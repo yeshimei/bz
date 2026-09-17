@@ -14,6 +14,11 @@ function readVal(fm: Record<string, unknown>, cn: string, legacy: string): unkno
   return fm[cn] !== undefined ? fm[cn] : fm[legacy];
 }
 
+/** 非负整数读数（缺键/非法/负数 → 0） */
+function intOf(v: unknown): number {
+  return Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0;
+}
+
 /** 扫描游戏目录全部笔记 → 条目（AppID 缺失/非法的文件跳过——不是本域数据不碰） */
 export function rebuildItems(app: App): GameItem[] {
   const folder = resolveGameshelfFolderPath();
@@ -23,13 +28,20 @@ export function rebuildItems(app: App): GameItem[] {
     const fm = app.metadataCache.getFileCache(file)?.frontmatter;
     const appid = Number(readVal(fm ?? {}, 'AppID', 'appid'));
     if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
+    const icon = readVal(fm, '图标', '');
     items.push({
       file,
       appid,
       name: file.basename.replace(/^《/, '').replace(/》$/, '').trim() || `App ${appid}`,
-      playtimeMin: Number.isFinite(Number(readVal(fm, '游玩分钟', 'playtimeMin'))) ? Math.max(0, Math.floor(Number(readVal(fm, '游玩分钟', 'playtimeMin')))) : 0,
+      playtimeMin: intOf(readVal(fm, '游玩分钟', 'playtimeMin')),
       lastPlayed: typeof readVal(fm, '最后游玩', 'lastPlayed') === 'string' ? String(readVal(fm, '最后游玩', 'lastPlayed')) : '',
       cover: typeof readVal(fm, '封面', 'cover') === 'string' && /^https?:\/\//.test(String(readVal(fm, '封面', 'cover'))) ? String(readVal(fm, '封面', 'cover')) : steamCoverUrl(appid),
+      icon: typeof icon === 'string' && /^https?:\/\//.test(icon) ? icon : null,
+      windowsMin: intOf(fm['Windows分钟']),
+      deckMin: intOf(fm['SteamDeck分钟']),
+      macMin: intOf(fm['Mac分钟']),
+      linuxMin: intOf(fm['Linux分钟']),
+      hasAch: fm['有成就'] === true,
       offShelf: readVal(fm, '已下架', 'offShelf') === true,
       syncedAt: typeof readVal(fm, '同步时间', 'syncedAt') === 'string' ? String(readVal(fm, '同步时间', 'syncedAt')) : null,
     });

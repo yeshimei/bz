@@ -1,7 +1,7 @@
-/* 源指纹 03faed9022de9b0a · 仓内输入 223 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
-/* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
-var BZW_settings_panel = (() => {
+/* 源指纹 bc1c30a517ae6ac9 · 仓内输入 235 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
+var BZW_gameshelf = (() => {
   var __create = Object.create;
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -42,3999 +42,10 @@ var BZW_settings_panel = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
-  var require_moment = __commonJS({
-    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
-      (function(global, factory) {
-        typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
-      })(exports, function() {
-        "use strict";
-        var hookCallback;
-        function hooks() {
-          return hookCallback.apply(null, arguments);
-        }
-        function setHookCallback(callback) {
-          hookCallback = callback;
-        }
-        function isArray(input) {
-          return input instanceof Array || Object.prototype.toString.call(input) === "[object Array]";
-        }
-        function isObject(input) {
-          return input != null && Object.prototype.toString.call(input) === "[object Object]";
-        }
-        function hasOwnProp(a, b) {
-          return Object.prototype.hasOwnProperty.call(a, b);
-        }
-        function isObjectEmpty(obj) {
-          if (Object.getOwnPropertyNames) {
-            return Object.getOwnPropertyNames(obj).length === 0;
-          } else {
-            var k;
-            for (k in obj) {
-              if (hasOwnProp(obj, k)) {
-                return false;
-              }
-            }
-            return true;
-          }
-        }
-        function isUndefined(input) {
-          return input === void 0;
-        }
-        function isNumber(input) {
-          return typeof input === "number" || Object.prototype.toString.call(input) === "[object Number]";
-        }
-        function isDate(input) {
-          return input instanceof Date || Object.prototype.toString.call(input) === "[object Date]";
-        }
-        function map(arr, fn) {
-          var res = [], i, arrLen = arr.length;
-          for (i = 0; i < arrLen; ++i) {
-            res.push(fn(arr[i], i));
-          }
-          return res;
-        }
-        function extend(a, b) {
-          for (var i in b) {
-            if (hasOwnProp(b, i)) {
-              a[i] = b[i];
-            }
-          }
-          if (hasOwnProp(b, "toString")) {
-            a.toString = b.toString;
-          }
-          if (hasOwnProp(b, "valueOf")) {
-            a.valueOf = b.valueOf;
-          }
-          return a;
-        }
-        function createUTC(input, format2, locale2, strict) {
-          return createLocalOrUTC(input, format2, locale2, strict, true).utc();
-        }
-        function defaultParsingFlags() {
-          return {
-            empty: false,
-            unusedTokens: [],
-            unusedInput: [],
-            overflow: -2,
-            charsLeftOver: 0,
-            nullInput: false,
-            invalidEra: null,
-            invalidMonth: null,
-            invalidFormat: false,
-            userInvalidated: false,
-            iso: false,
-            parsedDateParts: [],
-            era: null,
-            meridiem: null,
-            rfc2822: false,
-            weekdayMismatch: false
-          };
-        }
-        function getParsingFlags(m) {
-          if (m._pf == null) {
-            m._pf = defaultParsingFlags();
-          }
-          return m._pf;
-        }
-        var some;
-        if (Array.prototype.some) {
-          some = Array.prototype.some;
-        } else {
-          some = function(fun) {
-            var t = Object(this), len = t.length >>> 0, i;
-            for (i = 0; i < len; i++) {
-              if (i in t && fun.call(this, t[i], i, t)) {
-                return true;
-              }
-            }
-            return false;
-          };
-        }
-        function isValid(m) {
-          var flags = null, parsedParts = false, isNowValid = m._d && !isNaN(m._d.getTime());
-          if (isNowValid) {
-            flags = getParsingFlags(m);
-            parsedParts = some.call(flags.parsedDateParts, function(i) {
-              return i != null;
-            });
-            isNowValid = flags.overflow < 0 && !flags.empty && !flags.invalidEra && !flags.invalidMonth && !flags.invalidWeekday && !flags.weekdayMismatch && !flags.nullInput && !flags.invalidFormat && !flags.userInvalidated && (!flags.meridiem || flags.meridiem && parsedParts);
-            if (m._strict) {
-              isNowValid = isNowValid && flags.charsLeftOver === 0 && flags.unusedTokens.length === 0 && flags.bigHour === void 0;
-            }
-          }
-          if (Object.isFrozen == null || !Object.isFrozen(m)) {
-            m._isValid = isNowValid;
-          } else {
-            return isNowValid;
-          }
-          return m._isValid;
-        }
-        function createInvalid(flags) {
-          var m = createUTC(NaN);
-          if (flags != null) {
-            extend(getParsingFlags(m), flags);
-          } else {
-            getParsingFlags(m).userInvalidated = true;
-          }
-          return m;
-        }
-        var momentProperties = hooks.momentProperties = [], updateInProgress = false;
-        function copyConfig(to2, from2) {
-          var i, prop, val, momentPropertiesLen = momentProperties.length;
-          if (!isUndefined(from2._isAMomentObject)) {
-            to2._isAMomentObject = from2._isAMomentObject;
-          }
-          if (!isUndefined(from2._i)) {
-            to2._i = from2._i;
-          }
-          if (!isUndefined(from2._f)) {
-            to2._f = from2._f;
-          }
-          if (!isUndefined(from2._l)) {
-            to2._l = from2._l;
-          }
-          if (!isUndefined(from2._strict)) {
-            to2._strict = from2._strict;
-          }
-          if (!isUndefined(from2._tzm)) {
-            to2._tzm = from2._tzm;
-          }
-          if (!isUndefined(from2._isUTC)) {
-            to2._isUTC = from2._isUTC;
-          }
-          if (!isUndefined(from2._offset)) {
-            to2._offset = from2._offset;
-          }
-          if (!isUndefined(from2._pf)) {
-            to2._pf = getParsingFlags(from2);
-          }
-          if (!isUndefined(from2._locale)) {
-            to2._locale = from2._locale;
-          }
-          if (momentPropertiesLen > 0) {
-            for (i = 0; i < momentPropertiesLen; i++) {
-              prop = momentProperties[i];
-              val = from2[prop];
-              if (!isUndefined(val)) {
-                to2[prop] = val;
-              }
-            }
-          }
-          return to2;
-        }
-        function Moment(config) {
-          copyConfig(this, config);
-          this._d = new Date(config._d != null ? config._d.getTime() : NaN);
-          if (!this.isValid()) {
-            this._d = /* @__PURE__ */ new Date(NaN);
-          }
-          if (updateInProgress === false) {
-            updateInProgress = true;
-            hooks.updateOffset(this);
-            updateInProgress = false;
-          }
-        }
-        function isMoment(obj) {
-          return obj instanceof Moment || obj != null && obj._isAMomentObject != null;
-        }
-        function warn(msg) {
-          if (hooks.suppressDeprecationWarnings === false && typeof console !== "undefined" && console.warn) {
-            console.warn("Deprecation warning: " + msg);
-          }
-        }
-        function deprecate(msg, fn) {
-          var firstTime = true;
-          return extend(function() {
-            if (hooks.deprecationHandler != null) {
-              hooks.deprecationHandler(null, msg);
-            }
-            if (firstTime) {
-              var args = [], arg, i, key, argLen = arguments.length;
-              for (i = 0; i < argLen; i++) {
-                arg = "";
-                if (typeof arguments[i] === "object") {
-                  arg += "\n[" + i + "] ";
-                  for (key in arguments[0]) {
-                    if (hasOwnProp(arguments[0], key)) {
-                      arg += key + ": " + arguments[0][key] + ", ";
-                    }
-                  }
-                  arg = arg.slice(0, -2);
-                } else {
-                  arg = arguments[i];
-                }
-                args.push(arg);
-              }
-              warn(
-                msg + "\nArguments: " + Array.prototype.slice.call(args).join("") + "\n" + new Error().stack
-              );
-              firstTime = false;
-            }
-            return fn.apply(this, arguments);
-          }, fn);
-        }
-        var deprecations = {};
-        function deprecateSimple(name, msg) {
-          if (hooks.deprecationHandler != null) {
-            hooks.deprecationHandler(name, msg);
-          }
-          if (!deprecations[name]) {
-            warn(msg);
-            deprecations[name] = true;
-          }
-        }
-        hooks.suppressDeprecationWarnings = false;
-        hooks.deprecationHandler = null;
-        function isFunction(input) {
-          return typeof Function !== "undefined" && input instanceof Function || Object.prototype.toString.call(input) === "[object Function]";
-        }
-        function set(config) {
-          var prop, i;
-          for (i in config) {
-            if (hasOwnProp(config, i)) {
-              prop = config[i];
-              if (isFunction(prop)) {
-                this[i] = prop;
-              } else {
-                this["_" + i] = prop;
-              }
-            }
-          }
-          this._config = config;
-          this._dayOfMonthOrdinalParseLenient = new RegExp(
-            (this._dayOfMonthOrdinalParse.source || this._ordinalParse.source) + "|" + /\d{1,2}/.source
-          );
-        }
-        function mergeConfigs(parentConfig, childConfig) {
-          var res = extend({}, parentConfig), prop;
-          for (prop in childConfig) {
-            if (hasOwnProp(childConfig, prop)) {
-              if (isObject(parentConfig[prop]) && isObject(childConfig[prop])) {
-                res[prop] = {};
-                extend(res[prop], parentConfig[prop]);
-                extend(res[prop], childConfig[prop]);
-              } else if (childConfig[prop] != null) {
-                res[prop] = childConfig[prop];
-              } else {
-                delete res[prop];
-              }
-            }
-          }
-          for (prop in parentConfig) {
-            if (hasOwnProp(parentConfig, prop) && !hasOwnProp(childConfig, prop) && isObject(parentConfig[prop])) {
-              res[prop] = extend({}, res[prop]);
-            }
-          }
-          return res;
-        }
-        function Locale(config) {
-          if (config != null) {
-            this.set(config);
-          }
-        }
-        var keys;
-        if (Object.keys) {
-          keys = Object.keys;
-        } else {
-          keys = function(obj) {
-            var i, res = [];
-            for (i in obj) {
-              if (hasOwnProp(obj, i)) {
-                res.push(i);
-              }
-            }
-            return res;
-          };
-        }
-        var defaultCalendar = {
-          sameDay: "[Today at] LT",
-          nextDay: "[Tomorrow at] LT",
-          nextWeek: "dddd [at] LT",
-          lastDay: "[Yesterday at] LT",
-          lastWeek: "[Last] dddd [at] LT",
-          sameElse: "L"
-        };
-        function calendar(key, mom, now2) {
-          var output = this._calendar[key] || this._calendar["sameElse"];
-          return isFunction(output) ? output.call(mom, now2) : output;
-        }
-        function zeroFill(number, targetLength, forceSign) {
-          var absNumber = "" + Math.abs(number), zerosToFill = targetLength - absNumber.length, sign2 = number >= 0;
-          return (sign2 ? forceSign ? "+" : "" : "-") + Math.pow(10, Math.max(0, zerosToFill)).toString().substr(1) + absNumber;
-        }
-        var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|N{1,5}|YYYYYY|YYYYY|YYYY|YY|y{2,4}|yo?|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g, localFormattingTokens = /(\[[^\[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g, formatFunctions = {}, formatTokenFunctions = {};
-        function addFormatToken(token2, padded, ordinal2, callback) {
-          var func = callback;
-          if (typeof callback === "string") {
-            func = function() {
-              return this[callback]();
-            };
-          }
-          if (token2) {
-            formatTokenFunctions[token2] = func;
-          }
-          if (padded) {
-            formatTokenFunctions[padded[0]] = function() {
-              return zeroFill(func.apply(this, arguments), padded[1], padded[2]);
-            };
-          }
-          if (ordinal2) {
-            formatTokenFunctions[ordinal2] = function() {
-              return this.localeData().ordinal(
-                func.apply(this, arguments),
-                token2
-              );
-            };
-          }
-        }
-        function removeFormattingTokens(input) {
-          if (input.match(/\[[\s\S]/)) {
-            return input.replace(/^\[|\]$/g, "");
-          }
-          return input.replace(/\\/g, "");
-        }
-        function makeFormatFunction(format2) {
-          var array = format2.match(formattingTokens), i, length;
-          for (i = 0, length = array.length; i < length; i++) {
-            if (formatTokenFunctions[array[i]]) {
-              array[i] = formatTokenFunctions[array[i]];
-            } else {
-              array[i] = removeFormattingTokens(array[i]);
-            }
-          }
-          return function(mom) {
-            var output = "", i2;
-            for (i2 = 0; i2 < length; i2++) {
-              output += isFunction(array[i2]) ? array[i2].call(mom, format2) : array[i2];
-            }
-            return output;
-          };
-        }
-        function formatMoment(m, format2) {
-          if (!m.isValid()) {
-            return m.localeData().invalidDate();
-          }
-          format2 = expandFormat(format2, m.localeData());
-          formatFunctions[format2] = formatFunctions[format2] || makeFormatFunction(format2);
-          return formatFunctions[format2](m);
-        }
-        function expandFormat(format2, locale2) {
-          var i = 5;
-          function replaceLongDateFormatTokens(input) {
-            return locale2.longDateFormat(input) || input;
-          }
-          localFormattingTokens.lastIndex = 0;
-          while (i >= 0 && localFormattingTokens.test(format2)) {
-            format2 = format2.replace(
-              localFormattingTokens,
-              replaceLongDateFormatTokens
-            );
-            localFormattingTokens.lastIndex = 0;
-            i -= 1;
-          }
-          return format2;
-        }
-        var defaultLongDateFormat = {
-          LTS: "h:mm:ss A",
-          LT: "h:mm A",
-          L: "MM/DD/YYYY",
-          LL: "MMMM D, YYYY",
-          LLL: "MMMM D, YYYY h:mm A",
-          LLLL: "dddd, MMMM D, YYYY h:mm A"
-        };
-        function longDateFormat(key) {
-          var format2 = this._longDateFormat[key], formatUpper = this._longDateFormat[key.toUpperCase()];
-          if (format2 || !formatUpper) {
-            return format2;
-          }
-          this._longDateFormat[key] = formatUpper.match(formattingTokens).map(function(tok) {
-            if (tok === "MMMM" || tok === "MM" || tok === "DD" || tok === "dddd") {
-              return tok.slice(1);
-            }
-            return tok;
-          }).join("");
-          return this._longDateFormat[key];
-        }
-        var defaultInvalidDate = "Invalid date";
-        function invalidDate() {
-          return this._invalidDate;
-        }
-        var defaultOrdinal = "%d", defaultDayOfMonthOrdinalParse = /\d{1,2}/;
-        function ordinal(number) {
-          return this._ordinal.replace("%d", number);
-        }
-        var defaultRelativeTime = {
-          future: "in %s",
-          past: "%s ago",
-          s: "a few seconds",
-          ss: "%d seconds",
-          m: "a minute",
-          mm: "%d minutes",
-          h: "an hour",
-          hh: "%d hours",
-          d: "a day",
-          dd: "%d days",
-          w: "a week",
-          ww: "%d weeks",
-          M: "a month",
-          MM: "%d months",
-          y: "a year",
-          yy: "%d years"
-        };
-        function relativeTime(number, withoutSuffix, string, isFuture) {
-          var output = this._relativeTime[string];
-          return isFunction(output) ? output(number, withoutSuffix, string, isFuture) : output.replace(/%d/i, number);
-        }
-        function pastFuture(diff2, output) {
-          var format2 = this._relativeTime[diff2 > 0 ? "future" : "past"];
-          return isFunction(format2) ? format2(output) : format2.replace(/%s/i, output);
-        }
-        var aliases = {
-          D: "date",
-          dates: "date",
-          date: "date",
-          d: "day",
-          days: "day",
-          day: "day",
-          e: "weekday",
-          weekdays: "weekday",
-          weekday: "weekday",
-          E: "isoWeekday",
-          isoweekdays: "isoWeekday",
-          isoweekday: "isoWeekday",
-          DDD: "dayOfYear",
-          dayofyears: "dayOfYear",
-          dayofyear: "dayOfYear",
-          h: "hour",
-          hours: "hour",
-          hour: "hour",
-          ms: "millisecond",
-          milliseconds: "millisecond",
-          millisecond: "millisecond",
-          m: "minute",
-          minutes: "minute",
-          minute: "minute",
-          M: "month",
-          months: "month",
-          month: "month",
-          Q: "quarter",
-          quarters: "quarter",
-          quarter: "quarter",
-          s: "second",
-          seconds: "second",
-          second: "second",
-          gg: "weekYear",
-          weekyears: "weekYear",
-          weekyear: "weekYear",
-          GG: "isoWeekYear",
-          isoweekyears: "isoWeekYear",
-          isoweekyear: "isoWeekYear",
-          w: "week",
-          weeks: "week",
-          week: "week",
-          W: "isoWeek",
-          isoweeks: "isoWeek",
-          isoweek: "isoWeek",
-          y: "year",
-          years: "year",
-          year: "year"
-        };
-        function normalizeUnits(units) {
-          return typeof units === "string" ? aliases[units] || aliases[units.toLowerCase()] : void 0;
-        }
-        function normalizeObjectUnits(inputObject) {
-          var normalizedInput = {}, normalizedProp, prop;
-          for (prop in inputObject) {
-            if (hasOwnProp(inputObject, prop)) {
-              normalizedProp = normalizeUnits(prop);
-              if (normalizedProp) {
-                normalizedInput[normalizedProp] = inputObject[prop];
-              }
-            }
-          }
-          return normalizedInput;
-        }
-        var priorities = {
-          date: 9,
-          day: 11,
-          weekday: 11,
-          isoWeekday: 11,
-          dayOfYear: 4,
-          hour: 13,
-          millisecond: 16,
-          minute: 14,
-          month: 8,
-          quarter: 7,
-          second: 15,
-          weekYear: 1,
-          isoWeekYear: 1,
-          week: 5,
-          isoWeek: 5,
-          year: 1
-        };
-        function getPrioritizedUnits(unitsObj) {
-          var units = [], u;
-          for (u in unitsObj) {
-            if (hasOwnProp(unitsObj, u)) {
-              units.push({ unit: u, priority: priorities[u] });
-            }
-          }
-          units.sort(function(a, b) {
-            return a.priority - b.priority;
-          });
-          return units;
-        }
-        var match1 = /\d/, match2 = /\d\d/, match3 = /\d{3}/, match4 = /\d{4}/, match6 = /[+-]?\d{6}/, match1to2 = /\d\d?/, match3to4 = /\d\d\d\d?/, match5to6 = /\d\d\d\d\d\d?/, match1to3 = /\d{1,3}/, match1to4 = /\d{1,4}/, match1to6 = /[+-]?\d{1,6}/, matchUnsigned = /\d+/, matchSigned = /[+-]?\d+/, matchOffset = /Z|[+-]\d\d:?\d\d/gi, matchShortOffset = /Z|[+-]\d\d(?::?\d\d)?/gi, matchTimestamp = /[+-]?\d+(\.\d{1,3})?/, matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFF07\uFF10-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i, match1to2NoLeadingZero = /^[1-9]\d?/, match1to2HasZero = /^([1-9]\d|\d)/, regexes;
-        regexes = {};
-        function addRegexToken(token2, regex, strictRegex) {
-          regexes[token2] = isFunction(regex) ? regex : function(isStrict, localeData2) {
-            return isStrict && strictRegex ? strictRegex : regex;
-          };
-        }
-        function getParseRegexForToken(token2, config) {
-          if (!hasOwnProp(regexes, token2)) {
-            return new RegExp(unescapeFormat(token2));
-          }
-          return regexes[token2](config._strict, config._locale);
-        }
-        function unescapeFormat(s) {
-          return regexEscape(
-            s.replace("\\", "").replace(
-              /\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g,
-              function(matched, p1, p2, p3, p4) {
-                return p1 || p2 || p3 || p4;
-              }
-            )
-          );
-        }
-        function regexEscape(s) {
-          return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
-        }
-        function absFloor(number) {
-          if (number < 0) {
-            return Math.ceil(number) || 0;
-          } else {
-            return Math.floor(number);
-          }
-        }
-        function toInt(argumentForCoercion) {
-          var coercedNumber = +argumentForCoercion, value = 0;
-          if (coercedNumber !== 0 && isFinite(coercedNumber)) {
-            value = absFloor(coercedNumber);
-          }
-          return value;
-        }
-        var tokens = {};
-        function addParseToken(token2, callback) {
-          var i, func = callback, tokenLen;
-          if (typeof token2 === "string") {
-            token2 = [token2];
-          }
-          if (isNumber(callback)) {
-            func = function(input, array) {
-              array[callback] = toInt(input);
-            };
-          }
-          tokenLen = token2.length;
-          for (i = 0; i < tokenLen; i++) {
-            tokens[token2[i]] = func;
-          }
-        }
-        function addWeekParseToken(token2, callback) {
-          addParseToken(token2, function(input, array, config, token3) {
-            config._w = config._w || {};
-            callback(input, config._w, config, token3);
-          });
-        }
-        function addTimeToArrayFromToken(token2, input, config) {
-          if (input != null && hasOwnProp(tokens, token2)) {
-            tokens[token2](input, config._a, config, token2);
-          }
-        }
-        function isLeapYear(year) {
-          return year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
-        }
-        var YEAR = 0, MONTH = 1, DATE = 2, HOUR = 3, MINUTE = 4, SECOND = 5, MILLISECOND = 6, WEEK = 7, WEEKDAY = 8;
-        addFormatToken("Y", 0, 0, function() {
-          var y = this.year();
-          return y <= 9999 ? zeroFill(y, 4) : "+" + y;
-        });
-        addFormatToken(0, ["YY", 2], 0, function() {
-          return this.year() % 100;
-        });
-        addFormatToken(0, ["YYYY", 4], 0, "year");
-        addFormatToken(0, ["YYYYY", 5], 0, "year");
-        addFormatToken(0, ["YYYYYY", 6, true], 0, "year");
-        addRegexToken("Y", matchSigned);
-        addRegexToken("YY", match1to2, match2);
-        addRegexToken("YYYY", match1to4, match4);
-        addRegexToken("YYYYY", match1to6, match6);
-        addRegexToken("YYYYYY", match1to6, match6);
-        addParseToken(["YYYYY", "YYYYYY"], YEAR);
-        addParseToken("YYYY", function(input, array) {
-          array[YEAR] = input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
-        });
-        addParseToken("YY", function(input, array) {
-          array[YEAR] = hooks.parseTwoDigitYear(input);
-        });
-        addParseToken("Y", function(input, array) {
-          array[YEAR] = parseInt(input, 10);
-        });
-        function daysInYear(year) {
-          return isLeapYear(year) ? 366 : 365;
-        }
-        hooks.parseTwoDigitYear = function(input) {
-          return toInt(input) + (toInt(input) > 68 ? 1900 : 2e3);
-        };
-        var getSetYear = makeGetSet("FullYear", true);
-        function getIsLeapYear() {
-          return isLeapYear(this.year());
-        }
-        function makeGetSet(unit, keepTime) {
-          return function(value) {
-            if (value != null) {
-              set$1(this, unit, value);
-              hooks.updateOffset(this, keepTime);
-              return this;
-            } else {
-              return get(this, unit);
-            }
-          };
-        }
-        function get(mom, unit) {
-          if (!mom.isValid()) {
-            return NaN;
-          }
-          var d = mom._d, isUTC = mom._isUTC;
-          switch (unit) {
-            case "Milliseconds":
-              return isUTC ? d.getUTCMilliseconds() : d.getMilliseconds();
-            case "Seconds":
-              return isUTC ? d.getUTCSeconds() : d.getSeconds();
-            case "Minutes":
-              return isUTC ? d.getUTCMinutes() : d.getMinutes();
-            case "Hours":
-              return isUTC ? d.getUTCHours() : d.getHours();
-            case "Date":
-              return isUTC ? d.getUTCDate() : d.getDate();
-            case "Day":
-              return isUTC ? d.getUTCDay() : d.getDay();
-            case "Month":
-              return isUTC ? d.getUTCMonth() : d.getMonth();
-            case "FullYear":
-              return isUTC ? d.getUTCFullYear() : d.getFullYear();
-            default:
-              return NaN;
-          }
-        }
-        function set$1(mom, unit, value) {
-          var d, isUTC, year, month, date;
-          if (!mom.isValid() || isNaN(value)) {
-            return;
-          }
-          d = mom._d;
-          isUTC = mom._isUTC;
-          switch (unit) {
-            case "Milliseconds":
-              return void (isUTC ? d.setUTCMilliseconds(value) : d.setMilliseconds(value));
-            case "Seconds":
-              return void (isUTC ? d.setUTCSeconds(value) : d.setSeconds(value));
-            case "Minutes":
-              return void (isUTC ? d.setUTCMinutes(value) : d.setMinutes(value));
-            case "Hours":
-              return void (isUTC ? d.setUTCHours(value) : d.setHours(value));
-            case "Date":
-              return void (isUTC ? d.setUTCDate(value) : d.setDate(value));
-            case "FullYear":
-              break;
-            default:
-              return;
-          }
-          year = value;
-          month = mom.month();
-          date = mom.date();
-          date = date === 29 && month === 1 && !isLeapYear(year) ? 28 : date;
-          void (isUTC ? d.setUTCFullYear(year, month, date) : d.setFullYear(year, month, date));
-        }
-        function stringGet(units) {
-          units = normalizeUnits(units);
-          if (isFunction(this[units])) {
-            return this[units]();
-          }
-          return this;
-        }
-        function stringSet(units, value) {
-          if (typeof units === "object") {
-            units = normalizeObjectUnits(units);
-            var prioritized = getPrioritizedUnits(units), i, prioritizedLen = prioritized.length;
-            for (i = 0; i < prioritizedLen; i++) {
-              this[prioritized[i].unit](units[prioritized[i].unit]);
-            }
-          } else {
-            units = normalizeUnits(units);
-            if (isFunction(this[units])) {
-              return this[units](value);
-            }
-          }
-          return this;
-        }
-        function mod(n, x) {
-          return (n % x + x) % x;
-        }
-        var indexOf;
-        if (Array.prototype.indexOf) {
-          indexOf = Array.prototype.indexOf;
-        } else {
-          indexOf = function(o) {
-            var i;
-            for (i = 0; i < this.length; ++i) {
-              if (this[i] === o) {
-                return i;
-              }
-            }
-            return -1;
-          };
-        }
-        function daysInMonth(year, month) {
-          if (isNaN(year) || isNaN(month)) {
-            return NaN;
-          }
-          var modMonth = mod(month, 12);
-          year += (month - modMonth) / 12;
-          return modMonth === 1 ? isLeapYear(year) ? 29 : 28 : 31 - modMonth % 7 % 2;
-        }
-        addFormatToken("M", ["MM", 2], "Mo", function() {
-          return this.month() + 1;
-        });
-        addFormatToken("MMM", 0, 0, function(format2) {
-          return this.localeData().monthsShort(this, format2);
-        });
-        addFormatToken("MMMM", 0, 0, function(format2) {
-          return this.localeData().months(this, format2);
-        });
-        addRegexToken("M", match1to2, match1to2NoLeadingZero);
-        addRegexToken("MM", match1to2, match2);
-        addRegexToken("MMM", function(isStrict, locale2) {
-          return locale2.monthsShortRegex(isStrict);
-        });
-        addRegexToken("MMMM", function(isStrict, locale2) {
-          return locale2.monthsRegex(isStrict);
-        });
-        addParseToken(["M", "MM"], function(input, array) {
-          array[MONTH] = toInt(input) - 1;
-        });
-        addParseToken(["MMM", "MMMM"], function(input, array, config, token2) {
-          var month = config._locale.monthsParse(input, token2, config._strict);
-          if (month != null) {
-            array[MONTH] = month;
-          } else {
-            getParsingFlags(config).invalidMonth = input;
-          }
-        });
-        var defaultLocaleMonths = "January_February_March_April_May_June_July_August_September_October_November_December".split(
-          "_"
-        ), defaultLocaleMonthsShort = "Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec".split("_"), MONTHS_IN_FORMAT = /D[oD]?(\[[^\[\]]*\]|\s)+MMMM?/, defaultMonthsShortRegex = matchWord, defaultMonthsRegex = matchWord;
-        function localeMonths(m, format2) {
-          if (!m) {
-            return isArray(this._months) ? this._months : this._months["standalone"];
-          }
-          return isArray(this._months) ? this._months[m.month()] : this._months[(this._months.isFormat || MONTHS_IN_FORMAT).test(format2) ? "format" : "standalone"][m.month()];
-        }
-        function localeMonthsShort(m, format2) {
-          if (!m) {
-            return isArray(this._monthsShort) ? this._monthsShort : this._monthsShort["standalone"];
-          }
-          return isArray(this._monthsShort) ? this._monthsShort[m.month()] : this._monthsShort[MONTHS_IN_FORMAT.test(format2) ? "format" : "standalone"][m.month()];
-        }
-        function handleStrictParse(monthName, format2, strict) {
-          var i, ii, mom, llc = monthName.toLocaleLowerCase();
-          if (!this._monthsParse) {
-            this._monthsParse = [];
-            this._longMonthsParse = [];
-            this._shortMonthsParse = [];
-            for (i = 0; i < 12; ++i) {
-              mom = createUTC([2e3, i]);
-              this._shortMonthsParse[i] = this.monthsShort(
-                mom,
-                ""
-              ).toLocaleLowerCase();
-              this._longMonthsParse[i] = this.months(mom, "").toLocaleLowerCase();
-            }
-          }
-          if (strict) {
-            if (format2 === "MMM") {
-              ii = indexOf.call(this._shortMonthsParse, llc);
-              return ii !== -1 ? ii : null;
-            } else {
-              ii = indexOf.call(this._longMonthsParse, llc);
-              return ii !== -1 ? ii : null;
-            }
-          } else {
-            if (format2 === "MMM") {
-              ii = indexOf.call(this._shortMonthsParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._longMonthsParse, llc);
-              return ii !== -1 ? ii : null;
-            } else {
-              ii = indexOf.call(this._longMonthsParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._shortMonthsParse, llc);
-              return ii !== -1 ? ii : null;
-            }
-          }
-        }
-        function localeMonthsParse(monthName, format2, strict) {
-          var i, mom, regex;
-          if (this._monthsParseExact) {
-            return handleStrictParse.call(this, monthName, format2, strict);
-          }
-          if (!this._monthsParse) {
-            this._monthsParse = [];
-            this._longMonthsParse = [];
-            this._shortMonthsParse = [];
-          }
-          for (i = 0; i < 12; i++) {
-            mom = createUTC([2e3, i]);
-            if (strict && !this._longMonthsParse[i]) {
-              this._longMonthsParse[i] = new RegExp(
-                "^" + this.months(mom, "").replace(".", "") + "$",
-                "i"
-              );
-              this._shortMonthsParse[i] = new RegExp(
-                "^" + this.monthsShort(mom, "").replace(".", "") + "$",
-                "i"
-              );
-            }
-            if (!strict && !this._monthsParse[i]) {
-              regex = "^" + this.months(mom, "") + "|^" + this.monthsShort(mom, "");
-              this._monthsParse[i] = new RegExp(regex.replace(".", ""), "i");
-            }
-            if (strict && format2 === "MMMM" && this._longMonthsParse[i].test(monthName)) {
-              return i;
-            } else if (strict && format2 === "MMM" && this._shortMonthsParse[i].test(monthName)) {
-              return i;
-            } else if (!strict && this._monthsParse[i].test(monthName)) {
-              return i;
-            }
-          }
-        }
-        function setMonth(mom, value) {
-          if (!mom.isValid()) {
-            return mom;
-          }
-          if (typeof value === "string") {
-            if (/^\d+$/.test(value)) {
-              value = toInt(value);
-            } else {
-              value = mom.localeData().monthsParse(value);
-              if (!isNumber(value)) {
-                return mom;
-              }
-            }
-          }
-          var month = value, date = mom.date();
-          date = date < 29 ? date : Math.min(date, daysInMonth(mom.year(), month));
-          void (mom._isUTC ? mom._d.setUTCMonth(month, date) : mom._d.setMonth(month, date));
-          return mom;
-        }
-        function getSetMonth(value) {
-          if (value != null) {
-            setMonth(this, value);
-            hooks.updateOffset(this, true);
-            return this;
-          } else {
-            return get(this, "Month");
-          }
-        }
-        function getDaysInMonth() {
-          return daysInMonth(this.year(), this.month());
-        }
-        function monthsShortRegex(isStrict) {
-          if (this._monthsParseExact) {
-            if (!hasOwnProp(this, "_monthsRegex")) {
-              computeMonthsParse.call(this);
-            }
-            if (isStrict) {
-              return this._monthsShortStrictRegex;
-            } else {
-              return this._monthsShortRegex;
-            }
-          } else {
-            if (!hasOwnProp(this, "_monthsShortRegex")) {
-              this._monthsShortRegex = defaultMonthsShortRegex;
-            }
-            return this._monthsShortStrictRegex && isStrict ? this._monthsShortStrictRegex : this._monthsShortRegex;
-          }
-        }
-        function monthsRegex(isStrict) {
-          if (this._monthsParseExact) {
-            if (!hasOwnProp(this, "_monthsRegex")) {
-              computeMonthsParse.call(this);
-            }
-            if (isStrict) {
-              return this._monthsStrictRegex;
-            } else {
-              return this._monthsRegex;
-            }
-          } else {
-            if (!hasOwnProp(this, "_monthsRegex")) {
-              this._monthsRegex = defaultMonthsRegex;
-            }
-            return this._monthsStrictRegex && isStrict ? this._monthsStrictRegex : this._monthsRegex;
-          }
-        }
-        function computeMonthsParse() {
-          function cmpLenRev(a, b) {
-            return b.length - a.length;
-          }
-          var shortPieces = [], longPieces = [], mixedPieces = [], i, mom, shortP, longP;
-          for (i = 0; i < 12; i++) {
-            mom = createUTC([2e3, i]);
-            shortP = regexEscape(this.monthsShort(mom, ""));
-            longP = regexEscape(this.months(mom, ""));
-            shortPieces.push(shortP);
-            longPieces.push(longP);
-            mixedPieces.push(longP);
-            mixedPieces.push(shortP);
-          }
-          shortPieces.sort(cmpLenRev);
-          longPieces.sort(cmpLenRev);
-          mixedPieces.sort(cmpLenRev);
-          this._monthsRegex = new RegExp("^(" + mixedPieces.join("|") + ")", "i");
-          this._monthsShortRegex = this._monthsRegex;
-          this._monthsStrictRegex = new RegExp(
-            "^(" + longPieces.join("|") + ")",
-            "i"
-          );
-          this._monthsShortStrictRegex = new RegExp(
-            "^(" + shortPieces.join("|") + ")",
-            "i"
-          );
-        }
-        function createDate(y, m, d, h, M7, s, ms) {
-          var date;
-          if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M7, s, ms);
-            if (isFinite(date.getFullYear())) {
-              date.setFullYear(y);
-            }
-          } else {
-            date = new Date(y, m, d, h, M7, s, ms);
-          }
-          return date;
-        }
-        function createUTCDate(y) {
-          var date, args;
-          if (y < 100 && y >= 0) {
-            args = Array.prototype.slice.call(arguments);
-            args[0] = y + 400;
-            date = new Date(Date.UTC.apply(null, args));
-            if (isFinite(date.getUTCFullYear())) {
-              date.setUTCFullYear(y);
-            }
-          } else {
-            date = new Date(Date.UTC.apply(null, arguments));
-          }
-          return date;
-        }
-        function firstWeekOffset(year, dow, doy) {
-          var fwd = 7 + dow - doy, fwdlw = (7 + createUTCDate(year, 0, fwd).getUTCDay() - dow) % 7;
-          return -fwdlw + fwd - 1;
-        }
-        function dayOfYearFromWeeks(year, week, weekday, dow, doy) {
-          var localWeekday = (7 + weekday - dow) % 7, weekOffset = firstWeekOffset(year, dow, doy), dayOfYear = 1 + 7 * (week - 1) + localWeekday + weekOffset, resYear, resDayOfYear;
-          if (dayOfYear <= 0) {
-            resYear = year - 1;
-            resDayOfYear = daysInYear(resYear) + dayOfYear;
-          } else if (dayOfYear > daysInYear(year)) {
-            resYear = year + 1;
-            resDayOfYear = dayOfYear - daysInYear(year);
-          } else {
-            resYear = year;
-            resDayOfYear = dayOfYear;
-          }
-          return {
-            year: resYear,
-            dayOfYear: resDayOfYear
-          };
-        }
-        function weekOfYear(mom, dow, doy) {
-          var weekOffset = firstWeekOffset(mom.year(), dow, doy), week = Math.floor((mom.dayOfYear() - weekOffset - 1) / 7) + 1, resWeek, resYear;
-          if (week < 1) {
-            resYear = mom.year() - 1;
-            resWeek = week + weeksInYear(resYear, dow, doy);
-          } else if (week > weeksInYear(mom.year(), dow, doy)) {
-            resWeek = week - weeksInYear(mom.year(), dow, doy);
-            resYear = mom.year() + 1;
-          } else {
-            resYear = mom.year();
-            resWeek = week;
-          }
-          return {
-            week: resWeek,
-            year: resYear
-          };
-        }
-        function weeksInYear(year, dow, doy) {
-          var weekOffset = firstWeekOffset(year, dow, doy), weekOffsetNext = firstWeekOffset(year + 1, dow, doy);
-          return (daysInYear(year) - weekOffset + weekOffsetNext) / 7;
-        }
-        addFormatToken("w", ["ww", 2], "wo", "week");
-        addFormatToken("W", ["WW", 2], "Wo", "isoWeek");
-        addRegexToken("w", match1to2, match1to2NoLeadingZero);
-        addRegexToken("ww", match1to2, match2);
-        addRegexToken("W", match1to2, match1to2NoLeadingZero);
-        addRegexToken("WW", match1to2, match2);
-        addWeekParseToken(
-          ["w", "ww", "W", "WW"],
-          function(input, week, config, token2) {
-            week[token2.substr(0, 1)] = toInt(input);
-          }
-        );
-        function localeWeek(mom) {
-          return weekOfYear(mom, this._week.dow, this._week.doy).week;
-        }
-        var defaultLocaleWeek = {
-          dow: 0,
-          // Sunday is the first day of the week.
-          doy: 6
-          // The week that contains Jan 6th is the first week of the year.
-        };
-        function localeFirstDayOfWeek() {
-          return this._week.dow;
-        }
-        function localeFirstDayOfYear() {
-          return this._week.doy;
-        }
-        function getSetWeek(input) {
-          var week = this.localeData().week(this);
-          return input == null ? week : this.add((input - week) * 7, "d");
-        }
-        function getSetISOWeek(input) {
-          var week = weekOfYear(this, 1, 4).week;
-          return input == null ? week : this.add((input - week) * 7, "d");
-        }
-        addFormatToken("d", 0, "do", "day");
-        addFormatToken("dd", 0, 0, function(format2) {
-          return this.localeData().weekdaysMin(this, format2);
-        });
-        addFormatToken("ddd", 0, 0, function(format2) {
-          return this.localeData().weekdaysShort(this, format2);
-        });
-        addFormatToken("dddd", 0, 0, function(format2) {
-          return this.localeData().weekdays(this, format2);
-        });
-        addFormatToken("e", 0, 0, "weekday");
-        addFormatToken("E", 0, 0, "isoWeekday");
-        addRegexToken("d", match1to2);
-        addRegexToken("e", match1to2);
-        addRegexToken("E", match1to2);
-        addRegexToken("dd", function(isStrict, locale2) {
-          return locale2.weekdaysMinRegex(isStrict);
-        });
-        addRegexToken("ddd", function(isStrict, locale2) {
-          return locale2.weekdaysShortRegex(isStrict);
-        });
-        addRegexToken("dddd", function(isStrict, locale2) {
-          return locale2.weekdaysRegex(isStrict);
-        });
-        addWeekParseToken(["dd", "ddd", "dddd"], function(input, week, config, token2) {
-          var weekday = config._locale.weekdaysParse(input, token2, config._strict);
-          if (weekday != null) {
-            week.d = weekday;
-          } else {
-            getParsingFlags(config).invalidWeekday = input;
-          }
-        });
-        addWeekParseToken(["d", "e", "E"], function(input, week, config, token2) {
-          week[token2] = toInt(input);
-        });
-        function parseWeekday(input, locale2) {
-          if (typeof input !== "string") {
-            return input;
-          }
-          if (!isNaN(input)) {
-            return parseInt(input, 10);
-          }
-          input = locale2.weekdaysParse(input);
-          if (typeof input === "number") {
-            return input;
-          }
-          return null;
-        }
-        function parseIsoWeekday(input, locale2) {
-          if (typeof input === "string") {
-            return locale2.weekdaysParse(input) % 7 || 7;
-          }
-          return isNaN(input) ? null : input;
-        }
-        function shiftWeekdays(ws, n) {
-          return ws.slice(n, 7).concat(ws.slice(0, n));
-        }
-        var defaultLocaleWeekdays = "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), defaultLocaleWeekdaysShort = "Sun_Mon_Tue_Wed_Thu_Fri_Sat".split("_"), defaultLocaleWeekdaysMin = "Su_Mo_Tu_We_Th_Fr_Sa".split("_"), defaultWeekdaysRegex = matchWord, defaultWeekdaysShortRegex = matchWord, defaultWeekdaysMinRegex = matchWord;
-        function localeWeekdays(m, format2) {
-          var weekdays = isArray(this._weekdays) ? this._weekdays : this._weekdays[m && m !== true && this._weekdays.isFormat.test(format2) ? "format" : "standalone"];
-          return m === true ? shiftWeekdays(weekdays, this._week.dow) : m ? weekdays[m.day()] : weekdays;
-        }
-        function localeWeekdaysShort(m) {
-          return m === true ? shiftWeekdays(this._weekdaysShort, this._week.dow) : m ? this._weekdaysShort[m.day()] : this._weekdaysShort;
-        }
-        function localeWeekdaysMin(m) {
-          return m === true ? shiftWeekdays(this._weekdaysMin, this._week.dow) : m ? this._weekdaysMin[m.day()] : this._weekdaysMin;
-        }
-        function handleStrictParse$1(weekdayName, format2, strict) {
-          var i, ii, mom, llc = weekdayName.toLocaleLowerCase();
-          if (!this._weekdaysParse) {
-            this._weekdaysParse = [];
-            this._shortWeekdaysParse = [];
-            this._minWeekdaysParse = [];
-            for (i = 0; i < 7; ++i) {
-              mom = createUTC([2e3, 1]).day(i);
-              this._minWeekdaysParse[i] = this.weekdaysMin(
-                mom,
-                ""
-              ).toLocaleLowerCase();
-              this._shortWeekdaysParse[i] = this.weekdaysShort(
-                mom,
-                ""
-              ).toLocaleLowerCase();
-              this._weekdaysParse[i] = this.weekdays(mom, "").toLocaleLowerCase();
-            }
-          }
-          if (strict) {
-            if (format2 === "dddd") {
-              ii = indexOf.call(this._weekdaysParse, llc);
-              return ii !== -1 ? ii : null;
-            } else if (format2 === "ddd") {
-              ii = indexOf.call(this._shortWeekdaysParse, llc);
-              return ii !== -1 ? ii : null;
-            } else {
-              ii = indexOf.call(this._minWeekdaysParse, llc);
-              return ii !== -1 ? ii : null;
-            }
-          } else {
-            if (format2 === "dddd") {
-              ii = indexOf.call(this._weekdaysParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._shortWeekdaysParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._minWeekdaysParse, llc);
-              return ii !== -1 ? ii : null;
-            } else if (format2 === "ddd") {
-              ii = indexOf.call(this._shortWeekdaysParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._weekdaysParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._minWeekdaysParse, llc);
-              return ii !== -1 ? ii : null;
-            } else {
-              ii = indexOf.call(this._minWeekdaysParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._weekdaysParse, llc);
-              if (ii !== -1) {
-                return ii;
-              }
-              ii = indexOf.call(this._shortWeekdaysParse, llc);
-              return ii !== -1 ? ii : null;
-            }
-          }
-        }
-        function localeWeekdaysParse(weekdayName, format2, strict) {
-          var i, mom, regex;
-          if (this._weekdaysParseExact) {
-            return handleStrictParse$1.call(this, weekdayName, format2, strict);
-          }
-          if (!this._weekdaysParse) {
-            this._weekdaysParse = [];
-            this._minWeekdaysParse = [];
-            this._shortWeekdaysParse = [];
-            this._fullWeekdaysParse = [];
-          }
-          for (i = 0; i < 7; i++) {
-            mom = createUTC([2e3, 1]).day(i);
-            if (strict && !this._fullWeekdaysParse[i]) {
-              this._fullWeekdaysParse[i] = new RegExp(
-                "^" + this.weekdays(mom, "").replace(".", "\\.?") + "$",
-                "i"
-              );
-              this._shortWeekdaysParse[i] = new RegExp(
-                "^" + this.weekdaysShort(mom, "").replace(".", "\\.?") + "$",
-                "i"
-              );
-              this._minWeekdaysParse[i] = new RegExp(
-                "^" + this.weekdaysMin(mom, "").replace(".", "\\.?") + "$",
-                "i"
-              );
-            }
-            if (!this._weekdaysParse[i]) {
-              regex = "^" + this.weekdays(mom, "") + "|^" + this.weekdaysShort(mom, "") + "|^" + this.weekdaysMin(mom, "");
-              this._weekdaysParse[i] = new RegExp(regex.replace(".", ""), "i");
-            }
-            if (strict && format2 === "dddd" && this._fullWeekdaysParse[i].test(weekdayName)) {
-              return i;
-            } else if (strict && format2 === "ddd" && this._shortWeekdaysParse[i].test(weekdayName)) {
-              return i;
-            } else if (strict && format2 === "dd" && this._minWeekdaysParse[i].test(weekdayName)) {
-              return i;
-            } else if (!strict && this._weekdaysParse[i].test(weekdayName)) {
-              return i;
-            }
-          }
-        }
-        function getSetDayOfWeek(input) {
-          if (!this.isValid()) {
-            return input != null ? this : NaN;
-          }
-          var day = get(this, "Day");
-          if (input != null) {
-            input = parseWeekday(input, this.localeData());
-            return this.add(input - day, "d");
-          } else {
-            return day;
-          }
-        }
-        function getSetLocaleDayOfWeek(input) {
-          if (!this.isValid()) {
-            return input != null ? this : NaN;
-          }
-          var weekday = (this.day() + 7 - this.localeData()._week.dow) % 7;
-          return input == null ? weekday : this.add(input - weekday, "d");
-        }
-        function getSetISODayOfWeek(input) {
-          if (!this.isValid()) {
-            return input != null ? this : NaN;
-          }
-          if (input != null) {
-            var weekday = parseIsoWeekday(input, this.localeData());
-            return this.day(this.day() % 7 ? weekday : weekday - 7);
-          } else {
-            return this.day() || 7;
-          }
-        }
-        function weekdaysRegex(isStrict) {
-          if (this._weekdaysParseExact) {
-            if (!hasOwnProp(this, "_weekdaysRegex")) {
-              computeWeekdaysParse.call(this);
-            }
-            if (isStrict) {
-              return this._weekdaysStrictRegex;
-            } else {
-              return this._weekdaysRegex;
-            }
-          } else {
-            if (!hasOwnProp(this, "_weekdaysRegex")) {
-              this._weekdaysRegex = defaultWeekdaysRegex;
-            }
-            return this._weekdaysStrictRegex && isStrict ? this._weekdaysStrictRegex : this._weekdaysRegex;
-          }
-        }
-        function weekdaysShortRegex(isStrict) {
-          if (this._weekdaysParseExact) {
-            if (!hasOwnProp(this, "_weekdaysRegex")) {
-              computeWeekdaysParse.call(this);
-            }
-            if (isStrict) {
-              return this._weekdaysShortStrictRegex;
-            } else {
-              return this._weekdaysShortRegex;
-            }
-          } else {
-            if (!hasOwnProp(this, "_weekdaysShortRegex")) {
-              this._weekdaysShortRegex = defaultWeekdaysShortRegex;
-            }
-            return this._weekdaysShortStrictRegex && isStrict ? this._weekdaysShortStrictRegex : this._weekdaysShortRegex;
-          }
-        }
-        function weekdaysMinRegex(isStrict) {
-          if (this._weekdaysParseExact) {
-            if (!hasOwnProp(this, "_weekdaysRegex")) {
-              computeWeekdaysParse.call(this);
-            }
-            if (isStrict) {
-              return this._weekdaysMinStrictRegex;
-            } else {
-              return this._weekdaysMinRegex;
-            }
-          } else {
-            if (!hasOwnProp(this, "_weekdaysMinRegex")) {
-              this._weekdaysMinRegex = defaultWeekdaysMinRegex;
-            }
-            return this._weekdaysMinStrictRegex && isStrict ? this._weekdaysMinStrictRegex : this._weekdaysMinRegex;
-          }
-        }
-        function computeWeekdaysParse() {
-          function cmpLenRev(a, b) {
-            return b.length - a.length;
-          }
-          var minPieces = [], shortPieces = [], longPieces = [], mixedPieces = [], i, mom, minp, shortp, longp;
-          for (i = 0; i < 7; i++) {
-            mom = createUTC([2e3, 1]).day(i);
-            minp = regexEscape(this.weekdaysMin(mom, ""));
-            shortp = regexEscape(this.weekdaysShort(mom, ""));
-            longp = regexEscape(this.weekdays(mom, ""));
-            minPieces.push(minp);
-            shortPieces.push(shortp);
-            longPieces.push(longp);
-            mixedPieces.push(minp);
-            mixedPieces.push(shortp);
-            mixedPieces.push(longp);
-          }
-          minPieces.sort(cmpLenRev);
-          shortPieces.sort(cmpLenRev);
-          longPieces.sort(cmpLenRev);
-          mixedPieces.sort(cmpLenRev);
-          this._weekdaysRegex = new RegExp("^(" + mixedPieces.join("|") + ")", "i");
-          this._weekdaysShortRegex = this._weekdaysRegex;
-          this._weekdaysMinRegex = this._weekdaysRegex;
-          this._weekdaysStrictRegex = new RegExp(
-            "^(" + longPieces.join("|") + ")",
-            "i"
-          );
-          this._weekdaysShortStrictRegex = new RegExp(
-            "^(" + shortPieces.join("|") + ")",
-            "i"
-          );
-          this._weekdaysMinStrictRegex = new RegExp(
-            "^(" + minPieces.join("|") + ")",
-            "i"
-          );
-        }
-        function hFormat() {
-          return this.hours() % 12 || 12;
-        }
-        function kFormat() {
-          return this.hours() || 24;
-        }
-        addFormatToken("H", ["HH", 2], 0, "hour");
-        addFormatToken("h", ["hh", 2], 0, hFormat);
-        addFormatToken("k", ["kk", 2], 0, kFormat);
-        addFormatToken("hmm", 0, 0, function() {
-          return "" + hFormat.apply(this) + zeroFill(this.minutes(), 2);
-        });
-        addFormatToken("hmmss", 0, 0, function() {
-          return "" + hFormat.apply(this) + zeroFill(this.minutes(), 2) + zeroFill(this.seconds(), 2);
-        });
-        addFormatToken("Hmm", 0, 0, function() {
-          return "" + this.hours() + zeroFill(this.minutes(), 2);
-        });
-        addFormatToken("Hmmss", 0, 0, function() {
-          return "" + this.hours() + zeroFill(this.minutes(), 2) + zeroFill(this.seconds(), 2);
-        });
-        function meridiem(token2, lowercase) {
-          addFormatToken(token2, 0, 0, function() {
-            return this.localeData().meridiem(
-              this.hours(),
-              this.minutes(),
-              lowercase
-            );
-          });
-        }
-        meridiem("a", true);
-        meridiem("A", false);
-        function matchMeridiem(isStrict, locale2) {
-          return locale2._meridiemParse;
-        }
-        addRegexToken("a", matchMeridiem);
-        addRegexToken("A", matchMeridiem);
-        addRegexToken("H", match1to2, match1to2HasZero);
-        addRegexToken("h", match1to2, match1to2NoLeadingZero);
-        addRegexToken("k", match1to2, match1to2NoLeadingZero);
-        addRegexToken("HH", match1to2, match2);
-        addRegexToken("hh", match1to2, match2);
-        addRegexToken("kk", match1to2, match2);
-        addRegexToken("hmm", match3to4);
-        addRegexToken("hmmss", match5to6);
-        addRegexToken("Hmm", match3to4);
-        addRegexToken("Hmmss", match5to6);
-        addParseToken(["H", "HH"], HOUR);
-        addParseToken(["k", "kk"], function(input, array, config) {
-          var kInput = toInt(input);
-          array[HOUR] = kInput === 24 ? 0 : kInput;
-        });
-        addParseToken(["a", "A"], function(input, array, config) {
-          config._isPm = config._locale.isPM(input);
-          config._meridiem = input;
-        });
-        addParseToken(["h", "hh"], function(input, array, config) {
-          array[HOUR] = toInt(input);
-          getParsingFlags(config).bigHour = true;
-        });
-        addParseToken("hmm", function(input, array, config) {
-          var pos = input.length - 2;
-          array[HOUR] = toInt(input.substr(0, pos));
-          array[MINUTE] = toInt(input.substr(pos));
-          getParsingFlags(config).bigHour = true;
-        });
-        addParseToken("hmmss", function(input, array, config) {
-          var pos1 = input.length - 4, pos2 = input.length - 2;
-          array[HOUR] = toInt(input.substr(0, pos1));
-          array[MINUTE] = toInt(input.substr(pos1, 2));
-          array[SECOND] = toInt(input.substr(pos2));
-          getParsingFlags(config).bigHour = true;
-        });
-        addParseToken("Hmm", function(input, array, config) {
-          var pos = input.length - 2;
-          array[HOUR] = toInt(input.substr(0, pos));
-          array[MINUTE] = toInt(input.substr(pos));
-        });
-        addParseToken("Hmmss", function(input, array, config) {
-          var pos1 = input.length - 4, pos2 = input.length - 2;
-          array[HOUR] = toInt(input.substr(0, pos1));
-          array[MINUTE] = toInt(input.substr(pos1, 2));
-          array[SECOND] = toInt(input.substr(pos2));
-        });
-        function localeIsPM(input) {
-          return (input + "").toLowerCase().charAt(0) === "p";
-        }
-        var defaultLocaleMeridiemParse = /[ap]\.?m?\.?/i, getSetHour = makeGetSet("Hours", true);
-        function localeMeridiem(hours2, minutes2, isLower) {
-          if (hours2 > 11) {
-            return isLower ? "pm" : "PM";
-          } else {
-            return isLower ? "am" : "AM";
-          }
-        }
-        var baseConfig = {
-          calendar: defaultCalendar,
-          longDateFormat: defaultLongDateFormat,
-          invalidDate: defaultInvalidDate,
-          ordinal: defaultOrdinal,
-          dayOfMonthOrdinalParse: defaultDayOfMonthOrdinalParse,
-          relativeTime: defaultRelativeTime,
-          months: defaultLocaleMonths,
-          monthsShort: defaultLocaleMonthsShort,
-          week: defaultLocaleWeek,
-          weekdays: defaultLocaleWeekdays,
-          weekdaysMin: defaultLocaleWeekdaysMin,
-          weekdaysShort: defaultLocaleWeekdaysShort,
-          meridiemParse: defaultLocaleMeridiemParse
-        };
-        var locales = {}, localeFamilies = {}, globalLocale;
-        function commonPrefix(arr1, arr2) {
-          var i, minl = Math.min(arr1.length, arr2.length);
-          for (i = 0; i < minl; i += 1) {
-            if (arr1[i] !== arr2[i]) {
-              return i;
-            }
-          }
-          return minl;
-        }
-        function normalizeLocale(key) {
-          return key ? key.toLowerCase().replace("_", "-") : key;
-        }
-        function chooseLocale(names) {
-          var i = 0, j, next, locale2, split;
-          while (i < names.length) {
-            split = normalizeLocale(names[i]).split("-");
-            j = split.length;
-            next = normalizeLocale(names[i + 1]);
-            next = next ? next.split("-") : null;
-            while (j > 0) {
-              locale2 = loadLocale(split.slice(0, j).join("-"));
-              if (locale2) {
-                return locale2;
-              }
-              if (next && next.length >= j && commonPrefix(split, next) >= j - 1) {
-                break;
-              }
-              j--;
-            }
-            i++;
-          }
-          return globalLocale;
-        }
-        function isLocaleNameSane(name) {
-          return !!(name && name.match("^[^/\\\\]*$"));
-        }
-        function loadLocale(name) {
-          var oldLocale = null, aliasedRequire;
-          if (locales[name] === void 0 && typeof module !== "undefined" && module && module.exports && isLocaleNameSane(name)) {
-            try {
-              oldLocale = globalLocale._abbr;
-              aliasedRequire = __require;
-              aliasedRequire("./locale/" + name);
-              getSetGlobalLocale(oldLocale);
-            } catch (e) {
-              locales[name] = null;
-            }
-          }
-          return locales[name];
-        }
-        function getSetGlobalLocale(key, values) {
-          var data;
-          if (key) {
-            if (isUndefined(values)) {
-              data = getLocale(key);
-            } else {
-              data = defineLocale(key, values);
-            }
-            if (data) {
-              globalLocale = data;
-            } else {
-              if (typeof console !== "undefined" && console.warn) {
-                console.warn(
-                  "Locale " + key + " not found. Did you forget to load it?"
-                );
-              }
-            }
-          }
-          return globalLocale._abbr;
-        }
-        function defineLocale(name, config) {
-          if (config !== null) {
-            var locale2, parentConfig = baseConfig;
-            config.abbr = name;
-            if (locales[name] != null) {
-              deprecateSimple(
-                "defineLocaleOverride",
-                "use moment.updateLocale(localeName, config) to change an existing locale. moment.defineLocale(localeName, config) should only be used for creating a new locale See http://momentjs.com/guides/#/warnings/define-locale/ for more info."
-              );
-              parentConfig = locales[name]._config;
-            } else if (config.parentLocale != null) {
-              if (locales[config.parentLocale] != null) {
-                parentConfig = locales[config.parentLocale]._config;
-              } else {
-                locale2 = loadLocale(config.parentLocale);
-                if (locale2 != null) {
-                  parentConfig = locale2._config;
-                } else {
-                  if (!localeFamilies[config.parentLocale]) {
-                    localeFamilies[config.parentLocale] = [];
-                  }
-                  localeFamilies[config.parentLocale].push({
-                    name,
-                    config
-                  });
-                  return null;
-                }
-              }
-            }
-            locales[name] = new Locale(mergeConfigs(parentConfig, config));
-            if (localeFamilies[name]) {
-              localeFamilies[name].forEach(function(x) {
-                defineLocale(x.name, x.config);
-              });
-            }
-            getSetGlobalLocale(name);
-            return locales[name];
-          } else {
-            delete locales[name];
-            return null;
-          }
-        }
-        function updateLocale(name, config) {
-          if (config != null) {
-            var locale2, tmpLocale, parentConfig = baseConfig;
-            if (locales[name] != null && locales[name].parentLocale != null) {
-              locales[name].set(mergeConfigs(locales[name]._config, config));
-            } else {
-              tmpLocale = loadLocale(name);
-              if (tmpLocale != null) {
-                parentConfig = tmpLocale._config;
-              }
-              config = mergeConfigs(parentConfig, config);
-              if (tmpLocale == null) {
-                config.abbr = name;
-              }
-              locale2 = new Locale(config);
-              locale2.parentLocale = locales[name];
-              locales[name] = locale2;
-            }
-            getSetGlobalLocale(name);
-          } else {
-            if (locales[name] != null) {
-              if (locales[name].parentLocale != null) {
-                locales[name] = locales[name].parentLocale;
-                if (name === getSetGlobalLocale()) {
-                  getSetGlobalLocale(name);
-                }
-              } else if (locales[name] != null) {
-                delete locales[name];
-              }
-            }
-          }
-          return locales[name];
-        }
-        function getLocale(key) {
-          var locale2;
-          if (key && key._locale && key._locale._abbr) {
-            key = key._locale._abbr;
-          }
-          if (!key) {
-            return globalLocale;
-          }
-          if (!isArray(key)) {
-            locale2 = loadLocale(key);
-            if (locale2) {
-              return locale2;
-            }
-            key = [key];
-          }
-          return chooseLocale(key);
-        }
-        function listLocales() {
-          return keys(locales);
-        }
-        function checkOverflow(m) {
-          var overflow, a = m._a;
-          if (a && getParsingFlags(m).overflow === -2) {
-            overflow = a[MONTH] < 0 || a[MONTH] > 11 ? MONTH : a[DATE] < 1 || a[DATE] > daysInMonth(a[YEAR], a[MONTH]) ? DATE : a[HOUR] < 0 || a[HOUR] > 24 || a[HOUR] === 24 && (a[MINUTE] !== 0 || a[SECOND] !== 0 || a[MILLISECOND] !== 0) ? HOUR : a[MINUTE] < 0 || a[MINUTE] > 59 ? MINUTE : a[SECOND] < 0 || a[SECOND] > 59 ? SECOND : a[MILLISECOND] < 0 || a[MILLISECOND] > 999 ? MILLISECOND : -1;
-            if (getParsingFlags(m)._overflowDayOfYear && (overflow < YEAR || overflow > DATE)) {
-              overflow = DATE;
-            }
-            if (getParsingFlags(m)._overflowWeeks && overflow === -1) {
-              overflow = WEEK;
-            }
-            if (getParsingFlags(m)._overflowWeekday && overflow === -1) {
-              overflow = WEEKDAY;
-            }
-            getParsingFlags(m).overflow = overflow;
-          }
-          return m;
-        }
-        var extendedIsoRegex = /^\s*((?:[+-]\d{6}|\d{4})-(?:\d\d-\d\d|W\d\d-\d|W\d\d|\d\d\d|\d\d))(?:(T| )(\d\d(?::\d\d(?::\d\d(?:[.,]\d+)?)?)?)([+-]\d\d(?::?\d\d)?|\s*Z)?)?$/, basicIsoRegex = /^\s*((?:[+-]\d{6}|\d{4})(?:\d\d\d\d|W\d\d\d|W\d\d|\d\d\d|\d\d|))(?:(T| )(\d\d(?:\d\d(?:\d\d(?:[.,]\d+)?)?)?)([+-]\d\d(?::?\d\d)?|\s*Z)?)?$/, tzRegex = /Z|[+-]\d\d(?::?\d\d)?/, isoDates = [
-          ["YYYYYY-MM-DD", /[+-]\d{6}-\d\d-\d\d/],
-          ["YYYY-MM-DD", /\d{4}-\d\d-\d\d/],
-          ["GGGG-[W]WW-E", /\d{4}-W\d\d-\d/],
-          ["GGGG-[W]WW", /\d{4}-W\d\d/, false],
-          ["YYYY-DDD", /\d{4}-\d{3}/],
-          ["YYYY-MM", /\d{4}-\d\d/, false],
-          ["YYYYYYMMDD", /[+-]\d{10}/],
-          ["YYYYMMDD", /\d{8}/],
-          ["GGGG[W]WWE", /\d{4}W\d{3}/],
-          ["GGGG[W]WW", /\d{4}W\d{2}/, false],
-          ["YYYYDDD", /\d{7}/],
-          ["YYYYMM", /\d{6}/, false],
-          ["YYYY", /\d{4}/, false]
-        ], isoTimes = [
-          ["HH:mm:ss.SSSS", /\d\d:\d\d:\d\d\.\d+/],
-          ["HH:mm:ss,SSSS", /\d\d:\d\d:\d\d,\d+/],
-          ["HH:mm:ss", /\d\d:\d\d:\d\d/],
-          ["HH:mm", /\d\d:\d\d/],
-          ["HHmmss.SSSS", /\d\d\d\d\d\d\.\d+/],
-          ["HHmmss,SSSS", /\d\d\d\d\d\d,\d+/],
-          ["HHmmss", /\d\d\d\d\d\d/],
-          ["HHmm", /\d\d\d\d/],
-          ["HH", /\d\d/]
-        ], aspNetJsonRegex = /^\/?Date\((-?\d+)/i, rfc2822 = /^(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{2,4})\s(\d\d):(\d\d)(?::(\d\d))?\s(?:(UT|GMT|[ECMP][SD]T)|([Zz])|([+-]\d{4}))$/, obsOffsets = {
-          UT: 0,
-          GMT: 0,
-          EDT: -4 * 60,
-          EST: -5 * 60,
-          CDT: -5 * 60,
-          CST: -6 * 60,
-          MDT: -6 * 60,
-          MST: -7 * 60,
-          PDT: -7 * 60,
-          PST: -8 * 60
-        };
-        function configFromISO(config) {
-          var i, l, string = config._i, match = extendedIsoRegex.exec(string) || basicIsoRegex.exec(string), allowTime, dateFormat, timeFormat, tzFormat, isoDatesLen = isoDates.length, isoTimesLen = isoTimes.length;
-          if (match) {
-            getParsingFlags(config).iso = true;
-            for (i = 0, l = isoDatesLen; i < l; i++) {
-              if (isoDates[i][1].exec(match[1])) {
-                dateFormat = isoDates[i][0];
-                allowTime = isoDates[i][2] !== false;
-                break;
-              }
-            }
-            if (dateFormat == null) {
-              config._isValid = false;
-              return;
-            }
-            if (match[3]) {
-              for (i = 0, l = isoTimesLen; i < l; i++) {
-                if (isoTimes[i][1].exec(match[3])) {
-                  timeFormat = (match[2] || " ") + isoTimes[i][0];
-                  break;
-                }
-              }
-              if (timeFormat == null) {
-                config._isValid = false;
-                return;
-              }
-            }
-            if (!allowTime && timeFormat != null) {
-              config._isValid = false;
-              return;
-            }
-            if (match[4]) {
-              if (tzRegex.exec(match[4])) {
-                tzFormat = "Z";
-              } else {
-                config._isValid = false;
-                return;
-              }
-            }
-            config._f = dateFormat + (timeFormat || "") + (tzFormat || "");
-            configFromStringAndFormat(config);
-          } else {
-            config._isValid = false;
-          }
-        }
-        function extractFromRFC2822Strings(yearStr, monthStr, dayStr, hourStr, minuteStr, secondStr) {
-          var result = [
-            untruncateYear(yearStr),
-            defaultLocaleMonthsShort.indexOf(monthStr),
-            parseInt(dayStr, 10),
-            parseInt(hourStr, 10),
-            parseInt(minuteStr, 10)
-          ];
-          if (secondStr) {
-            result.push(parseInt(secondStr, 10));
-          }
-          return result;
-        }
-        function untruncateYear(yearStr) {
-          var year = parseInt(yearStr, 10);
-          if (year <= 49) {
-            return 2e3 + year;
-          } else if (year <= 999) {
-            return 1900 + year;
-          }
-          return year;
-        }
-        function preprocessRFC2822(s) {
-          return s.replace(/\([^()]*\)|[\n\t]/g, " ").replace(/(\s\s+)/g, " ").replace(/^\s\s*/, "").replace(/\s\s*$/, "");
-        }
-        function checkWeekday(weekdayStr, parsedInput, config) {
-          if (weekdayStr) {
-            var weekdayProvided = defaultLocaleWeekdaysShort.indexOf(weekdayStr), weekdayActual = new Date(
-              parsedInput[0],
-              parsedInput[1],
-              parsedInput[2]
-            ).getDay();
-            if (weekdayProvided !== weekdayActual) {
-              getParsingFlags(config).weekdayMismatch = true;
-              config._isValid = false;
-              return false;
-            }
-          }
-          return true;
-        }
-        function calculateOffset(obsOffset, militaryOffset, numOffset) {
-          if (obsOffset) {
-            return obsOffsets[obsOffset];
-          } else if (militaryOffset) {
-            return 0;
-          } else {
-            var hm = parseInt(numOffset, 10), m = hm % 100, h = (hm - m) / 100;
-            return h * 60 + m;
-          }
-        }
-        function configFromRFC2822(config) {
-          var match = rfc2822.exec(preprocessRFC2822(config._i)), parsedArray;
-          if (match) {
-            parsedArray = extractFromRFC2822Strings(
-              match[4],
-              match[3],
-              match[2],
-              match[5],
-              match[6],
-              match[7]
-            );
-            if (!checkWeekday(match[1], parsedArray, config)) {
-              return;
-            }
-            config._a = parsedArray;
-            config._tzm = calculateOffset(match[8], match[9], match[10]);
-            config._d = createUTCDate.apply(null, config._a);
-            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
-            getParsingFlags(config).rfc2822 = true;
-          } else {
-            config._isValid = false;
-          }
-        }
-        function configFromString(config) {
-          var matched = aspNetJsonRegex.exec(config._i);
-          if (matched !== null) {
-            config._d = /* @__PURE__ */ new Date(+matched[1]);
-            return;
-          }
-          configFromISO(config);
-          if (config._isValid === false) {
-            delete config._isValid;
-          } else {
-            return;
-          }
-          configFromRFC2822(config);
-          if (config._isValid === false) {
-            delete config._isValid;
-          } else {
-            return;
-          }
-          if (config._strict) {
-            config._isValid = false;
-          } else {
-            hooks.createFromInputFallback(config);
-          }
-        }
-        hooks.createFromInputFallback = deprecate(
-          "value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are discouraged. Please refer to http://momentjs.com/guides/#/warnings/js-date/ for more info.",
-          function(config) {
-            config._d = /* @__PURE__ */ new Date(config._i + (config._useUTC ? " UTC" : ""));
-          }
-        );
-        function defaults(a, b, c) {
-          if (a != null) {
-            return a;
-          }
-          if (b != null) {
-            return b;
-          }
-          return c;
-        }
-        function currentDateArray(config) {
-          var nowValue = new Date(hooks.now());
-          if (config._useUTC) {
-            return [
-              nowValue.getUTCFullYear(),
-              nowValue.getUTCMonth(),
-              nowValue.getUTCDate()
-            ];
-          }
-          return [nowValue.getFullYear(), nowValue.getMonth(), nowValue.getDate()];
-        }
-        function configFromArray(config) {
-          var i, date, input = [], currentDate, expectedWeekday, yearToUse;
-          if (config._d) {
-            return;
-          }
-          currentDate = currentDateArray(config);
-          if (config._w && config._a[DATE] == null && config._a[MONTH] == null) {
-            dayOfYearFromWeekInfo(config);
-          }
-          if (config._dayOfYear != null) {
-            yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
-            if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
-              getParsingFlags(config)._overflowDayOfYear = true;
-            }
-            date = createUTCDate(yearToUse, 0, config._dayOfYear);
-            config._a[MONTH] = date.getUTCMonth();
-            config._a[DATE] = date.getUTCDate();
-          }
-          for (i = 0; i < 3 && config._a[i] == null; ++i) {
-            config._a[i] = input[i] = currentDate[i];
-          }
-          for (; i < 7; i++) {
-            config._a[i] = input[i] = config._a[i] == null ? i === 2 ? 1 : 0 : config._a[i];
-          }
-          if (config._a[HOUR] === 24 && config._a[MINUTE] === 0 && config._a[SECOND] === 0 && config._a[MILLISECOND] === 0) {
-            config._nextDay = true;
-            config._a[HOUR] = 0;
-          }
-          config._d = (config._useUTC ? createUTCDate : createDate).apply(
-            null,
-            input
-          );
-          expectedWeekday = config._useUTC ? config._d.getUTCDay() : config._d.getDay();
-          if (config._tzm != null) {
-            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
-          }
-          if (config._nextDay) {
-            config._a[HOUR] = 24;
-          }
-          if (config._w && typeof config._w.d !== "undefined" && config._w.d !== expectedWeekday) {
-            getParsingFlags(config).weekdayMismatch = true;
-          }
-        }
-        function dayOfYearFromWeekInfo(config) {
-          var w, weekYear, week, weekday, dow, doy, temp, weekdayOverflow, curWeek;
-          w = config._w;
-          if (w.GG != null || w.W != null || w.E != null) {
-            dow = 1;
-            doy = 4;
-            weekYear = defaults(
-              w.GG,
-              config._a[YEAR],
-              weekOfYear(createLocal(), 1, 4).year
-            );
-            week = defaults(w.W, 1);
-            weekday = defaults(w.E, 1);
-            if (weekday < 1 || weekday > 7) {
-              weekdayOverflow = true;
-            }
-          } else {
-            dow = config._locale._week.dow;
-            doy = config._locale._week.doy;
-            curWeek = weekOfYear(createLocal(), dow, doy);
-            weekYear = defaults(w.gg, config._a[YEAR], curWeek.year);
-            week = defaults(w.w, curWeek.week);
-            if (w.d != null) {
-              weekday = w.d;
-              if (weekday < 0 || weekday > 6) {
-                weekdayOverflow = true;
-              }
-            } else if (w.e != null) {
-              weekday = w.e + dow;
-              if (w.e < 0 || w.e > 6) {
-                weekdayOverflow = true;
-              }
-            } else {
-              weekday = dow;
-            }
-          }
-          if (week < 1 || week > weeksInYear(weekYear, dow, doy)) {
-            getParsingFlags(config)._overflowWeeks = true;
-          } else if (weekdayOverflow != null) {
-            getParsingFlags(config)._overflowWeekday = true;
-          } else {
-            temp = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy);
-            config._a[YEAR] = temp.year;
-            config._dayOfYear = temp.dayOfYear;
-          }
-        }
-        hooks.ISO_8601 = function() {
-        };
-        hooks.RFC_2822 = function() {
-        };
-        function configFromStringAndFormat(config) {
-          if (config._f === hooks.ISO_8601) {
-            configFromISO(config);
-            return;
-          }
-          if (config._f === hooks.RFC_2822) {
-            configFromRFC2822(config);
-            return;
-          }
-          config._a = [];
-          getParsingFlags(config).empty = true;
-          var string = "" + config._i, i, parsedInput, tokens2, token2, skipped, stringLength = string.length, totalParsedInputLength = 0, era, tokenLen;
-          tokens2 = expandFormat(config._f, config._locale).match(formattingTokens) || [];
-          tokenLen = tokens2.length;
-          for (i = 0; i < tokenLen; i++) {
-            token2 = tokens2[i];
-            parsedInput = (string.match(getParseRegexForToken(token2, config)) || [])[0];
-            if (parsedInput) {
-              skipped = string.substr(0, string.indexOf(parsedInput));
-              if (skipped.length > 0) {
-                getParsingFlags(config).unusedInput.push(skipped);
-              }
-              string = string.slice(
-                string.indexOf(parsedInput) + parsedInput.length
-              );
-              totalParsedInputLength += parsedInput.length;
-            }
-            if (formatTokenFunctions[token2]) {
-              if (parsedInput) {
-                getParsingFlags(config).empty = false;
-              } else {
-                getParsingFlags(config).unusedTokens.push(token2);
-              }
-              addTimeToArrayFromToken(token2, parsedInput, config);
-            } else if (config._strict && !parsedInput) {
-              getParsingFlags(config).unusedTokens.push(token2);
-            }
-          }
-          getParsingFlags(config).charsLeftOver = stringLength - totalParsedInputLength;
-          if (string.length > 0) {
-            getParsingFlags(config).unusedInput.push(string);
-          }
-          if (config._a[HOUR] <= 12 && getParsingFlags(config).bigHour === true && config._a[HOUR] > 0) {
-            getParsingFlags(config).bigHour = void 0;
-          }
-          getParsingFlags(config).parsedDateParts = config._a.slice(0);
-          getParsingFlags(config).meridiem = config._meridiem;
-          config._a[HOUR] = meridiemFixWrap(
-            config._locale,
-            config._a[HOUR],
-            config._meridiem
-          );
-          era = getParsingFlags(config).era;
-          if (era !== null) {
-            config._a[YEAR] = config._locale.erasConvertYear(era, config._a[YEAR]);
-          }
-          configFromArray(config);
-          checkOverflow(config);
-        }
-        function meridiemFixWrap(locale2, hour, meridiem2) {
-          var isPm;
-          if (meridiem2 == null) {
-            return hour;
-          }
-          if (locale2.meridiemHour != null) {
-            return locale2.meridiemHour(hour, meridiem2);
-          } else if (locale2.isPM != null) {
-            isPm = locale2.isPM(meridiem2);
-            if (isPm && hour < 12) {
-              hour += 12;
-            }
-            if (!isPm && hour === 12) {
-              hour = 0;
-            }
-            return hour;
-          } else {
-            return hour;
-          }
-        }
-        function configFromStringAndArray(config) {
-          var tempConfig, bestMoment, scoreToBeat, i, currentScore, validFormatFound, bestFormatIsValid = false, configfLen = config._f.length;
-          if (configfLen === 0) {
-            getParsingFlags(config).invalidFormat = true;
-            config._d = /* @__PURE__ */ new Date(NaN);
-            return;
-          }
-          for (i = 0; i < configfLen; i++) {
-            currentScore = 0;
-            validFormatFound = false;
-            tempConfig = copyConfig({}, config);
-            if (config._useUTC != null) {
-              tempConfig._useUTC = config._useUTC;
-            }
-            tempConfig._f = config._f[i];
-            configFromStringAndFormat(tempConfig);
-            if (isValid(tempConfig)) {
-              validFormatFound = true;
-            }
-            currentScore += getParsingFlags(tempConfig).charsLeftOver;
-            currentScore += getParsingFlags(tempConfig).unusedTokens.length * 10;
-            getParsingFlags(tempConfig).score = currentScore;
-            if (!bestFormatIsValid) {
-              if (scoreToBeat == null || currentScore < scoreToBeat || validFormatFound) {
-                scoreToBeat = currentScore;
-                bestMoment = tempConfig;
-                if (validFormatFound) {
-                  bestFormatIsValid = true;
-                }
-              }
-            } else {
-              if (currentScore < scoreToBeat) {
-                scoreToBeat = currentScore;
-                bestMoment = tempConfig;
-              }
-            }
-          }
-          extend(config, bestMoment || tempConfig);
-        }
-        function configFromObject(config) {
-          if (config._d) {
-            return;
-          }
-          var i = normalizeObjectUnits(config._i), dayOrDate = i.day === void 0 ? i.date : i.day;
-          config._a = map(
-            [i.year, i.month, dayOrDate, i.hour, i.minute, i.second, i.millisecond],
-            function(obj) {
-              return obj && parseInt(obj, 10);
-            }
-          );
-          configFromArray(config);
-        }
-        function createFromConfig(config) {
-          var res = new Moment(checkOverflow(prepareConfig(config)));
-          if (res._nextDay) {
-            res.add(1, "d");
-            res._nextDay = void 0;
-          }
-          return res;
-        }
-        function prepareConfig(config) {
-          var input = config._i, format2 = config._f;
-          config._locale = config._locale || getLocale(config._l);
-          if (input === null || format2 === void 0 && input === "") {
-            return createInvalid({ nullInput: true });
-          }
-          if (typeof input === "string") {
-            config._i = input = config._locale.preparse(input);
-          }
-          if (isMoment(input)) {
-            return new Moment(checkOverflow(input));
-          } else if (isDate(input)) {
-            config._d = input;
-          } else if (isArray(format2)) {
-            configFromStringAndArray(config);
-          } else if (format2) {
-            configFromStringAndFormat(config);
-          } else {
-            configFromInput(config);
-          }
-          if (!isValid(config)) {
-            config._d = null;
-          }
-          return config;
-        }
-        function configFromInput(config) {
-          var input = config._i;
-          if (isUndefined(input)) {
-            config._d = new Date(hooks.now());
-          } else if (isDate(input)) {
-            config._d = new Date(input.valueOf());
-          } else if (typeof input === "string") {
-            configFromString(config);
-          } else if (isArray(input)) {
-            config._a = map(input.slice(0), function(obj) {
-              return parseInt(obj, 10);
-            });
-            configFromArray(config);
-          } else if (isObject(input)) {
-            configFromObject(config);
-          } else if (isNumber(input)) {
-            config._d = new Date(input);
-          } else {
-            hooks.createFromInputFallback(config);
-          }
-        }
-        function createLocalOrUTC(input, format2, locale2, strict, isUTC) {
-          var c = {};
-          if (format2 === true || format2 === false) {
-            strict = format2;
-            format2 = void 0;
-          }
-          if (locale2 === true || locale2 === false) {
-            strict = locale2;
-            locale2 = void 0;
-          }
-          if (isObject(input) && isObjectEmpty(input) || isArray(input) && input.length === 0) {
-            input = void 0;
-          }
-          c._isAMomentObject = true;
-          c._useUTC = c._isUTC = isUTC;
-          c._l = locale2;
-          c._i = input;
-          c._f = format2;
-          c._strict = strict;
-          return createFromConfig(c);
-        }
-        function createLocal(input, format2, locale2, strict) {
-          return createLocalOrUTC(input, format2, locale2, strict, false);
-        }
-        var prototypeMin = deprecate(
-          "moment().min is deprecated, use moment.max instead. http://momentjs.com/guides/#/warnings/min-max/",
-          function() {
-            var other = createLocal.apply(null, arguments);
-            if (this.isValid() && other.isValid()) {
-              return other < this ? this : other;
-            } else {
-              return createInvalid();
-            }
-          }
-        ), prototypeMax = deprecate(
-          "moment().max is deprecated, use moment.min instead. http://momentjs.com/guides/#/warnings/min-max/",
-          function() {
-            var other = createLocal.apply(null, arguments);
-            if (this.isValid() && other.isValid()) {
-              return other > this ? this : other;
-            } else {
-              return createInvalid();
-            }
-          }
-        );
-        function pickBy(fn, moments) {
-          var res, i;
-          if (moments.length === 1 && isArray(moments[0])) {
-            moments = moments[0];
-          }
-          if (!moments.length) {
-            return createLocal();
-          }
-          res = moments[0];
-          for (i = 1; i < moments.length; ++i) {
-            if (!moments[i].isValid() || moments[i][fn](res)) {
-              res = moments[i];
-            }
-          }
-          return res;
-        }
-        function min() {
-          var args = [].slice.call(arguments, 0);
-          return pickBy("isBefore", args);
-        }
-        function max() {
-          var args = [].slice.call(arguments, 0);
-          return pickBy("isAfter", args);
-        }
-        var now = function() {
-          return Date.now ? Date.now() : +/* @__PURE__ */ new Date();
-        };
-        var ordering = [
-          "year",
-          "quarter",
-          "month",
-          "week",
-          "day",
-          "hour",
-          "minute",
-          "second",
-          "millisecond"
-        ];
-        function isDurationValid(m) {
-          var key, unitHasDecimal = false, i, orderLen = ordering.length;
-          for (key in m) {
-            if (hasOwnProp(m, key) && !(indexOf.call(ordering, key) !== -1 && (m[key] == null || !isNaN(m[key])))) {
-              return false;
-            }
-          }
-          for (i = 0; i < orderLen; ++i) {
-            if (m[ordering[i]]) {
-              if (unitHasDecimal) {
-                return false;
-              }
-              if (parseFloat(m[ordering[i]]) !== toInt(m[ordering[i]])) {
-                unitHasDecimal = true;
-              }
-            }
-          }
-          return true;
-        }
-        function isValid$1() {
-          return this._isValid;
-        }
-        function createInvalid$1() {
-          return createDuration(NaN);
-        }
-        function Duration(duration) {
-          var normalizedInput = normalizeObjectUnits(duration), years2 = normalizedInput.year || 0, quarters = normalizedInput.quarter || 0, months2 = normalizedInput.month || 0, weeks2 = normalizedInput.week || normalizedInput.isoWeek || 0, days2 = normalizedInput.day || 0, hours2 = normalizedInput.hour || 0, minutes2 = normalizedInput.minute || 0, seconds2 = normalizedInput.second || 0, milliseconds2 = normalizedInput.millisecond || 0;
-          this._isValid = isDurationValid(normalizedInput);
-          this._milliseconds = +milliseconds2 + seconds2 * 1e3 + // 1000
-          minutes2 * 6e4 + // 1000 * 60
-          hours2 * 1e3 * 60 * 60;
-          this._days = +days2 + weeks2 * 7;
-          this._months = +months2 + quarters * 3 + years2 * 12;
-          this._data = {};
-          this._locale = getLocale();
-          this._bubble();
-        }
-        function isDuration(obj) {
-          return obj instanceof Duration;
-        }
-        function absRound(number) {
-          if (number < 0) {
-            return Math.round(-1 * number) * -1;
-          } else {
-            return Math.round(number);
-          }
-        }
-        function compareArrays(array1, array2, dontConvert) {
-          var len = Math.min(array1.length, array2.length), lengthDiff = Math.abs(array1.length - array2.length), diffs = 0, i;
-          for (i = 0; i < len; i++) {
-            if (dontConvert && array1[i] !== array2[i] || !dontConvert && toInt(array1[i]) !== toInt(array2[i])) {
-              diffs++;
-            }
-          }
-          return diffs + lengthDiff;
-        }
-        function offset(token2, separator) {
-          addFormatToken(token2, 0, 0, function() {
-            var offset2 = this.utcOffset(), sign2 = "+";
-            if (offset2 < 0) {
-              offset2 = -offset2;
-              sign2 = "-";
-            }
-            return sign2 + zeroFill(~~(offset2 / 60), 2) + separator + zeroFill(~~offset2 % 60, 2);
-          });
-        }
-        offset("Z", ":");
-        offset("ZZ", "");
-        addRegexToken("Z", matchShortOffset);
-        addRegexToken("ZZ", matchShortOffset);
-        addParseToken(["Z", "ZZ"], function(input, array, config) {
-          config._useUTC = true;
-          config._tzm = offsetFromString(matchShortOffset, input);
-        });
-        var chunkOffset = /([\+\-]|\d\d)/gi;
-        function offsetFromString(matcher, string) {
-          var matches = (string || "").match(matcher), chunk, parts, minutes2;
-          if (matches === null) {
-            return null;
-          }
-          chunk = matches[matches.length - 1] || [];
-          parts = (chunk + "").match(chunkOffset) || ["-", 0, 0];
-          minutes2 = +(parts[1] * 60) + toInt(parts[2]);
-          return minutes2 === 0 ? 0 : parts[0] === "+" ? minutes2 : -minutes2;
-        }
-        function cloneWithOffset(input, model) {
-          var res, diff2;
-          if (model._isUTC) {
-            res = model.clone();
-            diff2 = (isMoment(input) || isDate(input) ? input.valueOf() : createLocal(input).valueOf()) - res.valueOf();
-            res._d.setTime(res._d.valueOf() + diff2);
-            hooks.updateOffset(res, false);
-            return res;
-          } else {
-            return createLocal(input).local();
-          }
-        }
-        function getDateOffset(m) {
-          return -Math.round(m._d.getTimezoneOffset());
-        }
-        hooks.updateOffset = function() {
-        };
-        function getSetOffset(input, keepLocalTime, keepMinutes) {
-          var offset2 = this._offset || 0, localAdjust;
-          if (!this.isValid()) {
-            return input != null ? this : NaN;
-          }
-          if (input != null) {
-            if (typeof input === "string") {
-              input = offsetFromString(matchShortOffset, input);
-              if (input === null) {
-                return this;
-              }
-            } else if (Math.abs(input) < 16 && !keepMinutes) {
-              input = input * 60;
-            }
-            if (!this._isUTC && keepLocalTime) {
-              localAdjust = getDateOffset(this);
-            }
-            this._offset = input;
-            this._isUTC = true;
-            if (localAdjust != null) {
-              this.add(localAdjust, "m");
-            }
-            if (offset2 !== input) {
-              if (!keepLocalTime || this._changeInProgress) {
-                addSubtract(
-                  this,
-                  createDuration(input - offset2, "m"),
-                  1,
-                  false
-                );
-              } else if (!this._changeInProgress) {
-                this._changeInProgress = true;
-                hooks.updateOffset(this, true);
-                this._changeInProgress = null;
-              }
-            }
-            return this;
-          } else {
-            return this._isUTC ? offset2 : getDateOffset(this);
-          }
-        }
-        function getSetZone(input, keepLocalTime) {
-          if (input != null) {
-            if (typeof input !== "string") {
-              input = -input;
-            }
-            this.utcOffset(input, keepLocalTime);
-            return this;
-          } else {
-            return -this.utcOffset();
-          }
-        }
-        function setOffsetToUTC(keepLocalTime) {
-          return this.utcOffset(0, keepLocalTime);
-        }
-        function setOffsetToLocal(keepLocalTime) {
-          if (this._isUTC) {
-            this.utcOffset(0, keepLocalTime);
-            this._isUTC = false;
-            if (keepLocalTime) {
-              this.subtract(getDateOffset(this), "m");
-            }
-          }
-          return this;
-        }
-        function setOffsetToParsedOffset() {
-          if (this._tzm != null) {
-            this.utcOffset(this._tzm, false, true);
-          } else if (typeof this._i === "string") {
-            var tZone = offsetFromString(matchOffset, this._i);
-            if (tZone != null) {
-              this.utcOffset(tZone);
-            } else {
-              this.utcOffset(0, true);
-            }
-          }
-          return this;
-        }
-        function hasAlignedHourOffset(input) {
-          if (!this.isValid()) {
-            return false;
-          }
-          input = input ? createLocal(input).utcOffset() : 0;
-          return (this.utcOffset() - input) % 60 === 0;
-        }
-        function isDaylightSavingTime() {
-          return this.utcOffset() > this.clone().month(0).utcOffset() || this.utcOffset() > this.clone().month(5).utcOffset();
-        }
-        function isDaylightSavingTimeShifted() {
-          if (!isUndefined(this._isDSTShifted)) {
-            return this._isDSTShifted;
-          }
-          var c = {}, other;
-          copyConfig(c, this);
-          c = prepareConfig(c);
-          if (c._a) {
-            other = c._isUTC ? createUTC(c._a) : createLocal(c._a);
-            this._isDSTShifted = this.isValid() && compareArrays(c._a, other.toArray()) > 0;
-          } else {
-            this._isDSTShifted = false;
-          }
-          return this._isDSTShifted;
-        }
-        function isLocal() {
-          return this.isValid() ? !this._isUTC : false;
-        }
-        function isUtcOffset() {
-          return this.isValid() ? this._isUTC : false;
-        }
-        function isUtc() {
-          return this.isValid() ? this._isUTC && this._offset === 0 : false;
-        }
-        var aspNetRegex = /^(-|\+)?(?:(\d*)[. ])?(\d+):(\d+)(?::(\d+)(\.\d*)?)?$/, isoRegex = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
-        function createDuration(input, key) {
-          var duration = input, match = null, sign2, ret, diffRes;
-          if (isDuration(input)) {
-            duration = {
-              ms: input._milliseconds,
-              d: input._days,
-              M: input._months
-            };
-          } else if (isNumber(input) || !isNaN(+input)) {
-            duration = {};
-            if (key) {
-              duration[key] = +input;
-            } else {
-              duration.milliseconds = +input;
-            }
-          } else if (match = aspNetRegex.exec(input)) {
-            sign2 = match[1] === "-" ? -1 : 1;
-            duration = {
-              y: 0,
-              d: toInt(match[DATE]) * sign2,
-              h: toInt(match[HOUR]) * sign2,
-              m: toInt(match[MINUTE]) * sign2,
-              s: toInt(match[SECOND]) * sign2,
-              ms: toInt(absRound(match[MILLISECOND] * 1e3)) * sign2
-              // the millisecond decimal point is included in the match
-            };
-          } else if (match = isoRegex.exec(input)) {
-            sign2 = match[1] === "-" ? -1 : 1;
-            duration = {
-              y: parseIso(match[2], sign2),
-              M: parseIso(match[3], sign2),
-              w: parseIso(match[4], sign2),
-              d: parseIso(match[5], sign2),
-              h: parseIso(match[6], sign2),
-              m: parseIso(match[7], sign2),
-              s: parseIso(match[8], sign2)
-            };
-          } else if (duration == null) {
-            duration = {};
-          } else if (typeof duration === "object" && ("from" in duration || "to" in duration)) {
-            diffRes = momentsDifference(
-              createLocal(duration.from),
-              createLocal(duration.to)
-            );
-            duration = {};
-            duration.ms = diffRes.milliseconds;
-            duration.M = diffRes.months;
-          }
-          ret = new Duration(duration);
-          if (isDuration(input) && hasOwnProp(input, "_locale")) {
-            ret._locale = input._locale;
-          }
-          if (isDuration(input) && hasOwnProp(input, "_isValid")) {
-            ret._isValid = input._isValid;
-          }
-          return ret;
-        }
-        createDuration.fn = Duration.prototype;
-        createDuration.invalid = createInvalid$1;
-        function parseIso(inp, sign2) {
-          var res = inp && parseFloat(inp.replace(",", "."));
-          return (isNaN(res) ? 0 : res) * sign2;
-        }
-        function positiveMomentsDifference(base, other) {
-          var res = {};
-          res.months = other.month() - base.month() + (other.year() - base.year()) * 12;
-          if (base.clone().add(res.months, "M").isAfter(other)) {
-            --res.months;
-          }
-          res.milliseconds = +other - +base.clone().add(res.months, "M");
-          return res;
-        }
-        function momentsDifference(base, other) {
-          var res;
-          if (!(base.isValid() && other.isValid())) {
-            return { milliseconds: 0, months: 0 };
-          }
-          other = cloneWithOffset(other, base);
-          if (base.isBefore(other)) {
-            res = positiveMomentsDifference(base, other);
-          } else {
-            res = positiveMomentsDifference(other, base);
-            res.milliseconds = -res.milliseconds;
-            res.months = -res.months;
-          }
-          return res;
-        }
-        function createAdder(direction, name) {
-          return function(val, period2) {
-            var dur, tmp;
-            if (period2 !== null && !isNaN(+period2)) {
-              deprecateSimple(
-                name,
-                "moment()." + name + "(period, number) is deprecated. Please use moment()." + name + "(number, period). See http://momentjs.com/guides/#/warnings/add-inverted-param/ for more info."
-              );
-              tmp = val;
-              val = period2;
-              period2 = tmp;
-            }
-            dur = createDuration(val, period2);
-            addSubtract(this, dur, direction);
-            return this;
-          };
-        }
-        function addSubtract(mom, duration, isAdding, updateOffset) {
-          var milliseconds2 = duration._milliseconds, days2 = absRound(duration._days), months2 = absRound(duration._months);
-          if (!mom.isValid()) {
-            return;
-          }
-          updateOffset = updateOffset == null ? true : updateOffset;
-          if (months2) {
-            setMonth(mom, get(mom, "Month") + months2 * isAdding);
-          }
-          if (days2) {
-            set$1(mom, "Date", get(mom, "Date") + days2 * isAdding);
-          }
-          if (milliseconds2) {
-            mom._d.setTime(mom._d.valueOf() + milliseconds2 * isAdding);
-          }
-          if (updateOffset) {
-            hooks.updateOffset(mom, days2 || months2);
-          }
-        }
-        var add = createAdder(1, "add"), subtract = createAdder(-1, "subtract");
-        function isString(input) {
-          return typeof input === "string" || input instanceof String;
-        }
-        function isMomentInput(input) {
-          return isMoment(input) || isDate(input) || isString(input) || isNumber(input) || isNumberOrStringArray(input) || isMomentInputObject(input) || input === null || input === void 0;
-        }
-        function isMomentInputObject(input) {
-          var objectTest = isObject(input) && !isObjectEmpty(input), propertyTest = false, properties = [
-            "years",
-            "year",
-            "y",
-            "months",
-            "month",
-            "M",
-            "days",
-            "day",
-            "d",
-            "dates",
-            "date",
-            "D",
-            "hours",
-            "hour",
-            "h",
-            "minutes",
-            "minute",
-            "m",
-            "seconds",
-            "second",
-            "s",
-            "milliseconds",
-            "millisecond",
-            "ms"
-          ], i, property, propertyLen = properties.length;
-          for (i = 0; i < propertyLen; i += 1) {
-            property = properties[i];
-            propertyTest = propertyTest || hasOwnProp(input, property);
-          }
-          return objectTest && propertyTest;
-        }
-        function isNumberOrStringArray(input) {
-          var arrayTest = isArray(input), dataTypeTest = false;
-          if (arrayTest) {
-            dataTypeTest = input.filter(function(item) {
-              return !isNumber(item) && isString(input);
-            }).length === 0;
-          }
-          return arrayTest && dataTypeTest;
-        }
-        function isCalendarSpec(input) {
-          var objectTest = isObject(input) && !isObjectEmpty(input), propertyTest = false, properties = [
-            "sameDay",
-            "nextDay",
-            "lastDay",
-            "nextWeek",
-            "lastWeek",
-            "sameElse"
-          ], i, property;
-          for (i = 0; i < properties.length; i += 1) {
-            property = properties[i];
-            propertyTest = propertyTest || hasOwnProp(input, property);
-          }
-          return objectTest && propertyTest;
-        }
-        function getCalendarFormat(myMoment, now2) {
-          var diff2 = myMoment.diff(now2, "days", true);
-          return diff2 < -6 ? "sameElse" : diff2 < -1 ? "lastWeek" : diff2 < 0 ? "lastDay" : diff2 < 1 ? "sameDay" : diff2 < 2 ? "nextDay" : diff2 < 7 ? "nextWeek" : "sameElse";
-        }
-        function calendar$1(time, formats) {
-          if (arguments.length === 1) {
-            if (!arguments[0]) {
-              time = void 0;
-              formats = void 0;
-            } else if (isMomentInput(arguments[0])) {
-              time = arguments[0];
-              formats = void 0;
-            } else if (isCalendarSpec(arguments[0])) {
-              formats = arguments[0];
-              time = void 0;
-            }
-          }
-          var now2 = time || createLocal(), sod = cloneWithOffset(now2, this).startOf("day"), format2 = hooks.calendarFormat(this, sod) || "sameElse", output = formats && (isFunction(formats[format2]) ? formats[format2].call(this, now2) : formats[format2]);
-          return this.format(
-            output || this.localeData().calendar(format2, this, createLocal(now2))
-          );
-        }
-        function clone() {
-          return new Moment(this);
-        }
-        function isAfter(input, units) {
-          var localInput = isMoment(input) ? input : createLocal(input);
-          if (!(this.isValid() && localInput.isValid())) {
-            return false;
-          }
-          units = normalizeUnits(units) || "millisecond";
-          if (units === "millisecond") {
-            return this.valueOf() > localInput.valueOf();
-          } else {
-            return localInput.valueOf() < this.clone().startOf(units).valueOf();
-          }
-        }
-        function isBefore(input, units) {
-          var localInput = isMoment(input) ? input : createLocal(input);
-          if (!(this.isValid() && localInput.isValid())) {
-            return false;
-          }
-          units = normalizeUnits(units) || "millisecond";
-          if (units === "millisecond") {
-            return this.valueOf() < localInput.valueOf();
-          } else {
-            return this.clone().endOf(units).valueOf() < localInput.valueOf();
-          }
-        }
-        function isBetween(from2, to2, units, inclusivity) {
-          var localFrom = isMoment(from2) ? from2 : createLocal(from2), localTo = isMoment(to2) ? to2 : createLocal(to2);
-          if (!(this.isValid() && localFrom.isValid() && localTo.isValid())) {
-            return false;
-          }
-          inclusivity = inclusivity || "()";
-          return (inclusivity[0] === "(" ? this.isAfter(localFrom, units) : !this.isBefore(localFrom, units)) && (inclusivity[1] === ")" ? this.isBefore(localTo, units) : !this.isAfter(localTo, units));
-        }
-        function isSame(input, units) {
-          var localInput = isMoment(input) ? input : createLocal(input), inputMs;
-          if (!(this.isValid() && localInput.isValid())) {
-            return false;
-          }
-          units = normalizeUnits(units) || "millisecond";
-          if (units === "millisecond") {
-            return this.valueOf() === localInput.valueOf();
-          } else {
-            inputMs = localInput.valueOf();
-            return this.clone().startOf(units).valueOf() <= inputMs && inputMs <= this.clone().endOf(units).valueOf();
-          }
-        }
-        function isSameOrAfter(input, units) {
-          return this.isSame(input, units) || this.isAfter(input, units);
-        }
-        function isSameOrBefore(input, units) {
-          return this.isSame(input, units) || this.isBefore(input, units);
-        }
-        function diff(input, units, asFloat) {
-          var that, zoneDelta, output;
-          if (!this.isValid()) {
-            return NaN;
-          }
-          that = cloneWithOffset(input, this);
-          if (!that.isValid()) {
-            return NaN;
-          }
-          zoneDelta = (that.utcOffset() - this.utcOffset()) * 6e4;
-          units = normalizeUnits(units);
-          switch (units) {
-            case "year":
-              output = monthDiff(this, that) / 12;
-              break;
-            case "month":
-              output = monthDiff(this, that);
-              break;
-            case "quarter":
-              output = monthDiff(this, that) / 3;
-              break;
-            case "second":
-              output = (this - that) / 1e3;
-              break;
-            case "minute":
-              output = (this - that) / 6e4;
-              break;
-            case "hour":
-              output = (this - that) / 36e5;
-              break;
-            case "day":
-              output = (this - that - zoneDelta) / 864e5;
-              break;
-            case "week":
-              output = (this - that - zoneDelta) / 6048e5;
-              break;
-            default:
-              output = this - that;
-          }
-          return asFloat ? output : absFloor(output);
-        }
-        function monthDiff(a, b) {
-          if (a.date() < b.date()) {
-            return -monthDiff(b, a);
-          }
-          var wholeMonthDiff = (b.year() - a.year()) * 12 + (b.month() - a.month()), anchor = a.clone().add(wholeMonthDiff, "months"), anchor2, adjust;
-          if (b - anchor < 0) {
-            anchor2 = a.clone().add(wholeMonthDiff - 1, "months");
-            adjust = (b - anchor) / (anchor - anchor2);
-          } else {
-            anchor2 = a.clone().add(wholeMonthDiff + 1, "months");
-            adjust = (b - anchor) / (anchor2 - anchor);
-          }
-          return -(wholeMonthDiff + adjust) || 0;
-        }
-        hooks.defaultFormat = "YYYY-MM-DDTHH:mm:ssZ";
-        hooks.defaultFormatUtc = "YYYY-MM-DDTHH:mm:ss[Z]";
-        function toString() {
-          return this.clone().locale("en").format("ddd MMM DD YYYY HH:mm:ss [GMT]ZZ");
-        }
-        function toISOString(keepOffset) {
-          if (!this.isValid()) {
-            return null;
-          }
-          var utc = keepOffset !== true, m = utc ? this.clone().utc() : this;
-          if (m.year() < 0 || m.year() > 9999) {
-            return formatMoment(
-              m,
-              utc ? "YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]" : "YYYYYY-MM-DD[T]HH:mm:ss.SSSZ"
-            );
-          }
-          if (isFunction(Date.prototype.toISOString)) {
-            if (utc) {
-              return this.toDate().toISOString();
-            } else {
-              return new Date(this.valueOf() + this.utcOffset() * 60 * 1e3).toISOString().replace("Z", formatMoment(m, "Z"));
-            }
-          }
-          return formatMoment(
-            m,
-            utc ? "YYYY-MM-DD[T]HH:mm:ss.SSS[Z]" : "YYYY-MM-DD[T]HH:mm:ss.SSSZ"
-          );
-        }
-        function inspect() {
-          if (!this.isValid()) {
-            return "moment.invalid(/* " + this._i + " */)";
-          }
-          var func = "moment", zone = "", prefix, year, datetime, suffix;
-          if (!this.isLocal()) {
-            func = this.utcOffset() === 0 ? "moment.utc" : "moment.parseZone";
-            zone = "Z";
-          }
-          prefix = "[" + func + '("]';
-          year = 0 <= this.year() && this.year() <= 9999 ? "YYYY" : "YYYYYY";
-          datetime = "-MM-DD[T]HH:mm:ss.SSS";
-          suffix = zone + '[")]';
-          return this.format(prefix + year + datetime + suffix);
-        }
-        function format(inputString) {
-          if (!inputString) {
-            inputString = this.isUtc() ? hooks.defaultFormatUtc : hooks.defaultFormat;
-          }
-          var output = formatMoment(this, inputString);
-          return this.localeData().postformat(output);
-        }
-        function from(time, withoutSuffix) {
-          if (this.isValid() && (isMoment(time) && time.isValid() || createLocal(time).isValid())) {
-            return createDuration({ to: this, from: time }).locale(this.locale()).humanize(!withoutSuffix);
-          } else {
-            return this.localeData().invalidDate();
-          }
-        }
-        function fromNow(withoutSuffix) {
-          return this.from(createLocal(), withoutSuffix);
-        }
-        function to(time, withoutSuffix) {
-          if (this.isValid() && (isMoment(time) && time.isValid() || createLocal(time).isValid())) {
-            return createDuration({ from: this, to: time }).locale(this.locale()).humanize(!withoutSuffix);
-          } else {
-            return this.localeData().invalidDate();
-          }
-        }
-        function toNow(withoutSuffix) {
-          return this.to(createLocal(), withoutSuffix);
-        }
-        function locale(key) {
-          var newLocaleData;
-          if (key === void 0) {
-            return this._locale._abbr;
-          } else {
-            newLocaleData = getLocale(key);
-            if (newLocaleData != null) {
-              this._locale = newLocaleData;
-            }
-            return this;
-          }
-        }
-        var lang = deprecate(
-          "moment().lang() is deprecated. Instead, use moment().localeData() to get the language configuration. Use moment().locale() to change languages.",
-          function(key) {
-            if (key === void 0) {
-              return this.localeData();
-            } else {
-              return this.locale(key);
-            }
-          }
-        );
-        function localeData() {
-          return this._locale;
-        }
-        var MS_PER_SECOND = 1e3, MS_PER_MINUTE = 60 * MS_PER_SECOND, MS_PER_HOUR = 60 * MS_PER_MINUTE, MS_PER_400_YEARS = (365 * 400 + 97) * 24 * MS_PER_HOUR;
-        function mod$1(dividend, divisor) {
-          return (dividend % divisor + divisor) % divisor;
-        }
-        function localStartOfDate(y, m, d) {
-          if (y < 100 && y >= 0) {
-            return new Date(y + 400, m, d) - MS_PER_400_YEARS;
-          } else {
-            return new Date(y, m, d).valueOf();
-          }
-        }
-        function utcStartOfDate(y, m, d) {
-          if (y < 100 && y >= 0) {
-            return Date.UTC(y + 400, m, d) - MS_PER_400_YEARS;
-          } else {
-            return Date.UTC(y, m, d);
-          }
-        }
-        function startOf(units) {
-          var time, startOfDate;
-          units = normalizeUnits(units);
-          if (units === void 0 || units === "millisecond" || !this.isValid()) {
-            return this;
-          }
-          startOfDate = this._isUTC ? utcStartOfDate : localStartOfDate;
-          switch (units) {
-            case "year":
-              time = startOfDate(this.year(), 0, 1);
-              break;
-            case "quarter":
-              time = startOfDate(
-                this.year(),
-                this.month() - this.month() % 3,
-                1
-              );
-              break;
-            case "month":
-              time = startOfDate(this.year(), this.month(), 1);
-              break;
-            case "week":
-              time = startOfDate(
-                this.year(),
-                this.month(),
-                this.date() - this.weekday()
-              );
-              break;
-            case "isoWeek":
-              time = startOfDate(
-                this.year(),
-                this.month(),
-                this.date() - (this.isoWeekday() - 1)
-              );
-              break;
-            case "day":
-            case "date":
-              time = startOfDate(this.year(), this.month(), this.date());
-              break;
-            case "hour":
-              time = this._d.valueOf();
-              time -= mod$1(
-                time + (this._isUTC ? 0 : this.utcOffset() * MS_PER_MINUTE),
-                MS_PER_HOUR
-              );
-              break;
-            case "minute":
-              time = this._d.valueOf();
-              time -= mod$1(time, MS_PER_MINUTE);
-              break;
-            case "second":
-              time = this._d.valueOf();
-              time -= mod$1(time, MS_PER_SECOND);
-              break;
-          }
-          this._d.setTime(time);
-          hooks.updateOffset(this, true);
-          return this;
-        }
-        function endOf(units) {
-          var time, startOfDate;
-          units = normalizeUnits(units);
-          if (units === void 0 || units === "millisecond" || !this.isValid()) {
-            return this;
-          }
-          startOfDate = this._isUTC ? utcStartOfDate : localStartOfDate;
-          switch (units) {
-            case "year":
-              time = startOfDate(this.year() + 1, 0, 1) - 1;
-              break;
-            case "quarter":
-              time = startOfDate(
-                this.year(),
-                this.month() - this.month() % 3 + 3,
-                1
-              ) - 1;
-              break;
-            case "month":
-              time = startOfDate(this.year(), this.month() + 1, 1) - 1;
-              break;
-            case "week":
-              time = startOfDate(
-                this.year(),
-                this.month(),
-                this.date() - this.weekday() + 7
-              ) - 1;
-              break;
-            case "isoWeek":
-              time = startOfDate(
-                this.year(),
-                this.month(),
-                this.date() - (this.isoWeekday() - 1) + 7
-              ) - 1;
-              break;
-            case "day":
-            case "date":
-              time = startOfDate(this.year(), this.month(), this.date() + 1) - 1;
-              break;
-            case "hour":
-              time = this._d.valueOf();
-              time += MS_PER_HOUR - mod$1(
-                time + (this._isUTC ? 0 : this.utcOffset() * MS_PER_MINUTE),
-                MS_PER_HOUR
-              ) - 1;
-              break;
-            case "minute":
-              time = this._d.valueOf();
-              time += MS_PER_MINUTE - mod$1(time, MS_PER_MINUTE) - 1;
-              break;
-            case "second":
-              time = this._d.valueOf();
-              time += MS_PER_SECOND - mod$1(time, MS_PER_SECOND) - 1;
-              break;
-          }
-          this._d.setTime(time);
-          hooks.updateOffset(this, true);
-          return this;
-        }
-        function valueOf() {
-          return this._d.valueOf() - (this._offset || 0) * 6e4;
-        }
-        function unix() {
-          return Math.floor(this.valueOf() / 1e3);
-        }
-        function toDate() {
-          return new Date(this.valueOf());
-        }
-        function toArray() {
-          var m = this;
-          return [
-            m.year(),
-            m.month(),
-            m.date(),
-            m.hour(),
-            m.minute(),
-            m.second(),
-            m.millisecond()
-          ];
-        }
-        function toObject() {
-          var m = this;
-          return {
-            years: m.year(),
-            months: m.month(),
-            date: m.date(),
-            hours: m.hours(),
-            minutes: m.minutes(),
-            seconds: m.seconds(),
-            milliseconds: m.milliseconds()
-          };
-        }
-        function toJSON() {
-          return this.isValid() ? this.toISOString() : null;
-        }
-        function isValid$2() {
-          return isValid(this);
-        }
-        function parsingFlags() {
-          return extend({}, getParsingFlags(this));
-        }
-        function invalidAt() {
-          return getParsingFlags(this).overflow;
-        }
-        function creationData() {
-          return {
-            input: this._i,
-            format: this._f,
-            locale: this._locale,
-            isUTC: this._isUTC,
-            strict: this._strict
-          };
-        }
-        addFormatToken("N", 0, 0, "eraAbbr");
-        addFormatToken("NN", 0, 0, "eraAbbr");
-        addFormatToken("NNN", 0, 0, "eraAbbr");
-        addFormatToken("NNNN", 0, 0, "eraName");
-        addFormatToken("NNNNN", 0, 0, "eraNarrow");
-        addFormatToken("y", ["y", 1], "yo", "eraYear");
-        addFormatToken("y", ["yy", 2], 0, "eraYear");
-        addFormatToken("y", ["yyy", 3], 0, "eraYear");
-        addFormatToken("y", ["yyyy", 4], 0, "eraYear");
-        addRegexToken("N", matchEraAbbr);
-        addRegexToken("NN", matchEraAbbr);
-        addRegexToken("NNN", matchEraAbbr);
-        addRegexToken("NNNN", matchEraName);
-        addRegexToken("NNNNN", matchEraNarrow);
-        addParseToken(
-          ["N", "NN", "NNN", "NNNN", "NNNNN"],
-          function(input, array, config, token2) {
-            var era = config._locale.erasParse(input, token2, config._strict);
-            if (era) {
-              getParsingFlags(config).era = era;
-            } else {
-              getParsingFlags(config).invalidEra = input;
-            }
-          }
-        );
-        addRegexToken("y", matchUnsigned);
-        addRegexToken("yy", matchUnsigned);
-        addRegexToken("yyy", matchUnsigned);
-        addRegexToken("yyyy", matchUnsigned);
-        addRegexToken("yo", matchEraYearOrdinal);
-        addParseToken(["y", "yy", "yyy", "yyyy"], YEAR);
-        addParseToken(["yo"], function(input, array, config, token2) {
-          var match;
-          if (config._locale._eraYearOrdinalRegex) {
-            match = input.match(config._locale._eraYearOrdinalRegex);
-          }
-          if (config._locale.eraYearOrdinalParse) {
-            array[YEAR] = config._locale.eraYearOrdinalParse(input, match);
-          } else {
-            array[YEAR] = parseInt(input, 10);
-          }
-        });
-        function localeEras(m, format2) {
-          var i, l, date, eras = this._eras || getLocale("en")._eras;
-          for (i = 0, l = eras.length; i < l; ++i) {
-            switch (typeof eras[i].since) {
-              case "string":
-                date = hooks(eras[i].since).startOf("day");
-                eras[i].since = date.valueOf();
-                break;
-            }
-            switch (typeof eras[i].until) {
-              case "undefined":
-                eras[i].until = Infinity;
-                break;
-              case "string":
-                date = hooks(eras[i].until).startOf("day").valueOf();
-                eras[i].until = date.valueOf();
-                break;
-            }
-          }
-          return eras;
-        }
-        function localeErasParse(eraName, format2, strict) {
-          var i, l, eras = this.eras(), name, abbr, narrow;
-          eraName = eraName.toUpperCase();
-          for (i = 0, l = eras.length; i < l; ++i) {
-            name = eras[i].name.toUpperCase();
-            abbr = eras[i].abbr.toUpperCase();
-            narrow = eras[i].narrow.toUpperCase();
-            if (strict) {
-              switch (format2) {
-                case "N":
-                case "NN":
-                case "NNN":
-                  if (abbr === eraName) {
-                    return eras[i];
-                  }
-                  break;
-                case "NNNN":
-                  if (name === eraName) {
-                    return eras[i];
-                  }
-                  break;
-                case "NNNNN":
-                  if (narrow === eraName) {
-                    return eras[i];
-                  }
-                  break;
-              }
-            } else if ([name, abbr, narrow].indexOf(eraName) >= 0) {
-              return eras[i];
-            }
-          }
-        }
-        function localeErasConvertYear(era, year) {
-          var dir = era.since <= era.until ? 1 : -1;
-          if (year === void 0) {
-            return hooks(era.since).year();
-          } else {
-            return hooks(era.since).year() + (year - era.offset) * dir;
-          }
-        }
-        function getEraName() {
-          var i, l, val, eras = this.localeData().eras();
-          for (i = 0, l = eras.length; i < l; ++i) {
-            val = this.clone().startOf("day").valueOf();
-            if (eras[i].since <= val && val <= eras[i].until) {
-              return eras[i].name;
-            }
-            if (eras[i].until <= val && val <= eras[i].since) {
-              return eras[i].name;
-            }
-          }
-          return "";
-        }
-        function getEraNarrow() {
-          var i, l, val, eras = this.localeData().eras();
-          for (i = 0, l = eras.length; i < l; ++i) {
-            val = this.clone().startOf("day").valueOf();
-            if (eras[i].since <= val && val <= eras[i].until) {
-              return eras[i].narrow;
-            }
-            if (eras[i].until <= val && val <= eras[i].since) {
-              return eras[i].narrow;
-            }
-          }
-          return "";
-        }
-        function getEraAbbr() {
-          var i, l, val, eras = this.localeData().eras();
-          for (i = 0, l = eras.length; i < l; ++i) {
-            val = this.clone().startOf("day").valueOf();
-            if (eras[i].since <= val && val <= eras[i].until) {
-              return eras[i].abbr;
-            }
-            if (eras[i].until <= val && val <= eras[i].since) {
-              return eras[i].abbr;
-            }
-          }
-          return "";
-        }
-        function getEraYear() {
-          var i, l, dir, val, eras = this.localeData().eras();
-          for (i = 0, l = eras.length; i < l; ++i) {
-            dir = eras[i].since <= eras[i].until ? 1 : -1;
-            val = this.clone().startOf("day").valueOf();
-            if (eras[i].since <= val && val <= eras[i].until || eras[i].until <= val && val <= eras[i].since) {
-              return (this.year() - hooks(eras[i].since).year()) * dir + eras[i].offset;
-            }
-          }
-          return this.year();
-        }
-        function erasNameRegex(isStrict) {
-          if (!hasOwnProp(this, "_erasNameRegex")) {
-            computeErasParse.call(this);
-          }
-          return isStrict ? this._erasNameRegex : this._erasRegex;
-        }
-        function erasAbbrRegex(isStrict) {
-          if (!hasOwnProp(this, "_erasAbbrRegex")) {
-            computeErasParse.call(this);
-          }
-          return isStrict ? this._erasAbbrRegex : this._erasRegex;
-        }
-        function erasNarrowRegex(isStrict) {
-          if (!hasOwnProp(this, "_erasNarrowRegex")) {
-            computeErasParse.call(this);
-          }
-          return isStrict ? this._erasNarrowRegex : this._erasRegex;
-        }
-        function matchEraAbbr(isStrict, locale2) {
-          return locale2.erasAbbrRegex(isStrict);
-        }
-        function matchEraName(isStrict, locale2) {
-          return locale2.erasNameRegex(isStrict);
-        }
-        function matchEraNarrow(isStrict, locale2) {
-          return locale2.erasNarrowRegex(isStrict);
-        }
-        function matchEraYearOrdinal(isStrict, locale2) {
-          return locale2._eraYearOrdinalRegex || matchUnsigned;
-        }
-        function computeErasParse() {
-          var abbrPieces = [], namePieces = [], narrowPieces = [], mixedPieces = [], i, l, erasName, erasAbbr, erasNarrow, eras = this.eras();
-          for (i = 0, l = eras.length; i < l; ++i) {
-            erasName = regexEscape(eras[i].name);
-            erasAbbr = regexEscape(eras[i].abbr);
-            erasNarrow = regexEscape(eras[i].narrow);
-            namePieces.push(erasName);
-            abbrPieces.push(erasAbbr);
-            narrowPieces.push(erasNarrow);
-            mixedPieces.push(erasName);
-            mixedPieces.push(erasAbbr);
-            mixedPieces.push(erasNarrow);
-          }
-          this._erasRegex = new RegExp("^(" + mixedPieces.join("|") + ")", "i");
-          this._erasNameRegex = new RegExp("^(" + namePieces.join("|") + ")", "i");
-          this._erasAbbrRegex = new RegExp("^(" + abbrPieces.join("|") + ")", "i");
-          this._erasNarrowRegex = new RegExp(
-            "^(" + narrowPieces.join("|") + ")",
-            "i"
-          );
-        }
-        addFormatToken(0, ["gg", 2], 0, function() {
-          return this.weekYear() % 100;
-        });
-        addFormatToken(0, ["GG", 2], 0, function() {
-          return this.isoWeekYear() % 100;
-        });
-        function addWeekYearFormatToken(token2, getter) {
-          addFormatToken(0, [token2, token2.length], 0, getter);
-        }
-        addWeekYearFormatToken("gggg", "weekYear");
-        addWeekYearFormatToken("ggggg", "weekYear");
-        addWeekYearFormatToken("GGGG", "isoWeekYear");
-        addWeekYearFormatToken("GGGGG", "isoWeekYear");
-        addRegexToken("G", matchSigned);
-        addRegexToken("g", matchSigned);
-        addRegexToken("GG", match1to2, match2);
-        addRegexToken("gg", match1to2, match2);
-        addRegexToken("GGGG", match1to4, match4);
-        addRegexToken("gggg", match1to4, match4);
-        addRegexToken("GGGGG", match1to6, match6);
-        addRegexToken("ggggg", match1to6, match6);
-        addWeekParseToken(
-          ["gggg", "ggggg", "GGGG", "GGGGG"],
-          function(input, week, config, token2) {
-            week[token2.substr(0, 2)] = toInt(input);
-          }
-        );
-        addWeekParseToken(["gg", "GG"], function(input, week, config, token2) {
-          week[token2] = hooks.parseTwoDigitYear(input);
-        });
-        function getSetWeekYear(input) {
-          return getSetWeekYearHelper.call(
-            this,
-            input,
-            this.week(),
-            this.weekday() + this.localeData()._week.dow,
-            this.localeData()._week.dow,
-            this.localeData()._week.doy
-          );
-        }
-        function getSetISOWeekYear(input) {
-          return getSetWeekYearHelper.call(
-            this,
-            input,
-            this.isoWeek(),
-            this.isoWeekday(),
-            1,
-            4
-          );
-        }
-        function getISOWeeksInYear() {
-          return weeksInYear(this.year(), 1, 4);
-        }
-        function getISOWeeksInISOWeekYear() {
-          return weeksInYear(this.isoWeekYear(), 1, 4);
-        }
-        function getWeeksInYear() {
-          var weekInfo = this.localeData()._week;
-          return weeksInYear(this.year(), weekInfo.dow, weekInfo.doy);
-        }
-        function getWeeksInWeekYear() {
-          var weekInfo = this.localeData()._week;
-          return weeksInYear(this.weekYear(), weekInfo.dow, weekInfo.doy);
-        }
-        function getSetWeekYearHelper(input, week, weekday, dow, doy) {
-          var weeksTarget;
-          if (input == null) {
-            return weekOfYear(this, dow, doy).year;
-          } else {
-            weeksTarget = weeksInYear(input, dow, doy);
-            if (week > weeksTarget) {
-              week = weeksTarget;
-            }
-            return setWeekAll.call(this, input, week, weekday, dow, doy);
-          }
-        }
-        function setWeekAll(weekYear, week, weekday, dow, doy) {
-          var dayOfYearData = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy), date = createUTCDate(dayOfYearData.year, 0, dayOfYearData.dayOfYear);
-          this.year(date.getUTCFullYear());
-          this.month(date.getUTCMonth());
-          this.date(date.getUTCDate());
-          return this;
-        }
-        addFormatToken("Q", 0, "Qo", "quarter");
-        addRegexToken("Q", match1);
-        addParseToken("Q", function(input, array) {
-          array[MONTH] = (toInt(input) - 1) * 3;
-        });
-        function getSetQuarter(input) {
-          return input == null ? Math.ceil((this.month() + 1) / 3) : this.month((input - 1) * 3 + this.month() % 3);
-        }
-        addFormatToken("D", ["DD", 2], "Do", "date");
-        addRegexToken("D", match1to2, match1to2NoLeadingZero);
-        addRegexToken("DD", match1to2, match2);
-        addRegexToken("Do", function(isStrict, locale2) {
-          return isStrict ? locale2._dayOfMonthOrdinalParse || locale2._ordinalParse : locale2._dayOfMonthOrdinalParseLenient;
-        });
-        addParseToken(["D", "DD"], DATE);
-        addParseToken("Do", function(input, array) {
-          array[DATE] = toInt(input.match(match1to2)[0]);
-        });
-        var getSetDayOfMonth = makeGetSet("Date", true);
-        addFormatToken("DDD", ["DDDD", 3], "DDDo", "dayOfYear");
-        addRegexToken("DDD", match1to3);
-        addRegexToken("DDDD", match3);
-        addParseToken(["DDD", "DDDD"], function(input, array, config) {
-          config._dayOfYear = toInt(input);
-        });
-        function getSetDayOfYear(input) {
-          var dayOfYear = Math.round(
-            (this.clone().startOf("day") - this.clone().startOf("year")) / 864e5
-          ) + 1;
-          return input == null ? dayOfYear : this.add(input - dayOfYear, "d");
-        }
-        addFormatToken("m", ["mm", 2], 0, "minute");
-        addRegexToken("m", match1to2, match1to2HasZero);
-        addRegexToken("mm", match1to2, match2);
-        addParseToken(["m", "mm"], MINUTE);
-        var getSetMinute = makeGetSet("Minutes", false);
-        addFormatToken("s", ["ss", 2], 0, "second");
-        addRegexToken("s", match1to2, match1to2HasZero);
-        addRegexToken("ss", match1to2, match2);
-        addParseToken(["s", "ss"], SECOND);
-        var getSetSecond = makeGetSet("Seconds", false);
-        addFormatToken("S", 0, 0, function() {
-          return ~~(this.millisecond() / 100);
-        });
-        addFormatToken(0, ["SS", 2], 0, function() {
-          return ~~(this.millisecond() / 10);
-        });
-        addFormatToken(0, ["SSS", 3], 0, "millisecond");
-        addFormatToken(0, ["SSSS", 4], 0, function() {
-          return this.millisecond() * 10;
-        });
-        addFormatToken(0, ["SSSSS", 5], 0, function() {
-          return this.millisecond() * 100;
-        });
-        addFormatToken(0, ["SSSSSS", 6], 0, function() {
-          return this.millisecond() * 1e3;
-        });
-        addFormatToken(0, ["SSSSSSS", 7], 0, function() {
-          return this.millisecond() * 1e4;
-        });
-        addFormatToken(0, ["SSSSSSSS", 8], 0, function() {
-          return this.millisecond() * 1e5;
-        });
-        addFormatToken(0, ["SSSSSSSSS", 9], 0, function() {
-          return this.millisecond() * 1e6;
-        });
-        addRegexToken("S", match1to3, match1);
-        addRegexToken("SS", match1to3, match2);
-        addRegexToken("SSS", match1to3, match3);
-        var token, getSetMillisecond;
-        for (token = "SSSS"; token.length <= 9; token += "S") {
-          addRegexToken(token, matchUnsigned);
-        }
-        function parseMs(input, array) {
-          array[MILLISECOND] = toInt(("0." + input) * 1e3);
-        }
-        for (token = "S"; token.length <= 9; token += "S") {
-          addParseToken(token, parseMs);
-        }
-        getSetMillisecond = makeGetSet("Milliseconds", false);
-        addFormatToken("z", 0, 0, "zoneAbbr");
-        addFormatToken("zz", 0, 0, "zoneName");
-        function getZoneAbbr() {
-          return this._isUTC ? "UTC" : "";
-        }
-        function getZoneName() {
-          return this._isUTC ? "Coordinated Universal Time" : "";
-        }
-        var proto = Moment.prototype;
-        proto.add = add;
-        proto.calendar = calendar$1;
-        proto.clone = clone;
-        proto.diff = diff;
-        proto.endOf = endOf;
-        proto.format = format;
-        proto.from = from;
-        proto.fromNow = fromNow;
-        proto.to = to;
-        proto.toNow = toNow;
-        proto.get = stringGet;
-        proto.invalidAt = invalidAt;
-        proto.isAfter = isAfter;
-        proto.isBefore = isBefore;
-        proto.isBetween = isBetween;
-        proto.isSame = isSame;
-        proto.isSameOrAfter = isSameOrAfter;
-        proto.isSameOrBefore = isSameOrBefore;
-        proto.isValid = isValid$2;
-        proto.lang = lang;
-        proto.locale = locale;
-        proto.localeData = localeData;
-        proto.max = prototypeMax;
-        proto.min = prototypeMin;
-        proto.parsingFlags = parsingFlags;
-        proto.set = stringSet;
-        proto.startOf = startOf;
-        proto.subtract = subtract;
-        proto.toArray = toArray;
-        proto.toObject = toObject;
-        proto.toDate = toDate;
-        proto.toISOString = toISOString;
-        proto.inspect = inspect;
-        if (typeof Symbol !== "undefined" && Symbol.for != null) {
-          proto[Symbol.for("nodejs.util.inspect.custom")] = function() {
-            return "Moment<" + this.format() + ">";
-          };
-        }
-        proto.toJSON = toJSON;
-        proto.toString = toString;
-        proto.unix = unix;
-        proto.valueOf = valueOf;
-        proto.creationData = creationData;
-        proto.eraName = getEraName;
-        proto.eraNarrow = getEraNarrow;
-        proto.eraAbbr = getEraAbbr;
-        proto.eraYear = getEraYear;
-        proto.year = getSetYear;
-        proto.isLeapYear = getIsLeapYear;
-        proto.weekYear = getSetWeekYear;
-        proto.isoWeekYear = getSetISOWeekYear;
-        proto.quarter = proto.quarters = getSetQuarter;
-        proto.month = getSetMonth;
-        proto.daysInMonth = getDaysInMonth;
-        proto.week = proto.weeks = getSetWeek;
-        proto.isoWeek = proto.isoWeeks = getSetISOWeek;
-        proto.weeksInYear = getWeeksInYear;
-        proto.weeksInWeekYear = getWeeksInWeekYear;
-        proto.isoWeeksInYear = getISOWeeksInYear;
-        proto.isoWeeksInISOWeekYear = getISOWeeksInISOWeekYear;
-        proto.date = getSetDayOfMonth;
-        proto.day = proto.days = getSetDayOfWeek;
-        proto.weekday = getSetLocaleDayOfWeek;
-        proto.isoWeekday = getSetISODayOfWeek;
-        proto.dayOfYear = getSetDayOfYear;
-        proto.hour = proto.hours = getSetHour;
-        proto.minute = proto.minutes = getSetMinute;
-        proto.second = proto.seconds = getSetSecond;
-        proto.millisecond = proto.milliseconds = getSetMillisecond;
-        proto.utcOffset = getSetOffset;
-        proto.utc = setOffsetToUTC;
-        proto.local = setOffsetToLocal;
-        proto.parseZone = setOffsetToParsedOffset;
-        proto.hasAlignedHourOffset = hasAlignedHourOffset;
-        proto.isDST = isDaylightSavingTime;
-        proto.isLocal = isLocal;
-        proto.isUtcOffset = isUtcOffset;
-        proto.isUtc = isUtc;
-        proto.isUTC = isUtc;
-        proto.zoneAbbr = getZoneAbbr;
-        proto.zoneName = getZoneName;
-        proto.dates = deprecate(
-          "dates accessor is deprecated. Use date instead.",
-          getSetDayOfMonth
-        );
-        proto.months = deprecate(
-          "months accessor is deprecated. Use month instead",
-          getSetMonth
-        );
-        proto.years = deprecate(
-          "years accessor is deprecated. Use year instead",
-          getSetYear
-        );
-        proto.zone = deprecate(
-          "moment().zone is deprecated, use moment().utcOffset instead. http://momentjs.com/guides/#/warnings/zone/",
-          getSetZone
-        );
-        proto.isDSTShifted = deprecate(
-          "isDSTShifted is deprecated. See http://momentjs.com/guides/#/warnings/dst-shifted/ for more information",
-          isDaylightSavingTimeShifted
-        );
-        function createUnix(input) {
-          return createLocal(input * 1e3);
-        }
-        function createInZone() {
-          return createLocal.apply(null, arguments).parseZone();
-        }
-        function preParsePostFormat(string) {
-          return string;
-        }
-        var proto$1 = Locale.prototype;
-        proto$1.calendar = calendar;
-        proto$1.longDateFormat = longDateFormat;
-        proto$1.invalidDate = invalidDate;
-        proto$1.ordinal = ordinal;
-        proto$1.preparse = preParsePostFormat;
-        proto$1.postformat = preParsePostFormat;
-        proto$1.relativeTime = relativeTime;
-        proto$1.pastFuture = pastFuture;
-        proto$1.set = set;
-        proto$1.eras = localeEras;
-        proto$1.erasParse = localeErasParse;
-        proto$1.erasConvertYear = localeErasConvertYear;
-        proto$1.erasAbbrRegex = erasAbbrRegex;
-        proto$1.erasNameRegex = erasNameRegex;
-        proto$1.erasNarrowRegex = erasNarrowRegex;
-        proto$1.months = localeMonths;
-        proto$1.monthsShort = localeMonthsShort;
-        proto$1.monthsParse = localeMonthsParse;
-        proto$1.monthsRegex = monthsRegex;
-        proto$1.monthsShortRegex = monthsShortRegex;
-        proto$1.week = localeWeek;
-        proto$1.firstDayOfYear = localeFirstDayOfYear;
-        proto$1.firstDayOfWeek = localeFirstDayOfWeek;
-        proto$1.weekdays = localeWeekdays;
-        proto$1.weekdaysMin = localeWeekdaysMin;
-        proto$1.weekdaysShort = localeWeekdaysShort;
-        proto$1.weekdaysParse = localeWeekdaysParse;
-        proto$1.weekdaysRegex = weekdaysRegex;
-        proto$1.weekdaysShortRegex = weekdaysShortRegex;
-        proto$1.weekdaysMinRegex = weekdaysMinRegex;
-        proto$1.isPM = localeIsPM;
-        proto$1.meridiem = localeMeridiem;
-        function get$1(format2, index, field, setter) {
-          var locale2 = getLocale(), utc = createUTC().set(setter, index);
-          return locale2[field](utc, format2);
-        }
-        function listMonthsImpl(format2, index, field) {
-          if (isNumber(format2)) {
-            index = format2;
-            format2 = void 0;
-          }
-          format2 = format2 || "";
-          if (index != null) {
-            return get$1(format2, index, field, "month");
-          }
-          var i, out = [];
-          for (i = 0; i < 12; i++) {
-            out[i] = get$1(format2, i, field, "month");
-          }
-          return out;
-        }
-        function listWeekdaysImpl(localeSorted, format2, index, field) {
-          if (typeof localeSorted === "boolean") {
-            if (isNumber(format2)) {
-              index = format2;
-              format2 = void 0;
-            }
-            format2 = format2 || "";
-          } else {
-            format2 = localeSorted;
-            index = format2;
-            localeSorted = false;
-            if (isNumber(format2)) {
-              index = format2;
-              format2 = void 0;
-            }
-            format2 = format2 || "";
-          }
-          var locale2 = getLocale(), shift = localeSorted ? locale2._week.dow : 0, i, out = [];
-          if (index != null) {
-            return get$1(format2, (index + shift) % 7, field, "day");
-          }
-          for (i = 0; i < 7; i++) {
-            out[i] = get$1(format2, (i + shift) % 7, field, "day");
-          }
-          return out;
-        }
-        function listMonths(format2, index) {
-          return listMonthsImpl(format2, index, "months");
-        }
-        function listMonthsShort(format2, index) {
-          return listMonthsImpl(format2, index, "monthsShort");
-        }
-        function listWeekdays(localeSorted, format2, index) {
-          return listWeekdaysImpl(localeSorted, format2, index, "weekdays");
-        }
-        function listWeekdaysShort(localeSorted, format2, index) {
-          return listWeekdaysImpl(localeSorted, format2, index, "weekdaysShort");
-        }
-        function listWeekdaysMin(localeSorted, format2, index) {
-          return listWeekdaysImpl(localeSorted, format2, index, "weekdaysMin");
-        }
-        getSetGlobalLocale("en", {
-          eras: [
-            {
-              since: "0001-01-01",
-              until: Infinity,
-              offset: 1,
-              name: "Anno Domini",
-              narrow: "AD",
-              abbr: "AD"
-            },
-            {
-              since: "0000-12-31",
-              until: -Infinity,
-              offset: 1,
-              name: "Before Christ",
-              narrow: "BC",
-              abbr: "BC"
-            }
-          ],
-          dayOfMonthOrdinalParse: /\d{1,2}(th|st|nd|rd)/,
-          ordinal: function(number) {
-            var b = number % 10, output = toInt(number % 100 / 10) === 1 ? "th" : b === 1 ? "st" : b === 2 ? "nd" : b === 3 ? "rd" : "th";
-            return number + output;
-          }
-        });
-        hooks.lang = deprecate(
-          "moment.lang is deprecated. Use moment.locale instead.",
-          getSetGlobalLocale
-        );
-        hooks.langData = deprecate(
-          "moment.langData is deprecated. Use moment.localeData instead.",
-          getLocale
-        );
-        var mathAbs = Math.abs;
-        function abs() {
-          var data = this._data;
-          this._milliseconds = mathAbs(this._milliseconds);
-          this._days = mathAbs(this._days);
-          this._months = mathAbs(this._months);
-          data.milliseconds = mathAbs(data.milliseconds);
-          data.seconds = mathAbs(data.seconds);
-          data.minutes = mathAbs(data.minutes);
-          data.hours = mathAbs(data.hours);
-          data.months = mathAbs(data.months);
-          data.years = mathAbs(data.years);
-          return this;
-        }
-        function addSubtract$1(duration, input, value, direction) {
-          var other = createDuration(input, value);
-          duration._milliseconds += direction * other._milliseconds;
-          duration._days += direction * other._days;
-          duration._months += direction * other._months;
-          return duration._bubble();
-        }
-        function add$1(input, value) {
-          return addSubtract$1(this, input, value, 1);
-        }
-        function subtract$1(input, value) {
-          return addSubtract$1(this, input, value, -1);
-        }
-        function absCeil(number) {
-          if (number < 0) {
-            return Math.floor(number);
-          } else {
-            return Math.ceil(number);
-          }
-        }
-        function bubble() {
-          var milliseconds2 = this._milliseconds, days2 = this._days, months2 = this._months, data = this._data, seconds2, minutes2, hours2, years2, monthsFromDays;
-          if (!(milliseconds2 >= 0 && days2 >= 0 && months2 >= 0 || milliseconds2 <= 0 && days2 <= 0 && months2 <= 0)) {
-            milliseconds2 += absCeil(monthsToDays(months2) + days2) * 864e5;
-            days2 = 0;
-            months2 = 0;
-          }
-          data.milliseconds = milliseconds2 % 1e3;
-          seconds2 = absFloor(milliseconds2 / 1e3);
-          data.seconds = seconds2 % 60;
-          minutes2 = absFloor(seconds2 / 60);
-          data.minutes = minutes2 % 60;
-          hours2 = absFloor(minutes2 / 60);
-          data.hours = hours2 % 24;
-          days2 += absFloor(hours2 / 24);
-          monthsFromDays = absFloor(daysToMonths(days2));
-          months2 += monthsFromDays;
-          days2 -= absCeil(monthsToDays(monthsFromDays));
-          years2 = absFloor(months2 / 12);
-          months2 %= 12;
-          data.days = days2;
-          data.months = months2;
-          data.years = years2;
-          return this;
-        }
-        function daysToMonths(days2) {
-          return days2 * 4800 / 146097;
-        }
-        function monthsToDays(months2) {
-          return months2 * 146097 / 4800;
-        }
-        function as(units) {
-          if (!this.isValid()) {
-            return NaN;
-          }
-          var days2, months2, milliseconds2 = this._milliseconds;
-          units = normalizeUnits(units);
-          if (units === "month" || units === "quarter" || units === "year") {
-            days2 = this._days + milliseconds2 / 864e5;
-            months2 = this._months + daysToMonths(days2);
-            switch (units) {
-              case "month":
-                return months2;
-              case "quarter":
-                return months2 / 3;
-              case "year":
-                return months2 / 12;
-            }
-          } else {
-            days2 = this._days + Math.round(monthsToDays(this._months));
-            switch (units) {
-              case "week":
-                return days2 / 7 + milliseconds2 / 6048e5;
-              case "day":
-                return days2 + milliseconds2 / 864e5;
-              case "hour":
-                return days2 * 24 + milliseconds2 / 36e5;
-              case "minute":
-                return days2 * 1440 + milliseconds2 / 6e4;
-              case "second":
-                return days2 * 86400 + milliseconds2 / 1e3;
-              case "millisecond":
-                return Math.floor(days2 * 864e5) + milliseconds2;
-              default:
-                throw new Error("Unknown unit " + units);
-            }
-          }
-        }
-        function makeAs(alias) {
-          return function() {
-            return this.as(alias);
-          };
-        }
-        var asMilliseconds = makeAs("ms"), asSeconds = makeAs("s"), asMinutes = makeAs("m"), asHours = makeAs("h"), asDays = makeAs("d"), asWeeks = makeAs("w"), asMonths = makeAs("M"), asQuarters = makeAs("Q"), asYears = makeAs("y"), valueOf$1 = asMilliseconds;
-        function clone$1() {
-          return createDuration(this);
-        }
-        function get$2(units) {
-          units = normalizeUnits(units);
-          return this.isValid() ? this[units + "s"]() : NaN;
-        }
-        function makeGetter(name) {
-          return function() {
-            return this.isValid() ? this._data[name] : NaN;
-          };
-        }
-        var milliseconds = makeGetter("milliseconds"), seconds = makeGetter("seconds"), minutes = makeGetter("minutes"), hours = makeGetter("hours"), days = makeGetter("days"), months = makeGetter("months"), years = makeGetter("years");
-        function weeks() {
-          return absFloor(this.days() / 7);
-        }
-        var round = Math.round, thresholds = {
-          ss: 44,
-          // a few seconds to seconds
-          s: 45,
-          // seconds to minute
-          m: 45,
-          // minutes to hour
-          h: 22,
-          // hours to day
-          d: 26,
-          // days to month/week
-          w: null,
-          // weeks to month
-          M: 11
-          // months to year
-        };
-        function substituteTimeAgo(string, number, withoutSuffix, isFuture, locale2) {
-          return locale2.relativeTime(number || 1, !!withoutSuffix, string, isFuture);
-        }
-        function relativeTime$1(posNegDuration, withoutSuffix, thresholds2, locale2) {
-          var duration = createDuration(posNegDuration).abs(), seconds2 = round(duration.as("s")), minutes2 = round(duration.as("m")), hours2 = round(duration.as("h")), days2 = round(duration.as("d")), months2 = round(duration.as("M")), weeks2 = round(duration.as("w")), years2 = round(duration.as("y")), a = seconds2 <= thresholds2.ss && ["s", seconds2] || seconds2 < thresholds2.s && ["ss", seconds2] || minutes2 <= 1 && ["m"] || minutes2 < thresholds2.m && ["mm", minutes2] || hours2 <= 1 && ["h"] || hours2 < thresholds2.h && ["hh", hours2] || days2 <= 1 && ["d"] || days2 < thresholds2.d && ["dd", days2];
-          if (thresholds2.w != null) {
-            a = a || weeks2 <= 1 && ["w"] || weeks2 < thresholds2.w && ["ww", weeks2];
-          }
-          a = a || months2 <= 1 && ["M"] || months2 < thresholds2.M && ["MM", months2] || years2 <= 1 && ["y"] || ["yy", years2];
-          a[2] = withoutSuffix;
-          a[3] = +posNegDuration > 0;
-          a[4] = locale2;
-          return substituteTimeAgo.apply(null, a);
-        }
-        function getSetRelativeTimeRounding(roundingFunction) {
-          if (roundingFunction === void 0) {
-            return round;
-          }
-          if (typeof roundingFunction === "function") {
-            round = roundingFunction;
-            return true;
-          }
-          return false;
-        }
-        function getSetRelativeTimeThreshold(threshold, limit) {
-          if (thresholds[threshold] === void 0) {
-            return false;
-          }
-          if (limit === void 0) {
-            return thresholds[threshold];
-          }
-          thresholds[threshold] = limit;
-          if (threshold === "s") {
-            thresholds.ss = limit - 1;
-          }
-          return true;
-        }
-        function humanize(argWithSuffix, argThresholds) {
-          if (!this.isValid()) {
-            return this.localeData().invalidDate();
-          }
-          var withSuffix = false, th = thresholds, locale2, output;
-          if (typeof argWithSuffix === "object") {
-            argThresholds = argWithSuffix;
-            argWithSuffix = false;
-          }
-          if (typeof argWithSuffix === "boolean") {
-            withSuffix = argWithSuffix;
-          }
-          if (typeof argThresholds === "object") {
-            th = Object.assign({}, thresholds, argThresholds);
-            if (argThresholds.s != null && argThresholds.ss == null) {
-              th.ss = argThresholds.s - 1;
-            }
-          }
-          locale2 = this.localeData();
-          output = relativeTime$1(this, !withSuffix, th, locale2);
-          if (withSuffix) {
-            output = locale2.pastFuture(+this, output);
-          }
-          return locale2.postformat(output);
-        }
-        var abs$1 = Math.abs;
-        function sign(x) {
-          return (x > 0) - (x < 0) || +x;
-        }
-        function toISOString$1() {
-          if (!this.isValid()) {
-            return this.localeData().invalidDate();
-          }
-          var seconds2 = abs$1(this._milliseconds) / 1e3, days2 = abs$1(this._days), months2 = abs$1(this._months), minutes2, hours2, years2, s, total = this.asSeconds(), totalSign, ymSign, daysSign, hmsSign;
-          if (!total) {
-            return "P0D";
-          }
-          minutes2 = absFloor(seconds2 / 60);
-          hours2 = absFloor(minutes2 / 60);
-          seconds2 %= 60;
-          minutes2 %= 60;
-          years2 = absFloor(months2 / 12);
-          months2 %= 12;
-          s = seconds2 ? seconds2.toFixed(3).replace(/\.?0+$/, "") : "";
-          totalSign = total < 0 ? "-" : "";
-          ymSign = sign(this._months) !== sign(total) ? "-" : "";
-          daysSign = sign(this._days) !== sign(total) ? "-" : "";
-          hmsSign = sign(this._milliseconds) !== sign(total) ? "-" : "";
-          return totalSign + "P" + (years2 ? ymSign + years2 + "Y" : "") + (months2 ? ymSign + months2 + "M" : "") + (days2 ? daysSign + days2 + "D" : "") + (hours2 || minutes2 || seconds2 ? "T" : "") + (hours2 ? hmsSign + hours2 + "H" : "") + (minutes2 ? hmsSign + minutes2 + "M" : "") + (seconds2 ? hmsSign + s + "S" : "");
-        }
-        var proto$2 = Duration.prototype;
-        proto$2.isValid = isValid$1;
-        proto$2.abs = abs;
-        proto$2.add = add$1;
-        proto$2.subtract = subtract$1;
-        proto$2.as = as;
-        proto$2.asMilliseconds = asMilliseconds;
-        proto$2.asSeconds = asSeconds;
-        proto$2.asMinutes = asMinutes;
-        proto$2.asHours = asHours;
-        proto$2.asDays = asDays;
-        proto$2.asWeeks = asWeeks;
-        proto$2.asMonths = asMonths;
-        proto$2.asQuarters = asQuarters;
-        proto$2.asYears = asYears;
-        proto$2.valueOf = valueOf$1;
-        proto$2._bubble = bubble;
-        proto$2.clone = clone$1;
-        proto$2.get = get$2;
-        proto$2.milliseconds = milliseconds;
-        proto$2.seconds = seconds;
-        proto$2.minutes = minutes;
-        proto$2.hours = hours;
-        proto$2.days = days;
-        proto$2.weeks = weeks;
-        proto$2.months = months;
-        proto$2.years = years;
-        proto$2.humanize = humanize;
-        proto$2.toISOString = toISOString$1;
-        proto$2.toString = toISOString$1;
-        proto$2.toJSON = toISOString$1;
-        proto$2.locale = locale;
-        proto$2.localeData = localeData;
-        proto$2.toIsoString = deprecate(
-          "toIsoString() is deprecated. Please use toISOString() instead (notice the capitals)",
-          toISOString$1
-        );
-        proto$2.lang = lang;
-        addFormatToken("X", 0, 0, "unix");
-        addFormatToken("x", 0, 0, "valueOf");
-        addRegexToken("x", matchSigned);
-        addRegexToken("X", matchTimestamp);
-        addParseToken("X", function(input, array, config) {
-          config._d = new Date(parseFloat(input) * 1e3);
-        });
-        addParseToken("x", function(input, array, config) {
-          config._d = new Date(toInt(input));
-        });
-        hooks.version = "2.30.1";
-        setHookCallback(createLocal);
-        hooks.fn = proto;
-        hooks.min = min;
-        hooks.max = max;
-        hooks.now = now;
-        hooks.utc = createUTC;
-        hooks.unix = createUnix;
-        hooks.months = listMonths;
-        hooks.isDate = isDate;
-        hooks.locale = getSetGlobalLocale;
-        hooks.invalid = createInvalid;
-        hooks.duration = createDuration;
-        hooks.isMoment = isMoment;
-        hooks.weekdays = listWeekdays;
-        hooks.parseZone = createInZone;
-        hooks.localeData = getLocale;
-        hooks.isDuration = isDuration;
-        hooks.monthsShort = listMonthsShort;
-        hooks.weekdaysMin = listWeekdaysMin;
-        hooks.defineLocale = defineLocale;
-        hooks.updateLocale = updateLocale;
-        hooks.locales = listLocales;
-        hooks.weekdaysShort = listWeekdaysShort;
-        hooks.normalizeUnits = normalizeUnits;
-        hooks.relativeTimeRounding = getSetRelativeTimeRounding;
-        hooks.relativeTimeThreshold = getSetRelativeTimeThreshold;
-        hooks.calendarFormat = getCalendarFormat;
-        hooks.prototype = proto;
-        hooks.HTML5_FMT = {
-          DATETIME_LOCAL: "YYYY-MM-DDTHH:mm",
-          // <input type="datetime-local" />
-          DATETIME_LOCAL_SECONDS: "YYYY-MM-DDTHH:mm:ss",
-          // <input type="datetime-local" step="1" />
-          DATETIME_LOCAL_MS: "YYYY-MM-DDTHH:mm:ss.SSS",
-          // <input type="datetime-local" step="0.001" />
-          DATE: "YYYY-MM-DD",
-          // <input type="date" />
-          TIME: "HH:mm",
-          // <input type="time" />
-          TIME_SECONDS: "HH:mm:ss",
-          // <input type="time" step="1" />
-          TIME_MS: "HH:mm:ss.SSS",
-          // <input type="time" step="0.001" />
-          WEEK: "GGGG-[W]WW",
-          // <input type="week" />
-          MONTH: "YYYY-MM"
-          // <input type="month" />
-        };
-        return hooks;
-      });
-    }
-  });
-
-  // prototypes/settings-panel/fake/fake-obsidian.ts
+  // prototypes/gameshelf/fake/fake-obsidian.ts
   function setIcon(container, iconId) {
     var _a2;
-    const d = typeof window !== "undefined" && ((_a2 = window.BZ_SP_ICONS) == null ? void 0 : _a2[iconId]) || "";
+    const d = typeof window !== "undefined" && ((_a2 = window.GS_ICONS) == null ? void 0 : _a2[iconId]) || "";
     if (!d) return;
     const ns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(ns, "svg");
@@ -4047,261 +58,226 @@ var BZW_settings_panel = (() => {
     svg.innerHTML = d;
     container.replaceChildren(svg);
   }
-  async function requestUrl() {
-    throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
+  function globalOf(key) {
+    const self = window[key];
+    if (self) return self;
+    try {
+      const p = window.parent;
+      return p && p[key] || null;
+    } catch (e) {
+      return null;
+    }
   }
-  function encodeSeedFile(content, stat) {
-    var _a2, _b2, _c;
-    const now = Date.now();
-    const env = { c: content, ct: (_a2 = stat == null ? void 0 : stat.ctime) != null ? _a2 : now, mt: (_c = (_b2 = stat == null ? void 0 : stat.mtime) != null ? _b2 : stat == null ? void 0 : stat.ctime) != null ? _c : now };
-    return JSON.stringify(env);
+  function seedGames() {
+    var _a2;
+    return (_a2 = globalOf("GAMESHELF_DATA")) != null ? _a2 : [];
   }
-  function isHiddenSegmentPath(p) {
-    return p.split("/").some((seg) => seg.startsWith("."));
+  function detailBundle() {
+    var _a2;
+    return (_a2 = globalOf("GAMESHELF_DETAIL")) != null ? _a2 : { store: {}, ach: {} };
   }
-  function parseFrontmatter(content) {
-    if (!content.startsWith("---")) return null;
-    const end = content.indexOf("\n---", 3);
-    if (end < 0) return null;
-    const strip = (s) => {
-      const t = s.trim();
-      if (t.length >= 2 && (t.startsWith('"') && t.endsWith('"') || t.startsWith("'") && t.endsWith("'"))) {
-        return t.slice(1, -1);
-      }
-      return t;
+  function unixOf(dateStr) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr || "");
+    if (!m) return 0;
+    return Math.floor(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime() / 1e3);
+  }
+  function iconHash(icon2) {
+    const m = /\/apps\/\d+\/([^/]+)\.jpg$/.exec(icon2 || "");
+    return m ? m[1] : "";
+  }
+  function appidOf(url) {
+    const m = /appids=(\d+)/.exec(url) || /appreviews\/(\d+)/.exec(url) || /appid=(\d+)/.exec(url) || /gameid=(\d+)/.exec(url);
+    return m ? Number(m[1]) : 0;
+  }
+  function demoStore(g) {
+    return [{ success: true, data: {
+      type: "game",
+      name: g.name,
+      is_free: false,
+      short_description: "原型罐头：这款游戏的真实商店资料没抓到，这里用占位文案走通版式。真机在装了系统代理时会拉到 Steam 的中文简介。",
+      supported_languages: "英语, 简体中文",
+      developers: ["演示开发商"],
+      publishers: ["演示发行商"],
+      platforms: { windows: true, mac: false, linux: false },
+      categories: [{ description: "单人" }, { description: "Steam 成就" }],
+      genres: [{ description: "演示类型" }],
+      recommendations: { total: 1234 },
+      release_date: { date: "20xx 年 x 月 x 日" },
+      price_overview: { final_formatted: "¥ 00", discount_percent: 0 },
+      screenshots: [
+        { path_full: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/header.jpg` },
+        { path_full: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/capsule_616x353.jpg` },
+        { path_full: `https://cdn.cloudflare.steamstatic.com/steam/apps/${g.appid}/library_600x900.jpg` }
+      ],
+      achievements: { total: 12 },
+      support_info: { url: "https://help.steampowered.com/", email: "" }
+    } }];
+  }
+  function demoReviews() {
+    return { query_summary: { review_score_desc: "多半好评", total_reviews: 1234, total_positive: 1e3, total_negative: 234 } };
+  }
+  function demoAchievements(g) {
+    const n = 12;
+    const names = Array.from({ length: n }, (_, i) => `DEMOACH${String(i + 1).padStart(2, "0")}`);
+    return {
+      schema: { game: { availableGameStats: { achievements: names.map((nm, i) => ({
+        name: nm,
+        displayName: `演示成就 ${String(i + 1).padStart(2, "0")}`,
+        description: "原型罐头：真机为 Steam 成就说明",
+        hidden: 0,
+        icon: g.icon || ""
+      })) } } },
+      player: { playerstats: { achievements: names.map((nm, i) => ({
+        apiname: nm,
+        achieved: i % 3 === 0 ? 1 : 0,
+        unlocktime: i % 3 === 0 ? 17e8 + i * 86400 : 0
+      })) } },
+      global: { achievementpercentages: { achievements: names.map((nm, i) => ({ name: nm, percent: Math.round((4 + i * 7.3) * 10) / 10 })) } }
     };
+  }
+  function replay(url) {
+    var _a2, _b2, _c;
+    const reply = (json) => ({ status: 200, json, text: JSON.stringify(json) });
+    if (url.includes("IPlayerService/GetOwnedGames")) {
+      const games = seedGames().map((g) => ({
+        appid: g.appid,
+        name: g.name,
+        playtime_forever: g.min,
+        rtime_last_played: unixOf(g.last),
+        img_icon_url: iconHash(g.icon),
+        playtime_windows_forever: g.win,
+        playtime_deck_forever: g.deck,
+        playtime_mac_forever: g.mac,
+        playtime_linux_forever: g.linux,
+        has_community_visible_stats: g.ach
+      }));
+      return reply({ response: { game_count: games.length, games } });
+    }
+    if (url.includes("IPlayerService/GetRecentlyPlayedGames")) {
+      return reply({ response: { total_count: 0 } });
+    }
+    const appid = appidOf(url);
+    const bundle = detailBundle();
+    const seed = seedGames().find((g) => g.appid === appid);
+    if (url.includes("/api/appdetails")) {
+      const real = bundle.store[String(appid)];
+      if (real) return reply(real);
+      return seed ? reply(demoStore(seed)) : reply([{ success: false }]);
+    }
+    if (url.includes("/appreviews/")) {
+      const real = (_a2 = bundle.reviews) == null ? void 0 : _a2[String(appid)];
+      return reply(real != null ? real : demoReviews());
+    }
+    if (url.includes("GetSchemaForGame")) {
+      const real = bundle.ach[String(appid)];
+      return reply((_b2 = real == null ? void 0 : real.schema) != null ? _b2 : seed ? demoAchievements(seed).schema : { game: {} });
+    }
+    if (url.includes("GetPlayerAchievements")) {
+      const real = bundle.ach[String(appid)];
+      if (real) return reply(real.player);
+      if (seed && !seed.ach) return { status: 400, json: {}, text: "{}" };
+      return reply(seed ? demoAchievements(seed).player : { playerstats: {} });
+    }
+    if (url.includes("GetGlobalAchievementPercentagesForApp")) {
+      const real = bundle.ach[String(appid)];
+      return reply((_c = real == null ? void 0 : real.global) != null ? _c : seed ? demoAchievements(seed).global : { achievementpercentages: { achievements: [] } });
+    }
+    if (/steamstatic\.com|steampowered\.com\/steamcommunity/.test(url)) {
+      return { status: 200, json: {}, text: "", arrayBuffer: new ArrayBuffer(1) };
+    }
+    return null;
+  }
+  async function requestUrl(opts) {
+    var _a2;
+    const url = String((_a2 = opts == null ? void 0 : opts.url) != null ? _a2 : "");
+    const r = replay(url);
+    if (!r) throw new Error("原型壳没有这个请求的罐头：" + url);
+    return r;
+  }
+  function stripQuotes(v) {
+    if (v.length >= 2 && (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'"))) {
+      return v.slice(1, -1);
+    }
+    return v;
+  }
+  function parseYaml(text) {
     const fm = {};
     let lastKey = null;
-    for (const line of content.slice(3, end).split(/\r?\n/)) {
+    for (const line of text.split(/\r?\n/)) {
       if (!line.trim()) continue;
-      const listItem = /^\s*-\s*(.+)$/.exec(line);
-      if (listItem && lastKey) {
-        const arr = Array.isArray(fm[lastKey]) ? fm[lastKey] : [];
-        arr.push(strip(listItem[1]));
-        fm[lastKey] = arr;
+      if (/^\s*-\s+/.test(line)) {
+        const v = stripQuotes(line.replace(/^\s*-\s+/, "").trim());
+        if (!lastKey) continue;
+        const cur = fm[lastKey];
+        if (Array.isArray(cur)) cur.push(v);
+        else fm[lastKey] = cur === "" || cur === void 0 ? [v] : [String(cur), v];
         continue;
       }
-      const kv = /^([^\s:][^:]*):\s*(.*)$/.exec(line);
-      if (!kv) continue;
-      const key = kv[1].trim();
-      const rawVal = kv[2].trim();
+      const idx = line.indexOf(":");
+      if (idx < 0) continue;
+      const key = line.slice(0, idx).trim();
+      const val = line.slice(idx + 1).trim();
       lastKey = key;
-      if (rawVal === "") {
-        fm[key] = [];
-      } else if (rawVal.startsWith("[") && rawVal.endsWith("]")) {
-        fm[key] = rawVal.slice(1, -1).split(",").map((s) => strip(s)).filter(Boolean);
+      if (val.startsWith("[") && val.endsWith("]")) {
+        const inner = val.slice(1, -1).trim();
+        fm[key] = inner ? inner.split(",").map((s) => stripQuotes(s.trim())) : [];
       } else {
-        fm[key] = strip(rawVal);
+        fm[key] = stripQuotes(val);
       }
     }
     return fm;
   }
-  var import_moment, Platform, Setting, TFile, MarkdownRenderer, MarkdownView, Component, KEY_PREFIX, FakeVault, FakeMetadataCache, FakeApp;
+  function coerce(fm) {
+    for (const k of ["已下架", "有成就", "简体中文支持"]) {
+      if (fm[k] === "true") fm[k] = true;
+      else if (fm[k] === "false") fm[k] = false;
+    }
+    return fm;
+  }
+  function serializeYaml(fm) {
+    const lines = ["---"];
+    for (const [k, v] of Object.entries(fm)) {
+      if (v === void 0 || v === null) continue;
+      if (Array.isArray(v)) {
+        lines.push(`${k}:`);
+        for (const item of v) lines.push(`- ${String(item)}`);
+      } else if (v === "") {
+        lines.push(`${k}:`);
+      } else {
+        const s = String(v);
+        lines.push(/[:#"']/.test(s) ? `${k}: "${s.replace(/"/g, '\\"')}"` : `${k}: ${s}`);
+      }
+    }
+    lines.push("---", "");
+    return lines.join("\n");
+  }
+  function splitFrontmatter(content) {
+    var _a2;
+    const m = /^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n([\s\S]*))?$/.exec(content);
+    if (!m) return { frontmatter: null, body: content, had: false };
+    return { frontmatter: coerce(parseYaml(m[1])), body: (_a2 = m[2]) != null ? _a2 : "", had: true };
+  }
+  function seedVaultFile(path, content, ctime) {
+    localStorage.setItem(LS_PREFIX + path, content);
+    let stats = {};
+    try {
+      stats = JSON.parse(localStorage.getItem(STAT_KEY) || "{}");
+    } catch (e) {
+      stats = {};
+    }
+    stats[path] = { ctime, mtime: ctime };
+    localStorage.setItem(STAT_KEY, JSON.stringify(stats));
+  }
+  var Platform, Setting, MarkdownRenderer, MarkdownView, Component, TFile, LS_PREFIX, STAT_KEY, FakeVault, FakeFileManager, FakeApp;
   var init_fake_obsidian = __esm({
-    "prototypes/settings-panel/fake/fake-obsidian.ts"() {
-      import_moment = __toESM(require_moment());
+    "prototypes/gameshelf/fake/fake-obsidian.ts"() {
       Platform = {
         isMobile: typeof window !== "undefined" && window.innerWidth <= 768
       };
       Setting = class {
-        constructor(container) {
+        constructor(_container) {
           this.settingEl = document.createElement("div");
-          this.settingEl.className = "setting-item";
-          const info = document.createElement("div");
-          info.className = "setting-item-info";
-          this.nameEl = document.createElement("div");
-          this.nameEl.className = "setting-item-name";
-          this.descEl = document.createElement("div");
-          this.descEl.className = "setting-item-description";
-          info.append(this.nameEl, this.descEl);
-          this.controlEl = document.createElement("div");
-          this.controlEl.className = "setting-item-control";
-          this.settingEl.append(info, this.controlEl);
-          container.appendChild(this.settingEl);
         }
-        setName(v) {
-          this.nameEl.textContent = v instanceof DocumentFragment ? v.textContent : String(v != null ? v : "");
-          return this;
-        }
-        setDesc(v) {
-          this.descEl.textContent = v instanceof DocumentFragment ? v.textContent : String(v != null ? v : "");
-          return this;
-        }
-        setClass(c) {
-          this.settingEl.classList.add(c);
-          return this;
-        }
-        setTooltip(_t) {
-          return this;
-        }
-        addText(cb) {
-          const input = document.createElement("input");
-          input.type = "text";
-          input.className = "bz-input";
-          const comp = {
-            inputEl: input,
-            setValue(v) {
-              input.value = v;
-              return comp;
-            },
-            getValue: () => input.value,
-            setPlaceholder(p) {
-              input.placeholder = p;
-              return comp;
-            },
-            onChange(cb2) {
-              input.addEventListener("input", () => cb2(input.value));
-              return comp;
-            }
-          };
-          cb(comp);
-          this.controlEl.appendChild(input);
-          return this;
-        }
-        addSearch(cb) {
-          return this.addText(cb);
-        }
-        addTextArea(cb) {
-          const input = document.createElement("textarea");
-          input.className = "bz-input";
-          const comp = {
-            inputEl: input,
-            setValue(v) {
-              input.value = v;
-              return comp;
-            },
-            getValue: () => input.value,
-            setPlaceholder(p) {
-              input.placeholder = p;
-              return comp;
-            },
-            onChange(cb2) {
-              input.addEventListener("input", () => cb2(input.value));
-              return comp;
-            }
-          };
-          cb(comp);
-          this.controlEl.appendChild(input);
-          return this;
-        }
-        addToggle(cb) {
-          const toggleEl = document.createElement("input");
-          toggleEl.type = "checkbox";
-          const comp = {
-            toggleEl,
-            setValue(v) {
-              toggleEl.checked = v;
-              return comp;
-            },
-            getValue: () => toggleEl.checked,
-            onChange(cb2) {
-              toggleEl.addEventListener("change", () => cb2(toggleEl.checked));
-              return comp;
-            }
-          };
-          cb(comp);
-          this.controlEl.appendChild(toggleEl);
-          return this;
-        }
-        addDropdown(cb) {
-          const selectEl = document.createElement("select");
-          const comp = {
-            selectEl,
-            addOptions(opts) {
-              for (const o of opts) {
-                const opt = document.createElement("option");
-                opt.value = o.value;
-                opt.textContent = o.label;
-                selectEl.appendChild(opt);
-              }
-              return comp;
-            },
-            setValue(v) {
-              selectEl.value = v;
-              return comp;
-            },
-            onChange(cb2) {
-              selectEl.addEventListener("change", () => cb2(selectEl.value));
-              return comp;
-            }
-          };
-          cb(comp);
-          this.controlEl.appendChild(selectEl);
-          return this;
-        }
-        mkButton(cb) {
-          const buttonEl = document.createElement("button");
-          buttonEl.type = "button";
-          let onClickCb = null;
-          const comp = {
-            buttonEl,
-            setButtonText(t) {
-              buttonEl.textContent = t;
-              return comp;
-            },
-            setCta(v) {
-              buttonEl.classList.toggle("bz-sp-btn--primary", v !== false);
-              return comp;
-            },
-            setDisabled(v) {
-              buttonEl.disabled = v;
-              return comp;
-            },
-            onClick(cb2) {
-              onClickCb = cb2;
-              return comp;
-            }
-          };
-          buttonEl.addEventListener("click", () => {
-            if (onClickCb && !buttonEl.disabled) void onClickCb();
-          });
-          cb(comp);
-          this.controlEl.appendChild(buttonEl);
-        }
-        addButton(cb) {
-          this.mkButton(cb);
-          return this;
-        }
-        addExtraButton(cb) {
-          this.mkButton(cb);
-          return this;
-        }
-        addSlider(cb) {
-          const input = document.createElement("input");
-          input.type = "range";
-          const comp = {
-            inputEl: input,
-            setValue(v) {
-              input.value = v;
-              return comp;
-            },
-            getValue: () => input.value,
-            setPlaceholder() {
-              return comp;
-            },
-            onChange(cb2) {
-              input.addEventListener("input", () => cb2(input.value));
-              return comp;
-            }
-          };
-          cb(comp);
-          this.controlEl.appendChild(input);
-          return this;
-        }
-        addColorPicker(cb) {
-          void cb({ setValue: () => void 0, onChange: () => void 0 });
-          return this;
-        }
-        addMomentFormat(cb) {
-          void cb({ sample: "" });
-          return this;
-        }
-        then(cb) {
-          if (cb) cb(this);
-          return this;
-        }
-      };
-      TFile = class {
       };
       MarkdownRenderer = class {
         static render() {
@@ -4337,153 +313,168 @@ var BZW_settings_panel = (() => {
           return 0;
         }
       };
-      KEY_PREFIX = "bz-sim:";
-      FakeVault = class _FakeVault {
+      TFile = class {
+        constructor() {
+          this.path = "";
+          this.name = "";
+          this.basename = "";
+          this.extension = "";
+          this.stat = { ctime: 0, mtime: 0 };
+        }
+      };
+      LS_PREFIX = "bz-sim:";
+      STAT_KEY = "bz-sim:__stat__";
+      FakeVault = class {
         constructor() {
           this.listeners = /* @__PURE__ */ new Map();
           this.idSeq = 0;
-          /**
-           * adapter 直读目录面（collectVaultFolders 的递归补齐源）：与 Obsidian DataAdapter.list
-           * 同契约——folders = dir 下一层目录的【库根绝对路径】（含空目录与点前缀目录），
-           * files = dir 下文件名。目录树 = 全量键路径父目录并集。
-           */
+          /** 二进制写（posters.ts 的本地海报缓存用）：只记账占位，内容不落 localStorage */
           this.adapter = {
-            list: async (dir) => {
-              const clean = String(dir).replace(/^\/+|\/+$/g, "");
-              const dirs = /* @__PURE__ */ new Set();
-              const files = [];
-              for (let i = 0; i < localStorage.length; i++) {
-                const k = localStorage.key(i);
-                if (!k || !k.startsWith(KEY_PREFIX)) continue;
-                const path = k.slice(KEY_PREFIX.length);
-                if (!path) continue;
-                const parent = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
-                if (parent !== clean && !parent.startsWith(clean ? clean + "/" : "")) continue;
-                const rest = clean ? path.slice(clean.length + 1) : path;
-                if (!rest) continue;
-                const slash = rest.indexOf("/");
-                if (slash >= 0) dirs.add(clean ? clean + "/" + rest.slice(0, slash) : rest.slice(0, slash));
-                else files.push(rest);
-              }
-              return { folders: [...dirs].sort(), files };
+            writeBinary: async (path, buf) => {
+              localStorage.setItem(LS_PREFIX + path, "binary:" + buf.byteLength);
+              const stats = this.stats();
+              if (!stats[path]) stats[path] = { ctime: Date.now(), mtime: Date.now() };
+              this.saveStats(stats);
             }
           };
           if (typeof window !== "undefined") {
             window.addEventListener("storage", (e) => {
-              if (!e.key || !e.key.startsWith(KEY_PREFIX)) return;
-              this.emit("modify", { path: e.key.slice(KEY_PREFIX.length) });
+              if (!e.key || !e.key.startsWith(LS_PREFIX) || e.key === STAT_KEY) return;
+              const path = e.key.slice(LS_PREFIX.length);
+              this.emit(e.newValue == null ? "delete" : "modify", { path });
             });
           }
         }
-        static key(path) {
-          return KEY_PREFIX + path;
+        raw(path) {
+          return localStorage.getItem(LS_PREFIX + path);
         }
-        /** 原始值 → FakeFile（封套外敌数据按纯内容兜底，stat 取当前——防御性，种子外不发生） */
-        toFile(path, raw) {
-          let content = raw;
-          let ct = Date.now();
-          let mt = ct;
+        stats() {
           try {
-            const env = JSON.parse(raw);
-            if (env && typeof env === "object" && typeof env.c === "string") {
-              content = env.c;
-              ct = Number(env.ct) || ct;
-              mt = Number(env.mt) || mt;
-            }
+            return JSON.parse(localStorage.getItem(STAT_KEY) || "{}");
           } catch (e) {
+            return {};
           }
-          const base = path.includes("/") ? path.slice(path.lastIndexOf("/") + 1) : path;
-          const dot = base.lastIndexOf(".");
-          return {
-            path,
-            // Obsidian TFile 契约：basename 不含扩展名，name 含
-            basename: dot > 0 ? base.slice(0, dot) : base,
-            extension: dot > 0 ? base.slice(dot + 1) : "",
-            name: base,
-            stat: { ctime: ct, mtime: mt },
-            content
-          };
+        }
+        saveStats(stats) {
+          localStorage.setItem(STAT_KEY, JSON.stringify(stats));
+        }
+        makeFile(path) {
+          if (this.raw(path) == null) return null;
+          const s = this.stats()[path] || { ctime: 0, mtime: 0 };
+          const f = new TFile();
+          f.path = path;
+          f.name = path.split("/").pop() || path;
+          f.basename = f.name.replace(/\.[^.]+$/, "");
+          f.extension = f.name.includes(".") ? f.name.split(".").pop() : "";
+          f.stat = { ...s };
+          return f;
         }
         getAbstractFileByPath(path) {
-          const raw = localStorage.getItem(_FakeVault.key(path));
-          return raw == null ? null : this.toFile(path, raw);
+          return this.makeFile(path);
         }
-        /** 全部索引文件（jsonFileStore 文件 + 种子 md；点前缀目录与 .keep 空目录占位不入——与真宿主「点前缀/空目录不索引」同语义） */
-        getFiles() {
-          const out = [];
+        getMarkdownFiles() {
+          const paths = [];
           for (let i = 0; i < localStorage.length; i++) {
             const k = localStorage.key(i);
-            if (!k || !k.startsWith(KEY_PREFIX)) continue;
-            const path = k.slice(KEY_PREFIX.length);
-            if (!path || isHiddenSegmentPath(path)) continue;
-            if (path === ".keep" || path.endsWith("/.keep")) continue;
-            out.push(this.toFile(path, localStorage.getItem(k)));
+            if (!k || !k.startsWith(LS_PREFIX) || k === STAT_KEY) continue;
+            const p = k.slice(LS_PREFIX.length);
+            if (p.endsWith(".md")) paths.push(p);
           }
-          return out;
-        }
-        /** 全部 md 文件（diary/clipbook 闭包扫描吃这个列表；同 getFiles 的点前缀语义） */
-        getMarkdownFiles() {
-          return this.getFiles().filter((f) => f.extension === "md");
+          return paths.map((p) => this.makeFile(p));
         }
         async read(f) {
-          return f.content;
+          const raw = this.raw(f.path);
+          if (raw == null) throw new Error("文件不存在：" + f.path);
+          return raw;
         }
         async modify(f, content) {
-          f.content = content;
-          localStorage.setItem(_FakeVault.key(f.path), encodeSeedFile(content, f.stat));
+          localStorage.setItem(LS_PREFIX + f.path, content);
+          const stats = this.stats();
+          const cur = stats[f.path] || { ctime: Date.now(), mtime: Date.now() };
+          stats[f.path] = { ctime: cur.ctime, mtime: Date.now() };
+          this.saveStats(stats);
+          this.emit("modify", { path: f.path });
         }
         async create(path, content) {
-          const f = this.toFile(path, encodeSeedFile(content));
-          localStorage.setItem(_FakeVault.key(path), encodeSeedFile(content));
+          if (this.raw(path) != null) throw new Error("文件已存在：" + path);
+          localStorage.setItem(LS_PREFIX + path, content);
+          const stats = this.stats();
+          stats[path] = { ctime: Date.now(), mtime: Date.now() };
+          this.saveStats(stats);
+          const f = this.makeFile(path);
+          this.emit("create", f);
           return f;
         }
         async createFolder(_path) {
           return void 0;
         }
-        /** 事件订阅（core/app vault.on/offref 同形） */
+        async trash(f, _system) {
+          localStorage.removeItem(LS_PREFIX + f.path);
+          const stats = this.stats();
+          delete stats[f.path];
+          this.saveStats(stats);
+          this.emit("delete", { path: f.path });
+        }
         on(evt, cb) {
           if (!this.listeners.has(evt)) this.listeners.set(evt, []);
           this.listeners.get(evt).push(cb);
-          const id = ++this.idSeq;
-          return { ref: id };
+          return { ref: ++this.idSeq };
         }
-        offref(ref) {
+        offref(_ref) {
           this.listeners.clear();
         }
-        emit(evt, file) {
+        emitEvent(evt, ...args) {
+          this.emit(evt, ...args);
+        }
+        moveStat(from, to) {
+          const stats = this.stats();
+          stats[to] = stats[from] || { ctime: Date.now(), mtime: Date.now() };
+          delete stats[from];
+          this.saveStats(stats);
+        }
+        emit(evt, ...args) {
           var _a2;
-          for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(file);
+          for (const cb of (_a2 = this.listeners.get(evt)) != null ? _a2 : []) cb(...args);
         }
       };
-      FakeMetadataCache = class {
-        constructor() {
-          this.cache = /* @__PURE__ */ new Map();
+      FakeFileManager = class {
+        constructor(vault) {
+          this.vault = vault;
         }
-        getFileCache(file) {
-          if (!file || typeof file.path !== "string") return null;
-          if (!this.cache.has(file.path)) {
-            const raw = typeof file.content === "string" ? file.content : "";
-            const fm2 = parseFrontmatter(raw || this.readThrough(file.path));
-            this.cache.set(file.path, fm2);
-          }
-          const fm = this.cache.get(file.path);
-          return fm ? { frontmatter: fm } : null;
+        async renameFile(file, newPath) {
+          const content = localStorage.getItem(LS_PREFIX + file.path);
+          if (content == null) throw new Error("改名失败，源文件不存在：" + file.path);
+          localStorage.setItem(LS_PREFIX + newPath, content);
+          localStorage.removeItem(LS_PREFIX + file.path);
+          this.vault.moveStat(file.path, newPath);
+          const oldPath = file.path;
+          file.path = newPath;
+          file.name = newPath.split("/").pop() || newPath;
+          file.basename = file.name.replace(/\.[^.]+$/, "");
+          this.vault.emitEvent("rename", file, oldPath);
         }
-        readThrough(path) {
-          try {
-            const raw = localStorage.getItem(FakeVault.key(path));
-            if (raw == null) return "";
-            const env = JSON.parse(raw);
-            return env && typeof env === "object" && typeof env.c === "string" ? env.c : raw;
-          } catch (e) {
-            return "";
-          }
+        async processFrontMatter(file, fn) {
+          var _a2;
+          const content = (_a2 = localStorage.getItem(LS_PREFIX + file.path)) != null ? _a2 : "";
+          const { frontmatter, body } = splitFrontmatter(content);
+          const fm = frontmatter != null ? frontmatter : {};
+          fn(fm);
+          await this.vault.modify(file, serializeYaml(fm) + body);
         }
       };
       FakeApp = class {
         constructor() {
           this.vault = new FakeVault();
-          this.metadataCache = new FakeMetadataCache();
+          this.fileManager = new FakeFileManager(this.vault);
+          this.metadataCache = {
+            /** notes.ts rebuildItems 唯一消费面：现场解析 frontmatter */
+            getFileCache(file) {
+              const content = localStorage.getItem(LS_PREFIX + file.path);
+              if (content == null) return null;
+              const { frontmatter } = splitFrontmatter(content);
+              return frontmatter ? { frontmatter } : null;
+            }
+          };
         }
       };
     }
@@ -4530,6 +521,1484 @@ var BZW_settings_panel = (() => {
     "src/core/settings-provider.ts"() {
       _provider = null;
       _saver = null;
+    }
+  });
+
+  // src/core/model-limits.ts
+  function normalizeModelId(model) {
+    return String(model || "").trim().toLowerCase().split(":")[0].split("/").pop().trim();
+  }
+  function resolveModelLimits(model) {
+    const key = normalizeModelId(model || "");
+    if (!key) return null;
+    let best = null;
+    for (const entry of MODEL_LIMITS) {
+      for (const k of [entry.id, ...entry.aliases || []]) {
+        if (key === k) return { maxOutput: entry.maxOutput, contextWindow: entry.contextWindow };
+        if (key.includes(k) && (!best || k.length > best.len)) best = { entry, len: k.length };
+      }
+    }
+    return best ? { maxOutput: best.entry.maxOutput, contextWindow: best.entry.contextWindow } : null;
+  }
+  var MODEL_LIMITS;
+  var init_model_limits = __esm({
+    "src/core/model-limits.ts"() {
+      MODEL_LIMITS = [
+        // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
+        {
+          id: "deepseek-flash",
+          aliases: ["deepseek-v4-flash", "deepseek-v4-flash-vision-exp", "deepseek-flash-latest", "deepseek-v4.1-flash"],
+          maxOutput: 393216,
+          contextWindow: 1048576
+        },
+        {
+          id: "deepseek-v4-pro",
+          aliases: ["deepseek-pro", "deepseek-pro-latest"],
+          maxOutput: 393216,
+          contextWindow: 1048576
+        },
+        // ---- 阿里云百炼 Qwen3.7 系（2026-09-16 核对官方帮助中心；qwen-plus / qwen-max 等短名指向当前主力版本）
+        { id: "qwen3.7-plus", aliases: ["qwen-plus"], maxOutput: 131072, contextWindow: 1e6 },
+        { id: "qwen3.7-max", aliases: ["qwen-max"], maxOutput: 65536, contextWindow: 1e6 },
+        { id: "qwen3.7-flash", aliases: ["qwen-flash", "qwen-turbo"], maxOutput: 16384, contextWindow: 1e6 },
+        // ---- 以下条目沿用注册表既有口径（未二次核对官方文档，数值与注册表默认一致，勿据此调大）
+        { id: "claude-sonnet-4-5", aliases: ["claude-sonnet-4.5"], maxOutput: 64e3, contextWindow: 2e5 },
+        { id: "gpt-4o-mini", maxOutput: 16384, contextWindow: 128e3 },
+        { id: "gemini-2.0-flash", maxOutput: 8192, contextWindow: 1048576 },
+        { id: "kimi-k2-0711-preview", aliases: ["kimi-k2"], maxOutput: 131072, contextWindow: 131072 },
+        { id: "glm-4-flash", maxOutput: 8192, contextWindow: 131072 }
+      ];
+    }
+  });
+
+  // src/core/ai.ts
+  var ai_exports = {};
+  __export(ai_exports, {
+    AIService: () => AIService,
+    AI_IDLE_TIMEOUT_MS: () => AI_IDLE_TIMEOUT_MS,
+    AI_IMAGE_IDLE_TIMEOUT_MS: () => AI_IMAGE_IDLE_TIMEOUT_MS,
+    AI_IMAGE_MAX_BYTES: () => AI_IMAGE_MAX_BYTES,
+    AI_PROVIDER_REGISTRY: () => AI_PROVIDER_REGISTRY,
+    AI_THINKING_STYLE: () => AI_THINKING_STYLE,
+    createAI: () => createAI,
+    getAIProvider: () => getAIProvider,
+    getProviderDescriptor: () => getProviderDescriptor,
+    hasExplicitThinkingOption: () => hasExplicitThinkingOption,
+    imageDataUrl: () => imageDataUrl,
+    imageExtOfMime: () => imageExtOfMime,
+    imageMimeOfPath: () => imageMimeOfPath,
+    resetAIProviderCache: () => resetAIProviderCache,
+    setAISettingsProvider: () => setAISettingsProvider,
+    thinkingOptionsFor: () => thinkingOptionsFor
+  });
+  function setAISettingsProvider(fn) {
+    _settingsProvider = fn;
+  }
+  function getQ3Settings() {
+    return _settingsProvider ? _settingsProvider() : {};
+  }
+  function getProviderDescriptor(id) {
+    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
+  }
+  function thinkingOptionsFor(level, style) {
+    if (style === "none") return null;
+    if (level === "off") {
+      if (style === "enable") return { enable_thinking: false };
+      if (style === "zhipu") return { thinking: { type: "disabled" } };
+      return null;
+    }
+    if (level !== "low" && level !== "medium" && level !== "high") return null;
+    if (style === "effort") return { reasoning_effort: level };
+    if (style === "enable") return { enable_thinking: true };
+    return { thinking: { type: "enabled" } };
+  }
+  function hasExplicitThinkingOption(mo) {
+    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
+  }
+  function resetAIProviderCache() {
+    _aiProviderCache = null;
+  }
+  async function getAIProvider(override) {
+    var _a2, _b2, _c;
+    if (!override && _aiProviderCache) return _aiProviderCache;
+    const cacheable = !override;
+    const cachePut2 = (p) => {
+      if (cacheable) _aiProviderCache = p;
+      return p;
+    };
+    const s = getQ3Settings();
+    if (override && typeof override === "object" && override.apiKey) {
+      return {
+        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
+        apiKey: override.apiKey,
+        model: override.model || void 0,
+        extraHeaders: override.extraHeaders || void 0,
+        defaultMaxTokens: override.defaultMaxTokens
+      };
+    }
+    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
+    const desc = getProviderDescriptor(name);
+    if (name === "custom") {
+      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
+      if (!endpoint || !s.aiCustomApiKey) {
+        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
+      }
+      const customLimits = resolveModelLimits(s.aiCustomModel || "");
+      return cachePut2({
+        id: "custom",
+        endpoint,
+        apiKey: s.aiCustomApiKey,
+        model: s.aiCustomModel || void 0,
+        extraHeaders: desc.extraHeaders,
+        defaultMaxTokens: ((_a2 = s.aiMaxTokensOverrides) == null ? void 0 : _a2["custom"]) || (customLimits == null ? void 0 : customLimits.maxOutput) || desc.defaultMaxTokens
+      });
+    }
+    const key = s[desc.apiKeyKey];
+    if (!key && name === "deepseek") {
+      try {
+        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
+        const cfg = JSON.parse(raw);
+        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
+        if (provider && provider.endpoint && provider.apiKey) {
+          return cachePut2({
+            id: "deepseek",
+            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
+            apiKey: provider.apiKey,
+            defaultMaxTokens: desc.defaultMaxTokens
+          });
+        }
+      } catch (e) {
+      }
+    }
+    if (!key && name !== "ollama") {
+      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
+    }
+    const overrideModel = (_b2 = s.aiModelOverrides) == null ? void 0 : _b2[name];
+    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
+    const limits = resolveModelLimits(overrideModel || desc.model || "");
+    return cachePut2({
+      id: name,
+      endpoint: desc.endpoint,
+      apiKey: key || "",
+      model: overrideModel || desc.model || void 0,
+      noCors: desc.noCors,
+      extraHeaders: desc.extraHeaders,
+      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
+    });
+  }
+  function abortError() {
+    const e = new Error("请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  function timeoutError(idleMs = AI_IDLE_TIMEOUT_MS) {
+    const e = new Error(`AI 请求超时（${Math.round(idleMs / 1e3)} 秒无响应）`);
+    e.name = "TimeoutError";
+    return e;
+  }
+  function idleTimeoutOf(body) {
+    const msgs = Array.isArray(body == null ? void 0 : body.messages) ? body.messages : [];
+    const hasImage = msgs.some(
+      (m) => Array.isArray(m == null ? void 0 : m.content) && m.content.some((p) => (p == null ? void 0 : p.type) === "image_url")
+    );
+    return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
+  }
+  async function streamChatCompletions(provider, body, signal, onDelta) {
+    const idleMs = idleTimeoutOf(body);
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const controller = new AbortController();
+    const onOuterAbort = () => controller.abort();
+    let outerLinked = false;
+    if (signal) {
+      if (signal.aborted) controller.abort();
+      else {
+        signal.addEventListener("abort", onOuterAbort);
+        outerLinked = true;
+      }
+    }
+    let idleTimer = null;
+    const armIdle = () => {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      idleTimer = setTimeout(() => controller.abort(), idleMs);
+    };
+    try {
+      armIdle();
+      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      if (!resp.ok) {
+        let msg = `API ${resp.status}`;
+        try {
+          const err = await resp.json();
+          if (err.error && err.error.message) msg = err.error.message;
+        } catch (e) {
+        }
+        throw new Error(msg);
+      }
+      if (!resp.body || typeof resp.body.getReader !== "function") {
+        const data = await resp.json();
+        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
+      }
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let full = "", buf = "";
+      while (true) {
+        armIdle();
+        const { done, value } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        let nl;
+        while ((nl = buf.indexOf("\n")) !== -1) {
+          const line = buf.slice(0, nl).trim();
+          buf = buf.slice(nl + 1);
+          if (!line.startsWith("data:")) continue;
+          const payload = line.slice(5).trim();
+          if (payload === "[DONE]") {
+            try {
+              reader.cancel();
+            } catch (e) {
+            }
+            return full;
+          }
+          try {
+            const chunk = JSON.parse(payload);
+            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
+            if (delta) {
+              full += delta;
+              try {
+                onDelta == null ? void 0 : onDelta(delta);
+              } catch (e) {
+              }
+            }
+          } catch (e) {
+          }
+        }
+      }
+      return full;
+    } catch (e) {
+      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
+      throw e;
+    } finally {
+      if (idleTimer !== null) clearTimeout(idleTimer);
+      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
+    }
+  }
+  async function chatCompletionsNonStream(provider, body, signal) {
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const idleMs = idleTimeoutOf(body);
+    const headers = {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${provider.apiKey}`,
+      ...provider.extraHeaders || {}
+    };
+    const resp = await new Promise((resolve2, reject) => {
+      let timer = null;
+      const settle = (fn) => {
+        if (timer !== null) clearTimeout(timer);
+        fn();
+      };
+      timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
+      requestUrl({
+        url: `${provider.endpoint}/chat/completions`,
+        method: "POST",
+        headers,
+        body: JSON.stringify({ ...body, stream: false })
+      }).then(
+        (r) => settle(() => resolve2(r)),
+        (e) => settle(() => reject(e))
+      );
+    });
+    if (signal == null ? void 0 : signal.aborted) throw abortError();
+    const data = JSON.parse(resp.text);
+    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
+    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
+    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
+    return content;
+  }
+  function imageMimeOfPath(path) {
+    var _a2;
+    const ext = ((_a2 = String(path || "").split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";
+    return AI_IMAGE_MIME[ext] || null;
+  }
+  function imageExtOfMime(mime) {
+    const m = String(mime || "").toLowerCase();
+    for (const [ext, known] of Object.entries(AI_IMAGE_MIME)) {
+      if (known === m && ext !== "jpeg") return ext;
+    }
+    return null;
+  }
+  function imageDataUrl(bytes, mime) {
+    const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    if (u8.byteLength === 0) throw new Error("图片内容为空");
+    if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
+      throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
+    }
+    let bin = "";
+    const CHUNK = 32768;
+    for (let i = 0; i < u8.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)));
+    }
+    return `data:${mime};base64,${btoa(bin)}`;
+  }
+  function buildUserContent(input) {
+    var _a2;
+    if (typeof input === "string") return input;
+    const text = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
+    const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
+    if (!images.length) return text;
+    return [
+      { type: "text", text },
+      ...images.map((url) => ({ type: "image_url", image_url: { url } }))
+    ];
+  }
+  function buildMessages(input) {
+    if (input && typeof input === "object" && Array.isArray(input.messages)) {
+      return input.messages;
+    }
+    return [{ role: "user", content: buildUserContent(input) }];
+  }
+  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+    return new AIService(params, defaultModel, defaultOptions);
+  }
+  var _settingsProvider, AI_PROVIDER_REGISTRY, AI_THINKING_STYLE, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
+  var init_ai = __esm({
+    "src/core/ai.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_model_limits();
+      _settingsProvider = null;
+      AI_PROVIDER_REGISTRY = [
+        {
+          id: "deepseek",
+          label: "DeepSeek",
+          endpoint: "https://api.deepseek.com",
+          model: "",
+          // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
+          // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
+          // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
+          defaultMaxTokens: 393216,
+          apiKeyKey: "deepseekApiKey",
+          apiKeyLabel: "DeepSeek 密钥",
+          apiKeyDesc: "留空则自动回退读取外部配置密钥"
+        },
+        {
+          id: "opencode-go",
+          label: "OpenCode Go",
+          endpoint: "https://opencode.ai/zen/go/v1",
+          model: "deepseek-v4-flash",
+          // deepseek-v4-flash 是官方 deepseek-flash 的旧名（同档：1M 窗口 / 384K 输出）
+          defaultMaxTokens: 393216,
+          apiKeyKey: "opencodeGoApiKey",
+          apiKeyLabel: "OpenCode 密钥",
+          apiKeyDesc: "在订阅官网获取后填入这里",
+          noCors: true
+        },
+        {
+          id: "openai",
+          label: "OpenAI",
+          endpoint: "https://api.openai.com/v1",
+          model: "gpt-4o-mini",
+          defaultMaxTokens: 16384,
+          apiKeyKey: "openaiApiKey",
+          apiKeyLabel: "OpenAI 密钥",
+          apiKeyDesc: "在 OpenAI 官网获取后填入这里"
+        },
+        {
+          id: "anthropic",
+          label: "Anthropic（Claude）",
+          endpoint: "https://api.anthropic.com/v1",
+          model: "claude-sonnet-4-5",
+          defaultMaxTokens: 64e3,
+          // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
+          apiKeyKey: "anthropicApiKey",
+          apiKeyLabel: "Anthropic 密钥",
+          apiKeyDesc: "在 Anthropic 官网获取后填入这里",
+          extraHeaders: { "anthropic-version": "2023-06-01" }
+        },
+        {
+          id: "google",
+          label: "Google Gemini",
+          endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
+          model: "gemini-2.0-flash",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "googleApiKey",
+          apiKeyLabel: "Gemini 密钥",
+          apiKeyDesc: "在 Google AI Studio 获取后填入这里"
+        },
+        {
+          id: "moonshot",
+          label: "Moonshot（Kimi）",
+          endpoint: "https://api.moonshot.cn/v1",
+          model: "kimi-k2-0711-preview",
+          defaultMaxTokens: 131072,
+          // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
+          apiKeyKey: "moonshotApiKey",
+          apiKeyLabel: "Kimi 密钥",
+          apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
+        },
+        {
+          id: "zhipu",
+          label: "智谱（GLM）",
+          endpoint: "https://open.bigmodel.cn/api/paas/v4",
+          model: "glm-4-flash",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "zhipuApiKey",
+          apiKeyLabel: "智谱密钥",
+          apiKeyDesc: "在智谱开放平台获取后填入这里"
+        },
+        {
+          // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
+          id: "zhipu-plan",
+          label: "智谱 Plan",
+          endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
+          model: "glm-5.3-flash",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "zhipuPlanApiKey",
+          apiKeyLabel: "智谱 Plan 密钥",
+          apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
+        },
+        {
+          id: "dashscope",
+          label: "阿里云百炼（通义）",
+          endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          model: "qwen-plus",
+          // qwen-plus 指向当前主力版本（Qwen3.7-Plus：1M 窗口 / 131K 输出）
+          defaultMaxTokens: 131072,
+          apiKeyKey: "dashscopeApiKey",
+          apiKeyLabel: "百炼密钥",
+          apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
+        },
+        {
+          id: "siliconflow",
+          label: "硅基流动",
+          endpoint: "https://api.siliconflow.cn/v1",
+          model: "deepseek-ai/DeepSeek-V3",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "siliconflowApiKey",
+          apiKeyLabel: "硅基流动密钥",
+          apiKeyDesc: "在硅基流动官网获取后填入这里"
+        },
+        {
+          id: "openrouter",
+          label: "OpenRouter",
+          endpoint: "https://openrouter.ai/api/v1",
+          model: "deepseek/deepseek-chat",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "openrouterApiKey",
+          apiKeyLabel: "OpenRouter 密钥",
+          apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
+        },
+        {
+          id: "xai",
+          label: "xAI（Grok）",
+          endpoint: "https://api.x.ai/v1",
+          model: "grok-2-latest",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "xaiApiKey",
+          apiKeyLabel: "xAI 密钥",
+          apiKeyDesc: "在 xAI 控制台获取后填入这里"
+        },
+        {
+          id: "groq",
+          label: "Groq",
+          endpoint: "https://api.groq.com/openai/v1",
+          model: "llama-3.3-70b-versatile",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "groqApiKey",
+          apiKeyLabel: "Groq 密钥",
+          apiKeyDesc: "在 Groq 控制台获取后填入这里"
+        },
+        {
+          id: "mistral",
+          label: "Mistral",
+          endpoint: "https://api.mistral.ai/v1",
+          model: "mistral-large-latest",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "mistralApiKey",
+          apiKeyLabel: "Mistral 密钥",
+          apiKeyDesc: "在 Mistral 控制台获取后填入这里"
+        },
+        {
+          id: "together",
+          label: "Together AI",
+          endpoint: "https://api.together.xyz/v1",
+          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "togetherApiKey",
+          apiKeyLabel: "Together 密钥",
+          apiKeyDesc: "在 Together AI 官网获取后填入这里"
+        },
+        {
+          id: "ollama",
+          label: "Ollama（本地）",
+          endpoint: "http://localhost:11434/v1",
+          model: "llama3.1",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "ollamaApiKey",
+          apiKeyLabel: "Ollama 密钥",
+          apiKeyDesc: "本地服务无需密钥，留空即可"
+        },
+        {
+          id: "custom",
+          label: "自定义（OpenAI 兼容）",
+          endpoint: "",
+          model: "",
+          defaultMaxTokens: 8192,
+          apiKeyKey: "aiCustomApiKey",
+          apiKeyLabel: "自定义 API 密钥",
+          apiKeyDesc: "在服务官网获取后填入这里"
+        }
+      ];
+      AI_THINKING_STYLE = {
+        openai: "effort",
+        openrouter: "effort",
+        anthropic: "effort",
+        google: "effort",
+        groq: "effort",
+        xai: "effort",
+        together: "effort",
+        mistral: "effort",
+        siliconflow: "effort",
+        deepseek: "enable",
+        "opencode-go": "enable",
+        dashscope: "enable",
+        zhipu: "zhipu",
+        "zhipu-plan": "zhipu",
+        moonshot: "none",
+        ollama: "none",
+        custom: "none"
+      };
+      _aiProviderCache = null;
+      AI_IDLE_TIMEOUT_MS = 6e4;
+      AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
+      AI_IMAGE_MIME = {
+        jpg: "image/jpeg",
+        jpeg: "image/jpeg",
+        png: "image/png",
+        gif: "image/gif",
+        webp: "image/webp"
+      };
+      AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
+      AIService = class {
+        constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
+          this.defaultModel = defaultModel;
+          this.defaultOptions = defaultOptions;
+        }
+        /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
+         *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
+         *  或 {messages}（多轮完整报文，原样进请求）；
+         *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
+         *  既有调用（不传这两项）行为零变化 */
+        async prompt(input, model = this.defaultModel, options2 = {}) {
+          const mergedOptions = this._mergeOptions(options2);
+          const provider = await getAIProvider(mergedOptions.provider);
+          const s = getQ3Settings();
+          const isExplicit = model !== this.defaultModel;
+          const effModel = isExplicit ? model : provider.model || model;
+          const mo = mergedOptions.modelOptions || {};
+          const effMaxTokens = provider.defaultMaxTokens || 4096;
+          const body = {
+            model: effModel,
+            messages: buildMessages(input),
+            max_tokens: effMaxTokens,
+            stream: true
+          };
+          for (const k of Object.keys(mo)) {
+            if (k === "max_tokens") continue;
+            body[k] = mo[k];
+          }
+          if (!hasExplicitThinkingOption(mo)) {
+            const style = AI_THINKING_STYLE[provider.id || ""] || "none";
+            const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
+            if (thinking) Object.assign(body, thinking);
+          }
+          const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
+          const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
+          try {
+            const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
+            return content;
+          } catch (streamError) {
+            if (signal == null ? void 0 : signal.aborted) throw streamError;
+            try {
+              const content = await chatCompletionsNonStream(provider, body, signal);
+              return content;
+            } catch (e) {
+              throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
+            }
+          }
+        }
+        /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
+        async chat(input, extraOptions = {}) {
+          return this.prompt(input, "deepseek-v4-flash", extraOptions);
+        }
+        /** 推理模型，自动开启思考模式 */
+        async reason(input, extraOptions = {}) {
+          const options2 = this._prepareOptions(extraOptions, { enable_thinking: true });
+          return this.prompt(input, "deepseek-v4-flash", options2);
+        }
+        /** 联网搜索（实验性，第三方代理平台生效） */
+        async search(input, extraOptions = {}) {
+          const options2 = this._prepareOptions(extraOptions, { search: true });
+          return this.prompt(input, "deepseek-v4-flash", options2);
+        }
+        /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
+        async json(input, extraOptions = {}) {
+          const options2 = this._prepareOptions(extraOptions, {
+            response_format: { type: "json_object" }
+          });
+          return this.prompt(input, "deepseek-v4-flash", options2);
+        }
+        /** 思考 + 联网搜索（实验性） */
+        async reasonAndSearch(input, extraOptions = {}) {
+          const options2 = this._prepareOptions(extraOptions, {
+            enable_thinking: true,
+            search: true
+          });
+          return this.prompt(input, "deepseek-v4-flash", options2);
+        }
+        setDefaultModel(model) {
+          this.defaultModel = model;
+        }
+        setDefaultOptions(options2) {
+          this.defaultOptions = options2;
+        }
+        // ---------- 内部辅助方法 ----------
+        _mergeOptions(options2) {
+          const merged = { ...this.defaultOptions, ...options2 };
+          if (this.defaultOptions.modelOptions || options2.modelOptions) {
+            merged.modelOptions = {
+              ...this.defaultOptions.modelOptions || {},
+              ...options2.modelOptions || {}
+            };
+          }
+          return merged;
+        }
+        /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
+        _prepareOptions(extraOptions, modelSettings) {
+          const options2 = { ...extraOptions };
+          if (!options2.modelOptions) options2.modelOptions = {};
+          const userModelOpts = options2.modelOptions;
+          options2.modelOptions = { ...modelSettings, ...userModelOpts };
+          return options2;
+        }
+      };
+    }
+  });
+
+  // src/core/domain-bus.ts
+  function emitDomainEvent(channel, evt) {
+    const handlers = channels.get(channel);
+    if (!handlers || handlers.size === 0) return;
+    for (const handler of [...handlers]) {
+      try {
+        handler(evt);
+      } catch (e) {
+        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
+      }
+    }
+  }
+  function onDomainEvent(channel, handler) {
+    let set = channels.get(channel);
+    if (!set) {
+      set = /* @__PURE__ */ new Set();
+      channels.set(channel, set);
+    }
+    set.add(handler);
+    let offed = false;
+    return () => {
+      if (offed) return;
+      offed = true;
+      const cur = channels.get(channel);
+      if (!cur) return;
+      cur.delete(handler);
+      if (cur.size === 0) channels.delete(channel);
+    };
+  }
+  var channels;
+  var init_domain_bus = __esm({
+    "src/core/domain-bus.ts"() {
+      channels = /* @__PURE__ */ new Map();
+    }
+  });
+
+  // src/core/diary-format.ts
+  function diaryEntryBaseName(dateStr, timeStr, seq) {
+    const d = String(dateStr || "").replace(/-/g, "");
+    const t = String(timeStr || "").replace(/:/g, "");
+    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
+    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
+  }
+  function diaryEntryPath(dir, dateStr, timeStr, seq) {
+    return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
+  }
+  function diaryMetaFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromLegacyPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_LEGACY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `${m[1]}-${m[2]}-${m[3]}`;
+    return isValidDiaryDate(date) ? date : null;
+  }
+  function diaryDateFromEntryPath(path) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = diaryMetaFromEntryPath(path)) == null ? void 0 : _a2.date) != null ? _b2 : null;
+  }
+  function diaryStampText(date, time) {
+    return `${date} ${time}`;
+  }
+  function parseDiaryStamp(value) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
+    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
+  }
+  function isValidDiaryDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d <= days[mo - 1];
+  }
+  function isValidDiaryTime(s) {
+    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
+  }
+  function serializeDiaryEntryFile(meta, tags, content) {
+    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
+    for (const t of tags) lines.push(`  - ${t}`);
+    lines.push("---", "", content);
+    let out = lines.join("\n");
+    if (!out.endsWith("\n")) out += "\n";
+    return out;
+  }
+  function parseDiaryBlockHeader(line) {
+    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
+    if (!m) return null;
+    const tags = [];
+    for (const name of m[1].split("/")) {
+      const t = name.trim();
+      if (t && !tags.includes(t)) tags.push(t);
+    }
+    return { tags, time: m[2] };
+  }
+  function readDiaryFrontmatterFieldRaw(content, key) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return null;
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return null;
+    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
+    return m ? m[1].trim() : null;
+  }
+  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
+  var init_diary_format = __esm({
+    "src/core/diary-format.ts"() {
+      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
+      DIARY_DATE_KEY = "date";
+      DIARY_TYPE_KEY = "type";
+    }
+  });
+
+  // src/gameshelf/state.ts
+  function resolveGameshelfFolderPath() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.gameshelfFolderPath === "string" && s.gameshelfFolderPath.trim() ? s.gameshelfFolderPath : DEFAULT_FOLDER;
+    } catch (e) {
+      return DEFAULT_FOLDER;
+    }
+  }
+  function resetGameshelfState() {
+    M.currentOverlay = null;
+    M.items = [];
+    M.view = "shelf";
+    M.query = "";
+    M.bucket = "all";
+    M.sort = "hours";
+    M.syncing = false;
+    M.statusMsg = "";
+    M.appRef = null;
+    M.folderPath = DEFAULT_FOLDER;
+    M.renderFn = null;
+  }
+  var DEFAULT_FOLDER, M;
+  var init_state = __esm({
+    "src/gameshelf/state.ts"() {
+      init_settings_provider();
+      DEFAULT_FOLDER = "我的/游戏";
+      M = {
+        currentOverlay: null,
+        items: [],
+        view: "shelf",
+        query: "",
+        bucket: "all",
+        sort: "hours",
+        syncing: false,
+        statusMsg: "",
+        appRef: null,
+        folderPath: DEFAULT_FOLDER,
+        renderFn: null
+      };
+    }
+  });
+
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve2, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve2(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  async function httpGetText(url, opts) {
+    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
+    try {
+      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
+      if (!resp || !resp.ok) return null;
+      return await resp.text();
+    } catch (e) {
+      return null;
+    }
+  }
+  function requestUrlAsFetch() {
+    return async (url, init) => {
+      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
+      const status = resp.status;
+      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
+    };
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/gameshelf/steam.ts
+  function steamCoverUrl(appid) {
+    return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`;
+  }
+  function steamStoreUrl(appid) {
+    return `${STORE_BASE}/app/${appid}/`;
+  }
+  function isValidSteamId(steamId) {
+    return /^7656\d{13}$/.test(steamId.trim());
+  }
+  async function getJson(url) {
+    try {
+      const resp = await withTimeout(requestUrl({ url, method: "GET", throw: false }), REQUEST_TIMEOUT_MS, "Steam Web API");
+      if (resp.status === 401 || resp.status === 403) throw new SteamHttpError("auth", resp.status);
+      if (resp.status >= 400) throw new SteamHttpError("http", resp.status);
+      return resp.json;
+    } catch (e) {
+      if (e instanceof SteamHttpError) throw e;
+      throw new SteamHttpError("network", void 0, e instanceof Error ? e.message : String(e));
+    }
+  }
+  async function fetchSteamLibrary(steamId, apiKey) {
+    if (!isValidSteamId(steamId)) {
+      return { ok: false, reason: "config", message: "SteamID64 未填写或格式不对（应为 17 位数字）" };
+    }
+    if (!apiKey.trim()) {
+      return { ok: false, reason: "config", message: "Web API 密钥未填写，请在设置面板游戏架页填入" };
+    }
+    const id = steamId.trim();
+    const key = apiKey.trim();
+    let ownedRaw;
+    try {
+      ownedRaw = await getJson(
+        `${API_BASE}/IPlayerService/GetOwnedGames/v1/?key=${encodeURIComponent(key)}&steamid=${id}&include_appinfo=true&include_played_free_games=true&skip_unvetted_apps=0`
+      );
+    } catch (e) {
+      const err = e;
+      if (err.reason === "auth") {
+        return { ok: false, reason: "auth", message: "Web API 密钥无效或已被吊销，请去 Steam 开发者页重新生成" };
+      }
+      if (err.reason === "http") {
+        return { ok: false, reason: "http", message: `Steam 接口返回异常（${err.status}），稍后重试` };
+      }
+      return { ok: false, reason: "network", message: "连不上 Steam 接口：请检查网络，国内网络需系统代理开启后再同步" };
+    }
+    let recentRaw = null;
+    try {
+      recentRaw = await getJson(`${API_BASE}/IPlayerService/GetRecentlyPlayedGames/v1/?key=${encodeURIComponent(key)}&steamid=${id}`);
+    } catch (e) {
+      recentRaw = null;
+    }
+    return { ok: true, owned: parseOwnedGames(ownedRaw), recent: parseRecentGames(recentRaw) };
+  }
+  function steamIconUrl(appid, hash) {
+    return `https://media.steampowered.com/steamcommunity/public/images/apps/${appid}/${hash}.jpg`;
+  }
+  function parseOwnedGames(raw) {
+    var _a2;
+    const games = (_a2 = raw == null ? void 0 : raw.response) == null ? void 0 : _a2.games;
+    if (!Array.isArray(games)) return [];
+    const out = [];
+    for (const g of games) {
+      const appid = Number(g == null ? void 0 : g.appid);
+      if (!Number.isFinite(appid) || appid <= 0) continue;
+      const num2 = (v) => Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0;
+      out.push({
+        appid,
+        name: typeof (g == null ? void 0 : g.name) === "string" && g.name ? g.name : `App ${appid}`,
+        playtimeMin: num2(g == null ? void 0 : g.playtime_forever),
+        lastPlayedTs: num2(g == null ? void 0 : g.rtime_last_played) * 1e3,
+        iconUrl: typeof (g == null ? void 0 : g.img_icon_url) === "string" && g.img_icon_url ? steamIconUrl(appid, g.img_icon_url) : null,
+        windowsMin: num2(g == null ? void 0 : g.playtime_windows_forever),
+        macMin: num2(g == null ? void 0 : g.playtime_mac_forever),
+        linuxMin: num2(g == null ? void 0 : g.playtime_linux_forever),
+        deckMin: num2(g == null ? void 0 : g.playtime_deck_forever),
+        hasAchievements: (g == null ? void 0 : g.has_community_visible_stats) === true
+      });
+    }
+    return out;
+  }
+  function parseRecentGames(raw) {
+    var _a2;
+    const games = (_a2 = raw == null ? void 0 : raw.response) == null ? void 0 : _a2.games;
+    if (!Array.isArray(games)) return [];
+    const out = [];
+    for (const g of games) {
+      const appid = Number(g == null ? void 0 : g.appid);
+      if (!Number.isFinite(appid) || appid <= 0) continue;
+      out.push({
+        appid,
+        name: typeof (g == null ? void 0 : g.name) === "string" && g.name ? g.name : `App ${appid}`,
+        playtime2weeksMin: Number.isFinite(Number(g == null ? void 0 : g.playtime_2weeks)) ? Math.max(0, Math.floor(Number(g.playtime_2weeks))) : 0
+      });
+    }
+    return out;
+  }
+  function globalPercents(globalRaw) {
+    var _a2;
+    const list = (_a2 = globalRaw == null ? void 0 : globalRaw.achievementpercentages) == null ? void 0 : _a2.achievements;
+    const map = /* @__PURE__ */ new Map();
+    if (!Array.isArray(list)) return map;
+    for (const a of list) {
+      const p = Number(a == null ? void 0 : a.percent);
+      if (typeof (a == null ? void 0 : a.name) === "string" && Number.isFinite(p)) map.set(a.name, p);
+    }
+    return map;
+  }
+  function parseAchievementRows(schemaRaw, playerRaw, globalRaw) {
+    var _a2, _b2, _c, _d, _e, _f;
+    const schemaAch = (_b2 = (_a2 = schemaRaw == null ? void 0 : schemaRaw.game) == null ? void 0 : _a2.availableGameStats) == null ? void 0 : _b2.achievements;
+    const playerAch = (_c = playerRaw == null ? void 0 : playerRaw.playerstats) == null ? void 0 : _c.achievements;
+    if (!Array.isArray(schemaAch) || !Array.isArray(playerAch)) return null;
+    const globals = globalPercents(globalRaw);
+    const meta = /* @__PURE__ */ new Map();
+    for (const a of schemaAch) {
+      if (!a || typeof a.name !== "string") continue;
+      const pct = Number((_d = a == null ? void 0 : a.globalAchievement) == null ? void 0 : _d.percent);
+      if (!globals.has(a.name) && Number.isFinite(pct)) globals.set(a.name, pct);
+      meta.set(a.name, {
+        name: typeof a.displayName === "string" && a.displayName ? a.displayName : a.name,
+        desc: typeof a.description === "string" ? a.description : "",
+        hidden: a.hidden === 1 || a.hidden === true,
+        icon: typeof a.icon === "string" && a.icon ? a.icon : null
+      });
+    }
+    const rows = [];
+    let unlocked = 0;
+    let rarestName = null;
+    let rarestPercent = null;
+    for (const p of playerAch) {
+      if (!p) continue;
+      const apiName = String((_e = p.apiname) != null ? _e : "");
+      if (!apiName) continue;
+      const m = (_f = meta.get(apiName)) != null ? _f : { name: apiName, desc: "", hidden: false, icon: null };
+      const isUnlocked = p.achieved === 1;
+      if (isUnlocked) unlocked += 1;
+      const pct = globals.get(apiName);
+      const percent = pct === void 0 ? null : Math.round(pct * 10) / 10;
+      if (isUnlocked && percent !== null && (rarestPercent === null || percent < rarestPercent)) {
+        rarestPercent = percent;
+        rarestName = m.name;
+      }
+      rows.push({
+        apiName,
+        name: m.name,
+        desc: m.desc,
+        hidden: m.hidden,
+        unlocked: isUnlocked,
+        unlockedAt: isUnlocked && Number(p.unlocktime) > 0 ? new Date(Number(p.unlocktime) * 1e3).toISOString() : null,
+        globalPercent: percent,
+        icon: m.icon
+      });
+    }
+    rows.sort((a, b) => {
+      var _a3, _b3;
+      return ((_a3 = a.globalPercent) != null ? _a3 : 101) - ((_b3 = b.globalPercent) != null ? _b3 : 101) || Number(b.unlocked) - Number(a.unlocked);
+    });
+    const total = rows.length;
+    return {
+      total,
+      unlocked,
+      percent: total > 0 ? Math.round(unlocked / total * 1e3) / 10 : 0,
+      rows,
+      rarestName,
+      rarestPercent
+    };
+  }
+  function achievementFailure(e) {
+    const err = e;
+    if (err instanceof SteamHttpError && err.reason === "http" && (err.status === 400 || err.status === 403)) {
+      return { ok: false, reason: "none", message: "这款游戏没有公开成就，或成就页不可见" };
+    }
+    return { ok: false, reason: "network", message: "成就拉取失败：请检查网络与系统代理" };
+  }
+  async function fetchAchievementDetail(steamId, apiKey, appid) {
+    const enc = encodeURIComponent(apiKey.trim());
+    try {
+      const schema = await getJson(`${API_BASE}/ISteamUserStats/GetSchemaForGame/v2/?key=${enc}&appid=${appid}`);
+      const player = await getJson(`${API_BASE}/ISteamUserStats/GetPlayerAchievements/v1/?key=${enc}&steamid=${steamId.trim()}&appid=${appid}`);
+      let global = null;
+      try {
+        global = await getJson(`${API_BASE}/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid=${appid}`);
+      } catch (e) {
+        global = null;
+      }
+      const detail = parseAchievementRows(schema, player, global);
+      if (!detail) return { ok: false, reason: "none", message: "这款游戏没有公开成就，或成就页不可见" };
+      return { ok: true, data: detail };
+    } catch (e) {
+      return achievementFailure(e);
+    }
+  }
+  function parseStoreMeta(raw) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
+    const data = (_b2 = (_a2 = raw == null ? void 0 : raw[0]) == null ? void 0 : _a2.data) != null ? _b2 : raw == null ? void 0 : raw.data;
+    if (!data || typeof data !== "object") return null;
+    const str2 = (v) => typeof v === "string" && v.trim() ? v : null;
+    const join = (v) => Array.isArray(v) ? v.map((x) => {
+      var _a3, _b3;
+      return String(typeof x === "string" ? x : (_b3 = (_a3 = x == null ? void 0 : x.description) != null ? _a3 : x == null ? void 0 : x.name) != null ? _b3 : "");
+    }).filter(Boolean).join("、") || null : null;
+    const langs = typeof (data == null ? void 0 : data.supported_languages) === "string" ? data.supported_languages : "";
+    const plats = (_c = data == null ? void 0 : data.platforms) != null ? _c : {};
+    const platformNames = [plats.windows ? "Windows" : "", plats.mac ? "macOS" : "", plats.linux ? "Linux" : ""].filter(Boolean);
+    const shots = Array.isArray(data == null ? void 0 : data.screenshots) ? data.screenshots.map((s) => str2(s == null ? void 0 : s.path_full)).filter((x) => !!x).slice(0, 8) : [];
+    const num2 = (v) => Number.isFinite(Number(v)) ? Number(v) : null;
+    return {
+      type: str2(data == null ? void 0 : data.type),
+      genres: join(data == null ? void 0 : data.genres),
+      developers: join(data == null ? void 0 : data.developers),
+      publishers: join(data == null ? void 0 : data.publishers),
+      releaseDate: str2((_d = data == null ? void 0 : data.release_date) == null ? void 0 : _d.date),
+      comingSoon: ((_e = data == null ? void 0 : data.release_date) == null ? void 0 : _e.coming_soon) === true,
+      zhSupported: langs.includes("简体中文"),
+      platforms: platformNames.length ? platformNames.join("、") : null,
+      categories: join(data == null ? void 0 : data.categories),
+      metacritic: num2((_f = data == null ? void 0 : data.metacritic) == null ? void 0 : _f.score),
+      recommendations: num2((_g = data == null ? void 0 : data.recommendations) == null ? void 0 : _g.total),
+      isFree: (data == null ? void 0 : data.is_free) === true,
+      price: (data == null ? void 0 : data.is_free) === true ? "免费" : str2((_h = data == null ? void 0 : data.price_overview) == null ? void 0 : _h.final_formatted),
+      discountPercent: num2((_i = data == null ? void 0 : data.price_overview) == null ? void 0 : _i.discount_percent),
+      website: str2(data == null ? void 0 : data.website),
+      shortDescription: str2(data == null ? void 0 : data.short_description),
+      background: (_j = str2(data == null ? void 0 : data.background_raw)) != null ? _j : str2(data == null ? void 0 : data.background),
+      screenshots: shots,
+      dlcCount: Array.isArray(data == null ? void 0 : data.dlc) ? data.dlc.length : null,
+      achievementsTotal: num2((_k = data == null ? void 0 : data.achievements) == null ? void 0 : _k.total),
+      supportUrl: str2((_l = data == null ? void 0 : data.support_info) == null ? void 0 : _l.url),
+      supportEmail: str2((_m = data == null ? void 0 : data.support_info) == null ? void 0 : _m.email)
+    };
+  }
+  function parseReviews(raw) {
+    const q2 = raw == null ? void 0 : raw.query_summary;
+    const num2 = (v) => Number.isFinite(Number(v)) ? Number(v) : null;
+    return {
+      reviewDesc: typeof (q2 == null ? void 0 : q2.review_score_desc) === "string" && q2.review_score_desc ? q2.review_score_desc : null,
+      reviewsTotal: num2(q2 == null ? void 0 : q2.total_reviews),
+      reviewsPositive: num2(q2 == null ? void 0 : q2.total_positive),
+      reviewsNegative: num2(q2 == null ? void 0 : q2.total_negative)
+    };
+  }
+  async function fetchStoreMeta(appid) {
+    try {
+      const details = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese`);
+      const meta = parseStoreMeta(details);
+      if (!meta) return { ok: false, reason: "parse", message: "商店数据拉到了但解析不出（可能已下架）" };
+      let reviews = { reviewDesc: null, reviewsTotal: null, reviewsPositive: null, reviewsNegative: null };
+      try {
+        reviews = parseReviews(await getJson(`${STORE_BASE}/appreviews/${appid}?json=1&num_per_page=0&language=schinese&purchase_type=all`));
+      } catch (e) {
+      }
+      return { ok: true, data: { ...meta, ...reviews } };
+    } catch (e) {
+      const err = e;
+      return { ok: false, reason: err.reason === "auth" ? "parse" : "network", message: "商店数据拉取失败：请检查网络" };
+    }
+  }
+  var API_BASE, STORE_BASE, REQUEST_TIMEOUT_MS, SteamHttpError;
+  var init_steam = __esm({
+    "src/gameshelf/steam.ts"() {
+      init_fake_obsidian();
+      init_http();
+      API_BASE = "https://api.steampowered.com";
+      STORE_BASE = "https://store.steampowered.com";
+      REQUEST_TIMEOUT_MS = 2e4;
+      SteamHttpError = class extends Error {
+        constructor(reason, status, detail) {
+          super(detail || `Steam HTTP ${status != null ? status : ""}`);
+          this.reason = reason;
+          this.status = status;
+        }
+      };
+    }
+  });
+
+  // src/gameshelf/reconcile.ts
+  function buildSyncPlan(owned, notes) {
+    const byAppid = /* @__PURE__ */ new Map();
+    for (const n of notes) byAppid.set(n.appid, n);
+    const seen = /* @__PURE__ */ new Set();
+    const plan = { toCreate: [], toUpdate: [], toOffShelf: [], unchanged: 0 };
+    for (const game of owned) {
+      if (seen.has(game.appid)) continue;
+      seen.add(game.appid);
+      const note = byAppid.get(game.appid);
+      if (!note) {
+        plan.toCreate.push(game);
+        continue;
+      }
+      const valueChanged = note.playtimeMin === null || note.playtimeMin !== game.playtimeMin;
+      if (valueChanged || note.offShelf || note.legacy) plan.toUpdate.push({ game, note });
+      else plan.unchanged += 1;
+    }
+    for (const note of notes) {
+      if (!seen.has(note.appid) && !note.offShelf) plan.toOffShelf.push(note);
+    }
+    return plan;
+  }
+  function sanitizeFileName(name) {
+    return name.replace(/[\\/:*?"<>|]/g, "－").trim();
+  }
+  function notePathFor(folder, game, takenPaths) {
+    const base = `《${sanitizeFileName(game.name)}》`;
+    const direct = `${folder}/${base}.md`;
+    if (!takenPaths.has(direct)) return direct;
+    return `${folder}/${base} ${game.appid}.md`;
+  }
+  function managedFm(game, nowIso) {
+    var _a2;
+    return {
+      AppID: game.appid,
+      游玩分钟: game.playtimeMin,
+      最后游玩: lastPlayedStr(game.lastPlayedTs),
+      封面: steamCoverUrl(game.appid),
+      同步时间: nowIso,
+      已下架: false,
+      图标: (_a2 = game.iconUrl) != null ? _a2 : "",
+      Windows分钟: game.windowsMin,
+      SteamDeck分钟: game.deckMin,
+      Mac分钟: game.macMin,
+      Linux分钟: game.linuxMin,
+      有成就: game.hasAchievements
+    };
+  }
+  function migrateLegacyKeys(fm) {
+    let migrated = false;
+    for (const [oldKey, newKey] of Object.entries(LEGACY_KEY_MAP)) {
+      if (oldKey in fm) {
+        if (fm[newKey] === void 0) fm[newKey] = fm[oldKey];
+        delete fm[oldKey];
+        migrated = true;
+      }
+    }
+    return migrated;
+  }
+  function lastPlayedStr(tsMs) {
+    if (!tsMs || tsMs <= 0) return "";
+    const d = new Date(tsMs);
+    if (isNaN(d.getTime())) return "";
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function mergeTags(raw) {
+    const list = typeof raw === "string" ? [raw] : Array.isArray(raw) ? raw.map((t) => String(t)) : [];
+    const out = [];
+    for (const t of list) {
+      const s = t.trim();
+      if (s && !out.includes(s)) out.push(s);
+    }
+    if (!out.includes(GAME_TAG)) out.unshift(GAME_TAG);
+    return out;
+  }
+  var GAME_TAG, LEGACY_KEY_MAP;
+  var init_reconcile = __esm({
+    "src/gameshelf/reconcile.ts"() {
+      init_steam();
+      GAME_TAG = "游戏";
+      LEGACY_KEY_MAP = {
+        appid: "AppID",
+        playtimeMin: "游玩分钟",
+        lastPlayed: "最后游玩",
+        cover: "封面",
+        syncedAt: "同步时间",
+        offShelf: "已下架"
+      };
+    }
+  });
+
+  // src/gameshelf/notes.ts
+  function readVal(fm, cn, legacy) {
+    return fm[cn] !== void 0 ? fm[cn] : fm[legacy];
+  }
+  function intOf(v) {
+    return Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0;
+  }
+  function rebuildItems(app) {
+    var _a2;
+    const folder = resolveGameshelfFolderPath();
+    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+    const items = [];
+    for (const file of files) {
+      const fm = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
+      const appid = Number(readVal(fm != null ? fm : {}, "AppID", "appid"));
+      if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
+      const icon2 = readVal(fm, "图标", "");
+      items.push({
+        file,
+        appid,
+        name: file.basename.replace(/^《/, "").replace(/》$/, "").trim() || `App ${appid}`,
+        playtimeMin: intOf(readVal(fm, "游玩分钟", "playtimeMin")),
+        lastPlayed: typeof readVal(fm, "最后游玩", "lastPlayed") === "string" ? String(readVal(fm, "最后游玩", "lastPlayed")) : "",
+        cover: typeof readVal(fm, "封面", "cover") === "string" && /^https?:\/\//.test(String(readVal(fm, "封面", "cover"))) ? String(readVal(fm, "封面", "cover")) : steamCoverUrl(appid),
+        icon: typeof icon2 === "string" && /^https?:\/\//.test(icon2) ? icon2 : null,
+        windowsMin: intOf(fm["Windows分钟"]),
+        deckMin: intOf(fm["SteamDeck分钟"]),
+        macMin: intOf(fm["Mac分钟"]),
+        linuxMin: intOf(fm["Linux分钟"]),
+        hasAch: fm["有成就"] === true,
+        offShelf: readVal(fm, "已下架", "offShelf") === true,
+        syncedAt: typeof readVal(fm, "同步时间", "syncedAt") === "string" ? String(readVal(fm, "同步时间", "syncedAt")) : null
+      });
+    }
+    M.items = items;
+    return items;
+  }
+  function scanSnapshots(app, folder) {
+    var _a2;
+    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+    const out = [];
+    for (const file of files) {
+      const fm = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
+      const appid = Number(readVal(fm != null ? fm : {}, "AppID", "appid"));
+      if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
+      out.push({
+        path: file.path,
+        appid,
+        playtimeMin: Number.isFinite(Number(readVal(fm, "游玩分钟", "playtimeMin"))) ? Math.max(0, Math.floor(Number(readVal(fm, "游玩分钟", "playtimeMin")))) : null,
+        offShelf: readVal(fm, "已下架", "offShelf") === true,
+        legacy: "appid" in fm || "playtimeMin" in fm
+      });
+    }
+    return out;
+  }
+  async function applySyncPlan(app, folder, owned, nowIso) {
+    const plan = buildSyncPlan(owned, scanSnapshots(app, folder));
+    if (plan.toCreate.length > 0 && !app.vault.getAbstractFileByPath(folder)) {
+      await app.vault.createFolder(folder);
+    }
+    const taken = new Set(app.vault.getMarkdownFiles().map((f) => f.path));
+    for (const game of plan.toCreate) {
+      const path = notePathFor(folder, game, taken);
+      taken.add(path);
+      await app.vault.create(path, noteMarkdown(game, nowIso));
+    }
+    const byPath = /* @__PURE__ */ new Map();
+    for (const f of app.vault.getMarkdownFiles()) byPath.set(f.path, f);
+    for (const { game, note } of plan.toUpdate) {
+      const file = byPath.get(note.path);
+      if (!file) continue;
+      await app.fileManager.processFrontMatter(file, (fm) => {
+        Object.assign(fm, managedFm(game, nowIso));
+        migrateLegacyKeys(fm);
+        fm.tags = mergeTags(fm.tags);
+      });
+    }
+    for (const note of plan.toOffShelf) {
+      const file = byPath.get(note.path);
+      if (!file) continue;
+      await app.fileManager.processFrontMatter(file, (fm) => {
+        fm["已下架"] = true;
+        delete fm["offShelf"];
+      });
+    }
+    return { added: plan.toCreate.length, updated: plan.toUpdate.length, offShelf: plan.toOffShelf.length };
+  }
+  function noteMarkdown(game, nowIso) {
+    const fm = managedFm(game, nowIso);
+    const lines = [
+      "---",
+      "tags:",
+      "- 游戏",
+      `AppID: ${fm.AppID}`,
+      `游玩分钟: ${fm["游玩分钟"]}`
+    ];
+    if (fm["最后游玩"]) lines.push(`最后游玩: "${fm["最后游玩"]}"`);
+    lines.push(
+      `封面: ${fm["封面"]}`,
+      `同步时间: "${fm["同步时间"]}"`,
+      `已下架: ${fm["已下架"]}`,
+      `图标: ${fm["图标"] || '""'}`,
+      `Windows分钟: ${fm["Windows分钟"]}`,
+      `SteamDeck分钟: ${fm["SteamDeck分钟"]}`,
+      `Mac分钟: ${fm["Mac分钟"]}`,
+      `Linux分钟: ${fm["Linux分钟"]}`,
+      `有成就: ${fm["有成就"]}`,
+      "---",
+      "",
+      ""
+    );
+    return lines.join("\n");
+  }
+  async function upsertDetail(app, file, fields) {
+    await app.fileManager.processFrontMatter(file, (fm) => {
+      Object.assign(fm, fields);
+    });
+  }
+  function readDetailFm(app, file) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter) != null ? _b2 : {};
+  }
+  var init_notes = __esm({
+    "src/gameshelf/notes.ts"() {
+      init_state();
+      init_reconcile();
+      init_steam();
+    }
+  });
+
+  // src/gameshelf/posters.ts
+  var posters_exports = {};
+  __export(posters_exports, {
+    DEFAULT_POSTER_FOLDER: () => DEFAULT_POSTER_FOLDER,
+    ensurePosters: () => ensurePosters,
+    posterDisplayUrl: () => posterDisplayUrl,
+    resolvePosterFolder: () => resolvePosterFolder,
+    unloadPosters: () => unloadPosters
+  });
+  function resolvePosterFolder() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.gameshelfPosterFolder === "string" && s.gameshelfPosterFolder.trim() ? s.gameshelfPosterFolder : DEFAULT_POSTER_FOLDER;
+    } catch (e) {
+      return DEFAULT_POSTER_FOLDER;
+    }
+  }
+  function posterDisplayUrl(app, appid, remote) {
+    const f = app.vault.getAbstractFileByPath(`${resolvePosterFolder()}/${appid}.jpg`);
+    if (f) {
+      try {
+        return app.vault.getResourcePath(f);
+      } catch (e) {
+      }
+    }
+    return remote != null ? remote : "";
+  }
+  function hasPoster(app, folder, appid) {
+    return app.vault.getAbstractFileByPath(`${folder}/${appid}.jpg`) !== null;
+  }
+  function ensurePosters(app, items) {
+    const folder = resolvePosterFolder();
+    if (!app.vault.getAbstractFileByPath(folder)) {
+      try {
+        void app.vault.createFolder(folder);
+      } catch (e) {
+      }
+    }
+    let added = 0;
+    for (const it of items) {
+      if (!it.cover) continue;
+      if (hasPoster(app, folder, it.appid)) continue;
+      const path = `${folder}/${it.appid}.jpg`;
+      if (pending.has(path)) continue;
+      pending.add(path);
+      queue.push({ app, path, url: it.cover, appid: it.appid });
+      added += 1;
+    }
+    if (added > 0 && !running) void runQueue();
+  }
+  async function runQueue() {
+    running = true;
+    while (queue.length > 0) {
+      const job = queue.shift();
+      try {
+        const resp = await requestUrl({ url: job.url, method: "GET", throw: false });
+        const buf = resp.arrayBuffer;
+        if (resp.status >= 200 && resp.status < 300 && buf) {
+          if (!job.app.vault.getAbstractFileByPath(job.path)) {
+            await job.app.vault.adapter.writeBinary(job.path, buf);
+            scheduleRerender(job.app);
+          }
+        }
+      } catch (e) {
+        console.warn("bz 游戏架：海报下载失败:", job.url, e);
+      } finally {
+        pending.delete(job.path);
+      }
+    }
+    running = false;
+  }
+  function scheduleRerender(_app3) {
+    if (rerenderTimer) return;
+    rerenderTimer = setTimeout(() => {
+      var _a2, _b2;
+      rerenderTimer = null;
+      (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
+    }, 1500);
+  }
+  function unloadPosters() {
+    queue.length = 0;
+    pending.clear();
+    if (rerenderTimer) {
+      clearTimeout(rerenderTimer);
+      rerenderTimer = null;
+    }
+  }
+  var DEFAULT_POSTER_FOLDER, queue, pending, running, rerenderTimer;
+  var init_posters = __esm({
+    "src/gameshelf/posters.ts"() {
+      init_fake_obsidian();
+      init_settings_provider();
+      init_state();
+      DEFAULT_POSTER_FOLDER = "CONFIG/游戏海报";
+      queue = [];
+      pending = /* @__PURE__ */ new Set();
+      running = false;
+      rerenderTimer = null;
     }
   });
 
@@ -4915,7 +2384,7 @@ var BZW_settings_panel = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M7 = 10;
+    const M8 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -4942,7 +2411,7 @@ var BZW_settings_panel = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
+      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
         moved = true;
         cancel();
       }
@@ -5008,7 +2477,16 @@ var BZW_settings_panel = (() => {
   });
 
   // src/core/esc-manager.ts
-  var escManager;
+  function registerPanelEsc(id, isVisible, close) {
+    if (panelEscHandles.has(id)) return;
+    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
+  function unregisterPanelEsc(id) {
+    var _a2;
+    (_a2 = panelEscHandles.get(id)) == null ? void 0 : _a2.unregister();
+    panelEscHandles.delete(id);
+  }
+  var escManager, panelEscHandles;
   var init_esc_manager = __esm({
     "src/core/esc-manager.ts"() {
       escManager = (() => {
@@ -5054,916 +2532,7 @@ var BZW_settings_panel = (() => {
           }
         };
       })();
-    }
-  });
-
-  // src/core/mobile.ts
-  function isMobileEnv() {
-    return typeof Platform !== "undefined" && !!Platform.isMobile;
-  }
-  var init_mobile = __esm({
-    "src/core/mobile.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/str.ts
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
-  }
-  function emptyHtmlStr(icon2, title, desc) {
-    return `<div class="bz-empty">${icon2 ? iconSpan(icon2, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  var ESC_MAP;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str2) {
-    return str2.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function generateId(prefix) {
-    prefix = prefix || "item";
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
-  }
-  function extractUrlAndDisplay(c) {
-    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (m1) return { url: m1[2], display: m1[1] };
-    const m2 = c.match(/(https?:\/\/\S+)/i);
-    if (m2) {
-      const u = m2[1], d = c.replace(u, "").trim();
-      return { url: u, display: d || u };
-    }
-    return { url: null, display: c };
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
-    }
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function getCurrentNoteInfo() {
-    const f = getApp().workspace.getActiveFile();
-    return f ? { path: f.path, name: f.basename } : null;
-  }
-  function getCurrentCursorPosition() {
-    const ws = getApp().workspace;
-    const ed = ws.activeEditor && ws.activeEditor.editor;
-    return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
-  }
-  async function fetchPageTitle(url) {
-    try {
-      const r = await requestUrl({
-        url,
-        method: "GET",
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
-      });
-      if (r.status === 200) {
-        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
-        if (m && m[1]) return m[1].trim();
-      }
-    } catch (e) {
-    }
-    return null;
-  }
-  function bytesEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-    return true;
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  function cmpZh(a, b) {
-    return String(a || "").localeCompare(String(b || ""), "zh");
-  }
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
-  }
-  function hash31(str2) {
-    let h = 0;
-    const t = String(str2 || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return h >>> 0;
-  }
-  function debounce(fn, ms) {
-    let t;
-    const wrapped = (...args) => {
-      if (t !== void 0) clearTimeout(t);
-      t = setTimeout(() => {
-        t = void 0;
-        fn(...args);
-      }, ms);
-    };
-    wrapped.cancel = () => {
-      if (t !== void 0) {
-        clearTimeout(t);
-        t = void 0;
-      }
-    };
-    return wrapped;
-  }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve2) => {
-      if (typeof window === "undefined") {
-        resolve2();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
-      else window.setTimeout(resolve2, 0);
-    });
-  }
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text) {
-    try {
-      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-  async function copySensitiveWithFallback(text) {
-    try {
-      await copySensitiveText(text);
-      return true;
-    } catch (e) {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.cssText = "position:fixed;opacity:0";
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand("copy");
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
-  }
-  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
-      init_app();
-      init_str();
-      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-      clipboardClearTimer = null;
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve2) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle6 = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        escHandle6.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve2(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function confirmDiscard(proceed, message, className) {
-    void openFlowDialog({
-      title: "放弃未保存的内容？",
-      message: message || "弹窗内有未保存的输入，关闭后将丢失",
-      className,
-      actions: [
-        { label: "放弃", value: "ok" },
-        { label: "继续编辑", value: "cancel" }
-      ]
-    }).then((v) => {
-      if (v === "ok") proceed();
-    });
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
-    }
-  });
-
-  // src/core/domain-icons.ts
-  var DOMAIN_ICONS;
-  var init_domain_icons = __esm({
-    "src/core/domain-icons.ts"() {
-      DOMAIN_ICONS = {
-        // 面板专属域（无对应命令）
-        global: "settings",
-        // 通知（2026-09-12）：自「通用」域拆出的独立面板页；「设置」页并入通用后 appearance 键退役
-        notice: "bell",
-        ai: "sparkles",
-        // 域入口命令与面板导航共用
-        home: "layout-grid",
-        memo: "check-square",
-        belongings: "package",
-        clipping: "scissors",
-        favorites: "star",
-        diary: "notebook-pen",
-        "reading-report": "bar-chart-3",
-        cinema: "clapperboard",
-        gameshelf: "gamepad-2",
-        bookshelf: "book-open",
-        review: "repeat-2",
-        secondbrain: "brain",
-        "auto-summary": "sparkles",
-        pomodoro: "timer",
-        attach: "folder-down",
-        encrypt: "lock",
-        "password-vault": "key",
-        smartcat: "cat",
-        knowledge: "list-video",
-        // 命令专属域
-        "settings-panel": "settings-2"
-      };
-    }
-  });
-
-  // src/core/path-picker.ts
-  function isExcludedPath(p) {
-    if (!p) return false;
-    for (const seg of p.split("/")) {
-      if (EXCLUDED_DIR_NAMES.has(seg)) return true;
-    }
-    return false;
-  }
-  function foldersFromFiles(paths) {
-    const out = /* @__PURE__ */ new Set([""]);
-    for (const p of paths) {
-      if (isExcludedPath(p)) continue;
-      const sep = p.lastIndexOf("/");
-      if (sep === -1) continue;
-      let dir = p.slice(0, sep);
-      while (dir) {
-        if (!isExcludedPath(dir)) out.add(dir);
-        const i = dir.lastIndexOf("/");
-        dir = i === -1 ? "" : dir.slice(0, i);
-      }
-    }
-    return [...out].sort();
-  }
-  async function collectVaultFolders(app) {
-    var _a2, _b2, _c, _d;
-    const out = /* @__PURE__ */ new Set([""]);
-    try {
-      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      for (const p of foldersFromFiles(files)) out.add(p);
-    } catch (e) {
-    }
-    const adapter = (_d = app == null ? void 0 : app.vault) == null ? void 0 : _d.adapter;
-    if (adapter && typeof adapter.list === "function") {
-      const walk = async (dir, depth) => {
-        var _a3;
-        if (depth > 40) return;
-        let listed = null;
-        try {
-          listed = await adapter.list(dir);
-        } catch (e) {
-          if (dir === "") {
-            try {
-              listed = await adapter.list("/");
-            } catch (e2) {
-              return;
-            }
-          } else {
-            return;
-          }
-        }
-        for (const f of (_a3 = listed == null ? void 0 : listed.folders) != null ? _a3 : []) {
-          const p = String(f).replace(/^\/+|\/+$/g, "");
-          if (!p) continue;
-          if (isExcludedPath(p)) continue;
-          if (!out.has(p)) out.add(p);
-          await walk(p, depth + 1);
-        }
-      };
-      try {
-        await walk("", 0);
-      } catch (e) {
-      }
-    }
-    return [...out].sort();
-  }
-  function normalizePicked(list) {
-    const out = [];
-    for (const item of list) {
-      const raw = String(item);
-      if (raw === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      const trimmed = raw.trim();
-      if (trimmed === "") continue;
-      const p = trimmed.replace(/^\/+|\/+$/g, "");
-      if (p === "") {
-        if (!out.includes("")) out.push("");
-        continue;
-      }
-      if (!out.includes(p)) out.push(p);
-    }
-    return out;
-  }
-  function renderPathChips(container, selected, onChange, emptyText = "未选择", onChipClick) {
-    container.innerHTML = "";
-    container.classList.add("bz-path-picker-chips");
-    if (selected.length === 0) {
-      if (!emptyText) return;
-      const empty = document.createElement("span");
-      empty.className = "bz-path-picker-chips-empty";
-      empty.textContent = emptyText;
-      container.appendChild(empty);
-      return;
-    }
-    for (const path of selected) {
-      const label = path === "" ? "（库根目录）" : path;
-      const chip2 = document.createElement("span");
-      chip2.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
-      chip2.title = label;
-      const name = document.createElement("span");
-      name.className = "bz-path-picker-chip-name";
-      name.textContent = label;
-      if (onChipClick) name.onclick = () => onChipClick(path);
-      const x = document.createElement("button");
-      x.className = "bz-path-picker-chip-x";
-      x.textContent = "✕";
-      x.setAttribute("aria-label", `移除 ${label}`);
-      x.onclick = () => onChange(selected.filter((p) => p !== path));
-      chip2.appendChild(name);
-      chip2.appendChild(x);
-      container.appendChild(chip2);
-    }
-  }
-  function renderPathSettingRow(opts) {
-    const readValue = () => {
-      const v = opts.value;
-      return Array.isArray(v) ? [...v] : v ? [v] : [];
-    };
-    let current2 = readValue();
-    const setting = new Setting(opts.parent).setName(opts.name);
-    if (opts.desc) setting.setDesc(opts.desc);
-    setting.settingEl.classList.add("bz-path-picker-setting-row");
-    const chipsWrap = document.createElement("div");
-    chipsWrap.className = "bz-path-picker-chips--setting";
-    const apply = (list) => {
-      const res = opts.onChange(list);
-      if (res && typeof res.then === "function") {
-        return Promise.resolve(res).then((final) => {
-          current2 = Array.isArray(final) ? final : list;
-          renderAll5();
-        });
-      }
-      current2 = Array.isArray(res) ? res : list;
-      renderAll5();
-    };
-    const openPicker = () => openPathPicker({
-      title: opts.pickerTitle || opts.name,
-      desc: opts.pickerDesc,
-      mode: opts.mode,
-      selected: current2,
-      okText: opts.okText,
-      onConfirm: (list) => {
-        void apply(list);
-      }
-    });
-    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
-      void apply(next);
-    }, "", openPicker);
-    let btn = null;
-    setting.addButton((b) => {
-      b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
-      b.buttonEl.classList.add("bz-path-picker-btn--slim");
-      btn = b.buttonEl;
-    });
-    const control = setting.settingEl.querySelector(".setting-item-control");
-    if (control) control.appendChild(chipsWrap);
-    const syncBtn = () => {
-      setting.settingEl.dataset.filled = current2.length > 0 ? "1" : "0";
-      if (!btn || !control) return;
-      if (current2.length === 0) {
-        if (!btn.isConnected) control.appendChild(btn);
-      } else if (btn.isConnected) {
-        btn.remove();
-      }
-    };
-    const renderAll5 = () => {
-      syncBtn();
-      render2();
-    };
-    const refresh2 = () => {
-      current2 = readValue();
-      renderAll5();
-    };
-    renderAll5();
-    return { refresh: refresh2, settingEl: setting.settingEl };
-  }
-  function closePathPicker() {
-    if (currentMask) {
-      currentMask.remove();
-      currentMask = null;
-    }
-    if (currentPopup) {
-      currentPopup.remove();
-      currentPopup = null;
-    }
-    if (currentHandle) {
-      currentHandle.unregister();
-      currentHandle = null;
-    }
-    if (focusTimer !== null) {
-      window.clearTimeout(focusTimer);
-      focusTimer = null;
-    }
-  }
-  function openPathPicker(opts) {
-    var _a2, _b2, _c;
-    closePathPicker();
-    const app = getApp();
-    const mode = opts.mode || "single";
-    const selected = new Set(normalizePicked(opts.selected || []));
-    const pinnedAtOpen = [...selected];
-    const { mask, popup } = createOverlay({
-      maskId: "bz-path-picker-mask",
-      popupId: "bz-path-picker-popup",
-      // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
-      width: "min(calc(100vw - 32px), 440px)",
-      maxWidth: 440,
-      onMaskClick: () => closePathPicker()
-    });
-    currentMask = mask;
-    currentPopup = popup;
-    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
-    if (skinClasses.length) {
-      mask.classList.add(...skinClasses);
-      popup.classList.add(...skinClasses);
-    }
-    popup.classList.add("bz-path-picker");
-    popup.style.height = "min(560px, 82vh)";
-    const head = document.createElement("div");
-    head.className = "bz-path-picker-head";
-    const title = document.createElement("h3");
-    title.className = "bz-path-picker-title";
-    title.textContent = opts.title || "选择文件夹";
-    head.appendChild(title);
-    if (opts.desc) {
-      const desc = document.createElement("div");
-      desc.className = "bz-path-picker-desc";
-      desc.textContent = opts.desc;
-      head.appendChild(desc);
-    }
-    const search = document.createElement("input");
-    search.type = "text";
-    search.className = "bz-path-picker-search";
-    search.placeholder = "搜索目录…";
-    search.spellcheck = false;
-    search.setAttribute("aria-label", "搜索目录");
-    const listEl2 = document.createElement("div");
-    listEl2.className = "bz-path-picker-list";
-    const state3 = { folders: [], q: "" };
-    const foot = document.createElement("div");
-    foot.className = "bz-path-picker-foot";
-    const selinfo = document.createElement("span");
-    selinfo.className = "bz-path-picker-selinfo";
-    const btns = document.createElement("div");
-    btns.className = "bz-path-picker-foot-btns";
-    foot.appendChild(selinfo);
-    foot.appendChild(btns);
-    const mkBtn = (label, primary, onclick) => {
-      const b = document.createElement("button");
-      b.textContent = label;
-      b.className = "bz-path-picker-btn" + (primary ? " bz-path-picker-btn--primary" : "");
-      b.onclick = onclick;
-      btns.appendChild(b);
-      return b;
-    };
-    if (mode === "multi") mkBtn("清空", false, () => {
-      selected.clear();
-      renderList2();
-      updateSel();
-    });
-    mkBtn(opts.okText || "下一步", true, () => {
-      const list = normalizePicked([...selected]);
-      closePathPicker();
-      opts.onConfirm(list);
-    });
-    function orderedList() {
-      const pinned = [];
-      const rest = [];
-      const pinSet = new Set(pinnedAtOpen);
-      for (const f of state3.folders) {
-        if (pinSet.has(f)) pinned.push(f);
-        else rest.push(f);
-      }
-      const rootIdx = rest.indexOf("");
-      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
-      rest.reverse();
-      return [...pinned, ...root === null ? [] : [root], ...rest];
-    }
-    function renderList2() {
-      listEl2.innerHTML = "";
-      const q2 = state3.q.trim().toLowerCase();
-      const exact = !!q2 && state3.folders.includes(q2);
-      const LIMIT = 300;
-      let n = 0;
-      let total = 0;
-      for (const folder of orderedList()) {
-        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
-        total++;
-        if (n >= LIMIT) continue;
-        n++;
-        const on = selected.has(folder);
-        const row = document.createElement("div");
-        row.className = "bz-path-picker-row" + (on ? " bz-path-picker-row--sel" : "");
-        row.dataset.path = folder;
-        row.setAttribute("role", mode === "multi" ? "checkbox" : "option");
-        row.setAttribute("aria-checked", on ? "true" : "false");
-        const box = document.createElement("span");
-        box.className = "bz-path-picker-check";
-        box.textContent = on ? "✓" : "";
-        const name = document.createElement("span");
-        name.className = "bz-path-picker-name";
-        name.textContent = folder === "" ? "（库根目录）" : folder;
-        name.title = folder === "" ? "（库根目录）" : folder;
-        row.appendChild(box);
-        row.appendChild(name);
-        row.onclick = () => {
-          if (mode === "single") {
-            selected.clear();
-            selected.add(folder);
-          } else if (selected.has(folder)) {
-            selected.delete(folder);
-          } else {
-            selected.add(folder);
-          }
-          renderList2();
-          updateSel();
-        };
-        listEl2.appendChild(row);
-      }
-      if (!total) {
-        const empty = document.createElement("div");
-        empty.className = "bz-path-picker-empty";
-        empty.textContent = "没有匹配的目录";
-        listEl2.appendChild(empty);
-      } else if (total > LIMIT) {
-        const more = document.createElement("div");
-        more.className = "bz-path-picker-empty";
-        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
-        listEl2.appendChild(more);
-      }
-    }
-    function updateSel() {
-      if (mode === "single") {
-        const first = [...selected][0];
-        selinfo.textContent = first === void 0 ? "未选择" : first === "" ? "已选（库根目录）" : `已选 ${first}`;
-      } else {
-        selinfo.textContent = `已选 ${selected.size} 项`;
-      }
-    }
-    search.oninput = () => {
-      state3.q = search.value;
-      renderList2();
-    };
-    try {
-      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
-      state3.folders = foldersFromFiles(files);
-    } catch (e) {
-    }
-    void collectVaultFolders(app).then((folders) => {
-      if (!mask.isConnected) return;
-      state3.folders = folders;
-      popup.dataset.ready = "1";
-      renderList2();
-    });
-    renderList2();
-    updateSel();
-    popup.append(head, search, listEl2, foot);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    currentHandle = escManager.register("bz-path-picker", {
-      isVisible: () => !!currentMask,
-      close: () => closePathPicker()
-    });
-    focusTimer = window.setTimeout(() => {
-      focusTimer = null;
-      if (mask.isConnected) search.focus();
-    }, 30);
-  }
-  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
-  var init_path_picker = __esm({
-    "src/core/path-picker.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_dom();
-      init_esc_manager();
-      EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
-      currentMask = null;
-      currentPopup = null;
-      currentHandle = null;
-      focusTimer = null;
-    }
-  });
-
-  // src/core/settings-modal.ts
-  function createSettingsGroup(container, opts) {
-    const group = document.createElement("div");
-    group.className = "bz-settings-group";
-    const head = document.createElement("div");
-    head.className = "bz-settings-group-head";
-    const icon2 = document.createElement("span");
-    icon2.className = "bz-settings-group-icon";
-    setIcon(icon2, opts.icon);
-    const name = document.createElement("span");
-    name.className = "bz-settings-group-name";
-    name.textContent = opts.name;
-    const count = document.createElement("span");
-    count.className = "bz-settings-group-count";
-    count.textContent = "0 项";
-    head.append(icon2, name, count);
-    const body = document.createElement("div");
-    body.className = "bz-settings-group-body";
-    group.append(head, body);
-    container.appendChild(group);
-    return body;
-  }
-  function isItemHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function refreshSettingsGroupCounts(content) {
-    content.querySelectorAll(".bz-settings-group").forEach((g) => {
-      const body = g.querySelector(".bz-settings-group-body");
-      const countEl = g.querySelector(".bz-settings-group-count");
-      if (!body || !countEl) return;
-      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
-        const h = el;
-        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
-      }).length;
-      countEl.textContent = `${n} 项`;
-      countEl.style.display = n > 0 ? "" : "none";
-    });
-  }
-  function markSettingSplitRows(container) {
-    container.querySelectorAll(".setting-item").forEach((el) => {
-      if (el.classList.contains("bz-path-picker-setting-row")) return;
-      const ctl = el.querySelector(".setting-item-control");
-      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
-    });
-  }
-  function closeSettingsModal() {
-    var _a2;
-    if (currentModal) {
-      const m = currentModal;
-      currentModal = null;
-      m.dispose();
-      (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
-    }
-  }
-  function openSettingsModal(opts) {
-    var _a2;
-    closeSettingsModal();
-    const prevActive = document.activeElement;
-    const { mask, popup } = createOverlay({
-      maskId: "bz-settings-modal-mask",
-      popupId: "bz-settings-modal-popup",
-      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
-      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
-      maxWidth: opts.maxWidth,
-      onMaskClick: () => closeSettingsModal()
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = opts.title;
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
-    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
-      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
-    );
-    if (!hasVisibleItem) {
-      content.innerHTML = "";
-      const empty = document.createElement("div");
-      empty.className = "bz-settings-empty";
-      empty.textContent = opts.emptyText || "暂无设置项";
-      if (opts.emptyDesc) {
-        const desc = document.createElement("div");
-        desc.className = "bz-settings-empty-desc";
-        desc.textContent = opts.emptyDesc;
-        empty.appendChild(desc);
-      }
-      content.appendChild(empty);
-    }
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
-      if (isItemHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    if (firstFocusable) firstFocusable.focus();
-    const handle = escManager.register("bz-settings-modal", {
-      isVisible: () => !!currentModal,
-      close: () => closeSettingsModal()
-    });
-    currentModal = {
-      mask,
-      popup,
-      onClose: opts.onClose,
-      dispose: () => {
-        mask.remove();
-        popup.remove();
-        handle.unregister();
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-    };
-  }
-  var FOCUSABLE_SELECTOR, currentModal;
-  var init_settings_modal = __esm({
-    "src/core/settings-modal.ts"() {
-      init_fake_obsidian();
-      init_dom();
-      init_esc_manager();
-      init_mobile();
-      init_settings_schema();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-      currentModal = null;
+      panelEscHandles = /* @__PURE__ */ new Map();
     }
   });
 
@@ -7671,6 +4240,5008 @@ var BZW_settings_panel = (() => {
     }
   });
 
+  // src/gameshelf/sync.ts
+  var sync_exports = {};
+  __export(sync_exports, {
+    AUTO_SYNC_INTERVAL_MS: () => AUTO_SYNC_INTERVAL_MS,
+    autoSyncOnOpen: () => autoSyncOnOpen,
+    isSyncDue: () => isSyncDue,
+    lastSyncedAt: () => lastSyncedAt,
+    readSteamConfig: () => readSteamConfig,
+    runSync: () => runSync
+  });
+  function lastSyncedAt(syncedAts) {
+    let max = 0;
+    for (const s of syncedAts) {
+      const t = Date.parse(s);
+      if (Number.isFinite(t) && t > max) max = t;
+    }
+    return max;
+  }
+  function isSyncDue(syncedAts, now = Date.now()) {
+    return now - lastSyncedAt(syncedAts) >= AUTO_SYNC_INTERVAL_MS;
+  }
+  function readSteamConfig() {
+    return readConfig();
+  }
+  function readConfig() {
+    const s = tryGetSettings();
+    return {
+      steamId: typeof s.gameshelfSteamId === "string" ? s.gameshelfSteamId : "",
+      apiKey: typeof s.gameshelfSteamApiKey === "string" ? s.gameshelfSteamApiKey : ""
+    };
+  }
+  async function runSync(app, opts) {
+    var _a2, _b2, _c, _d;
+    if (M.syncing) return { ok: false, added: 0, updated: 0, offShelf: 0, reason: "busy" };
+    const folder = resolveGameshelfFolderPath();
+    const syncedAts = rebuildItems(app).map((it) => it.syncedAt || "").filter(Boolean);
+    if (!(opts == null ? void 0 : opts.force) && !isSyncDue(syncedAts)) {
+      M.statusMsg = `游戏库已是最新（${fmtTime(new Date(lastSyncedAt(syncedAts)))}同步）`;
+      return { ok: true, added: 0, updated: 0, offShelf: 0 };
+    }
+    const { steamId, apiKey } = readConfig();
+    if (!steamId.trim() || !apiKey.trim()) {
+      return { ok: false, added: 0, updated: 0, offShelf: 0, reason: "config", message: "尚未配置 SteamID64 与 Web API 密钥" };
+    }
+    M.syncing = true;
+    M.statusMsg = "正在从 Steam 拉取游戏库…";
+    (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
+    try {
+      const result = await fetchSteamLibrary(steamId, apiKey);
+      if (!result.ok) {
+        M.statusMsg = result.message;
+        notice(`游戏架同步失败：${result.message}`, "error");
+        return { ok: false, added: 0, updated: 0, offShelf: 0, reason: result.reason, message: result.message };
+      }
+      const r = await applySyncPlan(app, folder, result.owned, (/* @__PURE__ */ new Date()).toISOString());
+      rebuildItems(app);
+      const parts = [];
+      if (r.added > 0) parts.push(`新增 ${r.added}`);
+      if (r.updated > 0) parts.push(`更新 ${r.updated}`);
+      if (r.offShelf > 0) parts.push(`下架标记 ${r.offShelf}`);
+      M.statusMsg = parts.length > 0 ? `同步完成：${parts.join("，")}` : "同步完成：库内无变化";
+      if (r.added > 0 || r.updated > 0 || r.offShelf > 0) {
+        notice(`游戏架已同步：${M.statusMsg.replace("同步完成：", "")}`, "success");
+      }
+      emitDomainEvent("gameshelf", { kind: "synced", added: r.added, updated: r.updated, offShelf: r.offShelf });
+      return { ok: true, ...r };
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      M.statusMsg = `同步失败：${msg}`;
+      notice(`游戏架同步失败：${msg}`, "error");
+      return { ok: false, added: 0, updated: 0, offShelf: 0, reason: "http", message: msg };
+    } finally {
+      M.syncing = false;
+      (_d = (_c = M).renderFn) == null ? void 0 : _d.call(_c);
+    }
+  }
+  function fmtTime(d) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+  function autoSyncOnOpen(app) {
+    const s = tryGetSettings();
+    if (s.gameshelfAutoSync === false) return;
+    const { steamId, apiKey } = readConfig();
+    if (!steamId.trim() || !apiKey.trim()) return;
+    void runSync(app).then(() => {
+      var _a2, _b2;
+      return (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
+    });
+  }
+  var AUTO_SYNC_INTERVAL_MS;
+  var init_sync = __esm({
+    "src/gameshelf/sync.ts"() {
+      init_settings_provider();
+      init_notice();
+      init_domain_bus();
+      init_state();
+      init_notes();
+      init_steam();
+      AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1e3;
+    }
+  });
+
+  // src/core/mobile.ts
+  function isMobileEnv() {
+    return typeof Platform !== "undefined" && !!Platform.isMobile;
+  }
+  var init_mobile = __esm({
+    "src/core/mobile.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  var require_moment = __commonJS({
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+      (function(global, factory) {
+        typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
+      })(exports, function() {
+        "use strict";
+        var hookCallback;
+        function hooks() {
+          return hookCallback.apply(null, arguments);
+        }
+        function setHookCallback(callback) {
+          hookCallback = callback;
+        }
+        function isArray(input) {
+          return input instanceof Array || Object.prototype.toString.call(input) === "[object Array]";
+        }
+        function isObject(input) {
+          return input != null && Object.prototype.toString.call(input) === "[object Object]";
+        }
+        function hasOwnProp(a, b) {
+          return Object.prototype.hasOwnProperty.call(a, b);
+        }
+        function isObjectEmpty(obj) {
+          if (Object.getOwnPropertyNames) {
+            return Object.getOwnPropertyNames(obj).length === 0;
+          } else {
+            var k;
+            for (k in obj) {
+              if (hasOwnProp(obj, k)) {
+                return false;
+              }
+            }
+            return true;
+          }
+        }
+        function isUndefined(input) {
+          return input === void 0;
+        }
+        function isNumber(input) {
+          return typeof input === "number" || Object.prototype.toString.call(input) === "[object Number]";
+        }
+        function isDate(input) {
+          return input instanceof Date || Object.prototype.toString.call(input) === "[object Date]";
+        }
+        function map(arr, fn) {
+          var res = [], i, arrLen = arr.length;
+          for (i = 0; i < arrLen; ++i) {
+            res.push(fn(arr[i], i));
+          }
+          return res;
+        }
+        function extend(a, b) {
+          for (var i in b) {
+            if (hasOwnProp(b, i)) {
+              a[i] = b[i];
+            }
+          }
+          if (hasOwnProp(b, "toString")) {
+            a.toString = b.toString;
+          }
+          if (hasOwnProp(b, "valueOf")) {
+            a.valueOf = b.valueOf;
+          }
+          return a;
+        }
+        function createUTC(input, format2, locale2, strict) {
+          return createLocalOrUTC(input, format2, locale2, strict, true).utc();
+        }
+        function defaultParsingFlags() {
+          return {
+            empty: false,
+            unusedTokens: [],
+            unusedInput: [],
+            overflow: -2,
+            charsLeftOver: 0,
+            nullInput: false,
+            invalidEra: null,
+            invalidMonth: null,
+            invalidFormat: false,
+            userInvalidated: false,
+            iso: false,
+            parsedDateParts: [],
+            era: null,
+            meridiem: null,
+            rfc2822: false,
+            weekdayMismatch: false
+          };
+        }
+        function getParsingFlags(m) {
+          if (m._pf == null) {
+            m._pf = defaultParsingFlags();
+          }
+          return m._pf;
+        }
+        var some;
+        if (Array.prototype.some) {
+          some = Array.prototype.some;
+        } else {
+          some = function(fun) {
+            var t = Object(this), len = t.length >>> 0, i;
+            for (i = 0; i < len; i++) {
+              if (i in t && fun.call(this, t[i], i, t)) {
+                return true;
+              }
+            }
+            return false;
+          };
+        }
+        function isValid(m) {
+          var flags = null, parsedParts = false, isNowValid = m._d && !isNaN(m._d.getTime());
+          if (isNowValid) {
+            flags = getParsingFlags(m);
+            parsedParts = some.call(flags.parsedDateParts, function(i) {
+              return i != null;
+            });
+            isNowValid = flags.overflow < 0 && !flags.empty && !flags.invalidEra && !flags.invalidMonth && !flags.invalidWeekday && !flags.weekdayMismatch && !flags.nullInput && !flags.invalidFormat && !flags.userInvalidated && (!flags.meridiem || flags.meridiem && parsedParts);
+            if (m._strict) {
+              isNowValid = isNowValid && flags.charsLeftOver === 0 && flags.unusedTokens.length === 0 && flags.bigHour === void 0;
+            }
+          }
+          if (Object.isFrozen == null || !Object.isFrozen(m)) {
+            m._isValid = isNowValid;
+          } else {
+            return isNowValid;
+          }
+          return m._isValid;
+        }
+        function createInvalid(flags) {
+          var m = createUTC(NaN);
+          if (flags != null) {
+            extend(getParsingFlags(m), flags);
+          } else {
+            getParsingFlags(m).userInvalidated = true;
+          }
+          return m;
+        }
+        var momentProperties = hooks.momentProperties = [], updateInProgress = false;
+        function copyConfig(to2, from2) {
+          var i, prop, val, momentPropertiesLen = momentProperties.length;
+          if (!isUndefined(from2._isAMomentObject)) {
+            to2._isAMomentObject = from2._isAMomentObject;
+          }
+          if (!isUndefined(from2._i)) {
+            to2._i = from2._i;
+          }
+          if (!isUndefined(from2._f)) {
+            to2._f = from2._f;
+          }
+          if (!isUndefined(from2._l)) {
+            to2._l = from2._l;
+          }
+          if (!isUndefined(from2._strict)) {
+            to2._strict = from2._strict;
+          }
+          if (!isUndefined(from2._tzm)) {
+            to2._tzm = from2._tzm;
+          }
+          if (!isUndefined(from2._isUTC)) {
+            to2._isUTC = from2._isUTC;
+          }
+          if (!isUndefined(from2._offset)) {
+            to2._offset = from2._offset;
+          }
+          if (!isUndefined(from2._pf)) {
+            to2._pf = getParsingFlags(from2);
+          }
+          if (!isUndefined(from2._locale)) {
+            to2._locale = from2._locale;
+          }
+          if (momentPropertiesLen > 0) {
+            for (i = 0; i < momentPropertiesLen; i++) {
+              prop = momentProperties[i];
+              val = from2[prop];
+              if (!isUndefined(val)) {
+                to2[prop] = val;
+              }
+            }
+          }
+          return to2;
+        }
+        function Moment(config) {
+          copyConfig(this, config);
+          this._d = new Date(config._d != null ? config._d.getTime() : NaN);
+          if (!this.isValid()) {
+            this._d = /* @__PURE__ */ new Date(NaN);
+          }
+          if (updateInProgress === false) {
+            updateInProgress = true;
+            hooks.updateOffset(this);
+            updateInProgress = false;
+          }
+        }
+        function isMoment(obj) {
+          return obj instanceof Moment || obj != null && obj._isAMomentObject != null;
+        }
+        function warn(msg) {
+          if (hooks.suppressDeprecationWarnings === false && typeof console !== "undefined" && console.warn) {
+            console.warn("Deprecation warning: " + msg);
+          }
+        }
+        function deprecate(msg, fn) {
+          var firstTime = true;
+          return extend(function() {
+            if (hooks.deprecationHandler != null) {
+              hooks.deprecationHandler(null, msg);
+            }
+            if (firstTime) {
+              var args = [], arg, i, key, argLen = arguments.length;
+              for (i = 0; i < argLen; i++) {
+                arg = "";
+                if (typeof arguments[i] === "object") {
+                  arg += "\n[" + i + "] ";
+                  for (key in arguments[0]) {
+                    if (hasOwnProp(arguments[0], key)) {
+                      arg += key + ": " + arguments[0][key] + ", ";
+                    }
+                  }
+                  arg = arg.slice(0, -2);
+                } else {
+                  arg = arguments[i];
+                }
+                args.push(arg);
+              }
+              warn(
+                msg + "\nArguments: " + Array.prototype.slice.call(args).join("") + "\n" + new Error().stack
+              );
+              firstTime = false;
+            }
+            return fn.apply(this, arguments);
+          }, fn);
+        }
+        var deprecations = {};
+        function deprecateSimple(name, msg) {
+          if (hooks.deprecationHandler != null) {
+            hooks.deprecationHandler(name, msg);
+          }
+          if (!deprecations[name]) {
+            warn(msg);
+            deprecations[name] = true;
+          }
+        }
+        hooks.suppressDeprecationWarnings = false;
+        hooks.deprecationHandler = null;
+        function isFunction(input) {
+          return typeof Function !== "undefined" && input instanceof Function || Object.prototype.toString.call(input) === "[object Function]";
+        }
+        function set(config) {
+          var prop, i;
+          for (i in config) {
+            if (hasOwnProp(config, i)) {
+              prop = config[i];
+              if (isFunction(prop)) {
+                this[i] = prop;
+              } else {
+                this["_" + i] = prop;
+              }
+            }
+          }
+          this._config = config;
+          this._dayOfMonthOrdinalParseLenient = new RegExp(
+            (this._dayOfMonthOrdinalParse.source || this._ordinalParse.source) + "|" + /\d{1,2}/.source
+          );
+        }
+        function mergeConfigs(parentConfig, childConfig) {
+          var res = extend({}, parentConfig), prop;
+          for (prop in childConfig) {
+            if (hasOwnProp(childConfig, prop)) {
+              if (isObject(parentConfig[prop]) && isObject(childConfig[prop])) {
+                res[prop] = {};
+                extend(res[prop], parentConfig[prop]);
+                extend(res[prop], childConfig[prop]);
+              } else if (childConfig[prop] != null) {
+                res[prop] = childConfig[prop];
+              } else {
+                delete res[prop];
+              }
+            }
+          }
+          for (prop in parentConfig) {
+            if (hasOwnProp(parentConfig, prop) && !hasOwnProp(childConfig, prop) && isObject(parentConfig[prop])) {
+              res[prop] = extend({}, res[prop]);
+            }
+          }
+          return res;
+        }
+        function Locale(config) {
+          if (config != null) {
+            this.set(config);
+          }
+        }
+        var keys;
+        if (Object.keys) {
+          keys = Object.keys;
+        } else {
+          keys = function(obj) {
+            var i, res = [];
+            for (i in obj) {
+              if (hasOwnProp(obj, i)) {
+                res.push(i);
+              }
+            }
+            return res;
+          };
+        }
+        var defaultCalendar = {
+          sameDay: "[Today at] LT",
+          nextDay: "[Tomorrow at] LT",
+          nextWeek: "dddd [at] LT",
+          lastDay: "[Yesterday at] LT",
+          lastWeek: "[Last] dddd [at] LT",
+          sameElse: "L"
+        };
+        function calendar(key, mom, now2) {
+          var output = this._calendar[key] || this._calendar["sameElse"];
+          return isFunction(output) ? output.call(mom, now2) : output;
+        }
+        function zeroFill(number, targetLength, forceSign) {
+          var absNumber = "" + Math.abs(number), zerosToFill = targetLength - absNumber.length, sign2 = number >= 0;
+          return (sign2 ? forceSign ? "+" : "" : "-") + Math.pow(10, Math.max(0, zerosToFill)).toString().substr(1) + absNumber;
+        }
+        var formattingTokens = /(\[[^\[]*\])|(\\)?([Hh]mm(ss)?|Mo|MM?M?M?|Do|DDDo|DD?D?D?|ddd?d?|do?|w[o|w]?|W[o|W]?|Qo?|N{1,5}|YYYYYY|YYYYY|YYYY|YY|y{2,4}|yo?|gg(ggg?)?|GG(GGG?)?|e|E|a|A|hh?|HH?|kk?|mm?|ss?|S{1,9}|x|X|zz?|ZZ?|.)/g, localFormattingTokens = /(\[[^\[]*\])|(\\)?(LTS|LT|LL?L?L?|l{1,4})/g, formatFunctions = {}, formatTokenFunctions = {};
+        function addFormatToken(token2, padded, ordinal2, callback) {
+          var func = callback;
+          if (typeof callback === "string") {
+            func = function() {
+              return this[callback]();
+            };
+          }
+          if (token2) {
+            formatTokenFunctions[token2] = func;
+          }
+          if (padded) {
+            formatTokenFunctions[padded[0]] = function() {
+              return zeroFill(func.apply(this, arguments), padded[1], padded[2]);
+            };
+          }
+          if (ordinal2) {
+            formatTokenFunctions[ordinal2] = function() {
+              return this.localeData().ordinal(
+                func.apply(this, arguments),
+                token2
+              );
+            };
+          }
+        }
+        function removeFormattingTokens(input) {
+          if (input.match(/\[[\s\S]/)) {
+            return input.replace(/^\[|\]$/g, "");
+          }
+          return input.replace(/\\/g, "");
+        }
+        function makeFormatFunction(format2) {
+          var array = format2.match(formattingTokens), i, length;
+          for (i = 0, length = array.length; i < length; i++) {
+            if (formatTokenFunctions[array[i]]) {
+              array[i] = formatTokenFunctions[array[i]];
+            } else {
+              array[i] = removeFormattingTokens(array[i]);
+            }
+          }
+          return function(mom) {
+            var output = "", i2;
+            for (i2 = 0; i2 < length; i2++) {
+              output += isFunction(array[i2]) ? array[i2].call(mom, format2) : array[i2];
+            }
+            return output;
+          };
+        }
+        function formatMoment(m, format2) {
+          if (!m.isValid()) {
+            return m.localeData().invalidDate();
+          }
+          format2 = expandFormat(format2, m.localeData());
+          formatFunctions[format2] = formatFunctions[format2] || makeFormatFunction(format2);
+          return formatFunctions[format2](m);
+        }
+        function expandFormat(format2, locale2) {
+          var i = 5;
+          function replaceLongDateFormatTokens(input) {
+            return locale2.longDateFormat(input) || input;
+          }
+          localFormattingTokens.lastIndex = 0;
+          while (i >= 0 && localFormattingTokens.test(format2)) {
+            format2 = format2.replace(
+              localFormattingTokens,
+              replaceLongDateFormatTokens
+            );
+            localFormattingTokens.lastIndex = 0;
+            i -= 1;
+          }
+          return format2;
+        }
+        var defaultLongDateFormat = {
+          LTS: "h:mm:ss A",
+          LT: "h:mm A",
+          L: "MM/DD/YYYY",
+          LL: "MMMM D, YYYY",
+          LLL: "MMMM D, YYYY h:mm A",
+          LLLL: "dddd, MMMM D, YYYY h:mm A"
+        };
+        function longDateFormat(key) {
+          var format2 = this._longDateFormat[key], formatUpper = this._longDateFormat[key.toUpperCase()];
+          if (format2 || !formatUpper) {
+            return format2;
+          }
+          this._longDateFormat[key] = formatUpper.match(formattingTokens).map(function(tok) {
+            if (tok === "MMMM" || tok === "MM" || tok === "DD" || tok === "dddd") {
+              return tok.slice(1);
+            }
+            return tok;
+          }).join("");
+          return this._longDateFormat[key];
+        }
+        var defaultInvalidDate = "Invalid date";
+        function invalidDate() {
+          return this._invalidDate;
+        }
+        var defaultOrdinal = "%d", defaultDayOfMonthOrdinalParse = /\d{1,2}/;
+        function ordinal(number) {
+          return this._ordinal.replace("%d", number);
+        }
+        var defaultRelativeTime = {
+          future: "in %s",
+          past: "%s ago",
+          s: "a few seconds",
+          ss: "%d seconds",
+          m: "a minute",
+          mm: "%d minutes",
+          h: "an hour",
+          hh: "%d hours",
+          d: "a day",
+          dd: "%d days",
+          w: "a week",
+          ww: "%d weeks",
+          M: "a month",
+          MM: "%d months",
+          y: "a year",
+          yy: "%d years"
+        };
+        function relativeTime(number, withoutSuffix, string, isFuture) {
+          var output = this._relativeTime[string];
+          return isFunction(output) ? output(number, withoutSuffix, string, isFuture) : output.replace(/%d/i, number);
+        }
+        function pastFuture(diff2, output) {
+          var format2 = this._relativeTime[diff2 > 0 ? "future" : "past"];
+          return isFunction(format2) ? format2(output) : format2.replace(/%s/i, output);
+        }
+        var aliases = {
+          D: "date",
+          dates: "date",
+          date: "date",
+          d: "day",
+          days: "day",
+          day: "day",
+          e: "weekday",
+          weekdays: "weekday",
+          weekday: "weekday",
+          E: "isoWeekday",
+          isoweekdays: "isoWeekday",
+          isoweekday: "isoWeekday",
+          DDD: "dayOfYear",
+          dayofyears: "dayOfYear",
+          dayofyear: "dayOfYear",
+          h: "hour",
+          hours: "hour",
+          hour: "hour",
+          ms: "millisecond",
+          milliseconds: "millisecond",
+          millisecond: "millisecond",
+          m: "minute",
+          minutes: "minute",
+          minute: "minute",
+          M: "month",
+          months: "month",
+          month: "month",
+          Q: "quarter",
+          quarters: "quarter",
+          quarter: "quarter",
+          s: "second",
+          seconds: "second",
+          second: "second",
+          gg: "weekYear",
+          weekyears: "weekYear",
+          weekyear: "weekYear",
+          GG: "isoWeekYear",
+          isoweekyears: "isoWeekYear",
+          isoweekyear: "isoWeekYear",
+          w: "week",
+          weeks: "week",
+          week: "week",
+          W: "isoWeek",
+          isoweeks: "isoWeek",
+          isoweek: "isoWeek",
+          y: "year",
+          years: "year",
+          year: "year"
+        };
+        function normalizeUnits(units) {
+          return typeof units === "string" ? aliases[units] || aliases[units.toLowerCase()] : void 0;
+        }
+        function normalizeObjectUnits(inputObject) {
+          var normalizedInput = {}, normalizedProp, prop;
+          for (prop in inputObject) {
+            if (hasOwnProp(inputObject, prop)) {
+              normalizedProp = normalizeUnits(prop);
+              if (normalizedProp) {
+                normalizedInput[normalizedProp] = inputObject[prop];
+              }
+            }
+          }
+          return normalizedInput;
+        }
+        var priorities = {
+          date: 9,
+          day: 11,
+          weekday: 11,
+          isoWeekday: 11,
+          dayOfYear: 4,
+          hour: 13,
+          millisecond: 16,
+          minute: 14,
+          month: 8,
+          quarter: 7,
+          second: 15,
+          weekYear: 1,
+          isoWeekYear: 1,
+          week: 5,
+          isoWeek: 5,
+          year: 1
+        };
+        function getPrioritizedUnits(unitsObj) {
+          var units = [], u;
+          for (u in unitsObj) {
+            if (hasOwnProp(unitsObj, u)) {
+              units.push({ unit: u, priority: priorities[u] });
+            }
+          }
+          units.sort(function(a, b) {
+            return a.priority - b.priority;
+          });
+          return units;
+        }
+        var match1 = /\d/, match2 = /\d\d/, match3 = /\d{3}/, match4 = /\d{4}/, match6 = /[+-]?\d{6}/, match1to2 = /\d\d?/, match3to4 = /\d\d\d\d?/, match5to6 = /\d\d\d\d\d\d?/, match1to3 = /\d{1,3}/, match1to4 = /\d{1,4}/, match1to6 = /[+-]?\d{1,6}/, matchUnsigned = /\d+/, matchSigned = /[+-]?\d+/, matchOffset = /Z|[+-]\d\d:?\d\d/gi, matchShortOffset = /Z|[+-]\d\d(?::?\d\d)?/gi, matchTimestamp = /[+-]?\d+(\.\d{1,3})?/, matchWord = /[0-9]{0,256}['a-z\u00A0-\u05FF\u0700-\uD7FF\uF900-\uFDCF\uFDF0-\uFF07\uFF10-\uFFEF]{1,256}|[\u0600-\u06FF\/]{1,256}(\s*?[\u0600-\u06FF]{1,256}){1,2}/i, match1to2NoLeadingZero = /^[1-9]\d?/, match1to2HasZero = /^([1-9]\d|\d)/, regexes;
+        regexes = {};
+        function addRegexToken(token2, regex, strictRegex) {
+          regexes[token2] = isFunction(regex) ? regex : function(isStrict, localeData2) {
+            return isStrict && strictRegex ? strictRegex : regex;
+          };
+        }
+        function getParseRegexForToken(token2, config) {
+          if (!hasOwnProp(regexes, token2)) {
+            return new RegExp(unescapeFormat(token2));
+          }
+          return regexes[token2](config._strict, config._locale);
+        }
+        function unescapeFormat(s) {
+          return regexEscape(
+            s.replace("\\", "").replace(
+              /\\(\[)|\\(\])|\[([^\]\[]*)\]|\\(.)/g,
+              function(matched, p1, p2, p3, p4) {
+                return p1 || p2 || p3 || p4;
+              }
+            )
+          );
+        }
+        function regexEscape(s) {
+          return s.replace(/[-\/\\^$*+?.()|[\]{}]/g, "\\$&");
+        }
+        function absFloor(number) {
+          if (number < 0) {
+            return Math.ceil(number) || 0;
+          } else {
+            return Math.floor(number);
+          }
+        }
+        function toInt(argumentForCoercion) {
+          var coercedNumber = +argumentForCoercion, value = 0;
+          if (coercedNumber !== 0 && isFinite(coercedNumber)) {
+            value = absFloor(coercedNumber);
+          }
+          return value;
+        }
+        var tokens = {};
+        function addParseToken(token2, callback) {
+          var i, func = callback, tokenLen;
+          if (typeof token2 === "string") {
+            token2 = [token2];
+          }
+          if (isNumber(callback)) {
+            func = function(input, array) {
+              array[callback] = toInt(input);
+            };
+          }
+          tokenLen = token2.length;
+          for (i = 0; i < tokenLen; i++) {
+            tokens[token2[i]] = func;
+          }
+        }
+        function addWeekParseToken(token2, callback) {
+          addParseToken(token2, function(input, array, config, token3) {
+            config._w = config._w || {};
+            callback(input, config._w, config, token3);
+          });
+        }
+        function addTimeToArrayFromToken(token2, input, config) {
+          if (input != null && hasOwnProp(tokens, token2)) {
+            tokens[token2](input, config._a, config, token2);
+          }
+        }
+        function isLeapYear(year) {
+          return year % 4 === 0 && year % 100 !== 0 || year % 400 === 0;
+        }
+        var YEAR = 0, MONTH = 1, DATE = 2, HOUR = 3, MINUTE = 4, SECOND = 5, MILLISECOND = 6, WEEK = 7, WEEKDAY = 8;
+        addFormatToken("Y", 0, 0, function() {
+          var y = this.year();
+          return y <= 9999 ? zeroFill(y, 4) : "+" + y;
+        });
+        addFormatToken(0, ["YY", 2], 0, function() {
+          return this.year() % 100;
+        });
+        addFormatToken(0, ["YYYY", 4], 0, "year");
+        addFormatToken(0, ["YYYYY", 5], 0, "year");
+        addFormatToken(0, ["YYYYYY", 6, true], 0, "year");
+        addRegexToken("Y", matchSigned);
+        addRegexToken("YY", match1to2, match2);
+        addRegexToken("YYYY", match1to4, match4);
+        addRegexToken("YYYYY", match1to6, match6);
+        addRegexToken("YYYYYY", match1to6, match6);
+        addParseToken(["YYYYY", "YYYYYY"], YEAR);
+        addParseToken("YYYY", function(input, array) {
+          array[YEAR] = input.length === 2 ? hooks.parseTwoDigitYear(input) : toInt(input);
+        });
+        addParseToken("YY", function(input, array) {
+          array[YEAR] = hooks.parseTwoDigitYear(input);
+        });
+        addParseToken("Y", function(input, array) {
+          array[YEAR] = parseInt(input, 10);
+        });
+        function daysInYear(year) {
+          return isLeapYear(year) ? 366 : 365;
+        }
+        hooks.parseTwoDigitYear = function(input) {
+          return toInt(input) + (toInt(input) > 68 ? 1900 : 2e3);
+        };
+        var getSetYear = makeGetSet("FullYear", true);
+        function getIsLeapYear() {
+          return isLeapYear(this.year());
+        }
+        function makeGetSet(unit, keepTime) {
+          return function(value) {
+            if (value != null) {
+              set$1(this, unit, value);
+              hooks.updateOffset(this, keepTime);
+              return this;
+            } else {
+              return get(this, unit);
+            }
+          };
+        }
+        function get(mom, unit) {
+          if (!mom.isValid()) {
+            return NaN;
+          }
+          var d = mom._d, isUTC = mom._isUTC;
+          switch (unit) {
+            case "Milliseconds":
+              return isUTC ? d.getUTCMilliseconds() : d.getMilliseconds();
+            case "Seconds":
+              return isUTC ? d.getUTCSeconds() : d.getSeconds();
+            case "Minutes":
+              return isUTC ? d.getUTCMinutes() : d.getMinutes();
+            case "Hours":
+              return isUTC ? d.getUTCHours() : d.getHours();
+            case "Date":
+              return isUTC ? d.getUTCDate() : d.getDate();
+            case "Day":
+              return isUTC ? d.getUTCDay() : d.getDay();
+            case "Month":
+              return isUTC ? d.getUTCMonth() : d.getMonth();
+            case "FullYear":
+              return isUTC ? d.getUTCFullYear() : d.getFullYear();
+            default:
+              return NaN;
+          }
+        }
+        function set$1(mom, unit, value) {
+          var d, isUTC, year, month, date;
+          if (!mom.isValid() || isNaN(value)) {
+            return;
+          }
+          d = mom._d;
+          isUTC = mom._isUTC;
+          switch (unit) {
+            case "Milliseconds":
+              return void (isUTC ? d.setUTCMilliseconds(value) : d.setMilliseconds(value));
+            case "Seconds":
+              return void (isUTC ? d.setUTCSeconds(value) : d.setSeconds(value));
+            case "Minutes":
+              return void (isUTC ? d.setUTCMinutes(value) : d.setMinutes(value));
+            case "Hours":
+              return void (isUTC ? d.setUTCHours(value) : d.setHours(value));
+            case "Date":
+              return void (isUTC ? d.setUTCDate(value) : d.setDate(value));
+            case "FullYear":
+              break;
+            default:
+              return;
+          }
+          year = value;
+          month = mom.month();
+          date = mom.date();
+          date = date === 29 && month === 1 && !isLeapYear(year) ? 28 : date;
+          void (isUTC ? d.setUTCFullYear(year, month, date) : d.setFullYear(year, month, date));
+        }
+        function stringGet(units) {
+          units = normalizeUnits(units);
+          if (isFunction(this[units])) {
+            return this[units]();
+          }
+          return this;
+        }
+        function stringSet(units, value) {
+          if (typeof units === "object") {
+            units = normalizeObjectUnits(units);
+            var prioritized = getPrioritizedUnits(units), i, prioritizedLen = prioritized.length;
+            for (i = 0; i < prioritizedLen; i++) {
+              this[prioritized[i].unit](units[prioritized[i].unit]);
+            }
+          } else {
+            units = normalizeUnits(units);
+            if (isFunction(this[units])) {
+              return this[units](value);
+            }
+          }
+          return this;
+        }
+        function mod(n, x) {
+          return (n % x + x) % x;
+        }
+        var indexOf;
+        if (Array.prototype.indexOf) {
+          indexOf = Array.prototype.indexOf;
+        } else {
+          indexOf = function(o) {
+            var i;
+            for (i = 0; i < this.length; ++i) {
+              if (this[i] === o) {
+                return i;
+              }
+            }
+            return -1;
+          };
+        }
+        function daysInMonth(year, month) {
+          if (isNaN(year) || isNaN(month)) {
+            return NaN;
+          }
+          var modMonth = mod(month, 12);
+          year += (month - modMonth) / 12;
+          return modMonth === 1 ? isLeapYear(year) ? 29 : 28 : 31 - modMonth % 7 % 2;
+        }
+        addFormatToken("M", ["MM", 2], "Mo", function() {
+          return this.month() + 1;
+        });
+        addFormatToken("MMM", 0, 0, function(format2) {
+          return this.localeData().monthsShort(this, format2);
+        });
+        addFormatToken("MMMM", 0, 0, function(format2) {
+          return this.localeData().months(this, format2);
+        });
+        addRegexToken("M", match1to2, match1to2NoLeadingZero);
+        addRegexToken("MM", match1to2, match2);
+        addRegexToken("MMM", function(isStrict, locale2) {
+          return locale2.monthsShortRegex(isStrict);
+        });
+        addRegexToken("MMMM", function(isStrict, locale2) {
+          return locale2.monthsRegex(isStrict);
+        });
+        addParseToken(["M", "MM"], function(input, array) {
+          array[MONTH] = toInt(input) - 1;
+        });
+        addParseToken(["MMM", "MMMM"], function(input, array, config, token2) {
+          var month = config._locale.monthsParse(input, token2, config._strict);
+          if (month != null) {
+            array[MONTH] = month;
+          } else {
+            getParsingFlags(config).invalidMonth = input;
+          }
+        });
+        var defaultLocaleMonths = "January_February_March_April_May_June_July_August_September_October_November_December".split(
+          "_"
+        ), defaultLocaleMonthsShort = "Jan_Feb_Mar_Apr_May_Jun_Jul_Aug_Sep_Oct_Nov_Dec".split("_"), MONTHS_IN_FORMAT = /D[oD]?(\[[^\[\]]*\]|\s)+MMMM?/, defaultMonthsShortRegex = matchWord, defaultMonthsRegex = matchWord;
+        function localeMonths(m, format2) {
+          if (!m) {
+            return isArray(this._months) ? this._months : this._months["standalone"];
+          }
+          return isArray(this._months) ? this._months[m.month()] : this._months[(this._months.isFormat || MONTHS_IN_FORMAT).test(format2) ? "format" : "standalone"][m.month()];
+        }
+        function localeMonthsShort(m, format2) {
+          if (!m) {
+            return isArray(this._monthsShort) ? this._monthsShort : this._monthsShort["standalone"];
+          }
+          return isArray(this._monthsShort) ? this._monthsShort[m.month()] : this._monthsShort[MONTHS_IN_FORMAT.test(format2) ? "format" : "standalone"][m.month()];
+        }
+        function handleStrictParse(monthName, format2, strict) {
+          var i, ii, mom, llc = monthName.toLocaleLowerCase();
+          if (!this._monthsParse) {
+            this._monthsParse = [];
+            this._longMonthsParse = [];
+            this._shortMonthsParse = [];
+            for (i = 0; i < 12; ++i) {
+              mom = createUTC([2e3, i]);
+              this._shortMonthsParse[i] = this.monthsShort(
+                mom,
+                ""
+              ).toLocaleLowerCase();
+              this._longMonthsParse[i] = this.months(mom, "").toLocaleLowerCase();
+            }
+          }
+          if (strict) {
+            if (format2 === "MMM") {
+              ii = indexOf.call(this._shortMonthsParse, llc);
+              return ii !== -1 ? ii : null;
+            } else {
+              ii = indexOf.call(this._longMonthsParse, llc);
+              return ii !== -1 ? ii : null;
+            }
+          } else {
+            if (format2 === "MMM") {
+              ii = indexOf.call(this._shortMonthsParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._longMonthsParse, llc);
+              return ii !== -1 ? ii : null;
+            } else {
+              ii = indexOf.call(this._longMonthsParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._shortMonthsParse, llc);
+              return ii !== -1 ? ii : null;
+            }
+          }
+        }
+        function localeMonthsParse(monthName, format2, strict) {
+          var i, mom, regex;
+          if (this._monthsParseExact) {
+            return handleStrictParse.call(this, monthName, format2, strict);
+          }
+          if (!this._monthsParse) {
+            this._monthsParse = [];
+            this._longMonthsParse = [];
+            this._shortMonthsParse = [];
+          }
+          for (i = 0; i < 12; i++) {
+            mom = createUTC([2e3, i]);
+            if (strict && !this._longMonthsParse[i]) {
+              this._longMonthsParse[i] = new RegExp(
+                "^" + this.months(mom, "").replace(".", "") + "$",
+                "i"
+              );
+              this._shortMonthsParse[i] = new RegExp(
+                "^" + this.monthsShort(mom, "").replace(".", "") + "$",
+                "i"
+              );
+            }
+            if (!strict && !this._monthsParse[i]) {
+              regex = "^" + this.months(mom, "") + "|^" + this.monthsShort(mom, "");
+              this._monthsParse[i] = new RegExp(regex.replace(".", ""), "i");
+            }
+            if (strict && format2 === "MMMM" && this._longMonthsParse[i].test(monthName)) {
+              return i;
+            } else if (strict && format2 === "MMM" && this._shortMonthsParse[i].test(monthName)) {
+              return i;
+            } else if (!strict && this._monthsParse[i].test(monthName)) {
+              return i;
+            }
+          }
+        }
+        function setMonth(mom, value) {
+          if (!mom.isValid()) {
+            return mom;
+          }
+          if (typeof value === "string") {
+            if (/^\d+$/.test(value)) {
+              value = toInt(value);
+            } else {
+              value = mom.localeData().monthsParse(value);
+              if (!isNumber(value)) {
+                return mom;
+              }
+            }
+          }
+          var month = value, date = mom.date();
+          date = date < 29 ? date : Math.min(date, daysInMonth(mom.year(), month));
+          void (mom._isUTC ? mom._d.setUTCMonth(month, date) : mom._d.setMonth(month, date));
+          return mom;
+        }
+        function getSetMonth(value) {
+          if (value != null) {
+            setMonth(this, value);
+            hooks.updateOffset(this, true);
+            return this;
+          } else {
+            return get(this, "Month");
+          }
+        }
+        function getDaysInMonth() {
+          return daysInMonth(this.year(), this.month());
+        }
+        function monthsShortRegex(isStrict) {
+          if (this._monthsParseExact) {
+            if (!hasOwnProp(this, "_monthsRegex")) {
+              computeMonthsParse.call(this);
+            }
+            if (isStrict) {
+              return this._monthsShortStrictRegex;
+            } else {
+              return this._monthsShortRegex;
+            }
+          } else {
+            if (!hasOwnProp(this, "_monthsShortRegex")) {
+              this._monthsShortRegex = defaultMonthsShortRegex;
+            }
+            return this._monthsShortStrictRegex && isStrict ? this._monthsShortStrictRegex : this._monthsShortRegex;
+          }
+        }
+        function monthsRegex(isStrict) {
+          if (this._monthsParseExact) {
+            if (!hasOwnProp(this, "_monthsRegex")) {
+              computeMonthsParse.call(this);
+            }
+            if (isStrict) {
+              return this._monthsStrictRegex;
+            } else {
+              return this._monthsRegex;
+            }
+          } else {
+            if (!hasOwnProp(this, "_monthsRegex")) {
+              this._monthsRegex = defaultMonthsRegex;
+            }
+            return this._monthsStrictRegex && isStrict ? this._monthsStrictRegex : this._monthsRegex;
+          }
+        }
+        function computeMonthsParse() {
+          function cmpLenRev(a, b) {
+            return b.length - a.length;
+          }
+          var shortPieces = [], longPieces = [], mixedPieces = [], i, mom, shortP, longP;
+          for (i = 0; i < 12; i++) {
+            mom = createUTC([2e3, i]);
+            shortP = regexEscape(this.monthsShort(mom, ""));
+            longP = regexEscape(this.months(mom, ""));
+            shortPieces.push(shortP);
+            longPieces.push(longP);
+            mixedPieces.push(longP);
+            mixedPieces.push(shortP);
+          }
+          shortPieces.sort(cmpLenRev);
+          longPieces.sort(cmpLenRev);
+          mixedPieces.sort(cmpLenRev);
+          this._monthsRegex = new RegExp("^(" + mixedPieces.join("|") + ")", "i");
+          this._monthsShortRegex = this._monthsRegex;
+          this._monthsStrictRegex = new RegExp(
+            "^(" + longPieces.join("|") + ")",
+            "i"
+          );
+          this._monthsShortStrictRegex = new RegExp(
+            "^(" + shortPieces.join("|") + ")",
+            "i"
+          );
+        }
+        function createDate(y, m, d, h, M8, s, ms) {
+          var date;
+          if (y < 100 && y >= 0) {
+            date = new Date(y + 400, m, d, h, M8, s, ms);
+            if (isFinite(date.getFullYear())) {
+              date.setFullYear(y);
+            }
+          } else {
+            date = new Date(y, m, d, h, M8, s, ms);
+          }
+          return date;
+        }
+        function createUTCDate(y) {
+          var date, args;
+          if (y < 100 && y >= 0) {
+            args = Array.prototype.slice.call(arguments);
+            args[0] = y + 400;
+            date = new Date(Date.UTC.apply(null, args));
+            if (isFinite(date.getUTCFullYear())) {
+              date.setUTCFullYear(y);
+            }
+          } else {
+            date = new Date(Date.UTC.apply(null, arguments));
+          }
+          return date;
+        }
+        function firstWeekOffset(year, dow, doy) {
+          var fwd = 7 + dow - doy, fwdlw = (7 + createUTCDate(year, 0, fwd).getUTCDay() - dow) % 7;
+          return -fwdlw + fwd - 1;
+        }
+        function dayOfYearFromWeeks(year, week, weekday, dow, doy) {
+          var localWeekday = (7 + weekday - dow) % 7, weekOffset = firstWeekOffset(year, dow, doy), dayOfYear = 1 + 7 * (week - 1) + localWeekday + weekOffset, resYear, resDayOfYear;
+          if (dayOfYear <= 0) {
+            resYear = year - 1;
+            resDayOfYear = daysInYear(resYear) + dayOfYear;
+          } else if (dayOfYear > daysInYear(year)) {
+            resYear = year + 1;
+            resDayOfYear = dayOfYear - daysInYear(year);
+          } else {
+            resYear = year;
+            resDayOfYear = dayOfYear;
+          }
+          return {
+            year: resYear,
+            dayOfYear: resDayOfYear
+          };
+        }
+        function weekOfYear(mom, dow, doy) {
+          var weekOffset = firstWeekOffset(mom.year(), dow, doy), week = Math.floor((mom.dayOfYear() - weekOffset - 1) / 7) + 1, resWeek, resYear;
+          if (week < 1) {
+            resYear = mom.year() - 1;
+            resWeek = week + weeksInYear(resYear, dow, doy);
+          } else if (week > weeksInYear(mom.year(), dow, doy)) {
+            resWeek = week - weeksInYear(mom.year(), dow, doy);
+            resYear = mom.year() + 1;
+          } else {
+            resYear = mom.year();
+            resWeek = week;
+          }
+          return {
+            week: resWeek,
+            year: resYear
+          };
+        }
+        function weeksInYear(year, dow, doy) {
+          var weekOffset = firstWeekOffset(year, dow, doy), weekOffsetNext = firstWeekOffset(year + 1, dow, doy);
+          return (daysInYear(year) - weekOffset + weekOffsetNext) / 7;
+        }
+        addFormatToken("w", ["ww", 2], "wo", "week");
+        addFormatToken("W", ["WW", 2], "Wo", "isoWeek");
+        addRegexToken("w", match1to2, match1to2NoLeadingZero);
+        addRegexToken("ww", match1to2, match2);
+        addRegexToken("W", match1to2, match1to2NoLeadingZero);
+        addRegexToken("WW", match1to2, match2);
+        addWeekParseToken(
+          ["w", "ww", "W", "WW"],
+          function(input, week, config, token2) {
+            week[token2.substr(0, 1)] = toInt(input);
+          }
+        );
+        function localeWeek(mom) {
+          return weekOfYear(mom, this._week.dow, this._week.doy).week;
+        }
+        var defaultLocaleWeek = {
+          dow: 0,
+          // Sunday is the first day of the week.
+          doy: 6
+          // The week that contains Jan 6th is the first week of the year.
+        };
+        function localeFirstDayOfWeek() {
+          return this._week.dow;
+        }
+        function localeFirstDayOfYear() {
+          return this._week.doy;
+        }
+        function getSetWeek(input) {
+          var week = this.localeData().week(this);
+          return input == null ? week : this.add((input - week) * 7, "d");
+        }
+        function getSetISOWeek(input) {
+          var week = weekOfYear(this, 1, 4).week;
+          return input == null ? week : this.add((input - week) * 7, "d");
+        }
+        addFormatToken("d", 0, "do", "day");
+        addFormatToken("dd", 0, 0, function(format2) {
+          return this.localeData().weekdaysMin(this, format2);
+        });
+        addFormatToken("ddd", 0, 0, function(format2) {
+          return this.localeData().weekdaysShort(this, format2);
+        });
+        addFormatToken("dddd", 0, 0, function(format2) {
+          return this.localeData().weekdays(this, format2);
+        });
+        addFormatToken("e", 0, 0, "weekday");
+        addFormatToken("E", 0, 0, "isoWeekday");
+        addRegexToken("d", match1to2);
+        addRegexToken("e", match1to2);
+        addRegexToken("E", match1to2);
+        addRegexToken("dd", function(isStrict, locale2) {
+          return locale2.weekdaysMinRegex(isStrict);
+        });
+        addRegexToken("ddd", function(isStrict, locale2) {
+          return locale2.weekdaysShortRegex(isStrict);
+        });
+        addRegexToken("dddd", function(isStrict, locale2) {
+          return locale2.weekdaysRegex(isStrict);
+        });
+        addWeekParseToken(["dd", "ddd", "dddd"], function(input, week, config, token2) {
+          var weekday = config._locale.weekdaysParse(input, token2, config._strict);
+          if (weekday != null) {
+            week.d = weekday;
+          } else {
+            getParsingFlags(config).invalidWeekday = input;
+          }
+        });
+        addWeekParseToken(["d", "e", "E"], function(input, week, config, token2) {
+          week[token2] = toInt(input);
+        });
+        function parseWeekday(input, locale2) {
+          if (typeof input !== "string") {
+            return input;
+          }
+          if (!isNaN(input)) {
+            return parseInt(input, 10);
+          }
+          input = locale2.weekdaysParse(input);
+          if (typeof input === "number") {
+            return input;
+          }
+          return null;
+        }
+        function parseIsoWeekday(input, locale2) {
+          if (typeof input === "string") {
+            return locale2.weekdaysParse(input) % 7 || 7;
+          }
+          return isNaN(input) ? null : input;
+        }
+        function shiftWeekdays(ws, n) {
+          return ws.slice(n, 7).concat(ws.slice(0, n));
+        }
+        var defaultLocaleWeekdays = "Sunday_Monday_Tuesday_Wednesday_Thursday_Friday_Saturday".split("_"), defaultLocaleWeekdaysShort = "Sun_Mon_Tue_Wed_Thu_Fri_Sat".split("_"), defaultLocaleWeekdaysMin = "Su_Mo_Tu_We_Th_Fr_Sa".split("_"), defaultWeekdaysRegex = matchWord, defaultWeekdaysShortRegex = matchWord, defaultWeekdaysMinRegex = matchWord;
+        function localeWeekdays(m, format2) {
+          var weekdays = isArray(this._weekdays) ? this._weekdays : this._weekdays[m && m !== true && this._weekdays.isFormat.test(format2) ? "format" : "standalone"];
+          return m === true ? shiftWeekdays(weekdays, this._week.dow) : m ? weekdays[m.day()] : weekdays;
+        }
+        function localeWeekdaysShort(m) {
+          return m === true ? shiftWeekdays(this._weekdaysShort, this._week.dow) : m ? this._weekdaysShort[m.day()] : this._weekdaysShort;
+        }
+        function localeWeekdaysMin(m) {
+          return m === true ? shiftWeekdays(this._weekdaysMin, this._week.dow) : m ? this._weekdaysMin[m.day()] : this._weekdaysMin;
+        }
+        function handleStrictParse$1(weekdayName, format2, strict) {
+          var i, ii, mom, llc = weekdayName.toLocaleLowerCase();
+          if (!this._weekdaysParse) {
+            this._weekdaysParse = [];
+            this._shortWeekdaysParse = [];
+            this._minWeekdaysParse = [];
+            for (i = 0; i < 7; ++i) {
+              mom = createUTC([2e3, 1]).day(i);
+              this._minWeekdaysParse[i] = this.weekdaysMin(
+                mom,
+                ""
+              ).toLocaleLowerCase();
+              this._shortWeekdaysParse[i] = this.weekdaysShort(
+                mom,
+                ""
+              ).toLocaleLowerCase();
+              this._weekdaysParse[i] = this.weekdays(mom, "").toLocaleLowerCase();
+            }
+          }
+          if (strict) {
+            if (format2 === "dddd") {
+              ii = indexOf.call(this._weekdaysParse, llc);
+              return ii !== -1 ? ii : null;
+            } else if (format2 === "ddd") {
+              ii = indexOf.call(this._shortWeekdaysParse, llc);
+              return ii !== -1 ? ii : null;
+            } else {
+              ii = indexOf.call(this._minWeekdaysParse, llc);
+              return ii !== -1 ? ii : null;
+            }
+          } else {
+            if (format2 === "dddd") {
+              ii = indexOf.call(this._weekdaysParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._shortWeekdaysParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._minWeekdaysParse, llc);
+              return ii !== -1 ? ii : null;
+            } else if (format2 === "ddd") {
+              ii = indexOf.call(this._shortWeekdaysParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._weekdaysParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._minWeekdaysParse, llc);
+              return ii !== -1 ? ii : null;
+            } else {
+              ii = indexOf.call(this._minWeekdaysParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._weekdaysParse, llc);
+              if (ii !== -1) {
+                return ii;
+              }
+              ii = indexOf.call(this._shortWeekdaysParse, llc);
+              return ii !== -1 ? ii : null;
+            }
+          }
+        }
+        function localeWeekdaysParse(weekdayName, format2, strict) {
+          var i, mom, regex;
+          if (this._weekdaysParseExact) {
+            return handleStrictParse$1.call(this, weekdayName, format2, strict);
+          }
+          if (!this._weekdaysParse) {
+            this._weekdaysParse = [];
+            this._minWeekdaysParse = [];
+            this._shortWeekdaysParse = [];
+            this._fullWeekdaysParse = [];
+          }
+          for (i = 0; i < 7; i++) {
+            mom = createUTC([2e3, 1]).day(i);
+            if (strict && !this._fullWeekdaysParse[i]) {
+              this._fullWeekdaysParse[i] = new RegExp(
+                "^" + this.weekdays(mom, "").replace(".", "\\.?") + "$",
+                "i"
+              );
+              this._shortWeekdaysParse[i] = new RegExp(
+                "^" + this.weekdaysShort(mom, "").replace(".", "\\.?") + "$",
+                "i"
+              );
+              this._minWeekdaysParse[i] = new RegExp(
+                "^" + this.weekdaysMin(mom, "").replace(".", "\\.?") + "$",
+                "i"
+              );
+            }
+            if (!this._weekdaysParse[i]) {
+              regex = "^" + this.weekdays(mom, "") + "|^" + this.weekdaysShort(mom, "") + "|^" + this.weekdaysMin(mom, "");
+              this._weekdaysParse[i] = new RegExp(regex.replace(".", ""), "i");
+            }
+            if (strict && format2 === "dddd" && this._fullWeekdaysParse[i].test(weekdayName)) {
+              return i;
+            } else if (strict && format2 === "ddd" && this._shortWeekdaysParse[i].test(weekdayName)) {
+              return i;
+            } else if (strict && format2 === "dd" && this._minWeekdaysParse[i].test(weekdayName)) {
+              return i;
+            } else if (!strict && this._weekdaysParse[i].test(weekdayName)) {
+              return i;
+            }
+          }
+        }
+        function getSetDayOfWeek(input) {
+          if (!this.isValid()) {
+            return input != null ? this : NaN;
+          }
+          var day = get(this, "Day");
+          if (input != null) {
+            input = parseWeekday(input, this.localeData());
+            return this.add(input - day, "d");
+          } else {
+            return day;
+          }
+        }
+        function getSetLocaleDayOfWeek(input) {
+          if (!this.isValid()) {
+            return input != null ? this : NaN;
+          }
+          var weekday = (this.day() + 7 - this.localeData()._week.dow) % 7;
+          return input == null ? weekday : this.add(input - weekday, "d");
+        }
+        function getSetISODayOfWeek(input) {
+          if (!this.isValid()) {
+            return input != null ? this : NaN;
+          }
+          if (input != null) {
+            var weekday = parseIsoWeekday(input, this.localeData());
+            return this.day(this.day() % 7 ? weekday : weekday - 7);
+          } else {
+            return this.day() || 7;
+          }
+        }
+        function weekdaysRegex(isStrict) {
+          if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, "_weekdaysRegex")) {
+              computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+              return this._weekdaysStrictRegex;
+            } else {
+              return this._weekdaysRegex;
+            }
+          } else {
+            if (!hasOwnProp(this, "_weekdaysRegex")) {
+              this._weekdaysRegex = defaultWeekdaysRegex;
+            }
+            return this._weekdaysStrictRegex && isStrict ? this._weekdaysStrictRegex : this._weekdaysRegex;
+          }
+        }
+        function weekdaysShortRegex(isStrict) {
+          if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, "_weekdaysRegex")) {
+              computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+              return this._weekdaysShortStrictRegex;
+            } else {
+              return this._weekdaysShortRegex;
+            }
+          } else {
+            if (!hasOwnProp(this, "_weekdaysShortRegex")) {
+              this._weekdaysShortRegex = defaultWeekdaysShortRegex;
+            }
+            return this._weekdaysShortStrictRegex && isStrict ? this._weekdaysShortStrictRegex : this._weekdaysShortRegex;
+          }
+        }
+        function weekdaysMinRegex(isStrict) {
+          if (this._weekdaysParseExact) {
+            if (!hasOwnProp(this, "_weekdaysRegex")) {
+              computeWeekdaysParse.call(this);
+            }
+            if (isStrict) {
+              return this._weekdaysMinStrictRegex;
+            } else {
+              return this._weekdaysMinRegex;
+            }
+          } else {
+            if (!hasOwnProp(this, "_weekdaysMinRegex")) {
+              this._weekdaysMinRegex = defaultWeekdaysMinRegex;
+            }
+            return this._weekdaysMinStrictRegex && isStrict ? this._weekdaysMinStrictRegex : this._weekdaysMinRegex;
+          }
+        }
+        function computeWeekdaysParse() {
+          function cmpLenRev(a, b) {
+            return b.length - a.length;
+          }
+          var minPieces = [], shortPieces = [], longPieces = [], mixedPieces = [], i, mom, minp, shortp, longp;
+          for (i = 0; i < 7; i++) {
+            mom = createUTC([2e3, 1]).day(i);
+            minp = regexEscape(this.weekdaysMin(mom, ""));
+            shortp = regexEscape(this.weekdaysShort(mom, ""));
+            longp = regexEscape(this.weekdays(mom, ""));
+            minPieces.push(minp);
+            shortPieces.push(shortp);
+            longPieces.push(longp);
+            mixedPieces.push(minp);
+            mixedPieces.push(shortp);
+            mixedPieces.push(longp);
+          }
+          minPieces.sort(cmpLenRev);
+          shortPieces.sort(cmpLenRev);
+          longPieces.sort(cmpLenRev);
+          mixedPieces.sort(cmpLenRev);
+          this._weekdaysRegex = new RegExp("^(" + mixedPieces.join("|") + ")", "i");
+          this._weekdaysShortRegex = this._weekdaysRegex;
+          this._weekdaysMinRegex = this._weekdaysRegex;
+          this._weekdaysStrictRegex = new RegExp(
+            "^(" + longPieces.join("|") + ")",
+            "i"
+          );
+          this._weekdaysShortStrictRegex = new RegExp(
+            "^(" + shortPieces.join("|") + ")",
+            "i"
+          );
+          this._weekdaysMinStrictRegex = new RegExp(
+            "^(" + minPieces.join("|") + ")",
+            "i"
+          );
+        }
+        function hFormat() {
+          return this.hours() % 12 || 12;
+        }
+        function kFormat() {
+          return this.hours() || 24;
+        }
+        addFormatToken("H", ["HH", 2], 0, "hour");
+        addFormatToken("h", ["hh", 2], 0, hFormat);
+        addFormatToken("k", ["kk", 2], 0, kFormat);
+        addFormatToken("hmm", 0, 0, function() {
+          return "" + hFormat.apply(this) + zeroFill(this.minutes(), 2);
+        });
+        addFormatToken("hmmss", 0, 0, function() {
+          return "" + hFormat.apply(this) + zeroFill(this.minutes(), 2) + zeroFill(this.seconds(), 2);
+        });
+        addFormatToken("Hmm", 0, 0, function() {
+          return "" + this.hours() + zeroFill(this.minutes(), 2);
+        });
+        addFormatToken("Hmmss", 0, 0, function() {
+          return "" + this.hours() + zeroFill(this.minutes(), 2) + zeroFill(this.seconds(), 2);
+        });
+        function meridiem(token2, lowercase) {
+          addFormatToken(token2, 0, 0, function() {
+            return this.localeData().meridiem(
+              this.hours(),
+              this.minutes(),
+              lowercase
+            );
+          });
+        }
+        meridiem("a", true);
+        meridiem("A", false);
+        function matchMeridiem(isStrict, locale2) {
+          return locale2._meridiemParse;
+        }
+        addRegexToken("a", matchMeridiem);
+        addRegexToken("A", matchMeridiem);
+        addRegexToken("H", match1to2, match1to2HasZero);
+        addRegexToken("h", match1to2, match1to2NoLeadingZero);
+        addRegexToken("k", match1to2, match1to2NoLeadingZero);
+        addRegexToken("HH", match1to2, match2);
+        addRegexToken("hh", match1to2, match2);
+        addRegexToken("kk", match1to2, match2);
+        addRegexToken("hmm", match3to4);
+        addRegexToken("hmmss", match5to6);
+        addRegexToken("Hmm", match3to4);
+        addRegexToken("Hmmss", match5to6);
+        addParseToken(["H", "HH"], HOUR);
+        addParseToken(["k", "kk"], function(input, array, config) {
+          var kInput = toInt(input);
+          array[HOUR] = kInput === 24 ? 0 : kInput;
+        });
+        addParseToken(["a", "A"], function(input, array, config) {
+          config._isPm = config._locale.isPM(input);
+          config._meridiem = input;
+        });
+        addParseToken(["h", "hh"], function(input, array, config) {
+          array[HOUR] = toInt(input);
+          getParsingFlags(config).bigHour = true;
+        });
+        addParseToken("hmm", function(input, array, config) {
+          var pos = input.length - 2;
+          array[HOUR] = toInt(input.substr(0, pos));
+          array[MINUTE] = toInt(input.substr(pos));
+          getParsingFlags(config).bigHour = true;
+        });
+        addParseToken("hmmss", function(input, array, config) {
+          var pos1 = input.length - 4, pos2 = input.length - 2;
+          array[HOUR] = toInt(input.substr(0, pos1));
+          array[MINUTE] = toInt(input.substr(pos1, 2));
+          array[SECOND] = toInt(input.substr(pos2));
+          getParsingFlags(config).bigHour = true;
+        });
+        addParseToken("Hmm", function(input, array, config) {
+          var pos = input.length - 2;
+          array[HOUR] = toInt(input.substr(0, pos));
+          array[MINUTE] = toInt(input.substr(pos));
+        });
+        addParseToken("Hmmss", function(input, array, config) {
+          var pos1 = input.length - 4, pos2 = input.length - 2;
+          array[HOUR] = toInt(input.substr(0, pos1));
+          array[MINUTE] = toInt(input.substr(pos1, 2));
+          array[SECOND] = toInt(input.substr(pos2));
+        });
+        function localeIsPM(input) {
+          return (input + "").toLowerCase().charAt(0) === "p";
+        }
+        var defaultLocaleMeridiemParse = /[ap]\.?m?\.?/i, getSetHour = makeGetSet("Hours", true);
+        function localeMeridiem(hours3, minutes2, isLower) {
+          if (hours3 > 11) {
+            return isLower ? "pm" : "PM";
+          } else {
+            return isLower ? "am" : "AM";
+          }
+        }
+        var baseConfig = {
+          calendar: defaultCalendar,
+          longDateFormat: defaultLongDateFormat,
+          invalidDate: defaultInvalidDate,
+          ordinal: defaultOrdinal,
+          dayOfMonthOrdinalParse: defaultDayOfMonthOrdinalParse,
+          relativeTime: defaultRelativeTime,
+          months: defaultLocaleMonths,
+          monthsShort: defaultLocaleMonthsShort,
+          week: defaultLocaleWeek,
+          weekdays: defaultLocaleWeekdays,
+          weekdaysMin: defaultLocaleWeekdaysMin,
+          weekdaysShort: defaultLocaleWeekdaysShort,
+          meridiemParse: defaultLocaleMeridiemParse
+        };
+        var locales = {}, localeFamilies = {}, globalLocale;
+        function commonPrefix(arr1, arr2) {
+          var i, minl = Math.min(arr1.length, arr2.length);
+          for (i = 0; i < minl; i += 1) {
+            if (arr1[i] !== arr2[i]) {
+              return i;
+            }
+          }
+          return minl;
+        }
+        function normalizeLocale(key) {
+          return key ? key.toLowerCase().replace("_", "-") : key;
+        }
+        function chooseLocale(names) {
+          var i = 0, j, next, locale2, split;
+          while (i < names.length) {
+            split = normalizeLocale(names[i]).split("-");
+            j = split.length;
+            next = normalizeLocale(names[i + 1]);
+            next = next ? next.split("-") : null;
+            while (j > 0) {
+              locale2 = loadLocale(split.slice(0, j).join("-"));
+              if (locale2) {
+                return locale2;
+              }
+              if (next && next.length >= j && commonPrefix(split, next) >= j - 1) {
+                break;
+              }
+              j--;
+            }
+            i++;
+          }
+          return globalLocale;
+        }
+        function isLocaleNameSane(name) {
+          return !!(name && name.match("^[^/\\\\]*$"));
+        }
+        function loadLocale(name) {
+          var oldLocale = null, aliasedRequire;
+          if (locales[name] === void 0 && typeof module !== "undefined" && module && module.exports && isLocaleNameSane(name)) {
+            try {
+              oldLocale = globalLocale._abbr;
+              aliasedRequire = __require;
+              aliasedRequire("./locale/" + name);
+              getSetGlobalLocale(oldLocale);
+            } catch (e) {
+              locales[name] = null;
+            }
+          }
+          return locales[name];
+        }
+        function getSetGlobalLocale(key, values) {
+          var data;
+          if (key) {
+            if (isUndefined(values)) {
+              data = getLocale(key);
+            } else {
+              data = defineLocale(key, values);
+            }
+            if (data) {
+              globalLocale = data;
+            } else {
+              if (typeof console !== "undefined" && console.warn) {
+                console.warn(
+                  "Locale " + key + " not found. Did you forget to load it?"
+                );
+              }
+            }
+          }
+          return globalLocale._abbr;
+        }
+        function defineLocale(name, config) {
+          if (config !== null) {
+            var locale2, parentConfig = baseConfig;
+            config.abbr = name;
+            if (locales[name] != null) {
+              deprecateSimple(
+                "defineLocaleOverride",
+                "use moment.updateLocale(localeName, config) to change an existing locale. moment.defineLocale(localeName, config) should only be used for creating a new locale See http://momentjs.com/guides/#/warnings/define-locale/ for more info."
+              );
+              parentConfig = locales[name]._config;
+            } else if (config.parentLocale != null) {
+              if (locales[config.parentLocale] != null) {
+                parentConfig = locales[config.parentLocale]._config;
+              } else {
+                locale2 = loadLocale(config.parentLocale);
+                if (locale2 != null) {
+                  parentConfig = locale2._config;
+                } else {
+                  if (!localeFamilies[config.parentLocale]) {
+                    localeFamilies[config.parentLocale] = [];
+                  }
+                  localeFamilies[config.parentLocale].push({
+                    name,
+                    config
+                  });
+                  return null;
+                }
+              }
+            }
+            locales[name] = new Locale(mergeConfigs(parentConfig, config));
+            if (localeFamilies[name]) {
+              localeFamilies[name].forEach(function(x) {
+                defineLocale(x.name, x.config);
+              });
+            }
+            getSetGlobalLocale(name);
+            return locales[name];
+          } else {
+            delete locales[name];
+            return null;
+          }
+        }
+        function updateLocale(name, config) {
+          if (config != null) {
+            var locale2, tmpLocale, parentConfig = baseConfig;
+            if (locales[name] != null && locales[name].parentLocale != null) {
+              locales[name].set(mergeConfigs(locales[name]._config, config));
+            } else {
+              tmpLocale = loadLocale(name);
+              if (tmpLocale != null) {
+                parentConfig = tmpLocale._config;
+              }
+              config = mergeConfigs(parentConfig, config);
+              if (tmpLocale == null) {
+                config.abbr = name;
+              }
+              locale2 = new Locale(config);
+              locale2.parentLocale = locales[name];
+              locales[name] = locale2;
+            }
+            getSetGlobalLocale(name);
+          } else {
+            if (locales[name] != null) {
+              if (locales[name].parentLocale != null) {
+                locales[name] = locales[name].parentLocale;
+                if (name === getSetGlobalLocale()) {
+                  getSetGlobalLocale(name);
+                }
+              } else if (locales[name] != null) {
+                delete locales[name];
+              }
+            }
+          }
+          return locales[name];
+        }
+        function getLocale(key) {
+          var locale2;
+          if (key && key._locale && key._locale._abbr) {
+            key = key._locale._abbr;
+          }
+          if (!key) {
+            return globalLocale;
+          }
+          if (!isArray(key)) {
+            locale2 = loadLocale(key);
+            if (locale2) {
+              return locale2;
+            }
+            key = [key];
+          }
+          return chooseLocale(key);
+        }
+        function listLocales() {
+          return keys(locales);
+        }
+        function checkOverflow(m) {
+          var overflow, a = m._a;
+          if (a && getParsingFlags(m).overflow === -2) {
+            overflow = a[MONTH] < 0 || a[MONTH] > 11 ? MONTH : a[DATE] < 1 || a[DATE] > daysInMonth(a[YEAR], a[MONTH]) ? DATE : a[HOUR] < 0 || a[HOUR] > 24 || a[HOUR] === 24 && (a[MINUTE] !== 0 || a[SECOND] !== 0 || a[MILLISECOND] !== 0) ? HOUR : a[MINUTE] < 0 || a[MINUTE] > 59 ? MINUTE : a[SECOND] < 0 || a[SECOND] > 59 ? SECOND : a[MILLISECOND] < 0 || a[MILLISECOND] > 999 ? MILLISECOND : -1;
+            if (getParsingFlags(m)._overflowDayOfYear && (overflow < YEAR || overflow > DATE)) {
+              overflow = DATE;
+            }
+            if (getParsingFlags(m)._overflowWeeks && overflow === -1) {
+              overflow = WEEK;
+            }
+            if (getParsingFlags(m)._overflowWeekday && overflow === -1) {
+              overflow = WEEKDAY;
+            }
+            getParsingFlags(m).overflow = overflow;
+          }
+          return m;
+        }
+        var extendedIsoRegex = /^\s*((?:[+-]\d{6}|\d{4})-(?:\d\d-\d\d|W\d\d-\d|W\d\d|\d\d\d|\d\d))(?:(T| )(\d\d(?::\d\d(?::\d\d(?:[.,]\d+)?)?)?)([+-]\d\d(?::?\d\d)?|\s*Z)?)?$/, basicIsoRegex = /^\s*((?:[+-]\d{6}|\d{4})(?:\d\d\d\d|W\d\d\d|W\d\d|\d\d\d|\d\d|))(?:(T| )(\d\d(?:\d\d(?:\d\d(?:[.,]\d+)?)?)?)([+-]\d\d(?::?\d\d)?|\s*Z)?)?$/, tzRegex = /Z|[+-]\d\d(?::?\d\d)?/, isoDates = [
+          ["YYYYYY-MM-DD", /[+-]\d{6}-\d\d-\d\d/],
+          ["YYYY-MM-DD", /\d{4}-\d\d-\d\d/],
+          ["GGGG-[W]WW-E", /\d{4}-W\d\d-\d/],
+          ["GGGG-[W]WW", /\d{4}-W\d\d/, false],
+          ["YYYY-DDD", /\d{4}-\d{3}/],
+          ["YYYY-MM", /\d{4}-\d\d/, false],
+          ["YYYYYYMMDD", /[+-]\d{10}/],
+          ["YYYYMMDD", /\d{8}/],
+          ["GGGG[W]WWE", /\d{4}W\d{3}/],
+          ["GGGG[W]WW", /\d{4}W\d{2}/, false],
+          ["YYYYDDD", /\d{7}/],
+          ["YYYYMM", /\d{6}/, false],
+          ["YYYY", /\d{4}/, false]
+        ], isoTimes = [
+          ["HH:mm:ss.SSSS", /\d\d:\d\d:\d\d\.\d+/],
+          ["HH:mm:ss,SSSS", /\d\d:\d\d:\d\d,\d+/],
+          ["HH:mm:ss", /\d\d:\d\d:\d\d/],
+          ["HH:mm", /\d\d:\d\d/],
+          ["HHmmss.SSSS", /\d\d\d\d\d\d\.\d+/],
+          ["HHmmss,SSSS", /\d\d\d\d\d\d,\d+/],
+          ["HHmmss", /\d\d\d\d\d\d/],
+          ["HHmm", /\d\d\d\d/],
+          ["HH", /\d\d/]
+        ], aspNetJsonRegex = /^\/?Date\((-?\d+)/i, rfc2822 = /^(?:(Mon|Tue|Wed|Thu|Fri|Sat|Sun),?\s)?(\d{1,2})\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{2,4})\s(\d\d):(\d\d)(?::(\d\d))?\s(?:(UT|GMT|[ECMP][SD]T)|([Zz])|([+-]\d{4}))$/, obsOffsets = {
+          UT: 0,
+          GMT: 0,
+          EDT: -4 * 60,
+          EST: -5 * 60,
+          CDT: -5 * 60,
+          CST: -6 * 60,
+          MDT: -6 * 60,
+          MST: -7 * 60,
+          PDT: -7 * 60,
+          PST: -8 * 60
+        };
+        function configFromISO(config) {
+          var i, l, string = config._i, match = extendedIsoRegex.exec(string) || basicIsoRegex.exec(string), allowTime, dateFormat, timeFormat, tzFormat, isoDatesLen = isoDates.length, isoTimesLen = isoTimes.length;
+          if (match) {
+            getParsingFlags(config).iso = true;
+            for (i = 0, l = isoDatesLen; i < l; i++) {
+              if (isoDates[i][1].exec(match[1])) {
+                dateFormat = isoDates[i][0];
+                allowTime = isoDates[i][2] !== false;
+                break;
+              }
+            }
+            if (dateFormat == null) {
+              config._isValid = false;
+              return;
+            }
+            if (match[3]) {
+              for (i = 0, l = isoTimesLen; i < l; i++) {
+                if (isoTimes[i][1].exec(match[3])) {
+                  timeFormat = (match[2] || " ") + isoTimes[i][0];
+                  break;
+                }
+              }
+              if (timeFormat == null) {
+                config._isValid = false;
+                return;
+              }
+            }
+            if (!allowTime && timeFormat != null) {
+              config._isValid = false;
+              return;
+            }
+            if (match[4]) {
+              if (tzRegex.exec(match[4])) {
+                tzFormat = "Z";
+              } else {
+                config._isValid = false;
+                return;
+              }
+            }
+            config._f = dateFormat + (timeFormat || "") + (tzFormat || "");
+            configFromStringAndFormat(config);
+          } else {
+            config._isValid = false;
+          }
+        }
+        function extractFromRFC2822Strings(yearStr, monthStr, dayStr, hourStr, minuteStr, secondStr) {
+          var result = [
+            untruncateYear(yearStr),
+            defaultLocaleMonthsShort.indexOf(monthStr),
+            parseInt(dayStr, 10),
+            parseInt(hourStr, 10),
+            parseInt(minuteStr, 10)
+          ];
+          if (secondStr) {
+            result.push(parseInt(secondStr, 10));
+          }
+          return result;
+        }
+        function untruncateYear(yearStr) {
+          var year = parseInt(yearStr, 10);
+          if (year <= 49) {
+            return 2e3 + year;
+          } else if (year <= 999) {
+            return 1900 + year;
+          }
+          return year;
+        }
+        function preprocessRFC2822(s) {
+          return s.replace(/\([^()]*\)|[\n\t]/g, " ").replace(/(\s\s+)/g, " ").replace(/^\s\s*/, "").replace(/\s\s*$/, "");
+        }
+        function checkWeekday(weekdayStr, parsedInput, config) {
+          if (weekdayStr) {
+            var weekdayProvided = defaultLocaleWeekdaysShort.indexOf(weekdayStr), weekdayActual = new Date(
+              parsedInput[0],
+              parsedInput[1],
+              parsedInput[2]
+            ).getDay();
+            if (weekdayProvided !== weekdayActual) {
+              getParsingFlags(config).weekdayMismatch = true;
+              config._isValid = false;
+              return false;
+            }
+          }
+          return true;
+        }
+        function calculateOffset(obsOffset, militaryOffset, numOffset) {
+          if (obsOffset) {
+            return obsOffsets[obsOffset];
+          } else if (militaryOffset) {
+            return 0;
+          } else {
+            var hm = parseInt(numOffset, 10), m = hm % 100, h = (hm - m) / 100;
+            return h * 60 + m;
+          }
+        }
+        function configFromRFC2822(config) {
+          var match = rfc2822.exec(preprocessRFC2822(config._i)), parsedArray;
+          if (match) {
+            parsedArray = extractFromRFC2822Strings(
+              match[4],
+              match[3],
+              match[2],
+              match[5],
+              match[6],
+              match[7]
+            );
+            if (!checkWeekday(match[1], parsedArray, config)) {
+              return;
+            }
+            config._a = parsedArray;
+            config._tzm = calculateOffset(match[8], match[9], match[10]);
+            config._d = createUTCDate.apply(null, config._a);
+            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+            getParsingFlags(config).rfc2822 = true;
+          } else {
+            config._isValid = false;
+          }
+        }
+        function configFromString(config) {
+          var matched = aspNetJsonRegex.exec(config._i);
+          if (matched !== null) {
+            config._d = /* @__PURE__ */ new Date(+matched[1]);
+            return;
+          }
+          configFromISO(config);
+          if (config._isValid === false) {
+            delete config._isValid;
+          } else {
+            return;
+          }
+          configFromRFC2822(config);
+          if (config._isValid === false) {
+            delete config._isValid;
+          } else {
+            return;
+          }
+          if (config._strict) {
+            config._isValid = false;
+          } else {
+            hooks.createFromInputFallback(config);
+          }
+        }
+        hooks.createFromInputFallback = deprecate(
+          "value provided is not in a recognized RFC2822 or ISO format. moment construction falls back to js Date(), which is not reliable across all browsers and versions. Non RFC2822/ISO date formats are discouraged. Please refer to http://momentjs.com/guides/#/warnings/js-date/ for more info.",
+          function(config) {
+            config._d = /* @__PURE__ */ new Date(config._i + (config._useUTC ? " UTC" : ""));
+          }
+        );
+        function defaults(a, b, c) {
+          if (a != null) {
+            return a;
+          }
+          if (b != null) {
+            return b;
+          }
+          return c;
+        }
+        function currentDateArray(config) {
+          var nowValue = new Date(hooks.now());
+          if (config._useUTC) {
+            return [
+              nowValue.getUTCFullYear(),
+              nowValue.getUTCMonth(),
+              nowValue.getUTCDate()
+            ];
+          }
+          return [nowValue.getFullYear(), nowValue.getMonth(), nowValue.getDate()];
+        }
+        function configFromArray(config) {
+          var i, date, input = [], currentDate, expectedWeekday, yearToUse;
+          if (config._d) {
+            return;
+          }
+          currentDate = currentDateArray(config);
+          if (config._w && config._a[DATE] == null && config._a[MONTH] == null) {
+            dayOfYearFromWeekInfo(config);
+          }
+          if (config._dayOfYear != null) {
+            yearToUse = defaults(config._a[YEAR], currentDate[YEAR]);
+            if (config._dayOfYear > daysInYear(yearToUse) || config._dayOfYear === 0) {
+              getParsingFlags(config)._overflowDayOfYear = true;
+            }
+            date = createUTCDate(yearToUse, 0, config._dayOfYear);
+            config._a[MONTH] = date.getUTCMonth();
+            config._a[DATE] = date.getUTCDate();
+          }
+          for (i = 0; i < 3 && config._a[i] == null; ++i) {
+            config._a[i] = input[i] = currentDate[i];
+          }
+          for (; i < 7; i++) {
+            config._a[i] = input[i] = config._a[i] == null ? i === 2 ? 1 : 0 : config._a[i];
+          }
+          if (config._a[HOUR] === 24 && config._a[MINUTE] === 0 && config._a[SECOND] === 0 && config._a[MILLISECOND] === 0) {
+            config._nextDay = true;
+            config._a[HOUR] = 0;
+          }
+          config._d = (config._useUTC ? createUTCDate : createDate).apply(
+            null,
+            input
+          );
+          expectedWeekday = config._useUTC ? config._d.getUTCDay() : config._d.getDay();
+          if (config._tzm != null) {
+            config._d.setUTCMinutes(config._d.getUTCMinutes() - config._tzm);
+          }
+          if (config._nextDay) {
+            config._a[HOUR] = 24;
+          }
+          if (config._w && typeof config._w.d !== "undefined" && config._w.d !== expectedWeekday) {
+            getParsingFlags(config).weekdayMismatch = true;
+          }
+        }
+        function dayOfYearFromWeekInfo(config) {
+          var w, weekYear, week, weekday, dow, doy, temp, weekdayOverflow, curWeek;
+          w = config._w;
+          if (w.GG != null || w.W != null || w.E != null) {
+            dow = 1;
+            doy = 4;
+            weekYear = defaults(
+              w.GG,
+              config._a[YEAR],
+              weekOfYear(createLocal(), 1, 4).year
+            );
+            week = defaults(w.W, 1);
+            weekday = defaults(w.E, 1);
+            if (weekday < 1 || weekday > 7) {
+              weekdayOverflow = true;
+            }
+          } else {
+            dow = config._locale._week.dow;
+            doy = config._locale._week.doy;
+            curWeek = weekOfYear(createLocal(), dow, doy);
+            weekYear = defaults(w.gg, config._a[YEAR], curWeek.year);
+            week = defaults(w.w, curWeek.week);
+            if (w.d != null) {
+              weekday = w.d;
+              if (weekday < 0 || weekday > 6) {
+                weekdayOverflow = true;
+              }
+            } else if (w.e != null) {
+              weekday = w.e + dow;
+              if (w.e < 0 || w.e > 6) {
+                weekdayOverflow = true;
+              }
+            } else {
+              weekday = dow;
+            }
+          }
+          if (week < 1 || week > weeksInYear(weekYear, dow, doy)) {
+            getParsingFlags(config)._overflowWeeks = true;
+          } else if (weekdayOverflow != null) {
+            getParsingFlags(config)._overflowWeekday = true;
+          } else {
+            temp = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy);
+            config._a[YEAR] = temp.year;
+            config._dayOfYear = temp.dayOfYear;
+          }
+        }
+        hooks.ISO_8601 = function() {
+        };
+        hooks.RFC_2822 = function() {
+        };
+        function configFromStringAndFormat(config) {
+          if (config._f === hooks.ISO_8601) {
+            configFromISO(config);
+            return;
+          }
+          if (config._f === hooks.RFC_2822) {
+            configFromRFC2822(config);
+            return;
+          }
+          config._a = [];
+          getParsingFlags(config).empty = true;
+          var string = "" + config._i, i, parsedInput, tokens2, token2, skipped, stringLength = string.length, totalParsedInputLength = 0, era, tokenLen;
+          tokens2 = expandFormat(config._f, config._locale).match(formattingTokens) || [];
+          tokenLen = tokens2.length;
+          for (i = 0; i < tokenLen; i++) {
+            token2 = tokens2[i];
+            parsedInput = (string.match(getParseRegexForToken(token2, config)) || [])[0];
+            if (parsedInput) {
+              skipped = string.substr(0, string.indexOf(parsedInput));
+              if (skipped.length > 0) {
+                getParsingFlags(config).unusedInput.push(skipped);
+              }
+              string = string.slice(
+                string.indexOf(parsedInput) + parsedInput.length
+              );
+              totalParsedInputLength += parsedInput.length;
+            }
+            if (formatTokenFunctions[token2]) {
+              if (parsedInput) {
+                getParsingFlags(config).empty = false;
+              } else {
+                getParsingFlags(config).unusedTokens.push(token2);
+              }
+              addTimeToArrayFromToken(token2, parsedInput, config);
+            } else if (config._strict && !parsedInput) {
+              getParsingFlags(config).unusedTokens.push(token2);
+            }
+          }
+          getParsingFlags(config).charsLeftOver = stringLength - totalParsedInputLength;
+          if (string.length > 0) {
+            getParsingFlags(config).unusedInput.push(string);
+          }
+          if (config._a[HOUR] <= 12 && getParsingFlags(config).bigHour === true && config._a[HOUR] > 0) {
+            getParsingFlags(config).bigHour = void 0;
+          }
+          getParsingFlags(config).parsedDateParts = config._a.slice(0);
+          getParsingFlags(config).meridiem = config._meridiem;
+          config._a[HOUR] = meridiemFixWrap(
+            config._locale,
+            config._a[HOUR],
+            config._meridiem
+          );
+          era = getParsingFlags(config).era;
+          if (era !== null) {
+            config._a[YEAR] = config._locale.erasConvertYear(era, config._a[YEAR]);
+          }
+          configFromArray(config);
+          checkOverflow(config);
+        }
+        function meridiemFixWrap(locale2, hour, meridiem2) {
+          var isPm;
+          if (meridiem2 == null) {
+            return hour;
+          }
+          if (locale2.meridiemHour != null) {
+            return locale2.meridiemHour(hour, meridiem2);
+          } else if (locale2.isPM != null) {
+            isPm = locale2.isPM(meridiem2);
+            if (isPm && hour < 12) {
+              hour += 12;
+            }
+            if (!isPm && hour === 12) {
+              hour = 0;
+            }
+            return hour;
+          } else {
+            return hour;
+          }
+        }
+        function configFromStringAndArray(config) {
+          var tempConfig, bestMoment, scoreToBeat, i, currentScore, validFormatFound, bestFormatIsValid = false, configfLen = config._f.length;
+          if (configfLen === 0) {
+            getParsingFlags(config).invalidFormat = true;
+            config._d = /* @__PURE__ */ new Date(NaN);
+            return;
+          }
+          for (i = 0; i < configfLen; i++) {
+            currentScore = 0;
+            validFormatFound = false;
+            tempConfig = copyConfig({}, config);
+            if (config._useUTC != null) {
+              tempConfig._useUTC = config._useUTC;
+            }
+            tempConfig._f = config._f[i];
+            configFromStringAndFormat(tempConfig);
+            if (isValid(tempConfig)) {
+              validFormatFound = true;
+            }
+            currentScore += getParsingFlags(tempConfig).charsLeftOver;
+            currentScore += getParsingFlags(tempConfig).unusedTokens.length * 10;
+            getParsingFlags(tempConfig).score = currentScore;
+            if (!bestFormatIsValid) {
+              if (scoreToBeat == null || currentScore < scoreToBeat || validFormatFound) {
+                scoreToBeat = currentScore;
+                bestMoment = tempConfig;
+                if (validFormatFound) {
+                  bestFormatIsValid = true;
+                }
+              }
+            } else {
+              if (currentScore < scoreToBeat) {
+                scoreToBeat = currentScore;
+                bestMoment = tempConfig;
+              }
+            }
+          }
+          extend(config, bestMoment || tempConfig);
+        }
+        function configFromObject(config) {
+          if (config._d) {
+            return;
+          }
+          var i = normalizeObjectUnits(config._i), dayOrDate = i.day === void 0 ? i.date : i.day;
+          config._a = map(
+            [i.year, i.month, dayOrDate, i.hour, i.minute, i.second, i.millisecond],
+            function(obj) {
+              return obj && parseInt(obj, 10);
+            }
+          );
+          configFromArray(config);
+        }
+        function createFromConfig(config) {
+          var res = new Moment(checkOverflow(prepareConfig(config)));
+          if (res._nextDay) {
+            res.add(1, "d");
+            res._nextDay = void 0;
+          }
+          return res;
+        }
+        function prepareConfig(config) {
+          var input = config._i, format2 = config._f;
+          config._locale = config._locale || getLocale(config._l);
+          if (input === null || format2 === void 0 && input === "") {
+            return createInvalid({ nullInput: true });
+          }
+          if (typeof input === "string") {
+            config._i = input = config._locale.preparse(input);
+          }
+          if (isMoment(input)) {
+            return new Moment(checkOverflow(input));
+          } else if (isDate(input)) {
+            config._d = input;
+          } else if (isArray(format2)) {
+            configFromStringAndArray(config);
+          } else if (format2) {
+            configFromStringAndFormat(config);
+          } else {
+            configFromInput(config);
+          }
+          if (!isValid(config)) {
+            config._d = null;
+          }
+          return config;
+        }
+        function configFromInput(config) {
+          var input = config._i;
+          if (isUndefined(input)) {
+            config._d = new Date(hooks.now());
+          } else if (isDate(input)) {
+            config._d = new Date(input.valueOf());
+          } else if (typeof input === "string") {
+            configFromString(config);
+          } else if (isArray(input)) {
+            config._a = map(input.slice(0), function(obj) {
+              return parseInt(obj, 10);
+            });
+            configFromArray(config);
+          } else if (isObject(input)) {
+            configFromObject(config);
+          } else if (isNumber(input)) {
+            config._d = new Date(input);
+          } else {
+            hooks.createFromInputFallback(config);
+          }
+        }
+        function createLocalOrUTC(input, format2, locale2, strict, isUTC) {
+          var c = {};
+          if (format2 === true || format2 === false) {
+            strict = format2;
+            format2 = void 0;
+          }
+          if (locale2 === true || locale2 === false) {
+            strict = locale2;
+            locale2 = void 0;
+          }
+          if (isObject(input) && isObjectEmpty(input) || isArray(input) && input.length === 0) {
+            input = void 0;
+          }
+          c._isAMomentObject = true;
+          c._useUTC = c._isUTC = isUTC;
+          c._l = locale2;
+          c._i = input;
+          c._f = format2;
+          c._strict = strict;
+          return createFromConfig(c);
+        }
+        function createLocal(input, format2, locale2, strict) {
+          return createLocalOrUTC(input, format2, locale2, strict, false);
+        }
+        var prototypeMin = deprecate(
+          "moment().min is deprecated, use moment.max instead. http://momentjs.com/guides/#/warnings/min-max/",
+          function() {
+            var other = createLocal.apply(null, arguments);
+            if (this.isValid() && other.isValid()) {
+              return other < this ? this : other;
+            } else {
+              return createInvalid();
+            }
+          }
+        ), prototypeMax = deprecate(
+          "moment().max is deprecated, use moment.min instead. http://momentjs.com/guides/#/warnings/min-max/",
+          function() {
+            var other = createLocal.apply(null, arguments);
+            if (this.isValid() && other.isValid()) {
+              return other > this ? this : other;
+            } else {
+              return createInvalid();
+            }
+          }
+        );
+        function pickBy(fn, moments) {
+          var res, i;
+          if (moments.length === 1 && isArray(moments[0])) {
+            moments = moments[0];
+          }
+          if (!moments.length) {
+            return createLocal();
+          }
+          res = moments[0];
+          for (i = 1; i < moments.length; ++i) {
+            if (!moments[i].isValid() || moments[i][fn](res)) {
+              res = moments[i];
+            }
+          }
+          return res;
+        }
+        function min() {
+          var args = [].slice.call(arguments, 0);
+          return pickBy("isBefore", args);
+        }
+        function max() {
+          var args = [].slice.call(arguments, 0);
+          return pickBy("isAfter", args);
+        }
+        var now = function() {
+          return Date.now ? Date.now() : +/* @__PURE__ */ new Date();
+        };
+        var ordering = [
+          "year",
+          "quarter",
+          "month",
+          "week",
+          "day",
+          "hour",
+          "minute",
+          "second",
+          "millisecond"
+        ];
+        function isDurationValid(m) {
+          var key, unitHasDecimal = false, i, orderLen = ordering.length;
+          for (key in m) {
+            if (hasOwnProp(m, key) && !(indexOf.call(ordering, key) !== -1 && (m[key] == null || !isNaN(m[key])))) {
+              return false;
+            }
+          }
+          for (i = 0; i < orderLen; ++i) {
+            if (m[ordering[i]]) {
+              if (unitHasDecimal) {
+                return false;
+              }
+              if (parseFloat(m[ordering[i]]) !== toInt(m[ordering[i]])) {
+                unitHasDecimal = true;
+              }
+            }
+          }
+          return true;
+        }
+        function isValid$1() {
+          return this._isValid;
+        }
+        function createInvalid$1() {
+          return createDuration(NaN);
+        }
+        function Duration(duration) {
+          var normalizedInput = normalizeObjectUnits(duration), years2 = normalizedInput.year || 0, quarters = normalizedInput.quarter || 0, months2 = normalizedInput.month || 0, weeks2 = normalizedInput.week || normalizedInput.isoWeek || 0, days2 = normalizedInput.day || 0, hours3 = normalizedInput.hour || 0, minutes2 = normalizedInput.minute || 0, seconds2 = normalizedInput.second || 0, milliseconds2 = normalizedInput.millisecond || 0;
+          this._isValid = isDurationValid(normalizedInput);
+          this._milliseconds = +milliseconds2 + seconds2 * 1e3 + // 1000
+          minutes2 * 6e4 + // 1000 * 60
+          hours3 * 1e3 * 60 * 60;
+          this._days = +days2 + weeks2 * 7;
+          this._months = +months2 + quarters * 3 + years2 * 12;
+          this._data = {};
+          this._locale = getLocale();
+          this._bubble();
+        }
+        function isDuration(obj) {
+          return obj instanceof Duration;
+        }
+        function absRound(number) {
+          if (number < 0) {
+            return Math.round(-1 * number) * -1;
+          } else {
+            return Math.round(number);
+          }
+        }
+        function compareArrays(array1, array2, dontConvert) {
+          var len = Math.min(array1.length, array2.length), lengthDiff = Math.abs(array1.length - array2.length), diffs = 0, i;
+          for (i = 0; i < len; i++) {
+            if (dontConvert && array1[i] !== array2[i] || !dontConvert && toInt(array1[i]) !== toInt(array2[i])) {
+              diffs++;
+            }
+          }
+          return diffs + lengthDiff;
+        }
+        function offset(token2, separator) {
+          addFormatToken(token2, 0, 0, function() {
+            var offset2 = this.utcOffset(), sign2 = "+";
+            if (offset2 < 0) {
+              offset2 = -offset2;
+              sign2 = "-";
+            }
+            return sign2 + zeroFill(~~(offset2 / 60), 2) + separator + zeroFill(~~offset2 % 60, 2);
+          });
+        }
+        offset("Z", ":");
+        offset("ZZ", "");
+        addRegexToken("Z", matchShortOffset);
+        addRegexToken("ZZ", matchShortOffset);
+        addParseToken(["Z", "ZZ"], function(input, array, config) {
+          config._useUTC = true;
+          config._tzm = offsetFromString(matchShortOffset, input);
+        });
+        var chunkOffset = /([\+\-]|\d\d)/gi;
+        function offsetFromString(matcher, string) {
+          var matches = (string || "").match(matcher), chunk, parts, minutes2;
+          if (matches === null) {
+            return null;
+          }
+          chunk = matches[matches.length - 1] || [];
+          parts = (chunk + "").match(chunkOffset) || ["-", 0, 0];
+          minutes2 = +(parts[1] * 60) + toInt(parts[2]);
+          return minutes2 === 0 ? 0 : parts[0] === "+" ? minutes2 : -minutes2;
+        }
+        function cloneWithOffset(input, model) {
+          var res, diff2;
+          if (model._isUTC) {
+            res = model.clone();
+            diff2 = (isMoment(input) || isDate(input) ? input.valueOf() : createLocal(input).valueOf()) - res.valueOf();
+            res._d.setTime(res._d.valueOf() + diff2);
+            hooks.updateOffset(res, false);
+            return res;
+          } else {
+            return createLocal(input).local();
+          }
+        }
+        function getDateOffset(m) {
+          return -Math.round(m._d.getTimezoneOffset());
+        }
+        hooks.updateOffset = function() {
+        };
+        function getSetOffset(input, keepLocalTime, keepMinutes) {
+          var offset2 = this._offset || 0, localAdjust;
+          if (!this.isValid()) {
+            return input != null ? this : NaN;
+          }
+          if (input != null) {
+            if (typeof input === "string") {
+              input = offsetFromString(matchShortOffset, input);
+              if (input === null) {
+                return this;
+              }
+            } else if (Math.abs(input) < 16 && !keepMinutes) {
+              input = input * 60;
+            }
+            if (!this._isUTC && keepLocalTime) {
+              localAdjust = getDateOffset(this);
+            }
+            this._offset = input;
+            this._isUTC = true;
+            if (localAdjust != null) {
+              this.add(localAdjust, "m");
+            }
+            if (offset2 !== input) {
+              if (!keepLocalTime || this._changeInProgress) {
+                addSubtract(
+                  this,
+                  createDuration(input - offset2, "m"),
+                  1,
+                  false
+                );
+              } else if (!this._changeInProgress) {
+                this._changeInProgress = true;
+                hooks.updateOffset(this, true);
+                this._changeInProgress = null;
+              }
+            }
+            return this;
+          } else {
+            return this._isUTC ? offset2 : getDateOffset(this);
+          }
+        }
+        function getSetZone(input, keepLocalTime) {
+          if (input != null) {
+            if (typeof input !== "string") {
+              input = -input;
+            }
+            this.utcOffset(input, keepLocalTime);
+            return this;
+          } else {
+            return -this.utcOffset();
+          }
+        }
+        function setOffsetToUTC(keepLocalTime) {
+          return this.utcOffset(0, keepLocalTime);
+        }
+        function setOffsetToLocal(keepLocalTime) {
+          if (this._isUTC) {
+            this.utcOffset(0, keepLocalTime);
+            this._isUTC = false;
+            if (keepLocalTime) {
+              this.subtract(getDateOffset(this), "m");
+            }
+          }
+          return this;
+        }
+        function setOffsetToParsedOffset() {
+          if (this._tzm != null) {
+            this.utcOffset(this._tzm, false, true);
+          } else if (typeof this._i === "string") {
+            var tZone = offsetFromString(matchOffset, this._i);
+            if (tZone != null) {
+              this.utcOffset(tZone);
+            } else {
+              this.utcOffset(0, true);
+            }
+          }
+          return this;
+        }
+        function hasAlignedHourOffset(input) {
+          if (!this.isValid()) {
+            return false;
+          }
+          input = input ? createLocal(input).utcOffset() : 0;
+          return (this.utcOffset() - input) % 60 === 0;
+        }
+        function isDaylightSavingTime() {
+          return this.utcOffset() > this.clone().month(0).utcOffset() || this.utcOffset() > this.clone().month(5).utcOffset();
+        }
+        function isDaylightSavingTimeShifted() {
+          if (!isUndefined(this._isDSTShifted)) {
+            return this._isDSTShifted;
+          }
+          var c = {}, other;
+          copyConfig(c, this);
+          c = prepareConfig(c);
+          if (c._a) {
+            other = c._isUTC ? createUTC(c._a) : createLocal(c._a);
+            this._isDSTShifted = this.isValid() && compareArrays(c._a, other.toArray()) > 0;
+          } else {
+            this._isDSTShifted = false;
+          }
+          return this._isDSTShifted;
+        }
+        function isLocal() {
+          return this.isValid() ? !this._isUTC : false;
+        }
+        function isUtcOffset() {
+          return this.isValid() ? this._isUTC : false;
+        }
+        function isUtc() {
+          return this.isValid() ? this._isUTC && this._offset === 0 : false;
+        }
+        var aspNetRegex = /^(-|\+)?(?:(\d*)[. ])?(\d+):(\d+)(?::(\d+)(\.\d*)?)?$/, isoRegex = /^(-|\+)?P(?:([-+]?[0-9,.]*)Y)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)W)?(?:([-+]?[0-9,.]*)D)?(?:T(?:([-+]?[0-9,.]*)H)?(?:([-+]?[0-9,.]*)M)?(?:([-+]?[0-9,.]*)S)?)?$/;
+        function createDuration(input, key) {
+          var duration = input, match = null, sign2, ret, diffRes;
+          if (isDuration(input)) {
+            duration = {
+              ms: input._milliseconds,
+              d: input._days,
+              M: input._months
+            };
+          } else if (isNumber(input) || !isNaN(+input)) {
+            duration = {};
+            if (key) {
+              duration[key] = +input;
+            } else {
+              duration.milliseconds = +input;
+            }
+          } else if (match = aspNetRegex.exec(input)) {
+            sign2 = match[1] === "-" ? -1 : 1;
+            duration = {
+              y: 0,
+              d: toInt(match[DATE]) * sign2,
+              h: toInt(match[HOUR]) * sign2,
+              m: toInt(match[MINUTE]) * sign2,
+              s: toInt(match[SECOND]) * sign2,
+              ms: toInt(absRound(match[MILLISECOND] * 1e3)) * sign2
+              // the millisecond decimal point is included in the match
+            };
+          } else if (match = isoRegex.exec(input)) {
+            sign2 = match[1] === "-" ? -1 : 1;
+            duration = {
+              y: parseIso(match[2], sign2),
+              M: parseIso(match[3], sign2),
+              w: parseIso(match[4], sign2),
+              d: parseIso(match[5], sign2),
+              h: parseIso(match[6], sign2),
+              m: parseIso(match[7], sign2),
+              s: parseIso(match[8], sign2)
+            };
+          } else if (duration == null) {
+            duration = {};
+          } else if (typeof duration === "object" && ("from" in duration || "to" in duration)) {
+            diffRes = momentsDifference(
+              createLocal(duration.from),
+              createLocal(duration.to)
+            );
+            duration = {};
+            duration.ms = diffRes.milliseconds;
+            duration.M = diffRes.months;
+          }
+          ret = new Duration(duration);
+          if (isDuration(input) && hasOwnProp(input, "_locale")) {
+            ret._locale = input._locale;
+          }
+          if (isDuration(input) && hasOwnProp(input, "_isValid")) {
+            ret._isValid = input._isValid;
+          }
+          return ret;
+        }
+        createDuration.fn = Duration.prototype;
+        createDuration.invalid = createInvalid$1;
+        function parseIso(inp, sign2) {
+          var res = inp && parseFloat(inp.replace(",", "."));
+          return (isNaN(res) ? 0 : res) * sign2;
+        }
+        function positiveMomentsDifference(base, other) {
+          var res = {};
+          res.months = other.month() - base.month() + (other.year() - base.year()) * 12;
+          if (base.clone().add(res.months, "M").isAfter(other)) {
+            --res.months;
+          }
+          res.milliseconds = +other - +base.clone().add(res.months, "M");
+          return res;
+        }
+        function momentsDifference(base, other) {
+          var res;
+          if (!(base.isValid() && other.isValid())) {
+            return { milliseconds: 0, months: 0 };
+          }
+          other = cloneWithOffset(other, base);
+          if (base.isBefore(other)) {
+            res = positiveMomentsDifference(base, other);
+          } else {
+            res = positiveMomentsDifference(other, base);
+            res.milliseconds = -res.milliseconds;
+            res.months = -res.months;
+          }
+          return res;
+        }
+        function createAdder(direction, name) {
+          return function(val, period2) {
+            var dur, tmp;
+            if (period2 !== null && !isNaN(+period2)) {
+              deprecateSimple(
+                name,
+                "moment()." + name + "(period, number) is deprecated. Please use moment()." + name + "(number, period). See http://momentjs.com/guides/#/warnings/add-inverted-param/ for more info."
+              );
+              tmp = val;
+              val = period2;
+              period2 = tmp;
+            }
+            dur = createDuration(val, period2);
+            addSubtract(this, dur, direction);
+            return this;
+          };
+        }
+        function addSubtract(mom, duration, isAdding, updateOffset) {
+          var milliseconds2 = duration._milliseconds, days2 = absRound(duration._days), months2 = absRound(duration._months);
+          if (!mom.isValid()) {
+            return;
+          }
+          updateOffset = updateOffset == null ? true : updateOffset;
+          if (months2) {
+            setMonth(mom, get(mom, "Month") + months2 * isAdding);
+          }
+          if (days2) {
+            set$1(mom, "Date", get(mom, "Date") + days2 * isAdding);
+          }
+          if (milliseconds2) {
+            mom._d.setTime(mom._d.valueOf() + milliseconds2 * isAdding);
+          }
+          if (updateOffset) {
+            hooks.updateOffset(mom, days2 || months2);
+          }
+        }
+        var add = createAdder(1, "add"), subtract = createAdder(-1, "subtract");
+        function isString(input) {
+          return typeof input === "string" || input instanceof String;
+        }
+        function isMomentInput(input) {
+          return isMoment(input) || isDate(input) || isString(input) || isNumber(input) || isNumberOrStringArray(input) || isMomentInputObject(input) || input === null || input === void 0;
+        }
+        function isMomentInputObject(input) {
+          var objectTest = isObject(input) && !isObjectEmpty(input), propertyTest = false, properties = [
+            "years",
+            "year",
+            "y",
+            "months",
+            "month",
+            "M",
+            "days",
+            "day",
+            "d",
+            "dates",
+            "date",
+            "D",
+            "hours",
+            "hour",
+            "h",
+            "minutes",
+            "minute",
+            "m",
+            "seconds",
+            "second",
+            "s",
+            "milliseconds",
+            "millisecond",
+            "ms"
+          ], i, property, propertyLen = properties.length;
+          for (i = 0; i < propertyLen; i += 1) {
+            property = properties[i];
+            propertyTest = propertyTest || hasOwnProp(input, property);
+          }
+          return objectTest && propertyTest;
+        }
+        function isNumberOrStringArray(input) {
+          var arrayTest = isArray(input), dataTypeTest = false;
+          if (arrayTest) {
+            dataTypeTest = input.filter(function(item) {
+              return !isNumber(item) && isString(input);
+            }).length === 0;
+          }
+          return arrayTest && dataTypeTest;
+        }
+        function isCalendarSpec(input) {
+          var objectTest = isObject(input) && !isObjectEmpty(input), propertyTest = false, properties = [
+            "sameDay",
+            "nextDay",
+            "lastDay",
+            "nextWeek",
+            "lastWeek",
+            "sameElse"
+          ], i, property;
+          for (i = 0; i < properties.length; i += 1) {
+            property = properties[i];
+            propertyTest = propertyTest || hasOwnProp(input, property);
+          }
+          return objectTest && propertyTest;
+        }
+        function getCalendarFormat(myMoment, now2) {
+          var diff2 = myMoment.diff(now2, "days", true);
+          return diff2 < -6 ? "sameElse" : diff2 < -1 ? "lastWeek" : diff2 < 0 ? "lastDay" : diff2 < 1 ? "sameDay" : diff2 < 2 ? "nextDay" : diff2 < 7 ? "nextWeek" : "sameElse";
+        }
+        function calendar$1(time, formats) {
+          if (arguments.length === 1) {
+            if (!arguments[0]) {
+              time = void 0;
+              formats = void 0;
+            } else if (isMomentInput(arguments[0])) {
+              time = arguments[0];
+              formats = void 0;
+            } else if (isCalendarSpec(arguments[0])) {
+              formats = arguments[0];
+              time = void 0;
+            }
+          }
+          var now2 = time || createLocal(), sod = cloneWithOffset(now2, this).startOf("day"), format2 = hooks.calendarFormat(this, sod) || "sameElse", output = formats && (isFunction(formats[format2]) ? formats[format2].call(this, now2) : formats[format2]);
+          return this.format(
+            output || this.localeData().calendar(format2, this, createLocal(now2))
+          );
+        }
+        function clone() {
+          return new Moment(this);
+        }
+        function isAfter(input, units) {
+          var localInput = isMoment(input) ? input : createLocal(input);
+          if (!(this.isValid() && localInput.isValid())) {
+            return false;
+          }
+          units = normalizeUnits(units) || "millisecond";
+          if (units === "millisecond") {
+            return this.valueOf() > localInput.valueOf();
+          } else {
+            return localInput.valueOf() < this.clone().startOf(units).valueOf();
+          }
+        }
+        function isBefore(input, units) {
+          var localInput = isMoment(input) ? input : createLocal(input);
+          if (!(this.isValid() && localInput.isValid())) {
+            return false;
+          }
+          units = normalizeUnits(units) || "millisecond";
+          if (units === "millisecond") {
+            return this.valueOf() < localInput.valueOf();
+          } else {
+            return this.clone().endOf(units).valueOf() < localInput.valueOf();
+          }
+        }
+        function isBetween(from2, to2, units, inclusivity) {
+          var localFrom = isMoment(from2) ? from2 : createLocal(from2), localTo = isMoment(to2) ? to2 : createLocal(to2);
+          if (!(this.isValid() && localFrom.isValid() && localTo.isValid())) {
+            return false;
+          }
+          inclusivity = inclusivity || "()";
+          return (inclusivity[0] === "(" ? this.isAfter(localFrom, units) : !this.isBefore(localFrom, units)) && (inclusivity[1] === ")" ? this.isBefore(localTo, units) : !this.isAfter(localTo, units));
+        }
+        function isSame(input, units) {
+          var localInput = isMoment(input) ? input : createLocal(input), inputMs;
+          if (!(this.isValid() && localInput.isValid())) {
+            return false;
+          }
+          units = normalizeUnits(units) || "millisecond";
+          if (units === "millisecond") {
+            return this.valueOf() === localInput.valueOf();
+          } else {
+            inputMs = localInput.valueOf();
+            return this.clone().startOf(units).valueOf() <= inputMs && inputMs <= this.clone().endOf(units).valueOf();
+          }
+        }
+        function isSameOrAfter(input, units) {
+          return this.isSame(input, units) || this.isAfter(input, units);
+        }
+        function isSameOrBefore(input, units) {
+          return this.isSame(input, units) || this.isBefore(input, units);
+        }
+        function diff(input, units, asFloat) {
+          var that, zoneDelta, output;
+          if (!this.isValid()) {
+            return NaN;
+          }
+          that = cloneWithOffset(input, this);
+          if (!that.isValid()) {
+            return NaN;
+          }
+          zoneDelta = (that.utcOffset() - this.utcOffset()) * 6e4;
+          units = normalizeUnits(units);
+          switch (units) {
+            case "year":
+              output = monthDiff(this, that) / 12;
+              break;
+            case "month":
+              output = monthDiff(this, that);
+              break;
+            case "quarter":
+              output = monthDiff(this, that) / 3;
+              break;
+            case "second":
+              output = (this - that) / 1e3;
+              break;
+            case "minute":
+              output = (this - that) / 6e4;
+              break;
+            case "hour":
+              output = (this - that) / 36e5;
+              break;
+            case "day":
+              output = (this - that - zoneDelta) / 864e5;
+              break;
+            case "week":
+              output = (this - that - zoneDelta) / 6048e5;
+              break;
+            default:
+              output = this - that;
+          }
+          return asFloat ? output : absFloor(output);
+        }
+        function monthDiff(a, b) {
+          if (a.date() < b.date()) {
+            return -monthDiff(b, a);
+          }
+          var wholeMonthDiff = (b.year() - a.year()) * 12 + (b.month() - a.month()), anchor = a.clone().add(wholeMonthDiff, "months"), anchor2, adjust;
+          if (b - anchor < 0) {
+            anchor2 = a.clone().add(wholeMonthDiff - 1, "months");
+            adjust = (b - anchor) / (anchor - anchor2);
+          } else {
+            anchor2 = a.clone().add(wholeMonthDiff + 1, "months");
+            adjust = (b - anchor) / (anchor2 - anchor);
+          }
+          return -(wholeMonthDiff + adjust) || 0;
+        }
+        hooks.defaultFormat = "YYYY-MM-DDTHH:mm:ssZ";
+        hooks.defaultFormatUtc = "YYYY-MM-DDTHH:mm:ss[Z]";
+        function toString() {
+          return this.clone().locale("en").format("ddd MMM DD YYYY HH:mm:ss [GMT]ZZ");
+        }
+        function toISOString(keepOffset) {
+          if (!this.isValid()) {
+            return null;
+          }
+          var utc = keepOffset !== true, m = utc ? this.clone().utc() : this;
+          if (m.year() < 0 || m.year() > 9999) {
+            return formatMoment(
+              m,
+              utc ? "YYYYYY-MM-DD[T]HH:mm:ss.SSS[Z]" : "YYYYYY-MM-DD[T]HH:mm:ss.SSSZ"
+            );
+          }
+          if (isFunction(Date.prototype.toISOString)) {
+            if (utc) {
+              return this.toDate().toISOString();
+            } else {
+              return new Date(this.valueOf() + this.utcOffset() * 60 * 1e3).toISOString().replace("Z", formatMoment(m, "Z"));
+            }
+          }
+          return formatMoment(
+            m,
+            utc ? "YYYY-MM-DD[T]HH:mm:ss.SSS[Z]" : "YYYY-MM-DD[T]HH:mm:ss.SSSZ"
+          );
+        }
+        function inspect() {
+          if (!this.isValid()) {
+            return "moment.invalid(/* " + this._i + " */)";
+          }
+          var func = "moment", zone = "", prefix, year, datetime, suffix;
+          if (!this.isLocal()) {
+            func = this.utcOffset() === 0 ? "moment.utc" : "moment.parseZone";
+            zone = "Z";
+          }
+          prefix = "[" + func + '("]';
+          year = 0 <= this.year() && this.year() <= 9999 ? "YYYY" : "YYYYYY";
+          datetime = "-MM-DD[T]HH:mm:ss.SSS";
+          suffix = zone + '[")]';
+          return this.format(prefix + year + datetime + suffix);
+        }
+        function format(inputString) {
+          if (!inputString) {
+            inputString = this.isUtc() ? hooks.defaultFormatUtc : hooks.defaultFormat;
+          }
+          var output = formatMoment(this, inputString);
+          return this.localeData().postformat(output);
+        }
+        function from(time, withoutSuffix) {
+          if (this.isValid() && (isMoment(time) && time.isValid() || createLocal(time).isValid())) {
+            return createDuration({ to: this, from: time }).locale(this.locale()).humanize(!withoutSuffix);
+          } else {
+            return this.localeData().invalidDate();
+          }
+        }
+        function fromNow(withoutSuffix) {
+          return this.from(createLocal(), withoutSuffix);
+        }
+        function to(time, withoutSuffix) {
+          if (this.isValid() && (isMoment(time) && time.isValid() || createLocal(time).isValid())) {
+            return createDuration({ from: this, to: time }).locale(this.locale()).humanize(!withoutSuffix);
+          } else {
+            return this.localeData().invalidDate();
+          }
+        }
+        function toNow(withoutSuffix) {
+          return this.to(createLocal(), withoutSuffix);
+        }
+        function locale(key) {
+          var newLocaleData;
+          if (key === void 0) {
+            return this._locale._abbr;
+          } else {
+            newLocaleData = getLocale(key);
+            if (newLocaleData != null) {
+              this._locale = newLocaleData;
+            }
+            return this;
+          }
+        }
+        var lang = deprecate(
+          "moment().lang() is deprecated. Instead, use moment().localeData() to get the language configuration. Use moment().locale() to change languages.",
+          function(key) {
+            if (key === void 0) {
+              return this.localeData();
+            } else {
+              return this.locale(key);
+            }
+          }
+        );
+        function localeData() {
+          return this._locale;
+        }
+        var MS_PER_SECOND = 1e3, MS_PER_MINUTE = 60 * MS_PER_SECOND, MS_PER_HOUR = 60 * MS_PER_MINUTE, MS_PER_400_YEARS = (365 * 400 + 97) * 24 * MS_PER_HOUR;
+        function mod$1(dividend, divisor) {
+          return (dividend % divisor + divisor) % divisor;
+        }
+        function localStartOfDate(y, m, d) {
+          if (y < 100 && y >= 0) {
+            return new Date(y + 400, m, d) - MS_PER_400_YEARS;
+          } else {
+            return new Date(y, m, d).valueOf();
+          }
+        }
+        function utcStartOfDate(y, m, d) {
+          if (y < 100 && y >= 0) {
+            return Date.UTC(y + 400, m, d) - MS_PER_400_YEARS;
+          } else {
+            return Date.UTC(y, m, d);
+          }
+        }
+        function startOf(units) {
+          var time, startOfDate;
+          units = normalizeUnits(units);
+          if (units === void 0 || units === "millisecond" || !this.isValid()) {
+            return this;
+          }
+          startOfDate = this._isUTC ? utcStartOfDate : localStartOfDate;
+          switch (units) {
+            case "year":
+              time = startOfDate(this.year(), 0, 1);
+              break;
+            case "quarter":
+              time = startOfDate(
+                this.year(),
+                this.month() - this.month() % 3,
+                1
+              );
+              break;
+            case "month":
+              time = startOfDate(this.year(), this.month(), 1);
+              break;
+            case "week":
+              time = startOfDate(
+                this.year(),
+                this.month(),
+                this.date() - this.weekday()
+              );
+              break;
+            case "isoWeek":
+              time = startOfDate(
+                this.year(),
+                this.month(),
+                this.date() - (this.isoWeekday() - 1)
+              );
+              break;
+            case "day":
+            case "date":
+              time = startOfDate(this.year(), this.month(), this.date());
+              break;
+            case "hour":
+              time = this._d.valueOf();
+              time -= mod$1(
+                time + (this._isUTC ? 0 : this.utcOffset() * MS_PER_MINUTE),
+                MS_PER_HOUR
+              );
+              break;
+            case "minute":
+              time = this._d.valueOf();
+              time -= mod$1(time, MS_PER_MINUTE);
+              break;
+            case "second":
+              time = this._d.valueOf();
+              time -= mod$1(time, MS_PER_SECOND);
+              break;
+          }
+          this._d.setTime(time);
+          hooks.updateOffset(this, true);
+          return this;
+        }
+        function endOf(units) {
+          var time, startOfDate;
+          units = normalizeUnits(units);
+          if (units === void 0 || units === "millisecond" || !this.isValid()) {
+            return this;
+          }
+          startOfDate = this._isUTC ? utcStartOfDate : localStartOfDate;
+          switch (units) {
+            case "year":
+              time = startOfDate(this.year() + 1, 0, 1) - 1;
+              break;
+            case "quarter":
+              time = startOfDate(
+                this.year(),
+                this.month() - this.month() % 3 + 3,
+                1
+              ) - 1;
+              break;
+            case "month":
+              time = startOfDate(this.year(), this.month() + 1, 1) - 1;
+              break;
+            case "week":
+              time = startOfDate(
+                this.year(),
+                this.month(),
+                this.date() - this.weekday() + 7
+              ) - 1;
+              break;
+            case "isoWeek":
+              time = startOfDate(
+                this.year(),
+                this.month(),
+                this.date() - (this.isoWeekday() - 1) + 7
+              ) - 1;
+              break;
+            case "day":
+            case "date":
+              time = startOfDate(this.year(), this.month(), this.date() + 1) - 1;
+              break;
+            case "hour":
+              time = this._d.valueOf();
+              time += MS_PER_HOUR - mod$1(
+                time + (this._isUTC ? 0 : this.utcOffset() * MS_PER_MINUTE),
+                MS_PER_HOUR
+              ) - 1;
+              break;
+            case "minute":
+              time = this._d.valueOf();
+              time += MS_PER_MINUTE - mod$1(time, MS_PER_MINUTE) - 1;
+              break;
+            case "second":
+              time = this._d.valueOf();
+              time += MS_PER_SECOND - mod$1(time, MS_PER_SECOND) - 1;
+              break;
+          }
+          this._d.setTime(time);
+          hooks.updateOffset(this, true);
+          return this;
+        }
+        function valueOf() {
+          return this._d.valueOf() - (this._offset || 0) * 6e4;
+        }
+        function unix() {
+          return Math.floor(this.valueOf() / 1e3);
+        }
+        function toDate() {
+          return new Date(this.valueOf());
+        }
+        function toArray() {
+          var m = this;
+          return [
+            m.year(),
+            m.month(),
+            m.date(),
+            m.hour(),
+            m.minute(),
+            m.second(),
+            m.millisecond()
+          ];
+        }
+        function toObject() {
+          var m = this;
+          return {
+            years: m.year(),
+            months: m.month(),
+            date: m.date(),
+            hours: m.hours(),
+            minutes: m.minutes(),
+            seconds: m.seconds(),
+            milliseconds: m.milliseconds()
+          };
+        }
+        function toJSON() {
+          return this.isValid() ? this.toISOString() : null;
+        }
+        function isValid$2() {
+          return isValid(this);
+        }
+        function parsingFlags() {
+          return extend({}, getParsingFlags(this));
+        }
+        function invalidAt() {
+          return getParsingFlags(this).overflow;
+        }
+        function creationData() {
+          return {
+            input: this._i,
+            format: this._f,
+            locale: this._locale,
+            isUTC: this._isUTC,
+            strict: this._strict
+          };
+        }
+        addFormatToken("N", 0, 0, "eraAbbr");
+        addFormatToken("NN", 0, 0, "eraAbbr");
+        addFormatToken("NNN", 0, 0, "eraAbbr");
+        addFormatToken("NNNN", 0, 0, "eraName");
+        addFormatToken("NNNNN", 0, 0, "eraNarrow");
+        addFormatToken("y", ["y", 1], "yo", "eraYear");
+        addFormatToken("y", ["yy", 2], 0, "eraYear");
+        addFormatToken("y", ["yyy", 3], 0, "eraYear");
+        addFormatToken("y", ["yyyy", 4], 0, "eraYear");
+        addRegexToken("N", matchEraAbbr);
+        addRegexToken("NN", matchEraAbbr);
+        addRegexToken("NNN", matchEraAbbr);
+        addRegexToken("NNNN", matchEraName);
+        addRegexToken("NNNNN", matchEraNarrow);
+        addParseToken(
+          ["N", "NN", "NNN", "NNNN", "NNNNN"],
+          function(input, array, config, token2) {
+            var era = config._locale.erasParse(input, token2, config._strict);
+            if (era) {
+              getParsingFlags(config).era = era;
+            } else {
+              getParsingFlags(config).invalidEra = input;
+            }
+          }
+        );
+        addRegexToken("y", matchUnsigned);
+        addRegexToken("yy", matchUnsigned);
+        addRegexToken("yyy", matchUnsigned);
+        addRegexToken("yyyy", matchUnsigned);
+        addRegexToken("yo", matchEraYearOrdinal);
+        addParseToken(["y", "yy", "yyy", "yyyy"], YEAR);
+        addParseToken(["yo"], function(input, array, config, token2) {
+          var match;
+          if (config._locale._eraYearOrdinalRegex) {
+            match = input.match(config._locale._eraYearOrdinalRegex);
+          }
+          if (config._locale.eraYearOrdinalParse) {
+            array[YEAR] = config._locale.eraYearOrdinalParse(input, match);
+          } else {
+            array[YEAR] = parseInt(input, 10);
+          }
+        });
+        function localeEras(m, format2) {
+          var i, l, date, eras = this._eras || getLocale("en")._eras;
+          for (i = 0, l = eras.length; i < l; ++i) {
+            switch (typeof eras[i].since) {
+              case "string":
+                date = hooks(eras[i].since).startOf("day");
+                eras[i].since = date.valueOf();
+                break;
+            }
+            switch (typeof eras[i].until) {
+              case "undefined":
+                eras[i].until = Infinity;
+                break;
+              case "string":
+                date = hooks(eras[i].until).startOf("day").valueOf();
+                eras[i].until = date.valueOf();
+                break;
+            }
+          }
+          return eras;
+        }
+        function localeErasParse(eraName, format2, strict) {
+          var i, l, eras = this.eras(), name, abbr, narrow;
+          eraName = eraName.toUpperCase();
+          for (i = 0, l = eras.length; i < l; ++i) {
+            name = eras[i].name.toUpperCase();
+            abbr = eras[i].abbr.toUpperCase();
+            narrow = eras[i].narrow.toUpperCase();
+            if (strict) {
+              switch (format2) {
+                case "N":
+                case "NN":
+                case "NNN":
+                  if (abbr === eraName) {
+                    return eras[i];
+                  }
+                  break;
+                case "NNNN":
+                  if (name === eraName) {
+                    return eras[i];
+                  }
+                  break;
+                case "NNNNN":
+                  if (narrow === eraName) {
+                    return eras[i];
+                  }
+                  break;
+              }
+            } else if ([name, abbr, narrow].indexOf(eraName) >= 0) {
+              return eras[i];
+            }
+          }
+        }
+        function localeErasConvertYear(era, year) {
+          var dir = era.since <= era.until ? 1 : -1;
+          if (year === void 0) {
+            return hooks(era.since).year();
+          } else {
+            return hooks(era.since).year() + (year - era.offset) * dir;
+          }
+        }
+        function getEraName() {
+          var i, l, val, eras = this.localeData().eras();
+          for (i = 0, l = eras.length; i < l; ++i) {
+            val = this.clone().startOf("day").valueOf();
+            if (eras[i].since <= val && val <= eras[i].until) {
+              return eras[i].name;
+            }
+            if (eras[i].until <= val && val <= eras[i].since) {
+              return eras[i].name;
+            }
+          }
+          return "";
+        }
+        function getEraNarrow() {
+          var i, l, val, eras = this.localeData().eras();
+          for (i = 0, l = eras.length; i < l; ++i) {
+            val = this.clone().startOf("day").valueOf();
+            if (eras[i].since <= val && val <= eras[i].until) {
+              return eras[i].narrow;
+            }
+            if (eras[i].until <= val && val <= eras[i].since) {
+              return eras[i].narrow;
+            }
+          }
+          return "";
+        }
+        function getEraAbbr() {
+          var i, l, val, eras = this.localeData().eras();
+          for (i = 0, l = eras.length; i < l; ++i) {
+            val = this.clone().startOf("day").valueOf();
+            if (eras[i].since <= val && val <= eras[i].until) {
+              return eras[i].abbr;
+            }
+            if (eras[i].until <= val && val <= eras[i].since) {
+              return eras[i].abbr;
+            }
+          }
+          return "";
+        }
+        function getEraYear() {
+          var i, l, dir, val, eras = this.localeData().eras();
+          for (i = 0, l = eras.length; i < l; ++i) {
+            dir = eras[i].since <= eras[i].until ? 1 : -1;
+            val = this.clone().startOf("day").valueOf();
+            if (eras[i].since <= val && val <= eras[i].until || eras[i].until <= val && val <= eras[i].since) {
+              return (this.year() - hooks(eras[i].since).year()) * dir + eras[i].offset;
+            }
+          }
+          return this.year();
+        }
+        function erasNameRegex(isStrict) {
+          if (!hasOwnProp(this, "_erasNameRegex")) {
+            computeErasParse.call(this);
+          }
+          return isStrict ? this._erasNameRegex : this._erasRegex;
+        }
+        function erasAbbrRegex(isStrict) {
+          if (!hasOwnProp(this, "_erasAbbrRegex")) {
+            computeErasParse.call(this);
+          }
+          return isStrict ? this._erasAbbrRegex : this._erasRegex;
+        }
+        function erasNarrowRegex(isStrict) {
+          if (!hasOwnProp(this, "_erasNarrowRegex")) {
+            computeErasParse.call(this);
+          }
+          return isStrict ? this._erasNarrowRegex : this._erasRegex;
+        }
+        function matchEraAbbr(isStrict, locale2) {
+          return locale2.erasAbbrRegex(isStrict);
+        }
+        function matchEraName(isStrict, locale2) {
+          return locale2.erasNameRegex(isStrict);
+        }
+        function matchEraNarrow(isStrict, locale2) {
+          return locale2.erasNarrowRegex(isStrict);
+        }
+        function matchEraYearOrdinal(isStrict, locale2) {
+          return locale2._eraYearOrdinalRegex || matchUnsigned;
+        }
+        function computeErasParse() {
+          var abbrPieces = [], namePieces = [], narrowPieces = [], mixedPieces = [], i, l, erasName, erasAbbr, erasNarrow, eras = this.eras();
+          for (i = 0, l = eras.length; i < l; ++i) {
+            erasName = regexEscape(eras[i].name);
+            erasAbbr = regexEscape(eras[i].abbr);
+            erasNarrow = regexEscape(eras[i].narrow);
+            namePieces.push(erasName);
+            abbrPieces.push(erasAbbr);
+            narrowPieces.push(erasNarrow);
+            mixedPieces.push(erasName);
+            mixedPieces.push(erasAbbr);
+            mixedPieces.push(erasNarrow);
+          }
+          this._erasRegex = new RegExp("^(" + mixedPieces.join("|") + ")", "i");
+          this._erasNameRegex = new RegExp("^(" + namePieces.join("|") + ")", "i");
+          this._erasAbbrRegex = new RegExp("^(" + abbrPieces.join("|") + ")", "i");
+          this._erasNarrowRegex = new RegExp(
+            "^(" + narrowPieces.join("|") + ")",
+            "i"
+          );
+        }
+        addFormatToken(0, ["gg", 2], 0, function() {
+          return this.weekYear() % 100;
+        });
+        addFormatToken(0, ["GG", 2], 0, function() {
+          return this.isoWeekYear() % 100;
+        });
+        function addWeekYearFormatToken(token2, getter) {
+          addFormatToken(0, [token2, token2.length], 0, getter);
+        }
+        addWeekYearFormatToken("gggg", "weekYear");
+        addWeekYearFormatToken("ggggg", "weekYear");
+        addWeekYearFormatToken("GGGG", "isoWeekYear");
+        addWeekYearFormatToken("GGGGG", "isoWeekYear");
+        addRegexToken("G", matchSigned);
+        addRegexToken("g", matchSigned);
+        addRegexToken("GG", match1to2, match2);
+        addRegexToken("gg", match1to2, match2);
+        addRegexToken("GGGG", match1to4, match4);
+        addRegexToken("gggg", match1to4, match4);
+        addRegexToken("GGGGG", match1to6, match6);
+        addRegexToken("ggggg", match1to6, match6);
+        addWeekParseToken(
+          ["gggg", "ggggg", "GGGG", "GGGGG"],
+          function(input, week, config, token2) {
+            week[token2.substr(0, 2)] = toInt(input);
+          }
+        );
+        addWeekParseToken(["gg", "GG"], function(input, week, config, token2) {
+          week[token2] = hooks.parseTwoDigitYear(input);
+        });
+        function getSetWeekYear(input) {
+          return getSetWeekYearHelper.call(
+            this,
+            input,
+            this.week(),
+            this.weekday() + this.localeData()._week.dow,
+            this.localeData()._week.dow,
+            this.localeData()._week.doy
+          );
+        }
+        function getSetISOWeekYear(input) {
+          return getSetWeekYearHelper.call(
+            this,
+            input,
+            this.isoWeek(),
+            this.isoWeekday(),
+            1,
+            4
+          );
+        }
+        function getISOWeeksInYear() {
+          return weeksInYear(this.year(), 1, 4);
+        }
+        function getISOWeeksInISOWeekYear() {
+          return weeksInYear(this.isoWeekYear(), 1, 4);
+        }
+        function getWeeksInYear() {
+          var weekInfo = this.localeData()._week;
+          return weeksInYear(this.year(), weekInfo.dow, weekInfo.doy);
+        }
+        function getWeeksInWeekYear() {
+          var weekInfo = this.localeData()._week;
+          return weeksInYear(this.weekYear(), weekInfo.dow, weekInfo.doy);
+        }
+        function getSetWeekYearHelper(input, week, weekday, dow, doy) {
+          var weeksTarget;
+          if (input == null) {
+            return weekOfYear(this, dow, doy).year;
+          } else {
+            weeksTarget = weeksInYear(input, dow, doy);
+            if (week > weeksTarget) {
+              week = weeksTarget;
+            }
+            return setWeekAll.call(this, input, week, weekday, dow, doy);
+          }
+        }
+        function setWeekAll(weekYear, week, weekday, dow, doy) {
+          var dayOfYearData = dayOfYearFromWeeks(weekYear, week, weekday, dow, doy), date = createUTCDate(dayOfYearData.year, 0, dayOfYearData.dayOfYear);
+          this.year(date.getUTCFullYear());
+          this.month(date.getUTCMonth());
+          this.date(date.getUTCDate());
+          return this;
+        }
+        addFormatToken("Q", 0, "Qo", "quarter");
+        addRegexToken("Q", match1);
+        addParseToken("Q", function(input, array) {
+          array[MONTH] = (toInt(input) - 1) * 3;
+        });
+        function getSetQuarter(input) {
+          return input == null ? Math.ceil((this.month() + 1) / 3) : this.month((input - 1) * 3 + this.month() % 3);
+        }
+        addFormatToken("D", ["DD", 2], "Do", "date");
+        addRegexToken("D", match1to2, match1to2NoLeadingZero);
+        addRegexToken("DD", match1to2, match2);
+        addRegexToken("Do", function(isStrict, locale2) {
+          return isStrict ? locale2._dayOfMonthOrdinalParse || locale2._ordinalParse : locale2._dayOfMonthOrdinalParseLenient;
+        });
+        addParseToken(["D", "DD"], DATE);
+        addParseToken("Do", function(input, array) {
+          array[DATE] = toInt(input.match(match1to2)[0]);
+        });
+        var getSetDayOfMonth = makeGetSet("Date", true);
+        addFormatToken("DDD", ["DDDD", 3], "DDDo", "dayOfYear");
+        addRegexToken("DDD", match1to3);
+        addRegexToken("DDDD", match3);
+        addParseToken(["DDD", "DDDD"], function(input, array, config) {
+          config._dayOfYear = toInt(input);
+        });
+        function getSetDayOfYear(input) {
+          var dayOfYear = Math.round(
+            (this.clone().startOf("day") - this.clone().startOf("year")) / 864e5
+          ) + 1;
+          return input == null ? dayOfYear : this.add(input - dayOfYear, "d");
+        }
+        addFormatToken("m", ["mm", 2], 0, "minute");
+        addRegexToken("m", match1to2, match1to2HasZero);
+        addRegexToken("mm", match1to2, match2);
+        addParseToken(["m", "mm"], MINUTE);
+        var getSetMinute = makeGetSet("Minutes", false);
+        addFormatToken("s", ["ss", 2], 0, "second");
+        addRegexToken("s", match1to2, match1to2HasZero);
+        addRegexToken("ss", match1to2, match2);
+        addParseToken(["s", "ss"], SECOND);
+        var getSetSecond = makeGetSet("Seconds", false);
+        addFormatToken("S", 0, 0, function() {
+          return ~~(this.millisecond() / 100);
+        });
+        addFormatToken(0, ["SS", 2], 0, function() {
+          return ~~(this.millisecond() / 10);
+        });
+        addFormatToken(0, ["SSS", 3], 0, "millisecond");
+        addFormatToken(0, ["SSSS", 4], 0, function() {
+          return this.millisecond() * 10;
+        });
+        addFormatToken(0, ["SSSSS", 5], 0, function() {
+          return this.millisecond() * 100;
+        });
+        addFormatToken(0, ["SSSSSS", 6], 0, function() {
+          return this.millisecond() * 1e3;
+        });
+        addFormatToken(0, ["SSSSSSS", 7], 0, function() {
+          return this.millisecond() * 1e4;
+        });
+        addFormatToken(0, ["SSSSSSSS", 8], 0, function() {
+          return this.millisecond() * 1e5;
+        });
+        addFormatToken(0, ["SSSSSSSSS", 9], 0, function() {
+          return this.millisecond() * 1e6;
+        });
+        addRegexToken("S", match1to3, match1);
+        addRegexToken("SS", match1to3, match2);
+        addRegexToken("SSS", match1to3, match3);
+        var token, getSetMillisecond;
+        for (token = "SSSS"; token.length <= 9; token += "S") {
+          addRegexToken(token, matchUnsigned);
+        }
+        function parseMs(input, array) {
+          array[MILLISECOND] = toInt(("0." + input) * 1e3);
+        }
+        for (token = "S"; token.length <= 9; token += "S") {
+          addParseToken(token, parseMs);
+        }
+        getSetMillisecond = makeGetSet("Milliseconds", false);
+        addFormatToken("z", 0, 0, "zoneAbbr");
+        addFormatToken("zz", 0, 0, "zoneName");
+        function getZoneAbbr() {
+          return this._isUTC ? "UTC" : "";
+        }
+        function getZoneName() {
+          return this._isUTC ? "Coordinated Universal Time" : "";
+        }
+        var proto = Moment.prototype;
+        proto.add = add;
+        proto.calendar = calendar$1;
+        proto.clone = clone;
+        proto.diff = diff;
+        proto.endOf = endOf;
+        proto.format = format;
+        proto.from = from;
+        proto.fromNow = fromNow;
+        proto.to = to;
+        proto.toNow = toNow;
+        proto.get = stringGet;
+        proto.invalidAt = invalidAt;
+        proto.isAfter = isAfter;
+        proto.isBefore = isBefore;
+        proto.isBetween = isBetween;
+        proto.isSame = isSame;
+        proto.isSameOrAfter = isSameOrAfter;
+        proto.isSameOrBefore = isSameOrBefore;
+        proto.isValid = isValid$2;
+        proto.lang = lang;
+        proto.locale = locale;
+        proto.localeData = localeData;
+        proto.max = prototypeMax;
+        proto.min = prototypeMin;
+        proto.parsingFlags = parsingFlags;
+        proto.set = stringSet;
+        proto.startOf = startOf;
+        proto.subtract = subtract;
+        proto.toArray = toArray;
+        proto.toObject = toObject;
+        proto.toDate = toDate;
+        proto.toISOString = toISOString;
+        proto.inspect = inspect;
+        if (typeof Symbol !== "undefined" && Symbol.for != null) {
+          proto[Symbol.for("nodejs.util.inspect.custom")] = function() {
+            return "Moment<" + this.format() + ">";
+          };
+        }
+        proto.toJSON = toJSON;
+        proto.toString = toString;
+        proto.unix = unix;
+        proto.valueOf = valueOf;
+        proto.creationData = creationData;
+        proto.eraName = getEraName;
+        proto.eraNarrow = getEraNarrow;
+        proto.eraAbbr = getEraAbbr;
+        proto.eraYear = getEraYear;
+        proto.year = getSetYear;
+        proto.isLeapYear = getIsLeapYear;
+        proto.weekYear = getSetWeekYear;
+        proto.isoWeekYear = getSetISOWeekYear;
+        proto.quarter = proto.quarters = getSetQuarter;
+        proto.month = getSetMonth;
+        proto.daysInMonth = getDaysInMonth;
+        proto.week = proto.weeks = getSetWeek;
+        proto.isoWeek = proto.isoWeeks = getSetISOWeek;
+        proto.weeksInYear = getWeeksInYear;
+        proto.weeksInWeekYear = getWeeksInWeekYear;
+        proto.isoWeeksInYear = getISOWeeksInYear;
+        proto.isoWeeksInISOWeekYear = getISOWeeksInISOWeekYear;
+        proto.date = getSetDayOfMonth;
+        proto.day = proto.days = getSetDayOfWeek;
+        proto.weekday = getSetLocaleDayOfWeek;
+        proto.isoWeekday = getSetISODayOfWeek;
+        proto.dayOfYear = getSetDayOfYear;
+        proto.hour = proto.hours = getSetHour;
+        proto.minute = proto.minutes = getSetMinute;
+        proto.second = proto.seconds = getSetSecond;
+        proto.millisecond = proto.milliseconds = getSetMillisecond;
+        proto.utcOffset = getSetOffset;
+        proto.utc = setOffsetToUTC;
+        proto.local = setOffsetToLocal;
+        proto.parseZone = setOffsetToParsedOffset;
+        proto.hasAlignedHourOffset = hasAlignedHourOffset;
+        proto.isDST = isDaylightSavingTime;
+        proto.isLocal = isLocal;
+        proto.isUtcOffset = isUtcOffset;
+        proto.isUtc = isUtc;
+        proto.isUTC = isUtc;
+        proto.zoneAbbr = getZoneAbbr;
+        proto.zoneName = getZoneName;
+        proto.dates = deprecate(
+          "dates accessor is deprecated. Use date instead.",
+          getSetDayOfMonth
+        );
+        proto.months = deprecate(
+          "months accessor is deprecated. Use month instead",
+          getSetMonth
+        );
+        proto.years = deprecate(
+          "years accessor is deprecated. Use year instead",
+          getSetYear
+        );
+        proto.zone = deprecate(
+          "moment().zone is deprecated, use moment().utcOffset instead. http://momentjs.com/guides/#/warnings/zone/",
+          getSetZone
+        );
+        proto.isDSTShifted = deprecate(
+          "isDSTShifted is deprecated. See http://momentjs.com/guides/#/warnings/dst-shifted/ for more information",
+          isDaylightSavingTimeShifted
+        );
+        function createUnix(input) {
+          return createLocal(input * 1e3);
+        }
+        function createInZone() {
+          return createLocal.apply(null, arguments).parseZone();
+        }
+        function preParsePostFormat(string) {
+          return string;
+        }
+        var proto$1 = Locale.prototype;
+        proto$1.calendar = calendar;
+        proto$1.longDateFormat = longDateFormat;
+        proto$1.invalidDate = invalidDate;
+        proto$1.ordinal = ordinal;
+        proto$1.preparse = preParsePostFormat;
+        proto$1.postformat = preParsePostFormat;
+        proto$1.relativeTime = relativeTime;
+        proto$1.pastFuture = pastFuture;
+        proto$1.set = set;
+        proto$1.eras = localeEras;
+        proto$1.erasParse = localeErasParse;
+        proto$1.erasConvertYear = localeErasConvertYear;
+        proto$1.erasAbbrRegex = erasAbbrRegex;
+        proto$1.erasNameRegex = erasNameRegex;
+        proto$1.erasNarrowRegex = erasNarrowRegex;
+        proto$1.months = localeMonths;
+        proto$1.monthsShort = localeMonthsShort;
+        proto$1.monthsParse = localeMonthsParse;
+        proto$1.monthsRegex = monthsRegex;
+        proto$1.monthsShortRegex = monthsShortRegex;
+        proto$1.week = localeWeek;
+        proto$1.firstDayOfYear = localeFirstDayOfYear;
+        proto$1.firstDayOfWeek = localeFirstDayOfWeek;
+        proto$1.weekdays = localeWeekdays;
+        proto$1.weekdaysMin = localeWeekdaysMin;
+        proto$1.weekdaysShort = localeWeekdaysShort;
+        proto$1.weekdaysParse = localeWeekdaysParse;
+        proto$1.weekdaysRegex = weekdaysRegex;
+        proto$1.weekdaysShortRegex = weekdaysShortRegex;
+        proto$1.weekdaysMinRegex = weekdaysMinRegex;
+        proto$1.isPM = localeIsPM;
+        proto$1.meridiem = localeMeridiem;
+        function get$1(format2, index, field, setter) {
+          var locale2 = getLocale(), utc = createUTC().set(setter, index);
+          return locale2[field](utc, format2);
+        }
+        function listMonthsImpl(format2, index, field) {
+          if (isNumber(format2)) {
+            index = format2;
+            format2 = void 0;
+          }
+          format2 = format2 || "";
+          if (index != null) {
+            return get$1(format2, index, field, "month");
+          }
+          var i, out = [];
+          for (i = 0; i < 12; i++) {
+            out[i] = get$1(format2, i, field, "month");
+          }
+          return out;
+        }
+        function listWeekdaysImpl(localeSorted, format2, index, field) {
+          if (typeof localeSorted === "boolean") {
+            if (isNumber(format2)) {
+              index = format2;
+              format2 = void 0;
+            }
+            format2 = format2 || "";
+          } else {
+            format2 = localeSorted;
+            index = format2;
+            localeSorted = false;
+            if (isNumber(format2)) {
+              index = format2;
+              format2 = void 0;
+            }
+            format2 = format2 || "";
+          }
+          var locale2 = getLocale(), shift = localeSorted ? locale2._week.dow : 0, i, out = [];
+          if (index != null) {
+            return get$1(format2, (index + shift) % 7, field, "day");
+          }
+          for (i = 0; i < 7; i++) {
+            out[i] = get$1(format2, (i + shift) % 7, field, "day");
+          }
+          return out;
+        }
+        function listMonths(format2, index) {
+          return listMonthsImpl(format2, index, "months");
+        }
+        function listMonthsShort(format2, index) {
+          return listMonthsImpl(format2, index, "monthsShort");
+        }
+        function listWeekdays(localeSorted, format2, index) {
+          return listWeekdaysImpl(localeSorted, format2, index, "weekdays");
+        }
+        function listWeekdaysShort(localeSorted, format2, index) {
+          return listWeekdaysImpl(localeSorted, format2, index, "weekdaysShort");
+        }
+        function listWeekdaysMin(localeSorted, format2, index) {
+          return listWeekdaysImpl(localeSorted, format2, index, "weekdaysMin");
+        }
+        getSetGlobalLocale("en", {
+          eras: [
+            {
+              since: "0001-01-01",
+              until: Infinity,
+              offset: 1,
+              name: "Anno Domini",
+              narrow: "AD",
+              abbr: "AD"
+            },
+            {
+              since: "0000-12-31",
+              until: -Infinity,
+              offset: 1,
+              name: "Before Christ",
+              narrow: "BC",
+              abbr: "BC"
+            }
+          ],
+          dayOfMonthOrdinalParse: /\d{1,2}(th|st|nd|rd)/,
+          ordinal: function(number) {
+            var b = number % 10, output = toInt(number % 100 / 10) === 1 ? "th" : b === 1 ? "st" : b === 2 ? "nd" : b === 3 ? "rd" : "th";
+            return number + output;
+          }
+        });
+        hooks.lang = deprecate(
+          "moment.lang is deprecated. Use moment.locale instead.",
+          getSetGlobalLocale
+        );
+        hooks.langData = deprecate(
+          "moment.langData is deprecated. Use moment.localeData instead.",
+          getLocale
+        );
+        var mathAbs = Math.abs;
+        function abs() {
+          var data = this._data;
+          this._milliseconds = mathAbs(this._milliseconds);
+          this._days = mathAbs(this._days);
+          this._months = mathAbs(this._months);
+          data.milliseconds = mathAbs(data.milliseconds);
+          data.seconds = mathAbs(data.seconds);
+          data.minutes = mathAbs(data.minutes);
+          data.hours = mathAbs(data.hours);
+          data.months = mathAbs(data.months);
+          data.years = mathAbs(data.years);
+          return this;
+        }
+        function addSubtract$1(duration, input, value, direction) {
+          var other = createDuration(input, value);
+          duration._milliseconds += direction * other._milliseconds;
+          duration._days += direction * other._days;
+          duration._months += direction * other._months;
+          return duration._bubble();
+        }
+        function add$1(input, value) {
+          return addSubtract$1(this, input, value, 1);
+        }
+        function subtract$1(input, value) {
+          return addSubtract$1(this, input, value, -1);
+        }
+        function absCeil(number) {
+          if (number < 0) {
+            return Math.floor(number);
+          } else {
+            return Math.ceil(number);
+          }
+        }
+        function bubble() {
+          var milliseconds2 = this._milliseconds, days2 = this._days, months2 = this._months, data = this._data, seconds2, minutes2, hours3, years2, monthsFromDays;
+          if (!(milliseconds2 >= 0 && days2 >= 0 && months2 >= 0 || milliseconds2 <= 0 && days2 <= 0 && months2 <= 0)) {
+            milliseconds2 += absCeil(monthsToDays(months2) + days2) * 864e5;
+            days2 = 0;
+            months2 = 0;
+          }
+          data.milliseconds = milliseconds2 % 1e3;
+          seconds2 = absFloor(milliseconds2 / 1e3);
+          data.seconds = seconds2 % 60;
+          minutes2 = absFloor(seconds2 / 60);
+          data.minutes = minutes2 % 60;
+          hours3 = absFloor(minutes2 / 60);
+          data.hours = hours3 % 24;
+          days2 += absFloor(hours3 / 24);
+          monthsFromDays = absFloor(daysToMonths(days2));
+          months2 += monthsFromDays;
+          days2 -= absCeil(monthsToDays(monthsFromDays));
+          years2 = absFloor(months2 / 12);
+          months2 %= 12;
+          data.days = days2;
+          data.months = months2;
+          data.years = years2;
+          return this;
+        }
+        function daysToMonths(days2) {
+          return days2 * 4800 / 146097;
+        }
+        function monthsToDays(months2) {
+          return months2 * 146097 / 4800;
+        }
+        function as(units) {
+          if (!this.isValid()) {
+            return NaN;
+          }
+          var days2, months2, milliseconds2 = this._milliseconds;
+          units = normalizeUnits(units);
+          if (units === "month" || units === "quarter" || units === "year") {
+            days2 = this._days + milliseconds2 / 864e5;
+            months2 = this._months + daysToMonths(days2);
+            switch (units) {
+              case "month":
+                return months2;
+              case "quarter":
+                return months2 / 3;
+              case "year":
+                return months2 / 12;
+            }
+          } else {
+            days2 = this._days + Math.round(monthsToDays(this._months));
+            switch (units) {
+              case "week":
+                return days2 / 7 + milliseconds2 / 6048e5;
+              case "day":
+                return days2 + milliseconds2 / 864e5;
+              case "hour":
+                return days2 * 24 + milliseconds2 / 36e5;
+              case "minute":
+                return days2 * 1440 + milliseconds2 / 6e4;
+              case "second":
+                return days2 * 86400 + milliseconds2 / 1e3;
+              case "millisecond":
+                return Math.floor(days2 * 864e5) + milliseconds2;
+              default:
+                throw new Error("Unknown unit " + units);
+            }
+          }
+        }
+        function makeAs(alias) {
+          return function() {
+            return this.as(alias);
+          };
+        }
+        var asMilliseconds = makeAs("ms"), asSeconds = makeAs("s"), asMinutes = makeAs("m"), asHours = makeAs("h"), asDays = makeAs("d"), asWeeks = makeAs("w"), asMonths = makeAs("M"), asQuarters = makeAs("Q"), asYears = makeAs("y"), valueOf$1 = asMilliseconds;
+        function clone$1() {
+          return createDuration(this);
+        }
+        function get$2(units) {
+          units = normalizeUnits(units);
+          return this.isValid() ? this[units + "s"]() : NaN;
+        }
+        function makeGetter(name) {
+          return function() {
+            return this.isValid() ? this._data[name] : NaN;
+          };
+        }
+        var milliseconds = makeGetter("milliseconds"), seconds = makeGetter("seconds"), minutes = makeGetter("minutes"), hours2 = makeGetter("hours"), days = makeGetter("days"), months = makeGetter("months"), years = makeGetter("years");
+        function weeks() {
+          return absFloor(this.days() / 7);
+        }
+        var round = Math.round, thresholds = {
+          ss: 44,
+          // a few seconds to seconds
+          s: 45,
+          // seconds to minute
+          m: 45,
+          // minutes to hour
+          h: 22,
+          // hours to day
+          d: 26,
+          // days to month/week
+          w: null,
+          // weeks to month
+          M: 11
+          // months to year
+        };
+        function substituteTimeAgo(string, number, withoutSuffix, isFuture, locale2) {
+          return locale2.relativeTime(number || 1, !!withoutSuffix, string, isFuture);
+        }
+        function relativeTime$1(posNegDuration, withoutSuffix, thresholds2, locale2) {
+          var duration = createDuration(posNegDuration).abs(), seconds2 = round(duration.as("s")), minutes2 = round(duration.as("m")), hours3 = round(duration.as("h")), days2 = round(duration.as("d")), months2 = round(duration.as("M")), weeks2 = round(duration.as("w")), years2 = round(duration.as("y")), a = seconds2 <= thresholds2.ss && ["s", seconds2] || seconds2 < thresholds2.s && ["ss", seconds2] || minutes2 <= 1 && ["m"] || minutes2 < thresholds2.m && ["mm", minutes2] || hours3 <= 1 && ["h"] || hours3 < thresholds2.h && ["hh", hours3] || days2 <= 1 && ["d"] || days2 < thresholds2.d && ["dd", days2];
+          if (thresholds2.w != null) {
+            a = a || weeks2 <= 1 && ["w"] || weeks2 < thresholds2.w && ["ww", weeks2];
+          }
+          a = a || months2 <= 1 && ["M"] || months2 < thresholds2.M && ["MM", months2] || years2 <= 1 && ["y"] || ["yy", years2];
+          a[2] = withoutSuffix;
+          a[3] = +posNegDuration > 0;
+          a[4] = locale2;
+          return substituteTimeAgo.apply(null, a);
+        }
+        function getSetRelativeTimeRounding(roundingFunction) {
+          if (roundingFunction === void 0) {
+            return round;
+          }
+          if (typeof roundingFunction === "function") {
+            round = roundingFunction;
+            return true;
+          }
+          return false;
+        }
+        function getSetRelativeTimeThreshold(threshold, limit) {
+          if (thresholds[threshold] === void 0) {
+            return false;
+          }
+          if (limit === void 0) {
+            return thresholds[threshold];
+          }
+          thresholds[threshold] = limit;
+          if (threshold === "s") {
+            thresholds.ss = limit - 1;
+          }
+          return true;
+        }
+        function humanize(argWithSuffix, argThresholds) {
+          if (!this.isValid()) {
+            return this.localeData().invalidDate();
+          }
+          var withSuffix = false, th = thresholds, locale2, output;
+          if (typeof argWithSuffix === "object") {
+            argThresholds = argWithSuffix;
+            argWithSuffix = false;
+          }
+          if (typeof argWithSuffix === "boolean") {
+            withSuffix = argWithSuffix;
+          }
+          if (typeof argThresholds === "object") {
+            th = Object.assign({}, thresholds, argThresholds);
+            if (argThresholds.s != null && argThresholds.ss == null) {
+              th.ss = argThresholds.s - 1;
+            }
+          }
+          locale2 = this.localeData();
+          output = relativeTime$1(this, !withSuffix, th, locale2);
+          if (withSuffix) {
+            output = locale2.pastFuture(+this, output);
+          }
+          return locale2.postformat(output);
+        }
+        var abs$1 = Math.abs;
+        function sign(x) {
+          return (x > 0) - (x < 0) || +x;
+        }
+        function toISOString$1() {
+          if (!this.isValid()) {
+            return this.localeData().invalidDate();
+          }
+          var seconds2 = abs$1(this._milliseconds) / 1e3, days2 = abs$1(this._days), months2 = abs$1(this._months), minutes2, hours3, years2, s, total = this.asSeconds(), totalSign, ymSign, daysSign, hmsSign;
+          if (!total) {
+            return "P0D";
+          }
+          minutes2 = absFloor(seconds2 / 60);
+          hours3 = absFloor(minutes2 / 60);
+          seconds2 %= 60;
+          minutes2 %= 60;
+          years2 = absFloor(months2 / 12);
+          months2 %= 12;
+          s = seconds2 ? seconds2.toFixed(3).replace(/\.?0+$/, "") : "";
+          totalSign = total < 0 ? "-" : "";
+          ymSign = sign(this._months) !== sign(total) ? "-" : "";
+          daysSign = sign(this._days) !== sign(total) ? "-" : "";
+          hmsSign = sign(this._milliseconds) !== sign(total) ? "-" : "";
+          return totalSign + "P" + (years2 ? ymSign + years2 + "Y" : "") + (months2 ? ymSign + months2 + "M" : "") + (days2 ? daysSign + days2 + "D" : "") + (hours3 || minutes2 || seconds2 ? "T" : "") + (hours3 ? hmsSign + hours3 + "H" : "") + (minutes2 ? hmsSign + minutes2 + "M" : "") + (seconds2 ? hmsSign + s + "S" : "");
+        }
+        var proto$2 = Duration.prototype;
+        proto$2.isValid = isValid$1;
+        proto$2.abs = abs;
+        proto$2.add = add$1;
+        proto$2.subtract = subtract$1;
+        proto$2.as = as;
+        proto$2.asMilliseconds = asMilliseconds;
+        proto$2.asSeconds = asSeconds;
+        proto$2.asMinutes = asMinutes;
+        proto$2.asHours = asHours;
+        proto$2.asDays = asDays;
+        proto$2.asWeeks = asWeeks;
+        proto$2.asMonths = asMonths;
+        proto$2.asQuarters = asQuarters;
+        proto$2.asYears = asYears;
+        proto$2.valueOf = valueOf$1;
+        proto$2._bubble = bubble;
+        proto$2.clone = clone$1;
+        proto$2.get = get$2;
+        proto$2.milliseconds = milliseconds;
+        proto$2.seconds = seconds;
+        proto$2.minutes = minutes;
+        proto$2.hours = hours2;
+        proto$2.days = days;
+        proto$2.weeks = weeks;
+        proto$2.months = months;
+        proto$2.years = years;
+        proto$2.humanize = humanize;
+        proto$2.toISOString = toISOString$1;
+        proto$2.toString = toISOString$1;
+        proto$2.toJSON = toISOString$1;
+        proto$2.locale = locale;
+        proto$2.localeData = localeData;
+        proto$2.toIsoString = deprecate(
+          "toIsoString() is deprecated. Please use toISOString() instead (notice the capitals)",
+          toISOString$1
+        );
+        proto$2.lang = lang;
+        addFormatToken("X", 0, 0, "unix");
+        addFormatToken("x", 0, 0, "valueOf");
+        addRegexToken("x", matchSigned);
+        addRegexToken("X", matchTimestamp);
+        addParseToken("X", function(input, array, config) {
+          config._d = new Date(parseFloat(input) * 1e3);
+        });
+        addParseToken("x", function(input, array, config) {
+          config._d = new Date(toInt(input));
+        });
+        hooks.version = "2.30.1";
+        setHookCallback(createLocal);
+        hooks.fn = proto;
+        hooks.min = min;
+        hooks.max = max;
+        hooks.now = now;
+        hooks.utc = createUTC;
+        hooks.unix = createUnix;
+        hooks.months = listMonths;
+        hooks.isDate = isDate;
+        hooks.locale = getSetGlobalLocale;
+        hooks.invalid = createInvalid;
+        hooks.duration = createDuration;
+        hooks.isMoment = isMoment;
+        hooks.weekdays = listWeekdays;
+        hooks.parseZone = createInZone;
+        hooks.localeData = getLocale;
+        hooks.isDuration = isDuration;
+        hooks.monthsShort = listMonthsShort;
+        hooks.weekdaysMin = listWeekdaysMin;
+        hooks.defineLocale = defineLocale;
+        hooks.updateLocale = updateLocale;
+        hooks.locales = listLocales;
+        hooks.weekdaysShort = listWeekdaysShort;
+        hooks.normalizeUnits = normalizeUnits;
+        hooks.relativeTimeRounding = getSetRelativeTimeRounding;
+        hooks.relativeTimeThreshold = getSetRelativeTimeThreshold;
+        hooks.calendarFormat = getCalendarFormat;
+        hooks.prototype = proto;
+        hooks.HTML5_FMT = {
+          DATETIME_LOCAL: "YYYY-MM-DDTHH:mm",
+          // <input type="datetime-local" />
+          DATETIME_LOCAL_SECONDS: "YYYY-MM-DDTHH:mm:ss",
+          // <input type="datetime-local" step="1" />
+          DATETIME_LOCAL_MS: "YYYY-MM-DDTHH:mm:ss.SSS",
+          // <input type="datetime-local" step="0.001" />
+          DATE: "YYYY-MM-DD",
+          // <input type="date" />
+          TIME: "HH:mm",
+          // <input type="time" />
+          TIME_SECONDS: "HH:mm:ss",
+          // <input type="time" step="1" />
+          TIME_MS: "HH:mm:ss.SSS",
+          // <input type="time" step="0.001" />
+          WEEK: "GGGG-[W]WW",
+          // <input type="week" />
+          MONTH: "YYYY-MM"
+          // <input type="month" />
+        };
+        return hooks;
+      });
+    }
+  });
+
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function emptyHtmlStr(icon2, title, desc) {
+    return `<div class="bz-empty">${icon2 ? iconSpan(icon2, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
+  // src/core/utils.ts
+  function escapeHtml2(str2) {
+    return str2.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function generateId(prefix) {
+    prefix = prefix || "item";
+    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+  function extractUrlAndDisplay(c) {
+    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (m1) return { url: m1[2], display: m1[1] };
+    const m2 = c.match(/(https?:\/\/\S+)/i);
+    if (m2) {
+      const u = m2[1], d = c.replace(u, "").trim();
+      return { url: u, display: d || u };
+    }
+    return { url: null, display: c };
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
+    const todayStart = (0, import_moment.default)(now).startOf("day");
+    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
+      const hours2 = Math.floor(diffMinutes / 60);
+      return `${hours2}小时前`;
+    }
+    const yesterdayStart = (0, import_moment.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function getCurrentNoteInfo() {
+    const f = getApp().workspace.getActiveFile();
+    return f ? { path: f.path, name: f.basename } : null;
+  }
+  function getCurrentCursorPosition() {
+    const ws = getApp().workspace;
+    const ed = ws.activeEditor && ws.activeEditor.editor;
+    return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
+  }
+  async function fetchPageTitle(url) {
+    try {
+      const r = await requestUrl({
+        url,
+        method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
+      });
+      if (r.status === 200) {
+        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
+        if (m && m[1]) return m[1].trim();
+      }
+    } catch (e) {
+    }
+    return null;
+  }
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
+  }
+  function cmpZh(a, b) {
+    return String(a || "").localeCompare(String(b || ""), "zh");
+  }
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  function hash31(str2) {
+    let h = 0;
+    const t = String(str2 || "");
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return h >>> 0;
+  }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve2) => {
+      if (typeof window === "undefined") {
+        resolve2();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
+      else window.setTimeout(resolve2, 0);
+    });
+  }
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text) {
+    try {
+      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  async function copySensitiveWithFallback(text) {
+    try {
+      await copySensitiveText(text);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+  var import_moment, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment = __toESM(require_moment());
+      init_fake_obsidian();
+      init_app();
+      init_str();
+      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+      clipboardClearTimer = null;
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve2) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle6 = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        escHandle6.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve2(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function confirmDiscard(proceed, message, className) {
+    void openFlowDialog({
+      title: "放弃未保存的内容？",
+      message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
+      actions: [
+        { label: "放弃", value: "ok" },
+        { label: "继续编辑", value: "cancel" }
+      ]
+    }).then((v) => {
+      if (v === "ok") proceed();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
+  // src/core/domain-icons.ts
+  var DOMAIN_ICONS;
+  var init_domain_icons = __esm({
+    "src/core/domain-icons.ts"() {
+      DOMAIN_ICONS = {
+        // 面板专属域（无对应命令）
+        global: "settings",
+        // 通知（2026-09-12）：自「通用」域拆出的独立面板页；「设置」页并入通用后 appearance 键退役
+        notice: "bell",
+        ai: "sparkles",
+        // 域入口命令与面板导航共用
+        home: "layout-grid",
+        memo: "check-square",
+        belongings: "package",
+        clipping: "scissors",
+        favorites: "star",
+        diary: "notebook-pen",
+        "reading-report": "bar-chart-3",
+        cinema: "clapperboard",
+        gameshelf: "gamepad-2",
+        bookshelf: "book-open",
+        review: "repeat-2",
+        secondbrain: "brain",
+        "auto-summary": "sparkles",
+        pomodoro: "timer",
+        attach: "folder-down",
+        encrypt: "lock",
+        "password-vault": "key",
+        smartcat: "cat",
+        knowledge: "list-video",
+        // 命令专属域
+        "settings-panel": "settings-2"
+      };
+    }
+  });
+
+  // src/core/path-picker.ts
+  function isExcludedPath(p) {
+    if (!p) return false;
+    for (const seg of p.split("/")) {
+      if (EXCLUDED_DIR_NAMES.has(seg)) return true;
+    }
+    return false;
+  }
+  function foldersFromFiles(paths) {
+    const out = /* @__PURE__ */ new Set([""]);
+    for (const p of paths) {
+      if (isExcludedPath(p)) continue;
+      const sep = p.lastIndexOf("/");
+      if (sep === -1) continue;
+      let dir = p.slice(0, sep);
+      while (dir) {
+        if (!isExcludedPath(dir)) out.add(dir);
+        const i = dir.lastIndexOf("/");
+        dir = i === -1 ? "" : dir.slice(0, i);
+      }
+    }
+    return [...out].sort();
+  }
+  async function collectVaultFolders(app) {
+    var _a2, _b2, _c, _d;
+    const out = /* @__PURE__ */ new Set([""]);
+    try {
+      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
+      for (const p of foldersFromFiles(files)) out.add(p);
+    } catch (e) {
+    }
+    const adapter = (_d = app == null ? void 0 : app.vault) == null ? void 0 : _d.adapter;
+    if (adapter && typeof adapter.list === "function") {
+      const walk = async (dir, depth) => {
+        var _a3;
+        if (depth > 40) return;
+        let listed = null;
+        try {
+          listed = await adapter.list(dir);
+        } catch (e) {
+          if (dir === "") {
+            try {
+              listed = await adapter.list("/");
+            } catch (e2) {
+              return;
+            }
+          } else {
+            return;
+          }
+        }
+        for (const f of (_a3 = listed == null ? void 0 : listed.folders) != null ? _a3 : []) {
+          const p = String(f).replace(/^\/+|\/+$/g, "");
+          if (!p) continue;
+          if (isExcludedPath(p)) continue;
+          if (!out.has(p)) out.add(p);
+          await walk(p, depth + 1);
+        }
+      };
+      try {
+        await walk("", 0);
+      } catch (e) {
+      }
+    }
+    return [...out].sort();
+  }
+  function normalizePicked(list) {
+    const out = [];
+    for (const item of list) {
+      const raw = String(item);
+      if (raw === "") {
+        if (!out.includes("")) out.push("");
+        continue;
+      }
+      const trimmed = raw.trim();
+      if (trimmed === "") continue;
+      const p = trimmed.replace(/^\/+|\/+$/g, "");
+      if (p === "") {
+        if (!out.includes("")) out.push("");
+        continue;
+      }
+      if (!out.includes(p)) out.push(p);
+    }
+    return out;
+  }
+  function renderPathChips(container, selected, onChange, emptyText = "未选择", onChipClick) {
+    container.innerHTML = "";
+    container.classList.add("bz-path-picker-chips");
+    if (selected.length === 0) {
+      if (!emptyText) return;
+      const empty = document.createElement("span");
+      empty.className = "bz-path-picker-chips-empty";
+      empty.textContent = emptyText;
+      container.appendChild(empty);
+      return;
+    }
+    for (const path of selected) {
+      const label = path === "" ? "（库根目录）" : path;
+      const chip2 = document.createElement("span");
+      chip2.className = "bz-path-picker-chip" + (onChipClick ? " bz-path-picker-chip--click" : "");
+      chip2.title = label;
+      const name = document.createElement("span");
+      name.className = "bz-path-picker-chip-name";
+      name.textContent = label;
+      if (onChipClick) name.onclick = () => onChipClick(path);
+      const x = document.createElement("button");
+      x.className = "bz-path-picker-chip-x";
+      x.textContent = "✕";
+      x.setAttribute("aria-label", `移除 ${label}`);
+      x.onclick = () => onChange(selected.filter((p) => p !== path));
+      chip2.appendChild(name);
+      chip2.appendChild(x);
+      container.appendChild(chip2);
+    }
+  }
+  function renderPathSettingRow(opts) {
+    const readValue = () => {
+      const v = opts.value;
+      return Array.isArray(v) ? [...v] : v ? [v] : [];
+    };
+    let current2 = readValue();
+    const setting = new Setting(opts.parent).setName(opts.name);
+    if (opts.desc) setting.setDesc(opts.desc);
+    setting.settingEl.classList.add("bz-path-picker-setting-row");
+    const chipsWrap = document.createElement("div");
+    chipsWrap.className = "bz-path-picker-chips--setting";
+    const apply = (list) => {
+      const res = opts.onChange(list);
+      if (res && typeof res.then === "function") {
+        return Promise.resolve(res).then((final) => {
+          current2 = Array.isArray(final) ? final : list;
+          renderAll6();
+        });
+      }
+      current2 = Array.isArray(res) ? res : list;
+      renderAll6();
+    };
+    const openPicker = () => openPathPicker({
+      title: opts.pickerTitle || opts.name,
+      desc: opts.pickerDesc,
+      mode: opts.mode,
+      selected: current2,
+      okText: opts.okText,
+      onConfirm: (list) => {
+        void apply(list);
+      }
+    });
+    const render2 = () => renderPathChips(chipsWrap, current2, (next) => {
+      void apply(next);
+    }, "", openPicker);
+    let btn = null;
+    setting.addButton((b) => {
+      b.setButtonText(opts.buttonText || (opts.mode === "multi" ? "添加…" : "选择…")).onClick(openPicker);
+      b.buttonEl.classList.add("bz-path-picker-btn--slim");
+      btn = b.buttonEl;
+    });
+    const control = setting.settingEl.querySelector(".setting-item-control");
+    if (control) control.appendChild(chipsWrap);
+    const syncBtn = () => {
+      setting.settingEl.dataset.filled = current2.length > 0 ? "1" : "0";
+      if (!btn || !control) return;
+      if (current2.length === 0) {
+        if (!btn.isConnected) control.appendChild(btn);
+      } else if (btn.isConnected) {
+        btn.remove();
+      }
+    };
+    const renderAll6 = () => {
+      syncBtn();
+      render2();
+    };
+    const refresh2 = () => {
+      current2 = readValue();
+      renderAll6();
+    };
+    renderAll6();
+    return { refresh: refresh2, settingEl: setting.settingEl };
+  }
+  function closePathPicker() {
+    if (currentMask) {
+      currentMask.remove();
+      currentMask = null;
+    }
+    if (currentPopup) {
+      currentPopup.remove();
+      currentPopup = null;
+    }
+    if (currentHandle) {
+      currentHandle.unregister();
+      currentHandle = null;
+    }
+    if (focusTimer !== null) {
+      window.clearTimeout(focusTimer);
+      focusTimer = null;
+    }
+  }
+  function openPathPicker(opts) {
+    var _a2, _b2, _c;
+    closePathPicker();
+    const app = getApp();
+    const mode = opts.mode || "single";
+    const selected = new Set(normalizePicked(opts.selected || []));
+    const pinnedAtOpen = [...selected];
+    const { mask, popup } = createOverlay({
+      maskId: "bz-path-picker-mask",
+      popupId: "bz-path-picker-popup",
+      // ticket 133：桌面/移动端统一一张居中卡——左右各 16px 外边距，宽视口封顶 440px（不分两套样式）
+      width: "min(calc(100vw - 32px), 440px)",
+      maxWidth: 440,
+      onMaskClick: () => closePathPicker()
+    });
+    currentMask = mask;
+    currentPopup = popup;
+    const skinClasses = (opts.skinClassName || "").split(/\s+/).filter(Boolean);
+    if (skinClasses.length) {
+      mask.classList.add(...skinClasses);
+      popup.classList.add(...skinClasses);
+    }
+    popup.classList.add("bz-path-picker");
+    popup.style.height = "min(560px, 82vh)";
+    const head = document.createElement("div");
+    head.className = "bz-path-picker-head";
+    const title = document.createElement("h3");
+    title.className = "bz-path-picker-title";
+    title.textContent = opts.title || "选择文件夹";
+    head.appendChild(title);
+    if (opts.desc) {
+      const desc = document.createElement("div");
+      desc.className = "bz-path-picker-desc";
+      desc.textContent = opts.desc;
+      head.appendChild(desc);
+    }
+    const search = document.createElement("input");
+    search.type = "text";
+    search.className = "bz-path-picker-search";
+    search.placeholder = "搜索目录…";
+    search.spellcheck = false;
+    search.setAttribute("aria-label", "搜索目录");
+    const listEl2 = document.createElement("div");
+    listEl2.className = "bz-path-picker-list";
+    const state3 = { folders: [], q: "" };
+    const foot = document.createElement("div");
+    foot.className = "bz-path-picker-foot";
+    const selinfo = document.createElement("span");
+    selinfo.className = "bz-path-picker-selinfo";
+    const btns = document.createElement("div");
+    btns.className = "bz-path-picker-foot-btns";
+    foot.appendChild(selinfo);
+    foot.appendChild(btns);
+    const mkBtn = (label, primary, onclick) => {
+      const b = document.createElement("button");
+      b.textContent = label;
+      b.className = "bz-path-picker-btn" + (primary ? " bz-path-picker-btn--primary" : "");
+      b.onclick = onclick;
+      btns.appendChild(b);
+      return b;
+    };
+    if (mode === "multi") mkBtn("清空", false, () => {
+      selected.clear();
+      renderList3();
+      updateSel();
+    });
+    mkBtn(opts.okText || "下一步", true, () => {
+      const list = normalizePicked([...selected]);
+      closePathPicker();
+      opts.onConfirm(list);
+    });
+    function orderedList() {
+      const pinned = [];
+      const rest = [];
+      const pinSet = new Set(pinnedAtOpen);
+      for (const f of state3.folders) {
+        if (pinSet.has(f)) pinned.push(f);
+        else rest.push(f);
+      }
+      const rootIdx = rest.indexOf("");
+      const root = rootIdx >= 0 ? rest.splice(rootIdx, 1)[0] : null;
+      rest.reverse();
+      return [...pinned, ...root === null ? [] : [root], ...rest];
+    }
+    function renderList3() {
+      listEl2.innerHTML = "";
+      const q2 = state3.q.trim().toLowerCase();
+      const exact = !!q2 && state3.folders.includes(q2);
+      const LIMIT = 300;
+      let n = 0;
+      let total = 0;
+      for (const folder of orderedList()) {
+        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
+        total++;
+        if (n >= LIMIT) continue;
+        n++;
+        const on = selected.has(folder);
+        const row = document.createElement("div");
+        row.className = "bz-path-picker-row" + (on ? " bz-path-picker-row--sel" : "");
+        row.dataset.path = folder;
+        row.setAttribute("role", mode === "multi" ? "checkbox" : "option");
+        row.setAttribute("aria-checked", on ? "true" : "false");
+        const box = document.createElement("span");
+        box.className = "bz-path-picker-check";
+        box.textContent = on ? "✓" : "";
+        const name = document.createElement("span");
+        name.className = "bz-path-picker-name";
+        name.textContent = folder === "" ? "（库根目录）" : folder;
+        name.title = folder === "" ? "（库根目录）" : folder;
+        row.appendChild(box);
+        row.appendChild(name);
+        row.onclick = () => {
+          if (mode === "single") {
+            selected.clear();
+            selected.add(folder);
+          } else if (selected.has(folder)) {
+            selected.delete(folder);
+          } else {
+            selected.add(folder);
+          }
+          renderList3();
+          updateSel();
+        };
+        listEl2.appendChild(row);
+      }
+      if (!total) {
+        const empty = document.createElement("div");
+        empty.className = "bz-path-picker-empty";
+        empty.textContent = "没有匹配的目录";
+        listEl2.appendChild(empty);
+      } else if (total > LIMIT) {
+        const more = document.createElement("div");
+        more.className = "bz-path-picker-empty";
+        more.textContent = `已显示前 ${LIMIT} 个（共 ${total} 个匹配目录），请输入关键词缩小范围`;
+        listEl2.appendChild(more);
+      }
+    }
+    function updateSel() {
+      if (mode === "single") {
+        const first = [...selected][0];
+        selinfo.textContent = first === void 0 ? "未选择" : first === "" ? "已选（库根目录）" : `已选 ${first}`;
+      } else {
+        selinfo.textContent = `已选 ${selected.size} 项`;
+      }
+    }
+    search.oninput = () => {
+      state3.q = search.value;
+      renderList3();
+    };
+    try {
+      const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
+      state3.folders = foldersFromFiles(files);
+    } catch (e) {
+    }
+    void collectVaultFolders(app).then((folders) => {
+      if (!mask.isConnected) return;
+      state3.folders = folders;
+      popup.dataset.ready = "1";
+      renderList3();
+    });
+    renderList3();
+    updateSel();
+    popup.append(head, search, listEl2, foot);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    currentHandle = escManager.register("bz-path-picker", {
+      isVisible: () => !!currentMask,
+      close: () => closePathPicker()
+    });
+    focusTimer = window.setTimeout(() => {
+      focusTimer = null;
+      if (mask.isConnected) search.focus();
+    }, 30);
+  }
+  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
+  var init_path_picker = __esm({
+    "src/core/path-picker.ts"() {
+      init_fake_obsidian();
+      init_app();
+      init_dom();
+      init_esc_manager();
+      EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
+      currentMask = null;
+      currentPopup = null;
+      currentHandle = null;
+      focusTimer = null;
+    }
+  });
+
+  // src/core/settings-modal.ts
+  function createSettingsGroup(container, opts) {
+    const group = document.createElement("div");
+    group.className = "bz-settings-group";
+    const head = document.createElement("div");
+    head.className = "bz-settings-group-head";
+    const icon2 = document.createElement("span");
+    icon2.className = "bz-settings-group-icon";
+    setIcon(icon2, opts.icon);
+    const name = document.createElement("span");
+    name.className = "bz-settings-group-name";
+    name.textContent = opts.name;
+    const count = document.createElement("span");
+    count.className = "bz-settings-group-count";
+    count.textContent = "0 项";
+    head.append(icon2, name, count);
+    const body = document.createElement("div");
+    body.className = "bz-settings-group-body";
+    group.append(head, body);
+    container.appendChild(group);
+    return body;
+  }
+  function isItemHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function refreshSettingsGroupCounts(content) {
+    content.querySelectorAll(".bz-settings-group").forEach((g) => {
+      const body = g.querySelector(".bz-settings-group-body");
+      const countEl = g.querySelector(".bz-settings-group-count");
+      if (!body || !countEl) return;
+      const n = [...body.querySelectorAll(".setting-item")].filter((el) => {
+        const h = el;
+        return !h.classList.contains("bz-setting-action-row") && !isItemHidden(h);
+      }).length;
+      countEl.textContent = `${n} 项`;
+      countEl.style.display = n > 0 ? "" : "none";
+    });
+  }
+  function markSettingSplitRows(container) {
+    container.querySelectorAll(".setting-item").forEach((el) => {
+      if (el.classList.contains("bz-path-picker-setting-row")) return;
+      const ctl = el.querySelector(".setting-item-control");
+      el.classList.toggle("bz-setting-split", !!ctl && ctl.children.length >= 2);
+    });
+  }
+  function closeSettingsModal() {
+    var _a2;
+    if (currentModal) {
+      const m = currentModal;
+      currentModal = null;
+      m.dispose();
+      (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
+    }
+  }
+  function openSettingsModal(opts) {
+    var _a2;
+    closeSettingsModal();
+    const prevActive = document.activeElement;
+    const { mask, popup } = createOverlay({
+      maskId: "bz-settings-modal-mask",
+      popupId: "bz-settings-modal-popup",
+      // z-index 动态发号（ADR-0067）：原静态层规家族表随动态层级制退役，
+      // 全站规则只有一条——谁后显示谁在上（settings-modal 每次打开新建 DOM，创建即显示）
+      maxWidth: opts.maxWidth,
+      onMaskClick: () => closeSettingsModal()
+    });
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = opts.title;
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    renderSettingsInto(content, (_a2 = opts.schema) != null ? _a2 : { groups: [] });
+    const hasVisibleItem = Array.from(content.querySelectorAll(".setting-item")).some(
+      (el) => !el.classList.contains("bz-setting-action-row") && !isItemHidden(el)
+    );
+    if (!hasVisibleItem) {
+      content.innerHTML = "";
+      const empty = document.createElement("div");
+      empty.className = "bz-settings-empty";
+      empty.textContent = opts.emptyText || "暂无设置项";
+      if (opts.emptyDesc) {
+        const desc = document.createElement("div");
+        desc.className = "bz-settings-empty-desc";
+        desc.textContent = opts.emptyDesc;
+        empty.appendChild(desc);
+      }
+      content.appendChild(empty);
+    }
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
+      if (isItemHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    if (firstFocusable) firstFocusable.focus();
+    const handle = escManager.register("bz-settings-modal", {
+      isVisible: () => !!currentModal,
+      close: () => closeSettingsModal()
+    });
+    currentModal = {
+      mask,
+      popup,
+      onClose: opts.onClose,
+      dispose: () => {
+        mask.remove();
+        popup.remove();
+        handle.unregister();
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+    };
+  }
+  var FOCUSABLE_SELECTOR, currentModal;
+  var init_settings_modal = __esm({
+    "src/core/settings-modal.ts"() {
+      init_fake_obsidian();
+      init_dom();
+      init_esc_manager();
+      init_mobile();
+      init_settings_schema();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      currentModal = null;
+    }
+  });
+
   // src/core/settings-schema.ts
   function bindValue(binding) {
     if ("key" in binding) {
@@ -7730,14 +9301,14 @@ var BZW_settings_panel = (() => {
       const acc = isNumber ? bindValue(row.binding) : bindValue(row.binding);
       const changeCb = row.onChange;
       const initial = String((_a3 = acc.read()) != null ? _a3 : "");
-      let pending = null;
+      let pending2 = null;
       let last = initial;
       let dirty2 = false;
       const warn = new CommitWarn(initial, row.onCommit);
       const commit = () => {
-        if (pending !== null) {
-          clearTimeout(pending);
-          pending = null;
+        if (pending2 !== null) {
+          clearTimeout(pending2);
+          pending2 = null;
         }
         if (!dirty2) return;
         void acc.persist();
@@ -7767,8 +9338,8 @@ var BZW_settings_panel = (() => {
           }
           last = v;
           changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
-          if (pending !== null) clearTimeout(pending);
-          pending = setTimeout(commit, TEXT_COMMIT_DELAY);
+          if (pending2 !== null) clearTimeout(pending2);
+          pending2 = setTimeout(commit, TEXT_COMMIT_DELAY);
         });
         const inputEl = t.inputEl;
         if (inputEl) {
@@ -8852,675 +10423,6 @@ var BZW_settings_panel = (() => {
     }
   });
 
-  // src/core/model-limits.ts
-  function normalizeModelId(model) {
-    return String(model || "").trim().toLowerCase().split(":")[0].split("/").pop().trim();
-  }
-  function resolveModelLimits(model) {
-    const key = normalizeModelId(model || "");
-    if (!key) return null;
-    let best = null;
-    for (const entry of MODEL_LIMITS) {
-      for (const k of [entry.id, ...entry.aliases || []]) {
-        if (key === k) return { maxOutput: entry.maxOutput, contextWindow: entry.contextWindow };
-        if (key.includes(k) && (!best || k.length > best.len)) best = { entry, len: k.length };
-      }
-    }
-    return best ? { maxOutput: best.entry.maxOutput, contextWindow: best.entry.contextWindow } : null;
-  }
-  var MODEL_LIMITS;
-  var init_model_limits = __esm({
-    "src/core/model-limits.ts"() {
-      MODEL_LIMITS = [
-        // ---- DeepSeek 官方（2026-09-16 核对官方「模型 & 价格」页：上下文 1M / 最大输出 384K，在售模型同档）
-        {
-          id: "deepseek-flash",
-          aliases: ["deepseek-v4-flash", "deepseek-v4-flash-vision-exp", "deepseek-flash-latest", "deepseek-v4.1-flash"],
-          maxOutput: 393216,
-          contextWindow: 1048576
-        },
-        {
-          id: "deepseek-v4-pro",
-          aliases: ["deepseek-pro", "deepseek-pro-latest"],
-          maxOutput: 393216,
-          contextWindow: 1048576
-        },
-        // ---- 阿里云百炼 Qwen3.7 系（2026-09-16 核对官方帮助中心；qwen-plus / qwen-max 等短名指向当前主力版本）
-        { id: "qwen3.7-plus", aliases: ["qwen-plus"], maxOutput: 131072, contextWindow: 1e6 },
-        { id: "qwen3.7-max", aliases: ["qwen-max"], maxOutput: 65536, contextWindow: 1e6 },
-        { id: "qwen3.7-flash", aliases: ["qwen-flash", "qwen-turbo"], maxOutput: 16384, contextWindow: 1e6 },
-        // ---- 以下条目沿用注册表既有口径（未二次核对官方文档，数值与注册表默认一致，勿据此调大）
-        { id: "claude-sonnet-4-5", aliases: ["claude-sonnet-4.5"], maxOutput: 64e3, contextWindow: 2e5 },
-        { id: "gpt-4o-mini", maxOutput: 16384, contextWindow: 128e3 },
-        { id: "gemini-2.0-flash", maxOutput: 8192, contextWindow: 1048576 },
-        { id: "kimi-k2-0711-preview", aliases: ["kimi-k2"], maxOutput: 131072, contextWindow: 131072 },
-        { id: "glm-4-flash", maxOutput: 8192, contextWindow: 131072 }
-      ];
-    }
-  });
-
-  // src/core/ai.ts
-  var ai_exports = {};
-  __export(ai_exports, {
-    AIService: () => AIService,
-    AI_IDLE_TIMEOUT_MS: () => AI_IDLE_TIMEOUT_MS,
-    AI_IMAGE_IDLE_TIMEOUT_MS: () => AI_IMAGE_IDLE_TIMEOUT_MS,
-    AI_IMAGE_MAX_BYTES: () => AI_IMAGE_MAX_BYTES,
-    AI_PROVIDER_REGISTRY: () => AI_PROVIDER_REGISTRY,
-    AI_THINKING_STYLE: () => AI_THINKING_STYLE,
-    createAI: () => createAI,
-    getAIProvider: () => getAIProvider,
-    getProviderDescriptor: () => getProviderDescriptor,
-    hasExplicitThinkingOption: () => hasExplicitThinkingOption,
-    imageDataUrl: () => imageDataUrl,
-    imageExtOfMime: () => imageExtOfMime,
-    imageMimeOfPath: () => imageMimeOfPath,
-    resetAIProviderCache: () => resetAIProviderCache,
-    setAISettingsProvider: () => setAISettingsProvider,
-    thinkingOptionsFor: () => thinkingOptionsFor
-  });
-  function setAISettingsProvider(fn) {
-    _settingsProvider = fn;
-  }
-  function getQ3Settings() {
-    return _settingsProvider ? _settingsProvider() : {};
-  }
-  function getProviderDescriptor(id) {
-    return AI_PROVIDER_REGISTRY.find((p) => p.id === id) || AI_PROVIDER_REGISTRY.find((p) => p.id === "custom") || AI_PROVIDER_REGISTRY[AI_PROVIDER_REGISTRY.length - 1];
-  }
-  function thinkingOptionsFor(level, style) {
-    if (style === "none") return null;
-    if (level === "off") {
-      if (style === "enable") return { enable_thinking: false };
-      if (style === "zhipu") return { thinking: { type: "disabled" } };
-      return null;
-    }
-    if (level !== "low" && level !== "medium" && level !== "high") return null;
-    if (style === "effort") return { reasoning_effort: level };
-    if (style === "enable") return { enable_thinking: true };
-    return { thinking: { type: "enabled" } };
-  }
-  function hasExplicitThinkingOption(mo) {
-    return "enable_thinking" in mo || "reasoning_effort" in mo || "thinking" in mo;
-  }
-  function resetAIProviderCache() {
-    _aiProviderCache = null;
-  }
-  async function getAIProvider(override) {
-    var _a2, _b2, _c;
-    if (!override && _aiProviderCache) return _aiProviderCache;
-    const cacheable = !override;
-    const cachePut2 = (p) => {
-      if (cacheable) _aiProviderCache = p;
-      return p;
-    };
-    const s = getQ3Settings();
-    if (override && typeof override === "object" && override.apiKey) {
-      return {
-        endpoint: String(override.endpoint || "https://api.deepseek.com").replace(/\/+$/, ""),
-        apiKey: override.apiKey,
-        model: override.model || void 0,
-        extraHeaders: override.extraHeaders || void 0,
-        defaultMaxTokens: override.defaultMaxTokens
-      };
-    }
-    const name = typeof override === "string" && override || s.aiProvider || "opencode-go";
-    const desc = getProviderDescriptor(name);
-    if (name === "custom") {
-      const endpoint = (s.aiCustomEndpoint || "").replace(/\/+$/, "");
-      if (!endpoint || !s.aiCustomApiKey) {
-        throw new Error("未配置自定义 AI 服务：请填写 API 地址与密钥（插件设置 → AI 配置）");
-      }
-      const customLimits = resolveModelLimits(s.aiCustomModel || "");
-      return cachePut2({
-        id: "custom",
-        endpoint,
-        apiKey: s.aiCustomApiKey,
-        model: s.aiCustomModel || void 0,
-        extraHeaders: desc.extraHeaders,
-        defaultMaxTokens: ((_a2 = s.aiMaxTokensOverrides) == null ? void 0 : _a2["custom"]) || (customLimits == null ? void 0 : customLimits.maxOutput) || desc.defaultMaxTokens
-      });
-    }
-    const key = s[desc.apiKeyKey];
-    if (!key && name === "deepseek") {
-      try {
-        const raw = await getApp().vault.adapter.read(".obsidian/plugins/quickadd/data.json");
-        const cfg = JSON.parse(raw);
-        const provider = cfg.ai && cfg.ai.providers && cfg.ai.providers[0];
-        if (provider && provider.endpoint && provider.apiKey) {
-          return cachePut2({
-            id: "deepseek",
-            endpoint: String(provider.endpoint).replace(/\/+$/, ""),
-            apiKey: provider.apiKey,
-            defaultMaxTokens: desc.defaultMaxTokens
-          });
-        }
-      } catch (e) {
-      }
-    }
-    if (!key && name !== "ollama") {
-      throw new Error(`未配置 ${desc.label} API Key：插件设置 → AI 配置 → ${desc.apiKeyLabel}`);
-    }
-    const overrideModel = (_b2 = s.aiModelOverrides) == null ? void 0 : _b2[name];
-    const overrideMaxTokens = (_c = s.aiMaxTokensOverrides) == null ? void 0 : _c[name];
-    const limits = resolveModelLimits(overrideModel || desc.model || "");
-    return cachePut2({
-      id: name,
-      endpoint: desc.endpoint,
-      apiKey: key || "",
-      model: overrideModel || desc.model || void 0,
-      noCors: desc.noCors,
-      extraHeaders: desc.extraHeaders,
-      defaultMaxTokens: overrideMaxTokens || (limits == null ? void 0 : limits.maxOutput) || desc.defaultMaxTokens
-    });
-  }
-  function abortError() {
-    const e = new Error("请求已取消");
-    e.name = "AbortError";
-    return e;
-  }
-  function timeoutError(idleMs = AI_IDLE_TIMEOUT_MS) {
-    const e = new Error(`AI 请求超时（${Math.round(idleMs / 1e3)} 秒无响应）`);
-    e.name = "TimeoutError";
-    return e;
-  }
-  function idleTimeoutOf(body) {
-    const msgs = Array.isArray(body == null ? void 0 : body.messages) ? body.messages : [];
-    const hasImage = msgs.some(
-      (m) => Array.isArray(m == null ? void 0 : m.content) && m.content.some((p) => (p == null ? void 0 : p.type) === "image_url")
-    );
-    return hasImage ? AI_IMAGE_IDLE_TIMEOUT_MS : AI_IDLE_TIMEOUT_MS;
-  }
-  async function streamChatCompletions(provider, body, signal, onDelta) {
-    const idleMs = idleTimeoutOf(body);
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const controller = new AbortController();
-    const onOuterAbort = () => controller.abort();
-    let outerLinked = false;
-    if (signal) {
-      if (signal.aborted) controller.abort();
-      else {
-        signal.addEventListener("abort", onOuterAbort);
-        outerLinked = true;
-      }
-    }
-    let idleTimer = null;
-    const armIdle = () => {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => controller.abort(), idleMs);
-    };
-    try {
-      armIdle();
-      const resp = await fetch(`${provider.endpoint}/chat/completions`, {
-        method: "POST",
-        headers,
-        body: JSON.stringify(body),
-        signal: controller.signal
-      });
-      if (!resp.ok) {
-        let msg = `API ${resp.status}`;
-        try {
-          const err = await resp.json();
-          if (err.error && err.error.message) msg = err.error.message;
-        } catch (e) {
-        }
-        throw new Error(msg);
-      }
-      if (!resp.body || typeof resp.body.getReader !== "function") {
-        const data = await resp.json();
-        return data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content || "";
-      }
-      const reader = resp.body.getReader();
-      const decoder = new TextDecoder();
-      let full = "", buf = "";
-      while (true) {
-        armIdle();
-        const { done, value } = await reader.read();
-        if (done) break;
-        buf += decoder.decode(value, { stream: true });
-        let nl;
-        while ((nl = buf.indexOf("\n")) !== -1) {
-          const line = buf.slice(0, nl).trim();
-          buf = buf.slice(nl + 1);
-          if (!line.startsWith("data:")) continue;
-          const payload = line.slice(5).trim();
-          if (payload === "[DONE]") {
-            try {
-              reader.cancel();
-            } catch (e) {
-            }
-            return full;
-          }
-          try {
-            const chunk = JSON.parse(payload);
-            const delta = chunk.choices && chunk.choices[0] && chunk.choices[0].delta && chunk.choices[0].delta.content;
-            if (delta) {
-              full += delta;
-              try {
-                onDelta == null ? void 0 : onDelta(delta);
-              } catch (e) {
-              }
-            }
-          } catch (e) {
-          }
-        }
-      }
-      return full;
-    } catch (e) {
-      if (controller.signal.aborted && !(signal && signal.aborted)) throw timeoutError(idleMs);
-      throw e;
-    } finally {
-      if (idleTimer !== null) clearTimeout(idleTimer);
-      if (outerLinked && signal) signal.removeEventListener("abort", onOuterAbort);
-    }
-  }
-  async function chatCompletionsNonStream(provider, body, signal) {
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const idleMs = idleTimeoutOf(body);
-    const headers = {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${provider.apiKey}`,
-      ...provider.extraHeaders || {}
-    };
-    const resp = await new Promise((resolve2, reject) => {
-      let timer = null;
-      const settle = (fn) => {
-        if (timer !== null) clearTimeout(timer);
-        fn();
-      };
-      timer = setTimeout(() => settle(() => reject(timeoutError(idleMs))), idleMs);
-      requestUrl({
-        url: `${provider.endpoint}/chat/completions`,
-        method: "POST",
-        headers,
-        body: JSON.stringify({ ...body, stream: false })
-      }).then(
-        (r) => settle(() => resolve2(r)),
-        (e) => settle(() => reject(e))
-      );
-    });
-    if (signal == null ? void 0 : signal.aborted) throw abortError();
-    const data = JSON.parse(resp.text);
-    const errMsg = data.error && (data.error.message || data.error.type) || data.message && data.message;
-    if (errMsg) throw new Error(`API ${resp.status}: ${errMsg}`);
-    const content = data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-    if (content === void 0 || content === null) throw new Error(`API ${resp.status}: 响应缺少 content`);
-    return content;
-  }
-  function imageMimeOfPath(path) {
-    var _a2;
-    const ext = ((_a2 = String(path || "").split(".").pop()) == null ? void 0 : _a2.toLowerCase()) || "";
-    return AI_IMAGE_MIME[ext] || null;
-  }
-  function imageExtOfMime(mime) {
-    const m = String(mime || "").toLowerCase();
-    for (const [ext, known] of Object.entries(AI_IMAGE_MIME)) {
-      if (known === m && ext !== "jpeg") return ext;
-    }
-    return null;
-  }
-  function imageDataUrl(bytes, mime) {
-    const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-    if (u8.byteLength === 0) throw new Error("图片内容为空");
-    if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
-      throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
-    }
-    let bin = "";
-    const CHUNK = 32768;
-    for (let i = 0; i < u8.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)));
-    }
-    return `data:${mime};base64,${btoa(bin)}`;
-  }
-  function buildUserContent(input) {
-    var _a2;
-    if (typeof input === "string") return input;
-    const text = String((_a2 = input == null ? void 0 : input.text) != null ? _a2 : "");
-    const images = (Array.isArray(input == null ? void 0 : input.images) ? input.images : []).map((u) => String(u != null ? u : "").trim()).filter((u) => u.length > 0);
-    if (!images.length) return text;
-    return [
-      { type: "text", text },
-      ...images.map((url) => ({ type: "image_url", image_url: { url } }))
-    ];
-  }
-  function buildMessages(input) {
-    if (input && typeof input === "object" && Array.isArray(input.messages)) {
-      return input.messages;
-    }
-    return [{ role: "user", content: buildUserContent(input) }];
-  }
-  function createAI(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
-    return new AIService(params, defaultModel, defaultOptions);
-  }
-  var _settingsProvider, AI_PROVIDER_REGISTRY, AI_THINKING_STYLE, _aiProviderCache, AI_IDLE_TIMEOUT_MS, AI_IMAGE_IDLE_TIMEOUT_MS, AI_IMAGE_MIME, AI_IMAGE_MAX_BYTES, AIService;
-  var init_ai = __esm({
-    "src/core/ai.ts"() {
-      init_fake_obsidian();
-      init_app();
-      init_model_limits();
-      _settingsProvider = null;
-      AI_PROVIDER_REGISTRY = [
-        {
-          id: "deepseek",
-          label: "DeepSeek",
-          endpoint: "https://api.deepseek.com",
-          model: "",
-          // 空 = 沿用调用方默认模型（原行为：deepseek 不强制模型）
-          // 兜底 = 端点在售模型的官方最大档（2026-09-16 核对：上下文 1M / 最大输出 384K）；
-          // 用户在「模型名称」行指定模型时，以 model-limits 查表值为准（issue 342/ADR-0151）
-          defaultMaxTokens: 393216,
-          apiKeyKey: "deepseekApiKey",
-          apiKeyLabel: "DeepSeek 密钥",
-          apiKeyDesc: "留空则自动回退读取外部配置密钥"
-        },
-        {
-          id: "opencode-go",
-          label: "OpenCode Go",
-          endpoint: "https://opencode.ai/zen/go/v1",
-          model: "deepseek-v4-flash",
-          // deepseek-v4-flash 是官方 deepseek-flash 的旧名（同档：1M 窗口 / 384K 输出）
-          defaultMaxTokens: 393216,
-          apiKeyKey: "opencodeGoApiKey",
-          apiKeyLabel: "OpenCode 密钥",
-          apiKeyDesc: "在订阅官网获取后填入这里",
-          noCors: true
-        },
-        {
-          id: "openai",
-          label: "OpenAI",
-          endpoint: "https://api.openai.com/v1",
-          model: "gpt-4o-mini",
-          defaultMaxTokens: 16384,
-          apiKeyKey: "openaiApiKey",
-          apiKeyLabel: "OpenAI 密钥",
-          apiKeyDesc: "在 OpenAI 官网获取后填入这里"
-        },
-        {
-          id: "anthropic",
-          label: "Anthropic（Claude）",
-          endpoint: "https://api.anthropic.com/v1",
-          model: "claude-sonnet-4-5",
-          defaultMaxTokens: 64e3,
-          // claude-sonnet-4-5 最大输出上限 64K（ticket 172 默认最大值）
-          apiKeyKey: "anthropicApiKey",
-          apiKeyLabel: "Anthropic 密钥",
-          apiKeyDesc: "在 Anthropic 官网获取后填入这里",
-          extraHeaders: { "anthropic-version": "2023-06-01" }
-        },
-        {
-          id: "google",
-          label: "Google Gemini",
-          endpoint: "https://generativelanguage.googleapis.com/v1beta/openai",
-          model: "gemini-2.0-flash",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "googleApiKey",
-          apiKeyLabel: "Gemini 密钥",
-          apiKeyDesc: "在 Google AI Studio 获取后填入这里"
-        },
-        {
-          id: "moonshot",
-          label: "Moonshot（Kimi）",
-          endpoint: "https://api.moonshot.cn/v1",
-          model: "kimi-k2-0711-preview",
-          defaultMaxTokens: 131072,
-          // kimi-k2 最大输出上限 128K（ticket 172 默认最大值）
-          apiKeyKey: "moonshotApiKey",
-          apiKeyLabel: "Kimi 密钥",
-          apiKeyDesc: "在 Moonshot 开放平台获取后填入这里"
-        },
-        {
-          id: "zhipu",
-          label: "智谱（GLM）",
-          endpoint: "https://open.bigmodel.cn/api/paas/v4",
-          model: "glm-4-flash",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "zhipuApiKey",
-          apiKeyLabel: "智谱密钥",
-          apiKeyDesc: "在智谱开放平台获取后填入这里"
-        },
-        {
-          // Coding 套餐（Lite/Pro/Max）额度只在 coding 专用端点生效；走标准 paas/v4 会按量计费报余额不足
-          id: "zhipu-plan",
-          label: "智谱 Plan",
-          endpoint: "https://open.bigmodel.cn/api/coding/paas/v4",
-          model: "glm-5.3-flash",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "zhipuPlanApiKey",
-          apiKeyLabel: "智谱 Plan 密钥",
-          apiKeyDesc: "智谱 Coding 套餐专用端点，密钥与智谱开放平台相同"
-        },
-        {
-          id: "dashscope",
-          label: "阿里云百炼（通义）",
-          endpoint: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-          model: "qwen-plus",
-          // qwen-plus 指向当前主力版本（Qwen3.7-Plus：1M 窗口 / 131K 输出）
-          defaultMaxTokens: 131072,
-          apiKeyKey: "dashscopeApiKey",
-          apiKeyLabel: "百炼密钥",
-          apiKeyDesc: "在阿里云百炼获取 API Key 后填入这里"
-        },
-        {
-          id: "siliconflow",
-          label: "硅基流动",
-          endpoint: "https://api.siliconflow.cn/v1",
-          model: "deepseek-ai/DeepSeek-V3",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "siliconflowApiKey",
-          apiKeyLabel: "硅基流动密钥",
-          apiKeyDesc: "在硅基流动官网获取后填入这里"
-        },
-        {
-          id: "openrouter",
-          label: "OpenRouter",
-          endpoint: "https://openrouter.ai/api/v1",
-          model: "deepseek/deepseek-chat",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "openrouterApiKey",
-          apiKeyLabel: "OpenRouter 密钥",
-          apiKeyDesc: "在 OpenRouter 官网获取后填入这里"
-        },
-        {
-          id: "xai",
-          label: "xAI（Grok）",
-          endpoint: "https://api.x.ai/v1",
-          model: "grok-2-latest",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "xaiApiKey",
-          apiKeyLabel: "xAI 密钥",
-          apiKeyDesc: "在 xAI 控制台获取后填入这里"
-        },
-        {
-          id: "groq",
-          label: "Groq",
-          endpoint: "https://api.groq.com/openai/v1",
-          model: "llama-3.3-70b-versatile",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "groqApiKey",
-          apiKeyLabel: "Groq 密钥",
-          apiKeyDesc: "在 Groq 控制台获取后填入这里"
-        },
-        {
-          id: "mistral",
-          label: "Mistral",
-          endpoint: "https://api.mistral.ai/v1",
-          model: "mistral-large-latest",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "mistralApiKey",
-          apiKeyLabel: "Mistral 密钥",
-          apiKeyDesc: "在 Mistral 控制台获取后填入这里"
-        },
-        {
-          id: "together",
-          label: "Together AI",
-          endpoint: "https://api.together.xyz/v1",
-          model: "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "togetherApiKey",
-          apiKeyLabel: "Together 密钥",
-          apiKeyDesc: "在 Together AI 官网获取后填入这里"
-        },
-        {
-          id: "ollama",
-          label: "Ollama（本地）",
-          endpoint: "http://localhost:11434/v1",
-          model: "llama3.1",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "ollamaApiKey",
-          apiKeyLabel: "Ollama 密钥",
-          apiKeyDesc: "本地服务无需密钥，留空即可"
-        },
-        {
-          id: "custom",
-          label: "自定义（OpenAI 兼容）",
-          endpoint: "",
-          model: "",
-          defaultMaxTokens: 8192,
-          apiKeyKey: "aiCustomApiKey",
-          apiKeyLabel: "自定义 API 密钥",
-          apiKeyDesc: "在服务官网获取后填入这里"
-        }
-      ];
-      AI_THINKING_STYLE = {
-        openai: "effort",
-        openrouter: "effort",
-        anthropic: "effort",
-        google: "effort",
-        groq: "effort",
-        xai: "effort",
-        together: "effort",
-        mistral: "effort",
-        siliconflow: "effort",
-        deepseek: "enable",
-        "opencode-go": "enable",
-        dashscope: "enable",
-        zhipu: "zhipu",
-        "zhipu-plan": "zhipu",
-        moonshot: "none",
-        ollama: "none",
-        custom: "none"
-      };
-      _aiProviderCache = null;
-      AI_IDLE_TIMEOUT_MS = 6e4;
-      AI_IMAGE_IDLE_TIMEOUT_MS = 18e4;
-      AI_IMAGE_MIME = {
-        jpg: "image/jpeg",
-        jpeg: "image/jpeg",
-        png: "image/png",
-        gif: "image/gif",
-        webp: "image/webp"
-      };
-      AI_IMAGE_MAX_BYTES = 32 * 1024 * 1024;
-      AIService = class {
-        constructor(params, defaultModel = "deepseek-v4-flash", defaultOptions = {}) {
-          this.defaultModel = defaultModel;
-          this.defaultOptions = defaultOptions;
-        }
-        /** 通用 AI 请求（fetch 流式，失败自动 fallback requestUrl 非流式）；
-         *  input 为字符串（纯文本，报文同旧版）、{text, images}（带图 → 多模态 content 数组）
-         *  或 {messages}（多轮完整报文，原样进请求）；
-         *  options.signal（取消）/ options.onDelta（流式增量回调）为调用方选项（ticket 141），不进请求体，
-         *  既有调用（不传这两项）行为零变化 */
-        async prompt(input, model = this.defaultModel, options2 = {}) {
-          const mergedOptions = this._mergeOptions(options2);
-          const provider = await getAIProvider(mergedOptions.provider);
-          const s = getQ3Settings();
-          const isExplicit = model !== this.defaultModel;
-          const effModel = isExplicit ? model : provider.model || model;
-          const mo = mergedOptions.modelOptions || {};
-          const effMaxTokens = provider.defaultMaxTokens || 4096;
-          const body = {
-            model: effModel,
-            messages: buildMessages(input),
-            max_tokens: effMaxTokens,
-            stream: true
-          };
-          for (const k of Object.keys(mo)) {
-            if (k === "max_tokens") continue;
-            body[k] = mo[k];
-          }
-          if (!hasExplicitThinkingOption(mo)) {
-            const style = AI_THINKING_STYLE[provider.id || ""] || "none";
-            const thinking = thinkingOptionsFor(s.aiThinking || "auto", style);
-            if (thinking) Object.assign(body, thinking);
-          }
-          const signal = mergedOptions.signal instanceof AbortSignal ? mergedOptions.signal : void 0;
-          const onDelta = typeof mergedOptions.onDelta === "function" ? mergedOptions.onDelta : void 0;
-          try {
-            const content = provider.noCors ? await chatCompletionsNonStream(provider, body, signal) : await streamChatCompletions(provider, body, signal, onDelta);
-            return content;
-          } catch (streamError) {
-            if (signal == null ? void 0 : signal.aborted) throw streamError;
-            try {
-              const content = await chatCompletionsNonStream(provider, body, signal);
-              return content;
-            } catch (e) {
-              throw new Error(`AI 请求失败: ${streamError.message}（fallback: ${e.message}）`);
-            }
-          }
-        }
-        /** 普通对话模型（deepseek-v4-flash；收纯文本或 {text, images}） */
-        async chat(input, extraOptions = {}) {
-          return this.prompt(input, "deepseek-v4-flash", extraOptions);
-        }
-        /** 推理模型，自动开启思考模式 */
-        async reason(input, extraOptions = {}) {
-          const options2 = this._prepareOptions(extraOptions, { enable_thinking: true });
-          return this.prompt(input, "deepseek-v4-flash", options2);
-        }
-        /** 联网搜索（实验性，第三方代理平台生效） */
-        async search(input, extraOptions = {}) {
-          const options2 = this._prepareOptions(extraOptions, { search: true });
-          return this.prompt(input, "deepseek-v4-flash", options2);
-        }
-        /** 要求 AI 返回 JSON 格式（设置 response_format；知识盒等域走这条，故同样要能吃图） */
-        async json(input, extraOptions = {}) {
-          const options2 = this._prepareOptions(extraOptions, {
-            response_format: { type: "json_object" }
-          });
-          return this.prompt(input, "deepseek-v4-flash", options2);
-        }
-        /** 思考 + 联网搜索（实验性） */
-        async reasonAndSearch(input, extraOptions = {}) {
-          const options2 = this._prepareOptions(extraOptions, {
-            enable_thinking: true,
-            search: true
-          });
-          return this.prompt(input, "deepseek-v4-flash", options2);
-        }
-        setDefaultModel(model) {
-          this.defaultModel = model;
-        }
-        setDefaultOptions(options2) {
-          this.defaultOptions = options2;
-        }
-        // ---------- 内部辅助方法 ----------
-        _mergeOptions(options2) {
-          const merged = { ...this.defaultOptions, ...options2 };
-          if (this.defaultOptions.modelOptions || options2.modelOptions) {
-            merged.modelOptions = {
-              ...this.defaultOptions.modelOptions || {},
-              ...options2.modelOptions || {}
-            };
-          }
-          return merged;
-        }
-        /** 准备选项：复制 extraOptions，并设置指定的 modelOptions 字段（用户显式传入优先） */
-        _prepareOptions(extraOptions, modelSettings) {
-          const options2 = { ...extraOptions };
-          if (!options2.modelOptions) options2.modelOptions = {};
-          const userModelOpts = options2.modelOptions;
-          options2.modelOptions = { ...modelSettings, ...userModelOpts };
-          return options2;
-        }
-      };
-    }
-  });
-
   // src/core/ai-models.ts
   function providerDescriptorOf(id) {
     return getProviderDescriptor(id);
@@ -10360,11 +11262,11 @@ var BZW_settings_panel = (() => {
   });
 
   // src/bookshelf/state.ts
-  var M;
-  var init_state = __esm({
+  var M2;
+  var init_state2 = __esm({
     "src/bookshelf/state.ts"() {
       init_settings_provider();
-      M = {
+      M2 = {
         currentOverlay: null,
         items: [],
         side: "all",
@@ -10552,9 +11454,9 @@ var BZW_settings_panel = (() => {
   function formatReadingTime(totalReadTimeMs) {
     const totalMinutes = Math.round((Number(totalReadTimeMs) || 0) / 6e4);
     if (totalMinutes <= 0) return null;
-    const hours = Math.floor(totalMinutes / 60);
+    const hours2 = Math.floor(totalMinutes / 60);
     const minutes = totalMinutes % 60;
-    if (hours > 0) return minutes > 0 ? `${hours}小时${minutes}分` : `${hours}小时`;
+    if (hours2 > 0) return minutes > 0 ? `${hours2}小时${minutes}分` : `${hours2}小时`;
     return `${minutes}分`;
   }
   function toDateString(timestamp) {
@@ -10633,7 +11535,7 @@ var BZW_settings_panel = (() => {
       init_fake_obsidian();
       init_settings_provider();
       init_utils();
-      init_state();
+      init_state2();
       init_render4();
       WEAVE_PLUGIN_ID = "weave-epub-reader";
       WEAVE_DATA_FILE = "weave-data.json";
@@ -10996,7 +11898,7 @@ ${countsToText(s.missing)}
   });
 
   // src/cinema/state.ts
-  var init_state2 = __esm({
+  var init_state3 = __esm({
     "src/cinema/state.ts"() {
       init_settings_provider();
     }
@@ -11057,7 +11959,7 @@ ${countsToText(s.missing)}
   var init_data2 = __esm({
     "src/cinema/data.ts"() {
       init_constants2();
-      init_state2();
+      init_state3();
     }
   });
 
@@ -11354,9 +12256,9 @@ ${countsToText(s.missing)}
   function nextRecurDue(recur, base, nowStr) {
     const fmt2 = "YYYY-MM-DD HH:mm:ss";
     const norm = (s) => s.replace("T", " ");
-    let anchor = (0, import_moment3.default)(norm(base || nowStr || (0, import_moment3.default)().format(fmt2)), fmt2);
-    if (!anchor.isValid()) anchor = (0, import_moment3.default)();
-    const now = nowStr ? (0, import_moment3.default)(norm(nowStr), fmt2) : (0, import_moment3.default)();
+    let anchor = (0, import_moment2.default)(norm(base || nowStr || (0, import_moment2.default)().format(fmt2)), fmt2);
+    if (!anchor.isValid()) anchor = (0, import_moment2.default)();
+    const now = nowStr ? (0, import_moment2.default)(norm(nowStr), fmt2) : (0, import_moment2.default)();
     const unit = recur.kind === "weekly" ? "weeks" : recur.kind === "monthly" ? "months" : recur.kind === "yearly" ? "years" : "days";
     const amount = unit === "days" ? recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1 : 1;
     const anchorDay = recur.anchorDay;
@@ -11369,7 +12271,7 @@ ${countsToText(s.missing)}
     let n = 1;
     let cur = shift(n);
     if (now.diff(anchor, "days") > 366) {
-      const m = (0, import_moment3.default)(now).add(amount, unit);
+      const m = (0, import_moment2.default)(now).add(amount, unit);
       if (useAnchorDay) m.date(Math.min(anchorDay, m.daysInMonth()));
       cur = m;
     } else {
@@ -11379,7 +12281,7 @@ ${countsToText(s.missing)}
         cur = shift(n);
       }
       if (cur.valueOf() <= now.valueOf()) {
-        cur = (0, import_moment3.default)(now).add(amount, unit);
+        cur = (0, import_moment2.default)(now).add(amount, unit);
       }
     }
     return cur.format(fmt2);
@@ -11413,10 +12315,10 @@ ${countsToText(s.missing)}
       }
     );
   }
-  var import_moment3, DEFAULT_SCENARIOS, MemoData;
+  var import_moment2, DEFAULT_SCENARIOS, MemoData;
   var init_data3 = __esm({
     "src/memo/data.ts"() {
-      import_moment3 = __toESM(require_moment());
+      import_moment2 = __toESM(require_moment());
       init_json_store();
       init_app();
       init_utils();
@@ -11513,7 +12415,7 @@ ${countsToText(s.missing)}
             const item = data.find((d) => d.id === id);
             if (!item) throw new Error("条目不存在");
             if (item.completed) return { next: null, changed: false };
-            const now = (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss");
+            const now = (0, import_moment2.default)().format("YYYY-MM-DD HH:mm:ss");
             item.completed = now;
             const recur = normalizeRecur(item.recur);
             let next = null;
@@ -11521,7 +12423,7 @@ ${countsToText(s.missing)}
               const due = nextRecurDue(recur, item.due || now, now);
               const nextRecur = { ...recur };
               if ((recur.kind === "monthly" || recur.kind === "yearly") && nextRecur.anchorDay === void 0) {
-                const d = (0, import_moment3.default)((item.due || now).replace("T", " "), "YYYY-MM-DD HH:mm:ss");
+                const d = (0, import_moment2.default)((item.due || now).replace("T", " "), "YYYY-MM-DD HH:mm:ss");
                 if (d.isValid()) nextRecur.anchorDay = d.date();
               }
               next = normalizeItem({
@@ -11972,7 +12874,7 @@ ${countsToText(s.missing)}
     const fixed = await enqueueFileTask(file, async () => {
       const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
       const data = await store2.read();
-      const pending = recordSectionOf(data, "pendingSource");
+      const pending2 = recordSectionOf(data, "pendingSource");
       let n = 0;
       for (const key of keys) {
         let articleKey = "";
@@ -11985,12 +12887,12 @@ ${countsToText(s.missing)}
           continue;
         }
         if (!articleKey || !notePath) continue;
-        const list = Array.isArray(pending[articleKey]) ? pending[articleKey] : [];
+        const list = Array.isArray(pending2[articleKey]) ? pending2[articleKey] : [];
         const idx = list.findIndex((p) => String(p || "") === notePath);
         if (idx === -1) continue;
         removed.push({ articleKey, notePath, index: idx });
         list.splice(idx, 1);
-        if (list.length === 0) delete pending[articleKey];
+        if (list.length === 0) delete pending2[articleKey];
         n += 1;
       }
       if (n > 0) await store2.write(data);
@@ -12004,12 +12906,12 @@ ${countsToText(s.missing)}
         await enqueueFileTask(file, async () => {
           const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
           const data = await store2.read();
-          const pending = recordSectionOf(data, "pendingSource");
+          const pending2 = recordSectionOf(data, "pendingSource");
           for (const r of removed) {
-            const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
+            const list = Array.isArray(pending2[r.articleKey]) ? pending2[r.articleKey] : [];
             const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
             list.splice(at, 0, r.notePath);
-            pending[r.articleKey] = list;
+            pending2[r.articleKey] = list;
           }
           await store2.write(data);
         });
@@ -12060,7 +12962,7 @@ ${countsToText(s.missing)}
   }
   function unloadDataCheckup() {
     runSeq += 1;
-    running = false;
+    running2 = false;
     hostApp = null;
     escHandle == null ? void 0 : escHandle.unregister();
     escHandle = null;
@@ -12112,7 +13014,7 @@ ${countsToText(s.missing)}
   }
   function renderBody() {
     if (!overlay) return;
-    if (running) {
+    if (running2) {
       renderRunning();
       return;
     }
@@ -12139,7 +13041,7 @@ ${countsToText(s.missing)}
   function renderFoot() {
     const foot = footEl();
     foot.innerHTML = "";
-    if (running) {
+    if (running2) {
       foot.appendChild(uiBtn({ label: "取消体检", onClick: () => cancelRun() }));
       return;
     }
@@ -12149,8 +13051,8 @@ ${countsToText(s.missing)}
     );
   }
   async function startRun() {
-    if (!hostApp || running) return;
-    running = true;
+    if (!hostApp || running2) return;
+    running2 = true;
     const seq = ++runSeq;
     renderRunning();
     try {
@@ -12162,11 +13064,11 @@ ${countsToText(s.missing)}
         }
       });
       if (seq !== runSeq) return;
-      running = false;
+      running2 = false;
       if (report) renderReport(report, false);
       else renderBody();
     } catch (e) {
-      running = false;
+      running2 = false;
       if (seq !== runSeq) return;
       notice("体检失败：" + (e instanceof Error ? e.message : String(e)), "error");
       renderBody();
@@ -12174,7 +13076,7 @@ ${countsToText(s.missing)}
   }
   function cancelRun() {
     runSeq += 1;
-    running = false;
+    running2 = false;
     renderBody();
   }
   function renderRunning() {
@@ -12360,7 +13262,7 @@ ${countsToText(s.missing)}
     }
     await startRun();
   }
-  var overlay, escHandle, runSeq, running, hostApp, OVERLAY_ID, FRAME_ID;
+  var overlay, escHandle, runSeq, running2, hostApp, OVERLAY_ID, FRAME_ID;
   var init_ui2 = __esm({
     "src/checkup/ui.ts"() {
       init_z_order();
@@ -12372,7 +13274,7 @@ ${countsToText(s.missing)}
       overlay = null;
       escHandle = null;
       runSeq = 0;
-      running = false;
+      running2 = false;
       hostApp = null;
       OVERLAY_ID = "bz-checkup-mask";
       FRAME_ID = "bz-checkup-popup";
@@ -12935,7 +13837,7 @@ ${countsToText(s.missing)}
   var DIARY_DIRECTORY, LETTER_DIRECTORY, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
   var init_config2 = __esm({
     "src/diary/config.ts"() {
-      init_state2();
+      init_state3();
       init_data();
       DIARY_DIRECTORY = "我的/日记";
       LETTER_DIRECTORY = "我的/信";
@@ -12996,91 +13898,6 @@ ${countsToText(s.missing)}
       tagToEmojiMap = {};
       emojiToTagMap = {};
       buildTagMaps();
-    }
-  });
-
-  // src/core/diary-format.ts
-  function diaryEntryBaseName(dateStr, timeStr, seq) {
-    const d = String(dateStr || "").replace(/-/g, "");
-    const t = String(timeStr || "").replace(/:/g, "");
-    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
-    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
-  }
-  function diaryEntryPath(dir, dateStr, timeStr, seq) {
-    return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
-  }
-  function diaryMetaFromEntryPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    if (!m) return null;
-    const date = `20${m[1]}-${m[2]}-${m[3]}`;
-    const time = `${m[4]}:${m[5]}`;
-    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
-    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
-  }
-  function diaryDateFromLegacyPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = DIARY_LEGACY_FILE_RE.exec(base);
-    if (!m) return null;
-    const date = `${m[1]}-${m[2]}-${m[3]}`;
-    return isValidDiaryDate(date) ? date : null;
-  }
-  function diaryStampText(date, time) {
-    return `${date} ${time}`;
-  }
-  function parseDiaryStamp(value) {
-    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
-    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
-  }
-  function isValidDiaryDate(s) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1) return false;
-    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    return d <= days[mo - 1];
-  }
-  function isValidDiaryTime(s) {
-    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
-  }
-  function serializeDiaryEntryFile(meta, tags, content) {
-    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
-    for (const t of tags) lines.push(`  - ${t}`);
-    lines.push("---", "", content);
-    let out = lines.join("\n");
-    if (!out.endsWith("\n")) out += "\n";
-    return out;
-  }
-  function parseDiaryBlockHeader(line) {
-    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
-    if (!m) return null;
-    const tags = [];
-    for (const name of m[1].split("/")) {
-      const t = name.trim();
-      if (t && !tags.includes(t)) tags.push(t);
-    }
-    return { tags, time: m[2] };
-  }
-  function readDiaryFrontmatterFieldRaw(content, key) {
-    const text = (content || "").replace(/\r\n/g, "\n");
-    if (!text.startsWith("---\n")) return null;
-    const end = text.indexOf("\n---", 4);
-    if (end < 0) return null;
-    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
-    return m ? m[1].trim() : null;
-  }
-  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
-  var init_diary_format = __esm({
-    "src/core/diary-format.ts"() {
-      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
-      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
-      DIARY_DATE_KEY = "date";
-      DIARY_TYPE_KEY = "type";
     }
   });
 
@@ -13340,42 +14157,6 @@ ${countsToText(s.missing)}
       init_settings_provider();
       init_config2();
       init_repair_modal();
-    }
-  });
-
-  // src/core/domain-bus.ts
-  function emitDomainEvent(channel, evt) {
-    const handlers = channels.get(channel);
-    if (!handlers || handlers.size === 0) return;
-    for (const handler of [...handlers]) {
-      try {
-        handler(evt);
-      } catch (e) {
-        console.error(`bz: 域事件 handler 异常（channel=${channel}）`, e);
-      }
-    }
-  }
-  function onDomainEvent(channel, handler) {
-    let set = channels.get(channel);
-    if (!set) {
-      set = /* @__PURE__ */ new Set();
-      channels.set(channel, set);
-    }
-    set.add(handler);
-    let offed = false;
-    return () => {
-      if (offed) return;
-      offed = true;
-      const cur = channels.get(channel);
-      if (!cur) return;
-      cur.delete(handler);
-      if (cur.size === 0) channels.delete(channel);
-    };
-  }
-  var channels;
-  var init_domain_bus = __esm({
-    "src/core/domain-bus.ts"() {
-      channels = /* @__PURE__ */ new Map();
     }
   });
 
@@ -13776,7 +14557,7 @@ ${countsToText(s.missing)}
 
   // src/memo/due.ts
   function getNowStr() {
-    return (0, import_moment4.default)().format("YYYY-MM-DD HH:mm");
+    return (0, import_moment3.default)().format("YYYY-MM-DD HH:mm");
   }
   function getTodayStr() {
     return localDayKey();
@@ -13794,18 +14575,18 @@ ${countsToText(s.missing)}
   }
   function formatDueText(due) {
     const status = getDueStatus(due);
-    const dueMoment = (0, import_moment4.default)(due.replace("T", " "));
+    const dueMoment = (0, import_moment3.default)(due.replace("T", " "));
     const timeStr = dueMoment.format("HH:mm");
     const dateStr = dueMoment.format("MM/DD");
     const today = getTodayStr();
     const dueDate = due.slice(0, 10);
     if (status === "overdue") {
       if (dueDate === today) return `今天 ${timeStr} 已过期`;
-      const days2 = (0, import_moment4.default)().diff((0, import_moment4.default)(dueDate), "days");
+      const days2 = (0, import_moment3.default)().diff((0, import_moment3.default)(dueDate), "days");
       return `${days2}天前已过期`;
     }
     if (status === "today") return `今天 ${timeStr} 到期`;
-    const days = (0, import_moment4.default)(dueDate).diff((0, import_moment4.default)(today), "days");
+    const days = (0, import_moment3.default)(dueDate).diff((0, import_moment3.default)(today), "days");
     if (days === 1) return `明天 ${timeStr} 到期`;
     return `${dateStr} ${timeStr} 到期`;
   }
@@ -13816,10 +14597,10 @@ ${countsToText(s.missing)}
     const n = recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1;
     return `每 ${n} 天`;
   }
-  var import_moment4;
+  var import_moment3;
   var init_due = __esm({
     "src/memo/due.ts"() {
-      import_moment4 = __toESM(require_moment());
+      import_moment3 = __toESM(require_moment());
       init_utils();
     }
   });
@@ -14015,10 +14796,10 @@ ${countsToText(s.missing)}
   });
 
   // src/memo/state.ts
-  var M3;
-  var init_state3 = __esm({
+  var M4;
+  var init_state4 = __esm({
     "src/memo/state.ts"() {
-      M3 = {
+      M4 = {
         appRef: null,
         overlay: null,
         items: [],
@@ -14194,7 +14975,7 @@ ${countsToText(s.missing)}
     return { state: idleState(), history: history2.slice(), events: [] };
   }
   var PHASES;
-  var init_state4 = __esm({
+  var init_state5 = __esm({
     "src/pomodoro/state.ts"() {
       PHASES = ["idle", "focus", "short-break", "long-break"];
     }
@@ -14413,7 +15194,7 @@ ${countsToText(s.missing)}
     "src/pomodoro/data.ts"() {
       init_settings_provider();
       init_storage();
-      init_state4();
+      init_state5();
       init_stats();
       PomodoroDataManager = class {
         constructor(app) {
@@ -14550,13 +15331,13 @@ ${countsToText(s.missing)}
   // src/pomodoro/statusbar.ts
   function syncPomodoroStatusBar(state3, remainSec) {
     if (!statusEl) return;
-    const running2 = state3.endTime !== null;
-    const paused = !running2 && state3.paused;
-    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
+    const running3 = state3.endTime !== null;
+    const paused = !running3 && state3.paused;
+    statusEl.classList.toggle("pomodoro-statusbar-idle", !running3 && !paused);
     statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
     statusEl.title = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
     if (textSpan) {
-      if (running2) {
+      if (running3) {
         const m = Math.floor(remainSec / 60);
         const s = remainSec % 60;
         textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
@@ -14743,11 +15524,11 @@ ${countsToText(s.missing)}
       bar.title = r.title;
       const col = document.createElement("div");
       col.className = "pomodoro-stat-col";
-      const numText = (_a3 = opts.valueLabel) == null ? void 0 : _a3.call(opts, r);
-      if (numText) {
+      const numText2 = (_a3 = opts.valueLabel) == null ? void 0 : _a3.call(opts, r);
+      if (numText2) {
         const num2 = document.createElement("span");
         num2.className = "pomodoro-stat-num";
-        num2.textContent = numText;
+        num2.textContent = numText2;
         col.appendChild(num2);
       }
       const h = document.createElement("div");
@@ -14880,9 +15661,9 @@ ${countsToText(s.missing)}
   function updateButtons() {
     const startBtn = document.getElementById("pomodoro-btn-start");
     if (!startBtn) return;
-    const running2 = state.endTime !== null;
-    startBtn.textContent = running2 ? "暂停" : state.paused ? "继续" : "开始";
-    const locked = options().forceFocus && state.phase === "focus" && (running2 || state.paused);
+    const running3 = state.endTime !== null;
+    startBtn.textContent = running3 ? "暂停" : state.paused ? "继续" : "开始";
+    const locked = options().forceFocus && state.phase === "focus" && (running3 || state.paused);
     const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
     startBtn.disabled = startLocked;
     const resetBtn = document.getElementById("pomodoro-btn-reset");
@@ -15204,8 +15985,8 @@ ${countsToText(s.missing)}
         openInflight = null;
       }
     }
-    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
-    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
+    const popupEl3 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
+    popupEl3 == null ? void 0 : popupEl3.classList.add("bz-panel-mtop");
   }
   async function ensurePomodoro(app) {
     appRef = app;
@@ -15332,7 +16113,7 @@ ${countsToText(s.missing)}
       init_statusbar();
       init_stats();
       init_config3();
-      init_state4();
+      init_state5();
       init_pomodoro_phase();
       init_utils();
       init_domain_bus();
@@ -15376,7 +16157,7 @@ ${countsToText(s.missing)}
 
   // src/memo/ui.ts
   function isTodayStr(s) {
-    return !!s && s.slice(0, 10) === (0, import_moment5.default)().format("YYYY-MM-DD");
+    return !!s && s.slice(0, 10) === (0, import_moment4.default)().format("YYYY-MM-DD");
   }
   function fallbackScene() {
     const scenes = MemoData.getScenarios();
@@ -15408,12 +16189,12 @@ ${countsToText(s.missing)}
     notify("已从剪贴板预填链接", { type: "info", dedupeKey: "memo-clip-prefill" });
   }
   async function loadData() {
-    M3.items = await MemoData.loadItems();
+    M4.items = await MemoData.loadItems();
   }
   async function refresh() {
     var _a2, _b2;
     await loadData();
-    (_b2 = (_a2 = M3).renderFn) == null ? void 0 : _b2.call(_a2);
+    (_b2 = (_a2 = M4).renderFn) == null ? void 0 : _b2.call(_a2);
   }
   function dueRank(it) {
     if (!it.due) return 3;
@@ -15421,26 +16202,26 @@ ${countsToText(s.missing)}
     return st === "overdue" ? 0 : st === "today" ? 1 : 2;
   }
   function getVisibleItems() {
-    const kw = M3.search.trim().toLowerCase();
-    let list = M3.items.filter((it) => {
-      if (M3.activeScene === "今日") {
+    const kw = M4.search.trim().toLowerCase();
+    let list = M4.items.filter((it) => {
+      if (M4.activeScene === "今日") {
         if (!it.completed) {
           const st = getDueStatus(it.due);
           if (st !== "overdue" && st !== "today") return false;
         } else if (!isTodayStr(it.completed)) {
           return false;
         }
-      } else if (M3.activeScene === "重要") {
+      } else if (M4.activeScene === "重要") {
         if (it.priority !== "important") return false;
-      } else if (M3.activeScene !== "全部" && it.scene !== M3.activeScene) return false;
+      } else if (M4.activeScene !== "全部" && it.scene !== M4.activeScene) return false;
       if (kw) {
         const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-    if (M3.pinnedNewId && M3.activeScene !== "全部") {
-      const pinned = M3.items.find((i) => i.id === M3.pinnedNewId);
+    if (M4.pinnedNewId && M4.activeScene !== "全部") {
+      const pinned = M4.items.find((i) => i.id === M4.pinnedNewId);
       if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
     }
     list.sort((a, b) => {
@@ -15448,12 +16229,12 @@ ${countsToText(s.missing)}
       if (ac !== bc) return ac ? 1 : -1;
       const dr = dueRank(a) - dueRank(b);
       if (dr !== 0) return dr;
-      if (M3.sortMode === "priority") {
+      if (M4.sortMode === "priority") {
         const pa = a.priority === "important" ? 0 : 1;
         const pb = b.priority === "important" ? 0 : 1;
         if (pa !== pb) return pa - pb;
       }
-      if (M3.sortMode === "created") {
+      if (M4.sortMode === "created") {
         return (b.created || "").localeCompare(a.created || "");
       }
       if (a.due && b.due) return a.due.localeCompare(b.due);
@@ -15463,19 +16244,19 @@ ${countsToText(s.missing)}
   }
   function sceneCount(scene) {
     if (scene === "今日") {
-      return M3.items.filter((it) => {
+      return M4.items.filter((it) => {
         if (it.completed) return isTodayStr(it.completed);
         const st = getDueStatus(it.due);
         return st === "overdue" || st === "today";
       }).length;
     }
-    if (scene === "重要") return M3.items.filter((it) => it.priority === "important").length;
-    if (scene === "全部") return M3.items.length;
-    return M3.items.filter((it) => it.scene === scene).length;
+    if (scene === "重要") return M4.items.filter((it) => it.priority === "important").length;
+    if (scene === "全部") return M4.items.length;
+    return M4.items.filter((it) => it.scene === scene).length;
   }
   function applyMemoSkin(skin) {
-    if (!M3.overlay) return;
-    const panel2 = M3.overlay.querySelector(".bz-memo-panel");
+    if (!M4.overlay) return;
+    const panel2 = M4.overlay.querySelector(".bz-memo-panel");
     if (!panel2) return;
     panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
     const v = skin === "editorial" ? "editorial" : "paper";
@@ -15486,14 +16267,14 @@ ${countsToText(s.missing)}
     return s === "editorial" ? "bz-memo-skin-editorial" : "bz-memo-skin-paper";
   }
   function closeMemoPanel() {
-    if (M3.overlay) {
+    if (M4.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.memoLastScene = M3.activeScene;
+        s.memoLastScene = M4.activeScene;
         void saveSettings();
       }
-      M3.overlay.remove();
-      M3.overlay = null;
+      M4.overlay.remove();
+      M4.overlay = null;
     }
     searchDebounced.cancel();
     if (panelResizeDetach) {
@@ -15504,14 +16285,14 @@ ${countsToText(s.missing)}
       sortSelectDetach();
       sortSelectDetach = null;
     }
-    M3.renderFn = null;
-    M3.pinnedNewId = null;
+    M4.renderFn = null;
+    M4.pinnedNewId = null;
     clipTitleHint = null;
-    M3.completeTimers.forEach((t) => clearTimeout(t));
-    M3.completeTimers.clear();
+    M4.completeTimers.forEach((t) => clearTimeout(t));
+    M4.completeTimers.clear();
   }
   function renderAll() {
-    if (!M3.overlay) return;
+    if (!M4.overlay) return;
     renderNav();
     renderMobScenes();
     renderMainHead();
@@ -15519,18 +16300,18 @@ ${countsToText(s.missing)}
     renderContent();
   }
   function renderViewToggle() {
-    const wrap = M3.overlay.querySelector("[data-memo-viewtoggle]");
+    const wrap = M4.overlay.querySelector("[data-memo-viewtoggle]");
     if (!wrap) return;
     wrap.querySelectorAll("[data-memo-view]").forEach((b) => {
-      b.classList.toggle("is-on", b.dataset.memoView === M3.view);
+      b.classList.toggle("is-on", b.dataset.memoView === M4.view);
     });
   }
   function renderMainHead() {
-    const overlay2 = M3.overlay;
+    const overlay2 = M4.overlay;
     const titleEl = overlay2.querySelector("[data-memo-main-title]");
     const countEl = overlay2.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
-    titleEl.textContent = sceneLabel(M3.activeScene);
+    titleEl.textContent = sceneLabel(M4.activeScene);
     const items = getVisibleItems();
     const undone = items.filter((i) => !i.completed).length;
     countEl.innerHTML = mainCountHtml(items.length, undone);
@@ -15548,18 +16329,18 @@ ${countsToText(s.missing)}
     attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
   }
   function renderNav() {
-    const nav = M3.overlay.querySelector("[data-memo-nav]");
+    const nav = M4.overlay.querySelector("[data-memo-nav]");
     if (!nav) return;
-    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M3.activeScene === o.scene, sceneCount(o.scene))).join("");
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M4.activeScene === o.scene, sceneCount(o.scene))).join("");
     mountIcons(nav);
     nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
     });
   }
   function renderMobScenes() {
-    const wrap = M3.overlay.querySelector("[data-memo-mob-scenes]");
+    const wrap = M4.overlay.querySelector("[data-memo-mob-scenes]");
     if (!wrap) return;
-    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M3.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M4.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
     mountIcons(wrap);
     wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
@@ -15589,9 +16370,9 @@ ${countsToText(s.missing)}
     );
   }
   function renderContent() {
-    const content = M3.overlay.querySelector("[data-memo-content]");
+    const content = M4.overlay.querySelector("[data-memo-content]");
     if (!content) return;
-    if (M3.view === "calendar") {
+    if (M4.view === "calendar") {
       renderCalendar(content);
       return;
     }
@@ -15605,20 +16386,20 @@ ${countsToText(s.missing)}
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const it = M3.items.find((i) => i.id === el.dataset.memoOpenitem);
+        const it = M4.items.find((i) => i.id === el.dataset.memoOpenitem);
         if (it) openItem(it);
       });
     });
     content.querySelectorAll("[data-memo-pos]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const it = M3.items.find((i) => i.id === el.dataset.memoPos);
+        const it = M4.items.find((i) => i.id === el.dataset.memoPos);
         if (it) jumpToNote(it);
       });
     });
     content.querySelectorAll(".bz-memo-card").forEach((card) => {
       const id = card.dataset.memoId;
-      const it = M3.items.find((i) => i.id === id);
+      const it = M4.items.find((i) => i.id === id);
       if (!it) return;
       attachItemActions(card, buildCardActions(it), {
         menuClass: skinClass() || void 0,
@@ -15634,8 +16415,8 @@ ${countsToText(s.missing)}
       content.innerHTML = "";
       content.appendChild(uiEmpty({
         icon: MEMO_ICONS.empty,
-        title: M3.search ? "没有匹配的备忘录" : "这里还没有备忘录",
-        desc: M3.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
+        title: M4.search ? "没有匹配的备忘录" : "这里还没有备忘录",
+        desc: M4.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
         actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
       }));
       return;
@@ -15654,16 +16435,16 @@ ${countsToText(s.missing)}
       sections.push(...normal.map((it) => cardHtmlOf(it)));
     }
     if (done.length) {
-      const open = M3.showDone;
+      const open = M4.showDone;
       const win = doneWindowDays();
-      const cutoff = win === null ? null : (0, import_moment5.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
+      const cutoff = win === null ? null : (0, import_moment4.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
       const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
       const earlier = done.length - recent2.length;
-      const listed = !open || M3.showEarlierDone ? done : recent2;
+      const listed = !open || M4.showEarlierDone ? done : recent2;
       sections.push(doneBarHtml(open, done.length));
       if (open) {
         sections.push(...listed.map((it) => cardHtmlOf(it)));
-        if (earlier > 0 && !M3.showEarlierDone) {
+        if (earlier > 0 && !M4.showEarlierDone) {
           sections.push(doneMoreHtml(earlier));
         }
       }
@@ -15674,11 +16455,11 @@ ${countsToText(s.missing)}
   }
   function renderCalendar(content) {
     var _a2;
-    let monthMoment = (0, import_moment5.default)(`${M3.calMonth}-01`, "YYYY-MM-DD", true);
+    let monthMoment = (0, import_moment4.default)(`${M4.calMonth}-01`, "YYYY-MM-DD", true);
     if (!monthMoment.isValid()) {
-      M3.calMonth = (0, import_moment5.default)().format("YYYY-MM");
-      M3.calSelected = null;
-      monthMoment = (0, import_moment5.default)(`${M3.calMonth}-01`, "YYYY-MM-DD", true);
+      M4.calMonth = (0, import_moment4.default)().format("YYYY-MM");
+      M4.calSelected = null;
+      monthMoment = (0, import_moment4.default)(`${M4.calMonth}-01`, "YYYY-MM-DD", true);
     }
     const visible = getVisibleItems();
     const undone = visible.filter((i) => !i.completed && i.due);
@@ -15695,25 +16476,25 @@ ${countsToText(s.missing)}
     for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
     const daysInMonth = monthMoment.daysInMonth();
     for (let d = 1; d <= daysInMonth; d++) {
-      const key = `${M3.calMonth}-${String(d).padStart(2, "0")}`;
+      const key = `${M4.calMonth}-${String(d).padStart(2, "0")}`;
       const list = byDay.get(key) || [];
       const chips = list.slice(0, 3).map((it) => {
         const st = getDueStatus(it.due);
         return { id: it.id, title: it.title, cls: st === "overdue" ? "is-overdue" : st === "today" ? "is-today" : "is-future" };
       });
       if (list.length > 3) chips.push({ id: "", title: `还有 ${list.length - 3} 条`, cls: "is-more" });
-      cells.push({ day: d, today: key === today, selected: M3.calSelected === key, chips });
+      cells.push({ day: d, today: key === today, selected: M4.calSelected === key, chips });
     }
-    const isCurrentMonth = M3.calMonth === (0, import_moment5.default)().format("YYYY-MM");
+    const isCurrentMonth = M4.calMonth === (0, import_moment4.default)().format("YYYY-MM");
     const todayCount2 = isCurrentMonth ? ((_a2 = byDay.get(today)) == null ? void 0 : _a2.length) || 0 : null;
-    const monthPrefix = `${M3.calMonth}-`;
+    const monthPrefix = `${M4.calMonth}-`;
     let monthCount = 0;
     for (const [k, v] of byDay) if (k.startsWith(monthPrefix)) monthCount += v.length;
     const sections = [calHeadHtml(monthMoment.format("YYYY年M月")), calStatsHtml(monthCount, todayCount2), calGridHtml(cells)];
-    if (monthCount === 0) sections.push(calEmptyHtml(!!M3.search.trim() || M3.activeScene !== "全部"));
-    if (M3.calSelected) {
-      const dayItems = visible.filter((i) => (i.due || "").slice(0, 10) === M3.calSelected);
-      const label = M3.calSelected === today ? `今日事项 · ${dayItems.length} 项` : `${(0, import_moment5.default)(M3.calSelected).format("M月D日")} · ${dayItems.length} 项`;
+    if (monthCount === 0) sections.push(calEmptyHtml(!!M4.search.trim() || M4.activeScene !== "全部"));
+    if (M4.calSelected) {
+      const dayItems = visible.filter((i) => (i.due || "").slice(0, 10) === M4.calSelected);
+      const label = M4.calSelected === today ? `今日事项 · ${dayItems.length} 项` : `${(0, import_moment4.default)(M4.calSelected).format("M月D日")} · ${dayItems.length} 项`;
       const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join("") : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
       sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
     }
@@ -15721,7 +16502,7 @@ ${countsToText(s.missing)}
     mountIcons(content);
     wireCards(content);
     content.querySelectorAll("[data-memo-cal-item]").forEach((chipEl) => {
-      const it = M3.items.find((i) => i.id === chipEl.dataset.memoCalItem);
+      const it = M4.items.find((i) => i.id === chipEl.dataset.memoCalItem);
       if (!it) return;
       attachItemActions(chipEl, buildCardActions(it), {
         menuClass: skinClass() || void 0,
@@ -15758,7 +16539,7 @@ ${countsToText(s.missing)}
   }
   function openItem(it) {
     closeMemoPanel();
-    const app = M3.appRef;
+    const app = M4.appRef;
     if (it.linkedNote) {
       const file = app.vault.getAbstractFileByPath(it.linkedNote);
       if (file) void app.workspace.getLeaf().openFile(file);
@@ -15776,7 +16557,7 @@ ${countsToText(s.missing)}
     var _a2;
     if (!it.notePath) return;
     closeMemoPanel();
-    const app = M3.appRef;
+    const app = M4.appRef;
     const file = app.vault.getAbstractFileByPath(it.notePath);
     if (!file) {
       notice("关联笔记不存在");
@@ -15797,23 +16578,23 @@ ${countsToText(s.missing)}
       void restoreItem(it);
       return;
     }
-    if (M3.completeTimers.has(it.id)) {
-      clearTimeout(M3.completeTimers.get(it.id));
-      M3.completeTimers.delete(it.id);
+    if (M4.completeTimers.has(it.id)) {
+      clearTimeout(M4.completeTimers.get(it.id));
+      M4.completeTimers.delete(it.id);
       return;
     }
     const timer = setTimeout(() => {
-      M3.completeTimers.delete(it.id);
+      M4.completeTimers.delete(it.id);
       void completeItem(it);
     }, 300);
-    M3.completeTimers.set(it.id, timer);
+    M4.completeTimers.set(it.id, timer);
   }
   async function completeItem(it) {
     try {
       const { next, changed } = await MemoData.completeItem(it.id);
       if (changed) emitDomainEvent("memo", { kind: "completed", title: it.title });
       if (next) {
-        notice(next.due ? `下一期已排到 ${(0, import_moment5.default)(next.due).format("MM/DD HH:mm")}` : "下一期已生成", "success");
+        notice(next.due ? `下一期已排到 ${(0, import_moment4.default)(next.due).format("MM/DD HH:mm")}` : "下一期已生成", "success");
         emitDomainEvent("memo", { kind: "added", title: next.title, scene: next.scene, priority: next.priority, due: next.due });
       }
     } catch (e) {
@@ -15833,7 +16614,7 @@ ${countsToText(s.missing)}
     await refresh();
   }
   async function restoreItem(it) {
-    const chained = hasPendingNextItem(M3.items, it);
+    const chained = hasPendingNextItem(M4.items, it);
     try {
       await MemoData.updateItem(it.id, chained ? { completed: null, recur: null } : { completed: null });
       if (chained) notify("下一期已存在，本条恢复后不再生成新的一期", { type: "success" });
@@ -15845,7 +16626,7 @@ ${countsToText(s.missing)}
     await refresh();
   }
   async function postponeItem(id, days) {
-    const it = M3.items.find((i) => i.id === id);
+    const it = M4.items.find((i) => i.id === id);
     if (!it || !it.due) return;
     const d = new Date(it.due.replace("T", " "));
     d.setDate(d.getDate() + days);
@@ -15860,18 +16641,18 @@ ${countsToText(s.missing)}
     }
     await refresh();
   }
-  function moveDayText(selected, now = (0, import_moment5.default)()) {
-    return (0, import_moment5.default)(selected).format((0, import_moment5.default)(selected).year() === now.year() ? "MM-DD" : "YYYY-MM-DD");
+  function moveDayText(selected, now = (0, import_moment4.default)()) {
+    return (0, import_moment4.default)(selected).format((0, import_moment4.default)(selected).year() === now.year() ? "MM-DD" : "YYYY-MM-DD");
   }
   async function moveToDay(id, day) {
-    const it = M3.items.find((i) => i.id === id);
+    const it = M4.items.find((i) => i.id === id);
     if (!it) return;
     const time = (it.due ? it.due.replace("T", " ").slice(11) : "") || "09:00";
     const next = `${day} ${time}`;
     try {
       await MemoData.updateItem(id, { due: next });
       emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
-      notice(`已移到 ${(0, import_moment5.default)(day).format("MM/DD")}`, "success");
+      notice(`已移到 ${(0, import_moment4.default)(day).format("MM/DD")}`, "success");
     } catch (e) {
       notifySaveError(e, "改期备忘录");
       console.error(e);
@@ -15879,7 +16660,7 @@ ${countsToText(s.missing)}
     await refresh();
   }
   async function togglePrio(id) {
-    const it = M3.items.find((i) => i.id === id);
+    const it = M4.items.find((i) => i.id === id);
     if (!it) return;
     const to = it.priority === "important" ? "minor" : "important";
     try {
@@ -15925,7 +16706,7 @@ ${countsToText(s.missing)}
     await refresh();
   }
   function focusMemoItem(it) {
-    const app = M3.appRef;
+    const app = M4.appRef;
     if (!app) return;
     void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
   }
@@ -15975,14 +16756,14 @@ ${countsToText(s.missing)}
           await postponeItem(it.id, 3);
         } });
       }
-      if (M3.calSelected && (!it.due || it.due.slice(0, 10) !== M3.calSelected)) {
+      if (M4.calSelected && (!it.due || it.due.slice(0, 10) !== M4.calSelected)) {
         actions.push({
           icon: "calendar",
           label: "移到选中日期",
           title: "移到月历选中的日期",
-          sub: `→ ${moveDayText(M3.calSelected)}${it.due ? "" : " 09:00"}`,
+          sub: `→ ${moveDayText(M4.calSelected)}${it.due ? "" : " 09:00"}`,
           onClick: async () => {
-            await moveToDay(it.id, M3.calSelected);
+            await moveToDay(it.id, M4.calSelected);
           }
         });
       }
@@ -16187,8 +16968,8 @@ ${countsToText(s.missing)}
     });
     prioField.appendChild(prioChoice.el);
     form.appendChild(prioField);
-    const knownScripts = [...new Set(M3.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
-    const knownCourses = [...new Set(M3.items.map((i) => i.courseName).filter((n) => !!n))].sort();
+    const knownScripts = [...new Set(M4.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
+    const knownCourses = [...new Set(M4.items.map((i) => i.courseName).filter((n) => !!n))].sort();
     function bindSug(input, list, onPick) {
       uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
     }
@@ -16373,7 +17154,7 @@ ${countsToText(s.missing)}
               title: finalTitle,
               scene,
               priority,
-              created: (0, import_moment5.default)().format("YYYY-MM-DD HH:mm:ss"),
+              created: (0, import_moment4.default)().format("YYYY-MM-DD HH:mm:ss"),
               completed: null,
               due,
               recur,
@@ -16388,7 +17169,7 @@ ${countsToText(s.missing)}
             };
             await MemoData.addItem(it);
             emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
-            M3.pinnedNewId = it.id;
+            M4.pinnedNewId = it.id;
           }
           closeModal();
           (_a4 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a4.call(opts);
@@ -16424,7 +17205,7 @@ ${countsToText(s.missing)}
     return actions;
   }
   function openMemoInSettings() {
-    const app = M3.appRef;
+    const app = M4.appRef;
     closeMemoPanel();
     if (!app) return;
     void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
@@ -16450,7 +17231,7 @@ ${countsToText(s.missing)}
     const input = document.createElement("input");
     input.className = "bz-input";
     input.value = scene;
-    const count = M3.items.filter((i) => i.scene === scene).length;
+    const count = M4.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
     hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与备忘录共用）";
@@ -16483,7 +17264,7 @@ ${countsToText(s.missing)}
           const moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
           await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
-          if (M3.activeScene === scene) M3.activeScene = name;
+          if (M4.activeScene === scene) M4.activeScene = name;
           renderAll();
           close();
         } catch (e) {
@@ -16516,7 +17297,7 @@ ${countsToText(s.missing)}
       notice("至少保留一个场景");
       return;
     }
-    const count = M3.items.filter((i) => i.scene === scene).length;
+    const count = M4.items.filter((i) => i.scene === scene).length;
     const ok = await openFlowDialog({
       title: "删除场景",
       message: count > 0 ? `确定删除场景「${scene}」吗？
@@ -16533,17 +17314,17 @@ ${countsToText(s.missing)}
     try {
       if (count > 0) await MemoData.updateSceneBulk(scene, target);
       await commitScenarios(others, `已删除场景「${scene}」`);
-      if (M3.activeScene === scene) M3.activeScene = "全部";
+      if (M4.activeScene === scene) M4.activeScene = "全部";
       renderAll();
     } catch (e) {
       notifySaveError(e, "删除场景");
       console.error(e);
     }
   }
-  var import_moment5, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach;
+  var import_moment4, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach;
   var init_ui4 = __esm({
     "src/memo/ui.ts"() {
-      import_moment5 = __toESM(require_moment());
+      import_moment4 = __toESM(require_moment());
       init_notice();
       init_esc_manager();
       init_dom();
@@ -16557,10 +17338,10 @@ ${countsToText(s.missing)}
       init_data3();
       init_due();
       init_render5();
-      init_state3();
+      init_state4();
       SEARCH_DEBOUNCE_MS = 180;
       searchDebounced = debounce((v) => {
-        M3.search = v;
+        M4.search = v;
         renderAll();
       }, SEARCH_DEBOUNCE_MS);
       clipTitleHint = null;
@@ -18256,10 +19037,10 @@ ${countsToText(s.missing)}
       content.innerHTML = emptyHtml(noMatch);
     } else {
       content.innerHTML = gridHtml(items, view, unit);
-      const gridEl = content.querySelector("[data-bel-grid]");
-      const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
+      const gridEl2 = content.querySelector("[data-bel-grid]");
+      const cols = (getComputedStyle(gridEl2).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
       const rem = list.length % cols;
-      if (rem) gridEl.insertAdjacentHTML("beforeend", `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
+      if (rem) gridEl2.insertAdjacentHTML("beforeend", `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
     }
     hooks.mountIcons(content);
   }
@@ -18467,13 +19248,13 @@ ${countsToText(s.missing)}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M4.overlay = null;
-    M4.db = null;
-    M4.status = null;
-    M4.year = "";
-    M4.q = "";
-    M4.sort = "recent";
-    M4.renderFn = null;
+    M5.overlay = null;
+    M5.db = null;
+    M5.status = null;
+    M5.year = "";
+    M5.q = "";
+    M5.sort = "recent";
+    M5.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -18572,17 +19353,17 @@ ${countsToText(s.missing)}
     };
   }
   function itemList() {
-    return M4.db ? Object.values(M4.db.items) : [];
+    return M5.db ? Object.values(M5.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M5.db) == null ? void 0 : _a2.items[id];
   }
   function ensureBelongingsEsc() {
     if (mainEscRegistered) return;
     mainEscRegistered = true;
     escManager.register("bz-bel", {
-      isVisible: () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      isVisible: () => !!M5.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       close: () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -18601,7 +19382,7 @@ ${countsToText(s.missing)}
     });
   }
   async function openPanel() {
-    if (M4.overlay) {
+    if (M5.overlay) {
       closePanel();
       return;
     }
@@ -18615,17 +19396,17 @@ ${countsToText(s.missing)}
   }
   async function openPanelInner() {
     const st = tryGetSettings().belongingsDefaultStatus;
-    M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M4.db = await loadDatabase();
+    M5.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M5.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml2();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M4.overlay = overlay2;
-    M4.renderFn = () => renderAll2();
+    M5.overlay = overlay2;
+    M5.renderFn = () => renderAll2();
     mountIcons(overlay2);
     ensureBelongingsEsc();
     const closeDrops = () => {
@@ -18646,8 +19427,8 @@ ${countsToText(s.missing)}
       if (opt) {
         closeDrops();
         const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
-        if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
-        else M4.sort = v;
+        if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
+        else M5.sort = v;
         renderAll2();
         return;
       }
@@ -18688,22 +19469,22 @@ ${countsToText(s.missing)}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M4.sort = segBtn.dataset.k;
+        M5.sort = segBtn.dataset.k;
         renderAll2();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
+        if (kind === "asset") M5.status = M5.status === "asset" ? null : "asset";
         renderAll2();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (!M4.overlay) return;
-        M4.q = inp.value.trim();
+        if (!M5.overlay) return;
+        M5.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
       inp.addEventListener("input", () => debounced());
@@ -18757,13 +19538,13 @@ ${countsToText(s.missing)}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M4.overlay) {
-      M4.overlay.remove();
-      M4.overlay = null;
+    if (M5.overlay) {
+      M5.overlay.remove();
+      M5.overlay = null;
     }
-    M4.renderFn = null;
-    M4.db = null;
-    M4.q = "";
+    M5.renderFn = null;
+    M5.db = null;
+    M5.q = "";
   }
   function cleanupBelongings() {
     closePanel();
@@ -18783,8 +19564,8 @@ ${countsToText(s.missing)}
       if (selfWritePending) return;
       void (async () => {
         var _a2;
-        M4.db = await loadDatabase();
-        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        M5.db = await loadDatabase();
+        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       })();
     });
     autoRefreshOff = () => app.vault.offref(off);
@@ -18813,37 +19594,37 @@ ${countsToText(s.missing)}
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M4.db) return;
+    if (!M5.db) return;
     selfWritePending = true;
     try {
-      await saveDatabase(M4.db);
+      await saveDatabase(M5.db);
     } finally {
       selfWritePending = false;
     }
-    (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+    (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
   }
   function renderAll2() {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
+    if (!M5.overlay) return;
+    const panel2 = M5.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
+    renderPanelView(panel2, itemList(), M5, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M4.status = null;
-    else M4.status = M4.status === k ? null : k;
+    if (k === "__all") M5.status = null;
+    else M5.status = M5.status === k ? null : k;
     renderAll2();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M4.db) {
+    if (M5.db) {
       items = itemList();
     } else {
       try {
@@ -18923,7 +19704,7 @@ ${countsToText(s.missing)}
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       return;
     }
     const prevStatus = cur.current_status;
@@ -18939,8 +19720,8 @@ ${countsToText(s.missing)}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      M5.db = await loadDatabase().catch(() => null);
+      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
@@ -18948,7 +19729,7 @@ ${countsToText(s.missing)}
       void (async () => {
         var _a3;
         try {
-          if (!M4.db) M4.db = await loadDatabase();
+          if (!M5.db) M5.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -18962,8 +19743,8 @@ ${countsToText(s.missing)}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+          M5.db = await loadDatabase().catch(() => null);
+          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
         }
       })();
     }, { type: "restore" });
@@ -19019,22 +19800,22 @@ ${countsToText(s.missing)}
         { label: "删除", value: "del", danger: true, cta: true }
       ]
     });
-    if (v !== "del" || !M4.db) return;
-    if (!M4.db.items[it.id]) {
+    if (v !== "del" || !M5.db) return;
+    if (!M5.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       return;
     }
-    const snapshot2 = { ...M4.db.items[it.id] };
-    delete M4.db.items[it.id];
+    const snapshot2 = { ...M5.db.items[it.id] };
+    delete M5.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M4.db.items[snapshot2.id] = snapshot2;
+      M5.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      M5.db = await loadDatabase().catch(() => null);
+      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -19042,18 +19823,18 @@ ${countsToText(s.missing)}
       void (async () => {
         var _a3;
         try {
-          if (!M4.db) M4.db = await loadDatabase();
-          if (M4.db.items[snapshot2.id]) {
+          if (!M5.db) M5.db = await loadDatabase();
+          if (M5.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M4.db.items[snapshot2.id] = snapshot2;
+          M5.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+          M5.db = await loadDatabase().catch(() => null);
+          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
         }
       })();
     }, { type: "restore" });
@@ -19096,9 +19877,9 @@ ${countsToText(s.missing)}
       }
       return;
     }
-    if (!M4.db) {
+    if (!M5.db) {
       void loadDatabase().then((db) => {
-        M4.db = db;
+        M5.db = db;
         openForm(it);
       }).catch((e) => {
         const msg = e instanceof Error ? e.message : String(e);
@@ -19146,13 +19927,13 @@ ${countsToText(s.missing)}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -19205,7 +19986,7 @@ ${countsToText(s.missing)}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -19264,7 +20045,7 @@ ${countsToText(s.missing)}
       saveBtn.textContent = "保存中…";
       void (async () => {
         try {
-          if (!M4.db) M4.db = await loadDatabase();
+          if (!M5.db) M5.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -19290,7 +20071,7 @@ ${countsToText(s.missing)}
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M4.db) throw new Error("数据库未加载");
+            if (!M5.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -19306,7 +20087,7 @@ ${countsToText(s.missing)}
               ...curStatus === "已转卖" ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M4.db.items[newItem.id] = newItem;
+            M5.db.items[newItem.id] = newItem;
             await saveAndRender();
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
@@ -19330,7 +20111,7 @@ ${countsToText(s.missing)}
       return (_a3 = mask.querySelector("#bm-name")) == null ? void 0 : _a3.focus();
     }, 100);
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M5, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui5 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -19352,7 +20133,7 @@ ${countsToText(s.missing)}
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;
-      M4 = {
+      M5 = {
         overlay: null,
         db: null,
         status: null,
@@ -19820,7 +20601,7 @@ ${countsToText(s.missing)}
     if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
     return v;
   }
-  function parseFrontmatter2(content) {
+  function parseFrontmatter(content) {
     const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
     if (!m) return { fm: null, body: content, extraLines: [] };
     const fm = {};
@@ -20008,7 +20789,7 @@ ${bodyText.substring(0, 6e3)}`;
     const tagCount2 = String(s.autoSummaryTagCount || "3-6");
     try {
       const content = await app.vault.read(file);
-      const { fm, body } = parseFrontmatter2(content);
+      const { fm, body } = parseFrontmatter(content);
       const bodyText = extractBodyForAI(body);
       if (!bodyText || bodyText.length < 100) return;
       const missing = [];
@@ -20057,7 +20838,7 @@ ${bodyText.substring(0, 6e3)}`;
         }
       }
       const latest = await app.vault.read(targetFile);
-      const latestParsed = parseFrontmatter2(latest);
+      const latestParsed = parseFrontmatter(latest);
       const mergedFm = { ...latestParsed.fm || {} };
       if (missing.includes("title") && aiResult.title) mergedFm.title = aiResult.title;
       if (missing.includes("summary") && aiResult.summary) mergedFm.summary = aiResult.summary;
@@ -20296,48 +21077,6 @@ ${bodyText.substring(0, 6e3)}`;
       batchTotal = 0;
       batchDone = 0;
       batchNotice = null;
-    }
-  });
-
-  // src/core/http.ts
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
-        ms
-      );
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve2(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
-  async function httpGetText(url, opts) {
-    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
-    try {
-      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
-      if (!resp || !resp.ok) return null;
-      return await resp.text();
-    } catch (e) {
-      return null;
-    }
-  }
-  function requestUrlAsFetch() {
-    return async (url, init) => {
-      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
-      const status = resp.status;
-      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
-    };
-  }
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
     }
   });
 
@@ -21592,14 +22331,14 @@ ${c.trim()}
     const entries = filterReadLogByPeriod(log, period2, now);
     const minutesByKey = /* @__PURE__ */ new Map();
     const srcMap = /* @__PURE__ */ new Map();
-    const hours = new Array(24).fill(0);
+    const hours2 = new Array(24).fill(0);
     const days = /* @__PURE__ */ new Set();
     let totalMinutes = 0;
     for (const e of entries) {
       const m = Math.max(0, Math.round(Number(e.minutes) || 0));
       if (m <= 0) continue;
       totalMinutes += m;
-      hours[hourOf(e.ts)] += m;
+      hours2[hourOf(e.ts)] += m;
       days.add(dayKeyOf(e.ts));
       const key = String(e.key || "");
       const src = String(e.src || "").trim() || "未知";
@@ -21626,7 +22365,7 @@ ${c.trim()}
       sessions: entries.length,
       totalMinutes,
       bySrc,
-      hours,
+      hours: hours2,
       topArticles,
       activeDays: days.size
     };
@@ -21944,24 +22683,24 @@ ${c.trim()}
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M5.appRef = null;
-    M5.overlay = null;
-    M5.open = false;
-    M5.articles = [];
-    M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M5.clipNotes = null;
-    M5.clipUrls = /* @__PURE__ */ new Set();
-    M5.sel = defaultSel();
-    M5.cur = null;
-    M5.list = [];
-    M5.upInfo = {};
-    M5.mobDetailOpen = false;
+    M6.appRef = null;
+    M6.overlay = null;
+    M6.open = false;
+    M6.articles = [];
+    M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M6.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M6.clipNotes = null;
+    M6.clipUrls = /* @__PURE__ */ new Set();
+    M6.sel = defaultSel();
+    M6.cur = null;
+    M6.list = [];
+    M6.upInfo = {};
+    M6.mobDetailOpen = false;
   }
-  var M5;
-  var init_state5 = __esm({
+  var M6;
+  var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M5 = {
+      M6 = {
         appRef: null,
         overlay: null,
         open: false,
@@ -22008,10 +22747,10 @@ ${c.trim()}
       ts: e.ts
     }));
   }
-  function resolveRecord(raw, coerce) {
+  function resolveRecord(raw, coerce2) {
     if (!raw || raw === null || typeof raw !== "object" || Array.isArray(raw)) return {};
     const out = {};
-    for (const k of Object.keys(raw)) out[k] = coerce(raw[k]);
+    for (const k of Object.keys(raw)) out[k] = coerce2(raw[k]);
     return out;
   }
   async function readClipbookData() {
@@ -22255,20 +22994,20 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      return { status: "missing", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+      M6.articles = [];
+      M6.clipNotes = null;
+      M6.clipUrls = /* @__PURE__ */ new Set();
+      M6.sidecar = emptySidecar();
+      M6.upInfo = {};
+      return { status: "missing", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      return { status: "corrupt", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+      M6.articles = [];
+      M6.clipNotes = null;
+      M6.clipUrls = /* @__PURE__ */ new Set();
+      M6.sidecar = emptySidecar();
+      M6.upInfo = {};
+      return { status: "corrupt", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -22302,13 +23041,13 @@ ${c.trim()}
       vault: getApp().vault
     });
     const clipUrls = clipUrlSet2(clipNotes || []);
-    M5.articles = data.articles;
-    M5.stats = data.stats;
-    M5.sidecar = sidecar;
-    M5.clipNotes = clipNotes;
-    M5.clipUrls = clipUrls;
-    M5.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M5.upInfo };
+    M6.articles = data.articles;
+    M6.stats = data.stats;
+    M6.sidecar = sidecar;
+    M6.clipNotes = clipNotes;
+    M6.clipUrls = clipUrls;
+    M6.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M6.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -22320,7 +23059,7 @@ ${c.trim()}
       init_constants3();
       init_settings_provider();
       init_app();
-      init_state5();
+      init_state6();
       init_write_queue();
     }
   });
@@ -22761,10 +23500,10 @@ ${c.trim()}
     if (parts.length === 2) return Math.round(parts[0] * 60 + parts[1]);
     return Math.round(parts[0]);
   }
-  var import_moment6, TIME_RE, KnowledgeData;
+  var import_moment5, TIME_RE, KnowledgeData;
   var init_data7 = __esm({
     "src/knowledge/data.ts"() {
-      import_moment6 = __toESM(require_moment());
+      import_moment5 = __toESM(require_moment());
       init_storage();
       init_settings_provider();
       init_utils();
@@ -22843,7 +23582,7 @@ ${c.trim()}
                 remark: item.remark || null,
                 notePath: item.notePath || null,
                 videoPath: item.videoPath || null,
-                created: item.created || (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
+                created: item.created || (0, import_moment5.default)().format("YYYY-MM-DD HH:mm:ss"),
                 processedAt: item.processedAt || null,
                 title: item.title || null,
                 uploader: item.uploader || null,
@@ -22873,7 +23612,7 @@ ${c.trim()}
             uploader: ((_e = input.uploader) == null ? void 0 : _e.trim()) || null,
             notePath: null,
             videoPath: null,
-            created: (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
+            created: (0, import_moment5.default)().format("YYYY-MM-DD HH:mm:ss"),
             processedAt: null,
             archived: false,
             archivedAt: null,
@@ -23477,9 +24216,9 @@ ${c.trim()}
     const root = await rootNode(rootPath, scan);
     nodes.set(root.id, root);
     order.push(root.id);
-    const queue = [root.id];
-    while (queue.length) {
-      const node = nodes.get(queue.shift());
+    const queue2 = [root.id];
+    while (queue2.length) {
+      const node = nodes.get(queue2.shift());
       if (node.kind !== "card" || node.missing) continue;
       const sameNote = await findSameNameNote(node.path, ctx);
       if (sameNote && !nodes.has(sameNote)) {
@@ -23520,7 +24259,7 @@ ${c.trim()}
             edges.push({ from: node.id, to: child.id, suggested: false });
           }
         }
-        if (fresh && child.kind === "card" && !child.missing) queue.push(child.id);
+        if (fresh && child.kind === "card" && !child.missing) queue2.push(child.id);
       }
     }
     const firstIdx = new Map(order.map((id, i) => [id, i]));
@@ -23991,7 +24730,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     if (upgraded !== content) await app.vault.modify(file, upgraded);
     return true;
   }
-  function parseFrontmatter3(content) {
+  function parseFrontmatter2(content) {
     var _a2;
     const out = {};
     const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -24072,7 +24811,7 @@ ${content || ""}`;
         content = migrated;
         filled++;
       }
-      const fm = parseFrontmatter3(content);
+      const fm = parseFrontmatter2(content);
       const hasType = fm.type === "video" || fm.type === "term";
       const hasDomain = !!fm.domain;
       if (hasType && hasDomain) continue;
@@ -29640,8 +30379,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
             return;
           }
           const active2 = tasks.filter((t) => !t.archived);
-          const running2 = BatchRunner.running;
-          if (running2) {
+          const running3 = BatchRunner.running;
+          if (running3) {
             const idx = active2.findIndex((t) => t.status === "processing");
             const banner = document.createElement("div");
             banner.className = "bz-kb-banner";
@@ -29676,9 +30415,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!this.videoPopup) return;
           const run = q(this.videoPopup, "#lit-btn-video-run");
           if (!run) return;
-          const running2 = BatchRunner.running;
+          const running3 = BatchRunner.running;
           const hasWork = tasks.some((t) => t.status === "pending" || t.status === "failed");
-          if (running2) {
+          if (running3) {
             run.disabled = false;
             const retry = this.batchAbortLabel === "终止整批";
             if (this.runIcon) setIcon(this.runIcon, "square");
@@ -31034,11 +31773,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 正文区渲染：占位灰字 / 已流入正文共用同一个容器（textContent 单源）。
          * 值没变就不动 DOM——每帧都写会让流式期间的排版反复重排。
          */
-        setTermContent(text, pending) {
+        setTermContent(text, pending2) {
           const el = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
           if (!el) return;
-          if (el.textContent === text && el.classList.contains("bz-lit-term-pending") === pending) return;
-          el.classList.toggle("bz-lit-term-pending", pending);
+          if (el.textContent === text && el.classList.contains("bz-lit-term-pending") === pending2) return;
+          el.classList.toggle("bz-lit-term-pending", pending2);
           el.textContent = text;
         }
         /**
@@ -31827,13 +32566,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
 
   // src/core/file-sync.ts
   function createFileSync(config) {
-    let initialized7 = false;
+    let initialized8 = false;
     let _refs = [];
     let _cancelled = false;
     let _flushers = [];
-    let queue = Promise.resolve();
+    let queue2 = Promise.resolve();
     function enqueue2(task) {
-      queue = queue.then(() => {
+      queue2 = queue2.then(() => {
         if (_cancelled) return;
         return task();
       }).catch((e) => {
@@ -31846,21 +32585,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
       return Number(s && s.DEBOUNCE_DELAY) || 300;
     }
     function createBatchFlusher(run) {
-      let pending = [];
+      let pending2 = [];
       let timer = null;
       const flush = () => {
         timer = null;
         if (_cancelled) {
-          pending = [];
+          pending2 = [];
           return;
         }
-        const batch = pending;
-        pending = [];
+        const batch = pending2;
+        pending2 = [];
         enqueue2(() => run(batch));
       };
       const push = (ev) => {
         if (_cancelled) return;
-        pending.push(ev);
+        pending2.push(ev);
         if (timer !== null) clearTimeout(timer);
         timer = setTimeout(flush, debounceDelay());
       };
@@ -31870,7 +32609,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             clearTimeout(timer);
             timer = null;
           }
-          pending = [];
+          pending2 = [];
         }
       });
     }
@@ -31912,8 +32651,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     return {
       /** 幂等初始化（main.ts onLayoutReady 调用；ADR-0003 同款幂等） */
       ensure(app) {
-        if (initialized7) return;
-        initialized7 = true;
+        if (initialized8) return;
+        initialized8 = true;
         _cancelled = false;
         createAgent(app);
       },
@@ -31935,8 +32674,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         _refs = [];
-        initialized7 = false;
-        queue = Promise.resolve();
+        initialized8 = false;
+        queue2 = Promise.resolve();
       }
     };
   }
@@ -33015,25 +33754,25 @@ ${body}`;
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M5.appRef = app;
+    M6.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
   }
   function showPanel() {
     if (!overlayEl2) {
-      buildDom2(M5.appRef);
+      buildDom2(M6.appRef);
     }
     overlayEl2.style.display = "flex";
     panelSplit == null ? void 0 : panelSplit.restore();
-    M5.open = true;
+    M6.open = true;
     beginSession();
     if (dirty || !loaded2) void loadIfNeeded();
     else renderAll3();
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M5.open && overlayEl2) return Promise.resolve();
+    if (!M6.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") notice("news.json 损坏，未加载（原文件已保留）", "error");
@@ -33052,7 +33791,7 @@ ${body}`;
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M5.open) return;
+    if (!M6.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -33074,8 +33813,8 @@ ${body}`;
     void flushReadingSession();
     panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
-    M5.open = false;
-    M5.mobDetailOpen = false;
+    M6.open = false;
+    M6.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -33115,8 +33854,8 @@ ${body}`;
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M5.open = false;
-    M5.mobDetailOpen = false;
+    M6.open = false;
+    M6.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -33204,7 +33943,7 @@ ${body}`;
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
+      if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -33247,8 +33986,8 @@ ${body}`;
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a2;
-      if (((_a2 = M5.cur) == null ? void 0 : _a2.st) === "saved") return;
-      void doSave(M5.cur);
+      if (((_a2 = M6.cur) == null ? void 0 : _a2.st) === "saved") return;
+      void doSave(M6.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -33273,9 +34012,9 @@ ${body}`;
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M5.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M5.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M5.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M6.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M6.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M6.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -33290,7 +34029,7 @@ ${body}`;
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M5.mobDetailOpen) {
+        if (M6.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -33329,35 +34068,35 @@ ${body}`;
     });
   }
   function selectSource(src) {
-    M5.sel = {
+    M6.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M5.mobDetailOpen = false;
+    M6.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     renderAll3();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M5.sel.kind && String(src.platform || "") === M5.sel.platform && (src.up ? String(src.up) : null) === M5.sel.up && String(src.site || "") === M5.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M6.sel.kind && String(src.platform || "") === M6.sel.platform && (src.up ? String(src.up) : null) === M6.sel.up && String(src.site || "") === M6.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
     searchKw = kw;
   }
   function renderAll3() {
-    if (!M5.open) return;
+    if (!M6.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M5.mobDetailOpen) {
-      if (M5.cur) renderMobDetail();
+    if (M6.mobDetailOpen) {
+      if (M6.cur) renderMobDetail();
       else {
-        M5.mobDetailOpen = false;
+        M6.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -33365,7 +34104,7 @@ ${body}`;
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M5.mobDetailOpen = false;
+    M6.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll3();
   }
@@ -33373,17 +34112,17 @@ ${body}`;
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M5.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M6.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M5.sel;
+    const s = M6.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], currentSrc(), M5.upInfo);
+    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], currentSrc(), M6.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -33399,7 +34138,7 @@ ${body}`;
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo));
+    const b = bucketByState(queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -33407,7 +34146,7 @@ ${body}`;
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -33446,39 +34185,39 @@ ${body}`;
   function renderRail() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M5.articles;
-    const clipNotes = M5.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source2, M5.upInfo).filter(matchesSearch).length;
+    const arts = M6.articles;
+    const clipNotes = M6.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, source2, M6.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M5.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
-      const full = queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, { kind: "site", site: row.site }, M5.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M6.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M6.sidecar.savedArchive || []).map((x) => x.url)), M6.clipUrls)) {
+      const full = queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, { kind: "site", site: row.site }, M6.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M5.sel.kind === "site" && M5.sel.site === row.site;
+      const active2 = M6.sel.kind === "site" && M6.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (!a.read && a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M5.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M6.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M5.sel.kind === "inbox" && M5.sel.platform === "B站" && M5.sel.up === uid;
+      const active2 = M6.sel.kind === "inbox" && M6.sel.platform === "B站" && M6.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M5.sel.kind === "clip";
+    const clipActive = M6.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M6.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -33496,7 +34235,7 @@ ${body}`;
     });
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source2, M5.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -33525,20 +34264,20 @@ ${body}`;
     if (!listEl) return;
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M5.cur = null;
+        M6.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) {
-        M5.cur = list[0];
+      if (!list.some((a) => a.id === (M6.cur && M6.cur.id))) {
+        M6.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime(a.timeTs));
-      M5.list = list;
+      listEl.innerHTML = tocListHtml(list, M6.cur ? M6.cur.id : null, (a) => relTime(a.timeTs));
+      M6.list = list;
       bindItemMenus();
       return;
     }
@@ -33546,27 +34285,27 @@ ${body}`;
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M5.cur = null;
+      M6.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M5.cur && M5.cur.id))) {
-      M5.cur = flat[0];
+    if (!flat.some((a) => a.id === (M6.cur && M6.cur.id))) {
+      M6.cur = flat[0];
     }
     const timeOf = (a) => relTime(a.timeTs);
-    const curId = M5.cur ? M5.cur.id : null;
+    const curId = M6.cur ? M6.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M5.cur = null;
+        M6.cur = null;
         if (readerEl) renderReader();
-        M5.list = [];
+        M6.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf);
-      M5.list = hit;
+      M6.list = hit;
       bindItemMenus();
       return;
     }
@@ -33584,7 +34323,7 @@ ${body}`;
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf), open);
     }
     listEl.innerHTML = html;
-    M5.list = flat;
+    M6.list = flat;
     bindItemMenus();
   }
   function relTime(ts) {
@@ -33597,10 +34336,10 @@ ${body}`;
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M5.list;
+    const all = M6.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M5.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M6.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -33663,8 +34402,8 @@ ${body}`;
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M5.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M5.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M6.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M6.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -33675,7 +34414,7 @@ ${body}`;
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M5.cur;
+    const a = M6.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -33704,7 +34443,7 @@ ${body}`;
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -33715,13 +34454,13 @@ ${body}`;
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M5.cur && M5.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M6.cur && M6.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -33736,11 +34475,11 @@ ${body}`;
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M5.cur && M5.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M6.cur && M6.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M5.mobDetailOpen && M5.cur && M5.cur.id === a.id && mobDetailEl) {
+    if (M6.mobDetailOpen && M6.cur && M6.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -33782,12 +34521,12 @@ ${body}`;
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M5.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M6.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M5.cur ? list.findIndex((x) => x.id === M5.cur.id) : -1;
+    const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M5.cur || next.id !== M5.cur.id)) selectArticle(next.id);
+    if (next && (!M6.cur || next.id !== M6.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -33796,8 +34535,8 @@ ${body}`;
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M5.cur || M5.cur.id !== a.id;
-    M5.cur = a;
+    const changed = !M6.cur || M6.cur.id !== a.id;
+    M6.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -33928,25 +34667,25 @@ ${body}`;
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M5.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M5.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M6.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M6.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M5.cur = flat.find((x) => x.id === prevId) || M5.cur;
+      M6.cur = flat.find((x) => x.id === prevId) || M6.cur;
     } else if (flat.length) {
-      M5.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M5.cur && M5.cur.id !== prevId;
+      M6.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M6.cur && M6.cur.id !== prevId;
     } else {
-      M5.cur = null;
+      M6.cur = null;
     }
-    if (advanced && M5.cur) markReadOnOpen(M5.cur);
+    if (advanced && M6.cur) markReadOnOpen(M6.cur);
     renderAll3();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M5.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M6.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -33976,9 +34715,9 @@ ${body}`;
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M5.articles;
-    const clipNotes = M5.clipNotes || [];
-    const savedUrls = new Set((M5.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M6.articles;
+    const clipNotes = M6.clipNotes || [];
+    const savedUrls = new Set((M6.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime(a.timeTs);
     const chapters = [];
@@ -34074,8 +34813,8 @@ ${body}`;
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M5.cur = a;
-    M5.mobDetailOpen = true;
+    M6.cur = a;
+    M6.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -34086,12 +34825,12 @@ ${body}`;
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M5.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M6.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M5.stats = res.stats;
-      if (M5.open && !M5.mobDetailOpen) {
+      if (res && res.changed && res.stats) M6.stats = res.stats;
+      if (M6.open && !M6.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -34100,8 +34839,8 @@ ${body}`;
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M5.cur) return;
-    const a = M5.cur;
+    if (!mobDetailEl || !M6.cur) return;
+    const a = M6.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -34133,7 +34872,7 @@ ${body}`;
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -34206,7 +34945,7 @@ ${body}`;
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M5.cur;
+    const a = M6.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -34221,7 +34960,7 @@ ${body}`;
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M5.cur;
+    const a = M6.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -34238,7 +34977,7 @@ ${body}`;
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M5.open) return;
+    if (!M6.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -34301,7 +35040,7 @@ ${body}`;
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M5.cur && M5.cur.id === articleId ? M5.cur : null;
+    return M6.cur && M6.cur.id === articleId ? M6.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -34328,9 +35067,9 @@ ${body}`;
     else fn(getApp(), { text: snap.text, source: source2, onCreated });
   }
   function refreshReadingViews(articleId) {
-    if (!M5.cur || M5.cur.id !== articleId) return;
+    if (!M6.cur || M6.cur.id !== articleId) return;
     renderReader();
-    if (M5.mobDetailOpen) renderMobDetail();
+    if (M6.mobDetailOpen) renderMobDetail();
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -34347,8 +35086,8 @@ ${body}`;
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M5.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M5.sidecar = await addPendingSourceNote(a.id, notePath);
+        M6.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M6.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -34377,7 +35116,7 @@ ${body}`;
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M5.sidecar = res.sidecar;
+      if (res.sidecar) M6.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
     } catch (e) {
@@ -34423,7 +35162,7 @@ ${body}`;
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M5.sidecar = await addPendingSourceNote(a.id, notePath);
+        M6.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -34573,8 +35312,8 @@ ${body}`;
       maxWidth: 560,
       schema,
       onClose: () => {
-        M5.clipNotes = null;
-        M5.clipUrls = /* @__PURE__ */ new Set();
+        M6.clipNotes = null;
+        M6.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -34600,7 +35339,7 @@ ${body}`;
       init_md();
       init_store();
       init_render9();
-      init_state5();
+      init_state6();
       init_loader();
       init_news_data();
       init_knowledge_boxes();
@@ -35027,12 +35766,12 @@ ${body}`;
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M6.overlay = null;
-    M6.items = [];
-    M6.tag = null;
-    M6.archived = false;
-    M6.sort = "new";
-    M6.renderFn = null;
+    M7.overlay = null;
+    M7.items = [];
+    M7.tag = null;
+    M7.archived = false;
+    M7.sort = "new";
+    M7.renderFn = null;
   }
   function favoritesSettingsSchema() {
     return {
@@ -35104,7 +35843,7 @@ ${body}`;
     if (mainEscRegistered2) return;
     mainEscRegistered2 = true;
     escManager.register("bz-fav", {
-      isVisible: () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
+      isVisible: () => !!M7.overlay || !!document.querySelector(".bz-fav-form"),
       close: () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -35120,7 +35859,7 @@ ${body}`;
   function openPanel2(app, dm, ai) {
     var _a2;
     initFavoritesUI(app, dm, ai);
-    if (M6.overlay) {
+    if (M7.overlay) {
       closePanel3();
       return;
     }
@@ -35129,12 +35868,12 @@ ${body}`;
     overlay2.innerHTML = panelHtml4(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M6.overlay = overlay2;
-    M6.renderFn = () => renderAll4();
+    M7.overlay = overlay2;
+    M7.renderFn = () => renderAll4();
     const openFilter = resolveOpenFilter();
-    M6.tag = openFilter.tag;
-    M6.archived = openFilter.archived;
-    M6.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M7.tag = openFilter.tag;
+    M7.archived = openFilter.archived;
+    M7.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     overlay2.addEventListener("click", (e) => {
@@ -35201,16 +35940,16 @@ ${body}`;
     })();
   }
   function closePanel3() {
-    if (M6.overlay) {
+    if (M7.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M6.archived ? "@archived" : M6.tag || "";
+        s.favoritesLastFilter = M7.archived ? "@archived" : M7.tag || "";
         void saveSettings();
       }
-      M6.overlay.remove();
-      M6.overlay = null;
+      M7.overlay.remove();
+      M7.overlay = null;
     }
-    M6.renderFn = null;
+    M7.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -35219,9 +35958,9 @@ ${body}`;
   }
   async function loadItems() {
     try {
-      M6.items = await dataManagerOf().getAll();
+      M7.items = await dataManagerOf().getAll();
     } catch (e) {
-      M6.items = [];
+      M7.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -35229,28 +35968,28 @@ ${body}`;
   async function reload2() {
     var _a2;
     await loadItems();
-    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
+    (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
   }
   function renderAll4() {
-    if (!M6.overlay) return;
-    const panel2 = M6.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
+    if (!M7.overlay) return;
+    const panel2 = M7.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M7.items, M7, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
     if (label === "全部" || label === "__all") {
-      M6.tag = null;
-      M6.archived = false;
+      M7.tag = null;
+      M7.archived = false;
     } else if (label === "已归档" || label === "__archived") {
-      M6.tag = null;
-      M6.archived = !M6.archived;
+      M7.tag = null;
+      M7.archived = !M7.archived;
     } else {
-      M6.archived = false;
-      M6.tag = M6.tag === label ? null : label;
+      M7.archived = false;
+      M7.tag = M7.tag === label ? null : label;
     }
     renderAll4();
   }
   function itemById2(id) {
-    return M6.items.find((i) => i.id === id);
+    return M7.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -35877,7 +36616,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M7, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui8 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -35895,7 +36634,7 @@ GitHub 仓库：${ghInfo.title}
       init_config();
       init_render11();
       init_data8();
-      M6 = {
+      M7 = {
         overlay: null,
         items: [],
         tag: null,
@@ -36118,7 +36857,7 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/bookshelf/notes.ts
-  var init_notes = __esm({
+  var init_notes2 = __esm({
     "src/bookshelf/notes.ts"() {
       init_notice();
     }
@@ -36141,7 +36880,7 @@ GitHub 仓库：${ghInfo.title}
       init_flow_dialog();
       init_ui();
       init_ui9();
-      init_notes();
+      init_notes2();
       init_epub_notes();
     }
   });
@@ -36154,8 +36893,8 @@ GitHub 仓库：${ghInfo.title}
     return document.body.classList.contains("theme-dark") ? "bz-bs-mode-dark" : "bz-bs-mode-light";
   }
   function applyBookshelfSkin(skin) {
-    if (!M.currentOverlay) return;
-    const panel2 = M.currentOverlay.querySelector(".bz-bs-panel");
+    if (!M2.currentOverlay) return;
+    const panel2 = M2.currentOverlay.querySelector(".bz-bs-panel");
     if (!panel2) return;
     panel2.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
     panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
@@ -36171,7 +36910,7 @@ GitHub 仓库：${ghInfo.title}
       init_ui();
       init_notice();
       init_reading_report();
-      init_state();
+      init_state2();
       init_data();
       init_render4();
       init_notes_ui();
@@ -37907,9 +38646,9 @@ ${n.content.slice(0, 2e3)}
     const diff = new Date(item.nextReviewDate).getTime() - now;
     if (diff > 0) {
       const days = Math.floor(diff / 864e5);
-      const hours = Math.floor(diff % 864e5 / 36e5);
+      const hours2 = Math.floor(diff % 864e5 / 36e5);
       if (days > 0) return { label: `${days} 天后`, cls: "is-future" };
-      if (hours > 0) return { label: `${hours} 小时后`, cls: "is-future" };
+      if (hours2 > 0) return { label: `${hours2} 小时后`, cls: "is-future" };
       return { label: `${Math.max(1, Math.floor(diff / 6e4))} 分钟后`, cls: "is-future" };
     }
     return { label: "已逾期", cls: "is-overdue" };
@@ -41205,12 +41944,12 @@ ${n.content.slice(0, 2e3)}
     const meta = { ...priMeta, notes };
     let panel2 = primary.panel;
     if (conflict.panel && (!panel2 || conflict.panel.generatedAt > panel2.generatedAt)) panel2 = conflict.panel;
-    const queue = [...primary.link.queue];
-    const seen = new Set(queue.map((q2) => q2.path));
+    const queue2 = [...primary.link.queue];
+    const seen = new Set(queue2.map((q2) => q2.path));
     for (const q2 of conflict.link.queue) {
       if (!seen.has(q2.path)) {
         seen.add(q2.path);
-        queue.push(q2);
+        queue2.push(q2);
       }
     }
     const state3 = { ...primary.link.state };
@@ -41238,7 +41977,7 @@ ${n.content.slice(0, 2e3)}
       ]);
       weekly = { ...weekly, knownPaths: [...union] };
     }
-    return { version: primary.version, meta, panel: panel2, link: { queue, state: state3 }, chatHistory: chatTrimmed, weekly };
+    return { version: primary.version, meta, panel: panel2, link: { queue: queue2, state: state3 }, chatHistory: chatTrimmed, weekly };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -41490,7 +42229,7 @@ ${n.content.slice(0, 2e3)}
     }
     await adapter.write(getSecondBrainStorePath(), next);
   }
-  async function loadStore(app) {
+  async function loadStore2(app) {
     return enqueue(() => readStoreRaw(app));
   }
   var STORE_VERSION, CHAT_HISTORY_LIMIT, LEGACY_FILES, LEGACY_VEC, chain;
@@ -41874,7 +42613,7 @@ ${n.content.slice(0, 2e3)}
     void (async () => {
       var _a2, _b2;
       try {
-        const store2 = await loadStore(app);
+        const store2 = await loadStore2(app);
         ensureModal(app);
         showWeeklyModal((_b2 = (_a2 = store2.weekly) == null ? void 0 : _a2.digest) != null ? _b2 : null);
       } catch (e) {
@@ -42608,7 +43347,7 @@ ${n.content.slice(0, 2e3)}
         async loadSummaryAndLinks() {
           var _a2, _b2, _c, _d, _e;
           try {
-            const store2 = await loadStore(this.app);
+            const store2 = await loadStore2(this.app);
             const popup = this.popup;
             if (!popup || !popup.isConnected) return;
             const summary = ((_a2 = store2.panel) == null ? void 0 : _a2.summary) || "";
@@ -43230,10 +43969,10 @@ ${n.content.slice(0, 2e3)}
          */
         async selfHeal() {
           if (!this.unlocked || !this.password) return 0;
-          const pending = await this.readPending();
+          const pending2 = await this.readPending();
           let rolledBack = 0;
-          if (pending.length) {
-            for (const id of pending) {
+          if (pending2.length) {
+            for (const id of pending2) {
               const idx = this.manifest.notes.findIndex((n) => n.id === id);
               if (idx === -1) continue;
               const note = this.manifest.notes[idx];
@@ -48431,138 +49170,1107 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
-  // prototypes/settings-panel/fake-sim.ts
+  // prototypes/gameshelf/fake-sim.ts
   var fake_sim_exports = {};
   __export(fake_sim_exports, {
-    __simSettings: () => __simSettings,
-    bootSettingsPanelSim: () => bootSettingsPanelSim,
-    openPanel: () => openPanel3
+    bootGameshelfSim: () => bootGameshelfSim,
+    closeGameshelf: () => closeGameshelf,
+    openGameshelf: () => openGameshelf2,
+    unloadGameshelfSim: () => unloadGameshelfSim
   });
   init_fake_obsidian();
   init_app();
   init_settings_provider();
-  init_settings_panel();
-  var SIM_SETTINGS_KEY = "bz-sim:bz-settings.json";
-  var SEED_MARKER = "bz-sim:__sp_seed_v1";
-  var SEED_SETTINGS = {
-    storagePath: "CONFIG/STORAGE",
-    aiProvider: "deepseek",
-    diaryDirectory: "我的/日记",
-    letterDirectory: "我的/信",
-    movieDirectory: "我的/影视",
-    settingsPanelLayout: "jingwei",
-    settingsPanelSkin: "chenhun",
-    memoSkin: "paper",
-    memoLayout: "default",
-    bookshelfSkin: "nordic",
-    bookshelfLayout: "default",
-    belSkin: "poster",
-    belSkinTheme: "warmwhite",
-    diarySkin: "default",
-    // 主题值随 ADR-0115 正名 ivory→gallery（旧值已不在 schema options 里，留着会让卡「无选中态」）；
-    // 旧 diaryWallSkin/Theme 双键同期退役，不再播种子
-    diarySkinTheme: "gallery",
-    clipbookSkin: "default",
-    clipbookSkinTheme: "newsprint",
-    favoritesSkin: "default",
-    favoritesSkinTheme: "linen",
-    cinemaStyle: "midnight",
-    cinemaSkinTheme: "nightfall",
-    reviewSkin: "default",
-    reviewSkinTheme: "sage",
-    secondbrainSkin: "default",
-    secondbrainSkinTheme: "graphite",
-    knowledgeSkin: "default",
-    knowledgeSkinTheme: "manila",
-    pomodoroSkin: "default",
-    pomodoroSkinTheme: "tomato",
-    encryptSkin: "default",
-    encryptSkinTheme: "steel",
-    // 首页（home 域，2026-09-10 外观组）：与 src/settings.ts DEFAULT 同值 —— 主题行按 homeLayout
-    // 联动过滤，布局键不设则主题单卡被滤空（同 diarySkin 口径），评审壳必须给种子才看得到「米白」
-    homeLayout: "default",
-    homeSkin: "cream",
-    // 首页时间线（issue 287/288，2026-09-11）：与 src/settings.ts DEFAULT **三处同值**
-    // （缺任一个，评审壳里的 select/toggle 会渲染成未选中态，自检断言全红）
-    homeTimelineSize: "normal",
-    homeTimelineRange: "week",
-    homeTimelineProduce: true,
-    homeTimelineProgress: true,
-    homeTimelineNotes: true,
-    homeDefaultDay: "today",
-    homeTimelineTime: true,
-    homeNextCards: true,
-    // 密码本（issue 250）：生成/安全三键与 src/settings.ts DEFAULT 同值
-    passwordCharset: "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+",
-    passwordLength: "16",
-    securityMode: false,
-    // 外观组（2026-09-12）：布局/主题与 src/settings.ts DEFAULT 同值——缺键 = 主题行 layoutKey
-    // 过滤落空 → 面板主题渲染成空卡组（同 diarySkin 口径）
-    passwordVaultSkin: "default",
-    passwordVaultSkinTheme: "gold",
-    // 通知（issue 297，通用域「通知」组）：四键与 src/settings.ts DEFAULT 同值——
-    // 壳内 toast 走真 notice.ts（settings-provider 已注入），改档位行为实时生效
-    noticeLevel: "all",
-    noticeDuration: "standard",
-    noticePosition: "top-right",
-    noticeMaxVisible: "5"
-  };
-  var SEED_FILES = [
-    ["我的/日记/2609011200.md", "---\ndate: 2026-09-01 12:00\ntype:\n  - 日记\n---\n\n演示日记。\n"],
-    ["我的/日记/2609071200.md", "---\ndate: 2026-09-07 12:00\ntype:\n  - 日记\n---\n\n演示日记。\n"],
-    ["书库/三体.md", "---\ntitle: 三体\n---\n\n演示藏书。"],
-    ["我的/影视/流浪地球2.md", "---\ntitle: 流浪地球2\n---\n\n演示影视条目。"],
-    ["归档/网页剪藏/示例文章.md", "# 示例文章\n\n演示剪藏。"],
-    ["CONFIG/.ENCRYPT/保险箱.md", "---\nbz-encrypted: true\n---\n\n演示加密笔记。"]
+  init_ai();
+
+  // src/core/obsidian-adapter.ts
+  init_domain_bus();
+
+  // src/core/path-classify.ts
+  init_settings_provider();
+  init_diary_format();
+  function normalizeDir(dir) {
+    return (dir || "").trim().replace(/\\/g, "/").replace(/\/+$/, "");
+  }
+  function isUnderDir(dir, p) {
+    const d = normalizeDir(dir);
+    if (!d) return false;
+    return p === d || p.startsWith(d + "/");
+  }
+  function matchSettingDir(value, p, fallback) {
+    const raw = typeof value === "string" && value.trim() ? value : fallback;
+    return isUnderDir(raw, p);
+  }
+  function classifyFilePath(path) {
+    if (!path) return null;
+    const p = String(path).replace(/\\/g, "/");
+    if (!p.endsWith(".md")) return null;
+    const s = tryGetSettings();
+    if (matchSettingDir(s.diaryDirectory, p, "我的/日记")) return "diary";
+    if (isUnderDir("卡片盒", p)) return "flash";
+    if (matchSettingDir(s.articleDirectory, p, "归档/网页剪藏")) return "clipping";
+    if (matchSettingDir(s.cinemaFolderPath, p, "我的/影视")) return "cinema";
+    if (isUnderDir("我的/现代诗", p)) return "poem";
+    if (matchSettingDir(s.letterDirectory, p, "我的/信")) return "letter";
+    if (matchSettingDir(s.knowledgeDirectory, p, "文献盒")) return "knowledge";
+    return null;
+  }
+  function diaryDateFromPath(path) {
+    return diaryDateFromEntryPath(path);
+  }
+
+  // src/core/obsidian-adapter.ts
+  var attached = false;
+  var boundVault = null;
+  var boundRefs = [];
+  function isMarkdownFile(file, path) {
+    if (file && typeof file.extension === "string") return file.extension === "md";
+    if (file && Array.isArray(file.children)) return false;
+    return path.endsWith(".md");
+  }
+  function dispatchBasic(action, file) {
+    const path = file && typeof file.path === "string" ? file.path : void 0;
+    if (!path || !isMarkdownFile(file, path)) return;
+    emitDomainEvent(`vault:md-${action}`, { path });
+    const kind = classifyFilePath(path);
+    if (!kind) return;
+    if (kind === "diary") {
+      const date = diaryDateFromPath(path);
+      emitDomainEvent(`diary:file-${action}`, date ? { path, date } : { path });
+      return;
+    }
+    emitDomainEvent(`${kind}:file-${action}`, { path });
+  }
+  function isFolder(file) {
+    return !!(file && Array.isArray(file.children));
+  }
+  function dispatchRename(file, oldPath) {
+    const newPath = file && typeof file.path === "string" ? file.path : void 0;
+    if (!newPath || typeof oldPath !== "string" || !oldPath) return;
+    if (isFolder(file)) return;
+    const wasMd = oldPath.endsWith(".md");
+    if (!wasMd && !isMarkdownFile(file, newPath)) return;
+    emitDomainEvent("vault:md-renamed", { oldPath, newPath });
+    const after = classifyFilePath(newPath);
+    if (!after) return;
+    const before = classifyFilePath(oldPath);
+    const payload = {
+      oldPath,
+      newPath,
+      movedOut: before !== after
+      // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
+    };
+    if (after === "diary") {
+      const date = diaryDateFromPath(newPath);
+      if (date) payload.date = date;
+    }
+    emitDomainEvent(`${after}:file-renamed`, payload);
+  }
+  function attachObsidianAdapter(app, registerRef) {
+    if (attached) return;
+    const vault = app && app.vault;
+    if (!vault || typeof vault.on !== "function") return;
+    attached = true;
+    boundVault = vault;
+    const subscribe = (name, cb) => {
+      const ref = vault.on(name, cb);
+      boundRefs.push(ref);
+      if (registerRef) registerRef(ref);
+    };
+    subscribe("create", (file) => dispatchBasic("created", file));
+    subscribe("modify", (file) => dispatchBasic("modified", file));
+    subscribe("delete", (file) => dispatchBasic("deleted", file));
+    subscribe("rename", (file, oldPath) => dispatchRename(file, oldPath));
+  }
+
+  // src/gameshelf/index.ts
+  init_state();
+  init_notes();
+  init_posters();
+
+  // src/gameshelf/ui.ts
+  init_dom();
+  init_esc_manager();
+  init_settings_provider();
+  init_ui();
+  init_state();
+
+  // src/gameshelf/report.ts
+  var hours = (it) => (it.playtimeMin || 0) / 60;
+  var BUCKETS = [
+    { key: "all", label: "全部", test: () => true },
+    { key: "b200", label: "200 小时以上", test: (it) => hours(it) >= 200 },
+    { key: "b50", label: "50 到 200 小时", test: (it) => hours(it) >= 50 && hours(it) < 200 },
+    { key: "b10", label: "10 到 50 小时", test: (it) => hours(it) >= 10 && hours(it) < 50 },
+    { key: "b1", label: "10 小时以内", test: (it) => it.playtimeMin > 0 && hours(it) < 10 },
+    { key: "idle", label: "从未启动", test: (it) => !it.playtimeMin }
   ];
-  var SEED_EMPTY_DIRS = ["我的/信件"];
-  var simSettings = { ...SEED_SETTINGS };
-  var simApp = null;
-  function seedVault() {
-    if (localStorage.getItem(SEED_MARKER)) return;
-    for (const [path, content] of SEED_FILES) {
-      localStorage.setItem("bz-sim:" + path, encodeSeedFile(content));
-    }
-    for (const dir of SEED_EMPTY_DIRS) {
-      localStorage.setItem("bz-sim:" + dir + "/.keep", encodeSeedFile(""));
-    }
-    localStorage.setItem(SEED_MARKER, "1");
+  function bucketOf(key) {
+    var _a2;
+    return (_a2 = BUCKETS.find((b) => b.key === key)) != null ? _a2 : BUCKETS[0];
   }
-  function injectApp() {
-    const app = new FakeApp();
-    setApp(app);
-    simApp = app;
+  var REPORT_CAVEAT = "Steam 只提供累计时长和最后游玩日期，没有逐日游玩时长，所以这里没有每日曲线；年份分布按最后游玩日期归年，不代表当年新增。";
+  var RECENT_WINDOW_MS = 14 * 24 * 60 * 60 * 1e3;
+  var TOP_N = 10;
+  var LATEST_N = 8;
+  var MONTH_WINDOW = 6;
+  function buildReport(items, nowMs = Date.now()) {
+    const active2 = items.filter((it) => !it.offShelf);
+    const totalMin = active2.reduce((sum, it) => sum + (it.playtimeMin || 0), 0);
+    const totalHours = round1(totalMin / 60);
+    const withDate = active2.filter((it) => lastPlayedMs(it.lastPlayed) > 0);
+    const recent2 = active2.filter((it) => lastPlayedMs(it.lastPlayed) >= nowMs - RECENT_WINDOW_MS).sort((a, b) => lastPlayedMs(b.lastPlayed) - lastPlayedMs(a.lastPlayed));
+    const latest = [...withDate].sort((a, b) => lastPlayedMs(b.lastPlayed) - lastPlayedMs(a.lastPlayed)).slice(0, LATEST_N);
+    const top = [...active2].sort((a, b) => b.playtimeMin - a.playtimeMin).slice(0, TOP_N).map((it) => ({ appid: it.appid, name: it.name, hours: round1((it.playtimeMin || 0) / 60) }));
+    return {
+      total: active2.length,
+      offShelfCount: items.length - active2.length,
+      played: active2.filter((it) => it.playtimeMin > 0).length,
+      neverPlayed: active2.filter((it) => !it.playtimeMin).length,
+      achCount: active2.filter((it) => it.hasAch).length,
+      totalHours,
+      days: round1(totalMin / 60 / 24),
+      avgHours: active2.length > 0 ? round1(totalMin / 60 / active2.length) : 0,
+      recent: recent2,
+      latest,
+      top,
+      buckets: BUCKETS.filter((b) => b.key !== "all").map((b) => ({
+        key: b.key,
+        label: b.label,
+        count: active2.filter(b.test).length
+      })),
+      years: yearDistribution(active2),
+      platforms: platformSplit(active2),
+      months: monthDistribution(active2, nowMs)
+    };
   }
-  function injectSettings() {
+  function yearDistribution(items) {
+    var _a2;
+    const counts = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const ms = lastPlayedMs(it.lastPlayed);
+      if (ms <= 0) continue;
+      const y = String(new Date(ms).getFullYear());
+      counts.set(y, ((_a2 = counts.get(y)) != null ? _a2 : 0) + 1);
+    }
+    return [...counts.keys()].sort().map((year) => ({ year, count: counts.get(year) }));
+  }
+  function platformSplit(items) {
+    const defs = [
+      ["Windows", (it) => it.windowsMin],
+      ["Steam Deck", (it) => it.deckMin],
+      ["macOS", (it) => it.macMin],
+      ["Linux", (it) => it.linuxMin]
+    ];
+    return defs.map(([label, pick]) => ({ label, min: items.reduce((s, it) => s + (pick(it) || 0), 0) })).filter((p) => p.min > 0).sort((a, b) => b.min - a.min);
+  }
+  function monthDistribution(items, nowMs) {
+    const now = new Date(nowMs);
+    const keys = [];
+    for (let i = MONTH_WINDOW - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`);
+    }
+    const counts = new Map(keys.map((k) => [k, 0]));
+    for (const it of items) {
+      const ms = lastPlayedMs(it.lastPlayed);
+      if (ms <= 0) continue;
+      const d = new Date(ms);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      if (counts.has(key)) counts.set(key, counts.get(key) + 1);
+    }
+    return keys.map((k) => ({ month: k, count: counts.get(k) }));
+  }
+  function lastPlayedMs(dateStr) {
+    if (!dateStr) return 0;
+    const m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!m) return 0;
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getTime();
+  }
+  function round1(n) {
+    return Math.round(n * 10) / 10;
+  }
+
+  // src/gameshelf/detail.ts
+  init_notes();
+  init_sync();
+  init_steam();
+  var storeCache = /* @__PURE__ */ new Map();
+  var achCache = /* @__PURE__ */ new Map();
+  function clearDetailCache() {
+    storeCache.clear();
+    achCache.clear();
+  }
+  var one = (v) => String(v != null ? v : "").replace(/\s*\n+\s*/g, " ").trim();
+  function storeToFm(s) {
+    const out = {
+      类型: one(s.genres),
+      开发商: one(s.developers),
+      发行商: one(s.publishers),
+      发行日期: one(s.releaseDate),
+      价格: one(s.price),
+      平台: one(s.platforms),
+      玩法分类: one(s.categories),
+      好评率: one(s.reviewDesc),
+      简体中文支持: s.zhSupported,
+      简介: one(s.shortDescription),
+      官网: one(s.website),
+      详情时间: (/* @__PURE__ */ new Date()).toISOString()
+    };
+    if (s.metacritic !== null) out["Metacritic"] = s.metacritic;
+    if (s.reviewsTotal !== null) out["评测数"] = s.reviewsTotal;
+    if (s.reviewsPositive !== null) out["好评数"] = s.reviewsPositive;
+    if (s.reviewsNegative !== null) out["差评数"] = s.reviewsNegative;
+    if (s.recommendations !== null) out["推荐数"] = s.recommendations;
+    if (s.achievementsTotal !== null) out["商店成就数"] = s.achievementsTotal;
+    if (s.dlcCount !== null && s.dlcCount > 0) out["DLC数"] = s.dlcCount;
+    return out;
+  }
+  function fmToStore(fm) {
+    const s = (k) => fm[k] === void 0 || fm[k] === "" ? null : one(fm[k]);
+    const n = (k) => fm[k] === void 0 || fm[k] === "" || !Number.isFinite(Number(fm[k])) ? null : Number(fm[k]);
+    const out = {
+      genres: s("类型"),
+      developers: s("开发商"),
+      publishers: s("发行商"),
+      releaseDate: s("发行日期"),
+      price: s("价格"),
+      platforms: s("平台"),
+      categories: s("玩法分类"),
+      reviewDesc: s("好评率"),
+      shortDescription: s("简介"),
+      website: s("官网"),
+      metacritic: n("Metacritic"),
+      reviewsTotal: n("评测数"),
+      reviewsPositive: n("好评数"),
+      reviewsNegative: n("差评数"),
+      recommendations: n("推荐数"),
+      achievementsTotal: n("商店成就数"),
+      dlcCount: n("DLC数")
+    };
+    if (fm["简体中文支持"] !== void 0) out.zhSupported = fm["简体中文支持"] === true;
+    return out;
+  }
+  function fmToAchSummary(fm) {
+    const total = Number(fm["成就总数"]);
+    if (!Number.isFinite(total) || total <= 0) return null;
+    const unlocked = Number.isFinite(Number(fm["成就已解"])) ? Number(fm["成就已解"]) : 0;
+    return { total, unlocked, rare: one(fm["稀有成就"]) };
+  }
+  function safeDetailFm(app, file) {
+    var _a2;
+    if (!file) return {};
     try {
-      const raw = localStorage.getItem(SIM_SETTINGS_KEY);
-      if (raw) simSettings = { ...SEED_SETTINGS, ...JSON.parse(raw) };
+      return (_a2 = readDetailFm(app, file)) != null ? _a2 : {};
     } catch (e) {
-      simSettings = { ...SEED_SETTINGS };
+      return {};
     }
-    setSettingsProvider(() => simSettings);
-    setSettingsSaver(async () => {
-      localStorage.setItem(SIM_SETTINGS_KEY, JSON.stringify(simSettings));
+  }
+  async function loadStore(app, item, cached) {
+    const hit = storeCache.get(item.appid);
+    if (hit) return { meta: hit, error: null, fromCache: false, screenshots: hit.screenshots };
+    const r = await fetchStoreMeta(item.appid);
+    if (r.ok) {
+      storeCache.set(item.appid, r.data);
+      if (item.file) await upsertDetail(app, item.file, storeToFm(r.data));
+      return { meta: r.data, error: null, fromCache: false, screenshots: r.data.screenshots };
+    }
+    const cachedMeta = fmToStore(cached);
+    const hasCache = Object.keys(cachedMeta).some((k) => cachedMeta[k] !== null && cachedMeta[k] !== void 0);
+    if (hasCache) return { meta: cachedMeta, error: null, fromCache: true, screenshots: [] };
+    return { meta: {}, error: r.message, fromCache: false, screenshots: [] };
+  }
+  async function loadAchievements(app, item, cached) {
+    const summary = fmToAchSummary(cached);
+    const hit = achCache.get(item.appid);
+    if (hit) return { detail: hit, summary, error: null, fromCache: false };
+    if (!item.hasAch) return { detail: null, summary, error: "这款游戏没有成就页", fromCache: false };
+    const { steamId, apiKey } = readSteamConfig();
+    if (!steamId.trim() || !apiKey.trim()) {
+      return { detail: null, summary, error: "未配置 Steam，无法拉取成就", fromCache: false };
+    }
+    const r = await fetchAchievementDetail(steamId, apiKey, item.appid);
+    if (r.ok) {
+      achCache.set(item.appid, r.data);
+      if (item.file) {
+        await upsertDetail(app, item.file, {
+          成就已解: r.data.unlocked,
+          成就总数: r.data.total,
+          稀有成就: r.data.rarestName ? `${r.data.rarestName}（全球 ${r.data.rarestPercent}% 拥有）` : ""
+        });
+      }
+      return { detail: r.data, summary, error: null, fromCache: false };
+    }
+    return { detail: null, summary, error: r.message, fromCache: !!summary };
+  }
+  function storeUrlOf(appid) {
+    return steamStoreUrl(appid);
+  }
+
+  // src/gameshelf/ui.ts
+  init_posters();
+  var ESC_ID3 = "gameshelf";
+  var maskEl4 = null;
+  var popupEl2 = null;
+  var segRef = null;
+  var sortSegRef = null;
+  var countRef = null;
+  var heroEl = null;
+  var gridEl = null;
+  var lastReport2 = null;
+  function hoursOf(min) {
+    return Math.round((min || 0) / 60 * 10) / 10;
+  }
+  function numText(n) {
+    if (n >= 1e3) return Math.round(n).toLocaleString("zh-CN");
+    if (n >= 100) return String(Math.round(n));
+    return String(Math.round(n * 10) / 10);
+  }
+  function hoursText(min) {
+    return `${numText(hoursOf(min))}h`;
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+  var escAttr = escHtml;
+  function dateText(s, dash = "—") {
+    const v = String(s != null ? s : "").trim();
+    if (!v) return dash;
+    const m = v.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[1]}-${m[2]}-${m[3]}` : v;
+  }
+  function guidanceEl(app) {
+    const actions = document.createElement("div");
+    actions.className = "bz-gs-guide-actions";
+    const go = uiBtn({ label: "去配置", tone: "primary", onClick: () => goConfig(app) });
+    go.id = "bz-gs-guide-config";
+    const re = uiBtn({ label: "重新检测", onClick: () => renderAll5(app) });
+    re.id = "bz-gs-guide-recheck";
+    actions.appendChild(go);
+    actions.appendChild(re);
+    return uiEmpty({
+      icon: "gamepad-2",
+      title: "接上 Steam，游戏架自己长出来",
+      desc: "在设置面板游戏架页填 SteamID64 和 Web API 密钥，保存后回来点同步，库和时长自动拉进来，不用手动登记。",
+      actions
     });
   }
-  function bootSettingsPanelSim() {
+  function goConfig(app) {
+    closePanel4();
+    void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "gameshelf"));
+  }
+  function heroTag() {
+    if (M.sort === "last") return "最近在玩";
+    if (M.sort === "name") return "名称首位";
+    return "时长第一";
+  }
+  function heroHtml(item, cover, rp, tag = heroTag()) {
+    const sub = [
+      hoursOf(item.playtimeMin) > 0 ? `${numText(hoursOf(item.playtimeMin))} 小时` : "从未启动",
+      item.lastPlayed ? `最后游玩 ${dateText(item.lastPlayed)}` : "没有游玩记录",
+      `在库 ${M.items.length} 款中第 ${indexInList(item) + 1} 位`
+    ].join(" · ");
+    const bg = cover ? ` style="background-image:url('${escAttr(cover)}')"` : "";
+    return `
+  <div class="bz-gs-hero${cover ? "" : " bz-gs-hero--bare"}">
+    <div class="bz-gs-hero-art"${bg}></div>
+    <div class="bz-gs-hero-veil"></div>
+    <div class="bz-gs-hero-in">
+      <div class="bz-gs-hero-left">
+        <span class="bz-gs-hero-tag">${escHtml(tag)}</span>
+        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(item.name)}</div>
+        <div class="bz-gs-hero-sub">${escHtml(sub)}</div>
+      </div>
+      <div class="bz-gs-hero-side">
+        <div><b>${rp.total}</b><span>在架游戏</span></div>
+        <div><b>${numText(rp.totalHours)}</b><span>累计小时</span></div>
+        <div><b>${rp.neverPlayed}</b><span>从未启动</span></div>
+      </div>
+    </div>
+  </div>`;
+  }
+  function indexInList(item) {
+    const all = [...M.items].sort((a, b) => b.playtimeMin - a.playtimeMin);
+    return Math.max(0, all.findIndex((it) => it.appid === item.appid));
+  }
+  function maxPlaytime() {
+    return Math.max(1, ...M.items.map((it) => it.playtimeMin));
+  }
+  function filterList(items) {
+    const def = bucketOf(M.bucket);
+    const q2 = M.query.trim().toLowerCase();
+    return items.filter((it) => def.test(it) && (!q2 || it.name.toLowerCase().includes(q2)));
+  }
+  function sortList(items) {
+    const list = [...items];
+    if (M.sort === "last") return list.sort((a, b) => (b.lastPlayed || "").localeCompare(a.lastPlayed || "") || b.playtimeMin - a.playtimeMin);
+    if (M.sort === "name") return list.sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
+    return list.sort((a, b) => b.playtimeMin - a.playtimeMin);
+  }
+  function shelfHtml(items, coverOf, opts = {}) {
+    var _a2;
+    const max = Math.max(1, (_a2 = opts.maxMin) != null ? _a2 : 1);
+    const cards = items.map((it, i) => {
+      const cover = coverOf(it);
+      const rank = opts.showRank && i < 3 ? `<span class="bz-gs-rank">NO.${i + 1}</span>` : "";
+      const pct = Math.max(1, Math.min(100, Math.round((it.playtimeMin || 0) / max * 100)));
+      const hint = it.playtimeMin > 0 ? `${numText(hoursOf(it.playtimeMin))} 小时` : "从未启动";
+      const last = it.lastPlayed ? dateText(it.lastPlayed) : "—";
+      return `
+      <button type="button" class="bz-gs-card${it.offShelf ? " bz-gs-card--off" : ""}" data-appid="${it.appid}" title="${escAttr(it.name)}">
+        <span class="bz-gs-cover" data-initial="${escAttr(firstChar(it.name))}">
+          ${cover ? `<img loading="lazy" src="${escAttr(cover)}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
+          ${rank}
+          ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ""}
+          <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
+        </span>
+        <span class="bz-gs-cardbar">
+          <span class="bz-gs-name">${escHtml(it.name)}</span>
+          <span class="bz-gs-hours">${hoursText(it.playtimeMin)}</span>
+        </span>
+        <span class="bz-gs-strip"><i style="width:${pct}%"></i></span>
+      </button>`;
+    }).join("");
+    return `<div class="bz-gs-grid">${cards}</div>`;
+  }
+  function firstChar(name) {
+    return name.slice(0, 1) || "?";
+  }
+  function statsHtml(rp) {
+    var _a2, _b2;
+    const maxTop = Math.max(1, (_b2 = (_a2 = rp.top[0]) == null ? void 0 : _a2.hours) != null ? _b2 : 1);
+    const maxBucket = Math.max(1, ...rp.buckets.map((b) => b.count));
+    const maxYear = Math.max(1, ...rp.years.map((y) => y.count));
+    const maxPlat = Math.max(1, ...rp.platforms.map((p) => p.min));
+    const thisYear = String((/* @__PURE__ */ new Date()).getFullYear());
+    const topRows = rp.top.length ? rp.top.map((t, i) => `
+      <div class="bz-gs-rankrow">
+        <span class="bz-gs-rankno">${String(i + 1).padStart(2, "0")}</span>
+        <span class="bz-gs-rankname" title="${escAttr(t.name)}">${escHtml(t.name)}</span>
+        <span class="bz-gs-rankbar"><i style="width:${Math.max(2, Math.round(t.hours / maxTop * 100))}%"></i></span>
+        <span class="bz-gs-rankval">${numText(t.hours)} h</span>
+      </div>`).join("") : '<div class="bz-gs-dim">库里还没有游戏</div>';
+    const bucketCols = rp.buckets.map(
+      (b) => `
+    <div class="bz-gs-col">
+      <b>${b.count}</b>
+      <span class="bz-gs-colbar" style="height:${Math.max(3, Math.round(b.count / maxBucket * 92))}px"></span>
+      <span class="bz-gs-collabel">${escHtml(b.label)}</span>
+    </div>`
+    ).join("");
+    const yearCols = rp.years.length ? rp.years.map(
+      (y) => `
+    <div class="bz-gs-col${y.year === thisYear ? " is-now" : ""}">
+      <b>${y.count}</b>
+      <span class="bz-gs-colbar" style="height:${Math.max(3, Math.round(y.count / maxYear * 92))}px"></span>
+      <span class="bz-gs-collabel">${escHtml(y.year)}</span>
+    </div>`
+    ).join("") : '<div class="bz-gs-dim">还没有带日期的游玩记录</div>';
+    const platRows = rp.platforms.length ? rp.platforms.map(
+      (p) => `
+    <div class="bz-gs-rankrow">
+      <span class="bz-gs-rankname">${escHtml(p.label)}</span>
+      <span class="bz-gs-rankbar"><i style="width:${Math.max(2, Math.round(p.min / maxPlat * 100))}%"></i></span>
+      <span class="bz-gs-rankval">${numText(hoursOf(p.min))} h</span>
+    </div>`
+    ).join("") : '<div class="bz-gs-dim">Steam 没有给出平台分项时长</div>';
+    const latestRows = rp.latest.length ? rp.latest.map(
+      (it) => `
+    <div class="bz-gs-latestrow" data-appid="${it.appid}">
+      <span class="bz-gs-latestdate">${escHtml(dateText(it.lastPlayed))}</span>
+      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${escHtml(it.name)}</span>
+      <span class="bz-gs-latesth">${hoursText(it.playtimeMin)}</span>
+    </div>`
+    ).join("") : '<div class="bz-gs-dim">Steam 没给最后游玩日期</div>';
+    const achPct = rp.total > 0 ? Math.round(rp.achCount / rp.total * 100) : 0;
+    return `
+  <div class="bz-gs-stats" id="bz-gs-stats"></div>
+  <div class="bz-gs-caveat">${escHtml(REPORT_CAVEAT)}</div>
+  <section class="bz-gs-sec">
+    <div class="bz-gs-sectitle">时长排行 · Top 10</div>
+    <div class="bz-gs-rows">${topRows}</div>
+  </section>
+  <section class="bz-gs-sec">
+    <div class="bz-gs-sectitle">时长档位分布</div>
+    <div class="bz-gs-cols">${bucketCols}</div>
+  </section>
+  <section class="bz-gs-sec">
+    <div class="bz-gs-sectitle">最后游玩年份分布</div>
+    <div class="bz-gs-cols">${yearCols}</div>
+    <div class="bz-gs-sechint">按最后游玩日期归年，不代表当年新增；深色柱 = 今年</div>
+  </section>
+  <section class="bz-gs-sec">
+    <div class="bz-gs-sectitle">平台分项时长</div>
+    <div class="bz-gs-rows">${platRows}</div>
+  </section>
+  <section class="bz-gs-sec">
+    <div class="bz-gs-sectitle">最近玩过</div>
+    <div class="bz-gs-rows bz-gs-rows--flat">${latestRows}</div>
+  </section>
+  <div class="bz-gs-foot">成就页覆盖 ${rp.achCount} / ${rp.total} 款（${achPct}%）· 平均每款 ${numText(rp.avgHours)} 小时 · 折合 ${numText(rp.days)} 天</div>`;
+  }
+  function fillStatsRow(app, rp) {
+    const row = popupEl2 == null ? void 0 : popupEl2.querySelector("#bz-gs-stats");
+    if (!row) return;
+    row.innerHTML = "";
+    row.appendChild(uiStat({ icon: "gamepad-2", label: "在架游戏", num: String(rp.total), hint: rp.offShelfCount > 0 ? `另有 ${rp.offShelfCount} 款下架保留` : "" }));
+    row.appendChild(uiStat({ icon: "clock", label: "累计时长", num: `${numText(rp.totalHours)} h`, hint: `折合 ${numText(rp.days)} 天` }));
+    row.appendChild(uiStat({ icon: "package", label: "从未启动", num: String(rp.neverPlayed), hint: `玩过 ${rp.played} 款` }));
+    row.appendChild(uiStat({ icon: "calendar-days", label: "最近玩过", num: String(rp.latest.length), hint: rp.latest[0] ? `最近 ${dateText(rp.latest[0].lastPlayed)}` : "" }));
+    row.appendChild(uiStat({ icon: "trophy", label: "成就页覆盖", num: `${rp.achCount}/${rp.total}` }));
+  }
+  function detailShellHtml(item, cover, fm) {
+    const store2 = fmToStore(fm);
+    const chips = [];
+    if (store2.genres) chips.push(store2.genres);
+    if (store2.platforms) chips.push(store2.platforms);
+    if (store2.releaseDate) chips.push(store2.releaseDate);
+    if (store2.price) chips.push(store2.price);
+    if (store2.zhSupported) chips.push("支持简体中文");
+    if (store2.metacritic) chips.push(`Metacritic ${store2.metacritic}`);
+    if (item.offShelf) chips.push("已下架保留");
+    return `
+  <div class="bz-gs-detail${item.offShelf ? " bz-gs-detail--off" : ""}">
+    <div class="bz-gs-detail-top">
+      <div class="bz-gs-detail-cover" data-initial="${escAttr(firstChar(item.name))}">
+        ${cover ? `<img src="${escAttr(cover)}" alt="">` : ""}
+      </div>
+      <div class="bz-gs-detail-id">
+        <div class="bz-gs-detail-name">
+          ${item.icon ? `<img class="bz-gs-detail-icon" src="${escAttr(item.icon)}" alt="">` : ""}
+          <span title="${escAttr(item.name)}">${escHtml(item.name)}</span>
+        </div>
+        <div class="bz-gs-detail-chips" id="bz-gs-detail-chips">
+          ${chips.map((c) => `<span class="bz-gs-chiplet">${escHtml(c)}</span>`).join("")}
+        </div>
+        <div class="bz-gs-detail-appid">AppID ${item.appid}</div>
+      </div>
+    </div>
+    ${mineHtml(item, fm)}
+    <section class="bz-gs-detail-sec" id="bz-gs-detail-ach">
+      <div class="bz-gs-sectitle">成就</div>
+      <div class="bz-gs-dim">${item.hasAch ? "加载中…" : "这款游戏没有成就页"}</div>
+    </section>
+    <section class="bz-gs-detail-sec" id="bz-gs-detail-store">
+      <div class="bz-gs-sectitle">游戏资料</div>
+      <div class="bz-gs-dim">加载中…</div>
+    </section>
+    <section class="bz-gs-detail-sec" id="bz-gs-detail-shots"></section>
+  </div>`;
+  }
+  function mineHtml(item, fm) {
+    const h = hoursOf(item.playtimeMin);
+    const sum = fmToAchSummary(fm);
+    const pcts = [
+      { label: "Windows", min: item.windowsMin },
+      { label: "Steam Deck", min: item.deckMin },
+      { label: "macOS", min: item.macMin },
+      { label: "Linux", min: item.linuxMin }
+    ].filter((p) => p.min > 0);
+    const maxP = Math.max(1, ...pcts.map((p) => p.min));
+    const plat = pcts.length ? `<div class="bz-gs-mine-plats">${pcts.map(
+      (p) => `<div class="bz-gs-platrow"><span class="bz-gs-platlabel">${escHtml(p.label)}</span>
+        <span class="bz-gs-platbar"><i style="width:${Math.max(2, Math.round(p.min / maxP * 100))}%"></i></span>
+        <span class="bz-gs-platval">${numText(hoursOf(p.min))} h</span></div>`
+    ).join("")}</div>` : '<div class="bz-gs-dim">Steam 没有给出平台分项时长</div>';
+    const achLine = sum ? `<div class="bz-gs-mine-ach">
+        <div class="bz-gs-mine-achhead"><span>成就进度</span><span class="bz-gs-mine-achval">${sum.unlocked} / ${sum.total}</span></div>
+        <span class="bz-gs-platbar"><i style="width:${Math.max(1, Math.round(sum.unlocked / sum.total * 100))}%"></i></span>
+        ${sum.rare ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(sum.rare)}</div>` : ""}
+      </div>` : "";
+    return `
+  <section class="bz-gs-detail-sec">
+    <div class="bz-gs-sectitle">我的游玩数据</div>
+    <div class="bz-gs-mine">
+      <div class="bz-gs-mine-num">
+        <b>${item.playtimeMin > 0 ? numText(h) : "0"}</b><span>小时</span>
+        ${item.playtimeMin > 0 ? `<em>折合 ${numText(Math.round(h / 24 * 10) / 10)} 天</em>` : "<em>从未启动</em>"}
+      </div>
+      <div class="bz-gs-mine-grid">
+        <div><u>最后游玩</u><span>${escHtml(dateText(item.lastPlayed, "没有记录"))}</span></div>
+        <div><u>同步时间</u><span>${escHtml(item.syncedAt ? dateText(item.syncedAt) : "没有记录")}</span></div>
+        <div><u>库里状态</u><span>${item.offShelf ? "已下架保留" : "在架"}</span></div>
+        <div><u>成就页</u><span>${item.hasAch ? "有" : "没有"}</span></div>
+      </div>
+      ${plat}
+      ${achLine}
+    </div>
+  </section>`;
+  }
+  function achListHtml(item, sec) {
+    const head = '<div class="bz-gs-sectitle">成就</div>';
+    if (sec.detail) {
+      const d = sec.detail;
+      const rows = d.rows.slice(0, 200).map((r) => {
+        const pct = r.globalPercent === null ? "" : `${r.globalPercent}%`;
+        const when = r.unlockedAt ? dateText(r.unlockedAt) : "";
+        const desc = r.desc || (r.hidden ? "隐藏成就，解锁后可见说明" : "");
+        return `
+      <div class="bz-gs-achrow${r.unlocked ? " is-on" : ""}" title="${escAttr(desc)}">
+        ${r.icon ? `<img class="bz-gs-achicon" src="${escAttr(r.icon)}" alt="" loading="lazy">` : '<span class="bz-gs-achicon bz-gs-achicon--none"></span>'}
+        <span class="bz-gs-achtext">
+          <span class="bz-gs-achname">${escHtml(r.name)}</span>
+          ${desc ? `<span class="bz-gs-achdesc">${escHtml(desc)}</span>` : ""}
+        </span>
+        <span class="bz-gs-achmeta">
+          ${pct ? `<span class="bz-gs-achpct" title="全球解锁率">${escHtml(pct)}</span>` : ""}
+          <span class="bz-gs-achwhen">${escHtml(r.unlocked ? when || "已解锁" : "未解锁")}</span>
+        </span>
+      </div>`;
+      }).join("");
+      return `${head}
+    <div class="bz-gs-achhead">
+      <span class="bz-gs-achsum">${d.unlocked} / ${d.total}（${d.percent}%）</span>
+      <span class="bz-gs-platbar"><i style="width:${Math.max(1, d.percent)}%"></i></span>
+    </div>
+    ${d.rarestName ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(d.rarestName)}（全球 ${d.rarestPercent}% 拥有）</div>` : ""}
+    <div class="bz-gs-achlist">${rows}</div>
+    <div class="bz-gs-sechint">按全球解锁率从稀有到常见排序${d.rows.length > 200 ? `，仅显示前 200 条（共 ${d.rows.length} 条）` : ""}</div>`;
+    }
+    if (sec.summary) {
+      const s = sec.summary;
+      return `${head}
+    <div class="bz-gs-achhead">
+      <span class="bz-gs-achsum">${s.unlocked} / ${s.total}（${Math.round(s.unlocked / s.total * 1e3) / 10}%）</span>
+      <span class="bz-gs-platbar"><i style="width:${Math.max(1, Math.round(s.unlocked / s.total * 100))}%"></i></span>
+    </div>
+    ${s.rare ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(s.rare)}</div>` : ""}
+    <div class="bz-gs-dim">${escHtml(sec.error || "成就明细未拉取")}${sec.fromCache ? "（上方为上次同步缓存）" : ""}</div>`;
+    }
+    return `${head}<div class="bz-gs-dim">${escHtml(sec.error || "这款游戏没有成就页")}</div>`;
+  }
+  function storeRowsHtml(item, sec) {
+    const m = sec.meta;
+    const row = (label, v) => {
+      const s = v === void 0 || v === null || v === "" ? "" : String(v);
+      return s ? `<div class="bz-gs-kv"><u>${escHtml(label)}</u><span>${escHtml(s)}</span></div>` : "";
+    };
+    const reviewBits = [];
+    if (m.reviewsTotal !== null && m.reviewsTotal !== void 0) reviewBits.push(`${Number(m.reviewsTotal).toLocaleString("zh-CN")} 条评测`);
+    if (m.reviewsPositive !== null && m.reviewsPositive !== void 0) reviewBits.push(`好评 ${Number(m.reviewsPositive).toLocaleString("zh-CN")}`);
+    if (m.reviewsNegative !== null && m.reviewsNegative !== void 0) reviewBits.push(`差评 ${Number(m.reviewsNegative).toLocaleString("zh-CN")}`);
+    const meta = sec.meta;
+    const rows = [
+      row("价格", m.price),
+      row("类型", m.genres),
+      row("开发商", m.developers),
+      row("发行商", m.publishers),
+      row("发行日期", m.releaseDate),
+      row("平台", m.platforms),
+      row("玩法", m.categories),
+      row("评价", [m.reviewDesc, reviewBits.join(" · ")].filter(Boolean).join("（") + (reviewBits.length ? "）" : "")),
+      row("Metacritic", m.metacritic),
+      row("推荐数", m.recommendations ? Number(m.recommendations).toLocaleString("zh-CN") : ""),
+      row("DLC", meta.dlcCount ? `${meta.dlcCount} 个` : ""),
+      row("商店成就数", meta.achievementsTotal),
+      row("简体中文", m.zhSupported === void 0 ? "" : m.zhSupported ? "支持" : "无官方"),
+      row("官网", m.website)
+    ].join("");
+    const desc = m.shortDescription ? `<div class="bz-gs-desc">${escHtml(m.shortDescription)}</div>` : "";
+    const link = `<div class="bz-gs-detail-actions">
+      <button type="button" class="bz-btn bz-btn--md" id="bz-gs-open-store"><span class="bz-ic" data-lucide="external-link"></span>在商店打开</button>
+    </div>`;
+    const err = sec.error ? `<div class="bz-gs-dim">${escHtml(sec.error)}</div>` : "";
+    const cacheTag = sec.fromCache ? '<div class="bz-gs-sechint">以下为上次同步时缓存的资料</div>' : "";
+    return `<div class="bz-gs-sectitle">游戏资料</div>${cacheTag}${err}${rows ? `<div class="bz-gs-kvlist">${rows}</div>` : ""}${desc}${link}`;
+  }
+  function shotsHtml(urls) {
+    if (!urls.length) return "";
+    return `<div class="bz-gs-sectitle">商店截图</div>
+  <div class="bz-gs-shots">${urls.map((u) => `<button type="button" class="bz-gs-shot" data-src="${escAttr(u)}"><img loading="lazy" src="${escAttr(u)}" alt=""></button>`).join("")}</div>`;
+  }
+  function openDetail(app, appid) {
+    const item = M.items.find((it) => it.appid === appid);
+    if (!item) return;
+    const cached = safeDetailFm(app, item.file);
+    const cover = posterDisplayUrl(app, item.appid, item.cover);
+    const modal = uiModalSafe(detailShellHtml(item, cover, cached), `《${item.name}》`);
+    if (!modal) return;
+    const popup = modal.popup;
+    const achBox = popup.querySelector("#bz-gs-detail-ach");
+    void loadAchievements(app, item, cached).then((sec) => {
+      if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, sec);
+      mountIcons(popup);
+    });
+    const storeBox = popup.querySelector("#bz-gs-detail-store");
+    const shotsBox = popup.querySelector("#bz-gs-detail-shots");
+    void loadStore(app, item, cached).then((sec) => {
+      if (storeBox && storeBox.isConnected) storeBox.innerHTML = storeRowsHtml(item, sec);
+      if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(sec.screenshots);
+      const open = popup.querySelector("#bz-gs-open-store");
+      if (open) open.addEventListener("click", () => window.open(storeUrlOf(item.appid), "_blank"));
+      mountIcons(popup);
+    });
+    popup.addEventListener("click", (e) => {
+      const shot = e.target.closest(".bz-gs-shot");
+      if (shot == null ? void 0 : shot.dataset.src) openLightbox({ src: shot.dataset.src, type: "image", title: item.name });
+    });
+  }
+  function uiModalSafe(content, title) {
+    return uiModal({ head: true, title, maxWidth: 720, className: "bz-gs-detail-modal", content });
+  }
+  function createUI(app) {
+    if (maskEl4 && document.body.contains(maskEl4)) return;
+    const mask = document.createElement("div");
+    mask.className = "bz-panel-overlay";
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) closePanel4();
+    });
+    const frame = document.createElement("div");
+    frame.className = "bz-panel-frame bz-gs-panel bz-panel-mtop";
+    frame.setAttribute("role", "dialog");
+    frame.setAttribute("aria-label", "游戏架");
+    const head = uiMainHead({
+      title: "游戏架",
+      action: { label: "立即同步", icon: "refresh-cw", onClick: () => void onSyncClick(app) }
+    });
+    countRef = head;
+    const seg = uiSegmented({
+      value: M.view,
+      label: "视图切换",
+      options: [
+        { value: "shelf", label: "游戏墙" },
+        { value: "stats", label: "数据统计" }
+      ],
+      onChange: (v) => {
+        M.view = v;
+        renderAll5(app);
+      }
+    });
+    segRef = seg;
+    const spacer = head.el.querySelector(".bz-main-spacer");
+    if (spacer) head.el.insertBefore(seg.el, spacer);
+    const close = uiBtn({ label: "关闭", icon: "x", onClick: () => closePanel4() });
+    close.classList.add("bz-gs-close");
+    close.setAttribute("aria-label", "关闭");
+    head.el.appendChild(close);
+    frame.appendChild(head.el);
+    const status = document.createElement("div");
+    status.className = "bz-gs-status";
+    status.id = "bz-gs-status";
+    frame.appendChild(status);
+    const body = document.createElement("div");
+    body.className = "bz-gs-body";
+    body.id = "bz-gs-body";
+    body.addEventListener("click", (e) => {
+      const card = e.target.closest(".bz-gs-card");
+      if (card) {
+        const appid = Number(card.dataset.appid);
+        if (Number.isFinite(appid)) openDetail(app, appid);
+        return;
+      }
+      const latest = e.target.closest(".bz-gs-latestrow");
+      if (latest) {
+        const appid = Number(latest.dataset.appid);
+        if (Number.isFinite(appid)) openDetail(app, appid);
+      }
+    });
+    body.addEventListener(
+      "error",
+      (e) => {
+        var _a2;
+        const img = e.target;
+        if (img.tagName === "IMG") (_a2 = img.closest(".bz-gs-cover, .bz-gs-detail-cover")) == null ? void 0 : _a2.classList.add("is-broken");
+      },
+      true
+    );
+    frame.appendChild(body);
+    document.body.appendChild(mask);
+    document.body.appendChild(frame);
+    topifyZ(mask, frame);
+    maskEl4 = mask;
+    popupEl2 = frame;
+    M.currentOverlay = frame;
+    registerPanelEsc(ESC_ID3, () => !!M.currentOverlay, closePanel4);
+  }
+  async function onSyncClick(app) {
+    const { runSync: runSync2 } = await Promise.resolve().then(() => (init_sync(), sync_exports));
+    await runSync2(app, { force: true });
+    void ensurePostersFor(app);
+    renderAll5(app);
+  }
+  async function ensurePostersFor(app) {
+    const { ensurePosters: ensurePosters2 } = await Promise.resolve().then(() => (init_posters(), posters_exports));
+    ensurePosters2(app, M.items.map((it) => ({ appid: it.appid, cover: it.cover })));
+  }
+  function renderAll5(app) {
+    const frame = M.currentOverlay;
+    if (!frame || !document.body.contains(frame)) return;
+    const configured = isConfigured();
+    segRef == null ? void 0 : segRef.setValue(M.view);
+    countRef == null ? void 0 : countRef.setCount(configured ? `${M.items.filter((it) => !it.offShelf).length} 款` : "");
+    const syncBtn = frame.querySelector(".bz-btn--primary");
+    if (syncBtn) syncBtn.disabled = M.syncing || !configured;
+    const status = frame.querySelector("#bz-gs-status");
+    if (status) status.textContent = M.statusMsg;
+    const body = frame.querySelector("#bz-gs-body");
+    if (!body) return;
+    body.innerHTML = "";
+    heroEl = null;
+    gridEl = null;
+    lastReport2 = null;
+    if (!configured) {
+      body.appendChild(guidanceEl(app));
+      mountIcons(frame);
+      return;
+    }
+    const rp = buildReport(M.items);
+    lastReport2 = rp;
+    if (M.view === "stats") {
+      body.insertAdjacentHTML("beforeend", statsHtml(rp));
+      fillStatsRow(app, rp);
+    } else {
+      body.appendChild(shelfBody(app, rp));
+    }
+    mountIcons(frame);
+  }
+  function shelfBody(app, rp) {
+    var _a2;
+    const wrap = document.createElement("div");
+    wrap.className = "bz-gs-wall";
+    wrap.innerHTML = `
+    <div id="bz-gs-hero"></div>
+    <div class="bz-gs-tools">
+      <div class="bz-gs-chips" id="bz-gs-chips"></div>
+      <div class="bz-gs-toolsend">
+        <div id="bz-gs-sort"></div>
+        <div id="bz-gs-search"></div>
+      </div>
+    </div>
+    <div id="bz-gs-grid"></div>`;
+    heroEl = wrap.querySelector("#bz-gs-hero");
+    gridEl = wrap.querySelector("#bz-gs-grid");
+    const chips = wrap.querySelector("#bz-gs-chips");
+    const counts = new Map(rp.buckets.map((b) => [b.key, b.count]));
+    for (const def of BUCKETS) {
+      const chip2 = uiChip({
+        label: def.label,
+        count: def.key === "all" ? rp.total : (_a2 = counts.get(def.key)) != null ? _a2 : 0,
+        selectedSoft: M.bucket === def.key,
+        onClick: () => {
+          M.bucket = def.key;
+          syncChipState();
+          renderList2(app);
+        }
+      });
+      chip2.classList.add("bz-gs-chip");
+      chip2.dataset.k = def.key;
+      chips.appendChild(chip2);
+    }
+    const sortSeg = uiSegmented({
+      value: M.sort,
+      label: "排序",
+      options: [
+        { value: "hours", label: "时长" },
+        { value: "last", label: "最近玩" },
+        { value: "name", label: "名称" }
+      ],
+      onChange: (v) => {
+        M.sort = v;
+        renderList2(app);
+      }
+    });
+    sortSegRef = sortSeg;
+    wrap.querySelector("#bz-gs-sort").appendChild(sortSeg.el);
+    const search = uiSearch({
+      placeholder: "搜索游戏名",
+      value: M.query,
+      onInput: (v) => {
+        M.query = v;
+        renderList2(app);
+      }
+    });
+    search.el.classList.add("bz-gs-search");
+    wrap.querySelector("#bz-gs-search").appendChild(search.el);
+    renderList2(app);
+    return wrap;
+  }
+  function syncChipState() {
+    popupEl2 == null ? void 0 : popupEl2.querySelectorAll(".bz-gs-chip").forEach((c) => {
+      const on = c.dataset.k === M.bucket;
+      c.classList.toggle("bz-chip--sel", on);
+      c.setAttribute("aria-pressed", String(on));
+    });
+  }
+  function renderList2(app) {
+    if (!heroEl || !gridEl) return;
+    const rp = lastReport2 != null ? lastReport2 : buildReport(M.items);
+    lastReport2 = rp;
+    const list = sortList(filterList(M.items));
+    const showRank = M.bucket === "all" && !M.query.trim() && M.sort === "hours";
+    if (list.length === 0) {
+      heroEl.innerHTML = "";
+      gridEl.innerHTML = "";
+      gridEl.appendChild(emptyResult(app));
+    } else {
+      const top = list[0];
+      heroEl.innerHTML = heroHtml(top, posterDisplayUrl(app, top.appid, top.cover), rp);
+      gridEl.innerHTML = shelfHtml(list, (it) => posterDisplayUrl(app, it.appid, it.cover), { showRank, maxMin: maxPlaytime() });
+    }
+    const frame = M.currentOverlay;
+    if (frame) mountIcons(frame);
+  }
+  function emptyResult(app) {
+    const actions = document.createElement("div");
+    actions.className = "bz-gs-guide-actions";
+    const clear = uiBtn({
+      label: "清除筛选",
+      onClick: () => {
+        M.bucket = "all";
+        M.query = "";
+        const s = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-search input");
+        if (s) s.value = "";
+        syncChipState();
+        renderList2(app);
+      }
+    });
+    clear.id = "bz-gs-clear-filter";
+    actions.appendChild(clear);
+    return uiEmpty({
+      icon: "search",
+      title: M.items.length === 0 ? "还没有游戏" : "没有匹配的游戏",
+      desc: M.items.length === 0 ? "点右上角立即同步，从 Steam 把库和时长拉进来。" : "换个关键词，或把时长档位放宽。",
+      actions
+    });
+  }
+  function isConfigured() {
+    try {
+      const s = tryGetSettings();
+      const id = typeof s.gameshelfSteamId === "string" ? s.gameshelfSteamId.trim() : "";
+      const key = typeof s.gameshelfSteamApiKey === "string" ? s.gameshelfSteamApiKey.trim() : "";
+      return !!id && !!key;
+    } catch (e) {
+      return false;
+    }
+  }
+  function openPanel3(app) {
+    createUI(app);
+    M.renderFn = () => renderAll5(app);
+    renderAll5(app);
+    void ensurePostersFor(app);
+  }
+  function closePanel4() {
+    var _a2;
+    unregisterPanelEsc(ESC_ID3);
+    maskEl4 == null ? void 0 : maskEl4.remove();
+    maskEl4 = null;
+    popupEl2 = null;
+    (_a2 = M.currentOverlay) == null ? void 0 : _a2.remove();
+    M.currentOverlay = null;
+    heroEl = null;
+    gridEl = null;
+    lastReport2 = null;
+    clearDetailCache();
+  }
+
+  // src/gameshelf/index.ts
+  var initialized7 = false;
+  function ensureGameshelf(app) {
+    M.folderPath = resolveGameshelfFolderPath();
+    if (initialized7) return;
+    initialized7 = true;
+    M.appRef = app;
+  }
+  function openGameshelf(app) {
+    ensureGameshelf(app);
+    if (M.currentOverlay) {
+      closePanel4();
+      return;
+    }
+    rebuildItems(app);
+    openPanel3(app);
+    void Promise.resolve().then(() => (init_sync(), sync_exports)).then(async (m) => {
+      await m.autoSyncOnOpen(app);
+      renderAll5(app);
+      ensurePosters(app, M.items.map((it) => ({ appid: it.appid, cover: it.cover })));
+    });
+  }
+  function unloadGameshelf() {
+    initialized7 = false;
+    closePanel4();
+    unloadPosters();
+    resetGameshelfState();
+  }
+
+  // prototypes/gameshelf/fake-sim.ts
+  var FOLDER = "我的/游戏";
+  var SEED_MARK = "bz-sim:__gameshelf-seed-v1";
+  var SETTINGS_KEY = "bz-sim:__settings";
+  function mdOf(g) {
+    return [
+      "---",
+      "tags:",
+      "- 游戏",
+      `AppID: ${g.appid}`,
+      `游玩分钟: ${g.min}`,
+      `最后游玩: "${g.last}"`,
+      `封面: ${g.cover}`,
+      `同步时间: "2026-09-17T05:35:19.664Z"`,
+      `已下架: false`,
+      `图标: ${g.icon || '""'}`,
+      `Windows分钟: ${g.win}`,
+      `SteamDeck分钟: ${g.deck}`,
+      `Mac分钟: ${g.mac}`,
+      `Linux分钟: ${g.linux}`,
+      `有成就: ${g.ach}`,
+      "---",
+      "",
+      ""
+    ].join("\n");
+  }
+  function seedDatabase() {
+    const items = window.GAMESHELF_DATA || [];
+    if (localStorage.getItem(SEED_MARK)) {
+      const broken = items.some((g) => typeof (g == null ? void 0 : g.appid) === "number" && !localStorage.getItem(`bz-sim:${FOLDER}/《${g.name}》.md`));
+      if (!broken) return;
+      localStorage.removeItem(SEED_MARK);
+    }
+    const base = 17e11;
+    const n = items.length;
+    items.forEach((g, i) => {
+      if (!g || !g.appid) return;
+      seedVaultFile(`${FOLDER}/《${g.name}》.md`, mdOf(g), base + (n - i) * 1e3);
+    });
+    localStorage.setItem(SEED_MARK, (/* @__PURE__ */ new Date()).toISOString());
+  }
+  var settingsStore = {
+    gameshelfFolderPath: FOLDER,
+    // 真机默认 CONFIG/游戏海报；壳里给空串 → posters.ts 回落默认目录（避免污染演示数据）
+    gameshelfPosterFolder: "",
+    gameshelfSteamId: "76561198366147295",
+    gameshelfSteamApiKey: "demo-key-not-a-secret-32chars-ok",
+    gameshelfAutoSync: true
+  };
+  function injectSettings() {
+    setSettingsProvider(() => settingsStore);
+    setSettingsSaver(async () => {
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));
+    });
+    setAISettingsProvider(() => settingsStore);
+  }
+  var simApp = null;
+  function bootGameshelfSim() {
     const g = window;
-    if (g.__bzSpSimBooted) return;
-    g.__bzSpSimBooted = true;
-    seedVault();
-    injectApp();
+    if (g.__bzGsSimBooted) return;
+    g.__bzGsSimBooted = true;
+    seedDatabase();
+    const app = new FakeApp();
+    simApp = app;
+    setApp(app);
     injectSettings();
+    attachObsidianAdapter(app);
+    ensureGameshelf(app);
   }
-  function ensureBoot() {
-    bootSettingsPanelSim();
+  function openGameshelf2() {
+    if (!simApp) bootGameshelfSim();
+    openGameshelf(simApp);
   }
-  function openPanel3() {
-    ensureBoot();
-    openSettingsPanel(simApp);
+  function closeGameshelf() {
+    closePanel4();
   }
-  function __simSettings() {
-    ensureBoot();
-    return simSettings;
+  function unloadGameshelfSim() {
+    unloadGameshelf();
+    simApp = null;
   }
   return __toCommonJS(fake_sim_exports);
 })();

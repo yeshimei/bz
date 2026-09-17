@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>游戏架 · 真行为实例</title>
+<!--
+  本页 = 游戏架行为单源评审壳的 iframe 视图（范式自 cinema/diary 适配）。
+  它不实现任何游戏架交互——只把真行为层跑起来：
+    - 载入同一份 CSS（与 build-css SOURCES 同序）：host-theme → core/styles →
+      core/ui/tokens → core/ui/components → gameshelf/styles
+    - 载入 prototype-behavior.js（真 ui.ts / notes.ts / sync.ts / steam.ts / detail.ts
+      依赖链，alias obsidian→fake）
+    - boot + openGameshelf：面板 append 到本页 body（iframe 即全屏视口），
+      桌面视图 = 1180px 面板居中；移动视图 412×915 = Platform.isMobile（视口判定）
+  宿主差异（笔记数据 / 图标 / 视口 / Steam 响应）由 fake/fake-obsidian 与
+  prototype-icons/data/detail.js 提供。
+  主题：?theme=dark 直达暗色；缺省亮色（本域评审默认亮色）。
+-->
+<link rel="stylesheet" href="../host-theme.css">
+<link rel="stylesheet" href="../../src/core/styles.css">
+<link rel="stylesheet" href="../../src/core/ui/tokens.css">
+<link rel="stylesheet" href="../../src/core/ui/components.css">
+<link rel="stylesheet" href="../../src/gameshelf/styles.css">
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script src="./prototype-detail.js"></script>
+<script src="./prototype-behavior.js"></script>
+<style>
+  /* iframe 内全屏面板：清掉 body 边距，让根遮罩铺满 */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+  /* 遮罩背后露出的是 Obsidian 工作区底 —— 用宿主 token，不写死颜色 */
+  body { background: var(--background-primary); font-family: var(--font-interface); }
+</style>
+</head>
+<body class="theme-light">
+<script>
+  (function () {
+    // 主题类必须与 host-theme.css 的 body.theme-light / body.theme-dark 对齐
+    // （外景壳按切换钮传参，直达 URL 时缺省亮色——本域评审默认亮色）
+    if (location.search.indexOf('theme=dark') >= 0) {
+      document.body.classList.remove('theme-light');
+      document.body.classList.add('theme-dark');
+    }
+    // 移动视图：模拟 Obsidian 移动端原生顶栏/底栏占位（约 44px+44px）在 webview 视口之外，
+    // 使 --bz-vvh 短于 100vh —— 真机上面板顶部会空出 44px（用户真机反馈 2026-09-10）。
+    // 壳按此口径模拟，复现顶距供评审；配合 .bz-panel-mtop 的顶部避让可见面板贴顶。
+    if (new URLSearchParams(location.search).get('mob')) {
+      document.documentElement.style.setProperty('--bz-vvh', 'calc(100vh - 88px)');
+    }
+    var B = window.BZW_gameshelf;
+    B.bootGameshelfSim();
+    B.openGameshelf();
+  })();
+</script>
+</body>
+</html>

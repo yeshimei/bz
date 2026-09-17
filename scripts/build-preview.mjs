@@ -104,7 +104,10 @@ export const PREVIEW_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook",
 // encrypt 行为产物（2026-09-12）：保险库域此前在原型侧缺席（只有 encrypt-lab 设计稿与
 //   password-vault 壳），接入后 encrypt/styles.css + 三资产工作台 + 锁屏走行为单源；
 //   该域无 render.ts（markup 全在 ui.ts 内拼），故只产行为包、不进 PREVIEW_DOMAINS。
-export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "encrypt", "diary", "favorites", "home", "knowledge", "memo", "password-vault", "pomodoro", "review", "secondbrain", "settings-panel"];
+// gameshelf 行为产物（2026-09-17）：游戏架域 UI 全在 ui.ts 内拼（无 render.ts），加 V1 海报墙
+//   落域后接入评审壳——真 requestUrl 换 Steam 响应罐头（prototypes/gameshelf/fake/fake-obsidian.ts），
+//   数据 = 真实 vault 147 篇游戏笔记快照 + 真 appdetails/成就响应回放；同样只产行为包。
+export const BEHAVIOR_DOMAINS = ["belongings", "bookshelf", "cinema", "clipbook", "encrypt", "diary", "favorites", "gameshelf", "home", "knowledge", "memo", "password-vault", "pomodoro", "review", "secondbrain", "settings-panel"];
 
 export async function buildBehavior(domain) {
   const entry = path.join(ROOT, "prototypes", domain, "fake-sim.ts");

@@ -204,6 +204,8 @@ export default interface BzSettings {
   // ===== 🎮 游戏架（gameshelf 域，issue 368：Steam 直连自动拉库，一作一笔记）=====
   /** 📁 游戏文件夹（游戏架域数据源；缺省回落「我的/游戏」） */
   gameshelfFolderPath: string;
+  /** 📁 游戏海报文件夹（封面 header.jpg 本地缓存目录；缺省回落「CONFIG/游戏海报」） */
+  gameshelfPosterFolder: string;
   /** 🎮 SteamID64（17 位数字；GetOwnedGames/GetRecentlyPlayedGames 查询主体） */
   gameshelfSteamId: string;
   /** 🎮 Steam Web API 密钥（steamcommunity.com/dev/apikey 免费申请；own key 查 own steamid 不受隐私限制） */
@@ -696,6 +698,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 游戏架（gameshelf，issue 368：Steam 直连自动拉库；目录缺省回落「我的/游戏」）
   gameshelfFolderPath: '我的/游戏',
+  gameshelfPosterFolder: '',
   gameshelfSteamId: '',
   gameshelfSteamApiKey: '',
   gameshelfAutoSync: true,

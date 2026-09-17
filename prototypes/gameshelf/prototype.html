@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>游戏架 · 原型预览（真行为单源）</title>
+<!--
+  ┌────────────────────────────────────────────────────────────────────────┐
+  │ 本文件 = 游戏架域 UI 的评审壳（行为单源版，issue 245/ADR-0106 范式）。     │
+  │ 组件样式零内联，全部来自（与 build-css SOURCES 同序）：                    │
+  │   ../host-theme.css（真实宿主 token，scripts/fetch-host-theme.mjs 生成）  │
+  │   → ../core/styles.css → ../core/ui/tokens.css → ./ui/components.css     │
+  │   → ../gameshelf/styles.css                                             │
+  │ 行为单源：交互逻辑全部是插件同款 ui.ts 依赖链——经 ./prototype-behavior.js  │
+  │   （prototypes/gameshelf/fake-sim.ts 构建，alias obsidian→fake 假层）      │
+  │   在两个 iframe 视图里跑真行为：                                          │
+  │   桌面 iframe 1280×900 = 1180px 面板居中；移动 iframe 412×915 =           │
+  │   Platform 视口判定 → 移动布局（物理 1:1，见 ../mob-1to1.js）。            │
+  │ 数据 = 真实 vault 147 篇游戏笔记快照（localStorage 文件系统，跨 iframe     │
+  │   storage 桥同步）；Steam 响应 = 真响应罐头回放（见 PROTOTYPE.md）。        │
+  │ 主题：默认亮色，按钮切暗色（宿主体 theme-light/theme-dark 三端同步）。       │
+  │ 壳内只允许：外景容器样式、评审徽牌、演示钩子与自检。                        │
+  └────────────────────────────────────────────────────────────────────────┘
+-->
+<link rel="stylesheet" href="../mob-1to1.css">
+<script src="../mob-1to1.js"></script>
+<style>
+  /* ===== 以下全部是演示壳，禁止放组件样式 ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; gap: 26px;
+    padding: 28px 20px 60px; background: #dcd8cd;
+    font-family: system-ui, 'Segoe UI', 'Microsoft YaHei', sans-serif; }
+  /* 模拟 Obsidian 宿主变量（core 弹层/菜单取值用；插件内由主题提供） */
+  body {
+    --background-primary: #fbf9f3; --text-normal: #171512; --text-muted: #8b8474; --text-faint: #b3ab99;
+    --text-error: #b3564d; --background-modifier-hover: rgba(23,21,18,.06); --color-green: #3d8f5d;
+    --background-modifier-border: rgba(23,21,18,.12); --background-modifier-cover: rgba(0,0,0,.32);
+    --interactive-normal: #fff; --interactive-accent: #e67341; --shadow-s: 0 1px 3px rgba(0,0,0,.1);
+  }
+  body.theme-dark {
+    background: #17171b;
+    --background-primary: #1e1e24; --text-normal: #e8e8ec; --text-muted: #9a9aa5; --text-faint: #6c6c78;
+    --background-modifier-hover: rgba(255,255,255,.07); --background-modifier-border: rgba(255,255,255,.12);
+    --background-modifier-cover: rgba(0,0,0,.6);
+  }
+  * { scrollbar-width: none; } *::-webkit-scrollbar { display: none; }
+
+  .title { font-size: 13px; color: #7c7566; }
+  body.theme-dark .title { color: #8f8f9a; }
+
+  /* 桌面外景（真行为 iframe：面板 append iframe body，视口宽决定面板宽度） */
+  .demo-dt { flex: none; width: 1280px; height: 900px; }
+  /* 移动外景 412×915 → 物理 1:1（缩放只走 transform，不改 iframe 尺寸，见 mob-1to1.css）。
+     ⚠️ 边框用 box-shadow 画（border 会吃掉 2px 内容宽 → iframe 视口变 410，移动端
+     「满幅」断言与真机 412 对不上；shadow 不参与布局）。 */
+  .demo-mob { width: 412px; height: 915px; border-radius: 26px; overflow: hidden; flex: none;
+    box-shadow: 0 0 0 1px #b8b0a0, 0 8px 30px rgba(0,0,0,.16); background: #f5f2ec; }
+  body.theme-dark .demo-mob { box-shadow: 0 0 0 1px #3a3a44, 0 8px 30px rgba(0,0,0,.5); background: #22222a; }
+  .demo-frame { width: 100%; height: 100%; border: 0; display: block; }
+
+  /* 评审徽牌（演示壳自用） */
+  .vbadge { position: fixed; right: 16px; bottom: 12px; font-size: 11px; color: #6d6659; display: flex; gap: 10px; align-items: center;
+    background: rgba(255,255,255,.94); border: 1px solid #c9c2b2; padding: 4px 9px; z-index: 900; border-radius: 6px; }
+  body.theme-dark .vbadge { background: rgba(34,34,42,.95); border-color: #43434f; color: #a9a9b4; }
+  .vbadge button { border: none; background: none; color: #a8402f; font: 11px 'Microsoft YaHei'; cursor: pointer; padding: 0; }
+  body.theme-dark .vbadge button { color: #e9a08a; }
+  .vbadge .ok { color: #2f7d4d; }
+  .vbadge .bad { color: #b3564d; }
+</style>
+</head>
+<body class="theme-light">
+  <div class="title" id="title">游戏架 · 真行为单源预览（桌面 1280×900 · 移动 412×915 物理 1:1 · 默认亮色）</div>
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="游戏架·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="游戏架·移动"></iframe></div></div>
+
+  <div class="vbadge">
+    <button id="themeToggle">切到暗色</button>
+    <button id="mobToggle">隐藏移动端</button>
+    <button id="reset">重置演示数据</button>
+    <span id="stResult"></span>
+  </div>
+
+<script src="./prototype-icons.js"></script>
+<script src="./prototype-data.js"></script>
+<script src="./prototype-detail.js"></script>
+<script>
+(function () {
+  /* ==================== 壳基座（仅外景）：两个真行为 iframe + storage 桥 ====================
+   * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
+   *  - 数据基座（GAMESHELF_DATA / GAMESHELF_DETAIL 经父页全局供 fake 层读）
+   *  - 亮暗切换（默认亮色；三端同步 body 主题类）
+   *  - 重置演示数据（清 localStorage bz-sim:* 后重载）
+   *  - 自检（?selftest=1）：经 iframe contentDocument 访问真 DOM 断言
+   */
+  const DATA = window.GAMESHELF_DATA || [];
+
+  const resetSim = () => {
+    const kill = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith('bz-sim:')) kill.push(k);
+    }
+    kill.forEach((k) => localStorage.removeItem(k));
+  };
+
+  const dtFrame = () => document.querySelector('#dtHost iframe');
+  const mobFrame = () => document.querySelector('#mobHost iframe');
+  const dtDoc = () => dtFrame().contentDocument;
+  const mobDoc = () => mobFrame().contentDocument;
+  // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
+  // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
+  const waitFrame = (getDoc, sel) => new Promise((res, rej) => {
+    const started = Date.now();
+    const tries = () => {
+      try {
+        const doc = getDoc();
+        if (doc && doc.querySelector(sel)) return res(doc);
+        if (Date.now() - started > 25000) return rej(new Error('iframe 面板超时'));
+        setTimeout(tries, 150);
+      } catch (e) { setTimeout(tries, 150); }
+    };
+    tries();
+  });
+
+  /* ---------- 亮暗切换（缺省亮色；文案按当前态，不做三态跟随系统） ---------- */
+  const applyTheme = () => {
+    const dark = document.documentElement.classList.contains('theme-dark');
+    document.body.className = dark ? 'theme-dark' : 'theme-light';
+    for (const f of [dtFrame(), mobFrame()]) {
+      try {
+        const d = f && f.contentDocument;
+        if (d && d.body) d.body.className = dark ? 'theme-dark' : 'theme-light';
+      } catch (e) { /* 未加载跳过 */ }
+    }
+    document.querySelector('#themeToggle').textContent = dark ? '切回亮色' : '切到暗色';
+  };
+  document.querySelector('#themeToggle').addEventListener('click', () => {
+    document.documentElement.classList.toggle('theme-dark');
+    applyTheme();
+  });
+  // iframe 首载晚于壳脚本：加载完成后补一次主题（切到暗色后重置 iframe 也不会掉回亮色）
+  for (const sel of ['#dtHost iframe', '#mobHost iframe']) {
+    const f = document.querySelector(sel);
+    if (f) f.addEventListener('load', () => { try { applyTheme(); } catch (e) { /* noop */ } });
+  }
+  applyTheme();
+
+  document.querySelector('#mobToggle').addEventListener('click', () => {
+    const m = document.querySelector('#mobHost');
+    const hidden = m.style.display === 'none';
+    m.style.display = hidden ? '' : 'none';
+    document.querySelector('#mobToggle').textContent = hidden ? '隐藏移动端' : '显示移动端';
+  });
+
+  document.querySelector('#reset').addEventListener('click', () => {
+    resetSim();
+    location.reload();
+  });
+
+  /* ==================== 自检（?selftest=1）：真行为 DOM 断言（经 iframe） ==================== */
+  if (location.search.includes('selftest')) {
+    window.__st = { pass: 0, fail: [] };
+    const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    (async () => {
+      const res = document.querySelector('#stResult');
+      try {
+        // 基线：种子数 = 数据条数（残留脏数据先重置重载一次）
+        const countSimMd = () => {
+          let n = 0;
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k && k.startsWith('bz-sim:我的/游戏/') && k.endsWith('.md')) n++;
+          }
+          return n;
+        };
+        if (countSimMd() !== DATA.length && !location.search.includes('reset=1')) {
+          resetSim();
+          location.search = '?selftest=1&reset=1';
+          return;
+        }
+        const dd = await waitFrame(dtDoc, '.bz-gs-panel');
+        const md = await waitFrame(mobDoc, '.bz-gs-panel');
+        res.textContent = '…';
+        const dt = (sel) => dd.querySelector(sel);
+        const mob = (sel) => md.querySelector(sel);
+        const cards = (doc) => doc.querySelectorAll('.bz-gs-card').length;
+
+        t('桌面面板开', !!dt('.bz-gs-panel') && !!dt('.bz-main-head'));
+        t('移动面板开', !!mob('.bz-gs-panel') && !!mob('.bz-main-head'));
+        t('面板挂 bz-panel-mtop', dt('.bz-gs-panel').classList.contains('bz-panel-mtop'));
+        // view 页 CSS 链生效（曾因 ../../ 深度写错静默 404 → 面板透明）
+        const cssAlive = (doc) => {
+          const sec = doc.querySelector('.bz-gs-panel');
+          const bg = getComputedStyle(sec).backgroundColor;
+          let sheets = 0;
+          for (const s of doc.styleSheets) { try { if (s.cssRules.length > 0) sheets++; } catch (e) { /* 跨域忽略 */ } }
+          return bg !== 'rgba(0, 0, 0, 0)' && sheets >= 5;
+        };
+        t('view页CSS链生效', cssAlive(dd) && cssAlive(md));
+        t('桌面 147 卡', cards(dd) === DATA.length);
+        t('移动 147 卡', cards(md) === DATA.length);
+        t('门面渲染首位', !!dt('.bz-gs-hero-name') && dt('.bz-gs-hero-name').textContent === DATA[0].name);
+        t('工具行 6 档位 chips', dd.querySelectorAll('.bz-gs-chip').length === 6);
+        t('排序三档', dd.querySelectorAll('#bz-gs-sort .bz-segmented-btn').length === 3);
+
+        // 档位筛选：从未启动（种子 13 款）——口径从种子现算，不硬编码
+        const idle = DATA.filter((g) => !g.min).length;
+        dt('.bz-gs-chip[data-k="idle"]').click();
+        await sleep(120);
+        t('从未启动筛选 ' + idle + ' 卡', cards(dd) === idle && dt('.bz-gs-chip[data-k="idle"]').classList.contains('bz-chip--sel'));
+        dt('.bz-gs-chip[data-k="all"]').click();
+        await sleep(120);
+        t('回全部 ' + DATA.length + ' 卡', cards(dd) === DATA.length);
+
+        // 搜索（只重填列表，输入框不重建）
+        const q = dt('.bz-gs-search input');
+        q.value = 'Deep Rock';
+        q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(150);
+        const hits = DATA.filter((g) => g.name.toLowerCase().includes('deep rock')).length;
+        t('搜索命中 ' + hits + ' 卡', cards(dd) === hits && dt('.bz-gs-search input') === q);
+        q.value = '';
+        q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(120);
+
+        // 排序：名称升序 → 首位应为 zh 排序最小者
+        dt('#bz-gs-sort .bz-segmented-btn:nth-child(3)').click();
+        await sleep(120);
+        const firstName = [...DATA].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'))[0].name;
+        t('名称排序首位=' + firstName, dt('.bz-gs-hero-name').textContent === firstName);
+        dt('#bz-gs-sort .bz-segmented-btn:nth-child(1)').click();
+        await sleep(120);
+
+        // 数据统计页（注意：Document 没有 textContent——要用 dd.body.textContent）
+        dd.querySelectorAll('.bz-main-head .bz-segmented-btn')[1].click();
+        await sleep(200);
+        t('统计页 5 张统计卡', dd.querySelectorAll('.bz-stat').length === 5);
+        t('统计页含排行与分布', !!dt('.bz-gs-rows') && !!dt('.bz-gs-cols') && dd.body.textContent.includes('时长档位分布'));
+        t('统计页口径注记', dd.body.textContent.includes('没有逐日游玩时长'));
+        const top0 = [...DATA].sort((a, b) => b.min - a.min)[0];
+        t('排行首位=' + top0.name, dt('.bz-gs-rankname').textContent === top0.name);
+        dd.querySelectorAll('.bz-main-head .bz-segmented-btn')[0].click();
+        await sleep(200);
+        t('切回游戏墙', cards(dd) === DATA.length);
+
+        // 详情弹窗：真实 appdetails + 成就罐头（走假 requestUrl）
+        const first = DATA[0];
+        dt('.bz-gs-card').click();
+        await sleep(600);
+        const modal = dt('.bz-gs-detail-modal');
+        t('详情弹窗开', !!modal && modal.textContent.includes(first.name));
+        t('详情含我的游玩数据', !!dt('.bz-gs-mine-num') && !!dt('.bz-gs-detail-appid'));
+        await sleep(900); // 等商店/成就两段回填
+        const storeTxt = (dt('#bz-gs-detail-store') || {}).textContent || '';
+        const achTxt = (dt('#bz-gs-detail-ach') || {}).textContent || '';
+        t('资料段已填', storeTxt.includes('开发商') && storeTxt.includes('在商店打开'));
+        t('成就段已填', achTxt.includes('成就') && !achTxt.includes('加载中'));
+        // 弹窗打开时统计页那套 class 不该串进来（.bz-gs-rankrow 只在统计页）
+        dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await sleep(150);
+        t('ESC 关弹窗留面板', !!dt('.bz-gs-panel') && !dt('.bz-gs-detail-modal'));
+        dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+        await sleep(150);
+        t('ESC 再关面板', !dt('.bz-gs-panel'));
+
+        // 移动端：真全屏（宽度 = iframe 视口宽）
+        const w = getComputedStyle(mob('.bz-gs-panel')).width;
+        t('移动面板满幅 ' + w, Math.abs(parseFloat(w) - 412) < 1);
+        t('移动端门面收窄', !!mob('.bz-gs-hero'));
+
+        document.title = window.__st.fail.length
+          ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
+          : 'SELFTEST OK ' + window.__st.pass + '/' + (window.__st.pass + window.__st.fail.length);
+        res.textContent = window.__st.fail.length ? '自检失败' : '自检通过 ' + window.__st.pass;
+        res.className = window.__st.fail.length ? 'bad' : 'ok';
+      } catch (err) {
+        // 带上已通过的断言数：pass+1 就是挂掉的那条（省得再来一次二分排查）
+        const msg = (err && err.message) || err;
+        document.title = 'SELFTEST ERR@' + window.__st.pass + ' ' + msg;
+        res.textContent = '自检异常 @' + window.__st.pass + ' ' + msg;
+        res.className = 'bad';
+      }
+    })();
+  }
+})();
+</script>
+</body>
+</html>
