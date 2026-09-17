@@ -1,4 +1,4 @@
-/* 源指纹 194c229e99a43c5a · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5bfb94b4a583c19b · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -6564,7 +6564,7 @@ var BZW_belongings = (() => {
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask bz-bel-report-mask";
     mask.innerHTML = `
-  <div class="bz-bel-report" role="dialog" aria-label="归物本年度资产报告">
+  <div class="bz-bel-report bz-panel-mtop" role="dialog" aria-label="归物本年度资产报告">
     <div class="bz-bel-report-head">
       <div class="bz-bel-report-title">年度资产报告</div>
       <div class="bz-bel-report-nav">
@@ -6753,7 +6753,7 @@ var BZW_belongings = (() => {
     return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ""}</div>`;
   }
   function summaryHtml(stats) {
-    const card = (num, label, color) => `<div class="bz-belr-hero" style="background:${color}">
+    const card = (num, label, color) => `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
       <b>${esc(num)}</b><span>${esc(label)}</span>
     </div>`;
     return `<div class="bz-belr-sec">

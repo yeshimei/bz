@@ -13,6 +13,9 @@
  * 年份切换（‹ ›）：头部导航在「有记录年份」间移动，切换即作废在途重渲。
  * 数据层 = ./report-stats 纯函数（belongings.json 只读派生）；图表配色 = core/chart-palette。
  * 本文件不 import ./ui（空态「记一笔」动作经 opts.onAdd 注入，避免环依赖）。
+ * issue 356 真机回归批：面板挂 .bz-panel-mtop（移动端真全屏 + 44px 顶部避让，桌面不生效，
+ *   对照 secondbrain/panel.ts 与域内主面板挂法）；概览 KPI 卡文字显式取 CHART_INK
+ *   （粉彩底不翻主题，继承壳墨色会在暗色下翻成米白 → 看不清）。
  */
 import { yieldToMainThread as yieldToMainThreadCore } from '../core/utils';
 import { notify } from '../core/notice';
@@ -87,7 +90,7 @@ export function openBelReport(items: BelongingsItem[], unit: MoneyUnit, opts: { 
   const mask = document.createElement('div');
   mask.className = 'bz-overlay-mask bz-bel-report-mask';
   mask.innerHTML = `
-  <div class="bz-bel-report" role="dialog" aria-label="归物本年度资产报告">
+  <div class="bz-bel-report bz-panel-mtop" role="dialog" aria-label="归物本年度资产报告">
     <div class="bz-bel-report-head">
       <div class="bz-bel-report-title">年度资产报告</div>
       <div class="bz-bel-report-nav">
@@ -331,10 +334,13 @@ function secHead(title: string, note = ''): string {
   return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ''}</div>`;
 }
 
-/** 概览：当年购入件数/金额 + 离场件数/回血（粉彩底 + 深墨字，两主题一致） */
+/** 概览：当年购入件数/金额 + 离场件数/回血（粉彩底 + 深墨字，两主题一致）。
+ *  文字色必须显式取 CHART_INK：粉彩底不随主题翻转（chart-palette 契约），若让文字继承
+ *  壳的 --bz-bel-ink，暗色下翻成米白 → 粉彩底上看不清（issue 356 真机回归）。陪伴榜
+ *  徽章同款先例（background + color:${CHART_INK} 内联成对出现）。 */
 function summaryHtml(stats: YearReportStats): string {
   const card = (num: string, label: string, color: string) =>
-    `<div class="bz-belr-hero" style="background:${color}">
+    `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
       <b>${esc(num)}</b><span>${esc(label)}</span>
     </div>`;
   return `<div class="bz-belr-sec">

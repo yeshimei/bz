@@ -201,6 +201,20 @@ describe('年度报告页渲染（body 级 mask）', () => {
     expect(body()!.textContent).toContain('购入件数');
   });
 
+  it('移动端面板规范挂载：popup 带 bz-panel-mtop（移动真全屏 + 44px 顶部避让，桌面不生效）；关闭钮在位、遮罩点击可关', () => {
+    openBelReport(seedItems(), 'cny');
+    const popup = document.querySelector('.bz-bel-report') as HTMLElement;
+    expect(popup).toBeTruthy();
+    // 真机回归（issue 356）：报告层原先只挂遮罩无 mtop → 移动端页面顶到 Obsidian 头部
+    expect(popup.classList.contains('bz-panel-mtop'), '报告 popup 未挂 .bz-panel-mtop').toBe(true);
+    // 移动全屏后没有遮罩可点，关闭钮是唯一出口，必须在位
+    expect(popup.querySelector('[data-belr-close]'), '移动全屏后关闭钮必须在位').toBeTruthy();
+    // 桌面语义保留：点遮罩（popup 之外）直接关
+    mask()!.click();
+    expect(mask()).toBeNull();
+    expect(isBelReportOpen()).toBe(false);
+  });
+
   it('面板工具行入口：点 data-bel-report 开报告；closePanel 连带收口', async () => {
     const vault = seedVault(seedItems());
     setApp({ vault } as any);
