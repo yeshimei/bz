@@ -675,9 +675,14 @@ function createUI(app: App): void {
   bindMediaFallback(body);
   frame.appendChild(body);
 
+  // ⚠️ frame **必须是遮罩的子节点**：居中的是 .bz-panel-overlay（position:fixed inset:0
+  // + flex 居中），.bz-panel-frame 只是 position:relative、自身没有任何定位——
+  // 把它挂到 body 上会落进文档流，真机里 Obsidian 的 .app-container 已占满一屏，
+  // frame 被排到视口下方 → 用户看到「只有遮罩层，没有主窗口」（2026-09-17 真机反馈）。
+  // 其余 13 域同款：frame 一律是 overlay 内部的子节点。
+  mask.appendChild(frame);
   document.body.appendChild(mask);
-  document.body.appendChild(frame);
-  topifyZ(mask, frame);
+  topifyZ(mask); // 层档只发给遮罩；frame 作为其子节点随父级层叠
   maskEl = mask;
   popupEl = frame;
   M.currentOverlay = frame;
