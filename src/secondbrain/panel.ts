@@ -31,7 +31,7 @@ import type { VectorStore } from './vector-store';
 import { parsePathList, formatPathList } from './whitelist';
 import { getLanIPs, formatRemoteOllamaUrl, pickPrimaryLanIp } from './local-ip';
 import { loadStore } from './store-file';
-import { renderPanelWeeklyCard } from './weekly-ui';
+import { openWeeklyDigest, renderPanelWeeklyCard } from './weekly-ui';
 import {
   panelShellHtml,
   panelCardsHtml,
@@ -329,6 +329,9 @@ export class SecondBrainPanel {
       this.close();
       this.opts.onOpenReference();
     });
+    // 本周知识动态（issue 360 真机回归）：只读挂入口——点开详情弹层叠在面板上，
+    // 主面板不关不动（区别于对话/参考的跳转语义）
+    popup.querySelector('#bz-sb-weekly-open')?.addEventListener('click', () => openWeeklyDigest(this.app));
 
     // 底部操作：手动增量 / 全量重建（flow 确认，同设置页「重新索引」语义）
     popup.querySelector('#bz-sb-incr')?.addEventListener('click', () => {

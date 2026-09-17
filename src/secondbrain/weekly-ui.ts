@@ -10,7 +10,8 @@
  * - 命令入口（bz-secondbrain-weekly 本周知识动态）：打开弹层同时强制重聚一轮（不等周界），
  *   聚合期间弹层先垫聚合中态，完成后原位刷新；
  * - 主面板入口卡：panel.ts 在 loadSummaryAndLinks 里调 renderPanelWeeklyCard 回填，
- *   点击同样打开详情弹层（面板结构最小侵入——右栏 AI 摘要卡下方一枚只读卡）。
+ *   点击同样打开详情弹层（面板结构最小侵入——右栏 AI 摘要卡下方一枚只读卡）；
+ *   另有头行图标钮 bz-sb-weekly-open（issue 360，panel.createUI 绑定，只读不动面板结构）。
  */
 import type { App, TFile } from 'obsidian';
 import { createOverlay } from '../core/dom';
@@ -139,7 +140,8 @@ function ensureModal(app: App): void {
     width: '560px',
     maxWidth: 560,
   });
-  popup.classList.add('bz-sb-weekly-modal');
+  // bz-panel-mtop（issue 360 真机回归）：移动端真全屏 + 44px 顶部避让（panel.ts:311 同范式，桌面不生效）
+  popup.classList.add('bz-sb-weekly-modal', 'bz-panel-mtop');
   popup.innerHTML = weeklyShellHtml('');
   overlayEl = popup;
   document.body.appendChild(mask);

@@ -84,8 +84,9 @@ describe('主面板 markup', () => {
       expect(html).toContain(`id="${id}"`);
     }
     expect(html).toContain('data-lucide="brain"');
-    expect(html.match(/bz-sb-panel-func/g)!.length).toBe(3); // 功能钮 + 关闭钮（issue 272）
+    expect(html.match(/bz-sb-panel-func/g)!.length).toBe(4); // 周报入口 + 对话 + 参考 + 关闭（issue 272/360）
     expect(html).toContain('id="bz-sb-panel-close"');
+    expect(html).toContain('id="bz-sb-weekly-open"'); // 本周知识动态头行入口（issue 360）
   });
 
   it('统计带/趋势/树/最近/摘要/日志构建器', () => {
