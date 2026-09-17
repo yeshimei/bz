@@ -14,7 +14,7 @@
  *   另有头行图标钮 bz-sb-weekly-open（issue 360，panel.createUI 绑定，只读不动面板结构）。
  */
 import type { App, TFile } from 'obsidian';
-import { createOverlay } from '../core/dom';
+import { createOverlay, topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { mountIcons } from '../core/ui';
 import { notice, notify } from '../core/notice';
@@ -43,6 +43,12 @@ export function __setWeeklyScheduleDelayMsForTests(ms: number): void {
 export const WEEKLY_NOTICE_KEY = 'bz-sb-weekly-digest';
 
 let scheduleTimer: ReturnType<typeof setTimeout> | null = null;
+
+/**
+ * 卸载代际（P3 审查修复）：unloadWeeklyDigest 即自增——在途 runWeeklyIfDue 的完成回调
+ * 比对代际，不同则静默丢弃（卸载后聚合结果不再弹通知打扰）。
+ */
+let weeklyRunGeneration = 0;
 
 /**
  * 启动后延迟调度（index.ensureSecondBrain 调用）：等索引装载完成再聚合——
@@ -81,10 +87,12 @@ export function cancelWeeklySchedule(): void {
  *  opts 透传 runWeeklyDigest（测试注入 probe/askAI 免真实网络与 AI 配置）。 */
 export async function runWeeklyIfDue(app: App, store: WeeklyStoreLike, opts: WeeklyRunOptions = {}): Promise<void> {
   appRef = app; // 通知「查看详情」动作的无参出口依赖它（用户可能从未手动打开过弹层）
+  const gen = weeklyRunGeneration;
   const result = await runWeeklyDigest(store, {
     askAI: (p) => AI.ask(p),
     ...opts,
   });
+  if (gen !== weeklyRunGeneration) return; // 聚合在途时发生卸载：本轮结果静默丢弃，不再弹通知
   if (result.status === 'done' && result.digest) notifyWeeklyDigest(result.digest);
 }
 
@@ -105,11 +113,11 @@ export async function runWeeklyManual(app: App, store: WeeklyStoreLike, opts: We
   }
 }
 
-/** 有实质内容的完成态通知：正文计数（不带 emoji），「查看详情」打开弹层 */
+/** 有实质内容的完成态通知：一句自然句（CONTEXT.md 通知文案规范③，不用「·」拼符号串），「查看详情」打开弹层 */
 export function notifyWeeklyDigest(digest: WeeklyDigest): void {
   const parts = [`新增笔记 ${digest.newNotes.length} 篇`, `新增关联 ${digest.newLinks.length} 条`];
   if (digest.collisions.length > 0) parts.push(`${digest.collisions.length} 篇与既有内容高度重合`);
-  notify(parts.join(' · '), {
+  notify(`本周${parts.join('，')}。`, {
     type: 'info',
     title: '本周知识动态',
     duration: 8000,
@@ -121,6 +129,7 @@ export function notifyWeeklyDigest(digest: WeeklyDigest): void {
 // ---------------- 详情弹层 ----------------
 
 let overlayEl: HTMLElement | null = null;
+let maskEl: HTMLElement | null = null;
 let escHandle: { unregister(): void } | null = null;
 /** 弹层持有 app（跳转笔记用；由 open 入口注入） */
 let appRef: App | null = null;
@@ -129,51 +138,56 @@ let renderSeq = 0;
 
 function ensureModal(app: App): void {
   appRef = app;
-  if (overlayEl) {
-    overlayEl.style.display = 'flex'; // 复用重开：重新显示（z 号创建时已发，clipbook 报告页同法）
-    return;
+  if (!overlayEl) {
+    const { mask, popup } = createOverlay({
+      maskId: 'bz-sb-weekly-mask',
+      popupId: 'bz-sb-weekly-panel',
+      onMaskClick: () => closeWeeklyDigest(),
+      width: '560px',
+      maxWidth: 560,
+    });
+    // bz-panel-mtop（issue 360 真机回归）：移动端真全屏 + 44px 顶部避让（panel.ts:311 同范式，桌面不生效）
+    popup.classList.add('bz-sb-weekly-modal', 'bz-panel-mtop');
+    popup.innerHTML = weeklyShellHtml('');
+    overlayEl = popup;
+    maskEl = mask;
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+
+    popup.querySelector('#bz-sb-weekly-close')?.addEventListener('click', () => closeWeeklyDigest());
+
+    // 行跳转委托：新增笔记 / 新增关联行点任意处跳；撞车行仅两段名字段各跳各的
+    //（行容器不带 data-path——点行其余处不跳，closest 取最内层 data-path）
+    const body = popup.querySelector('#bz-sb-weekly-body') as HTMLElement | null;
+    const jump = (path: string): void => {
+      const f = appRef?.vault.getAbstractFileByPath(path);
+      if (f) void appRef!.workspace.getLeaf(false).openFile(f as TFile);
+      else notice('文件不存在或已被移动', 'info');
+    };
+    body?.addEventListener('click', (e) => {
+      const el = (e.target as HTMLElement).closest('[data-path]') as HTMLElement | null;
+      if (el?.dataset.path) jump(el.dataset.path);
+    });
+    body?.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      const el = (e.target as HTMLElement).closest('[data-path]') as HTMLElement | null;
+      if (el?.dataset.path) {
+        e.preventDefault();
+        jump(el.dataset.path);
+      }
+    });
+
+    escHandle = escManager.register('bz-sb-weekly-modal', {
+      isVisible: () => !!overlayEl && overlayEl.style.display === 'flex' && overlayEl.isConnected,
+      close: () => closeWeeklyDigest(),
+    });
   }
-  const { mask, popup } = createOverlay({
-    maskId: 'bz-sb-weekly-mask',
-    popupId: 'bz-sb-weekly-panel',
-    onMaskClick: () => closeWeeklyDigest(),
-    width: '560px',
-    maxWidth: 560,
-  });
-  // bz-panel-mtop（issue 360 真机回归）：移动端真全屏 + 44px 顶部避让（panel.ts:311 同范式，桌面不生效）
-  popup.classList.add('bz-sb-weekly-modal', 'bz-panel-mtop');
-  popup.innerHTML = weeklyShellHtml('');
-  overlayEl = popup;
-  document.body.appendChild(mask);
-  document.body.appendChild(popup);
-  popup.style.display = 'flex';
-
-  popup.querySelector('#bz-sb-weekly-close')?.addEventListener('click', () => closeWeeklyDigest());
-
-  // 行跳转委托：新增笔记 / 新增关联行点任意处跳；撞车行点名字段各跳各的（closest 取最内层 data-path）
-  const body = popup.querySelector('#bz-sb-weekly-body') as HTMLElement | null;
-  const jump = (path: string): void => {
-    const f = appRef?.vault.getAbstractFileByPath(path);
-    if (f) void appRef!.workspace.getLeaf(false).openFile(f as TFile);
-    else notice('文件不存在或已被移动', 'info');
-  };
-  body?.addEventListener('click', (e) => {
-    const el = (e.target as HTMLElement).closest('[data-path]') as HTMLElement | null;
-    if (el?.dataset.path) jump(el.dataset.path);
-  });
-  body?.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    const el = (e.target as HTMLElement).closest('[data-path]') as HTMLElement | null;
-    if (el?.dataset.path) {
-      e.preventDefault();
-      jump(el.dataset.path);
-    }
-  });
-
-  escHandle = escManager.register('bz-sb-weekly-modal', {
-    isVisible: () => !!overlayEl && overlayEl.style.display === 'flex' && overlayEl.isConnected,
-    close: () => closeWeeklyDigest(),
-  });
+  // 首开与复用统一「显示 + 发号」（P1 审查修复）：遮罩随弹层显隐（chat-panel.ts show/close 同范式），
+  // 「遮罩点击关闭」才真实可达；topifyZ 每次显示重发号（ADR-0067）——主面板每次 open 都重发号，
+  // 弹层复用重开必须跟着重发，否则后开的面板盖住弹层「点了没反应」、ESC 先关面板才露出。
+  topifyZ(maskEl, overlayEl);
+  if (maskEl) maskEl.style.display = 'block';
+  overlayEl!.style.display = 'flex';
 }
 
 /**
@@ -203,10 +217,12 @@ function openWeeklyDigestFromApp(): void {
 function closeWeeklyDigest(): void {
   renderSeq++;
   if (overlayEl) overlayEl.style.display = 'none';
+  if (maskEl) maskEl.style.display = 'none';
 }
 
 /** 卸载清理（index.unloadSecondBrain 经 cancelWeeklySchedule 间接调用亦可；此处供显式摘除 DOM） */
 export function unloadWeeklyDigest(): void {
+  weeklyRunGeneration++; // 在途 runWeeklyIfDue 完成回调比对代际后静默丢弃（卸载后不再弹通知）
   cancelWeeklySchedule();
   if (escHandle) {
     try {
@@ -218,8 +234,13 @@ export function unloadWeeklyDigest(): void {
   }
   overlayEl?.remove();
   overlayEl = null;
+  maskEl?.remove();
+  maskEl = null;
   appRef = null;
 }
+
+/** 弹层列表展示上限（数据层落盘上限 WEEKLY_MAX_LIST=200，展示取最近 N 条，超出补脚注） */
+const WEEKLY_UI_LIST_CAP = 30;
 
 /**
  * 渲染弹层内容：头行区间 + 概要（AI 文案或计数总览）+ 三段列表（撞车节置顶提醒）。
@@ -266,17 +287,23 @@ function showWeeklyModal(digest: WeeklyDigest | null, opts?: { loading?: boolean
   }
   if (digest.newNotes.length > 0) {
     const rows = digest.newNotes
-      .slice(0, 30)
+      .slice(0, WEEKLY_UI_LIST_CAP)
       .map((n) => weeklyNoteRowHtml(n.path, nameOf(n.path), formatRelativeTime(n.mtime)))
       .join('');
     sections.push(weeklySectionHtml('bz-sb-weekly-notes', 'file-plus', '新增笔记', digest.newNotes.length, rows));
+    if (digest.newNotes.length > WEEKLY_UI_LIST_CAP) {
+      sections.push(`<div class="bz-sb-weekly-empty">新增笔记较多，仅显示最近 ${WEEKLY_UI_LIST_CAP} 条。</div>`);
+    }
   }
   if (digest.newLinks.length > 0) {
     const rows = digest.newLinks
-      .slice(0, 30)
+      .slice(0, WEEKLY_UI_LIST_CAP)
       .map((l) => weeklyNoteRowHtml(l.path, nameOf(l.path), formatRelativeTime(l.linkedAt)))
       .join('');
     sections.push(weeklySectionHtml('bz-sb-weekly-links', 'link', '新增关联', digest.newLinks.length, rows));
+    if (digest.newLinks.length > WEEKLY_UI_LIST_CAP) {
+      sections.push(`<div class="bz-sb-weekly-empty">新增关联较多，仅显示最近 ${WEEKLY_UI_LIST_CAP} 条。</div>`);
+    }
   }
   if (digest.newNotes.length + digest.newLinks.length + digest.collisions.length === 0) {
     sections.push(weeklyEmptyHtml());
@@ -316,7 +343,8 @@ export function renderPanelWeeklyCard(popup: HTMLElement, app: App, digest: Week
   }
   const range = popup.querySelector('#bz-sb-weekly-range') as HTMLElement | null;
   const txt = popup.querySelector('#bz-sb-weekly-card-txt') as HTMLElement | null;
-  if (range) range.textContent = formatDigestRange(digest.since, digest.until);
+  // 「最近一份」前缀（审查修复）：空轮后入口卡回放的是上一份非空摘要，不冒充当周动态
+  if (range) range.textContent = `最近一份（${formatDigestRange(digest.since, digest.until)}）`;
   if (txt) {
     const parts = [`${digest.newNotes.length} 篇新增`, `${digest.newLinks.length} 条关联`];
     if (digest.collisions.length > 0) parts.push(`${digest.collisions.length} 处撞车`);

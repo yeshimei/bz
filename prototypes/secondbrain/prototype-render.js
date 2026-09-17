@@ -1,4 +1,4 @@
-/* 源指纹 f7c5f602ad20fac1 · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 03c6bc6532d691ec · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/secondbrain/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/secondbrain/render.ts → window.BZR_secondbrain（评审壳预览包，ADR-0104） */
 var BZR_secondbrain = (() => {
@@ -296,7 +296,7 @@ var BZR_secondbrain = (() => {
     return `<div class="bz-sb-weekly-row" data-path="${escapeHtml(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot"></span><span class="bz-sb-weekly-row-name">${escapeHtml(name)}</span><span class="bz-sb-weekly-row-time">${escapeHtml(when)}</span></div>`;
   }
   function weeklyCollisionRowHtml(path, name, targetPath, targetName, pct) {
-    return `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit" data-path="${escapeHtml(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span><span class="bz-sb-weekly-row-name">${escapeHtml(name)}</span><span class="bz-sb-weekly-row-hit-arrow">${ic("arrow-right", 12)}</span><span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml(targetPath)}">${escapeHtml(targetName)}</span><span class="bz-sb-weekly-row-pct">${pct}%</span></div>`;
+    return `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit"><span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span><span class="bz-sb-weekly-row-name" data-path="${escapeHtml(path)}" role="button" tabindex="0">${escapeHtml(name)}</span><span class="bz-sb-weekly-row-hit-arrow">${ic("arrow-right", 12)}</span><span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml(targetPath)}" role="button" tabindex="0">${escapeHtml(targetName)}</span><span class="bz-sb-weekly-row-pct">${pct}%</span></div>`;
   }
   function weeklyEmptyHtml() {
     return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">最近一周没有新入脑的笔记与关联，一切安静。</div>`;

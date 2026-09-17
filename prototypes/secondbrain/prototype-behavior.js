@@ -1,4 +1,4 @@
-/* 源指纹 4e4f77596ed02020 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 08366644dbc6f7b8 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -5839,7 +5839,8 @@ var BZW_secondbrain = (() => {
   function normalizeWeekly(raw) {
     if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
     const r = raw;
-    if (typeof r.lastRunAt !== "number" || !isFinite(r.lastRunAt) || !Array.isArray(r.knownPaths)) return null;
+    if (typeof r.lastRunAt !== "number" || !isFinite(r.lastRunAt) || r.lastRunAt <= 0 || !Array.isArray(r.knownPaths))
+      return null;
     const digest = r.digest && typeof r.digest === "object" && !Array.isArray(r.digest) ? r.digest : null;
     return {
       lastRunAt: r.lastRunAt,
@@ -5959,7 +5960,7 @@ var BZW_secondbrain = (() => {
     return /^secondbrain\.sync-conflict-.*\.vec$/.test(name);
   }
   function mergeStoreWithConflict(primary, conflict) {
-    var _a2, _b2, _c;
+    var _a2, _b2, _c, _d, _e, _f, _g;
     const priMeta = primary.meta && typeof primary.meta === "object" ? primary.meta : {};
     const confMeta = conflict.meta && typeof conflict.meta === "object" ? conflict.meta : {};
     const notes = { ...priMeta.notes || {} };
@@ -5997,6 +5998,14 @@ var BZW_secondbrain = (() => {
     const chatTrimmed = chatHistory.slice(-CHAT_HISTORY_LIMIT);
     let weekly = primary.weekly;
     if (conflict.weekly && (!weekly || conflict.weekly.lastRunAt > weekly.lastRunAt)) weekly = conflict.weekly;
+    if (weekly) {
+      const union = /* @__PURE__ */ new Set([
+        ...weekly.knownPaths,
+        ...(_e = (_d = primary.weekly) == null ? void 0 : _d.knownPaths) != null ? _e : [],
+        ...(_g = (_f = conflict.weekly) == null ? void 0 : _f.knownPaths) != null ? _g : []
+      ]);
+      weekly = { ...weekly, knownPaths: [...union] };
+    }
     return { version: primary.version, meta, panel: panel2, link: { queue, state }, chatHistory: chatTrimmed, weekly };
   }
   function buildRowOffsets(meta) {
@@ -6627,7 +6636,7 @@ var BZW_secondbrain = (() => {
     return `<div class="bz-sb-weekly-row" data-path="${escapeHtml2(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot"></span><span class="bz-sb-weekly-row-name">${escapeHtml2(name)}</span><span class="bz-sb-weekly-row-time">${escapeHtml2(when)}</span></div>`;
   }
   function weeklyCollisionRowHtml(path, name, targetPath, targetName, pct) {
-    return `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit" data-path="${escapeHtml2(path)}" role="button" tabindex="0"><span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span><span class="bz-sb-weekly-row-name">${escapeHtml2(name)}</span><span class="bz-sb-weekly-row-hit-arrow">${ic("arrow-right", 12)}</span><span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml2(targetPath)}">${escapeHtml2(targetName)}</span><span class="bz-sb-weekly-row-pct">${pct}%</span></div>`;
+    return `<div class="bz-sb-weekly-row bz-sb-weekly-row--hit"><span class="bz-sb-weekly-row-dot bz-sb-weekly-row-dot--warn"></span><span class="bz-sb-weekly-row-name" data-path="${escapeHtml2(path)}" role="button" tabindex="0">${escapeHtml2(name)}</span><span class="bz-sb-weekly-row-hit-arrow">${ic("arrow-right", 12)}</span><span class="bz-sb-weekly-row-name bz-sb-weekly-row-name--target" data-path="${escapeHtml2(targetPath)}" role="button" tabindex="0">${escapeHtml2(targetName)}</span><span class="bz-sb-weekly-row-pct">${pct}%</span></div>`;
   }
   function weeklyEmptyHtml() {
     return `<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">最近一周没有新入脑的笔记与关联，一切安静。</div>`;
@@ -6684,52 +6693,54 @@ var BZW_secondbrain = (() => {
   // src/secondbrain/weekly-ui.ts
   init_ai2();
   var overlayEl = null;
+  var maskEl = null;
   var escHandle = null;
   var appRef = null;
   var renderSeq = 0;
   function ensureModal(app) {
     var _a2;
     appRef = app;
-    if (overlayEl) {
-      overlayEl.style.display = "flex";
-      return;
+    if (!overlayEl) {
+      const { mask, popup } = createOverlay({
+        maskId: "bz-sb-weekly-mask",
+        popupId: "bz-sb-weekly-panel",
+        onMaskClick: () => closeWeeklyDigest(),
+        width: "560px",
+        maxWidth: 560
+      });
+      popup.classList.add("bz-sb-weekly-modal", "bz-panel-mtop");
+      popup.innerHTML = weeklyShellHtml("");
+      overlayEl = popup;
+      maskEl = mask;
+      document.body.appendChild(mask);
+      document.body.appendChild(popup);
+      (_a2 = popup.querySelector("#bz-sb-weekly-close")) == null ? void 0 : _a2.addEventListener("click", () => closeWeeklyDigest());
+      const body = popup.querySelector("#bz-sb-weekly-body");
+      const jump = (path) => {
+        const f = appRef == null ? void 0 : appRef.vault.getAbstractFileByPath(path);
+        if (f) void appRef.workspace.getLeaf(false).openFile(f);
+        else notice("文件不存在或已被移动", "info");
+      };
+      body == null ? void 0 : body.addEventListener("click", (e) => {
+        const el = e.target.closest("[data-path]");
+        if (el == null ? void 0 : el.dataset.path) jump(el.dataset.path);
+      });
+      body == null ? void 0 : body.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        const el = e.target.closest("[data-path]");
+        if (el == null ? void 0 : el.dataset.path) {
+          e.preventDefault();
+          jump(el.dataset.path);
+        }
+      });
+      escHandle = escManager.register("bz-sb-weekly-modal", {
+        isVisible: () => !!overlayEl && overlayEl.style.display === "flex" && overlayEl.isConnected,
+        close: () => closeWeeklyDigest()
+      });
     }
-    const { mask, popup } = createOverlay({
-      maskId: "bz-sb-weekly-mask",
-      popupId: "bz-sb-weekly-panel",
-      onMaskClick: () => closeWeeklyDigest(),
-      width: "560px",
-      maxWidth: 560
-    });
-    popup.classList.add("bz-sb-weekly-modal", "bz-panel-mtop");
-    popup.innerHTML = weeklyShellHtml("");
-    overlayEl = popup;
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    popup.style.display = "flex";
-    (_a2 = popup.querySelector("#bz-sb-weekly-close")) == null ? void 0 : _a2.addEventListener("click", () => closeWeeklyDigest());
-    const body = popup.querySelector("#bz-sb-weekly-body");
-    const jump = (path) => {
-      const f = appRef == null ? void 0 : appRef.vault.getAbstractFileByPath(path);
-      if (f) void appRef.workspace.getLeaf(false).openFile(f);
-      else notice("文件不存在或已被移动", "info");
-    };
-    body == null ? void 0 : body.addEventListener("click", (e) => {
-      const el = e.target.closest("[data-path]");
-      if (el == null ? void 0 : el.dataset.path) jump(el.dataset.path);
-    });
-    body == null ? void 0 : body.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const el = e.target.closest("[data-path]");
-      if (el == null ? void 0 : el.dataset.path) {
-        e.preventDefault();
-        jump(el.dataset.path);
-      }
-    });
-    escHandle = escManager.register("bz-sb-weekly-modal", {
-      isVisible: () => !!overlayEl && overlayEl.style.display === "flex" && overlayEl.isConnected,
-      close: () => closeWeeklyDigest()
-    });
+    topifyZ(maskEl, overlayEl);
+    if (maskEl) maskEl.style.display = "block";
+    overlayEl.style.display = "flex";
   }
   function openWeeklyDigest(app) {
     void (async () => {
@@ -6748,7 +6759,9 @@ var BZW_secondbrain = (() => {
   function closeWeeklyDigest() {
     renderSeq++;
     if (overlayEl) overlayEl.style.display = "none";
+    if (maskEl) maskEl.style.display = "none";
   }
+  var WEEKLY_UI_LIST_CAP = 30;
   function showWeeklyModal(digest, opts) {
     if (!overlayEl) return;
     const seq = ++renderSeq;
@@ -6776,12 +6789,18 @@ var BZW_secondbrain = (() => {
       sections.push(weeklySectionHtml("bz-sb-weekly-hits", "copy", "主题撞车提示", digest.collisions.length, rows));
     }
     if (digest.newNotes.length > 0) {
-      const rows = digest.newNotes.slice(0, 30).map((n) => weeklyNoteRowHtml(n.path, nameOf(n.path), formatRelativeTime(n.mtime))).join("");
+      const rows = digest.newNotes.slice(0, WEEKLY_UI_LIST_CAP).map((n) => weeklyNoteRowHtml(n.path, nameOf(n.path), formatRelativeTime(n.mtime))).join("");
       sections.push(weeklySectionHtml("bz-sb-weekly-notes", "file-plus", "新增笔记", digest.newNotes.length, rows));
+      if (digest.newNotes.length > WEEKLY_UI_LIST_CAP) {
+        sections.push(`<div class="bz-sb-weekly-empty">新增笔记较多，仅显示最近 ${WEEKLY_UI_LIST_CAP} 条。</div>`);
+      }
     }
     if (digest.newLinks.length > 0) {
-      const rows = digest.newLinks.slice(0, 30).map((l) => weeklyNoteRowHtml(l.path, nameOf(l.path), formatRelativeTime(l.linkedAt))).join("");
+      const rows = digest.newLinks.slice(0, WEEKLY_UI_LIST_CAP).map((l) => weeklyNoteRowHtml(l.path, nameOf(l.path), formatRelativeTime(l.linkedAt))).join("");
       sections.push(weeklySectionHtml("bz-sb-weekly-links", "link", "新增关联", digest.newLinks.length, rows));
+      if (digest.newLinks.length > WEEKLY_UI_LIST_CAP) {
+        sections.push(`<div class="bz-sb-weekly-empty">新增关联较多，仅显示最近 ${WEEKLY_UI_LIST_CAP} 条。</div>`);
+      }
     }
     if (digest.newNotes.length + digest.newLinks.length + digest.collisions.length === 0) {
       sections.push(weeklyEmptyHtml());
@@ -6811,7 +6830,7 @@ var BZW_secondbrain = (() => {
     }
     const range = popup.querySelector("#bz-sb-weekly-range");
     const txt = popup.querySelector("#bz-sb-weekly-card-txt");
-    if (range) range.textContent = formatDigestRange(digest.since, digest.until);
+    if (range) range.textContent = `最近一份（${formatDigestRange(digest.since, digest.until)}）`;
     if (txt) {
       const parts = [`${digest.newNotes.length} 篇新增`, `${digest.newLinks.length} 条关联`];
       if (digest.collisions.length > 0) parts.push(`${digest.collisions.length} 处撞车`);

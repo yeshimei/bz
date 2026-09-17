@@ -8,7 +8,8 @@
  * - 周界（滚动 7 天）：距上次聚合 lastRunAt ≥ WEEKLY_INTERVAL_MS 才再聚；聚合窗口 =
  *   (lastRunAt, now]，弹层与入口卡标注实际日期区间（「本周」为概念口径——每 ~7 天一份、
  *   报告最近一周动态，周日晚打开看到的就是本周新增）。首轮（无 lastRunAt）只立基线不产出：
- *   无对照快照时全部存量笔记都会被判「新增」，打扰且无意义。
+ *   无对照快照时全部存量笔记都会被判「新增」，打扰且无意义；索引未就绪（空库待首次向量化）
+ *   则连基线也延迟——本次跳过不写 lastRunAt，待索引就绪后的下一轮再立。
  * - 新增笔记：当前 meta.notes 键 − 上次快照 knownPaths 键（mtime 降序）。mtime 是文件修改时间，
  *   区分不了「新笔记」与「改笔记」，快照差分才是「新入脑」的真相；快照随每轮聚合刷新
  *   （knownPaths = 当前键，删除的笔记自然出局）。
@@ -187,6 +188,11 @@ export function formatDigestRange(since: number, until: number): string {
 export interface WeeklyStoreLike {
   meta: { notes: Record<string, { mtime: number; chunks: { text: string }[] }> };
   vectorSearch(query: string, topK?: number, baseUrl?: string): Promise<SearchHit[]>;
+  /**
+   * 索引就绪判定（可选，VectorStore.isIndexReady 同款）：首轮「空索引延迟立基线」用它——
+   * 缺省时按 meta.notes 是否为空兜底（空库必不就绪；有残留 meta 但向量未装载的损坏态由真实现报告）。
+   */
+  isIndexReady?: () => boolean;
 }
 
 export interface WeeklyRunOptions {
@@ -223,7 +229,7 @@ export function buildWeeklySummaryPrompt(digest: WeeklyDigest): string {
 
 /**
  * 聚合编排：读盘状态 → 周界判定 → 差分（新增笔记/关联）→ 撞车检测（向量优先、TF-IDF 降级）→
- * 可选 AI 文案 → 落盘（lastRunAt/knownPaths 每轮必写；digest 仅非空轮写）。
+ * 可选 AI 文案 → 落盘（lastRunAt/knownPaths 每轮必写、空索引首轮除外；digest 仅非空轮写）。
  * 抛错一律向上（调用方 catch 后静默告警——周报是后台任务，不弹错误打扰）。
  */
 export async function runWeeklyDigest(store: WeeklyStoreLike, opts: WeeklyRunOptions = {}): Promise<WeeklyRunResult> {
@@ -233,6 +239,10 @@ export async function runWeeklyDigest(store: WeeklyStoreLike, opts: WeeklyRunOpt
 
   // 首轮（无 lastRunAt）：只立基线不产出（无对照快照，产出必是全库噪音）
   if (!prev) {
+    // 空索引延迟立基线（审查修复）：索引未就绪（空库等首次向量化）时本次跳过、不写 lastRunAt——
+    // 否则基线立在空库上，稍后首次向量化全库入索引，下轮差分把全部存量误报「新增」
+    const indexReady = store.isIndexReady ? store.isIndexReady() : currentPaths.length > 0;
+    if (!indexReady) return { status: 'baseline', digest: null };
     await saveWeeklySection({ lastRunAt: now, knownPaths: currentPaths, digest: null });
     return { status: 'baseline', digest: null };
   }
@@ -241,7 +251,9 @@ export async function runWeeklyDigest(store: WeeklyStoreLike, opts: WeeklyRunOpt
     return { status: 'not-due', digest: prev.digest };
   }
 
-  const since = prev.lastRunAt;
+  // 摘要区间起点收敛到 now（审查修复）：时钟回拨后 lastRunAt 在未来，直接取会让 since > until
+  //（区间倒置渲染）；force 手动路径可触发，取 min 保证区间恒为正序
+  const since = Math.min(prev.lastRunAt, now);
   const newNotes = diffNewNotes(store.meta.notes, prev.knownPaths);
   const newLinks = collectNewLinks(await loadLinkState(), since);
   const collisions = await detectCollisions(store, newNotes, prev, opts);
