@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域对账纯函数（issue 368 核心机制）：
+ * 游戏库（gameshelf）域对账纯函数（issue 368 核心机制）：
  * Steam 库快照 × 现存笔记 → 同步计划；Steam 管辖字段归一。
  * 零 IO、零 DOM、无 obsidian 依赖——node 环境可测。
  *

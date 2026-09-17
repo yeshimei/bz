@@ -1,5 +1,5 @@
 /**
- * 游戏架媒体本地化（issue 368 增补；2026-09-17 扩到图标 + 回写本地路径）：
+ * 游戏库媒体本地化（issue 368 增补；2026-09-17 扩到图标 + 回写本地路径）：
  * 把封面 header.jpg 与库内图标拉到本地文件夹（默认 CONFIG/游戏海报，设置键 gameshelfPosterFolder），
  * 并把笔记属性里的 `封面` / `图标` **写成 vault 本地路径**（与影院域 `海报: CONFIG/MOVIE POSTER/x.jpg`
  * 同一约定；Obsidian 属性面板认路径为链接，图片直接出缩略图）。
@@ -174,7 +174,7 @@ async function download(app: App, path: string, url: string): Promise<boolean> {
       return true;
     }
   } catch (e) {
-    console.warn('bz 游戏架：媒体下载失败:', url, e);
+    console.warn('bz 游戏库：媒体下载失败:', url, e);
   }
   return false;
 }
@@ -210,7 +210,7 @@ async function runQueue(): Promise<void> {
           try {
             await upsertDetail(app, item.file, wrote);
           } catch (e) {
-            console.warn('bz 游戏架：媒体路径写回失败:', item.appid, e);
+            console.warn('bz 游戏库：媒体路径写回失败:', item.appid, e);
           }
         }
         scheduleRerender();

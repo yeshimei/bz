@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域 vault 读写（store 层）：
+ * 游戏库（gameshelf）域 vault 读写（store 层）：
  * 扫描现存游戏笔记（metadataCache 零 IO，ADR-0137 挂载树同口径）→ 快照；
  * 新建笔记 / processFrontMatter 管辖键 upsert（用户正文与自定义 frontmatter 绝不覆盖）。
  */

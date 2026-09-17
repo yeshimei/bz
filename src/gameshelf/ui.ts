@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域 UI v3（2026-09-17：V1 海报墙方向落域 + 数据统计面板 + 全量详情弹窗）。
+ * 游戏库（gameshelf）域 UI v3（2026-09-17：V1 海报墙方向落域 + 数据统计面板 + 全量详情弹窗）。
  *
  * 单源约定：markup 纯函数（heroHtml/shelfHtml/statsHtml/详情三段）与行为层同文件，
  * 插件面板与评审壳消费同一份——改一处两侧生效（docs/prototype-first.md）。
@@ -112,8 +112,8 @@ function guidanceEl(app: App): HTMLElement {
   actions.appendChild(re);
   return uiEmpty({
     icon: 'gamepad-2',
-    title: '接上 Steam，游戏架自己长出来',
-    desc: '在设置面板游戏架页填 SteamID64 和 Web API 密钥，保存后回来点同步，库和时长自动拉进来，不用手动登记。',
+    title: '接上 Steam，游戏库自己长出来',
+    desc: '在设置面板游戏库页填 SteamID64 和 Web API 密钥，保存后回来点同步，库和时长自动拉进来，不用手动登记。',
     actions,
   });
 }
@@ -624,10 +624,10 @@ function createUI(app: App): void {
   const frame = document.createElement('div');
   frame.className = 'bz-panel-frame bz-gs-panel bz-panel-mtop';
   frame.setAttribute('role', 'dialog');
-  frame.setAttribute('aria-label', '游戏架');
+  frame.setAttribute('aria-label', '游戏库');
 
   const head = uiMainHead({
-    title: '游戏架',
+    title: '游戏库',
     action: { label: '立即同步', icon: 'refresh-cw', onClick: () => void onSyncClick(app) },
   });
   countRef = head;

@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域同步编排（issue 368）：配置校验 → 间隔判定 → 拉库 → 对账落盘 → 域事件。
+ * 游戏库（gameshelf）域同步编排（issue 368）：配置校验 → 间隔判定 → 拉库 → 对账落盘 → 域事件。
  * 节律仿 clipbook fetch：打开面板自动同步（lastSyncAt 间隔判定）+ 手动「立即同步」（忽略间隔）。
  */
 import type { App } from 'obsidian';
@@ -76,7 +76,7 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     const result = await fetchSteamLibrary(steamId, apiKey);
     if (!result.ok) {
       M.statusMsg = result.message;
-      notice(`游戏架同步失败：${result.message}`, 'error');
+      notice(`游戏库同步失败：${result.message}`, 'error');
       return { ok: false, added: 0, updated: 0, offShelf: 0, reason: result.reason, message: result.message };
     }
     const r = await applySyncPlan(app, folder, result.owned, new Date().toISOString());
@@ -89,7 +89,7 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     // 每次点立即同步都挂一行「什么都没发生」；真有事才说话）
     M.statusMsg = parts.length > 0 ? `同步完成：${parts.join('，')}` : '';
     if (parts.length > 0) {
-      notice(`游戏架已同步：${parts.join('，')}`, 'success');
+      notice(`游戏库已同步：${parts.join('，')}`, 'success');
     }
     // 行为流观察（smartcat 消费；emit-and-forget，无订阅方零成本）
     emitDomainEvent('gameshelf', { kind: 'synced', added: r.added, updated: r.updated, offShelf: r.offShelf });
@@ -97,7 +97,7 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     M.statusMsg = `同步失败：${msg}`;
-    notice(`游戏架同步失败：${msg}`, 'error');
+    notice(`游戏库同步失败：${msg}`, 'error');
     return { ok: false, added: 0, updated: 0, offShelf: 0, reason: 'http', message: msg };
   } finally {
     M.syncing = false;

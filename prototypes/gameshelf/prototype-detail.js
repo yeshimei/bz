@@ -1,4 +1,4 @@
-// 游戏架评审壳详情罐头（真实 Steam 响应，已瘦身到 UI 解析字段）。
+// 游戏库评审壳详情罐头（真实 Steam 响应，已瘦身到 UI 解析字段）。
 // - store   = store.steampowered.com/api/appdetails?l=schinese 逐条真实响应
 // - reviews = store.steampowered.com/appreviews 真实响应
 // - ach     = api.steampowered.com 成就三接口真实响应（经系统代理；凭据不入库）

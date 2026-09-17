@@ -1,5 +1,5 @@
 /**
- * 游戏架行为单源 · sim 启动入口（范式自 cinema/belongings 适配）
+ * 游戏库行为单源 · sim 启动入口（范式自 cinema/belongings 适配）
  *
  * 评审壳侧启动器：把真行为层（src/gameshelf/ui.ts 及其依赖链）在浏览器里跑起来。
  * 与插件侧的差异全部收敛在「启动注入」：
@@ -8,7 +8,7 @@
  *   - 种子 = window.GAMESHELF_DATA（真实 vault 147 篇笔记的同构快照，含平台分项分钟与
  *     有成就标记）→ 首启转写成 fake vault 的游戏笔记，**字段与真机笔记逐键一致**；
  *   - Steam 罐头 = fake/fake-obsidian 的 requestUrl（真响应回放，见该文件头）；
- *   - 设置注入：setSettingsProvider 注入游戏架实际键（SteamID64/密钥/目录/自动同步），
+ *   - 设置注入：setSettingsProvider 注入游戏库实际键（SteamID64/密钥/目录/自动同步），
  *     面板因此走「已配置」分支而不是引导态。
  *
  * 产物：build-preview.mjs 以本文件为入口、alias obsidian→fake/fake-obsidian，
@@ -84,7 +84,7 @@ function seedDatabase(): void {
   localStorage.setItem(SEED_MARK, new Date().toISOString());
 }
 
-/** 游戏架设置 store（真 settings-provider 注入；与真机 data.json 同键） */
+/** 游戏库设置 store（真 settings-provider 注入；与真机 data.json 同键） */
 const settingsStore: Record<string, unknown> = {
   gameshelfFolderPath: FOLDER,
   // 真机默认 CONFIG/游戏海报；壳里给空串 → posters.ts 回落默认目录（避免污染演示数据）
@@ -118,7 +118,7 @@ export function bootGameshelfSim(): void {
   ensureGameshelf(app as never);
 }
 
-/** 打开游戏架（命令 bz-gameshelf-open 同语义：toggle） */
+/** 打开游戏库（命令 bz-gameshelf-open 同语义：toggle） */
 export function openGameshelf(): void {
   if (!simApp) bootGameshelfSim();
   openGameshelfDomain(simApp as never);

@@ -1,8 +1,8 @@
 /**
- * 游戏架行为单源 · 公共假 obsidian（范式自 cinema/belongings 适配）
+ * 游戏库行为单源 · 公共假 obsidian（范式自 cinema/belongings 适配）
  *
  * 评审壳预览构建（build-preview.mjs 的 esbuild alias）把 ui.ts 依赖链上的
- * `obsidian` 包替换为本文件——浏览器里没有 Obsidian，但游戏架真实现只用到以下出口：
+ * `obsidian` 包替换为本文件——浏览器里没有 Obsidian，但游戏库真实现只用到以下出口：
  *   - Platform.isMobile   → 视口 ≤768 判定（评审壳移动 iframe 归它管）
  *   - setIcon / IconName  → DOM 内联 SVG（表 = window.GS_ICONS，prototype-icons.js）
  *   - TFile               → instanceof 判定与文件元信息面（FakeVault 返回本类实例）
@@ -11,7 +11,7 @@
  *                           读改写/建目录/列文件/回收站/frontmatter 写入全真）
  *   - metadataCache       → getFileCache 现场解析 frontmatter（notes.ts 唯一消费面）
  *
- * requestUrl 罐头（这是本域与影院假层的最大差别：游戏架的核心数据来自网络）：
+ * requestUrl 罐头（这是本域与影院假层的最大差别：游戏库的核心数据来自网络）：
  *   - GetOwnedGames        → 由 window.GAMESHELF_DATA（真实 vault 147 篇笔记快照）现拼，
  *                            于是「立即同步」在壳里跑的是**真对账链**，结果与笔记一致（零变更）；
  *   - GetRecentlyPlayedGames → 真机也是空的（近两周没玩，total_count=0）；
