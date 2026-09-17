@@ -9,8 +9,9 @@ import {
   panelHtml, railItemHtml, railFootHtml, tocListHtml, summaryHtml,
   readerHtml, mobListHtml, mobDetailHtml, mobTocHtml, mobFoldHtml, mobChHeadHtml, mobNoHitHtml,
   siteShort, siteTint, stateFlag, stateLabel,
-  clipReportEntryHtml, clipReportShellHtml, clipReportEmptyHtml, buildClipReportSections,
+  clipReportEntryHtml, clipReportShellHtml, buildClipReportSections,
 } from '../../src/clipbook/render';
+import * as clipRenderNs from '../../src/clipbook/render';
 import type { ClipArticle } from '../../src/clipbook/render';
 
 function art(partial: Partial<ClipArticle>): ClipArticle {
@@ -186,10 +187,8 @@ describe('clipbook render 纯层（issue 247）', () => {
     expect(shell).toContain('data-clp-rep-close');
     expect(shell).toContain('data-clp-rep-body');
     expect(shell).toContain('bz-panel-mtop');
-    // 空态人话（无 emoji）
-    const empty = clipReportEmptyHtml();
-    expect(empty).toContain('还没有阅读记录');
-    expect(empty).not.toMatch(/[←-⯿☀-➿]/);
+    // 空态 markup 已退役（审查修复批 体验⑩）：改 core uiEmpty 标准件，组装在 report-ui.ts
+    expect((clipRenderNs as any).clipReportEmptyHtml).toBeUndefined();
     // 三段懒生成：键序冻结 + 段序（概览 → 来源分布 → 阅读时段）
     const d = {
       period: 'week' as const, articles: 2, sessions: 3, totalMinutes: 45,

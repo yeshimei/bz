@@ -10,15 +10,17 @@
  */
 import type { App } from 'obsidian';
 import { notify } from '../core/notice';
-import { mountIcons } from '../core/ui';
+import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
+import { getApp } from '../core/app';
 import { yieldToMainThread } from '../core/utils';
 import { escManager } from '../core/esc-manager';
 import { readClipbookData, type ClipReadLogEntry } from './data';
 import { flushReadingSession } from './flow';
 import { buildClipReport, type ClipReportData, type ReportPeriod } from './report-stats';
 import {
-  clipReportShellHtml, clipReportSkeletonHtml, clipReportEmptyHtml, buildClipReportSections,
+  clipReportShellHtml, clipReportSkeletonHtml, buildClipReportSections,
 } from './render';
+import { openClipbook } from './index';
 
 let overlayEl: HTMLElement | null = null;
 let escHandle: { unregister(): void } | null = null;
@@ -30,8 +32,14 @@ let logCache: ClipReadLogEntry[] | null = null;
 let renderSeq = 0;
 let progressToastSeq = 0;
 let activeProgress: ReturnType<typeof notify> | null = null;
+/** 打开时记下的 app（空态「去剪藏本读几篇」动作跳转用；命令直开亦有 app） */
+let reportApp: App | null = null;
 
 const YIELD_MS = 50;
+
+/** 统计 toast 判据（审查修复批 体验⑪，与 reading-report 小数据量静默同口径）：
+ *  readLog 不足该条数时聚合毫秒级完成，progress/完成双 toast 徒增噪音——弹层内骨架已给反馈。 */
+const QUIET_TOAST_MIN_ENTRIES = 500;
 
 /** 骨架期错误人话模板（不展示原始异常；技术详情留 console） */
 const ERROR_HTML = `<div class="bz-clp-rep-error">
@@ -43,14 +51,20 @@ function bodyEl(): HTMLElement | null {
   return overlayEl ? overlayEl.querySelector('[data-clp-rep-body]') as HTMLElement | null : null;
 }
 
-/** 打开报告弹层（幂等：已开则重读数据重渲）。app 参数与各域 open 入口同形。 */
-export function openClipbookReport(_app?: App): void {
+/** 打开报告弹层（幂等：已开则重读数据重渲）。app 参数与各域 open 入口同形。
+ *  审查修复批 P2③：重入先 releaseProgress——上次渲染在途时旧「正在统计…」常驻 toast
+ *  因 activeProgress 易主而 finishAbort 不回收，此处先收掉（对照 reading-report
+ *  renderReadingReport 开头的 cancelReadingReport）。
+ *  审查修复批 P3⑤：flush 暴露 promise，await 落盘后再读侧写——刚读的段本次打开即可见。 */
+export async function openClipbookReport(_app?: App): Promise<void> {
+  reportApp = _app || null;
   // 面板开着时先把当前阅读会话入账（读到一半开报告也要看到刚才那段）
-  flushReadingSession();
+  await flushReadingSession();
+  releaseProgress(); // 重入防 toast 泄漏（上一轮在途渲染醒来后 finishAbort 不再误持旧 toast）
   if (!overlayEl) buildDom();
   syncPeriodSeg(); // 周期跨开保留：重开时 seg 高亮对齐真实 period（骨架是静态「本周」高亮）
   overlayEl!.style.display = 'flex';
-  void renderBody(true);
+  await renderBody(true);
 }
 
 /** 周期 seg 高亮 ↔ period 同步（openClipbookReport 与 setPeriod 共用） */
@@ -70,9 +84,11 @@ export function closeClipbookReport(): void {
   logCache = null;
 }
 
-/** 卸载清理（clipbook index unloadClipbook 链；main.ts 不另挂）：摘 DOM + 注销 ESC */
+/** 卸载清理（clipbook index unloadClipbook 链；main.ts 不另挂）：摘 DOM + 注销 ESC。
+ *  卸载 = 全新会话：复位 period（「周期跨开保留」仅指关弹层再开的用户路径）。 */
 export function unloadClipbookReport(): void {
   closeClipbookReport();
+  period = 'week';
   if (escHandle) {
     try { escHandle.unregister(); } catch (e) { /* 幂等 */ }
     escHandle = null;
@@ -125,9 +141,49 @@ function setPeriod(next: ReportPeriod): void {
   void renderBody(false);
 }
 
+/** 空态（审查修复批 ⑨⑩）：改 core uiEmpty 标准件 + 动作（手册 §8.3——自造 empty 正是
+ *  上次图标失控根因）。两态人话区分（⑨）：
+ *  - never：readLog 全空 = 还没在剪藏本里读过 → 引导去读（关报告 + 开剪藏本面板）；
+ *  - period：有记录但本期窗口没读过/全零分钟段 → 文案带周期上下文，另一期有记录时
+ *    给「切到 X 看看」直达（switchTo = 另一期；两期都空不给按钮）。 */
+function buildClipReportEmpty(kind: 'never' | 'period', switchTo?: ReportPeriod): HTMLElement {
+  if (kind === 'period') {
+    const curLabel = period === 'week' ? '本周' : '本月';
+    const otherLabel = switchTo === 'week' ? '本周' : switchTo === 'month' ? '本月' : '';
+    return uiEmpty({
+      icon: 'book-open',
+      title: `${curLabel}还没读过`,
+      desc: otherLabel ? '阅读记录还在，换个周期看看' : '阅读记录还不在这两个周期里',
+      actions: otherLabel
+        ? uiBtnRow([uiBtn({ label: `切到${otherLabel}看看`, icon: 'calendar', onClick: () => setPeriod(switchTo!) })], { center: true })
+        : undefined,
+    });
+  }
+  return uiEmpty({
+    icon: 'book-open',
+    title: '还没有阅读记录',
+    desc: '在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里',
+    actions: uiBtnRow([uiBtn({
+      label: '去剪藏本读几篇',
+      icon: 'scissors',
+      tone: 'primary',
+      onClick: () => { closeClipbookReport(); openClipbook(reportApp || getApp()); },
+    })], { center: true }),
+  });
+}
+
+/** 空态装配（uiEmpty 产出 DOM 元素；图标经 mountIcons 兑现） */
+function renderEmptyState(body: HTMLElement, empty: HTMLElement): void {
+  body.innerHTML = '';
+  body.appendChild(empty);
+  mountIcons(body);
+}
+
 /**
  * 渲染报告体：骨架 →（首开）读侧写 → 空态 / 分段填充（逐段让出主线程）。
  * alive 守卫：渲染中途关闭/重开 → 立即中止，不写已摘除的 DOM。
+ * 统计 toast（体验⑪）：创建点在数据快照到手后——小数据量（< QUIET_TOAST_MIN_ENTRIES 条）
+ * 毫秒级聚合直接跳过 toast（骨架已给反馈）；读取阶段由骨架顶着，不为它多弹一帧。
  */
 async function renderBody(withToast: boolean): Promise<void> {
   const body = bodyEl();
@@ -137,28 +193,26 @@ async function renderBody(withToast: boolean): Promise<void> {
 
   body.innerHTML = clipReportSkeletonHtml();
 
-  const progress = withToast
-    ? notify('正在统计剪藏阅读数据…', { type: 'progress', duration: 0, dedupeKey: `bz-clipbook-report-progress-${++progressToastSeq}` })
-    : null;
-  if (progress) activeProgress = progress;
-  const finishAbort = (): void => {
-    if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
-  };
-
   try {
     if (!logCache) {
-      progress?.setMessage('正在读取阅读记录…');
       await yieldToMainThread(YIELD_MS);
-      if (!alive()) return finishAbort();
+      if (!alive()) return;
       const sidecar = await readClipbookData();
-      if (!alive()) return finishAbort();
+      if (!alive()) return;
       logCache = sidecar.readLog || [];
     }
 
-    // 空态人话：还没有任何阅读记录（openClipbookReport 已先 flush，能记的都在了）
+    const progress = withToast && logCache.length >= QUIET_TOAST_MIN_ENTRIES
+      ? notify('正在统计剪藏阅读数据…', { type: 'progress', duration: 0, dedupeKey: `bz-clipbook-report-progress-${++progressToastSeq}` })
+      : null;
+    if (progress) activeProgress = progress;
+    const finishAbort = (): void => {
+      if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
+    };
+
+    // 空态人话·首次：还没有任何阅读记录（openClipbookReport 已先 flush，能记的都在了）
     if (!logCache.length) {
-      body.innerHTML = clipReportEmptyHtml();
-      mountIcons(body);
+      renderEmptyState(body, buildClipReportEmpty('never'));
       if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
       return;
     }
@@ -168,12 +222,15 @@ async function renderBody(withToast: boolean): Promise<void> {
     if (!alive()) return finishAbort();
     const data: ClipReportData = buildClipReport(logCache, period, new Date());
 
-    // 本期空态：readLog 有记录但本期窗口（本周/本月）没读过，或记录全是零分钟段——
+    // 本期空态（⑨）：readLog 有记录但本期窗口（本周/本月）没读过，或记录全是零分钟段——
     // 整页只显空态，不渲染零值统计段（issue 358 真机回归「没有阅读记录时统计有误」）。
+    // 另一期有记录 → 给「切到 X 看看」直达；两期都空 → 纯文案。
     // 首次渲染 / 周期切换 / 分段懒生成三路都经 renderBody，本短路在分段循环前统一收口。
     if (!data.articles && !data.totalMinutes) {
-      body.innerHTML = clipReportEmptyHtml();
-      mountIcons(body);
+      const other: ReportPeriod = period === 'week' ? 'month' : 'week';
+      const otherData = buildClipReport(logCache, other, new Date());
+      const switchTo = otherData.articles || otherData.totalMinutes ? other : undefined;
+      renderEmptyState(body, buildClipReportEmpty('period', switchTo));
       if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
       return;
     }

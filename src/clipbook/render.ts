@@ -372,15 +372,8 @@ export function clipReportSkeletonHtml(): string {
   return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
 }
 
-/** 空态人话（readLog 无任何记录：还没在剪藏本里读过文章） */
-export function clipReportEmptyHtml(): string {
-  return `
-    <div class="bz-clp-rep-empty">
-      ${iconSpan(ICO.book, 'bz-ic--lg')}
-      <div class="bz-clp-rep-empty-t">还没有阅读记录</div>
-      <div class="bz-clp-rep-empty-d">在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里</div>
-    </div>`;
-}
+// 空态 markup 退役（审查修复批 体验⑨⑩）：自造 .bz-clp-rep-empty 换 core uiEmpty 标准件
+// （手册 §8.3 空态带动作；两态文案与动作组装在 report-ui.ts buildClipReportEmpty）。
 
 /** 单期报告分段（懒生成；段序冻结：概览 → 来源分布 → 阅读时段） */
 export interface ClipReportSection {

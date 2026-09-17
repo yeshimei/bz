@@ -40,8 +40,8 @@ let accumMs = 0;
  *  issue 358：切换时旧篇先封存入账侧写 readLog（flushReadingSession），meta 传当前篇。 */
 export function setReadingSession(key: string, meta?: { title: string; src: string } | null): void {
   if (key !== curKey) {
-    // 切换目标：旧篇累计封存入账 → 换篇重开
-    flushReadingSession();
+    // 切换目标：旧篇累计封存入账 → 换篇重开（封存落盘 fire-and-forget，切篇不等写盘）
+    void flushReadingSession();
     curKey = key;
     curMeta = meta || null;
     accumMs = 0;
@@ -72,14 +72,16 @@ function durationMin(): number {
  *  只记满 1 分钟的段（快速略过不入账，对齐 durationMin 整分钟口径；不足整分钟丢弃）。
  *  调用点：切篇（setReadingSession）/ 处理动作落定后（flowSave/flowMarkRead——行为流
  *  emit 之后，不影响 durationMin）/ 关面板、卸载、开报告前（pause 之后补封存）。
- *  落盘 fire-and-forget：updateClipbookData 自带 per-path 串行队列，失败只留 console。 */
-export function flushReadingSession(): void {
-  if (!curKey) return;
+ *  返回落盘 promise（审查修复批 P3⑤）：openClipbookReport await 后再读侧写，
+ *  刚读段本次可见；其余调用点 void/fire-and-forget。写失败已 catch（⑧暂存补写，见下），
+ *  promise 恒 resolve 不 reject。 */
+export function flushReadingSession(): Promise<void> {
+  if (!curKey) return Promise.resolve();
   const now = Date.now();
   const total = (openedAt ? now - openedAt : 0) + accumMs;
   openedAt = 0;
   accumMs = 0;
-  if (total < 60000) return;
+  if (total < 60000) return Promise.resolve();
   const entry: ClipReadLogEntry = {
     key: curKey,
     title: curMeta?.title || '',
@@ -87,14 +89,30 @@ export function flushReadingSession(): void {
     minutes: Math.max(1, Math.round(total / 60000)),
     ts: now,
   };
-  void appendReadLog(entry).catch((e) => console.error('[剪藏本] 阅读时长入账失败', e));
+  return appendReadLog(entry).catch((e) => console.error('[剪藏本] 阅读时长入账失败', e));
 }
+
+/** 写盘失败暂存（审查修复批 P3⑧）：flush 落盘失败时段留内存，下次 appendReadLog
+ *  一并补写入账（原实现静默丢段）。上限防写盘长期失败时无限攒。 */
+const PENDING_READ_LOG_MAX = 500;
+const pendingReadLog: ClipReadLogEntry[] = [];
 
 /** readLog 追加 + 裁剪（读改写事务，与侧写其他写方同队列串行） */
 async function appendReadLog(entry: ClipReadLogEntry): Promise<void> {
-  await updateClipbookData((cur) => {
-    return { ...cur, readLog: trimReadLog([...(cur.readLog || []), entry], entry.ts) };
-  });
+  // 批次 = 之前失败暂存的段 + 本次段，一次事务合并入账；成功才清暂存
+  const batch = [...pendingReadLog, entry];
+  try {
+    await updateClipbookData((cur) => {
+      return { ...cur, readLog: trimReadLog([...(cur.readLog || []), ...batch], entry.ts) };
+    });
+    pendingReadLog.length = 0;
+  } catch (e) {
+    pendingReadLog.push(entry);
+    if (pendingReadLog.length > PENDING_READ_LOG_MAX) {
+      pendingReadLog.splice(0, pendingReadLog.length - PENDING_READ_LOG_MAX);
+    }
+    throw e;
+  }
 }
 
 /** readLog 裁剪口径（issue 358）：保留最近 180 天 + 上限 5000 条（超出裁最旧）。
@@ -223,7 +241,7 @@ export async function flowSave(article: any): Promise<boolean> {
     // 保存联动 auto-summary：登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
     emitDomainEvent('news', { kind: 'saved', evt, clipPath: `${dirOf()}/${String(raw.title || '').replace(/[\\/:*?"<>|]/g, '').trim()}.md` });
     // 本篇已处理出收件流 → 会话封存入账 readLog（issue 358；行为流已 emit，不影响 durationMin）
-    flushReadingSession();
+    void flushReadingSession();
     return true;
   } catch (e) {
     console.error('[剪藏本] 保存失败', e);
@@ -233,15 +251,20 @@ export async function flowSave(article: any): Promise<boolean> {
 
 /** 标记已读（skip 语义：read+skipped 骨架，行为流 news:skipped）。
  *  C32：emitReadEvt 仅在本轮真的落盘（changed）时发——「打开即已读」落盘窗口内再手动标读，
- *  盘面已是目标态（F3 守卫拦截）不再重复喂 smartcat 同篇 news:read。返回落盘结果供 UI 取快照。 */
-export async function flowMarkRead(article: any): Promise<HandledBump> {
+ *  盘面已是目标态（F3 守卫拦截）不再重复喂 smartcat 同篇 news:read。返回落盘结果供 UI 取快照。
+ *  opts.keepSession（审查修复批 P1①）：「打开即已读」（markReadOnOpen）路径传 true——
+ *  本篇**仍在阅读**，不暂停也不尾置封存会话；原实现的 pause + 写盘完成后尾置 flush 会在
+ *  异步窗口内清零该篇刚开的计时器，此后时长在切篇时以 total=0 丢弃（每篇未读条首次
+ *  阅读时长系统性不入账）。封存交给既有封存点：切篇 / 关面板 / 卸载 / 开报告。 */
+export async function flowMarkRead(article: any, opts?: { keepSession?: boolean }): Promise<HandledBump> {
   const raw = article && article.raw;
   if (!raw) return NO_BUMP;
-  pauseReadingSession();
+  const keepSession = !!opts?.keepSession;
+  if (!keepSession) pauseReadingSession();
   const res = await markHandledAndBump(raw, 'skipped');
   if (res.changed) emitReadEvt(raw, 'skipped');
-  // 本篇已处理 → 会话封存入账 readLog（issue 358；同上，行为流之后）
-  flushReadingSession();
+  // 手动标读：本篇已处理 → 会话封存入账 readLog（issue 358；行为流之后）
+  if (!keepSession) void flushReadingSession();
   return res;
 }
 

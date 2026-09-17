@@ -1,4 +1,4 @@
-/* 源指纹 5b3d68e9ebdde1b6 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e65320aa012cbf89 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/clipbook/report-stats.ts","src/core/chart-palette.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
@@ -25,7 +25,6 @@ var BZR_clipbook = (() => {
   __export(render_exports, {
     ICO: () => ICO,
     buildClipReportSections: () => buildClipReportSections,
-    clipReportEmptyHtml: () => clipReportEmptyHtml,
     clipReportEntryHtml: () => clipReportEntryHtml,
     clipReportShellHtml: () => clipReportShellHtml,
     clipReportSkeletonHtml: () => clipReportSkeletonHtml,
@@ -304,14 +303,6 @@ var BZR_clipbook = (() => {
   }
   function clipReportSkeletonHtml() {
     return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
-  }
-  function clipReportEmptyHtml() {
-    return `
-    <div class="bz-clp-rep-empty">
-      ${iconSpan(ICO.book, "bz-ic--lg")}
-      <div class="bz-clp-rep-empty-t">还没有阅读记录</div>
-      <div class="bz-clp-rep-empty-d">在剪藏本里打开文章阅读，停留满一分钟就会自动记到这里</div>
-    </div>`;
   }
   function buildClipReportSections(d) {
     return [

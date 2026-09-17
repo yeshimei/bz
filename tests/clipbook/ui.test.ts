@@ -2,6 +2,8 @@
  * clipbook 域：UI 层（ADR-0082 / issue 177）jsdom 测试。
  * 桌面三栏构建 / rail 源切换 / 列表点击阅读 / 移动双屏切换 / 右键动作（保存/已读/在读）
  * 状态点与徽标、卸载清理。core 注入三连 + MockVault 种子数据。
+ * 审查修复批（issue 358）：移动详情动线计时（P2②）、railFoot 报告入口图标兑现（P3⑥）
+ * 与 Enter/Space 键盘可达（P3⑦）。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, vi } from 'vitest';
@@ -12,6 +14,8 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { initPanel, showPanel, closePanel, unloadPanel } from '../../src/clipbook/ui';
 import { M } from '../../src/clipbook/state';
 import { openClipbook, unloadClipbook } from '../../src/clipbook';
+import { readClipbookData } from '../../src/clipbook/data';
+import { flushReadingSession } from '../../src/clipbook/flow';
 import { setClipDir } from './helpers';
 
 /** 种子：news.json 未读 2 + 已处理 1 + 剪藏目录 1 篇 */

@@ -9,10 +9,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { setApp } from '../../src/core/app';
+import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { readClipbookData, emptySidecar } from '../../src/clipbook/data';
-import { setReadingSession, pauseReadingSession, flushReadingSession, trimReadLog } from '../../src/clipbook/flow';
+import {
+  setReadingSession, pauseReadingSession, flushReadingSession, trimReadLog,
+  flowMarkRead, __readingSessionStateForTests,
+} from '../../src/clipbook/flow';
 import { readNewsData } from '../../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 
@@ -139,6 +142,80 @@ describe('保存动作后的封存入账（flowSave → flush）', () => {
     const news = await readNewsData();
     expect(news.data.articles[0].read).toBe(true);
     expect(news.data.articles[0].state).toBe('saved');
+  });
+});
+
+describe('打开即已读不丢时长（审查修复批 P1① 回归）', () => {
+  /** 一篇未读 news（复用 boot 的 settings/app 注入） */
+  function bootWithOneUnread(): void {
+    const vault = new MockVault();
+    vault.files.set('CONFIG/STORAGE/news.json', JSON.stringify({
+      articles: [
+        { platform: '果壳科学人', title: '甲', url: 'https://guokr.com/1', author: '果壳', body: '正文', date: '2026-09-01 08:00:00' },
+      ],
+      stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
+      bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '',
+      sources: { zhihu: true, guokr: true, bilibili: true },
+    }));
+    boot(vault);
+  }
+
+  it('桌面点开未读（markReadOnOpen 异步落盘窗口）→ 时间推进 → 切篇，readLog 必有该篇记录', async () => {
+    bootWithOneUnread();
+    const raw = ((await readNewsData()).data.articles || [])[0];
+    // selectArticle 动线复刻：renderReader 先开计时 → markReadOnOpen fire-and-forget 标读
+    setReadingSession('url:https://guokr.com/1', { title: '甲', src: '果壳科学人' });
+    const pending = flowMarkRead({ raw }, { keepSession: true });
+    readFor(120_000); // 标读落盘（异步窗口）期间用户持续阅读 2 分钟
+    await pending;
+    // keepSession 语义：本篇仍在阅读——不封存（readLog 仍空）、计时未断
+    expect((await readClipbookData()).readLog).toEqual([]);
+    expect(__readingSessionStateForTests().opened).toBe(true);
+    // 切篇触发封存 → 该篇时长入账（修复前异步窗口清零计时器，此处 total=0 整段丢弃）
+    setReadingSession('url:https://guokr.com/2', { title: '乙', src: '知乎日报' });
+    const readLog = await waitForReadLog(1);
+    expect(readLog).toHaveLength(1);
+    expect(readLog[0]).toMatchObject({ key: 'url:https://guokr.com/1', title: '甲', src: '果壳科学人', minutes: 2 });
+  });
+
+  it('手动标读（无 keepSession）仍走 pause + 尾置封存既有语义', async () => {
+    bootWithOneUnread();
+    const raw = ((await readNewsData()).data.articles || [])[0];
+    setReadingSession('url:https://guokr.com/1', { title: '甲', src: '果壳科学人' });
+    readFor(65_000);
+    await flowMarkRead({ raw });
+    // 尾置 flush 已入账本段（修复前行为保持）
+    const readLog = await waitForReadLog(1);
+    expect(readLog[0]).toMatchObject({ key: 'url:https://guokr.com/1', minutes: 1 });
+    expect(__readingSessionStateForTests().opened).toBe(false);
+  });
+
+  it('flush 暴露 promise（审查修复批 P3⑤）：await 返回即已落盘，无需轮询', async () => {
+    boot();
+    setReadingSession('url:https://x.com/p', { title: 'P', src: '知乎日报' });
+    readFor(65_000);
+    await flushReadingSession();
+    const readLog = (await readClipbookData()).readLog;
+    expect(readLog).toHaveLength(1);
+    expect(readLog[0]).toMatchObject({ key: 'url:https://x.com/p', minutes: 1 });
+  });
+
+  it('readLog 写盘失败暂存内存（审查修复批 P3⑧），恢复后下次 flush 一并补写不丢段', async () => {
+    boot();
+    await readClipbookData(); // 首建 clipbook.json，让后续写走 modify 路径
+    const app = getApp();
+    const modifySpy = vi.spyOn((app.vault as any), 'modify').mockRejectedValueOnce(new Error('disk full'));
+    setReadingSession('url:https://x.com/1', { title: '文章一', src: '知乎日报' });
+    readFor(65_000);
+    await flushReadingSession(); // 写盘失败：flush 内 catch（恒 resolve），段暂存内存
+    modifySpy.mockRestore();
+    expect((await readClipbookData()).readLog).toEqual([]); // 盘上确实没写进去
+    // 下一次会话照常阅读切篇 → 暂存段与新段一并入账
+    setReadingSession('url:https://x.com/2', { title: '文章二', src: '果壳科学人' });
+    readFor(65_000);
+    await flushReadingSession();
+    const readLog = await waitForReadLog(2);
+    expect(readLog.map((e) => e.key)).toEqual(['url:https://x.com/1', 'url:https://x.com/2']);
   });
 });
 
