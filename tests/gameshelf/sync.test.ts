@@ -240,6 +240,8 @@ describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
       expect(document.querySelectorAll('.bz-gs-chips .bz-chip').length).toBe(6);
       expect(document.querySelector('.bz-gs-sortseg .bz-segmented')).toBeTruthy();
       expect(document.querySelectorAll('.bz-gs-sels .bz-select').length).toBe(2);
+      // 游戏墙标记：移动端「搜索行固定（滚动权在网格）」那套 CSS 认它（data-view=shelf）
+      expect(document.querySelector('#bz-gs-body')!.getAttribute('data-view')).toBe('shelf');
       // 头行：视图入口在同步钮左侧（都靠右），关闭钮在（桌面由 CSS 隐藏）
       const acts = [...document.querySelectorAll('.bz-main-head > *')];
       expect(acts.findIndex((e) => e.classList.contains('bz-gs-viewslot'))).toBeLessThan(
@@ -269,6 +271,8 @@ describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
     expect(document.body.textContent).toContain('最后游玩年份分布');
     expect(document.body.querySelectorAll('.bz-stat').length).toBe(5);
     expect(document.body.textContent).toContain('没有逐日游玩时长');
+    // 统计页不带游戏墙标记 → 移动端那套「滚动权在网格」的布局不套到统计页（统计页仍整页滚动）
+    expect(document.querySelector('#bz-gs-body')!.hasAttribute('data-view')).toBe(false);
     unloadGameshelf();
   });
 

@@ -709,9 +709,11 @@ export function renderAll(app: App): void {
   if (syncBtn) syncBtn.disabled = M.syncing || !configured;
   const status = frame.querySelector('#bz-gs-status');
   if (status) status.textContent = M.statusMsg;
-  const body = frame.querySelector('#bz-gs-body');
+  const body = frame.querySelector<HTMLElement>('#bz-gs-body');
   if (!body) return;
   body.innerHTML = '';
+  // 视图标记（只有游戏墙打）：移动端「滚动权交给网格本身」那套布局按它切，统计页/引导态不受影响
+  body.removeAttribute('data-view');
   disposeSelects(); // 工具行重建前先摘掉上一轮下拉的 document 监听
   heroEl = null;
   gridEl = null;
@@ -729,11 +731,17 @@ export function renderAll(app: App): void {
     fillStatsRow(app, rp);
   } else {
     body.appendChild(shelfBody(app, rp));
+    body.dataset.view = 'shelf';
   }
   mountIcons(frame);
 }
 
-/** 游戏墙主体：门面 + 工具行 + 网格（三块容器固定，列表变化只重填门面与网格） */
+/**
+ * 游戏墙主体：门面 + 工具行 + 网格宿主（三块容器固定，列表变化只重填门面与网格）。
+ * 注意两层「网格」不是同一件东西：`#bz-gs-grid`（.bz-gs-gridhost）是**宿主**，
+ * 里面由 shelfHtml 渲染的 `.bz-gs-grid` 才是卡片网格本身——移动端「搜索行固定」那套
+ * 把滚动权交给的是宿主（见 styles.css 的 data-view=shelf 段）。
+ */
 function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
   const wrap = document.createElement('div');
   wrap.className = 'bz-gs-wall';
@@ -753,7 +761,7 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
         <div class="bz-gs-searchwrap" id="bz-gs-search"></div>
       </div>
     </div>
-    <div id="bz-gs-grid"></div>`;
+    <div class="bz-gs-gridhost" id="bz-gs-grid"></div>`;
   heroEl = wrap.querySelector('#bz-gs-hero');
   gridEl = wrap.querySelector('#bz-gs-grid');
 

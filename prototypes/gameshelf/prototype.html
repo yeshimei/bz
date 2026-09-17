@@ -205,6 +205,8 @@
         t('卡片显示中文名', dt('.bz-gs-card .bz-gs-name').textContent === dn(DATA[0]));
         t('中文名不同时列出原名', !!dt('.bz-gs-card .bz-gs-orig'));
         t('工具行 6 档位 chips', dd.querySelectorAll('.bz-gs-chip').length === 6);
+        // 桌面仍吸顶（移动端已改「固定」，见下）：桌面门面在上，工具行要吸在门面之下
+        t('桌面工具行仍吸顶（sticky）', getComputedStyle(dt('.bz-gs-tools')).position === 'sticky');
         t('排序三档', dd.querySelectorAll('#bz-gs-sort .bz-segmented-btn').length === 3);
         t('视图切换不做页签', dd.querySelectorAll('.bz-main-head .bz-segmented').length === 0);
         t('桌面无关闭钮', getComputedStyle(dt('.bz-gs-close')).display === 'none');
@@ -286,7 +288,11 @@
         const mPanel = mob('.bz-gs-panel');
         const mRect = mPanel.getBoundingClientRect();
         t('移动面板满幅 ' + Math.round(mRect.width) + 'px', Math.abs(mRect.width - 412) < 1);
-        t('移动端门面收窄', !!mob('.bz-gs-hero'));
+        // 移动端去掉海报头：门面不出高度（display:none），进面板就是搜索行 + 网格
+        t('移动端无门面（海报头已去掉）', (() => {
+          const h = mob('.bz-gs-hero');
+          return !!h && getComputedStyle(h).display === 'none';
+        })());
         // 整屏：面板高 = iframe 视口高，且底边贴住视口下沿（不留空隙）
         const mvh = md.documentElement.clientHeight;
         t('移动端整屏无底部空隙', Math.abs(mRect.height - mvh) < 1.5 && Math.abs(mRect.bottom - mvh) < 1.5);
@@ -312,6 +318,23 @@
         const rSearch = mob('.bz-gs-searchwrap').getBoundingClientRect();
         t('移动端工具行一行且搜索在前=' + Math.round(rSel.top) + ',' + Math.round(rSearch.top) + ',' + Math.round(rSearch.left) + '<' + Math.round(rSel.left),
           Math.abs(rSel.top - rSearch.top) < 4 && rSearch.left < rSel.left && rSel.right <= mRect.right + 0.5);
+        // 搜索行「固定」而不是「吸顶」（用户 2026-09-17）：滚动权在网格本身，工具行不在滚动流里
+        // → 滚列表时它的位置纹丝不动；position 也不再是 sticky。
+        const mToolsPos = getComputedStyle(mob('.bz-gs-tools')).position;
+        const mToolsTop0 = mob('.bz-gs-tools').getBoundingClientRect().top;
+        // 滚动容器 = 网格宿主 #bz-gs-grid（.bz-gs-gridhost），不是里面那层卡片网格
+        mob('.bz-gs-gridhost').scrollTop = 320;
+        await sleep(140);
+        const mScrolled = mob('.bz-gs-gridhost').scrollTop;
+        mob('.bz-gs-body').scrollTop = 400; // body 不该再吃滚动（吃了就是「吸顶」那套）
+        await sleep(80);
+        const mBodyScroll = mob('.bz-gs-body').scrollTop;
+        const mToolsTop1 = mob('.bz-gs-tools').getBoundingClientRect().top;
+        mob('.bz-gs-gridhost').scrollTop = 0;
+        await sleep(80);
+        t('移动端搜索行固定（非 sticky；滚网格 ' + Math.round(mScrolled) + 'px 后位置不动）',
+          mToolsPos !== 'sticky' && mScrolled > 0 && Math.abs(mToolsTop1 - mToolsTop0) < 0.5);
+        t('移动端滚动权在网格（body 不再滚动，滚 ' + mBodyScroll + '）', mBodyScroll === 0);
         // 下拉可用：开菜单 → 6 项 → 选中即筛选 → 回全部
         mob('.bz-gs-sels .bz-select').click();
         await sleep(150);
