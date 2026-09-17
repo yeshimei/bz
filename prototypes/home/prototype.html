@@ -257,6 +257,10 @@
         t('盒头灰字=入口行那行小字（同口径）', md.querySelector('.bz-home-sheet-sub').textContent === md.querySelector('.bz-home-m-tile[data-home-go="diary"] .bz-home-ect').textContent);
         t('抽屉功能项=写日记', sheetLabels().join('|') === '写日记');
 
+        // 游戏库（2026-09-17 补快捷命令）：长按抽屉与桌面右键菜单**同源**（同一份 DOMAIN_MENU）
+        await longPressTile('gameshelf');
+        t('游戏库抽屉项=立即同步|数据统计（与桌面菜单同源）', sheetLabels().join('|') === '立即同步|数据统计');
+
         await longPressTile('pomodoro');
         // 相位敏感的**单条**：种子 = 暂停中的专注 → 只出「继续专注」（不再并列停止/跳过，二者互斥）
         t('番茄钟抽屉项=继续专注（单条，种子 = 暂停中的专注）', sheetLabels().join('|') === '继续专注');
