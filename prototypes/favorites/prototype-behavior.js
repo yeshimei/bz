@@ -1,4 +1,4 @@
-/* 源指纹 8348f2c3dd55088b · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 382f4f6253fb62f2 · 仓内输入 53 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4180,8 +4180,10 @@ var BZW_favorites = (() => {
     var _a;
     return (_a = getTags().find((t) => t.id === id)) != null ? _a : null;
   }
+  var tagIdSeq = 0;
   function newTagId() {
-    return "t" + Date.now().toString(36);
+    tagIdSeq = (tagIdSeq + 1) % 1679616;
+    return "t" + Date.now().toString(36) + tagIdSeq.toString(36);
   }
   function normalizeTags(raw) {
     if (!Array.isArray(raw)) return [];
@@ -4746,6 +4748,15 @@ var BZW_favorites = (() => {
     const dir = idx >= 0 ? favoritesPath.slice(0, idx) : "";
     return (dir || CONFIG.DEFAULT_STORAGE_PATH) + "/favorites.tags.json";
   }
+  var legacyMigrateInFlight = null;
+  function migrateLegacyOnce(run) {
+    if (!legacyMigrateInFlight) {
+      legacyMigrateInFlight = run().finally(() => {
+        legacyMigrateInFlight = null;
+      });
+    }
+    return legacyMigrateInFlight;
+  }
   var DataManager = class {
     constructor(storagePath) {
       this.store = jsonStore(storagePath);
@@ -4799,14 +4810,15 @@ var BZW_favorites = (() => {
     // ==================== 标签定义（issue 363 修订：data.json 设置键 favoriteTags） ====================
     /**
      * 标签定义收口（app.init / 设置面板标签管理载入时调用）：
-     * 1) 旧伴生文件一次性迁移（幂等）——文件缺失直接跳过；存在 → 读出归一化（坏 JSON 由
+     * 1) 旧伴生文件一次性迁移（幂等；审查修复：模块级 in-flight promise 串行——双入口并发载入
+     *    只跑一次迁移，防读-迁-退役三步竞态互踩）；文件缺失直接跳过；存在 → 读出归一化（坏 JSON 由
      *    jsonStore 原样留档 CONFIG/.CORRUPT 后降级 []），设置键尚无自定义值且旧件有有效行
      *    → setTags 迁入 data.json 并落盘（落盘失败保留旧文件，下次载入重试）；最后旧文件
      *    进系统回收站退役（可反悔；删除失败不阻塞，下次载入重试）。
      * 2) 返回当前生效集（getTags：设置键优先，无键/空/坏回退内置 9 类 seed，seed 不落盘）。
      */
     async loadTags() {
-      await this.migrateLegacyTagsFile();
+      await migrateLegacyOnce(() => this.migrateLegacyTagsFile());
       return getTags();
     }
     /** 保存标签定义（管理界面增删改排序的唯一落盘点）：config.setTags 写设置层 + saveSettings 持久化 */
@@ -4854,6 +4866,8 @@ var BZW_favorites = (() => {
     /**
      * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to
      * 且 type 同步（type = tags[0] 派生字段），返回迁移条数；零匹配不写盘。
+     * 审查修复：触达条件改 or——type===from 但 tags[] 不含的脏条目（历史数据 type 与 tags 失同步）
+     * 也一并跟随，不再残留脱钩旧标签。
      */
     async updateTagLabelBulk(from, to) {
       if (!from || from === to) return 0;
@@ -4861,8 +4875,8 @@ var BZW_favorites = (() => {
         const data = await this.read();
         let n = 0;
         data.forEach((d) => {
-          if ((d.tags || []).includes(from)) {
-            d.tags = d.tags.map((t) => t === from ? to : t);
+          if ((d.tags || []).includes(from) || d.type === from) {
+            d.tags = (d.tags || []).map((t) => t === from ? to : t);
             if (d.type === from) d.type = to;
             n++;
           }
@@ -6245,6 +6259,7 @@ var BZW_favorites = (() => {
     return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
   }
   function hueOf(label) {
+    if (!label) return 210;
     const m = {
       GitHub: 215,
       桌面软件: 160,

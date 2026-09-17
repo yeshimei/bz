@@ -25,6 +25,21 @@ function legacyTagsPath(favoritesPath: string): string {
   return (dir || CONFIG.DEFAULT_STORAGE_PATH) + '/favorites.tags.json';
 }
 
+/**
+ * 迁移 in-flight 串行（审查修复）：DataManager 按调用点现构造（app.init 与设置面板标签管理
+ * 各持一个实例），实例字段锁不住跨实例并发——用模块级 promise 记忆，迁移在途时后到方直接
+ * 等同一拍；完成后释放（迁移幂等，旧文件已退役时重入为空跑）。
+ */
+let legacyMigrateInFlight: Promise<void> | null = null;
+function migrateLegacyOnce(run: () => Promise<void>): Promise<void> {
+  if (!legacyMigrateInFlight) {
+    legacyMigrateInFlight = run().finally(() => {
+      legacyMigrateInFlight = null;
+    });
+  }
+  return legacyMigrateInFlight;
+}
+
 export class DataManager {
   store: ReturnType<typeof jsonStore>;
   /** 数据文件路径（per-path 串行队列键；与 store 同路径） */
@@ -92,14 +107,15 @@ export class DataManager {
 
   /**
    * 标签定义收口（app.init / 设置面板标签管理载入时调用）：
-   * 1) 旧伴生文件一次性迁移（幂等）——文件缺失直接跳过；存在 → 读出归一化（坏 JSON 由
+   * 1) 旧伴生文件一次性迁移（幂等；审查修复：模块级 in-flight promise 串行——双入口并发载入
+   *    只跑一次迁移，防读-迁-退役三步竞态互踩）；文件缺失直接跳过；存在 → 读出归一化（坏 JSON 由
    *    jsonStore 原样留档 CONFIG/.CORRUPT 后降级 []），设置键尚无自定义值且旧件有有效行
    *    → setTags 迁入 data.json 并落盘（落盘失败保留旧文件，下次载入重试）；最后旧文件
    *    进系统回收站退役（可反悔；删除失败不阻塞，下次载入重试）。
    * 2) 返回当前生效集（getTags：设置键优先，无键/空/坏回退内置 9 类 seed，seed 不落盘）。
    */
   async loadTags(): Promise<FavTag[]> {
-    await this.migrateLegacyTagsFile();
+    await migrateLegacyOnce(() => this.migrateLegacyTagsFile());
     return getTags();
   }
 
@@ -149,6 +165,8 @@ export class DataManager {
   /**
    * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to
    * 且 type 同步（type = tags[0] 派生字段），返回迁移条数；零匹配不写盘。
+   * 审查修复：触达条件改 or——type===from 但 tags[] 不含的脏条目（历史数据 type 与 tags 失同步）
+   * 也一并跟随，不再残留脱钩旧标签。
    */
   async updateTagLabelBulk(from: string, to: string): Promise<number> {
     if (!from || from === to) return 0;
@@ -156,8 +174,8 @@ export class DataManager {
       const data = await this.read();
       let n = 0;
       data.forEach((d) => {
-        if ((d.tags || []).includes(from)) {
-          d.tags = d.tags.map((t) => (t === from ? to : t));
+        if ((d.tags || []).includes(from) || d.type === from) {
+          d.tags = (d.tags || []).map((t) => (t === from ? to : t));
           if (d.type === from) d.type = to;
           n++;
         }
