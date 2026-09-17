@@ -46,7 +46,7 @@ import {
   debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
-import { MemoData, DEFAULT_SCENARIOS, parseComposerChecklist } from './data';
+import { MemoData, DEFAULT_SCENARIOS, parseComposerChecklist, hasPendingNextItem } from './data';
 import { getDueStatus, formatDueText, recurLabel } from './due';
 import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
@@ -459,13 +459,20 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       const cur = moment(`${M.calMonth}-01`, 'YYYY-MM-DD');
       if (calNav.hasAttribute('data-memo-cal-prev')) M.calMonth = cur.subtract(1, 'month').format('YYYY-MM');
       else if (calNav.hasAttribute('data-memo-cal-next')) M.calMonth = cur.add(1, 'month').format('YYYY-MM');
-      else M.calMonth = moment().format('YYYY-MM');
-      M.calSelected = null; // 换月不保留选中日（当日清单随视图重置）
+      else {
+        M.calMonth = moment().format('YYYY-MM');
+        // 回到今天同时选中今日（审查体验 P3 修复批）：当日清单直接展开，不只翻月
+        M.calSelected = localDayKey();
+      }
+      if (!calNav.hasAttribute('data-memo-cal-today')) M.calSelected = null; // 换月不保留选中日（当日清单随视图重置）
       renderAll();
       return;
     }
     const calChip = (e.target as HTMLElement).closest('[data-memo-cal-item]') as HTMLElement | null;
-    if (calChip) {
+    if (calChip && !isMobileEnv()) {
+      // 桌面：点 chip 直开编辑器。移动端不进此分支（审查体验 P2 修复批）：chip 热区外扩后
+      // 几乎占满格子，点 chip 须落回下方格子分支选中当日看清单（点格看清单为主），
+      // 编辑走长按抽屉（renderCalendar 里对 chip 挂 attachItemActions）
       const it = M.items.find((i) => i.id === calChip.dataset.memoCalItem);
       if (it) {
         e.stopPropagation();
@@ -675,13 +682,19 @@ function checkProgress(it: MemoItem): string {
   return `${cl.filter((c) => c.done).length}/${cl.length}`;
 }
 
+/** 周期重复标签文案（审查 P3 修复批）：仅未完成条目注入——已完成条目期已了结，
+ *  meta 再挂「每周」有「还会自己回来」的误导；恢复未完成后标记随之回来 */
+function recurTextOf(it: MemoItem): string {
+  return it.recur && !it.completed ? recurLabel(it.recur) : '';
+}
+
 /** 卡片 meta 行（纯层 metaTagsHtml 的行为侧封装：注入 due 包与相对时间；recur/进度文案单源注入） */
 function metaTags(it: MemoItem): string {
   return metaTagsHtml(
     it,
     metaDueOf(it),
     it.created ? formatRelativeTime(it.created) : '',
-    it.recur ? recurLabel(it.recur) : '',
+    recurTextOf(it),
     checkProgress(it)
   );
 }
@@ -698,7 +711,7 @@ function renderContent(): void {
 
 /** 卡片 markup（列表 / 月历当日清单共用：recur/进度文案单源注入） */
 function cardHtmlOf(it: MemoItem): string {
-  return renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', it.recur ? recurLabel(it.recur) : '', checkProgress(it));
+  return renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', recurTextOf(it), checkProgress(it));
 }
 
 /** 卡片行为接线（列表 / 月历当日清单共用）：链接打开/位置跳转/右键菜单与长按抽屉 */
@@ -822,23 +835,41 @@ function renderCalendar(content: HTMLElement): void {
     cells.push({ day: d, today: key === today, selected: M.calSelected === key, chips });
   }
   // 月度概览统计（issue 355 真机回归）：口径与格子 chip 同源（可见未完成且有 due 的条目）；
-  // 整月零条目时补人话空态——多数备忘录不设截止，格子全空不能一片空白无解释
-  const todayCount = byDay.get(today)?.length || 0;
+  // 整月零条目时补人话空态——多数备忘录不设截止，格子全空不能一片空白无解释；
+  // 「今日 N 条」仅当月显示（审查 P2 修复批：翻到别的月份今日不在格中，计数无所指）；
+  // 搜索/场景筛选滤空时空态文案附筛选上下文（审查 P2 修复批，calEmptyHtml 参数注入）
+  const isCurrentMonth = M.calMonth === moment().format('YYYY-MM');
+  const todayCount = isCurrentMonth ? byDay.get(today)?.length || 0 : null;
   const monthPrefix = `${M.calMonth}-`;
   let monthCount = 0;
   for (const [k, v] of byDay) if (k.startsWith(monthPrefix)) monthCount += v.length;
   const sections: string[] = [calHeadHtml(monthMoment.format('YYYY年M月')), calStatsHtml(monthCount, todayCount), calGridHtml(cells)];
-  if (monthCount === 0) sections.push(calEmptyHtml());
+  if (monthCount === 0) sections.push(calEmptyHtml(!!M.search.trim() || M.activeScene !== '全部'));
   // 当日清单：点日期展开（完成态条目同列，卡片淡显划线）
   if (M.calSelected) {
     const dayItems = visible.filter((i) => (i.due || '').slice(0, 10) === M.calSelected);
-    const label = `${moment(M.calSelected).format('M月D日')} · ${dayItems.length} 项`;
+    // 选中今日用「今日事项」语义标签（审查体验 P3 修复批：当日清单直接展开时一眼可辨）
+    const label =
+      M.calSelected === today
+        ? `今日事项 · ${dayItems.length} 项`
+        : `${moment(M.calSelected).format('M月D日')} · ${dayItems.length} 项`;
     const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join('') : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
     sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
   }
   content.innerHTML = sections.join('');
   mountIcons(content);
   wireCards(content);
+  // 月历事件 chip 长按 = 条目动作抽屉（审查体验 P2 修复批）：移动端点 chip 已让位格子选中
+  // （见 click 委托），编辑改走长按；桌面 chip 仍点击直开编辑器，此处右键菜单为顺带增强
+  content.querySelectorAll<HTMLElement>('[data-memo-cal-item]').forEach((chipEl) => {
+    const it = M.items.find((i) => i.id === chipEl.dataset.memoCalItem);
+    if (!it) return;
+    attachItemActions(chipEl, buildCardActions(it), {
+      menuClass: skinClass() || undefined,
+      sheetClass: skinClass() || undefined, // 抽屉挂 body，须自带皮肤类（与列表卡同口径）
+      sheetHead: buildSheetHead(it),
+    });
+  });
 }
 
 /** 移动抽屉顶部信息说明（与列表卡同源 markup——勾选圈走 checkHtml 单源（ADR-0104），
@@ -932,8 +963,9 @@ function toggleCheck(it: MemoItem): void {
 
 async function completeItem(it: MemoItem): Promise<void> {
   try {
-    const { next } = await MemoData.completeItem(it.id);
-    emitDomainEvent('memo', { kind: 'completed', title: it.title });
+    // changed（审查 P3 修复批）：幂等短路（重复完成）不再补发 completed 域事件，行为流不双记
+    const { next, changed } = await MemoData.completeItem(it.id);
+    if (changed) emitDomainEvent('memo', { kind: 'completed', title: it.title });
     // 周期重复（issue 353）：下一期已由数据层生成——轻提示新到期日 + 补一条 added 行为流
     if (next) {
       notice(next.due ? `下一期已排到 ${moment(next.due).format('MM/DD HH:mm')}` : '下一期已生成', 'success');
@@ -959,8 +991,12 @@ async function stopRecur(id: string): Promise<void> {
 }
 
 async function restoreItem(it: MemoItem): Promise<void> {
+  // 链上已有未完成下期（审查 P2 修复批）：已完成周期条目恢复后再完成会再生成一期，
+  // 与首期下期并存重复——一并撤链（recur 清空），本条降级为普通补录，下期即系列的未来期
+  const chained = hasPendingNextItem(M.items, it);
   try {
-    await MemoData.updateItem(it.id, { completed: null });
+    await MemoData.updateItem(it.id, chained ? { completed: null, recur: null } : { completed: null });
+    if (chained) notify('下一期已存在，本条恢复后不再生成新的一期', { type: 'success' });
     emitDomainEvent('memo', { kind: 'restored', title: it.title });
   } catch (e) {
     notifySaveError(e, '恢复未完成');
@@ -1012,11 +1048,22 @@ async function postponeItem(id: string, days: number): Promise<void> {
   await refresh();
 }
 
-/** 移到指定日期（issue 355 月历改期）：保留原时刻只换日期，日历上把事项直接挪到别的日子 */
+/**
+ * 移到指定日期（issue 355 月历改期）：保留原时刻只换日期，日历上把事项直接挪到别的日子；
+ * 无 due 条目（审查 P3 修复批）默认 09:00 时刻排到该日——「排到选中日期」入口。
+ */
+/**
+ * 「移到选中日期」的 sub 文案日期部分（审查 P3 修复批）：目标日不在今年时带年份，
+ * 避免跨年翻页后 MM-DD 有歧义。纯函数（now 可注入）供单测；渲染仅移动端抽屉消费。
+ */
+export function moveDayText(selected: string, now: moment.Moment = moment()): string {
+  return moment(selected).format(moment(selected).year() === now.year() ? 'MM-DD' : 'YYYY-MM-DD');
+}
+
 async function moveToDay(id: string, day: string): Promise<void> {
   const it = M.items.find((i) => i.id === id);
-  if (!it || !it.due) return;
-  const time = it.due.replace('T', ' ').slice(11) || '09:00';
+  if (!it) return;
+  const time = (it.due ? it.due.replace('T', ' ').slice(11) : '') || '09:00';
   const next = `${day} ${time}`;
   try {
     await MemoData.updateItem(id, { due: next });
@@ -1111,26 +1158,29 @@ function buildCardActions(it: MemoItem): ItemAction[] {
       sub: it.due ? formatDueText(it.due) : undefined,
       onClick: async () => { await completeItem(it); },
     });
-  } else {
-    actions.push({ icon: 'rotate-ccw', label: '恢复未完成', title: '恢复未完成', onClick: async () => { await restoreItem(it); } });
-  }
-  if (it.due && !it.completed) {
-    const postponeSub = (days: number) => {
-      const d = new Date(it.due!.replace('T', ' '));
-      d.setDate(d.getDate() + days);
-      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    };
-    actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: `→ ${postponeSub(1)}`, onClick: async () => { await postponeItem(it.id, 1); } });
-    actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: `→ ${postponeSub(3)}`, onClick: async () => { await postponeItem(it.id, 3); } });
+    if (it.due) {
+      const postponeSub = (days: number) => {
+        const d = new Date(it.due!.replace('T', ' '));
+        d.setDate(d.getDate() + days);
+        return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      };
+      actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: `→ ${postponeSub(1)}`, onClick: async () => { await postponeItem(it.id, 1); } });
+      actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: `→ ${postponeSub(3)}`, onClick: async () => { await postponeItem(it.id, 3); } });
+    }
     // 月历选中日（issue 355）：≠ 到期日时给「移到选中日期」——先在月历点目标日，
-    // 再（切回列表或在该日清单之外）对任意事项右键/长按直接改期
-    if (M.calSelected && it.due.slice(0, 10) !== M.calSelected) {
+    // 再（切回列表或在该日清单之外）对任意事项右键/长按直接改期；
+    // 无 due 条目同样可排（审查 P3 修复批）：默认 09:00 时刻排到选中日
+    if (M.calSelected && (!it.due || it.due.slice(0, 10) !== M.calSelected)) {
+      // 跨年目标日带年份（审查 P3 修复批：只显 MM-DD 有歧义）；sub 仅移动端抽屉渲染
+      // （既有拍板：桌面菜单不渲染小字），格式逻辑提为纯函数 moveDayText 供单测
       actions.push({
         icon: 'calendar', label: '移到选中日期', title: '移到月历选中的日期',
-        sub: `→ ${moment(M.calSelected).format('MM-DD')}`,
+        sub: `→ ${moveDayText(M.calSelected)}${it.due ? '' : ' 09:00'}`,
         onClick: async () => { await moveToDay(it.id, M.calSelected!); },
       });
     }
+  } else {
+    actions.push({ icon: 'rotate-ccw', label: '恢复未完成', title: '恢复未完成', onClick: async () => { await restoreItem(it); } });
   }
   // 周期重复（issue 353）：可随时停止——recur 清空后完成不再生成下一期
   if (it.recur && !it.completed) {
@@ -1226,8 +1276,10 @@ function addFromComposer(): void {
       await MemoData.addItem(it);
       emitDomainEvent('memo', { kind: 'added', title: it.title, scene: it.scene, priority: it.priority, due: it.due });
       M.pinnedNewId = it.id; // 录入当场可见：伪场景过滤放行这条新目
-      // 补全半径：toast 挂「补全」按钮直开该条编辑器
-      notify(`已添加到「${scene}」`, {
+      // 补全半径：toast 挂「补全」按钮直开该条编辑器；
+      // 月历视图下补去向说明（审查体验 P3 修复批）：composer 无截止字段，录的条目不进月历格
+      const calHint = M.view === 'calendar' ? '，未设截止不出现在月历' : '';
+      notify(`已添加到「${scene}」${calHint}`, {
         type: 'success',
         action: { label: '补全', onClick: () => openEditor(it) },
       });
@@ -1482,13 +1534,16 @@ export function openEditor(
   dueField.append(dueLabel, dueRow);
   form.appendChild(dueField);
 
-  // 周期重复（issue 353）：不重复/每周/每月/每年；自定义 N 天间隔数据结构已预留，UI 一期不暴露
+  // 周期重复（issue 353）：不重复/每周/每月/每年；自定义 N 天间隔数据结构已预留，UI 一期不暴露——
+  // 旧数据 kind:'days' 时 UI 无对应档（审查 P2 修复批）：回填显「不重复」，保存经 recurTouched
+  // 门控保留原值，不再静默清 null；用户动了选择则按所选落盘（含主动清成不重复）
   const recurField = document.createElement('div');
   recurField.className = 'bz-field';
   const recurLabelEl = document.createElement('span');
   recurLabelEl.className = 'bz-field-label';
   recurLabelEl.textContent = '重复';
   recurField.appendChild(recurLabelEl);
+  let recurTouched = false;
   const recurChoice = uiChoice<string>({
     options: [
       { value: 'none', label: '不重复' },
@@ -1496,10 +1551,10 @@ export function openEditor(
       { value: 'monthly', label: '每月' },
       { value: 'yearly', label: '每年' },
     ],
-    value: editing?.recur ? editing.recur.kind : 'none',
+    value: editing?.recur && editing.recur.kind !== 'days' ? editing.recur.kind : 'none',
     float: true, // 浮岛 segmented（与场景/优先级同范式）
     label: '重复',
-    onChange: () => { /* 值由保存时读取 */ },
+    onChange: () => { recurTouched = true; }, // 值由保存时读取；touched 门控 days 原值保留
   });
   recurField.appendChild(recurChoice.el);
   form.appendChild(recurField);
@@ -1575,10 +1630,16 @@ export function openEditor(
     if (sceneBtnOn) scene = (sceneBtnOn as HTMLElement).dataset.value || scene;
     const prioBtnOn = prioChoice.el.querySelector('.is-on');
     const priority: string = prioBtnOn ? (prioBtnOn as HTMLElement).dataset.value || 'minor' : 'minor';
-    // 周期重复（issue 353）：'none' 归一 null；days 自定义间隔一期不出 UI，保存口径只产三基础周期
+    // 周期重复（issue 353）：'none' 归一 null；days 自定义间隔一期不出 UI——
+    // 未触碰且原值是 days 时保留原值不静默清 null（审查 P2 修复批），其余按所选三基础周期落盘
     const recurBtnOn = recurChoice.el.querySelector('.is-on');
     const recurKind = (recurBtnOn ? (recurBtnOn as HTMLElement).dataset.value || 'none' : 'none') as MemoRecur['kind'] | 'none';
-    const recur: MemoRecur | null = recurKind === 'weekly' || recurKind === 'monthly' || recurKind === 'yearly' ? { kind: recurKind } : null;
+    const recur: MemoRecur | null =
+      !recurTouched && editing?.recur?.kind === 'days'
+        ? editing.recur
+        : recurKind === 'weekly' || recurKind === 'monthly' || recurKind === 'yearly'
+          ? { kind: recurKind }
+          : null;
     // 清单子任务（issue 354）：清洗空行后落盘；全空 = 无清单
     const clClean = clDraft.map((c) => ({ text: c.text.trim(), done: c.done })).filter((c) => c.text);
     const checklist: MemoCheckItem[] | null = clClean.length ? clClean : null;

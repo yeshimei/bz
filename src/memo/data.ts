@@ -41,12 +41,18 @@ function hasCourseTag(cache: any): boolean {
   return !!tags && tags.includes('公开课'); // 数组与字符串均有 includes
 }
 
-/** recur 字段归一（issue 353，零迁移）：合法 kind 保留（days 补 interval 缺省 1）；
+/** recur 字段归一（issue 353，零迁移）：合法 kind 保留（days 补 interval 缺省 1；
+ *  monthly/yearly 保留合法 anchorDay 月/年锚定日，1-31 整数）；
  *  缺省/形态不对/未知 kind 一律 null（旧数据与手改脏数据都安全回落「不重复」） */
 export function normalizeRecur(v: unknown): MemoRecur | null {
   if (!v || typeof v !== 'object') return null;
   const kind = (v as MemoRecur).kind;
-  if (kind === 'weekly' || kind === 'monthly' || kind === 'yearly') return { kind };
+  if (kind === 'weekly' || kind === 'monthly' || kind === 'yearly') {
+    const out: MemoRecur = { kind };
+    const ad = (v as MemoRecur).anchorDay;
+    if (typeof ad === 'number' && Number.isInteger(ad) && ad >= 1 && ad <= 31) out.anchorDay = ad;
+    return out;
+  }
   if (kind === 'days') {
     const n = Number((v as MemoRecur).interval);
     return { kind: 'days', interval: Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1 };
@@ -66,8 +72,9 @@ export function normalizeChecklist(v: unknown): MemoCheckItem[] | null {
 
 /**
  * composer 约定语法解析（issue 354）：「筹备旅行 /订机票 /订酒店」——
- * 空白分隔的 `/词条` token 逐个收进清单（词条本身不含空白）；其余文本为标题。
- * 全部是词条（无标题）时首词条升格为标题；无词条时 checklist = null（普通条目）。
+ * 空白分隔的 `/词条` token 逐个收进清单（词条本身不含空白与 `/`；含第二个 `/` 的
+ * 形如 /etc/nginx.conf 的 Unix 路径 token 不收，归回标题，审查 P2 修复批）；
+ * 其余文本为标题。全部是词条（无标题）时首词条升格为标题；无词条时 checklist = null（普通条目）。
  * 纯函数；URL 不受影响（https:// 开头不以 / 起始，路径型 token 如 24/7 也不带前导斜杠）。
  */
 export function parseComposerChecklist(raw: string): { title: string; checklist: MemoCheckItem[] | null } {
@@ -76,7 +83,8 @@ export function parseComposerChecklist(raw: string): { title: string; checklist:
   const items: MemoCheckItem[] = [];
   const titleParts: string[] = [];
   for (const tok of text.split(/\s+/)) {
-    if (tok.length > 1 && tok.startsWith('/')) items.push({ text: tok.slice(1), done: false });
+    // `/词条`：以 / 起始、长度 >1、词条内无第二个 /（Unix 绝对路径不收）
+    if (tok.length > 1 && tok.startsWith('/') && !tok.slice(1).includes('/')) items.push({ text: tok.slice(1), done: false });
     else titleParts.push(tok);
   }
   let title = titleParts.join(' ').trim();
@@ -86,9 +94,11 @@ export function parseComposerChecklist(raw: string): { title: string; checklist:
 
 /**
  * 周期条目的下一期到期时间（issue 353）：锚定 base（条目 due；无则取完成时刻）不动，
- * 取「锚点 + n 个周期」中第一个严格晚于完成时刻的值——锚点不随加法漂移
- * （月锚 1/31 顺延恒为每月 31 日/月末钳制 2/28，不因逐次 add 退化成 28 号）。
- * 补完逾期老条目逐周期前跳，上限 366 跳防极端数据死循环。
+ * 取「锚点 + n 个周期」中第一个严格晚于完成时刻的值——锚点不随加法漂移。
+ * 月/年周期带 anchorDay（completeItem 链式记录的原始锚定日）时按「目标月取 min(anchorDay,
+ * 当月天数)」取日：钳制后的 due 不回写锚，「每月 31 号」逐代恒 31 号/月末钳制，不退化成 28 号
+ * （审查 P1 修复批）。补完逾期老条目逐周期前跳，上限 366 跳防极端数据死循环；
+ * guard 耗尽仍不晚于完成时刻（小间隔 + 严重落后的 due）→ 以完成时刻为锚兜底一期。
  * 纯函数（moment 仅做日期算术），nowStr 由调用方注入便于测试。
  */
 export function nextRecurDue(recur: MemoRecur, base: string | null, nowStr?: string): string {
@@ -99,12 +109,33 @@ export function nextRecurDue(recur: MemoRecur, base: string | null, nowStr?: str
   const now = nowStr ? moment(norm(nowStr), fmt) : moment();
   const unit = recur.kind === 'weekly' ? 'weeks' : recur.kind === 'monthly' ? 'months' : recur.kind === 'yearly' ? 'years' : 'days';
   const amount = unit === 'days' ? (recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1) : 1;
+  // 月/年锚定日：加法只推进年月，日成分恒取 min(anchorDay, 目标月天数)（月末钳制不回写锚）
+  const anchorDay = recur.anchorDay;
+  const useAnchorDay =
+    (recur.kind === 'monthly' || recur.kind === 'yearly') && typeof anchorDay === 'number' && Number.isInteger(anchorDay) && anchorDay >= 1 && anchorDay <= 31;
+  const shift = (steps: number): moment.Moment => {
+    const m = anchor.clone().add(steps * amount, unit as moment.DurationInputArg2);
+    if (useAnchorDay) m.date(Math.min(anchorDay as number, m.daysInMonth()));
+    return m;
+  };
   let n = 1;
-  let cur = anchor.clone().add(n * amount, unit as moment.DurationInputArg2);
-  let guard = 0;
-  while (cur.valueOf() <= now.valueOf() && guard++ < 366) {
-    n++;
-    cur = anchor.clone().add(n * amount, unit as moment.DurationInputArg2);
+  let cur = shift(n);
+  if (now.diff(anchor, 'days') > 366) {
+    // 严重落后（锚落后超一年）：旧锚已失去调度意义，以完成时刻为锚重排一期，
+    // 不再逐周期追赶（避免小间隔 + 多年落后时产出「过去到期」或长期滞留旧锚）
+    const m = moment(now).add(amount, unit as moment.DurationInputArg2);
+    if (useAnchorDay) m.date(Math.min(anchorDay as number, m.daysInMonth()));
+    cur = m;
+  } else {
+    let guard = 0;
+    while (cur.valueOf() <= now.valueOf() && guard++ < 366) {
+      n++;
+      cur = shift(n);
+    }
+    if (cur.valueOf() <= now.valueOf()) {
+      // guard 耗尽仍不晚于完成时刻：以完成时刻为锚兜底一期（不再产出「过去到期」的下一期）
+      cur = moment(now).add(amount, unit as moment.DurationInputArg2);
+    }
   }
   return cur.format(fmt);
 }
@@ -129,6 +160,26 @@ export function normalizeItem(item: any): MemoItem {
     recur: normalizeRecur(item.recur),
     checklist: normalizeChecklist(item.checklist),
   };
+}
+
+/**
+ * 链上是否已有未完成下期（审查 P2 修复批）：完成周期条目会克隆生成下一期（同标题/场景、
+ * recur 同 kind、due 更晚、未完成）。已完成的当期再「恢复未完成」时若链上已有下期，
+ * 再完成会与首期下期并存重复——restoreItem 据此一并撤链。启发式识别（无 parent id 字段），
+ * 标题/场景/周期种类三项对齐生成时全克隆的口径。
+ */
+export function hasPendingNextItem(items: MemoItem[], it: MemoItem): boolean {
+  if (!it.recur || !it.completed) return false;
+  return items.some(
+    (o) =>
+      o.id !== it.id &&
+      !o.completed &&
+      o.title === it.title &&
+      o.scene === it.scene &&
+      o.recur?.kind === it.recur!.kind &&
+      !!o.due &&
+      (!it.due || o.due > it.due)
+  );
 }
 
 export const MemoData = {
@@ -222,27 +273,37 @@ export const MemoData = {
   /**
    * 完成条目（issue 353 扩展）：标记 completed；周期条目（recur）自动生成下一期——
    * 全字段克隆（场景/优先级/关联笔记/子任务等保留），新 id/created，completed 清空，
-   * due 顺延到下一周期（nextRecurDue，无 due 则锚定完成时刻起算）。
-   * 返回 { next }：非周期条目 next = null；已完成条目幂等短路（不重复生成）。
+   * due 顺延到下一周期（nextRecurDue，无 due 则锚定完成时刻起算）；
+   * 月/年周期把未钳制的锚定日记进下一代 recur.anchorDay（月末钳制不跨代漂移，审查 P1 修复批）。
+   * 返回 { next, changed }：非周期条目 next = null；已完成条目幂等短路（changed = false，
+   * UI 据此不重复发 completed 域事件，审查 P3 修复批）。
    * 整个「读→改→写（含生成）」在同一个串行队列任务内原子完成——队列不可重入，
    * 任务内不得再走 updateItem/addItem（同路径会死锁）。
    */
-  async completeItem(id: string): Promise<{ next: MemoItem | null }> {
+  async completeItem(id: string): Promise<{ next: MemoItem | null; changed: boolean }> {
     return enqueueFileTask(this.memoFilePath, async () => {
       const data = await this.read();
       const item = data.find((d: any) => d.id === id);
       if (!item) throw new Error('条目不存在');
-      if (item.completed) return { next: null };
+      if (item.completed) return { next: null, changed: false };
       const now = moment().format('YYYY-MM-DD HH:mm:ss');
       item.completed = now;
       const recur = normalizeRecur(item.recur);
       let next: MemoItem | null = null;
       if (recur) {
         const due = nextRecurDue(recur, item.due || now, now);
+        // 月/年锚定日链式：首期（无 anchorDay）从条目 due 记原始日；已带锚的传下去不动——
+        // 锚取「原始日」而非钳制后的 due 日，跨代不漂移（1/31 → 2/28 → 3/31 …）
+        const nextRecur: MemoRecur = { ...recur };
+        if ((recur.kind === 'monthly' || recur.kind === 'yearly') && nextRecur.anchorDay === undefined) {
+          const d = moment((item.due || now).replace('T', ' '), 'YYYY-MM-DD HH:mm:ss');
+          if (d.isValid()) nextRecur.anchorDay = d.date();
+        }
         // 经 normalizeItem 重建干净形态；notePosition 浅拷贝防两期共享引用；
         // checklist 深拷贝且勾选态重置——新的一期从头来过（原条目保留当期勾选史）
         next = normalizeItem({
           ...item,
+          recur: nextRecur,
           notePosition: item.notePosition ? { ...item.notePosition } : null,
           checklist: normalizeChecklist(item.checklist)?.map((c) => ({ ...c, done: false })) ?? null,
           id: generateId(),
@@ -253,7 +314,7 @@ export const MemoData = {
         data.unshift(next);
       }
       await this.write(data);
-      return { next };
+      return { next, changed: true };
     });
   },
 

@@ -95,6 +95,9 @@
   border-radius: var(--bz-radius-full); white-space: nowrap; overflow: hidden;
   background: var(--bz-surface-3); color: var(--bz-text-2); cursor: pointer;
 }
+/* 长标题省略号（审查体验 P3 修复批）：chip 整体 overflow:hidden 只裁切不出 …，
+   文字段自持 ellipsis（flex 子项 min-width:0 才收得拢） */
+.bz-memo-cal-chip .bz-memo-cal-chip-txt { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
 .bz-memo-cal-chip .bz-memo-cal-chip-dot {
   width: 6px; height: 6px; border-radius: 50%; background: currentColor;
   flex-shrink: 0; display: none;
@@ -104,6 +107,8 @@
 .bz-memo-cal-chip.is-today { background: color-mix(in srgb, var(--bz-brand) 14%, transparent); color: var(--bz-brand); }
 .bz-memo-cal-chip.is-future { background: color-mix(in srgb, var(--bz-success) 12%, transparent); color: var(--bz-success); }
 .bz-memo-cal-chip.is-more { background: transparent; color: var(--bz-text-3); }
+/* 「还有 N 条」可点感（审查体验 P3 修复批）：点击落在格子上展开当日全量清单 */
+.bz-memo-cal-chip.is-more:hover { color: var(--bz-text-1); background: var(--bz-surface-hover); }
 /* 当日清单（点日期展开）：复用列表卡片；空日轻提示 */
 .bz-memo-cal-daypanel { padding-top: var(--bz-space-sm); }
 .bz-memo-cal-noday { padding: var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; }
@@ -334,12 +339,19 @@
   .bz-memo-cl-row { padding: 5px 0; gap: 9px; }
   .bz-memo-cl-row .bz-memo-cl-box { width: 16px; height: 16px; }
   .bz-memo-cl-row .bz-memo-cl-text { font-size: var(--bz-font-body); }
-  /* 月历触控档（issue 355）：格子收矮成色点热区——chip 隐文字显圆点，日数留格 */
+  /* 月历触控档（issue 355）：格子收矮成色点热区——chip 隐文字显圆点，日数留格；
+     chip 间距 2px → 4px（审查体验 P2 修复批：色点行距放宽，少粘连） */
   .bz-memo-cal-cell { min-height: 44px; padding: 2px 3px; }
+  .bz-memo-cal-chips { gap: 4px; }
   .bz-memo-cal-chip { padding: 0; justify-content: center; background: transparent; }
   .bz-memo-cal-chip .bz-memo-cal-chip-dot { display: block; width: 7px; height: 7px; }
   .bz-memo-cal-chip .bz-memo-cal-chip-txt { display: none; }
   .bz-memo-cal-chip.is-more .bz-memo-cal-chip-txt { display: block; font-size: 10px; line-height: 14px; }
+  /* chip 触控热区 ≥40px（审查体验 P2 修复批）：7px 色点可视盒（行高 16px）点击太难，
+     ::after 外扩（域内先例 .bz-memo-check::after）——16px 行盒 + 12px×2 = 40px；
+     点 chip 现已让位格子选中（ui.ts 委托 isMobileEnv 分流），编辑走长按抽屉 */
+  .bz-memo-cal-chip { position: relative; }
+  .bz-memo-cal-chip::after { content: ''; position: absolute; inset: -12px; }
 }
 
 /* ═══════════ 皮肤体系（issue 210，2026-09-06 细节对齐原型） ═══════════

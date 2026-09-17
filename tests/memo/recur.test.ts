@@ -11,7 +11,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { resetObsidianMocks, Platform as MockPlatform } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { MemoData, normalizeRecur, nextRecurDue } from '../../src/memo/data';
+import { MemoData, normalizeRecur, nextRecurDue, hasPendingNextItem } from '../../src/memo/data';
 import { recurLabel } from '../../src/memo/due';
 import { metaTagsHtml } from '../../src/memo/render';
 import { M, resetMemoState } from '../../src/memo/state';
@@ -69,6 +69,38 @@ describe('issue 353 · nextRecurDue 周期算术', () => {
 
   it('monthly：月末钳制（1/31 → 2/28）+ 补逾期前跳', () => {
     expect(nextRecurDue({ kind: 'monthly' }, '2026-01-31 08:00:00', '2026-03-01 10:00:00')).toBe('2026-03-31 08:00:00');
+  });
+
+  it('审查 P1 · 月锚 anchorDay 链式：钳制后的 due 不回写锚，连两代完成 1/31 不退化', () => {
+    // 第 1 代：锚 1/31 完成于 2 月初 → 2/28（钳制）；带上 anchorDay=31 再算第 2 代
+    const gen1 = nextRecurDue({ kind: 'monthly', anchorDay: 31 }, '2026-01-31 08:00:00', '2026-02-01 10:00:00');
+    expect(gen1).toBe('2026-02-28 08:00:00');
+    // 第 2 代：锚仍是 31 号（修复前钳制 due 2/28 成新锚 → 永久退化 3/28）
+    const gen2 = nextRecurDue({ kind: 'monthly', anchorDay: 31 }, gen1, '2026-03-01 10:00:00');
+    expect(gen2).toBe('2026-03-31 08:00:00');
+    const gen3 = nextRecurDue({ kind: 'monthly', anchorDay: 31 }, gen2, '2026-04-01 10:00:00');
+    expect(gen3).toBe('2026-04-30 08:00:00'); // 4 月无 31 号 → 月末钳制
+    const gen4 = nextRecurDue({ kind: 'monthly', anchorDay: 31 }, gen3, '2026-05-01 10:00:00');
+    expect(gen4).toBe('2026-05-31 08:00:00'); // 钳制不传染：5 月回到 31 号
+  });
+
+  it('审查 P1 · 年锚 anchorDay：2/29 逐年取日，闰年回归 29 号', () => {
+    // 2028 闰年锚 2/29，连跨三个平年后 2032 闰年应回到 2/29
+    const g1 = nextRecurDue({ kind: 'yearly', anchorDay: 29 }, '2028-02-29 09:00:00', '2028-03-01 09:00:00');
+    expect(g1).toBe('2029-02-28 09:00:00');
+    const g2 = nextRecurDue({ kind: 'yearly', anchorDay: 29 }, g1, '2029-03-01 09:00:00');
+    expect(g2).toBe('2030-02-28 09:00:00');
+    const g3 = nextRecurDue({ kind: 'yearly', anchorDay: 29 }, g2, '2031-03-01 09:00:00');
+    expect(g3).toBe('2032-02-29 09:00:00'); // 2032 闰年：锚 29 不漂移成 28
+  });
+
+  it('审查 P2 · days guard 耗尽仍落后：以完成时刻为锚兜底一期（不再产「过去到期」）', () => {
+    // due 落后 6 年余（>366 个 7 天周期），修复前 guard 耗尽后返回的仍是过去时刻
+    const next = nextRecurDue({ kind: 'days', interval: 7 }, '2020-01-01 09:00:00', '2026-09-16 12:00:00');
+    expect(moment(next).valueOf()).toBeGreaterThan(moment('2026-09-16 12:00:00').valueOf());
+    expect(next).toBe('2026-09-23 12:00:00'); // now + 7 天兜底
+    // 小间隔（1 天）同理
+    expect(nextRecurDue({ kind: 'days', interval: 1 }, '2020-01-01 09:00:00', '2026-09-16 12:00:00')).toBe('2026-09-17 12:00:00');
   });
 
   it('yearly：+1 年', () => {
@@ -156,6 +188,69 @@ describe('issue 353 · completeItem 自动生成下一期', () => {
     const { next } = await MemoData.completeItem('r');
     expect(next).toBeNull();
     expect(JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!)).toHaveLength(1);
+  });
+
+  it('审查 P1 · 月末锚跨代链式：completeItem 记 anchorDay，连两代完成 1/31 月重复不退化', async () => {
+    vault.files.set(
+      'CONFIG/STORAGE/memo.json',
+      JSON.stringify([
+        { id: 'm1', title: '月度盘点', scene: '工作', priority: 'minor', created: '2026-01-01 09:00:00', completed: null, due: '2026-01-31 09:00:00', recur: { kind: 'monthly' } },
+      ])
+    );
+    // 第 1 代完成（2026-02 内）；只 fake Date（completeItem 的 now 取 moment()），不碰队列计时
+    vi.useFakeTimers({ toFake: ['Date'], now: new Date('2026-02-05T10:00:00') });
+    try {
+      const r1 = await MemoData.completeItem('m1');
+      expect(r1.next!.due).toBe('2026-02-28 09:00:00'); // 2 月无 31 号 → 钳制
+      expect(r1.next!.recur).toEqual({ kind: 'monthly', anchorDay: 31 }); // 原始锚随下一代走
+      // 第 2 代完成（2026-03 内）——修复前锚被钳制 due 2/28 接管 → 3/28 永久退化
+      vault.files.set(
+        'CONFIG/STORAGE/memo.json',
+        JSON.stringify([
+          { ...JSON.parse(JSON.stringify(r1.next!)), completed: null },
+        ])
+      );
+      const r2 = await MemoData.completeItem(r1.next!.id);
+      expect(r2.next!.due).toBe('2026-03-31 09:00:00'); // 回到 31 号，不退化
+      expect(r2.next!.recur).toEqual({ kind: 'monthly', anchorDay: 31 });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('审查 P3 · changed 语义：实际完成 true；幂等短路 false（UI 据此不重复发 completed 事件）', async () => {
+    vault.files.set(
+      'CONFIG/STORAGE/memo.json',
+      JSON.stringify([{ id: 'c1', title: '普通条目', scene: '生活', priority: 'minor', created: '2026-09-01 09:00:00' }])
+    );
+    const first = await MemoData.completeItem('c1');
+    expect(first.changed).toBe(true);
+    const again = await MemoData.completeItem('c1');
+    expect(again.changed).toBe(false);
+    expect(again.next).toBeNull();
+  });
+});
+
+describe('审查 P2 · hasPendingNextItem（恢复撤链判定）', () => {
+  const base = (extra: Partial<MemoItem>): MemoItem => ({
+    id: 't1', title: '交周报', scene: '工作', priority: 'minor', created: '2026-09-10 09:00:00',
+    completed: null, due: null, notePath: null, notePosition: null, scriptName: null,
+    courseName: null, coursePath: null, linkedNote: null, url: null, recur: null, checklist: null, ...extra,
+  });
+
+  it('链上有同标题/场景/周期、未完成且 due 更晚的下期 → true', () => {
+    const done = base({ id: 'a', completed: moment().subtract(1, 'day').format('YYYY-MM-DD') + ' 10:00:00', due: moment().subtract(2, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } });
+    const pending = base({ id: 'b', due: moment().add(6, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } });
+    expect(hasPendingNextItem([done, pending], done)).toBe(true);
+  });
+
+  it('标题不同 / 周期种类不同 / 下期已完成 / 无 recur / 自身未完成 → false', () => {
+    const done = base({ id: 'a', completed: moment().subtract(1, 'day').format('YYYY-MM-DD') + ' 10:00:00', due: moment().subtract(2, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } });
+    expect(hasPendingNextItem([done, base({ id: 'b', title: '别的标题', due: moment().add(6, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } })], done)).toBe(false);
+    expect(hasPendingNextItem([done, base({ id: 'b', due: moment().add(6, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'monthly' } })], done)).toBe(false);
+    expect(hasPendingNextItem([done, base({ id: 'b', completed: '2026-09-16 09:00:00', due: moment().add(6, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } })], done)).toBe(false);
+    expect(hasPendingNextItem([done, base({ id: 'b', due: moment().add(6, 'day').format('YYYY-MM-DD') + ' 09:00:00' })], done)).toBe(false);
+    expect(hasPendingNextItem([done], base({ id: 'a', recur: { kind: 'weekly' } }))).toBe(false); // 自身未完成
   });
 });
 
@@ -283,6 +378,117 @@ describe('issue 353 · UI（列表标记/勾选重生/编辑器）', () => {
 
   it('编辑器：不重复 → 保存清空 recur（停止重复的第二入口）', async () => {
     const { app } = seed({ id: 'r1', title: '换滤芯', scene: '生活', priority: 'minor', created: '2026-09-01 09:00:00', recur: { kind: 'monthly' } });
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(M.items.length).toBe(1);
+    });
+    openEditor(M.items[0]);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
+    });
+    (document.querySelector('.bz-memo-editor [data-value="none"]') as HTMLElement).click();
+    const saveBtn = [...document.querySelectorAll('.bz-memo-editor .bz-btn')].find((b) => b.textContent!.includes('保存')) as HTMLElement;
+    saveBtn.click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      expect(raw[0].recur).toBeNull();
+    });
+  });
+
+  it('审查 P3 · 已完成条目 meta 不再注入「每周」标签；恢复未完成后标记回来', async () => {
+    const { app } = seed({ id: 'r1', title: '交周报', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: '2026-09-15 10:00:00', recur: { kind: 'weekly' } });
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-donebar]')).toBeTruthy();
+    });
+    // 展开已完成折叠区
+    (document.querySelector('[data-memo-donebar]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-card[data-memo-id="r1"]')).toBeTruthy();
+    });
+    // 已完成：无「每周」标签（期已了结，标每周有「还会自己回来」的误导）
+    expect(document.querySelector('.bz-memo-card[data-memo-id="r1"] .bz-memo-tag-recur')).toBeNull();
+    // 恢复未完成：标记随 recur 回来
+    (document.querySelector('.bz-memo-card[data-memo-id="r1"] [data-memo-check]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-card[data-memo-id="r1"] .bz-memo-tag-recur')).toBeTruthy();
+    });
+  });
+
+  it('审查 P2 · 恢复已完成周期条目：链上已有未完成下期 → 一并撤链（recur 清空）+ 提示', async () => {
+    // r1 = 已完成当期；r2 = 完成时克隆出的下期（未完成、due 更晚、同标题/场景/周期）
+    const { app } = seed({ id: 'r1', title: '交周报', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: moment().subtract(1, 'day').format('YYYY-MM-DD') + ' 10:00:00', due: moment().subtract(2, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } });
+    vault.files.set(
+      'CONFIG/STORAGE/memo.json',
+      JSON.stringify([
+        { id: 'r1', title: '交周报', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: moment().subtract(1, 'day').format('YYYY-MM-DD') + ' 10:00:00', due: moment().subtract(2, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } },
+        { id: 'r2', title: '交周报', scene: '工作', priority: 'minor', created: '2026-09-15 10:00:00', completed: null, due: moment().add(6, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } },
+      ])
+    );
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(M.items.length).toBe(2);
+    });
+    (document.querySelector('[data-memo-donebar]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-card[data-memo-id="r1"]')).toBeTruthy();
+    });
+    (document.querySelector('.bz-memo-card[data-memo-id="r1"] [data-memo-check]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      const r1 = raw.find((i: any) => i.id === 'r1');
+      expect(r1.completed).toBeNull();
+      expect(r1.recur).toBeNull(); // 撤链：再完成不会再生成第二期（r2 即未来期）
+    });
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-notice')?.textContent).toContain('下一期已存在');
+    });
+    // 下期原样保留
+    const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+    expect(raw.find((i: any) => i.id === 'r2').recur).toEqual({ kind: 'weekly' });
+  });
+
+  it('审查 P2 · 恢复无下期的已完成周期条目：recur 原样保留（再完成照常生成下期）', async () => {
+    const { app } = seed({ id: 'r1', title: '交周报', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: moment().subtract(1, 'day').format('YYYY-MM-DD') + ' 10:00:00', due: moment().subtract(2, 'day').format('YYYY-MM-DD') + ' 09:00:00', recur: { kind: 'weekly' } });
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(M.items.length).toBe(1);
+    });
+    (document.querySelector('[data-memo-donebar]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-card[data-memo-id="r1"]')).toBeTruthy();
+    });
+    (document.querySelector('.bz-memo-card[data-memo-id="r1"] [data-memo-check]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      const r1 = raw.find((i: any) => i.id === 'r1');
+      expect(r1.completed).toBeNull();
+      expect(r1.recur).toEqual({ kind: 'weekly' });
+    });
+  });
+
+  it('审查 P2 · 编辑器遇 kind:days 旧数据：不触碰重复档保存保留原值（不静默清 null）', async () => {
+    const { app } = seed({ id: 'd1', title: '三天一查', scene: '生活', priority: 'minor', created: '2026-09-01 09:00:00', recur: { kind: 'days', interval: 3 } });
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(M.items.length).toBe(1);
+    });
+    openEditor(M.items[0]);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
+    });
+    // days 无 UI 档：回填显「不重复」；不动它直接保存
+    expect(document.querySelector('.bz-memo-editor [data-value="days"]')).toBeNull();
+    const saveBtn = [...document.querySelectorAll('.bz-memo-editor .bz-btn')].find((b) => b.textContent!.includes('保存')) as HTMLElement;
+    saveBtn.click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      expect(raw[0].recur).toEqual({ kind: 'days', interval: 3 });
+    });
+  });
+
+  it('审查 P2 · 编辑器 days 旧数据：动了重复档则按所选落盘（含清成不重复）', async () => {
+    const { app } = seed({ id: 'd1', title: '三天一查', scene: '生活', priority: 'minor', created: '2026-09-01 09:00:00', recur: { kind: 'days', interval: 3 } });
     openMemoPanel(app);
     await vi.waitFor(() => {
       expect(M.items.length).toBe(1);

@@ -69,10 +69,22 @@ describe('issue 355 · 月历纯层 markup 口径', () => {
     expect(h).toContain('1');
   });
 
+  it('审查 P2 · calStatsHtml：非当月（todayCount=null）不显「今日 N 条」段', () => {
+    const h = calStatsHtml(2, null);
+    expect(h).toContain('本月到期');
+    expect(h).not.toContain('今日');
+  });
+
   it('calEmptyHtml：空月人话提示 markup（issue 355 真机回归）', () => {
-    const h = calEmptyHtml();
+    const h = calEmptyHtml(false);
     expect(h).toContain('bz-memo-cal-empt');
     expect(h).toContain('本月没有到期事项');
+  });
+
+  it('审查 P2 · calEmptyHtml：筛选滤空时文案附筛选上下文', () => {
+    const h = calEmptyHtml(true);
+    expect(h).toContain('当前筛选下本月没有到期事项');
+    expect(h).toContain('清除搜索或切换场景');
   });
 });
 
@@ -278,6 +290,28 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计
     }
   });
 
+  it('审查体验 P2 · 移动端点月历 chip = 选中当日看清单（不直开编辑器）', async () => {
+    const { app } = seedEvents();
+    MockPlatform.isMobile = true;
+    try {
+      openCal(app);
+      // 等 item 加载与 chip 渲染完成再点（首次 grid 出现时 items 可能尚未汇入）
+      await vi.waitFor(() => {
+        expect(document.querySelector('[data-memo-cal-item="td"]')).toBeTruthy();
+      });
+      // chip 热区外扩后几乎占满格子：点 chip 须落回格子选中当日（点格看清单为主），不开编辑器
+      (document.querySelector('[data-memo-cal-item="td"]') as HTMLElement).click();
+      await vi.waitFor(() => {
+        expect(document.querySelector('.bz-memo-cal-daypanel')).toBeTruthy();
+      });
+      expect(M.calSelected).toBe(moment().format('YYYY-MM-DD'));
+      expect(document.querySelector('.bz-memo-editor')).toBeNull();
+      expect(document.querySelector('.bz-memo-cal-daypanel')?.textContent).toContain('今日事项');
+    } finally {
+      MockPlatform.isMobile = false;
+    }
+  });
+
   // ---------- 统计行与空月提示（issue 355 真机回归：格子全空且无解释） ----------
 
   it('月度概览统计行：口径与格子 chip 同源（完成/无 due 不计入），有条目月不出空态', async () => {
@@ -339,7 +373,93 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计
     });
     expect((document.querySelector('[data-memo-cal-item="nm"]') as HTMLElement).className).toContain('is-future');
     expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('本月到期 1 条');
-    expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('今日 0 条');
+    // 非当月不显「今日 N 条」段（审查 P2 修复批：今日不在该月格中，计数无所指）
+    expect(document.querySelector('.bz-memo-cal-stats')?.textContent).not.toContain('今日');
     expect(document.querySelector('.bz-memo-cal-empt')).toBeNull();
+  });
+
+  it('审查 P2 · 搜索滤空时空态文案附筛选上下文；无筛选恢复人话原文案', async () => {
+    const { app } = seed([
+      { id: 'nd1', title: '无截止事项', scene: '工作', priority: 'minor', created: '2026-09-01 09:00:00', completed: null, due: null },
+    ]);
+    openCal(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-grid')).toBeTruthy();
+    });
+    // 无筛选：原文案
+    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    // 输入搜索词滤空：附筛选上下文
+    const inp = document.querySelector('[data-memo-search]') as HTMLInputElement;
+    inp.value = '不存在的关键词';
+    inp.dispatchEvent(new Event('input'));
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('当前筛选下本月没有到期事项');
+    });
+    // 清掉搜索：恢复原文案
+    inp.value = '';
+    inp.dispatchEvent(new Event('input'));
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+      expect(document.querySelector('.bz-memo-cal-empt')?.textContent).not.toContain('当前筛选下');
+    });
+  });
+
+  it('审查体验 P3 · 「回到今天」同时选中今日：当日清单直接展开', async () => {
+    const { app } = seedEvents();
+    openCal(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-grid')).toBeTruthy();
+    });
+    // 翻下月再回来：回到今天 = 翻月 + 选中今日
+    (document.querySelector('[data-memo-cal-next]') as HTMLElement).click();
+    expect(M.calSelected).toBeNull();
+    (document.querySelector('[data-memo-cal-today]') as HTMLElement).click();
+    const todayKey = moment().format('YYYY-MM-DD');
+    expect(M.calSelected).toBe(todayKey);
+    expect(document.querySelector('.bz-memo-cal-daypanel')?.textContent).toContain('今日事项');
+  });
+
+  it('审查 P3 · 无 due 条目「排到选中日期」：默认 09:00 时刻落盘', async () => {
+    const { app } = seedEvents(); // 含无截止事项 nd
+    openCal(app);
+    await vi.waitFor(() => {
+      expect(M.items.length).toBe(5);
+    });
+    // 月历选中一个未来日
+    const futureKey = moment().add(4, 'days').format('YYYY-MM-DD');
+    (document.querySelector(`[data-memo-cal-day="${moment().add(4, 'days').date()}"]`) as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-cal-daypanel')).toBeTruthy();
+    });
+    // 列表视图对无 due 条目右键 →「移到选中日期」出现（无 due 也有入口）
+    (document.querySelector('[data-memo-view="list"]') as HTMLElement).click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-card[data-memo-id="nd"]')).toBeTruthy();
+    });
+    const card = document.querySelector('.bz-memo-card[data-memo-id="nd"]') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-item-menu')).toBeTruthy();
+    });
+    const items = [...document.querySelectorAll('.bz-item-menu-item')];
+    const moveBtn = items.find((b) => b.textContent!.includes('移到选中日期')) as HTMLElement;
+    expect(moveBtn, '无 due 条目也应有「移到选中日期」入口').toBeTruthy();
+    // sub（「→ MM-DD 09:00」）仅移动端抽屉渲染（既有拍板：桌面菜单不渲染小字），
+    // 桌面菜单路径断言入口 + 行为；sub 文案格式由下方 moveDayText 纯函数用例覆盖
+    moveBtn.click();
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      const nd = raw.find((i: any) => i.id === 'nd');
+      expect(nd.due).toBe(`${futureKey} 09:00`);
+    });
+  });
+
+  it('审查 P3 · moveDayText：跨年目标日带年份，同年只显 MM-DD', async () => {
+    const { moveDayText } = await import('../../src/memo/ui');
+    const nextYear = moment().add(1, 'year').format('YYYY-MM-DD');
+    const thisYear = moment().format('YYYY-MM-DD');
+    expect(moveDayText(nextYear)).toBe(moment(nextYear).format('YYYY-MM-DD')); // 跨年带年份
+    expect(moveDayText(thisYear)).toBe(moment(thisYear).format('MM-DD')); // 同年只显 MM-DD
+    expect(moveDayText(thisYear)).not.toContain(moment().format('YYYY')); // 今年不缀年份
   });
 });
