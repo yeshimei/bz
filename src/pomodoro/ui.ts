@@ -201,19 +201,43 @@ function fmt(sec: number): string {
   return `${pad2(m)}:${pad2(s)}`;
 }
 
-/** 统计柱条公共搭建：柱高按 count 归一（max 40px），label 短签 + title 全量（近 7 天/近 6 月共用） */
-function buildStatBars(container: HTMLElement, rows: Array<{ label: string; title: string; count: number }>): void {
-  const max = Math.max(1, ...rows.map((r) => r.count));
+/** 柱顶小时数（审查修复批 issue 357：月档按分钟说话——<1h 也以小时计，一位内有效，0 不出柱顶签） */
+function hoursLabel(minutes: number): string | null {
+  if (!(minutes > 0)) return null;
+  const h = minutes / 60;
+  return `${h >= 100 ? Math.round(h) : Math.round(h * 10) / 10}h`;
+}
+
+/**
+ * 统计柱条公共搭建：柱高按 metric 指标归一（max 40px），label 短签 + title 全量；
+ * 可选 valueLabel = 柱顶数值文本（审查修复批 issue 357：月档改 minutes 归一 + 柱顶小时数，
+ * 旧按 count 归一在「次数少、单次长」的月份柱高失真看不出时长对比）。
+ */
+function buildStatBars(
+  container: HTMLElement,
+  rows: Array<{ label: string; title: string; count: number; minutes?: number }>,
+  opts: { metric?: 'count' | 'minutes'; valueLabel?: (r: { count: number; minutes?: number }) => string | null } = {}
+): void {
+  const metric = opts.metric ?? 'count';
+  const values = rows.map((r) => (metric === 'minutes' ? (r.minutes ?? 0) : r.count));
+  const max = Math.max(1, ...values);
   container.innerHTML = '';
-  for (const r of rows) {
+  rows.forEach((r, i) => {
     const bar = document.createElement('div');
     bar.className = 'pomodoro-stat-day';
     bar.title = r.title;
     const col = document.createElement('div');
     col.className = 'pomodoro-stat-col';
+    const numText = opts.valueLabel?.(r);
+    if (numText) {
+      const num = document.createElement('span');
+      num.className = 'pomodoro-stat-num';
+      num.textContent = numText;
+      col.appendChild(num);
+    }
     const h = document.createElement('div');
     h.className = 'pomodoro-stat-bar';
-    h.style.height = `${Math.max(2, Math.round((r.count / max) * 40))}px`;
+    h.style.height = `${Math.max(2, Math.round((values[i] / max) * 40))}px`;
     col.appendChild(h);
     const label = document.createElement('span');
     label.className = 'pomodoro-stat-label';
@@ -221,7 +245,7 @@ function buildStatBars(container: HTMLElement, rows: Array<{ label: string; titl
     col.appendChild(label);
     bar.appendChild(col);
     container.appendChild(bar);
-  }
+  });
 }
 
 /**
@@ -491,11 +515,21 @@ function ensureTick(): void {
 
 async function save(): Promise<void> {
   // F13 保留窗裁剪 + issue 357 周归档：离开窗口的明细先按自然周归档（幂等合并）再落盘，
-  // 「history 只留 7 天明细」拍板不变；归档随同一次 save 原子落账（空数组不落键）
+  // 「history 只留 7 天明细」拍板不变；归档随同一次 save 原子落账（空数组不落键）。
+  // 审查修复批（issue 357）：先落盘成功再改内存态——失败不裁不归档（内存保留全量明细，
+  // 下次 save 自动重试归档），消除「内存已裁盘上未裁 → 重载重复入账」窗口；catch 消化
+  // 落盘失败，void save() 调用链不再挂 unhandled rejection。
   const t = trimWithArchive(history, archived, Date.now());
+  try {
+    if (dataManager) await dataManager.save({ version: 1, state, history: t.history, ...(t.archived.length ? { archived: t.archived } : {}) });
+  } catch (e: unknown) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error('番茄钟数据保存失败:', e);
+    notice(`番茄钟数据保存失败：${msg}，下次保存会自动补写`, 'error');
+    return;
+  }
   history = t.history;
   archived = t.archived;
-  if (dataManager) await dataManager.save({ version: 1, state, history, ...(archived.length ? { archived } : {}) });
 }
 
 /** 首次打开：load + 主倒计时超时恢复（静默；ticket 62 不补算——超时即回空闲） */
