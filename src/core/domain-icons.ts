@@ -30,6 +30,7 @@ export const DOMAIN_ICONS: Readonly<Record<string, string>> = {
   diary: 'notebook-pen',
   'reading-report': 'bar-chart-3',
   cinema: 'clapperboard',
+  gameshelf: 'gamepad-2',
   bookshelf: 'book-open',
   review: 'repeat-2',
   secondbrain: 'brain',

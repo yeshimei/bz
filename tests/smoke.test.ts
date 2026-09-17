@@ -79,6 +79,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-cinema-open', 'bz-cinema-add',
   // 随机抽一部（2026-09-11 首页入口菜单；想看池随机直开详情）
   'bz-cinema-random-pick',
+  // 游戏架（gameshelf 域，issue 368：Steam 直连自动拉库）
+  'bz-gameshelf-open',
   // 书架墙（bookshelf 域，新域与书库并存）
   'bz-bookshelf-open',
   // 继续在读（2026-09-11 首页入口菜单；开书架墙落「在读」分栏）

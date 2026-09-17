@@ -200,6 +200,16 @@ export default interface BzSettings {
   cinemaDoubanCookie: string;
   /** B站 Cookie（ADR-0133 知识盒视频档位查询；「数据源凭据」组设置项，桌面端可从 CLI 导入） */
   bilibiliCookie: string;
+
+  // ===== 🎮 游戏架（gameshelf 域，issue 368：Steam 直连自动拉库，一作一笔记）=====
+  /** 📁 游戏文件夹（游戏架域数据源；缺省回落「我的/游戏」） */
+  gameshelfFolderPath: string;
+  /** 🎮 SteamID64（17 位数字；GetOwnedGames/GetRecentlyPlayedGames 查询主体） */
+  gameshelfSteamId: string;
+  /** 🎮 Steam Web API 密钥（steamcommunity.com/dev/apikey 免费申请；own key 查 own steamid 不受隐私限制） */
+  gameshelfSteamApiKey: string;
+  /** 🎮 自动同步开关（打开面板时 syncedAt 超过间隔即后台拉库；默认开。关闭只保留手动「立即同步」） */
+  gameshelfAutoSync: boolean;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
   /** 📦 归物本：默认排序（recent 最近购入 / price 投入最高 / daily 日均最高；非法值回落 recent。issue 294） */
@@ -683,6 +693,12 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaApizeroKey: '',
   cinemaDoubanCookie: '',
   bilibiliCookie: '',
+
+  // 游戏架（gameshelf，issue 368：Steam 直连自动拉库；目录缺省回落「我的/游戏」）
+  gameshelfFolderPath: '我的/游戏',
+  gameshelfSteamId: '',
+  gameshelfSteamApiKey: '',
+  gameshelfAutoSync: true,
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,

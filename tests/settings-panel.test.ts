@@ -108,7 +108,7 @@ describe('设置面板（settings-panel）', () => {
     expect(badges[9]).toBe('5'); // 收藏本：issue 246 外观两卡 + issue 296 显示组两行（打开默认筛选/默认排序）+ issue 363 标签管理 1（custom 行计入徽标）→ 5 项
     // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
-    expect(navIcons.length).toBe(18); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域补入口设置 → 18
+    expect(navIcons.length).toBe(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19
     expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
     expect(navIcons[1].getAttribute('data-icon')).toBe('bell'); // 通知（基础组第二位，2026-09-12 独立成页）
     expect(navIcons[2].getAttribute('data-icon')).toBe('layout-grid'); // 首页（基础组第三位，2026-09-10 侧栏重分组）
@@ -693,11 +693,11 @@ describe('设置面板（settings-panel）', () => {
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
       const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || (names.length === 18 && !badges.includes('·'))) break;
+      if (Date.now() > deadline0 || (names.length === 19 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（nav-name），避免描述包含（如剪藏本「网页剪藏与聚合讯」）误判
-    expect(names).toHaveLength(18); // issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域转可见 → 18
+    expect(names).toHaveLength(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19
     expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
     // 无设置域（聚合讯/阅读报告/自动摘要/附件搬移）一律不出现；小橘陪伴猫有 schema（issue 194 转可见）
     for (const n of ['聚合讯', '阅读报告', '做题家', '自动摘要', '附件搬移']) {
@@ -731,11 +731,11 @@ describe('设置面板（settings-panel）', () => {
     let names: (string | null)[];
     for (;;) {
       names = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
-      if (Date.now() > deadline0 || names.length === 18) break;
+      if (Date.now() > deadline0 || names.length === 19) break;
       await new Promise((r) => setTimeout(r, 30));
     }
     // 只看域名（mob-name），避免描述包含误判
-    expect(names).toHaveLength(18); // 拍板 P1 补「设置」域 → 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17；2026-09-10 内容首页域转可见 → 18
+    expect(names).toHaveLength(19); // issue 368 补游戏架 → 19
     expect(names.slice(0, 3)).toEqual(['通用', '通知', '首页']); // 基础组（2026-09-12）：通用 → 通知 → 首页
     expect(names).not.toContain('聚合讯');
     expect(names).toContain('小橘陪伴猫'); // 有 schema，issue 194 转可见
@@ -789,7 +789,7 @@ describe('设置面板（settings-panel）', () => {
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     // 无设置项的域不在列表显示（用户拍板）；issue 194 小橘陪伴猫转可见 → 15
     // 拍板 P1 补「设置」域 → 加载前列表 17；issue 250 补密码本 → 18；ADR-0115 回忆墙并入日记本 → 17
-    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(18); // 2026-09-10 内容首页域转可见
+    expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(19); // issue 368 补游戏架
     // 移动列表图标为 lucide（tile 内 svg 容器）
     const firstIc = popup.querySelector('.bz-sp-mob-item .bz-sp-mob-ic .bz-ic');
     expect(firstIc).toBeTruthy();
