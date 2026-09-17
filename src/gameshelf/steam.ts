@@ -346,6 +346,8 @@ export async function fetchAchievementSummary(steamId: string, apiKey: string, a
 export interface StoreMeta {
   /** 条目类型短码（game/dlc/demo/…） */
   type: string | null;
+  /** 本地化名（l=schinese → 中文名；库里 GetOwnedGames 只给英文名，中文名只能从这里拿） */
+  name: string | null;
   genres: string | null;
   developers: string | null;
   publishers: string | null;
@@ -401,6 +403,7 @@ export function parseStoreMeta(raw: unknown): Omit<StoreMeta, 'reviewDesc' | 're
   const num = (v: unknown): number | null => (Number.isFinite(Number(v)) ? Number(v) : null);
   return {
     type: str(data?.type),
+    name: str(data?.name),
     genres: join(data?.genres),
     developers: join(data?.developers),
     publishers: join(data?.publishers),
@@ -453,5 +456,30 @@ export async function fetchStoreMeta(appid: number): Promise<DetailFetchResult<S
   } catch (e) {
     const err = e as SteamHttpError;
     return { ok: false, reason: err.reason === 'auth' ? 'parse' : 'network', message: '商店数据拉取失败：请检查网络' };
+  }
+}
+
+/* ---------- 本地化名（中文名回填） ---------- */
+
+/** appdetails 响应 → 本地化名（l=schinese 时即中文名；下架/无商店页 → null） */
+export function parseZhName(raw: unknown): string | null {
+  const data = (raw as any)?.[0]?.data ?? (raw as any)?.data;
+  const n = data?.name;
+  return typeof n === 'string' && n.trim() ? n.trim() : null;
+}
+
+/**
+ * 拉本地化名（filters=basic：只要名字，响应体积最小）。
+ * GetOwnedGames 只给英文名，中文名只能从商店接口取——全库回填走 names.ts 的串行队列。
+ */
+export async function fetchZhName(appid: number): Promise<DetailFetchResult<string>> {
+  try {
+    const raw = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese&filters=basic`);
+    const name = parseZhName(raw);
+    if (!name) return { ok: false, reason: 'parse', message: '商店没有给出这款游戏的名字' };
+    return { ok: true, data: name };
+  } catch (e) {
+    const err = e as SteamHttpError;
+    return { ok: false, reason: err.reason === 'auth' ? 'parse' : 'network', message: '中文名拉取失败：请检查网络' };
   }
 }

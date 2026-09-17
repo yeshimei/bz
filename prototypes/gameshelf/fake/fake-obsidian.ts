@@ -47,6 +47,8 @@ declare global {
 export interface SeedGame {
   appid: number;
   name: string;
+  /** 中文名（真实 appdetails 本地化名；空 = 未抓到 → 界面回落英文名，names.ts 队列会去补） */
+  zh: string;
   min: number;
   last: string;
   cover: string;

@@ -25,6 +25,8 @@ export interface GameItem {
   file: TFile | null;
   appid: number;
   name: string;
+  /** 中文名（frontmatter `中文名`；Steam 库只给英文名，中文名由 names.ts 从商店接口回填） */
+  zhName: string | null;
   /** 累计游玩分钟 */
   playtimeMin: number;
   /** YYYY-MM-DD 或空（从未玩） */
@@ -42,6 +44,19 @@ export interface GameItem {
   offShelf: boolean;
   /** 最近一次同步时刻 ISO 串 */
   syncedAt: string | null;
+}
+
+/** 展示名：中文名优先，缺则回原名（卡片/门面/弹窗标题都用它，禁止各处自己拼） */
+export function displayNameOf(it: GameItem): string {
+  const zh = (it.zhName ?? '').trim();
+  return zh || it.name;
+}
+
+/** 原名与中文名都在搜索命中范围内（用户可能记得任一语言的名字） */
+export function nameMatches(it: GameItem, query: string): boolean {
+  const k = query.trim().toLowerCase();
+  if (!k) return true;
+  return it.name.toLowerCase().includes(k) || (it.zhName ? it.zhName.toLowerCase().includes(k) : false);
 }
 
 /** 面板视图：shelf=游戏墙 / stats=数据统计 */

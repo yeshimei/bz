@@ -29,10 +29,12 @@ export function rebuildItems(app: App): GameItem[] {
     const appid = Number(readVal(fm ?? {}, 'AppID', 'appid'));
     if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
     const icon = readVal(fm, '图标', '');
+    const zh = fm['中文名'];
     items.push({
       file,
       appid,
       name: file.basename.replace(/^《/, '').replace(/》$/, '').trim() || `App ${appid}`,
+      zhName: typeof zh === 'string' && zh.trim() ? zh.trim() : null,
       playtimeMin: intOf(readVal(fm, '游玩分钟', 'playtimeMin')),
       lastPlayed: typeof readVal(fm, '最后游玩', 'lastPlayed') === 'string' ? String(readVal(fm, '最后游玩', 'lastPlayed')) : '',
       cover: typeof readVal(fm, '封面', 'cover') === 'string' && /^https?:\/\//.test(String(readVal(fm, '封面', 'cover'))) ? String(readVal(fm, '封面', 'cover')) : steamCoverUrl(appid),

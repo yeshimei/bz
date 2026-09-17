@@ -9,18 +9,18 @@ import { requestUrl } from 'obsidian';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
-import { M, resetGameshelfState, type GameItem } from '../../src/gameshelf/state';
+import { M, displayNameOf, resetGameshelfState, type GameItem } from '../../src/gameshelf/state';
 import { achListHtml, detailShellHtml, filterList, heroHtml, hoursOf, numText, renderAll, shelfHtml, sortList, statsHtml, storeRowsHtml } from '../../src/gameshelf/ui';
 import { buildReport } from '../../src/gameshelf/report';
 import { fmToStore, storeToFm } from '../../src/gameshelf/detail';
-import { parseAchievementRows, parseStoreMeta, parseReviews } from '../../src/gameshelf/steam';
+import { parseAchievementRows, parseStoreMeta, parseReviews, parseZhName } from '../../src/gameshelf/steam';
 import { openGameshelf, unloadGameshelf } from '../../src/gameshelf/index';
 
 const CONFIG = { gameshelfSteamId: '76561198366147295', gameshelfSteamApiKey: 'k'.repeat(32) };
 
-function item(appid: number, name: string, playtimeMin: number, lastPlayed = '', offShelf = false, hasAch = false): GameItem {
+function item(appid: number, name: string, playtimeMin: number, lastPlayed = '', offShelf = false, hasAch = false, zhName: string | null = null): GameItem {
   return {
-    file: null, appid, name, playtimeMin, lastPlayed, cover: `https://cdn/${appid}.jpg`, icon: null,
+    file: null, appid, name, zhName, playtimeMin, lastPlayed, cover: `https://cdn/${appid}.jpg`, icon: null,
     windowsMin: playtimeMin, deckMin: 0, macMin: 0, linuxMin: 0, hasAch, offShelf, syncedAt: '2026-09-17T05:35:19.664Z',
   };
 }
@@ -260,6 +260,64 @@ describe('详情弹窗 markup', () => {
     expect(fm['详情时间']).toBeTruthy();
     const back = fmToStore(fm);
     expect(back).toMatchObject({ genres: '独立', developers: 'A', publishers: 'B', price: '免费', zhSupported: true, reviewsPositive: 9 });
+  });
+});
+
+describe('中文名（展示名单源 / 搜索 / 排序 / 卡片）', () => {
+  it('展示名中文优先，空串与 null 都回落原名', () => {
+    expect(displayNameOf(item(1, 'Balatro', 60, '', false, false, '小丑牌'))).toBe('小丑牌');
+    expect(displayNameOf(item(2, 'Balatro', 60))).toBe('Balatro');
+    expect(displayNameOf(item(3, 'Balatro', 60, '', false, false, '   '))).toBe('Balatro');
+  });
+
+  it('搜索：原名与中文名都命中', () => {
+    M.bucket = 'all';
+    const lib = [item(1, 'Balatro', 60, '', false, false, '小丑牌'), item(2, 'Hades', 60, '', false, false, '哈迪斯')];
+    M.query = 'balatro';
+    expect(filterList(lib).map(displayNameOf)).toEqual(['小丑牌']);
+    M.query = '哈迪斯';
+    expect(filterList(lib).map(displayNameOf)).toEqual(['哈迪斯']);
+  });
+
+  it('名称排序按展示名（中文名优先）', () => {
+    M.sort = 'name';
+    const lib = [item(1, 'Zelda', 60, '', false, false, '阿尔法'), item(2, 'Alpha', 60, '', false, false, '贝塔')];
+    expect(sortList(lib).map(displayNameOf)).toEqual(['阿尔法', '贝塔']);
+  });
+
+  it('卡片与门面：中文名主显 + 原名另起一行；中文名与原名相同则不出第二行', () => {
+    const zh = item(1, 'Deep Rock Galactic', 65214, '2026-07-20', false, false, '深岩银河');
+    const same = item(2, 'Bongo Cat', 600, '', false, false, 'Bongo Cat');
+    const html = shelfHtml([zh, same], (it) => it.cover ?? '', { maxMin: 65214 });
+    expect(html).toContain('深岩银河');
+    expect(html).toContain('Deep Rock Galactic');
+    expect((html.match(/class="bz-gs-orig"/g) ?? []).length).toBe(1);
+    const hero = heroHtml(zh, 'https://cdn/1.jpg', buildReport([zh, same]));
+    expect(hero).toContain('bz-gs-hero-name" title="Deep Rock Galactic">深岩银河');
+    expect(hero).toContain('bz-gs-hero-orig');
+    expect(heroHtml(same, 'https://cdn/2.jpg', buildReport([zh, same]))).not.toContain('bz-gs-hero-orig');
+  });
+
+  it('统计排行与最近玩过也用展示名（原名只留在 tooltip）', () => {
+    const zh = item(1, 'Deep Rock Galactic', 65214, '2026-07-20', false, false, '深岩银河');
+    const html = statsHtml(buildReport([zh]));
+    expect(html).toContain('>深岩银河<');
+    expect(html).not.toContain('>Deep Rock Galactic<');
+    expect(html).toContain('title="Deep Rock Galactic"');
+  });
+
+  it('parseZhName：取 appdetails 本地化名；空/缺 → null', () => {
+    expect(parseZhName([{ success: true, data: { name: '深岩银河' } }])).toBe('深岩银河');
+    expect(parseZhName([{ success: true, data: { name: '  ' } }])).toBeNull();
+    expect(parseZhName([{ success: false }])).toBeNull();
+    expect(parseZhName({})).toBeNull();
+  });
+
+  it('详情弹窗：中文名做主标题，原名写进 AppID 行', () => {
+    const zh = item(548430, 'Deep Rock Galactic', 65214, '2026-07-20', false, true, '深岩银河');
+    const html = detailShellHtml(zh, 'https://cdn/x.jpg', {});
+    expect(html).toContain('深岩银河');
+    expect(html).toContain('原名 Deep Rock Galactic · AppID 548430');
   });
 });
 
