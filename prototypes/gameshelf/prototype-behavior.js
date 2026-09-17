@@ -1,4 +1,4 @@
-/* 源指纹 cb12c7a326f28a33 · 仓内输入 236 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 06260ca602598311 · 仓内输入 236 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -328,7 +328,7 @@ var BZW_gameshelf = (() => {
         constructor() {
           this.listeners = /* @__PURE__ */ new Map();
           this.idSeq = 0;
-          /** 二进制写（posters.ts 的本地海报缓存用）：只记账占位，内容不落 localStorage */
+          /** 二进制写（媒体本地化队列用）：只记账占位，内容不落 localStorage */
           this.adapter = {
             writeBinary: async (path, buf) => {
               localStorage.setItem(LS_PREFIX + path, "binary:" + buf.byteLength);
@@ -414,6 +414,17 @@ var BZW_gameshelf = (() => {
           delete stats[f.path];
           this.saveStats(stats);
           this.emit("delete", { path: f.path });
+        }
+        /**
+         * vault 文件 → 可显示 URL（插件端由 Obsidian 给 app://... 的本地资源地址）。
+         * 评审壳专用实现：走 preview-live 的 `/__vault-media/<文件名>` 按 basename 从**真实 vault**
+         * 现取——所以游戏封面在评审页里显示的就是用户 vault 里那张真海报（同名即命中，
+         * 不必管本地海报文件夹叫什么）。图标在真 vault 里没有对应文件（`<appid>-icon.jpg` 是
+         * 本插件新加的命名），会 404；UI 侧对图标挂了「本地失败回落远端源」的兜底，
+         * 所以评审页里图标仍能正常显示。
+         */
+        getResourcePath(f) {
+          return `/__vault-media/${encodeURIComponent(f.name)}`;
         }
         on(evt, cb) {
           if (!this.listeners.has(evt)) this.listeners.set(evt, []);
@@ -1721,7 +1732,7 @@ var BZW_gameshelf = (() => {
         continue;
       }
       const valueChanged = note.playtimeMin === null || note.playtimeMin !== game.playtimeMin;
-      if (valueChanged || note.offShelf || note.legacy) plan.toUpdate.push({ game, note });
+      if (valueChanged || note.offShelf || note.legacy || note.mediaPending === true) plan.toUpdate.push({ game, note });
       else plan.unchanged += 1;
     }
     for (const note of notes) {
@@ -1744,10 +1755,10 @@ var BZW_gameshelf = (() => {
       AppID: game.appid,
       游玩分钟: game.playtimeMin,
       最后游玩: lastPlayedStr(game.lastPlayedTs),
-      封面: steamCoverUrl(game.appid),
+      封面源: steamCoverUrl(game.appid),
+      图标源: (_a2 = game.iconUrl) != null ? _a2 : "",
       同步时间: nowIso,
       已下架: false,
-      图标: (_a2 = game.iconUrl) != null ? _a2 : "",
       Windows分钟: game.windowsMin,
       SteamDeck分钟: game.deckMin,
       Mac分钟: game.macMin,
@@ -1806,6 +1817,9 @@ var BZW_gameshelf = (() => {
   function intOf(v) {
     return Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0;
   }
+  function strOf(v) {
+    return typeof v === "string" && v.trim() ? v.trim() : null;
+  }
   function rebuildItems(app) {
     var _a2;
     const folder = resolveGameshelfFolderPath();
@@ -1817,6 +1831,9 @@ var BZW_gameshelf = (() => {
       if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
       const icon2 = readVal(fm, "图标", "");
       const zh = fm["中文名"];
+      const coverRaw = readVal(fm, "封面", "cover");
+      const iconSrc = fm["图标源"];
+      const coverSrc = fm["封面源"];
       items.push({
         file,
         appid,
@@ -1824,8 +1841,11 @@ var BZW_gameshelf = (() => {
         zhName: typeof zh === "string" && zh.trim() ? zh.trim() : null,
         playtimeMin: intOf(readVal(fm, "游玩分钟", "playtimeMin")),
         lastPlayed: typeof readVal(fm, "最后游玩", "lastPlayed") === "string" ? String(readVal(fm, "最后游玩", "lastPlayed")) : "",
-        cover: typeof readVal(fm, "封面", "cover") === "string" && /^https?:\/\//.test(String(readVal(fm, "封面", "cover"))) ? String(readVal(fm, "封面", "cover")) : steamCoverUrl(appid),
-        icon: typeof icon2 === "string" && /^https?:\/\//.test(icon2) ? icon2 : null,
+        // 封面/图标：既可能是本地 vault 路径（媒体队列写过），也可能是远端地址（没本地化过）
+        cover: strOf(coverRaw) || steamCoverUrl(appid),
+        coverSrc: strOf(coverSrc) || steamCoverUrl(appid),
+        icon: strOf(icon2),
+        iconSrc: strOf(iconSrc),
         windowsMin: intOf(fm["Windows分钟"]),
         deckMin: intOf(fm["SteamDeck分钟"]),
         macMin: intOf(fm["Mac分钟"]),
@@ -1851,7 +1871,9 @@ var BZW_gameshelf = (() => {
         appid,
         playtimeMin: Number.isFinite(Number(readVal(fm, "游玩分钟", "playtimeMin"))) ? Math.max(0, Math.floor(Number(readVal(fm, "游玩分钟", "playtimeMin")))) : null,
         offShelf: readVal(fm, "已下架", "offShelf") === true,
-        legacy: "appid" in fm || "playtimeMin" in fm
+        legacy: "appid" in fm || "playtimeMin" in fm,
+        // 媒体本地化改造前建的笔记没有「封面源」→ 借这次同步补齐（补过即自愈，不再 churn）
+        mediaPending: fm["封面源"] === void 0
       });
     }
     return out;
@@ -1899,10 +1921,13 @@ var BZW_gameshelf = (() => {
     ];
     if (fm["最后游玩"]) lines.push(`最后游玩: "${fm["最后游玩"]}"`);
     lines.push(
-      `封面: ${fm["封面"]}`,
+      // 源键（同步管辖）+ 现值：新建时现值先填远端，媒体队列拉到本地后改写成 vault 路径
+      `封面源: ${fm["封面源"]}`,
+      `封面: ${fm["封面源"]}`,
+      `图标源: ${fm["图标源"] || '""'}`,
+      `图标: ${fm["图标源"] || '""'}`,
       `同步时间: "${fm["同步时间"]}"`,
       `已下架: ${fm["已下架"]}`,
-      `图标: ${fm["图标"] || '""'}`,
       `Windows分钟: ${fm["Windows分钟"]}`,
       `SteamDeck分钟: ${fm["SteamDeck分钟"]}`,
       `Mac分钟: ${fm["Mac分钟"]}`,
@@ -1935,7 +1960,12 @@ var BZW_gameshelf = (() => {
   var posters_exports = {};
   __export(posters_exports, {
     DEFAULT_POSTER_FOLDER: () => DEFAULT_POSTER_FOLDER,
+    coverDisplayUrl: () => coverDisplayUrl,
     ensurePosters: () => ensurePosters,
+    iconDisplayUrl: () => iconDisplayUrl,
+    localCoverPath: () => localCoverPath,
+    localIconPath: () => localIconPath,
+    mediaItemsOf: () => mediaItemsOf,
     posterDisplayUrl: () => posterDisplayUrl,
     resolvePosterFolder: () => resolvePosterFolder,
     unloadPosters: () => unloadPosters
@@ -1948,18 +1978,67 @@ var BZW_gameshelf = (() => {
       return DEFAULT_POSTER_FOLDER;
     }
   }
-  function posterDisplayUrl(app, appid, remote) {
-    const f = app.vault.getAbstractFileByPath(`${resolvePosterFolder()}/${appid}.jpg`);
-    if (f) {
-      try {
-        return app.vault.getResourcePath(f);
-      } catch (e) {
-      }
-    }
-    return remote != null ? remote : "";
+  function localCoverPath(appid) {
+    return `${resolvePosterFolder()}/${appid}.jpg`;
   }
-  function hasPoster(app, folder, appid) {
-    return app.vault.getAbstractFileByPath(`${folder}/${appid}.jpg`) !== null;
+  function localIconPath(appid) {
+    return `${resolvePosterFolder()}/${appid}-icon.jpg`;
+  }
+  function isRemote(v) {
+    return !!v && /^https?:\/\//i.test(v);
+  }
+  function hasFile(app, path) {
+    try {
+      return app.vault.getAbstractFileByPath(path) !== null;
+    } catch (e) {
+      return false;
+    }
+  }
+  function resourceUrl(app, path) {
+    const f = app.vault.getAbstractFileByPath(path);
+    if (!f) return "";
+    try {
+      return app.vault.getResourcePath(f);
+    } catch (e) {
+      return "";
+    }
+  }
+  function coverDisplayUrl(app, appid, value, src) {
+    const local = resourceUrl(app, `${resolvePosterFolder()}/${appid}.jpg`);
+    if (local) return local;
+    if (isRemote(value)) return value;
+    if (isRemote(src)) return src;
+    return steamCoverUrl(appid);
+  }
+  function iconDisplayUrl(app, appid, value, src) {
+    const local = resourceUrl(app, `${resolvePosterFolder()}/${appid}-icon.jpg`);
+    if (local) return local;
+    if (isRemote(value)) return value;
+    return isRemote(src) ? src : "";
+  }
+  function posterDisplayUrl(app, appid, remote) {
+    return coverDisplayUrl(app, appid, remote);
+  }
+  function mediaItemsOf(items) {
+    return items.map((it) => ({
+      appid: it.appid,
+      cover: it.cover,
+      coverSrc: it.coverSrc,
+      icon: it.icon,
+      iconSrc: it.iconSrc,
+      file: it.file
+    }));
+  }
+  function needsWork(app, it) {
+    const cover = `${resolvePosterFolder()}/${it.appid}.jpg`;
+    if (!hasFile(app, cover)) return true;
+    if (it.cover !== cover) return true;
+    if (isRemote(it.iconSrc)) {
+      const icon2 = `${resolvePosterFolder()}/${it.appid}-icon.jpg`;
+      if (!hasFile(app, icon2)) return true;
+      if (it.icon !== icon2) return true;
+    }
+    return false;
   }
   function ensurePosters(app, items) {
     const folder = resolvePosterFolder();
@@ -1971,38 +2050,67 @@ var BZW_gameshelf = (() => {
     }
     let added = 0;
     for (const it of items) {
-      if (!it.cover) continue;
-      if (hasPoster(app, folder, it.appid)) continue;
-      const path = `${folder}/${it.appid}.jpg`;
-      if (pending.has(path)) continue;
-      pending.add(path);
-      queue.push({ app, path, url: it.cover, appid: it.appid });
+      if (pending.has(it.appid)) continue;
+      if (!needsWork(app, it)) continue;
+      pending.add(it.appid);
+      queue.push({ app, item: it });
       added += 1;
     }
     if (added > 0 && !running) void runQueue();
+  }
+  async function download(app, path, url) {
+    try {
+      const resp = await requestUrl({ url, method: "GET", throw: false });
+      const buf = resp.arrayBuffer;
+      if (resp.status >= 200 && resp.status < 300 && buf) {
+        if (!app.vault.getAbstractFileByPath(path)) await app.vault.adapter.writeBinary(path, buf);
+        return true;
+      }
+    } catch (e) {
+      console.warn("bz 游戏架：媒体下载失败:", url, e);
+    }
+    return false;
   }
   async function runQueue() {
     running = true;
     while (queue.length > 0) {
       const job = queue.shift();
+      const { app, item } = job;
       try {
-        const resp = await requestUrl({ url: job.url, method: "GET", throw: false });
-        const buf = resp.arrayBuffer;
-        if (resp.status >= 200 && resp.status < 300 && buf) {
-          if (!job.app.vault.getAbstractFileByPath(job.path)) {
-            await job.app.vault.adapter.writeBinary(job.path, buf);
-            scheduleRerender(job.app);
+        const wrote = {};
+        const coverPath = `${resolvePosterFolder()}/${item.appid}.jpg`;
+        if (hasFile(app, coverPath)) {
+          if (item.cover !== coverPath) wrote["封面"] = coverPath;
+        } else if (await download(app, coverPath, item.coverSrc || steamCoverUrl(item.appid))) {
+          wrote["封面"] = coverPath;
+        }
+        if (isRemote(item.iconSrc)) {
+          const iconPath = `${resolvePosterFolder()}/${item.appid}-icon.jpg`;
+          if (hasFile(app, iconPath)) {
+            if (item.icon !== iconPath) wrote["图标"] = iconPath;
+          } else if (await download(app, iconPath, item.iconSrc)) {
+            wrote["图标"] = iconPath;
           }
         }
-      } catch (e) {
-        console.warn("bz 游戏架：海报下载失败:", job.url, e);
+        if (Object.keys(wrote).length > 0) {
+          if (typeof wrote["封面"] === "string") item.cover = wrote["封面"];
+          if (typeof wrote["图标"] === "string") item.icon = wrote["图标"];
+          if (item.file) {
+            try {
+              await upsertDetail(app, item.file, wrote);
+            } catch (e) {
+              console.warn("bz 游戏架：媒体路径写回失败:", item.appid, e);
+            }
+          }
+          scheduleRerender();
+        }
       } finally {
-        pending.delete(job.path);
+        pending.delete(item.appid);
       }
     }
     running = false;
   }
-  function scheduleRerender(_app3) {
+  function scheduleRerender() {
     if (rerenderTimer) return;
     rerenderTimer = setTimeout(() => {
       var _a2, _b2;
@@ -2023,7 +2131,9 @@ var BZW_gameshelf = (() => {
     "src/gameshelf/posters.ts"() {
       init_fake_obsidian();
       init_settings_provider();
+      init_notes();
       init_state();
+      init_steam();
       DEFAULT_POSTER_FOLDER = "CONFIG/游戏海报";
       queue = [];
       pending = /* @__PURE__ */ new Set();
@@ -36818,7 +36928,7 @@ GitHub 仓库：${ghInfo.title}
               type: "path",
               mode: "single",
               name: "海报文件夹",
-              desc: "游戏封面缓存到本地的文件夹",
+              desc: "游戏封面与图标缓存到本地的文件夹",
               binding: { key: "gameshelfPosterFolder" }
             }
           ]
@@ -47354,8 +47464,8 @@ ${n.content.slice(0, 2e3)}
               let previewData;
               if (this.config.previewEnabled) {
                 try {
-                  const resourceUrl = ((_b2 = (_a2 = app.vault).getResourcePath) == null ? void 0 : _b2.call(_a2, f)) || "";
-                  const result = kindOf(p) === "video" ? await videoFrame(resourceUrl, size, quality) : await compressImage(resourceUrl, size, quality);
+                  const resourceUrl2 = ((_b2 = (_a2 = app.vault).getResourcePath) == null ? void 0 : _b2.call(_a2, f)) || "";
+                  const result = kindOf(p) === "video" ? await videoFrame(resourceUrl2, size, quality) : await compressImage(resourceUrl2, size, quality);
                   if (result) previewData = result.dataUrl;
                 } catch (e) {
                   previewData = void 0;
@@ -49750,6 +49860,7 @@ ${n.content.slice(0, 2e3)}
     var _a2;
     const max = Math.max(1, (_a2 = opts.maxMin) != null ? _a2 : 1);
     const cards = items.map((it, i) => {
+      var _a3;
       const cover = coverOf(it);
       const zh = displayNameOf(it);
       const orig = it.zhName && it.zhName !== it.name ? it.name : "";
@@ -49760,7 +49871,7 @@ ${n.content.slice(0, 2e3)}
       return `
       <button type="button" class="bz-gs-card${it.offShelf ? " bz-gs-card--off" : ""}" data-appid="${it.appid}" title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">
         <span class="bz-gs-cover" data-initial="${escAttr(firstChar(zh))}">
-          ${cover ? `<img loading="lazy" src="${escAttr(cover)}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
+          ${cover ? `<img loading="lazy" src="${escAttr(cover)}" data-fallback-src="${escAttr((_a3 = it.coverSrc) != null ? _a3 : "")}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
           ${rank}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ""}
           <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
@@ -49863,7 +49974,8 @@ ${n.content.slice(0, 2e3)}
     row.appendChild(uiStat({ icon: "calendar-days", label: "最近玩过", num: String(rp.latest.length), hint: rp.latest[0] ? `最近 ${dateText(rp.latest[0].lastPlayed)}` : "" }));
     row.appendChild(uiStat({ icon: "trophy", label: "成就页覆盖", num: `${rp.achCount}/${rp.total}` }));
   }
-  function detailShellHtml(item, cover, fm) {
+  function detailShellHtml(item, cover, fm, icon2 = "") {
+    var _a2, _b2;
     const store2 = fmToStore(fm);
     const zh = displayNameOf(item);
     const orig = item.zhName && item.zhName !== item.name ? item.name : "";
@@ -49879,11 +49991,11 @@ ${n.content.slice(0, 2e3)}
   <div class="bz-gs-detail${item.offShelf ? " bz-gs-detail--off" : ""}">
     <div class="bz-gs-detail-top">
       <div class="bz-gs-detail-cover" data-initial="${escAttr(firstChar(zh))}">
-        ${cover ? `<img src="${escAttr(cover)}" alt="">` : ""}
+        ${cover ? `<img src="${escAttr(cover)}" data-fallback-src="${escAttr((_a2 = item.coverSrc) != null ? _a2 : "")}" alt="">` : ""}
       </div>
       <div class="bz-gs-detail-id">
         <div class="bz-gs-detail-name">
-          ${item.icon ? `<img class="bz-gs-detail-icon" src="${escAttr(item.icon)}" alt="">` : ""}
+          ${icon2 ? `<img class="bz-gs-detail-icon" src="${escAttr(icon2)}" data-fallback-src="${escAttr((_b2 = item.iconSrc) != null ? _b2 : "")}" alt="">` : ""}
           <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${escHtml(zh)}</span>
         </div>
         <div class="bz-gs-detail-chips" id="bz-gs-detail-chips">
@@ -50029,10 +50141,12 @@ ${n.content.slice(0, 2e3)}
     const item = M.items.find((it) => it.appid === appid);
     if (!item) return;
     const cached = safeDetailFm(app, item.file);
-    const cover = posterDisplayUrl(app, item.appid, item.cover);
-    const modal = uiModalSafe(detailShellHtml(item, cover, cached), `《${displayNameOf(item)}》`);
+    const cover = coverDisplayUrl(app, item.appid, item.cover, item.coverSrc);
+    const icon2 = iconDisplayUrl(app, item.appid, item.icon, item.iconSrc);
+    const modal = uiModalSafe(detailShellHtml(item, cover, cached, icon2), `《${displayNameOf(item)}》`);
     if (!modal) return;
     const popup = modal.popup;
+    bindMediaFallback(popup);
     modal.mask.classList.add("bz-gs-detail-mask");
     const achBox = popup.querySelector("#bz-gs-detail-ach");
     void loadAchievements(app, item, cached).then((sec) => {
@@ -50055,6 +50169,24 @@ ${n.content.slice(0, 2e3)}
   }
   function uiModalSafe(content, title) {
     return uiModal({ head: true, title, maxWidth: 720, className: "bz-gs-detail-modal", content });
+  }
+  function bindMediaFallback(root) {
+    root.addEventListener(
+      "error",
+      (e) => {
+        var _a2;
+        const img = e.target;
+        if (img.tagName !== "IMG") return;
+        const fb = img.dataset.fallbackSrc;
+        if (fb && img.dataset.fbDone !== "1" && img.src !== fb) {
+          img.dataset.fbDone = "1";
+          img.src = fb;
+          return;
+        }
+        (_a2 = img.closest(".bz-gs-cover, .bz-gs-detail-cover")) == null ? void 0 : _a2.classList.add("is-broken");
+      },
+      true
+    );
   }
   function createUI(app) {
     if (maskEl4 && document.body.contains(maskEl4)) return;
@@ -50106,15 +50238,7 @@ ${n.content.slice(0, 2e3)}
         if (Number.isFinite(appid)) openDetail(app, appid);
       }
     });
-    body.addEventListener(
-      "error",
-      (e) => {
-        var _a2;
-        const img = e.target;
-        if (img.tagName === "IMG") (_a2 = img.closest(".bz-gs-cover, .bz-gs-detail-cover")) == null ? void 0 : _a2.classList.add("is-broken");
-      },
-      true
-    );
+    bindMediaFallback(body);
     frame.appendChild(body);
     document.body.appendChild(mask);
     document.body.appendChild(frame);
@@ -50132,8 +50256,8 @@ ${n.content.slice(0, 2e3)}
     renderAll5(app);
   }
   async function ensurePostersFor(app) {
-    const { ensurePosters: ensurePosters2 } = await Promise.resolve().then(() => (init_posters(), posters_exports));
-    ensurePosters2(app, M.items.map((it) => ({ appid: it.appid, cover: it.cover })));
+    const { ensurePosters: ensurePosters2, mediaItemsOf: mediaItemsOf2 } = await Promise.resolve().then(() => (init_posters(), posters_exports));
+    ensurePosters2(app, mediaItemsOf2(M.items));
   }
   function renderAll5(app) {
     const frame = M.currentOverlay;
@@ -50286,8 +50410,8 @@ ${n.content.slice(0, 2e3)}
       gridEl.appendChild(emptyResult(app));
     } else {
       const top = list[0];
-      heroEl.innerHTML = heroHtml(top, posterDisplayUrl(app, top.appid, top.cover), rp);
-      gridEl.innerHTML = shelfHtml(list, (it) => posterDisplayUrl(app, it.appid, it.cover), { showRank, maxMin: maxPlaytime() });
+      heroEl.innerHTML = heroHtml(top, coverDisplayUrl(app, top.appid, top.cover, top.coverSrc), rp);
+      gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, maxMin: maxPlaytime() });
     }
     const frame = M.currentOverlay;
     if (frame) mountIcons(frame);
@@ -50368,7 +50492,7 @@ ${n.content.slice(0, 2e3)}
     void Promise.resolve().then(() => (init_sync(), sync_exports)).then(async (m) => {
       await m.autoSyncOnOpen(app);
       renderAll5(app);
-      ensurePosters(app, M.items.map((it) => ({ appid: it.appid, cover: it.cover })));
+      ensurePosters(app, mediaItemsOf(M.items));
       ensureZhNames(app, M.items);
     });
   }

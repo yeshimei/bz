@@ -23,6 +23,12 @@ export interface NoteSnapshot {
   offShelf: boolean;
   /** frontmatter 还是旧英文键（中文化迁移待做）→ 归入 toUpdate 顺带迁移 */
   legacy: boolean;
+  /**
+   * 缺媒体源键（`封面源`）→ 归入 toUpdate 顺带补齐。
+   * 用途：媒体本地化改造前建的笔记没有源键，光靠数值变化触发更新会让它们永远补不上
+   * （图标 hash 是拼不出来的，没有源就没法下载）。写一次源键后该标记自愈，不再churn。
+   */
+  mediaPending?: boolean;
 }
 
 export interface SyncPlan {
@@ -55,7 +61,7 @@ export function buildSyncPlan(owned: SteamOwnedGame[], notes: NoteSnapshot[]): S
       continue;
     }
     const valueChanged = note.playtimeMin === null || note.playtimeMin !== game.playtimeMin;
-    if (valueChanged || note.offShelf || note.legacy) plan.toUpdate.push({ game, note });
+    if (valueChanged || note.offShelf || note.legacy || note.mediaPending === true) plan.toUpdate.push({ game, note });
     else plan.unchanged += 1;
   }
   for (const note of notes) {
@@ -80,16 +86,20 @@ export function notePathFor(folder: string, game: SteamOwnedGame, takenPaths: Se
 /**
  * 管辖 frontmatter 归一（键全中文，与 vault 中文属性习惯一致；tags 为 Obsidian 核心约定保留英文）。
  * 同步时刻 nowIso 由调用方注入，纯函数可测。
+ *
+ * 媒体键分工（2026-09-17 本地化改造）：只写 `封面源` / `图标源`（远端地址）；
+ * `封面` / `图标` 是本地图片路径，由 posters.ts 的媒体队列写，**同步绝不碰**——
+ * 否则每次同步都把本地路径冲回远端，属性里就再也看不到本地图了。
  */
 export function managedFm(game: SteamOwnedGame, nowIso: string): Record<string, unknown> {
   return {
     AppID: game.appid,
     游玩分钟: game.playtimeMin,
     最后游玩: lastPlayedStr(game.lastPlayedTs),
-    封面: steamCoverUrl(game.appid),
+    封面源: steamCoverUrl(game.appid),
+    图标源: game.iconUrl ?? '',
     同步时间: nowIso,
     已下架: false,
-    图标: game.iconUrl ?? '',
     Windows分钟: game.windowsMin,
     SteamDeck分钟: game.deckMin,
     Mac分钟: game.macMin,

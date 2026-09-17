@@ -20,7 +20,8 @@ const CONFIG = { gameshelfSteamId: '76561198366147295', gameshelfSteamApiKey: 'k
 
 function item(appid: number, name: string, playtimeMin: number, lastPlayed = '', offShelf = false, hasAch = false, zhName: string | null = null): GameItem {
   return {
-    file: null, appid, name, zhName, playtimeMin, lastPlayed, cover: `https://cdn/${appid}.jpg`, icon: null,
+    file: null, appid, name, zhName, playtimeMin, lastPlayed,
+    cover: `https://cdn/${appid}.jpg`, coverSrc: `https://cdn/${appid}.jpg`, icon: null, iconSrc: null,
     windowsMin: playtimeMin, deckMin: 0, macMin: 0, linuxMin: 0, hasAch, offShelf, syncedAt: '2026-09-17T05:35:19.664Z',
   };
 }

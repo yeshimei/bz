@@ -5,7 +5,7 @@
 import type { App } from 'obsidian';
 import { M, resetGameshelfState, resolveGameshelfFolderPath } from './state';
 import { rebuildItems } from './notes';
-import { ensurePosters, unloadPosters } from './posters';
+import { ensurePosters, mediaItemsOf, unloadPosters } from './posters';
 import { ensureZhNames, unloadZhNames } from './names';
 import { closePanel, openPanel, renderAll } from './ui';
 
@@ -32,7 +32,7 @@ export function openGameshelf(app: App): void {
   void import('./sync').then(async (m) => {
     await m.autoSyncOnOpen(app);
     renderAll(app);
-    ensurePosters(app, M.items.map((it) => ({ appid: it.appid, cover: it.cover })));
+    ensurePosters(app, mediaItemsOf(M.items));
     ensureZhNames(app, M.items);
   });
 }

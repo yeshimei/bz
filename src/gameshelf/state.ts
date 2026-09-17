@@ -31,9 +31,14 @@ export interface GameItem {
   playtimeMin: number;
   /** YYYY-MM-DD 或空（从未玩） */
   lastPlayed: string;
+  /** 封面现值（frontmatter `封面`：本地 vault 路径，或还没本地化时的远端地址） */
   cover: string | null;
-  /** 库内小图标（frontmatter 图标；无 → null） */
+  /** 封面远端地址（frontmatter `封面源`；同步管辖，本地化后仍在，供删缓存后重下） */
+  coverSrc: string | null;
+  /** 图标现值（frontmatter `图标`：本地路径或远端） */
   icon: string | null;
+  /** 图标远端地址（frontmatter `图标源`；hash 拼不出来，只有同步能刷新它） */
+  iconSrc: string | null;
   /** 平台分项分钟（frontmatter 四键；老笔记缺键 → 0） */
   windowsMin: number;
   deckMin: number;

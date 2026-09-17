@@ -77,7 +77,8 @@ function makeApp() {
 /** 测试条目工厂（GameItem 全文；只关心少数字段时也能一眼看清默认值） */
 function item(appid: number, name: string, playtimeMin: number, lastPlayed = '', offShelf = false) {
   return {
-    file: null, appid, name, zhName: null, playtimeMin, lastPlayed, cover: null, icon: null,
+    file: null, appid, name, zhName: null, playtimeMin, lastPlayed,
+    cover: null, coverSrc: null, icon: null, iconSrc: null,
     windowsMin: playtimeMin, deckMin: 0, macMin: 0, linuxMin: 0, hasAch: false,
     offShelf, syncedAt: null,
   };

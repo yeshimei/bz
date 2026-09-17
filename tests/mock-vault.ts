@@ -100,6 +100,11 @@ export class MockVault {
     return null;
   }
 
+  /** vault 文件 → 本地资源 URL（真实 Obsidian 给 app://…；测试给固定前缀便于断言） */
+  getResourcePath(f: any): string {
+    return 'app://mock-vault/' + (f?.path ?? '');
+  }
+
   file(path: string): any {
     const content = this.files.get(path) ?? (this.binaryFiles.has(path) ? '<binary>' : undefined);
     const basename = path.split('/').pop()!.replace(/\.[^./]+$/, '');

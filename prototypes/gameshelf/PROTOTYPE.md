@@ -68,6 +68,16 @@ python .scratch/fetch-gameshelf-store.py     # 补 store 侧：appdetails 逐条
 - 海报本地缓存：壳里 `requestUrl` 对图片 URL 只回 1 字节，故封面显示走远端 CDN；
   真机走 `CONFIG/游戏海报` 本地优先（设置键 `gameshelfPosterFolder`）。
 
+## 媒体本地化（2026-09-17 第二批）
+
+- 键分工见 ADR-0164：`封面源`/`图标源`（远端，同步管辖）vs `封面`/`图标`（vault 本地路径，媒体队列写）。
+- 壳里能看到整条链路真跑：种子笔记没有源键 → 自动同步补齐源键（迁移）→ 媒体队列下封面/图标
+  → 属性改写成 `CONFIG/游戏海报/<appid>.jpg`。
+- **评审壳的 `vault.getResourcePath` 是壳专用实现**：返回 `/__vault-media/<文件名>`，
+  由 preview-live 按 basename 从**真实 vault** 现取——所以评审页里的封面就是用户 vault 里那张真海报。
+  图标（`<appid>-icon.jpg`）在真 vault 里没有同名文件，会 404，因此 UI 侧的 `data-fallback-src`
+  兜底在这里正好被验证到：本地失败 → 回落远端图标。
+
 ## 自检
 
 ```bash
