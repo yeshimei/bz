@@ -1,6 +1,7 @@
 /**
- * 游戏架（gameshelf）域 Steam 通道（issue 368 / 研究票 347）：
- * GetOwnedGames + GetRecentlyPlayedGames 直连拉库，封面 CDN 直拼。
+ * 游戏架（gameshelf）域 Steam 通道（issue 368 / 研究票 347；详情全量化 2026-09-17）：
+ * 库同步 = GetOwnedGames + GetRecentlyPlayedGames；详情 = appdetails + appreviews +
+ * 成就三接口（Schema / PlayerAchievements / GlobalAchievementPercentages）。
  *
  * 实测口径（2026-09-17 主会话真机验证，.scratch/memo-suite-plugin/research/347-steam-live-test.md）：
  * - api.steampowered.com 国内网络直连常被重置，requestUrl 跟随系统代理可用——
@@ -9,11 +10,16 @@
  *   近两周没玩时 total_count=0 且 games 缺省——两处都按缺省兜底。
  * - 单条字段：playtime_forever=分钟、rtime_last_played=unix 秒；无 img_logo_url，
  *   封面走 header.jpg 直拼（CDN 不走代理也可达）。
+ * - store.steampowered.com（appdetails / appreviews）**直连可达**且 l=schinese 直出中文；
+ *   api.steampowered.com（成就）与库同步同一条代理通道。
+ * - 成就全局解锁率的权威来源是 GetGlobalAchievementPercentagesForApp（独立接口）；
+ *   Schema 内嵌的 globalAchievement 仅部分游戏有，故两条来源都读、全局接口优先。
  */
 import { requestUrl } from 'obsidian';
 import { withTimeout } from '../core/http';
 
 const API_BASE = 'https://api.steampowered.com';
+const STORE_BASE = 'https://store.steampowered.com';
 const REQUEST_TIMEOUT_MS = 20_000;
 
 /** 库内单款游戏（GetOwnedGames 归一后） */
@@ -50,6 +56,11 @@ export type SteamFetchResult =
 /** 封面直拼（CDN 独立于 API 通道，直连可达） */
 export function steamCoverUrl(appid: number): string {
   return `https://cdn.cloudflare.steamstatic.com/steam/apps/${appid}/header.jpg`;
+}
+
+/** 商店页地址（详情弹窗「在商店打开」用） */
+export function steamStoreUrl(appid: number): string {
+  return `${STORE_BASE}/app/${appid}/`;
 }
 
 /** SteamID64 形态粗校验：17 位纯数字（前缀恒 7656） */
@@ -160,110 +171,281 @@ export function parseRecentGames(raw: unknown): SteamRecentGame[] {
 }
 
 /* ==================== 逐游戏详情（按需拉取，写回 frontmatter 缓存） ====================
-   全量 147 款 × 每款 2-4 请求会撞 Steam 限流——只有点开详情才拉，拉过即缓存不再请求。
-   成就两接口走 api.steampowered.com（需代理）；商店 appdetails/appreviews 走
+   全量 147 款 × 每款多次请求会撞 Steam 限流——只有点开详情才拉，拉过即缓存不再请求。
+   成就三接口走 api.steampowered.com（需代理）；商店 appdetails/appreviews 走
    store.steampowered.com（实测直连可达，且 l=schinese 直出中文类型/评语）。 */
-
-/** 成就摘要（玩家解锁 × 全局解锁率 → 稀有成就） */
-export interface AchievementSummary {
-  total: number;
-  unlocked: number;
-  /** 已解成就里全球解锁率最低的一个（小黑盒式「稀有成就」） */
-  rarestName: string | null;
-  /** 该稀有成就的全球解锁率（0-100，一位小数） */
-  rarestPercent: number | null;
-}
 
 export type DetailFetchResult<T> = { ok: true; data: T } | { ok: false; reason: 'none' | 'network' | 'parse'; message: string };
 
-/** 成就接口响应 → 摘要（Schema.globalAchievement.percent × Player.achieved 联表） */
-export function parseAchievementSummary(schemaRaw: unknown, playerRaw: unknown): AchievementSummary | null {
+/* ---------- 成就明细（Schema × Player × 全局解锁率） ---------- */
+
+/** 成就单条（三来源联表后） */
+export interface AchievementRow {
+  apiName: string;
+  /** 展示名（Schema displayName，缺省回落 apiName） */
+  name: string;
+  /** 描述（隐藏成就可能为空串） */
+  desc: string;
+  /** 是否隐藏成就（解锁前 Steam 不显示描述） */
+  hidden: boolean;
+  unlocked: boolean;
+  /** 解锁时间 ISO 串（unlocktime 秒；未解锁/无时间 → null） */
+  unlockedAt: string | null;
+  /** 全球解锁率 %（0-100 一位小数；两来源都拿不到 → null） */
+  globalPercent: number | null;
+  /** 图标（Schema icon；隐藏成就也有） */
+  icon: string | null;
+}
+
+/** 成就明细（弹窗成就段全量） */
+export interface AchievementDetail {
+  total: number;
+  unlocked: number;
+  /** 解锁占比（0-100 一位小数） */
+  percent: number;
+  /** 按稀有度升序（越稀有越靠前；同稀有度解锁在前） */
+  rows: AchievementRow[];
+  /** 已解成就里全球解锁率最低的一个（小黑盒式「稀有成就」） */
+  rarestName: string | null;
+  rarestPercent: number | null;
+}
+
+/** 成就摘要（写回 frontmatter 的标量三键） */
+export interface AchievementSummary {
+  total: number;
+  unlocked: number;
+  rarestName: string | null;
+  rarestPercent: number | null;
+}
+
+/** 全局解锁率表（GetGlobalAchievementPercentagesForApp → apiname→percent） */
+function globalPercents(globalRaw: unknown): Map<string, number> {
+  const list = (globalRaw as any)?.achievementpercentages?.achievements;
+  const map = new Map<string, number>();
+  if (!Array.isArray(list)) return map;
+  for (const a of list) {
+    const p = Number(a?.percent);
+    if (typeof a?.name === 'string' && Number.isFinite(p)) map.set(a.name, p);
+  }
+  return map;
+}
+
+/**
+ * 成就三来源 → 明细。
+ * - 名称/描述/隐藏/图标 取 Schema（GetSchemaForGame）；
+ * - 解锁与否/解锁时间取 Player（GetPlayerAchievements）；
+ * - 全球解锁率优先取全局接口，缺省回落 Schema 内嵌 globalAchievement；
+ * - 无 Schema 成就表或无玩家成就表 → null（该游戏没有可展示的成就页）。
+ */
+export function parseAchievementRows(schemaRaw: unknown, playerRaw: unknown, globalRaw?: unknown): AchievementDetail | null {
   const schemaAch = (schemaRaw as any)?.game?.availableGameStats?.achievements;
   const playerAch = (playerRaw as any)?.playerstats?.achievements;
   if (!Array.isArray(schemaAch) || !Array.isArray(playerAch)) return null;
-  const global = new Map<string, number>();
-  const names = new Map<string, string>();
+  const globals = globalPercents(globalRaw);
+  const meta = new Map<string, { name: string; desc: string; hidden: boolean; icon: string | null }>();
   for (const a of schemaAch) {
-    if (a && typeof a.name === 'string') {
-      names.set(a.name, typeof a.displayName === 'string' ? a.displayName : a.name);
-      if (Number.isFinite(Number(a?.globalAchievement?.percent))) global.set(a.name, Number(a.globalAchievement.percent));
-    }
+    if (!a || typeof a.name !== 'string') continue;
+    // Schema 内嵌解锁率仅部分游戏有：全局接口没给时才用它补位
+    const pct = Number(a?.globalAchievement?.percent);
+    if (!globals.has(a.name) && Number.isFinite(pct)) globals.set(a.name, pct);
+    meta.set(a.name, {
+      name: typeof a.displayName === 'string' && a.displayName ? a.displayName : a.name,
+      desc: typeof a.description === 'string' ? a.description : '',
+      hidden: a.hidden === 1 || a.hidden === true,
+      icon: typeof a.icon === 'string' && a.icon ? a.icon : null,
+    });
   }
+  const rows: AchievementRow[] = [];
   let unlocked = 0;
   let rarestName: string | null = null;
   let rarestPercent: number | null = null;
   for (const p of playerAch) {
-    if (!p || p.achieved !== 1) continue;
-    unlocked += 1;
-    const pct = global.get(String(p.apiname));
-    if (pct !== undefined && (rarestPercent === null || pct < rarestPercent)) {
-      rarestPercent = pct;
-      rarestName = names.get(String(p.apiname)) ?? null;
+    if (!p) continue;
+    const apiName = String(p.apiname ?? '');
+    if (!apiName) continue;
+    const m = meta.get(apiName) ?? { name: apiName, desc: '', hidden: false, icon: null };
+    const isUnlocked = p.achieved === 1;
+    if (isUnlocked) unlocked += 1;
+    const pct = globals.get(apiName);
+    const percent = pct === undefined ? null : Math.round(pct * 10) / 10;
+    // 稀有成就只在**已解锁**的里挑（未解锁的 0.1% 成就算不上「我的稀有」）
+    if (isUnlocked && percent !== null && (rarestPercent === null || percent < rarestPercent)) {
+      rarestPercent = percent;
+      rarestName = m.name;
     }
+    rows.push({
+      apiName,
+      name: m.name,
+      desc: m.desc,
+      hidden: m.hidden,
+      unlocked: isUnlocked,
+      unlockedAt: isUnlocked && Number(p.unlocktime) > 0 ? new Date(Number(p.unlocktime) * 1000).toISOString() : null,
+      globalPercent: percent,
+      icon: m.icon,
+    });
   }
-  return { total: schemaAch.length, unlocked, rarestName, rarestPercent: rarestPercent === null ? null : Math.round(rarestPercent * 10) / 10 };
+  // 排序：稀有度升序（越稀有越靠前），稀有度相同按解锁在前
+  rows.sort((a, b) => (a.globalPercent ?? 101) - (b.globalPercent ?? 101) || Number(b.unlocked) - Number(a.unlocked));
+  const total = rows.length;
+  return {
+    total,
+    unlocked,
+    percent: total > 0 ? Math.round((unlocked / total) * 1000) / 10 : 0,
+    rows,
+    rarestName,
+    rarestPercent,
+  };
 }
 
-/** 拉成就摘要（无成就/私密 → reason none；网络/解析问题如实上抛归类） */
-export async function fetchAchievementSummary(steamId: string, apiKey: string, appid: number): Promise<DetailFetchResult<AchievementSummary>> {
+/** 成就摘要（明细派生；frontmatter 三键口径不变） */
+export function parseAchievementSummary(schemaRaw: unknown, playerRaw: unknown, globalRaw?: unknown): AchievementSummary | null {
+  const d = parseAchievementRows(schemaRaw, playerRaw, globalRaw);
+  if (!d) return null;
+  return { total: d.total, unlocked: d.unlocked, rarestName: d.rarestName, rarestPercent: d.rarestPercent };
+}
+
+/** 成就接口错误分流（无成就页的 400/403 与网络失败分开） */
+function achievementFailure(e: unknown): DetailFetchResult<never> {
+  const err = e as SteamHttpError;
+  if (err instanceof SteamHttpError && err.reason === 'http' && (err.status === 400 || err.status === 403)) {
+    return { ok: false, reason: 'none', message: '这款游戏没有公开成就，或成就页不可见' };
+  }
+  return { ok: false, reason: 'network', message: '成就拉取失败：请检查网络与系统代理' };
+}
+
+/** 拉成就明细（Schema + Player + 全局解锁率；全局接口失败可容忍） */
+export async function fetchAchievementDetail(steamId: string, apiKey: string, appid: number): Promise<DetailFetchResult<AchievementDetail>> {
   const enc = encodeURIComponent(apiKey.trim());
   try {
     const schema = await getJson(`${API_BASE}/ISteamUserStats/GetSchemaForGame/v2/?key=${enc}&appid=${appid}`);
     const player = await getJson(`${API_BASE}/ISteamUserStats/GetPlayerAchievements/v1/?key=${enc}&steamid=${steamId.trim()}&appid=${appid}`);
-    const summary = parseAchievementSummary(schema, player);
-    if (!summary) return { ok: false, reason: 'none', message: '这款游戏没有公开成就，或成就页不可见' };
-    return { ok: true, data: summary };
-  } catch (e) {
-    const err = e as SteamHttpError;
-    if (err.reason === 'http' && (err.status === 400 || err.status === 403)) {
-      return { ok: false, reason: 'none', message: '这款游戏没有公开成就，或成就页不可见' };
+    let global: unknown = null;
+    try {
+      global = await getJson(`${API_BASE}/ISteamUserStats/GetGlobalAchievementPercentagesForApp/v2/?gameid=${appid}`);
+    } catch {
+      global = null; // 容忍：回落 Schema 内嵌 globalAchievement
     }
-    return { ok: false, reason: 'network', message: '成就拉取失败：请检查网络与系统代理' };
+    const detail = parseAchievementRows(schema, player, global);
+    if (!detail) return { ok: false, reason: 'none', message: '这款游戏没有公开成就，或成就页不可见' };
+    return { ok: true, data: detail };
+  } catch (e) {
+    return achievementFailure(e) as DetailFetchResult<AchievementDetail>;
   }
 }
 
-/** 商店元数据（类型/开发商/发行日期/简体中文支持 + 好评率/评测数） */
+/** 拉成就摘要（issue 368 口径保留，供只需三键的场景） */
+export async function fetchAchievementSummary(steamId: string, apiKey: string, appid: number): Promise<DetailFetchResult<AchievementSummary>> {
+  const r = await fetchAchievementDetail(steamId, apiKey, appid);
+  if (!r.ok) return r;
+  return { ok: true, data: { total: r.data.total, unlocked: r.data.unlocked, rarestName: r.data.rarestName, rarestPercent: r.data.rarestPercent } };
+}
+
+/* ---------- 商店元数据（appdetails + appreviews） ---------- */
+
+/** 商店元数据（appdetails 静态字段 + appreviews 评价摘要；可空 = 该项 Steam 没给） */
 export interface StoreMeta {
+  /** 条目类型短码（game/dlc/demo/…） */
+  type: string | null;
   genres: string | null;
   developers: string | null;
+  publishers: string | null;
   releaseDate: string | null;
+  comingSoon: boolean;
   zhSupported: boolean;
+  /** 支持平台（Windows、macOS、Linux） */
+  platforms: string | null;
+  /** 玩法分类（单人、多人、成就、云存档…） */
+  categories: string | null;
+  metacritic: number | null;
+  /** Steam 推荐数（recommendations.total） */
+  recommendations: number | null;
+  isFree: boolean;
+  /** 现价文案（免费 → 免费；无商店页/无价格 → null） */
+  price: string | null;
+  discountPercent: number | null;
+  website: string | null;
+  shortDescription: string | null;
+  /** 商店页大图（background_raw；弹窗头图氛围用） */
+  background: string | null;
+  /** 截图（path_full，最多 8 张） */
+  screenshots: string[];
+  dlcCount: number | null;
+  /** 商店侧成就总数（与成就接口的 total 互为印证） */
+  achievementsTotal: number | null;
+  supportUrl: string | null;
+  supportEmail: string | null;
   reviewDesc: string | null;
   reviewsTotal: number | null;
+  reviewsPositive: number | null;
+  reviewsNegative: number | null;
 }
 
-/** appdetails 响应 → 静态元数据归一（评价段由 parseReviews 单独归一） */
-export function parseStoreMeta(raw: unknown): Pick<StoreMeta, 'genres' | 'developers' | 'releaseDate' | 'zhSupported'> | null {
-  const data = (raw as any)?.[0]?.data;
+/** appdetails 静态字段归一（data 段缺失/非对象 → null，调用方判「没拉到」） */
+export function parseStoreMeta(raw: unknown): Omit<StoreMeta, 'reviewDesc' | 'reviewsTotal' | 'reviewsPositive' | 'reviewsNegative'> | null {
+  const data = (raw as any)?.[0]?.data ?? (raw as any)?.data;
   if (!data || typeof data !== 'object') return null;
-  const join = (v: unknown) => (Array.isArray(v) ? v.map((x: any) => String(typeof x === 'string' ? x : x?.description ?? x?.name ?? '')).filter(Boolean).join('、') : null);
+  const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
+  const join = (v: unknown): string | null =>
+    Array.isArray(v)
+      ? v.map((x: any) => String(typeof x === 'string' ? x : x?.description ?? x?.name ?? '')).filter(Boolean).join('、') || null
+      : null;
   const langs = typeof data?.supported_languages === 'string' ? data.supported_languages : '';
+  const plats = data?.platforms ?? {};
+  const platformNames = [plats.windows ? 'Windows' : '', plats.mac ? 'macOS' : '', plats.linux ? 'Linux' : ''].filter(Boolean);
+  const shots = Array.isArray(data?.screenshots)
+    ? (data.screenshots
+        .map((s: any) => str(s?.path_full))
+        .filter((x: string | null): x is string => !!x)
+        .slice(0, 8))
+    : [];
+  const num = (v: unknown): number | null => (Number.isFinite(Number(v)) ? Number(v) : null);
   return {
+    type: str(data?.type),
     genres: join(data?.genres),
     developers: join(data?.developers),
-    releaseDate: typeof data?.release_date?.date === 'string' && data.release_date.date ? data.release_date.date : null,
+    publishers: join(data?.publishers),
+    releaseDate: str(data?.release_date?.date),
+    comingSoon: data?.release_date?.coming_soon === true,
     zhSupported: langs.includes('简体中文'),
+    platforms: platformNames.length ? platformNames.join('、') : null,
+    categories: join(data?.categories),
+    metacritic: num(data?.metacritic?.score),
+    recommendations: num(data?.recommendations?.total),
+    isFree: data?.is_free === true,
+    price: data?.is_free === true ? '免费' : str(data?.price_overview?.final_formatted),
+    discountPercent: num(data?.price_overview?.discount_percent),
+    website: str(data?.website),
+    shortDescription: str(data?.short_description),
+    background: str(data?.background_raw) ?? str(data?.background),
+    screenshots: shots,
+    dlcCount: Array.isArray(data?.dlc) ? data.dlc.length : null,
+    achievementsTotal: num(data?.achievements?.total),
+    supportUrl: str(data?.support_info?.url),
+    supportEmail: str(data?.support_info?.email),
   };
 }
 
-/** appreviews 响应 → 好评摘要 */
-export function parseReviews(raw: unknown): { reviewDesc: string | null; reviewsTotal: number | null } {
+/** appreviews 响应 → 评价摘要（好评率文案 + 总数 + 正负票） */
+export function parseReviews(raw: unknown): { reviewDesc: string | null; reviewsTotal: number | null; reviewsPositive: number | null; reviewsNegative: number | null } {
   const q = (raw as any)?.query_summary;
+  const num = (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : null);
   return {
     reviewDesc: typeof q?.review_score_desc === 'string' && q.review_score_desc ? q.review_score_desc : null,
-    reviewsTotal: Number.isFinite(Number(q?.total_reviews)) ? Number(q.total_reviews) : null,
+    reviewsTotal: num(q?.total_reviews),
+    reviewsPositive: num(q?.total_positive),
+    reviewsNegative: num(q?.total_negative),
   };
 }
 
-/** 拉商店元数据（store 域直连可达；失败不阻塞成就，调用方各自处理） */
+/** 拉商店元数据（store 域直连可达；评价接口失败不阻塞静态字段） */
 export async function fetchStoreMeta(appid: number): Promise<DetailFetchResult<StoreMeta>> {
   try {
-    const details = await getJson(`https://store.steampowered.com/api/appdetails?appids=${appid}&l=schinese`);
+    const details = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese`);
     const meta = parseStoreMeta(details);
     if (!meta) return { ok: false, reason: 'parse', message: '商店数据拉到了但解析不出（可能已下架）' };
-    let reviews = { reviewDesc: null as string | null, reviewsTotal: null as number | null };
+    let reviews: ReturnType<typeof parseReviews> = { reviewDesc: null, reviewsTotal: null, reviewsPositive: null, reviewsNegative: null };
     try {
-      reviews = parseReviews(await getJson(`https://store.steampowered.com/appreviews/${appid}?json=1&num_per_page=0&language=schinese&purchase_type=all`));
+      reviews = parseReviews(await getJson(`${STORE_BASE}/appreviews/${appid}?json=1&num_per_page=0&language=schinese&purchase_type=all`));
     } catch {
       /* 评价接口失败可容忍：静态元数据已到手 */
     }

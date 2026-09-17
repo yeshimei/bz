@@ -30,18 +30,39 @@ export interface GameItem {
   /** YYYY-MM-DD 或空（从未玩） */
   lastPlayed: string;
   cover: string | null;
+  /** 库内小图标（frontmatter 图标；无 → null） */
+  icon: string | null;
+  /** 平台分项分钟（frontmatter 四键；老笔记缺键 → 0） */
+  windowsMin: number;
+  deckMin: number;
+  macMin: number;
+  linuxMin: number;
+  /** 有社区成就页（frontmatter 有成就） */
+  hasAch: boolean;
   offShelf: boolean;
   /** 最近一次同步时刻 ISO 串 */
   syncedAt: string | null;
 }
 
-/** 面板视图：shelf=游戏墙 / report=报告 */
-export type GameshelfViewKind = 'shelf' | 'report';
+/** 面板视图：shelf=游戏墙 / stats=数据统计 */
+export type GameshelfViewKind = 'shelf' | 'stats';
+
+/** 时长档位筛选（游戏墙工具行） */
+export type GameshelfBucket = 'all' | 'b200' | 'b50' | 'b10' | 'b1' | 'idle';
+
+/** 排序键 */
+export type GameshelfSort = 'hours' | 'last' | 'name';
 
 export interface GameshelfState {
   currentOverlay: HTMLElement | null;
   items: GameItem[];
   view: GameshelfViewKind;
+  /** 搜索词（名称模糊，实时过滤） */
+  query: string;
+  /** 时长档位筛选 */
+  bucket: GameshelfBucket;
+  /** 排序键 */
+  sort: GameshelfSort;
   /** 同步进行中（防重入 + 按钮态） */
   syncing: boolean;
   /** 状态行文案（上次同步时刻/进行中提示） */
@@ -55,6 +76,9 @@ export const M: GameshelfState = {
   currentOverlay: null,
   items: [],
   view: 'shelf',
+  query: '',
+  bucket: 'all',
+  sort: 'hours',
   syncing: false,
   statusMsg: '',
   appRef: null,
@@ -67,6 +91,9 @@ export function resetGameshelfState(): void {
   M.currentOverlay = null;
   M.items = [];
   M.view = 'shelf';
+  M.query = '';
+  M.bucket = 'all';
+  M.sort = 'hours';
   M.syncing = false;
   M.statusMsg = '';
   M.appRef = null;

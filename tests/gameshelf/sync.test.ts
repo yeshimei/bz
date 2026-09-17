@@ -74,6 +74,15 @@ function makeApp() {
   } as any;
 }
 
+/** 测试条目工厂（GameItem 全文；只关心少数字段时也能一眼看清默认值） */
+function item(appid: number, name: string, playtimeMin: number, lastPlayed = '', offShelf = false) {
+  return {
+    file: null, appid, name, playtimeMin, lastPlayed, cover: null, icon: null,
+    windowsMin: playtimeMin, deckMin: 0, macMin: 0, linuxMin: 0, hasAch: false,
+    offShelf, syncedAt: null,
+  };
+}
+
 function setup(settings: Record<string, unknown>) {
   setApp({ vault } as any);
   setSettingsProvider(() => settings as any);
@@ -188,13 +197,15 @@ describe('runSync 同步链路（issue 368）', () => {
   });
 });
 
-describe('面板 UI（overlay 范式 + 引导态 + 报告）', () => {
+describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
   it('未配置：打开即引导态（两键），同步按钮禁用', () => {
     setup({});
     const app = makeApp();
     openGameshelf(app);
     expect(document.querySelector('.bz-gs-panel')).toBeTruthy();
-    expect(document.querySelector('.bz-gs-mask')).toBeTruthy();
+    // 面板基座 = core .bz-panel-overlay（13 域同款），域内不再自造遮罩
+    expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
+    expect(document.querySelector('.bz-gs-panel')!.className).toContain('bz-panel-frame');
     expect(document.querySelector('.bz-gs-panel')!.className).toContain('bz-panel-mtop');
     expect(document.querySelector('#bz-gs-guide-config')).toBeTruthy();
     expect(document.querySelector('#bz-gs-guide-recheck')).toBeTruthy();
@@ -219,19 +230,22 @@ describe('面板 UI（overlay 范式 + 引导态 + 报告）', () => {
     });
   });
 
-  it('报告视图：库总览/时长排行/口径注记在壳内（分片渲染单源 markup）', () => {
+  it('数据统计视图：总览卡/时长排行/档位分布/年份分布/口径注记在壳内', () => {
     setup(CONFIG);
     const app = makeApp();
     openGameshelf(app); // open 内部 rebuildItems（空库）——先开壳再注入条目
     M.items = [
-      { file: null, appid: 1, name: 'AAA', playtimeMin: 6000, lastPlayed: '2026-09-16', cover: null, offShelf: false, syncedAt: null },
-      { file: null, appid: 2, name: 'BBB', playtimeMin: 60, lastPlayed: '', cover: null, offShelf: false, syncedAt: null },
+      item(1, 'AAA', 6000, '2026-09-16'),
+      item(2, 'BBB', 60, ''),
     ];
-    M.view = 'report';
+    M.view = 'stats';
     renderAll(app);
     expect(document.body.textContent).toContain('时长排行');
     expect(document.body.textContent).toContain('100h');
-    expect(document.body.textContent).toContain('最后游玩日期');
+    expect(document.body.textContent).toContain('时长档位分布');
+    expect(document.body.textContent).toContain('最后游玩年份分布');
+    expect(document.body.querySelectorAll('.bz-stat').length).toBe(5);
+    expect(document.body.textContent).toContain('没有逐日游玩时长');
     unloadGameshelf();
   });
 
