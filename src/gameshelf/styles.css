@@ -181,6 +181,8 @@
   gap: var(--bz-space-sm);
   flex: none;
 }
+/* 移动端专用的一套控件（档位/排序下拉）：桌面隐藏，工具行两套形态共用同一份状态 */
+.bz-gs-sels { display: none; }
 .bz-gs-search { min-width: 168px; }
 .bz-gs-search .bz-input { width: 100%; }
 
@@ -629,7 +631,12 @@
   .bz-gs-panel {
     width: 100vw;
     max-width: none;
-    height: var(--bz-vvh, 100vh);
+    /* 移动端整屏：用动态视口高 100dvh，**不吃 --bz-vvh**——本面板没有贴底固定条
+       （底部输入条是备忘录/第二大脑/小橘那类域的问题，键盘不会遮住这里的任何元素），
+       而 --bz-vvh 在评审壳里被模拟成「短 88px」，会留出底部空隙。
+       老内核不认 dvh → 前一行 100vh 兜底，与改造前一致，零劣化。 */
+    height: 100vh;
+    height: 100dvh;
     max-height: none;
     border: 0;
     border-radius: 0;
@@ -642,6 +649,10 @@
   .bz-gs-panel .bz-main-head .bz-main-count { display: none; }
   /* 移动端出关闭钮：全屏面板没有可点的遮罩，只能靠它出去 */
   .bz-gs-panel .bz-main-head .bz-gs-close { display: inline-flex; }
+  /* 头行三钮只留图标（数据统计 / 立即同步 / 关闭）：窄屏放不下三串字，
+     表意交给 title 与 aria-label（ui.ts 里逐个补过） */
+  .bz-gs-panel .bz-main-head .bz-btn { padding: 0 10px; }
+  .bz-gs-panel .bz-main-head .bz-btn > span:not(.bz-ic) { display: none; }
   .bz-gs-body { padding: 0 var(--bz-space-md) var(--bz-space-md); }
   .bz-gs-hero {
     height: clamp(132px, 21vh, 172px);
@@ -650,12 +661,21 @@
   }
   .bz-gs-hero-in { padding-bottom: var(--bz-space-md); }
   .bz-gs-hero-side { display: none; }
+  /* 工具行一行放下：搜索 + 档位下拉 + 排序下拉（6 个 chip 与三档分段窄屏放不下） */
   .bz-gs-tools {
     margin: 0 calc(-1 * var(--bz-space-md));
     padding: var(--bz-space-sm) var(--bz-space-md);
+    flex-wrap: nowrap;
   }
-  .bz-gs-toolsend { margin-left: 0; width: 100%; }
-  .bz-gs-search { flex: 1; min-width: 0; }
+  .bz-gs-chips, .bz-gs-sortseg { display: none; }
+  .bz-gs-toolsend { margin-left: 0; width: 100%; flex-wrap: nowrap; gap: var(--bz-space-sm); }
+  .bz-gs-searchwrap { order: 1; flex: 1 1 auto; min-width: 0; }
+  .bz-gs-search { min-width: 0; }
+  .bz-gs-sels { display: flex; order: 2; gap: var(--bz-space-sm); flex: 0 0 auto; min-width: 0; }
+  .bz-gs-sel { min-width: 0; }
+  /* 下拉窄屏压缩：core .bz-select 的 min-width 160px 会让三件同行放不下 */
+  .bz-gs-sel .bz-select { min-width: 0; padding: 0 8px; gap: 4px; }
+  .bz-gs-sel .bz-select-val { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bz-gs-grid { grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: var(--bz-space-sm); padding-top: var(--bz-space-md); }
   .bz-gs-hint { opacity: 1; }           /* 触屏没有 hover：时长/日期常显 */
   .bz-gs-card:hover { transform: none; }

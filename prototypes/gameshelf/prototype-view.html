@@ -42,12 +42,9 @@
       document.body.classList.remove('theme-light');
       document.body.classList.add('theme-dark');
     }
-    // 移动视图：模拟 Obsidian 移动端原生顶栏/底栏占位（约 44px+44px）在 webview 视口之外，
-    // 使 --bz-vvh 短于 100vh —— 真机上面板顶部会空出 44px（用户真机反馈 2026-09-10）。
-    // 壳按此口径模拟，复现顶距供评审；配合 .bz-panel-mtop 的顶部避让可见面板贴顶。
-    if (new URLSearchParams(location.search).get('mob')) {
-      document.documentElement.style.setProperty('--bz-vvh', 'calc(100vh - 88px)');
-    }
+    // 注意：这里**不再**模拟 --bz-vvh 的「webview 视口比 100vh 短 88px」。
+    // 本面板移动端吃的是 100dvh（见 styles.css 移动块），因为游戏架没有贴底固定条，
+    // 键盘不会遮住任何元素——照旧模拟会凭空在底部留 88px 空隙（用户 2026-09-17 反馈）。
     var B = window.BZW_gameshelf;
     B.bootGameshelfSim();
     B.openGameshelf();

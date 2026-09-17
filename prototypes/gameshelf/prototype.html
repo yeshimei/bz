@@ -70,7 +70,7 @@
 <body class="theme-light">
   <div class="title" id="title">游戏架 · 真行为单源预览（桌面 1280×900 · 移动 412×915 物理 1:1 · 默认亮色）</div>
   <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="游戏架·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="游戏架·移动"></iframe></div></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html" title="游戏架·移动"></iframe></div></div>
 
   <div class="vbadge">
     <button id="themeToggle">切到暗色</button>
@@ -282,10 +282,51 @@
         await sleep(150);
         t('ESC 再关面板', !dt('.bz-gs-panel'));
 
-        // 移动端：真全屏（宽度 = iframe 视口宽）
-        const w = getComputedStyle(mob('.bz-gs-panel')).width;
-        t('移动面板满幅 ' + w, Math.abs(parseFloat(w) - 412) < 1);
+        // ---- 移动端（412×915）----
+        const mPanel = mob('.bz-gs-panel');
+        const mRect = mPanel.getBoundingClientRect();
+        t('移动面板满幅 ' + Math.round(mRect.width) + 'px', Math.abs(mRect.width - 412) < 1);
         t('移动端门面收窄', !!mob('.bz-gs-hero'));
+        // 整屏：面板高 = iframe 视口高，且底边贴住视口下沿（不留空隙）
+        const mvh = md.documentElement.clientHeight;
+        t('移动端整屏无底部空隙', Math.abs(mRect.height - mvh) < 1.5 && Math.abs(mRect.bottom - mvh) < 1.5);
+        // 三钮只留图标（文字 span 隐藏、图标仍是真 svg）
+        const iconOnly = (b) => {
+          const label = b && b.querySelector('span:not(.bz-ic)');
+          return !!b && !!label && getComputedStyle(label).display === 'none' && !!b.querySelector('svg');
+        };
+        t('移动端三钮只留图标', iconOnly(mob('.bz-gs-viewbtn')) && iconOnly(mob('.bz-main-head .bz-btn--primary')) && iconOnly(mob('.bz-gs-close')));
+        // 工具行：搜索 + 两个下拉同一行，搜索在最前；chips 与三档分段让位
+        // （每个元素用前现查：海报/中文名队列的节流重渲会把工具行整块换掉，
+        //   提前抓的引用会变游离节点——getBoundingClientRect 全 0，断言假失败）
+        const mSelCount = md.querySelectorAll('.bz-gs-sels .bz-select').length;
+        t('移动端两个下拉在位=' + mSelCount, mSelCount === 2);
+        t('移动端 chips 与分段隐藏', getComputedStyle(mob('.bz-gs-chips')).display === 'none'
+          && getComputedStyle(mob('.bz-gs-sortseg')).display === 'none');
+        const rSel = mob('.bz-gs-sels').getBoundingClientRect();
+        const rSearch = mob('.bz-gs-searchwrap').getBoundingClientRect();
+        t('移动端工具行一行且搜索在前=' + Math.round(rSel.top) + ',' + Math.round(rSearch.top) + ',' + Math.round(rSearch.left) + '<' + Math.round(rSel.left),
+          Math.abs(rSel.top - rSearch.top) < 4 && rSearch.left < rSel.left && rSel.right <= mRect.right + 0.5);
+        // 下拉可用：开菜单 → 6 项 → 选中即筛选 → 回全部
+        mob('.bz-gs-sels .bz-select').click();
+        await sleep(150);
+        const menuItems = md.querySelectorAll('.bz-gs-sels .bz-select-menu .bz-select-item');
+        t('档位下拉 6 项=' + menuItems.length, menuItems.length === 6);
+        if (menuItems.length === 6) {
+          menuItems[5].click(); // 从未启动
+          await sleep(200);
+          const idleN = DATA.filter((g) => !g.min).length;
+          t('下拉选中即筛选 ' + idleN + ' 卡', cards(md) === idleN && !mob('.bz-gs-sels .bz-select-menu'));
+          mob('.bz-gs-sels .bz-select').click();
+          await sleep(150);
+          const back = md.querySelectorAll('.bz-gs-sels .bz-select-menu .bz-select-item');
+          t('下拉可回全部=' + back.length, back.length === 6);
+          if (back.length) {
+            back[0].click();
+            await sleep(200);
+            t('下拉回全部后 ' + DATA.length + ' 卡', cards(md) === DATA.length);
+          }
+        }
 
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
