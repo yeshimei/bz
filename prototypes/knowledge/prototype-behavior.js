@@ -1,4 +1,4 @@
-/* 源指纹 860a62966a7f740b · 仓内输入 38 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 61668f6136423442 · 仓内输入 38 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -12472,7 +12472,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       if (this.mask && this.mask.isConnected || this.popup && this.popup.isConnected) return;
       const mask = document.createElement("div");
       mask.id = "knowledge-mask";
-      mask.className = "bz-kb-mask";
+      mask.className = "bz-overlay-mask bz-kb-mask";
       mask.style.display = "none";
       mask.onclick = () => this.hideMain();
       const popup = document.createElement("div");
@@ -13109,7 +13109,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     createVideoUI() {
       const mask = document.createElement("div");
       mask.id = "knowledge-video-mask";
-      mask.className = "bz-kb-mask";
+      mask.className = "bz-overlay-mask bz-kb-mask";
       mask.style.display = "none";
       mask.onclick = () => this.hideVideo();
       const popup = document.createElement("div");
@@ -13507,7 +13507,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       var _a, _b;
       const addMask = document.createElement("div");
       addMask.id = "knowledge-add-mask";
-      addMask.className = "bz-kb-mask";
+      addMask.className = "bz-overlay-mask bz-kb-mask";
       addMask.style.display = "none";
       addMask.onclick = () => this.requestAddClose();
       const popup = document.createElement("div");
@@ -14141,7 +14141,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       var _a, _b, _c, _d, _e;
       const mask = document.createElement("div");
       mask.id = "knowledge-term-mask";
-      mask.className = "bz-kb-mask";
+      mask.className = "bz-overlay-mask bz-kb-mask";
       mask.style.display = "none";
       mask.onclick = () => this.requestTermClose();
       const popup = document.createElement("div");

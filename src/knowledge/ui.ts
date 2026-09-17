@@ -612,7 +612,7 @@ export class UIManager {
     if ((this.mask && this.mask.isConnected) || (this.popup && this.popup.isConnected)) return;
     const mask = document.createElement('div');
     mask.id = 'knowledge-mask';
-    mask.className = 'bz-kb-mask';
+    mask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     mask.style.display = 'none';
     mask.onclick = () => this.hideMain();
 
@@ -1276,7 +1276,7 @@ export class UIManager {
   createVideoUI(): void {
     const mask = document.createElement('div');
     mask.id = 'knowledge-video-mask';
-    mask.className = 'bz-kb-mask';
+    mask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     mask.style.display = 'none';
     mask.onclick = () => this.hideVideo();
     const popup = document.createElement('div');
@@ -1684,7 +1684,7 @@ export class UIManager {
   createAddDialog(): void {
     const addMask = document.createElement('div');
     addMask.id = 'knowledge-add-mask';
-    addMask.className = 'bz-kb-mask';
+    addMask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     addMask.style.display = 'none';
     addMask.onclick = () => this.requestAddClose(); // issue 326：有草稿先确认
     const popup = document.createElement('div');
@@ -2304,7 +2304,7 @@ export class UIManager {
   createTermUI(): void {
     const mask = document.createElement('div');
     mask.id = 'knowledge-term-mask';
-    mask.className = 'bz-kb-mask';
+    mask.className = 'bz-overlay-mask bz-kb-mask'; // issue 365 收编单源后此处漏挂 → 遮罩零尺寸不可见、点不着关不掉
     mask.style.display = 'none';
     mask.onclick = () => this.requestTermClose(); // issue 326：有草稿先确认
     const popup = document.createElement('div');
