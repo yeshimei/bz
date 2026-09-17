@@ -1,5 +1,5 @@
-/* 源指纹 3bbb253487b32b4b · 仓内输入 237 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 935e5e11ae0c7ba4 · 仓内输入 236 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
   var __create = Object.create;
@@ -90,7 +90,7 @@ var BZW_gameshelf = (() => {
     return m ? Number(m[1]) : 0;
   }
   function demoStore(g) {
-    return [{ success: true, data: {
+    return { [String(g.appid)]: { success: true, data: {
       type: "game",
       name: g.name,
       is_free: false,
@@ -111,7 +111,7 @@ var BZW_gameshelf = (() => {
       ],
       achievements: { total: 12 },
       support_info: { url: "https://help.steampowered.com/", email: "" }
-    } }];
+    } } };
   }
   function demoReviews() {
     return { query_summary: { review_score_desc: "多半好评", total_reviews: 1234, total_positive: 1e3, total_negative: 234 } };
@@ -161,8 +161,8 @@ var BZW_gameshelf = (() => {
     const seed = seedGames().find((g) => g.appid === appid);
     if (url.includes("/api/appdetails")) {
       const real = bundle.store[String(appid)];
-      if (real) return reply(real);
-      return seed ? reply(demoStore(seed)) : reply([{ success: false }]);
+      if (real) return reply({ [String(appid)]: real });
+      return seed ? reply(demoStore(seed)) : reply({ [String(appid)]: { success: false } });
     }
     if (url.includes("/appreviews/")) {
       const real = (_a2 = bundle.reviews) == null ? void 0 : _a2[String(appid)];
@@ -1816,6 +1816,15 @@ var BZW_gameshelf = (() => {
       const resp = await withTimeout(requestUrl({ url, method: "GET", throw: false }), REQUEST_TIMEOUT_MS, "Steam Web API");
       if (resp.status === 401 || resp.status === 403) throw new SteamHttpError("auth", resp.status);
       if (resp.status >= 400) throw new SteamHttpError("http", resp.status);
+      if (resp.json === void 0 || resp.json === null) {
+        const text = typeof resp.text === "string" ? resp.text.trim() : "";
+        if (!text) return null;
+        try {
+          return JSON.parse(text.replace(/^\uFEFF/, ""));
+        } catch (e) {
+          return null;
+        }
+      }
       return resp.json;
     } catch (e) {
       if (e instanceof SteamHttpError) throw e;
@@ -1993,9 +2002,21 @@ var BZW_gameshelf = (() => {
       return achievementFailure(e);
     }
   }
-  function parseStoreMeta(raw) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m;
-    const data = (_b2 = (_a2 = raw == null ? void 0 : raw[0]) == null ? void 0 : _a2.data) != null ? _b2 : raw == null ? void 0 : raw.data;
+  function storeDataOf(raw, appid) {
+    var _a2, _b2, _c, _d, _e;
+    if (!raw || typeof raw !== "object") return null;
+    const r = raw;
+    if (appid !== void 0 && r[String(appid)] && typeof r[String(appid)] === "object") {
+      return (_a2 = r[String(appid)].data) != null ? _a2 : null;
+    }
+    if (Array.isArray(raw)) return (_c = (_b2 = raw[0]) == null ? void 0 : _b2.data) != null ? _c : null;
+    const vals = Object.values(r);
+    if (vals.length === 1 && vals[0] && typeof vals[0] === "object") return (_d = vals[0].data) != null ? _d : null;
+    return (_e = r.data) != null ? _e : null;
+  }
+  function parseStoreMeta(raw, appid) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+    const data = storeDataOf(raw, appid);
     if (!data || typeof data !== "object") return null;
     const str2 = (v) => typeof v === "string" && v.trim() ? v : null;
     const join = (v) => Array.isArray(v) ? v.map((x) => {
@@ -2003,7 +2024,7 @@ var BZW_gameshelf = (() => {
       return String(typeof x === "string" ? x : (_b3 = (_a3 = x == null ? void 0 : x.description) != null ? _a3 : x == null ? void 0 : x.name) != null ? _b3 : "");
     }).filter(Boolean).join("、") || null : null;
     const langs = typeof (data == null ? void 0 : data.supported_languages) === "string" ? data.supported_languages : "";
-    const plats = (_c = data == null ? void 0 : data.platforms) != null ? _c : {};
+    const plats = (_a2 = data == null ? void 0 : data.platforms) != null ? _a2 : {};
     const platformNames = [plats.windows ? "Windows" : "", plats.mac ? "macOS" : "", plats.linux ? "Linux" : ""].filter(Boolean);
     const shots = Array.isArray(data == null ? void 0 : data.screenshots) ? data.screenshots.map((s) => str2(s == null ? void 0 : s.path_full)).filter((x) => !!x).slice(0, 8) : [];
     const num2 = (v) => Number.isFinite(Number(v)) ? Number(v) : null;
@@ -2013,24 +2034,24 @@ var BZW_gameshelf = (() => {
       genres: join(data == null ? void 0 : data.genres),
       developers: join(data == null ? void 0 : data.developers),
       publishers: join(data == null ? void 0 : data.publishers),
-      releaseDate: str2((_d = data == null ? void 0 : data.release_date) == null ? void 0 : _d.date),
-      comingSoon: ((_e = data == null ? void 0 : data.release_date) == null ? void 0 : _e.coming_soon) === true,
+      releaseDate: str2((_b2 = data == null ? void 0 : data.release_date) == null ? void 0 : _b2.date),
+      comingSoon: ((_c = data == null ? void 0 : data.release_date) == null ? void 0 : _c.coming_soon) === true,
       zhSupported: langs.includes("简体中文"),
       platforms: platformNames.length ? platformNames.join("、") : null,
       categories: join(data == null ? void 0 : data.categories),
-      metacritic: num2((_f = data == null ? void 0 : data.metacritic) == null ? void 0 : _f.score),
-      recommendations: num2((_g = data == null ? void 0 : data.recommendations) == null ? void 0 : _g.total),
+      metacritic: num2((_d = data == null ? void 0 : data.metacritic) == null ? void 0 : _d.score),
+      recommendations: num2((_e = data == null ? void 0 : data.recommendations) == null ? void 0 : _e.total),
       isFree: (data == null ? void 0 : data.is_free) === true,
-      price: (data == null ? void 0 : data.is_free) === true ? "免费" : str2((_h = data == null ? void 0 : data.price_overview) == null ? void 0 : _h.final_formatted),
-      discountPercent: num2((_i = data == null ? void 0 : data.price_overview) == null ? void 0 : _i.discount_percent),
+      price: (data == null ? void 0 : data.is_free) === true ? "免费" : str2((_f = data == null ? void 0 : data.price_overview) == null ? void 0 : _f.final_formatted),
+      discountPercent: num2((_g = data == null ? void 0 : data.price_overview) == null ? void 0 : _g.discount_percent),
       website: str2(data == null ? void 0 : data.website),
       shortDescription: str2(data == null ? void 0 : data.short_description),
-      background: (_j = str2(data == null ? void 0 : data.background_raw)) != null ? _j : str2(data == null ? void 0 : data.background),
+      background: (_h = str2(data == null ? void 0 : data.background_raw)) != null ? _h : str2(data == null ? void 0 : data.background),
       screenshots: shots,
       dlcCount: Array.isArray(data == null ? void 0 : data.dlc) ? data.dlc.length : null,
-      achievementsTotal: num2((_k = data == null ? void 0 : data.achievements) == null ? void 0 : _k.total),
-      supportUrl: str2((_l = data == null ? void 0 : data.support_info) == null ? void 0 : _l.url),
-      supportEmail: str2((_m = data == null ? void 0 : data.support_info) == null ? void 0 : _m.email)
+      achievementsTotal: num2((_i = data == null ? void 0 : data.achievements) == null ? void 0 : _i.total),
+      supportUrl: str2((_j = data == null ? void 0 : data.support_info) == null ? void 0 : _j.url),
+      supportEmail: str2((_k = data == null ? void 0 : data.support_info) == null ? void 0 : _k.email)
     };
   }
   function parseReviews(raw) {
@@ -2044,10 +2065,18 @@ var BZW_gameshelf = (() => {
     };
   }
   async function fetchStoreMeta(appid) {
+    var _a2;
     try {
       const details = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese`);
-      const meta = parseStoreMeta(details);
-      if (!meta) return { ok: false, reason: "parse", message: "商店数据拉到了但解析不出（可能已下架）" };
+      const meta = parseStoreMeta(details, appid);
+      if (!meta) {
+        const denied = ((_a2 = details == null ? void 0 : details[String(appid)]) == null ? void 0 : _a2.success) === false;
+        return {
+          ok: false,
+          reason: "parse",
+          message: denied ? "Steam 没有返回这款游戏的商店数据（可能已下架或地区限制）" : "商店数据拉到了但解析不出（可能已下架）"
+        };
+      }
       let reviews = { reviewDesc: null, reviewsTotal: null, reviewsPositive: null, reviewsNegative: null };
       try {
         reviews = parseReviews(await getJson(`${STORE_BASE}/appreviews/${appid}?json=1&num_per_page=0&language=schinese&purchase_type=all`));
@@ -2059,16 +2088,15 @@ var BZW_gameshelf = (() => {
       return { ok: false, reason: err.reason === "auth" ? "parse" : "network", message: "商店数据拉取失败：请检查网络" };
     }
   }
-  function parseZhName(raw) {
-    var _a2, _b2;
-    const data = (_b2 = (_a2 = raw == null ? void 0 : raw[0]) == null ? void 0 : _a2.data) != null ? _b2 : raw == null ? void 0 : raw.data;
+  function parseZhName(raw, appid) {
+    const data = storeDataOf(raw, appid);
     const n = data == null ? void 0 : data.name;
     return typeof n === "string" && n.trim() ? n.trim() : null;
   }
   async function fetchZhName(appid) {
     try {
       const raw = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese&filters=basic`);
-      const name = parseZhName(raw);
+      const name = parseZhName(raw, appid);
       if (!name) return { ok: false, reason: "parse", message: "商店没有给出这款游戏的名字" };
       return { ok: true, data: name };
     } catch (e) {
@@ -36827,14 +36855,6 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
-  // src/cinema/douban-fetcher.ts
-  var POSTER_FOLDER;
-  var init_douban_fetcher = __esm({
-    "src/cinema/douban-fetcher.ts"() {
-      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
-    }
-  });
-
   // src/cinema/settings.ts
   var settings_exports4 = {};
   __export(settings_exports4, {
@@ -36872,8 +36892,7 @@ GitHub 仓库：${ghInfo.title}
           icon: "folder-open",
           name: "目录",
           rows: [
-            { type: "path", mode: "single", name: "影视文件夹", desc: "影院读取的影视文件夹，日记本也从这里读影视", binding: { key: "cinemaFolderPath" } },
-            { type: "path", mode: "single", name: "海报文件夹", desc: "豆瓣抓取的海报图片保存位置，留空用默认目录", binding: { key: "cinemaPosterFolder" }, fallbackValue: () => POSTER_FOLDER }
+            { type: "path", mode: "single", name: "影视文件夹", desc: "影院读取的影视文件夹，日记本也从这里读影视", binding: { key: "cinemaFolderPath" } }
             // 旧「每批加载数量」（cinemaPageSize）已删除：全仓无消费点（列表一次全量渲染），属死配置
           ]
         },
@@ -36922,7 +36941,6 @@ GitHub 仓库：${ghInfo.title}
   var init_settings4 = __esm({
     "src/cinema/settings.ts"() {
       init_settings_common();
-      init_douban_fetcher();
     }
   });
 
@@ -48521,7 +48539,6 @@ ${n.content.slice(0, 2e3)}
         cinemaStyle: "midnight",
         cinemaApizeroKey: "",
         cinemaDoubanCookie: "",
-        cinemaPosterFolder: "",
         bilibiliCookie: "",
         // 游戏架（gameshelf，issue 368：Steam 直连自动拉库；目录缺省回落「我的/游戏」）
         gameshelfFolderPath: "我的/游戏",
@@ -49515,7 +49532,7 @@ ${n.content.slice(0, 2e3)}
         if (r.ok) {
           failures = 0;
           job.item.zhName = r.data;
-          if (job.file) {
+          if (job.file && r.data !== job.item.name) {
             try {
               await upsertDetail(job.app, job.file, { 中文名: r.data });
             } catch (e) {

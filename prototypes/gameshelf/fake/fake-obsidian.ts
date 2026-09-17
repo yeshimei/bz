@@ -127,9 +127,9 @@ function appidOf(url: string): number {
   return m ? Number(m[1]) : 0;
 }
 
-/** 演示罐头（未抓到真详情的 appid）：名字自报家门，不冒充真数据 */
+/** 演示罐头（未抓到真详情的 appid）：名字自报家门，不冒充真数据。形状与真实响应一致（外层键 = appid） */
 function demoStore(g: SeedGame): unknown {
-  return [{ success: true, data: {
+  return { [String(g.appid)]: { success: true, data: {
     type: 'game',
     name: g.name,
     is_free: false,
@@ -150,7 +150,7 @@ function demoStore(g: SeedGame): unknown {
     ],
     achievements: { total: 12 },
     support_info: { url: 'https://help.steampowered.com/', email: '' },
-  } }];
+  } } };
 }
 
 function demoReviews(): unknown {
@@ -207,9 +207,12 @@ function replay(url: string): { status: number; json: unknown; text: string } | 
   const seed = seedGames().find((g) => g.appid === appid);
 
   if (url.includes('/api/appdetails')) {
+    // ⚠️ 真实 Steam 的 appdetails 外层键是 **appid 字符串**（不是数组）——
+    // 2026-09-17 真机事故就栽在这层形状上（罐头存成数组 → 壳里全绿、真机全红），
+    // 故壳这里按真实形状回，才能验证真解析路径。
     const real = bundle.store[String(appid)];
-    if (real) return reply(real);
-    return seed ? reply(demoStore(seed)) : reply([{ success: false }]);
+    if (real) return reply({ [String(appid)]: real });
+    return seed ? reply(demoStore(seed)) : reply({ [String(appid)]: { success: false } });
   }
   if (url.includes('/appreviews/')) {
     const real = bundle.reviews?.[String(appid)];

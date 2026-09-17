@@ -74,6 +74,17 @@ async function getJson(url: string): Promise<unknown> {
     const resp = await withTimeout(requestUrl({ url, method: 'GET', throw: false }), REQUEST_TIMEOUT_MS, 'Steam Web API');
     if (resp.status === 401 || resp.status === 403) throw new SteamHttpError('auth', resp.status);
     if (resp.status >= 400) throw new SteamHttpError('http', resp.status);
+    // requestUrl 只在 Content-Type 认得出来时才填 .json；Steam 个别节点会给
+    // text/plain 或带 BOM 的响应 → 兜底用 text 自己解析一次，别直接当空数据
+    if (resp.json === undefined || resp.json === null) {
+      const text = typeof resp.text === 'string' ? resp.text.trim() : '';
+      if (!text) return null;
+      try {
+        return JSON.parse(text.replace(/^\uFEFF/, ''));
+      } catch {
+        return null;
+      }
+    }
     return resp.json;
   } catch (e) {
     if (e instanceof SteamHttpError) throw e;
@@ -383,8 +394,30 @@ export interface StoreMeta {
 }
 
 /** appdetails 静态字段归一（data 段缺失/非对象 → null，调用方判「没拉到」） */
-export function parseStoreMeta(raw: unknown): Omit<StoreMeta, 'reviewDesc' | 'reviewsTotal' | 'reviewsPositive' | 'reviewsNegative'> | null {
-  const data = (raw as any)?.[0]?.data ?? (raw as any)?.data;
+/**
+ * appdetails 响应取 `data`——三种形态都要认：
+ *   ① **真实 Steam**：`{ "<appid>": { success, data } }`，外层键是 **appid 字符串**。
+ *      ⚠️ 2026-09-17 真机事故：原来只写 `raw[0].data`，对象形态下恒为 undefined →
+ *      商店资料与中文名全部「拉到了但解析不出」（评审壳的罐头存成了数组形态，
+ *      恰好命中旧分支，故评审阶段全绿、真机全红）。
+ *   ② 数组形态 `[{ success, data }]`（旧抓取罐头与既有单测）：按下标 0。
+ *   ③ 直接形态 `{ success, data }`（部分单测）：按 `.data`。
+ * `success: false`（下架 / 地区限制）时三者都取不到 data → 返回 null，交给调用方分文案。
+ */
+function storeDataOf(raw: unknown, appid?: number): any {
+  if (!raw || typeof raw !== 'object') return null;
+  const r = raw as Record<string, any>;
+  if (appid !== undefined && r[String(appid)] && typeof r[String(appid)] === 'object') {
+    return r[String(appid)].data ?? null;
+  }
+  if (Array.isArray(raw)) return (raw as any[])[0]?.data ?? null;
+  const vals = Object.values(r);
+  if (vals.length === 1 && vals[0] && typeof vals[0] === 'object') return (vals[0] as any).data ?? null;
+  return r.data ?? null;
+}
+
+export function parseStoreMeta(raw: unknown, appid?: number): Omit<StoreMeta, 'reviewDesc' | 'reviewsTotal' | 'reviewsPositive' | 'reviewsNegative'> | null {
+  const data = storeDataOf(raw, appid);
   if (!data || typeof data !== 'object') return null;
   const str = (v: unknown): string | null => (typeof v === 'string' && v.trim() ? v : null);
   const join = (v: unknown): string | null =>
@@ -444,8 +477,19 @@ export function parseReviews(raw: unknown): { reviewDesc: string | null; reviews
 export async function fetchStoreMeta(appid: number): Promise<DetailFetchResult<StoreMeta>> {
   try {
     const details = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese`);
-    const meta = parseStoreMeta(details);
-    if (!meta) return { ok: false, reason: 'parse', message: '商店数据拉到了但解析不出（可能已下架）' };
+    const meta = parseStoreMeta(details, appid);
+    if (!meta) {
+      // Steam 明确给了 success:false = 这款游戏在商店查不到（下架 / 地区限制）；
+      // 否则才是结构没认出来 —— 两种原因给用户不同文案，方便判断该不该重试
+      const denied = (details as Record<string, any> | null)?.[String(appid)]?.success === false;
+      return {
+        ok: false,
+        reason: 'parse',
+        message: denied
+          ? 'Steam 没有返回这款游戏的商店数据（可能已下架或地区限制）'
+          : '商店数据拉到了但解析不出（可能已下架）',
+      };
+    }
     let reviews: ReturnType<typeof parseReviews> = { reviewDesc: null, reviewsTotal: null, reviewsPositive: null, reviewsNegative: null };
     try {
       reviews = parseReviews(await getJson(`${STORE_BASE}/appreviews/${appid}?json=1&num_per_page=0&language=schinese&purchase_type=all`));
@@ -462,8 +506,8 @@ export async function fetchStoreMeta(appid: number): Promise<DetailFetchResult<S
 /* ---------- 本地化名（中文名回填） ---------- */
 
 /** appdetails 响应 → 本地化名（l=schinese 时即中文名；下架/无商店页 → null） */
-export function parseZhName(raw: unknown): string | null {
-  const data = (raw as any)?.[0]?.data ?? (raw as any)?.data;
+export function parseZhName(raw: unknown, appid?: number): string | null {
+  const data = storeDataOf(raw, appid) as Record<string, unknown> | null;
   const n = data?.name;
   return typeof n === 'string' && n.trim() ? n.trim() : null;
 }
@@ -475,7 +519,7 @@ export function parseZhName(raw: unknown): string | null {
 export async function fetchZhName(appid: number): Promise<DetailFetchResult<string>> {
   try {
     const raw = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese&filters=basic`);
-    const name = parseZhName(raw);
+    const name = parseZhName(raw, appid);
     if (!name) return { ok: false, reason: 'parse', message: '商店没有给出这款游戏的名字' };
     return { ok: true, data: name };
   } catch (e) {

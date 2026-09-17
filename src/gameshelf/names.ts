@@ -75,7 +75,9 @@ async function runQueue(): Promise<void> {
         failures = 0;
         // 先更新内存（列表立刻能显示），再落盘（写回失败也不影响本次会话的显示）
         job.item.zhName = r.data;
-        if (job.file) {
+        // Steam 没做本地化时返回的还是英文名（如 Bongo Cat）——只记内存让列表不再重复请求，
+        // **不写盘**：把英文名写成「中文名」是脏数据，而且会让笔记属性看不出到底有没有本地化。
+        if (job.file && r.data !== job.item.name) {
           try {
             await upsertDetail(job.app, job.file, { 中文名: r.data });
           } catch (e) {

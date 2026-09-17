@@ -83,4 +83,17 @@ describe('中文名回填队列', () => {
     ensureZhNames(recorder([]), list);
     await vi.waitFor(() => expect((requestUrl as any).mock.calls.length).toBe(ZH_NAME_MAX_FAILURES));
   });
+  it('Steam 没本地化（返回的就是原名）→ 只记内存不写盘，避免英文名污染「中文名」', async () => {
+    const sink: Record<string, unknown>[] = [];
+    (requestUrl as any).mockImplementation(async (o: { url: string }) => ({
+      status: 200,
+      // 真实形态：外层键 = appid 字符串
+      json: { '7': { success: true, data: { name: 'Bongo Cat' } } },
+      text: '',
+    }));
+    const g = item(7, 'Bongo Cat', null, {} as unknown);
+    ensureZhNames(recorder(sink), [g]);
+    await vi.waitFor(() => expect(g.zhName).toBe('Bongo Cat')); // 内存记住 → 下次不再请求
+    expect(sink.length).toBe(0); // 但笔记属性里不落这条
+  });
 });
