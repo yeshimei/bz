@@ -23,7 +23,7 @@ export function gameshelfSettingsSchema(): SettingsSchema {
             type: 'path',
             mode: 'single',
             name: '海报文件夹',
-            desc: '游戏封面缓存到本地的文件夹',
+            desc: '游戏封面与图标缓存到本地的文件夹',
             binding: { key: 'gameshelfPosterFolder' },
           },
         ],

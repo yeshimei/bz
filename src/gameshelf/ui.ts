@@ -24,7 +24,7 @@ import {
   type AchSection, type StoreSection,
 } from './detail';
 import { ensureZhNames, unloadZhNames } from './names';
-import { posterDisplayUrl } from './posters';
+import { coverDisplayUrl, iconDisplayUrl } from './posters';
 
 const ESC_ID = 'gameshelf';
 
@@ -221,7 +221,7 @@ export function shelfHtml(
       return `
       <button type="button" class="bz-gs-card${it.offShelf ? ' bz-gs-card--off' : ''}" data-appid="${it.appid}" title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">
         <span class="bz-gs-cover" data-initial="${escAttr(firstChar(zh))}">
-          ${cover ? `<img loading="lazy" src="${escAttr(cover)}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
+          ${cover ? `<img loading="lazy" src="${escAttr(cover)}" data-fallback-src="${escAttr(it.coverSrc ?? '')}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
           ${rank}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ''}
           <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
@@ -361,7 +361,7 @@ function fillStatsRow(app: App, rp: GameshelfReport): void {
 /* ==================== 详情弹窗（全量数据） ==================== */
 
 /** 详情骨架：头部（封面+名称+速览 chip）→ 我的游玩数据（本地秒出）→ 成就段 → 资料段 → 截图段 */
-export function detailShellHtml(item: GameItem, cover: string, fm: Record<string, unknown>): string {
+export function detailShellHtml(item: GameItem, cover: string, fm: Record<string, unknown>, icon = ''): string {
   const store = fmToStore(fm);
   const zh = displayNameOf(item);
   const orig = item.zhName && item.zhName !== item.name ? item.name : '';
@@ -378,11 +378,11 @@ export function detailShellHtml(item: GameItem, cover: string, fm: Record<string
   <div class="bz-gs-detail${item.offShelf ? ' bz-gs-detail--off' : ''}">
     <div class="bz-gs-detail-top">
       <div class="bz-gs-detail-cover" data-initial="${escAttr(firstChar(zh))}">
-        ${cover ? `<img src="${escAttr(cover)}" alt="">` : ''}
+        ${cover ? `<img src="${escAttr(cover)}" data-fallback-src="${escAttr(item.coverSrc ?? '')}" alt="">` : ''}
       </div>
       <div class="bz-gs-detail-id">
         <div class="bz-gs-detail-name">
-          ${item.icon ? `<img class="bz-gs-detail-icon" src="${escAttr(item.icon)}" alt="">` : ''}
+          ${icon ? `<img class="bz-gs-detail-icon" src="${escAttr(icon)}" data-fallback-src="${escAttr(item.iconSrc ?? '')}" alt="">` : ''}
           <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${escHtml(zh)}</span>
         </div>
         <div class="bz-gs-detail-chips" id="bz-gs-detail-chips">
@@ -552,10 +552,12 @@ function openDetail(app: App, appid: number): void {
   const item = M.items.find((it) => it.appid === appid);
   if (!item) return;
   const cached = safeDetailFm(app, item.file);
-  const cover = posterDisplayUrl(app, item.appid, item.cover);
-  const modal = uiModalSafe(detailShellHtml(item, cover, cached), `《${displayNameOf(item)}》`);
+  const cover = coverDisplayUrl(app, item.appid, item.cover, item.coverSrc);
+  const icon = iconDisplayUrl(app, item.appid, item.icon, item.iconSrc);
+  const modal = uiModalSafe(detailShellHtml(item, cover, cached, icon), `《${displayNameOf(item)}》`);
   if (!modal) return;
   const popup = modal.popup;
+  bindMediaFallback(popup); // 弹窗不在面板树内，图片兜底要单独绑
   // 遮罩毛玻璃：core 的 .bz-overlay-mask 只有平色（各域自绘遮罩都用 --bz-overlay + blur），
   // 这里给本域弹窗的遮罩补上 blur，与面板遮罩 .bz-panel-overlay 观感一致。
   modal.mask.classList.add('bz-gs-detail-mask');
@@ -584,6 +586,30 @@ function openDetail(app: App, appid: number): void {
 /** 弹窗工厂薄封装（uiModal 直连；抽一层只为收敛标题与宽度口径，并把 mask 一并透出） */
 function uiModalSafe(content: string, title: string): { mask: HTMLElement; popup: HTMLElement } | null {
   return uiModal({ head: true, title, maxWidth: 720, className: 'bz-gs-detail-modal', content });
+}
+
+/**
+ * 图片兜底（事件委托，捕获阶段：img 的 error 不冒泡）：
+ * 本地媒体加载失败 → 用「源」键的远端地址再试一次（只试一次，防死循环）；
+ * 再失败才置 is-broken（封面留位显示首字占位）。
+ * 面板体与详情弹窗各绑一次——uiModal 把弹窗挂在 document.body，不在面板树内。
+ */
+function bindMediaFallback(root: HTMLElement): void {
+  root.addEventListener(
+    'error',
+    (e) => {
+      const img = e.target as HTMLImageElement;
+      if (img.tagName !== 'IMG') return;
+      const fb = img.dataset.fallbackSrc;
+      if (fb && img.dataset.fbDone !== '1' && img.src !== fb) {
+        img.dataset.fbDone = '1';
+        img.src = fb;
+        return;
+      }
+      img.closest('.bz-gs-cover, .bz-gs-detail-cover')?.classList.add('is-broken');
+    },
+    true,
+  );
 }
 
 /* ==================== 面板壳与渲染 ==================== */
@@ -646,14 +672,7 @@ function createUI(app: App): void {
       if (Number.isFinite(appid)) openDetail(app, appid);
     }
   });
-  body.addEventListener(
-    'error',
-    (e) => {
-      const img = e.target as HTMLImageElement;
-      if (img.tagName === 'IMG') img.closest('.bz-gs-cover, .bz-gs-detail-cover')?.classList.add('is-broken');
-    },
-    true,
-  );
+  bindMediaFallback(body);
   frame.appendChild(body);
 
   document.body.appendChild(mask);
@@ -673,10 +692,10 @@ async function onSyncClick(app: App): Promise<void> {
   renderAll(app);
 }
 
-/** 同步/打开后补海报（缺本地缓存的入队后台串行下载） */
+/** 同步/打开后补本地媒体（缺封面/图标的入队后台串行下载，并把属性改写成 vault 路径） */
 async function ensurePostersFor(app: App): Promise<void> {
-  const { ensurePosters } = await import('./posters');
-  ensurePosters(app, M.items.map((it) => ({ appid: it.appid, cover: it.cover })));
+  const { ensurePosters, mediaItemsOf } = await import('./posters');
+  ensurePosters(app, mediaItemsOf(M.items));
 }
 
 /** 面板全量重渲染（视图分派；工具行/门面/网格整块重建） */
@@ -848,8 +867,8 @@ export function renderList(app: App): void {
     gridEl.appendChild(emptyResult(app));
   } else {
     const top = list[0];
-    heroEl.innerHTML = heroHtml(top, posterDisplayUrl(app, top.appid, top.cover), rp);
-    gridEl.innerHTML = shelfHtml(list, (it) => posterDisplayUrl(app, it.appid, it.cover), { showRank, maxMin: maxPlaytime() });
+    heroEl.innerHTML = heroHtml(top, coverDisplayUrl(app, top.appid, top.cover, top.coverSrc), rp);
+    gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, maxMin: maxPlaytime() });
   }
   const frame = M.currentOverlay;
   if (frame) mountIcons(frame);

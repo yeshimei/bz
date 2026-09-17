@@ -520,7 +520,7 @@ export class FakeVault {
     this.emit('delete', { path: f.path });
   }
 
-  /** 二进制写（posters.ts 的本地海报缓存用）：只记账占位，内容不落 localStorage */
+  /** 二进制写（媒体本地化队列用）：只记账占位，内容不落 localStorage */
   adapter = {
     writeBinary: async (path: string, buf: ArrayBuffer): Promise<void> => {
       localStorage.setItem(LS_PREFIX + path, 'binary:' + buf.byteLength);
@@ -529,6 +529,18 @@ export class FakeVault {
       this.saveStats(stats);
     },
   };
+
+  /**
+   * vault 文件 → 可显示 URL（插件端由 Obsidian 给 app://... 的本地资源地址）。
+   * 评审壳专用实现：走 preview-live 的 `/__vault-media/<文件名>` 按 basename 从**真实 vault**
+   * 现取——所以游戏封面在评审页里显示的就是用户 vault 里那张真海报（同名即命中，
+   * 不必管本地海报文件夹叫什么）。图标在真 vault 里没有对应文件（`<appid>-icon.jpg` 是
+   * 本插件新加的命名），会 404；UI 侧对图标挂了「本地失败回落远端源」的兜底，
+   * 所以评审页里图标仍能正常显示。
+   */
+  getResourcePath(f: TFile): string {
+    return `/__vault-media/${encodeURIComponent(f.name)}`;
+  }
 
   on(evt: string, cb: (...args: unknown[]) => void): { ref: number } {
     if (!this.listeners.has(evt)) this.listeners.set(evt, []);

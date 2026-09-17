@@ -12,7 +12,8 @@ import type { GameItem } from '../../src/gameshelf/state';
 
 function item(appid: number, name: string, zhName: string | null = null, file: unknown = null): GameItem {
   return {
-    file: file as never, appid, name, zhName, playtimeMin: 0, lastPlayed: '', cover: null, icon: null,
+    file: file as never, appid, name, zhName, playtimeMin: 0, lastPlayed: '',
+    cover: null, coverSrc: null, icon: null, iconSrc: null,
     windowsMin: 0, deckMin: 0, macMin: 0, linuxMin: 0, hasAch: false, offShelf: false, syncedAt: null,
   };
 }

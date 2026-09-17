@@ -78,16 +78,16 @@ describe('文件名与 frontmatter 归一', () => {
     expect(mergeTags('roguelike')).toEqual([GAME_TAG, 'roguelike']);
   });
 
-  it('managedFm：中文管辖键齐全（封面/图标/平台分钟/有成就），直拼 URL', () => {
+  it('managedFm：中文管辖键齐全（媒体只写源键，本地路径由媒体队列写），直拼 URL', () => {
     const fm = managedFm(g(548430, 'Deep Rock Galactic', 65214, new Date(2026, 1, 24).getTime()), '2026-09-17T00:00:00Z');
     expect(fm).toMatchObject({
       AppID: 548430,
       游玩分钟: 65214,
       最后游玩: '2026-02-24',
-      封面: steamCoverUrl(548430),
+      封面源: steamCoverUrl(548430),
       同步时间: '2026-09-17T00:00:00Z',
       已下架: false,
-      图标: steamIconUrl(548430, 'hash'),
+      图标源: steamIconUrl(548430, 'hash'),
       Windows分钟: 65214,
       SteamDeck分钟: 0,
       Mac分钟: 0,

@@ -649,6 +649,11 @@
   .bz-gs-panel .bz-main-head .bz-main-count { display: none; }
   /* 移动端出关闭钮：全屏面板没有可点的遮罩，只能靠它出去 */
   .bz-gs-panel .bz-main-head .bz-gs-close { display: inline-flex; }
+  /* 头行按钮顺序（移动端专属）：立即同步在最前 → 数据统计 → 关闭。
+     桌面仍是「数据统计 → 立即同步」（DOM 顺序不变，这里只用 flex order 翻移动端）。 */
+  .bz-gs-panel .bz-main-head .bz-btn--primary { order: 1; }
+  .bz-gs-panel .bz-main-head .bz-gs-viewslot { order: 2; }
+  .bz-gs-panel .bz-main-head .bz-gs-close { order: 3; }
   /* 头行三钮只留图标（数据统计 / 立即同步 / 关闭）：窄屏放不下三串字，
      表意交给 title 与 aria-label（ui.ts 里逐个补过） */
   .bz-gs-panel .bz-main-head .bz-btn { padding: 0 10px; }
@@ -661,10 +666,12 @@
   }
   .bz-gs-hero-in { padding-bottom: var(--bz-space-md); }
   .bz-gs-hero-side { display: none; }
-  /* 工具行一行放下：搜索 + 档位下拉 + 排序下拉（6 个 chip 与三档分段窄屏放不下） */
+  /* 工具行一行放下：搜索 + 档位下拉 + 排序下拉（6 个 chip 与三档分段窄屏放不下）。
+     上内边距归零：工具行是吸顶元素，8px 的上垫在吸住时会变成「搜索框上方一道空隙」
+     （实测工具行 top 与滚动容器顶边齐平，但搜索框 top 还要再低 8px）——用户点名要贴死。 */
   .bz-gs-tools {
     margin: 0 calc(-1 * var(--bz-space-md));
-    padding: var(--bz-space-sm) var(--bz-space-md);
+    padding: 0 var(--bz-space-md) var(--bz-space-sm);
     flex-wrap: nowrap;
   }
   .bz-gs-chips, .bz-gs-sortseg { display: none; }

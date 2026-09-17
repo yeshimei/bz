@@ -19,6 +19,11 @@ function intOf(v: unknown): number {
   return Number.isFinite(Number(v)) ? Math.max(0, Math.floor(Number(v))) : 0;
 }
 
+/** 非空字符串读数（缺键/空串/非字符串 → null）——封面/图标既可能是本地路径也可能是远端地址 */
+function strOf(v: unknown): string | null {
+  return typeof v === 'string' && v.trim() ? v.trim() : null;
+}
+
 /** 扫描游戏目录全部笔记 → 条目（AppID 缺失/非法的文件跳过——不是本域数据不碰） */
 export function rebuildItems(app: App): GameItem[] {
   const folder = resolveGameshelfFolderPath();
@@ -30,6 +35,9 @@ export function rebuildItems(app: App): GameItem[] {
     if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
     const icon = readVal(fm, '图标', '');
     const zh = fm['中文名'];
+    const coverRaw = readVal(fm, '封面', 'cover');
+    const iconSrc = fm['图标源'];
+    const coverSrc = fm['封面源'];
     items.push({
       file,
       appid,
@@ -37,8 +45,11 @@ export function rebuildItems(app: App): GameItem[] {
       zhName: typeof zh === 'string' && zh.trim() ? zh.trim() : null,
       playtimeMin: intOf(readVal(fm, '游玩分钟', 'playtimeMin')),
       lastPlayed: typeof readVal(fm, '最后游玩', 'lastPlayed') === 'string' ? String(readVal(fm, '最后游玩', 'lastPlayed')) : '',
-      cover: typeof readVal(fm, '封面', 'cover') === 'string' && /^https?:\/\//.test(String(readVal(fm, '封面', 'cover'))) ? String(readVal(fm, '封面', 'cover')) : steamCoverUrl(appid),
-      icon: typeof icon === 'string' && /^https?:\/\//.test(icon) ? icon : null,
+      // 封面/图标：既可能是本地 vault 路径（媒体队列写过），也可能是远端地址（没本地化过）
+      cover: strOf(coverRaw) || steamCoverUrl(appid),
+      coverSrc: strOf(coverSrc) || steamCoverUrl(appid),
+      icon: strOf(icon),
+      iconSrc: strOf(iconSrc),
       windowsMin: intOf(fm['Windows分钟']),
       deckMin: intOf(fm['SteamDeck分钟']),
       macMin: intOf(fm['Mac分钟']),
@@ -66,6 +77,8 @@ export function scanSnapshots(app: App, folder: string): NoteSnapshot[] {
       playtimeMin: Number.isFinite(Number(readVal(fm, '游玩分钟', 'playtimeMin'))) ? Math.max(0, Math.floor(Number(readVal(fm, '游玩分钟', 'playtimeMin')))) : null,
       offShelf: readVal(fm, '已下架', 'offShelf') === true,
       legacy: 'appid' in fm || 'playtimeMin' in fm,
+      // 媒体本地化改造前建的笔记没有「封面源」→ 借这次同步补齐（补过即自愈，不再 churn）
+      mediaPending: fm['封面源'] === undefined,
     });
   }
   return out;
@@ -121,10 +134,13 @@ function noteMarkdown(game: SteamOwnedGame, nowIso: string): string {
   ];
   if (fm['最后游玩']) lines.push(`最后游玩: "${fm['最后游玩']}"`);
   lines.push(
-    `封面: ${fm['封面']}`,
+    // 源键（同步管辖）+ 现值：新建时现值先填远端，媒体队列拉到本地后改写成 vault 路径
+    `封面源: ${fm['封面源']}`,
+    `封面: ${fm['封面源']}`,
+    `图标源: ${fm['图标源'] || '""'}`,
+    `图标: ${fm['图标源'] || '""'}`,
     `同步时间: "${fm['同步时间']}"`,
     `已下架: ${fm['已下架']}`,
-    `图标: ${fm['图标'] || '""'}`,
     `Windows分钟: ${fm['Windows分钟']}`,
     `SteamDeck分钟: ${fm['SteamDeck分钟']}`,
     `Mac分钟: ${fm['Mac分钟']}`,
