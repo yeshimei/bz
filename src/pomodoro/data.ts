@@ -88,34 +88,50 @@ function normalizeData(raw: any): PomodoroData {
   return { version: 1, state, history, ...(archived.length ? { archived } : {}) };
 }
 
-/** archived 段容错归一（issue 357）：week 需 YYYY-MM-DD、count/minutes 需非负数、tasks 值需有限数；空段不落键 */
+/**
+ * archived 段容错归一（issue 357）：week 需 YYYY-MM-DD 且为真实存在的周一（Date 反解校验，
+ * 「2026-99-99」这类 rollover 假日期与错星期行一律拒收——审查修复批：假日期常驻、错行错档）；
+ * count/minutes 需非负数、tasks 值需有限数；同周重复行只保留首条（月趋势按周 key 累计，
+ * 重复行会期间双计）；空段不落键。
+ */
 function normalizeArchived(raw: any): ArchivedWeek[] {
   if (!Array.isArray(raw)) return [];
-  return raw
-    .filter(
-      (r: any) =>
-        r &&
-        typeof r.week === 'string' &&
-        /^\d{4}-\d{2}-\d{2}$/.test(r.week) &&
-        typeof r.count === 'number' &&
-        r.count >= 0 &&
-        typeof r.minutes === 'number' &&
-        r.minutes >= 0
-    )
-    .map((r: any) => {
-      const tasks: Record<string, number> = {};
-      if (r.tasks && typeof r.tasks === 'object' && !Array.isArray(r.tasks)) {
-        for (const [t, m] of Object.entries(r.tasks as Record<string, unknown>)) {
-          if (typeof m === 'number' && Number.isFinite(m) && m >= 0) tasks[t] = m;
-        }
+  const seen = new Set<string>();
+  const rows: ArchivedWeek[] = [];
+  for (const r of raw) {
+    if (
+      !r ||
+      typeof r.week !== 'string' ||
+      !/^\d{4}-\d{2}-\d{2}$/.test(r.week) ||
+      typeof r.count !== 'number' ||
+      r.count < 0 ||
+      typeof r.minutes !== 'number' ||
+      r.minutes < 0
+    ) {
+      continue;
+    }
+    const [ys, ms, ds] = r.week.split('-').map(Number);
+    const d = new Date(ys, ms - 1, ds);
+    // Date 反解校验：构出的日期必须与字段逐项一致（防 99-99 rollover 成别的日期），
+    // 且星期必须落在周一（getDay: 1 = 周一，与 stats.weekKeyOf 周一起始口径一致）
+    if (d.getFullYear() !== ys || d.getMonth() !== ms - 1 || d.getDate() !== ds) continue;
+    if (d.getDay() !== 1) continue;
+    if (seen.has(r.week)) continue; // 同周重复行去重：保留首条
+    seen.add(r.week);
+    const tasks: Record<string, number> = {};
+    if (r.tasks && typeof r.tasks === 'object' && !Array.isArray(r.tasks)) {
+      for (const [t, m] of Object.entries(r.tasks as Record<string, unknown>)) {
+        if (typeof m === 'number' && Number.isFinite(m) && m >= 0) tasks[t] = m;
       }
-      return {
-        week: r.week,
-        count: r.count,
-        minutes: r.minutes,
-        ...(Object.keys(tasks).length ? { tasks } : {}),
-      };
+    }
+    rows.push({
+      week: r.week,
+      count: r.count,
+      minutes: r.minutes,
+      ...(Object.keys(tasks).length ? { tasks } : {}),
     });
+  }
+  return rows;
 }
 
 /** 逐字段校验 state（非法 phase/负数 remaining 一律回退默认；旧 target/reading 字段忽略不迁移） */

@@ -1,4 +1,4 @@
-/* 源指纹 bcd1406a99a8eadc · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a48cc698e962ee48 · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -5168,22 +5168,32 @@ var BZW_pomodoro = (() => {
   }
   function normalizeArchived(raw) {
     if (!Array.isArray(raw)) return [];
-    return raw.filter(
-      (r) => r && typeof r.week === "string" && /^\d{4}-\d{2}-\d{2}$/.test(r.week) && typeof r.count === "number" && r.count >= 0 && typeof r.minutes === "number" && r.minutes >= 0
-    ).map((r) => {
+    const seen = /* @__PURE__ */ new Set();
+    const rows = [];
+    for (const r of raw) {
+      if (!r || typeof r.week !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(r.week) || typeof r.count !== "number" || r.count < 0 || typeof r.minutes !== "number" || r.minutes < 0) {
+        continue;
+      }
+      const [ys, ms, ds] = r.week.split("-").map(Number);
+      const d = new Date(ys, ms - 1, ds);
+      if (d.getFullYear() !== ys || d.getMonth() !== ms - 1 || d.getDate() !== ds) continue;
+      if (d.getDay() !== 1) continue;
+      if (seen.has(r.week)) continue;
+      seen.add(r.week);
       const tasks = {};
       if (r.tasks && typeof r.tasks === "object" && !Array.isArray(r.tasks)) {
         for (const [t, m] of Object.entries(r.tasks)) {
           if (typeof m === "number" && Number.isFinite(m) && m >= 0) tasks[t] = m;
         }
       }
-      return {
+      rows.push({
         week: r.week,
         count: r.count,
         minutes: r.minutes,
         ...Object.keys(tasks).length ? { tasks } : {}
-      };
-    });
+      });
+    }
+    return rows;
   }
   function normalizeState(raw) {
     const def = createInitialState();
@@ -5520,18 +5530,32 @@ var BZW_pomodoro = (() => {
     const s = sec % 60;
     return `${pad2(m)}:${pad2(s)}`;
   }
-  function buildStatBars(container, rows) {
-    const max = Math.max(1, ...rows.map((r) => r.count));
+  function buildStatBars(container, rows, opts = {}) {
+    var _a;
+    const metric = (_a = opts.metric) != null ? _a : "count";
+    const values = rows.map((r) => {
+      var _a2;
+      return metric === "minutes" ? (_a2 = r.minutes) != null ? _a2 : 0 : r.count;
+    });
+    const max = Math.max(1, ...values);
     container.innerHTML = "";
-    for (const r of rows) {
+    rows.forEach((r, i) => {
+      var _a2;
       const bar = document.createElement("div");
       bar.className = "pomodoro-stat-day";
       bar.title = r.title;
       const col = document.createElement("div");
       col.className = "pomodoro-stat-col";
+      const numText = (_a2 = opts.valueLabel) == null ? void 0 : _a2.call(opts, r);
+      if (numText) {
+        const num = document.createElement("span");
+        num.className = "pomodoro-stat-num";
+        num.textContent = numText;
+        col.appendChild(num);
+      }
       const h = document.createElement("div");
       h.className = "pomodoro-stat-bar";
-      h.style.height = `${Math.max(2, Math.round(r.count / max * 40))}px`;
+      h.style.height = `${Math.max(2, Math.round(values[i] / max * 40))}px`;
       col.appendChild(h);
       const label = document.createElement("span");
       label.className = "pomodoro-stat-label";
@@ -5539,7 +5563,7 @@ var BZW_pomodoro = (() => {
       col.appendChild(label);
       bar.appendChild(col);
       container.appendChild(bar);
-    }
+    });
   }
   function renderStats() {
     const now = Date.now();
@@ -5749,9 +5773,16 @@ var BZW_pomodoro = (() => {
   }
   async function save() {
     const t = trimWithArchive(history, archived, Date.now());
+    try {
+      if (dataManager) await dataManager.save({ version: 1, state, history: t.history, ...t.archived.length ? { archived: t.archived } : {} });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.error("番茄钟数据保存失败:", e);
+      notice(`番茄钟数据保存失败：${msg}，下次保存会自动补写`, "error");
+      return;
+    }
     history = t.history;
     archived = t.archived;
-    if (dataManager) await dataManager.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
   }
   async function initData() {
     var _a;
