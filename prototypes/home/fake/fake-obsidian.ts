@@ -453,6 +453,11 @@ const FAKE_COMMANDS: Record<string, () => Promise<void>> = {
   'bz-memo-note-binding': async () => notice('已打开备忘录（关联当前笔记）'),
   'bz-cinema-random-pick': async () => notice('已打开影院并抽中一部'),
   'bz-bookshelf-continue': async () => notice('已打开书库（在读分栏）'),
+  'bz-gameshelf-stats': async () => notice('已打开游戏库（数据统计）'),
+  // —— 即时类（2026-09-17 游戏库菜单）——
+  // 真实现（gameshelf/index.ts::syncGameshelf）拉完按变化数弹一条：有变化「游戏库已同步：…」/
+  // 无变化「已同步，暂无变化」。壳里不真拉 Steam，给一条有变化的成功条让菜单可判读。
+  'bz-gameshelf-sync': async () => notice('游戏库已同步：新增 2，更新 6', 'success'),
   // —— 确认类：与真实现同一个流程框 + 同一皮类，文案同源 ——
   'bz-clipbook-mark-all-read': async () => {
     const unread = 42; // 壳内不读真数据，给个确定篇数让确认框可判读
