@@ -107,6 +107,17 @@
 /* 当日清单（点日期展开）：复用列表卡片；空日轻提示 */
 .bz-memo-cal-daypanel { padding-top: var(--bz-space-sm); }
 .bz-memo-cal-noday { padding: var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; }
+/* 月度概览统计行（issue 355 真机回归）：头行与网格之间的口径说明行 */
+.bz-memo-cal-stats { padding: 0 var(--bz-space-xs) var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--bz-text-2); }
+.bz-memo-cal-stats .bz-memo-cal-stats-n { color: var(--bz-text-1); font-weight: var(--bz-weight-semibold); }
+/* 空月提示（issue 355 真机回归）：整月零条目时的人话解释，不一片空白 */
+.bz-memo-cal-empt {
+  margin-top: var(--bz-space-sm); padding: var(--bz-space-lg) var(--bz-space-md);
+  border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-sm);
+  text-align: center;
+}
+.bz-memo-cal-empt-t { font-size: var(--bz-font-body); color: var(--bz-text-1); }
+.bz-memo-cal-empt-d { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
 
 /* ---- 列表 ---- */
 .bz-memo-content { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
@@ -623,6 +634,11 @@
 .bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-recur {
   background: var(--bz-brand-soft);
   color: var(--bz-brand);
+}
+/* 清单进度标记（issue 354 两肤自检补缺）：纸感同把 tag-check 压成无框色字，中性次底保留（n/N 弱信息徽标） */
+.bz-memo-skin-paper .bz-memo-tag.bz-memo-tag-check {
+  background: var(--bz-surface-3);
+  color: var(--bz-text-2);
 }
 
 /* 已完成条 + 录入行 + 弹窗标题 */

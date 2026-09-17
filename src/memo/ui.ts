@@ -52,7 +52,7 @@ import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
   navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
   cardHtml as renderCard, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
-  calHeadHtml, calGridHtml, CAL_WEEKDAYS, type CalCell, type CalChip,
+  calHeadHtml, calGridHtml, calStatsHtml, calEmptyHtml, CAL_WEEKDAYS, type CalCell, type CalChip,
 } from './render';
 import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
 import { M } from './state';
@@ -821,7 +821,14 @@ function renderCalendar(content: HTMLElement): void {
     if (list.length > 3) chips.push({ id: '', title: `还有 ${list.length - 3} 条`, cls: 'is-more' });
     cells.push({ day: d, today: key === today, selected: M.calSelected === key, chips });
   }
-  const sections: string[] = [calHeadHtml(monthMoment.format('YYYY年M月')), calGridHtml(cells)];
+  // 月度概览统计（issue 355 真机回归）：口径与格子 chip 同源（可见未完成且有 due 的条目）；
+  // 整月零条目时补人话空态——多数备忘录不设截止，格子全空不能一片空白无解释
+  const todayCount = byDay.get(today)?.length || 0;
+  const monthPrefix = `${M.calMonth}-`;
+  let monthCount = 0;
+  for (const [k, v] of byDay) if (k.startsWith(monthPrefix)) monthCount += v.length;
+  const sections: string[] = [calHeadHtml(monthMoment.format('YYYY年M月')), calStatsHtml(monthCount, todayCount), calGridHtml(cells)];
+  if (monthCount === 0) sections.push(calEmptyHtml());
   // 当日清单：点日期展开（完成态条目同列，卡片淡显划线）
   if (M.calSelected) {
     const dayItems = visible.filter((i) => (i.due || '').slice(0, 10) === M.calSelected);

@@ -313,3 +313,13 @@ export function calGridHtml(cells: CalCell[]): string {
 		.join('');
 	return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
 }
+
+/** 月度概览统计行（issue 355 真机回归）：口径与格子 chip 同源——当月未完成且有 due 条目数 / 今日到期数 */
+export function calStatsHtml(monthCount: number, todayCount: number): string {
+	return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条 · 今日 <span class="bz-memo-cal-stats-n">${todayCount}</span> 条</div>`;
+}
+
+/** 空月提示（issue 355 真机回归）：当前月零条目时给「本月没有到期事项」人话解释，不再一片空白 */
+export function calEmptyHtml(): string {
+	return `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
+}
