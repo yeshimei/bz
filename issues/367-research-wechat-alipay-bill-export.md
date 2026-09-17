@@ -1,6 +1,6 @@
 # 367 · 研究：微信账单导出数据的可得性与解析（366 账本 CSV 通道前置）
 
-> labels: wayfinder:research ｜ map: 346 ｜ status: open ｜ assignee: — ｜ blocked-by: —
+> labels: wayfinder:research ｜ map: 346 ｜ status: closed ｜ assignee: dev ｜ blocked-by: —
 
 ## Question
 
@@ -12,4 +12,4 @@
 
 ## Resolution
 
-（research 子代理填写）
+**取消（2026-09-17 用户两次收紧后拍板不需要）**：先砍支付宝，随即整票停掉——CSV 账单导入通道整体不做了，账本通道定为「识图为主 + 手记兜底」两条（366 已同步）。按 wayfinder 规则记入 map 的 Out of scope。
