@@ -1,9 +1,9 @@
-// 游戏架评审壳图标表（core/ui/icons.mountIcons 的 setIcon 兑现表）。
+// 游戏库评审壳图标表（core/ui/icons.mountIcons 的 setIcon 兑现表）。
 // 键 = markup 里 <i data-lucide="…"> 的 lucide 占位名；值 = 图标内芯 markup（lucide 原型）。
 // ⚠️ 无工具校验的手写 JS 对象：往表尾插新键时上一行必须补逗号——一个语法错整表崩掉，
 //    所有图标静默空白（症状出现在别的断言上）。改完先 `node --check prototype-icons.js`。
 // 本域用到的图标清单（改 markup 加了新图标就要同步补表）：
-//   refresh-cw(立即同步) x(关闭，仅移动端) gamepad-2(游戏架) search(搜索/空态)
+//   refresh-cw(立即同步) x(关闭，仅移动端) gamepad-2(游戏库) search(搜索/空态)
 //   clock(累计时长) package(从未启动) calendar-days(最近玩过) trophy(成就)
 //   external-link(商店页) bar-chart-3(进数据统计) layout-grid(回游戏墙)
 //   chevron-down / check(移动端两个下拉 .bz-select 的箭头与选中勾)

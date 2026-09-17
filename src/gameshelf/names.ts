@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域中文名回填（2026-09-17）。
+ * 游戏库（gameshelf）域中文名回填（2026-09-17）。
  *
  * 问题：Steam 的 GetOwnedGames 只给**英文名**（Balatro / Deep Rock Galactic），
  * 中文名只能问商店接口（`appdetails?l=schinese` 的 `name` → 小丑牌 / 深岩银河）。
@@ -79,7 +79,7 @@ async function runQueue(): Promise<void> {
           try {
             await upsertDetail(job.app, job.file, { 中文名: r.data });
           } catch (e) {
-            console.warn('bz 游戏架：中文名写回失败:', job.item.name, e);
+            console.warn('bz 游戏库：中文名写回失败:', job.item.name, e);
           }
         }
         scheduleRerender();
@@ -88,7 +88,7 @@ async function runQueue(): Promise<void> {
       }
     } catch (e) {
       failures += 1;
-      console.warn('bz 游戏架：中文名拉取异常:', job.item.name, e);
+      console.warn('bz 游戏库：中文名拉取异常:', job.item.name, e);
     } finally {
       queued.delete(job.item.appid);
     }

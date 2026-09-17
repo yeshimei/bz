@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<title>游戏架 · 真行为实例</title>
+<title>游戏库 · 真行为实例</title>
 <!--
-  本页 = 游戏架行为单源评审壳的 iframe 视图（范式自 cinema/diary 适配）。
-  它不实现任何游戏架交互——只把真行为层跑起来：
+  本页 = 游戏库行为单源评审壳的 iframe 视图（范式自 cinema/diary 适配）。
+  它不实现任何游戏库交互——只把真行为层跑起来：
     - 载入同一份 CSS（与 build-css SOURCES 同序）：host-theme → core/styles →
       core/ui/tokens → core/ui/components → gameshelf/styles
     - 载入 prototype-behavior.js（真 ui.ts / notes.ts / sync.ts / steam.ts / detail.ts
@@ -43,7 +43,7 @@
       document.body.classList.add('theme-dark');
     }
     // 注意：这里**不再**模拟 --bz-vvh 的「webview 视口比 100vh 短 88px」。
-    // 本面板移动端吃的是 100dvh（见 styles.css 移动块），因为游戏架没有贴底固定条，
+    // 本面板移动端吃的是 100dvh（见 styles.css 移动块），因为游戏库没有贴底固定条，
     // 键盘不会遮住任何元素——照旧模拟会凭空在底部留 88px 空隙（用户 2026-09-17 反馈）。
     var B = window.BZW_gameshelf;
     B.bootGameshelfSim();

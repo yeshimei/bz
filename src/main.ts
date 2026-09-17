@@ -37,7 +37,7 @@ import { unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役。ADR-0090：openCinemaAnalysis
 // 直达影院面板分析页，独立报告窗退役）
 import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unloadCinema } from './cinema';
-// 游戏架（gameshelf 域，issue 368：Steam 直连自动拉库，我的/游戏/*.md 一作一笔记）
+// 游戏库（gameshelf 域，issue 368：Steam 直连自动拉库，我的/游戏/*.md 一作一笔记）
 import { openGameshelf, unloadGameshelf } from './gameshelf';
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
 import { openBookshelf, openBookshelfReport, continueReading, unloadBookshelf } from './bookshelf';
@@ -126,8 +126,8 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-cinema-add', name: '加影视', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 随机抽一部（2026-09-11 首页入口菜单）：想看池随机 → 直开详情
   { id: 'bz-cinema-random-pick', name: '随机抽一部', icon: 'shuffle', callback: () => pickRandomCinema(getApp()) },
-  // 游戏架（gameshelf 域，issue 368）
-  { id: 'bz-gameshelf-open', name: '游戏架', icon: DOMAIN_ICONS.gameshelf, callback: () => openGameshelf(getApp()) },
+  // 游戏库（gameshelf 域，issue 368）
+  { id: 'bz-gameshelf-open', name: '游戏库', icon: DOMAIN_ICONS.gameshelf, callback: () => openGameshelf(getApp()) },
   // 书架墙（bookshelf 新域）
   { id: 'bz-bookshelf-open', name: '书库', icon: DOMAIN_ICONS.bookshelf, callback: () => openBookshelf(getApp()) },
   // 继续在读（2026-09-11 首页入口菜单）：开书架墙并落到「在读」分栏
@@ -371,7 +371,7 @@ export default class BzPlugin extends Plugin {
     unloadFavorites();
     unloadReview();
     unloadCinema();
-    // 游戏架（gameshelf 域：面板 DOM + 模块单例复位）
+    // 游戏库（gameshelf 域：面板 DOM + 模块单例复位）
     unloadGameshelf();
     // 书架墙（bookshelf 域：面板 DOM + 模块单例复位）
     unloadBookshelf();

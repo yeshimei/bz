@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域入口：懒加载初始化 + 打开/关闭 + 卸载（影院同范式）。
+ * 游戏库（gameshelf）域入口：懒加载初始化 + 打开/关闭 + 卸载（影院同范式）。
  * 打开时自动同步：已配置才拉，间隔判定在 runSync 内（无笔记 syncedAt=0 必过期 → 首次必拉）。
  */
 import type { App } from 'obsidian';
@@ -19,7 +19,7 @@ export function ensureGameshelf(app: App): void {
   M.appRef = app;
 }
 
-/** 打开游戏架（命令 bz-gameshelf-open，toggle 语义） */
+/** 打开游戏库（命令 bz-gameshelf-open，toggle 语义） */
 export function openGameshelf(app: App): void {
   ensureGameshelf(app);
   if (M.currentOverlay) {

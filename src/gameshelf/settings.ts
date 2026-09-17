@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域设置 schema（接入设置面板；面板内无设置按钮，收敛进设置面板域页）。
+ * 游戏库（gameshelf）域设置 schema（接入设置面板；面板内无设置按钮，收敛进设置面板域页）。
  * Steam 组 = 票 368 两键（SteamID64 / Web API 密钥）+ 自动同步开关；文案守 copy-lint 规范
  * （标题 4-8 字零符号、描述自然句不带符号花样）。
  */
@@ -16,7 +16,7 @@ export function gameshelfSettingsSchema(): SettingsSchema {
             type: 'path',
             mode: 'single',
             name: '游戏文件夹',
-            desc: '游戏架读取的游戏笔记文件夹',
+            desc: '游戏库读取的游戏笔记文件夹',
             binding: { key: 'gameshelfFolderPath' },
           },
           {

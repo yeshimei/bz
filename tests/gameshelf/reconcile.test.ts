@@ -1,6 +1,6 @@
 // @vitest-environment node
 /**
- * 游戏架数据层测试（issue 368）：对账纯函数（buildSyncPlan 四分支 + 恢复在架）、
+ * 游戏库数据层测试（issue 368）：对账纯函数（buildSyncPlan 四分支 + 恢复在架）、
  * 文件名清洗与冲突消歧、Steam 响应归一（缺省/坏条目）、lastPlayed 与 tags 归并。
  */
 import { describe, it, expect } from 'vitest';

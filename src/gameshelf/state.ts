@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域状态：模块级可变对象 M（影院同范式）。
+ * 游戏库（gameshelf）域状态：模块级可变对象 M（影院同范式）。
  * 数据 = `我的/游戏/*.md` 一作一笔记（票 368：影院范式，frontmatter Steam 管辖字段）。
  */
 import type { App, TFile } from 'obsidian';

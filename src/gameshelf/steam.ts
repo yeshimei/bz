@@ -1,5 +1,5 @@
 /**
- * 游戏架（gameshelf）域 Steam 通道（issue 368 / 研究票 347；详情全量化 2026-09-17）：
+ * 游戏库（gameshelf）域 Steam 通道（issue 368 / 研究票 347；详情全量化 2026-09-17）：
  * 库同步 = GetOwnedGames + GetRecentlyPlayedGames；详情 = appdetails + appreviews +
  * 成就三接口（Schema / PlayerAchievements / GlobalAchievementPercentages）。
  *
@@ -94,7 +94,7 @@ export async function fetchSteamLibrary(steamId: string, apiKey: string): Promis
     return { ok: false, reason: 'config', message: 'SteamID64 未填写或格式不对（应为 17 位数字）' };
   }
   if (!apiKey.trim()) {
-    return { ok: false, reason: 'config', message: 'Web API 密钥未填写，请在设置面板游戏架页填入' };
+    return { ok: false, reason: 'config', message: 'Web API 密钥未填写，请在设置面板游戏库页填入' };
   }
   const id = steamId.trim();
   const key = apiKey.trim();
