@@ -188,6 +188,18 @@
         t('桌面面板开', !!dt('.bz-gs-panel') && !!dt('.bz-main-head'));
         t('移动面板开', !!mob('.bz-gs-panel') && !!mob('.bz-main-head'));
         t('面板挂 bz-panel-mtop', dt('.bz-gs-panel').classList.contains('bz-panel-mtop'));
+        // 回归钉（2026-09-17 真机「只有遮罩、没有主窗口」）：frame 必须是遮罩的子节点。
+        // 壳的 body 是空的，挂错位置也会「看着居中」，所以这里同时钉父子关系与几何居中——
+        // 真机 body 被 Obsidian 的 .app-container 占满，挂到 body 上就被顶到视口外。
+        {
+          const dMask = dt('.bz-panel-overlay');
+          const dFrame = dt('.bz-gs-panel');
+          t('面板在遮罩内（父子关系）', dFrame.parentElement === dMask && dMask.parentElement === dd.body);
+          const vw = dd.documentElement.clientWidth / 2;
+          const r = dFrame.getBoundingClientRect();
+          t('面板水平居中', Math.abs((r.left + r.right) / 2 - vw) < 2);
+          t('面板在视口内 top=' + Math.round(r.top), r.top >= 0 && r.top < dd.documentElement.clientHeight);
+        }
         // view 页 CSS 链生效（曾因 ../../ 深度写错静默 404 → 面板透明）
         const cssAlive = (doc) => {
           const sec = doc.querySelector('.bz-gs-panel');

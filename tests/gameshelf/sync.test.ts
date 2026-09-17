@@ -219,6 +219,14 @@ describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
     expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     expect(document.querySelector('.bz-gs-panel')!.className).toContain('bz-panel-frame');
     expect(document.querySelector('.bz-gs-panel')!.className).toContain('bz-panel-mtop');
+    // 回归钉（2026-09-17 真机「只有遮罩没有主窗口」）：frame 必须是遮罩的**子节点**——
+    // 居中的是 .bz-panel-overlay（fixed inset:0 + flex 居中），.bz-panel-frame 自身零定位，
+    // 挂到 body 上就落进文档流，真机里被 Obsidian 的 .app-container 顶到视口外。
+    const mask = document.querySelector('.bz-panel-overlay')!;
+    const frame = document.querySelector('.bz-gs-panel')!;
+    expect(frame.parentElement).toBe(mask);
+    expect(mask.parentElement).toBe(document.body);
+    expect(mask.children.length).toBe(1);
     expect(document.querySelector('#bz-gs-guide-config')).toBeTruthy();
     expect(document.querySelector('#bz-gs-guide-recheck')).toBeTruthy();
     expect((document.querySelector('.bz-btn--primary') as HTMLButtonElement).disabled).toBe(true);
