@@ -1,4 +1,4 @@
-/* 源指纹 54f409aa12f948a3 · 仓内输入 235 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 52fe8574538a7c69 · 仓内输入 235 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/store.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/recap/summarize.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -16032,7 +16032,12 @@ ${countsToText(s.missing)}
   function normalizeRecur(v) {
     if (!v || typeof v !== "object") return null;
     const kind = v.kind;
-    if (kind === "weekly" || kind === "monthly" || kind === "yearly") return { kind };
+    if (kind === "weekly" || kind === "monthly" || kind === "yearly") {
+      const out = { kind };
+      const ad = v.anchorDay;
+      if (typeof ad === "number" && Number.isInteger(ad) && ad >= 1 && ad <= 31) out.anchorDay = ad;
+      return out;
+    }
     if (kind === "days") {
       const n = Number(v.interval);
       return { kind: "days", interval: Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1 };
@@ -16053,7 +16058,7 @@ ${countsToText(s.missing)}
     const items = [];
     const titleParts = [];
     for (const tok of text.split(/\s+/)) {
-      if (tok.length > 1 && tok.startsWith("/")) items.push({ text: tok.slice(1), done: false });
+      if (tok.length > 1 && tok.startsWith("/") && !tok.slice(1).includes("/")) items.push({ text: tok.slice(1), done: false });
       else titleParts.push(tok);
     }
     let title = titleParts.join(" ").trim();
@@ -16068,12 +16073,28 @@ ${countsToText(s.missing)}
     const now = nowStr ? (0, import_moment3.default)(norm(nowStr), fmt2) : (0, import_moment3.default)();
     const unit = recur.kind === "weekly" ? "weeks" : recur.kind === "monthly" ? "months" : recur.kind === "yearly" ? "years" : "days";
     const amount = unit === "days" ? recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1 : 1;
+    const anchorDay = recur.anchorDay;
+    const useAnchorDay = (recur.kind === "monthly" || recur.kind === "yearly") && typeof anchorDay === "number" && Number.isInteger(anchorDay) && anchorDay >= 1 && anchorDay <= 31;
+    const shift = (steps) => {
+      const m = anchor.clone().add(steps * amount, unit);
+      if (useAnchorDay) m.date(Math.min(anchorDay, m.daysInMonth()));
+      return m;
+    };
     let n = 1;
-    let cur = anchor.clone().add(n * amount, unit);
-    let guard = 0;
-    while (cur.valueOf() <= now.valueOf() && guard++ < 366) {
-      n++;
-      cur = anchor.clone().add(n * amount, unit);
+    let cur = shift(n);
+    if (now.diff(anchor, "days") > 366) {
+      const m = (0, import_moment3.default)(now).add(amount, unit);
+      if (useAnchorDay) m.date(Math.min(anchorDay, m.daysInMonth()));
+      cur = m;
+    } else {
+      let guard = 0;
+      while (cur.valueOf() <= now.valueOf() && guard++ < 366) {
+        n++;
+        cur = shift(n);
+      }
+      if (cur.valueOf() <= now.valueOf()) {
+        cur = (0, import_moment3.default)(now).add(amount, unit);
+      }
     }
     return cur.format(fmt2);
   }
@@ -16096,6 +16117,15 @@ ${countsToText(s.missing)}
       recur: normalizeRecur(item.recur),
       checklist: normalizeChecklist(item.checklist)
     };
+  }
+  function hasPendingNextItem(items, it) {
+    if (!it.recur || !it.completed) return false;
+    return items.some(
+      (o) => {
+        var _a2;
+        return o.id !== it.id && !o.completed && o.title === it.title && o.scene === it.scene && ((_a2 = o.recur) == null ? void 0 : _a2.kind) === it.recur.kind && !!o.due && (!it.due || o.due > it.due);
+      }
+    );
   }
   var import_moment3, DEFAULT_SCENARIOS, MemoData;
   var init_data5 = __esm({
@@ -16183,8 +16213,10 @@ ${countsToText(s.missing)}
         /**
          * 完成条目（issue 353 扩展）：标记 completed；周期条目（recur）自动生成下一期——
          * 全字段克隆（场景/优先级/关联笔记/子任务等保留），新 id/created，completed 清空，
-         * due 顺延到下一周期（nextRecurDue，无 due 则锚定完成时刻起算）。
-         * 返回 { next }：非周期条目 next = null；已完成条目幂等短路（不重复生成）。
+         * due 顺延到下一周期（nextRecurDue，无 due 则锚定完成时刻起算）；
+         * 月/年周期把未钳制的锚定日记进下一代 recur.anchorDay（月末钳制不跨代漂移，审查 P1 修复批）。
+         * 返回 { next, changed }：非周期条目 next = null；已完成条目幂等短路（changed = false，
+         * UI 据此不重复发 completed 域事件，审查 P3 修复批）。
          * 整个「读→改→写（含生成）」在同一个串行队列任务内原子完成——队列不可重入，
          * 任务内不得再走 updateItem/addItem（同路径会死锁）。
          */
@@ -16194,15 +16226,21 @@ ${countsToText(s.missing)}
             const data = await this.read();
             const item = data.find((d) => d.id === id);
             if (!item) throw new Error("条目不存在");
-            if (item.completed) return { next: null };
+            if (item.completed) return { next: null, changed: false };
             const now = (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss");
             item.completed = now;
             const recur = normalizeRecur(item.recur);
             let next = null;
             if (recur) {
               const due = nextRecurDue(recur, item.due || now, now);
+              const nextRecur = { ...recur };
+              if ((recur.kind === "monthly" || recur.kind === "yearly") && nextRecur.anchorDay === void 0) {
+                const d = (0, import_moment3.default)((item.due || now).replace("T", " "), "YYYY-MM-DD HH:mm:ss");
+                if (d.isValid()) nextRecur.anchorDay = d.date();
+              }
               next = normalizeItem({
                 ...item,
+                recur: nextRecur,
                 notePosition: item.notePosition ? { ...item.notePosition } : null,
                 checklist: (_b2 = (_a2 = normalizeChecklist(item.checklist)) == null ? void 0 : _a2.map((c) => ({ ...c, done: false }))) != null ? _b2 : null,
                 id: generateId(),
@@ -16213,7 +16251,7 @@ ${countsToText(s.missing)}
               data.unshift(next);
             }
             await this.write(data);
-            return { next };
+            return { next, changed: true };
           });
         },
         /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
@@ -17943,10 +17981,11 @@ ${countsToText(s.missing)}
     return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
   }
   function calStatsHtml(monthCount, todayCount2) {
-    return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条 · 今日 <span class="bz-memo-cal-stats-n">${todayCount2}</span> 条</div>`;
+    const todaySeg = todayCount2 === null ? "" : ` · 今日 <span class="bz-memo-cal-stats-n">${todayCount2}</span> 条`;
+    return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条${todaySeg}</div>`;
   }
-  function calEmptyHtml() {
-    return `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
+  function calEmptyHtml(filtered2) {
+    return filtered2 ? `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">当前筛选下本月没有到期事项</div><div class="bz-memo-cal-empt-d">试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上</div></div>` : `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
   }
   var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE, CAL_WEEKDAYS;
   var init_render6 = __esm({
@@ -19146,12 +19185,15 @@ ${countsToText(s.missing)}
     if (!cl.length) return "";
     return `${cl.filter((c) => c.done).length}/${cl.length}`;
   }
+  function recurTextOf(it) {
+    return it.recur && !it.completed ? recurLabel(it.recur) : "";
+  }
   function metaTags(it) {
     return metaTagsHtml(
       it,
       metaDueOf(it),
       it.created ? formatRelativeTime(it.created) : "",
-      it.recur ? recurLabel(it.recur) : "",
+      recurTextOf(it),
       checkProgress(it)
     );
   }
@@ -19165,7 +19207,7 @@ ${countsToText(s.missing)}
     renderListContent(content);
   }
   function cardHtmlOf(it) {
-    return cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", it.recur ? recurLabel(it.recur) : "", checkProgress(it));
+    return cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", recurTextOf(it), checkProgress(it));
   }
   function wireCards(content) {
     content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
@@ -19271,21 +19313,32 @@ ${countsToText(s.missing)}
       if (list.length > 3) chips.push({ id: "", title: `还有 ${list.length - 3} 条`, cls: "is-more" });
       cells.push({ day: d, today: key === today, selected: M3.calSelected === key, chips });
     }
-    const todayCount2 = ((_a2 = byDay.get(today)) == null ? void 0 : _a2.length) || 0;
+    const isCurrentMonth = M3.calMonth === (0, import_moment5.default)().format("YYYY-MM");
+    const todayCount2 = isCurrentMonth ? ((_a2 = byDay.get(today)) == null ? void 0 : _a2.length) || 0 : null;
     const monthPrefix = `${M3.calMonth}-`;
     let monthCount = 0;
     for (const [k, v] of byDay) if (k.startsWith(monthPrefix)) monthCount += v.length;
     const sections = [calHeadHtml(monthMoment.format("YYYY年M月")), calStatsHtml(monthCount, todayCount2), calGridHtml(cells)];
-    if (monthCount === 0) sections.push(calEmptyHtml());
+    if (monthCount === 0) sections.push(calEmptyHtml(!!M3.search.trim() || M3.activeScene !== "全部"));
     if (M3.calSelected) {
       const dayItems = visible.filter((i) => (i.due || "").slice(0, 10) === M3.calSelected);
-      const label = `${(0, import_moment5.default)(M3.calSelected).format("M月D日")} · ${dayItems.length} 项`;
+      const label = M3.calSelected === today ? `今日事项 · ${dayItems.length} 项` : `${(0, import_moment5.default)(M3.calSelected).format("M月D日")} · ${dayItems.length} 项`;
       const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join("") : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
       sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
     }
     content.innerHTML = sections.join("");
     mountIcons(content);
     wireCards(content);
+    content.querySelectorAll("[data-memo-cal-item]").forEach((chipEl) => {
+      const it = M3.items.find((i) => i.id === chipEl.dataset.memoCalItem);
+      if (!it) return;
+      attachItemActions(chipEl, buildCardActions(it), {
+        menuClass: skinClass() || void 0,
+        sheetClass: skinClass() || void 0,
+        // 抽屉挂 body，须自带皮肤类（与列表卡同口径）
+        sheetHead: buildSheetHead(it)
+      });
+    });
   }
   function buildSheetHead(it) {
     var _a2;
@@ -19366,8 +19419,8 @@ ${countsToText(s.missing)}
   }
   async function completeItem(it) {
     try {
-      const { next } = await MemoData.completeItem(it.id);
-      emitDomainEvent("memo", { kind: "completed", title: it.title });
+      const { next, changed } = await MemoData.completeItem(it.id);
+      if (changed) emitDomainEvent("memo", { kind: "completed", title: it.title });
       if (next) {
         notice(next.due ? `下一期已排到 ${(0, import_moment5.default)(next.due).format("MM/DD HH:mm")}` : "下一期已生成", "success");
         emitDomainEvent("memo", { kind: "added", title: next.title, scene: next.scene, priority: next.priority, due: next.due });
@@ -19389,8 +19442,10 @@ ${countsToText(s.missing)}
     await refresh();
   }
   async function restoreItem(it) {
+    const chained = hasPendingNextItem(M3.items, it);
     try {
-      await MemoData.updateItem(it.id, { completed: null });
+      await MemoData.updateItem(it.id, chained ? { completed: null, recur: null } : { completed: null });
+      if (chained) notify("下一期已存在，本条恢复后不再生成新的一期", { type: "success" });
       emitDomainEvent("memo", { kind: "restored", title: it.title });
     } catch (e) {
       notifySaveError(e, "恢复未完成");
@@ -19414,10 +19469,13 @@ ${countsToText(s.missing)}
     }
     await refresh();
   }
+  function moveDayText(selected, now = (0, import_moment5.default)()) {
+    return (0, import_moment5.default)(selected).format((0, import_moment5.default)(selected).year() === now.year() ? "MM-DD" : "YYYY-MM-DD");
+  }
   async function moveToDay(id, day) {
     const it = M3.items.find((i) => i.id === id);
-    if (!it || !it.due) return;
-    const time = it.due.replace("T", " ").slice(11) || "09:00";
+    if (!it) return;
+    const time = (it.due ? it.due.replace("T", " ").slice(11) : "") || "09:00";
     const next = `${day} ${time}`;
     try {
       await MemoData.updateItem(id, { due: next });
@@ -19513,34 +19571,34 @@ ${countsToText(s.missing)}
           await completeItem(it);
         }
       });
-    } else {
-      actions.push({ icon: "rotate-ccw", label: "恢复未完成", title: "恢复未完成", onClick: async () => {
-        await restoreItem(it);
-      } });
-    }
-    if (it.due && !it.completed) {
-      const postponeSub = (days) => {
-        const d = new Date(it.due.replace("T", " "));
-        d.setDate(d.getDate() + days);
-        return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      };
-      actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
-        await postponeItem(it.id, 1);
-      } });
-      actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
-        await postponeItem(it.id, 3);
-      } });
-      if (M3.calSelected && it.due.slice(0, 10) !== M3.calSelected) {
+      if (it.due) {
+        const postponeSub = (days) => {
+          const d = new Date(it.due.replace("T", " "));
+          d.setDate(d.getDate() + days);
+          return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        };
+        actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
+          await postponeItem(it.id, 1);
+        } });
+        actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
+          await postponeItem(it.id, 3);
+        } });
+      }
+      if (M3.calSelected && (!it.due || it.due.slice(0, 10) !== M3.calSelected)) {
         actions.push({
           icon: "calendar",
           label: "移到选中日期",
           title: "移到月历选中的日期",
-          sub: `→ ${(0, import_moment5.default)(M3.calSelected).format("MM-DD")}`,
+          sub: `→ ${moveDayText(M3.calSelected)}${it.due ? "" : " 09:00"}`,
           onClick: async () => {
             await moveToDay(it.id, M3.calSelected);
           }
         });
       }
+    } else {
+      actions.push({ icon: "rotate-ccw", label: "恢复未完成", title: "恢复未完成", onClick: async () => {
+        await restoreItem(it);
+      } });
     }
     if (it.recur && !it.completed) {
       actions.push({
@@ -19784,6 +19842,7 @@ ${countsToText(s.missing)}
     recurLabelEl.className = "bz-field-label";
     recurLabelEl.textContent = "重复";
     recurField.appendChild(recurLabelEl);
+    let recurTouched = false;
     const recurChoice = uiChoice({
       options: [
         { value: "none", label: "不重复" },
@@ -19791,12 +19850,14 @@ ${countsToText(s.missing)}
         { value: "monthly", label: "每月" },
         { value: "yearly", label: "每年" }
       ],
-      value: (editing == null ? void 0 : editing.recur) ? editing.recur.kind : "none",
+      value: (editing == null ? void 0 : editing.recur) && editing.recur.kind !== "days" ? editing.recur.kind : "none",
       float: true,
       // 浮岛 segmented（与场景/优先级同范式）
       label: "重复",
       onChange: () => {
+        recurTouched = true;
       }
+      // 值由保存时读取；touched 门控 days 原值保留
     });
     recurField.appendChild(recurChoice.el);
     form.appendChild(recurField);
@@ -19852,6 +19913,7 @@ ${countsToText(s.missing)}
     form.appendChild(actionsRow);
     modalBox.appendChild(form);
     saveBtn.addEventListener("click", () => {
+      var _a3;
       let content = contentInput.value.trim();
       if (!content) {
         const ph = contentInput.placeholder;
@@ -19868,7 +19930,7 @@ ${countsToText(s.missing)}
       const priority = prioBtnOn ? prioBtnOn.dataset.value || "minor" : "minor";
       const recurBtnOn = recurChoice.el.querySelector(".is-on");
       const recurKind = recurBtnOn ? recurBtnOn.dataset.value || "none" : "none";
-      const recur = recurKind === "weekly" || recurKind === "monthly" || recurKind === "yearly" ? { kind: recurKind } : null;
+      const recur = !recurTouched && ((_a3 = editing == null ? void 0 : editing.recur) == null ? void 0 : _a3.kind) === "days" ? editing.recur : recurKind === "weekly" || recurKind === "monthly" || recurKind === "yearly" ? { kind: recurKind } : null;
       const clClean = clDraft.map((c) => ({ text: c.text.trim(), done: c.done })).filter((c) => c.text);
       const checklist = clClean.length ? clClean : null;
       const dueVal = dueInput.value;
@@ -19895,7 +19957,7 @@ ${countsToText(s.missing)}
       const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
       const { url } = extractUrlAndDisplay(content);
       void (async () => {
-        var _a3;
+        var _a4;
         try {
           if (isEdit && editing) {
             await MemoData.updateItem(editing.id, {
@@ -19938,7 +20000,7 @@ ${countsToText(s.missing)}
             M3.pinnedNewId = it.id;
           }
           closeModal();
-          (_a3 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a3.call(opts);
+          (_a4 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a4.call(opts);
           await refresh();
         } catch (e) {
           notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
@@ -39327,6 +39389,13 @@ GitHub 仓库：${ghInfo.title}
               name: "游戏文件夹",
               desc: "游戏架读取的游戏笔记文件夹",
               binding: { key: "gameshelfFolderPath" }
+            },
+            {
+              type: "path",
+              mode: "single",
+              name: "海报文件夹",
+              desc: "游戏封面缓存到本地的文件夹",
+              binding: { key: "gameshelfPosterFolder" }
             }
           ]
         },
