@@ -1,6 +1,6 @@
 # 349 · 拍板：账本域方案（51）
 
-> labels: wayfinder:grilling ｜ map: 346 ｜ status: open ｜ assignee: — ｜ blocked-by: 348
+> labels: wayfinder:grilling ｜ map: 346 ｜ status: closed ｜ assignee: dev ｜ blocked-by: 348
 
 ## Question
 
@@ -18,4 +18,4 @@
 
 ## Resolution
 
-（过票后填写）
+2026-09-17 用户逐项拍板（AskUserQuestion）：主入口=**识图为主**（首屏发截图+确认卡，手记次要入口）；分类=**内置+自定义**（data.json 键）；首版报表=**全量**（总览+分类占比+趋势+商户 TopN）；归物联动=**首版不做**。追加提问「能否拿微信/支付宝账单」→ 催生 CSV 批量回补通道（研究票 367），账本定为三通道（识图/CSV 回补/手记）同一确认-入账管线。全记录于实现票 366。

@@ -17,6 +17,7 @@
 - 执行票建议开发顺序（互相独立，可并行 worktree）：352 / 356 / 357 / 361 / 362（小活先行）→ 353 / 354 / 355（备忘录三连，动同一 schema 建议串行）→ 358 / 359 / 360 / 363。
 
 ## Decisions so far
+- [拍板：账本域方案](349-grilling-ledger-domain.md) — 识图为主（首屏发截图+确认卡，手记兜底）；分类内置+自定义（data.json 键）；首版全量报表；归物联动首版不做。用户追加催生 CSV 回补通道（研究票 367），三通道设计。实现票 [366](366-ledger-implementation.md) 已开（CSV 细节待 367）。
 
 - [研究：AI 识图记账的能力与路径](348-research-ai-receipt-photo-bookkeeping.md) — **直接复用**：core AI 多模态 JSON 通道（`ai.json({text, images})`，知识盒图版同构）零改造可承载账单识图；默认模型档即视觉模型；风险=无视觉能力探测、手工通道必须保留、需明示图片发往第三方 AI。详见 `.scratch/memo-suite-plugin/research/348-vision-bookkeeping.md`。
 - [研究：游戏架接 Steam 数据的可行性](347-research-steam-data-feasibility.md) — **直接接 API**：GetOwnedGames/GetRecentlyPlayedGames 覆盖名称/时长/封面（header.jpg 按 appid 直拼）；前提仅 SteamID64 + 免费 Web API key，且 own key 查 own steamid 可绕过隐私设置（无需引导用户改隐私）；限额 100k/天可忽略。详见 `.scratch/memo-suite-plugin/research/347-steam-feasibility.md`。
@@ -26,7 +27,7 @@
 **批次执行状态（2026-09-17 凌晨无人值守完成）**：12 张执行票全部交付闭票（352/353/354/355/356/357/358/359/360/361/362/363），逐票全量门禁绿（终态 5544/5544），部署 commit `2b2fdbbc`。spec.md 补记两段、CONTEXT.md 词条同步、ADR-0154（番茄归档层）。执行中发现并修正两处票面勘误：358 阅读时长原仅内存累计（补 readLog 落盘）、361 旧拟合公式不读权重（重写为回放式 MLE）。
 
 
-- **账本（51）**：识图调研闭合后才能钉的细节——账单截图的支持范围（支付宝/微信/银行 App 各形态）、手工记账与识图记账的双通道配比、与归物本「购入流转」的契约、分类体系。→ 毕业为 349 拍板票的后续细化票。
+- ~~账本（51）~~ 已拍板（349 闭票），实现票 366 就绪；CSV 导入细节待研究票 367；归物联动挪入二版候选。
 - **游戏架（59）**：Steam 调研闭合后才能钉——数据形态（同步哪些字段、同步频率）、非 Steam 游戏的手动补录、与影院范式的差异。→ 毕业为 350 拍板票的后续。
 - **小橘主动化（62）**：49 播报落地后的后续票——月度对话、年度故事（与 next-ideas #63「年度之书」可能合并立项）。
 - ~~执行票的 spec 批量更新~~ 已完成（spec 两段 + ADR-0154 + CONTEXT 词条 62381df1）。
