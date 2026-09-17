@@ -19,6 +19,13 @@ export function gameshelfSettingsSchema(): SettingsSchema {
             desc: '游戏架读取的游戏笔记文件夹',
             binding: { key: 'gameshelfFolderPath' },
           },
+          {
+            type: 'path',
+            mode: 'single',
+            name: '海报文件夹',
+            desc: '游戏封面缓存到本地的文件夹',
+            binding: { key: 'gameshelfPosterFolder' },
+          },
         ],
       },
       {
