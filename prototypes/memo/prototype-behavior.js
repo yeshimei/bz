@@ -1,4 +1,4 @@
-/* 源指纹 623da70234b25262 · 仓内输入 228 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 213f8adc376c41ae · 仓内输入 228 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -34735,7 +34735,7 @@ GitHub 仓库：${ghInfo.title}
       target = Math.max(0, Math.min(target, LADDER_MAX));
       if (target >= LADDER_MAX) {
         const S2 = fsrs.initS(rating);
-        const D2 = rating === "again" ? fsrs.w[4] : 0.3;
+        const D2 = fsrs.initD(rating);
         const rS = Math.round(S2 * 100) / 100;
         const rD = Math.round(D2 * 100) / 100;
         return {
@@ -34802,6 +34802,14 @@ GitHub 仓库：${ghInfo.title}
           const map = { again: 0, hard: 1, good: 2, easy: 3 };
           return this.w[map[rating]] || 1;
         }
+        /**
+         * 初始难度 D0（进入 FSRS：again→w[4]，其余 0.3）。
+         * 调度（scheduleNext enteringFsrs）与拟合回放（fit.ts replayLogLikelihood 起点）共用此单源——
+         * 防两处字面量漂移再造 w[4] 口径分叉（审查修复：D0 同口径；后续轮次两侧均经 nextDiff 钳制）。
+         */
+        initD(rating) {
+          return rating === "again" ? this.w[4] : 0.3;
+        }
         /** 下一难度 */
         nextDiff(D, rating) {
           let newD;
@@ -34835,6 +34843,186 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/review/fit.ts
+  function buildReplaySeries(history2) {
+    const fsrsEntries = history2.filter((h) => h.stability !== void 0);
+    if (fsrsEntries.length < 2) return null;
+    const initRating = RATING_INDEX[fsrsEntries[0].rating];
+    if (initRating === void 0) return null;
+    const pairs = [];
+    for (let i = 1; i < fsrsEntries.length; i++) {
+      const t = (new Date(fsrsEntries[i].timestamp).getTime() - new Date(fsrsEntries[i - 1].timestamp).getTime()) / 864e5;
+      if (!(t > 0)) continue;
+      const rating = RATING_INDEX[fsrsEntries[i].rating];
+      if (rating === void 0) continue;
+      pairs.push({ t, rating });
+    }
+    if (!pairs.length) return null;
+    return { initRating, pairs };
+  }
+  function buildReplaySeriesFromItems(items) {
+    const out = [];
+    for (const it of items) {
+      const s = buildReplaySeries(it.reviewHistory || []);
+      if (s) out.push(s);
+    }
+    return out;
+  }
+  function replayLogLikelihood(w, series) {
+    const fsrs = new FSRS(w);
+    let sum = 0;
+    for (const s of series) {
+      let S = fsrs.initS(RATING_NAMES[s.initRating]);
+      let D = fsrs.initD(RATING_NAMES[s.initRating]);
+      for (const p of s.pairs) {
+        const R = fsrs.R(p.t, S);
+        const remember = p.rating >= 2;
+        const prob = remember ? R : 1 - R;
+        sum += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, prob)));
+        const next = fsrs.nextInterval(S, D, RATING_NAMES[p.rating], R);
+        S = next.S;
+        D = next.D;
+      }
+    }
+    return sum;
+  }
+  function clipWToBounds(w) {
+    return w.map((x, i) => {
+      const b = W_BOUNDS[i];
+      return b ? Math.max(b[0], Math.min(b[1], x)) : x;
+    });
+  }
+  function numericGradient(w, series, fitLen = 8, eps = 1e-5) {
+    const grad = new Array(w.length).fill(0);
+    const wp = [...w];
+    const wm = [...w];
+    for (let i = 0; i < Math.min(fitLen, w.length); i++) {
+      wp[i] = w[i] + eps;
+      wm[i] = w[i] - eps;
+      grad[i] = (replayLogLikelihood(wp, series) - replayLogLikelihood(wm, series)) / (2 * eps);
+      wp[i] = w[i];
+      wm[i] = w[i];
+    }
+    return grad;
+  }
+  async function fitFSRSParams(series, opts = {}) {
+    var _a2, _b2, _c, _d, _e;
+    const initW = opts.initW ? [...opts.initW] : [...DEFAULT_W];
+    const iterations = Math.max(1, (_a2 = opts.iterations) != null ? _a2 : opts.full ? 120 : 80);
+    const lr = (_b2 = opts.lr) != null ? _b2 : 0.05;
+    const full = (_c = opts.full) != null ? _c : false;
+    const maxMs = Math.max(0, (_d = opts.maxMs) != null ? _d : 800);
+    const stallRounds = Math.max(1, (_e = opts.stallRounds) != null ? _e : 10);
+    const fitLen = full ? Math.min(19, initW.length) : Math.min(8, initW.length);
+    const w = clipWToBounds(initW);
+    const m = new Array(w.length).fill(0);
+    const v = new Array(w.length).fill(0);
+    const beta1 = 0.9;
+    const beta2 = 0.999;
+    const eps = 1e-8;
+    const t0 = Date.now();
+    let sliceStart = t0;
+    let lastLL = replayLogLikelihood(w, series);
+    let bestW = [...w];
+    let bestLL = lastLL;
+    let stall = 0;
+    let done = 0;
+    for (let it = 1; it <= iterations; it++) {
+      done = it;
+      const lrIt = lr * (1 - 0.75 * (it / iterations));
+      const grad = numericGradient(w, series, fitLen);
+      for (let i = 0; i < fitLen; i++) {
+        m[i] = beta1 * m[i] + (1 - beta1) * grad[i];
+        v[i] = beta2 * v[i] + (1 - beta2) * grad[i] * grad[i];
+        const mHat = m[i] / (1 - Math.pow(beta1, it));
+        const vHat = v[i] / (1 - Math.pow(beta2, it));
+        w[i] += lrIt * mHat / (Math.sqrt(vHat) + eps);
+      }
+      for (let i = 0; i < fitLen; i++) {
+        const b = W_BOUNDS[i];
+        if (b) w[i] = Math.max(b[0], Math.min(b[1], w[i]));
+      }
+      const ll = replayLogLikelihood(w, series);
+      if (ll > bestLL) {
+        bestLL = ll;
+        bestW = [...w];
+      }
+      if (Math.abs(ll - lastLL) < 1e-6) {
+        stall++;
+        if (stall >= stallRounds) break;
+      } else stall = 0;
+      lastLL = ll;
+      if (maxMs > 0 && Date.now() - t0 > maxMs) break;
+      if (Date.now() - sliceStart >= FIT_SLICE_MS) {
+        await new Promise((resolve2) => setTimeout(resolve2, 0));
+        sliceStart = Date.now();
+      }
+    }
+    return { w: clipWToBounds(bestW), logLikelihood: bestLL, iterations: done, full };
+  }
+  async function fitFromItems(items, opts) {
+    var _a2;
+    const series = buildReplaySeriesFromItems(items);
+    const count = series.reduce((n, s) => n + s.pairs.length, 0);
+    if (count < 100) return null;
+    const full = (_a2 = opts == null ? void 0 : opts.full) != null ? _a2 : count >= 300;
+    return { fit: await fitFSRSParams(series, { full }), count };
+  }
+  function mergeFittedW(fitted) {
+    const out = [...DEFAULT_W];
+    for (let i = 0; i < Math.min(19, fitted.length); i++) out[i] = fitted[i];
+    return out;
+  }
+  var RATING_NAMES, RATING_INDEX, W_BOUNDS, FIT_SLICE_MS;
+  var init_fit = __esm({
+    "src/review/fit.ts"() {
+      init_fsrs();
+      RATING_NAMES = ["again", "hard", "good", "easy"];
+      RATING_INDEX = { again: 0, hard: 1, good: 2, easy: 3 };
+      W_BOUNDS = [
+        [0.01, 60],
+        // w0  初始稳定性 again
+        [0.01, 120],
+        // w1  hard
+        [0.01, 240],
+        // w2  good
+        [0.01, 480],
+        // w3  easy
+        [0, 10],
+        // w4  again 难度（上界放宽含 DEFAULT_W[4]=4.93；D0 消费侧经 nextDiff 钳制，拟合-调度同口径）
+        [-1.5, 1.5],
+        // w5  hard 难度增量
+        [-1.5, 1.5],
+        // w6  easy 难度增量
+        [0.01, 10],
+        // w7  （v4 模型未用，兜底约束）
+        [0.01, 10],
+        // w8  成功演化 exp 系数
+        [0.01, 5],
+        // w9  S 幂
+        [0.01, 10],
+        // w10 (1-R) 系数
+        [0.01, 10],
+        // w11 again 演化系数
+        [0.01, 5],
+        // w12 D 幂
+        [0.01, 5],
+        // w13 (S+1) 幂
+        [-5, 5],
+        // w14 R 系数
+        [0.01, 10],
+        // w15 （v4 模型未用）
+        [0.01, 10],
+        // w16 （v4 模型未用）
+        [-5, 5],
+        // w17 easy 奖励系数
+        [0.01, 10]
+        // w18 （v4 模型未用）
+      ];
+      FIT_SLICE_MS = 50;
+    }
+  });
+
   // src/review/data.ts
   function getReviewFilePath() {
     const s = tryGetSettings();
@@ -34848,7 +35036,8 @@ GitHub 仓库：${ghInfo.title}
     const data = await jsonFileStore(getReviewFitFilePath()).read();
     if (!data || !Array.isArray(data.w) || data.w.length < 8) return null;
     if (data.version === FIT_PARAMS_VERSION.FULL && data.w.length < 19) return null;
-    return data;
+    if (!data.w.every((x) => Number.isFinite(x))) return null;
+    return { ...data, w: clipWToBounds(data.w) };
   }
   async function saveFittedParams(app, fit2) {
     await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit2));
@@ -34860,6 +35049,7 @@ GitHub 仓库：${ghInfo.title}
       init_storage();
       init_settings_provider();
       init_fsrs();
+      init_fit();
       ReviewDataManager = class {
         constructor(app) {
           this.app = app;
@@ -35003,180 +35193,6 @@ GitHub 仓库：${ghInfo.title}
         }
       };
       FIT_PARAMS_VERSION = { BASIC: 1, FULL: 2 };
-    }
-  });
-
-  // src/review/fit.ts
-  function buildReplaySeries(history2) {
-    const fsrsEntries = history2.filter((h) => h.stability !== void 0);
-    if (fsrsEntries.length < 2) return null;
-    const initRating = RATING_INDEX[fsrsEntries[0].rating];
-    if (initRating === void 0) return null;
-    const pairs = [];
-    for (let i = 1; i < fsrsEntries.length; i++) {
-      const t = (new Date(fsrsEntries[i].timestamp).getTime() - new Date(fsrsEntries[i - 1].timestamp).getTime()) / 864e5;
-      if (!(t > 0)) continue;
-      const rating = RATING_INDEX[fsrsEntries[i].rating];
-      if (rating === void 0) continue;
-      pairs.push({ t, rating });
-    }
-    if (!pairs.length) return null;
-    return { initRating, pairs };
-  }
-  function buildReplaySeriesFromItems(items) {
-    const out = [];
-    for (const it of items) {
-      const s = buildReplaySeries(it.reviewHistory || []);
-      if (s) out.push(s);
-    }
-    return out;
-  }
-  function replayLogLikelihood(w, series) {
-    const fsrs = new FSRS(w);
-    let sum = 0;
-    for (const s of series) {
-      let S = fsrs.initS(RATING_NAMES[s.initRating]);
-      let D = s.initRating === 0 ? fsrs.w[4] : 0.3;
-      for (const p of s.pairs) {
-        const R = fsrs.R(p.t, S);
-        const remember = p.rating >= 2;
-        const prob = remember ? R : 1 - R;
-        sum += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, prob)));
-        const next = fsrs.nextInterval(S, D, RATING_NAMES[p.rating], R);
-        S = next.S;
-        D = next.D;
-      }
-    }
-    return sum;
-  }
-  function clipW(w) {
-    return w.map((x, i) => {
-      const b = W_BOUNDS[i];
-      return b ? Math.max(b[0], Math.min(b[1], x)) : x;
-    });
-  }
-  function numericGradient(w, series, fitLen = 8, eps = 1e-5) {
-    const grad = new Array(w.length).fill(0);
-    const wp = [...w];
-    const wm = [...w];
-    for (let i = 0; i < Math.min(fitLen, w.length); i++) {
-      wp[i] = w[i] + eps;
-      wm[i] = w[i] - eps;
-      grad[i] = (replayLogLikelihood(wp, series) - replayLogLikelihood(wm, series)) / (2 * eps);
-      wp[i] = w[i];
-      wm[i] = w[i];
-    }
-    return grad;
-  }
-  function fitFSRSParams(series, opts = {}) {
-    var _a2, _b2, _c, _d, _e;
-    const initW = opts.initW ? [...opts.initW] : [...DEFAULT_W];
-    const iterations = Math.max(1, (_a2 = opts.iterations) != null ? _a2 : opts.full ? 120 : 80);
-    const lr = (_b2 = opts.lr) != null ? _b2 : 0.05;
-    const full = (_c = opts.full) != null ? _c : false;
-    const maxMs = Math.max(0, (_d = opts.maxMs) != null ? _d : 3e3);
-    const stallRounds = Math.max(1, (_e = opts.stallRounds) != null ? _e : 10);
-    const fitLen = full ? Math.min(19, initW.length) : Math.min(8, initW.length);
-    const w = clipW(initW);
-    const m = new Array(w.length).fill(0);
-    const v = new Array(w.length).fill(0);
-    const beta1 = 0.9;
-    const beta2 = 0.999;
-    const eps = 1e-8;
-    const t0 = Date.now();
-    let lastLL = replayLogLikelihood(w, series);
-    let bestW = [...w];
-    let bestLL = lastLL;
-    let stall = 0;
-    let done = 0;
-    for (let it = 1; it <= iterations; it++) {
-      done = it;
-      const lrIt = lr * (1 - 0.75 * (it / iterations));
-      const grad = numericGradient(w, series, fitLen);
-      for (let i = 0; i < fitLen; i++) {
-        m[i] = beta1 * m[i] + (1 - beta1) * grad[i];
-        v[i] = beta2 * v[i] + (1 - beta2) * grad[i] * grad[i];
-        const mHat = m[i] / (1 - Math.pow(beta1, it));
-        const vHat = v[i] / (1 - Math.pow(beta2, it));
-        w[i] += lrIt * mHat / (Math.sqrt(vHat) + eps);
-      }
-      for (let i = 0; i < fitLen; i++) {
-        const b = W_BOUNDS[i];
-        if (b) w[i] = Math.max(b[0], Math.min(b[1], w[i]));
-      }
-      const ll = replayLogLikelihood(w, series);
-      if (ll > bestLL) {
-        bestLL = ll;
-        bestW = [...w];
-      }
-      if (Math.abs(ll - lastLL) < 1e-6) {
-        stall++;
-        if (stall >= stallRounds) break;
-      } else stall = 0;
-      lastLL = ll;
-      if (maxMs > 0 && Date.now() - t0 > maxMs) break;
-    }
-    return { w: clipW(bestW), logLikelihood: bestLL, iterations: done, full };
-  }
-  function fitFromItems(items, opts) {
-    var _a2;
-    const series = buildReplaySeriesFromItems(items);
-    const count = series.reduce((n, s) => n + s.pairs.length, 0);
-    if (count < 100) return null;
-    const full = (_a2 = opts == null ? void 0 : opts.full) != null ? _a2 : count >= 300;
-    return { fit: fitFSRSParams(series, { full }), count };
-  }
-  function mergeFittedW(fitted) {
-    const out = [...DEFAULT_W];
-    for (let i = 0; i < Math.min(19, fitted.length); i++) out[i] = fitted[i];
-    return out;
-  }
-  var RATING_NAMES, RATING_INDEX, W_BOUNDS;
-  var init_fit = __esm({
-    "src/review/fit.ts"() {
-      init_fsrs();
-      RATING_NAMES = ["again", "hard", "good", "easy"];
-      RATING_INDEX = { again: 0, hard: 1, good: 2, easy: 3 };
-      W_BOUNDS = [
-        [0.01, 60],
-        // w0  初始稳定性 again
-        [0.01, 120],
-        // w1  hard
-        [0.01, 240],
-        // w2  good
-        [0.01, 480],
-        // w3  easy
-        [0, 1],
-        // w4  again 难度（本插件口径）
-        [-1.5, 1.5],
-        // w5  hard 难度增量
-        [-1.5, 1.5],
-        // w6  easy 难度增量
-        [0.01, 10],
-        // w7  （v4 模型未用，兜底约束）
-        [0.01, 10],
-        // w8  成功演化 exp 系数
-        [0.01, 5],
-        // w9  S 幂
-        [0.01, 10],
-        // w10 (1-R) 系数
-        [0.01, 10],
-        // w11 again 演化系数
-        [0.01, 5],
-        // w12 D 幂
-        [0.01, 5],
-        // w13 (S+1) 幂
-        [-5, 5],
-        // w14 R 系数
-        [0.01, 10],
-        // w15 （v4 模型未用）
-        [0.01, 10],
-        // w16 （v4 模型未用）
-        [-5, 5],
-        // w17 easy 奖励系数
-        [0.01, 10]
-        // w18 （v4 模型未用）
-      ];
     }
   });
 
@@ -36623,7 +36639,7 @@ ${n.content.slice(0, 2e3)}
     } else {
       detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc3(ctx.notePath)}"></div>`;
     }
-    const meta = ctx.bankCount === null ? "" : ctx.bankCount > 0 ? `当前范围现有 <b>${ctx.bankCount}</b> 题` : "当前范围还没有题目，开始后会自动出题";
+    const meta = ctx.scope === "folder" && !ctx.folders.length ? "先选择文件夹再看题量" : ctx.bankCount === null ? "" : ctx.bankCount > 0 ? `当前范围现有 <b>${ctx.bankCount}</b> 题` : "当前范围还没有题目，开始后会自动出题";
     return `
     <div class="bz-qp-view">
       <div class="bz-panel-head">
@@ -36651,6 +36667,7 @@ ${n.content.slice(0, 2e3)}
     </div>`;
   }
   function quizPracticeSummaryHtml(r) {
+    const answered = r.correct + r.wrong;
     return `
     <div class="bz-summary">
       <div class="bz-summary-title">本轮刷题小结</div>
@@ -36659,9 +36676,10 @@ ${n.content.slice(0, 2e3)}
         <div class="st ${r.wrong ? "warn" : ""}"><b>${r.wrong}</b><span>答错</span></div>
         <div class="st"><b>${r.skipped}</b><span>跳过</span></div>
       </div>
-      <div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>
+      ${answered > 0 ? `<div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>` : `<div class="bz-qp-acc">本轮未答题已保留</div>`}
       <button class="bz-btn bz-btn--primary bz-btn--block" data-act="again">再来一轮</button>
       <button class="bz-btn bz-btn--ghost bz-btn--block" data-act="finish">收工</button>
+      <div class="bz-qp-foot">答错的题留在题库，下轮再见。</div>
     </div>`;
   }
   function difficultyDialogHtml(item) {
@@ -37396,8 +37414,10 @@ ${n.content.slice(0, 2e3)}
     </div>`;
   }
   function statInlineHTML(items) {
-    return `<div class="bz-stats-inline">${items.map((s) => `
-    <span class="bz-stats-inline-chip">${s}</span>`).join("")}</div>`;
+    return `<div class="bz-stats-inline">${items.map((s) => {
+      const o = typeof s === "string" ? { text: s } : s;
+      return `<span class="bz-stats-inline-chip"${o.title ? ` title="${escapeHtml2(o.title)}"` : ""}>${o.text}</span>`;
+    }).join("")}</div>`;
   }
   function rankListHTML(items) {
     if (!items.length) return emptyHTML();
@@ -37482,10 +37502,13 @@ ${n.content.slice(0, 2e3)}
       ${statCardHTML("复习笔记", stats.reviewedNotes, 5)}
     </div>`;
     const fitChips = fit2 ? statInlineHTML([
-      `记忆曲线：${fit2.full ? "全参拟合" : "基础拟合"}`,
+      {
+        text: fit2.full ? "记忆曲线：按你的记录定制" : "记忆曲线：简化版",
+        title: fit2.full ? "用全部 19 个记忆参数拟合你的复习记录，越用越贴合你的节奏" : "先用 8 个核心参数拟合的简化版，复习记录攒够后会自动升级为完整定制"
+      },
       `样本 ${fit2.fitCount} 条`,
       `拟合于 ${formatRelativeTime(new Date(fit2.fitAt))}`
-    ]) : statInlineHTML(["记忆曲线：默认参数，复习积累后自动拟合"]);
+    ]) : statInlineHTML([{ text: "记忆曲线：默认参数，复习积累后自动拟合", title: "复习记录攒够（约 100 条评级）后会自动拟合你的记忆曲线" }]);
     const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;
     const ratingBars = ["again", "hard", "good", "easy"].map((r) => ({
       label: RATING_NAMES2[r],
@@ -38084,14 +38107,18 @@ ${n.content.slice(0, 2e3)}
     return [...picked].sort();
   }
   function resolveScopeNotes(app, scope, folders, notePath) {
+    var _a2, _b2;
     if (scope === "folder") return notesInFolders(app, folders);
-    if (scope === "note") return notePath ? [notePath] : [];
+    if (scope === "note") {
+      return notePath && ((_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, notePath)) ? [notePath] : [];
+    }
     return listVaultNotes(app);
   }
-  async function collectQuestionsForNotes(app, reader, paths) {
+  async function collectQuestionsForNotes(bank, paths) {
+    const notes = (bank == null ? void 0 : bank.notes) || {};
     const out = [];
     for (const p of paths) {
-      const qs = await reader.getQuestionsForNote(app, p);
+      const qs = notes[p];
       if (!qs || !qs.length) continue;
       for (const q2 of qs) out.push({ ...q2, notePath: p });
     }
@@ -38151,7 +38178,10 @@ ${n.content.slice(0, 2e3)}
     }
   }
   async function openQuizPanel(app) {
-    if (quizUI._sessionActive) return;
+    if (quizUI._sessionActive) {
+      notice("做题进行中，先完成或放弃当前这轮再开", "info");
+      return;
+    }
     ensureQuiz(app);
     if (!panel) panel = new QuizPracticePanel(app);
     panel.show();
@@ -38160,7 +38190,7 @@ ${n.content.slice(0, 2e3)}
     panel == null ? void 0 : panel.destroy();
     panel = null;
   }
-  var MASK_ID2, POPUP_ID, ESC_ID2, DEFAULT_BATCH, QuizPracticePanel, panel;
+  var MASK_ID2, POPUP_ID, ESC_ID2, DEFAULT_BATCH, ENSURE_BATCH, QuizPracticePanel, panel;
   var init_quiz_panel = __esm({
     "src/review/quiz-panel.ts"() {
       init_app();
@@ -38178,6 +38208,7 @@ ${n.content.slice(0, 2e3)}
       POPUP_ID = "bz-quiz-practice-popup";
       ESC_ID2 = "review-quiz-practice";
       DEFAULT_BATCH = 20;
+      ENSURE_BATCH = 10;
       QuizPracticePanel = class {
         constructor(app) {
           this.escHandle = null;
@@ -38191,6 +38222,9 @@ ${n.content.slice(0, 2e3)}
           this.roundSize = 0;
           /** 会话启动 in-flight 防抖（双击只放行一次，防双跑批量出题） */
           this.starting = false;
+          /** 取消标志（审查修复）：关面板/卸载置位，startSession 每个 await 后检查即中止——
+           *  in-flight 出题完成后不再把题面强弹到已关闭的面板上 */
+          this.cancelled = false;
           this.app = app;
           this.mask = document.createElement("div");
           this.mask.id = MASK_ID2;
@@ -38212,6 +38246,7 @@ ${n.content.slice(0, 2e3)}
         }
         // ==================== 显隐 / 生命周期 ====================
         show() {
+          this.cancelled = false;
           this.present();
           void this.renderSetup();
         }
@@ -38228,6 +38263,7 @@ ${n.content.slice(0, 2e3)}
           }
         }
         hide() {
+          this.cancelled = true;
           this.mask.style.display = "none";
           this.popup.style.display = "none";
         }
@@ -38235,6 +38271,7 @@ ${n.content.slice(0, 2e3)}
          *  不留孤儿题面/键盘监听/ESC 层；DOM 与 ESC 层随手摘除（模块单例复位后下次重建）。 */
         destroy() {
           var _a2;
+          this.cancelled = true;
           if (quizUI._sessionActive) quizUI.close();
           (_a2 = this.escHandle) == null ? void 0 : _a2.unregister();
           this.escHandle = null;
@@ -38338,17 +38375,33 @@ ${n.content.slice(0, 2e3)}
             const app = this.app;
             const paths = resolveScopeNotes(app, this.state.scope, this.state.folders, this.state.notePath);
             if (!paths.length) {
-              notice("当前范围没有可出题的笔记", "warning");
+              notice(
+                this.state.scope === "note" ? "找不到这篇笔记，可能已被移动或重命名，重新选一篇吧" : "当前范围没有可出题的笔记",
+                "warning"
+              );
               return;
             }
             if (!await aiReadyOrGuide()) return;
-            await quizUI.ensureQuestions(paths);
-            const collected = await collectQuestionsForNotes(app, quizUI.manager, paths);
+            if (this.cancelled) return;
+            const progress = notify(`正在备题（0/${paths.length} 篇）…`, { type: "progress", dedupeKey: "quiz-prepare" });
+            try {
+              for (let i = 0; i < paths.length; i += ENSURE_BATCH) {
+                if (this.cancelled) return;
+                await quizUI.ensureQuestions(paths.slice(i, i + ENSURE_BATCH));
+                progress.setMessage(`正在备题（${Math.min(i + ENSURE_BATCH, paths.length)}/${paths.length} 篇）…`);
+              }
+            } finally {
+              progress.hide();
+            }
+            if (this.cancelled) return;
+            const bank = await quizUI.manager.loadQuiz(app);
+            const collected = await collectQuestionsForNotes(bank, paths);
             const picked = pickRoundQuestions(collected, this.state.batch);
             if (!picked.length) {
               notice("这个范围还没出成题目：AI 出题失败或笔记内容为空，稍后再试", "warning");
               return;
             }
+            if (this.cancelled) return;
             this.hide();
             emitDomainEvent("review", { kind: "started" });
             this.roundSize = picked.length;
@@ -38719,7 +38772,7 @@ ${n.content.slice(0, 2e3)}
             this._fittedW = null;
           }
         },
-        /** issue 361：当前拟合档位元数据（无拟合 → null；stats-ui 人话标注「基础拟合/全参拟合」） */
+        /** issue 361：当前拟合档位元数据（无拟合 → null；stats-ui 人话标注「按你的记录定制/简化版」） */
         fitMeta() {
           return this._fitMeta;
         },
@@ -38739,7 +38792,7 @@ ${n.content.slice(0, 2e3)}
           try {
             const dm = this.dataManager;
             const items = await dm.loadItems();
-            const result = fitFromItems(items);
+            const result = await fitFromItems(items);
             if (result) {
               const fitAt = (/* @__PURE__ */ new Date()).toISOString();
               const version = result.fit.full ? FIT_PARAMS_VERSION.FULL : FIT_PARAMS_VERSION.BASIC;
