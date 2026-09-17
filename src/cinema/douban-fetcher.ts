@@ -34,6 +34,8 @@ export interface DoubanFetchDeps {
   apizeroKey?: string;
   /** 豆瓣 Cookie（设置项，可选；注入搜索/rexxar 请求头） */
   doubanCookie?: string;
+  /** 海报保存文件夹（设置项，可选；空/缺省回落 POSTER_FOLDER） */
+  posterFolder?: string;
   now?: () => number;
 }
 
@@ -219,21 +221,31 @@ export function updateFrontmatterFields(content: string, fields: Record<string, 
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].match(/^\s+- /)) insertIdx = i + 1;
   }
-  const existingKeys = new Set<string>();
+  const existingKeys = new Map<string, string>();
   for (const line of lines) {
     const m = line.match(/^([^:]+):/);
-    if (m) existingKeys.add(m[1].trim());
+    if (m) existingKeys.set(m[1].trim(), m[1]);
   }
+  /** 取键当前值（剥引号；空值 null）——与 fieldValue 同口径，供「缺失才填」判断 */
+  const lineValue = (key: string): string | null => {
+    const m = lines.map((l) => l.match(new RegExp(`^${key}:[ \\t]*(.*)$`, 'm'))).find(Boolean) as RegExpExecArray | null;
+    if (!m) return null;
+    const v = m[1].trim().replace(/^"(.*)"$/, '$1').replace(/^'(.*)'$/, '$1').trim();
+    return v || null;
+  };
   const newLines: string[] = [];
   for (const [key, spec] of Object.entries(fields)) {
     const val = typeof spec === 'string' ? spec : spec.value;
     if (!val || val === '') continue;
     if (existingKeys.has(key)) {
-      // 缺失才填（C8/C9）：已有值不动，保留用户手改与存量
-      if (typeof spec !== 'string' && spec.ifMissing) continue;
+      // 缺失才填（C8/C9）：已有**非空**值不动，保留用户手改与存量；
+      // 空值键（如模板预置的 `海报:`）视为缺失照写——否则属性永不回填，
+      // 队列判未齐反复入队重抓（实测一次会话一张海报 + 一条 embed 的恶性循环）
+      if (typeof spec !== 'string' && spec.ifMissing && lineValue(key)) continue;
+      const lineKey = existingKeys.get(key)!;
       for (let i = 0; i < lines.length; i++) {
-        if (lines[i].match(new RegExp(`^${key}:`))) {
-          lines[i] = `${key}: ${formatYamlValue(val)}`;
+        if (lines[i].match(new RegExp(`^${lineKey}:`))) {
+          lines[i] = `${lineKey}: ${formatYamlValue(val)}`;
           break;
         }
       }
@@ -319,7 +331,9 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   if (!sid) return { ok: false, reason: 'notfound' };
 
   // 2. 海报（无海报时：高清 URL → 二进制 → 写盘 → frontmatter + 正文 embed）。
+  //  保存目录可配（cinemaPosterFolder），空/缺省回落 POSTER_FOLDER；
   //  下载失败（抛错/null）归 network，写盘失败归 write（C6：下载与落盘失败语义拆分）
+  const posterFolder = deps.posterFolder?.trim() || POSTER_FOLDER;
   let posterRelative = fieldValue(content, '海报');
   if (!hasPoster && first.posterUrl) {
     let buf: ArrayBuffer | null;
@@ -330,11 +344,11 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
     }
     if (!buf) return { ok: false, reason: 'network' };
     try {
-      await deps.mkdir(POSTER_FOLDER);
+      await deps.mkdir(posterFolder);
       const ext = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
       const safeName = name.replace(/[/\\:*?"<>|]/g, '_');
       const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
-      posterRelative = `${POSTER_FOLDER}/${fileName}`;
+      posterRelative = `${posterFolder}/${fileName}`;
       await deps.writeBinary(posterRelative, buf);
     } catch {
       return { ok: false, reason: 'write' };

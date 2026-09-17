@@ -198,6 +198,8 @@ export default interface BzSettings {
   cinemaApizeroKey: string;
   /** 影院抓取：豆瓣 Cookie（搜索页风控时提高成功率，可选） */
   cinemaDoubanCookie: string;
+  /** 影院抓取：海报保存文件夹（空 = 回落默认 CONFIG/MOVIE POSTER；写入 frontmatter 海报键与正文 embed） */
+  cinemaPosterFolder: string;
   /** B站 Cookie（ADR-0133 知识盒视频档位查询；「数据源凭据」组设置项，桌面端可从 CLI 导入） */
   bilibiliCookie: string;
 
@@ -698,6 +700,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaStyle: 'midnight',
   cinemaApizeroKey: '',
   cinemaDoubanCookie: '',
+  cinemaPosterFolder: '',
   bilibiliCookie: '',
 
   // 游戏架（gameshelf，issue 368：Steam 直连自动拉库；目录缺省回落「我的/游戏」）
