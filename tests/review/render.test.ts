@@ -5,7 +5,7 @@
  * 一旦 FSRS.R 引入 w 依赖（或换模型），排序与展示即漂移；现排序透传 ctx.w 同源。
  */
 import { describe, it, expect } from 'vitest';
-import { queueViewHtml, sortColumn, currentRPct } from '../../src/review/render';
+import { queueViewHtml, sortColumn, currentRPct, quizPracticeSetupHtml, quizPracticeSummaryHtml } from '../../src/review/render';
 import { DEFAULT_W } from '../../src/review/fsrs';
 import type { ReviewItem } from '../../src/review/data';
 
@@ -65,5 +65,37 @@ describe('sortColumn 透传 ctx.w（G4 回归）', () => {
     const fsrsItem = mkItem({ id: 'f', filePath: 'f.md', phase: 'fsrs', stability: 1, lastReviewed: new Date(now - 86400e3).toISOString() });
     const fitted = DEFAULT_W.slice();
     expect(sortColumn([ladder, fsrsItem], now, fitted).map((i) => i.id)).toEqual(['f', 'l']);
+  });
+});
+
+// ==================== 做题练习面板 markup（issue 362；审查体验修复） ====================
+
+describe('做题练习 markup（审查体验修复）', () => {
+  it('folder 范围未选文件夹：meta 引导「先选择文件夹再看题量」，不再与「还没选文件夹」矛盾', () => {
+    const html = quizPracticeSetupHtml({ scope: 'folder', batch: 20, folders: [], notePath: '', bankCount: 0 });
+    expect(html).toContain('还没选文件夹');
+    expect(html).toContain('先选择文件夹再看题量');
+    expect(html).not.toContain('当前范围还没有题目');
+  });
+
+  it('已选文件夹：题库 meta 正常显示；未统计（null）占位空', () => {
+    const withCount = quizPracticeSetupHtml({ scope: 'folder', batch: 20, folders: ['sub'], notePath: '', bankCount: 7 });
+    expect(withCount).toContain('当前范围现有 <b>7</b> 题');
+    const noCount = quizPracticeSetupHtml({ scope: 'folder', batch: 20, folders: ['sub'], notePath: '', bankCount: null });
+    expect(noCount).not.toContain('当前范围现有');
+    expect(noCount).not.toContain('先选择文件夹再看题量');
+  });
+
+  it('成绩小结：答对+答错>0 显正确率 + 错题去向小字「答错的题留在题库」', () => {
+    const html = quizPracticeSummaryHtml({ correct: 6, wrong: 2, skipped: 2, accuracy: 75 });
+    expect(html).toContain('正确率 <b>75%</b>');
+    expect(html).toContain('答错的题留在题库，下轮再见');
+  });
+
+  it('成绩小结：中途放弃（答对+答错=0）不弹「正确率 0%」，改「本轮未答题已保留」', () => {
+    const html = quizPracticeSummaryHtml({ correct: 0, wrong: 0, skipped: 5, accuracy: 0 });
+    expect(html).toContain('本轮未答题已保留');
+    expect(html).not.toContain('正确率');
+    expect(html).toContain('答错的题留在题库，下轮再见');
   });
 });

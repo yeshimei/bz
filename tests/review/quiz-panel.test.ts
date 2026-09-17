@@ -166,7 +166,11 @@ describe('做题练习面板（issue 362）', () => {
     // 对/错/跳过三卡：0 对 0 错 3 跳过（备题 3 − 已答 0）
     const nums = [...popup.querySelectorAll('.bz-summary-stats .st b')].map((b) => b.textContent);
     expect(nums).toEqual(['0', '0', '3']);
-    expect(popup.querySelector('.bz-qp-acc')!.textContent).toContain('0%');
+    // 中途放弃（答对+答错=0）：不弹「正确率 0%」像考砸，改人话（审查体验修复）
+    expect(popup.querySelector('.bz-qp-acc')!.textContent).toContain('本轮未答题已保留');
+    expect(popup.querySelector('.bz-qp-acc')!.textContent).not.toContain('0%');
+    // 错题去向小字（审查体验修复）
+    expect(popup.querySelector('.bz-summary .bz-qp-foot')!.textContent).toContain('答错的题留在题库');
     // 小结动作：再来一轮回设置视图
     (popup.querySelector('[data-act="again"]') as HTMLElement).click();
     await vi.waitFor(() => expect(popup.querySelector('[data-act="start"]')).toBeTruthy());
@@ -191,5 +195,91 @@ describe('做题练习面板（issue 362）', () => {
     expect(document.getElementById('quiz-mask')).toBeNull();
     // 幂等：未开面板时重复清理不抛
     expect(() => unloadQuizPanel()).not.toThrow();
+  });
+
+  it('会话在途重开命令：不静默 no-op，notice「做题进行中」反馈（审查修复）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文 A');
+    const app = await open(vault, { aiProvider: 'ollama', shuffleQuestions: false });
+    const qm = new QuizManager();
+    await qm.saveQuestionsForNote(app, 'A.md', [
+      { question: 'A1?', options: ['a', 'b', 'c', 'd'], correctIndices: [0] },
+    ]);
+    const popup = document.getElementById(POPUP_ID)!;
+    (popup.querySelector('[data-act="start"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.getElementById('quiz-mask')).toBeTruthy());
+    expect(quizUI._sessionActive).toBe(true);
+    // 会话在途再开命令：人话反馈，设置视图不抢占题面前台
+    await openQuizPanel(app);
+    expect(document.getElementById('bz-notice-container')!.textContent).toContain('做题进行中');
+    expect(popup.style.display).toBe('none');
+    quizUI.close();
+  });
+
+  it('「全部」范围按批备题（审查修复）：12 篇分 10+2 两组循环 ensureQuestions，不整库单次调用', async () => {
+    const vault = new MockVault();
+    for (let i = 1; i <= 12; i++) vault.files.set(`N${String(i).padStart(2, '0')}.md`, '正文');
+    const app = await open(vault, { aiProvider: 'ollama' });
+    const calls: string[][] = [];
+    const spy = vi.spyOn(quizUI, 'ensureQuestions').mockImplementation(async (paths: string[]) => {
+      calls.push([...paths]);
+    });
+    const popup = document.getElementById(POPUP_ID)!;
+    (popup.querySelector('[data-act="start"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(calls.length).toBe(2));
+    expect(spy).toHaveBeenCalled();
+    expect(calls[0]).toHaveLength(10);
+    expect(calls[1]).toHaveLength(2);
+    // 无题产出 → 不进会话（收尾人话），题面不出现
+    await vi.waitFor(() =>
+      expect(document.getElementById('bz-notice-container')!.textContent).toContain('还没出成题目')
+    );
+    expect(document.getElementById('quiz-mask')).toBeNull();
+    expect(popup.style.display).toBe('flex');
+  });
+
+  it('备题在途关面板：cancelled 即中止，出题完成后不再强弹题面（审查修复）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文 A');
+    const app = await open(vault, { aiProvider: 'ollama' });
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let called = false;
+    vi.spyOn(quizUI, 'ensureQuestions').mockImplementation(() => {
+      called = true;
+      return gate as unknown as Promise<void>;
+    });
+    const popup = document.getElementById(POPUP_ID)!;
+    (popup.querySelector('[data-act="start"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(called).toBe(true)); // in-flight（ensureQuestions 挂起）
+    // 此时关面板 → cancelled 置位
+    document.getElementById(MASK_ID)!.click();
+    expect(popup.style.display).toBe('none');
+    release();
+    await new Promise((r) => setTimeout(r, 20)); // 让 startSession 的续段跑完
+    // 中止生效：不读题库不进会话，题面不弹
+    expect(quizUI._sessionActive).toBe(false);
+    expect(document.getElementById('quiz-mask')).toBeNull();
+  });
+
+  it('单篇范围路径不存在：过滤空清单 + 人话提示（审查修复）', async () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', '正文 A');
+    await open(vault, { aiProvider: 'ollama' });
+    const popup = document.getElementById(POPUP_ID)!;
+    (popup.querySelector('[data-scope="note"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(popup.querySelector('[data-role="note-input"]')).toBeTruthy());
+    const input = popup.querySelector('[data-role="note-input"]') as HTMLInputElement;
+    input.value = 'GHOST.md'; // 手输不存在的路径（被移动/改名/拼错）
+    input.dispatchEvent(new Event('input')); // state 回填
+    input.dispatchEvent(new Event('change')); // 重渲染
+    await vi.waitFor(() => expect(popup.querySelector('[data-act="start"]')).toBeTruthy());
+    (popup.querySelector('[data-act="start"]') as HTMLElement).click();
+    await vi.waitFor(() =>
+      expect(document.getElementById('bz-notice-container')!.textContent).toContain('找不到这篇笔记')
+    );
+    expect(document.getElementById('quiz-mask')).toBeNull();
   });
 });

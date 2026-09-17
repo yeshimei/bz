@@ -85,10 +85,14 @@ function barChartHTML(entries: Array<{ label: string; value: number }>, color: s
     </div>`;
 }
 
-/** chips 行内小统计（对齐影视 statInlineHTML） */
-function statInlineHTML(items: string[]): string {
-  return `<div class="bz-stats-inline">${items.map((s) => `
-    <span class="bz-stats-inline-chip">${s}</span>`).join('')}</div>`;
+/** chips 行内小统计（对齐影视 statInlineHTML；支持 title 悬浮注解） */
+function statInlineHTML(items: Array<string | { text: string; title?: string }>): string {
+  return `<div class="bz-stats-inline">${items
+    .map((s) => {
+      const o = typeof s === 'string' ? { text: s } : s;
+      return `<span class="bz-stats-inline-chip"${o.title ? ` title="${escapeHtml(o.title)}"` : ''}>${o.text}</span>`;
+    })
+    .join('')}</div>`;
 }
 
 /** 排名列表行（对齐影视 topListHTML；点击行为由渲染方事件委托处理） */
@@ -194,15 +198,21 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
       ${statCardHTML('复习笔记', stats.reviewedNotes, 5)}
     </div>`;
 
-  // 拟合档位标注（issue 361）：人话展示当前记忆曲线来源——全参拟合（≥300 条）/ 基础拟合（八参）/
-  // 默认参数（尚未拟合）；附样本量与拟合时间
+  // 拟合档位标注（issue 361；审查体验修复——「全参拟合/基础拟合」是天书，改人话 + title 悬浮注解）：
+  // 全参 = 按你的记录定制（19 参数全拟合）；基础 = 简化版（8 参数）；默认参数 = 尚未拟合。
+  // 附样本量与拟合时间。
   const fitChips = fit
     ? statInlineHTML([
-        `记忆曲线：${fit.full ? '全参拟合' : '基础拟合'}`,
+        {
+          text: fit.full ? '记忆曲线：按你的记录定制' : '记忆曲线：简化版',
+          title: fit.full
+            ? '用全部 19 个记忆参数拟合你的复习记录，越用越贴合你的节奏'
+            : '先用 8 个核心参数拟合的简化版，复习记录攒够后会自动升级为完整定制',
+        },
         `样本 ${fit.fitCount} 条`,
         `拟合于 ${formatRelativeTime(new Date(fit.fitAt))}`,
       ])
-    : statInlineHTML(['记忆曲线：默认参数，复习积累后自动拟合']);
+    : statInlineHTML([{ text: '记忆曲线：默认参数，复习积累后自动拟合', title: '复习记录攒够（约 100 条评级）后会自动拟合你的记忆曲线' }]);
 
   // 评级分布（软进度条，窄卡更紧凑）
   const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;

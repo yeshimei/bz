@@ -1,4 +1,4 @@
-/* 源指纹 0a430c6ccb4cdcd9 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3f0fa2dd6c05a31c · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
@@ -79,6 +79,14 @@ var BZR_review = (() => {
     initS(rating) {
       const map = { again: 0, hard: 1, good: 2, easy: 3 };
       return this.w[map[rating]] || 1;
+    }
+    /**
+     * 初始难度 D0（进入 FSRS：again→w[4]，其余 0.3）。
+     * 调度（scheduleNext enteringFsrs）与拟合回放（fit.ts replayLogLikelihood 起点）共用此单源——
+     * 防两处字面量漂移再造 w[4] 口径分叉（审查修复：D0 同口径；后续轮次两侧均经 nextDiff 钳制）。
+     */
+    initD(rating) {
+      return rating === "again" ? this.w[4] : 0.3;
     }
     /** 下一难度 */
     nextDiff(D, rating) {
@@ -528,7 +536,7 @@ var BZR_review = (() => {
     } else {
       detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc2(ctx.notePath)}"></div>`;
     }
-    const meta = ctx.bankCount === null ? "" : ctx.bankCount > 0 ? `当前范围现有 <b>${ctx.bankCount}</b> 题` : "当前范围还没有题目，开始后会自动出题";
+    const meta = ctx.scope === "folder" && !ctx.folders.length ? "先选择文件夹再看题量" : ctx.bankCount === null ? "" : ctx.bankCount > 0 ? `当前范围现有 <b>${ctx.bankCount}</b> 题` : "当前范围还没有题目，开始后会自动出题";
     return `
     <div class="bz-qp-view">
       <div class="bz-panel-head">
@@ -556,6 +564,7 @@ var BZR_review = (() => {
     </div>`;
   }
   function quizPracticeSummaryHtml(r) {
+    const answered = r.correct + r.wrong;
     return `
     <div class="bz-summary">
       <div class="bz-summary-title">本轮刷题小结</div>
@@ -564,9 +573,10 @@ var BZR_review = (() => {
         <div class="st ${r.wrong ? "warn" : ""}"><b>${r.wrong}</b><span>答错</span></div>
         <div class="st"><b>${r.skipped}</b><span>跳过</span></div>
       </div>
-      <div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>
+      ${answered > 0 ? `<div class="bz-qp-acc">正确率 <b>${r.accuracy}%</b></div>` : `<div class="bz-qp-acc">本轮未答题已保留</div>`}
       <button class="bz-btn bz-btn--primary bz-btn--block" data-act="again">再来一轮</button>
       <button class="bz-btn bz-btn--ghost bz-btn--block" data-act="finish">收工</button>
+      <div class="bz-qp-foot">答错的题留在题库，下轮再见。</div>
     </div>`;
   }
   function difficultyDialogHtml(item) {

@@ -14,7 +14,7 @@
  */
 import type { App } from 'obsidian';
 import { getApp } from '../core/app';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -38,6 +38,10 @@ const POPUP_ID = 'bz-quiz-practice-popup';
 const ESC_ID = 'review-quiz-practice';
 /** 默认本轮题量（20 题≈15 分钟一组，考试周刷一小时可连开三轮） */
 const DEFAULT_BATCH = 20;
+/** 「全部/文件夹」范围按批出题（审查修复）：每批笔记数上限——引擎 ensureQuestions 一次
+ *  AI 调用拼全部 missing 笔记全文，整库单次必超 token/超时后降级数百次串行；面板侧按批
+ *  循环驱动，批间汇报进度。 */
+const ENSURE_BATCH = 10;
 
 /** AI 就绪检查：getAIProvider 是「已配置」的唯一权威（缺密钥即抛人话错误）。
  *  未就绪 → 流程框引导去设置面板（不出题不崩），返回 false。 */
@@ -78,6 +82,9 @@ class QuizPracticePanel {
   private roundSize = 0;
   /** 会话启动 in-flight 防抖（双击只放行一次，防双跑批量出题） */
   private starting = false;
+  /** 取消标志（审查修复）：关面板/卸载置位，startSession 每个 await 后检查即中止——
+   *  in-flight 出题完成后不再把题面强弹到已关闭的面板上 */
+  private cancelled = false;
 
   constructor(app: App) {
     this.app = app;
@@ -106,6 +113,7 @@ class QuizPracticePanel {
   // ==================== 显隐 / 生命周期 ====================
 
   show(): void {
+    this.cancelled = false; // 重开复位（取消只针对关面板/卸载时在途的备题流程）
     this.present();
     void this.renderSetup();
   }
@@ -124,6 +132,7 @@ class QuizPracticePanel {
   }
 
   hide(): void {
+    this.cancelled = true; // 关面板即取消在途备题（startSession await 后检查）
     this.mask.style.display = 'none';
     this.popup.style.display = 'none';
   }
@@ -131,6 +140,7 @@ class QuizPracticePanel {
   /** 卸载清理（unloadQuizPanel）：会话在途先走契约强制收口（防御性结算 + 拆题面弹窗），
    *  不留孤儿题面/键盘监听/ESC 层；DOM 与 ESC 层随手摘除（模块单例复位后下次重建）。 */
   destroy(): void {
+    this.cancelled = true; // 卸载同取消：在途 startSession 各 await 后即 return
     if (quizUI._sessionActive) quizUI.close();
     this.escHandle?.unregister();
     this.escHandle = null;
@@ -239,18 +249,37 @@ class QuizPracticePanel {
       const app = this.app;
       const paths = resolveScopeNotes(app, this.state.scope, this.state.folders, this.state.notePath);
       if (!paths.length) {
-        notice('当前范围没有可出题的笔记', 'warning');
+        // 单篇空 = 路径不存在（resolveScopeNotes 已过滤幽灵路径）——给人话，不再笼统「没有笔记」
+        notice(
+          this.state.scope === 'note' ? '找不到这篇笔记，可能已被移动或重命名，重新选一篇吧' : '当前范围没有可出题的笔记',
+          'warning'
+        );
         return;
       }
       if (!(await aiReadyOrGuide())) return;
-      // 引擎既有批量出题（进度/失败通知内建；已有题的笔记跳过不重出）
-      await quizUI.ensureQuestions(paths);
-      const collected = await collectQuestionsForNotes(app, quizUI.manager, paths);
+      if (this.cancelled) return; // 关面板/卸载后不再继续备题
+      // 引擎既有批量出题（进度/失败通知内建；已有题的笔记跳过不重出）。
+      // 审查修复：按批循环驱动（每批 ≤10 篇一次 AI 调用），「全部」范围不再整库单次调用
+      // 拼全部全文（必超 token/超时降级数百次串行）；批间更新进度框，关面板即中止。
+      const progress = notify(`正在备题（0/${paths.length} 篇）…`, { type: 'progress', dedupeKey: 'quiz-prepare' });
+      try {
+        for (let i = 0; i < paths.length; i += ENSURE_BATCH) {
+          if (this.cancelled) return;
+          await quizUI.ensureQuestions(paths.slice(i, i + ENSURE_BATCH));
+          progress.setMessage(`正在备题（${Math.min(i + ENSURE_BATCH, paths.length)}/${paths.length} 篇）…`);
+        }
+      } finally {
+        progress.hide();
+      }
+      if (this.cancelled) return;
+      const bank = await quizUI.manager.loadQuiz(app); // 循环外一次读题库（审查修复：不再逐篇 O(N) 读盘）
+      const collected = await collectQuestionsForNotes(bank, paths);
       const picked = pickRoundQuestions(collected, this.state.batch);
       if (!picked.length) {
         notice('这个范围还没出成题目：AI 出题失败或笔记内容为空，稍后再试', 'warning');
         return;
       }
+      if (this.cancelled) return;
       this.hide();
       // 行为流（issue 261 范式）：开始刷题入小橘行为流（review:started；未装小橘订阅端静默）
       emitDomainEvent('review', { kind: 'started' });
@@ -294,8 +323,12 @@ let panel: QuizPracticePanel | null = null;
 
 /** 打开做题练习面板（review/index.openQuizPractice 转发；幂等建壳） */
 export async function openQuizPanel(app: App): Promise<void> {
-  // 会话在途：题面弹窗拥有前台（ESC 层在其下），不重开设置视图垫底
-  if (quizUI._sessionActive) return;
+  // 会话在途：题面弹窗拥有前台（ESC 层在其下），不重开设置视图垫底；
+  // 审查修复：不再静默 no-op，给人话反馈
+  if (quizUI._sessionActive) {
+    notice('做题进行中，先完成或放弃当前这轮再开', 'info');
+    return;
+  }
   ensureQuiz(app);
   if (!panel) panel = new QuizPracticePanel(app);
   panel.show();

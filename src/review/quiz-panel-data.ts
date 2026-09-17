@@ -8,17 +8,12 @@
  * - 本轮题量 = 按笔记 round-robin 交错抽取后截断（batch ≤ 0 = 不限）——短批量不集中在
  *   个别笔记，逐篇都能刷到。
  *
- * 只消费 quiz-core 引擎公开读原语（manager.getQuestionsForNote），不触引擎会话状态；
- * 出题生成经 quizUI.ensureQuestions（引擎既有批量链路），见 quiz-panel.ts。
+ * 只消费题库数据结构（QuizManager.loadQuiz 的 {notes} 形状），不触引擎会话状态；
+ * 出题生成经 quizUI.ensureQuestions（引擎既有批量链路，面板侧按批循环），见 quiz-panel.ts。
  */
 import type { App } from 'obsidian';
 import { isExcludedPath } from '../core/path-picker';
 import type { QuizQuestion } from './quiz-core/manager';
-
-/** 题库读原语最小面（QuizManager 的只读切片；测试可注入替身） */
-export interface QuizReader {
-  getQuestionsForNote(app: App, notePath: string): Promise<QuizQuestion[] | null>;
-}
 
 /** 整库笔记清单（md；环境目录子树剪枝；路径升序稳定输出） */
 export function listVaultNotes(app: App): string[] {
@@ -48,7 +43,9 @@ export function notesInFolders(app: App, folders: string[]): string[] {
   return [...picked].sort();
 }
 
-/** 按范围解析笔记路径清单（scope = all 整库 / folder 目录展开 / note 单篇） */
+/** 按范围解析笔记路径清单（scope = all 整库 / folder 目录展开 / note 单篇）。
+ *  单篇校验存在性（审查修复）：手输路径不存在（被移动/改名/拼错）→ 返回空清单，
+ *  由面板给人话提示，不再拿幽灵路径去出题误导。 */
 export function resolveScopeNotes(
   app: App,
   scope: 'all' | 'folder' | 'note',
@@ -56,19 +53,25 @@ export function resolveScopeNotes(
   notePath: string
 ): string[] {
   if (scope === 'folder') return notesInFolders(app, folders);
-  if (scope === 'note') return notePath ? [notePath] : [];
+  if (scope === 'note') {
+    return notePath && app?.vault?.getAbstractFileByPath?.(notePath) ? [notePath] : [];
+  }
   return listVaultNotes(app);
 }
 
-/** 读取范围内现有题目（只读题库，不触生成；带 notePath 供会话答对出库定位） */
+/**
+ * 读取范围内现有题目（只读题库，不触生成；带 notePath 供会话答对出库定位）。
+ * 审查修复：题库整本由调用方循环外 loadQuiz 一次传入（原先逐篇 getQuestionsForNote
+ * 是 O(N) 次读文件——「全部」范围整库逐篇读盘）。bank = QuizManager.loadQuiz 返回结构。
+ */
 export async function collectQuestionsForNotes(
-  app: App,
-  reader: QuizReader,
+  bank: { notes?: Record<string, QuizQuestion[]> | undefined } | null,
   paths: string[]
 ): Promise<QuizQuestion[]> {
+  const notes = bank?.notes || {};
   const out: QuizQuestion[] = [];
   for (const p of paths) {
-    const qs = await reader.getQuestionsForNote(app, p);
+    const qs = notes[p];
     if (!qs || !qs.length) continue;
     for (const q of qs) out.push({ ...q, notePath: p });
   }

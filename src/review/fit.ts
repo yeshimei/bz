@@ -11,8 +11,9 @@
  *   - 基础档（100~299 条）：拟合 w[0..7] 八参（w[7] 在本插件 v4 模型中不进似然公式，梯度恒零保持初值）
  *   - 全参档（≥300 条）：拟合全部 19 维（w[7]/w[15]/w[16]/w[18] 为 v4 模型未用参数，自动保持初值）
  *
- * 防不收敛拖死（拟合在评级路径 fire-and-forget 后台跑，但仍是主线程同步 CPU）：
- * 迭代上限 + 停滞早停 + 墙钟时限三重护栏。
+ * 防不收敛拖死（拟合在评级路径 fire-and-forget 后台跑，但仍是主线程 CPU）：
+ * 迭代上限 + 停滞早停 + 墙钟时限（默认 800ms）三重护栏，并按迭代分片 await setTimeout
+ * 让出主线程（审查修复：不再整段冻结 UI）。
  *
  * 样本门槛（ADR-0077）：≥300 条全参、100~300 基础八参、<100 跳过。
  * 数值：逐参数合法区间约束、从 DEFAULT_W 初始化、小学习率 + 退火、log 截断防溢出。
@@ -82,7 +83,9 @@ export function replayLogLikelihood(w: number[], series: ReplaySeries[]): number
   let sum = 0;
   for (const s of series) {
     let S = fsrs.initS(RATING_NAMES[s.initRating]);
-    let D = s.initRating === 0 ? fsrs.w[4] : 0.3;
+    // D0 走 FSRS.initD 单源（again→w[4] / 其余 0.3），与调度 enteringFsrs 存盘口径逐字一致；
+    // 后续轮次经 nextInterval→nextDiff 钳制——拟合与调度同一条难度链
+    let D = fsrs.initD(RATING_NAMES[s.initRating]);
     for (const p of s.pairs) {
       const R = fsrs.R(p.t, S);
       const remember = p.rating >= 2; // good/easy=记住，again/hard=遗忘
@@ -96,13 +99,17 @@ export function replayLogLikelihood(w: number[], series: ReplaySeries[]): number
   return sum;
 }
 
-/** 19 权重合法区间（全参放开后逐参数约束，防 19 维跑飞产出 NaN/无穷记忆曲线；区间恒含 DEFAULT_W 除 w[4] 既有 [0,1] 口径） */
+/**
+ * 19 权重合法区间（全参放开后逐参数约束，防 19 维跑飞产出 NaN/无穷记忆曲线）。
+ * 审查修复（issue 361/362 审查批）：w[4] 上界放宽 1 → 10——旧 [0,1] 与 DEFAULT_W[4]=4.93 冲突，
+ * clipW 起点即把 4.93 钳到 1，拟合从被削的 D0 起步且似然够不到真值（既有缺陷，ticket 174 起）。
+ */
 const W_BOUNDS: ReadonlyArray<readonly [number, number]> = [
   [0.01, 60], // w0  初始稳定性 again
   [0.01, 120], // w1  hard
   [0.01, 240], // w2  good
   [0.01, 480], // w3  easy
-  [0, 1], // w4  again 难度（本插件口径）
+  [0, 10], // w4  again 难度（上界放宽含 DEFAULT_W[4]=4.93；D0 消费侧经 nextDiff 钳制，拟合-调度同口径）
   [-1.5, 1.5], // w5  hard 难度增量
   [-1.5, 1.5], // w6  easy 难度增量
   [0.01, 10], // w7  （v4 模型未用，兜底约束）
@@ -119,8 +126,11 @@ const W_BOUNDS: ReadonlyArray<readonly [number, number]> = [
   [0.01, 10], // w18 （v4 模型未用）
 ];
 
-/** 将权重约束到合法区间（就地语义的纯拷贝版） */
-function clipW(w: number[]): number[] {
+/**
+ * 将权重约束到合法区间（纯拷贝版）。
+ * 导出共享：data.loadFittedParams 载入脏文件时逐维钳制同用此函数（载入-拟合-落盘同一张界）。
+ */
+export function clipWToBounds(w: number[]): number[] {
   return w.map((x, i) => {
     const b = W_BOUNDS[i];
     return b ? Math.max(b[0], Math.min(b[1], x)) : x;
@@ -157,9 +167,13 @@ export function numericGradient(w: number[], series: ReplaySeries[], fitLen = 8,
 /**
  * Adam 梯度上升（最大化回放对数似然）。
  * 护栏：iterations 迭代上限 + stallRounds 停滞早停（改进 <1e-6 连续 N 轮）+ maxMs 墙钟时限
- * （issue 361：19 维数值梯度的评估量是八参的 ~2.7 倍，三重护栏防大历史用户不收敛拖死后台拟合）。
+ * （审查修复：默认 3000 → 800ms——拟合虽 fire-and-forget 后台跑，但仍是主线程 CPU；
+ * 并按迭代分片，片内耗时超 FIT_SLICE_MS 即 await setTimeout 让出主线程，评级/渲染不再被
+ * 长时间冻结；fire-and-forget 语义不变（调用方仍 void 不 await））。
  */
-export function fitFSRSParams(
+/** 单个让出分片的目标耗时（ms）：片内超过即让出一拍 */
+const FIT_SLICE_MS = 50;
+export async function fitFSRSParams(
   series: ReplaySeries[],
   opts: {
     initW?: number[];
@@ -169,21 +183,21 @@ export function fitFSRSParams(
     lr?: number;
     /** 是否全参拟合（默认 false=基础八参 w[0..7]） */
     full?: boolean;
-    /** 墙钟时限 ms（默认 3000） */
+    /** 墙钟时限 ms（默认 800） */
     maxMs?: number;
     /** 停滞早停轮数（默认 10） */
     stallRounds?: number;
   } = {}
-): FitResult {
+): Promise<FitResult> {
   const initW = opts.initW ? [...opts.initW] : [...DEFAULT_W];
   const iterations = Math.max(1, opts.iterations ?? (opts.full ? 120 : 80));
   const lr = opts.lr ?? 0.05;
   const full = opts.full ?? false;
-  const maxMs = Math.max(0, opts.maxMs ?? 3000);
+  const maxMs = Math.max(0, opts.maxMs ?? 800);
   const stallRounds = Math.max(1, opts.stallRounds ?? 10);
 
   const fitLen = full ? Math.min(19, initW.length) : Math.min(8, initW.length);
-  const w = clipW(initW);
+  const w = clipWToBounds(initW);
 
   // Adam 状态
   const m = new Array(w.length).fill(0);
@@ -193,6 +207,7 @@ export function fitFSRSParams(
   const eps = 1e-8;
 
   const t0 = Date.now();
+  let sliceStart = t0;
   let lastLL = replayLogLikelihood(w, series);
   let bestW = [...w];
   let bestLL = lastLL;
@@ -232,25 +247,30 @@ export function fitFSRSParams(
     lastLL = ll;
     // 墙钟护栏：不收敛也不拖死后台（同步 CPU 在主线程）
     if (maxMs > 0 && Date.now() - t0 > maxMs) break;
+    // 分片让出：本片耗时超阈值 → 让一拍给 UI（评级点击/渲染），再继续下一轮
+    if (Date.now() - sliceStart >= FIT_SLICE_MS) {
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      sliceStart = Date.now();
+    }
   }
 
-  return { w: clipW(bestW), logLikelihood: bestLL, iterations: done, full };
+  return { w: clipWToBounds(bestW), logLikelihood: bestLL, iterations: done, full };
 }
 
 /**
  * 拟合入口：从 reviewItems 的 reviewHistory 构造回放序列 → 判断门槛 → 分档拟合。
  * 返回 null 表示样本不足/无可回放序列（调用方回退默认参数）。
  */
-export function fitFromItems(
+export async function fitFromItems(
   items: Array<{ reviewHistory?: Array<{ timestamp: string; stage?: number; rating: string; stability?: number }> }>,
   opts?: { full?: boolean }
-): { fit: FitResult; count: number } | null {
+): Promise<{ fit: FitResult; count: number } | null> {
   const series = buildReplaySeriesFromItems(items);
   const count = series.reduce((n, s) => n + s.pairs.length, 0);
   // 样本门槛（ADR-0077）：≥300 全参、100~300 基础八参、<100 跳过
   if (count < 100) return null;
   const full = opts?.full ?? count >= 300;
-  return { fit: fitFSRSParams(series, { full }), count };
+  return { fit: await fitFSRSParams(series, { full }), count };
 }
 
 /** 将拟合权重与默认权重合并为完整 19 权重（拟合结果本身 19 维，等长即全量覆盖） */
