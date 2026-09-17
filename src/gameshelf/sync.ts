@@ -85,9 +85,11 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     if (r.added > 0) parts.push(`新增 ${r.added}`);
     if (r.updated > 0) parts.push(`更新 ${r.updated}`);
     if (r.offShelf > 0) parts.push(`下架标记 ${r.offShelf}`);
-    M.statusMsg = parts.length > 0 ? `同步完成：${parts.join('，')}` : '同步完成：库内无变化';
-    if (r.added > 0 || r.updated > 0 || r.offShelf > 0) {
-      notice(`游戏架已同步：${M.statusMsg.replace('同步完成：', '')}`, 'success');
+    // 库内无变化 → 状态行留空（用户 2026-09-17：「同步完成：库内无变化」是噪音，
+    // 每次点立即同步都挂一行「什么都没发生」；真有事才说话）
+    M.statusMsg = parts.length > 0 ? `同步完成：${parts.join('，')}` : '';
+    if (parts.length > 0) {
+      notice(`游戏架已同步：${parts.join('，')}`, 'success');
     }
     // 行为流观察（smartcat 消费；emit-and-forget，无订阅方零成本）
     emitDomainEvent('gameshelf', { kind: 'synced', added: r.added, updated: r.updated, offShelf: r.offShelf });

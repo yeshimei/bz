@@ -1,5 +1,5 @@
-/* 源指纹 bc1c30a517ae6ac9 · 仓内输入 235 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 78fd344a7d577bfb · 仓内输入 236 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
   var __create = Object.create;
@@ -1327,6 +1327,16 @@ var BZW_gameshelf = (() => {
       return DEFAULT_FOLDER;
     }
   }
+  function displayNameOf(it) {
+    var _a2;
+    const zh = ((_a2 = it.zhName) != null ? _a2 : "").trim();
+    return zh || it.name;
+  }
+  function nameMatches(it, query) {
+    const k = query.trim().toLowerCase();
+    if (!k) return true;
+    return it.name.toLowerCase().includes(k) || (it.zhName ? it.zhName.toLowerCase().includes(k) : false);
+  }
   function resetGameshelfState() {
     M.currentOverlay = null;
     M.items = [];
@@ -1611,6 +1621,7 @@ var BZW_gameshelf = (() => {
     const num2 = (v) => Number.isFinite(Number(v)) ? Number(v) : null;
     return {
       type: str2(data == null ? void 0 : data.type),
+      name: str2(data == null ? void 0 : data.name),
       genres: join(data == null ? void 0 : data.genres),
       developers: join(data == null ? void 0 : data.developers),
       publishers: join(data == null ? void 0 : data.publishers),
@@ -1658,6 +1669,23 @@ var BZW_gameshelf = (() => {
     } catch (e) {
       const err = e;
       return { ok: false, reason: err.reason === "auth" ? "parse" : "network", message: "商店数据拉取失败：请检查网络" };
+    }
+  }
+  function parseZhName(raw) {
+    var _a2, _b2;
+    const data = (_b2 = (_a2 = raw == null ? void 0 : raw[0]) == null ? void 0 : _a2.data) != null ? _b2 : raw == null ? void 0 : raw.data;
+    const n = data == null ? void 0 : data.name;
+    return typeof n === "string" && n.trim() ? n.trim() : null;
+  }
+  async function fetchZhName(appid) {
+    try {
+      const raw = await getJson(`${STORE_BASE}/api/appdetails?appids=${appid}&l=schinese&filters=basic`);
+      const name = parseZhName(raw);
+      if (!name) return { ok: false, reason: "parse", message: "商店没有给出这款游戏的名字" };
+      return { ok: true, data: name };
+    } catch (e) {
+      const err = e;
+      return { ok: false, reason: err.reason === "auth" ? "parse" : "network", message: "中文名拉取失败：请检查网络" };
     }
   }
   var API_BASE, STORE_BASE, REQUEST_TIMEOUT_MS, SteamHttpError;
@@ -1788,10 +1816,12 @@ var BZW_gameshelf = (() => {
       const appid = Number(readVal(fm != null ? fm : {}, "AppID", "appid"));
       if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
       const icon2 = readVal(fm, "图标", "");
+      const zh = fm["中文名"];
       items.push({
         file,
         appid,
         name: file.basename.replace(/^《/, "").replace(/》$/, "").trim() || `App ${appid}`,
+        zhName: typeof zh === "string" && zh.trim() ? zh.trim() : null,
         playtimeMin: intOf(readVal(fm, "游玩分钟", "playtimeMin")),
         lastPlayed: typeof readVal(fm, "最后游玩", "lastPlayed") === "string" ? String(readVal(fm, "最后游玩", "lastPlayed")) : "",
         cover: typeof readVal(fm, "封面", "cover") === "string" && /^https?:\/\//.test(String(readVal(fm, "封面", "cover"))) ? String(readVal(fm, "封面", "cover")) : steamCoverUrl(appid),
@@ -4300,9 +4330,9 @@ var BZW_gameshelf = (() => {
       if (r.added > 0) parts.push(`新增 ${r.added}`);
       if (r.updated > 0) parts.push(`更新 ${r.updated}`);
       if (r.offShelf > 0) parts.push(`下架标记 ${r.offShelf}`);
-      M.statusMsg = parts.length > 0 ? `同步完成：${parts.join("，")}` : "同步完成：库内无变化";
-      if (r.added > 0 || r.updated > 0 || r.offShelf > 0) {
-        notice(`游戏架已同步：${M.statusMsg.replace("同步完成：", "")}`, "success");
+      M.statusMsg = parts.length > 0 ? `同步完成：${parts.join("，")}` : "";
+      if (parts.length > 0) {
+        notice(`游戏架已同步：${parts.join("，")}`, "success");
       }
       emitDomainEvent("gameshelf", { kind: "synced", added: r.added, updated: r.updated, offShelf: r.offShelf });
       return { ok: true, ...r };
@@ -12962,7 +12992,7 @@ ${countsToText(s.missing)}
   }
   function unloadDataCheckup() {
     runSeq += 1;
-    running2 = false;
+    running3 = false;
     hostApp = null;
     escHandle == null ? void 0 : escHandle.unregister();
     escHandle = null;
@@ -13014,7 +13044,7 @@ ${countsToText(s.missing)}
   }
   function renderBody() {
     if (!overlay) return;
-    if (running2) {
+    if (running3) {
       renderRunning();
       return;
     }
@@ -13041,7 +13071,7 @@ ${countsToText(s.missing)}
   function renderFoot() {
     const foot = footEl();
     foot.innerHTML = "";
-    if (running2) {
+    if (running3) {
       foot.appendChild(uiBtn({ label: "取消体检", onClick: () => cancelRun() }));
       return;
     }
@@ -13051,8 +13081,8 @@ ${countsToText(s.missing)}
     );
   }
   async function startRun() {
-    if (!hostApp || running2) return;
-    running2 = true;
+    if (!hostApp || running3) return;
+    running3 = true;
     const seq = ++runSeq;
     renderRunning();
     try {
@@ -13064,11 +13094,11 @@ ${countsToText(s.missing)}
         }
       });
       if (seq !== runSeq) return;
-      running2 = false;
+      running3 = false;
       if (report) renderReport(report, false);
       else renderBody();
     } catch (e) {
-      running2 = false;
+      running3 = false;
       if (seq !== runSeq) return;
       notice("体检失败：" + (e instanceof Error ? e.message : String(e)), "error");
       renderBody();
@@ -13076,7 +13106,7 @@ ${countsToText(s.missing)}
   }
   function cancelRun() {
     runSeq += 1;
-    running2 = false;
+    running3 = false;
     renderBody();
   }
   function renderRunning() {
@@ -13262,7 +13292,7 @@ ${countsToText(s.missing)}
     }
     await startRun();
   }
-  var overlay, escHandle, runSeq, running2, hostApp, OVERLAY_ID, FRAME_ID;
+  var overlay, escHandle, runSeq, running3, hostApp, OVERLAY_ID, FRAME_ID;
   var init_ui2 = __esm({
     "src/checkup/ui.ts"() {
       init_z_order();
@@ -13274,7 +13304,7 @@ ${countsToText(s.missing)}
       overlay = null;
       escHandle = null;
       runSeq = 0;
-      running2 = false;
+      running3 = false;
       hostApp = null;
       OVERLAY_ID = "bz-checkup-mask";
       FRAME_ID = "bz-checkup-popup";
@@ -15331,13 +15361,13 @@ ${countsToText(s.missing)}
   // src/pomodoro/statusbar.ts
   function syncPomodoroStatusBar(state3, remainSec) {
     if (!statusEl) return;
-    const running3 = state3.endTime !== null;
-    const paused = !running3 && state3.paused;
-    statusEl.classList.toggle("pomodoro-statusbar-idle", !running3 && !paused);
+    const running4 = state3.endTime !== null;
+    const paused = !running4 && state3.paused;
+    statusEl.classList.toggle("pomodoro-statusbar-idle", !running4 && !paused);
     statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
     statusEl.title = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
     if (textSpan) {
-      if (running3) {
+      if (running4) {
         const m = Math.floor(remainSec / 60);
         const s = remainSec % 60;
         textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
@@ -15661,9 +15691,9 @@ ${countsToText(s.missing)}
   function updateButtons() {
     const startBtn = document.getElementById("pomodoro-btn-start");
     if (!startBtn) return;
-    const running3 = state.endTime !== null;
-    startBtn.textContent = running3 ? "暂停" : state.paused ? "继续" : "开始";
-    const locked = options().forceFocus && state.phase === "focus" && (running3 || state.paused);
+    const running4 = state.endTime !== null;
+    startBtn.textContent = running4 ? "暂停" : state.paused ? "继续" : "开始";
+    const locked = options().forceFocus && state.phase === "focus" && (running4 || state.paused);
     const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
     startBtn.disabled = startLocked;
     const resetBtn = document.getElementById("pomodoro-btn-reset");
@@ -20920,12 +20950,12 @@ ${bodyText.substring(0, 6e3)}`;
       if (drainTimer === null) {
         drainTimer = setTimeout(() => {
           drainTimer = null;
-          void drainQueue();
+          void drainQueue2();
         }, 0);
       }
     });
   }
-  async function drainQueue() {
+  async function drainQueue2() {
     var _a2;
     if (draining) return;
     draining = true;
@@ -24216,9 +24246,9 @@ ${c.trim()}
     const root = await rootNode(rootPath, scan);
     nodes.set(root.id, root);
     order.push(root.id);
-    const queue2 = [root.id];
-    while (queue2.length) {
-      const node = nodes.get(queue2.shift());
+    const queue3 = [root.id];
+    while (queue3.length) {
+      const node = nodes.get(queue3.shift());
       if (node.kind !== "card" || node.missing) continue;
       const sameNote = await findSameNameNote(node.path, ctx);
       if (sameNote && !nodes.has(sameNote)) {
@@ -24259,7 +24289,7 @@ ${c.trim()}
             edges.push({ from: node.id, to: child.id, suggested: false });
           }
         }
-        if (fresh && child.kind === "card" && !child.missing) queue2.push(child.id);
+        if (fresh && child.kind === "card" && !child.missing) queue3.push(child.id);
       }
     }
     const firstIdx = new Map(order.map((id, i) => [id, i]));
@@ -30379,8 +30409,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
             return;
           }
           const active2 = tasks.filter((t) => !t.archived);
-          const running3 = BatchRunner.running;
-          if (running3) {
+          const running4 = BatchRunner.running;
+          if (running4) {
             const idx = active2.findIndex((t) => t.status === "processing");
             const banner = document.createElement("div");
             banner.className = "bz-kb-banner";
@@ -30415,9 +30445,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!this.videoPopup) return;
           const run = q(this.videoPopup, "#lit-btn-video-run");
           if (!run) return;
-          const running3 = BatchRunner.running;
+          const running4 = BatchRunner.running;
           const hasWork = tasks.some((t) => t.status === "pending" || t.status === "failed");
-          if (running3) {
+          if (running4) {
             run.disabled = false;
             const retry = this.batchAbortLabel === "终止整批";
             if (this.runIcon) setIcon(this.runIcon, "square");
@@ -32570,9 +32600,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
     let _refs = [];
     let _cancelled = false;
     let _flushers = [];
-    let queue2 = Promise.resolve();
+    let queue3 = Promise.resolve();
     function enqueue2(task) {
-      queue2 = queue2.then(() => {
+      queue3 = queue3.then(() => {
         if (_cancelled) return;
         return task();
       }).catch((e) => {
@@ -32675,7 +32705,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }
         _refs = [];
         initialized8 = false;
-        queue2 = Promise.resolve();
+        queue3 = Promise.resolve();
       }
     };
   }
@@ -41944,12 +41974,12 @@ ${n.content.slice(0, 2e3)}
     const meta = { ...priMeta, notes };
     let panel2 = primary.panel;
     if (conflict.panel && (!panel2 || conflict.panel.generatedAt > panel2.generatedAt)) panel2 = conflict.panel;
-    const queue2 = [...primary.link.queue];
-    const seen = new Set(queue2.map((q2) => q2.path));
+    const queue3 = [...primary.link.queue];
+    const seen = new Set(queue3.map((q2) => q2.path));
     for (const q2 of conflict.link.queue) {
       if (!seen.has(q2.path)) {
         seen.add(q2.path);
-        queue2.push(q2);
+        queue3.push(q2);
       }
     }
     const state3 = { ...primary.link.state };
@@ -41977,7 +42007,7 @@ ${n.content.slice(0, 2e3)}
       ]);
       weekly = { ...weekly, knownPaths: [...union] };
     }
-    return { version: primary.version, meta, panel: panel2, link: { queue: queue2, state: state3 }, chatHistory: chatTrimmed, weekly };
+    return { version: primary.version, meta, panel: panel2, link: { queue: queue3, state: state3 }, chatHistory: chatTrimmed, weekly };
   }
   function buildRowOffsets(meta) {
     const map = /* @__PURE__ */ new Map();
@@ -49288,6 +49318,88 @@ ${n.content.slice(0, 2e3)}
   init_notes();
   init_posters();
 
+  // src/gameshelf/names.ts
+  init_notes();
+  init_state();
+  init_steam();
+  var ZH_NAME_INTERVAL_MS = 900;
+  var ZH_NAME_MAX_FAILURES = 3;
+  var queue2 = [];
+  var queued = /* @__PURE__ */ new Set();
+  var running2 = false;
+  var failures = 0;
+  var intervalMs = ZH_NAME_INTERVAL_MS;
+  var rerenderTimer2 = null;
+  function drainQueue() {
+    while (queue2.length > 0) queued.delete(queue2.shift().item.appid);
+  }
+  function ensureZhNames(app, items) {
+    let added = 0;
+    for (const it of items) {
+      if (it.zhName) continue;
+      if (queued.has(it.appid)) continue;
+      queued.add(it.appid);
+      queue2.push({ app, item: it, file: it.file });
+      added += 1;
+    }
+    if (added > 0 && !running2) void runQueue2();
+  }
+  async function runQueue2() {
+    running2 = true;
+    failures = 0;
+    while (queue2.length > 0) {
+      if (failures >= ZH_NAME_MAX_FAILURES) {
+        drainQueue();
+        break;
+      }
+      const job = queue2.shift();
+      try {
+        const r = await fetchZhName(job.item.appid);
+        if (r.ok) {
+          failures = 0;
+          job.item.zhName = r.data;
+          if (job.file) {
+            try {
+              await upsertDetail(job.app, job.file, { 中文名: r.data });
+            } catch (e) {
+              console.warn("bz 游戏架：中文名写回失败:", job.item.name, e);
+            }
+          }
+          scheduleRerender2();
+        } else {
+          failures += 1;
+        }
+      } catch (e) {
+        failures += 1;
+        console.warn("bz 游戏架：中文名拉取异常:", job.item.name, e);
+      } finally {
+        queued.delete(job.item.appid);
+      }
+      if (queue2.length > 0) await sleep(intervalMs);
+    }
+    running2 = false;
+  }
+  function sleep(ms) {
+    return new Promise((r) => setTimeout(r, ms));
+  }
+  function scheduleRerender2() {
+    if (rerenderTimer2) return;
+    rerenderTimer2 = setTimeout(() => {
+      var _a2, _b2;
+      rerenderTimer2 = null;
+      (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
+    }, 1200);
+  }
+  function unloadZhNames() {
+    queue2.length = 0;
+    queued.clear();
+    failures = 0;
+    if (rerenderTimer2) {
+      clearTimeout(rerenderTimer2);
+      rerenderTimer2 = null;
+    }
+  }
+
   // src/gameshelf/ui.ts
   init_dom();
   init_esc_manager();
@@ -49296,6 +49408,7 @@ ${n.content.slice(0, 2e3)}
   init_state();
 
   // src/gameshelf/report.ts
+  init_state();
   var hours = (it) => (it.playtimeMin || 0) / 60;
   var BUCKETS = [
     { key: "all", label: "全部", test: () => true },
@@ -49321,7 +49434,7 @@ ${n.content.slice(0, 2e3)}
     const withDate = active2.filter((it) => lastPlayedMs(it.lastPlayed) > 0);
     const recent2 = active2.filter((it) => lastPlayedMs(it.lastPlayed) >= nowMs - RECENT_WINDOW_MS).sort((a, b) => lastPlayedMs(b.lastPlayed) - lastPlayedMs(a.lastPlayed));
     const latest = [...withDate].sort((a, b) => lastPlayedMs(b.lastPlayed) - lastPlayedMs(a.lastPlayed)).slice(0, LATEST_N);
-    const top = [...active2].sort((a, b) => b.playtimeMin - a.playtimeMin).slice(0, TOP_N).map((it) => ({ appid: it.appid, name: it.name, hours: round1((it.playtimeMin || 0) / 60) }));
+    const top = [...active2].sort((a, b) => b.playtimeMin - a.playtimeMin).slice(0, TOP_N).map((it) => ({ appid: it.appid, name: displayNameOf(it), hours: round1((it.playtimeMin || 0) / 60) }));
     return {
       total: active2.length,
       offShelfCount: items.length - active2.length,
@@ -49417,6 +49530,7 @@ ${n.content.slice(0, 2e3)}
       官网: one(s.website),
       详情时间: (/* @__PURE__ */ new Date()).toISOString()
     };
+    if (s.name && s.name.trim()) out["中文名"] = one(s.name);
     if (s.metacritic !== null) out["Metacritic"] = s.metacritic;
     if (s.reviewsTotal !== null) out["评测数"] = s.reviewsTotal;
     if (s.reviewsPositive !== null) out["好评数"] = s.reviewsPositive;
@@ -49430,6 +49544,7 @@ ${n.content.slice(0, 2e3)}
     const s = (k) => fm[k] === void 0 || fm[k] === "" ? null : one(fm[k]);
     const n = (k) => fm[k] === void 0 || fm[k] === "" || !Number.isFinite(Number(fm[k])) ? null : Number(fm[k]);
     const out = {
+      name: s("中文名"),
       genres: s("类型"),
       developers: s("开发商"),
       publishers: s("发行商"),
@@ -49512,12 +49627,27 @@ ${n.content.slice(0, 2e3)}
   var ESC_ID3 = "gameshelf";
   var maskEl4 = null;
   var popupEl2 = null;
-  var segRef = null;
   var sortSegRef = null;
   var countRef = null;
   var heroEl = null;
   var gridEl = null;
   var lastReport2 = null;
+  function fillViewSlot(app) {
+    const slot = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-viewslot");
+    if (!slot) return;
+    const onStats = M.view === "stats";
+    const b = uiBtn({
+      label: onStats ? "游戏墙" : "数据统计",
+      icon: onStats ? "layout-grid" : "bar-chart-3",
+      on: onStats,
+      onClick: () => {
+        M.view = onStats ? "shelf" : "stats";
+        renderAll5(app);
+      }
+    });
+    b.classList.add("bz-gs-viewbtn");
+    slot.replaceChildren(b);
+  }
   function hoursOf(min) {
     return Math.round((min || 0) / 60 * 10) / 10;
   }
@@ -49565,6 +49695,8 @@ ${n.content.slice(0, 2e3)}
     return "时长第一";
   }
   function heroHtml(item, cover, rp, tag = heroTag()) {
+    const zh = displayNameOf(item);
+    const orig = item.zhName && item.zhName !== item.name ? item.name : "";
     const sub = [
       hoursOf(item.playtimeMin) > 0 ? `${numText(hoursOf(item.playtimeMin))} 小时` : "从未启动",
       item.lastPlayed ? `最后游玩 ${dateText(item.lastPlayed)}` : "没有游玩记录",
@@ -49578,7 +49710,8 @@ ${n.content.slice(0, 2e3)}
     <div class="bz-gs-hero-in">
       <div class="bz-gs-hero-left">
         <span class="bz-gs-hero-tag">${escHtml(tag)}</span>
-        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(item.name)}</div>
+        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(zh)}</div>
+        ${orig ? `<div class="bz-gs-hero-orig">${escHtml(orig)}</div>` : ""}
         <div class="bz-gs-hero-sub">${escHtml(sub)}</div>
       </div>
       <div class="bz-gs-hero-side">
@@ -49598,13 +49731,12 @@ ${n.content.slice(0, 2e3)}
   }
   function filterList(items) {
     const def = bucketOf(M.bucket);
-    const q2 = M.query.trim().toLowerCase();
-    return items.filter((it) => def.test(it) && (!q2 || it.name.toLowerCase().includes(q2)));
+    return items.filter((it) => def.test(it) && nameMatches(it, M.query));
   }
   function sortList(items) {
     const list = [...items];
     if (M.sort === "last") return list.sort((a, b) => (b.lastPlayed || "").localeCompare(a.lastPlayed || "") || b.playtimeMin - a.playtimeMin);
-    if (M.sort === "name") return list.sort((a, b) => a.name.localeCompare(b.name, "zh-Hans-CN"));
+    if (M.sort === "name") return list.sort((a, b) => displayNameOf(a).localeCompare(displayNameOf(b), "zh-Hans-CN"));
     return list.sort((a, b) => b.playtimeMin - a.playtimeMin);
   }
   function shelfHtml(items, coverOf, opts = {}) {
@@ -49612,20 +49744,25 @@ ${n.content.slice(0, 2e3)}
     const max = Math.max(1, (_a2 = opts.maxMin) != null ? _a2 : 1);
     const cards = items.map((it, i) => {
       const cover = coverOf(it);
+      const zh = displayNameOf(it);
+      const orig = it.zhName && it.zhName !== it.name ? it.name : "";
       const rank = opts.showRank && i < 3 ? `<span class="bz-gs-rank">NO.${i + 1}</span>` : "";
       const pct = Math.max(1, Math.min(100, Math.round((it.playtimeMin || 0) / max * 100)));
       const hint = it.playtimeMin > 0 ? `${numText(hoursOf(it.playtimeMin))} 小时` : "从未启动";
       const last = it.lastPlayed ? dateText(it.lastPlayed) : "—";
       return `
-      <button type="button" class="bz-gs-card${it.offShelf ? " bz-gs-card--off" : ""}" data-appid="${it.appid}" title="${escAttr(it.name)}">
-        <span class="bz-gs-cover" data-initial="${escAttr(firstChar(it.name))}">
+      <button type="button" class="bz-gs-card${it.offShelf ? " bz-gs-card--off" : ""}" data-appid="${it.appid}" title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">
+        <span class="bz-gs-cover" data-initial="${escAttr(firstChar(zh))}">
           ${cover ? `<img loading="lazy" src="${escAttr(cover)}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
           ${rank}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ""}
           <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
         </span>
         <span class="bz-gs-cardbar">
-          <span class="bz-gs-name">${escHtml(it.name)}</span>
+          <span class="bz-gs-namebox">
+            <span class="bz-gs-name">${escHtml(zh)}</span>
+            ${orig ? `<span class="bz-gs-orig">${escHtml(orig)}</span>` : ""}
+          </span>
           <span class="bz-gs-hours">${hoursText(it.playtimeMin)}</span>
         </span>
         <span class="bz-gs-strip"><i style="width:${pct}%"></i></span>
@@ -49678,7 +49815,7 @@ ${n.content.slice(0, 2e3)}
       (it) => `
     <div class="bz-gs-latestrow" data-appid="${it.appid}">
       <span class="bz-gs-latestdate">${escHtml(dateText(it.lastPlayed))}</span>
-      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${escHtml(it.name)}</span>
+      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${escHtml(displayNameOf(it))}</span>
       <span class="bz-gs-latesth">${hoursText(it.playtimeMin)}</span>
     </div>`
     ).join("") : '<div class="bz-gs-dim">Steam 没给最后游玩日期</div>';
@@ -49721,6 +49858,8 @@ ${n.content.slice(0, 2e3)}
   }
   function detailShellHtml(item, cover, fm) {
     const store2 = fmToStore(fm);
+    const zh = displayNameOf(item);
+    const orig = item.zhName && item.zhName !== item.name ? item.name : "";
     const chips = [];
     if (store2.genres) chips.push(store2.genres);
     if (store2.platforms) chips.push(store2.platforms);
@@ -49732,18 +49871,18 @@ ${n.content.slice(0, 2e3)}
     return `
   <div class="bz-gs-detail${item.offShelf ? " bz-gs-detail--off" : ""}">
     <div class="bz-gs-detail-top">
-      <div class="bz-gs-detail-cover" data-initial="${escAttr(firstChar(item.name))}">
+      <div class="bz-gs-detail-cover" data-initial="${escAttr(firstChar(zh))}">
         ${cover ? `<img src="${escAttr(cover)}" alt="">` : ""}
       </div>
       <div class="bz-gs-detail-id">
         <div class="bz-gs-detail-name">
           ${item.icon ? `<img class="bz-gs-detail-icon" src="${escAttr(item.icon)}" alt="">` : ""}
-          <span title="${escAttr(item.name)}">${escHtml(item.name)}</span>
+          <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${escHtml(zh)}</span>
         </div>
         <div class="bz-gs-detail-chips" id="bz-gs-detail-chips">
           ${chips.map((c) => `<span class="bz-gs-chiplet">${escHtml(c)}</span>`).join("")}
         </div>
-        <div class="bz-gs-detail-appid">AppID ${item.appid}</div>
+        <div class="bz-gs-detail-appid">${orig ? `原名 ${escHtml(orig)} · ` : ""}AppID ${item.appid}</div>
       </div>
     </div>
     ${mineHtml(item, fm)}
@@ -49884,9 +50023,10 @@ ${n.content.slice(0, 2e3)}
     if (!item) return;
     const cached = safeDetailFm(app, item.file);
     const cover = posterDisplayUrl(app, item.appid, item.cover);
-    const modal = uiModalSafe(detailShellHtml(item, cover, cached), `《${item.name}》`);
+    const modal = uiModalSafe(detailShellHtml(item, cover, cached), `《${displayNameOf(item)}》`);
     if (!modal) return;
     const popup = modal.popup;
+    modal.mask.classList.add("bz-gs-detail-mask");
     const achBox = popup.querySelector("#bz-gs-detail-ach");
     void loadAchievements(app, item, cached).then((sec) => {
       if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, sec);
@@ -49925,21 +50065,11 @@ ${n.content.slice(0, 2e3)}
       action: { label: "立即同步", icon: "refresh-cw", onClick: () => void onSyncClick(app) }
     });
     countRef = head;
-    const seg = uiSegmented({
-      value: M.view,
-      label: "视图切换",
-      options: [
-        { value: "shelf", label: "游戏墙" },
-        { value: "stats", label: "数据统计" }
-      ],
-      onChange: (v) => {
-        M.view = v;
-        renderAll5(app);
-      }
-    });
-    segRef = seg;
-    const spacer = head.el.querySelector(".bz-main-spacer");
-    if (spacer) head.el.insertBefore(seg.el, spacer);
+    const slot = document.createElement("span");
+    slot.className = "bz-gs-viewslot";
+    const primaryBtn = head.el.querySelector(".bz-btn--primary");
+    if (primaryBtn) head.el.insertBefore(slot, primaryBtn);
+    else head.el.appendChild(slot);
     const close = uiBtn({ label: "关闭", icon: "x", onClick: () => closePanel4() });
     close.classList.add("bz-gs-close");
     close.setAttribute("aria-label", "关闭");
@@ -49987,6 +50117,7 @@ ${n.content.slice(0, 2e3)}
     const { runSync: runSync2 } = await Promise.resolve().then(() => (init_sync(), sync_exports));
     await runSync2(app, { force: true });
     void ensurePostersFor(app);
+    ensureZhNames(app, M.items);
     renderAll5(app);
   }
   async function ensurePostersFor(app) {
@@ -49997,7 +50128,7 @@ ${n.content.slice(0, 2e3)}
     const frame = M.currentOverlay;
     if (!frame || !document.body.contains(frame)) return;
     const configured = isConfigured();
-    segRef == null ? void 0 : segRef.setValue(M.view);
+    fillViewSlot(app);
     countRef == null ? void 0 : countRef.setCount(configured ? `${M.items.filter((it) => !it.offShelf).length} 款` : "");
     const syncBtn = frame.querySelector(".bz-btn--primary");
     if (syncBtn) syncBtn.disabled = M.syncing || !configured;
@@ -50145,9 +50276,11 @@ ${n.content.slice(0, 2e3)}
   }
   function openPanel3(app) {
     createUI(app);
+    M.view = "shelf";
     M.renderFn = () => renderAll5(app);
     renderAll5(app);
     void ensurePostersFor(app);
+    ensureZhNames(app, M.items);
   }
   function closePanel4() {
     var _a2;
@@ -50161,6 +50294,7 @@ ${n.content.slice(0, 2e3)}
     gridEl = null;
     lastReport2 = null;
     clearDetailCache();
+    unloadZhNames();
   }
 
   // src/gameshelf/index.ts
@@ -50183,21 +50317,23 @@ ${n.content.slice(0, 2e3)}
       await m.autoSyncOnOpen(app);
       renderAll5(app);
       ensurePosters(app, M.items.map((it) => ({ appid: it.appid, cover: it.cover })));
+      ensureZhNames(app, M.items);
     });
   }
   function unloadGameshelf() {
     initialized7 = false;
     closePanel4();
     unloadPosters();
+    unloadZhNames();
     resetGameshelfState();
   }
 
   // prototypes/gameshelf/fake-sim.ts
   var FOLDER = "我的/游戏";
-  var SEED_MARK = "bz-sim:__gameshelf-seed-v1";
+  var SEED_MARK = "bz-sim:__gameshelf-seed-v2";
   var SETTINGS_KEY = "bz-sim:__settings";
   function mdOf(g) {
-    return [
+    const lines = [
       "---",
       "tags:",
       "- 游戏",
@@ -50206,7 +50342,10 @@ ${n.content.slice(0, 2e3)}
       `最后游玩: "${g.last}"`,
       `封面: ${g.cover}`,
       `同步时间: "2026-09-17T05:35:19.664Z"`,
-      `已下架: false`,
+      `已下架: false`
+    ];
+    if (g.zh) lines.push(`中文名: ${g.zh}`);
+    lines.push(
       `图标: ${g.icon || '""'}`,
       `Windows分钟: ${g.win}`,
       `SteamDeck分钟: ${g.deck}`,
@@ -50216,7 +50355,8 @@ ${n.content.slice(0, 2e3)}
       "---",
       "",
       ""
-    ].join("\n");
+    );
+    return lines.join("\n");
   }
   function seedDatabase() {
     const items = window.GAMESHELF_DATA || [];

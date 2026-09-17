@@ -71,6 +71,8 @@ export function storeToFm(s: StoreMeta): Record<string, unknown> {
     官网: one(s.website),
     详情时间: new Date().toISOString(),
   };
+  // 中文名：商店返回的本地化名（l=schinese）。空值不写——别拿空串盖掉已回填的值
+  if (s.name && s.name.trim()) out['中文名'] = one(s.name);
   if (s.metacritic !== null) out['Metacritic'] = s.metacritic;
   if (s.reviewsTotal !== null) out['评测数'] = s.reviewsTotal;
   if (s.reviewsPositive !== null) out['好评数'] = s.reviewsPositive;
@@ -86,6 +88,7 @@ export function fmToStore(fm: Record<string, unknown>): Partial<StoreMeta> {
   const s = (k: string): string | null => (fm[k] === undefined || fm[k] === '' ? null : one(fm[k]));
   const n = (k: string): number | null => (fm[k] === undefined || fm[k] === '' || !Number.isFinite(Number(fm[k])) ? null : Number(fm[k]));
   const out: Partial<StoreMeta> = {
+    name: s('中文名'),
     genres: s('类型'),
     developers: s('开发商'),
     publishers: s('发行商'),

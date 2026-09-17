@@ -27,7 +27,7 @@ import { closePanel } from '../../src/gameshelf/ui';
 const FOLDER = '我的/游戏';
 /** 种子标记：存在 = 已种子过（用户在壳里的改动保留，不被覆盖）。
  *  ⚠️ 改种子内容必须同一次把版本号 +1——否则浏览器老 localStorage 里的旧种子不会重播。 */
-const SEED_MARK = 'bz-sim:__gameshelf-seed-v1';
+const SEED_MARK = 'bz-sim:__gameshelf-seed-v2';
 /** 设置持久键 */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -39,7 +39,7 @@ declare global {
 
 /** 种子条目 → 游戏笔记（frontmatter 与 notes.ts noteMarkdown 同键同序） */
 function mdOf(g: SeedGame): string {
-  return [
+  const lines = [
     '---',
     'tags:',
     '- 游戏',
@@ -49,6 +49,10 @@ function mdOf(g: SeedGame): string {
     `封面: ${g.cover}`,
     `同步时间: "2026-09-17T05:35:19.664Z"`,
     `已下架: false`,
+  ];
+  // 中文名：有才写（与真机一致——没回填过的笔记就没有这个键，names.ts 队列会去补）
+  if (g.zh) lines.push(`中文名: ${g.zh}`);
+  lines.push(
     `图标: ${g.icon || '""'}`,
     `Windows分钟: ${g.win}`,
     `SteamDeck分钟: ${g.deck}`,
@@ -58,7 +62,8 @@ function mdOf(g: SeedGame): string {
     '---',
     '',
     '',
-  ].join('\n');
+  );
+  return lines.join('\n');
 }
 
 /** 种子：GAMESHELF_DATA → fake vault 的游戏笔记（仅首启；ctime 按导出序递减） */

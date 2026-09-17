@@ -199,9 +199,20 @@
         t('view页CSS链生效', cssAlive(dd) && cssAlive(md));
         t('桌面 147 卡', cards(dd) === DATA.length);
         t('移动 147 卡', cards(md) === DATA.length);
-        t('门面渲染首位', !!dt('.bz-gs-hero-name') && dt('.bz-gs-hero-name').textContent === DATA[0].name);
+        // 展示名口径 = 中文名优先（种子里的 zh 来自真实 appdetails 的本地化名）
+        const dn = (g) => (g.zh && g.zh.trim()) || g.name;
+        t('门面渲染首位', !!dt('.bz-gs-hero-name') && dt('.bz-gs-hero-name').textContent === dn(DATA[0]));
+        t('卡片显示中文名', dt('.bz-gs-card .bz-gs-name').textContent === dn(DATA[0]));
+        t('中文名不同时列出原名', !!dt('.bz-gs-card .bz-gs-orig'));
         t('工具行 6 档位 chips', dd.querySelectorAll('.bz-gs-chip').length === 6);
         t('排序三档', dd.querySelectorAll('#bz-gs-sort .bz-segmented-btn').length === 3);
+        t('视图切换不做页签', dd.querySelectorAll('.bz-main-head .bz-segmented').length === 0);
+        t('桌面无关闭钮', getComputedStyle(dt('.bz-gs-close')).display === 'none');
+        t('视图入口在数据统计位', !!dt('.bz-main-head .bz-gs-viewbtn') && dt('.bz-main-head .bz-gs-viewbtn').textContent.includes('数据统计'));
+        // 右侧顺序：数据统计 → 立即同步（用户要求两者都放右边，统计在前）
+        t('右侧顺序 统计→同步', !!dt('.bz-gs-viewslot') && !!dt('.bz-gs-viewslot').nextElementSibling
+          && dt('.bz-gs-viewslot').nextElementSibling.classList.contains('bz-btn--primary'));
+        t('移动端有关闭钮', getComputedStyle(mob('.bz-gs-close')).display !== 'none');
 
         // 档位筛选：从未启动（种子 13 款）——口径从种子现算，不硬编码
         const idle = DATA.filter((g) => !g.min).length;
@@ -212,44 +223,52 @@
         await sleep(120);
         t('回全部 ' + DATA.length + ' 卡', cards(dd) === DATA.length);
 
-        // 搜索（只重填列表，输入框不重建）
+        // 搜索：原名与中文名都命中（用户可能记得任一语言的名字）
         const q = dt('.bz-gs-search input');
         q.value = 'Deep Rock';
         q.dispatchEvent(new Event('input', { bubbles: true }));
         await sleep(150);
-        const hits = DATA.filter((g) => g.name.toLowerCase().includes('deep rock')).length;
+        const hits = DATA.filter((g) => g.name.toLowerCase().includes('deep rock') || (g.zh || '').toLowerCase().includes('deep rock')).length;
         t('搜索命中 ' + hits + ' 卡', cards(dd) === hits && dt('.bz-gs-search input') === q);
+        q.value = '深岩';
+        q.dispatchEvent(new Event('input', { bubbles: true }));
+        await sleep(150);
+        t('中文名可搜', cards(dd) === DATA.filter((g) => (g.zh || '').includes('深岩')).length);
         q.value = '';
         q.dispatchEvent(new Event('input', { bubbles: true }));
         await sleep(120);
 
-        // 排序：名称升序 → 首位应为 zh 排序最小者
+        // 排序：名称升序 → 首位应为展示名（中文名优先）排序最小者
         dt('#bz-gs-sort .bz-segmented-btn:nth-child(3)').click();
         await sleep(120);
-        const firstName = [...DATA].sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'))[0].name;
+        const firstName = dn([...DATA].sort((a, b) => dn(a).localeCompare(dn(b), 'zh-Hans-CN'))[0]);
         t('名称排序首位=' + firstName, dt('.bz-gs-hero-name').textContent === firstName);
         dt('#bz-gs-sort .bz-segmented-btn:nth-child(1)').click();
         await sleep(120);
 
         // 数据统计页（注意：Document 没有 textContent——要用 dd.body.textContent）
-        dd.querySelectorAll('.bz-main-head .bz-segmented-btn')[1].click();
+        // 入口 = 头行右侧工具位按钮（一个槽位随状态只出一条），不是页签
+        dt('.bz-gs-viewbtn').click();
         await sleep(200);
         t('统计页 5 张统计卡', dd.querySelectorAll('.bz-stat').length === 5);
         t('统计页含排行与分布', !!dt('.bz-gs-rows') && !!dt('.bz-gs-cols') && dd.body.textContent.includes('时长档位分布'));
         t('统计页口径注记', dd.body.textContent.includes('没有逐日游玩时长'));
+        t('入口变回「游戏墙」', dt('.bz-gs-viewbtn').textContent.includes('游戏墙'));
         const top0 = [...DATA].sort((a, b) => b.min - a.min)[0];
-        t('排行首位=' + top0.name, dt('.bz-gs-rankname').textContent === top0.name);
-        dd.querySelectorAll('.bz-main-head .bz-segmented-btn')[0].click();
+        t('排行首位=' + dn(top0), dt('.bz-gs-rankname').textContent === dn(top0));
+        dt('.bz-gs-viewbtn').click();
         await sleep(200);
-        t('切回游戏墙', cards(dd) === DATA.length);
+        t('切回游戏墙', cards(dd) === DATA.length && dt('.bz-gs-viewbtn').textContent.includes('数据统计'));
 
         // 详情弹窗：真实 appdetails + 成就罐头（走假 requestUrl）
         const first = DATA[0];
         dt('.bz-gs-card').click();
         await sleep(600);
         const modal = dt('.bz-gs-detail-modal');
-        t('详情弹窗开', !!modal && modal.textContent.includes(first.name));
+        t('详情弹窗开', !!modal && modal.textContent.includes(dn(first)));
         t('详情含我的游玩数据', !!dt('.bz-gs-mine-num') && !!dt('.bz-gs-detail-appid'));
+        const gsMask = dt('.bz-gs-detail-mask');
+        t('弹窗遮罩用毛玻璃', !!gsMask && getComputedStyle(gsMask).backdropFilter.includes('blur'));
         await sleep(900); // 等商店/成就两段回填
         const storeTxt = (dt('#bz-gs-detail-store') || {}).textContent || '';
         const achTxt = (dt('#bz-gs-detail-ach') || {}).textContent || '';

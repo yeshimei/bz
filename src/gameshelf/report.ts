@@ -5,7 +5,7 @@
  * 「游玩分布」按 lastPlayed 年份/月份呈现，不做无法兑现的每日时长曲线。
  * 零 IO、零 DOM、无 obsidian 依赖——node 环境可测。
  */
-import type { GameItem, GameshelfBucket } from './state';
+import { displayNameOf, type GameItem, type GameshelfBucket } from './state';
 
 /** 时长档位（游戏墙筛选与统计面板分布共用同一份口径——单源，禁止两处各写一套） */
 export interface BucketDef {
@@ -86,7 +86,7 @@ export function buildReport(items: GameItem[], nowMs = Date.now()): GameshelfRep
   const top = [...active]
     .sort((a, b) => b.playtimeMin - a.playtimeMin)
     .slice(0, TOP_N)
-    .map((it) => ({ appid: it.appid, name: it.name, hours: round1((it.playtimeMin || 0) / 60) }));
+    .map((it) => ({ appid: it.appid, name: displayNameOf(it), hours: round1((it.playtimeMin || 0) / 60) }));
   return {
     total: active.length,
     offShelfCount: items.length - active.length,

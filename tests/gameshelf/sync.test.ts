@@ -77,7 +77,7 @@ function makeApp() {
 /** 测试条目工厂（GameItem 全文；只关心少数字段时也能一眼看清默认值） */
 function item(appid: number, name: string, playtimeMin: number, lastPlayed = '', offShelf = false) {
   return {
-    file: null, appid, name, playtimeMin, lastPlayed, cover: null, icon: null,
+    file: null, appid, name, zhName: null, playtimeMin, lastPlayed, cover: null, icon: null,
     windowsMin: playtimeMin, deckMin: 0, macMin: 0, linuxMin: 0, hasAch: false,
     offShelf, syncedAt: null,
   };
@@ -194,6 +194,17 @@ describe('runSync 同步链路（issue 368）', () => {
     const r = await runSync(makeApp()); // 不 force
     expect(r.ok).toBe(true);
     expect((requestUrl as any).mock.calls.length).toBe(calls);
+  });
+
+  it('库内无变化：状态行留空（不再写「同步完成：库内无变化」）', async () => {
+    setup(CONFIG);
+    mockSteam([{ appid: 1, name: 'A', playtime_forever: 60 }]);
+    const app = makeApp();
+    await runSync(app, { force: true });
+    expect(M.statusMsg).toContain('新增 1');
+    const again = await runSync(app, { force: true }); // 数值一致 → 无变化
+    expect(again.ok).toBe(true);
+    expect(M.statusMsg).toBe('');
   });
 });
 

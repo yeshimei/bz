@@ -17,19 +17,19 @@ import { topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiMainHead, uiSegmented, uiStat, uiEmpty, uiBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
-import { M, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
+import { M, displayNameOf, nameMatches, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
 import { BUCKETS, bucketOf, buildReport, REPORT_CAVEAT, type GameshelfReport } from './report';
 import {
   clearDetailCache, fmToAchSummary, fmToStore, loadAchievements, loadStore, safeDetailFm, storeUrlOf,
   type AchSection, type StoreSection,
 } from './detail';
+import { ensureZhNames, unloadZhNames } from './names';
 import { posterDisplayUrl } from './posters';
 
 const ESC_ID = 'gameshelf';
 
 let maskEl: HTMLElement | null = null;
 let popupEl: HTMLElement | null = null;
-let segRef: { setValue: (v: GameshelfViewKind) => void } | null = null;
 let sortSegRef: { setValue: (v: GameshelfSort) => void } | null = null;
 let countRef: { setCount: (c?: string) => void } | null = null;
 /** 游戏墙的两个动态区（renderList 只重填这两块，保住搜索框焦点与滚动位置） */
@@ -37,6 +37,24 @@ let heroEl: HTMLElement | null = null;
 let gridEl: HTMLElement | null = null;
 /** 本次渲染的报告（工具行计数与统计页共用一次计算） */
 let lastReport: GameshelfReport | null = null;
+
+/** 视图入口按钮：随当前视图只出一条（游戏墙 ↔ 数据统计） */
+function fillViewSlot(app: App): void {
+  const slot = popupEl?.querySelector('.bz-gs-viewslot');
+  if (!slot) return;
+  const onStats = M.view === 'stats';
+  const b = uiBtn({
+    label: onStats ? '游戏墙' : '数据统计',
+    icon: onStats ? 'layout-grid' : 'bar-chart-3',
+    on: onStats,
+    onClick: () => {
+      M.view = onStats ? 'shelf' : 'stats';
+      renderAll(app);
+    },
+  });
+  b.classList.add('bz-gs-viewbtn');
+  slot.replaceChildren(b);
+}
 
 /* ==================== 小工具 ==================== */
 
@@ -105,10 +123,12 @@ function heroTag(): string {
 }
 
 /**
- * 门面（列表首位游戏）：封面放大模糊作环境底 + 名称与时长 + 三个总览数字。
+ * 门面（列表首位游戏）：封面放大模糊作环境底 + 中文名（原名另起一行）+ 三个总览数字。
  * 筛选后门面跟着列表首位走——筛出来的是哪款，门面就展示哪款。
  */
 export function heroHtml(item: GameItem, cover: string, rp: GameshelfReport, tag = heroTag()): string {
+  const zh = displayNameOf(item);
+  const orig = item.zhName && item.zhName !== item.name ? item.name : '';
   const sub = [
     hoursOf(item.playtimeMin) > 0 ? `${numText(hoursOf(item.playtimeMin))} 小时` : '从未启动',
     item.lastPlayed ? `最后游玩 ${dateText(item.lastPlayed)}` : '没有游玩记录',
@@ -122,7 +142,8 @@ export function heroHtml(item: GameItem, cover: string, rp: GameshelfReport, tag
     <div class="bz-gs-hero-in">
       <div class="bz-gs-hero-left">
         <span class="bz-gs-hero-tag">${escHtml(tag)}</span>
-        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(item.name)}</div>
+        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(zh)}</div>
+        ${orig ? `<div class="bz-gs-hero-orig">${escHtml(orig)}</div>` : ''}
         <div class="bz-gs-hero-sub">${escHtml(sub)}</div>
       </div>
       <div class="bz-gs-hero-side">
@@ -150,18 +171,17 @@ function maxPlaytime(): number {
   return Math.max(1, ...M.items.map((it) => it.playtimeMin));
 }
 
-/** 筛选（档位 + 搜索词） */
+/** 筛选（档位 + 搜索词；原名与中文名都参与匹配） */
 export function filterList(items: GameItem[]): GameItem[] {
   const def = bucketOf(M.bucket);
-  const q = M.query.trim().toLowerCase();
-  return items.filter((it) => def.test(it) && (!q || it.name.toLowerCase().includes(q)));
+  return items.filter((it) => def.test(it) && nameMatches(it, M.query));
 }
 
-/** 排序（时长降 / 最近玩降 / 名称升） */
+/** 排序（时长降 / 最近玩降 / 名称升——名称按**展示名**排，用户看到什么就按什么排） */
 export function sortList(items: GameItem[]): GameItem[] {
   const list = [...items];
   if (M.sort === 'last') return list.sort((a, b) => (b.lastPlayed || '').localeCompare(a.lastPlayed || '') || b.playtimeMin - a.playtimeMin);
-  if (M.sort === 'name') return list.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hans-CN'));
+  if (M.sort === 'name') return list.sort((a, b) => displayNameOf(a).localeCompare(displayNameOf(b), 'zh-Hans-CN'));
   return list.sort((a, b) => b.playtimeMin - a.playtimeMin);
 }
 
@@ -180,6 +200,8 @@ export function shelfHtml(
   const cards = items
     .map((it, i) => {
       const cover = coverOf(it);
+      const zh = displayNameOf(it);
+      const orig = it.zhName && it.zhName !== it.name ? it.name : '';
       const rank = opts.showRank && i < 3 ? `<span class="bz-gs-rank">NO.${i + 1}</span>` : '';
       const pct = Math.max(1, Math.min(100, Math.round(((it.playtimeMin || 0) / max) * 100)));
       const hint = it.playtimeMin > 0
@@ -187,15 +209,18 @@ export function shelfHtml(
         : '从未启动';
       const last = it.lastPlayed ? dateText(it.lastPlayed) : '—';
       return `
-      <button type="button" class="bz-gs-card${it.offShelf ? ' bz-gs-card--off' : ''}" data-appid="${it.appid}" title="${escAttr(it.name)}">
-        <span class="bz-gs-cover" data-initial="${escAttr(firstChar(it.name))}">
+      <button type="button" class="bz-gs-card${it.offShelf ? ' bz-gs-card--off' : ''}" data-appid="${it.appid}" title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">
+        <span class="bz-gs-cover" data-initial="${escAttr(firstChar(zh))}">
           ${cover ? `<img loading="lazy" src="${escAttr(cover)}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
           ${rank}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ''}
           <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
         </span>
         <span class="bz-gs-cardbar">
-          <span class="bz-gs-name">${escHtml(it.name)}</span>
+          <span class="bz-gs-namebox">
+            <span class="bz-gs-name">${escHtml(zh)}</span>
+            ${orig ? `<span class="bz-gs-orig">${escHtml(orig)}</span>` : ''}
+          </span>
           <span class="bz-gs-hours">${hoursText(it.playtimeMin)}</span>
         </span>
         <span class="bz-gs-strip"><i style="width:${pct}%"></i></span>
@@ -275,7 +300,7 @@ export function statsHtml(rp: GameshelfReport): string {
           (it) => `
     <div class="bz-gs-latestrow" data-appid="${it.appid}">
       <span class="bz-gs-latestdate">${escHtml(dateText(it.lastPlayed))}</span>
-      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${escHtml(it.name)}</span>
+      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${escHtml(displayNameOf(it))}</span>
       <span class="bz-gs-latesth">${hoursText(it.playtimeMin)}</span>
     </div>`,
         )
@@ -328,6 +353,8 @@ function fillStatsRow(app: App, rp: GameshelfReport): void {
 /** 详情骨架：头部（封面+名称+速览 chip）→ 我的游玩数据（本地秒出）→ 成就段 → 资料段 → 截图段 */
 export function detailShellHtml(item: GameItem, cover: string, fm: Record<string, unknown>): string {
   const store = fmToStore(fm);
+  const zh = displayNameOf(item);
+  const orig = item.zhName && item.zhName !== item.name ? item.name : '';
   const chips: string[] = [];
   if (store.genres) chips.push(store.genres);
   if (store.platforms) chips.push(store.platforms);
@@ -340,18 +367,18 @@ export function detailShellHtml(item: GameItem, cover: string, fm: Record<string
   return `
   <div class="bz-gs-detail${item.offShelf ? ' bz-gs-detail--off' : ''}">
     <div class="bz-gs-detail-top">
-      <div class="bz-gs-detail-cover" data-initial="${escAttr(firstChar(item.name))}">
+      <div class="bz-gs-detail-cover" data-initial="${escAttr(firstChar(zh))}">
         ${cover ? `<img src="${escAttr(cover)}" alt="">` : ''}
       </div>
       <div class="bz-gs-detail-id">
         <div class="bz-gs-detail-name">
           ${item.icon ? `<img class="bz-gs-detail-icon" src="${escAttr(item.icon)}" alt="">` : ''}
-          <span title="${escAttr(item.name)}">${escHtml(item.name)}</span>
+          <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${escHtml(zh)}</span>
         </div>
         <div class="bz-gs-detail-chips" id="bz-gs-detail-chips">
           ${chips.map((c) => `<span class="bz-gs-chiplet">${escHtml(c)}</span>`).join('')}
         </div>
-        <div class="bz-gs-detail-appid">AppID ${item.appid}</div>
+        <div class="bz-gs-detail-appid">${orig ? `原名 ${escHtml(orig)} · ` : ''}AppID ${item.appid}</div>
       </div>
     </div>
     ${mineHtml(item, fm)}
@@ -516,9 +543,12 @@ function openDetail(app: App, appid: number): void {
   if (!item) return;
   const cached = safeDetailFm(app, item.file);
   const cover = posterDisplayUrl(app, item.appid, item.cover);
-  const modal = uiModalSafe(detailShellHtml(item, cover, cached), `《${item.name}》`);
+  const modal = uiModalSafe(detailShellHtml(item, cover, cached), `《${displayNameOf(item)}》`);
   if (!modal) return;
   const popup = modal.popup;
+  // 遮罩毛玻璃：core 的 .bz-overlay-mask 只有平色（各域自绘遮罩都用 --bz-overlay + blur），
+  // 这里给本域弹窗的遮罩补上 blur，与面板遮罩 .bz-panel-overlay 观感一致。
+  modal.mask.classList.add('bz-gs-detail-mask');
 
   const achBox = popup.querySelector('#bz-gs-detail-ach');
   void loadAchievements(app, item, cached).then((sec) => {
@@ -541,8 +571,8 @@ function openDetail(app: App, appid: number): void {
   });
 }
 
-/** 弹窗工厂薄封装（uiModal 直连；抽一层只为收敛标题与宽度口径） */
-function uiModalSafe(content: string, title: string): { popup: HTMLElement } | null {
+/** 弹窗工厂薄封装（uiModal 直连；抽一层只为收敛标题与宽度口径，并把 mask 一并透出） */
+function uiModalSafe(content: string, title: string): { mask: HTMLElement; popup: HTMLElement } | null {
   return uiModal({ head: true, title, maxWidth: 720, className: 'bz-gs-detail-modal', content });
 }
 
@@ -565,21 +595,15 @@ function createUI(app: App): void {
     action: { label: '立即同步', icon: 'refresh-cw', onClick: () => void onSyncClick(app) },
   });
   countRef = head;
-  const seg = uiSegmented<GameshelfViewKind>({
-    value: M.view,
-    label: '视图切换',
-    options: [
-      { value: 'shelf', label: '游戏墙' },
-      { value: 'stats', label: '数据统计' },
-    ],
-    onChange: (v) => {
-      M.view = v;
-      renderAll(app);
-    },
-  });
-  segRef = seg;
-  const spacer = head.el.querySelector('.bz-main-spacer');
-  if (spacer) head.el.insertBefore(seg.el, spacer);
+  // 视图入口 = 头行右侧工具位（一个槽位随状态只出一条）：游戏墙上写「数据统计」，
+  // 统计页上写「游戏墙」——不做平级页签，因为面板默认就是游戏墙，统计是有需要才进的入口。
+  const slot = document.createElement('span');
+  slot.className = 'bz-gs-viewslot';
+  const primaryBtn = head.el.querySelector('.bz-btn--primary');
+  if (primaryBtn) head.el.insertBefore(slot, primaryBtn);
+  else head.el.appendChild(slot);
+  // 关闭：桌面走点遮罩 / ESC（issue 271：头行不放关闭钮）；移动端全屏面板遮不住——
+  // 那个 ✕ 只在 ≤768px 出现（styles.css 里控显隐），否则手机上出去了回不来。
   const close = uiBtn({ label: '关闭', icon: 'x', onClick: () => closePanel() });
   close.classList.add('bz-gs-close');
   close.setAttribute('aria-label', '关闭');
@@ -631,6 +655,7 @@ async function onSyncClick(app: App): Promise<void> {
   const { runSync } = await import('./sync');
   await runSync(app, { force: true });
   void ensurePostersFor(app);
+  ensureZhNames(app, M.items); // 新入库的游戏也要补中文名
   renderAll(app);
 }
 
@@ -645,7 +670,7 @@ export function renderAll(app: App): void {
   const frame = M.currentOverlay;
   if (!frame || !document.body.contains(frame)) return;
   const configured = isConfigured();
-  segRef?.setValue(M.view);
+  fillViewSlot(app);
   countRef?.setCount(configured ? `${M.items.filter((it) => !it.offShelf).length} 款` : '');
   const syncBtn = frame.querySelector('.bz-btn--primary') as HTMLButtonElement | null;
   if (syncBtn) syncBtn.disabled = M.syncing || !configured;
@@ -811,12 +836,14 @@ function isConfigured(): boolean {
 
 /* ==================== 开 / 关 ==================== */
 
-/** 打开面板（挂壳 + 首渲 + 补海报）；已挂则跳过（toggle 关分支走 closePanel） */
+/** 打开面板（挂壳 + 首渲 + 补海报与中文名）；已挂则跳过（toggle 关分支走 closePanel） */
 export function openPanel(app: App): void {
   createUI(app);
+  M.view = 'shelf'; // 面板默认落在游戏墙（统计是点右侧入口才进的一页）
   M.renderFn = () => renderAll(app);
   renderAll(app);
   void ensurePostersFor(app);
+  ensureZhNames(app, M.items);
 }
 
 /** 关闭（toggle 语义的关分支）：DOM 摘除 + ESC 注销；状态保留（下次打开重建） */
@@ -831,4 +858,5 @@ export function closePanel(): void {
   gridEl = null;
   lastReport = null;
   clearDetailCache();
+  unloadZhNames();
 }

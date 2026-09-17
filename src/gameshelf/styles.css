@@ -27,9 +27,18 @@
   align-items: center;
 }
 .bz-gs-panel .bz-main-head .bz-main-title { font-size: var(--bz-font-title); }
-.bz-gs-panel .bz-main-head .bz-segmented { flex: none; margin-left: var(--bz-space-md); }
 .bz-gs-panel .bz-main-head .bz-main-spacer { display: block; }
+/* 视图入口（右侧工具位）：一个槽位随状态只出一条按钮——游戏墙上「数据统计」，
+   统计页上「游戏墙」；选中态用品牌软底，与 .bz-chip--sel 同一套语言 */
+.bz-gs-viewslot { display: inline-flex; align-items: center; }
+.bz-gs-viewbtn.is-on {
+  background: var(--bz-brand-soft) !important;
+  color: var(--bz-brand) !important;
+}
+/* 关闭钮：桌面走点遮罩 / ESC，头行不放（issue 271）；移动端全屏面板遮不住，
+   只在那里露出来（否则手机上出去了回不来）。 */
 .bz-gs-panel .bz-main-head .bz-gs-close {
+  display: none;
   box-shadow: none !important;
   border: none !important;
   background: transparent;
@@ -114,6 +123,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 原名（中文名之下的小字；Steam 库里只有英文名，中文名由 names.ts 回填） */
+.bz-gs-hero-orig {
+  margin-top: 2px;
+  font-size: var(--bz-font-label);
+  color: rgba(255, 255, 255, 0.64);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .bz-gs-hero-sub {
   margin-top: 4px;
   font-size: var(--bz-font-meta);
@@ -137,6 +155,7 @@
 .bz-gs-hero--bare { color: var(--bz-text-1); }
 .bz-gs-hero--bare .bz-gs-hero-veil { display: none; }
 .bz-gs-hero--bare .bz-gs-hero-sub,
+.bz-gs-hero--bare .bz-gs-hero-orig,
 .bz-gs-hero--bare .bz-gs-hero-side span { color: var(--bz-text-3); }
 .bz-gs-hero--bare .bz-gs-hero-tag { color: var(--bz-on-brand); }
 
@@ -275,15 +294,29 @@
 .bz-gs-card--off .bz-gs-name { color: var(--bz-text-2); }
 .bz-gs-cardbar {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: var(--bz-space-sm);
   min-width: 0;
 }
-.bz-gs-name {
+/* 名字块：中文名 + 原名两行（原名为空时只有一行，高度随内容，行距靠这里收紧） */
+.bz-gs-namebox {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
   flex: 1;
+  min-width: 0;
+}
+.bz-gs-name {
   min-width: 0;
   font-size: var(--bz-font-label);
   font-weight: var(--bz-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.bz-gs-orig {
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-3);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -293,9 +326,11 @@
   color: var(--bz-text-3);
   font-size: var(--bz-font-meta);
   font-variant-numeric: tabular-nums;
+  line-height: 1.4;
 }
 .bz-gs-strip {
   display: block;
+  margin-top: auto; /* 贴卡片底：同行里有/没有原名两种卡片，时长条仍然对齐 */
   height: 2px;
   border-radius: 2px;
   background: var(--bz-code-bg);
@@ -435,6 +470,13 @@
 .bz-gs-body > .bz-empty { height: 100%; }
 
 /* ---------- 详情弹窗（core .bz-overlay-popup 基座） ---------- */
+/* 遮罩毛玻璃：core 的 .bz-overlay-mask 只有平色 --background-modifier-cover，
+   而面板遮罩 .bz-panel-overlay 与各域自绘遮罩都是 --bz-overlay + blur。
+   域内给弹窗遮罩补一类（openDetail 里 mask.classList.add），与面板观感对齐。 */
+.bz-gs-detail-mask {
+  background: var(--bz-overlay);
+  backdrop-filter: blur(var(--bz-overlay-blur));
+}
 .bz-gs-detail-modal { width: 100%; }
 .bz-gs-detail-modal .bz-dialog-body {
   padding: 0 var(--bz-space-lg) var(--bz-space-lg);
@@ -598,6 +640,8 @@
     padding: 0 var(--bz-space-md);
   }
   .bz-gs-panel .bz-main-head .bz-main-count { display: none; }
+  /* 移动端出关闭钮：全屏面板没有可点的遮罩，只能靠它出去 */
+  .bz-gs-panel .bz-main-head .bz-gs-close { display: inline-flex; }
   .bz-gs-body { padding: 0 var(--bz-space-md) var(--bz-space-md); }
   .bz-gs-hero {
     height: clamp(132px, 21vh, 172px);
