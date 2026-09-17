@@ -167,4 +167,36 @@ describe('issue 356：年度资产报告页样式守卫', () => {
     expect(css).not.toContain('scrollbar-width');
     expect(css).not.toContain('-webkit-scrollbar');
   });
+
+  it('报告暗色内容层零固定色（issue 356 真机回归）：去注释后全文件 hex 只允许与 --bz-* token 同行', () => {
+    // 覆盖报告全部段：头行/年份导航/KPI 行/分段卡/柱列图/条形行/陪伴榜/骨架/错误/空态——
+    // KPI 卡曾靠继承壳墨（暗色翻米白）配不翻主题的粉彩底 → 看不清；守卫杜绝再走裸 hex。
+    const text = cssText().replace(/\/\*[\s\S]*?\*\//g, '');
+    const hits = [...text.matchAll(/#[0-9a-fA-F]{3,8}\b/g)];
+    expect(hits.length, '亮/暗两组 token 定义应在场').toBeGreaterThan(30);
+    for (const h of hits) {
+      const at = h.index ?? 0;
+      const start = Math.max(text.lastIndexOf(';', at), text.lastIndexOf('{', at), text.lastIndexOf('}', at)) + 1;
+      const ends = [text.indexOf(';', at), text.indexOf('}', at)].filter((i) => i > -1);
+      const decl = text.slice(start, Math.min(...ends));
+      expect(decl, `固定色 ${h[0]} 须走 --bz-*/bel token（定义行或 var 兜底）`).toMatch(/--bz-[a-z0-9-]+/);
+    }
+  });
+
+  it('粉彩底上的文字显式取 CHART_INK（底色+墨色内联成对，不随壳翻色）：KPI 卡与陪伴榜徽章', () => {
+    const ts = repo('src/belongings/report.ts');
+    expect(ts, '概览 KPI 卡缺内联墨色（继承壳墨会在暗色翻米白）').toContain(
+      'style="background:${color};color:${CHART_INK}"'
+    );
+    expect(ts, '陪伴榜徽章应保持底色+墨色成对').toContain(
+      'background:${CHART_RANK_BADGES[i]};color:${CHART_INK}'
+    );
+  });
+
+  it('移动端面板规范（issue 356 真机回归）：popup 挂 bz-panel-mtop + 头行顶距恢复规则在位', () => {
+    expect(repo('src/belongings/report.ts')).toContain('class="bz-bel-report bz-panel-mtop"');
+    const rule = cssText().match(/\.bz-bel-report\.bz-panel-mtop \.bz-bel-report-head\s*\{[^}]*\}/);
+    expect(rule, '缺头行顶距恢复规则（core mtop 反制会归零首子元素顶距）').not.toBeNull();
+    expect(rule![0]).toContain('padding-top: 12px !important');
+  });
 });
