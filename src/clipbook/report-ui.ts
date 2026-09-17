@@ -48,8 +48,18 @@ export function openClipbookReport(_app?: App): void {
   // 面板开着时先把当前阅读会话入账（读到一半开报告也要看到刚才那段）
   flushReadingSession();
   if (!overlayEl) buildDom();
+  syncPeriodSeg(); // 周期跨开保留：重开时 seg 高亮对齐真实 period（骨架是静态「本周」高亮）
   overlayEl!.style.display = 'flex';
   void renderBody(true);
+}
+
+/** 周期 seg 高亮 ↔ period 同步（openClipbookReport 与 setPeriod 共用） */
+function syncPeriodSeg(): void {
+  const seg = overlayEl?.querySelector('[data-clp-rep-period]');
+  if (!seg) return;
+  seg.querySelectorAll('[data-period]').forEach((b) => {
+    b.classList.toggle('on', (b as HTMLElement).dataset.period === period);
+  });
 }
 
 /** 关闭弹层（隐藏 + 作废在途渲染 + 清数据快照；DOM 保留供重开复用） */
@@ -111,12 +121,7 @@ function buildDom(): void {
 function setPeriod(next: ReportPeriod): void {
   if (next === period) return;
   period = next;
-  const seg = overlayEl?.querySelector('[data-clp-rep-period]');
-  if (seg) {
-    seg.querySelectorAll('[data-period]').forEach((b) => {
-      b.classList.toggle('on', (b as HTMLElement).dataset.period === period);
-    });
-  }
+  syncPeriodSeg();
   void renderBody(false);
 }
 
@@ -162,6 +167,16 @@ async function renderBody(withToast: boolean): Promise<void> {
     await yieldToMainThread(YIELD_MS);
     if (!alive()) return finishAbort();
     const data: ClipReportData = buildClipReport(logCache, period, new Date());
+
+    // 本期空态：readLog 有记录但本期窗口（本周/本月）没读过，或记录全是零分钟段——
+    // 整页只显空态，不渲染零值统计段（issue 358 真机回归「没有阅读记录时统计有误」）。
+    // 首次渲染 / 周期切换 / 分段懒生成三路都经 renderBody，本短路在分段循环前统一收口。
+    if (!data.articles && !data.totalMinutes) {
+      body.innerHTML = clipReportEmptyHtml();
+      mountIcons(body);
+      if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
+      return;
+    }
 
     body.innerHTML = ''; // 骨架 → 报告区（分段渐进填充）
     for (const section of buildClipReportSections(data)) {
