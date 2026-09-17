@@ -234,6 +234,17 @@ describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
       expect(document.querySelector('.bz-gs-grid')).toBeTruthy();
       expect(document.body.textContent).toContain('A');
       expect(document.body.textContent).toContain('1h');
+      // 工具行两套形态（CSS 按屏宽取一套，状态同一份）：桌面 chips 6 + 三档分段；
+      // 移动端两个下拉（档位/排序）
+      expect(document.querySelectorAll('.bz-gs-chips .bz-chip').length).toBe(6);
+      expect(document.querySelector('.bz-gs-sortseg .bz-segmented')).toBeTruthy();
+      expect(document.querySelectorAll('.bz-gs-sels .bz-select').length).toBe(2);
+      // 头行：视图入口在同步钮左侧（都靠右），关闭钮在（桌面由 CSS 隐藏）
+      const acts = [...document.querySelectorAll('.bz-main-head > *')];
+      expect(acts.findIndex((e) => e.classList.contains('bz-gs-viewslot'))).toBeLessThan(
+        acts.findIndex((e) => e.classList.contains('bz-btn--primary')),
+      );
+      expect(document.querySelector('.bz-gs-close')).toBeTruthy();
       // 再点命令 toggle 关
       openGameshelf(app);
       expect(document.querySelector('.bz-gs-panel')).toBeNull();

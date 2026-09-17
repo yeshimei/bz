@@ -16,7 +16,7 @@ import type { App } from 'obsidian';
 import { topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
-import { uiMainHead, uiSegmented, uiStat, uiEmpty, uiBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
+import { uiMainHead, uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
 import { M, displayNameOf, nameMatches, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
 import { BUCKETS, bucketOf, buildReport, REPORT_CAVEAT, type GameshelfReport } from './report';
 import {
@@ -37,6 +37,14 @@ let heroEl: HTMLElement | null = null;
 let gridEl: HTMLElement | null = null;
 /** 本次渲染的报告（工具行计数与统计页共用一次计算） */
 let lastReport: GameshelfReport | null = null;
+/** 移动端两个下拉的句柄（每次重建工具行都要 detach——uiSelect 挂了 document 级点击监听） */
+let selectRefs: Array<{ detach: () => void }> = [];
+
+/** 释放上一轮下拉（漏了就是每渲染一次攒一个 document 监听） */
+function disposeSelects(): void {
+  for (const s of selectRefs) s.detach();
+  selectRefs = [];
+}
 
 /** 视图入口按钮：随当前视图只出一条（游戏墙 ↔ 数据统计） */
 function fillViewSlot(app: App): void {
@@ -47,12 +55,14 @@ function fillViewSlot(app: App): void {
     label: onStats ? '游戏墙' : '数据统计',
     icon: onStats ? 'layout-grid' : 'bar-chart-3',
     on: onStats,
+    title: onStats ? '返回游戏墙' : '数据统计',
     onClick: () => {
       M.view = onStats ? 'shelf' : 'stats';
       renderAll(app);
     },
   });
   b.classList.add('bz-gs-viewbtn');
+  b.setAttribute('aria-label', onStats ? '返回游戏墙' : '数据统计');
   slot.replaceChildren(b);
 }
 
@@ -599,12 +609,16 @@ function createUI(app: App): void {
   // 统计页上写「游戏墙」——不做平级页签，因为面板默认就是游戏墙，统计是有需要才进的入口。
   const slot = document.createElement('span');
   slot.className = 'bz-gs-viewslot';
-  const primaryBtn = head.el.querySelector('.bz-btn--primary');
-  if (primaryBtn) head.el.insertBefore(slot, primaryBtn);
-  else head.el.appendChild(slot);
+  const primaryBtn = head.el.querySelector('.bz-btn--primary') as HTMLButtonElement | null;
+  if (primaryBtn) {
+    primaryBtn.title = '立即同步'; // 移动端按钮只留图标，靠 title/aria-label 表意
+    head.el.insertBefore(slot, primaryBtn);
+  } else {
+    head.el.appendChild(slot);
+  }
   // 关闭：桌面走点遮罩 / ESC（issue 271：头行不放关闭钮）；移动端全屏面板遮不住——
   // 那个 ✕ 只在 ≤768px 出现（styles.css 里控显隐），否则手机上出去了回不来。
-  const close = uiBtn({ label: '关闭', icon: 'x', onClick: () => closePanel() });
+  const close = uiBtn({ label: '关闭', icon: 'x', title: '关闭', onClick: () => closePanel() });
   close.classList.add('bz-gs-close');
   close.setAttribute('aria-label', '关闭');
   head.el.appendChild(close);
@@ -679,6 +693,7 @@ export function renderAll(app: App): void {
   const body = frame.querySelector('#bz-gs-body');
   if (!body) return;
   body.innerHTML = '';
+  disposeSelects(); // 工具行重建前先摘掉上一轮下拉的 document 监听
   heroEl = null;
   gridEl = null;
   lastReport = null;
@@ -703,13 +718,20 @@ export function renderAll(app: App): void {
 function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
   const wrap = document.createElement('div');
   wrap.className = 'bz-gs-wall';
+  // 工具行两套形态（同一份状态，CSS 按屏宽取一套）：
+  //   桌面 = 6 个档位 chip + 三档分段排序；移动 = 档位/排序两个下拉 + 搜索同行。
+  // 两套都渲染而不是按 Platform 分支：媒体查询能随窗口宽实时切，Platform 是启动时定值。
   wrap.innerHTML = `
     <div id="bz-gs-hero"></div>
     <div class="bz-gs-tools">
       <div class="bz-gs-chips" id="bz-gs-chips"></div>
       <div class="bz-gs-toolsend">
-        <div id="bz-gs-sort"></div>
-        <div id="bz-gs-search"></div>
+        <div class="bz-gs-sortseg" id="bz-gs-sort"></div>
+        <div class="bz-gs-sels">
+          <div class="bz-gs-sel" id="bz-gs-bucketsel"></div>
+          <div class="bz-gs-sel" id="bz-gs-sortsel"></div>
+        </div>
+        <div class="bz-gs-searchwrap" id="bz-gs-search"></div>
       </div>
     </div>
     <div id="bz-gs-grid"></div>`;
@@ -735,7 +757,7 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
     chips.appendChild(chip);
   }
 
-  // 排序（三档分段：口径标签与 heroTag 一致）
+  // 排序（桌面：三档分段；口径标签与 heroTag 一致）
   const sortSeg = uiSegmented<GameshelfSort>({
     value: M.sort,
     label: '排序',
@@ -751,6 +773,42 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
   });
   sortSegRef = sortSeg;
   wrap.querySelector('#bz-gs-sort')!.appendChild(sortSeg.el);
+
+  // 移动端两个下拉（同样口径：labels 带计数，与 chips 一致）
+  const bucketLabel = (key: GameshelfBucket): string => {
+    if (key === 'all') return `全部 ${rp.total}`;
+    const def = BUCKETS.find((b) => b.key === key);
+    return `${def?.label ?? key} ${counts.get(key) ?? 0}`;
+  };
+  const selRefs: Array<{ detach: () => void }> = [];
+  const bucketSel = uiSelect<GameshelfBucket>({
+    value: M.bucket,
+    className: 'bz-gs-select',
+    options: BUCKETS.map((b) => ({ value: b.key, label: bucketLabel(b.key) })),
+    onChange: (v) => {
+      M.bucket = v;
+      syncChipState();
+      renderList(app);
+    },
+  });
+  const sortSel = uiSelect<GameshelfSort>({
+    value: M.sort,
+    className: 'bz-gs-select',
+    options: [
+      { value: 'hours', label: '按时长' },
+      { value: 'last', label: '按最近玩' },
+      { value: 'name', label: '按名称' },
+    ],
+    onChange: (v) => {
+      M.sort = v;
+      sortSegRef?.setValue(v);
+      renderList(app);
+    },
+  });
+  selRefs.push(bucketSel, sortSel);
+  wrap.querySelector('#bz-gs-bucketsel')!.appendChild(bucketSel.el);
+  wrap.querySelector('#bz-gs-sortsel')!.appendChild(sortSel.el);
+  selectRefs = selRefs;
 
   // 搜索（实时过滤；只重填列表，输入框不重建，焦点不丢）
   const search = uiSearch({
@@ -854,6 +912,7 @@ export function closePanel(): void {
   popupEl = null;
   M.currentOverlay?.remove();
   M.currentOverlay = null;
+  disposeSelects();
   heroEl = null;
   gridEl = null;
   lastReport = null;
