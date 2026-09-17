@@ -212,6 +212,10 @@ export default interface BzSettings {
   gameshelfSteamApiKey: string;
   /** 🎮 自动同步开关（打开面板时 syncedAt 超过间隔即后台拉库；默认开。关闭只保留手动「立即同步」） */
   gameshelfAutoSync: boolean;
+  /** 🎨 游戏库面板布局（外观组占位单卡；当前仅 default 海报墙，未知值域内回落） */
+  gameshelfLayout: string;
+  /** 🎨 游戏库面板主题（与布局一一对应占位；当前仅 ink 墨黑。2026-09-17 补外观组，皮肤待设计） */
+  gameshelfSkinTheme: string;
   /** 📦 归物本：默认状态筛选（空串=全部，其余 using/idle/sold/discard；非法值回落全部。issue 194） */
   belongingsDefaultStatus: string;
   /** 📦 归物本：默认排序（recent 最近购入 / price 投入最高 / daily 日均最高；非法值回落 recent。issue 294） */
@@ -702,6 +706,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   gameshelfSteamId: '',
   gameshelfSteamApiKey: '',
   gameshelfAutoSync: true,
+  gameshelfLayout: 'default',
+  gameshelfSkinTheme: 'ink',
 
   // 做题家（设置并入复习计划 tab）
   enableMultipleChoice: true,

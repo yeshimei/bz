@@ -116,11 +116,14 @@ describe('设置面板（settings-panel）', () => {
     expect(navIcons[5].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
     expect(navIcons[6].getAttribute('data-icon')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
     expect(navIcons[10].getAttribute('data-icon')).toBe('clapperboard'); // 影院（媒体与阅读组首位）
+    expect(navIcons[11].getAttribute('data-icon')).toBe('book-open'); // 书库（媒体与阅读组）
+    // 游戏库（2026-09-17 归入媒体与阅读组，不再落「其他」尾组）：声明在书库之后，与首页入口同序
+    expect(navIcons[12].getAttribute('data-icon')).toBe('gamepad-2'); // 游戏库（媒体与阅读组）
     // 拍板分组顺序（NAV_SECS）：…工具组 = 番茄钟/小橘陪伴猫；安全组 = 保险库/密码本
-    expect(navIcons[14].getAttribute('data-icon')).toBe('timer'); // 番茄钟（工具组首位）
-    expect(navIcons[15].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（工具组，issue 194 转可见）
-    expect(navIcons[16].getAttribute('data-icon')).toBe('lock'); // 保险库（安全组）
-    expect(navIcons[17].getAttribute('data-icon')).toBe('key'); // 密码本（安全组，issue 250 拆回独立域）
+    expect(navIcons[15].getAttribute('data-icon')).toBe('timer'); // 番茄钟（工具组首位）
+    expect(navIcons[16].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（工具组，issue 194 转可见）
+    expect(navIcons[17].getAttribute('data-icon')).toBe('lock'); // 保险库（安全组）
+    expect(navIcons[18].getAttribute('data-icon')).toBe('key'); // 密码本（安全组，issue 250 拆回独立域）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();

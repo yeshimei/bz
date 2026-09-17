@@ -94,16 +94,31 @@ export const ALL_DOMAIN_IDS: string[] = DOMAINS.map((d) => d.id);
 
 /**
  * 按持久化顺序重排域清单（纯函数，node 可测）。
- *  - 未列出的域（此后新增的域）保持 DOMAINS 声明顺序，整体落在已列出项之后；
- *  - 已退役/未知 id 自然被忽略（不在 domains 里就不参与排序）；
- *  - sort 在 V8 稳定 → 未列出项之间的先后 = DOMAINS 声明顺序。
+ *  - 已列出的域按 order 先后排（sort 稳定 → 重复 id 取首次出现的位次）；
+ *  - **未列出的域（此后新增的域）插到「声明序上紧邻的前驱」之后**，不落在末尾：
+ *    2026-09-17 用户点名（新域游戏库被排到「设置」后面，看着像没位置）。按声明位置落点
+ *    才是 DOMAINS 里那份次序的意图（游戏库声明在书库之后 → 就落在书库之后）。
+ *    多个新域按声明序逐个落位，紧邻的前驱允许是刚插入的新域（链式）；
+ *    前驱一个都没有（新域声明在首位）→ 落最前；
+ *  - 已退役/未知 id 自然被忽略（不在 domains 里就不参与排序）。
  */
 export function applyOrder(order: readonly string[] | null | undefined, domains: HomeDomain[] = DOMAINS): HomeDomain[] {
   if (!order || !order.length) return domains;
   const rank = new Map<string, number>();
   order.forEach((id, i) => { if (!rank.has(id)) rank.set(id, i); });
-  const MISS = Number.MAX_SAFE_INTEGER;
-  return [...domains].sort((a, b) => (rank.get(a.id) ?? MISS) - (rank.get(b.id) ?? MISS));
+  const listed = domains.filter((d) => rank.has(d.id)).sort((a, b) => rank.get(a.id)! - rank.get(b.id)!);
+  if (listed.length === domains.length) return listed;
+  const out = [...listed];
+  for (const d of domains) {
+    if (rank.has(d.id)) continue; // 有持久化位次 → 已在 out 里
+    let anchor = -1;
+    for (let k = domains.indexOf(d) - 1; k >= 0; k--) {
+      const pos = out.indexOf(domains[k]);
+      if (pos >= 0) { anchor = pos; break; }
+    }
+    out.splice(anchor + 1, 0, d);
+  }
+  return out;
 }
 
 /**
@@ -262,6 +277,13 @@ export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
     { label: '阅读分析报告', commandId: 'bz-reading-report-open', icon: 'bar-chart-3' },
     // 直开书架墙并切到「在读」分栏（有在读时才点亮入口彩点，见 buildDots）
     { label: '继续在读', commandId: 'bz-bookshelf-continue', icon: 'book-open' },
+  ],
+  // 游戏库（2026-09-17 用户点名补快捷命令）：两条都是「一步成事」——
+  // 立即同步 = 即时类（不关首页，拉完原地看计数）/ 数据统计 = 开面板落统计页（影院分析报告同范式）。
+  gameshelf: [
+    { label: '立即同步', commandId: 'bz-gameshelf-sync', icon: 'refresh-cw', keepHome: true },
+    // 图标 chart-bar 与「阅读分析报告」的 bar-chart-3 错开（enh-sweep-a 起报告/统计类图标互异的惯例）
+    { label: '数据统计', commandId: 'bz-gameshelf-stats', icon: 'chart-bar' },
   ],
   secondbrain: [
     { label: '第二大脑对话', commandId: 'bz-secondbrain-chat', icon: 'message-circle' },

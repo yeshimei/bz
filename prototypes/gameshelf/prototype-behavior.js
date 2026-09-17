@@ -1,4 +1,4 @@
-/* 源指纹 dda8cc852d24c406 · 仓内输入 236 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 67664dd320b1aea7 · 仓内输入 236 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -1329,6 +1329,383 @@ var BZW_gameshelf = (() => {
     }
   });
 
+  // src/core/z-order.ts
+  function registerAlwaysOnTop(el) {
+    alwaysOnTop.add(el);
+    syncAlwaysOnTop();
+  }
+  function syncAlwaysOnTop() {
+    for (const el of alwaysOnTop) {
+      if (!el.isConnected) {
+        alwaysOnTop.delete(el);
+        continue;
+      }
+      el.style.zIndex = String(zCounter);
+    }
+  }
+  function allocZBlock(n) {
+    const base = ++zCounter;
+    zCounter += n - 1;
+    zCounter++;
+    syncAlwaysOnTop();
+    return base;
+  }
+  function allocZ() {
+    return allocZBlock(1);
+  }
+  function topifyZ(...els) {
+    const live2 = els.filter((el) => !!el);
+    if (live2.length === 0) return;
+    const base = allocZBlock(live2.length);
+    live2.forEach((el, i) => {
+      el.style.zIndex = String(base + i);
+    });
+  }
+  var zCounter, alwaysOnTop;
+  var init_z_order = __esm({
+    "src/core/z-order.ts"() {
+      zCounter = 1e5;
+      alwaysOnTop = /* @__PURE__ */ new Set();
+    }
+  });
+
+  // src/core/notice.ts
+  function maxVisible() {
+    const v = Number(noticePref("noticeMaxVisible"));
+    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
+  }
+  function notice(msg, type, duration) {
+    notify(msg, { type: type || "info", duration });
+  }
+  function notifyUndo(msg, onUndo, opts) {
+    return notify(msg, {
+      type: opts && opts.type || "delete",
+      duration: opts && opts.duration !== void 0 ? opts.duration : UNDO_DURATION_MS,
+      action: { label: "撤销", onClick: onUndo }
+    });
+  }
+  function notifySaveError(err, what) {
+    const msg = err instanceof Error ? err.message : String(err);
+    notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
+  }
+  function notifyActionError(err, action) {
+    const msg = err instanceof Error ? err.message : String(err);
+    notify(`${action}失败：${msg}，请重试`, { type: "error" });
+  }
+  function isMobileView() {
+    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
+  }
+  function defaultVariant() {
+    if (isMobileView()) return "drop";
+    const pos = noticePref("noticePosition");
+    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
+  }
+  function noticePref(key) {
+    var _a2;
+    try {
+      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
+      return typeof v === "string" ? v : void 0;
+    } catch (e) {
+      return void 0;
+    }
+  }
+  function durationGear() {
+    const v = noticePref("noticeDuration");
+    if (v === "quick") return { base: 2e3, persistent: false };
+    if (v === "relaxed") return { base: 5e3, persistent: false };
+    if (v === "persistent") return { base: 3e3, persistent: true };
+    return { base: 3e3, persistent: false };
+  }
+  function defaultDuration(type) {
+    const base = durationGear().base;
+    return type === "error" ? base + 2e3 : base;
+  }
+  function suppressedByLevel(kind, opts) {
+    const level = noticePref("noticeLevel");
+    if (level !== "important" && level !== "error") return false;
+    if (kind === "progress") return false;
+    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
+    if (level === "error") return kind !== "error";
+    return kind !== "warning" && kind !== "error";
+  }
+  function applyPositionClass(container) {
+    const pos = noticePref("noticePosition");
+    container.classList.remove(...POSITION_CLASSES);
+    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
+    if (cls) container.classList.add(cls);
+  }
+  function calcDuration(text, base) {
+    const len = text.length;
+    if (len <= SHORT_THRESHOLD) return base;
+    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
+    return Math.min(base + extra, 15e3);
+  }
+  function ensureContainer() {
+    let container = document.getElementById("bz-notice-container");
+    if (!container) {
+      container = document.createElement("div");
+      container.id = "bz-notice-container";
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+  function removeInternal(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    const i = live.indexOf(n);
+    if (i !== -1) live.splice(i, 1);
+    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
+  }
+  function evictOldest() {
+    let quota = live.length - maxVisible() + 1;
+    for (let i = 0; quota > 0 && i < live.length; ) {
+      const candidate = live[i];
+      if (candidate.persistent) {
+        i++;
+        continue;
+      }
+      removeInternal(candidate);
+      quota--;
+    }
+  }
+  function applyTypeToEl(n, kind) {
+    const isProgressNow = kind === "progress";
+    n.el.classList.remove(
+      "bz-notice--info",
+      "bz-notice--success",
+      "bz-notice--warning",
+      "bz-notice--error",
+      "bz-notice--pause",
+      "bz-notice--accept",
+      "bz-notice--delete",
+      "bz-notice--confirm",
+      "bz-notice--restore",
+      "bz-notice--skip",
+      "bz-notice--archive",
+      "bz-notice--progress"
+    );
+    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
+    n.iconEl.innerHTML = "";
+    if (isProgressNow) {
+      n.iconEl.innerHTML = SPINNER_SVG;
+    } else {
+      n.iconEl.textContent = ICONS[kind];
+    }
+    n.isProgress = isProgressNow;
+  }
+  function hideNow(n) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    if (!n.el.classList.contains("bz-notice--leaving")) {
+      n.el.classList.add("bz-notice--leaving");
+      const out = OUT_CLASS[n.variant];
+      if (out) n.el.classList.add(out);
+      window.setTimeout(() => removeInternal(n), LEAVE_MS);
+    }
+  }
+  function armTimer(n, kind, explicitDuration, text) {
+    if (n.timer !== null) {
+      window.clearTimeout(n.timer);
+      n.timer = null;
+    }
+    n.persistent = false;
+    if (kind === "progress") {
+      if (explicitDuration !== void 0 && explicitDuration > 0) {
+        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
+      } else {
+        n.persistent = true;
+      }
+      return;
+    }
+    const base = defaultDuration(kind);
+    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+    if (dur <= 0) {
+      n.persistent = true;
+      return;
+    }
+    if (explicitDuration === void 0 && durationGear().persistent) return;
+    n.timer = window.setTimeout(() => hideNow(n), dur);
+  }
+  function noopHandle() {
+    return {
+      el: document.createElement("div"),
+      setMessage() {
+      },
+      setProgress() {
+      },
+      setType() {
+      },
+      hide() {
+      }
+    };
+  }
+  function appendActionBtn(n, action) {
+    const btn = document.createElement("span");
+    btn.className = "bz-notice-action";
+    btn.setAttribute("role", "button");
+    btn.textContent = action.label;
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (action.onClick) action.onClick();
+      hideNow(n);
+    });
+    n.el.appendChild(btn);
+  }
+  function notify(msg, opts) {
+    const kind = opts && opts.type || "info";
+    if (suppressedByLevel(kind, opts)) return noopHandle();
+    const isProgress = kind === "progress";
+    const type = isProgress ? "info" : kind;
+    const variant = opts && opts.variant || defaultVariant();
+    const container = ensureContainer();
+    applyPositionClass(container);
+    if (opts && opts.dedupeKey) {
+      const key = opts.dedupeKey;
+      const r = recent[key];
+      const now = Date.now();
+      if (r && r.n && r.n.el.isConnected) {
+        r.n.msgEl.textContent = msg;
+        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
+          applyTypeToEl(r.n, kind);
+        }
+        const mergeActions = [];
+        if (opts.action) mergeActions.push(opts.action);
+        if (opts.actions) mergeActions.push(...opts.actions);
+        const existingLabels = new Set(
+          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
+        );
+        for (const a of mergeActions) {
+          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
+        }
+        armTimer(r.n, kind, opts.duration, msg);
+        return noopHandle();
+      }
+      if (r && now - r.at < DEDUPE_WINDOW_MS) {
+        return noopHandle();
+      }
+      recent[key] = { at: now, n: null };
+    }
+    evictOldest();
+    const el = document.createElement("div");
+    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
+    const icon2 = document.createElement("div");
+    icon2.className = "bz-notice-icon";
+    if (isProgress) {
+      icon2.innerHTML = SPINNER_SVG;
+    } else {
+      icon2.textContent = ICONS[type];
+    }
+    el.appendChild(icon2);
+    const body = document.createElement("div");
+    body.className = "bz-notice-body";
+    if (opts && opts.title) {
+      const titleEl = document.createElement("div");
+      titleEl.className = "bz-notice-title";
+      titleEl.textContent = opts.title;
+      body.appendChild(titleEl);
+    }
+    const msgEl = document.createElement("div");
+    msgEl.className = "bz-notice-msg";
+    msgEl.textContent = msg;
+    body.appendChild(msgEl);
+    el.appendChild(body);
+    let progressEl = null;
+    if (isProgress) {
+      progressEl = document.createElement("div");
+      progressEl.className = "bz-notice-progress";
+      el.appendChild(progressEl);
+    }
+    const n = { el, timer: null, msgEl, progressEl, iconEl: icon2, variant, isProgress, persistent: false };
+    const actions = [];
+    if (opts && opts.action) actions.push(opts.action);
+    if (opts && opts.actions) {
+      for (const a of opts.actions) {
+        if (!actions.some((x) => x.label === a.label)) actions.push(a);
+      }
+    }
+    for (const a of actions) appendActionBtn(n, a);
+    el.addEventListener("click", () => hideNow(n));
+    container.style.zIndex = String(allocZ());
+    container.appendChild(el);
+    live.push(n);
+    if (opts && opts.dedupeKey) {
+      const r = recent[opts.dedupeKey];
+      if (r) r.n = n;
+    }
+    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
+    armTimer(n, kind, opts && opts.duration, fullText);
+    return {
+      el,
+      setMessage(text) {
+        n.msgEl.textContent = text;
+      },
+      setType(t) {
+        applyTypeToEl(n, t);
+        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
+      },
+      setProgress(pct) {
+        if (!n.progressEl) return;
+        if (pct === -1) {
+          n.progressEl.classList.add("bz-notice-progress--indeterminate");
+          return;
+        }
+        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
+        const clamped = Math.max(0, Math.min(100, pct));
+        n.progressEl.style.width = clamped + "%";
+        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
+        else n.progressEl.classList.remove("bz-notice-progress--done");
+      },
+      hide() {
+        hideNow(n);
+      }
+    };
+  }
+  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
+  var init_notice = __esm({
+    "src/core/notice.ts"() {
+      init_z_order();
+      init_settings_provider();
+      MAX_VISIBLE_DEFAULT = 5;
+      LEAVE_MS = 200;
+      DEDUPE_WINDOW_MS = 3e4;
+      MOBILE_QUERY = "(max-width: 768px)";
+      ICONS = {
+        info: "ℹ️",
+        success: "✅",
+        warning: "⚠️",
+        error: "❌",
+        pause: "⏸️",
+        accept: "✨",
+        delete: "🗑️",
+        confirm: "✓",
+        restore: "↩️",
+        skip: "🚫",
+        archive: "📁"
+      };
+      SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+      UNDO_DURATION_MS = 6e3;
+      OUT_CLASS = {
+        drop: "bz-notice--out-drop",
+        pop: "bz-notice--out-pop",
+        "slide-left": "bz-notice--out-left",
+        "slide-right": "bz-notice--out-right",
+        bounce: "bz-notice--out-fade",
+        shake: "bz-notice--out-fade"
+      };
+      POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
+      PER_CHAR_MS = 60;
+      SHORT_THRESHOLD = 20;
+      live = [];
+      recent = {};
+    }
+  });
+
   // src/gameshelf/state.ts
   function resolveGameshelfFolderPath() {
     try {
@@ -2139,383 +2516,6 @@ var BZW_gameshelf = (() => {
       pending = /* @__PURE__ */ new Set();
       running = false;
       rerenderTimer = null;
-    }
-  });
-
-  // src/core/z-order.ts
-  function registerAlwaysOnTop(el) {
-    alwaysOnTop.add(el);
-    syncAlwaysOnTop();
-  }
-  function syncAlwaysOnTop() {
-    for (const el of alwaysOnTop) {
-      if (!el.isConnected) {
-        alwaysOnTop.delete(el);
-        continue;
-      }
-      el.style.zIndex = String(zCounter);
-    }
-  }
-  function allocZBlock(n) {
-    const base = ++zCounter;
-    zCounter += n - 1;
-    zCounter++;
-    syncAlwaysOnTop();
-    return base;
-  }
-  function allocZ() {
-    return allocZBlock(1);
-  }
-  function topifyZ(...els) {
-    const live2 = els.filter((el) => !!el);
-    if (live2.length === 0) return;
-    const base = allocZBlock(live2.length);
-    live2.forEach((el, i) => {
-      el.style.zIndex = String(base + i);
-    });
-  }
-  var zCounter, alwaysOnTop;
-  var init_z_order = __esm({
-    "src/core/z-order.ts"() {
-      zCounter = 1e5;
-      alwaysOnTop = /* @__PURE__ */ new Set();
-    }
-  });
-
-  // src/core/notice.ts
-  function maxVisible() {
-    const v = Number(noticePref("noticeMaxVisible"));
-    return v === 3 || v === 8 ? v : MAX_VISIBLE_DEFAULT;
-  }
-  function notice(msg, type, duration) {
-    notify(msg, { type: type || "info", duration });
-  }
-  function notifyUndo(msg, onUndo, opts) {
-    return notify(msg, {
-      type: opts && opts.type || "delete",
-      duration: opts && opts.duration !== void 0 ? opts.duration : UNDO_DURATION_MS,
-      action: { label: "撤销", onClick: onUndo }
-    });
-  }
-  function notifySaveError(err, what) {
-    const msg = err instanceof Error ? err.message : String(err);
-    notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
-  }
-  function notifyActionError(err, action) {
-    const msg = err instanceof Error ? err.message : String(err);
-    notify(`${action}失败：${msg}，请重试`, { type: "error" });
-  }
-  function isMobileView() {
-    return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
-  }
-  function defaultVariant() {
-    if (isMobileView()) return "drop";
-    const pos = noticePref("noticePosition");
-    return pos === "top-left" || pos === "bottom-left" ? "slide-left" : "slide-right";
-  }
-  function noticePref(key) {
-    var _a2;
-    try {
-      const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2[key];
-      return typeof v === "string" ? v : void 0;
-    } catch (e) {
-      return void 0;
-    }
-  }
-  function durationGear() {
-    const v = noticePref("noticeDuration");
-    if (v === "quick") return { base: 2e3, persistent: false };
-    if (v === "relaxed") return { base: 5e3, persistent: false };
-    if (v === "persistent") return { base: 3e3, persistent: true };
-    return { base: 3e3, persistent: false };
-  }
-  function defaultDuration(type) {
-    const base = durationGear().base;
-    return type === "error" ? base + 2e3 : base;
-  }
-  function suppressedByLevel(kind, opts) {
-    const level = noticePref("noticeLevel");
-    if (level !== "important" && level !== "error") return false;
-    if (kind === "progress") return false;
-    if (opts && (opts.action || opts.actions && opts.actions.length > 0)) return false;
-    if (level === "error") return kind !== "error";
-    return kind !== "warning" && kind !== "error";
-  }
-  function applyPositionClass(container) {
-    const pos = noticePref("noticePosition");
-    container.classList.remove(...POSITION_CLASSES);
-    const cls = pos === "bottom-right" || pos === "bottom-left" || pos === "top-left" ? `bz-notice-pos--${pos}` : "";
-    if (cls) container.classList.add(cls);
-  }
-  function calcDuration(text, base) {
-    const len = text.length;
-    if (len <= SHORT_THRESHOLD) return base;
-    const extra = (len - SHORT_THRESHOLD) * PER_CHAR_MS;
-    return Math.min(base + extra, 15e3);
-  }
-  function ensureContainer() {
-    let container = document.getElementById("bz-notice-container");
-    if (!container) {
-      container = document.createElement("div");
-      container.id = "bz-notice-container";
-      document.body.appendChild(container);
-    }
-    return container;
-  }
-  function removeInternal(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    const i = live.indexOf(n);
-    if (i !== -1) live.splice(i, 1);
-    if (n.el.parentNode) n.el.parentNode.removeChild(n.el);
-  }
-  function evictOldest() {
-    let quota = live.length - maxVisible() + 1;
-    for (let i = 0; quota > 0 && i < live.length; ) {
-      const candidate = live[i];
-      if (candidate.persistent) {
-        i++;
-        continue;
-      }
-      removeInternal(candidate);
-      quota--;
-    }
-  }
-  function applyTypeToEl(n, kind) {
-    const isProgressNow = kind === "progress";
-    n.el.classList.remove(
-      "bz-notice--info",
-      "bz-notice--success",
-      "bz-notice--warning",
-      "bz-notice--error",
-      "bz-notice--pause",
-      "bz-notice--accept",
-      "bz-notice--delete",
-      "bz-notice--confirm",
-      "bz-notice--restore",
-      "bz-notice--skip",
-      "bz-notice--archive",
-      "bz-notice--progress"
-    );
-    n.el.classList.add("bz-notice--" + (isProgressNow ? "progress" : kind));
-    n.iconEl.innerHTML = "";
-    if (isProgressNow) {
-      n.iconEl.innerHTML = SPINNER_SVG;
-    } else {
-      n.iconEl.textContent = ICONS[kind];
-    }
-    n.isProgress = isProgressNow;
-  }
-  function hideNow(n) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    if (!n.el.classList.contains("bz-notice--leaving")) {
-      n.el.classList.add("bz-notice--leaving");
-      const out = OUT_CLASS[n.variant];
-      if (out) n.el.classList.add(out);
-      window.setTimeout(() => removeInternal(n), LEAVE_MS);
-    }
-  }
-  function armTimer(n, kind, explicitDuration, text) {
-    if (n.timer !== null) {
-      window.clearTimeout(n.timer);
-      n.timer = null;
-    }
-    n.persistent = false;
-    if (kind === "progress") {
-      if (explicitDuration !== void 0 && explicitDuration > 0) {
-        n.timer = window.setTimeout(() => hideNow(n), explicitDuration);
-      } else {
-        n.persistent = true;
-      }
-      return;
-    }
-    const base = defaultDuration(kind);
-    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
-    if (dur <= 0) {
-      n.persistent = true;
-      return;
-    }
-    if (explicitDuration === void 0 && durationGear().persistent) return;
-    n.timer = window.setTimeout(() => hideNow(n), dur);
-  }
-  function noopHandle() {
-    return {
-      el: document.createElement("div"),
-      setMessage() {
-      },
-      setProgress() {
-      },
-      setType() {
-      },
-      hide() {
-      }
-    };
-  }
-  function appendActionBtn(n, action) {
-    const btn = document.createElement("span");
-    btn.className = "bz-notice-action";
-    btn.setAttribute("role", "button");
-    btn.textContent = action.label;
-    btn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      if (action.onClick) action.onClick();
-      hideNow(n);
-    });
-    n.el.appendChild(btn);
-  }
-  function notify(msg, opts) {
-    const kind = opts && opts.type || "info";
-    if (suppressedByLevel(kind, opts)) return noopHandle();
-    const isProgress = kind === "progress";
-    const type = isProgress ? "info" : kind;
-    const variant = opts && opts.variant || defaultVariant();
-    const container = ensureContainer();
-    applyPositionClass(container);
-    if (opts && opts.dedupeKey) {
-      const key = opts.dedupeKey;
-      const r = recent[key];
-      const now = Date.now();
-      if (r && r.n && r.n.el.isConnected) {
-        r.n.msgEl.textContent = msg;
-        if (r.n.isProgress !== isProgress || r.n.el.classList.contains("bz-notice--" + type) === false) {
-          applyTypeToEl(r.n, kind);
-        }
-        const mergeActions = [];
-        if (opts.action) mergeActions.push(opts.action);
-        if (opts.actions) mergeActions.push(...opts.actions);
-        const existingLabels = new Set(
-          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
-        );
-        for (const a of mergeActions) {
-          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
-        }
-        armTimer(r.n, kind, opts.duration, msg);
-        return noopHandle();
-      }
-      if (r && now - r.at < DEDUPE_WINDOW_MS) {
-        return noopHandle();
-      }
-      recent[key] = { at: now, n: null };
-    }
-    evictOldest();
-    const el = document.createElement("div");
-    el.className = "bz-notice bz-notice--" + (isProgress ? "progress" : type) + " bz-notice--in-" + variant;
-    el.setAttribute("role", "status");
-    el.setAttribute("aria-live", type === "error" ? "assertive" : "polite");
-    const icon2 = document.createElement("div");
-    icon2.className = "bz-notice-icon";
-    if (isProgress) {
-      icon2.innerHTML = SPINNER_SVG;
-    } else {
-      icon2.textContent = ICONS[type];
-    }
-    el.appendChild(icon2);
-    const body = document.createElement("div");
-    body.className = "bz-notice-body";
-    if (opts && opts.title) {
-      const titleEl = document.createElement("div");
-      titleEl.className = "bz-notice-title";
-      titleEl.textContent = opts.title;
-      body.appendChild(titleEl);
-    }
-    const msgEl = document.createElement("div");
-    msgEl.className = "bz-notice-msg";
-    msgEl.textContent = msg;
-    body.appendChild(msgEl);
-    el.appendChild(body);
-    let progressEl = null;
-    if (isProgress) {
-      progressEl = document.createElement("div");
-      progressEl.className = "bz-notice-progress";
-      el.appendChild(progressEl);
-    }
-    const n = { el, timer: null, msgEl, progressEl, iconEl: icon2, variant, isProgress, persistent: false };
-    const actions = [];
-    if (opts && opts.action) actions.push(opts.action);
-    if (opts && opts.actions) {
-      for (const a of opts.actions) {
-        if (!actions.some((x) => x.label === a.label)) actions.push(a);
-      }
-    }
-    for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
-    container.style.zIndex = String(allocZ());
-    container.appendChild(el);
-    live.push(n);
-    if (opts && opts.dedupeKey) {
-      const r = recent[opts.dedupeKey];
-      if (r) r.n = n;
-    }
-    const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
-    armTimer(n, kind, opts && opts.duration, fullText);
-    return {
-      el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
-      },
-      setType(t) {
-        applyTypeToEl(n, t);
-        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
-      },
-      setProgress(pct) {
-        if (!n.progressEl) return;
-        if (pct === -1) {
-          n.progressEl.classList.add("bz-notice-progress--indeterminate");
-          return;
-        }
-        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
-        const clamped = Math.max(0, Math.min(100, pct));
-        n.progressEl.style.width = clamped + "%";
-        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
-        else n.progressEl.classList.remove("bz-notice-progress--done");
-      },
-      hide() {
-        hideNow(n);
-      }
-    };
-  }
-  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
-  var init_notice = __esm({
-    "src/core/notice.ts"() {
-      init_z_order();
-      init_settings_provider();
-      MAX_VISIBLE_DEFAULT = 5;
-      LEAVE_MS = 200;
-      DEDUPE_WINDOW_MS = 3e4;
-      MOBILE_QUERY = "(max-width: 768px)";
-      ICONS = {
-        info: "ℹ️",
-        success: "✅",
-        warning: "⚠️",
-        error: "❌",
-        pause: "⏸️",
-        accept: "✨",
-        delete: "🗑️",
-        confirm: "✓",
-        restore: "↩️",
-        skip: "🚫",
-        archive: "📁"
-      };
-      SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
-      UNDO_DURATION_MS = 6e3;
-      OUT_CLASS = {
-        drop: "bz-notice--out-drop",
-        pop: "bz-notice--out-pop",
-        "slide-left": "bz-notice--out-left",
-        "slide-right": "bz-notice--out-right",
-        bounce: "bz-notice--out-fade",
-        shake: "bz-notice--out-fade"
-      };
-      POSITION_CLASSES = ["bz-notice-pos--bottom-right", "bz-notice-pos--bottom-left", "bz-notice-pos--top-left"];
-      PER_CHAR_MS = 60;
-      SHORT_THRESHOLD = 20;
-      live = [];
-      recent = {};
     }
   });
 
@@ -13474,11 +13474,22 @@ ${countsToText(s.missing)}
     order.forEach((id, i) => {
       if (!rank.has(id)) rank.set(id, i);
     });
-    const MISS = Number.MAX_SAFE_INTEGER;
-    return [...domains].sort((a, b) => {
-      var _a2, _b2;
-      return ((_a2 = rank.get(a.id)) != null ? _a2 : MISS) - ((_b2 = rank.get(b.id)) != null ? _b2 : MISS);
-    });
+    const listed = domains.filter((d) => rank.has(d.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
+    if (listed.length === domains.length) return listed;
+    const out = [...listed];
+    for (const d of domains) {
+      if (rank.has(d.id)) continue;
+      let anchor = -1;
+      for (let k = domains.indexOf(d) - 1; k >= 0; k--) {
+        const pos = out.indexOf(domains[k]);
+        if (pos >= 0) {
+          anchor = pos;
+          break;
+        }
+      }
+      out.splice(anchor + 1, 0, d);
+    }
+    return out;
   }
   function reorderTo(order, id, toIndex, hidden = [], domains = DOMAINS) {
     const all = applyOrder(order, domains).map((d) => d.id);
@@ -36914,6 +36925,27 @@ GitHub 仓库：${ghInfo.title}
     return {
       groups: [
         {
+          // 外观组（2026-09-17 用户点名补齐，与各域同款置顶）：布局单卡占位 + 主题单档，
+          // layoutKey 联动同范式；两键目前只是占位（域内未消费皮肤），接入皮肤时在 styles.css 消费
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "gameshelfLayout" },
+              options: [{ value: "default", label: "海报墙", prevClass: "bz-sp-prev-panel" }]
+            },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "gameshelfSkinTheme" },
+              layoutKey: "gameshelfLayout",
+              options: [{ value: "ink", label: "墨黑", layout: "default", prevClass: "bz-sp-prev-ink" }]
+            }
+          ]
+        },
+        {
           icon: "folder-open",
           name: "目录",
           rows: [
@@ -48486,6 +48518,8 @@ ${n.content.slice(0, 2e3)}
         gameshelfSteamId: "",
         gameshelfSteamApiKey: "",
         gameshelfAutoSync: true,
+        gameshelfLayout: "default",
+        gameshelfSkinTheme: "ink",
         // 做题家（设置并入复习计划 tab）
         enableMultipleChoice: true,
         questionsPerNote: "0",
@@ -48796,8 +48830,9 @@ ${n.content.slice(0, 2e3)}
         { id: "favorites", name: "收藏本", icon: DOMAIN_ICONS.favorites, desc: "收藏条目", schemaLoader: schemaLoaders.favorites },
         { id: "reading-report", name: "阅读报告", icon: DOMAIN_ICONS["reading-report"], desc: "阅读统计", noSettings: true },
         { id: "cinema", name: "影院", icon: DOMAIN_ICONS.cinema, desc: "影视目录与海报", schemaLoader: schemaLoaders.cinema },
-        { id: "gameshelf", name: "游戏库", icon: DOMAIN_ICONS.gameshelf, desc: "Steam 游戏库同步与统计", schemaLoader: schemaLoaders.gameshelf },
         { id: "bookshelf", name: "书库", icon: DOMAIN_ICONS.bookshelf, desc: "藏书封面墙、读书笔记与阅读报告", schemaLoader: schemaLoaders.bookshelf },
+        // 游戏库（2026-09-17）：声明在书库之后（与首页入口同序：影院 → 书库 → 游戏库）
+        { id: "gameshelf", name: "游戏库", icon: DOMAIN_ICONS.gameshelf, desc: "Steam 游戏库同步与统计", schemaLoader: schemaLoaders.gameshelf },
         { id: "review", name: "复习计划", icon: DOMAIN_ICONS.review, desc: "间隔重复与做题", schemaLoader: schemaLoaders.review },
         { id: "secondbrain", name: "第二大脑", icon: DOMAIN_ICONS.secondbrain, desc: "嵌入检索与对话", schemaLoader: schemaLoaders.secondbrain },
         { id: "auto-summary", name: "自动摘要", icon: DOMAIN_ICONS["auto-summary"], desc: "剪藏自动摘要", noSettings: true },
@@ -48814,7 +48849,7 @@ ${n.content.slice(0, 2e3)}
         { title: "智能", ids: ["ai", "secondbrain"] },
         { title: "记录", ids: ["diary", "memo", "belongings"] },
         { title: "收集", ids: ["clipping", "favorites"] },
-        { title: "媒体与阅读", ids: ["cinema", "bookshelf", "review", "knowledge"] },
+        { title: "媒体与阅读", ids: ["cinema", "bookshelf", "gameshelf", "review", "knowledge"] },
         { title: "工具", ids: ["pomodoro", "smartcat"] },
         { title: "安全", ids: ["encrypt", "password-vault"] }
       ];
@@ -49424,6 +49459,7 @@ ${n.content.slice(0, 2e3)}
   }
 
   // src/gameshelf/index.ts
+  init_notice();
   init_state();
   init_notes();
   init_posters();
@@ -50449,9 +50485,9 @@ ${n.content.slice(0, 2e3)}
       return false;
     }
   }
-  function openPanel3(app) {
+  function openPanel3(app, view = "shelf") {
     createUI(app);
-    M.view = "shelf";
+    M.view = view;
     M.renderFn = () => renderAll5(app);
     renderAll5(app);
     void ensurePostersFor(app);
@@ -50481,6 +50517,14 @@ ${n.content.slice(0, 2e3)}
     initialized7 = true;
     M.appRef = app;
   }
+  function afterOpen(app) {
+    void Promise.resolve().then(() => (init_sync(), sync_exports)).then(async (m) => {
+      await m.autoSyncOnOpen(app);
+      renderAll5(app);
+      ensurePosters(app, mediaItemsOf(M.items));
+      ensureZhNames(app, M.items);
+    });
+  }
   function openGameshelf(app) {
     ensureGameshelf(app);
     if (M.currentOverlay) {
@@ -50489,12 +50533,7 @@ ${n.content.slice(0, 2e3)}
     }
     rebuildItems(app);
     openPanel3(app);
-    void Promise.resolve().then(() => (init_sync(), sync_exports)).then(async (m) => {
-      await m.autoSyncOnOpen(app);
-      renderAll5(app);
-      ensurePosters(app, mediaItemsOf(M.items));
-      ensureZhNames(app, M.items);
-    });
+    afterOpen(app);
   }
   function unloadGameshelf() {
     initialized7 = false;

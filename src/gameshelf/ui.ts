@@ -913,10 +913,11 @@ function isConfigured(): boolean {
 
 /* ==================== 开 / 关 ==================== */
 
-/** 打开面板（挂壳 + 首渲 + 补海报与中文名）；已挂则跳过（toggle 关分支走 closePanel） */
-export function openPanel(app: App): void {
+/** 打开面板（挂壳 + 首渲 + 补海报与中文名）；已挂则跳过（toggle 关分支走 closePanel）。
+ *  view 缺省落游戏墙（统计是点右侧入口才进的一页）；命令 bz-gameshelf-stats 传 'stats' 直达。 */
+export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
   createUI(app);
-  M.view = 'shelf'; // 面板默认落在游戏墙（统计是点右侧入口才进的一页）
+  M.view = view;
   M.renderFn = () => renderAll(app);
   renderAll(app);
   void ensurePostersFor(app);

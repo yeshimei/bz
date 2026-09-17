@@ -1,4 +1,4 @@
-/* 源指纹 b3e2bf39e5525981 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8457c4dcaa6dbdd9 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -167,11 +167,22 @@ var BZR_home = (() => {
     order.forEach((id, i) => {
       if (!rank.has(id)) rank.set(id, i);
     });
-    const MISS = Number.MAX_SAFE_INTEGER;
-    return [...domains].sort((a, b) => {
-      var _a, _b;
-      return ((_a = rank.get(a.id)) != null ? _a : MISS) - ((_b = rank.get(b.id)) != null ? _b : MISS);
-    });
+    const listed = domains.filter((d) => rank.has(d.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
+    if (listed.length === domains.length) return listed;
+    const out = [...listed];
+    for (const d of domains) {
+      if (rank.has(d.id)) continue;
+      let anchor = -1;
+      for (let k = domains.indexOf(d) - 1; k >= 0; k--) {
+        const pos = out.indexOf(domains[k]);
+        if (pos >= 0) {
+          anchor = pos;
+          break;
+        }
+      }
+      out.splice(anchor + 1, 0, d);
+    }
+    return out;
   }
   function reorderTo(order, id, toIndex, hidden = [], domains = DOMAINS) {
     const all = applyOrder(order, domains).map((d) => d.id);
@@ -239,6 +250,13 @@ var BZR_home = (() => {
       { label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" },
       // 直开书架墙并切到「在读」分栏（有在读时才点亮入口彩点，见 buildDots）
       { label: "继续在读", commandId: "bz-bookshelf-continue", icon: "book-open" }
+    ],
+    // 游戏库（2026-09-17 用户点名补快捷命令）：两条都是「一步成事」——
+    // 立即同步 = 即时类（不关首页，拉完原地看计数）/ 数据统计 = 开面板落统计页（影院分析报告同范式）。
+    gameshelf: [
+      { label: "立即同步", commandId: "bz-gameshelf-sync", icon: "refresh-cw", keepHome: true },
+      // 图标 chart-bar 与「阅读分析报告」的 bar-chart-3 错开（enh-sweep-a 起报告/统计类图标互异的惯例）
+      { label: "数据统计", commandId: "bz-gameshelf-stats", icon: "chart-bar" }
     ],
     secondbrain: [
       { label: "第二大脑对话", commandId: "bz-secondbrain-chat", icon: "message-circle" },
