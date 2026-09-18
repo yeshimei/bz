@@ -2,25 +2,25 @@
  * 游戏库（gameshelf）域详情数据装配。
  *
  * **2026-09-18 起「全量落盘」**（用户拍板：所有数据都进笔记属性，图片图标都进本地文件夹）：
- * - 成就 → `成就` 列表（每行 6 段，格式见 steam.ts::achRowText）+ `成就已解`/`成就总数`/
+ * - 成就 → `成就` 列表（每行 8 段，格式见 steam.ts::achRowText）+ `成就已解`/`成就总数`/
  *   `稀有成就`/`成就更新`；
  * - 截图 → `截图源`（远端 URL，**同步管辖**）+ `截图`（本地 vault 路径，**媒体队列管辖**）
  *   + `截图更新`，两数组同序同长、下载失败的位置留空串；
- * - 成就图标**不写属性**：本地文件名由 (appid, apiname) 直接推出（见 posters.ts），
- *   写进去纯属冗余。属性里存的是「图在本地文件夹」这件事的**结果**，不是路径清单。
+ * - 成就图标 → 文件落本地文件夹，路径写进 `成就` 行的第 7/8 段（ADR-0167：用户要的是
+ *   「属性里一眼看得见图在哪」，可推导不是不写的理由）。
  *
  * 由此详情弹窗**默认零网络**：属性里有的块直接渲染（断网也能看全），只有该块属性缺失
  * 时才拉一次补齐；拉完即写回，下次离线可用。会话缓存退居「同一会话内避免重复拉」的加速层。
  *
- * 图片本体一律在本地文件夹，**属性里不放二进制、也不放 CDN 地址清单**——这条是属性体积的命门：
- * 134 款成就的图标 URL 光地址就要 1.4 MB，而文件名可推导，一分钱都不用花。
+ * 图片本体一律在本地文件夹，**属性里不放二进制**——这条仍是属性体积的命门：截图只存
+ * 地址（远端源 + 本地路径），图本体走文件系统。
  */
 import type { App, TFile } from 'obsidian';
 import { readDetailFm, upsertDetail } from './notes';
-import { ensureAchIcons, ensureShots } from './posters';
+import { ensureAchIcons, ensureShots, localAchIconPath } from './posters';
 import { readSteamConfig } from './sync';
 import {
-  achRowFromText, achRowText, fetchAchievementDetail, fetchStoreMeta, steamStoreUrl,
+  achRowFromText, achRowSegCount, achRowText, fetchAchievementDetail, fetchStoreMeta, steamStoreUrl,
   type AchievementDetail, type AchievementRow, type StoreMeta,
 } from './steam';
 import type { GameItem } from './state';
@@ -109,11 +109,11 @@ export function storeToFm(s: StoreMeta): Record<string, unknown> {
   if (s.recommendations !== null) out['推荐数'] = s.recommendations;
   if (s.achievementsTotal !== null) out['商店成就数'] = s.achievementsTotal;
   if (s.dlcCount !== null && s.dlcCount > 0) out['DLC数'] = s.dlcCount;
-  // 截图源：只在拿到截图时写，且**绝不碰 `截图`**（本地路径归媒体队列，同步写回会把本地冲回远端）
-  if (s.screenshots.length > 0) {
-    out['截图源'] = s.screenshots;
-    out['截图更新'] = new Date().toISOString();
-  }
+  // 截图源：**始终写**——空数组是「商店查过、确实没截图」的标记，缺了它这类游戏
+  // 每次开面板都被判缺、白拉一次商店（backfillNeeds 靠「键存在」判自愈完成）。
+  // **绝不碰 `截图`**：本地路径归媒体队列，同步/商店刷新写回会把本地冲回远端。
+  out['截图源'] = s.screenshots;
+  if (s.screenshots.length > 0) out['截图更新'] = new Date().toISOString();
   return out;
 }
 
@@ -160,10 +160,17 @@ export function fmToShots(fm: Record<string, unknown>): { local: string[]; remot
   return { local: pad(local), remote: pad(remote) };
 }
 
-/** 成就明细 → frontmatter（全量列表 + 四键；图标不进属性——文件名可推导） */
-export function achToFm(d: AchievementDetail): Record<string, unknown> {
+/** 成就明细 → frontmatter（全量列表 + 四键；行尾两段 = 图标本地路径，见 ADR-0167） */
+export function achToFm(d: AchievementDetail, appid: number): Record<string, unknown> {
   return {
-    成就: d.rows.map(achRowText),
+    // 第 7/8 段写本地路径：只在该色的远端源存在时写（Steam 没给的色留空串，
+    // 免得属性里指着一个永远不会下载的文件），路径与媒体队列的落点同源同函数。
+    成就: d.rows.map((r) =>
+      achRowText(r, {
+        on: r.icon ? localAchIconPath(appid, r.apiName, true) : '',
+        off: r.iconGray ? localAchIconPath(appid, r.apiName, false) : '',
+      }),
+    ),
     成就已解: d.unlocked,
     成就总数: d.total,
     稀有成就: d.rarestName ? `${d.rarestName}（全球 ${d.rarestPercent}% 拥有）` : '',
@@ -172,9 +179,22 @@ export function achToFm(d: AchievementDetail): Record<string, unknown> {
 }
 
 /**
+ * 全量列表是不是**旧格式**（行只 6 段、没有图标路径段）。
+ * 用途：本次改造前写下的 `成就` 列表重拉一次补上路径段；补过即 8 段，判据自然收敛
+ * （不再看「段里有没有内容」——Steam 没给灰图的行第 8 段本来就该是空串）。
+ */
+export function achIconPathsMissing(fm: Record<string, unknown>): boolean {
+  const lines = rawStrList(fm['成就']).filter((l) => l !== '');
+  if (lines.length === 0) return false; // 没列表 → 交给「缺全量列表」那条判据，别重复刷
+  return lines.some((l) => achRowSegCount(l) < 8);
+}
+
+/**
  * frontmatter → 成就明细（全量列表反解；没有 `成就` 列表 → null）。
  * 行序原样保留（写入时已按稀有度升序排过），不再重排——属性里看到的顺序就是界面顺序。
- * `icon`/`iconGray` 留空：本地图路径由 ui 侧按 (appid, apiname) 解析（posters.ts）。
+ * `icon`/`iconGray` 留空：界面按 (appid, apiname) 解析本地图（posters.ts::achIconDisplayUrl）。
+ * 行尾那两段本地路径（第 7/8 段）是给**人看/手引用**的留档，界面不消费——两者同源于
+ * localAchIconPath，不会不一致。
  */
 export function fmToAchDetail(fm: Record<string, unknown>): AchievementDetail | null {
   const lines = rawStrList(fm['成就']).filter((l) => l !== '');
@@ -328,8 +348,9 @@ export async function refreshAchievements(app: App, item: GameItem): Promise<Ach
   const r = await fetchAchievementDetail(steamId, apiKey, item.appid);
   if (r.ok) {
     achCache.set(item.appid, r.data);
-    if (item.file) await upsertDetail(app, item.file, achToFm(r.data));
-    // 成就图标入本地队列（两色都下；状态翻转时零下载）。图标不写属性，故不入 frontmatter
+    if (item.file) await upsertDetail(app, item.file, achToFm(r.data, item.appid));
+    // 成就图标入本地队列（两色都下；状态翻转时零下载）。图标路径随 `成就` 行落盘（ADR-0167），
+    // 文件本身由媒体队列补——下完只重渲，不再回写属性。
     ensureAchIcons(app, item.appid, r.data.rows.map((row) => ({ apiName: row.apiName, on: row.icon, off: row.iconGray })));
     return { detail: r.data, summary, error: null, fromCache: false };
   }

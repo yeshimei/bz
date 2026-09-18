@@ -24,6 +24,14 @@ function item(appid: number, name: string, hasAch = false, fm?: Record<string, u
   };
 }
 
+/** 8 段成就行（本次改造后的格式；尾两段 = 图标本地路径，与媒体队列同源） */
+function row8(api: string, unlocked: boolean, name = '成就'): string {
+  return [
+    name, '', unlocked ? '1' : '0', '2026-01-01', '5.0', api,
+    localAchIconPath(548430, api, true), localAchIconPath(548430, api, false),
+  ].join(' | ');
+}
+
 /** 记录 frontmatter 写入的假 App（metadataCache 现场读 __fm；vault 供媒体队列查/写文件） */
 function recorder(sink: Record<string, unknown>[], files = new Set<string>()): never {
   return {
@@ -66,7 +74,10 @@ function mockSteamDetail(opts: { failStore?: boolean } = {}): string[] {
       };
     }
     if (url.includes('/appreviews/')) return { status: 200, json: { query_summary: { review_score_desc: '特别好评', total_reviews: 36619, total_positive: 34365, total_negative: 2254 } }, text: '' };
-    if (url.includes('GetSchemaForGame')) return { status: 200, json: { game: { availableGameStats: { achievements: [{ name: 'A1', displayName: '首发日', icon: '' }, { name: 'A2', displayName: '一周目', icon: '' }] } } }, text: '' };
+    if (url.includes('GetSchemaForGame')) return { status: 200, json: { game: { availableGameStats: { achievements: [
+      { name: 'A1', displayName: '首发日', description: '首发', icon: 'https://cdn/a1.jpg', icongray: 'https://cdn/a1g.jpg' },
+      { name: 'A2', displayName: '一周目', description: '通关', icon: 'https://cdn/a2.jpg', icongray: 'https://cdn/a2g.jpg' },
+    ] } } }, text: '' };
     if (url.includes('GetPlayerAchievements')) return { status: 200, json: { playerstats: { achievements: [{ apiname: 'A1', achieved: 0, unlocktime: 0 }, { apiname: 'A2', achieved: 1, unlocktime: 1700000000 }] } }, text: '' };
     if (url.includes('GetGlobalAchievementPercentagesForApp')) return { status: 200, json: { achievementpercentages: { achievements: [{ name: 'A1', percent: 80 }, { name: 'A2', percent: 0.7 }] } }, text: '' };
     // 非 Steam 接口的 URL（截图/图标图床）→ 给个二进制体，媒体队列按 arrayBuffer 判定成功
@@ -110,7 +121,7 @@ describe('后台全量回填（商店资料 + 成就三键 → 笔记属性）',
   it('幂等：属性里已有「详情时间」→ 不发请求', async () => {
     const calls = mockSteamDetail();
     const sink: Record<string, unknown>[] = [];
-    M.items = [item(1, 'A', false, { 详情时间: '2026-09-18T00:00:00.000Z' })];
+    M.items = [item(1, 'A', false, { 详情时间: '2026-09-18T00:00:00.000Z', 截图源: [] })];
     ensureBackfill(recorder(sink), M.items);
     await new Promise((r) => setTimeout(r, 40));
     expect(calls.length).toBe(0);
@@ -143,9 +154,12 @@ describe('回填补跑判据（2026-09-18：成就全量 + 媒体文件）', () 
   it('三件活各自独立：缺哪件排哪件，全齐才跳过', () => {
     expect(backfillNeeds({}, false)).toEqual({ store: true, ach: false, shots: false });
     // 有详情时间、有成就页、却没有 `成就` 全量列表 → 只该补成就
-    expect(backfillNeeds({ 详情时间: 'x' }, true)).toEqual({ store: false, ach: true, shots: false });
+    // （截图源键在——空数组也算在，那是「商店查过、真没截图」的自愈标记）
+    expect(backfillNeeds({ 详情时间: 'x', 截图源: [] }, true)).toEqual({ store: false, ach: true, shots: false });
     // 无成就页的款不排成就活（省 3 次请求）
-    expect(backfillNeeds({ 详情时间: 'x' }, false)).toEqual({ store: false, ach: false, shots: false });
+    expect(backfillNeeds({ 详情时间: 'x', 截图源: [] }, false)).toEqual({ store: false, ach: false, shots: false });
+    // 存量笔记：全量落盘改造前回填的——有详情时间但截图源键从没写过 → 该重拉商店
+    expect(backfillNeeds({ 详情时间: 'x' }, false)).toEqual({ store: true, ach: false, shots: false });
     // 截图源有值而对应位缺本地路径 → 该补
     const fm = { 详情时间: 'x', 成就: ['A |  | 1 | 2026-01-01 | 5.0 | A1'], 截图源: ['https://s/1.jpg', 'https://s/2.jpg'], 截图: [localShotPath(1, 0), ''] };
     expect(backfillNeeds(fm, false)).toEqual({ store: false, ach: false, shots: true });
@@ -156,7 +170,7 @@ describe('回填补跑判据（2026-09-18：成就全量 + 媒体文件）', () 
   it('有详情时间但缺成就全量列表 → 只拉成就三接口，不重拉商店', async () => {
     const calls = mockSteamDetail();
     const sink: Record<string, unknown>[] = [];
-    M.items = [item(548430, '深岩银河', true, { 详情时间: '2026-09-18T00:00:00.000Z' })];
+    M.items = [item(548430, '深岩银河', true, { 详情时间: '2026-09-18T00:00:00.000Z', 截图源: [] })];
     ensureBackfill(recorder(sink), M.items);
     await vi.waitFor(() => expect(sink.some((s) => '成就总数' in s)).toBe(true));
     expect(calls.filter((u) => u.includes('/api/appdetails')).length).toBe(0);
@@ -187,6 +201,7 @@ describe('回填补跑判据（2026-09-18：成就全量 + 媒体文件）', () 
     const sink: Record<string, unknown>[] = [];
     M.items = [item(548430, '深岩银河', true, {
       详情时间: '2026-09-18T00:00:00.000Z',
+      截图源: [],
       成就: ['首发日 |  | 1 | 2026-01-01 | 5.0 | A1'],
       成就已解: 1,
       成就总数: 1,
@@ -197,15 +212,36 @@ describe('回填补跑判据（2026-09-18：成就全量 + 媒体文件）', () 
     expect(calls.filter((u) => u.includes('/api/appdetails')).length).toBe(0); // 不重拉商店
   });
 
-  it('成就列表齐且当前解锁态的图标也在 → 零请求（补跑判据收敛）', async () => {
+  it('旧格式成就行（6 段、缺图标路径）→ 重拉一次补路径段，写完即收敛', async () => {
     const calls = mockSteamDetail();
     const sink: Record<string, unknown>[] = [];
-    const files = new Set<string>([localAchIconPath(548430, 'A1', true)]);
+    // 文件全在（含两色图标）→ 只剩「行是旧格式」这一个理由该拉
+    const files = new Set<string>([localAchIconPath(548430, 'A1', true), localAchIconPath(548430, 'A2', false)]);
     M.items = [item(548430, '深岩银河', true, {
       详情时间: '2026-09-18T00:00:00.000Z',
-      成就: ['首发日 |  | 1 | 2026-01-01 | 5.0 | A1'],
+      截图源: [],
+      成就: ['首发日 |  | 1 | 2026-01-01 | 5.0 | A1', '一周目 |  | 0 | - | 0.7 | A2'],
       成就已解: 1,
-      成就总数: 1,
+      成就总数: 2,
+    })];
+    ensureBackfill(recorder(sink, files), M.items);
+    await vi.waitFor(() => expect(sink.some((s) => '成就' in s)).toBe(true));
+    const rows = sink.find((s) => '成就' in s)!['成就'] as string[];
+    expect(rows.every((r) => r.split(' | ').length === 8)).toBe(true);
+    expect(rows.find((r) => r.includes('A1'))).toContain('CONFIG/游戏海报/548430-ach-A1-on.jpg');
+  });
+
+  it('成就列表齐（新 8 段格式）且当前解锁态的图标也在 → 零请求（补跑判据收敛）', async () => {
+    const calls = mockSteamDetail();
+    const sink: Record<string, unknown>[] = [];
+    // A1 已解锁 → 查彩色那张；A2 未解锁 → 查灰图那张（判据只查当前解锁态那一色）
+    const files = new Set<string>([localAchIconPath(548430, 'A1', true), localAchIconPath(548430, 'A2', false)]);
+    M.items = [item(548430, '深岩银河', true, {
+      详情时间: '2026-09-18T00:00:00.000Z',
+      截图源: [],
+      成就: [row8('A1', true), row8('A2', false)],
+      成就已解: 1,
+      成就总数: 2,
     })];
     ensureBackfill(recorder(sink, files), M.items);
     await new Promise((r) => setTimeout(r, 60));

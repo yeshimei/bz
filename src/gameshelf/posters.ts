@@ -12,8 +12,9 @@
  * - `封面源` / `图标源` / `截图源` = Steam 远端地址，**同步管辖**（随库刷新，hash 变了能跟上）；
  * - `封面` / `图标` / `截图`       = 本地图片的 vault 路径，**由本模块写**，同步绝不碰
  *   （否则每次同步都把本地路径冲回远端）。`截图源` 与 `截图` **同序同长**，下载失败位留空串。
- * - **成就图标一个属性键都不占**：文件名由 (appid, apiname, 解锁态) 推出，写进属性纯属冗余；
- *   134 款成就光图标地址清单就要 1.4 MB，这是属性体积的命门。
+ * - **成就图标**：路径写在 `成就` 行的第 7/8 段（ADR-0167 用户拍板「一个不差」），
+ *   但**只写不读**——界面按 (appid, apiname) 推导，两处同源于 localAchIconPath。
+ *   本模块因此不需要（也不该）拿 file 去回写属性：文件落盘即完成。
  *
  * CDN 实测直连可达（不走代理）。两条队列各自串行：封面/库内图标一条（要「立刻可看」），
  * 成就图标与截图另一条（量级差两个数量级，混排会把封面挤到几千张之后）。
@@ -295,7 +296,7 @@ const mediaTasks: Array<() => Promise<void>> = [];
 const mediaQueued = new Set<string>();
 let mediaRunning = false;
 
-/** 成就图标入队（幂等：本地文件已在 → 不排队；这条队列不写属性，故不需要 file） */
+/** 成就图标入队（幂等：本地文件已在 → 不排队；路径已随 `成就` 行落盘，故这里只下文件） */
 export function ensureAchIcons(app: App, appid: number, jobs: AchIconJob[]): void {
   for (const job of jobs) {
     const wants: Array<[string | null, boolean]> = [[job.on, true], [job.off, false]];
@@ -308,7 +309,7 @@ export function ensureAchIcons(app: App, appid: number, jobs: AchIconJob[]): voi
       mediaQueued.add(key);
       mediaTasks.push(async () => {
         try {
-          // 图标不写属性（文件名可推导），唯一的副作用就是文件本身 ——
+          // 路径已在写 `成就` 行时随行落盘（detail.ts::achToFm），这里唯一的副作用就是文件本身 ——
           // 所以下完必须显式叫一次重渲，否则界面上永远停在占位图（弹窗也靠这个钩子）
           if (await download(app, path, url)) scheduleRerender();
         } finally {
@@ -379,7 +380,8 @@ async function pumpMedia(): Promise<void> {
  * 该款的成就图标有没有缺（按属性里的行判断）。
  * 只查**当前解锁态对应的那一色**：Steam 个别成就没给 icongray，若两色都查，
  * 那款会永远判「缺」→ 每次开面板都重拉一次 schema，白跑。
- * 用途：属性里不存图标地址，所以图标缺了只能靠重拉 schema 才拿得到 URL。
+ * 用途：属性里存的是**本地路径**、不是图标地址（ADR-0167），所以图标缺了只能靠重拉
+ * schema 才拿得到 URL 去补。
  */
 export function achIconsMissing(app: App, appid: number, rows: Array<{ apiName: string; unlocked: boolean }>): boolean {
   for (const r of rows) {

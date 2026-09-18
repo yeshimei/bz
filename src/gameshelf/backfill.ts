@@ -4,8 +4,9 @@
  * 不等用户逐款点开详情弹窗。
  *
  * 补跑判据（三件各自独立，任一缺就排队；全齐才跳过）：
- * - `详情时间` 缺 → 拉商店资料（appdetails）；
- * - 有成就页却缺 `成就` 全量列表 → 拉成就三接口（顺带把图标源交给媒体队列）；
+ * - `详情时间` 缺、或 `截图源` 键缺失（= 全量落盘改造前回填的存量笔记）→ 拉商店资料；
+ * - 有成就页却缺 `成就` 全量列表、或列表是旧 6 段格式（缺图标本地路径）→ 拉成就三接口
+ *   （顺带把图标源交给媒体队列）；
  * - `截图源` 有值而 `截图` 对应位缺 → 只补下载，**零网络请求**（URL 就在属性里）。
  *
  * 做法（同 names.ts 的串行队列范式）：
@@ -21,7 +22,7 @@
  * store.steampowered.com（直连可达），两条通道可用性互不影响，混跑会互相连坐。
  */
 import type { App, TFile } from 'obsidian';
-import { fmToAchDetail, fmToShots, refreshAchievements, refreshStore, safeDetailFm } from './detail';
+import { achIconPathsMissing, fmToAchDetail, fmToShots, refreshAchievements, refreshStore, safeDetailFm } from './detail';
 import { achIconsMissing, ensureShots } from './posters';
 import { M, type GameItem } from './state';
 
@@ -42,8 +43,13 @@ interface Job {
 
 /** 某款还缺什么（纯函数，可测；三种活各自独立） */
 export function backfillNeeds(fm: Record<string, unknown>, hasAch: boolean): { store: boolean; ach: boolean; shots: boolean } {
-  const store = !fm['详情时间'];
-  const ach = hasAch && !fmToAchDetail(fm);
+  // `截图源` 键缺失也算该拉：全量落盘改造（2026-09-18）之前回填的存量笔记有 `详情时间`
+  // 却从没写过截图源——只看详情时间它们永远判「不用拉」，截图就永远本地化不了。
+  // storeToFm 现在始终写截图源（无截图写空数组），重拉一次即自愈，不会反复 churn。
+  const store = !fm['详情时间'] || fm['截图源'] === undefined;
+  // 缺全量列表 **或** 列表是旧格式（行只有 6 段、没有图标本地路径——ADR-0167 改造前写的）
+  // → 各拉一次补齐；补过即自愈（8 段行不再命中，不会反复 churn）
+  const ach = hasAch && (!fmToAchDetail(fm) || achIconPathsMissing(fm));
   const { local, remote } = fmToShots(fm);
   const shots = remote.some((u, i) => !!u && !local[i]);
   return { store, ach, shots };

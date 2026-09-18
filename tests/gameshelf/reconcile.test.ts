@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { buildSyncPlan, sanitizeFileName, notePathFor, lastPlayedStr, mergeTags, managedFm, migrateLegacyKeys, GAME_TAG } from '../../src/gameshelf/reconcile';
-import { parseOwnedGames, parseRecentGames, steamCoverUrl, steamIconUrl, isValidSteamId, parseAchievementSummary, parseAchievementRows, achRowText, achRowFromText, parseStoreMeta, parseReviews, parseZhName, type AchievementRow } from '../../src/gameshelf/steam';
+import { parseOwnedGames, parseRecentGames, steamCoverUrl, steamIconUrl, isValidSteamId, parseAchievementSummary, parseAchievementRows, achRowText, achRowFromText, achRowSegCount, parseStoreMeta, parseReviews, parseZhName, type AchievementRow } from '../../src/gameshelf/steam';
 import { isSyncDue, lastSyncedAt, AUTO_SYNC_INTERVAL_MS } from '../../src/gameshelf/sync';
 
 const g = (appid: number, name: string, playtimeMin: number, lastPlayedTs = 0) => ({
@@ -254,6 +254,22 @@ describe('成就属性行（2026-09-18 全量落盘）', () => {
   it('坏行跳过：段数不足 / 无 apiname → null，不把整段渲染带崩', () => {
     expect(achRowFromText('只有一段')).toBeNull();
     expect(achRowFromText('a | b | 1 | - | - | ')).toBeNull();
+  });
+
+  it('带图标路径 → 8 段（第 7/8 段），旧格式行也认（往返不丢段）', () => {
+    const t = achRowText(row(), { on: 'CONFIG/GAME POSTER/548430-ach-APPROVED_GREENBEARD-on.jpg', off: 'CONFIG/GAME POSTER/548430-ach-APPROVED_GREENBEARD-off.jpg' });
+    expect(t).toBe('合格菜鸟 | 完成你的第一个战役任务。 | 1 | 2021-09-04 | 45.0 | APPROVED_GREENBEARD | CONFIG/GAME POSTER/548430-ach-APPROVED_GREENBEARD-on.jpg | CONFIG/GAME POSTER/548430-ach-APPROVED_GREENBEARD-off.jpg');
+    expect(achRowSegCount(t)).toBe(8);
+    const back = achRowFromText(t)!;
+    expect(back).toMatchObject({ apiName: 'APPROVED_GREENBEARD', iconPath: 'CONFIG/GAME POSTER/548430-ach-APPROVED_GREENBEARD-on.jpg', iconGrayPath: 'CONFIG/GAME POSTER/548430-ach-APPROVED_GREENBEARD-off.jpg' });
+    // Steam 没给灰图 → 第 8 段写 `-` 占位，段数仍是 8（判据看段数，不看有没有内容）
+    expect(achRowText(row(), { on: 'x.jpg', off: '' }).endsWith(' | x.jpg | -')).toBe(true);
+    expect(achRowSegCount(achRowText(row(), { on: 'x.jpg', off: '' }))).toBe(8);
+    // 旧格式（不传 icons）→ 6 段，路径位反解成空串
+    const legacy = achRowFromText(achRowText(row()))!;
+    expect(legacy).toMatchObject({ iconPath: '', iconGrayPath: '' });
+    expect(achRowSegCount(achRowText(row()))).toBe(6);
+    expect(achRowSegCount('')).toBe(0);
   });
 
   it('双色图标：Schema 的 icon 与 icongray 都读进来（缺 icongray → null）', () => {

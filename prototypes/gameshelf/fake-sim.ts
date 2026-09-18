@@ -22,14 +22,14 @@ import { setAISettingsProvider } from '../../src/core/ai';
 import { attachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import { ensureGameshelf, openGameshelf as openGameshelfDomain, unloadGameshelf } from '../../src/gameshelf/index';
 import { closePanel } from '../../src/gameshelf/ui';
-import { setMediaInterval } from '../../src/gameshelf/posters';
+import { localAchIconPath, setMediaInterval } from '../../src/gameshelf/posters';
 import { achRowText, parseAchievementRows, parseStoreMeta } from '../../src/gameshelf/steam';
 
 /** 游戏目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
 const FOLDER = '我的/游戏';
 /** 种子标记：存在 = 已种子过（用户在壳里的改动保留，不被覆盖）。
  *  ⚠️ 改种子内容必须同一次把版本号 +1——否则浏览器老 localStorage 里的旧种子不会重播。 */
-const SEED_MARK = 'bz-sim:__gameshelf-seed-v5';
+const SEED_MARK = 'bz-sim:__gameshelf-seed-v6';
 /** 设置持久键 */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -43,12 +43,21 @@ declare global {
  * 罐头 → 该款的 `成就` 属性行（**真解析 + 真序列化**，与插件写盘口径逐字一致）。
  * 壳里种子直接带上全量行，是为了让评审跑的是「属性优先、零网络」那条主路径
  * （而不是每次都靠罐头现拉再回填）。罐头没这款 → 空数组。
+ * 尾两段 = 图标本地路径（ADR-0167）：与媒体队列同源（localAchIconPath），
+ * 罐头没给的那一色写 `-`（占位符口径与日期/全球率一致）。
  */
 function achRowsOf(appid: number): string[] {
   const a = window.GAMESHELF_DETAIL?.ach?.[String(appid)];
   if (!a) return [];
   const d = parseAchievementRows(a.schema, a.player, a.global);
-  return d ? d.rows.map(achRowText) : [];
+  return d
+    ? d.rows.map((r) =>
+        achRowText(r, {
+          on: r.icon ? localAchIconPath(appid, r.apiName, true) : '',
+          off: r.iconGray ? localAchIconPath(appid, r.apiName, false) : '',
+        }),
+      )
+    : [];
 }
 
 /**
