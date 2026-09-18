@@ -2206,12 +2206,14 @@ function openAddSceneDialog(): void {
     const settings = getSettings();
     const next = [...scenes, name].join(',');
     settings.memoScenarios = next;
-    void saveSettings().then(async () => {
-      MemoData.init(getSettings());
-      notice(`已添加场景「${name}」`, 'success');
-      close();
-      await refresh();
-    });
+    void saveSettings()
+      .then(async () => {
+        MemoData.init(getSettings());
+        notice(`已添加场景「${name}」`, 'success');
+        close();
+        await refresh();
+      })
+      .catch((e) => notifySaveError(e, '添加场景')); // 一致#13：写设置失败可见（对齐域内口径）
   };
   saveBtn.addEventListener('click', doSave);
   cancelBtn.addEventListener('click', () => close());
@@ -2248,11 +2250,13 @@ function openMemoInSettings(): void {
 /** 场景列表写回设置串（与旧 memo 共用 memoScenarios 键）→ 重建数据层 → 刷新 */
 function commitScenarios(next: string[], okMsg: string): Promise<void> {
   getSettings().memoScenarios = next.join(',');
-  return saveSettings().then(async () => {
-    MemoData.init(getSettings());
-    notice(okMsg, 'success');
-    await refresh();
-  });
+  return saveSettings()
+    .then(async () => {
+      MemoData.init(getSettings());
+      notice(okMsg, 'success');
+      await refresh();
+    })
+    .catch((e) => notifySaveError(e, '保存场景')); // 一致#13：写设置失败可见（对齐域内口径）
 }
 
 /** 场景重命名浮层：批量改条目 scene 字段 + 更新设置串（默认场景拒改，issue 200 拍板） */

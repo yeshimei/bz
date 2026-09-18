@@ -168,12 +168,12 @@ describe('批C · markup 源静态断言', () => {
     expect(read('src/secondbrain/render.ts')).toContain("import { stripMdExt } from '../core/ui/str'");
   });
 
-  it('条目16 一致#5：isTodayStr 收口 localDayKey、月历日键 pad2（批 D 边界外无 padStart 新增）', () => {
+  it('条目16 一致#5：isTodayStr 收口 localDayKey、月历日键 pad2（合并后全域 padStart 归零，批 D 已收尾）', () => {
     const ui = read('src/memo/ui.ts');
     expect(ui).toMatch(/isTodayStr[\s\S]{0,200}localDayKey\(\)/);
     expect(ui).toContain('pad2');
-    // 仅剩的四处 padStart 属批 D 边界（postponeItem:1040 两处 / postponeSub:1166 两处），此处不动
-    expect(ui.match(/padStart\(2, '0'\)/g)?.length).toBe(4);
+    // 合并终态：批 D 把 postponeItem/postponeSub 四处也 pad2 化（一致#5 全清），全域零 padStart
+    expect(ui.match(/padStart\(2, '0'\)/g)?.length ?? 0).toBe(0);
   });
 });
 

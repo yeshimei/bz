@@ -25,10 +25,10 @@ import { unloadMemo } from '../../src/memo'; // index 版 = ui 卸载 + 提醒�
 import { MemoData } from '../../src/memo/data';
 
 /** 【期望配置】见文件头「可配置期望约定」：现状全部 false（钉旧基线行为），修复合并后翻转 */
-const OPEN_FOR_NOTE_RESETS_SCENE = false; // 批 B：openForNote 已开分支重置 activeScene='全部'
-const COMPOSER_READS_DEFAULT_PRIORITY = false; // 批 D：composer 读 memoDefaultPriority（现状恒 minor）
-const AWAIT_OPEN_FILE = false; // 批 D：jumpToNote await openFile 后再取 editor（现状同步取旧 view）
-const READ_FAILURE_ERROR_STATE = false; // A9：读盘抛错面板渲染错误空态（现状空白 + unhandled）
+const OPEN_FOR_NOTE_RESETS_SCENE = true; // 批 B 已合并：openForNote 已开分支重置 activeScene='全部'
+const COMPOSER_READS_DEFAULT_PRIORITY = true; // 批 D 已合并：composer 读 memoDefaultPriority
+const AWAIT_OPEN_FILE = true; // 批 D 已合并：jumpToNote await openFile 后再取 editor
+const READ_FAILURE_ERROR_STATE = true; // 批 B 已合并：读盘抛错面板渲染错误空态
 
 const SETTINGS = {
   storagePath: 'CONFIG/STORAGE',
