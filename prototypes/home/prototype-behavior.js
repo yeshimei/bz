@@ -1,4 +1,4 @@
-/* 源指纹 bb8b3ee485bfa896 · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4364fdec4caacb4f · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -6755,6 +6755,24 @@ var BZW_home = (() => {
   });
 
   // src/core/ui/modal.ts
+  function bindFormSubmit(popup, onSubmit) {
+    popup.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      onSubmit();
+    });
+    popup.addEventListener("keypress", (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.dataset.bzNoFormSubmit !== void 0) return;
+      e.preventDefault();
+      onSubmit();
+    });
+  }
   function uiModal(opts) {
     var _a2;
     const prevActive = document.activeElement;
@@ -6790,6 +6808,7 @@ var BZW_home = (() => {
       var _a3;
       if (closed) return;
       closed = true;
+      liveModals.delete(close);
       releaseTrap == null ? void 0 : releaseTrap();
       mask.remove();
       escHandle6 == null ? void 0 : escHandle6.unregister();
@@ -6811,13 +6830,16 @@ var BZW_home = (() => {
     });
     document.body.appendChild(mask);
     if (focusEnabled) (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
+    liveModals.add(close);
     return { mask, popup, close };
   }
+  var liveModals;
   var init_modal = __esm({
     "src/core/ui/modal.ts"() {
       init_esc_manager();
       init_z_order();
       init_focus_trap();
+      liveModals = /* @__PURE__ */ new Set();
     }
   });
 
@@ -20167,7 +20189,7 @@ ${countsToText(s.missing)}
       openExternalUrl(app, it.url);
     }
   }
-  function jumpToNote(it) {
+  async function jumpToNote(it) {
     var _a2;
     if (!it.notePath) return;
     closeMemoPanel();
@@ -20178,13 +20200,23 @@ ${countsToText(s.missing)}
       return;
     }
     const leaf = app.workspace.getLeaf();
-    void leaf.openFile(file);
+    await leaf.openFile(file);
     const editor = (_a2 = leaf.view) == null ? void 0 : _a2.editor;
     if (editor && it.notePosition) {
       const { line, ch } = it.notePosition;
       editor.focus();
       editor.setCursor(line, ch || 0);
       editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    } else if (it.notePosition) {
+      const { line, ch } = it.notePosition;
+      requestAnimationFrame(() => {
+        var _a3;
+        const ed = (_a3 = leaf.view) == null ? void 0 : _a3.editor;
+        if (!ed) return;
+        ed.focus();
+        ed.setCursor(line, ch || 0);
+        ed.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+      });
     }
   }
   function toggleCheck(it) {
@@ -20242,9 +20274,7 @@ ${countsToText(s.missing)}
   async function postponeItem(id, days) {
     const it = M3.items.find((i) => i.id === id);
     if (!it || !it.due) return;
-    const d = new Date(it.due.replace("T", " "));
-    d.setDate(d.getDate() + days);
-    const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const next = (0, import_moment5.default)(it.due, "YYYY-MM-DD HH:mm").add(days, "days").format("YYYY-MM-DD HH:mm");
     try {
       await MemoData.updateItem(id, { due: next });
       emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
@@ -20288,19 +20318,13 @@ ${countsToText(s.missing)}
     await refresh();
   }
   async function deleteItemConfirm(it) {
-    const ok = await openFlowDialog({
-      title: "删除备忘录",
-      message: `确定删除备忘录「${it.title}」吗？
-删除后可在通知中撤销。`,
-      className: skinClass(),
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "删除", value: "delete", danger: true, cta: true }
-      ]
-    });
-    if (ok !== "delete") return;
     try {
       const idx = await MemoData.deleteItem(it.id);
+      if (idx === -1) {
+        notice("该条已不存在");
+        await refresh();
+        return;
+      }
       emitDomainEvent("memo", { kind: "deleted", title: it.title });
       notifyUndo(`已删除备忘录「${it.title}」`, () => {
         void (async () => {
@@ -20358,11 +20382,7 @@ ${countsToText(s.missing)}
         }
       });
       if (it.due) {
-        const postponeSub = (days) => {
-          const d = new Date(it.due.replace("T", " "));
-          d.setDate(d.getDate() + days);
-          return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-        };
+        const postponeSub = (days) => (0, import_moment5.default)(it.due, "YYYY-MM-DD HH:mm").add(days, "days").format("MM-DD");
         actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
           await postponeItem(it.id, 1);
         } });
@@ -20446,10 +20466,24 @@ ${countsToText(s.missing)}
     contentLabel.textContent = "内容";
     const contentInput = document.createElement("textarea");
     contentInput.className = "bz-input";
-    contentInput.placeholder = "输入备忘录内容...";
+    contentInput.placeholder = PLACEHOLDER_CONTENT;
     contentInput.value = editing ? editing.title : parsedPreset ? parsedPreset.title : "";
     contentField.append(contentLabel, contentInput);
     form.appendChild(contentField);
+    let urlCleared = false;
+    if (isEdit && (editing == null ? void 0 : editing.url)) {
+      const linkRow = document.createElement("div");
+      linkRow.className = "bz-memo-link-row";
+      const linkBtn = uiBtn({ icon: "link", label: "清除链接", chip: true });
+      const linkLabel = linkBtn.lastElementChild;
+      linkBtn.addEventListener("click", () => {
+        urlCleared = !urlCleared;
+        linkBtn.classList.toggle("is-on", urlCleared);
+        linkLabel.textContent = urlCleared ? "保存后移除链接" : "清除链接";
+      });
+      linkRow.appendChild(linkBtn);
+      form.appendChild(linkRow);
+    }
     const clDraft = clInitial;
     const clField = document.createElement("div");
     clField.className = "bz-field bz-memo-cl-field";
@@ -20481,8 +20515,14 @@ ${countsToText(s.missing)}
         inp.className = "bz-input";
         inp.value = c.text;
         inp.placeholder = "子任务内容";
+        inp.dataset.bzNoFormSubmit = "1";
         inp.addEventListener("input", () => {
           clDraft[idx].text = inp.value;
+        });
+        inp.addEventListener("keydown", (e) => {
+          if (e.isComposing || e.ctrlKey || e.metaKey || e.key !== "Enter") return;
+          e.preventDefault();
+          clAddBtn.click();
         });
         const del = document.createElement("button");
         del.type = "button";
@@ -20490,8 +20530,11 @@ ${countsToText(s.missing)}
         del.title = "删除子任务";
         del.appendChild(uiIcon("x"));
         del.addEventListener("click", () => {
+          var _a3;
           clDraft.splice(idx, 1);
           renderClRows();
+          const inputs = clRows.querySelectorAll("input");
+          (_a3 = inputs[Math.min(idx, inputs.length - 1)]) == null ? void 0 : _a3.focus();
         });
         row.append(box, inp, del);
         clRows.appendChild(row);
@@ -20509,7 +20552,7 @@ ${countsToText(s.missing)}
     titleBox.className = "bz-memo-extra" + (isClip ? " bz-memo-extra-on" : "");
     const titleInput = document.createElement("input");
     titleInput.className = "bz-input";
-    titleInput.placeholder = "标题（可选）";
+    titleInput.placeholder = PLACEHOLDER_TITLE;
     titleInput.value = editing ? "" : (opts == null ? void 0 : opts.presetTitle) || "";
     titleBox.appendChild(titleInput);
     form.appendChild(titleBox);
@@ -20537,7 +20580,11 @@ ${countsToText(s.missing)}
         if (!hit) return;
         if (contentInput.value.trim()) return;
         contentInput.placeholder = hit.url;
-        if (hit.title) titleInput.placeholder = hit.title;
+        contentInput.dataset.clipPrefilled = "1";
+        if (hit.title) {
+          titleInput.placeholder = hit.title;
+          titleInput.dataset.clipPrefilled = "1";
+        }
         notifyClipPrefill();
       })();
     }
@@ -20620,7 +20667,24 @@ ${countsToText(s.missing)}
       dueClear.style.display = dueInput.value ? "inline-flex" : "none";
     });
     dueRow.append(dueInput, dueClear);
-    dueField.append(dueLabel, dueRow);
+    const dueQuick = document.createElement("div");
+    dueQuick.className = "bz-memo-due-quick";
+    const quickHM = (editing == null ? void 0 : editing.due) ? editing.due.slice(11, 16) : null;
+    [
+      { offset: 0, day: "今天", fallbackHM: "18:00" },
+      { offset: 1, day: "明天", fallbackHM: "09:00" }
+    ].forEach(({ offset, day, fallbackHM }) => {
+      const hm = quickHM || fallbackHM;
+      dueQuick.appendChild(uiBtn({
+        label: `${day} ${hm}`,
+        size: "sm",
+        onClick: () => {
+          dueInput.value = `${(0, import_moment5.default)().add(offset, "days").format("YYYY-MM-DD")}T${hm}`;
+          dueInput.dispatchEvent(new Event("input"));
+        }
+      }));
+    });
+    dueField.append(dueLabel, dueRow, dueQuick);
     form.appendChild(dueField);
     const recurField = document.createElement("div");
     recurField.className = "bz-field";
@@ -20691,19 +20755,41 @@ ${countsToText(s.missing)}
     };
     const modalBox = document.createElement("div");
     modalBox.className = "bz-memo-editor";
-    const cancelBtn = uiBtn({ label: "取消", onClick: () => closeModal() });
+    const cancelBtn = uiBtn({ label: "取消", onClick: () => requestClose() });
     const saveBtn = uiBtn({ label: isEdit ? "保存" : "添加", tone: "primary" });
     const actionsRow = document.createElement("div");
     actionsRow.className = "bz-memo-form-actions";
     actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
     form.appendChild(actionsRow);
     modalBox.appendChild(form);
-    saveBtn.addEventListener("click", () => {
-      var _a3;
+    const baseline = {
+      content: contentInput.value,
+      clipTitle: titleInput.value,
+      script: scriptInput.value,
+      course: courseInput.value,
+      scene: defaultScene,
+      priority: editing ? editing.priority : tryGetSettings().memoDefaultPriority || "minor",
+      due: dueInput.value,
+      recur: (editing == null ? void 0 : editing.recur) && editing.recur.kind !== "days" ? editing.recur.kind : "none",
+      notePath: posState.notePath,
+      notePosition: posState.notePosition ? { ...posState.notePosition } : null,
+      cl: clDraft.map((c) => ({ ...c }))
+    };
+    function editorDirty() {
+      var _a3, _b3, _c, _d;
+      const on = (el) => {
+        var _a4;
+        return ((_a4 = el.querySelector(".bz-choice-btn.is-on")) == null ? void 0 : _a4.dataset.value) || "";
+      };
+      return contentInput.value !== baseline.content || titleInput.value !== baseline.clipTitle || scriptInput.value !== baseline.script || courseInput.value !== baseline.course || dueInput.value !== baseline.due || on(choice.el) !== baseline.scene || on(prioChoice.el) !== baseline.priority || on(recurChoice.el) !== baseline.recur || posState.notePath !== baseline.notePath || ((_a3 = posState.notePosition) == null ? void 0 : _a3.line) !== ((_b3 = baseline.notePosition) == null ? void 0 : _b3.line) || ((_c = posState.notePosition) == null ? void 0 : _c.ch) !== ((_d = baseline.notePosition) == null ? void 0 : _d.ch) || urlCleared || clDraft.length !== baseline.cl.length || clDraft.some((c, i) => c.text !== baseline.cl[i].text || c.done !== baseline.cl[i].done);
+    }
+    let saving = false;
+    const saveLabelEl = saveBtn.querySelector("span");
+    const doSave2 = () => {
+      if (saving) return;
       let content = contentInput.value.trim();
       if (!content) {
-        const ph = contentInput.placeholder;
-        if (ph && ph !== "输入备忘录内容...") content = ph;
+        if (contentInput.dataset.clipPrefilled === "1" && contentInput.placeholder) content = contentInput.placeholder;
       }
       if (!content) {
         notice("请输入内容");
@@ -20716,15 +20802,14 @@ ${countsToText(s.missing)}
       const priority = prioBtnOn ? prioBtnOn.dataset.value || "minor" : "minor";
       const recurBtnOn = recurChoice.el.querySelector(".is-on");
       const recurKind = recurBtnOn ? recurBtnOn.dataset.value || "none" : "none";
-      const recur = !recurTouched && ((_a3 = editing == null ? void 0 : editing.recur) == null ? void 0 : _a3.kind) === "days" ? editing.recur : recurKind === "weekly" || recurKind === "monthly" || recurKind === "yearly" ? { kind: recurKind } : null;
+      const recur = !recurTouched && (editing == null ? void 0 : editing.recur) ? editing.recur : recurKind === "weekly" || recurKind === "monthly" || recurKind === "yearly" ? { kind: recurKind } : null;
       const clClean = clDraft.map((c) => ({ text: c.text.trim(), done: c.done })).filter((c) => c.text);
       const checklist = clClean.length ? clClean : null;
       const dueVal = dueInput.value;
       const due = dueVal ? dueVal.replace("T", " ") : null;
       let titleVal = titleInput.value.trim();
       if (!titleVal && scene === "剪藏") {
-        const ph = titleInput.placeholder;
-        if (ph && ph !== "标题（可选）") titleVal = ph;
+        if (titleInput.dataset.clipPrefilled === "1" && titleInput.placeholder) titleVal = titleInput.placeholder;
       }
       const scriptName = scene === "代码" ? scriptInput.value.trim() || null : null;
       let courseName = null;
@@ -20742,8 +20827,11 @@ ${countsToText(s.missing)}
       }
       const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
       const { url } = extractUrlAndDisplay(content);
+      saving = true;
+      saveBtn.disabled = true;
+      if (saveLabelEl) saveLabelEl.textContent = "保存中…";
       void (async () => {
-        var _a4;
+        var _a3;
         try {
           if (isEdit && editing) {
             await MemoData.updateItem(editing.id, {
@@ -20758,7 +20846,9 @@ ${countsToText(s.missing)}
               scriptName,
               courseName,
               coursePath,
-              url: url != null ? url : editing.url
+              // 清除链接哨兵（M8）：显式点击「清除链接」→ url 落 null；否则维持原语义
+              // （内容里有链接用新链接，内容无链接保留原 url）
+              url: urlCleared ? null : url != null ? url : editing.url
             });
             emitDomainEvent("memo", { kind: "edited", old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
           } else {
@@ -20786,17 +20876,27 @@ ${countsToText(s.missing)}
             M3.pinnedNewId = it.id;
           }
           closeModal();
-          (_a4 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a4.call(opts);
+          (_a3 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a3.call(opts);
           await refresh();
         } catch (e) {
           notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
           console.error(e);
+        } finally {
+          saving = false;
+          saveBtn.disabled = false;
+          if (saveLabelEl) saveLabelEl.textContent = isEdit ? "保存" : "添加";
         }
       })();
-    });
-    const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
+    };
+    saveBtn.addEventListener("click", doSave2);
+    const requestClose = () => {
+      if (editorDirty()) confirmDiscard(() => closeModal(), void 0, skinClass());
+      else closeModal();
+    };
+    const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
     closeModal = close;
-    contentInput.focus();
+    bindFormSubmit(popup, doSave2);
+    if (!isMobileEnv()) contentInput.focus();
     if (!isEdit && defaultScene === "剪藏") tryEditorClipPrefill();
   }
   function uiIconBtnClear() {
@@ -20848,12 +20948,12 @@ ${countsToText(s.missing)}
     const count = M3.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
-    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与备忘录共用）";
+    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与设置面板同键）";
     const saveBtn = uiBtn({ label: "保存", tone: "primary" });
     const cancelBtn = uiBtn({ label: "取消" });
     const row = uiBtnRow([cancelBtn, saveBtn]);
     wrap2.append(title, input, hint, row);
-    const { close } = uiModal({ content: wrap2, maxWidth: 340, className: skinClass() });
+    const { close, popup } = uiModal({ content: wrap2, maxWidth: 340, className: skinClass() });
     const doSave2 = () => {
       const name = input.value.trim();
       if (!name) {
@@ -20873,26 +20973,35 @@ ${countsToText(s.missing)}
         notice("场景已存在");
         return;
       }
+      let rollbackMsg = null;
       void (async () => {
         try {
           const moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
-          await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
+          try {
+            await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
+          } catch (e) {
+            try {
+              await MemoData.updateSceneBulk(name, scene);
+              rollbackMsg = "条目场景已还原，场景列表未改动，可稍后重试";
+            } catch (e2) {
+              rollbackMsg = `自动还原未成功：重新添加场景「${name}」即可找回已迁移的条目`;
+            }
+            throw e;
+          }
           if (M3.activeScene === scene) M3.activeScene = name;
           renderAll();
           close();
         } catch (e) {
           notifySaveError(e, "重命名场景");
+          if (rollbackMsg) notice(rollbackMsg, "warning");
           console.error(e);
         }
       })();
     };
     saveBtn.addEventListener("click", doSave2);
     cancelBtn.addEventListener("click", () => close());
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doSave2();
-      if (e.key === "Escape") close();
-    });
+    bindFormSubmit(popup, doSave2);
     setTimeout(() => {
       input.focus();
       input.select();
@@ -20925,17 +21034,33 @@ ${countsToText(s.missing)}
       ]
     });
     if (ok !== "delete") return;
+    let rollbackMsg = null;
     try {
-      if (count > 0) await MemoData.updateSceneBulk(scene, target);
-      await commitScenarios(others, `已删除场景「${scene}」`);
+      if (count > 0) {
+        await MemoData.updateSceneBulk(scene, target);
+        try {
+          await commitScenarios(others, `已删除场景「${scene}」`);
+        } catch (e) {
+          try {
+            await MemoData.updateSceneBulk(target, scene);
+            rollbackMsg = "条目已迁回原场景，场景列表未改动，可稍后重试";
+          } catch (e2) {
+            rollbackMsg = `自动还原未成功：重新添加场景「${scene}」即可找回已迁移的条目`;
+          }
+          throw e;
+        }
+      } else {
+        await commitScenarios(others, `已删除场景「${scene}」`);
+      }
       if (M3.activeScene === scene) M3.activeScene = "全部";
       renderAll();
     } catch (e) {
       notifySaveError(e, "删除场景");
+      if (rollbackMsg) notice(rollbackMsg, "warning");
       console.error(e);
     }
   }
-  var import_moment5, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach;
+  var import_moment5, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach, PLACEHOLDER_CONTENT, PLACEHOLDER_TITLE;
   var init_ui5 = __esm({
     "src/memo/ui.ts"() {
       import_moment5 = __toESM(require_moment());
@@ -20944,6 +21069,7 @@ ${countsToText(s.missing)}
       init_dom();
       init_mobile();
       init_settings_provider();
+      init_modal();
       init_ui();
       init_flow_dialog();
       init_str();
@@ -20962,6 +21088,8 @@ ${countsToText(s.missing)}
       clipTitleHint = null;
       panelResizeDetach = null;
       sortSelectDetach = null;
+      PLACEHOLDER_CONTENT = "输入备忘录内容…";
+      PLACEHOLDER_TITLE = "标题（可选）";
     }
   });
 

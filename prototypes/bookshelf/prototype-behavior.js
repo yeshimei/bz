@@ -1,4 +1,4 @@
-/* 源指纹 a24b7c7907225bc3 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 51d3c392df095d49 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -5462,6 +5462,7 @@ var BZW_bookshelf = (() => {
   }
 
   // src/core/ui/modal.ts
+  var liveModals = /* @__PURE__ */ new Set();
   function uiModal(opts) {
     var _a;
     const prevActive = document.activeElement;
@@ -5497,6 +5498,7 @@ var BZW_bookshelf = (() => {
       var _a2;
       if (closed) return;
       closed = true;
+      liveModals.delete(close);
       releaseTrap == null ? void 0 : releaseTrap();
       mask.remove();
       escHandle == null ? void 0 : escHandle.unregister();
@@ -5518,6 +5520,7 @@ var BZW_bookshelf = (() => {
     });
     document.body.appendChild(mask);
     if (focusEnabled) (_a = firstFocusable(popup)) == null ? void 0 : _a.focus();
+    liveModals.add(close);
     return { mask, popup, close };
   }
 

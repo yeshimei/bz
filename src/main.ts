@@ -13,6 +13,7 @@ import { closeSettingsModal } from './core/settings-modal';
 import { closeModelPicker } from './core/settings-model-picker';
 import { closePathPicker } from './core/path-picker';
 import { closeLightbox } from './core/ui/lightbox';
+import { closeAllModals } from './core/ui/modal';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
@@ -351,6 +352,9 @@ export default class BzPlugin extends Plugin {
     closeModelPicker();
     closePathPicker();
     closeLightbox();
+    // uiModal 存活收口（M13/A1）：编辑器/添加场景等组件库弹窗的登记表统一关——
+    // 禁用插件后遮罩残留且 ESC 已被下方 escManager.destroy 短路（未打开时 no-op）
+    closeAllModals();
     // toast 卸载清理（UX 整改 l2-toast）：清空通知容器 DOM + 存活/去重状态
     cleanupNotices();
     // 清理裸注册命令（统一 bz- 前缀，必须显式 removeCommand）
