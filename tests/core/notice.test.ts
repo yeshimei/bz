@@ -413,6 +413,117 @@ describe('通知系统', () => {
       expect(visibleNotices()[1].querySelector('.bz-notice-msg')!.textContent).toBe('还原失败：42，请重试');
     });
   });
+
+  // ==================== 修复批 B（R6 / 效率 7 / 8 / 9 / 一致 7，2026-09-18） ====================
+
+  describe('修复批 B：操作按钮键盘可达 + 常驻帧关闭策略 + setAction（R6/效率 7/8/9）', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      __resetNoticeForTests();
+      document.body.innerHTML = '';
+    });
+    afterEach(() => {
+      vi.useRealTimers();
+      document.body.innerHTML = '';
+    });
+
+    it('R6：操作按钮 tabIndex=0，Enter/Space 触发同回调（键盘可达）', () => {
+      const onClick = vi.fn();
+      notify('已删除', { action: { label: '撤销', onClick } });
+      const btn = visibleNotices()[0].querySelector('.bz-notice-action') as HTMLElement;
+      expect(btn.tabIndex).toBe(0);
+      btn.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      expect(onClick).toHaveBeenCalledTimes(1);
+      btn.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      expect(onClick).toHaveBeenCalledTimes(2);
+    });
+
+    it('效率7：duration<=0 常驻帧点击本体不关，右上 ✕ 专职关闭', () => {
+      const h = notify('常驻错误', { type: 'error', duration: 0 });
+      const el = h.el;
+      // 常驻帧挂显式关闭钮（推右 ✕）
+      const closeBtn = el.querySelector('.bz-notice-close') as HTMLElement;
+      expect(closeBtn).not.toBeNull();
+      // 点击本体不再关闭
+      el.click();
+      vi.advanceTimersByTime(400);
+      expect(el.isConnected).toBe(true);
+      // ✕ 点击关闭（带退出动画）
+      closeBtn.click();
+      vi.advanceTimersByTime(300);
+      expect(el.isConnected).toBe(false);
+    });
+
+    it('效率7：自动消失帧保持点击本体即关，且不挂 ✕', async () => {
+      const h = notify('普通提示');
+      expect(h.el.querySelector('.bz-notice-close')).toBeNull();
+      h.el.click();
+      await vi.advanceTimersByTimeAsync(300);
+      expect(h.el.isConnected).toBe(false);
+    });
+
+    it('效率7：setType 接管计时退出常驻后摘 ✕、恢复点本体即关', async () => {
+      const h = notify('处理中', { type: 'progress' }); // progress 默认常驻
+      expect(h.el.querySelector('.bz-notice-close')).not.toBeNull();
+      h.setType('success'); // 转自动消失
+      expect(h.el.querySelector('.bz-notice-close')).toBeNull();
+      h.el.click();
+      await vi.advanceTimersByTimeAsync(300);
+      expect(h.el.isConnected).toBe(false);
+    });
+
+    it('效率8：notifyActionError 传 onRetry 挂「重试」按钮，点击执行回调', () => {
+      const onRetry = vi.fn();
+      notifyActionError(new Error('网络超时'), '同步', { onRetry });
+      const el = visibleNotices()[0];
+      expect(el.classList.contains('bz-notice--error')).toBe(true);
+      const btn = el.querySelector('.bz-notice-action') as HTMLElement;
+      expect(btn.textContent).toBe('重试');
+      btn.click();
+      expect(onRetry).toHaveBeenCalledTimes(1);
+    });
+
+    it('效率8：不传 onRetry 不挂 action（原文案行为不变）', () => {
+      notifyActionError(new Error('x'), '动作');
+      expect(visibleNotices()[0].querySelector('.bz-notice-action')).toBeNull();
+    });
+
+    it('效率9：dedupe 合并路径返回指向存活帧的真句柄（setMessage/setAction/hide 生效）', () => {
+      const h1 = notify('第一次', { dedupeKey: 'fix-b-handle', type: 'progress' });
+      const h2 = notify('第二次', { dedupeKey: 'fix-b-handle', type: 'progress' });
+      expect(visibleNotices()).toHaveLength(1);
+      // 同一存活帧：句柄操作落在唯一通知上
+      expect(h2.el).toBe(visibleNotices()[0]);
+      h2.setMessage('改到存活帧');
+      expect(h1.el.querySelector('.bz-notice-msg')!.textContent).toBe('改到存活帧');
+      // setAction 补挂 + label 去重
+      h2.setAction({ label: '查看', onClick: () => {} });
+      h2.setAction({ label: '查看', onClick: () => {} }); // 重复不重挂
+      expect(visibleNotices()[0].querySelectorAll('.bz-notice-action')).toHaveLength(1);
+      // hide 关掉存活帧
+      h2.hide();
+      vi.advanceTimersByTime(300);
+      expect(visibleNotices()).toHaveLength(0);
+    });
+
+    it('效率9：句柄 setAction 单个与数组两种入参都可用', () => {
+      const h = notify('批量');
+      h.setAction([
+        { label: '甲', onClick: () => {} },
+        { label: '乙', onClick: () => {} },
+      ]);
+      h.setAction({ label: '丙', onClick: () => {} });
+      const labels = [...h.el.querySelectorAll('.bz-notice-action')].map((el) => el.textContent);
+      expect(labels).toEqual(['甲', '乙', '丙']);
+    });
+
+    it('一致7：archive 类型仍可用（favorites 归档撤销消费中）；零消费类型已由编译期移除', () => {
+      notifyUndo('已归档收藏「X」', () => {}, { type: 'archive' });
+      const el = visibleNotices()[0];
+      expect(el.classList.contains('bz-notice--archive')).toBe(true);
+      expect(el.querySelector('.bz-notice-icon')!.textContent).toBe('📁');
+    });
+  });
 });
 
 // ==================== 用户偏好（issue 297）：级别 / 停留档位 / 桌面位置 / 同屏上限 ====================

@@ -68,6 +68,17 @@ export function uiPopover(opts: BzPopoverOpts): {
     }
     (anchor.parentElement || anchor).appendChild(m);
     layer = m;
+    // 向上翻转（R5）：默认只向下展开（top: calc(100% + 4px)），弹窗壳 overflow-y:auto
+    // 限高时控件位于表单下半部 → 浮层溢出计入壳滚动区显示不全。实测下方剩余空间，
+    // 不足浮层自身高度且上方更宽裕时改向上翻（.is-flip-up → bottom: calc(100% + 4px)），
+    // 对齐 uiSelect 同款翻转与右缘钳制口径
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const rect = m.getBoundingClientRect();
+    const need = rect.height || m.offsetHeight;
+    const spaceBelow = vh - rect.bottom;
+    if (need > 0 && spaceBelow < need && spaceBelow < rect.top) {
+      m.classList.add('is-flip-up');
+    }
     document.addEventListener('click', onDocClick);
     // ESC 关闭走 escManager 统一层序（C5）：私挂 document 级 ESC 监听会被 escManager 命中
     // 可见层后的 stopImmediatePropagation 抢先短路（面板开着时整面板直关、浮层不动）

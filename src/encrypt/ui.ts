@@ -1216,8 +1216,7 @@ export class UIManager {
           }
         }
       };
-      ls.input.addEventListener('keydown', (e) => { if (e.key === 'Enter') ls.actionBtn.click(); });
-      ls.input2.addEventListener('keydown', (e) => { if (e.key === 'Enter') ls.actionBtn.click(); });
+      // （输入框回车提交已由 uiLockScreen 内置：Enter → 主按钮，效率整改 13）
       // 点遮罩（非内容区）关闭弹窗 = 取消
       ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
       // 焦点：元素挂载后再聚焦才生效；移动端 WebView 需二次聚焦才弹键盘
@@ -1883,7 +1882,7 @@ export class UIManager {
       }
     };
     ls.actionBtn.addEventListener('click', () => void submit());
-    ls.input.addEventListener('keydown', (e) => { if (e.key === 'Enter') void submit(); });
+    // （输入框回车提交已由 uiLockScreen 内置：Enter → 主按钮 = submit，效率整改 13）
     // 点遮罩（非内容区）关闭 = 取消（同解锁屏语义）
     ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
     ls.focus();

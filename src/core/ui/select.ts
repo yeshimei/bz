@@ -108,6 +108,17 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
       m.style.right = `${over}px`;
       if (m.getBoundingClientRect().left < 2) m.style.right = '';
     }
+    // 向上翻转（R5）：默认只向下展开（top: calc(100% + 4px)），弹窗壳 overflow-y:auto
+    // 限高时控件位于表单下半部 → 菜单溢出计入壳滚动区显示不全。实测下方剩余空间，
+    // 不足菜单自身高度且上方更宽裕时改向上翻（.is-flip-up → bottom: calc(100% + 4px)），
+    // 对齐上方右缘钳制的「量完再修」口径
+    const vh = window.innerHeight || document.documentElement.clientHeight;
+    const mRect = m.getBoundingClientRect();
+    const need = mRect.height || m.offsetHeight;
+    const spaceBelow = vh - mRect.bottom;
+    if (need > 0 && spaceBelow < need && spaceBelow < mRect.top) {
+      m.classList.add('is-flip-up');
+    }
     // ESC 关闭走 escManager 统一层序（C5）：私挂 document 级 ESC 监听会被 escManager 命中
     // 可见层后的 stopImmediatePropagation 抢先短路——宿主面板开着时按 ESC 整面板直关、下拉不动。
     // 立约见 esc-manager.ts：禁止私挂 document 级 ESC 监听，一律注册层级。
@@ -170,6 +181,11 @@ export function uiSelect<T extends string>(opts: BzSelectOpts<T>): {
       if (!menu) open();
       moveFocus(e.key === 'ArrowDown' ? 1 : -1);
     } else if (e.key === 'Escape') {
+      // 只收下拉，不穿 escManager/宿主面板层（对齐 uiSuggest suggest.ts 同款口径）：
+      // 焦点在 el 上（点开下拉即聚焦）时，el 的 close 已同步注销 escManager 下拉层，
+      // 若事件继续冒泡到 document，栈里轮到的就是宿主面板层——用户只想收下拉，
+      // 结果整个面板被关（R1，C5 回潮）。
+      e.stopPropagation();
       close();
     }
   });

@@ -15,6 +15,7 @@ import { createOverlay } from './dom';
 import { escManager } from './esc-manager';
 import { isMobileEnv } from './mobile';
 import { renderSettingsInto } from './settings-schema';
+import { trapFocus } from './ui/focus-trap';
 import type { SettingsSchema } from './settings-schema';
 
 /** 弹窗内可交互元素选择器（读屏/焦点管理的通用口径） */
@@ -198,6 +199,9 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
   });
   if (firstFocusable) firstFocusable.focus();
 
+  // 焦点圈闭（效率整改 6）：Tab 循环钳制在弹窗内，不再跑到被遮罩盖住的背景上
+  const releaseFocusTrap = trapFocus(popup);
+
   const handle = escManager.register('bz-settings-modal', {
     isVisible: () => !!currentModal,
     close: () => closeSettingsModal(),
@@ -207,6 +211,7 @@ export function openSettingsModal(opts: SettingsModalOptions): void {
     popup,
     onClose: opts.onClose,
     dispose: () => {
+      releaseFocusTrap();
       mask.remove();
       popup.remove();
       handle.unregister();

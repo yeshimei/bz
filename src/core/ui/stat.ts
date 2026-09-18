@@ -32,6 +32,16 @@ export function uiStat(opts: BzStatOpts): HTMLDivElement {
     el.appendChild(hint);
   }
 
-  if (opts.onClick) el.addEventListener('click', opts.onClick);
+  if (opts.onClick) {
+    // --click 档键盘可达（R11）：role=button + Tab 焦点 + Enter/Space 复用回调
+    el.setAttribute('role', 'button');
+    el.tabIndex = 0;
+    el.addEventListener('click', opts.onClick);
+    el.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      opts.onClick?.();
+    });
+  }
   return el;
 }

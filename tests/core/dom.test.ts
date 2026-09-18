@@ -239,8 +239,9 @@ describe('createOverlay', () => {
 // ===== issue 222：拖拽收尾吞终端 click（uiResizable/uiVSplitter 共用防线）=====
 
 describe('swallowNextClick', () => {
+  // 鼠标事件带非零坐标（真实鼠标路径；无坐标 click = 键盘激活，R12 放行不吞）
   const fire = (el: EventTarget, type: string) =>
-    el.dispatchEvent(new MouseEvent(type, { bubbles: true }));
+    el.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: 10, clientY: 10 }));
 
   it('吞掉随后一次 click：body 冒泡监听收不到（拖拽松手在遮罩上不再误关闭）', () => {
     const inner = document.createElement('div');
@@ -268,5 +269,23 @@ describe('swallowNextClick', () => {
     expect(seen).toHaveBeenCalledTimes(1);
     inner.remove();
     document.body.removeEventListener('click', seen);
+  });
+
+  it('R12：无坐标键盘激活 click 放行不吞（窗口外松手后第一次 Enter 不再失灵）', () => {
+    const btn = document.createElement('button');
+    document.body.appendChild(btn);
+    const seen = vi.fn();
+    btn.addEventListener('click', seen);
+    swallowNextClick();
+    // 键盘激活（Tab+Enter）派发的 click 无坐标、且无前置 mousedown（撤防监听不触发）
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 0, clientY: 0 }));
+    expect(seen).toHaveBeenCalledTimes(1);
+    // 监听保持武装：随后的带坐标拖拽残影 click 照旧被吞
+    const seen2 = vi.fn();
+    document.body.addEventListener('click', seen2);
+    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: 12, clientY: 34 }));
+    expect(seen2).not.toHaveBeenCalled();
+    btn.remove();
+    document.body.removeEventListener('click', seen2);
   });
 });

@@ -83,6 +83,31 @@ describe('sweep-core 共享基座修复批（C5-C14）', () => {
     expect(() => comp.detach()).not.toThrow();
   });
 
+  it('C5 回潮修复（R1）：焦点在 el 上按 ESC 只收下拉、宿主面板层不关（从 el 派发打中 el 级处理器）', () => {
+    let panelOpen = true;
+    const closePanel = vi.fn(() => {
+      panelOpen = false;
+    });
+    const panelHandle = escManager.register('bz-test-panel-r1', { isVisible: () => panelOpen, close: closePanel });
+    const el = uiSelect({
+      value: 'a',
+      options: [
+        { value: 'a', label: 'A' },
+        { value: 'b', label: 'B' },
+      ],
+      onChange: () => {},
+    }).el;
+    document.body.appendChild(el);
+    el.click(); // 开下拉（真实环境 mousedown 即聚焦 el，焦点落在 el 上）
+    expect(el.classList.contains('open')).toBe(true);
+
+    // 必须从 el 派发带 bubbles 的 keydown 才打得中 el 级处理器（旧测试从 document 派发打不中）
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(el.classList.contains('open')).toBe(false); // 下拉同步关闭
+    expect(closePanel).not.toHaveBeenCalled(); // stopPropagation 拦住冒泡，面板层不动
+    panelHandle.unregister();
+  });
+
   it('C5 uiPopover：面板 esc 层开着时按 ESC，先关浮层、面板保留', () => {
     let panelOpen = true;
     const closePanel = vi.fn(() => {

@@ -4,9 +4,13 @@
  *   .bz-overlay-mask（遮罩，点关）+ .bz-overlay-popup（内容卡）
  * 供新体系域复用——替换各域自造的 .bz-*-mask/modal 弹窗基座。
  * ESC 经 escManager 单例注册（先开先关，后开优先）。
+ * 焦点管理（R13 / 效率整改 2，对齐 settings-modal 样板）：打开聚焦 popup 内
+ *   首个可交互元素（autofocus: false 逃生口）、Tab 圈闭在弹窗内（trapFocus）、
+ *   关闭（遮罩/ESC/requestClose 放行后的 close）还原焦点到触发元素。
  * ============================================================ */
 import { escManager } from '../esc-manager';
 import { allocZ } from '../z-order';
+import { firstFocusable, trapFocus } from './focus-trap';
 
 export interface BzModalOpts {
   content: HTMLElement | string;   // 弹窗内容（元素或 HTML 片段）
@@ -18,10 +22,17 @@ export interface BzModalOpts {
    *  由消费方决定放行（自行调 close()）还是先弹放弃确认；不直接关。缺省 = 直接关。 */
   requestClose?: () => void;
   className?: string;              // 附加到 popup 的类
+  /** 初始焦点管理开关（效率整改 2）：缺省 true = 打开聚焦首个可交互元素 + 关闭还原焦点；
+   *  传 false 逃生口——特殊弹窗（如需聚焦特定控件的域自管焦点）完全跳过本组件的焦点接管 */
+  autofocus?: boolean;
 }
 
 /** 打开居中模态，返回 { mask, popup, close } */
 export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElement; close: () => void } {
+  // 打开前记录焦点归属，关闭时还原（遮罩/ESC/requestClose 放行均走 close）
+  const prevActive = document.activeElement;
+  const focusEnabled = opts.autofocus !== false;
+
   const mask = document.createElement('div');
   mask.className = 'bz-overlay-mask';
   mask.style.zIndex = String(allocZ());
@@ -49,11 +60,17 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
 
   let closed = false;
   let escHandle: ReturnType<typeof escManager.register> | null = null;
+  const releaseTrap = focusEnabled ? trapFocus(popup) : null;
   function close() {
     if (closed) return;
     closed = true;
+    releaseTrap?.();
     mask.remove();
     escHandle?.unregister();
+    // 还原焦点到触发元素（元素仍连接时；被外部清理时跳过）
+    if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
+      prevActive.focus();
+    }
     opts.onClose?.();
   }
 
@@ -75,5 +92,7 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
   });
 
   document.body.appendChild(mask);
+  // 聚焦 popup 内首个可交互元素（跳过隐藏项；移动端跳过 input/textarea 防软键盘）
+  if (focusEnabled) firstFocusable(popup)?.focus();
   return { mask, popup, close };
 }

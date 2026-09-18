@@ -121,6 +121,13 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
 
   /** 拖拽移动（document 上：鼠标移出面板仍持续） */
   const onDragMove = (e: MouseEvent) => {
+    // C12 同款：宿主离场自摘 document 级监听——detach 契约不变，忘调时下一次
+    // 全局事件自愈（原先一对监听随实例永久滞留，面板反复开关持续累积）
+    if (!el.isConnected) {
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      return;
+    }
     if (!dragging) return;
     e.preventDefault();
     const dx = e.clientX - startX;
@@ -163,6 +170,11 @@ export function uiResizable(el: HTMLElement, opts: BzResizableOpts = {}): {
   };
 
   const onMouseUp = () => {
+    if (!el.isConnected) {
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      return;
+    }
     if (!dragging) return;
     dragging = false;
     dir = null;

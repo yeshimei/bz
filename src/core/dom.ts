@@ -73,9 +73,13 @@ export function longPress(
 /** swallowNextClick()：拖拽收尾防线——吞掉紧随本次拖拽结束的终端 click（issue 222）。
  *  拖拽中 mousedown 落在面板、mouseup 落在遮罩/列表行时，浏览器把 click 派发到两者的
  *  公共祖先，误触发「点遮罩关闭」「行点击」等冒泡语义。capture 一次性拦截：click 触发
- *  即自毁；若未触发（如鼠标移出窗口松开）则下次 mousedown 撤防，不吞正常点击。 */
+ *  即自毁；若未触发（如鼠标移出窗口松开）则下次 mousedown 撤防，不吞正常点击。
+ *  键盘激活的 click（R12）无坐标（clientX/Y === 0）且无前置 mousedown（撤防监听不触发），
+ *  直接放行不吞——否则「窗口外松手 → 回窗先键盘激活按钮」时第一次 Enter 被误吞。 */
 export function swallowNextClick(): void {
   const swallow = (e: MouseEvent) => {
+    // 键盘 click 无坐标：不属于拖拽残影，放行（监听保持武装等真正的终端 click）
+    if (e.clientX === 0 && e.clientY === 0) return;
     document.removeEventListener('click', swallow, true);
     e.stopPropagation();
   };

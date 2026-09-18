@@ -689,8 +689,9 @@ describe('bz ui 组件库', () => {
       };
       return { container, left, right };
     }
-    function fire(el: Element | Document, type: string, x = 0) {
-      el.dispatchEvent(new MouseEvent(type, { clientX: x, bubbles: true, button: 0 }));
+    // y 默认非零：无坐标 click（clientX/Y 全 0）= 键盘激活，R12 起 swallowNextClick 放行不吞
+    function fire(el: Element | Document, type: string, x = 0, y = 12) {
+      el.dispatchEvent(new MouseEvent(type, { clientX: x, clientY: y, bubbles: true, button: 0 }));
     }
 
     it('结构：bz-vsplit + role=separator(vertical) + title', () => {
