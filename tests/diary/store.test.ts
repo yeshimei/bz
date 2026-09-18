@@ -160,6 +160,62 @@ describe('updateDiaryTags（只重写 frontmatter，正文一字不动）', () =
     expect(updated).toBeNull();
     expect(vault.files.get(E1)).toContain('  - 日记');
   });
+
+  it('N3 回归：重复标签集（type: [日记, 日记]）改成不同集合能写盘（不再误判无变化）', async () => {
+    // 旧比较「长度相等且旧集每个都在新集内」把 ['日记','日记']→['日记','随笔'] 误判为无变化
+    const dup = ['---', 'date: 2024-01-01 08:00', 'type:', '  - 日记', '  - 日记', '---', '', 'A', ''].join('\n');
+    makeVault({ [E1]: dup });
+    const updated = await updateDiaryTags(DATE, (e) => e.time === '08:00', ['日记', '随笔']);
+    expect(updated?.tags).toEqual(['日记', '随笔']);
+    const disk = vault.files.get(E1)!;
+    expect(disk).toContain('  - 日记');
+    expect(disk).toContain('  - 随笔');
+  });
+
+  it('N3 回归：同集同序才算未变化（不写盘）；顺序不同视为变化', async () => {
+    const dup = ['---', 'date: 2024-01-01 08:00', 'type:', '  - 日记', '  - 诗', '---', '', 'A', ''].join('\n');
+    makeVault({ [E1]: dup });
+    // 逐位相等：['日记','诗'] → ['诗','日记'] 是不同序集合，判为变化写盘
+    const before = vault.files.get(E1);
+    await updateDiaryTags(DATE, (e) => e.time === '08:00', ['诗', '日记']);
+    expect(vault.files.get(E1)).not.toBe(before);
+    expect(vault.files.get(E1)).toContain('  - 诗');
+  });
+
+  it('N4 回归：改标签保留契约外 frontmatter 键（不静默丢弃用户自加属性）', async () => {
+    const withExtra = [
+      '---',
+      'date: 2024-01-01 08:00',
+      'cssclass: wide',
+      'type:',
+      '  - 日记',
+      'tags: [a, b]',
+      '---',
+      '',
+      'A',
+      '',
+    ].join('\n');
+    makeVault({ [E1]: withExtra });
+    const updated = await updateDiaryTags(DATE, (e) => e.time === '08:00', ['骑行']);
+    expect(updated?.tags).toEqual(['骑行']);
+    const disk = vault.files.get(E1)!;
+    expect(disk).toContain('date: 2024-01-01 08:00');
+    expect(disk).toContain('  - 骑行');
+    expect(disk).toContain('cssclass: wide'); // 契约外键原样保留
+    expect(disk).toContain('tags: [a, b]');
+    expect(disk).toContain('A'); // 正文不动
+  });
+
+  it('N4 回归：name-mismatch（属性时间与题目不一致）的文件拒写并发通知引导先体检', async () => {
+    // 题目 0800 vs 属性 09:30：体检口径 name-mismatch（需人工裁决），改标签不得单方面按题目归一
+    const mismatch = ['---', 'date: 2024-01-01 09:30', 'type:', '  - 日记', '---', '', 'A', ''].join('\n');
+    makeVault({ [E1]: mismatch });
+    const before = vault.files.get(E1);
+    // 运行时宽降级：属性可信 → entry.time = 09:30，谓词命中该条目后才触发拒写检查
+    const updated = await updateDiaryTags(DATE, (e) => e.time === '09:30', ['骑行']);
+    expect(updated).toBeNull(); // 拒写
+    expect(vault.files.get(E1)).toBe(before); // 磁盘一字不动（date 未被单方面改成 08:00）
+  });
 });
 
 describe('findDiaryEntry / listDateEntries', () => {
