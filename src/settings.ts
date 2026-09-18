@@ -192,6 +192,9 @@ export default interface BzSettings {
   cinemaStatusFilter: string;
   /** 🎬 影院：海报网格每行列数（2~12，默认 5；issue 208） */
   cinemaGridColumns: string;
+  /** 🎬 影院：剧集按季合并（同一部剧的各季在片库里合并成一张卡；issue 376 / ADR-0168）。
+   *  纯渲染层分组——不改笔记、不加存储，关掉即逐季一卡 */
+  cinemaMergeSeasons: boolean;
   /** 面板风格（issue 236 / ADR-0103）：midnight/gazette/booth */
   cinemaStyle: string;
   /** 影院抓取：ApiZero Key（豆瓣字段接口，apizero.cn；空 = 字段走豆瓣演职员兜底，ADR-0129） */
@@ -697,6 +700,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
   cinemaGridColumns: '5',
+  cinemaMergeSeasons: false,
   cinemaStyle: 'midnight',
   cinemaApizeroKey: '',
   cinemaDoubanCookie: '',

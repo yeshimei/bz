@@ -20,6 +20,7 @@ import {
   GROUP_ORDER, TYPE_COLORS, getGroupForTag, getStarString,
 } from './constants';
 import type { CinemaItem } from './state';
+import type { CardEntry, SeasonSlot, SeriesCard } from './seasons';
 
 // ---------- 图标名 ----------
 
@@ -88,15 +89,66 @@ export function posterInner(item: CinemaItem, url: string | null): string {
   return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc(item.name[0] ?? '')}</div>'">`;
 }
 
-/** 片卡 HTML（desk 网格与 mob 长按网格同一张卡；data-cinema-key = CM3 稳定键）；
- *  fetching=后台抓取中 → 海报区遮罩 spinner（ADR-0113） */
-export function pcardHtml(it: CinemaItem, posterUrl: string | null, fetching = false): string {
-  const r = it.rating;
-  return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
-    ${(() => { const st = statusNum(it.status); return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''; })()}</div>
-    <div class="pname">${esc(it.name)}</div>
+// ---------- 剧集按季合并（cinemaMergeSeasons；分组口径在 ./seasons 单源） ----------
+
+/** 季段状态三态：已看=金实 / 在看=橙斜纹 / 未看·想看=空段（用户 2026-09-18 拍板口径） */
+export type SeasonSegState = 'watched' | 'watching' | 'empty';
+
+export function seasonSegState(item: CinemaItem): SeasonSegState {
+  const st = statusNum(item.status);
+  return st === STATUS_WATCHED ? 'watched' : st === STATUS_WATCHING ? 'watching' : 'empty';
+}
+
+/** 合并卡聚合状态（角标口径）：任一看在 → 在看；否则任一想看 → 想看；全已看 → 已看 */
+export function seriesStatus(seasons: SeasonSlot[]): number {
+  const states = seasons.map((s) => statusNum(s.item.status));
+  if (states.includes(STATUS_WATCHING)) return STATUS_WATCHING;
+  if (states.includes(STATUS_WANT)) return STATUS_WANT;
+  return STATUS_WATCHED;
+}
+
+/** 卡片状态（rail 计数与角标共用；合并卡取聚合态） */
+export function cardStatus(e: CardEntry): number {
+  return e.kind === 'series' ? seriesStatus(e.seasons) : statusNum(e.item.status);
+}
+
+/**
+ * 季进度条（D1 拍板形态）：一行分段条（一段 = 一季，季号升序）+ 一行注释。
+ * 注释口径：在看季优先报季号，「已收 x/y 季」的 y = 库内季数（不臆造全剧季数——
+ * 笔记里没有可信的总季数来源，「季集」字段是每季集数不是季数）。
+ */
+export function seasonBarHtml(seasons: SeasonSlot[]): string {
+  const segs = seasons.map((s) => `<i class="${seasonSegState(s.item)}"></i>`).join('');
+  const total = seasons.length;
+  const done = seasons.filter((s) => seasonSegState(s.item) === 'watched').length;
+  const watching = seasons.find((s) => seasonSegState(s.item) === 'watching');
+  const note = watching
+    ? `S${watching.no} 在看 · ${done}/${total} 季`
+    : done === total ? `全 ${total} 季已看` : `已收 ${done}/${total} 季`;
+  return `<div class="season-bar">${segs}</div><div class="bar-note">${note}</div>`;
+}
+
+/**
+ * 片卡 HTML 唯一出口（desk 网格 / mob 网格 / 局部重刷共用；data-cinema-key = CM3 稳定键，
+ * 合并卡为 `series:` 键）。fetching=后台抓取中 → 海报区遮罩 spinner（ADR-0113）。
+ * 合并卡与普通卡同构：海报区 / 季进度条（仅合并卡）/ 名字 / meta / 星级；
+ * 正脸 = 最近观看的一季，评分取最新已评季——卡片读作「你最近在追的那一季」。
+ */
+export function cardHtml(e: CardEntry, posterUrl: string | null, fetching = false): string {
+  const it = e.kind === 'series' ? e.face : e.item;
+  const st = cardStatus(e);
+  const r = e.kind === 'series' ? e.rating : it.rating;
+  return `<div class="pcard${e.kind === 'series' ? ' pcard-series' : ''}" data-cinema-key="${esc(e.kind === 'series' ? e.key : itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
+    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''}</div>
+    ${e.kind === 'series' ? seasonBarHtml(e.seasons) : ''}
+    <div class="pname">${esc(e.kind === 'series' ? e.name : it.name)}</div>
     <div class="pmeta">${esc(it.year || '')}${it.year && it.director ? ' · ' : ''}${esc(it.director || '')}</div>
     <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
+}
+
+/** 单条目片卡（pcardHtml 调用点先于合并卡存在：douban-queue 测试与语义单条入口仍用此名） */
+export function pcardHtml(it: CinemaItem, posterUrl: string | null, fetching = false): string {
+  return cardHtml({ kind: 'single', item: it }, posterUrl, fetching);
 }
 
 // ---------- 视图状态快照（纯层禁读 M：筛选/排序/视图显式入参） ----------
@@ -141,6 +193,43 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ''}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div style="font-size:12px;line-height:1.8;color:var(--ink-2);text-align:justify">${esc(it.synopsis)}</div>` : ''}
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+  </div>`;
+}
+
+// ---------- 合并卡详情弹窗（D1）：头部 + 各季明细行 ----------
+
+/**
+ * 合并卡详情弹窗内容。头部 = 正脸（最近看的）海报 + 片名 + 共 N 季 + 聚合状态 + 最新评分；
+ * 正文 = 各季明细行（`data-cinema-season-key` = 该季条目键，点击进单季详情）。
+ * **不放 找同类/编辑/删除**：三者都作用在「一季的笔记」上，合并卡上无落点——
+ * 要动某一季就点进那一季（口径见 ADR-0168）。
+ */
+export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaItem) => string | null): string {
+  const face = card.face;
+  const url = posterOf(face);
+  const st = seriesStatus(card.seasons);
+  const badge = (color: string, text: string) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
+  const thumb = (it: CinemaItem): string => {
+    const t = posterOf(it);
+    return `<div class="s-thumb">${t ? `<img src="${esc(t)}" alt="" onerror="this.remove()">` : ''}</div>`;
+  };
+  const rows = card.seasons.map((s) => {
+    const sub = [s.item.watchDate ? `观影 ${esc(s.item.watchDate.slice(0, 10))}` : '', s.item.seasonText ? `${esc(s.item.seasonText)} 集` : '']
+      .filter(Boolean).join(' · ');
+    const r = s.item.rating;
+    return `<div class="s-row" data-cinema-season-key="${esc(itemKey(s.item))}">${thumb(s.item)}
+      <div class="s-mid"><div class="s-name">${esc(s.item.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ''}</div>
+      <span class="s-chip" style="background:${statusColor(s.item.status)}">${statusText(s.item.status)}</span>
+      <span class="s-rate${r && r > 0 ? '' : ' none'}">${r && r > 0 ? Number(r).toFixed(1) : '—'}</span></div>`;
+  }).join('');
+  return `<div class="cn-modal" style="max-width:400px;width:100%">
+    <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">共 ${card.seasons.length} 季</span></div>
+        <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
+          ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''}
+          ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ''}
+          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ''}</div></div></div>    <div class="dm-sec">各 季 明 细</div>${rows}
+    <div class="dm-hint">点某一季查看该季详情</div>
   </div>`;
 }
 

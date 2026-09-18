@@ -80,6 +80,13 @@ export function cinemaSettingsSchema(): SettingsSchema {
             max: 12,
             step: 1,
           },
+          // issue 376 / ADR-0168：剧集按季合并（纯渲染层分组；同一部剧 ≥2 季才合并，单季照旧一卡）
+          {
+            type: 'toggle',
+            name: '剧集按季合并',
+            desc: '同一部剧的各季合并成一张卡片，卡片上显示各季进度',
+            binding: { key: 'cinemaMergeSeasons' },
+          },
         ],
       },
     ],

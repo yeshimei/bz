@@ -34,7 +34,7 @@ describe('cinema 设置 schema', () => {
   it('显示组：默认排序/默认状态筛选/网格每行列数（issue 194 + issue 208，键与契约）', () => {
     const schema = cinemaSettingsSchema();
     const view = schema.groups.find((g) => g.name === '显示')!;
-    expect(view.rows).toHaveLength(3);
+    expect(view.rows).toHaveLength(4);
     const [sort, status] = view.rows as any[];
     expect(sort.type).toBe('select');
     expect(sort.binding).toMatchObject({ key: 'cinemaSortMode' });
@@ -43,13 +43,18 @@ describe('cinema 设置 schema', () => {
     expect(status.binding).toMatchObject({ key: 'cinemaStatusFilter' });
     expect(status.options.map((o: any) => o.value)).toEqual(['', '想看', '在看', '已看']);
     // 网格每行列数（issue 208）：number 行 + string 键数字绑定，钳制 2~12，默认 5
-    expect(view.rows).toHaveLength(3);
     const grid = view.rows[2] as any;
     expect(grid.type).toBe('number');
     expect(grid.name).toBe('网格每行列数');
     expect(grid.min).toBe(2);
     expect(grid.max).toBe(12);
     expect(grid.binding.get()).toBe(5);
+    // 剧集按季合并（issue 376 / ADR-0168）：toggle 行 + 布尔键，默认关（列表形态变化的设置必须显式开）
+    const merge = view.rows[3] as any;
+    expect(merge.type).toBe('toggle');
+    expect(merge.name).toBe('剧集按季合并');
+    expect(merge.binding.key).toBe('cinemaMergeSeasons');
+    expect(DEFAULT_SETTINGS.cinemaMergeSeasons).toBe(false);
     // 默认值与选项集一致
     expect(DEFAULT_SETTINGS.cinemaSortMode).toBe('date');
     expect(DEFAULT_SETTINGS.cinemaStatusFilter).toBe('');

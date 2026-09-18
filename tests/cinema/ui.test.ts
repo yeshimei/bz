@@ -839,3 +839,123 @@ describe('补扫 C：随机抽一部（已开面板先整刷再叠详情）', ()
     expect(root.querySelector('.cn-modal')).toBeTruthy();
   });
 });
+
+/**
+ * 剧集按季合并（issue 376 / ADR-0168）：设置开 → 渲染层分组出一张合集卡 + 季进度条（D1），
+ * 点合集卡开各季明细、点某一季钻进单季详情；关 → 逐季一卡（现状不动）。
+ * 计数口径随卡片走（rail「全部/剧集」= 卡片数，不是笔记数）——否则「点了对不上」。
+ */
+describe('cinema 剧集按季合并（issue 376）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    Platform.isMobile = false;
+    unloadCinema();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  /** 老友记三季（已看/在看/想看）+ 一部电影 = 4 篇笔记 */
+  function seedSeasons(): { app: ReturnType<typeof mockAppWithVault> } {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《老友记 第一季》.md', md(`---
+tags: [美剧]
+评分: 9.2
+观影日期: 2026-06-18
+主演: 詹妮弗·安妮斯顿
+导演: 大卫·克拉尼
+---`));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md(`---
+tags: [美剧]
+评分: 0
+观影日期: 2026-08-18
+---`));
+    vault.files.set('我的/影视/《老友记 第三季》.md', md(`---
+tags: [美剧]
+评分: -1
+观影日期:
+---`));
+    vault.files.set('我的/影视/《奥本海默》.md', md(`---
+tags: [电影]
+评分: 9
+观影日期: 2026-09-01
+---`));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    return { app };
+  }
+
+  it('默认关：逐季一卡（现状不变）', () => {
+    setSettingsProvider(() => ({}) as any);
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(4);
+    expect(root.querySelectorAll('.pcard-series').length).toBe(0);
+    expect(root.querySelectorAll('.season-bar').length).toBe(0);
+  });
+
+  it('开启：三季合成一张合集卡（进度条 3 段 + 在看注释），计数随卡片走', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(2); // 老友记合集 + 奥本海默
+    const series = root.querySelector('.pcard-series') as HTMLElement;
+    expect(series).toBeTruthy();
+    expect(series.dataset.cinemaKey).toBe('series:剧集:老友记');
+    expect(series.querySelector('.pname')?.textContent).toBe('老友记'); // 标题 = 归一名称
+    // D1 分段条：一段 = 一季，金实/橙斜纹/空段三态
+    const segs = Array.from(series.querySelectorAll('.season-bar i'));
+    expect(segs.map((s) => s.className)).toEqual(['watched', 'watching', 'empty']);
+    expect(series.querySelector('.bar-note')?.textContent).toBe('S2 在看 · 1/3 季');
+    expect(series.querySelector('.badge')?.textContent).toBe('在看'); // 聚合角标：任一看在 → 在看
+    // 计数口径：rail 与头行都按卡片数（不是 4 篇笔记）
+    expect(root.querySelector('.d-head .j-cnt')?.textContent).toBe('· 2 部');
+    expect(root.querySelector('[data-g="全部"] .n')?.textContent).toBe('2');
+    expect(root.querySelector('[data-g="剧集"] .n')?.textContent).toBe('1');
+    expect(root.querySelector('[data-g="电影"] .n')?.textContent).toBe('1');
+  });
+
+  it('点合集卡开各季明细；点某一季关掉合集、钻进单季详情', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.pcard-series'));
+    let modal = root.querySelector('.cn-modal') as HTMLElement;
+    expect(modal).toBeTruthy();
+    expect(modal.querySelector('.dm-title')?.textContent).toContain('老友记');
+    expect(modal.querySelector('.dm-n')?.textContent).toBe('共 3 季');
+    const rows = Array.from(modal.querySelectorAll('.s-row'));
+    expect(rows).toHaveLength(3);
+    expect(rows.map((r) => r.querySelector('.s-name')?.textContent)).toEqual(['老友记 第一季', '老友记 第二季', '老友记 第三季']);
+    expect(rows[0].querySelector('.s-rate')?.textContent).toBe('9.2');
+    expect(rows[2].querySelector('.s-rate')?.textContent).toBe('—'); // 想看季无评分
+    expect(modal.querySelector('.dm-actions')).toBeNull(); // 合集上不落单季动作
+
+    clickEl(rows[1]);
+    modal = root.querySelector('.cn-modal') as HTMLElement;
+    expect(root.querySelectorAll('.cn-modal')).toHaveLength(1); // 合集弹窗已关，只留单季详情
+    expect(modal.querySelector('.dm-title')?.textContent).toBe('老友记 第二季');
+    expect(modal.querySelectorAll('.s-row')).toHaveLength(0); // 单季详情不再有季明细行
+    expect(modal.querySelector('.dm-actions')).toBeTruthy(); // 单季详情才有 找同类/编辑/删除
+  });
+
+  it('合集卡右键不开单季动作菜单，而是开合集详情（无处落单季动作）', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const series = root.querySelector('.pcard-series') as HTMLElement;
+    series.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(root.querySelectorAll('.s-row')).toHaveLength(3);
+  });
+});

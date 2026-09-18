@@ -32,11 +32,12 @@ import { buildAnalysisHTML } from './analysis';
 import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching } from './douban-queue';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
-  detailModalHtml, confirmModalHtml, formModalHtml,
-  aiPageHtml, sheetHeadHtml, pcardHtml, type AiPageInput,
+  detailModalHtml, seriesDetailModalHtml, confirmModalHtml, formModalHtml,
+  aiPageHtml, sheetHeadHtml, cardHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
 } from './render';
+import { mergeSeasonCards, isSeriesKey, cardFace, type SeriesCard } from './seasons';
 
 // ---------- 小工具 ----------
 
@@ -191,6 +192,23 @@ export function gridColumns(): number {
   return Math.min(12, Math.max(2, Math.round(raw)));
 }
 
+/** 剧集按季合并（设置 cinemaMergeSeasons；缺省关）。渲染前实时读——设置面板一改即生效 */
+export function mergeSeasonsOn(): boolean {
+  return (tryGetSettings() as Record<string, unknown>).cinemaMergeSeasons === true;
+}
+
+/** 当前展示列表里的合并卡（点击分流用；与网格同一份入参，保证键能对上） */
+function seriesCardByKey(key: string): SeriesCard | undefined {
+  return mergeSeasonCards(getDisplayItems(), mergeSeasonsOn())
+    .find((c): c is SeriesCard => c.kind === 'series' && c.key === key);
+}
+
+/** 卡片条目 → HTML（正脸季的海报与抓取态；网格与局部重刷共用一份口径） */
+function cardEntryHtml(e: Parameters<typeof cardHtml>[0], app: App): string {
+  const face = cardFace(e);
+  return cardHtml(e, posterUrl(face, app), isFetching(face.file?.path));
+}
+
 // ---------- 共享弹窗宿主（display:contents 午夜场锚类：三风格共用弹窗样式，ADR-0103 §3） ----------
 
 function ovHost(sec: HTMLElement): HTMLElement {
@@ -260,13 +278,16 @@ function sheetHeadEl(it: CinemaItem, url: string | null): HTMLElement {
   return (box.firstElementChild as HTMLElement) ?? box;
 }
 
-/** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。 */
+/** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。
+ *  合并卡（剧集按季合并）长按开合并详情——抽屉里的动作全是单季动作，合集上没法落地。 */
 function attachLongPress(sec: HTMLElement, app: App): void {
   sec.querySelectorAll<HTMLElement>('.m-grid .pcard').forEach((c) => {
     // 原生长按菜单（保存图片/复制链接）让位给抽屉
     c.addEventListener('contextmenu', (ev) => ev.preventDefault());
     longPress(c, () => {
-      const it = itemByKeyInState(c.dataset.cinemaKey);
+      const key = c.dataset.cinemaKey;
+      if (isSeriesKey(key)) { openSeriesDetail(sec, key as string, app); return; }
+      const it = itemByKeyInState(key);
       if (!it) return;
       openSheet(sec, it, app);
     });
@@ -291,6 +312,20 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
   el.querySelector('.j-edit')?.addEventListener('click', () => { close(); openForm(sec, it, app); });
   el.querySelector('.j-del')?.addEventListener('click', () => { close(); openConfirm(sec, it, app); });
   el.querySelector('.j-similar')?.addEventListener('click', () => { close(); void runSimilarRecommend(it, app); });
+}
+
+/** 合并卡详情：头部 + 各季明细行；点某一季关掉合并弹窗、钻进那一季的单季详情 */
+function openSeriesDetail(sec: HTMLElement, key: string, app: App): void {
+  const card = seriesCardByKey(key);
+  if (!card) return;
+  const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)));
+  mountIcons(el);
+  el.querySelectorAll<HTMLElement>('.s-row').forEach((row) => row.addEventListener('click', () => {
+    const it = itemByKeyInState(row.dataset.cinemaSeasonKey);
+    if (!it) return;
+    close();
+    openDetail(sec, it, app);
+  }));
 }
 
 /**
@@ -481,9 +516,10 @@ function aiInput(): AiPageInput {
 // ---------- 渲染（布局胶水入参装配；vault 自动刷新与 M.renderFn 都走 renderAll） ----------
 
 function midnightInput(app: App): MidnightRenderInput {
+  const merge = mergeSeasonsOn();
   return {
-    items: M.items,
-    list: getDisplayItems(),
+    allCards: mergeSeasonCards(M.items, merge),
+    cards: mergeSeasonCards(getDisplayItems(), merge),
     view: {
       view: M.view,
       typeFilter: M.typeFilter,
@@ -527,10 +563,11 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
   const head = view.querySelector('.d-head');
   const list = getDisplayItems();
   if (!body || !head || !list.length) { renderAll(app); return; }
+  const cards = mergeSeasonCards(list, mergeSeasonsOn());
   const cnt = head.querySelector('.j-cnt');
-  if (cnt) cnt.textContent = `· ${list.length} 部`;
+  if (cnt) cnt.textContent = `· ${cards.length} 部`;
   const grid = body.querySelector('.grid');
-  if (grid) grid.innerHTML = list.map((it) => pcardHtml(it, posterUrl(it, app), isFetching(it.file?.path))).join('');
+  if (grid) grid.innerHTML = cards.map((e) => cardEntryHtml(e, app)).join('');
   mountIcons(sec);
 }
 
@@ -614,8 +651,13 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     if (add) { openForm(sec, null, app); return; }
     const cardEl = t.closest('.pcard') as HTMLElement | null;
     if (cardEl) {
-      const it = itemByKeyInState(cardEl.dataset.cinemaKey);
-      if (it) openDetail(sec, it, app);
+      const key = cardEl.dataset.cinemaKey;
+      // 合并卡（剧集按季合并）：点开各季明细；其余走单条目详情
+      if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app);
+      else {
+        const it = itemByKeyInState(key);
+        if (it) openDetail(sec, it, app);
+      }
     }
   });
   sec.addEventListener('contextmenu', (e) => {
@@ -625,7 +667,10 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     const cardEl = (e.target as HTMLElement).closest('.pcard') as HTMLElement | null;
     if (!cardEl) return;
     e.preventDefault();
-    const it = itemByKeyInState(cardEl.dataset.cinemaKey);
+    const key = cardEl.dataset.cinemaKey;
+    // 合并卡没有「单季动作」的落点（标记在看/编辑/删除都作用在一篇笔记上）→ 右键等同左键开合集
+    if (isSeriesKey(key)) { openSeriesDetail(sec, key as string, app); return; }
+    const it = itemByKeyInState(key);
     if (!it) return;
     // core 跟手菜单（防溢出定位/ESC/外部点击关闭/键盘导航由共享层承载）
     openItemMenu(e.clientX, e.clientY, toItemActions(itemActions(it, sec, app)), true, MENU_SKIN);

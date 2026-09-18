@@ -9,9 +9,10 @@ import { esc, iconSpan } from '../../../core/ui/str';
 import { GROUP_ORDER } from '../../constants';
 import {
   ICON, ST_COLOR, statusText, typeColor,
-  pcardHtml, viewFiltered,
+  cardHtml, cardStatus, viewFiltered,
   type CinemaView,
 } from '../../shared';
+import { cardFace, cardGroup, type CardEntry } from '../../seasons';
 import type { CinemaItem } from '../../state';
 
 // ---------- 壳骨架 ----------
@@ -60,14 +61,15 @@ export function midnightMobHtml(): string {
 const railRow = (on: boolean, attr: string, color: string, name: string, n: number) =>
   `<button class="rail-item${on ? ' is-on' : ''}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
 
-/** 侧栏 rail（类型 + 状态两组；计数来自全量条目快照）。
+/** 侧栏 rail（类型 + 状态两组；计数 = **卡片**数——合并开后「剧集 9」与网格 9 张卡对得上，
+ *  不是「库里 33 个季笔记」那种点了对不上的数）。
  *  ai/stat 页 rail 整体熄灭（含「全部」）——它是列表视图的筛选控件，非列表页不表达选中 */
-export function railHtml(items: CinemaItem[], view: CinemaView): { groups: string; status: string } {
+export function railHtml(cards: CardEntry[], view: CinemaView): { groups: string; status: string } {
   const listOn = view.view === 'list';
   const g: Record<string, number> = {};
   const c: Record<string, number> = { 想看: 0, 在看: 0, 已看: 0 };
-  items.forEach((it) => { g[it.group] = (g[it.group] || 0) + 1; c[statusText(it.status)]++; });
-  let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', 'var(--gold)', '全部', items.length);
+  cards.forEach((e) => { const grp = cardGroup(e); g[grp] = (g[grp] || 0) + 1; c[statusText(cardStatus(e))]++; });
+  let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', 'var(--gold)', '全部', cards.length);
   for (const name of GROUP_ORDER) {
     groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
   }
@@ -106,17 +108,17 @@ export function spHeadHtml(title: string, cnt: string): string {
 
 /** 渲染输入快照（一次渲染的全部数据与回调，显式入参——纯层禁读模块态） */
 export interface MidnightRenderInput {
-  /** 全量条目（rail/chips 计数口径） */
-  items: CinemaItem[];
-  /** 当前展示列表（筛选 + 排序后） */
-  list: CinemaItem[];
+  /** 全量卡片条目（rail/chips 计数口径；合并开启时剧集多季合一张） */
+  allCards: CardEntry[];
+  /** 当前展示卡片条目（筛选 + 排序 + 按季合并后，与网格逐张对应） */
+  cards: CardEntry[];
   /** 视图状态快照 */
   view: CinemaView;
   /** 网格每行列数（插件读设置钳制，壳给演示值） */
   cols: number;
   /** 列表标题（组 + 状态叠加口径，listTitle） */
   title: string;
-  /** 已看部数（分析页头计数） */
+  /** 已看部数（分析页头计数；分析页仍按笔记条数统计，不随按季合并变） */
   watchedCount: number;
   /** AI 荐片页 HTML（shared aiPageHtml 产物） */
   aiHtml: string;
@@ -130,9 +132,17 @@ export interface MidnightRenderInput {
   fetching?: (it: CinemaItem) => boolean;
 }
 
+/** 卡片条目 → HTML（正脸解析留在渲染层：合并卡拿 face 季的海报与抓取态） */
+function cardsHtml(cards: CardEntry[], inp: MidnightRenderInput): string {
+  return cards.map((e) => {
+    const face = cardFace(e);
+    return cardHtml(e, inp.poster(face), inp.fetching?.(face) ?? false);
+  }).join('');
+}
+
 /** 列表视图头 + 工具行（d-head/d-tools；添加钮钩子 data-cinema-add） */
 export function listHeadHtml(inp: MidnightRenderInput): string {
-  return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.list.length} 部</span>
+  return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.cards.length} 部</span>
     <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
 }
 export function listToolsHtml(view: CinemaView): string {
@@ -144,7 +154,7 @@ export function listToolsHtml(view: CinemaView): string {
 
 /** desk 渲染：侧栏 rail + 主视图（list/ai/stat 按视图状态装配） */
 export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput): void {
-  const rail = railHtml(inp.items, inp.view);
+  const rail = railHtml(inp.allCards, inp.view);
   const groupsEl = root.querySelector('.j-groups');
   const statusEl = root.querySelector('.j-status');
   if (groupsEl) groupsEl.innerHTML = rail.groups;
@@ -157,8 +167,8 @@ export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput):
   } else if (v.view === 'stat') {
     view.innerHTML = spHeadHtml('观影分析', `· ${inp.watchedCount} 部已看`) + `<div class="sp-body">${inp.statHtml}</div>`;
   } else {
-    const body = inp.list.length
-      ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${inp.list.map((it) => pcardHtml(it, inp.poster(it), inp.fetching?.(it) ?? false)).join('')}</div></div>`
+    const body = inp.cards.length
+      ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>`
       : emptyPageHtml(viewFiltered(v));
     view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
   }
@@ -171,12 +181,12 @@ export function renderMidnightMob(root: HTMLElement, inp: MidnightRenderInput): 
   const titleEl = root.querySelector('.j-mtitle');
   const cntEl = root.querySelector('.j-mcnt');
   if (titleEl) titleEl.textContent = t;
-  if (cntEl) cntEl.textContent = v.view === 'list' ? `· ${inp.list.length}` : '';
+  if (cntEl) cntEl.textContent = v.view === 'list' ? `· ${inp.cards.length}` : '';
   const mv = root.querySelector<HTMLElement>('.j-mview');
   if (mv) {
     if (v.view === 'list') {
       mv.className = 'm-scroll j-mview';
-      mv.innerHTML = `<div class="m-grid">${inp.list.map((it) => pcardHtml(it, inp.poster(it), inp.fetching?.(it) ?? false)).join('')}</div>`;
+      mv.innerHTML = `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>`;
     } else if (v.view === 'ai') {
       mv.className = 'sp-body j-mview';
       mv.innerHTML = inp.aiHtml;
