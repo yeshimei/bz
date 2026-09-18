@@ -311,6 +311,18 @@ export function bindValue<V>(binding: RowBinding<V>): ValueAccess<V> {
 }
 
 /**
+ * persist 统一兜底（N5，与 C10 列表行同口径）：saveQueue reject / 同步抛错不再裸奔成
+ * unhandled rejection——控件已显示新值而盘上没存上，必须人话提示（notifySaveError）。
+ */
+function safePersist(persist: () => Promise<void> | void, what: string): void {
+  try {
+    Promise.resolve(persist()).catch((e) => notifySaveError(e, what));
+  } catch (e) {
+    notifySaveError(e, what);
+  }
+}
+
+/**
  * onCommit 一次性提示机制（原 textSetting f1 语义收口，warnedInitial 细节逐字保留）：
  * 值相对初始值有变更才触发；同一次编辑会话至多一次；改回原值后复位可再次提示。
  */
@@ -356,6 +368,21 @@ export function parseClampedNumber(raw: string, min?: number, max?: number): num
   if (min !== undefined) out = Math.max(min, out);
   if (max !== undefined) out = Math.min(max, out);
   return out;
+}
+
+/** 文本/多行/数字组件的最小结构面（真实 obsidian Text/TextAreaComponent 与 mock 均满足） */
+interface TextualComponent {
+  setValue: (v: string) => unknown;
+  setPlaceholder?: (p: string) => unknown;
+  onChange: (cb: (v: string) => void) => unknown;
+  inputEl?: {
+    type: string;
+    min?: string;
+    max?: string;
+    step?: string;
+    classList: { add(c: string): void; remove(c: string): void };
+    addEventListener: (type: string, listener: (e: { key: string }) => void) => void;
+  };
 }
 
 /**
@@ -404,7 +431,25 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
     let last = initial;
     /** 用户是否实际编辑过（P2-2：refreshKey 程序化改写显示值不置脏，防 blur 假写覆盖换 provider 的值） */
     let dirty = false;
+    /** number 行输入框当前原文（R9：commit 点判定非法输入用——commit 只有 inputEl，无回调值参） */
+    let raw = initial;
     const warn = new CommitWarn(initial, row.onCommit);
+    /** number 行非法输入的行内报错态（R9/效率#14）：输入框 error 描边 + desc 提示「已保留原值 N」，
+     *  下次有效输入或 commit 回显时清除。desc 走 Setting.setDesc（无新 DOM 结构，不影响徽标/两行式） */
+    let numError = false;
+    const markNumberError = (): void => {
+      if (numError) return;
+      numError = true;
+      currentText?.inputEl?.classList.add('bz-input--error');
+      const base = row.desc ? `${row.desc}；` : '';
+      setting.setDesc(`${base}需为数字，已保留原值 ${String(acc.read() ?? '')}`);
+    };
+    const clearNumberError = (): void => {
+      if (!numError) return;
+      numError = false;
+      currentText?.inputEl?.classList.remove('bz-input--error');
+      setting.setDesc(row.desc ?? '');
+    };
     /** 有意的落盘点：防抖到期 / 失焦 / 回车（textarea 无回车提交）——统一落盘 */
     const commit = (): void => {
       if (pending !== null) {
@@ -412,25 +457,24 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         pending = null;
       }
       if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘、不提示、不求值
-      void acc.persist();
+      // R9/效率#14：number 行非空非法输入——回显生效旧值并清报错态（内存未写入，落的是旧值；
+      // 不再让「显示值 ≠ 生效值」的缝留给用户）。空串不回显（留空回落默认是有意义的状态）
+      if (isNumber) {
+        const n = parseClampedNumber(raw, (row as NumberRow).min, (row as NumberRow).max);
+        if (n === null && raw.trim() !== '') {
+          dirty = false;
+          if (currentText) currentText.setValue(String(acc.read() ?? ''));
+          clearNumberError();
+        }
+      }
+      safePersist(acc.persist, row.name);
       warn.fire(last);
       reevaluate(); // 有意变更点重求值显隐（逐键重排会闪烁，文本类行只在 commit 点联动）
     };
-    // refreshKey 联动刷新：保存输入框引用供重求值回调 setValue（声明在 addInto 外，闭包内写入）
-    let currentText: { setValue: (v: string) => unknown } | null = null;
-    /** 文本/多行文本组件的最小结构面（真实 obsidian Text/TextAreaComponent 与 mock 均满足） */
-    const addInto = (t: {
-      setValue: (v: string) => unknown;
-      setPlaceholder?: (p: string) => unknown;
-      onChange: (cb: (v: string) => void) => unknown;
-      inputEl?: {
-        type: string;
-        min?: string;
-        max?: string;
-        step?: string;
-        addEventListener: (type: string, listener: (e: { key: string }) => void) => void;
-      };
-    }) => {
+    // refreshKey 联动刷新 + R9 报错态：保存输入框引用供闭包回调 setValue/classList（声明在 addInto 外）
+    let currentText: TextualComponent | null = null;
+    /** addInto 形参复用 currentText 类型（声明在后，运行时同一对象） */
+    const addInto = (t: TextualComponent) => {
       currentText = t;
       t.setValue(initial);
       // placeholder：函数形式 = 随快照联动（ticket 172 提供商默认提示），字符串形式 = 静态
@@ -446,14 +490,34 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
       t.onChange((v: string) => {
         dirty = true; // 用户真实输入（程序化 setValue 不经过 onChange → 不置脏）
         if (isNumber) {
+          raw = v;
           const n = parseClampedNumber(v, (row as NumberRow).min, (row as NumberRow).max);
-          if (n === null) return; // 空串/非数字不写入（防脏值落盘），已有计时照常走完
+          if (n === null) {
+            // 空串/非数字不写入（防脏值落盘），已有计时照常走完；非空非法行内报错（效率#14）
+            if (v.trim() !== '') markNumberError();
+            return;
+          }
+          clearNumberError();
           acc.write(n);
+          if (String(n) !== v) {
+            // R9：钳制值 ≠ 输入值 → 回写输入框（程序化 setValue 不经 onChange，dirty 保持——
+            // 防抖 commit 照常落钳制值，显示值不再 ≠ 落盘值）
+            last = String(n);
+            t.setValue(last);
+          } else {
+            last = v;
+          }
         } else {
           acc.write(v);
+          last = v;
         }
-        last = v;
-        changeCb?.(isNumber ? (acc.read() as number) : v, ctx);
+        try {
+          changeCb?.(isNumber ? (acc.read() as number) : v, ctx);
+        } catch (e) {
+          // 新-1 连带：域行 onChange 同步抛错不得中断防抖排程（否则落盘只剩 blur/回车兜底）
+          console.error(e);
+          notifySaveError(e, row.name);
+        }
         if (pending !== null) clearTimeout(pending);
         pending = setTimeout(commit, TEXT_COMMIT_DELAY);
       });
@@ -552,6 +616,12 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
         const initialRaw = acc.read();
         const initialKey = multi ? JSON.stringify(initialRaw ?? []) : String(initialRaw ?? '');
         const warn = new CommitWarn(initialKey, row.onCommit);
+        // N6：当前生效值（域回调抛错时的回滚锚点）——初始为绑定初值，成功 apply 后推进
+        let applied: string | string[] = multi
+          ? Array.isArray(initialRaw)
+            ? [...initialRaw]
+            : []
+          : String(initialRaw ?? '');
         // 行 DOM 由 renderPathSettingRow 自建（Setting + chips + 按钮）；包装容器作 visibleWhen 宿主
         const wrap = document.createElement('div');
         body.appendChild(wrap);
@@ -574,10 +644,28 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           onChange: (list) => {
             const v = multi ? list : (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
             acc.write(v as string | string[]);
-            void acc.persist();
+            safePersist(() => acc.persist(), row.name);
+            let res: void | string[] | Promise<void | string[]>;
+            try {
+              res = row.onChange?.(list, ctx);
+            } catch (e) {
+              // N6：域行回调同步抛错 → 人话提示 + 回滚绑定值；回传旧清单供 path-picker 回滚
+              // chips 渲染（原先 unhandled rejection：chips 停留新值假象且无提示）
+              notifySaveError(e, row.name);
+              acc.write(applied);
+              safePersist(() => acc.persist(), row.name);
+              reevaluate();
+              return multi
+                ? Array.isArray(applied)
+                  ? [...applied]
+                  : []
+                : String(applied ?? '')
+                  ? [String(applied)]
+                  : [];
+            }
             // 回调在落盘后触发（原口径）；返回清单（含异步解析结果）回传 path 行作 chips 渲染口径——
             // 异步否决场景的落盘改写由回调自行负责（如外部 binding 自管写盘）
-            const res = row.onChange?.(list, ctx);
+            applied = v as string | string[];
             warn.fire(multi ? JSON.stringify(v) : String(v));
             reevaluate();
             if (res && typeof (res as { then?: unknown }).then === 'function') {
@@ -598,7 +686,12 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             acc.write(v);
             // 显隐随值同步切换（原 refreshKeys 在落盘前同步刷新的口径）
             reevaluate();
-            await acc.persist();
+            // N5：persist reject 不再裸奔（开关已显新值盘上没有，必须人话提示）
+            try {
+              await acc.persist();
+            } catch (e) {
+              notifySaveError(e, row.name);
+            }
             row.onChange?.(v, ctx);
           })
         );
@@ -615,7 +708,11 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             acc.write(v);
             // 显隐随值同步切换（原 refreshKeys 口径）
             reevaluate();
-            await acc.persist();
+            try {
+              await acc.persist();
+            } catch (e) {
+              notifySaveError(e, row.name); // N5 同口径
+            }
             row.onChange?.(v, ctx);
           });
         });
@@ -632,7 +729,11 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
           onChange: async (v) => {
             acc.write(v);
             reevaluate();
-            await acc.persist();
+            try {
+              await acc.persist();
+            } catch (e) {
+              notifySaveError(e, row.name); // N5 同口径
+            }
             row.onChange?.(v, ctx);
           },
         });
@@ -650,7 +751,11 @@ export function renderSettingsInto(container: HTMLElement, schema: SettingsSchem
             acc.write(v);
             // 显隐随值同步切换（同 toggle 口径）
             reevaluate();
-            await acc.persist();
+            try {
+              await acc.persist();
+            } catch (e) {
+              notifySaveError(e, row.name); // N5 同口径
+            }
             row.onChange?.(v, ctx);
           });
         });

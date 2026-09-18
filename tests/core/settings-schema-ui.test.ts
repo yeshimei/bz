@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import type BzSettings from '../../src/settings';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { renderSettingsInto } from '../../src/core/settings-schema';
@@ -444,6 +444,40 @@ describe('path 行接入统一路径选择器（ADR-0061）', () => {
     expect(state.reviewWatchedFolders).toEqual([]);
     expect(saver).toHaveBeenCalledTimes(1);
   });
+
+  it('N6：域行 onChange 同步抛错 → 绑定值回滚 + chips 回滚 + 保存失败通知（不再 unhandled rejection）', async () => {
+    const vault = new MockVault();
+    vault.create('旧目录/a.md', 'x');
+    vault.create('新目录/b.md', 'x');
+    setApp(mockAppWithVault(vault) as any);
+    state.reviewWatchedFolders = ['旧目录'];
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [
+        {
+          name: '路径组',
+          rows: [
+            {
+              type: 'path',
+              mode: 'multi',
+              name: '监听文件夹',
+              binding: { key: 'reviewWatchedFolders' },
+              onChange: () => {
+                throw new Error('域炸了');
+              },
+            },
+          ],
+        },
+      ],
+    });
+    const row = findRow(container, '监听文件夹');
+    controlOf(row).trigger(); // 「添加…」按钮开选择器
+    await pickInPicker('新目录');
+    // 域回调炸：绑定值回滚旧清单并补落盘，chips 以旧清单重渲染，人话提示
+    expect(state.reviewWatchedFolders).toEqual(['旧目录']);
+    expect(row.querySelector('.bz-path-picker-chip-name')!.textContent).toBe('旧目录');
+    expect(hasSaveError('监听文件夹')).toBe(true);
+  });
 });
 
 describe('主设置页 AI per-provider 配置三行（ticket 172）', () => {
@@ -535,5 +569,219 @@ describe('choiceCards 行（issue 210）', () => {
     expect(saver).toHaveBeenCalled();
     expect(cards[1].classList.contains('is-on')).toBe(true);
     expect(cards[0].classList.contains('is-on')).toBe(false);
+  });
+});
+
+/** 通知里是否出现「保存失败（行名）」人话提示（N5/N6 断言口径） */
+function hasSaveError(rowName?: string): boolean {
+  return getNoticeMessages().some((m) =>
+    rowName ? m.includes(`保存失败（${rowName}）`) : m.includes('保存失败')
+  );
+}
+
+/** 微任务冲刷（落盘 reject → catch → notify 链） */
+const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+
+describe('persist 失败兜底（N5：reject/抛错不再 unhandled rejection，必须人话提示）', () => {
+  function useFailingSaver() {
+    const failing = vi.fn(() => Promise.reject(new Error('磁盘满了')));
+    setSettingsSaver(failing);
+    return failing;
+  }
+
+  it('toggle 行：persist reject → 通知，内存已写，回调链不断', async () => {
+    useFailingSaver();
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [{ name: 'G', rows: [{ type: 'toggle', name: '开关行', binding: { key: 'useFileDateTime' } }] }],
+    });
+    controlOf(findRow(container, '开关行')).trigger(true);
+    await flush();
+    expect(state.useFileDateTime).toBe(true);
+    expect(hasSaveError('开关行')).toBe(true);
+  });
+
+  it('select 行：persist reject → 通知', async () => {
+    useFailingSaver();
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [
+        {
+          name: 'G',
+          rows: [
+            { type: 'select', name: '服务商行', binding: { key: 'aiProvider' }, options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] },
+          ],
+        },
+      ],
+    });
+    controlOf(findRow(container, '服务商行')).trigger('a');
+    await flush();
+    expect(state.aiProvider).toBe('a');
+    expect(hasSaveError('服务商行')).toBe(true);
+  });
+
+  it('slider 行：persist reject → 通知', async () => {
+    useFailingSaver();
+    state.pomodoroVolume = 80;
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [{ name: 'G', rows: [{ type: 'slider', name: '音量行', min: 0, max: 100, binding: { key: 'pomodoroVolume' } }] }],
+    });
+    controlOf(findRow(container, '音量行')).trigger(50);
+    await flush();
+    expect(state.pomodoroVolume).toBe(50);
+    expect(hasSaveError('音量行')).toBe(true);
+  });
+
+  it('text 行 commit：persist reject → 通知（void persist 不再裸奔）', async () => {
+    useFailingSaver();
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [{ name: 'G', rows: [{ type: 'text', name: '文本行', binding: { key: 'bookshelfFolderPath' } }] }],
+    });
+    textControlOf(findRow(container, '文本行')).trigger('新值');
+    textControlOf(findRow(container, '文本行')).inputEl.dispatchEvent(new Event('blur'));
+    await flush();
+    expect(state.bookshelfFolderPath).toBe('新值');
+    expect(hasSaveError('文本行')).toBe(true);
+  });
+
+  it('save 同步抛错（外部绑定）→ toggle 行照常通知，不炸渲染器', async () => {
+    setSettingsSaver(() => {
+      throw new Error('同步炸');
+    });
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [{ name: 'G', rows: [{ type: 'toggle', name: '同步炸行', binding: { key: 'useFileDateTime' } }] }],
+    });
+    controlOf(findRow(container, '同步炸行')).trigger(true);
+    await flush();
+    expect(hasSaveError('同步炸行')).toBe(true);
+  });
+});
+
+describe('R9 + 效率#14：number 行钳制回写与非法输入行内报错', () => {
+  function renderNumRow(desc?: string) {
+    const container = document.createElement('div');
+    renderSettingsInto(container, {
+      groups: [
+        {
+          name: 'G',
+          rows: [{ type: 'number', name: '每日上限', desc, min: 0, max: 10, binding: { key: 'reviewDailyLimit' } }],
+        },
+      ],
+    });
+    const rowEl = findRow(container, '每日上限');
+    return { rowEl, text: textControlOf(rowEl) };
+  }
+
+  it('钳制值 ≠ 输入值 → 回写输入框（显示值不再 ≠ 落盘值），dirty 保持，blur 落钳制值', () => {
+    state.reviewDailyLimit = 5;
+    const { text } = renderNumRow();
+    text.trigger('15');
+    expect(state.reviewDailyLimit).toBe(10); // 上界钳制写入
+    expect(text.inputEl.value).toBe('10'); // 钳制值回写显示
+    expect(text.inputEl.classList.contains('bz-input--error')).toBe(false);
+    text.inputEl.dispatchEvent(new Event('blur'));
+    expect(saver).toHaveBeenCalledTimes(1); // 回写不丢 dirty，blur 照常落盘
+    expect(state.reviewDailyLimit).toBe(10);
+  });
+
+  it('负数输入（min 0）→ 钳到 0 并回写（N4 同机制）', () => {
+    state.reviewDailyLimit = 9;
+    const { text } = renderNumRow();
+    text.trigger('-5');
+    expect(state.reviewDailyLimit).toBe(0);
+    expect(text.inputEl.value).toBe('0');
+  });
+
+  it('非法输入：error 态 + desc「已保留原值」提示；下次有效输入清除', () => {
+    state.reviewDailyLimit = 3;
+    const { rowEl, text } = renderNumRow('每日复习上限');
+    text.trigger('abc');
+    expect(state.reviewDailyLimit).toBe(3); // 不写入
+    expect(text.inputEl.classList.contains('bz-input--error')).toBe(true);
+    expect((rowEl as any).__setting.desc).toContain('需为数字，已保留原值 3');
+    // 下次有效输入清除报错态
+    text.trigger('7');
+    expect(text.inputEl.classList.contains('bz-input--error')).toBe(false);
+    expect((rowEl as any).__setting.desc).toBe('每日复习上限');
+    expect(state.reviewDailyLimit).toBe(7);
+  });
+
+  it('非法输入后 blur：回显生效旧值并清报错态（落的是旧值，与显示对齐）', () => {
+    state.reviewDailyLimit = 7;
+    const { text } = renderNumRow();
+    text.trigger('abc');
+    text.inputEl.dispatchEvent(new Event('blur'));
+    expect(text.inputEl.value).toBe('7'); // 回显生效旧值
+    expect(text.inputEl.classList.contains('bz-input--error')).toBe(false);
+    expect(state.reviewDailyLimit).toBe(7);
+  });
+
+  it('清空（空串）：不报错、不写入、blur 不回显（留空回落默认是有意义状态）', () => {
+    state.reviewDailyLimit = 3;
+    const { text } = renderNumRow('每日复习上限');
+    text.trigger('');
+    expect(text.inputEl.classList.contains('bz-input--error')).toBe(false);
+    text.inputEl.dispatchEvent(new Event('blur'));
+    expect(text.inputEl.value).toBe('');
+    expect(state.reviewDailyLimit).toBe(3);
+  });
+});
+
+describe('新-1 连带：域行 onChange 同步抛错不中断防抖排程', () => {
+  it('text 行 onChange 抛错：commit 必达（落盘）+ console.error + 保存失败通知', () => {
+    vi.useFakeTimers();
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const container = document.createElement('div');
+      renderSettingsInto(container, {
+        groups: [
+          {
+            name: 'G',
+            rows: [
+              {
+                type: 'text',
+                name: '抛错行',
+                binding: { key: 'bookshelfFolderPath' },
+                onChange: () => {
+                  throw new Error('域回调炸了');
+                },
+              },
+            ],
+          },
+        ],
+      });
+      const text = textControlOf(findRow(container, '抛错行'));
+      expect(() => text.trigger('新值')).not.toThrow();
+      vi.advanceTimersByTime(800); // 防抖排程必达
+      expect(state.bookshelfFolderPath).toBe('新值');
+      expect(saver).toHaveBeenCalledTimes(1);
+      expect(errSpy).toHaveBeenCalled();
+      expect(hasSaveError('抛错行')).toBe(true);
+    } finally {
+      errSpy.mockRestore();
+      vi.useRealTimers();
+    }
+  });
+});
+
+describe('最大输出 token 行 min 钳制（N4）', () => {
+  it('schema 声明 min:0；负数输入钳到 0 = 删覆盖回落默认（不再直通服务商 max_tokens）', () => {
+    const schema = mainSettingsSchema();
+    const row = schema.groups[1].rows.find((r) => (r as { name?: string }).name === '最大输出 token') as { min?: number };
+    expect(row.min).toBe(0);
+
+    state.aiProvider = 'openai';
+    state.aiMaxTokensOverrides = { openai: 16384 };
+    const container = document.createElement('div');
+    renderSettingsInto(container, { groups: schema.groups.slice(1, 2) });
+    const text = textControlOf(findRow(container, '最大输出 token'));
+    expect(text.value).toBe('16384');
+    text.trigger('-5');
+    // 0 经 setProviderValue 删键 = 回落注册表默认（口径自洽），而非存 -5 发给服务商
+    expect((state.aiMaxTokensOverrides as Record<string, unknown>).openai).toBeUndefined();
+    expect(text.inputEl.value).toBe('0'); // 钳制值回写（R9）
   });
 });
