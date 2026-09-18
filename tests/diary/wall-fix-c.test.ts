@@ -79,6 +79,8 @@ vi.mock('../../src/diary/data', async (importOriginal) => {
 vi.mock('../../src/diary/ui/dialogs', () => ({
   openAddDialog: mocks.openAddDialog,
   showTagPicker: mocks.showTagPicker,
+  hideAddDialog: vi.fn(),
+  hideTagPicker: vi.fn(),
 }));
 // partial mock：jumpToDiaryEntry/copyDiaryLink 默认走真实现（A4 直测），spy 断言时换 mock
 vi.mock('../../src/diary/ui/entry-actions', async (importOriginal) => {

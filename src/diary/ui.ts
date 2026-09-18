@@ -45,7 +45,7 @@ import { loadWallEntries, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, e
 import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
 // markup 单源（ADR-0104）：壳模板/图标表/MIME/统计/题注在 render.ts，原型壳与插件同源消费
 import { wallPanelHTML, ACT_ICON, KIND_ICON, mimeOfMediaName, dayStats, statHtml, lbCaption, lbSubText, mediaCapHtml, WEEK } from './render';
-import { openAddDialog, showTagPicker } from './ui/dialogs';
+import { hideAddDialog, hideTagPicker, openAddDialog, showTagPicker } from './ui/dialogs';
 import { jumpToDiaryEntry, copyDiaryLink, showConfirm } from './ui/entry-actions';
 import { findDiaryEntry, removeDiaryEntries, isUnparsedRefusal, isDiaryReadFailure, rekeyDiaryMapPath, dropDiaryMapPath } from './store';
 import { isUnlocked, loadEncryptedEntries, encryptEntry, reclassifyEntry, deleteEncryptedEntry } from './encrypt';
@@ -2448,6 +2448,9 @@ export class DiaryAppController {
     this.closeSheet();
     // 右键菜单（core .bz-item-menu）挂 body，不收起会在面板关闭后残留、菜单动作仍可点击
     closeItemMenu();
+    // 写链路两弹窗挂 body（D-UI2 残款兜底）：面板关闭强制收壳，不留可交互浮层
+    hideAddDialog();
+    hideTagPicker();
     this.root.style.display = 'none';
     this.unsubscribeVaultModify();
     this.unsubscribeUnlockEvents();
@@ -2576,6 +2579,8 @@ export class DiaryAppController {
     }
     this.closeLightbox();
     this.closeSheet();
+    // 改标签选择器挂 body 且加密条目改签链路依赖解锁态（func N1）：上锁归位一并强制收壳
+    hideTagPicker();
     closeItemMenu();
     if (hadEnc) this.renderAll();
   }

@@ -161,7 +161,11 @@ describe('D-UI2/旧 D1\'：写日记弹窗 ESC 层 + 脏表单分流', () => {
     openWriteDialog();
     const popup = addPopup()!;
     expect(popup.contains(document.activeElement)).toBe(true);
-    expect((document.activeElement as HTMLElement).tagName).toBe('INPUT'); // 标签过滤框
+    // 合并批口径：B 批 D-UI10 给日期展示区补 tabindex=0（Enter/Space 开滚轮）后，
+    // 表单首个可交互元素 = 日期展示区（DIV），过滤框退居其次——焦点必落可交互元素即可
+    const el = document.activeElement as HTMLElement;
+    expect(['DIV', 'INPUT']).toContain(el.tagName);
+    expect(el.getAttribute('tabindex') === '0' || el.tagName === 'INPUT').toBe(true);
   });
 });
 

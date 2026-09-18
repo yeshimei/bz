@@ -60,6 +60,8 @@ vi.mock('../../src/diary/data', async (importOriginal) => {
 vi.mock('../../src/diary/ui/dialogs', () => ({
   openAddDialog: mocks.openAddDialog,
   showTagPicker: mocks.showTagPicker,
+  hideAddDialog: vi.fn(),
+  hideTagPicker: vi.fn(),
 }));
 // 条目动作 mock（ui.ts 静态 import：jumpToDiaryEntry / copyDiaryLink / showConfirm）
 vi.mock('../../src/diary/ui/entry-actions', () => ({

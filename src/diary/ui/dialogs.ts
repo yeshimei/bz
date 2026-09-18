@@ -384,6 +384,11 @@ function closeAddDialog(): void {
   addDialogSaveBtn = null;
 }
 
+/** 对外兜底入口（D-UI2 残款）：面板 hide()/上锁归位等清理路径强制收壳，不走脏拦截 */
+export function hideAddDialog(): void {
+  closeAddDialog();
+}
+
 /** 关闭意图分流（D-UI2）：有输入走 confirmDiscard（favorites/belongings 同款），无输入直接收 */
 function requestCloseAddDialog(): void {
   if (addDialogDirty()) confirmDiscard(closeAddDialog, undefined, DIARY_FLOW_SKIN);

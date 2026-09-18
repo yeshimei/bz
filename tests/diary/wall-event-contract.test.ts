@@ -11,11 +11,11 @@
  * 故暂无实害；后续消费方（smartcat 观察、home 时间线）接入订阅即漏报。
  *
  * 【可配置期望约定】（写明以防无意识漂移，勿删用例）：
- * 下方 EMIT_* 开关钉死的是「合并前 master 现状 = 不发」。该行为正由另一修复代理补发
- * （A2：两动作成功分支补发同通道事件）；并行改动合并后若行为翻转，把对应开关改为 true
- * 即把断言翻转为「必发」——开关值必须始终与被钉死的可观测行为一致，翻转开关 = 翻转断言方向。
- * 附：另一代理还在 encryptEntryAction 前加确认弹窗；本文件以 master 现状为基线（无弹窗、
- * ensureSafeUnlocked 通过即直走加密），mock ensureSafeUnlocked 返回 true 已同时兼容两种现状。
+ * 下方 EMIT_* 开关钉死的是「合并前 master 现状 = 不发」。该行为已由墙面板修复批（A2）
+ * 补发——encryptEntryAction/decryptEntryAction 成功分支现均发同通道事件，开关已翻转为 true
+ *（断言方向 = 必发）。开关值必须始终与被钉死的可观测行为一致，翻转开关 = 翻转断言方向。
+ * 附：A2 同批在 encryptEntryAction 加了 openFlowDialog 二次确认；本文件将其 mock 为
+ * 自动确认（取消分支的行为面由 wall-fix-c.test.ts 钉死），确保成功路径仍走通到事件发射。
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { DiaryAppController } from '../../src/diary/ui';
@@ -25,9 +25,9 @@ import type { WallEntry } from '../../src/diary/types';
 const CHANNELS = ['diary:entry-deleted', 'diary:entry-decrypted'] as const;
 type Channel = (typeof CHANNELS)[number];
 
-/** 【期望配置】见文件头「可配置期望约定」：当前 = master 现状（不发） */
-const EMIT_ENTRY_DELETED_ON_ENCRYPT = false;
-const EMIT_ENTRY_DECRYPTED_ON_DECRYPT = false;
+/** 【期望配置】见文件头「可配置期望约定」：A2 合并后两动作成功分支 = 必发 */
+const EMIT_ENTRY_DELETED_ON_ENCRYPT = true;
+const EMIT_ENTRY_DECRYPTED_ON_DECRYPT = true;
 
 const mocks = vi.hoisted(() => ({
   findDiaryEntry: vi.fn(),
@@ -40,6 +40,7 @@ const mocks = vi.hoisted(() => ({
   ensureSafeUnlocked: vi.fn(),
   openEncrypt: vi.fn(),
   getSafeManager: vi.fn(() => ({ unlocked: false, manifest: { notes: [] } })),
+  openFlowDialog: vi.fn(async () => 'ok'),
 }));
 
 // store 保留真实模块（isUnparsedRefusal/isDiaryReadFailure 等被 ui.ts 静态 import），
@@ -65,10 +66,16 @@ vi.mock('../../src/encrypt', () => ({
   openEncrypt: mocks.openEncrypt,
   getSafeManager: mocks.getSafeManager,
 }));
+// 加密动作的二次确认（效率#12）：mock 为自动确认，取消分支行为面由 wall-fix-c.test.ts 钉死
+vi.mock('../../src/core/flow-dialog', () => ({
+  openFlowDialog: mocks.openFlowDialog,
+}));
 // 写链路弹窗与条目动作（ui.ts 静态 import；本文件不触其行为面）
 vi.mock('../../src/diary/ui/dialogs', () => ({
   openAddDialog: vi.fn(),
   showTagPicker: vi.fn(),
+  hideAddDialog: vi.fn(),
+  hideTagPicker: vi.fn(),
 }));
 vi.mock('../../src/diary/ui/entry-actions', () => ({
   jumpToDiaryEntry: vi.fn(),
