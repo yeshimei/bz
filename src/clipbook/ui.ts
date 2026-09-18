@@ -29,7 +29,7 @@ import { Component, MarkdownRenderer, TFile } from 'obsidian';
 import { getApp } from '../core/app';
 import { notice, notifyActionError, notifySaveError, notifyUndo } from '../core/notice';
 import { uiBtn, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
-import { cmpZh, debounce, formatRelativeTime, localDayKey } from '../core/utils';
+import { cmpZh, debounce, formatRelativeTime, localDayKey, openExternalUrl } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
@@ -360,7 +360,7 @@ function buildDom(app: any): void {
   readPaneEl!.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
-    if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
+    if (ext) { e.preventDefault(); openExternalUrl(getApp(), ext.href); return; }
     // issue 329：划词锚定双链点击 → 文献盒内拦下直达预览（目录外不拦原生导航）。
     // stopPropagation 必须有：Obsidian 对 internal-link 另有自己的监听，只 preventDefault 挡不住
     // ——预览与原生导航同时发生，移动端两者相争直接崩（用户实测 OB 重启）
@@ -426,7 +426,7 @@ function buildDom(app: any): void {
   mobDetailEl!.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const ext = t.closest('a[data-clip-ext]') as HTMLAnchorElement | null;
-    if (ext) { e.preventDefault(); try { window.open(ext.href, '_blank'); } catch { /* jsdom 无 window.open */ } return; }
+    if (ext) { e.preventDefault(); openExternalUrl(getApp(), ext.href); return; }
     // issue 329：移动详情同款——双链直达预览拦截 + 图片单击工具框（桌面/移动同套逻辑）
     const ilink = t.closest('a.internal-link') as HTMLAnchorElement | null;
     if (ilink && interceptKnowledgeLink(ilink)) {

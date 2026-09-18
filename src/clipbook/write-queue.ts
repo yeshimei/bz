@@ -2,7 +2,7 @@
  * clipbook（剪藏本融合域，ADR-0082 / issue 177）：news.json 写回串行队列。
  *
  * 背景（P1 审查项）：news.json 是插件与后台抓取守护进程的**双写者**文件，此前
- * loader（保留策略清理写回）、news-source-settings（设置写回）、store（writeNewsState）
+ * loader（保留策略清理写回）、news-source-settings（设置写回）等各写方
  * 各自直接 writeNewsData，绕过 flow 的串行队列——多次读改写互相交错、并对 daemon
  * 在 read→write 窗口内的写入无任何合并。现在全部写回统一入队串行执行，且每次写
  * 前重读磁盘做段级合并（见 news-data.writeNewsDataMerged）。

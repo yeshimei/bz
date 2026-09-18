@@ -1,3 +1,4 @@
+import { pad2 } from '../core/utils';
 /**
  * clipbook（issue 329）：保存正文图片到本地。
  *
@@ -83,7 +84,7 @@ function extFromContentType(contentType?: string): string {
 /** 时间戳基名 `clip-<yyyymmdd>-<hhmmss>-<seq>`（同秒多图靠 seq 区分） */
 function clipTimestampBase(seq: number): string {
   const d = new Date();
-  const p2 = (n: number) => String(n).padStart(2, '0');
+  const p2 = (n: number) => pad2(n); // 一致#12：pad2 单源
   const day = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}`;
   const time = `${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`;
   return `clip-${day}-${time}-${seq}`;

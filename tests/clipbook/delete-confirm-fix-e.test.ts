@@ -24,7 +24,7 @@ import { deleteClipNote } from '../../src/clipbook/ui';
 import { getNewsFilePath } from '../../src/clipbook/news-data';
 
 /** 【期望配置】见文件头「可配置期望约定」：现状 false（钉旧基线行为），批 C 合并后翻转 */
-const DELETE_WITHOUT_CONFIRM = false;
+const DELETE_WITHOUT_CONFIRM = true; // 批 C 已合并：删除免确认直达撤销
 
 vi.mock('../../src/core/flow-dialog', () => ({
   openFlowDialog: vi.fn(async () => 'ok'), // 现状确认流自动「确定」；翻转分支断言其根本不被调

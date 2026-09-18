@@ -1,4 +1,4 @@
-/* 源指纹 c001cc5eb5840995 · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a93a1f95459ff1c4 · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -6917,7 +6917,13 @@ var BZW_home = (() => {
     document.addEventListener("click", swallow, true);
     document.addEventListener("mousedown", disarm, { capture: true, once: true });
   }
+  function pruneDetachedOverlays() {
+    for (const entry of liveOverlays) {
+      if (!entry.mask.isConnected && !entry.popup.isConnected) liveOverlays.delete(entry);
+    }
+  }
   function createOverlay(opts) {
+    pruneDetachedOverlays();
     const mask = document.createElement("div");
     mask.id = opts.maskId;
     mask.className = "bz-overlay-mask";
@@ -6932,12 +6938,36 @@ var BZW_home = (() => {
     popup.style.width = opts.width || "90%";
     popup.style.maxWidth = (opts.maxWidth || 400) + "px";
     topifyZ(mask, popup);
-    return { mask, popup, topify: () => topifyZ(mask, popup) };
+    const entry = {
+      mask,
+      popup,
+      close: () => {
+        liveOverlays.delete(entry);
+        if (mask.isConnected) mask.remove();
+        if (popup.isConnected) popup.remove();
+      }
+    };
+    liveOverlays.add(entry);
+    return {
+      mask,
+      popup,
+      topify: () => topifyZ(mask, popup),
+      /** 注入调用方 close（UP/RSS 管理等自带 esc 注销/单例旗标复位的收尾）：包装为
+       *  「先自注销再执行」，重复触发与 closeAllOverlays 兜底都幂等 */
+      registerClose: (close) => {
+        entry.close = () => {
+          liveOverlays.delete(entry);
+          close();
+        };
+      }
+    };
   }
+  var liveOverlays;
   var init_dom = __esm({
     "src/core/dom.ts"() {
       init_notice();
       init_z_order();
+      liveOverlays = /* @__PURE__ */ new Set();
     }
   });
 
@@ -24061,10 +24091,7 @@ ${countsToText(s.missing)}
     return { ok: true, missing, data: content, corrupt: false };
   }
   async function writeNewsData(data) {
-    try {
-      await jsonFileStore(getNewsFilePath()).write(data);
-    } catch (e) {
-    }
+    await jsonFileStore(getNewsFilePath()).write(data);
   }
   async function writeNewsDataMerged(intent) {
     var _a2;
@@ -24124,26 +24151,23 @@ ${countsToText(s.missing)}
     const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
     return m ? m[1] : null;
   }
-  async function resolveUidFromInput(text) {
+  async function resolveUidFromInputDetailed(text) {
     var _a2;
     const local = parseUidFromText(text);
-    if (local) return local;
+    if (local) return { uid: local, networkFailed: false };
     const bvid = parseBvidFromText(text);
-    if (!bvid) return null;
+    if (!bvid) return { uid: null, networkFailed: false };
+    const body = await httpGetText(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
+      timeoutMs: 1e4,
+      fetchImpl: requestUrlAsFetch()
+    });
+    if (body === null) return { uid: null, networkFailed: true };
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 1e4);
-      const resp = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
-        method: "GET",
-        signal: ctrl.signal
-      });
-      clearTimeout(timer);
-      if (!resp.ok) return null;
-      const json = await resp.json();
+      const json = JSON.parse(body);
       const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
-      return mid || null;
+      return { uid: mid || null, networkFailed: false };
     } catch (e) {
-      return null;
+      return { uid: null, networkFailed: false };
     }
   }
   async function migrateLegacyStats(data) {
@@ -24193,6 +24217,7 @@ ${countsToText(s.missing)}
     "src/clipbook/news-data.ts"() {
       init_app();
       init_storage();
+      init_http();
       init_constants3();
       STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
       DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
@@ -24824,1644 +24849,6 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
-  // src/clipbook/news-fetcher.ts
-  function requestUrlHttpGet() {
-    const impl = requestUrlAsFetch();
-    return (url, headers) => httpGetText(url, {
-      timeoutMs: FETCH_TIMEOUT_MS,
-      headers: { ...HEADERS, ...headers || {} },
-      fetchImpl: impl
-    });
-  }
-  function defaultFetchStore() {
-    return {
-      read: async () => {
-        var _a2, _b2;
-        const res = await readNewsData();
-        if (!res.ok) return null;
-        const d = res.data;
-        return {
-          articles: d.articles,
-          sources: { ...d.sources },
-          bilibiliUps: [...d.bilibiliUps],
-          bilibiliMaxItems: d.bilibiliMaxItems,
-          bilibiliCookie: d.bilibiliCookie,
-          bilibiliUpInfo: { ...d.bilibiliUpInfo },
-          rssFeeds: d.rssFeeds.map((f) => ({ ...f })),
-          lastFetchAt: (_a2 = d.lastFetchAt) != null ? _a2 : 0,
-          fetchIntervalMin: (_b2 = d.fetchIntervalMin) != null ? _b2 : DEFAULT_FETCH_INTERVAL_MIN
-        };
-      },
-      write: (intent) => enqueueNewsWrite(async () => {
-        await writeNewsDataMerged(intent);
-      })
-    };
-  }
-  function htmlToMarkdown(html) {
-    let md = html;
-    md = md.replace(/<script[\s\S]*?<\/script>/gi, "");
-    md = md.replace(/<style[\s\S]*?<\/style>/gi, "");
-    md = md.replace(/<nav[\s\S]*?<\/nav>/gi, "");
-    md = md.replace(/<footer[\s\S]*?<\/footer>/gi, "");
-    md = md.replace(/<!--[\s\S]*?-->/g, "");
-    md = md.replace(/<img[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*\/?>/gi, (m, src) => {
-      const altM = m.match(/alt=["']([^"']*)["']/i);
-      return `![${altM ? altM[1].replace(/\s+/g, " ").trim() : ""}](${src})`;
-    });
-    md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, (_, t) => `
-# ${t.trim()}
-`);
-    md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, t) => `
-## ${t.trim()}
-`);
-    md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, t) => `
-### ${t.trim()}
-`);
-    md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_, t) => `
-#### ${t.trim()}
-`);
-    md = md.replace(/<(?:strong|b)>([\s\S]*?)<\/(?:strong|b)>/gi, "**$1**");
-    md = md.replace(/<(?:em|i)>([\s\S]*?)<\/(?:em|i)>/gi, "*$1*");
-    md = md.replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, text) => {
-      const cleanText = text.replace(/<[^>]+>/g, "").trim();
-      return cleanText ? `[${cleanText}](${url})` : "";
-    });
-    md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n");
-    md = md.replace(/<\/?[ou]l[^>]*>/gi, "\n");
-    md = md.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, t) => "\n" + t.trim().split("\n").map((l) => `> ${l.trim()}`).join("\n") + "\n");
-    md = md.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, (_, c) => `
-\`\`\`
-${c.trim()}
-\`\`\`
-`);
-    md = md.replace(/<code>([\s\S]*?)<\/code>/gi, "`$1`");
-    md = md.replace(/<pre>([\s\S]*?)<\/pre>/gi, (_, c) => `
-\`\`\`
-${c.trim()}
-\`\`\`
-`);
-    md = md.replace(/<hr[^>]*\/?>/gi, "\n---\n");
-    md = md.replace(/<figure[^>]*>/gi, "\n");
-    md = md.replace(/<\/figure>/gi, "\n");
-    md = md.replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, "\n> $1\n");
-    md = md.replace(/<\/p>/gi, "\n\n");
-    md = md.replace(/<br\s*\/?>/gi, "\n");
-    md = md.replace(/<div[^>]*>/gi, "\n");
-    md = md.replace(/\r\n/g, "\n");
-    md = md.replace(/\r/g, "\n");
-    const codeBlocks = [];
-    md = md.replace(/\n(`{3}[\s\S]*?`{3})\n/g, (_, code) => {
-      codeBlocks.push(code);
-      return `
-%%CODEBLOCK_${codeBlocks.length - 1}%%
-`;
-    });
-    const inlineMedia = [];
-    md = md.replace(/(!?\[[^\]]*\]\([^)]*\))/g, (_, m) => {
-      inlineMedia.push(m);
-      return `%%MEDIA_${inlineMedia.length - 1}%%`;
-    });
-    md = md.replace(/<[^>]+>/g, "");
-    md = md.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
-    md = md.replace(/%%MEDIA_(\d+)%%/g, (_, i) => inlineMedia[+i] || "");
-    md = md.replace(/%%CODEBLOCK_(\d+)%%/g, (_, i) => codeBlocks[+i] || "");
-    md = md.replace(/\*\*\*\*/g, "** **");
-    md = md.replace(/\n{3,}/g, "\n\n").replace(/[ \t]+\n/g, "\n");
-    md = md.replace(/^ +/gm, "");
-    return md.trim();
-  }
-  function extractGuokrContent(html) {
-    const i = html.indexOf("window.INITIAL_STORE=");
-    if (i >= 0) {
-      const j = html.indexOf("<\/script>", i);
-      if (j > i) {
-        try {
-          const raw = html.slice(i + "window.INITIAL_STORE=".length, j).trim().replace(/;\s*$/, "");
-          const store2 = JSON.parse(raw);
-          const art = store2.articleStore && store2.articleStore.article;
-          if (art && art.content) return art.content;
-        } catch (e) {
-        }
-      }
-    }
-    return null;
-  }
-  function decodeXmlEntities(s) {
-    return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&amp;/g, "&");
-  }
-  function tagText(block, tag) {
-    const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "i");
-    const m = block.match(re);
-    if (!m) return null;
-    const cdata = m[1].match(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/);
-    const raw = cdata ? cdata[1] : m[1].replace(/<[^>]+>/g, "");
-    return decodeXmlEntities(raw).trim() || null;
-  }
-  function parseRssXml(xml) {
-    const out = [];
-    const blocks = String(xml || "").match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
-    for (const block of blocks) {
-      const title = tagText(block, "title") || "";
-      let link = tagText(block, "link") || "";
-      if (!link) {
-        const hrefM = block.match(/<link[^>]*href=["']([^"']+)["']/i);
-        link = hrefM ? decodeXmlEntities(hrefM[1]).trim() : "";
-      }
-      const guid = tagText(block, "guid") || tagText(block, "id") || "";
-      const pubDate = tagText(block, "pubDate") || tagText(block, "published") || tagText(block, "updated") || "";
-      const content = tagText(block, "content:encoded") || tagText(block, "content") || "";
-      const summary = tagText(block, "description") || tagText(block, "summary") || "";
-      if (!title && !link) continue;
-      out.push({ title, link, guid, pubDate, content, summary });
-    }
-    return out;
-  }
-  function buildRssArticle(it, feedName) {
-    if (!it) return null;
-    const url = String(it.link || it.guid || "").trim();
-    if (!url) return null;
-    const rawTitle = String(it.title || "").trim();
-    const title = /^\d{4}-\d{2}-\d{2}$/.test(rawTitle) ? `${rawTitle} · ${feedName}` : rawTitle || feedName;
-    const content = String(it.content || it.summary || "").trim();
-    const body = content ? htmlToMarkdown(content) : "";
-    let date = "";
-    if (it.pubDate) {
-      const d = new Date(it.pubDate);
-      if (!isNaN(d.getTime())) date = localDatetime(d.getTime());
-    }
-    return { platform: feedName, title, url, author: feedName, date, body };
-  }
-  function capRssWindow(allArticles, perFeedArticles, cap = RSS_MAX_PER_FEED) {
-    const pruned = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const [name, arts] of Object.entries(perFeedArticles || {})) {
-      if (!Array.isArray(arts) || arts.length === 0) continue;
-      const pool = (allArticles || []).filter((a) => a && a.platform === name && !seen.has(a.url));
-      const keep = pool.slice().sort((x, y) => String(y.date || "").localeCompare(String(x.date || ""))).slice(0, cap);
-      const keepUrls = new Set(keep.map((a) => a.url));
-      for (const a of pool) {
-        if (!keepUrls.has(a.url)) {
-          seen.add(a.url);
-          pruned.push(a.url);
-        }
-      }
-    }
-    return pruned;
-  }
-  function buildBilibiliArticle(it, cutoffMs) {
-    if (!it || it.type !== "DYNAMIC_TYPE_AV") return null;
-    const author = it.modules && it.modules.module_author || {};
-    const dyn = it.modules && it.modules.module_dynamic || {};
-    const desc = it.modules && it.modules.module_desc || {};
-    const archive = dyn.major && dyn.major.archive || null;
-    if (!archive || !archive.bvid || !archive.title) return null;
-    const pubTs = Number(author.pub_ts || 0);
-    if (!pubTs || isNaN(pubTs)) return null;
-    if (cutoffMs && pubTs * 1e3 < cutoffMs) return null;
-    const url = `https://www.bilibili.com/video/${archive.bvid}`;
-    const cover = String(archive.cover || "").replace(/^http:/, "https:");
-    const descText = String(desc.desc || "").trim();
-    const intro = descText || String(archive.desc || "").trim();
-    const body = [
-      intro ? `${intro}
-
-` : "",
-      cover ? `![封面](${cover})
-
-` : "",
-      `🔗 观看：[${String(archive.title)}](${url})${archive.duration_text ? `（时长 ${archive.duration_text}）` : ""}`
-    ].join("").trim();
-    const date = localDatetime(pubTs * 1e3);
-    return { platform: "B站", title: String(archive.title), url, author: String(author.name || ""), date, body };
-  }
-  function extractUpInfo(items) {
-    for (const it of items || []) {
-      const author = it && it.modules && it.modules.module_author;
-      if (!author) continue;
-      if (author.name || author.face) {
-        const info = {};
-        if (author.name) info.name = String(author.name);
-        if (author.face) info.avatar = String(author.face).replace(/^http:/, "https:");
-        return info;
-      }
-    }
-    return null;
-  }
-  function collectBilibiliBatch(items, limit, out) {
-    for (const it of items || []) {
-      if (out.length >= limit) return true;
-      const a = buildBilibiliArticle(it, null);
-      if (!a) continue;
-      out.push(a);
-    }
-    return out.length >= limit;
-  }
-  function pruneBilibiliWindow(existingArticles, perUpArticles, perUpRejected, upInfo) {
-    const pruned = [];
-    const seen = /* @__PURE__ */ new Set();
-    for (const [uid, arts] of Object.entries(perUpArticles || {})) {
-      if (!Array.isArray(arts) || arts.length === 0) continue;
-      if (perUpRejected && perUpRejected[uid]) continue;
-      const name = upInfo && upInfo[uid] && upInfo[uid].name;
-      if (!name) continue;
-      const windowUrls = new Set(arts.map((a) => a.url));
-      const oldest = arts.map((a) => String(a.date || "")).sort()[0];
-      if (!oldest) continue;
-      for (const a of existingArticles || []) {
-        if (!a || a.platform !== "B站" || a.author !== name) continue;
-        if (windowUrls.has(a.url) || seen.has(a.url)) continue;
-        if (a.date && String(a.date) < oldest) {
-          seen.add(a.url);
-          pruned.push(a.url);
-        }
-      }
-    }
-    return pruned;
-  }
-  async function fetchBilibiliUp(uid, cookie, maxItems, httpGet) {
-    const articles = [];
-    const limit = Math.max(1, Math.floor(Number(maxItems) || 10));
-    let offset = "";
-    let upInfo = null;
-    let rejected = false;
-    let requestFailed = false;
-    const headers = cookie ? { Cookie: cookie } : void 0;
-    for (let page = 0; page < 50; page++) {
-      const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480&web_location=333.999`;
-      const text = await httpGet(url, headers);
-      if (!text) {
-        if (page === 0) requestFailed = true;
-        break;
-      }
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        if (page === 0) requestFailed = true;
-        break;
-      }
-      if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) {
-        if (data && data.code !== 0 && data.code !== void 0) rejected = true;
-        break;
-      }
-      const items = data.data.items || [];
-      if (items.length === 0) break;
-      if (!upInfo) upInfo = extractUpInfo(items);
-      if (collectBilibiliBatch(items, limit, articles)) break;
-      if (!data.data.has_more) break;
-      offset = data.data.offset || "";
-      if (!offset) break;
-    }
-    return { articles, upInfo, rejected, requestFailed };
-  }
-  async function defaultBootstrapBilibiliCookie() {
-    var _a2;
-    try {
-      const resp = await requestUrl({ url: BILIBILI_HOME, method: "GET", headers: HEADERS, throw: false });
-      if (resp.status < 200 || resp.status >= 300) return null;
-      const raw = String(((_a2 = resp.headers) == null ? void 0 : _a2["set-cookie"]) || "");
-      const cookies = raw.split(/,(?=[^;]+?=)/).map((c) => String(c).split(";")[0].trim()).filter((c) => /^[^=]+=/.test(c));
-      return cookies.length > 0 ? cookies.join("; ") : null;
-    } catch (e) {
-      return null;
-    }
-  }
-  async function fetchBilibili(upUids, maxItems, cookie, httpGet, bootstrapCookie) {
-    const list = upUids || [];
-    if (list.length === 0) {
-      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
-    }
-    const per = Math.max(1, Math.floor(Number(maxItems) || 10));
-    const configured = cookie && String(cookie).trim();
-    const ck = configured || await (bootstrapCookie || defaultBootstrapBilibiliCookie)();
-    if (!ck) {
-      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: true, requestFailed: true };
-    }
-    const seen = /* @__PURE__ */ new Set();
-    const articles = [];
-    const upInfo = {};
-    const perUpArticles = {};
-    const perUpRejected = {};
-    let failedUps = 0;
-    for (const uid of list) {
-      const res = await fetchBilibiliUp(uid, ck, per, httpGet);
-      perUpArticles[uid] = res.articles;
-      if (res.requestFailed) failedUps++;
-      if (res.rejected) perUpRejected[uid] = true;
-      for (const a of res.articles) {
-        if (seen.has(a.url)) continue;
-        seen.add(a.url);
-        articles.push(a);
-      }
-      if (res.upInfo) upInfo[uid] = res.upInfo;
-    }
-    const needsCookieNotice = Object.keys(perUpRejected).length > 0;
-    const requestFailed = failedUps >= list.length;
-    return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice, requestFailed };
-  }
-  async function fetchZhihu(httpGet) {
-    const articles = [];
-    const text = await httpGet("https://news-at.zhihu.com/api/4/news/latest");
-    if (!text) throw new Error("知乎日报列表请求失败");
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      throw new Error("知乎日报列表解析失败");
-    }
-    const list = data.stories || [];
-    const rawDate = data.date || "";
-    const formattedDate = rawDate.length === 8 ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}` : rawDate;
-    for (const item of list) {
-      const title = item.title || "";
-      const id = item.id || "";
-      const url = item.url || (id ? `https://daily.zhihu.com/story/${id}` : "");
-      if (!title || !url) continue;
-      let body = "", author = null;
-      const detailText = await httpGet(`https://news-at.zhihu.com/api/4/news/${id}`);
-      if (detailText) {
-        try {
-          const detail = JSON.parse(detailText);
-          if (detail.body) body = htmlToMarkdown(detail.body);
-          if (detail.editor_name) author = detail.editor_name;
-        } catch (e) {
-        }
-      }
-      articles.push({ platform: "知乎日报", title, url, author, date: formattedDate || null, body });
-    }
-    return articles;
-  }
-  async function fetchGuokr(httpGet, now = Date.now()) {
-    var _a2, _b2, _c;
-    const articles = [];
-    const cutoff = now - WINDOW_MS;
-    const text = await httpGet("https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50");
-    if (!text) throw new Error("果壳科学人列表请求失败");
-    let list;
-    try {
-      list = Object.values(JSON.parse(text));
-    } catch (e) {
-      throw new Error("果壳科学人列表解析失败");
-    }
-    const seen = /* @__PURE__ */ new Set();
-    for (const item of list) {
-      const published = new Date(item.date_published).getTime();
-      if (!item.date_published || isNaN(published)) continue;
-      if (published < cutoff) continue;
-      const id = String(item.id || "");
-      const title = item.title || "";
-      const url = `https://www.guokr.com/article/${id}`;
-      if (!id || !title || seen.has(url)) continue;
-      seen.add(url);
-      const author = ((_b2 = (_a2 = item.authors) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.nickname) || ((_c = item.author) == null ? void 0 : _c.nickname) || null;
-      let body = "";
-      const html = await httpGet(url);
-      if (html) {
-        const content = extractGuokrContent(html);
-        if (content) body = htmlToMarkdown(content);
-      }
-      articles.push({
-        platform: "果壳科学人",
-        title,
-        url,
-        author,
-        date: item.date_published.replace("T", " ").substring(0, 19),
-        body
-      });
-    }
-    return articles;
-  }
-  async function fetchRss(feeds, httpGet) {
-    var _a2;
-    const articles = [];
-    const perFeed = {};
-    const titleUpdates = {};
-    let attempted = 0;
-    let failedRequests = 0;
-    for (const feed of feeds || []) {
-      const url = String(feed && feed.url || "").trim();
-      if (!url) continue;
-      attempted++;
-      const xml = await httpGet(url);
-      if (!xml) {
-        failedRequests++;
-        continue;
-      }
-      try {
-        const feedTitle = String(((_a2 = xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)) == null ? void 0 : _a2[1]) || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").trim();
-        const name = String(feed && feed.title || feedTitle || url).trim();
-        if (!feed.title && feedTitle) titleUpdates[url] = feedTitle;
-        const items = parseRssXml(xml).map((it) => buildRssArticle(it, name)).filter(Boolean);
-        perFeed[name] = items;
-        articles.push(...items);
-      } catch (e) {
-      }
-    }
-    return { articles, perFeed, titleUpdates, requestFailed: attempted > 0 && failedRequests === attempted };
-  }
-  async function runNewsFetchRound(deps) {
-    const httpGet = deps.httpGet;
-    const now = deps.now || Date.now;
-    const disk = await deps.store.read();
-    if (!disk) {
-      return { added: 0, prunedBilibili: 0, prunedRss: 0, failedSources: ["读取 news.json 失败"], needsCookieNotice: false };
-    }
-    const existing = disk.articles;
-    const existingUrls = new Set(existing.map((a) => a.url));
-    const existingTitles = new Set(existing.map((a) => String(a.title || "").trim()));
-    const sources = disk.sources || { zhihu: true, guokr: true, bilibili: true, rss: true };
-    const failedSources = [];
-    const guokrP = sources.guokr !== false ? fetchGuokr(httpGet, now()) : null;
-    const zhihuP = sources.zhihu !== false ? fetchZhihu(httpGet) : null;
-    const biliP = sources.bilibili !== false && disk.bilibiliUps.length > 0 ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
-    const rssP = sources.rss !== false && disk.rssFeeds.length > 0 ? fetchRss(disk.rssFeeds, httpGet) : null;
-    const guarded = async (p, name, fallback) => {
-      if (!p) return null;
-      try {
-        return await p;
-      } catch (e) {
-        failedSources.push(name);
-        return fallback;
-      }
-    };
-    const emptyBili = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
-    const emptyRss = { articles: [], perFeed: {}, titleUpdates: {}, requestFailed: false };
-    const guokrList = await guarded(guokrP, "果壳科学人", []) || [];
-    const zhihuList = await guarded(zhihuP, "知乎日报", []) || [];
-    const biliRes = await guarded(biliP, "B站", emptyBili);
-    const rssRes = await guarded(rssP, "RSS", emptyRss);
-    if (biliRes && biliRes.requestFailed) failedSources.push("B站");
-    if (rssRes && rssRes.requestFailed) failedSources.push("RSS");
-    let newArticles = [guokrList, zhihuList, biliRes ? biliRes.articles : [], rssRes ? rssRes.articles : []].flat().filter((a) => a && !existingUrls.has(a.url));
-    newArticles = newArticles.filter((a) => !existingTitles.has(String(a.title || "").trim()));
-    const prunedUrls = biliRes ? pruneBilibiliWindow(existing, biliRes.perUpArticles, biliRes.perUpRejected, biliRes.upInfo) : [];
-    const prunedSet = new Set(prunedUrls);
-    const afterBiliPrune = prunedUrls.length > 0 ? existing.filter((a) => !prunedSet.has(a.url)) : existing;
-    const rssPrunedUrls = rssRes ? capRssWindow([...afterBiliPrune, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
-    if (rssPrunedUrls.length > 0) {
-      const rssPrunedSet = new Set(rssPrunedUrls);
-      newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
-    }
-    const rssTitlePatches = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? rssRes.titleUpdates : void 0;
-    const fetchedAt = localDatetime(now());
-    for (const a of newArticles) a.fetchedAt = fetchedAt;
-    const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
-    const allFailed = attempted > 0 && failedSources.length >= attempted;
-    const prunedUrlSet = /* @__PURE__ */ new Set([...prunedUrls, ...rssPrunedUrls]);
-    const removeArticleKeys = [];
-    const seenRemoveKeys = /* @__PURE__ */ new Set();
-    for (const a of existing) {
-      if (!a || !a.url || !prunedUrlSet.has(a.url)) continue;
-      const k = articleKeyOf(a);
-      if (seenRemoveKeys.has(k)) continue;
-      seenRemoveKeys.add(k);
-      removeArticleKeys.push(k);
-    }
-    await deps.store.write({
-      set: {
-        articles: newArticles,
-        ...allFailed ? {} : { lastFetchAt: now() }
-      },
-      // C26：UP 主资料按条补丁（只声明本轮 uid），不用旧快照拼整段——窗口期内被移除的
-      // UP 资料不再被旧快照复活为本轮没抓到的孤儿条目
-      ...biliRes && Object.keys(biliRes.upInfo).length > 0 ? { patchBilibiliUpInfo: biliRes.upInfo } : {},
-      ...rssTitlePatches ? { patchRssFeedTitles: rssTitlePatches } : {},
-      ...removeArticleKeys.length > 0 ? { removeArticleKeys } : {}
-    });
-    return {
-      added: newArticles.length,
-      prunedBilibili: prunedUrls.length,
-      prunedRss: rssPrunedUrls.length,
-      failedSources,
-      needsCookieNotice: biliRes ? biliRes.needsCookieNotice : false
-    };
-  }
-  function setNewsFetchDoneListener(fn) {
-    onFetched = fn;
-  }
-  async function executeFetchRound(deps) {
-    if (fetching) return null;
-    fetching = true;
-    try {
-      const r = await runNewsFetchRound({
-        httpGet: (deps == null ? void 0 : deps.httpGet) || requestUrlHttpGet(),
-        store: (deps == null ? void 0 : deps.store) || defaultFetchStore(),
-        now: deps == null ? void 0 : deps.now
-      });
-      if (r.failedSources.length > 0) {
-        notice(`聚合讯抓取部分失败：${r.failedSources.join("、")}`, "warning");
-      }
-      if (r.needsCookieNotice) {
-        notice("B站接口被风控拦截，请在剪藏本设置的数据源中更新 B站 Cookie", "warning");
-      }
-      if (onFetched) onFetched(r);
-      return r;
-    } finally {
-      fetching = false;
-    }
-  }
-  async function maybeFetchNews(deps) {
-    if (fetching) return null;
-    const store2 = (deps == null ? void 0 : deps.store) || defaultFetchStore();
-    const disk = await store2.read();
-    if (!disk) return null;
-    const intervalMin = normalizeFetchIntervalMin(disk.fetchIntervalMin);
-    const now = (deps == null ? void 0 : deps.now) || Date.now;
-    if (now() - disk.lastFetchAt < intervalMin * 60 * 1e3) return null;
-    return executeFetchRound(deps);
-  }
-  function notifyManualFetchResult(r) {
-    if (!r) {
-      notice("抓取已在进行中，请稍候", "info");
-      return;
-    }
-    if (r.failedSources.length > 0) return;
-    notice(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : "已抓取，暂无新文章", "success");
-  }
-  async function fetchNowNews(deps) {
-    return executeFetchRound(deps);
-  }
-  var WINDOW_MS, RSS_MAX_PER_FEED, FETCH_TIMEOUT_MS, HEADERS, BILIBILI_API, BILIBILI_HOME, fetching, onFetched;
-  var init_news_fetcher = __esm({
-    "src/clipbook/news-fetcher.ts"() {
-      init_fake_obsidian();
-      init_http();
-      init_notice();
-      init_news_data();
-      init_constants3();
-      init_write_queue();
-      WINDOW_MS = 24 * 60 * 60 * 1e3;
-      RSS_MAX_PER_FEED = 30;
-      FETCH_TIMEOUT_MS = 15e3;
-      HEADERS = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
-      };
-      BILIBILI_API = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space";
-      BILIBILI_HOME = "https://www.bilibili.com/";
-      fetching = false;
-      onFetched = null;
-    }
-  });
-
-  // src/clipbook/news-sources-group.ts
-  function dataSourceGroupRows(init) {
-    const box = {
-      ...init,
-      sources: { ...init.sources },
-      bilibiliUps: [...init.bilibiliUps],
-      bilibiliUpInfo: { ...init.bilibiliUpInfo },
-      rssFeeds: init.rssFeeds.map((f) => ({ ...f }))
-    };
-    const sourceBinding = (key) => ({
-      get: () => box.sources[key] === true,
-      set: (v) => {
-        box.sources[key] = v;
-      },
-      save: async () => {
-        if (!await writeSources({ ...box.sources })) notifyWriteFailed("数据源开关");
-      }
-    });
-    const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
-    const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
-    const intervalDesc = () => {
-      const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : "还没有抓取过";
-      return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
-    };
-    return [
-      {
-        type: "button",
-        name: "立即抓取",
-        desc: intervalDesc(),
-        buttonText: "抓取",
-        cta: true,
-        onClick: async (ctx) => {
-          const r = await fetchNowNews();
-          notifyManualFetchResult(r);
-          const fresh = await readDataSourceState();
-          box.lastFetchAt = fresh.lastFetchAt;
-          box.fetchIntervalMin = fresh.fetchIntervalMin;
-          setRowDesc(ctx, intervalDesc());
-        }
-      },
-      {
-        type: "select",
-        name: "抓取间隔",
-        desc: "打开插件或剪藏本时超过该间隔才自动抓取，最短 30 分钟",
-        options: FETCH_INTERVAL_STEPS.map((m) => ({ value: String(m), label: m >= 60 ? `${m / 60} 小时` : `${m} 分钟` })),
-        binding: {
-          get: () => String(box.fetchIntervalMin),
-          set: (v) => {
-            box.fetchIntervalMin = normalizeFetchIntervalMin(v);
-          },
-          save: async () => {
-            if (!await writeFetchInterval(box.fetchIntervalMin)) notifyWriteFailed("抓取间隔");
-          }
-        }
-      },
-      { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
-      { type: "toggle", name: "果壳科学人", desc: "抓取果壳科学人最新文章", binding: sourceBinding("guokr") },
-      {
-        type: "button",
-        name: "UP 主名单",
-        desc: upListDesc(),
-        buttonText: "管理",
-        cta: true,
-        onClick: (ctx) => openUpManagerModal({
-          ups: [...box.bilibiliUps],
-          upInfo: { ...box.bilibiliUpInfo },
-          onChanged: async () => {
-            const fresh = await readDataSourceState();
-            box.bilibiliUps = [...fresh.bilibiliUps];
-            box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
-            setRowDesc(ctx, upListDesc());
-            ctx.refreshVisibility();
-          }
-        })
-      },
-      {
-        type: "button",
-        name: "RSS 订阅源",
-        desc: rssListDesc(),
-        buttonText: "管理",
-        cta: true,
-        onClick: (ctx) => openRssManagerModal({
-          feeds: box.rssFeeds.map((f) => ({ ...f })),
-          onChanged: async () => {
-            const fresh = await readDataSourceState();
-            box.rssFeeds = fresh.rssFeeds.map((f) => ({ ...f }));
-            setRowDesc(ctx, rssListDesc());
-            ctx.refreshVisibility();
-          }
-        })
-      },
-      {
-        type: "number",
-        name: "B站抓取条数",
-        desc: "每位 UP 主抓取最近动态的条数上限，默认 10",
-        min: 1,
-        max: 50,
-        step: 1,
-        binding: {
-          get: () => box.bilibiliMaxItems,
-          set: (v) => {
-            box.bilibiliMaxItems = v;
-          },
-          save: async () => {
-            if (!await writeBilibiliMaxItems(box.bilibiliMaxItems)) notifyWriteFailed("B站抓取条数");
-          }
-        }
-      },
-      {
-        type: "number",
-        name: "文章保留天数",
-        desc: "已读与跳过文章的数据超期自动清理，默认 30 天",
-        min: 1,
-        step: 1,
-        binding: numStrBinding("newsRetentionUnsavedDays", 30)
-      }
-    ];
-  }
-  function setRowDesc(ctx, text) {
-    const el = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
-    if (el) el.textContent = text;
-  }
-  function notifyWriteFailed(what) {
-    notifySaveError(new Error("news.json 不可读或已损坏"), what);
-  }
-  function upManagerSettingsSchema(opts) {
-    const box = {
-      inputValue: "",
-      ups: [...opts.ups],
-      upInfo: { ...opts.upInfo }
-    };
-    return {
-      groups: [
-        {
-          icon: "users",
-          name: "UP 主名单",
-          rows: [
-            {
-              type: "text",
-              name: "添加 UP 主",
-              placeholder: "粘贴链接或 UID",
-              binding: {
-                get: () => box.inputValue,
-                set: (v) => {
-                  box.inputValue = v;
-                },
-                save: () => {
-                }
-              },
-              actions: [{
-                text: "添加",
-                cta: true,
-                onClick: (value) => addUpUid(value, box, opts)
-              }]
-            },
-            {
-              type: "list",
-              name: "名单列表",
-              items: () => box.ups.map((uid) => {
-                var _a2;
-                return {
-                  key: uid,
-                  label: upDisplayName(uid, box.upInfo[uid]),
-                  sub: `UID ${uid}`,
-                  imageUrl: (_a2 = box.upInfo[uid]) == null ? void 0 : _a2.avatar
-                };
-              }),
-              emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
-              // 返回 Promise 与 RSS 订阅行同口径：渲染器待落盘完成后重读重建——否则字盒变更晚于
-              // refresh，写失败保留的条目（或已移除条目）在弹窗内回显不准
-              onChange: (keys) => (async () => {
-                const removed = box.ups.filter((u) => !keys.includes(u));
-                let changed = false;
-                for (const uid of removed) {
-                  if (!await removeBilibiliUp(uid)) {
-                    notifyWriteFailed(`移除 UP 主 ${uid}`);
-                    continue;
-                  }
-                  box.ups = box.ups.filter((u) => u !== uid);
-                  delete box.upInfo[uid];
-                  changed = true;
-                  notice(`已移除 UP 主 ${uid}`, "success");
-                }
-                if (changed) opts.onChanged();
-              })()
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function upDisplayName(uid, info) {
-    return info && info.name ? info.name : `UP ${uid}`;
-  }
-  async function addUpUid(raw, box, opts) {
-    const input = String(raw || "").trim();
-    if (!input) return;
-    const uid = await resolveUidFromInput(input);
-    if (!uid) {
-      notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
-      return;
-    }
-    const outcome = await addBilibiliUp(uid);
-    switch (outcome) {
-      case "added":
-        box.inputValue = "";
-        box.ups = [...box.ups, uid];
-        opts.onChanged();
-        notice(`已添加 UP 主 ${uid}`, "success");
-        return;
-      case "exists":
-        notice("该 UP 主已在名单中", "info");
-        return;
-      case "invalid":
-        notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
-        return;
-      default:
-        notifyWriteFailed("添加 UP 主");
-        return;
-    }
-  }
-  async function openUpManagerModal(opts) {
-    if (upManagerOpen || document.getElementById("bz-up-manager-mask")) return;
-    upManagerOpen = true;
-    let handle = null;
-    function close() {
-      mask.remove();
-      popup.remove();
-      if (handle) handle.unregister();
-      upManagerOpen = false;
-    }
-    const { mask, popup } = createOverlay({
-      maskId: "bz-up-manager-mask",
-      popupId: "bz-up-manager-popup",
-      maxWidth: 560,
-      // ticket 170 方案 A：加宽让描述换行，文字不再拥挤
-      onMaskClick: close
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = "UP 主名单管理";
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    try {
-      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-      renderPanelSchema2(content, upManagerSettingsSchema(opts));
-    } catch (e) {
-      close();
-      throw e;
-    }
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    const handleReg = escManager.register("bz-up-manager", {
-      isVisible: () => true,
-      close
-    });
-    handle = handleReg;
-  }
-  async function fetchRssFeedTitle(url) {
-    const xml = await httpGetText(url, { timeoutMs: 1e4, fetchImpl: requestUrlAsFetch() });
-    if (!xml || !looksLikeFeedXml(xml)) return null;
-    return extractFeedTitleFromXml(xml);
-  }
-  function rssManagerSettingsSchema(opts) {
-    const box = {
-      inputValue: "",
-      feeds: opts.feeds.map((f) => ({ ...f }))
-    };
-    return {
-      groups: [
-        {
-          icon: "rss",
-          name: "RSS 订阅源",
-          rows: [
-            {
-              type: "text",
-              name: "添加 RSS 源",
-              placeholder: "https://example.com/rss.xml",
-              binding: {
-                get: () => box.inputValue,
-                set: (v) => {
-                  box.inputValue = v;
-                },
-                save: () => {
-                }
-              },
-              actions: [{
-                text: "添加",
-                cta: true,
-                onClick: (value) => addRssFeedUrl(value, box, opts)
-              }]
-            },
-            {
-              type: "list",
-              name: "订阅列表",
-              items: () => box.feeds.map((f) => ({
-                key: f.url,
-                label: f.title || f.url,
-                sub: f.title ? f.url : ""
-              })),
-              emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加",
-              onChange: (keys) => (async () => {
-                const removed = box.feeds.filter((f) => !keys.includes(f.url));
-                let changed = false;
-                for (const f of removed) {
-                  if (!await removeRssFeed(f.url)) {
-                    notifyWriteFailed(`移除 RSS 源 ${f.title || f.url}`);
-                    continue;
-                  }
-                  box.feeds = box.feeds.filter((x) => x.url !== f.url);
-                  changed = true;
-                  notice(`已移除 RSS 源 ${f.title || f.url}`, "success");
-                }
-                if (changed) opts.onChanged();
-              })()
-            }
-          ]
-        }
-      ]
-    };
-  }
-  async function addRssFeedUrl(raw, box, opts) {
-    const input = String(raw || "").trim();
-    if (!input) return;
-    const url = normalizeRssFeedUrl(input);
-    if (!url) {
-      notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
-      return;
-    }
-    if (box.feeds.some((f) => f.url === url)) {
-      notice("该 RSS 源已在订阅列表中", "info");
-      return;
-    }
-    notice("正在校验 RSS 地址…", "info");
-    const title = await fetchRssFeedTitle(url);
-    if (title === null) {
-      notice("试拉失败：地址不可达或不是有效的 RSS 源，未添加", "error");
-      return;
-    }
-    const outcome = await addRssFeed(url, title);
-    switch (outcome) {
-      case "added":
-        box.inputValue = "";
-        box.feeds = [...box.feeds, { url, title }];
-        opts.onChanged();
-        notice(`已订阅 ${title || url}`, "success");
-        return;
-      case "exists":
-        notice("该 RSS 源已在订阅列表中", "info");
-        return;
-      case "invalid":
-        notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
-        return;
-      default:
-        notifyWriteFailed("添加 RSS 源");
-        return;
-    }
-  }
-  async function openRssManagerModal(opts) {
-    if (rssManagerOpen || document.getElementById("bz-rss-manager-mask")) return;
-    rssManagerOpen = true;
-    let handle = null;
-    function close() {
-      mask.remove();
-      popup.remove();
-      if (handle) handle.unregister();
-      rssManagerOpen = false;
-    }
-    const { mask, popup } = createOverlay({
-      maskId: "bz-rss-manager-mask",
-      popupId: "bz-rss-manager-popup",
-      maxWidth: 560,
-      onMaskClick: close
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = "RSS 订阅管理";
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    try {
-      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
-      renderPanelSchema2(content, rssManagerSettingsSchema(opts));
-    } catch (e) {
-      close();
-      throw e;
-    }
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    const handleReg = escManager.register("bz-rss-manager", {
-      isVisible: () => true,
-      close
-    });
-    handle = handleReg;
-  }
-  var upManagerOpen, rssManagerOpen;
-  var init_news_sources_group = __esm({
-    "src/clipbook/news-sources-group.ts"() {
-      init_http();
-      init_notice();
-      init_settings_common();
-      init_dom();
-      init_esc_manager();
-      init_news_source_settings();
-      init_news_fetcher();
-      init_news_data();
-      upManagerOpen = false;
-      rssManagerOpen = false;
-    }
-  });
-
-  // src/clipbook/md.ts
-  function stripClipChrome(raw) {
-    return String(raw || "").replace(/^\s*---\r?\n(?:[\s\S]*?\r?\n)?---\s*/, "").replace(/```dataviewjs[\s\S]*?```/g, "").trim();
-  }
-  var init_md = __esm({
-    "src/clipbook/md.ts"() {
-    }
-  });
-
-  // src/clipbook/store.ts
-  function siteName(a) {
-    return a.site ? String(a.site) : a.platform ? String(a.platform) : "未知";
-  }
-  function upName(a, info) {
-    const uid = String(a && a.bvid || a && a.author || "");
-    const name = info && typeof info === "object" ? info.name : null;
-    return name || uid || "";
-  }
-  function platformOf(a) {
-    const p = a.platform || "";
-    if (p === "B站") return "B站";
-    if (p === "果壳" || p === "果壳科学人") return "果壳科学人";
-    if (p === "知乎日报" || p === "知乎") return "知乎日报";
-    return p || "未知";
-  }
-  function siteDomain(a) {
-    const u = String(a.url || "").trim();
-    if (u) {
-      try {
-        return new URL(u).hostname;
-      } catch (e) {
-      }
-      try {
-        return new URL("https://" + u.replace(/^\/+/, "")).hostname;
-      } catch (e) {
-      }
-    }
-    return PLATFORM_DOMAIN[platformOf(a)] || "";
-  }
-  function cleanBody(body) {
-    return String(body || "").trim();
-  }
-  function clipArticle(a, opts) {
-    const clipByUrl = opts.clipByUrl || /* @__PURE__ */ new Set();
-    const upInfo = opts.upInfo || {};
-    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
-    const key = articleKeyOf(a);
-    const platform = platformOf(a);
-    const newsSaved = a.state === "saved";
-    const archived2 = savedKeys.has(String(a.url || ""));
-    const clipped = !!a.url && clipByUrl.has(String(a.url));
-    const saved = newsSaved || archived2 || clipped;
-    const title = String(a.title || "(无标题)");
-    const body = cleanBody(a.body);
-    const isBili = platform === "B站";
-    const feedUp = isBili ? upName(a, upInfo[String(a.author || "")]) : "";
-    const srcName = feedUp || platform;
-    const typeLabel = feedUp ? "UP主" : platform;
-    let timeText = String(a.fetchedAt || a.date || "");
-    let timeTs = new Date(a.fetchedAt || a.date || "").valueOf();
-    if (isNaN(timeTs)) {
-      timeText = "";
-      timeTs = Date.now();
-    }
-    const st = saved ? "saved" : a.read === true ? "read" : "unread";
-    return {
-      id: key,
-      origin: "news",
-      title,
-      url: String(a.url || ""),
-      site: siteName(a),
-      domain: siteDomain(a),
-      author: String(a.author || ""),
-      srcName,
-      typeLabel,
-      timeText,
-      timeTs,
-      summary: excerpt(body, 110),
-      body,
-      tags: Array.isArray(a.tags) ? a.tags.map(String) : [],
-      notePath: null,
-      st,
-      clipped,
-      raw: a,
-      backlinks: []
-    };
-  }
-  function clipFromNote(n) {
-    return {
-      id: "clip:" + n.path,
-      origin: "clip",
-      title: String(n.title || "(无标题)"),
-      url: n.url ? String(n.url) : "",
-      site: String(n.site || "未知"),
-      domain: n.domain || "",
-      author: n.author || "",
-      srcName: n.site || "剪藏",
-      typeLabel: "",
-      timeText: "",
-      timeTs: n.created || 0,
-      summary: String(n.summary || ""),
-      body: "",
-      tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
-      notePath: n.path || null,
-      st: "saved",
-      clipped: true,
-      note: n,
-      backlinks: Array.isArray(n.backlinkNames) ? n.backlinkNames : []
-    };
-  }
-  function clipUrlSet2(notes) {
-    const s = /* @__PURE__ */ new Set();
-    for (const n of notes) if (n && n.url) s.add(String(n.url));
-    return s;
-  }
-  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
-    if (source2.kind === "clip") {
-      return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    const pool = (articles || []).filter((a) => !a.read);
-    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    if (source2.kind === "site") {
-      const s = normSite(source2.site);
-      const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
-      const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
-      return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
-    }
-    let out = [];
-    if (source2.kind === "all") {
-      out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
-    } else {
-      const isBili = source2.platform === "B站";
-      const list = pool.filter((a) => {
-        const p = platformOf(a);
-        if (p !== source2.platform) return false;
-        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
-        return true;
-      });
-      out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
-    }
-    return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
-  }
-  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
-    if (source2.kind === "clip") {
-      return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
-    const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
-    let news = [];
-    let clips = [];
-    if (source2.kind === "all") {
-      news = (articles || []).filter((a) => !isClippedNews(a));
-    } else if (source2.kind === "site") {
-      const s = normSite(source2.site);
-      news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
-      clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
-    } else {
-      const isBili = source2.platform === "B站";
-      news = (articles || []).filter((a) => {
-        if (isClippedNews(a)) return false;
-        const p = platformOf(a);
-        if (p !== source2.platform) return false;
-        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
-        return true;
-      });
-    }
-    return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
-  }
-  function bucketByState(list) {
-    const unread = [];
-    const read = [];
-    const saved = [];
-    for (const a of list) {
-      if (a.st === "saved") saved.push(a);
-      else if (a.st === "read") read.push(a);
-      else unread.push(a);
-    }
-    return { unread, read, saved };
-  }
-  function normSite(s) {
-    const t = String(s || "").trim();
-    return t || "未知";
-  }
-  function aggregateSites(articles, clipNotes, savedUrls, clipUrls) {
-    const saved = savedUrls || /* @__PURE__ */ new Set();
-    const byUrl = clipUrls || /* @__PURE__ */ new Set();
-    const rows = /* @__PURE__ */ new Map();
-    const bump = (rawSite, unread) => {
-      const site = normSite(rawSite);
-      let r = rows.get(site);
-      if (!r) {
-        r = { site, total: 0, unread: 0 };
-        rows.set(site, r);
-      }
-      r.total++;
-      if (unread) r.unread++;
-    };
-    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
-    for (const a of articles || []) {
-      if (!a || a.read) continue;
-      if (saved.has(String(a.url || ""))) continue;
-      if (a.url && byUrl.has(String(a.url))) continue;
-      bump(siteName(a), true);
-    }
-    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
-  }
-  var PLATFORM_DOMAIN;
-  var init_store = __esm({
-    "src/clipbook/store.ts"() {
-      init_utils();
-      init_news_data();
-      init_constants3();
-      init_write_queue();
-      PLATFORM_DOMAIN = {
-        "B站": "bilibili.com",
-        "果壳科学人": "guokr.com",
-        "知乎日报": "zhihu.com"
-      };
-    }
-  });
-
-  // src/clipbook/report-stats.ts
-  function periodStartTs(period2, now) {
-    if (period2 === "month") {
-      return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-    }
-    const offset = (now.getDay() + 6) % 7;
-    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset).getTime();
-  }
-  function filterReadLogByPeriod(log, period2, now) {
-    const start = periodStartTs(period2, now);
-    return (log || []).filter((e) => e && typeof e.ts === "number" && isFinite(e.ts) && e.ts >= start);
-  }
-  function hourOf(ts) {
-    const h = new Date(ts).getHours();
-    return h >= 0 && h < 24 ? h : 0;
-  }
-  function dayKeyOf(ts) {
-    const d = new Date(ts);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-  }
-  function buildClipReport(log, period2, now = /* @__PURE__ */ new Date()) {
-    const entries = filterReadLogByPeriod(log, period2, now);
-    const minutesByKey = /* @__PURE__ */ new Map();
-    const srcMap = /* @__PURE__ */ new Map();
-    const hours = new Array(24).fill(0);
-    const days = /* @__PURE__ */ new Set();
-    let totalMinutes = 0;
-    for (const e of entries) {
-      const m = Math.max(0, Math.round(Number(e.minutes) || 0));
-      if (m <= 0) continue;
-      totalMinutes += m;
-      hours[hourOf(e.ts)] += m;
-      days.add(dayKeyOf(e.ts));
-      const key = String(e.key || "");
-      const src = String(e.src || "").trim() || "未知";
-      const prev = minutesByKey.get(key);
-      if (prev) prev.minutes += m;
-      else minutesByKey.set(key, { entry: e, minutes: m });
-      let row = srcMap.get(src);
-      if (!row) {
-        row = { name: src, articles: 0, minutes: 0 };
-        srcMap.set(src, row);
-      }
-      row.minutes += m;
-    }
-    for (const { entry } of minutesByKey.values()) {
-      const src = String(entry.src || "").trim() || "未知";
-      const row = srcMap.get(src);
-      if (row) row.articles += 1;
-    }
-    const bySrc = [...srcMap.values()].sort((a, b) => b.minutes - a.minutes || b.articles - a.articles || a.name.localeCompare(b.name));
-    const topArticles = [...minutesByKey.entries()].map(([key, v]) => ({ key, title: v.entry.title || "(无标题)", src: String(v.entry.src || "").trim() || "未知", minutes: v.minutes })).sort((a, b) => b.minutes - a.minutes || a.key.localeCompare(b.key)).slice(0, 5);
-    return {
-      period: period2,
-      articles: minutesByKey.size,
-      sessions: entries.length,
-      totalMinutes,
-      bySrc,
-      hours,
-      topArticles,
-      activeDays: days.size
-    };
-  }
-  function formatMinutes(min) {
-    const m = Math.max(0, Math.round(min));
-    const h = Math.floor(m / 60);
-    const r = m % 60;
-    if (h <= 0) return `${r} 分钟`;
-    return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
-  }
-  var REPORT_TOP_N;
-  var init_report_stats2 = __esm({
-    "src/clipbook/report-stats.ts"() {
-      REPORT_TOP_N = 5;
-    }
-  });
-
-  // src/clipbook/render.ts
-  function panelHtml3() {
-    return `
-    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
-      <!-- 桌面三栏 -->
-      <div class="bz-clip-desk">
-        <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-title">剪藏本</div>
-          <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-issue" data-clip-issue></div>
-          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
-        </div>
-        <div class="bz-clip-desk-body">
-          <div class="bz-rail bz-rail--wide bz-clip-rail">
-            <div class="bz-clip-rail-label">SITE 站点</div>
-            <div class="bz-rail-scroll" data-clip-rail></div>
-            <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
-          </div>
-          <div class="bz-clip-mid">
-            <div class="bz-clip-toc-head">目录</div>
-            <div class="bz-clip-list" data-clip-list></div>
-          </div>
-          <div class="bz-clip-read" data-clip-read-pane tabindex="0">
-            <div class="bz-clip-read-scroll"><div class="bz-clip-read-body" data-clip-reader></div></div>
-          </div>
-        </div>
-      </div>
-      <!-- 移动双屏 -->
-      <div class="bz-clip-mob" data-clip-mob>
-        <div class="bz-clip-mob-top">
-          <div class="bz-clip-mob-title">剪藏本</div>
-          <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
-          <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
-          <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
-        </div>
-        <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
-        </div>
-        <div class="bz-clip-mob-list" data-clip-mob-list></div>
-      </div>
-      <!-- 移动详情 overlay（屏2） -->
-      <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
-        <div class="bz-clip-mob-detail-top">
-          <span class="bz-clip-mob-d-back" data-clip-mob-back role="button">‹ 返回</span>
-          <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
-          <span class="bz-clip-mob-save" data-clip-mob-save role="button">存为剪藏</span>
-        </div>
-        <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
-      </div>
-    </div>
-  `;
-  }
-  function siteShort(s) {
-    return String(s || "").replace("果壳科学人", "果壳");
-  }
-  function siteTint(site) {
-    let h = 0;
-    const t = String(site || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return `hsl(${h % 360}, 42%, 52%)`;
-  }
-  function railItemHtml(sel, label, unread, total, icon2, color, active2, sub) {
-    const badge = icon2 === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon2 === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon2 === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon2 ? iconSpan(icon2) : ""}</span>`;
-    const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
-    return `
-    <div class="bz-rail-item${active2 ? " on" : ""}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
-      ${badge}
-      <span class="bz-rail-name">${esc(label)}</span>
-      <span class="bz-clip-lead"></span>
-      ${count}
-    </div>`;
-  }
-  function railFootHtml(todayRead) {
-    return `今日已读<br><b>${todayRead}</b> 篇`;
-  }
-  function clipReportEntryHtml() {
-    return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
-  }
-  function tocListHtml(list, curId, timeOf) {
-    return list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
-      <span class="bz-clip-no">${String(i + 1).padStart(2, "0")}</span>
-      <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
-      </div>
-    </div>`).join("");
-  }
-  function deskFoldRowHtml(kind, n, open) {
-    const label = kind === "read" ? "已读" : "已收";
-    const lab = open ? "收起" : `${label} <b>${n}</b> 篇`;
-    return `
-    <div class="bz-clip-desk-fold${open ? " on" : ""}" data-desk-fold="${kind}" role="button" aria-expanded="${open}">
-      <span class="bz-clip-desk-fold-rule"></span>
-      <span class="bz-clip-desk-fold-lab">${lab}</span>
-      <span class="bz-clip-desk-fold-ar"></span>
-      <span class="bz-clip-desk-fold-rule"></span>
-    </div>`;
-  }
-  function foldBodyHtml(html, open) {
-    return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
-  }
-  function summaryHtml2(summary) {
-    return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
-  }
-  function readerHtml(a, opts) {
-    const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
-    return `
-    <div class="bz-clip-art-title">${esc(a.title)}</div>
-    <div class="bz-clip-art-meta">
-      <span>${esc(opts.time)}</span>
-      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
-    </div>
-    ${a.summary ? summaryHtml2(a.summary) : ""}
-    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
-    ${openNoteFoot}
-  `;
-  }
-  function mobListHtml(list, timeOf) {
-    return list.map((a) => `
-    <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
-      <span class="bz-clip-mob-dot ${a.st}"></span>
-      <span class="bz-clip-mob-ttl">${esc(a.title)}</span>
-      ${a.st === "reading" ? '<span class="bz-clip-mob-tag">在读</span>' : ""}
-      <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
-    </div>`).join("");
-  }
-  function mobChHeadHtml(site, unread, readN, savedN) {
-    const seg = [];
-    if (unread > 0) seg.push(`${unread} 未读`);
-    if (readN > 0) seg.push(`${readN} 已读`);
-    if (savedN > 0) seg.push(`${savedN} 已收`);
-    const cntTxt = seg.join(" · ");
-    return `
-    <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
-      <span class="bz-clip-mob-ch-name">${esc(site)}</span>
-      <span class="bz-clip-mob-ch-n">${cntTxt}</span>
-      <span class="bz-clip-mob-ch-rule"></span>
-    </div>`;
-  }
-  function mobFoldHtml(kind, n, open) {
-    const label = kind === "read" ? "已读" : "已收";
-    return `
-    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
-      <span class="bz-clip-mob-fold-rule"></span>
-      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `${label} <b>${n}</b> 篇`}</span>
-      <span class="bz-clip-mob-fold-ar"></span>
-      <span class="bz-clip-mob-fold-rule"></span>
-    </div>`;
-  }
-  function mobFoldBodyHtml(kind, html, open) {
-    return html ? open ? `<div class="bz-clip-mob-arch" data-arch-kind="${kind}">${html}</div>` : `<div class="bz-clip-mob-arch" data-arch-kind="${kind}" hidden>${html}</div>` : "";
-  }
-  function mobTocHtml(chapters, searching, expanded) {
-    return chapters.map((ch) => {
-      const readOpen = expanded.has("read:" + ch.site);
-      const savedOpen = expanded.has("saved:" + ch.site);
-      const foldRead = !searching && ch.readN > 0 ? mobFoldHtml("read", ch.readN, readOpen) : "";
-      const foldSaved = !searching && ch.savedN > 0 ? mobFoldHtml("saved", ch.savedN, savedOpen) : "";
-      const readBody = mobFoldBodyHtml("read", ch.readHtml, searching || readOpen);
-      const savedBody = mobFoldBodyHtml("saved", ch.savedHtml, searching || savedOpen);
-      return `
-      <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN)}
-        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${foldRead}${readBody}${foldSaved}${savedBody}</div>
-      </div>`;
-    }).join("");
-  }
-  function mobNoHitHtml(text) {
-    return `<div class="bz-clip-mob-no-hit">${esc(text)}</div>`;
-  }
-  function mobDetailHtml(a, opts) {
-    return `
-    <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
-    <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
-    <hr class="bz-clip-mob-d-rule">
-    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
-    <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
-  `;
-  }
-  function clipReportShellHtml() {
-    return `
-    <div class="bz-panel-frame bz-clip-report-frame bz-panel-mtop">
-      <div class="bz-panel-head">
-        <div class="bz-panel-title">我读了什么</div>
-        <div class="bz-clp-rep-seg" data-clp-rep-period role="tablist" aria-label="统计周期">
-          <button class="bz-clp-rep-seg-btn on" data-period="week" type="button">本周</button>
-          <button class="bz-clp-rep-seg-btn" data-period="month" type="button">本月</button>
-        </div>
-        <div class="bz-panel-head-sp"></div>
-        <span class="bz-clp-rep-close" role="button" tabindex="0" data-clp-rep-close title="关闭">${iconSpan(ICO.x)}</span>
-      </div>
-      <div class="bz-clp-rep-body" data-clp-rep-body></div>
-    </div>`;
-  }
-  function clipReportSkeletonHtml() {
-    return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
-  }
-  function buildClipReportSections(d) {
-    return [
-      { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d) },
-      { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
-      { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
-    ];
-  }
-  function clipReportOverviewHtml(d) {
-    const topRows = d.topArticles.map((a, i) => {
-      const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
-      return `
-    <div class="bz-clp-rep-top-row">
-      <span class="bz-clp-rep-rank" style="background:${badge}">${i + 1}</span>
-      <span class="bz-clp-rep-top-title" title="${esc(a.title)}">${esc(a.title)}</span>
-      <span class="bz-clp-rep-top-src">${esc(a.src)}</span>
-      <span class="bz-clp-rep-top-min">${esc(formatMinutes(a.minutes))}</span>
-    </div>`;
-    }).join("");
-    return `
-    <div class="bz-clp-rep-sec">
-      <div class="bz-clp-rep-sec-h">统计概览</div>
-      <div class="bz-clp-rep-hero">
-        <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
-        <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
-        <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
-      </div>
-      ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ""}
-    </div>`;
-  }
-  function clipReportSourcesHtml(d) {
-    const rows = d.bySrc.slice(0, REPORT_TOP_N);
-    if (!rows.length) {
-      return `<div class="bz-clp-rep-sec"><div class="bz-clp-rep-sec-h">来源分布</div><p class="bz-clp-rep-none">本期暂无来源数据</p></div>`;
-    }
-    const max = Math.max(1, ...rows.map((r) => r.minutes));
-    const barRows = rows.map((r, i) => {
-      const width = Math.max(2, Math.round(r.minutes / max * 100));
-      return `
-    <div class="bz-clp-rep-bar-row">
-      <span class="bz-clp-rep-bar-label" title="${esc(r.name)}">${esc(r.name)}</span>
-      <span class="bz-clp-rep-bar-track"><i style="width:${width}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
-      <span class="bz-clp-rep-bar-val">${r.articles} 篇 · ${esc(formatMinutes(r.minutes))}</span>
-    </div>`;
-    }).join("");
-    return `
-    <div class="bz-clp-rep-sec">
-      <div class="bz-clp-rep-sec-h">来源分布</div>
-      <div class="bz-clp-rep-bars">${barRows}</div>
-    </div>`;
-  }
-  function clipReportHoursHtml(d) {
-    const max = Math.max(0, ...d.hours);
-    const cols = d.hours.map((m, h) => {
-      const height = max > 0 && m > 0 ? 10 + Math.round(m / max * 44) : 3;
-      const accent = max > 0 && m > 0 && m === max;
-      const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
-      return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
-    }).join("");
-    const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
-    const peakText = peakHour >= 0 ? `${peakHour} 点前后` : "暂无";
-    return `
-    <div class="bz-clp-rep-sec">
-      <div class="bz-clp-rep-sec-h">阅读时段</div>
-      <div class="bz-clp-rep-hours">${cols}</div>
-      <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
-    </div>`;
-  }
-  var ICO;
-  var init_render10 = __esm({
-    "src/clipbook/render.ts"() {
-      init_str();
-      init_chart_palette();
-      init_report_stats2();
-      ICO = {
-        inbox: "inbox",
-        feed: "rss",
-        clip: "scissors",
-        bili: "play-square",
-        mail: "mail",
-        book: "book-open",
-        check: "check",
-        download: "download",
-        external: "external-link",
-        trash: "trash-2",
-        search: "search",
-        x: "x",
-        arrow: "arrow-left",
-        link: "link",
-        globe: "globe",
-        folder: "folder-open",
-        rotate: "rotate-ccw",
-        radio: "radio"
-      };
-    }
-  });
-
-  // src/clipbook/state.ts
-  function defaultSel() {
-    return { kind: "all", platform: "", up: null, site: "" };
-  }
-  function resetClipbookState() {
-    M5.appRef = null;
-    M5.overlay = null;
-    M5.open = false;
-    M5.articles = [];
-    M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M5.clipNotes = null;
-    M5.clipUrls = /* @__PURE__ */ new Set();
-    M5.sel = defaultSel();
-    M5.cur = null;
-    M5.list = [];
-    M5.upInfo = {};
-    M5.mobDetailOpen = false;
-  }
-  var M5;
-  var init_state5 = __esm({
-    "src/clipbook/state.ts"() {
-      M5 = {
-        appRef: null,
-        overlay: null,
-        open: false,
-        articles: [],
-        stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
-        sidecar: { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] },
-        clipNotes: null,
-        clipUrls: /* @__PURE__ */ new Set(),
-        sel: defaultSel(),
-        cur: null,
-        list: [],
-        upInfo: {},
-        mobDetailOpen: false
-      };
-    }
-  });
-
   // src/clipbook/data.ts
   function clipbookFilePath() {
     return storageFile(CLIPBOOK_JSON);
@@ -26527,6 +24914,12 @@ ${c.trim()}
   function escapeRe(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
+  function insideUnclosedLink(s, idx) {
+    const open = s.lastIndexOf("[[", Math.max(0, idx - 1));
+    if (open === -1) return false;
+    const close = s.lastIndexOf("]]", Math.max(0, idx - 1));
+    return close < open;
+  }
   function noteBasename(notePath) {
     const base = String(notePath || "").split("/").pop() || "";
     return base.replace(/\.md$/i, "") || String(notePath || "");
@@ -26550,7 +24943,10 @@ ${c.trim()}
     }
     for (const mk of Array.isArray(marks) ? marks : []) {
       if (!mk || !mk.find || !mk.notePath) continue;
-      const idx = out.indexOf(mk.find);
+      let idx = out.indexOf(mk.find);
+      while (idx !== -1 && insideUnclosedLink(out, idx)) {
+        idx = out.indexOf(mk.find, idx + mk.find.length);
+      }
       if (idx === -1) continue;
       out = out.slice(0, idx) + aliasLink(mk.notePath, mk.find) + out.slice(idx + mk.find.length);
       usedMarks.push({ find: mk.find, notePath: mk.notePath, kind: mk.kind === "passage" ? "passage" : "term" });
@@ -26659,207 +25055,24 @@ ${c.trim()}
     }
   });
 
-  // src/clipbook/scan.ts
-  function defaultCache(f) {
-    var _a2;
-    try {
-      const app = getApp();
-      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
-        return app.metadataCache.getFileCache(f);
-      }
-    } catch (e) {
-    }
-    return f && f.frontmatter;
-  }
-  function parseClipFile(file, getCache, getBacklinks) {
-    const cache = (getCache || defaultCache)(file);
-    const fm2 = cache && cache.frontmatter;
-    if (!fm2) return null;
-    if (!fm2.url || !fm2.created) return null;
-    const title = file.basename || stripMdExt(String(file.name || ""));
-    let created = new Date(fm2.created).valueOf();
-    if (isNaN(created)) created = Date.now();
-    let backlinkNames = [];
-    try {
-      const bl = (getBacklinks || (() => null))(file);
-      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
-        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
-      }
-    } catch (e) {
-    }
-    let domain = "";
-    try {
-      if (fm2.url) domain = new URL(String(fm2.url)).hostname;
-    } catch (e) {
-    }
-    return {
-      path: file.path,
-      file,
-      url: String(fm2.url),
-      author: fm2.author ? String(fm2.author) : "",
-      site: fm2.site ? String(fm2.site) : "未知",
-      summary: fm2.summary ? String(fm2.summary) : "",
-      tags: Array.isArray(fm2.tags) ? fm2.tags.map(String) : fm2.tags ? [String(fm2.tags)] : [],
-      title,
-      created,
-      backlinkNames,
-      domain
-    };
-  }
-  async function scanClipDirectory(dirPath, deps) {
-    const dir = deps.vault.getAbstractFileByPath(dirPath);
-    if (!dir || !Array.isArray(dir.children)) return null;
-    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
-    const parse = deps.parse || ((f) => parseClipFile(f));
-    const notes = [];
-    for (const f of mdFiles2) {
-      try {
-        const n = parse(f);
-        if (n) notes.push(n);
-      } catch (e) {
-      }
-    }
-    notes.sort((a, b) => b.created - a.created);
-    return notes;
-  }
-  var init_scan = __esm({
-    "src/clipbook/scan.ts"() {
-      init_utils();
-      init_app();
-    }
-  });
-
-  // src/clipbook/loader.ts
-  function clipDir() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  async function readNewsAndSidecar() {
-    var _a2;
-    const res = await readNewsData();
-    if (res.missing) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      return { status: "missing", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
-    }
-    if (!res.ok) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      return { status: "corrupt", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
-    }
-    const s = tryGetSettings();
-    const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
-    let data = res.data;
-    const cleaned = applyRetention(data.articles, days, days);
-    const retentionChanged = cleaned.length !== data.articles.length;
-    let removedKeys = [];
-    if (retentionChanged) {
-      const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
-      removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
-      data = { ...data, articles: cleaned };
-      for (const k of removedKeys) void clearArticleTracking(k).catch(() => {
-      });
-    }
-    let statsChanged = false;
-    if (!statsHasData(data.stats)) {
-      const migrated = await migrateLegacyStats(data);
-      if (statsHasData(migrated.stats)) {
-        data = migrated;
-        statsChanged = true;
-      }
-    }
-    if (retentionChanged || statsChanged) {
-      const set = {};
-      if (retentionChanged) set.articles = data.articles;
-      if (statsChanged) set.stats = data.stats;
-      await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
-    }
-    const sidecar = await readClipbookData();
-    const clipNotes = await scanClipDirectory(clipDir(), {
-      vault: getApp().vault
-    });
-    const clipUrls = clipUrlSet2(clipNotes || []);
-    M5.articles = data.articles;
-    M5.stats = data.stats;
-    M5.sidecar = sidecar;
-    M5.clipNotes = clipNotes;
-    M5.clipUrls = clipUrls;
-    M5.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M5.upInfo };
-  }
-  var init_loader = __esm({
-    "src/clipbook/loader.ts"() {
-      init_news_data();
-      init_data7();
-      init_anchor();
-      init_scan();
-      init_store();
-      init_constants3();
-      init_settings_provider();
-      init_app();
-      init_state5();
-      init_write_queue();
-    }
-  });
-
-  // src/core/knowledge-boxes.ts
-  function normalizeBoxDir(raw, fallback) {
-    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
-    return s || fallback;
-  }
-  function parseDirList(raw) {
-    const out = [];
-    for (const part of String(raw != null ? raw : "").split(",")) {
-      const d = normalizeBoxDir(part, "");
-      if (d && !out.includes(d)) out.push(d);
-    }
-    return out;
-  }
-  function getKnowledgeBoxes(s) {
-    var _a2;
-    const st = (_a2 = s != null ? s : tryGetSettings()) != null ? _a2 : {};
-    return {
-      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
-      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
-      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
-    };
-  }
-  function boxDirs(boxes) {
-    const b = boxes != null ? boxes : getKnowledgeBoxes();
-    const out = [];
-    for (const d of [b.lit, b.cardbox, b.topic]) {
-      if (d && !out.includes(d)) out.push(d);
-    }
-    return out;
-  }
-  function isBoxDir(dir, boxes) {
-    const d = normalizeBoxDir(dir, "");
-    return !!d && boxDirs(boxes).includes(d);
-  }
-  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
-  var init_knowledge_boxes = __esm({
-    "src/core/knowledge-boxes.ts"() {
-      init_utils();
-      init_settings_provider();
-      DEFAULT_LIT_DIR = "文献盒";
-      DEFAULT_CARDBOX_DIR = "卡片盒";
-      DEFAULT_TOPIC_DIR = "主题盒";
-    }
-  });
-
   // src/clipbook/image-save.ts
+  var image_save_exports = {};
+  __export(image_save_exports, {
+    clipbookImageDir: () => clipbookImageDir,
+    extOfImageUrl: () => extOfImageUrl,
+    extractImageUrls: () => extractImageUrls,
+    fetchImageBinary: () => fetchImageBinary,
+    fetchImageDataUrl: () => fetchImageDataUrl,
+    imageNameFromUrl: () => imageNameFromUrl,
+    localizeArticleImages: () => localizeArticleImages,
+    normalizeImageSrc: () => normalizeImageSrc,
+    saveClipImage: () => saveClipImage
+  });
   function clipbookImageDir() {
     const s = tryGetSettings();
     const configured = String(s && s.clipbookImageFolder || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     if (configured) return configured;
-    const dir = String(s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-    return `${dir}/assets`;
+    return `${clipDir()}/assets`;
   }
   function normalizeImageSrc(src) {
     const s = String(src || "").trim();
@@ -26889,7 +25102,7 @@ ${c.trim()}
   }
   function clipTimestampBase(seq) {
     const d = /* @__PURE__ */ new Date();
-    const p22 = (n) => String(n).padStart(2, "0");
+    const p22 = (n) => pad2(n);
     const day = `${d.getFullYear()}${p22(d.getMonth() + 1)}${p22(d.getDate())}`;
     const time = `${p22(d.getHours())}${p22(d.getMinutes())}${p22(d.getSeconds())}`;
     return `clip-${day}-${time}-${seq}`;
@@ -27026,10 +25239,12 @@ ${c.trim()}
   var HTTP_TIMEOUT_MS, UA_HEADERS, EXT_WHITELIST, NAME_EXTS, NAME_EXT_RE;
   var init_image_save = __esm({
     "src/clipbook/image-save.ts"() {
+      init_utils();
       init_fake_obsidian();
       init_app();
       init_settings_provider();
       init_notice();
+      init_save();
       init_anchor();
       HTTP_TIMEOUT_MS = 15e3;
       UA_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" };
@@ -27399,6 +25614,51 @@ ${c.trim()}
           });
         }
       };
+    }
+  });
+
+  // src/core/knowledge-boxes.ts
+  function normalizeBoxDir(raw, fallback) {
+    const s = String(raw != null ? raw : "").replace(/\\/g, "/").trim().replace(/^\/+|\/+$/g, "");
+    return s || fallback;
+  }
+  function parseDirList(raw) {
+    const out = [];
+    for (const part of String(raw != null ? raw : "").split(",")) {
+      const d = normalizeBoxDir(part, "");
+      if (d && !out.includes(d)) out.push(d);
+    }
+    return out;
+  }
+  function getKnowledgeBoxes(s) {
+    var _a2;
+    const st = (_a2 = s != null ? s : tryGetSettings()) != null ? _a2 : {};
+    return {
+      lit: normalizeBoxDir(st.knowledgeDirectory, DEFAULT_LIT_DIR),
+      cardbox: normalizeBoxDir(st.knowledgeCardboxDirectory, DEFAULT_CARDBOX_DIR),
+      topic: normalizeBoxDir(st.knowledgeTopicDirectory, DEFAULT_TOPIC_DIR)
+    };
+  }
+  function boxDirs(boxes) {
+    const b = boxes != null ? boxes : getKnowledgeBoxes();
+    const out = [];
+    for (const d of [b.lit, b.cardbox, b.topic]) {
+      if (d && !out.includes(d)) out.push(d);
+    }
+    return out;
+  }
+  function isBoxDir(dir, boxes) {
+    const d = normalizeBoxDir(dir, "");
+    return !!d && boxDirs(boxes).includes(d);
+  }
+  var DEFAULT_LIT_DIR, DEFAULT_CARDBOX_DIR, DEFAULT_TOPIC_DIR;
+  var init_knowledge_boxes = __esm({
+    "src/core/knowledge-boxes.ts"() {
+      init_utils();
+      init_settings_provider();
+      DEFAULT_LIT_DIR = "文献盒";
+      DEFAULT_CARDBOX_DIR = "卡片盒";
+      DEFAULT_TOPIC_DIR = "主题盒";
     }
   });
 
@@ -36706,22 +34966,36 @@ ${String(blockText != null ? blockText : "").trim()}`);
   });
 
   // src/clipbook/save.ts
-  function clipDirOf2() {
+  function clipDir() {
     const s = tryGetSettings();
-    return s && s.articleDirectory || "归档/网页剪藏";
+    return String(s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
   }
-  async function writeClipNote(raw, dirOverride) {
+  function cleanClipTitleOf(title) {
+    let t = String(title != null ? title : "").replace(/[\\/:*?"<>|]/g, "").trim();
+    t = t.replace(/[. ]+$/, "");
+    if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(t)) t = `_${t}`;
+    return t;
+  }
+  function clipFilePathOf(title) {
+    return `${clipDir()}/${cleanClipTitleOf(title)}.md`;
+  }
+  async function writeClipNote(raw) {
     const app = getApp();
-    const dir = dirOverride || clipDirOf2();
-    const cleanTitle = String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim();
+    const cleanTitle = cleanClipTitleOf(raw && raw.title);
     if (!cleanTitle) {
       notice("标题为空", "error");
       return false;
     }
-    const filePath = `${dir}/${cleanTitle}.md`;
+    let filePath = clipFilePathOf(cleanTitle);
     if (app.vault.getAbstractFileByPath(filePath)) {
-      const ok = await confirmOverwrite(filePath);
-      if (!ok) return false;
+      const verdict = await confirmOverwrite(filePath);
+      if (verdict === "rename") {
+        let n = 2;
+        while (app.vault.getAbstractFileByPath(clipFilePathOf(`${cleanTitle} · ${n}`))) n++;
+        filePath = clipFilePathOf(`${cleanTitle} · ${n}`);
+      } else if (verdict !== "ok") {
+        return false;
+      }
     }
     const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
     const now = localDatetime();
@@ -36748,12 +35022,19 @@ await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
 
 ${body}`;
     try {
+      const dir = clipDir();
       const dirAf = app.vault.getAbstractFileByPath(dir);
       if (!dirAf) await app.vault.createFolder(dir);
       const existing = app.vault.getAbstractFileByPath(filePath);
       if (existing) await app.vault.modify(existing, md);
       else await app.vault.create(filePath, md);
-      notice(`已保存：${cleanTitle}`, "success");
+      notify(`已保存：${cleanTitle}`, {
+        type: "success",
+        action: {
+          label: "打开笔记",
+          onClick: () => void getApp().workspace.openLinkText(filePath, "")
+        }
+      });
       await materializeTracking(key, filePath, cleanTitle);
       return true;
     } catch (e) {
@@ -36763,11 +35044,12 @@ ${body}`;
     }
   }
   async function localizeImagesForSave(body, existing) {
-    const total = extractImageUrls(body).length;
+    const { extractImageUrls: extractImageUrls2, localizeArticleImages: localizeArticleImages2 } = await Promise.resolve().then(() => (init_image_save(), image_save_exports));
+    const total = extractImageUrls2(body).length;
     if (!total) return existing;
     const ph = total > 1 ? notify(`正在保存图片 1/${total}…`, { type: "progress" }) : null;
     try {
-      const res = await localizeArticleImages({
+      const res = await localizeArticleImages2({
         body,
         existing,
         onProgress: (done, t) => ph == null ? void 0 : ph.setMessage(`正在保存图片 ${done}/${t}…`)
@@ -36825,64 +35107,27 @@ ${body}`;
     }
   }
   function confirmOverwrite(filePath) {
-    return new Promise((resolve2) => {
-      const el = document.createElement("div");
-      Object.assign(el.style, {
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%,-50%)",
-        background: "var(--background-primary)",
-        borderRadius: "10px",
-        padding: "20px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-        minWidth: "260px",
-        textAlign: "center",
-        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif",
-        zIndex: "10500"
-      });
-      el.innerHTML = `
-      <div style="margin-bottom:14px;color:var(--text-normal);font-size:14px;">已存在同名剪藏，覆盖？</div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="y" style="padding:6px 18px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:4px;cursor:pointer;">覆盖</button>
-        <button class="n" style="padding:6px 18px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);border-radius:4px;cursor:pointer;">取消</button>
-      </div>`;
-      const ov = document.createElement("div");
-      Object.assign(ov.style, { position: "fixed", inset: "0", background: "var(--background-modifier-cover)" });
-      topifyZ(ov, el);
-      document.body.appendChild(ov);
-      document.body.appendChild(el);
-      const close = (v) => {
-        ov.remove();
-        el.remove();
-        resolve2(v);
-      };
-      ov.onclick = () => close(false);
-      const h = escManager.register("clipbook-confirm", {
-        isVisible: () => ov.isConnected,
-        close: () => close(false)
-      });
-      el.querySelector(".y").onclick = () => {
-        h.unregister();
-        close(true);
-      };
-      el.querySelector(".n").onclick = () => {
-        h.unregister();
-        close(false);
-      };
-    });
+    return openFlowDialog({
+      className: "bz-clip-dialog-editorial",
+      title: "已存在同名剪藏",
+      message: `「${filePath.split("/").pop() || filePath}」已存在
+将覆盖现有摘要、标签与正文编辑`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "另存为新剪藏", value: "rename" },
+        { label: "覆盖更新", value: "ok", cta: true, danger: true }
+      ]
+    }).then((v) => v === "ok" || v === "rename" ? v : void 0);
   }
   var yamlEscape;
   var init_save = __esm({
     "src/clipbook/save.ts"() {
       init_app();
-      init_esc_manager();
-      init_dom();
       init_settings_provider();
       init_notice();
+      init_flow_dialog();
       init_constants3();
       init_anchor();
-      init_image_save();
       yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
     }
   });
@@ -37014,7 +35259,7 @@ ${body}`;
       const bump = await markHandledAndBump(raw, "saved");
       const evt = buildReadEvt(raw, "saved");
       if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
-      emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
+      emitDomainEvent("news", { kind: "saved", evt, clipPath: clipFilePathOf(raw.title) });
       void flushReadingSession();
       return true;
     } catch (e) {
@@ -37047,27 +35292,70 @@ ${body}`;
   }
   async function flowMarkAllRead(raws) {
     const keys = new Set(raws.filter(Boolean).map((r) => articleKeyOf(r)));
-    if (!keys.size) return;
+    if (!keys.size) return NO_MARK_ALL;
     pauseReadingSession();
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok || res.missing) return NO_MARK_ALL;
       const today = localDayKey();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      if (!s.byPlatform) s.byPlatform = {};
+      if (!s.byDate) s.byDate = {};
       let bumped = 0;
+      const snapshot2 = [];
       const list = (res.data.articles || []).map((a) => {
         if (a.read === true || !keys.has(articleKeyOf(a))) return a;
         bumped++;
+        snapshot2.push({ ...a });
         const next = { ...a, read: true, state: "skipped" };
         const platform = a.platform || "未知";
         s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
         s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
         return next;
       });
-      if (!bumped) return;
+      if (!bumped) return NO_MARK_ALL;
       s.totalRead = (Number(s.totalRead) || 0) + bumped;
       s.totalSkipped = (Number(s.totalSkipped) || 0) + bumped;
       await writeNewsDataMerged({ set: { articles: list, stats: s } });
+      return { bumped, snapshot: snapshot2 };
+    });
+  }
+  async function flowUndoMarkAllRead(snapshot2) {
+    if (!snapshot2 || !snapshot2.length) return;
+    const beforeByKey = /* @__PURE__ */ new Map();
+    for (const r of snapshot2) if (r) beforeByKey.set(articleKeyOf(r), r);
+    if (!beforeByKey.size) return;
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const s = res.data.stats;
+      let touched = false;
+      const list = (res.data.articles || []).map((a) => {
+        const before = beforeByKey.get(articleKeyOf(a));
+        if (!before) return a;
+        touched = true;
+        if (s && a.read === true) {
+          s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
+          if (a.state === "saved") s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
+          else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
+          if (!s.byPlatform) s.byPlatform = {};
+          if (!s.byDate) s.byDate = {};
+          const platform = a.platform || "未知";
+          s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
+          const day = localDayKey();
+          s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
+        }
+        const restored = { ...a };
+        if (before.read === void 0) delete restored.read;
+        else restored.read = before.read;
+        if (before.state === void 0) delete restored.state;
+        else restored.state = before.state;
+        if (before.body === void 0) delete restored.body;
+        else restored.body = before.body;
+        return restored;
+      });
+      if (!touched) return;
+      await writeNewsDataMerged({ set: s ? { articles: list, stats: s } : { articles: list } });
     });
   }
   async function flowUndoHandled(rawBefore) {
@@ -37085,6 +35373,8 @@ ${body}`;
           s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
           if (a.state === "saved") s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
+          if (!s.byPlatform) s.byPlatform = {};
+          if (!s.byDate) s.byDate = {};
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
           const day = localDayKey();
@@ -37113,15 +35403,10 @@ ${body}`;
       await writeNewsDataMerged({ set: { articles: [...list, rawBefore] } });
     });
   }
-  function dirOf() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  var curKey, curMeta, openedAt, accumMs, PENDING_READ_LOG_MAX, pendingReadLog, READ_LOG_RETENTION_MS, READ_LOG_MAX_ENTRIES, NO_BUMP;
+  var curKey, curMeta, openedAt, accumMs, PENDING_READ_LOG_MAX, pendingReadLog, READ_LOG_RETENTION_MS, READ_LOG_MAX_ENTRIES, NO_BUMP, NO_MARK_ALL;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
       init_domain_bus();
-      init_settings_provider();
       init_news_data();
       init_constants3();
       init_save();
@@ -37137,157 +35422,478 @@ ${body}`;
       READ_LOG_RETENTION_MS = 180 * 24 * 60 * 60 * 1e3;
       READ_LOG_MAX_ENTRIES = 5e3;
       NO_BUMP = { changed: false, upgraded: false, stats: null };
+      NO_MARK_ALL = { bumped: 0, snapshot: [] };
     }
   });
 
-  // src/clipbook/file-sync.ts
-  function syncRename2(data, { oldPath, newPath }) {
-    let changed = false;
-    for (const key of Object.keys(data.marks)) {
-      const list = data.marks[key];
-      if (!Array.isArray(list)) continue;
-      for (const mk of list) {
-        if (mk && mk.notePath === oldPath) {
-          mk.notePath = newPath;
-          changed = true;
-        }
-      }
-    }
-    for (const key of Object.keys(data.pendingSource)) {
-      const list = data.pendingSource[key];
-      if (!Array.isArray(list)) continue;
-      for (let i = 0; i < list.length; i++) {
-        if (list[i] === oldPath) {
-          list[i] = newPath;
-          changed = true;
-        }
-      }
-    }
-    return changed;
+  // src/clipbook/state.ts
+  function defaultSel() {
+    return { kind: "all", platform: "", up: null, site: "" };
   }
-  function syncDelete2(data, path) {
-    let changed = false;
-    const marks = {};
-    for (const key of Object.keys(data.marks)) {
-      const list = data.marks[key];
-      if (!Array.isArray(list)) continue;
-      const kept = list.filter((mk) => !(mk && mk.notePath === path));
-      if (kept.length !== list.length) changed = true;
-      if (kept.length) marks[key] = kept;
-    }
-    const pendingSource = {};
-    for (const key of Object.keys(data.pendingSource)) {
-      const list = data.pendingSource[key];
-      if (!Array.isArray(list)) continue;
-      const kept = list.filter((p) => p !== path);
-      if (kept.length !== list.length) changed = true;
-      if (kept.length) pendingSource[key] = kept;
-    }
-    if (!changed) return false;
-    data.marks = marks;
-    data.pendingSource = pendingSource;
-    return true;
+  function resetClipbookState() {
+    M5.appRef = null;
+    M5.open = false;
+    M5.articles = [];
+    M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M5.clipNotes = null;
+    M5.clipUrls = /* @__PURE__ */ new Set();
+    M5.sel = defaultSel();
+    M5.cur = null;
+    M5.list = [];
+    M5.upInfo = {};
+    M5.mobDetailOpen = false;
   }
-  function clipDirOf3() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  function getWatchedFolders2() {
-    const s = tryGetSettings();
-    const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return [kb, clipDirOf3()];
-  }
-  async function referencedByClipbook(path) {
-    if (!path) return false;
-    try {
-      const data = await readClipbookData();
-      const markHit = Object.values(data.marks).some((list) => list.some((mk) => mk && mk.notePath === path));
-      const pendingHit = Object.values(data.pendingSource).some((list) => list.includes(path));
-      return markHit || pendingHit;
-    } catch (e) {
-      return false;
-    }
-  }
-  var agent2;
-  var init_file_sync3 = __esm({
-    "src/clipbook/file-sync.ts"() {
-      init_settings_provider();
-      init_file_sync();
-      init_data7();
-      agent2 = createFileSync({
-        logTag: "[clipbook-file-sync]",
-        failNotice: "剪藏本同步失败，数据可能不一致",
-        failDedupeKey: "clipbook-file-sync",
-        watchedFolders: getWatchedFolders2,
-        /** clipbook.json 读改写事务（updateClipbookData 自带 per-path 串行队列与 D2 写契约） */
-        commit: (apply) => updateClipbookData((cur) => {
-          apply(cur);
-          return cur;
-        }),
-        referencedBy: referencedByClipbook,
-        applyRename: syncRename2,
-        applyDelete: syncDelete2
-      });
+  var M5;
+  var init_state5 = __esm({
+    "src/clipbook/state.ts"() {
+      M5 = {
+        appRef: null,
+        open: false,
+        articles: [],
+        stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
+        sidecar: { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] },
+        clipNotes: null,
+        clipUrls: /* @__PURE__ */ new Set(),
+        sel: defaultSel(),
+        cur: null,
+        list: [],
+        upInfo: {},
+        mobDetailOpen: false
+      };
     }
   });
 
-  // src/clipbook/index.ts
-  function openClipbook(app) {
-    if (!initialized4) {
-      initialized4 = true;
-      registerAutoRefresh(app);
-      setNewsFetchDoneListener(() => reloadIfOpen());
-      initPanel(app, true);
-    } else {
-      showPanel();
+  // src/clipbook/report-stats.ts
+  function periodStartTs(period2, now) {
+    if (period2 === "month") {
+      return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
     }
-    void maybeFetchNews();
+    const offset = (now.getDay() + 6) % 7;
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - offset).getTime();
   }
-  function registerAutoRefresh(app) {
-    if (autoRefreshRegistered) return;
-    autoRefreshRegistered = true;
-    let timer = null;
-    const dir = () => {
-      const s = tryGetSettings();
-      return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-    };
-    const schedule = (path, stalePath) => {
-      if (path) invalidateClipBodyCache(path);
-      if (stalePath) invalidateClipBodyCache(stalePath);
-      const d = dir();
-      const inDir2 = (p) => !!p && p.startsWith(d + "/");
-      if (path && !inDir2(path) && !inDir2(stalePath)) return;
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => {
-        void reloadIfOpen();
-      }, 300);
-    };
-    onDomainEvent("clipping:file-created", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-modified", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-deleted", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath, e && e.oldPath));
+  function filterReadLogByPeriod(log, period2, now) {
+    const start = periodStartTs(period2, now);
+    return (log || []).filter((e) => e && typeof e.ts === "number" && isFinite(e.ts) && e.ts >= start);
   }
-  var initialized4, autoRefreshRegistered;
-  var init_clipbook = __esm({
-    "src/clipbook/index.ts"() {
-      init_settings_provider();
-      init_domain_bus();
-      init_notice();
-      init_flow_dialog();
-      init_news_data();
-      init_news_fetcher();
-      init_flow();
-      init_ui8();
-      init_report_ui();
-      init_file_sync3();
-      initialized4 = false;
-      autoRefreshRegistered = false;
+  function hourOf(ts) {
+    const h = new Date(ts).getHours();
+    return h >= 0 && h < 24 ? h : 0;
+  }
+  function dayKeyOf(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function buildClipReport(log, period2, now = /* @__PURE__ */ new Date()) {
+    const entries = filterReadLogByPeriod(log, period2, now);
+    const minutesByKey = /* @__PURE__ */ new Map();
+    const srcMap = /* @__PURE__ */ new Map();
+    const hours = new Array(24).fill(0);
+    const days = /* @__PURE__ */ new Set();
+    let totalMinutes = 0;
+    for (const e of entries) {
+      const m = Math.max(0, Math.round(Number(e.minutes) || 0));
+      if (m <= 0) continue;
+      totalMinutes += m;
+      hours[hourOf(e.ts)] += m;
+      days.add(dayKeyOf(e.ts));
+      const key = String(e.key || "");
+      const src = String(e.src || "").trim() || "未知";
+      const prev = minutesByKey.get(key);
+      if (prev) prev.minutes += m;
+      else minutesByKey.set(key, { entry: e, minutes: m });
+      let row = srcMap.get(src);
+      if (!row) {
+        row = { name: src, articles: 0, minutes: 0 };
+        srcMap.set(src, row);
+      }
+      row.minutes += m;
+    }
+    for (const { entry } of minutesByKey.values()) {
+      const src = String(entry.src || "").trim() || "未知";
+      const row = srcMap.get(src);
+      if (row) row.articles += 1;
+    }
+    const bySrc = [...srcMap.values()].sort((a, b) => b.minutes - a.minutes || b.articles - a.articles || a.name.localeCompare(b.name));
+    const topArticles = [...minutesByKey.entries()].map(([key, v]) => ({ key, title: v.entry.title || "(无标题)", src: String(v.entry.src || "").trim() || "未知", minutes: v.minutes })).sort((a, b) => b.minutes - a.minutes || a.key.localeCompare(b.key)).slice(0, 5);
+    return {
+      period: period2,
+      articles: minutesByKey.size,
+      sessions: entries.length,
+      totalMinutes,
+      bySrc,
+      hours,
+      topArticles,
+      activeDays: days.size
+    };
+  }
+  function formatMinutes(min) {
+    const m = Math.max(0, Math.round(min));
+    const h = Math.floor(m / 60);
+    const r = m % 60;
+    if (h <= 0) return `${r} 分钟`;
+    return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
+  }
+  var REPORT_TOP_N;
+  var init_report_stats2 = __esm({
+    "src/clipbook/report-stats.ts"() {
+      init_str();
+      REPORT_TOP_N = 5;
+    }
+  });
+
+  // src/clipbook/render.ts
+  function panelHtml3() {
+    return `
+    <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
+      <!-- 桌面三栏 -->
+      <div class="bz-clip-desk">
+        <div class="bz-panel-head bz-panel-head--tall">
+          <div class="bz-panel-title">剪藏本</div>
+          <div class="bz-panel-head-sp"></div>
+          <div class="bz-clip-issue" data-clip-issue></div>
+          <!-- 效率#12：尾部 ✕ 一键清除（有词才显示，ui.ts syncDeskSearchClear 同步）。定位走内联随单源
+               markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的左缘绝对定位会劫持 iconSpan 产物，
+               且 mountIcons 换节点会丢内联样式；不带 display 内联值，hidden 属性才能生效 -->
+          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+        </div>
+        <div class="bz-clip-desk-body">
+          <div class="bz-rail bz-rail--wide bz-clip-rail">
+            <div class="bz-clip-rail-label">SITE 站点</div>
+            <div class="bz-rail-scroll" data-clip-rail></div>
+            <div class="bz-clip-rail-foot" data-clip-rail-foot></div>
+          </div>
+          <div class="bz-clip-mid">
+            <div class="bz-clip-toc-head">目录</div>
+            <div class="bz-clip-list" data-clip-list></div>
+          </div>
+          <div class="bz-clip-read" data-clip-read-pane tabindex="0">
+            <div class="bz-clip-read-scroll"><div class="bz-clip-read-body" data-clip-reader></div></div>
+          </div>
+        </div>
+      </div>
+      <!-- 移动双屏 -->
+      <div class="bz-clip-mob" data-clip-mob>
+        <div class="bz-clip-mob-top">
+          <div class="bz-clip-mob-title">剪藏本</div>
+          <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
+          <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
+          <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
+        </div>
+        <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+        </div>
+        <div class="bz-clip-mob-list" data-clip-mob-list></div>
+      </div>
+      <!-- 移动详情 overlay（屏2） -->
+      <div class="bz-clip-mob-detail bz-panel-mtop" data-clip-mob-detail style="display:none">
+        <div class="bz-clip-mob-detail-top">
+          <span class="bz-clip-mob-d-back" data-clip-mob-back role="button">‹ 返回</span>
+          <div class="bz-clip-mob-detail-title" data-clip-mob-title></div>
+          <span class="bz-clip-mob-save" data-clip-mob-save role="button">存为剪藏</span>
+        </div>
+        <div class="bz-clip-mob-detail-body" data-clip-mob-detail-body></div>
+      </div>
+    </div>
+  `;
+  }
+  function siteShort(s) {
+    return String(s || "").replace("果壳科学人", "果壳");
+  }
+  function siteTint(site) {
+    let h = 0;
+    const t = String(site || "");
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return `hsl(${h % 360}, 42%, 52%)`;
+  }
+  function railItemHtml(sel, label, unread, total, icon2, color, active2, sub, markAllN = 0) {
+    const badge = icon2 === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon2 === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon2 === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon2 ? iconSpan(icon2) : ""}</span>`;
+    const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
+    const markAll = markAllN > 0 ? `<span class="bz-clip-rail-markall" data-clip-rail-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, "bz-ic--xs")}</span>` : "";
+    return `
+    <div class="bz-rail-item${active2 ? " on" : ""}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
+      ${badge}
+      <span class="bz-rail-name">${esc(label)}</span>
+      <span class="bz-clip-lead"></span>
+      ${markAll}
+      ${count}
+    </div>`;
+  }
+  function railFootHtml(todayRead) {
+    return `今日已读<br><b>${todayRead}</b> 篇`;
+  }
+  function clipReportEntryHtml() {
+    return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
+  }
+  function highlightTitleHtml2(title, kw) {
+    const safe = esc(title);
+    const needle = esc((kw || "").trim()).toLowerCase();
+    if (!needle) return safe;
+    const hay = safe.toLowerCase();
+    let out = "";
+    let i = 0;
+    for (; ; ) {
+      const hit = hay.indexOf(needle, i);
+      if (hit === -1) {
+        out += safe.slice(i);
+        break;
+      }
+      out += `${safe.slice(i, hit)}<mark>${safe.slice(hit, hit + needle.length)}</mark>`;
+      i = hit + needle.length;
+    }
+    return out;
+  }
+  function tocTagsHtml(tags) {
+    if (!tags.length) return "";
+    const shown = tags.slice(0, 2).map((t) => `#${esc(t)}`).join(" ");
+    return `<span class="bz-clip-item-tags">${shown}${tags.length > 2 ? " …" : ""}</span>`;
+  }
+  function tocListHtml(list, curId, timeOf, kw = "") {
+    return list.map((a, i) => `
+    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
+      <span class="bz-clip-no">${pad2(i + 1)}</span>
+      <div class="bz-clip-item-main">
+        <div class="bz-clip-item-t"><span>${highlightTitleHtml2(a.title, kw)}</span></div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}${tocTagsHtml(a.tags)}</div>
+      </div>
+    </div>`).join("");
+  }
+  function deskFoldRowHtml(kind, n, open) {
+    const label = kind === "read" ? "已读" : "已收";
+    const lab = open ? "收起" : `${label} <b>${n}</b> 篇`;
+    return `
+    <div class="bz-clip-desk-fold${open ? " on" : ""}" data-desk-fold="${kind}" role="button" tabindex="0" aria-expanded="${open}">
+      <span class="bz-clip-desk-fold-rule"></span>
+      <span class="bz-clip-desk-fold-lab">${lab}</span>
+      <span class="bz-clip-desk-fold-ar"></span>
+      <span class="bz-clip-desk-fold-rule"></span>
+    </div>`;
+  }
+  function foldBodyHtml(html, open) {
+    return html ? `<div class="bz-clip-desk-fold-body"${open ? "" : " hidden"}>${html}</div>` : "";
+  }
+  function summaryHtml2(summary) {
+    return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
+  }
+  function artTagsHtml(tags) {
+    if (!tags.length) return "";
+    return `<div class="bz-clip-art-tags">${tags.map((t) => `<span class="bz-clip-art-tag">${esc(t)}</span>`).join("")}</div>`;
+  }
+  function readerHtml(a, opts) {
+    const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
+    return `
+    <div class="bz-clip-art-title">${esc(a.title)}</div>
+    <div class="bz-clip-art-meta">
+      <span>${esc(opts.time)}</span>
+      <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
+    </div>
+    ${artTagsHtml(a.tags)}
+    ${a.summary ? summaryHtml2(a.summary) : ""}
+    <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
+    ${openNoteFoot}
+  `;
+  }
+  function mobListHtml(list, timeOf) {
+    return list.map((a) => `
+    <div class="bz-clip-mob-item ${a.st}" data-id="${esc(a.id)}">
+      <span class="bz-clip-mob-dot ${a.st}"></span>
+      <span class="bz-clip-mob-ttl">${esc(a.title)}</span>
+      ${a.st === "reading" ? '<span class="bz-clip-mob-tag">在读</span>' : ""}
+      <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
+    </div>`).join("");
+  }
+  function mobChHeadHtml(site, unread, readN, savedN, markAllN = 0) {
+    const seg = [];
+    if (unread > 0) seg.push(`${unread} 未读`);
+    if (readN > 0) seg.push(`${readN} 已读`);
+    if (savedN > 0) seg.push(`${savedN} 已收`);
+    const cntTxt = seg.join(" · ");
+    const mark = markAllN > 0 ? `<span class="bz-clip-mob-ch-mark" data-clip-ch-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, "bz-ic--xs")}</span>` : "";
+    return `
+    <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
+      <span class="bz-clip-mob-ch-name">${esc(site)}</span>
+      <span class="bz-clip-mob-ch-n">${cntTxt}</span>
+      <span class="bz-clip-mob-ch-rule"></span>
+      ${mark}
+    </div>`;
+  }
+  function mobFoldHtml(kind, n, open) {
+    const label = kind === "read" ? "已读" : "已收";
+    return `
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
+      <span class="bz-clip-mob-fold-rule"></span>
+      <span class="bz-clip-mob-fold-lab">${open ? "收起" : `${label} <b>${n}</b> 篇`}</span>
+      <span class="bz-clip-mob-fold-ar"></span>
+      <span class="bz-clip-mob-fold-rule"></span>
+    </div>`;
+  }
+  function mobFoldBodyHtml(kind, html, open) {
+    return html ? open ? `<div class="bz-clip-mob-arch" data-arch-kind="${kind}">${html}</div>` : `<div class="bz-clip-mob-arch" data-arch-kind="${kind}" hidden>${html}</div>` : "";
+  }
+  function mobTocHtml(chapters, searching, expanded) {
+    return chapters.map((ch) => {
+      const readOpen = expanded.has("read:" + ch.site);
+      const savedOpen = expanded.has("saved:" + ch.site);
+      const foldRead = !searching && ch.readN > 0 ? mobFoldHtml("read", ch.readN, readOpen) : "";
+      const foldSaved = !searching && ch.savedN > 0 ? mobFoldHtml("saved", ch.savedN, savedOpen) : "";
+      const readBody = mobFoldBodyHtml("read", ch.readHtml, searching || readOpen);
+      const savedBody = mobFoldBodyHtml("saved", ch.savedHtml, searching || savedOpen);
+      return `
+      <div class="bz-clip-mob-ch">
+        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN, ch.markAllN || 0)}
+        <div class="bz-clip-mob-ch-items">${ch.activeHtml}${foldRead}${readBody}${foldSaved}${savedBody}</div>
+      </div>`;
+    }).join("");
+  }
+  function mobNoHitHtml(text) {
+    return `<div class="bz-clip-mob-no-hit">${esc(text)}</div>`;
+  }
+  function mobDetailHtml(a, opts) {
+    return `
+    <div class="bz-clip-mob-d-kicker"><span>${esc(siteShort(a.srcName))} · ${esc(opts.time)}</span><span>${esc(opts.seq)}</span></div>
+    <div class="bz-clip-mob-d-title">${esc(a.title)}</div>
+    <hr class="bz-clip-mob-d-rule">
+    <div class="bz-clip-mob-d-md markdown-rendered" data-clip-mob-md>${opts.note ? `<p>${esc(opts.note)}</p>` : ""}</div>
+    <div class="bz-clip-mob-d-foot"><span class="bz-clip-mob-d-next" data-clip-mob-next>↓ 读下一则</span><span class="bz-clip-mob-d-fch">${esc(siteShort(a.srcName))}</span></div>
+  `;
+  }
+  function clipReportShellHtml() {
+    return `
+    <div class="bz-panel-frame bz-clip-report-frame bz-panel-mtop">
+      <div class="bz-panel-head">
+        <div class="bz-panel-title">我读了什么</div>
+        <div class="bz-clp-rep-seg" data-clp-rep-period role="tablist" aria-label="统计周期">
+          <button class="bz-clp-rep-seg-btn on" data-period="week" type="button">本周</button>
+          <button class="bz-clp-rep-seg-btn" data-period="month" type="button">本月</button>
+        </div>
+        <div class="bz-panel-head-sp"></div>
+        <span class="bz-clp-rep-close" role="button" tabindex="0" data-clp-rep-close title="关闭">${iconSpan(ICO.x)}</span>
+      </div>
+      <div class="bz-clp-rep-body" data-clp-rep-body></div>
+    </div>`;
+  }
+  function clipReportSkeletonHtml() {
+    return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
+  }
+  function buildClipReportSections(d, opts) {
+    return [
+      { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d, opts) },
+      { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
+      { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
+    ];
+  }
+  function clipReportOverviewHtml(d, opts) {
+    const keys = (opts == null ? void 0 : opts.availableKeys) || null;
+    const topRows = d.topArticles.map((a, i) => {
+      const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
+      const openable = !!keys && keys.has(a.key);
+      const openBtn = openable ? `<span class="bz-clp-rep-top-open" data-clip-rep-open role="button" tabindex="0" title="打开该篇回看">打开 ${iconSpan(ICO.external, "bz-ic--xs")}</span>` : "";
+      return `
+    <div class="bz-clp-rep-top-row"${openable ? ` data-clip-rep-key="${esc(a.key)}"` : ""}>
+      <span class="bz-clp-rep-rank" style="background:${badge}">${i + 1}</span>
+      <span class="bz-clp-rep-top-title" title="${esc(a.title)}">${esc(a.title)}</span>
+      <span class="bz-clp-rep-top-src">${esc(a.src)}</span>
+      <span class="bz-clp-rep-top-min">${esc(formatMinutes(a.minutes))}</span>
+      ${openBtn}
+    </div>`;
+    }).join("");
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">统计概览</div>
+      <div class="bz-clp-rep-hero">
+        <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+      </div>
+      ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ""}
+    </div>`;
+  }
+  function clipReportSourcesHtml(d) {
+    const rows = d.bySrc.slice(0, REPORT_TOP_N);
+    if (!rows.length) {
+      return `<div class="bz-clp-rep-sec"><div class="bz-clp-rep-sec-h">来源分布</div><p class="bz-clp-rep-none">本期暂无来源数据</p></div>`;
+    }
+    const max = Math.max(1, ...rows.map((r) => r.minutes));
+    const barRows = rows.map((r, i) => {
+      const width = Math.max(2, Math.round(r.minutes / max * 100));
+      return `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(r.name)}">${esc(r.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${width}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${r.articles} 篇 · ${esc(formatMinutes(r.minutes))}</span>
+    </div>`;
+    }).join("");
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">来源分布</div>
+      <div class="bz-clp-rep-bars">${barRows}</div>
+    </div>`;
+  }
+  function clipReportHoursHtml(d) {
+    const max = Math.max(0, ...d.hours);
+    const cols = d.hours.map((m, h) => {
+      const height = max > 0 && m > 0 ? 10 + Math.round(m / max * 44) : 3;
+      const accent = max > 0 && m > 0 && m === max;
+      const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+      return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
+    }).join("");
+    const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
+    const peakText = peakHour >= 0 ? `${peakHour} 点前后` : "暂无";
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-hours">${cols}</div>
+      <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
+  }
+  var ICO;
+  var init_render10 = __esm({
+    "src/clipbook/render.ts"() {
+      init_str();
+      init_chart_palette();
+      init_report_stats2();
+      ICO = {
+        inbox: "inbox",
+        feed: "rss",
+        clip: "scissors",
+        bili: "play-square",
+        mail: "mail",
+        book: "book-open",
+        check: "check",
+        download: "download",
+        external: "external-link",
+        trash: "trash-2",
+        search: "search",
+        x: "x",
+        arrow: "arrow-left",
+        link: "link",
+        globe: "globe",
+        folder: "folder-open",
+        rotate: "rotate-ccw",
+        radio: "radio",
+        checks: "check-check"
+      };
     }
   });
 
   // src/clipbook/report-ui.ts
   function bodyEl2() {
     return overlayEl ? overlayEl.querySelector("[data-clp-rep-body]") : null;
+  }
+  async function collectAvailableKeys() {
+    const keys = /* @__PURE__ */ new Set();
+    for (const a of M5.articles || []) keys.add(a.id);
+    for (const n of M5.clipNotes || []) {
+      if (n && n.path) keys.add("clip:" + String(n.path));
+    }
+    try {
+      const res = await readNewsData();
+      if (res.ok && !res.missing) {
+        for (const raw of res.data && res.data.articles || []) keys.add(articleKeyOf(raw));
+      }
+    } catch (e) {
+    }
+    return keys;
   }
   async function openClipbookReport(_app3) {
     reportApp = _app3 || null;
@@ -37310,6 +35916,21 @@ ${body}`;
     releaseProgress();
     if (overlayEl) overlayEl.style.display = "none";
     logCache = null;
+  }
+  function unloadClipbookReport() {
+    closeClipbookReport();
+    period = "week";
+    if (escHandle3) {
+      try {
+        escHandle3.unregister();
+      } catch (e) {
+      }
+      escHandle3 = null;
+    }
+    if (overlayEl) {
+      overlayEl.remove();
+      overlayEl = null;
+    }
   }
   function releaseProgress() {
     if (activeProgress2) {
@@ -37334,7 +35955,19 @@ ${body}`;
         return;
       }
       const segBtn = t.closest("[data-period]");
-      if (segBtn) setPeriod(segBtn.dataset.period || "week");
+      if (segBtn) {
+        setPeriod(segBtn.dataset.period || "week");
+        return;
+      }
+      const openBtn = t.closest("[data-clip-rep-open]");
+      if (openBtn) {
+        const row = openBtn.closest("[data-clip-rep-key]");
+        const key = row ? row.getAttribute("data-clip-rep-key") || "" : "";
+        if (key) {
+          closeClipbookReport();
+          revealArticleByKey(key);
+        }
+      }
     });
     overlayEl.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -37342,6 +35975,17 @@ ${body}`;
       if (t.closest("[data-clp-rep-close]")) {
         e.preventDefault();
         closeClipbookReport();
+        return;
+      }
+      const openBtn = t.closest("[data-clip-rep-open]");
+      if (openBtn) {
+        const row = openBtn.closest("[data-clip-rep-key]");
+        const key = row ? row.getAttribute("data-clip-rep-key") || "" : "";
+        if (key) {
+          e.preventDefault();
+          closeClipbookReport();
+          revealArticleByKey(key);
+        }
       }
     });
     escHandle3 = escManager.register("bz-clipbook-report", {
@@ -37420,6 +36064,8 @@ ${body}`;
       await yieldToMainThread(YIELD_MS);
       if (!alive()) return finishAbort();
       const data = buildClipReport(logCache, period, /* @__PURE__ */ new Date());
+      const availKeys = await collectAvailableKeys();
+      if (!alive()) return finishAbort();
       if (!data.articles && !data.totalMinutes) {
         const other = period === "week" ? "month" : "week";
         const otherData = buildClipReport(logCache, other, /* @__PURE__ */ new Date());
@@ -37432,7 +36078,7 @@ ${body}`;
         return;
       }
       body.innerHTML = "";
-      for (const section of buildClipReportSections(data)) {
+      for (const section of buildClipReportSections(data, { availableKeys: availKeys })) {
         if (!alive()) return finishAbort();
         await yieldToMainThread(YIELD_MS);
         if (!alive()) return finishAbort();
@@ -37464,10 +36110,14 @@ ${body}`;
       init_utils();
       init_esc_manager();
       init_data7();
+      init_news_data();
+      init_constants3();
+      init_state5();
       init_flow();
       init_report_stats2();
       init_render10();
       init_clipbook();
+      init_ui8();
       overlayEl = null;
       escHandle3 = null;
       period = "week";
@@ -37485,9 +36135,1641 @@ ${body}`;
     }
   });
 
+  // src/clipbook/file-sync.ts
+  function syncRename2(data, { oldPath, newPath }) {
+    let changed = false;
+    for (const key of Object.keys(data.marks)) {
+      const list = data.marks[key];
+      if (!Array.isArray(list)) continue;
+      for (const mk of list) {
+        if (mk && mk.notePath === oldPath) {
+          mk.notePath = newPath;
+          changed = true;
+        }
+      }
+    }
+    for (const key of Object.keys(data.pendingSource)) {
+      const list = data.pendingSource[key];
+      if (!Array.isArray(list)) continue;
+      for (let i = 0; i < list.length; i++) {
+        if (list[i] === oldPath) {
+          list[i] = newPath;
+          changed = true;
+        }
+      }
+    }
+    return changed;
+  }
+  function syncDelete2(data, path) {
+    let changed = false;
+    const marks = {};
+    for (const key of Object.keys(data.marks)) {
+      const list = data.marks[key];
+      if (!Array.isArray(list)) continue;
+      const kept = list.filter((mk) => !(mk && mk.notePath === path));
+      if (kept.length !== list.length) changed = true;
+      if (kept.length) marks[key] = kept;
+    }
+    const pendingSource = {};
+    for (const key of Object.keys(data.pendingSource)) {
+      const list = data.pendingSource[key];
+      if (!Array.isArray(list)) continue;
+      const kept = list.filter((p) => p !== path);
+      if (kept.length !== list.length) changed = true;
+      if (kept.length) pendingSource[key] = kept;
+    }
+    if (!changed) return false;
+    data.marks = marks;
+    data.pendingSource = pendingSource;
+    return true;
+  }
+  function getWatchedFolders2() {
+    const s = tryGetSettings();
+    const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
+    return [kb, clipDir()];
+  }
+  async function referencedByClipbook(path) {
+    if (!path) return false;
+    try {
+      const data = await readClipbookData();
+      const markHit = Object.values(data.marks).some((list) => list.some((mk) => mk && mk.notePath === path));
+      const pendingHit = Object.values(data.pendingSource).some((list) => list.includes(path));
+      return markHit || pendingHit;
+    } catch (e) {
+      return false;
+    }
+  }
+  function ensureFileSync2(app) {
+    agent2.ensure(app);
+  }
+  function unloadFileSync2() {
+    agent2.unload();
+  }
+  var agent2;
+  var init_file_sync3 = __esm({
+    "src/clipbook/file-sync.ts"() {
+      init_settings_provider();
+      init_file_sync();
+      init_save();
+      init_data7();
+      agent2 = createFileSync({
+        logTag: "[clipbook-file-sync]",
+        failNotice: "剪藏本同步失败，数据可能不一致",
+        failDedupeKey: "clipbook-file-sync",
+        watchedFolders: getWatchedFolders2,
+        /** clipbook.json 读改写事务（updateClipbookData 自带 per-path 串行队列与 D2 写契约） */
+        commit: (apply) => updateClipbookData((cur) => {
+          apply(cur);
+          return cur;
+        }),
+        referencedBy: referencedByClipbook,
+        applyRename: syncRename2,
+        applyDelete: syncDelete2
+      });
+    }
+  });
+
+  // src/clipbook/index.ts
+  var clipbook_exports = {};
+  __export(clipbook_exports, {
+    ensureClipbookFileSync: () => ensureFileSync2,
+    markAllUnreadRead: () => markAllUnreadRead,
+    openClipbook: () => openClipbook,
+    openClipbookReport: () => openClipbookReport,
+    unloadClipbook: () => unloadClipbook,
+    unloadClipbookFileSync: () => unloadFileSync2
+  });
+  function openClipbook(app) {
+    if (!initialized4) {
+      initialized4 = true;
+      registerAutoRefresh(app);
+      setNewsFetchDoneListener(() => reloadIfOpen());
+      initPanel(app, true);
+    } else {
+      showPanel();
+    }
+    void maybeFetchNews();
+  }
+  async function markAllUnreadRead() {
+    const res = await readNewsData();
+    if (!res.ok || res.missing) {
+      notice("读不到未读流（news.json）", "warning");
+      return;
+    }
+    const unread = (res.data.articles || []).filter((a) => a && a.read !== true);
+    if (!unread.length) {
+      notice("未读流已经空了");
+      return;
+    }
+    const ok = await openFlowDialog({
+      className: "bz-clip-dialog-editorial",
+      title: "未读全部标为已读",
+      message: `将把未读流里的 ${unread.length} 篇全部标为已读。`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: `全部已读（${unread.length} 篇）`, value: "ok", cta: true }
+      ]
+    });
+    if (ok !== "ok") return;
+    const { bumped, snapshot: snapshot2 } = await flowMarkAllRead(unread);
+    if (!bumped) {
+      void reloadIfOpen();
+      return;
+    }
+    notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
+      await flowUndoMarkAllRead(snapshot2);
+      notice("已撤销：条目恢复未读", "success");
+      void reloadIfOpen();
+    })());
+    void reloadIfOpen();
+  }
+  function unloadClipbook() {
+    var _a2;
+    unloadClipbookReport();
+    unloadManagerModals();
+    for (const id of ["bz-up-manager-mask", "bz-up-manager-popup", "bz-rss-manager-mask", "bz-rss-manager-popup"]) {
+      (_a2 = document.getElementById(id)) == null ? void 0 : _a2.remove();
+    }
+    if (!initialized4) return;
+    initialized4 = false;
+    unloadPanel();
+    autoRefreshRegistered = false;
+    for (const off of autoRefreshUnsubs.splice(0)) off();
+    setNewsFetchDoneListener(() => {
+    });
+  }
+  function registerAutoRefresh(app) {
+    if (autoRefreshRegistered) return;
+    autoRefreshRegistered = true;
+    let timer = null;
+    const schedule = (path, stalePath) => {
+      if (!path && !stalePath) return;
+      if (path) invalidateClipBodyCache(path);
+      if (stalePath) invalidateClipBodyCache(stalePath);
+      const d = clipDir();
+      const inDir2 = (p) => !!p && p.startsWith(d + "/");
+      if (!inDir2(path) && !inDir2(stalePath)) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => {
+        void reloadIfOpen();
+      }, 300);
+    };
+    autoRefreshUnsubs = [
+      onDomainEvent("clipping:file-created", (e) => schedule(e && e.path)),
+      onDomainEvent("clipping:file-modified", (e) => schedule(e && e.path)),
+      onDomainEvent("clipping:file-deleted", (e) => schedule(e && e.path)),
+      onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath, e && e.oldPath))
+    ];
+  }
+  var initialized4, autoRefreshRegistered, autoRefreshUnsubs;
+  var init_clipbook = __esm({
+    "src/clipbook/index.ts"() {
+      init_domain_bus();
+      init_notice();
+      init_flow_dialog();
+      init_news_data();
+      init_news_fetcher();
+      init_flow();
+      init_save();
+      init_ui8();
+      init_report_ui();
+      init_news_sources_group();
+      init_file_sync3();
+      initialized4 = false;
+      autoRefreshRegistered = false;
+      autoRefreshUnsubs = [];
+    }
+  });
+
+  // src/clipbook/news-fetcher.ts
+  function requestUrlHttpGet() {
+    const impl = requestUrlAsFetch();
+    return (url, headers) => httpGetText(url, {
+      timeoutMs: FETCH_TIMEOUT_MS,
+      headers: { ...HEADERS, ...headers || {} },
+      fetchImpl: impl
+    });
+  }
+  function defaultFetchStore() {
+    return {
+      read: async () => {
+        var _a2, _b2;
+        const res = await readNewsData();
+        if (!res.ok) return null;
+        const d = res.data;
+        return {
+          articles: d.articles,
+          sources: { ...d.sources },
+          bilibiliUps: [...d.bilibiliUps],
+          bilibiliMaxItems: d.bilibiliMaxItems,
+          bilibiliCookie: d.bilibiliCookie,
+          bilibiliUpInfo: { ...d.bilibiliUpInfo },
+          rssFeeds: d.rssFeeds.map((f) => ({ ...f })),
+          lastFetchAt: (_a2 = d.lastFetchAt) != null ? _a2 : 0,
+          fetchIntervalMin: (_b2 = d.fetchIntervalMin) != null ? _b2 : DEFAULT_FETCH_INTERVAL_MIN
+        };
+      },
+      write: (intent) => enqueueNewsWrite(async () => {
+        await writeNewsDataMerged(intent);
+      })
+    };
+  }
+  function htmlToMarkdown(html) {
+    let md = html;
+    md = md.replace(/<script[\s\S]*?<\/script>/gi, "");
+    md = md.replace(/<style[\s\S]*?<\/style>/gi, "");
+    md = md.replace(/<nav[\s\S]*?<\/nav>/gi, "");
+    md = md.replace(/<footer[\s\S]*?<\/footer>/gi, "");
+    md = md.replace(/<!--[\s\S]*?-->/g, "");
+    md = md.replace(/<img[^>]*(?:src|data-src)=["']([^"']+)["'][^>]*\/?>/gi, (m, src) => {
+      const altM = m.match(/alt=["']([^"']*)["']/i);
+      return `![${altM ? altM[1].replace(/\s+/g, " ").trim() : ""}](${src})`;
+    });
+    md = md.replace(/<h1[^>]*>([\s\S]*?)<\/h1>/gi, (_, t) => `
+# ${t.trim()}
+`);
+    md = md.replace(/<h2[^>]*>([\s\S]*?)<\/h2>/gi, (_, t) => `
+## ${t.trim()}
+`);
+    md = md.replace(/<h3[^>]*>([\s\S]*?)<\/h3>/gi, (_, t) => `
+### ${t.trim()}
+`);
+    md = md.replace(/<h4[^>]*>([\s\S]*?)<\/h4>/gi, (_, t) => `
+#### ${t.trim()}
+`);
+    md = md.replace(/<(?:strong|b)>([\s\S]*?)<\/(?:strong|b)>/gi, "**$1**");
+    md = md.replace(/<(?:em|i)>([\s\S]*?)<\/(?:em|i)>/gi, "*$1*");
+    md = md.replace(/<a[^>]*href=["']([^"']+)["'][^>]*>([\s\S]*?)<\/a>/gi, (_, url, text) => {
+      const cleanText = text.replace(/<[^>]+>/g, "").trim();
+      return cleanText ? `[${cleanText}](${url})` : "";
+    });
+    md = md.replace(/<li[^>]*>([\s\S]*?)<\/li>/gi, "- $1\n");
+    md = md.replace(/<\/?[ou]l[^>]*>/gi, "\n");
+    md = md.replace(/<blockquote[^>]*>([\s\S]*?)<\/blockquote>/gi, (_, t) => "\n" + t.trim().split("\n").map((l) => `> ${l.trim()}`).join("\n") + "\n");
+    md = md.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/gi, (_, c) => `
+\`\`\`
+${c.trim()}
+\`\`\`
+`);
+    md = md.replace(/<code>([\s\S]*?)<\/code>/gi, "`$1`");
+    md = md.replace(/<pre>([\s\S]*?)<\/pre>/gi, (_, c) => `
+\`\`\`
+${c.trim()}
+\`\`\`
+`);
+    md = md.replace(/<hr[^>]*\/?>/gi, "\n---\n");
+    md = md.replace(/<figure[^>]*>/gi, "\n");
+    md = md.replace(/<\/figure>/gi, "\n");
+    md = md.replace(/<figcaption[^>]*>([\s\S]*?)<\/figcaption>/gi, "\n> $1\n");
+    md = md.replace(/<\/p>/gi, "\n\n");
+    md = md.replace(/<br\s*\/?>/gi, "\n");
+    md = md.replace(/<div[^>]*>/gi, "\n");
+    md = md.replace(/\r\n/g, "\n");
+    md = md.replace(/\r/g, "\n");
+    const codeBlocks = [];
+    md = md.replace(/\n(`{3}[\s\S]*?`{3})\n/g, (_, code) => {
+      codeBlocks.push(code);
+      return `
+%%CODEBLOCK_${codeBlocks.length - 1}%%
+`;
+    });
+    const inlineMedia = [];
+    md = md.replace(/(!?\[[^\]]*\]\([^)]*\))/g, (_, m) => {
+      inlineMedia.push(m);
+      return `%%MEDIA_${inlineMedia.length - 1}%%`;
+    });
+    md = md.replace(/<[^>]+>/g, "");
+    md = md.replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)));
+    md = md.replace(/%%MEDIA_(\d+)%%/g, (_, i) => inlineMedia[+i] || "");
+    md = md.replace(/%%CODEBLOCK_(\d+)%%/g, (_, i) => codeBlocks[+i] || "");
+    md = md.replace(/\*\*\*\*/g, "** **");
+    md = md.replace(/\n{3,}/g, "\n\n").replace(/[ \t]+\n/g, "\n");
+    md = md.replace(/^ +/gm, "");
+    return md.trim();
+  }
+  function extractGuokrContent(html) {
+    const i = html.indexOf("window.INITIAL_STORE=");
+    if (i >= 0) {
+      const j = html.indexOf("<\/script>", i);
+      if (j > i) {
+        try {
+          const raw = html.slice(i + "window.INITIAL_STORE=".length, j).trim().replace(/;\s*$/, "");
+          const store2 = JSON.parse(raw);
+          const art = store2.articleStore && store2.articleStore.article;
+          if (art && art.content) return art.content;
+        } catch (e) {
+        }
+      }
+    }
+    return null;
+  }
+  function decodeXmlEntities(s) {
+    return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ").replace(/&#x([0-9a-fA-F]+);/g, (_, h) => String.fromCharCode(parseInt(h, 16))).replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n))).replace(/&amp;/g, "&");
+  }
+  function tagText(block, tag) {
+    const re = new RegExp(`<${tag}(?:\\s[^>]*)?>([\\s\\S]*?)<\\/${tag}>`, "i");
+    const m = block.match(re);
+    if (!m) return null;
+    const cdata = m[1].match(/^\s*<!\[CDATA\[([\s\S]*?)\]\]>\s*$/);
+    const raw = cdata ? cdata[1] : m[1].replace(/<[^>]+>/g, "");
+    return decodeXmlEntities(raw).trim() || null;
+  }
+  function parseRssXml(xml) {
+    const out = [];
+    const blocks = String(xml || "").match(/<(?:item|entry)[\s>][\s\S]*?<\/(?:item|entry)>/gi) || [];
+    for (const block of blocks) {
+      const title = tagText(block, "title") || "";
+      let link = tagText(block, "link") || "";
+      if (!link) {
+        const hrefM = block.match(/<link[^>]*href=["']([^"']+)["']/i);
+        link = hrefM ? decodeXmlEntities(hrefM[1]).trim() : "";
+      }
+      const guid = tagText(block, "guid") || tagText(block, "id") || "";
+      const pubDate = tagText(block, "pubDate") || tagText(block, "published") || tagText(block, "updated") || "";
+      const content = tagText(block, "content:encoded") || tagText(block, "content") || "";
+      const summary = tagText(block, "description") || tagText(block, "summary") || "";
+      if (!title && !link) continue;
+      out.push({ title, link, guid, pubDate, content, summary });
+    }
+    return out;
+  }
+  function buildRssArticle(it, feedName) {
+    if (!it) return null;
+    const url = String(it.link || it.guid || "").trim();
+    if (!url) return null;
+    const rawTitle = String(it.title || "").trim();
+    const title = /^\d{4}-\d{2}-\d{2}$/.test(rawTitle) ? `${rawTitle} · ${feedName}` : rawTitle || feedName;
+    const content = String(it.content || it.summary || "").trim();
+    const body = content ? htmlToMarkdown(content) : "";
+    let date = "";
+    if (it.pubDate) {
+      const d = new Date(it.pubDate);
+      if (!isNaN(d.getTime())) date = localDatetime(d.getTime());
+    }
+    return { platform: feedName, title, url, author: feedName, date, body };
+  }
+  function capRssWindow(allArticles, perFeedArticles, cap = RSS_MAX_PER_FEED) {
+    const pruned = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const [name, arts] of Object.entries(perFeedArticles || {})) {
+      if (!Array.isArray(arts) || arts.length === 0) continue;
+      const pool = (allArticles || []).filter((a) => a && a.platform === name && !seen.has(a.url));
+      const keep = pool.slice().sort((x, y) => String(y.date || "").localeCompare(String(x.date || ""))).slice(0, cap);
+      const keepUrls = new Set(keep.map((a) => a.url));
+      for (const a of pool) {
+        if (!keepUrls.has(a.url)) {
+          seen.add(a.url);
+          pruned.push(a.url);
+        }
+      }
+    }
+    return pruned;
+  }
+  function buildBilibiliArticle(it, cutoffMs) {
+    if (!it || it.type !== "DYNAMIC_TYPE_AV") return null;
+    const author = it.modules && it.modules.module_author || {};
+    const dyn = it.modules && it.modules.module_dynamic || {};
+    const desc = it.modules && it.modules.module_desc || {};
+    const archive = dyn.major && dyn.major.archive || null;
+    if (!archive || !archive.bvid || !archive.title) return null;
+    const pubTs = Number(author.pub_ts || 0);
+    if (!pubTs || isNaN(pubTs)) return null;
+    if (cutoffMs && pubTs * 1e3 < cutoffMs) return null;
+    const url = `https://www.bilibili.com/video/${archive.bvid}`;
+    const cover = String(archive.cover || "").replace(/^http:/, "https:");
+    const descText = String(desc.desc || "").trim();
+    const intro = descText || String(archive.desc || "").trim();
+    const body = [
+      intro ? `${intro}
+
+` : "",
+      cover ? `![封面](${cover})
+
+` : "",
+      `🔗 观看：[${String(archive.title)}](${url})${archive.duration_text ? `（时长 ${archive.duration_text}）` : ""}`
+    ].join("").trim();
+    const date = localDatetime(pubTs * 1e3);
+    return { platform: "B站", title: String(archive.title), url, author: String(author.name || ""), date, body };
+  }
+  function extractUpInfo(items) {
+    for (const it of items || []) {
+      const author = it && it.modules && it.modules.module_author;
+      if (!author) continue;
+      if (author.name || author.face) {
+        const info = {};
+        if (author.name) info.name = String(author.name);
+        if (author.face) info.avatar = String(author.face).replace(/^http:/, "https:");
+        return info;
+      }
+    }
+    return null;
+  }
+  function collectBilibiliBatch(items, limit, out) {
+    for (const it of items || []) {
+      if (out.length >= limit) return true;
+      const a = buildBilibiliArticle(it, null);
+      if (!a) continue;
+      out.push(a);
+    }
+    return out.length >= limit;
+  }
+  function pruneBilibiliWindow(existingArticles, perUpArticles, perUpRejected, upInfo) {
+    const pruned = [];
+    const seen = /* @__PURE__ */ new Set();
+    for (const [uid, arts] of Object.entries(perUpArticles || {})) {
+      if (!Array.isArray(arts) || arts.length === 0) continue;
+      if (perUpRejected && perUpRejected[uid]) continue;
+      const name = upInfo && upInfo[uid] && upInfo[uid].name;
+      if (!name) continue;
+      const windowUrls = new Set(arts.map((a) => a.url));
+      const oldest = arts.map((a) => String(a.date || "")).sort()[0];
+      if (!oldest) continue;
+      for (const a of existingArticles || []) {
+        if (!a || a.platform !== "B站" || a.author !== name) continue;
+        if (windowUrls.has(a.url) || seen.has(a.url)) continue;
+        if (a.date && String(a.date) < oldest) {
+          seen.add(a.url);
+          pruned.push(a.url);
+        }
+      }
+    }
+    return pruned;
+  }
+  async function fetchBilibiliUp(uid, cookie, maxItems, httpGet) {
+    const articles = [];
+    const limit = Math.max(1, Math.floor(Number(maxItems) || 10));
+    let offset = "";
+    let upInfo = null;
+    let rejected = false;
+    let requestFailed = false;
+    const headers = cookie ? { Cookie: cookie } : void 0;
+    for (let page = 0; page < 50; page++) {
+      const url = `${BILIBILI_API}?host_mid=${encodeURIComponent(uid)}&offset=${encodeURIComponent(offset)}&timezone_offset=-480&web_location=333.999`;
+      const text = await httpGet(url, headers);
+      if (!text) {
+        if (page === 0) requestFailed = true;
+        break;
+      }
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        if (page === 0) requestFailed = true;
+        break;
+      }
+      if (!data || data.code !== 0 || !data.data || !Array.isArray(data.data.items)) {
+        if (data && data.code !== 0 && data.code !== void 0) rejected = true;
+        break;
+      }
+      const items = data.data.items || [];
+      if (items.length === 0) break;
+      if (!upInfo) upInfo = extractUpInfo(items);
+      if (collectBilibiliBatch(items, limit, articles)) break;
+      if (!data.data.has_more) break;
+      offset = data.data.offset || "";
+      if (!offset) break;
+    }
+    return { articles, upInfo, rejected, requestFailed };
+  }
+  async function defaultBootstrapBilibiliCookie() {
+    var _a2;
+    try {
+      const resp = await requestUrl({ url: BILIBILI_HOME, method: "GET", headers: HEADERS, throw: false });
+      if (resp.status < 200 || resp.status >= 300) return null;
+      const raw = String(((_a2 = resp.headers) == null ? void 0 : _a2["set-cookie"]) || "");
+      const cookies = raw.split(/,(?=[^;]+?=)/).map((c) => String(c).split(";")[0].trim()).filter((c) => /^[^=]+=/.test(c));
+      return cookies.length > 0 ? cookies.join("; ") : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchBilibili(upUids, maxItems, cookie, httpGet, bootstrapCookie) {
+    const list = upUids || [];
+    if (list.length === 0) {
+      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
+    }
+    const per = Math.max(1, Math.floor(Number(maxItems) || 10));
+    const configured = cookie && String(cookie).trim();
+    const ck = configured || await (bootstrapCookie || defaultBootstrapBilibiliCookie)();
+    if (!ck) {
+      return { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: true, requestFailed: true };
+    }
+    const seen = /* @__PURE__ */ new Set();
+    const articles = [];
+    const upInfo = {};
+    const perUpArticles = {};
+    const perUpRejected = {};
+    let failedUps = 0;
+    for (const uid of list) {
+      const res = await fetchBilibiliUp(uid, ck, per, httpGet);
+      perUpArticles[uid] = res.articles;
+      if (res.requestFailed) failedUps++;
+      if (res.rejected) perUpRejected[uid] = true;
+      for (const a of res.articles) {
+        if (seen.has(a.url)) continue;
+        seen.add(a.url);
+        articles.push(a);
+      }
+      if (res.upInfo) upInfo[uid] = res.upInfo;
+    }
+    const needsCookieNotice = Object.keys(perUpRejected).length > 0;
+    const requestFailed = failedUps >= list.length;
+    return { articles, upInfo, perUpArticles, perUpRejected, needsCookieNotice, requestFailed };
+  }
+  async function fetchZhihu(httpGet) {
+    const articles = [];
+    const text = await httpGet("https://news-at.zhihu.com/api/4/news/latest");
+    if (!text) throw new Error("知乎日报列表请求失败");
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error("知乎日报列表解析失败");
+    }
+    const list = data.stories || [];
+    const rawDate = data.date || "";
+    const formattedDate = rawDate.length === 8 ? `${rawDate.slice(0, 4)}-${rawDate.slice(4, 6)}-${rawDate.slice(6, 8)}` : rawDate;
+    for (const item of list) {
+      const title = item.title || "";
+      const id = item.id || "";
+      const url = item.url || (id ? `https://daily.zhihu.com/story/${id}` : "");
+      if (!title || !url) continue;
+      let body = "", author = null;
+      const detailText = await httpGet(`https://news-at.zhihu.com/api/4/news/${id}`);
+      if (detailText) {
+        try {
+          const detail = JSON.parse(detailText);
+          if (detail.body) body = htmlToMarkdown(detail.body);
+          if (detail.editor_name) author = detail.editor_name;
+        } catch (e) {
+        }
+      }
+      articles.push({ platform: "知乎日报", title, url, author, date: formattedDate || null, body });
+    }
+    return articles;
+  }
+  async function fetchGuokr(httpGet, now = Date.now()) {
+    var _a2, _b2, _c;
+    const articles = [];
+    const cutoff = now - WINDOW_MS;
+    const text = await httpGet("https://www.guokr.com/beta/proxy/science_api/articles?offset=0&limit=50");
+    if (!text) throw new Error("果壳科学人列表请求失败");
+    let list;
+    try {
+      list = Object.values(JSON.parse(text));
+    } catch (e) {
+      throw new Error("果壳科学人列表解析失败");
+    }
+    const seen = /* @__PURE__ */ new Set();
+    for (const item of list) {
+      const published = new Date(item.date_published).getTime();
+      if (!item.date_published || isNaN(published)) continue;
+      if (published < cutoff) continue;
+      const id = String(item.id || "");
+      const title = item.title || "";
+      const url = `https://www.guokr.com/article/${id}`;
+      if (!id || !title || seen.has(url)) continue;
+      seen.add(url);
+      const author = ((_b2 = (_a2 = item.authors) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.nickname) || ((_c = item.author) == null ? void 0 : _c.nickname) || null;
+      let body = "";
+      const html = await httpGet(url);
+      if (html) {
+        const content = extractGuokrContent(html);
+        if (content) body = htmlToMarkdown(content);
+      }
+      articles.push({
+        platform: "果壳科学人",
+        title,
+        url,
+        author,
+        date: item.date_published.replace("T", " ").substring(0, 19),
+        body
+      });
+    }
+    return articles;
+  }
+  async function fetchRss(feeds, httpGet) {
+    var _a2;
+    const articles = [];
+    const perFeed = {};
+    const titleUpdates = {};
+    let attempted = 0;
+    let failedRequests = 0;
+    for (const feed of feeds || []) {
+      const url = String(feed && feed.url || "").trim();
+      if (!url) continue;
+      attempted++;
+      const xml = await httpGet(url);
+      if (!xml) {
+        failedRequests++;
+        continue;
+      }
+      try {
+        const feedTitle = String(((_a2 = xml.match(/<title[^>]*>([\s\S]*?)<\/title>/i)) == null ? void 0 : _a2[1]) || "").replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").trim();
+        const name = String(feed && feed.title || feedTitle || url).trim();
+        if (!feed.title && feedTitle) titleUpdates[url] = feedTitle;
+        const items = parseRssXml(xml).map((it) => buildRssArticle(it, name)).filter(Boolean);
+        perFeed[name] = items;
+        articles.push(...items);
+      } catch (e) {
+      }
+    }
+    return { articles, perFeed, titleUpdates, requestFailed: attempted > 0 && failedRequests === attempted };
+  }
+  async function runNewsFetchRound(deps) {
+    const httpGet = deps.httpGet;
+    const now = deps.now || Date.now;
+    const disk = await deps.store.read();
+    if (!disk) {
+      return { added: 0, prunedBilibili: 0, prunedRss: 0, failedSources: ["读取 news.json 失败"], needsCookieNotice: false };
+    }
+    const existing = disk.articles;
+    const existingUrls = new Set(existing.map((a) => a.url));
+    const existingTitles = new Set(existing.map((a) => String(a.title || "").trim()));
+    const sources = disk.sources || { zhihu: true, guokr: true, bilibili: true, rss: true };
+    const failedSources = [];
+    const guokrP = sources.guokr !== false ? fetchGuokr(httpGet, now()) : null;
+    const zhihuP = sources.zhihu !== false ? fetchZhihu(httpGet) : null;
+    const biliP = sources.bilibili !== false && disk.bilibiliUps.length > 0 ? fetchBilibili(disk.bilibiliUps, disk.bilibiliMaxItems, disk.bilibiliCookie, httpGet) : null;
+    const rssP = sources.rss !== false && disk.rssFeeds.length > 0 ? fetchRss(disk.rssFeeds, httpGet) : null;
+    const guarded = async (p, name, fallback) => {
+      if (!p) return null;
+      try {
+        return await p;
+      } catch (e) {
+        failedSources.push(name);
+        return fallback;
+      }
+    };
+    const emptyBili = { articles: [], upInfo: {}, perUpArticles: {}, perUpRejected: {}, needsCookieNotice: false, requestFailed: false };
+    const emptyRss = { articles: [], perFeed: {}, titleUpdates: {}, requestFailed: false };
+    const guokrList = await guarded(guokrP, "果壳科学人", []) || [];
+    const zhihuList = await guarded(zhihuP, "知乎日报", []) || [];
+    const biliRes = await guarded(biliP, "B站", emptyBili);
+    const rssRes = await guarded(rssP, "RSS", emptyRss);
+    if (biliRes && biliRes.requestFailed) failedSources.push("B站");
+    if (rssRes && rssRes.requestFailed) failedSources.push("RSS");
+    let newArticles = [guokrList, zhihuList, biliRes ? biliRes.articles : [], rssRes ? rssRes.articles : []].flat().filter((a) => a && !existingUrls.has(a.url));
+    newArticles = newArticles.filter((a) => !existingTitles.has(String(a.title || "").trim()));
+    const prunedUrls = biliRes ? pruneBilibiliWindow(existing, biliRes.perUpArticles, biliRes.perUpRejected, biliRes.upInfo) : [];
+    const prunedSet = new Set(prunedUrls);
+    const afterBiliPrune = prunedUrls.length > 0 ? existing.filter((a) => !prunedSet.has(a.url)) : existing;
+    const rssPrunedUrls = rssRes ? capRssWindow([...afterBiliPrune, ...newArticles], rssRes.perFeed, RSS_MAX_PER_FEED) : [];
+    if (rssPrunedUrls.length > 0) {
+      const rssPrunedSet = new Set(rssPrunedUrls);
+      newArticles = newArticles.filter((a) => !rssPrunedSet.has(a.url));
+    }
+    const rssTitlePatches = rssRes && Object.keys(rssRes.titleUpdates).length > 0 ? rssRes.titleUpdates : void 0;
+    const fetchedAt = localDatetime(now());
+    for (const a of newArticles) a.fetchedAt = fetchedAt;
+    const attempted = [guokrP, zhihuP, biliP, rssP].filter((p) => p !== null).length;
+    const allFailed = attempted > 0 && failedSources.length >= attempted;
+    const prunedUrlSet = /* @__PURE__ */ new Set([...prunedUrls, ...rssPrunedUrls]);
+    const removeArticleKeys = [];
+    const seenRemoveKeys = /* @__PURE__ */ new Set();
+    for (const a of existing) {
+      if (!a || !a.url || !prunedUrlSet.has(a.url)) continue;
+      const k = articleKeyOf(a);
+      if (seenRemoveKeys.has(k)) continue;
+      seenRemoveKeys.add(k);
+      removeArticleKeys.push(k);
+    }
+    await deps.store.write({
+      set: {
+        articles: newArticles,
+        ...allFailed ? {} : { lastFetchAt: now() }
+      },
+      // C26：UP 主资料按条补丁（只声明本轮 uid），不用旧快照拼整段——窗口期内被移除的
+      // UP 资料不再被旧快照复活为本轮没抓到的孤儿条目
+      ...biliRes && Object.keys(biliRes.upInfo).length > 0 ? { patchBilibiliUpInfo: biliRes.upInfo } : {},
+      ...rssTitlePatches ? { patchRssFeedTitles: rssTitlePatches } : {},
+      ...removeArticleKeys.length > 0 ? { removeArticleKeys } : {}
+    });
+    return {
+      added: newArticles.length,
+      prunedBilibili: prunedUrls.length,
+      prunedRss: rssPrunedUrls.length,
+      failedSources,
+      needsCookieNotice: biliRes ? biliRes.needsCookieNotice : false
+    };
+  }
+  function setNewsFetchDoneListener(fn) {
+    onFetched = fn;
+  }
+  async function executeFetchRound(deps, opts) {
+    if (fetching) return null;
+    fetching = true;
+    try {
+      const r = await runNewsFetchRound({
+        httpGet: (deps == null ? void 0 : deps.httpGet) || requestUrlHttpGet(),
+        store: (deps == null ? void 0 : deps.store) || defaultFetchStore(),
+        now: deps == null ? void 0 : deps.now
+      });
+      if (r.failedSources.length > 0) {
+        notice(`聚合讯抓取部分失败：${r.failedSources.join("、")}`, "warning");
+      }
+      if (r.needsCookieNotice) {
+        notice("B站接口被风控，将自动重试，也可稍后手动抓取", "warning");
+      }
+      if (onFetched) onFetched(r);
+      return r;
+    } catch (e) {
+      console.warn("[剪藏本] 聚合讯抓取失败", e);
+      if (!(opts == null ? void 0 : opts.silent)) {
+        const msg = e instanceof Error ? e.message : String(e);
+        notice(`聚合讯抓取失败：${msg}，请稍后重试`, "error");
+      }
+      return null;
+    } finally {
+      fetching = false;
+    }
+  }
+  async function maybeFetchNews(deps) {
+    if (fetching) return null;
+    const store2 = (deps == null ? void 0 : deps.store) || defaultFetchStore();
+    let disk;
+    try {
+      disk = await store2.read();
+    } catch (e) {
+      console.warn("[剪藏本] 聚合讯抓取失败", e);
+      return null;
+    }
+    if (!disk) return null;
+    const intervalMin = normalizeFetchIntervalMin(disk.fetchIntervalMin);
+    const now = (deps == null ? void 0 : deps.now) || Date.now;
+    if (now() - disk.lastFetchAt < intervalMin * 60 * 1e3) return null;
+    return executeFetchRound(deps, { silent: true });
+  }
+  function notifyManualFetchResult(r) {
+    if (!r) {
+      notice("抓取已在进行中，请稍候", "info");
+      return;
+    }
+    if (r.failedSources.length > 0) return;
+    notify(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : "已抓取，暂无新文章", {
+      type: "success",
+      action: {
+        label: "去剪藏本",
+        onClick: () => {
+          void Promise.resolve().then(() => (init_clipbook(), clipbook_exports)).then((m) => m.openClipbook(getApp()));
+        }
+      }
+    });
+  }
+  async function fetchNowNews(deps) {
+    return executeFetchRound(deps);
+  }
+  var WINDOW_MS, RSS_MAX_PER_FEED, FETCH_TIMEOUT_MS, HEADERS, BILIBILI_API, BILIBILI_HOME, fetching, onFetched;
+  var init_news_fetcher = __esm({
+    "src/clipbook/news-fetcher.ts"() {
+      init_fake_obsidian();
+      init_http();
+      init_app();
+      init_notice();
+      init_news_data();
+      init_constants3();
+      init_write_queue();
+      WINDOW_MS = 24 * 60 * 60 * 1e3;
+      RSS_MAX_PER_FEED = 30;
+      FETCH_TIMEOUT_MS = 15e3;
+      HEADERS = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8"
+      };
+      BILIBILI_API = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space";
+      BILIBILI_HOME = "https://www.bilibili.com/";
+      fetching = false;
+      onFetched = null;
+    }
+  });
+
+  // src/clipbook/news-sources-group.ts
+  function dataSourceGroupRows(init) {
+    const box = {
+      ...init,
+      sources: { ...init.sources },
+      bilibiliUps: [...init.bilibiliUps],
+      bilibiliUpInfo: { ...init.bilibiliUpInfo },
+      rssFeeds: init.rssFeeds.map((f) => ({ ...f }))
+    };
+    const sourceBinding = (key) => ({
+      get: () => box.sources[key] === true,
+      set: (v) => {
+        box.sources[key] = v;
+      },
+      save: async () => {
+        if (!await writeSources({ ...box.sources })) notifyWriteFailed("数据源开关");
+      }
+    });
+    const upListDesc = () => box.bilibiliUps.length > 0 ? `已跟踪 ${box.bilibiliUps.length} 位 UP 主，添加与移除在管理弹窗` : "暂未跟踪 UP 主，添加与移除在管理弹窗";
+    const rssListDesc = () => box.rssFeeds.length > 0 ? `已订阅 ${box.rssFeeds.length} 个 RSS 源，添加与移除在管理弹窗` : "暂未订阅 RSS 源，添加与移除在管理弹窗";
+    const intervalDesc = () => {
+      const t = box.lastFetchAt > 0 ? localDatetime(box.lastFetchAt) : "还没有抓取过";
+      return `打开插件或剪藏本时超过该间隔自动抓取，上次抓取 ${t}`;
+    };
+    return [
+      {
+        type: "button",
+        name: "立即抓取",
+        desc: intervalDesc(),
+        buttonText: "抓取",
+        cta: true,
+        onClick: async (ctx) => {
+          const r = await fetchNowNews();
+          notifyManualFetchResult(r);
+          const fresh = await readDataSourceState();
+          box.lastFetchAt = fresh.lastFetchAt;
+          box.fetchIntervalMin = fresh.fetchIntervalMin;
+          setRowDesc(ctx, intervalDesc());
+        }
+      },
+      {
+        type: "select",
+        name: "抓取间隔",
+        desc: "打开插件或剪藏本时超过该间隔才自动抓取，最短 30 分钟",
+        options: FETCH_INTERVAL_STEPS.map((m) => ({ value: String(m), label: m >= 60 ? `${m / 60} 小时` : `${m} 分钟` })),
+        binding: {
+          get: () => String(box.fetchIntervalMin),
+          set: (v) => {
+            box.fetchIntervalMin = normalizeFetchIntervalMin(v);
+          },
+          save: async () => {
+            if (!await writeFetchInterval(box.fetchIntervalMin)) notifyWriteFailed("抓取间隔");
+          }
+        }
+      },
+      { type: "toggle", name: "知乎日报", desc: "抓取知乎日报每日文章", binding: sourceBinding("zhihu") },
+      { type: "toggle", name: "果壳科学人", desc: "抓取果壳科学人最新文章", binding: sourceBinding("guokr") },
+      {
+        type: "button",
+        name: "UP 主名单",
+        desc: upListDesc(),
+        buttonText: "管理",
+        cta: true,
+        onClick: (ctx) => openUpManagerModal({
+          ups: [...box.bilibiliUps],
+          upInfo: { ...box.bilibiliUpInfo },
+          onChanged: async () => {
+            const fresh = await readDataSourceState();
+            box.bilibiliUps = [...fresh.bilibiliUps];
+            box.bilibiliUpInfo = { ...fresh.bilibiliUpInfo };
+            setRowDesc(ctx, upListDesc());
+            ctx.refreshVisibility();
+          }
+        })
+      },
+      {
+        type: "button",
+        name: "RSS 订阅源",
+        desc: rssListDesc(),
+        buttonText: "管理",
+        cta: true,
+        onClick: (ctx) => openRssManagerModal({
+          feeds: box.rssFeeds.map((f) => ({ ...f })),
+          onChanged: async () => {
+            const fresh = await readDataSourceState();
+            box.rssFeeds = fresh.rssFeeds.map((f) => ({ ...f }));
+            setRowDesc(ctx, rssListDesc());
+            ctx.refreshVisibility();
+          }
+        })
+      },
+      {
+        type: "number",
+        name: "B站抓取条数",
+        desc: "每位 UP 主抓取最近动态的条数上限，默认 10",
+        min: 1,
+        max: 50,
+        step: 1,
+        binding: {
+          get: () => box.bilibiliMaxItems,
+          set: (v) => {
+            box.bilibiliMaxItems = v;
+          },
+          save: async () => {
+            if (!await writeBilibiliMaxItems(box.bilibiliMaxItems)) notifyWriteFailed("B站抓取条数");
+          }
+        }
+      },
+      {
+        type: "number",
+        name: "文章保留天数",
+        desc: "已读与跳过文章的数据超期自动清理，默认 30 天",
+        min: 1,
+        step: 1,
+        binding: numStrBinding("newsRetentionUnsavedDays", 30)
+      }
+    ];
+  }
+  function setRowDesc(ctx, text) {
+    const el = ctx.rowEl.querySelector(".bz-sp-set-desc") || ctx.rowEl.querySelector(".setting-item-description");
+    if (el) el.textContent = text;
+  }
+  function notifyWriteFailed(what) {
+    notifySaveError(new Error("news.json 不可读或已损坏"), what);
+  }
+  function upManagerSettingsSchema(opts) {
+    const box = {
+      inputValue: "",
+      ups: [...opts.ups],
+      upInfo: { ...opts.upInfo }
+    };
+    return {
+      groups: [
+        {
+          icon: "users",
+          name: "UP 主名单",
+          rows: [
+            {
+              type: "text",
+              name: "添加 UP 主",
+              placeholder: "粘贴链接或 UID",
+              binding: {
+                get: () => box.inputValue,
+                set: (v) => {
+                  box.inputValue = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [{
+                text: "添加",
+                cta: true,
+                onClick: (value) => addUpUid(value, box, opts)
+              }]
+            },
+            {
+              type: "list",
+              name: "名单列表",
+              items: () => box.ups.map((uid) => {
+                var _a2;
+                return {
+                  key: uid,
+                  label: upDisplayName(uid, box.upInfo[uid]),
+                  sub: `UID ${uid}`,
+                  imageUrl: (_a2 = box.upInfo[uid]) == null ? void 0 : _a2.avatar
+                };
+              }),
+              emptyText: "暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加",
+              // 返回 Promise 与 RSS 订阅行同口径：渲染器待落盘完成后重读重建——否则字盒变更晚于
+              // refresh，写失败保留的条目（或已移除条目）在弹窗内回显不准
+              onChange: (keys) => (async () => {
+                const removed = box.ups.filter((u) => !keys.includes(u));
+                let changed = false;
+                for (const uid of removed) {
+                  if (!await removeBilibiliUp(uid)) {
+                    notifyWriteFailed(`移除 UP 主 ${uid}`);
+                    continue;
+                  }
+                  box.ups = box.ups.filter((u) => u !== uid);
+                  delete box.upInfo[uid];
+                  changed = true;
+                  notice(`已移除 UP 主 ${uid}`, "success");
+                }
+                if (changed) opts.onChanged();
+              })()
+            }
+          ]
+        }
+      ]
+    };
+  }
+  function upDisplayName(uid, info) {
+    return info && info.name ? info.name : `UP ${uid}`;
+  }
+  async function addUpUid(raw, box, opts) {
+    const input = String(raw || "").trim();
+    if (!input) return;
+    const res = await resolveUidFromInputDetailed(input);
+    if (res.networkFailed) {
+      notice("网络读取 B站信息失败，请检查网络后重试", "error");
+      return;
+    }
+    if (!res.uid) {
+      notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+      return;
+    }
+    const uid = res.uid;
+    const outcome = await addBilibiliUp(uid);
+    switch (outcome) {
+      case "added":
+        box.inputValue = "";
+        box.ups = [...box.ups, uid];
+        opts.onChanged();
+        notice(`已添加 UP 主 ${uid}`, "success");
+        return;
+      case "exists":
+        notice("该 UP 主已在名单中", "info");
+        return;
+      case "invalid":
+        notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
+        return;
+      default:
+        notifyWriteFailed("添加 UP 主");
+        return;
+    }
+  }
+  async function openUpManagerModal(opts) {
+    if (upManagerOpen || document.getElementById("bz-up-manager-mask")) return;
+    upManagerOpen = true;
+    let handle = null;
+    function close() {
+      upManagerClose = null;
+      mask.remove();
+      popup.remove();
+      if (handle) handle.unregister();
+      upManagerOpen = false;
+    }
+    const { mask, popup, registerClose } = createOverlay({
+      maskId: "bz-up-manager-mask",
+      popupId: "bz-up-manager-popup",
+      maxWidth: 560,
+      // ticket 170 方案 A：加宽让描述换行，文字不再拥挤
+      onMaskClick: close
+    });
+    upManagerClose = close;
+    registerClose(close);
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = "UP 主名单管理";
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    try {
+      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+      renderPanelSchema2(content, upManagerSettingsSchema(opts));
+    } catch (e) {
+      close();
+      throw e;
+    }
+    if (!upManagerOpen) return;
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    const handleReg = escManager.register("bz-up-manager", {
+      isVisible: () => true,
+      close
+    });
+    handle = handleReg;
+  }
+  async function fetchRssFeedTitle(url) {
+    const xml = await httpGetText(url, { timeoutMs: 1e4, fetchImpl: requestUrlAsFetch() });
+    if (!xml || !looksLikeFeedXml(xml)) return null;
+    return extractFeedTitleFromXml(xml);
+  }
+  function rssManagerSettingsSchema(opts) {
+    const box = {
+      inputValue: "",
+      feeds: opts.feeds.map((f) => ({ ...f }))
+    };
+    return {
+      groups: [
+        {
+          icon: "rss",
+          name: "RSS 订阅源",
+          rows: [
+            {
+              type: "text",
+              name: "添加 RSS 源",
+              placeholder: "https://example.com/rss.xml",
+              binding: {
+                get: () => box.inputValue,
+                set: (v) => {
+                  box.inputValue = v;
+                },
+                save: () => {
+                }
+              },
+              actions: [{
+                text: "添加",
+                cta: true,
+                onClick: (value) => addRssFeedUrl(value, box, opts)
+              }]
+            },
+            {
+              type: "list",
+              name: "订阅列表",
+              items: () => box.feeds.map((f) => ({
+                key: f.url,
+                label: f.title || f.url,
+                sub: f.title ? f.url : ""
+              })),
+              emptyText: "暂无订阅源，在上方粘贴 RSS 地址添加",
+              onChange: (keys) => (async () => {
+                const removed = box.feeds.filter((f) => !keys.includes(f.url));
+                let changed = false;
+                for (const f of removed) {
+                  if (!await removeRssFeed(f.url)) {
+                    notifyWriteFailed(`移除 RSS 源 ${f.title || f.url}`);
+                    continue;
+                  }
+                  box.feeds = box.feeds.filter((x) => x.url !== f.url);
+                  changed = true;
+                  notice(`已移除 RSS 源 ${f.title || f.url}`, "success");
+                }
+                if (changed) opts.onChanged();
+              })()
+            }
+          ]
+        }
+      ]
+    };
+  }
+  async function addRssFeedUrl(raw, box, opts) {
+    const input = String(raw || "").trim();
+    if (!input) return;
+    const url = normalizeRssFeedUrl(input);
+    if (!url) {
+      notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
+      return;
+    }
+    if (box.feeds.some((f) => f.url === url)) {
+      notice("该 RSS 源已在订阅列表中", "info");
+      return;
+    }
+    notice("正在校验 RSS 地址…", "info");
+    const title = await fetchRssFeedTitle(url);
+    if (title === null) {
+      notice("试拉失败：地址不可达或不是有效的 RSS 源，未添加", "error");
+      return;
+    }
+    const outcome = await addRssFeed(url, title);
+    switch (outcome) {
+      case "added":
+        box.inputValue = "";
+        box.feeds = [...box.feeds, { url, title }];
+        opts.onChanged();
+        notice(`已订阅 ${title || url}`, "success");
+        return;
+      case "exists":
+        notice("该 RSS 源已在订阅列表中", "info");
+        return;
+      case "invalid":
+        notice("无效的 RSS 地址，请粘贴 http/https 开头的订阅链接", "error");
+        return;
+      default:
+        notifyWriteFailed("添加 RSS 源");
+        return;
+    }
+  }
+  async function openRssManagerModal(opts) {
+    if (rssManagerOpen || document.getElementById("bz-rss-manager-mask")) return;
+    rssManagerOpen = true;
+    let handle = null;
+    function close() {
+      rssManagerClose = null;
+      mask.remove();
+      popup.remove();
+      if (handle) handle.unregister();
+      rssManagerOpen = false;
+    }
+    const { mask, popup, registerClose } = createOverlay({
+      maskId: "bz-rss-manager-mask",
+      popupId: "bz-rss-manager-popup",
+      maxWidth: 560,
+      onMaskClick: close
+    });
+    rssManagerClose = close;
+    registerClose(close);
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = "RSS 订阅管理";
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    try {
+      const { renderPanelSchema: renderPanelSchema2 } = await Promise.resolve().then(() => (init_renderer(), renderer_exports));
+      renderPanelSchema2(content, rssManagerSettingsSchema(opts));
+    } catch (e) {
+      close();
+      throw e;
+    }
+    if (!rssManagerOpen) return;
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    const handleReg = escManager.register("bz-rss-manager", {
+      isVisible: () => true,
+      close
+    });
+    handle = handleReg;
+  }
+  function unloadManagerModals() {
+    upManagerClose == null ? void 0 : upManagerClose();
+    rssManagerClose == null ? void 0 : rssManagerClose();
+  }
+  var upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose;
+  var init_news_sources_group = __esm({
+    "src/clipbook/news-sources-group.ts"() {
+      init_http();
+      init_notice();
+      init_settings_common();
+      init_dom();
+      init_esc_manager();
+      init_news_source_settings();
+      init_news_fetcher();
+      init_news_data();
+      upManagerOpen = false;
+      upManagerClose = null;
+      rssManagerOpen = false;
+      rssManagerClose = null;
+    }
+  });
+
+  // src/clipbook/md.ts
+  function stripClipChrome(raw) {
+    return String(raw || "").replace(/^\s*---\r?\n(?:[\s\S]*?\r?\n)?---\s*/, "").replace(/```dataviewjs[\s\S]*?```/g, "").trim();
+  }
+  var init_md = __esm({
+    "src/clipbook/md.ts"() {
+    }
+  });
+
+  // src/clipbook/store.ts
+  function siteName(a) {
+    return a.site ? String(a.site) : a.platform ? String(a.platform) : "未知";
+  }
+  function upName(a, info) {
+    const uid = String(a && a.bvid || a && a.author || "");
+    const name = info && typeof info === "object" ? info.name : null;
+    return name || uid || "";
+  }
+  function platformOf(a) {
+    const p = a.platform || "";
+    if (p === "B站") return "B站";
+    if (p === "果壳" || p === "果壳科学人") return "果壳科学人";
+    if (p === "知乎日报" || p === "知乎") return "知乎日报";
+    return p || "未知";
+  }
+  function siteDomain(a) {
+    const u = String(a.url || "").trim();
+    if (u) {
+      try {
+        return new URL(u).hostname;
+      } catch (e) {
+      }
+      try {
+        return new URL("https://" + u.replace(/^\/+/, "")).hostname;
+      } catch (e) {
+      }
+    }
+    return PLATFORM_DOMAIN[platformOf(a)] || "";
+  }
+  function cleanBody(body) {
+    return String(body || "").trim();
+  }
+  function clipArticle(a, opts) {
+    const clipByUrl = opts.clipByUrl || /* @__PURE__ */ new Set();
+    const upInfo = opts.upInfo || {};
+    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
+    const key = articleKeyOf(a);
+    const platform = platformOf(a);
+    const newsSaved = a.state === "saved";
+    const archived2 = savedKeys.has(String(a.url || ""));
+    const clipped = !!a.url && clipByUrl.has(String(a.url));
+    const saved = newsSaved || archived2 || clipped;
+    const title = String(a.title || "(无标题)");
+    const body = cleanBody(a.body);
+    const isBili = platform === "B站";
+    const feedUp = isBili ? upName(a, upInfo[String(a.author || "")]) : "";
+    const srcName = feedUp || platform;
+    const typeLabel = feedUp ? "UP主" : platform;
+    let timeText = String(a.fetchedAt || a.date || "");
+    let timeTs = new Date(a.fetchedAt || a.date || "").valueOf();
+    if (isNaN(timeTs)) {
+      timeText = "";
+      timeTs = Date.now();
+    }
+    const st = saved ? "saved" : a.read === true ? "read" : "unread";
+    return {
+      id: key,
+      origin: "news",
+      title,
+      url: String(a.url || ""),
+      site: siteName(a),
+      domain: siteDomain(a),
+      author: String(a.author || ""),
+      srcName,
+      typeLabel,
+      timeText,
+      timeTs,
+      summary: excerpt(body, 110),
+      body,
+      tags: Array.isArray(a.tags) ? a.tags.map(String) : [],
+      notePath: null,
+      st,
+      clipped,
+      raw: a,
+      backlinks: []
+    };
+  }
+  function clipFromNote(n) {
+    return {
+      id: "clip:" + n.path,
+      origin: "clip",
+      title: String(n.title || "(无标题)"),
+      url: n.url ? String(n.url) : "",
+      site: String(n.site || "未知"),
+      domain: n.domain || "",
+      author: n.author || "",
+      srcName: n.site || "剪藏",
+      typeLabel: "",
+      timeText: "",
+      timeTs: n.created || 0,
+      summary: String(n.summary || ""),
+      body: "",
+      tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
+      notePath: n.path || null,
+      st: "saved",
+      clipped: true,
+      note: n,
+      backlinks: Array.isArray(n.backlinkNames) ? n.backlinkNames : []
+    };
+  }
+  function clipUrlSet2(notes) {
+    const s = /* @__PURE__ */ new Set();
+    for (const n of notes) if (n && n.url) s.add(String(n.url));
+    return s;
+  }
+  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
+      return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    const pool = (articles || []).filter((a) => !a.read);
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    if (source2.kind === "site") {
+      const s = normSite(source2.site);
+      const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
+      const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
+      return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
+    }
+    let out = [];
+    if (source2.kind === "all") {
+      out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
+    } else {
+      const isBili = source2.platform === "B站";
+      const list = pool.filter((a) => {
+        const p = platformOf(a);
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
+        return true;
+      });
+      out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
+    }
+    return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
+  }
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
+      return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
+    const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
+    let news = [];
+    let clips = [];
+    if (source2.kind === "all") {
+      news = (articles || []).filter((a) => !isClippedNews(a));
+    } else if (source2.kind === "site") {
+      const s = normSite(source2.site);
+      news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
+      clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
+    } else {
+      const isBili = source2.platform === "B站";
+      news = (articles || []).filter((a) => {
+        if (isClippedNews(a)) return false;
+        const p = platformOf(a);
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
+        return true;
+      });
+    }
+    return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
+  }
+  function bucketByState(list) {
+    const unread = [];
+    const read = [];
+    const saved = [];
+    for (const a of list) {
+      if (a.st === "saved") saved.push(a);
+      else if (a.st === "read") read.push(a);
+      else unread.push(a);
+    }
+    return { unread, read, saved };
+  }
+  function normSite(s) {
+    const t = String(s || "").trim();
+    return t || "未知";
+  }
+  function aggregateSites(articles, clipNotes, savedUrls, clipUrls) {
+    const saved = savedUrls || /* @__PURE__ */ new Set();
+    const byUrl = clipUrls || /* @__PURE__ */ new Set();
+    const rows = /* @__PURE__ */ new Map();
+    const bump = (rawSite, unread) => {
+      const site = normSite(rawSite);
+      let r = rows.get(site);
+      if (!r) {
+        r = { site, total: 0, unread: 0 };
+        rows.set(site, r);
+      }
+      r.total++;
+      if (unread) r.unread++;
+    };
+    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
+    for (const a of articles || []) {
+      if (!a || a.read) continue;
+      if (saved.has(String(a.url || ""))) continue;
+      if (a.url && byUrl.has(String(a.url))) continue;
+      bump(siteName(a), true);
+    }
+    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
+  }
+  var PLATFORM_DOMAIN;
+  var init_store = __esm({
+    "src/clipbook/store.ts"() {
+      init_utils();
+      init_constants3();
+      PLATFORM_DOMAIN = {
+        "B站": "bilibili.com",
+        "果壳科学人": "guokr.com",
+        "知乎日报": "zhihu.com"
+      };
+    }
+  });
+
+  // src/clipbook/scan.ts
+  function defaultCache(f) {
+    var _a2;
+    try {
+      const app = getApp();
+      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
+        return app.metadataCache.getFileCache(f);
+      }
+    } catch (e) {
+    }
+    return f && f.frontmatter;
+  }
+  function parseClipFile(file, getCache, getBacklinks) {
+    const cache = (getCache || defaultCache)(file);
+    const fm2 = cache && cache.frontmatter;
+    if (!fm2) return null;
+    if (!fm2.url || !fm2.created) return null;
+    const title = file.basename || stripMdExt(String(file.name || ""));
+    let created = new Date(fm2.created).valueOf();
+    if (isNaN(created)) created = Date.now();
+    let backlinkNames = [];
+    try {
+      const bl = (getBacklinks || (() => null))(file);
+      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
+        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
+      }
+    } catch (e) {
+    }
+    let domain = "";
+    try {
+      if (fm2.url) domain = new URL(String(fm2.url)).hostname;
+    } catch (e) {
+    }
+    return {
+      path: file.path,
+      file,
+      url: String(fm2.url),
+      author: fm2.author ? String(fm2.author) : "",
+      site: fm2.site ? String(fm2.site) : "未知",
+      summary: fm2.summary ? String(fm2.summary) : "",
+      tags: Array.isArray(fm2.tags) ? fm2.tags.map(String) : fm2.tags ? [String(fm2.tags)] : [],
+      title,
+      created,
+      backlinkNames,
+      domain
+    };
+  }
+  async function scanClipDirectory(dirPath, deps) {
+    const dir = deps.vault.getAbstractFileByPath(dirPath);
+    if (!dir || !Array.isArray(dir.children)) return null;
+    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
+    const parse = deps.parse || ((f) => parseClipFile(f));
+    const notes = [];
+    const rejectedPaths = [];
+    for (const f of mdFiles2) {
+      try {
+        const n = parse(f);
+        if (n) {
+          notes.push(n);
+          continue;
+        }
+        if (f && f.path) rejectedPaths.push(String(f.path));
+      } catch (e) {
+        if (f && f.path) rejectedPaths.push(String(f.path));
+      }
+    }
+    notes.sort((a, b) => b.created - a.created);
+    const result = notes;
+    result.rejected = rejectedPaths.length;
+    result.rejectedPaths = rejectedPaths;
+    return result;
+  }
+  var init_scan = __esm({
+    "src/clipbook/scan.ts"() {
+      init_utils();
+      init_app();
+    }
+  });
+
+  // src/clipbook/loader.ts
+  async function readNewsAndSidecar() {
+    var _a2;
+    const res = await readNewsData();
+    if (res.missing) {
+      M5.articles = [];
+      M5.clipNotes = null;
+      M5.clipUrls = /* @__PURE__ */ new Set();
+      M5.sidecar = emptySidecar();
+      M5.upInfo = {};
+      M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+    }
+    if (!res.ok) {
+      M5.articles = [];
+      M5.clipNotes = null;
+      M5.clipUrls = /* @__PURE__ */ new Set();
+      M5.sidecar = emptySidecar();
+      M5.upInfo = {};
+      M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+    }
+    const s = tryGetSettings();
+    const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
+    let data = res.data;
+    const cleaned = applyRetention(data.articles, days, days);
+    const retentionChanged = cleaned.length !== data.articles.length;
+    let removedKeys = [];
+    if (retentionChanged) {
+      const kept = new Set(cleaned.map((a) => articleKeyOf(a)));
+      removedKeys = (data.articles || []).map((a) => articleKeyOf(a)).filter((k) => !kept.has(k));
+      data = { ...data, articles: cleaned };
+      for (const k of removedKeys) void clearArticleTracking(k).catch(() => {
+      });
+    }
+    let statsChanged = false;
+    if (!statsHasData(data.stats)) {
+      const migrated = await migrateLegacyStats(data);
+      if (statsHasData(migrated.stats)) {
+        data = migrated;
+        statsChanged = true;
+      }
+    }
+    if (retentionChanged || statsChanged) {
+      const set = {};
+      if (retentionChanged) set.articles = data.articles;
+      if (statsChanged) set.stats = data.stats;
+      await enqueueNewsWrite(() => writeNewsDataMerged({ set, removeArticleKeys: removedKeys }));
+    }
+    const sidecar = await readClipbookData();
+    const clipNotes = await scanClipDirectory(clipDir(), {
+      vault: getApp().vault
+    });
+    if (clipNotes && clipNotes.rejected > 0) {
+      console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
+    }
+    const clipUrls = clipUrlSet2(clipNotes || []);
+    M5.articles = data.articles;
+    M5.stats = data.stats;
+    M5.sidecar = sidecar;
+    M5.clipNotes = clipNotes;
+    M5.clipUrls = clipUrls;
+    M5.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M5.upInfo };
+  }
+  var init_loader = __esm({
+    "src/clipbook/loader.ts"() {
+      init_news_data();
+      init_data7();
+      init_anchor();
+      init_scan();
+      init_store();
+      init_constants3();
+      init_settings_provider();
+      init_app();
+      init_state5();
+      init_write_queue();
+      init_save();
+    }
+  });
+
   // src/clipbook/ui.ts
   var ui_exports6 = {};
   __export(ui_exports6, {
+    __bindImgFallbackForTests: () => __bindImgFallbackForTests,
     __clipBodyCacheKeysForTests: () => __clipBodyCacheKeysForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel2,
@@ -37495,7 +37777,9 @@ ${body}`;
     initPanel: () => initPanel,
     invalidateClipBodyCache: () => invalidateClipBodyCache,
     openSettings: () => openSettings,
+    refreshReadingViews: () => refreshReadingViews,
     reloadIfOpen: () => reloadIfOpen,
+    revealArticleByKey: () => revealArticleByKey,
     revealClipArticle: () => revealClipArticle,
     showPanel: () => showPanel,
     unloadPanel: () => unloadPanel
@@ -37511,30 +37795,48 @@ ${body}`;
       buildDom2(M5.appRef);
     }
     overlayEl2.style.display = "flex";
+    topifyZ(overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
     M5.open = true;
     beginSession();
-    if (dirty || !loaded2) void loadIfNeeded();
-    else renderAll3();
+    if (dirty || !loaded2) {
+      if (!loaded2 && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+      void loadIfNeeded();
+    } else renderAll3();
+    if (!isMobileEnv()) {
+      readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
+      deskSearchEl == null ? void 0 : deskSearchEl.focus();
+    }
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
     if (!M5.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
-      if (res && res.status === "corrupt") notice("news.json 损坏，未加载（原文件已保留）", "error");
+      if (res && res.status === "corrupt") {
+        loadError = { kind: "corrupt", reason: "news.json 损坏（原文件已保留）" };
+        notifyActionError(new Error(loadError.reason), "剪藏本数据读取", { onRetry: retryLoad });
+      } else {
+        loadError = null;
+      }
       dirty = false;
       loaded2 = true;
       beginSession();
       renderAll3();
     }).catch((e) => {
       console.error("[剪藏本] 装载失败", e);
-      notice("剪藏本数据读取失败", "error");
+      loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
+      notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
+      if (M5.open) renderAll3();
     }).finally(() => {
       loading = false;
       loadPromise = null;
     });
     return loadPromise;
+  }
+  function retryLoad() {
+    loadError = null;
+    void loadIfNeeded();
   }
   function reloadIfOpen() {
     dirty = true;
@@ -37560,6 +37862,7 @@ ${body}`;
     void flushReadingSession();
     panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
+    hideSelBar();
     M5.open = false;
     M5.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
@@ -37607,6 +37910,7 @@ ${body}`;
     loadPromise = null;
     dirty = false;
     loaded2 = false;
+    loadError = null;
     if (overlayEl2) overlayEl2.remove();
     overlayEl2 = null;
     readerEl = null;
@@ -37616,6 +37920,8 @@ ${body}`;
     listEl = null;
     mobListEl = null;
     mobDetailEl = null;
+    mobTitleEl = null;
+    mobSaveBtnEl = null;
     mobSearchbarEl = null;
     deskSearchEl = null;
     expandedMobArch.clear();
@@ -37624,6 +37930,7 @@ ${body}`;
     resetClipbookState();
   }
   function buildDom2(app) {
+    var _a2;
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
     overlayEl2.style.display = "none";
@@ -37666,16 +37973,23 @@ ${body}`;
       if (!row) return;
       toggleSource(JSON.parse(row.dataset.src || "null"));
     });
-    deskSearchEl.addEventListener("input", () => searchDebounced2());
+    deskSearchEl.addEventListener("input", () => {
+      syncDeskSearchClear();
+      searchDebounced2();
+    });
+    deskSearchEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || !deskSearchEl.value.trim()) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      clearDeskSearch();
+    });
+    (_a2 = overlayEl2.querySelector("[data-clip-search-clear]")) == null ? void 0 : _a2.addEventListener("click", () => clearDeskSearch());
     readPaneEl.addEventListener("click", (e) => {
       const t = e.target;
       const ext = t.closest("a[data-clip-ext]");
       if (ext) {
         e.preventDefault();
-        try {
-          window.open(ext.href, "_blank");
-        } catch (e2) {
-        }
+        openExternalUrl(getApp(), ext.href);
         return;
       }
       const ilink = t.closest("a.internal-link");
@@ -37693,6 +38007,13 @@ ${body}`;
       if (t.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
+      var _a3, _b2;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
+        e.preventDefault();
+        if (M5.cur) openNote(M5.cur);
+        return;
+      }
       if (e.key === "ArrowLeft" || e.key === "k") {
         e.preventDefault();
         stepArticle(-1);
@@ -37732,8 +38053,8 @@ ${body}`;
     });
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
-      var _a2;
-      if (((_a2 = M5.cur) == null ? void 0 : _a2.st) === "saved") return;
+      var _a3;
+      if (((_a3 = M5.cur) == null ? void 0 : _a3.st) === "saved") return;
       void doSave(M5.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
@@ -37741,10 +38062,7 @@ ${body}`;
       const ext = t.closest("a[data-clip-ext]");
       if (ext) {
         e.preventDefault();
-        try {
-          window.open(ext.href, "_blank");
-        } catch (e2) {
-        }
+        openExternalUrl(getApp(), ext.href);
         return;
       }
       const ilink = t.closest("a.internal-link");
@@ -37824,6 +38142,9 @@ ${body}`;
     M5.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
+    if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
+    const mobInput = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-input]") : null;
+    if (mobInput) mobInput.value = "";
     renderAll3();
   }
   function toggleSource(src) {
@@ -37832,6 +38153,18 @@ ${body}`;
   }
   function setSearchKw(kw) {
     searchKw = kw;
+  }
+  function syncDeskSearchClear() {
+    const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-search-clear]") : null;
+    if (btn) btn.hidden = !(deskSearchEl == null ? void 0 : deskSearchEl.value.trim());
+  }
+  function clearDeskSearch() {
+    if (deskSearchEl) deskSearchEl.value = "";
+    setSearchKw("");
+    syncDeskSearchClear();
+    renderList();
+    renderRail();
+    deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll3() {
     if (!M5.open) return;
@@ -37923,11 +38256,12 @@ ${body}`;
     deskFoldOpen.clear();
     deskFoldTouched.clear();
     expandedMobArch.clear();
+    readScrollMemo.clear();
   }
   function matchesSearch(a) {
     const kw = (searchKw || "").toLowerCase();
     if (!kw) return true;
-    return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
+    return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.body.toLowerCase().includes(kw) || a.url.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
   }
   function renderRail() {
     var _a2, _b2, _c, _d;
@@ -37936,17 +38270,18 @@ ${body}`;
     const clipNotes = M5.clipNotes || [];
     const countOf = (source2) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source2, M5.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M5.sel.kind === "all", "");
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M5.sel.kind === "all", "", railUnreadN({ kind: "all" }));
     for (const row of aggregateSites(arts, clipNotes, new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
       const full = queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, { kind: "site", site: row.site }, M5.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
       const active2 = M5.sel.kind === "site" && M5.sel.site === row.site;
-      html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
+      const markN = railUnreadN({ kind: "site", site: row.site });
+      html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "", markN);
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
-      if (!a.read && a.platform === "B站" && a.author) {
+      if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
         const backfilled = (_b2 = (_a2 = M5.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
@@ -37956,7 +38291,8 @@ ${body}`;
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
       const active2 = M5.sel.kind === "inbox" && M5.sel.platform === "B站" && M5.sel.up === uid;
-      html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
+      const markN = railUnreadN({ kind: "inbox", platform: "B站", up: uid });
+      html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1), markN);
     }
     const clipActive = M5.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
@@ -37979,6 +38315,39 @@ ${body}`;
       const source2 = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : sel.kind === "site" ? { kind: "site", site: String(sel.site || "") } : { kind: "all" };
       const actions = buildRailActions(String(row.title || ""), source2);
       if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ""), menuClass: "bz-clip-menu-editorial" });
+      const markBtn = row.querySelector("[data-clip-rail-markall]");
+      if (markBtn && actions.length) {
+        markBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          actions[0].onClick();
+        });
+      }
+    });
+  }
+  function railUnreadN(source2) {
+    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source2, M5.upInfo).filter((a) => a.origin === "news").length;
+  }
+  function revealArticleByKey(key) {
+    const k = String(key || "");
+    if (!k) return;
+    if (k.startsWith("clip:")) {
+      void revealClipArticle(k.slice("clip:".length));
+      return;
+    }
+    const trySelect = () => {
+      const hit = M5.articles.find((x) => articleKeyOf(x) === k);
+      if (!hit) return false;
+      if (!M5.open) showPanel();
+      selectSource({ kind: "all" });
+      selectArticle(articleKeyOf(hit));
+      return true;
+    };
+    if (trySelect()) return;
+    showPanel();
+    void loadIfNeeded().then(() => {
+      trySelect();
+    }).catch(() => {
     });
   }
   function buildRailActions(label, source2) {
@@ -38003,12 +38372,31 @@ ${body}`;
       ]
     });
     if (ok !== "ok") return;
-    await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
-    notice(`已把 ${items.length} 篇标为已读`, "success");
+    const { bumped, snapshot: snapshot2 } = await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
+    if (!bumped) {
+      await refreshAfterAction();
+      return;
+    }
+    notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
+      await flowUndoMarkAllRead(snapshot2);
+      notice("已撤销：条目恢复未读", "success");
+      await refreshAfterAction();
+    })());
     await refreshAfterAction();
   }
   function renderList() {
     if (!listEl) return;
+    if (loadError) {
+      listEl.innerHTML = "";
+      listEl.appendChild(uiEmpty({
+        icon: "circle-alert",
+        title: `剪藏本数据读取失败：${loadError.reason}`,
+        actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
+      }));
+      M5.cur = null;
+      if (readerEl) renderReader();
+      return;
+    }
     const src = currentSrc();
     if (src.kind === "clip") {
       const list = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo).filter((a) => !searchKw || matchesSearch(a));
@@ -38023,7 +38411,7 @@ ${body}`;
         M5.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime2(a.timeTs));
+      listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
       M5.list = list;
       bindItemMenus();
       return;
@@ -38051,23 +38439,23 @@ ${body}`;
         M5.list = [];
         return;
       }
-      listEl.innerHTML = tocListHtml(hit, curId, timeOf);
+      listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
       M5.list = hit;
       bindItemMenus();
       return;
     }
     const b = dirFor(src);
     const snapUnreadN = b.unread.length;
-    let html = tocListHtml(b.unread, curId, timeOf);
+    let html = tocListHtml(b.unread, curId, timeOf, searchKw);
     if (b.read.length) {
       const open = deskFoldIsOpen("read", b.read.length, b.saved.length, snapUnreadN);
       html += deskFoldRowHtml("read", b.read.length, open);
-      html += foldBodyHtml(tocListHtml(b.read, curId, timeOf), open);
+      html += foldBodyHtml(tocListHtml(b.read, curId, timeOf, searchKw), open);
     }
     if (b.saved.length) {
       const open = deskFoldIsOpen("saved", b.saved.length, b.saved.length, snapUnreadN);
       html += deskFoldRowHtml("saved", b.saved.length, open);
-      html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf), open);
+      html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
     M5.list = flat;
@@ -38093,12 +38481,19 @@ ${body}`;
       card.addEventListener("click", (e) => {
         if (e.target && e.target.closest(".bz-item-sheet")) return;
         selectArticle(art.id);
+        if (!isMobileEnv()) readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
       });
     });
     listEl.querySelectorAll("[data-desk-fold]").forEach((row) => {
-      row.addEventListener("click", () => {
+      const toggle = () => {
         const kind = row.getAttribute("data-desk-fold") || "saved";
         toggleDeskFold(kind);
+      };
+      row.addEventListener("click", toggle);
+      row.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        toggle();
       });
     });
   }
@@ -38157,7 +38552,11 @@ ${body}`;
   function bindImgFallback(container) {
     container.querySelectorAll("img").forEach((img) => {
       img.addEventListener("error", () => img.remove(), { once: true });
+      if (img.complete && img.naturalWidth === 0) img.remove();
     });
+  }
+  function __bindImgFallbackForTests(container) {
+    bindImgFallback(container);
   }
   function renderReader() {
     if (!readerEl) return;
@@ -38283,12 +38682,27 @@ ${body}`;
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
     const changed = !M5.cur || M5.cur.id !== a.id;
+    const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
+    if (changed && M5.cur) {
+      const sc = readScroller();
+      if (sc) {
+        if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
+          const oldest = readScrollMemo.keys().next().value;
+          if (oldest !== void 0) readScrollMemo.delete(oldest);
+        }
+        readScrollMemo.set(M5.cur.id, sc.scrollTop);
+      }
+    }
     M5.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
     renderMobDetail();
-    if (changed) resetReadScroll();
+    if (changed) {
+      const sc = readScroller();
+      if (sc) sc.scrollTop = readScrollMemo.get(a.id) || 0;
+    }
+    if (!isMobileEnv()) readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
   }
   async function doSave(a) {
     if (!a) return;
@@ -38301,7 +38715,13 @@ ${body}`;
     if (!a || a.origin !== "news") return;
     if (a.st !== "unread") return;
     const rawBefore = await rawBeforeFromDisk(a);
-    const res = await flowMarkRead(a);
+    let res;
+    try {
+      res = await flowMarkRead(a);
+    } catch (e) {
+      notifySaveError(e, "标记已读");
+      return;
+    }
     if (!res.changed) {
       await refreshAfterAction();
       return;
@@ -38320,24 +38740,23 @@ ${body}`;
     return { ...a.raw || {} };
   }
   async function undoMarkRead(rawBefore) {
-    await flowUndoHandled(rawBefore);
+    try {
+      await flowUndoHandled(rawBefore);
+    } catch (e) {
+      notifySaveError(e, "撤销");
+      return;
+    }
     notice("已撤销：条目恢复未读", "success");
     await refreshAfterAction();
   }
   async function deleteNewsItem(a) {
-    const ok = await openFlowDialog({
-      className: "bz-clip-dialog-editorial",
-      title: "删除条目",
-      message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        // danger（issue 291 评审补）：删除类主动作标 danger → 主钮中性底 + 红字（手册 §9/§10）
-        { label: "删除", value: "ok", cta: true, danger: true }
-      ]
-    });
-    if (ok !== "ok") return;
     const rawBefore = { ...a.raw || {} };
-    await flowDeleteNews(a);
+    try {
+      await flowDeleteNews(a);
+    } catch (e) {
+      notifySaveError(e, "删除条目");
+      return;
+    }
     void clearArticleTracking(a.id).catch(() => {
     });
     notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
@@ -38349,17 +38768,6 @@ ${body}`;
     await refreshAfterAction();
   }
   async function deleteClipNote(a) {
-    const ok = await openFlowDialog({
-      className: "bz-clip-dialog-editorial",
-      title: "删除剪藏",
-      message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        // danger（issue 291 评审补）：删除剪藏确认同口径
-        { label: "删除", value: "ok", cta: true, danger: true }
-      ]
-    });
-    if (ok !== "ok") return;
     const note = a.note;
     if (note && note.file) {
       try {
@@ -38384,19 +38792,27 @@ ${body}`;
         notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
         await refreshAfterAction();
       } catch (e) {
-        notice("删除失败，请检查文件权限", "error");
+        notifyActionError(e, "删除剪藏");
       }
     }
   }
   async function undoTrashClip(path, content) {
     if (!path) return;
     try {
+      const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+      if (dir && !getApp().vault.getAbstractFileByPath(dir)) {
+        try {
+          await getApp().vault.createFolder(dir);
+        } catch (e) {
+        }
+      }
       await getApp().vault.create(path, content);
       clipBodyCache.delete(path);
       notice("已撤销删除：剪藏已恢复", "success");
       await refreshAfterAction();
     } catch (e) {
-      notice("撤销失败：原路径已存在同名文件", "error");
+      const msg = e instanceof Error ? e.message : String(e);
+      notice(/exist|已存在/i.test(msg) ? "撤销失败：原路径已存在同名文件" : `撤销失败：${msg}，请重试`, "error");
     }
   }
   function openNote(a) {
@@ -38409,7 +38825,7 @@ ${body}`;
       await navigator.clipboard.writeText(text);
       notice(okMsg, "success");
     } catch (e) {
-      notice("复制失败", "error");
+      notifyActionError(e, "复制");
     }
   }
   async function refreshAfterAction() {
@@ -38479,6 +38895,7 @@ ${body}`;
       const s = String(n && n.site || "").trim() || "未知";
       siteSet.add(s);
     }
+    const siteActions = /* @__PURE__ */ new Map();
     for (const site of siteSet) {
       const snap = snapDirFor({ kind: "site", site });
       const b = resolveSnap(snap, { kind: "site", site });
@@ -38487,12 +38904,15 @@ ${body}`;
       const saved = b.saved.filter(matchesSearch);
       if (!unread.length && !read.length && !saved.length) continue;
       const unreadN = unread.filter((a) => a.st === "unread").length;
+      const markN = railUnreadN({ kind: "site", site });
+      if (markN > 0) siteActions.set(site, buildRailActions(site, { kind: "site", site }));
       chapters.push({
         site,
         unread: unreadN,
         activeN: unread.length,
         readN: read.length,
         savedN: saved.length,
+        markAllN: markN,
         activeHtml: mobListHtml(unread, timeOf),
         readHtml: read.length ? mobListHtml(read, timeOf) : "",
         savedHtml: saved.length ? mobListHtml(saved, timeOf) : ""
@@ -38510,6 +38930,7 @@ ${body}`;
       return;
     }
     mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
+    mountIcons(mobListEl);
     mobListEl.querySelectorAll("[data-id]").forEach((card) => {
       const art = byId.get(String(card.dataset.id || ""));
       if (!art) return;
@@ -38523,8 +38944,17 @@ ${body}`;
         return;
       }
       if (!sel || sel.kind !== "site") return;
-      const actions = buildRailActions(String(sel.site), { kind: "site", site: String(sel.site) });
-      if (actions.length) attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: "bz-clip-menu-editorial" });
+      const actions = siteActions.get(String(sel.site)) || [];
+      if (!actions.length) return;
+      attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: "bz-clip-menu-editorial" });
+      const mark = hd.querySelector("[data-clip-ch-markall]");
+      if (mark) {
+        mark.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          actions[0].onClick();
+        });
+      }
     });
   }
   function toggleMobArch(foldEl) {
@@ -38813,10 +39243,74 @@ ${body}`;
     if (kind === "term") fn(getApp(), snap.text, { source: source2, onCreated });
     else fn(getApp(), { text: snap.text, source: source2, onCreated });
   }
+  function refreshReaderBodyInPlace(a) {
+    if (!readerEl || readerEl.dataset.clipReaderId !== a.id) {
+      renderReader();
+      return;
+    }
+    const md = readerEl.querySelector("[data-clip-md]");
+    if (!md) {
+      renderReader();
+      return;
+    }
+    let body = "";
+    let note = "";
+    if (a.origin === "clip") {
+      const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
+      if (cached === void 0) {
+        renderReader();
+        return;
+      }
+      body = cached;
+      if (!body) note = "（笔记暂无正文）";
+    } else {
+      body = transformBodyForRead(a, a.body);
+      if (!body) note = "正文已清空（已处理条目）";
+    }
+    md.innerHTML = "";
+    if (note) {
+      const p = document.createElement("p");
+      p.className = "dim";
+      p.textContent = note;
+      md.appendChild(p);
+      return;
+    }
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(md));
+  }
+  function refreshMobBodyInPlace(a) {
+    if (!mobDetailEl || !M5.mobDetailOpen) return;
+    const md = mobDetailEl.querySelector("[data-clip-mob-md]");
+    if (!md) {
+      renderMobDetail();
+      return;
+    }
+    let mdBody = "";
+    let note = "";
+    if (a.origin === "clip") {
+      const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
+      if (cached === void 0) {
+        renderMobDetail();
+        return;
+      }
+      mdBody = cached;
+      if (!mdBody) note = "（笔记暂无正文）";
+    } else {
+      mdBody = transformBodyForRead(a, a.body);
+      if (!mdBody) note = "正文已清空";
+    }
+    md.innerHTML = "";
+    if (note) {
+      const p = document.createElement("p");
+      p.textContent = note;
+      md.appendChild(p);
+      return;
+    }
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+  }
   function refreshReadingViews(articleId) {
     if (!M5.cur || M5.cur.id !== articleId) return;
-    renderReader();
-    if (M5.mobDetailOpen) renderMobDetail();
+    refreshReaderBodyInPlace(M5.cur);
+    if (M5.mobDetailOpen) refreshMobBodyInPlace(M5.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -38839,7 +39333,7 @@ ${body}`;
       }
     } catch (e) {
       console.warn("[剪藏本] 划词锚定写入失败", e);
-      notice("锚定写入失败", "error");
+      notifyActionError(e, "锚定写入");
     }
   }
   async function upgradeSourceFor(notePath, a) {
@@ -38913,7 +39407,7 @@ ${body}`;
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
-      notice("图版来源登记失败", "error");
+      notifyActionError(e, "图版来源登记");
     }
   }
   function knowledgeDir() {
@@ -39065,7 +39559,7 @@ ${body}`;
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle4, loading, dirty, loaded2, SEARCH_DEBOUNCE_MS3, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced2, panelResizeDetach2, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, SEARCH_DEBOUNCE_MS3, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced2, panelResizeDetach2, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui8 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -39074,6 +39568,7 @@ ${body}`;
       init_ui();
       init_utils();
       init_mobile();
+      init_dom();
       init_esc_manager();
       init_item_actions();
       init_flow_dialog();
@@ -39111,6 +39606,9 @@ ${body}`;
       loading = false;
       dirty = false;
       loaded2 = false;
+      loadError = null;
+      readScrollMemo = /* @__PURE__ */ new Map();
+      READ_SCROLL_MEMO_MAX = 200;
       SEARCH_DEBOUNCE_MS3 = 180;
       PANEL_MIN_W = 760;
       PANEL_MIN_H = 520;

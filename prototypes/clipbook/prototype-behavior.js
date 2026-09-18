@@ -1,4 +1,4 @@
-/* 源指纹 bc2d4c5c623ec041 · 仓内输入 104 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 31e11ec11541cd7c · 仓内输入 104 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5585,10 +5585,7 @@ var BZW_clipbook = (() => {
     return { ok: true, missing, data: content, corrupt: false };
   }
   async function writeNewsData(data) {
-    try {
-      await jsonFileStore(getNewsFilePath()).write(data);
-    } catch (e) {
-    }
+    await jsonFileStore(getNewsFilePath()).write(data);
   }
   async function writeNewsDataMerged(intent) {
     var _a;
@@ -5648,26 +5645,23 @@ var BZW_clipbook = (() => {
     const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
     return m ? m[1] : null;
   }
-  async function resolveUidFromInput(text) {
+  async function resolveUidFromInputDetailed(text) {
     var _a;
     const local = parseUidFromText(text);
-    if (local) return local;
+    if (local) return { uid: local, networkFailed: false };
     const bvid = parseBvidFromText(text);
-    if (!bvid) return null;
+    if (!bvid) return { uid: null, networkFailed: false };
+    const body = await httpGetText(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
+      timeoutMs: 1e4,
+      fetchImpl: requestUrlAsFetch()
+    });
+    if (body === null) return { uid: null, networkFailed: true };
     try {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 1e4);
-      const resp = await fetch(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
-        method: "GET",
-        signal: ctrl.signal
-      });
-      clearTimeout(timer);
-      if (!resp.ok) return null;
-      const json = await resp.json();
+      const json = JSON.parse(body);
       const mid = json && json.data && json.data.owner ? String((_a = json.data.owner.mid) != null ? _a : "") : "";
-      return mid || null;
+      return { uid: mid || null, networkFailed: false };
     } catch (e) {
-      return null;
+      return { uid: null, networkFailed: false };
     }
   }
   async function migrateLegacyStats(data) {
@@ -5717,6 +5711,7 @@ var BZW_clipbook = (() => {
     "src/clipbook/news-data.ts"() {
       init_app();
       init_storage();
+      init_http();
       init_constants();
       STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
       DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
@@ -6252,7 +6247,7 @@ ${c.trim()}
   function setNewsFetchDoneListener(fn) {
     onFetched = fn;
   }
-  async function executeFetchRound(deps) {
+  async function executeFetchRound(deps, opts) {
     if (fetching) return null;
     fetching = true;
     try {
@@ -6265,10 +6260,17 @@ ${c.trim()}
         notice(`聚合讯抓取部分失败：${r.failedSources.join("、")}`, "warning");
       }
       if (r.needsCookieNotice) {
-        notice("B站接口被风控拦截，请在剪藏本设置的数据源中更新 B站 Cookie", "warning");
+        notice("B站接口被风控，将自动重试，也可稍后手动抓取", "warning");
       }
       if (onFetched) onFetched(r);
       return r;
+    } catch (e) {
+      console.warn("[剪藏本] 聚合讯抓取失败", e);
+      if (!(opts == null ? void 0 : opts.silent)) {
+        const msg = e instanceof Error ? e.message : String(e);
+        notice(`聚合讯抓取失败：${msg}，请稍后重试`, "error");
+      }
+      return null;
     } finally {
       fetching = false;
     }
@@ -6276,12 +6278,18 @@ ${c.trim()}
   async function maybeFetchNews(deps) {
     if (fetching) return null;
     const store = (deps == null ? void 0 : deps.store) || defaultFetchStore();
-    const disk = await store.read();
+    let disk;
+    try {
+      disk = await store.read();
+    } catch (e) {
+      console.warn("[剪藏本] 聚合讯抓取失败", e);
+      return null;
+    }
     if (!disk) return null;
     const intervalMin = normalizeFetchIntervalMin(disk.fetchIntervalMin);
     const now = (deps == null ? void 0 : deps.now) || Date.now;
     if (now() - disk.lastFetchAt < intervalMin * 60 * 1e3) return null;
-    return executeFetchRound(deps);
+    return executeFetchRound(deps, { silent: true });
   }
   function notifyManualFetchResult(r) {
     if (!r) {
@@ -6289,7 +6297,15 @@ ${c.trim()}
       return;
     }
     if (r.failedSources.length > 0) return;
-    notice(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : "已抓取，暂无新文章", "success");
+    notify(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : "已抓取，暂无新文章", {
+      type: "success",
+      action: {
+        label: "去剪藏本",
+        onClick: () => {
+          void Promise.resolve().then(() => (init_clipbook(), clipbook_exports)).then((m) => m.openClipbook(getApp()));
+        }
+      }
+    });
   }
   async function fetchNowNews(deps) {
     return executeFetchRound(deps);
@@ -6299,6 +6315,7 @@ ${c.trim()}
     "src/clipbook/news-fetcher.ts"() {
       init_fake_obsidian();
       init_http();
+      init_app();
       init_notice();
       init_news_data();
       init_constants();
@@ -6314,104 +6331,6 @@ ${c.trim()}
       BILIBILI_HOME = "https://www.bilibili.com/";
       fetching = false;
       onFetched = null;
-    }
-  });
-
-  // src/core/dom.ts
-  function longPress(el, cb, dur, filter) {
-    if (!dur) dur = 500;
-    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
-    let suppressClick = false;
-    const M2 = 10;
-    function start(e) {
-      if (filter && !filter(e)) return;
-      if (e.button !== void 0 && e.button !== 0) return;
-      fired = false;
-      moved = false;
-      if (e.touches && e.touches.length) {
-        const t = e.touches[0];
-        sx = t.clientX;
-        sy = t.clientY;
-        touching = true;
-      }
-      timer = setTimeout(function() {
-        timer = null;
-        fired = true;
-        cb(e);
-      }, dur);
-    }
-    function cancel() {
-      if (timer) {
-        clearTimeout(timer);
-        timer = null;
-      }
-    }
-    function move(e) {
-      if (!timer || !touching || !e.touches || !e.touches.length) return;
-      const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
-        moved = true;
-        cancel();
-      }
-    }
-    function endFromTouch() {
-      if (fired) suppressClick = true;
-      touching = false;
-      cancel();
-    }
-    function endFromMouse() {
-      touching = false;
-      cancel();
-    }
-    function onClick(e) {
-      if (suppressClick) {
-        suppressClick = false;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-      }
-    }
-    el.addEventListener("mousedown", start);
-    el.addEventListener("mouseup", endFromMouse);
-    el.addEventListener("mouseleave", endFromMouse);
-    el.addEventListener("touchstart", start, { passive: true });
-    el.addEventListener("touchend", endFromTouch);
-    el.addEventListener("touchmove", move, { passive: true });
-    el.addEventListener("touchcancel", endFromTouch);
-    el.addEventListener("click", onClick, true);
-  }
-  function swallowNextClick() {
-    const swallow = (e) => {
-      if (e.clientX === 0 && e.clientY === 0) return;
-      document.removeEventListener("click", swallow, true);
-      e.stopPropagation();
-    };
-    const disarm = () => {
-      document.removeEventListener("click", swallow, true);
-    };
-    document.addEventListener("click", swallow, true);
-    document.addEventListener("mousedown", disarm, { capture: true, once: true });
-  }
-  function createOverlay(opts) {
-    const mask = document.createElement("div");
-    mask.id = opts.maskId;
-    mask.className = "bz-overlay-mask";
-    mask.style.display = "none";
-    mask.onclick = function(e) {
-      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
-    };
-    const popup = document.createElement("div");
-    popup.id = opts.popupId;
-    popup.className = "bz-overlay-popup";
-    popup.style.display = "none";
-    popup.style.width = opts.width || "90%";
-    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
-    topifyZ(mask, popup);
-    return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
-  var init_dom = __esm({
-    "src/core/dom.ts"() {
-      init_notice();
-      init_z_order();
     }
   });
 
@@ -6480,6 +6399,12 @@ ${c.trim()}
   function escapeRe(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
+  function insideUnclosedLink(s, idx) {
+    const open = s.lastIndexOf("[[", Math.max(0, idx - 1));
+    if (open === -1) return false;
+    const close = s.lastIndexOf("]]", Math.max(0, idx - 1));
+    return close < open;
+  }
   function noteBasename(notePath) {
     const base = String(notePath || "").split("/").pop() || "";
     return base.replace(/\.md$/i, "") || String(notePath || "");
@@ -6503,7 +6428,10 @@ ${c.trim()}
     }
     for (const mk of Array.isArray(marks) ? marks : []) {
       if (!mk || !mk.find || !mk.notePath) continue;
-      const idx = out.indexOf(mk.find);
+      let idx = out.indexOf(mk.find);
+      while (idx !== -1 && insideUnclosedLink(out, idx)) {
+        idx = out.indexOf(mk.find, idx + mk.find.length);
+      }
       if (idx === -1) continue;
       out = out.slice(0, idx) + aliasLink(mk.notePath, mk.find) + out.slice(idx + mk.find.length);
       usedMarks.push({ find: mk.find, notePath: mk.notePath, kind: mk.kind === "passage" ? "passage" : "term" });
@@ -6613,12 +6541,23 @@ ${c.trim()}
   });
 
   // src/clipbook/image-save.ts
+  var image_save_exports = {};
+  __export(image_save_exports, {
+    clipbookImageDir: () => clipbookImageDir,
+    extOfImageUrl: () => extOfImageUrl,
+    extractImageUrls: () => extractImageUrls,
+    fetchImageBinary: () => fetchImageBinary,
+    fetchImageDataUrl: () => fetchImageDataUrl,
+    imageNameFromUrl: () => imageNameFromUrl,
+    localizeArticleImages: () => localizeArticleImages,
+    normalizeImageSrc: () => normalizeImageSrc,
+    saveClipImage: () => saveClipImage
+  });
   function clipbookImageDir() {
     const s = tryGetSettings();
     const configured = String(s && s.clipbookImageFolder || "").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "");
     if (configured) return configured;
-    const dir = String(s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-    return `${dir}/assets`;
+    return `${clipDir()}/assets`;
   }
   function normalizeImageSrc(src) {
     const s = String(src || "").trim();
@@ -6648,7 +6587,7 @@ ${c.trim()}
   }
   function clipTimestampBase(seq) {
     const d = /* @__PURE__ */ new Date();
-    const p2 = (n) => String(n).padStart(2, "0");
+    const p2 = (n) => pad2(n);
     const day = `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}`;
     const time = `${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`;
     return `clip-${day}-${time}-${seq}`;
@@ -6785,10 +6724,12 @@ ${c.trim()}
   var HTTP_TIMEOUT_MS, UA_HEADERS, EXT_WHITELIST, NAME_EXTS, NAME_EXT_RE;
   var init_image_save = __esm({
     "src/clipbook/image-save.ts"() {
+      init_utils();
       init_fake_obsidian();
       init_app();
       init_settings_provider();
       init_notice();
+      init_save();
       init_anchor();
       HTTP_TIMEOUT_MS = 15e3;
       UA_HEADERS = { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" };
@@ -7837,6 +7778,134 @@ ${c.trim()}
       DEFAULT_LIT_DIR = "文献盒";
       DEFAULT_CARDBOX_DIR = "卡片盒";
       DEFAULT_TOPIC_DIR = "主题盒";
+    }
+  });
+
+  // src/core/dom.ts
+  function longPress(el, cb, dur, filter) {
+    if (!dur) dur = 500;
+    let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
+    let suppressClick = false;
+    const M2 = 10;
+    function start(e) {
+      if (filter && !filter(e)) return;
+      if (e.button !== void 0 && e.button !== 0) return;
+      fired = false;
+      moved = false;
+      if (e.touches && e.touches.length) {
+        const t = e.touches[0];
+        sx = t.clientX;
+        sy = t.clientY;
+        touching = true;
+      }
+      timer = setTimeout(function() {
+        timer = null;
+        fired = true;
+        cb(e);
+      }, dur);
+    }
+    function cancel() {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+    }
+    function move(e) {
+      if (!timer || !touching || !e.touches || !e.touches.length) return;
+      const t = e.touches[0];
+      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+        moved = true;
+        cancel();
+      }
+    }
+    function endFromTouch() {
+      if (fired) suppressClick = true;
+      touching = false;
+      cancel();
+    }
+    function endFromMouse() {
+      touching = false;
+      cancel();
+    }
+    function onClick(e) {
+      if (suppressClick) {
+        suppressClick = false;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+      }
+    }
+    el.addEventListener("mousedown", start);
+    el.addEventListener("mouseup", endFromMouse);
+    el.addEventListener("mouseleave", endFromMouse);
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchend", endFromTouch);
+    el.addEventListener("touchmove", move, { passive: true });
+    el.addEventListener("touchcancel", endFromTouch);
+    el.addEventListener("click", onClick, true);
+  }
+  function swallowNextClick() {
+    const swallow = (e) => {
+      if (e.clientX === 0 && e.clientY === 0) return;
+      document.removeEventListener("click", swallow, true);
+      e.stopPropagation();
+    };
+    const disarm = () => {
+      document.removeEventListener("click", swallow, true);
+    };
+    document.addEventListener("click", swallow, true);
+    document.addEventListener("mousedown", disarm, { capture: true, once: true });
+  }
+  function pruneDetachedOverlays() {
+    for (const entry of liveOverlays) {
+      if (!entry.mask.isConnected && !entry.popup.isConnected) liveOverlays.delete(entry);
+    }
+  }
+  function createOverlay(opts) {
+    pruneDetachedOverlays();
+    const mask = document.createElement("div");
+    mask.id = opts.maskId;
+    mask.className = "bz-overlay-mask";
+    mask.style.display = "none";
+    mask.onclick = function(e) {
+      if (e.target === mask && typeof opts.onMaskClick === "function") opts.onMaskClick();
+    };
+    const popup = document.createElement("div");
+    popup.id = opts.popupId;
+    popup.className = "bz-overlay-popup";
+    popup.style.display = "none";
+    popup.style.width = opts.width || "90%";
+    popup.style.maxWidth = (opts.maxWidth || 400) + "px";
+    topifyZ(mask, popup);
+    const entry = {
+      mask,
+      popup,
+      close: () => {
+        liveOverlays.delete(entry);
+        if (mask.isConnected) mask.remove();
+        if (popup.isConnected) popup.remove();
+      }
+    };
+    liveOverlays.add(entry);
+    return {
+      mask,
+      popup,
+      topify: () => topifyZ(mask, popup),
+      /** 注入调用方 close（UP/RSS 管理等自带 esc 注销/单例旗标复位的收尾）：包装为
+       *  「先自注销再执行」，重复触发与 closeAllOverlays 兜底都幂等 */
+      registerClose: (close) => {
+        entry.close = () => {
+          liveOverlays.delete(entry);
+          close();
+        };
+      }
+    };
+  }
+  var liveOverlays;
+  var init_dom = __esm({
+    "src/core/dom.ts"() {
+      init_notice();
+      init_z_order();
+      liveOverlays = /* @__PURE__ */ new Set();
     }
   });
 
@@ -17413,22 +17482,36 @@ ${String(blockText != null ? blockText : "").trim()}`);
   });
 
   // src/clipbook/save.ts
-  function clipDirOf() {
+  function clipDir() {
     const s = tryGetSettings();
-    return s && s.articleDirectory || "归档/网页剪藏";
+    return String(s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
   }
-  async function writeClipNote(raw, dirOverride) {
+  function cleanClipTitleOf(title) {
+    let t = String(title != null ? title : "").replace(/[\\/:*?"<>|]/g, "").trim();
+    t = t.replace(/[. ]+$/, "");
+    if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(t)) t = `_${t}`;
+    return t;
+  }
+  function clipFilePathOf(title) {
+    return `${clipDir()}/${cleanClipTitleOf(title)}.md`;
+  }
+  async function writeClipNote(raw) {
     const app = getApp();
-    const dir = dirOverride || clipDirOf();
-    const cleanTitle = String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim();
+    const cleanTitle = cleanClipTitleOf(raw && raw.title);
     if (!cleanTitle) {
       notice("标题为空", "error");
       return false;
     }
-    const filePath = `${dir}/${cleanTitle}.md`;
+    let filePath = clipFilePathOf(cleanTitle);
     if (app.vault.getAbstractFileByPath(filePath)) {
-      const ok = await confirmOverwrite(filePath);
-      if (!ok) return false;
+      const verdict = await confirmOverwrite(filePath);
+      if (verdict === "rename") {
+        let n = 2;
+        while (app.vault.getAbstractFileByPath(clipFilePathOf(`${cleanTitle} · ${n}`))) n++;
+        filePath = clipFilePathOf(`${cleanTitle} · ${n}`);
+      } else if (verdict !== "ok") {
+        return false;
+      }
     }
     const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
     const now = localDatetime();
@@ -17455,12 +17538,19 @@ await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
 
 ${body}`;
     try {
+      const dir = clipDir();
       const dirAf = app.vault.getAbstractFileByPath(dir);
       if (!dirAf) await app.vault.createFolder(dir);
       const existing = app.vault.getAbstractFileByPath(filePath);
       if (existing) await app.vault.modify(existing, md);
       else await app.vault.create(filePath, md);
-      notice(`已保存：${cleanTitle}`, "success");
+      notify(`已保存：${cleanTitle}`, {
+        type: "success",
+        action: {
+          label: "打开笔记",
+          onClick: () => void getApp().workspace.openLinkText(filePath, "")
+        }
+      });
       await materializeTracking(key, filePath, cleanTitle);
       return true;
     } catch (e) {
@@ -17470,11 +17560,12 @@ ${body}`;
     }
   }
   async function localizeImagesForSave(body, existing) {
-    const total = extractImageUrls(body).length;
+    const { extractImageUrls: extractImageUrls2, localizeArticleImages: localizeArticleImages2 } = await Promise.resolve().then(() => (init_image_save(), image_save_exports));
+    const total = extractImageUrls2(body).length;
     if (!total) return existing;
     const ph = total > 1 ? notify(`正在保存图片 1/${total}…`, { type: "progress" }) : null;
     try {
-      const res = await localizeArticleImages({
+      const res = await localizeArticleImages2({
         body,
         existing,
         onProgress: (done, t) => ph == null ? void 0 : ph.setMessage(`正在保存图片 ${done}/${t}…`)
@@ -17532,64 +17623,27 @@ ${body}`;
     }
   }
   function confirmOverwrite(filePath) {
-    return new Promise((resolve2) => {
-      const el = document.createElement("div");
-      Object.assign(el.style, {
-        position: "fixed",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%,-50%)",
-        background: "var(--background-primary)",
-        borderRadius: "10px",
-        padding: "20px",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.3)",
-        minWidth: "260px",
-        textAlign: "center",
-        fontFamily: "-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif",
-        zIndex: "10500"
-      });
-      el.innerHTML = `
-      <div style="margin-bottom:14px;color:var(--text-normal);font-size:14px;">已存在同名剪藏，覆盖？</div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="y" style="padding:6px 18px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:4px;cursor:pointer;">覆盖</button>
-        <button class="n" style="padding:6px 18px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);border-radius:4px;cursor:pointer;">取消</button>
-      </div>`;
-      const ov = document.createElement("div");
-      Object.assign(ov.style, { position: "fixed", inset: "0", background: "var(--background-modifier-cover)" });
-      topifyZ(ov, el);
-      document.body.appendChild(ov);
-      document.body.appendChild(el);
-      const close = (v) => {
-        ov.remove();
-        el.remove();
-        resolve2(v);
-      };
-      ov.onclick = () => close(false);
-      const h = escManager.register("clipbook-confirm", {
-        isVisible: () => ov.isConnected,
-        close: () => close(false)
-      });
-      el.querySelector(".y").onclick = () => {
-        h.unregister();
-        close(true);
-      };
-      el.querySelector(".n").onclick = () => {
-        h.unregister();
-        close(false);
-      };
-    });
+    return openFlowDialog({
+      className: "bz-clip-dialog-editorial",
+      title: "已存在同名剪藏",
+      message: `「${filePath.split("/").pop() || filePath}」已存在
+将覆盖现有摘要、标签与正文编辑`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "另存为新剪藏", value: "rename" },
+        { label: "覆盖更新", value: "ok", cta: true, danger: true }
+      ]
+    }).then((v) => v === "ok" || v === "rename" ? v : void 0);
   }
   var yamlEscape;
   var init_save = __esm({
     "src/clipbook/save.ts"() {
       init_app();
-      init_esc_manager();
-      init_dom();
       init_settings_provider();
       init_notice();
+      init_flow_dialog();
       init_constants();
       init_anchor();
-      init_image_save();
       yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
     }
   });
@@ -17721,7 +17775,7 @@ ${body}`;
       const bump = await markHandledAndBump(raw, "saved");
       const evt = buildReadEvt(raw, "saved");
       if (bump.changed) emitDomainEvent("news", { kind: "read", evt });
-      emitDomainEvent("news", { kind: "saved", evt, clipPath: `${dirOf()}/${String(raw.title || "").replace(/[\\/:*?"<>|]/g, "").trim()}.md` });
+      emitDomainEvent("news", { kind: "saved", evt, clipPath: clipFilePathOf(raw.title) });
       void flushReadingSession();
       return true;
     } catch (e) {
@@ -17754,27 +17808,70 @@ ${body}`;
   }
   async function flowMarkAllRead(raws) {
     const keys = new Set(raws.filter(Boolean).map((r) => articleKeyOf(r)));
-    if (!keys.size) return;
+    if (!keys.size) return NO_MARK_ALL;
     pauseReadingSession();
-    await enqueueNewsWrite(async () => {
+    return enqueueNewsWrite(async () => {
       const res = await readNewsData();
-      if (!res.ok || res.missing) return;
+      if (!res.ok || res.missing) return NO_MARK_ALL;
       const today = localDayKey();
       const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      if (!s.byPlatform) s.byPlatform = {};
+      if (!s.byDate) s.byDate = {};
       let bumped = 0;
+      const snapshot2 = [];
       const list = (res.data.articles || []).map((a) => {
         if (a.read === true || !keys.has(articleKeyOf(a))) return a;
         bumped++;
+        snapshot2.push({ ...a });
         const next = { ...a, read: true, state: "skipped" };
         const platform = a.platform || "未知";
         s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
         s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
         return next;
       });
-      if (!bumped) return;
+      if (!bumped) return NO_MARK_ALL;
       s.totalRead = (Number(s.totalRead) || 0) + bumped;
       s.totalSkipped = (Number(s.totalSkipped) || 0) + bumped;
       await writeNewsDataMerged({ set: { articles: list, stats: s } });
+      return { bumped, snapshot: snapshot2 };
+    });
+  }
+  async function flowUndoMarkAllRead(snapshot2) {
+    if (!snapshot2 || !snapshot2.length) return;
+    const beforeByKey = /* @__PURE__ */ new Map();
+    for (const r of snapshot2) if (r) beforeByKey.set(articleKeyOf(r), r);
+    if (!beforeByKey.size) return;
+    await enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok || res.missing) return;
+      const s = res.data.stats;
+      let touched = false;
+      const list = (res.data.articles || []).map((a) => {
+        const before = beforeByKey.get(articleKeyOf(a));
+        if (!before) return a;
+        touched = true;
+        if (s && a.read === true) {
+          s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
+          if (a.state === "saved") s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
+          else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
+          if (!s.byPlatform) s.byPlatform = {};
+          if (!s.byDate) s.byDate = {};
+          const platform = a.platform || "未知";
+          s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
+          const day = localDayKey();
+          s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
+        }
+        const restored = { ...a };
+        if (before.read === void 0) delete restored.read;
+        else restored.read = before.read;
+        if (before.state === void 0) delete restored.state;
+        else restored.state = before.state;
+        if (before.body === void 0) delete restored.body;
+        else restored.body = before.body;
+        return restored;
+      });
+      if (!touched) return;
+      await writeNewsDataMerged({ set: s ? { articles: list, stats: s } : { articles: list } });
     });
   }
   async function flowUndoHandled(rawBefore) {
@@ -17792,6 +17889,8 @@ ${body}`;
           s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
           if (a.state === "saved") s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
           else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
+          if (!s.byPlatform) s.byPlatform = {};
+          if (!s.byDate) s.byDate = {};
           const platform = a.platform || "未知";
           s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
           const day = localDayKey();
@@ -17820,15 +17919,10 @@ ${body}`;
       await writeNewsDataMerged({ set: { articles: [...list, rawBefore] } });
     });
   }
-  function dirOf() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  var curKey, curMeta, openedAt, accumMs, PENDING_READ_LOG_MAX, pendingReadLog, READ_LOG_RETENTION_MS, READ_LOG_MAX_ENTRIES, NO_BUMP;
+  var curKey, curMeta, openedAt, accumMs, PENDING_READ_LOG_MAX, pendingReadLog, READ_LOG_RETENTION_MS, READ_LOG_MAX_ENTRIES, NO_BUMP, NO_MARK_ALL;
   var init_flow = __esm({
     "src/clipbook/flow.ts"() {
       init_domain_bus();
-      init_settings_provider();
       init_news_data();
       init_constants();
       init_save();
@@ -17844,6 +17938,7 @@ ${body}`;
       READ_LOG_RETENTION_MS = 180 * 24 * 60 * 60 * 1e3;
       READ_LOG_MAX_ENTRIES = 5e3;
       NO_BUMP = { changed: false, upgraded: false, stats: null };
+      NO_MARK_ALL = { bumped: 0, snapshot: [] };
     }
   });
 
@@ -21085,11 +21180,16 @@ ${bodyText.substring(0, 6e3)}`;
   async function addUpUid(raw, box, opts) {
     const input = String(raw || "").trim();
     if (!input) return;
-    const uid = await resolveUidFromInput(input);
-    if (!uid) {
+    const res = await resolveUidFromInputDetailed(input);
+    if (res.networkFailed) {
+      notice("网络读取 B站信息失败，请检查网络后重试", "error");
+      return;
+    }
+    if (!res.uid) {
       notice("无法识别 UID，请粘贴 space.bilibili.com 内的主页链接", "error");
       return;
     }
+    const uid = res.uid;
     const outcome = await addBilibiliUp(uid);
     switch (outcome) {
       case "added":
@@ -21114,18 +21214,21 @@ ${bodyText.substring(0, 6e3)}`;
     upManagerOpen = true;
     let handle = null;
     function close() {
+      upManagerClose = null;
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
       upManagerOpen = false;
     }
-    const { mask, popup } = createOverlay({
+    const { mask, popup, registerClose } = createOverlay({
       maskId: "bz-up-manager-mask",
       popupId: "bz-up-manager-popup",
       maxWidth: 560,
       // ticket 170 方案 A：加宽让描述换行，文字不再拥挤
       onMaskClick: close
     });
+    upManagerClose = close;
+    registerClose(close);
     const header = document.createElement("div");
     header.className = "bz-settings-header";
     const title = document.createElement("h3");
@@ -21141,6 +21244,7 @@ ${bodyText.substring(0, 6e3)}`;
       close();
       throw e;
     }
+    if (!upManagerOpen) return;
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -21258,17 +21362,20 @@ ${bodyText.substring(0, 6e3)}`;
     rssManagerOpen = true;
     let handle = null;
     function close() {
+      rssManagerClose = null;
       mask.remove();
       popup.remove();
       if (handle) handle.unregister();
       rssManagerOpen = false;
     }
-    const { mask, popup } = createOverlay({
+    const { mask, popup, registerClose } = createOverlay({
       maskId: "bz-rss-manager-mask",
       popupId: "bz-rss-manager-popup",
       maxWidth: 560,
       onMaskClick: close
     });
+    rssManagerClose = close;
+    registerClose(close);
     const header = document.createElement("div");
     header.className = "bz-settings-header";
     const title = document.createElement("h3");
@@ -21284,6 +21391,7 @@ ${bodyText.substring(0, 6e3)}`;
       close();
       throw e;
     }
+    if (!rssManagerOpen) return;
     popup.appendChild(header);
     popup.appendChild(content);
     document.body.appendChild(mask);
@@ -21296,7 +21404,11 @@ ${bodyText.substring(0, 6e3)}`;
     });
     handle = handleReg;
   }
-  var upManagerOpen, rssManagerOpen;
+  function unloadManagerModals() {
+    upManagerClose == null ? void 0 : upManagerClose();
+    rssManagerClose == null ? void 0 : rssManagerClose();
+  }
+  var upManagerOpen, upManagerClose, rssManagerOpen, rssManagerClose;
   var init_news_sources_group = __esm({
     "src/clipbook/news-sources-group.ts"() {
       init_http();
@@ -21308,7 +21420,9 @@ ${bodyText.substring(0, 6e3)}`;
       init_news_fetcher();
       init_news_data();
       upManagerOpen = false;
+      upManagerClose = null;
       rssManagerOpen = false;
+      rssManagerClose = null;
     }
   });
 
@@ -21523,9 +21637,7 @@ ${bodyText.substring(0, 6e3)}`;
   var init_store = __esm({
     "src/clipbook/store.ts"() {
       init_utils();
-      init_news_data();
       init_constants();
-      init_write_queue();
       PLATFORM_DOMAIN = {
         "B站": "bilibili.com",
         "果壳科学人": "guokr.com",
@@ -21562,8 +21674,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function dayKeyOf(ts) {
     const d = new Date(ts);
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
   function buildClipReport(log, period2, now = /* @__PURE__ */ new Date()) {
     const entries = filterReadLogByPeriod(log, period2, now);
@@ -21618,6 +21729,7 @@ ${bodyText.substring(0, 6e3)}`;
   var REPORT_TOP_N;
   var init_report_stats = __esm({
     "src/clipbook/report-stats.ts"() {
+      init_str();
       REPORT_TOP_N = 5;
     }
   });
@@ -21632,7 +21744,10 @@ ${bodyText.substring(0, 6e3)}`;
           <div class="bz-panel-title">剪藏本</div>
           <div class="bz-panel-head-sp"></div>
           <div class="bz-clip-issue" data-clip-issue></div>
-          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"></div>
+          <!-- 效率#12：尾部 ✕ 一键清除（有词才显示，ui.ts syncDeskSearchClear 同步）。定位走内联随单源
+               markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的左缘绝对定位会劫持 iconSpan 产物，
+               且 mountIcons 换节点会丢内联样式；不带 display 内联值，hidden 属性才能生效 -->
+          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -21658,7 +21773,7 @@ ${bodyText.substring(0, 6e3)}`;
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -21683,14 +21798,16 @@ ${bodyText.substring(0, 6e3)}`;
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return `hsl(${h % 360}, 42%, 52%)`;
   }
-  function railItemHtml(sel, label, unread, total, icon, color, active, sub) {
+  function railItemHtml(sel, label, unread, total, icon, color, active, sub, markAllN = 0) {
     const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan(icon) : ""}</span>`;
     const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
+    const markAll = markAllN > 0 ? `<span class="bz-clip-rail-markall" data-clip-rail-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, "bz-ic--xs")}</span>` : "";
     return `
     <div class="bz-rail-item${active ? " on" : ""}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
       ${badge}
       <span class="bz-rail-name">${esc(label)}</span>
       <span class="bz-clip-lead"></span>
+      ${markAll}
       ${count}
     </div>`;
   }
@@ -21700,13 +21817,36 @@ ${bodyText.substring(0, 6e3)}`;
   function clipReportEntryHtml() {
     return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
   }
-  function tocListHtml(list, curId, timeOf) {
+  function highlightTitleHtml(title, kw) {
+    const safe = esc(title);
+    const needle = esc((kw || "").trim()).toLowerCase();
+    if (!needle) return safe;
+    const hay = safe.toLowerCase();
+    let out = "";
+    let i = 0;
+    for (; ; ) {
+      const hit = hay.indexOf(needle, i);
+      if (hit === -1) {
+        out += safe.slice(i);
+        break;
+      }
+      out += `${safe.slice(i, hit)}<mark>${safe.slice(hit, hit + needle.length)}</mark>`;
+      i = hit + needle.length;
+    }
+    return out;
+  }
+  function tocTagsHtml(tags) {
+    if (!tags.length) return "";
+    const shown = tags.slice(0, 2).map((t) => `#${esc(t)}`).join(" ");
+    return `<span class="bz-clip-item-tags">${shown}${tags.length > 2 ? " …" : ""}</span>`;
+  }
+  function tocListHtml(list, curId, timeOf, kw = "") {
     return list.map((a, i) => `
     <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
-      <span class="bz-clip-no">${String(i + 1).padStart(2, "0")}</span>
+      <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
+        <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}${tocTagsHtml(a.tags)}</div>
       </div>
     </div>`).join("");
   }
@@ -21714,7 +21854,7 @@ ${bodyText.substring(0, 6e3)}`;
     const label = kind === "read" ? "已读" : "已收";
     const lab = open ? "收起" : `${label} <b>${n}</b> 篇`;
     return `
-    <div class="bz-clip-desk-fold${open ? " on" : ""}" data-desk-fold="${kind}" role="button" aria-expanded="${open}">
+    <div class="bz-clip-desk-fold${open ? " on" : ""}" data-desk-fold="${kind}" role="button" tabindex="0" aria-expanded="${open}">
       <span class="bz-clip-desk-fold-rule"></span>
       <span class="bz-clip-desk-fold-lab">${lab}</span>
       <span class="bz-clip-desk-fold-ar"></span>
@@ -21727,6 +21867,10 @@ ${bodyText.substring(0, 6e3)}`;
   function summaryHtml(summary) {
     return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan("sparkles", "bz-ic--xs")}摘要</span>${esc(summary)}</div>`;
   }
+  function artTagsHtml(tags) {
+    if (!tags.length) return "";
+    return `<div class="bz-clip-art-tags">${tags.map((t) => `<span class="bz-clip-art-tag">${esc(t)}</span>`).join("")}</div>`;
+  }
   function readerHtml(a, opts) {
     const openNoteFoot = a.origin === "clip" && a.notePath ? `<div class="bz-clip-art-foot"><span role="button" tabindex="0" data-clip-open-note>打开笔记 ${iconSpan(ICO.external, "bz-ic--xs")}</span></div>` : "";
     return `
@@ -21735,6 +21879,7 @@ ${bodyText.substring(0, 6e3)}`;
       <span>${esc(opts.time)}</span>
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
     </div>
+    ${artTagsHtml(a.tags)}
     ${a.summary ? summaryHtml(a.summary) : ""}
     <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ""}</div>
     ${openNoteFoot}
@@ -21749,17 +21894,19 @@ ${bodyText.substring(0, 6e3)}`;
       <span class="bz-clip-mob-time">${esc(timeOf(a))}</span>
     </div>`).join("");
   }
-  function mobChHeadHtml(site, unread, readN, savedN) {
+  function mobChHeadHtml(site, unread, readN, savedN, markAllN = 0) {
     const seg = [];
     if (unread > 0) seg.push(`${unread} 未读`);
     if (readN > 0) seg.push(`${readN} 已读`);
     if (savedN > 0) seg.push(`${savedN} 已收`);
     const cntTxt = seg.join(" · ");
+    const mark = markAllN > 0 ? `<span class="bz-clip-mob-ch-mark" data-clip-ch-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, "bz-ic--xs")}</span>` : "";
     return `
     <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: "site", site }))}' title="${esc(site)}">
       <span class="bz-clip-mob-ch-name">${esc(site)}</span>
       <span class="bz-clip-mob-ch-n">${cntTxt}</span>
       <span class="bz-clip-mob-ch-rule"></span>
+      ${mark}
     </div>`;
   }
   function mobFoldHtml(kind, n, open) {
@@ -21785,7 +21932,7 @@ ${bodyText.substring(0, 6e3)}`;
       const savedBody = mobFoldBodyHtml("saved", ch.savedHtml, searching || savedOpen);
       return `
       <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN)}
+        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN, ch.markAllN || 0)}
         <div class="bz-clip-mob-ch-items">${ch.activeHtml}${foldRead}${readBody}${foldSaved}${savedBody}</div>
       </div>`;
     }).join("");
@@ -21820,22 +21967,26 @@ ${bodyText.substring(0, 6e3)}`;
   function clipReportSkeletonHtml() {
     return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
   }
-  function buildClipReportSections(d) {
+  function buildClipReportSections(d, opts) {
     return [
-      { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d) },
+      { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d, opts) },
       { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
       { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
     ];
   }
-  function clipReportOverviewHtml(d) {
+  function clipReportOverviewHtml(d, opts) {
+    const keys = (opts == null ? void 0 : opts.availableKeys) || null;
     const topRows = d.topArticles.map((a, i) => {
       const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
+      const openable = !!keys && keys.has(a.key);
+      const openBtn = openable ? `<span class="bz-clp-rep-top-open" data-clip-rep-open role="button" tabindex="0" title="打开该篇回看">打开 ${iconSpan(ICO.external, "bz-ic--xs")}</span>` : "";
       return `
-    <div class="bz-clp-rep-top-row">
+    <div class="bz-clp-rep-top-row"${openable ? ` data-clip-rep-key="${esc(a.key)}"` : ""}>
       <span class="bz-clp-rep-rank" style="background:${badge}">${i + 1}</span>
       <span class="bz-clp-rep-top-title" title="${esc(a.title)}">${esc(a.title)}</span>
       <span class="bz-clp-rep-top-src">${esc(a.src)}</span>
       <span class="bz-clp-rep-top-min">${esc(formatMinutes(a.minutes))}</span>
+      ${openBtn}
     </div>`;
     }).join("");
     return `
@@ -21911,7 +22062,8 @@ ${bodyText.substring(0, 6e3)}`;
         globe: "globe",
         folder: "folder-open",
         rotate: "rotate-ccw",
-        radio: "radio"
+        radio: "radio",
+        checks: "check-check"
       };
     }
   });
@@ -21922,7 +22074,6 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function resetClipbookState() {
     M.appRef = null;
-    M.overlay = null;
     M.open = false;
     M.articles = [];
     M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
@@ -21940,7 +22091,6 @@ ${bodyText.substring(0, 6e3)}`;
     "src/clipbook/state.ts"() {
       M = {
         appRef: null,
-        overlay: null,
         open: false,
         articles: [],
         stats: { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} },
@@ -22009,15 +22159,24 @@ ${bodyText.substring(0, 6e3)}`;
     const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
     const parse = deps.parse || ((f) => parseClipFile(f));
     const notes = [];
+    const rejectedPaths = [];
     for (const f of mdFiles2) {
       try {
         const n = parse(f);
-        if (n) notes.push(n);
+        if (n) {
+          notes.push(n);
+          continue;
+        }
+        if (f && f.path) rejectedPaths.push(String(f.path));
       } catch (e) {
+        if (f && f.path) rejectedPaths.push(String(f.path));
       }
     }
     notes.sort((a, b) => b.created - a.created);
-    return notes;
+    const result = notes;
+    result.rejected = rejectedPaths.length;
+    result.rejectedPaths = rejectedPaths;
+    return result;
   }
   var init_scan = __esm({
     "src/clipbook/scan.ts"() {
@@ -22027,10 +22186,6 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/loader.ts
-  function clipDir() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
   async function readNewsAndSidecar() {
     var _a;
     const res = await readNewsData();
@@ -22040,6 +22195,7 @@ ${bodyText.substring(0, 6e3)}`;
       M.clipUrls = /* @__PURE__ */ new Set();
       M.sidecar = emptySidecar();
       M.upInfo = {};
+      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       return { status: "missing", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
@@ -22048,6 +22204,7 @@ ${bodyText.substring(0, 6e3)}`;
       M.clipUrls = /* @__PURE__ */ new Set();
       M.sidecar = emptySidecar();
       M.upInfo = {};
+      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
       return { status: "corrupt", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
@@ -22081,6 +22238,9 @@ ${bodyText.substring(0, 6e3)}`;
     const clipNotes = await scanClipDirectory(clipDir(), {
       vault: getApp().vault
     });
+    if (clipNotes && clipNotes.rejected > 0) {
+      console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
+    }
     const clipUrls = clipUrlSet(clipNotes || []);
     M.articles = data.articles;
     M.stats = data.stats;
@@ -22102,12 +22262,28 @@ ${bodyText.substring(0, 6e3)}`;
       init_app();
       init_state();
       init_write_queue();
+      init_save();
     }
   });
 
   // src/clipbook/report-ui.ts
   function bodyEl() {
     return overlayEl ? overlayEl.querySelector("[data-clp-rep-body]") : null;
+  }
+  async function collectAvailableKeys() {
+    const keys = /* @__PURE__ */ new Set();
+    for (const a of M.articles || []) keys.add(a.id);
+    for (const n of M.clipNotes || []) {
+      if (n && n.path) keys.add("clip:" + String(n.path));
+    }
+    try {
+      const res = await readNewsData();
+      if (res.ok && !res.missing) {
+        for (const raw of res.data && res.data.articles || []) keys.add(articleKeyOf(raw));
+      }
+    } catch (e) {
+    }
+    return keys;
   }
   async function openClipbookReport(_app2) {
     reportApp = _app2 || null;
@@ -22169,7 +22345,19 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       const segBtn = t.closest("[data-period]");
-      if (segBtn) setPeriod(segBtn.dataset.period || "week");
+      if (segBtn) {
+        setPeriod(segBtn.dataset.period || "week");
+        return;
+      }
+      const openBtn = t.closest("[data-clip-rep-open]");
+      if (openBtn) {
+        const row = openBtn.closest("[data-clip-rep-key]");
+        const key = row ? row.getAttribute("data-clip-rep-key") || "" : "";
+        if (key) {
+          closeClipbookReport();
+          revealArticleByKey(key);
+        }
+      }
     });
     overlayEl.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -22177,6 +22365,17 @@ ${bodyText.substring(0, 6e3)}`;
       if (t.closest("[data-clp-rep-close]")) {
         e.preventDefault();
         closeClipbookReport();
+        return;
+      }
+      const openBtn = t.closest("[data-clip-rep-open]");
+      if (openBtn) {
+        const row = openBtn.closest("[data-clip-rep-key]");
+        const key = row ? row.getAttribute("data-clip-rep-key") || "" : "";
+        if (key) {
+          e.preventDefault();
+          closeClipbookReport();
+          revealArticleByKey(key);
+        }
       }
     });
     escHandle = escManager.register("bz-clipbook-report", {
@@ -22255,6 +22454,8 @@ ${bodyText.substring(0, 6e3)}`;
       await yieldToMainThread(YIELD_MS);
       if (!alive()) return finishAbort();
       const data = buildClipReport(logCache, period, /* @__PURE__ */ new Date());
+      const availKeys = await collectAvailableKeys();
+      if (!alive()) return finishAbort();
       if (!data.articles && !data.totalMinutes) {
         const other = period === "week" ? "month" : "week";
         const otherData = buildClipReport(logCache, other, /* @__PURE__ */ new Date());
@@ -22267,7 +22468,7 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       body.innerHTML = "";
-      for (const section of buildClipReportSections(data)) {
+      for (const section of buildClipReportSections(data, { availableKeys: availKeys })) {
         if (!alive()) return finishAbort();
         await yieldToMainThread(YIELD_MS);
         if (!alive()) return finishAbort();
@@ -22299,10 +22500,14 @@ ${bodyText.substring(0, 6e3)}`;
       init_utils();
       init_esc_manager();
       init_data();
+      init_news_data();
+      init_constants();
+      init_state();
       init_flow();
       init_report_stats();
       init_render3();
       init_clipbook();
+      init_ui3();
       overlayEl = null;
       escHandle = null;
       period = "week";
@@ -22323,6 +22528,7 @@ ${bodyText.substring(0, 6e3)}`;
   // src/clipbook/ui.ts
   var ui_exports = {};
   __export(ui_exports, {
+    __bindImgFallbackForTests: () => __bindImgFallbackForTests,
     __clipBodyCacheKeysForTests: () => __clipBodyCacheKeysForTests,
     clipbookSettingsSchema: () => clipbookSettingsSchema,
     closePanel: () => closePanel,
@@ -22330,7 +22536,9 @@ ${bodyText.substring(0, 6e3)}`;
     initPanel: () => initPanel,
     invalidateClipBodyCache: () => invalidateClipBodyCache,
     openSettings: () => openSettings,
+    refreshReadingViews: () => refreshReadingViews,
     reloadIfOpen: () => reloadIfOpen,
+    revealArticleByKey: () => revealArticleByKey,
     revealClipArticle: () => revealClipArticle,
     showPanel: () => showPanel,
     unloadPanel: () => unloadPanel
@@ -22346,30 +22554,48 @@ ${bodyText.substring(0, 6e3)}`;
       buildDom2(M.appRef);
     }
     overlayEl2.style.display = "flex";
+    topifyZ(overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
     M.open = true;
     beginSession();
-    if (dirty || !loaded) void loadIfNeeded();
-    else renderAll();
+    if (dirty || !loaded) {
+      if (!loaded && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+      void loadIfNeeded();
+    } else renderAll();
+    if (!isMobileEnv()) {
+      readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
+      deskSearchEl == null ? void 0 : deskSearchEl.focus();
+    }
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
     if (!M.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
-      if (res && res.status === "corrupt") notice("news.json 损坏，未加载（原文件已保留）", "error");
+      if (res && res.status === "corrupt") {
+        loadError = { kind: "corrupt", reason: "news.json 损坏（原文件已保留）" };
+        notifyActionError(new Error(loadError.reason), "剪藏本数据读取", { onRetry: retryLoad });
+      } else {
+        loadError = null;
+      }
       dirty = false;
       loaded = true;
       beginSession();
       renderAll();
     }).catch((e) => {
       console.error("[剪藏本] 装载失败", e);
-      notice("剪藏本数据读取失败", "error");
+      loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
+      notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
+      if (M.open) renderAll();
     }).finally(() => {
       loading = false;
       loadPromise = null;
     });
     return loadPromise;
+  }
+  function retryLoad() {
+    loadError = null;
+    void loadIfNeeded();
   }
   function reloadIfOpen() {
     dirty = true;
@@ -22395,6 +22621,7 @@ ${bodyText.substring(0, 6e3)}`;
     void flushReadingSession();
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
+    hideSelBar();
     M.open = false;
     M.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
@@ -22442,6 +22669,7 @@ ${bodyText.substring(0, 6e3)}`;
     loadPromise = null;
     dirty = false;
     loaded = false;
+    loadError = null;
     if (overlayEl2) overlayEl2.remove();
     overlayEl2 = null;
     readerEl = null;
@@ -22451,6 +22679,8 @@ ${bodyText.substring(0, 6e3)}`;
     listEl = null;
     mobListEl = null;
     mobDetailEl = null;
+    mobTitleEl = null;
+    mobSaveBtnEl = null;
     mobSearchbarEl = null;
     deskSearchEl = null;
     expandedMobArch.clear();
@@ -22459,6 +22689,7 @@ ${bodyText.substring(0, 6e3)}`;
     resetClipbookState();
   }
   function buildDom2(app) {
+    var _a;
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
     overlayEl2.style.display = "none";
@@ -22501,16 +22732,23 @@ ${bodyText.substring(0, 6e3)}`;
       if (!row) return;
       toggleSource(JSON.parse(row.dataset.src || "null"));
     });
-    deskSearchEl.addEventListener("input", () => searchDebounced());
+    deskSearchEl.addEventListener("input", () => {
+      syncDeskSearchClear();
+      searchDebounced();
+    });
+    deskSearchEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || !deskSearchEl.value.trim()) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      clearDeskSearch();
+    });
+    (_a = overlayEl2.querySelector("[data-clip-search-clear]")) == null ? void 0 : _a.addEventListener("click", () => clearDeskSearch());
     readPaneEl.addEventListener("click", (e) => {
       const t = e.target;
       const ext = t.closest("a[data-clip-ext]");
       if (ext) {
         e.preventDefault();
-        try {
-          window.open(ext.href, "_blank");
-        } catch (e2) {
-        }
+        openExternalUrl(getApp(), ext.href);
         return;
       }
       const ilink = t.closest("a.internal-link");
@@ -22528,6 +22766,13 @@ ${bodyText.substring(0, 6e3)}`;
       if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
+      var _a2, _b;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if ((e.key === "Enter" || e.key === " ") && ((_b = (_a2 = e.target).closest) == null ? void 0 : _b.call(_a2, "[data-clip-open-note]"))) {
+        e.preventDefault();
+        if (M.cur) openNote(M.cur);
+        return;
+      }
       if (e.key === "ArrowLeft" || e.key === "k") {
         e.preventDefault();
         stepArticle(-1);
@@ -22567,8 +22812,8 @@ ${bodyText.substring(0, 6e3)}`;
     });
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
-      var _a;
-      if (((_a = M.cur) == null ? void 0 : _a.st) === "saved") return;
+      var _a2;
+      if (((_a2 = M.cur) == null ? void 0 : _a2.st) === "saved") return;
       void doSave(M.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
@@ -22576,10 +22821,7 @@ ${bodyText.substring(0, 6e3)}`;
       const ext = t.closest("a[data-clip-ext]");
       if (ext) {
         e.preventDefault();
-        try {
-          window.open(ext.href, "_blank");
-        } catch (e2) {
-        }
+        openExternalUrl(getApp(), ext.href);
         return;
       }
       const ilink = t.closest("a.internal-link");
@@ -22659,6 +22901,9 @@ ${bodyText.substring(0, 6e3)}`;
     M.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
+    if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
+    const mobInput = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-input]") : null;
+    if (mobInput) mobInput.value = "";
     renderAll();
   }
   function toggleSource(src) {
@@ -22667,6 +22912,18 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function setSearchKw(kw) {
     searchKw = kw;
+  }
+  function syncDeskSearchClear() {
+    const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-search-clear]") : null;
+    if (btn) btn.hidden = !(deskSearchEl == null ? void 0 : deskSearchEl.value.trim());
+  }
+  function clearDeskSearch() {
+    if (deskSearchEl) deskSearchEl.value = "";
+    setSearchKw("");
+    syncDeskSearchClear();
+    renderList();
+    renderRail();
+    deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll() {
     if (!M.open) return;
@@ -22758,11 +23015,12 @@ ${bodyText.substring(0, 6e3)}`;
     deskFoldOpen.clear();
     deskFoldTouched.clear();
     expandedMobArch.clear();
+    readScrollMemo.clear();
   }
   function matchesSearch(a) {
     const kw = (searchKw || "").toLowerCase();
     if (!kw) return true;
-    return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
+    return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.body.toLowerCase().includes(kw) || a.url.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
   }
   function renderRail() {
     var _a, _b, _c, _d;
@@ -22771,17 +23029,18 @@ ${bodyText.substring(0, 6e3)}`;
     const clipNotes = M.clipNotes || [];
     const countOf = (source2) => queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source2, M.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M.sel.kind === "all", "");
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M.sel.kind === "all", "", railUnreadN({ kind: "all" }));
     for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
       const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: "site", site: row.site }, M.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
       const active = M.sel.kind === "site" && M.sel.site === row.site;
-      html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active, "");
+      const markN = railUnreadN({ kind: "site", site: row.site });
+      html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active, "", markN);
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
-      if (!a.read && a.platform === "B站" && a.author) {
+      if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
         const backfilled = (_b = (_a = M.upInfo) == null ? void 0 : _a[uid]) == null ? void 0 : _b.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
@@ -22791,7 +23050,8 @@ ${bodyText.substring(0, 6e3)}`;
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
       const active = M.sel.kind === "inbox" && M.sel.platform === "B站" && M.sel.up === uid;
-      html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active, name.slice(0, 1));
+      const markN = railUnreadN({ kind: "inbox", platform: "B站", up: uid });
+      html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active, name.slice(0, 1), markN);
     }
     const clipActive = M.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
@@ -22814,6 +23074,39 @@ ${bodyText.substring(0, 6e3)}`;
       const source2 = sel.kind === "clip" ? { kind: "clip" } : sel.kind === "inbox" ? { kind: "inbox", platform: String(sel.platform || ""), up: sel.up ? String(sel.up) : void 0 } : sel.kind === "site" ? { kind: "site", site: String(sel.site || "") } : { kind: "all" };
       const actions = buildRailActions(String(row.title || ""), source2);
       if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ""), menuClass: "bz-clip-menu-editorial" });
+      const markBtn = row.querySelector("[data-clip-rail-markall]");
+      if (markBtn && actions.length) {
+        markBtn.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          actions[0].onClick();
+        });
+      }
+    });
+  }
+  function railUnreadN(source2) {
+    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source2, M.upInfo).filter((a) => a.origin === "news").length;
+  }
+  function revealArticleByKey(key) {
+    const k = String(key || "");
+    if (!k) return;
+    if (k.startsWith("clip:")) {
+      void revealClipArticle(k.slice("clip:".length));
+      return;
+    }
+    const trySelect = () => {
+      const hit = M.articles.find((x) => articleKeyOf(x) === k);
+      if (!hit) return false;
+      if (!M.open) showPanel();
+      selectSource({ kind: "all" });
+      selectArticle(articleKeyOf(hit));
+      return true;
+    };
+    if (trySelect()) return;
+    showPanel();
+    void loadIfNeeded().then(() => {
+      trySelect();
+    }).catch(() => {
     });
   }
   function buildRailActions(label, source2) {
@@ -22838,12 +23131,31 @@ ${bodyText.substring(0, 6e3)}`;
       ]
     });
     if (ok !== "ok") return;
-    await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
-    notice(`已把 ${items.length} 篇标为已读`, "success");
+    const { bumped, snapshot: snapshot2 } = await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
+    if (!bumped) {
+      await refreshAfterAction();
+      return;
+    }
+    notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
+      await flowUndoMarkAllRead(snapshot2);
+      notice("已撤销：条目恢复未读", "success");
+      await refreshAfterAction();
+    })());
     await refreshAfterAction();
   }
   function renderList() {
     if (!listEl) return;
+    if (loadError) {
+      listEl.innerHTML = "";
+      listEl.appendChild(uiEmpty({
+        icon: "circle-alert",
+        title: `剪藏本数据读取失败：${loadError.reason}`,
+        actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
+      }));
+      M.cur = null;
+      if (readerEl) renderReader();
+      return;
+    }
     const src = currentSrc();
     if (src.kind === "clip") {
       const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
@@ -22858,7 +23170,7 @@ ${bodyText.substring(0, 6e3)}`;
         M.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime2(a.timeTs));
+      listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
       M.list = list;
       bindItemMenus();
       return;
@@ -22886,23 +23198,23 @@ ${bodyText.substring(0, 6e3)}`;
         M.list = [];
         return;
       }
-      listEl.innerHTML = tocListHtml(hit, curId, timeOf);
+      listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
       M.list = hit;
       bindItemMenus();
       return;
     }
     const b = dirFor(src);
     const snapUnreadN = b.unread.length;
-    let html = tocListHtml(b.unread, curId, timeOf);
+    let html = tocListHtml(b.unread, curId, timeOf, searchKw);
     if (b.read.length) {
       const open = deskFoldIsOpen("read", b.read.length, b.saved.length, snapUnreadN);
       html += deskFoldRowHtml("read", b.read.length, open);
-      html += foldBodyHtml(tocListHtml(b.read, curId, timeOf), open);
+      html += foldBodyHtml(tocListHtml(b.read, curId, timeOf, searchKw), open);
     }
     if (b.saved.length) {
       const open = deskFoldIsOpen("saved", b.saved.length, b.saved.length, snapUnreadN);
       html += deskFoldRowHtml("saved", b.saved.length, open);
-      html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf), open);
+      html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
     M.list = flat;
@@ -22928,12 +23240,19 @@ ${bodyText.substring(0, 6e3)}`;
       card.addEventListener("click", (e) => {
         if (e.target && e.target.closest(".bz-item-sheet")) return;
         selectArticle(art.id);
+        if (!isMobileEnv()) readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
       });
     });
     listEl.querySelectorAll("[data-desk-fold]").forEach((row) => {
-      row.addEventListener("click", () => {
+      const toggle = () => {
         const kind = row.getAttribute("data-desk-fold") || "saved";
         toggleDeskFold(kind);
+      };
+      row.addEventListener("click", toggle);
+      row.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        toggle();
       });
     });
   }
@@ -22992,7 +23311,11 @@ ${bodyText.substring(0, 6e3)}`;
   function bindImgFallback(container) {
     container.querySelectorAll("img").forEach((img) => {
       img.addEventListener("error", () => img.remove(), { once: true });
+      if (img.complete && img.naturalWidth === 0) img.remove();
     });
+  }
+  function __bindImgFallbackForTests(container) {
+    bindImgFallback(container);
   }
   function renderReader() {
     if (!readerEl) return;
@@ -23118,12 +23441,27 @@ ${bodyText.substring(0, 6e3)}`;
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
     const changed = !M.cur || M.cur.id !== a.id;
+    const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
+    if (changed && M.cur) {
+      const sc = readScroller();
+      if (sc) {
+        if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
+          const oldest = readScrollMemo.keys().next().value;
+          if (oldest !== void 0) readScrollMemo.delete(oldest);
+        }
+        readScrollMemo.set(M.cur.id, sc.scrollTop);
+      }
+    }
     M.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
     renderMobDetail();
-    if (changed) resetReadScroll();
+    if (changed) {
+      const sc = readScroller();
+      if (sc) sc.scrollTop = readScrollMemo.get(a.id) || 0;
+    }
+    if (!isMobileEnv()) readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
   }
   async function doSave(a) {
     if (!a) return;
@@ -23136,7 +23474,13 @@ ${bodyText.substring(0, 6e3)}`;
     if (!a || a.origin !== "news") return;
     if (a.st !== "unread") return;
     const rawBefore = await rawBeforeFromDisk(a);
-    const res = await flowMarkRead(a);
+    let res;
+    try {
+      res = await flowMarkRead(a);
+    } catch (e) {
+      notifySaveError(e, "标记已读");
+      return;
+    }
     if (!res.changed) {
       await refreshAfterAction();
       return;
@@ -23155,24 +23499,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { ...a.raw || {} };
   }
   async function undoMarkRead(rawBefore) {
-    await flowUndoHandled(rawBefore);
+    try {
+      await flowUndoHandled(rawBefore);
+    } catch (e) {
+      notifySaveError(e, "撤销");
+      return;
+    }
     notice("已撤销：条目恢复未读", "success");
     await refreshAfterAction();
   }
   async function deleteNewsItem(a) {
-    const ok = await openFlowDialog({
-      className: "bz-clip-dialog-editorial",
-      title: "删除条目",
-      message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        // danger（issue 291 评审补）：删除类主动作标 danger → 主钮中性底 + 红字（手册 §9/§10）
-        { label: "删除", value: "ok", cta: true, danger: true }
-      ]
-    });
-    if (ok !== "ok") return;
     const rawBefore = { ...a.raw || {} };
-    await flowDeleteNews(a);
+    try {
+      await flowDeleteNews(a);
+    } catch (e) {
+      notifySaveError(e, "删除条目");
+      return;
+    }
     void clearArticleTracking(a.id).catch(() => {
     });
     notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
@@ -23184,17 +23527,6 @@ ${bodyText.substring(0, 6e3)}`;
     await refreshAfterAction();
   }
   async function deleteClipNote(a) {
-    const ok = await openFlowDialog({
-      className: "bz-clip-dialog-editorial",
-      title: "删除剪藏",
-      message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        // danger（issue 291 评审补）：删除剪藏确认同口径
-        { label: "删除", value: "ok", cta: true, danger: true }
-      ]
-    });
-    if (ok !== "ok") return;
     const note = a.note;
     if (note && note.file) {
       try {
@@ -23219,19 +23551,27 @@ ${bodyText.substring(0, 6e3)}`;
         notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
         await refreshAfterAction();
       } catch (e) {
-        notice("删除失败，请检查文件权限", "error");
+        notifyActionError(e, "删除剪藏");
       }
     }
   }
   async function undoTrashClip(path, content) {
     if (!path) return;
     try {
+      const dir = path.includes("/") ? path.slice(0, path.lastIndexOf("/")) : "";
+      if (dir && !getApp().vault.getAbstractFileByPath(dir)) {
+        try {
+          await getApp().vault.createFolder(dir);
+        } catch (e) {
+        }
+      }
       await getApp().vault.create(path, content);
       clipBodyCache.delete(path);
       notice("已撤销删除：剪藏已恢复", "success");
       await refreshAfterAction();
     } catch (e) {
-      notice("撤销失败：原路径已存在同名文件", "error");
+      const msg = e instanceof Error ? e.message : String(e);
+      notice(/exist|已存在/i.test(msg) ? "撤销失败：原路径已存在同名文件" : `撤销失败：${msg}，请重试`, "error");
     }
   }
   function openNote(a) {
@@ -23244,7 +23584,7 @@ ${bodyText.substring(0, 6e3)}`;
       await navigator.clipboard.writeText(text);
       notice(okMsg, "success");
     } catch (e) {
-      notice("复制失败", "error");
+      notifyActionError(e, "复制");
     }
   }
   async function refreshAfterAction() {
@@ -23314,6 +23654,7 @@ ${bodyText.substring(0, 6e3)}`;
       const s = String(n && n.site || "").trim() || "未知";
       siteSet.add(s);
     }
+    const siteActions = /* @__PURE__ */ new Map();
     for (const site of siteSet) {
       const snap = snapDirFor({ kind: "site", site });
       const b = resolveSnap(snap, { kind: "site", site });
@@ -23322,12 +23663,15 @@ ${bodyText.substring(0, 6e3)}`;
       const saved = b.saved.filter(matchesSearch);
       if (!unread.length && !read.length && !saved.length) continue;
       const unreadN = unread.filter((a) => a.st === "unread").length;
+      const markN = railUnreadN({ kind: "site", site });
+      if (markN > 0) siteActions.set(site, buildRailActions(site, { kind: "site", site }));
       chapters.push({
         site,
         unread: unreadN,
         activeN: unread.length,
         readN: read.length,
         savedN: saved.length,
+        markAllN: markN,
         activeHtml: mobListHtml(unread, timeOf),
         readHtml: read.length ? mobListHtml(read, timeOf) : "",
         savedHtml: saved.length ? mobListHtml(saved, timeOf) : ""
@@ -23345,6 +23689,7 @@ ${bodyText.substring(0, 6e3)}`;
       return;
     }
     mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
+    mountIcons(mobListEl);
     mobListEl.querySelectorAll("[data-id]").forEach((card) => {
       const art = byId.get(String(card.dataset.id || ""));
       if (!art) return;
@@ -23358,8 +23703,17 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       if (!sel || sel.kind !== "site") return;
-      const actions = buildRailActions(String(sel.site), { kind: "site", site: String(sel.site) });
-      if (actions.length) attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: "bz-clip-menu-editorial" });
+      const actions = siteActions.get(String(sel.site)) || [];
+      if (!actions.length) return;
+      attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: "bz-clip-menu-editorial" });
+      const mark = hd.querySelector("[data-clip-ch-markall]");
+      if (mark) {
+        mark.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          actions[0].onClick();
+        });
+      }
     });
   }
   function toggleMobArch(foldEl) {
@@ -23648,10 +24002,74 @@ ${bodyText.substring(0, 6e3)}`;
     if (kind === "term") fn(getApp(), snap.text, { source: source2, onCreated });
     else fn(getApp(), { text: snap.text, source: source2, onCreated });
   }
+  function refreshReaderBodyInPlace(a) {
+    if (!readerEl || readerEl.dataset.clipReaderId !== a.id) {
+      renderReader();
+      return;
+    }
+    const md = readerEl.querySelector("[data-clip-md]");
+    if (!md) {
+      renderReader();
+      return;
+    }
+    let body = "";
+    let note = "";
+    if (a.origin === "clip") {
+      const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
+      if (cached === void 0) {
+        renderReader();
+        return;
+      }
+      body = cached;
+      if (!body) note = "（笔记暂无正文）";
+    } else {
+      body = transformBodyForRead(a, a.body);
+      if (!body) note = "正文已清空（已处理条目）";
+    }
+    md.innerHTML = "";
+    if (note) {
+      const p = document.createElement("p");
+      p.className = "dim";
+      p.textContent = note;
+      md.appendChild(p);
+      return;
+    }
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
+  }
+  function refreshMobBodyInPlace(a) {
+    if (!mobDetailEl || !M.mobDetailOpen) return;
+    const md = mobDetailEl.querySelector("[data-clip-mob-md]");
+    if (!md) {
+      renderMobDetail();
+      return;
+    }
+    let mdBody = "";
+    let note = "";
+    if (a.origin === "clip") {
+      const cached = a.notePath ? clipBodyCache.get(a.notePath) : void 0;
+      if (cached === void 0) {
+        renderMobDetail();
+        return;
+      }
+      mdBody = cached;
+      if (!mdBody) note = "（笔记暂无正文）";
+    } else {
+      mdBody = transformBodyForRead(a, a.body);
+      if (!mdBody) note = "正文已清空";
+    }
+    md.innerHTML = "";
+    if (note) {
+      const p = document.createElement("p");
+      p.textContent = note;
+      md.appendChild(p);
+      return;
+    }
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+  }
   function refreshReadingViews(articleId) {
     if (!M.cur || M.cur.id !== articleId) return;
-    renderReader();
-    if (M.mobDetailOpen) renderMobDetail();
+    refreshReaderBodyInPlace(M.cur);
+    if (M.mobDetailOpen) refreshMobBodyInPlace(M.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -23674,7 +24092,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     } catch (e) {
       console.warn("[剪藏本] 划词锚定写入失败", e);
-      notice("锚定写入失败", "error");
+      notifyActionError(e, "锚定写入");
     }
   }
   async function upgradeSourceFor(notePath, a) {
@@ -23748,7 +24166,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
-      notice("图版来源登记失败", "error");
+      notifyActionError(e, "图版来源登记");
     }
   }
   function knowledgeDir() {
@@ -23900,7 +24318,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -23909,6 +24327,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_ui2();
       init_utils();
       init_mobile();
+      init_dom();
       init_esc_manager();
       init_item_actions();
       init_flow_dialog();
@@ -23946,6 +24365,9 @@ ${bodyText.substring(0, 6e3)}`;
       loading = false;
       dirty = false;
       loaded = false;
+      loadError = null;
+      readScrollMemo = /* @__PURE__ */ new Map();
+      READ_SCROLL_MEMO_MAX = 200;
       SEARCH_DEBOUNCE_MS = 180;
       PANEL_MIN_W = 760;
       PANEL_MIN_H = 520;
@@ -24029,14 +24451,10 @@ ${bodyText.substring(0, 6e3)}`;
     data.pendingSource = pendingSource;
     return true;
   }
-  function clipDirOf2() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
   function getWatchedFolders2() {
     const s = tryGetSettings();
     const kb = String(s && s.knowledgeDirectory || "文献盒").trim().replace(/\\/g, "/").replace(/^\/+|\/+$/g, "") || "文献盒";
-    return [kb, clipDirOf2()];
+    return [kb, clipDir()];
   }
   async function referencedByClipbook(path) {
     if (!path) return false;
@@ -24049,11 +24467,18 @@ ${bodyText.substring(0, 6e3)}`;
       return false;
     }
   }
+  function ensureFileSync2(app) {
+    agent2.ensure(app);
+  }
+  function unloadFileSync2() {
+    agent2.unload();
+  }
   var agent2;
   var init_file_sync3 = __esm({
     "src/clipbook/file-sync.ts"() {
       init_settings_provider();
       init_file_sync();
+      init_save();
       init_data();
       agent2 = createFileSync({
         logTag: "[clipbook-file-sync]",
@@ -24073,6 +24498,15 @@ ${bodyText.substring(0, 6e3)}`;
   });
 
   // src/clipbook/index.ts
+  var clipbook_exports = {};
+  __export(clipbook_exports, {
+    ensureClipbookFileSync: () => ensureFileSync2,
+    markAllUnreadRead: () => markAllUnreadRead,
+    openClipbook: () => openClipbook,
+    openClipbookReport: () => openClipbookReport,
+    unloadClipbook: () => unloadClipbook,
+    unloadClipbookFileSync: () => unloadFileSync2
+  });
   function openClipbook(app) {
     if (!initialized3) {
       initialized3 = true;
@@ -24084,52 +24518,94 @@ ${bodyText.substring(0, 6e3)}`;
     }
     void maybeFetchNews();
   }
+  async function markAllUnreadRead() {
+    const res = await readNewsData();
+    if (!res.ok || res.missing) {
+      notice("读不到未读流（news.json）", "warning");
+      return;
+    }
+    const unread = (res.data.articles || []).filter((a) => a && a.read !== true);
+    if (!unread.length) {
+      notice("未读流已经空了");
+      return;
+    }
+    const ok = await openFlowDialog({
+      className: "bz-clip-dialog-editorial",
+      title: "未读全部标为已读",
+      message: `将把未读流里的 ${unread.length} 篇全部标为已读。`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: `全部已读（${unread.length} 篇）`, value: "ok", cta: true }
+      ]
+    });
+    if (ok !== "ok") return;
+    const { bumped, snapshot: snapshot2 } = await flowMarkAllRead(unread);
+    if (!bumped) {
+      void reloadIfOpen();
+      return;
+    }
+    notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
+      await flowUndoMarkAllRead(snapshot2);
+      notice("已撤销：条目恢复未读", "success");
+      void reloadIfOpen();
+    })());
+    void reloadIfOpen();
+  }
   function unloadClipbook() {
+    var _a;
     unloadClipbookReport();
+    unloadManagerModals();
+    for (const id of ["bz-up-manager-mask", "bz-up-manager-popup", "bz-rss-manager-mask", "bz-rss-manager-popup"]) {
+      (_a = document.getElementById(id)) == null ? void 0 : _a.remove();
+    }
     if (!initialized3) return;
     initialized3 = false;
     unloadPanel();
     autoRefreshRegistered = false;
+    for (const off of autoRefreshUnsubs.splice(0)) off();
+    setNewsFetchDoneListener(() => {
+    });
   }
   function registerAutoRefresh(app) {
     if (autoRefreshRegistered) return;
     autoRefreshRegistered = true;
     let timer = null;
-    const dir = () => {
-      const s = tryGetSettings();
-      return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-    };
     const schedule = (path, stalePath) => {
+      if (!path && !stalePath) return;
       if (path) invalidateClipBodyCache(path);
       if (stalePath) invalidateClipBodyCache(stalePath);
-      const d = dir();
+      const d = clipDir();
       const inDir2 = (p) => !!p && p.startsWith(d + "/");
-      if (path && !inDir2(path) && !inDir2(stalePath)) return;
+      if (!inDir2(path) && !inDir2(stalePath)) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         void reloadIfOpen();
       }, 300);
     };
-    onDomainEvent("clipping:file-created", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-modified", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-deleted", (e) => schedule(e && e.path));
-    onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath, e && e.oldPath));
+    autoRefreshUnsubs = [
+      onDomainEvent("clipping:file-created", (e) => schedule(e && e.path)),
+      onDomainEvent("clipping:file-modified", (e) => schedule(e && e.path)),
+      onDomainEvent("clipping:file-deleted", (e) => schedule(e && e.path)),
+      onDomainEvent("clipping:file-renamed", (e) => schedule(e && e.newPath, e && e.oldPath))
+    ];
   }
-  var initialized3, autoRefreshRegistered;
+  var initialized3, autoRefreshRegistered, autoRefreshUnsubs;
   var init_clipbook = __esm({
     "src/clipbook/index.ts"() {
-      init_settings_provider();
       init_domain_bus();
       init_notice();
       init_flow_dialog();
       init_news_data();
       init_news_fetcher();
       init_flow();
+      init_save();
       init_ui3();
       init_report_ui();
+      init_news_sources_group();
       init_file_sync3();
       initialized3 = false;
       autoRefreshRegistered = false;
+      autoRefreshUnsubs = [];
     }
   });
 

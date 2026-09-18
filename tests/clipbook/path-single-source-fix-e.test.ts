@@ -29,7 +29,7 @@ import { flowSave } from '../../src/clipbook/flow';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 
 /** 【期望配置】见文件头「可配置期望约定」：现状 false（钉旧基线行为），批 A 合并后翻转 */
-const CLIPDIR_SINGLE_SOURCE = false;
+const CLIPDIR_SINGLE_SOURCE = true; // 批 A 已合并：clipDir 单源五面一致
 
 vi.mock('../../src/knowledge', () => ({
   openKnowledgeAddTask: vi.fn(),
@@ -75,7 +75,8 @@ function boot(files: Record<string, string> = {}): MockVault {
 /** 覆盖确认是否在 DOM（现状自绘遮罩与迁移后 flow-dialog 的判定交集：主动作「覆盖」按钮） */
 function findOverwriteConfirm(): HTMLButtonElement | null {
   const btns = [...document.querySelectorAll('button')] as HTMLButtonElement[];
-  return btns.find((b) => (b.textContent || '').trim() === '覆盖') || null;
+  // 批 A 迁移 flow-dialog 后主动作文案为「覆盖更新」（自绘壳时代为「覆盖」）：取交集 = 含「覆盖」
+  return btns.find((b) => (b.textContent || '').includes('覆盖')) || null;
 }
 
 /** 剥斜杠目录的扫描视图（loader.clipDir 口径）：

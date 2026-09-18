@@ -26,7 +26,7 @@ import {
   writeBilibiliMaxItems, addRssFeed, removeRssFeed, writeFetchInterval, type DataSourceState,
 } from './news-source-settings';
 import { fetchNowNews, notifyManualFetchResult, localDatetime } from './news-fetcher';
-import { resolveUidFromInput, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { resolveUidFromInputDetailed, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, type BilibiliUpInfo, type RssFeed } from './news-data';
 
 /** 状态盒（构建期快照的可变副本）：三函数绑定 get/set 读它，save 经数据层落盘 */
 type DataSourceBox = DataSourceState;
@@ -238,11 +238,17 @@ function upDisplayName(uid: string, info?: BilibiliUpInfo): string {
 async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
   const input = String(raw || '').trim();
   if (!input) return;
-  const uid = await resolveUidFromInput(input);
-  if (!uid) {
+  // 新-8：网络失败与「无法识别」分文案（resolveUidFromInputDetailed 由批 B 落地）
+  const res = await resolveUidFromInputDetailed(input);
+  if (res.networkFailed) {
+    notice('网络读取 B站信息失败，请检查网络后重试', 'error');
+    return;
+  }
+  if (!res.uid) {
     notice('无法识别 UID，请粘贴 space.bilibili.com 内的主页链接', 'error');
     return;
   }
+  const uid = res.uid;
   // C4：数据层结果四分（已写入/已存在/入参非法/读盘失败），各给准确文案——不再把读盘失败说成「已在名单中」
   const outcome = await addBilibiliUp(uid);
   switch (outcome) {

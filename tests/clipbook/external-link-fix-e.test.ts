@@ -20,7 +20,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 /** 【期望配置】见文件头「可配置期望约定」：现状 false（钉旧基线行为），批 A/D 合并后翻转 */
-const USES_OPEN_EXTERNAL_URL = false;
+const USES_OPEN_EXTERNAL_URL = true; // 主线程收口已合并：外链走 core openExternalUrl
 
 const UI_TS = readFileSync(fileURLToPath(new URL('../../src/clipbook/ui.ts', import.meta.url)), 'utf8');
 

@@ -23,7 +23,7 @@ import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { flowMarkAllRead, flowUndoHandled } from '../../src/clipbook/flow';
 
 /** 【期望配置】见文件头「可配置期望约定」：现状 false（钉旧基线行为），批 B 合并后翻转 */
-const STATS_BUCKET_GUARD = false;
+const STATS_BUCKET_GUARD = true; // 批 B 已合并：stats 子桶守卫
 
 const RAW = (over: Record<string, unknown> = {}) => ({
   platform: '果壳科学人',
@@ -68,7 +68,7 @@ describe('T9 stats 子段守卫（开关 STATS_BUCKET_GUARD，批 B / clipbook-a
 
     if (STATS_BUCKET_GUARD) {
       // 修复后（必须）：补建桶守卫对齐 bumpStats——不抛且落盘
-      await expect(flowMarkAllRead(diskJson(vault).articles)).resolves.toBeUndefined();
+      await expect(flowMarkAllRead(diskJson(vault).articles)).resolves.toBeDefined(); // 批 B 返回 {bumped, snapshot}，此处只锁「不抛」
       await drainNewsWritesForTests();
       const disk = diskJson(vault);
       expect(disk.articles.every((a: any) => a.read === true)).toBe(true);
@@ -92,11 +92,13 @@ describe('T9 stats 子段守卫（开关 STATS_BUCKET_GUARD，批 B / clipbook-a
       { totalRead: 1, totalSaved: 0, totalSkipped: 1 }, // 缺 byPlatform/byDate
       [RAW({ read: true, state: 'skipped' })]
     );
-    const rawBefore = { ...diskJson(vault).articles[0] };
+    const rawBefore = { ...diskJson(vault).articles[0], read: undefined, state: undefined }; // C32 语义：rawBefore=「处理前」快照（read/state 未置）
+    delete rawBefore.read;
+    delete rawBefore.state;
 
     if (STATS_BUCKET_GUARD) {
       // 修复后（必须）：守卫在位——撤销不抛，统计回退 + 补桶
-      await expect(flowUndoHandled(rawBefore)).resolves.toBeUndefined();
+      await flowUndoHandled(rawBefore); // 返回值形态不锁（flowUndoHandled 无返回值），只锁「不抛」
       await drainNewsWritesForTests();
       const disk = diskJson(vault);
       expect(disk.articles[0].read).toBeUndefined();

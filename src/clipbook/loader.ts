@@ -42,6 +42,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
     M.clipUrls = new Set();
     M.sidecar = emptySidecar();
     M.upInfo = {};
+    M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }; // CB9：missing 分支复位统计脚注（state.ts 同款字面量），不留上一会话旧值
     return { status: 'missing', articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
   }
   if (!res.ok) {
@@ -50,6 +51,7 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
     M.clipUrls = new Set();
     M.sidecar = emptySidecar();
     M.upInfo = {};
+    M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} }; // CB9：corrupt 分支复位统计脚注
     return { status: 'corrupt', articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
   }
 

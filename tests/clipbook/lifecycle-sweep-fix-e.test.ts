@@ -28,8 +28,8 @@ import { dataSourceGroupRows } from '../../src/clipbook/news-sources-group';
 import type { SettingsRow } from '../../src/core/settings-schema';
 
 /** 【期望配置】见文件头「可配置期望约定」：现状全部 false（钉旧基线行为），批 A 合并后翻转 */
-const OVERLAY_SWEEP_ON_UNLOAD = false; // unloadClipbook 收口三类自建浮层（批 A，A1）
-const UNSUBSCRIBE_ON_UNLOAD = false; // 域事件订阅随 unloadClipbook 退订（批 A，A7）
+const OVERLAY_SWEEP_ON_UNLOAD = true; // 批 A 已合并：unloadClipbook 收口三类自建浮层（A1）
+const UNSUBSCRIBE_ON_UNLOAD = true; // 批 A 已合并：域事件订阅随 unloadClipbook 退订（A7）
 
 /** 旁路记录：域总线订阅表（真实总线委托 + 记账；T6 断言订阅叠加用） */
 const mocks = vi.hoisted(() => ({
@@ -47,8 +47,14 @@ vi.mock('../../src/core/domain-bus', async (importOriginal) => {
     ...actual,
     onDomainEvent: (((channel: string, handler: (e: unknown) => void) => {
       const off = actual.onDomainEvent(channel as never, handler as never);
-      mocks.subs.push({ channel, off });
-      return off;
+      const rec = { channel, off };
+      mocks.subs.push(rec);
+      // T6 探针：记账随真实退订摘除——数组反映「当前活跃订阅」而非累计注册数
+      return () => {
+        const i = mocks.subs.indexOf(rec);
+        if (i >= 0) mocks.subs.splice(i, 1);
+        off();
+      };
     }) as typeof actual.onDomainEvent),
   };
 });
@@ -175,7 +181,7 @@ describe('T6 域事件退订闭环（开关 UNSUBSCRIBE_ON_UNLOAD，批 A / clip
     const after = mocks.subs.filter((s) => s.channel.startsWith('clipping:file-')).length;
     const delta = after - before;
     if (UNSUBSCRIBE_ON_UNLOAD) {
-      expect(delta).toBe(4); // 修复后（必须）：每轮 4 订阅、卸载即退订——循环不叠加
+      expect(delta).toBe(0); // 修复后（必须）：每轮 4 订阅、卸载即退订——循环结束总线零残留
     } else {
       expect(delta).toBe(12); // 现状（钉死）：3 轮 × 4 全部滞留总线
     }
