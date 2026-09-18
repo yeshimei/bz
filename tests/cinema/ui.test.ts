@@ -268,6 +268,48 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.items.find((i) => i.name === '星际穿越')!.rating).toBe(7.7);
   });
 
+  // 回归（memo item-1789722741019）：编辑改「想看」保存后弹回在看——想看曾被收集成 null，
+  // persistItem `?? 0` 兜底写 0（=在看），落盘自动刷新重解析当场翻回
+  it('编辑已看条目改「想看」→ 落盘评分 -1（不再写 0 弹回在看）；重建解析仍想看 + status 域事件', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const evts: any[] = [];
+    const offMovie = onDomainEvent('movie', (e: any) => evts.push(e));
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="想看"]'));
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('已保存'));
+    const item = M.items.find((i) => i.name === '星际穿越')!;
+    expect(item.status).toBe(0); // STATUS_WANT
+    expect(item.rating).toBe(-1);
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('评分: -1');
+    // 落盘触发自动刷新重解析（同链路 rebuildItems）：评分 -1 → 想看，不再弹回在看
+    rebuildItems(app);
+    expect(M.items.find((i) => i.name === '星际穿越')!.status).toBe(0);
+    // 状态流转域事件语义保留（saveEdit 补发，小橘行为流承接）
+    expect(evts).toContainEqual(expect.objectContaining({ kind: 'status', name: '星际穿越', from: 'watched', to: 'want' }));
+    offMovie();
+  });
+
+  it('新增「想看」条目 → 落盘评分 -1（不再写 0 的在看）；重建解析仍想看', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    expect(form.querySelector('[data-f-st="想看"]')?.classList.contains('is-on')).toBe(true); // 默认想看
+    (form.querySelector('.j-name') as HTMLInputElement).value = '想看新片';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《想看新片》.md')).toBe(true));
+    expect(vault.files.get('我的/影视/《想看新片》.md')).toContain('评分: -1');
+    expect(M.items.find((i) => i.name === '想看新片')!.status).toBe(0); // STATUS_WANT
+    rebuildItems(app);
+    expect(M.items.find((i) => i.name === '想看新片')!.status).toBe(0); // 重解析仍是想看
+  });
+
   it('编辑改名 → 文件真实重命名落盘（旧路径消失、内存指向新文件）', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
