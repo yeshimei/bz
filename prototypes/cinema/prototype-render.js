@@ -1,4 +1,4 @@
-/* 源指纹 ab88585a2d3d82ad · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 00bb20bb09809bc2 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -32,7 +32,6 @@ var BZR_cinema = (() => {
     cardHtml: () => cardHtml,
     cardStatus: () => cardStatus,
     chipsHtml: () => chipsHtml,
-    confirmModalHtml: () => confirmModalHtml,
     detailModalHtml: () => detailModalHtml,
     doubanSearchUrl: () => doubanSearchUrl,
     emptyPageHtml: () => emptyPageHtml,
@@ -303,15 +302,6 @@ var BZR_cinema = (() => {
       <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>
     <div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>
     <div class="dm-actions"><button class="dm-btn gold j-save">${editing ? "保存" : "添加"}</button></div>
-  </div>`;
-  }
-  function confirmModalHtml(item) {
-    return `<div class="cn-modal cn-confirm" style="max-width:320px;width:100%">
-    <span class="cn-confirm-ic">${iconSpan(ICON.confirm)}</span>
-    <div class="cn-confirm-title">删除影视</div>
-    <p>确定删除「${esc(item.name)}」吗？</p>
-    <div class="cn-confirm-sub">将移入系统回收站，可在回收站恢复</div>
-    <div class="dm-actions"><button class="dm-btn j-cancel">取消</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
   }
   function aiRecName(r) {

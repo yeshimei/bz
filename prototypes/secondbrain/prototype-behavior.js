@@ -1,4 +1,4 @@
-/* 源指纹 78f21a418c43bfd9 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 dabc94edcd53f2cc · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -5587,6 +5587,7 @@ var BZW_secondbrain = (() => {
 
   // src/core/flow-dialog.ts
   function buildFlowDialogParts(title, message, actions) {
+    var _a2;
     let buttons;
     if (actions.length === 2) {
       buttons = [
@@ -5602,12 +5603,18 @@ var BZW_secondbrain = (() => {
       });
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
   }
   function openFlowDialog(opts) {
     if (!opts.actions || opts.actions.length === 0) {

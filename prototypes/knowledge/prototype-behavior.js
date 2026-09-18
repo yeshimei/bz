@@ -1,4 +1,4 @@
-/* 源指纹 dafee7edc59b1eb4 · 仓内输入 39 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 784803293b0d1f38 · 仓内输入 39 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -6682,6 +6682,7 @@ var BZW_knowledge = (() => {
   var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
   var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
   function buildFlowDialogParts(title, message, actions) {
+    var _a;
     let buttons;
     if (actions.length === 2) {
       buttons = [
@@ -6697,12 +6698,18 @@ var BZW_knowledge = (() => {
       });
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
   }
   var activeSettle = null;
   function openFlowDialog(opts) {
