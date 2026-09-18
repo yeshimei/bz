@@ -206,9 +206,10 @@ describe('collectRecap（只读采集集成）', () => {
   it('混合数据：五域痕迹齐全、时间正序、摘要同口径（含 mtime 痕迹时刻与归属任务名）', async () => {
     const t = todayStr();
     const y = todayStr(-1);
-    // 日记（条目文件，一目一文件）：当天 2 条可见（09:00 / 23:10）+ 1 条加密（正文含 🔐，同日记本口径不可见不计数）
+    // 日记（条目文件，一目一文件）：当天 3 条——其中 12:00 是正文手打 🔐 的普通条目，
+    // N2 后 recap 只滤「加密」标签（对齐墙 ui.ts），正文 🔐 是普通字符照常计数
     vault.files.set(diaryEntryPath('我的/日记', t, '09:00'), entryFile(t, '09:00', '早读了一会儿'));
-    vault.files.set(diaryEntryPath('我的/日记', t, '12:00'), entryFile(t, '12:00', '🔐这条加密了'));
+    vault.files.set(diaryEntryPath('我的/日记', t, '12:00'), entryFile(t, '12:00', '正文里手打了一个🔐字符'));
     vault.files.set(diaryEntryPath('我的/日记', t, '23:10'), entryFile(t, '23:10', '睡前记一笔'));
     vault.files.set(diaryEntryPath('我的/日记', y, '08:00'), entryFile(y, '08:00', '昨天的'));
     // 影视：1 部今天标记已看（mtime 今天 23:14）+ 1 部今天创建的想看 + 1 部昨天已看
@@ -240,7 +241,7 @@ describe('collectRecap（只读采集集成）', () => {
 
     const data = await collectRecap(mockAppWithVault(vault) as any);
     expect(data.failed).toEqual([]);
-    expect(data.summary).toEqual({ diary: 2, movies: 1, books: 2, memoDone: 1, pomodoros: 1, pomodoroMinutes: 25 });
+    expect(data.summary).toEqual({ diary: 3, movies: 1, books: 2, memoDone: 1, pomodoros: 1, pomodoroMinutes: 25 });
     const texts = data.items.map((i) => `${i.timeLabel} ${i.domain} ${i.text}`);
     expect(texts).toEqual([
       '08:00 memo 新增备忘录『写周报』',
@@ -249,7 +250,7 @@ describe('collectRecap（只读采集集成）', () => {
       '19:30 bookshelf 《在读的书》读到 45%',
       '21:00 bookshelf 读完《读完的书》',
       '21:00–21:25 pomodoro 专注《写周报》 · 25 分钟',
-      '23:10 diary 新增 2 条',
+      '23:10 diary 新增 3 条',
       '23:14 cinema 标记《夜片》已看 · ★★★★☆',
     ]);
   });
@@ -264,13 +265,15 @@ describe('collectRecap（只读采集集成）', () => {
     expect(data.items).toHaveLength(1);
   });
 
-  it('R1 回归：加密过滤口径对齐墙——「加密」标签条目、正文带 🔐 条目同样不计数', async () => {
-    // 旧口径只查正文 🔐：标签「加密」的条目被回顾计数、却在墙上隐藏 → 摘要对不上
-    vault.files.set(diaryEntryPath('我的/日记', todayStr(), '12:00'), entryFile(todayStr(), '12:00', '正文没有🔐标记', ['日记', '加密']));
+  it('N2 回归：加密过滤口径对齐墙——「加密」标签不计数，正文手打 🔐 的普通条目计入', async () => {
+    // 旧口径连查正文 🔐（isEncryptedEntry）：条目文件化后正文 🔐 只是普通字符，
+    // 把墙上照常显示的条目从回顾里滤掉，摘要对不上
+    vault.files.set(diaryEntryPath('我的/日记', todayStr(), '12:00'), entryFile(todayStr(), '12:00', '正文带一个🔐字符'));
+    vault.files.set(diaryEntryPath('我的/日记', todayStr(), '14:00'), entryFile(todayStr(), '14:00', '标签加密的', ['日记', '加密']));
     vault.files.set(diaryEntryPath('我的/日记', todayStr(), '20:00'), entryFile(todayStr(), '20:00', '普通条目'));
     const data = await collectRecap(mockAppWithVault(vault) as any);
-    expect(data.summary.diary).toBe(1); // 只有 20:00 普通条目计数
+    expect(data.summary.diary).toBe(2); // 12:00（正文 🔐 无标签）与 20:00 计入；14:00「加密」标签滤掉
     expect(data.items).toHaveLength(1);
-    expect(data.items[0].text).toContain('新增 1 条');
+    expect(data.items[0].text).toContain('新增 2 条');
   });
 });
