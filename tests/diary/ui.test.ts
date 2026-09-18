@@ -307,7 +307,7 @@ describe('回忆墙 UI', () => {
     expect(document.querySelector('.bz-item-menu')).toBeTruthy();
   });
 
-  it('空态：无日记时显示提示与动作按钮', async () => {
+  it('空态：无日记时显示提示与动作按钮（一致#4：接 core uiEmpty 单源 .bz-empty 族）', async () => {
     const emptyVault = new MockVault();
     emptyVault.dirs.add('我的/日记');
     const emptyApp = mockAppWithVault(emptyVault);
@@ -315,10 +315,10 @@ describe('回忆墙 UI', () => {
     setApp(emptyApp);
     const c = DiaryAppController.getInstance();
     await c.openManager();
-    await waitFor(() => !!document.querySelector('.bz-diary-empty'));
-    const empty = document.querySelector('.bz-diary-empty')!;
+    await waitFor(() => !!document.querySelector('.bz-empty'));
+    const empty = document.querySelector('.bz-empty')!;
     expect(empty.textContent).toContain('这一页还空着');
-    expect(empty.querySelector('.bz-diary-empty-btn')).toBeTruthy();
+    expect(Array.from(empty.querySelectorAll('button')).find((b) => b.textContent!.includes('写第一篇'))).toBeTruthy();
   });
 
   it('ESC 关闭（escManager 注册）', async () => {
@@ -355,17 +355,17 @@ describe('回忆墙 UI', () => {
   });
 
   // ===== v2 新功能 =====
-  it('头行按钮组 =「写日记 / 搜索 / 关闭」——关闭钮 2026-09-11 移动端评审补回（仅移动端显示，桌面 CSS 隐藏）（图标 lucide 化）', async () => {
+  it('头行按钮组 =「写日记 / 搜索 / 今天 / 关闭」——今天钮效率#6 补回（清日期筛选+滚回顶）；关闭钮仅移动端显示（图标 lucide 化）', async () => {
     await openAndWait();
     const btns = Array.from(document.querySelectorAll('.bz-diary-desk .bz-diary-btns [data-act]')).map(
       (b) => (b as HTMLElement).dataset.act
     );
-    expect(btns).toEqual(['add', 'search', 'close']);
-    // 头行图标：pen-line / search / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
+    expect(btns).toEqual(['add', 'search', 'today', 'close']);
+    // 头行图标：pen-line / search / calendar-check / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
     const icons = Array.from(
       document.querySelectorAll<HTMLElement>('.bz-diary-desk .bz-diary-btns [data-act] .bz-ic')
     ).map((i) => i.dataset.icon);
-    expect(icons).toEqual(['pen-line', 'search', 'x']);
+    expect(icons).toEqual(['pen-line', 'search', 'calendar-check', 'x']);
     // 退役按钮（设置/按年月跳转）在头行不再存在；关闭钮在桌面实例隐藏（.bz-diary-head-close）
     for (const act of ['settings', 'date-picker']) {
       expect(document.querySelector(`.bz-diary-desk .bz-diary-btns [data-act="${act}"]`), act).toBeNull();
@@ -728,14 +728,18 @@ describe('回忆墙 UI', () => {
     searchBtn.click();
     const box = desk.querySelector('.bz-diary-searchrow .bz-search input') as HTMLInputElement;
     expect(box).toBeTruthy();
-    // 输入「猫」（2026-08-19 日记内容含「被猫盯着」）
+    // 输入「猫」（2026-08-19 日记内容含「被猫盯着」）。
+    // 效率#8 增量显隐：既有卡片只 toggle display，节内全藏的分节节头隐藏（DOM 保留）
     box.value = '猫';
     box.dispatchEvent(new Event('input', { bubbles: true }));
-    await waitFor(() => desk.querySelectorAll('.bz-diary-day-head').length === 1);
-    expect(desk.querySelectorAll('.bz-diary-day-head').length).toBe(1);
-    // 清空还原（再次点搜索按钮收起）
+    const visibleHeads = () =>
+      Array.from(desk.querySelectorAll<HTMLElement>('.bz-diary-day-head')).filter((h) => h.style.display !== 'none').length;
+    await waitFor(() => visibleHeads() === 1);
+    expect(visibleHeads()).toBe(1);
+    // 清空还原（再次点搜索按钮收起，防抖已取消即时生效）
     searchBtn.click();
-    expect(desk.querySelectorAll('.bz-diary-day-head').length).toBe(3);
+    await waitFor(() => visibleHeads() === 3);
+    expect(visibleHeads()).toBe(3);
   });
 
   it('二级标签：点击带子标签的主标签显示子标签行', async () => {
@@ -1517,24 +1521,19 @@ describe('回忆墙 UI', () => {
 
   // ===== 样式回归（CSS 改动 jsdom 不可算，按源码断言；先例：reading-report report.test.ts） =====
 
-  it('增强 #13：触屏热区 ≥44px 档（修复批 B 收编 core .bz-touch-target--xl，模板挂类）', () => {
-    // 外扩本体在 core 样式库（components.css pointer:coarse ::after，--xl = inset -12px）
-    const core = readFileSync(resolve(process.cwd(), 'src/core/ui/components.css'), 'utf8');
-    expect(core).toContain('.bz-touch-target--xl');
-    expect(core).toMatch(/\.bz-touch-target::after\s*\{[^}]*inset: var\(--bz-touch-outset, -6px\)/);
-    // 热区外扩对象：横滑标签/二级标签/头行图标钮（壳模板在 render.ts 单源）/那年今天卡片（模板挂类）
+  it('D-UI6：触控热区收敛——紧凑行不再挂 .bz-touch-target--xl（外扩两两重叠误触），移动端 padding 抬档达标', () => {
     const ui = readFileSync(resolve(process.cwd(), 'src/diary/ui.ts'), 'utf8');
     const render = readFileSync(resolve(process.cwd(), 'src/diary/render.ts'), 'utf8');
-    for (const [cls, src] of [
-      ['bz-diary-chip bz-touch-target--xl', ui],
-      ['bz-diary-subchip bz-touch-target--xl', ui],
-      ['bz-diary-icon-btn bz-touch-target--xl', render],
-      ['bz-diary-memory bz-touch-target--xl', ui],
-    ] as const) {
-      expect(src, cls).toContain(cls);
+    // chips（gap 8px）/subchips（gap 6px）/头行钮（gap 8px，42×46 自身达标）/时光条卡不再外扩
+    for (const cls of ['bz-diary-chip bz-touch-target--xl', 'bz-diary-subchip bz-touch-target--xl', 'bz-diary-memory bz-touch-target--xl']) {
+      expect(ui, cls).not.toContain(cls);
     }
-    // 域内不再复制 ::after 外扩块（防双份外扩）
+    expect(render).not.toContain('bz-diary-icon-btn bz-touch-target--xl');
+    // 移动端触控达标走 padding 抬档（styles.css 768px 段，≥40px 绝对下限）
     const css = readFileSync(resolve(process.cwd(), 'src/diary/styles.css'), 'utf8');
+    expect(css).toMatch(/\.bz-diary-mob \.bz-diary-chip\s*{[^}]*padding: 11px 16px/s);
+    expect(css).toMatch(/\.bz-diary-mob \.bz-diary-subchip\s*{[^}]*padding: 12px 15px/s);
+    // 域内不复制 ::after 外扩块（防双份外扩）
     expect(css).not.toMatch(/bz-diary-chip::after/);
   });
 

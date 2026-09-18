@@ -26,6 +26,8 @@ const mocks = vi.hoisted(() => ({
   deleteEncryptedEntry: vi.fn(async () => {}),
   encryptEntry: vi.fn(async (_e: any) => ({ encrypted: true })),
   reclassifyEntry: vi.fn(async (): Promise<boolean> => true),
+  // 效率#12：加密动作二次确认（ui.ts encryptEntryAction）——既有用例期望「确认后走完」，默认放行
+  openFlowDialog: vi.fn(async (): Promise<string | undefined> => 'ok'),
 }));
 vi.mock('../../src/diary/data', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../src/diary/data')>();
@@ -39,6 +41,10 @@ vi.mock('../../src/diary/ui/entry-actions', () => ({
   jumpToDiaryEntry: mocks.jumpToEntry,
   copyDiaryLink: mocks.copyDiaryLink,
   showConfirm: mocks.showConfirm,
+}));
+// 效率#12：加密二次确认弹窗（ui.ts 静态 import openFlowDialog）——mock 放行，确认流回归在 wall-fix-c.test.ts
+vi.mock('../../src/core/flow-dialog', () => ({
+  openFlowDialog: mocks.openFlowDialog,
 }));
 // store 不 mock：真实写层（findDiaryEntry/removeDiaryEntries）直接跑在 MockVault 上
 vi.mock('../../src/encrypt', () => ({

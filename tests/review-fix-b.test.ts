@@ -72,8 +72,10 @@ describe('批 B-3：触控热区收编 core .bz-touch-target', () => {
     // --lg（原 -8px）：复习信息行（home 活动河改版后无盒装钮/迷你 chips）；
     // 加密空态钮/复制账号钮随 ADR-0158 密码视图退役（vault-pw-view 文件删除，断言一并清退）
     expect(repo('src/review/render.ts')).toContain('bz-q-fitem bz-touch-target--lg'); // issue 253 markup 单源 render.ts
-    // --xl（原 -12px）：日记本头行图标钮（ADR-0115 回忆墙升格，markup 单源 render.ts）、加密移动关闭/返回钮、复习三个关闭钮
-    expect(repo('src/diary/render.ts')).toContain('bz-diary-icon-btn bz-touch-target--xl');
+    // --xl（原 -12px）：加密移动关闭/返回钮、复习三个关闭钮。
+    // diary 头行图标钮已反转退役（review-deep D-UI6：42×46 自身达标，紧凑头行外扩热区
+    // 两两重叠 16px 误触；触控档由移动端尺寸承接，wall-fix-c.test.ts 钉死）
+    expect(repo('src/diary/render.ts')).not.toContain('bz-diary-icon-btn bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('bz-vault-mobclose bz-touch-target--xl');
     expect(repo('src/encrypt/ui.ts')).toContain('back bz-touch-target--xl');
     // 排除名单已收敛为通用 list 行：移除按钮类由组件工厂统一挂（含触控档；2026-09-12 markup/行为收归 uiSetlist）

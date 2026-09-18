@@ -14,8 +14,10 @@ import type { WallEntry, WallMedia } from './types';
 export const ACT_ICON: Record<string, string> = {
   add: 'pen-line',
   search: 'search',
+  today: 'calendar-check',
   close: 'x',
   'lb-close': 'x',
+  'lb-more': 'more-horizontal',
   'lb-prev': 'chevron-left',
   'lb-next': 'chevron-right',
 };
@@ -74,9 +76,10 @@ export function wallPanelHTML(): string {
           <span class="bz-diary-range"></span>
         </div>
         <div class="bz-diary-btns">
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="add" title="写日记"></button>
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
-          <button class="bz-diary-icon-btn bz-diary-head-close bz-touch-target--xl" data-act="close" title="关闭"></button>
+          <button class="bz-diary-icon-btn" data-act="add" title="写日记"></button>
+          <button class="bz-diary-icon-btn" data-act="search" title="搜索"></button>
+          <button class="bz-diary-icon-btn" data-act="today" title="回到今天（清除日期筛选）"></button>
+          <button class="bz-diary-icon-btn bz-diary-head-close" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>
@@ -89,6 +92,7 @@ export function wallPanelHTML(): string {
       <div class="bz-diary-lb">
         <button class="bz-diary-lbnav bz-diary-lbnav--prev" data-act="lb-prev" title="上一个（←）"></button>
         <button class="bz-diary-lbclose" data-act="lb-close" title="关闭"></button>
+        <button class="bz-diary-lbmore" data-act="lb-more" title="更多动作"></button>
         <button class="bz-diary-lbnav bz-diary-lbnav--next" data-act="lb-next" title="下一个（→）"></button>
         <div class="bz-diary-lbmedia"></div>
         <div class="bz-diary-lbcap"></div>
