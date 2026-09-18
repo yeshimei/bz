@@ -1475,9 +1475,10 @@ describe('回忆墙 UI', () => {
     expect(popup).toBeTruthy();
     expect(popup.style.display).toBe('flex');
     // 病根回归：弹窗挂 document.body（在 .bz-diary 根外）→ --dw-* 若只声明在 .bz-diary
-    // 上，卡片 var(--dw-bg) 解析为空 = 无背景色（用户报障）。断言两者同在选择器组内。
+    // 上，卡片 var(--dw-bg) 解析为空 = 无背景色（用户报障）。断言弹层同列在选择器组内
+    // （一致#2 后组内含滚轮壳 #unified-datetime-picker-mask，阴影 token 同理依赖同列声明）。
     const css = readFileSync(resolve(process.cwd(), 'src/diary/styles.css'), 'utf8');
-    expect(css).toMatch(/\.bz-diary,\s*\.bz-diary-datefilter\s*\{[^}]*--dw-bg:/);
+    expect(css).toMatch(/\.bz-diary,\s*\.bz-diary-datefilter,\s*#unified-datetime-picker-mask\s*\{[^}]*--dw-bg:/);
     expect(css).toMatch(/\.bz-diary-datefilter-card\s*\{[^}]*background:\s*var\(--dw-bg\)/);
   });
 

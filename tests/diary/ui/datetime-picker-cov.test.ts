@@ -1,11 +1,12 @@
 /**
  * 覆盖率补测：滚轮日期时间选择器（datetime-picker）。
  * 覆盖滚轮数值项点击、年/月变更的天数重建（收缩/钳制/增长）、滚轮与触摸滚动、
- * 「此刻」「确定」按钮、遮罩关闭、手动模式拦截、syncDateTime 防御分支。
+ * 「此刻」「确定」按钮、遮罩关闭、手动模式拦截。
+ * （原 syncDateTime 防御分支用例随 N11 死代码删除一并移除。）
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { moment } from 'obsidian';
-import { createDateTimeControl, showDateTimePicker, syncDateTime } from '../../../src/diary/ui/datetime-picker';
+import { createDateTimeControl, showDateTimePicker } from '../../../src/diary/ui/datetime-picker';
 import { resetObsidianMocks, clearNotices, hasNotice } from '../../mock-obsidian-entry';
 
 beforeEach(() => {
@@ -62,7 +63,8 @@ describe('滚轮数值项点击', () => {
     expect(selectedItem(hourCol)!.dataset.value).toBe('8');
     const it8 = itemOf(hourCol, 8);
     expect(it8.style.color).toBe('var(--text-on-accent)');
-    expect(it8.style.fontWeight).toBe('900');
+    expect(it8.style.fontWeight).toBe('700');
+    expect(it8.style.background).toBe('var(--background-modifier-hover)');
     const it14 = itemOf(hourCol, 14);
     expect(it14.style.color).toBe('var(--text-muted)');
     expect(it14.style.fontWeight).toBe('400');
@@ -203,70 +205,30 @@ describe('边界与按钮', () => {
 });
 
 describe('日期时间控件（createDateTimeControl）手动模式', () => {
-  it('手动模式下重复双击被忽略；单击延迟打开被拦截；blur 提交后单击可正常打开滚轮', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    try {
-      const ctrl = mountControl(true);
-      const display = ctrl.querySelector('#datetime-display-area') as HTMLElement;
-      const manual = ctrl.querySelector('input[placeholder*="YYYY-MM-DD"]') as HTMLInputElement;
+  it('手动模式下重复双击被忽略；手动模式拦截单击开滚轮；blur 提交后单击立即打开滚轮', () => {
+    const ctrl = mountControl(true);
+    const display = ctrl.querySelector('#datetime-display-area') as HTMLElement;
+    const manual = ctrl.querySelector('input[placeholder*="YYYY-MM-DD"]') as HTMLInputElement;
 
-      // 双击进入手动模式；再次双击 → isManualMode 早退（无副作用）
-      display.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-      expect(manual.style.display).toBe('block');
-      display.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-      expect(manual.style.display).toBe('block');
+    // 双击进入手动模式（兼容入口）；再次双击 → isManualMode 早退（无副作用）
+    display.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(manual.style.display).toBe('block');
+    display.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(manual.style.display).toBe('block');
 
-      // 手动模式下单击 displayArea：200ms 后 openUnifiedPicker 因手动模式早退
-      display.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(260);
-      expect(document.getElementById('unified-datetime-picker-mask')).toBeNull();
+    // 手动模式下单击 displayArea：openUnifiedPicker 因手动模式早退
+    display.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.getElementById('unified-datetime-picker-mask')).toBeNull();
 
-      // blur 提交（值合法）退出手动模式
-      manual.dispatchEvent(new Event('blur'));
-      expect(manual.style.display).toBe('none');
-      expect(display.style.display).toBe('flex');
+    // blur 提交（值合法）退出手动模式
+    manual.dispatchEvent(new Event('blur'));
+    expect(manual.style.display).toBe('none');
+    expect(display.style.display).toBe('flex');
 
-      // 现在单击延迟后正常打开滚轮选择器
-      display.dispatchEvent(new MouseEvent('click', { bubbles: true }));
-      await vi.advanceTimersByTimeAsync(260);
-      expect(document.getElementById('unified-datetime-picker-mask')).toBeTruthy();
-      document.getElementById('unified-datetime-picker-mask')!.remove();
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('syncDateTime：无输入/无效值/非弹窗容器均安全返回；有效值同步各段显示', () => {
-    // 无隐藏输入
-    syncDateTime();
-    // 控件不在 #add-diary-popup 内
-    const ctrl = mountControl(false);
-    const hidden = document.getElementById('add-diary-datetime') as HTMLInputElement;
-    hidden.value = 'garbage-input';
-    syncDateTime(); // 无效格式早退
-    let year = ctrl.querySelector('[data-part="year"]') as HTMLElement;
-    const before = year.textContent;
-    expect(before).toMatch(/^\d{4}$/); // 保持创建时的当前时间显示
-    hidden.value = '2024-06-15 14:30';
-    syncDateTime(); // 容器不是 #add-diary-popup → 早退
-    year = ctrl.querySelector('[data-part="year"]') as HTMLElement;
-    expect(year.textContent).toBe(before);
-
-    // 清掉前一个控件（同 id 隐藏输入只能存在一个，getElementById 取第一个）
-    document.body.innerHTML = '';
-    // 包在 #add-diary-popup 内 → 同步生效
-    const ctrl2 = mountControl(true);
-    (document.getElementById('add-diary-datetime') as HTMLInputElement).value = '2024-06-15 14:30';
-    syncDateTime();
-    expect((ctrl2.querySelector('[data-part="year"]') as HTMLElement).textContent).toBe('2024');
-    expect((ctrl2.querySelector('[data-part="month"]') as HTMLElement).textContent).toBe('06');
-    expect((ctrl2.querySelector('[data-part="day"]') as HTMLElement).textContent).toBe('15');
-    expect((ctrl2.querySelector('[data-part="hour"]') as HTMLElement).textContent).toBe('14');
-    expect((ctrl2.querySelector('[data-part="minute"]') as HTMLElement).textContent).toBe('30');
-
-    // 移除输入后再调 → 早退不抛错
-    document.getElementById('add-diary-datetime')!.remove();
-    expect(() => syncDateTime()).not.toThrow();
+    // 单击立即打开滚轮选择器（效率#4②：原 200ms 延迟已去）
+    display.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    expect(document.getElementById('unified-datetime-picker-mask')).toBeTruthy();
+    document.getElementById('unified-datetime-picker-mask')!.remove();
   });
 
   it('手动输入无效内容 blur → 提示并恢复', () => {
