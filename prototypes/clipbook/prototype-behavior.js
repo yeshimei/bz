@@ -1,4 +1,4 @@
-/* 源指纹 c1c93b14f6bb7e06 · 仓内输入 103 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b93db2a512db633e · 仓内输入 103 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -4847,6 +4847,18 @@ var BZW_clipbook = (() => {
     const d = /* @__PURE__ */ new Date();
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
@@ -4889,13 +4901,10 @@ var BZW_clipbook = (() => {
       return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
     }
     if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
     }
+    const diffMinutes = Math.floor(diffSeconds / 60);
     const yesterdayStart = (0, import_moment.default)(now).subtract(1, "days").startOf("day");
     const beforeYesterdayStart = (0, import_moment.default)(now).subtract(2, "days").startOf("day");
     if (target.isSame(yesterdayStart, "day")) {
@@ -4905,7 +4914,7 @@ var BZW_clipbook = (() => {
       return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
     }
     const weekStart = (0, import_moment.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
       return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
     }
     const isThisYear = target.year() === nowMoment.year();
@@ -17322,7 +17331,7 @@ ${body}`;
       return true;
     } catch (e) {
       console.error("[剪藏本] 保存剪藏失败", e);
-      notice("保存失败，请稍后重试", "error");
+      notifySaveError(e, "剪藏");
       return false;
     }
   }
@@ -19979,7 +19988,7 @@ ${bodyText.substring(0, 6e3)}`;
     return getSettings();
   }
   function notifyWriteError(e) {
-    notice(`设置写入失败：${e instanceof Error ? e.message : String(e)}`, "error");
+    notifySaveError(e, "设置写入");
   }
   function makeCtx(rowEl, refreshVisibility) {
     return { rowEl, refreshVisibility };
@@ -20088,9 +20097,7 @@ ${bodyText.substring(0, 6e3)}`;
         chip2.textContent = label;
         chip2.addEventListener("click", openPicker);
         if (multi) {
-          const x = document.createElement("i");
-          x.className = "x";
-          x.textContent = "✕";
+          const x = uiIcon("x", "x");
           x.addEventListener("click", (ev) => {
             ev.stopPropagation();
             void apply(current.filter((p) => p !== path));
@@ -20724,7 +20731,7 @@ ${bodyText.substring(0, 6e3)}`;
     if (el) el.textContent = text;
   }
   function notifyWriteFailed(what) {
-    notice(`写入失败（${what}）：news.json 不可读或已损坏`, "error");
+    notifySaveError(new Error("news.json 不可读或已损坏"), what);
   }
   function upManagerSettingsSchema(opts) {
     const box = {
@@ -22571,7 +22578,7 @@ ${bodyText.substring(0, 6e3)}`;
         M.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
+      listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime2(a.timeTs));
       M.list = list;
       bindItemMenus();
       return;
@@ -22587,7 +22594,7 @@ ${bodyText.substring(0, 6e3)}`;
     if (!flat.some((a) => a.id === (M.cur && M.cur.id))) {
       M.cur = flat[0];
     }
-    const timeOf = (a) => relTime(a.timeTs);
+    const timeOf = (a) => relTime2(a.timeTs);
     const curId = M.cur ? M.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
@@ -22621,7 +22628,7 @@ ${bodyText.substring(0, 6e3)}`;
     M.list = flat;
     bindItemMenus();
   }
-  function relTime(ts) {
+  function relTime2(ts) {
     if (!ts) return "";
     try {
       return formatRelativeTime(new Date(ts));
@@ -22732,7 +22739,7 @@ ${bodyText.substring(0, 6e3)}`;
       body = a.body;
       if (!body) note = "正文已清空（已处理条目）";
     }
-    readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime(a.timeTs), note });
+    readerEl.innerHTML = readerHtml(a, { time: a.timeText || relTime2(a.timeTs), note });
     readerEl.dataset.clipReaderId = a.id;
     mountIcons(readerEl);
     bindImgFallback(readerEl);
@@ -23014,7 +23021,7 @@ ${bodyText.substring(0, 6e3)}`;
     const clipNotes = M.clipNotes || [];
     const savedUrls = new Set((M.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
-    const timeOf = (a) => relTime(a.timeTs);
+    const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
     const byId = /* @__PURE__ */ new Map();
     const order = [];
@@ -23162,7 +23169,7 @@ ${bodyText.substring(0, 6e3)}`;
     const idx = mobItemOrder.findIndex((x) => x.id === a.id);
     const seq = idx >= 0 ? `第 ${idx + 1} 则 / ${mobItemOrder.length}` : "";
     const detailBody = mobDetailEl.querySelector("[data-clip-mob-detail-body]");
-    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime(a.timeTs), note, seq });
+    detailBody.innerHTML = mobDetailHtml(a, { time: a.timeText || relTime2(a.timeTs), note, seq });
     mountIcons(detailBody);
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");

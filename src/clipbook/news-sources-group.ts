@@ -16,7 +16,7 @@
  *   （renderPanelSchema 渲染进自建 overlay，形态不变）。
  */
 import { httpGetText, requestUrlAsFetch } from '../core/http';
-import { notice } from '../core/notice';
+import { notice, notifySaveError } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
@@ -133,9 +133,10 @@ function setRowDesc(ctx: SettingsRowContext, text: string): void {
 }
 
 /** C4：设置/名单写失败提示——news.json 损坏或读盘失败时数据层放弃落盘（F8 保护），
- *  调用方必须告知「改了但没存上」，不再给假成功反馈（正文无 emoji，类型用既有 error 档） */
+ *  调用方必须告知「改了但没存上」，不再给假成功反馈。
+ *  文案收编 core notifySaveError 单源（review-deep 一致#3）：保存失败（what）：原因 */
 function notifyWriteFailed(what: string): void {
-  notice(`写入失败（${what}）：news.json 不可读或已损坏`, 'error');
+  notifySaveError(new Error('news.json 不可读或已损坏'), what);
 }
 
 // ===== UP 主名单管理弹窗（ticket 126 + 127）=====

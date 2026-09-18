@@ -135,15 +135,15 @@ describe('C4 名单与订阅增删结果（数据层）', () => {
 // ---------- C4-④：调用方提示（设置组绑定 + 管理弹窗） ----------
 
 describe('C4 设置组写失败提示（绑定 save）', () => {
-  it('损坏：三个绑定的 save 各弹对应「写入失败」提示（无 emoji error 档）', async () => {
+  it('损坏：三个绑定的 save 各弹对应「保存失败」提示（无 emoji error 档）', async () => {
     seedBroken();
     const rows = dataSourceGroupRows(await readDataSourceState());
     await rowByName(rows, '知乎日报').binding.save();
-    expect(hasNotice('写入失败（数据源开关）：news.json 不可读或已损坏')).toBe(true);
+    expect(hasNotice('保存失败（数据源开关）：news.json 不可读或已损坏')).toBe(true);
     await rowByName(rows, '抓取间隔').binding.save();
-    expect(hasNotice('写入失败（抓取间隔）：news.json 不可读或已损坏')).toBe(true);
+    expect(hasNotice('保存失败（抓取间隔）：news.json 不可读或已损坏')).toBe(true);
     await rowByName(rows, 'B站抓取条数').binding.save();
-    expect(hasNotice('写入失败（B站抓取条数）：news.json 不可读或已损坏')).toBe(true);
+    expect(hasNotice('保存失败（B站抓取条数）：news.json 不可读或已损坏')).toBe(true);
   });
 
   it('正常：绑定 save 落盘且不弹失败提示', async () => {
@@ -151,16 +151,16 @@ describe('C4 设置组写失败提示（绑定 save）', () => {
     const rows = dataSourceGroupRows(await readDataSourceState());
     await rowByName(rows, 'B站抓取条数').binding.save();
     expect(disk(vault).bilibiliMaxItems).toBe(10);
-    expect(hasNotice(/写入失败/)).toBe(false);
+    expect(hasNotice(/保存失败/)).toBe(false);
   });
 });
 
 describe('C4 管理弹窗增删提示（调用方文案准确）', () => {
-  it('UP 添加：损坏态弹「添加 UP 主写入失败」，不再误报「已在名单中」', async () => {
+  it('UP 添加：损坏态弹「添加 UP 主保存失败」，不再误报「已在名单中」', async () => {
     seedBroken();
     const schema = upManagerSettingsSchema({ ups: [], upInfo: {}, onChanged: () => {} });
     await rowByName(schema.groups[0].rows, '添加 UP 主').actions[0].onClick('123456');
-    expect(hasNotice('写入失败（添加 UP 主）：news.json 不可读或已损坏')).toBe(true);
+    expect(hasNotice('保存失败（添加 UP 主）：news.json 不可读或已损坏')).toBe(true);
     expect(hasNotice('该 UP 主已在名单中')).toBe(false);
   });
 
@@ -186,7 +186,7 @@ describe('C4 管理弹窗增删提示（调用方文案准确）', () => {
     const schema = upManagerSettingsSchema({ ups: ['11'], upInfo: {}, onChanged: onChangedFail });
     const listRow = rowByName(schema.groups[0].rows, '名单列表');
     await listRow.onChange([]);
-    expect(hasNotice('写入失败（移除 UP 主 11）：news.json 不可读或已损坏')).toBe(true);
+    expect(hasNotice('保存失败（移除 UP 主 11）：news.json 不可读或已损坏')).toBe(true);
     expect(hasNotice('已移除 UP 主 11')).toBe(false); // 假成功消灭
     expect(listRow.items()).toHaveLength(1); // 字盒保留条目：重开不「复活」
     expect(onChangedFail).not.toHaveBeenCalled();
@@ -201,12 +201,12 @@ describe('C4 管理弹窗增删提示（调用方文案准确）', () => {
     expect(disk(vault).bilibiliUps).toEqual([]);
   });
 
-  it('RSS 添加：损坏态弹「添加 RSS 源写入失败」；已存在 → info 文案', async () => {
+  it('RSS 添加：损坏态弹「添加 RSS 源保存失败」；已存在 → info 文案', async () => {
     (requestUrl as ReturnType<typeof vi.fn>).mockResolvedValue({ status: 200, text: '<rss><channel><title>甲源</title></channel></rss>' });
     seedBroken();
     const schema = rssManagerSettingsSchema({ feeds: [], onChanged: () => {} });
     await rowByName(schema.groups[0].rows, '添加 RSS 源').actions[0].onClick('https://a.com/rss.xml');
-    expect(hasNotice('写入失败（添加 RSS 源）：news.json 不可读或已损坏')).toBe(true);
+    expect(hasNotice('保存失败（添加 RSS 源）：news.json 不可读或已损坏')).toBe(true);
     expect(hasNotice('该 RSS 源已在订阅列表中')).toBe(false);
 
     clearNotices();
@@ -222,7 +222,7 @@ describe('C4 管理弹窗增删提示（调用方文案准确）', () => {
     const schema = rssManagerSettingsSchema({ feeds: [{ url: 'https://a.com/rss.xml', title: 'A 源' }], onChanged: onChangedFail });
     const listRow = rowByName(schema.groups[0].rows, '订阅列表');
     await listRow.onChange([]);
-    expect(hasNotice('写入失败（移除 RSS 源 A 源）：news.json 不可读或已损坏')).toBe(true);
+    expect(hasNotice('保存失败（移除 RSS 源 A 源）：news.json 不可读或已损坏')).toBe(true);
     expect(hasNotice('已移除 RSS 源 A 源')).toBe(false);
     expect(listRow.items()).toHaveLength(1);
     expect(onChangedFail).not.toHaveBeenCalled();

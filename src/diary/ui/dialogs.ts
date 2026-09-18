@@ -9,7 +9,7 @@
  */
 import { MarkdownView as MarkdownViewFromObsidian, moment } from 'obsidian';
 import { topifyZ } from '../../core/z-order';
-import { notice } from '../../core/notice';
+import { notice, notifySaveError } from '../../core/notice';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { getApp } from '../../core/app';
 import { tryGetSettings } from '../../core/settings-provider';
@@ -442,7 +442,7 @@ export async function saveNewEntry() {
   } catch (error: any) {
     if (isUnparsedRefusal(error) || isDiaryReadFailure(error)) return; // 守卫拒写/读盘失败：人话通知已由写层发出
     console.error('保存日记失败:', error);
-    notice('保存日记失败：' + error.message, 'error');
+    notifySaveError(error, '日记');
   } finally {
     savingNewEntry = false;
   }

@@ -1,4 +1,4 @@
-/* 源指纹 84a25b59a8cffbf8 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 eadae1ce9afcf05d · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -6385,7 +6385,8 @@ var BZW_belongings = (() => {
       <div class="bz-btn-row bz-bel-form-actions">
         <div class="bz-bel-form-spacer"></div>
         <button type="button" class="bz-btn bz-btn--ghost" data-bm-cancel>取消</button>
-        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? "更新" : "保存"}</button>
+        <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（favorites 同款收敛） -->
+        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? "保存" : "添加"}</button>
       </div>
     </div>
   </div>`;
@@ -8605,10 +8606,10 @@ var BZW_belongings = (() => {
           belFormClose == null ? void 0 : belFormClose();
           belFormClose = null;
         } catch (e) {
-          notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
+          notifySaveError(e);
           saving = false;
           saveBtn.disabled = false;
-          saveBtn.textContent = it ? "更新" : "保存";
+          saveBtn.textContent = it ? "保存" : "添加";
         }
       })();
     });

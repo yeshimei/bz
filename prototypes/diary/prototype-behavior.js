@@ -1,4 +1,4 @@
-/* 源指纹 055091c8f8121122 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 093cb396ca679662 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -4523,6 +4523,18 @@ var BZW_diary = (() => {
   function pad2(n) {
     return String(n).padStart(2, "0");
   }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
   var ESC_MAP;
   var init_str = __esm({
     "src/core/ui/str.ts"() {
@@ -4558,13 +4570,10 @@ var BZW_diary = (() => {
       return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
     }
     if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
     }
+    const diffMinutes = Math.floor(diffSeconds / 60);
     const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
     const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
     if (target.isSame(yesterdayStart, "day")) {
@@ -4574,7 +4583,7 @@ var BZW_diary = (() => {
       return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
     }
     const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
       return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
     }
     const isThisYear = target.year() === nowMoment.year();
@@ -13405,7 +13414,7 @@ ${entry.content.trim()}`;
         }
         emitDomainEvent("diary:entry-deleted", { date: loc.date, time: loc.time, wasEncrypted: false });
       }
-      notice("日记条目已删除", "success");
+      notice(`已删除日记「${loc.date} ${loc.time}」`, "success");
     }).catch((err) => {
       if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return;
       notice("删除日记失败：" + ((err == null ? void 0 : err.message) || err), "error");
@@ -13703,7 +13712,7 @@ ${entry.content.trim()}`;
     } catch (error) {
       if (isUnparsedRefusal(error) || isDiaryReadFailure(error)) return;
       console.error("保存日记失败:", error);
-      notice("保存日记失败：" + error.message, "error");
+      notifySaveError(error, "日记");
     } finally {
       savingNewEntry = false;
     }

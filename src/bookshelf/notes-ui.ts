@@ -9,7 +9,7 @@
  * 写盘保持旧域收口语义：md 走 vault.process 原子读改写（src/bookshelf/notes.ts）。
  */
 import type { App, TFile } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notifySaveError } from '../core/notice';
 import { localDayKey } from '../core/utils';
 import { longPress } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -435,7 +435,7 @@ function openNoteEditModal(opts: {
       })
       .catch((e) => {
         console.error('保存批注失败:', e);
-        notice('保存失败，请重试', 'error');
+        notifySaveError(e, '批注');
       });
   });
 

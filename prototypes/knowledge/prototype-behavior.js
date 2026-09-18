@@ -1,4 +1,4 @@
-/* 源指纹 784803293b0d1f38 · 仓内输入 39 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 46db847593b4c74f · 仓内输入 39 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5838,6 +5838,18 @@ var BZW_knowledge = (() => {
     const d = /* @__PURE__ */ new Date();
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
@@ -5874,13 +5886,10 @@ var BZW_knowledge = (() => {
       return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
     }
     if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment2.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
     }
+    const diffMinutes = Math.floor(diffSeconds / 60);
     const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
     const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
     if (target.isSame(yesterdayStart, "day")) {
@@ -5890,7 +5899,7 @@ var BZW_knowledge = (() => {
       return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
     }
     const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
       return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
     }
     const isThisYear = target.year() === nowMoment.year();

@@ -453,11 +453,15 @@ export function quizPracticeSetupHtml(ctx: QuizPracticeSetupCtx): string {
   if (ctx.scope === 'all') {
     detail = `<div class="bz-qp-detail">整库笔记都纳入出题范围，系统目录自动跳过</div>`;
   } else if (ctx.scope === 'folder') {
+    // 监听文件夹名单（review-deep 一致#12）：正典应走 uiSetlist({variant:'chips', removeLabel, onRemove})，
+    // 但本文件是 render 纯层——组件库 barrel 会拖入 obsidian（render-purity 白名单外），
+    // 故保留手搓胶囊 markup 仅把移除钮文本 ✕ 收编 lucide 占位（同文件 icon() 先例 +
+    // 渲染后 mountIcons 兑现）；data-rm-folder 即 onRemove 的 key 通道，行为层接线不变。
     const chips = ctx.folders.length
       ? ctx.folders
           .map((f) => {
             const label = f === '' ? '（库根目录）' : f;
-            return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc(label)}">${esc(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc(f)}" aria-label="移除 ${esc(label)}">✕</button></span>`;
+            return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc(label)}">${esc(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc(f)}" aria-label="移除 ${esc(label)}">${icon('x')}</button></span>`;
           })
           .join('')
       : `<span class="bz-qp-detail">还没选文件夹</span>`;

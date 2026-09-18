@@ -1,4 +1,4 @@
-/* 源指纹 17a087494ecbd398 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9cd6a823822ec1f7 · 仓内输入 54 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -5701,6 +5701,21 @@ var BZW_favorites = (() => {
     const d = /* @__PURE__ */ new Date();
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
   }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
@@ -6259,18 +6274,6 @@ var BZW_favorites = (() => {
   function normalizeFavSort(v) {
     return v === "old" || v === "title" ? v : "new";
   }
-  function relTime(s) {
-    if (!s) return "";
-    const d = new Date(s.replace(" ", "T"));
-    if (isNaN(d.getTime())) return s;
-    const diff = Date.now() - d.getTime();
-    const m = 6e4, h = 36e5, day = 864e5;
-    if (diff < m) return "刚刚";
-    if (diff < h) return Math.floor(diff / m) + " 分钟前";
-    if (diff < day) return Math.floor(diff / h) + " 小时前";
-    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
-  }
   function hueOf(label) {
     if (!label) return 210;
     const m = {
@@ -6330,7 +6333,7 @@ var BZW_favorites = (() => {
   </div>`;
   }
   function emptyHtml() {
-    return '<div class="bz-fav-empty">这块板上还没有卡片</div>';
+    return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", "这块板上还没有卡片", "添加第一条收藏试试")}</div>`;
   }
   function actionSpecs(it) {
     const acts = [];
@@ -6360,10 +6363,12 @@ var BZW_favorites = (() => {
     <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
     <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
+    <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（memo/cinema/diary 多数派，
+         与本域标签表单 existing ? '保存' : '添加' 对齐，域内不再二分） -->
     <div class="bz-fav-btns">
       <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON.ai, "bz-ic--xs")} <span>AI 整理</span></button>
       <button type="button" data-fz-cancel>取消</button>
-      <button type="button" id="fz-save" class="bz-fav-pri">${editing ? "更新" : "保存"}</button>
+      <button type="button" id="fz-save" class="bz-fav-pri">${editing ? "保存" : "添加"}</button>
     </div>
   </div>`;
   }
@@ -6999,9 +7004,9 @@ GitHub 仓库：${ghInfo.title}
       closeForm();
       await reload();
     } catch (e) {
-      notice(`保存失败：${(e == null ? void 0 : e.message) || "未知错误"}`, "error");
+      notifySaveError(e);
       saveBtn.disabled = false;
-      saveBtn.textContent = it ? "更新" : "保存";
+      saveBtn.textContent = it ? "保存" : "添加";
     } finally {
       _saving = false;
     }

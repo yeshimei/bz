@@ -202,10 +202,10 @@ describe('markup 构建器（钩子契约 = 两侧绑定与测试断言的共同
     const editForm = belFormHtml(it0({ name: '台灯', category: '灯具', purchase_price: 99.5 }));
     expect(editForm).toContain('编辑物品');
     expect(editForm).toContain('value="99.5"');
-    expect(editForm).toContain('更新');
+    expect(editForm).toContain('保存'); // 一致#9：编辑=保存
     const newForm = belFormHtml(null);
     expect(newForm).toContain('记一笔');
-    expect(newForm).toContain('保存');
+    expect(newForm).toContain('添加'); // 一致#9：新建=添加
     expect(belFormInit(null).exitedInit).toBe(false);
     expect(belFormInit(it0({ current_status: '已转卖', exit_date: '2025-06-01' })).exitedInit).toBe(true);
     expect(belFormInit(null).dateVal).toBe('2025-06-15'); // 新记日期默认今天

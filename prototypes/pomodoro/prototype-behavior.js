@@ -1,4 +1,4 @@
-/* 源指纹 27b8e8b48d726e53 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 72721106985618d1 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4357,6 +4357,10 @@ var BZW_pomodoro = (() => {
   function notice(msg, type, duration) {
     notify(msg, { type: type || "info", duration });
   }
+  function notifySaveError(err, what) {
+    const msg = err instanceof Error ? err.message : String(err);
+    notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
+  }
   function isMobileView() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
   }
@@ -5789,9 +5793,8 @@ var BZW_pomodoro = (() => {
     try {
       if (dataManager) await dataManager.save({ version: 1, state, history: t.history, ...t.archived.length ? { archived: t.archived } : {} });
     } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e);
       console.error("番茄钟数据保存失败:", e);
-      notice(`番茄钟数据保存失败：${msg}，下次保存会自动补写`, "error");
+      notifySaveError(e, "番茄钟数据");
       return;
     }
     history = t.history;

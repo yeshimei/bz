@@ -19,10 +19,10 @@ import { openPathPicker } from '../core/path-picker';
 import { bindValue } from '../core/settings-schema';
 import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notifySaveError } from '../core/notice';
 // markup 单源（ADR-0104/0105）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
 import * as R from './render';
-import { mountIcons, uiSetlist } from '../core/ui';
+import { mountIcons, uiSetlist, uiIcon } from '../core/ui';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
 function snapshot(): SettingsSnapshot {
@@ -55,9 +55,10 @@ class SpCommitWarn {
   }
 }
 
-/** 行绑定写入失败的统一提示（H5：先写后翻 UI——写入抛错时不翻 UI 只提示） */
+/** 行绑定写入失败的统一提示（H5：先写后翻 UI——写入抛错时不翻 UI 只提示）；
+ *  文案收编 core notifySaveError 单源（review-deep 一致#3） */
 function notifyWriteError(e: unknown): void {
-  notice(`设置写入失败：${e instanceof Error ? e.message : String(e)}`, 'error');
+  notifySaveError(e, '设置写入');
 }
 
 /** 行上下文（供 onChange/custom/button 回调；结构与 core SettingsRowContext 一致） */
@@ -231,9 +232,9 @@ export function makePathRowCtrl(opts: {
       chip.textContent = label;
       chip.addEventListener('click', openPicker); // 文本点击重开选择器
       if (multi) {
-        const x = document.createElement('i');
-        x.className = 'x';
-        x.textContent = '✕';
+        // 移除钮符号收编 lucide（review-deep 一致#6）：uiIcon 即刻 setIcon 成 SVG（免 mountIcons）；
+        // 保留 .x 域内色/cursor 钩子（styles.css .bz-sp-chip .x），尺寸随 .bz-ic 1em
+        const x = uiIcon('x', 'x');
         x.addEventListener('click', (ev) => {
           ev.stopPropagation();
           void apply(current.filter((p) => p !== path));

@@ -813,9 +813,9 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
     closeForm();
     await reload();
   } catch (e: any) {
-    notice(`保存失败：${e?.message || '未知错误'}`, 'error');
+    notifySaveError(e);
     saveBtn.disabled = false;
-    saveBtn.textContent = it ? '更新' : '保存';
+    saveBtn.textContent = it ? '保存' : '添加';
   } finally {
     _saving = false;
   }

@@ -18,7 +18,7 @@
  * 值内嵌 markup 两侧零差异；data-* 钩子即两侧事件绑定与测试断言的共同契约，改钩子先改这里。
  * 本文件只做 markup 平移（自 ui.ts，issue 251），任何视觉值不动。
  */
-import { colorOf, esc, escAttr } from '../core/ui/str';
+import { colorOf, esc, escAttr, relTime } from '../core/ui/str';
 import type { PasswordVaultEntry, PlatformGroup } from './data';
 
 /** esc/colorOf/escAttr 再导出：行为层与评审壳演示 markup 同源（收口 core/ui/str，批次 G） */
@@ -28,16 +28,9 @@ export type { PasswordVaultEntry, PlatformGroup } from './data';
 
 // ==================== 常量与工具 ====================
 
-/** 相对时间（原型同款） */
-export function relTime(iso: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const diff = (Date.now() - d.getTime()) / 864e5;
-  if (diff < 1) return '今天';
-  if (diff < 2) return '昨天';
-  if (diff < 30) return Math.round(diff) + ' 天前';
-  return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
-}
+/** 相对时间：原「今天/昨天/N 天前/N月N日」自持档位已收口 core/ui/str 跨域单源
+ *  （2026-09 收编拍板：刚刚/N 分钟前/N 小时前/N 天前，7 天封顶回落 M-D） */
+export { relTime };
 
 /** 本地日期（账号卡 meta「创建于」用） */
 export function fmtDate(iso: string): string {

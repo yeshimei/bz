@@ -88,7 +88,9 @@ export function showConfirm(loc: DiaryEntryLocator): void {
         // 动作埋点：普通条目删除意图（结构性事实 file-vacated 由 store 在整文件删除时另发）
         emitDomainEvent('diary:entry-deleted', { date: loc.date, time: loc.time, wasEncrypted: false });
       }
-      notice('日记条目已删除', 'success');
+      // 删除成功通知带条目标识（review-deep 一致#11：对齐 memo/favorites「已删除X「名」」句式；
+      // 日记条目以 日期+时间 标识，删错时可辨认是哪篇）
+      notice(`已删除日记「${loc.date} ${loc.time}」`, 'success');
     })
     .catch((err: any) => {
       if (err && (isUnparsedRefusal(err) || isDiaryReadFailure(err))) return; // 守卫拒删/读失败：人话通知已由写层发出

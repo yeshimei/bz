@@ -107,7 +107,7 @@ describe('内容首页 review 回归（H11-H13）', () => {
     await waitFor(() => !!body.querySelector('[data-ent-remove]'));
     clearNotices();
     (body.querySelector('[data-ent-remove]') as HTMLElement).click();
-    await waitFor(() => hasNotice(/入口顺序保存失败/));
-    expect(hasNotice(/入口顺序保存失败/)).toBe(true);
+    await waitFor(() => hasNotice(/保存失败（入口顺序）/));
+    expect(hasNotice(/保存失败（入口顺序）/)).toBe(true);
   });
 });
