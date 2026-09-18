@@ -20,6 +20,7 @@
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
 import { resolveModelLimits } from './model-limits';
+import { toBase64 } from './crypto';
 
 export interface AISettingsLike {
   aiProvider?: string;
@@ -650,7 +651,8 @@ export function imageExtOfMime(mime: string): string | null {
 
 /**
  * 图片字节 → data URL。本地图唯一可行的投喂方式（DeepSeek 只收公网 https 或 base64）。
- * 分块 fromCharCode 防止大图爆栈；空图与超 32 MiB 直接抛错（由调用方决定压缩还是换图）。
+ * 分块 Base64 编码走 crypto.toBase64 单源（架#7：原内联循环与 crypto 重复实现收编）；
+ * 空图与超 32 MiB 直接抛错（由调用方决定压缩还是换图）。
  */
 export function imageDataUrl(bytes: ArrayBuffer | Uint8Array, mime: string): string {
   const u8 = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
@@ -658,12 +660,7 @@ export function imageDataUrl(bytes: ArrayBuffer | Uint8Array, mime: string): str
   if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
     throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
   }
-  let bin = '';
-  const CHUNK = 0x8000;
-  for (let i = 0; i < u8.length; i += CHUNK) {
-    bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)) as unknown as number[]);
-  }
-  return `data:${mime};base64,${btoa(bin)}`;
+  return `data:${mime};base64,${toBase64(u8)}`;
 }
 
 /**
