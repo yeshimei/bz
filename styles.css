@@ -15200,18 +15200,22 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .pw{position:relative;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--chip);border:1px solid var(--line);transition:transform .18s,box-shadow .18s,border-color .18s}
 .bz-cinema--midnight .pcard:hover .pw{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 10px 22px #0004}
 .bz-cinema--midnight .pw img{width:100%;height:100%;object-fit:cover;display:block}
+/* 海报内芯包裹层（悬浮季圆点换脸用）：行为层只重写这一层，抓取遮罩/状态角标/季圆点原地不动。
+   绝对定位铺满 → 卡片高度仍由 .pw 的 aspect-ratio 决定，不随换脸抖动。 */
+.bz-cinema--midnight .pw .pw-face{position:absolute;inset:0}
 .bz-cinema--midnight .pw .ph{width:100%;height:100%;display:grid;place-items:center;font-family:"Noto Serif SC",serif;font-size:26px;color:var(--ink-3);background:linear-gradient(160deg,var(--chip),var(--panel))}
 .bz-cinema--midnight .badge{position:absolute;top:7px;left:7px;font-size:10.5px;letter-spacing:.1em;padding:2px var(--bz-space-sm);border-radius:99px;color:#fff}
 .bz-cinema--midnight .pname{font-size:12.5px;font-weight:600;color:var(--ink);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bz-cinema--midnight .pmeta{font-size:var(--bz-font-caption);color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bz-cinema--midnight .pstars{font-size:10.5px;color:var(--star);margin-top:3px;letter-spacing:1px}
 .bz-cinema--midnight .pstars .num{color:var(--ink-2);margin-left:var(--bz-space-xs);letter-spacing:0}
-/* 剧集按季合并（cinemaMergeSeasons，issue 376 / ADR-0168）：海报**右下角**的季圆点。
+/* 剧集按季合并（cinemaMergeSeasons，issue 376 / ADR-0168）：海报**左下角**的季圆点。
    一个圆点 = 一季（左→右即季号顺序）：金实 = 已看 / 橙实 = 在看 / 空心描边 = 未看·想看。
    注释文字整条不出（用户 2026-09-18 定稿），故圆点自带一层半透明深色底衬——海报深浅不一，
    光靠圆点自身颜色读不出来；底衬固定不随亮暗翻转（圆点坐在图片上，与面板主题无关）。
-   绝对定位在 .pw 内：不占卡片高度，也不受 .pw 的 overflow:hidden 影响（图与圆点同一有界盒）。 */
-.bz-cinema--midnight .season-dots{position:absolute;right:6px;bottom:6px;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:3px;max-width:calc(100% - 12px);padding:4px 6px;border-radius:99px;background:rgba(10,8,4,.58)}
+   绝对定位在 .pw 内：不占卡片高度，也不受 .pw 的 overflow:hidden 影响（图与圆点同一有界盒）。
+   方位 = 左下（用户 2026-09-18 订正，原写右下）——状态角标在左上，两者不同角不打架。 */
+.bz-cinema--midnight .season-dots{position:absolute;left:6px;bottom:6px;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-start;gap:3px;max-width:calc(100% - 12px);padding:4px 6px;border-radius:99px;background:rgba(10,8,4,.58)}
 .bz-cinema--midnight .season-dots i{flex:none;width:6px;height:6px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(236,229,211,.5)}
 .bz-cinema--midnight .season-dots i.watched{background:#e0aa4b;box-shadow:none}
 .bz-cinema--midnight .season-dots i.watching{background:#d97c1d;box-shadow:0 0 0 1.5px rgba(217,124,29,.4)}
