@@ -27,9 +27,16 @@ import { achRowText, parseAchievementRows, parseStoreMeta } from '../../src/game
 
 /** 游戏目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
 const FOLDER = '我的/游戏';
+/**
+ * 评审种子条数上限：0 = 整库（147 款快照，评审默认口径）。交互调试期曾限 3 款
+ * （媒体回填「落图 → 重渲」会让评审壳躁动），收尾已复原。若再要小种子评审，
+ * 改这里 + 同一次把 SEED_MARK 版本 +1（sync 罐头回放同读此数据源，砍种子即一起砍）。
+ */
+const SEED_LIMIT = 0;
 /** 种子标记：存在 = 已种子过（用户在壳里的改动保留，不被覆盖）。
- *  ⚠️ 改种子内容必须同一次把版本号 +1——否则浏览器老 localStorage 里的旧种子不会重播。 */
-const SEED_MARK = 'bz-sim:__gameshelf-seed-v6';
+ *  ⚠️ 改种子内容（含条数上限）必须同一次把版本号 +1——否则浏览器老 localStorage 里的
+ *  旧种子不会重播。 */
+const SEED_MARK = 'bz-sim:__gameshelf-seed-v9';
 /** 设置持久键 */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -124,12 +131,17 @@ function mdOf(g: SeedGame): string {
 
 /** 种子：GAMESHELF_DATA → fake vault 的游戏笔记（仅首启；ctime 按导出序递减） */
 function seedDatabase(): void {
-  const items = window.GAMESHELF_DATA || [];
+  const items = (window.GAMESHELF_DATA || []).slice(0, SEED_LIMIT > 0 ? SEED_LIMIT : undefined);
   if (localStorage.getItem(SEED_MARK)) {
     // 形状自愈：数组约定的数据被写坏（老种子/手工改）时强制重播，别让页面静默空白
     const broken = items.some((g) => typeof g?.appid === 'number' && !localStorage.getItem(`bz-sim:${FOLDER}/《${g.name}》.md`));
     if (!broken) return;
     localStorage.removeItem(SEED_MARK);
+  }
+  // 重播 = 整库替换语义：先清旧笔记再种（条数上限收紧后，老的多余笔记不能留下冒充库存）
+  for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(`bz-sim:${FOLDER}/`)) localStorage.removeItem(k);
   }
   const base = 1700000000000;
   const n = items.length;
@@ -165,6 +177,17 @@ export function bootGameshelfSim(): void {
   const g = window as unknown as { __bzGsSimBooted?: boolean };
   if (g.__bzGsSimBooted) return;
   g.__bzGsSimBooted = true;
+  // 条数上限砍在**数据源**上：sync 的罐头回放（GetOwnedGames）也经 globalOf 读
+  // GAMESHELF_DATA，且 fake 层会**回落到父窗口**取——只切本 iframe 的话，开面板的
+  // 自动同步照样从父窗口把整库 147 款灌回来（2026-09-18 实测）。顶层同源可写，一起切。
+  // 壳自检的 DATA 常量在切之前已捕获（指向原数组），?selftest 的条数断言暂按全量口径。
+  if (SEED_LIMIT > 0) {
+    const sliced = (window.GAMESHELF_DATA || []).slice(0, SEED_LIMIT);
+    window.GAMESHELF_DATA = sliced;
+    try {
+      if (window.parent && window.parent !== window) window.parent.GAMESHELF_DATA = sliced;
+    } catch { /* 跨域隔离时放弃（本地壳恒同源） */ }
+  }
   seedDatabase();
   // 媒体队列的任务间隔归零：生产那 120ms 是给 Steam CDN 留的礼貌间隔，壳里没有真网络，
   // 留着只会让评审时「图标一张张才出来」（成就图标一款就上百张）

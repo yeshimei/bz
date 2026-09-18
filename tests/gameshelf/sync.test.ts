@@ -229,7 +229,8 @@ describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
     expect(mask.children.length).toBe(1);
     expect(document.querySelector('#bz-gs-guide-config')).toBeTruthy();
     expect(document.querySelector('#bz-gs-guide-recheck')).toBeTruthy();
-    expect((document.querySelector('.bz-btn--primary') as HTMLButtonElement).disabled).toBe(true);
+    // 头行退役：同步钮是海报右上角的图标钮，未配置时置灰
+    expect((document.querySelector('#bz-gs-heroops [title="立即同步"]') as HTMLButtonElement).disabled).toBe(true);
     closePanel();
     expect(document.querySelector('.bz-gs-panel')).toBeNull();
   });
@@ -250,10 +251,10 @@ describe('面板 UI（core 面板壳 + 引导态 + 游戏墙）', () => {
       expect(document.querySelectorAll('.bz-gs-sels .bz-select').length).toBe(2);
       // 游戏墙标记：移动端「搜索行固定（滚动权在网格）」那套 CSS 认它（data-view=shelf）
       expect(document.querySelector('#bz-gs-body')!.getAttribute('data-view')).toBe('shelf');
-      // 头行：视图入口在同步钮左侧（都靠右），关闭钮在（桌面由 CSS 隐藏）
-      const acts = [...document.querySelectorAll('.bz-main-head > *')];
-      expect(acts.findIndex((e) => e.classList.contains('bz-gs-viewslot'))).toBeLessThan(
-        acts.findIndex((e) => e.classList.contains('bz-btn--primary')),
+      // 海报右上角常驻操作（头行退役）：统计在同步左侧，关闭钮在（桌面由 CSS 隐藏）
+      const ops = [...document.querySelectorAll('#bz-gs-heroops .bz-icon-btn')];
+      expect(ops.findIndex((e) => e.getAttribute('title') === '数据统计')).toBeLessThan(
+        ops.findIndex((e) => e.getAttribute('title') === '立即同步'),
       );
       expect(document.querySelector('.bz-gs-close')).toBeTruthy();
       // 再点命令 toggle 关

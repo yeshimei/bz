@@ -1,4 +1,4 @@
-/* 源指纹 a536042fa8d28182 · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5be621c8453157bc · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -50244,32 +50244,37 @@ ${n.content.slice(0, 2e3)}
   var maskEl4 = null;
   var popupEl2 = null;
   var sortSegRef = null;
-  var countRef = null;
   var heroEl = null;
   var gridEl = null;
   var lastReport2 = null;
+  var heroRestHtml = "";
+  var peekedHeroAppid = null;
+  var reelTimer = null;
+  var reelCard = null;
   var selectRefs = [];
   function disposeSelects() {
     for (const s of selectRefs) s.detach();
     selectRefs = [];
   }
-  function fillViewSlot(app) {
-    const slot = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-viewslot");
-    if (!slot) return;
+  function mountOps(app) {
+    const ops = popupEl2 == null ? void 0 : popupEl2.querySelector("#bz-gs-heroops");
+    if (!ops) return;
     const onStats = M.view === "stats";
-    const b = uiBtn({
-      label: onStats ? "游戏墙" : "数据统计",
-      icon: onStats ? "layout-grid" : "bar-chart-3",
-      on: onStats,
-      title: onStats ? "返回游戏墙" : "数据统计",
-      onClick: () => {
+    const mk = (icon2, label, onClick, disabled = false) => {
+      const b = uiIconBtn({ icon: icon2, title: label, className: "bz-gs-opsbtn", onClick, disabled });
+      b.setAttribute("aria-label", label);
+      return b;
+    };
+    const close = mk("x", "关闭", () => closePanel4());
+    close.classList.add("bz-gs-close");
+    ops.replaceChildren(
+      mk(onStats ? "layout-grid" : "bar-chart-3", onStats ? "返回游戏墙" : "数据统计", () => {
         M.view = onStats ? "shelf" : "stats";
         renderAll5(app);
-      }
-    });
-    b.classList.add("bz-gs-viewbtn");
-    b.setAttribute("aria-label", onStats ? "返回游戏墙" : "数据统计");
-    slot.replaceChildren(b);
+      }),
+      mk("refresh-cw", "立即同步", () => void onSyncClick(app), M.syncing || !isConfigured()),
+      close
+    );
   }
   function hoursOf(min) {
     return Math.round((min || 0) / 60 * 10) / 10;
@@ -50317,7 +50322,7 @@ ${n.content.slice(0, 2e3)}
     if (M.sort === "name") return "名称首位";
     return "时长第一";
   }
-  function heroHtml(item, cover, rp, tag = heroTag()) {
+  function heroHtml(item, cover, rp, tag = heroTag(), peek = false) {
     const zh = displayNameOf(item);
     const orig = item.zhName && item.zhName !== item.name ? item.name : "";
     const sub = [
@@ -50332,7 +50337,7 @@ ${n.content.slice(0, 2e3)}
     <div class="bz-gs-hero-veil"></div>
     <div class="bz-gs-hero-in">
       <div class="bz-gs-hero-left">
-        <span class="bz-gs-hero-tag">${escHtml(tag)}</span>
+        ${peek ? "" : `<span class="bz-gs-hero-tag">${escHtml(tag)}</span>`}
         <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(zh)}</div>
         ${orig ? `<div class="bz-gs-hero-orig">${escHtml(orig)}</div>` : ""}
         <div class="bz-gs-hero-sub">${escHtml(sub)}</div>
@@ -50349,9 +50354,6 @@ ${n.content.slice(0, 2e3)}
     const all = [...M.items].sort((a, b) => b.playtimeMin - a.playtimeMin);
     return Math.max(0, all.findIndex((it) => it.appid === item.appid));
   }
-  function maxPlaytime() {
-    return Math.max(1, ...M.items.map((it) => it.playtimeMin));
-  }
   function filterList(items) {
     const def = bucketOf(M.bucket);
     return items.filter((it) => def.test(it) && nameMatches(it, M.query));
@@ -50363,22 +50365,24 @@ ${n.content.slice(0, 2e3)}
     return list.sort((a, b) => b.playtimeMin - a.playtimeMin);
   }
   function shelfHtml(items, coverOf, opts = {}) {
-    var _a2;
-    const max = Math.max(1, (_a2 = opts.maxMin) != null ? _a2 : 1);
     const cards = items.map((it, i) => {
-      var _a3;
+      var _a2, _b2, _c;
       const cover = coverOf(it);
       const zh = displayNameOf(it);
       const orig = it.zhName && it.zhName !== it.name ? it.name : "";
       const rank = opts.showRank && i < 3 ? `<span class="bz-gs-rank">NO.${i + 1}</span>` : "";
-      const pct = Math.max(1, Math.min(100, Math.round((it.playtimeMin || 0) / max * 100)));
+      const ach = (_b2 = (_a2 = opts.achOf) == null ? void 0 : _a2.call(opts, it)) != null ? _b2 : null;
+      const achPct = ach && ach.total > 0 ? Math.round(ach.unlocked / ach.total * 100) : null;
+      const isFull = achPct !== null && achPct >= 100;
+      const trophy = isFull ? '<span class="bz-gs-trophy" data-lucide="trophy" title="全成就达成"></span>' : "";
       const hint = it.playtimeMin > 0 ? `${numText(hoursOf(it.playtimeMin))} 小时` : "从未启动";
       const last = it.lastPlayed ? dateText(it.lastPlayed) : "—";
       return `
       <button type="button" class="bz-gs-card${it.offShelf ? " bz-gs-card--off" : ""}" data-appid="${it.appid}" title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">
         <span class="bz-gs-cover" data-initial="${escAttr(firstChar(zh))}">
-          ${cover ? `<img loading="lazy" src="${escAttr(cover)}" data-fallback-src="${escAttr((_a3 = it.coverSrc) != null ? _a3 : "")}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
+          ${cover ? `<img loading="lazy" src="${escAttr(cover)}" data-fallback-src="${escAttr((_c = it.coverSrc) != null ? _c : "")}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
           ${rank}
+          ${trophy}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ""}
           <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
         </span>
@@ -50389,13 +50393,133 @@ ${n.content.slice(0, 2e3)}
           </span>
           <span class="bz-gs-hours">${hoursText(it.playtimeMin)}</span>
         </span>
-        <span class="bz-gs-strip"><i style="width:${pct}%"></i></span>
+        ${achPct !== null ? `<span class="bz-gs-strip${isFull ? " is-full" : ""}"><i style="width:${achPct}%"></i></span>` : ""}
       </button>`;
     }).join("");
     return `<div class="bz-gs-grid">${cards}</div>`;
   }
   function firstChar(name) {
     return name.slice(0, 1) || "?";
+  }
+  var REEL_INTERVAL_MS = 300;
+  function thumbUrlOf(u) {
+    return /^https?:\/\//i.test(u) ? u.replace(/\.\d+x\d+\.jpg/i, ".600x338.jpg") : u;
+  }
+  function shotReelHtml(urls, fullUrls = urls) {
+    return `<span class="bz-gs-reel">${urls.map((u, i) => {
+      var _a2;
+      return `<img src="${escAttr(u)}" alt="" decoding="async" data-shot-full="${escAttr((_a2 = fullUrls[i]) != null ? _a2 : u)}"${i === 0 ? ' class="is-on"' : ""}>`;
+    }).join("")}</span>`;
+  }
+  function shotUrlsOfCard(app, appid) {
+    const item = M.items.find((it) => it.appid === appid);
+    if (!item) return [];
+    const { local, remote } = fmToShots(safeDetailFm(app, item.file));
+    return resolveShotUrls(app, local, remote);
+  }
+  function restReel() {
+    var _a2;
+    if (reelTimer !== null) {
+      clearInterval(reelTimer);
+      reelTimer = null;
+    }
+    (_a2 = reelCard == null ? void 0 : reelCard.querySelector(".bz-gs-reel")) == null ? void 0 : _a2.remove();
+    reelCard = null;
+  }
+  function promoteFirstReadyShot() {
+    const reel = reelCard == null ? void 0 : reelCard.querySelector(".bz-gs-reel");
+    if (!reel) return;
+    const imgs = [...reel.querySelectorAll("img")];
+    const cur = imgs.findIndex((im) => im.classList.contains("is-on"));
+    if (cur >= 0 && imgs[cur].complete && imgs[cur].naturalWidth > 0) return;
+    const ready = imgs.find((im) => im.complete && im.naturalWidth > 0);
+    if (!ready) return;
+    if (cur >= 0) imgs[cur].classList.remove("is-on");
+    ready.classList.add("is-on");
+  }
+  function peekReel(card, app) {
+    var _a2;
+    if (card === reelCard) return;
+    restReel();
+    const urls = shotUrlsOfCard(app, Number(card.dataset.appid));
+    const cover = card.querySelector(".bz-gs-cover");
+    if (!cover || urls.length === 0) return;
+    cover.insertAdjacentHTML("afterbegin", shotReelHtml(urls.map(thumbUrlOf), urls));
+    reelCard = card;
+    (_a2 = reelCard.querySelector(".bz-gs-reel")) == null ? void 0 : _a2.addEventListener("load", promoteFirstReadyShot, true);
+    promoteFirstReadyShot();
+    if (urls.length < 2) return;
+    reelTimer = setInterval(() => {
+      if (!(reelCard == null ? void 0 : reelCard.isConnected)) {
+        restReel();
+        return;
+      }
+      const imgs = [...reelCard.querySelectorAll(".bz-gs-reel img")];
+      const cur = imgs.findIndex((im) => im.classList.contains("is-on"));
+      if (cur < 0) return;
+      for (let step = 1; step < imgs.length; step += 1) {
+        const at = (cur + step) % imgs.length;
+        const im = imgs[at];
+        if (im.complete && im.naturalWidth > 0) {
+          imgs[cur].classList.remove("is-on");
+          im.classList.add("is-on");
+          return;
+        }
+      }
+    }, REEL_INTERVAL_MS);
+  }
+  function peekHero(app, appid) {
+    if (appid === peekedHeroAppid) return;
+    if (!heroEl || !heroRestHtml || !lastReport2) return;
+    const it = M.items.find((i) => i.appid === appid);
+    if (!it) return;
+    peekedHeroAppid = appid;
+    heroEl.innerHTML = heroHtml(it, coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), lastReport2, "", true);
+  }
+  function restHero() {
+    if (peekedHeroAppid === null) return;
+    peekedHeroAppid = null;
+    if (heroEl && heroRestHtml) heroEl.innerHTML = heroRestHtml;
+  }
+  function hoverCapable() {
+    try {
+      return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    } catch (e) {
+      return false;
+    }
+  }
+  function bindShotReel(app, host, hoverable = hoverCapable()) {
+    if (!hoverable) return;
+    host.addEventListener(
+      "error",
+      (e) => {
+        const img = e.target;
+        if (img.tagName !== "IMG" || !img.closest(".bz-gs-reel")) return;
+        const full = img.getAttribute("data-shot-full");
+        if (full && img.src !== full && !img.dataset.shotTried) {
+          img.dataset.shotTried = "1";
+          img.src = full;
+        }
+      },
+      true
+    );
+    host.addEventListener("mouseover", (e) => {
+      var _a2, _b2;
+      const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, ".bz-gs-card");
+      if (!card) return;
+      peekReel(card, app);
+      peekHero(app, Number(card.dataset.appid));
+    });
+    host.addEventListener("mouseout", (e) => {
+      var _a2, _b2;
+      if (!reelCard && !heroRestHtml) return;
+      const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, ".bz-gs-card");
+      if (!card) return;
+      const to = e.relatedTarget;
+      if (to && card.contains(to)) return;
+      restReel();
+      restHero();
+    });
   }
   function statsHtml(rp) {
     var _a2, _b2;
@@ -50727,6 +50851,7 @@ ${n.content.slice(0, 2e3)}
         var _a2;
         const img = e.target;
         if (img.tagName !== "IMG") return;
+        if (img.closest(".bz-gs-reel")) return;
         const fb = img.dataset.fallbackSrc;
         if (fb && img.dataset.fbDone !== "1" && img.src !== fb) {
           img.dataset.fbDone = "1";
@@ -50749,25 +50874,17 @@ ${n.content.slice(0, 2e3)}
     frame.className = "bz-panel-frame bz-gs-panel bz-panel-mtop";
     frame.setAttribute("role", "dialog");
     frame.setAttribute("aria-label", "游戏库");
-    const head = uiMainHead({
-      title: "游戏库",
-      action: { label: "立即同步", icon: "refresh-cw", onClick: () => void onSyncClick(app) }
-    });
-    countRef = head;
-    const slot = document.createElement("span");
-    slot.className = "bz-gs-viewslot";
-    const primaryBtn = head.el.querySelector(".bz-btn--primary");
-    if (primaryBtn) {
-      primaryBtn.title = "立即同步";
-      head.el.insertBefore(slot, primaryBtn);
-    } else {
-      head.el.appendChild(slot);
-    }
-    const close = uiBtn({ label: "关闭", icon: "x", title: "关闭", onClick: () => closePanel4() });
-    close.classList.add("bz-gs-close");
-    close.setAttribute("aria-label", "关闭");
-    head.el.appendChild(close);
-    frame.appendChild(head.el);
+    const heroz = document.createElement("div");
+    heroz.className = "bz-gs-heroz";
+    const hero = document.createElement("div");
+    hero.id = "bz-gs-hero";
+    const ops = document.createElement("div");
+    ops.className = "bz-gs-heroops";
+    ops.id = "bz-gs-heroops";
+    heroz.appendChild(hero);
+    heroz.appendChild(ops);
+    frame.appendChild(heroz);
+    heroEl = hero;
     const status = document.createElement("div");
     status.className = "bz-gs-status";
     status.id = "bz-gs-status";
@@ -50789,6 +50906,7 @@ ${n.content.slice(0, 2e3)}
       }
     });
     bindMediaFallback(body);
+    bindShotReel(app, body);
     frame.appendChild(body);
     mask.appendChild(frame);
     document.body.appendChild(mask);
@@ -50809,14 +50927,25 @@ ${n.content.slice(0, 2e3)}
     const { ensurePosters: ensurePosters2, mediaItemsOf: mediaItemsOf2 } = await Promise.resolve().then(() => (init_posters(), posters_exports));
     ensurePosters2(app, mediaItemsOf2(M.items));
   }
+  function fillHero(app, rp) {
+    if (!heroEl) return;
+    const list = sortList(filterList(M.items));
+    if (list.length === 0) {
+      heroEl.innerHTML = "";
+      heroRestHtml = "";
+      return;
+    }
+    const top = list[0];
+    heroRestHtml = heroHtml(top, coverDisplayUrl(app, top.appid, top.cover, top.coverSrc), rp);
+    peekedHeroAppid = null;
+    heroEl.innerHTML = heroRestHtml;
+  }
   function renderAll5(app) {
     const frame = M.currentOverlay;
     if (!frame || !document.body.contains(frame)) return;
     const configured = isConfigured();
-    fillViewSlot(app);
-    countRef == null ? void 0 : countRef.setCount(configured ? `${M.items.filter((it) => !it.offShelf).length} 款` : "");
-    const syncBtn = frame.querySelector(".bz-btn--primary");
-    if (syncBtn) syncBtn.disabled = M.syncing || !configured;
+    mountOps(app);
+    restReel();
     const status = frame.querySelector("#bz-gs-status");
     if (status) status.textContent = M.statusMsg;
     const body = frame.querySelector("#bz-gs-body");
@@ -50824,16 +50953,20 @@ ${n.content.slice(0, 2e3)}
     body.innerHTML = "";
     body.removeAttribute("data-view");
     disposeSelects();
-    heroEl = null;
     gridEl = null;
     lastReport2 = null;
     if (!configured) {
+      if (heroEl) {
+        heroEl.innerHTML = "";
+        heroRestHtml = "";
+      }
       body.appendChild(guidanceEl(app));
       mountIcons(frame);
       return;
     }
     const rp = buildReport(M.items);
     lastReport2 = rp;
+    fillHero(app, rp);
     if (M.view === "stats") {
       body.insertAdjacentHTML("beforeend", statsHtml(rp));
       fillStatsRow(app, rp);
@@ -50848,7 +50981,6 @@ ${n.content.slice(0, 2e3)}
     const wrap = document.createElement("div");
     wrap.className = "bz-gs-wall";
     wrap.innerHTML = `
-    <div id="bz-gs-hero"></div>
     <div class="bz-gs-tools">
       <div class="bz-gs-chips" id="bz-gs-chips"></div>
       <div class="bz-gs-toolsend">
@@ -50861,7 +50993,6 @@ ${n.content.slice(0, 2e3)}
       </div>
     </div>
     <div class="bz-gs-gridhost" id="bz-gs-grid"></div>`;
-    heroEl = wrap.querySelector("#bz-gs-hero");
     gridEl = wrap.querySelector("#bz-gs-grid");
     const chips = wrap.querySelector("#bz-gs-chips");
     const counts = new Map(rp.buckets.map((b) => [b.key, b.count]));
@@ -50951,19 +51082,23 @@ ${n.content.slice(0, 2e3)}
     });
   }
   function renderList2(app) {
-    if (!heroEl || !gridEl) return;
+    if (!gridEl) return;
     const rp = lastReport2 != null ? lastReport2 : buildReport(M.items);
     lastReport2 = rp;
+    restReel();
+    fillHero(app, rp);
     const list = sortList(filterList(M.items));
     const showRank = M.bucket === "all" && !M.query.trim() && M.sort === "hours";
+    const achOf = (it) => {
+      if (!it.hasAch) return null;
+      const s = fmToAchSummary(safeDetailFm(app, it.file));
+      return s && s.total > 0 ? { unlocked: s.unlocked, total: s.total } : null;
+    };
     if (list.length === 0) {
-      heroEl.innerHTML = "";
       gridEl.innerHTML = "";
       gridEl.appendChild(emptyResult(app));
     } else {
-      const top = list[0];
-      heroEl.innerHTML = heroHtml(top, coverDisplayUrl(app, top.appid, top.cover, top.coverSrc), rp);
-      gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, maxMin: maxPlaytime() });
+      gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, achOf });
     }
     const frame = M.currentOverlay;
     if (frame) mountIcons(frame);
@@ -51012,6 +51147,7 @@ ${n.content.slice(0, 2e3)}
   function closePanel4() {
     var _a2;
     unregisterPanelEsc(ESC_ID3);
+    restReel();
     maskEl4 == null ? void 0 : maskEl4.remove();
     maskEl4 = null;
     popupEl2 = null;
@@ -51019,6 +51155,8 @@ ${n.content.slice(0, 2e3)}
     M.currentOverlay = null;
     disposeSelects();
     heroEl = null;
+    heroRestHtml = "";
+    peekedHeroAppid = null;
     gridEl = null;
     lastReport2 = null;
     clearDetailCache();
@@ -51066,7 +51204,8 @@ ${n.content.slice(0, 2e3)}
   init_posters();
   init_steam();
   var FOLDER = "我的/游戏";
-  var SEED_MARK = "bz-sim:__gameshelf-seed-v6";
+  var SEED_LIMIT = 0;
+  var SEED_MARK = "bz-sim:__gameshelf-seed-v9";
   var SETTINGS_KEY = "bz-sim:__settings";
   function achRowsOf(appid) {
     var _a2, _b2;
@@ -51133,11 +51272,15 @@ ${n.content.slice(0, 2e3)}
     return lines.join("\n");
   }
   function seedDatabase() {
-    const items = window.GAMESHELF_DATA || [];
+    const items = (window.GAMESHELF_DATA || []).slice(0, SEED_LIMIT > 0 ? SEED_LIMIT : void 0);
     if (localStorage.getItem(SEED_MARK)) {
       const broken = items.some((g) => typeof (g == null ? void 0 : g.appid) === "number" && !localStorage.getItem(`bz-sim:${FOLDER}/《${g.name}》.md`));
       if (!broken) return;
       localStorage.removeItem(SEED_MARK);
+    }
+    for (let i = localStorage.length - 1; i >= 0; i -= 1) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(`bz-sim:${FOLDER}/`)) localStorage.removeItem(k);
     }
     const base = 17e11;
     const n = items.length;
@@ -51167,6 +51310,14 @@ ${n.content.slice(0, 2e3)}
     const g = window;
     if (g.__bzGsSimBooted) return;
     g.__bzGsSimBooted = true;
+    if (SEED_LIMIT > 0) {
+      const sliced = (window.GAMESHELF_DATA || []).slice(0, SEED_LIMIT);
+      window.GAMESHELF_DATA = sliced;
+      try {
+        if (window.parent && window.parent !== window) window.parent.GAMESHELF_DATA = sliced;
+      } catch (e) {
+      }
+    }
     seedDatabase();
     setMediaInterval(0);
     const app = new FakeApp();
