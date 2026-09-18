@@ -515,7 +515,13 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   // 底部录入 Enter
   const composerInput = overlay.querySelector('[data-memo-composer-input]') as HTMLInputElement;
   composerInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addFromComposer();
+    // IME 组词确认回车不提交（M5）：isComposing/229 守卫，core bindFormSubmit 同口径
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key !== 'Enter') return;
+    // 平台分流（M2-2）：移动端回车 = 与「添加」钮同路开创建弹窗（issue 268 拍板，
+    // 草稿/场景一并带过去），桌面 = 快速落盘
+    if (isMobileEnv()) submitComposer();
+    else addFromComposer();
   });
 
   // 剪藏场景剪贴板预填（memo 同款逻辑）：聚焦时读剪贴板，URL 形态自动填入并抓标题；
@@ -575,6 +581,9 @@ export function closeMemoPanel(): void {
   M.renderFn = null;
   M.pinnedNewId = null;
   clipTitleHint = null; // 剪贴板预填候选随面板生命周期清空
+  // 未决完成的取舍（M10 拍板）：勾选完成 300ms 防抖窗口内关面板（ESC/遮罩），挂起 timer
+  // 就地取消、完成不落盘——「防抖 = 反悔窗口」语义覆盖关闭场景（窗口内关面板视同反悔），
+  // 不做 flush：关面板 + 补落盘的组合反而可能违背用户反悔意图。属可辩护设计，注释钉死口径。
   M.completeTimers.forEach((t) => clearTimeout(t));
   M.completeTimers.clear();
 }
@@ -921,7 +930,7 @@ function openItem(it: MemoItem): void {
   }
 }
 
-function jumpToNote(it: MemoItem): void {
+async function jumpToNote(it: MemoItem): Promise<void> {
   if (!it.notePath) return;
   closeMemoPanel();
   const app = M.appRef!;
@@ -931,13 +940,26 @@ function jumpToNote(it: MemoItem): void {
     return;
   }
   const leaf = app.workspace.getLeaf();
-  void leaf.openFile(file as any);
+  // openFile 是异步切视图（N8/A2）：必须 await 后 leaf.view 才是新笔记的视图——
+  // 此前 fire-and-forget 后同步取 editor，定位会打在旧视图（旧视图恰为 md 编辑器时
+  // setCursor 落在上一篇笔记）或空 view 上，跳转到行从不生效
+  await leaf.openFile(file as any);
   const editor = (leaf as any).view?.editor;
   if (editor && it.notePosition) {
     const { line, ch } = it.notePosition;
     editor.focus();
     editor.setCursor(line, ch || 0);
     editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+  } else if (it.notePosition) {
+    // 极端时序兜底：await 后 view/editor 仍未就绪（Obsidian 内部再排程）→ rAF 一帧后重取
+    const { line, ch } = it.notePosition;
+    requestAnimationFrame(() => {
+      const ed = (leaf as any).view?.editor;
+      if (!ed) return;
+      ed.focus();
+      ed.setCursor(line, ch || 0);
+      ed.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    });
   }
 }
 
@@ -1016,15 +1038,26 @@ async function toggleChecklistItem(it: MemoItem, idx: number): Promise<void> {
   if (idx < 0 || idx >= cl.length) return;
   cl[idx].done = !cl[idx].done;
   const allDone = cl.every((c) => c.done);
+  // 已完成父项取消勾选 → 自动恢复未完成；链上已有未完成下期（周期条目，M4）时
+  // 复用 restoreItem 的 hasPendingNextItem 守卫一并撤链（recur 清空）——
+  // 否则恢复后再完成会与链上下期并存重复生成（与勾选圈路径同型，此处曾漏网）
+  const restoring = it.completed && !allDone;
+  const patch: Partial<MemoItem> = { checklist: cl };
+  if (restoring) {
+    patch.completed = null;
+    if (hasPendingNextItem(M.items, it)) patch.recur = null;
+  }
   try {
     if (allDone && !it.completed) {
       await MemoData.updateItem(it.id, { checklist: cl });
       await completeItem(it); // 复用完成链路（通知/域事件/refresh 同源）
       return;
     }
-    const patch: Partial<MemoItem> = { checklist: cl };
-    if (it.completed && !allDone) patch.completed = null; // 已完成父项取消勾选 → 自动恢复
     await MemoData.updateItem(it.id, patch);
+    if (restoring) {
+      if (patch.recur === null) notify('下一期已存在，本条恢复后不再生成新的一期', { type: 'success' });
+      emitDomainEvent('memo', { kind: 'restored', title: it.title }); // 对齐 restoreItem 口径
+    }
   } catch (e) {
     notifySaveError(e, '更新子任务');
     console.error(e);
@@ -1035,9 +1068,9 @@ async function toggleChecklistItem(it: MemoItem, idx: number): Promise<void> {
 async function postponeItem(id: string, days: number): Promise<void> {
   const it = M.items.find((i) => i.id === id);
   if (!it || !it.due) return;
-  const d = new Date(it.due.replace('T', ' '));
-  d.setDate(d.getDate() + days);
-  const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  // moment 单源算术（M2-3）：`new Date('YYYY-MM-DD HH:mm')` 在 iOS WebKit 是 Invalid Date，
+  // setDate 产出 NaN 落盘脏 due——域内 data.ts nextRecurDue 全 moment 口径，此处对齐
+  const next = moment(it.due, 'YYYY-MM-DD HH:mm').add(days, 'days').format('YYYY-MM-DD HH:mm');
   try {
     await MemoData.updateItem(id, { due: next });
     emitDomainEvent('memo', { kind: 'postponed', title: it.title, due: next });
@@ -1093,20 +1126,18 @@ async function togglePrio(id: string): Promise<void> {
 }
 
 async function deleteItemConfirm(it: MemoItem): Promise<void> {
-  // 三段式确认框：标题 + 问句（名称「」引号）+ 后果说明（删除已接撤销，后果如实说明）
-  // className：流程框挂 body，须显式带皮肤类才与编辑弹窗同皮（issue 291 全域子弹窗统一）
-  const ok = await openFlowDialog({
-    title: '删除备忘录',
-    message: `确定删除备忘录「${it.title}」吗？\n删除后可在通知中撤销。`,
-    className: skinClass(),
-    actions: [
-      { label: '取消', value: 'cancel' },
-      { label: '删除', value: 'delete', danger: true, cta: true },
-    ],
-  });
-  if (ok !== 'delete') return;
+  // 删除免确认直达撤销（core 效率整改 5 定稿）：notifyUndo 撤销兜底已覆盖误删风险，
+  // 确认 + 撤销双保险只是多一次打断（favorites 同款：点删除 → 已删除 + 撤销，一道）；
+  // 不可逆/批量迁移类（场景删除 deleteSceneConfirm）仍保留确认
   try {
     const idx = await MemoData.deleteItem(it.id);
+    if (idx === -1) {
+      // 条目已被他端/外部删除（未找到、未写盘）：不发 deleted 事件、不挂撤销——
+      // 撤销会把删除前的陈旧快照插回，让外部刚删掉的数据以旧貌复活（M11）；如实提示即可
+      notice('该条已不存在');
+      await refresh();
+      return;
+    }
     emitDomainEvent('memo', { kind: 'deleted', title: it.title });
     notifyUndo(`已删除备忘录「${it.title}」`, () => {
       void (async () => {
@@ -1160,11 +1191,8 @@ function buildCardActions(it: MemoItem): ItemAction[] {
       onClick: async () => { await completeItem(it); },
     });
     if (it.due) {
-      const postponeSub = (days: number) => {
-        const d = new Date(it.due!.replace('T', ' '));
-        d.setDate(d.getDate() + days);
-        return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      };
+      // 同 M2-3：菜单 sub 文案的延后算术也走 moment（原 new Date 在 iOS WebKit 为 NaN）
+      const postponeSub = (days: number) => moment(it.due!, 'YYYY-MM-DD HH:mm').add(days, 'days').format('MM-DD');
       actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: `→ ${postponeSub(1)}`, onClick: async () => { await postponeItem(it.id, 1); } });
       actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: `→ ${postponeSub(3)}`, onClick: async () => { await postponeItem(it.id, 3); } });
     }
@@ -1259,7 +1287,10 @@ function addFromComposer(): void {
       id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
       title: hint ? hint.title : parsed.title,
       scene,
-      priority: 'minor',
+      // 默认优先级（A5）：读设置 memoDefaultPriority，与编辑弹窗（openEditor :priorityChoice
+      // 初值）同口径——设置文案承诺「新建备忘录时默认选中的优先级」，composer 快速录入
+      // 是新建入口之一，不该绕过（否则「今日/重要」聚合与提醒判定随之漏报）
+      priority: tryGetSettings().memoDefaultPriority || 'minor',
       created: localNow(),
       completed: null,
       due: null,
@@ -1278,9 +1309,12 @@ function addFromComposer(): void {
       emitDomainEvent('memo', { kind: 'added', title: it.title, scene: it.scene, priority: it.priority, due: it.due });
       M.pinnedNewId = it.id; // 录入当场可见：伪场景过滤放行这条新目
       // 补全半径：toast 挂「补全」按钮直开该条编辑器；
-      // 月历视图下补去向说明（审查体验 P3 修复批）：composer 无截止字段，录的条目不进月历格
+      // 月历视图下补去向说明（审查体验 P3 修复批）：composer 无截止字段，录的条目不进月历格。
+      // 通知带条目标识（一致#12，对齐「已删除备忘录「x」」句式）：连续快速录入可分辨是哪条；
+      // 超长标题截 ~12 字加省略号防 toast 撑爆
       const calHint = M.view === 'calendar' ? '，未设截止不出现在月历' : '';
-      notify(`已添加到「${scene}」${calHint}`, {
+      const shortTitle = it.title.length > 12 ? `${it.title.slice(0, 12)}…` : it.title;
+      notify(`已添加到「${scene}」：「${shortTitle}」${calHint}`, {
         type: 'success',
         action: { label: '补全', onClick: () => openEditor(it) },
       });

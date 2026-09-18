@@ -2,9 +2,13 @@
  * issue 291：全域子弹窗统一 —— memo 确认框随面板皮肤。
  *
  * 前情（缺陷）：编辑 / 添加场景 / 重命名三个 uiModal 弹窗早已传 `skinClass()`，
- * 但「删除备忘录」「删除场景」两个 openFlowDialog 确认框漏传 —— 弹窗挂 body 后
- * 掉回 core 裸皮，同一域里出现「表单弹窗有皮、确认框没皮」。
- * 本用例守护：两个确认框都带皮肤类，且 popup 同时带统一壳类（与 uiModal 同壳）。
+ * 但 openFlowDialog 确认框漏传 —— 弹窗挂 body 后掉回 core 裸皮，同一域里出现
+ * 「表单弹窗有皮、确认框没皮」。本用例守护：确认框带皮肤类，且 popup 同时带
+ * 统一壳类（与 uiModal 同壳）。
+ *
+ * 口径更新（效率整改 5，2026-09-18）：「删除备忘录」已免确认直达撤销（notifyUndo
+ * 兜底），不再出确认框；本域保留确认的 openFlowDialog 只剩「删除场景」（批量迁移
+ * 近不可逆）——皮肤守护随之改走该路径（同一 className: skinClass() 传参）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
@@ -53,13 +57,14 @@ function clickMenuItem(label: string): void {
   (hit as HTMLElement).click();
 }
 
-/** 打开面板 → 右键条目 → 点「删除」→ 等确认框 */
+/** 打开面板 → 右键「副业」场景 → 点「删除场景」→ 等确认框
+ *  （删除备忘录已免确认直达撤销，确认框皮肤守护改走保留确认的删除场景） */
 async function openDeleteConfirm(): Promise<HTMLElement> {
-  const card = document.querySelector('.bz-memo-card[data-memo-id="a"]') as HTMLElement;
-  expect(card).toBeTruthy();
-  card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+  const navBtn = document.querySelector('[data-memo-nav] [data-memo-scene="副业"]') as HTMLElement;
+  expect(navBtn).toBeTruthy();
+  navBtn.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
   await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
-  clickMenuItem('删除');
+  clickMenuItem('删除场景');
   await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy());
   return document.getElementById('__shared_confirm_popup__') as HTMLElement;
 }
@@ -80,19 +85,19 @@ describe('memo 删除确认框随皮肤（issue 291）', () => {
   it('paper 皮肤：确认框挂 bz-overlay-popup + bz-flow-dialog + bz-memo-skin-paper（与编辑弹窗同壳同皮）', async () => {
     const { app } = seed('paper');
     openMemoPanel(app);
-    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card[data-memo-id="a"]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy());
     const popup = await openDeleteConfirm();
     expect(popup.classList.contains('bz-overlay-popup')).toBe(true); // 统一壳（issue 291 核心）
     expect(popup.classList.contains('bz-flow-dialog')).toBe(true);
     expect(popup.classList.contains('bz-memo-skin-paper')).toBe(true);
     expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true); // 删除 = 危险主动作
-    expect(popup.querySelector('h4')?.textContent).toBe('删除备忘录');
+    expect(popup.querySelector('h4')?.textContent).toBe('删除场景');
   });
 
   it('editorial 皮肤：确认框跟着换成 bz-memo-skin-editorial（皮肤类由 settings 驱动，非硬编码）', async () => {
     const { app } = seed('editorial');
     openMemoPanel(app);
-    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card[data-memo-id="a"]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy());
     const popup = await openDeleteConfirm();
     expect(popup.classList.contains('bz-memo-skin-editorial')).toBe(true);
     expect(popup.classList.contains('bz-memo-skin-paper')).toBe(false);
@@ -101,10 +106,32 @@ describe('memo 删除确认框随皮肤（issue 291）', () => {
   it('皮肤未设置：回落纸感手账（与 applyMemoSkin 同口径，绝不因缺省掉回 core 裸皮）', async () => {
     const { app } = seed();
     openMemoPanel(app);
-    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card[data-memo-id="a"]')).toBeTruthy());
+    await vi.waitFor(() => expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy());
     const popup = await openDeleteConfirm();
     expect(popup.classList.contains('bz-overlay-popup')).toBe(true);
     expect(popup.classList.contains('bz-memo-skin-paper')).toBe(true); // 面板回落纸感 → 弹窗同皮
+  });
+
+  it('删除备忘录免确认直达撤销（效率整改 5）：点删除不出确认框，直接落盘挂撤销', async () => {
+    const { app, settings } = seed('paper');
+    const vault = app.vault as MockVault;
+    openMemoPanel(app);
+    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card[data-memo-id="a"]')).toBeTruthy());
+    const card = document.querySelector('.bz-memo-card[data-memo-id="a"]') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    clickMenuItem('删除');
+    // 直接落盘：无确认框、条目移除、撤销 toast 在
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
+      expect(raw.find((r: any) => r.id === 'a')).toBeUndefined();
+    });
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
+    await vi.waitFor(() => {
+      const undo = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销');
+      expect(undo).toBeTruthy();
+    });
+    void settings;
   });
 
   it('删除场景确认框同样带皮肤类（场景栏右键 → 删除场景）', async () => {
