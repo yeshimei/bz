@@ -86,22 +86,41 @@ export function parseClipFile(file: any, getCache?: (f: any) => any, getBacklink
   };
 }
 
-/** 扫描剪藏目录全部 .md → 解析为剪藏条目（created 降序）；目录不存在/无子级 → null（区分空态） */
+/**
+ * 扫描结果 = ClipNote 数组 + 被拒诊断（效率#2：不合契约的剪藏此前静默蒸发零观测）。
+ * 数组附加属性形态——现有调用方按数组消费（M.clipNotes / clipUrlSet 等）零改动，
+ * 新消费方读 .rejected / .rejectedPaths 做诊断展示（UI 呈现面留给后续接线）。
+ */
+export interface ClipScanResult extends Array<ClipNote> {
+  /** 被 frontmatter 契约拒收的顶层 .md 数（缺 url/created、无 frontmatter、单文件解析异常） */
+  rejected: number;
+  /** 被拒文件路径清单（诊断定位用） */
+  rejectedPaths: string[];
+}
+
+/** 扫描剪藏目录全部 .md → 解析为剪藏条目（created 降序；含被拒诊断附加字段）；目录不存在/无子级 → null（区分空态） */
 export async function scanClipDirectory(
   dirPath: string,
   deps: { vault: any; parse?: (f: any) => ClipNote | null }
-): Promise<ClipNote[] | null> {
+): Promise<ClipScanResult | null> {
   const dir = deps.vault.getAbstractFileByPath(dirPath);
   if (!dir || !Array.isArray(dir.children)) return null;
   const mdFiles = (dir.children as any[]).filter((f: any) => f && f.extension === 'md');
   const parse = deps.parse || ((f: any) => parseClipFile(f));
   const notes: ClipNote[] = [];
+  const rejectedPaths: string[] = [];
   for (const f of mdFiles) {
     try {
       const n = parse(f);
-      if (n) notes.push(n);
-    } catch (e) { /* 单文件解析失败跳过 */ }
+      if (n) { notes.push(n); continue; }
+      if (f && f.path) rejectedPaths.push(String(f.path)); // 契约拒收（缺 url/created 等）
+    } catch (e) {
+      if (f && f.path) rejectedPaths.push(String(f.path)); // 单文件解析异常
+    }
   }
   notes.sort((a, b) => b.created - a.created);
-  return notes;
+  const result = notes as ClipScanResult;
+  result.rejected = rejectedPaths.length;
+  result.rejectedPaths = rejectedPaths;
+  return result;
 }

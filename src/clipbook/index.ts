@@ -8,11 +8,11 @@
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
-import { notice } from '../core/notice';
+import { notice, notifyUndo } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { readNewsData } from './news-data';
 import { maybeFetchNews, setNewsFetchDoneListener } from './news-fetcher';
-import { flowMarkAllRead } from './flow';
+import { flowMarkAllRead, flowUndoMarkAllRead } from './flow';
 import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache } from './ui';
 import { openClipbookReport, unloadClipbookReport } from './report-ui';
 
@@ -66,8 +66,15 @@ export async function markAllUnreadRead(): Promise<void> {
     ],
   });
   if (ok !== 'ok') return;
-  await flowMarkAllRead(unread);
-  notice(`已把 ${unread.length} 篇标为已读`, 'success');
+  // 新-9/CB12：通知篇数取返回的实际 bumped（确认框停留窗口内竞态不虚报）；
+  // 批量撤销兜底（flowUndoMarkAllRead 按动作前快照整批恢复 + 统计回退）
+  const { bumped, snapshot } = await flowMarkAllRead(unread);
+  if (!bumped) { void reloadIfOpen(); return; }
+  notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
+    await flowUndoMarkAllRead(snapshot);
+    notice('已撤销：条目恢复未读', 'success');
+    void reloadIfOpen();
+  })());
   // 面板开着就同步刷新（首页侧由 home 的 keepHome 路径自行刷新）
   void reloadIfOpen();
 }
