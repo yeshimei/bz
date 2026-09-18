@@ -1,11 +1,12 @@
 /**
  * 游戏库（gameshelf）域 UI v3（2026-09-17：V1 海报墙方向落域 + 数据统计面板 + 全量详情弹窗）。
  *
- * 单源约定：markup 纯函数（heroHtml/shelfHtml/statsHtml/详情三段）与行为层同文件，
+ * 单源约定：markup 纯函数（heroHtml/shelfHtml/shotReelHtml/statsHtml/详情三段）与行为层同文件，
  * 插件面板与评审壳消费同一份——改一处两侧生效（docs/prototype-first.md）。
- * 面板基座 = core .bz-panel-overlay / .bz-panel-frame / .bz-panel-mtop（13 域同款），
- * 头行 = uiMainHead，视图切换 = uiSegmented，统计卡 = uiStat，空态 = uiEmpty，
- * 筛选 = uiChip，排序 = uiSegmented，搜索 = uiSearch。
+ * 面板基座 = core .bz-panel-overlay / .bz-panel-frame / .bz-panel-mtop（13 域同款）。
+ * 头行已退役（2026-09-18 用户点版）：标题/N款全去掉，大海报直接顶到面板顶，
+ * 常驻操作只剩海报右上角三枚图标钮（统计↔游戏墙 / 立即同步 / 移动端关闭）。
+ * 统计卡 = uiStat，空态 = uiEmpty，筛选 = uiChip，排序 = uiSegmented，搜索 = uiSearch。
  *
  * 亮暗：全部消费 --bz token（tokens.css 的 .theme-dark/.theme-light 双组），零固定色——
  * 评审壳默认亮色、可切暗色，插件内跟随宿主主题。
@@ -16,7 +17,7 @@ import type { App } from 'obsidian';
 import { topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
-import { uiMainHead, uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
+import { uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiIconBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
 import { M, displayNameOf, nameMatches, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
 import { BUCKETS, bucketOf, buildReport, REPORT_CAVEAT, type GameshelfReport } from './report';
 import {
@@ -33,12 +34,18 @@ const ESC_ID = 'gameshelf';
 let maskEl: HTMLElement | null = null;
 let popupEl: HTMLElement | null = null;
 let sortSegRef: { setValue: (v: GameshelfSort) => void } | null = null;
-let countRef: { setCount: (c?: string) => void } | null = null;
-/** 游戏墙的两个动态区（renderList 只重填这两块，保住搜索框焦点与滚动位置） */
+/** 门面（frame 级常驻，两视图共用）与游戏墙网格（shelf 视图才有） */
 let heroEl: HTMLElement | null = null;
 let gridEl: HTMLElement | null = null;
 /** 本次渲染的报告（工具行计数与统计页共用一次计算） */
 let lastReport: GameshelfReport | null = null;
+/** 门面静息态 HTML（fillHero 时存；悬浮换脸后复原回它——列表首位口径已含标签与汇报，不重算） */
+let heroRestHtml = '';
+/** 换脸进行中的款（防抖阀：mouseover 在卡内每个子元素边界都会发，同款不得重写正脸） */
+let peekedHeroAppid: number | null = null;
+/** 悬浮截图快轮播的进行中卡片与定时器（同一时刻至多一张卡在轮播） */
+let reelTimer: ReturnType<typeof setInterval> | null = null;
+let reelCard: HTMLElement | null = null;
 /** 移动端两个下拉的句柄（每次重建工具行都要 detach——uiSelect 挂了 document 级点击监听） */
 let selectRefs: Array<{ detach: () => void }> = [];
 
@@ -48,24 +55,27 @@ function disposeSelects(): void {
   selectRefs = [];
 }
 
-/** 视图入口按钮：随当前视图只出一条（游戏墙 ↔ 数据统计） */
-function fillViewSlot(app: App): void {
-  const slot = popupEl?.querySelector('.bz-gs-viewslot');
-  if (!slot) return;
+/** 海报右上角常驻操作（头行退役后的全部家当）：统计↔游戏墙、立即同步、移动端关闭——三枚图标钮。
+ *  每次 renderAll 重挂（图标随视图变、同步钮随 syncing/configured 变）。 */
+function mountOps(app: App): void {
+  const ops = popupEl?.querySelector('#bz-gs-heroops');
+  if (!ops) return;
   const onStats = M.view === 'stats';
-  const b = uiBtn({
-    label: onStats ? '游戏墙' : '数据统计',
-    icon: onStats ? 'layout-grid' : 'bar-chart-3',
-    on: onStats,
-    title: onStats ? '返回游戏墙' : '数据统计',
-    onClick: () => {
+  const mk = (icon: string, label: string, onClick: () => void, disabled = false): HTMLButtonElement => {
+    const b = uiIconBtn({ icon, title: label, className: 'bz-gs-opsbtn', onClick, disabled });
+    b.setAttribute('aria-label', label);
+    return b;
+  };
+  const close = mk('x', '关闭', () => closePanel());
+  close.classList.add('bz-gs-close'); // 桌面隐藏（点遮罩/ESC 出），≤768px 露出（全屏面板无可点遮罩）
+  ops.replaceChildren(
+    mk(onStats ? 'layout-grid' : 'bar-chart-3', onStats ? '返回游戏墙' : '数据统计', () => {
       M.view = onStats ? 'shelf' : 'stats';
       renderAll(app);
-    },
-  });
-  b.classList.add('bz-gs-viewbtn');
-  b.setAttribute('aria-label', onStats ? '返回游戏墙' : '数据统计');
-  slot.replaceChildren(b);
+    }),
+    mk('refresh-cw', '立即同步', () => void onSyncClick(app), M.syncing || !isConfigured()),
+    close,
+  );
 }
 
 /* ==================== 小工具 ==================== */
@@ -137,8 +147,10 @@ function heroTag(): string {
 /**
  * 门面（列表首位游戏）：封面放大模糊作环境底 + 中文名（原名另起一行）+ 三个总览数字。
  * 筛选后门面跟着列表首位走——筛出来的是哪款，门面就展示哪款。
+ * peek（悬浮换脸态）：口径标签隐去——「时长第一」描述的是列表首位为何是它，
+ * 挂在悬浮的那款头上是假信息，宁可不显示（影院换脸同款口径：角标不动、语义漂的不动）。
  */
-export function heroHtml(item: GameItem, cover: string, rp: GameshelfReport, tag = heroTag()): string {
+export function heroHtml(item: GameItem, cover: string, rp: GameshelfReport, tag = heroTag(), peek = false): string {
   const zh = displayNameOf(item);
   const orig = item.zhName && item.zhName !== item.name ? item.name : '';
   const sub = [
@@ -153,7 +165,7 @@ export function heroHtml(item: GameItem, cover: string, rp: GameshelfReport, tag
     <div class="bz-gs-hero-veil"></div>
     <div class="bz-gs-hero-in">
       <div class="bz-gs-hero-left">
-        <span class="bz-gs-hero-tag">${escHtml(tag)}</span>
+        ${peek ? '' : `<span class="bz-gs-hero-tag">${escHtml(tag)}</span>`}
         <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(zh)}</div>
         ${orig ? `<div class="bz-gs-hero-orig">${escHtml(orig)}</div>` : ''}
         <div class="bz-gs-hero-sub">${escHtml(sub)}</div>
@@ -178,11 +190,6 @@ function indexInList(item: GameItem): number {
   return Math.max(0, all.findIndex((it) => it.appid === item.appid));
 }
 
-/** 时长条/排名基准（全库最长时长） */
-function maxPlaytime(): number {
-  return Math.max(1, ...M.items.map((it) => it.playtimeMin));
-}
-
 /** 筛选（档位 + 搜索词；原名与中文名都参与匹配） */
 export function filterList(items: GameItem[]): GameItem[] {
   const def = bucketOf(M.bucket);
@@ -198,24 +205,27 @@ export function sortList(items: GameItem[]): GameItem[] {
 }
 
 /**
- * 游戏墙网格：封面卡（Steam header 比例）+ 名字/时长 + 时长条。
- * - 时长条基准 = 全库最长时长（maxMin 显式传入，纯函数不读模块状态）——
- *   基准固定，筛掉长时长游戏后条长仍然可比；
+ * 游戏墙网格：封面卡（Steam header 比例）+ 名字/时长 + 成就进度条。
+ * - 进度条口径（2026-09-18 用户点版，取代原「相对全库时长条」）：已解/总成就的百分比，
+ *   全成就满条 + 小海报右上角挂奖杯角标；没有成就页的款不显示条（空条会被误读成 0%）；
+ * - achOf 由调用方注入（renderList 从笔记属性读，零网络），markup 保持纯函数；
  * - 排名角标只在「未筛选 + 按时长排」时出现（换了口径的序号没有意义，宁可不显示）。
  */
 export function shelfHtml(
   items: GameItem[],
   coverOf: (it: GameItem) => string,
-  opts: { showRank?: boolean; maxMin?: number } = {},
+  opts: { showRank?: boolean; achOf?: (it: GameItem) => { unlocked: number; total: number } | null } = {},
 ): string {
-  const max = Math.max(1, opts.maxMin ?? 1);
   const cards = items
     .map((it, i) => {
       const cover = coverOf(it);
       const zh = displayNameOf(it);
       const orig = it.zhName && it.zhName !== it.name ? it.name : '';
       const rank = opts.showRank && i < 3 ? `<span class="bz-gs-rank">NO.${i + 1}</span>` : '';
-      const pct = Math.max(1, Math.min(100, Math.round(((it.playtimeMin || 0) / max) * 100)));
+      const ach = opts.achOf?.(it) ?? null;
+      const achPct = ach && ach.total > 0 ? Math.round((ach.unlocked / ach.total) * 100) : null;
+      const isFull = achPct !== null && achPct >= 100;
+      const trophy = isFull ? '<span class="bz-gs-trophy" data-lucide="trophy" title="全成就达成"></span>' : '';
       const hint = it.playtimeMin > 0
         ? `${numText(hoursOf(it.playtimeMin))} 小时`
         : '从未启动';
@@ -225,6 +235,7 @@ export function shelfHtml(
         <span class="bz-gs-cover" data-initial="${escAttr(firstChar(zh))}">
           ${cover ? `<img loading="lazy" src="${escAttr(cover)}" data-fallback-src="${escAttr(it.coverSrc ?? '')}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
           ${rank}
+          ${trophy}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ''}
           <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
         </span>
@@ -235,7 +246,7 @@ export function shelfHtml(
           </span>
           <span class="bz-gs-hours">${hoursText(it.playtimeMin)}</span>
         </span>
-        <span class="bz-gs-strip"><i style="width:${pct}%"></i></span>
+        ${achPct !== null ? `<span class="bz-gs-strip${isFull ? ' is-full' : ''}"><i style="width:${achPct}%"></i></span>` : ''}
       </button>`;
     })
     .join('');
@@ -245,6 +256,167 @@ export function shelfHtml(
 /** 首字符（封面加载失败时的占位字） */
 function firstChar(name: string): string {
   return name.slice(0, 1) || '?';
+}
+
+/* ==================== 悬浮预览：卡片截图快轮播 + 门面换脸（issue 378） ==================== */
+
+/** 轮播节奏（用户 2026-09-18 点版 0.3s 一张；淡化相应收紧到 dur-fast，见 styles.css） */
+const REEL_INTERVAL_MS = 300;
+
+/**
+ * 远端原图 → 商店缩略图（600×338，同一 CDN 的定式改名）：轮播要「快速」，原图一张
+ * 400KB 起头悬得等一秒多；缩略图几十 KB 秒出。本地图（resource URL）原样返回。
+ * 缩略图万一 404 由 bindShotReel 的 error 委托回退原 URL（data-shot-full）。
+ */
+function thumbUrlOf(u: string): string {
+  return /^https?:\/\//i.test(u) ? u.replace(/\.\d+x\d+\.jpg/i, '.600x338.jpg') : u;
+}
+
+/**
+ * 悬浮轮播内芯（markup 单源）：全套截图叠放进 .bz-gs-reel，首张亮（is-on），
+ * 轮转只翻 is-on 类（只轮已就绪的图，见 peekReel）。层序靠 DOM 先后：reel 以
+ * afterbegin 插在封面图之前，角标（NO.x / 已下架）与时长提示是它的后续兄弟，自然压在上面。
+ */
+export function shotReelHtml(urls: string[], fullUrls: string[] = urls): string {
+  return `<span class="bz-gs-reel">${urls
+    .map((u, i) => `<img src="${escAttr(u)}" alt="" decoding="async" data-shot-full="${escAttr(fullUrls[i] ?? u)}"${i === 0 ? ' class="is-on"' : ''}>`)
+    .join('')}</span>`;
+}
+
+/** 该款的商店截图展示 URL（本地优先、远端兜底；零网络——只读属性，悬浮绝不发请求） */
+function shotUrlsOfCard(app: App, appid: number): string[] {
+  const item = M.items.find((it) => it.appid === appid);
+  if (!item) return [];
+  const { local, remote } = fmToShots(safeDetailFm(app, item.file));
+  return resolveShotUrls(app, local, remote);
+}
+
+/** 停轮播 + 摘浮层（封面正脸从未被换过，摘掉即复原） */
+function restReel(): void {
+  if (reelTimer !== null) {
+    clearInterval(reelTimer);
+    reelTimer = null;
+  }
+  reelCard?.querySelector('.bz-gs-reel')?.remove();
+  reelCard = null;
+}
+
+/** 把「第一张已就绪」的截图点亮（当前 is-on 未就绪时）——首悬最怕悬上去半天没反应，
+ *  不能干等 700ms 节拍：缩略图一到（load 事件 / 插入时已缓存）立刻上屏。 */
+function promoteFirstReadyShot(): void {
+  const reel = reelCard?.querySelector('.bz-gs-reel');
+  if (!reel) return;
+  const imgs = [...reel.querySelectorAll('img')];
+  const cur = imgs.findIndex((im) => im.classList.contains('is-on'));
+  if (cur >= 0 && imgs[cur].complete && imgs[cur].naturalWidth > 0) return;
+  const ready = imgs.find((im) => im.complete && im.naturalWidth > 0);
+  if (!ready) return;
+  if (cur >= 0) imgs[cur].classList.remove('is-on');
+  ready.classList.add('is-on');
+}
+
+/** 进卡片：海报换成商店截图快轮播（单张截图只亮不转；没截图的款封面不动） */
+function peekReel(card: HTMLElement, app: App): void {
+  if (card === reelCard) return;
+  restReel();
+  const urls = shotUrlsOfCard(app, Number(card.dataset.appid));
+  const cover = card.querySelector('.bz-gs-cover');
+  if (!cover || urls.length === 0) return;
+  cover.insertAdjacentHTML('afterbegin', shotReelHtml(urls.map(thumbUrlOf), urls));
+  reelCard = card;
+  // 缩略图一到就点亮（load 不冒泡，捕获段接在 reel 上；reel 摘除时监听随节点一起回收）
+  reelCard.querySelector('.bz-gs-reel')?.addEventListener('load', promoteFirstReadyShot, true);
+  promoteFirstReadyShot();
+  if (urls.length < 2) return;
+  reelTimer = setInterval(() => {
+    // 网格重渲染会换掉整批卡片元素：旧的已摘除（isConnected 为假）就即刻收摊，别空转
+    if (!reelCard?.isConnected) {
+      restReel();
+      return;
+    }
+    const imgs = [...reelCard.querySelectorAll<HTMLImageElement>('.bz-gs-reel img')];
+    const cur = imgs.findIndex((im) => im.classList.contains('is-on'));
+    if (cur < 0) return;
+    // 只轮「已就绪」的图（complete + 解码出尺寸）：原图一张 400KB 起，没就绪就被轮到
+    // 会亮空框——看起来就是「没轮播、还在闪」（2026-09-18 原型实测）。没图就绪则原地不动，
+    // 封面从 reel 透明层底下透出来，等下个节拍。
+    for (let step = 1; step < imgs.length; step += 1) {
+      const at = (cur + step) % imgs.length;
+      const im = imgs[at];
+      if (im.complete && im.naturalWidth > 0) {
+        imgs[cur].classList.remove('is-on');
+        im.classList.add('is-on');
+        return;
+      }
+    }
+  }, REEL_INTERVAL_MS);
+}
+
+/** 悬浮卡片：门面正脸临时换成该款（海报 + 名字/原名/副行）；库级三个总览数字不动。
+ *  防抖：同款重复悬浮直接跳过——mouseover 在卡内每个子元素边界都发（轮播层一插进去
+ *  浏览器还会重算 hover 再发一轮），每次都 innerHTML 重写正脸 = 海报背景反复重建，
+ *  界面上就是「一直在闪」（2026-09-18 原型实测）。 */
+function peekHero(app: App, appid: number): void {
+  if (appid === peekedHeroAppid) return;
+  if (!heroEl || !heroRestHtml || !lastReport) return;
+  const it = M.items.find((i) => i.appid === appid);
+  if (!it) return;
+  peekedHeroAppid = appid;
+  heroEl.innerHTML = heroHtml(it, coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), lastReport, '', true);
+}
+
+/** 离开卡片：门面回静息态（回快照不重算——静息口径 = 列表首位 + 排序标签） */
+function restHero(): void {
+  if (peekedHeroAppid === null) return;
+  peekedHeroAppid = null;
+  if (heroEl && heroRestHtml) heroEl.innerHTML = heroRestHtml;
+}
+
+/** 只在鼠标惯用件上挂：触屏 tap 会发 mouseover 却不发 mouseout，悬浮态会滞留（影院季圆点同款口径） */
+function hoverCapable(): boolean {
+  try {
+    return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * 悬浮预览委托（host = #bz-gs-body，面板生命周期内绑一次；网格重渲染不换 host）：
+ * mouseover 进卡片 → 轮播 + 门面换脸；mouseout 相关目标仍在卡内（子元素间移动）不算离开。
+ * 测试/评审壳环境经 hoverable 参数显式开（jsdom 无真 hover 能力，默认关）。
+ */
+export function bindShotReel(app: App, host: HTMLElement, hoverable = hoverCapable()): void {
+  if (!hoverable) return;
+  // 缩略图加载失败 → 回退原 URL（一张只试一次，防死循环；error 不冒泡，捕获阶段接）
+  host.addEventListener(
+    'error',
+    (e) => {
+      const img = e.target as HTMLImageElement;
+      if (img.tagName !== 'IMG' || !img.closest('.bz-gs-reel')) return;
+      const full = img.getAttribute('data-shot-full');
+      if (full && img.src !== full && !img.dataset.shotTried) {
+        img.dataset.shotTried = '1';
+        img.src = full;
+      }
+    },
+    true,
+  );
+  host.addEventListener('mouseover', (e) => {
+    const card = (e.target as HTMLElement).closest?.('.bz-gs-card') as HTMLElement | null;
+    if (!card) return;
+    peekReel(card, app);
+    peekHero(app, Number(card.dataset.appid));
+  });
+  host.addEventListener('mouseout', (e) => {
+    if (!reelCard && !heroRestHtml) return;
+    const card = (e.target as HTMLElement).closest?.('.bz-gs-card') as HTMLElement | null;
+    if (!card) return;
+    const to = e.relatedTarget as HTMLElement | null;
+    if (to && card.contains(to)) return;
+    restReel();
+    restHero();
+  });
 }
 
 /* ==================== 数据统计面板 ==================== */
@@ -667,6 +839,7 @@ function bindMediaFallback(root: HTMLElement): void {
     (e) => {
       const img = e.target as HTMLImageElement;
       if (img.tagName !== 'IMG') return;
+      if (img.closest('.bz-gs-reel')) return; // 轮播层的失败只代表那格截图没有，不代表封面裂了
       const fb = img.dataset.fallbackSrc;
       if (fb && img.dataset.fbDone !== '1' && img.src !== fb) {
         img.dataset.fbDone = '1';
@@ -693,29 +866,19 @@ function createUI(app: App): void {
   frame.setAttribute('role', 'dialog');
   frame.setAttribute('aria-label', '游戏库');
 
-  const head = uiMainHead({
-    title: '游戏库',
-    action: { label: '立即同步', icon: 'refresh-cw', onClick: () => void onSyncClick(app) },
-  });
-  countRef = head;
-  // 视图入口 = 头行右侧工具位（一个槽位随状态只出一条）：游戏墙上写「数据统计」，
-  // 统计页上写「游戏墙」——不做平级页签，因为面板默认就是游戏墙，统计是有需要才进的入口。
-  const slot = document.createElement('span');
-  slot.className = 'bz-gs-viewslot';
-  const primaryBtn = head.el.querySelector('.bz-btn--primary') as HTMLButtonElement | null;
-  if (primaryBtn) {
-    primaryBtn.title = '立即同步'; // 移动端按钮只留图标，靠 title/aria-label 表意
-    head.el.insertBefore(slot, primaryBtn);
-  } else {
-    head.el.appendChild(slot);
-  }
-  // 关闭：桌面走点遮罩 / ESC（issue 271：头行不放关闭钮）；移动端全屏面板遮不住——
-  // 那个 ✕ 只在 ≤768px 出现（styles.css 里控显隐），否则手机上出去了回不来。
-  const close = uiBtn({ label: '关闭', icon: 'x', title: '关闭', onClick: () => closePanel() });
-  close.classList.add('bz-gs-close');
-  close.setAttribute('aria-label', '关闭');
-  head.el.appendChild(close);
-  frame.appendChild(head.el);
+  // 海报头（frame 级常驻，头行退役）：大海报直接顶到面板顶，两视图共用——
+  // 数据统计也画在它下面，面板因此始终有一张「脸」。常驻操作 = 右上角三枚图标钮。
+  const heroz = document.createElement('div');
+  heroz.className = 'bz-gs-heroz';
+  const hero = document.createElement('div');
+  hero.id = 'bz-gs-hero';
+  const ops = document.createElement('div');
+  ops.className = 'bz-gs-heroops';
+  ops.id = 'bz-gs-heroops';
+  heroz.appendChild(hero);
+  heroz.appendChild(ops);
+  frame.appendChild(heroz);
+  heroEl = hero;
 
   const status = document.createElement('div');
   status.className = 'bz-gs-status';
@@ -740,6 +903,7 @@ function createUI(app: App): void {
     }
   });
   bindMediaFallback(body);
+  bindShotReel(app, body); // 悬浮预览（仅鼠标惯用件）：卡片截图快轮播 + 门面换脸
   frame.appendChild(body);
 
   // ⚠️ frame **必须是遮罩的子节点**：居中的是 .bz-panel-overlay（position:fixed inset:0
@@ -770,15 +934,28 @@ async function ensurePostersFor(app: App): Promise<void> {
   ensurePosters(app, mediaItemsOf(M.items));
 }
 
-/** 面板全量重渲染（视图分派；工具行/门面/网格整块重建） */
+/** 门面填装（两视图共用；悬浮换脸的静息态快照在这里存，复原回它不重算） */
+function fillHero(app: App, rp: GameshelfReport): void {
+  if (!heroEl) return;
+  const list = sortList(filterList(M.items));
+  if (list.length === 0) {
+    heroEl.innerHTML = '';
+    heroRestHtml = '';
+    return;
+  }
+  const top = list[0];
+  heroRestHtml = heroHtml(top, coverDisplayUrl(app, top.appid, top.cover, top.coverSrc), rp);
+  peekedHeroAppid = null; // 静息态刚换过，上一轮的换脸标记作废
+  heroEl.innerHTML = heroRestHtml;
+}
+
+/** 面板全量重渲染（视图分派；海报头常驻，工具行/网格/统计整块重建） */
 export function renderAll(app: App): void {
   const frame = M.currentOverlay;
   if (!frame || !document.body.contains(frame)) return;
   const configured = isConfigured();
-  fillViewSlot(app);
-  countRef?.setCount(configured ? `${M.items.filter((it) => !it.offShelf).length} 款` : '');
-  const syncBtn = frame.querySelector('.bz-btn--primary') as HTMLButtonElement | null;
-  if (syncBtn) syncBtn.disabled = M.syncing || !configured;
+  mountOps(app);
+  restReel();
   const status = frame.querySelector('#bz-gs-status');
   if (status) status.textContent = M.statusMsg;
   const body = frame.querySelector<HTMLElement>('#bz-gs-body');
@@ -787,17 +964,21 @@ export function renderAll(app: App): void {
   // 视图标记（只有游戏墙打）：移动端「滚动权交给网格本身」那套布局按它切，统计页/引导态不受影响
   body.removeAttribute('data-view');
   disposeSelects(); // 工具行重建前先摘掉上一轮下拉的 document 监听
-  heroEl = null;
   gridEl = null;
   lastReport = null;
 
   if (!configured) {
+    if (heroEl) {
+      heroEl.innerHTML = '';
+      heroRestHtml = '';
+    }
     body.appendChild(guidanceEl(app));
     mountIcons(frame);
     return;
   }
   const rp = buildReport(M.items);
   lastReport = rp;
+  fillHero(app, rp);
   if (M.view === 'stats') {
     body.insertAdjacentHTML('beforeend', statsHtml(rp));
     fillStatsRow(app, rp);
@@ -809,7 +990,7 @@ export function renderAll(app: App): void {
 }
 
 /**
- * 游戏墙主体：门面 + 工具行 + 网格宿主（三块容器固定，列表变化只重填门面与网格）。
+ * 游戏墙主体：工具行 + 网格宿主（门面已上移为 frame 级海报头，不随视图重建）。
  * 注意两层「网格」不是同一件东西：`#bz-gs-grid`（.bz-gs-gridhost）是**宿主**，
  * 里面由 shelfHtml 渲染的 `.bz-gs-grid` 才是卡片网格本身——移动端「搜索行固定」那套
  * 把滚动权交给的是宿主（见 styles.css 的 data-view=shelf 段）。
@@ -821,7 +1002,6 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
   //   桌面 = 6 个档位 chip + 三档分段排序；移动 = 档位/排序两个下拉 + 搜索同行。
   // 两套都渲染而不是按 Platform 分支：媒体查询能随窗口宽实时切，Platform 是启动时定值。
   wrap.innerHTML = `
-    <div id="bz-gs-hero"></div>
     <div class="bz-gs-tools">
       <div class="bz-gs-chips" id="bz-gs-chips"></div>
       <div class="bz-gs-toolsend">
@@ -834,7 +1014,6 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
       </div>
     </div>
     <div class="bz-gs-gridhost" id="bz-gs-grid"></div>`;
-  heroEl = wrap.querySelector('#bz-gs-hero');
   gridEl = wrap.querySelector('#bz-gs-grid');
 
   // 档位 chips（含「全部」；计数即时从报告口径出）
@@ -936,19 +1115,24 @@ function syncChipState(): void {
 
 /** 只重填门面与网格（筛选/排序/搜索走这条，避免整面板重建） */
 export function renderList(app: App): void {
-  if (!heroEl || !gridEl) return;
+  if (!gridEl) return;
   const rp = lastReport ?? buildReport(M.items);
   lastReport = rp;
+  restReel();
+  fillHero(app, rp);
   const list = sortList(filterList(M.items));
   const showRank = M.bucket === 'all' && !M.query.trim() && M.sort === 'hours';
+  // 成就进度（条 + 奖杯）从笔记属性读（属性优先零网络）；无成就页/属性缺 → null，卡上不显示
+  const achOf = (it: GameItem): { unlocked: number; total: number } | null => {
+    if (!it.hasAch) return null;
+    const s = fmToAchSummary(safeDetailFm(app, it.file));
+    return s && s.total > 0 ? { unlocked: s.unlocked, total: s.total } : null;
+  };
   if (list.length === 0) {
-    heroEl.innerHTML = '';
     gridEl.innerHTML = '';
     gridEl.appendChild(emptyResult(app));
   } else {
-    const top = list[0];
-    heroEl.innerHTML = heroHtml(top, coverDisplayUrl(app, top.appid, top.cover, top.coverSrc), rp);
-    gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, maxMin: maxPlaytime() });
+    gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, achOf });
   }
   const frame = M.currentOverlay;
   if (frame) mountIcons(frame);
@@ -1007,6 +1191,7 @@ export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
 /** 关闭（toggle 语义的关分支）：DOM 摘除 + ESC 注销；状态保留（下次打开重建） */
 export function closePanel(): void {
   unregisterPanelEsc(ESC_ID);
+  restReel();
   maskEl?.remove();
   maskEl = null;
   popupEl = null;
@@ -1014,6 +1199,8 @@ export function closePanel(): void {
   M.currentOverlay = null;
   disposeSelects();
   heroEl = null;
+  heroRestHtml = '';
+  peekedHeroAppid = null;
   gridEl = null;
   lastReport = null;
   clearDetailCache();

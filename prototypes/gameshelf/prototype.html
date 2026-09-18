@@ -209,7 +209,7 @@
           return bg !== 'rgba(0, 0, 0, 0)' && sheets >= 5;
         };
         t('view页CSS链生效', cssAlive(dd) && cssAlive(md));
-        t('桌面 147 卡', cards(dd) === DATA.length);
+        t('桌面 ' + DATA.length + ' 卡', cards(dd) === DATA.length);
         // 回归钉（2026-09-18 真机截图：宿主裸 button 基线 inline-flex + align/justify-center
         // + height:30px 把卡片压扁、标题居中、时长条挤出可视区）——样式必须整组显式覆盖
         {
@@ -221,7 +221,7 @@
           const fillW = strip ? strip.querySelector('i').getBoundingClientRect().width : 0;
           t('时长条在卡底可见 w=' + Math.round(fillW), !!strip && strip.getBoundingClientRect().height >= 2 && fillW > 0);
         }
-        t('移动 147 卡', cards(md) === DATA.length);
+        t('移动 ' + DATA.length + ' 卡', cards(md) === DATA.length);
         // 展示名口径 = 中文名优先（种子里的 zh 来自真实 appdetails 的本地化名）
         const dn = (g) => (g.zh && g.zh.trim()) || g.name;
         t('门面渲染首位', !!dt('.bz-gs-hero-name') && dt('.bz-gs-hero-name').textContent === dn(DATA[0]));

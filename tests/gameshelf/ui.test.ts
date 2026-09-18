@@ -10,7 +10,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { M, displayNameOf, resetGameshelfState, type GameItem } from '../../src/gameshelf/state';
-import { achListHtml, detailShellHtml, filterList, heroHtml, hoursOf, numText, renderAll, shelfHtml, sortList, statsHtml, storeRowsHtml } from '../../src/gameshelf/ui';
+import { achListHtml, bindShotReel, detailShellHtml, filterList, heroHtml, hoursOf, numText, renderAll, shelfHtml, shotReelHtml, sortList, statsHtml, storeRowsHtml } from '../../src/gameshelf/ui';
 import { buildReport } from '../../src/gameshelf/report';
 import { fmToStore, storeToFm } from '../../src/gameshelf/detail';
 import { parseAchievementRows, parseStoreMeta, parseReviews, parseZhName } from '../../src/gameshelf/steam';
@@ -50,25 +50,35 @@ describe('海报墙 markup', () => {
 
   it('网格：卡片数与数据一致，排名角标只给前三，下架挂角标并置灰', () => {
     const list = [item(1, 'A', 600), item(2, 'B', 500), item(3, 'C', 400), item(4, 'D', 300, '', true)];
-    const html = shelfHtml(list, (it) => it.cover ?? '', { showRank: true, maxMin: 600 });
+    const html = shelfHtml(list, (it) => it.cover ?? '', { showRank: true });
     expect((html.match(/data-appid="/g) ?? []).length).toBe(4);
     expect(html).toContain('NO.1');
     expect(html).toContain('NO.3');
     expect(html).not.toContain('NO.4');
     expect(html).toContain('bz-gs-card--off');
     expect(html).toContain('已下架');
-    // 时长条相对全库最长：600 分钟 = 10 h 打满，300 分钟 = 5 h 取一半
-    expect(html).toContain('width:100%');
-    expect(html).toContain('width:50%');
+    // achOf 缺省（无成就数据）→ 进度条整条不渲染
+    expect(html).not.toContain('bz-gs-strip');
   });
 
   it('未筛选关闭排名角标（换口径的序号没有意义）', () => {
     const list = [item(1, 'A', 600)];
-    expect(shelfHtml(list, () => '', { maxMin: 600 })).not.toContain('NO.1');
+    expect(shelfHtml(list, () => '')).not.toContain('NO.1');
+  });
+
+  it('进度条改成就口径（issue 378）：宽度 = 已解/总数，全成就满条挂奖杯，无成就页不渲染', () => {
+    const list = [item(1, 'A', 60, '', false, true), item(2, 'B', 60), item(3, 'C', 60, '', false, true)];
+    const achOf = (it: GameItem) => (it.appid === 1 ? { unlocked: 69, total: 69 } : it.appid === 3 ? { unlocked: 10, total: 28 } : null);
+    const html = shelfHtml(list, (it) => it.cover ?? '', { achOf });
+    expect((html.match(/bz-gs-strip/g) ?? []).length).toBe(2); // 无成就页的 B 不渲染条
+    expect(html).toContain('width:100%'); // 69/69 满条
+    expect(html).toContain('is-full');
+    expect((html.match(/bz-gs-trophy/g) ?? []).length).toBe(1); // 只有全成就挂杯
+    expect(html).toContain('width:36%'); // 10/28 ≈ 36%
   });
 
   it('无封面走占位：首字 data-initial + 不注入 img', () => {
-    const html = shelfHtml([item(1, 'Balatro', 100)], () => '', { maxMin: 100 });
+    const html = shelfHtml([item(1, "Balatro", 100)], () => "");
     expect(html).toContain('data-initial="B"');
     expect(html).not.toContain('<img');
   });
@@ -289,7 +299,7 @@ describe('中文名（展示名单源 / 搜索 / 排序 / 卡片）', () => {
   it('卡片与门面：中文名主显 + 原名另起一行；中文名与原名相同则不出第二行', () => {
     const zh = item(1, 'Deep Rock Galactic', 65214, '2026-07-20', false, false, '深岩银河');
     const same = item(2, 'Bongo Cat', 600, '', false, false, 'Bongo Cat');
-    const html = shelfHtml([zh, same], (it) => it.cover ?? '', { maxMin: 65214 });
+    const html = shelfHtml([zh, same], (it) => it.cover ?? "");
     expect(html).toContain('深岩银河');
     expect(html).toContain('Deep Rock Galactic');
     expect((html.match(/class="bz-gs-orig"/g) ?? []).length).toBe(1);
@@ -369,6 +379,129 @@ describe('详情弹窗端到端（mock requestUrl：商店 + 成就三接口）'
     });
     expect(ach.textContent).toContain('1 / 1（100%）');
     expect(ach.textContent).toContain('7.5%');
+    unloadGameshelf();
+  });
+});
+
+describe('海报头与悬浮预览（issue 378：头行退役 / 截图快轮播 / 门面换脸）', () => {
+  it('shotReelHtml：全套截图叠放，首张亮（is-on 只有一枚），原图留在 data-shot-full', () => {
+    const html = shotReelHtml(['https://s/1.jpg', 'https://s/2.jpg', 'https://s/3.jpg']);
+    expect((html.match(/class="bz-gs-reel"/g) ?? []).length).toBe(1);
+    expect((html.match(/<img /g) ?? []).length).toBe(3);
+    expect((html.match(/is-on/g) ?? []).length).toBe(1);
+    expect(html.indexOf('s/1.jpg')).toBeLessThan(html.indexOf('s/2.jpg'));
+    expect(html).toContain('data-shot-full="https://s/2.jpg"');
+  });
+
+  it('heroHtml peek 态：口径标签隐去（描述列表首位为何是它的标签，挂在悬浮款头上是假信息）', () => {
+    const rp = buildReport([item(1, 'A', 600)]);
+    expect(heroHtml(item(1, 'A', 600), 'https://c/1.jpg', rp)).toContain('bz-gs-hero-tag');
+    expect(heroHtml(item(1, 'A', 600), 'https://c/1.jpg', rp, '', true)).not.toContain('bz-gs-hero-tag');
+    expect(heroHtml(item(1, 'A', 600), 'https://c/1.jpg', rp, '', true)).toContain('bz-gs-hero-name');
+  });
+
+  it('面板壳：头行退役——没有标题/N款，海报右上角只剩三枚图标钮（统计/同步/移动端关闭）', () => {
+    const app = { vault: { getMarkdownFiles: () => [], getAbstractFileByPath: () => null, createFolder: async () => {} } } as any;
+    openGameshelf(app);
+    M.items = [item(1, 'A', 600), item(2, 'B', 100)];
+    renderAll(app);
+    expect(document.querySelector('.bz-main-head')).toBeNull();
+    expect(document.querySelector('.bz-main-title')).toBeNull();
+    const ops = document.querySelector('#bz-gs-heroops')!;
+    expect((ops.querySelectorAll('.bz-icon-btn').length)).toBe(3);
+    expect(ops.querySelector('[title="数据统计"]')).toBeTruthy();
+    expect(ops.querySelector('[title="立即同步"]')).toBeTruthy();
+    // 关闭钮桌面隐藏（点遮罩/ESC 出门），仍在 DOM 里给移动端用
+    expect(ops.querySelector('.bz-gs-close')).toBeTruthy();
+    // 门面顶格：海报头是 frame 直接子节点（body 之外），统计视图也在
+    expect(document.querySelector('.bz-gs-heroz > #bz-gs-hero')).toBeTruthy();
+    unloadGameshelf();
+  });
+
+  it('悬浮：卡片海报换成截图快轮播（只轮已就绪的图）+ 门面换脸防抖，离开复原', () => {
+    vi.useFakeTimers();
+    try {
+      const app = {
+        vault: { getMarkdownFiles: () => [], getAbstractFileByPath: () => null, createFolder: async () => {} },
+        metadataCache: { getFileCache: (f: any) => (f?.__fm ? { frontmatter: f.__fm } : null) },
+      } as any;
+      const shots = { 截图源: [
+        'https://cdn/ss_a.1920x1080.jpg',
+        'https://cdn/ss_b.1920x1080.jpg',
+        'https://cdn/ss_c.1920x1080.jpg',
+      ] };
+      const a = item(1, 'AAA', 6000);
+      const b = item(2, 'BBB', 600);
+      (b as any).file = { __fm: shots };
+      openGameshelf(app);
+      M.items = [a, b];
+      renderAll(app);
+      const body = document.querySelector('#bz-gs-body') as HTMLElement;
+      expect(body).toBeTruthy();
+      bindShotReel(app, body, true); // jsdom 无真 hover 能力，显式开
+
+      const hero = () => document.querySelector('#bz-gs-hero')!.innerHTML;
+      expect(hero()).toContain('AAA'); // 静息态门面 = 列表首位（按时长）
+
+      const cardB = document.querySelector('.bz-gs-card[data-appid="2"]') as HTMLElement;
+      cardB.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      // 卡片：reel 落位、三张叠放、首张亮；展示 src 走缩略图定式，原图留在 data-shot-full
+      const reel = cardB.querySelector('.bz-gs-reel')!;
+      const imgs = [...reel.querySelectorAll('img')];
+      expect(imgs).toHaveLength(3);
+      expect(reel.querySelector('img.is-on')).toBe(imgs[0]);
+      expect(imgs[0].getAttribute('src')).toBe('https://cdn/ss_a.600x338.jpg');
+      expect(imgs[0].getAttribute('data-shot-full')).toBe('https://cdn/ss_a.1920x1080.jpg');
+      // 门面：正脸换成 BBB（口径标签隐去）
+      expect(hero()).toContain('BBB');
+      expect(hero()).not.toContain('bz-gs-hero-tag');
+      // 门面防抖：同款重复悬浮（子元素边界连环 mouseover）不重写正脸
+      const heroNode = document.querySelector('#bz-gs-hero')!.firstElementChild;
+      cardB.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(document.querySelector('#bz-gs-hero')!.firstElementChild).toBe(heroNode);
+
+      // 轮转只认「已就绪」的图（complete + 解码出尺寸）：没图就绪 → 原地不动，不亮空框
+      vi.advanceTimersByTime(300);
+      expect(reel.querySelector('img.is-on')).toBe(imgs[0]);
+      // 第 2 张就绪 → 下个节拍轮到它；之后没有别的就绪图 → 原地守着
+      Object.defineProperty(imgs[1], 'complete', { value: true });
+      Object.defineProperty(imgs[1], 'naturalWidth', { value: 600 });
+      vi.advanceTimersByTime(300);
+      expect(reel.querySelector('img.is-on')).toBe(imgs[1]);
+      vi.advanceTimersByTime(300);
+      expect(reel.querySelector('img.is-on')).toBe(imgs[1]);
+
+      // 悬浮没截图的款：门面照常换脸，卡片封面不动（无 reel）
+      const cardA = document.querySelector('.bz-gs-card[data-appid="1"]') as HTMLElement;
+      cardA.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(hero()).toContain('AAA');
+      expect(cardA.querySelector('.bz-gs-reel')).toBeNull();
+      expect(cardB.querySelector('.bz-gs-reel')).toBeNull(); // 换卡时上一张的轮播已摘
+
+      // 离开：轮播摘除、门面回静息态快照；再推进若干节拍不再轮转
+      cardA.dispatchEvent(new MouseEvent('mouseout', { bubbles: true, relatedTarget: document.body }));
+      expect(cardA.querySelector('.bz-gs-reel')).toBeNull();
+      expect(hero()).toContain('AAA');
+      expect(hero()).toContain('时长第一');
+      const after = hero();
+      vi.advanceTimersByTime(2100);
+      expect(hero()).toBe(after);
+    } finally {
+      vi.useRealTimers();
+      unloadGameshelf();
+    }
+  });
+
+  it('悬浮能力关（触屏/jsdom 默认）：不挂监听，悬浮无副作用', () => {
+    const app = { vault: { getMarkdownFiles: () => [], getAbstractFileByPath: () => null, createFolder: async () => {} } } as any;
+    openGameshelf(app);
+    M.items = [item(1, 'AAA', 6000)];
+    renderAll(app);
+    const body = document.querySelector('#bz-gs-body') as HTMLElement;
+    bindShotReel(app, body, false);
+    const card = document.querySelector('.bz-gs-card') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(card.querySelector('.bz-gs-reel')).toBeNull();
     unloadGameshelf();
   });
 });
