@@ -86,6 +86,50 @@ describe('日记格式体检面板（ADR-0131 只读）', () => {
     expect([...document.querySelectorAll('button')].some((b) => b.textContent!.includes('修复'))).toBe(false);
   });
 
+  it('D-UI8 回归：点条目打开文件成功后体检弹窗收起（文件不再被遮罩盖住）', async () => {
+    vault.files.set('我的/日记/2023-04-22.md', '# 🤝02:43\n旧格式残留\n');
+    await openAndSettle();
+
+    const editorMock = { focus: vi.fn(), setCursor: vi.fn(), scrollIntoView: vi.fn() };
+    app.workspace.getLeaf = vi.fn(() => ({ openFile: vi.fn(async () => {}), view: { editor: editorMock } }));
+
+    (document.querySelector('.bz-diary-repair-link') as HTMLElement).click();
+    await vi.waitFor(() => expect(editorMock.setCursor).toHaveBeenCalledWith(0, 0));
+    // 打开成功即收体检弹窗：mask/popup 从 DOM 摘除
+    await vi.waitFor(() => {
+      expect(document.getElementById('bz-diary-repair-mask')).toBeNull();
+      expect(document.getElementById('bz-diary-repair-popup')).toBeNull();
+    });
+  });
+
+  it("D10' 回归：扫描抛错 → 可重试态 + error 通知，进度条不死；重试可恢复", async () => {
+    vault.files.set('我的/日记/2401010800.md', entry('2024-01-01', '08:00', ['日记'], '正常'));
+    vi.spyOn(app.vault, 'read').mockImplementation(async () => {
+      throw new Error('磁盘抽风');
+    });
+    openDiaryRepairModal();
+    await vi.waitFor(() => {
+      const ptext = document.querySelector('.bz-diary-repair-progress-text') as HTMLElement;
+      expect(ptext?.textContent).toContain('体检失败');
+      expect(ptext?.textContent).toContain('磁盘抽风');
+    });
+    // 人话 error 通知
+    await vi.waitFor(() => {
+      expect(
+        [...document.querySelectorAll('.bz-notice-msg')].some((el) => (el.textContent || '').includes('日记格式体检失败'))
+      ).toBe(true);
+    });
+    // 可重试态：出错底栏有「重新体检」按钮
+    const again = [...document.querySelectorAll('button')].find((b) => b.textContent!.includes('重新体检'));
+    expect(again).toBeTruthy();
+
+    // 修复读取后重试 → 正常出报告
+    vi.mocked(app.vault.read).mockRestore();
+    (again as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-diary-repair-summary')).toBeTruthy());
+    expect(document.querySelector('.bz-diary-repair-summary')!.textContent).toContain('全部健康');
+  });
+
   it('重新体检按钮重扫面板（改好文件后清单归零）', async () => {
     vault.files.set('我的/日记/2023-04-22.md', '# 🤝02:43\n旧格式残留\n');
     await openAndSettle();
