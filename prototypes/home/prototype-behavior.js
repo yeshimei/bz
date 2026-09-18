@@ -1,4 +1,4 @@
-/* 源指纹 0ccafbd160955cf7 · 仓内输入 239 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b78c935a53ec5fda · 仓内输入 239 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -13325,15 +13325,23 @@ ${n.content.slice(0, 2e3)}
     const chipsWrap = document.createElement("div");
     chipsWrap.className = "bz-path-picker-chips--setting";
     const apply = (list) => {
-      const res = opts.onChange(list);
-      if (res && typeof res.then === "function") {
-        return Promise.resolve(res).then((final) => {
-          current2 = Array.isArray(final) ? final : list;
-          renderAll6();
-        });
+      try {
+        const res = opts.onChange(list);
+        if (res && typeof res.then === "function") {
+          return Promise.resolve(res).then((final) => {
+            current2 = Array.isArray(final) ? final : list;
+            renderAll6();
+          }).catch((e) => {
+            notifySaveError(e, opts.name);
+            renderAll6();
+          });
+        }
+        current2 = Array.isArray(res) ? res : list;
+        renderAll6();
+      } catch (e) {
+        notifySaveError(e, opts.name);
+        renderAll6();
       }
-      current2 = Array.isArray(res) ? res : list;
-      renderAll6();
     };
     const openPicker = () => openPathPicker({
       title: opts.pickerTitle || opts.name,
@@ -13393,10 +13401,16 @@ ${n.content.slice(0, 2e3)}
       window.clearTimeout(focusTimer);
       focusTimer = null;
     }
+    if (focusRestore) {
+      const el = focusRestore;
+      focusRestore = null;
+      if (el.isConnected) el.focus();
+    }
   }
   function openPathPicker(opts) {
     var _a2, _b2, _c;
     closePathPicker();
+    focusRestore = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const app = getApp();
     const mode = opts.mode || "single";
     const selected = new Set(normalizePicked(opts.selected || []));
@@ -13460,11 +13474,30 @@ ${n.content.slice(0, 2e3)}
       renderList2();
       updateSel();
     });
-    mkBtn(opts.okText || "下一步", true, () => {
+    const submit = () => {
       const list = normalizePicked([...selected]);
       closePathPicker();
       opts.onConfirm(list);
+    };
+    const newBtn = mkBtn("新建文件夹", false, () => {
+      var _a3;
+      const name = state3.q.trim().replace(/^\/+|\/+$/g, "");
+      if (!name) return;
+      const parent = (_a3 = [...selected][0]) != null ? _a3 : "";
+      const full = parent ? `${parent}/${name}` : name;
+      void (async () => {
+        if (!state3.folders.includes(full)) {
+          await app.vault.createFolder(full);
+          if (!state3.folders.includes(full)) state3.folders.push(full);
+        }
+        if (mode === "single") selected.clear();
+        selected.add(full);
+        renderList2();
+        updateSel();
+      })().catch((e) => notifyActionError(e, `新建文件夹 ${full}`));
     });
+    newBtn.disabled = !state3.q.trim();
+    mkBtn(opts.okText || "下一步", true, submit);
     function orderedList() {
       const pinned = [];
       const rest = [];
@@ -13517,6 +13550,19 @@ ${n.content.slice(0, 2e3)}
           renderList2();
           updateSel();
         };
+        row.tabIndex = 0;
+        row.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            row.click();
+          }
+        });
+        if (mode === "single") {
+          row.ondblclick = () => {
+            row.click();
+            submit();
+          };
+        }
         listEl2.appendChild(row);
       }
       if (!total) {
@@ -13541,8 +13587,17 @@ ${n.content.slice(0, 2e3)}
     }
     search.oninput = () => {
       state3.q = search.value;
+      newBtn.disabled = !state3.q.trim();
       renderList2();
     };
+    search.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter") return;
+      const first = listEl2.querySelector(".bz-path-picker-row");
+      if (!first) return;
+      ev.preventDefault();
+      first.click();
+      if (mode === "single") submit();
+    });
     try {
       const files = ((_c = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getFiles) == null ? void 0 : _b2.call(_a2)) != null ? _c : []).map((f) => f.path);
       state3.folders = foldersFromFiles(files);
@@ -13570,18 +13625,20 @@ ${n.content.slice(0, 2e3)}
       if (mask.isConnected) search.focus();
     }, 30);
   }
-  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
+  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer, focusRestore;
   var init_path_picker = __esm({
     "src/core/path-picker.ts"() {
       init_fake_obsidian();
       init_app();
       init_dom();
       init_esc_manager();
+      init_notice();
       EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
       currentMask = null;
       currentPopup = null;
       currentHandle = null;
       focusTimer = null;
+      focusRestore = null;
     }
   });
 
@@ -13717,6 +13774,8 @@ ${n.content.slice(0, 2e3)}
     if (currentModal) {
       const m = currentModal;
       currentModal = null;
+      const active2 = document.activeElement;
+      if (active2 instanceof HTMLElement && m.popup.contains(active2)) active2.blur();
       m.dispose();
       (_a2 = m.onClose) == null ? void 0 : _a2.call(m);
     }
@@ -13820,6 +13879,13 @@ ${n.content.slice(0, 2e3)}
     }
     return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
   }
+  function safePersist(persist, what) {
+    try {
+      Promise.resolve(persist()).catch((e) => notifySaveError(e, what));
+    } catch (e) {
+      notifySaveError(e, what);
+    }
+  }
   function currentSnapshot() {
     return tryGetSettings();
   }
@@ -13868,14 +13934,40 @@ ${n.content.slice(0, 2e3)}
       let pending = null;
       let last = initial;
       let dirty2 = false;
+      let raw = initial;
       const warn = new CommitWarn(initial, row.onCommit);
+      let numError = false;
+      const markNumberError = () => {
+        var _a4, _b2;
+        if (numError) return;
+        numError = true;
+        (_a4 = currentText == null ? void 0 : currentText.inputEl) == null ? void 0 : _a4.classList.add("bz-input--error");
+        const base = row.desc ? `${row.desc}；` : "";
+        setting.setDesc(`${base}需为数字，已保留原值 ${String((_b2 = acc.read()) != null ? _b2 : "")}`);
+      };
+      const clearNumberError = () => {
+        var _a4, _b2;
+        if (!numError) return;
+        numError = false;
+        (_a4 = currentText == null ? void 0 : currentText.inputEl) == null ? void 0 : _a4.classList.remove("bz-input--error");
+        setting.setDesc((_b2 = row.desc) != null ? _b2 : "");
+      };
       const commit = () => {
+        var _a4;
         if (pending !== null) {
           clearTimeout(pending);
           pending = null;
         }
         if (!dirty2) return;
-        void acc.persist();
+        if (isNumber) {
+          const n = parseClampedNumber(raw, row.min, row.max);
+          if (n === null && raw.trim() !== "") {
+            dirty2 = false;
+            if (currentText) currentText.setValue(String((_a4 = acc.read()) != null ? _a4 : ""));
+            clearNumberError();
+          }
+        }
+        safePersist(acc.persist, row.name);
         warn.fire(last);
         reevaluate();
       };
@@ -13894,14 +13986,30 @@ ${n.content.slice(0, 2e3)}
         t.onChange((v) => {
           dirty2 = true;
           if (isNumber) {
+            raw = v;
             const n = parseClampedNumber(v, row.min, row.max);
-            if (n === null) return;
+            if (n === null) {
+              if (v.trim() !== "") markNumberError();
+              return;
+            }
+            clearNumberError();
             acc.write(n);
+            if (String(n) !== v) {
+              last = String(n);
+              t.setValue(last);
+            } else {
+              last = v;
+            }
           } else {
             acc.write(v);
+            last = v;
           }
-          last = v;
-          changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
+          try {
+            changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
+          } catch (e) {
+            console.error(e);
+            notifySaveError(e, row.name);
+          }
           if (pending !== null) clearTimeout(pending);
           pending = setTimeout(commit, TEXT_COMMIT_DELAY);
         });
@@ -13990,6 +14098,7 @@ ${n.content.slice(0, 2e3)}
           const initialRaw = acc.read();
           const initialKey = multi ? JSON.stringify(initialRaw != null ? initialRaw : []) : String(initialRaw != null ? initialRaw : "");
           const warn = new CommitWarn(initialKey, row.onCommit);
+          let applied = multi ? Array.isArray(initialRaw) ? [...initialRaw] : [] : String(initialRaw != null ? initialRaw : "");
           const wrap2 = document.createElement("div");
           body.appendChild(wrap2);
           if (row.visibleWhen) entries.push({ el: wrap2, visibleWhen: row.visibleWhen });
@@ -14008,8 +14117,18 @@ ${n.content.slice(0, 2e3)}
               var _a4;
               const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
               acc.write(v);
-              void acc.persist();
-              const res = (_a4 = row.onChange) == null ? void 0 : _a4.call(row, list, ctx);
+              safePersist(() => acc.persist(), row.name);
+              let res;
+              try {
+                res = (_a4 = row.onChange) == null ? void 0 : _a4.call(row, list, ctx);
+              } catch (e) {
+                notifySaveError(e, row.name);
+                acc.write(applied);
+                safePersist(() => acc.persist(), row.name);
+                reevaluate();
+                return multi ? Array.isArray(applied) ? [...applied] : [] : String(applied != null ? applied : "") ? [String(applied)] : [];
+              }
+              applied = v;
               warn.fire(multi ? JSON.stringify(v) : String(v));
               reevaluate();
               if (res && typeof res.then === "function") {
@@ -14030,7 +14149,11 @@ ${n.content.slice(0, 2e3)}
               var _a4;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
             })
           );
@@ -14047,7 +14170,11 @@ ${n.content.slice(0, 2e3)}
               var _a5;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
             });
           });
@@ -14064,7 +14191,11 @@ ${n.content.slice(0, 2e3)}
               var _a4;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
             }
           });
@@ -14083,7 +14214,11 @@ ${n.content.slice(0, 2e3)}
               var _a5;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a5 = row.onChange) == null ? void 0 : _a5.call(row, v, ctx);
             });
           });
@@ -15333,6 +15468,9 @@ ${n.content.slice(0, 2e3)}
       type: "number",
       name: "最大输出 token",
       desc: "留空时取该模型官方上限",
+      // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
+      //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
+      min: 0,
       binding: {
         // 读当前 provider 的值：覆盖 > 注册表默认（providerValue 恒返回数字字符串；NaN 兜底 0）
         get: () => {
