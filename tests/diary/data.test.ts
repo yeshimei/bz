@@ -209,6 +209,43 @@ describe('loadWallEntries', () => {
     expect(entries[0].tags).toEqual(['日记', '诗']);
     expect(entries[0].emoji).toBe('📖🌟');
   });
+
+  it("D5' 回归：批量读中一个文件 reject 只跳过该文件，其余正常上墙", async () => {
+    const app = makeApp({
+      '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], '健康甲'),
+      '我的/日记/2401010930.md': entry('2024-01-01', '09:30', ['日记'], '健康乙'),
+      '我的/日记/2401022200.md': entry('2024-01-02', '22:00', ['日记'], '坏文件'),
+    });
+    // 单文件读失败（坏盘/同步冲突）：旧 Promise.all 链路整墙空，修复后只跳该文件
+    const realRead = app.vault.read.bind(app.vault);
+    vi.spyOn(app.vault, 'read').mockImplementation(async (f: any) => {
+      if (f.path === '我的/日记/2401022200.md') throw new Error('读取失败');
+      return realRead(f);
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const entries = await loadWallEntries(app);
+    expect(new Set(entries.map((e) => e.content))).toEqual(new Set(['健康甲', '健康乙']));
+    expect(entries.some((e) => e.date === '2024-01-02')).toBe(false); // 坏文件不在墙内
+    warnSpy.mockRestore();
+  });
+
+  it("D5' 回归：信批量读单文件失败不空整墙（特殊条目同口径；影视/书不读盘走 parse 内部容错）", async () => {
+    const app = makeApp({
+      '我的/信/好信.md': '---\ndate: 2024-03-09 09:00\n---\n好信正文\n',
+      '我的/信/坏信.md': '---\ndate: 2024-03-09 10:00\n---\n坏信正文\n',
+    });
+    const realRead = app.vault.read.bind(app.vault);
+    vi.spyOn(app.vault, 'read').mockImplementation(async (f: any) => {
+      if (f.path === '我的/信/坏信.md') throw new Error('读取失败');
+      return realRead(f);
+    });
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const entries = await loadWallEntries(app);
+    expect(entries).toHaveLength(1);
+    expect(entries[0].kind).toBe('letter');
+    expect(entries[0].content).toContain('好信正文');
+    warnSpy.mockRestore();
+  });
 });
 
 describe('groupByMonth', () => {
@@ -421,8 +458,8 @@ describe('parseBookFile（书库 frontmatter 解析）', () => {
     expect(entry!.content).toContain('神作');
     expect(entry!.content).toContain('![[CONFIG/BOOK/来自新世界/cover.jpeg]]');
     expect(entry!.id).toContain('book-');
-    // 时间来自文件创建时间（mock stat = Date.UTC(2024,0,1,12,0)，本地时区格式化；中国时区 +8 → 20:00）
-    expect(entry!.time).toBe('20:00');
+    // 时间（A1）：不再取文件创建时间，回落固定 00:00（对端书库域补结构化时间前的过渡口径）
+    expect(entry!.time).toBe('00:00');
   });
 
   it('无 completionDate 时用 readingDate', async () => {
@@ -478,8 +515,8 @@ describe('parseMovieFile / parseLetterFile（影视/信 frontmatter 解析）', 
     expect(m1!.content).toContain('![[poster.jpg]]'); // 海报内链进 content（数据层提取为媒体）
     expect(m2).toMatchObject({ tags: ['纪录片'] });
     expect(m3).toMatchObject({ tags: ['电视剧'] });
-    // 时间来自文件创建时间（mock stat = Date.UTC(2024,0,1,12,0)，本地时区格式化；中国时区 +8 → 20:00）
-    expect(m1!.time).toBe('20:00');
+    // 时间（A1）：不再取文件创建时间，回落固定 00:00（对端影院域补结构化时间前的过渡口径）
+    expect(m1!.time).toBe('00:00');
     expect(m1!.id).toContain('movie-');
   });
 
@@ -537,9 +574,10 @@ describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
     // 日记 1 + 影视 1 + 信 1（草稿跳过）+ 书 1 = 4
     expect(entries).toHaveLength(4);
     // 统一 date 降序（同日再 time 降序）：书(03-12) > 影视(03-11) > 日记(03-10) > 信(03-09)
+    // A1：书/影视时分回落固定 00:00；信取 frontmatter date 的时间半段 20:00
     expect(entries.map((e) => `${e.date} ${e.time} ${e.kind}`)).toEqual([
-      '2024-03-12 20:00 book',
-      '2024-03-11 20:00 movie',
+      '2024-03-12 00:00 book',
+      '2024-03-11 00:00 movie',
       '2024-03-10 08:00 diary',
       '2024-03-09 20:00 letter',
     ]);

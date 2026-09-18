@@ -93,6 +93,38 @@ export function stripMediaLinks(content: string): string {
 const READ_BATCH_SIZE = 10;
 
 /**
+ * 批量读一个批次（D5' per-file 容错）：单个文件读取/解析失败只跳过该文件
+ * （console.warn 一次汇总），不让整墙因一个坏文件空掉。返回成功解析的 WallEntry。
+ */
+async function readBatch<T>(
+  batch: T[],
+  readOne: (file: T) => Promise<WallEntry[]>,
+  failed: string[]
+): Promise<WallEntry[]> {
+  const results = await Promise.all(
+    batch.map(async (file) => {
+      try {
+        return await readOne(file);
+      } catch (e) {
+        const path = (file as { path?: string })?.path || String(file);
+        failed.push(path);
+        return [];
+      }
+    })
+  );
+  const out: WallEntry[] = [];
+  for (const r of results) out.push(...r);
+  return out;
+}
+
+/** 批量读取结束后汇总告警一次（不刷屏） */
+function warnFailedBatch(kind: string, failed: string[]): void {
+  if (failed.length > 0) {
+    console.warn(`[diary] ${kind}加载：${failed.length} 个文件读取失败已跳过：`, failed.join(', '));
+  }
+}
+
+/**
  * 递归枚举目录下全部 .md 文件路径（vault.adapter.list，Obsidian DataAdapter 标准接口；
  * mock vault 与真实 vault 行为一致，且天然支持子目录递归）。
  * 目录不存在/无权限：list 抛错时跳过该目录，不阻断整体加载。
@@ -191,18 +223,23 @@ async function loadDiaryEntries(app: App, diaryDir: string): Promise<WallEntry[]
   const vault = app.vault;
   const mdFiles = await mdFilesUnder(app, diaryDir);
   const entries: WallEntry[] = [];
+  const failed: string[] = [];
   for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
     const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
-    const batchResults = await Promise.all(
-      batch.map(async (file) => {
-        if (!diaryMetaFromEntryPath(file.name)) return [];
-        const content = await vault.read(file);
-        const e = parseEntryFile(content, file.path);
-        return e ? [toWallEntry(e, 'diary', diaryDir)] : [];
-      })
+    entries.push(
+      ...(await readBatch(
+        batch,
+        async (file) => {
+          if (!diaryMetaFromEntryPath(file.name)) return [];
+          const content = await vault.read(file);
+          const e = parseEntryFile(content, file.path);
+          return e ? [toWallEntry(e, 'diary', diaryDir)] : [];
+        },
+        failed
+      ))
     );
-    for (const r of batchResults) entries.push(...r);
   }
+  warnFailedBatch('日记', failed);
   return entries;
 }
 
@@ -215,16 +252,21 @@ async function loadSpecialEntries(
 ): Promise<WallEntry[]> {
   const mdFiles = await mdFilesUnder(app, dir);
   const entries: WallEntry[] = [];
+  const failed: string[] = [];
   for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
     const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
-    const batchResults = await Promise.all(
-      batch.map(async (file) => {
-        const e = await parse(file, app);
-        return e ? [toWallEntry(e, kind, dir)] : [];
-      })
+    entries.push(
+      ...(await readBatch(
+        batch,
+        async (file) => {
+          const e = await parse(file, app);
+          return e ? [toWallEntry(e, kind, dir)] : [];
+        },
+        failed
+      ))
     );
-    for (const r of batchResults) entries.push(...r);
   }
+  warnFailedBatch(kind, failed);
   return entries;
 }
 
