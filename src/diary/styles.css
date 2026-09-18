@@ -8,12 +8,14 @@
  * --background-modifier-border/hover/active-hover、--color-green/orange/cyan。 */
 
 /* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ----------
-   挂 body 的日记弹层（日期筛选 .bz-diary-datefilter）不在 .bz-diary 根内，必须同列声明——
-   否则 --dw-* 在它身上全部解析失败（背景 transparent、边框/文字色全丢）。
+   挂 body 的日记弹层（日期筛选 .bz-diary-datefilter、滚轮选择器 #unified-datetime-picker-mask）
+   不在 .bz-diary 根内，必须同列声明——否则 --dw-* 在它身上全部解析失败
+   （背景 transparent、边框/文字色/阴影全丢）。
    用户报障：「点击『日记本』打开的日期窗口没有背景色」即此因（此前只补过按钮背景，
-   卡片的 var(--dw-bg) 仍是空值）。 */
+   卡片的 var(--dw-bg) 仍是空值）。滚轮壳系一致#2 降级口径：阴影对齐手册三档依赖同列声明。 */
 .bz-diary,
-.bz-diary-datefilter {
+.bz-diary-datefilter,
+#unified-datetime-picker-mask {
   --dw-bg: var(--background-primary);
   --dw-surface: var(--background-secondary);
   --dw-hover: var(--background-modifier-hover);
@@ -1532,6 +1534,36 @@
 #add-diary-content:focus {
   border-color: var(--interactive-accent);
 }
+
+/* 效率#4①：日期行常驻快捷 chip「此刻 / 昨天」（补写昨晚路径；挂 body 不在 .bz-diary 根内） */
+.dt-quick-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.dt-quick-chip {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 999px;
+  background: var(--background-primary);
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-family: inherit;
+  padding: 4px 14px;
+  min-height: 30px;
+  box-sizing: border-box;
+}
+.dt-quick-chip:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* D-UI16：手输日期聚焦软键盘顶起——写日记弹窗上移一档（top:50% 内联在 dialogs.ts 弹窗壳，
+ * 域内样式需 !important 覆盖；blur 移除类回落居中档） */
+#add-diary-popup.keyboard-up {
+  top: 30% !important;
+}
+
 @media (max-width: 768px) {
   .add-diary-popup {
     width: 85%;

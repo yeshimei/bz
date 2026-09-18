@@ -1,4 +1,4 @@
-/* 源指纹 60564aca5a3572c6 · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 48f98b8c56c5f03b · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -13029,9 +13029,68 @@ ${entry.content.trim()}`;
   init_notice();
   init_esc_manager();
   init_z_order();
+  init_app();
+  init_diary_format();
   var yearRangeProvider = null;
   function setDateTimeYearRangeProvider(p) {
     yearRangeProvider = p;
+  }
+  function createNumberItem(value, onSelect) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "datetime-number-item";
+    item.dataset.value = String(value);
+    item.textContent = value < 10 ? `0${value}` : String(value);
+    item.style.cssText = `
+    padding: 12px 8px;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+    width: 100%;
+    text-align: center;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    font-family: inherit;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+  `;
+    item.addEventListener("click", onSelect);
+    return item;
+  }
+  function bindStepKeys(item, colIndex, picker, select) {
+    item.addEventListener("keydown", (e) => {
+      var _a;
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      e.preventDefault();
+      const field = picker.fields[colIndex];
+      const lo = typeof field.min === "function" ? field.min() : field.min;
+      const hi = typeof field.max === "function" ? field.max() : field.max;
+      const delta = e.key === "ArrowUp" ? -1 : 1;
+      const target = Math.min(hi, Math.max(lo, field.get(picker.tempMoment) + delta));
+      if (target === field.get(picker.tempMoment)) return;
+      select(target);
+      const next = (_a = picker.numberItems[colIndex]) == null ? void 0 : _a[target - lo];
+      if (next) next.focus();
+    });
+  }
+  function applyFieldValue(picker, field, newVal) {
+    if (field.unit === "year" || field.unit === "month") {
+      const origDay = picker.tempMoment.date();
+      picker.tempMoment.date(1);
+      field.set(picker.tempMoment, newVal);
+      const dayMax = picker.tempMoment.daysInMonth();
+      const dayField = picker.fields.find((f) => f.unit === "day");
+      if (dayField) dayField.set(picker.tempMoment, Math.min(origDay, dayMax));
+      regenerateDayNumbers(picker);
+    } else {
+      field.set(picker.tempMoment, newVal);
+    }
   }
   function createWheelColumn(field, colIndex, picker) {
     const column = document.createElement("div");
@@ -13060,8 +13119,6 @@ ${entry.content.trim()}`;
     overflow-y: auto;
     overflow-x: hidden;
     position: relative;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
   `;
     column.appendChild(wheelScrollContainer);
     const numbersContainer = document.createElement("div");
@@ -13076,45 +13133,35 @@ ${entry.content.trim()}`;
     const items = [];
     let min = typeof field.min === "function" ? field.min() : field.min;
     let max = typeof field.max === "function" ? field.max() : field.max;
+    const selectValue = (newVal) => {
+      if (newVal === field.get(picker.tempMoment)) return;
+      applyFieldValue(picker, field, newVal);
+      updateSelection();
+    };
     for (let i = min; i <= max; i++) {
-      const item = document.createElement("div");
-      item.className = "datetime-number-item";
-      item.dataset.value = String(i);
-      item.textContent = i < 10 ? `0${i}` : String(i);
-      item.style.cssText = `
-      padding: 12px 8px;
-      font-size: 18px;
-      font-weight: 400;
-      color: var(--text-muted);
-      cursor: pointer;
-      user-select: none;
-      width: 100%;
-      text-align: center;
-      border-radius: 8px;
-      min-height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-sizing: border-box;
-    `;
+      const item = createNumberItem(i, () => selectValue(parseInt(item.dataset.value)));
+      bindStepKeys(item, colIndex, picker, selectValue);
       items.push(item);
       numbersContainer.appendChild(item);
     }
     picker.numberItems[colIndex] = items;
     const updateSelection = () => {
       const currentVal = field.get(picker.tempMoment);
+      let selected = null;
       items.forEach((item) => {
         const val = parseInt(item.dataset.value);
         if (val === currentVal) {
           item.style.color = "var(--text-on-accent)";
-          item.style.fontWeight = "900";
-          item.style.background = "var(--text-muted)";
+          item.style.fontWeight = "700";
+          item.style.background = "var(--background-modifier-hover)";
+          selected = item;
         } else {
           item.style.color = "var(--text-muted)";
           item.style.fontWeight = "400";
           item.style.background = "transparent";
         }
       });
+      column.selectedEl = selected;
     };
     const scrollToSelected = () => {
       const currentVal = field.get(picker.tempMoment);
@@ -13126,26 +13173,6 @@ ${entry.content.trim()}`;
         wheelScrollContainer.scrollTop = targetScrollTop;
       }
     };
-    items.forEach((item) => {
-      item.addEventListener("click", () => {
-        const newVal = parseInt(item.dataset.value);
-        if (newVal !== field.get(picker.tempMoment)) {
-          field.set(picker.tempMoment, newVal);
-          if (field.unit === "year" || field.unit === "month") {
-            const dayField = picker.fields.find((f) => f.unit === "day");
-            if (dayField) {
-              const dayMax = picker.tempMoment.daysInMonth();
-              const currentDay = dayField.get(picker.tempMoment);
-              if (currentDay > dayMax) {
-                dayField.set(picker.tempMoment, dayMax);
-              }
-              regenerateDayNumbers(picker);
-            }
-          }
-          updateSelection();
-        }
-      });
-    });
     wheelScrollContainer.addEventListener(
       "wheel",
       (e) => {
@@ -13187,13 +13214,13 @@ ${entry.content.trim()}`;
     );
     column.updateSelection = updateSelection;
     column.scrollToSelected = scrollToSelected;
+    column.selectValue = selectValue;
     return column;
   }
   function regenerateDayNumbers(picker) {
     const dayField = picker.fields.find((f) => f.unit === "day");
     const dayColIndex = picker.fields.findIndex((f) => f.unit === "day");
     const dayItems = picker.numberItems[dayColIndex];
-    const dayMin = 1;
     const dayMax = picker.tempMoment.daysInMonth();
     const currentCount = dayItems.length;
     const targetCount = dayMax;
@@ -13204,35 +13231,10 @@ ${entry.content.trim()}`;
       }
     } else if (targetCount > currentCount) {
       const container = dayItems[0].parentElement;
+      const selectDay = (v) => picker.columns[dayColIndex].selectValue(v);
       for (let i = currentCount + 1; i <= targetCount; i++) {
-        const item = document.createElement("div");
-        item.className = "datetime-number-item";
-        item.dataset.value = String(i);
-        item.textContent = i < 10 ? `0${i}` : String(i);
-        item.style.cssText = `
-        padding: 12px 8px;
-        font-size: 18px;
-        font-weight: 400;
-        color: var(--text-muted);
-        cursor: pointer;
-        user-select: none;
-        transition: all 0.15s;
-        width: 100%;
-        text-align: center;
-        border-radius: 8px;
-        min-height: 44px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-sizing: border-box;
-      `;
-        item.addEventListener("click", () => {
-          const newVal = parseInt(item.dataset.value);
-          if (newVal !== dayField.get(picker.tempMoment)) {
-            dayField.set(picker.tempMoment, newVal);
-            picker.columns[dayColIndex].updateSelection();
-          }
-        });
+        const item = createNumberItem(i, () => selectDay(parseInt(item.dataset.value)));
+        bindStepKeys(item, dayColIndex, picker, selectDay);
         container.appendChild(item);
         dayItems.push(item);
       }
@@ -13242,10 +13244,6 @@ ${entry.content.trim()}`;
       item.dataset.value = String(value);
       item.textContent = value < 10 ? `0${value}` : String(value);
     });
-    const currentDay = dayField.get(picker.tempMoment);
-    if (currentDay > dayMax) {
-      dayField.set(picker.tempMoment, dayMax);
-    }
     picker.columns[dayColIndex].updateSelection();
   }
   function updateAllColumns(picker, shouldScroll = false) {
@@ -13258,6 +13256,28 @@ ${entry.content.trim()}`;
       }
     });
   }
+  var earliestYearCache;
+  function probeEarliestYear() {
+    var _a, _b, _c, _d;
+    if (earliestYearCache !== void 0) return earliestYearCache;
+    earliestYearCache = null;
+    try {
+      const files = (_c = (_b = (_a = getApp().vault).getMarkdownFiles) == null ? void 0 : _b.call(_a)) != null ? _c : [];
+      const dir = DIARY_DIRECTORY.replace(/\/+$/, "");
+      let earliest = null;
+      for (const f of files) {
+        const p = String((_d = f == null ? void 0 : f.path) != null ? _d : "");
+        if (dir && !p.startsWith(dir + "/")) continue;
+        const date = diaryDateFromEntryPath(p);
+        if (!date) continue;
+        const y = parseInt(date.slice(0, 4), 10);
+        if (!Number.isNaN(y) && (earliest === null || y < earliest)) earliest = y;
+      }
+      earliestYearCache = earliest;
+    } catch (e) {
+    }
+    return earliestYearCache;
+  }
   function getYearRange() {
     if (yearRangeProvider) {
       try {
@@ -13266,12 +13286,11 @@ ${entry.content.trim()}`;
       } catch (e) {
       }
     }
-    return {
-      min: 1900,
-      max: (/* @__PURE__ */ new Date()).getFullYear() + 1
-    };
+    const max = (/* @__PURE__ */ new Date()).getFullYear() + 1;
+    const earliest = probeEarliestYear();
+    return { min: Math.min(earliest != null ? earliest : 1900, max), max };
   }
-  function showDateTimePicker(initialMoment, onConfirm) {
+  function showDateTimePicker(initialMoment, onConfirm, onManual) {
     const existing = document.getElementById("unified-datetime-picker-mask");
     if (existing) existing.remove();
     const picker = {
@@ -13339,11 +13358,13 @@ ${entry.content.trim()}`;
     width: 90%;
     max-width: 600px;
     max-height: 80vh;
-    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-    font-family: system-ui, -apple-system, sans-serif;
+    box-shadow: var(--dw-shadow-lg);
     display: flex;
     flex-direction: column;
   `;
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    popup.setAttribute("aria-label", "选择日期时间");
     const title = document.createElement("h4");
     title.textContent = "选择日期时间";
     title.style.cssText = `
@@ -13377,9 +13398,7 @@ ${entry.content.trim()}`;
     padding-top: 16px;
     border-top: 1px solid var(--background-modifier-border);
   `;
-    const todayBtn = document.createElement("button");
-    todayBtn.textContent = "此刻";
-    todayBtn.style.cssText = `
+    const neutralBtnCss = `
     padding: 10px 20px;
     border-radius: 8px;
     border: none;
@@ -13389,13 +13408,31 @@ ${entry.content.trim()}`;
     font-size: 14px;
     font-weight: 500;
     flex: 1;
+    font-family: inherit;
   `;
+    const todayBtn = document.createElement("button");
+    todayBtn.type = "button";
+    todayBtn.textContent = "此刻";
+    todayBtn.style.cssText = neutralBtnCss;
     todayBtn.onclick = () => {
       picker.tempMoment = (0, import_moment.default)();
       regenerateDayNumbers(picker);
       updateAllColumns(picker, true);
     };
+    btnContainer.appendChild(todayBtn);
+    if (onManual) {
+      const manualBtn = document.createElement("button");
+      manualBtn.type = "button";
+      manualBtn.textContent = "手输";
+      manualBtn.style.cssText = neutralBtnCss;
+      manualBtn.onclick = () => {
+        mask.remove();
+        onManual();
+      };
+      btnContainer.appendChild(manualBtn);
+    }
     const okBtn = document.createElement("button");
+    okBtn.type = "button";
     okBtn.textContent = "确定";
     okBtn.style.cssText = `
     padding: 10px 20px;
@@ -13407,27 +13444,38 @@ ${entry.content.trim()}`;
     font-size: 14px;
     font-weight: 500;
     flex: 1;
+    font-family: inherit;
   `;
     okBtn.onclick = () => {
       if (onConfirm) onConfirm(picker.tempMoment.clone());
       mask.remove();
     };
-    btnContainer.appendChild(todayBtn);
     btnContainer.appendChild(okBtn);
     popup.appendChild(btnContainer);
     mask.appendChild(popup);
     mask.style.zIndex = String(allocZ());
     document.body.appendChild(mask);
     updateAllColumns(picker, true);
+    for (const col of picker.columns) {
+      const el = col.selectedEl;
+      if (el) {
+        el.focus({ preventScroll: true });
+        break;
+      }
+    }
     mask.addEventListener("click", (e) => {
       if (e.target === mask) mask.remove();
     });
-    escManager.register("diary-datetime", { isVisible: () => mask.isConnected, close: () => mask.remove() });
+    escManager.register("bz-diary-datetime", { isVisible: () => mask.isConnected, close: () => mask.remove() });
     return mask;
   }
   var activeMomentReset = null;
   function resetDateTimeControl(m) {
     if (activeMomentReset) activeMomentReset(m);
+  }
+  function setKeyboardUp(on) {
+    var _a;
+    (_a = document.getElementById("add-diary-popup")) == null ? void 0 : _a.classList.toggle("keyboard-up", on);
   }
   function createDateTimeControl() {
     const container = document.createElement("div");
@@ -13451,6 +13499,9 @@ ${entry.content.trim()}`;
     cursor: pointer;
     flex-wrap: wrap;
   `;
+    displayArea.tabIndex = 0;
+    displayArea.setAttribute("role", "button");
+    displayArea.setAttribute("aria-label", "日期时间：回车或空格打开滚轮选择，滚轮内可切手输");
     const yearSpan = document.createElement("span");
     yearSpan.className = "dt-part";
     yearSpan.setAttribute("data-part", "year");
@@ -13489,13 +13540,31 @@ ${entry.content.trim()}`;
     displayArea.appendChild(hourSpan);
     displayArea.appendChild(colon);
     displayArea.appendChild(minuteSpan);
+    const quickRow = document.createElement("div");
+    quickRow.className = "dt-quick-row";
+    const mkQuickChip = (text, title, toMoment) => {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "dt-quick-chip";
+      chip.textContent = text;
+      chip.title = title;
+      chip.addEventListener("click", () => {
+        const m = toMoment();
+        if (!m || typeof m.isValid !== "function" || !m.isValid()) return;
+        exitManualMode();
+        setMoment(m);
+      });
+      quickRow.appendChild(chip);
+    };
+    mkQuickChip("此刻", "设为当前时刻", () => (0, import_moment.default)());
+    mkQuickChip("昨天", "昨天同一时刻（补写昨晚）", () => (0, import_moment.default)().subtract(1, "day"));
     const hiddenInput = document.createElement("input");
     hiddenInput.type = "text";
     hiddenInput.id = "add-diary-datetime";
     hiddenInput.style.display = "none";
     const manualInput = document.createElement("input");
     manualInput.type = "text";
-    manualInput.placeholder = "YYYY-MM-DD HH:mm 或 1分钟前";
+    manualInput.placeholder = "YYYY-MM-DD HH:mm 或 1 分钟前";
     manualInput.style.cssText = `
     width: 100%;
     border: 1px solid var(--background-modifier-border);
@@ -13507,7 +13576,6 @@ ${entry.content.trim()}`;
   `;
     let currentMoment = (0, import_moment.default)();
     let isManualMode = false;
-    let clickTimer = null;
     const setMoment = (m) => {
       if (!m || typeof m.isValid !== "function" || !m.isValid()) return;
       currentMoment = m.clone();
@@ -13534,25 +13602,19 @@ ${entry.content.trim()}`;
     updateDisplay(currentMoment);
     function openUnifiedPicker() {
       if (isManualMode) return;
-      showDateTimePicker(currentMoment, (newMoment) => {
-        if (newMoment && newMoment.isValid()) {
-          currentMoment = newMoment;
-          updateDisplay(currentMoment);
-        }
-      });
+      showDateTimePicker(
+        currentMoment,
+        (newMoment) => {
+          if (newMoment && newMoment.isValid()) {
+            currentMoment = newMoment;
+            updateDisplay(currentMoment);
+          }
+        },
+        () => enterManualMode()
+        // 效率#4②：滚轮内「手输」钮承接显性入口
+      );
     }
-    function onSingleClick() {
-      if (clickTimer) clearTimeout(clickTimer);
-      clickTimer = setTimeout(() => {
-        clickTimer = null;
-        openUnifiedPicker();
-      }, 200);
-    }
-    function onDoubleClick() {
-      if (clickTimer) {
-        clearTimeout(clickTimer);
-        clickTimer = null;
-      }
+    function enterManualMode() {
       if (isManualMode) return;
       isManualMode = true;
       displayArea.style.display = "none";
@@ -13561,8 +13623,13 @@ ${entry.content.trim()}`;
       manualInput.focus();
       manualInput.select();
     }
-    displayArea.addEventListener("click", onSingleClick);
-    displayArea.addEventListener("dblclick", onDoubleClick);
+    function exitManualMode() {
+      setKeyboardUp(false);
+      if (!isManualMode) return;
+      isManualMode = false;
+      manualInput.style.display = "none";
+      displayArea.style.display = "flex";
+    }
     function commitManualEdit() {
       const raw = manualInput.value.trim();
       const newMoment = parseFlexibleDateTime(raw);
@@ -13573,10 +13640,17 @@ ${entry.content.trim()}`;
         manualInput.value = hiddenInput.value;
         notice("日期时间格式无效，已恢复");
       }
-      isManualMode = false;
-      manualInput.style.display = "none";
-      displayArea.style.display = "flex";
+      exitManualMode();
     }
+    displayArea.addEventListener("click", openUnifiedPicker);
+    displayArea.addEventListener("dblclick", enterManualMode);
+    displayArea.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openUnifiedPicker();
+      }
+    });
+    manualInput.addEventListener("focus", () => setKeyboardUp(true));
     manualInput.addEventListener("blur", commitManualEdit);
     manualInput.addEventListener("keypress", (e) => {
       if (e.key === "Enter") {
@@ -13585,6 +13659,7 @@ ${entry.content.trim()}`;
       }
     });
     container.appendChild(displayArea);
+    container.appendChild(quickRow);
     container.appendChild(manualInput);
     container.appendChild(hiddenInput);
     return container;

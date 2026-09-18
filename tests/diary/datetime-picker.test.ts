@@ -60,10 +60,10 @@ describe('写日记弹窗日期控件同步（P1 审查修复）', () => {
     const el = createDateTimeControl();
     document.body.appendChild(el);
     resetDateTimeControl(moment('2020-03-04 05:06', 'YYYY-MM-DD HH:mm', true));
-    // 滚轮起点年份 = 重置时刻年份（选中项字重 900）
+    // 滚轮起点年份 = 重置时刻年份（选中项字重 700，一致#6 档位）
     const mask = openWheel(el.querySelector('#datetime-display-area') as HTMLElement);
     const selectedYears = Array.from(mask.querySelectorAll<HTMLElement>('.datetime-number-item'))
-      .filter((i) => i.style.fontWeight === '900')
+      .filter((i) => i.style.fontWeight === '700')
       .map((i) => i.textContent);
     expect(selectedYears).toContain('2020');
     // 不动滚轮直接确定：确认值必须仍是重置时刻（修复前会是控件创建时的「现在」）
