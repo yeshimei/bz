@@ -8,6 +8,7 @@ import moment from 'moment';
 import { jsonStore } from '../core/json-store';
 import { getApp } from '../core/app';
 import { generateId, extractUrlAndDisplay } from '../core/utils';
+import { localNow } from '../core/ui/str';
 import { backupOriginal, enqueueFileTask, storageFile } from '../core/storage';
 import { notify } from '../core/notice';
 import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
@@ -286,7 +287,7 @@ export const MemoData = {
       const item = data.find((d: any) => d.id === id);
       if (!item) throw new Error('条目不存在');
       if (item.completed) return { next: null, changed: false };
-      const now = moment().format('YYYY-MM-DD HH:mm:ss');
+      const now = localNow();
       item.completed = now;
       const recur = normalizeRecur(item.recur);
       let next: MemoItem | null = null;

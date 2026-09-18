@@ -40,6 +40,7 @@ import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
+import { localNow } from '../core/ui/str';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import {
@@ -1259,7 +1260,7 @@ function addFromComposer(): void {
       title: hint ? hint.title : parsed.title,
       scene,
       priority: 'minor',
-      created: moment().format('YYYY-MM-DD HH:mm:ss'),
+      created: localNow(),
       completed: null,
       due: null,
       recur: null, // composer 快速录入不带周期（编辑弹窗可补）
@@ -1694,7 +1695,7 @@ export function openEditor(
             title: finalTitle,
             scene,
             priority,
-            created: moment().format('YYYY-MM-DD HH:mm:ss'),
+            created: localNow(),
             completed: null,
             due,
             recur,
