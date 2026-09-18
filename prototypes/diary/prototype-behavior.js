@@ -1,4 +1,4 @@
-/* 源指纹 093cb396ca679662 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a3afff780ac7a1df · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -6534,15 +6534,23 @@ var BZW_diary = (() => {
     const chipsWrap = document.createElement("div");
     chipsWrap.className = "bz-path-picker-chips--setting";
     const apply = (list) => {
-      const res = opts.onChange(list);
-      if (res && typeof res.then === "function") {
-        return Promise.resolve(res).then((final) => {
-          current = Array.isArray(final) ? final : list;
-          renderAll();
-        });
+      try {
+        const res = opts.onChange(list);
+        if (res && typeof res.then === "function") {
+          return Promise.resolve(res).then((final) => {
+            current = Array.isArray(final) ? final : list;
+            renderAll();
+          }).catch((e) => {
+            notifySaveError(e, opts.name);
+            renderAll();
+          });
+        }
+        current = Array.isArray(res) ? res : list;
+        renderAll();
+      } catch (e) {
+        notifySaveError(e, opts.name);
+        renderAll();
       }
-      current = Array.isArray(res) ? res : list;
-      renderAll();
     };
     const openPicker = () => openPathPicker({
       title: opts.pickerTitle || opts.name,
@@ -6602,10 +6610,16 @@ var BZW_diary = (() => {
       window.clearTimeout(focusTimer);
       focusTimer = null;
     }
+    if (focusRestore) {
+      const el = focusRestore;
+      focusRestore = null;
+      if (el.isConnected) el.focus();
+    }
   }
   function openPathPicker(opts) {
     var _a, _b, _c;
     closePathPicker();
+    focusRestore = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const app = getApp();
     const mode = opts.mode || "single";
     const selected = new Set(normalizePicked(opts.selected || []));
@@ -6669,11 +6683,30 @@ var BZW_diary = (() => {
       renderList();
       updateSel();
     });
-    mkBtn(opts.okText || "下一步", true, () => {
+    const submit = () => {
       const list = normalizePicked([...selected]);
       closePathPicker();
       opts.onConfirm(list);
+    };
+    const newBtn = mkBtn("新建文件夹", false, () => {
+      var _a2;
+      const name = state.q.trim().replace(/^\/+|\/+$/g, "");
+      if (!name) return;
+      const parent = (_a2 = [...selected][0]) != null ? _a2 : "";
+      const full = parent ? `${parent}/${name}` : name;
+      void (async () => {
+        if (!state.folders.includes(full)) {
+          await app.vault.createFolder(full);
+          if (!state.folders.includes(full)) state.folders.push(full);
+        }
+        if (mode === "single") selected.clear();
+        selected.add(full);
+        renderList();
+        updateSel();
+      })().catch((e) => notifyActionError(e, `新建文件夹 ${full}`));
     });
+    newBtn.disabled = !state.q.trim();
+    mkBtn(opts.okText || "下一步", true, submit);
     function orderedList() {
       const pinned = [];
       const rest = [];
@@ -6726,6 +6759,19 @@ var BZW_diary = (() => {
           renderList();
           updateSel();
         };
+        row.tabIndex = 0;
+        row.addEventListener("keydown", (ev) => {
+          if (ev.key === "Enter" || ev.key === " ") {
+            ev.preventDefault();
+            row.click();
+          }
+        });
+        if (mode === "single") {
+          row.ondblclick = () => {
+            row.click();
+            submit();
+          };
+        }
         listEl.appendChild(row);
       }
       if (!total) {
@@ -6750,8 +6796,17 @@ var BZW_diary = (() => {
     }
     search.oninput = () => {
       state.q = search.value;
+      newBtn.disabled = !state.q.trim();
       renderList();
     };
+    search.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter") return;
+      const first = listEl.querySelector(".bz-path-picker-row");
+      if (!first) return;
+      ev.preventDefault();
+      first.click();
+      if (mode === "single") submit();
+    });
     try {
       const files = ((_c = (_b = (_a = app == null ? void 0 : app.vault) == null ? void 0 : _a.getFiles) == null ? void 0 : _b.call(_a)) != null ? _c : []).map((f) => f.path);
       state.folders = foldersFromFiles(files);
@@ -6779,18 +6834,20 @@ var BZW_diary = (() => {
       if (mask.isConnected) search.focus();
     }, 30);
   }
-  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer;
+  var EXCLUDED_DIR_NAMES, currentMask, currentPopup, currentHandle, focusTimer, focusRestore;
   var init_path_picker = __esm({
     "src/core/path-picker.ts"() {
       init_fake_obsidian();
       init_app();
       init_dom();
       init_esc_manager();
+      init_notice();
       EXCLUDED_DIR_NAMES = /* @__PURE__ */ new Set([".obsidian", ".trash", "node_modules", ".git"]);
       currentMask = null;
       currentPopup = null;
       currentHandle = null;
       focusTimer = null;
+      focusRestore = null;
     }
   });
 
@@ -6807,6 +6864,13 @@ var BZW_diary = (() => {
       };
     }
     return { read: () => binding.get(), write: (v) => binding.set(v), persist: () => binding.save() };
+  }
+  function safePersist(persist, what) {
+    try {
+      Promise.resolve(persist()).catch((e) => notifySaveError(e, what));
+    } catch (e) {
+      notifySaveError(e, what);
+    }
   }
   function currentSnapshot() {
     return tryGetSettings();
@@ -6856,14 +6920,40 @@ var BZW_diary = (() => {
       let pending = null;
       let last = initial;
       let dirty = false;
+      let raw = initial;
       const warn = new CommitWarn(initial, row.onCommit);
+      let numError = false;
+      const markNumberError = () => {
+        var _a3, _b;
+        if (numError) return;
+        numError = true;
+        (_a3 = currentText == null ? void 0 : currentText.inputEl) == null ? void 0 : _a3.classList.add("bz-input--error");
+        const base = row.desc ? `${row.desc}；` : "";
+        setting.setDesc(`${base}需为数字，已保留原值 ${String((_b = acc.read()) != null ? _b : "")}`);
+      };
+      const clearNumberError = () => {
+        var _a3, _b;
+        if (!numError) return;
+        numError = false;
+        (_a3 = currentText == null ? void 0 : currentText.inputEl) == null ? void 0 : _a3.classList.remove("bz-input--error");
+        setting.setDesc((_b = row.desc) != null ? _b : "");
+      };
       const commit = () => {
+        var _a3;
         if (pending !== null) {
           clearTimeout(pending);
           pending = null;
         }
         if (!dirty) return;
-        void acc.persist();
+        if (isNumber) {
+          const n = parseClampedNumber(raw, row.min, row.max);
+          if (n === null && raw.trim() !== "") {
+            dirty = false;
+            if (currentText) currentText.setValue(String((_a3 = acc.read()) != null ? _a3 : ""));
+            clearNumberError();
+          }
+        }
+        safePersist(acc.persist, row.name);
         warn.fire(last);
         reevaluate();
       };
@@ -6882,14 +6972,30 @@ var BZW_diary = (() => {
         t.onChange((v) => {
           dirty = true;
           if (isNumber) {
+            raw = v;
             const n = parseClampedNumber(v, row.min, row.max);
-            if (n === null) return;
+            if (n === null) {
+              if (v.trim() !== "") markNumberError();
+              return;
+            }
+            clearNumberError();
             acc.write(n);
+            if (String(n) !== v) {
+              last = String(n);
+              t.setValue(last);
+            } else {
+              last = v;
+            }
           } else {
             acc.write(v);
+            last = v;
           }
-          last = v;
-          changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
+          try {
+            changeCb == null ? void 0 : changeCb(isNumber ? acc.read() : v, ctx);
+          } catch (e) {
+            console.error(e);
+            notifySaveError(e, row.name);
+          }
           if (pending !== null) clearTimeout(pending);
           pending = setTimeout(commit, TEXT_COMMIT_DELAY);
         });
@@ -6978,6 +7084,7 @@ var BZW_diary = (() => {
           const initialRaw = acc.read();
           const initialKey = multi ? JSON.stringify(initialRaw != null ? initialRaw : []) : String(initialRaw != null ? initialRaw : "");
           const warn = new CommitWarn(initialKey, row.onCommit);
+          let applied = multi ? Array.isArray(initialRaw) ? [...initialRaw] : [] : String(initialRaw != null ? initialRaw : "");
           const wrap = document.createElement("div");
           body.appendChild(wrap);
           if (row.visibleWhen) entries.push({ el: wrap, visibleWhen: row.visibleWhen });
@@ -6996,8 +7103,18 @@ var BZW_diary = (() => {
               var _a3;
               const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
               acc.write(v);
-              void acc.persist();
-              const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
+              safePersist(() => acc.persist(), row.name);
+              let res;
+              try {
+                res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
+              } catch (e) {
+                notifySaveError(e, row.name);
+                acc.write(applied);
+                safePersist(() => acc.persist(), row.name);
+                reevaluate();
+                return multi ? Array.isArray(applied) ? [...applied] : [] : String(applied != null ? applied : "") ? [String(applied)] : [];
+              }
+              applied = v;
               warn.fire(multi ? JSON.stringify(v) : String(v));
               reevaluate();
               if (res && typeof res.then === "function") {
@@ -7018,7 +7135,11 @@ var BZW_diary = (() => {
               var _a3;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
             })
           );
@@ -7035,7 +7156,11 @@ var BZW_diary = (() => {
               var _a4;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
             });
           });
@@ -7052,7 +7177,11 @@ var BZW_diary = (() => {
               var _a3;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
             }
           });
@@ -7071,7 +7200,11 @@ var BZW_diary = (() => {
               var _a4;
               acc.write(v);
               reevaluate();
-              await acc.persist();
+              try {
+                await acc.persist();
+              } catch (e) {
+                notifySaveError(e, row.name);
+              }
               (_a4 = row.onChange) == null ? void 0 : _a4.call(row, v, ctx);
             });
           });
@@ -7254,6 +7387,8 @@ var BZW_diary = (() => {
     if (currentModal) {
       const m = currentModal;
       currentModal = null;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && m.popup.contains(active)) active.blur();
       m.dispose();
       (_a = m.onClose) == null ? void 0 : _a.call(m);
     }

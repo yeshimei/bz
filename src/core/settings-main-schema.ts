@@ -172,6 +172,9 @@ function providerMaxTokensRow(): NumberRow {
     type: 'number',
     name: '最大输出 token',
     desc: '留空时取该模型官方上限',
+    // N4：负数原直通 max_tokens → 服务商 400（负数 truthy 过 overrideMaxTokens 短路）——钳下界 0
+    //（'0'/0 已有 setProviderValue 删键回落默认语义，口径自洽）
+    min: 0,
     binding: {
       // 读当前 provider 的值：覆盖 > 注册表默认（providerValue 恒返回数字字符串；NaN 兜底 0）
       get: () => {

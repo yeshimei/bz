@@ -158,6 +158,31 @@ describe('core settings-modal 机制', () => {
     expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
   });
 
+  it('新-1：防抖窗口内 ESC 关闭——关闭前主动 blur 聚焦输入框，编辑立即落盘不静默丢失', () => {
+    const state: Record<string, unknown> = { bookshelfFolderPath: '' };
+    setSettingsProvider(() => state as any);
+    const saver = vi.fn(async () => {});
+    setSettingsSaver(saver);
+    openSettingsModal({
+      title: '防抖落盘测试',
+      schema: {
+        groups: [
+          { name: 'G', rows: [{ type: 'text', name: '文本行', binding: { key: 'bookshelfFolderPath' } }] },
+        ],
+      },
+    });
+    const input = document.querySelector('#bz-settings-modal-popup input') as HTMLInputElement;
+    expect(document.activeElement).toBe(input); // 打开即聚焦（UX 整改 37）
+    // 模拟「粘贴后立刻 ESC」：防抖窗口内、焦点仍在输入框（无 blur）
+    input.value = '粘贴的新值';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(document.getElementById('bz-settings-modal-mask')).toBeNull();
+    // 关闭即 commit：不依赖被移除元素永远等不到的 blur，也不等 800ms 防抖
+    expect(state.bookshelfFolderPath).toBe('粘贴的新值');
+    expect(saver).toHaveBeenCalledTimes(1);
+  });
+
   it('重复打开替换旧弹窗（同一时刻至多一个）', () => {
     openSettingsModal({ title: '旧弹窗', schema: { groups: [] } });
     openSettingsModal({ title: '新弹窗', schema: { groups: [] } });
