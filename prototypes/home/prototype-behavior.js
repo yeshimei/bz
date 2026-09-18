@@ -1,4 +1,4 @@
-/* 源指纹 5cf8fc9c00f34847 · 仓内输入 239 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0ccafbd160955cf7 · 仓内输入 239 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -4442,7 +4442,9 @@ var BZW_home = (() => {
     "src/core/esc-manager.ts"() {
       escManager = (() => {
         const layers = [];
+        let disabled = false;
         const onKeydown = (e) => {
+          if (disabled) return;
           if (e.key !== "Escape") return;
           for (let i = layers.length - 1; i >= 0; i--) {
             const L = layers[i];
@@ -4475,11 +4477,15 @@ var BZW_home = (() => {
               }
             };
           },
-          /** 插件卸载时移除全局监听 */
+          /** 插件卸载时软关（N1）：只置 disabled 旗标——不摘 document 监听（模块 IIFE
+           *  常驻单例，Obsidian 禁用→再启用不重新求值，摘了就全站 ESC 永久失效）、
+           *  不清 layers（重启用后旧层由 isVisible 判活自愈）。恢复走 arm()。 */
           destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
+            disabled = true;
+          },
+          /** 插件（重）启用时恢复 ESC 处理（main.ts onload 调用；幂等） */
+          arm() {
+            disabled = false;
           }
         };
       })();
@@ -4501,6 +4507,48 @@ var BZW_home = (() => {
   var init_app = __esm({
     "src/core/app.ts"() {
       _app = null;
+    }
+  });
+
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve2, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve2(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  async function httpGetText(url, opts) {
+    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
+    try {
+      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
+      if (!resp || !resp.ok) return null;
+      return await resp.text();
+    } catch (e) {
+      return null;
+    }
+  }
+  function requestUrlAsFetch() {
+    return async (url, init) => {
+      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
+      const status = resp.status;
+      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
+    };
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
     }
   });
 
@@ -4608,19 +4656,14 @@ var BZW_home = (() => {
     return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
   }
   async function fetchPageTitle(url) {
-    try {
-      const r = await requestUrl({
-        url,
-        method: "GET",
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
-      });
-      if (r.status === 200) {
-        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
-        if (m && m[1]) return m[1].trim();
-      }
-    } catch (e) {
-    }
-    return null;
+    const text = await httpGetText(url, {
+      timeoutMs: 8e3,
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      fetchImpl: requestUrlAsFetch()
+    });
+    if (!text) return null;
+    const m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
+    return m && m[1] ? m[1].trim() : null;
   }
   function bytesEqual(a, b) {
     if (a.length !== b.length) return false;
@@ -4727,8 +4770,8 @@ var BZW_home = (() => {
   var init_utils = __esm({
     "src/core/utils.ts"() {
       import_moment = __toESM(require_moment());
-      init_fake_obsidian();
       init_app();
+      init_http();
       init_str();
       CLIPBOARD_CLEAR_DELAY_MS = 6e4;
       clipboardClearTimer = null;
@@ -4737,6 +4780,7 @@ var BZW_home = (() => {
 
   // src/core/flow-dialog.ts
   function buildFlowDialogParts(title, message, actions) {
+    var _a2;
     let buttons;
     if (actions.length === 2) {
       buttons = [
@@ -4752,12 +4796,18 @@ var BZW_home = (() => {
       });
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a2 = actions[primaryIdx]) == null ? void 0 : _a2.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
   }
   function openFlowDialog(opts) {
     if (!opts.actions || opts.actions.length === 0) {
@@ -6459,7 +6509,8 @@ var BZW_home = (() => {
     head.appendChild(closeBtn);
     const media = document.createElement("div");
     media.className = "bz-lightbox-media";
-    const type = opts.type || (opts.src.endsWith(".mp4") || opts.src.endsWith(".webm") ? "video" : "image");
+    const bareSrc = opts.src.split("?")[0].split("#")[0];
+    const type = opts.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
     if (type === "video") {
       const v = document.createElement("video");
       v.src = opts.src;
@@ -9715,6 +9766,89 @@ var BZW_home = (() => {
     }
   });
 
+  // src/core/crypto.ts
+  function toBase64(bytes) {
+    const CHUNK = 32768;
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+  }
+  function cachePut(cacheKey, password, key) {
+    keyCache.delete(cacheKey);
+    keyCache.set(cacheKey, { pw: password, key });
+    if (keyCache.size > KEY_CACHE_MAX) {
+      const oldest = keyCache.keys().next().value;
+      if (oldest !== void 0) keyCache.delete(oldest);
+    }
+  }
+  function clearCryptoKeyCache() {
+    keyCache.clear();
+  }
+  var CryptoService, keyCache, KEY_CACHE_MAX;
+  var init_crypto = __esm({
+    "src/core/crypto.ts"() {
+      CryptoService = class {
+        static async deriveKey(password, salt) {
+          const cacheKey = toBase64(salt);
+          const hit = keyCache.get(cacheKey);
+          if (hit && hit.pw === password) {
+            keyCache.delete(cacheKey);
+            keyCache.set(cacheKey, hit);
+            return hit.key;
+          }
+          const enc = new TextEncoder();
+          const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, [
+            "deriveKey"
+          ]);
+          const key = await crypto.subtle.deriveKey(
+            {
+              name: "PBKDF2",
+              salt,
+              iterations: 1e5,
+              hash: "SHA-256"
+            },
+            keyMaterial,
+            { name: "AES-GCM", length: 256 },
+            false,
+            ["encrypt", "decrypt"]
+          );
+          cachePut(cacheKey, password, key);
+          return key;
+        }
+        static async encrypt(plainText, password) {
+          const encoder = new TextEncoder();
+          const data = encoder.encode(plainText);
+          const salt = crypto.getRandomValues(new Uint8Array(16));
+          const iv = crypto.getRandomValues(new Uint8Array(12));
+          const key = await this.deriveKey(password, salt);
+          const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
+          const combined = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
+          combined.set(salt, 0);
+          combined.set(iv, salt.length);
+          combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
+          return toBase64(combined);
+        }
+        static async decrypt(encryptedBase64, password) {
+          const combined = Uint8Array.from(atob(encryptedBase64), (c) => c.charCodeAt(0));
+          const salt = combined.slice(0, 16);
+          const iv = combined.slice(16, 28);
+          const ciphertext = combined.slice(28);
+          const key = await this.deriveKey(password, salt);
+          const decrypted = await crypto.subtle.decrypt(
+            { name: "AES-GCM", iv },
+            key,
+            ciphertext
+          );
+          return new TextDecoder().decode(decrypted);
+        }
+      };
+      keyCache = /* @__PURE__ */ new Map();
+      KEY_CACHE_MAX = 128;
+    }
+  });
+
   // src/core/ai.ts
   var ai_exports = {};
   __export(ai_exports, {
@@ -9985,12 +10119,7 @@ var BZW_home = (() => {
     if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
       throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
     }
-    let bin = "";
-    const CHUNK = 32768;
-    for (let i = 0; i < u8.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)));
-    }
-    return `data:${mime};base64,${btoa(bin)}`;
+    return `data:${mime};base64,${toBase64(u8)}`;
   }
   function buildUserContent(input) {
     var _a2;
@@ -10018,6 +10147,7 @@ var BZW_home = (() => {
       init_fake_obsidian();
       init_app();
       init_model_limits();
+      init_crypto();
       _settingsProvider = null;
       AI_PROVIDER_REGISTRY = [
         {
@@ -23984,48 +24114,6 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
-  // src/core/http.ts
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
-        ms
-      );
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve2(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
-  async function httpGetText(url, opts) {
-    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
-    try {
-      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
-      if (!resp || !resp.ok) return null;
-      return await resp.text();
-    } catch (e) {
-      return null;
-    }
-  }
-  function requestUrlAsFetch() {
-    return async (url, init) => {
-      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
-      const status = resp.status;
-      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
-    };
-  }
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
   // src/clipbook/news-fetcher.ts
   function requestUrlHttpGet() {
     const impl = requestUrlAsFetch();
@@ -35572,17 +35660,25 @@ ${String(blockText != null ? blockText : "").trim()}`);
       });
       const buildRenameEvent = (_a2 = config.buildRenameEvent) != null ? _a2 : (evt) => evt;
       const flushRenames = createBatchFlusher(async (batch) => {
+        const refCache = /* @__PURE__ */ new Map();
+        const referencedOnce = (path) => {
+          let p = refCache.get(path);
+          if (p === void 0) {
+            p = config.referencedBy(path);
+            refCache.set(path, p);
+          }
+          return p;
+        };
         for (const ev of batch) {
+          const inScope = inFolders(ev.newPath, config.watchedFolders());
+          if (!(inScope || await referencedOnce(ev.oldPath) || await referencedOnce(ev.newPath))) continue;
           await config.commit((data) => config.applyRename(data, ev));
         }
       });
       _flushers.push(flushRenames);
       _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
         const file = pseudoFile(evt.newPath);
-        void (async () => {
-          if (!(isMd(file) || await config.referencedBy(evt.oldPath) || await config.referencedBy(evt.newPath))) return;
-          flushRenames(buildRenameEvent(evt, file.basename));
-        })();
+        flushRenames(buildRenameEvent(evt, file.basename));
       }));
       _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
         const file = pseudoFile(evt.path);
@@ -41672,89 +41768,6 @@ GitHub 仓库：${ghInfo.title}
           }
         }
       };
-    }
-  });
-
-  // src/core/crypto.ts
-  function toBase64(bytes) {
-    const CHUNK = 32768;
-    let bin = "";
-    for (let i = 0; i < bytes.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
-    }
-    return btoa(bin);
-  }
-  function cachePut(cacheKey, password, key) {
-    keyCache.delete(cacheKey);
-    keyCache.set(cacheKey, { pw: password, key });
-    if (keyCache.size > KEY_CACHE_MAX) {
-      const oldest = keyCache.keys().next().value;
-      if (oldest !== void 0) keyCache.delete(oldest);
-    }
-  }
-  function clearCryptoKeyCache() {
-    keyCache.clear();
-  }
-  var CryptoService, keyCache, KEY_CACHE_MAX;
-  var init_crypto = __esm({
-    "src/core/crypto.ts"() {
-      CryptoService = class {
-        static async deriveKey(password, salt) {
-          const cacheKey = toBase64(salt);
-          const hit = keyCache.get(cacheKey);
-          if (hit && hit.pw === password) {
-            keyCache.delete(cacheKey);
-            keyCache.set(cacheKey, hit);
-            return hit.key;
-          }
-          const enc = new TextEncoder();
-          const keyMaterial = await crypto.subtle.importKey("raw", enc.encode(password), "PBKDF2", false, [
-            "deriveKey"
-          ]);
-          const key = await crypto.subtle.deriveKey(
-            {
-              name: "PBKDF2",
-              salt,
-              iterations: 1e5,
-              hash: "SHA-256"
-            },
-            keyMaterial,
-            { name: "AES-GCM", length: 256 },
-            false,
-            ["encrypt", "decrypt"]
-          );
-          cachePut(cacheKey, password, key);
-          return key;
-        }
-        static async encrypt(plainText, password) {
-          const encoder = new TextEncoder();
-          const data = encoder.encode(plainText);
-          const salt = crypto.getRandomValues(new Uint8Array(16));
-          const iv = crypto.getRandomValues(new Uint8Array(12));
-          const key = await this.deriveKey(password, salt);
-          const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
-          const combined = new Uint8Array(salt.length + iv.length + ciphertext.byteLength);
-          combined.set(salt, 0);
-          combined.set(iv, salt.length);
-          combined.set(new Uint8Array(ciphertext), salt.length + iv.length);
-          return toBase64(combined);
-        }
-        static async decrypt(encryptedBase64, password) {
-          const combined = Uint8Array.from(atob(encryptedBase64), (c) => c.charCodeAt(0));
-          const salt = combined.slice(0, 16);
-          const iv = combined.slice(16, 28);
-          const ciphertext = combined.slice(28);
-          const key = await this.deriveKey(password, salt);
-          const decrypted = await crypto.subtle.decrypt(
-            { name: "AES-GCM", iv },
-            key,
-            ciphertext
-          );
-          return new TextDecoder().decode(decrypted);
-        }
-      };
-      keyCache = /* @__PURE__ */ new Map();
-      KEY_CACHE_MAX = 128;
     }
   });
 

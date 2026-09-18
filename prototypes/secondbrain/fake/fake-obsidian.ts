@@ -73,7 +73,11 @@ export const MarkdownRenderer = {
       .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
       .replace(/`([^`]+)`/g, '<code>$1</code>')
       .replace(/\n/g, '<br>');
-    el.innerHTML = html;
+    // 追加语义（ADR-0122）：真 Obsidian 的 render 是「追加到容器」而非覆盖——
+    // 经 template 解析后逐节点追加，容器已有内容（如预填纯文本）时叠加，评审壳可复现真机双份（issue 275）
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    el.appendChild(tpl.content);
   },
 };
 

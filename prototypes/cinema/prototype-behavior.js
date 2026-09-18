@@ -1,5 +1,5 @@
-/* 源指纹 b784c6d441ebecc1 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 83cb2acf49f9925b · 仓内输入 60 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -5630,7 +5630,9 @@ var BZW_cinema = (() => {
   // src/core/esc-manager.ts
   var escManager = (() => {
     const layers = [];
+    let disabled = false;
     const onKeydown = (e) => {
+      if (disabled) return;
       if (e.key !== "Escape") return;
       for (let i = layers.length - 1; i >= 0; i--) {
         const L = layers[i];
@@ -5663,11 +5665,15 @@ var BZW_cinema = (() => {
           }
         };
       },
-      /** 插件卸载时移除全局监听 */
+      /** 插件卸载时软关（N1）：只置 disabled 旗标——不摘 document 监听（模块 IIFE
+       *  常驻单例，Obsidian 禁用→再启用不重新求值，摘了就全站 ESC 永久失效）、
+       *  不清 layers（重启用后旧层由 isVisible 判活自愈）。恢复走 arm()。 */
       destroy() {
-        if (typeof document !== "undefined") {
-          document.removeEventListener("keydown", onKeydown);
-        }
+        disabled = true;
+      },
+      /** 插件（重）启用时恢复 ESC 处理（main.ts onload 调用；幂等） */
+      arm() {
+        disabled = false;
       }
     };
   })();
@@ -5675,6 +5681,130 @@ var BZW_cinema = (() => {
   function registerPanelEsc(id, isVisible, close) {
     if (panelEscHandles.has(id)) return;
     panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
+
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
+
+  // src/core/ui/str.ts
+  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+
+  // src/core/utils.ts
+  function escapeHtml2(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  // src/core/flow-dialog.ts
+  var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+  var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+  function buildFlowDialogParts(title, message, actions) {
+    var _a;
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
+  }
+  var activeSettle = null;
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        escHandle.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
   }
 
   // src/core/mobile.ts
@@ -6101,40 +6231,6 @@ var BZW_cinema = (() => {
       } catch (e) {
       }
     });
-  }
-
-  // src/core/ui/str.ts
-  var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-
-  // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
-  function escapeHtml2(str) {
-    return str.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
   }
 
   // src/cinema/douban-fetcher.ts
@@ -7247,15 +7343,6 @@ tags:
     <div class="dm-actions"><button class="dm-btn gold j-save">${editing ? "保存" : "添加"}</button></div>
   </div>`;
   }
-  function confirmModalHtml(item) {
-    return `<div class="cn-modal cn-confirm" style="max-width:320px;width:100%">
-    <span class="cn-confirm-ic">${iconSpan(ICON.confirm)}</span>
-    <div class="cn-confirm-title">删除影视</div>
-    <p>确定删除「${esc(item.name)}」吗？</p>
-    <div class="cn-confirm-sub">将移入系统回收站，可在回收站恢复</div>
-    <div class="dm-actions"><button class="dm-btn j-cancel">取消</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
-  </div>`;
-  }
   function aiRecName(r) {
     return (r == null ? void 0 : r.title) || (r == null ? void 0 : r.name) || "未命名";
   }
@@ -7549,7 +7636,7 @@ tags:
     } catch (e) {
     }
   }
-  async function markStatus(item, target, sec, app) {
+  async function markStatus(item, target, app) {
     const fromSt = item.status === STATUS_WANT ? "want" : item.status === STATUS_WATCHING ? "watching" : "watched";
     const prevRating = item.rating && item.rating > 0 ? item.rating : null;
     const prev = { status: item.status, rating: item.rating, watchDate: item.watchDate };
@@ -7562,7 +7649,7 @@ tags:
     item.watchDate = localNow();
     try {
       await persistItem(item, app);
-      panelToast(sec, `已把「${item.name}」标记为${target}`);
+      notice(`已把「${item.name}」标记为${target}`, "success");
       const toSt = target === "已看" ? "watched" : "watching";
       if (toSt !== fromSt) emitDomainEvent("movie", { kind: "status", name: item.name, from: fromSt, to: toSt });
       if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
@@ -7579,7 +7666,7 @@ tags:
   function itemActions(it, sec, app) {
     const out = [{ icon: ICON.eye, label: "打开详情", run: () => openDetail(sec, it, app) }];
     if (it.status !== STATUS_WATCHING && it.status !== STATUS_WATCHED) {
-      out.push({ icon: ICON.play, label: "标记在看", run: () => void markStatus(it, "在看", sec, app) });
+      out.push({ icon: ICON.play, label: "标记在看", run: () => void markStatus(it, "在看", app) });
     }
     if (it.status !== STATUS_WATCHED) {
       out.push({ icon: "check", label: "标记已看", run: () => openForm(sec, it, app, "已看") });
@@ -7588,7 +7675,7 @@ tags:
       { icon: ICON.ai, label: "找同类", run: () => void runSimilarRecommend(it, app) },
       { icon: ICON.globe, label: "在豆瓣打开", run: () => openDouban(it) },
       { icon: ICON.edit, label: "编辑", run: () => openForm(sec, it, app) },
-      { icon: ICON.del, label: "删除", danger: true, run: () => openConfirm(sec, it, app) }
+      { icon: ICON.del, label: "删除", danger: true, run: () => openConfirm(it, app) }
     );
     return out;
   }
@@ -7693,17 +7780,6 @@ ${item.review ? `影评: ${item.review}
     });
     return { el, close };
   }
-  function panelToast(sec, msg) {
-    if (!sec || !sec.isConnected) {
-      notice(msg);
-      return;
-    }
-    const t = document.createElement("div");
-    t.className = "cn-toast";
-    t.textContent = msg;
-    ovHost(sec).appendChild(t);
-    setTimeout(() => t.remove(), 1800);
-  }
   var MENU_SKIN = "cn-skin cn-menu-skin";
   var SHEET_SKIN = "cn-skin cn-sheet-skin";
   function toItemActions(acts) {
@@ -7781,7 +7857,7 @@ ${item.review ? `影评: ${item.review}
     });
     (_b = el.querySelector(".j-del")) == null ? void 0 : _b.addEventListener("click", () => {
       close();
-      openConfirm(sec, it, app);
+      openConfirm(it, app);
     });
     (_c = el.querySelector(".j-similar")) == null ? void 0 : _c.addEventListener("click", () => {
       close();
@@ -7832,15 +7908,15 @@ ${item.review ? `影评: ${item.review}
     (_b = el.querySelector(".j-save")) == null ? void 0 : _b.addEventListener("click", () => {
       const name = el.querySelector(".j-name").value.trim();
       if (!name) {
-        panelToast(sec, "请输入名称");
+        notice("请输入名称", "warning");
         return;
       }
       if (editing && item && name !== item.name && M.items.some((x) => x.name === name)) {
-        panelToast(sec, "已存在同名影视，请换个名称");
+        notice("已存在同名影视，请换个名称", "warning");
         return;
       }
       if (!editing && M.items.some((x) => x.name === name)) {
-        panelToast(sec, "已存在同名影视，请换个名称");
+        notice("已存在同名影视，请换个名称", "warning");
         return;
       }
       const stChanged = !editing || !item || item.status !== (cur.st === "想看" ? STATUS_WANT : cur.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED);
@@ -7848,20 +7924,20 @@ ${item.review ? `影评: ${item.review}
       const rating = cur.st === "已看" ? parseFloat(el.querySelector(".j-range").value) : cur.st === "在看" ? 0 : -1;
       const review = cur.st === "已看" ? el.querySelector(".j-review-t").value.trim() : "";
       if (editing && item) {
-        void saveEdit(sec, item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
+        void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
       } else {
-        void saveNew(sec, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
+        void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
       }
     });
   }
-  async function saveNew(sec, p, app, close) {
+  async function saveNew(p, app, close) {
     var _a;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
     const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-        panelToast(sec, "已存在同名影视，请换个名称");
+        notice("已存在同名影视，请换个名称", "warning");
         return;
       }
       M.items.unshift(it);
@@ -7869,7 +7945,7 @@ ${item.review ? `影评: ${item.review}
       emitDomainEvent("movie", { kind: "created", name: p.name, status: st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched", rating: p.rating, review: p.review || null });
       if (it.file) enqueueDoubanFetch(it.file, it.name);
       close();
-      panelToast(sec, `已添加「${p.name}」`);
+      notice(`已添加「${p.name}」`, "success");
       renderAll(app);
     } catch (e) {
       if (!it.file) {
@@ -7881,7 +7957,7 @@ ${item.review ? `影评: ${item.review}
       console.error(e);
     }
   }
-  async function saveEdit(sec, item, p, app, close) {
+  async function saveEdit(item, p, app, close) {
     var _a;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
@@ -7892,7 +7968,7 @@ ${item.review ? `影评: ${item.review}
         return;
       }
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-        panelToast(sec, "已存在同名影视，请换个名称");
+        notice("已存在同名影视，请换个名称", "warning");
         return;
       }
     }
@@ -7915,7 +7991,7 @@ ${item.review ? `影评: ${item.review}
         emitDomainEvent("movie", { kind: "rated", name: item.name, fromRating: prevRating, toRating: item.rating });
       }
       close();
-      panelToast(sec, `已保存「${p.name}」`);
+      notice(`已保存「${p.name}」`, "success");
       renderAll(app);
     } catch (e) {
       Object.assign(item, prev);
@@ -7923,12 +7999,21 @@ ${item.review ? `影评: ${item.review}
       console.error(e);
     }
   }
-  function openConfirm(sec, item, app) {
-    var _a, _b;
-    const { el, close } = ovl(sec, confirmModalHtml(item), { sticky: true });
-    mountIcons(el);
-    (_a = el.querySelector(".j-cancel")) == null ? void 0 : _a.addEventListener("click", close);
-    (_b = el.querySelector(".j-del")) == null ? void 0 : _b.addEventListener("click", async () => {
+  function openConfirm(item, app) {
+    void openFlowDialog({
+      title: "删除影视",
+      // message 经 core escapeHtml（片名注入防护），\n 渲染为 <br> 分行
+      message: `确定删除「${item.name}」吗？
+将移入系统回收站，可在回收站恢复`,
+      // 流程框挂 document.body、不在面板树内：cn-skin 取午夜场调色板（菜单/抽屉皮肤同一通道），
+      // bz-cinema-flow-dialog = 本域确认框专属类；删除是危险主动作 → core 另挂 bz-flow-dialog--danger
+      className: "cn-skin bz-cinema-flow-dialog",
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "ok", cta: true, danger: true }
+      ]
+    }).then(async (v) => {
+      if (v !== "ok") return;
       if (item.file) {
         try {
           await app.vault.trash(item.file, true);
@@ -7942,8 +8027,7 @@ ${item.review ? `影评: ${item.review}
       const idx = M.items.indexOf(item);
       if (idx > -1) M.items.splice(idx, 1);
       emitDomainEvent("movie", { kind: "deleted", name: item.name });
-      close();
-      panelToast(sec, `已删除「${item.name}」`);
+      notice(`已删除「${item.name}」`, "success");
       renderAll(app);
     });
   }

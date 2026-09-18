@@ -59,10 +59,14 @@ export async function requestUrl(): Promise<never> {
 
 // ==================== markdown 渲染（评审壳纯文本直渲，保文字可读） ====================
 
-/** 墙正文/抽屉的 MarkdownRenderer 消费面：无宿主管线，纯文本直渲（防注入走 textContent） */
+/** 墙正文/抽屉的 MarkdownRenderer 消费面：无宿主管线，纯文本直渲（防注入走 textContent）。
+ *  追加语义（ADR-0122）：真 render 是「追加到容器」而非覆盖——div 承载纯文本后
+ *  appendChild，容器已有内容（如预填兜底）时叠加，评审壳可复现真机双份（issue 275）。 */
 export class MarkdownRenderer {
   static async render(_app: unknown, md: string, container: HTMLElement): Promise<void> {
-    container.textContent = md;
+    const block = document.createElement('div');
+    block.textContent = md;
+    container.appendChild(block);
   }
   static renderMarkdown(): Promise<string> {
     return Promise.resolve('');

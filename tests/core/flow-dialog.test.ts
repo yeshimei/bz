@@ -66,6 +66,46 @@ describe('flow-dialog UI 层：标准双动作 DOM 契约（铁律 3）', () => 
     });
   });
 
+  it('危险主动作：打开聚焦取消钮（Enter=取消，删除须 Tab 或鼠标）；danger 修饰照挂；点确认仍走确认路径', async () => {
+    const trigger = document.createElement('button');
+    trigger.textContent = '触发';
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const p = openFlowDialog({
+      title: '删除影视',
+      message: '确定删除「想看片」吗？',
+      actions: [
+        { label: '取消', value: 'cancel' },
+        { label: '删除', value: 'ok', cta: true, danger: true },
+      ],
+    });
+    // 效率审查#1：焦点不落删除钮——弹窗一开回车不再直通危险动作
+    expect(document.activeElement).toBe(document.getElementById(CANCEL_ID));
+    expect(document.activeElement).not.toBe(document.getElementById(OK_ID));
+    expect(document.getElementById(POPUP_ID)!.classList.contains('bz-flow-dialog--danger')).toBe(true);
+    // 显式点击确认仍 resolve 确认值（删除路径行为不变），焦点还原触发元素
+    (document.getElementById(OK_ID) as HTMLElement).click();
+    await expect(p).resolves.toBe('ok');
+    expect(document.activeElement).toBe(trigger);
+  });
+
+  it('非危险确认保持打开聚焦确认钮（回车=确认的效率语义不变，回归保护）', () => {
+    void openDouble();
+    expect(document.activeElement).toBe(document.getElementById(OK_ID));
+  });
+
+  it('message 的 \\n 渲染为 <br> 换行（效率审查#4）；注入内容仍被转义', () => {
+    void openFlowDialog({
+      title: '确认删除',
+      message: '确定要删除吗？\n\n此操作不可撤销。<b>加粗</b>',
+      actions: [{ label: '取消', value: 'c' }, { label: '确定', value: 'ok' }],
+    });
+    const p = document.querySelector(`#${POPUP_ID} p`)!;
+    expect(p.innerHTML).toBe('确定要删除吗？<br><br>此操作不可撤销。&lt;b&gt;加粗&lt;/b&gt;');
+    expect(p.querySelector('br')).not.toBeNull(); // 换行生效
+    expect(p.querySelector('b')).toBeNull(); // 注入标签未解析
+  });
+
   it('空标题回退「确认」（旧 confirm 行为保持）', () => {
     void openFlowDialog({ message: '正文', actions: [{ label: '取消', value: 'c' }, { label: '确定', value: 'ok' }] });
     expect(document.querySelector(`#${POPUP_ID} h4`)!.textContent).toBe('确认');

@@ -173,21 +173,46 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(root.querySelector('.cn-ovl')).toBeNull();
   });
 
-  it('详情删除 → cn-confirm 三段式 + 移入回收站（列表减少）', async () => {
+  // 确认框收编 core/flow-dialog（一致审查#1）：自绘 .cn-confirm 三段式退役
+  it('详情删除 → core 流程框确认（域皮 bz-cinema-flow-dialog + 危险中性）→ 移入回收站（列表减少）', async () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(pcardByName(root, '想看片'));
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-del'));
-    const confirm = root.querySelector('.cn-confirm') as HTMLElement;
-    expect(confirm.querySelector('.cn-confirm-title')?.textContent).toBe('删除影视');
-    expect(confirm.textContent).toContain('确定删除「想看片」吗？');
-    expect(confirm.textContent).toContain('回收站');
+    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(popup).toBeTruthy();
+    expect(popup.querySelector('h4')?.textContent).toBe('删除影视');
+    expect(popup.textContent).toContain('确定删除「想看片」吗？');
+    expect(popup.textContent).toContain('回收站');
+    // 域皮类在位（cn-skin 取午夜场调色板）+ 危险主动作中性修饰
+    expect(popup.classList.contains('cn-skin')).toBe(true);
+    expect(popup.classList.contains('bz-cinema-flow-dialog')).toBe(true);
+    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
+    // 效率审查#1：危险主动作不落焦点（焦点反落取消钮，回车不再直通删除）
+    expect(document.activeElement).toBe(popup.querySelector('#__shared_confirm_cancel__'));
     const trashSpy = vi.spyOn(app.vault, 'trash').mockResolvedValue(undefined);
-    clickEl(confirm.querySelector('.j-del'));
+    clickEl(popup.querySelector('#__shared_confirm_ok__'));
     await vi.waitFor(() => expect(trashSpy).toHaveBeenCalled());
+    await vi.waitFor(() => expect(hasNotice(/已删除「想看片」/)).toBe(true));
     expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(3);
     expect(M.items.some((i) => i.name === '想看片')).toBe(false);
+  });
+
+  it('删除确认取消路径：点取消不删（回收站不动、条目保留、无删除通知）', async () => {
+    const { app, vault } = seedVault();
+    const trashSpy = vi.spyOn(app.vault, 'trash');
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '想看片'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-del'));
+    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    clickEl(popup.querySelector('#__shared_confirm_cancel__'));
+    await vi.waitFor(() => expect(document.getElementById('__shared_confirm_popup__')).toBeNull());
+    expect(trashSpy).not.toHaveBeenCalled();
+    expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(4);
+    expect(M.items.some((i) => i.name === '想看片')).toBe(true);
+    expect(hasNotice(/已删除/)).toBe(false);
   });
 
   // 桌面菜单已统一到 core/item-actions（.bz-item-menu，挂 document.body，皮肤 cn-menu-skin）
@@ -235,7 +260,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     range.dispatchEvent(new Event('input', { bubbles: true }));
     (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '值得重看';
     clickEl(form.querySelector('.j-save'));
-    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('已保存'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true)); // toast 收编 core notice（一致审查#2）
     const item = M.items.find((i) => i.name === '想看片')!;
     expect(item.status).toBe(2); // STATUS_WATCHED
     expect(item.rating).toBe(8.8);
@@ -264,7 +289,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     range.dispatchEvent(new Event('input', { bubbles: true }));
     expect(form.querySelector('.j-rval')?.textContent).toBe('7.7');
     clickEl(form.querySelector('.j-save'));
-    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('已保存'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true)); // toast 收编 core notice（一致审查#2）
     expect(M.items.find((i) => i.name === '星际穿越')!.rating).toBe(7.7);
   });
 
@@ -281,7 +306,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     const form = root.querySelector('.cn-modal') as HTMLElement;
     clickEl(form.querySelector('[data-f-st="想看"]'));
     clickEl(form.querySelector('.j-save'));
-    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('已保存'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true)); // toast 收编 core notice（一致审查#2）
     const item = M.items.find((i) => i.name === '星际穿越')!;
     expect(item.status).toBe(0); // STATUS_WANT
     expect(item.rating).toBe(-1);
@@ -332,7 +357,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     const form = root.querySelector('.cn-modal') as HTMLElement;
     (form.querySelector('.j-name') as HTMLInputElement).value = '星际穿越';
     clickEl(form.querySelector('.j-save'));
-    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('已存在同名影视'));
+    await vi.waitFor(() => expect(hasNotice('已存在同名影视，请换个名称')).toBe(true)); // toast 收编 core notice（一致审查#2）
     expect(vault.files.has('我的/影视/《瑞克和莫蒂》.md')).toBe(true);
     expect(form.querySelector('.j-name')).toBeTruthy();
   });
@@ -380,7 +405,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     (form.querySelector('.j-name') as HTMLInputElement).value = '星际穿越';
     clickEl(form.querySelector('[data-f-st="已看"]'));
     clickEl(form.querySelector('.j-save'));
-    await vi.waitFor(() => expect(root.querySelector('.cn-toast')?.textContent).toContain('已存在同名影视'));
+    await vi.waitFor(() => expect(hasNotice('已存在同名影视，请换个名称')).toBe(true)); // toast 收编 core notice（一致审查#2）
     expect(M.items.filter((i) => i.name === '星际穿越').length).toBe(1);
     void vault;
   });

@@ -2,8 +2,8 @@
  * 影院（cinema）渲染纯层·跨布局共享件（ADR-0104 markup 单源 + ADR-0105 布局分层）。
  *
  * 本文件是「原型 × 插件」markup 的共享口径层：格式化（星串/状态·类型色/相对日期兜底语义）、
- * 稳定键、海报内芯、片卡、共享弹窗（详情/表单/确认/设置——ADR-0103 §3 三风格共用）、
- * AI 荐片页与菜单/抽屉行等跨布局件全部出自这里——
+ * 稳定键、海报内芯、片卡、共享弹窗（详情/表单/设置——ADR-0103 §3 三风格共用；删除确认
+ * 已收编 core/flow-dialog）、AI 荐片页与菜单/抽屉行等跨布局件全部出自这里——
  *   - 插件侧：ui.ts 直接 import（事件绑定/core 服务/数据读写留 ui.ts）；
  *   - 原型侧：dev 打成 prototype-render.js（IIFE，挂 window.BZR_cinema），壳消费同一份。
  * 布局差异层（午夜场 desk/mob 壳、侧栏、chips、视图装配）在 layouts/midnight/，
@@ -298,16 +298,8 @@ export function formModalHtml(opts: { editing: boolean; name: string; typeTag: s
   </div>`;
 }
 
-/** 删除确认弹窗内容（sticky；删除动作留行为层） */
-export function confirmModalHtml(item: CinemaItem): string {
-  return `<div class="cn-modal cn-confirm" style="max-width:320px;width:100%">
-    <span class="cn-confirm-ic">${iconSpan(ICON.confirm)}</span>
-    <div class="cn-confirm-title">删除影视</div>
-    <p>确定删除「${esc(item.name)}」吗？</p>
-    <div class="cn-confirm-sub">将移入系统回收站，可在回收站恢复</div>
-    <div class="dm-actions"><button class="dm-btn j-cancel">取消</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
-  </div>`;
-}
+// 删除确认弹窗已收编 core/flow-dialog（一致审查#1）：行为层 openConfirm 走 openFlowDialog +
+// 域皮 `cn-skin bz-cinema-flow-dialog`（styles.css 映射段），confirmModalHtml 退役。
 
 // ---------- AI 荐片页（共享页；画像/结果状态显式入参） ----------
 

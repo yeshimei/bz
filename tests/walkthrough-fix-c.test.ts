@@ -152,12 +152,15 @@ describe('批 C-9：分析页排印归档', () => {
     expect(ts).toContain('stat-cards'); // 原型分析页语言在位
   });
 
-  it('cinema 旧骨架间距条款退役（ADR-0103：原型 1:1 允许原型同款内联样式，共享弹窗仍走域内类）', () => {
-    const ui = repo('src/cinema/shared.ts'); // ADR-0104 markup 单源：共享确认框在纯层 shared
+  it('cinema 自绘确认框/面板 toast 收编 core 单源（一致审查#1/#2：cn-confirm/cn-toast 退役）', () => {
+    const shared = repo('src/cinema/shared.ts'); // ADR-0104 markup 单源（确认弹窗已随收编退役）
+    const behavior = repo('src/cinema/ui.ts');
     const css = cineCss();
-    expect(ui).toContain('cn-modal cn-confirm'); // 确认框域内类在位
-    expect(css).toMatch(/\.bz-cinema--midnight \.cn-confirm/); // 共享弹窗样式 scoped 午夜场锚
-    expect(css).toMatch(/\.bz-cinema--midnight \.cn-toast/); // 面板 toast 同上
+    expect(shared).not.toContain('cn-confirm'); // confirmModalHtml 退役：确认框走 core openFlowDialog
+    expect(behavior).toContain('openFlowDialog'); // 删除确认收编 core 流程框
+    expect(behavior).not.toContain('panelToast'); // 面板 toast 收编 core notice
+    expect(css).toContain('#__shared_confirm_popup__.bz-cinema-flow-dialog'); // 域皮映射在位（favorites/belongings 同款结构）
+    expect(css).not.toMatch(/\.cn-toast/); // 域内 toast 样式段退役（通知走 core 单源）
   });
 });
 

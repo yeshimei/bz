@@ -18,9 +18,12 @@
  *   确认框，域内不必再写 `#__shared_confirm_popup__` id 选择器；id 契约与内部结构不变。
  *   右侧主动作为危险动作时，popup 再挂 `bz-flow-dialog--danger`（按钮不加类，契约不破）——
  *   对应设计手册 §9/§10「慎重决策场景按钮保持中性」（主按钮不默认高亮，仅文字用 danger 色）。
- * - 文案（title/message/按钮 label）一律 escapeHtml 后拼 HTML（P0-8 防注入不得回退）。
- * - 焦点（UX 整改 37）：打开默认聚焦确认动作（`cta: true` 的动作，否则最后一个动作；
- *   标准双动作即右侧 `__shared_confirm_ok__`，回车=确认）；关闭还原焦点到触发元素。
+ * - 文案（title/message/按钮 label）一律 escapeHtml 后拼 HTML（P0-8 防注入不得回退）；
+ *   message 转义后再把 \n 换 `<br>`（效率审查#4：多段确认文案分行，替换在转义后无注入面）。
+ * - 焦点（UX 整改 37；效率审查#1）：打开默认聚焦主动作（`cta: true` 优先，否则最后一个；
+ *   标准双动作即右侧 `__shared_confirm_ok__`，回车=确认）；主动作为危险动作时焦点反落
+ *   首个非危险动作（Enter=取消，危险动作须 Tab 或鼠标触达，与 confirmDiscard 的安全聚焦
+ *   同一防误触哲学）；关闭还原焦点到触发元素。
  * - ESC 通道沿用 `'q3-confirm'`（escManager）。
  * - danger/cta 标记在标准双动作下只影响焦点（cta），不改动冻结的 DOM 结构。
  */
@@ -59,6 +62,7 @@ export interface FlowDialogButtonSpec {
 export interface FlowDialogParts {
   html: string;
   buttons: FlowDialogButtonSpec[];
+  /** 打开时聚焦的按钮 id：危险主动作反落首个非危险动作，否则 cta 优先、缺省最后一个 */
   focusId: string;
   /** 主动作（cta 优先，否则最后一个）是危险动作——UI 层据此挂 `bz-flow-dialog--danger` 修饰 */
   dangerPrimary: boolean;
@@ -71,7 +75,8 @@ export const FLOW_DIALOG_OK_ID = '__shared_confirm_ok__';
 /**
  * 数据层（纯函数，node 安全）：title/message/actions → popup HTML 与按钮绑定清单。
  * 标准双动作 = 旧 confirm 逐字节同构（取消左/确认右，无附加类）；
- * 其余数量动作 = 新 id/类名方案；焦点 = cta 动作优先，否则最后一个动作。
+ * 其余数量动作用新 id/类名方案；焦点 = 危险主动作反落首个非危险动作，
+ * 否则 cta 动作优先、缺省最后一个动作（效率审查#1/4）。
  */
 export function buildFlowDialogParts(
   title: string | undefined,
@@ -93,10 +98,22 @@ export function buildFlowDialogParts(
     });
   }
   const ctaIdx = actions.findIndex((a) => a.cta);
-  const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+  // 主动作（cta 优先，否则最后一个）；dangerPrimary 按主动作判定——bz-flow-dialog--danger
+  // 中性形制只看「主动作是否危险」，不受下方焦点反落影响（效率审查#1）
+  const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+  const dangerPrimary = !!actions[primaryIdx]?.danger;
+  // 焦点策略（UX 整改 37 + 效率审查#1）：危险主动作不落焦点——焦点反落首个非危险动作
+  // （Enter=取消，危险动作须 Tab 或鼠标触达），与 confirmDiscard「默认聚焦安全侧」同一哲学；
+  // 非 danger 保持「cta 优先、缺省最后动作」（回车=确认的效率语义不变），保底不反焦。
+  let focusIdx = primaryIdx;
+  if (dangerPrimary) {
+    const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+    if (safeIdx >= 0) focusIdx = safeIdx;
+  }
   const html =
     '<h4>' + escapeHtml(title || '确认') + '</h4>' +
-    '<p>' + escapeHtml(message) + '</p>' +
+    // 效率审查#4：转义后再把 \n 换 <br>——多段确认文案（后果说明）分行显示，无注入面
+    '<p>' + escapeHtml(message).replace(/\n/g, '<br>') + '</p>' +
     '<div class="confirm-actions">' +
     buttons
       .map((b) => {
@@ -105,7 +122,7 @@ export function buildFlowDialogParts(
       })
       .join('') +
     '</div>';
-  return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
+  return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
 }
 
 /** 当前在途流程框的结算函数（同一时刻至多一个；被新框顶替时按取消语义结算） */
@@ -182,7 +199,7 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
       if (btn) btn.onclick = () => settle(b.value);
     }
 
-    // 打开默认聚焦确认动作（cta 优先，否则最后一个；标准双动作=右侧确认钮，回车=确认）
+    // 打开默认聚焦主动作（cta 优先，否则最后一个；危险主动作反落首个非危险动作，Enter=取消）
     const focusBtn = document.getElementById(parts.focusId);
     if (focusBtn) focusBtn.focus();
   });

@@ -1,5 +1,5 @@
-/* 源指纹 92b0ba2f868b73e6 · 仓内输入 102 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 c1c93b14f6bb7e06 · 仓内输入 103 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -143,9 +143,17 @@ var BZW_clipbook = (() => {
         }
       };
       MarkdownRenderer = class {
-        /** 评审壳近似实现：正文以纯文本落入容器（Obsidian 真渲染仅插件环境可用，视觉看真机） */
+        /**
+         * 评审壳近似实现：正文以纯文本落入容器（Obsidian 真渲染仅插件环境可用，视觉看真机）。
+         * 追加语义（ADR-0122）：真 render 是「追加到容器」而非覆盖——div 承载纯文本后
+         * appendChild，容器已有内容（如预填兜底）时叠加，评审壳可复现真机双份（issue 275）。
+         */
         static render(_app2, md, el) {
-          if (el) el.textContent = String(md != null ? md : "");
+          if (el) {
+            const block = document.createElement("div");
+            block.textContent = String(md != null ? md : "");
+            el.appendChild(block);
+          }
           return Promise.resolve();
         }
       };
@@ -744,7 +752,9 @@ var BZW_clipbook = (() => {
     "src/core/esc-manager.ts"() {
       escManager = (() => {
         const layers = [];
+        let disabled = false;
         const onKeydown = (e) => {
+          if (disabled) return;
           if (e.key !== "Escape") return;
           for (let i = layers.length - 1; i >= 0; i--) {
             const L = layers[i];
@@ -777,11 +787,15 @@ var BZW_clipbook = (() => {
               }
             };
           },
-          /** 插件卸载时移除全局监听 */
+          /** 插件卸载时软关（N1）：只置 disabled 旗标——不摘 document 监听（模块 IIFE
+           *  常驻单例，Obsidian 禁用→再启用不重新求值，摘了就全站 ESC 永久失效）、
+           *  不清 layers（重启用后旧层由 isVisible 判活自愈）。恢复走 arm()。 */
           destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
+            disabled = true;
+          },
+          /** 插件（重）启用时恢复 ESC 处理（main.ts onload 调用；幂等） */
+          arm() {
+            disabled = false;
           }
         };
       })();
@@ -4777,6 +4791,48 @@ var BZW_clipbook = (() => {
     }
   });
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve2, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve2(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+  async function httpGetText(url, opts) {
+    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
+    try {
+      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
+      if (!resp || !resp.ok) return null;
+      return await resp.text();
+    } catch (e) {
+      return null;
+    }
+  }
+  function requestUrlAsFetch() {
+    return async (url, init) => {
+      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
+      const status = resp.status;
+      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
+    };
+  }
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/core/ui/str.ts
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
@@ -4859,19 +4915,14 @@ var BZW_clipbook = (() => {
     return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
   }
   async function fetchPageTitle(url) {
-    try {
-      const r = await requestUrl({
-        url,
-        method: "GET",
-        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" }
-      });
-      if (r.status === 200) {
-        const m = r.text.match(/<title[^>]*>([^<]*)<\/title>/i);
-        if (m && m[1]) return m[1].trim();
-      }
-    } catch (e) {
-    }
-    return null;
+    const text = await httpGetText(url, {
+      timeoutMs: 8e3,
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      fetchImpl: requestUrlAsFetch()
+    });
+    if (!text) return null;
+    const m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
+    return m && m[1] ? m[1].trim() : null;
   }
   function localDayKey(ts = Date.now()) {
     const d = ts instanceof Date ? ts : new Date(ts);
@@ -4929,14 +4980,15 @@ var BZW_clipbook = (() => {
   var init_utils = __esm({
     "src/core/utils.ts"() {
       import_moment = __toESM(require_moment());
-      init_fake_obsidian();
       init_app();
+      init_http();
       init_str();
     }
   });
 
   // src/core/flow-dialog.ts
   function buildFlowDialogParts(title, message, actions) {
+    var _a;
     let buttons;
     if (actions.length === 2) {
       buttons = [
@@ -4952,12 +5004,18 @@ var BZW_clipbook = (() => {
       });
     }
     const ctaIdx = actions.findIndex((a) => a.cta);
-    const focusIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message) + '</p><div class="confirm-actions">' + buttons.map((b) => {
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
       const clsAttr = b.className ? ' class="' + b.className + '"' : "";
       return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
     }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary: !!actions[focusIdx].danger };
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
   }
   function openFlowDialog(opts) {
     if (!opts.actions || opts.actions.length === 0) {
@@ -5510,48 +5568,6 @@ var BZW_clipbook = (() => {
       DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
       FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
       DEFAULT_FETCH_INTERVAL_MIN = 30;
-    }
-  });
-
-  // src/core/http.ts
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve2, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
-        ms
-      );
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve2(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
-  async function httpGetText(url, opts) {
-    const fetchImpl = opts.fetchImpl || ((u, init) => globalThis.fetch(u, init));
-    try {
-      const resp = await withTimeout(fetchImpl(url, { headers: opts.headers }), opts.timeoutMs, url);
-      if (!resp || !resp.ok) return null;
-      return await resp.text();
-    } catch (e) {
-      return null;
-    }
-  }
-  function requestUrlAsFetch() {
-    return async (url, init) => {
-      const resp = await requestUrl({ url, method: "GET", headers: init == null ? void 0 : init.headers, throw: false });
-      const status = resp.status;
-      return { ok: status >= 200 && status < 300, status, text: () => Promise.resolve(resp.text) };
-    };
-  }
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
     }
   });
 
@@ -7036,6 +7052,20 @@ ${c.trim()}
     }
   });
 
+  // src/core/crypto.ts
+  function toBase64(bytes) {
+    const CHUNK = 32768;
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += CHUNK) {
+      bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+    }
+    return btoa(bin);
+  }
+  var init_crypto = __esm({
+    "src/core/crypto.ts"() {
+    }
+  });
+
   // src/core/ai.ts
   function getQ3Settings() {
     return _settingsProvider ? _settingsProvider() : {};
@@ -7281,12 +7311,7 @@ ${c.trim()}
     if (u8.byteLength > AI_IMAGE_MAX_BYTES) {
       throw new Error(`图片过大（${Math.round(u8.byteLength / 1024 / 1024)} MiB），上限 ${AI_IMAGE_MAX_BYTES / 1024 / 1024} MiB`);
     }
-    let bin = "";
-    const CHUNK = 32768;
-    for (let i = 0; i < u8.length; i += CHUNK) {
-      bin += String.fromCharCode.apply(null, Array.from(u8.subarray(i, i + CHUNK)));
-    }
-    return `data:${mime};base64,${btoa(bin)}`;
+    return `data:${mime};base64,${toBase64(u8)}`;
   }
   function buildUserContent(input) {
     var _a;
@@ -7314,6 +7339,7 @@ ${c.trim()}
       init_fake_obsidian();
       init_app();
       init_model_limits();
+      init_crypto();
       _settingsProvider = null;
       AI_PROVIDER_REGISTRY = [
         {
@@ -16903,17 +16929,25 @@ ${String(blockText != null ? blockText : "").trim()}`);
       });
       const buildRenameEvent = (_a = config.buildRenameEvent) != null ? _a : (evt) => evt;
       const flushRenames = createBatchFlusher(async (batch) => {
+        const refCache = /* @__PURE__ */ new Map();
+        const referencedOnce = (path) => {
+          let p = refCache.get(path);
+          if (p === void 0) {
+            p = config.referencedBy(path);
+            refCache.set(path, p);
+          }
+          return p;
+        };
         for (const ev of batch) {
+          const inScope = inFolders(ev.newPath, config.watchedFolders());
+          if (!(inScope || await referencedOnce(ev.oldPath) || await referencedOnce(ev.newPath))) continue;
           await config.commit((data) => config.applyRename(data, ev));
         }
       });
       _flushers.push(flushRenames);
       _refs.push(onDomainEvent("vault:md-renamed", (evt) => {
         const file = pseudoFile(evt.newPath);
-        void (async () => {
-          if (!(isMd(file) || await config.referencedBy(evt.oldPath) || await config.referencedBy(evt.newPath))) return;
-          flushRenames(buildRenameEvent(evt, file.basename));
-        })();
+        flushRenames(buildRenameEvent(evt, file.basename));
       }));
       _refs.push(onDomainEvent("vault:md-deleted", (evt) => {
         const file = pseudoFile(evt.path);

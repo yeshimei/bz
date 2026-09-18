@@ -197,14 +197,46 @@
 .bz-cinema--midnight .f-range{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:var(--chip);outline:none}
 .bz-cinema--midnight .f-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--panel);box-shadow:0 1px 4px #0003}
 .bz-cinema--midnight .f-range-val{min-width:36px;text-align:center;font-size:var(--bz-font-label);font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
-/* 确认框 */
-.bz-cinema--midnight .cn-confirm{text-align:center;padding:var(--bz-space-xs) 2px}
-.bz-cinema--midnight .cn-confirm-ic{display:inline-flex;width:34px;height:34px;color:#b3402a}
-.bz-cinema--midnight .cn-confirm-ic svg{width:100%;height:100%}
-.bz-cinema--midnight .cn-confirm-title{font-family:"Noto Serif SC",SimSun,serif;font-size:16px;font-weight:700;color:var(--ink);margin-top:10px}
-.bz-cinema--midnight .cn-confirm p{font-size:var(--bz-font-label);color:var(--ink);margin-top:10px;line-height:1.6}
-.bz-cinema--midnight .cn-confirm-sub{font-size:var(--bz-font-caption);color:var(--ink-3);margin-top:var(--bz-space-sm)}
-.bz-cinema--midnight .cn-confirm .dm-actions{justify-content:center;margin-top:var(--bz-space-lg)}
+/* 删除确认流程框（core/flow-dialog 收编，一致审查#1：全域最后一个自绘确认框退役）。
+   行为层 openConfirm 传 className: 'cn-skin bz-cinema-flow-dialog'。为什么必须是这两个类：
+     · `cn-skin` = 午夜场调色板（本文件开头）：core 流程框挂 document.body、不在面板树内，
+       缺它下面所有变量解析失败（跟手菜单/底部抽屉皮肤同一通道）；
+     · `bz-cinema-flow-dialog` = 本域确认框专属类，承载下面这套取值。
+   取值照抄同域弹窗 .cn-modal（纸白底/墨线描边/大阴影），让「删除影视」确认框读起来就是
+   午夜场弹窗那张纸。结构与几何仍由 core 壳承担（.bz-overlay-popup 消费的 --bz-* token 起底），
+   这里只覆写颜色观感，故选择器结构与 favorites/belongings 域皮同款（id 契约映射）。 */
+#__shared_confirm_popup__.bz-cinema-flow-dialog {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  box-shadow: 0 18px 48px #0005, 0 2px 10px #0003;
+}
+#__shared_confirm_popup__.bz-cinema-flow-dialog h4 {
+  font-family: "Noto Serif SC", SimSun, serif;
+  letter-spacing: .08em;
+  color: var(--ink);
+}
+#__shared_confirm_popup__.bz-cinema-flow-dialog p {
+  color: var(--ink);
+}
+/* 按钮：对齐同域弹窗 .dm-btn（墨线描边/无底/次级墨字）。删除主钮在危险态由 core 的
+   .bz-flow-dialog--danger 降为中性次级形制，本域按 .dm-btn.danger 口径把文字色交给域内
+   危险色惯例 #b3402a（午夜场调色板无 --danger token）；常态 (2,1,0) 规则天然被
+   core 危险规则 (2,2,0) 压住，危险覆写状态限定 .bz-flow-dialog--danger。 */
+#__shared_confirm_popup__.bz-cinema-flow-dialog #__shared_confirm_cancel__ {
+  border-color: var(--line);
+  background: none;
+  color: var(--ink-2);
+}
+#__shared_confirm_popup__.bz-cinema-flow-dialog #__shared_confirm_ok__ {
+  border-color: var(--line);
+  background: none;
+  color: var(--ink-2);
+}
+#__shared_confirm_popup__.bz-cinema-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__ {
+  border-color: var(--line);
+  background: none;
+  color: #b3402a;
+}
 /* ---------- 统一浮层皮肤（core/item-actions：跟手菜单 .bz-item-menu / 底部抽屉 .bz-item-sheet） ----------
    移动端抽屉与跟手菜单的**手势与实现**统一走共享层（core/dom.longPress + core/item-actions：
    防穿透/下滑关闭/ESC/外部点击关闭/键盘导航全由 core 承载）；本域只提供皮肤类，保持午夜场观感。
@@ -293,11 +325,9 @@
 .bz-cinema--midnight .top-name{flex:1;min-width:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bz-cinema--midnight .top-val{flex:none;color:var(--gold);font-weight:700;font-variant-numeric:tabular-nums}
 .bz-cinema--midnight .cn-empty{padding:18px 0;text-align:center;font-size:11.5px;color:var(--ink-3);letter-spacing:.1em}
-/* 空态 / toast */
+/* 空态（面板 toast 已收编 core notice 单源，一致审查#2：自绘通道与样式段退役） */
 .bz-cinema--midnight .cn-empty-page{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:var(--bz-space-sm);color:var(--ink-3)}
 .bz-cinema--midnight .cn-empty-page .big{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-emphasis);letter-spacing:.3em;color:var(--ink-2)}
-.bz-cinema--midnight .cn-toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:80;background:var(--ink);color:var(--panel);font-size:var(--bz-font-meta);padding:var(--bz-space-sm) var(--bz-space-lg);border-radius:99px;box-shadow:0 6px 20px #0004;animation:cn-toast-in var(--bz-dur-base) ease}
-@keyframes cn-toast-in{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
 
 /* ---------- 场刊 gazette（探索稿 p2-gazette.html） ---------- */
 

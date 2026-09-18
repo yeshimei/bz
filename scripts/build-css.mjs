@@ -37,7 +37,6 @@ const SOURCES = [
   "src/core/ui/tokens.css",
   "src/core/ui/components.css",
   "src/diary/styles.css",
-  "src/diary/styles.css",
   "src/home/styles.css",
   "src/memo/styles.css",
   "src/clipbook/styles.css",
