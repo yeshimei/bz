@@ -291,7 +291,7 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 }
 
 /* ═══════════ 表单字段 .bz-field ═══════════ */
-.bz-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; }
+.bz-field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 4px; position: relative; }
 .bz-field-label { font-size: var(--bz-font-meta); font-weight: var(--bz-weight-medium); color: var(--bz-text-2); }
 .bz-field-desc { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-field .bz-input, .bz-field .bz-select { width: 100%; }
@@ -493,6 +493,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: var(--bz-radius-sm);
   box-shadow: var(--bz-shadow-md);
 }
+/* 下方剩余空间不足时向上翻（select.ts R5 实测后挂类） */
+.bz-select-menu.is-flip-up { top: auto; bottom: calc(100% + 4px); }
 .bz-select-item {
   appearance: none;
   border: none;
@@ -698,10 +700,24 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
    （shadcn extend-touch-target 同款）。按元素原尺寸分档：32px 档钮用默认 -6px；
    40/36px 档用 --sm(-4px)；26/28px 档用 --lg(-8px)；20/22px 档用 --xl(-12px)；
    非档位值可内联 --bz-touch-outset 覆写。热区外扩会盖住相邻元素命中——
-   行距紧凑的列表行勿用本类，改 padding 抬档（先例 attach 清单行）。 */
+   行距紧凑的列表行勿用本类，改 padding 抬档（先例 attach 清单行）。
+   修饰类自带热区（R2）：--sm/--lg/--xl 可脱离基类独立使用（setlist 移除钮、
+   diary/encrypt 域模板的既有挂法），各自 position:relative + ::after 生效。 */
 @media (pointer: coarse) {
   .bz-touch-target { position: relative; }
   .bz-touch-target::after {
+    content: '';
+    position: absolute;
+    inset: var(--bz-touch-outset, -6px);
+  }
+  /* 修饰类自带热区（R2）：可脱离基类独立使用——setlist 移除钮、diary/encrypt
+     域模板的既有挂法只挂 --xl 等修饰类，热区照常生成（基类保留兼容不互斥） */
+  .bz-touch-target--sm,
+  .bz-touch-target--lg,
+  .bz-touch-target--xl { position: relative; }
+  .bz-touch-target--sm::after,
+  .bz-touch-target--lg::after,
+  .bz-touch-target--xl::after {
     content: '';
     position: absolute;
     inset: var(--bz-touch-outset, -6px);
@@ -1150,7 +1166,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   padding: 4px;
   max-height: 200px;
   overflow-y: auto;
+  /* 下方剩余空间不足时向上翻（popover.ts R5 实测后挂类，同 .bz-select-menu） */
 }
+.bz-popover.is-flip-up { top: auto; bottom: calc(100% + 4px); }
 .bz-popover-item {
   display: flex;
   align-items: center;
@@ -2533,3 +2551,28 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-caption);
   color: var(--ls-faint);
 }
+
+/* ═══════════ 通知常驻帧关闭钮 .bz-notice-close（notice.ts 效率整改 7） ═══════════
+   duration<=0 常驻帧点击本体不再关闭，右上一枚 ✕ 专职关闭。独立类（不与
+   .bz-notice-action 混用，避免污染 action 计数/去重口径），形制对齐 action。 */
+.bz-notice-close {
+  flex: 0 0 auto;
+  align-self: center;
+  margin-left: auto;
+  padding: 2px;
+  border-radius: var(--bz-radius-xs);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--bz-text-3);
+  font-size: var(--bz-font-meta);
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+.bz-notice-close:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--background-modifier-border);
+  color: var(--bz-text-1);
+}
+.bz-notice-close .bz-ic { width: 12px; height: 12px; }
