@@ -6476,20 +6476,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-cal-chip.is-more { background: transparent; color: var(--bz-text-3); }
 /* 「还有 N 条」可点感（审查体验 P3 修复批）：点击落在格子上展开当日全量清单 */
 .bz-memo-cal-chip.is-more:hover { color: var(--bz-text-1); background: var(--bz-surface-hover); }
-/* 当日清单（点日期展开）：复用列表卡片；空日轻提示 */
+/* 当日清单（点日期展开）：复用列表卡片；空日用 core 空态单源（emptyHtmlStr → .bz-empty，一致#6） */
 .bz-memo-cal-daypanel { padding-top: var(--bz-space-sm); }
-.bz-memo-cal-noday { padding: var(--bz-space-md) var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; }
 /* 月度概览统计行（issue 355 真机回归）：头行与网格之间的口径说明行 */
 .bz-memo-cal-stats { padding: 0 var(--bz-space-xs) var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--bz-text-2); }
 .bz-memo-cal-stats .bz-memo-cal-stats-n { color: var(--bz-text-1); font-weight: var(--bz-weight-semibold); }
-/* 空月提示（issue 355 真机回归）：整月零条目时的人话解释，不一片空白 */
-.bz-memo-cal-empt {
-  margin-top: var(--bz-space-sm); padding: var(--bz-space-lg) var(--bz-space-md);
-  border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-sm);
-  text-align: center;
-}
-.bz-memo-cal-empt-t { font-size: var(--bz-font-body); color: var(--bz-text-1); }
-.bz-memo-cal-empt-d { margin-top: var(--bz-space-xs); font-size: var(--bz-font-meta); color: var(--bz-text-3); }
+/* 空月提示（issue 355 真机回归）：emptyHtmlStr 空态单源（一致#6），域内自绘
+   空月三件套规则退役；.bz-empty 间距由组件库承担，月历语境不再域内补样式 */
 
 /* ---- 列表 ---- */
 .bz-memo-content { flex: 1; overflow-y: auto; padding: var(--bz-space-xs) var(--bz-space-md) var(--bz-space-md); display: flex; flex-direction: column; min-height: 0; }
@@ -6500,9 +6493,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-memo-section-label::after { content: ''; flex: 1; height: 1px; background: var(--bz-border); }
 .bz-memo-section-label .bz-memo-sec-cnt { color: var(--bz-text-3); font-weight: var(--bz-weight-regular); }
-/* 已完成折叠条（无归档按钮，展开/收起都在条上） */
+/* 已完成折叠条（无归档按钮，展开/收起都在条上）。语义 button（M3-10）：
+   补 button 重置三件（宽满/左对齐/字族继承），其余观感与 div 版逐值一致 */
 .bz-memo-donebar {
   display: flex; align-items: center; gap: var(--bz-space-sm);
+  width: 100%; box-sizing: border-box; text-align: left; font-family: inherit;
   margin: var(--bz-space-sm) var(--bz-space-xs) 2px; padding: 7px var(--bz-space-sm);
   border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-sm);
   background: var(--bz-surface-1); cursor: pointer;
@@ -6545,6 +6540,26 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-card-title { font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
 .bz-memo-card.bz-memo-done .bz-memo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
 .bz-memo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
+/* 搜索命中高亮（效率#7）：关键词 `<mark>` 包裹——强调色底 + 反色字（Obsidian 原生 accent 对） */
+.bz-memo-card-title mark { background: var(--text-accent); color: var(--text-on-accent); border-radius: 2px; padding: 0 1px; }
+/* 卡片键盘可达（M3-10）：tabindex 聚焦环（focus-visible 才显，鼠标点击不出环） */
+.bz-memo-card:focus-visible,
+.bz-memo-check:focus-visible,
+.bz-memo-cl-row:focus-visible,
+.bz-memo-donebar:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: -2px; }
+
+/* 搜索框尾部清除钮（效率#6）：core .bz-search 只有左图标位，域内补右缘 ✕——
+   有词才显示（ui 侧 toggle hidden），点击清词 + 焦点回框；域前缀限作用域不外溢 */
+.bz-memo-panel .bz-search .bz-input { padding-right: 28px; }
+.bz-memo-panel .bz-memo-search-clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: none; border-radius: 50%; background: transparent;
+  color: var(--bz-text-3); cursor: pointer;
+}
+.bz-memo-panel .bz-memo-search-clear:hover { color: var(--bz-text-1); background: var(--bz-surface-hover); }
+.bz-memo-panel .bz-memo-search-clear .bz-ic { width: 12px; height: 12px; }
 
 /* ---- 清单子任务（issue 354）：标题之下、meta 之上的勾选行组 ---- */
 .bz-memo-cl { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
@@ -6630,15 +6645,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-extra.bz-memo-extra-on { display: block; }
 .bz-memo-extra .bz-input { width: 100%; }
 /* 联想候选已改组件库 .bz-popover 下拉浮层（issue 201，同收藏本「关联笔记」），bz-memo-sug-* 退役 */
-/* 定位行：垂直居中；按钮走组件库 .bz-btn--chip 图标圆底档（issue 200 F 款入库） */
+/* 定位行：垂直居中；按钮走组件库 .bz-btn--chip 图标圆底档（issue 200 F 款入库）。
+   （pos-hint 的 .bz-ic 规则已删——hint 是纯文本节点无图标子元素，死选择器 M3-8） */
 .bz-memo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
 .bz-memo-pos-row .bz-memo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-memo-pos-row .bz-memo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
 /* 截止时间行（datetime 输入 + 清除钮）：flex 防组件库 `.bz-field .bz-input
    { width: 100% }` 把清除钮挤换行——输入框吃余量（flex-basis 覆盖 width），
    清除钮定宽贴右；间距/对齐消费 spacing token，随肤随档 */
 .bz-memo-due-row { display: flex; align-items: center; gap: var(--bz-space-sm); }
 .bz-memo-due-row .bz-input { flex: 1; min-width: 0; }
+/* 截止快捷档 chip 行（效率#3）：「今天/明天」一步达——按钮走组件库 .bz-btn--sm 小号档，
+   域内只管排布（flex wrap 防窄弹窗溢出，token 间距随肤随档） */
+.bz-memo-due-quick { display: flex; flex-wrap: wrap; gap: var(--bz-space-xs); margin-top: var(--bz-space-xs); }
+/* 清除链接行（M8）：编辑态条目带 url 时的显式解绑钮——chip 钮单行贴内容框之下 */
+.bz-memo-link-row { display: flex; margin-top: calc(var(--bz-space-xs) * -1); }
 
 /* ---- 添加场景弹窗（issue 199：此前容器/提示零规则裸排） ---- */
 .bz-memo-addscene { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }
@@ -6716,9 +6736,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-memo-cal-chip.is-more .bz-memo-cal-chip-txt { display: block; font-size: 10px; line-height: 14px; }
   /* chip 触控热区 ≥40px（审查体验 P2 修复批）：7px 色点可视盒（行高 16px）点击太难，
      ::after 外扩（域内先例 .bz-memo-check::after）——16px 行盒 + 12px×2 = 40px；
-     点 chip 现已让位格子选中（ui.ts 委托 isMobileEnv 分流），编辑走长按抽屉 */
+     点 chip 现已让位格子选中（ui.ts 委托 isMobileEnv 分流），编辑走长按抽屉。
+     halo 收敛（M3-2）：改双值外扩 `纵 -12px 横 -8px`——横向少扩 4px，连续点相邻
+     两格上下缘不再落进侧向 halo 误选邻日 */
   .bz-memo-cal-chip { position: relative; }
-  .bz-memo-cal-chip::after { content: ''; position: absolute; inset: -12px; }
+  .bz-memo-cal-chip::after { content: ''; position: absolute; inset: -12px -8px; }
 }
 
 /* ═══════════ 皮肤体系（issue 210，2026-09-06 细节对齐原型） ═══════════
@@ -7419,16 +7441,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   letter-spacing: 0.1em;
 }
 
-/* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态） ---- */
-.bz-skinprev-default { background: linear-gradient(150deg, #ffffff, #f0f0f4); }
-.bz-skinprev-default::before {
-  content: ''; position: absolute; left: 10%; top: 16%; width: 42%; height: 26%;
-  border-radius: var(--bz-radius-full); background: linear-gradient(135deg, #ef8352, #e2571c);
-}
-.bz-skinprev-default::after {
-  content: ''; position: absolute; left: 10%; top: 60%; width: 72%; height: 10%;
-  border-radius: var(--bz-radius-full); background: #e2e2e8;
-}
+/* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态）。
+   （「默认皮肤」预览卡三条已删——默认皮肤退役后设置行实际用纸感/编辑部两档，
+   src 零引用死样式，深审 M3-8；类名见守卫测试断言） ---- */
 .bz-skinprev-paper {
   background:
     radial-gradient(rgba(160, 140, 100, 0.3) 1px, transparent 1px) 0 0 / 10px 10px,
@@ -7460,7 +7475,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    { display: none }`）**之后**——媒体查询不增特异性，同特异性
    下靠「后写者赢」，故本段是文件最后一节。仅收口四件事，均限 ≤768px：
    1) 头行钮组放回（皮肤段 display:none 的反制）
-   2) 设置钮撤出移动头行（issue 268 用户拍板：设置归设置面板，头行只留关闭）
+   2) 设置钮退役说明（深审 M3-7：markup/委托/死规则全删）+ 5) 次级触控热区抬档
+      （M2-5+M3-1：排序下拉/composer 添加钮/折叠条/更早 N 条/回到今天/位置标签）
    3) 关闭钮换装皮肤形态 + 定档（issue 269 用户拍板「小一点」：38 → 28px）
    4) 顶距 44px 改挂头行自身（issue 269：「头部的斜斑纹条延伸出去那 44px 也要有」）
    桌面端（>768px）零生效——桌面头行外观与本改动前逐像素一致。 */
@@ -7474,9 +7490,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-memo-skin-paper .bz-panel-head-btns,
   .bz-memo-skin-editorial .bz-panel-head-btns { display: flex; }
 
-  /* 2) 设置钮（issue 268）：移动端头行撤除——桌面由皮肤段整组收掉，移动端从此只留关闭。
-        设置入口仍在：场景项右键/长按菜单「在设置中编辑」（buildSceneActions）。 */
-  .bz-memo-panel .bz-memo-head-settings { display: none; }
+  /* 2) 设置钮已整体退役（深审 M3-7：markup 与委托删除——issue 210 桌面皮肤段收整组 +
+        issue 268 移动端撤除后本就三端不可达；设置入口 = 场景项菜单「在设置中编辑」）。
+        原先此处「移动端 display:none」的死规则一并删除（类名见守卫测试断言）。 */
+
+  /* 5) 次级触控热区抬档（M2-5 + M3-1 聚合）：视图页签/月历翻页已由 markup 挂
+        touch-target--lg（render.ts），此处收剩余 <40px 缺口——min-height 抬档或
+        ::after 外扩，视觉形态不变、命中区过移动端 40px 绝对下限。
+        排序下拉 32px：抬 40px（同特异性 (0,3,0) 靠本段在皮肤段之后取胜） */
+  .bz-memo-panel .bz-memo-sort .bz-select { height: 40px; }
+  /* composer「添加」钮 32px（--bz-control-h）：与同排输入框 40px 对齐 */
+  .bz-memo-composer .bz-btn { min-height: 40px; }
+  /* 已完成折叠条 ~30px / 「更早 N 条」~28px / 「回到今天」24px（--bz-control-h-sm） */
+  .bz-memo-donebar { min-height: 40px; }
+  .bz-memo-done-more { min-height: 40px; }
+  .bz-memo-cal-today { min-height: 40px; }
+  /* 位置 meta 标签 18px 行高盒：::after 外扩 40px（先例同勾选圈 halo；标签
+     现已真可点——列表卡跳转/抽屉头关抽屉跳转，见 ui.ts 接线） */
+  .bz-memo-tag-pos { position: relative; }
+  .bz-memo-tag-pos::after { content: ''; position: absolute; inset: -11px; }
 
   /* 3) 关闭钮 = 移动端头行唯一按钮，28px 可视档（issue 269 两轮收小：38 → 34 → 28）+
         皮肤贴纸形态。28px 与头行品牌块同尺寸（`.bz-memo-skin-paper .bz-panel-brand`
