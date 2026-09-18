@@ -687,7 +687,10 @@ function beginSession(): void {
   readScrollMemo.clear(); // 效率#17：滚位记忆是会话内的，重开面板不背旧位
 }
 
-/** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 206：搜索时各源统计联动） */
+/** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 206：搜索时各源统计联动）。
+ *  hay 域（效率#15）：title/summary/site/srcName/author/tags 之外补 body 与 url——
+ *  news 条目 body 已在内存（issue 274 起正文保留），零 IO；url 是 articleKeyOf 的键（数据在手）。
+ *  clip 条目正文在盘上不进 hay（全文阈值检索未拍板，placeholder 口径如实）。 */
 function matchesSearch(a: ClipArticle): boolean {
   const kw = (searchKw || '').toLowerCase();
   if (!kw) return true;
@@ -696,6 +699,8 @@ function matchesSearch(a: ClipArticle): boolean {
     a.site.toLowerCase().includes(kw) ||
     a.srcName.toLowerCase().includes(kw) ||
     a.author.toLowerCase().includes(kw) ||
+    a.body.toLowerCase().includes(kw) ||
+    a.url.toLowerCase().includes(kw) ||
     a.tags.some((t) => t.toLowerCase().includes(kw));
 }
 
@@ -710,7 +715,8 @@ function renderRail(): void {
     queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
   const allHit = countOf({ kind: 'all' });
   // V1 计数口径（issue 214）：未读（搜索态 = 命中数）/ 总数（全量含已处理）
-  let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
+  // markAllN（效率#4）：有未读 news 时挂「✓✓」小钮（批量已读可见入口，同款确认流）
+  let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '', railUnreadN({ kind: 'all' }));
 
   // 站点行动态聚合（issue 222：rail 按 site 属性分类，issue 206 平台聚合行退役）——
   // 全库站点 = 剪藏全量 + 未读 news 面（行总数 = 该源列表长度，口径同 queryBySource site 源）；
@@ -720,13 +726,17 @@ function renderRail(): void {
     const unreadN = full.filter((a) => a.st !== 'saved').length;
     const hit = countOf({ kind: 'site', site: row.site });
     const active = M.sel.kind === 'site' && M.sel.site === row.site;
-    html += railItemHtml({ kind: 'site', site: row.site }, row.site, searchKw ? hit : unreadN, full.length, 'feed', siteTint(row.site), active, '');
+    // markAllN（效率#4）：该源未读 news 数 >0 时行内挂「✓✓」批量已读小钮（口径 = buildRailActions 的 N）
+    const markN = railUnreadN({ kind: 'site', site: row.site });
+    html += railItemHtml({ kind: 'site', site: row.site }, row.site, searchKw ? hit : unreadN, full.length, 'feed', siteTint(row.site), active, '', markN);
   }
 
-  // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）
+  // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）。
+  // 效率#5：改**全量**收集（原 !a.read 未读面——UP 未读归零整行消失，往期无处可去）；
+  // 未读数照实显 0（cnt 现查），排序已有未读降序兜底不碍位
   const biliUps = new Map<string, string>(); // key=author 原始值（uid），value=展示名（回填回退）
   for (const a of arts) {
-    if (!a.read && a.platform === 'B站' && a.author) {
+    if (a.platform === 'B站' && a.author) {
       const uid = String(a.author);
       const backfilled = M.upInfo?.[uid]?.name;
       if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
@@ -739,10 +749,11 @@ function renderRail(): void {
     // G：UP 行 data-src 携带 platform=B站 + up=uid（旧实现 platform=展示名、up=null，
     // 点击后按平台名过滤恒空——UP 源点开是空列表且高亮不复位）
     // B站徽标色由 .bz-clip-rail .bz-rail-badge.bili 样式侧单源承担（不再内联传 #8b7cf6）
-    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, upTotal, 'bili', '', active, name.slice(0, 1));
+    const markN = railUnreadN({ kind: 'inbox', platform: 'B站', up: uid });
+    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, upTotal, 'bili', '', active, name.slice(0, 1), markN);
   }
 
-  // 剪藏本（聚合，saved 语义；搜索时显示命中数）
+  // 剪藏本（聚合，saved 语义；搜索时显示命中数）——剪藏本源无未读语义，不挂批量已读钮
   const clipActive = M.sel.kind === 'clip';
   const clipHit = countOf({ kind: 'clip' });
   html += railItemHtml({ kind: 'clip' }, '剪藏本', clipHit, clipNotes.length, 'clip', '', clipActive, '');
@@ -773,7 +784,48 @@ function renderRail(): void {
           : { kind: 'all' as const };
     const actions = buildRailActions(String(row.title || ''), source);
     if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ''), menuClass: 'bz-clip-menu-editorial' });
+    // 行内「✓✓」小钮（效率#4）：与右键同一条「全部标为已读（N 篇）」确认流——stopPropagation
+    // 防冒泡触发 railListEl 的源切换委托
+    const markBtn = row.querySelector('[data-clip-rail-markall]') as HTMLElement | null;
+    if (markBtn && actions.length) {
+      markBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        actions[0].onClick();
+      });
+    }
   });
+}
+
+/** 该源未读 news 数（效率#4）：rail ✓✓ 钮的显隐与 N 口径 = buildRailActions 的 unreadList.length
+ *  （queryBySource 未处理流 ∩ origin==='news'；剪藏条目无未读语义不计） */
+function railUnreadN(source: SrcFilter): number {
+  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo)
+    .filter((a) => a.origin === 'news').length;
+}
+
+/** 报告 Top5 回看入口（效率#20）：按条目 key（articleKeyOf / clip:<path>）定位并选中。
+ *  clip 条目走 revealClipArticle（切剪藏本源 + 装载后定位）；news 条目切「全部未读」源后
+ *  selectArticle（deskFlat 快照含已读/已收骨架——报告榜上几乎全是已处理条目）。
+ *  数据未装载时先开面板触发装载，完成后重试一次；定位失败保持面板打开，不抛错。 */
+export function revealArticleByKey(key: string): void {
+  const k = String(key || '');
+  if (!k) return;
+  if (k.startsWith('clip:')) { void revealClipArticle(k.slice('clip:'.length)); return; }
+  const trySelect = (): boolean => {
+    // M.articles 存 news.json raw（无 .id）——条目 id 由 articleKeyOf 派生（ClipArticle.id 同式）
+    const hit = M.articles.find((x) => articleKeyOf(x) === k);
+    if (!hit) return false;
+    if (!M.open) showPanel();
+    selectSource({ kind: 'all' });
+    selectArticle(articleKeyOf(hit));
+    return true;
+  };
+  if (trySelect()) return;
+  showPanel();
+  void loadIfNeeded()
+    .then(() => { trySelect(); })
+    .catch(() => { /* 装载失败保持原状 */ });
 }
 
 /** rail 源级动作（enh 包 4）：该源还有未读时提供「全部标为已读」；剪藏本源无未读语义不挂 */
@@ -856,7 +908,7 @@ function renderList(): void {
       // j/k 从幻觉位置步进）；renderAll 路径下与外层 renderReader 重复渲染一次，幂等无害
       if (readerEl) renderReader();
     }
-    listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs));
+    listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime(a.timeTs), searchKw);
     M.list = list;
     bindItemMenus();
     return;
@@ -887,25 +939,26 @@ function renderList(): void {
       M.list = [];
       return;
     }
-    listEl.innerHTML = tocListHtml(hit, curId, timeOf);
+    listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
     M.list = hit;
     bindItemMenus();
     return;
   }
   const b = dirFor(src);
   const snapUnreadN = b.unread.length; // 快照桶大小 = 打开目录时未读数（会话内读完不触发闪开）
-  let html = tocListHtml(b.unread, curId, timeOf);
+  // 非搜索态 kw 恒空（折叠段内不高亮）；统一传参，搜索语义单点在 tocListHtml
+  let html = tocListHtml(b.unread, curId, timeOf, searchKw);
   // 已读段（快照 read 桶；默认收起——打开即无未读且已收空时自动展开兜底）
   if (b.read.length) {
     const open = deskFoldIsOpen('read', b.read.length, b.saved.length, snapUnreadN);
     html += deskFoldRowHtml('read', b.read.length, open);
-    html += foldBodyHtml(tocListHtml(b.read, curId, timeOf), open);
+    html += foldBodyHtml(tocListHtml(b.read, curId, timeOf, searchKw), open);
   }
   // 已收段（快照 saved 桶；打开即无未读默认展开）
   if (b.saved.length) {
     const open = deskFoldIsOpen('saved', b.saved.length, b.saved.length, snapUnreadN);
     html += deskFoldRowHtml('saved', b.saved.length, open);
-    html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf), open);
+    html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
   }
   listEl.innerHTML = html;
   M.list = flat; // 菜单/点击查找全目录
@@ -943,11 +996,18 @@ function bindItemMenus(): void {
       if (!isMobileEnv()) readPaneEl?.focus({ preventScroll: true });
     });
   });
-  // 桌面折叠行点击开合（已读/已收两段独立；renderList 重建 DOM 后重挂）
+  // 桌面折叠行点击/键盘开合（已读/已收两段独立；renderList 重建 DOM 后重挂）。
+  // C-UI5：deskFoldRowHtml 已带 tabindex="0"，此处补 Enter/Space——键盘/开关类辅助工具可达
   listEl.querySelectorAll<HTMLElement>('[data-desk-fold]').forEach((row) => {
-    row.addEventListener('click', () => {
+    const toggle = () => {
       const kind = (row.getAttribute('data-desk-fold') as 'read' | 'saved') || 'saved';
       toggleDeskFold(kind);
+    };
+    row.addEventListener('click', toggle);
+    row.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      e.preventDefault();
+      toggle();
     });
   });
 }
@@ -1463,6 +1523,9 @@ function renderMobToc(): void {
     const s = String((n && n.site) || '').trim() || '未知';
     siteSet.add(s);
   }
+  // 章头「✓✓」钮的动作集（效率#4）：组装期算一次，markup（markAllN）与接线（forEach）共用，
+  // 口径与 rail 源行同一条「全部标为已读（N 篇）」确认链
+  const siteActions = new Map<string, ItemAction[]>();
   for (const site of siteSet) {
     const snap = snapDirFor({ kind: 'site', site });
     const b = resolveSnap(snap, { kind: 'site', site });
@@ -1471,12 +1534,15 @@ function renderMobToc(): void {
     const saved = b.saved.filter(matchesSearch);
     if (!unread.length && !read.length && !saved.length) continue;
     const unreadN = unread.filter((a) => a.st === 'unread').length; // 章头未读数（搜索命中口径 + 会话内标读即时减）
+    const markN = railUnreadN({ kind: 'site', site });
+    if (markN > 0) siteActions.set(site, buildRailActions(site, { kind: 'site', site }));
     chapters.push({
       site,
       unread: unreadN,
       activeN: unread.length,
       readN: read.length,
       savedN: saved.length,
+      markAllN: markN,
       activeHtml: mobListHtml(unread, timeOf),
       readHtml: read.length ? mobListHtml(read, timeOf) : '',
       savedHtml: saved.length ? mobListHtml(saved, timeOf) : '',
@@ -1492,6 +1558,7 @@ function renderMobToc(): void {
     return;
   }
   mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
+  mountIcons(mobListEl); // 章头「✓✓」灰态钮的 check-check 图标兑现（innerHTML 后必须补挂）
   // 移动长按抽屉（enh 包 2）：条目动作与桌面右键同源（buildItemActions）——一处接入两端全量对齐；
   // 抽屉头走核心 sheetTitle/sheetSub（issue 329 追加修订：与桌面卡同款，域内自绘头部退役）。
   // 章头挂源级「全部标为已读」（rail 源行动同源，源条退役后的迁移位）
@@ -1504,8 +1571,19 @@ function renderMobToc(): void {
     let sel: any = null;
     try { sel = JSON.parse(hd.dataset.src || 'null'); } catch (e) { return; }
     if (!sel || sel.kind !== 'site') return;
-    const actions = buildRailActions(String(sel.site), { kind: 'site', site: String(sel.site) });
-    if (actions.length) attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: 'bz-clip-menu-editorial' });
+    const actions = siteActions.get(String(sel.site)) || [];
+    if (!actions.length) return;
+    attachItemActions(hd, actions, { sheetTitle: String(sel.site), menuClass: 'bz-clip-menu-editorial' });
+    // 常驻灰态「✓✓」小钮（效率#4 移动面）：长按抽屉之外的可见入口，点击 = 同款确认流；
+    // markup 由 mobChHeadHtml 单源产出，此处只接线（stopPropagation 防冒泡误触条目委托）
+    const mark = hd.querySelector('[data-clip-ch-markall]') as HTMLElement | null;
+    if (mark) {
+      mark.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        actions[0].onClick();
+      });
+    }
   });
 }
 
@@ -1859,13 +1937,69 @@ async function actSaveEntry(kind: 'term' | 'passage'): Promise<void> {
   else fn(getApp(), { text: snap.text, source, onCreated });
 }
 
-/** 双端阅读视图原位重渲（锚定/图片动作后即时出链）：桌面右栏 renderReader +
- *  移动详情 renderMobDetail（独立渲染路径，issue 329 Bug 2）一并覆盖；
- *  同条目守卫内置（对齐原三处 `M.cur && M.cur.id === a.id`——切篇后丢弃本次刷新）。 */
-function refreshReadingViews(articleId: string): void {
+/** 双端阅读视图原位重渲（锚定/图片动作后即时出链）：桌面右栏 + 移动详情一并覆盖；
+ *  同条目守卫内置（对齐原三处 `M.cur && M.cur.id === a.id`——切篇后丢弃本次刷新）。
+ *  效率#8 轻版：同篇刷新（本函数守卫后必然同篇）**不整栏重建**——标题/摘要/meta 容器
+ *  不动（节点身份与滚位保持，正文不闪空），只清正文容器后重跑变换与异步水合；
+ *  正文源不可得（clip 未缓存等异常态）才回退全量渲染路径。导出供回归测试锚定。 */
+function refreshReaderBodyInPlace(a: ClipArticle): void {
+  if (!readerEl || readerEl.dataset.clipReaderId !== a.id) { renderReader(); return; }
+  const md = readerEl.querySelector('[data-clip-md]') as HTMLElement | null;
+  if (!md) { renderReader(); return; }
+  let body = '';
+  let note = '';
+  if (a.origin === 'clip') {
+    const cached = a.notePath ? clipBodyCache.get(a.notePath) : undefined;
+    if (cached === undefined) { renderReader(); return; } // 未缓存 → 全量（占位 + 懒加载链）
+    body = cached;
+    if (!body) note = '（笔记暂无正文）';
+  } else {
+    body = transformBodyForRead(a, a.body);
+    if (!body) note = '正文已清空（已处理条目）';
+  }
+  md.innerHTML = '';
+  if (note) {
+    const p = document.createElement('p');
+    p.className = 'dim';
+    p.textContent = note;
+    md.appendChild(p);
+    return;
+  }
+  void hydrateArticleMarkdown(md, body, a.notePath || '', () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
+}
+
+/** 移动详情同款原位重水合（效率#8）：标题/期次行/保存钮不动，只重跑 [data-clip-mob-md]。 */
+function refreshMobBodyInPlace(a: ClipArticle): void {
+  if (!mobDetailEl || !M.mobDetailOpen) return;
+  const md = mobDetailEl.querySelector('[data-clip-mob-md]') as HTMLElement | null;
+  if (!md) { renderMobDetail(); return; }
+  let mdBody = '';
+  let note = '';
+  if (a.origin === 'clip') {
+    const cached = a.notePath ? clipBodyCache.get(a.notePath) : undefined;
+    if (cached === undefined) { renderMobDetail(); return; }
+    mdBody = cached;
+    if (!mdBody) note = '（笔记暂无正文）';
+  } else {
+    mdBody = transformBodyForRead(a, a.body);
+    if (!mdBody) note = '正文已清空';
+  }
+  md.innerHTML = '';
+  if (note) {
+    const p = document.createElement('p');
+    p.textContent = note;
+    md.appendChild(p);
+    return;
+  }
+  void hydrateArticleMarkdown(md, mdBody, a.notePath || '', () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+}
+
+/** 锚定/图片动作后的刷新入口（原全量 renderReader/renderMobDetail 重建 → 效率#8 轻版原位水合）。
+ *  导出仅供回归测试（同篇刷新标题节点身份不变）。 */
+export function refreshReadingViews(articleId: string): void {
   if (!M.cur || M.cur.id !== articleId) return;
-  renderReader();
-  if (M.mobDetailOpen) renderMobDetail();
+  refreshReaderBodyInPlace(M.cur);
+  if (M.mobDetailOpen) refreshMobBodyInPlace(M.cur);
 }
 
 /** 划词锚定落盘两路（ADR-0144 决策 4）：已保存条目直写剪藏 md；未保存条目侧写暂存（渲染层出链）。

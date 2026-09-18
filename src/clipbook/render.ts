@@ -20,7 +20,7 @@
  * data-clip-* 钩子即两侧事件绑定与测试断言的共同契约，改钩子先改这里。
  * 编辑部印刷风视觉拍板定稿（issue 214，p1-final 原型）：本文件只做 markup 平移，任何视觉值不动。
  */
-import { esc, iconSpan } from '../core/ui/str';
+import { esc, iconSpan, pad2 } from '../core/ui/str';
 import { CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_HIGHLIGHT } from '../core/chart-palette';
 import { formatMinutes, REPORT_TOP_N, type ClipReportData } from './report-stats';
 import type { ClipArticle } from './types';
@@ -52,6 +52,7 @@ export const ICO = {
   folder: 'folder-open',
   rotate: 'rotate-ccw',
   radio: 'radio',
+  checks: 'check-check',
 };
 
 // ==================== 面板骨架 ====================
@@ -70,7 +71,7 @@ export function panelHtml(): string {
           <!-- 效率#12：尾部 ✕ 一键清除（有词才显示，ui.ts syncDeskSearchClear 同步）。定位走内联随单源
                markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的左缘绝对定位会劫持 iconSpan 产物，
                且 mountIcons 换节点会丢内联样式；不带 display 内联值，hidden 属性才能生效 -->
-          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -96,7 +97,7 @@ export function panelHtml(): string {
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -146,8 +147,10 @@ export function stateLabel(st: string): string {
 /** data-src JSON 序列化选择器（UP 行携带 platform=B站 + up=uid；site 行携带站点名） */
 export type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' } | { kind: 'site'; site: string };
 
-/** rail 源行（原 ui.ts railItemHtml 平移）：徽标/图标槽位保留 DOM（编辑部皮肤 CSS 隐藏，结构给测试） */
-export function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
+/** rail 源行（原 ui.ts railItemHtml 平移）：徽标/图标槽位保留 DOM（编辑部皮肤 CSS 隐藏，结构给测试）。
+ *  markAllN（效率#4）：该源未读 news 数 >0 时行内挂「✓✓」批量已读小钮（桌面 hover 浮出；
+ *  点击流与右键「全部标为已读（N 篇）」同一条确认链，接线在 ui.ts renderRail）。 */
+export function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string, markAllN = 0): string {
   // G：JSON 过 esc 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
   // 前缀槽三态保留 DOM（issue 214：编辑部皮肤在域 CSS 内隐藏徽标/图标，V1 = 纯文字点线索引）
   const badge = icon === 'feed'
@@ -159,11 +162,16 @@ export function railItemHtml(sel: SrcSelJson, label: string, unread: number, tot
         : `<span class="bz-rail-ic${sel.kind === 'all' ? ' bz-rail-ic--accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`;
   // 计数 = 未读（搜索态为命中数，橘粗）/ 总数（issue 214 V1 口径）
   const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
+  // 批量已读可见入口（效率#4）：markup 单源在此，点击接线在行为层（stopPropagation 防触发源切换）
+  const markAll = markAllN > 0
+    ? `<span class="bz-clip-rail-markall" data-clip-rail-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, 'bz-ic--xs')}</span>`
+    : '';
   return `
     <div class="bz-rail-item${active ? ' on' : ''}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
       ${badge}
       <span class="bz-rail-name">${esc(label)}</span>
       <span class="bz-clip-lead"></span>
+      ${markAll}
       ${count}
     </div>`;
 }
@@ -182,27 +190,58 @@ export function clipReportEntryHtml(): string {
 
 // ==================== 中栏目录（序号制条目） ====================
 
+/** 标题命中高亮（效率#13）：先 esc 再大小写不敏感 `<mark>` 包裹——
+ *  转义后的文本与转义后的关键词做 indexOf 分段（不劈开 &amp; 等实体，防注入）；
+ *  kw 空/无命中原样返回。只做 title 段（meta 行不高亮，控制噪音）。 */
+export function highlightTitleHtml(title: string, kw: string): string {
+  const safe = esc(title);
+  const needle = esc((kw || '').trim()).toLowerCase();
+  if (!needle) return safe;
+  const hay = safe.toLowerCase();
+  let out = '';
+  let i = 0;
+  for (;;) {
+    const hit = hay.indexOf(needle, i);
+    if (hit === -1) {
+      out += safe.slice(i);
+      break;
+    }
+    out += `${safe.slice(i, hit)}<mark>${safe.slice(hit, hit + needle.length)}</mark>`;
+    i = hit + needle.length;
+  }
+  return out;
+}
+
+/** 目录卡 meta 尾标签（效率#9）：前两个 + 超出省略号，纯展示（点击筛选未做） */
+function tocTagsHtml(tags: string[]): string {
+  if (!tags.length) return '';
+  const shown = tags.slice(0, 2).map((t) => `#${esc(t)}`).join(' ');
+  return `<span class="bz-clip-item-tags">${shown}${tags.length > 2 ? ' …' : ''}</span>`;
+}
+
 /** 目录条目序列（编辑部目录：序号 + 标题 + 「站点 · 时间」一行；摘要不入目录）。
- *  timeOf 注入展示时间串（moment 留在行为层，纯层不引用）；列表空由调用方走 uiEmpty。 */
-export function tocListHtml(list: ClipArticle[], curId: string | null, timeOf: (a: ClipArticle) => string): string {
+ *  timeOf 注入展示时间串（moment 留在行为层，纯层不引用）；列表空由调用方走 uiEmpty。
+ *  kw（效率#13）：搜索关键词，标题段命中 `<mark>` 高亮；meta 行不高亮。 */
+export function tocListHtml(list: ClipArticle[], curId: string | null, timeOf: (a: ClipArticle) => string, kw = ''): string {
   return list.map((a, i) => `
     <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? ' on' : ''}" data-id="${esc(a.id)}">
-      <span class="bz-clip-no">${String(i + 1).padStart(2, '0')}</span>
+      <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${esc(a.title)}</span></div>
-        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}</div>
+        <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
+        <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}${tocTagsHtml(a.tags)}</div>
       </div>
     </div>`).join('');
 }
 
 // ==================== 中栏目录折叠段（ADR-0108：已读/已收双折叠，桌面新增） ====================
 
-/** 桌面折叠行（编辑部风点线：隔线 + 「已读 N 篇 / 已收 N 篇」衬线小标；展开态文案切「收起」同移动）。data-desk-fold 供行为层 toggle */
+/** 桌面折叠行（编辑部风点线：隔线 + 「已读 N 篇 / 已收 N 篇」衬线小标；展开态文案切「收起」同移动）。
+ *  data-desk-fold 供行为层 toggle；tabindex="0"（C-UI5 键盘可达：Enter/Space 开合由 ui.ts bindItemMenus 接线） */
 export function deskFoldRowHtml(kind: 'read' | 'saved', n: number, open: boolean): string {
   const label = kind === 'read' ? '已读' : '已收';
   const lab = open ? '收起' : `${label} <b>${n}</b> 篇`;
   return `
-    <div class="bz-clip-desk-fold${open ? ' on' : ''}" data-desk-fold="${kind}" role="button" aria-expanded="${open}">
+    <div class="bz-clip-desk-fold${open ? ' on' : ''}" data-desk-fold="${kind}" role="button" tabindex="0" aria-expanded="${open}">
       <span class="bz-clip-desk-fold-rule"></span>
       <span class="bz-clip-desk-fold-lab">${lab}</span>
       <span class="bz-clip-desk-fold-ar"></span>
@@ -222,7 +261,14 @@ export function summaryHtml(summary: string): string {
   return `<div class="bz-clip-art-sum"><span class="bz-clip-art-sum-h">${iconSpan('sparkles', 'bz-ic--xs')}摘要</span>${esc(summary)}</div>`;
 }
 
-/** 桌面阅读面（原 ui.ts renderReader 模板平移）：meta 行（时间 · 站点橘）+ 摘要
+/** 标签 chip 行（效率#9）：阅读面 meta 行下的 AI 标签展示（clip 条目 frontmatter tags；
+ *  news 条目 tags 常空不显行）。纯展示（点击筛选未做）。 */
+function artTagsHtml(tags: string[]): string {
+  if (!tags.length) return '';
+  return `<div class="bz-clip-art-tags">${tags.map((t) => `<span class="bz-clip-art-tag">${esc(t)}</span>`).join('')}</div>`;
+}
+
+/** 桌面阅读面（原 ui.ts renderReader 模板平移）：meta 行（时间 · 站点橘）+ 标签行 + 摘要
  *  + 正文容器（markdown 原文由行为层经 Obsidian MarkdownRenderer 异步水合，diary/knowledge 同范式；
  *  note = 非空时的 dim 占位文案）+ 剪藏「打开笔记」文字脚（issue 214 文末唯一保留动作）。 */
 export function readerHtml(a: ClipArticle, opts: { time: string; note: string }): string {
@@ -235,6 +281,7 @@ export function readerHtml(a: ClipArticle, opts: { time: string; note: string })
       <span>${esc(opts.time)}</span>
       <span class="bz-clip-art-site"><span class="bz-clip-art-site-name">${esc(siteShort(a.srcName))}</span></span>
     </div>
+    ${artTagsHtml(a.tags)}
     ${a.summary ? summaryHtml(a.summary) : ''}
     <div class="bz-clip-art-md markdown-rendered" data-clip-md>${opts.note ? `<p class="dim">${esc(opts.note)}</p>` : ''}</div>
     ${openNoteFoot}
@@ -269,6 +316,8 @@ export interface MobChapter {
   readN: number;
   /** 已收段（saved 语义）条数 */
   savedN: number;
+  /** 该源未读 news 数（效率#4：>0 时章头挂常驻灰态「全部标为已读」小钮；口径与 rail 源行同款确认流） */
+  markAllN?: number;
   /** 常显段条目串 */
   activeHtml: string;
   /** 已读段条目串 */
@@ -277,18 +326,23 @@ export interface MobChapter {
   savedHtml: string;
 }
 
-/** 章头（m3 原型 .ch-hd：橘竖条章名 + 未读·已读·已收计数 + 细线拖尾；data-src 承载该源——长按批量已读） */
-export function mobChHeadHtml(site: string, unread: number, readN: number, savedN: number): string {
+/** 章头（m3 原型 .ch-hd：橘竖条章名 + 未读·已读·已收计数 + 细线拖尾；data-src 承载该源——长按批量已读）。
+ *  markAllN（效率#4）：>0 时行尾挂常驻灰态「✓✓」小钮（长按抽屉之外的可见入口，点击流与 rail 同链；接线在 ui.ts renderMobToc）。 */
+export function mobChHeadHtml(site: string, unread: number, readN: number, savedN: number, markAllN = 0): string {
   const seg: string[] = [];
   if (unread > 0) seg.push(`${unread} 未读`);
   if (readN > 0) seg.push(`${readN} 已读`);
   if (savedN > 0) seg.push(`${savedN} 已收`);
   const cntTxt = seg.join(' · ');
+  const mark = markAllN > 0
+    ? `<span class="bz-clip-mob-ch-mark" data-clip-ch-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, 'bz-ic--xs')}</span>`
+    : '';
   return `
     <div class="bz-clip-mob-ch-hd" data-src='${esc(JSON.stringify({ kind: 'site', site }))}' title="${esc(site)}">
       <span class="bz-clip-mob-ch-name">${esc(site)}</span>
       <span class="bz-clip-mob-ch-n">${cntTxt}</span>
       <span class="bz-clip-mob-ch-rule"></span>
+      ${mark}
     </div>`;
 }
 
@@ -326,7 +380,7 @@ export function mobTocHtml(chapters: MobChapter[], searching: boolean, expanded:
     const savedBody = mobFoldBodyHtml('saved', ch.savedHtml, searching || savedOpen);
     return `
       <div class="bz-clip-mob-ch">
-        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN)}
+        ${mobChHeadHtml(ch.site, ch.unread, ch.readN, ch.savedN, ch.markAllN || 0)}
         <div class="bz-clip-mob-ch-items">${ch.activeHtml}${foldRead}${readBody}${foldSaved}${savedBody}</div>
       </div>`;
   }).join('');
@@ -388,25 +442,40 @@ export interface ClipReportSection {
   generate: () => string;
 }
 
-export function buildClipReportSections(d: ClipReportData): ClipReportSection[] {
+export function buildClipReportSections(d: ClipReportData, opts?: ClipReportViewOpts): ClipReportSection[] {
   return [
-    { key: 'overview', label: '统计概览', generate: () => clipReportOverviewHtml(d) },
+    { key: 'overview', label: '统计概览', generate: () => clipReportOverviewHtml(d, opts) },
     { key: 'sources', label: '来源分布', generate: () => clipReportSourcesHtml(d) },
     { key: 'hours', label: '阅读时段', generate: () => clipReportHoursHtml(d) },
   ];
 }
 
+/** 报告视图装配选项（效率#20：Top5 可点回看的可定位信息由行为层现查后注入，纯层不持状态） */
+export interface ClipReportViewOpts {
+  /** 当前库内可定位条目的 key 集（articleKeyOf / clip:<path>）；
+   *  缺省/null = 不可知，Top5 全部不挂「打开」钮（保留策略清掉的条目诚实不承诺）。 */
+  availableKeys?: Set<string> | null;
+}
+
 /** 段 1·统计概览：三格 hero（篇数/总时长/活跃天数）+ 读得最久 Top 5。
- *  hero/排名徽章取 chart-palette 粉彩系与浅底徽章色（图表配色单源），墨字走域皮肤。 */
-function clipReportOverviewHtml(d: ClipReportData): string {
+ *  hero/排名徽章取 chart-palette 粉彩系与浅底徽章色（图表配色单源），墨字走域皮肤。
+ *  opts.availableKeys（效率#20）：命中的行挂 data-clip-rep-key + 行尾「打开」钮（点击回看，
+ *  面板开着 selectArticle / 未开 revealClipArticle 链路，接线在 report-ui.ts）；失隐条目不挂。 */
+function clipReportOverviewHtml(d: ClipReportData, opts?: ClipReportViewOpts): string {
+  const keys = opts?.availableKeys || null;
   const topRows = d.topArticles.map((a, i) => {
     const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
+    const openable = !!keys && keys.has(a.key);
+    const openBtn = openable
+      ? `<span class="bz-clp-rep-top-open" data-clip-rep-open role="button" tabindex="0" title="打开该篇回看">打开 ${iconSpan(ICO.external, 'bz-ic--xs')}</span>`
+      : '';
     return `
-    <div class="bz-clp-rep-top-row">
+    <div class="bz-clp-rep-top-row"${openable ? ` data-clip-rep-key="${esc(a.key)}"` : ''}>
       <span class="bz-clp-rep-rank" style="background:${badge}">${i + 1}</span>
       <span class="bz-clp-rep-top-title" title="${esc(a.title)}">${esc(a.title)}</span>
       <span class="bz-clp-rep-top-src">${esc(a.src)}</span>
       <span class="bz-clp-rep-top-min">${esc(formatMinutes(a.minutes))}</span>
+      ${openBtn}
     </div>`;
   }).join('');
   return `
