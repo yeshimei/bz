@@ -15,11 +15,9 @@
  * - saveToClip 写剪藏笔记 + 发 news:read/saved 域事件（smartcat 行为流三跳依赖）。
  */
 import { cmpZh } from '../core/utils';
-import { readNewsData, writeNewsDataMerged } from './news-data';
 import type { ClipArticle, ClipState } from './types';
 import { articleKeyOf, excerpt } from './constants';
 import type { ClipbookData } from './data';
-import { enqueueNewsWrite } from './write-queue';
 
 
 /** 展示站点名（news：平台；剪藏：frontmatter site） */
@@ -281,27 +279,6 @@ export function bucketByState(list: ClipArticle[]): { unread: ClipArticle[]; rea
  * @param act save|unsave|read|skip|reading|delete|open-note
  * 返回需要触发 UI 重渲染的提示文案（或空）。
  */
-
-/** 写回 news.json 单篇状态（read=true + state；issue 274：正文保留不清。无插件内调用方，
- *  保留作外部入口；串行队列 + 段级合并——与 loader/news-source-settings/flow 共用同一条
- *  写链，daemon 并发追加的文章不被覆盖） */
-export async function writeNewsState(raw: any, action: 'save' | 'read' | 'skip'): Promise<void> {
-  const key = articleKeyOf(raw);
-  await enqueueNewsWrite(async () => {
-    const res = await readNewsData();
-    if (!res.ok || res.missing) return;
-    const list = (res.data.articles || []).map((a: any) => {
-      if (articleKeyOf(a) !== key) return a;
-      return {
-        ...a,
-        read: true,
-        state: action === 'save' ? 'saved' : action === 'skip' ? 'skipped' : a.state === 'saved' ? 'saved' : 'skipped',
-      };
-    });
-    await writeNewsDataMerged({ set: { articles: list } });
-  });
-}
-
 
 // ===== 站点聚合（issue 222：rail 按 site 属性分类，平台聚合行退役）=====
 

@@ -273,14 +273,9 @@ describe('C20：当前条目被删且列表清空时收起详情', () => {
     await vi.waitFor(() => expect(M.mobDetailOpen).toBe(true));
 
     // 桌面目录右键删除该唯一条目 → refreshAfterAction：盘面清空 → M.cur=null → renderAll
+    // 翻转（效率整改 5 免确认口径）：删除不再弹 openFlowDialog 确认框，直落 + notifyUndo
     const menu = await contextMenuOn(document.querySelector('.bz-clip-list .bz-clip-item') as HTMLElement);
     menuItem(menu, '删除').click();
-    const okBtn = await vi.waitFor(() => {
-      const el = document.querySelector('#__shared_confirm_ok__') as HTMLElement | null;
-      expect(el, '删除确认框应弹出').toBeTruthy();
-      return el!;
-    });
-    okBtn.click();
 
     await vi.waitFor(() => expect(M.cur).toBeNull());
     // 修复前：M.mobDetailOpen 仍 true、overlay 仍 flex，残留已删文章详情屏

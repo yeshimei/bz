@@ -223,27 +223,38 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     });
   });
 
-  it('删除条目（收件流）确认框：危险主动作挂 bz-flow-dialog--danger（issue 291 评审补），取消不动盘', async () => {
+  // 翻转（效率整改 5 免确认口径，2026-09-18 拍板）：原用例断言「确认框 danger 皮 + 取消不动盘」；
+  // 删除接了 notifyUndo 后不再走 openFlowDialog 二次确认——改为断言「无确认框直落 + 撤销可插回」
+  it('删除条目（收件流）免确认直达撤销：无确认框，删除后撤销插回（效率整改 5）', async () => {
     const { vault } = await openDesktop();
     const item = document.querySelector('.bz-clip-item') as HTMLElement;
     const menu = await openContextMenuOn(item);
     const delBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.trim() === '删除') as HTMLElement;
     expect(delBtn.title).toBe('从收件流删除'); // 确认点的是收件流分支（非剪藏本删除）
     delBtn.click();
-    const popup = await vi.waitFor(() => {
-      const el = document.querySelector('#__shared_confirm_popup__') as HTMLElement;
-      expect(el).toBeTruthy();
-      return el;
-    });
-    expect(popup.querySelector('h4')!.textContent).toBe('删除条目');
-    expect(popup.classList.contains('bz-clip-dialog-editorial')).toBe(true); // 域皮在
-    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);   // 删除钮不高亮
-    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30));
-    expect(diskJson(vault).articles).toHaveLength(2);
+    // 免确认：确认框不出现，条目直落
+    expect(document.querySelector('#__shared_confirm_popup__')).toBeNull();
+    await vi.waitFor(() => expect(diskJson(vault).articles).toHaveLength(1));
+    // 撤销通知在
+    await vi.waitFor(() => {
+      const msg = document.querySelector('.bz-notice-msg') as HTMLElement;
+      expect(msg.textContent).toBe('已删除条目「影视飓风视频」');
+    });
+    // 撤销 → raw 快照插回 news.json
+    (document.querySelector('.bz-notice-action') as HTMLElement).click();
+    await drainNewsWritesForTests();
+    await vi.waitFor(() => {
+      const restored = diskJson(vault).articles.find((x: any) => x.url === 'https://bilibili.com/video/BV1');
+      expect(restored).toBeTruthy();
+      expect(restored.body).toBe('视频简介内容');
+      expect(diskJson(vault).articles).toHaveLength(2);
+    });
   });
 
-  it('删除剪藏 → vault.trash 移入系统回收站（确认文案写明），撤销后原路径恢复', async () => {
+  // 翻转（效率整改 5 同口径）：原用例先断言「删除剪藏」确认框三段式文案再点确定；
+  // 免确认后点删除直接 trash，确认框断言退役，保留 trash + 撤销重建链断言
+  it('删除剪藏免确认：vault.trash 移入系统回收站，撤销后原路径恢复（效率整改 5）', async () => {
     const { vault } = await openDesktop();
     const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => r.textContent!.includes('剪藏本')) as HTMLElement;
     clipRow.click();
@@ -252,23 +263,14 @@ describe('误标/误删可撤销（enh 包 5）', () => {
     const menu = await openContextMenuOn(item);
     const delBtn = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => b.textContent!.trim() === '删除') as HTMLElement;
     delBtn.click();
-    const popup = await vi.waitFor(() => {
-      const el = document.querySelector('#__shared_confirm_popup__') as HTMLElement;
-      expect(el).toBeTruthy();
-      return el;
-    });
-    // B 包扫尾：三段式标题「删除剪藏」+ 问句 + 回收站后果
-    expect(popup.querySelector('h4')!.textContent).toBe('删除剪藏');
-    expect(popup.textContent).toContain('确定删除剪藏「剪藏笔记A」吗？');
-    expect(popup.textContent).toContain('系统回收站');
-    // issue 291 评审补：删除剪藏是危险主动作 → 挂危险修饰（编辑部皮另有方角危险态覆写）
-    expect(popup.classList.contains('bz-flow-dialog--danger')).toBe(true);
-    (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    // 免确认：确认框不出现，直接进系统回收站
+    expect(document.querySelector('#__shared_confirm_popup__')).toBeNull();
     await vi.waitFor(() => {
       expect(vault.trashed.some((t) => t.path === '归档/网页剪藏/剪藏笔记A.md' && t.system)).toBe(true);
       expect(vault.files.has('归档/网页剪藏/剪藏笔记A.md')).toBe(false);
     });
-    // B 包扫尾：撤销通知带对象名
+    // 撤销通知带对象名
     await vi.waitFor(() => {
       const msg = document.querySelector('.bz-notice-msg') as HTMLElement;
       expect(msg.textContent).toBe('已删除剪藏「剪藏笔记A」（已移入系统回收站）');
