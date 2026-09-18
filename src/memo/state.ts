@@ -1,7 +1,7 @@
 /**
  * 备忘录（memo）域状态：模块级可变对象 M + 界面状态
- * 与 memo 域并存：读写同一 memo.json；后台任务（引用同步/AI 剪藏归档/启动与
- * file-open 提醒）仍由旧 memo 域执行，memo 只负责 UI 与交互（旧 memo 删除时再交接）。
+ * memo.json 唯一属主（ADR-0092，旧 memo 域已退役）；后台任务（引用同步/启动与
+ * file-open 提醒）在域内 file-sync/reminder 执行。
  */
 import type { App } from 'obsidian';
 import type { MemoItem } from './types';
