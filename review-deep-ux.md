@@ -84,4 +84,36 @@
 
 ---
 
-（下一域：memo）
+## memo（备忘录）2026-09-19 深审 · 体验线
+
+> 明细：`.scratch/review-deep/memo-efficiency.md`（★★×8 + ★×6，成本 S×12/M×2）+ `memo-consistency.md`（15 条）。唤起面四路齐备是全域少见好形态；缺口集中在弹窗键盘链路与检索退出语义。bug 线部分见 review-deep-bugs.md memo 节。
+
+### ★★（本轮做）
+- 效率#1/一致#3 编辑器弹窗键盘流断头：bindFormSubmit 未消费、场景弹窗手写 Enter/Escape 双轨——三弹窗统一基元（bug 线 P2）。
+- 效率#12 移动端编辑弹窗不吃 --bz-vvh：软键盘盖住场景/截止/保存整段；域内经 skinClass 定向接管（`max-height: var(--bz-vvh)` + mask 顶对齐）。
+- 效率#14/func M2 初始 loadData 零 catch：读盘失败=面板永久空白连空态都没有——错误态+重试（bug 线 P2 读链健壮化）。
+- 效率#4 编辑器保存无防连点（bug 线 P2）。
+- 效率#5 搜索框 ESC 误关整个面板：有词时清词不关，无词放行（diary「ESC 只清空」先例）。
+- 效率#10 桌面卡体单击零反应、编辑藏右键二级：双击卡体直开编辑器。
+- 效率#11 已完成区无批量出口：「清理更早」入口 + deleteCompletedBefore + 批量 notifyUndo（确认框保留：批量不可逐条反悔）。
+- 一致#1 脏表单拦截（bug 线 P1，144 挂账清账）。
+
+### ★（打包做，S 级）
+- 效率#2 打开面板零聚焦（桌面 composer，notePath 分支聚焦搜索框）。
+- 效率#3 截止快捷档 chip「今天 18:00 / 明天 09:00」（diary「此刻/昨天」同范式）。
+- 效率#6 搜索 ✕ 一键清除 + 空态「清除搜索」钮兑现文案承诺。
+- 效率#7 搜索命中 title 段 `<mark>` 高亮（先转义后替换防注入）。
+- 效率#8 搜索域补 checklist 子任务与 url。
+- 效率#9 搜索增量显隐轻版（数百条内无感，机制对冲）。
+- 一致#5/#6/#9/#10/#11/#12 微收口族：localDayKey/pad2、月历空态接 emptyHtmlStr、月历壳收 render.ts、hint 过期文案、placeholder 常量化+dataset 哨兵、composer 通知带条目标识。
+
+### 记录不修（登记/拍板）
+- 效率#13 移动滑动手势：锦上添花且需真机拍板手势互斥，登记。
+- 一致#13 设置写盘全域无 catch：memo 本轮补 commitScenarios/doSave 两处（写失败可见），「saveSettingsQuiet 低价值静默写」作为 core 级微基元待立项。
+- 一致#14 openExternal 三域副本：本轮收 core/utils 单源（零行为差），favorites/literature 同步替换。
+- 一致#15/M3-9 皮肤档位（font-weight:900 等）与手册位阶：走文档成文豁免（ui-design-manual 补记），不改样式值。
+- 一致#2 删除双保险：memo 本轮对齐效率整改 5（免确认直达 notifyUndo），**favorites/belongings 同款滞后待各自域轮**——防域间不一致的跟进项，已记 bugs 账。
+
+---
+
+（下一域：clipbook）
