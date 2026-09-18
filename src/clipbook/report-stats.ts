@@ -10,6 +10,7 @@
  * - 时段分布 = 会话封存时刻 ts 的小时桶（每桶 = 该时段阅读分钟数，读多久权重落在哪一刻）。
  */
 import type { ClipReadLogEntry } from './data';
+import { pad2 } from '../core/ui/str';
 
 /** 报告周期：本周（周一起）/ 本月（1 日起） */
 export type ReportPeriod = 'week' | 'month';
@@ -67,8 +68,8 @@ function hourOf(ts: number): number {
 
 function dayKeyOf(ts: number): string {
   const d = new Date(ts);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  // pad2 单源（一致#12）：core/ui/str 零依赖区（与 render.ts 同径，不经 core/utils）
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
 /** 聚合一份周期报告（log 空或全被过滤 → 零值结果，调用方按 articles/totalMinutes 判空态） */

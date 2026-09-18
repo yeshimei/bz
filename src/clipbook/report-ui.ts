@@ -15,12 +15,16 @@ import { getApp } from '../core/app';
 import { yieldToMainThread } from '../core/utils';
 import { escManager } from '../core/esc-manager';
 import { readClipbookData, type ClipReadLogEntry } from './data';
+import { readNewsData } from './news-data';
+import { articleKeyOf } from './constants';
+import { M } from './state';
 import { flushReadingSession } from './flow';
 import { buildClipReport, type ClipReportData, type ReportPeriod } from './report-stats';
 import {
   clipReportShellHtml, clipReportSkeletonHtml, buildClipReportSections,
 } from './render';
 import { openClipbook } from './index';
+import { revealArticleByKey } from './ui';
 
 let overlayEl: HTMLElement | null = null;
 let escHandle: { unregister(): void } | null = null;
@@ -49,6 +53,24 @@ const ERROR_HTML = `<div class="bz-clp-rep-error">
 
 function bodyEl(): HTMLElement | null {
   return overlayEl ? overlayEl.querySelector('[data-clp-rep-body]') as HTMLElement | null : null;
+}
+
+/** Top5 可点回看的可定位 key 集（效率#20）：面板装载面（M.articles id ∪ clip 面派生键）
+ *  ∪ news.json 现读（报告不依赖主面板装载态——命令直开也能定位 news 条目）。
+ *  读盘失败按已收集部分返回（失隐条目诚实不挂「打开」钮，不承诺定位不到的条目）。 */
+async function collectAvailableKeys(): Promise<Set<string>> {
+  const keys = new Set<string>();
+  for (const a of M.articles || []) keys.add(a.id);
+  for (const n of M.clipNotes || []) {
+    if (n && n.path) keys.add('clip:' + String(n.path));
+  }
+  try {
+    const res = await readNewsData();
+    if (res.ok && !res.missing) {
+      for (const raw of ((res.data && res.data.articles) || []) as any[]) keys.add(articleKeyOf(raw));
+    }
+  } catch (e) { /* 读盘失败按空补充——已有集合仍可用 */ }
+  return keys;
 }
 
 /** 打开报告弹层（幂等：已开则重读数据重渲）。app 参数与各域 open 入口同形。
@@ -118,13 +140,26 @@ function buildDom(): void {
     const t = e.target as HTMLElement;
     if (t.closest('[data-clp-rep-close]')) { closeClipbookReport(); return; }
     const segBtn = t.closest('[data-period]') as HTMLElement | null;
-    if (segBtn) setPeriod((segBtn.dataset.period || 'week') as ReportPeriod);
+    if (segBtn) { setPeriod((segBtn.dataset.period || 'week') as ReportPeriod); return; }
+    // Top5 回看（效率#20）：收报告弹层后按 key 定位选中（面板开着 selectArticle / 未开走装载链）
+    const openBtn = t.closest('[data-clip-rep-open]') as HTMLElement | null;
+    if (openBtn) {
+      const row = openBtn.closest('[data-clip-rep-key]') as HTMLElement | null;
+      const key = row ? row.getAttribute('data-clip-rep-key') || '' : '';
+      if (key) { closeClipbookReport(); revealArticleByKey(key); }
+    }
   });
-  // 关闭钮键盘可达（Enter/Space）
+  // 关闭钮键盘可达（Enter/Space）；Top5「打开」钮同款（效率#20）
   overlayEl.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
     const t = e.target as HTMLElement;
-    if (t.closest('[data-clp-rep-close]')) { e.preventDefault(); closeClipbookReport(); }
+    if (t.closest('[data-clp-rep-close]')) { e.preventDefault(); closeClipbookReport(); return; }
+    const openBtn = t.closest('[data-clip-rep-open]') as HTMLElement | null;
+    if (openBtn) {
+      const row = openBtn.closest('[data-clip-rep-key]') as HTMLElement | null;
+      const key = row ? row.getAttribute('data-clip-rep-key') || '' : '';
+      if (key) { e.preventDefault(); closeClipbookReport(); revealArticleByKey(key); }
+    }
   });
 
   escHandle = escManager.register('bz-clipbook-report', {
@@ -221,6 +256,9 @@ async function renderBody(withToast: boolean): Promise<void> {
     await yieldToMainThread(YIELD_MS);
     if (!alive()) return finishAbort();
     const data: ClipReportData = buildClipReport(logCache, period, new Date());
+    // Top5 可点回看（效率#20）：现查库内可定位条目，命中行才挂「打开」钮
+    const availKeys = await collectAvailableKeys();
+    if (!alive()) return finishAbort();
 
     // 本期空态（⑨）：readLog 有记录但本期窗口（本周/本月）没读过，或记录全是零分钟段——
     // 整页只显空态，不渲染零值统计段（issue 358 真机回归「没有阅读记录时统计有误」）。
@@ -236,7 +274,7 @@ async function renderBody(withToast: boolean): Promise<void> {
     }
 
     body.innerHTML = ''; // 骨架 → 报告区（分段渐进填充）
-    for (const section of buildClipReportSections(data)) {
+    for (const section of buildClipReportSections(data, { availableKeys: availKeys })) {
       if (!alive()) return finishAbort();
       await yieldToMainThread(YIELD_MS);
       // 二次校验：让出期间弹层可能已被关闭 → 不把本段写进已隐藏的 DOM
