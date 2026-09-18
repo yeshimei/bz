@@ -9,6 +9,10 @@ import { notice, cleanupNotices } from './core/notice';
 import { escManager } from './core/esc-manager';
 import { closeItemMenu } from './core/item-actions';
 import { cancelActiveFlowDialog } from './core/flow-dialog';
+import { closeSettingsModal } from './core/settings-modal';
+import { closeModelPicker } from './core/settings-model-picker';
+import { closePathPicker } from './core/path-picker';
+import { closeLightbox } from './core/ui/lightbox';
 import { setApp, getApp } from './core/app';
 import { setAISettingsProvider, resetAIProviderCache } from './core/ai';
 import { setSettingsProvider, setSettingsSaver } from './core/settings-provider';
@@ -275,6 +279,10 @@ export default class BzPlugin extends Plugin {
     // 域事件总线地基：全插件唯一 vault 订阅点挂载（registerEvent 保证插件卸载时 Obsidian 自动清理引用）
     attachObsidianAdapter(this.app, (ref) => this.registerEvent(ref as any));
 
+    // ESC 全局管理器重挂入口（N1）：escManager 是模块 IIFE 单例，禁用→再启用不重新求值，
+    // destroy 只软关不清层——onload 每次恢复 ESC 处理（首次调用复位缺省旗标，幂等）
+    escManager.arm();
+
     // 移动端可视视口高度（issue 266）：把 visualViewport.height 写进 --bz-vvh，
     // 让移动端真全屏面板（.bz-panel-mtop）随软键盘收缩，底部输入条不再被键盘压住。
     // 桌面端无害（媒体查询不命中）；卸载时 onunload 解绑。
@@ -337,6 +345,12 @@ export default class BzPlugin extends Plugin {
     unbindMobileViewport();
     // 统一右键菜单/长按抽屉浮层先收口（fix(main)：卸载接线补全）
     closeItemMenu();
+    // 全局浮层收口（N2）：设置弹窗/模型选择器/路径选择器/灯箱均导出幂等 close——
+    // 禁用时若开着，遮罩残留且灯箱滚动锁留在 body（未打开时调用为安全 no-op）
+    closeSettingsModal();
+    closeModelPicker();
+    closePathPicker();
+    closeLightbox();
     // toast 卸载清理（UX 整改 l2-toast）：清空通知容器 DOM + 存活/去重状态
     cleanupNotices();
     // 清理裸注册命令（统一 bz- 前缀，必须显式 removeCommand）

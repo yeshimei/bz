@@ -15,8 +15,13 @@ export interface EscHandle {
 
 export const escManager = (() => {
   const layers: (EscLayer & { id: string })[] = [];
+  /** 软关旗标（N1）：destroy() 置位、arm() 复位——keydown 首行判旗直返。
+   *  Obsidian 禁用→再启用不会重新求值模块（IIFE 单例常驻），摘监听/清层都不可逆，
+   *  软关后 layers 保留（重启用后 isVisible 判活自愈），ESC 处理可随 arm() 恢复。 */
+  let disabled = false;
 
   const onKeydown = (e: KeyboardEvent) => {
+    if (disabled) return;
     if (e.key !== 'Escape') return;
     for (let i = layers.length - 1; i >= 0; i--) {
       const L = layers[i];
@@ -56,11 +61,15 @@ export const escManager = (() => {
         },
       };
     },
-    /** 插件卸载时移除全局监听 */
+    /** 插件卸载时软关（N1）：只置 disabled 旗标——不摘 document 监听（模块 IIFE
+     *  常驻单例，Obsidian 禁用→再启用不重新求值，摘了就全站 ESC 永久失效）、
+     *  不清 layers（重启用后旧层由 isVisible 判活自愈）。恢复走 arm()。 */
     destroy() {
-      if (typeof document !== 'undefined') {
-        document.removeEventListener('keydown', onKeydown);
-      }
+      disabled = true;
+    },
+    /** 插件（重）启用时恢复 ESC 处理（main.ts onload 调用；幂等） */
+    arm() {
+      disabled = false;
     },
   };
 })();
