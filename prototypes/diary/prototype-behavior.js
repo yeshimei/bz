@@ -1,4 +1,4 @@
-/* 源指纹 ce19b017cad85d62 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ab7d46aedd6377b5 · 仓内输入 76 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -13597,10 +13597,13 @@ ${entry.content.trim()}`;
     mask.appendChild(popup);
     document.body.appendChild(mask);
   }
+  var activeAddDialogOnSaved = null;
   function openAddDialog(opts) {
+    var _a;
     const mask = document.getElementById("add-diary-mask");
     const popup = document.getElementById("add-diary-popup");
     if (!mask || !popup) return;
+    activeAddDialogOnSaved = (_a = opts == null ? void 0 : opts.onSaved) != null ? _a : null;
     if (opts == null ? void 0 : opts.yearRange) {
       const range = opts.yearRange;
       setDateTimeYearRangeProvider(() => range);
@@ -13673,9 +13676,15 @@ ${entry.content.trim()}`;
     const timeStr = targetMoment.format("HH:mm");
     savingNewEntry = true;
     try {
-      await addEntry(dateStr, timeStr, selTagNames, "");
+      const entry = await addEntry(dateStr, timeStr, selTagNames, "");
       mask.style.display = "none";
       popup.style.display = "none";
+      try {
+        await jumpToDiaryEntry(entry);
+        activeAddDialogOnSaved == null ? void 0 : activeAddDialogOnSaved();
+        activeAddDialogOnSaved = null;
+      } catch (e) {
+      }
     } catch (error) {
       if (isUnparsedRefusal(error) || isDiaryReadFailure(error)) return;
       console.error("保存日记失败:", error);
@@ -15663,11 +15672,16 @@ ${entry.content.trim()}`;
       void pruneRailThumbs(railThumbKeepKeys(this.entries));
     }
     // ---------- 头部动作（写日记 / 搜索 / 日期选择器） ----------
-    /** 写日记：本域 openAddDialog（滚轮年份动态范围取自当前数据，UX-34） */
+    /** 写日记：本域 openAddDialog（滚轮年份动态范围取自当前数据，UX-34）。
+     *  onSaved：保存成功回调注入（item-1789672493967-y11jgy）——新笔记打开后收起墙，
+     *  避免弹窗关了墙仍盖在最上层挡住笔记（对齐 jumpTo 先例「跳转后关日记本」） */
     openAddEntry() {
       var _a;
       try {
-        openAddDialog({ yearRange: (_a = this.getYearRange()) != null ? _a : void 0 });
+        openAddDialog({
+          yearRange: (_a = this.getYearRange()) != null ? _a : void 0,
+          onSaved: () => this.hide()
+        });
       } catch (e) {
         notice("写日记暂不可用：" + (e instanceof Error ? e.message : String(e)), "error");
       }
