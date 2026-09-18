@@ -1,4 +1,4 @@
-/* 源指纹 db7b66272c75a4e5 · 仓内输入 60 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b4ef7f7a23935125 · 仓内输入 60 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -4684,6 +4684,21 @@ var BZW_password_vault = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
   function escAttr(s) {
     return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
@@ -4734,13 +4749,10 @@ var BZW_password_vault = (() => {
       return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
     }
     if (diffSeconds < 60) return "刚刚";
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-    const todayStart = (0, import_moment.default)(now).startOf("day");
-    if (target.isSame(todayStart, "day") && diffMinutes >= 60) {
-      const hours = Math.floor(diffMinutes / 60);
-      return `${hours}小时前`;
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
     }
+    const diffMinutes = Math.floor(diffSeconds / 60);
     const yesterdayStart = (0, import_moment.default)(now).subtract(1, "days").startOf("day");
     const beforeYesterdayStart = (0, import_moment.default)(now).subtract(2, "days").startOf("day");
     if (target.isSame(yesterdayStart, "day")) {
@@ -4750,7 +4762,7 @@ var BZW_password_vault = (() => {
       return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
     }
     const weekStart = (0, import_moment.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(todayStart)) {
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
       return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
     }
     const isThisYear = target.year() === nowMoment.year();
@@ -10838,15 +10850,6 @@ var BZW_password_vault = (() => {
   }
 
   // src/password-vault/render.ts
-  function relTime(iso) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const diff = (Date.now() - d.getTime()) / 864e5;
-    if (diff < 1) return "今天";
-    if (diff < 2) return "昨天";
-    if (diff < 30) return Math.round(diff) + " 天前";
-    return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
-  }
   function fmtDate(iso) {
     return new Date(iso).toLocaleDateString("zh-CN");
   }
@@ -11511,7 +11514,7 @@ var BZW_password_vault = (() => {
         this.renderAll();
         this.refreshMobPage();
       } else if (act === "del") {
-        this.askConfirm("删除密码条目", `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, async () => {
+        this.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, async () => {
           try {
             await this.dataManager.deleteItem(d.id);
           } catch (e) {
@@ -11765,7 +11768,7 @@ var BZW_password_vault = (() => {
           icon: "trash-2",
           label: "删除",
           kind: "danger",
-          onClick: () => this.askConfirm("删除密码条目", `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, () => {
+          onClick: () => this.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, () => {
             void (async () => {
               try {
                 await this.dataManager.deleteItem(d.id);

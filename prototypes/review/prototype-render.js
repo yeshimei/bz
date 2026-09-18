@@ -1,4 +1,4 @@
-/* 源指纹 3f0fa2dd6c05a31c · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 dea5a006a017f1a4 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
@@ -530,7 +530,7 @@ var BZR_review = (() => {
     } else if (ctx.scope === "folder") {
       const chips = ctx.folders.length ? ctx.folders.map((f) => {
         const label = f === "" ? "（库根目录）" : f;
-        return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc2(label)}">${esc2(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc2(f)}" aria-label="移除 ${esc2(label)}">✕</button></span>`;
+        return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc2(label)}">${esc2(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc2(f)}" aria-label="移除 ${esc2(label)}">${icon("x")}</button></span>`;
       }).join("") : `<span class="bz-qp-detail">还没选文件夹</span>`;
       detail = `<div class="bz-qp-folder-row"><div class="bz-qp-chips">${chips}</div><button type="button" class="bz-btn bz-btn--ghost" data-act="pick-folders">${ctx.folders.length ? "改文件夹" : "选择文件夹"}</button></div>`;
     } else {

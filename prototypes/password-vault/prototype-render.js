@@ -1,4 +1,4 @@
-/* 源指纹 85cf76b14743c7c3 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 33010572237267ca · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/password-vault/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/password-vault/render.ts → window.BZR_password_vault（评审壳预览包，ADR-0104） */
 var BZR_password_vault = (() => {
@@ -55,6 +55,21 @@ var BZR_password_vault = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
   function escAttr(s) {
     return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
   }
@@ -78,15 +93,6 @@ var BZR_password_vault = (() => {
   }
 
   // src/password-vault/render.ts
-  function relTime(iso) {
-    if (!iso) return "";
-    const d = new Date(iso);
-    const diff = (Date.now() - d.getTime()) / 864e5;
-    if (diff < 1) return "今天";
-    if (diff < 2) return "昨天";
-    if (diff < 30) return Math.round(diff) + " 天前";
-    return d.toLocaleDateString("zh-CN", { month: "short", day: "numeric" });
-  }
   function fmtDate(iso) {
     return new Date(iso).toLocaleDateString("zh-CN");
   }
