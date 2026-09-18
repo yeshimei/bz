@@ -4,7 +4,7 @@
  * 纯度：禁 obsidian/moment/core 服务（tests/core/render-purity 守卫 import 图）——
  * 时间类（due 状态/文案、相对时间）由调用方计算后以参数注入，本层只拼字符串。
  */
-import { escapeHtml as esc, iconSpan } from '../core/ui/str';
+import { escapeHtml as esc, iconSpan, stripMdExt, emptyHtmlStr } from '../core/ui/str';
 import type { MemoItem } from './types';
 
 /** 域图标表（lucide 名；渲染后组件库 mountIcons 统一 setIcon） */
@@ -112,12 +112,14 @@ export function mobAddSceneChipHtml(): string {
 
 /** 面板壳首帧模板（.bz-panel-frame.bz-memo-panel；各槽位的渲染与行为接线在 ui.ts）
  *
- * 头行钮组（issue 197 → 268 收敛）：品牌块 + 右侧「打开备忘录设置 / 关闭」图标钮。
- * 皮肤段（.bz-memo-skin-*）在桌面把整组收掉（原型无此二钮）；移动端真全屏只放回
- * **关闭**一枚（issue 268：设置与新建从移动端头行撤除——设置并入设置面板，
- * 新建归底部录入「添加」与场景条尾部「添加场景」），并在收口段定档 28px 贴纸形态。
+ * 头行钮组（issue 197 → 268 → M3-7 收敛）：品牌块 + 右侧「关闭」图标钮。
+ * 「设置」钮已退役（issue 210 桌面皮肤段收整组 + issue 268 移动端撤除后三端不可达，
+ * 2026-09 深审 M3-7 删尸——设置入口 = 场景项菜单「在设置中编辑」）。
+ * 皮肤段（.bz-memo-skin-*）在桌面把整组收掉（原型无此钮）；移动端真全屏只放回
+ * 关闭一枚，并在收口段定档 28px 贴纸形态。
  * 新建：移动端入口归底部录入「添加」（打开创建弹窗）与场景条尾部「添加场景」——
- * issue 266 曾为此在头行补过一枚移动端专属新建钮，issue 268 随本次收敛退役。 */
+ * issue 266 曾为此在头行补过一枚移动端专属新建钮，issue 268 随本次收敛退役。
+ * 搜索框尾部「清除搜索」✕（效率#6）：有词才显示（ui 侧 toggle hidden）。 */
 export function panelShellHtml(): string {
 	return `
     <div class="bz-panel-frame bz-memo-panel bz-panel-mtop">
@@ -126,8 +128,7 @@ export function panelShellHtml(): string {
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭" aria-label="关闭">${iconSpan(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">
@@ -146,11 +147,11 @@ export function panelShellHtml(): string {
             <button class="bz-btn bz-btn--primary bz-btn--md" data-memo-newbtn>${iconSpan(MEMO_ICONS.add, 'bz-ic--sm')} 新建备忘录</button>
           </div>
           <div class="bz-toolrow">
-            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
+            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…" aria-label="搜索备忘录"><button type="button" class="bz-memo-search-clear" data-memo-search-clear title="清除搜索" aria-label="清除搜索" hidden>${iconSpan(MEMO_ICONS.close, 'bz-ic--sm')}</button></div>
             <div class="bz-memo-sort" data-memo-sort></div>
             <div class="bz-memo-viewtoggle" data-memo-viewtoggle role="tablist" aria-label="视图切换">
-              <button class="bz-memo-viewbtn is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
-              <button class="bz-memo-viewbtn" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
+              <button class="bz-memo-viewbtn bz-touch-target bz-touch-target--lg is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
+              <button class="bz-memo-viewbtn bz-touch-target bz-touch-target--lg" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
             </div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
@@ -187,7 +188,7 @@ export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, recurT
 	}
 	// 4. 位置（绑定笔记才显示；公开课课程同名文件不重复）
 	if (it.notePath) {
-		const name = it.notePath.split('/').pop()!.replace(/\.md$/i, '');
+		const name = stripMdExt(it.notePath.split('/').pop() || '');
 		const isCourseSame = it.scene === '公开课' && it.courseName && it.courseName.replace(/^《|》$/g, '') === name;
 		if (!isCourseSame) {
 			tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${esc(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${esc(name)}</span>`);
@@ -216,19 +217,23 @@ export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, recurT
 }
 
 /** 勾选圈（列表卡与移动抽屉头共用，ADR-0104 markup 单源；完成态带 bz-memo-checked，
- *  title 随态换文案，data-memo-check 锚点两处同款——点击行为各自接线在 ui.ts） */
+ *  title 随态换文案，data-memo-check 锚点两处同款——点击行为各自接线在 ui.ts）。
+ *  键盘可达（M3-10）：role="checkbox" + tabindex + aria-checked/label——Enter/Space
+ *  触发由 ui.ts keydown 委托承接（span 无原生点击语义） */
 export function checkHtml(it: MemoItem): string {
-	return `<span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check title="${it.completed ? '恢复未完成' : '标记完成'}"></span>`;
+	const label = it.completed ? '恢复未完成' : '标记完成';
+	return `<span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check role="checkbox" tabindex="0" aria-checked="${it.completed ? 'true' : 'false'}" aria-label="${label}" title="${label}"></span>`;
 }
 
 /** 清单子任务行组（issue 354，ADR-0104 纯层 markup：标题之下、meta 之上；
- *  锚点 data-memo-cl="itemId:idx"，点击行为接线在 ui.ts；父项完成态整组淡显） */
+ *  锚点 data-memo-cl="itemId:idx"，点击行为接线在 ui.ts；父项完成态整组淡显）。
+ *  键盘可达（M3-10）：行 = role="checkbox" + tabindex + aria-checked（同勾选圈口径） */
 export function checklistHtml(it: MemoItem): string {
 	const cl = it.checklist || [];
 	if (!cl.length) return '';
 	const rows = cl
 		.map(
-			(c, i) => `<div class="bz-memo-cl-row${c.done ? ' is-done' : ''}" data-memo-cl="${esc(it.id)}:${i}">
+			(c, i) => `<div class="bz-memo-cl-row${c.done ? ' is-done' : ''}" data-memo-cl="${esc(it.id)}:${i}" role="checkbox" tabindex="0" aria-checked="${c.done ? 'true' : 'false'}">
         <span class="bz-memo-cl-box${c.done ? ' bz-memo-cl-on' : ''}"></span>
         <span class="bz-memo-cl-text">${esc(c.text)}</span>
       </div>`
@@ -237,14 +242,39 @@ export function checklistHtml(it: MemoItem): string {
 	return `<div class="bz-memo-cl${it.completed ? ' bz-memo-cl-dim' : ''}">${rows}</div>`;
 }
 
-/** 条目卡（勾选/标题/清单子任务/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts） */
-export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = '', checkProgress = ''): string {
+/** 标题命中高亮（效率#7）：先 escapeHtml 再大小写不敏感 `<mark>` 包裹——
+ *  转义后的文本与转义后的关键词做 indexOf 分段（不劈开 &amp; 等实体，防注入）；
+ *  kw 空/无命中原样返回。只做 title 一段（清单/meta 命中靠条目级召回） */
+export function highlightTitleHtml(title: string, kw: string): string {
+	const safe = esc(title);
+	const needle = esc((kw || '').trim()).toLowerCase();
+	if (!needle) return safe;
+	const hay = safe.toLowerCase();
+	let out = '';
+	let i = 0;
+	for (;;) {
+		const hit = hay.indexOf(needle, i);
+		if (hit === -1) {
+			out += safe.slice(i);
+			break;
+		}
+		out += `${safe.slice(i, hit)}<mark>${safe.slice(hit, hit + needle.length)}</mark>`;
+		i = hit + needle.length;
+	}
+	return out;
+}
+
+/** 条目卡（勾选/标题/清单子任务/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts）。
+ *  kw（效率#7）：搜索关键词，标题段命中 `<mark>` 高亮；tabindex="0"（M3-10 键盘可达，
+ *  Enter/Space 开条目菜单由 ui.ts wireCards 接线） */
+export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = '', checkProgress = '', kw = ''): string {
 	const titleCls = it.completed ? ' bz-memo-done' : '';
 	const clickable = !!(it.linkedNote || it.url);
+	const titleText = highlightTitleHtml(it.title, kw);
 	const titleHtml = clickable
-		? `<a href="javascript:void(0)" data-memo-openitem="${esc(it.id)}">${esc(it.title)}</a>`
-		: esc(it.title);
-	return `<div class="bz-memo-card${titleCls}" data-memo-id="${esc(it.id)}">
+		? `<a href="javascript:void(0)" data-memo-openitem="${esc(it.id)}">${titleText}</a>`
+		: titleText;
+	return `<div class="bz-memo-card${titleCls}" data-memo-id="${esc(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
@@ -254,15 +284,17 @@ export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText 
     </div>`;
 }
 
-/** 分区标签（到期优先 / 其他） */
-export function sectionLabelHtml(label: string, count: number): string {
-	return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
+/** 分区标签（到期优先 / 其他）。kind（'urgent'|'normal'，效率#9）：搜索增量显隐路径
+ *  按区定位计数节点（data-memo-sec），不传不带属性（行为与旧版一致） */
+export function sectionLabelHtml(label: string, count: number, kind = ''): string {
+	return `<div class="bz-memo-section-label"${kind ? ` data-memo-sec="${kind}"` : ''}>${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
 }
 
-/** 已完成折叠条（open = 展开态） */
+/** 已完成折叠条（open = 展开态）。语义 button（M3-10：键盘可达，Enter/Space 原生触发
+ *  click，委托方不变）；aria-expanded 同步展开态 */
 export function doneBarHtml(open: boolean, count: number): string {
-	return `<div class="bz-memo-donebar${open ? ' bz-memo-donebar-open' : ''}" data-memo-donebar>
-      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
+	return `<button type="button" class="bz-memo-donebar${open ? ' bz-memo-donebar-open' : ''}" data-memo-donebar aria-expanded="${open ? 'true' : 'false'}">
+      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></button>`;
 }
 
 /** 「更早 N 条」放全钮 */
@@ -282,12 +314,13 @@ export type CalChip = { id: string; title: string; cls: string };
 /** 日历格子（blank = 月首尾补位空格） */
 export type CalCell = { day: number; blank?: boolean; today?: boolean; selected?: boolean; chips: CalChip[] };
 
-/** 月历头行：‹ › 月份翻页 + 回到今天（锚点 data-memo-cal-prev/next/today） */
+/** 月历头行：‹ › 月份翻页 + 回到今天（锚点 data-memo-cal-prev/next/today）。
+ *  翻页钮挂 touch-target--lg（M2-5：组件基档 22×26 移动端不足触控下限） */
 export function calHeadHtml(monthLabel: string): string {
 	return `<div class="bz-memo-cal-head">
-      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan('chevron-left')}</button>
+      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-prev title="上个月" aria-label="上个月">${iconSpan('chevron-left')}</button>
       <div class="bz-memo-cal-title">${esc(monthLabel)}</div>
-      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan('chevron-right')}</button>
+      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-next title="下个月" aria-label="下个月">${iconSpan('chevron-right')}</button>
       <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
     </div>`;
 }
@@ -323,9 +356,17 @@ export function calStatsHtml(monthCount: number, todayCount: number | null): str
 
 /** 空月提示（issue 355 真机回归）：当前月零条目时给「本月没有到期事项」人话解释，不再一片空白；
  *  filtered = 搜索/场景筛选在生效（审查 P2 修复批）——滤空时文案附筛选上下文，不再把「被筛掉」
- *  说成「没有到期」 */
+ *  说成「没有到期」。
+ *  一致#6：自绘 bz-memo-cal-empt 三件套收口 emptyHtmlStr 空态单源（icon 空串跳过图标节点） */
 export function calEmptyHtml(filtered: boolean): string {
-  return filtered
-    ? `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">当前筛选下本月没有到期事项</div><div class="bz-memo-cal-empt-d">试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上</div></div>`
-    : `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
+	return filtered
+		? emptyHtmlStr('', '当前筛选下本月没有到期事项', '试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上')
+		: emptyHtmlStr('', '本月没有到期事项', '设了截止时间的备忘录才会出现在月历上');
+}
+
+/** 月历当日清单面板（一致#11：壳自 ui.ts 拼串收口纯层单源；label 文案调用方拼好注入）。
+ *  cardsHtml 空时出「这一天没有备忘录」空态（emptyHtmlStr 单源，替代自绘 bz-memo-cal-noday） */
+export function calDayPanelHtml(label: string, count: number, cardsHtml: string): string {
+	const body = cardsHtml || emptyHtmlStr('', '这一天没有备忘录');
+	return `<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, count)}${body}</div>`;
 }

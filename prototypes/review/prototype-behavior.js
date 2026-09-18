@@ -1,4 +1,4 @@
-/* 源指纹 bae947cbdc472305 · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a044844c009537af · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -4410,206 +4410,13 @@ var BZW_review = (() => {
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
   var ESC_MAP;
   var init_str = __esm({
     "src/core/ui/str.ts"() {
       ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-    }
-  });
-
-  // src/core/utils.ts
-  function escapeHtml2(str2) {
-    return str2.replace(/[&<>"']/g, (m) => {
-      if (m === "&") return "&amp;";
-      if (m === "<") return "&lt;";
-      if (m === ">") return "&gt;";
-      if (m === '"') return "&quot;";
-      return "&#39;";
-    });
-  }
-  function generateId(prefix) {
-    prefix = prefix || "item";
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
-  }
-  function extractUrlAndDisplay(c) {
-    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-    if (m1) return { url: m1[2], display: m1[1] };
-    const m2 = c.match(/(https?:\/\/\S+)/i);
-    if (m2) {
-      const u = m2[1], d = c.replace(u, "").trim();
-      return { url: u, display: d || u };
-    }
-    return { url: null, display: c };
-  }
-  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
-    const target = (0, import_moment2.default)(date);
-    if (!target.isValid()) return "无效日期";
-    let hasExplicitTime = true;
-    if (typeof date === "string") {
-      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
-    }
-    const nowMoment = (0, import_moment2.default)(now);
-    const diffSeconds = nowMoment.diff(target, "seconds");
-    function shouldShowTime() {
-      const timeStr = target.format("HH:mm");
-      if (timeStr !== "00:00") return true;
-      return hasExplicitTime;
-    }
-    if (diffSeconds < 0) {
-      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
-    }
-    if (diffSeconds < 60) return "刚刚";
-    if (target.isSame(nowMoment.startOf("day"), "day")) {
-      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
-    }
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
-    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
-    if (target.isSame(yesterdayStart, "day")) {
-      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
-    }
-    if (target.isSame(beforeYesterdayStart, "day")) {
-      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
-    }
-    const weekStart = (0, import_moment2.default)(now).startOf("week");
-    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
-      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
-    }
-    const isThisYear = target.year() === nowMoment.year();
-    if (isThisYear) {
-      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
-    }
-    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
-  }
-  function getCurrentNoteInfo() {
-    const f = getApp().workspace.getActiveFile();
-    return f ? { path: f.path, name: f.basename } : null;
-  }
-  function getCurrentCursorPosition() {
-    const ws = getApp().workspace;
-    const ed = ws.activeEditor && ws.activeEditor.editor;
-    return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
-  }
-  async function fetchPageTitle(url) {
-    const text = await httpGetText(url, {
-      timeoutMs: 8e3,
-      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
-      fetchImpl: requestUrlAsFetch()
-    });
-    if (!text) return null;
-    const m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
-    return m && m[1] ? m[1].trim() : null;
-  }
-  function bytesEqual(a, b) {
-    if (a.length !== b.length) return false;
-    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
-    return true;
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  function cmpZh(a, b) {
-    return String(a || "").localeCompare(String(b || ""), "zh");
-  }
-  function isUnderFolder(folder, path) {
-    const f = (folder || "").trim().replace(/\/+$/, "");
-    if (!f) return false;
-    return path === f || path.startsWith(f + "/");
-  }
-  function hash31(str2) {
-    let h = 0;
-    const t = String(str2 || "");
-    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
-    return h >>> 0;
-  }
-  function debounce(fn, ms) {
-    let t;
-    const wrapped = (...args) => {
-      if (t !== void 0) clearTimeout(t);
-      t = setTimeout(() => {
-        t = void 0;
-        fn(...args);
-      }, ms);
-    };
-    wrapped.cancel = () => {
-      if (t !== void 0) {
-        clearTimeout(t);
-        t = void 0;
-      }
-    };
-    return wrapped;
-  }
-  function yieldToMainThread(timeoutMs = 200) {
-    return new Promise((resolve2) => {
-      if (typeof window === "undefined") {
-        resolve2();
-        return;
-      }
-      const ric = window.requestIdleCallback;
-      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
-      else window.setTimeout(resolve2, 0);
-    });
-  }
-  function cancelClipboardClear() {
-    if (clipboardClearTimer !== null) {
-      clearTimeout(clipboardClearTimer);
-      clipboardClearTimer = null;
-    }
-  }
-  function armClipboardClear() {
-    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
-    clipboardClearTimer = setTimeout(() => {
-      clipboardClearTimer = null;
-      try {
-        void navigator.clipboard.writeText("").catch(() => {
-        });
-      } catch (e) {
-      }
-    }, CLIPBOARD_CLEAR_DELAY_MS);
-  }
-  function copySensitiveText(text) {
-    try {
-      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
-    } catch (e) {
-      return Promise.reject(e);
-    }
-  }
-  async function copySensitiveWithFallback(text) {
-    try {
-      await copySensitiveText(text);
-      return true;
-    } catch (e) {
-      try {
-        const ta = document.createElement("textarea");
-        ta.value = text;
-        ta.style.cssText = "position:fixed;opacity:0";
-        document.body.appendChild(ta);
-        ta.select();
-        const ok = document.execCommand("copy");
-        ta.remove();
-        if (ok) armClipboardClear();
-        return ok;
-      } catch (e2) {
-        return false;
-      }
-    }
-  }
-  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_app();
-      init_http();
-      init_str();
-      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
-      clipboardClearTimer = null;
     }
   });
 
@@ -5053,6 +4860,221 @@ var BZW_review = (() => {
       SHORT_THRESHOLD = 20;
       live = [];
       recent = {};
+    }
+  });
+
+  // src/core/utils.ts
+  function escapeHtml2(str2) {
+    return str2.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  function generateId(prefix) {
+    prefix = prefix || "item";
+    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2, 8);
+  }
+  function extractUrlAndDisplay(c) {
+    const m1 = c.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+    if (m1) return { url: m1[2], display: m1[1] };
+    const m2 = c.match(/(https?:\/\/\S+)/i);
+    if (m2) {
+      const u = m2[1], d = c.replace(u, "").trim();
+      return { url: u, display: d || u };
+    }
+    return { url: null, display: c };
+  }
+  function formatRelativeTime(date, now = /* @__PURE__ */ new Date()) {
+    const target = (0, import_moment2.default)(date);
+    if (!target.isValid()) return "无效日期";
+    let hasExplicitTime = true;
+    if (typeof date === "string") {
+      hasExplicitTime = !/^\d{4}-\d{2}-\d{2}$/.test(date.trim());
+    }
+    const nowMoment = (0, import_moment2.default)(now);
+    const diffSeconds = nowMoment.diff(target, "seconds");
+    function shouldShowTime() {
+      const timeStr = target.format("HH:mm");
+      if (timeStr !== "00:00") return true;
+      return hasExplicitTime;
+    }
+    if (diffSeconds < 0) {
+      return target.format(shouldShowTime() ? "YYYY-MM-DD HH:mm" : "YYYY-MM-DD");
+    }
+    if (diffSeconds < 60) return "刚刚";
+    if (target.isSame(nowMoment.startOf("day"), "day")) {
+      return relTime(target.format("YYYY-MM-DD HH:mm:ss"), now.getTime());
+    }
+    const diffMinutes = Math.floor(diffSeconds / 60);
+    const yesterdayStart = (0, import_moment2.default)(now).subtract(1, "days").startOf("day");
+    const beforeYesterdayStart = (0, import_moment2.default)(now).subtract(2, "days").startOf("day");
+    if (target.isSame(yesterdayStart, "day")) {
+      return shouldShowTime() ? `昨天 ${target.format("HH:mm")}` : "昨天";
+    }
+    if (target.isSame(beforeYesterdayStart, "day")) {
+      return shouldShowTime() ? `前天 ${target.format("HH:mm")}` : "前天";
+    }
+    const weekStart = (0, import_moment2.default)(now).startOf("week");
+    if (target.isSameOrAfter(weekStart, "day") && target.isBefore(nowMoment.startOf("day"))) {
+      return shouldShowTime() ? `${target.format("ddd")} ${target.format("HH:mm")}` : target.format("ddd");
+    }
+    const isThisYear = target.year() === nowMoment.year();
+    if (isThisYear) {
+      return shouldShowTime() ? target.format("MM-DD HH:mm") : target.format("MM-DD");
+    }
+    return shouldShowTime() ? target.format("YYYY-MM-DD HH:mm") : target.format("YYYY-MM-DD");
+  }
+  function getCurrentNoteInfo() {
+    const f = getApp().workspace.getActiveFile();
+    return f ? { path: f.path, name: f.basename } : null;
+  }
+  function getCurrentCursorPosition() {
+    const ws = getApp().workspace;
+    const ed = ws.activeEditor && ws.activeEditor.editor;
+    return ed ? { line: ed.getCursor().line, ch: ed.getCursor().ch } : null;
+  }
+  async function fetchPageTitle(url) {
+    const text = await httpGetText(url, {
+      timeoutMs: 8e3,
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36" },
+      fetchImpl: requestUrlAsFetch()
+    });
+    if (!text) return null;
+    const m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
+    return m && m[1] ? m[1].trim() : null;
+  }
+  function bytesEqual(a, b) {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
+  }
+  function cmpZh(a, b) {
+    return String(a || "").localeCompare(String(b || ""), "zh");
+  }
+  function isUnderFolder(folder, path) {
+    const f = (folder || "").trim().replace(/\/+$/, "");
+    if (!f) return false;
+    return path === f || path.startsWith(f + "/");
+  }
+  function hash31(str2) {
+    let h = 0;
+    const t = String(str2 || "");
+    for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
+    return h >>> 0;
+  }
+  function debounce(fn, ms) {
+    let t;
+    const wrapped = (...args) => {
+      if (t !== void 0) clearTimeout(t);
+      t = setTimeout(() => {
+        t = void 0;
+        fn(...args);
+      }, ms);
+    };
+    wrapped.cancel = () => {
+      if (t !== void 0) {
+        clearTimeout(t);
+        t = void 0;
+      }
+    };
+    return wrapped;
+  }
+  function yieldToMainThread(timeoutMs = 200) {
+    return new Promise((resolve2) => {
+      if (typeof window === "undefined") {
+        resolve2();
+        return;
+      }
+      const ric = window.requestIdleCallback;
+      if (typeof ric === "function") ric(() => resolve2(), { timeout: timeoutMs });
+      else window.setTimeout(resolve2, 0);
+    });
+  }
+  function cancelClipboardClear() {
+    if (clipboardClearTimer !== null) {
+      clearTimeout(clipboardClearTimer);
+      clipboardClearTimer = null;
+    }
+  }
+  function armClipboardClear() {
+    if (clipboardClearTimer !== null) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+      clipboardClearTimer = null;
+      try {
+        void navigator.clipboard.writeText("").catch(() => {
+        });
+      } catch (e) {
+      }
+    }, CLIPBOARD_CLEAR_DELAY_MS);
+  }
+  function copySensitiveText(text) {
+    try {
+      return navigator.clipboard.writeText(text).then(() => armClipboardClear());
+    } catch (e) {
+      return Promise.reject(e);
+    }
+  }
+  async function copySensitiveWithFallback(text) {
+    try {
+      await copySensitiveText(text);
+      return true;
+    } catch (e) {
+      try {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.cssText = "position:fixed;opacity:0";
+        document.body.appendChild(ta);
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (ok) armClipboardClear();
+        return ok;
+      } catch (e2) {
+        return false;
+      }
+    }
+  }
+  function openExternalUrl(app, url) {
+    try {
+      app.openUrl(url);
+      return;
+    } catch (e) {
+    }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
+  }
+  var import_moment2, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_app();
+      init_http();
+      init_str();
+      init_notice();
+      CLIPBOARD_CLEAR_DELAY_MS = 6e4;
+      clipboardClearTimer = null;
     }
   });
 
@@ -16228,23 +16250,25 @@ ${countsToText(s.missing)}
     return cur.format(fmt2);
   }
   function normalizeItem(item) {
+    var _a2, _b2;
+    const src = item && typeof item === "object" ? item : {};
     return {
-      id: item.id,
-      title: item.title,
-      scene: item.scene,
-      priority: item.priority || "minor",
-      created: item.created,
-      completed: item.completed || null,
-      due: item.due || null,
-      notePath: item.notePath || null,
-      notePosition: item.notePosition || null,
-      scriptName: item.scriptName || null,
-      courseName: item.courseName || null,
-      coursePath: item.coursePath || null,
-      linkedNote: item.linkedNote || null,
-      url: item.url || null,
-      recur: normalizeRecur(item.recur),
-      checklist: normalizeChecklist(item.checklist)
+      id: src.id,
+      title: String((_a2 = src.title) != null ? _a2 : ""),
+      scene: String((_b2 = src.scene) != null ? _b2 : ""),
+      priority: src.priority || "minor",
+      created: src.created,
+      completed: src.completed || null,
+      due: src.due || null,
+      notePath: src.notePath || null,
+      notePosition: src.notePosition || null,
+      scriptName: src.scriptName || null,
+      courseName: src.courseName || null,
+      coursePath: src.coursePath || null,
+      linkedNote: src.linkedNote || null,
+      url: src.url || null,
+      recur: normalizeRecur(src.recur),
+      checklist: normalizeChecklist(src.checklist)
     };
   }
   function hasPendingNextItem(items, it) {
@@ -16303,14 +16327,28 @@ ${countsToText(s.missing)}
               return [];
             }
             let needWrite = false;
-            const items = raw.map((item) => {
+            const clean = [];
+            let bad = 0;
+            for (const item of raw) {
+              if (!item || typeof item !== "object" || Array.isArray(item)) {
+                bad++;
+                needWrite = true;
+                continue;
+              }
               if (!item.id) {
                 item.id = generateId();
                 needWrite = true;
               }
-              return normalizeItem(item);
-            });
-            if (needWrite) await this.write(raw);
+              clean.push(item);
+            }
+            if (bad > 0) console.warn(`[bz:memo] memo.json 含 ${bad} 个非法条目（null/非对象），已剔除`);
+            const items = clean.map(
+              (item) => (
+                // 统一字段形状（缺省补默认值，旧数据零迁移）
+                normalizeItem(item)
+              )
+            );
+            if (needWrite) await this.write(clean);
             return items;
           });
         },
@@ -16405,6 +16443,27 @@ ${countsToText(s.missing)}
             await this.write(data);
           });
         },
+        /**
+         * 批量清理已完成条目（效率#11）：completed 非空且早于 cutoff（字符串比较，YYYY-MM-DD
+         * HH:mm:ss 字典序即时间序）的一次性删除；cutoff 传 null = 不设时间窗（清全部已完成）。
+         * onlyIds 提供时只清该集合内的条目（UI 侧按当前视图可见口径收窄，所见即所删）。
+         * 整个读改写在同一个串行队列任务内原子完成；返回被删条目快照数组（含各自原索引，
+         * 供撤销按原索引升序逐条 restoreItem 插回原位——绝对位置 splice 须先小后大，降序会错位）。
+         */
+        async deleteCompletedBefore(cutoff, onlyIds) {
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const data = await this.read();
+            const removed = [];
+            const kept = [];
+            data.forEach((d, idx) => {
+              const hit = d && typeof d === "object" && d.completed && (cutoff === null || d.completed < cutoff) && (!onlyIds || onlyIds.has(d.id));
+              if (hit) removed.push({ item: normalizeItem(d), idx });
+              else kept.push(d);
+            });
+            if (removed.length) await this.write(kept);
+            return removed;
+          });
+        },
         /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
          *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
         async updateSceneBulk(from, to) {
@@ -16421,12 +16480,16 @@ ${countsToText(s.missing)}
             return n;
           });
         },
-        /** 公开课笔记（影视目录中含 公开课 标签的文件） */
+        /** 公开课笔记（影视目录中含 公开课 标签的文件）。
+         *  A6 前缀边界：path === dir || path.startsWith(dir + '/')（对齐 core/file-sync inFolders）——
+         *  裸 startsWith 会把同级兄弟目录「我的/影视花絮」误命中进「我的/影视」 */
         async getCourseNotes() {
           const app = getApp();
           const result = [];
+          const dir = this.cinemaFolderPath;
           for (const file of app.vault.getFiles()) {
-            if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== "md") continue;
+            const inDir2 = file.path === dir || file.path.startsWith(dir + "/");
+            if (!inDir2 || file.extension !== "md") continue;
             const cache = app.metadataCache.getFileCache(file);
             if (!cache) continue;
             if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
@@ -18324,7 +18387,7 @@ ${countsToText(s.missing)}
       tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
     }
     if (it.notePath) {
-      const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
+      const name = stripMdExt(it.notePath.split("/").pop() || "");
       const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
       if (!isCourseSame) {
         tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
@@ -18347,24 +18410,44 @@ ${countsToText(s.missing)}
     return tags.join("");
   }
   function checkHtml(it) {
-    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
+    const label = it.completed ? "恢复未完成" : "标记完成";
+    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check role="checkbox" tabindex="0" aria-checked="${it.completed ? "true" : "false"}" aria-label="${label}" title="${label}"></span>`;
   }
   function checklistHtml(it) {
     const cl = it.checklist || [];
     if (!cl.length) return "";
     const rows = cl.map(
-      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}">
+      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}" role="checkbox" tabindex="0" aria-checked="${c.done ? "true" : "false"}">
         <span class="bz-memo-cl-box${c.done ? " bz-memo-cl-on" : ""}"></span>
         <span class="bz-memo-cl-text">${escapeHtml(c.text)}</span>
       </div>`
     ).join("");
     return `<div class="bz-memo-cl${it.completed ? " bz-memo-cl-dim" : ""}">${rows}</div>`;
   }
-  function cardHtml2(it, due, relTime3, recurText = "", checkProgress2 = "") {
+  function highlightTitleHtml(title, kw) {
+    const safe = escapeHtml(title);
+    const needle = escapeHtml((kw || "").trim()).toLowerCase();
+    if (!needle) return safe;
+    const hay = safe.toLowerCase();
+    let out = "";
+    let i = 0;
+    for (; ; ) {
+      const hit = hay.indexOf(needle, i);
+      if (hit === -1) {
+        out += safe.slice(i);
+        break;
+      }
+      out += `${safe.slice(i, hit)}<mark>${safe.slice(hit, hit + needle.length)}</mark>`;
+      i = hit + needle.length;
+    }
+    return out;
+  }
+  function cardHtml2(it, due, relTime3, recurText = "", checkProgress2 = "", kw = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
-    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
-    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
+    const titleText = highlightTitleHtml(it.title, kw);
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${titleText}</a>` : titleText;
+    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
@@ -18373,21 +18456,21 @@ ${countsToText(s.missing)}
       </div>
     </div>`;
   }
-  function sectionLabelHtml(label, count) {
-    return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
+  function sectionLabelHtml(label, count, kind = "") {
+    return `<div class="bz-memo-section-label"${kind ? ` data-memo-sec="${kind}"` : ""}>${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
   }
   function doneBarHtml(open, count) {
-    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
-      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
+    return `<button type="button" class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar aria-expanded="${open ? "true" : "false"}">
+      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></button>`;
   }
   function doneMoreHtml(n) {
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
   }
   function calHeadHtml(monthLabel2) {
     return `<div class="bz-memo-cal-head">
-      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan("chevron-left")}</button>
+      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-prev title="上个月" aria-label="上个月">${iconSpan("chevron-left")}</button>
       <div class="bz-memo-cal-title">${escapeHtml(monthLabel2)}</div>
-      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan("chevron-right")}</button>
+      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-next title="下个月" aria-label="下个月">${iconSpan("chevron-right")}</button>
       <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
     </div>`;
   }
@@ -18410,7 +18493,11 @@ ${countsToText(s.missing)}
     return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条${todaySeg}</div>`;
   }
   function calEmptyHtml(filtered2) {
-    return filtered2 ? `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">当前筛选下本月没有到期事项</div><div class="bz-memo-cal-empt-d">试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上</div></div>` : `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
+    return filtered2 ? emptyHtmlStr("", "当前筛选下本月没有到期事项", "试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上") : emptyHtmlStr("", "本月没有到期事项", "设了截止时间的备忘录才会出现在月历上");
+  }
+  function calDayPanelHtml(label, count, cardsHtml) {
+    const body = cardsHtml || emptyHtmlStr("", "这一天没有备忘录");
+    return `<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, count)}${body}</div>`;
   }
   var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE, CAL_WEEKDAYS;
   var init_render6 = __esm({
@@ -19820,7 +19907,7 @@ ${countsToText(s.missing)}
 
   // src/memo/ui.ts
   function isTodayStr(s) {
-    return !!s && s.slice(0, 10) === (0, import_moment5.default)().format("YYYY-MM-DD");
+    return !!s && s.slice(0, 10) === localDayKey();
   }
   function fallbackScene() {
     const scenes = MemoData.getScenarios();
@@ -19833,6 +19920,9 @@ ${countsToText(s.missing)}
     if (v === "all") return null;
     const n = Number(v);
     return Number.isFinite(n) && n > 0 ? n : 30;
+  }
+  function saveSettingsQuiet() {
+    void saveSettings().catch((e) => console.error("[bz:memo] 设置写盘失败", e));
   }
   async function readClipUrl() {
     let text = "";
@@ -19856,7 +19946,12 @@ ${countsToText(s.missing)}
   }
   async function refresh() {
     var _a2, _b2;
-    await loadData();
+    try {
+      await loadData();
+    } catch (e) {
+      notifySaveError(e, "读取备忘录");
+      return;
+    }
     (_b2 = (_a2 = M3).renderFn) == null ? void 0 : _b2.call(_a2);
   }
   function dueRank(it) {
@@ -19878,7 +19973,15 @@ ${countsToText(s.missing)}
         if (it.priority !== "important") return false;
       } else if (M3.activeScene !== "全部" && it.scene !== M3.activeScene) return false;
       if (kw) {
-        const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(" ").toLowerCase();
+        const hay = [
+          it.title,
+          it.scene,
+          it.notePath,
+          it.scriptName,
+          it.courseName,
+          it.url,
+          ...(it.checklist || []).map((c) => c.text)
+        ].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
@@ -19934,7 +20037,7 @@ ${countsToText(s.missing)}
       const s = tryGetSettings();
       if (s) {
         s.memoLastScene = M3.activeScene;
-        void saveSettings();
+        saveSettingsQuiet();
       }
       M3.overlay.remove();
       M3.overlay = null;
@@ -19954,13 +20057,39 @@ ${countsToText(s.missing)}
     M3.completeTimers.forEach((t) => clearTimeout(t));
     M3.completeTimers.clear();
   }
-  function renderAll() {
+  function syncSearchClear() {
+    var _a2, _b2;
+    const btn = (_a2 = M3.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search-clear]");
+    const inp = (_b2 = M3.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search]");
+    if (btn) btn.hidden = !(inp == null ? void 0 : inp.value.trim());
+  }
+  function clearSearchInput() {
+    var _a2;
+    const inp = (_a2 = M3.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    if (inp) inp.value = "";
+    M3.search = "";
+    syncSearchClear();
+    renderAll();
+    inp == null ? void 0 : inp.focus();
+  }
+  function captureScroll(el) {
+    if (!el) return null;
+    return { top: el.scrollTop, left: el.scrollLeft };
+  }
+  function applyScroll(el, snap) {
+    if (!el || !snap) return;
+    el.scrollTop = snap.top;
+    el.scrollLeft = snap.left;
+  }
+  function renderAll(searchDelta = false) {
     if (!M3.overlay) return;
+    const mobSnap = captureScroll(M3.overlay.querySelector("[data-memo-mob-scenes]"));
     renderNav();
     renderMobScenes();
+    applyScroll(M3.overlay.querySelector("[data-memo-mob-scenes]"), mobSnap);
     renderMainHead();
     renderViewToggle();
-    renderContent();
+    renderContent(searchDelta);
   }
   function renderViewToggle() {
     const wrap = M3.overlay.querySelector("[data-memo-viewtoggle]");
@@ -20032,17 +20161,19 @@ ${countsToText(s.missing)}
       checkProgress(it)
     );
   }
-  function renderContent() {
+  function renderContent(searchDelta = false) {
     const content = M3.overlay.querySelector("[data-memo-content]");
     if (!content) return;
+    const snap = captureScroll(content);
     if (M3.view === "calendar") {
       renderCalendar(content);
-      return;
+    } else {
+      renderListContent(content, searchDelta);
     }
-    renderListContent(content);
+    applyScroll(content, snap);
   }
-  function cardHtmlOf(it) {
-    return cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", recurTextOf(it), checkProgress(it));
+  function cardHtmlOf(it, kw = M3.search.trim()) {
+    return cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", recurTextOf(it), checkProgress(it), kw);
   }
   function wireCards(content) {
     content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
@@ -20064,6 +20195,18 @@ ${countsToText(s.missing)}
       const id = card.dataset.memoId;
       const it = M3.items.find((i) => i.id === id);
       if (!it) return;
+      card.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " " || e.target !== card) return;
+        e.preventDefault();
+        const r = card.getBoundingClientRect();
+        openItemMenu(r.left + 24, r.bottom + 4, buildCardActions(it), true, skinClass() || void 0);
+        resetItemMenuClickGuard();
+      });
+      card.addEventListener("dblclick", (e) => {
+        if (isMobileEnv()) return;
+        if (e.target.closest("[data-memo-openitem],[data-memo-pos],[data-memo-check],[data-memo-cl]")) return;
+        openEditor(it);
+      });
       attachItemActions(card, buildCardActions(it), {
         menuClass: skinClass() || void 0,
         sheetClass: skinClass() || void 0,
@@ -20072,16 +20215,50 @@ ${countsToText(s.missing)}
       });
     });
   }
-  function renderListContent(content) {
+  function trySearchDelta(content, items) {
+    const cards = Array.from(content.querySelectorAll(".bz-memo-card"));
+    if (!cards.length) return false;
+    const want = new Set(items.map((i) => i.id));
+    const wall = new Set(cards.map((c) => c.dataset.memoId));
+    for (const id of want) if (!wall.has(id)) return false;
+    for (const c of cards) c.style.display = want.has(c.dataset.memoId) ? "" : "none";
+    const active2 = items.filter((i) => !i.completed);
+    const urgent = active2.filter((i) => dueRank(i) <= 1);
+    const normal = active2.filter((i) => dueRank(i) > 1);
+    const done = items.filter((i) => i.completed);
+    const syncSec = (kind, count) => {
+      const label = content.querySelector(`.bz-memo-section-label[data-memo-sec="${kind}"]`);
+      if (!label) return;
+      const cnt2 = label.querySelector(".bz-memo-sec-cnt");
+      if (cnt2) cnt2.textContent = String(count);
+      label.style.display = count ? "" : "none";
+    };
+    syncSec("urgent", urgent.length);
+    syncSec("normal", normal.length);
+    const cnt = content.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
+    if (cnt) cnt.textContent = String(done.length);
+    return true;
+  }
+  function renderListContent(content, searchDelta = false) {
+    var _a2;
     const items = getVisibleItems();
     if (items.length === 0) {
       content.innerHTML = "";
+      const actions = [uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })];
+      if (M3.search.trim()) {
+        actions.push(uiBtn({ label: "清除搜索", icon: MEMO_ICONS.close, onClick: () => clearSearchInput() }));
+      }
       content.appendChild(uiEmpty({
         icon: MEMO_ICONS.empty,
         title: M3.search ? "没有匹配的备忘录" : "这里还没有备忘录",
         desc: M3.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
-        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
+        actions: uiBtnRow(actions, { center: true })
       }));
+      content.dataset.memoWall = "empty";
+      return;
+    }
+    if (searchDelta && trySearchDelta(content, items)) {
+      content.dataset.memoWall = "cards";
       return;
     }
     const active2 = items.filter((i) => !i.completed);
@@ -20090,11 +20267,11 @@ ${countsToText(s.missing)}
     const normal = active2.filter((i) => dueRank(i) > 1);
     const sections = [];
     if (urgent.length) {
-      sections.push(sectionLabelHtml("到期优先", urgent.length));
+      sections.push(sectionLabelHtml("到期优先", urgent.length, "urgent"));
       sections.push(...urgent.map((it) => cardHtmlOf(it)));
     }
     if (normal.length) {
-      sections.push(sectionLabelHtml("其他", normal.length));
+      sections.push(sectionLabelHtml("其他", normal.length, "normal"));
       sections.push(...normal.map((it) => cardHtmlOf(it)));
     }
     if (done.length) {
@@ -20104,17 +20281,76 @@ ${countsToText(s.missing)}
       const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
       const earlier = done.length - recent2.length;
       const listed = !open || M3.showEarlierDone ? done : recent2;
+      const cleanBtn = cutoff === null || earlier > 0 ? `<button class="bz-memo-done-more" data-memo-doneclean>${cutoff === null ? "清理已完成" : `清理更早 ${earlier} 条`}</button>` : "";
       sections.push(doneBarHtml(open, done.length));
       if (open) {
         sections.push(...listed.map((it) => cardHtmlOf(it)));
         if (earlier > 0 && !M3.showEarlierDone) {
           sections.push(doneMoreHtml(earlier));
         }
+        sections.push(cleanBtn);
+      } else {
+        sections.push(cleanBtn);
       }
     }
     content.innerHTML = sections.join("");
+    content.dataset.memoWall = "cards";
     mountIcons(content);
     wireCards(content);
+    (_a2 = content.querySelector("[data-memo-doneclean]")) == null ? void 0 : _a2.addEventListener("click", (e) => {
+      e.stopPropagation();
+      void openDoneCleanDialog();
+    });
+  }
+  async function openDoneCleanDialog() {
+    const doneVisible = getVisibleItems().filter((i) => i.completed);
+    const win = doneWindowDays();
+    const cutoff = win === null ? null : (0, import_moment5.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
+    const targets = cutoff === null ? doneVisible : doneVisible.filter((i) => i.completed < cutoff);
+    if (!targets.length) {
+      notice("没有可清理的已完成备忘录");
+      return;
+    }
+    const scope = M3.activeScene === "全部" ? "" : `「${sceneLabel(M3.activeScene)}」视图内`;
+    const message = cutoff === null ? `将删除 ${scope}${targets.length} 条已完成的备忘录。
+删除后可在通知中一键撤销。` : `将删除 ${scope}${targets.length} 条 ${win} 天前完成的备忘录。
+删除后可在通知中一键撤销。`;
+    const ok = await openFlowDialog({
+      title: "清理已完成备忘录",
+      message,
+      className: skinClass(),
+      // 流程框挂 body，须显式带皮肤类（issue 291 同口径）
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "清理", value: "clean", danger: true, cta: true }
+      ]
+    });
+    if (ok !== "clean") return;
+    try {
+      const ids = new Set(targets.map((i) => i.id));
+      const removed = await MemoData.deleteCompletedBefore(cutoff, ids);
+      if (!removed.length) {
+        notice("没有可清理的已完成备忘录");
+        return;
+      }
+      for (const r of removed) emitDomainEvent("memo", { kind: "deleted", title: r.item.title });
+      notifyUndo(`已清理 ${removed.length} 条已完成备忘录`, () => {
+        void (async () => {
+          try {
+            const sorted = [...removed].sort((a, b) => a.idx - b.idx);
+            for (const r of sorted) await MemoData.restoreItem(r.item, r.idx);
+            await refresh();
+          } catch (e) {
+            notifySaveError(e, "撤销清理");
+            console.error(e);
+          }
+        })();
+      });
+    } catch (e) {
+      notifySaveError(e, "清理已完成备忘录");
+      console.error(e);
+    }
+    await refresh();
   }
   function renderCalendar(content) {
     var _a2;
@@ -20139,7 +20375,7 @@ ${countsToText(s.missing)}
     for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
     const daysInMonth = monthMoment.daysInMonth();
     for (let d = 1; d <= daysInMonth; d++) {
-      const key = `${M3.calMonth}-${String(d).padStart(2, "0")}`;
+      const key = `${M3.calMonth}-${pad2(d)}`;
       const list = byDay.get(key) || [];
       const chips = list.slice(0, 3).map((it) => {
         const st = getDueStatus(it.due);
@@ -20158,8 +20394,7 @@ ${countsToText(s.missing)}
     if (M3.calSelected) {
       const dayItems = visible.filter((i) => (i.due || "").slice(0, 10) === M3.calSelected);
       const label = M3.calSelected === today ? `今日事项 · ${dayItems.length} 项` : `${(0, import_moment5.default)(M3.calSelected).format("M月D日")} · ${dayItems.length} 项`;
-      const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join("") : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
-      sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
+      sections.push(calDayPanelHtml(label, dayItems.length, dayItems.map((it) => cardHtmlOf(it)).join("")));
     }
     content.innerHTML = sections.join("");
     mountIcons(content);
@@ -20176,7 +20411,7 @@ ${countsToText(s.missing)}
     });
   }
   function buildSheetHead(it) {
-    var _a2;
+    var _a2, _b2, _c;
     const head = document.createElement("div");
     head.className = "bz-item-sheet-entry bz-memo-sheet-entry";
     if (it.completed) head.classList.add("bz-memo-done");
@@ -20198,6 +20433,18 @@ ${countsToText(s.missing)}
       closeItemMenu();
       toggleCheck(it);
     });
+    (_b2 = head.querySelector("[data-memo-check]")) == null ? void 0 : _b2.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      e.stopPropagation();
+      closeItemMenu();
+      toggleCheck(it);
+    });
+    (_c = head.querySelector("[data-memo-pos]")) == null ? void 0 : _c.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeItemMenu();
+      jumpToNote(it);
+    });
     return head;
   }
   function openItem(it) {
@@ -20208,12 +20455,7 @@ ${countsToText(s.missing)}
       if (file) void app.workspace.getLeaf().openFile(file);
       else notice("关联笔记不存在");
     } else if (it.url) {
-      try {
-        app.openUrl(it.url);
-      } catch (e) {
-        const electron = window.require && window.require("electron");
-        if (electron && electron.shell) electron.shell.openExternal(it.url);
-      }
+      openExternalUrl(app, it.url);
     }
   }
   function jumpToNote(it) {
@@ -21006,7 +21248,7 @@ ${countsToText(s.missing)}
       SEARCH_DEBOUNCE_MS = 180;
       searchDebounced = debounce((v) => {
         M3.search = v;
-        renderAll();
+        renderAll(true);
       }, SEARCH_DEBOUNCE_MS);
       clipTitleHint = null;
       panelResizeDetach = null;
@@ -36110,15 +36352,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
             notice("复制失败", "error");
           }
         }
+        /** 外链打开 = core 单源转发（一致#14：原域内 openUrl→electron 副本删除；最深兜底层
+         *  多出 window.open + 人话提示——favorites F14 同款，正常桌面路径行为不变） */
         _openExternal(url) {
-          const app = getApp();
-          try {
-            app.openUrl(url);
-          } catch (e) {
-            const w = window;
-            const electron = w.require && w.require("electron");
-            if (electron && electron.shell) electron.shell.openExternal(url);
-          }
+          openExternalUrl(getApp(), url);
         }
         destroy() {
           var _a2;
@@ -39797,26 +40034,7 @@ ${body}`;
     return _app2 || getApp();
   }
   function openExternal(url) {
-    const app = appOf();
-    try {
-      app.openUrl(url);
-      return;
-    } catch (e) {
-    }
-    try {
-      const electron = window.require && window.require("electron");
-      if (electron && electron.shell) {
-        electron.shell.openExternal(url);
-        return;
-      }
-    } catch (e) {
-    }
-    try {
-      const w = window.open(url, "_blank");
-      if (w) return;
-    } catch (e) {
-    }
-    notice("无法打开链接，请复制到浏览器打开", "error");
+    openExternalUrl(appOf(), url);
   }
   function formTagsNow(popup) {
     return [...popup.querySelectorAll("#fz-tags [data-tag].bz-fav-on")].map((b) => b.dataset.tag || "").sort().join("|");
@@ -40290,6 +40508,7 @@ GitHub 仓库：${ghInfo.title}
       init_flow_dialog();
       init_item_actions();
       init_app();
+      init_utils();
       init_ui();
       init_domain_bus();
       init_settings_provider();
@@ -41569,6 +41788,7 @@ GitHub 仓库：${ghInfo.title}
   var SB_PALETTE, SB_FALLBACK, ic;
   var init_render13 = __esm({
     "src/secondbrain/render.ts"() {
+      init_str();
       SB_PALETTE = ["#0f766e", "#6366f1", "#d97706", "#db2777", "#0e7490", "#7c3aed", "#b45309", "#be185d"];
       SB_FALLBACK = "#a39b8c";
       ic = (name, size = 15) => `<i data-lucide="${name}" style="width:${size}px;height:${size}px"></i>`;

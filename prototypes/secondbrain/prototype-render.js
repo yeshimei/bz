@@ -1,5 +1,5 @@
-/* 源指纹 03c6bc6532d691ec · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/secondbrain/render.ts"]*/
+/* 源指纹 2313d295352e1b6e · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/core/ui/str.ts","src/secondbrain/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/secondbrain/render.ts → window.BZR_secondbrain（评审壳预览包，ADR-0104） */
 var BZR_secondbrain = (() => {
   var __defProp = Object.defineProperty;
@@ -53,6 +53,13 @@ var BZR_secondbrain = (() => {
     weeklyStatsHtml: () => weeklyStatsHtml,
     weeklySummaryHtml: () => weeklySummaryHtml
   });
+
+  // src/core/ui/str.ts
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
+
+  // src/secondbrain/render.ts
   function topLevelDir(path) {
     const i = path.indexOf("/");
     return i === -1 ? "（根目录）" : path.slice(0, i);
@@ -340,7 +347,7 @@ var BZR_secondbrain = (() => {
   function chatCitesHtml(hits) {
     if (!hits.length) return "";
     return `<div class="bz-sb-chat-cites">` + hits.map(
-      (h) => `<button class="bz-sb-chat-cite" data-path="${escapeHtml(h.path)}"><span class="bz-sb-chat-cite-score">${h.pct}%</span><span class="bz-sb-dot" style="background:${h.color}"></span><span class="bz-sb-chat-cite-name">${escapeHtml(h.path.replace(/^.*[\\/]/, "").replace(/\.md$/i, ""))}</span></button>`
+      (h) => `<button class="bz-sb-chat-cite" data-path="${escapeHtml(h.path)}"><span class="bz-sb-chat-cite-score">${h.pct}%</span><span class="bz-sb-dot" style="background:${h.color}"></span><span class="bz-sb-chat-cite-name">${escapeHtml(stripMdExt(h.path.replace(/^.*[\\/]/, "")))}</span></button>`
     ).join("") + `</div>`;
   }
   function refCardHtml(name, pct, color) {

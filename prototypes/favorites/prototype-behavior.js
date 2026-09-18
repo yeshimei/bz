@@ -1,4 +1,4 @@
-/* 源指纹 d57037a1a9b520cd · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b0751e08030a00b5 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -5787,6 +5787,27 @@ var BZW_favorites = (() => {
       return "&#39;";
     });
   }
+  function openExternalUrl(app, url) {
+    try {
+      app.openUrl(url);
+      return;
+    } catch (e) {
+    }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
+  }
 
   // src/core/ui/focus-trap.ts
   var FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
@@ -6851,26 +6872,7 @@ var BZW_favorites = (() => {
     return _app2 || getApp();
   }
   function openExternal(url) {
-    const app = appOf();
-    try {
-      app.openUrl(url);
-      return;
-    } catch (e) {
-    }
-    try {
-      const electron = window.require && window.require("electron");
-      if (electron && electron.shell) {
-        electron.shell.openExternal(url);
-        return;
-      }
-    } catch (e) {
-    }
-    try {
-      const w = window.open(url, "_blank");
-      if (w) return;
-    } catch (e) {
-    }
-    notice("无法打开链接，请复制到浏览器打开", "error");
+    openExternalUrl(appOf(), url);
   }
   var _saving = false;
   var _baseline = null;

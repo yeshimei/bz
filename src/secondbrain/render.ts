@@ -7,6 +7,7 @@
  * （行为层渲染后 mountIcons 统一物化）。统计纯函数（computeStats/buildSourceTree/
  * fmtCompact）自 panel.ts 收编，口径不变（statistics.test 同步改锚）。
  */
+import { stripMdExt } from '../core/ui/str'; // 零依赖区（render 纯层白名单）：内联 .md 剥壳收口
 
 // ==================== 类型（口径与旧 panel.ts 一致） ====================
 
@@ -456,7 +457,7 @@ export function chatCitesHtml(hits: Array<{ path: string; pct: number; color: st
           `<button class="bz-sb-chat-cite" data-path="${escapeHtml(h.path)}">` +
           `<span class="bz-sb-chat-cite-score">${h.pct}%</span>` +
           `<span class="bz-sb-dot" style="background:${h.color}"></span>` +
-          `<span class="bz-sb-chat-cite-name">${escapeHtml(h.path.replace(/^.*[\\/]/, '').replace(/\.md$/i, ''))}</span>` +
+          `<span class="bz-sb-chat-cite-name">${escapeHtml(stripMdExt(h.path.replace(/^.*[\\/]/, '')))}</span>` +
           `</button>`
       )
       .join('') +

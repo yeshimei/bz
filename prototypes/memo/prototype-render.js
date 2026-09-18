@@ -1,4 +1,4 @@
-/* 源指纹 53156e63c071728a · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4456677b418e7882 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -27,6 +27,7 @@ var BZR_memo = (() => {
     MEMO_ICONS: () => MEMO_ICONS,
     SCENE_DOTS: () => SCENE_DOTS,
     SCENE_PSEUDO_ICONS: () => SCENE_PSEUDO_ICONS,
+    calDayPanelHtml: () => calDayPanelHtml,
     calEmptyHtml: () => calEmptyHtml,
     calGridHtml: () => calGridHtml,
     calHeadHtml: () => calHeadHtml,
@@ -38,6 +39,7 @@ var BZR_memo = (() => {
     doneMoreHtml: () => doneMoreHtml,
     dueIconName: () => dueIconName,
     dueTagClass: () => dueTagClass,
+    highlightTitleHtml: () => highlightTitleHtml,
     iconSpan: () => iconSpan,
     mainCountHtml: () => mainCountHtml,
     metaTagsHtml: () => metaTagsHtml,
@@ -56,8 +58,17 @@ var BZR_memo = (() => {
   function escapeHtml(s) {
     return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
   }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
   }
 
   // src/memo/render.ts
@@ -145,8 +156,7 @@ var BZR_memo = (() => {
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
-          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭" aria-label="关闭">${iconSpan(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">
@@ -165,11 +175,11 @@ var BZR_memo = (() => {
             <button class="bz-btn bz-btn--primary bz-btn--md" data-memo-newbtn>${iconSpan(MEMO_ICONS.add, "bz-ic--sm")} 新建备忘录</button>
           </div>
           <div class="bz-toolrow">
-            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
+            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…" aria-label="搜索备忘录"><button type="button" class="bz-memo-search-clear" data-memo-search-clear title="清除搜索" aria-label="清除搜索" hidden>${iconSpan(MEMO_ICONS.close, "bz-ic--sm")}</button></div>
             <div class="bz-memo-sort" data-memo-sort></div>
             <div class="bz-memo-viewtoggle" data-memo-viewtoggle role="tablist" aria-label="视图切换">
-              <button class="bz-memo-viewbtn is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
-              <button class="bz-memo-viewbtn" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
+              <button class="bz-memo-viewbtn bz-touch-target bz-touch-target--lg is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
+              <button class="bz-memo-viewbtn bz-touch-target bz-touch-target--lg" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
             </div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
@@ -199,7 +209,7 @@ var BZR_memo = (() => {
       tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
     }
     if (it.notePath) {
-      const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
+      const name = stripMdExt(it.notePath.split("/").pop() || "");
       const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
       if (!isCourseSame) {
         tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
@@ -222,24 +232,44 @@ var BZR_memo = (() => {
     return tags.join("");
   }
   function checkHtml(it) {
-    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
+    const label = it.completed ? "恢复未完成" : "标记完成";
+    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check role="checkbox" tabindex="0" aria-checked="${it.completed ? "true" : "false"}" aria-label="${label}" title="${label}"></span>`;
   }
   function checklistHtml(it) {
     const cl = it.checklist || [];
     if (!cl.length) return "";
     const rows = cl.map(
-      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}">
+      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}" role="checkbox" tabindex="0" aria-checked="${c.done ? "true" : "false"}">
         <span class="bz-memo-cl-box${c.done ? " bz-memo-cl-on" : ""}"></span>
         <span class="bz-memo-cl-text">${escapeHtml(c.text)}</span>
       </div>`
     ).join("");
     return `<div class="bz-memo-cl${it.completed ? " bz-memo-cl-dim" : ""}">${rows}</div>`;
   }
-  function cardHtml(it, due, relTime, recurText = "", checkProgress = "") {
+  function highlightTitleHtml(title, kw) {
+    const safe = escapeHtml(title);
+    const needle = escapeHtml((kw || "").trim()).toLowerCase();
+    if (!needle) return safe;
+    const hay = safe.toLowerCase();
+    let out = "";
+    let i = 0;
+    for (; ; ) {
+      const hit = hay.indexOf(needle, i);
+      if (hit === -1) {
+        out += safe.slice(i);
+        break;
+      }
+      out += `${safe.slice(i, hit)}<mark>${safe.slice(hit, hit + needle.length)}</mark>`;
+      i = hit + needle.length;
+    }
+    return out;
+  }
+  function cardHtml(it, due, relTime, recurText = "", checkProgress = "", kw = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
-    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
-    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
+    const titleText = highlightTitleHtml(it.title, kw);
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${titleText}</a>` : titleText;
+    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
@@ -248,12 +278,12 @@ var BZR_memo = (() => {
       </div>
     </div>`;
   }
-  function sectionLabelHtml(label, count) {
-    return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
+  function sectionLabelHtml(label, count, kind = "") {
+    return `<div class="bz-memo-section-label"${kind ? ` data-memo-sec="${kind}"` : ""}>${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
   }
   function doneBarHtml(open, count) {
-    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
-      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
+    return `<button type="button" class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar aria-expanded="${open ? "true" : "false"}">
+      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></button>`;
   }
   function doneMoreHtml(n) {
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
@@ -261,9 +291,9 @@ var BZR_memo = (() => {
   var CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
   function calHeadHtml(monthLabel) {
     return `<div class="bz-memo-cal-head">
-      <button class="bz-icon-btn" data-memo-cal-prev title="上个月">${iconSpan("chevron-left")}</button>
+      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-prev title="上个月" aria-label="上个月">${iconSpan("chevron-left")}</button>
       <div class="bz-memo-cal-title">${escapeHtml(monthLabel)}</div>
-      <button class="bz-icon-btn" data-memo-cal-next title="下个月">${iconSpan("chevron-right")}</button>
+      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-next title="下个月" aria-label="下个月">${iconSpan("chevron-right")}</button>
       <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
     </div>`;
   }
@@ -286,7 +316,11 @@ var BZR_memo = (() => {
     return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条${todaySeg}</div>`;
   }
   function calEmptyHtml(filtered) {
-    return filtered ? `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">当前筛选下本月没有到期事项</div><div class="bz-memo-cal-empt-d">试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上</div></div>` : `<div class="bz-memo-cal-empt"><div class="bz-memo-cal-empt-t">本月没有到期事项</div><div class="bz-memo-cal-empt-d">设了截止时间的备忘录才会出现在月历上</div></div>`;
+    return filtered ? emptyHtmlStr("", "当前筛选下本月没有到期事项", "试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上") : emptyHtmlStr("", "本月没有到期事项", "设了截止时间的备忘录才会出现在月历上");
+  }
+  function calDayPanelHtml(label, count, cardsHtml) {
+    const body = cardsHtml || emptyHtmlStr("", "这一天没有备忘录");
+    return `<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, count)}${body}</div>`;
   }
   return __toCommonJS(render_exports);
 })();

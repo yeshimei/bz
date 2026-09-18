@@ -1,4 +1,4 @@
-/* 源指纹 3aab508c875a82aa · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e3810fdbbd590d29 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5910,6 +5910,9 @@ var BZW_knowledge = (() => {
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
 
   // src/core/utils.ts
   function escapeHtml(str2) {
@@ -5975,9 +5978,6 @@ var BZW_knowledge = (() => {
     const m = text.match(/<title[^>]*>([^<]*)<\/title>/i);
     return m && m[1] ? m[1].trim() : null;
   }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
   function isUnderFolder(folder, path) {
     const f = (folder || "").trim().replace(/\/+$/, "");
     if (!f) return false;
@@ -5988,6 +5988,27 @@ var BZW_knowledge = (() => {
     const t = String(str2 || "");
     for (let i = 0; i < t.length; i++) h = h * 31 + t.charCodeAt(i) >>> 0;
     return h >>> 0;
+  }
+  function openExternalUrl(app, url) {
+    try {
+      app.openUrl(url);
+      return;
+    } catch (e) {
+    }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
   }
 
   // src/knowledge/source.ts
@@ -15447,15 +15468,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
         notice("复制失败", "error");
       }
     }
+    /** 外链打开 = core 单源转发（一致#14：原域内 openUrl→electron 副本删除；最深兜底层
+     *  多出 window.open + 人话提示——favorites F14 同款，正常桌面路径行为不变） */
     _openExternal(url) {
-      const app = getApp();
-      try {
-        app.openUrl(url);
-      } catch (e) {
-        const w = window;
-        const electron = w.require && w.require("electron");
-        if (electron && electron.shell) electron.shell.openExternal(url);
-      }
+      openExternalUrl(getApp(), url);
     }
     destroy() {
       var _a;

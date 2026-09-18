@@ -1,4 +1,4 @@
-/* 源指纹 2363b5edeb5bf76f · 仓内输入 104 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9181853026a037ba · 仓内输入 104 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -4932,6 +4932,9 @@ var BZW_clipbook = (() => {
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
   }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
   var ESC_MAP;
   var init_str = __esm({
     "src/core/ui/str.ts"() {
@@ -5007,9 +5010,6 @@ var BZW_clipbook = (() => {
     const d = ts instanceof Date ? ts : new Date(ts);
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
   function stripTitleMarks(s) {
     return String(s || "").replace(/^《|》$/g, "");
   }
@@ -5055,6 +5055,27 @@ var BZW_clipbook = (() => {
       else window.setTimeout(resolve2, 0);
     });
   }
+  function openExternalUrl(app, url) {
+    try {
+      app.openUrl(url);
+      return;
+    } catch (e) {
+    }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
+  }
   var import_moment;
   var init_utils = __esm({
     "src/core/utils.ts"() {
@@ -5062,6 +5083,7 @@ var BZW_clipbook = (() => {
       init_app();
       init_http();
       init_str();
+      init_notice();
     }
   });
 
@@ -16874,15 +16896,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
             notice("复制失败", "error");
           }
         }
+        /** 外链打开 = core 单源转发（一致#14：原域内 openUrl→electron 副本删除；最深兜底层
+         *  多出 window.open + 人话提示——favorites F14 同款，正常桌面路径行为不变） */
         _openExternal(url) {
-          const app = getApp();
-          try {
-            app.openUrl(url);
-          } catch (e) {
-            const w = window;
-            const electron = w.require && w.require("electron");
-            if (electron && electron.shell) electron.shell.openExternal(url);
-          }
+          openExternalUrl(getApp(), url);
         }
         destroy() {
           var _a;
