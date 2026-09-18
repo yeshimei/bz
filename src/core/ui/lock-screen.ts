@@ -162,6 +162,15 @@ export function uiLockScreen(opts: LockScreenOpts): LockScreenHandle {
   row.appendChild(actionBtn);
   box.appendChild(row);
 
+  // 输入框回车即提交（效率整改 13）：Enter 恒等价点主按钮（首设双输入同理）——
+  // 解锁屏最不该让用户多动手，域内不必再各自挂 keydown 接线；
+  // busy 期按钮 disabled，click() 不触发，天然防重复提交
+  for (const inp of [input, input2]) {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') actionBtn.click();
+    });
+  }
+
   // 错误行
   const err = document.createElement('div');
   err.className = 'bz-lockscreen-err';

@@ -1336,15 +1336,8 @@ export class PasswordVaultUIManager {
         resetBtn();
       }
     });
-    ls.input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        if (ls.input2.style.display === 'none') ls.actionBtn.click();
-        else ls.input2.focus();
-      }
-    });
-    ls.input2.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') ls.actionBtn.click();
-    });
+    // （输入框回车提交已由 uiLockScreen 内置：Enter → 主按钮，效率整改 13；
+    //   首设双输入态回车同样走主按钮的「请再次输入」分支，与原 focus input2 收敛为同一步）
   }
   private closeLock() {
     this.root!.querySelectorAll('.bz-password-vault-lock').forEach((l) => l.classList.remove('open'));
