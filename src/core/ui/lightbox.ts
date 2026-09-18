@@ -57,7 +57,11 @@ export function openLightbox(opts: BzLightboxOpts): { close: () => void } {
   // 媒体主体
   const media = document.createElement('div');
   media.className = 'bz-lightbox-media';
-  const type = opts.type || (opts.src.endsWith('.mp4') || opts.src.endsWith('.webm') ? 'video' : 'image');
+  // 类型判定剥掉查询串/锚点再看后缀（N7 潜伏缺陷）：Obsidian vault.getResourcePath 产出
+  // `app://…?path=…` 形态 URL，带着 ? 判后缀永远落不中 → 视频被当图片塞进 <img>。
+  // 无后缀兜底维持现状（显式 type 优先，audio 本就无后缀判定）。
+  const bareSrc = opts.src.split('?')[0].split('#')[0];
+  const type = opts.type || (bareSrc.endsWith('.mp4') || bareSrc.endsWith('.webm') ? 'video' : 'image');
   if (type === 'video') {
     const v = document.createElement('video');
     v.src = opts.src;

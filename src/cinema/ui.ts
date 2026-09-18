@@ -13,6 +13,7 @@
 import type { App, IconName } from 'obsidian';
 import { TFile } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
+import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
@@ -32,7 +33,7 @@ import { buildAnalysisHTML } from './analysis';
 import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching } from './douban-queue';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
-  detailModalHtml, seriesDetailModalHtml, confirmModalHtml, formModalHtml,
+  detailModalHtml, seriesDetailModalHtml, formModalHtml,
   aiPageHtml, sheetHeadHtml, cardHtml, facePiecesHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
@@ -73,7 +74,7 @@ function openDouban(item: CinemaItem): void {
 
 /** 快速标记状态（菜单/抽屉「标记在看」）：状态流转 + 刷新观影日期 + 域事件补发。
  *  「标记已看」已改走编辑窗（评分影评由用户在表单输入，saveEdit 落盘时补发同款域事件） */
-async function markStatus(item: CinemaItem, target: '在看' | '已看', sec: HTMLElement, app: App): Promise<void> {
+async function markStatus(item: CinemaItem, target: '在看' | '已看', app: App): Promise<void> {
   const fromSt = item.status === STATUS_WANT ? 'want' : item.status === STATUS_WATCHING ? 'watching' : 'watched';
   const prevRating = item.rating && item.rating > 0 ? item.rating : null;
   // G7：先记快照，落盘失败回滚内存（saveEdit 同法）——否则面板显示与磁盘相反
@@ -87,7 +88,7 @@ async function markStatus(item: CinemaItem, target: '在看' | '已看', sec: HT
   item.watchDate = localNow();
   try {
     await persistItem(item, app);
-    panelToast(sec, `已把「${item.name}」标记为${target}`);
+    notice(`已把「${item.name}」标记为${target}`, 'success');
     const toSt = target === '已看' ? 'watched' : 'watching';
     if (toSt !== fromSt) emitDomainEvent('movie', { kind: 'status', name: item.name, from: fromSt, to: toSt });
     if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
@@ -107,7 +108,7 @@ interface MenuAct { icon: string; label: string; danger?: boolean; run: () => vo
 function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
   const out: MenuAct[] = [{ icon: ICON.eye, label: '打开详情', run: () => openDetail(sec, it, app) }];
   if (it.status !== STATUS_WATCHING && it.status !== STATUS_WATCHED) {
-    out.push({ icon: ICON.play, label: '标记在看', run: () => void markStatus(it, '在看', sec, app) });
+    out.push({ icon: ICON.play, label: '标记在看', run: () => void markStatus(it, '在看', app) });
   }
   if (it.status !== STATUS_WATCHED) {
     // 标记已看不直改状态/评分：改走编辑窗预选「已看」，评分影评由用户确认后保存（memo item-1789105594322）
@@ -117,7 +118,7 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
     { icon: ICON.ai, label: '找同类', run: () => void runSimilarRecommend(it, app) },
     { icon: ICON.globe, label: '在豆瓣打开', run: () => openDouban(it) },
     { icon: ICON.edit, label: '编辑', run: () => openForm(sec, it, app) },
-    { icon: ICON.del, label: '删除', danger: true, run: () => openConfirm(sec, it, app) },
+    { icon: ICON.del, label: '删除', danger: true, run: () => openConfirm(it, app) },
   );
   return out;
 }
@@ -240,15 +241,9 @@ function ovl(sec: HTMLElement, html: string, opts: { sticky?: boolean } = {}): O
   return { el, close };
 }
 
-/** 面板内 toast（原型 .cn-toast 同构；无面板时回落 core notice） */
-function panelToast(sec: HTMLElement | null, msg: string): void {
-  if (!sec || !sec.isConnected) { notice(msg); return; }
-  const t = document.createElement('div');
-  t.className = 'cn-toast';
-  t.textContent = msg;
-  ovHost(sec).appendChild(t);
-  setTimeout(() => t.remove(), 1800);
-}
+// 面板内 toast 已收编 core notice 单源（一致审查#2）：不再自绘 .cn-toast——通知偏好
+// （issue 297 级别/时长/位置）与类型图标语义全部生效，调 notice(msg, type) 直达。
+// 各消费点：成功 completion → 'success'，校验拦截（空名/重名）→ 'warning'，失败 → 'error'。
 
 // ---------- 弹窗：跟手菜单 / 长按抽屉（统一走 core/item-actions） ----------
 //
@@ -347,7 +342,7 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
   const { el, close } = ovl(sec, detailModalHtml(it, url));
   mountIcons(el);
   el.querySelector('.j-edit')?.addEventListener('click', () => { close(); openForm(sec, it, app); });
-  el.querySelector('.j-del')?.addEventListener('click', () => { close(); openConfirm(sec, it, app); });
+  el.querySelector('.j-del')?.addEventListener('click', () => { close(); openConfirm(it, app); });
   el.querySelector('.j-similar')?.addEventListener('click', () => { close(); void runSimilarRecommend(it, app); });
 }
 
@@ -417,9 +412,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
   }));
   el.querySelector('.j-save')?.addEventListener('click', () => {
     const name = (el.querySelector('.j-name') as HTMLInputElement).value.trim();
-    if (!name) { panelToast(sec, '请输入名称'); return; }
-    if (editing && item && name !== item.name && M.items.some((x) => x.name === name)) { panelToast(sec, '已存在同名影视，请换个名称'); return; }
-    if (!editing && M.items.some((x) => x.name === name)) { panelToast(sec, '已存在同名影视，请换个名称'); return; }
+    if (!name) { notice('请输入名称', 'warning'); return; }
+    if (editing && item && name !== item.name && M.items.some((x) => x.name === name)) { notice('已存在同名影视，请换个名称', 'warning'); return; }
+    if (!editing && M.items.some((x) => x.name === name)) { notice('已存在同名影视，请换个名称', 'warning'); return; }
     const stChanged = !editing || !item || item.status !== (cur.st === '想看' ? STATUS_WANT : cur.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED);
     const date = stChanged ? localNow() : (item!.watchDate || localNow());
     // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
@@ -427,9 +422,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     const rating = cur.st === '已看' ? parseFloat((el.querySelector('.j-range') as HTMLInputElement).value) : cur.st === '在看' ? 0 : -1;
     const review = cur.st === '已看' ? (el.querySelector('.j-review-t') as HTMLTextAreaElement).value.trim() : '';
     if (editing && item) {
-      void saveEdit(sec, item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
+      void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
     } else {
-      void saveNew(sec, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
+      void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
     }
   });
 }
@@ -437,13 +432,13 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
 interface FormPayload { name: string; tag: string; st: string; rating: number | null; date: string; review: string }
 
 /** 新增落盘（CM2：重名/落盘失败回退；created 域事件 + 抓取队列接管） */
-async function saveNew(sec: HTMLElement, p: FormPayload, app: App, close: () => void): Promise<void> {
+async function saveNew(p: FormPayload, app: App, close: () => void): Promise<void> {
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
   const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-      panelToast(sec, '已存在同名影视，请换个名称');
+      notice('已存在同名影视，请换个名称', 'warning');
       return;
     }
     M.items.unshift(it);
@@ -451,7 +446,7 @@ async function saveNew(sec: HTMLElement, p: FormPayload, app: App, close: () => 
     emitDomainEvent('movie', { kind: 'created', name: p.name, status: st === STATUS_WANT ? 'want' : st === STATUS_WATCHING ? 'watching' : 'watched', rating: p.rating, review: p.review || null });
     if (it.file) enqueueDoubanFetch(it.file, it.name);
     close();
-    panelToast(sec, `已添加「${p.name}」`);
+    notice(`已添加「${p.name}」`, 'success');
     renderAll(app);
   } catch (e) {
     if (!it.file) {
@@ -465,7 +460,7 @@ async function saveNew(sec: HTMLElement, p: FormPayload, app: App, close: () => 
 }
 
 /** 编辑落盘：改名前置校验（非法字符/重名拦截）→ persistItem（rename + frontmatter tags）→ 域事件补发 */
-async function saveEdit(sec: HTMLElement, item: CinemaItem, p: FormPayload, app: App, close: () => void): Promise<void> {
+async function saveEdit(item: CinemaItem, p: FormPayload, app: App, close: () => void): Promise<void> {
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
   const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review };
@@ -475,7 +470,7 @@ async function saveEdit(sec: HTMLElement, item: CinemaItem, p: FormPayload, app:
       return;
     }
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-      panelToast(sec, '已存在同名影视，请换个名称');
+      notice('已存在同名影视，请换个名称', 'warning');
       return;
     }
   }
@@ -495,7 +490,7 @@ async function saveEdit(sec: HTMLElement, item: CinemaItem, p: FormPayload, app:
       emitDomainEvent('movie', { kind: 'rated', name: item.name, fromRating: prevRating, toRating: item.rating });
     }
     close();
-    panelToast(sec, `已保存「${p.name}」`);
+    notice(`已保存「${p.name}」`, 'success');
     renderAll(app);
   } catch (e) {
     Object.assign(item, prev);
@@ -504,13 +499,27 @@ async function saveEdit(sec: HTMLElement, item: CinemaItem, p: FormPayload, app:
   }
 }
 
-// ---------- 弹窗：删除确认 ----------
+// ---------- 弹窗：删除确认（一致审查#1 收编 core/flow-dialog：全域最后一个自绘确认框退役） ----------
 
-function openConfirm(sec: HTMLElement, item: CinemaItem, app: App): void {
-  const { el, close } = ovl(sec, confirmModalHtml(item), { sticky: true });
-  mountIcons(el);
-  el.querySelector('.j-cancel')?.addEventListener('click', close);
-  el.querySelector('.j-del')?.addEventListener('click', async () => {
+/**
+ * 删除确认：走 core openFlowDialog（role=dialog/aria-modal、ESC/遮罩取消、焦点管理、
+ * danger 中性形制——焦点反落取消钮，回车不再直通删除）。皮肤类见 styles.css 的
+ * `#__shared_confirm_popup__.bz-cinema-flow-dialog` 映射段。
+ */
+function openConfirm(item: CinemaItem, app: App): void {
+  void openFlowDialog({
+    title: '删除影视',
+    // message 经 core escapeHtml（片名注入防护），\n 渲染为 <br> 分行
+    message: `确定删除「${item.name}」吗？\n将移入系统回收站，可在回收站恢复`,
+    // 流程框挂 document.body、不在面板树内：cn-skin 取午夜场调色板（菜单/抽屉皮肤同一通道），
+    // bz-cinema-flow-dialog = 本域确认框专属类；删除是危险主动作 → core 另挂 bz-flow-dialog--danger
+    className: 'cn-skin bz-cinema-flow-dialog',
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'ok', cta: true, danger: true },
+    ],
+  }).then(async (v) => {
+    if (v !== 'ok') return;
     if (item.file) {
       try {
         await app.vault.trash(item.file, true);
@@ -526,8 +535,7 @@ function openConfirm(sec: HTMLElement, item: CinemaItem, app: App): void {
     const idx = M.items.indexOf(item);
     if (idx > -1) M.items.splice(idx, 1);
     emitDomainEvent('movie', { kind: 'deleted', name: item.name });
-    close();
-    panelToast(sec, `已删除「${item.name}」`);
+    notice(`已删除「${item.name}」`, 'success');
     renderAll(app);
   });
 }
