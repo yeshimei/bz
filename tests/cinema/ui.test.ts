@@ -911,7 +911,7 @@ tags: [电影]
     expect(series).toBeTruthy();
     expect(series.dataset.cinemaKey).toBe('series:剧集:老友记');
     expect(series.querySelector('.pname')?.textContent).toBe('老友记'); // 标题 = 归一名称
-    // 季圆点：贴在**海报区内**（右下角 CSS 定位），一个圆点 = 一季，金/橙/空三态
+    // 季圆点：贴在**海报区内**（左下角 CSS 定位），一个圆点 = 一季，金/橙/空三态
     const dots = Array.from(series.querySelectorAll('.pw .season-dots i'));
     expect(dots.map((s) => s.className)).toEqual(['watched', 'watching', 'empty']);
     expect(series.querySelector('.bar-note')).toBeNull(); // 注释行已按用户要求去掉

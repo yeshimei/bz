@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * 影院剧集按季合并（issue 376 / ADR-0168）：名称归一 + 分组纯加工层，
- * 以及卡片形态（海报右下角季圆点，无注释文字）与合并卡详情弹窗的 markup 口径。
+ * 以及卡片形态（海报左下角季圆点，无注释文字）与合并卡详情弹窗的 markup 口径。
  *
  * 纯层无 DOM 依赖：seasons.ts 只 import 域内类型，shared.ts 的渲染件只 import
  * core/ui/str 与域内常量——本文件按 node 环境跑，刻意不引入 jsdom（跑得快、也顺带
@@ -152,7 +152,7 @@ describe('cinema 季进度条与合并卡 markup（D1）', () => {
     expect(all).toContain('aria-label="各季进度：共 1 季，已看 1、在看 0、未看 0"');
   });
 
-  it('合并卡：pcard-series + series: 键 + 季圆点在**海报区内**（右下角）+ 聚合角标', () => {
+  it('合并卡：pcard-series + series: 键 + 季圆点在**海报区内**（左下角）+ 聚合角标', () => {
     const card = mergeSeasonCards([watched, watching, want], true)[0] as SeriesCard;
     const html = cardHtml(card, null);
     expect(html).toContain('class="pcard pcard-series"');

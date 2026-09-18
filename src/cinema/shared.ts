@@ -113,11 +113,12 @@ export function cardStatus(e: CardEntry): number {
 }
 
 /**
- * 季圆点（2026-09-18 用户二次点名形态）：**一个圆点 = 一季**，贴在**海报右下角**，
+ * 季圆点（2026-09-18 用户二次点名形态）：**一个圆点 = 一季**，贴在**海报左下角**，
  * **不出注释文字**——原 D1 的那句「全 N 季已看 / S6 在看 · 6/7 季」按用户要求整条去掉
  * （卡片因此回到原高度，季进度也不占名字上方的行）。
  * 三态与分段条同口径：金实 = 已看 / 橙实 = 在看 / 空心描边 = 未看·想看；季号顺序即左右顺序，
- * 季多时换行且仍右对齐。文字去掉后信息只剩颜色，故补 `role=img` + aria-label 供读屏。
+ * 季多时换行且仍左对齐（方位由用户 2026-09-18 订正为左下，原写右下）。
+ * 文字去掉后信息只剩颜色，故补 `role=img` + aria-label 供读屏。
  */
 export function seasonDotsHtml(seasons: SeasonSlot[]): string {
   const n = { watched: 0, watching: 0, empty: 0 };
@@ -133,7 +134,7 @@ export function seasonDotsHtml(seasons: SeasonSlot[]): string {
 /**
  * 片卡 HTML 唯一出口（desk 网格 / mob 网格 / 局部重刷共用；data-cinema-key = CM3 稳定键，
  * 合并卡为 `series:` 键）。fetching=后台抓取中 → 海报区遮罩 spinner（ADR-0113）。
- * 合并卡与普通卡同构：海报区（含季圆点）/ 名字 / meta / 星级——季圆点贴在**海报右下角**，
+ * 合并卡与普通卡同构：海报区（含季圆点）/ 名字 / meta / 星级——季圆点贴在**海报左下角**，
  * 不额外占卡片高度；正脸 = 最近观看的一季，评分取最新已评季（读作「你最近在追的那一季」）。
  */
 export function cardHtml(e: CardEntry, posterUrl: string | null, fetching = false): string {
