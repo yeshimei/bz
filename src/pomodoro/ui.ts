@@ -19,7 +19,7 @@ import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
-import { notice, notify } from '../core/notice';
+import { notice, notify, notifySaveError } from '../core/notice';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { PomodoroDataManager, trimWithArchive } from './data';
@@ -523,9 +523,10 @@ async function save(): Promise<void> {
   try {
     if (dataManager) await dataManager.save({ version: 1, state, history: t.history, ...(t.archived.length ? { archived: t.archived } : {}) });
   } catch (e: unknown) {
-    const msg = e instanceof Error ? e.message : String(e);
     console.error('番茄钟数据保存失败:', e);
-    notice(`番茄钟数据保存失败：${msg}，下次保存会自动补写`, 'error');
+    // 保存失败提示收编 core 单源（review-deep 一致#3）；「下次保存会自动补写」承诺由
+    // 上方先落盘后改内存态的顺序兑现——失败不裁不归档，下次 save 自动重试归档
+    notifySaveError(e, '番茄钟数据');
     return;
   }
   history = t.history;

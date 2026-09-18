@@ -579,7 +579,7 @@ export class PasswordVaultUIManager {
       this.renderAll();
       this.refreshMobPage(); // E6：收藏星标立即生效
     } else if (act === 'del') {
-      this.askConfirm('删除密码条目', `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, async () => {
+      this.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, async () => {
         try {
           await this.dataManager.deleteItem(d.id); // E16：失败 toast（回滚由数据层负责）
         } catch (e: any) {
@@ -844,7 +844,7 @@ export class PasswordVaultUIManager {
         label: '删除',
         kind: 'danger',
         onClick: () =>
-          this.askConfirm('删除密码条目', `确定删除账号 "${d.account}" 吗？此操作不可撤销。`, true, () => {
+          this.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, () => {
             void (async () => {
               try {
                 await this.dataManager.deleteItem(d.id); // E16：失败 toast

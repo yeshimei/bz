@@ -32,7 +32,7 @@
  *    改为「按住 ≥250ms 后，第一次移动才真正起拖」——用户看到的是「按住不动、一动就跟着走」。
  */
 import { isMobileEnv } from '../core/mobile';
-import { notice } from '../core/notice';
+import { notifySaveError } from '../core/notice';
 import { mountIcons } from '../core/ui';
 import { iconSpan } from '../core/ui/str';
 import type { App } from 'obsidian';
@@ -100,9 +100,10 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
   function persist(): void {
     if (!order) return;
     // 提交读到的整份 order（含另一端），本端编辑不动另一端；
-    // 失败不再静默（H13）：静默回弹会让用户以为排序已存
-    void saveHomeConfig(order, app).catch(() => {
-      notice('入口顺序保存失败，重开设置后会回到原顺序', 'error');
+    // 失败不再静默（H13）：静默回弹会让用户以为排序已存。
+    // 文案收编 core notifySaveError 单源（review-deep 一致#3）
+    void saveHomeConfig(order, app).catch((e) => {
+      notifySaveError(e, '入口顺序');
     });
   }
 

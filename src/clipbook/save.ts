@@ -16,7 +16,7 @@ import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
-import { notice, notify, type NoticeHandle } from '../core/notice';
+import { notice, notify, notifySaveError, type NoticeHandle } from '../core/notice';
 import { localDatetime, toDatetime, articleKeyOf } from './constants';
 import { readArticleTracking, applyBodyTransforms, clearArticleTracking, linkAliasText } from './anchor';
 import { extractImageUrls, localizeArticleImages } from './image-save';
@@ -103,7 +103,7 @@ ${body}`;
     return true;
   } catch (e) {
     console.error('[剪藏本] 保存剪藏失败', e);
-    notice('保存失败，请稍后重试', 'error');
+    notifySaveError(e, '剪藏');
     return false;
   }
 }

@@ -113,7 +113,7 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     pickType('日记');
     vi.spyOn(vault, 'create').mockRejectedValueOnce(new Error('磁盘已满'));
     await saveNewEntry(); // 建文件失败：抛错路径（finally 释放标志）
-    expect(getNoticeMessages().join('\n')).toContain('保存日记失败');
+    expect(getNoticeMessages().join('\n')).toContain('保存失败（日记）');
     // 下一笔保存不被进行中标志拦截，正常落盘
     openWriteDialog('2024-01-01 10:30');
     pickType('日记');
@@ -144,7 +144,7 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     pickType('日记');
     vi.spyOn(vault, 'create').mockRejectedValueOnce(new Error('磁盘已满'));
     await saveNewEntry();
-    expect(getNoticeMessages().join('\n')).toContain('保存日记失败');
+    expect(getNoticeMessages().join('\n')).toContain('保存失败（日记）');
     expect(linkSpy).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
     expect((document.querySelector('#add-diary-popup') as HTMLElement).style.display).not.toBe('none');
