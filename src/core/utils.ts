@@ -6,6 +6,7 @@ import moment from 'moment';
 import { getApp } from './app';
 import { httpGetText, requestUrlAsFetch } from './http';
 import { pad2, relTime as baseRelTime } from './ui/str';
+import { notice } from './notice';
 
 /** HTML 转义 */
 export function escapeHtml(str: string): string {
@@ -338,4 +339,34 @@ export async function copySensitiveWithFallback(text: string): Promise<boolean> 
       return false;
     }
   }
+}
+
+/**
+ * 打开外部链接（系统浏览器）单源（审查 P3 一致#14 收口）：
+ * memo/ui openItem、favorites/ui openExternal、knowledge/ui _openExternal 三份私有副本
+ * 收编至此，域内不再自留副本。行为口径（与 favorites 版逐字等价——三份中最完整的一份）：
+ * - app.openUrl(url)（Obsidian 原生，桌面/移动均可用）成功 → 完成；
+ * - openUrl 缺失/抛错（故意不带 ?.，缺失须落 TypeError 才进兜底链）→ electron shell.openExternal；
+ * - 无 electron（移动端/jsdom）→ window.open 兜底（favorites F14：不再静默）；
+ * - 全链失败 → 人话提示（error）。
+ * app 由调用方注入（memo 传 M.appRef，favorites 传 appOf()，knowledge 传 getApp()），
+ * 本函数不自取——调用时机多在面板闭包里，appRef 与面板生命周期一致更稳。
+ */
+export function openExternalUrl(app: unknown, url: string): void {
+  try {
+    (app as any).openUrl(url);
+    return;
+  } catch (e) { /* 落 electron 兜底 */ }
+  try {
+    const electron = (window as any).require && (window as any).require('electron');
+    if (electron && electron.shell) {
+      electron.shell.openExternal(url);
+      return;
+    }
+  } catch (e) { /* 落 window.open 兜底 */ }
+  try {
+    const w = window.open(url, '_blank');
+    if (w) return;
+  } catch (e) { /* 环境不支持（jsdom 等）落提示 */ }
+  notice('无法打开链接，请复制到浏览器打开', 'error');
 }
