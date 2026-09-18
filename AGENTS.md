@@ -8,7 +8,7 @@
 - 测试用 vitest，alias 替换 obsidian 为 mock。
 
 ## 架构
-- `src/main.ts`：命令注册、设置页、懒加载（命令量以代码为准，另有 diary 写日记命令域内注册）。
+- `src/main.ts`：命令注册、设置页、懒加载（命令量以代码为准；diary 两命令（bz-diary-open/bz-diary-write）均在 main.ts COMMANDS 表注册（ADR-0004 裸注册通道），域内仅出回调）。
 - `src/core/`：共享层；`src/<域>/`：index + data + ui + styles.css。
 - **依赖方向（ADR-0002）**：`core ← config/state ← parser ← store ← ui ← main`。禁止模块顶层互访，函数级环引用须延迟解析。
 
