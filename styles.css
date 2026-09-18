@@ -4297,12 +4297,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * --background-modifier-border/hover/active-hover、--color-green/orange/cyan。 */
 
 /* ---------- 设计变量（token 化，跟随 Obsidian 主题亮暗） ----------
-   挂 body 的日记弹层（日期筛选 .bz-diary-datefilter）不在 .bz-diary 根内，必须同列声明——
-   否则 --dw-* 在它身上全部解析失败（背景 transparent、边框/文字色全丢）。
+   挂 body 的日记弹层（日期筛选 .bz-diary-datefilter、滚轮选择器 #unified-datetime-picker-mask）
+   不在 .bz-diary 根内，必须同列声明——否则 --dw-* 在它身上全部解析失败
+   （背景 transparent、边框/文字色/阴影全丢）。
    用户报障：「点击『日记本』打开的日期窗口没有背景色」即此因（此前只补过按钮背景，
-   卡片的 var(--dw-bg) 仍是空值）。 */
+   卡片的 var(--dw-bg) 仍是空值）。滚轮壳系一致#2 降级口径：阴影对齐手册三档依赖同列声明。 */
 .bz-diary,
-.bz-diary-datefilter {
+.bz-diary-datefilter,
+#unified-datetime-picker-mask {
   --dw-bg: var(--background-primary);
   --dw-surface: var(--background-secondary);
   --dw-hover: var(--background-modifier-hover);
@@ -5149,6 +5151,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-diary-lb {
   position: fixed;
   inset: 0;
+  /* 静态 z 90 仅在面板 root 的 stacking context 内有意义（.bz-diary root 自身经 topifyZ
+     动态定层）；勿把该值当「高于一切 body 浮层」复用——抽屉/菜单等 body 级浮层走
+     core allocZ 动态发号，跨树层叠比较取的是面板 root 的号（D-UI1 根因注记） */
   z-index: 90;
   background: rgba(0, 0, 0, 0.9);
   display: none;
@@ -5324,43 +5329,101 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   object-fit: cover;
 }
 
-/* ============ 空态 ============ */
-.bz-diary-empty {
-  display: flex;
-  flex-direction: column;
+/* ============ 空态 ============
+   一致#4（review-deep 一致性）：空态接 core uiEmpty 单源（.bz-empty 族，components.css），
+   mkEmpty 改走 uiEmpty 工厂 + uiBtnRow——域内 .bz-diary-empty 家族 14 条样式随单源化删除。 */
+
+/* ============ 效率批 C 新增样式（全部 bz-diary 前缀，随域聚合） ============ */
+/* 效率#6：brand 行「✕ 清除」日期筛选胶囊（筛选生效时由 renderRange 动态挂载） */
+.bz-diary .bz-diary-filter-clear {
+  display: inline-flex;
   align-items: center;
-  gap: var(--bz-space-sm);
-  padding: 72px var(--bz-space-xl);
-  text-align: center;
-}
-.bz-diary-empty-ic {
-  font-size: 34px;
-  line-height: 1;
-  opacity: 0.55;
-}
-.bz-diary-empty-title {
-  font-size: var(--bz-font-body);
-  color: var(--dw-muted);
-}
-.bz-diary-empty-desc {
-  font-size: var(--bz-font-meta);
-  color: var(--dw-faint);
-}
-.bz-diary .bz-diary-empty-btn {
-  margin-top: 10px;
-  padding: 9px 22px;
-  border-radius: var(--bz-radius-sm);
+  gap: 3px;
+  padding: 2px 9px;
   border: none;
-  background: var(--dw-accent);
-  color: var(--dw-on-accent);
-  font-size: var(--bz-font-label);
-  font-weight: 500;
+  border-radius: var(--bz-radius-full);
+  background: var(--dw-surface);
+  box-shadow: none;
+  color: var(--dw-muted);
+  font-size: var(--bz-font-caption);
+  line-height: 1.4;
   cursor: pointer;
-  font-family: inherit;
-  transition: opacity var(--bz-dur-fast);
+  white-space: nowrap;
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
 }
-.bz-diary .bz-diary-empty-btn:hover {
-  opacity: 0.88;
+.bz-diary .bz-diary-filter-clear .bz-ic {
+  width: 11px;
+  height: 11px;
+}
+.bz-diary .bz-diary-filter-clear:hover {
+  background: var(--dw-hover);
+  color: var(--dw-accent);
+}
+/* 效率#9：搜索命中词轻高亮（文字卡 <mark>，accent 底） */
+.bz-diary mark.bz-diary-mark {
+  background: var(--text-accent);
+  color: var(--text-on-accent);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+/* 效率#10：灯箱「⋯」动作菜单钮（规格同 lbclose，位于其左侧） */
+.bz-diary .bz-diary-lbmore {
+  position: absolute;
+  right: 64px;
+  top: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--bz-dur-fast);
+}
+.bz-diary .bz-diary-lbmore:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+/* 效率#13：loadAndRender 读取期骨架占位（shimmer 渐变卡 + 一句话；媒体占位表面 token） */
+.bz-diary-skel {
+  padding: var(--bz-space-lg) 0;
+}
+.bz-diary-skel-tip {
+  font-size: var(--bz-font-label);
+  color: var(--dw-faint);
+  text-align: center;
+  padding-bottom: var(--bz-space-md);
+}
+.bz-diary-skel-row {
+  column-count: 3;
+  column-gap: 10px;
+}
+.bz-diary-skel-card {
+  break-inside: avoid;
+  height: 180px;
+  margin-bottom: 10px;
+  border-radius: 10px;
+  background: linear-gradient(100deg, var(--dw-surface) 35%, var(--dw-hover) 50%, var(--dw-surface) 65%);
+  background-size: 200% 100%;
+  animation: bz-diary-skel-shimmer 1.2s linear infinite;
+}
+.bz-diary-skel-card--tall {
+  height: 250px;
+}
+@keyframes bz-diary-skel-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@media (max-width: 768px) {
+  .bz-diary-skel-row {
+    column-count: 2;
+  }
 }
 
 /* ============ 动画 ============ */
@@ -5400,9 +5463,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-diary-mob {
     display: flex;
     width: 100vw;
-    height: 100vh;
+    /* D-UI7（review-deep P3）：接 core 可视视口机制（components.css --bz-vvh + viewport.ts）——
+       100vh 是布局视口高度，不随软键盘/原生栏收缩；memo/cinema 已接，diary 同批对齐 */
+    height: var(--bz-vvh, 100vh);
     max-width: 100vw;
-    max-height: 100vh;
+    max-height: var(--bz-vvh, 100vh);
     border-radius: 0;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -5436,8 +5501,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     flex-shrink: 0;
   }
   /* L5 控件：类型 chips（主 14 / 子 13） */
+  /* D-UI6：触控热区改 padding 抬档（替代 ::after 外扩——紧凑行外扩两两重叠误触）：
+     chip ≈ 17.5px 内容 + 2×11px 垫 ≥ 40px 绝对下限；subchip 16.25 + 2×12 ≥ 40 */
   .bz-diary .bz-diary-mob .bz-diary-chip {
-    padding: 7px 14px;
+    padding: 11px 16px;
     font-size: 14px;
     gap: 5px;
   }
@@ -5445,7 +5512,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     font-size: 12px;
   }
   .bz-diary .bz-diary-mob .bz-diary-subchip {
-    padding: 5px 12px;
+    padding: 12px 15px;
     font-size: 13px;
     gap: 4px;
   }
@@ -5528,21 +5595,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
   /* 底部抽屉字号/几何不再域内定档：2026-09-11 换核 core openItemSheet（.bz-item-sheet），
      与 favorites/belongings/cinema 同壳同档——「和别的域一致」正是本次用户诉求。
-     域内六档 sheet 段（emoji/title/content/thumb/act/act-sub/close）随之退役。 */
-  /* 空态：图 40 / 题 15 / 描述 13 / 按钮 14.5 */
-  .bz-diary-mob .bz-diary-empty-ic {
-    font-size: 40px;
-  }
-  .bz-diary-mob .bz-diary-empty-title {
-    font-size: 15px;
-  }
-  .bz-diary-mob .bz-diary-empty-desc {
-    font-size: 13px;
-  }
-  .bz-diary-mob .bz-diary-empty-btn {
-    font-size: 14.5px;
-    padding: 10px 24px;
-  }
+     域内六档 sheet 段（emoji/title/content/thumb/act/act-sub/close）随之退役。
+     空态样式段随一致#4 单源化一并退役（.bz-empty 族由 core 管，含移动端档位）。 */
 }
 
 /* ============ 增强 #13：移动端触控热区 ≥44px 档 ============ */
@@ -5775,8 +5829,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     font-size: 13px;
   }
   .bz-diary-datefilter .bz-diary-datefilter-close {
-    width: 32px;
-    height: 36px;
+    /* D-UI9（review-deep P3）：弹窗内唯一显式关闭路径，触控命中 ≥40×40 绝对下限（原 32×36） */
+    width: 40px;
+    height: 40px;
     font-size: 18px;
   }
   .bz-diary-datefilter .bz-diary-datefilter-year {
@@ -5800,66 +5855,94 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   }
 }
 
-/* ==================== 写链路弹窗样式（issue 256 随写链路迁入；弹窗挂 body，在 .bz-diary 作用域之外） ==================== */
+/* ==================== 写链路弹窗（bz-diary-add-popup / bz-diary-tag-popup，一致#2 收编 core uiModal 壳） ====================
+   遮罩底色/blur/圆角/阴影/82vh 限高/焦点圈闭由 .bz-overlay-* 壳单源承载
+   （遮罩毛玻璃回归 core 组守卫，overlay-glass.test.ts 的 diary 手绘 mask 条目随壳收编摘除）；
+   旧 #add-diary-mask / .add-diary-popup / .diary-tag-selector-popup 手绘壳与
+   #add-diary-content:focus 等死选择器一并退役。此处只补域内布局（效率#1 表单骨架 +
+   sticky 底栏）与触控热区（D-UI15）。 */
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+/* 表单纵向骨架：日期行 + 类型标签 + 过滤框 + chip 滚动区 + 底栏；
+   壳限高 82vh 内 chip 区自滚、底栏常驻，保存钮不再随 chips 滚走 */
+.bz-diary-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
-
-/* 写日记弹窗 */
-#add-diary-mask {
-  backdrop-filter: blur(var(--bz-overlay-blur));
-  animation: fadeIn var(--bz-dur-base) ease-out;
+.bz-diary-field-label {
+  display: block;
+  margin-bottom: var(--bz-space-sm);
+  font-size: var(--bz-font-body);
+  color: var(--text-muted);
+  font-weight: 500;
 }
-.add-diary-popup {
-  animation: slideUp var(--bz-dur-slow) ease-out;
+.bz-diary-tag-filter {
+  margin-bottom: var(--bz-space-sm);
 }
-/* 焦点环统一走 core p3 focus-visible 规则：此处仅保留 border 高亮，避免输入聚焦双环 */
-#add-diary-datetime:focus,
-#add-diary-type:focus,
-#add-diary-content:focus {
-  border-color: var(--interactive-accent);
+/* 效率#4①：日期行常驻快捷 chip「此刻 / 昨天」（补写昨晚路径；行由 datetime-picker 注入弹窗内） */
+.dt-quick-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
 }
-@media (max-width: 768px) {
-  .add-diary-popup {
-    width: 85%;
-    padding: 20px;
-  }
-}
-
-/* 标签选择器弹窗 */
-#diary-tag-selector-mask {
-  backdrop-filter: blur(var(--bz-overlay-blur));
-  animation: fadeIn var(--bz-dur-base) ease-out;
-}
-.diary-tag-selector-popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+.dt-quick-chip {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 999px;
   background: var(--background-primary);
-  border-radius: var(--bz-radius-md);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  padding: 20px;
-  display: none;
-  max-width: 300px;
-  width: 90%;
-  max-height: 80vh;
-  overflow-y: auto;
-  animation: slideUp var(--bz-dur-slow) ease-out;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12.5px;
+  font-family: inherit;
+  padding: 4px 14px;
+  min-height: 30px;
+  box-sizing: border-box;
 }
-.diary-tag-selector-title {
-  margin: 0 0 var(--bz-space-lg) 0;
-  font-size: 16px;
+.dt-quick-chip:hover {
+  background: var(--background-modifier-hover);
   color: var(--text-normal);
-  font-weight: 600;
+}
+
+/* D-UI16：手输日期聚焦软键盘顶起——写日记弹窗上移一档。
+ * 壳收编 uiModal 后为 flex 居中（无 top 内联可覆盖），用 translateY 抬升等效原 top:30% 档；
+ * blur 移除类回落居中档 */
+#add-diary-popup.keyboard-up {
+  transform: translateY(-20vh);
+}
+
+.bz-diary-chip-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  margin-bottom: var(--bz-space-md);
+}
+/* sticky 底栏（效率#1）：写弹窗「取消/添加」右对齐；选择器「--split」删除居左、保存居右 */
+.bz-diary-dialog-foot {
+  display: flex;
+  gap: var(--bz-space-md);
+  justify-content: flex-end;
+  flex-shrink: 0;
+  padding-top: var(--bz-space-md);
+  border-top: 1px solid var(--background-modifier-border);
+}
+.bz-diary-dialog-foot--split {
+  justify-content: space-between;
+}
+/* 类型 chip 附加类：父标签角标定位锚点（基础观感仍走 .diary-tag-selector-btn） */
+.bz-diary-tag-chip {
+  position: relative;
+}
+.bz-diary-tag-badge {
+  font-size: 12px;
+  margin-left: 4px;
+  position: absolute;
+  top: 0;
+  right: 0;
+  translate: 5px -5px;
 }
 .diary-tag-selector-buttons {
   display: flex;
   flex-wrap: wrap;
   gap: var(--bz-space-sm);
-  margin-bottom: 20px;
 }
 .diary-tag-selector-btn {
   padding: var(--bz-space-sm) var(--bz-space-md);
@@ -5875,60 +5958,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .diary-tag-selector-btn.diary-active {
   background: var(--interactive-accent) !important;
 }
-.diary-tag-selector-actions {
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-}
-.diary-action-btn {
-  padding: var(--bz-space-sm) var(--bz-space-lg);
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-size: var(--bz-font-body);
-  font-weight: 500;
-}
-.diary-save-btn {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-.diary-delete-btn {
-  background: var(--background-modifier-error) !important;
-  color: var(--text-on-accent) !important;
-  border: none !important;
-}
-.diary-delete-btn:hover {
-  background: var(--background-modifier-error-hover) !important;
-}
-.diary-action-btn:hover {
-  opacity: 0.9;
-}
 @media (max-width: 768px) {
-  .diary-tag-selector-actions {
+  .bz-diary-dialog-foot {
     flex-direction: column-reverse;
     gap: var(--bz-space-sm);
   }
-  .diary-delete-btn,
-  .diary-save-btn {
+  .bz-diary-dialog-foot .bz-btn {
     width: 100%;
     text-align: center;
   }
-  .diary-tag-selector-popup {
-    width: 85%;
-    max-height: 70vh;
-    padding: var(--bz-space-lg);
-  }
-  .diary-tag-selector-title {
-    font-size: var(--bz-font-emphasis);
-    margin-bottom: var(--bz-space-md);
+  /* D-UI15：移动档触控抬档——chips padding 提到 8px 14px（配 bz-touch-target--xl
+     coarse 外扩热区，视觉不变），保存/取消钮同批 */
+  .diary-tag-selector-btn {
+    padding: 8px 14px;
+    font-size: var(--bz-font-label);
   }
   .diary-tag-selector-buttons {
-    /* 类型按钮全部平铺展示；超高时由弹窗整体滚动承载 */
+    /* 类型按钮全部平铺展示；超高时由 chip 滚动区承载 */
     max-height: none !important;
     overflow: visible !important;
-  }
-  .diary-tag-selector-btn {
-    font-size: var(--bz-font-label);
   }
 }
 
