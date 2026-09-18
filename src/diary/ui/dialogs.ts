@@ -26,7 +26,7 @@ import { addEntry, updateDiaryTags, isUnparsedRefusal, isDiaryReadFailure } from
 import { ENCRYPT_TAG, reclassifyEntry } from '../encrypt';
 import { emitDomainEvent } from '../../core/domain-bus';
 import { createDateTimeControl, resetDateTimeControl, setDateTimeYearRangeProvider } from './datetime-picker';
-import { showConfirm } from './entry-actions';
+import { jumpToDiaryEntry, showConfirm } from './entry-actions';
 import { buildLocatorPredicateFor } from './locator';
 
 // ===== 类型选择按钮（写日记弹窗与标签选择器共用） =====
@@ -314,11 +314,18 @@ export function createAddDialog() {
 
 /** 打开添加日记弹窗（原 3348-3426）。
  * opts.yearRange：宿主（墙）注入的滚轮年份动态范围（UX-34，取自当前数据最早/最新年份）；
- * 未注入回落 1900～当前年+1。 */
-export function openAddDialog(opts?: { yearRange?: { min: number; max: number } }) {
+ * 未注入回落 1900～当前年+1。
+ * opts.onSaved：保存成功后的宿主回调（item-1789672493967-y11jgy，墙注入「收起主窗口」；
+ * 回调注入避免本模块反向依赖 ui.ts 的 DiaryAppController——依赖铁律禁模块顶层互访）；
+ * 打开新笔记在本模块内完成，回调只管宿主自身收尾。 */
+let activeAddDialogOnSaved: (() => void) | null = null;
+
+export function openAddDialog(opts?: { yearRange?: { min: number; max: number }; onSaved?: () => void }) {
   const mask = document.getElementById('add-diary-mask');
   const popup = document.getElementById('add-diary-popup');
   if (!mask || !popup) return;
+
+  activeAddDialogOnSaved = opts?.onSaved ?? null;
 
   if (opts?.yearRange) {
     const range = opts.yearRange;
@@ -418,10 +425,20 @@ export async function saveNewEntry() {
 
   savingNewEntry = true;
   try {
-    await addEntry(dateStr, timeStr, selTagNames, '');
+    const entry = await addEntry(dateStr, timeStr, selTagNames, '');
     // 收紧通知（memo item-1789105697068）：保存成功结果立即可见（弹窗关、墙已刷新），不再弹成功提示
     mask.style.display = 'none';
     popup.style.display = 'none';
+    // 创建成功 → 打开新笔记并通知宿主（item-1789672493967-y11jgy）：先 await 打开
+    // 再回调关墙，对齐 jumpTo 先例「跳转后关日记本」；打开/回调失败不影响已落盘
+    // 事实，静默兜底——不落入下方写盘失败分支误报「保存失败」
+    try {
+      await jumpToDiaryEntry(entry);
+      activeAddDialogOnSaved?.();
+      activeAddDialogOnSaved = null; // 消费即清：防陈旧回调（下次 openAddDialog 重设）
+    } catch {
+      // 打开新笔记失败（罕见）：条目已落盘、弹窗已关，无需人话通知
+    }
   } catch (error: any) {
     if (isUnparsedRefusal(error) || isDiaryReadFailure(error)) return; // 守卫拒写/读盘失败：人话通知已由写层发出
     console.error('保存日记失败:', error);

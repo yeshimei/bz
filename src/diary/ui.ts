@@ -2369,10 +2369,15 @@ export class DiaryAppController {
   }
 
   // ---------- 头部动作（写日记 / 搜索 / 日期选择器） ----------
-  /** 写日记：本域 openAddDialog（滚轮年份动态范围取自当前数据，UX-34） */
+  /** 写日记：本域 openAddDialog（滚轮年份动态范围取自当前数据，UX-34）。
+   *  onSaved：保存成功回调注入（item-1789672493967-y11jgy）——新笔记打开后收起墙，
+   *  避免弹窗关了墙仍盖在最上层挡住笔记（对齐 jumpTo 先例「跳转后关日记本」） */
   private openAddEntry() {
     try {
-      openAddDialog({ yearRange: this.getYearRange() ?? undefined });
+      openAddDialog({
+        yearRange: this.getYearRange() ?? undefined,
+        onSaved: () => this.hide(),
+      });
     } catch (e) {
       notice('写日记暂不可用：' + (e instanceof Error ? e.message : String(e)), 'error');
     }

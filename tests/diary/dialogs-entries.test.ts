@@ -4,7 +4,7 @@
  * - 标签选择器保存：写层未命中告警不盲写；同刻唯一兜底定位成功改盘。
  */
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import { setApp } from '../../src/core/app';
+import { getApp, setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { DEFAULT_SETTINGS } from '../../src/settings';
 import { applyDirectories, resetTagsConfig } from '../../src/diary/config';
@@ -120,6 +120,35 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     await saveNewEntry();
     expect(vault.files.get('我的/日记/2401011030.md')).toContain('date: 2024-01-01 10:30');
   });
+
+  it('成功创建：打开新笔记（openLinkText，路径去 .md）并触发 onSaved（item-1789672493967-y11jgy）', async () => {
+    const onSaved = vi.fn();
+    const linkSpy = vi.spyOn((getApp() as any).workspace, 'openLinkText');
+    createAddDialog();
+    openAddDialog({ onSaved });
+    (document.querySelector('#add-diary-datetime') as HTMLInputElement).value = '2024-01-01 10:30';
+    pickType('日记');
+    await saveNewEntry();
+    expect(linkSpy).toHaveBeenCalledTimes(1);
+    expect(linkSpy.mock.calls[0][0]).toBe('我的/日记/2401011030'); // stripMdExt 形态
+    expect(linkSpy.mock.calls[0][3]).toMatchObject({ active: true });
+    expect(onSaved).toHaveBeenCalledTimes(1);
+  });
+
+  it('失败路径（建文件抛错）：不打开笔记、不触发 onSaved、弹窗不关', async () => {
+    const onSaved = vi.fn();
+    const linkSpy = vi.spyOn((getApp() as any).workspace, 'openLinkText');
+    createAddDialog();
+    openAddDialog({ onSaved });
+    (document.querySelector('#add-diary-datetime') as HTMLInputElement).value = '2024-01-01 10:30';
+    pickType('日记');
+    vi.spyOn(vault, 'create').mockRejectedValueOnce(new Error('磁盘已满'));
+    await saveNewEntry();
+    expect(getNoticeMessages().join('\n')).toContain('保存日记失败');
+    expect(linkSpy).not.toHaveBeenCalled();
+    expect(onSaved).not.toHaveBeenCalled();
+    expect((document.querySelector('#add-diary-popup') as HTMLElement).style.display).not.toBe('none');
+  });
 });
 
 describe('showTagPicker（标签选择器，locator 定位）', () => {
@@ -164,7 +193,12 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
   });
 
   it('删除按钮：locator 传给 showConfirm 并收起选择器', async () => {
-    vi.mock('../../src/diary/ui/entry-actions', () => ({ showConfirm: vi.fn() }));
+    // partial mock（hoist 至文件顶）：只替 showConfirm，保留 jumpToDiaryEntry 等真实现
+    //（saveNewEntry 成功路径经 jumpToDiaryEntry 打开新笔记，整模块 mock 会把它变 undefined）
+    vi.mock('../../src/diary/ui/entry-actions', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('../../src/diary/ui/entry-actions')>();
+      return { ...actual, showConfirm: vi.fn() };
+    });
     const { showConfirm } = await import('../../src/diary/ui/entry-actions');
     vault.files.set(
       '我的/日记/2401010800.md',
