@@ -33,6 +33,25 @@ export function localNow(): string {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
 
+/** 相对时间跨域单源（2026-09 收编拍板，favorites relTime 为蓝本）：刚刚 / N 分钟前 /
+ *  N 小时前 / N 天前（带空格），超 7 天回落 M-D 短日期；空串返回 ''，解析失败原串返回。
+ *  s 为 localNow 写入格式（' ' 换 'T' 兼容 ISO）；now 可注入（测试/评审壳重放）。
+ *  消费：favorites/shared、password-vault/render 直转（render 纯层白名单内），
+ *  core/utils formatRelativeTime 转基础档（昨天/前天/周几等 moment 增强档留 utils）。
+ *  smartcat（absence.ts 自持档位）待后续收编；review/render「N 分钟后」未来向语义不同不收。 */
+export function relTime(s: string | undefined, now: number = Date.now()): string {
+  if (!s) return '';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return s;
+  const diff = now - d.getTime();
+  const m = 60000, h = 3600000, day = 86400000;
+  if (diff < m) return '刚刚';
+  if (diff < h) return Math.floor(diff / m) + ' 分钟前';
+  if (diff < day) return Math.floor(diff / h) + ' 小时前';
+  if (diff < 7 * day) return Math.floor(diff / day) + ' 天前';
+  return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+}
+
 /** 空态字符串版（与 core/ui/empty.ts uiEmpty 同 markup 口径：bz-empty / bz-empty-ic /
  *  bz-empty-title / bz-empty-desc；icon 传空串跳过图标节点、desc 传空串跳过描述节点，
  *  与 DOM 版 if (opts.icon) / if (opts.desc) 对齐）。零依赖居此：icon 用 iconSpan 占位串

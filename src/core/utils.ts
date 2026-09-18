@@ -5,7 +5,7 @@
 import moment from 'moment';
 import { requestUrl } from 'obsidian';
 import { getApp } from './app';
-import { pad2 } from './ui/str';
+import { pad2, relTime as baseRelTime } from './ui/str';
 
 /** HTML 转义 */
 export function escapeHtml(str: string): string {
@@ -57,7 +57,9 @@ export function formatFileSize(bytes: number | null | undefined): string | null 
 
 /**
  * formatRelativeTime(date, now)：相对时间格式化（moment）
- * 未来时间→YYYY-MM-DD [HH:mm]；刚刚/N分钟前/N小时前/昨天/前天/周几/MM-DD/YYYY-MM-DD
+ * 未来时间→YYYY-MM-DD [HH:mm]；今天内基础档收编 core/ui/str relTime 单源
+ * （刚刚/N 分钟前/N 小时前，带空格——2026-09 跨域说法拍板）；
+ * 昨天/前天/周几/MM-DD/YYYY-MM-DD 为 moment 增强档保留（行为不回退）。
  */
 export function formatRelativeTime(date: Date | string | number, now: Date = new Date()): string {
   const target = moment(date as any);
@@ -86,16 +88,13 @@ export function formatRelativeTime(date: Date | string | number, now: Date = new
   // 1分钟内
   if (diffSeconds < 60) return '刚刚';
 
-  const diffMinutes = Math.floor(diffSeconds / 60);
-  // 1小时内
-  if (diffMinutes < 60) return `${diffMinutes}分钟前`;
-
-  // 今天内
-  const todayStart = moment(now).startOf('day');
-  if (target.isSame(todayStart, 'day') && diffMinutes >= 60) {
-    const hours = Math.floor(diffMinutes / 60);
-    return `${hours}小时前`;
+  // 今天内（N 分钟前 / N 小时前）：转发 core/ui/str relTime 基础档（跨域单源说法）；
+  // 传 now 时刻保证测试/回放注入的时钟不旁路
+  if (target.isSame(nowMoment.startOf('day'), 'day')) {
+    return baseRelTime(target.format('YYYY-MM-DD HH:mm:ss'), now.getTime());
   }
+
+  const diffMinutes = Math.floor(diffSeconds / 60);
 
   // 昨天 / 前天
   const yesterdayStart = moment(now).subtract(1, 'days').startOf('day');
@@ -109,7 +108,7 @@ export function formatRelativeTime(date: Date | string | number, now: Date = new
 
   // 本周内
   const weekStart = moment(now).startOf('week');
-  if (target.isSameOrAfter(weekStart, 'day') && target.isBefore(todayStart)) {
+  if (target.isSameOrAfter(weekStart, 'day') && target.isBefore(nowMoment.startOf('day'))) {
     return shouldShowTime() ? `${target.format('ddd')} ${target.format('HH:mm')}` : target.format('ddd');
   }
 

@@ -95,12 +95,12 @@ describe('formatRelativeTime', () => {
     expect(formatRelativeTime(new Date(now.getTime() - 30 * 1000), now)).toBe('刚刚');
   });
 
-  it('1 小时内 → N分钟前', () => {
-    expect(formatRelativeTime(new Date(now.getTime() - 5 * 60 * 1000), now)).toBe('5分钟前');
+  it('1 小时内 → N 分钟前（基础档收编 str.relTime，带空格）', () => {
+    expect(formatRelativeTime(new Date(now.getTime() - 5 * 60 * 1000), now)).toBe('5 分钟前');
   });
 
-  it('今天内 → N小时前', () => {
-    expect(formatRelativeTime(new Date(now.getTime() - 3 * 3600 * 1000), now)).toBe('3小时前');
+  it('今天内 → N 小时前（基础档收编 str.relTime，带空格）', () => {
+    expect(formatRelativeTime(new Date(now.getTime() - 3 * 3600 * 1000), now)).toBe('3 小时前');
   });
 
   it('昨天 → 昨天 HH:mm（有时间）', () => {
