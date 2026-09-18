@@ -86,6 +86,14 @@ describe('做题练习 markup（审查体验修复）', () => {
     expect(noCount).not.toContain('先选择文件夹再看题量');
   });
 
+  it('监听文件夹 chip：移除钮 = lucide x 占位（文本 ✕ 退役，一致#6/#12），data-rm-folder 通道保留', () => {
+    const html = quizPracticeSetupHtml({ scope: 'folder', batch: 20, folders: ['sub'], notePath: '', bankCount: 7 });
+    const chip = html.match(/<button[^>]*data-rm-folder="sub"[^>]*>[\s\S]*?<\/button>/);
+    expect(chip, 'chip 移除钮在场').not.toBeNull();
+    expect(chip![0]).toContain('data-lucide="x"');
+    expect(chip![0]).not.toContain('✕');
+  });
+
   it('成绩小结：答对+答错>0 显正确率 + 错题去向小字「答错的题留在题库」', () => {
     const html = quizPracticeSummaryHtml({ correct: 6, wrong: 2, skipped: 2, accuracy: 75 });
     expect(html).toContain('正确率 <b>75%</b>');

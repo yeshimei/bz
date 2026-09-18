@@ -178,7 +178,7 @@ describe('设置面板 review 回归（H1-H10）', () => {
     sw.click();
     await flush();
     expect(sw.classList.contains('on')).toBe(false); // 显示值不背离实际值
-    expect(hasNotice(/设置写入失败.*boom/s)).toBe(true);
+    expect(hasNotice(/保存失败（设置写入）.*boom/s)).toBe(true);
   });
 
   it('H6：refresh 中 visibleWhen 抛错 → 该行保守可见，其余行显隐照常（不中断整轮）', async () => {
