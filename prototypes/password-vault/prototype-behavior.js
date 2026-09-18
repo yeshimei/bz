@@ -1,4 +1,4 @@
-/* 源指纹 db7b66272c75a4e5 · 仓内输入 60 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 cc164fc500bc126a · 仓内输入 60 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -4676,6 +4676,26 @@ var BZW_password_vault = (() => {
   // src/core/utils.ts
   var import_moment = __toESM(require_moment());
 
+  // src/core/http.ts
+  function withTimeout(p, ms, label) {
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(
+        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
+        ms
+      );
+      p.then(
+        (v) => {
+          clearTimeout(timer);
+          resolve(v);
+        },
+        (e) => {
+          clearTimeout(timer);
+          reject(e);
+        }
+      );
+    });
+  }
+
   // src/core/ui/str.ts
   var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
   function escapeHtml(s) {
@@ -4841,7 +4861,9 @@ var BZW_password_vault = (() => {
   // src/core/esc-manager.ts
   var escManager = (() => {
     const layers = [];
+    let disabled = false;
     const onKeydown = (e) => {
+      if (disabled) return;
       if (e.key !== "Escape") return;
       for (let i = layers.length - 1; i >= 0; i--) {
         const L = layers[i];
@@ -4874,11 +4896,15 @@ var BZW_password_vault = (() => {
           }
         };
       },
-      /** 插件卸载时移除全局监听 */
+      /** 插件卸载时软关（N1）：只置 disabled 旗标——不摘 document 监听（模块 IIFE
+       *  常驻单例，Obsidian 禁用→再启用不重新求值，摘了就全站 ESC 永久失效）、
+       *  不清 layers（重启用后旧层由 isVisible 判活自愈）。恢复走 arm()。 */
       destroy() {
-        if (typeof document !== "undefined") {
-          document.removeEventListener("keydown", onKeydown);
-        }
+        disabled = true;
+      },
+      /** 插件（重）启用时恢复 ESC 处理（main.ts onload 调用；幂等） */
+      arm() {
+        disabled = false;
       }
     };
   })();
@@ -8073,26 +8099,6 @@ var BZW_password_vault = (() => {
       return CryptoService.decrypt(cipher, this.password);
     }
   };
-
-  // src/core/http.ts
-  function withTimeout(p, ms, label) {
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(
-        () => reject(new Error(`请求超时（${label || "未命名请求"}，${ms}ms）`)),
-        ms
-      );
-      p.then(
-        (v) => {
-          clearTimeout(timer);
-          resolve(v);
-        },
-        (e) => {
-          clearTimeout(timer);
-          reject(e);
-        }
-      );
-    });
-  }
 
   // src/encrypt/preview.ts
   var PREVIEW_TIMEOUT_MS = 5e3;
