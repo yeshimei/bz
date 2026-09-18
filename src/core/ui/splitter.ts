@@ -113,6 +113,13 @@ export function uiVSplitter(opts: BzVSplitterOpts): {
   };
 
   const onDragMove = (e: MouseEvent): void => {
+    // C12 同款：宿主离场自摘 document 级监听（判左栏——拖拽的作用对象）——
+    // detach 契约不变，忘调时下一次全局事件自愈
+    if (!left.isConnected) {
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      return;
+    }
     if (!dragging) return;
     e.preventDefault();
     const w = clampW(startW + (e.clientX - startX));
@@ -135,6 +142,11 @@ export function uiVSplitter(opts: BzVSplitterOpts): {
   };
 
   const onMouseUp = (): void => {
+    if (!left.isConnected) {
+      document.removeEventListener('mousemove', onDragMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      return;
+    }
     if (!dragging) return;
     dragging = false;
     el.classList.remove('is-drag');
