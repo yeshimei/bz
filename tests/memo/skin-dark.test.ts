@@ -74,12 +74,13 @@ describe('issue 270-A：两肤暗色 token 整组覆盖', () => {
 });
 
 describe('issue 291：确认框随皮肤（流程框与 uiModal 同壳）', () => {
-  it('ui.ts 三个流程框都传了皮肤类（删除备忘录 / 删除场景 / 批量清理已完成）', () => {
+  it('ui.ts 两个流程框都传了皮肤类（删除场景 / 批量清理已完成；删除备忘录已免确认直达撤销）', () => {
     const ui = repo('src/memo/ui.ts');
-    // 全部 openFlowDialog 调用都带 className: skinClass()（漏传即掉回 core 裸皮 —— 本 issue 的缺陷形态）；
-    // 第三个 = 效率#11 批量清理确认框（随批 B 修复新增，同样守皮肤）
+    // 效率整改 5（2026-09-18）：删除备忘录免确认直达 notifyUndo，不再有流程框；
+    // 保留两处 = 删除场景（批量迁移近不可逆）+ 效率#11 批量清理确认框（批 B 新增），
+    // 全部带 className: skinClass()（漏传即掉回 core 裸皮 —— 本 issue 的缺陷形态）
     const hits = ui.match(/openFlowDialog\(\{[\s\S]*?\n  \}\);/g) ?? [];
-    expect(hits.length).toBe(3);
+    expect(hits.length).toBe(2);
     for (const h of hits) expect(h).toContain('className: skinClass()');
   });
 

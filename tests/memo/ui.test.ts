@@ -902,7 +902,7 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     expect(activeScene()).toBe('全部');
   });
 
-  it('删除接撤销：三段式确认框 + notifyUndo 撤销后条目插回原位', async () => {
+  it('删除免确认直达撤销（效率整改 5）：点删除直接落盘 + notifyUndo，撤销后条目插回原位', async () => {
     const { vault, app } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
@@ -915,20 +915,12 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
     });
     clickMenuItem('删除');
-    // 三段式确认框：标题「删除备忘录」+ 问句（「」引号）+ 后果说明
-    await vi.waitFor(() => {
-      expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy();
-    });
-    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
-    expect(popup.querySelector('h4')?.textContent).toBe('删除备忘录');
-    const msg = popup.querySelector('p')?.textContent || '';
-    expect(msg).toContain('确定删除备忘录「ffmpeg 转写参数整理」吗');
-    expect(msg).toContain('撤销');
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    // 行为翻转（效率整改 5）：接撤销的删除不再弹确认框——点击即落盘
     await vi.waitFor(() => {
       const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
       expect(raw.find((r: any) => r.id === 'b')).toBeUndefined();
     });
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     // 删除 toast 挂「撤销」按钮
     await vi.waitFor(() => {
       const undo = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销');
