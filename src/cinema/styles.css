@@ -78,6 +78,9 @@
 .bz-cinema--midnight .pw{position:relative;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--chip);border:1px solid var(--line);transition:transform .18s,box-shadow .18s,border-color .18s}
 .bz-cinema--midnight .pcard:hover .pw{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 10px 22px #0004}
 .bz-cinema--midnight .pw img{width:100%;height:100%;object-fit:cover;display:block}
+/* 海报内芯包裹层（悬浮季圆点换脸用）：行为层只重写这一层，抓取遮罩/状态角标/季圆点原地不动。
+   绝对定位铺满 → 卡片高度仍由 .pw 的 aspect-ratio 决定，不随换脸抖动。 */
+.bz-cinema--midnight .pw .pw-face{position:absolute;inset:0}
 .bz-cinema--midnight .pw .ph{width:100%;height:100%;display:grid;place-items:center;font-family:"Noto Serif SC",serif;font-size:26px;color:var(--ink-3);background:linear-gradient(160deg,var(--chip),var(--panel))}
 .bz-cinema--midnight .badge{position:absolute;top:7px;left:7px;font-size:10.5px;letter-spacing:.1em;padding:2px var(--bz-space-sm);border-radius:99px;color:#fff}
 .bz-cinema--midnight .pname{font-size:12.5px;font-weight:600;color:var(--ink);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

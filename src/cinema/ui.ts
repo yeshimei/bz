@@ -33,7 +33,7 @@ import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching } from './douban-que
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
   detailModalHtml, seriesDetailModalHtml, confirmModalHtml, formModalHtml,
-  aiPageHtml, sheetHeadHtml, cardHtml, type AiPageInput,
+  aiPageHtml, sheetHeadHtml, cardHtml, facePiecesHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
 } from './render';
@@ -276,6 +276,43 @@ function sheetHeadEl(it: CinemaItem, url: string | null): HTMLElement {
   const box = document.createElement('div');
   box.innerHTML = sheetHeadHtml(it, url);
   return (box.firstElementChild as HTMLElement) ?? box;
+}
+
+/** 悬浮换脸前的静息态快照（卡片元素 → 四件 innerHTML）。合并卡正脸口径与单季不同
+ *  （名字是归一名称、评分取最新已评季），复原必须回快照、不能靠重算。
+ *  卡片每次重渲染都是新元素，旧键自然被 GC → WeakMap 不积残留。 */
+const faceStash = new WeakMap<HTMLElement, string[]>();
+
+/** 正脸四件挂点（海报内芯 / 名字 / meta / 星级）；缺一即不换（如非合并卡） */
+function faceSlots(card: HTMLElement): HTMLElement[] {
+  return (['pw-face', 'pname', 'pmeta', 'pstars'] as const)
+    .map((c) => card.querySelector<HTMLElement>(`.${c}`)).filter((x): x is HTMLElement => !!x);
+}
+
+/** 悬浮季圆点：把卡片正脸换成该季的海报 + 名字/meta/星级（格式走 shared.facePiecesHtml 单源） */
+function peekSeasonDot(dot: HTMLElement, app: App): void {
+  const card = dot.closest<HTMLElement>('.pcard');
+  const it = itemByKeyInState(dot.dataset.cinemaSeasonKey);
+  const slots = card ? faceSlots(card) : [];
+  if (!card || !it || slots.length !== 4) return;
+  if (!faceStash.has(card)) faceStash.set(card, slots.map((s) => s.innerHTML));
+  const p = facePiecesHtml(it, posterUrl(it, app));
+  slots[0].innerHTML = p.poster;
+  slots[1].innerHTML = p.name;
+  slots[2].innerHTML = p.meta;
+  slots[3].innerHTML = p.stars;
+  card.classList.add('is-peek');
+}
+
+/** 离开圆点：正脸复原为静息态（快照回填） */
+function restFace(dot: HTMLElement): void {
+  const card = dot.closest<HTMLElement>('.pcard');
+  const snap = card ? faceStash.get(card) : undefined;
+  if (!card || !snap) return;
+  const slots = faceSlots(card);
+  if (slots.length !== 4) return;
+  slots.forEach((s, i) => { s.innerHTML = snap[i]; });
+  card.classList.remove('is-peek');
 }
 
 /** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。
@@ -574,6 +611,18 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
 // ---------- 事件绑定（sec 级委托一次；重渲染内容全覆盖） ----------
 
 function bindMidnight(sec: HTMLElement, app: App): void {
+  // 季圆点悬浮预览（仅桌面壳——hover 是鼠标惯用件，触屏 tap 会发 mouseover 却不发 mouseout，
+  // 换脸会滞留）。sec 级委托：网格每次重渲染都换新卡片元素，逐个绑定会漏绑/泄漏。
+  if (!sec.classList.contains('mob')) {
+    sec.addEventListener('mouseover', (e) => {
+      const dot = (e.target as HTMLElement).closest('.season-dots i') as HTMLElement | null;
+      if (dot) peekSeasonDot(dot, app);
+    });
+    sec.addEventListener('mouseout', (e) => {
+      const dot = (e.target as HTMLElement).closest('.season-dots i') as HTMLElement | null;
+      if (dot) restFace(dot);
+    });
+  }
   sec.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     // AI 页按钮（开始/重试/换一批/加入想看）先行分流（页内与共享弹窗内同享）

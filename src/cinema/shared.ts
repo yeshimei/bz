@@ -125,10 +125,32 @@ export function seasonDotsHtml(seasons: SeasonSlot[]): string {
   const dots = seasons.map((s) => {
     const st = seasonSegState(s.item);
     n[st]++;
-    return `<i class="${st}"></i>`;
+    // data-cinema-season-key：行为层据此在悬浮该圆点时把卡片正脸换成这一季（ui.ts 委托处理）
+    return `<i class="${st}" data-cinema-season-key="${esc(itemKey(s.item))}"></i>`;
   }).join('');
   const label = `各季进度：共 ${seasons.length} 季，已看 ${n.watched}、在看 ${n.watching}、未看 ${n.empty}`;
   return `<span class="season-dots" role="img" aria-label="${esc(label)}">${dots}</span>`;
+}
+
+/** 卡片正脸四件（海报内芯 / 名字 / meta / 星级；`name`/`rating` 可覆盖 = 合并卡口径） */
+export interface CardFacePieces { poster: string; name: string; meta: string; stars: string }
+
+/**
+ * 卡片正脸件**唯一出口**：卡面渲染与「悬浮季圆点换脸」共用它——行为层不许自己拼第二套
+ * 名字/meta/星级 格式（否则悬浮前后的排版口径会漂）。
+ * opts.name：合并卡正脸写归一名称（老友记）而非该季全名；opts.rating：合并卡评分取**最新已评季**
+ * （正脸季可能是在看不评分），普通卡留空即用条目自身评分。
+ */
+export function facePiecesHtml(
+  it: CinemaItem, posterUrl: string | null, opts: { name?: string; rating?: number | null } = {},
+): CardFacePieces {
+  const r = opts.rating !== undefined ? opts.rating : it.rating;
+  return {
+    poster: posterInner(it, posterUrl),
+    name: esc(opts.name ?? it.name),
+    meta: esc([it.year || '', it.director || ''].filter(Boolean).join(' · ')),
+    stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>',
+  };
 }
 
 /**
@@ -136,16 +158,17 @@ export function seasonDotsHtml(seasons: SeasonSlot[]): string {
  * 合并卡为 `series:` 键）。fetching=后台抓取中 → 海报区遮罩 spinner（ADR-0113）。
  * 合并卡与普通卡同构：海报区（含季圆点）/ 名字 / meta / 星级——季圆点贴在**海报左下角**，
  * 不额外占卡片高度；正脸 = 最近观看的一季，评分取最新已评季（读作「你最近在追的那一季」）。
+ * `.pw-face` 是海报内芯的独立包裹层：悬浮季圆点时行为层只换它，抓取遮罩/角标/圆点原地不动。
  */
 export function cardHtml(e: CardEntry, posterUrl: string | null, fetching = false): string {
   const it = e.kind === 'series' ? e.face : e.item;
   const st = cardStatus(e);
-  const r = e.kind === 'series' ? e.rating : it.rating;
-  return `<div class="pcard${e.kind === 'series' ? ' pcard-series' : ''}" data-cinema-key="${esc(e.kind === 'series' ? e.key : itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
+  const p = facePiecesHtml(it, posterUrl, e.kind === 'series' ? { name: e.name, rating: e.rating } : {});
+  return `<div class="pcard${e.kind === 'series' ? ' pcard-series' : ''}" data-cinema-key="${esc(e.kind === 'series' ? e.key : itemKey(it))}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
     ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''}${e.kind === 'series' ? seasonDotsHtml(e.seasons) : ''}</div>
-    <div class="pname">${esc(e.kind === 'series' ? e.name : it.name)}</div>
-    <div class="pmeta">${esc(it.year || '')}${it.year && it.director ? ' · ' : ''}${esc(it.director || '')}</div>
-    <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
+    <div class="pname">${p.name}</div>
+    <div class="pmeta">${p.meta}</div>
+    <div class="pstars">${p.stars}</div></div>`;
 }
 
 /** 单条目片卡（pcardHtml 调用点先于合并卡存在：douban-queue 测试与语义单条入口仍用此名） */

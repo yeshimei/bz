@@ -959,4 +959,49 @@ tags: [电影]
     expect(document.querySelector('.bz-item-menu')).toBeNull();
     expect(root.querySelectorAll('.s-row')).toHaveLength(3);
   });
+
+  it('鼠标落在季圆点上：卡片正脸换成该季（海报 + 名字/meta/星级），离开复原', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const series = root.querySelector('.pcard-series') as HTMLElement;
+    const dots = Array.from(series.querySelectorAll<HTMLElement>('.pw .season-dots i'));
+    expect(dots).toHaveLength(3);
+    // 静息态：正脸 = 最近看的那季（第二季 08-18），名字是归一名称、评分取最新已评季（9.2）
+    expect(series.querySelector('.pname')?.textContent).toBe('老友记');
+    expect(series.querySelector('.pstars')?.textContent).toContain('9.2');
+    expect(series.querySelector('.pw .pw-face')).toBeTruthy(); // 海报内芯独立包裹层
+    expect(series.querySelector('.pw-face .season-dots')).toBeNull(); // 圆点是它的兄弟，换脸不会碰掉
+
+    // 悬浮第 3 枚（想看季，无评分）→ 换脸
+    dots[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(series.querySelector('.pname')?.textContent).toBe('老友记 第三季');
+    expect(series.querySelector('.pstars')?.textContent).toContain('未评分');
+    expect(series.classList.contains('is-peek')).toBe(true);
+    expect(series.querySelectorAll('.pw .season-dots i')).toHaveLength(3); // 圆点原地不动
+
+    // 离开 → 回快照（不是重算：合并卡正脸口径与单季不同）
+    dots[2].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    expect(series.querySelector('.pname')?.textContent).toBe('老友记');
+    expect(series.querySelector('.pstars')?.textContent).toContain('9.2');
+    expect(series.classList.contains('is-peek')).toBe(false);
+  });
+
+  it('移动端不挂悬浮换脸（触屏 tap 只发 mouseover 不发 mouseout，换脸会滞留）', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    Platform.isMobile = true;
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-08-18\n---'));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('section.mob[data-cinema-root]') as HTMLElement;
+    const dot = root.querySelector<HTMLElement>('.m-grid .season-dots i');
+    expect(dot).toBeTruthy();
+    dot!.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(root.querySelector('.pcard-series')?.classList.contains('is-peek')).toBe(false);
+  });
 });

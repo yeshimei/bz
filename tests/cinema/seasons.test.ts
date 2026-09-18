@@ -12,7 +12,7 @@ import {
   seasonNumber, parseSeasonName, seriesKeyOf, isSeriesKey,
   mergeSeasonCards, cardFace, cardGroup, type SeriesCard,
 } from '../../src/cinema/seasons';
-import { cardHtml, pcardHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesDetailModalHtml } from '../../src/cinema/shared';
+import { cardHtml, pcardHtml, facePiecesHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesDetailModalHtml } from '../../src/cinema/shared';
 import type { CinemaItem } from '../../src/cinema/state';
 
 /** 造条目（字段默认值不参与本组断言） */
@@ -117,7 +117,7 @@ describe('cinema 按季分组合并（mergeSeasonCards）', () => {
   });
 });
 
-describe('cinema 季进度条与合并卡 markup（D1）', () => {
+describe('cinema 季圆点与合并卡 markup（D1 定稿形态）', () => {
   const watched = item('老友记 第一季', { status: 2, rating: 9.2 });
   const watching = item('老友记 第二季', { status: 1, rating: 0 });
   const want = item('老友记 第三季', { status: 0, rating: null });
@@ -141,7 +141,12 @@ describe('cinema 季进度条与合并卡 markup（D1）', () => {
   it('季圆点：一个圆点 = 一季，类名即状态；**不出任何可见注释文字**', () => {
     const dots = seasonDotsHtml([{ no: 1, item: watched }, { no: 2, item: watching }, { no: 3, item: want }]);
     expect(dots).toContain('class="season-dots"');
-    expect(dots).toContain('<i class="watched"></i><i class="watching"></i><i class="empty"></i>');
+    // 圆点带季键属性，故按 class 片段断言 + 独立校验左右顺序（左→右 = 季号升序）
+    expect(dots).toContain('<i class="watched"');
+    expect(dots).toContain('<i class="watching"');
+    expect(dots).toContain('<i class="empty"');
+    const order = ['class="watched"', 'class="watching"', 'class="empty"'].map((c) => dots.indexOf(c));
+    expect(order).toEqual([...order].sort((x, y) => x - y));
     // 用户 2026-09-18 点名去掉「全 N 季已看」这类注释 → 卡面不再有任何文字，
     // 进度改由 aria-label 供读屏（可见文字里连「季」字都不该出现）
     expect(dots).not.toContain('bar-note');
@@ -152,6 +157,29 @@ describe('cinema 季进度条与合并卡 markup（D1）', () => {
     expect(all).toContain('aria-label="各季进度：共 1 季，已看 1、在看 0、未看 0"');
   });
 
+  it('季圆点带条目键：悬浮换脸靠它回查那一季', () => {
+    const dots = seasonDotsHtml([{ no: 1, item: watched }, { no: 2, item: watching }]);
+    expect(dots).toContain('data-cinema-season-key="new:老友记 第一季"');
+    expect(dots).toContain('data-cinema-season-key="new:老友记 第二季"');
+  });
+
+  it('正脸四件唯一出口（facePiecesHtml）：名字/评分可覆盖；海报按条目出图或首字占位', () => {
+    const own = facePiecesHtml(item('犬屋敷', { year: '2017', director: '佐藤敬一', rating: 7.7 }), null);
+    expect(own.poster).toBe('<div class="ph">犬</div>');
+    expect(own.name).toBe('犬屋敷');
+    expect(own.meta).toBe('2017 · 佐藤敬一');
+    expect(own.stars).toContain('7.7');
+    // 覆盖口径 = 合并卡正脸：名字写归一名称、评分取**最新已评季**（正脸季可能是在看不评分）
+    const ov = facePiecesHtml(item('老友记 第三季', { year: '1996', rating: null }), 'res://p.jpg', { name: '老友记', rating: 9.2 });
+    expect(ov.name).toBe('老友记');
+    expect(ov.stars).toContain('9.2');
+    expect(ov.poster).toContain('res://p.jpg');
+    // 无年份无导演 → meta 空串（不留孤零零的分隔符）；无评分 → 未评分灰字
+    const bare = facePiecesHtml(item('光杆'), null);
+    expect(bare.meta).toBe('');
+    expect(bare.stars).toContain('未评分');
+  });
+
   it('合并卡：pcard-series + series: 键 + 季圆点在**海报区内**（左下角）+ 聚合角标', () => {
     const card = mergeSeasonCards([watched, watching, want], true)[0] as SeriesCard;
     const html = cardHtml(card, null);
@@ -160,6 +188,9 @@ describe('cinema 季进度条与合并卡 markup（D1）', () => {
     expect(html).toContain('class="season-dots"');
     expect(html).toContain('>在看</span>'); // 聚合角标 = 在看
     expect(html).toContain('<div class="pname">老友记</div>');
+    // 圆点与海报内芯是 .pw 内的**兄弟**：悬浮换脸只重写 .pw-face，圆点原地不动
+    expect(html).toContain('<div class="pw"><div class="pw-face">');
+    expect(html).not.toContain('pw-face"><span class="season-dots"');
     // 圆点必须落在 .pw 内、名字之前——挂在 .pw 之外会多占卡片高度（用户要的就是不占高度）
     const iDots = html.indexOf('season-dots');
     expect(iDots).toBeGreaterThan(html.indexOf('<div class="pw">'));
