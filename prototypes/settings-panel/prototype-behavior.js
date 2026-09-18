@@ -1,5 +1,5 @@
-/* 源指纹 abde7348a652b9ed · 仓内输入 224 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 a7d48889fb943915 · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -4573,6 +4573,19 @@ var BZW_settings_panel = (() => {
     }
   });
 
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  var init_icon = __esm({
+    "src/core/ui/icon.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/core/notice.ts
   function maxVisible() {
     const v = Number(noticePref("noticeMaxVisible"));
@@ -4592,9 +4605,12 @@ var BZW_settings_panel = (() => {
     const msg = err instanceof Error ? err.message : String(err);
     notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
   }
-  function notifyActionError(err, action) {
+  function notifyActionError(err, action, opts) {
     const msg = err instanceof Error ? err.message : String(err);
-    notify(`${action}失败：${msg}，请重试`, { type: "error" });
+    notify(`${action}失败：${msg}，请重试`, {
+      type: "error",
+      action: (opts == null ? void 0 : opts.onRetry) ? { label: "重试", onClick: opts.onRetry } : void 0
+    });
   }
   function isMobileView() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
@@ -4682,11 +4698,8 @@ var BZW_settings_panel = (() => {
       "bz-notice--warning",
       "bz-notice--error",
       "bz-notice--pause",
-      "bz-notice--accept",
       "bz-notice--delete",
-      "bz-notice--confirm",
       "bz-notice--restore",
-      "bz-notice--skip",
       "bz-notice--archive",
       "bz-notice--progress"
     );
@@ -4711,6 +4724,35 @@ var BZW_settings_panel = (() => {
       window.setTimeout(() => removeInternal(n), LEAVE_MS);
     }
   }
+  function buildCloseBtn(n) {
+    const btn = document.createElement("span");
+    btn.className = "bz-notice-close";
+    btn.setAttribute("role", "button");
+    btn.setAttribute("aria-label", "关闭");
+    btn.title = "关闭";
+    btn.tabIndex = 0;
+    btn.appendChild(uiIcon("x"));
+    const fire = (e) => {
+      e.stopPropagation();
+      hideNow(n);
+    };
+    btn.addEventListener("click", fire);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fire(e);
+      }
+    });
+    return btn;
+  }
+  function syncPersistentUi(n) {
+    const closeBtn = n.el.querySelector(".bz-notice-close");
+    if (n.persistent && !closeBtn) {
+      n.el.appendChild(buildCloseBtn(n));
+    } else if (!n.persistent && closeBtn) {
+      closeBtn.remove();
+    }
+  }
   function armTimer(n, kind, explicitDuration, text) {
     if (n.timer !== null) {
       window.clearTimeout(n.timer);
@@ -4723,16 +4765,17 @@ var BZW_settings_panel = (() => {
       } else {
         n.persistent = true;
       }
-      return;
+    } else {
+      const base = defaultDuration(kind);
+      const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+      if (dur <= 0) {
+        n.persistent = true;
+      } else if (explicitDuration === void 0 && durationGear().persistent) {
+      } else {
+        n.timer = window.setTimeout(() => hideNow(n), dur);
+      }
     }
-    const base = defaultDuration(kind);
-    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
-    if (dur <= 0) {
-      n.persistent = true;
-      return;
-    }
-    if (explicitDuration === void 0 && durationGear().persistent) return;
-    n.timer = window.setTimeout(() => hideNow(n), dur);
+    syncPersistentUi(n);
   }
   function noopHandle() {
     return {
@@ -4743,6 +4786,8 @@ var BZW_settings_panel = (() => {
       },
       setType() {
       },
+      setAction() {
+      },
       hide() {
       }
     };
@@ -4751,13 +4796,61 @@ var BZW_settings_panel = (() => {
     const btn = document.createElement("span");
     btn.className = "bz-notice-action";
     btn.setAttribute("role", "button");
+    btn.tabIndex = 0;
     btn.textContent = action.label;
-    btn.addEventListener("click", (e) => {
+    const fire = (e) => {
       e.stopPropagation();
       if (action.onClick) action.onClick();
       hideNow(n);
+    };
+    btn.addEventListener("click", fire);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fire(e);
+      }
     });
-    n.el.appendChild(btn);
+    const closeBtn = n.el.querySelector(".bz-notice-close");
+    if (closeBtn) n.el.insertBefore(btn, closeBtn);
+    else n.el.appendChild(btn);
+  }
+  function makeHandle(n) {
+    return {
+      el: n.el,
+      setMessage(text) {
+        n.msgEl.textContent = text;
+      },
+      setType(t) {
+        applyTypeToEl(n, t);
+        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
+      },
+      setProgress(pct) {
+        if (!n.progressEl) return;
+        if (pct === -1) {
+          n.progressEl.classList.add("bz-notice-progress--indeterminate");
+          return;
+        }
+        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
+        const clamped = Math.max(0, Math.min(100, pct));
+        n.progressEl.style.width = clamped + "%";
+        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
+        else n.progressEl.classList.remove("bz-notice-progress--done");
+      },
+      setAction(actions) {
+        const list = Array.isArray(actions) ? actions : [actions];
+        const existing = new Set(
+          Array.from(n.el.querySelectorAll(".bz-notice-action")).map((el) => el.textContent || "")
+        );
+        for (const a of list) {
+          if (existing.has(a.label)) continue;
+          appendActionBtn(n, a);
+          existing.add(a.label);
+        }
+      },
+      hide() {
+        hideNow(n);
+      }
+    };
   }
   function notify(msg, opts) {
     const kind = opts && opts.type || "info";
@@ -4779,14 +4872,10 @@ var BZW_settings_panel = (() => {
         const mergeActions = [];
         if (opts.action) mergeActions.push(opts.action);
         if (opts.actions) mergeActions.push(...opts.actions);
-        const existingLabels = new Set(
-          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
-        );
-        for (const a of mergeActions) {
-          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
-        }
         armTimer(r.n, kind, opts.duration, msg);
-        return noopHandle();
+        const merged = makeHandle(r.n);
+        if (mergeActions.length) merged.setAction(mergeActions);
+        return merged;
       }
       if (r && now - r.at < DEDUPE_WINDOW_MS) {
         return noopHandle();
@@ -4834,7 +4923,10 @@ var BZW_settings_panel = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
+    el.addEventListener("click", () => {
+      if (n.persistent) return;
+      hideNow(n);
+    });
     container.style.zIndex = String(allocZ());
     container.appendChild(el);
     live.push(n);
@@ -4844,37 +4936,14 @@ var BZW_settings_panel = (() => {
     }
     const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
     armTimer(n, kind, opts && opts.duration, fullText);
-    return {
-      el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
-      },
-      setType(t) {
-        applyTypeToEl(n, t);
-        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
-      },
-      setProgress(pct) {
-        if (!n.progressEl) return;
-        if (pct === -1) {
-          n.progressEl.classList.add("bz-notice-progress--indeterminate");
-          return;
-        }
-        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
-        const clamped = Math.max(0, Math.min(100, pct));
-        n.progressEl.style.width = clamped + "%";
-        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
-        else n.progressEl.classList.remove("bz-notice-progress--done");
-      },
-      hide() {
-        hideNow(n);
-      }
-    };
+    return makeHandle(n);
   }
   var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
   var init_notice = __esm({
     "src/core/notice.ts"() {
       init_z_order();
       init_settings_provider();
+      init_icon();
       MAX_VISIBLE_DEFAULT = 5;
       LEAVE_MS = 200;
       DEDUPE_WINDOW_MS = 3e4;
@@ -4885,11 +4954,8 @@ var BZW_settings_panel = (() => {
         warning: "⚠️",
         error: "❌",
         pause: "⏸️",
-        accept: "✨",
         delete: "🗑️",
-        confirm: "✓",
         restore: "↩️",
-        skip: "🚫",
         archive: "📁"
       };
       SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
@@ -4974,6 +5040,7 @@ var BZW_settings_panel = (() => {
   }
   function swallowNextClick() {
     const swallow = (e) => {
+      if (e.clientX === 0 && e.clientY === 0) return;
       document.removeEventListener("click", swallow, true);
       e.stopPropagation();
     };
@@ -5298,6 +5365,58 @@ var BZW_settings_panel = (() => {
     }
   });
 
+  // src/core/ui/focus-trap.ts
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function firstFocusable(container) {
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
+      if (isHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    return list[0] || null;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active2 = document.activeElement;
+      if (e.shiftKey) {
+        if (active2 === first || !container.contains(active2)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active2 === last || !container.contains(active2)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  var FOCUSABLE_SELECTOR;
+  var init_focus_trap = __esm({
+    "src/core/ui/focus-trap.ts"() {
+      init_mobile();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    }
+  });
+
   // src/core/flow-dialog.ts
   function buildFlowDialogParts(title, message, actions) {
     let buttons;
@@ -5352,6 +5471,7 @@ var BZW_settings_panel = (() => {
         close: () => settle(void 0)
       });
       let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
       function restoreFocus() {
         if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
           prevActive.focus();
@@ -5361,6 +5481,7 @@ var BZW_settings_panel = (() => {
         if (settled) return;
         settled = true;
         if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
         escHandle6.unregister();
         mask.remove();
         restoreFocus();
@@ -5394,6 +5515,7 @@ var BZW_settings_panel = (() => {
       init_esc_manager();
       init_utils();
       init_z_order();
+      init_focus_trap();
       FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
       FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
       activeSettle = null;
@@ -5927,7 +6049,7 @@ var BZW_settings_panel = (() => {
     popup.style.display = "flex";
     popup.setAttribute("role", "dialog");
     popup.setAttribute("aria-modal", "true");
-    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
+    const firstFocusable2 = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR2)).find((el) => {
       if (isItemHidden(el)) return false;
       if (isMobileEnv()) {
         const tag = el.tagName;
@@ -5935,7 +6057,8 @@ var BZW_settings_panel = (() => {
       }
       return true;
     });
-    if (firstFocusable) firstFocusable.focus();
+    if (firstFocusable2) firstFocusable2.focus();
+    const releaseFocusTrap = trapFocus(popup);
     const handle = escManager.register("bz-settings-modal", {
       isVisible: () => !!currentModal,
       close: () => closeSettingsModal()
@@ -5945,6 +6068,7 @@ var BZW_settings_panel = (() => {
       popup,
       onClose: opts.onClose,
       dispose: () => {
+        releaseFocusTrap();
         mask.remove();
         popup.remove();
         handle.unregister();
@@ -5954,7 +6078,7 @@ var BZW_settings_panel = (() => {
       }
     };
   }
-  var FOCUSABLE_SELECTOR, currentModal;
+  var FOCUSABLE_SELECTOR2, currentModal;
   var init_settings_modal = __esm({
     "src/core/settings-modal.ts"() {
       init_fake_obsidian();
@@ -5962,21 +6086,9 @@ var BZW_settings_panel = (() => {
       init_esc_manager();
       init_mobile();
       init_settings_schema();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      init_focus_trap();
+      FOCUSABLE_SELECTOR2 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
       currentModal = null;
-    }
-  });
-
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
     }
   });
 
@@ -6615,6 +6727,13 @@ var BZW_settings_panel = (() => {
         m.style.right = `${over}px`;
         if (m.getBoundingClientRect().left < 2) m.style.right = "";
       }
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const mRect = m.getBoundingClientRect();
+      const need = mRect.height || m.offsetHeight;
+      const spaceBelow = vh - mRect.bottom;
+      if (need > 0 && spaceBelow < need && spaceBelow < mRect.top) {
+        m.classList.add("is-flip-up");
+      }
       escHandle6 = escManager.register("bz-ui-select", {
         isVisible: () => !!menu && menu.isConnected,
         close: () => close()
@@ -6668,6 +6787,7 @@ var BZW_settings_panel = (() => {
         if (!menu) open();
         moveFocus(e.key === "ArrowDown" ? 1 : -1);
       } else if (e.key === "Escape") {
+        e.stopPropagation();
         close();
       }
     });
@@ -6942,7 +7062,17 @@ var BZW_settings_panel = (() => {
       hint.textContent = opts.hint;
       el.appendChild(hint);
     }
-    if (opts.onClick) el.addEventListener("click", opts.onClick);
+    if (opts.onClick) {
+      el.setAttribute("role", "button");
+      el.tabIndex = 0;
+      el.addEventListener("click", opts.onClick);
+      el.addEventListener("keydown", (e) => {
+        var _a2;
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
+      });
+    }
     return el;
   }
   var init_stat = __esm({
@@ -7020,6 +7150,13 @@ var BZW_settings_panel = (() => {
       }
       (anchor.parentElement || anchor).appendChild(m);
       layer = m;
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const rect = m.getBoundingClientRect();
+      const need = rect.height || m.offsetHeight;
+      const spaceBelow = vh - rect.bottom;
+      if (need > 0 && spaceBelow < need && spaceBelow < rect.top) {
+        m.classList.add("is-flip-up");
+      }
       document.addEventListener("click", onDocClick);
       escHandle6 = escManager.register("bz-ui-popover", {
         isVisible: () => !!layer && layer.isConnected,
@@ -7185,8 +7322,10 @@ var BZW_settings_panel = (() => {
         e.preventDefault();
       } else if (e.key === "Enter") {
         const on = layer.querySelector(".bz-popover-item.is-on");
-        if (on) pick(on.dataset.value);
-        e.preventDefault();
+        if (on) {
+          pick(on.dataset.value);
+          e.preventDefault();
+        }
       } else if (e.key === "Escape") {
         close();
         e.stopPropagation();
@@ -7305,6 +7444,9 @@ var BZW_settings_panel = (() => {
 
   // src/core/ui/modal.ts
   function uiModal(opts) {
+    var _a2;
+    const prevActive = document.activeElement;
+    const focusEnabled = opts.autofocus !== false;
     const mask = document.createElement("div");
     mask.className = "bz-overlay-mask";
     mask.style.zIndex = String(allocZ());
@@ -7328,13 +7470,18 @@ var BZW_settings_panel = (() => {
     mask.appendChild(popup);
     let closed = false;
     let escHandle6 = null;
+    const releaseTrap = focusEnabled ? trapFocus(popup) : null;
     function close() {
-      var _a2;
+      var _a3;
       if (closed) return;
       closed = true;
+      releaseTrap == null ? void 0 : releaseTrap();
       mask.remove();
       escHandle6 == null ? void 0 : escHandle6.unregister();
-      (_a2 = opts.onClose) == null ? void 0 : _a2.call(opts);
+      if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
+        prevActive.focus();
+      }
+      (_a3 = opts.onClose) == null ? void 0 : _a3.call(opts);
     }
     const attemptClose = () => {
       if (opts.requestClose) opts.requestClose();
@@ -7348,12 +7495,14 @@ var BZW_settings_panel = (() => {
       close: attemptClose
     });
     document.body.appendChild(mask);
+    if (focusEnabled) (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
     return { mask, popup, close };
   }
   var init_modal = __esm({
     "src/core/ui/modal.ts"() {
       init_esc_manager();
       init_z_order();
+      init_focus_trap();
     }
   });
 
@@ -7416,6 +7565,11 @@ var BZW_settings_panel = (() => {
       setCursor(regionAt(e));
     };
     const onDragMove = (e) => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
       if (!dragging) return;
       e.preventDefault();
       const dx = e.clientX - startX;
@@ -7454,6 +7608,11 @@ var BZW_settings_panel = (() => {
       document.body.style.userSelect = "none";
     };
     const onMouseUp = () => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
       if (!dragging) return;
       dragging = false;
       dir = null;
@@ -7552,6 +7711,11 @@ var BZW_settings_panel = (() => {
       }
     };
     const onDragMove = (e) => {
+      if (!left.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
       if (!dragging) return;
       e.preventDefault();
       const w = clampW(startW + (e.clientX - startX));
@@ -7571,6 +7735,11 @@ var BZW_settings_panel = (() => {
       document.body.style.userSelect = "none";
     };
     const onMouseUp = () => {
+      if (!left.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
       if (!dragging) return;
       dragging = false;
       el.classList.remove("is-drag");
@@ -12713,9 +12882,9 @@ ${countsToText(s.missing)}
         window.addEventListener("pointercancel", onUp);
       });
     }
-    function rowHtml2(d, isHidden) {
-      const btn = isHidden ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan("plus") + "</button>" : '<button type="button" class="bz-home-ent-btn" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan("x") + "</button>";
-      return '<div class="bz-home-ent-row' + (isHidden ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '"><span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + '</span><span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
+    function rowHtml2(d, isHidden2) {
+      const btn = isHidden2 ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan("plus") + "</button>" : '<button type="button" class="bz-home-ent-btn" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan("x") + "</button>";
+      return '<div class="bz-home-ent-row' + (isHidden2 ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '"><span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + '</span><span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
     }
     function render2() {
       if (!order) return;
@@ -44504,6 +44673,11 @@ ${n.content.slice(0, 2e3)}
     row.appendChild(input2);
     row.appendChild(actionBtn);
     box.appendChild(row);
+    for (const inp of [input, input2]) {
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") actionBtn.click();
+      });
+    }
     const err = document.createElement("div");
     err.className = "bz-lockscreen-err";
     err.dataset.ls = "err";
@@ -45632,12 +45806,6 @@ ${n.content.slice(0, 2e3)}
                 }
               }
             };
-            ls.input.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") ls.actionBtn.click();
-            });
-            ls.input2.addEventListener("keydown", (e) => {
-              if (e.key === "Enter") ls.actionBtn.click();
-            });
             ls.el.addEventListener("click", (e) => {
               if (e.target === ls.el) done(false);
             });
@@ -46218,9 +46386,6 @@ ${n.content.slice(0, 2e3)}
             }
           };
           ls.actionBtn.addEventListener("click", () => void submit());
-          ls.input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") void submit();
-          });
           ls.el.addEventListener("click", (e) => {
             if (e.target === ls.el) done(false);
           });

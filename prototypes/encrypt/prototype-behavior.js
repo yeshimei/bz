@@ -1,5 +1,5 @@
-/* 源指纹 d84cc404070d58c0 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 66e9b4e1dc345790 · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/encrypt/fake-sim.ts","prototypes/encrypt/fake/fake-obsidian.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/encrypt/fake-sim.ts → window.BZW_encrypt（行为单源预览包，issue 245/ADR-0106） */
 var BZW_encrypt = (() => {
   var __create = Object.create;
@@ -4426,6 +4426,14 @@ var BZW_encrypt = (() => {
     });
   }
 
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+
   // src/core/notice.ts
   var MAX_VISIBLE_DEFAULT = 5;
   function maxVisible() {
@@ -4441,11 +4449,8 @@ var BZW_encrypt = (() => {
     warning: "⚠️",
     error: "❌",
     pause: "⏸️",
-    accept: "✨",
     delete: "🗑️",
-    confirm: "✓",
     restore: "↩️",
-    skip: "🚫",
     archive: "📁"
   };
   var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
@@ -4456,9 +4461,12 @@ var BZW_encrypt = (() => {
     const msg = err instanceof Error ? err.message : String(err);
     notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
   }
-  function notifyActionError(err, action) {
+  function notifyActionError(err, action, opts) {
     const msg = err instanceof Error ? err.message : String(err);
-    notify(`${action}失败：${msg}，请重试`, { type: "error" });
+    notify(`${action}失败：${msg}，请重试`, {
+      type: "error",
+      action: (opts == null ? void 0 : opts.onRetry) ? { label: "重试", onClick: opts.onRetry } : void 0
+    });
   }
   function isMobileView() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
@@ -4559,11 +4567,8 @@ var BZW_encrypt = (() => {
       "bz-notice--warning",
       "bz-notice--error",
       "bz-notice--pause",
-      "bz-notice--accept",
       "bz-notice--delete",
-      "bz-notice--confirm",
       "bz-notice--restore",
-      "bz-notice--skip",
       "bz-notice--archive",
       "bz-notice--progress"
     );
@@ -4588,6 +4593,35 @@ var BZW_encrypt = (() => {
       window.setTimeout(() => removeInternal(n), LEAVE_MS);
     }
   }
+  function buildCloseBtn(n) {
+    const btn = document.createElement("span");
+    btn.className = "bz-notice-close";
+    btn.setAttribute("role", "button");
+    btn.setAttribute("aria-label", "关闭");
+    btn.title = "关闭";
+    btn.tabIndex = 0;
+    btn.appendChild(uiIcon("x"));
+    const fire = (e) => {
+      e.stopPropagation();
+      hideNow(n);
+    };
+    btn.addEventListener("click", fire);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fire(e);
+      }
+    });
+    return btn;
+  }
+  function syncPersistentUi(n) {
+    const closeBtn = n.el.querySelector(".bz-notice-close");
+    if (n.persistent && !closeBtn) {
+      n.el.appendChild(buildCloseBtn(n));
+    } else if (!n.persistent && closeBtn) {
+      closeBtn.remove();
+    }
+  }
   function armTimer(n, kind, explicitDuration, text) {
     if (n.timer !== null) {
       window.clearTimeout(n.timer);
@@ -4600,16 +4634,17 @@ var BZW_encrypt = (() => {
       } else {
         n.persistent = true;
       }
-      return;
+    } else {
+      const base = defaultDuration(kind);
+      const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+      if (dur <= 0) {
+        n.persistent = true;
+      } else if (explicitDuration === void 0 && durationGear().persistent) {
+      } else {
+        n.timer = window.setTimeout(() => hideNow(n), dur);
+      }
     }
-    const base = defaultDuration(kind);
-    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
-    if (dur <= 0) {
-      n.persistent = true;
-      return;
-    }
-    if (explicitDuration === void 0 && durationGear().persistent) return;
-    n.timer = window.setTimeout(() => hideNow(n), dur);
+    syncPersistentUi(n);
   }
   function noopHandle() {
     return {
@@ -4620,6 +4655,8 @@ var BZW_encrypt = (() => {
       },
       setType() {
       },
+      setAction() {
+      },
       hide() {
       }
     };
@@ -4628,13 +4665,61 @@ var BZW_encrypt = (() => {
     const btn = document.createElement("span");
     btn.className = "bz-notice-action";
     btn.setAttribute("role", "button");
+    btn.tabIndex = 0;
     btn.textContent = action.label;
-    btn.addEventListener("click", (e) => {
+    const fire = (e) => {
       e.stopPropagation();
       if (action.onClick) action.onClick();
       hideNow(n);
+    };
+    btn.addEventListener("click", fire);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fire(e);
+      }
     });
-    n.el.appendChild(btn);
+    const closeBtn = n.el.querySelector(".bz-notice-close");
+    if (closeBtn) n.el.insertBefore(btn, closeBtn);
+    else n.el.appendChild(btn);
+  }
+  function makeHandle(n) {
+    return {
+      el: n.el,
+      setMessage(text) {
+        n.msgEl.textContent = text;
+      },
+      setType(t) {
+        applyTypeToEl(n, t);
+        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
+      },
+      setProgress(pct) {
+        if (!n.progressEl) return;
+        if (pct === -1) {
+          n.progressEl.classList.add("bz-notice-progress--indeterminate");
+          return;
+        }
+        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
+        const clamped = Math.max(0, Math.min(100, pct));
+        n.progressEl.style.width = clamped + "%";
+        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
+        else n.progressEl.classList.remove("bz-notice-progress--done");
+      },
+      setAction(actions) {
+        const list = Array.isArray(actions) ? actions : [actions];
+        const existing = new Set(
+          Array.from(n.el.querySelectorAll(".bz-notice-action")).map((el) => el.textContent || "")
+        );
+        for (const a of list) {
+          if (existing.has(a.label)) continue;
+          appendActionBtn(n, a);
+          existing.add(a.label);
+        }
+      },
+      hide() {
+        hideNow(n);
+      }
+    };
   }
   function notify(msg, opts) {
     const kind = opts && opts.type || "info";
@@ -4656,14 +4741,10 @@ var BZW_encrypt = (() => {
         const mergeActions = [];
         if (opts.action) mergeActions.push(opts.action);
         if (opts.actions) mergeActions.push(...opts.actions);
-        const existingLabels = new Set(
-          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
-        );
-        for (const a of mergeActions) {
-          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
-        }
         armTimer(r.n, kind, opts.duration, msg);
-        return noopHandle();
+        const merged = makeHandle(r.n);
+        if (mergeActions.length) merged.setAction(mergeActions);
+        return merged;
       }
       if (r && now - r.at < DEDUPE_WINDOW_MS) {
         return noopHandle();
@@ -4711,7 +4792,10 @@ var BZW_encrypt = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
+    el.addEventListener("click", () => {
+      if (n.persistent) return;
+      hideNow(n);
+    });
     container.style.zIndex = String(allocZ());
     container.appendChild(el);
     live.push(n);
@@ -4721,31 +4805,7 @@ var BZW_encrypt = (() => {
     }
     const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
     armTimer(n, kind, opts && opts.duration, fullText);
-    return {
-      el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
-      },
-      setType(t) {
-        applyTypeToEl(n, t);
-        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
-      },
-      setProgress(pct) {
-        if (!n.progressEl) return;
-        if (pct === -1) {
-          n.progressEl.classList.add("bz-notice-progress--indeterminate");
-          return;
-        }
-        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
-        const clamped = Math.max(0, Math.min(100, pct));
-        n.progressEl.style.width = clamped + "%";
-        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
-        else n.progressEl.classList.remove("bz-notice-progress--done");
-      },
-      hide() {
-        hideNow(n);
-      }
-    };
+    return makeHandle(n);
   }
 
   // src/core/esc-manager.ts
@@ -4911,6 +4971,46 @@ var BZW_encrypt = (() => {
     }
   }
 
+  // src/core/mobile.ts
+  function isMobileEnv() {
+    return typeof Platform !== "undefined" && !!Platform.isMobile;
+  }
+
+  // src/core/ui/focus-trap.ts
+  var FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || !container.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !container.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+
   // src/core/flow-dialog.ts
   var FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
   var FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
@@ -4968,6 +5068,7 @@ var BZW_encrypt = (() => {
         close: () => settle(void 0)
       });
       let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
       function restoreFocus() {
         if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
           prevActive.focus();
@@ -4977,6 +5078,7 @@ var BZW_encrypt = (() => {
         if (settled) return;
         settled = true;
         if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
         escHandle.unregister();
         mask.remove();
         restoreFocus();
@@ -5070,11 +5172,6 @@ var BZW_encrypt = (() => {
     popup.style.maxWidth = (opts.maxWidth || 400) + "px";
     topifyZ(mask, popup);
     return { mask, popup, topify: () => topifyZ(mask, popup) };
-  }
-
-  // src/core/mobile.ts
-  function isMobileEnv() {
-    return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
 
   // src/core/item-actions.ts
@@ -5434,14 +5531,6 @@ var BZW_encrypt = (() => {
       void 0,
       opts == null ? void 0 : opts.longPressFilter
     );
-  }
-
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
   }
 
   // src/core/ui/setlist.ts
@@ -6364,7 +6453,7 @@ var BZW_encrypt = (() => {
   }
 
   // src/core/settings-modal.ts
-  var FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  var FOCUSABLE_SELECTOR2 = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
   function createSettingsGroup(container, opts) {
     const group = document.createElement("div");
     group.className = "bz-settings-group";
@@ -6470,7 +6559,7 @@ var BZW_encrypt = (() => {
     popup.style.display = "flex";
     popup.setAttribute("role", "dialog");
     popup.setAttribute("aria-modal", "true");
-    const firstFocusable = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR)).find((el) => {
+    const firstFocusable2 = Array.from(popup.querySelectorAll(FOCUSABLE_SELECTOR2)).find((el) => {
       if (isItemHidden(el)) return false;
       if (isMobileEnv()) {
         const tag = el.tagName;
@@ -6478,7 +6567,8 @@ var BZW_encrypt = (() => {
       }
       return true;
     });
-    if (firstFocusable) firstFocusable.focus();
+    if (firstFocusable2) firstFocusable2.focus();
+    const releaseFocusTrap = trapFocus(popup);
     const handle = escManager.register("bz-settings-modal", {
       isVisible: () => !!currentModal,
       close: () => closeSettingsModal()
@@ -6488,6 +6578,7 @@ var BZW_encrypt = (() => {
       popup,
       onClose: opts.onClose,
       dispose: () => {
+        releaseFocusTrap();
         mask.remove();
         popup.remove();
         handle.unregister();
@@ -8611,6 +8702,11 @@ var BZW_encrypt = (() => {
     row.appendChild(input2);
     row.appendChild(actionBtn);
     box.appendChild(row);
+    for (const inp of [input, input2]) {
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") actionBtn.click();
+      });
+    }
     const err = document.createElement("div");
     err.className = "bz-lockscreen-err";
     err.dataset.ls = "err";
@@ -9691,12 +9787,6 @@ var BZW_encrypt = (() => {
             }
           }
         };
-        ls.input.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") ls.actionBtn.click();
-        });
-        ls.input2.addEventListener("keydown", (e) => {
-          if (e.key === "Enter") ls.actionBtn.click();
-        });
         ls.el.addEventListener("click", (e) => {
           if (e.target === ls.el) done(false);
         });
@@ -10277,9 +10367,6 @@ var BZW_encrypt = (() => {
         }
       };
       ls.actionBtn.addEventListener("click", () => void submit());
-      ls.input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") void submit();
-      });
       ls.el.addEventListener("click", (e) => {
         if (e.target === ls.el) done(false);
       });

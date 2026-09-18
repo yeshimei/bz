@@ -1,5 +1,5 @@
-/* 源指纹 b784c6d441ebecc1 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 fa4bf606e508718f · 仓内输入 58 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -5309,6 +5309,14 @@ var BZW_cinema = (() => {
     });
   }
 
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+
   // src/core/notice.ts
   var MAX_VISIBLE_DEFAULT = 5;
   function maxVisible() {
@@ -5324,11 +5332,8 @@ var BZW_cinema = (() => {
     warning: "⚠️",
     error: "❌",
     pause: "⏸️",
-    accept: "✨",
     delete: "🗑️",
-    confirm: "✓",
     restore: "↩️",
-    skip: "🚫",
     archive: "📁"
   };
   var SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
@@ -5438,11 +5443,8 @@ var BZW_cinema = (() => {
       "bz-notice--warning",
       "bz-notice--error",
       "bz-notice--pause",
-      "bz-notice--accept",
       "bz-notice--delete",
-      "bz-notice--confirm",
       "bz-notice--restore",
-      "bz-notice--skip",
       "bz-notice--archive",
       "bz-notice--progress"
     );
@@ -5467,6 +5469,35 @@ var BZW_cinema = (() => {
       window.setTimeout(() => removeInternal(n), LEAVE_MS);
     }
   }
+  function buildCloseBtn(n) {
+    const btn = document.createElement("span");
+    btn.className = "bz-notice-close";
+    btn.setAttribute("role", "button");
+    btn.setAttribute("aria-label", "关闭");
+    btn.title = "关闭";
+    btn.tabIndex = 0;
+    btn.appendChild(uiIcon("x"));
+    const fire = (e) => {
+      e.stopPropagation();
+      hideNow(n);
+    };
+    btn.addEventListener("click", fire);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fire(e);
+      }
+    });
+    return btn;
+  }
+  function syncPersistentUi(n) {
+    const closeBtn = n.el.querySelector(".bz-notice-close");
+    if (n.persistent && !closeBtn) {
+      n.el.appendChild(buildCloseBtn(n));
+    } else if (!n.persistent && closeBtn) {
+      closeBtn.remove();
+    }
+  }
   function armTimer(n, kind, explicitDuration, text) {
     if (n.timer !== null) {
       window.clearTimeout(n.timer);
@@ -5479,16 +5510,17 @@ var BZW_cinema = (() => {
       } else {
         n.persistent = true;
       }
-      return;
+    } else {
+      const base = defaultDuration(kind);
+      const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
+      if (dur <= 0) {
+        n.persistent = true;
+      } else if (explicitDuration === void 0 && durationGear().persistent) {
+      } else {
+        n.timer = window.setTimeout(() => hideNow(n), dur);
+      }
     }
-    const base = defaultDuration(kind);
-    const dur = explicitDuration !== void 0 ? explicitDuration : text ? calcDuration(text, base) : base;
-    if (dur <= 0) {
-      n.persistent = true;
-      return;
-    }
-    if (explicitDuration === void 0 && durationGear().persistent) return;
-    n.timer = window.setTimeout(() => hideNow(n), dur);
+    syncPersistentUi(n);
   }
   function noopHandle() {
     return {
@@ -5499,6 +5531,8 @@ var BZW_cinema = (() => {
       },
       setType() {
       },
+      setAction() {
+      },
       hide() {
       }
     };
@@ -5507,13 +5541,61 @@ var BZW_cinema = (() => {
     const btn = document.createElement("span");
     btn.className = "bz-notice-action";
     btn.setAttribute("role", "button");
+    btn.tabIndex = 0;
     btn.textContent = action.label;
-    btn.addEventListener("click", (e) => {
+    const fire = (e) => {
       e.stopPropagation();
       if (action.onClick) action.onClick();
       hideNow(n);
+    };
+    btn.addEventListener("click", fire);
+    btn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        fire(e);
+      }
     });
-    n.el.appendChild(btn);
+    const closeBtn = n.el.querySelector(".bz-notice-close");
+    if (closeBtn) n.el.insertBefore(btn, closeBtn);
+    else n.el.appendChild(btn);
+  }
+  function makeHandle(n) {
+    return {
+      el: n.el,
+      setMessage(text) {
+        n.msgEl.textContent = text;
+      },
+      setType(t) {
+        applyTypeToEl(n, t);
+        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
+      },
+      setProgress(pct) {
+        if (!n.progressEl) return;
+        if (pct === -1) {
+          n.progressEl.classList.add("bz-notice-progress--indeterminate");
+          return;
+        }
+        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
+        const clamped = Math.max(0, Math.min(100, pct));
+        n.progressEl.style.width = clamped + "%";
+        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
+        else n.progressEl.classList.remove("bz-notice-progress--done");
+      },
+      setAction(actions) {
+        const list = Array.isArray(actions) ? actions : [actions];
+        const existing = new Set(
+          Array.from(n.el.querySelectorAll(".bz-notice-action")).map((el) => el.textContent || "")
+        );
+        for (const a of list) {
+          if (existing.has(a.label)) continue;
+          appendActionBtn(n, a);
+          existing.add(a.label);
+        }
+      },
+      hide() {
+        hideNow(n);
+      }
+    };
   }
   function notify(msg, opts) {
     const kind = opts && opts.type || "info";
@@ -5535,14 +5617,10 @@ var BZW_cinema = (() => {
         const mergeActions = [];
         if (opts.action) mergeActions.push(opts.action);
         if (opts.actions) mergeActions.push(...opts.actions);
-        const existingLabels = new Set(
-          Array.from(r.n.el.querySelectorAll(".bz-notice-action")).map((el2) => el2.textContent || "")
-        );
-        for (const a of mergeActions) {
-          if (!existingLabels.has(a.label)) appendActionBtn(r.n, a);
-        }
         armTimer(r.n, kind, opts.duration, msg);
-        return noopHandle();
+        const merged = makeHandle(r.n);
+        if (mergeActions.length) merged.setAction(mergeActions);
+        return merged;
       }
       if (r && now - r.at < DEDUPE_WINDOW_MS) {
         return noopHandle();
@@ -5590,7 +5668,10 @@ var BZW_cinema = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => hideNow(n));
+    el.addEventListener("click", () => {
+      if (n.persistent) return;
+      hideNow(n);
+    });
     container.style.zIndex = String(allocZ());
     container.appendChild(el);
     live.push(n);
@@ -5600,31 +5681,7 @@ var BZW_cinema = (() => {
     }
     const fullText = (opts && opts.title ? opts.title + " " : "") + msg;
     armTimer(n, kind, opts && opts.duration, fullText);
-    return {
-      el,
-      setMessage(text) {
-        n.msgEl.textContent = text;
-      },
-      setType(t) {
-        applyTypeToEl(n, t);
-        armTimer(n, t, void 0, n.msgEl.textContent || void 0);
-      },
-      setProgress(pct) {
-        if (!n.progressEl) return;
-        if (pct === -1) {
-          n.progressEl.classList.add("bz-notice-progress--indeterminate");
-          return;
-        }
-        n.progressEl.classList.remove("bz-notice-progress--indeterminate");
-        const clamped = Math.max(0, Math.min(100, pct));
-        n.progressEl.style.width = clamped + "%";
-        if (clamped >= 100) n.progressEl.classList.add("bz-notice-progress--done");
-        else n.progressEl.classList.remove("bz-notice-progress--done");
-      },
-      hide() {
-        hideNow(n);
-      }
-    };
+    return makeHandle(n);
   }
 
   // src/core/esc-manager.ts
