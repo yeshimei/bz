@@ -8,10 +8,12 @@
  * 依赖方向（ADR-0002）：store(数据层) ← 本层 ← ui；不挂 window；import 保险箱域（显式跨域 import）。
  */
 import { getApp } from '../core/app';
+import { notify } from '../core/notice';
 import { getSafeManager } from '../encrypt';
 import { collectNoteAttachmentPaths, kindOf } from '../encrypt/ui';
 import { bytesToBase64, type LockAttachmentInput } from '../encrypt/data';
 import {
+  diaryDateFromLegacyPath,
   diaryEntryPath,
   diaryMetaFromEntryPath,
   parseDiaryBlockHeader,
@@ -23,8 +25,7 @@ import type { DiaryEntry } from './types';
 // 加密分类标签名（ADR-0017；写入块标题、参与筛选/计数）——单一来源在 config，此处转出给 UI 层
 export { ENCRYPT_TAG };
 
-// ===== 解锁态（与保险箱同一 SafeManager 单例，共享解锁态） =====
-let unlockedListeners: (() => void)[] = [];
+// ===== 解锁态（与保险箱同一 SafeManager 单例，共享解锁态；上锁通知由 ui 层订阅 encrypt:unlock-changed） =====
 
 export function isUnlocked(): boolean {
   // 降级链：保险箱未初始化/设置未注入时视为未解锁，不阻断列表渲染（与 store 加密合并同策略）
@@ -35,41 +36,44 @@ export function isUnlocked(): boolean {
   }
 }
 
-export function onUnlockChange(cb: () => void): void {
-  unlockedListeners.push(cb);
-}
-
-function notifyUnlockChange(): void {
-  unlockedListeners.forEach((cb) => cb());
-}
-
-/** 保险箱解锁/上锁（复用一个实例；关日记面板即上锁在这里触发整体 lock） */
-export function lockSafe(): void {
-  getSafeManager().lock();
-  notifyUnlockChange();
-}
-
 // ===== 附件收集（正文里的 ![[...]] 图片/视频） =====
 
 interface AttachmentInput extends LockAttachmentInput {}
 
-async function collectAttachmentsForContent(content: string, datePath: string): Promise<AttachmentInput[]> {
+/** 单附件体积上限（N9）：base64 放大 ~1.37 倍且与密文同驻内存，超限附件跳过不读——
+ *  原文件仍留在盘上， vault 单条视频可达数百 MB（对照 thumb-cache 48MB 预览上限口径）。 */
+const ATTACHMENT_MAX_BYTES = 64 * 1024 * 1024;
+
+/** 附件收集结果：list = 收集成功的附件；oversized = 超限被跳过的路径（通知用） */
+interface CollectedAttachments {
+  list: AttachmentInput[];
+  oversized: string[];
+}
+
+async function collectAttachmentsForContent(content: string, datePath: string): Promise<CollectedAttachments> {
   const app = getApp();
   // 附件引用：metadataCache.embeds（Obsidian 自带链接信息）为主 + 正则兜底（collectNoteAttachmentPaths）
   const paths = collectNoteAttachmentPaths(app, datePath, content);
-  const out: AttachmentInput[] = [];
+  const list: AttachmentInput[] = [];
+  const oversized: string[] = [];
   for (const p of paths) {
     try {
       const f = app.vault.getAbstractFileByPath(p);
       if (!f) continue;
+      // N9 体积守卫：读取前按 stat.size 拦截，超大附件不读入内存（避免 base64 同驻 OOM）
+      const stat = (f as { stat?: { size?: number } }).stat;
+      if (stat && typeof stat.size === 'number' && stat.size > ATTACHMENT_MAX_BYTES) {
+        oversized.push(p);
+        continue;
+      }
       const buf = await app.vault.readBinary(f as any);
       // 原始 base64（无预览层精简；还原以原质量为准）——统一分块 util
-      out.push({ path: p, kind: kindOf(p), data: bytesToBase64(new Uint8Array(buf)) });
+      list.push({ path: p, kind: kindOf(p), data: bytesToBase64(new Uint8Array(buf)) });
     } catch (e) {
       /* 附件读取失败跳过该附件 */
     }
   }
-  return out;
+  return { list, oversized };
 }
 
 // ===== 加密单个条目 =====
@@ -88,7 +92,20 @@ export async function encryptEntry(entry: DiaryEntry): Promise<DiaryEntry | null
   const block = `${serializeDiaryBlockHeader(tags, entry.time)}\n${entry.content.trim()}`;
   // 来源条目文件路径：加密时来自条目（filename=完整路径），缺省按目录+日期时间拼
   const datePath = entry.filePath || diaryEntryPath(DIARY_DIRECTORY, entry.date, entry.time);
-  const attachments = await collectAttachmentsForContent(entry.content || '', datePath);
+  const { list: attachments, oversized } = await collectAttachmentsForContent(entry.content || '', datePath);
+
+  // N9：全部附件超限 → 整条拒绝（密文缺媒体已不完整，硬加密徒增一份大密文）
+  if (attachments.length === 0 && oversized.length > 0) {
+    notify(
+      `加密取消：条目引用的 ${oversized.length} 个附件都超过 64MB，未加密（原文件仍留在盘上）。请先移出大媒体再加密。`,
+      { type: 'error' }
+    );
+    return null;
+  }
+  // N9：部分附件超限 → 继续加密其余附件，通知缺失面（原文件不动）
+  if (oversized.length > 0) {
+    notify(`有 ${oversized.length} 个附件过大（超过 64MB）未加密（原文件仍留在盘上）。`, { type: 'warning' });
+  }
 
   // D9：lockNote 本就返回入库的 SafeNote——不再取 notes[length-1]（耦合「追加在末尾」实现，
   // 并发/插序变化即错链 noteId）
@@ -126,10 +143,14 @@ export async function loadEncryptedEntries(): Promise<DiaryEntry[]> {
     try {
       const plain = await safe.getDiaryEntryPlain(note.id);
       if (plain === null || plain === undefined) continue;
-      // 日期从来源条目文件路径还原（ADR-0131：note.path = `我的/日记/YYMMDDHHmm(-N).md`）
+      // 日期从来源条目文件路径还原（ADR-0131：note.path = `我的/日记/YYMMDDHHmm(-N).md`）。
+      // N7：ADR-0131 之前加密的历史清单，note.path 是旧日期文件名（`2024-05-01.md` 形态）——
+      // 补 diaryDateFromLegacyPath 兜底换算（与 encrypt/data.ts mergeDiaryBlock 同套兜底），
+      // 否则解锁后这些条目不上墙、无解密入口（还原路径有兜底而加载路径没有，口径不一致）。
       const meta = diaryMetaFromEntryPath(note.path);
-      if (!meta) continue;
-      const entry = parseDiaryBlock(plain, meta.date, note.id, note.path);
+      const date = meta?.date ?? diaryDateFromLegacyPath(note.path);
+      if (!date) continue;
+      const entry = parseDiaryBlock(plain, date, note.id, note.path);
       if (entry) out.push(entry);
     } catch (e) {
       /* 单篇解密失败跳过，不阻断其余 */
