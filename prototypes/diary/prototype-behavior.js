@@ -1,5 +1,5 @@
-/* 源指纹 60564aca5a3572c6 · 仓内输入 77 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
+/* 源指纹 5c0900fc3a930a89 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
   var __create = Object.create;
@@ -4294,6 +4294,7 @@ var BZW_diary = (() => {
       MEDIA_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg|mp4|m4v|webm|mov|ogv|mp3|m4a|aac|wav|flac|ogg|oga)$/i;
       FakeVault = class _FakeVault {
         constructor() {
+          /** 事件订阅表（ref→cb 映射，offref 按 ref 摘单个监听，见 on/offref 注释） */
           this.listeners = /* @__PURE__ */ new Map();
           this.idSeq = 0;
           /** adapter 直读目录面（data.ts collectMdPaths 递归枚举 md 的数据源）。
@@ -4394,16 +4395,26 @@ var BZW_diary = (() => {
         /** 事件订阅（core/app vault.on/offref 同形） */
         on(evt, cb) {
           if (!this.listeners.has(evt)) this.listeners.set(evt, []);
-          this.listeners.get(evt).push(cb);
           const id = ++this.idSeq;
+          this.listeners.get(evt).push({ id, cb });
           return { ref: id };
         }
-        offref(_ref) {
-          this.listeners.clear();
+        /** 与宿主 Vault.offref 同语义（ADR-0122）：只摘该 ref 对应的监听，不清空整表
+         *  （清空整表会掩盖原型端的重复订阅泄漏）。 */
+        offref(ref) {
+          const id = ref == null ? void 0 : ref.ref;
+          if (id === void 0) return;
+          for (const [evt, list] of this.listeners) {
+            const idx = list.findIndex((l) => l.id === id);
+            if (idx >= 0) {
+              list.splice(idx, 1);
+              if (list.length === 0) this.listeners.delete(evt);
+            }
+          }
         }
         emit(evt, file) {
           var _a;
-          for (const cb of (_a = this.listeners.get(evt)) != null ? _a : []) cb(file);
+          for (const l of (_a = this.listeners.get(evt)) != null ? _a : []) l.cb(file);
         }
       };
       FakeMetadataCache = class {
@@ -6160,6 +6171,15 @@ var BZW_diary = (() => {
       if (t && !tags.includes(t)) tags.push(t);
     }
     return { tags, time: m[2] };
+  }
+  function readDiaryFrontmatterFieldRaw(content, key) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return null;
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return null;
+    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
+    return m ? m[1].trim() : null;
   }
   function parseDiaryEntryFile(content) {
     const text = (content || "").replace(/\r\n/g, "\n");
@@ -11821,8 +11841,12 @@ var BZW_diary = (() => {
     }
   }
   function applyDirectories(settings) {
-    DIARY_DIRECTORY = settings.diaryDirectory || "我的/日记";
-    LETTER_DIRECTORY = settings.letterDirectory || "我的/信";
+    const clean = (v, fallback) => {
+      const t = (v || "").trim().replace(/\/+$/, "");
+      return t || fallback;
+    };
+    DIARY_DIRECTORY = clean(settings.diaryDirectory, "我的/日记");
+    LETTER_DIRECTORY = clean(settings.letterDirectory, "我的/信");
   }
   var ENCRYPT_TAG = "加密";
   function getPrimaryTagsInDisplayOrder() {
@@ -11979,12 +12003,8 @@ var BZW_diary = (() => {
     const cache = app.metadataCache.getFileCache(file);
     return cache && cache.frontmatter ? cache.frontmatter : null;
   }
-  async function getFileTimeParts(file) {
-    const stat = await file.stat;
-    const createTime = stat.ctime || stat.birthtime;
-    const m = (0, import_moment.default)(createTime);
-    return { timeStr: m.format("HH:mm"), timeValue: parseInt(m.format("HHmm")) };
-  }
+  var FALLBACK_TIME = "00:00";
+  var FALLBACK_TIME_VALUE = 0;
   function makeEntryId(prefix, file, dateStr) {
     return `${prefix}-${file.path.replace(/\//g, "-")}-${dateStr}`;
   }
@@ -11998,7 +12018,8 @@ var BZW_diary = (() => {
       if (!dateStr || !(0, import_moment.default)(dateStr, "YYYY-MM-DD", true).isValid()) return null;
       dateStr = (0, import_moment.default)(dateStr).format("YYYY-MM-DD");
       let poster = fm["海报"];
-      const { timeStr, timeValue } = await getFileTimeParts(file);
+      const timeStr = FALLBACK_TIME;
+      const timeValue = FALLBACK_TIME_VALUE;
       let rawTag = "";
       if (fm.tags && Array.isArray(fm.tags) && fm.tags.length > 0) {
         rawTag = fm.tags[0];
@@ -12051,6 +12072,8 @@ var BZW_diary = (() => {
         if (!parsed.isValid()) return null;
       }
       const dateFormatted = parsed.format("YYYY-MM-DD");
+      const timeStr = parsed.format("HH:mm");
+      const timeValue = parseInt(parsed.format("HHmm"), 10);
       const fullContent = await app.vault.read(file);
       const frontmatterRegex = /^---\n([\s\S]*?)\n---\n/;
       const match = fullContent.match(frontmatterRegex);
@@ -12063,7 +12086,6 @@ var BZW_diary = (() => {
       const entryContent = `**${title}**
 
 ${body}`.trim();
-      const { timeStr, timeValue } = await getFileTimeParts(file);
       return {
         date: dateFormatted,
         time: timeStr,
@@ -12103,7 +12125,8 @@ ${String(review).trim()}`;
 
 ![[${String(cover).trim()}]]`;
       }
-      const { timeStr, timeValue } = await getFileTimeParts(file);
+      const timeStr = FALLBACK_TIME;
+      const timeValue = FALLBACK_TIME_VALUE;
       return {
         date: dateStr,
         time: timeStr,
@@ -12203,6 +12226,27 @@ ${String(review).trim()}`;
     }).trim();
   }
   var READ_BATCH_SIZE = 10;
+  async function readBatch(batch, readOne, failed) {
+    const results = await Promise.all(
+      batch.map(async (file) => {
+        try {
+          return await readOne(file);
+        } catch (e) {
+          const path = (file == null ? void 0 : file.path) || String(file);
+          failed.push(path);
+          return [];
+        }
+      })
+    );
+    const out = [];
+    for (const r of results) out.push(...r);
+    return out;
+  }
+  function warnFailedBatch(kind, failed) {
+    if (failed.length > 0) {
+      console.warn(`[diary] ${kind}加载：${failed.length} 个文件读取失败已跳过：`, failed.join(", "));
+    }
+  }
   async function collectMdPaths(app, dirPath) {
     const out = [];
     const stack = [dirPath.replace(/\/+$/, "") || "/"];
@@ -12283,33 +12327,43 @@ ${String(review).trim()}`;
     const vault = app.vault;
     const mdFiles = await mdFilesUnder(app, diaryDir);
     const entries = [];
+    const failed = [];
     for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
       const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
-      const batchResults = await Promise.all(
-        batch.map(async (file) => {
-          if (!diaryMetaFromEntryPath(file.name)) return [];
-          const content = await vault.read(file);
-          const e = parseEntryFile(content, file.path);
-          return e ? [toWallEntry(e, "diary", diaryDir)] : [];
-        })
+      entries.push(
+        ...await readBatch(
+          batch,
+          async (file) => {
+            if (!diaryMetaFromEntryPath(file.name)) return [];
+            const content = await vault.read(file);
+            const e = parseEntryFile(content, file.path);
+            return e ? [toWallEntry(e, "diary", diaryDir)] : [];
+          },
+          failed
+        )
       );
-      for (const r of batchResults) entries.push(...r);
     }
+    warnFailedBatch("日记", failed);
     return entries;
   }
   async function loadSpecialEntries(app, dir, kind, parse) {
     const mdFiles = await mdFilesUnder(app, dir);
     const entries = [];
+    const failed = [];
     for (let i = 0; i < mdFiles.length; i += READ_BATCH_SIZE) {
       const batch = mdFiles.slice(i, i + READ_BATCH_SIZE);
-      const batchResults = await Promise.all(
-        batch.map(async (file) => {
-          const e = await parse(file, app);
-          return e ? [toWallEntry(e, kind, dir)] : [];
-        })
+      entries.push(
+        ...await readBatch(
+          batch,
+          async (file) => {
+            const e = await parse(file, app);
+            return e ? [toWallEntry(e, kind, dir)] : [];
+          },
+          failed
+        )
       );
-      for (const r of batchResults) entries.push(...r);
     }
+    warnFailedBatch(kind, failed);
     return entries;
   }
   async function loadWallEntries(app) {
@@ -12697,6 +12751,28 @@ ${String(review).trim()}`;
   init_domain_bus();
   init_storage();
   init_diary_format();
+
+  // src/diary/repair.ts
+  init_diary_format();
+  function lintEntryFile(path, content) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    if (DIARY_LEGACY_FILE_RE.test(base)) return "legacy";
+    const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
+    const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, "日期");
+    const fmMeta = raw ? parseDiaryStamp(raw) : null;
+    const fileMeta = diaryMetaFromEntryPath(base);
+    if (rawLegacyKey && !raw) return "unparsable";
+    if (raw && !fmMeta && !fileMeta) return "unparsable";
+    if (!fmMeta && !fileMeta) return "unparsable";
+    if (raw && !fmMeta && fileMeta) return "unparsable";
+    if (fmMeta && !fileMeta) return "name-mismatch";
+    if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
+      return "name-mismatch";
+    }
+    return null;
+  }
+
+  // src/diary/store.ts
   var diaryDataMap = null;
   function setDiaryDataMap(map) {
     diaryDataMap = map;
@@ -12731,6 +12807,25 @@ ${String(review).trim()}`;
   };
   function isDiaryReadFailure(e) {
     return e instanceof DiaryFileReadError;
+  }
+  function extraFrontmatterLines(content) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return [];
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return [];
+    const out = [];
+    let keeping = false;
+    for (const line of text.slice(4, end).split("\n")) {
+      const kv = /^([^:\s][^:]*):(.*)$/.exec(line);
+      if (kv) {
+        const key = kv[1].trim();
+        keeping = key !== "date" && key !== "type";
+        if (keeping) out.push(line);
+        continue;
+      }
+      if (keeping && /^\s+-\s/.test(line)) out.push(line);
+    }
+    return out;
   }
   function listDateEntryPaths(dateStr) {
     var _a, _b;
@@ -12836,10 +12931,23 @@ ${String(review).trim()}`;
         hit = await enqueueFileTask(p, async () => {
           const { file, content, entry } = await readEntryCtxInQueue(p);
           if (!file || !entry || !match(entry)) return null;
-          const changed = !(entry.tags.length === newTags.length && entry.tags.every((t) => newTags.includes(t)));
+          if (lintEntryFile(p, content) === "name-mismatch") {
+            warnUnparsed(
+              `「${p.split("/").pop()}」属性时间与文件名不一致（需人工裁决），本次改标签没有执行。请先在日记本设置中运行「日记格式体检」处理该文件后再试。`,
+              `diary-name-mismatch-${p}`
+            );
+            return null;
+          }
+          const changed = entry.tags.join("\0") !== newTags.join("\0");
           if (!changed) return { entry, from: [...entry.tags], changed: false };
           const body = parseDiaryEntryFile(content).body;
-          await getApp().vault.modify(file, serializeDiaryEntryFile({ date: entry.date, time: entry.time }, newTags, body));
+          let disk = serializeDiaryEntryFile({ date: entry.date, time: entry.time }, newTags, body);
+          const extra = extraFrontmatterLines(content);
+          if (extra.length > 0) {
+            const closeIdx = disk.indexOf("\n---\n", 4);
+            disk = disk.slice(0, closeIdx + 1) + extra.join("\n") + "\n" + disk.slice(closeIdx + 1);
+          }
+          await getApp().vault.modify(file, disk);
           const from = [...entry.tags];
           entry.tags = [...newTags];
           entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join("");
@@ -12889,6 +12997,7 @@ ${String(review).trim()}`;
 
   // src/diary/encrypt.ts
   init_app();
+  init_notice();
   init_encrypt();
   init_ui2();
   init_data();
@@ -12900,20 +13009,27 @@ ${String(review).trim()}`;
       return false;
     }
   }
+  var ATTACHMENT_MAX_BYTES = 64 * 1024 * 1024;
   async function collectAttachmentsForContent(content, datePath) {
     const app = getApp();
     const paths = collectNoteAttachmentPaths(app, datePath, content);
-    const out = [];
+    const list = [];
+    const oversized = [];
     for (const p of paths) {
       try {
         const f = app.vault.getAbstractFileByPath(p);
         if (!f) continue;
+        const stat = f.stat;
+        if (stat && typeof stat.size === "number" && stat.size > ATTACHMENT_MAX_BYTES) {
+          oversized.push(p);
+          continue;
+        }
         const buf = await app.vault.readBinary(f);
-        out.push({ path: p, kind: kindOf(p), data: bytesToBase64(new Uint8Array(buf)) });
+        list.push({ path: p, kind: kindOf(p), data: bytesToBase64(new Uint8Array(buf)) });
       } catch (e) {
       }
     }
-    return out;
+    return { list, oversized };
   }
   async function encryptEntry(entry) {
     const safe = getSafeManager();
@@ -12922,7 +13038,17 @@ ${String(review).trim()}`;
     const block = `${serializeDiaryBlockHeader(tags, entry.time)}
 ${entry.content.trim()}`;
     const datePath = entry.filePath || diaryEntryPath(DIARY_DIRECTORY, entry.date, entry.time);
-    const attachments = await collectAttachmentsForContent(entry.content || "", datePath);
+    const { list: attachments, oversized } = await collectAttachmentsForContent(entry.content || "", datePath);
+    if (attachments.length === 0 && oversized.length > 0) {
+      notify(
+        `加密取消：条目引用的 ${oversized.length} 个附件都超过 64MB，未加密（原文件仍留在盘上）。请先移出大媒体再加密。`,
+        { type: "error" }
+      );
+      return null;
+    }
+    if (oversized.length > 0) {
+      notify(`有 ${oversized.length} 个附件过大（超过 64MB）未加密（原文件仍留在盘上）。`, { type: "warning" });
+    }
     const note = await safe.lockNote(
       {
         path: datePath,
@@ -12941,6 +13067,7 @@ ${entry.content.trim()}`;
     };
   }
   async function loadEncryptedEntries() {
+    var _a;
     const safe = getSafeManager();
     if (!safe.unlocked || !safe.manifest) return [];
     const out = [];
@@ -12950,8 +13077,9 @@ ${entry.content.trim()}`;
         const plain = await safe.getDiaryEntryPlain(note.id);
         if (plain === null || plain === void 0) continue;
         const meta = diaryMetaFromEntryPath(note.path);
-        if (!meta) continue;
-        const entry = parseDiaryBlock(plain, meta.date, note.id, note.path);
+        const date = (_a = meta == null ? void 0 : meta.date) != null ? _a : diaryDateFromLegacyPath(note.path);
+        if (!date) continue;
+        const entry = parseDiaryBlock(plain, date, note.id, note.path);
         if (entry) out.push(entry);
       } catch (e) {
       }
