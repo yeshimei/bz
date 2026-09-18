@@ -43,6 +43,19 @@ export function bindFormSubmit(popup: HTMLElement, onSubmit: () => void): void {
   });
 }
 
+/**
+ * 存活 uiModal 登记表（M13/A1）：open 登记 close 句柄、close 注销（幂等 close 防双注销）。
+ * 插件卸载时 closeAllModals() 统一收口（main.ts onunload 清单）——否则禁用插件后遮罩残留
+ * 且 ESC 已被 escManager.destroy 短路，只剩点遮罩可关。卸载语义直接 close（绕过 requestClose）：
+ * 脏表单确认框在「插件正在消失」的前提下没有意义。遍历副本：close 会同步改集合。
+ */
+const liveModals = new Set<() => void>();
+
+/** 关闭全部存活 uiModal（unload 收口；未打开时 no-op，可无条件调用） */
+export function closeAllModals(): void {
+  for (const close of [...liveModals]) close();
+}
+
 export interface BzModalOpts {
   content: HTMLElement | string;   // 弹窗内容（元素或 HTML 片段）
   maxWidth?: number;               // 像素宽度（默认 400，≤90vw）
@@ -99,6 +112,7 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
   function close() {
     if (closed) return;
     closed = true;
+    liveModals.delete(close); // 存活登记表注销（幂等 close 只走一次）
     releaseTrap?.();
     mask.remove();
     escHandle?.unregister();
@@ -129,5 +143,6 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
   document.body.appendChild(mask);
   // 聚焦 popup 内首个可交互元素（跳过隐藏项；移动端跳过 input/textarea 防软键盘）
   if (focusEnabled) firstFocusable(popup)?.focus();
+  liveModals.add(close); // 存活登记（closeAllModals 卸载收口用）
   return { mask, popup, close };
 }
