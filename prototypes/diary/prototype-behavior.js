@@ -1,4 +1,4 @@
-/* 源指纹 caa610272ed40304 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6095c270e6b0cae2 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -5541,6 +5541,15 @@ var BZW_diary = (() => {
     if (opts.onClick) b.addEventListener("click", opts.onClick);
     return b;
   }
+  function uiBtnRow(buttons, opts) {
+    const row = document.createElement("div");
+    const cls = ["bz-btn-row"];
+    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
+    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
+    row.className = cls.join(" ");
+    buttons.forEach((x) => row.appendChild(x));
+    return row;
+  }
   var init_button = __esm({
     "src/core/ui/button.ts"() {
       init_icon();
@@ -6436,6 +6445,118 @@ var BZW_diary = (() => {
     }
   });
 
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    var _a;
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
+        escHandle.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  function confirmDiscard(proceed, message, className) {
+    void openFlowDialog({
+      title: "放弃未保存的内容？",
+      message: message || "弹窗内有未保存的输入，关闭后将丢失",
+      className,
+      actions: [
+        { label: "放弃", value: "ok" },
+        { label: "继续编辑", value: "cancel" }
+      ]
+    }).then((v) => {
+      if (v === "ok") proceed();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      init_focus_trap();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
   // src/core/diary-format.ts
   function diaryEntryBaseName(dateStr, timeStr, seq) {
     const d = String(dateStr || "").replace(/-/g, "");
@@ -6581,118 +6702,6 @@ var BZW_diary = (() => {
       DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
       DIARY_DATE_KEY = "date";
       DIARY_TYPE_KEY = "type";
-    }
-  });
-
-  // src/core/flow-dialog.ts
-  function buildFlowDialogParts(title, message, actions) {
-    var _a;
-    let buttons;
-    if (actions.length === 2) {
-      buttons = [
-        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
-        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
-      ];
-    } else {
-      buttons = actions.map((a, i) => {
-        const cls = ["bz-flow-dialog-action"];
-        if (a.danger) cls.push("bz-flow-dialog-danger");
-        if (a.cta) cls.push("bz-flow-dialog-cta");
-        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
-      });
-    }
-    const ctaIdx = actions.findIndex((a) => a.cta);
-    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
-    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
-    let focusIdx = primaryIdx;
-    if (dangerPrimary) {
-      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
-      if (safeIdx >= 0) focusIdx = safeIdx;
-    }
-    const html = "<h4>" + escapeHtml2(title || "确认") + "</h4><p>" + escapeHtml2(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
-      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
-      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml2(b.label) + "</button>";
-    }).join("") + "</div>";
-    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
-  }
-  function openFlowDialog(opts) {
-    if (!opts.actions || opts.actions.length === 0) {
-      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
-    }
-    return new Promise((resolve) => {
-      const prevActive = document.activeElement;
-      if (activeSettle) activeSettle(void 0);
-      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
-      const mask = document.createElement("div");
-      mask.id = "__shared_confirm_mask__";
-      mask.style.zIndex = String(allocZ());
-      mask.onclick = (e) => {
-        if (e.target === mask) settle(void 0);
-      };
-      const popup = document.createElement("div");
-      popup.id = "__shared_confirm_popup__";
-      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
-      if (opts.className) {
-        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
-      }
-      popup.setAttribute("role", "dialog");
-      popup.setAttribute("aria-modal", "true");
-      popup.innerHTML = parts.html;
-      mask.appendChild(popup);
-      document.body.appendChild(mask);
-      const escHandle = escManager.register("q3-confirm", {
-        isVisible: () => mask.isConnected,
-        close: () => settle(void 0)
-      });
-      let settled = false;
-      const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
-        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
-          prevActive.focus();
-        }
-      }
-      function settle(v) {
-        if (settled) return;
-        settled = true;
-        if (activeSettle === settle) activeSettle = null;
-        releaseFocusTrap();
-        escHandle.unregister();
-        mask.remove();
-        restoreFocus();
-        resolve(v);
-      }
-      activeSettle = settle;
-      for (const b of parts.buttons) {
-        const btn = document.getElementById(b.id);
-        if (btn) btn.onclick = () => settle(b.value);
-      }
-      const focusBtn = document.getElementById(parts.focusId);
-      if (focusBtn) focusBtn.focus();
-    });
-  }
-  function confirmDiscard(proceed, message, className) {
-    void openFlowDialog({
-      title: "放弃未保存的内容？",
-      message: message || "弹窗内有未保存的输入，关闭后将丢失",
-      className,
-      actions: [
-        { label: "放弃", value: "ok" },
-        { label: "继续编辑", value: "cancel" }
-      ]
-    }).then((v) => {
-      if (v === "ok") proceed();
-    });
-  }
-  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
-  var init_flow_dialog = __esm({
-    "src/core/flow-dialog.ts"() {
-      init_esc_manager();
-      init_utils();
-      init_z_order();
-      init_focus_trap();
-      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
-      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
-      activeSettle = null;
     }
   });
 
@@ -12320,6 +12329,7 @@ ${entry.content.trim()}`;
   init_item_actions();
   init_utils();
   init_domain_bus();
+  init_flow_dialog();
   init_notice();
   init_app();
   init_config();
@@ -12987,8 +12997,10 @@ ${String(review).trim()}`;
   var ACT_ICON = {
     add: "pen-line",
     search: "search",
+    today: "calendar-check",
     close: "x",
     "lb-close": "x",
+    "lb-more": "more-horizontal",
     "lb-prev": "chevron-left",
     "lb-next": "chevron-right"
   };
@@ -13027,9 +13039,10 @@ ${String(review).trim()}`;
           <span class="bz-diary-range"></span>
         </div>
         <div class="bz-diary-btns">
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="add" title="写日记"></button>
-          <button class="bz-diary-icon-btn bz-touch-target--xl" data-act="search" title="搜索"></button>
-          <button class="bz-diary-icon-btn bz-diary-head-close bz-touch-target--xl" data-act="close" title="关闭"></button>
+          <button class="bz-diary-icon-btn" data-act="add" title="写日记"></button>
+          <button class="bz-diary-icon-btn" data-act="search" title="搜索"></button>
+          <button class="bz-diary-icon-btn" data-act="today" title="回到今天（清除日期筛选）"></button>
+          <button class="bz-diary-icon-btn bz-diary-head-close" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>
@@ -13042,6 +13055,7 @@ ${String(review).trim()}`;
       <div class="bz-diary-lb">
         <button class="bz-diary-lbnav bz-diary-lbnav--prev" data-act="lb-prev" title="上一个（←）"></button>
         <button class="bz-diary-lbclose" data-act="lb-close" title="关闭"></button>
+        <button class="bz-diary-lbmore" data-act="lb-more" title="更多动作"></button>
         <button class="bz-diary-lbnav bz-diary-lbnav--next" data-act="lb-next" title="下一个（→）"></button>
         <div class="bz-diary-lbmedia"></div>
         <div class="bz-diary-lbcap"></div>
@@ -14000,7 +14014,6 @@ ${String(review).trim()}`;
   init_app();
   init_domain_bus();
   init_utils();
-  init_config();
   init_encrypt2();
 
   // src/diary/ui/locator.ts
@@ -14010,10 +14023,14 @@ ${String(review).trim()}`;
 
   // src/diary/ui/entry-actions.ts
   function diaryEntryFilePath(entry) {
-    return entry.filePath || `${DIARY_DIRECTORY}/${entry.filename}.md`;
+    return entry.filePath || entry.filename || null;
   }
   async function jumpToDiaryEntry(entry) {
     const filePath = diaryEntryFilePath(entry);
+    if (!filePath) {
+      notice("找不到原文", "error");
+      return;
+    }
     const file = getApp().vault.getAbstractFileByPath(filePath);
     if (!file) {
       notice("找不到日记文件");
@@ -14022,7 +14039,12 @@ ${String(review).trim()}`;
     await getApp().workspace.openLinkText(stripMdExt(filePath), "", false, { active: true });
   }
   async function copyDiaryLink(entry) {
-    const link = `[[${stripMdExt(diaryEntryFilePath(entry))}]]`;
+    const filePath = diaryEntryFilePath(entry);
+    if (!filePath) {
+      notice("找不到原文，无法复制双链", "error");
+      return;
+    }
+    const link = `[[${stripMdExt(filePath)}]]`;
     await navigator.clipboard.writeText(link);
     notice(`已复制双链引用：${link}`, "success");
   }
@@ -14479,6 +14501,9 @@ ${String(review).trim()}`;
       this._initialized = false;
       /** DW3：vault modify 自动刷新订阅（show 挂 / hide+cleanup 摘）+ 防抖计时 */
       this._modifyRef = null;
+      /** N5（review-deep func）：vault create 订阅——外部新建/移入条目文件 modify 不触发、
+       *  rename 事件 oldPath 在墙外不命中，create 是唯一入口（与 modify 同一防抖回刷） */
+      this._createRef = null;
       this._modifyTimer = null;
       /** DW6：章节跳转落定校正计时 */
       this._scrollFixTimer = null;
@@ -14489,9 +14514,12 @@ ${String(review).trim()}`;
       this.rafCleanups = { desk: null, mob: null };
       this.sheetEntry = null;
       /** 搜索防抖（250ms 尾触；issue 365 收编 core debounce。实例唯一槽：desk/mob 双搜索框共享，
-       *  与原共享 _searchTimer 槽语义一致；原手写无 teardown 取消路径，此处同样不设） */
+       *  与原共享 _searchTimer 槽语义一致。D-UI3：收起/ESC 清空路径须 cancel()——否则 250ms 内
+       *  的尾触落地把已清空的关键词写回，列表按一个不可见的词过滤（「收起搜索后列表莫名变短」）。
+       *  效率#8：回调走增量显隐，基线不符才整墙重建） */
       this._searchDebounced = debounce((v) => {
         this.searchKeyword = v;
+        if (this.applySearchVisibility()) return;
         this.renderAll();
       }, SEARCH_DEBOUNCE_MS);
       /** 日期筛选弹窗元素（null = 未打开） */
@@ -14505,6 +14533,10 @@ ${String(review).trim()}`;
       /** issue 217 F1：时光条灯箱打开期间暂存的墙内主序列（关闭时还原） */
       this._lbSeqMain = null;
       this._lbIdx = -1;
+      /** D6'（review-all2）：灯箱会话代次——openLightbox 每次开新会话递增，加密媒体慢解密
+       *  promise 闭包捕获发起时的代次，回填前比对；关灯箱立刻重开、新旧项同下标时，
+       *  旧会话晚到的解密结果不再穿透进新灯箱（旧实现只比对 isConnected + _lbIdx）。 */
+      this._lbGen = 0;
       /** issue 217 F3：桌面/移动断点（renderAll 只渲染可见端；跨断点变化补渲染） */
       this._mql = null;
       this._onMqChange = null;
@@ -14529,6 +14561,12 @@ ${String(review).trim()}`;
       this._restore = null;
       /** 增强 #8：加密媒体解密结果缓存（noteId|kind|name → dataURL promise；失败也缓存避免重复解密风暴） */
       this.encMediaCache = /* @__PURE__ */ new Map();
+      /** 效率#14：整墙读取失败的错误消息（null = 无错误；mkEmpty 据此分流错误态） */
+      this._loadError = null;
+      /** 效率#8：增量显隐基线——上次 renderWall 时的 entries 引用与「除关键词外」的筛选键，
+       *  两者都没变才允许对既有卡片 toggle display（否则卡片集合与 widx 不对应） */
+      this._wallBaseRef = null;
+      this._wallBaseKey = "";
     }
     static getInstance() {
       if (!_DiaryAppController.instance) {
@@ -14617,7 +14655,7 @@ ${String(review).trim()}`;
     }
     // ---------- 交互绑定 ----------
     bindPanel(ui) {
-      var _a, _b, _c, _d;
+      var _a, _b, _c, _d, _e;
       ui.head.querySelectorAll('[data-act="date-picker"]').forEach((el) => {
         el.addEventListener("click", () => this.openDatePicker());
       });
@@ -14644,17 +14682,19 @@ ${String(review).trim()}`;
       ui.searchBox.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
           e.stopPropagation();
+          this._searchDebounced.cancel();
           ui.searchBox.value = "";
           this.searchKeyword = "";
           this.renderAll();
           ui.searchBox.blur();
         }
       });
+      (_e = ui.head.querySelector('[data-act="today"]')) == null ? void 0 : _e.addEventListener("click", () => this.backToToday(ui));
     }
     /** 灯箱通用绑定（双实例各一份；增强 #1：左右按钮 + 触摸滑动连看） */
     bindLightbox() {
       [this.desk, this.mob].forEach((ui) => {
-        var _a, _b;
+        var _a, _b, _c;
         ui.lb.addEventListener("click", (e) => {
           if (e.target === ui.lb) this.closeLightbox();
         });
@@ -14666,11 +14706,20 @@ ${String(review).trim()}`;
           e.stopPropagation();
           this.stepLightbox(1);
         });
+        (_c = ui.lb.querySelector('[data-act="lb-more"]')) == null ? void 0 : _c.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const me = e;
+          this.openLbActions(me.clientX, me.clientY);
+        });
         let touchX = null;
         ui.lb.addEventListener(
           "touchstart",
           (e) => {
             var _a2, _b2;
+            if (e.target.closest("video, audio, button")) {
+              touchX = null;
+              return;
+            }
             touchX = (_b2 = (_a2 = e.touches[0]) == null ? void 0 : _a2.clientX) != null ? _b2 : null;
           },
           { passive: true }
@@ -14700,6 +14749,18 @@ ${String(review).trim()}`;
       if (!this.lbVisible() || !this._lbSeq.length) return;
       this.showLightboxAt(this._lbIdx + dir);
     }
+    /**
+     * 效率#10：灯箱「⋯」动作菜单——复用 buildMenuActions 动作集（core openItemMenu 跟手菜单，
+     * 桌面移动通用），上下文 = 当前连看项 _lbSeq[_lbIdx]；动作项点击后菜单自动收，灯箱保持开着
+     * （「打开原文」的 hide() 会顺带收灯箱，符合跳走语义）。
+     */
+    openLbActions(x, y) {
+      const cur = this._lbSeq[this._lbIdx];
+      if (!cur) return;
+      if (this.isEncHidden(cur.entry)) return;
+      openItemMenu(x, y, this.buildMenuActions(cur.entry), true);
+      resetItemMenuClickGuard();
+    }
     // ---------- 渲染 ----------
     /** 重新渲染（筛选变化 / 数据加载后）。
      *  issue 217 F3：只渲染当前可见端实例——隐藏端全量渲染（每条正文 MarkdownRenderer ×2）
@@ -14708,9 +14769,7 @@ ${String(review).trim()}`;
       if (!this.root) return;
       this.renderChips();
       const list = this.filtered();
-      const range = `${list.length} 条`;
-      this.desk.range.textContent = range;
-      this.mob.range.textContent = range;
+      this.renderRange(list);
       if (this._mql) {
         if (this._mql.matches) this.renderWall(this.mob, true, list);
         else this.renderWall(this.desk, false, list);
@@ -14718,6 +14777,86 @@ ${String(review).trim()}`;
       }
       this.renderWall(this.desk, false, list);
       this.renderWall(this.mob, true, list);
+    }
+    /**
+     * 效率#6：头行范围文案带日期筛选态（「2026-06 · 37 条」）——旧实现只有「N 条」，
+     * 套用月份筛选后无处可见当前被限定在哪个月，墙看起来像丢数据；
+     * 同步 brand 行「✕ 清除」胶囊（筛选生效时出现，一键清日期筛选）。
+     */
+    renderRange(list) {
+      const df = this.selDateFilter;
+      const range = df ? `${df.year}${df.month ? "-" + df.month : ""} · ${list.length} 条` : `${list.length} 条`;
+      this.desk.range.textContent = range;
+      this.mob.range.textContent = range;
+      [this.desk, this.mob].forEach((ui) => this.syncFilterClearChip(ui));
+    }
+    /** 效率#6：brand 行「✕ 清除」日期筛选胶囊（brand 点击本体 = 开筛选弹窗，胶囊是独立动作） */
+    syncFilterClearChip(ui) {
+      const brand = ui.head.querySelector(".bz-diary-brand");
+      if (!brand) return;
+      const chip = brand.querySelector(".bz-diary-filter-clear");
+      if (!this.selDateFilter) {
+        chip == null ? void 0 : chip.remove();
+        return;
+      }
+      if (chip) return;
+      const b = document.createElement("button");
+      b.className = "bz-diary-filter-clear";
+      b.title = "清除日期筛选";
+      b.appendChild(uiIcon("x"));
+      b.appendChild(document.createTextNode("清除"));
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.selDateFilter = null;
+        this.renderAll();
+      });
+      brand.appendChild(b);
+    }
+    /** 增量显隐基线键：除搜索关键词外的全部筛选态 + 数据量（任一变化即失效，强制整墙重建） */
+    filterKeyNoKw() {
+      const df = this.selDateFilter;
+      return `${this.selTag}|${this.selSubTag}|${df ? df.year + "-" + (df.month || "") : ""}|${this.entries.length}`;
+    }
+    /**
+     * 效率#8：搜索增量显隐——关键词变化只对既有卡片 toggle display（widx↔条目映射现成），
+     * 不匹配藏、匹配显，墙结构不动（MarkdownRenderer 不重跑、媒体 observer 不重建）。
+     * 仅空结果（要渲染空态）/ 首渲或基线不符（卡片集合与 widx 对不上）走整墙重建。
+     * 返回 false = 调用方须 renderAll 整墙重建。
+     */
+    applySearchVisibility() {
+      const list = this.filtered();
+      if (!list.length) return false;
+      if (this._wallBaseRef !== this.entries || this._wallBaseKey !== this.filterKeyNoKw()) return false;
+      const show = new Set(list);
+      let applied = 0;
+      for (const ui of [this.desk, this.mob]) {
+        if (this._mql) {
+          const mobNow = this._mql.matches;
+          if (mobNow && ui !== this.mob || !mobNow && ui !== this.desk) continue;
+        }
+        const items = ui.wall.querySelectorAll(".bz-diary-item[data-widx]");
+        if (!items.length || items.length !== this._wallEntries.length) return false;
+        items.forEach((el) => {
+          const e = this._wallEntries[Number(el.dataset.widx)];
+          el.style.display = show.has(e) ? "" : "none";
+        });
+        ui.wall.querySelectorAll(".bz-diary-day-head[data-date]").forEach((h) => {
+          const m = h.nextElementSibling;
+          const cards = m ? Array.from(m.children) : [];
+          const anyVisible = cards.some((el) => el.classList.contains("bz-diary-item") && el.style.display !== "none");
+          h.style.display = anyVisible ? "" : "none";
+          if (m && m.classList.contains("bz-diary-masonry")) m.style.display = anyVisible ? "" : "none";
+        });
+        const mem = ui.wall.querySelector(".bz-diary-memories");
+        if (mem) mem.style.display = this.searchKeyword ? "none" : "";
+        applied++;
+      }
+      if (!applied) return false;
+      if (!this.lbVisible()) {
+        this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
+      }
+      this.renderRange(list);
+      return true;
     }
     /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索/日期） */
     filtered() {
@@ -14758,7 +14897,7 @@ ${String(review).trim()}`;
         tagChips.forEach(([tag, emoji]) => {
           const locked = tag === "加密" && !this.lockedVisible;
           const b = document.createElement("button");
-          b.className = "bz-diary-chip bz-touch-target--xl" + (locked ? " bz-diary-chip--locked" : "") + (this.selTag === tag ? " bz-diary-chip--on" : "");
+          b.className = "bz-diary-chip" + (locked ? " bz-diary-chip--locked" : "") + (this.selTag === tag ? " bz-diary-chip--on" : "");
           b.dataset.tag = tag;
           if (locked) b.appendChild(uiIcon("lock"));
           else b.appendChild(document.createTextNode(emoji));
@@ -14858,7 +14997,7 @@ ${String(review).trim()}`;
       row.style.display = "flex";
       subs.forEach((sub) => {
         const b = document.createElement("button");
-        b.className = "bz-diary-subchip bz-touch-target--xl" + (this.selSubTag === sub.tag ? " bz-diary-subchip--on" : "");
+        b.className = "bz-diary-subchip" + (this.selSubTag === sub.tag ? " bz-diary-subchip--on" : "");
         b.dataset.tag = sub.tag;
         b.innerHTML = `${sub.emoji} ${sub.tag}`;
         b.addEventListener("click", () => {
@@ -14873,7 +15012,9 @@ ${String(review).trim()}`;
       this.teardownScrollers(mobile ? "mob" : "desk");
       ui.wall.innerHTML = "";
       ui.rail.innerHTML = "";
-      this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
+      if (!this.lbVisible()) {
+        this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
+      }
       if (!list.length) {
         ui.wall.appendChild(this.mkEmpty());
         return;
@@ -14885,6 +15026,8 @@ ${String(review).trim()}`;
         this.setupRailLazy(ui.rail, "desk");
       }
       this._wallEntries = list;
+      this._wallBaseRef = this.entries;
+      this._wallBaseKey = this.filterKeyNoKw();
       this.renderMasonry(ui, mobile, list);
       this.setupLazy(ui.wall, mobile ? "mob" : "desk");
       this.bindWallContext(ui.wall, mobile ? "mob" : "desk");
@@ -15030,10 +15173,46 @@ ${String(review).trim()}`;
       if (this.isEncHidden(e)) {
         tx.textContent = "（已加密）";
       } else {
-        void this.renderText(tx, text, e);
+        void this.renderText(tx, text, e).then(() => {
+          if (tx.isConnected) this.highlightHits(tx);
+        });
       }
       item.append(row, tx);
       return item;
+    }
+    /** 效率#9：容器内文本节点命中关键词 → <mark class="bz-diary-mark"> 包裹（大小写不敏感） */
+    highlightHits(container) {
+      var _a, _b;
+      const kw = this.searchKeyword.trim().toLowerCase();
+      if (!kw) return;
+      const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+      const targets = [];
+      let n;
+      while (n = walker.nextNode()) {
+        if (!n.nodeValue || !n.nodeValue.toLowerCase().includes(kw)) continue;
+        if ((_a = n.parentElement) == null ? void 0 : _a.closest("mark")) continue;
+        targets.push(n);
+      }
+      for (const t of targets) {
+        const text = t.nodeValue;
+        const frag = document.createDocumentFragment();
+        const lower = text.toLowerCase();
+        let i = 0;
+        while (i < text.length) {
+          const hit = lower.indexOf(kw, i);
+          if (hit === -1) {
+            frag.appendChild(document.createTextNode(text.slice(i)));
+            break;
+          }
+          if (hit > i) frag.appendChild(document.createTextNode(text.slice(i, hit)));
+          const mark = document.createElement("mark");
+          mark.className = "bz-diary-mark";
+          mark.textContent = text.slice(hit, hit + kw.length);
+          frag.appendChild(mark);
+          i = hit + kw.length;
+        }
+        (_b = t.parentNode) == null ? void 0 : _b.replaceChild(frag, t);
+      }
     }
     /**
      * Markdown 渲染正文（支持 Obsidian 语法；sourcePath 用条目 filename 供链接解析）。
@@ -15140,7 +15319,11 @@ ${String(review).trim()}`;
           this.hide();
           return;
         }
-        await jumpToDiaryEntry({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
+        if (!e.filePath && !e.filename) {
+          notice("找不到原文", "error");
+          return;
+        }
+        await jumpToDiaryEntry({ filename: e.filename || "", filePath: e.filePath, emoji: e.emoji, time: e.time });
         this.hide();
       } catch (err) {
         notice("跳转失败", "error");
@@ -15224,7 +15407,7 @@ ${String(review).trim()}`;
       row.className = "bz-diary-memories-row";
       entries.forEach((e) => {
         const cell = document.createElement("button");
-        cell.className = "bz-diary-memory bz-touch-target--xl";
+        cell.className = "bz-diary-memory";
         cell.title = `${e.date} ${e.time}`;
         const year = document.createElement("span");
         year.className = "bz-diary-memory-year";
@@ -15305,33 +15488,63 @@ ${String(review).trim()}`;
       box.append(head, row);
       return box;
     }
-    /** 空态 */
+    /** 空态（一致#4：接 core uiEmpty 单源 .bz-empty 族，删 .bz-diary-empty 家族域内样式；
+     *  效率#14：读墙失败 ≠ 真空——错误态单独分流，旧实现渲染「写下第一篇」引导空态
+     *  会误导用户以为数据没了，且 toast 级错误错过即无痕） */
     mkEmpty() {
-      const empty = document.createElement("div");
-      empty.className = "bz-diary-empty";
-      const ic = document.createElement("div");
-      ic.className = "bz-diary-empty-ic";
-      ic.appendChild(uiIcon("book-open"));
-      const t = document.createElement("div");
-      t.className = "bz-diary-empty-title";
-      t.textContent = this.selTag ? "这个类型还没有记录" : "这一页还空着";
-      const d = document.createElement("div");
-      d.className = "bz-diary-empty-desc";
-      d.textContent = "写下第一篇，或放上第一张照片";
-      const b = document.createElement("button");
-      b.className = "bz-diary-empty-btn";
-      b.textContent = "写第一篇";
-      b.addEventListener("click", () => {
-        this.openAddEntry();
+      if (this._loadError) {
+        return uiEmpty({
+          icon: "file-warning",
+          title: "日记加载失败",
+          desc: this._loadError,
+          actions: uiBtnRow([
+            uiBtn({ label: "重试", tone: "primary", onClick: () => void this.loadAndRender() })
+          ])
+        });
+      }
+      return uiEmpty({
+        icon: "book-open",
+        title: this.selTag ? "这个类型还没有记录" : "这一页还空着",
+        desc: "写下第一篇，或放上第一张照片",
+        actions: uiBtnRow([
+          uiBtn({ label: "写第一篇", tone: "primary", onClick: () => this.openAddEntry() })
+        ])
       });
-      empty.append(ic, t, d, b);
-      return empty;
+    }
+    /**
+     * 效率#13：loadAndRender 读取期间的墙区骨架占位——大库首屏曾是一段「看起来像空库」的
+     * 纯空白期（面板壳/chips 都在，唯独墙区空着）。渐变 shimmer 卡复用媒体占位的表面 token；
+     * 只在墙区无内容时铺（防抖回刷等刷新场景已有内容，不闪骨架）。
+     */
+    showSkeleton() {
+      for (const ui of [this.desk, this.mob]) {
+        if (ui.wall.querySelector(".bz-diary-item")) continue;
+        ui.wall.innerHTML = "";
+        ui.wall.appendChild(this.mkSkeleton());
+      }
+    }
+    mkSkeleton() {
+      const box = document.createElement("div");
+      box.className = "bz-diary-skel";
+      const tip = document.createElement("div");
+      tip.className = "bz-diary-skel-tip";
+      tip.textContent = "正在翻日记…";
+      const row = document.createElement("div");
+      row.className = "bz-diary-skel-row";
+      for (let i = 0; i < 6; i++) {
+        const card = document.createElement("div");
+        card.className = "bz-diary-skel-card" + (i % 3 === 1 ? " bz-diary-skel-card--tall" : "");
+        row.appendChild(card);
+      }
+      box.append(tip, row);
+      return box;
     }
     // ---------- 媒体构建（视口懒加载） ----------
-    /** 媒体 URL：带 sourcePath 解析（日记条目 → filePath（子目录日期文件，D2）或顶层日期.md；影视/信/书 → filename 完整路径），修复纯文件名全局解析失败 */
+    /** 媒体 URL：带 sourcePath 解析（条目 filePath 优先；影视/信/书 filename 即完整路径）。
+     *  A4（review-deep 架）：v2「日期.md」拼装兜底退役——ADR-0131 契约外格式知识泄漏面，
+     *  条目文件化后 filePath 恒在，异常条目解析不出 → 返回空 → 渐变占位（可辨的失败形态） */
     mediaSrcFor(entry, name) {
-      const src = entry.filePath || (entry.kind === "diary" ? `${DIARY_DIRECTORY}/${entry.date}.md` : entry.filename || "");
-      return mediaSrc(this.app(), name, src);
+      return mediaSrc(this.app(), name, entry.filePath || entry.filename || "");
     }
     /** 媒体块（图片/视频/音频 + 渐变占位 + 描述；无 emoji 角标——用户要求去掉） */
     mediaEl(k, entry, mobile) {
@@ -15656,7 +15869,7 @@ ${String(review).trim()}`;
         if (!dur || !Number.isFinite(v.duration) || v.duration <= 0) return;
         const m = Math.floor(v.duration / 60);
         const s = Math.round(v.duration % 60);
-        dur.textContent = `${m}:${String(s).padStart(2, "0")}`;
+        dur.textContent = `${m}:${pad2(s)}`;
       }, { once: true });
     }
     /**
@@ -15832,8 +16045,10 @@ ${String(review).trim()}`;
     // ---------- 灯箱 ----------
     /** 打开灯箱：定位连看序列下标后展示（增强 #1；找不到 = 非墙内入口，退化为单条序列） */
     openLightbox(k, entry) {
+      this._lbGen++;
       let idx = this._lbSeq.findIndex((s) => s.entry === entry && s.media.name === k.name && s.media.kind === k.kind);
       if (idx === -1) {
+        if (!this._lbSeqMain) this._lbSeqMain = this._lbSeq;
         this._lbSeq = [{ entry, media: k }];
         idx = 0;
       }
@@ -15913,11 +16128,12 @@ ${String(review).trim()}`;
       box.innerHTML = "";
       if (entry.encrypted) {
         const idx = this._lbIdx;
+        const gen = this._lbGen;
         const pend = document.createElement("div");
         pend.className = "bz-diary-lb-pending";
         box.appendChild(pend);
         void this.encMediaUrl(entry.noteId || "", k).then((url) => {
-          if (!box.isConnected || this._lbIdx !== idx) return;
+          if (!box.isConnected || this._lbGen !== gen || this._lbIdx !== idx) return;
           box.innerHTML = "";
           if (!url) {
             box.appendChild(this.mkLbErr(k));
@@ -15969,7 +16185,11 @@ ${String(review).trim()}`;
           notice("已复制双链引用", "success");
           return;
         }
-        await copyDiaryLink({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
+        if (!e.filePath && !e.filename) {
+          notice("找不到原文，无法复制双链", "error");
+          return;
+        }
+        await copyDiaryLink({ filename: e.filename || "", filePath: e.filePath, emoji: e.emoji, time: e.time });
       } catch (err) {
         notice("复制双链失败", "error");
       }
@@ -16003,6 +16223,9 @@ ${String(review).trim()}`;
      * 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙。
      * D5：摘除失败（返回 0 或抛错）必须回滚保险箱密文——密文已入库原文未删时，
      * 解锁后同条出现两次且重试越积越多。
+     * 效率#12（review-deep ★★）：加密与删除同为「条目当场从墙消失」，且挂在右键/长按
+     * 菜单（「加密」紧邻「改标签」，滑错一格条目即蒸发）——ensureSafeUnlocked 之后补
+     * openFlowDialog 二次确认（对齐 CONTEXT「日记加密入口」词条既有承诺）。
      */
     async encryptEntryAction(e) {
       let enc = null;
@@ -16011,6 +16234,15 @@ ${String(review).trim()}`;
         const { ensureSafeUnlocked: ensureSafeUnlocked2 } = await Promise.resolve().then(() => (init_encrypt(), encrypt_exports));
         const unlocked = await ensureSafeUnlocked2("diary");
         if (!unlocked) return;
+        const confirmed = await openFlowDialog({
+          title: "加密日记",
+          message: `将把「${e.date} ${e.time}」这条日记移入保险库加密保存，原位置不再保留明文。`,
+          actions: [
+            { label: "取消", value: "cancel" },
+            { label: "加密", value: "ok", cta: true, danger: true }
+          ]
+        });
+        if (confirmed !== "ok") return;
         const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
         if (!entry) {
           notice("找不到原文条目，无法加密", "error");
@@ -16034,6 +16266,7 @@ ${String(review).trim()}`;
             notice("加密失败：原文块摘除未生效", "error");
             return;
           }
+          emitDomainEvent("diary:entry-deleted", { date: entry.date, time: entry.time, wasEncrypted: false, encrypted: true });
           void this.loadAndRender();
         }
       } catch (err) {
@@ -16050,7 +16283,9 @@ ${String(review).trim()}`;
         console.warn("[bz-diary] 加密回滚失败（保险箱可能残留密文，请手动删除）:", e);
       }
     }
-    /** 解密：本域 reclassifyEntry 降级（还原块 merge 回 md，取出即删） */
+    /** 解密：本域 reclassifyEntry 降级（还原块 merge 回 md，取出即删）。
+     *  效率#12：还原是恢复性操作（条目回墙、密文释放回明文），不加二次确认——
+     *  确认留给「条目当场消失」的加密/删除两动作，风险口径与删除对齐。 */
     async decryptEntryAction(e) {
       try {
         const noteId = e.noteId;
@@ -16061,6 +16296,7 @@ ${String(review).trim()}`;
         const newTags = e.tags.filter((t) => t !== "加密");
         const ok = await reclassifyEntry(noteId, newTags);
         if (ok) {
+          emitDomainEvent("diary:entry-decrypted", { noteId, date: e.date, newTags });
           void this.loadAndRender();
         } else {
           notice("解密失败：主密码可能不正确，密文未受影响", "error");
@@ -16152,7 +16388,10 @@ ${String(review).trim()}`;
         } else {
           mt.appendChild(uiIcon(k.kind === "video" ? ACTION_ICON.play : ACTION_ICON.music));
         }
-        mt.addEventListener("click", () => this.openLightbox(k, e));
+        mt.addEventListener("click", () => {
+          this.closeSheet();
+          this.openLightbox(k, e);
+        });
         media.appendChild(mt);
       });
       info.appendChild(timeEl);
@@ -16183,8 +16422,11 @@ ${String(review).trim()}`;
             return;
           }
           if (this.sheetEntry) {
-            this.closeSheet();
-            return;
+            if (document.querySelector(".bz-item-sheet")) {
+              this.closeSheet();
+              return;
+            }
+            this.sheetEntry = null;
           }
           if ([this.desk, this.mob].some((u) => u.lb.classList.contains("bz-diary-lb--show"))) {
             this.closeLightbox();
@@ -16356,31 +16598,46 @@ ${String(review).trim()}`;
       this.renderAll();
     }
     /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
-     *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效）；隐藏期不订阅不刷新。 */
+     *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效）；隐藏期不订阅不刷新。
+     *  N5：create（外部新建/拖入/其他工具写入条目文件）同路回刷——此前纯外部变更是盲区，直到手动重开面板。 */
     subscribeVaultModify() {
       if (this._modifyRef) return;
       const dirs = () => [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()];
+      const hit = (p) => dirs().some((d) => p.startsWith(d + "/") || p === d + ".md");
+      const schedule = () => {
+        if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
+        this._modifyTimer = setTimeout(() => {
+          var _a;
+          this._modifyTimer = null;
+          if (((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
+          void this.loadAndRender();
+        }, MODIFY_REFRESH_DEBOUNCE_MS);
+      };
       this._modifyRef = this.app().vault.on("modify", (file) => {
         var _a;
         const p = file == null ? void 0 : file.path;
         if (!p || ((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
-        if (!dirs().some((d) => p.startsWith(d + "/") || p === d + ".md")) return;
-        if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
-        this._modifyTimer = setTimeout(() => {
-          var _a2;
-          this._modifyTimer = null;
-          if (((_a2 = this.root) == null ? void 0 : _a2.style.display) !== "flex") return;
-          void this.loadAndRender();
-        }, MODIFY_REFRESH_DEBOUNCE_MS);
+        if (!hit(p)) return;
+        schedule();
+      });
+      this._createRef = this.app().vault.on("create", (file) => {
+        var _a;
+        const p = file == null ? void 0 : file.path;
+        if (!p || ((_a = this.root) == null ? void 0 : _a.style.display) !== "flex") return;
+        if (!hit(p)) return;
+        schedule();
       });
     }
     unsubscribeVaultModify() {
-      if (this._modifyRef) {
-        try {
-          this.app().vault.offref(this._modifyRef);
-        } catch (e) {
+      for (const key of ["_modifyRef", "_createRef"]) {
+        const ref = this[key];
+        if (ref) {
+          try {
+            this.app().vault.offref(ref);
+          } catch (e) {
+          }
+          this[key] = null;
         }
-        this._modifyRef = null;
       }
       if (this._modifyTimer !== null) {
         clearTimeout(this._modifyTimer);
@@ -16389,11 +16646,15 @@ ${String(review).trim()}`;
     }
     /** 加载数据并渲染（openManager 主路径） */
     async loadAndRender() {
+      this.lockedVisible = isUnlocked();
+      this.showSkeleton();
       try {
         this.entries = await loadWallEntries(this.app());
+        this._loadError = null;
       } catch (e) {
         this.entries = [];
-        notice("加载日记失败：" + (e && e.message ? e.message : String(e)), "error");
+        this._loadError = e && e.message ? e.message : String(e);
+        notice("加载日记失败：" + this._loadError, "error");
       }
       await this.mergeEncryptedEntries();
       this.renderAll();
@@ -16566,12 +16827,22 @@ ${String(review).trim()}`;
         box.select();
         btn == null ? void 0 : btn.classList.add("bz-diary-icon-btn--on");
       } else {
+        this._searchDebounced.cancel();
         row.style.display = "none";
         box.value = "";
         this.searchKeyword = "";
         if (other == null ? void 0 : other.searchBox) other.searchBox.value = "";
         this.renderAll();
         btn == null ? void 0 : btn.classList.remove("bz-diary-icon-btn--on");
+      }
+    }
+    /** 效率#6：回到今天——清日期筛选 + 滚回墙顶（开墙默认在最新，此钮只在离今天远了时有意义） */
+    backToToday(ui) {
+      this.selDateFilter = null;
+      this.renderAll();
+      try {
+        ui.wall.scrollTo({ top: 0, behavior: "smooth" });
+      } catch (e) {
       }
     }
     /** App 实例（生产由主实现注入；测试 setApp——diary/app.ts 单例，与 diary 域同口径） */

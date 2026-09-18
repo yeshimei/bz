@@ -33,10 +33,11 @@ import { Component, MarkdownRenderer, type App, type EventRef, type IconName } f
 import { escManager } from '../core/esc-manager';
 import { topifyZ, longPress } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
-import { uiIcon, uiSearch } from '../core/ui';
+import { uiIcon, uiSearch, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
-import { debounce, escapeHtml, hash31, localDayKey, stripMdExt } from '../core/utils';
-import { onDomainEvent } from '../core/domain-bus';
+import { debounce, escapeHtml, hash31, localDayKey, pad2, stripMdExt } from '../core/utils';
+import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
+import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
@@ -197,6 +198,9 @@ export class DiaryAppController {
   private _initialized = false;
   /** DW3：vault modify 自动刷新订阅（show 挂 / hide+cleanup 摘）+ 防抖计时 */
   private _modifyRef: EventRef | null = null;
+  /** N5（review-deep func）：vault create 订阅——外部新建/移入条目文件 modify 不触发、
+   *  rename 事件 oldPath 在墙外不命中，create 是唯一入口（与 modify 同一防抖回刷） */
+  private _createRef: EventRef | null = null;
   private _modifyTimer: ReturnType<typeof setTimeout> | null = null;
   /** DW6：章节跳转落定校正计时 */
   private _scrollFixTimer: ReturnType<typeof setTimeout> | null = null;
@@ -207,9 +211,12 @@ export class DiaryAppController {
   private rafCleanups: Record<'desk' | 'mob', (() => void) | null> = { desk: null, mob: null };
   private sheetEntry: WallEntry | null = null;
   /** 搜索防抖（250ms 尾触；issue 365 收编 core debounce。实例唯一槽：desk/mob 双搜索框共享，
-   *  与原共享 _searchTimer 槽语义一致；原手写无 teardown 取消路径，此处同样不设） */
+   *  与原共享 _searchTimer 槽语义一致。D-UI3：收起/ESC 清空路径须 cancel()——否则 250ms 内
+   *  的尾触落地把已清空的关键词写回，列表按一个不可见的词过滤（「收起搜索后列表莫名变短」）。
+   *  效率#8：回调走增量显隐，基线不符才整墙重建） */
   private _searchDebounced = debounce((v: string) => {
     this.searchKeyword = v;
+    if (this.applySearchVisibility()) return;
     this.renderAll();
   }, SEARCH_DEBOUNCE_MS);
   /** 日期筛选弹窗元素（null = 未打开） */
@@ -223,6 +230,10 @@ export class DiaryAppController {
   /** issue 217 F1：时光条灯箱打开期间暂存的墙内主序列（关闭时还原） */
   private _lbSeqMain: { entry: WallEntry; media: WallMedia }[] | null = null;
   private _lbIdx = -1;
+  /** D6'（review-all2）：灯箱会话代次——openLightbox 每次开新会话递增，加密媒体慢解密
+   *  promise 闭包捕获发起时的代次，回填前比对；关灯箱立刻重开、新旧项同下标时，
+   *  旧会话晚到的解密结果不再穿透进新灯箱（旧实现只比对 isConnected + _lbIdx）。 */
+  private _lbGen = 0;
   /** issue 217 F3：桌面/移动断点（renderAll 只渲染可见端；跨断点变化补渲染） */
   private _mql: MediaQueryList | null = null;
   private _onMqChange: (() => void) | null = null;
@@ -247,6 +258,12 @@ export class DiaryAppController {
   private _restore: WallViewState | null = null;
   /** 增强 #8：加密媒体解密结果缓存（noteId|kind|name → dataURL promise；失败也缓存避免重复解密风暴） */
   private encMediaCache = new Map<string, Promise<string | null>>();
+  /** 效率#14：整墙读取失败的错误消息（null = 无错误；mkEmpty 据此分流错误态） */
+  private _loadError: string | null = null;
+  /** 效率#8：增量显隐基线——上次 renderWall 时的 entries 引用与「除关键词外」的筛选键，
+   *  两者都没变才允许对既有卡片 toggle display（否则卡片集合与 widx 不对应） */
+  private _wallBaseRef: WallEntry[] | null = null;
+  private _wallBaseKey = '';
 
   // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
   ensureElements() {
@@ -374,16 +391,19 @@ export class DiaryAppController {
     });
     // 搜索输入：防抖过滤
     ui.searchBox.addEventListener('input', () => this._searchDebounced(ui.searchBox.value));
-    // ESC 在搜索框内：只清空/失焦（不关面板）
+    // ESC 在搜索框内：只清空/失焦（不关面板）；D-UI3：先取消防抖尾触，防关键词「复活」
     ui.searchBox.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         e.stopPropagation();
+        this._searchDebounced.cancel();
         ui.searchBox.value = '';
         this.searchKeyword = '';
         this.renderAll();
         ui.searchBox.blur();
       }
     });
+    // 效率#6：「今天」钮——清日期筛选 + 滚回墙顶（离今天远了时的一键回家）
+    ui.head.querySelector('[data-act="today"]')?.addEventListener('click', () => this.backToToday(ui));
   }
 
   /** 灯箱通用绑定（双实例各一份；增强 #1：左右按钮 + 触摸滑动连看） */
@@ -402,11 +422,23 @@ export class DiaryAppController {
         e.stopPropagation();
         this.stepLightbox(1);
       });
-      // 移动端滑动切图：水平位移 ≥ LB_SWIPE_THRESHOLD_PX 判定（垂直滚动不受影响）
+      // 效率#10：灯箱「⋯」动作菜单——看图时跳原文/改标签不必先关灯箱（上下文即当前连看项）
+      ui.lb.querySelector('[data-act="lb-more"]')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const me = e as MouseEvent;
+        this.openLbActions(me.clientX, me.clientY);
+      });
+      // 移动端滑动切图：水平位移 ≥ LB_SWIPE_THRESHOLD_PX 判定（垂直滚动不受影响）。
+      // D-UI4（review-deep P3）：video/audio/button（原生进度条/控件、灯箱内按钮）上的
+      // 触点不参与——横拖进度条位移轻松超阈值，旧实现把调进度手势判成「切下一个媒体」。
       let touchX: number | null = null;
       ui.lb.addEventListener(
         'touchstart',
         (e) => {
+          if ((e.target as HTMLElement).closest('video, audio, button')) {
+            touchX = null;
+            return;
+          }
           touchX = e.touches[0]?.clientX ?? null;
         },
         { passive: true }
@@ -443,6 +475,19 @@ export class DiaryAppController {
     this.showLightboxAt(this._lbIdx + dir);
   }
 
+  /**
+   * 效率#10：灯箱「⋯」动作菜单——复用 buildMenuActions 动作集（core openItemMenu 跟手菜单，
+   * 桌面移动通用），上下文 = 当前连看项 _lbSeq[_lbIdx]；动作项点击后菜单自动收，灯箱保持开着
+   * （「打开原文」的 hide() 会顺带收灯箱，符合跳走语义）。
+   */
+  private openLbActions(x: number, y: number) {
+    const cur = this._lbSeq[this._lbIdx];
+    if (!cur) return;
+    if (this.isEncHidden(cur.entry)) return;
+    openItemMenu(x, y, this.buildMenuActions(cur.entry), true);
+    resetItemMenuClickGuard();
+  }
+
   // ---------- 渲染 ----------
   /** 重新渲染（筛选变化 / 数据加载后）。
    *  issue 217 F3：只渲染当前可见端实例——隐藏端全量渲染（每条正文 MarkdownRenderer ×2）
@@ -453,9 +498,7 @@ export class DiaryAppController {
     // 增强 #3：头行计数 = 当前结果数（filtered().length，对齐「头行计数=当前结果数」范式）；
     // 过滤结果一次计算，两实例渲染与计数共用
     const list = this.filtered();
-    const range = `${list.length} 条`;
-    this.desk.range.textContent = range;
-    this.mob.range.textContent = range;
+    this.renderRange(list);
     if (this._mql) {
       if (this._mql.matches) this.renderWall(this.mob, true, list);
       else this.renderWall(this.desk, false, list);
@@ -463,6 +506,95 @@ export class DiaryAppController {
     }
     this.renderWall(this.desk, false, list);
     this.renderWall(this.mob, true, list);
+  }
+
+  /**
+   * 效率#6：头行范围文案带日期筛选态（「2026-06 · 37 条」）——旧实现只有「N 条」，
+   * 套用月份筛选后无处可见当前被限定在哪个月，墙看起来像丢数据；
+   * 同步 brand 行「✕ 清除」胶囊（筛选生效时出现，一键清日期筛选）。
+   */
+  private renderRange(list: WallEntry[]) {
+    const df = this.selDateFilter;
+    const range = df
+      ? `${df.year}${df.month ? '-' + df.month : ''} · ${list.length} 条`
+      : `${list.length} 条`;
+    this.desk.range.textContent = range;
+    this.mob.range.textContent = range;
+    [this.desk, this.mob].forEach((ui) => this.syncFilterClearChip(ui));
+  }
+
+  /** 效率#6：brand 行「✕ 清除」日期筛选胶囊（brand 点击本体 = 开筛选弹窗，胶囊是独立动作） */
+  private syncFilterClearChip(ui: typeof this.desk) {
+    const brand = ui.head.querySelector('.bz-diary-brand');
+    if (!brand) return;
+    const chip = brand.querySelector<HTMLElement>('.bz-diary-filter-clear');
+    if (!this.selDateFilter) {
+      chip?.remove();
+      return;
+    }
+    if (chip) return;
+    const b = document.createElement('button');
+    b.className = 'bz-diary-filter-clear';
+    b.title = '清除日期筛选';
+    b.appendChild(uiIcon('x'));
+    b.appendChild(document.createTextNode('清除'));
+    b.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.selDateFilter = null;
+      this.renderAll();
+    });
+    brand.appendChild(b);
+  }
+
+  /** 增量显隐基线键：除搜索关键词外的全部筛选态 + 数据量（任一变化即失效，强制整墙重建） */
+  private filterKeyNoKw(): string {
+    const df = this.selDateFilter;
+    return `${this.selTag}|${this.selSubTag}|${df ? df.year + '-' + (df.month || '') : ''}|${this.entries.length}`;
+  }
+
+  /**
+   * 效率#8：搜索增量显隐——关键词变化只对既有卡片 toggle display（widx↔条目映射现成），
+   * 不匹配藏、匹配显，墙结构不动（MarkdownRenderer 不重跑、媒体 observer 不重建）。
+   * 仅空结果（要渲染空态）/ 首渲或基线不符（卡片集合与 widx 对不上）走整墙重建。
+   * 返回 false = 调用方须 renderAll 整墙重建。
+   */
+  private applySearchVisibility(): boolean {
+    const list = this.filtered();
+    if (!list.length) return false;
+    if (this._wallBaseRef !== this.entries || this._wallBaseKey !== this.filterKeyNoKw()) return false;
+    const show = new Set<WallEntry>(list);
+    let applied = 0;
+    for (const ui of [this.desk, this.mob]) {
+      if (this._mql) {
+        const mobNow = this._mql.matches;
+        if ((mobNow && ui !== this.mob) || (!mobNow && ui !== this.desk)) continue;
+      }
+      const items = ui.wall.querySelectorAll<HTMLElement>('.bz-diary-item[data-widx]');
+      if (!items.length || items.length !== this._wallEntries.length) return false;
+      items.forEach((el) => {
+        const e = this._wallEntries[Number(el.dataset.widx)];
+        el.style.display = show.has(e) ? '' : 'none';
+      });
+      // 节内条目全被藏住的日期分节：节头与 masonry 容器一并藏（不留「空节头」）
+      ui.wall.querySelectorAll<HTMLElement>('.bz-diary-day-head[data-date]').forEach((h) => {
+        const m = h.nextElementSibling;
+        const cards = m ? (Array.from(m.children) as HTMLElement[]) : [];
+        const anyVisible = cards.some((el) => el.classList.contains('bz-diary-item') && el.style.display !== 'none');
+        h.style.display = anyVisible ? '' : 'none';
+        if (m && m.classList.contains('bz-diary-masonry')) (m as HTMLElement).style.display = anyVisible ? '' : 'none';
+      });
+      // 时光条是「当年今日」快照，与关键词过滤无关——搜索态下整块暂藏
+      const mem = ui.wall.querySelector<HTMLElement>('.bz-diary-memories');
+      if (mem) mem.style.display = this.searchKeyword ? 'none' : '';
+      applied++;
+    }
+    if (!applied) return false;
+    // 灯箱序列与可见集同步（灯箱开着则按 D7' 暂缓，不动）
+    if (!this.lbVisible()) {
+      this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
+    }
+    this.renderRange(list);
+    return true;
   }
 
   /** 过滤后的条目（加密条目默认隐藏，选中「加密」标签时显示；支持标签/二级标签/搜索/日期） */
@@ -518,8 +650,11 @@ export class DiaryAppController {
       tagChips.forEach(([tag, emoji]) => {
         const locked = tag === '加密' && !this.lockedVisible;
         const b = document.createElement('button');
+        // D-UI6（review-deep P3）：不挂 bz-touch-target--xl——::after 外扩热区（inset -12px）
+        // 在 gap 8px 的紧凑 chips 行两两重叠 16px，点边缘触发相邻 chip；触控热区由移动端
+        // padding 抬档达标（styles.css 768px 段），不再外扩
         b.className =
-          'bz-diary-chip bz-touch-target--xl' +
+          'bz-diary-chip' +
           (locked ? ' bz-diary-chip--locked' : '') +
           (this.selTag === tag ? ' bz-diary-chip--on' : '');
         b.dataset.tag = tag;
@@ -631,8 +766,9 @@ export class DiaryAppController {
     row.style.display = 'flex';
     subs.forEach((sub) => {
       const b = document.createElement('button');
+      // D-UI6：去外扩热区（subrow gap 6px 更紧凑），触控达标走移动端 padding 抬档
       b.className =
-        'bz-diary-subchip bz-touch-target--xl' + (this.selSubTag === sub.tag ? ' bz-diary-subchip--on' : '');
+        'bz-diary-subchip' + (this.selSubTag === sub.tag ? ' bz-diary-subchip--on' : '');
       b.dataset.tag = sub.tag;
       b.innerHTML = `${sub.emoji} ${sub.tag}`;
       b.addEventListener('click', () => {
@@ -650,8 +786,12 @@ export class DiaryAppController {
     ui.rail.innerHTML = '';
     // issue 217 F2：这里不再清空 lbMedia——灯箱开着时 vault modify 自动刷新会把媒体
     // 掏空成黑屏；灯箱内容生命周期完全归 closeLightbox/showLightboxAt 管
-    // 增强 #1：灯箱连看序列 = 过滤列表的媒体平铺（openLightbox 按条目+媒体名定位）
-    this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
+    // 增强 #1：灯箱连看序列 = 过滤列表的媒体平铺（openLightbox 按条目+媒体名定位）。
+    // D7'（review-all2）：灯箱开着时暂缓重建——vault modify 防抖刷新会整体换序列，而
+    // _lbIdx 不变，←/→ 步进落在错位的媒体上；灯箱关闭后的下次 renderWall 自然重建
+    if (!this.lbVisible()) {
+      this._lbSeq = list.flatMap((e) => e.media.map((m) => ({ entry: e, media: m })));
+    }
     if (!list.length) {
       ui.wall.appendChild(this.mkEmpty());
       return;
@@ -666,8 +806,11 @@ export class DiaryAppController {
       // issue 210：章节栏视频缩略懒加载（进视口才读首帧，修「开墙全量解码」卡顿）
       this.setupRailLazy(ui.rail, 'desk');
     }
-    // 条目 → 数据索引表（右键委托用）：list 是本次渲染的过滤后列表，widx 即其在 list 中的下标
+    // 条目 → 数据索引表（右键委托用）：list 是本次渲染的过滤后列表，widx 即其在 list 中的下标。
+    // 同时记增量显隐基线（效率#8）：entries 引用 + 非关键词筛选键都没变，搜索才可只 toggle display
     this._wallEntries = list;
+    this._wallBaseRef = this.entries;
+    this._wallBaseKey = this.filterKeyNoKw();
     this.renderMasonry(ui, mobile, list);
     this.setupLazy(ui.wall, mobile ? 'mob' : 'desk');
     this.bindWallContext(ui.wall, mobile ? 'mob' : 'desk');
@@ -836,10 +979,48 @@ export class DiaryAppController {
     if (this.isEncHidden(e)) {
       tx.textContent = '（已加密）';
     } else {
-      void this.renderText(tx, text, e);
+      // 效率#9：搜索命中词轻高亮——渲染完成后 TreeWalker 包 <mark>（先只纯文本卡；
+      // must 等渲染管线产出再扫，直接改 markdown 源串会破坏语法）
+      void this.renderText(tx, text, e).then(() => {
+        if (tx.isConnected) this.highlightHits(tx);
+      });
     }
     item.append(row, tx);
     return item;
+  }
+
+  /** 效率#9：容器内文本节点命中关键词 → <mark class="bz-diary-mark"> 包裹（大小写不敏感） */
+  private highlightHits(container: HTMLElement) {
+    const kw = this.searchKeyword.trim().toLowerCase();
+    if (!kw) return;
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT);
+    const targets: Text[] = [];
+    let n: Node | null;
+    while ((n = walker.nextNode())) {
+      if (!n.nodeValue || !n.nodeValue.toLowerCase().includes(kw)) continue;
+      if ((n.parentElement as HTMLElement | null)?.closest('mark')) continue; // 已高亮不重复包
+      targets.push(n as Text);
+    }
+    for (const t of targets) {
+      const text = t.nodeValue!;
+      const frag = document.createDocumentFragment();
+      const lower = text.toLowerCase();
+      let i = 0;
+      while (i < text.length) {
+        const hit = lower.indexOf(kw, i);
+        if (hit === -1) {
+          frag.appendChild(document.createTextNode(text.slice(i)));
+          break;
+        }
+        if (hit > i) frag.appendChild(document.createTextNode(text.slice(i, hit)));
+        const mark = document.createElement('mark');
+        mark.className = 'bz-diary-mark';
+        mark.textContent = text.slice(hit, hit + kw.length);
+        frag.appendChild(mark);
+        i = hit + kw.length;
+      }
+      t.parentNode?.replaceChild(frag, t);
+    }
   }
 
   /**
@@ -972,9 +1153,13 @@ export class DiaryAppController {
         this.hide();
         return;
       }
-      // 普通日记条目：日期文件 # emoji 时间 标题锚点（openLinkText 原生定位，不依赖旧面板）；
-      // 子目录日期条目带 filePath 按实际路径跳转（D2）
-      await jumpToDiaryEntry({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
+      // 普通日记条目：直接打开条目文件（openLinkText 原生定位，不依赖旧面板）；
+      // A4：v2「日期.md」拼装兜底退役——无 filePath/filename 的异常条目显式报错，不拼幽灵路径
+      if (!e.filePath && !e.filename) {
+        notice('找不到原文', 'error');
+        return;
+      }
+      await jumpToDiaryEntry({ filename: e.filename || '', filePath: e.filePath, emoji: e.emoji, time: e.time });
       this.hide(); // 跳转后关日记本（对齐旧面板行为）
     } catch (err) {
       notice('跳转失败', 'error');
@@ -1065,7 +1250,8 @@ export class DiaryAppController {
     row.className = 'bz-diary-memories-row';
     entries.forEach((e) => {
       const cell = document.createElement('button');
-      cell.className = 'bz-diary-memory bz-touch-target--xl';
+      // D-UI6：时光条卡自身 96/124px 宽 × 4/3 高（远超 44px），外扩热区纯放大误触面（卡间 gap 8px）
+      cell.className = 'bz-diary-memory';
       cell.title = `${e.date} ${e.time}`;
       const year = document.createElement('span');
       year.className = 'bz-diary-memory-year';
@@ -1162,34 +1348,66 @@ export class DiaryAppController {
     return box;
   }
 
-  /** 空态 */
+  /** 空态（一致#4：接 core uiEmpty 单源 .bz-empty 族，删 .bz-diary-empty 家族域内样式；
+   *  效率#14：读墙失败 ≠ 真空——错误态单独分流，旧实现渲染「写下第一篇」引导空态
+   *  会误导用户以为数据没了，且 toast 级错误错过即无痕） */
   private mkEmpty(): HTMLElement {
-    const empty = document.createElement('div');
-    empty.className = 'bz-diary-empty';
-    const ic = document.createElement('div');
-    ic.className = 'bz-diary-empty-ic';
-    ic.appendChild(uiIcon('book-open'));
-    const t = document.createElement('div');
-    t.className = 'bz-diary-empty-title';
-    t.textContent = this.selTag ? '这个类型还没有记录' : '这一页还空着';
-    const d = document.createElement('div');
-    d.className = 'bz-diary-empty-desc';
-    d.textContent = '写下第一篇，或放上第一张照片';
-    const b = document.createElement('button');
-    b.className = 'bz-diary-empty-btn';
-    b.textContent = '写第一篇';
-    b.addEventListener('click', () => {
-      this.openAddEntry();
+    if (this._loadError) {
+      return uiEmpty({
+        icon: 'file-warning',
+        title: '日记加载失败',
+        desc: this._loadError,
+        actions: uiBtnRow([
+          uiBtn({ label: '重试', tone: 'primary', onClick: () => void this.loadAndRender() }),
+        ]),
+      });
+    }
+    return uiEmpty({
+      icon: 'book-open',
+      title: this.selTag ? '这个类型还没有记录' : '这一页还空着',
+      desc: '写下第一篇，或放上第一张照片',
+      actions: uiBtnRow([
+        uiBtn({ label: '写第一篇', tone: 'primary', onClick: () => this.openAddEntry() }),
+      ]),
     });
-    empty.append(ic, t, d, b);
-    return empty;
+  }
+
+  /**
+   * 效率#13：loadAndRender 读取期间的墙区骨架占位——大库首屏曾是一段「看起来像空库」的
+   * 纯空白期（面板壳/chips 都在，唯独墙区空着）。渐变 shimmer 卡复用媒体占位的表面 token；
+   * 只在墙区无内容时铺（防抖回刷等刷新场景已有内容，不闪骨架）。
+   */
+  private showSkeleton() {
+    for (const ui of [this.desk, this.mob]) {
+      if (ui.wall.querySelector('.bz-diary-item')) continue;
+      ui.wall.innerHTML = '';
+      ui.wall.appendChild(this.mkSkeleton());
+    }
+  }
+
+  private mkSkeleton(): HTMLElement {
+    const box = document.createElement('div');
+    box.className = 'bz-diary-skel';
+    const tip = document.createElement('div');
+    tip.className = 'bz-diary-skel-tip';
+    tip.textContent = '正在翻日记…';
+    const row = document.createElement('div');
+    row.className = 'bz-diary-skel-row';
+    for (let i = 0; i < 6; i++) {
+      const card = document.createElement('div');
+      card.className = 'bz-diary-skel-card' + (i % 3 === 1 ? ' bz-diary-skel-card--tall' : '');
+      row.appendChild(card);
+    }
+    box.append(tip, row);
+    return box;
   }
 
   // ---------- 媒体构建（视口懒加载） ----------
-  /** 媒体 URL：带 sourcePath 解析（日记条目 → filePath（子目录日期文件，D2）或顶层日期.md；影视/信/书 → filename 完整路径），修复纯文件名全局解析失败 */
+  /** 媒体 URL：带 sourcePath 解析（条目 filePath 优先；影视/信/书 filename 即完整路径）。
+   *  A4（review-deep 架）：v2「日期.md」拼装兜底退役——ADR-0131 契约外格式知识泄漏面，
+   *  条目文件化后 filePath 恒在，异常条目解析不出 → 返回空 → 渐变占位（可辨的失败形态） */
   private mediaSrcFor(entry: WallEntry, name: string): string {
-    const src = entry.filePath || (entry.kind === 'diary' ? `${DIARY_DIRECTORY}/${entry.date}.md` : entry.filename || '');
-    return mediaSrc(this.app(), name, src);
+    return mediaSrc(this.app(), name, entry.filePath || entry.filename || '');
   }
 
   /** 媒体块（图片/视频/音频 + 渐变占位 + 描述；无 emoji 角标——用户要求去掉） */
@@ -1543,7 +1761,7 @@ export class DiaryAppController {
       if (!dur || !Number.isFinite(v.duration) || v.duration <= 0) return;
       const m = Math.floor(v.duration / 60);
       const s = Math.round(v.duration % 60);
-      dur.textContent = `${m}:${String(s).padStart(2, '0')}`;
+      dur.textContent = `${m}:${pad2(s)}`;
     }, { once: true });
   }
 
@@ -1738,8 +1956,14 @@ export class DiaryAppController {
   // ---------- 灯箱 ----------
   /** 打开灯箱：定位连看序列下标后展示（增强 #1；找不到 = 非墙内入口，退化为单条序列） */
   private openLightbox(k: WallMedia, entry: WallEntry) {
+    // D6'：开新灯箱会话——旧会话的加密慢解密回填自此全部失效
+    this._lbGen++;
     let idx = this._lbSeq.findIndex((s) => s.entry === entry && s.media.name === k.name && s.media.kind === k.kind);
     if (idx === -1) {
+      // N10（review-deep func）：对齐时光条口径——落空覆盖前先存主序列（若已在会话序列中
+      // 则不重复存），关灯箱由 closeLightbox 统一还原。抽屉入口在后台 modify 重渲染
+      // （条目对象引用全换）后必然落空，旧实现直接覆盖 → 墙内 ←/→ 连看退化为单条。
+      if (!this._lbSeqMain) this._lbSeqMain = this._lbSeq;
       this._lbSeq = [{ entry, media: k }];
       idx = 0;
     }
@@ -1830,12 +2054,15 @@ export class DiaryAppController {
     if (entry.encrypted) {
       // D13：捕获发起时的连看下标——快速连按/滑动时旧请求晚到，只比对 isConnected 会把
       // 上一个媒体回填进当前灯箱（图文错位）。下标已推进则丢弃本次回填。
+      // D6'：再捕获会话代次——关灯箱立刻重开（openLightbox 递增 _lbGen）、新旧落点同
+      // 下标时，旧会话慢解密 promise 仍能通过下标比对穿透，覆盖新灯箱内容。
       const idx = this._lbIdx;
+      const gen = this._lbGen;
       const pend = document.createElement('div');
       pend.className = 'bz-diary-lb-pending';
       box.appendChild(pend);
       void this.encMediaUrl(entry.noteId || '', k).then((url) => {
-        if (!box.isConnected || this._lbIdx !== idx) return;
+        if (!box.isConnected || this._lbGen !== gen || this._lbIdx !== idx) return;
         box.innerHTML = '';
         if (!url) {
           box.appendChild(this.mkLbErr(k));
@@ -1892,8 +2119,13 @@ export class DiaryAppController {
         notice('已复制双链引用', 'success');
         return;
       }
-      // 普通日记条目：ADR-0130 一目一文件，双链即条目文件本身（无标题锚点）
-      await copyDiaryLink({ filename: e.filename || e.date, filePath: e.filePath, emoji: e.emoji, time: e.time });
+      // 普通日记条目：ADR-0130 一目一文件，双链即条目文件本身（无标题锚点）；
+      // A4：v2 兜底退役——无 filePath/filename 的异常条目显式报错
+      if (!e.filePath && !e.filename) {
+        notice('找不到原文，无法复制双链', 'error');
+        return;
+      }
+      await copyDiaryLink({ filename: e.filename || '', filePath: e.filePath, emoji: e.emoji, time: e.time });
     } catch (err) {
       notice('复制双链失败', 'error');
     }
@@ -1930,6 +2162,9 @@ export class DiaryAppController {
    * 加密：本域 encryptEntry（需保险箱解锁）+ 写层摘除原块；结果经域事件回刷本墙。
    * D5：摘除失败（返回 0 或抛错）必须回滚保险箱密文——密文已入库原文未删时，
    * 解锁后同条出现两次且重试越积越多。
+   * 效率#12（review-deep ★★）：加密与删除同为「条目当场从墙消失」，且挂在右键/长按
+   * 菜单（「加密」紧邻「改标签」，滑错一格条目即蒸发）——ensureSafeUnlocked 之后补
+   * openFlowDialog 二次确认（对齐 CONTEXT「日记加密入口」词条既有承诺）。
    */
   private async encryptEntryAction(e: WallEntry) {
     let enc: Awaited<ReturnType<typeof encryptEntry>> = null;
@@ -1939,6 +2174,17 @@ export class DiaryAppController {
       const { ensureSafeUnlocked } = await import('../encrypt') as typeof import('../encrypt');
       const unlocked = await ensureSafeUnlocked('diary'); // 加密的是日记条目，解锁屏走 diary 域口径（与 519 行入口同文案）
       if (!unlocked) return;
+      // 效率#12：二次确认。danger 标记走中性主钮口径（ADR-0125 慎重决策形态，
+      // 与 entry-actions 删除确认同款）；文案带条目标识（删错/滑错可辨认是哪篇）
+      const confirmed = await openFlowDialog({
+        title: '加密日记',
+        message: `将把「${e.date} ${e.time}」这条日记移入保险库加密保存，原位置不再保留明文。`,
+        actions: [
+          { label: '取消', value: 'cancel' },
+          { label: '加密', value: 'ok', cta: true, danger: true },
+        ],
+      });
+      if (confirmed !== 'ok') return;
       const entry = await findDiaryEntry(e.filePath || e.filename || e.date);
       if (!entry) {
         notice('找不到原文条目，无法加密', 'error');
@@ -1964,6 +2210,9 @@ export class DiaryAppController {
           notice('加密失败：原文块摘除未生效', 'error');
           return;
         }
+        // A2（review-deep 架）：加密 = 原条目文件摘除，同级的磁盘变更须发同通道域事件
+        //（对齐 entry-actions 删除发射形态）——此前仅墙自刷兜住，后续消费方接入即漏报
+        emitDomainEvent('diary:entry-deleted', { date: entry.date, time: entry.time, wasEncrypted: false, encrypted: true });
         // 收紧通知：加密移入成功结果立即可见（条目从墙消失），不再弹成功提示
         void this.loadAndRender();
       }
@@ -1983,7 +2232,9 @@ export class DiaryAppController {
     }
   }
 
-  /** 解密：本域 reclassifyEntry 降级（还原块 merge 回 md，取出即删） */
+  /** 解密：本域 reclassifyEntry 降级（还原块 merge 回 md，取出即删）。
+   *  效率#12：还原是恢复性操作（条目回墙、密文释放回明文），不加二次确认——
+   *  确认留给「条目当场消失」的加密/删除两动作，风险口径与删除对齐。 */
   private async decryptEntryAction(e: WallEntry) {
     try {
       const noteId = e.noteId;
@@ -1994,6 +2245,9 @@ export class DiaryAppController {
       const newTags = e.tags.filter((t) => t !== '加密');
       const ok = await reclassifyEntry(noteId, newTags);
       if (ok) {
+        // A2（review-deep 架）：解密 = 还原写盘 + 密文取出，补发同通道域事件
+        //（对齐 dialogs showTagPicker 降级路径的发射形态）
+        emitDomainEvent('diary:entry-decrypted', { noteId, date: e.date, newTags });
         // 收紧通知：解密还原成功结果立即可见（条目回墙），不再弹成功提示
         void this.loadAndRender();
       } else {
@@ -2099,7 +2353,14 @@ export class DiaryAppController {
       } else {
         mt.appendChild(uiIcon(k.kind === 'video' ? ACTION_ICON.play : ACTION_ICON.music));
       }
-      mt.addEventListener('click', () => this.openLightbox(k, e));
+      // D-UI1（review-deep P2）：抽屉是 body 级浮层（core allocZ 动态发号，后开必高于面板
+      // root），灯箱是面板实例内静态层——不先收抽屉，灯箱会被抽屉遮罩整体盖住（点缩略图
+      // 「毫无反应」假象，且 ESC 分流 sheetEntry 优先还会吃掉第一次 ESC）。动作行 ItemAction
+      // 有 core 自动关抽屉，自定义 sheetHead 头内点击不经过该路径，须显式先关。
+      mt.addEventListener('click', () => {
+        this.closeSheet();
+        this.openLightbox(k, e);
+      });
       media.appendChild(mt);
     });
     info.appendChild(timeEl);
@@ -2137,8 +2398,14 @@ export class DiaryAppController {
           return;
         }
         if (this.sheetEntry) {
-          this.closeSheet();
-          return;
+          // D8'（review-all2）：抽屉可能已被 core 路径（点遮罩/下拉关闭）关掉，而 core
+          // openItemSheet 无 onClose 回调、sheetEntry 残留——先探测 DOM，抽屉确实不在则
+          // 清标记继续下一分流，否则 ESC 第一次被空操作消费（要按两次才见效果）
+          if (document.querySelector('.bz-item-sheet')) {
+            this.closeSheet();
+            return;
+          }
+          this.sheetEntry = null;
         }
         if ([this.desk, this.mob].some((u) => u.lb.classList.contains('bz-diary-lb--show'))) {
           this.closeLightbox();
@@ -2321,31 +2588,45 @@ export class DiaryAppController {
   }
 
   /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
-   *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效）；隐藏期不订阅不刷新。 */
+   *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效）；隐藏期不订阅不刷新。
+   *  N5：create（外部新建/拖入/其他工具写入条目文件）同路回刷——此前纯外部变更是盲区，直到手动重开面板。 */
   private subscribeVaultModify(): void {
     if (this._modifyRef) return;
     const dirs = () => [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()];
-    this._modifyRef = this.app().vault.on('modify', (file: { path?: string }) => {
-      const p = (file as { path?: string } | null)?.path;
-      if (!p || this.root?.style.display !== 'flex') return;
-      if (!dirs().some((d) => p.startsWith(d + '/') || p === d + '.md')) return;
+    const hit = (p: string) => dirs().some((d) => p.startsWith(d + '/') || p === d + '.md');
+    const schedule = () => {
       if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
       this._modifyTimer = setTimeout(() => {
         this._modifyTimer = null;
         if (this.root?.style.display !== 'flex') return;
         void this.loadAndRender();
       }, MODIFY_REFRESH_DEBOUNCE_MS);
+    };
+    this._modifyRef = this.app().vault.on('modify', (file: { path?: string }) => {
+      const p = (file as { path?: string } | null)?.path;
+      if (!p || this.root?.style.display !== 'flex') return;
+      if (!hit(p)) return;
+      schedule();
+    });
+    this._createRef = this.app().vault.on('create', (file: { path?: string }) => {
+      const p = (file as { path?: string } | null)?.path;
+      if (!p || this.root?.style.display !== 'flex') return;
+      if (!hit(p)) return;
+      schedule();
     });
   }
 
   private unsubscribeVaultModify(): void {
-    if (this._modifyRef) {
-      try {
-        this.app().vault.offref(this._modifyRef);
-      } catch {
-        // mock/异常环境兜底：忽略 offref 失败
+    for (const key of ['_modifyRef', '_createRef'] as const) {
+      const ref = this[key];
+      if (ref) {
+        try {
+          this.app().vault.offref(ref);
+        } catch {
+          // mock/异常环境兜底：忽略 offref 失败
+        }
+        this[key] = null;
       }
-      this._modifyRef = null;
     }
     if (this._modifyTimer !== null) {
       clearTimeout(this._modifyTimer);
@@ -2355,11 +2636,20 @@ export class DiaryAppController {
 
   /** 加载数据并渲染（openManager 主路径） */
   private async loadAndRender() {
+    // D9'（review-all2）：面板关闭期间保险箱可能被外部上锁（别域「立即上锁」/安全模式
+    // 自动锁）——按真实锁态复位「加密」可见性，否则重开后 chip 呈已解锁态与真实锁态不符
+    //（show() 路径经此处覆盖）
+    this.lockedVisible = isUnlocked();
+    // 效率#13：数据读取期间墙区骨架占位（大库首屏不再是一段「看起来像空库」的空白期）
+    this.showSkeleton();
     try {
       this.entries = await loadWallEntries(this.app());
+      this._loadError = null;
     } catch (e: any) {
       this.entries = [];
-      notice('加载日记失败：' + (e && e.message ? e.message : String(e)), 'error');
+      // 效率#14：挂错误标记，mkEmpty 分流错误态（toast 一闪即逝，错误要留在墙上可重试）
+      this._loadError = e && e.message ? e.message : String(e);
+      notice('加载日记失败：' + this._loadError, 'error');
     }
     // 保险箱已解锁：一并并入加密日记（幂等；上锁态不可见）
     await this.mergeEncryptedEntries();
@@ -2560,12 +2850,27 @@ export class DiaryAppController {
       box.select();
       btn?.classList.add('bz-diary-icon-btn--on');
     } else {
+      // D-UI3：收起前取消防抖尾触——否则 250ms 内尾触落地把关键词写回 + 再 renderAll，
+      // 列表按一个不可见的词过滤（下次点开搜索框「自己长出了词」）
+      this._searchDebounced.cancel();
       row.style.display = 'none';
       box.value = '';
       this.searchKeyword = '';
       if (other?.searchBox) other.searchBox.value = '';
       this.renderAll();
       btn?.classList.remove('bz-diary-icon-btn--on');
+    }
+  }
+
+  /** 效率#6：回到今天——清日期筛选 + 滚回墙顶（开墙默认在最新，此钮只在离今天远了时有意义） */
+  private backToToday(ui: typeof this.desk) {
+    this.selDateFilter = null;
+    this.renderAll();
+    try {
+      // scrollTo({behavior:'smooth'}) 老内核/jsdom 缺失：滚顶是增强，缺 API 静默跳过
+      ui.wall.scrollTo({ top: 0, behavior: 'smooth' });
+    } catch {
+      /* 忽略 */
     }
   }
 
