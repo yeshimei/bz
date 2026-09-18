@@ -6,20 +6,18 @@
  * - frontmatter：url/author/site/summary/tags/date/created（created 本地时间戳
  *   ——UTC+8 凌晨不落昨日；date 转 UTC 本地串）
  * - 正文剥离 frontmatter/dataviewjs 块后写入，尾部嵌 dataviewjs 摘要 view
- * - 同名文件已存在 → 覆盖确认（自绘遮罩小弹窗 + escManager，对齐 reader 语义）
+ * - 同名文件已存在 → 覆盖确认（flow-dialog 三出口：覆盖/另存为新剪藏/取消，效率#3）
  * - B站视频条目保存分流文献盒（ADR-0068：openLiteratureAddTask），不写剪藏
  *
  * 调用方：UI 保存动作（doAct save）。成功后由调用方触发重渲染 + 目录刷新。
  */
 import { TFile } from 'obsidian';
 import { getApp } from '../core/app';
-import { escManager } from '../core/esc-manager';
-import { topifyZ } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice, notify, notifySaveError, type NoticeHandle } from '../core/notice';
+import { openFlowDialog } from '../core/flow-dialog';
 import { localDatetime, toDatetime, articleKeyOf } from './constants';
 import { readArticleTracking, applyBodyTransforms, clearArticleTracking, linkAliasText } from './anchor';
-import { extractImageUrls, localizeArticleImages } from './image-save';
 import type { ClipSavedImage } from './data';
 
 // C27：先转义反斜杠（\ → \\）再转义引号/换行——否则 url/author/summary 含 `\` 时
@@ -27,35 +25,64 @@ import type { ClipSavedImage } from './data';
 const yamlEscape = (v: any): string =>
   String(v ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
 
-/** 剪藏目录（读设置 articleDirectory，缺省回退常量——与 news/reader CLIP_DIR 同默认） */
-export function clipDirOf(): string {
+/**
+ * 剪藏目录单源（CB4/A3）：读设置 articleDirectory，尾斜杠归一（去尾 `/{1,}`）——
+ * 写盘/事件 clipPath/扫描/自动刷新命中判定/引用同步五面共用此一处，缺省串也只此一处。
+ * （原 clipDirOf 独缺尾斜杠归一，设置带尾斜杠时写盘路径与其余各面分叉。）
+ */
+export function clipDir(): string {
   const s = tryGetSettings() as any;
-  return (s && s.articleDirectory) || '归档/网页剪藏';
+  return String((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
+}
+
+/**
+ * 标题清洗单源（新-4，save 写盘与 flow 事件 clipPath 共用）：剥文件系统非法字符
+ * `[\\/:*?"<>|]` + Windows 命名边界——尾点/尾空格剥掉（Windows 禁止）、保留设备名
+ * （con/prn/aux/nul/com1-9/lpt1-9，大小写不敏感）前置 `_`，否则 vault.create 恒失败。
+ */
+export function cleanClipTitleOf(title: unknown): string {
+  let t = String(title ?? '').replace(/[\\/:*?"<>|]/g, '').trim();
+  t = t.replace(/[. ]+$/, '');
+  if (/^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i.test(t)) t = `_${t}`;
+  return t;
+}
+
+/** 剪藏文件路径组装单源（CB4/A3）：`clipDir() + 清洗标题 + .md`——save 写盘与
+ *  flow 事件 clipPath 共用此一函数，防两处手拼再次漂移。 */
+export function clipFilePathOf(title: unknown): string {
+  return `${clipDir()}/${cleanClipTitleOf(title)}.md`;
 }
 
 // C10：原 saveArticle 分流导出已删（无调用方——flow.ts 内联 B站/写剪藏分流）；
 // B站分流逻辑在 flow.flowSave 内实现。
 
 /** 写剪藏笔记（news 原文 raw）。返回是否写盘成功；空标题/取消覆盖/写盘异常均返回 false（调用方不得标已处理）。
- *  dirOverride（ADR-0119）：每日简报保存走专属目录，缺省仍取 articleDirectory。
  *  保存物化（issue 329 / ADR-0144）：落盘前 body 过 applyBodyTransforms——划词标记替换为
  *  别名双链、已存图片外链换 `![[本地路径]]`；写盘成功后清该条目侧写追踪，并对每个待升级
  *  文献笔记回写 source 为 `[[剪藏路径|条目标题]]`（source 两态：外链 URL → 内部路径）。写盘失败不清理（重存再物化）。
  *  全量图片本地化（issue 329 追加修订）：覆盖确认之后、写 md 之前把正文**所有**外链图
- *  下载落盘并组进换链映射（确认前不网络等待；复用侧写 savedImages 不重下；单张失败保留外链）。 */
-export async function writeClipNote(raw: any, dirOverride?: string): Promise<boolean> {
+ *  下载落盘并组进换链映射（确认前不网络等待；复用侧写 savedImages 不重下；单张失败保留外链）。
+ *  同名覆盖三出口（效率#3）：覆盖更新=现语义；另存为新剪藏=文件名追加 ` · N` 序号去重
+ *  循环后走正常写盘；取消/ESC/遮罩=false（不写盘）。 */
+export async function writeClipNote(raw: any): Promise<boolean> {
   const app = getApp();
-  const dir = dirOverride || clipDirOf();
-  const cleanTitle = String(raw.title || '').replace(/[\\/:*?"<>|]/g, '').trim();
+  const cleanTitle = cleanClipTitleOf(raw && raw.title);
   if (!cleanTitle) {
     notice('标题为空', 'error');
     return false;
   }
-  const filePath = `${dir}/${cleanTitle}.md`;
+  let filePath = clipFilePathOf(cleanTitle);
 
   if (app.vault.getAbstractFileByPath(filePath)) {
-    const ok = await confirmOverwrite(filePath);
-    if (!ok) return false;
+    const verdict = await confirmOverwrite(filePath);
+    if (verdict === 'rename') {
+      // 另存为新剪藏：` · N` 序号去重循环（首个空位落座，永不覆盖既有文件）
+      let n = 2;
+      while (app.vault.getAbstractFileByPath(clipFilePathOf(`${cleanTitle} · ${n}`))) n++;
+      filePath = clipFilePathOf(`${cleanTitle} · ${n}`);
+    } else if (verdict !== 'ok') {
+      return false; // 取消/ESC/遮罩：现取消语义，不写盘
+    }
   }
 
   const tagsYaml = (raw.tags || []).map((t: string) => `  - "${yamlEscape(t)}"`).join('\n');
@@ -92,12 +119,21 @@ await dv.view(\`CONFIG/SCRIPTS/DataView/摘要\`)
 ${body}`;
 
   try {
+    const dir = clipDir();
     const dirAf = app.vault.getAbstractFileByPath(dir);
     if (!dirAf) await app.vault.createFolder(dir);
     const existing = app.vault.getAbstractFileByPath(filePath);
     if (existing) await app.vault.modify(existing as TFile, md);
     else await app.vault.create(filePath, md);
-    notice(`已保存：${cleanTitle}`, 'success');
+    // 保存成功通知挂动作（效率#3 半）：给「打开笔记」出口——openLinkText 实际写盘路径
+    // （另存分支为 ` · N` 新路径，打开的正是刚写出的那篇）
+    notify(`已保存：${cleanTitle}`, {
+      type: 'success',
+      action: {
+        label: '打开笔记',
+        onClick: () => void getApp().workspace.openLinkText(filePath, ''),
+      },
+    });
     // 物化收尾：清侧写追踪 + 待升级 source 回写内部双链（升级失败静默——断链代价可接受，ADR-0144 后果）
     await materializeTracking(key, filePath, cleanTitle);
     return true;
@@ -115,6 +151,8 @@ ${body}`;
  * 返回 src→local 全量映射（复用 + 新下），供 applyBodyTransforms 换链。
  */
 async function localizeImagesForSave(body: string, existing: ClipSavedImage[]): Promise<ClipSavedImage[]> {
+  // image-save 反向 import 本模块（clipDir 单源）→ 顶层互访环在此侧延迟解析（ADR-0002）
+  const { extractImageUrls, localizeArticleImages } = await import('./image-save');
   const total = extractImageUrls(body).length;
   if (!total) return existing;
   // 多张才开进度框（单张瞬时完成不值得占一条常驻通知）
@@ -183,38 +221,25 @@ async function materializeTracking(key: string, clipPath: string, title: string)
   }
 }
 
-/** 同名覆盖确认（自绘遮罩弹窗；ESC/遮罩 = 取消；覆盖 = 确定） */
-function confirmOverwrite(filePath: string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const el = document.createElement('div');
-    Object.assign(el.style, {
-      position: 'fixed', top: '50%', left: '50%',
-      transform: 'translate(-50%,-50%)',
-      background: 'var(--background-primary)',
-      borderRadius: '10px', padding: '20px',
-      boxShadow: '0 8px 30px rgba(0,0,0,0.3)',
-      minWidth: '260px', textAlign: 'center',
-      fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, system-ui, sans-serif',
-      zIndex: '10500',
-    });
-    el.innerHTML = `
-      <div style="margin-bottom:14px;color:var(--text-normal);font-size:14px;">已存在同名剪藏，覆盖？</div>
-      <div style="display:flex;gap:8px;justify-content:center;">
-        <button class="y" style="padding:6px 18px;border:none;background:var(--interactive-accent);color:var(--text-on-accent);border-radius:4px;cursor:pointer;">覆盖</button>
-        <button class="n" style="padding:6px 18px;border:1px solid var(--background-modifier-border);background:var(--background-secondary);color:var(--text-normal);border-radius:4px;cursor:pointer;">取消</button>
-      </div>`;
-    const ov = document.createElement('div');
-    Object.assign(ov.style, { position: 'fixed', inset: '0', background: 'var(--background-modifier-cover)' });
-    topifyZ(ov, el);
-    document.body.appendChild(ov);
-    document.body.appendChild(el);
-    const close = (v: boolean) => { ov.remove(); el.remove(); resolve(v); };
-    ov.onclick = () => close(false);
-    const h = escManager.register('clipbook-confirm', {
-      isVisible: () => ov.isConnected,
-      close: () => close(false),
-    });
-    el.querySelector<HTMLElement>('.y')!.onclick = () => { h.unregister(); close(true); };
-    el.querySelector<HTMLElement>('.n')!.onclick = () => { h.unregister(); close(false); };
-  });
+/**
+ * 同名覆盖确认（效率#3）：自绘遮罩弹窗退役，改走 openFlowDialog 统一皮
+ * （`.bz-clip-dialog-editorial` 编辑部皮，与删除/全部已读确认同款）+ 三出口——
+ * - 'ok'：覆盖更新（现语义：modify 既有文件）；
+ * - 'rename'：另存为新剪藏（调用方按 ` · N` 序号落新文件）；
+ * - undefined：取消（ESC/遮罩/被顶替的 flow-dialog 取消语义，不写盘）。
+ * message 披露文件名 + 副文案，明示覆盖后果；主动作为危险动作（danger）时焦点反落
+ * 「取消」（Enter=取消，防误触），随 flow-dialog 自动被 cancelActiveFlowDialog 收口，
+ * 旧 esc id 'clipbook-confirm' 退役。
+ */
+function confirmOverwrite(filePath: string): Promise<'ok' | 'rename' | undefined> {
+  return openFlowDialog({
+    className: 'bz-clip-dialog-editorial',
+    title: '已存在同名剪藏',
+    message: `「${filePath.split('/').pop() || filePath}」已存在\n将覆盖现有摘要、标签与正文编辑`,
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '另存为新剪藏', value: 'rename' },
+      { label: '覆盖更新', value: 'ok', cta: true, danger: true },
+    ],
+  }).then((v) => (v === 'ok' || v === 'rename' ? v : undefined));
 }

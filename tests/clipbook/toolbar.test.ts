@@ -690,10 +690,10 @@ describe('保存剪藏全量图片本地化（issue 329 追加修订）', () => 
       platform: '果壳科学人', title: '图文庚', url: 'https://guokr.com/7',
       body: '![图](https://img.example/confirm.png)',
     });
-    // 覆盖确认框已挂起 → 此刻 requestUrl 必须零调用
-    await vi.waitFor(() => expect(document.querySelector('.y')).toBeTruthy());
+    // 覆盖确认框已挂起（flow-dialog 三动作版，「覆盖更新」= action-2）→ 此刻 requestUrl 必须零调用
+    await vi.waitFor(() => expect(document.querySelector('#bz-flow-dialog-action-2')).toBeTruthy());
     expect((requestUrl as ReturnType<typeof vi.fn>).mock.calls.length).toBe(0);
-    (document.querySelector('.y') as HTMLElement).click();
+    (document.querySelector('#bz-flow-dialog-action-2') as HTMLElement).click();
     expect(await p).toBe(true);
     expect((requestUrl as ReturnType<typeof vi.fn>).mock.calls.length).toBe(1);
     const md = vault.files.get('归档/网页剪藏/图文庚.md')!;

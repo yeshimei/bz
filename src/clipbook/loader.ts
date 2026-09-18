@@ -28,11 +28,9 @@ export interface PanelData {
   upInfo: Record<string, { name?: string; avatar?: string }>;
 }
 
-/** 剪藏目录（读设置，去尾斜杠） */
-export function clipDir(): string {
-  const s = tryGetSettings() as any;
-  return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
-}
+// 剪藏目录：域内单源在 save.clipDir（尾斜杠归一 + 缺省串一处，CB4/A3），此处转发保旧导出位
+import { clipDir } from './save';
+export { clipDir };
 
 /** 整盘装载（news 保留清理 + 迁移 + 侧写 + 剪藏扫描）→ 结果写入 M */
 export async function readNewsAndSidecar(): Promise<PanelData> {

@@ -18,6 +18,7 @@ import { requestUrl, TFile } from 'obsidian';
 import { getApp } from '../core/app';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
+import { clipDir } from './save';
 import type { ClipbookData, ClipSavedImage } from './data';
 import { addArticleImageSwap, applyClipContentTransforms } from './anchor';
 
@@ -31,14 +32,13 @@ const EXT_WHITELIST = new Set(['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'bmp'
 
 /**
  * 剪藏图片目录：设置键 clipbookImageFolder（留空回落 <articleDirectory>/assets）。
- * 回落口径与 loader.clipDir 的 articleDirectory 缺省一致。
+ * 回落口径走 save.clipDir 单源（CB4/A3 收编；articleDirectory 缺省与尾斜杠归一同一处）。
  */
 export function clipbookImageDir(): string {
   const s = tryGetSettings() as any;
   const configured = String((s && s.clipbookImageFolder) || '').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '');
   if (configured) return configured;
-  const dir = String((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
-  return `${dir}/assets`;
+  return `${clipDir()}/assets`;
 }
 
 /** 协议相对地址补全（//host/a.png → https://host/a.png）；data:/blob: 原样返回 */
