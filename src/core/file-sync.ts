@@ -144,18 +144,31 @@ export function createFileSync<D, R extends FileSyncRenameEvent = FileSyncRename
     const buildRenameEvent = config.buildRenameEvent ?? ((evt: FileSyncRenameEvent): R => evt as R);
 
     const flushRenames = createBatchFlusher<R>(async (batch) => {
+      // E22 判定随批走（架#3）：referencedBy 是域全量 JSON 读+解析，批量改名（整目录
+      // 重命名连发 N 条事件）若逐事件判定 = 最多 2N 次全量读盘且结果全弃。收进 flush
+      // 后对本批出现过的路径做「路径→判定 Promise」去重缓存（随批新建即随批清空），
+      // 同一路径（如 rename 链 A→B→C 的中转名）整批只判一次。
+      const refCache = new Map<string, Promise<boolean>>();
+      const referencedOnce = (path: string): Promise<boolean> => {
+        let p = refCache.get(path);
+        if (p === undefined) {
+          p = config.referencedBy(path);
+          refCache.set(path, p);
+        }
+        return p;
+      };
       for (const ev of batch) {
+        // E22：范围外放行看新旧两条路径（改名移出/移入监听范围都算被引用）
+        const inScope = inFolders(ev.newPath, config.watchedFolders());
+        if (!(inScope || (await referencedOnce(ev.oldPath)) || (await referencedOnce(ev.newPath)))) continue;
         await config.commit((data) => config.applyRename(data, ev));
       }
     });
     _flushers.push(flushRenames);
     _refs.push(onDomainEvent<FileSyncRenameEvent>('vault:md-renamed', (evt) => {
       const file = pseudoFile(evt.newPath);
-      // E22：范围外放行看新旧两条路径（改名移出/移入监听范围都算被引用）
-      void (async () => {
-        if (!(isMd(file) || (await config.referencedBy(evt.oldPath)) || (await config.referencedBy(evt.newPath)))) return;
-        flushRenames(buildRenameEvent(evt, file.basename));
-      })();
+      // 候选事件直接进批（判定挪到 flush 内随批去重，架构#3）——载荷构造纯内存无 IO
+      flushRenames(buildRenameEvent(evt, file.basename));
     }));
 
     _refs.push(onDomainEvent<{ path: string }>('vault:md-deleted', (evt) => {

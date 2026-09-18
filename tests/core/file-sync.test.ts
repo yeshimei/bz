@@ -108,6 +108,34 @@ describe('watched folders 匹配与范围放行', () => {
     await flushQueue(30);
     expect(renames).toEqual([{ oldPath: '我的/日记/2024.md', newPath: '我的/日记/2025.md' }]);
   });
+
+  it('批量改名只判一次（架构#3）：referencedBy 对本批出现过的路径去重缓存，随 flush 清空', async () => {
+    const refCalls: string[] = [];
+    const { renames, setData } = makeAgent({
+      debounce: '30',
+      // 全部判「未引用」→ 每事件先查 oldPath（false）再查 newPath，去重效果完整可见
+      referencedBy: async (path) => {
+        refCalls.push(path);
+        return false;
+      },
+    });
+    setData([]); // 域数据不含这些路径：判定全走 referencedBy 通道
+
+    // 整目录重命名连发（rename 链）：路径集 = {A,B,C,D}；B/C 是两事件的共享中转名
+    emitDomainEvent('vault:md-renamed', { oldPath: '随手记/A.md', newPath: '随手记/B.md' });
+    emitDomainEvent('vault:md-renamed', { oldPath: '随手记/B.md', newPath: '随手记/C.md' });
+    emitDomainEvent('vault:md-renamed', { oldPath: '随手记/C.md', newPath: '随手记/D.md' });
+    await flushQueue(30);
+
+    expect(renames).toHaveLength(0); // 全未引用：不派发（E22 负语义）
+    // 去重后 A/B/C/D 各判一次 = 4 次（逐事件判定是 6 次：B/C 作为共享中转名各重复一次）
+    expect(refCalls.sort()).toEqual(['随手记/A.md', '随手记/B.md', '随手记/C.md', '随手记/D.md']);
+
+    // 窗口外新批次：缓存已随上次 flush 清空，同路径重新判定（不被旧缓存粘连）
+    emitDomainEvent('vault:md-renamed', { oldPath: '随手记/A.md', newPath: '随手记/B.md' });
+    await flushQueue(30);
+    expect(refCalls.filter((p) => p === '随手记/A.md')).toHaveLength(2);
+  });
 });
 
 describe('去抖合并与派发', () => {

@@ -1,4 +1,4 @@
-/* 源指纹 8c604c680ff36c6e · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6832a36aea8ed52b · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/secondbrain/fake-sim.ts","prototypes/secondbrain/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/secondbrain/ai.ts","src/secondbrain/chat-panel.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/context.ts","src/secondbrain/float-window.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/mobile-panel.ts","src/secondbrain/panel.ts","src/secondbrain/reference-panel.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/ui-tools.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/secondbrain/fake-sim.ts → window.BZW_secondbrain（行为单源预览包，issue 245/ADR-0106） */
 var BZW_secondbrain = (() => {
@@ -73,7 +73,9 @@ var BZW_secondbrain = (() => {
       MarkdownRenderer = {
         async render(_app2, md, el) {
           const html = String(md).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\n/g, "<br>");
-          el.innerHTML = html;
+          const tpl = document.createElement("template");
+          tpl.innerHTML = html;
+          el.appendChild(tpl.content);
         }
       };
       Component = class {
@@ -265,6 +267,12 @@ var BZW_secondbrain = (() => {
         { id: "kimi-k2-0711-preview", aliases: ["kimi-k2"], maxOutput: 131072, contextWindow: 131072 },
         { id: "glm-4-flash", maxOutput: 8192, contextWindow: 131072 }
       ];
+    }
+  });
+
+  // src/core/crypto.ts
+  var init_crypto = __esm({
+    "src/core/crypto.ts"() {
     }
   });
 
@@ -524,6 +532,7 @@ var BZW_secondbrain = (() => {
       init_fake_obsidian();
       init_app();
       init_model_limits();
+      init_crypto();
       _settingsProvider = null;
       AI_PROVIDER_REGISTRY = [
         {
@@ -1302,7 +1311,9 @@ var BZW_secondbrain = (() => {
     "src/core/esc-manager.ts"() {
       escManager = (() => {
         const layers = [];
+        let disabled = false;
         const onKeydown = (e) => {
+          if (disabled) return;
           if (e.key !== "Escape") return;
           for (let i = layers.length - 1; i >= 0; i--) {
             const L = layers[i];
@@ -1335,11 +1346,15 @@ var BZW_secondbrain = (() => {
               }
             };
           },
-          /** 插件卸载时移除全局监听 */
+          /** 插件卸载时软关（N1）：只置 disabled 旗标——不摘 document 监听（模块 IIFE
+           *  常驻单例，Obsidian 禁用→再启用不重新求值，摘了就全站 ESC 永久失效）、
+           *  不清 layers（重启用后旧层由 isVisible 判活自愈）。恢复走 arm()。 */
           destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
+            disabled = true;
+          },
+          /** 插件（重）启用时恢复 ESC 处理（main.ts onload 调用；幂等） */
+          arm() {
+            disabled = false;
           }
         };
       })();
@@ -5486,6 +5501,13 @@ var BZW_secondbrain = (() => {
     }
   });
 
+  // src/core/http.ts
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/core/ui/str.ts
   var init_str = __esm({
     "src/core/ui/str.ts"() {
@@ -5557,8 +5579,8 @@ var BZW_secondbrain = (() => {
   var init_utils = __esm({
     "src/core/utils.ts"() {
       import_moment = __toESM(require_moment());
-      init_fake_obsidian();
       init_app();
+      init_http();
       init_str();
     }
   });

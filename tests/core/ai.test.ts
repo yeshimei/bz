@@ -20,6 +20,7 @@ import {
   hasExplicitThinkingOption,
 } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
+import { toBase64 } from '../../src/core/crypto';
 import { MockVault } from '../mock-vault';
 import { requestUrl } from '../mock-obsidian-entry';
 
@@ -148,6 +149,22 @@ describe('AIService', () => {
     expect(() => imageDataUrl(new Uint8Array(0), 'image/png')).toThrow('图片内容为空');
     const huge = new Uint8Array(AI_IMAGE_MAX_BYTES + 1);
     expect(() => imageDataUrl(huge, 'image/jpeg')).toThrow('图片过大');
+  });
+
+  it('大数组跨分块边界：分块编码 == 一次性编码（架#7 toBase64 单源往返）', () => {
+    // 70001 字节确定性伪随机（跨 2 个 32768 分块 + 尾块），避免全零序列掩盖分块错位
+    const bytes = new Uint8Array(70001);
+    let seed = 12345;
+    for (let i = 0; i < bytes.length; i++) {
+      seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+      bytes[i] = seed & 0xff;
+    }
+    // 分块输出（crypto.toBase64）与一次性编码（Buffer）逐字节等价
+    expect(toBase64(bytes)).toBe(Buffer.from(bytes).toString('base64'));
+    // data URL 往返：解码回字节一致
+    const dataUrl = imageDataUrl(bytes, 'image/png');
+    const b64 = dataUrl.slice('data:image/png;base64,'.length);
+    expect(Buffer.from(atob(b64), 'binary').equals(Buffer.from(bytes))).toBe(true);
   });
 
   it('imageMimeOfPath：只认 DeepSeek 接受的四种格式，其余返回 null', () => {

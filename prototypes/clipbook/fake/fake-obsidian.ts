@@ -98,9 +98,17 @@ export class MarkdownView {
   }
 }
 export class MarkdownRenderer {
-  /** 评审壳近似实现：正文以纯文本落入容器（Obsidian 真渲染仅插件环境可用，视觉看真机） */
+  /**
+   * 评审壳近似实现：正文以纯文本落入容器（Obsidian 真渲染仅插件环境可用，视觉看真机）。
+   * 追加语义（ADR-0122）：真 render 是「追加到容器」而非覆盖——div 承载纯文本后
+   * appendChild，容器已有内容（如预填兜底）时叠加，评审壳可复现真机双份（issue 275）。
+   */
   static render(_app: unknown, md: string, el: HTMLElement): Promise<void> {
-    if (el) el.textContent = String(md ?? '');
+    if (el) {
+      const block = document.createElement('div');
+      block.textContent = String(md ?? '');
+      el.appendChild(block);
+    }
     return Promise.resolve();
   }
 }

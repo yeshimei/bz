@@ -1,5 +1,5 @@
-/* 源指纹 a48cc698e962ee48 · 仓内输入 21 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 27b8e8b48d726e53 · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -4271,7 +4271,9 @@ var BZW_pomodoro = (() => {
     "src/core/esc-manager.ts"() {
       escManager = (() => {
         const layers = [];
+        let disabled = false;
         const onKeydown = (e) => {
+          if (disabled) return;
           if (e.key !== "Escape") return;
           for (let i = layers.length - 1; i >= 0; i--) {
             const L = layers[i];
@@ -4304,11 +4306,15 @@ var BZW_pomodoro = (() => {
               }
             };
           },
-          /** 插件卸载时移除全局监听 */
+          /** 插件卸载时软关（N1）：只置 disabled 旗标——不摘 document 监听（模块 IIFE
+           *  常驻单例，Obsidian 禁用→再启用不重新求值，摘了就全站 ESC 永久失效）、
+           *  不清 layers（重启用后旧层由 isVisible 判活自愈）。恢复走 arm()。 */
           destroy() {
-            if (typeof document !== "undefined") {
-              document.removeEventListener("keydown", onKeydown);
-            }
+            disabled = true;
+          },
+          /** 插件（重）启用时恢复 ESC 处理（main.ts onload 调用；幂等） */
+          arm() {
+            disabled = false;
           }
         };
       })();
@@ -4978,6 +4984,13 @@ var BZW_pomodoro = (() => {
     }
   });
 
+  // src/core/http.ts
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
   // src/core/ui/str.ts
   function pad2(n) {
     return String(n).padStart(2, "0");
@@ -4996,8 +5009,8 @@ var BZW_pomodoro = (() => {
   var init_utils = __esm({
     "src/core/utils.ts"() {
       import_moment2 = __toESM(require_moment());
-      init_fake_obsidian();
       init_app();
+      init_http();
       init_str();
     }
   });

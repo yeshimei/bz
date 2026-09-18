@@ -174,4 +174,22 @@ describe('fetchPageTitle', () => {
     vi.mocked(requestUrl).mockResolvedValue({ status: 404, text: '<html></html>' });
     expect(await fetchPageTitle('https://example.com')).toBeNull();
   });
+
+  it('远端挂起 → 8s 超时归 null 不悬挂（新-2：改走 http 单源带超时）', async () => {
+    vi.useFakeTimers();
+    try {
+      // 模拟目标服务器建连后不回包：requestUrl 永不 settle（旧实现此处 Promise 永悬挂）
+      vi.mocked(requestUrl).mockImplementation(() => new Promise(() => { /* 挂起 */ }));
+      let settled = false;
+      const p = fetchPageTitle('https://hang.example.com').then((r) => { settled = true; return r; });
+
+      await vi.advanceTimersByTimeAsync(7999);
+      expect(settled).toBe(false); // 8s 超时窗内不 settle（不再瞬间返回，也不永远悬挂）
+
+      await vi.advanceTimersByTimeAsync(1);
+      expect(await p).toBeNull(); // 超时窗口到点归 null
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });
