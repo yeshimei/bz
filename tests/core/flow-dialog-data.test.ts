@@ -59,6 +59,56 @@ describe('flow-dialog 数据层：标准双动作 DOM 契约', () => {
     expect(ctaLeft.focusId).toBe(FLOW_DIALOG_CANCEL_ID); // cta 显式标在左侧动作 → 焦点随声明
   });
 
+  it('危险主动作：焦点反落取消动作（Enter=取消），dangerPrimary 仍按主动作判定（效率审查#1）', () => {
+    const parts = buildFlowDialogParts('删除影视', '该操作不可撤销', [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'del', cta: true, danger: true },
+    ]);
+    // 焦点不落删除钮：弹窗一开回车不再直通危险动作，须 Tab 或鼠标触达
+    expect(parts.focusId).toBe(FLOW_DIALOG_CANCEL_ID);
+    // bz-flow-dialog--danger 中性形制只看主动作是否危险，不受焦点反落影响
+    expect(parts.dangerPrimary).toBe(true);
+    // 非主动作位的 danger（左侧取消是 danger）不触发反焦：焦点照旧落最后动作
+    const notPrimary = buildFlowDialogParts('t', 'm', [
+      { label: '取消', value: 'cancel', danger: true },
+      { label: '确定', value: 'ok' },
+    ]);
+    expect(notPrimary.focusId).toBe(FLOW_DIALOG_OK_ID);
+  });
+
+  it('非危险主动作保持「cta 优先、缺省最后动作」（回车=确认的效率语义不变，回归保护）', () => {
+    const withCta = buildFlowDialogParts('t', 'm', [
+      { label: '取消', value: 'cancel' },
+      { label: '确定', value: 'ok', cta: true },
+    ]);
+    expect(withCta.focusId).toBe(FLOW_DIALOG_OK_ID);
+    expect(withCta.dangerPrimary).toBe(false);
+  });
+
+  it('三动作且主动作危险：焦点落首个非危险动作；全部动作皆危险时保持主动作（保底不炸）', () => {
+    const mixed = buildFlowDialogParts('t', 'm', [
+      { label: '甲', value: 'a' },
+      { label: '乙', value: 'b', danger: true, cta: true },
+      { label: '丙', value: 'c', danger: true },
+    ]);
+    expect(mixed.focusId).toBe('bz-flow-dialog-action-0'); // 首个非危险动作
+    expect(mixed.dangerPrimary).toBe(true);
+    const allDanger = buildFlowDialogParts('t', 'm', [
+      { label: '甲', value: 'a', danger: true },
+      { label: '乙', value: 'b', danger: true, cta: true },
+      { label: '丙', value: 'c', danger: true },
+    ]);
+    expect(allDanger.focusId).toBe('bz-flow-dialog-action-1'); // 无安全侧可落 → 焦点留在主动作
+  });
+
+  it('confirmDiscard 安全聚焦语义不受影响：无 danger 双动作焦点落「继续编辑」（最后动作）', () => {
+    const parts = buildFlowDialogParts('放弃未保存的内容？', '弹窗内有未保存的输入，关闭后将丢失', [
+      { label: '放弃', value: 'ok' },
+      { label: '继续编辑', value: 'cancel' },
+    ]);
+    expect(parts.focusId).toBe(FLOW_DIALOG_OK_ID); // 右侧（后渲染）= 继续编辑
+  });
+
   it('空标题回退「确认」（旧 confirm 行为保持）', () => {
     const parts = buildFlowDialogParts(undefined, '正文', [
       { label: '取消', value: 'cancel' },
@@ -121,6 +171,35 @@ describe('flow-dialog 数据层：三动作及以上扩展', () => {
     expect(parts.buttons).toHaveLength(1);
     expect(parts.buttons[0].id).toBe('bz-flow-dialog-action-0');
     expect(parts.focusId).toBe('bz-flow-dialog-action-0');
+  });
+});
+
+describe('flow-dialog 数据层：message 换行渲染（效率审查#4）', () => {
+  it('message 的 \\n 渲染为 <br>：多段确认文案分行，不再挤成一行', () => {
+    const parts = buildFlowDialogParts('确认删除', '第一行\n\n第二行', [
+      { label: '取消', value: 'cancel' },
+      { label: '删除', value: 'ok' },
+    ]);
+    expect(parts.html).toContain('<p>第一行<br><br>第二行</p>');
+    // 无换行的 message 不引入 <br>（现状不变）
+    const plain = buildFlowDialogParts('t', '单行文案', [
+      { label: '取消', value: 'cancel' },
+      { label: '确定', value: 'ok' },
+    ]);
+    expect(plain.html).toContain('<p>单行文案</p>');
+  });
+
+  it('\\n 替换发生在 escapeHtml 之后：注入内容仍被转义，<br> 是唯一放行的标签', () => {
+    const evil = '第一段 <img src=x onerror="window.__pwned=1">\n第二段 <script>window.__xss=1</script>';
+    const parts = buildFlowDialogParts('t', evil, [
+      { label: '取消', value: 'cancel' },
+      { label: '确定', value: 'ok' },
+    ]);
+    expect(parts.html).toContain(
+      '&lt;img src=x onerror=&quot;window.__pwned=1&quot;&gt;<br>第二段 &lt;script&gt;window.__xss=1&lt;/script&gt;'
+    );
+    expect(parts.html).not.toContain('<img');
+    expect(parts.html).not.toContain('<script>');
   });
 });
 
