@@ -29,7 +29,7 @@ import { getLinkBridge } from '../core/link-now';
 import { attachItemActions, type ItemAction } from '../core/item-actions';
 import { confirmDiscard, openFlowDialog } from '../core/flow-dialog';
 import { notice, notify } from '../core/notice';
-import { escapeHtml, fetchPageTitle, formatRelativeTime, stripMdExt } from '../core/utils';
+import { escapeHtml, fetchPageTitle, formatRelativeTime, stripMdExt, openExternalUrl } from '../core/utils';
 import { iconSpan } from '../core/ui/str';
 import { mountIcons } from '../core/ui/icons';
 import { uiSuggest } from '../core/ui/suggest';
@@ -3528,15 +3528,10 @@ export class UIManager {
     catch { notice('复制失败', 'error'); }
   }
 
+  /** 外链打开 = core 单源转发（一致#14：原域内 openUrl→electron 副本删除；最深兜底层
+   *  多出 window.open + 人话提示——favorites F14 同款，正常桌面路径行为不变） */
   private _openExternal(url: string): void {
-    const app = getApp();
-    try {
-      (app as any).openUrl(url);
-    } catch {
-      const w = window as any;
-      const electron = w.require && w.require('electron');
-      if (electron && electron.shell) electron.shell.openExternal(url);
-    }
+    openExternalUrl(getApp(), url);
   }
 
   destroy(): void {

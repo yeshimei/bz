@@ -29,6 +29,7 @@ import { isMobileEnv } from '../core/mobile';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { openItemMenu, openItemSheet, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { getApp } from '../core/app';
+import { openExternalUrl } from '../core/utils';
 import { mountIcons, uiModal, uiInput } from '../core/ui';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
@@ -497,27 +498,10 @@ function aiServiceOf(): FavoritesAIService {
 function appOf(): any {
   return _app || getApp();
 }
+/** 外链打开 = core 单源转发（一致#14：原域内 openUrl→electron→window.open 四层副本删除，
+ *  行为逐字等价——单源即以本域 F14 修复后的完整兜底链为基准） */
 function openExternal(url: string): void {
-  const app = appOf();
-  try {
-    // 不带 ?.：openUrl 缺失时抛 TypeError 落 catch 走 electron 兜底（与 memo/literature 写法对齐）
-    (app as any).openUrl(url);
-    return;
-  } catch (e) { /* 落 electron 兜底 */ }
-  try {
-    const electron = (window as any).require && (window as any).require('electron');
-    if (electron && electron.shell) {
-      electron.shell.openExternal(url);
-      return;
-    }
-  } catch (e) { /* 落 window.open 兜底 */ }
-  // F14：移动端无 electron（也无 require），两层兜底都落空时不再静默——
-  // 先试 window.open（系统浏览器），仍失败给人话提示
-  try {
-    const w = window.open(url, '_blank');
-    if (w) return;
-  } catch (e) { /* 环境不支持（jsdom 等）落提示 */ }
-  notice('无法打开链接，请复制到浏览器打开', 'error');
+  openExternalUrl(appOf(), url);
 }
 
 // ==================== 添加 / 编辑 表单（markup 在 shared.formHtml） ====================

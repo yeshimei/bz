@@ -141,25 +141,28 @@ export function nextRecurDue(recur: MemoRecur, base: string | null, nowStr?: str
   return cur.format(fmt);
 }
 
-/** 条目字段归一（缺省补默认值，旧数据零迁移）——与旧 memo loadItems 逐字段等价 */
+/** 条目字段归一（缺省补默认值，旧数据零迁移）——与旧 memo loadItems 逐字段等价。
+ *  M2 字段级守卫：title/scene 关键展示字段 String() 归一（缺失/非串回落 ''，
+ *  手改脏数据不再让渲染层 it.title.length TypeError 炸整列表） */
 export function normalizeItem(item: any): MemoItem {
+  const src = item && typeof item === 'object' ? item : {};
   return {
-    id: item.id,
-    title: item.title,
-    scene: item.scene,
-    priority: item.priority || 'minor',
-    created: item.created,
-    completed: item.completed || null,
-    due: item.due || null,
-    notePath: item.notePath || null,
-    notePosition: item.notePosition || null,
-    scriptName: item.scriptName || null,
-    courseName: item.courseName || null,
-    coursePath: item.coursePath || null,
-    linkedNote: item.linkedNote || null,
-    url: item.url || null,
-    recur: normalizeRecur(item.recur),
-    checklist: normalizeChecklist(item.checklist),
+    id: src.id,
+    title: String(src.title ?? ''),
+    scene: String(src.scene ?? ''),
+    priority: src.priority || 'minor',
+    created: src.created,
+    completed: src.completed || null,
+    due: src.due || null,
+    notePath: src.notePath || null,
+    notePosition: src.notePosition || null,
+    scriptName: src.scriptName || null,
+    courseName: src.courseName || null,
+    coursePath: src.coursePath || null,
+    linkedNote: src.linkedNote || null,
+    url: src.url || null,
+    recur: normalizeRecur(src.recur),
+    checklist: normalizeChecklist(src.checklist),
   };
 }
 
@@ -229,15 +232,29 @@ export const MemoData = {
         return [];
       }
       let needWrite = false;
-      const items = raw.map((item: any) => {
+      // M2 元素级守卫：null/非对象元素（外部同步工具/手滑编辑可产出）剔除不再让
+      // item.id TypeError 炸整条读链（面板永久空白 + unhandled rejection）；
+      // 剔除即回写（坏元素不留在盘上），console.warn 一次汇总留痕
+      const clean: any[] = [];
+      let bad = 0;
+      for (const item of raw) {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) {
+          bad++;
+          needWrite = true;
+          continue;
+        }
         if (!item.id) {
           item.id = generateId();
           needWrite = true;
         }
+        clean.push(item);
+      }
+      if (bad > 0) console.warn(`[bz:memo] memo.json 含 ${bad} 个非法条目（null/非对象），已剔除`);
+      const items = clean.map((item: any) =>
         // 统一字段形状（缺省补默认值，旧数据零迁移）
-        return normalizeItem(item);
-      });
-      if (needWrite) await this.write(raw);
+        normalizeItem(item)
+      );
+      if (needWrite) await this.write(clean);
       return items;
     });
   },
@@ -342,6 +359,36 @@ export const MemoData = {
     });
   },
 
+  /**
+   * 批量清理已完成条目（效率#11）：completed 非空且早于 cutoff（字符串比较，YYYY-MM-DD
+   * HH:mm:ss 字典序即时间序）的一次性删除；cutoff 传 null = 不设时间窗（清全部已完成）。
+   * onlyIds 提供时只清该集合内的条目（UI 侧按当前视图可见口径收窄，所见即所删）。
+   * 整个读改写在同一个串行队列任务内原子完成；返回被删条目快照数组（含各自原索引，
+   * 供撤销按原索引升序逐条 restoreItem 插回原位——绝对位置 splice 须先小后大，降序会错位）。
+   */
+  async deleteCompletedBefore(
+    cutoff: string | null,
+    onlyIds?: ReadonlySet<string>
+  ): Promise<{ item: MemoItem; idx: number }[]> {
+    return enqueueFileTask(this.memoFilePath, async () => {
+      const data = await this.read();
+      const removed: { item: MemoItem; idx: number }[] = [];
+      const kept: any[] = [];
+      data.forEach((d: any, idx: number) => {
+        const hit =
+          d &&
+          typeof d === 'object' &&
+          d.completed &&
+          (cutoff === null || d.completed < cutoff) &&
+          (!onlyIds || onlyIds.has(d.id));
+        if (hit) removed.push({ item: normalizeItem(d), idx });
+        else kept.push(d);
+      });
+      if (removed.length) await this.write(kept);
+      return removed;
+    });
+  },
+
   /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
    *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
   async updateSceneBulk(from: string, to: string): Promise<number> {
@@ -359,12 +406,16 @@ export const MemoData = {
     });
   },
 
-  /** 公开课笔记（影视目录中含 公开课 标签的文件） */
+  /** 公开课笔记（影视目录中含 公开课 标签的文件）。
+   *  A6 前缀边界：path === dir || path.startsWith(dir + '/')（对齐 core/file-sync inFolders）——
+   *  裸 startsWith 会把同级兄弟目录「我的/影视花絮」误命中进「我的/影视」 */
   async getCourseNotes(): Promise<{ name: string; path: string }[]> {
     const app = getApp();
     const result: { name: string; path: string }[] = [];
+    const dir = this.cinemaFolderPath;
     for (const file of app.vault.getFiles()) {
-      if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== 'md') continue;
+      const inDir = file.path === dir || file.path.startsWith(dir + '/');
+      if (!inDir || file.extension !== 'md') continue;
       const cache = app.metadataCache.getFileCache(file);
       if (!cache) continue;
       if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
