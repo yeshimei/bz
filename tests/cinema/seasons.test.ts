@@ -1,7 +1,7 @@
 // @vitest-environment node
 /**
  * 影院剧集按季合并（issue 376 / ADR-0168）：名称归一 + 分组纯加工层，
- * 以及 D1 卡片形态（分段条 + 注释）与合并卡详情弹窗的 markup 口径。
+ * 以及卡片形态（海报右下角季圆点，无注释文字）与合并卡详情弹窗的 markup 口径。
  *
  * 纯层无 DOM 依赖：seasons.ts 只 import 域内类型，shared.ts 的渲染件只 import
  * core/ui/str 与域内常量——本文件按 node 环境跑，刻意不引入 jsdom（跑得快、也顺带
@@ -12,7 +12,7 @@ import {
   seasonNumber, parseSeasonName, seriesKeyOf, isSeriesKey,
   mergeSeasonCards, cardFace, cardGroup, type SeriesCard,
 } from '../../src/cinema/seasons';
-import { cardHtml, pcardHtml, seasonBarHtml, seasonSegState, seriesStatus, seriesDetailModalHtml } from '../../src/cinema/shared';
+import { cardHtml, pcardHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesDetailModalHtml } from '../../src/cinema/shared';
 import type { CinemaItem } from '../../src/cinema/state';
 
 /** 造条目（字段默认值不参与本组断言） */
@@ -138,28 +138,35 @@ describe('cinema 季进度条与合并卡 markup（D1）', () => {
     expect(seriesStatus([slot(watched), slot({ ...watched, name: 'B' })])).toBe(2);
   });
 
-  it('分段条：一段 = 一季，类名即状态；注释报在看季号与已看进度', () => {
-    const bar = seasonBarHtml([{ no: 1, item: watched }, { no: 2, item: watching }, { no: 3, item: want }]);
-    expect(bar).toContain('<i class="watched"></i><i class="watching"></i><i class="empty"></i>');
-    expect(bar).toContain('S2 在看 · 1/3 季');
+  it('季圆点：一个圆点 = 一季，类名即状态；**不出任何可见注释文字**', () => {
+    const dots = seasonDotsHtml([{ no: 1, item: watched }, { no: 2, item: watching }, { no: 3, item: want }]);
+    expect(dots).toContain('class="season-dots"');
+    expect(dots).toContain('<i class="watched"></i><i class="watching"></i><i class="empty"></i>');
+    // 用户 2026-09-18 点名去掉「全 N 季已看」这类注释 → 卡面不再有任何文字，
+    // 进度改由 aria-label 供读屏（可见文字里连「季」字都不该出现）
+    expect(dots).not.toContain('bar-note');
+    expect(dots).not.toContain('>全 ');
+    expect(dots).toContain('aria-label="各季进度：共 3 季，已看 1、在看 1、未看 1"');
+    // 全部已看 / 无在看季也不改口径（没有文字可改）
+    const all = seasonDotsHtml([{ no: 1, item: watched }]);
+    expect(all).toContain('aria-label="各季进度：共 1 季，已看 1、在看 0、未看 0"');
   });
 
-  it('无在看季时注释改口径：全部已看 → 「全 N 季已看」，否则「已收 x/y 季」', () => {
-    expect(seasonBarHtml([{ no: 1, item: watched }])).toContain('全 1 季已看');
-    expect(seasonBarHtml([{ no: 1, item: watched }, { no: 2, item: want }])).toContain('已收 1/2 季');
-  });
-
-  it('合并卡：pcard-series + series: 键 + 进度条 + 聚合角标；普通卡无进度条', () => {
+  it('合并卡：pcard-series + series: 键 + 季圆点在**海报区内**（右下角）+ 聚合角标', () => {
     const card = mergeSeasonCards([watched, watching, want], true)[0] as SeriesCard;
     const html = cardHtml(card, null);
     expect(html).toContain('class="pcard pcard-series"');
     expect(html).toContain('data-cinema-key="series:剧集:老友记"');
-    expect(html).toContain('class="season-bar"');
+    expect(html).toContain('class="season-dots"');
     expect(html).toContain('>在看</span>'); // 聚合角标 = 在看
     expect(html).toContain('<div class="pname">老友记</div>');
-    // 单条目卡（pcardHtml 老入口）行为不变：无季进度条、键仍是条目键
+    // 圆点必须落在 .pw 内、名字之前——挂在 .pw 之外会多占卡片高度（用户要的就是不占高度）
+    const iDots = html.indexOf('season-dots');
+    expect(iDots).toBeGreaterThan(html.indexOf('<div class="pw">'));
+    expect(iDots).toBeLessThan(html.indexOf('<div class="pname">'));
+    // 单条目卡（pcardHtml 老入口）行为不变：无季圆点、键仍是条目键
     const plain = pcardHtml(watched, null, true);
-    expect(plain).not.toContain('season-bar');
+    expect(plain).not.toContain('season-dots');
     expect(plain).toContain('pw-fetch');
   });
 

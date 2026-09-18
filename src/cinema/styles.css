@@ -84,16 +84,16 @@
 .bz-cinema--midnight .pmeta{font-size:var(--bz-font-caption);color:var(--ink-3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bz-cinema--midnight .pstars{font-size:10.5px;color:var(--star);margin-top:3px;letter-spacing:1px}
 .bz-cinema--midnight .pstars .num{color:var(--ink-2);margin-left:var(--bz-space-xs);letter-spacing:0}
-/* 剧集按季合并（cinemaMergeSeasons，issue 376 / ADR-0168）：海报区下方的季进度条（D1 形态）。
-   一段 = 一季：金实 = 已看 / 橙斜纹 = 在看 / 空段描边 = 未看（想看）。状态功能色双主题一致，
-   故 watched 取 --gold（午夜场即 #e0aa4b）、watching 硬编码状态橙（与 shared.ts::ST_COLOR 同值）。
-   注意：必须挂在 .pcard 下、.pw 之外——.pw 是 aspect-ratio + overflow:hidden 的有界盒，
-   非绝对定位的附加行会被整条裁掉（2026-09-18 原型踩过）。 */
-.bz-cinema--midnight .season-bar{display:flex;gap:3px;margin-top:7px;height:6px}
-.bz-cinema--midnight .season-bar i{flex:1 1 0;min-width:0;border-radius:3px;background:var(--chip);box-shadow:inset 0 0 0 1px var(--line)}
-.bz-cinema--midnight .season-bar i.watched{background:var(--gold);box-shadow:none}
-.bz-cinema--midnight .season-bar i.watching{background:repeating-linear-gradient(90deg,#d97c1d 0 5px,#6b4310 5px 9px);box-shadow:none}
-.bz-cinema--midnight .bar-note{font-size:var(--bz-font-caption);color:var(--ink-2);margin-top:4px;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 剧集按季合并（cinemaMergeSeasons，issue 376 / ADR-0168）：海报**右下角**的季圆点。
+   一个圆点 = 一季（左→右即季号顺序）：金实 = 已看 / 橙实 = 在看 / 空心描边 = 未看·想看。
+   注释文字整条不出（用户 2026-09-18 定稿），故圆点自带一层半透明深色底衬——海报深浅不一，
+   光靠圆点自身颜色读不出来；底衬固定不随亮暗翻转（圆点坐在图片上，与面板主题无关）。
+   绝对定位在 .pw 内：不占卡片高度，也不受 .pw 的 overflow:hidden 影响（图与圆点同一有界盒）。 */
+.bz-cinema--midnight .season-dots{position:absolute;right:6px;bottom:6px;z-index:2;display:flex;flex-wrap:wrap;justify-content:flex-end;gap:3px;max-width:calc(100% - 12px);padding:4px 6px;border-radius:99px;background:rgba(10,8,4,.58)}
+.bz-cinema--midnight .season-dots i{flex:none;width:6px;height:6px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(236,229,211,.5)}
+.bz-cinema--midnight .season-dots i.watched{background:#e0aa4b;box-shadow:none}
+.bz-cinema--midnight .season-dots i.watching{background:#d97c1d;box-shadow:0 0 0 1.5px rgba(217,124,29,.4)}
+.bz-cinema--midnight .season-dots i.empty{background:transparent}
 /* 午夜场 · 移动端：真机全屏。
    探索稿那套 396×780 + 10px 黑边框 + 26px 圆角是「评审稿里的手机模型框」，落域时被
    照搬进插件 → 真机上等于在手机屏幕里再画一台手机（上下留 66px、左右留 7px）。

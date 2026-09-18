@@ -113,34 +113,35 @@ export function cardStatus(e: CardEntry): number {
 }
 
 /**
- * 季进度条（D1 拍板形态）：一行分段条（一段 = 一季，季号升序）+ 一行注释。
- * 注释口径：在看季优先报季号，「已收 x/y 季」的 y = 库内季数（不臆造全剧季数——
- * 笔记里没有可信的总季数来源，「季集」字段是每季集数不是季数）。
+ * 季圆点（2026-09-18 用户二次点名形态）：**一个圆点 = 一季**，贴在**海报右下角**，
+ * **不出注释文字**——原 D1 的那句「全 N 季已看 / S6 在看 · 6/7 季」按用户要求整条去掉
+ * （卡片因此回到原高度，季进度也不占名字上方的行）。
+ * 三态与分段条同口径：金实 = 已看 / 橙实 = 在看 / 空心描边 = 未看·想看；季号顺序即左右顺序，
+ * 季多时换行且仍右对齐。文字去掉后信息只剩颜色，故补 `role=img` + aria-label 供读屏。
  */
-export function seasonBarHtml(seasons: SeasonSlot[]): string {
-  const segs = seasons.map((s) => `<i class="${seasonSegState(s.item)}"></i>`).join('');
-  const total = seasons.length;
-  const done = seasons.filter((s) => seasonSegState(s.item) === 'watched').length;
-  const watching = seasons.find((s) => seasonSegState(s.item) === 'watching');
-  const note = watching
-    ? `S${watching.no} 在看 · ${done}/${total} 季`
-    : done === total ? `全 ${total} 季已看` : `已收 ${done}/${total} 季`;
-  return `<div class="season-bar">${segs}</div><div class="bar-note">${note}</div>`;
+export function seasonDotsHtml(seasons: SeasonSlot[]): string {
+  const n = { watched: 0, watching: 0, empty: 0 };
+  const dots = seasons.map((s) => {
+    const st = seasonSegState(s.item);
+    n[st]++;
+    return `<i class="${st}"></i>`;
+  }).join('');
+  const label = `各季进度：共 ${seasons.length} 季，已看 ${n.watched}、在看 ${n.watching}、未看 ${n.empty}`;
+  return `<span class="season-dots" role="img" aria-label="${esc(label)}">${dots}</span>`;
 }
 
 /**
  * 片卡 HTML 唯一出口（desk 网格 / mob 网格 / 局部重刷共用；data-cinema-key = CM3 稳定键，
  * 合并卡为 `series:` 键）。fetching=后台抓取中 → 海报区遮罩 spinner（ADR-0113）。
- * 合并卡与普通卡同构：海报区 / 季进度条（仅合并卡）/ 名字 / meta / 星级；
- * 正脸 = 最近观看的一季，评分取最新已评季——卡片读作「你最近在追的那一季」。
+ * 合并卡与普通卡同构：海报区（含季圆点）/ 名字 / meta / 星级——季圆点贴在**海报右下角**，
+ * 不额外占卡片高度；正脸 = 最近观看的一季，评分取最新已评季（读作「你最近在追的那一季」）。
  */
 export function cardHtml(e: CardEntry, posterUrl: string | null, fetching = false): string {
   const it = e.kind === 'series' ? e.face : e.item;
   const st = cardStatus(e);
   const r = e.kind === 'series' ? e.rating : it.rating;
   return `<div class="pcard${e.kind === 'series' ? ' pcard-series' : ''}" data-cinema-key="${esc(e.kind === 'series' ? e.key : itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
-    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''}</div>
-    ${e.kind === 'series' ? seasonBarHtml(e.seasons) : ''}
+    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''}${e.kind === 'series' ? seasonDotsHtml(e.seasons) : ''}</div>
     <div class="pname">${esc(e.kind === 'series' ? e.name : it.name)}</div>
     <div class="pmeta">${esc(it.year || '')}${it.year && it.director ? ' · ' : ''}${esc(it.director || '')}</div>
     <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
