@@ -285,33 +285,97 @@ export async function flowDeleteNews(article: any): Promise<void> {
 // ---------- 批量已读 + 误操作撤销（enh 包 4/5） ----------
 
 /**
+ * 批量标记已读结果（新-9/CB12 反馈口径 + 批量撤销兜底）：
+ * - bumped = 本轮真正标读的条数（确认框停留窗口内面板「打开即已读」可能已消化若干篇，
+ *   通知按实际数，不按动作前快照虚报）；
+ * - snapshot = 动作前受影响条目 raw 快照（盘上顺序升序收集）——flowUndoMarkAllRead
+ *   批量撤销入口的恢复依据（撤销兜底此前只覆盖单篇，整源清扫误触无反悔门）。
+ */
+export interface MarkAllReadResult {
+  bumped: number;
+  snapshot: any[];
+}
+
+const NO_MARK_ALL: MarkAllReadResult = { bumped: 0, snapshot: [] };
+
+/**
  * 批量标记已读（rail 源行「全部标为已读」）：单次读改写——N 篇一次落盘，不逐篇入队
  * （防 N 次读-写窗口放大与 daemon 的竞态）；批量路径不逐篇发行为流事件
  * （news:read 为单篇阅读语义，整源清扫不属于「阅读」）。
  */
-export async function flowMarkAllRead(raws: any[]): Promise<void> {
+export async function flowMarkAllRead(raws: any[]): Promise<MarkAllReadResult> {
   const keys = new Set(raws.filter(Boolean).map((r) => articleKeyOf(r)));
-  if (!keys.size) return;
+  if (!keys.size) return NO_MARK_ALL;
   pauseReadingSession();
-  await enqueueNewsWrite(async () => {
+  return enqueueNewsWrite(async (): Promise<MarkAllReadResult> => {
     const res = await readNewsData();
-    if (!res.ok || res.missing) return;
+    if (!res.ok || res.missing) return NO_MARK_ALL;
     const today = localDayKey();
     const s = res.data.stats || { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    // CB3：stats 子桶缺段守卫（旧数据/手改盘可能缺 byPlatform/byDate，bumpStats 同款兜底——
+    // 此前只有整段兜底，缺子桶批量标读直接 TypeError）
+    if (!s.byPlatform) s.byPlatform = {};
+    if (!s.byDate) s.byDate = {};
     let bumped = 0;
+    const snapshot: any[] = [];
     const list = (res.data.articles || []).map((a: any) => {
       if (a.read === true || !keys.has(articleKeyOf(a))) return a;
       bumped++;
+      snapshot.push({ ...a }); // 动作前快照（盘上顺序 = 升序）
       const next: any = { ...a, read: true, state: 'skipped' };
       const platform = a.platform || '未知';
       s.byPlatform[platform] = (Number(s.byPlatform[platform]) || 0) + 1;
       s.byDate[today] = (Number(s.byDate[today]) || 0) + 1;
       return next;
     });
-    if (!bumped) return;
+    if (!bumped) return NO_MARK_ALL;
     s.totalRead = (Number(s.totalRead) || 0) + bumped;
     s.totalSkipped = (Number(s.totalSkipped) || 0) + bumped;
     await writeNewsDataMerged({ set: { articles: list, stats: s } });
+    return { bumped, snapshot };
+  });
+}
+
+/**
+ * 批量撤销「全部标为已读」：按 flowMarkAllRead 返回的动作前快照逐条恢复 read/state/body
+ * + 统计逐桶回退（与 flowUndoHandled 同口径：仅现态仍是已读的条目回退计数，重复撤销幂等）。
+ * 按快照原序（升序）遍历——恢复是字段级还原、不 splice 不动数组位置（memo 批降序 splice
+ * 错位的教训针对插回场景，此处无插回；保持升序与动作时同向，若日后演化为插回语义不踩坑）。
+ * 走既有串行写回队列，与 daemon/其他写方不互吞。
+ */
+export async function flowUndoMarkAllRead(snapshot: any[]): Promise<void> {
+  if (!snapshot || !snapshot.length) return;
+  const beforeByKey = new Map<string, any>();
+  for (const r of snapshot) if (r) beforeByKey.set(articleKeyOf(r), r);
+  if (!beforeByKey.size) return;
+  await enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok || res.missing) return;
+    const s = res.data.stats;
+    let touched = false;
+    const list = (res.data.articles || []).map((a: any) => {
+      const before = beforeByKey.get(articleKeyOf(a));
+      if (!before) return a;
+      touched = true;
+      if (s && a.read === true) {
+        s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
+        if (a.state === 'saved') s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
+        else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
+        if (!s.byPlatform) s.byPlatform = {};
+        if (!s.byDate) s.byDate = {};
+        const platform = a.platform || '未知';
+        s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
+        const day = localDayKey();
+        s.byDate[day] = Math.max(0, (Number(s.byDate[day]) || 0) - 1);
+      }
+      const restored: any = { ...a };
+      if (before.read === undefined) delete restored.read; else restored.read = before.read;
+      if (before.state === undefined) delete restored.state; else restored.state = before.state;
+      if (before.body === undefined) delete restored.body; else restored.body = before.body;
+      return restored;
+    });
+    if (!touched) return;
+    await writeNewsDataMerged({ set: s ? { articles: list, stats: s } : { articles: list } });
   });
 }
 
@@ -335,6 +399,9 @@ export async function flowUndoHandled(rawBefore: any): Promise<void> {
         s.totalRead = Math.max(0, (Number(s.totalRead) || 0) - 1);
         if (a.state === 'saved') s.totalSaved = Math.max(0, (Number(s.totalSaved) || 0) - 1);
         else s.totalSkipped = Math.max(0, (Number(s.totalSkipped) || 0) - 1);
+        // CB3：子桶缺段守卫（对齐 bumpStats；缺桶时先补建再回退，不 TypeError）
+        if (!s.byPlatform) s.byPlatform = {};
+        if (!s.byDate) s.byDate = {};
         const platform = a.platform || '未知';
         s.byPlatform[platform] = Math.max(0, (Number(s.byPlatform[platform]) || 0) - 1);
         const day = localDayKey();

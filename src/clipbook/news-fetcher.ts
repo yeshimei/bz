@@ -11,7 +11,8 @@
  */
 import { requestUrl } from 'obsidian';
 import { httpGetText, requestUrlAsFetch } from '../core/http';
-import { notice } from '../core/notice';
+import { getApp } from '../core/app';
+import { notice, notify } from '../core/notice';
 import { readNewsData, writeNewsDataMerged, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN, type NewsSources, type NewsWriteIntent, type RssFeed } from './news-data';
 import { articleKeyOf, localDatetime } from './constants';
 import { enqueueNewsWrite } from './write-queue';
@@ -712,8 +713,11 @@ export function setNewsFetchDoneListener(fn: (r: NewsFetchResult) => void): void
   onFetched = fn;
 }
 
-/** 单轮执行（互斥 + 完成通知）：手动与自动共用 */
-async function executeFetchRound(deps?: Partial<RunFetchDeps>): Promise<NewsFetchResult | null> {
+/** 单轮执行（互斥 + 完成通知）：手动与自动共用。
+ *  CB12：补 catch——runNewsFetchRound 的意外异常（存储适配层抛错等）不再 unhandled：
+ *  手动轮弹人话错误通知，自动轮（maybeFetchNews 经 opts.silent）只 console.warn 静默计数，
+ *  不在后台周期里刷屏。返回 null = 本轮未产出结果（调用方按「抓取失败/进行中」口径反馈）。 */
+async function executeFetchRound(deps?: Partial<RunFetchDeps>, opts?: { silent?: boolean }): Promise<NewsFetchResult | null> {
   if (fetching) return null;
   fetching = true;
   try {
@@ -726,37 +730,63 @@ async function executeFetchRound(deps?: Partial<RunFetchDeps>): Promise<NewsFetc
       notice(`聚合讯抓取部分失败：${r.failedSources.join('、')}`, 'warning');
     }
     if (r.needsCookieNotice) {
-      notice('B站接口被风控拦截，请在剪藏本设置的数据源中更新 B站 Cookie', 'warning');
+      // 新-1（拍板 2026-09-12：数据源组 Cookie 设置行已移除，不恢复入口）：
+      // 文案如实描述风控与自动重试，不再指向已不存在的设置项
+      notice('B站接口被风控，将自动重试，也可稍后手动抓取', 'warning');
     }
     if (onFetched) onFetched(r);
     return r;
+  } catch (e) {
+    console.warn('[剪藏本] 聚合讯抓取失败', e);
+    if (!opts?.silent) {
+      const msg = e instanceof Error ? e.message : String(e);
+      notice(`聚合讯抓取失败：${msg}，请稍后重试`, 'error');
+    }
+    return null;
   } finally {
     fetching = false;
   }
 }
 
-/** 自动触发：距 lastFetchAt 不足间隔则静默跳过（onload / openClipbook 挂此） */
+/** 自动触发：距 lastFetchAt 不足间隔则静默跳过（onload / openClipbook 挂此）。
+ *  CB12 配套：自动轮全程静默——间隔判定的读盘抛错与轮内意外都只 console.warn 计数，
+ *  不弹错误通知（onload 后台周期不刷屏）。 */
 export async function maybeFetchNews(deps?: Partial<RunFetchDeps>): Promise<NewsFetchResult | null> {
   if (fetching) return null;
   const store = deps?.store || defaultFetchStore();
-  const disk = await store.read();
+  let disk: FetchDiskState | null;
+  try {
+    disk = await store.read();
+  } catch (e) {
+    console.warn('[剪藏本] 聚合讯抓取失败', e);
+    return null;
+  }
   if (!disk) return null;
   const intervalMin = normalizeFetchIntervalMin(disk.fetchIntervalMin);
   const now = deps?.now || Date.now;
   if (now() - disk.lastFetchAt < intervalMin * 60 * 1000) return null;
-  return executeFetchRound(deps);
+  return executeFetchRound(deps, { silent: true });
 }
 
 /** 手动触发结果反馈（命令 / 设置「立即抓取」共用；CONTEXT 通知文案：完成态动词「已」）：
  *  抓取中 → info；部分失败 → 静默（executeFetchRound 已发 warning，不叠加 success）；
- *  成功 → success 计数（手动触发无就地可见结果，保留反馈——ADR-0128） */
+ *  成功 → success 计数 + 「去剪藏本」action（效率#3：通知零动作收口——点击动态 import
+ *  openClipbook 防环（index ↔ fetcher）；openClipbook 幂等，面板已开时即置前，无害） */
 export function notifyManualFetchResult(r: NewsFetchResult | null): void {
   if (!r) {
     notice('抓取已在进行中，请稍候', 'info');
     return;
   }
   if (r.failedSources.length > 0) return;
-  notice(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : '已抓取，暂无新文章', 'success');
+  notify(r.added > 0 ? `已抓取，新增 ${r.added} 篇文章` : '已抓取，暂无新文章', {
+    type: 'success',
+    action: {
+      label: '去剪藏本',
+      onClick: () => {
+        void import('./index').then((m) => m.openClipbook(getApp()));
+      },
+    },
+  });
 }
 
 /** 手动触发（bz-clipbook-fetch-now / 设置组「立即抓取」）：忽略间隔立即抓 */

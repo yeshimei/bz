@@ -97,6 +97,11 @@ export async function readNewsAndSidecar(): Promise<PanelData> {
   const clipNotes = await scanClipDirectory(clipDir(), {
     vault: getApp().vault,
   });
+  // 效率#2：被契约拒收的剪藏不再凭空蒸发——每次装载 warn 一次（含路径清单，控制台可定位；
+  // 面板内可视化呈现留给 UI 侧接线）
+  if (clipNotes && clipNotes.rejected > 0) {
+    console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
+  }
   const clipUrls = clipUrlSet(clipNotes || []);
 
   M.articles = data.articles;

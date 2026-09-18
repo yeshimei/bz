@@ -30,6 +30,18 @@ function escapeRe(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * idx 处是否落在未闭合的 `[[…]]` wikilink 内部（新-2）：向前回扫——idx 前最近的 `[[`
+ * 若没有被更近的 `]]` 闭合，则 idx 处于双链内部（别名显示文本区）。命中此处就替换会把
+ * 旧双链嵌套成 `[[A|[[B|词]]]]` 破损 markup（渲染破链并随保存物化污染剪藏 md）。
+ */
+function insideUnclosedLink(s: string, idx: number): boolean {
+  const open = s.lastIndexOf('[[', Math.max(0, idx - 1));
+  if (open === -1) return false;
+  const close = s.lastIndexOf(']]', Math.max(0, idx - 1));
+  return close < open;
+}
+
 /** notePath → basename（去目录、去 .md）：别名双链的显示名 */
 export function noteBasename(notePath: string): string {
   const base = String(notePath || '').split('/').pop() || '';
@@ -49,7 +61,9 @@ export function aliasLink(notePath: string, find: string): string {
 /**
  * 正文变换（渲染层替换与保存物化共用这一个函数）：
  * - 先换图：`![alt](src)` 按 src 精确匹配 → `![[local]]`（同 src 多处全部替换）；
- * - 再换词：marks 的 find 串首次出现 → `[[笔记 basename|find]]`（同串多处只替换第一处，接受）。
+ * - 再换词：marks 的 find 串首次出现 → `[[笔记 basename|find]]`（同串多处只替换第一处，接受）；
+ *   首现落在未闭合双链内部时（新-2：前序 mark 刚生成的别名链显示文本、或正文原有 wikilink）
+ *   顺延找下一处裸文本，宁可不锚定也不产出嵌套破链。
  * 纯函数：不改入参，返回新 body 与应用明细。
  */
 export function applyBodyTransforms(body: string, marks: ClipMark[], imageSwaps: ClipSavedImage[]): BodyTransformResult {
@@ -65,7 +79,10 @@ export function applyBodyTransforms(body: string, marks: ClipMark[], imageSwaps:
   }
   for (const mk of Array.isArray(marks) ? marks : []) {
     if (!mk || !mk.find || !mk.notePath) continue;
-    const idx = out.indexOf(mk.find);
+    let idx = out.indexOf(mk.find);
+    while (idx !== -1 && insideUnclosedLink(out, idx)) {
+      idx = out.indexOf(mk.find, idx + mk.find.length);
+    }
     if (idx === -1) continue;
     out = out.slice(0, idx) + aliasLink(mk.notePath, mk.find) + out.slice(idx + mk.find.length);
     usedMarks.push({ find: mk.find, notePath: mk.notePath, kind: mk.kind === 'passage' ? 'passage' : 'term' });

@@ -58,7 +58,7 @@ import { applyBodyTransforms, applyClipContentTransforms, findMarkdownSnippet, a
 import { saveClipImage, fetchImageDataUrl } from './image-save';
 import {
   flowSave, flowMarkRead, flowDeleteNews, setReadingSession, pauseReadingSession, flushReadingSession,
-  flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews,
+  flowMarkAllRead, flowUndoHandled, flowUndoDeleteNews, flowUndoMarkAllRead,
 } from './flow';
 import { openClipbookReport } from './report-ui';
 import type { ClipNote } from './scan';
@@ -707,7 +707,9 @@ function buildRailActions(label: string, source: SrcFilter): ItemAction[] {
   }];
 }
 
-/** 批量已读：确认框写明 N 篇 → 单次读改写落盘 */
+/** 批量已读：确认框写明 N 篇 → 单次读改写落盘 → 撤销兜底（flowUndoMarkAllRead 恢复快照）。
+ *  通知篇数取返回的实际 bumped（新-9：确认框停留窗口内竞态不虚报）；bumped=0（窗口内
+ *  已被「打开即已读」消化）不弹假通知。 */
 async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
   const ok = await openFlowDialog({
     className: 'bz-clip-dialog-editorial',
@@ -719,8 +721,13 @@ async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
     ],
   });
   if (ok !== 'ok') return;
-  await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
-  notice(`已把 ${items.length} 篇标为已读`, 'success');
+  const { bumped, snapshot } = await flowMarkAllRead(items.map((a) => a.raw).filter(Boolean));
+  if (!bumped) { await refreshAfterAction(); return; }
+  notifyUndo(`已把 ${bumped} 篇标为已读`, () => void (async () => {
+    await flowUndoMarkAllRead(snapshot);
+    notice('已撤销：条目恢复未读', 'success');
+    await refreshAfterAction();
+  })());
   await refreshAfterAction();
 }
 
