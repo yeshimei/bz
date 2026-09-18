@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 动态目录分类测试：默认目录六域命中/未命中/边界（我的/日记.md 不算）、反斜杠归一、
  * settings 注入自定义目录生效与实时切换、cinema 接管影视目录 + movieDirectory 语义、日期解析正反例。

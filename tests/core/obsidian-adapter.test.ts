@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * vault 事件适配器测试：伪造 app={vault:{on}} 捕获回调并手动触发，断言
  * 通用 + 语义两路事件与载荷、非 md 忽略、delete 失效对象只用 path、幂等挂载/摘除、

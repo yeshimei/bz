@@ -1,3 +1,4 @@
+// @vitest-environment node
 /**
  * 域事件总线测试：同步扇出顺序、退订幂等、handler 抛错隔离、通道隔离、clearDomainEvents。
  * 总线是模块级单例，每个用例后 clearDomainEvents 清场防串扰。
