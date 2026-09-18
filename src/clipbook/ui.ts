@@ -27,10 +27,11 @@
  */
 import { Component, MarkdownRenderer, TFile } from 'obsidian';
 import { getApp } from '../core/app';
-import { notice, notifyUndo } from '../core/notice';
-import { uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
+import { notice, notifyActionError, notifySaveError, notifyUndo } from '../core/notice';
+import { uiBtn, uiEmpty, uiResizable, uiVSplitter, mountIcons } from '../core/ui';
 import { cmpZh, debounce, formatRelativeTime, localDayKey } from '../core/utils';
 import { isMobileEnv } from '../core/mobile';
+import { topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -81,6 +82,13 @@ let escHandle: { unregister(): void } | null = null;
 let loading = false;
 let dirty = false; // 数据变化待刷标志（目录事件回调期）
 let loaded = false; // C5：本次会话是否已成功装载过（false = 首开必须装载）
+/** 装载错误态（效率#16）：null = 正常；corrupt（news.json 损坏）/ exception（读盘通道异常）
+ *  两态 + 原因。错误时中栏出「读取失败」错误空态（带重试钮）替代引导空态——
+ *  防「暂无内容」假空态误导用户以为数据全丢（数据明明在盘上） */
+let loadError: { kind: 'corrupt' | 'exception'; reason: string } | null = null;
+/** 会话内滚位记忆（效率#17）：id → scrollTop，切走存、切回恢复；beginSession 清空（跨会话不背） */
+const readScrollMemo = new Map<string, number>();
+const READ_SCROLL_MEMO_MAX = 200; // 上限防涨（FIFO 淘汰最旧即可，不必 LRU）
 
 // ================= 增强包常量与状态 =================
 const SEARCH_DEBOUNCE_MS = 180; // 对齐保险库/备忘录
@@ -119,13 +127,26 @@ export function showPanel(): void {
     buildDom(M.appRef);
   }
   overlayEl!.style.display = 'flex';
+  topifyZ(overlayEl); // CB1：显示即发号（ADR-0067）——与已发号的其他面板同屏时「后显示恒在上」
   panelSplit?.restore(); // 分割线尺寸记忆（容器可见后 restore 才能按实际宽度钳制）
   M.open = true;
   beginSession();
   // C5/ADR-0063：已装载且无目录事件（!dirty）直接用内存缓存渲染——零扫描瞬时显示；
   // 首开未装载或有变更才异步重读
-  if (dirty || !loaded) void loadIfNeeded();
+  if (dirty || !loaded) {
+    // 效率#17：首开装载骨架——中栏 dim 占位一行，装载完成 renderAll 自然覆盖；
+    // 三栏全空与错误态同貌，先给一句「正在装载」对冲误导（dirty 重载不占位：旧面仍可读）
+    if (!loaded && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+    void loadIfNeeded();
+  }
   else renderAll();
+  // 效率#6 + 效率#12（桌面）：先给右栏落一次焦点（j/k 即时可用），尾部聚焦搜索框
+  // （打开 → 直接打字的本能链路第一步；focus 不 select，已有词不全选）——移动端遵 core
+  // 口径跳过聚焦防软键盘
+  if (!isMobileEnv()) {
+    readPaneEl?.focus({ preventScroll: true });
+    deskSearchEl?.focus();
+  }
 }
 
 /** 装载（防重入 + 首载后保留内存面，目录事件增量走 reloadIfOpen）。
@@ -137,14 +158,32 @@ function loadIfNeeded(): Promise<void> {
   loading = true;
   loadPromise = readNewsAndSidecar()
     .then((res) => {
-      // C9：news.json 损坏（status='corrupt'）不再静默——否则面板呈现「暂无内容」假空态，
-      // 用户误以为数据全丢。missing（首用引导）语义不动。
-      if (res && res.status === 'corrupt') notice('news.json 损坏，未加载（原文件已保留）', 'error');
+      // C9 + 效率#16：news.json 损坏（status='corrupt'）不再静默——错误态标记 + 错误空态
+      //（renderList 分流）+ onRetry 通知，不再呈现「暂无内容」假空态误导。missing（首用引导）语义不动。
+      if (res && res.status === 'corrupt') {
+        loadError = { kind: 'corrupt', reason: 'news.json 损坏（原文件已保留）' };
+        notifyActionError(new Error(loadError.reason), '剪藏本数据读取', { onRetry: retryLoad });
+      } else {
+        loadError = null;
+      }
       dirty = false; loaded = true; beginSession(); renderAll();
     })
-    .catch((e) => { console.error('[剪藏本] 装载失败', e); notice('剪藏本数据读取失败', 'error'); })
+    .catch((e) => {
+      // 效率#16：装载通道异常（同步盘锁住/权限等）——错误态标记 + onRetry 通知 + 错误空态，
+      // 首开不再纯白三栏、错误与真空可辨
+      console.error('[剪藏本] 装载失败', e);
+      loadError = { kind: 'exception', reason: e instanceof Error ? e.message : String(e) };
+      notifyActionError(e, '剪藏本数据读取', { onRetry: retryLoad });
+      if (M.open) renderAll();
+    })
     .finally(() => { loading = false; loadPromise = null; });
   return loadPromise;
+}
+
+/** 错误空态「重试」出口（效率#16）：清错误标记重新装载（成功/失败均由 loadIfNeeded 收敛渲染） */
+function retryLoad(): void {
+  loadError = null;
+  void loadIfNeeded();
 }
 
 /** 目录文件事件触发的重载（面板隐藏期记脏不丢——C5：重开时按需重读而非丢弃事件后全量重扫） */
@@ -182,6 +221,7 @@ export function closePanel(): void {
   void flushReadingSession();
   panelResizeDetach?.flush(); // 关面板即落盘面板尺寸（review P2：恢复旧 flushPendingSize 语义）
   panelSplit?.flush(); // 关面板即落盘分割线宽度（同上语义）
+  hideSelBar(); // CB7：划选工具框挂 body，面板藏了框还悬着（要等下一次 mousedown 才被兜底收走）
   M.open = false;
   M.mobDetailOpen = false;
   // C7：移动详情 overlay 的 DOM 显示态同步复位——原实现只清布尔，重开面板会直接落在上次的详情屏
@@ -230,6 +270,7 @@ export function unloadPanel(): void {
   loadPromise = null;
   dirty = false;
   loaded = false;
+  loadError = null; // 错误态不跨卸载残留（重开按新装载判定）
   if (overlayEl) overlayEl.remove();
   overlayEl = null;
   readerEl = null;
@@ -239,6 +280,8 @@ export function unloadPanel(): void {
   listEl = null;
   mobListEl = null;
   mobDetailEl = null;
+  mobTitleEl = null; // CB8：置空清单与 buildDom 收集对齐（漏项 = 卸载后残留 DOM 引用）
+  mobSaveBtnEl = null; // 同上
   mobSearchbarEl = null;
   deskSearchEl = null;
   expandedMobArch.clear(); // 面板重开折叠态复位（会话内详情往返不丢）
@@ -301,8 +344,18 @@ function buildDom(app: any): void {
     if (!row) return;
     toggleSource(JSON.parse(row.dataset.src || 'null'));
   });
-  // 桌面搜索（enh 包 1）：180ms 防抖对齐保险库/备忘录
-  deskSearchEl!.addEventListener('input', () => searchDebounced());
+  // 桌面搜索（enh 包 1）：180ms 防抖对齐保险库/备忘录；✕ 显隐随词同步（效率#12）
+  deskSearchEl!.addEventListener('input', () => { syncDeskSearchClear(); searchDebounced(); });
+  // 效率#11：搜索框内 ESC 清词——有词 = 只清词不冒泡（escManager 的 document 层收不到，
+  // 防「清词变成关整个面板」）；无词放行（关面板语义不变，与移动「关闭」钮二段语义同向）
+  deskSearchEl!.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !deskSearchEl!.value.trim()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    clearDeskSearch();
+  });
+  // 效率#12：尾部 ✕ 一键清除（有词才显示，syncDeskSearchClear 同步）——点 = 清词 + 刷新 + 焦点回框
+  overlayEl.querySelector('[data-clip-search-clear]')?.addEventListener('click', () => clearDeskSearch());
   // 右栏常驻委托（enh 包 3/6c）：正文外链（md 锚点 data-clip-ext）+「打开笔记」点击 + ←→/jk 条目切换
   readPaneEl!.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -323,6 +376,13 @@ function buildDom(app: any): void {
     if (t.closest('[data-clip-open-note]') && M.cur) openNote(M.cur);
   }, true); // capture：先于 Obsidian 的 internal-link 监听
   readPaneEl!.addEventListener('keydown', (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return; // CB5：修饰键组合不劫持（Ctrl/Cmd+K 等还给自己）
+    // C-UI3：「打开笔记」role=button tabindex=0 补键盘可达（railFoot 入口同款修复，Enter/Space 触发）
+    if ((e.key === 'Enter' || e.key === ' ') && (e.target as HTMLElement).closest?.('[data-clip-open-note]')) {
+      e.preventDefault();
+      if (M.cur) openNote(M.cur);
+      return;
+    }
     if (e.key === 'ArrowLeft' || e.key === 'k') { e.preventDefault(); stepArticle(-1); }
     else if (e.key === 'ArrowRight' || e.key === 'j') { e.preventDefault(); stepArticle(1); }
   });
@@ -445,6 +505,11 @@ function selectSource(src: any): void {
   M.mobDetailOpen = false;
   setSearchKw('');
   if (deskSearchEl) deskSearchEl.value = '';
+  // C-UI7：移动搜索栏一并复位——原实现只清桌面词，通知「查看」定位链换源后移动输入框
+  // 仍有词、列表却按无词全量渲染，两端打架
+  if (mobSearchbarEl) mobSearchbarEl.style.display = 'none';
+  const mobInput = overlayEl ? (overlayEl.querySelector('[data-clip-mob-input]') as HTMLInputElement | null) : null;
+  if (mobInput) mobInput.value = '';
   renderAll();
 }
 
@@ -461,6 +526,23 @@ function toggleSource(src: any): void {
 /** 读当前搜索词（state 扩展占位——直接模块级变量） */
 let searchKw = '';
 function setSearchKw(kw: string): void { searchKw = kw; }
+
+/** ✕ 显隐同步（效率#12）：有词才显示（input/ESC/✕/开面板四路都过这里） */
+function syncDeskSearchClear(): void {
+  const btn = overlayEl ? (overlayEl.querySelector('[data-clip-search-clear]') as HTMLElement | null) : null;
+  if (btn) btn.hidden = !deskSearchEl?.value.trim();
+}
+
+/** 桌面清词统一出口（效率#11 ESC / 效率#12 ✕ 同一收口）：输入框与状态词清空 +
+ *  ✕ 显隐同步 + 列表/rail 刷新 + 焦点回框 */
+function clearDeskSearch(): void {
+  if (deskSearchEl) deskSearchEl.value = '';
+  setSearchKw('');
+  syncDeskSearchClear();
+  renderList();
+  renderRail();
+  deskSearchEl?.focus();
+}
 /** 已展开「已收」的章（site）集合（issue 248：详情往返不丢折叠态；面板重开复位） */
 const expandedMobArch = new Set<string>();
 /** 移动目录全量条目索引（issue 248：arch 内剪藏条目点开详情——currentList 只是当前源 news 流） */
@@ -602,6 +684,7 @@ function beginSession(): void {
   deskFoldOpen.clear();
   deskFoldTouched.clear();
   expandedMobArch.clear();
+  readScrollMemo.clear(); // 效率#17：滚位记忆是会话内的，重开面板不背旧位
 }
 
 /** 搜索谓词（中栏列表过滤与 rail 计数共用——issue 206：搜索时各源统计联动） */
@@ -742,6 +825,19 @@ async function markAllRead(label: string, items: ClipArticle[]): Promise<void> {
  */
 function renderList(): void {
   if (!listEl) return;
+  // 效率#16：装载错误态分流——错误空态（图标 + 原因 + 重试钮）替代引导空态，
+  // 防 corrupt/读盘异常呈现「暂无内容」假空态误导用户以为数据全丢
+  if (loadError) {
+    listEl.innerHTML = '';
+    listEl.appendChild(uiEmpty({
+      icon: 'circle-alert',
+      title: `剪藏本数据读取失败：${loadError.reason}`,
+      actions: uiBtn({ label: '重试', icon: 'rotate-ccw', onClick: () => retryLoad() }),
+    }));
+    M.cur = null;
+    if (readerEl) renderReader();
+    return;
+  }
   const src = currentSrc();
   if (src.kind === 'clip') {
     // 剪藏本源：全量平铺（冻结序不适用；read/saved 均无语义）
@@ -843,6 +939,8 @@ function bindItemMenus(): void {
     card.addEventListener('click', (e) => {
       if (e.target && (e.target as HTMLElement).closest('.bz-item-sheet')) return;
       selectArticle(art.id);
+      // 效率#6：焦点接力右栏——点目录即「通电」j/k，不必再点一下右栏才知道快捷键活着
+      if (!isMobileEnv()) readPaneEl?.focus({ preventScroll: true });
     });
   });
   // 桌面折叠行点击开合（已读/已收两段独立；renderList 重建 DOM 后重挂）
@@ -924,7 +1022,14 @@ function transformBodyForRead(a: ClipArticle, body: string): string {
 function bindImgFallback(container: HTMLElement): void {
   container.querySelectorAll('img').forEach((img) => {
     img.addEventListener('error', () => img.remove(), { once: true });
+    // CB6：挂监听前已加载失败的图（缓存 404/慢网竞态，error 不会再触发）——按 complete + naturalWidth 直判摘除
+    if (img.complete && img.naturalWidth === 0) img.remove();
   });
+}
+
+/** 测试钩子：CB6 回归用（bindImgFallback 私有，经渲染链驱动成本过高） */
+export function __bindImgFallbackForTests(container: HTMLElement): void {
+  bindImgFallback(container);
 }
 
 function renderReader(): void {
@@ -1094,13 +1199,31 @@ function selectArticle(id: string): void {
   const a = deskFlat().find((x) => x.id === id);
   if (!a) return;
   const changed = !M.cur || M.cur.id !== a.id;
+  // 效率#17：会话内滚位记忆——切走先存当前篇 scrollTop（上限 FIFO 防涨），落位后恢复目标篇
+  // 的记忆值；无记忆 = 归顶（维持 issue 206「切换从开头读」语义，仅「回看」方向受益）
+  const readScroller = () => (readPaneEl ? (readPaneEl.querySelector('.bz-clip-read-scroll') as HTMLElement | null) : null);
+  if (changed && M.cur) {
+    const sc = readScroller();
+    if (sc) {
+      if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
+        const oldest = readScrollMemo.keys().next().value;
+        if (oldest !== undefined) readScrollMemo.delete(oldest);
+      }
+      readScrollMemo.set(M.cur.id, sc.scrollTop);
+    }
+  }
   M.cur = a;
   // ADR-0108 Q5：桌面也「打开即已读」——与移动同动线（含 ←→/jk 步进）；会话内原位灰显
   markReadOnOpen(a);
   renderList();
   renderReader();
   renderMobDetail();
-  if (changed) resetReadScroll();
+  if (changed) {
+    const sc = readScroller();
+    if (sc) sc.scrollTop = readScrollMemo.get(a.id) || 0;
+  }
+  // 效率#6：焦点接力右栏（j/k 即时可用；preventScroll 防落焦跳动滚动位）
+  if (!isMobileEnv()) readPaneEl?.focus({ preventScroll: true });
 }
 
 async function doSave(a: ClipArticle | null): Promise<void> {
@@ -1119,7 +1242,14 @@ async function doMarkRead(a: ClipArticle | null): Promise<void> {
   // C32：动作前快照按磁盘现态重取——「打开即已读」已把内存 raw.read 同步置 true（会话读取位），
   // 直接 {...a.raw} 会把污染态当动作前态，6 秒内撤销「恢复未读」实际仍已读
   const rawBefore = await rawBeforeFromDisk(a);
-  const res = await flowMarkRead(a);
+  let res;
+  try {
+    res = await flowMarkRead(a);
+  } catch (e) {
+    // CB2 UI 半：写层抛错不再 unhandled——人话错误 toast（写层透传由批 B 落地，未透传时本 catch 不触发）
+    notifySaveError(e, '标记已读');
+    return;
+  }
   if (!res.changed) {
     // 盘面已是目标态（落盘窗口内重复标读；flow 内已守卫不发事件）→ 不给假撤销，只收敛显示
     await refreshAfterAction();
@@ -1144,25 +1274,26 @@ async function rawBeforeFromDisk(a: ClipArticle): Promise<any> {
 
 /** 撤销标记已读（enh 包 5）：恢复动作前条目态 + 统计回退，走串行写回队列 */
 async function undoMarkRead(rawBefore: any): Promise<void> {
-  await flowUndoHandled(rawBefore);
+  try {
+    await flowUndoHandled(rawBefore);
+  } catch (e) {
+    notifySaveError(e, '撤销'); // CB2 UI 半：撤销链失败可感知，不再 unhandled rejection
+    return;
+  }
   notice('已撤销：条目恢复未读', 'success');
   await refreshAfterAction();
 }
 
+/** 删除 news 条目（效率整改 5 免确认口径：notifyUndo 撤销兜底已覆盖误删风险，
+ *  确认 + 撤销双保险只是多一次打断；对齐 memo 先例——点删除 → 已删除 + 撤销，一道） */
 async function deleteNewsItem(a: ClipArticle): Promise<void> {
-  const ok = await openFlowDialog({
-    className: 'bz-clip-dialog-editorial',
-    title: '删除条目',
-    message: `确定从收件流删除「${a.title}」吗？删除后可在通知中撤销。`,
-    actions: [
-      { label: '取消', value: 'cancel' },
-      // danger（issue 291 评审补）：删除类主动作标 danger → 主钮中性底 + 红字（手册 §9/§10）
-      { label: '删除', value: 'ok', cta: true, danger: true },
-    ],
-  });
-  if (ok !== 'ok') return;
   const rawBefore = { ...(a.raw || {}) }; // 动作前快照（撤销插回 news.json 用）
-  await flowDeleteNews(a);
+  try {
+    await flowDeleteNews(a);
+  } catch (e) {
+    notifySaveError(e, '删除条目'); // CB2 UI 半：删除链失败可感知，不再 unhandled rejection
+    return;
+  }
   void clearArticleTracking(a.id).catch(() => { /* 侧写残留无害，不阻断删除 */ });
   notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
   await refreshAfterAction();
@@ -1175,20 +1306,10 @@ async function undoDeleteNews(rawBefore: any): Promise<void> {
   await refreshAfterAction();
 }
 
-/** 删除剪藏笔记（enh 包 5 确认流 + issue 336/ADR-0149 trash 前 source 降级）。
+/** 删除剪藏笔记（效率整改 5 免确认 + issue 336/ADR-0149 trash 前 source 降级）：
+ *  文件级删除进系统回收站 + 内容快照撤销原路径重建，双兜底覆盖误删，不再前置确认。
  *  导出仅供删除流集成测试复用（真实入口 = 条目动作菜单的删除项）。 */
 export async function deleteClipNote(a: ClipArticle): Promise<void> {
-  const ok = await openFlowDialog({
-    className: 'bz-clip-dialog-editorial',
-    title: '删除剪藏',
-    message: `确定删除剪藏「${a.title}」吗？文件将移入系统回收站。`,
-    actions: [
-      { label: '取消', value: 'cancel' },
-      // danger（issue 291 评审补）：删除剪藏确认同口径
-      { label: '删除', value: 'ok', cta: true, danger: true },
-    ],
-  });
-  if (ok !== 'ok') return;
   const note = a.note as ClipNote | undefined;
   if (note && note.file) {
     try {
@@ -1212,21 +1333,29 @@ export async function deleteClipNote(a: ClipArticle): Promise<void> {
       notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
       await refreshAfterAction();
     } catch (e) {
-      notice('删除失败，请检查文件权限', 'error');
+      // 一致#15：错误人话化——动作名 + 原因 + 重试途径，替换无归因的「请检查文件权限」
+      notifyActionError(e, '删除剪藏');
     }
   }
 }
 
-/** 撤销删除剪藏笔记（enh 包 5）：按动作前内容快照在原路径重建 */
+/** 撤销删除剪藏笔记（enh 包 5）：按动作前内容快照在原路径重建。
+ *  P3 新-5：create 前目录兜底——用户顺手清了空目录时 create 直接抛错卡在最后一步，
+ *  缺目录先补建；失败文案分型（同名冲突 / 其他原因），不再单一归因「同名文件」误导排查 */
 async function undoTrashClip(path: string, content: string): Promise<void> {
   if (!path) return;
   try {
+    const dir = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : '';
+    if (dir && !getApp().vault.getAbstractFileByPath(dir)) {
+      try { await getApp().vault.createFolder(dir); } catch (e) { /* 并发建目录竞态无害 */ }
+    }
     await getApp().vault.create(path, content);
     clipBodyCache.delete(path);
     notice('已撤销删除：剪藏已恢复', 'success');
     await refreshAfterAction();
   } catch (e) {
-    notice('撤销失败：原路径已存在同名文件', 'error');
+    const msg = e instanceof Error ? e.message : String(e);
+    notice(/exist|已存在/i.test(msg) ? '撤销失败：原路径已存在同名文件' : `撤销失败：${msg}，请重试`, 'error');
   }
 }
 
@@ -1241,7 +1370,7 @@ async function copyText(text: string, okMsg: string): Promise<void> {
     await navigator.clipboard.writeText(text);
     notice(okMsg, 'success');
   } catch (e) {
-    notice('复制失败', 'error');
+    notifyActionError(e, '复制'); // 一致#15：带原因可辨（剪贴板权限/非安全上下文各归其位）
   }
 }
 
@@ -1766,7 +1895,7 @@ async function handleAnchorCreated(kind: 'term' | 'passage', notePath: string, s
     }
   } catch (e) {
     console.warn('[剪藏本] 划词锚定写入失败', e);
-    notice('锚定写入失败', 'error');
+    notifyActionError(e, '锚定写入'); // 一致#15：动作名 + 原因 + 重试途径
   }
 }
 
@@ -1849,7 +1978,7 @@ async function handlePlateCreated(notePath: string, a: ClipArticle): Promise<voi
     }
   } catch (e) {
     console.warn('[剪藏本] 图版来源登记失败', e);
-    notice('图版来源登记失败', 'error');
+    notifyActionError(e, '图版来源登记'); // 一致#15：动作名 + 原因 + 重试途径
   }
 }
 

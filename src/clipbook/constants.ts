@@ -13,11 +13,6 @@ export function articleKeyOf(a: any): string {
   return 'td:' + String((a && a.title) || '') + '|' + String((a && a.date) || '');
 }
 
-/** 空数据侧写（clipbook.json） */
-export function emptyData() {
-  return { articleOverrides: {}, savedArchive: [], order: [] };
-}
-
 /** 摘要截取：正文首段清洗（链接/图片/空白 → 清理），限长后加省略号 */
 export function excerpt(body: string, max = 90): string {
   const s = String(body || '')

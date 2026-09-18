@@ -147,7 +147,7 @@ describe('clipbook UI 桌面三栏', () => {
     expect(document.querySelector('.bz-panel-overlay')).toBeTruthy();
     unloadPanel();
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
-    expect(M.overlay).toBeNull();
+    expect(M.open).toBe(false); // A8 死代码清扫：M.overlay 字段已删（无消费者），复位口径改验 open
   });
 
   it('C2/C6：同 UP 多条未读 rail 只出一行；upInfo 回填名字', async () => {

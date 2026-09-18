@@ -262,8 +262,3 @@ async function renderBody(withToast: boolean): Promise<void> {
     if (alive()) body.innerHTML = ERROR_HTML;
   }
 }
-
-/** 域外入口便捷形（main.ts 命令表回调同构：与各域 open(app) 一形） */
-export function openClipbookReportCommand(app?: App): void {
-  openClipbookReport(app);
-}

@@ -67,9 +67,11 @@ describe('C9 news.json 损坏不再静默', () => {
     vault.files.set(getNewsFilePath(), broken);
     openClipbook(getApp());
     await vi.waitFor(() => expect(M.open).toBe(true));
+    // 翻转（效率#16 错误态分流）：损坏通知改走 notifyActionError——文案 = 动作名 + 原因 + 重试途径，
+    // 且中栏以错误空态（含重试钮）替代引导空态
     const msgEl = await vi.waitFor(() => {
       const found = [...document.querySelectorAll('.bz-notice-msg')]
-        .find((e) => e.textContent === 'news.json 损坏，未加载（原文件已保留）');
+        .find((e) => e.textContent === '剪藏本数据读取失败：news.json 损坏（原文件已保留），请重试');
       expect(found).toBeTruthy();
       return found as HTMLElement;
     });
