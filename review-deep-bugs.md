@@ -156,6 +156,9 @@
 ### 修复批分工（5 worktree）
 A 弹窗族（编辑器/场景弹窗区 1380-1900 + core/ui/modal.ts + main.ts）：P1 脏拦截、M1、防重入、bindFormSubmit、M8、M12、M3-4、M3-6、效率#3、hint、placeholder、A1 登记表。B 数据/提醒/读链（data/reminder/state + ui 读 catch 三处）：读链健壮化、A3、A6、注释漂移、openExternal 收口。C 渲染/检索/列表（ui.ts 渲染区+render.ts+styles.css）：滚位、热区、月历族、搜索族、双击、键盘可达、空态单源、stripMdExt 下沉。D 条目动作/composer（ui.ts 920-1300 动作函数）：N8、M4、M5/M2-2、M2-3、删除口径、idx=-1、completeTimers 注释、composer 优先级/通知。E 测试/文档（tests + CONTEXT + 手册 + AGENTS 面）：测试缺口与词条修正，零 src 行为改动。
 
+### memo 修复闭环（2026-09-19）
+五批分支 `bz-fix-memo-{doc,data,render,actions,dialogs}` 串行并入（合并序 E→B→C→D→A）。跨批冲突四处均主线程解决：core/utils.ts 与 memo/ui.ts import 块双追加（取并集）；skin-dark 皮肤守卫计数 B(3)×D(免确认) 合并语义=2（删除场景+批量清理）；C 的 padStart 守卫终态归零（D 已收尾）。**主线程收口**（提交随部署）：①E 批四个契约开关翻 true（OPEN_FOR_NOTE_RESETS_SCENE/COMPOSER_READS_DEFAULT_PRIORITY/AWAIT_OPEN_FILE/READ_FAILURE_ERROR_STATE，对应 B/D 批行为已合并）；②一致#13 残款——添加场景 doSave/commitScenarios 补 `.catch(notifySaveError)`（批 B 边界外、批 A 未覆盖）；③C 批 pad2 守卫断言改合并终态。代理修正拍板两处：B 批实测「降序插回」会错位，改升序并钉死用例；B 批指认 literature 域实际目录名为 knowledge（openExternal 三域替换为 memo/favorites/knowledge）。**门禁**：tsc 0 错误；全量 390 文件 6097 例全绿（diary 闭环基线 5991）；`pnpm run build` 部署。
+
 ---
 
-（下一域：clipbook）
+（下一域：clipbook，5 方向审查并行中）
