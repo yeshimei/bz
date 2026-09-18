@@ -272,6 +272,11 @@
    清除钮定宽贴右；间距/对齐消费 spacing token，随肤随档 */
 .bz-memo-due-row { display: flex; align-items: center; gap: var(--bz-space-sm); }
 .bz-memo-due-row .bz-input { flex: 1; min-width: 0; }
+/* 截止快捷档 chip 行（效率#3）：「今天/明天」一步达——按钮走组件库 .bz-btn--sm 小号档，
+   域内只管排布（flex wrap 防窄弹窗溢出，token 间距随肤随档） */
+.bz-memo-due-quick { display: flex; flex-wrap: wrap; gap: var(--bz-space-xs); margin-top: var(--bz-space-xs); }
+/* 清除链接行（M8）：编辑态条目带 url 时的显式解绑钮——chip 钮单行贴内容框之下 */
+.bz-memo-link-row { display: flex; margin-top: calc(var(--bz-space-xs) * -1); }
 
 /* ---- 添加场景弹窗（issue 199：此前容器/提示零规则裸排） ---- */
 .bz-memo-addscene { display: flex; flex-direction: column; gap: var(--bz-space-md); margin-top: var(--bz-space-md); }

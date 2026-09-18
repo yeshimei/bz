@@ -38,8 +38,9 @@ import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-ma
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
-import { openFlowDialog } from '../core/flow-dialog';
+import { uiModal, bindFormSubmit } from '../core/ui/modal';
+import { uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
+import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { localNow } from '../core/ui/str';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
@@ -1294,6 +1295,15 @@ function addFromComposer(): void {
   })();
 }
 
+// ---------- 编辑器（新建/编辑弹窗） ----------
+
+/**
+ * 编辑/创建弹窗占位串（一致#10：提常量三处共用，禁止保存兜底用字面串比对——
+ * 「未被预填」的判定改走 dataset.clipPrefilled 状态位，改文案不再有静默失效风险）。
+ */
+const PLACEHOLDER_CONTENT = '输入备忘录内容…';
+const PLACEHOLDER_TITLE = '标题（可选）';
+
 /** 打开编辑器（item = null 新建）；用 uiModal：无关闭按钮、点遮罩/ESC 关闭
  *
  * opts（新建态预填，issue 268 移动端「底部添加 → 弹窗」交接用；编辑态忽略）：
@@ -1343,10 +1353,27 @@ export function openEditor(
   contentLabel.textContent = '内容';
   const contentInput = document.createElement('textarea');
   contentInput.className = 'bz-input';
-  contentInput.placeholder = '输入备忘录内容...';
+  contentInput.placeholder = PLACEHOLDER_CONTENT;
   contentInput.value = editing ? editing.title : parsedPreset ? parsedPreset.title : '';
   contentField.append(contentLabel, contentInput);
   form.appendChild(contentField);
+
+  // 清除链接出口（M8）：编辑态条目带 url 时给显式解绑钮——点击切换哨兵，保存时 url 落 null；
+  // 未点击则维持原语义（内容无链接时保留原 url，剪藏标题兜底不受影响）
+  let urlCleared = false;
+  if (isEdit && editing?.url) {
+    const linkRow = document.createElement('div');
+    linkRow.className = 'bz-memo-link-row';
+    const linkBtn = uiBtn({ icon: 'link', label: '清除链接', chip: true });
+    const linkLabel = linkBtn.lastElementChild as HTMLElement;
+    linkBtn.addEventListener('click', () => {
+      urlCleared = !urlCleared;
+      linkBtn.classList.toggle('is-on', urlCleared);
+      linkLabel.textContent = urlCleared ? '保存后移除链接' : '清除链接';
+    });
+    linkRow.appendChild(linkBtn);
+    form.appendChild(linkRow); // 内容框之下：url 本就提取自内容，紧贴其出口
+  }
 
   // 清单子任务（issue 354）：行内勾选态 + 文案 + 删除，「添加子任务」追加空行；保存时清洗空行
   const clDraft: MemoCheckItem[] = clInitial;
@@ -1381,7 +1408,15 @@ export function openEditor(
       inp.className = 'bz-input';
       inp.value = c.text;
       inp.placeholder = '子任务内容';
+      inp.dataset.bzNoFormSubmit = '1'; // 回车 = 追加下一行，不提交弹窗（bindFormSubmit 豁免位）
       inp.addEventListener('input', () => { clDraft[idx].text = inp.value; });
+      inp.addEventListener('keydown', (e) => {
+        // 回车追加下一行（录入肌肉记忆，效率#1 尾巴）：isComposing 守卫防 IME 组词确认误触；
+        // Ctrl/⌘+Enter 不拦——放行给弹窗 bindFormSubmit 做整表提交
+        if (e.isComposing || e.ctrlKey || e.metaKey || e.key !== 'Enter') return;
+        e.preventDefault();
+        clAddBtn.click();
+      });
       const del = document.createElement('button');
       del.type = 'button';
       del.className = 'bz-icon-btn bz-icon-btn--lg';
@@ -1390,6 +1425,9 @@ export function openEditor(
       del.addEventListener('click', () => {
         clDraft.splice(idx, 1);
         renderClRows();
+        // 删行后焦点不落空（M3-6）：落回同行位置（原下一行顶上来），末行删除则落最后一行
+        const inputs = clRows.querySelectorAll<HTMLInputElement>('input');
+        (inputs[Math.min(idx, inputs.length - 1)] as HTMLInputElement | null)?.focus();
       });
       row.append(box, inp, del);
       clRows.appendChild(row);
@@ -1408,7 +1446,7 @@ export function openEditor(
   titleBox.className = 'bz-memo-extra' + (isClip ? ' bz-memo-extra-on' : '');
   const titleInput = document.createElement('input');
   titleInput.className = 'bz-input';
-  titleInput.placeholder = '标题（可选）';
+  titleInput.placeholder = PLACEHOLDER_TITLE;
   titleInput.value = editing ? '' : (opts?.presetTitle || '');
   titleBox.appendChild(titleInput);
   form.appendChild(titleBox);
@@ -1440,8 +1478,14 @@ export function openEditor(
       const hit = await readClipUrl();
       if (!hit) return; // 非 URL 不打扰
       if (contentInput.value.trim()) return;
+      // dataset 状态位标记「占位符已被剪贴板预填」（一致#10）：保存兜底据此取值，
+      // 不再比对占位串字面量（改文案即失效的魔法串）
       contentInput.placeholder = hit.url;
-      if (hit.title) titleInput.placeholder = hit.title;
+      contentInput.dataset.clipPrefilled = '1';
+      if (hit.title) {
+        titleInput.placeholder = hit.title;
+        titleInput.dataset.clipPrefilled = '1';
+      }
       notifyClipPrefill();
     })();
   }
@@ -1532,7 +1576,26 @@ export function openEditor(
   dueClear.addEventListener('click', () => { dueInput.value = ''; dueClear.style.display = 'none'; });
   dueInput.addEventListener('input', () => { dueClear.style.display = dueInput.value ? 'inline-flex' : 'none'; });
   dueRow.append(dueInput, dueClear);
-  dueField.append(dueLabel, dueRow);
+  // 截止快捷档 chip（效率#3）：「今天/明天」一步达，免 datetime 控件逐段拨——
+  // 条目原有时刻则沿用（延后 N 天保时刻，与数据层链式同语义），无原时刻才落默认档
+  const dueQuick = document.createElement('div');
+  dueQuick.className = 'bz-memo-due-quick';
+  const quickHM = editing?.due ? editing.due.slice(11, 16) : null; // 'HH:mm'
+  ([
+    { offset: 0, day: '今天', fallbackHM: '18:00' },
+    { offset: 1, day: '明天', fallbackHM: '09:00' },
+  ] as const).forEach(({ offset, day, fallbackHM }) => {
+    const hm = quickHM || fallbackHM;
+    dueQuick.appendChild(uiBtn({
+      label: `${day} ${hm}`,
+      size: 'sm',
+      onClick: () => {
+        dueInput.value = `${moment().add(offset, 'days').format('YYYY-MM-DD')}T${hm}`;
+        dueInput.dispatchEvent(new Event('input')); // 带出行内清除钮
+      },
+    }));
+  });
+  dueField.append(dueLabel, dueRow, dueQuick);
   form.appendChild(dueField);
 
   // 周期重复（issue 353）：不重复/每周/每月/每年；自定义 N 天间隔数据结构已预留，UI 一期不暴露——
@@ -1609,7 +1672,7 @@ export function openEditor(
   let closeModal: () => void = () => {};
   const modalBox = document.createElement('div');
   modalBox.className = 'bz-memo-editor';
-  const cancelBtn = uiBtn({ label: '取消', onClick: () => closeModal() });
+  const cancelBtn = uiBtn({ label: '取消', onClick: () => requestClose() }); // 取消同走脏拦截（belongings 同款形制）
   const saveBtn = uiBtn({ label: isEdit ? '保存' : '添加', tone: 'primary' });
   const actionsRow = document.createElement('div');
   actionsRow.className = 'bz-memo-form-actions';
@@ -1617,13 +1680,53 @@ export function openEditor(
   form.appendChild(actionsRow);
   modalBox.appendChild(form);
 
-  // 保存
-  saveBtn.addEventListener('click', () => {
+  // ---- 脏表单基线（一致#1，issue 144 通病 3 挂账）：开壳前全字段快照——
+  // 内容/清单草稿/场景/优先级/截止/重复/定位绑定/剪藏标题·脚本·课程，关前逐项比对定脏
+  const baseline = {
+    content: contentInput.value,
+    clipTitle: titleInput.value,
+    script: scriptInput.value,
+    course: courseInput.value,
+    scene: defaultScene,
+    priority: editing ? editing.priority : tryGetSettings().memoDefaultPriority || 'minor',
+    due: dueInput.value,
+    recur: editing?.recur && editing.recur.kind !== 'days' ? editing.recur.kind : 'none',
+    notePath: posState.notePath,
+    notePosition: posState.notePosition ? { ...posState.notePosition } : null,
+    cl: clDraft.map((c) => ({ ...c })),
+  };
+  /** 表单脏检测（requestClose 用）：任一字段偏离开壳快照即为脏（清单逐行比对文本+勾选态） */
+  function editorDirty(): boolean {
+    const on = (el: HTMLElement) => (el.querySelector('.bz-choice-btn.is-on') as HTMLElement | null)?.dataset.value || '';
+    return (
+      contentInput.value !== baseline.content ||
+      titleInput.value !== baseline.clipTitle ||
+      scriptInput.value !== baseline.script ||
+      courseInput.value !== baseline.course ||
+      dueInput.value !== baseline.due ||
+      on(choice.el) !== baseline.scene ||
+      on(prioChoice.el) !== baseline.priority ||
+      on(recurChoice.el) !== baseline.recur ||
+      posState.notePath !== baseline.notePath ||
+      posState.notePosition?.line !== baseline.notePosition?.line ||
+      posState.notePosition?.ch !== baseline.notePosition?.ch ||
+      urlCleared ||
+      clDraft.length !== baseline.cl.length ||
+      clDraft.some((c, i) => c.text !== baseline.cl[i].text || c.done !== baseline.cl[i].done)
+    );
+  }
+
+  // 保存（doSave 具名：按钮与 bindFormSubmit 回车/Ctrl+⌘+Enter 共用入口。M2-1 防重入：
+  // uiModal 保持打开到 addItem/updateItem 完成才收，慢盘窗口期再点/再回车会双条目——
+  // 入口 busy 旗标 + 按钮禁用「保存中…」双保险，finally 复位，composerBusy 同款）
+  let saving = false;
+  const saveLabelEl = saveBtn.querySelector('span');
+  const doSave = (): void => {
+    if (saving) return; // 落盘窗口期忽略再次提交
     let content = contentInput.value.trim();
     if (!content) {
-      // 剪藏预填兜底（memo 同款）：内容空但占位符已预填 URL → 采用占位符
-      const ph = contentInput.placeholder;
-      if (ph && ph !== '输入备忘录内容...') content = ph;
+      // 剪藏预填兜底（memo 同款）：内容空但占位符已被剪贴板预填（dataset 状态位，一致#10）→ 采用占位符
+      if (contentInput.dataset.clipPrefilled === '1' && contentInput.placeholder) content = contentInput.placeholder;
     }
     if (!content) { notice('请输入内容'); return; }
     let scene: string = defaultScene;
@@ -1631,12 +1734,13 @@ export function openEditor(
     if (sceneBtnOn) scene = (sceneBtnOn as HTMLElement).dataset.value || scene;
     const prioBtnOn = prioChoice.el.querySelector('.is-on');
     const priority: string = prioBtnOn ? (prioBtnOn as HTMLElement).dataset.value || 'minor' : 'minor';
-    // 周期重复（issue 353）：'none' 归一 null；days 自定义间隔一期不出 UI——
-    // 未触碰且原值是 days 时保留原值不静默清 null（审查 P2 修复批），其余按所选三基础周期落盘
+    // 周期重复（issue 353）：'none' 归一 null；未触碰（!recurTouched）即保留原 recur 整体——
+    // days 自定义间隔与 monthly/yearly 的 anchorDay（M1：防编辑保存把「每月 31 号」剥成
+    // 「每月 28 号」的月末钳制跨代漂移）同享门控，动了选择才按所选落盘（含主动清成不重复）
     const recurBtnOn = recurChoice.el.querySelector('.is-on');
     const recurKind = (recurBtnOn ? (recurBtnOn as HTMLElement).dataset.value || 'none' : 'none') as MemoRecur['kind'] | 'none';
     const recur: MemoRecur | null =
-      !recurTouched && editing?.recur?.kind === 'days'
+      !recurTouched && editing?.recur
         ? editing.recur
         : recurKind === 'weekly' || recurKind === 'monthly' || recurKind === 'yearly'
           ? { kind: recurKind }
@@ -1648,9 +1752,8 @@ export function openEditor(
     const due = dueVal ? dueVal.replace('T', ' ') : null;
     let titleVal = titleInput.value.trim();
     if (!titleVal && scene === '剪藏') {
-      // 剪藏标题占位符兜底（memo 同款）：未手填时采用预填的展示文本/抓取标题
-      const ph = titleInput.placeholder;
-      if (ph && ph !== '标题（可选）') titleVal = ph;
+      // 剪藏标题占位符兜底（memo 同款）：未手填且占位符已被预填（dataset 状态位）→ 采用预填标题
+      if (titleInput.dataset.clipPrefilled === '1' && titleInput.placeholder) titleVal = titleInput.placeholder;
     }
     const scriptName = scene === '代码' ? (scriptInput.value.trim() || null) : null;
     let courseName: string | null = null;
@@ -1671,6 +1774,9 @@ export function openEditor(
     // 剪藏：标题可选（未填则用内容）
     const finalTitle = scene === '剪藏' && titleVal ? titleVal : content;
     const { url } = extractUrlAndDisplay(content);
+    saving = true;
+    saveBtn.disabled = true;
+    if (saveLabelEl) saveLabelEl.textContent = '保存中…';
     void (async () => {
       try {
         if (isEdit && editing) {
@@ -1686,7 +1792,9 @@ export function openEditor(
             scriptName,
             courseName,
             coursePath,
-            url: url ?? editing.url,
+            // 清除链接哨兵（M8）：显式点击「清除链接」→ url 落 null；否则维持原语义
+            // （内容里有链接用新链接，内容无链接保留原 url）
+            url: urlCleared ? null : (url ?? editing.url),
           });
           emitDomainEvent('memo', { kind: 'edited', old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
         } else {
@@ -1718,13 +1826,26 @@ export function openEditor(
       } catch (e) {
         notifySaveError(e, isEdit ? '保存备忘录' : '新建备忘录');
         console.error(e);
+      } finally {
+        saving = false;
+        saveBtn.disabled = false;
+        if (saveLabelEl) saveLabelEl.textContent = isEdit ? '保存' : '添加';
       }
     })();
-  });
+  };
+  saveBtn.addEventListener('click', doSave);
 
-  const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
+  // 关闭意图分流（脏表单拦截）：遮罩/ESC 统一过 requestClose——脏走 confirmDiscard
+  // （默认聚焦「继续编辑」防误触丢稿，皮肤类透传防两张脸），未脏直收
+  const requestClose = (): void => {
+    if (editorDirty()) confirmDiscard(() => closeModal(), undefined, skinClass());
+    else closeModal();
+  };
+  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
   closeModal = close;
-  contentInput.focus();
+  bindFormSubmit(popup, doSave); // 回车提交基元：单行 input 纯 Enter / 任意处 Ctrl+⌘+Enter（textarea 换行不拦、uiSuggest 不双发由基元保证）
+  // 桌面才强制聚焦内容框（M3-4）：移动端软键盘顶起会遮挡下部字段（core 壳本就按端跳过 input 聚焦）
+  if (!isMobileEnv()) contentInput.focus();
   // 剪藏默认场景：打开即尝试剪贴板预填（新建限定；与切场景入口共用 tryEditorClipPrefill）
   if (!isEdit && defaultScene === '剪藏') tryEditorClipPrefill();
 }
@@ -1751,12 +1872,12 @@ function openAddSceneDialog(): void {
   input.placeholder = '场景名称（如：健身）';
   const hint = document.createElement('div');
   hint.className = 'bz-memo-addscene-hint';
-  hint.textContent = '场景将写入备忘录设置（与备忘录共用）';
+  hint.textContent = '场景将写入备忘录设置（与设置面板同键）'; // 一致#9：旧域已退役，不再「与备忘录共用」
   const saveBtn = uiBtn({ label: '添加', tone: 'primary' });
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
   wrap.append(title, input, hint, row);
-  const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+  const { close, popup } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
   const doSave = () => {
     const name = input.value.trim();
     if (!name) { notice('请输入场景名称'); return; }
@@ -1775,10 +1896,9 @@ function openAddSceneDialog(): void {
   };
   saveBtn.addEventListener('click', doSave);
   cancelBtn.addEventListener('click', () => close());
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') doSave();
-    if (e.key === 'Escape') close();
-  });
+  // 回车提交走基元（A4：删手写 keydown——Enter/Escape 交 bindFormSubmit 与 uiModal 自带 escManager 层，
+  // IME 组词 isComposing 守卫由基元保证）
+  bindFormSubmit(popup, doSave);
   setTimeout(() => input.focus(), 30);
 }
 
@@ -1830,12 +1950,12 @@ function openRenameSceneDialog(scene: string): void {
   const count = M.items.filter((i) => i.scene === scene).length;
   const hint = document.createElement('div');
   hint.className = 'bz-memo-addscene-hint';
-  hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : '场景将写入备忘录设置（与备忘录共用）';
+  hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : '场景将写入备忘录设置（与设置面板同键）';
   const saveBtn = uiBtn({ label: '保存', tone: 'primary' });
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
   wrap.append(title, input, hint, row);
-  const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+  const { close, popup } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
   const doSave = () => {
     const name = input.value.trim();
     if (!name) { notice('请输入场景名称'); return; }
@@ -1843,26 +1963,38 @@ function openRenameSceneDialog(scene: string): void {
     if (name === scene) { close(); return; }
     const scenes = MemoData.getScenarios();
     if (scenes.includes(name)) { notice('场景已存在'); return; }
+    let rollbackMsg: string | null = null; // M12 两段写补偿后给人话提示（外层 catch 统一走 notifySaveError）
     void (async () => {
       try {
         const moved = await MemoData.updateSceneBulk(scene, name); // 批量改条目 scene 字段（同源 memo.json）
         if (moved === 0 && count > 0) throw new Error('场景迁移未生效');
-        await commitScenarios(scenes.map((s) => (s === scene ? name : s)), `已重命名为「${name}」`);
+        try {
+          await commitScenarios(scenes.map((s) => (s === scene ? name : s)), `已重命名为「${name}」`);
+        } catch (e) {
+          // M12 两段写补偿：第一段条目已改名而第二段设置串写盘失败 → 条目会挂列表外场景
+          // （「全部」可见、场景筛选不可达），反向迁移还原
+          try {
+            await MemoData.updateSceneBulk(name, scene);
+            rollbackMsg = '条目场景已还原，场景列表未改动，可稍后重试';
+          } catch {
+            rollbackMsg = `自动还原未成功：重新添加场景「${name}」即可找回已迁移的条目`;
+          }
+          throw e;
+        }
         if (M.activeScene === scene) M.activeScene = name;
         renderAll();
         close();
       } catch (e) {
         notifySaveError(e, '重命名场景');
+        if (rollbackMsg) notice(rollbackMsg, 'warning');
         console.error(e);
       }
     })();
   };
   saveBtn.addEventListener('click', doSave);
   cancelBtn.addEventListener('click', () => close());
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') doSave();
-    if (e.key === 'Escape') close();
-  });
+  // 回车提交走基元（A4：删手写 keydown——Enter/Escape 交 bindFormSubmit 与 uiModal 自带 escManager 层）
+  bindFormSubmit(popup, doSave);
   setTimeout(() => { input.focus(); input.select(); }, 30);
 }
 
@@ -1888,13 +2020,30 @@ async function deleteSceneConfirm(scene: string): Promise<void> {
     ],
   });
   if (ok !== 'delete') return;
+  let rollbackMsg: string | null = null; // M12 两段写补偿后给人话提示（外层 catch 统一走 notifySaveError）
   try {
-    if (count > 0) await MemoData.updateSceneBulk(scene, target);
-    await commitScenarios(others, `已删除场景「${scene}」`);
+    if (count > 0) {
+      await MemoData.updateSceneBulk(scene, target);
+      try {
+        await commitScenarios(others, `已删除场景「${scene}」`);
+      } catch (e) {
+        // M12 两段写补偿：条目已迁走而设置串移除失败 → 场景与条目错位，反向迁移还原
+        try {
+          await MemoData.updateSceneBulk(target, scene);
+          rollbackMsg = '条目已迁回原场景，场景列表未改动，可稍后重试';
+        } catch {
+          rollbackMsg = `自动还原未成功：重新添加场景「${scene}」即可找回已迁移的条目`;
+        }
+        throw e;
+      }
+    } else {
+      await commitScenarios(others, `已删除场景「${scene}」`);
+    }
     if (M.activeScene === scene) M.activeScene = '全部';
     renderAll();
   } catch (e) {
     notifySaveError(e, '删除场景');
+    if (rollbackMsg) notice(rollbackMsg, 'warning');
     console.error(e);
   }
 }
