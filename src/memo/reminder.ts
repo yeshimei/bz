@@ -10,6 +10,7 @@
  */
 import type { App, EventRef } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { notifySaveError } from '../core/notice';
 import { MemoData } from './data';
 import { getDueStatus } from './due';
 import { M } from './state';
@@ -35,21 +36,32 @@ let startPopupTimer: ReturnType<typeof setTimeout> | null = null;
 /** 已提醒笔记（同 memo remindedFiles 口径：同一笔记只提醒一次，防反复弹出） */
 const remindedFiles = new Set<string>();
 
-/** 打开备忘录面板并定位到该笔记的关联备忘录（面板已开时不闪关，只更新定位条件） */
+/** 打开备忘录面板并定位到该笔记的关联备忘录（面板已开时不闪关，只更新定位条件）。
+ *  A3：已开分支补 M.activeScene='全部' + nav 重渲，对齐冷开分支口径（notePath 定位恒「全部」
+ *  ——定位靠搜索过滤，场景过滤会把目标条目挡掉；面板停「工作」时触发提醒目标条目必须可见） */
 function openForNote(app: App, path: string): void {
   if (M.overlay) {
     M.search = path;
+    M.activeScene = '全部';
     const input = M.overlay.querySelector('[data-memo-search]') as HTMLInputElement | null;
     if (input) input.value = path;
-    M.renderFn?.();
+    M.renderFn?.(); // renderAll 含 nav 重渲（场景高亮/计数随 activeScene 刷新）
     return;
   }
   openMemoPanel(app, { notePath: path });
 }
 
-/** 启动自动弹出（memo init 同款 300ms 延迟；无重要/到期未完成备忘录不弹） */
+/** 启动自动弹出（memo init 同款 300ms 延迟；无重要/到期未完成备忘录不弹）。
+ *  A9：loadItems 抛错兜 catch（notifySaveError 对齐写路径口径），静默断链不留 unhandled rejection */
 async function autoPopupOnStart(app: App): Promise<void> {
-  const items = await MemoData.loadItems();
+  let items: MemoItem[];
+  try {
+    items = await MemoData.loadItems();
+  } catch (e) {
+    notifySaveError(e, '读取备忘录');
+    console.error(e);
+    return;
+  }
   M.items = items;
   if (!hasPendingUrgent(items)) return;
   startPopupTimer = setTimeout(() => {
@@ -68,15 +80,21 @@ export function ensureMemoReminders(app: App): void {
   // 打开笔记提醒（开关事件触发时判定——设置变更即时生效，无需重注册）
   fileOpenRef = app.workspace.on('file-open', (file: any) => {
     void (async () => {
-      if (!file) return;
-      if (tryGetSettings()?.openNoteReminder === false) return;
-      const path = file.path as string;
-      if (!path || remindedFiles.has(path)) return;
-      const items = await MemoData.loadItems();
-      M.items = items;
-      if (hasPendingUrgent(items, path)) {
-        remindedFiles.add(path);
-        openForNote(app, path);
+      // A9：读链整体兜 catch——loadItems 抛错不再静默断提醒链 + unhandled rejection
+      try {
+        if (!file) return;
+        if (tryGetSettings()?.openNoteReminder === false) return;
+        const path = file.path as string;
+        if (!path || remindedFiles.has(path)) return;
+        const items = await MemoData.loadItems();
+        M.items = items;
+        if (hasPendingUrgent(items, path)) {
+          remindedFiles.add(path);
+          openForNote(app, path);
+        }
+      } catch (e) {
+        notifySaveError(e, '读取备忘录');
+        console.error(e);
       }
     })();
   });

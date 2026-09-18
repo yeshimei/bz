@@ -29,7 +29,7 @@
  *     更早的收进尾部「更早 N 条」放全；空态 = 组件库 .bz-empty 三件套
  * 基线：按钮/输入/弹窗/平铺选择走组件库；域内只留备忘录特有布局。
  * 图标：一律 lucide。
- * 数据：与旧 memo 域读写同一 memo.json；后台任务由旧 memo 域执行。
+ * 数据：memo.json 唯一属主（ADR-0092，旧 memo 域已退役）；后台任务在域内 reminder/file-sync 执行。
  */
 import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
@@ -40,12 +40,12 @@ import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
-import { localNow } from '../core/ui/str';
+import { localNow, emptyHtmlStr } from '../core/ui/str';
 import { emitDomainEvent } from '../core/domain-bus';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import {
   debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
-  generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
+  generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle, openExternalUrl,
 } from '../core/utils';
 import { MemoData, DEFAULT_SCENARIOS, parseComposerChecklist, hasPendingNextItem } from './data';
 import { getDueStatus, formatDueText, recurLabel } from './due';
@@ -104,6 +104,12 @@ function doneWindowDays(): number | null {
   return Number.isFinite(n) && n > 0 ? n : 30;
 }
 
+/** 静默写设置（一致#13 部分）：排序/面板尺寸/上次场景三处高频低价值写盘统一走这里——
+ *  失败仅 console 留痕，不弹错误通知打断（这类写盘对用户无感知，弹窗反而扰人） */
+function saveSettingsQuiet(): void {
+  void saveSettings().catch((e) => console.error('[bz:memo] 设置写盘失败', e));
+}
+
 /** 打开面板默认场景（设置 memoOpenScene）：'@last'=取关面板记忆 memoLastScene（issue 293）；
  *  伪场景/场景名直用；非法值（含场景已删/改名）回落「全部」 */
 function resolveOpenScene(): string {
@@ -152,9 +158,16 @@ async function loadData(): Promise<void> {
   M.items = await MemoData.loadItems();
 }
 
-/** 写盘后刷新 UI */
+/** 写盘后刷新 UI。M7/效率#14：读失败兜 catch → notifySaveError（对齐写路径口径），
+ *  不再让 completeItem/togglePrio 等 `await refresh()` 的抛出面裸奔成 unhandled
+ *  rejection；读失败时 items 保持旧态，不触发重渲（列表留住上次内容） */
 async function refresh(): Promise<void> {
-  await loadData();
+  try {
+    await loadData();
+  } catch (e) {
+    notifySaveError(e, '读取备忘录');
+    return;
+  }
   M.renderFn?.();
 }
 
@@ -362,9 +375,9 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     className: 'bz-memo-sortsel',
     onChange: (v) => {
       M.sortMode = v;
-      // 同步写入默认排序（与 memo 共用 memoSortMode 键）
+      // 同步写入默认排序（与 memo 共用 memoSortMode 键）；静默写盘（一致#13：失败仅 console）
       getSettings().memoSortMode = v;
-      void saveSettings();
+      saveSettingsQuiet();
       renderAll();
     },
   });
@@ -391,7 +404,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
           const s = tryGetSettings();
           s.memoPanelWidth = w;
           s.memoPanelHeight = h;
-          void saveSettings();
+          saveSettingsQuiet(); // 静默写盘（一致#13：拖拽尾值高频低价值，失败仅 console）
         },
       },
     });
@@ -537,8 +550,42 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   const searchInput = overlay.querySelector('[data-memo-search]') as HTMLInputElement;
   searchInput.addEventListener('input', () => searchDebounced(searchInput.value.trim()));
 
+  // A9/效率#14 读链兜底：loadData 抛错（文件被同步盘锁住/权限/适配器异常等通道级失败）
+  // 不再让 renderAll 永不执行（壳在、内容区一片空白 + unhandled rejection）——
+  // 错误态 = uiEmpty 形态空态（图标 + 「备忘录加载失败」+ 原因）+「重试」钮（重新 loadData+renderAll）
+  const renderLoadError = (err: unknown): void => {
+    const contentEl = overlay.querySelector('[data-memo-content]') as HTMLElement | null;
+    if (!contentEl) return;
+    const reason = err instanceof Error ? err.message : String(err);
+    contentEl.innerHTML = emptyHtmlStr('circle-alert', '备忘录加载失败', reason);
+    contentEl.appendChild(
+      uiBtn({
+        label: '重试',
+        icon: 'refresh-cw',
+        onClick: () => {
+          void (async () => {
+            try {
+              await loadData();
+            } catch (e2) {
+              notifySaveError(e2, '读取备忘录');
+              renderLoadError(e2);
+              return;
+            }
+            renderAll();
+          })();
+        },
+      })
+    );
+    mountIcons(contentEl);
+  };
   void (async () => {
-    await loadData();
+    try {
+      await loadData();
+    } catch (e) {
+      notifySaveError(e, '读取备忘录');
+      renderLoadError(e);
+      return;
+    }
     // 提醒定位（file-open 改道接管）：搜索预设关联笔记路径（hay 含 notePath，直接命中）
     if (opts?.notePath) {
       M.search = opts.notePath;
@@ -555,7 +602,7 @@ export function closeMemoPanel(): void {
     const s = tryGetSettings();
     if (s) {
       s.memoLastScene = M.activeScene;
-      void saveSettings();
+      saveSettingsQuiet(); // 静默写盘（一致#13：失败仅 console）
     }
     M.overlay.remove();
     M.overlay = null;
@@ -784,17 +831,91 @@ function renderListContent(content: HTMLElement): void {
     const recent = cutoff === null ? done : done.filter((i) => (i.completed as string) >= cutoff);
     const earlier = done.length - recent.length;
     const listed = !open || M.showEarlierDone ? done : recent;
+    // 效率#11：批量清理入口（折叠条尾部小钮，收起时也可见）——时间窗截断 = 「清理更早 N 条」，
+    // 无截断 = 「清理已完成」；时间窗外 0 条无可清不渲染。确认流 + 撤销见 openDoneCleanDialog
+    const cleanBtn =
+      cutoff === null || earlier > 0
+        ? `<button class="bz-memo-done-more" data-memo-doneclean>${cutoff === null ? '清理已完成' : `清理更早 ${earlier} 条`}</button>`
+        : '';
     sections.push(doneBarHtml(open, done.length));
     if (open) {
       sections.push(...listed.map((it) => cardHtmlOf(it)));
       if (earlier > 0 && !M.showEarlierDone) {
         sections.push(doneMoreHtml(earlier));
       }
+      sections.push(cleanBtn); // 展开时收在列表尾部
+    } else {
+      sections.push(cleanBtn); // 收起时紧贴折叠条之下，入口保持可见
     }
   }
   content.innerHTML = sections.join('');
   mountIcons(content);
   wireCards(content);
+  // 效率#11：批量清理入口接线（done 折叠区锚点；确认流与撤销插回在 openDoneCleanDialog）
+  content.querySelector('[data-memo-doneclean]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    void openDoneCleanDialog();
+  });
+}
+
+/**
+ * 已完成区批量清理（效率#11）：确认流 → deleteCompletedBefore（数据层单任务原子读改写）
+ * → notifyUndo 批量撤销（快照按原索引升序插回原位）。候选口径与折叠区所见一致：
+ * 当前场景/搜索过滤出的已完成条目（getVisibleItems，所见即所删），再按时间窗截断
+ * （无窗 = 全部已完成）。批量不可逐条反悔故保留确认框，撤销兜底。
+ */
+async function openDoneCleanDialog(): Promise<void> {
+  const doneVisible = getVisibleItems().filter((i) => i.completed);
+  const win = doneWindowDays();
+  const cutoff = win === null ? null : moment().subtract(win, 'days').format('YYYY-MM-DD HH:mm:ss');
+  const targets = cutoff === null ? doneVisible : doneVisible.filter((i) => (i.completed as string) < cutoff);
+  if (!targets.length) {
+    notice('没有可清理的已完成备忘录');
+    return;
+  }
+  const scope = M.activeScene === '全部' ? '' : `「${sceneLabel(M.activeScene)}」视图内`;
+  const message =
+    cutoff === null
+      ? `将删除 ${scope}${targets.length} 条已完成的备忘录。\n删除后可在通知中一键撤销。`
+      : `将删除 ${scope}${targets.length} 条 ${win} 天前完成的备忘录。\n删除后可在通知中一键撤销。`;
+  const ok = await openFlowDialog({
+    title: '清理已完成备忘录',
+    message,
+    className: skinClass(), // 流程框挂 body，须显式带皮肤类（issue 291 同口径）
+    actions: [
+      { label: '取消', value: 'cancel' },
+      { label: '清理', value: 'clean', danger: true, cta: true },
+    ],
+  });
+  if (ok !== 'clean') return;
+  try {
+    const ids = new Set(targets.map((i) => i.id));
+    const removed = await MemoData.deleteCompletedBefore(cutoff, ids);
+    if (!removed.length) {
+      notice('没有可清理的已完成备忘录');
+      return;
+    }
+    // 行为流逐条记 deleted（与单条删除同 kind 同口径，smartcat 消费侧零改动）
+    for (const r of removed) emitDomainEvent('memo', { kind: 'deleted', title: r.item.title });
+    notifyUndo(`已清理 ${removed.length} 条已完成备忘录`, () => {
+      void (async () => {
+        try {
+          // 按原索引升序插回：restoreItem 是绝对位置 splice(at, 0, item)——先把小索引
+          // 条目放回，不影响大索引条目的落点；降序会因前置条目缺失而整体偏后错位
+          const sorted = [...removed].sort((a, b) => a.idx - b.idx);
+          for (const r of sorted) await MemoData.restoreItem(r.item, r.idx);
+          await refresh();
+        } catch (e) {
+          notifySaveError(e, '撤销清理');
+          console.error(e);
+        }
+      })();
+    });
+  } catch (e) {
+    notifySaveError(e, '清理已完成备忘录');
+    console.error(e);
+  }
+  await refresh();
 }
 
 /**
@@ -912,12 +1033,7 @@ function openItem(it: MemoItem): void {
     if (file) void app.workspace.getLeaf().openFile(file as any);
     else notice('关联笔记不存在');
   } else if (it.url) {
-    try {
-      (app as any).openUrl(it.url);
-    } catch (e) {
-      const electron = (window as any).require && (window as any).require('electron');
-      if (electron && electron.shell) electron.shell.openExternal(it.url);
-    }
+    openExternalUrl(app, it.url); // 一致#14：外链打开收口 core 单源（原域内 openUrl→electron 副本删除）
   }
 }
 
@@ -1906,13 +2022,19 @@ export function ensureMemo(app: App): void {
   M.appRef = app;
   registerEscapeHandler();
   subscribeMemoSync(app); // T1：同源 memo.json 跨域同步
-  void loadData();
+  // A9：读失败兜 catch（notifySaveError 对齐写路径口径），不再裸奔成 unhandled rejection
+  void loadData().catch((e) => notifySaveError(e, '读取备忘录'));
 }
 
 export function addMemo(app: App): void {
   ensureMemo(app);
   void (async () => {
-    if (!M.items.length) await loadData();
+    try {
+      if (!M.items.length) await loadData();
+    } catch (e) {
+      // 读失败只留痕：随后 openMemoPanel 自己会再读一次，失败时面板出错误空态 + 通知
+      console.error(e);
+    }
     if (!M.overlay) openMemoPanel(app);
     openEditor(null);
   })();
