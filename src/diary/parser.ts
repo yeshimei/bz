@@ -2,8 +2,11 @@
  * 日记本（diary）域解析层——原回忆墙升格正名（ADR-0115；ADR-0130 条目文件格式）
  *
  * - parseEntryFile（条目文件，纯函数：frontmatter `date`+`type`，日期时间损坏从题目降级）；
- * - parseMovieFile / parseLetterFile（影视/信，读 frontmatter + 文件创建时间）；
+ * - parseMovieFile / parseLetterFile（影视/信，读 frontmatter；信的时间段来自 frontmatter `date`）；
  * - parseBookFile（书库，读 completionDate/readingDate/title/bookReview/cover）。
+ * 时分口径（A1，ADR-0157 补记）：ctime/mtime 推导已整体退役——信件用结构化时间
+ * （frontmatter `date` 的 HH:mm 半段），影视/书在对端域补结构化时间前回落固定 `00:00`
+ * （展示 00:00 比随复制/迁移漂移的 ctime 诚实）。
  * 特殊文件解析所需的 getFileFrontmatter 以 app 参数注入（不 import ../diary/app，自包含）。
  * moment 来自 'obsidian'（测试 alias 已替换为 moment）。
  */
@@ -51,13 +54,9 @@ function getFileFrontmatter(file: any, app: any): Record<string, any> | null {
   return cache && cache.frontmatter ? cache.frontmatter : null;
 }
 
-/** 文件创建时间 → { timeStr, timeValue } */
-async function getFileTimeParts(file: any): Promise<{ timeStr: string; timeValue: number }> {
-  const stat = await file.stat;
-  const createTime = stat.ctime || stat.birthtime;
-  const m = moment(createTime);
-  return { timeStr: m.format('HH:mm'), timeValue: parseInt(m.format('HHmm')) };
-}
+/** 影视/书条目过渡口径的固定时分（A1）：无结构化时间来源，回落 00:00 而非 ctime 推导 */
+const FALLBACK_TIME = '00:00';
+const FALLBACK_TIME_VALUE = 0;
 
 /** 生成特殊文件条目的稳定 id */
 function makeEntryId(prefix: string, file: any, dateStr: string): string {
@@ -86,8 +85,9 @@ export async function parseMovieFile(file: any, app: any): Promise<DiaryEntry | 
 
     let poster = fm['海报'];
 
-    // 文件创建时间作为时分秒
-    const { timeStr, timeValue } = await getFileTimeParts(file);
+    // 时分（A1）：无结构化时间来源，回落固定 00:00（不再用 ctime 推导，见文件头注释）
+    const timeStr = FALLBACK_TIME;
+    const timeValue = FALLBACK_TIME_VALUE;
 
     // 解析标签
     let rawTag = '';
@@ -156,6 +156,10 @@ export async function parseLetterFile(file: any, app: any): Promise<DiaryEntry |
       if (!parsed.isValid()) return null;
     }
     const dateFormatted = parsed.format('YYYY-MM-DD');
+    // 时分（A1）：frontmatter `date` 的时间半段（`YYYY-MM-DD HH:mm` 形态）——结构化来源；
+    // 纯日期形态解析出 00:00，与影视/书的固定回落同口径（不再用 ctime 补时分）
+    const timeStr = parsed.format('HH:mm');
+    const timeValue = parseInt(parsed.format('HHmm'), 10);
 
     // 读取文件内容，提取正文（去掉 frontmatter）
     const fullContent = await app.vault.read(file);
@@ -171,8 +175,6 @@ export async function parseLetterFile(file: any, app: any): Promise<DiaryEntry |
     const title = file.basename;
     // 构建内容：标题（不带《》） + 空行 + 正文
     const entryContent = `**${title}**\n\n${body}`.trim();
-    // 文件创建时间作为时分秒
-    const { timeStr, timeValue } = await getFileTimeParts(file);
 
     return {
       date: dateFormatted,
@@ -199,7 +201,7 @@ export async function parseLetterFile(file: any, app: any): Promise<DiaryEntry |
  * - content = `**《title》**` + 空行 + bookReview；
  * - cover 拼进 content（`![[cover]]`），由数据层 extractMedia 提取为媒体；
  * - tag=['书']，emoji=getTagEmoji('书')；filename 为完整 vault 路径；id=makeEntryId('book',...)；
- * - 时间取文件创建时间（与影视/信同口径，用于同日混排）。
+ * - 时分回落固定 00:00（与影视同口径，A1；用于同日混排，对端书库域补结构化时间前的过渡）。
  */
 export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | null> {
   try {
@@ -230,8 +232,9 @@ export async function parseBookFile(file: any, app: any): Promise<DiaryEntry | n
       content += `\n\n![[${String(cover).trim()}]]`;
     }
 
-    // 文件创建时间作为时分秒
-    const { timeStr, timeValue } = await getFileTimeParts(file);
+    // 时分（A1）：无结构化时间来源，回落固定 00:00（不再用 ctime 推导，见文件头注释）
+    const timeStr = FALLBACK_TIME;
+    const timeValue = FALLBACK_TIME_VALUE;
 
     return {
       date: dateStr,
