@@ -422,7 +422,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     if (!editing && M.items.some((x) => x.name === name)) { panelToast(sec, '已存在同名影视，请换个名称'); return; }
     const stChanged = !editing || !item || item.status !== (cur.st === '想看' ? STATUS_WANT : cur.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED);
     const date = stChanged ? localNow() : (item!.watchDate || localNow());
-    const rating = cur.st === '已看' ? parseFloat((el.querySelector('.j-range') as HTMLInputElement).value) : cur.st === '在看' ? 0 : null;
+    // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
+    // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回
+    const rating = cur.st === '已看' ? parseFloat((el.querySelector('.j-range') as HTMLInputElement).value) : cur.st === '在看' ? 0 : -1;
     const review = cur.st === '已看' ? (el.querySelector('.j-review-t') as HTMLTextAreaElement).value.trim() : '';
     if (editing && item) {
       void saveEdit(sec, item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
