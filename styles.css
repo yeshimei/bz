@@ -15606,9 +15606,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .pw-spin{width:20px;height:20px;border:3px solid var(--chip);border-top-color:var(--gold);border-radius:50%;animation:cn-spin .8s linear infinite}
 /* ==================== 游戏库域样式（src/gameshelf/styles.css）v3 ====================
    方向 = V1 海报墙落域（2026-09-17 用户点版）：门面 hero + 工具行 + 封面网格 + 数据统计面板
-   + 全量详情弹窗。
+   + 全量详情弹窗。2026-09-18（issue 378）：头行退役，大海报顶到面板顶，常驻操作 = 右上角
+   三枚图标钮；悬浮卡片 → 海报截图快轮播 + 门面换脸。
    基座复用 core：面板壳 .bz-panel-overlay/.bz-panel-frame/.bz-panel-mtop、
-   头行 .bz-main-head、页签 .bz-segmented、筛选 .bz-chip、搜索 .bz-search、
+   页签 .bz-segmented、筛选 .bz-chip、搜索 .bz-search、
    统计卡 .bz-stat、空态 .bz-empty、弹窗 .bz-overlay-popup/.bz-dialog-*。
    本文件只写域内布局与细节。
    亮暗：全部消费 --bz token（.theme-dark/.theme-light 双组），仅「图片浮层上的文字」用
@@ -15625,35 +15626,30 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--bz-surface-1);
   overflow: hidden;
 }
-.bz-gs-panel .bz-main-head {
-  flex: none;
-  padding: 0 var(--bz-space-lg);
-  border-bottom: 1px solid var(--bz-border);
-  height: var(--bz-head-h);
-  align-items: center;
+/* ---------- 海报头（头行退役 2026-09-18）：大海报直接顶到面板顶，标题/N款一并去掉 ---------- */
+.bz-gs-heroz { flex: none; position: relative; }
+/* 常驻操作 = 海报右上角三枚图标钮（统计↔游戏墙 / 立即同步 / 移动端关闭）：
+   深色软底压在任意海报上都立得住，表意交给 title 与 aria-label */
+.bz-gs-heroops {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 4;
+  display: flex;
+  gap: 8px;
 }
-.bz-gs-panel .bz-main-head .bz-main-title { font-size: var(--bz-font-title); }
-.bz-gs-panel .bz-main-head .bz-main-spacer { display: block; }
-/* 视图入口（右侧工具位）：一个槽位随状态只出一条按钮——游戏墙上「数据统计」，
-   统计页上「游戏墙」；选中态用品牌软底，与 .bz-chip--sel 同一套语言 */
-.bz-gs-viewslot { display: inline-flex; align-items: center; }
-.bz-gs-viewbtn.is-on {
-  background: var(--bz-brand-soft) !important;
-  color: var(--bz-brand) !important;
+.bz-gs-heroops .bz-icon-btn {
+  width: 30px;
+  height: 30px;
+  color: var(--bz-on-overlay);
+  background: rgba(0, 0, 0, 0.42);
+  border-radius: var(--bz-radius-sm);
+  transition: background var(--bz-dur-fast) var(--bz-ease-out);
 }
-/* 关闭钮：桌面走点遮罩 / ESC，头行不放（issue 271）；移动端全屏面板遮不住，
-   只在那里露出来（否则手机上出去了回不来）。 */
-.bz-gs-panel .bz-main-head .bz-gs-close {
-  display: none;
-  box-shadow: none !important;
-  border: none !important;
-  background: transparent;
-  color: var(--bz-text-2);
-}
-.bz-gs-panel .bz-main-head .bz-gs-close:hover {
-  background: var(--bz-surface-hover);
-  color: var(--bz-text-1);
-}
+.bz-gs-heroops .bz-icon-btn:hover { background: rgba(0, 0, 0, 0.66); }
+.bz-gs-heroops .bz-icon-btn:disabled { opacity: 0.5; cursor: default; }
+/* 关闭钮：桌面走点遮罩 / ESC（issue 271），海报上不放；移动端全屏面板遮不住，只在那里露出来 */
+.bz-gs-heroops .bz-gs-close { display: none; }
 
 /* 状态行（同步时刻 / 进行中 / 结果摘要；空则隐藏） */
 .bz-gs-status {
@@ -15674,11 +15670,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   padding: 0 var(--bz-space-lg) var(--bz-space-lg);
 }
 
-/* ---------- 门面（列表首位）：模糊封面作环境底 ---------- */
+/* ---------- 门面（列表首位）：模糊封面作环境底；头行退役后顶格铺满（issue 378） ---------- */
 .bz-gs-hero {
   position: relative;
-  height: clamp(148px, 23vh, 208px);
-  margin: var(--bz-space-lg) calc(-1 * var(--bz-space-lg)) 0;
+  height: clamp(180px, 28vh, 264px);
   padding: 0 var(--bz-space-lg);
   overflow: hidden;
   border-bottom: 1px solid var(--bz-border);
@@ -15846,6 +15841,28 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   transition: transform var(--bz-dur-slow) var(--bz-ease-out);
 }
 .bz-gs-card:hover .bz-gs-cover img { transform: scale(1.04); }
+/* 悬浮截图快轮播（issue 378）：hover 卡片时插到海报位的浮层，全套截图叠放、is-on 者显。
+   ⚠️ 必须显式 z-index:1——hover 时封面图带 scale 变换会升级为独立层，按 DOM 序恰好盖住
+   先行插入的 reel（桌面端「轮播看不见」的病根，移动端因禁了 hover 缩放才侥幸可见）；
+   角标/时长提示再抬到 2，压住轮播。挂在 .bz-gs-cover img 之后：transition 在此重写
+  （补上 opacity 淡入淡出）。 */
+.bz-gs-reel { position: absolute; inset: 0; z-index: 1; }
+.bz-gs-rank, .bz-gs-off, .bz-gs-hint { z-index: 2; }
+.bz-gs-reel img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  /* 0.3s 一张的节奏下淡化用 fast（0.15s）：base 的 0.2s 会让每张只有 0.1s 是实相，全程半透 */
+  transition: opacity var(--bz-dur-fast) var(--bz-ease-out), transform var(--bz-dur-slow) var(--bz-ease-out);
+}
+.bz-gs-reel img.is-on { opacity: 1; }
+/* 下架款轮播跟封面同款置灰：灰度/降透明挂容器，不与 img 自己的淡入淡出 opacity 打架 */
+.bz-gs-card--off .bz-gs-reel { filter: grayscale(0.85); opacity: 0.62; }
+/* 封面加载失败的卡：is-broken 藏的是封面图，不该误伤轮播层 */
+.bz-gs-cover.is-broken .bz-gs-reel img { display: block; }
 /* 封面加载失败/无封面：留位 + 首字占位 */
 .bz-gs-cover.is-broken img { display: none; }
 .bz-gs-cover.is-broken::after {
@@ -15946,16 +15963,36 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-variant-numeric: tabular-nums;
   line-height: 1.4;
 }
+/* 卡底条（issue 378 改口径：时长条退役 → 成就进度条，宽度 = 已解/总成就；
+   无成就页的款整条不渲染——空灰条会被误读成「0% 成就」） */
 .bz-gs-strip {
   display: block;
-  margin-top: auto; /* 贴卡片底：同行里有/没有原名两种卡片，时长条仍然对齐 */
+  margin-top: auto; /* 贴卡片底：同行里有/没有原名两种卡片，进度条仍然对齐 */
   height: 2px;
   border-radius: 2px;
   background: var(--bz-code-bg);
   overflow: hidden;
 }
 .bz-gs-strip > i { display: block; height: 100%; background: var(--bz-brand); opacity: 0.7; }
+.bz-gs-strip.is-full > i { opacity: 1; }
 .bz-gs-card:hover .bz-gs-strip > i { opacity: 1; }
+/* 全成就奖杯角标：小海报右上角，裸金杯 + 深投影（不套底圈，压在任何封面上都可读）。
+   金色借 --bz-warning 档（与 --bz-on-overlay 同属「图片浮层固定色」豁免口径）。 */
+.bz-gs-trophy {
+  position: absolute;
+  top: 5px;
+  right: 6px;
+  z-index: 2;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--bz-warning);
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
+}
+.bz-gs-trophy svg { width: 18px; height: 18px; }
+.bz-gs-card:has(.bz-gs-trophy) .bz-gs-off { top: 32px; }
 
 /* ---------- 数据统计面板 ---------- */
 .bz-gs-stats {
@@ -16261,25 +16298,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     border-radius: 0;
     box-shadow: none;
   }
-  .bz-gs-panel .bz-main-head {
-    gap: var(--bz-space-sm);
-    padding: 0 var(--bz-space-md);
-  }
-  .bz-gs-panel .bz-main-head .bz-main-count { display: none; }
-  /* 移动端出关闭钮：全屏面板没有可点的遮罩，只能靠它出去 */
-  .bz-gs-panel .bz-main-head .bz-gs-close { display: inline-flex; }
-  /* 头行按钮顺序（移动端专属）：立即同步在最前 → 数据统计 → 关闭。
-     桌面仍是「数据统计 → 立即同步」（DOM 顺序不变，这里只用 flex order 翻移动端）。 */
-  .bz-gs-panel .bz-main-head .bz-btn--primary { order: 1; }
-  .bz-gs-panel .bz-main-head .bz-gs-viewslot { order: 2; }
-  .bz-gs-panel .bz-main-head .bz-gs-close { order: 3; }
-  /* 头行三钮只留图标（数据统计 / 立即同步 / 关闭）：窄屏放不下三串字，
-     表意交给 title 与 aria-label（ui.ts 里逐个补过） */
-  .bz-gs-panel .bz-main-head .bz-btn { padding: 0 10px; }
-  .bz-gs-panel .bz-main-head .bz-btn > span:not(.bz-ic) { display: none; }
-  .bz-gs-body { padding: 0 var(--bz-space-md) var(--bz-space-md); }
-  /* 移动端去掉门面（海报头）：窄屏不给整块封面 banner 留高度，进面板就是搜索与网格 */
+  /* 海报头隐藏（窄屏不给整块封面 banner 留高度），右上角图标钮落成静态一行（右对齐）——
+     关闭/同步/统计在手机上仍可达：全屏面板无可点遮罩，关闭钮必须一直在 */
   .bz-gs-hero { display: none; }
+  .bz-gs-heroops {
+    position: static;
+    justify-content: flex-end;
+    padding: 10px var(--bz-space-md) 0;
+  }
+  .bz-gs-heroops .bz-gs-close { display: inline-flex; }
+  .bz-gs-body { padding: 0 var(--bz-space-md) var(--bz-space-md); }
   /* 搜索行「固定」而不是「吸顶」（用户 2026-09-17）：窄屏把**滚动权交给网格本身**——
      工具行与头行同层、不在滚动流里，滚动列表时它天然不动，不需要 sticky。
      只作用于游戏墙（data-view=shelf）：统计页仍是整页滚动，引导态同。 */
