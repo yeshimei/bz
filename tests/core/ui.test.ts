@@ -382,6 +382,20 @@ describe('bz ui 组件库', () => {
       expect(v!.getAttribute('controls')).not.toBeNull();
       closeLightbox();
     });
+    it('媒体类型按剥查询串/锚点后的后缀判定：带 ?/# 的 .mp4/.webm 判为 video（N7）', () => {
+      // Obsidian vault.getResourcePath 产出 app://…?path=… 形态：带查询串直判后缀永远落空
+      openLightbox({ src: 'app://mockvault/我的/影视/a.mp4?path=%E6%88%91%E7%9A%84' });
+      expect(document.querySelector('.bz-lightbox video')).not.toBeNull();
+      closeLightbox();
+      openLightbox({ src: 'https://example.com/b.webm#t=30' });
+      expect(document.querySelector('.bz-lightbox video')).not.toBeNull();
+      closeLightbox();
+      // 查询串不参与判定：同形态图片仍是 img（回归保护）
+      openLightbox({ src: 'app://mockvault/attach/c.png?path=%E9%99%84%E4%BB%B6' });
+      expect(document.querySelector('.bz-lightbox img')).not.toBeNull();
+      expect(document.querySelector('.bz-lightbox video')).toBeNull();
+      closeLightbox();
+    });
   });
 
   describe('uiSwitch 开关', () => {
