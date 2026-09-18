@@ -111,8 +111,12 @@ export function uiSuggest(opts: BzSuggestOpts): {
       e.preventDefault();
     } else if (e.key === 'Enter') {
       const on = layer.querySelector<HTMLElement>('.bz-popover-item.is-on');
-      if (on) pick(on.dataset.value as string);
-      e.preventDefault();
+      if (on) {
+        pick(on.dataset.value as string);
+        e.preventDefault();
+      }
+      // 无 is-on 高亮项（效率整改 12）：放行 Enter 不 preventDefault，交还宿主表单默认
+      // 行为（回车提交）——否则联想层开着时回车被吞且什么都不发生，表单像卡了
     } else if (e.key === 'Escape') {
       close();
       e.stopPropagation(); // 只收下拉，不穿 escManager/表单层

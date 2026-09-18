@@ -27,6 +27,7 @@
 import { escManager } from './esc-manager';
 import { escapeHtml } from './utils';
 import { allocZ } from './z-order';
+import { trapFocus } from './ui/focus-trap';
 
 export interface FlowDialogAction {
   /** 按钮文案（纯文本语义，渲染前 escapeHtml） */
@@ -161,6 +162,8 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
     });
 
     let settled = false;
+    // 焦点圈闭（效率整改 6）：Tab 循环钳制在弹窗内，不再跑到被遮罩盖住的背景上
+    const releaseFocusTrap = trapFocus(popup);
     function restoreFocus(): void {
       if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
         prevActive.focus();
@@ -170,6 +173,7 @@ export function openFlowDialog(opts: FlowDialogOptions): Promise<string | undefi
       if (settled) return;
       settled = true;
       if (activeSettle === settle) activeSettle = null;
+      releaseFocusTrap();
       escHandle.unregister();
       mask.remove();
       restoreFocus();
