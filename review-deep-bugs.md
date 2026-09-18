@@ -161,4 +161,42 @@ A 弹窗族（编辑器/场景弹窗区 1380-1900 + core/ui/modal.ts + main.ts�
 
 ---
 
-（下一域：clipbook，5 方向审查并行中）
+## clipbook（剪藏本）2026-09-19 深审
+
+> 明细：`.scratch/review-deep/clipbook-{func,ui,efficiency,consistency,arch}.md`。去重后 P1×3 + P2×9 + P3×20 + 测试缺口 9。**旧账大面积在案**：review-all2 CB1-CB12 全部未修（本轮一次清）+ AS1(P2)/AS2/AS3 属 auto-summary 域（已记该域轮待办）。门禁基线：tests/clipbook 32 文件 324 例绿。
+
+### P1
+- **覆盖确认自绘壳（144 拍板迁移未落地；func 新-3 + ui C-UI8 + 一致#1 + 效率#1 合并）** `save.ts:186-220` — 全仓最后一个手绘确认框（内联样式三违规 + esc id 'clipbook-confirm' 缺 bz- 前缀 + 无 aria/焦点圈闭 + accent 主钮违 §9）；且不披露损失面（auto-summary 摘要/标签与手工编辑被整文件回退）、缺「另存新篇」第三出口。修：迁 openFlowDialog（bz-clip-dialog-editorial 皮）三出口「覆盖更新(danger)/另存为新剪藏(·2 序号)/取消」+ 披露副文案。
+- **删除双保险滞后（效率整改 5；一致#2 + 效率#10）** `ui.ts:1145-1211` — 两路删除已接 notifyUndo 仍走 openFlowDialog 确认，四域中唯一未跟。修：免确认直达撤销（memo 同款）。
+- **CB1 面板/报告 z 序零发号（C-UI1 转正）** `ui.ts:116-129,252-259` × `report-ui.ts:110-113` — 全站唯一漏网域，同屏被已发号面板压底「命令像失灵」，报告隐形时 ESC 先关看不见的层。修：showPanel/openClipbookReport 显示路径补 topifyZ。
+
+### P2
+- **新-1（func）** `news-fetcher.ts:729` — B站风控通知指向已删除的 Cookie 设置入口（09-12 拍板移除），用户无自助出路。拍板：尊重移除拍板不恢复设置行，改文案如实（自动重试）；「UP 管理加 Cookie 行」登记待拍板。
+- **新-2（func）** `anchor.ts:66-73` — 同词锚定第二个笔记时 indexOf 命中第一个别名双链内部产出 `[[A|[[B|词]]]]` 嵌套破链并物化进剪藏 md。修：searchFrom 游标或 `[[` 前缀回扫守卫。
+- **CB2/A2 写链假成功（func/ui/一致/arch 四向合并）** `news-data.ts:245-250` × `ui.ts:1107-1162` — writeNewsData 静默吞错（news.json 全写链出口，磁盘异常标已读/设置/统计全假成功）；且 UI 消费端 doMarkRead/undoMarkRead/deleteNewsItem 无 catch 成 unhandled rejection 静默回弹。修：去吞透传 + UI 三动作 catch → notifySaveError。
+- **CB4/A3 剪藏目录路径分叉** — clipDirOf（save.ts:31）独缺尾斜杠归一，读取副本 4→6 份三套写法；带尾斜杠设置下写盘/扫描/事件/同步/反查五面不一致。修：save.ts clipDirOf 升格单源（归一+缺省串一处）+ 五处改引 + clipFilePathOf 路径组装单源。
+- **CB10/A1 卸载弹窗残留** — UP/RSS 管理 + 覆盖确认三组 body 浮层不在 main onunload 收口面（closeAllModals 只管 uiModal，clipbook 零 uiModal 消费）。修：core/dom createOverlay 增 liveOverlays 登记表 + closeAllOverlays（main 接线，全域受益）+ unloadClipbook 补收口。
+- **批量已读无撤销兜底（一致#7）** `ui.ts:711-725` × `index.ts:48-73` × `flow.ts:300-314` — 整源/全库标读无反悔窗（单条反而有）；stats 子桶无守卫（CB3 同函数）。修：flowMarkAllRead 动作前快照返回 + notifyUndo 批量回退（升序插回，memo 范式）+ stats 补建桶守卫（CB3 一并）。
+- **C-UI2/效率#18 移动触控热区** — 5 组可点目标 25-37px 低于 40px 下限（顶栏动作/折叠行/存为剪藏/读下一则/报告 seg）。修：移动段 padding 抬档。
+- **C-UI3/一致#9 假可达键盘** — 「打开笔记」role=button tabindex=0 无 keydown（railFoot 同款修复漏网）；折叠行无 tabindex 无 keydown。修：readPane keydown 委托 + 折叠行 tabindex/keydown。
+- **效率#2 剪藏目录静默丢弃** `scan.ts:53,96` — 不合 frontmatter 契约/子目录的剪藏凭空蒸发零诊断（外部剪藏扩展唯一入口）。修：scan 返回 rejected 计数 + rail 脚注/空态提示。
+- **效率#16 错误态缺失** `ui.ts:138-148` — 装载失败/news.json 损坏 = toast + 假空态，无重试出口。修：error 标记 + 空态分流（uiEmpty 错误态 + 重试钮）。
+- **效率#6 j/k 焦点断头** `ui.ts:325-328,836,1086` — 点目录后焦点不在右栏，核心阅读快捷键静默失效；CB5 修饰键劫持一并（Ctrl+K 被劫持成切篇）。修：selectArticle/showPanel 焦点接力 + 修饰键排除。
+- **效率#14 移动搜索零防抖** `ui.ts:340-343` — 每击键直连整目录重渲+逐卡挂抽屉（桌面 180ms 防抖已在）。修：复用防抖语义。
+- **CONTEXT 词条五处脱节（一致#17，文档）** `CONTEXT.md:47` — 「删 body」「reading 态」「守护进程主写」「已退役设置键」「rail 脚注入口名」全与实现反向。修：按实现改写。
+
+### P3（bug/体验，摘要）
+- func 新-4 cleanTitle Windows 尾点/保留名（清洗单源化）；新-5 undoTrashClip 目录缺失误归因同名；新-6/A8 死代码清扫（emptyData 旧形陷阱/writeNewsState/openClipbookReportCommand/dirOverride/M.overlay）；新-7/A6 window.open×2 → openExternalUrl 单源；新-8 resolveUidFromInput 裸 fetch → httpGetText；新-9/CB12 标读通知篇数竞态（flowMarkAllRead 返回 bumped）+ executeFetchRound 无 catch。
+- ui C-UI4 无效 CSS 负 margin（-var 写法）；C-UI6 移动两处 100vh 未接 --bz-vvh；C-UI7 selectSource 移动搜索栏不复位；C-UI9/A7 registerAutoRefresh 四订阅不退订；C-UI10 已并入 CB2；C-UI11/效率#17 首开无装载骨架。
+- 效率#3 通知零动作钮（保存成功「打开笔记」/抓取完成「去剪藏本」）；#5 UP 行未读归零即消失；#7 切回滚位重置（会话内 Map）；#8 同篇动作后正文闪空（轻版：同篇刷新不重建标题/摘要段）；#12 搜索✕+打开聚焦；#13 命中 mark 高亮；#15 搜索域补 body/url（news 面；clip 正文阈值搜索登记）；#20 报告 Top5 可点回看。
+- 一致#11 danger 皮肤形制破缺+id 选择器迁复合选择器；#12 padStart×3→pad2；#15 错误通知人话化 notifyActionError×4；#16 报告字体栈 --clip-serif + 搜索栏 display 状态位哨兵；A9 夹取规则双写单源。
+- CB11 载荷缺 path 放行全量重扫——补拦。
+- **登记不修/待拍板**：效率#19 移动滑动手势（真机拍板，同 memo#13）；clip 面正文阈值搜索（分寸拍板）；「UP 管理加 Cookie 行」（功能面拍板）；覆盖时 summary/tags 字段级合并（语义拍板，本轮只做披露）；AS1/AS2/AS3（auto-summary 域，记该域轮）。
+- **测试缺口 9 项**（arch T1-T9）：news 事件载荷钉死 / frontmatter 三面往返 / 卸载弹窗残留 / 死代码拍板回归 / 路径单源四面一致 / 退订闭环 / 外链降级 / 渲染兜底 / stats 守卫。
+
+### 修复批分工（5 worktree）
+A 保存链与卸载收口（save/image-save/news-sources-group/core-dom/main/index）：P1-1、CB4、CB10、CB11、P3-11、新-4、#3 保存通知、dirOverride 清扫。B 数据写链与抓取（news-data/flow/loader/write-queue/scan/news-fetcher/file-sync/anchor）：CB2、批量撤销、CB3/CB12、新-1、新-2、新-8、A9、#2 rejected、#3 抓取通知、#9 篇数竞态。C UI 核心动线（ui.ts 100-460+1050-1300 + constants/state）：P1-2、P1-3、P2-3 UI 半、#6/7/11/12/16/17、CB5-9、C-UI3/7、新-5、#15 人话、A8 死代码。D 列表检索移动报告（render/styles/report-ui/report-stats + ui.ts 600-1000+1300-2010）：C-UI2/4/5/6、#4/5/9/13/14域/15域/18/19登记/20、#8 闪空、#11/23/24/26。E 测试与 CONTEXT（tests + CONTEXT.md）：T1-T9 开关模式 + 词条五处。
+
+---
+
+（下一域：review）
