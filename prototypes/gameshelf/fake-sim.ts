@@ -22,12 +22,14 @@ import { setAISettingsProvider } from '../../src/core/ai';
 import { attachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import { ensureGameshelf, openGameshelf as openGameshelfDomain, unloadGameshelf } from '../../src/gameshelf/index';
 import { closePanel } from '../../src/gameshelf/ui';
+import { setMediaInterval } from '../../src/gameshelf/posters';
+import { achRowText, parseAchievementRows, parseStoreMeta } from '../../src/gameshelf/steam';
 
 /** 游戏目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
 const FOLDER = '我的/游戏';
 /** 种子标记：存在 = 已种子过（用户在壳里的改动保留，不被覆盖）。
  *  ⚠️ 改种子内容必须同一次把版本号 +1——否则浏览器老 localStorage 里的旧种子不会重播。 */
-const SEED_MARK = 'bz-sim:__gameshelf-seed-v3';
+const SEED_MARK = 'bz-sim:__gameshelf-seed-v5';
 /** 设置持久键 */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -35,6 +37,29 @@ declare global {
   interface Window {
     GAMESHELF_DATA?: SeedGame[];
   }
+}
+
+/**
+ * 罐头 → 该款的 `成就` 属性行（**真解析 + 真序列化**，与插件写盘口径逐字一致）。
+ * 壳里种子直接带上全量行，是为了让评审跑的是「属性优先、零网络」那条主路径
+ * （而不是每次都靠罐头现拉再回填）。罐头没这款 → 空数组。
+ */
+function achRowsOf(appid: number): string[] {
+  const a = window.GAMESHELF_DETAIL?.ach?.[String(appid)];
+  if (!a) return [];
+  const d = parseAchievementRows(a.schema, a.player, a.global);
+  return d ? d.rows.map(achRowText) : [];
+}
+
+/**
+ * 罐头 store → 该款 `截图源`。
+ * **走真解析器**（parseStoreMeta）而不是直接读原始字段：它会顺手做 8 张上限、
+ * 「没有截图的不写这个键」等口径，种子这才和插件真机写盘的内容一致。
+ */
+function shotUrlsOf(appid: number): string[] {
+  const entry = window.GAMESHELF_DETAIL?.store?.[String(appid)];
+  if (!entry) return [];
+  return parseStoreMeta(entry, appid)?.screenshots ?? [];
 }
 
 /** 种子条目 → 游戏笔记（frontmatter 与 notes.ts noteMarkdown 同键同序） */
@@ -55,6 +80,25 @@ function mdOf(g: SeedGame): string {
   // 详情时间：除首位游戏外都预置（模拟「全量回填已完成」的库）——backfill.ts 的入队
   // 判定看它；首位留空让壳自检能验证回填链（罐头回放 → 属性落 详情时间）
   if (g.appid !== window.GAMESHELF_DATA?.[0]?.appid) lines.push(`详情时间: "2026-09-18T00:00:00.000Z"`);
+  // 成就全量行 + 截图源：模拟「已全量落盘」的笔记，让评审跑「属性优先、零网络」主路径
+  const achRows = achRowsOf(g.appid);
+  if (achRows.length > 0) {
+    lines.push('成就:');
+    for (const row of achRows) lines.push(`- ${row}`);
+    lines.push(
+      `成就已解: ${achRows.filter((r) => r.split(' | ')[2] === '1').length}`,
+      `成就总数: ${achRows.length}`,
+      // 刻意写**过期**时间：这样点开任一详情都会走「属性过期 → 静默刷新」那条路，
+      // 顺带把该款的成就图标与截图补到本地。评审时因此每款一开就是齐的，
+      // 不用等全量回填轮到它（回填按 vault 序排队，展示首位那款不一定是第一个）。
+      '成就更新: "2026-09-01T00:00:00.000Z"',
+    );
+  }
+  const shots = shotUrlsOf(g.appid);
+  if (shots.length > 0) {
+    lines.push('截图源:');
+    for (const u of shots) lines.push(`- ${u}`);
+  }
   lines.push(
     `图标: ${g.icon || '""'}`,
     `Windows分钟: ${g.win}`,
@@ -113,6 +157,9 @@ export function bootGameshelfSim(): void {
   if (g.__bzGsSimBooted) return;
   g.__bzGsSimBooted = true;
   seedDatabase();
+  // 媒体队列的任务间隔归零：生产那 120ms 是给 Steam CDN 留的礼貌间隔，壳里没有真网络，
+  // 留着只会让评审时「图标一张张才出来」（成就图标一款就上百张）
+  setMediaInterval(0);
   const app = new FakeApp();
   simApp = app;
   setApp(app as never);

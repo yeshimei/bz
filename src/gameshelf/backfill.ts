@@ -1,21 +1,28 @@
 /**
  * 游戏库（gameshelf）域后台全量回填（2026-09-18 用户拍板）：
- * **商店资料 + 成就三键 → 笔记属性**，不等用户逐款点开详情弹窗。
+ * **商店资料 + 成就全量 + 截图/成就图标本地化 → 笔记属性与本地文件夹**，
+ * 不等用户逐款点开详情弹窗。
+ *
+ * 补跑判据（三件各自独立，任一缺就排队；全齐才跳过）：
+ * - `详情时间` 缺 → 拉商店资料（appdetails）；
+ * - 有成就页却缺 `成就` 全量列表 → 拉成就三接口（顺带把图标源交给媒体队列）；
+ * - `截图源` 有值而 `截图` 对应位缺 → 只补下载，**零网络请求**（URL 就在属性里）。
  *
  * 做法（同 names.ts 的串行队列范式）：
- * - 只回填 frontmatter 里**没有 `详情时间`** 的条目——这是幂等标记，手动点过详情
- *   弹窗的也算已回填（弹窗写回时带同一个标记），不会重复请求；
- * - 每条之间留 `BACKFILL_INTERVAL_MS` 间隔（appdetails 一次只能一个 appid，
- *   别打连发；147 款全程约 3-5 分钟，一次性）；
+ * - 每条之间留 `BACKFILL_INTERVAL_MS` 间隔（appdetails 一次只能一个 appid，别打连发）；
  * - **连错 3 条就停**（商店不可达时别把队列跑成雪崩；下次开面板/同步会重新排队）；
- * - 每条 = 商店资料（storeToFm 全字段，含 `详情时间` 标记）→ 有成就页再拉成就
- *   三键（成就失败不阻塞：资料已成，成就下次点详情会补）。
+ * - 图片本体走 posters.ts 的第二条队列，不占本队列的节奏。
+ *
+ * 不在这里做的事（写给下一个人）：**成就的定时刷新**。全库 134 款 × 3 个接口 = 400 请求，
+ * 每次开面板都跑太重。改由「打开某款详情时若属性超过 ACH_STALE_MS 就静默重拉」兜住——
+ * 你常看的那几款始终新鲜，不看的保持上次快照。
  *
  * 为什么独立于同步：同 names.ts —— 同步走 api.steampowered.com（需代理），回填走
  * store.steampowered.com（直连可达），两条通道可用性互不影响，混跑会互相连坐。
  */
 import type { App, TFile } from 'obsidian';
-import { loadAchievements, loadStore, safeDetailFm } from './detail';
+import { fmToAchDetail, fmToShots, refreshAchievements, refreshStore, safeDetailFm } from './detail';
+import { achIconsMissing, ensureShots } from './posters';
 import { M, type GameItem } from './state';
 
 /** 队列条目间隔（毫秒） */
@@ -27,6 +34,19 @@ interface Job {
   app: App;
   item: GameItem;
   file: TFile | null;
+  /** 该拉商店资料（缺 `详情时间`） */
+  needStore: boolean;
+  /** 该拉成就（有成就页却缺全量列表） */
+  needAch: boolean;
+}
+
+/** 某款还缺什么（纯函数，可测；三种活各自独立） */
+export function backfillNeeds(fm: Record<string, unknown>, hasAch: boolean): { store: boolean; ach: boolean; shots: boolean } {
+  const store = !fm['详情时间'];
+  const ach = hasAch && !fmToAchDetail(fm);
+  const { local, remote } = fmToShots(fm);
+  const shots = remote.some((u, i) => !!u && !local[i]);
+  return { store, ach, shots };
 }
 
 const queue: Job[] = [];
@@ -54,15 +74,26 @@ function scheduleRerender(): void {
   }, 1200);
 }
 
-/** 把还没回填过详情的条目入队（幂等；调用方为面板打开 / 同步完成） */
+/** 把还没回填齐的条目入队（幂等；调用方为面板打开 / 同步完成） */
 export function ensureBackfill(app: App, items: GameItem[]): void {
   let added = 0;
   for (const it of items) {
     if (queued.has(it.appid)) continue;
     const fm = safeDetailFm(app, it.file);
-    if (fm['详情时间']) continue;
+    const need = backfillNeeds(fm, it.hasAch);
+    // 截图只缺文件时**零网络**就能补（URL 就在 `截图源` 里）→ 直接交给媒体队列，
+    // 不占这条慢队列的 900ms 节奏，也不受「连错 3 条就停」牵连
+    if (need.shots) {
+      const s = fmToShots(fm);
+      ensureShots(app, { appid: it.appid, file: it.file, remote: s.remote, prevLocal: s.local });
+    }
+    // 成就图标缺文件 → 同样得重拉一次 schema：属性里**不存图标地址**（文件名由 appid+apiname 推），
+    // 没有 URL 就补不了图。判据只查当前解锁态那一色（见 posters.ts::achIconsMissing）。
+    const detail = need.ach ? null : fmToAchDetail(fm);
+    const needAch = need.ach || (!!detail && achIconsMissing(app, it.appid, detail.rows));
+    if (!need.store && !needAch) continue;
     queued.add(it.appid);
-    queue.push({ app, item: it, file: it.file });
+    queue.push({ app, item: it, file: it.file, needStore: need.store, needAch });
     added += 1;
   }
   if (added > 0 && !running) void runQueue();
@@ -78,17 +109,20 @@ async function runQueue(): Promise<void> {
     }
     const job = queue.shift()!;
     try {
-      const store = await loadStore(job.app, job.item, safeDetailFm(job.app, job.file));
-      if (store.error) {
-        failures += 1;
-      } else {
-        failures = 0;
-        // 成就三键尽力而为：资料已成（详情时间已写）就不会再整款重试，
-        // 成就缺失下次点开详情弹窗时会补
-        if (job.item.hasAch) {
-          await loadAchievements(job.app, job.item, safeDetailFm(job.app, job.file)).catch(() => undefined);
+      // 注意：这里必须用 refresh*（强制走网络）而不是 load*——load* 是「属性优先」的读路径，
+      // 属性里有就不发请求，队列会空转（曾因此让成就图标永远补不下来）。
+      if (job.needStore) {
+        const store = await refreshStore(job.app, job.item);
+        if (store.error) failures += 1;
+        else {
+          failures = 0;
+          scheduleRerender();
         }
-        scheduleRerender();
+      }
+      // 成就失败**不计入失败计数**：它走 api.* 通道（需系统代理），与商店通道（直连可达）
+      // 的可用性无关。若算进去，没开代理时会连错 3 条把整条商店回填队列一起拖停
+      if (job.needAch) {
+        await refreshAchievements(job.app, job.item).catch(() => undefined);
       }
     } catch (e) {
       failures += 1;

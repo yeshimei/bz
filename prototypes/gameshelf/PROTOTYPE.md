@@ -22,19 +22,24 @@ URL 钩子：`?theme=dark`（直达暗色）、`?selftest=1`（跑 iframe 内真
 | 数据 | 来源 | 文件 |
 |---|---|---|
 | 我的游戏库（147 款） | **真实 vault** `我的/游戏/*.md` 的 frontmatter 快照 | `prototype-data.js` |
-| Steam 商店资料 | **真实** `store.steampowered.com/api/appdetails`（`l=schinese`）原样响应 | `prototype-detail.js` |
+| Steam 商店资料 + 截图 | **真实** `store.steampowered.com/api/appdetails`（`l=schinese`，**含 screenshots：147 款 2270 张**）原样响应 | `prototype-detail.js` |
 | 成就（Schema/Player/全局解锁率） | **真实** `api.steampowered.com` 三接口原样响应（经用户系统代理，凭据不入库） | `prototype-detail.js` |
 | 库同步（GetOwnedGames） | 由 `GAMESHELF_DATA` **现拼**成 API 形状 → 壳里点「立即同步」跑的是真对账链 | 运行时现造 |
 
 重抓（换了游戏或想看更新的商店资料时，脚本在本地 `.scratch/`，不入库）：
 
 ```bash
-python .scratch/fetch-gameshelf-detail.py    # 种子快照 + 成就三接口（api 需系统代理，凭据从插件 data.json 读）
-python .scratch/fetch-gameshelf-store.py     # 补 store 侧：appdetails 逐条 + appreviews，并瘦身成就段
+python .scratch/refetch-gameshelf-detail.py   # 商店（逐条，含 screenshots）+ 成就三接口（schema 带 l=schinese）
+python .scratch/merge-gameshelf-detail.py     # 两条通道分开抓时合并（store 直连可达 / ach 需代理）
 ```
 
-注意 `appdetails` **只支持单个 appid**（逗号批量会 400）；`store.steampowered.com` 直连可达，
-`api.steampowered.com` 要走系统代理。
+⚠️ 两个抓取坑（都踩过）：
+- `appdetails` **只支持单个 appid**（逗号批量 400），必须逐条跑；
+- 商店白名单**必须含 `screenshots`**——先前那版脚本先按白名单过滤再判 `screenshots`，
+  那个分支永远不成立，于是评审壳的截图段一直是空的（真机代码直读 appdetails，一直有）。
+
+注意 `store.steampowered.com` 直连可达（偶发被重置，重试即可），`api.steampowered.com` 要走系统代理。
+两条通道分开抓、分开合，哪条好了补哪条。
 
 没抓到详情的 appid 走**自报家门的演示罐头**（成就名 `演示成就 NN`、简介写明「原型罐头」、
 开发商写「演示开发商」），绝不拿编造值冒充真数据；真机（装了系统代理）会拉到真值。
@@ -53,30 +58,48 @@ python .scratch/fetch-gameshelf-store.py     # 补 store 侧：appdetails 逐条
 - 移动端：≤768px 真全屏（`--bz-vvh` 口径）+ `.bz-panel-mtop` 44px 顶部避让；触屏无 hover，
   封面上的时长/日期改为常显。
 
-## 缓存取舍（写在 `src/gameshelf/detail.ts` 文件头，此处只记结论）
+## 全量落盘（2026-09-18 用户拍板，ADR-0166）
 
-- **frontmatter 标量回写**（持久）：商店展示标量 + 成就三键（成就已解/成就总数/稀有成就）
-  与 `详情时间`。价值 = 断网或代理没开时详情弹窗仍有内容可看。只写点开过的游戏，不是全库预写。
-- **会话内存缓存**（不落盘）：截图 URL 与成就逐条明细（体积不可控：截图 8 张、成就可上百条，
-  塞 frontmatter 会让笔记头部膨胀十倍）。重开面板即重拉。
+结论写在 `docs/adr/adr-0166-gameshelf-full-persistence.md`，这里只记壳侧形态：
+
+- 种子的游戏笔记**直接带上全量属性**（`成就` 每行 6 段、`截图源`、`成就已解/总数`），
+  由**真解析器 + 真序列化器**（`parseAchievementRows` / `parseStoreMeta` → `achRowText`）现造
+  ——所以评审跑的是「属性优先、零网络」那条主路径，而不是靠罐头现拉再回填。
+- 种子的 `成就更新` **刻意写成过去时间**：点开任一详情都会走「属性过期 → 静默刷新」，
+  顺带把该款的成就图标与截图补到本地。这样评审时开哪款都是齐的，不用等全量回填轮到它
+  （回填按 vault 序排队，展示首位那款不一定是第一个）。
+- 真机口径：成就明细与截图 URL **都进属性**，画像与体量见 ADR-0166（属性全库约 1 MB，
+  极值约 190 KB/款）；会话缓存降级为「同会话别重复拉」的加速层。
 
 ## 已知演示偏差（落域走真实现）
 
 - 未抓到真实详情的 appid：商店/成就段为自报家门的演示罐头（见上）。
 - `GetRecentlyPlayedGames` 真机返回空（近两周没玩）→ 统计页「最近玩过」按**最后游玩日期**取前 8，
   不是「近两周」，文案已按此口径写。
-- 海报本地缓存：壳里 `requestUrl` 对图片 URL 只回 1 字节，故封面显示走远端 CDN；
-  真机走 `CONFIG/游戏海报` 本地优先（设置键 `gameshelfPosterFolder`）。
+- **罐头的成就 schema 是加 `l=schinese` 之前抓的** → 壳里成就名是英文、且没有 `icongray`
+  （界面因此走「彩色图 + CSS 灰度」那条兜底）。真机走 `&l=schinese` 出中文名；
+  代理可用时重跑 `refetch-gameshelf-detail.py` 即可补齐。**这是当前壳与真机唯一的可见差异。**
+- 壳里媒体下载写的是 1 字节占位（显示走 `getResourcePath` 的远端映射），
+  所以「本地文件已存在」在壳里体现为文件清单与属性正确，字节本身不是真的。
 
-## 媒体本地化（2026-09-17 第二批）
+## 媒体本地化（2026-09-17 第一批 · 2026-09-18 扩到成就图标与截图）
 
-- 键分工见 ADR-0164：`封面源`/`图标源`（远端，同步管辖）vs `封面`/`图标`（vault 本地路径，媒体队列写）。
-- 壳里能看到整条链路真跑：种子笔记没有源键 → 自动同步补齐源键（迁移）→ 媒体队列下封面/图标
-  → 属性改写成 `CONFIG/游戏海报/<appid>.jpg`。
-- **评审壳的 `vault.getResourcePath` 是壳专用实现**：返回 `/__vault-media/<文件名>`，
-  由 preview-live 按 basename 从**真实 vault** 现取——所以评审页里的封面就是用户 vault 里那张真海报。
-  图标（`<appid>-icon.jpg`）在真 vault 里没有同名文件，会 404，因此 UI 侧的 `data-fallback-src`
-  兜底在这里正好被验证到：本地失败 → 回落远端图标。
+- 键分工见 ADR-0164/0166：`封面源`/`图标源`/`截图源`（远端，同步管辖）
+  vs `封面`/`图标`/`截图`（vault 本地路径，媒体队列写）；**成就图标不占属性键**，文件名可推导。
+- 本地命名：`<appid>.jpg` 封面 / `<appid>-icon.jpg` 库内图标 /
+  `<appid>-ach-<apiname>-{on,off}.jpg` 成就图标 / `<appid>-shot-<n>.jpg` 截图；
+  都在设置键 `gameshelfPosterFolder`（默认 `CONFIG/游戏海报`）下。
+- **评审壳的 `vault.getResourcePath` 是壳专用实现**，两条路：
+  1. **媒体队列下过的文件**（成就图标、截图）→ 按文件名**推导**出罐头里的远端源并返回。
+     为什么必须这么绕：浏览器写不了磁盘，而成就图标在 `steamcdn-a.akamaihd.net`、**只给图不给
+     CORS 头**（实测 ACAO 缺失）→ 壳里 `fetch` 拿不到字节；但 `<img src=远端>` 不受 CORS 限制，
+     于是评审页里看到的成就图标与截图是**真的**。真机走 `requestUrl`（Electron 主进程，不受 CORS），
+     下载到本地后由 `app://` 提供 —— 这条捷径只在壳里存在。
+  2. 其余（封面、库内图标）→ `/__vault-media/<文件名>`，由 preview-live 按 basename 从**真实 vault**
+     现取——所以评审页里的封面就是用户 vault 里那张真海报。`<appid>-icon.jpg` 在真 vault 里没有同名文件，
+     会 404，正好验证 UI 侧的 `data-fallback-src` 兜底（本地失败 → 回落远端图标）。
+- 壳里 `setMediaInterval(0)`：生产那 120ms 是给 Steam CDN 留的礼貌间隔，壳里没有真网络，
+  留着只会让评审时图标一张张才出来（一款成就就上百张）。
 
 ## 自检
 
@@ -84,5 +107,14 @@ python .scratch/fetch-gameshelf-store.py     # 补 store 侧：appdetails 逐条
 node scripts/_selftest-cdp.mjs "http://localhost:5177/prototypes/gameshelf/prototype.html?selftest=1"
 ```
 
-断言覆盖：CSS 链生效、桌面/移动面板开、147 卡、门面首位、档位筛选与搜索、三种排序、
-统计页五卡与排行首位、详情弹窗三段回填、ESC 分层、移动端满幅。
+断言 **69 条**，覆盖：CSS 链生效、桌面/移动面板开与满幅、147 卡、门面首位、档位筛选与搜索、
+三种排序、统计页五卡与排行首位、详情弹窗三段回填、**成就逐条明细渲染 + 已解锁行数 = 属性
+`成就已解`**、**成就图标落本地且弹窗出真图**、**截图段与 `截图源` 对账 + `截图` 本地路径写回**、
+ESC 分层、移动端工具行一行与两个下拉。
+
+三个写断言时的坑（别再踩）：
+- `dt()` / `mob()` 是**单元素**助手，要多个必须 `dd.querySelectorAll`（`.length` 恒 undefined，
+  断言名里会打出 `undefined`——靠这个一眼认出）；
+- 别把断言绑在「展示首位那款」的运气上：回填按 **vault 序**排队，而展示序是按游玩时长排的，
+  两者不是一回事；
+- 别假设「某款必有未解锁成就」：用户的深岩银河是 100% 全成就，`is-on` 会铺满整列。

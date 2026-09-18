@@ -20,12 +20,13 @@ import { uiMainHead, uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiChip, uiSe
 import { M, displayNameOf, nameMatches, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
 import { BUCKETS, bucketOf, buildReport, REPORT_CAVEAT, type GameshelfReport } from './report';
 import {
-  clearDetailCache, fmToAchSummary, fmToStore, loadAchievements, loadStore, safeDetailFm, storeUrlOf,
+  achRefreshDue, clearDetailCache, fmToAchDetail, fmToAchSummary, fmToShots, fmToStore, hasStoreFm,
+  loadAchievements, loadStore, refreshAchievements, refreshStore, safeDetailFm, storeRefreshDue, storeUrlOf,
   type AchSection, type StoreSection,
 } from './detail';
 import { ensureZhNames, unloadZhNames } from './names';
 import { unloadBackfill } from './backfill';
-import { coverDisplayUrl, iconDisplayUrl } from './posters';
+import { achIconDisplayUrl, coverDisplayUrl, iconDisplayUrl, resolveShotUrls } from './posters';
 
 const ESC_ID = 'gameshelf';
 
@@ -465,9 +466,13 @@ export function achListHtml(item: GameItem, sec: AchSection): string {
         const pct = r.globalPercent === null ? '' : `${r.globalPercent}%`;
         const when = r.unlockedAt ? dateText(r.unlockedAt) : '';
         const desc = r.desc || (r.hidden ? '隐藏成就，解锁后可见说明' : '');
+        // 图标按解锁态取色：已解锁 → 彩色图；未解锁 → Steam 的灰图（icongray）。
+        // 灰图缺失时回落彩色 + CSS 灰度（is-gray）——观感够用，且不必为缺图的那款多下一份
+        const iconSrc = r.unlocked ? (r.icon ?? r.iconGray) : (r.iconGray ?? r.icon);
+        const grayFallback = !r.unlocked && !r.iconGray && !!r.icon;
         return `
       <div class="bz-gs-achrow${r.unlocked ? ' is-on' : ''}" title="${escAttr(desc)}">
-        ${r.icon ? `<img class="bz-gs-achicon" src="${escAttr(r.icon)}" alt="" loading="lazy">` : '<span class="bz-gs-achicon bz-gs-achicon--none"></span>'}
+        ${iconSrc ? `<img class="bz-gs-achicon${grayFallback ? ' is-gray' : ''}" src="${escAttr(iconSrc)}" alt="" loading="lazy">` : '<span class="bz-gs-achicon bz-gs-achicon--none"></span>'}
         <span class="bz-gs-achtext">
           <span class="bz-gs-achname">${escHtml(r.name)}</span>
           ${desc ? `<span class="bz-gs-achdesc">${escHtml(desc)}</span>` : ''}
@@ -548,7 +553,28 @@ export function shotsHtml(urls: string[]): string {
     .join('')}</div>`;
 }
 
-/** 打开详情弹窗（本地数据秒出；成就/资料各拉各的，互不阻塞） */
+/**
+ * 属性里的成就行 → 把图标填成可显示 URL。
+ * 图标路径由 (appid, apiname, 解锁态) 推出（posters.ts），属性里不存——所以这一步在渲染前做，
+ * `achListHtml` 只认「行上有没有 icon/iconGray」。本地文件不在 → null，界面画占位圆点。
+ */
+function withLocalAchIcons(app: App, appid: number, detail: AchSection['detail']): AchSection['detail'] {
+  if (!detail) return detail;
+  return {
+    ...detail,
+    rows: detail.rows.map((r) => ({
+      ...r,
+      icon: achIconDisplayUrl(app, appid, r.apiName, true) || null,
+      iconGray: achIconDisplayUrl(app, appid, r.apiName, false) || null,
+    })),
+  };
+}
+
+/**
+ * 打开详情弹窗：**属性优先、零网络**（2026-09-18 起所有数据都在笔记属性里，
+ * 断网/代理没开也能看全）。属性缺该块 → 当场拉一次补齐；属性过期 → 后台静默刷新后重填。
+ * 成就与资料两段各走各的，互不阻塞。
+ */
 function openDetail(app: App, appid: number): void {
   const item = M.items.find((it) => it.appid === appid);
   if (!item) return;
@@ -563,25 +589,65 @@ function openDetail(app: App, appid: number): void {
   // 这里给本域弹窗的遮罩补上 blur，与面板遮罩 .bz-panel-overlay 观感一致。
   modal.mask.classList.add('bz-gs-detail-mask');
 
+  // 只在「属性本来就有这块」时才排后台刷新——属性缺块的话 load* 当场就拉了，别再拉一遍
+  const fmHadAch = !!fmToAchDetail(cached);
+  const fmHadStore = hasStoreFm(cached);
+
   const achBox = popup.querySelector('#bz-gs-detail-ach');
-  void loadAchievements(app, item, cached).then((sec) => {
-    if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, sec);
+  const paintAch = (sec: AchSection): void => {
+    if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, { ...sec, detail: withLocalAchIcons(app, item.appid, sec.detail) });
     mountIcons(popup);
+  };
+  void loadAchievements(app, item, cached).then((sec) => {
+    paintAch(sec);
+    if (fmHadAch && item.hasAch && achRefreshDue(cached)) {
+      // 玩家解锁了新成就 → 属性要跟上；失败静默（属性里的旧数据继续显示，不打断阅读）
+      void refreshAchievements(app, item).then((fresh) => {
+        if (fresh.detail) paintAch(fresh);
+      });
+    }
   });
+
   const storeBox = popup.querySelector('#bz-gs-detail-store');
   const shotsBox = popup.querySelector('#bz-gs-detail-shots');
-  void loadStore(app, item, cached).then((sec) => {
+  const paintStore = (sec: StoreSection): void => {
+    // 每次重渲都重读属性：后台刷新与媒体队列都会改它，截图因此能立刻从远端地址切到本地文件
+    const { local, remote } = fmToShots(safeDetailFm(app, item.file));
+    const display = resolveShotUrls(app, local, sec.screenshots.length > 0 ? sec.screenshots : remote);
     if (storeBox && storeBox.isConnected) storeBox.innerHTML = storeRowsHtml(item, sec);
-    if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(sec.screenshots);
+    if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(display);
     const open = popup.querySelector('#bz-gs-open-store') as HTMLButtonElement | null;
     if (open) open.addEventListener('click', () => window.open(storeUrlOf(item.appid), '_blank'));
     mountIcons(popup);
+  };
+  void loadStore(app, item, cached).then((sec) => {
+    paintStore(sec);
+    if (fmHadStore && storeRefreshDue(cached)) {
+      void refreshStore(app, item).then(paintStore);
+    }
   });
+
   // 截图 → 灯箱（委托：截图段整体 innerHTML 替换后依然生效）
   popup.addEventListener('click', (e) => {
     const shot = (e.target as HTMLElement).closest('.bz-gs-shot') as HTMLElement | null;
     if (shot?.dataset.src) openLightbox({ src: shot.dataset.src, type: 'image', title: item.name });
   });
+
+  // 媒体队列下完图后会调它。**只重画「会随下载变化」的两处**（成就图标、截图的本地路径），
+  // 不动资料段——它可能来自刚拉回来的新鲜数据，用属性反解反而会把新值覆盖成旧的。
+  // 弹窗关了就自清（uiModal 摘掉节点后 isConnected 为假），免得钩子常驻。
+  M.modalRepaintFn = () => {
+    if (!popup.isConnected) {
+      M.modalRepaintFn = null;
+      return;
+    }
+    const fm = safeDetailFm(app, item.file);
+    const detail = fmToAchDetail(fm);
+    if (detail) paintAch({ detail, summary: fmToAchSummary(fm), error: null, fromCache: false });
+    const { local, remote } = fmToShots(fm);
+    const urls = resolveShotUrls(app, local, remote);
+    if (shotsBox && shotsBox.isConnected && urls.length > 0) shotsBox.innerHTML = shotsHtml(urls);
+  };
 }
 
 /** 弹窗工厂薄封装（uiModal 直连；抽一层只为收敛标题与宽度口径，并把 mask 一并透出） */

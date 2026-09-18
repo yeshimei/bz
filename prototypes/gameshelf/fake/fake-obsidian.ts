@@ -19,8 +19,12 @@
  *                            （抓取脚本 .scratch/fetch-gameshelf-detail.py，凭据不入库）；
  *   - 未抓到详情的 appid → 给一份**自报家门的演示罐头**（成就名「演示成就 N」、
  *                            简介写明「原型罐头」），绝不用编造值冒充真数据；
- *   - 图片类 URL（CDN 封面/成就图标）→ 回 1 字节 arrayBuffer，让 posters.ts 的
- *                            本地缓存队列正常走完（显示仍回落远端 URL）。
+ *   - 图片类 URL（CDN 封面/成就图标/截图）→ 回 1 字节 arrayBuffer，让 posters.ts 的
+ *                            本地缓存队列把文件与属性正常走完。**浏览器拿不到成就图标的字节**：
+ *                            steamcdn-a.akamaihd.net 只给图不给 CORS 头（实测 ACAO 缺失），
+ *                            fetch 会被拦；而真机走 Obsidian requestUrl 不受 CORS 限制，故生产无碍。
+ *                            壳里改由 getResourcePath 把「本地文件」映射回它的远端源来显示
+ *                            （见下），评审页因此能看到**真的**成就图标与商店截图。
  *
  * 与插件侧的差异收敛到这里（本文件是浏览器版假层，随 prototype-behavior.js 产物进 git）：
  *   - frontmatter 解析/序列化是最小 YAML 面（键: 值 顶格列表项/内联数组），
@@ -233,8 +237,10 @@ function replay(url: string): { status: number; json: unknown; text: string } | 
     const real = bundle.ach[String(appid)];
     return reply(real?.global ?? (seed ? demoAchievements(seed).global : { achievementpercentages: { achievements: [] } }));
   }
-  // 图片（封面 CDN / 成就图标）：给 1 字节，让 posters.ts 的本地缓存队列走完
-  if (/steamstatic\.com|steampowered\.com\/steamcommunity/.test(url)) {
+  // 图片（封面 CDN / 成就图标 / 商店截图）：给 1 字节，让 posters.ts 的本地缓存队列走完。
+  // ⚠️ 成就图标在 **steamcdn-a.akamaihd.net**（老图床），不在 steamstatic 域名下——
+  // 只按 steamstatic 匹配会让图标全部下载失败（曾如此）。
+  if (/steamstatic\.com|akamaihd\.net|steampowered\.com\/steamcommunity|\.(?:jpg|jpeg|png)(?:\?|$)/i.test(url)) {
     return { status: 200, json: {}, text: '', arrayBuffer: new ArrayBuffer(1) } as never;
   }
   return null;
@@ -344,6 +350,40 @@ export class TFile {
   stat: { ctime: number; mtime: number } = { ctime: 0, mtime: 0 };
 }
 
+// ==================== 本地媒体 → 远端源映射（评审壳专用捷径） ====================
+
+/** 与 posters.ts::safeNameSeg 同规则（文件名段的净化口径必须一致，否则匹配不上） */
+function safeNameSeg(s: string): string {
+  return s.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) || 'x';
+}
+
+/**
+ * 本地媒体文件名 → 罐头里的远端源地址（推不出来 → null）。
+ * 两种命名都能从文件名反查，不需要运行时配对，也就不会因为两条队列并发而串味：
+ * - `<appid>-ach-<apiname>-on|off.jpg` → schema 里该 apiname 的 icon / icongray；
+ *   **未解锁但 Steam 没给 icongray 时返回 null**（让 UI 走「彩色图 + CSS 灰度」那条兜底，
+ *   与真机一致）；本地文件本来也没下，两边对得上。
+ * - `<appid>-shot-<n>.jpg`（n 1 基）→ store 里第 n 张截图的 path_full。
+ */
+function remoteOfLocalMedia(name: string): string | null {
+  const bundle = detailBundle();
+  const icon = /^(\d+)-ach-(.+)-(on|off)\.jpg$/.exec(name);
+  if (icon) {
+    const list = ((bundle.ach[icon[1]]?.schema as any)?.game?.availableGameStats?.achievements) ?? [];
+    const hit = (Array.isArray(list) ? list : []).find((a: { name?: unknown }) => safeNameSeg(String(a?.name ?? '')) === icon[2]);
+    if (!hit) return null;
+    const url = icon[3] === 'on' ? hit.icon : hit.icongray;
+    return typeof url === 'string' && url ? url : null;
+  }
+  const shot = /^(\d+)-shot-(\d+)\.jpg$/.exec(name);
+  if (shot) {
+    const list = (bundle.store[shot[1]] as { data?: { screenshots?: Array<{ path_full?: unknown }> } } | undefined)?.data?.screenshots;
+    const one = Array.isArray(list) ? list[Number(shot[2]) - 1] : undefined;
+    return typeof one?.path_full === 'string' ? one.path_full : null;
+  }
+  return null;
+}
+
 // ==================== frontmatter 最小解析 / 序列化 ====================
 
 function stripQuotes(v: string): string {
@@ -397,7 +437,13 @@ function serializeYaml(fm: Record<string, unknown>): string {
     if (v === undefined || v === null) continue;
     if (Array.isArray(v)) {
       lines.push(`${k}:`);
-      for (const item of v) lines.push(`- ${String(item)}`);
+      for (const item of v) {
+        const s = String(item);
+        // 空串必须写成 `- ""`：留成 `- `（末尾空格）时读侧的正则或 trim 会让这一项消失——
+        // 而 `截图` 与 `截图源` 靠下标对齐，少一项就整段错位。
+        // 以引号开头的值同理要包起来，否则读侧 stripQuotes 会把首尾引号当定界符吃掉。
+        lines.push(s === '' || /^["']/.test(s) ? `- "${s.replace(/"/g, '\\"')}"` : `- ${s}`);
+      }
     } else if (v === '') {
       lines.push(`${k}:`);
     } else {
@@ -535,13 +581,18 @@ export class FakeVault {
 
   /**
    * vault 文件 → 可显示 URL（插件端由 Obsidian 给 app://... 的本地资源地址）。
-   * 评审壳专用实现：走 preview-live 的 `/__vault-media/<文件名>` 按 basename 从**真实 vault**
-   * 现取——所以游戏封面在评审页里显示的就是用户 vault 里那张真海报（同名即命中，
-   * 不必管本地海报文件夹叫什么）。图标在真 vault 里没有对应文件（`<appid>-icon.jpg` 是
-   * 本插件新加的命名），会 404；UI 侧对图标挂了「本地失败回落远端源」的兜底，
-   * 所以评审页里图标仍能正常显示。
+   *
+   * 评审壳分两条路：
+   * 1. **媒体队列下过的文件**（成就图标 `<appid>-ach-<apiname>-<on|off>.jpg`、商店截图
+   *    `<appid>-shot-<n>.jpg`）→ 按文件名**推导**出它在罐头里的远端源并返回。浏览器写不了磁盘、
+   *    也拿不到图标的字节（CDN 无 CORS 头），但 `<img src=远端>` 不受 CORS 限制，于是评审页里
+   *    能直接看到真图。真机是本地文件，这条捷径只在壳里存在。
+   * 2. 其余（封面 `<appid>.jpg`、库内图标）→ 走 preview-live 的 `/__vault-media/<文件名>`
+   *    按 basename 从**真实 vault** 现取，所以游戏封面显示的就是用户 vault 里那张真海报。
    */
   getResourcePath(f: TFile): string {
+    const remote = remoteOfLocalMedia(f.name);
+    if (remote) return remote;
     return `/__vault-media/${encodeURIComponent(f.name)}`;
   }
 

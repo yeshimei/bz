@@ -5,7 +5,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { buildSyncPlan, sanitizeFileName, notePathFor, lastPlayedStr, mergeTags, managedFm, migrateLegacyKeys, GAME_TAG } from '../../src/gameshelf/reconcile';
-import { parseOwnedGames, parseRecentGames, steamCoverUrl, steamIconUrl, isValidSteamId, parseAchievementSummary, parseStoreMeta, parseReviews, parseZhName } from '../../src/gameshelf/steam';
+import { parseOwnedGames, parseRecentGames, steamCoverUrl, steamIconUrl, isValidSteamId, parseAchievementSummary, parseAchievementRows, achRowText, achRowFromText, parseStoreMeta, parseReviews, parseZhName, type AchievementRow } from '../../src/gameshelf/steam';
 import { isSyncDue, lastSyncedAt, AUTO_SYNC_INTERVAL_MS } from '../../src/gameshelf/sync';
 
 const g = (appid: number, name: string, playtimeMin: number, lastPlayedTs = 0) => ({
@@ -209,5 +209,61 @@ describe('中文化迁移与详情解析（2026-09-17 增补）', () => {
     const r = parseReviews({ query_summary: { review_score_desc: '特别好评', total_reviews: 123456 } });
     expect(r).toMatchObject({ reviewDesc: '特别好评', reviewsTotal: 123456 });
     expect(parseReviews({}).reviewsTotal).toBeNull();
+  });
+});
+
+describe('成就属性行（2026-09-18 全量落盘）', () => {
+  // 用**正午 UTC**的时间戳：本地时区换算后日期仍是 9-04（UTC-12 ~ UTC+11 都成立），
+  // 断言不受跑测试的机器时区影响（`最后游玩` 同口径，走本地时区）
+  const row = (over: Partial<AchievementRow> = {}): AchievementRow => ({
+    apiName: 'APPROVED_GREENBEARD',
+    name: '合格菜鸟',
+    desc: '完成你的第一个战役任务。',
+    hidden: false,
+    unlocked: true,
+    unlockedAt: '2021-09-04T12:00:00.000Z',
+    globalPercent: 45,
+    icon: 'https://cdn/on.jpg',
+    iconGray: 'https://cdn/off.jpg',
+    ...over,
+  });
+
+  it('序列化：6 段齐全，未解锁与未知全球率都写 `-`，全球率一位小数', () => {
+    expect(achRowText(row())).toBe('合格菜鸟 | 完成你的第一个战役任务。 | 1 | 2021-09-04 | 45.0 | APPROVED_GREENBEARD');
+    expect(achRowText(row({ unlocked: false, unlockedAt: null, globalPercent: null, desc: '' })))
+      .toBe('合格菜鸟 |  | 0 | - | - | APPROVED_GREENBEARD');
+  });
+
+  it('往返：序列化 → 反解字段一致，空描述不丢段', () => {
+    const back = achRowFromText(achRowText(row()))!;
+    expect(back).toMatchObject({ name: '合格菜鸟', desc: '完成你的第一个战役任务。', unlocked: true, date: '2021-09-04', percent: 45, apiName: 'APPROVED_GREENBEARD' });
+    const empty = achRowFromText(achRowText(row({ desc: '', unlocked: false, unlockedAt: null, globalPercent: null })))!;
+    expect(empty).toMatchObject({ desc: '', unlocked: false, date: '', percent: null, apiName: 'APPROVED_GREENBEARD' });
+  });
+
+  it('竖线净化：文案带 `|` 也不会切错段（格式契约不能靠「真实数据没出现」活着）', () => {
+    const t = achRowText(row({ name: 'A|B', desc: '隔着 | 的说明' }));
+    expect(t).toBe('A¦B | 隔着 ¦ 的说明 | 1 | 2021-09-04 | 45.0 | APPROVED_GREENBEARD');
+    expect(achRowFromText(t)).toMatchObject({ name: 'A¦B', desc: '隔着 ¦ 的说明', apiName: 'APPROVED_GREENBEARD' });
+  });
+
+  it('换行折成空格：属性行是单行，不能把 YAML 列表撑成多行', () => {
+    expect(achRowText(row({ desc: '第一行\n第二行' }))).toContain('第一行 第二行');
+  });
+
+  it('坏行跳过：段数不足 / 无 apiname → null，不把整段渲染带崩', () => {
+    expect(achRowFromText('只有一段')).toBeNull();
+    expect(achRowFromText('a | b | 1 | - | - | ')).toBeNull();
+  });
+
+  it('双色图标：Schema 的 icon 与 icongray 都读进来（缺 icongray → null）', () => {
+    const schema = { game: { availableGameStats: { achievements: [
+      { name: 'A1', displayName: '中文名', description: '中文描述', icon: 'https://cdn/on.jpg', icongray: 'https://cdn/off.jpg' },
+      { name: 'A2', displayName: '没灰图', icon: 'https://cdn/on2.jpg' },
+    ] } } };
+    const player = { playerstats: { achievements: [{ apiname: 'A1', achieved: 0 }, { apiname: 'A2', achieved: 0 }] } };
+    const d = parseAchievementRows(schema, player)!;
+    expect(d.rows.find((r) => r.apiName === 'A1')).toMatchObject({ name: '中文名', desc: '中文描述', icon: 'https://cdn/on.jpg', iconGray: 'https://cdn/off.jpg' });
+    expect(d.rows.find((r) => r.apiName === 'A2')!.iconGray).toBeNull();
   });
 });

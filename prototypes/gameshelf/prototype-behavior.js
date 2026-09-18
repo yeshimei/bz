@@ -1,4 +1,4 @@
-/* 源指纹 fe7d90de7d46a18f · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9ddec268aa3655d1 · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -182,7 +182,7 @@ var BZW_gameshelf = (() => {
       const real = bundle.ach[String(appid)];
       return reply((_c = real == null ? void 0 : real.global) != null ? _c : seed ? demoAchievements(seed).global : { achievementpercentages: { achievements: [] } });
     }
-    if (/steamstatic\.com|steampowered\.com\/steamcommunity/.test(url)) {
+    if (/steamstatic\.com|akamaihd\.net|steampowered\.com\/steamcommunity|\.(?:jpg|jpeg|png)(?:\?|$)/i.test(url)) {
       return { status: 200, json: {}, text: "", arrayBuffer: new ArrayBuffer(1) };
     }
     return null;
@@ -193,6 +193,31 @@ var BZW_gameshelf = (() => {
     const r = replay(url);
     if (!r) throw new Error("原型壳没有这个请求的罐头：" + url);
     return r;
+  }
+  function safeNameSeg(s) {
+    return s.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || "x";
+  }
+  function remoteOfLocalMedia(name) {
+    var _a2, _b2, _c, _d, _e, _f, _g;
+    const bundle = detailBundle();
+    const icon2 = /^(\d+)-ach-(.+)-(on|off)\.jpg$/.exec(name);
+    if (icon2) {
+      const list = (_e = (_d = (_c = (_b2 = (_a2 = bundle.ach[icon2[1]]) == null ? void 0 : _a2.schema) == null ? void 0 : _b2.game) == null ? void 0 : _c.availableGameStats) == null ? void 0 : _d.achievements) != null ? _e : [];
+      const hit = (Array.isArray(list) ? list : []).find((a) => {
+        var _a3;
+        return safeNameSeg(String((_a3 = a == null ? void 0 : a.name) != null ? _a3 : "")) === icon2[2];
+      });
+      if (!hit) return null;
+      const url = icon2[3] === "on" ? hit.icon : hit.icongray;
+      return typeof url === "string" && url ? url : null;
+    }
+    const shot = /^(\d+)-shot-(\d+)\.jpg$/.exec(name);
+    if (shot) {
+      const list = (_g = (_f = bundle.store[shot[1]]) == null ? void 0 : _f.data) == null ? void 0 : _g.screenshots;
+      const one2 = Array.isArray(list) ? list[Number(shot[2]) - 1] : void 0;
+      return typeof (one2 == null ? void 0 : one2.path_full) === "string" ? one2.path_full : null;
+    }
+    return null;
   }
   function stripQuotes(v) {
     if (v.length >= 2 && (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'"))) {
@@ -240,7 +265,10 @@ var BZW_gameshelf = (() => {
       if (v === void 0 || v === null) continue;
       if (Array.isArray(v)) {
         lines.push(`${k}:`);
-        for (const item of v) lines.push(`- ${String(item)}`);
+        for (const item of v) {
+          const s = String(item);
+          lines.push(s === "" || /^["']/.test(s) ? `- "${s.replace(/"/g, '\\"')}"` : `- ${s}`);
+        }
       } else if (v === "") {
         lines.push(`${k}:`);
       } else {
@@ -417,13 +445,18 @@ var BZW_gameshelf = (() => {
         }
         /**
          * vault 文件 → 可显示 URL（插件端由 Obsidian 给 app://... 的本地资源地址）。
-         * 评审壳专用实现：走 preview-live 的 `/__vault-media/<文件名>` 按 basename 从**真实 vault**
-         * 现取——所以游戏封面在评审页里显示的就是用户 vault 里那张真海报（同名即命中，
-         * 不必管本地海报文件夹叫什么）。图标在真 vault 里没有对应文件（`<appid>-icon.jpg` 是
-         * 本插件新加的命名），会 404；UI 侧对图标挂了「本地失败回落远端源」的兜底，
-         * 所以评审页里图标仍能正常显示。
+         *
+         * 评审壳分两条路：
+         * 1. **媒体队列下过的文件**（成就图标 `<appid>-ach-<apiname>-<on|off>.jpg`、商店截图
+         *    `<appid>-shot-<n>.jpg`）→ 按文件名**推导**出它在罐头里的远端源并返回。浏览器写不了磁盘、
+         *    也拿不到图标的字节（CDN 无 CORS 头），但 `<img src=远端>` 不受 CORS 限制，于是评审页里
+         *    能直接看到真图。真机是本地文件，这条捷径只在壳里存在。
+         * 2. 其余（封面 `<appid>.jpg`、库内图标）→ 走 preview-live 的 `/__vault-media/<文件名>`
+         *    按 basename 从**真实 vault** 现取，所以游戏封面显示的就是用户 vault 里那张真海报。
          */
         getResourcePath(f) {
+          const remote = remoteOfLocalMedia(f.name);
+          if (remote) return remote;
           return `/__vault-media/${encodeURIComponent(f.name)}`;
         }
         on(evt, cb) {
@@ -1737,6 +1770,7 @@ var BZW_gameshelf = (() => {
     M.appRef = null;
     M.folderPath = DEFAULT_FOLDER;
     M.renderFn = null;
+    M.modalRepaintFn = null;
   }
   var DEFAULT_FOLDER, M;
   var init_state = __esm({
@@ -1754,7 +1788,8 @@ var BZW_gameshelf = (() => {
         statusMsg: "",
         appRef: null,
         folderPath: DEFAULT_FOLDER,
-        renderFn: null
+        renderFn: null,
+        modalRepaintFn: null
       };
     }
   });
@@ -1932,7 +1967,8 @@ var BZW_gameshelf = (() => {
         name: typeof a.displayName === "string" && a.displayName ? a.displayName : a.name,
         desc: typeof a.description === "string" ? a.description : "",
         hidden: a.hidden === 1 || a.hidden === true,
-        icon: typeof a.icon === "string" && a.icon ? a.icon : null
+        icon: typeof a.icon === "string" && a.icon ? a.icon : null,
+        iconGray: typeof a.icongray === "string" && a.icongray ? a.icongray : null
       });
     }
     const rows = [];
@@ -1943,7 +1979,7 @@ var BZW_gameshelf = (() => {
       if (!p) continue;
       const apiName = String((_e = p.apiname) != null ? _e : "");
       if (!apiName) continue;
-      const m = (_f = meta.get(apiName)) != null ? _f : { name: apiName, desc: "", hidden: false, icon: null };
+      const m = (_f = meta.get(apiName)) != null ? _f : { name: apiName, desc: "", hidden: false, icon: null, iconGray: null };
       const isUnlocked = p.achieved === 1;
       if (isUnlocked) unlocked += 1;
       const pct = globals.get(apiName);
@@ -1960,7 +1996,8 @@ var BZW_gameshelf = (() => {
         unlocked: isUnlocked,
         unlockedAt: isUnlocked && Number(p.unlocktime) > 0 ? new Date(Number(p.unlocktime) * 1e3).toISOString() : null,
         globalPercent: percent,
-        icon: m.icon
+        icon: m.icon,
+        iconGray: m.iconGray
       });
     }
     rows.sort((a, b) => {
@@ -1977,6 +2014,43 @@ var BZW_gameshelf = (() => {
       rarestPercent
     };
   }
+  function sanitizeSeg(v) {
+    return String(v != null ? v : "").replace(/\|/g, "¦").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+  }
+  function dateOnly(iso) {
+    if (!iso) return "-";
+    const d = new Date(iso);
+    if (!Number.isFinite(d.getTime())) return "-";
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  }
+  function achRowText(row) {
+    const pct = row.globalPercent === null ? "-" : row.globalPercent.toFixed(1);
+    return [
+      sanitizeSeg(row.name),
+      sanitizeSeg(row.desc),
+      row.unlocked ? "1" : "0",
+      row.unlocked ? dateOnly(row.unlockedAt) : "-",
+      pct,
+      sanitizeSeg(row.apiName)
+    ].join(ACH_SEP);
+  }
+  function achRowFromText(text) {
+    const parts = String(text).split(ACH_SEP);
+    if (parts.length < 6) return null;
+    const seg = parts.map((s) => s.trim());
+    const [name, desc, on, date, pct, apiName] = seg;
+    if (!apiName) return null;
+    const n = Number(pct);
+    return {
+      name: name || apiName,
+      desc,
+      unlocked: on === "1",
+      date: date === "-" ? "" : date,
+      percent: pct === "-" || !Number.isFinite(n) ? null : n,
+      apiName
+    };
+  }
   function achievementFailure(e) {
     const err = e;
     if (err instanceof SteamHttpError && err.reason === "http" && (err.status === 400 || err.status === 403)) {
@@ -1987,7 +2061,7 @@ var BZW_gameshelf = (() => {
   async function fetchAchievementDetail(steamId, apiKey, appid) {
     const enc = encodeURIComponent(apiKey.trim());
     try {
-      const schema = await getJson(`${API_BASE}/ISteamUserStats/GetSchemaForGame/v2/?key=${enc}&appid=${appid}`);
+      const schema = await getJson(`${API_BASE}/ISteamUserStats/GetSchemaForGame/v2/?key=${enc}&appid=${appid}&l=schinese`);
       const player = await getJson(`${API_BASE}/ISteamUserStats/GetPlayerAchievements/v1/?key=${enc}&steamid=${steamId.trim()}&appid=${appid}`);
       let global = null;
       try {
@@ -2104,7 +2178,7 @@ var BZW_gameshelf = (() => {
       return { ok: false, reason: err.reason === "auth" ? "parse" : "network", message: "中文名拉取失败：请检查网络" };
     }
   }
-  var API_BASE, STORE_BASE, REQUEST_TIMEOUT_MS, SteamHttpError;
+  var API_BASE, STORE_BASE, REQUEST_TIMEOUT_MS, SteamHttpError, ACH_SEP;
   var init_steam = __esm({
     "src/gameshelf/steam.ts"() {
       init_fake_obsidian();
@@ -2119,6 +2193,7 @@ var BZW_gameshelf = (() => {
           this.status = status;
         }
       };
+      ACH_SEP = " | ";
     }
   });
 
@@ -2365,14 +2440,22 @@ var BZW_gameshelf = (() => {
   var posters_exports = {};
   __export(posters_exports, {
     DEFAULT_POSTER_FOLDER: () => DEFAULT_POSTER_FOLDER,
+    achIconDisplayUrl: () => achIconDisplayUrl,
+    achIconsMissing: () => achIconsMissing,
     coverDisplayUrl: () => coverDisplayUrl,
+    ensureAchIcons: () => ensureAchIcons,
     ensurePosters: () => ensurePosters,
+    ensureShots: () => ensureShots,
     iconDisplayUrl: () => iconDisplayUrl,
+    localAchIconPath: () => localAchIconPath,
     localCoverPath: () => localCoverPath,
     localIconPath: () => localIconPath,
+    localShotPath: () => localShotPath,
     mediaItemsOf: () => mediaItemsOf,
     posterDisplayUrl: () => posterDisplayUrl,
     resolvePosterFolder: () => resolvePosterFolder,
+    resolveShotUrls: () => resolveShotUrls,
+    setMediaInterval: () => setMediaInterval,
     unloadPosters: () => unloadPosters
   });
   function resolvePosterFolder() {
@@ -2515,23 +2598,132 @@ var BZW_gameshelf = (() => {
     }
     running = false;
   }
+  function safeNameSeg2(s) {
+    return s.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || "x";
+  }
+  function localAchIconPath(appid, apiName, unlocked) {
+    return `${resolvePosterFolder()}/${appid}-ach-${safeNameSeg2(apiName)}-${unlocked ? "on" : "off"}.jpg`;
+  }
+  function localShotPath(appid, index) {
+    return `${resolvePosterFolder()}/${appid}-shot-${index + 1}.jpg`;
+  }
+  function achIconDisplayUrl(app, appid, apiName, unlocked) {
+    return resourceUrl(app, localAchIconPath(appid, apiName, unlocked));
+  }
+  function resolveShotUrls(app, local, remote) {
+    var _a2;
+    const n = Math.max(local.length, remote.length);
+    const out = [];
+    for (let i = 0; i < n; i += 1) {
+      const localPath = (_a2 = local[i]) != null ? _a2 : "";
+      const localUrl = localPath ? resourceUrl(app, localPath) : "";
+      if (localUrl) out.push(localUrl);
+      else if (isRemote(remote[i])) out.push(remote[i]);
+    }
+    return out;
+  }
+  function setMediaInterval(ms) {
+    mediaIntervalMs = ms;
+  }
+  function ensureAchIcons(app, appid, jobs) {
+    for (const job of jobs) {
+      const wants = [[job.on, true], [job.off, false]];
+      for (const [url, unlocked] of wants) {
+        if (!url) continue;
+        const path = localAchIconPath(appid, job.apiName, unlocked);
+        if (hasFile(app, path)) continue;
+        const key = `i:${path}`;
+        if (mediaQueued.has(key)) continue;
+        mediaQueued.add(key);
+        mediaTasks.push(async () => {
+          try {
+            if (await download(app, path, url)) scheduleRerender();
+          } finally {
+            mediaQueued.delete(key);
+          }
+        });
+      }
+    }
+    void pumpMedia();
+  }
+  function ensureShots(app, job) {
+    if (job.remote.length === 0) return;
+    const key = `s:${job.appid}`;
+    if (mediaQueued.has(key)) return;
+    mediaQueued.add(key);
+    mediaTasks.push(async () => {
+      try {
+        const paths = [];
+        let downloaded = 0;
+        for (let i = 0; i < job.remote.length; i += 1) {
+          const path = localShotPath(job.appid, i);
+          if (hasFile(app, path)) {
+            paths.push(path);
+            continue;
+          }
+          if (await download(app, path, job.remote[i])) {
+            paths.push(path);
+            downloaded += 1;
+          } else {
+            paths.push("");
+          }
+        }
+        const wanted = job.prevLocal.concat(Array(Math.max(0, job.remote.length - job.prevLocal.length)).fill(""));
+        const same = wanted.length === paths.length && wanted.every((v, i) => v === paths[i]);
+        if (job.file && (downloaded > 0 || !same)) {
+          try {
+            await upsertDetail(app, job.file, { 截图: paths });
+            scheduleRerender();
+          } catch (e) {
+            console.warn("bz 游戏库：截图路径写回失败:", job.appid, e);
+          }
+        }
+      } finally {
+        mediaQueued.delete(key);
+      }
+    });
+    void pumpMedia();
+  }
+  async function pumpMedia() {
+    if (mediaRunning) return;
+    mediaRunning = true;
+    while (mediaTasks.length > 0) {
+      const task = mediaTasks.shift();
+      try {
+        await task();
+      } catch (e) {
+        console.warn("bz 游戏库：媒体任务异常:", e);
+      }
+      if (mediaTasks.length > 0) await new Promise((r) => setTimeout(r, mediaIntervalMs));
+    }
+    mediaRunning = false;
+  }
+  function achIconsMissing(app, appid, rows) {
+    for (const r of rows) {
+      if (!hasFile(app, localAchIconPath(appid, r.apiName, r.unlocked))) return true;
+    }
+    return false;
+  }
   function scheduleRerender() {
     if (rerenderTimer) return;
     rerenderTimer = setTimeout(() => {
-      var _a2, _b2;
+      var _a2, _b2, _c, _d;
       rerenderTimer = null;
       (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
+      (_d = (_c = M).modalRepaintFn) == null ? void 0 : _d.call(_c);
     }, 1500);
   }
   function unloadPosters() {
     queue.length = 0;
     pending.clear();
+    mediaTasks.length = 0;
+    mediaQueued.clear();
     if (rerenderTimer) {
       clearTimeout(rerenderTimer);
       rerenderTimer = null;
     }
   }
-  var DEFAULT_POSTER_FOLDER, queue, pending, running, rerenderTimer;
+  var DEFAULT_POSTER_FOLDER, queue, pending, running, rerenderTimer, MEDIA_INTERVAL_MS, mediaIntervalMs, mediaTasks, mediaQueued, mediaRunning;
   var init_posters = __esm({
     "src/gameshelf/posters.ts"() {
       init_fake_obsidian();
@@ -2544,6 +2736,11 @@ var BZW_gameshelf = (() => {
       pending = /* @__PURE__ */ new Set();
       running = false;
       rerenderTimer = null;
+      MEDIA_INTERVAL_MS = 120;
+      mediaIntervalMs = MEDIA_INTERVAL_MS;
+      mediaTasks = [];
+      mediaQueued = /* @__PURE__ */ new Set();
+      mediaRunning = false;
     }
   });
 
@@ -49505,6 +49702,7 @@ ${n.content.slice(0, 2e3)}
 
   // src/gameshelf/detail.ts
   init_notes();
+  init_posters();
   init_sync();
   init_steam();
   var storeCache = /* @__PURE__ */ new Map();
@@ -49513,7 +49711,18 @@ ${n.content.slice(0, 2e3)}
     storeCache.clear();
     achCache.clear();
   }
+  var ACH_STALE_MS = 24 * 60 * 60 * 1e3;
+  var STORE_STALE_MS = 14 * 24 * 60 * 60 * 1e3;
   var one = (v) => String(v != null ? v : "").replace(/\s*\n+\s*/g, " ").trim();
+  function rawStrList(v) {
+    return Array.isArray(v) ? v.map((x) => typeof x === "string" ? x.trim() : "") : [];
+  }
+  function dateToLocalNoonIso(date) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+    if (!m) return null;
+    const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0, 0);
+    return Number.isFinite(d.getTime()) ? d.toISOString() : null;
+  }
   function storeToFm(s) {
     const out = {
       类型: one(s.genres),
@@ -49537,6 +49746,10 @@ ${n.content.slice(0, 2e3)}
     if (s.recommendations !== null) out["推荐数"] = s.recommendations;
     if (s.achievementsTotal !== null) out["商店成就数"] = s.achievementsTotal;
     if (s.dlcCount !== null && s.dlcCount > 0) out["DLC数"] = s.dlcCount;
+    if (s.screenshots.length > 0) {
+      out["截图源"] = s.screenshots;
+      out["截图更新"] = (/* @__PURE__ */ new Date()).toISOString();
+    }
     return out;
   }
   function fmToStore(fm) {
@@ -49565,11 +49778,87 @@ ${n.content.slice(0, 2e3)}
     if (fm["简体中文支持"] !== void 0) out.zhSupported = fm["简体中文支持"] === true;
     return out;
   }
+  function hasStoreFm(fm) {
+    const m = fmToStore(fm);
+    return Object.values(m).some((v) => v !== null && v !== void 0 && v !== false);
+  }
+  function fmToShots(fm) {
+    const local = rawStrList(fm["截图"]);
+    const remote = rawStrList(fm["截图源"]);
+    const n = Math.max(local.length, remote.length);
+    const pad = (a) => Array.from({ length: n }, (_, i) => {
+      var _a2;
+      return (_a2 = a[i]) != null ? _a2 : "";
+    });
+    return { local: pad(local), remote: pad(remote) };
+  }
+  function achToFm(d) {
+    return {
+      成就: d.rows.map(achRowText),
+      成就已解: d.unlocked,
+      成就总数: d.total,
+      稀有成就: d.rarestName ? `${d.rarestName}（全球 ${d.rarestPercent}% 拥有）` : "",
+      成就更新: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  function fmToAchDetail(fm) {
+    const lines = rawStrList(fm["成就"]).filter((l) => l !== "");
+    if (lines.length === 0) return null;
+    const rows = [];
+    for (const line of lines) {
+      const r = achRowFromText(line);
+      if (!r) continue;
+      rows.push({
+        apiName: r.apiName,
+        name: r.name,
+        desc: r.desc,
+        // 属性里不存「隐藏」：隐藏成就解锁前 Steam 本就不给描述，界面按「描述为空 + 未解锁」呈现即可
+        hidden: false,
+        unlocked: r.unlocked,
+        unlockedAt: r.date ? dateToLocalNoonIso(r.date) : null,
+        globalPercent: r.percent,
+        icon: null,
+        iconGray: null
+      });
+    }
+    if (rows.length === 0) return null;
+    const unlocked = rows.filter((r) => r.unlocked).length;
+    let rarestName = null;
+    let rarestPercent = null;
+    for (const r of rows) {
+      if (r.unlocked && r.globalPercent !== null && (rarestPercent === null || r.globalPercent < rarestPercent)) {
+        rarestPercent = r.globalPercent;
+        rarestName = r.name;
+      }
+    }
+    return {
+      total: rows.length,
+      unlocked,
+      percent: Math.round(unlocked / rows.length * 1e3) / 10,
+      rows,
+      rarestName,
+      rarestPercent
+    };
+  }
   function fmToAchSummary(fm) {
+    const detail = fmToAchDetail(fm);
+    if (detail) return { total: detail.total, unlocked: detail.unlocked, rare: one(fm["稀有成就"]) };
     const total = Number(fm["成就总数"]);
     if (!Number.isFinite(total) || total <= 0) return null;
     const unlocked = Number.isFinite(Number(fm["成就已解"])) ? Number(fm["成就已解"]) : 0;
     return { total, unlocked, rare: one(fm["稀有成就"]) };
+  }
+  function achRefreshDue(fm, now = Date.now()) {
+    var _a2;
+    if (!fmToAchDetail(fm)) return true;
+    const t = Date.parse(String((_a2 = fm["成就更新"]) != null ? _a2 : ""));
+    return !Number.isFinite(t) || now - t > ACH_STALE_MS;
+  }
+  function storeRefreshDue(fm, now = Date.now()) {
+    var _a2;
+    if (!hasStoreFm(fm)) return true;
+    const t = Date.parse(String((_a2 = fm["详情时间"]) != null ? _a2 : ""));
+    return !Number.isFinite(t) || now - t > STORE_STALE_MS;
   }
   function safeDetailFm(app, file) {
     var _a2;
@@ -49580,51 +49869,81 @@ ${n.content.slice(0, 2e3)}
       return {};
     }
   }
+  function storeSectionFromFm(fm, shots) {
+    if (!hasStoreFm(fm)) return null;
+    return { meta: fmToStore(fm), error: null, fromCache: false, screenshots: shots };
+  }
+  function achSectionFromFm(fm) {
+    const detail = fmToAchDetail(fm);
+    const summary = fmToAchSummary(fm);
+    if (!detail && !summary) return null;
+    return { detail, summary, error: null, fromCache: false };
+  }
   async function loadStore(app, item, cached) {
     const hit = storeCache.get(item.appid);
     if (hit) return { meta: hit, error: null, fromCache: false, screenshots: hit.screenshots };
+    const fromFm = storeSectionFromFm(cached, fmToShots(cached).remote);
+    if (fromFm) return fromFm;
+    return refreshStore(app, item);
+  }
+  async function loadAchievements(app, item, cached) {
+    const hit = achCache.get(item.appid);
+    if (hit) return { detail: hit, summary: fmToAchSummary(cached), error: null, fromCache: false };
+    const fromFm = achSectionFromFm(cached);
+    if (fromFm) return fromFm;
+    if (!item.hasAch) return { detail: null, summary: null, error: "这款游戏没有成就页", fromCache: false };
+    return refreshAchievements(app, item);
+  }
+  async function refreshStore(app, item) {
+    var _a2;
     const r = await fetchStoreMeta(item.appid);
     if (r.ok) {
       storeCache.set(item.appid, r.data);
       if (item.file) await upsertDetail(app, item.file, storeToFm(r.data));
+      ensureShots(app, {
+        appid: item.appid,
+        file: item.file,
+        remote: r.data.screenshots,
+        prevLocal: fmToShots(safeDetailFm(app, item.file)).local
+      });
       return { meta: r.data, error: null, fromCache: false, screenshots: r.data.screenshots };
     }
-    const cachedMeta = fmToStore(cached);
-    const hasCache = Object.keys(cachedMeta).some((k) => cachedMeta[k] !== null && cachedMeta[k] !== void 0);
-    if (hasCache) return { meta: cachedMeta, error: null, fromCache: true, screenshots: [] };
-    return { meta: {}, error: r.message, fromCache: false, screenshots: [] };
+    const cached = safeDetailFm(app, item.file);
+    return (_a2 = storeSectionFromFm(cached, fmToShots(cached).remote)) != null ? _a2 : { meta: {}, error: r.message, fromCache: false, screenshots: [] };
   }
-  async function loadAchievements(app, item, cached) {
+  async function refreshAchievements(app, item) {
+    const cached = safeDetailFm(app, item.file);
     const summary = fmToAchSummary(cached);
-    const hit = achCache.get(item.appid);
-    if (hit) return { detail: hit, summary, error: null, fromCache: false };
-    if (!item.hasAch) return { detail: null, summary, error: "这款游戏没有成就页", fromCache: false };
+    if (!item.hasAch) return { detail: fmToAchDetail(cached), summary, error: "这款游戏没有成就页", fromCache: !!summary };
     const { steamId, apiKey } = readSteamConfig();
     if (!steamId.trim() || !apiKey.trim()) {
-      return { detail: null, summary, error: "未配置 Steam，无法拉取成就", fromCache: false };
+      return { detail: fmToAchDetail(cached), summary, error: "未配置 Steam，无法拉取成就", fromCache: !!summary };
     }
     const r = await fetchAchievementDetail(steamId, apiKey, item.appid);
     if (r.ok) {
       achCache.set(item.appid, r.data);
-      if (item.file) {
-        await upsertDetail(app, item.file, {
-          成就已解: r.data.unlocked,
-          成就总数: r.data.total,
-          稀有成就: r.data.rarestName ? `${r.data.rarestName}（全球 ${r.data.rarestPercent}% 拥有）` : ""
-        });
-      }
+      if (item.file) await upsertDetail(app, item.file, achToFm(r.data));
+      ensureAchIcons(app, item.appid, r.data.rows.map((row) => ({ apiName: row.apiName, on: row.icon, off: row.iconGray })));
       return { detail: r.data, summary, error: null, fromCache: false };
     }
-    return { detail: null, summary, error: r.message, fromCache: !!summary };
+    return { detail: fmToAchDetail(cached), summary, error: r.message, fromCache: !!summary };
   }
   function storeUrlOf(appid) {
     return steamStoreUrl(appid);
   }
 
   // src/gameshelf/backfill.ts
+  init_posters();
   init_state();
   var BACKFILL_INTERVAL_MS = 900;
   var BACKFILL_MAX_FAILURES = 3;
+  function backfillNeeds(fm, hasAch) {
+    const store2 = !fm["详情时间"];
+    const ach = hasAch && !fmToAchDetail(fm);
+    const { local, remote } = fmToShots(fm);
+    const shots = remote.some((u, i) => !!u && !local[i]);
+    return { store: store2, ach, shots };
+  }
   var queue2 = [];
   var queued = /* @__PURE__ */ new Set();
   var running2 = false;
@@ -49647,9 +49966,16 @@ ${n.content.slice(0, 2e3)}
     for (const it of items) {
       if (queued.has(it.appid)) continue;
       const fm = safeDetailFm(app, it.file);
-      if (fm["详情时间"]) continue;
+      const need = backfillNeeds(fm, it.hasAch);
+      if (need.shots) {
+        const s = fmToShots(fm);
+        ensureShots(app, { appid: it.appid, file: it.file, remote: s.remote, prevLocal: s.local });
+      }
+      const detail = need.ach ? null : fmToAchDetail(fm);
+      const needAch = need.ach || !!detail && achIconsMissing(app, it.appid, detail.rows);
+      if (!need.store && !needAch) continue;
       queued.add(it.appid);
-      queue2.push({ app, item: it, file: it.file });
+      queue2.push({ app, item: it, file: it.file, needStore: need.store, needAch });
       added += 1;
     }
     if (added > 0 && !running2) void runQueue2();
@@ -49664,15 +49990,16 @@ ${n.content.slice(0, 2e3)}
       }
       const job = queue2.shift();
       try {
-        const store2 = await loadStore(job.app, job.item, safeDetailFm(job.app, job.file));
-        if (store2.error) {
-          failures += 1;
-        } else {
-          failures = 0;
-          if (job.item.hasAch) {
-            await loadAchievements(job.app, job.item, safeDetailFm(job.app, job.file)).catch(() => void 0);
+        if (job.needStore) {
+          const store2 = await refreshStore(job.app, job.item);
+          if (store2.error) failures += 1;
+          else {
+            failures = 0;
+            scheduleRerender2();
           }
-          scheduleRerender2();
+        }
+        if (job.needAch) {
+          await refreshAchievements(job.app, job.item).catch(() => void 0);
         }
       } catch (e) {
         failures += 1;
@@ -50212,12 +50539,15 @@ ${n.content.slice(0, 2e3)}
     if (sec.detail) {
       const d = sec.detail;
       const rows = d.rows.slice(0, 200).map((r) => {
+        var _a2, _b2;
         const pct = r.globalPercent === null ? "" : `${r.globalPercent}%`;
         const when = r.unlockedAt ? dateText(r.unlockedAt) : "";
         const desc = r.desc || (r.hidden ? "隐藏成就，解锁后可见说明" : "");
+        const iconSrc = r.unlocked ? (_a2 = r.icon) != null ? _a2 : r.iconGray : (_b2 = r.iconGray) != null ? _b2 : r.icon;
+        const grayFallback = !r.unlocked && !r.iconGray && !!r.icon;
         return `
       <div class="bz-gs-achrow${r.unlocked ? " is-on" : ""}" title="${escAttr(desc)}">
-        ${r.icon ? `<img class="bz-gs-achicon" src="${escAttr(r.icon)}" alt="" loading="lazy">` : '<span class="bz-gs-achicon bz-gs-achicon--none"></span>'}
+        ${iconSrc ? `<img class="bz-gs-achicon${grayFallback ? " is-gray" : ""}" src="${escAttr(iconSrc)}" alt="" loading="lazy">` : '<span class="bz-gs-achicon bz-gs-achicon--none"></span>'}
         <span class="bz-gs-achtext">
           <span class="bz-gs-achname">${escHtml(r.name)}</span>
           ${desc ? `<span class="bz-gs-achdesc">${escHtml(desc)}</span>` : ""}
@@ -50289,6 +50619,17 @@ ${n.content.slice(0, 2e3)}
     return `<div class="bz-gs-sectitle">商店截图</div>
   <div class="bz-gs-shots">${urls.map((u) => `<button type="button" class="bz-gs-shot" data-src="${escAttr(u)}"><img loading="lazy" src="${escAttr(u)}" alt=""></button>`).join("")}</div>`;
   }
+  function withLocalAchIcons(app, appid, detail) {
+    if (!detail) return detail;
+    return {
+      ...detail,
+      rows: detail.rows.map((r) => ({
+        ...r,
+        icon: achIconDisplayUrl(app, appid, r.apiName, true) || null,
+        iconGray: achIconDisplayUrl(app, appid, r.apiName, false) || null
+      }))
+    };
+  }
   function openDetail(app, appid) {
     const item = M.items.find((it) => it.appid === appid);
     if (!item) return;
@@ -50300,24 +50641,54 @@ ${n.content.slice(0, 2e3)}
     const popup = modal.popup;
     bindMediaFallback(popup);
     modal.mask.classList.add("bz-gs-detail-mask");
+    const fmHadAch = !!fmToAchDetail(cached);
+    const fmHadStore = hasStoreFm(cached);
     const achBox = popup.querySelector("#bz-gs-detail-ach");
-    void loadAchievements(app, item, cached).then((sec) => {
-      if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, sec);
+    const paintAch = (sec) => {
+      if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, { ...sec, detail: withLocalAchIcons(app, item.appid, sec.detail) });
       mountIcons(popup);
+    };
+    void loadAchievements(app, item, cached).then((sec) => {
+      paintAch(sec);
+      if (fmHadAch && item.hasAch && achRefreshDue(cached)) {
+        void refreshAchievements(app, item).then((fresh) => {
+          if (fresh.detail) paintAch(fresh);
+        });
+      }
     });
     const storeBox = popup.querySelector("#bz-gs-detail-store");
     const shotsBox = popup.querySelector("#bz-gs-detail-shots");
-    void loadStore(app, item, cached).then((sec) => {
+    const paintStore = (sec) => {
+      const { local, remote } = fmToShots(safeDetailFm(app, item.file));
+      const display = resolveShotUrls(app, local, sec.screenshots.length > 0 ? sec.screenshots : remote);
       if (storeBox && storeBox.isConnected) storeBox.innerHTML = storeRowsHtml(item, sec);
-      if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(sec.screenshots);
+      if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(display);
       const open = popup.querySelector("#bz-gs-open-store");
       if (open) open.addEventListener("click", () => window.open(storeUrlOf(item.appid), "_blank"));
       mountIcons(popup);
+    };
+    void loadStore(app, item, cached).then((sec) => {
+      paintStore(sec);
+      if (fmHadStore && storeRefreshDue(cached)) {
+        void refreshStore(app, item).then(paintStore);
+      }
     });
     popup.addEventListener("click", (e) => {
       const shot = e.target.closest(".bz-gs-shot");
       if (shot == null ? void 0 : shot.dataset.src) openLightbox({ src: shot.dataset.src, type: "image", title: item.name });
     });
+    M.modalRepaintFn = () => {
+      if (!popup.isConnected) {
+        M.modalRepaintFn = null;
+        return;
+      }
+      const fm = safeDetailFm(app, item.file);
+      const detail = fmToAchDetail(fm);
+      if (detail) paintAch({ detail, summary: fmToAchSummary(fm), error: null, fromCache: false });
+      const { local, remote } = fmToShots(fm);
+      const urls = resolveShotUrls(app, local, remote);
+      if (shotsBox && shotsBox.isConnected && urls.length > 0) shotsBox.innerHTML = shotsHtml(urls);
+    };
   }
   function uiModalSafe(content, title) {
     return uiModal({ head: true, title, maxWidth: 720, className: "bz-gs-detail-modal", content });
@@ -50665,9 +51036,24 @@ ${n.content.slice(0, 2e3)}
   }
 
   // prototypes/gameshelf/fake-sim.ts
+  init_posters();
+  init_steam();
   var FOLDER = "我的/游戏";
-  var SEED_MARK = "bz-sim:__gameshelf-seed-v3";
+  var SEED_MARK = "bz-sim:__gameshelf-seed-v5";
   var SETTINGS_KEY = "bz-sim:__settings";
+  function achRowsOf(appid) {
+    var _a2, _b2;
+    const a = (_b2 = (_a2 = window.GAMESHELF_DETAIL) == null ? void 0 : _a2.ach) == null ? void 0 : _b2[String(appid)];
+    if (!a) return [];
+    const d = parseAchievementRows(a.schema, a.player, a.global);
+    return d ? d.rows.map(achRowText) : [];
+  }
+  function shotUrlsOf(appid) {
+    var _a2, _b2, _c, _d;
+    const entry = (_b2 = (_a2 = window.GAMESHELF_DETAIL) == null ? void 0 : _a2.store) == null ? void 0 : _b2[String(appid)];
+    if (!entry) return [];
+    return (_d = (_c = parseStoreMeta(entry, appid)) == null ? void 0 : _c.screenshots) != null ? _d : [];
+  }
   function mdOf(g) {
     var _a2, _b2;
     const lines = [
@@ -50683,6 +51069,24 @@ ${n.content.slice(0, 2e3)}
     ];
     if (g.zh) lines.push(`中文名: ${g.zh}`);
     if (g.appid !== ((_b2 = (_a2 = window.GAMESHELF_DATA) == null ? void 0 : _a2[0]) == null ? void 0 : _b2.appid)) lines.push(`详情时间: "2026-09-18T00:00:00.000Z"`);
+    const achRows = achRowsOf(g.appid);
+    if (achRows.length > 0) {
+      lines.push("成就:");
+      for (const row of achRows) lines.push(`- ${row}`);
+      lines.push(
+        `成就已解: ${achRows.filter((r) => r.split(" | ")[2] === "1").length}`,
+        `成就总数: ${achRows.length}`,
+        // 刻意写**过期**时间：这样点开任一详情都会走「属性过期 → 静默刷新」那条路，
+        // 顺带把该款的成就图标与截图补到本地。评审时因此每款一开就是齐的，
+        // 不用等全量回填轮到它（回填按 vault 序排队，展示首位那款不一定是第一个）。
+        '成就更新: "2026-09-01T00:00:00.000Z"'
+      );
+    }
+    const shots = shotUrlsOf(g.appid);
+    if (shots.length > 0) {
+      lines.push("截图源:");
+      for (const u of shots) lines.push(`- ${u}`);
+    }
     lines.push(
       `图标: ${g.icon || '""'}`,
       `Windows分钟: ${g.win}`,
@@ -50732,6 +51136,7 @@ ${n.content.slice(0, 2e3)}
     if (g.__bzGsSimBooted) return;
     g.__bzGsSimBooted = true;
     seedDatabase();
+    setMediaInterval(0);
     const app = new FakeApp();
     simApp = app;
     setApp(app);

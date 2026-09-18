@@ -90,6 +90,9 @@ export interface GameshelfState {
   appRef: App | null;
   folderPath: string;
   renderFn: (() => void) | null;
+  /** 详情弹窗的重画钩子（媒体队列下完图后调它，否则弹窗里第一次看到的是占位图，
+   *  关掉重开才出真图 —— 真机上首次打开某款的详情就撞这个）。弹窗关了就自清。 */
+  modalRepaintFn: (() => void) | null;
 }
 
 export const M: GameshelfState = {
@@ -104,6 +107,7 @@ export const M: GameshelfState = {
   appRef: null,
   folderPath: DEFAULT_FOLDER,
   renderFn: null,
+  modalRepaintFn: null,
 };
 
 /** 测试/卸载用：整体重置模块状态 */
@@ -119,4 +123,5 @@ export function resetGameshelfState(): void {
   M.appRef = null;
   M.folderPath = DEFAULT_FOLDER;
   M.renderFn = null;
+  M.modalRepaintFn = null;
 }

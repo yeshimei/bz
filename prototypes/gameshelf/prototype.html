@@ -309,6 +309,50 @@
         const achTxt = (dt('#bz-gs-detail-ach') || {}).textContent || '';
         t('资料段已填', storeTxt.includes('开发商') && storeTxt.includes('在商店打开'));
         t('成就段已填', achTxt.includes('成就') && !achTxt.includes('加载中'));
+        // ---- 全量落盘（2026-09-18 用户拍板）：成就明细与图标改由「笔记属性 + 本地文件」供给，
+        //      不再只活在会话内存 —— 这一组断言钉住那条链 ----
+        // ⚠️ dt() 是单元素助手，要多个必须 dd.querySelectorAll（踩过两次了）
+        const achRows = dd.querySelectorAll('.bz-gs-achrow');
+        t('成就逐条明细渲染 ' + achRows.length + ' 条', achRows.length > 0);
+        // 解锁态与属性对得上：已解锁的行数 = 属性里的 `成就已解`。
+        // （不写「必有未解锁行」——用户的深岩银河是 100%，那款一条未解锁都没有，断言会误红）
+        const noteRaw = localStorage.getItem('bz-sim:我的/游戏/《' + first.name + '》.md') || '';
+        t('笔记属性含 成就 全量列表', noteRaw.includes('\n成就:\n'));
+        const achSum = Number((/成就已解: (\d+)/.exec(noteRaw) || [])[1] ?? -1);
+        const achOn = dd.querySelectorAll('.bz-gs-achrow.is-on').length;
+        t('已解锁行 ' + achOn + ' = 属性成就已解 ' + achSum, achSum >= 0 && achOn === achSum);
+        // 图标：打开详情会因「成就属性过期」静默刷新该款 → 图标随即入本地队列，弹窗靠
+        // M.modalRepaintFn 重画。所以这里轮询即可，别把断言绑在某一款的运气上。
+        const iconFilePat = '/' + first.appid + '-ach-';
+        let iconFiles = 0;
+        let achIconSrc = '';
+        for (let i = 0; i < 90 && !achIconSrc; i++) {
+          await sleep(200);
+          iconFiles = Object.keys(localStorage).filter((k) => k.includes(iconFilePat)).length;
+          const img = dt('.bz-gs-achrow .bz-gs-achicon:not(.bz-gs-achicon--none)');
+          achIconSrc = (img && img.getAttribute('src')) || '';
+        }
+        t('成就图标落到本地 ' + iconFiles + ' 个 → 弹窗有真图 ' + (achIconSrc ? '有' : '无'),
+          iconFiles > 0 && !!achIconSrc);
+        // 截图：罐头抓到了才该渲染（没抓到就不该出现空段）——两种情况都是对的。
+        // 弹窗开着时刷新回来的那一版截图段用的是「截图源」的远端地址（本地文件还没下完），
+        // 所以稍等片刻即可，不需要为了看本地路径重开弹窗。
+        const seededShots = ((window.GAMESHELF_DETAIL || {}).store || {})[String(first.appid)]?.data?.screenshots || [];
+        for (let i = 0; i < 12 && seededShots.length > 0 && dd.querySelectorAll('.bz-gs-shot').length === 0; i++) await sleep(200);
+        const shotNodes = dd.querySelectorAll('.bz-gs-shot');
+        t('截图段：罐头 ' + seededShots.length + ' 张 → 渲染 ' + shotNodes.length + ' 张',
+          seededShots.length === 0 ? shotNodes.length === 0 : shotNodes.length > 0);
+        // 截图本地化：媒体队列下完后 `截图` 属性该出现本地路径（与「截图源」同序同长）
+        let shotLocal = '';
+        for (let i = 0; i < 20 && !shotLocal; i++) {
+          await sleep(200);
+          const raw = localStorage.getItem('bz-sim:我的/游戏/《' + first.name + '》.md') || '';
+          const m = /\n截图:\n((?:- .*\n?)+)/.exec(raw + '\n');
+          shotLocal = m ? m[1] : '';
+        }
+        t('截图本地路径已写回属性=' + shotLocal.split('\n').filter(Boolean).length + ' 项',
+          seededShots.length === 0 ? shotLocal === '' : shotLocal.length > 0);
+        t('截图本地路径指向海报文件夹', seededShots.length === 0 || shotLocal.includes('-shot-'));
         // 弹窗打开时统计页那套 class 不该串进来（.bz-gs-rankrow 只在统计页）
         dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
         await sleep(150);

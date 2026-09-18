@@ -11,9 +11,12 @@
  * - 单条字段：playtime_forever=分钟、rtime_last_played=unix 秒；无 img_logo_url，
  *   封面走 header.jpg 直拼（CDN 不走代理也可达）。
  * - store.steampowered.com（appdetails / appreviews）**直连可达**且 l=schinese 直出中文；
- *   api.steampowered.com（成就）与库同步同一条代理通道。
+ *   api.steampowered.com（成就）与库同步同一条代理通道，GetSchemaForGame 也认 l=schinese
+ *   （成就名与描述出中文；不传一律英文）。
  * - 成就全局解锁率的权威来源是 GetGlobalAchievementPercentagesForApp（独立接口）；
  *   Schema 内嵌的 globalAchievement 仅部分游戏有，故两条来源都读、全局接口优先。
+ * - Schema 每条成就给**两个图标**：icon（已解锁，彩色）与 icongray（未解锁，灰）；
+ *   两色都下到本地（见 posters.ts），界面按解锁态取用，状态翻转零下载。
  */
 import { requestUrl } from 'obsidian';
 import { withTimeout } from '../core/http';
@@ -204,8 +207,10 @@ export interface AchievementRow {
   unlockedAt: string | null;
   /** 全球解锁率 %（0-100 一位小数；两来源都拿不到 → null） */
   globalPercent: number | null;
-  /** 图标（Schema icon；隐藏成就也有） */
+  /** 已解锁用的彩色图标（Schema icon；隐藏成就也有） */
   icon: string | null;
+  /** 未解锁用的灰色图标（Schema icongray；Steam 未给 → null，界面回落彩色 + CSS 灰度） */
+  iconGray: string | null;
 }
 
 /** 成就明细（弹窗成就段全量） */
@@ -253,7 +258,7 @@ export function parseAchievementRows(schemaRaw: unknown, playerRaw: unknown, glo
   const playerAch = (playerRaw as any)?.playerstats?.achievements;
   if (!Array.isArray(schemaAch) || !Array.isArray(playerAch)) return null;
   const globals = globalPercents(globalRaw);
-  const meta = new Map<string, { name: string; desc: string; hidden: boolean; icon: string | null }>();
+  const meta = new Map<string, { name: string; desc: string; hidden: boolean; icon: string | null; iconGray: string | null }>();
   for (const a of schemaAch) {
     if (!a || typeof a.name !== 'string') continue;
     // Schema 内嵌解锁率仅部分游戏有：全局接口没给时才用它补位
@@ -264,6 +269,7 @@ export function parseAchievementRows(schemaRaw: unknown, playerRaw: unknown, glo
       desc: typeof a.description === 'string' ? a.description : '',
       hidden: a.hidden === 1 || a.hidden === true,
       icon: typeof a.icon === 'string' && a.icon ? a.icon : null,
+      iconGray: typeof a.icongray === 'string' && a.icongray ? a.icongray : null,
     });
   }
   const rows: AchievementRow[] = [];
@@ -274,7 +280,7 @@ export function parseAchievementRows(schemaRaw: unknown, playerRaw: unknown, glo
     if (!p) continue;
     const apiName = String(p.apiname ?? '');
     if (!apiName) continue;
-    const m = meta.get(apiName) ?? { name: apiName, desc: '', hidden: false, icon: null };
+    const m = meta.get(apiName) ?? { name: apiName, desc: '', hidden: false, icon: null, iconGray: null };
     const isUnlocked = p.achieved === 1;
     if (isUnlocked) unlocked += 1;
     const pct = globals.get(apiName);
@@ -293,6 +299,7 @@ export function parseAchievementRows(schemaRaw: unknown, playerRaw: unknown, glo
       unlockedAt: isUnlocked && Number(p.unlocktime) > 0 ? new Date(Number(p.unlocktime) * 1000).toISOString() : null,
       globalPercent: percent,
       icon: m.icon,
+      iconGray: m.iconGray,
     });
   }
   // 排序：稀有度升序（越稀有越靠前），稀有度相同按解锁在前
@@ -315,6 +322,80 @@ export function parseAchievementSummary(schemaRaw: unknown, playerRaw: unknown, 
   return { total: d.total, unlocked: d.unlocked, rarestName: d.rarestName, rarestPercent: d.rarestPercent };
 }
 
+/* ---------- 成就属性行（frontmatter 全量落盘的序列化口径） ---------- */
+
+/**
+ * 段分隔符。**实测 10088 条真实成就的名字与描述里 `|` 零出现**，故取它；
+ * 仍留 sanitizeSeg 把 `|` 换成断竖线 `¦` 兜底——格式契约不能靠「真实数据没出现」活着，
+ * 一旦某款新游戏的文案带竖线，整行会切错位、图标全部错配，代价远大于一个字符。
+ */
+const ACH_SEP = ' | ';
+
+/** 段净化：管道符换 ¦、换行折空格、收空白。引号交给 Obsidian 的 YAML 序列化，不自己转义 */
+export function sanitizeSeg(v: unknown): string {
+  return String(v ?? '')
+    .replace(/\|/g, '¦')
+    .replace(/[\r\n]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/** 解锁时间 ISO → YYYY-MM-DD（存日期不存时间戳：可读、短、和 `最后游玩` 同格式） */
+function dateOnly(iso: string | null): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  if (!Number.isFinite(d.getTime())) return '-';
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+/**
+ * 成就明细 → 属性行（6 段）：
+ *   显示名 | 描述 | 已解锁(1/0) | 解锁日期(未解锁 `-`) | 全球解锁率(未知 `-`) | apiname
+ *
+ * 第 6 段的 apiname 是**成就图标本地文件的键**（见 posters.ts::localAchIconPath）——
+ * 用它而不是下标，是因为 Steam 追加成就会让下标整体位移，而 apiname 永不变；
+ * 同时它也是这一行的稳定身份，手改属性时看得懂「这是哪一条」。
+ */
+export function achRowText(row: AchievementRow): string {
+  const pct = row.globalPercent === null ? '-' : row.globalPercent.toFixed(1);
+  return [
+    sanitizeSeg(row.name),
+    sanitizeSeg(row.desc),
+    row.unlocked ? '1' : '0',
+    row.unlocked ? dateOnly(row.unlockedAt) : '-',
+    pct,
+    sanitizeSeg(row.apiName),
+  ].join(ACH_SEP);
+}
+
+/** 属性行 → 结构化（段数不足 6 / 无 apiname → null，坏行跳过而不是带崩整段渲染） */
+export function achRowFromText(text: string): {
+  name: string;
+  desc: string;
+  unlocked: boolean;
+  /** YYYY-MM-DD；未解锁或未知 → '' */
+  date: string;
+  /** null = 全球解锁率未知 */
+  percent: number | null;
+  apiName: string;
+} | null {
+  const parts = String(text).split(ACH_SEP);
+  if (parts.length < 6) return null;
+  const seg = parts.map((s) => s.trim());
+  const [name, desc, on, date, pct, apiName] = seg;
+  if (!apiName) return null;
+  const n = Number(pct);
+  return {
+    name: name || apiName,
+    desc,
+    unlocked: on === '1',
+    date: date === '-' ? '' : date,
+    percent: pct === '-' || !Number.isFinite(n) ? null : n,
+    apiName,
+  };
+}
+
 /** 成就接口错误分流（无成就页的 400/403 与网络失败分开） */
 function achievementFailure(e: unknown): DetailFetchResult<never> {
   const err = e as SteamHttpError;
@@ -328,7 +409,9 @@ function achievementFailure(e: unknown): DetailFetchResult<never> {
 export async function fetchAchievementDetail(steamId: string, apiKey: string, appid: number): Promise<DetailFetchResult<AchievementDetail>> {
   const enc = encodeURIComponent(apiKey.trim());
   try {
-    const schema = await getJson(`${API_BASE}/ISteamUserStats/GetSchemaForGame/v2/?key=${enc}&appid=${appid}`);
+    // l=schinese：成就名与描述出中文（实测 v2 接口认该参数；不传一律英文，
+    // 与商店 appdetails 的本地化口径对齐）
+    const schema = await getJson(`${API_BASE}/ISteamUserStats/GetSchemaForGame/v2/?key=${enc}&appid=${appid}&l=schinese`);
     const player = await getJson(`${API_BASE}/ISteamUserStats/GetPlayerAchievements/v1/?key=${enc}&steamid=${steamId.trim()}&appid=${appid}`);
     let global: unknown = null;
     try {
