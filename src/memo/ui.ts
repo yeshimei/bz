@@ -42,9 +42,9 @@ import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEm
 import { openFlowDialog } from '../core/flow-dialog';
 import { localNow } from '../core/ui/str';
 import { emitDomainEvent } from '../core/domain-bus';
-import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
+import { attachItemActions, closeItemMenu, openItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import {
-  debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
+  debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt, pad2,
   generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
 } from '../core/utils';
 import { MemoData, DEFAULT_SCENARIOS, parseComposerChecklist, hasPendingNextItem } from './data';
@@ -53,7 +53,7 @@ import {
   MEMO_ICONS as ICON, iconSpan, sceneDot, sceneLabel, mainCountHtml,
   navBtnHtml, mobChipHtml, mobAddSceneChipHtml, panelShellHtml, metaTagsHtml,
   cardHtml as renderCard, checkHtml, sectionLabelHtml, doneBarHtml, doneMoreHtml, type MetaDue,
-  calHeadHtml, calGridHtml, calStatsHtml, calEmptyHtml, CAL_WEEKDAYS, type CalCell, type CalChip,
+  calHeadHtml, calGridHtml, calStatsHtml, calEmptyHtml, calDayPanelHtml, CAL_WEEKDAYS, type CalCell, type CalChip,
 } from './render';
 import type { MemoItem, MemoRecur, MemoCheckItem } from './types';
 import { M } from './state';
@@ -66,7 +66,7 @@ const SEARCH_DEBOUNCE_MS = 180;
  *  定时器等价——最后一次 input 的输入值生效，面板关闭 cancel 防孤儿回调） */
 const searchDebounced = debounce((v: string) => {
   M.search = v;
-  renderAll();
+  renderAll(true); // 搜索路径带增量标记（效率#9：已有卡墙按 id 显隐，纯缩小时不整墙重建）
 }, SEARCH_DEBOUNCE_MS);
 
 // ---------- 小工具 ----------
@@ -76,9 +76,10 @@ const esc = escapeHtml;
 
 
 
-/** 某时间串（YYYY-MM-DD HH:mm:ss）是否为今天（「今日」视图只看今天完成的口径） */
+/** 某时间串（YYYY-MM-DD HH:mm:ss）是否为今天（「今日」视图只看今天完成的口径）。
+ *  一致#5：moment().format 收口 localDayKey 单源（域内 due.ts 同款口径） */
 function isTodayStr(s: string): boolean {
-  return !!s && s.slice(0, 10) === moment().format('YYYY-MM-DD');
+  return !!s && s.slice(0, 10) === localDayKey();
 }
 
 /** composer/编辑器场景缺省兜底：设置 memoDefaultScene（合法时）否则第一个场景 */
@@ -234,9 +235,13 @@ function getVisibleItems(): MemoItem[] {
       // 跨场景聚合 star 标记条目（已完成重要项同样放行进 done 折叠区）
       if (it.priority !== 'important') return false;
     } else if (M.activeScene !== '全部' && it.scene !== M.activeScene) return false;
-    // 搜索（内容/场景/笔记名）
+    // 搜索（内容/场景/笔记名；效率#8：hay 补清单子任务文本与链接——issue 354 后子任务是
+    // 一等公民，录入与检索的口径对齐；命中高亮只做 title，子任务命中靠条目级召回）
     if (kw) {
-      const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(' ').toLowerCase();
+      const hay = [
+        it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url,
+        ...(it.checklist || []).map((c) => c.text),
+      ].filter(Boolean).join(' ').toLowerCase();
       if (!hay.includes(kw)) return false;
     }
     return true;
@@ -405,9 +410,8 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       closeMemoPanel();
       return;
     }
-    // 头行钮组：设置直达（关面板 → 设置面板定位备忘录域）/ 关闭
-    const headSettings = t.closest('[data-memo-head-settings]');
-    if (headSettings) { openMemoInSettings(); return; }
+    // 头行钮组：关闭（M3-7：「设置」钮退役——issue 210 桌面皮肤段收整组 + issue 268
+    // 移动端撤除后三端不可达，markup/委托一并删除；设置入口 = 场景项菜单「在设置中编辑」）
     const headClose = t.closest('[data-memo-head-close]');
     if (headClose) { closeMemoPanel(); return; }
     // 场景切换（左栏 / 移动 chips）
@@ -485,7 +489,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     if (dayCell) {
       const d = Number(dayCell.dataset.memoCalDay);
       if (Number.isInteger(d)) {
-        M.calSelected = `${M.calMonth}-${String(d).padStart(2, '0')}`;
+        M.calSelected = `${M.calMonth}-${pad2(d)}`; // 一致#5：padStart → pad2 单源
         renderAll();
       }
       return;
@@ -512,6 +516,33 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     toggleCheck(it);
   });
 
+  // 键盘委托（M3-10）：勾选圈/清单子任务行是 role="checkbox" 的 span/div（render 层已带
+  // tabindex/aria-checked）——Enter/Space 触发与点击同款行为（toggleCheck 含 300ms 防抖、
+  // toggleChecklistItem 含全勾自动完成，键盘与鼠标一个口径）
+  content.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target as HTMLElement;
+    const check = t.closest?.('[data-memo-check]') as HTMLElement | null;
+    if (check) {
+      const card = check.closest('.bz-memo-card') as HTMLElement | null;
+      const it = M.items.find((i) => i.id === card?.dataset.memoId);
+      if (!it) return;
+      e.preventDefault();
+      toggleCheck(it);
+      return;
+    }
+    const clRow = t.closest?.('[data-memo-cl]') as HTMLElement | null;
+    if (clRow) {
+      const card = clRow.closest('.bz-memo-card') as HTMLElement | null;
+      const it = M.items.find((i) => i.id === card?.dataset.memoId);
+      if (!it || it.checklist?.length === 0) return;
+      const idx = Number((clRow.dataset.memoCl || '').split(':')[1]);
+      if (!Number.isInteger(idx)) return;
+      e.preventDefault();
+      void toggleChecklistItem(it, idx);
+    }
+  });
+
   // 底部录入 Enter
   const composerInput = overlay.querySelector('[data-memo-composer-input]') as HTMLInputElement;
   composerInput.addEventListener('keydown', (e) => {
@@ -533,9 +564,32 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     })();
   });
 
-  // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符）
+  // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符；
+  // 效率#9：搜索路径 renderAll(true) 走增量显隐轻版）
   const searchInput = overlay.querySelector('[data-memo-search]') as HTMLInputElement;
-  searchInput.addEventListener('input', () => searchDebounced(searchInput.value.trim()));
+  searchInput.addEventListener('input', () => {
+    syncSearchClear();
+    searchDebounced(searchInput.value.trim());
+  });
+  // 搜索框 ESC 清词（效率#5）：有词 = 只清词不冒泡（escManager 的 document 冒泡层在
+  // input 之后，stopPropagation 拦得住——防「清词变成关整个面板」）；无词放行不变
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !searchInput.value.trim()) return;
+    e.preventDefault();
+    e.stopPropagation();
+    clearSearchInput();
+  });
+  // 尾部 ✕ 清除（效率#6）：有词才显示（syncSearchClear 同步），点 = 清词 + 焦点回框——
+  // 提醒定位预填的完整笔记路径不再只能手删
+  overlay.querySelector('[data-memo-search-clear]')?.addEventListener('click', () => {
+    clearSearchInput();
+  });
+  // 打开聚焦（效率#2）：桌面把焦点交给第一高频输入口；提醒 notePath 定位分支聚焦搜索框
+  //（定位场景下一步是看列表不是录入）；移动端遵 core 口径跳过 input 聚焦防软键盘
+  if (!isMobileEnv()) {
+    if (opts?.notePath) searchInput.focus();
+    else composerInput.focus();
+  }
 
   void (async () => {
     await loadData();
@@ -592,13 +646,47 @@ let sortSelectDetach: (() => void) | null = null;
 
 // ---------- 渲染 ----------
 
-function renderAll(): void {
+/** 搜索清除钮显隐同步（效率#6）：有词才显示 ✕（input/ESC/清词三路都过这里） */
+function syncSearchClear(): void {
+  const btn = M.overlay?.querySelector('[data-memo-search-clear]') as HTMLElement | null;
+  const inp = M.overlay?.querySelector('[data-memo-search]') as HTMLInputElement | null;
+  if (btn) btn.hidden = !inp?.value.trim();
+}
+
+/** 清词回全量（效率#5 ESC 与效率#6 ✕/空态钮同一出口）：输入框与状态词清空 +
+ *  ✕ 显隐同步 + 全量重渲 + 焦点回框 */
+function clearSearchInput(): void {
+  const inp = M.overlay?.querySelector('[data-memo-search]') as HTMLInputElement | null;
+  if (inp) inp.value = '';
+  M.search = '';
+  syncSearchClear();
+  renderAll();
+  inp?.focus();
+}
+
+/** 滚位快照（M2-4）：innerHTML 重建会重置滚动容器——重建前存 scrollTop/scrollLeft，
+ *  重建后按容器恢复（diary/ui.ts captureRestore/applyRestore 先例的轻量版） */
+function captureScroll(el: Element | null): { top: number; left: number } | null {
+  if (!el) return null;
+  return { top: el.scrollTop, left: el.scrollLeft };
+}
+function applyScroll(el: Element | null, snap: { top: number; left: number } | null): void {
+  if (!el || !snap) return;
+  el.scrollTop = snap.top;
+  el.scrollLeft = snap.left;
+}
+
+function renderAll(searchDelta = false): void {
   if (!M.overlay) return;
+  // 移动场景条横滚位（M2-4）：随 nav/mobScenes 重建保存恢复——勾选/搜索等任意重渲
+  // 不再把滑到中后段的场景 chips 弹回起点
+  const mobSnap = captureScroll(M.overlay.querySelector('[data-memo-mob-scenes]'));
   renderNav();
   renderMobScenes();
+  applyScroll(M.overlay.querySelector('[data-memo-mob-scenes]'), mobSnap);
   renderMainHead();
   renderViewToggle();
-  renderContent();
+  renderContent(searchDelta);
 }
 
 /** 视图页签态（issue 355）：list/calendar 两钮 is-on 随 M.view */
@@ -700,19 +788,22 @@ function metaTags(it: MemoItem): string {
   );
 }
 
-function renderContent(): void {
+function renderContent(searchDelta = false): void {
   const content = M.overlay!.querySelector('[data-memo-content]') as HTMLElement;
   if (!content) return;
+  const snap = captureScroll(content); // M2-4：列表纵滚位/月历滚位——重建后按容器恢复
   if (M.view === 'calendar') {
     renderCalendar(content);
-    return;
+  } else {
+    renderListContent(content, searchDelta);
   }
-  renderListContent(content);
+  applyScroll(content, snap);
 }
 
-/** 卡片 markup（列表 / 月历当日清单共用：recur/进度文案单源注入） */
-function cardHtmlOf(it: MemoItem): string {
-  return renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', recurTextOf(it), checkProgress(it));
+/** 卡片 markup（列表 / 月历当日清单共用：recur/进度文案单源注入；kw 默认当前搜索词——
+ *  命中 `<mark>` 高亮随两处卡片同源生效，效率#7） */
+function cardHtmlOf(it: MemoItem, kw: string = M.search.trim()): string {
+  return renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', recurTextOf(it), checkProgress(it), kw);
 }
 
 /** 卡片行为接线（列表 / 月历当日清单共用）：链接打开/位置跳转/右键菜单与长按抽屉 */
@@ -740,6 +831,25 @@ function wireCards(content: HTMLElement): void {
     const id = (card as HTMLElement).dataset.memoId;
     const it = M.items.find((i) => i.id === id);
     if (!it) return;
+    // 键盘可达（M3-10）：卡 tabindex="0"（render 层），Enter/Space 开条目菜单——
+    // 菜单内部 ↑↓/Tab 导航由 core item-actions 承接；仅卡体自身聚焦时触发，
+    // 圈/清单行/链接各自语义不劫持
+    card.addEventListener('keydown', (e: KeyboardEvent) => {
+      if ((e.key !== 'Enter' && e.key !== ' ') || e.target !== card) return;
+      e.preventDefault();
+      const r = (card as HTMLElement).getBoundingClientRect();
+      // 右键路径同款姿势（core 注释立约）：suppress=true 打开 + 立即复位守卫——
+      // 键盘打开无补发 click，不复位会吞掉用户随后的第一次点击
+      openItemMenu(r.left + 24, r.bottom + 4, buildCardActions(it), true, skinClass() || undefined);
+      resetItemMenuClickGuard();
+    });
+    // 桌面双击卡体直开编辑器（效率#10）：单击语义留白；链接/位置/勾选/清单让位区不劫持；
+    // 移动端保持长按抽屉口径（勾选/编辑抽屉首屏可达）
+    card.addEventListener('dblclick', (e) => {
+      if (isMobileEnv()) return;
+      if ((e.target as HTMLElement).closest('[data-memo-openitem],[data-memo-pos],[data-memo-check],[data-memo-cl]')) return;
+      openEditor(it);
+    });
     attachItemActions(card as HTMLElement, buildCardActions(it), {
       menuClass: skinClass() || undefined,
       sheetClass: skinClass() || undefined, // 抽屉挂 body，需自带皮肤类，头部勾选圈皮肤样式才随行
@@ -748,17 +858,57 @@ function wireCards(content: HTMLElement): void {
   });
 }
 
-function renderListContent(content: HTMLElement): void {
+/** 搜索增量显隐轻版（效率#9）：墙中已有卡按新结果集 toggle display，分区/折叠条计数
+ *  就地改文本——不重建 innerHTML、不重挂监听。返回 false = 结构变了须回退全量：
+ *  空墙（首渲/上帧空态）、结果集出现墙外新卡（清词方向/pinned 置顶放行）。
+ *  「更早 N 条」数字轻版不追（搜索过程临时态，任意非搜索重渲经全量路径矫正） */
+function trySearchDelta(content: HTMLElement, items: MemoItem[]): boolean {
+  const cards = Array.from(content.querySelectorAll<HTMLElement>('.bz-memo-card'));
+  if (!cards.length) return false;
+  const want = new Set(items.map((i) => i.id));
+  const wall = new Set(cards.map((c) => c.dataset.memoId as string));
+  for (const id of want) if (!wall.has(id)) return false; // 结果 ⊆ 墙才可增量（纯缩小）
+  for (const c of cards) c.style.display = want.has(c.dataset.memoId as string) ? '' : 'none';
+  const active = items.filter((i) => !i.completed);
+  const urgent = active.filter((i) => dueRank(i) <= 1);
+  const normal = active.filter((i) => dueRank(i) > 1);
+  const done = items.filter((i) => i.completed);
+  const syncSec = (kind: string, count: number) => {
+    const label = content.querySelector<HTMLElement>(`.bz-memo-section-label[data-memo-sec="${kind}"]`);
+    if (!label) return;
+    const cnt = label.querySelector<HTMLElement>('.bz-memo-sec-cnt');
+    if (cnt) cnt.textContent = String(count);
+    label.style.display = count ? '' : 'none';
+  };
+  syncSec('urgent', urgent.length);
+  syncSec('normal', normal.length);
+  const cnt = content.querySelector<HTMLElement>('[data-memo-donebar] .bz-memo-donebar-cnt');
+  if (cnt) cnt.textContent = String(done.length);
+  return true;
+}
+
+function renderListContent(content: HTMLElement, searchDelta = false): void {
   const items = getVisibleItems();
   if (items.length === 0) {
-    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 「新建备忘录」动作按钮）
+    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 动作按钮行）；搜索态文案分化 +
+    // 「清除搜索」动作（效率#6：desc 承诺「或清除搜索」，actions 补上对应钮不再悬空）
     content.innerHTML = '';
+    const actions = [uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })];
+    if (M.search.trim()) {
+      actions.push(uiBtn({ label: '清除搜索', icon: ICON.close, onClick: () => clearSearchInput() }));
+    }
     content.appendChild(uiEmpty({
       icon: ICON.empty,
       title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
       desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
-      actions: uiBtnRow([uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
+      actions: uiBtnRow(actions, { center: true }),
     }));
+    content.dataset.memoWall = 'empty';
+    return;
+  }
+  // 搜索增量显隐轻版（效率#9）：命中则已按 id 显隐，跳过整墙重建
+  if (searchDelta && trySearchDelta(content, items)) {
+    content.dataset.memoWall = 'cards';
     return;
   }
   // 分组：到期优先（overdue/today）→ 其他 → 已完成（折叠条）
@@ -769,11 +919,11 @@ function renderListContent(content: HTMLElement): void {
 
   const sections: string[] = [];
   if (urgent.length) {
-    sections.push(sectionLabelHtml('到期优先', urgent.length));
+    sections.push(sectionLabelHtml('到期优先', urgent.length, 'urgent'));
     sections.push(...urgent.map((it) => cardHtmlOf(it)));
   }
   if (normal.length) {
-    sections.push(sectionLabelHtml('其他', normal.length));
+    sections.push(sectionLabelHtml('其他', normal.length, 'normal'));
     sections.push(...normal.map((it) => cardHtmlOf(it)));
   }
   if (done.length) {
@@ -793,6 +943,7 @@ function renderListContent(content: HTMLElement): void {
     }
   }
   content.innerHTML = sections.join('');
+  content.dataset.memoWall = 'cards';
   mountIcons(content);
   wireCards(content);
 }
@@ -825,7 +976,7 @@ function renderCalendar(content: HTMLElement): void {
   for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
   const daysInMonth = monthMoment.daysInMonth();
   for (let d = 1; d <= daysInMonth; d++) {
-    const key = `${M.calMonth}-${String(d).padStart(2, '0')}`;
+    const key = `${M.calMonth}-${pad2(d)}`;
     const list = byDay.get(key) || [];
     // 每格最多 3 条 chip，多出折「还有 N 条」（格子本身可点看全量）
     const chips: CalChip[] = list.slice(0, 3).map((it) => {
@@ -846,7 +997,9 @@ function renderCalendar(content: HTMLElement): void {
   for (const [k, v] of byDay) if (k.startsWith(monthPrefix)) monthCount += v.length;
   const sections: string[] = [calHeadHtml(monthMoment.format('YYYY年M月')), calStatsHtml(monthCount, todayCount), calGridHtml(cells)];
   if (monthCount === 0) sections.push(calEmptyHtml(!!M.search.trim() || M.activeScene !== '全部'));
-  // 当日清单：点日期展开（完成态条目同列，卡片淡显划线）
+  // 当日清单：点日期展开（完成态条目同列，卡片淡显划线）——壳与空清单占位收口
+  // calDayPanelHtml 纯层单源（一致#11：ui.ts 不再手拼 markup；一致#6：空日用
+  // emptyHtmlStr 空态单源，「这一天没有备忘录」不再自绘）
   if (M.calSelected) {
     const dayItems = visible.filter((i) => (i.due || '').slice(0, 10) === M.calSelected);
     // 选中今日用「今日事项」语义标签（审查体验 P3 修复批：当日清单直接展开时一眼可辨）
@@ -854,8 +1007,7 @@ function renderCalendar(content: HTMLElement): void {
       M.calSelected === today
         ? `今日事项 · ${dayItems.length} 项`
         : `${moment(M.calSelected).format('M月D日')} · ${dayItems.length} 项`;
-    const cards = dayItems.length ? dayItems.map((it) => cardHtmlOf(it)).join('') : '<div class="bz-memo-cal-noday">这一天没有备忘录</div>';
-    sections.push(`<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, dayItems.length)}${cards}</div>`);
+    sections.push(calDayPanelHtml(label, dayItems.length, dayItems.map((it) => cardHtmlOf(it)).join('')));
   }
   content.innerHTML = sections.join('');
   mountIcons(content);
@@ -898,6 +1050,23 @@ function buildSheetHead(it: MemoItem): HTMLElement {
     e.stopPropagation();
     closeItemMenu();
     toggleCheck(it);
+  });
+  // 键盘同款（M3-10）：抽屉头圈是 role="checkbox" 的 span（checkHtml 单源），Enter/Space 触发
+  head.querySelector('[data-memo-check]')?.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    e.preventDefault();
+    e.stopPropagation();
+    closeItemMenu();
+    toggleCheck(it);
+  });
+  // 抽屉头位置标签接线（M3-3）：metaTags 单源带出 data-memo-pos 可点 markup——此前
+  // pointer 样式在、行为不在（wireCards 只接列表卡内容区，抽屉头不在其列）。
+  // 拍板：接「关抽屉 + jumpToNote」而非剥 markup——与列表卡位置标签交互语义一致，
+  // 抽屉里「看位置 → 跳过去」一步直达
+  head.querySelector('[data-memo-pos]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeItemMenu();
+    jumpToNote(it);
   });
   return head;
 }

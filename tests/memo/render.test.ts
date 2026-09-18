@@ -63,11 +63,13 @@ describe('memo render 纯层（markup 口径冻结）', () => {
   it('panelShellHtml：全部行为锚点在场', () => {
     const h = panelShellHtml();
     for (const anchor of [
-      'data-memo-head-settings', 'data-memo-head-close', 'data-memo-nav', 'data-memo-addscene',
+      'data-memo-head-close', 'data-memo-nav', 'data-memo-addscene',
       'data-memo-main-title', 'data-memo-main-count', 'data-memo-newbtn', 'data-memo-search',
       'data-memo-sort', 'data-memo-mob-scenes', 'data-memo-content',
-      'data-memo-composer-input', 'data-memo-composer-add',
+      'data-memo-composer-input', 'data-memo-composer-add', 'data-memo-search-clear',
     ]) expect(h).toContain(anchor);
+    // 设置钮已退役（深审 M3-7：issue 210/268 后三端不可达，markup 删尸）
+    expect(h).not.toContain('data-memo-head-settings');
     expect(h).toContain('bz-panel-frame bz-memo-panel bz-panel-mtop');
   });
 

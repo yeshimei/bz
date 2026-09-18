@@ -300,14 +300,17 @@ describe('memo 面板', () => {
     await vi.waitFor(() => {
       expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
     });
+    const visibleCards = () =>
+      [...document.querySelectorAll<HTMLElement>('.bz-memo-card')].filter((c) => c.style.display !== 'none');
     const inp = document.querySelector('[data-memo-search]') as HTMLInputElement;
     inp.value = 'ffmpeg';
     inp.dispatchEvent(new Event('input'));
-    // 防抖窗口内：列表未过滤（仍 3 张未完成卡）
-    expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
+    // 防抖窗口内：列表未过滤（仍 3 张未完成卡可见）
+    expect(visibleCards().length).toBe(3);
     await new Promise((r) => setTimeout(r, 250));
-    expect(document.querySelectorAll('.bz-memo-card').length).toBe(1);
-    expect(document.querySelectorAll('.bz-memo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
+    // 过滤生效（效率#9 增量显隐轻版）：命中卡可见，未命中卡 display:none 原地隐藏
+    expect(visibleCards().length).toBe(1);
+    expect(visibleCards()[0].textContent).toContain('ffmpeg 转写参数整理');
   });
 
   it('排序 = 组件库下拉（issue 268）：收起态单枚 + 展开菜单三档，切换写回设置', async () => {
@@ -732,7 +735,7 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     });
   });
 
-  it('头行钮组（issue 197）：品牌块 + 右侧设置/关闭；设置直达设置面板备忘录域，关闭即收面板', async () => {
+  it('头行钮组（issue 197 → M3-7 收敛）：品牌块 + 右侧关闭；设置钮退役，关闭即收面板', async () => {
     const { app } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
@@ -741,19 +744,11 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     // 品牌块图标 + 标题
     expect(document.querySelector('.bz-panel-brand [data-icon="list-checks"]')).toBeTruthy();
     expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('备忘录');
-    // 设置钮 = 齿轮 settings（issue 200：settings-2 滑杆式改齿轮）
-    expect(document.querySelector('[data-memo-head-settings] [data-icon="settings"]')).toBeTruthy();
+    // 设置钮退役（深审 M3-7：issue 210 桌面皮肤段收整组 + issue 268 移动撤除后三端不可达）；
+    // 设置入口 = 场景项菜单「在设置中编辑」（另有独立用例覆盖 openSettingsPanel 直达）
+    expect(document.querySelector('[data-memo-head-settings]')).toBeNull();
     // 关闭钮 → 面板收起
     (document.querySelector('[data-memo-head-close]') as HTMLElement).click();
-    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
-    // 设置钮 → 关面板 + openSettingsPanel(app, 'memo') 直达备忘录设置项
-    openMemoPanel(app);
-    await vi.waitFor(() => {
-      expect(document.querySelector('[data-memo-head-settings]')).toBeTruthy();
-    });
-    (document.querySelector('[data-memo-head-settings]') as HTMLElement).click();
-    const { openSettingsPanel } = await import('../../src/settings-panel');
-    expect(openSettingsPanel).toHaveBeenCalledWith(app, 'memo');
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 

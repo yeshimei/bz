@@ -75,9 +75,10 @@ describe('issue 355 · 月历纯层 markup 口径', () => {
     expect(h).not.toContain('今日');
   });
 
-  it('calEmptyHtml：空月人话提示 markup（issue 355 真机回归）', () => {
+  it('calEmptyHtml：空月人话提示 markup（issue 355 真机回归；一致#6 收口 emptyHtmlStr 空态单源）', () => {
     const h = calEmptyHtml(false);
-    expect(h).toContain('bz-memo-cal-empt');
+    expect(h).toContain('bz-empty');
+    expect(h).not.toContain('bz-memo-cal-empt');
     expect(h).toContain('本月没有到期事项');
   });
 
@@ -327,7 +328,7 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计
     expect(stats).toContain('本月到期 3 条'); // ov + td + ft
     expect(stats).toContain('今日 1 条'); // 仅 td
     // 有条目月不出现空态提示
-    expect(document.querySelector('.bz-memo-cal-empt')).toBeNull();
+    expect(document.querySelector('.bz-empty')).toBeNull();
   });
 
   it('空月人话提示：全库无 due 条目时格子全空但有统计与解释，翻月仍成立', async () => {
@@ -346,10 +347,10 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计
     expect(stats).toContain('本月到期 0 条');
     expect(stats).toContain('今日 0 条');
     // 空态人话提示
-    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    expect(document.querySelector('.bz-empty')?.textContent).toContain('本月没有到期事项');
     // 翻下月（也无条目）→ 空态与零统计仍在
     (document.querySelector('[data-memo-cal-next]') as HTMLElement).click();
-    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    expect(document.querySelector('.bz-empty')?.textContent).toContain('本月没有到期事项');
     expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('本月到期 0 条');
   });
 
@@ -363,7 +364,7 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计
       expect(document.querySelector('.bz-memo-cal-grid')).toBeTruthy();
     });
     // 当月：零条目 → 空态 + 统计 0（含今日 0）
-    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    expect(document.querySelector('.bz-empty')?.textContent).toContain('本月没有到期事项');
     expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('本月到期 0 条');
     expect(document.querySelector('[data-memo-cal-item="nm"]')).toBeNull();
     // 翻下月：chip 出现 + 统计联动为 1，空态退场
@@ -375,7 +376,7 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计
     expect(document.querySelector('.bz-memo-cal-stats')?.textContent).toContain('本月到期 1 条');
     // 非当月不显「今日 N 条」段（审查 P2 修复批：今日不在该月格中，计数无所指）
     expect(document.querySelector('.bz-memo-cal-stats')?.textContent).not.toContain('今日');
-    expect(document.querySelector('.bz-memo-cal-empt')).toBeNull();
+    expect(document.querySelector('.bz-empty')).toBeNull();
   });
 
   it('审查 P2 · 搜索滤空时空态文案附筛选上下文；无筛选恢复人话原文案', async () => {
@@ -387,20 +388,20 @@ describe('issue 355 · UI（页签切换/到期标记/点日清单/改期/统计
       expect(document.querySelector('.bz-memo-cal-grid')).toBeTruthy();
     });
     // 无筛选：原文案
-    expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
+    expect(document.querySelector('.bz-empty')?.textContent).toContain('本月没有到期事项');
     // 输入搜索词滤空：附筛选上下文
     const inp = document.querySelector('[data-memo-search]') as HTMLInputElement;
     inp.value = '不存在的关键词';
     inp.dispatchEvent(new Event('input'));
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('当前筛选下本月没有到期事项');
+      expect(document.querySelector('.bz-empty')?.textContent).toContain('当前筛选下本月没有到期事项');
     });
     // 清掉搜索：恢复原文案
     inp.value = '';
     inp.dispatchEvent(new Event('input'));
     await vi.waitFor(() => {
-      expect(document.querySelector('.bz-memo-cal-empt')?.textContent).toContain('本月没有到期事项');
-      expect(document.querySelector('.bz-memo-cal-empt')?.textContent).not.toContain('当前筛选下');
+      expect(document.querySelector('.bz-empty')?.textContent).toContain('本月没有到期事项');
+      expect(document.querySelector('.bz-empty')?.textContent).not.toContain('当前筛选下');
     });
   });
 
