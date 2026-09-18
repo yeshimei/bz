@@ -1,5 +1,5 @@
-/* 源指纹 aa0f473623c2fde5 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 0152edf21b898c1e · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -7108,14 +7108,35 @@ tags:
     if (!url) return ph;
     return `<img loading="lazy" src="${esc(url)}" onerror="this.outerHTML='<div class=\\'ph\\'>${esc((_b = item.name[0]) != null ? _b : "")}</div>'">`;
   }
-  function pcardHtml(it, posterUrl2, fetching = false) {
-    const r = it.rating;
-    return `<div class="pcard" data-cinema-key="${esc(itemKey(it))}"><div class="pw">${posterInner(it, posterUrl2)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
-    ${(() => {
-      const st = statusNum(it.status);
-      return st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : "";
-    })()}</div>
-    <div class="pname">${esc(it.name)}</div>
+  function seasonSegState(item) {
+    const st = statusNum(item.status);
+    return st === STATUS_WATCHED ? "watched" : st === STATUS_WATCHING ? "watching" : "empty";
+  }
+  function seriesStatus(seasons) {
+    const states = seasons.map((s) => statusNum(s.item.status));
+    if (states.includes(STATUS_WATCHING)) return STATUS_WATCHING;
+    if (states.includes(STATUS_WANT)) return STATUS_WANT;
+    return STATUS_WATCHED;
+  }
+  function cardStatus(e) {
+    return e.kind === "series" ? seriesStatus(e.seasons) : statusNum(e.item.status);
+  }
+  function seasonBarHtml(seasons) {
+    const segs = seasons.map((s) => `<i class="${seasonSegState(s.item)}"></i>`).join("");
+    const total = seasons.length;
+    const done = seasons.filter((s) => seasonSegState(s.item) === "watched").length;
+    const watching = seasons.find((s) => seasonSegState(s.item) === "watching");
+    const note = watching ? `S${watching.no} 在看 · ${done}/${total} 季` : done === total ? `全 ${total} 季已看` : `已收 ${done}/${total} 季`;
+    return `<div class="season-bar">${segs}</div><div class="bar-note">${note}</div>`;
+  }
+  function cardHtml(e, posterUrl2, fetching = false) {
+    const it = e.kind === "series" ? e.face : e.item;
+    const st = cardStatus(e);
+    const r = e.kind === "series" ? e.rating : it.rating;
+    return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}"><div class="pw">${posterInner(it, posterUrl2)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
+    ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ""}</div>
+    ${e.kind === "series" ? seasonBarHtml(e.seasons) : ""}
+    <div class="pname">${esc(e.kind === "series" ? e.name : it.name)}</div>
     <div class="pmeta">${esc(it.year || "")}${it.year && it.director ? " · " : ""}${esc(it.director || "")}</div>
     <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
   }
@@ -7148,6 +7169,33 @@ tags:
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ""}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div style="font-size:12px;line-height:1.8;color:var(--ink-2);text-align:justify">${esc(it.synopsis)}</div>` : ""}
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
+  </div>`;
+  }
+  function seriesDetailModalHtml(card, posterOf) {
+    const face = card.face;
+    const url = posterOf(face);
+    const st = seriesStatus(card.seasons);
+    const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
+    const thumb = (it) => {
+      const t = posterOf(it);
+      return `<div class="s-thumb">${t ? `<img src="${esc(t)}" alt="" onerror="this.remove()">` : ""}</div>`;
+    };
+    const rows = card.seasons.map((s) => {
+      const sub = [s.item.watchDate ? `观影 ${esc(s.item.watchDate.slice(0, 10))}` : "", s.item.seasonText ? `${esc(s.item.seasonText)} 集` : ""].filter(Boolean).join(" · ");
+      const r = s.item.rating;
+      return `<div class="s-row" data-cinema-season-key="${esc(itemKey(s.item))}">${thumb(s.item)}
+      <div class="s-mid"><div class="s-name">${esc(s.item.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
+      <span class="s-chip" style="background:${statusColor(s.item.status)}">${statusText(s.item.status)}</span>
+      <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
+    }).join("");
+    return `<div class="cn-modal" style="max-width:400px;width:100%">
+    <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">共 ${card.seasons.length} 季</span></div>
+        <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
+          ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ""}
+          ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ""}
+          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ""}</div></div></div>    <div class="dm-sec">各 季 明 细</div>${rows}
+    <div class="dm-hint">点某一季查看该季详情</div>
   </div>`;
   }
   var GROUP_SUBS_OF = {
@@ -7238,6 +7286,108 @@ tags:
     <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || "")} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
   }
 
+  // src/cinema/seasons.ts
+  var MERGE_GROUPS = ["剧集", "动漫"];
+  var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  function seasonNumber(raw) {
+    if (/^\d+$/.test(raw)) return Number(raw);
+    if (raw === "十") return 10;
+    const m = raw.match(/^(.)?十(.)?$/);
+    if (m) {
+      const tens = m[1] ? CN_NUM[m[1]] : 1;
+      const ones = m[2] ? CN_NUM[m[2]] : 0;
+      return tens == null || ones == null ? null : tens * 10 + ones;
+    }
+    return raw.length === 1 && CN_NUM[raw] != null ? CN_NUM[raw] : null;
+  }
+  var SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
+  function parseSeasonName(name) {
+    var _a, _b;
+    const m = SEASON_RE.exec(name);
+    if (!m) return null;
+    const season = seasonNumber((_b = (_a = m[1]) != null ? _a : m[2]) != null ? _b : "");
+    if (season == null || season <= 0) return null;
+    const base = (name.slice(0, m.index) + name.slice(m.index + m[0].length)).replace(/[\s\-–—·:：]+$/, "").replace(/[\s\-–—·:：]{2,}/g, " ").replace(/\s{2,}/g, " ").trim();
+    return base ? { base, season } : null;
+  }
+  function seriesKeyOf(group, base) {
+    return `series:${group}:${base}`;
+  }
+  function isSeriesKey(key) {
+    return !!key && key.startsWith("series:");
+  }
+  function cardFace(e) {
+    return e.kind === "series" ? e.face : e.item;
+  }
+  function cardGroup(e) {
+    return e.kind === "series" ? e.group : e.item.group;
+  }
+  function watchTs(it) {
+    if (!it.watchDate) return 0;
+    const t = new Date(it.watchDate).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+  function pickFace(slots) {
+    let best = slots[0];
+    for (const s of slots) {
+      const t = watchTs(s.item);
+      const bt = watchTs(best.item);
+      if (t > bt || t === bt && s.no > best.no) best = s;
+    }
+    return best.item;
+  }
+  function mergeSeasonCards(list, merge) {
+    if (!merge) return list.map((item) => ({ kind: "single", item }));
+    const grouped = /* @__PURE__ */ new Map();
+    for (const it of list) {
+      if (!MERGE_GROUPS.includes(it.group)) continue;
+      const parsed = parseSeasonName(it.name);
+      if (!parsed) continue;
+      const key = seriesKeyOf(it.group, parsed.base);
+      const slots = grouped.get(key);
+      if (slots) {
+        if (!slots.some((s) => s.no === parsed.season)) slots.push({ no: parsed.season, item: it });
+      } else {
+        grouped.set(key, [{ no: parsed.season, item: it }]);
+      }
+    }
+    const merged = /* @__PURE__ */ new Map();
+    for (const [key, slots] of grouped) {
+      if (slots.length < 2) continue;
+      slots.sort((a, b) => a.no - b.no);
+      const rated = slots.filter((s) => s.item.rating != null && s.item.rating > 0);
+      const latestRated = rated.length ? rated.reduce((best, s) => watchTs(s.item) >= watchTs(best.item) ? s : best, rated[0]) : null;
+      merged.set(key, {
+        kind: "series",
+        key,
+        name: parseSeasonName(slots[0].item.name).base,
+        group: slots[0].item.group,
+        seasons: slots,
+        face: pickFace(slots),
+        rating: latestRated ? latestRated.item.rating : null
+      });
+    }
+    const out = [];
+    const emitted = /* @__PURE__ */ new Set();
+    for (const it of list) {
+      let key = null;
+      if (MERGE_GROUPS.includes(it.group)) {
+        const parsed = parseSeasonName(it.name);
+        key = parsed ? seriesKeyOf(it.group, parsed.base) : null;
+      }
+      const card = key ? merged.get(key) : void 0;
+      if (card) {
+        if (!emitted.has(card.key)) {
+          out.push(card);
+          emitted.add(card.key);
+        }
+        continue;
+      }
+      out.push({ kind: "single", item: it });
+    }
+    return out;
+  }
+
   // src/cinema/layouts/midnight/render.ts
   function midnightDeskHtml() {
     return `<section class="bz-cinema--midnight" data-cinema-root="midnight">
@@ -7275,15 +7425,16 @@ tags:
   </section>`;
   }
   var railRow = (on, attr, color, name, n) => `<button class="rail-item${on ? " is-on" : ""}" ${attr}><span class="dot" style="background:${color}"></span>${esc(name)}<span class="n">${n}</span></button>`;
-  function railHtml(items, view) {
+  function railHtml(cards, view) {
     const listOn = view.view === "list";
     const g = {};
     const c = { 想看: 0, 在看: 0, 已看: 0 };
-    items.forEach((it) => {
-      g[it.group] = (g[it.group] || 0) + 1;
-      c[statusText(it.status)]++;
+    cards.forEach((e) => {
+      const grp = cardGroup(e);
+      g[grp] = (g[grp] || 0) + 1;
+      c[statusText(cardStatus(e))]++;
     });
-    let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', "var(--gold)", "全部", items.length);
+    let groups = railRow(listOn && !view.typeFilter && !view.statusFilter, 'data-g="全部"', "var(--gold)", "全部", cards.length);
     for (const name of GROUP_ORDER) {
       groups += railRow(listOn && view.typeFilter === name && !view.statusFilter, `data-g="${name}"`, typeColor(name), name, g[name] || 0);
     }
@@ -7311,8 +7462,15 @@ tags:
   function spHeadHtml(title, cnt) {
     return `<div class="sp-head"><button class="sp-back j-back">${iconSpan(ICON.back)}</button><span class="sp-title">${esc(title)}</span><span class="sp-cnt j-spcnt">${cnt}</span></div>`;
   }
+  function cardsHtml(cards, inp) {
+    return cards.map((e) => {
+      var _a, _b;
+      const face = cardFace(e);
+      return cardHtml(e, inp.poster(face), (_b = (_a = inp.fetching) == null ? void 0 : _a.call(inp, face)) != null ? _b : false);
+    }).join("");
+  }
   function listHeadHtml(inp) {
-    return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.list.length} 部</span>
+    return `<div class="d-head"><h2 class="j-title">${esc(inp.title)}</h2><span class="cnt j-cnt">· ${inp.cards.length} 部</span>
     <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
   }
   function listToolsHtml(view) {
@@ -7320,7 +7478,7 @@ tags:
     <div class="seg j-sort">${[["date", "最近观看"], ["created", "加入先后"], ["rating", "按评分"]].map(([k, l]) => `<button data-k="${k}" class="${view.sortMode === k ? "is-on" : ""}">${l}</button>`).join("")}</div></div>`;
   }
   function renderMidnightDesk(root, inp) {
-    const rail = railHtml(inp.items, inp.view);
+    const rail = railHtml(inp.allCards, inp.view);
     const groupsEl = root.querySelector(".j-groups");
     const statusEl = root.querySelector(".j-status");
     if (groupsEl) groupsEl.innerHTML = rail.groups;
@@ -7333,10 +7491,7 @@ tags:
     } else if (v.view === "stat") {
       view.innerHTML = spHeadHtml("观影分析", `· ${inp.watchedCount} 部已看`) + `<div class="sp-body">${inp.statHtml}</div>`;
     } else {
-      const body = inp.list.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${inp.list.map((it) => {
-        var _a, _b;
-        return pcardHtml(it, inp.poster(it), (_b = (_a = inp.fetching) == null ? void 0 : _a.call(inp, it)) != null ? _b : false);
-      }).join("")}</div></div>` : emptyPageHtml(viewFiltered(v));
+      const body = inp.cards.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>` : emptyPageHtml(viewFiltered(v));
       view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
     }
   }
@@ -7346,15 +7501,12 @@ tags:
     const titleEl = root.querySelector(".j-mtitle");
     const cntEl = root.querySelector(".j-mcnt");
     if (titleEl) titleEl.textContent = t;
-    if (cntEl) cntEl.textContent = v.view === "list" ? `· ${inp.list.length}` : "";
+    if (cntEl) cntEl.textContent = v.view === "list" ? `· ${inp.cards.length}` : "";
     const mv = root.querySelector(".j-mview");
     if (mv) {
       if (v.view === "list") {
         mv.className = "m-scroll j-mview";
-        mv.innerHTML = `<div class="m-grid">${inp.list.map((it) => {
-          var _a, _b;
-          return pcardHtml(it, inp.poster(it), (_b = (_a = inp.fetching) == null ? void 0 : _a.call(inp, it)) != null ? _b : false);
-        }).join("")}</div>`;
+        mv.innerHTML = `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>`;
       } else if (v.view === "ai") {
         mv.className = "sp-body j-mview";
         mv.innerHTML = inp.aiHtml;
@@ -7490,6 +7642,17 @@ ${item.review ? `影评: ${item.review}
     if (!Number.isFinite(raw) || raw <= 0) return 5;
     return Math.min(12, Math.max(2, Math.round(raw)));
   }
+  function mergeSeasonsOn() {
+    return tryGetSettings().cinemaMergeSeasons === true;
+  }
+  function seriesCardByKey(key) {
+    return mergeSeasonCards(getDisplayItems(), mergeSeasonsOn()).find((c) => c.kind === "series" && c.key === key);
+  }
+  function cardEntryHtml(e, app) {
+    var _a;
+    const face = cardFace(e);
+    return cardHtml(e, posterUrl(face, app), isFetching((_a = face.file) == null ? void 0 : _a.path));
+  }
   function ovHost(sec) {
     let host = sec.querySelector("[data-cinema-ovhost]");
     if (!host) {
@@ -7550,7 +7713,12 @@ ${item.review ? `影评: ${item.review}
     sec.querySelectorAll(".m-grid .pcard").forEach((c) => {
       c.addEventListener("contextmenu", (ev) => ev.preventDefault());
       longPress(c, () => {
-        const it = itemByKeyInState(c.dataset.cinemaKey);
+        const key = c.dataset.cinemaKey;
+        if (isSeriesKey(key)) {
+          openSeriesDetail(sec, key, app);
+          return;
+        }
+        const it = itemByKeyInState(key);
         if (!it) return;
         openSheet(sec, it, app);
       });
@@ -7580,6 +7748,18 @@ ${item.review ? `影评: ${item.review}
       close();
       void runSimilarRecommend(it, app);
     });
+  }
+  function openSeriesDetail(sec, key, app) {
+    const card = seriesCardByKey(key);
+    if (!card) return;
+    const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)));
+    mountIcons(el);
+    el.querySelectorAll(".s-row").forEach((row) => row.addEventListener("click", () => {
+      const it = itemByKeyInState(row.dataset.cinemaSeasonKey);
+      if (!it) return;
+      close();
+      openDetail(sec, it, app);
+    }));
   }
   function openForm(sec, item, app, presetSt) {
     var _a, _b;
@@ -7744,9 +7924,10 @@ ${item.review ? `影评: ${item.review}
     };
   }
   function midnightInput(app) {
+    const merge = mergeSeasonsOn();
     return {
-      items: M.items,
-      list: getDisplayItems(),
+      allCards: mergeSeasonCards(M.items, merge),
+      cards: mergeSeasonCards(getDisplayItems(), merge),
       view: {
         view: M.view,
         typeFilter: M.typeFilter,
@@ -7797,13 +7978,11 @@ ${item.review ? `影评: ${item.review}
       renderAll(app);
       return;
     }
+    const cards = mergeSeasonCards(list, mergeSeasonsOn());
     const cnt = head.querySelector(".j-cnt");
-    if (cnt) cnt.textContent = `· ${list.length} 部`;
+    if (cnt) cnt.textContent = `· ${cards.length} 部`;
     const grid = body.querySelector(".grid");
-    if (grid) grid.innerHTML = list.map((it) => {
-      var _a;
-      return pcardHtml(it, posterUrl(it, app), isFetching((_a = it.file) == null ? void 0 : _a.path));
-    }).join("");
+    if (grid) grid.innerHTML = cards.map((e) => cardEntryHtml(e, app)).join("");
     mountIcons(sec);
   }
   function bindMidnight(sec, app) {
@@ -7891,8 +8070,12 @@ ${item.review ? `影评: ${item.review}
       }
       const cardEl = t.closest(".pcard");
       if (cardEl) {
-        const it = itemByKeyInState(cardEl.dataset.cinemaKey);
-        if (it) openDetail(sec, it, app);
+        const key = cardEl.dataset.cinemaKey;
+        if (isSeriesKey(key)) openSeriesDetail(sec, key, app);
+        else {
+          const it = itemByKeyInState(key);
+          if (it) openDetail(sec, it, app);
+        }
       }
     });
     sec.addEventListener("contextmenu", (e) => {
@@ -7900,7 +8083,12 @@ ${item.review ? `影评: ${item.review}
       const cardEl = e.target.closest(".pcard");
       if (!cardEl) return;
       e.preventDefault();
-      const it = itemByKeyInState(cardEl.dataset.cinemaKey);
+      const key = cardEl.dataset.cinemaKey;
+      if (isSeriesKey(key)) {
+        openSeriesDetail(sec, key, app);
+        return;
+      }
+      const it = itemByKeyInState(key);
       if (!it) return;
       openItemMenu(e.clientX, e.clientY, toItemActions(itemActions(it, sec, app)), true, MENU_SKIN);
       resetItemMenuClickGuard();
