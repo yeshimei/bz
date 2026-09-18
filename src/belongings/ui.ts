@@ -1042,10 +1042,10 @@ export function openForm(it: BelongingsItem | null): void {
         belFormClose?.(); // uiModal 单一关闭路径：遮罩随 close 移除
         belFormClose = null;
       } catch (e: any) {
-        notice(`保存失败：${e?.message || '未知错误'}`, 'error');
+        notifySaveError(e);
         saving = false;
         saveBtn.disabled = false;
-        saveBtn.textContent = it ? '更新' : '保存';
+        saveBtn.textContent = it ? '保存' : '添加';
       }
     })();
   });

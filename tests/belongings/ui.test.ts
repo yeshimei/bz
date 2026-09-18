@@ -1221,7 +1221,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     await open(vault);
     openAddForm(panel()!);
     expect(formTitle()).toBe('记一笔');
-    expect(saveBtn().textContent).toBe('保存');
+    expect(saveBtn().textContent).toBe('添加'); // 一致#9：新建=添加
     expect(catInp().value).toBe('');
     expect(dateInp().value).not.toBe('');
     expect(stBtns().map((b) => b.dataset.status)).toEqual(['使用中', '闲置', '已转卖', '已丢弃']);
@@ -1448,7 +1448,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     await flush();
     const f = formMask();
     expect(f.querySelector('.bz-bel-form-title')!.textContent).toBe('编辑物品');
-    expect(saveBtn().textContent).toBe('更新');
+    expect(saveBtn().textContent).toBe('保存'); // 一致#9：编辑=保存
     // 回填（购买日期剥成 date 串）
     expect(nameInp().value).toBe('机械键盘');
     expect(catInp().value).toBe('机械键盘'); // issue 231：分类已迁移为纯文字

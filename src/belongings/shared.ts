@@ -337,7 +337,8 @@ export function belFormHtml(it: BelongingsItem | null, unit: MoneyUnit = 'cny'):
       <div class="bz-btn-row bz-bel-form-actions">
         <div class="bz-bel-form-spacer"></div>
         <button type="button" class="bz-btn bz-btn--ghost" data-bm-cancel>取消</button>
-        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? '更新' : '保存'}</button>
+        <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（favorites 同款收敛） -->
+        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? '保存' : '添加'}</button>
       </div>
     </div>
   </div>`;
