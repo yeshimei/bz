@@ -522,3 +522,12 @@
 - [x] 修法：token 选择器补齐前缀 + 删 `.bz-sp-mobile` 重复条；弹窗内部皮收口（头部描边/内容区/列表行 hover·选中/名称·来源/空态全挂 `--sp-*`）；移动端面板改 `inset:0` 真全屏 + 挂 `.bz-panel-mtop` 接管 44px；弹窗保持居中卡片（用户拍板），`max-height` 夹进上下安全区、宽放开 94vw
 - [x] 守卫：暗色 token 每条选择器须带 `.theme-dark ` 前缀（含两个弹窗 id）、皮收口段禁原生变量（静态源断言）；移动端面板挂 `bz-panel-mtop` 断言
 - [x] 门禁：tsc 0 错 + 全量 254 文件 4104 用例绿 + 主仓库构建部署
+
+## Issue 379 — memo 代码闭环批：影院想看编码 + 日记创建后打开笔记
+
+**状态：已交付**（2026-09-18，memo-code-fix 流程，两 worktree 并行）
+
+- [x] 规格：`issues/379-memo-cinema-want-encode-diary-open.md`（memo 两条 scene=代码；无 ADR / 无 CONTEXT 词条）
+- [x] 影院（item-1789722741019-t82vuk）：编辑/新增「想看」rating 收 null 被 `?? 0` 落盘成 0 → 重解析弹回「在看」；openForm 保存回调想看分支改 -1（saveEdit/saveNew 单点全修）+ tests/cinema/ui.test.ts 回归 2 例 + 行为包重出
+- [x] 日记本（item-1789672493967-y11jgy）：创建成功后 jumpToDiaryEntry 打开新笔记 + openAddDialog 增 onSaved 回调（墙注入 hide，openDiaryWrite 不传）+ tests/diary/dialogs-entries.test.ts 回归 2 例（失败路径不打开不回调）
+- [x] 门禁：tsc 0 错 + 全量 366 文件 5780 用例绿 + 主仓库构建部署
