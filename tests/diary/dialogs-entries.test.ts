@@ -87,7 +87,8 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     const disk = vault.files.get('我的/日记/2401011030.md')!;
     expect(disk).toContain('date: 2024-01-01 10:30');
     expect(disk).toContain('  - 日记');
-    expect((document.querySelector('#add-diary-popup') as HTMLElement).style.display).toBe('none');
+    // 迁 uiModal 壳后「关弹窗」= 关即拆：popup 随 mask 从 body 摘除
+    expect(document.querySelector('#add-diary-popup')).toBeNull();
     // 操作结果立即可见（弹窗关、墙已刷新）→ 不弹「已保存日记」
     expect(getNoticeMessages().join('\n')).not.toContain('已保存日记');
   });
@@ -147,7 +148,7 @@ describe('saveNewEntry（写日记弹窗，ADR-0130 建条目文件）', () => {
     expect(getNoticeMessages().join('\n')).toContain('保存失败（日记）');
     expect(linkSpy).not.toHaveBeenCalled();
     expect(onSaved).not.toHaveBeenCalled();
-    expect((document.querySelector('#add-diary-popup') as HTMLElement).style.display).not.toBe('none');
+    expect(document.querySelector('#add-diary-popup')).not.toBeNull();
   });
 });
 
@@ -161,7 +162,7 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
     // 定位谓词 = filePath + time（ADR-0131 行号退场）：时刻错位即写层未命中
     showTagPicker({ filename: '我的/日记/2401010800.md', filePath: '我的/日记/2401010800.md', date: '2024-01-01', time: '23:59', lineNumber: 0, tags: ['日记'] });
     const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
-    const save = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '保存')!;
+    const save = [...popup.querySelectorAll<HTMLButtonElement>('.bz-diary-dialog-foot button')].find((b) => b.textContent === '保存')!;
     const diaryBtn = popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="日记"]')!;
     const rideBtn = popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="骑行"]')!;
     expect(diaryBtn.classList.contains('diary-active')).toBe(true); // 当前标签已选中
@@ -181,7 +182,7 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
     createTagPicker();
     showTagPicker({ filename: '我的/日记/2401010800.md', date: '2024-01-01', time: '08:00', lineNumber: 0, tags: ['日记'] });
     const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
-    const save = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '保存')!;
+    const save = [...popup.querySelectorAll<HTMLButtonElement>('.bz-diary-dialog-foot button')].find((b) => b.textContent === '保存')!;
     // 选择器语义：保存时提交全部选中标签——原「日记」保持选中，追加「骑行」
     popup.querySelector<HTMLButtonElement>('.diary-tag-selector-btn[data-tag="骑行"]')!.click();
     save.click();
@@ -214,9 +215,10 @@ describe('showTagPicker（标签选择器，locator 定位）', () => {
       tags: ['日记'],
     });
     const popup = document.querySelector('#diary-tag-selector-popup') as HTMLElement;
-    const del = [...popup.querySelectorAll<HTMLButtonElement>('.diary-tag-selector-actions button')].find((b) => b.textContent === '删除')!;
+    const del = [...popup.querySelectorAll<HTMLButtonElement>('.bz-diary-dialog-foot button')].find((b) => b.textContent === '删除')!;
     del.click();
-    expect((document.querySelector('#diary-tag-selector-popup') as HTMLElement).style.display).toBe('none');
+    // 迁 uiModal 壳后：收选择器 = 关即拆（popup 随 mask 从 body 摘除）
+    expect(document.querySelector('#diary-tag-selector-popup')).toBeNull();
     expect(showConfirm).toHaveBeenCalledTimes(1);
     expect((showConfirm as any).mock.calls[0][0]).toMatchObject({
       filePath: '我的/日记/2401010800.md',

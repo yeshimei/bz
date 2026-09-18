@@ -12,6 +12,37 @@ import { escManager } from '../esc-manager';
 import { allocZ } from '../z-order';
 import { firstFocusable, trapFocus } from './focus-trap';
 
+/**
+ * bindFormSubmit（效率基元，diary 写链路效率#2 首个消费方）：弹窗表单回车提交。
+ * - Ctrl/⌘+Enter：恒提交（textarea / 按钮聚焦 / 无聚焦都在内）；
+ * - 纯 Enter：仅在单行 input（HTMLInputElement）聚焦时提交；textarea 不拦（回车换行）；
+ *   域内已消费（preventDefault）的放行不重复提交——keydown 消费时浏览器不再派发
+ *   keypress、keypress 消费时冒泡到本层可见 defaultPrevented，uiSuggest 接管回填与
+ *   diary 手输日期 commitManualEdit 两条路径都不双发；uiSuggest 开着但无高亮项时
+ *   放行提交（suggest.ts 效率整改 12 口径一致）；
+ * - 标 data-bz-no-form-submit 的 input 豁免（弹窗内过滤/搜索框：回车只筛不提交）。
+ * 纯 Enter 走 keypress 段监听：输入框的 keypress 消费在 target 阶段先于本层冒泡，
+ * defaultPrevented 可见；Ctrl/⌘+Enter 走 keydown 段（Chrome 不为组合键派发 keypress）。
+ */
+export function bindFormSubmit(popup: HTMLElement, onSubmit: () => void): void {
+  popup.addEventListener('keydown', (e: KeyboardEvent) => {
+    if (e.defaultPrevented || e.isComposing) return;
+    if (e.key !== 'Enter') return;
+    if (!(e.ctrlKey || e.metaKey)) return; // 纯 Enter 交 keypress 段（输入框消费在彼处可见）
+    e.preventDefault();
+    onSubmit();
+  });
+  popup.addEventListener('keypress', (e: KeyboardEvent) => {
+    if (e.defaultPrevented) return; // uiSuggest 接管 / 域内输入框已消费（如手输日期提交）
+    if (e.key !== 'Enter' || e.ctrlKey || e.metaKey) return; // Ctrl/⌘+Enter 已在 keydown 段提交
+    const t = e.target;
+    if (!(t instanceof HTMLInputElement)) return; // 仅单行 input；textarea 回车换行不拦
+    if (t.dataset.bzNoFormSubmit !== undefined) return; // 过滤/搜索框豁免
+    e.preventDefault();
+    onSubmit();
+  });
+}
+
 export interface BzModalOpts {
   content: HTMLElement | string;   // 弹窗内容（元素或 HTML 片段）
   maxWidth?: number;               // 像素宽度（默认 400，≤90vw）
@@ -40,6 +71,10 @@ export function uiModal(opts: BzModalOpts): { mask: HTMLElement; popup: HTMLElem
   const popup = document.createElement('div');
   popup.className = 'bz-overlay-popup' + (opts.className ? ' ' + opts.className : '');
   if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
+  // 读屏语义（对齐 flow-dialog 契约）：弹窗容器为模态 dialog，标题随 head 透出
+  popup.setAttribute('role', 'dialog');
+  popup.setAttribute('aria-modal', 'true');
+  if (opts.title) popup.setAttribute('aria-label', opts.title);
 
   if (opts.head) {
     const head = document.createElement('div');

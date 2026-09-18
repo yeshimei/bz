@@ -73,7 +73,7 @@ describe('core 旧硬编码遮罩两处（core/styles.css）', () => {
 });
 
 describe('域遮罩 blur 全量在位', () => {
-  it('非品牌域遮罩含 token blur（encrypt-lockscreen / review-quiz / diary×2 / password-vault×3）', () => {
+  it('非品牌域遮罩含 token blur（encrypt-lockscreen / review-quiz / password-vault×3；diary×2 已随壳收编）', () => {
     const cases: Array<[file: string, selector: string]> = [
       // 保险库解锁屏已收编为 core 共享组件（三域同源），遮罩随之落到 core 组件库
       ['src/core/ui/components.css', '.bz-lockscreen--mask'],
@@ -81,8 +81,8 @@ describe('域遮罩 blur 全量在位', () => {
       // .bz-overlay-mask 单源（issue 365），blur 随 core 组断言，域断言迁入下方收编组
       // .bz-vault-dlg-mask（密码添加/编辑弹窗遮罩）随 ADR-0158 密码视图退役，断言一并清退
       ['src/review/styles.css', '#quiz-mask'],
-      ['src/diary/styles.css', '#add-diary-mask'],
-      ['src/diary/styles.css', '#diary-tag-selector-mask'],
+      // diary 写日记/标签选择器两遮罩已随一致#2 收编 core uiModal 壳（issue 365 同款）：
+      // 遮罩底色/blur 归 .bz-overlay-mask 单源（core 组断言覆盖），diary 域手绘 mask 退役
       ['src/password-vault/styles.css', '.bz-password-vault-mobpage'],
       ['src/password-vault/styles.css', '.bz-password-vault-modal'],
       ['src/password-vault/styles.css', '.bz-password-vault-pop2'],

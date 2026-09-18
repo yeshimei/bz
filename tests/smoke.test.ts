@@ -281,13 +281,16 @@ describe('bz 骨架冒烟', () => {
     expect(writeCmd.name).toBe('写日记');
     // 幂等 ensureDiary：mock app 下可调用且不抛（UI 层数据读取失败安全降级为空）
     const { ensureDiary, unloadDiary } = await import('../src/diary');
+    const { openAddDialog } = await import('../src/diary/ui/dialogs');
     await expect(ensureDiary(app as any)).resolves.toBeUndefined();
     await expect(ensureDiary(app as any)).resolves.toBeUndefined();
-    // D15 回归：标签选择器/写日记弹窗两个 body 级 mask 随 ensure 常驻 body，卸载时必须按 id 摘除
-    expect(document.getElementById('diary-tag-selector-mask')).not.toBeNull();
+    // D15 回归（一致#2 迁 uiModal 壳后语义更新）：写链路弹窗改「按需构建、关即拆」——
+    // ensure 后 body 不再有常驻 mask；开着时卸载必须按 id 摘干净（openAddDialog 即开）
+    expect(document.getElementById('diary-tag-selector-mask')).toBeNull();
+    expect(document.getElementById('add-diary-mask')).toBeNull();
+    openAddDialog();
     expect(document.getElementById('add-diary-mask')).not.toBeNull();
     unloadDiary();
-    expect(document.getElementById('diary-tag-selector-mask')).toBeNull();
     expect(document.getElementById('add-diary-mask')).toBeNull();
   });
 
