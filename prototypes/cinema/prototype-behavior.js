@@ -1,4 +1,4 @@
-/* 源指纹 fe814eddce0d93ca · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8eb313b05a5fc812 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -7126,20 +7126,30 @@ tags:
     const dots = seasons.map((s) => {
       const st = seasonSegState(s.item);
       n[st]++;
-      return `<i class="${st}"></i>`;
+      return `<i class="${st}" data-cinema-season-key="${esc(itemKey(s.item))}"></i>`;
     }).join("");
     const label = `各季进度：共 ${seasons.length} 季，已看 ${n.watched}、在看 ${n.watching}、未看 ${n.empty}`;
     return `<span class="season-dots" role="img" aria-label="${esc(label)}">${dots}</span>`;
   }
+  function facePiecesHtml(it, posterUrl2, opts = {}) {
+    var _a;
+    const r = opts.rating !== void 0 ? opts.rating : it.rating;
+    return {
+      poster: posterInner(it, posterUrl2),
+      name: esc((_a = opts.name) != null ? _a : it.name),
+      meta: esc([it.year || "", it.director || ""].filter(Boolean).join(" · ")),
+      stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'
+    };
+  }
   function cardHtml(e, posterUrl2, fetching = false) {
     const it = e.kind === "series" ? e.face : e.item;
     const st = cardStatus(e);
-    const r = e.kind === "series" ? e.rating : it.rating;
-    return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}"><div class="pw">${posterInner(it, posterUrl2)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
+    const p = facePiecesHtml(it, posterUrl2, e.kind === "series" ? { name: e.name, rating: e.rating } : {});
+    return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
     ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ""}${e.kind === "series" ? seasonDotsHtml(e.seasons) : ""}</div>
-    <div class="pname">${esc(e.kind === "series" ? e.name : it.name)}</div>
-    <div class="pmeta">${esc(it.year || "")}${it.year && it.director ? " · " : ""}${esc(it.director || "")}</div>
-    <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
+    <div class="pname">${p.name}</div>
+    <div class="pmeta">${p.meta}</div>
+    <div class="pstars">${p.stars}</div></div>`;
   }
   function viewFiltered(view) {
     return !!(view.typeFilter || view.statusFilter || view.searchKeyword);
@@ -7710,6 +7720,34 @@ ${item.review ? `影评: ${item.review}
     box.innerHTML = sheetHeadHtml(it, url);
     return (_a = box.firstElementChild) != null ? _a : box;
   }
+  var faceStash = /* @__PURE__ */ new WeakMap();
+  function faceSlots(card) {
+    return ["pw-face", "pname", "pmeta", "pstars"].map((c) => card.querySelector(`.${c}`)).filter((x) => !!x);
+  }
+  function peekSeasonDot(dot, app) {
+    const card = dot.closest(".pcard");
+    const it = itemByKeyInState(dot.dataset.cinemaSeasonKey);
+    const slots = card ? faceSlots(card) : [];
+    if (!card || !it || slots.length !== 4) return;
+    if (!faceStash.has(card)) faceStash.set(card, slots.map((s) => s.innerHTML));
+    const p = facePiecesHtml(it, posterUrl(it, app));
+    slots[0].innerHTML = p.poster;
+    slots[1].innerHTML = p.name;
+    slots[2].innerHTML = p.meta;
+    slots[3].innerHTML = p.stars;
+    card.classList.add("is-peek");
+  }
+  function restFace(dot) {
+    const card = dot.closest(".pcard");
+    const snap = card ? faceStash.get(card) : void 0;
+    if (!card || !snap) return;
+    const slots = faceSlots(card);
+    if (slots.length !== 4) return;
+    slots.forEach((s, i) => {
+      s.innerHTML = snap[i];
+    });
+    card.classList.remove("is-peek");
+  }
   function attachLongPress(sec, app) {
     sec.querySelectorAll(".m-grid .pcard").forEach((c) => {
       c.addEventListener("contextmenu", (ev) => ev.preventDefault());
@@ -7987,6 +8025,16 @@ ${item.review ? `影评: ${item.review}
     mountIcons(sec);
   }
   function bindMidnight(sec, app) {
+    if (!sec.classList.contains("mob")) {
+      sec.addEventListener("mouseover", (e) => {
+        const dot = e.target.closest(".season-dots i");
+        if (dot) peekSeasonDot(dot, app);
+      });
+      sec.addEventListener("mouseout", (e) => {
+        const dot = e.target.closest(".season-dots i");
+        if (dot) restFace(dot);
+      });
+    }
     sec.addEventListener("click", (e) => {
       var _a, _b, _c;
       const t = e.target;

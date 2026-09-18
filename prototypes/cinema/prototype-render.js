@@ -1,4 +1,4 @@
-/* 源指纹 05849b04483f3c0e · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ab88585a2d3d82ad · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -36,6 +36,7 @@ var BZR_cinema = (() => {
     detailModalHtml: () => detailModalHtml,
     doubanSearchUrl: () => doubanSearchUrl,
     emptyPageHtml: () => emptyPageHtml,
+    facePiecesHtml: () => facePiecesHtml,
     formAllTags: () => formAllTags,
     formChoicesHtml: () => formChoicesHtml,
     formModalHtml: () => formModalHtml,
@@ -180,20 +181,30 @@ var BZR_cinema = (() => {
     const dots = seasons.map((s) => {
       const st = seasonSegState(s.item);
       n[st]++;
-      return `<i class="${st}"></i>`;
+      return `<i class="${st}" data-cinema-season-key="${esc(itemKey(s.item))}"></i>`;
     }).join("");
     const label = `各季进度：共 ${seasons.length} 季，已看 ${n.watched}、在看 ${n.watching}、未看 ${n.empty}`;
     return `<span class="season-dots" role="img" aria-label="${esc(label)}">${dots}</span>`;
   }
+  function facePiecesHtml(it, posterUrl, opts = {}) {
+    var _a;
+    const r = opts.rating !== void 0 ? opts.rating : it.rating;
+    return {
+      poster: posterInner(it, posterUrl),
+      name: esc((_a = opts.name) != null ? _a : it.name),
+      meta: esc([it.year || "", it.director || ""].filter(Boolean).join(" · ")),
+      stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'
+    };
+  }
   function cardHtml(e, posterUrl, fetching = false) {
     const it = e.kind === "series" ? e.face : e.item;
     const st = cardStatus(e);
-    const r = e.kind === "series" ? e.rating : it.rating;
-    return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}"><div class="pw">${posterInner(it, posterUrl)}${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
+    const p = facePiecesHtml(it, posterUrl, e.kind === "series" ? { name: e.name, rating: e.rating } : {});
+    return `<div class="pcard${e.kind === "series" ? " pcard-series" : ""}" data-cinema-key="${esc(e.kind === "series" ? e.key : itemKey(it))}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ""}
     ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ""}${e.kind === "series" ? seasonDotsHtml(e.seasons) : ""}</div>
-    <div class="pname">${esc(e.kind === "series" ? e.name : it.name)}</div>
-    <div class="pmeta">${esc(it.year || "")}${it.year && it.director ? " · " : ""}${esc(it.director || "")}</div>
-    <div class="pstars">${r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>'}</div></div>`;
+    <div class="pname">${p.name}</div>
+    <div class="pmeta">${p.meta}</div>
+    <div class="pstars">${p.stars}</div></div>`;
   }
   function pcardHtml(it, posterUrl, fetching = false) {
     return cardHtml({ kind: "single", item: it }, posterUrl, fetching);
