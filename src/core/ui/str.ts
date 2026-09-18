@@ -67,6 +67,14 @@ export function iconSpan(name: string, extra = ''): string {
   return `<i data-lucide="${name}" class="bz-ic${extra ? ' ' + extra : ''}"></i>`;
 }
 
+/** stripMdExt(name)：剥离结尾 .md 扩展名（大小写不敏感；与 core/utils stripMdExt 同语义）。
+ *  一致性批下沉（一致#7）：单源实现落此零依赖区——render 纯层白名单仅本文件，
+ *  memo/secondbrain 的 render.ts 由此消费内联 `.replace(/\.md$/i,'')` 的收口；
+ *  core/utils 同款转发保既有 import 路径兼容（pad2 范式）。 */
+export function stripMdExt(name: string): string {
+  return String(name || '').replace(/\.md$/i, '');
+}
+
 // ==================== 属性转义 / 平台派色（encrypt×password-vault 双域收口，全域扫描 2026-09 批次 G） ====================
 
 /** 属性值 HTML 转义（data-* 属性上下文：& " < >，不转 '), 与 esc（元素文本上下文）互补 */
