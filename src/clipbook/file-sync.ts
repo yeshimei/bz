@@ -15,6 +15,7 @@
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { createFileSync } from '../core/file-sync';
+import { clipDir } from './save';
 import { readClipbookData, updateClipbookData, type ClipbookData, type ClipMark } from './data';
 
 // ---------- 同步纯函数（域内私有） ----------
@@ -70,18 +71,14 @@ function syncDelete(data: ClipbookData, path: string): boolean {
 
 // ---------- 路径 / 设置 ----------
 
-/** 剪藏目录（设置 articleDirectory；域内私有副本，同 flow.ts dirOf 口径） */
-function clipDirOf(): string {
-  const s = tryGetSettings() as any;
-  return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
-}
+// 剪藏目录：域内单源 save.clipDir（尾斜杠归一 + 缺省串一处，CB4/A3；本地副本已删）
 
 /** 监听目录：marks/pendingSource 指向知识盒文献笔记（默认「文献盒」），来源录入口带当前
  *  笔记时也可能指向剪藏目录内笔记——两个栖息地都纳入监听，其余靠引用放行（E22 同款） */
 function getWatchedFolders(): string[] {
   const s = tryGetSettings() as any;
   const kb = String((s && s.knowledgeDirectory) || '文献盒').trim().replace(/\\/g, '/').replace(/^\/+|\/+$/g, '') || '文献盒';
-  return [kb, clipDirOf()];
+  return [kb, clipDir()];
 }
 
 // ---------- 壳装配（issue 365：队列/去抖/订阅/生命周期走 core/file-sync） ----------

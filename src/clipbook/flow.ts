@@ -18,11 +18,10 @@
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
-import { tryGetSettings } from '../core/settings-provider';
 import { readNewsData, writeNewsDataMerged } from './news-data';
 import { localDayKey } from './constants';
 import type { NewsReadEvent } from '../smartcat/news-source';
-import { writeClipNote } from './save';
+import { writeClipNote, clipFilePathOf } from './save';
 import { articleKeyOf } from './constants';
 import { updateClipbookData, type ClipReadLogEntry } from './data';
 import { enqueueNewsWrite } from './write-queue';
@@ -238,8 +237,9 @@ export async function flowSave(article: any): Promise<boolean> {
     // news:saved 保持恒发：笔记本轮确实写出（覆盖场景同样要登记 auto-summary 补全）。
     const evt = buildReadEvt(raw, 'saved');
     if (bump.changed) emitDomainEvent('news', { kind: 'read', evt });
-    // 保存联动 auto-summary：登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）
-    emitDomainEvent('news', { kind: 'saved', evt, clipPath: `${dirOf()}/${String(raw.title || '').replace(/[\\/:*?"<>|]/g, '').trim()}.md` });
+    // 保存联动 auto-summary：登记待补全（smartcat 订阅该剪藏 modify 补全 / 2 分钟降级）；
+    // clipPath 走 clipFilePathOf 单源（CB4/A3）——与写盘路径同一组装，尾斜杠设置不再分叉
+    emitDomainEvent('news', { kind: 'saved', evt, clipPath: clipFilePathOf(raw.title) });
     // 本篇已处理出收件流 → 会话封存入账 readLog（issue 358；行为流已 emit，不影响 durationMin）
     void flushReadingSession();
     return true;
@@ -430,9 +430,5 @@ export async function flowUndoDeleteNews(rawBefore: any): Promise<void> {
   });
 }
 
-/** 剪藏目录（设置读取） */
-function dirOf(): string {
-  const s = tryGetSettings() as any;
-  return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
-}
+// 剪藏目录/剪藏文件路径：域内单源在 save.ts（clipDir / clipFilePathOf，CB4/A3 收编，本地副本已删）
 

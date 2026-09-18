@@ -168,16 +168,37 @@ export function createIconBtn(
   return b;
 }
 
-/** createOverlay(opts)：{maskId, popupId, onMaskClick, width, maxWidth} → {mask, popup, topify}
+/** 存活 overlay 登记表（CB10/A1）：createOverlay 即登记（open 时机），close 幂等注销。
+ *  自建遮罩弹窗（UP/RSS 管理、路径选择器等）的 close 句柄原先困在各自闭包里，域卸载与
+ *  main onunload 都拿不到——统一登记后 closeAllOverlays() 一处收口，全域受益。
+ *  调用方手动 mask.remove() 而不经 close 的旧登记（detach 残留）由 pruneDetached 惰性回收。 */
+interface LiveOverlayEntry {
+  mask: HTMLDivElement;
+  popup: HTMLDivElement;
+  /** close 包装（含自注销）：registerClose 覆写为调用方 close，缺省为摘除 mask+popup */
+  close: () => void;
+}
+const liveOverlays = new Set<LiveOverlayEntry>();
+
+/** 惰性回收：mask 与 popup 均已离场的登记视为已关（手动 remove 的旧路径），静默注销 */
+function pruneDetachedOverlays(): void {
+  for (const entry of liveOverlays) {
+    if (!entry.mask.isConnected && !entry.popup.isConnected) liveOverlays.delete(entry);
+  }
+}
+
+/** createOverlay(opts)：{maskId, popupId, onMaskClick, width, maxWidth} → {mask, popup, topify, registerClose}
  *  z-index 动态分配（ADR-0067）：创建时发号一次（创建即显示的场景够用）；
- *  show/hide 复用的面板每次显示调 topify() 重新发号，保证「谁后显示谁在上」 */
+ *  show/hide 复用的面板每次显示调 topify() 重新发号，保证「谁后显示谁在上」；
+ *  创建即登记进存活表（CB10/A1），close 经 registerClose 注入后幂等注销。 */
 export function createOverlay(opts: {
   maskId: string;
   popupId: string;
   onMaskClick?: () => void;
   width?: string;
   maxWidth?: number;
-}): { mask: HTMLDivElement; popup: HTMLDivElement; topify: () => void } {
+}): { mask: HTMLDivElement; popup: HTMLDivElement; topify: () => void; registerClose: (close: () => void) => void } {
+  pruneDetachedOverlays();
   const mask = document.createElement('div');
   mask.id = opts.maskId;
   mask.className = 'bz-overlay-mask';
@@ -192,5 +213,42 @@ export function createOverlay(opts: {
   popup.style.width = opts.width || '90%';
   popup.style.maxWidth = (opts.maxWidth || 400) + 'px';
   topifyZ(mask, popup);
-  return { mask, popup, topify: () => topifyZ(mask, popup) };
+  const entry: LiveOverlayEntry = {
+    mask,
+    popup,
+    close: () => {
+      liveOverlays.delete(entry); // 幂等注销（closeAllOverlays 与调用方 close 双入口都安全）
+      if (mask.isConnected) mask.remove();
+      if (popup.isConnected) popup.remove();
+    },
+  };
+  liveOverlays.add(entry);
+  return {
+    mask,
+    popup,
+    topify: () => topifyZ(mask, popup),
+    /** 注入调用方 close（UP/RSS 管理等自带 esc 注销/单例旗标复位的收尾）：包装为
+     *  「先自注销再执行」，重复触发与 closeAllOverlays 兜底都幂等 */
+    registerClose: (close: () => void) => {
+      entry.close = () => {
+        liveOverlays.delete(entry);
+        close();
+      };
+    },
+  };
+}
+
+/** 关闭全部存活 overlay（CB10/A1，main.ts onunload 调用；幂等，无存活时 no-op）：
+ *  逐个走登记的 close（含调用方注入的收尾），关一个注销一个 */
+export function closeAllOverlays(): void {
+  for (const entry of [...liveOverlays]) {
+    try {
+      entry.close();
+    } catch (e) {
+      // close 抛错不阻断其余浮层收口；DOM 兜底摘除防残留
+      entry.mask.remove();
+      entry.popup.remove();
+      liveOverlays.delete(entry);
+    }
+  }
 }
