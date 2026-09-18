@@ -2,11 +2,13 @@
  * 统一路径选择器 UI 层测试（ticket 128，ADR-0061；ticket 133 增补）：弹窗结构/单选高亮提交/多选勾选清空/
  * 搜索过滤（含恰好相等显示全量）/库根目录/遮罩与 ESC 取消/已选 chips ✕ 移除/设置行助手
  * （空态紧凑按钮 + 已选态 chip 点击重开选择器）/移动端两行式挂类（markSettingSplitRows）/
- * 列表排序（已选置顶 → 库根 → 其余整体反转）。jsdom 环境。
+ * 列表排序（已选置顶 → 库根 → 其余整体反转）。
+ * review-deep 增补：新建文件夹（效率#10）/ 搜索 Enter 选首行 + 单选双击（效率#11）/
+ * 行键盘可达 + 关闭焦点还原（R7）/ onChange 抛错回滚（N6）。jsdom 环境。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, Setting } from '../mock-obsidian-entry';
+import { resetObsidianMocks, Setting, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import {
   openPathPicker,
@@ -526,5 +528,199 @@ describe('大 vault 性能（ticket 128 性能修复：剪枝 + 快速首渲染 
     // ticket 133 反转排：000→399 码点升序逆排 → 399 在前
     expect(names).toEqual(['目录399', '目录398', '目录397', '目录396', '目录395', '目录394', '目录393', '目录392', '目录391', '目录390']);
     expect(popup.querySelector('.bz-path-picker-list .bz-path-picker-empty')).toBeNull();
+  });
+});
+
+describe('键盘闭环（效率#11 + R7）：搜索 Enter 选首行 / 单选双击 / 行键盘可达 / 关闭焦点还原', () => {
+  it('搜索 Enter：single 选中当前可见首行并直接提交', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '归档/b.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: (l) => (picked = l) });
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    search.value = '档';
+    search.dispatchEvent(new Event('input'));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(picked).toEqual(['归档']);
+    expect(pickerMask()).toBeNull();
+  });
+
+  it('搜索 Enter：multi 勾选首行但不关闭（还须确定提交）', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '归档/b.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: (l) => (picked = l) });
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    search.value = '卡';
+    search.dispatchEvent(new Event('input'));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(popup.querySelector('.bz-path-picker-selinfo')!.textContent).toBe('已选 1 项');
+    expect(pickerMask()).not.toBeNull();
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual(['卡片盒']);
+  });
+
+  it('无匹配行时 Enter 不提交不炸（选择保持打开）', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: (l) => (picked = l) });
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    search.value = '不存在的目录xyz';
+    search.dispatchEvent(new Event('input'));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(picked).toBeNull();
+    expect(pickerMask()).not.toBeNull();
+  });
+
+  it('单选行双击：选中并直接提交（搜索 → 双击确认惯例）', async () => {
+    makeAppAndSeed(['卡片盒/A.md', '归档/b.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'single', selected: [], onConfirm: (l) => (picked = l) });
+    const row = [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === '卡片盒')!;
+    row.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    expect(picked).toEqual(['卡片盒']);
+    expect(pickerMask()).toBeNull();
+  });
+
+  it('列表行键盘可达（R7）：tabindex=0 + Enter/Space 复用点击', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const rowOf = () =>
+      [...popup.querySelectorAll<HTMLElement>(ROW_SEL)].find((r) => r.dataset.path === '卡片盒')!;
+    expect(rowOf().tabIndex).toBe(0);
+    rowOf().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(rowOf().getAttribute('aria-checked')).toBe('true'); // 勾选（行重绘后重查）
+    rowOf().dispatchEvent(new KeyboardEvent('keydown', { key: ' ' }));
+    expect(rowOf().getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('关闭还原焦点（R7）：确定/ESC 关闭后焦点回到打开前元素', async () => {
+    makeAppAndSeed(['卡片盒/A.md']);
+    const trigger = document.createElement('button');
+    trigger.textContent = '触发';
+    document.body.appendChild(trigger);
+    trigger.focus();
+    openPathPicker({ mode: 'single', selected: [], onConfirm: () => {} });
+    const popup = document.getElementById('bz-path-picker-popup')!;
+    const search = popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+    await vi.waitFor(() => expect(document.activeElement).toBe(search)); // 打开聚焦搜索框
+    closePathPicker();
+    expect(document.activeElement).toBe(trigger);
+  });
+});
+
+describe('新建文件夹（效率#10）：选不到「还不存在的目录」时就地补建', () => {
+  function newFolderBtn(popup: HTMLElement): HTMLButtonElement {
+    return [...popup.querySelectorAll('.bz-path-picker-btn')].find(
+      (b) => b.textContent === '新建文件夹'
+    ) as HTMLButtonElement;
+  }
+  function searchOf(popup: HTMLElement): HTMLInputElement {
+    return popup.querySelector('.bz-path-picker-search') as HTMLInputElement;
+  }
+
+  it('搜索词为名建在库根下，刷新列表并自动勾选', async () => {
+    const app = makeAppAndSeed(['卡片盒/A.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: (l) => (picked = l) });
+    expect(newFolderBtn(popup).disabled).toBe(true); // 搜索词为空禁用
+    const search = searchOf(popup);
+    search.value = '我的/影视';
+    search.dispatchEvent(new Event('input'));
+    expect(newFolderBtn(popup).disabled).toBe(false);
+    newFolderBtn(popup).click();
+    await vi.waitFor(() => {
+      const row = popup.querySelector<HTMLElement>(`${ROW_SEL}[data-path="我的/影视"]`);
+      expect(row?.getAttribute('aria-checked')).toBe('true');
+    });
+    expect(app.vault.dirs.has('我的/影视')).toBe(true); // 逐级补齐父目录
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual(['我的/影视']);
+  });
+
+  it('单选：建在当前选中目录下并替换勾选', async () => {
+    const app = makeAppAndSeed(['卡片盒/A.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'single', selected: ['卡片盒'], onConfirm: (l) => (picked = l) });
+    const search = searchOf(popup);
+    search.value = '子目录';
+    search.dispatchEvent(new Event('input'));
+    newFolderBtn(popup).click();
+    await vi.waitFor(() => {
+      const row = popup.querySelector<HTMLElement>(`${ROW_SEL}[data-path="卡片盒/子目录"]`);
+      expect(row?.classList.contains('bz-path-picker-row--sel')).toBe(true);
+    });
+    expect(app.vault.dirs.has('卡片盒/子目录')).toBe(true);
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual(['卡片盒/子目录']);
+  });
+
+  it('目录已存在时不重复建、只勾选', async () => {
+    const app = makeAppAndSeed(['卡片盒/A.md']);
+    let picked: string[] | null = null;
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: (l) => (picked = l) });
+    const search = searchOf(popup);
+    search.value = '卡片盒'; // 恰好等于既有目录
+    search.dispatchEvent(new Event('input'));
+    newFolderBtn(popup).click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(app.vault.dirs.has('卡片盒')).toBe(false); // 未重复 createFolder
+    const row = popup.querySelector<HTMLElement>(`${ROW_SEL}[data-path="卡片盒"]`);
+    expect(row?.getAttribute('aria-checked')).toBe('true');
+    (popup.querySelector('.bz-path-picker-btn--primary') as HTMLButtonElement).click();
+    expect(picked).toEqual(['卡片盒']);
+  });
+
+  it('createFolder 失败：动作失败人话提示，不炸弹窗', async () => {
+    const app = makeAppAndSeed(['卡片盒/A.md']);
+    (app.vault as any).createFolder = async () => {
+      throw new Error('磁盘只读');
+    };
+    const popup = await openAndWait({ mode: 'multi', selected: [], onConfirm: () => {} });
+    const search = searchOf(popup);
+    search.value = '新目录';
+    search.dispatchEvent(new Event('input'));
+    newFolderBtn(popup).click();
+    await vi.waitFor(() =>
+      expect(getNoticeMessages().some((m) => m.includes('新建文件夹 新目录失败：磁盘只读'))).toBe(true)
+    );
+    expect(pickerMask()).not.toBeNull();
+  });
+});
+
+describe('onChange 容错（N6）：域回调抛错 → chips 回滚 + 人话提示', () => {
+  const flush = (): Promise<void> => new Promise((r) => setTimeout(r, 0));
+
+  it('同步抛错：chips 保持旧选中（回滚）+ 保存失败通知', () => {
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    renderPathSettingRow({
+      parent,
+      name: '目录行',
+      mode: 'multi',
+      value: ['卡片盒'],
+      onChange: () => {
+        throw new Error('域炸了');
+      },
+    });
+    const chips = () => [...parent.querySelectorAll('.bz-path-picker-chip-name')].map((el) => el.textContent);
+    (parent.querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
+    expect(chips()).toEqual(['卡片盒']); // 回滚旧值
+    expect(getNoticeMessages().some((m) => m.includes('保存失败（目录行）：域炸了'))).toBe(true);
+  });
+
+  it('Promise reject：chips 保持旧选中 + 保存失败通知，无 unhandled rejection', async () => {
+    const parent = document.createElement('div');
+    document.body.appendChild(parent);
+    renderPathSettingRow({
+      parent,
+      name: '目录行',
+      mode: 'multi',
+      value: ['卡片盒'],
+      onChange: () => Promise.reject(new Error('异步炸了')),
+    });
+    const chips = () => [...parent.querySelectorAll('.bz-path-picker-chip-name')].map((el) => el.textContent);
+    (parent.querySelector('.bz-path-picker-chip-x') as HTMLButtonElement).click();
+    await flush();
+    expect(chips()).toEqual(['卡片盒']);
+    expect(getNoticeMessages().some((m) => m.includes('保存失败（目录行）：异步炸了'))).toBe(true);
   });
 });

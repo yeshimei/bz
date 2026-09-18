@@ -22,6 +22,7 @@ import { Setting } from 'obsidian';
 import { getApp } from './app';
 import { createOverlay } from './dom';
 import { escManager, type EscHandle } from './esc-manager';
+import { notifySaveError, notifyActionError } from './notice';
 
 export interface PathPickerOptions {
   /** 弹窗标题（缺省「选择文件夹」） */
@@ -239,17 +240,29 @@ export function renderPathSettingRow(opts: PathSettingRowOptions): { refresh: ()
   const chipsWrap = document.createElement('div');
   chipsWrap.className = 'bz-path-picker-chips--setting';
 
-  /** 统一变更入口：onChange 返回 Promise 时异步解析改写清单后重渲染；同步返回（含 void）立即重渲染 */
+  /** 统一变更入口：onChange 返回 Promise 时异步解析改写清单后重渲染；同步返回（含 void）立即重渲染。
+   *  N6：域回调同步抛错 / 异步 reject → 人话提示 + 保持旧选中（current 未动，renderAll 回滚 chips）
+   *  ——原先 unhandled rejection：chips 停留旧值且无任何提示。 */
   const apply = (list: string[]): void | Promise<void> => {
-    const res = opts.onChange(list);
-    if (res && typeof (res as { then?: unknown }).then === 'function') {
-      return Promise.resolve(res as Promise<void | string[]>).then((final) => {
-        current = Array.isArray(final) ? final : list;
-        renderAll();
-      });
+    try {
+      const res = opts.onChange(list);
+      if (res && typeof (res as { then?: unknown }).then === 'function') {
+        return Promise.resolve(res as Promise<void | string[]>)
+          .then((final) => {
+            current = Array.isArray(final) ? final : list;
+            renderAll();
+          })
+          .catch((e) => {
+            notifySaveError(e, opts.name);
+            renderAll(); // 回滚：current 保持旧选中
+          });
+      }
+      current = Array.isArray(res) ? res : list;
+      renderAll();
+    } catch (e) {
+      notifySaveError(e, opts.name);
+      renderAll(); // 回滚：current 保持旧选中
     }
-    current = Array.isArray(res) ? res : list;
-    renderAll();
   };
 
   const openPicker = () =>
@@ -314,6 +327,8 @@ let currentMask: HTMLElement | null = null;
 let currentPopup: HTMLElement | null = null;
 let currentHandle: EscHandle | null = null;
 let focusTimer: number | null = null;
+/** R7：打开前焦点快照，关闭时还原（键盘用户关选择器后落回触发处，不再落到 body） */
+let focusRestore: HTMLElement | null = null;
 
 /** 关闭当前选择器（无则静默）；取消语义：不回调 onConfirm。
  *  mask 与 popup 是 body 下两个独立兄弟节点（createOverlay 分别 append），必须都移除，
@@ -335,11 +350,18 @@ export function closePathPicker(): void {
     window.clearTimeout(focusTimer);
     focusTimer = null;
   }
+  // R7：还原打开前焦点（元素仍连接时；被外部清理时跳过）
+  if (focusRestore) {
+    const el = focusRestore;
+    focusRestore = null;
+    if (el.isConnected) el.focus();
+  }
 }
 
 /** 打开目录选择器（幂等：已开先关） */
 export function openPathPicker(opts: PathPickerOptions): void {
-  closePathPicker();
+  closePathPicker(); // 旧实例先关（其焦点还原先行，本实例快照取还原后的落点）
+  focusRestore = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const app = getApp();
   const mode = opts.mode || 'single';
   const selected = new Set(normalizePicked(opts.selected || []));
@@ -412,11 +434,34 @@ export function openPathPicker(opts: PathPickerOptions): void {
     return b;
   };
   if (mode === 'multi') mkBtn('清空', false, () => { selected.clear(); renderList(); updateSel(); });
-  mkBtn(opts.okText || '下一步', true, () => {
+  // 效率#11：确定提交收口成 submit（搜索框 Enter 单选直提复用）
+  const submit = (): void => {
     const list = normalizePicked([...selected]);
     closePathPicker();
     opts.onConfirm(list);
+  };
+  // 效率#10：新建文件夹——选不到「还不存在的目录」时就地补建（以当前搜索词为名，建在
+  // 选中目录/库根下；vault.createFolder 逐级补齐父目录），成功后刷新列表并自动勾选。
+  // 搜索词为空时禁用（无名字可建）
+  const newBtn = mkBtn('新建文件夹', false, () => {
+    const name = state.q.trim().replace(/^\/+|\/+$/g, '');
+    if (!name) return;
+    const parent = [...selected][0] ?? '';
+    const full = parent ? `${parent}/${name}` : name;
+    void (async () => {
+      if (!state.folders.includes(full)) {
+        await app.vault.createFolder(full);
+        // 手动并入列表（后台聚合是慢速路径，不等它）；已存在则只勾选
+        if (!state.folders.includes(full)) state.folders.push(full);
+      }
+      if (mode === 'single') selected.clear();
+      selected.add(full);
+      renderList();
+      updateSel();
+    })().catch((e) => notifyActionError(e, `新建文件夹 ${full}`));
   });
+  newBtn.disabled = !state.q.trim();
+  mkBtn(opts.okText || '下一步', true, submit);
 
   // ticket 133 排序：已选置顶（pinnedAtOpen 快照）→ 库根第二梯队 → 其余整体反转（中文在前、英文在后）
   function orderedList(): string[] {
@@ -475,6 +520,21 @@ export function openPathPicker(opts: PathPickerOptions): void {
         renderList();
         updateSel();
       };
+      // R7：键盘可达——行挂 tabindex，Enter/Space 复用点击（单选此前完全无法用键盘选定）
+      row.tabIndex = 0;
+      row.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter' || ev.key === ' ') {
+          ev.preventDefault();
+          row.click();
+        }
+      });
+      if (mode === 'single') {
+        // 效率#11：单选双击直选提交（「搜索 → 双击确认」的目录选择惯例，免第二步点确定）
+        row.ondblclick = () => {
+          row.click();
+          submit();
+        };
+      }
       listEl.appendChild(row);
     }
     if (!total) {
@@ -500,8 +560,18 @@ export function openPathPicker(opts: PathPickerOptions): void {
 
   search.oninput = () => {
     state.q = search.value;
+    newBtn.disabled = !state.q.trim(); // 效率#10：搜索词为名，空词不可建
     renderList();
   };
+  // 效率#11：Enter = 选中当前可见首行（single 直选提交；multi 勾选不关）——键盘闭环免伸手拿鼠标
+  search.addEventListener('keydown', (ev) => {
+    if (ev.key !== 'Enter') return;
+    const first = listEl.querySelector<HTMLElement>('.bz-path-picker-row');
+    if (!first) return;
+    ev.preventDefault();
+    first.click();
+    if (mode === 'single') submit();
+  });
 
   // 快速首渲染（ticket 128 性能修复）：文件聚合毫秒级完成，立即显示绝大多数业务目录，
   // 弹窗打开即可选；adapter 递归补齐（空目录/点前缀目录）在后台完成后合并替换
