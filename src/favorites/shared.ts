@@ -19,7 +19,7 @@
  * data-fav-* 钩子即两侧事件绑定与测试断言的共同契约，改钩子先改这里。
  * C5 视觉拍板定稿（ADR-0101）：本文件只做 markup 平移，任何视觉值一个像素不动。
  */
-import { esc, iconSpan, pad2 } from '../core/ui/str';
+import { esc, emptyHtmlStr, iconSpan, relTime } from '../core/ui/str';
 import { getTags } from './config';
 import type { FavoritesItem } from './types';
 
@@ -64,22 +64,11 @@ export interface FavView {
 
 // ==================== 小工具 / 口径 ====================
 
-// 本地时间 YYYY-MM-DD HH:mm:ss（created/archivedAt 写入格式）收口 core/ui/str
-export { localNow } from '../core/ui/str';
+// 本地时间 YYYY-MM-DD HH:mm:ss（created/archivedAt 写入格式）+ 相对时间（跨域单源，
+// 本域原 relTime 即其拍板蓝本）均收口 core/ui/str
+export { localNow, relTime } from '../core/ui/str';
 
-/** 相对时间（原型 1:1：刚刚/N 分钟前/N 小时前/N 天前，超 7 天回落 M-D 短日期） */
-export function relTime(s: string | undefined): string {
-  if (!s) return '';
-  const d = new Date(s.replace(' ', 'T'));
-  if (isNaN(d.getTime())) return s;
-  const diff = Date.now() - d.getTime();
-  const m = 60000, h = 3600000, day = 86400000;
-  if (diff < m) return '刚刚';
-  if (diff < h) return Math.floor(diff / m) + ' 分钟前';
-  if (diff < day) return Math.floor(diff / h) + ' 小时前';
-  if (diff < 7 * day) return Math.floor(diff / day) + ' 天前';
-  return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
-}
+/** relTime 已收口 core/ui/str 单源（上方 re-export） */
 
 /**
  * 首标签 → 磁圆点/徽记色相（原型 hueOf 逐字）。issue 363 标签自定义延伸：
@@ -163,9 +152,11 @@ export function cardHtml(it: FavoritesItem, idx: number): string {
   </div>`;
 }
 
-/** 空态（原型文案逐字） */
+/** 空态：内芯收编 core emptyHtmlStr 单源（review-deep 一致#16：bz-empty 库皮 =
+ *  图标 + 一句话 + 动作引导；原型文案保留为 title，desc 指向磁贴行常驻「新收藏」入口）。
+ *  外层 .bz-fav-empty 域皮保留（承载 board 网格跨列与留白，styles.css 在案）——bookshelf 域皮包裹同款。 */
 export function emptyHtml(): string {
-  return '<div class="bz-fav-empty">这块板上还没有卡片</div>';
+  return `<div class="bz-fav-empty">${emptyHtmlStr('inbox', '这块板上还没有卡片', '添加第一条收藏试试')}</div>`;
 }
 
 // ==================== 行操作集 ====================
@@ -223,10 +214,12 @@ export function formHtml(it: FavoritesItem | null): string {
     <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
     <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
+    <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（memo/cinema/diary 多数派，
+         与本域标签表单 existing ? '保存' : '添加' 对齐，域内不再二分） -->
     <div class="bz-fav-btns">
       <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON.ai, 'bz-ic--xs')} <span>AI 整理</span></button>
       <button type="button" data-fz-cancel>取消</button>
-      <button type="button" id="fz-save" class="bz-fav-pri">${editing ? '更新' : '保存'}</button>
+      <button type="button" id="fz-save" class="bz-fav-pri">${editing ? '保存' : '添加'}</button>
     </div>
   </div>`;
 }

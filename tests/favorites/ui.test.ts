@@ -208,10 +208,13 @@ describe('主面板开合与空态', () => {
     expect(addBtn).not.toBeNull();
     expect(addBtn.classList.contains('bz-fav-chip-add')).toBe(true);
     expect(addBtn.textContent).toContain('新收藏');
-    // 空态（原型文案）
+    // 空态（原型文案保留为 title；内芯收编 emptyHtmlStr 单源 = 图标+标题+引导，一致#16）
     const empty = overlay.querySelector('.bz-fav-board .bz-fav-empty') as HTMLElement;
     expect(empty).not.toBeNull();
-    expect(empty.textContent).toBe('这块板上还没有卡片');
+    expect(empty.querySelector('.bz-empty')).not.toBeNull();
+    expect(empty.querySelector('.bz-empty-title')!.textContent).toBe('这块板上还没有卡片');
+    expect(empty.querySelector('.bz-empty-desc')!.textContent).toBe('添加第一条收藏试试');
+    expect(empty.querySelector('.bz-empty-ic')).not.toBeNull();
     // 空库自动建文件
     expect(ctx.vault.files.has('CONFIG/STORAGE/favorites.json')).toBe(true);
     // 计数文案（C5 白卡口径）
@@ -1021,7 +1024,7 @@ describe('添加表单', () => {
     return b;
   };
 
-  it('主按钮弹表单；标题「添加收藏」+ 保存钮「保存」+ 9 个标签钮', async () => {
+  it('主按钮弹表单；标题「添加收藏」+ 保存钮「添加」（一致#9：新建=添加）+ 9 个标签钮', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
@@ -1029,7 +1032,7 @@ describe('添加表单', () => {
     const els = formEls();
     expect(document.querySelector('.bz-overlay-mask')).not.toBeNull();
     expect(els.titleEl.textContent).toBe('添加收藏');
-    expect(els.save.textContent).toBe('保存');
+    expect(els.save.textContent).toBe('添加');
     expect(els.tagBtns.length).toBe(9);
   });
 
@@ -1234,7 +1237,7 @@ describe('添加表单', () => {
 // ==================== 8. 编辑 ====================
 
 describe('编辑收藏', () => {
-  it('菜单「编辑」→ 表单回填（title/url/desc/tags/pin）+ 标题「编辑收藏」+ 保存钮「更新」', async () => {
+  it('菜单「编辑」→ 表单回填（title/url/desc/tags/pin）+ 标题「编辑收藏」+ 保存钮「保存」（一致#9：编辑=保存）', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [
       seedItem({
@@ -1251,7 +1254,7 @@ describe('编辑收藏', () => {
     const form = document.querySelector('.bz-fav-form') as HTMLElement;
     expect(form).not.toBeNull();
     expect(form.querySelector('h2')!.textContent).toBe('编辑收藏');
-    expect((form.querySelector('#fz-save') as HTMLButtonElement).textContent).toBe('更新');
+    expect((form.querySelector('#fz-save') as HTMLButtonElement).textContent).toBe('保存');
     expect((form.querySelector('#fz-title') as HTMLInputElement).value).toBe('原标题');
     expect((form.querySelector('#fz-url') as HTMLInputElement).value).toBe('https://github.com/a/b');
     expect((form.querySelector('#fz-desc') as HTMLTextAreaElement).value).toBe('原简介');
