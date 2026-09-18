@@ -6,18 +6,21 @@
  * 旧 news/clipping 入口命令断开后，本域是「剪藏本」唯一入口。
  */
 import type { App } from 'obsidian';
-import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { readNewsData } from './news-data';
 import { maybeFetchNews, setNewsFetchDoneListener } from './news-fetcher';
 import { flowMarkAllRead } from './flow';
+import { clipDir } from './save';
 import { initPanel, showPanel, unloadPanel, reloadIfOpen, invalidateClipBodyCache } from './ui';
 import { openClipbookReport, unloadClipbookReport } from './report-ui';
+import { unloadManagerModals } from './news-sources-group';
 
 let initialized = false;
 let autoRefreshRegistered = false;
+/** 域事件退订句柄（A7）：registerAutoRefresh 四订阅的 off 收集于此，unloadClipbook 逐个闭环 */
+let autoRefreshUnsubs: Array<() => void> = [];
 
 
 /** 打开剪藏本（bz-clipbook-open 命令回调） */
@@ -76,10 +79,19 @@ export async function markAllUnreadRead(): Promise<void> {
 export function unloadClipbook(): void {
   // 阅读报告弹层可由命令直开（不经 openClipbook 初始化），卸载无条件收口
   unloadClipbookReport();
+  // CB10 域内兜底：UP/RSS 管理弹窗可从设置面板直开（不经 openClipbook 装载），无条件收口——
+  // 先走 close（幂等：DOM+esc+单例旗标），再按 id 摘可能的残留（close 已收则此处空转）
+  unloadManagerModals();
+  for (const id of ['bz-up-manager-mask', 'bz-up-manager-popup', 'bz-rss-manager-mask', 'bz-rss-manager-popup']) {
+    document.getElementById(id)?.remove();
+  }
   if (!initialized) return;
   initialized = false;
   unloadPanel();
   autoRefreshRegistered = false;
+  // A7：四个域事件订阅逐个退订 + 抓取完成回调清槽（空函数占位，不依赖 news-fetcher 改口）
+  for (const off of autoRefreshUnsubs.splice(0)) off();
+  setNewsFetchDoneListener(() => {});
 }
 
 /** 打开剪藏阅读报告弹层（命令 bz-clipbook-report；issue 358）：
@@ -90,32 +102,35 @@ export { openClipbookReport };
  *  实现同 memo file-sync 范式：域事件订阅 + 去抖 + 读改写事务） */
 export { ensureFileSync as ensureClipbookFileSync, unloadFileSync as unloadClipbookFileSync } from './file-sync';
 
-/** 目录/数据变化自动刷新（clipping:file-* 域事件，仅面板打开时重载；300ms 防抖） */
+/** 目录/数据变化自动刷新（clipping:file-* 域事件，仅面板打开时重载；300ms 防抖）。
+ *  A7：四个订阅句柄收集存模块级 autoRefreshUnsubs，unloadClipbook 逐个退订（不再依赖
+ *  main onunload 末尾 clearDomainEvents 的调用顺序兜底）。 */
 function registerAutoRefresh(app: App): void {
   if (autoRefreshRegistered) return;
   autoRefreshRegistered = true;
   let timer: ReturnType<typeof setTimeout> | null = null;
-  const dir = () => {
-    const s = tryGetSettings() as any;
-    return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
-  };
   /** 缓存失效 + 目录内变更防抖刷新。
    *  C18：rename 携带 oldPath——正文缓存键是**旧路径**（notePath 快照），只失效 newPath 等于没失效
    *  （旧键常驻内存，重命名回原名会读到陈旧正文）；且「移出剪藏目录」的改名 newPath 不在目录内，
    *  旧路径条目却已消失，命中判定必须新旧都看，否则面板留着幽灵条目。 */
   const schedule = (path?: string, stalePath?: string) => {
+    // CB11：载荷缺 path/stalePath 的异常事件显式跳过——原 `path &&` 前置短路在缺失时
+    // 放行到防抖窗口，300ms 后白做一次全量重扫
+    if (!path && !stalePath) return;
     if (path) invalidateClipBodyCache(path); // 正文缓存失效（enh 包 3：clipping:file-modified 等）
     if (stalePath) invalidateClipBodyCache(stalePath);
-    const d = dir();
+    const d = clipDir();
     const inDir = (p?: string) => !!p && p.startsWith(d + '/');
-    if (path && !inDir(path) && !inDir(stalePath)) return;
+    if (!inDir(path) && !inDir(stalePath)) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       void reloadIfOpen();
     }, 300);
   };
-  onDomainEvent<{ path: string }>('clipping:file-created', (e) => schedule(e && e.path));
-  onDomainEvent<{ path: string }>('clipping:file-modified', (e) => schedule(e && e.path));
-  onDomainEvent<{ path: string }>('clipping:file-deleted', (e) => schedule(e && e.path));
-  onDomainEvent<{ oldPath: string; newPath: string }>('clipping:file-renamed', (e) => schedule(e && e.newPath, e && e.oldPath));
+  autoRefreshUnsubs = [
+    onDomainEvent<{ path: string }>('clipping:file-created', (e) => schedule(e && e.path)),
+    onDomainEvent<{ path: string }>('clipping:file-modified', (e) => schedule(e && e.path)),
+    onDomainEvent<{ path: string }>('clipping:file-deleted', (e) => schedule(e && e.path)),
+    onDomainEvent<{ oldPath: string; newPath: string }>('clipping:file-renamed', (e) => schedule(e && e.newPath, e && e.oldPath)),
+  ];
 }

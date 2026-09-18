@@ -269,6 +269,8 @@ async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpMana
  * 首开在动态加载 renderer 期间 mask 尚未挂 DOM，只查 mask 存在性会漏掉同帧连点（叠出第二层）。
  */
 let upManagerOpen = false;
+/** close 句柄外提（CB10/A1）：域卸载兜底与 closeAllOverlays 都能收口闭包内的 close */
+let upManagerClose: (() => void) | null = null;
 
 /** 打开 UP 主名单管理弹窗：自建 overlay + 面板通用组件渲染（z 序与叠加行为零变化）。
  *  C25：单例守卫——已开或正在打开即直接返回，消灭连点叠层（各层各持 esc 句柄、遮罩叠遮罩、Esc 只关最上层） */
@@ -277,17 +279,21 @@ async function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, 
   upManagerOpen = true;
   let handle: { unregister(): void } | null = null;
   function close(): void {
+    upManagerClose = null;
     mask.remove();
     popup.remove();
     if (handle) handle.unregister();
     upManagerOpen = false;
   }
-  const { mask, popup } = createOverlay({
+  const { mask, popup, registerClose } = createOverlay({
     maskId: 'bz-up-manager-mask',
     popupId: 'bz-up-manager-popup',
     maxWidth: 560, // ticket 170 方案 A：加宽让描述换行，文字不再拥挤
     onMaskClick: close,
   });
+  // CB10/A1：close 登记进 core 存活表（closeAllOverlays 全域兜底可达）+ 域卸载外提句柄
+  upManagerClose = close;
+  registerClose(close);
 
   const header = document.createElement('div');
   header.className = 'bz-settings-header';
@@ -310,6 +316,9 @@ async function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, 
     throw e;
   }
 
+  // 渲染期间域已收口（unloadClipbook/closeAllOverlays 走过 close）→ 不再挂载 DOM/esc 层
+  // （防卸载后弹窗复活成无 esc 句柄的孤儿浮层）
+  if (!upManagerOpen) return;
   popup.appendChild(header);
   popup.appendChild(content);
   document.body.appendChild(mask);
@@ -453,6 +462,8 @@ async function addRssFeedUrl(raw: string | undefined, box: RssManagerBox, opts: 
 
 /** C25：RSS 管理弹窗单例标志（语义同 upManagerOpen：首开异步加载期间 mask 未挂 DOM，同帧连点靠它拦住） */
 let rssManagerOpen = false;
+/** close 句柄外提（CB10/A1）：语义同 upManagerClose */
+let rssManagerClose: (() => void) | null = null;
 
 /** 打开 RSS 订阅管理弹窗：自建 overlay + 面板通用组件渲染（范式同 UP 主管理弹窗）。
  *  C25：单例守卫——已开或正在打开即直接返回，消灭连点叠层 */
@@ -461,17 +472,21 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
   rssManagerOpen = true;
   let handle: { unregister(): void } | null = null;
   function close(): void {
+    rssManagerClose = null;
     mask.remove();
     popup.remove();
     if (handle) handle.unregister();
     rssManagerOpen = false;
   }
-  const { mask, popup } = createOverlay({
+  const { mask, popup, registerClose } = createOverlay({
     maskId: 'bz-rss-manager-mask',
     popupId: 'bz-rss-manager-popup',
     maxWidth: 560,
     onMaskClick: close,
   });
+  // CB10/A1：同 UP 主弹窗——close 登记 core 存活表 + 域卸载外提句柄
+  rssManagerClose = close;
+  registerClose(close);
 
   const header = document.createElement('div');
   header.className = 'bz-settings-header';
@@ -492,6 +507,8 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
     throw e;
   }
 
+  // 渲染期间域已收口 → 不挂载 DOM/esc（同 UP 主弹窗口径）
+  if (!rssManagerOpen) return;
   popup.appendChild(header);
   popup.appendChild(content);
   document.body.appendChild(mask);
@@ -504,4 +521,14 @@ async function openRssManagerModal(opts: { feeds: RssFeed[]; onChanged: () => vo
     close,
   });
   handle = handleReg;
+}
+
+/**
+ * 域卸载兜底（CB10/A1，unloadClipbook 调用）：UP/RSS 管理弹窗开着时走各自 close 幂等收口
+ * （DOM 摘除 + esc 注销 + 单例旗标复位）；未开时 no-op。main.ts closeAllOverlays 全域兜底
+ * 之外的第二道——两道都以 close 收尾，先到先收、后到空转。
+ */
+export function unloadManagerModals(): void {
+  upManagerClose?.();
+  rssManagerClose?.();
 }
