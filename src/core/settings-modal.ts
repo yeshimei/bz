@@ -120,6 +120,10 @@ export function closeSettingsModal(): void {
   if (currentModal) {
     const m = currentModal;
     currentModal = null;
+    // 新-1：浏览器对「从 DOM 移除聚焦元素」不派发 blur——防抖窗口内 ESC/程序化关闭会静默丢编辑。
+    // 关闭前主动 blur 弹窗内聚焦元素，触发文本行的失焦 commit（立即落盘）
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && m.popup.contains(active)) active.blur();
     m.dispose();
     m.onClose?.();
   }
