@@ -8,6 +8,7 @@
 import { createOverlay } from '../../core/dom';
 import { escManager } from '../../core/esc-manager';
 import { getApp } from '../../core/app';
+import { notify } from '../../core/notice';
 import { DIARY_DIRECTORY } from '../config';
 import { lintEntryFile, LINT_REASON_TEXT, type DiaryLintItem, type DiaryLintReason } from '../repair';
 
@@ -72,8 +73,9 @@ async function runScan(
   return scanned;
 }
 
-/** 打开文件（定位到顶部；条目文件短小，不定位行） */
-async function openAtTop(path: string): Promise<void> {
+/** 打开文件（定位到顶部；条目文件短小，不定位行）。
+ *  D-UI8：打开成功后关闭体检弹窗——全屏弹窗不关会把打开的文件盖在遮罩后面。 */
+async function openAtTop(path: string, onOpened: () => void): Promise<void> {
   const app = getApp();
   const file = app.vault.getAbstractFileByPath(path);
   if (!file) return;
@@ -85,6 +87,7 @@ async function openAtTop(path: string): Promise<void> {
     view.editor.setCursor(0, 0);
     view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
   }
+  onOpened();
 }
 
 export function openDiaryRepairModal(): void {
@@ -175,7 +178,7 @@ export function openDiaryRepairModal(): void {
         const link = document.createElement('span');
         link.className = 'bz-diary-repair-link';
         link.textContent = item.path.split('/').pop() || item.path;
-        link.addEventListener('click', () => void openAtTop(item.path));
+        link.addEventListener('click', () => void openAtTop(item.path, close));
         const snippet = document.createElement('span');
         snippet.className = 'bz-diary-repair-snippet';
         snippet.textContent = item.path;
@@ -184,7 +187,12 @@ export function openDiaryRepairModal(): void {
       }
     }
 
-    // 底栏：重新体检
+    // 底栏：重新体检（与出错重试态同一构造）
+    mountRetryFooter();
+  };
+
+  /** 出错后的可重试底栏（D10'）：进度条不死，用户可点「重新体检」重扫 */
+  function mountRetryFooter(): void {
     const again = document.createElement('button');
     again.className = 'bz-button';
     again.textContent = '重新体检';
@@ -193,22 +201,36 @@ export function openDiaryRepairModal(): void {
     bar.className = 'bz-diary-repair-footer';
     bar.appendChild(again);
     content.appendChild(bar);
-  };
+  }
 
   async function startScan(): Promise<void> {
     progressWrap.style.display = 'block';
     fill.style.width = '0%';
+    ptext.textContent = '正在体检日记文件…';
     content.innerHTML = '';
     content.appendChild(progressWrap);
-    const scanned = await runScan(
-      () => mask.isConnected,
-      (done, total, label) => {
-        fill.style.width = `${Math.round((done / total) * 100)}%`;
-        ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
+    // D10'：扫描任一文件读抛错不再 unhandled rejection 卡死进度条——回可重试态 + 人话 error 通知
+    try {
+      const scanned = await runScan(
+        () => mask.isConnected,
+        (done, total, label) => {
+          fill.style.width = `${Math.round((done / total) * 100)}%`;
+          ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
+        }
+      );
+      if (!mask.isConnected) return;
+      summarize(scanned);
+    } catch (e) {
+      if (!mask.isConnected) return;
+      const msg = (e as Error)?.message || String(e);
+      ptext.textContent = `体检失败：${msg}（可点下方按钮重试）`;
+      mountRetryFooter();
+      try {
+        notify(`日记格式体检失败：${msg}`, { type: 'error' });
+      } catch {
+        /* 无通知环境（node 测试）静默 */
       }
-    );
-    if (!mask.isConnected) return;
-    summarize(scanned);
+    }
   }
 
   void startScan();

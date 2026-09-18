@@ -39,10 +39,16 @@ function safeResolve(resolver: () => string, fallback: string): string {
 }
 
 /** 应用目录常量（设置变更时调用；日记/信两键归本域设置）。
- *  影视/书库走跨域实时解析（movieDirectory/bookDirectory），不再在此快照（D6 修复）。 */
+ *  影视/书库走跨域实时解析（movieDirectory/bookDirectory），不再在此快照（D6 修复）。
+ *  N6：两键 trim 尾斜杠（与 data.ts collectMdPaths 同口径 normalize）——否则监听侧
+ *  `startsWith(dir + '/')` 拼成双斜杠恒不命中，改名/删除/修改的自动回刷整体失效。 */
 export function applyDirectories(settings: { diaryDirectory?: string; letterDirectory?: string }) {
-  DIARY_DIRECTORY = settings.diaryDirectory || '我的/日记';
-  LETTER_DIRECTORY = settings.letterDirectory || '我的/信';
+  const clean = (v: string | undefined, fallback: string): string => {
+    const t = (v || '').trim().replace(/\/+$/, '');
+    return t || fallback;
+  };
+  DIARY_DIRECTORY = clean(settings.diaryDirectory, '我的/日记');
+  LETTER_DIRECTORY = clean(settings.letterDirectory, '我的/信');
 }
 
 /** 加密分类标签名（ADR-0017；写块标题、筛选/计数、排序用） */

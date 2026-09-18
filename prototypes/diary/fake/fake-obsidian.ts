@@ -369,7 +369,8 @@ export class FakeVault {
     return KEY_PREFIX + path;
   }
 
-  private listeners = new Map<string, Array<(file: unknown) => void>>();
+  /** 事件订阅表（ref→cb 映射，offref 按 ref 摘单个监听，见 on/offref 注释） */
+  private listeners = new Map<string, Array<{ id: number; cb: (file: unknown) => void }>>();
   private idSeq = 0;
 
   constructor() {
@@ -479,19 +480,29 @@ export class FakeVault {
   };
 
   /** 事件订阅（core/app vault.on/offref 同形） */
-  on(evt: string, cb: (file: unknown) => void): { ref: unknown } {
+  on(evt: string, cb: (file: unknown) => void): { ref: number } {
     if (!this.listeners.has(evt)) this.listeners.set(evt, []);
-    this.listeners.get(evt)!.push(cb);
     const id = ++this.idSeq;
+    this.listeners.get(evt)!.push({ id, cb });
     return { ref: id };
   }
 
-  offref(_ref: unknown): void {
-    this.listeners.clear();
+  /** 与宿主 Vault.offref 同语义（ADR-0122）：只摘该 ref 对应的监听，不清空整表
+   *  （清空整表会掩盖原型端的重复订阅泄漏）。 */
+  offref(ref: unknown): void {
+    const id = (ref as { ref?: number } | null)?.ref;
+    if (id === undefined) return;
+    for (const [evt, list] of this.listeners) {
+      const idx = list.findIndex((l) => l.id === id);
+      if (idx >= 0) {
+        list.splice(idx, 1);
+        if (list.length === 0) this.listeners.delete(evt);
+      }
+    }
   }
 
   private emit(evt: string, file: unknown): void {
-    for (const cb of this.listeners.get(evt) ?? []) cb(file);
+    for (const l of this.listeners.get(evt) ?? []) l.cb(file);
   }
 }
 

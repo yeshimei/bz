@@ -25,6 +25,7 @@ import {
   parseDiaryEntryFile,
   serializeDiaryEntryFile,
 } from '../core/diary-format';
+import { lintEntryFile } from './repair';
 import { DIARY_DIRECTORY, getTagEmoji } from './config';
 import { parseEntryFile } from './parser';
 import type { DiaryEntry } from './types';
@@ -81,6 +82,32 @@ export class DiaryFileReadError extends Error {
 /** 判断是否写层读盘失败（UI 层 catch 后静默：人话通知已由写层发出） */
 export function isDiaryReadFailure(e: unknown): boolean {
   return e instanceof DiaryFileReadError;
+}
+
+/**
+ * 提取 frontmatter 中契约外键的原始行（N4）：契约恰两属性（date+type），
+ * 用户在属性面板自加的键（cssclass/tags/自定义键）在「改标签」重写 frontmatter 时
+ * 原样保留、不静默丢弃。跳过契约两键及其缩进列表项，其余顶层键行（含行内数组/
+ * 多行列表形态）按原文返回。
+ */
+function extraFrontmatterLines(content: string): string[] {
+  const text = (content || '').replace(/\r\n/g, '\n');
+  if (!text.startsWith('---\n')) return [];
+  const end = text.indexOf('\n---', 4);
+  if (end < 0) return [];
+  const out: string[] = [];
+  let keeping = false;
+  for (const line of text.slice(4, end).split('\n')) {
+    const kv = /^([^:\s][^:]*):(.*)$/.exec(line);
+    if (kv) {
+      const key = kv[1].trim();
+      keeping = key !== 'date' && key !== 'type';
+      if (keeping) out.push(line);
+      continue;
+    }
+    if (keeping && /^\s+-\s/.test(line)) out.push(line); // 契约外键的多值列表项
+  }
+  return out;
 }
 
 /** 日期写操作的目标文件引用（ADR-0130：条目在目录下平铺，filePath 缺省按日期枚举） */
@@ -245,8 +272,12 @@ export async function removeDiaryEntries(
 
 /**
  * 更新条目标签（定位 = 谓词，filePath 限定由调用方传入）。
- * 命中即重写 frontmatter（正文不动）；标签未变化等价成功不写盘；命中 0 条返回 null。
- * 成功（含变化）发 diary:tags-changed。
+ * 命中即重写 frontmatter（正文不动）：
+ * - 标签未变化（有序逐位比较，N3：['日记','日记']→['日记','随笔'] 属变化）等价成功不写盘；
+ * - 体检 name-mismatch（属性时间与题目不一致、需人工裁决，N4）的文件拒写并通知引导先体检——
+ *   自动按题目归一会单方面改掉用户尚未裁决的时间戳，与体检口径打架；
+ * - 契约外 frontmatter 键逐键保留（N4），重写不静默丢弃用户自加属性。
+ * 命中 0 条返回 null。成功（含变化）发 diary:tags-changed。
  */
 export async function updateDiaryTags(
   dateStr: string,
@@ -262,10 +293,27 @@ export async function updateDiaryTags(
         // 写在队列回调词法区域内（D3 直写守门契约内实现）：守卫读 + 仅重写 frontmatter
         const { file, content, entry } = await readEntryCtxInQueue(p);
         if (!file || !entry || !match(entry)) return null;
-        const changed = !(entry.tags.length === newTags.length && entry.tags.every((t) => newTags.includes(t)));
+        // N4：属性与题目双轨不一致（体检 name-mismatch 口径）拒写，人工裁决后再改
+        if (lintEntryFile(p, content) === 'name-mismatch') {
+          warnUnparsed(
+            `「${p.split('/').pop()}」属性时间与文件名不一致（需人工裁决），本次改标签没有执行。` +
+              `请先在日记本设置中运行「日记格式体检」处理该文件后再试。`,
+            `diary-name-mismatch-${p}`
+          );
+          return null;
+        }
+        // N3：有序逐位比较——重复标签集（['日记','日记']）与 ['日记','随笔'] 不再被误判等价
+        const changed = entry.tags.join('\u0000') !== newTags.join('\u0000');
         if (!changed) return { entry, from: [...entry.tags], changed: false };
         const body = parseDiaryEntryFile(content).body;
-        await getApp().vault.modify(file, serializeDiaryEntryFile({ date: entry.date, time: entry.time }, newTags, body));
+        let disk = serializeDiaryEntryFile({ date: entry.date, time: entry.time }, newTags, body);
+        // N4：契约外键原样插回重写后的 frontmatter（位于关闭行之前）
+        const extra = extraFrontmatterLines(content);
+        if (extra.length > 0) {
+          const closeIdx = disk.indexOf('\n---\n', 4);
+          disk = disk.slice(0, closeIdx + 1) + extra.join('\n') + '\n' + disk.slice(closeIdx + 1);
+        }
+        await getApp().vault.modify(file, disk);
         const from = [...entry.tags];
         entry.tags = [...newTags];
         entry.emoji = newTags.map((tag) => getTagEmoji(tag)).join('');

@@ -23,7 +23,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { parseLocalDay } from '../home/weekly';
-import { parseEntryFile, isEncryptedEntry } from '../diary/parser';
+import { parseEntryFile } from '../diary/parser';
 import { diaryDateFromEntryPath } from '../core/diary-format';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED, getStarString } from '../cinema/constants';
@@ -292,8 +292,7 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
   };
 
   // 日记：当天条目文件逐篇解析（ADR-0130 一目一文件；加密条目同日记本口径不可见）。
-  // R1：过滤口径对齐墙（ui.ts filtered）——「加密」标签命中同样隐藏，只查正文 🔐 会把
-  // 内容带 🔐 的条目计进回顾却在墙上隐藏，摘要对不上。
+  // R1/N2：过滤口径对齐墙（ui.ts「加密」chip 只认标签）——只滤「加密」标签。
   try {
     const dir = settingDir(['diaryDirectory'], '我的/日记');
     const dateStr = localDayStr(now);
@@ -303,7 +302,10 @@ export async function collectRecap(app: App, now: number = Date.now()): Promise<
       if (diaryDateFromEntryPath(f.path) !== dateStr) continue;
       const e = parseEntryFile(await app.vault.read(f as TFile), f.path);
       if (!e) continue;
-      if (isEncryptedEntry(e) || e.tags.includes('加密')) continue;
+      // N2：只滤「加密」标签（对齐墙 ui.ts 加密 chip 口径）——条目文件化后正文 🔐 只是普通字符
+      //（保险箱加密条目本就不在 getMarkdownFiles 里），连查正文会把手打 🔐 的普通条目从回顾滤掉、
+      // 墙上却照常显示，摘要对不上。
+      if (e.tags.includes('加密')) continue;
       times.push(e.time);
     }
     sources.diaryTimes = times;

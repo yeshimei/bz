@@ -110,4 +110,13 @@ describe('applyDirectories 设置应用', () => {
     expect(bookDirectory()).toBe('书库');
     setSettingsProvider(() => ({}) as any);
   });
+
+  it('N6 回归：目录配置带尾斜杠时 trim（与 data.ts collectMdPaths 同口径 normalize）', () => {
+    applyDirectories({ diaryDirectory: '我的/日记/', letterDirectory: '我的/信//' });
+    expect(DIARY_DIRECTORY).toBe('我的/日记'); // 双斜杠尾随一并清掉：监听侧 startsWith(dir+'/') 不再恒不命中
+    expect(LETTER_DIRECTORY).toBe('我的/信');
+    applyDirectories({ diaryDirectory: '  ' }); // 空白回落默认
+    expect(DIARY_DIRECTORY).toBe('我的/日记');
+    applyDirectories({});
+  });
 });

@@ -1,8 +1,8 @@
 /**
  * 覆盖率补测：diary/encrypt 加密编排层（ADR-0130 v2 块格式：`# 标签名/标签名 HH:mm` + 正文）。
- * 重点：未初始化降级、未解锁抛错、附件收集（缺失/读取失败跳过、视频类型）、
- * loadEncryptedEntries 防御分支（非日记类/损坏明文/解密失败/null）、
- * 块头标签名解析与兜底去重、deleteEncryptedEntry 守卫、上锁通知、reclassifyEntry 分支（还原落条目文件）。
+ * 重点：未初始化降级、未解锁抛错、附件收集（缺失/读取失败/超大跳过、视频类型）、
+ * loadEncryptedEntries 防御分支（非日记类/损坏明文/解密失败/null/legacy 路径兜底）、
+ * 块头标签名解析与兜底去重、deleteEncryptedEntry 守卫、reclassifyEntry 分支（还原落条目文件）。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { setApp as setCoreApp } from '../../src/core/app';
@@ -12,8 +12,6 @@ import { setDiaryDataMap } from '../../src/diary/store';
 import {
   ENCRYPT_TAG,
   isUnlocked,
-  onUnlockChange,
-  lockSafe,
   encryptEntry,
   loadEncryptedEntries,
   deleteEncryptedEntry,
@@ -22,7 +20,7 @@ import {
 import { getSafeManager, unloadEncrypt } from '../../src/encrypt';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks, clearNotices } from '../mock-obsidian-entry';
+import { resetObsidianMocks, clearNotices, hasNotice } from '../mock-obsidian-entry';
 import { diaryEntryPath, serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 let vault: MockVault;
@@ -103,13 +101,12 @@ describe('解锁态与守卫', () => {
     await expect(deleteEncryptedEntry('nope')).rejects.toThrow('未解锁');
   });
 
-  it('lockSafe：触发解锁状态监听回调', async () => {
-    await unlockSafe();
-    const cb = vi.fn();
-    onUnlockChange(cb);
-    lockSafe();
-    expect(cb).toHaveBeenCalledTimes(1);
-    expect(isUnlocked()).toBe(false);
+  // D14'：diary/encrypt 的 onUnlockChange/lockSafe 死代码已删除——解锁态订阅唯一出口
+  // 是 encrypt 域的 encrypt:unlock-changed 域事件（ui.ts 消费），此处钉死无残留导出。
+  it('D14\' 回归：死代码 onUnlockChange/lockSafe 已从模块导出摘除', async () => {
+    const mod = await import('../../src/diary/encrypt');
+    expect((mod as any).onUnlockChange).toBeUndefined();
+    expect((mod as any).lockSafe).toBeUndefined();
   });
 });
 
@@ -152,6 +149,40 @@ describe('encryptEntry 附件收集', () => {
     expect(note.attachments).toHaveLength(1);
     expect(note.attachments[0].kind).toBe('video');
     expect((note.attachments[0] as any).blobSize).toBeGreaterThan(0); // 密文已入库
+  });
+
+  /** 造一个 stat.size 超限的附件（内容仍是 1 字节——守卫在读取前按 stat 拦截，不真读大 buffer） */
+  function oversizeStat(path: string) {
+    const orig = vault.file.bind(vault);
+    (vault as any).file = (p: string) => {
+      const f = orig(p);
+      if (p === path) f.stat.size = 64 * 1024 * 1024 + 1;
+      return f;
+    };
+  }
+
+  it('N9 回归：单个附件超 64MB 跳过并通知（不读入内存，其余附件照常加密）', async () => {
+    const sm = await unlockSafe();
+    vault.binaryFiles.set('a.png', new Uint8Array([1, 2, 3]));
+    vault.binaryFiles.set('big.mp4', new Uint8Array([1])); // stat 虚标超 64MB
+    oversizeStat('big.mp4');
+    const res = await encryptEntry(plainEntry({ content: '图 ![[a.png]] 片 ![[big.mp4]]' }));
+    expect(res).not.toBeNull(); // 部分超限：继续加密其余附件
+    const note = sm.manifest.notes[sm.manifest.notes.length - 1];
+    expect(note.attachments.map((a: any) => a.path)).toEqual(['a.png']);
+    expect(hasNotice(/1 个附件过大（超过 64MB）未加密（原文件仍留在盘上）/)).toBe(true);
+  });
+
+  it('N9 回归：全部附件超限 → 整条拒绝（返回 null）并发 error 提示', async () => {
+    const sm = await unlockSafe();
+    vault.binaryFiles.set('big1.mp4', new Uint8Array([1]));
+    vault.binaryFiles.set('big2.mp4', new Uint8Array([2]));
+    oversizeStat('big1.mp4');
+    oversizeStat('big2.mp4');
+    const res = await encryptEntry(plainEntry({ content: '片 ![[big1.mp4]] ![[big2.mp4]]' }));
+    expect(res).toBeNull(); // 整条拒绝，不入库
+    expect(sm.manifest.notes.filter((n: any) => n.kind === 'diary-entry')).toHaveLength(0);
+    expect(hasNotice(/2 个附件都超过 64MB/)).toBe(true);
   });
 });
 
@@ -204,6 +235,18 @@ describe('loadEncryptedEntries 防御分支', () => {
     list = await loadEncryptedEntries();
     expect(list[0].tags).toEqual(['日记']); // 全空标签名兜底「日记」
     spy.mockRestore();
+  });
+
+  it('N7 回归：legacy 日期文件形状的历史 note.path（`2024-05-01.md`）解锁后可见', async () => {
+    const sm = await unlockSafe();
+    const res = await encryptEntry(plainEntry({ time: '08:00', content: '老格式加密日记' }));
+    const note = sm.manifest.notes.find((n: any) => n.id === res!.noteId)!;
+    note.path = '我的/日记/2024-01-01.md'; // ADR-0131 之前加密的历史清单遗留
+    const list = await loadEncryptedEntries();
+    expect(list).toHaveLength(1); // 不再被 diaryMetaFromEntryPath=null 跳过
+    expect(list[0].date).toBe('2024-01-01'); // 日期经 diaryDateFromLegacyPath 兜底换算
+    expect(list[0].encrypted).toBe(true);
+    expect(list[0].content).toContain('老格式加密日记');
   });
 });
 

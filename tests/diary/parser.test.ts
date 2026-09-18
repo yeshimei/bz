@@ -2,7 +2,7 @@
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { buildTagMaps } from '../../src/diary/config';
-import { parseEntryFile, parseMovieFile, parseLetterFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
+import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile, parseNaturalTime, isEncryptedEntry } from '../../src/diary/parser';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 
 /** 构造测试用 mock app（同时挂到 core/app 供域内 getApp 路径使用，并返回实例供解析函数显式传入） */
@@ -188,6 +188,48 @@ describe('parseLetterFile', () => {
   it('无 date 返回 null', async () => {
     mockApp({}, { 'a.md': { readonly: false } });
     expect(await parseLetterFile(makeFile('a.md', 0), app)).toBeNull();
+  });
+});
+
+describe('A1 回归：特殊条目时分不再取 ctime（ADR-0157 补记口径）', () => {
+  it('信件：时分取 frontmatter date 的时间半段——同属性不同 ctime 解析出相同 time', async () => {
+    const fm = { date: '2024-03-04 20:00' };
+    mockApp({}, { '我的/信/a.md': fm, '我的/信/b.md': fm });
+    // 两文件 ctime 不同（复制/迁移场景）：解析结果必须一致（结构化时间，不随 ctime 漂移）
+    const a = await parseLetterFile(makeFile('我的/信/a.md', Date.UTC(2024, 2, 4, 20, 0)), app);
+    const b = await parseLetterFile(makeFile('我的/信/b.md', Date.UTC(2030, 11, 25, 6, 37)), app);
+    expect(a!.time).toBe('20:00');
+    expect(b!.time).toBe('20:00');
+    expect(a!.timeValue).toBe(2000);
+    expect(b!.timeValue).toBe(2000);
+    expect(a!.date).toBe('2024-03-04');
+    expect(b!.date).toBe('2024-03-04');
+  });
+
+  it('信件：frontmatter date 为纯日期形态 → 时分回落 00:00（与影视/书过渡口径一致）', async () => {
+    mockApp({}, { 'a.md': { date: '2024-03-04' } });
+    const e = await parseLetterFile(makeFile('a.md', Date.UTC(2024, 5, 1, 15, 20)), app);
+    expect(e!.time).toBe('00:00');
+    expect(e!.timeValue).toBe(0);
+    expect(e!.date).toBe('2024-03-04');
+  });
+
+  it('影视：不同 ctime 的同 frontmatter 文件都回落 00:00（不再随 ctime 漂移）', async () => {
+    const fm = { 影评: '很好看', 观影日期: '2024-02-03', tags: ['电影'] };
+    mockApp({}, { '我的/影视/a.md': fm, '我的/影视/b.md': fm });
+    const a = await parseMovieFile(makeFile('我的/影视/a.md', Date.UTC(2024, 0, 3, 21, 30)), app);
+    const b = await parseMovieFile(makeFile('我的/影视/b.md', Date.UTC(2031, 7, 9, 3, 5)), app);
+    expect(a!.time).toBe('00:00');
+    expect(b!.time).toBe('00:00');
+    expect(a!.timeValue).toBe(0);
+    expect(b!.timeValue).toBe(0);
+  });
+
+  it('书：时分回落 00:00', async () => {
+    mockApp({}, { '书库/a.md': { bookReview: '好书', completionDate: '2024-02-03' } });
+    const e = await parseBookFile(makeFile('书库/a.md', Date.UTC(2024, 0, 3, 21, 30)), app);
+    expect(e!.time).toBe('00:00');
+    expect(e!.timeValue).toBe(0);
   });
 });
 
