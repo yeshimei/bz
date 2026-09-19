@@ -19,8 +19,8 @@ import type { CinemaItem } from '../../src/cinema/state';
 function item(name: string, opts: Partial<CinemaItem> = {}): CinemaItem {
   return {
     file: null, name, typeTag: '美剧', group: '剧集', watchDate: null, rating: null, status: 2,
-    poster: null, review: null, genre: null, director: null, actors: null, region: null, year: null,
-    doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
+    poster: null, review: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null,
+    doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     ...opts,
   };
 }

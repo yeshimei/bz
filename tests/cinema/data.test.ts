@@ -61,6 +61,25 @@ tags:
     expect(it.synopsis).toBe('近未来的地球黄沙遍野。');
   });
 
+  it('解析条目：完整上映日期 / 片长 / 季集 / 热门短评（详情弹窗字段补齐）', () => {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《24小时 第一季》.md', md(`---
+tags: [美剧]
+评分: 9.2
+上映日期: 2001-11-06
+片长: 42分钟
+季集: "24"
+热门短评: 第一季的剧情比较单纯
+---`));
+    const app = makeApp(vault);
+    const it = rebuildItems(app)[0];
+    expect(it.year).toBe('2001'); // 卡片副行 / 分析页片龄仍按年
+    expect(it.releaseDate).toBe('2001-11-06'); // 详情弹窗要完整年月日
+    expect(it.duration).toBe('42分钟');
+    expect(it.seasonText).toBe('24');
+    expect(it.hotComment).toBe('第一季的剧情比较单纯');
+  });
+
   it('状态推断：-1=想看 / 0=在看 / 正数=已看', () => {
     const vault = new MockVault();
     vault.files.set('我的/影视/《A》.md', '---\ntags: [电影]\n评分: -1\n---');
@@ -101,7 +120,7 @@ tags:
     const handItem: CinemaItem = {
       file: tfile, name: '缓存未就绪', typeTag: '电影', group: '电影', watchDate: null, rating: null,
       status: 2, poster: null, review: null, genre: null, director: null, actors: null,
-      region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
+      region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     };
     M.items.push(handItem);
     const items = rebuildItems(app);
@@ -117,7 +136,7 @@ tags:
     M.items.push({
       file: tfile, name: '无效', typeTag: '电影', group: '电影', watchDate: null, rating: null,
       status: 2, poster: null, review: null, genre: null, director: null, actors: null,
-      region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
+      region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     });
     rebuildItems(app);
     expect(M.items).toHaveLength(0);
@@ -175,8 +194,8 @@ describe('cinema 排序与筛选', () => {
       file: { path: `我的/影视/《${name}》.md`, stat: { ctime, mtime } } as any,
       name, typeTag: '电影', group: '电影',
       watchDate: null, rating: null, status: 2, poster: null, review: null,
-      genre: null, director: null, actors: null, region: null, year: null,
-      doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null,
+      genre: null, director: null, actors: null, region: null, year: null, releaseDate: null,
+      doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null,
     });
     const t0 = 1000;
     const old = mk('旧片', t0, 9000); // 先创建，后被编辑 → mtime 最大

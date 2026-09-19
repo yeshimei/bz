@@ -35,6 +35,9 @@ export interface CinemaItem {
   actors: string | null;
   region: string | null;
   year: string | null;
+  /** 完整上映日期原文（frontmatter「上映日期」，如 2013-01-08）。year 只留前 4 位
+   *  （卡片副行 / 分析页片龄统计按年聚合），详情弹窗要的是完整日期，故另存一份（687/687 有值） */
+  releaseDate: string | null;
   doubanRating: string | null;
   doubanUrl: string | null;
   synopsis: string | null;
@@ -42,6 +45,8 @@ export interface CinemaItem {
   duration: string | null;
   /** 季集原文（frontmatter「季集」，如「2季」；分析页追剧深度用，ADR-0090 并入） */
   seasonText: string | null;
+  /** 豆瓣热门短评原文（frontmatter「热门短评」；451/687 抓到，中位 39 字、最长 465） */
+  hotComment: string | null;
 }
 
 /** 排序模式：date=最近观看（默认）/ created=按创建 / rating=按评分 */

@@ -1,4 +1,4 @@
-/* 源指纹 40d5e3a07b451f7f · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a5b4827fc7678dce · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -217,17 +217,23 @@ var BZR_cinema = (() => {
   function viewFiltered(view) {
     return !!(view.typeFilter || view.statusFilter || view.searchKeyword);
   }
+  var HOT_FOLD_MIN = 120;
   function detailModalHtml(it, posterUrl) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
     const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
     const rows = [
       ["类型", (_a = it.genre) != null ? _a : ""],
       ["导演", (_b = it.director) != null ? _b : ""],
       ["主演", (_c = it.actors) != null ? _c : ""],
       ["制片国家/地区", (_d = it.region) != null ? _d : ""],
-      ["上映日期", (_e = it.year) != null ? _e : ""],
-      ["豆瓣评分", (_f = it.doubanRating) != null ? _f : ""]
+      ["上映日期", (_f = (_e = it.releaseDate) != null ? _e : it.year) != null ? _f : ""],
+      // 完整年月日（year 只留年，卡片/统计用）
+      ["片长", (_g = it.duration) != null ? _g : ""],
+      ["季集", it.seasonText ? `${it.seasonText} 集` : ""],
+      ["豆瓣评分", (_h = it.doubanRating) != null ? _h : ""]
     ].filter(([, v]) => v !== "");
+    const hot = ((_i = it.hotComment) != null ? _i : "").trim();
+    const hotFold = hot.length > HOT_FOLD_MIN;
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -241,6 +247,7 @@ var BZR_cinema = (() => {
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ""}
+    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? " is-fold" : ""}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ""}` : ""}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ""}
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;

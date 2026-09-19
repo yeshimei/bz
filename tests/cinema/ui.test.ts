@@ -1638,3 +1638,74 @@ describe('cinema 搜索框输入守护（后台整刷不打断打字）', () => 
     expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(2);
   });
 });
+describe('cinema 详情弹窗字段（片长 / 季集 / 完整上映日期 / 热门短评）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    Platform.isMobile = false;
+    unloadCinema();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  /** 造一部带全套豆瓣字段的剧集并开详情弹窗 */
+  function openDetailOf(hot: string): HTMLElement {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《24小时 第一季》.md', md(`---
+tags: [美剧]
+评分: 9.2
+观影日期: 2026-04-25
+导演: 乔恩·卡萨
+上映日期: 2001-11-06
+片长: 42分钟
+季集: "24"
+热门短评: ${hot}
+---`));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '24小时 第一季'));
+    return root.querySelector('.cn-ovl .cn-modal') as HTMLElement;
+  }
+
+  function kvOf(modal: HTMLElement, key: string): string | undefined {
+    const row = Array.from(modal.querySelectorAll('.dm-kv')).find((r) => r.querySelector('.dm-kv-k')?.textContent === key);
+    return row?.querySelector('.dm-kv-v')?.textContent ?? undefined;
+  }
+
+  it('豆瓣信息补齐片长与季集；上映日期给完整年月日（不再只到年）', () => {
+    const modal = openDetailOf('第一季的剧情比较单纯');
+    expect(kvOf(modal, '上映日期')).toBe('2001-11-06');
+    expect(kvOf(modal, '片长')).toBe('42分钟');
+    expect(kvOf(modal, '季集')).toBe('24 集');
+    expect(kvOf(modal, '导演')).toBe('乔恩·卡萨');
+  });
+
+  it('热门短评成区：短评直接铺开（无折叠钮）', () => {
+    const short = openDetailOf('第一季的剧情比较单纯');
+    expect(short.textContent).toContain('热 门 短 评');
+    expect(short.querySelector('[data-dm-quote]')?.textContent).toBe('第一季的剧情比较单纯');
+    expect(short.querySelector('[data-dm-fold]')).toBeNull();
+  });
+
+  it('热门短评超阈值（>120 字）收起，点按钮展开 / 再点收起', () => {
+    const long = openDetailOf('第一季的剧情比较单纯。'.repeat(12)); // 132 字
+    const quote = long.querySelector('[data-dm-quote]') as HTMLElement;
+    const btn = long.querySelector('[data-dm-fold]') as HTMLElement;
+    expect(quote.classList.contains('is-fold')).toBe(true);
+    expect(btn.textContent).toContain('展开全文');
+    clickEl(btn);
+    expect(quote.classList.contains('is-fold')).toBe(false);
+    expect(btn.textContent).toBe('收起');
+    clickEl(btn);
+    expect(quote.classList.contains('is-fold')).toBe(true);
+    expect(btn.textContent).toContain('展开全文');
+  });
+});

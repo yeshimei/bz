@@ -404,6 +404,15 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
   el.querySelector('.j-edit')?.addEventListener('click', () => { close(); openForm(sec, it, app); });
   el.querySelector('.j-del')?.addEventListener('click', () => { close(); openConfirm(it, app); });
   el.querySelector('.j-similar')?.addEventListener('click', () => { close(); void runSimilarRecommend(it, app); });
+  // 热门短评展开/收起（纯层对超阈值长评打 .is-fold 收 3 行；短评无按钮）
+  const foldBtn = el.querySelector<HTMLElement>('[data-dm-fold]');
+  const quote = el.querySelector<HTMLElement>('[data-dm-quote]');
+  if (foldBtn && quote) {
+    const foldText = foldBtn.textContent ?? '展开全文';
+    foldBtn.addEventListener('click', () => {
+      foldBtn.textContent = quote.classList.toggle('is-fold') ? foldText : '收起';
+    });
+  }
 }
 
 /**
@@ -540,7 +549,7 @@ async function saveNew(p: FormPayload, app: App, close: () => void): Promise<voi
   }
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
-  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
+  const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
       notice('已存在同名影视，请换个名称', 'warning');

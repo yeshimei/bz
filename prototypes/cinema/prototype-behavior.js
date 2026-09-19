@@ -1,4 +1,4 @@
-/* 源指纹 2c682af3deaeac86 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a9f83bf58ea6afda · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5173,6 +5173,7 @@ var BZW_cinema = (() => {
     view: "list",
     searchKeyword: "",
     searchDebounceTimer: null,
+    lastInputAt: 0,
     appRef: null,
     folderPath: DEFAULT_FOLDER,
     renderFn: null,
@@ -5510,7 +5511,7 @@ var BZW_cinema = (() => {
 
   // src/cinema/data.ts
   function parseMovieFile(file, app) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
     const cache = app.metadataCache.getFileCache(file);
     if (!cache || !cache.frontmatter) return null;
     const fm = cache.frontmatter;
@@ -5551,12 +5552,14 @@ var BZW_cinema = (() => {
       actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
       region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
+      releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
       doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
       synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
       duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
-      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null
+      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
+      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
     };
   }
   function findPosterRenameTargets(app, oldPath) {
@@ -6146,7 +6149,7 @@ var BZW_cinema = (() => {
       });
       let settled = false;
       const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
+      function restoreFocus2() {
         if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
           prevActive.focus();
         }
@@ -6158,7 +6161,7 @@ var BZW_cinema = (() => {
         releaseFocusTrap();
         escHandle.unregister();
         mask.remove();
-        restoreFocus();
+        restoreFocus2();
         resolve(v);
       }
       activeSettle = settle;
@@ -7384,17 +7387,23 @@ tags:
   function viewFiltered(view) {
     return !!(view.typeFilter || view.statusFilter || view.searchKeyword);
   }
+  var HOT_FOLD_MIN = 120;
   function detailModalHtml(it, posterUrl2) {
-    var _a, _b, _c, _d, _e, _f;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i;
     const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
     const rows = [
       ["类型", (_a = it.genre) != null ? _a : ""],
       ["导演", (_b = it.director) != null ? _b : ""],
       ["主演", (_c = it.actors) != null ? _c : ""],
       ["制片国家/地区", (_d = it.region) != null ? _d : ""],
-      ["上映日期", (_e = it.year) != null ? _e : ""],
-      ["豆瓣评分", (_f = it.doubanRating) != null ? _f : ""]
+      ["上映日期", (_f = (_e = it.releaseDate) != null ? _e : it.year) != null ? _f : ""],
+      // 完整年月日（year 只留年，卡片/统计用）
+      ["片长", (_g = it.duration) != null ? _g : ""],
+      ["季集", it.seasonText ? `${it.seasonText} 集` : ""],
+      ["豆瓣评分", (_h = it.doubanRating) != null ? _h : ""]
     ].filter(([, v]) => v !== "");
+    const hot = ((_i = it.hotComment) != null ? _i : "").trim();
+    const hotFold = hot.length > HOT_FOLD_MIN;
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl2 ? `<img src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -7408,6 +7417,7 @@ tags:
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ""}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ""}
+    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? " is-fold" : ""}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ""}` : ""}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ""}
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
@@ -8061,7 +8071,7 @@ tags:
     });
   }
   function openDetail(sec, it, app) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     const url = posterUrl(it, app);
     const { el, close } = ovl(sec, detailModalHtml(it, url));
     mountIcons(el);
@@ -8077,6 +8087,14 @@ tags:
       close();
       void runSimilarRecommend(it, app);
     });
+    const foldBtn = el.querySelector("[data-dm-fold]");
+    const quote = el.querySelector("[data-dm-quote]");
+    if (foldBtn && quote) {
+      const foldText = (_d = foldBtn.textContent) != null ? _d : "展开全文";
+      foldBtn.addEventListener("click", () => {
+        foldBtn.textContent = quote.classList.toggle("is-fold") ? foldText : "收起";
+      });
+    }
   }
   function openSeriesDetail(sec, key, app) {
     const card = seriesCardByKey(key);
@@ -8174,7 +8192,7 @@ tags:
     }
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
+    const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
         notice("已存在同名影视，请换个名称", "warning");
@@ -8519,7 +8537,7 @@ tags:
     document.body.appendChild(overlay);
     topifyZ(overlay);
     M.currentOverlay = overlay;
-    M.renderFn = () => renderAll(app);
+    M.renderFn = () => renderSoft(app);
     const root = overlay.querySelector("[data-cinema-root]");
     if (!root) return;
     overlay.addEventListener("click", (e) => {
@@ -8527,6 +8545,7 @@ tags:
     });
     bindMidnight(root, app);
     root.addEventListener("input", (e) => {
+      M.lastInputAt = Date.now();
       const t = e.target;
       if (t.classList.contains("j-q") || t.classList.contains("j-mq")) {
         onSearchInput(app, root, t.classList.contains("j-mq"), t.value);
@@ -8547,11 +8566,76 @@ tags:
     rebuildItems(app);
     renderAll(app);
   }
+  var TYPING_GUARD_MS = 400;
+  var SOFT_RENDER_DELAY_MS = 400;
+  var softRenderTimer = null;
+  function isTextField(el) {
+    if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
+    return !/^(range|checkbox|radio|button|submit|reset|file|color|image)$/i.test(el.type);
+  }
+  function focusSelector(el) {
+    const cls = Array.from(el.classList).filter((c) => /^[A-Za-z][\w-]*$/.test(c));
+    return cls.length ? `${el.tagName.toLowerCase()}.${cls.join(".")}` : null;
+  }
+  function snapshotFocus(root) {
+    const el = document.activeElement;
+    if (!isTextField(el) || !root.contains(el)) return null;
+    const sel = focusSelector(el);
+    if (!sel) return null;
+    let start = null;
+    let end = null;
+    try {
+      start = el.selectionStart;
+      end = el.selectionEnd;
+    } catch (e) {
+    }
+    return { sel, value: el.value, start, end };
+  }
+  function restoreFocus(root, snap) {
+    if (!snap) return;
+    const el = root.querySelector(snap.sel);
+    if (!isTextField(el)) return;
+    if (el.value !== snap.value) el.value = snap.value;
+    el.focus();
+    if (snap.start !== null && snap.end !== null) {
+      try {
+        el.setSelectionRange(snap.start, snap.end);
+      } catch (e) {
+      }
+    }
+  }
+  function isTyping(root) {
+    if (!M.lastInputAt || Date.now() - M.lastInputAt >= TYPING_GUARD_MS) return false;
+    return isTextField(document.activeElement) && root.contains(document.activeElement);
+  }
+  function clearSoftRender() {
+    if (softRenderTimer) {
+      clearTimeout(softRenderTimer);
+      softRenderTimer = null;
+    }
+  }
+  function renderSoft(app) {
+    const overlay = M.currentOverlay;
+    if (!overlay) return;
+    const root = overlay.querySelector("[data-cinema-root]");
+    if (!root) return;
+    if (isTyping(root)) {
+      if (softRenderTimer) clearTimeout(softRenderTimer);
+      softRenderTimer = setTimeout(() => {
+        softRenderTimer = null;
+        renderAll(app);
+      }, SOFT_RENDER_DELAY_MS);
+      return;
+    }
+    renderAll(app);
+  }
   function renderAll(app) {
     const overlay = M.currentOverlay;
     if (!overlay) return;
     const root = overlay.querySelector("[data-cinema-root]");
     if (!root) return;
+    clearSoftRender();
+    const snap = snapshotFocus(root);
     const scrollMemo = /* @__PURE__ */ new Map();
     for (const sel of [".d-scroll", ".m-scroll"]) {
       const sc = root.querySelector(sel);
@@ -8567,8 +8651,10 @@ tags:
       if (sc) sc.scrollTop = top;
     }
     mountIcons(root);
+    restoreFocus(root, snap);
   }
   function closeOverlay() {
+    clearSoftRender();
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     for (const close of [...liveOvlCloses]) close();
     closeItemMenu();
@@ -8612,7 +8698,7 @@ tags:
       timer = setTimeout(() => {
         if (!M.currentOverlay) return;
         rebuildItems(app);
-        renderAll(app);
+        renderSoft(app);
       }, 300);
     };
     onDomainEvent("cinema:file-created", (evt) => schedule({ path: evt.path }));
