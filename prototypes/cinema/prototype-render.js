@@ -1,4 +1,4 @@
-/* 源指纹 a5b4827fc7678dce · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ac654708799c3b76 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -115,6 +115,26 @@ var BZR_cinema = (() => {
     for (let i = 0; i < full; i++) s += "★";
     for (let j = full; j < 5; j++) s += "☆";
     return s;
+  }
+
+  // src/cinema/seasons.ts
+  function cmpByRelease(a, b) {
+    var _a, _b, _c, _d;
+    const ra = (_b = (_a = a.releaseDate) != null ? _a : a.year) != null ? _b : "";
+    const rb = (_d = (_c = b.releaseDate) != null ? _c : b.year) != null ? _d : "";
+    if (ra === rb) return 0;
+    if (!ra) return 1;
+    if (!rb) return -1;
+    return ra < rb ? -1 : 1;
+  }
+  function seasonsByRelease(slots) {
+    return [...slots].sort((a, b) => cmpByRelease(a.item, b.item) || a.no - b.no);
+  }
+  function cardFace(e) {
+    return e.kind === "series" ? e.face : e.item;
+  }
+  function cardGroup(e) {
+    return e.kind === "series" ? e.group : e.item.group;
   }
 
   // src/cinema/shared.ts
@@ -285,7 +305,11 @@ var BZR_cinema = (() => {
       <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
     };
-    const rows = card.seasons.map((s) => rowOf(s.item, "")).join("") + card.specials.map((it) => rowOf(it, " s-row-special")).join("");
+    const rowSrc = [
+      ...seasonsByRelease(card.seasons).map((s) => ({ it: s.item, special: false })),
+      ...card.specials.map((it) => ({ it, special: true }))
+    ].sort((a, b) => cmpByRelease(a.it, b.it) || (a.special === b.special ? 0 : a.special ? 1 : -1));
+    const rows = rowSrc.map(({ it, special }) => rowOf(it, special ? " s-row-special" : "")).join("");
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
@@ -377,14 +401,6 @@ var BZR_cinema = (() => {
   function seriesSheetHeadHtml(card, posterUrl) {
     return `<div class="cn-sheet-head">${posterUrl ? `<img class="cn-sheet-poster" src="${esc(posterUrl)}" onerror="this.remove()">` : ""}
     <div><div class="cn-sheet-name">${esc(card.name)}</div><div class="cn-sheet-sub">${esc(seriesCountsText(card))}</div></div></div>`;
-  }
-
-  // src/cinema/seasons.ts
-  function cardFace(e) {
-    return e.kind === "series" ? e.face : e.item;
-  }
-  function cardGroup(e) {
-    return e.kind === "series" ? e.group : e.item.group;
   }
 
   // src/cinema/layouts/midnight/render.ts

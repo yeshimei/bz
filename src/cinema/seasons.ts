@@ -74,6 +74,30 @@ export interface SeasonSlot {
 }
 
 /**
+ * 上映日期升序比较器（最早在前；合并卡行的统一排序口径）。
+ * 完整日期（2013-01-08）与仅年份（2013）混排时字符串序即时间序（同年缺月日排该年最前）。
+ * 缺上映日期的一律排最后（无据可依，不占前面的位置）；日期相同返回 0 交调用方兜底。
+ */
+export function cmpByRelease(a: CinemaItem, b: CinemaItem): number {
+  const ra = a.releaseDate ?? a.year ?? '';
+  const rb = b.releaseDate ?? b.year ?? '';
+  if (ra === rb) return 0;
+  if (!ra) return 1;
+  if (!rb) return -1;
+  return ra < rb ? -1 : 1;
+}
+
+/**
+ * 季行展示序：上映日期升序（最早在前）。
+ * 季号是片名推的，遇到前传 / 补拍季 / 延期播出会与实际先后错位，列表按上映日期看才顺。
+ * 日期相同按季号兜底，保序稳定。
+ * **只影响展示行序**：卡片圆点（一段 = 一季的进度条语义）仍按季号升序。
+ */
+export function seasonsByRelease(slots: SeasonSlot[]): SeasonSlot[] {
+  return [...slots].sort((a, b) => cmpByRelease(a.item, b.item) || a.no - b.no);
+}
+
+/**
  * 特别篇前缀分隔符（片名余下部分必须以它开头才认作「剧名 + 副标题」）。
  * **刻意不含「之」**：「我的三体之章北海传」「X之王」这类复合词既可能是独立作品、
  * 也是汉语里最黏的连接词，误合比漏合更伤——漏合改个名（「：」）就能补，误合会悄悄吞掉一部片。
