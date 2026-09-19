@@ -19,6 +19,7 @@ import { getApp } from '../core/app';
 import { emitDomainEvent } from '../core/domain-bus';
 import { CryptoService, clearCryptoKeyCache } from '../core/crypto';
 import { enqueueFileTask } from '../core/storage';
+import { tryGetSettings } from '../core/settings-provider';
 import {
   diaryDateFromLegacyPath,
   diaryEntryPath,
@@ -191,6 +192,30 @@ export function flatName(): string {
   return '.' + randToken(11) + '.enc';
 }
 
+/**
+ * 孤儿密文形态判定（体检扫描/清理两处单源，深审新-5）：只认顶层点前缀 `.随机.enc` 形态，
+ * 且绝不认清单本体 `.safe.enc`——清理侧此前漏了本体排除，上游 key 生成一旦回归
+ * （如传入 `file:.safe.enc`）即可删掉整库唯一清单；扫描侧 name 取自 listing basename
+ * 永无路径成分，而清理侧 key 可为任意字符串，`../x.enc` 这类相对段同样拦下防越界。
+ */
+function isOrphanEncName(name: string): boolean {
+  if (name === '.safe.enc') return false; // 清单本体绝不触碰
+  if (!name.startsWith('.') || !name.endsWith('.enc')) return false; // 只认平铺点前缀密文形态
+  const stem = name.slice(1, -4); // 开头 '.' 与结尾 '.enc' 之间的随机名段
+  return stem !== '' && !stem.includes('/') && !stem.includes('\\') && !stem.includes('..');
+}
+
+/**
+ * 当前日记目录（还原回日记实时重算落点用）：经 core 设置访问器读统一设置（data 层依赖
+ * 方向合规），与 diary 域 applyDirectories 同口径清洗（trim + 去尾斜杠）；未注入/空值
+ * 回退默认——设置真相同源，与 diary 域 DIARY_DIRECTORY 恒一致。
+ */
+function currentDiaryDirectory(): string {
+  const raw = tryGetSettings().diaryDirectory;
+  const t = (raw || '').trim().replace(/\/+$/, '');
+  return t || '我的/日记';
+}
+
 /** 暂存目录名（encryptRoot 下，点前缀隐藏、与最终镜像同盘；ADR-0018 提交式加密） */
 const STAGING_DIR = '.staging';
 /** 挂起标记文件名（暂存区内，明文 noteId 列表；带外标记——不改清单结构，铁律 1） */
@@ -330,14 +355,17 @@ export class SafeManager {
       this.manifest = parsed;
       this.password = password;
       this.unlocked = true;
-      this.onUnlockChange?.(true);
-      emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
-      // 自愈（ADR-0018）：回滚挂起的半提交 + 清空暂存残留；失败不阻塞解锁
+      // 自愈（ADR-0018）：回滚挂起的半提交 + 清空暂存残留；失败不阻塞解锁。
+      // 深审新-4：自愈先于两个解锁广播完成——订阅方（密码本/日记域）收到解锁事件即刻发起
+      // 清单读改写，自愈若排在其后即游离于事件序之外、与其并发互踩；双保险整体入 opQueue，
+      // 与后续 lockNote/removeNote 等操作全局串行（selfHealRolledBack 也就绪于广播前）。
       try {
-        await this.selfHeal();
+        await this.enqueueOp(() => this.selfHeal());
       } catch (e) {
         /* 自愈失败留待下次解锁重试 */
       }
+      this.onUnlockChange?.(true);
+      emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
       return true;
     } catch (e) {
       // GCM 认证失败：绝大多数是密码错误（数据损坏无法与密码错区分），
@@ -385,8 +413,11 @@ export class SafeManager {
     }
   }
 
-  /** 加锁：清内存态（含派生密钥缓存，密钥不残留） */
+  /** 加锁：清内存态（含派生密钥缓存，密钥不残留）。幂等短路：已锁再锁直接返回，不重复广播 */
   lock() {
+    // 深审新-7：已锁再锁本就无状态变化——短路掉冗余广播（安全模式一次「立即上锁」
+    // 此前 hide/lockNow 双双 lock、SafeManager×2 → 4 轮 onUnlockChange + 域事件，订阅方重绘 4 遍）
+    if (!this.unlocked) return;
     this.unlocked = false;
     this.password = null;
     this.manifest = { version: 1, notes: [] };
@@ -839,8 +870,7 @@ export class SafeManager {
           const listing = await this.adapter.list(this.root);
           for (const f of listing.files) {
             const name = f.slice(f.lastIndexOf('/') + 1);
-            if (name === '.safe.enc') continue; // 清单本体绝不触碰
-            if (!name.startsWith('.') || !name.endsWith('.enc')) continue; // 只认平铺点前缀密文形态
+            if (!isOrphanEncName(name)) continue; // 清单本体绝不触碰；只认平铺点前缀密文形态（判定单源）
             if (referenced.has(name)) continue;
             fresh.push({ cat: 'orphan-file', key: 'file:' + name, label: name, ref: name });
           }
@@ -943,11 +973,13 @@ export class SafeManager {
       }
       if (notes > 0) this.manifest.notes = kept;
 
-      // 2) 孤儿密文文件删除（形态校验同扫描：点前缀 + .enc，避开清单与目录结构）
+      // 2) 孤儿密文文件删除（形态校验与扫描共用 isOrphanEncName 单源：点前缀 + .enc，
+      //    且绝非清单本体 .safe.enc——此前清理侧漏本体排除，上游 key 回归即可删整库清单；
+      //    `../` 越界形态同样拦下，绝不越出加密根目录）
       for (const key of keys) {
         if (!key.startsWith('file:')) continue;
         const name = key.slice('file:'.length);
-        if (!name.startsWith('.') || !name.endsWith('.enc')) continue;
+        if (!isOrphanEncName(name)) continue;
         try {
           if (await this.adapter.exists(this.resolveRef(name))) {
             await this.adapter.remove(this.resolveRef(name));
@@ -1254,18 +1286,23 @@ export class SafeManager {
       return { note, conflicts: [...conflicts, note.path], removed: false };
     }
 
-    // 全部成功 → 彻底取出（删镜像 + 移除清单条目）
-    await this.deleteNoteMirrors(note);
+    // 全部成功 → 彻底取出（移除清单条目 + 落盘成功后再删镜像）。
+    // 深审新-1：清单是提交点，收尾顺序必须「先落盘、后删镜像」——旧序（先删镜像后落盘）
+    // 在 saveManifest 失败时镜像已没，重试还原在阶段一 readMirror 全 null 判冲突，
+    // 承诺的「重试幂等收敛」永不可达；新序落盘失败时镜像俱在，重试还原走
+    // 「目标已存在且内容一致 → 放行」真正收敛；落盘成功后再删镜像即使中断也只留
+    // 孤儿密文（体检 orphan-file 可清，removed 已如实返回）。
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
     try {
       await this.saveManifest();
     } catch (e) {
-      // 文件已还原、内存条目已移除，仅清单落盘失败（磁盘异常）：
-      // 如实告知（manifestSaveFailed），下次解锁后重试可幂等收敛——
-      // 正文/附件目标已存在且内容一致 → 放行，再还原一次即完成清理，绝不产生重复数据
+      // 文件已还原、镜像俱在，仅清单落盘失败（磁盘异常）：如实告知（manifestSaveFailed），
+      // 下次解锁后重试还原幂等收敛——目标一致 → 放行 → 摘条目落盘 → 删镜像
       return { note, conflicts, removed: false, manifestSaveFailed: true };
     }
+    // deleteSafeFile 全捕获不抛，删镜像失败也只留孤儿（体检可清），绝不影响已成功的还原
+    await this.deleteNoteMirrors(note);
     return { note, conflicts, removed: true };
   }
 
@@ -1302,13 +1339,31 @@ export class SafeManager {
   }
 
   /**
-   * 加密日记条目还原：还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
+   * 加密日记条目还原（操作级互斥入口）：与 lockNote/restoreNote/removeNote 共享同一串行链
+   * （E13 收编补漏——阶段一逐附件解密窗口为 PBKDF2 秒级，此前游离在队列外可与并发
+   * removeNote/lockNote 互踩清单）。
+   * 还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
    * 原子语义同 restoreNote：全部附件解密/校验成功且块就绪才写回；任一失败零落盘。
    */
-  async restoreDiaryEntry(noteId: string, finalBlock: string): Promise<boolean> {
+  restoreDiaryEntry(noteId: string, finalBlock: string): Promise<boolean> {
+    return this.enqueueOp(() => this.restoreDiaryEntrySerial(noteId, finalBlock));
+  }
+
+  private async restoreDiaryEntrySerial(noteId: string, finalBlock: string): Promise<boolean> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原加密日记');
     const note = this.manifest.notes.find((n) => n.id === noteId);
     if (!note || note.kind !== 'diary-entry') throw new Error('未找到该加密日记条目');
+    // 还原落点按当前日记目录实时重算（与 diary 域 realignRestorePath 同规则，两域单源设置）：
+    // 加密时固化的条目路径带「当时的日记目录」，用户改过目录后直接还原会 merge 进旧目录
+    //（日记墙读新目录 → 条目凭空消失）。basename 为条目文件形状 → 只换目录段指向当前目录
+    //（同刻冲突由 mergeDiaryBlock 后缀让位处理）；basename 非条目形状保持原路径不动，
+    // 旧日期文件等历史形态由 mergeDiaryBlock 自带兜底换算。重算只改内存，随收尾 saveManifest
+    // 一并落盘（还原失败不落盘，下次还原幂等重算）。
+    const base = note.path.split('/').pop() || '';
+    if (diaryMetaFromEntryPath(base)) {
+      const target = currentDiaryDirectory() + '/' + base;
+      if (target !== note.path) note.path = target;
+    }
     const conflicts: string[] = [];
     // 阶段一（准备，并行）：全部附件解密 + 校验（共享附件 keptShared 跳过——原件保留，issue 338）
     const plainAttachments = await mapLimit(note.attachments, BLOB_CONCURRENCY, async (a) =>
@@ -1340,15 +1395,17 @@ export class SafeManager {
       }
       return false;
     }
-    // 无冲突则彻底取出（删镜像 + 移除清单条目）；清单落盘失败如实返回 false（merge 幂等兜底）
-    await this.deleteNoteMirrors(note);
+    // 无冲突则彻底取出（移除清单条目 + 落盘成功后再删镜像；收尾顺序同 restoreNoteSerial 深审新-1）：
+    // 清单落盘失败如实返回 false——块已 merge、镜像俱在，重试还原时 mergeDiaryBlock 幂等跳过
+    // 已存在条目文件，收尾重做即收敛
     const idx = this.manifest.notes.indexOf(note);
     if (idx !== -1) this.manifest.notes.splice(idx, 1);
     try {
       await this.saveManifest();
     } catch (e) {
-      return false; // 块已 merge；重试时 mergeDiaryBlock 幂等跳过已存在标题行
+      return false;
     }
+    await this.deleteNoteMirrors(note); // deleteSafeFile 全捕获不抛，绝不影响已成功的还原
     return true;
   }
 
@@ -1502,10 +1559,13 @@ export class SafeManager {
   }
 
   /**
-   * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
+   * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像）。
    * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
    * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
    * E13：整体入 opQueue（理由同 removeNote——清单读改写与 lockNote/restoreNote 串行互斥）。
+   * 深审新-6：contentRef 已存在时清单零变化——跳过整库重加密落盘（此前密码本每存一条
+   * 全量重写 .safe.enc 一次），改为显式广播 encrypt:changed（同频道同事件，noteId 语义补真，
+   * 缓解订阅方按 null 盲比对）；仅新分配 contentRef（清单结构变化）才落盘（尾部自带广播）。
    */
   updateNotePayload(noteId: string, plainContent: string): Promise<void> {
     return this.enqueueOp(async () => {
@@ -1515,12 +1575,14 @@ export class SafeManager {
       const encrypted = await CryptoService.encrypt(plainContent, this.password);
       if (note.contentRef) {
         await this.replaceMirrorAtomic(note.contentRef, encrypted); // 原子覆盖同一密文镜像
+        // 清单零变化，显式广播替代冗余 saveManifest（订阅方重载行为不变）
+        emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId });
       } else {
         const ref = flatName();
         await this.replaceMirrorAtomic(ref, encrypted);
         note.contentRef = ref;
+        await this.saveManifest(); // 清单结构变化（新分配 contentRef）才落盘，尾部自带 changed 广播
       }
-      await this.saveManifest();
     });
   }
 
