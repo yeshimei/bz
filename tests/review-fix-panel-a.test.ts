@@ -209,7 +209,7 @@ describe('设置面板 review 回归（H1-H10）', () => {
     expect(searchIn).toBeTruthy();
     searchIn.value = '<img src=x onerror="window.__xss=1">';
     searchIn.dispatchEvent(new Event('input', { bubbles: true }));
-    await flush();
+    await tick(260); // E-5：搜索输入 180ms 防抖 + 余量
     const list = document.querySelector('.bz-sp-mob-list') as HTMLElement;
     expect(list.querySelectorAll('img').length).toBe(0); // 未转义会成真 img
     expect(list.querySelector('.bz-sp-mob-empty')).toBeTruthy();

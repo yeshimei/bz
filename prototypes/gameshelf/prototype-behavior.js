@@ -1,4 +1,4 @@
-/* 源指纹 9e44b589430f3016 · 仓内输入 242 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5dea19ea68ccead6 · 仓内输入 242 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -10462,10 +10462,10 @@ var BZW_gameshelf = (() => {
     return `<button type="button" class="bz-sw${on ? " on" : ""}" role="switch" aria-checked="${String(on)}"></button>`;
   }
   function selectTriggerHtml(label) {
-    return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
+    return `<div class="bz-select" role="listbox" tabindex="0" aria-expanded="false" aria-haspopup="listbox"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
   }
   function selectItemHtml(label, on) {
-    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
+    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}" role="option" aria-selected="${String(on)}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
   }
   function textInputHtml(opts) {
     const cls = ["bz-input"];
@@ -10487,7 +10487,7 @@ var BZW_gameshelf = (() => {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
   }
   function rowBtnHtml(label, cta) {
-    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
+    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""} bz-touch-target--lg">${esc(label)}</button>`;
   }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
@@ -10535,7 +10535,7 @@ var BZW_gameshelf = (() => {
   function cardpickHtml(cards) {
     return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
       const mini = c.kind ? miniHtml(c.kind, c.prev || {}) : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div>`;
-      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
+      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" role="radio" aria-checked="${String(c.on)}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
     }).join("") + `</div>`;
   }
   function rowHtml(vm) {
@@ -10605,7 +10605,9 @@ var BZW_gameshelf = (() => {
   // src/settings-panel/renderer.ts
   var renderer_exports = {};
   __export(renderer_exports, {
+    closeAllSelectMenus: () => closeAllSelectMenus,
     makePathRowCtrl: () => makePathRowCtrl,
+    refreshGroupCounts: () => refreshGroupCounts,
     renderPanelSchema: () => renderPanelSchema
   });
   function snapshot() {
@@ -10647,12 +10649,16 @@ var BZW_gameshelf = (() => {
         timer = null;
       }
       if (!dirty2) return;
-      opts.onCommit(input.value);
+      const echo = opts.onCommit(input.value);
+      if (typeof echo === "string" && input.value !== echo) {
+        dirty2 = false;
+        input.value = echo;
+      }
     };
     input.addEventListener("input", () => {
       dirty2 = true;
       if (timer !== null) window.clearTimeout(timer);
-      timer = window.setTimeout(commit, 800);
+      timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
     });
     input.addEventListener("blur", commit);
     input.addEventListener("keydown", (e) => {
@@ -10698,37 +10704,34 @@ var BZW_gameshelf = (() => {
       });
     };
     const multi = opts.mode === "multi";
-    const addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.className = "bz-sp-btn bz-sp-path-btn";
-    addBtn.textContent = opts.buttonText || (multi ? "添加…" : "选择…");
-    addBtn.addEventListener("click", openPicker);
+    const addBtn = uiBtn({
+      label: opts.buttonText || (multi ? "添加…" : "选择…"),
+      className: "bz-sp-path-btn",
+      onClick: openPicker
+    });
     const renderChips = () => {
-      ctrl.querySelectorAll(".bz-sp-chip").forEach((c) => c.remove());
+      ctrl.querySelectorAll(".bz-chip").forEach((c) => c.remove());
       if (!current2.length && opts.fallbackChip) {
-        const fb = document.createElement("span");
-        fb.className = "bz-sp-chip bz-sp-chip--locked";
-        fb.title = "未单独设置时的实际生效目录（点击可改为显式设置）";
-        fb.textContent = opts.fallbackChip;
-        fb.addEventListener("click", openPicker);
-        ctrl.appendChild(fb);
+        ctrl.appendChild(uiChip({
+          label: opts.fallbackChip,
+          locked: true,
+          title: "未单独设置时的实际生效目录（点击可改为显式设置）",
+          onClick: openPicker
+        }));
       }
       for (const path of current2) {
         const label = path === "" ? "（库根目录）" : path;
-        const chip2 = document.createElement("span");
-        chip2.className = "bz-sp-chip";
-        chip2.title = label;
-        chip2.textContent = label;
-        chip2.addEventListener("click", openPicker);
-        if (multi) {
-          const x = uiIcon("x", "x");
-          x.addEventListener("click", (ev) => {
-            ev.stopPropagation();
+        ctrl.appendChild(uiChip({
+          label,
+          title: label,
+          removable: multi,
+          // ✕ 移除（uiChip 自带 role=button/aria-label/tabIndex/Enter-Space 键盘三件套）；
+          // 文本点击重开选择器（✕ 点击 stopPropagation 不连锁）
+          onRemove: multi ? () => {
             void apply(current2.filter((p) => p !== path));
-          });
-          chip2.appendChild(x);
-        }
-        ctrl.appendChild(chip2);
+          } : void 0,
+          onClick: openPicker
+        }));
       }
       const empty = !current2.length && !opts.fallbackChip;
       if (empty) {
@@ -10797,7 +10800,7 @@ var BZW_gameshelf = (() => {
           }
           sw.classList.toggle("on", v);
           sw.setAttribute("aria-checked", String(v));
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "开关设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           refresh2();
         });
@@ -10806,7 +10809,7 @@ var BZW_gameshelf = (() => {
       case "text": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new SpCommitWarn(String((_b2 = acc.read()) != null ? _b2 : ""), row.onCommit);
+        const warn = new CommitWarn(String((_b2 = acc.read()) != null ? _b2 : ""), row.onCommit);
         const input = makeInput({
           value: (_c = acc.read()) != null ? _c : "",
           mono: !!row.mono,
@@ -10816,9 +10819,10 @@ var BZW_gameshelf = (() => {
           onCommit: (v) => {
             var _a3;
             acc.write(v);
-            void acc.persist();
+            safePersist(() => acc.persist(), rowName || "文本设置");
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
             warn.fire(v);
+            refresh2();
           }
         });
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
@@ -10831,20 +10835,21 @@ var BZW_gameshelf = (() => {
         const taHolder = document.createElement("div");
         taHolder.innerHTML = textareaHtml((_d = acc.read()) != null ? _d : "", row.placeholder);
         const ta = taHolder.firstElementChild;
-        const warn = new SpCommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
+        const warn = new CommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
         let timer = null;
         let dirty2 = false;
         const commit = () => {
           if (timer !== null) window.clearTimeout(timer);
           if (!dirty2) return;
           acc.write(ta.value);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "多行文本设置");
           warn.fire(ta.value);
+          refresh2();
         };
         ta.addEventListener("input", () => {
           dirty2 = true;
           if (timer !== null) window.clearTimeout(timer);
-          timer = window.setTimeout(commit, 800);
+          timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
         });
         ta.addEventListener("blur", commit);
         displaySetters.set(ta, (v) => {
@@ -10867,7 +10872,7 @@ var BZW_gameshelf = (() => {
       case "number": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new SpCommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
+        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
         const input = makeInput({
           value: String((_g = acc.read()) != null ? _g : ""),
           type: "number",
@@ -10876,16 +10881,16 @@ var BZW_gameshelf = (() => {
           min: row.min,
           max: row.max,
           onCommit: (raw) => {
-            var _a3;
+            var _a3, _b3;
             if (raw.trim() === "") return;
-            let v = Number(raw);
-            if (Number.isNaN(v)) v = 0;
-            if (row.min !== void 0 && v < row.min) v = row.min;
-            if (row.max !== void 0 && v > row.max) v = row.max;
+            const v = parseClampedNumber(raw, row.min, row.max);
+            if (v === null) return String((_a3 = acc.read()) != null ? _a3 : "");
             acc.write(v);
-            void acc.persist();
-            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            safePersist(() => acc.persist(), rowName || "数字设置");
+            (_b3 = row.onChange) == null ? void 0 : _b3.call(row, v, ctx);
             warn.fire(raw);
+            refresh2();
+            return String(v) !== raw.trim() ? String(v) : void 0;
           }
         });
         input.step = String((_h = row.step) != null ? _h : 1);
@@ -10901,52 +10906,106 @@ var BZW_gameshelf = (() => {
         ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_i = acc.read()) != null ? _i : "") || options2[0] && options2[0].value || ""));
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
-        sel.addEventListener("click", () => {
+        let group = null;
+        let docH = null;
+        let escLayer = null;
+        const closeMenu2 = () => {
+          var _a3;
+          (_a3 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a3.remove();
+          sel.setAttribute("aria-expanded", "false");
+          if (escLayer) {
+            escLayer.unregister();
+            escLayer = null;
+          }
+          if (group && !group.querySelector(".bz-select-menu")) {
+            group.style.overflow = "";
+            group.style.zIndex = "";
+          }
+          if (docH) document.removeEventListener("click", docH);
+        };
+        const moveHighlight = (delta) => {
+          const items = [...sel.querySelectorAll(".bz-select-item")];
+          if (!items.length) return;
+          const curIdx = items.findIndex((it) => it.classList.contains("is-on"));
+          const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+          items.forEach((it, i) => {
+            const on = i === nextIdx;
+            it.classList.toggle("is-on", on);
+            it.setAttribute("aria-selected", String(on));
+          });
+        };
+        const applyOption = (o) => {
+          var _a3;
+          try {
+            acc.write(o.value);
+          } catch (e) {
+            notifyWriteError(e);
+            closeMenu2();
+            return;
+          }
+          closeMenu2();
+          vspan.textContent = labelOf(o.value);
+          safePersist(() => acc.persist(), rowName || "下拉设置");
+          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, o.value, ctx);
+          refresh2();
+        };
+        const openMenu = () => {
           var _a3;
           if (sel.querySelector(".bz-select-menu")) return;
-          const group = sel.closest(".bz-sp-group");
+          group = sel.closest(".bz-sp-group");
           if (group) {
             group.style.overflow = "visible";
             group.style.zIndex = "10";
           }
-          const closeMenu2 = () => {
-            var _a4;
-            (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
-            if (group && !group.querySelector(".bz-select-menu")) {
-              group.style.overflow = "";
-              group.style.zIndex = "";
-            }
-            document.removeEventListener("click", h);
-          };
-          const h = (ev) => {
-            if (!sel.contains(ev.target)) closeMenu2();
-          };
-          setTimeout(() => document.addEventListener("click", h));
           const menu = document.createElement("div");
           menu.className = "bz-select-menu";
+          menu.setAttribute("role", "listbox");
           const curNow = String((_a3 = acc.read()) != null ? _a3 : "") || options2[0] && options2[0].value || "";
           menu.innerHTML = options2.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
+          menu.querySelectorAll(".bz-select-item").forEach((it) => it.classList.add("bz-touch-target--lg"));
           menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
             const o = options2[i];
             it.addEventListener("click", (ev) => {
-              var _a4;
               ev.stopPropagation();
-              try {
-                acc.write(o.value);
-              } catch (e) {
-                notifyWriteError(e);
-                closeMenu2();
-                return;
-              }
-              closeMenu2();
-              vspan.textContent = labelOf(o.value);
-              void acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
-              refresh2();
+              applyOption(o);
             });
           });
           sel.appendChild(menu);
+          sel.setAttribute("aria-expanded", "true");
           mountIcons(menu);
+          docH = (ev) => {
+            if (!sel.contains(ev.target)) closeMenu2();
+          };
+          setTimeout(() => document.addEventListener("click", docH));
+          escLayer = escManager.register("bz-ui-select", {
+            isVisible: () => !!sel.querySelector(".bz-select-menu"),
+            close: () => closeMenu2()
+          });
+        };
+        sel.addEventListener("click", () => {
+          if (sel.querySelector(".bz-select-menu")) closeMenu2();
+          else openMenu();
+        });
+        sel.addEventListener("keydown", (e) => {
+          const menu = sel.querySelector(".bz-select-menu");
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (menu) {
+              const items = [...menu.querySelectorAll(".bz-select-item")];
+              const idx = items.findIndex((it) => it.classList.contains("is-on"));
+              if (idx >= 0) applyOption(options2[idx]);
+              else closeMenu2();
+            } else {
+              openMenu();
+            }
+            return;
+          }
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!menu) openMenu();
+            moveHighlight(e.key === "ArrowDown" ? 1 : -1);
+          }
         });
         break;
       }
@@ -10961,8 +11020,9 @@ var BZW_gameshelf = (() => {
           em.textContent = range.value;
           const v = Number(range.value);
           acc.write(v);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "滑条设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+          refresh2();
         });
         for (const a of (_m = row.actions) != null ? _m : []) {
           const holder2 = document.createElement("div");
@@ -10979,7 +11039,7 @@ var BZW_gameshelf = (() => {
         const fallbackFn = row.fallbackValue;
         const onCommit = row.onCommit;
         const initRaw = acc.read();
-        const warn = new SpCommitWarn(
+        const warn = new CommitWarn(
           multi ? JSON.stringify(initRaw != null ? initRaw : []) : String(initRaw != null ? initRaw : ""),
           onCommit
         );
@@ -10996,9 +11056,10 @@ var BZW_gameshelf = (() => {
             var _a3;
             const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
             acc.write(v);
-            void acc.persist();
+            safePersist(() => acc.persist(), rowName || "路径设置");
             const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
             warn.fire(multi ? JSON.stringify(v) : String(v));
+            refresh2();
             if (res && typeof res.then === "function") {
               return Promise.resolve(res).then(
                 (final) => Array.isArray(final) ? final : list
@@ -11039,8 +11100,13 @@ var BZW_gameshelf = (() => {
               void (async () => {
                 var _a3;
                 const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
-                await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, cur.filter((k) => k !== key), ctx));
-                refresh2();
+                try {
+                  await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, cur.filter((k) => k !== key), ctx));
+                } catch (e) {
+                  notifySaveError(e, rowName || "列表项");
+                } finally {
+                  refresh2();
+                }
               })();
             }
           }));
@@ -11075,9 +11141,13 @@ var BZW_gameshelf = (() => {
               notifyWriteError(e);
               return;
             }
-            wrap.querySelectorAll(".is-on").forEach((x) => x.classList.remove("is-on"));
+            wrap.querySelectorAll(".is-on").forEach((x) => {
+              x.classList.remove("is-on");
+              x.setAttribute("aria-checked", "false");
+            });
             c.classList.add("is-on");
-            void acc.persist();
+            c.setAttribute("aria-checked", "true");
+            safePersist(() => acc.persist(), rowName || "卡片设置");
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
             refresh2();
           });
@@ -11173,7 +11243,7 @@ var BZW_gameshelf = (() => {
       if (groupVw) {
         card.dataset.spGroupCond = "1";
         visibleConditions.set(card, groupVw);
-        card.style.display = groupVw(snapshot()) ? "" : "none";
+        applyCond(card, groupVw);
       }
       const parentToggleKey = (_b2 = (_a2 = g.rows.find(
         (pr) => {
@@ -11193,40 +11263,42 @@ var BZW_gameshelf = (() => {
         if (vw) {
           rowEl.dataset.spRow = String(i);
           visibleConditions.set(rowEl, vw);
-          rowEl.style.display = vw(snapshot()) ? "" : "none";
+          applyCond(rowEl, vw);
         }
       });
     });
     mountIcons(container);
     return { refresh: refresh2 };
   }
-  var SpCommitWarn, displaySetters, groupCountUpdaters;
+  function closeAllSelectMenus(root) {
+    root.querySelectorAll(".bz-select").forEach((sel) => {
+      var _a2;
+      if (!sel.querySelector(".bz-select-menu")) return;
+      (_a2 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a2.remove();
+      sel.setAttribute("aria-expanded", "false");
+      const group = sel.closest(".bz-sp-group");
+      if (group && !group.querySelector(".bz-select-menu")) {
+        group.style.overflow = "";
+        group.style.zIndex = "";
+      }
+    });
+  }
+  function refreshGroupCounts(root) {
+    root.querySelectorAll(".bz-sp-group").forEach((card) => {
+      var _a2;
+      (_a2 = groupCountUpdaters.get(card)) == null ? void 0 : _a2();
+    });
+  }
+  var displaySetters, groupCountUpdaters;
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
       init_path_picker();
       init_settings_schema();
       init_notice();
+      init_esc_manager();
       init_render2();
       init_ui();
-      SpCommitWarn = class {
-        constructor(initial, onCommit) {
-          this.initial = initial;
-          this.onCommit = onCommit;
-          this.warnedInitial = null;
-        }
-        fire(current2) {
-          if (!this.onCommit) return;
-          if (current2 !== this.initial) {
-            if (this.warnedInitial !== this.initial) {
-              this.warnedInitial = this.initial;
-              this.onCommit();
-            }
-          } else {
-            this.warnedInitial = null;
-          }
-        }
-      };
       displaySetters = /* @__PURE__ */ new WeakMap();
       groupCountUpdaters = /* @__PURE__ */ new WeakMap();
     }
@@ -50292,6 +50364,13 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/settings-panel/ui.ts
+  async function loadSchemaCached(domain) {
+    const hit = schemaCache.get(domain.id);
+    if (hit) return hit;
+    const schema = await domain.schemaLoader();
+    schemaCache.set(domain.id, schema);
+    return schema;
+  }
   function cacheRowsFor(domainId, schema) {
     const rows = schema.groups.flatMap(
       (g) => g.rows.map((r) => {
@@ -50317,6 +50396,7 @@ ${n.content.slice(0, 2e3)}
     return (_a2 = navBadges.get(d.id)) != null ? _a2 : "·";
   }
   function visibleItemCount(schema) {
+    var _a2, _b2;
     let n = 0;
     for (const g of schema.groups) {
       const gvw = g.visibleWhen;
@@ -50326,21 +50406,31 @@ ${n.content.slice(0, 2e3)}
         } catch (e) {
         }
       }
+      const parentToggleKey = (_b2 = (_a2 = g.rows.find(
+        (pr) => {
+          var _a3;
+          return pr.type === "toggle" && typeof ((_a3 = pr.binding) == null ? void 0 : _a3.key) === "string";
+        }
+      )) == null ? void 0 : _a2.binding.key) != null ? _b2 : null;
       for (const r of g.rows) {
         if (r.type === "button") continue;
         const rvw = r.visibleWhen;
+        let visible = true;
         if (rvw) {
           try {
-            if (!rvw(tryGetSettings())) continue;
+            visible = !!rvw(tryGetSettings());
           } catch (e) {
           }
         }
-        n++;
+        if (visible && r.isChild && parentToggleKey) {
+          visible = tryGetSettings()[parentToggleKey] === true;
+        }
+        if (visible) n++;
       }
     }
     return n;
   }
-  var schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
+  var SEARCH_DEBOUNCE_MS4, spMatch, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui13 = __esm({
     "src/settings-panel/ui.ts"() {
       init_dom();
@@ -50353,7 +50443,11 @@ ${n.content.slice(0, 2e3)}
       init_notice();
       init_app();
       init_ui();
+      init_focus_trap();
+      init_utils();
       init_render2();
+      SEARCH_DEBOUNCE_MS4 = 180;
+      spMatch = (hay, needle) => !needle || hay.toLowerCase().includes(needle.toLowerCase());
       schemaLoaders = {
         // 通用组：基础 schema（存储路径）+ 外观组（原「设置」页并入）+「数据体检」按钮行
         // （D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
@@ -50469,6 +50563,7 @@ ${n.content.slice(0, 2e3)}
         { title: "安全", ids: ["encrypt", "password-vault"] }
       ];
       schemaRowCache = /* @__PURE__ */ new Map();
+      schemaCache = /* @__PURE__ */ new Map();
       loadedCounts = /* @__PURE__ */ new Map();
       listableDomains = () => DOMAINS2.filter((d) => {
         var _a2;
@@ -50479,7 +50574,6 @@ ${n.content.slice(0, 2e3)}
         constructor() {
           this.mask = null;
           this.popup = null;
-          this.escHandle = null;
           /** 当前激活域 id（按 id 驱动：可见域过滤后索引会错位，不用数字下标） */
           this.activeDomainId = "global";
           /** 桌面导航容器引用（schema 加载后回填徽标用） */
@@ -50495,6 +50589,8 @@ ${n.content.slice(0, 2e3)}
           /** 当前搜索词（桌面：切域重渲后按它重刷命中/过滤状态）。
            *  2026-09-12 用户拍板：去掉「只看命中」开关，搜索即过滤（默认恒开）。 */
           this.searchQuery = "";
+          /** 徽标预载在途 Promise（ARCH-2 单飞：并发 open 收敛为一轮，磁盘 IO 域不双倍重跑） */
+          this.preloadInFlight = null;
         }
         /**
          * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
@@ -50515,12 +50611,14 @@ ${n.content.slice(0, 2e3)}
               const pane = this.popup.querySelector(".bz-sp-pane");
               if (pane) void this.renderDomain(pane, deep);
             }
+            this.recomputeBadgesFromCache();
             void this.preloadAllBadges();
             return;
           }
           this.build(deep);
         }
         build(deep) {
+          var _a2;
           const { mask, popup } = createOverlay({
             maskId: "bz-settings-panel-mask",
             popupId: "bz-settings-panel-popup",
@@ -50542,14 +50640,12 @@ ${n.content.slice(0, 2e3)}
           mask.style.display = "block";
           popup.style.display = "flex";
           topifyZ(mask, popup);
-          this.escHandle = escManager.register("bz-settings-panel", {
-            isVisible: () => !!this.mask && this.mask.style.display === "block",
-            close: () => {
-              var _a2;
-              if ((_a2 = this.popup) == null ? void 0 : _a2.classList.contains("bz-sp-mob-pushed")) this.popDomain();
-              else this.hide();
-            }
+          registerPanelEsc("bz-settings-panel", () => !!this.mask && this.mask.style.display === "block", () => {
+            var _a3;
+            if ((_a3 = this.popup) == null ? void 0 : _a3.classList.contains("bz-sp-mob-pushed")) this.popDomain();
+            else this.hide();
           });
+          (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
         }
         /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
         buildDesktop(popup) {
@@ -50562,11 +50658,22 @@ ${n.content.slice(0, 2e3)}
           const pane = popup.querySelector(".bz-sp-pane");
           const searchIn = popup.querySelector(".bz-sp-search .bz-input");
           popup.addEventListener("keydown", (e) => this.onNavKey(e, pane));
+          nav.tabIndex = 0;
+          nav.addEventListener("keydown", (e) => {
+            if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+            const items = [...nav.querySelectorAll(".bz-sp-nav-item")];
+            if (!items.length) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const cur = items.indexOf(document.activeElement);
+            const next = cur < 0 ? e.key === "ArrowDown" ? 0 : items.length - 1 : e.key === "ArrowDown" ? Math.min(cur + 1, items.length - 1) : Math.max(cur - 1, 0);
+            items[next].focus();
+          });
           const renderNav2 = (q2) => {
             const query = q2.trim();
             nav.innerHTML = "";
             const visible = listableDomains();
-            const matches = (d) => !query || d.name.includes(query) || d.desc.includes(query) || (schemaRowCache.get(d.id) || []).some((r) => r.name.includes(query));
+            const matches = (d) => !query || spMatch(d.name, query) || spMatch(d.desc, query) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
             const secs = groupDomains(visible, matches);
             for (const sec of secs) {
               if (!sec.domains.length) continue;
@@ -50584,6 +50691,7 @@ ${n.content.slice(0, 2e3)}
             }
             mountIcons(nav);
             nav.querySelectorAll(".bz-sp-nav-item").forEach((b) => {
+              b.tabIndex = -1;
               const id = b.dataset.spDomain;
               b.addEventListener("click", () => {
                 this.activeDomainId = id;
@@ -50592,37 +50700,62 @@ ${n.content.slice(0, 2e3)}
               });
             });
           };
-          searchIn.addEventListener("input", () => {
+          const applySearch = debounce(() => {
             renderNav2(searchIn.value);
             this.searchQuery = searchIn.value.trim();
             this.applyHitFilter(popup, this.searchQuery);
-          });
+          }, SEARCH_DEBOUNCE_MS4);
+          searchIn.addEventListener("input", () => applySearch());
           renderNav2("");
           this.rerenderList = () => renderNav2(searchIn.value);
           void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
         }
+        /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
+         *  新轮被收敛不重跑——缓存重算保证「重开即重算」新鲜度；visibleWhen 按当前设置实时求值） */
+        recomputeBadgesFromCache() {
+          for (const d of DOMAINS2) {
+            const schema = schemaCache.get(d.id);
+            if (!schema) continue;
+            const count = visibleItemCount(schema);
+            loadedCounts.set(d.id, count);
+            navBadges.set(d.id, count > 0 ? String(count) : "—");
+          }
+          this.refreshNavBadges();
+        }
         /**
          * 预加载全部有 schema 的域，回填左侧导航徽标（设置项总数）。
          * 面板打开即算全量徽标（用户拍板：无需先点击各域）。
-         * 只调用 schemaLoader 取结构，不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
+         * 只经会话缓存取 schema 结构（E-8），不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
          * 组级/行级 visibleWhen 门控（如移动端组）按当前端环境过滤。
+         * ARCH-2 单飞：上一轮在途时复用同一 Promise——并发 open（命令重跑/深链）不再并发重跑
+         * 全量 loader（含磁盘 IO 域，重建风暴由轮末单次重绘收敛）；软重开的新鲜度由
+         * recomputeBadgesFromCache 兜底（H9 语义保持），完成后新 open 自然起新轮。
          */
         async preloadAllBadges() {
-          const tasks = DOMAINS2.filter((d) => d.schemaLoader).map(async (d) => {
+          if (this.preloadInFlight) return this.preloadInFlight;
+          const run = (async () => {
             var _a2;
-            try {
-              const schema = await d.schemaLoader();
-              const count = visibleItemCount(schema);
-              loadedCounts.set(d.id, count);
-              navBadges.set(d.id, count > 0 ? String(count) : "—");
-              cacheRowsFor(d.id, schema);
-            } catch (e) {
-              navBadges.set(d.id, "·");
-            }
-            this.refreshNavBadges();
+            const tasks = DOMAINS2.filter((d) => d.schemaLoader).map(async (d) => {
+              try {
+                const schema = await loadSchemaCached(d);
+                const count = visibleItemCount(schema);
+                loadedCounts.set(d.id, count);
+                navBadges.set(d.id, count > 0 ? String(count) : "—");
+                cacheRowsFor(d.id, schema);
+              } catch (e) {
+                navBadges.set(d.id, "·");
+              }
+              this.refreshNavBadges();
+            });
+            await Promise.allSettled(tasks);
             (_a2 = this.rerenderList) == null ? void 0 : _a2.call(this);
-          });
-          await Promise.allSettled(tasks);
+          })();
+          this.preloadInFlight = run;
+          try {
+            await run;
+          } finally {
+            if (this.preloadInFlight === run) this.preloadInFlight = null;
+          }
         }
         /** 重绘桌面导航徽标（schema 加载/组数变化后调用；不重建导航项，只刷数字） */
         refreshNavBadges() {
@@ -50645,6 +50778,7 @@ ${n.content.slice(0, 2e3)}
         async renderDomain(pane, domain, opts = {}) {
           var _a2;
           const runId = ++this.renderSeq;
+          this.flushPendingTextCommit();
           this.renderHandles = [];
           pane.innerHTML = "";
           let pageHead = null;
@@ -50670,11 +50804,17 @@ ${n.content.slice(0, 2e3)}
           pane.appendChild(body);
           body.innerHTML = loadingHtml();
           try {
-            const schema = await domain.schemaLoader();
+            const schema = await loadSchemaCached(domain);
             if (runId !== this.renderSeq) return;
             body.innerHTML = "";
             const handle = renderPanelSchema(body, schema);
-            this.renderHandles.push(handle);
+            const refreshWithBadge = () => {
+              handle.refresh();
+              const cnt = visibleItemCount(schema);
+              navBadges.set(domain.id, cnt > 0 ? String(cnt) : "—");
+              this.refreshNavBadges();
+            };
+            this.renderHandles.push({ refresh: refreshWithBadge });
             cacheRowsFor(domain.id, schema);
             const groupEls = body.querySelectorAll(".bz-sp-group");
             const visibleGroups = [...groupEls].filter((g) => g.style.display !== "none").length;
@@ -50695,19 +50835,23 @@ ${n.content.slice(0, 2e3)}
             return;
           } catch (e) {
             body.innerHTML = "";
-            body.appendChild(this.emptyEl(
-              "alert-circle",
-              "加载失败",
-              e.message
-            ));
-            notice(`加载「${domain.name}」设置失败：${e.message}`, "error");
+            const retry = () => void this.renderDomain(pane, domain);
+            const actions = document.createElement("div");
+            actions.className = "bz-sp-load-retry";
+            actions.appendChild(uiBtn({ label: "重试", tone: "primary", onClick: retry }));
+            const empty = this.emptyEl("alert-circle", "加载失败", e instanceof Error ? e.message : String(e));
+            empty.appendChild(actions);
+            body.appendChild(empty);
+            notifyActionError(e, `加载「${domain.name}」设置`, { onRetry: retry });
           }
         }
         /**
          * 命中高亮 + 搜索过滤（2026-09-12 补，桌面；用户拍板：无开关，搜索即过滤）：
          * - q 非空时给命中行加 .hit，并隐藏未命中行与「无可见行」的组；q 清空恢复全显；
          * - **只回收自己设过的**内联 display，不触碰渲染器 visibleWhen 的隐藏
-         *   （否则一过滤就会把门控隐藏的行放出来）。
+         *   （F-1：打标只记「本次过滤亲手藏的」——display 已为 none 的门控行不碰不标，
+         *   恢复分支因此永不放行 visibleWhen 隐藏的行/组；清空后再经渲染句柄 refresh 重求值门控兜底）；
+         * - 组卡「N 项」徽标按当前可见行数重算（UI-6：搜索态计数与实际可见行数一致）。
          */
         applyHitFilter(root, q2) {
           root.querySelectorAll(".bz-sp-set-row").forEach((row) => {
@@ -50715,9 +50859,9 @@ ${n.content.slice(0, 2e3)}
               row.style.display = "";
               delete row.dataset.spHitHidden;
             }
-            const hit = !!q2 && !!row.textContent && row.textContent.includes(q2);
+            const hit = !!q2 && !!row.textContent && spMatch(row.textContent, q2);
             row.classList.toggle("hit", hit);
-            if (q2 && !hit) {
+            if (q2 && !hit && row.style.display !== "none") {
               row.style.display = "none";
               row.dataset.spHitHidden = "1";
             }
@@ -50729,26 +50873,39 @@ ${n.content.slice(0, 2e3)}
             }
             if (!q2) return;
             const any = [...g.querySelectorAll(".bz-sp-set-row")].some((r) => r.style.display !== "none");
-            if (!any) {
+            if (!any && g.style.display !== "none") {
               g.style.display = "none";
               g.dataset.spHitHidden = "1";
             }
           });
+          if (!q2) {
+            this.renderHandles.forEach((h) => h.refresh());
+          }
+          refreshGroupCounts(root);
         }
         /**
          * 键盘导航（2026-09-12 补，桌面）：↑↓ 在可见域间前后切换，顺序 = 导航视觉顺序
          * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉里让位，搜索框与面板本体可用。
+         * F-6：搜索态与 renderNav 同源——只在当前命中（导航可见）集内移动，切到的一定是看得见的域；
+         * 当前域不在命中集时 ↓/↑ 进首/末个命中域；命中集为空 no-op。
          */
         onNavKey(e, pane) {
           var _a2, _b2, _c;
           if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
           const t = e.target;
           if (t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
-          const ordered = groupDomains(listableDomains()).flatMap((s) => s.domains);
+          const query = this.searchQuery.trim();
+          const matches = (d2) => !query || spMatch(d2.name, query) || spMatch(d2.desc, query) || (schemaRowCache.get(d2.id) || []).some((r) => spMatch(r.name, query));
+          const ordered = groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
+          if (!ordered.length) return;
           const idx = ordered.findIndex((d2) => d2.id === this.activeDomainId);
-          if (idx < 0) return;
-          const next = e.key === "ArrowDown" ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
-          if (next === idx) return;
+          let next;
+          if (idx < 0) {
+            next = e.key === "ArrowDown" ? 0 : ordered.length - 1;
+          } else {
+            next = e.key === "ArrowDown" ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
+            if (next === idx) return;
+          }
           e.preventDefault();
           const d = ordered[next];
           this.activeDomainId = d.id;
@@ -50766,9 +50923,9 @@ ${n.content.slice(0, 2e3)}
           if (!domain.schemaLoader) return;
           let schema;
           try {
-            schema = await domain.schemaLoader();
+            schema = await loadSchemaCached(domain);
           } catch (e) {
-            notice(`读取「${domain.name}」设置失败：${e.message}`, "error");
+            notifyActionError(e, `读取「${domain.name}」设置`, { onRetry: () => void this.resetDomain(domain, pane) });
             return;
           }
           const keys = /* @__PURE__ */ new Set();
@@ -50787,7 +50944,8 @@ ${n.content.slice(0, 2e3)}
             message: `把「${domain.name}」的设置项恢复为默认值（未改动的项不受影响）。确定继续吗？`,
             actions: [
               { label: "取消", value: "cancel" },
-              { label: "重置", value: "ok", cta: true }
+              // E-2：破坏性动作 danger 反焦（全仓惯例）——主按钮不默认持焦，防 Enter 一击即重置
+              { label: "重置", value: "ok", cta: true, danger: true }
             ]
           });
           if (ans !== "ok") return;
@@ -50801,7 +50959,13 @@ ${n.content.slice(0, 2e3)}
             s[k] = Array.isArray(def) ? [...def] : def;
             n++;
           }
-          await saveSettings();
+          try {
+            await saveSettings();
+          } catch (e) {
+            notifySaveError(e, `重置「${domain.name}」`);
+            void this.renderDomain(pane, domain);
+            return;
+          }
           notice(`「${domain.name}」已重置 ${n} 项`, "success");
           void this.renderDomain(pane, domain);
         }
@@ -50811,9 +50975,9 @@ ${n.content.slice(0, 2e3)}
           popup.innerHTML = mobShellHtml();
           this.mobPushed = false;
           const homeTools = popup.querySelector('[data-sp-mob-tools="home"]');
-          homeTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
+          homeTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close bz-touch-target", onClick: () => this.hide() }));
           const back = popup.querySelector("[data-sp-mob-back]");
-          back.appendChild(uiIconBtn({ icon: "arrow-left", lg: true, title: "返回", className: "bz-sp-mob-back-btn", onClick: () => this.popDomain() }));
+          back.appendChild(uiIconBtn({ icon: "arrow-left", lg: true, title: "返回", className: "bz-sp-mob-back-btn bz-touch-target", onClick: () => this.popDomain() }));
           mountIcons(popup);
           const list = popup.querySelector(".bz-sp-mob-list");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
@@ -50831,13 +50995,13 @@ ${n.content.slice(0, 2e3)}
                 sec.domains.forEach((d) => list.insertAdjacentHTML("beforeend", mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc })));
               }
             } else {
-              const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
+              const doms = listableDomains().filter((d) => spMatch(d.name, query) || spMatch(d.desc, query));
               const rows = [];
               schemaRowCache.forEach((rowsOf, did) => {
                 const d = DOMAINS2.find((x) => x.id === did);
                 if (!d) return;
                 rowsOf.forEach((r) => {
-                  if (r.name.includes(query) || r.desc && r.desc.includes(query)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
+                  if (spMatch(r.name, query) || r.desc && spMatch(r.desc, query)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
                 });
               });
               let html = "";
@@ -50862,19 +51026,31 @@ ${n.content.slice(0, 2e3)}
             });
             mountIcons(list);
           };
-          searchIn.addEventListener("input", () => render2(searchIn.value));
+          const applySearch = debounce(() => render2(searchIn.value), SEARCH_DEBOUNCE_MS4);
+          searchIn.addEventListener("input", () => applySearch());
           render2("");
           this.rerenderList = () => {
             if (!this.mobPushed) render2(searchIn.value);
           };
         }
         /** 推入域设置页（全屏页切换；返回/ESC 弹回首页）。
-         *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。 */
+         *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。
+         *  E-6：域页工具位挂「重置本域」图标钮——移动端重置动线此前不存在（withHead:false 连带
+         *  砍掉页头重置钮），flow 确认弹窗在移动端同样可用；重复推入先清工具位防叠挂。 */
         async pushDomain(domain, focusRow) {
           const popup = this.popup;
           this.mobPushed = true;
           popup.querySelector(".bz-sp-mob-title").textContent = domain.name;
           popup.classList.add("bz-sp-mob-pushed");
+          const tools = popup.querySelector('[data-sp-mob-tools="domain"]');
+          tools.replaceChildren();
+          tools.appendChild(uiIconBtn({
+            icon: "rotate-ccw",
+            lg: true,
+            title: "重置本域",
+            className: "bz-touch-target",
+            onClick: () => void this.resetDomain(domain, popup.querySelector(".bz-sp-mob-page-body"))
+          }));
           const body = popup.querySelector(".bz-sp-mob-page-body");
           await this.renderDomain(body, domain, { withHead: false });
           if (focusRow) this.focusRowIn(body, focusRow);
@@ -50899,14 +51075,23 @@ ${n.content.slice(0, 2e3)}
           (_a2 = this.popup) == null ? void 0 : _a2.classList.remove("bz-sp-mob-pushed");
         }
         hide() {
+          if (this.popup) closeAllSelectMenus(this.popup);
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
-        cleanup() {
-          if (this.escHandle) {
-            this.escHandle.unregister();
-            this.escHandle = null;
+        /** F-2：移除聚焦输入框前 flush 防抖——面板内 INPUT/TEXTAREA 持焦时真实 blur（触发已注册
+         *  blur commit 监听立即落盘），防「从 DOM 移除聚焦元素不派发 blur」的静默丢字。 */
+        flushPendingTextCommit() {
+          var _a2;
+          const active2 = document.activeElement;
+          if (active2 instanceof HTMLElement && ((_a2 = this.popup) == null ? void 0 : _a2.contains(active2)) && (active2.tagName === "INPUT" || active2.tagName === "TEXTAREA")) {
+            active2.blur();
           }
+        }
+        cleanup() {
+          unregisterPanelEsc("bz-settings-panel");
+          this.flushPendingTextCommit();
+          if (this.popup) closeAllSelectMenus(this.popup);
           if (this.mask) {
             this.mask.remove();
             this.mask = null;
@@ -50918,9 +51103,11 @@ ${n.content.slice(0, 2e3)}
           this.renderHandles = [];
           this.navEl = null;
           this.rerenderList = null;
+          this.preloadInFlight = null;
           navBadges.clear();
           schemaRowCache.clear();
           loadedCounts.clear();
+          schemaCache.clear();
         }
       };
     }
@@ -52636,8 +52823,8 @@ ${n.content.slice(0, 2e3)}
     renderList2(app);
     return wrap;
   }
-  var SEARCH_DEBOUNCE_MS4 = 180;
-  var searchListRender = debounce((app) => renderList2(app), SEARCH_DEBOUNCE_MS4);
+  var SEARCH_DEBOUNCE_MS5 = 180;
+  var searchListRender = debounce((app) => renderList2(app), SEARCH_DEBOUNCE_MS5);
   function syncSearchClear() {
     const btn = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-search-clear");
     if (btn) btn.hidden = !M.query.trim();
