@@ -159,6 +159,8 @@ describe('QuizMasterUI（纯复习会话）', () => {
     expect(getNoticeMessages().some((m) => m.includes('删除题目失败'))).toBe(true);
     // 作答态已恢复：按钮不再 disabled，仍停在当前题
     expect(btns()[0].classList.contains('disabled')).toBe(false);
+    // U建5：恢复作答态清正确项高亮——不亮答案，可无痕重答
+    expect(btns()[0].classList.contains('correct')).toBe(false);
     expect(document.getElementById('quiz-popup')!.textContent).toContain('Q1?');
     // 重答成功：只计一次，延时后自动完成
     (btns()[0] as HTMLElement).click();
@@ -478,6 +480,7 @@ describe('复习联动契约', () => {
     expect(onComplete).not.toHaveBeenCalled();
     // 取消 → 继续做题
     (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0)); // U1：confirming 复位走 promise 微任务（真实点击间隔必有任务边界）
     expect(document.getElementById('quiz-popup')).not.toBeNull();
     // 再点遮罩 → 确认放弃 → 按已答结算（0 题）
     (document.getElementById('quiz-mask') as HTMLElement).click();

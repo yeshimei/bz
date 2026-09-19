@@ -17,23 +17,28 @@
  *  - V1 增量落地：卡片「待重做」红 tag 显性化；归档态状态条改绿点「已完成复习」；
  *    列内排序 置顶 → R 升序 → 到期（render.sortColumn）
  *
+ * 深审批 C（2026-09-19）：
+ *  - U4/A4/E7/U10 难度弹窗迁 openFlowDialog choice 形态（ESC/遮罩/焦点 core 单源收口 +
+ *    1-4 快捷键 + onSelect promise 兜底），旧自绘 .difficulty-dialog 不再产出
+ *  - E1/C1 抽屉「移出复习计划」免确认直达 notifyUndo（效率整改 5 口径）
+ *  - E6 队列重建前记录三区列滚位与焦点控件，重建后还原
+ *  - C15 构造期 allocZ 删（ADR-0067 仅显示时 topifyZ 发号）；ESC 层 id 改 'bz-review-main'
+ *
  * 公共面（对外契约不变）：UIManager / reviewSettingsSchema（re-export）/ isPlayable / isDueToday
  */
 import { type App, type TFile } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
-import { notice, notifyUndo, notifySaveError } from '../core/notice';
+import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
-import { escapeHtml } from '../core/utils';
 import { uiEmpty, mountIcons } from '../core/ui';
-import { unregisterSheetCompanion } from '../core/item-actions';
 import { DEFAULT_W } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
 import {
   queueViewHtml, sprintHeadHtml, sprintLoadingHtml, sprintQuestionHtml, sprintBodyHtml,
-  sprintResultHtml, sprintSummaryHtml, difficultyDialogHtml, reviewBarHtml,
+  sprintResultHtml, sprintSummaryHtml, reviewBarHtml,
   isPlayable as isPlayableRender,
 } from './render';
 import { DEFAULT_R_THRESHOLD, isDueToday } from './queue';
@@ -52,6 +57,24 @@ export { isPlayableRender as isPlayable };
 const isPlayable = isPlayableRender;
 
 // issue 253：到期标签/可做题判定等纯口径随 markup 一并迁 render.ts（dueLabelOf/isPlayable/stageTagHtml/stageNum）
+
+/** E6 焦点记忆：面板内焦点控件 → data-* 特征键（data-id=… / data-act=…），null = 无可记忆焦点 */
+function captureFocusKey(scope: HTMLElement): string | null {
+  const el = document.activeElement;
+  if (!(el instanceof HTMLElement) || !scope.contains(el)) return null;
+  for (const attr of ['data-id', 'data-act']) {
+    const v = el.getAttribute(attr);
+    if (v != null) return `${attr}=${v}`;
+  }
+  return null;
+}
+
+/** E6 焦点还原：按特征键在重建后的容器内找回同位控件并聚焦（找不到则静默放弃） */
+function restoreFocusKey(scope: HTMLElement, key: string): void {
+  const eq = key.indexOf('=');
+  const el = scope.querySelector<HTMLElement>(`[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`);
+  el?.focus({ preventScroll: true });
+}
 
 export class UIManager {
   app: App;
@@ -90,7 +113,7 @@ export class UIManager {
     this.mask.id = 'review-mask';
     this.mask.classList.add('bz-panel-overlay');
     this.mask.style.display = 'none';
-    this.mask.style.zIndex = String(allocZ());
+    // C15（ADR-0067）：构造期不发号——display:none 壳不占号，showMain 时 topifyZ 统一发号
     this.mask.onclick = () => {
       if (!this.sprint) this.hideMain();
     };
@@ -101,7 +124,6 @@ export class UIManager {
     // ≤768px 弹窗满宽近全屏：挂顶距工具类（44px 避让 Obsidian 移动端头，components.css 统一档）
     this.popup.classList.add('bz-panel-mtop');
     this.popup.style.display = 'none';
-    this.popup.style.zIndex = String(allocZ());
     const content = document.createElement('div');
     content.id = 'review-entries-container';
     this.popup.appendChild(content);
@@ -113,7 +135,8 @@ export class UIManager {
 
   private registerEscLayer(): void {
     if (this.escHandle) return;
-    this.escHandle = escManager.register('review-main', {
+    // U5/C7：层 id 统一 `bz-<域>` 约定（原 'review-main' 无前缀）
+    this.escHandle = escManager.register('bz-review-main', {
       isVisible: () => !!this.mask && this.mask.style.display === 'block',
       close: () => this.hideMain(),
     });
@@ -162,11 +185,18 @@ export class UIManager {
     this.renderEntries(items);
   }
 
-  /** 渲染队列视图（冲刺态不响应） */
+  /** 渲染队列视图（冲刺态不响应）。
+   *  E6：重建前记录三区列各 scrollTop 与面板内焦点控件（data-* 定位），重建后还原——
+   *  翻篇/冲刺回收等一切刷新不再把滚位打回顶部、不再丢键盘焦点。 */
   renderEntries(items: ReviewItem[]): void {
     if (this.sprint) return;
     const container = this.entriesContainer;
     if (!container) return;
+    const focusKey = captureFocusKey(container);
+    const scrollTops = new Map<string, number>();
+    container.querySelectorAll<HTMLElement>('.bz-q-col').forEach((col) => {
+      scrollTops.set(col.className, col.scrollTop);
+    });
     container.innerHTML = this.queueViewHtml(items);
     if (!items.length) {
       // item 10：空库两条路引导（组件库 uiEmpty 工厂）
@@ -195,6 +225,12 @@ export class UIManager {
       }
     }
     mountIcons(container);
+    // E6 还原：先滚位（focus 用 preventScroll 不扰动），后焦点
+    container.querySelectorAll<HTMLElement>('.bz-q-col').forEach((col) => {
+      const top = scrollTops.get(col.className);
+      if (top != null) col.scrollTop = top;
+    });
+    if (focusKey) restoreFocusKey(container, focusKey);
     this.bindQueueEvents(container, items);
   }
   /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
@@ -272,7 +308,8 @@ export class UIManager {
       await this.refreshPanel();
       await reviewApp.applyReviewStyles(this.app);
     } catch (e: any) {
-      notice('加入复习计划失败：' + (e?.message || e) + '，请重试', 'error');
+      // C9：动作失败提示走 core 单源（不再手拼「X失败：msg，请重试」）
+      notifyActionError(e, '加入复习计划');
     }
   }
 
@@ -348,35 +385,50 @@ export class UIManager {
     await showStatsModal(this.app, this.dataManager);
   }
 
-  // ================= 难度弹窗（评分命令用；markup 单源 render.difficultyDialogHtml） =================
+  // ================= 难度弹窗（评分命令用；U4/A4/E7/U10 迁 openFlowDialog choice 形态） =================
 
+  /** 四档评级 + 取消：ESC/遮罩/焦点圈闭/关闭还原焦点全由 core flow-dialog 单源收口
+   *  （旧自绘 .difficulty-dialog 的 ESC 关错层、外点穿透、companion 残留随之消亡）。
+   *  1-4 直达档位（对齐做题模式键盘化拍板）；onSelect 的 promise 兜底 catch + notifySaveError。 */
   showDifficultyDialog(item: ReviewItem, onSelect?: (diff: string) => void): void {
-    const old = document.querySelector('.difficulty-dialog');
-    if (old) old.remove();
-    const div = document.createElement('div');
-    div.className = 'difficulty-dialog';
-    div.style.zIndex = String(allocZ());
-    div.innerHTML = difficultyDialogHtml(item);
-    document.body.appendChild(div);
-    div.style.display = 'block';
-    div.querySelectorAll('.diff-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        unregisterSheetCompanion(div);
-        div.remove();
-        const diff = (btn as HTMLElement).dataset.diff;
-        if (diff !== 'cancel' && diff && onSelect) onSelect(diff);
-      });
+    const report = (diff: string): void => {
+      if (!onSelect) return;
+      try {
+        // 调用方（bz-review-rate 命令）实为 async 回调：签名 void 但运行时返回 promise，
+        // 兜底 catch 防 unhandled rejection（U10）
+        const r = onSelect(diff) as unknown;
+        if (r instanceof Promise) r.catch((e: unknown) => notifySaveError(e, '标记复习'));
+      } catch (e) {
+        notifySaveError(e, '标记复习');
+      }
+    };
+    // 1-4 快捷键：flow-dialog 多动作按钮 id 契约 `bz-flow-dialog-action-<i>`；修饰键组合不劫持；
+    // settle 后按钮 DOM 已移除，getElementById 自然失配（监听随 promise 结算统一摘除）
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
+      const i = ['1', '2', '3', '4'].indexOf(e.key);
+      if (i < 0) return;
+      const btn = document.getElementById(`bz-flow-dialog-action-${i}`);
+      if (btn) {
+        e.preventDefault();
+        btn.click();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    void openFlowDialog({
+      title: `标记复习：${item.name}`,
+      message: '选择本次复习的难度（快捷键 1-4）',
+      actions: [
+        { label: '忘了（Again）', value: 'again' },
+        { label: '困难（Hard）', value: 'hard' },
+        { label: '一般（Good）', value: 'good' },
+        { label: '简单（Easy）', value: 'easy' },
+        { label: '取消', value: 'cancel' },
+      ],
+    }).then((v) => {
+      document.removeEventListener('keydown', onKey);
+      if (v && v !== 'cancel') report(v);
     });
-    setTimeout(() => {
-      const handler = (e: MouseEvent) => {
-        if (!div.contains(e.target as Node)) {
-          unregisterSheetCompanion(div);
-          div.remove();
-          document.removeEventListener('click', handler);
-        }
-      };
-      document.addEventListener('click', handler);
-    }, 100);
   }
 
   // ================= 抽屉（右键/长按） =================
@@ -414,16 +466,9 @@ export class UIManager {
         label: '移出复习计划',
         kind: 'danger',
         onClick: () => {
-          void openFlowDialog({
-            title: '移出复习计划',
-            message: `确定移出「${item.name}」吗？移出后可在通知中撤销。`,
-            actions: [
-              { label: '取消', value: 'cancel' },
-              // danger（issue 291 评审补）：移出 = 删除该笔记的复习数据（可撤销但仍是删除类主动作）
-              { label: '移出', value: 'ok', cta: true, danger: true },
-            ],
-          }).then(async (v) => {
-            if (v !== 'ok') return;
+          // E1/C1（效率整改 5 口径）：撤销链已在位（notifyUndo + restoreItem 原样插回），
+          // 删除免确认直达——不再弹 openFlowDialog 双保险
+          void (async () => {
             try {
               await this.dataManager.removeItem(item.filePath);
               await this.refreshPanel();
@@ -444,7 +489,7 @@ export class UIManager {
             } catch (e) {
               notifySaveError(e, '移出复习条目');
             }
-          });
+          })();
         },
       },
     ];
