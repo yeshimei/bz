@@ -97,6 +97,19 @@ const DOMAIN_MAP: Record<string, string> = {
 };
 
 /**
+ * favicon 取图失败负缓存（tombstone，会话内）：取失败的「域名+尺寸」不再重复发网请求——
+ * 列表每次重绘都会对同一批失效域名（内网地址/自建服务/拼错 url）原样重发必失败的请求
+ * （pv 深审新-14），tombstone 后 createSiteIcon 直接返回 null，调用方走字母回退。
+ * 会话级内存集即可：成功缓存走 localStorage 持久化，失败域名网络恢复后重开面板自然重试。
+ */
+const faviconFailures = new Set<string>();
+
+/** 测试专用：清空 favicon 失败负缓存（notice __resetNoticeForTests 同范式） */
+export function __resetFaviconFailuresForTests(): void {
+  faviconFailures.clear();
+}
+
+/**
  * createSiteIcon(domain, size=16)：网站 favicon 图标（yandex 取图 + localStorage 缓存）。
  * 高清修复：旧接口 `favicon/<domain>` 恒返 16px 小图，放大到 32/64px 头像位发糊——
  * 改走 v2 接口带 `size` 参数按需取高清源；缓存键升级 `favicon_v2_<domain>_<size>`，
@@ -106,6 +119,8 @@ export function createSiteIcon(domain: string | null | undefined, size = 16): HT
   if (!domain) return null;
   const mappedDomain = DOMAIN_MAP[domain] || domain;
   const cacheKey = `favicon_v2_${mappedDomain}_${size}`;
+  // 取过失败的「域名+尺寸」（按归一映射后键）直接短路，不再发网请求
+  if (faviconFailures.has(cacheKey)) return null;
 
   const img = document.createElement('img');
   img.className = 'bz-site-icon';
@@ -142,9 +157,10 @@ export function createSiteIcon(domain: string | null | undefined, size = 16): HT
     (img as any).onload = null;
   };
 
-  // 4. 加载失败则隐藏
+  // 4. 加载失败则隐藏并记 tombstone（会话内同「域名+尺寸」不再重试）
   img.onerror = function () {
     img.style.display = 'none';
+    faviconFailures.add(cacheKey);
     (img as any).onerror = null;
   };
 

@@ -10,7 +10,8 @@
  * markup 单源（issue 251/ADR-0110）：全部 HTML 出自 ./render.ts（本文件零模板串）。
  */
 import { escManager } from '../core/esc-manager';
-import { secureRandomPassword, copySensitiveWithFallback, cancelClipboardClear } from '../core/utils';
+import { secureRandomPassword, copySensitiveWithFallback, cancelClipboardClear, debounce, openExternalUrl } from '../core/utils';
+import { getApp } from '../core/app';
 import { getSafeManager } from '../encrypt';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { onDomainEvent } from '../core/domain-bus';
@@ -19,11 +20,13 @@ import { openFlowDialog, cancelActiveFlowDialog } from '../core/flow-dialog';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenHandle, LockScreenStat } from '../core/ui/lock-screen';
+import { bindFormSubmit } from '../core/ui/modal';
 import { readLockStats, writeLockStats } from '../core/lock-stats';
-import { notice } from '../core/notice';
+import { notice, notifyUndo, notifyActionError } from '../core/notice';
 import { attachItemActions, openItemSheet, type ItemAction } from '../core/item-actions';
 import {
   PasswordVaultDataManager,
+  DEFAULT_PW_CHARSET,
   type PasswordVaultEntry,
   type PlatformGroup,
 } from './data';
@@ -53,10 +56,8 @@ interface LockSecurity {
   unlockCooldownUntil: number;
 }
 
-const DEFAULT_CHARSET =
-  '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
-
 // secureRandomPassword / copySensitiveWithFallback / cancelClipboardClear 收口 core/utils（批次 G 单源 + issue 365 剪贴板兜底单源）
+// DEFAULT_CHARSET 域内副本已删（深审口径批）：生成字符集单源 data.ts DEFAULT_PW_CHARSET，本文件 import 消费
 
 /**
  * 给容器内所有 [data-avatar] 注入真实 favicon 图标（域名从 url 解析）：
@@ -109,8 +110,12 @@ export class PasswordVaultUIManager {
   editingId: string | null = null;
   // 安全机制（Q13）
   security: LockSecurity = { unlockFailStreak: 0, unlockCooldownUntil: 0 };
-  // 计时器
-  private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  // 搜索防抖（core debounce 单源收编，自带 cancel；桌面/移动双实例输入共用一支）
+  private applySearch = debounce((kw: string) => {
+    this.searchKw = kw;
+    this.syncSearchInputs(); // 新-6：提交时写回双实例输入框（一侧输入另一侧不同步）
+    this.renderAll();
+  }, 180);
   /** 安全模式无交互自动上锁计时器（15 分钟；document 捕获阶段交互重置，cons 新-3 对齐 encrypt 形制） */
   private idleLockTimer: ReturnType<typeof setTimeout> | null = null;
   /** idle bump 的 document 捕获监听（不随 DOM 摘除回收，cleanup 摘除） */
@@ -196,9 +201,10 @@ export class PasswordVaultUIManager {
     this.bindMob();
     this.bindDialogs();
     this.registerEscape();
-    // 外部变更（保险箱/旧密码本）→ 重绘
+    // 外部变更（保险箱/旧密码本）→ 重绘；移动详情页停驻时同步重建（新-9，refreshMobPage 同 E6 口径）
     this.dataManager.onExternalChange = () => {
       this.renderAll();
+      this.refreshMobPage();
     };
     // 安全模式无交互自动上锁（cons 新-3）：任何交互重置 15 分钟倒计时（捕获阶段兜底输入框事件，
     // N9 教训——body 弹层内的持续操作同样算「活跃使用」）。document 级监听不随 DOM 摘除回收，
@@ -220,14 +226,9 @@ export class PasswordVaultUIManager {
         this.renderAll();
       });
     });
-    // 搜索防抖
+    // 搜索防抖（双实例共用一支 applySearch）
     this.desk.search.addEventListener('input', (e) => {
-      const v = (e.target as HTMLInputElement).value.trim();
-      if (this.searchTimer) clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(() => {
-        this.searchKw = v;
-        this.renderAll();
-      }, 180);
+      this.applySearch((e.target as HTMLInputElement).value.trim());
     });
     // 点击卡片外遮罩 → 关闭窗口
     root.addEventListener('click', (e) => {
@@ -239,14 +240,9 @@ export class PasswordVaultUIManager {
 
   private bindMob() {
     const root = this.root!;
-    // 搜索
+    // 搜索（双实例共用一支 applySearch）
     this.mob.search.addEventListener('input', (e) => {
-      const v = (e.target as HTMLInputElement).value.trim();
-      if (this.searchTimer) clearTimeout(this.searchTimer);
-      this.searchTimer = setTimeout(() => {
-        this.searchKw = v;
-        this.renderAll();
-      }, 180);
+      this.applySearch((e.target as HTMLInputElement).value.trim());
     });
     // FAB 添加
     root.querySelector('.bz-password-vault-fab')?.addEventListener('click', () => this.openEntryDialog(null));
@@ -345,6 +341,9 @@ export class PasswordVaultUIManager {
           if (saveBtn) saveBtn.disabled = false;
         }
       });
+      // 回车提交（深审新-13，core bindFormSubmit 全域范式单源）：单行 input 聚焦时
+      // Enter/Ctrl+Enter=保存（转接保存按钮，校验/错误行/落盘链路原样复用）；本弹窗无 textarea
+      bindFormSubmit(dlg as HTMLElement, () => (dlg.querySelector('[data-act="save"]') as HTMLButtonElement).click());
     });
     // 平台编辑弹窗
     this.root!.querySelectorAll('.bz-password-vault-platedit').forEach((el) => {
@@ -381,10 +380,24 @@ export class PasswordVaultUIManager {
       (card as any).__setCurrent = (p: string) => {
         currentPlatform = p;
       };
+      // 回车提交（深审新-13）：平台编辑弹窗同款接 core bindFormSubmit
+      bindFormSubmit(card, () => (card.querySelector('[data-act="save"]') as HTMLButtonElement).click());
     });
   }
 
   // ---------- 渲染 ----------
+  /**
+   * 搜索词写回双实例输入框（深审新-6）：桌面/移动双实例各有搜索框、共享同一 searchKw——
+   * 一侧输入防抖提交后，另一侧（重开面板/切端可见时）不再出现「筛选在生效、框却是空的」。
+   * 只在防抖提交时调用：渲染路径不清输入框，不打断另一侧未提交的输入中内容。
+   */
+  private syncSearchInputs(): void {
+    const kw = this.searchKw;
+    for (const inp of [this.desk.search, this.mob.search]) {
+      if (inp && inp.value.trim() !== kw) inp.value = kw;
+    }
+  }
+
   renderAll() {
     if (!this.root) return;
     // T12 对齐 encrypt：renderAll 不落盘（本域最高频入口，原先搜索防抖/点眼/收藏每次都写
@@ -412,7 +425,8 @@ export class PasswordVaultUIManager {
     try {
       await this.dataManager.load();
     } catch (e: any) {
-      notice('加载数据失败：' + e.message, 'error');
+      // 深审口径批：手拼错误串收编 core notifyActionError（人话错误 + 重试出口）
+      notifyActionError(e, '加载数据', { onRetry: () => void this.loadAndRender() });
     }
   }
 
@@ -474,7 +488,7 @@ export class PasswordVaultUIManager {
       rows.innerHTML =
         this.view === 'fav'
           ? emptyHtml('bz-password-vault-empty', '还没有收藏', '点条目里的 ★ 收藏常用账号', { style: 'flex:1' })
-          : emptyHtml('bz-password-vault-empty', '保险库还是空的', '点击右上角「添加密码」开始收录', { style: 'flex:1', ctaLabel: '添加第一条密码', ctaAct: 'add-first' });
+          : emptyHtml('bz-password-vault-empty', '密码本还是空的', '点击右上角「添加密码」开始收录', { style: 'flex:1', ctaLabel: '添加第一条密码', ctaAct: 'add-first' });
       rows.querySelector('[data-act="add-first"]')?.addEventListener('click', () => this.openEntryDialog(null));
       return;
     }
@@ -536,7 +550,13 @@ export class PasswordVaultUIManager {
     );
     const acctsEl = detail.querySelector('.bz-password-vault-accts')!;
     if (!accs.length) {
-      acctsEl.innerHTML = emptyHtml('bz-password-vault-empty', '该平台暂无账号', '');
+      // 深审新-11：fav 视图下「账号被 fav 过滤光」≠ 平台无账号（普通视图同平台明明有），
+      // 空态文案按视图分叉，不再口径打架
+      acctsEl.innerHTML = emptyHtml(
+        'bz-password-vault-empty',
+        this.view === 'fav' ? '该平台暂无收藏账号' : '该平台暂无账号',
+        ''
+      );
       return;
     }
     this.appendAcctCards(acctsEl as HTMLElement, accs);
@@ -614,19 +634,61 @@ export class PasswordVaultUIManager {
       this.renderAll();
       this.refreshMobPage(); // E6：收藏星标立即生效
     } else if (act === 'del') {
-      this.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, async () => {
-        try {
-          await this.dataManager.deleteItem(d.id); // E16：失败 toast（回滚由数据层负责）
-        } catch (e: any) {
-          t('删除失败：' + (e?.message || e), true);
+      this.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？删除后可在通知中撤销。`, true, () => {
+        void (async () => {
+          try {
+            await this.dataManager.deleteItem(d.id); // E16：失败 toast（回滚由数据层负责）
+          } catch (e: any) {
+            t('删除失败：' + (e?.message || e), true);
+            this.renderAll();
+            return;
+          }
+          if (this.selAccount === d.id) this.selAccount = null;
+          this.clearSelPlatformIfEmpty(); // 新-10：删到平台最后一个账号 → 清选中回列表，详情不留空壳
           this.renderAll();
-          return;
-        }
-        if (this.selAccount === d.id) this.selAccount = null;
-        this.renderAll();
-        this.refreshMobPage(); // E6：已删条目从移动详情页消失
-        t('已删除');
+          this.refreshMobPage(); // E6：已删条目从移动详情页消失
+          this.notifyDeleteOne(d); // 新-10：撤销链（替代「已删除」单向 toast）
+        })();
       });
+    }
+  }
+
+  // ---------- 删除撤销链（新-10，core notifyUndo 单源；确认框保留为用户拍板项） ----------
+  /** 单账号删除通知：挂「撤销」按钮，点击原样塞回刚删条目（保 id/createdAt/fav）。 */
+  private notifyDeleteOne(d: PasswordVaultEntry): void {
+    notifyUndo(`已删除「${d.account || '(无账号)'}」`, () => {
+      void this.undoRestore([d]);
+    });
+  }
+
+  /**
+   * 恢复刚删条目（新-10）：数据原样塞回（区别于 addItem——不重发 id/createdAt，选中态与
+   * 展示引用不失效）+ save 失败回滚内存（saveWithRollback 同款口径）。不动 data.ts 接口，
+   * 用公开面（pwData 字段 + save()）在 ui 层组合实现；恢复后重绘双端。
+   */
+  private async undoRestore(entries: PasswordVaultEntry[]): Promise<void> {
+    const snap = this.dataManager.pwData.map((d) => ({ ...d }));
+    try {
+      const ids = new Set(entries.map((e) => e.id));
+      const rest = this.dataManager.pwData.filter((d) => !ids.has(d.id));
+      rest.unshift(...entries.map((e) => ({ ...e })));
+      this.dataManager.pwData = rest;
+      await this.dataManager.save();
+    } catch (e: any) {
+      this.dataManager.pwData = snap; // 写盘失败回滚内存，不留半恢复态
+      this.toast('撤销失败：' + (e?.message || e), true);
+      this.renderAll();
+      return;
+    }
+    this.renderAll();
+    this.refreshMobPage();
+  }
+
+  /** 删除后清悬空选中（新-10）：平台已无账号 → selPlatform/selAccount 回列表（详情区不再空壳）。 */
+  private clearSelPlatformIfEmpty(): void {
+    if (this.selPlatform && this.dataManager.accountsOf(this.selPlatform).length === 0) {
+      this.selPlatform = null;
+      this.selAccount = null;
     }
   }
 
@@ -689,7 +751,7 @@ export class PasswordVaultUIManager {
       list.innerHTML =
         this.view === 'fav'
           ? emptyHtml('bz-password-vault-mobempty', '还没有收藏', '点条目里的 ★ 收藏常用账号')
-          : emptyHtml('bz-password-vault-mobempty', '保险库还是空的', '点击右下角 + 添加第一条密码', { ctaLabel: '添加密码', ctaAct: 'add-first' });
+          : emptyHtml('bz-password-vault-mobempty', '密码本还是空的', '点击右下角 + 添加第一条密码', { ctaLabel: '添加密码', ctaAct: 'add-first' });
       list.querySelector('[data-act="add-first"]')?.addEventListener('click', () => this.openEntryDialog(null));
       return;
     }
@@ -874,7 +936,7 @@ export class PasswordVaultUIManager {
         icon: 'external-link',
         label: '打开链接',
         onClick: () => {
-          if (d.url) this.openExternal(d.url);
+          if (d.url) openExternalUrl(getApp(), d.url); // 补派收编：core openExternalUrl 单源
           else t('该条目没有链接', true);
         },
       },
@@ -884,7 +946,7 @@ export class PasswordVaultUIManager {
         label: '删除',
         kind: 'danger',
         onClick: () =>
-          this.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, () => {
+          this.askConfirm('删除密码条目', `确定删除账号「${d.account}」吗？删除后可在通知中撤销。`, true, () => {
             void (async () => {
               try {
                 await this.dataManager.deleteItem(d.id); // E16：失败 toast
@@ -893,9 +955,11 @@ export class PasswordVaultUIManager {
                 this.renderAll();
                 return;
               }
+              if (this.selAccount === d.id) this.selAccount = null;
+              this.clearSelPlatformIfEmpty(); // 新-10：删到平台最后一个账号 → 清选中回列表
               this.renderAll();
               this.refreshMobPage();
-              t('已删除');
+              this.notifyDeleteOne(d); // 新-10：撤销链（替代「已删除」单向 toast）
             })();
           }),
       },
@@ -940,8 +1004,10 @@ export class PasswordVaultUIManager {
       label: '删除整个平台',
       kind: 'danger',
       onClick: () =>
-        this.askConfirm('删除整个平台', `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, true, () => {
+        this.askConfirm('删除整个平台', `将删除「${platform}」的 ${count} 个账号，删除后可在通知中撤销。确定继续？`, true, () => {
           void (async () => {
+            // 撤销快照先于删除捕获（浅拷贝条目；removePlatform 只滤数组不动条目对象）
+            const removed = this.dataManager.accountsOf(platform).map((d) => ({ ...d }));
             let n = 0;
             try {
               n = await this.dataManager.removePlatform(platform); // E16：失败 toast
@@ -953,7 +1019,10 @@ export class PasswordVaultUIManager {
             this.selPlatform = null;
             this.renderAll();
             this.refreshMobPage(); // E6：整平台删除后收起其移动详情页
-            t(`已删除平台与 ${n} 个账号`);
+            // 新-10：撤销链——整平台原样塞回（保 id/createdAt/fav）
+            notifyUndo(`已删除平台「${platform}」与 ${n} 个账号`, () => {
+              void this.undoRestore(removed);
+            });
           })();
         }),
     });
@@ -961,9 +1030,35 @@ export class PasswordVaultUIManager {
   }
 
   // ---------- 添加/编辑弹窗 ----------
+  /** 当前生效实例（desk/mob）：与 styles.css 移动断点（max-width:768px）同口径（深审新-3）。
+   *  matchMedia 缺失（异常环境）回落 desk——notice.isMobileView 同款守卫。 */
+  private activeWhich(): 'desk' | 'mob' {
+    try {
+      if (typeof window.matchMedia === 'function') {
+        return window.matchMedia('(max-width: 768px)').matches ? 'mob' : 'desk';
+      }
+    } catch (e) {
+      /* fallthrough */
+    }
+    return 'desk';
+  }
+
+  /**
+   * 聚焦弹窗在当前生效实例上的目标输入框（深审新-3）：querySelector 恒取 DOM 序靠前的
+   * 桌面实例，移动端桌面实例 display:none 时 focus 无效、软键盘不弹——按断点选实例取字段，
+   * 查不到（异常环境）回落首个命中。
+   */
+  private focusDialogField(sel: string, attr: 'modal' | 'plat-edit', fieldSel: string): void {
+    const which = this.activeWhich();
+    const el =
+      this.root!.querySelector(`${sel}[data-${attr}="${which}"] ${fieldSel}`) ||
+      this.root!.querySelector(`${sel} ${fieldSel}`);
+    (el as HTMLInputElement | null)?.focus();
+  }
+
   openEntryDialog(editItem: PasswordVaultEntry | null = null, preset?: { platform?: string; url?: string }) {
     if (!this.dataManager.unlocked) {
-      notice('请先解锁保险库');
+      notice('请先解锁密码本');
       return;
     }
     // 双实例同步显示（桌面 + 移动共享同一数据，同一弹窗内容）
@@ -994,9 +1089,8 @@ export class PasswordVaultUIManager {
       (dlg.querySelector('[data-f-err]') as HTMLElement).textContent = '';
       modal.classList.add('open');
     });
-    // 焦点
-    const first = this.root!.querySelector('.bz-password-vault-modal [data-f="platform"]') as HTMLInputElement;
-    first?.focus();
+    // 焦点（深审新-3）：落当前生效实例，移动端软键盘才弹得起
+    this.focusDialogField('.bz-password-vault-modal', 'modal', '[data-f="platform"]');
   }
 
   private closeEntryDialog() {
@@ -1017,6 +1111,8 @@ export class PasswordVaultUIManager {
       (card as any).__setCurrent?.(platform);
       card.classList.add('open');
     });
+    // 聚焦（深审新-3）：平台编辑弹窗此前全平台无 focus，打开后焦点落 body——补当前生效实例聚焦
+    this.focusDialogField('.bz-password-vault-platedit', 'plat-edit', '[data-f="platform"]');
   }
 
   // ---------- 确认框（core 流程框单源，issue 365 收编） ----------
@@ -1045,36 +1141,24 @@ export class PasswordVaultUIManager {
   // ---------- 提示（core 全局通知单源，issue 365 收编） ----------
   /**
    * 提示：原为面板内自绘 toast（双实例同步 + 1800ms 定时器），收编 core 全局通知——
-   * 面板最小化/隐藏时提示仍可见（E15 同款教训），文案逐字保留；isErr → error（❌），
-   * 否则按结果语义走 success（✅，与 index.ts 快速取密通知同口径）。
+   * 面板最小化/隐藏时提示仍可见（E15 同款教训）。档位对齐 encrypt 域（深审口径漂移批）：
+   * isErr → error（❌）；常规动作走 info（ℹ️）——success（✅）仅大节点（解锁成功等），
+   * 由调用方直接 notice(msg, 'success')，不再经本封装一律抬成 success。
    */
   toast(msg: string, isErr = false) {
-    notice(msg, isErr ? 'error' : 'success');
+    notice(msg, isErr ? 'error' : 'info');
   }
 
   // ---------- 复制（core 剪贴板兜底单源，issue 365 收编） ----------
   // 复制链路（copySensitiveText 失败 → textarea+execCommand 兜底 + 60s 自动清空）
   // 收口 core/utils 的 copySensitiveWithFallback；本域 encrypt 双域消费同一实现。
-
-  /** 打开外链（electron shell 优先，Obsidian 环境） */
-  private openExternal(url: string): void {
-    try {
-      const w = window as any;
-      const electron = w.require && w.require('electron');
-      if (electron && electron.shell) {
-        electron.shell.openExternal(url);
-        return;
-      }
-    } catch (e) {
-      /* fallthrough */
-    }
-    window.open(url, '_blank');
-  }
+  // 打开外链原私有 openExternal 副本已删（补派收编单源）：electron→window.open 两链缺
+  // app.openUrl 首选与全链失败提示，改消费 core/utils openExternalUrl（memo/favorites 同范式）。
 
   // ---------- 生成器 ----------
   generatePassword(): string {
     const length = parseInt(this.config.length) || 16;
-    const charset = this.config.charset || DEFAULT_CHARSET;
+    const charset = this.config.charset || DEFAULT_PW_CHARSET; // 单源 data.ts（域内副本已删）
     return secureRandomPassword(length, charset);
   }
 
@@ -1106,10 +1190,7 @@ export class PasswordVaultUIManager {
 
   /** 清搜索过滤态（func 新-1 症状 B 配套）：kw 残留 + 两实例搜索框值一并复位 */
   private resetSearchFilter(): void {
-    if (this.searchTimer !== null) {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = null;
-    }
+    this.applySearch.cancel(); // 在途防抖一并收口（core debounce，批 C 收编后取代 searchTimer）
     this.searchKw = '';
     this.desk.search.value = '';
     this.mob.search.value = '';
@@ -1201,7 +1282,8 @@ export class PasswordVaultUIManager {
     try {
       await this.dataManager.load();
     } catch (e: any) {
-      notice('加载数据失败：' + e.message, 'error');
+      // 深审口径批：手拼错误串收编 core notifyActionError（人话错误 + 重试出口）
+      notifyActionError(e, '加载数据', { onRetry: () => void this.loadAndRender() });
     }
     this.renderAll();
   }
@@ -1461,7 +1543,7 @@ export class PasswordVaultUIManager {
               ls.input.value = '';
               ls.input2.value = ''; // arch 新-1 纵深防御：口令不残留在已关闭的锁屏 DOM 里
               this.closeLock();
-              this.toast('保险库已解锁');
+              notice('密码本已解锁', 'success'); // 深审口径批：自称「密码本」；大节点走 success 档
               await this.reloadAfterUnlock();
               this.renderAll();
             } else {
@@ -1495,7 +1577,7 @@ export class PasswordVaultUIManager {
           ls.input.value = '';
           ls.input2.value = ''; // arch 新-1 纵深防御：口令不残留在已关闭的锁屏 DOM 里
           this.closeLock();
-          this.toast('保险库已解锁');
+          notice('密码本已解锁', 'success'); // 深审口径批：自称「密码本」；大节点走 success 档
           await this.reloadAfterUnlock();
           this.renderAll();
         } else {
@@ -1505,7 +1587,7 @@ export class PasswordVaultUIManager {
             void openFlowDialog({
               title: '清单疑似损坏',
               message:
-                '保险箱清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。' +
+                '密码本清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。' +
                 '重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？',
               // issue 291：同上——挂 body 的流程框须显式带域类才拿到 --pwv-* 与域材质
               className: 'bz-pwv-flow-dialog',
@@ -1527,7 +1609,8 @@ export class PasswordVaultUIManager {
                     ls.input.value = '';
                     ls.input2.value = '';
                     this.closeLock();
-                    this.toast('已重设主密码（旧数据不可恢复）', true);
+                    // 对齐 encrypt 域同款 warning 档（重设属警示性结果，非纯失败）
+                    notice('已重设主密码（旧数据不可恢复）', 'warning');
                     await this.reloadAfterUnlock();
                     this.renderAll();
                   } else {
@@ -1590,10 +1673,7 @@ export class PasswordVaultUIManager {
   cleanup() {
     cancelClipboardClear();
     this.unsubscribeUnlockEvents(); // E2：退订共锁事件
-    if (this.searchTimer !== null) {
-      clearTimeout(this.searchTimer);
-      this.searchTimer = null;
-    }
+    this.applySearch.cancel(); // 防抖收口（core debounce 自带 cancel，语义同原 clearTimeout）
     this.clearIdleLock(); // idle 自动上锁计时器
     if (this.idleBump) {
       // document 捕获监听不随 DOM 摘除回收，卸载时显式摘除（对齐 encrypt detachGlobalListeners）

@@ -1,4 +1,4 @@
-/* 源指纹 bdf97a176bbe91e3 · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 209ca67b5f4c9a0d · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -383,6 +383,13 @@ var BZW_password_vault = (() => {
   function notice(msg, type, duration) {
     notify(msg, { type: type || "info", duration });
   }
+  function notifyUndo(msg, onUndo, opts) {
+    return notify(msg, {
+      type: opts && opts.type || "delete",
+      duration: opts && opts.duration !== void 0 ? opts.duration : UNDO_DURATION_MS,
+      action: { label: "撤销", onClick: onUndo }
+    });
+  }
   function notifySaveError(err, what) {
     const msg = err instanceof Error ? err.message : String(err);
     notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
@@ -685,7 +692,7 @@ var BZW_password_vault = (() => {
     armTimer(n, kind, opts && opts.duration, fullText);
     return makeHandle(n);
   }
-  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
+  var MAX_VISIBLE_DEFAULT, LEAVE_MS, DEDUPE_WINDOW_MS, MOBILE_QUERY, ICONS, SPINNER_SVG, UNDO_DURATION_MS, OUT_CLASS, POSITION_CLASSES, PER_CHAR_MS, SHORT_THRESHOLD, live, recent;
   var init_notice = __esm({
     "src/core/notice.ts"() {
       init_z_order();
@@ -705,6 +712,7 @@ var BZW_password_vault = (() => {
         archive: "📁"
       };
       SPINNER_SVG = '<svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9"/></svg>';
+      UNDO_DURATION_MS = 6e3;
       OUT_CLASS = {
         drop: "bz-notice--out-drop",
         pop: "bz-notice--out-pop",
@@ -4917,6 +4925,27 @@ var BZW_password_vault = (() => {
       }
     }
   }
+  function openExternalUrl(app, url) {
+    try {
+      app.openUrl(url);
+      return;
+    } catch (e) {
+    }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
+  }
   var import_moment, CLIPBOARD_CLEAR_DELAY_MS, clipboardClearTimer;
   var init_utils = __esm({
     "src/core/utils.ts"() {
@@ -5475,10 +5504,12 @@ var BZW_password_vault = (() => {
     "guokrapp.guokr.com": "guokr.com",
     "daily.zhihu.com": "zhihu.com"
   };
+  var faviconFailures = /* @__PURE__ */ new Set();
   function createSiteIcon(domain, size = 16) {
     if (!domain) return null;
     const mappedDomain = DOMAIN_MAP[domain] || domain;
     const cacheKey = `favicon_v2_${mappedDomain}_${size}`;
+    if (faviconFailures.has(cacheKey)) return null;
     const img = document.createElement("img");
     img.className = "bz-site-icon";
     img.style.cssText = `width:${size}px; height:${size}px;`;
@@ -5512,6 +5543,7 @@ var BZW_password_vault = (() => {
     };
     img.onerror = function() {
       img.style.display = "none";
+      faviconFailures.add(cacheKey);
       img.onerror = null;
     };
     return img;
@@ -6115,6 +6147,24 @@ var BZW_password_vault = (() => {
 
   // src/core/ui/modal.ts
   init_z_order();
+  function bindFormSubmit(popup, onSubmit) {
+    popup.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      onSubmit();
+    });
+    popup.addEventListener("keypress", (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.dataset.bzNoFormSubmit !== void 0) return;
+      e.preventDefault();
+      onSubmit();
+    });
+  }
 
   // src/encrypt/ui.ts
   init_settings_provider();
@@ -8859,6 +8909,7 @@ var BZW_password_vault = (() => {
 
   // src/password-vault/data.ts
   var PASSWORD_VAULT_CHANNEL = "password-vault:changed";
+  var DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
   var VAULT_KIND = "password-vault";
   var VAULT_PATH = "CONFIG/.ENCRYPT/passwords";
   var VAULT_TITLE = "密码本";
@@ -11769,6 +11820,7 @@ var BZW_password_vault = (() => {
 
   // src/password-vault/ui.ts
   init_utils();
+  init_app();
   init_settings_provider();
   init_notice();
 
@@ -11819,7 +11871,7 @@ var BZW_password_vault = (() => {
           <label>链接（可选）</label><input data-f="url" placeholder="https://…">
           <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
           <label>密码 *</label>
-          <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="mini" data-act="pw-eye" type="button" title="显示密码">${ICONS2.eye}</button><button class="gen" data-act="gen">生成</button></div>
+          <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="mini bz-touch-target--lg" data-act="pw-eye" type="button" title="显示密码">${ICONS2.eye}</button><button class="gen" data-act="gen">生成</button></div>
           <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
           <div class="err" data-f-err></div>
           <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="save" data-act="save">保存</button></div>
@@ -11874,7 +11926,7 @@ var BZW_password_vault = (() => {
       <div class="bz-password-vault-mobbar">
         <div class="seal">${ICONS2.seal}</div>
         <div class="t">密码本</div>
-        <button class="bz-password-vault-mobclose" data-act="mob-close" aria-label="关闭">${ICONS2.x}</button>
+        <button class="bz-password-vault-mobclose bz-touch-target" data-act="mob-close" aria-label="关闭">${ICONS2.x}</button>
       </div>
       <div class="bz-password-vault-mobsearch">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"></div>
       <div class="bz-password-vault-moblist"></div>
@@ -11882,9 +11934,9 @@ var BZW_password_vault = (() => {
       <div class="bz-password-vault-mobpage">
         <div class="bz-password-vault-mobsheet">
           <div class="head">
-            <button class="bz-password-vault-back">${ICONS2.back}</button>
+            <button class="bz-password-vault-back bz-touch-target">${ICONS2.back}</button>
             <div class="t">详情</div>
-            <button class="ic" data-act="menu">${ICONS2.menuDots}</button>
+            <button class="ic bz-touch-target" data-act="menu">${ICONS2.menuDots}</button>
           </div>
           <div class="bz-password-vault-mobbody"></div>
         </div>
@@ -11958,20 +12010,19 @@ var BZW_password_vault = (() => {
     </div>`;
   }
   function mobSegHtml(d, shown, withId) {
-    const idAttr = withId ? ` data-id="${d.id}"` : "";
+    const idAttr = withId ? ` data-id="${escAttr(d.id)}"` : "";
     return `<div class="bz-password-vault-seg">
           <div class="seghead"><div class="acc">${esc(d.account || "(无账号)")}${d.fav ? ' <span class="star">★</span>' : ""}</div>
-            <button class="copyac" data-act="copy-ac"${idAttr}>${ICONS2.copy} 复制账号</button></div>
+            <button class="copyac bz-touch-target--lg" data-act="copy-ac"${idAttr}>${ICONS2.copy} 复制账号</button></div>
           <div class="pwdline"><div class="pw ${shown ? "" : "mask"}">${shown ? esc(d.password) : dots(d.password)}</div>
-            <button class="mini" data-act="eye"${idAttr}>${shown ? ICONS2.eyeoff : ICONS2.eye}</button>
-            <button class="mini" data-act="copy-pw"${idAttr}>${ICONS2.copy}</button></div>
+            <button class="mini bz-touch-target--lg" data-act="eye"${idAttr}>${shown ? ICONS2.eyeoff : ICONS2.eye}</button>
+            <button class="mini bz-touch-target--lg" data-act="copy-pw"${idAttr}>${ICONS2.copy}</button></div>
           ${d.note ? `<div class="note">${esc(d.note)}</div>` : ""}
           <div class="segmeta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? " · " + esc(d.url.replace("https://", "")) : ""}</div>
         </div>`;
   }
 
   // src/password-vault/ui.ts
-  var DEFAULT_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
   function hydrateAvatars(scope) {
     scope.querySelectorAll("[data-avatar]").forEach((box) => {
       if (box.querySelector("img")) return;
@@ -12007,8 +12058,12 @@ var BZW_password_vault = (() => {
       this.editingId = null;
       // 安全机制（Q13）
       this.security = { unlockFailStreak: 0, unlockCooldownUntil: 0 };
-      // 计时器
-      this.searchTimer = null;
+      // 搜索防抖（core debounce 单源收编，自带 cancel；桌面/移动双实例输入共用一支）
+      this.applySearch = debounce((kw) => {
+        this.searchKw = kw;
+        this.syncSearchInputs();
+        this.renderAll();
+      }, 180);
       /** 安全模式无交互自动上锁计时器（15 分钟；document 捕获阶段交互重置，cons 新-3 对齐 encrypt 形制） */
       this.idleLockTimer = null;
       /** idle bump 的 document 捕获监听（不随 DOM 摘除回收，cleanup 摘除） */
@@ -12038,8 +12093,10 @@ var BZW_password_vault = (() => {
         { num: "—", label: "口令条目" },
         { num: "—", label: "收藏" }
       ];
-      /** 冷启动已从 lock-stats.json 回落过（仅首显 hydrate 一次，此后由 captureLockStats 维护） */
+      /** 冷启动已从 lock-stats.json 回落过（仅首显 hydrate 一次，此后由 refreshLockStatsCache 维护） */
       this.pwLockStatsHydrated = false;
+      /** 解锁期间刷新过真值快照（flush 前置条件：占位「—」/锁定态不落盘，防垃圾覆写） */
+      this.pwLockStatsFresh = false;
       this.dataManager = dataManager;
       this.config = config;
     }
@@ -12085,6 +12142,7 @@ var BZW_password_vault = (() => {
       this.registerEscape();
       this.dataManager.onExternalChange = () => {
         this.renderAll();
+        this.refreshMobPage();
       };
       this.idleBump = () => this.bumpIdleLock();
       document.addEventListener("pointerdown", this.idleBump, true);
@@ -12102,12 +12160,7 @@ var BZW_password_vault = (() => {
         });
       });
       this.desk.search.addEventListener("input", (e) => {
-        const v = e.target.value.trim();
-        if (this.searchTimer) clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => {
-          this.searchKw = v;
-          this.renderAll();
-        }, 180);
+        this.applySearch(e.target.value.trim());
       });
       root.addEventListener("click", (e) => {
         if (e.target === root && this.root.style.display === "flex") {
@@ -12119,12 +12172,7 @@ var BZW_password_vault = (() => {
       var _a, _b, _c, _d;
       const root = this.root;
       this.mob.search.addEventListener("input", (e) => {
-        const v = e.target.value.trim();
-        if (this.searchTimer) clearTimeout(this.searchTimer);
-        this.searchTimer = setTimeout(() => {
-          this.searchKw = v;
-          this.renderAll();
-        }, 180);
+        this.applySearch(e.target.value.trim());
       });
       (_a = root.querySelector(".bz-password-vault-fab")) == null ? void 0 : _a.addEventListener("click", () => this.openEntryDialog(null));
       (_b = root.querySelector('[data-act="mob-close"]')) == null ? void 0 : _b.addEventListener("click", () => this.hide());
@@ -12209,6 +12257,7 @@ var BZW_password_vault = (() => {
             if (saveBtn) saveBtn.disabled = false;
           }
         });
+        bindFormSubmit(dlg, () => dlg.querySelector('[data-act="save"]').click());
       });
       this.root.querySelectorAll(".bz-password-vault-platedit").forEach((el) => {
         var _a, _b;
@@ -12243,11 +12292,24 @@ var BZW_password_vault = (() => {
         card.__setCurrent = (p) => {
           currentPlatform = p;
         };
+        bindFormSubmit(card, () => card.querySelector('[data-act="save"]').click());
       });
     }
     // ---------- 渲染 ----------
+    /**
+     * 搜索词写回双实例输入框（深审新-6）：桌面/移动双实例各有搜索框、共享同一 searchKw——
+     * 一侧输入防抖提交后，另一侧（重开面板/切端可见时）不再出现「筛选在生效、框却是空的」。
+     * 只在防抖提交时调用：渲染路径不清输入框，不打断另一侧未提交的输入中内容。
+     */
+    syncSearchInputs() {
+      const kw = this.searchKw;
+      for (const inp of [this.desk.search, this.mob.search]) {
+        if (inp && inp.value.trim() !== kw) inp.value = kw;
+      }
+    }
     renderAll() {
       if (!this.root) return;
+      this.refreshLockStatsCache();
       this.renderLock();
       this.renderDeskList();
       this.renderDeskDetail();
@@ -12266,7 +12328,7 @@ var BZW_password_vault = (() => {
       try {
         await this.dataManager.load();
       } catch (e) {
-        notice("加载数据失败：" + e.message, "error");
+        notifyActionError(e, "加载数据", { onRetry: () => void this.loadAndRender() });
       }
     }
     /** 渲染桌面列表（平台聚合 / 搜索展平） */
@@ -12316,7 +12378,7 @@ var BZW_password_vault = (() => {
       this.desk.count.textContent = plats.length + " 个平台";
       rows.innerHTML = "";
       if (!plats.length) {
-        rows.innerHTML = this.view === "fav" ? emptyHtml("bz-password-vault-empty", "还没有收藏", "点条目里的 ★ 收藏常用账号", { style: "flex:1" }) : emptyHtml("bz-password-vault-empty", "保险库还是空的", "点击右上角「添加密码」开始收录", { style: "flex:1", ctaLabel: "添加第一条密码", ctaAct: "add-first" });
+        rows.innerHTML = this.view === "fav" ? emptyHtml("bz-password-vault-empty", "还没有收藏", "点条目里的 ★ 收藏常用账号", { style: "flex:1" }) : emptyHtml("bz-password-vault-empty", "密码本还是空的", "点击右上角「添加密码」开始收录", { style: "flex:1", ctaLabel: "添加第一条密码", ctaAct: "add-first" });
         (_a = rows.querySelector('[data-act="add-first"]')) == null ? void 0 : _a.addEventListener("click", () => this.openEntryDialog(null));
         return;
       }
@@ -12381,7 +12443,11 @@ var BZW_password_vault = (() => {
       );
       const acctsEl = detail.querySelector(".bz-password-vault-accts");
       if (!accs.length) {
-        acctsEl.innerHTML = emptyHtml("bz-password-vault-empty", "该平台暂无账号", "");
+        acctsEl.innerHTML = emptyHtml(
+          "bz-password-vault-empty",
+          this.view === "fav" ? "该平台暂无收藏账号" : "该平台暂无账号",
+          ""
+        );
         return;
       }
       this.appendAcctCards(acctsEl, accs);
@@ -12460,19 +12526,58 @@ var BZW_password_vault = (() => {
         this.renderAll();
         this.refreshMobPage();
       } else if (act === "del") {
-        this.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, async () => {
-          try {
-            await this.dataManager.deleteItem(d.id);
-          } catch (e) {
-            t("删除失败：" + ((e == null ? void 0 : e.message) || e), true);
+        this.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？删除后可在通知中撤销。`, true, () => {
+          void (async () => {
+            try {
+              await this.dataManager.deleteItem(d.id);
+            } catch (e) {
+              t("删除失败：" + ((e == null ? void 0 : e.message) || e), true);
+              this.renderAll();
+              return;
+            }
+            if (this.selAccount === d.id) this.selAccount = null;
+            this.clearSelPlatformIfEmpty();
             this.renderAll();
-            return;
-          }
-          if (this.selAccount === d.id) this.selAccount = null;
-          this.renderAll();
-          this.refreshMobPage();
-          t("已删除");
+            this.refreshMobPage();
+            this.notifyDeleteOne(d);
+          })();
         });
+      }
+    }
+    // ---------- 删除撤销链（新-10，core notifyUndo 单源；确认框保留为用户拍板项） ----------
+    /** 单账号删除通知：挂「撤销」按钮，点击原样塞回刚删条目（保 id/createdAt/fav）。 */
+    notifyDeleteOne(d) {
+      notifyUndo(`已删除「${d.account || "(无账号)"}」`, () => {
+        void this.undoRestore([d]);
+      });
+    }
+    /**
+     * 恢复刚删条目（新-10）：数据原样塞回（区别于 addItem——不重发 id/createdAt，选中态与
+     * 展示引用不失效）+ save 失败回滚内存（saveWithRollback 同款口径）。不动 data.ts 接口，
+     * 用公开面（pwData 字段 + save()）在 ui 层组合实现；恢复后重绘双端。
+     */
+    async undoRestore(entries) {
+      const snap = this.dataManager.pwData.map((d) => ({ ...d }));
+      try {
+        const ids = new Set(entries.map((e) => e.id));
+        const rest = this.dataManager.pwData.filter((d) => !ids.has(d.id));
+        rest.unshift(...entries.map((e) => ({ ...e })));
+        this.dataManager.pwData = rest;
+        await this.dataManager.save();
+      } catch (e) {
+        this.dataManager.pwData = snap;
+        this.toast("撤销失败：" + ((e == null ? void 0 : e.message) || e), true);
+        this.renderAll();
+        return;
+      }
+      this.renderAll();
+      this.refreshMobPage();
+    }
+    /** 删除后清悬空选中（新-10）：平台已无账号 → selPlatform/selAccount 回列表（详情区不再空壳）。 */
+    clearSelPlatformIfEmpty() {
+      if (this.selPlatform && this.dataManager.accountsOf(this.selPlatform).length === 0) {
+        this.selPlatform = null;
+        this.selAccount = null;
       }
     }
     /**
@@ -12528,7 +12633,7 @@ var BZW_password_vault = (() => {
       let plats = this.dataManager.platforms();
       if (this.view === "fav") plats = plats.filter((p) => this.dataManager.hasFav(p.platform));
       if (!plats.length) {
-        list.innerHTML = this.view === "fav" ? emptyHtml("bz-password-vault-mobempty", "还没有收藏", "点条目里的 ★ 收藏常用账号") : emptyHtml("bz-password-vault-mobempty", "保险库还是空的", "点击右下角 + 添加第一条密码", { ctaLabel: "添加密码", ctaAct: "add-first" });
+        list.innerHTML = this.view === "fav" ? emptyHtml("bz-password-vault-mobempty", "还没有收藏", "点条目里的 ★ 收藏常用账号") : emptyHtml("bz-password-vault-mobempty", "密码本还是空的", "点击右下角 + 添加第一条密码", { ctaLabel: "添加密码", ctaAct: "add-first" });
         (_a = list.querySelector('[data-act="add-first"]')) == null ? void 0 : _a.addEventListener("click", () => this.openEntryDialog(null));
         return;
       }
@@ -12709,7 +12814,7 @@ var BZW_password_vault = (() => {
           icon: "external-link",
           label: "打开链接",
           onClick: () => {
-            if (d.url) this.openExternal(d.url);
+            if (d.url) openExternalUrl(getApp(), d.url);
             else t("该条目没有链接", true);
           }
         },
@@ -12718,7 +12823,7 @@ var BZW_password_vault = (() => {
           icon: "trash-2",
           label: "删除",
           kind: "danger",
-          onClick: () => this.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？此操作不可撤销。`, true, () => {
+          onClick: () => this.askConfirm("删除密码条目", `确定删除账号「${d.account}」吗？删除后可在通知中撤销。`, true, () => {
             void (async () => {
               try {
                 await this.dataManager.deleteItem(d.id);
@@ -12727,9 +12832,11 @@ var BZW_password_vault = (() => {
                 this.renderAll();
                 return;
               }
+              if (this.selAccount === d.id) this.selAccount = null;
+              this.clearSelPlatformIfEmpty();
               this.renderAll();
               this.refreshMobPage();
-              t("已删除");
+              this.notifyDeleteOne(d);
             })();
           })
         }
@@ -12772,8 +12879,9 @@ var BZW_password_vault = (() => {
         icon: "trash-2",
         label: "删除整个平台",
         kind: "danger",
-        onClick: () => this.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，此操作不可撤销。确定继续？`, true, () => {
+        onClick: () => this.askConfirm("删除整个平台", `将删除「${platform}」的 ${count} 个账号，删除后可在通知中撤销。确定继续？`, true, () => {
           void (async () => {
+            const removed = this.dataManager.accountsOf(platform).map((d) => ({ ...d }));
             let n = 0;
             try {
               n = await this.dataManager.removePlatform(platform);
@@ -12785,16 +12893,39 @@ var BZW_password_vault = (() => {
             this.selPlatform = null;
             this.renderAll();
             this.refreshMobPage();
-            t(`已删除平台与 ${n} 个账号`);
+            notifyUndo(`已删除平台「${platform}」与 ${n} 个账号`, () => {
+              void this.undoRestore(removed);
+            });
           })();
         })
       });
       return actions;
     }
     // ---------- 添加/编辑弹窗 ----------
+    /** 当前生效实例（desk/mob）：与 styles.css 移动断点（max-width:768px）同口径（深审新-3）。
+     *  matchMedia 缺失（异常环境）回落 desk——notice.isMobileView 同款守卫。 */
+    activeWhich() {
+      try {
+        if (typeof window.matchMedia === "function") {
+          return window.matchMedia("(max-width: 768px)").matches ? "mob" : "desk";
+        }
+      } catch (e) {
+      }
+      return "desk";
+    }
+    /**
+     * 聚焦弹窗在当前生效实例上的目标输入框（深审新-3）：querySelector 恒取 DOM 序靠前的
+     * 桌面实例，移动端桌面实例 display:none 时 focus 无效、软键盘不弹——按断点选实例取字段，
+     * 查不到（异常环境）回落首个命中。
+     */
+    focusDialogField(sel, attr, fieldSel) {
+      const which = this.activeWhich();
+      const el = this.root.querySelector(`${sel}[data-${attr}="${which}"] ${fieldSel}`) || this.root.querySelector(`${sel} ${fieldSel}`);
+      el == null ? void 0 : el.focus();
+    }
     openEntryDialog(editItem = null, preset) {
       if (!this.dataManager.unlocked) {
-        notice("请先解锁保险库");
+        notice("请先解锁密码本");
         return;
       }
       this.editingId = editItem ? editItem.id : null;
@@ -12822,8 +12953,7 @@ var BZW_password_vault = (() => {
         dlg.querySelector("[data-f-err]").textContent = "";
         modal.classList.add("open");
       });
-      const first = this.root.querySelector('.bz-password-vault-modal [data-f="platform"]');
-      first == null ? void 0 : first.focus();
+      this.focusDialogField(".bz-password-vault-modal", "modal", '[data-f="platform"]');
     }
     closeEntryDialog() {
       this.root.querySelectorAll(".bz-password-vault-modal").forEach((m) => m.classList.remove("open"));
@@ -12843,6 +12973,7 @@ var BZW_password_vault = (() => {
         (_a = card.__setCurrent) == null ? void 0 : _a.call(card, platform);
         card.classList.add("open");
       });
+      this.focusDialogField(".bz-password-vault-platedit", "plat-edit", '[data-f="platform"]');
     }
     // ---------- 确认框（core 流程框单源，issue 365 收编） ----------
     /**
@@ -12869,32 +13000,22 @@ var BZW_password_vault = (() => {
     // ---------- 提示（core 全局通知单源，issue 365 收编） ----------
     /**
      * 提示：原为面板内自绘 toast（双实例同步 + 1800ms 定时器），收编 core 全局通知——
-     * 面板最小化/隐藏时提示仍可见（E15 同款教训），文案逐字保留；isErr → error（❌），
-     * 否则按结果语义走 success（✅，与 index.ts 快速取密通知同口径）。
+     * 面板最小化/隐藏时提示仍可见（E15 同款教训）。档位对齐 encrypt 域（深审口径漂移批）：
+     * isErr → error（❌）；常规动作走 info（ℹ️）——success（✅）仅大节点（解锁成功等），
+     * 由调用方直接 notice(msg, 'success')，不再经本封装一律抬成 success。
      */
     toast(msg, isErr = false) {
-      notice(msg, isErr ? "error" : "success");
+      notice(msg, isErr ? "error" : "info");
     }
     // ---------- 复制（core 剪贴板兜底单源，issue 365 收编） ----------
     // 复制链路（copySensitiveText 失败 → textarea+execCommand 兜底 + 60s 自动清空）
     // 收口 core/utils 的 copySensitiveWithFallback；本域 encrypt 双域消费同一实现。
-    /** 打开外链（electron shell 优先，Obsidian 环境） */
-    openExternal(url) {
-      try {
-        const w = window;
-        const electron = w.require && w.require("electron");
-        if (electron && electron.shell) {
-          electron.shell.openExternal(url);
-          return;
-        }
-      } catch (e) {
-      }
-      window.open(url, "_blank");
-    }
+    // 打开外链原私有 openExternal 副本已删（补派收编单源）：electron→window.open 两链缺
+    // app.openUrl 首选与全链失败提示，改消费 core/utils openExternalUrl（memo/favorites 同范式）。
     // ---------- 生成器 ----------
     generatePassword() {
       const length = parseInt(this.config.length) || 16;
-      const charset = this.config.charset || DEFAULT_CHARSET;
+      const charset = this.config.charset || DEFAULT_PW_CHARSET;
       return secureRandomPassword(length, charset);
     }
     // ---------- 显示/隐藏 ----------
@@ -12921,10 +13042,7 @@ var BZW_password_vault = (() => {
     }
     /** 清搜索过滤态（func 新-1 症状 B 配套）：kw 残留 + 两实例搜索框值一并复位 */
     resetSearchFilter() {
-      if (this.searchTimer !== null) {
-        clearTimeout(this.searchTimer);
-        this.searchTimer = null;
-      }
+      this.applySearch.cancel();
       this.searchKw = "";
       this.desk.search.value = "";
       this.mob.search.value = "";
@@ -12943,7 +13061,7 @@ var BZW_password_vault = (() => {
       this.clearIdleLock();
       this.root.style.display = "none";
       if (this.isSecurityModeLive()) {
-        if (this.dataManager.pwData.length) this.captureLockStats();
+        this.flushLockStats();
         this.dataManager.lock();
         this.shownIds = {};
         this.resetSearchFilter();
@@ -12973,7 +13091,7 @@ var BZW_password_vault = (() => {
       this.closeMobPage();
       if (this.lastUnlockSeen) {
         this.lastUnlockSeen = false;
-        if (this.dataManager.pwData.length) this.captureLockStats();
+        this.flushLockStats();
         this.dataManager.lock();
         this.shownIds = {};
         this.resetSearchFilter();
@@ -12993,12 +13111,13 @@ var BZW_password_vault = (() => {
       try {
         await this.dataManager.load();
       } catch (e) {
-        notice("加载数据失败：" + e.message, "error");
+        notifyActionError(e, "加载数据", { onRetry: () => void this.loadAndRender() });
       }
       this.renderAll();
     }
-    /** 快照本域统计（解锁态调用） */
-    captureLockStats() {
+    /** 解锁态刷新内存统计快照（渲染期只备值不落盘——本域最高频入口，写盘收敛到上锁消费点） */
+    refreshLockStatsCache() {
+      if (!this.dataManager.unlocked) return;
       try {
         const plats = this.dataManager.platforms();
         this.pwLockStatsCache = [
@@ -13006,17 +13125,23 @@ var BZW_password_vault = (() => {
           { num: String(this.dataManager.pwData.length), label: "口令条目" },
           { num: String(plats.filter((x) => this.dataManager.hasFav(x.platform)).length), label: "收藏" }
         ];
-        void writeLockStats("password-vault", this.pwLockStatsCache).catch(() => {
-        });
+        this.pwLockStatsFresh = true;
       } catch (e) {
       }
+    }
+    /** 上锁消费点落盘（hide 安全模式分支 / 外部上锁事件侧 / lockNow）：写最近一次解锁期快照。
+     *  不读 pwData——批 A 起数据层订阅在同一广播上先于 UI 自清明文，事件时刻 pwData 已空 */
+    flushLockStats() {
+      if (!this.pwLockStatsFresh) return;
+      void writeLockStats("password-vault", this.pwLockStatsCache).catch(() => {
+      });
     }
     /** 冷启动从 lock-stats.json 回落上次快照（ADR-0124 决策 4 修订；读到才覆盖「—」初值） */
     async hydrateLockStats() {
       if (this.pwLockStatsHydrated) return;
       this.pwLockStatsHydrated = true;
       const hit = await readLockStats("password-vault");
-      if (hit) this.pwLockStatsCache = hit;
+      if (hit && !this.pwLockStatsFresh) this.pwLockStatsCache = hit;
     }
     rootVisible() {
       return !!this.root && this.root.style.display === "flex";
@@ -13043,7 +13168,7 @@ var BZW_password_vault = (() => {
      *  快照统计 → 收场弹层 → 清明文缓存/明文开关/搜索态 → 单通知 → 安全模式随锁收面板 */
     lockNow(silent = false) {
       if (!this.root) return;
-      if (this.dataManager.pwData.length) this.captureLockStats();
+      this.flushLockStats();
       this.closeAllDialogs();
       this.closeMobPage();
       this.dataManager.lock();
@@ -13208,7 +13333,7 @@ var BZW_password_vault = (() => {
                 ls.input.value = "";
                 ls.input2.value = "";
                 this.closeLock();
-                this.toast("保险库已解锁");
+                notice("密码本已解锁", "success");
                 await this.reloadAfterUnlock();
                 this.renderAll();
               } else {
@@ -13241,7 +13366,7 @@ var BZW_password_vault = (() => {
             ls.input.value = "";
             ls.input2.value = "";
             this.closeLock();
-            this.toast("保险库已解锁");
+            notice("密码本已解锁", "success");
             await this.reloadAfterUnlock();
             this.renderAll();
           } else {
@@ -13249,7 +13374,7 @@ var BZW_password_vault = (() => {
             if (issue === "empty" || issue === "corrupt") {
               void openFlowDialog({
                 title: "清单疑似损坏",
-                message: "保险箱清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
+                message: "密码本清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
                 // issue 291：同上——挂 body 的流程框须显式带域类才拿到 --pwv-* 与域材质
                 className: "bz-pwv-flow-dialog",
                 actions: [
@@ -13270,7 +13395,7 @@ var BZW_password_vault = (() => {
                       ls.input.value = "";
                       ls.input2.value = "";
                       this.closeLock();
-                      this.toast("已重设主密码（旧数据不可恢复）", true);
+                      notice("已重设主密码（旧数据不可恢复）", "warning");
                       await this.reloadAfterUnlock();
                       this.renderAll();
                     } else {
@@ -13325,10 +13450,7 @@ var BZW_password_vault = (() => {
       var _a;
       cancelClipboardClear();
       this.unsubscribeUnlockEvents();
-      if (this.searchTimer !== null) {
-        clearTimeout(this.searchTimer);
-        this.searchTimer = null;
-      }
+      this.applySearch.cancel();
       this.clearIdleLock();
       if (this.idleBump) {
         document.removeEventListener("pointerdown", this.idleBump, true);
