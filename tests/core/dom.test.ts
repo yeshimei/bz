@@ -3,7 +3,7 @@
  * createSiteIcon/createOverlay——jsdom 环境行为断言。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { notice, longPress, createIconBtn, createSiteIcon, createOverlay, swallowNextClick } from '../../src/core/dom';
+import { notice, longPress, createIconBtn, createSiteIcon, createOverlay, swallowNextClick, __resetFaviconFailuresForTests } from '../../src/core/dom';
 import { __resetZForTests, allocZ } from '../../src/core/z-order';
 import { getNoticeMessages } from '../mock-obsidian-entry';
 
@@ -166,6 +166,7 @@ describe('createIconBtn', () => {
 describe('createSiteIcon', () => {
   beforeEach(() => {
     localStorage.clear();
+    __resetFaviconFailuresForTests(); // 失败负缓存跨用例隔离（会话级 tombstone）
   });
 
   it('空 domain 返回 null', () => {
@@ -196,6 +197,31 @@ describe('createSiteIcon', () => {
     localStorage.setItem('favicon_example.com', 'data:image/png;base64,old-blurry');
     const img2 = createSiteIcon('example.com', 32);
     expect(img2!.src).toContain('favicon.yandex.net/favicon/v2/example.com?size=32');
+  });
+
+  // pv 深审新-14：失败无负缓存 → 列表每次重绘对失效域名重复发必失败的网请求
+  it('失败负缓存：onerror 后同「域名+尺寸」短路返回 null，会话内不再重发请求', () => {
+    const img = createSiteIcon('nas.local', 64);
+    expect(img).not.toBeNull();
+    (img as any).onerror(); // 模拟加载失败（jsdom 不发真实网络请求，直接触发处理器）
+    // tombstone 命中：不再产 img（调用方走字母回退），src 网络地址不再发出
+    expect(createSiteIcon('nas.local', 64)).toBeNull();
+    // 不同尺寸键不牵连（缓存键即 tombstone 键）
+    expect(createSiteIcon('nas.local', 16)).not.toBeNull();
+  });
+
+  it('失败负缓存按域名归一映射后生效（daily.zhihu.com 失败 → zhihu.com 同样短路）', () => {
+    const img = createSiteIcon('daily.zhihu.com', 64);
+    (img as any).onerror();
+    expect(createSiteIcon('zhihu.com', 64)).toBeNull();
+  });
+
+  it('负缓存可重置（__resetFaviconFailuresForTests：重开面板/测试隔离后允许重试）', () => {
+    const img = createSiteIcon('down.example');
+    (img as any).onerror();
+    expect(createSiteIcon('down.example')).toBeNull();
+    __resetFaviconFailuresForTests();
+    expect(createSiteIcon('down.example')).not.toBeNull();
   });
 });
 

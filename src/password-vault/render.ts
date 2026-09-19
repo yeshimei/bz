@@ -99,7 +99,7 @@ export function modalHTML(which: 'desk' | 'mob'): string {
           <label>链接（可选）</label><input data-f="url" placeholder="https://…">
           <label>账号 *</label><input data-f="account" placeholder="登录账号 / 邮箱 / 手机号">
           <label>密码 *</label>
-          <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="mini" data-act="pw-eye" type="button" title="显示密码">${ICONS.eye}</button><button class="gen" data-act="gen">生成</button></div>
+          <div class="pwdrow"><input data-f="password" type="password" placeholder="密码" autocomplete="new-password"><button class="mini bz-touch-target--lg" data-act="pw-eye" type="button" title="显示密码">${ICONS.eye}</button><button class="gen" data-act="gen">生成</button></div>
           <label>备注（可选）</label><input data-f="note" placeholder="备用信息…">
           <div class="err" data-f-err></div>
           <div class="btns"><button class="cancel" data-act="cancel">取消</button><button class="save" data-act="save">保存</button></div>
@@ -165,7 +165,7 @@ export function mobHTML(): string {
       <div class="bz-password-vault-mobbar">
         <div class="seal">${ICONS.seal}</div>
         <div class="t">密码本</div>
-        <button class="bz-password-vault-mobclose" data-act="mob-close" aria-label="关闭">${ICONS.x}</button>
+        <button class="bz-password-vault-mobclose bz-touch-target" data-act="mob-close" aria-label="关闭">${ICONS.x}</button>
       </div>
       <div class="bz-password-vault-mobsearch">${ICONS.search}<input placeholder="搜索平台、账号、备注…"></div>
       <div class="bz-password-vault-moblist"></div>
@@ -173,9 +173,9 @@ export function mobHTML(): string {
       <div class="bz-password-vault-mobpage">
         <div class="bz-password-vault-mobsheet">
           <div class="head">
-            <button class="bz-password-vault-back">${ICONS.back}</button>
+            <button class="bz-password-vault-back bz-touch-target">${ICONS.back}</button>
             <div class="t">详情</div>
-            <button class="ic" data-act="menu">${ICONS.menuDots}</button>
+            <button class="ic bz-touch-target" data-act="menu">${ICONS.menuDots}</button>
           </div>
           <div class="bz-password-vault-mobbody"></div>
         </div>
@@ -285,13 +285,14 @@ export function mobPlatHeadHtml(opts: { platform: string; url: string; fav: bool
 
 /** 移动账号段（withId=平台页多账号态，按钮带 data-id；账号页单卡态不带） */
 export function mobSegHtml(d: PasswordVaultEntry, shown: boolean, withId: boolean): string {
-  const idAttr = withId ? ` data-id="${d.id}"` : '';
+  // N17：id 与其余字段同口径 escAttr（id 由数据层生成，防御脏数据/手拼串吞 markup）
+  const idAttr = withId ? ` data-id="${escAttr(d.id)}"` : '';
   return `<div class="bz-password-vault-seg">
           <div class="seghead"><div class="acc">${esc(d.account || '(无账号)')}${d.fav ? ' <span class="star">★</span>' : ''}</div>
-            <button class="copyac" data-act="copy-ac"${idAttr}>${ICONS.copy} 复制账号</button></div>
+            <button class="copyac bz-touch-target--lg" data-act="copy-ac"${idAttr}>${ICONS.copy} 复制账号</button></div>
           <div class="pwdline"><div class="pw ${shown ? '' : 'mask'}">${shown ? esc(d.password) : dots(d.password)}</div>
-            <button class="mini" data-act="eye"${idAttr}>${shown ? ICONS.eyeoff : ICONS.eye}</button>
-            <button class="mini" data-act="copy-pw"${idAttr}>${ICONS.copy}</button></div>
+            <button class="mini bz-touch-target--lg" data-act="eye"${idAttr}>${shown ? ICONS.eyeoff : ICONS.eye}</button>
+            <button class="mini bz-touch-target--lg" data-act="copy-pw"${idAttr}>${ICONS.copy}</button></div>
           ${d.note ? `<div class="note">${esc(d.note)}</div>` : ''}
           <div class="segmeta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? ' · ' + esc(d.url.replace('https://', '')) : ''}</div>
         </div>`;
