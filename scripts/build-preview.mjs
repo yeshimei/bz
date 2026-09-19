@@ -48,7 +48,7 @@ function sourceStamp(metafile) {
     h.update("\0");
     let digest = "MISSING";
     try {
-      digest = createHash("sha1").update(fs.readFileSync(path.join(ROOT, rel))).digest("hex");
+      digest = createHash("sha1").update(normalizeEndings(fs.readFileSync(path.join(ROOT, rel)))).digest("hex");
     } catch {
       /* 读不到（刚删/权限）→ 记 MISSING，仍可稳定比较 */
     }
@@ -56,6 +56,16 @@ function sourceStamp(metafile) {
     h.update("\n");
   }
   return { hash: h.digest("hex").slice(0, 16), files };
+}
+
+/**
+ * 行尾归一（CRLF→LF）后再入指纹：工作区行尾随 autocrlf / 工具写盘而变（主仓与各 worktree
+ * 同一文件行尾可不同），同一内容会算出两个指纹 → 「源没改也判产物过期」跨环境恒红
+ * （2026-09-19 实例：16 条行为包在主仓恒红，根源是产物在行尾混合的 worktree 里重出）。
+ * 测试端 tests/preview-freshness.test.ts 复用本函数，两侧同口径。
+ */
+export function normalizeEndings(buf) {
+  return buf.toString("utf8").replace(/\r\n/g, "\n");
 }
 
 /**

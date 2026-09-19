@@ -1,4 +1,4 @@
-/* 源指纹 d705ea38efe77fbf · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f4004fb538dd850d · 仓内输入 1 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/pomodoro/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/pomodoro/render.ts → window.BZR_pomodoro（评审壳预览包，ADR-0104） */
 var BZR_pomodoro = (() => {
