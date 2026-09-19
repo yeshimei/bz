@@ -1,4 +1,4 @@
-/* 源指纹 475bca485a9e89ae · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b183633599e98c04 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -4068,6 +4068,20 @@ var BZW_cinema = (() => {
       this.stat = { ctime: 0, mtime: 0 };
     }
   };
+  var MEDIA_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i;
+  function absoluteMediaPath(path) {
+    if (!path || !/^(file|https?):\/\//i.test(path)) return null;
+    const base = decodeURIComponent(path.split("?")[0].split("/").pop() || "");
+    return MEDIA_EXT_RE.test(base) ? base : null;
+  }
+  function mediaFile(base) {
+    const f = new TFile();
+    f.path = base;
+    f.name = base;
+    f.basename = base.replace(/\.[^.]+$/, "");
+    f.extension = base.includes(".") ? base.split(".").pop() : "";
+    return f;
+  }
   function stripQuotes(v) {
     if (v.length >= 2 && (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'"))) {
       return v.slice(1, -1);
@@ -4162,7 +4176,19 @@ var BZW_cinema = (() => {
       return f;
     }
     getAbstractFileByPath(path) {
+      const media = absoluteMediaPath(path);
+      if (media) return mediaFile(media);
       return this.makeFile(path);
+    }
+    /** 资源 URL（真插件返回 vault 资源路径）：
+     *  - http(s) 环境（`node scripts/preview-live.mjs` 起的评审服务）：`/__vault-media/<文件名>`，
+     *    服务端按 basename 从**真实 vault** 现场取流——海报全量 1.8G 不可能入库，只留名不入图；
+     *  - file:// 双击直开：无服务端 → 返回绝对路径，浏览器直读本地文件（原口径）。 */
+    getResourcePath(f) {
+      if (typeof location !== "undefined" && /^https?:$/.test(location.protocol)) {
+        return "/__vault-media/" + encodeURIComponent(f.name);
+      }
+      return f.path;
     }
     /** 列 md 文件（getMarkdownFiles：跳过 __stat__ 等内部键；顺序 = localStorage 插入序） */
     getMarkdownFiles() {
@@ -7259,14 +7285,14 @@ tags:
     const st = statusNum(item.status);
     return st === STATUS_WATCHED ? "watched" : st === STATUS_WATCHING ? "watching" : "empty";
   }
-  function seriesStatus(seasons) {
-    const states = seasons.map((s) => statusNum(s.item.status));
+  function seriesStatus(seasons, extra = []) {
+    const states = seasons.map((s) => statusNum(s.item.status)).concat(extra.map((it) => statusNum(it.status)));
     if (states.includes(STATUS_WATCHING)) return STATUS_WATCHING;
     if (states.includes(STATUS_WANT)) return STATUS_WANT;
     return STATUS_WATCHED;
   }
   function cardStatus(e) {
-    return e.kind === "series" ? seriesStatus(e.seasons) : statusNum(e.item.status);
+    return e.kind === "series" ? seriesStatus(e.seasons, e.specials) : statusNum(e.item.status);
   }
   function seasonDotsHtml(seasons) {
     const n = { watched: 0, watching: 0, empty: 0 };
@@ -7329,31 +7355,47 @@ tags:
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
   }
+  function seriesCountsText(card) {
+    var _a;
+    const byType = /* @__PURE__ */ new Map();
+    for (const it of card.specials) {
+      const t = it.typeTag || it.group;
+      byType.set(t, ((_a = byType.get(t)) != null ? _a : 0) + 1);
+    }
+    const extra = [...byType].map(([t, n]) => `${n} 部${t}`).join(" · ");
+    return `共 ${card.seasons.length} 季` + (extra ? ` · ${extra}` : "");
+  }
   function seriesDetailModalHtml(card, posterOf) {
     const face = card.face;
     const url = posterOf(face);
-    const st = seriesStatus(card.seasons);
+    const st = seriesStatus(card.seasons, card.specials);
     const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
     const thumb = (it) => {
       const t = posterOf(it);
       return `<div class="s-thumb">${t ? `<img src="${esc(t)}" alt="" onerror="this.remove()">` : ""}</div>`;
     };
-    const rows = card.seasons.map((s) => {
-      const sub = [s.item.watchDate ? `观影 ${esc(s.item.watchDate.slice(0, 10))}` : "", s.item.seasonText ? `${esc(s.item.seasonText)} 集` : ""].filter(Boolean).join(" · ");
-      const r = s.item.rating;
-      return `<div class="s-row" data-cinema-season-key="${esc(itemKey(s.item))}">${thumb(s.item)}
-      <div class="s-mid"><div class="s-name">${esc(s.item.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
-      <span class="s-chip" style="background:${statusColor(s.item.status)}">${statusText(s.item.status)}</span>
+    const rowOf = (it, cls) => {
+      const sub = [
+        it.group !== card.group ? esc(it.group) : "",
+        // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
+        it.watchDate ? `观影 ${esc(it.watchDate.slice(0, 10))}` : "",
+        it.seasonText ? `${esc(it.seasonText)} 集` : ""
+      ].filter(Boolean).join(" · ");
+      const r = it.rating;
+      return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
+      <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
+      <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
-    }).join("");
+    };
+    const rows = card.seasons.map((s) => rowOf(s.item, "")).join("") + card.specials.map((it) => rowOf(it, " s-row-special")).join("");
     return `<div class="cn-modal" style="max-width:400px;width:100%">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
-      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">共 ${card.seasons.length} 季</span></div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
         <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
           ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ""}
           ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ""}
-          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ""}</div></div></div>    <div class="dm-sec">各 季 明 细</div>${rows}
-    <div class="dm-hint">点某一季查看该季详情</div>
+          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ""}</div></div></div>
+    <div class="s-list">${rows}</div>
   </div>`;
   }
   var GROUP_SUBS_OF = {
@@ -7434,6 +7476,10 @@ tags:
     return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
     <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || "")} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
   }
+  function seriesSheetHeadHtml(card, posterUrl2) {
+    return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
+    <div><div class="cn-sheet-name">${esc(card.name)}</div><div class="cn-sheet-sub">${esc(seriesCountsText(card))}</div></div></div>`;
+  }
 
   // src/cinema/seasons.ts
   var MERGE_GROUPS = ["剧集", "动漫"];
@@ -7459,6 +7505,7 @@ tags:
     const base = (name.slice(0, m.index) + name.slice(m.index + m[0].length)).replace(/[\s\-–—·:：]+$/, "").replace(/[\s\-–—·:：]{2,}/g, " ").replace(/\s{2,}/g, " ").trim();
     return base ? { base, season } : null;
   }
+  var SPECIAL_SEP_RE = /^[\s:：·\-—－]+/;
   function seriesKeyOf(group, base) {
     return `series:${group}:${base}`;
   }
@@ -7485,6 +7532,24 @@ tags:
     }
     return best.item;
   }
+  function latestRated(items) {
+    const rated = items.filter((it) => it.rating != null && it.rating > 0);
+    if (!rated.length) return null;
+    return rated.reduce((best, it) => watchTs(it) >= watchTs(best) ? it : best, rated[0]).rating;
+  }
+  function specialHostOf(name, cards) {
+    let hit = null;
+    for (const c of cards) {
+      if (!c.name || name.length <= c.name.length) continue;
+      if (hit && c.name.length <= hit.name.length) continue;
+      if (!name.startsWith(c.name)) continue;
+      const rest = name.slice(c.name.length);
+      const sep = SPECIAL_SEP_RE.exec(rest);
+      if (!sep || !rest.slice(sep[0].length).trim()) continue;
+      hit = c;
+    }
+    return hit;
+  }
   function mergeSeasonCards(list, merge) {
     if (!merge) return list.map((item) => ({ kind: "single", item }));
     const grouped = /* @__PURE__ */ new Map();
@@ -7504,21 +7569,33 @@ tags:
     for (const [key, slots] of grouped) {
       if (slots.length < 2) continue;
       slots.sort((a, b) => a.no - b.no);
-      const rated = slots.filter((s) => s.item.rating != null && s.item.rating > 0);
-      const latestRated = rated.length ? rated.reduce((best, s) => watchTs(s.item) >= watchTs(best.item) ? s : best, rated[0]) : null;
       merged.set(key, {
         kind: "series",
         key,
         name: parseSeasonName(slots[0].item.name).base,
         group: slots[0].item.group,
         seasons: slots,
+        specials: [],
         face: pickFace(slots),
-        rating: latestRated ? latestRated.item.rating : null
+        rating: null
+        // 统一在特别篇并入后算（口径含特别篇）
       });
     }
+    const cards = [...merged.values()];
+    const absorbed = /* @__PURE__ */ new Set();
+    for (const it of list) {
+      if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
+      const host = specialHostOf(it.name, cards);
+      if (!host) continue;
+      host.specials.push(it);
+      absorbed.add(it);
+    }
+    const allItemsOf = (c) => c.seasons.map((s) => s.item).concat(c.specials);
+    for (const c of cards) c.rating = latestRated(allItemsOf(c));
     const out = [];
     const emitted = /* @__PURE__ */ new Set();
     for (const it of list) {
+      if (absorbed.has(it)) continue;
       let key = null;
       if (MERGE_GROUPS.includes(it.group)) {
         const parsed = parseSeasonName(it.name);
@@ -7797,6 +7874,9 @@ ${item.review ? `影评: ${item.review}
   function seriesCardByKey(key) {
     return mergeSeasonCards(getDisplayItems(), mergeSeasonsOn()).find((c) => c.kind === "series" && c.key === key);
   }
+  function seriesAllAct(sec, key, app) {
+    return { icon: "layers", label: "查看全部", run: () => openSeriesDetail(sec, key, app) };
+  }
   function cardEntryHtml(e, app) {
     var _a;
     const face = cardFace(e);
@@ -7841,11 +7921,23 @@ ${item.review ? `影评: ${item.review}
       onClick: a.run
     }));
   }
-  function sheetHeadEl2(it, url) {
+  function deferClose(acts, close) {
+    return acts.map((a) => ({ ...a, run: () => {
+      close();
+      a.run();
+    } }));
+  }
+  function headElOf(html) {
     var _a;
     const box = document.createElement("div");
-    box.innerHTML = sheetHeadHtml(it, url);
+    box.innerHTML = html;
     return (_a = box.firstElementChild) != null ? _a : box;
+  }
+  function sheetHeadEl2(it, url) {
+    return headElOf(sheetHeadHtml(it, url));
+  }
+  function seriesSheetHeadEl(card, url) {
+    return headElOf(seriesSheetHeadHtml(card, url));
   }
   var faceStash = /* @__PURE__ */ new WeakMap();
   function faceSlots(card) {
@@ -7881,20 +7973,27 @@ ${item.review ? `影评: ${item.review}
       longPress(c, () => {
         const key = c.dataset.cinemaKey;
         if (isSeriesKey(key)) {
-          openSeriesDetail(sec, key, app);
+          const card = seriesCardByKey(key);
+          if (card) openSheet(sec, seriesSheetTarget(card, sec, app));
           return;
         }
         const it = itemByKeyInState(key);
         if (!it) return;
-        openSheet(sec, it, app);
+        openSheet(sec, itemSheetTarget(it, sec, app));
       });
     });
   }
-  function openSheet(sec, it, app) {
+  function itemSheetTarget(it, sec, app) {
+    return { acts: itemActions(it, sec, app), head: sheetHeadEl2(it, posterUrl(it, app)) };
+  }
+  function seriesSheetTarget(card, sec, app) {
+    return { acts: [seriesAllAct(sec, card.key, app)], head: seriesSheetHeadEl(card, posterUrl(card.face, app)) };
+  }
+  function openSheet(sec, target, preFire) {
     if (!sec.isConnected) return;
-    openItemSheet(toItemActions(itemActions(it, sec, app)), {
+    openItemSheet(toItemActions(preFire ? deferClose(target.acts, preFire) : target.acts), {
       sheetClass: SHEET_SKIN,
-      sheetHead: sheetHeadEl2(it, posterUrl(it, app))
+      sheetHead: target.head
     });
   }
   function openDetail(sec, it, app) {
@@ -7918,14 +8017,31 @@ ${item.review ? `影评: ${item.review}
   function openSeriesDetail(sec, key, app) {
     const card = seriesCardByKey(key);
     if (!card) return;
+    const mobile = sec.classList.contains("mob");
     const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)));
     mountIcons(el);
-    el.querySelectorAll(".s-row").forEach((row) => row.addEventListener("click", () => {
-      const it = itemByKeyInState(row.dataset.cinemaSeasonKey);
-      if (!it) return;
-      close();
-      openDetail(sec, it, app);
-    }));
+    const rowItem = (row) => itemByKeyInState(row.dataset.cinemaSeasonKey);
+    el.querySelectorAll(".s-row").forEach((row) => {
+      row.addEventListener("click", () => {
+        const it = rowItem(row);
+        if (!it) return;
+        close();
+        openDetail(sec, it, app);
+      });
+      row.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        const it = rowItem(row);
+        if (!it || mobile) return;
+        openItemMenu(e.clientX, e.clientY, toItemActions(deferClose(itemActions(it, sec, app), close)), true, MENU_SKIN);
+        resetItemMenuClickGuard();
+      });
+      if (mobile) {
+        longPress(row, () => {
+          const it = rowItem(row);
+          if (it) openSheet(sec, itemSheetTarget(it, sec, app), close);
+        });
+      }
+    });
   }
   function openForm(sec, item, app, presetSt) {
     var _a, _b;
@@ -8269,7 +8385,8 @@ ${item.review ? `影评: ${item.review}
       e.preventDefault();
       const key = cardEl.dataset.cinemaKey;
       if (isSeriesKey(key)) {
-        openSeriesDetail(sec, key, app);
+        openItemMenu(e.clientX, e.clientY, toItemActions([seriesAllAct(sec, key, app)]), true, MENU_SKIN);
+        resetItemMenuClickGuard();
         return;
       }
       const it = itemByKeyInState(key);
@@ -8413,7 +8530,7 @@ ${item.review ? `影评: ${item.review}
 
   // prototypes/cinema/fake-sim.ts
   var FOLDER = "我的/影视";
-  var SEED_MARK = "bz-sim:__cinema-seed-v1";
+  var SEED_MARK = "bz-sim:__cinema-seed-v3";
   var SETTINGS_KEY = "bz-sim:__settings";
   function one(v) {
     return String(v != null ? v : "").replace(/\s*\n+\s*/g, " ").trim();
@@ -8457,9 +8574,11 @@ ${item.review ? `影评: ${item.review}
     cinemaFolderPath: FOLDER,
     cinemaSortMode: "date",
     cinemaStatusFilter: "",
-    cinemaGridColumns: "5"
+    cinemaGridColumns: "5",
+    cinemaMergeSeasons: true
   };
   function injectSettings() {
+    if (new URLSearchParams(location.search).get("merge") === "0") settingsStore.cinemaMergeSeasons = false;
     setSettingsProvider(() => settingsStore);
     setSettingsSaver(async () => {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));

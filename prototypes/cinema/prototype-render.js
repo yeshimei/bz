@@ -1,4 +1,4 @@
-/* 源指纹 79560ee1ca61d862 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e4e48f3dc48a3677 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -52,7 +52,9 @@ var BZR_cinema = (() => {
     renderMidnightMob: () => renderMidnightMob,
     seasonDotsHtml: () => seasonDotsHtml,
     seasonSegState: () => seasonSegState,
+    seriesCountsText: () => seriesCountsText,
     seriesDetailModalHtml: () => seriesDetailModalHtml,
+    seriesSheetHeadHtml: () => seriesSheetHeadHtml,
     seriesStatus: () => seriesStatus,
     sheetHeadHtml: () => sheetHeadHtml,
     spHeadHtml: () => spHeadHtml,
@@ -166,14 +168,14 @@ var BZR_cinema = (() => {
     const st = statusNum(item.status);
     return st === STATUS_WATCHED ? "watched" : st === STATUS_WATCHING ? "watching" : "empty";
   }
-  function seriesStatus(seasons) {
-    const states = seasons.map((s) => statusNum(s.item.status));
+  function seriesStatus(seasons, extra = []) {
+    const states = seasons.map((s) => statusNum(s.item.status)).concat(extra.map((it) => statusNum(it.status)));
     if (states.includes(STATUS_WATCHING)) return STATUS_WATCHING;
     if (states.includes(STATUS_WANT)) return STATUS_WANT;
     return STATUS_WATCHED;
   }
   function cardStatus(e) {
-    return e.kind === "series" ? seriesStatus(e.seasons) : statusNum(e.item.status);
+    return e.kind === "series" ? seriesStatus(e.seasons, e.specials) : statusNum(e.item.status);
   }
   function seasonDotsHtml(seasons) {
     const n = { watched: 0, watching: 0, empty: 0 };
@@ -239,31 +241,47 @@ var BZR_cinema = (() => {
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
   }
+  function seriesCountsText(card) {
+    var _a;
+    const byType = /* @__PURE__ */ new Map();
+    for (const it of card.specials) {
+      const t = it.typeTag || it.group;
+      byType.set(t, ((_a = byType.get(t)) != null ? _a : 0) + 1);
+    }
+    const extra = [...byType].map(([t, n]) => `${n} 部${t}`).join(" · ");
+    return `共 ${card.seasons.length} 季` + (extra ? ` · ${extra}` : "");
+  }
   function seriesDetailModalHtml(card, posterOf) {
     const face = card.face;
     const url = posterOf(face);
-    const st = seriesStatus(card.seasons);
+    const st = seriesStatus(card.seasons, card.specials);
     const badge = (color, text) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
     const thumb = (it) => {
       const t = posterOf(it);
       return `<div class="s-thumb">${t ? `<img src="${esc(t)}" alt="" onerror="this.remove()">` : ""}</div>`;
     };
-    const rows = card.seasons.map((s) => {
-      const sub = [s.item.watchDate ? `观影 ${esc(s.item.watchDate.slice(0, 10))}` : "", s.item.seasonText ? `${esc(s.item.seasonText)} 集` : ""].filter(Boolean).join(" · ");
-      const r = s.item.rating;
-      return `<div class="s-row" data-cinema-season-key="${esc(itemKey(s.item))}">${thumb(s.item)}
-      <div class="s-mid"><div class="s-name">${esc(s.item.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
-      <span class="s-chip" style="background:${statusColor(s.item.status)}">${statusText(s.item.status)}</span>
+    const rowOf = (it, cls) => {
+      const sub = [
+        it.group !== card.group ? esc(it.group) : "",
+        // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
+        it.watchDate ? `观影 ${esc(it.watchDate.slice(0, 10))}` : "",
+        it.seasonText ? `${esc(it.seasonText)} 集` : ""
+      ].filter(Boolean).join(" · ");
+      const r = it.rating;
+      return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
+      <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ""}</div>
+      <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
-    }).join("");
+    };
+    const rows = card.seasons.map((s) => rowOf(s.item, "")).join("") + card.specials.map((it) => rowOf(it, " s-row-special")).join("");
     return `<div class="cn-modal" style="max-width:400px;width:100%">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
-      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">共 ${card.seasons.length} 季</span></div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
         <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
           ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ""}
           ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ""}
-          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ""}</div></div></div>    <div class="dm-sec">各 季 明 细</div>${rows}
-    <div class="dm-hint">点某一季查看该季详情</div>
+          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ""}</div></div></div>
+    <div class="s-list">${rows}</div>
   </div>`;
   }
   var GROUP_SUBS_OF = {
@@ -343,6 +361,10 @@ var BZR_cinema = (() => {
   function sheetHeadHtml(it, posterUrl) {
     return `<div class="cn-sheet-head">${posterUrl ? `<img class="cn-sheet-poster" src="${esc(posterUrl)}" onerror="this.remove()">` : ""}
     <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || "")} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
+  }
+  function seriesSheetHeadHtml(card, posterUrl) {
+    return `<div class="cn-sheet-head">${posterUrl ? `<img class="cn-sheet-poster" src="${esc(posterUrl)}" onerror="this.remove()">` : ""}
+    <div><div class="cn-sheet-name">${esc(card.name)}</div><div class="cn-sheet-sub">${esc(seriesCountsText(card))}</div></div></div>`;
   }
 
   // src/cinema/seasons.ts
