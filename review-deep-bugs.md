@@ -325,4 +325,51 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-（下一域：cinema）
+---
+
+## cinema（影院）域 · 审查入账中（方向 1 功能 + 方向 2 UI + 方向 3 效率 + 方向 4 一致已到账；方向 5 架构审查中，本节待补全后定稿批次）
+
+> 明细：`.scratch/review-deep/cinema-{func,ui,efficiency,consistency}.md`（arch 待落）。方向 1：P2×1 + P3×7；方向 2：P1×1 + P2×1 + P3×4 + [UX-Suggestion]×2；方向 3：P2×5 + P3×2 + [UX-Suggestion]×3；方向 4：P2×4 + P3×8（含 [UX-Suggestion]×3）+ 附带功能线 P2×1。跨方向去重：ui.ts:142 模板（func=ui）、焦点（ui=eff）、openDouban（func=ui=cons 记名升格）、ESC 清词（eff=cons，cons 并入 ✕ 钮定稿范式）、mob 搜索回显（eff=cons）、热区（ui=cons）。旧账复核四方向一致：已修/闭环确认在位（C1 撤回属实、C2-C10、G6-G9、跟进 B/C、一致#1/#2）；未修 1 条（AI#17，P3，随手收）；144 拍板待做账（删除可撤销 notifyUndo/脏表单拦截）与 ADR-0125 基座迁移在案不另立。门禁基线：tsc 0 错；tests/cinema 11 文件 183 例全绿。
+
+### 已去重条目（func × ui 合并，暂记 P2×2 + P3×9；批次划分待 5 方向齐后定稿）
+
+- **P2 建档模板影评裸插值破 frontmatter** `ui.ts:142`（func 新-1 = ui 新-1，ui 记 P1）——「添加已看 + 多行影评」裸值直插破 YAML：重开面板影片消失、`parseMovieFile` 返 null、豆瓣 sweep 永不覆盖（自愈链断）；含 ` #` 影评下次 processFrontMatter 读回尾部静默丢。对照：douban-fetcher `formatYamlValue`（C3 修复）只覆盖了抓取链，create 路径漏网。修：formatYamlValue 导出复用（推荐）或 create 改走 processFrontMatter 同通道 + 多行/含 `: ` 影评 round-trip 回归。
+- **P2 桌面搜索空态整刷丢焦点** `ui.ts:612` × `layouts/midnight/render.ts:173`（ui 新-2）——搜索落空态触发 renderAll 重建含搜索框本体的 `.j-view`，焦点落 body，跨过空态后继续输入全部无效。修（二选一）：A. 空态也只换 `.d-scroll` 局部；B. renderAll 快照 activeElement 回焦 + 光标尾插（照抄 mob 样板 ui.ts:597-598）。
+- **P3 添加/加想看无文件名非法字符校验** `ui.ts:435-443` + `recommend.ts:176-192`（func 新-2 = ui 新-5）——《Face/Off》《What If...?》类真实片名 vault.create 必抛 OS 异常，通用「保存失败」提示难懂；saveEdit 有 ILLEGAL_NAME_RE 两条路径不对称。修：校验提共享函数，统一 saveEdit 同款人话提示。
+- **P3 建档日期裸写 → Moment → 英文星期显示** `ui.ts:142` + `recommend.ts:188`（func 新-3）——未引号日期被 metadataCache 解析成 Moment，详情/季明细 `slice(0,10)` 显示「Sat Sep 19」；一次编辑即自愈故长期未察觉。修：两处模板日期值加引号。
+- **P3 openDouban 裸 window.open 不走单源** `ui.ts:66-73`（func 新-4 = ui 新-3）——失败静默「点了没反应」；切 core `openExternalUrl`（app 在链上可得）。
+- **P3 ovl 弹窗 ESC 层唯一 id 绕过同 id 清扫** `ui.ts:229-242`（func 新-5）——unload/非常规关闭路径层泄漏不可 GC，ESC 每次遍历全部陈旧层。修：id 改固定 `'bz-cinema-ovl'` 交 esc-manager 同 id 清扫（域内弹窗不同时叠开，安全）。
+- **P3 改名「rename 成功 + 写属性失败」半失败不一致** `ui.ts:147-153` × `ui.ts:466,496`（func 新-6）——saveEdit prev 快照七字段不含 file：面板回滚旧名、盘上已改名、item.file 指新路径。修：快照补 file / 失败回滚 rename / 先写属性后 rename（三选一）。
+- **P3 节奏类统计把想看建档日期当观影日期** `analysis.ts:65-73,178,268-284`（func 新-7）——月均/周末/月度/年度/星期桶被想看条目抬高（评分类有 rating>0 守卫、节奏类漏了同款）；备选「想看不写观影日期」动字段语义属拍板项，默认走 status 守卫。
+- **P3 季行单位叠字** `shared.ts:242`（ui 新-7）——字段口径自带单位（「2季」）模板再拼「集」→「2季 集」；季行直接展示原文或按 `/季$/` 条件拼。同字段 analysis.ts:148-152 按「N 季」消费的口径矛盾一并核对。
+- **P3 海报扩展名白名单漏 avif/bmp/svg** `ui.ts:51`（func 新-8）——手填此类海报永远首字占位。修：白名单补齐或改 TFile 命中即给 URL 交 onerror 兜底。
+- **P3 AI#17（旧账）parseRecommendJson 围栏放宽** `recommend.ts:154`——只认 ` ```json `，裸围栏/` ```JSON `/噪声落「返回格式无法解析」；放宽 `/```[a-zA-Z]*\s*([\s\S]*?)```/` 与 knowledge/note-gen 对齐（note-gen 已有容错 parseAiJson 可对照）。
+
+### 方向 3（效率）补充条目
+
+- **P2 搜索 ESC 直接关面板，二段清词语义缺失** `ui.ts:804-806` × `layouts/midnight/render.ts:149/:54`（eff 新-1 = cons 新-4）——clipbook「ESC 清词 + ✕」定稿范式（clipbook/ui.ts:349-357 + 效率#12 尾部 ✕；encrypt ui.ts:740-741 注释明言对齐）未跟：搜索框有词按 ESC 应清词不冒泡、再按才关面板，现状一键关面板且防抖窗口未落词被 `closeOverlay` 一并丢弃；框尾无 ✕，清词只能全选删。修：`j-q`/`j-mq` 挂 keydown（有词 → 与 `data-cinema-clear` ui.ts:651-656 同出口清词 + stopImmediatePropagation，无词放行）+ 框尾 ✕（有词才显示）desk/mob 两端同做。
+- **P2 移动端重开面板隐形筛选** `ui.ts:791-800` × `index.ts:19-25` × `midnight/render.ts:54`（eff 新-2）——searchKeyword 跨会话残留生效，但 mob 壳无 value 回显（desk :149 有）：网格被旧词过滤而搜索框空白。修：mob 壳回显 `value`（对齐 desk，最小改；closeOverlay 清词属行为语义改动不做）。
+- **P2 滚位零记忆 + 队列双刷放大** `ui.ts:778-789` → `midnight/render.ts:173/:189`（eff 新-3）——renderAll 整写 innerHTML 销毁滚位，标记/保存/筛选/队列完成（douban-queue.ts:231-240 立即+1.5s 双刷）全部跳顶。修：renderAll 渲染前存 `.d-scroll`/`.m-scroll` scrollTop 渲染后恢复（clipbook 效率#17 已上线样板 clipbook/ui.ts:89,1250-1271）；批内可选最小加做：队列完成刷新走 `refreshDeskList` 局部通道。
+- **P2 卡片键盘不可达** `shared.ts:163-172` × `ui.ts:636-721`（eff 新-5）——`.pcard` 裸 div 无 tabindex/role，全域零键盘监听，纯键盘用户搜得到片打不开片。修：卡片 tabindex=0 + role=button + aria-label + 委托层 keydown 分支（Enter/Space 开详情，对齐 review 域不可达卡整改范式）。
+- **P3 表单 Enter 不保存** `ui.ts:391-430`（eff 新-6 修半）——core `bindFormSubmit`（core/ui/modal.ts:27-45，textarea 天然豁免）在位未用；接上即可。autofocus 半边归拍板 C2。
+- **P3 renderAll 恒算 AI 页 + 分析页 19 板块** `ui.ts:565-586`（eff 新-7）——列表页每次点筛/搜索防抖拍/队列双刷都在重算两份永不显示的大字符串（buildTasteProfile 全库加权 + analysis 19 板块拼装）。修：midnightInput 按 `M.view` 惰性构建（list 页跳过），几行收掉。
+- **P3 搜索占位文案与实际字段不符** `midnight/render.ts:149/:54` × `data.ts:158-168`（eff 新-10 = cons 新-12 部分合并）——主演/导演可搜但两端占位都没提全且两端互斥。修：两端统一「搜索片名、类型、导演、主演、影评…」（省略号统一 `…`）。
+
+### 方向 4（一致性）补充条目
+
+- **P2 编辑改状态致影评静默清空** `ui.ts:422-423` × `:157-158`（cons 附带功能线）——编辑「已看」影片改回「在看/想看」保存：表单只对「已看」收集影评（强置 `review=''`），persistItem 随即 `delete fm['影评']`，用户影评静默丢失且通知「已保存」。修：非「已看」态保留原影评不写空（推荐）+ 回归。
+- **P2 移动端列表视图零空态** `midnight/render.ts:186-190` × `:170-172`（cons 新-2）——空库/筛选无命中 = 整片空白，desk 的 emptyPageHtml（无匹配+清空筛选/空库+添加引导）mob 分支没有，搜索词错只能逐字删。修：`renderMidnightMob` list 分支补 `cards.length ? grid : emptyPageHtml(viewFiltered(v))`（`data-cinema-clear` 委托全端已生效，零行为层改动）。
+- **P2 movie 域事件 `review` 类零发射** `ui.ts:462-500` × `smartcat/movie-source.ts:13-18,52-59` × `CONTEXT.md:102`（cons 新-3）——契约/文案层（movieReviewText 写改删三态）/CONTEXT 词条三方俱在，唯 saveEdit 漏发 emitter，`movieReviewText` 成死代码。修：saveEdit 落盘成功后按 prev.review 快照补发 `{ kind:'review', fromReview, toReview }`（3 行 + 回归）。
+- **P3 触控热区** `styles.css:122/:126/:130`（ui 新-4 = cons 新-5）——移动头行四钮 30×30 低于设计手册 §8.2 绝对下限 40px，全域零 `pointer:coarse` 扩热区（stylized 域唯一）。修：头行四钮挂 `bz-touch-target` 修饰类（memo/render.ts:127 先例）+ `.chip` 等照 diary/styles.css:1310 先例补 `@media (pointer:coarse)` `::after` 外扩（视觉零改动）；chips 横条紧凑行按 components.css §8.2 口径不适用外扩的不动。
+- **P3 CONTEXT.md 影院词条三处脱节** `CONTEXT.md:102`（cons 新-7）——缺 `bz-cinema-random-pick` 命令、`M.aiTitle` 已死句、review 事件不实。修：随 review 事件拍板结果同步（主线程文档收口）。
+- **P3 域内微单源三处**（cons 新-8）——《》提取双实现（data.ts:16 × douban-fetcher extractMovieName:45-49，data.ts 改用域内单源）、stripMdExt 内联（fetcher:46 改 import core/ui/str:74）、非法字符集双份（ui.ts:129 × fetcher:349，常量落 constants.ts）。
+- **P3 静态内联视觉样式收编** `shared.ts:152/:209/:219/:250` × `analysis.ts:259-297`（cons 新-9，ADR-0020）——静态视觉值平移 styles.css 建类（值零改动不破探索稿 1:1）；动态行为性样式豁免不动。
+- **P3 unloadCinema 不注销面板 ESC 层** `index.ts:154-169`（cons 新-10）——bookshelf B1/gameshelf/home 均卸载注销，本域漏。修：补 `unregisterPanelEsc('bz-cinema')` 一行对齐。
+- **P3 文案口径收尾**（cons 新-12 除占位符外）——「已加入想看：X」（recommend.ts:195）补「」与全域引号形制对齐；「已看/已放映」同页双称保留午夜场风味词、CONTEXT 词条注一句口径（不改用户可见文案）。
+
+### UI/体验分流（6 项 → review-deep-ui-pending.md：C1 集合外 tag 表达 / C2 名称框自动聚焦 / C3 季圆点热区 / C4 失败通知 setAction 重试钮 / C5 菜单补「标记想看」回退 / C6 分析页 19 板块图标语义化——均为新交互供给或含设计选择，等总拍板）
+
+### 已核验无问题摘要（func+ui）
+面板生命周期/手势浮层单源/渲染竞态/数据-UI 对账/styles（滚动条零自造、--bz-vvh 守卫）/设置接线/main.ts 四命令三段式——逐面确认无新洞（详见 cinema-ui.md §三、cinema-func.md §三）。
+
+（方向 3 效率 / 4 一致 / 5 架构审查中——到账后补本节并定稿修复批次。）
