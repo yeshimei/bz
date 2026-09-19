@@ -31,12 +31,16 @@ function getController(): PasswordVaultAppController {
 
 export async function ensurePasswordVault(app: App): Promise<void> {
   if (initialized) return;
-  initialized = true;
   await getController().init();
+  // init 成功后再置旗标（对齐 encrypt ensureEncrypt 同款：先置会让 init 抛错后的
+  // 后续调用全部短路，无法重试）
+  initialized = true;
 }
 
 export function openPasswordVault(app: App): void {
-  void ensurePasswordVault(app).then(() => getController().openManager());
+  void ensurePasswordVault(app)
+    .then(() => getController().openManager())
+    .catch(() => notice('密码本初始化失败，请重试', 'error')); // void 链 catch 收口（对齐 encrypt openEncrypt）
 }
 
 /**
@@ -47,7 +51,12 @@ export function openPasswordVault(app: App): void {
  * 全程不打开面板（选择器为轻量弹层）。
  */
 export async function copyGeneratedPassword(app: App): Promise<void> {
-  await ensurePasswordVault(app);
+  try {
+    await ensurePasswordVault(app);
+  } catch {
+    notice('密码本初始化失败，请重试', 'error'); // main.ts 侧 void 调用，链内自兜底防 unhandled rejection
+    return;
+  }
   if (!(await ensureSafeUnlocked('password-vault'))) return;
   const c = getController();
   try {
@@ -75,13 +84,18 @@ export async function copyGeneratedPassword(app: App): Promise<void> {
 /**
  * 锁定密码本（命令 bz-password-vault-lock，2026-09-11 首页入口菜单）：
  * 与保险库**同一把主密码、同一个 SafeManager**（ADR-0109 同库共存），故直接复用 encrypt 的
- * `lockSafe` —— 一步锁掉两边，本域自己的明文缓存再清一次（两个域 UI 各自实例化包装层，
- * 保险库侧清不到本域实例）。此前只能进面板走缺省上锁路径。
+ * `lockSafe` —— 一步锁掉两边。本域实例的明文缓存（pwData/loadCache）自深审新-2 起由数据层
+ * 订阅 encrypt:unlock-changed(false) 统一自清（SafeManager.lock 幂等短路后上锁必广播一次），
+ * 此处不再显式 dataManager.lock()。
  */
 export async function lockPasswordVault(app: App): Promise<void> {
-  await ensurePasswordVault(app);
+  try {
+    await ensurePasswordVault(app);
+  } catch {
+    notice('密码本初始化失败，请重试', 'error');
+    return;
+  }
   const ok = await lockSafe(app);
-  getController().dataManager.lock();
   if (ok) notice('密码本已锁定', 'success');
   else notice('密码本本来就是锁着的', 'warning');
 }
