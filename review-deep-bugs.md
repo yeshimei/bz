@@ -598,6 +598,20 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **UX 分流（H 系）**：设置「外观」组 homeLayout/homeSkin 可选可存但首页不消费（issue 246 占位范式，接上 or 注明占位）。
 - **测试缺口 4**：keepHome 行为链、失败态 flow 断言、promise rejection 路径、死链测试——修复批随补。
 
+---
+
+## settings-panel（设置面板）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+
+> 明细：`.scratch/review-deep/settings-panel-func.md`。方向 1（func）：P2×2 + P3×5 + UX×1。旧账复核 8 组：已闭环 3 组（DOMAIN_ICONS/H1-H10 全闭环/linkAgentMinScore onChange 钳制）；**仍在 4 组**——R9 缝升级（非法输入 NaN→0 **写入**，比 core「不写入回显旧值」口径更重，建议升级修法）、styles.css:1042 `-var(` 无效声明（与 favorites UI-02 同族跨域记档）、GS3 密钥框确认全仓 `secret:` 零使用属预留死特性（拍板项）、core-consistency 提示手写实为已收编 notifySaveError（闭环）；F-2 即 core-func 新-1 的本域落账。门禁基线：tsc 0；settings-panel 相关 4 文件 69 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 搜索过滤恢复放出门控行**（F-1）——恢复分支无条件 `display=''`，visibleWhen 门控隐藏的行/组（DeepSeek 密钥行、移动端组）整批放出直到下次 refresh。修：恢复按门控重求值。
+- **P2 卸载清理不派 blur，防抖窗口文本静默丢失**（F-2 = core-func 新-1 本域落账）——↑↓ 切域/卸载清理移除聚焦输入框不派 blur。修：移除前 flush 防抖（或派 blur）。
+- **P3 群（5 条）**：list 行移除回调无 try/catch（core C10 口径分叉）；初始渲染 visibleWhen 求值裸奔（单行异常放大成整域「加载失败」，H6 容错只守 refresh）；「重置本域」saveSettings 裸奔假成功；搜索态 ↑↓ 在未过滤全集切换（可切到不可见域无反馈）；移动端搜索缓存不做端门控过滤（命中隐藏行定位静默失效）。
+- **P3 R9 缝升级修法**：非法输入 NaN→0 写入 → 对齐 core「不写入回显旧值」口径。
+- **UX 分流（SP 系）**：单行输入框聚焦时 ↑↓ 直接切域与光标移动习惯冲突（U-1，与 F-2 同现象交互面——修复时拍板：输入态让路光标移动 or 保留切域）。
+
 ### 已入账条目（跨方向去重待 5 方向齐）
 
 - **P2 统计柱区关闭重开不重建**（func PF1）——`lastStatsKey` 只在换档/卸载清空，关开弹窗同键早退，近 7 天/近 6 月柱状图空白。修：一行（openPanel 清 key 或早退条件补面板生命周期）。
