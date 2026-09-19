@@ -285,6 +285,44 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 ### 主线程收口清单（合并后）
 ① `.k-diary` 族生死核对（批 C 恢复入口后批 D 须保留该族，合并序 C→D）；② statusbarHtml 三方接线核对；③ 跨批测试适配；④ preview 产物 rebuild 仪式；⑤ 各批边界漏项。
 
+### encrypt 修复闭环（2026-09-20）
+四批分支 `bz-fix-encrypt-{data,dialog,view,style}` 串行并入（合并序 A→B→C→D，C 在 ui.ts import 块一处冲突主线程取并集）。**主线程收口**：①D9 回归修复——批 A 目录重算读 settings 与 diary 域 applyDirectories 快照不同源（diary 测试 applyDirectories 不写 settings），改「调用方注入真源」：`restoreDiaryEntry` 加 diaryDir 参数，diary/encrypt.ts 直传 `DIARY_DIRECTORY`、encrypt 面板动态 import（函数级环延迟解析合规），settings 读取降兜底；②`vault-assets-view` 还原按钮内联 style → `.bbtn.indigo`（批 D 类已备）；③closeAllDialogs 收场补 `cancelActiveFlowDialog()`（批 B 残款：flow-dialog 确认框不随上锁收场）；④搜索 ✕ 内联样式收编 `.bz-search-clear` 域类；⑤**既存构建雷**：secondbrain fake 层缺 `TFile` 导出（聚合链 bookshelf/data.ts 需要），diary 源变更触发重出即崩——补 TFile 桩类；⑥`.k-diary.on` 样式核对健在（批 C 残款担忧不成立）。**门禁**：tsc 0 错；全量 404 文件 6232 例全绿（smartcat 1 例并行负载 flaky 复跑绿）；`pnpm run build` 部署（70b861ce）。**批边界残款（登记）**：confirmRestoreDiary 确认框仍展示加密时旧目录 path（展示语义小尾巴）；destroy-confirm ESC 同名层并发顶替（沿袭现状）；pv 解锁屏被本域清扫的 await 悬挂——pv-func 方向证据链排除成立性，encrypt 侧 activeUnlock cancel 链已兜底。**姊妹域记名（pv 域轮输入，多数已被 pv 审查证实并展开）**：见 pv 节。
+
+## password-vault（密码本）2026-09-20 深审
+
+> 明细：`.scratch/review-deep/pv-{func,ui,efficiency,consistency,arch}.md`。5 方向并行审查；新发现合计 48 条（P1×3 + P2×8 + P3×37）+ [UX-Suggestion]×10 + 测试缺口 7。门禁基线：tsc 0 错；tests/password-vault 6 文件 53 例全绿（锁屏聚焦用例 flaky 记新-15）。去重后 **修复项 P1×3 + P2×8 + P3×20**（分三批）；UI/增强 9 项分流 `review-deep-ui-pending.md`；**encrypt 轮姊妹域记名 7 条验证：成立 5（安全模式双口径/openExternal/口径漂移/密码错误双通知/desc 不一且带「pv 关不掉安全模式」升级点）、消解 2（N18① 冗余 lock 被 SafeManager 幂等短路消解；「closeAllDialogs 误清扫 pv 锁屏致悬挂」证据链排除——pv 面板锁屏是 inline 非 body>mask 且 lockSafe 首行短路）**。旧账复核：review-fix-lock E 系全部在位；review-all2 N13-N18 七条未修确认（N14/N16 并入本轮 P1/P2 修法，N15 对齐 encrypt T11，N18① 消解关账）；N12 维持登记。
+
+### P1（3 项）
+- **密码行样式缺失（弹窗撑坏）** `render.ts:102` × `styles.css:1531-1539`（ui 新-1）——`.mini`/pwdrow 无 dialog 上下文规则，eye 内嵌 SVG 按 300×150 默认渲染，添加/编辑弹窗双端必现横向溢出。修：补 pwdrow flex + dialog .mini 规则（对齐 acctcard :517 规格）+ 测试断言。
+- **外部上锁后空锁屏卡死（N16 升级）** `ui.ts:1078-1089,378-383`（ui 新-2 = func 新-1A = arch 新-1）——解锁态开面板锁屏从未初始化，别域上锁后只 toggle open 类：纯背景空白层无输入框不可解锁。修：`onSharedLockChanged(false)` 补 `showLock()`（幂等重入，连带修 N16 残留文案）+ 回归断言锁屏内容节点（E2 旧用例只断 `.open` 数量在盲区）。
+- **kw 残留渲染链断裂（unhandled rejection）** `ui.ts:405-409,628-631 × data.ts:299-301`（func 新-1B）——searchKw 跨 hide/show 存活，未解锁时 renderAll 调 search 抛「未解锁」中断渲染链，showLock 被跳过且重开复现。修：渲染入口未解锁守卫 + onSharedLockChanged(false)/hide 清 searchKw + loadAndRender try/finally 保 showLock 必达。
+
+### P2（8 项）
+- **安全模式全链三分叉** `ui.ts:1047-1051 × settings.ts:33`（cons 新-1 = func ① = N18②）——hide 单读构造期快照且只认新键：存量旧键 encryptSecurityMode 用户 pv 永不自动上锁；pv 设置关安全模式不同步旧键（encrypt 侧 OR 读下关不掉）。修：hide 实时 OR 双键读 + settings binding 双键同步双写（逐字对齐 encrypt/ui.ts:463-468）+ desc 统一。
+- **「锁定保险库」清不到 pv 实例明文**（func 新-2 P2 数据安全）——快速取密后整表明文驻留 pwData，encrypt lockNow 只清自己实例。修：PasswordVaultDataManager 构造订阅 unlock-changed(false) 自清 pwData/loadCache（destroy 退订），UI 层订阅回归纯重绘，index.ts:84 显式 lock 可删。
+- **快速取密 Enter 默认「生成新」** `quick-pick.ts:168`（eff P2）——搜索命中后 Enter 应复制命中项而非生成（误生成风险+多一步）。修：默认动作改复制命中 + 测试。
+- **FAB 弹窗焦点落隐藏桌面实例** `ui.ts:950-952`（ui 新-3）——querySelector 恒取 desk 实例，移动端软键盘不弹；openPlatformEdit 全平台无聚焦。修：按可见实例 focus + 平台编辑补聚焦。
+- **hide/上锁不清 shownIds、show 不收移动详情页（N14 升级）** `ui.ts:1036-1052`（ui 新-4）——重锁再解锁明文直出、旧明文 DOM 复现。修：hide 首行收页 + lock 路径清 shownIds。
+- **renderAll 每次写盘 lock-stats.json** `ui.ts:371,1128`（ui 新-5 = func 新-6 = eff）——encrypt T12 整改未同步。修：对齐——摘 renderAll、挪 hide/onSharedLockChanged(false) 消费点。
+- **上锁路径不收场弹窗**（cons P2，对齐 encrypt N9 修法）——pv hide/lock 收场补弹窗清理（明文浮层残留）。
+- **15 分钟 idle 自动上锁 pv 缺席**（cons P2）——对齐 encrypt 补齐。
+
+### P3（20 项，按批摘要）
+- **数据/取密**：quick-pick 活动行 LIMIT（func 新-3）；search 空词返回 slice（func 新-5，防渲染层 sort 改写 pwData 持久化）；保存/首设防重入（func 新-4）；encrypt:changed 协议常量字面量双源（arch，抽共享常量）；index.ts 旗标先置+void 无 catch（arch）；data.test.ts 整文件重复删（arch，data-manager.test 严格超集）；快速取密陈旧快照（arch，登记低频）。
+- **锁屏/会话**：密码错误单通知+冷却倒计时+错误清除条件反转（ui 新-7 = N15）；N13 eye 三件套复位；showLock 卸载竞态 TypeError（arch）；死代码/失实注释清仓（arch）；锁屏聚焦 flaky 修（ui 新-15）；**encrypt 侧 closeAllDialogs 按 kind 过滤**（ui 新-8：快速取密的 body 解锁屏被保险库面板 hide/lockNow 误收场——encrypt/ui.ts 一处，pv 轮顺修）。
+- **渲染/列表**：N17 mobSegHtml data-id escAttr；双实例搜索状态回写（ui 新-6，联动防抖收编 core debounce）；外部变更回调刷新移动详情页（ui 新-9）；删最后账号清 selPlatform（ui 新-10）；fav 空态文案（ui 新-11）；口径漂移清单（toast 档/「密码本已解锁」解锁文案/「保险箱」→「密码本」/手拼 notice→notifyActionError/防抖收编）；pv 自称「保险库」修正（踩自家 _Avoid_）；DEFAULT_CHARSET 三份收敛；删除动作挂 notifyUndo（确认框保留——cons 判定可撤销面对齐效率整改 5 的完整形态待拍板，先补撤销链纯增益）；favicon 失败负缓存（ui 新-14，core/dom.ts 补 tombstone）；移动热区 40-44px（ui 新-12）；bindFormSubmit Enter 提交（ui 新-13）。
+
+### UI/增强分流（9 项 → review-deep-ui-pending.md）
+快速取密生成即丢弃不落库（func 建1）、空字段复制报成功（func 建3）、选择器键盘断路/role（ui S1）、移动收藏视图入口（ui S2）、移动链接纯文本（ui S3）、生成覆盖无确认（ui S4）、批量导入导出（ux#12 维持重呈）、首设流程统一 core 三态（cons，随 E6 重呈）、删除免确认完整形态（cons UX 拍板项）。
+
+### 修复批分工（3 worktree，文件互不重叠）
+- **A 数据取密协议** `bz-fix-pv-data`（data.ts/index.ts/quick-pick.ts + 测试）：func 新-2/3/5、eff P2 Enter 落点、N18①、arch 常量/旗标/data.test 重复。
+- **B ui 会话锁屏** `bz-fix-pv-lock`（ui.ts 会话区 + settings.ts + encrypt/ui.ts 仅 closeAllDialogs 一处 + 测试）：P1×2、安全模式三分叉、上锁收场、idle 补齐、shownIds/mobpage、密码通知/倒计时、N13、防重入、写盘摘除、showLock 竞态、flaky、encrypt kind 过滤。
+- **C ui 渲染列表弹窗样式** `bz-fix-pv-view`（ui.ts 渲染区/render.ts/styles.css/core-dom 负缓存 + 测试）：P1 密码行样式、P2 焦点、P3 渲染族全项 + 口径漂移 + 热区 + bindFormSubmit。
+
+### 主线程收口清单（合并后）
+① 批 B 动 encrypt/ui.ts 与 encrypt 侧测试适配核对；② pv 与 encrypt 双域测试互证（共锁事件链）；③ preview rebuild 仪式；④ 跨批 mock/计数适配；⑤ 各批边界漏项。
+
 ---
 
-（下一域：password-vault）
+（下一域：cinema）
