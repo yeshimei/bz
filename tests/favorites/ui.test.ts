@@ -203,8 +203,8 @@ describe('主面板开合与空态', () => {
     const stickers = overlay.querySelectorAll('[data-fav-tags] button');
     expect(stickers.length).toBe(3);
     const labels = [...stickers].map((b) => (b as HTMLElement).dataset.favTag);
-    expect(labels[0]).toBe('全部');
-    expect(labels[1]).toBe('已归档');
+    expect(labels[0]).toBe('__all'); // UI-05/func-7：内置贴纸 data 值发哨兵（显示文本仍「全部」）
+    expect(labels[1]).toBe('__archived');
     const addBtn = overlay.querySelector('[data-fav-add]') as HTMLElement;
     expect(addBtn).not.toBeNull();
     expect(addBtn.classList.contains('bz-fav-chip-add')).toBe(true);
@@ -272,7 +272,7 @@ describe('标签栏', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
-    expect(cntOf(side, '全部')).toBe('2');
+    expect(cntOf(side, '__all')).toBe('2');
     expect(cntOf(side, 'GitHub')).toBe('2');
     expect(cntOf(side, '网站')).toBe('1');
     expect(side.find((b) => b.dataset.favTag === '大模型')).toBeUndefined(); // 零计数标签不渲染（原型口径）
@@ -315,7 +315,7 @@ describe('标签栏', () => {
     const card = cards()[0];
     const badges = [...card.querySelectorAll('.bz-fav-tagb')].map((e) => e.textContent);
     expect(badges.join('|')).toContain('GitHub');
-    clickTag('全部');
+    clickTag('__all');
     await tick(10);
     expect(cards().length).toBe(1);
     const badges2 = [...cards()[0].querySelectorAll('.bz-fav-tagb')].map((e) => e.textContent);
@@ -352,10 +352,10 @@ describe('标签栏', () => {
     // 分类贴纸：emoji + 名字，无 lucide 图标
     // 空库只 3 张；GitHub 零计数不渲染（原型口径）
     expect(side.find((b) => b.dataset.favTag === 'GitHub')).toBeUndefined();
-    const all = side.find((b) => b.dataset.favTag === '全部')!;
+    const all = side.find((b) => b.dataset.favTag === '__all')!;
     expect(all.querySelector('.bz-ic')).toBeNull();
     expect(all.textContent).toContain('全部');
-    const arch = side.find((b) => b.dataset.favTag === '已归档')!;
+    const arch = side.find((b) => b.dataset.favTag === '__archived')!;
     expect(arch.classList.contains('bz-fav-chip--grey')).toBe(true);
     const add = side.find((b) => b.classList.contains('bz-fav-chip-add'))!;
     expect(add.textContent).toContain('新收藏');
@@ -371,7 +371,7 @@ describe('标签栏', () => {
     await tick(20);
     const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
     expect(cntOf(side, '网站')).toBe('1');
-    expect(cntOf(side, '全部')).toBe('1');
+    expect(cntOf(side, '__all')).toBe('1');
     expect(side.find((b) => b.dataset.favTag === 'GitHub')).toBeUndefined();
   });
 });
@@ -533,7 +533,7 @@ describe('打开默认筛选（issue 296）', () => {
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     expect(cardTitles()).toEqual(['GH', '站']);
-    expect(activeChipKeys()).toContain('全部');
+    expect(activeChipKeys()).toContain('__all');
   });
 
   it("'@last'：筛选 GitHub → 关面板写回 favoritesLastFilter → 重开仍在 GitHub", async () => {
@@ -789,7 +789,7 @@ describe('桌面行动作浮层', () => {
     expect((await ctx.dm.getAll())[0].pinned).toBe(false); // 数据未变
   });
 
-  it('归档：点归档 → 浮层收起 → flow-dialog（message 文案）→ 确定 → 冷存 + 卡片消失 + 事件 archive', async () => {
+  it('归档免确认直达（E1/C2 效率整改 5）：点归档 → 冷存 + 卡片消失 + 事件 archive + 撤销 toast', async () => {
     const ctx = await setup();
     const events = eventCollector();
     seedVault(ctx.vault, [seedItem({ id: '1', title: '归档项', url: '', desc: 'x' })]);
@@ -798,19 +798,10 @@ describe('桌面行动作浮层', () => {
     openCardMenu(cards()[0]);
     await tick(10);
     clickAction('归档');
-    await tick(10);
-    // 非 keepOpen：浮层收起
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
-    // flow-dialog
-    const popup = document.getElementById('__shared_confirm_popup__');
-    expect(popup).not.toBeNull();
-    expect(popup!.textContent).toContain('确定归档收藏「归档项」吗？');
-    expect(popup!.textContent).toContain('归档后不在主列表显示（数据保留），可在通知中撤销。');
-    // B 包扫尾：标题「归档收藏」+ 确认按钮动词化（不是「确定」）
-    expect(popup!.querySelector('h4')!.textContent).toBe('归档收藏');
-    expect((document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).textContent).toBe('归档');
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await tick(30);
+    // 非 keepOpen：浮层收起；确认框退役——撤销 toast 兜底直达（与 unarchive 同域一制）
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     const saved = (await ctx.dm.getAll())[0];
     expect(saved.archived).toBe(true);
     expect(saved.archivedAt).toBeTruthy();
@@ -819,7 +810,7 @@ describe('桌面行动作浮层', () => {
     expect(overlayText()).toContain('这块板上还没有卡片'); // 原型空态文案（ADR-0101）
     expect(hasNotice('已归档收藏「归档项」')).toBe(true);
     expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(true);
-    // 事件
+    // 事件载荷不变
     expect(events.calls).toEqual([{ kind: 'archive', title: '归档项' }]);
     events.off();
   });
@@ -833,9 +824,7 @@ describe('桌面行动作浮层', () => {
     openCardMenu(cards()[0]);
     await tick(10);
     clickAction('归档');
-    await tick(10);
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await tick(30);
+    await tick(30); // 免确认直达
     expect((await ctx.dm.getAll())[0].archived).toBe(true);
     events.calls.length = 0;
     const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;
@@ -848,26 +837,39 @@ describe('桌面行动作浮层', () => {
     events.off();
   });
 
-  it('归档：flow-dialog 取消 → 不归档、卡片仍在', async () => {
+  it('免确认同域一制（E1/C2）：归档/取消归档/删除三动作均无确认框直达', async () => {
     const ctx = await setup();
-    const events = eventCollector();
-    seedVault(ctx.vault, [seedItem({ id: '1', title: '归档项', url: '', desc: 'x' })]);
+    seedVault(ctx.vault, [seedItem({ id: '1', title: '直达项', url: '', desc: 'x' })]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
+    // 归档直达（归档/删除确认框退役；域内在位确认框仅「删除标签」+「放弃草稿」）
     openCardMenu(cards()[0]);
     await tick(10);
     clickAction('归档');
-    await tick(10);
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
     await tick(30);
-    const saved = (await ctx.dm.getAll())[0];
-    expect(saved.archived).toBeUndefined();
-    expect(cards().length).toBe(1);
-    expect(events.calls.length).toBe(0);
-    events.off();
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
+    expect((await ctx.dm.getAll())[0].archived).toBe(true);
+    // 取消归档（本就免确认——两制理顺后三动作一制）
+    clickTag('__archived');
+    await tick(10);
+    openCardMenu(cards()[0]);
+    await tick(10);
+    clickAction('取消归档');
+    await tick(30);
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
+    expect((await ctx.dm.getAll())[0].archived).toBe(false);
+    // 删除直达
+    clickTag('__all');
+    await tick(10);
+    openCardMenu(cards()[0]);
+    await tick(10);
+    clickAction('删除');
+    await tick(30);
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
+    expect((await ctx.dm.getAll()).length).toBe(0);
   });
 
-  it('删除：确认 → 卡片消失 + 撤销 toast + 事件 delete；点撤销 → restoreItem 原样 + 卡片回', async () => {
+  it('删除免确认直达：卡片消失 + 撤销 toast + 事件 delete；点撤销 → restoreItem 原样 + restored 事件（func-2）+ 卡片回', async () => {
     const ctx = await setup();
     const events = eventCollector();
     seedVault(ctx.vault, [seedItem({ id: '9', title: '被删条目', pinned: true, desc: 'x', created: '2025-06-01 08:00:00' })]);
@@ -876,12 +878,9 @@ describe('桌面行动作浮层', () => {
     openCardMenu(cards()[0]);
     await tick(10);
     clickAction('删除');
-    await tick(10);
-    expect(document.querySelector('.bz-item-menu')).toBeNull();
-    const popup = document.getElementById('__shared_confirm_popup__');
-    expect(popup!.textContent).toContain('确定删除收藏「被删条目」吗？');
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await tick(30);
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull(); // 免确认直达
     expect((await ctx.dm.getAll()).length).toBe(0);
     expect(cards().length).toBe(0);
     expect(events.calls).toEqual([{ kind: 'delete', title: '被删条目' }]);
@@ -896,60 +895,22 @@ describe('桌面行动作浮层', () => {
     expect(restored[0]).toMatchObject({ id: '9', title: '被删条目', pinned: true, created: '2025-06-01 08:00:00' });
     expect(cards().length).toBe(1);
     expect(cards()[0].textContent).toContain('被删条目');
+    // func-2：删除撤销补发 restored 事件（与归档撤销补 unarchive 同制）——行为流不再停在「已删」
+    expect(events.calls).toEqual([
+      { kind: 'delete', title: '被删条目' },
+      { kind: 'restored', title: '被删条目' },
+    ]);
     events.off();
   });
 
-  it('删除：flow-dialog 取消 → 不删、无撤销 toast', async () => {
-    const ctx = await setup();
-    const events = eventCollector();
-    seedVault(ctx.vault, [seedItem({ id: '1', title: '留着', url: '', desc: 'x' })]);
-    openPanel(getApp(), ctx.dm, ctx.ai);
-    await tick(20);
-    openCardMenu(cards()[0]);
-    await tick(10);
-    clickAction('删除');
-    await tick(10);
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    await tick(30);
-    expect((await ctx.dm.getAll()).length).toBe(1);
-    expect(cards().length).toBe(1);
-    expect(events.calls.length).toBe(0);
-    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(false);
-    events.off();
-  });
-
-  it('issue 291：三个确认框都带本域皮肤类（bz-fav-flow-dialog + bz-fav-scope），与表单弹窗同皮', async () => {
+  it('issue 291：在位确认框收敛两框（放弃草稿 + 删除标签）仍带本域皮肤类；归档/删除确认随免确认直达退役（E1/C2）', async () => {
     const ctx = await setup();
     seedVault(ctx.vault, [seedItem({ id: '1', title: '同皮项', url: '', desc: 'x' })]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
     const confirm = () => document.getElementById('__shared_confirm_popup__') as HTMLElement;
 
-    // 1) 归档确认：统一壳 + 域流程框类 + 私有 token 作用域类
-    openCardMenu(cards()[0]);
-    await tick(10);
-    clickAction('归档');
-    await tick(10);
-    expect(confirm().classList.contains('bz-overlay-popup')).toBe(true);
-    expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
-    expect(confirm().classList.contains('bz-fav-scope')).toBe(true);
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    await tick(30);
-
-    // 2) 删除确认：危险主动作附加 --danger 修饰，皮肤类仍并存
-    openCardMenu(cards()[0]);
-    await tick(10);
-    clickAction('删除');
-    await tick(10);
-    expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
-    expect(confirm().classList.contains('bz-fav-scope')).toBe(true);
-    expect(confirm().classList.contains('bz-flow-dialog--danger')).toBe(true);
-    // 冻结契约：标准双动作按钮不加类（皮肤只挂 popup）
-    expect((document.getElementById('__shared_confirm_ok__') as HTMLElement).className).toBe('');
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    await tick(30);
-
-    // 3) 放弃未保存草稿确认（confirmDiscard 第三参透传）：点表单遮罩触发脏拦截
+    // 1) 放弃未保存草稿确认（confirmDiscard 第三参透传）：点表单遮罩触发脏拦截
     const addBtn = [...document.querySelectorAll('[data-fav-add]')].find(
       (b) => (b as HTMLElement).classList.contains('bz-fav-chip-add')
     ) as HTMLElement;
@@ -960,6 +921,7 @@ describe('桌面行动作浮层', () => {
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     await tick(10);
     expect(document.querySelector('.bz-fav-form')).not.toBeNull(); // 表单仍在（拦截未直接关）
+    expect(confirm().classList.contains('bz-overlay-popup')).toBe(true);
     expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
     expect(confirm().classList.contains('bz-fav-scope')).toBe(true);
     expect(confirm().querySelector('h4')!.textContent).toBe('放弃未保存的内容？');
@@ -969,6 +931,20 @@ describe('桌面行动作浮层', () => {
     (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click(); // 放弃
     await tick(20);
     expect(document.querySelector('.bz-fav-form')).toBeNull();
+
+    // 2) 删除标签确认（域内在位的唯一主动作确认框：bulk 迁移有跨条目副作用，保留确认）——
+    //    归档/删除收藏确认随免确认直达退役（原归档/删除段删除，防回潮断言见 flow-dialog-skin.test.ts）
+    const host = document.createElement('div');
+    document.body.appendChild(host);
+    renderSettingsInto(host, favoritesSettingsSchema());
+    await tick(20);
+    const row = [...document.querySelectorAll('.bz-fav-tagmgr-row')][0] as HTMLElement;
+    (row.querySelector('[title="删除"]') as HTMLElement).click();
+    await tick(20);
+    expect(confirm().classList.contains('bz-fav-flow-dialog')).toBe(true);
+    expect(confirm().classList.contains('bz-fav-scope')).toBe(true);
+    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
+    await tick(10);
   });
 
   it('删除写盘失败 → notifySaveError，不弹撤销 toast，数据仍在', async () => {
@@ -980,9 +956,7 @@ describe('桌面行动作浮层', () => {
     openCardMenu(cards()[0]);
     await tick(10);
     clickAction('删除');
-    await tick(10);
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await tick(30);
+    await tick(30); // 免确认直达，写盘失败在 notifySaveError 兜底
     expect(hasNotice('保存失败（删除收藏）：磁盘只读')).toBe(true);
     expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(false);
     expect((await ctx.dm.getAll()).length).toBe(1);
@@ -1037,7 +1011,7 @@ describe('添加表单', () => {
     expect(els.tagBtns.length).toBe(9);
   });
 
-  it('校验链：空标题 → 请输入标题；url 非 http → 链接需以 http(s):// 开头；无标签 → 请至少选择一个标签', async () => {
+  it('校验链：空标题 → 请输入标题；手输无协议 url 自动补 https://（E6 写侧）+ 无标签 → 请至少选择一个标签', async () => {
     const ctx = await setup();
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
@@ -1051,14 +1025,16 @@ describe('添加表单', () => {
     els.url.value = 'github.com/no-protocol';
     els.save.click();
     await tick(10);
-    expect(els.err.textContent).toBe('链接需以 http(s):// 开头');
-
-    els.url.value = 'https://github.com/ok';
-    els.save.click();
-    await tick(10);
+    // E6 写侧半：saveForm 先 normalizeUrl 归一（无协议自动补），不再被校验拦截——只剩缺标签错
     expect(els.err.textContent).toBe('请至少选择一个标签');
     // 库未写入
     expect((await ctx.dm.getAll()).length).toBe(0);
+
+    // 补协议落盘：选标签保存后 url 带 https://（与贴链/读侧同待遇）
+    clickTagBtn(els, 'GitHub');
+    els.save.click();
+    await tick(40);
+    expect((await ctx.dm.getAll())[0].url).toBe('https://github.com/no-protocol');
   });
 
 
@@ -1365,7 +1341,7 @@ describe('smartcat 域事件总线', () => {
     events.off();
   });
 
-  it('archive / delete：动作确认后事件载荷（title 型）', async () => {
+  it('archive / delete：免确认直达后事件载荷（title 型）不变', async () => {
     const ctx = await setup();
     const events = eventCollector();
     seedVault(ctx.vault, [
@@ -1378,18 +1354,14 @@ describe('smartcat 域事件总线', () => {
     openCardMenu(byTitle('归档目标'));
     await tick(10);
     clickAction('归档');
-    await tick(10);
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await tick(30);
+    await tick(30); // 免确认直达
     expect(events.calls).toEqual([{ kind: 'archive', title: '归档目标' }]);
     events.calls.length = 0;
 
     openCardMenu(byTitle('删除目标'));
     await tick(10);
     clickAction('删除');
-    await tick(10);
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await tick(30);
+    await tick(30); // 免确认直达
     expect(events.calls).toEqual([{ kind: 'delete', title: '删除目标' }]);
     events.off();
   });
@@ -1709,15 +1681,15 @@ describe('已归档视图（ticket 188）', () => {
     expect(cardTitles()).toEqual(['活条目']);
     // 已归档贴纸计数 = 2
     const side = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
-    expect(cntOf(side, '已归档')).toBe('2');
-    clickTag('已归档');
+    expect(cntOf(side, '__archived')).toBe('2');
+    clickTag('__archived');
     await tick(10);
     expect(cardTitles()).toEqual(['冷二条', '冷一条']); // created 倒序
     // 渲染重建节点，重查磁贴行
     const side2 = [...document.querySelectorAll('[data-fav-tags] button')] as HTMLElement[];
-    expect(side2.find((b) => b.dataset.favTag === '已归档')!.classList.contains('bz-fav-on')).toBe(true);
+    expect(side2.find((b) => b.dataset.favTag === '__archived')!.classList.contains('bz-fav-on')).toBe(true);
     // 回全部
-    clickTag('全部');
+    clickTag('__all');
     await tick(10);
     expect(cardTitles()).toEqual(['活条目']);
   });
@@ -1728,7 +1700,7 @@ describe('已归档视图（ticket 188）', () => {
     seedVault(ctx.vault, [seedItem({ id: '1', title: '冷存条目', archived: true })]);
     openPanel(getApp(), ctx.dm, ctx.ai);
     await tick(20);
-    clickTag('已归档');
+    clickTag('__archived');
     await tick(10);
     openCardMenu(cards()[0]);
     await tick(10);
@@ -1743,7 +1715,7 @@ describe('已归档视图（ticket 188）', () => {
     expect(events.calls).toEqual([{ kind: 'unarchive', title: '冷存条目' }]);
     events.off();
     // 回全部可见
-    clickTag('全部');
+    clickTag('__all');
     await tick(10);
     expect(cardTitles()).toEqual(['冷存条目']);
   });
@@ -1882,7 +1854,7 @@ describe('issue 219「亚麻记事板」卡流视觉', () => {
     await tick(20);
     expect(cards().find((c) => c.querySelector('h3')!.textContent === '普通项')!.classList.contains('bz-fav-arch')).toBe(false);
     // 主列表过滤归档（ADR-0074），切归档视图后卡挂褪色类
-    clickTag('已归档'); // 磁贴行「已归档」贴纸
+    clickTag('__archived'); // 磁贴行「已归档」贴纸
     await tick(20);
     const archCard = cards()[0];
     expect(archCard.classList.contains('bz-fav-arch')).toBe(true);

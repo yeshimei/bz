@@ -30,6 +30,30 @@ export type { FavoritesItem } from './types';
 
 // ==================== 常量 ====================
 
+/** 内置视图哨兵值（UI-05/func-7 撞名防御单源）：磁贴行「全部/已归档」贴纸的 data-fav-tag
+ *  一律发哨兵而非字面值——用户自定义标签可任意命名（issue 363），发字面值时同名标签的贴纸
+ *  会被 applyTagFilter 的字面分支先行劫持（点「已归档」标签永远切归档视图，该标签筛选永不可达）。
+ *  消费：layouts/board chipsHtml 发出、ui.applyTagFilter 分流。 */
+export const VIEW_ALL = '__all';
+export const VIEW_ARCHIVED = '__archived';
+
+/** 标签名保留字（func-7：控制字面量与用户数据分命名空间后的最后一道闸）——新增/改名标签拒收，
+ *  防止磁贴 data 值与视图哨兵/打开默认筛选哨兵撞名：
+ *  「全部/已归档/__all/__archived」撞磁贴 data-fav-tag 分流、「@last/@archived」撞
+ *  favoritesOpenFilter/favoritesLastFilter 设置哨兵（resolveOpenFilter/@last 记忆语义）。 */
+export const RESERVED_TAG_LABELS: readonly string[] = [
+  '全部', '已归档', VIEW_ALL, VIEW_ARCHIVED, '@last', '@archived',
+];
+
+/** 动态标签图标白名单（UI-10）：tag.ic 可经手改 data.json / 旧伴生 favorites.tags.json 迁入
+ *  携带任意字符串，iconSpan 按「受信开发者常量」设计不转义 name——favorites 是唯一把用户数据
+ *  喂进去的消费方，消费前按 lucide 名形态白名单校验，不合者回落 'tag'（单点收口，卡片徽记 /
+ *  表单胶囊 / 标签管理三处消费同愈）。 */
+export function safeTagIcon(ic: unknown): string {
+  const s = typeof ic === 'string' ? ic : '';
+  return /^[a-z0-9-]+$/i.test(s) ? s : 'tag';
+}
+
 /** lucide 图标名（原 ui.ts ICON 迁入） */
 export const ICON = {
   close: 'x',
@@ -138,14 +162,16 @@ export function cardHtml(it: FavoritesItem, idx: number): string {
   const hue = hueOf((it.tags || [])[0] || '');
   // 胶带三色轮换：基础类恒在（承载 absolute 定位/尺寸），变体类只换色与角度
   const tape = 'bz-fav-tape' + (idx % 3 ? [' bz-fav-tape--r', ' bz-fav-tape--g'][idx % 3 - 1] : '');
-  return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}">
+  // 键盘可达（UI-06③）：卡片最小语义 role=button + tabindex=0——Enter/Space 走与点击同径
+  // （移动抽屉 / 桌面直开），keydown 委托在 ui.ts content 容器
+  return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
     <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <h3>${esc(it.title || '无标题')}</h3>
     <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const ic = (getTags().find((x) => x.label === t) || { ic: '' }).ic;
+      const ic = safeTagIcon((getTags().find((x) => x.label === t) || { ic: '' }).ic);
       return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? iconSpan(ic, 'bz-ic--xs') : ''}<span>${esc(t)}</span></span>`;
     }).join('')}</span>
       <span>${esc(relTime(it.created))}</span></div>
@@ -154,8 +180,18 @@ export function cardHtml(it: FavoritesItem, idx: number): string {
 
 /** 空态：内芯收编 core emptyHtmlStr 单源（review-deep 一致#16：bz-empty 库皮 =
  *  图标 + 一句话 + 动作引导；原型文案保留为 title，desc 指向磁贴行常驻「新收藏」入口）。
- *  外层 .bz-fav-empty 域皮保留（承载 board 网格跨列与留白，styles.css 在案）——bookshelf 域皮包裹同款。 */
-export function emptyHtml(): string {
+ *  外层 .bz-fav-empty 域皮保留（承载 board 网格跨列与留白，styles.css 在案）——bookshelf 域皮包裹同款。
+ *  文案按视图区分（UI-09）：归档空 ≠ 标签筛选空 ≠ 真空——「板上还没有卡片」会误导
+ *  「数据没了」，实际只是被筛掉/冷存在归档箱。传参缺省 = 原型默认文案（兼容既有调用面）。 */
+export function emptyHtml(view?: FavView, items?: FavoritesItem[]): string {
+  if (view && items) {
+    if (view.archived) {
+      return `<div class="bz-fav-empty">${emptyHtmlStr('archive', '归档箱是空的', '归档的收藏会冷存在这里，可随时恢复')}</div>`;
+    }
+    if (view.tag && !visibleItems(items).some((i) => (i.tags || []).includes(view.tag as string))) {
+      return `<div class="bz-fav-empty">${emptyHtmlStr('inbox', `「${view.tag}」标签下还没有收藏`, '换个标签看看，或添加一条试试')}</div>`;
+    }
+  }
   return `<div class="bz-fav-empty">${emptyHtmlStr('inbox', '这块板上还没有卡片', '添加第一条收藏试试')}</div>`;
 }
 
@@ -195,10 +231,11 @@ export function actionSpecs(it: FavoritesItem): FavActionSpec[] {
 // ==================== 表单（添加 / 编辑共用骨架） ====================
 
 /** 表单标签多选 chips（.bz-fav-pick 内部；sel = 当前选中集，重绘由调用方触发）。
- *  issue 363：标签集 = getTags() 动态（内置 seed / data.json 设置键 favoriteTags） */
+ *  issue 363：标签集 = getTags() 动态（内置 seed / data.json 设置键 favoriteTags）；
+ *  图标经 safeTagIcon 白名单（UI-10：动态 ic 不直插 markup） */
 export function pickChipsHtml(sel: Set<string>): string {
   return getTags().map((t) =>
-    `<button type="button" class="${sel.has(t.label) ? 'bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(t.ic, 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`
+    `<button type="button" class="${sel.has(t.label) ? 'bz-fav-on' : ''}" data-tag="${esc(t.label)}">${iconSpan(safeTagIcon(t.ic), 'bz-ic--xs')}<span>${esc(t.label)}</span></button>`
   ).join('');
 }
 
@@ -212,7 +249,7 @@ export function formHtml(it: FavoritesItem | null): string {
     <div class="bz-fav-fld"><label>链接</label><input id="fz-url" value="${esc(it ? it.url : '')}" placeholder="https://…"></div>
     <div class="bz-fav-fld"><label>简介</label><textarea id="fz-desc" placeholder="一句话记住它…">${esc(it ? it.description || '' : '')}</textarea></div>
     <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
-    <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
+    <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? ' bz-fav-on' : ''}" id="fz-pin" role="switch" tabindex="0" aria-checked="${!!(it && it.pinned)}"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
     <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（memo/cinema/diary 多数派，
          与本域标签表单 existing ? '保存' : '添加' 对齐，域内不再二分） -->

@@ -1,5 +1,5 @@
-/* 源指纹 57fcc66c5ecac003 · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 26790621f65d35b3 · 仓内输入 227 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
   var __create = Object.create;
@@ -35358,6 +35358,10 @@ ${c.trim()}
   });
 
   // src/favorites/shared.ts
+  function safeTagIcon(ic2) {
+    const s = typeof ic2 === "string" ? ic2 : "";
+    return /^[a-z0-9-]+$/i.test(s) ? s : "tag";
+  }
   function normalizeFavSort(v) {
     return v === "old" || v === "title" ? v : "new";
   }
@@ -35406,20 +35410,28 @@ ${c.trim()}
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
     const tape = "bz-fav-tape" + (idx % 3 ? [" bz-fav-tape--r", " bz-fav-tape--g"][idx % 3 - 1] : "");
-    return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}">
+    return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
     <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <h3>${esc(it.title || "无标题")}</h3>
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const ic2 = (getTags().find((x) => x.label === t) || { ic: "" }).ic;
+      const ic2 = safeTagIcon((getTags().find((x) => x.label === t) || { ic: "" }).ic);
       return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(t)}</span></span>`;
     }).join("")}</span>
       <span>${esc(relTime(it.created))}</span></div>
   </div>`;
   }
-  function emptyHtml2() {
+  function emptyHtml2(view, items) {
+    if (view && items) {
+      if (view.archived) {
+        return `<div class="bz-fav-empty">${emptyHtmlStr("archive", "归档箱是空的", "归档的收藏会冷存在这里，可随时恢复")}</div>`;
+      }
+      if (view.tag && !visibleItems(items).some((i) => (i.tags || []).includes(view.tag))) {
+        return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", `「${view.tag}」标签下还没有收藏`, "换个标签看看，或添加一条试试")}</div>`;
+      }
+    }
     return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", "这块板上还没有卡片", "添加第一条收藏试试")}</div>`;
   }
   function actionSpecs2(it) {
@@ -35437,7 +35449,7 @@ ${c.trim()}
   }
   function pickChipsHtml(sel) {
     return getTags().map(
-      (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(t.ic, "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
+      (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(safeTagIcon(t.ic), "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
     ).join("");
   }
   function formHtml(it) {
@@ -35448,7 +35460,7 @@ ${c.trim()}
     <div class="bz-fav-fld"><label>链接</label><input id="fz-url" value="${esc(it ? it.url : "")}" placeholder="https://…"></div>
     <div class="bz-fav-fld"><label>简介</label><textarea id="fz-desc" placeholder="一句话记住它…">${esc(it ? it.description || "" : "")}</textarea></div>
     <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
-    <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
+    <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin" role="switch" tabindex="0" aria-checked="${!!(it && it.pinned)}"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
     <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（memo/cinema/diary 多数派，
          与本域标签表单 existing ? '保存' : '添加' 对齐，域内不再二分） -->
@@ -35459,12 +35471,22 @@ ${c.trim()}
     </div>
   </div>`;
   }
-  var ICON2;
+  var VIEW_ALL, VIEW_ARCHIVED, RESERVED_TAG_LABELS, ICON2;
   var init_shared4 = __esm({
     "src/favorites/shared.ts"() {
       init_str();
       init_config();
       init_str();
+      VIEW_ALL = "__all";
+      VIEW_ARCHIVED = "__archived";
+      RESERVED_TAG_LABELS = [
+        "全部",
+        "已归档",
+        VIEW_ALL,
+        VIEW_ARCHIVED,
+        "@last",
+        "@archived"
+      ];
       ICON2 = {
         close: "x",
         add: "plus",
@@ -35490,25 +35512,33 @@ ${c.trim()}
 </div>`;
   }
   function chipsHtml2(items, view, mobile) {
-    const mk = (label, ic2, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
-    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON2.add, "bz-ic--xs")}<span>新收藏</span></button>`;
-    const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
+    const mk = (dataVal, display, ic2, cnt, active2, grey = false, empty = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}${empty ? " bz-fav-chip--empty" : ""}" data-fav-tag="${esc(dataVal)}"${active2 ? ' aria-pressed="true"' : ' aria-pressed="false"'}>${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(display)} ${cnt}</span></button>`;
+    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏" aria-label="添加收藏">${iconSpan(ICON2.add, "bz-ic--xs")}<span>新收藏</span></button>`;
+    const chips = mk(VIEW_ALL, "全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk(VIEW_ARCHIVED, "已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
       const n = tagCount(items, t.label);
-      return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
+      const active2 = !view.archived && view.tag === t.label;
+      if (!n && !active2) return "";
+      return mk(t.label, t.label, safeTagIcon(t.ic), n, active2, false, !n);
     }).join("");
     return mobile ? add + chips : chips + add;
   }
   function boardHtml(items, view) {
     const list = filteredItems(items, view);
-    if (!list.length) return emptyHtml2();
-    return list.map((it) => cardHtml2(it, items.indexOf(it))).join("");
+    if (!list.length) return emptyHtml2(view, items);
+    const idxMap = new Map(items.map((it, i) => [it, i]));
+    return list.map((it) => {
+      var _a2;
+      return cardHtml2(it, (_a2 = idxMap.get(it)) != null ? _a2 : 0);
+    }).join("");
   }
   function renderTagsInto(mount, items, view, hooks) {
     mount.innerHTML = chipsHtml2(items, view, hooks.mobile);
     hooks.mountIcons(mount);
   }
   function renderBoardInto(board, items, view, hooks) {
+    const keep = board.scrollTop;
     board.innerHTML = boardHtml(items, view);
+    board.scrollTop = keep;
     hooks.mountIcons(board);
   }
   function renderPanelView2(panel2, items, view, hooks) {
@@ -35530,6 +35560,84 @@ ${c.trim()}
     "src/favorites/render.ts"() {
       init_shared4();
       init_render8();
+    }
+  });
+
+  // src/favorites/ai.ts
+  function normalizeAiOrganizeResult(data) {
+    const s = (v) => v === void 0 || v === null ? "" : typeof v === "string" ? v : String(v);
+    const url = s(data.url).trim();
+    const tags = Array.isArray(data.tags) ? data.tags.map((t) => s(t)).filter((t) => t !== "") : data.tags ? [s(data.tags)] : [];
+    return {
+      title: s(data.title),
+      url: url ? normalizeUrl(url) : "",
+      description: s(data.description),
+      tags
+    };
+  }
+  var FavoritesAIService;
+  var init_ai3 = __esm({
+    "src/favorites/ai.ts"() {
+      init_fake_obsidian();
+      init_http();
+      init_ai();
+      init_config();
+      FavoritesAIService = class {
+        constructor() {
+          this.ai = createAI();
+        }
+        /**
+         * AI 是否已配置（ticket 23 + 审查建议 C：真实读取插件 AI 配置，替代恒真的 !!this.ai）。
+         * issue 334/ADR-0148 起判定口径单源 core/ai——getAIProvider() 能解析即已配置，
+         * 含 deepseek QuickAdd data.json 异步兜底、ollama 免密钥、custom 三件套齐全；
+         * 本地不再复刻第二套判定（旧同步版对 deepseek 恒真，口径偏松）。
+         */
+        async isAvailable() {
+          if (!this.ai) return false;
+          try {
+            await getAIProvider();
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+        /**
+         * 获取 GitHub 仓库信息（真实 API，增强：原稿为纯 AI 生成，现改为
+         * https://api.github.com/repos/{owner}/{repo} 取仓库名与简介原文）。
+         * 返回 {title, description, fetched}：fetched=false 表示请求失败/限流
+         * （此时 description 恒为空串，调用方不得让 AI 编造简介）；
+         * 非 GitHub 地址抛「无效的 GitHub 地址」。8s 超时 + 重试 1 次（api.github.com 网络不稳）。
+         */
+        async fetchGitHubInfo(url) {
+          const match = url.match(/github\.com\/([^\/?#]+)\/([^\/?#]+)/);
+          if (!match) throw new Error("无效的 GitHub 地址");
+          const [, owner, repo] = match;
+          let title = repo;
+          let description = "";
+          let fetched = false;
+          for (let attempt = 0; attempt < 2 && !fetched; attempt++) {
+            try {
+              const resp = await withTimeout(
+                requestUrl({
+                  url: `https://api.github.com/repos/${owner}/${repo}`,
+                  method: "GET",
+                  headers: { Accept: "application/vnd.github+json", "User-Agent": "obsidian-bz" }
+                }),
+                8e3,
+                "GitHub API"
+              );
+              if (resp.status && resp.status >= 400) throw new Error(`HTTP ${resp.status}`);
+              const data = JSON.parse(resp.text || "{}");
+              title = data.name || repo;
+              description = String(data.description || "").trim();
+              fetched = true;
+            } catch (e) {
+              if (attempt === 1) console.warn("GitHub API 获取失败，使用降级方案", e);
+            }
+          }
+          return { title, description, fetched };
+        }
+      };
     }
   });
 
@@ -35777,6 +35885,58 @@ ${c.trim()}
     }
   });
 
+  // src/favorites/app.ts
+  var _FavoritesApp, FavoritesApp;
+  var init_app2 = __esm({
+    "src/favorites/app.ts"() {
+      init_settings_provider();
+      init_config();
+      init_data8();
+      init_ai3();
+      init_ui8();
+      _FavoritesApp = class _FavoritesApp {
+        constructor() {
+          this.dataManager = null;
+          this.aiService = null;
+          this.initialized = false;
+        }
+        static getInstance() {
+          if (!_FavoritesApp.instance) _FavoritesApp.instance = new _FavoritesApp();
+          return _FavoritesApp.instance;
+        }
+        async init() {
+          if (this.initialized) return;
+          const settings = getSettings();
+          const storagePath = getStoragePath(settings == null ? void 0 : settings.storagePath);
+          this.dataManager = new DataManager(storagePath);
+          this.aiService = new FavoritesAIService();
+          this.initialized = true;
+          try {
+            await this.dataManager.loadTags();
+          } catch (e) {
+            console.error("[favorites-loadTags]", e);
+          }
+        }
+        /** 打开收藏面板（toggle 语义在 ui.openPanel 内） */
+        async openPanel(app) {
+          await this.init();
+          if (this.dataManager && this.aiService) {
+            openPanel2(app, this.dataManager, this.aiService);
+          }
+        }
+        /** 直接打开添加弹窗（bz-favorites-add 命令；无需先开面板） */
+        openAdd(app) {
+          if (this.dataManager && this.aiService) {
+            initFavoritesUI(app, this.dataManager, this.aiService);
+            openForm2(null);
+          }
+        }
+      };
+      _FavoritesApp.instance = null;
+      FavoritesApp = _FavoritesApp;
+    }
+  });
+
   // src/favorites/ui.ts
   var ui_exports6 = {};
   __export(ui_exports6, {
@@ -35863,16 +36023,15 @@ ${c.trim()}
     return { tag: null, archived: false };
   }
   function ensureFavoritesEsc() {
-    if (mainEscRegistered) return;
-    mainEscRegistered = true;
-    escManager.register("bz-fav", {
-      isVisible: () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
-      close: () => {
+    registerPanelEsc(
+      "bz-fav",
+      () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
+      () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
         else closePanel3();
       }
-    });
+    );
   }
   function initFavoritesUI(app, dm, ai) {
     _app2 = app;
@@ -35921,19 +36080,29 @@ ${c.trim()}
       applyTagFilter(b.dataset.favTag);
     });
     const content = overlay2.querySelector("[data-fav-content]");
-    content.addEventListener("click", (e) => {
-      const t = e.target;
-      const card = t.closest("[data-fav-id]");
-      if (!card) return;
-      e.stopPropagation();
-      const it = itemById2(card.dataset.favId);
-      if (!it) return;
+    const openCardDefault = (it) => {
       if (isMobileEnv()) {
         openMobSheet2(it);
         return;
       }
       const rawUrl = (it.url || "").trim();
       if (rawUrl) openExternal(normalizeUrl(rawUrl));
+    };
+    content.addEventListener("click", (e) => {
+      const t = e.target;
+      const card = t.closest("[data-fav-id]");
+      if (!card) return;
+      e.stopPropagation();
+      const it = itemById2(card.dataset.favId);
+      if (it) openCardDefault(it);
+    });
+    content.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const card = e.target.closest("[data-fav-id]");
+      if (!card || e.target !== card) return;
+      e.preventDefault();
+      const it = itemById2(card.dataset.favId);
+      if (it) openCardDefault(it);
     });
     content.addEventListener("contextmenu", (e) => {
       const card = e.target.closest("[data-fav-id]");
@@ -35957,6 +36126,7 @@ ${c.trim()}
         return isMobileEnv() && !!((_b2 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b2.call(_a3, "[data-fav-id]"));
       }
     );
+    renderAll4();
     void (async () => {
       await loadItems();
       renderAll4();
@@ -35995,14 +36165,15 @@ ${c.trim()}
   }
   function renderAll4() {
     if (!M6.overlay) return;
+    if (!M6.archived && M6.tag && !getTags().some((t) => t.label === M6.tag)) M6.tag = null;
     const panel2 = M6.overlay.querySelector(".bz-fav-panel");
     renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
-    if (label === "全部" || label === "__all") {
+    if (label === VIEW_ALL) {
       M6.tag = null;
       M6.archived = false;
-    } else if (label === "已归档" || label === "__archived") {
+    } else if (label === VIEW_ARCHIVED) {
       M6.tag = null;
       M6.archived = !M6.archived;
     } else {
@@ -36031,37 +36202,11 @@ ${c.trim()}
     } else if (spec.act === "edit") {
       openForm2(it);
     } else if (spec.act === "archive") {
-      void openFlowDialog({
-        title: "归档收藏",
-        // issue 291：流程框挂 document.body，不在 .bz-fav-panel 树内——不显式带皮肤类就掉回 core 裸皮。
-        // `bz-fav-flow-dialog` = 本域确认框专属类（styles.css 映射表单弹窗 .bz-fav-form 那套亚麻取值）；
-        // `bz-fav-scope` 必须跟着传：亚麻/暖纸是私有 token（--pop/--pop-ink/--pop-mut/--mask/--acc），
-        // 只在 .bz-fav-scope 命中时才定义，缺它变量全部解析失败。
-        className: "bz-fav-flow-dialog bz-fav-scope",
-        message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
-        actions: [
-          { label: "取消", value: "cancel" },
-          { label: "归档", value: "ok", cta: true }
-        ]
-      }).then((v) => {
-        if (v === "ok") void archiveItem(it);
-      });
+      void archiveItem(it);
     } else if (spec.act === "unarchive") {
       void unarchiveItem(it);
     } else if (spec.act === "del") {
-      void openFlowDialog({
-        title: "删除收藏",
-        // issue 291：与归档确认同一套皮肤类（删除是危险主动作 → core 另挂 bz-flow-dialog--danger，
-        // 与皮肤类并存不冲突）。类含义见归档确认处注释。
-        className: "bz-fav-flow-dialog bz-fav-scope",
-        message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
-        actions: [
-          { label: "取消", value: "cancel" },
-          { label: "删除", value: "del", danger: true, cta: true }
-        ]
-      }).then((v) => {
-        if (v === "del") void deleteItem2(it);
-      });
+      void deleteItem2(it);
     }
   }
   function toItemActions(it) {
@@ -36135,6 +36280,7 @@ ${c.trim()}
         void (async () => {
           try {
             await dataManagerOf().restoreItem(snapshot2);
+            emitDomainEvent("favorites", { kind: "restored", title: it.title });
             await reload2();
           } catch (e) {
             notifySaveError(e, "恢复收藏");
@@ -36193,7 +36339,13 @@ ${c.trim()}
   function openForm2(item) {
     var _a2, _b2, _c;
     ensureFavoritesEsc();
-    if (document.querySelector(".bz-fav-form")) closeForm();
+    if (document.querySelector(".bz-fav-form")) {
+      if (formDirty()) {
+        requestCloseForm();
+        return;
+      }
+      closeForm();
+    }
     const it = item;
     const host = document.createElement("div");
     host.innerHTML = formHtml(it);
@@ -36241,15 +36393,22 @@ ${c.trim()}
     };
     drawPick();
     const pinEl = popup.querySelector("#fz-pin");
-    pinEl.addEventListener("click", () => pinEl.classList.toggle("bz-fav-on"));
+    const togglePin = () => {
+      const on = pinEl.classList.toggle("bz-fav-on");
+      pinEl.setAttribute("aria-checked", String(on));
+    };
+    pinEl.addEventListener("click", togglePin);
+    pinEl.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        togglePin();
+      }
+    });
     const errEl = popup.querySelector("#fz-err");
     (_a2 = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => requestCloseForm());
     (_b2 = popup.querySelector("#fz-ai")) == null ? void 0 : _b2.addEventListener("click", () => void runAiFill(popup, sel, drawPick, errEl));
     (_c = popup.querySelector("#fz-save")) == null ? void 0 : _c.addEventListener("click", () => void saveForm(popup, it, sel, errEl));
-    setTimeout(() => {
-      var _a3;
-      return (_a3 = popup.querySelector("#fz-title")) == null ? void 0 : _a3.focus();
-    }, 100);
+    bindFormSubmit(popup, () => void saveForm(popup, it, sel, errEl));
   }
   async function runAiFill(popup, sel, redraw, errEl) {
     const ai = aiServiceOf();
@@ -36284,15 +36443,16 @@ ${c.trim()}
       const raw = await ai.ai.chat(text);
       const data = parseAiJson2(raw);
       if (!data) throw new Error("AI 返回格式错误");
+      const res = normalizeAiOrganizeResult(data);
       const setVal = (id, v) => {
         const el = popup.querySelector(id);
         if (el && !el.value.trim() && v) el.value = String(v);
       };
       if (ghInfo == null ? void 0 : ghInfo.fetched) setVal("#fz-title", ghInfo.title);
-      setVal("#fz-title", data.title);
-      setVal("#fz-url", data.url);
-      setVal("#fz-desc", data.description);
-      const rawTags = Array.isArray(data.tags) ? data.tags.map((x) => String(x)) : data.tags ? [String(data.tags)] : [];
+      setVal("#fz-title", res.title);
+      setVal("#fz-url", res.url);
+      setVal("#fz-desc", res.description);
+      const rawTags = res.tags;
       const known = getTags().map((t) => t.label);
       const valid = rawTags.filter((t) => known.includes(t));
       const unknown = rawTags.filter((t) => !known.includes(t));
@@ -36349,7 +36509,8 @@ GitHub 仓库：${ghInfo.title}
   async function saveForm(popup, it, sel, errEl) {
     if (_saving) return;
     const title = inputVal(popup, "#fz-title").trim();
-    const url = inputVal(popup, "#fz-url").trim();
+    const rawUrl = inputVal(popup, "#fz-url").trim();
+    const url = rawUrl ? normalizeUrl(rawUrl) : "";
     if (!title) {
       errEl.textContent = "请输入标题";
       return;
@@ -36413,8 +36574,8 @@ GitHub 仓库：${ghInfo.title}
     }
   }
   function tagManagerDm() {
-    const s = tryGetSettings();
-    return new DataManager(getStoragePath(s == null ? void 0 : s.storagePath));
+    var _a2, _b2;
+    return (_b2 = FavoritesApp.getInstance().dataManager) != null ? _b2 : new DataManager(getStoragePath((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath));
   }
   function renderTagManager(body, _ctx) {
     const dm = tagManagerDm();
@@ -36432,8 +36593,9 @@ GitHub 仓库：${ghInfo.title}
     const icBtn = (ic2, title, disabled, danger, onClick) => {
       const b = document.createElement("button");
       b.type = "button";
-      b.className = "bz-fav-tagmgr-btn" + (danger ? " bz-fav-tagmgr-btn--danger" : "");
+      b.className = "bz-fav-tagmgr-btn bz-touch-target" + (danger ? " bz-fav-tagmgr-btn--danger" : "");
       b.title = title;
+      b.setAttribute("aria-label", title);
       b.disabled = disabled;
       b.innerHTML = `<i data-lucide="${ic2}"></i>`;
       b.addEventListener("click", onClick);
@@ -36444,7 +36606,7 @@ GitHub 仓库：${ghInfo.title}
       row.className = "bz-fav-tagmgr-row";
       const ic2 = document.createElement("span");
       ic2.className = "bz-fav-tagmgr-ic";
-      ic2.innerHTML = `<i data-lucide="${tag.ic || "tag"}"></i>`;
+      ic2.innerHTML = iconSpan(safeTagIcon(tag.ic));
       const name = document.createElement("span");
       name.className = "bz-fav-tagmgr-name";
       name.textContent = tag.label;
@@ -36484,7 +36646,7 @@ GitHub 仓库：${ghInfo.title}
     var _a2, _b2;
     const host = document.createElement("div");
     host.innerHTML = `
-    <div class="bz-fav-form bz-fav-tageditor">
+    <div class="bz-fav-tageditor">
     <h2>${existing ? "编辑标签" : "添加标签"}</h2>
     <div class="bz-fav-fld"><label>名称</label><input id="fz-tag-name" value="${esc((existing == null ? void 0 : existing.label) || "")}" placeholder="如：装修灵感"></div>
     <div class="bz-fav-fld"><label>图标</label><div class="bz-fav-tageditor-ics" id="fz-tag-ics"></div></div>
@@ -36496,7 +36658,15 @@ GitHub 仓库：${ghInfo.title}
     const { popup, close } = uiModal({
       content: host.firstElementChild,
       className: "bz-fav-scope",
-      maxWidth: 380
+      maxWidth: 380,
+      requestClose: () => {
+        const input2 = popup.querySelector("#fz-tag-name");
+        if (input2 && input2.value.trim() && input2.value.trim() !== ((existing == null ? void 0 : existing.label) || "")) {
+          confirmDiscard(() => close(), void 0, "bz-fav-flow-dialog bz-fav-scope");
+        } else {
+          close();
+        }
+      }
     });
     mountIcons(popup);
     const input = popup.querySelector("#fz-tag-name");
@@ -36522,6 +36692,10 @@ GitHub 仓库：${ghInfo.title}
       const label = input.value.trim();
       if (!label) {
         notice("请输入标签名称");
+        return;
+      }
+      if (RESERVED_TAG_LABELS.includes(label)) {
+        notice("该名称与内置视图冲突，请换一个名称");
         return;
       }
       if (getTags().some((t) => t.label === label && t.id !== (existing == null ? void 0 : existing.id))) {
@@ -36564,13 +36738,7 @@ GitHub 仓库：${ghInfo.title}
     };
     (_a2 = popup.querySelector("[data-fz-tag-cancel]")) == null ? void 0 : _a2.addEventListener("click", () => close());
     (_b2 = popup.querySelector("#fz-tag-save")) == null ? void 0 : _b2.addEventListener("click", () => void doSave2());
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        void doSave2();
-      }
-    });
-    setTimeout(() => input.focus(), 30);
+    bindFormSubmit(popup, () => void doSave2());
   }
   async function deleteTagFlow(dm, tag, redraw) {
     var _a2;
@@ -36620,7 +36788,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, mainEscRegistered, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M6, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui8 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -36633,12 +36801,15 @@ GitHub 仓库：${ghInfo.title}
       init_app();
       init_utils();
       init_ui();
+      init_modal();
       init_domain_bus();
       init_settings_provider();
       init_favorites_source();
       init_config();
       init_render9();
+      init_ai3();
       init_data8();
+      init_app2();
       M6 = {
         overlay: null,
         items: [],
@@ -36647,7 +36818,6 @@ GitHub 仓库：${ghInfo.title}
         sort: "new",
         renderFn: null
       };
-      mainEscRegistered = false;
       _dm = null;
       _ai = null;
       _app2 = null;
@@ -38712,7 +38882,7 @@ ${n.content.slice(0, 2e3)}
         async refresh() {
           const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
           await (uiManager3 == null ? void 0 : uiManager3.refreshPanel());
-          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app2(), app_exports));
+          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
           await reviewApp2.applyReviewStyles(this.app);
         }
         /** 卸载清理（定时器/缓冲） */
@@ -39830,7 +40000,7 @@ ${n.content.slice(0, 2e3)}
     let w;
     let fit2 = null;
     try {
-      const appMod = await Promise.resolve().then(() => (init_app2(), app_exports));
+      const appMod = await Promise.resolve().then(() => (init_app3(), app_exports));
       w = appMod.reviewApp.currentW();
       fit2 = typeof appMod.reviewApp.fitMeta === "function" ? appMod.reviewApp.fitMeta() : null;
     } catch (e) {
@@ -39956,7 +40126,7 @@ ${n.content.slice(0, 2e3)}
     closeTimeline();
     let w;
     try {
-      w = (await Promise.resolve().then(() => (init_app2(), app_exports))).reviewApp.currentW();
+      w = (await Promise.resolve().then(() => (init_app3(), app_exports))).reviewApp.currentW();
     } catch (e) {
       w = void 0;
     }
@@ -40308,7 +40478,7 @@ ${n.content.slice(0, 2e3)}
             notice("请先打开一个笔记", "warning");
             return;
           }
-          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app2(), app_exports));
+          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
           try {
             await reviewApp2.addCurrentToReview(file);
             await this.refreshPanel();
@@ -40330,7 +40500,7 @@ ${n.content.slice(0, 2e3)}
           if (this.sprintStarting) return;
           this.sprintStarting = true;
           try {
-            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app2(), app_exports));
+            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
             await reviewApp2.autoJumpOverdue();
           } finally {
             this.sprintStarting = false;
@@ -40340,7 +40510,7 @@ ${n.content.slice(0, 2e3)}
           if (this.sprintStarting) return;
           this.sprintStarting = true;
           try {
-            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app2(), app_exports));
+            const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
             await reviewApp2.startSingleSprint(item);
           } finally {
             this.sprintStarting = false;
@@ -40450,14 +40620,14 @@ ${n.content.slice(0, 2e3)}
                   try {
                     await this.dataManager.removeItem(item.filePath);
                     await this.refreshPanel();
-                    const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app2(), app_exports));
+                    const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
                     await reviewApp2.applyReviewStyles(this.app);
                     notifyUndo(`已移出「${item.name}」`, () => {
                       void (async () => {
                         try {
                           await this.dataManager.restoreItem(item);
                           await this.refreshPanel();
-                          const { reviewApp: ra } = await Promise.resolve().then(() => (init_app2(), app_exports));
+                          const { reviewApp: ra } = await Promise.resolve().then(() => (init_app3(), app_exports));
                           await ra.applyReviewStyles(this.app);
                         } catch (e) {
                           notifySaveError(e, "恢复复习条目");
@@ -41104,7 +41274,7 @@ ${n.content.slice(0, 2e3)}
       init_data9();
       init_watch();
       init_ui10();
-      init_app2();
+      init_app3();
       init_quiz_panel();
       init_quiz_core();
       init_stats_ui();
@@ -41140,7 +41310,7 @@ ${n.content.slice(0, 2e3)}
     }
   }
   var REVIEW_AWAY_GRACE_MS, ReviewGateRejected, reviewApp;
-  var init_app2 = __esm({
+  var init_app3 = __esm({
     "src/review/app.ts"() {
       init_notice();
       init_app();
@@ -42799,7 +42969,7 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/secondbrain/ai.ts
-  var init_ai3 = __esm({
+  var init_ai4 = __esm({
     "src/secondbrain/ai.ts"() {
       init_ai();
     }
@@ -42968,7 +43138,7 @@ ${n.content.slice(0, 2e3)}
       init_store_file();
       init_weekly();
       init_render13();
-      init_ai3();
+      init_ai4();
       overlayEl3 = null;
       maskEl3 = null;
       escHandle5 = null;
@@ -49043,7 +49213,7 @@ ${n.content.slice(0, 2e3)}
         gameshelf: async () => (await Promise.resolve().then(() => (init_settings5(), settings_exports5))).gameshelfSettingsSchema(),
         bookshelf: async () => (await Promise.resolve().then(() => (init_settings6(), settings_exports6))).bookshelfSettingsSchema(),
         review: async () => {
-          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app2(), app_exports));
+          const { reviewApp: reviewApp2 } = await Promise.resolve().then(() => (init_app3(), app_exports));
           const { reviewSettingsSchema: reviewSettingsSchema2 } = await Promise.resolve().then(() => (init_ui10(), ui_exports7));
           const app = getApp();
           reviewApp2.ensure(app);

@@ -1,5 +1,5 @@
-/* 源指纹 224263d3d422e740 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
+/* 源指纹 cf8546afc40d7960 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
   var __create = Object.create;
@@ -4136,6 +4136,12 @@ var BZW_favorites = (() => {
   function saveSettings() {
     return _saver ? _saver() : Promise.resolve();
   }
+  function getSettings() {
+    if (!_provider) {
+      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
+    }
+    return _provider();
+  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
   }
@@ -5666,6 +5672,17 @@ var BZW_favorites = (() => {
       return { title, description, fetched };
     }
   };
+  function normalizeAiOrganizeResult(data) {
+    const s = (v) => v === void 0 || v === null ? "" : typeof v === "string" ? v : String(v);
+    const url = s(data.url).trim();
+    const tags = Array.isArray(data.tags) ? data.tags.map((t) => s(t)).filter((t) => t !== "") : data.tags ? [s(data.tags)] : [];
+    return {
+      title: s(data.title),
+      url: url ? normalizeUrl(url) : "",
+      description: s(data.description),
+      tags
+    };
+  }
 
   // src/core/dom.ts
   function longPress(el, cb, dur, filter) {
@@ -5780,6 +5797,11 @@ var BZW_favorites = (() => {
       }
     };
   })();
+  var panelEscHandles = /* @__PURE__ */ new Map();
+  function registerPanelEsc(id, isVisible, close) {
+    if (panelEscHandles.has(id)) return;
+    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
 
   // src/core/mobile.ts
   function isMobileEnv() {
@@ -6359,6 +6381,24 @@ var BZW_favorites = (() => {
   }
 
   // src/core/ui/modal.ts
+  function bindFormSubmit(popup, onSubmit) {
+    popup.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      onSubmit();
+    });
+    popup.addEventListener("keypress", (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.dataset.bzNoFormSubmit !== void 0) return;
+      e.preventDefault();
+      onSubmit();
+    });
+  }
   var liveModals = /* @__PURE__ */ new Set();
   function uiModal(opts) {
     var _a;
@@ -6446,6 +6486,12 @@ var BZW_favorites = (() => {
   }
 
   // src/favorites/shared.ts
+  var VIEW_ALL = "__all";
+  var VIEW_ARCHIVED = "__archived";
+  function safeTagIcon(ic) {
+    const s = typeof ic === "string" ? ic : "";
+    return /^[a-z0-9-]+$/i.test(s) ? s : "tag";
+  }
   var ICON = {
     close: "x",
     add: "plus",
@@ -6506,20 +6552,28 @@ var BZW_favorites = (() => {
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
     const tape = "bz-fav-tape" + (idx % 3 ? [" bz-fav-tape--r", " bz-fav-tape--g"][idx % 3 - 1] : "");
-    return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}">
+    return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
     <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <h3>${esc(it.title || "无标题")}</h3>
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
       const h = hueOf(t);
-      const ic = (getTags().find((x) => x.label === t) || { ic: "" }).ic;
+      const ic = safeTagIcon((getTags().find((x) => x.label === t) || { ic: "" }).ic);
       return `<span class="bz-fav-tagb" style="background:hsl(${h} 70% 95%);color:hsl(${h} 45% 42%)">${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(t)}</span></span>`;
     }).join("")}</span>
       <span>${esc(relTime(it.created))}</span></div>
   </div>`;
   }
-  function emptyHtml() {
+  function emptyHtml(view, items) {
+    if (view && items) {
+      if (view.archived) {
+        return `<div class="bz-fav-empty">${emptyHtmlStr("archive", "归档箱是空的", "归档的收藏会冷存在这里，可随时恢复")}</div>`;
+      }
+      if (view.tag && !visibleItems(items).some((i) => (i.tags || []).includes(view.tag))) {
+        return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", `「${view.tag}」标签下还没有收藏`, "换个标签看看，或添加一条试试")}</div>`;
+      }
+    }
     return `<div class="bz-fav-empty">${emptyHtmlStr("inbox", "这块板上还没有卡片", "添加第一条收藏试试")}</div>`;
   }
   function actionSpecs(it) {
@@ -6537,7 +6591,7 @@ var BZW_favorites = (() => {
   }
   function pickChipsHtml(sel) {
     return getTags().map(
-      (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(t.ic, "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
+      (t) => `<button type="button" class="${sel.has(t.label) ? "bz-fav-on" : ""}" data-tag="${esc(t.label)}">${iconSpan(safeTagIcon(t.ic), "bz-ic--xs")}<span>${esc(t.label)}</span></button>`
     ).join("");
   }
   function formHtml(it) {
@@ -6548,7 +6602,7 @@ var BZW_favorites = (() => {
     <div class="bz-fav-fld"><label>链接</label><input id="fz-url" value="${esc(it ? it.url : "")}" placeholder="https://…"></div>
     <div class="bz-fav-fld"><label>简介</label><textarea id="fz-desc" placeholder="一句话记住它…">${esc(it ? it.description || "" : "")}</textarea></div>
     <div class="bz-fav-fld"><label>标签（可多选）</label><div class="bz-fav-pick" id="fz-tags"></div></div>
-    <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
+    <div class="bz-fav-fld bz-fav-inline"><span class="bz-fav-sw${it && it.pinned ? " bz-fav-on" : ""}" id="fz-pin" role="switch" tabindex="0" aria-checked="${!!(it && it.pinned)}"></span><span class="bz-fav-fld-desc">置顶后恒排最前</span></div>
     <div class="bz-fav-err" id="fz-err"></div>
     <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（memo/cinema/diary 多数派，
          与本域标签表单 existing ? '保存' : '添加' 对齐，域内不再二分） -->
@@ -6570,25 +6624,33 @@ var BZW_favorites = (() => {
 </div>`;
   }
   function chipsHtml(items, view, mobile) {
-    const mk = (label, ic, cnt, active, grey = false) => `<button class="bz-fav-chip${active ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
-    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON.add, "bz-ic--xs")}<span>新收藏</span></button>`;
-    const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
+    const mk = (dataVal, display, ic, cnt, active, grey = false, empty = false) => `<button class="bz-fav-chip${active ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}${empty ? " bz-fav-chip--empty" : ""}" data-fav-tag="${esc(dataVal)}"${active ? ' aria-pressed="true"' : ' aria-pressed="false"'}>${ic ? iconSpan(ic, "bz-ic--xs") : ""}<span>${esc(display)} ${cnt}</span></button>`;
+    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏" aria-label="添加收藏">${iconSpan(ICON.add, "bz-ic--xs")}<span>新收藏</span></button>`;
+    const chips = mk(VIEW_ALL, "全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk(VIEW_ARCHIVED, "已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
       const n = tagCount(items, t.label);
-      return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
+      const active = !view.archived && view.tag === t.label;
+      if (!n && !active) return "";
+      return mk(t.label, t.label, safeTagIcon(t.ic), n, active, false, !n);
     }).join("");
     return mobile ? add + chips : chips + add;
   }
   function boardHtml(items, view) {
     const list = filteredItems(items, view);
-    if (!list.length) return emptyHtml();
-    return list.map((it) => cardHtml(it, items.indexOf(it))).join("");
+    if (!list.length) return emptyHtml(view, items);
+    const idxMap = new Map(items.map((it, i) => [it, i]));
+    return list.map((it) => {
+      var _a;
+      return cardHtml(it, (_a = idxMap.get(it)) != null ? _a : 0);
+    }).join("");
   }
   function renderTagsInto(mount, items, view, hooks) {
     mount.innerHTML = chipsHtml(items, view, hooks.mobile);
     hooks.mountIcons(mount);
   }
   function renderBoardInto(board, items, view, hooks) {
+    const keep = board.scrollTop;
     board.innerHTML = boardHtml(items, view);
+    board.scrollTop = keep;
     hooks.mountIcons(board);
   }
   function renderPanelView(panel, items, view, hooks) {
@@ -6597,6 +6659,48 @@ var BZW_favorites = (() => {
     const board = panel.querySelector("[data-fav-content]");
     if (board) renderBoardInto(board, items, view, hooks);
   }
+
+  // src/favorites/app.ts
+  var _FavoritesApp = class _FavoritesApp {
+    constructor() {
+      this.dataManager = null;
+      this.aiService = null;
+      this.initialized = false;
+    }
+    static getInstance() {
+      if (!_FavoritesApp.instance) _FavoritesApp.instance = new _FavoritesApp();
+      return _FavoritesApp.instance;
+    }
+    async init() {
+      if (this.initialized) return;
+      const settings = getSettings();
+      const storagePath = getStoragePath(settings == null ? void 0 : settings.storagePath);
+      this.dataManager = new DataManager(storagePath);
+      this.aiService = new FavoritesAIService();
+      this.initialized = true;
+      try {
+        await this.dataManager.loadTags();
+      } catch (e) {
+        console.error("[favorites-loadTags]", e);
+      }
+    }
+    /** 打开收藏面板（toggle 语义在 ui.openPanel 内） */
+    async openPanel(app) {
+      await this.init();
+      if (this.dataManager && this.aiService) {
+        openPanel(app, this.dataManager, this.aiService);
+      }
+    }
+    /** 直接打开添加弹窗（bz-favorites-add 命令；无需先开面板） */
+    openAdd(app) {
+      if (this.dataManager && this.aiService) {
+        initFavoritesUI(app, this.dataManager, this.aiService);
+        openForm(null);
+      }
+    }
+  };
+  _FavoritesApp.instance = null;
+  var FavoritesApp = _FavoritesApp;
 
   // src/favorites/ui.ts
   var M = {
@@ -6627,18 +6731,16 @@ var BZW_favorites = (() => {
     if (v && getTags().some((t) => t.label === v)) return { tag: v, archived: false };
     return { tag: null, archived: false };
   }
-  var mainEscRegistered = false;
   function ensureFavoritesEsc() {
-    if (mainEscRegistered) return;
-    mainEscRegistered = true;
-    escManager.register("bz-fav", {
-      isVisible: () => !!M.overlay || !!document.querySelector(".bz-fav-form"),
-      close: () => {
+    registerPanelEsc(
+      "bz-fav",
+      () => !!M.overlay || !!document.querySelector(".bz-fav-form"),
+      () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
         else closePanel();
       }
-    });
+    );
   }
   var _dm = null;
   var _ai = null;
@@ -6690,19 +6792,29 @@ var BZW_favorites = (() => {
       applyTagFilter(b.dataset.favTag);
     });
     const content = overlay.querySelector("[data-fav-content]");
-    content.addEventListener("click", (e) => {
-      const t = e.target;
-      const card = t.closest("[data-fav-id]");
-      if (!card) return;
-      e.stopPropagation();
-      const it = itemById(card.dataset.favId);
-      if (!it) return;
+    const openCardDefault = (it) => {
       if (isMobileEnv()) {
         openMobSheet(it);
         return;
       }
       const rawUrl = (it.url || "").trim();
       if (rawUrl) openExternal(normalizeUrl(rawUrl));
+    };
+    content.addEventListener("click", (e) => {
+      const t = e.target;
+      const card = t.closest("[data-fav-id]");
+      if (!card) return;
+      e.stopPropagation();
+      const it = itemById(card.dataset.favId);
+      if (it) openCardDefault(it);
+    });
+    content.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const card = e.target.closest("[data-fav-id]");
+      if (!card || e.target !== card) return;
+      e.preventDefault();
+      const it = itemById(card.dataset.favId);
+      if (it) openCardDefault(it);
     });
     content.addEventListener("contextmenu", (e) => {
       const card = e.target.closest("[data-fav-id]");
@@ -6726,6 +6838,7 @@ var BZW_favorites = (() => {
         return isMobileEnv() && !!((_b = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b.call(_a2, "[data-fav-id]"));
       }
     );
+    renderAll();
     void (async () => {
       await loadItems();
       renderAll();
@@ -6759,14 +6872,15 @@ var BZW_favorites = (() => {
   }
   function renderAll() {
     if (!M.overlay) return;
+    if (!M.archived && M.tag && !getTags().some((t) => t.label === M.tag)) M.tag = null;
     const panel = M.overlay.querySelector(".bz-fav-panel");
     renderPanelView(panel, M.items, M, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
-    if (label === "全部" || label === "__all") {
+    if (label === VIEW_ALL) {
       M.tag = null;
       M.archived = false;
-    } else if (label === "已归档" || label === "__archived") {
+    } else if (label === VIEW_ARCHIVED) {
       M.tag = null;
       M.archived = !M.archived;
     } else {
@@ -6795,37 +6909,11 @@ var BZW_favorites = (() => {
     } else if (spec.act === "edit") {
       openForm(it);
     } else if (spec.act === "archive") {
-      void openFlowDialog({
-        title: "归档收藏",
-        // issue 291：流程框挂 document.body，不在 .bz-fav-panel 树内——不显式带皮肤类就掉回 core 裸皮。
-        // `bz-fav-flow-dialog` = 本域确认框专属类（styles.css 映射表单弹窗 .bz-fav-form 那套亚麻取值）；
-        // `bz-fav-scope` 必须跟着传：亚麻/暖纸是私有 token（--pop/--pop-ink/--pop-mut/--mask/--acc），
-        // 只在 .bz-fav-scope 命中时才定义，缺它变量全部解析失败。
-        className: "bz-fav-flow-dialog bz-fav-scope",
-        message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
-        actions: [
-          { label: "取消", value: "cancel" },
-          { label: "归档", value: "ok", cta: true }
-        ]
-      }).then((v) => {
-        if (v === "ok") void archiveItem(it);
-      });
+      void archiveItem(it);
     } else if (spec.act === "unarchive") {
       void unarchiveItem(it);
     } else if (spec.act === "del") {
-      void openFlowDialog({
-        title: "删除收藏",
-        // issue 291：与归档确认同一套皮肤类（删除是危险主动作 → core 另挂 bz-flow-dialog--danger，
-        // 与皮肤类并存不冲突）。类含义见归档确认处注释。
-        className: "bz-fav-flow-dialog bz-fav-scope",
-        message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
-        actions: [
-          { label: "取消", value: "cancel" },
-          { label: "删除", value: "del", danger: true, cta: true }
-        ]
-      }).then((v) => {
-        if (v === "del") void deleteItem(it);
-      });
+      void deleteItem(it);
     }
   }
   function toItemActions(it) {
@@ -6899,6 +6987,7 @@ var BZW_favorites = (() => {
         void (async () => {
           try {
             await dataManagerOf().restoreItem(snapshot);
+            emitDomainEvent("favorites", { kind: "restored", title: it.title });
             await reload();
           } catch (e) {
             notifySaveError(e, "恢复收藏");
@@ -6960,7 +7049,13 @@ var BZW_favorites = (() => {
   function openForm(item) {
     var _a, _b, _c;
     ensureFavoritesEsc();
-    if (document.querySelector(".bz-fav-form")) closeForm();
+    if (document.querySelector(".bz-fav-form")) {
+      if (formDirty()) {
+        requestCloseForm();
+        return;
+      }
+      closeForm();
+    }
     const it = item;
     const host = document.createElement("div");
     host.innerHTML = formHtml(it);
@@ -7008,15 +7103,22 @@ var BZW_favorites = (() => {
     };
     drawPick();
     const pinEl = popup.querySelector("#fz-pin");
-    pinEl.addEventListener("click", () => pinEl.classList.toggle("bz-fav-on"));
+    const togglePin = () => {
+      const on = pinEl.classList.toggle("bz-fav-on");
+      pinEl.setAttribute("aria-checked", String(on));
+    };
+    pinEl.addEventListener("click", togglePin);
+    pinEl.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        togglePin();
+      }
+    });
     const errEl = popup.querySelector("#fz-err");
     (_a = popup.querySelector("[data-fz-cancel]")) == null ? void 0 : _a.addEventListener("click", () => requestCloseForm());
     (_b = popup.querySelector("#fz-ai")) == null ? void 0 : _b.addEventListener("click", () => void runAiFill(popup, sel, drawPick, errEl));
     (_c = popup.querySelector("#fz-save")) == null ? void 0 : _c.addEventListener("click", () => void saveForm(popup, it, sel, errEl));
-    setTimeout(() => {
-      var _a2;
-      return (_a2 = popup.querySelector("#fz-title")) == null ? void 0 : _a2.focus();
-    }, 100);
+    bindFormSubmit(popup, () => void saveForm(popup, it, sel, errEl));
   }
   async function runAiFill(popup, sel, redraw, errEl) {
     const ai = aiServiceOf();
@@ -7051,15 +7153,16 @@ var BZW_favorites = (() => {
       const raw = await ai.ai.chat(text);
       const data = parseAiJson(raw);
       if (!data) throw new Error("AI 返回格式错误");
+      const res = normalizeAiOrganizeResult(data);
       const setVal = (id, v) => {
         const el = popup.querySelector(id);
         if (el && !el.value.trim() && v) el.value = String(v);
       };
       if (ghInfo == null ? void 0 : ghInfo.fetched) setVal("#fz-title", ghInfo.title);
-      setVal("#fz-title", data.title);
-      setVal("#fz-url", data.url);
-      setVal("#fz-desc", data.description);
-      const rawTags = Array.isArray(data.tags) ? data.tags.map((x) => String(x)) : data.tags ? [String(data.tags)] : [];
+      setVal("#fz-title", res.title);
+      setVal("#fz-url", res.url);
+      setVal("#fz-desc", res.description);
+      const rawTags = res.tags;
       const known = getTags().map((t) => t.label);
       const valid = rawTags.filter((t) => known.includes(t));
       const unknown = rawTags.filter((t) => !known.includes(t));
@@ -7116,7 +7219,8 @@ GitHub 仓库：${ghInfo.title}
   async function saveForm(popup, it, sel, errEl) {
     if (_saving) return;
     const title = inputVal(popup, "#fz-title").trim();
-    const url = inputVal(popup, "#fz-url").trim();
+    const rawUrl = inputVal(popup, "#fz-url").trim();
+    const url = rawUrl ? normalizeUrl(rawUrl) : "";
     if (!title) {
       errEl.textContent = "请输入标题";
       return;
