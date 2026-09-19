@@ -22,12 +22,12 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
   return {
     groups: [
       {
-        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+        // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 零消费——desc 披露「预留，暂未生效」（深审新-14③），待皮肤设计时接入
         icon: 'palette',
         name: '外观',
         rows: [
-          { type: 'choiceCards', name: '面板布局', binding: { key: 'reviewSkin' }, options: [{ value: 'default', label: '三区队列', prevClass: 'bz-sp-prev-panel' }] },
-          { type: 'choiceCards', name: '面板主题', binding: { key: 'reviewSkinTheme' }, layoutKey: 'reviewSkin', options: [{ value: 'sage', label: '苔绿', layout: 'default', prevClass: 'bz-sp-prev-sage' }] },
+          { type: 'choiceCards', name: '面板布局', desc: '预留功能，暂未生效', binding: { key: 'reviewSkin' }, options: [{ value: 'default', label: '三区队列', prevClass: 'bz-sp-prev-panel' }] },
+          { type: 'choiceCards', name: '面板主题', desc: '预留功能，暂未生效', binding: { key: 'reviewSkinTheme' }, layoutKey: 'reviewSkin', options: [{ value: 'sage', label: '苔绿', layout: 'default', prevClass: 'bz-sp-prev-sage' }] },
         ],
       },
       {
@@ -45,7 +45,21 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
           { type: 'toggle', name: '用做题测难度', desc: '开始复习即做题，按正确率自动定难度', binding: { key: 'forceQuizForReview' } },
           // 出题子项：仅「用做题测难度」开启时显示（ticket 170 isChild 联动 + visibleWhen 兜底）
           { type: 'toggle', name: '允许多选题', desc: '开启后 AI 可能出多选题，关闭则只出单选题', binding: { key: 'enableMultipleChoice' }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
-          { type: 'text', name: '每篇笔记出题数量', desc: '固定每篇笔记出题的数量，留空/0=自动', binding: { key: 'questionsPerNote' }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
+          // 数量语义行口径对齐全域（深审新-14①）：number 行 + min 钳制（原 text 行可输 -5/abc）。
+          // 键仍为 string 型（session parseInt||0 消费），binding 自管转 string 落盘；0=自动语义保留
+          {
+            type: 'number',
+            name: '每篇笔记出题数量',
+            desc: '固定每篇笔记出题的数量，0 为自动',
+            binding: {
+              get: () => Number((getSettings() as any).questionsPerNote) || 0,
+              set: (v) => { (getSettings() as any).questionsPerNote = String(v); },
+              save: () => saveSettings(),
+            },
+            min: 0,
+            visibleWhen: (s) => s.forceQuizForReview === true,
+            isChild: true,
+          },
           { type: 'toggle', name: '打乱出题顺序', desc: '做题时随机排列题目顺序', binding: { key: 'shuffleQuestions' }, visibleWhen: (s) => s.forceQuizForReview === true, isChild: true },
           {
             type: 'select',
@@ -69,21 +83,22 @@ export function reviewSettingsSchema(deps: { app: App; dataManager: ReviewDataMa
         rows: [
           // 非正数钳制为 0（原 onChange 口径：>0 保留否则 0）；空串不写（防脏值落盘）
           { type: 'number', name: '每日复习上限', desc: '一轮最多复习的篇数，不填则不限制', binding: { key: 'reviewDailyLimit' }, min: 0 },
-          // 原钳制「n>0 且 n<=5 保留、否则回 1」：渲染器 min/max 只做边界钳制，超上界回 1 语义在 onChange 复刻
+          // 深审新-14②/A14：超界改渲染器声明钳制（min/max 进界并回写输入框，R9 通路显示值=落盘值），
+          // 原.onChange「超上界回 1」复刻删除——输入 8 落 5 且回显 5，不再出现显示 8 落 1 的缝
           {
             type: 'number',
             name: '复习间隔缩放',
             desc: '数值越小复习越频繁，数值越大越宽松',
             binding: { key: 'reviewIntervalScale' },
-            onChange: (v) => {
-              if (!(v > 0 && v <= 5)) (getSettings() as any).reviewIntervalScale = 1;
-            },
+            min: 0.1,
+            max: 5,
           },
-          // ADR-0077：R 目标阈值（低于该值视为可复习/提前；默认 0.9）
+          // ADR-0077：R 目标阈值（低于该值视为可复习/提前；默认 0.9）。
+          // F3 语义披露：该阈值仅用于提前复习判定，不改变排期间隔（真阈值排期是待拍板项）
           {
             type: 'number',
             name: 'R 目标阈值',
-            desc: '记忆保留度低于该值视为该复习了',
+            desc: '记忆保留度低于该值仅触发提前复习，不改变排期间隔',
             binding: { key: 'reviewRThreshold' },
             min: 0.5,
             max: 0.99,

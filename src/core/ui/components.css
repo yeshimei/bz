@@ -761,13 +761,17 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
    作用域 = bz 自有界面：bz- 前缀类/ID + 通用面板壳整树 + 非 bz 前缀的遗留容器。
    刻意不用 * 通配——Obsidian 核心 UI（文件树/编辑器/核心设置）不属本插件，不隐藏。
    scrollbar-width/-ms-overflow-style 可继承（子树自动生效）；::-webkit-scrollbar 不继承，
-   故对同组选择器补「元素自身 + 子树」两种形态（守卫：tests/core/ui-scrollbar.test.ts）。 */
+   故对同组选择器补「元素自身 + 子树」两种形态（守卫：tests/core/ui-scrollbar.test.ts）。
+   深审 U6：补 review 域三个无 bz- 前缀弹层壳（统计/历史/quiz 遗留会话弹窗）整树——
+   内层滚动区（#review-stats-body/.bz-review-history-tl/.bz-stats-chart-scroll）经继承/
+   子树形态一并覆盖，域内不得再自造滚动条规则。 */
 .bz-panel-overlay, .bz-panel-overlay *,
 .bz-panel-frame, .bz-panel-frame *,
 [class^="bz-"], [class*=" bz-"],
 [id^="bz-"], [id^="knowledge-"],
 #add-diary-popup, .diary-tag-selector-popup, .diary-datetime-scroll-container,
-#review-entries-container, #__shared_confirm_popup__ {
+#review-entries-container, #__shared_confirm_popup__,
+#review-stats-popup, #review-history-popup, #quiz-popup {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -781,7 +785,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .diary-tag-selector-popup::-webkit-scrollbar, .diary-tag-selector-popup *::-webkit-scrollbar,
 .diary-datetime-scroll-container::-webkit-scrollbar, .diary-datetime-scroll-container *::-webkit-scrollbar,
 #review-entries-container::-webkit-scrollbar, #review-entries-container *::-webkit-scrollbar,
-#__shared_confirm_popup__::-webkit-scrollbar, #__shared_confirm_popup__ *::-webkit-scrollbar {
+#__shared_confirm_popup__::-webkit-scrollbar, #__shared_confirm_popup__ *::-webkit-scrollbar,
+#review-stats-popup::-webkit-scrollbar, #review-stats-popup *::-webkit-scrollbar,
+#review-history-popup::-webkit-scrollbar, #review-history-popup *::-webkit-scrollbar,
+#quiz-popup::-webkit-scrollbar, #quiz-popup *::-webkit-scrollbar {
   display: none;
 }
 
