@@ -34,7 +34,7 @@ import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching } from './douban-que
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
   detailModalHtml, seriesDetailModalHtml, formModalHtml,
-  aiPageHtml, sheetHeadHtml, cardHtml, facePiecesHtml, type AiPageInput,
+  aiPageHtml, sheetHeadHtml, seriesSheetHeadHtml, cardHtml, facePiecesHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
 } from './render';
@@ -193,7 +193,7 @@ export function gridColumns(): number {
   return Math.min(12, Math.max(2, Math.round(raw)));
 }
 
-/** 剧集按季合并（设置 cinemaMergeSeasons；缺省关）。渲染前实时读——设置面板一改即生效 */
+/** 剧集按季合并（设置 cinemaMergeSeasons；缺省开）。渲染前实时读——设置面板一改即生效 */
 export function mergeSeasonsOn(): boolean {
   return (tryGetSettings() as Record<string, unknown>).cinemaMergeSeasons === true;
 }
@@ -202,6 +202,16 @@ export function mergeSeasonsOn(): boolean {
 function seriesCardByKey(key: string): SeriesCard | undefined {
   return mergeSeasonCards(getDisplayItems(), mergeSeasonsOn())
     .find((c): c is SeriesCard => c.kind === 'series' && c.key === key);
+}
+
+/**
+ * 合并卡的手势（桌面右键菜单 / 移动长按抽屉）：**只有一条入口**——打开各季明细弹窗。
+ * 卡片级没有具体条目可指，所以不放标记/编辑/删除这类**笔记级**动作（要动哪一条就进列表点它）；
+ * 文案不用「各季列表」：合并卡里除了各季还可能挂着电影版 / 特别篇 / 外传，
+ * 「查看全部」不带类型限定，与弹窗头部「共 N 季 · M 部电影」互补。
+ */
+function seriesAllAct(sec: HTMLElement, key: string, app: App): MenuAct {
+  return { icon: 'layers', label: '查看全部', run: () => openSeriesDetail(sec, key, app) };
 }
 
 /** 卡片条目 → HTML（正脸季的海报与抓取态；网格与局部重刷共用一份口径） */
@@ -266,11 +276,27 @@ function toItemActions(acts: MenuAct[]): ItemAction[] {
   }));
 }
 
-/** 抽屉头部节点（海报 + 名称 + meta）：markup 单源 shared.sheetHeadHtml，core 侧要元素 */
-function sheetHeadEl(it: CinemaItem, url: string | null): HTMLElement {
+/** 动作包一层「先收弹窗再执行」：合并卡弹窗里的动作都要换层（钻详情 / 开表单 / 开确认），
+ *  弹窗留着会压在新层上。菜单 ESC / 点外部关闭时弹窗仍在，用户可接着操作别的季。 */
+function deferClose(acts: MenuAct[], close: () => void): MenuAct[] {
+  return acts.map((a) => ({ ...a, run: () => { close(); a.run(); } }));
+}
+
+/** 抽屉头部 markup → 节点（core 侧要元素，markup 单源在 shared） */
+function headElOf(html: string): HTMLElement {
   const box = document.createElement('div');
-  box.innerHTML = sheetHeadHtml(it, url);
+  box.innerHTML = html;
   return (box.firstElementChild as HTMLElement) ?? box;
+}
+
+/** 抽屉头部节点（海报 + 名称 + meta）：markup 单源 shared.sheetHeadHtml */
+function sheetHeadEl(it: CinemaItem, url: string | null): HTMLElement {
+  return headElOf(sheetHeadHtml(it, url));
+}
+
+/** 合并卡抽屉头部节点（剧名 + 共 N 季 · M 部电影）：markup 单源 shared.seriesSheetHeadHtml */
+function seriesSheetHeadEl(card: SeriesCard, url: string | null): HTMLElement {
+  return headElOf(seriesSheetHeadHtml(card, url));
 }
 
 /** 悬浮换脸前的静息态快照（卡片元素 → 四件 innerHTML）。合并卡正脸口径与单季不同
@@ -311,27 +337,46 @@ function restFace(dot: HTMLElement): void {
 }
 
 /** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。
- *  合并卡（剧集按季合并）长按开合并详情——抽屉里的动作全是单季动作，合集上没法落地。 */
+ *  合并卡（剧集按季合并）长按只出「查看全部」一条（同桌面右键口径）；左键点击也是它。 */
 function attachLongPress(sec: HTMLElement, app: App): void {
   sec.querySelectorAll<HTMLElement>('.m-grid .pcard').forEach((c) => {
     // 原生长按菜单（保存图片/复制链接）让位给抽屉
     c.addEventListener('contextmenu', (ev) => ev.preventDefault());
     longPress(c, () => {
       const key = c.dataset.cinemaKey;
-      if (isSeriesKey(key)) { openSeriesDetail(sec, key as string, app); return; }
+      if (isSeriesKey(key)) {
+        const card = seriesCardByKey(key as string);
+        if (card) openSheet(sec, seriesSheetTarget(card, sec, app));
+        return;
+      }
       const it = itemByKeyInState(key);
       if (!it) return;
-      openSheet(sec, it, app);
+      openSheet(sec, itemSheetTarget(it, sec, app));
     });
   });
 }
 
-/** 移动端抽屉：core openItemSheet（遮罩 + 底部滑入 + 头部信息 + 动作行，皮肤保午夜场观感） */
-function openSheet(sec: HTMLElement, it: CinemaItem, app: App): void {
+/** 抽屉目标：动作集 + 头部节点（单条目 / 合并卡两种来源，禁在调用处各拼一套） */
+interface SheetTarget { acts: MenuAct[]; head: HTMLElement }
+
+/** 单条目抽屉目标：该条目的单条动作 + 该条目信息 */
+function itemSheetTarget(it: CinemaItem, sec: HTMLElement, app: App): SheetTarget {
+  return { acts: itemActions(it, sec, app), head: sheetHeadEl(it, posterUrl(it, app)) };
+}
+
+/** 合并卡抽屉目标：只有「查看全部」一条 + 剧名（正脸季海报）+ 共 N 季 · M 部电影 */
+function seriesSheetTarget(card: SeriesCard, sec: HTMLElement, app: App): SheetTarget {
+  return { acts: [seriesAllAct(sec, card.key, app)], head: seriesSheetHeadEl(card, posterUrl(card.face, app)) };
+}
+
+/** 移动端抽屉：core openItemSheet（遮罩 + 底部滑入 + 头部信息 + 动作行，皮肤保午夜场观感）
+ *  @param preFire 动作执行前先跑（各季明细弹窗里长按出的抽屉：点动作时先把弹窗收掉，
+ *                  否则弹窗压在新层上） */
+function openSheet(sec: HTMLElement, target: SheetTarget, preFire?: () => void): void {
   if (!sec.isConnected) return;
-  openItemSheet(toItemActions(itemActions(it, sec, app)), {
+  openItemSheet(toItemActions(preFire ? deferClose(target.acts, preFire) : target.acts), {
     sheetClass: SHEET_SKIN,
-    sheetHead: sheetHeadEl(it, posterUrl(it, app)),
+    sheetHead: target.head,
   });
 }
 
@@ -346,18 +391,49 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
   el.querySelector('.j-similar')?.addEventListener('click', () => { close(); void runSimilarRecommend(it, app); });
 }
 
-/** 合并卡详情：头部 + 各季明细行；点某一季关掉合并弹窗、钻进那一季的单季详情 */
+/**
+ * 合并卡详情：头部 + 各季明细行 + 特别篇行（2026-09-20 用户拍板：行上补手势，
+ * 桌面右键出**该行**的跟手菜单、移动长按出底部抽屉；行点击仍是钻入该行详情）。
+ * 入口 = 左键点卡片 / 卡片浮层的「查看全部」；卡片级不落笔记级动作，行级才有落点。
+ *
+ * 坑位（都踩过）：
+ * - 行内条目**触发时现取**，不在绑定时闭包捕获：面板重刷后条目对象会换，旧引用指向陈货；
+ * - 桌面右键后必须 `resetItemMenuClickGuard()`：Chromium 右键时序（mousedown → contextmenu →
+ *   mouseup 落在菜单外）会置位残余 click 抑制，吞掉用户下一次左键（菜单项要点两次才生效）；
+ * - 长按回调里**不关弹窗**：`longPress` 靠元素级捕获吞长按后的合成 click，元素一旦被移除，
+ *   合成 click 落到 document 层 → 被 item-actions 的「外部点击关闭」分支当成外部点击，
+ *   抽屉开出即关（正是真机「长按没反应」那个回归）；
+ * - 动作一律「先收弹窗再执行」（见 deferClose）。
+ */
 function openSeriesDetail(sec: HTMLElement, key: string, app: App): void {
   const card = seriesCardByKey(key);
   if (!card) return;
+  const mobile = sec.classList.contains('mob');
   const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)));
   mountIcons(el);
-  el.querySelectorAll<HTMLElement>('.s-row').forEach((row) => row.addEventListener('click', () => {
-    const it = itemByKeyInState(row.dataset.cinemaSeasonKey);
-    if (!it) return;
-    close();
-    openDetail(sec, it, app);
-  }));
+  const rowItem = (row: HTMLElement): CinemaItem | undefined => itemByKeyInState(row.dataset.cinemaSeasonKey);
+  el.querySelectorAll<HTMLElement>('.s-row').forEach((row) => {
+    row.addEventListener('click', () => {
+      const it = rowItem(row);
+      if (!it) return;
+      close();
+      openDetail(sec, it, app);
+    });
+    // 拦原生右键菜单：桌面换成跟手菜单；移动端只为挡「保存图片 / 复制链接」（触屏长按会同时发它）
+    row.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const it = rowItem(row);
+      if (!it || mobile) return;
+      openItemMenu(e.clientX, e.clientY, toItemActions(deferClose(itemActions(it, sec, app), close)), true, MENU_SKIN);
+      resetItemMenuClickGuard();
+    });
+    if (mobile) {
+      longPress(row, () => {
+        const it = rowItem(row);
+        if (it) openSheet(sec, itemSheetTarget(it, sec, app), close); // 弹窗不关（见上），点抽屉动作时再收
+      });
+    }
+  });
 }
 
 /**
@@ -727,8 +803,12 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     if (!cardEl) return;
     e.preventDefault();
     const key = cardEl.dataset.cinemaKey;
-    // 合并卡没有「单季动作」的落点（标记在看/编辑/删除都作用在一篇笔记上）→ 右键等同左键开合集
-    if (isSeriesKey(key)) { openSeriesDetail(sec, key as string, app); return; }
+    // 合并卡（剧集按季合并）：右键与普通卡同款浮层，但只有「查看全部」一条（2026-09-20 用户拍板）
+    if (isSeriesKey(key)) {
+      openItemMenu(e.clientX, e.clientY, toItemActions([seriesAllAct(sec, key as string, app)]), true, MENU_SKIN);
+      resetItemMenuClickGuard();
+      return;
+    }
     const it = itemByKeyInState(key);
     if (!it) return;
     // core 跟手菜单（防溢出定位/ESC/外部点击关闭/键盘导航由共享层承载）

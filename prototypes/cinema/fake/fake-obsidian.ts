@@ -70,6 +70,32 @@ export class TFile {
   stat: { ctime: number; mtime: number } = { ctime: 0, mtime: 0 };
 }
 
+// ==================== 绝对路径海报（演示数据的 file:// 媒体） ====================
+
+/** 媒体扩展名（与 ui.ts posterUrl 的判据同口径的超集） */
+const MEDIA_EXT_RE = /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i;
+
+/**
+ * 演示海报是 vault **绝对路径**（`file:///E:/…/CONFIG/MOVIE POSTER/x.png`；种子直写 frontmatter，
+ * 真插件里海报是 vault 相对路径）——它不在 localStorage 文件系统的键里，但评审壳要能显示真图。
+ * 判定：带协议的绝对路径 + 媒体扩展名 → 返回解码后的**文件名**（取流按 basename 走预览服务）。
+ */
+function absoluteMediaPath(path: string | null | undefined): string | null {
+  if (!path || !/^(file|https?):\/\//i.test(path)) return null;
+  const base = decodeURIComponent((path.split('?')[0].split('/').pop()) || '');
+  return MEDIA_EXT_RE.test(base) ? base : null;
+}
+
+/** 绝对路径媒体的合成 TFile（只为 getResourcePath 取流；不在文件系统里，不参与读写） */
+function mediaFile(base: string): TFile {
+  const f = new TFile();
+  f.path = base;
+  f.name = base;
+  f.basename = base.replace(/\.[^.]+$/, '');
+  f.extension = base.includes('.') ? base.split('.').pop()! : '';
+  return f;
+}
+
 // ==================== frontmatter 最小解析 / 序列化 ====================
 
 /** 去引号（persistItem/种子均写裸值；容忍成对引号） */
@@ -195,7 +221,24 @@ export class FakeVault {
   }
 
   getAbstractFileByPath(path: string): TFile | null {
+    // 演示海报是 vault **绝对路径**（`file:///E:/…/CONFIG/MOVIE POSTER/x.png`，种子直写 frontmatter；
+    // 真插件里海报是 vault 相对路径）→ 不在 localStorage 文件系统里，但必须能解析成 TFile，
+    // 否则 ui.posterUrl 判空、整片海报退回首字占位（评审壳看着像「海报一直在加载」，2026-09-20 用户反馈）。
+    // 取流见 getResourcePath。
+    const media = absoluteMediaPath(path);
+    if (media) return mediaFile(media);
     return this.makeFile(path);
+  }
+
+  /** 资源 URL（真插件返回 vault 资源路径）：
+   *  - http(s) 环境（`node scripts/preview-live.mjs` 起的评审服务）：`/__vault-media/<文件名>`，
+   *    服务端按 basename 从**真实 vault** 现场取流——海报全量 1.8G 不可能入库，只留名不入图；
+   *  - file:// 双击直开：无服务端 → 返回绝对路径，浏览器直读本地文件（原口径）。 */
+  getResourcePath(f: TFile): string {
+    if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) {
+      return '/__vault-media/' + encodeURIComponent(f.name);
+    }
+    return f.path;
   }
 
   /** 列 md 文件（getMarkdownFiles：跳过 __stat__ 等内部键；顺序 = localStorage 插入序） */

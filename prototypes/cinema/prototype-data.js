@@ -1,6 +1,11 @@
 // 影院域原型演示数据（prototype.html 专用，不进构建）。
 // 由真实 vault 笔记导出（671 部取有海报的 50 部，2026-09-07），
 // 海报为 vault 绝对 file:// 路径，双击原型即可加载真图。
+// 2026-09-20 补 9 条：神探夏洛克 第一/三季 + 两部电影版特别篇、我的三体 第一/四季、
+// 老友记 第一/二季 + 重聚特辑、权利的游戏：最后的守夜人——给「特别篇前缀并入」留样例
+// （神探夏洛克 / 权利的游戏 / 老友记三张合并卡各挂 1~2 部电影·纪录片）与反例
+// （我的三体之章北海传：之 不作分隔符，不并）。除两条**评审壳演示条目**
+// （老友记：重聚特辑 / 权利的游戏：最后的守夜人，库里没有、无豆瓣链接）外均为真实库笔记。
 window.CINEMA_DATA = [
   {
     "name": "完美的日子",
@@ -471,6 +476,61 @@ window.CINEMA_DATA = [
     "synopsis": "第二季包含《贝尔格莱维亚丑闻》《巴斯克维尔猎犬》《莱辛巴赫坠落》三集，夏洛克与艾琳·艾德勒的较量、莫里亚蒂的终极阴谋成为经典。"
   },
   {
+    "name": "神探夏洛克 第三季",
+    "typeTag": "英剧",
+    "group": "剧集",
+    "status": "已看",
+    "rating": 9.2,
+    "watchDate": "2018-03-15",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/Pasted%20image%2020260511194321.png",
+    "genre": "剧情 / 悬疑 / 犯罪",
+    "director": "杰里米·洛夫林 / 柯尔姆·麦卡锡 / 尼克·赫伦",
+    "actors": "本尼迪克特·康伯巴奇 / 马丁·弗瑞曼 / 安德鲁·斯科特 / 阿曼达·阿宾顿 / 尤娜·斯塔布斯",
+    "region": "英国",
+    "year": "2014",
+    "doubanRating": "8.8",
+    "doubanUrl": "https://movie.douban.com/subject/20388689/",
+    "synopsis": "夏洛克在莱辛巴赫坠楼后“复活”归来，与华生重聚。本季包含《空灵柩》《三签名》《最后的誓言》，夏洛克与华生的关系面临新挑战。"
+  },
+  {
+    // 特别篇并入样例（前缀 = 神探夏洛克 + 全角冒号）：库内标注为电影，豆瓣也按电影收录
+    "name": "神探夏洛克：可恶的新娘",
+    "typeTag": "电影",
+    "group": "电影",
+    "status": "已看",
+    "rating": 9.2,
+    "watchDate": "2018-03-22",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/Pasted%20image%2020260501213514.png",
+    "genre": "剧情 / 悬疑 / 犯罪",
+    "director": "道格拉斯·麦金农",
+    "actors": "本尼迪克特·康伯巴奇 / 马丁·弗瑞曼 / 尤娜·斯塔布斯 / 鲁珀特·格雷夫斯 / 马克·加蒂斯",
+    "region": "英国",
+    "year": "2016",
+    "doubanRating": "8.2",
+    "doubanUrl": "https://movie.douban.com/subject/26287028/",
+    "synopsis": "维多利亚时代的新娘离奇自杀后复活杀人，夏洛克与华生回到1895年调查这桩幽灵新娘案，实则是对现代剧情的梦境式呼应。"
+  },
+  {
+    "name": "神探夏洛克：最后的誓言",
+    "typeTag": "电影",
+    "group": "电影",
+    "status": "已看",
+    "rating": 9.2,
+    "watchDate": "2026-08-16",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/Pasted%20image%2020260511195051.png",
+    "genre": "剧情 / 悬疑 / 犯罪",
+    "director": "尼克·赫伦",
+    "actors": "本尼迪克特·康伯巴奇 / 马丁·弗瑞曼 / 拉尔斯·米克尔森 / 阿曼达·阿宾顿 / 安德鲁·斯科特",
+    "region": "英国",
+    "year": "2014",
+    "doubanRating": "9.2",
+    "doubanUrl": "https://movie.douban.com/subject/25826049/",
+    "synopsis": "夏洛克为了对付大反派马格努森，不惜潜入其庄园，在冲突中开枪，面临被驱逐出英国的危机，华生夫妇也卷入其中。"
+  },
+  {
     "name": "命运石之门",
     "typeTag": "日漫",
     "group": "动漫",
@@ -561,6 +621,83 @@ window.CINEMA_DATA = [
     "synopsis": "故事发展到第四季，乔佛里国王和'小玫瑰'玛格瑞特的盛大婚礼即将举行，'红毒蛇'马尔泰应邀来到首都，然而和兰尼斯特家族有着深仇大恨的他此行目的并不单纯。镜头转向北方，野人的大举进攻让守护长城的守夜人人人自危，在琼恩的带领下他们能够平安度过这一场危机吗？越过海峡，'龙母'丹妮莉丝率领无垢者军团一路前行，解放奴隶无数。森林中，布兰一行人要面对除了寒冷和饥饿外，还有来自恐怖堡的重重追踪。"
   },
   {
+    // 特别篇并入样例（前缀 = 权利的游戏 + 全角冒号）：纪录片组的幕后片同样按前缀认。
+    // **评审壳演示条目**（库里没有）：海报借同系列「权利的游戏 第四季」，豆瓣链接走搜索页——
+    // 两者都非空，故意不触发「缺海报 / 缺链接自动补抓」（评审壳无网络，抓不到只会挂在 loading 转圈）
+    "name": "权利的游戏：最后的守夜人",
+    "typeTag": "纪录片",
+    "group": "纪录片",
+    "status": "已看",
+    "rating": 9.0,
+    "watchDate": "2019-10-02",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/1474983213.jpg",
+    "genre": "纪录片",
+    "director": "珍妮·芬利",
+    "actors": "艾米莉亚·克拉克 / 彼特·丁拉基 / 基特·哈灵顿 / 索菲·特纳",
+    "region": "美国",
+    "year": "2019",
+    "doubanRating": "8.9",
+    "doubanUrl": "https://movie.douban.com/search?q=%E6%9D%83%E5%88%A9%E7%9A%84%E6%B8%B8%E6%88%8F%EF%BC%9A%E6%9C%80%E5%90%8E%E7%9A%84%E5%AE%88%E5%A4%9C%E4%BA%BA",
+    "synopsis": "记录《权力的游戏》最终季的幕后：贝尔法斯特的最后一个通宵、大雪里等光的剧组、首映礼上的告别——给演员与工作人员的一封情书。（评审壳演示条目）"
+  },
+  {
+    "name": "老友记 第一季",
+    "typeTag": "美剧",
+    "group": "剧集",
+    "status": "已看",
+    "rating": 9.2,
+    "watchDate": "2026-06-18",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/2628555981.jpg",
+    "genre": "喜剧 / 爱情",
+    "director": "大卫·克拉尼 / 玛尔塔·考夫曼",
+    "actors": "詹妮弗·安妮斯顿 / 柯特妮·考克斯 / 丽莎·库卓 / 马特·勒布朗 / 马修·派瑞",
+    "region": "美国",
+    "year": "1994",
+    "doubanRating": "9.7",
+    "doubanUrl": "https://movie.douban.com/subject/1394037/",
+    "synopsis": "六位好友在纽约曼哈顿的生活点滴，十年间他们一起经历了爱情、事业与成长，成为全球最经典的情景喜剧。"
+  },
+  {
+    "name": "老友记 第二季",
+    "typeTag": "美剧",
+    "group": "剧集",
+    "status": "已看",
+    "rating": 9.2,
+    "watchDate": "2026-06-30",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/151464613.jpg",
+    "genre": "喜剧 / 爱情",
+    "director": "迈克尔·莱贝克",
+    "actors": "詹妮弗·安妮斯顿 / 柯特妮·考克斯 / 丽莎·库卓 / 马特·勒布朗 / 马修·派瑞",
+    "region": "美国",
+    "year": "1995",
+    "doubanRating": "9.8",
+    "doubanUrl": "https://movie.douban.com/subject/1395027/",
+    "synopsis": "第二季中罗斯与瑞秋终于在一起，钱德勒与莫妮卡的感情线初现端倪，六人组的友情与爱情持续升温。"
+  },
+  {
+    // 特别篇并入样例（前缀 = 老友记 + 全角冒号）：2021 年重聚特辑，库内标注为电影。
+    // **评审壳演示条目**（库里没有）：海报借同系列「老友记 第二季」，豆瓣链接走搜索页（同上理由）
+    "name": "老友记：重聚特辑",
+    "typeTag": "电影",
+    "group": "电影",
+    "status": "已看",
+    "rating": 9.2,
+    "watchDate": "2026-07-05",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/151464613.jpg",
+    "genre": "喜剧 / 爱情 / 纪录片",
+    "director": "本·温斯顿",
+    "actors": "詹妮弗·安妮斯顿 / 柯特妮·考克斯 / 丽莎·库卓 / 马特·勒布朗 / 马修·派瑞 / 大卫·休默",
+    "region": "美国",
+    "year": "2021",
+    "doubanRating": "9.2",
+    "doubanUrl": "https://movie.douban.com/search?q=%E8%80%81%E5%8F%8B%E8%AE%B0%EF%BC%9A%E9%87%8D%E8%81%9A%E7%89%B9%E8%BE%91",
+    "synopsis": "六位主演回到第 24 号摄影棚做了一场无剧本的重聚：读当年的选角故事、复刻“赌上公寓”那场戏，也坦白了当年彼此的心动。（评审壳演示条目）"
+  },
+  {
     "name": "黑客帝国2：重装上阵",
     "typeTag": "电影",
     "group": "电影",
@@ -615,6 +752,43 @@ window.CINEMA_DATA = [
     "synopsis": "初三女生日暮戈薇意外穿越到战国时代，与半妖犬夜叉相遇，两人为了收集四魂之玉碎片，踏上对抗邪恶妖怪的冒险旅程。"
   },
   {
+    "name": "我的三体 第一季",
+    "typeTag": "国漫",
+    "group": "动漫",
+    "status": "已看",
+    "rating": 9.2,
+    "watchDate": "2022-08-09",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/Pasted%20image%2020260501202500.png",
+    "genre": "动画 / 科幻",
+    "director": "神游八方",
+    "actors": "无固定演员（动画作品）",
+    "region": "中国大陆",
+    "year": "2014",
+    "doubanRating": "9.5",
+    "doubanUrl": "https://movie.douban.com/subject/25856543/",
+    "synopsis": "改编自刘慈欣的科幻小说《三体》系列，始于粉丝自制的像素风同人动画，以MC风格将三体的故事做成动画，前三季豆瓣评分稳定在9.5分左右。"
+  },
+  {
+    "name": "我的三体 第四季",
+    "typeTag": "国漫",
+    "group": "动漫",
+    "status": "已看",
+    "rating": 9.1,
+    "watchDate": "2024-09-18",
+    "review": null,
+    "poster": "file:///E:/Obsidian/%E5%8F%AB%E6%88%91%E5%8C%85%E4%BB%94/CONFIG/MOVIE%20POSTER/Pasted%20image%2020260501202925.png",
+    "genre": "科幻 / 动画",
+    "director": "李圳宜",
+    "actors": "史泽鲲 / 贺文潇 / 蔡海婷 / 季骜杰",
+    "region": "中国大陆",
+    "year": "2024",
+    "doubanRating": "8.1",
+    "doubanUrl": "https://movie.douban.com/subject/36306990/",
+    "synopsis": "改编自刘慈欣的科幻小说《三体》第三部《死神永生》，呈现程心主持阶梯计划等情节。为应对来自三体的威胁，人类启动了一项代号为阶梯计划的秘密任务。"
+  },
+  {
+    // 反例样例：「之」不是并入分隔符 → 与上面的「我的三体」合集各自出卡（口径守卫，别误合）
     "name": "我的三体之章北海传",
     "typeTag": "国漫",
     "group": "动漫",

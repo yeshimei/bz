@@ -56,10 +56,11 @@
 </style>
 </head>
 <body class="theme-light"> <!-- 模拟 Obsidian 宿主：色彩 token 挂 theme-light/dark，壳内必须补一类才不透明 -->
-  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="影院·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html?mob=1" title="影院·移动"></iframe></div></div>
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" title="影院·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" title="影院·移动"></iframe></div></div>
 
   <div class="vbadge">影院 · 真行为单源预览（桌面=真 ui.ts 跑在 920px，移动=412×915）
+    <button id="mergeToggle">分季合并：开</button>
     <button id="mobToggle">隐藏移动端</button>
     <button id="reset">重置演示数据</button>
     <span id="stResult"></span>
@@ -74,9 +75,17 @@
    * 行为全部在 iframe 内跑真 ui.ts（prototype-behavior.js）；本页只做：
    *  - 数据基座（CINEMA_DATA 经父页全局供 fake-sim 种子读）
    *  - 重置演示数据（清 localStorage bz-sim:* 后重载 iframe）
+   *  - 分季合并开关（默认开；关时向 iframe 传 ?merge=0——插件侧该键走插件设置页，原型没有设置页入口）
    *  - 自检（?selftest=1）：经 iframe contentDocument 访问真 DOM 断言
    */
   const DATA = window.CINEMA_DATA || [];
+
+  /** 分季合并评审开关（cinemaMergeSeasons 在评审壳里没有设置页入口 → 壳给 URL 开关；
+   *  与插件默认一致 = **开**。自检基线按「关」的口径断言卡片数（逐季一卡 = 种子条数），
+   *  故 selftest 模式强制关；重置演示数据也回到默认开） */
+  const MERGE_KEY = 'bz-cinema-proto-merge';
+  const mergeOn = () => localStorage.getItem(MERGE_KEY) !== '0';
+  if (location.search.includes('selftest')) localStorage.setItem(MERGE_KEY, '0');
 
   const resetSim = () => {
     const kill = [];
@@ -85,14 +94,28 @@
       if (k && k.startsWith('bz-sim:')) kill.push(k);
     }
     kill.forEach((k) => localStorage.removeItem(k));
-    // 旧自绘壳数据键一并清（防误读旧壳残留）
-    ['bz-cinema-proto-db', 'bz-cinema-proto', 'bz-cinema-proto-set', 'bz-cinema-proto-theme'].forEach((k) => localStorage.removeItem(k));
+    // 旧自绘壳数据键一并清（防误读旧壳残留；MERGE_KEY 清掉 = 回默认「开」）
+    ['bz-cinema-proto-db', 'bz-cinema-proto', 'bz-cinema-proto-set', 'bz-cinema-proto-theme', MERGE_KEY].forEach((k) => localStorage.removeItem(k));
   };
 
   const dtFrame = () => document.querySelector('#dtHost iframe');
   const mobFrame = () => document.querySelector('#mobHost iframe');
   const dtDoc = () => dtFrame().contentDocument;
   const mobDoc = () => mobFrame().contentDocument;
+
+  /** iframe src 由本函数统一设置（含合并开关参数）：改 src 即重载 → 行为层重新 boot 读参数。
+   *  默认开 → 传的是关的参数 `merge=0`（fake-sim 侧只认 `?merge=0` 关闭） */
+  const applyFrames = () => {
+    const tail = mergeOn() ? '' : 'merge=0';
+    dtFrame().src = './prototype-view.html' + (tail ? '?' + tail : '');
+    mobFrame().src = './prototype-view.html?mob=1' + (tail ? '&' + tail : '');
+    document.querySelector('#mergeToggle').textContent = '分季合并：' + (mergeOn() ? '开' : '关');
+  };
+  document.querySelector('#mergeToggle').addEventListener('click', () => {
+    localStorage.setItem(MERGE_KEY, mergeOn() ? '0' : '1'); // '1' = 显式开（与「未设置 = 默认开」等价）
+    applyFrames();
+  });
+  applyFrames();
   // 轮询现取 contentDocument：iframe 加载前后 document 引用会替换（about:blank → 真实文档），
   // 不能缓存旧引用等面板——每次现查，跨文档访问本身同源安全。
   const waitFrame = (getDoc) => new Promise((res, rej) => {
@@ -128,7 +151,7 @@
     (async () => {
       const res = document.querySelector('#stResult');
       try {
-        // 数据基线检查：种子应是 50 部、无自检测试片、且各片评分口径与种子一致
+        // 数据基线检查：种子应是全量 DATA 条、无自检测试片、且各片评分口径与种子一致
         // （状态流转跑崩在还原前 → 下次启动也能识别为脏）。脏则重置重载一次。
         // headless 验收每次全新 profile 天然干净；浏览器手动重复跑 selftest 也能自清理。
         const countSimMd = () => {
@@ -205,8 +228,8 @@
           return bg !== 'rgba(0, 0, 0, 0)' && sheets >= 4;
         };
         t('view页CSS四链生效', cssAlive(dd) && cssAlive(md));
-        t('桌面50卡', dtCards() === DATA.length);
-        t('移动50卡', mobCards() === DATA.length);
+        t('桌面' + DATA.length + '卡', dtCards() === DATA.length);
+        t('移动' + DATA.length + '卡', mobCards() === DATA.length);
         t('侧栏类型7行', dd.querySelectorAll('.j-groups [data-g]').length === 7);
         t('侧栏状态3行', dd.querySelectorAll('.j-status [data-s]').length === 3);
         t('rail计数=数据口径', dt('.j-groups [data-g="全部"] .n')?.textContent === String(DATA.length)
@@ -279,7 +302,7 @@
         t('切已看显评分影评', dt('.cn-modal .j-rating').style.display !== 'none' && dt('.cn-modal .j-review').style.display !== 'none');
         dt('.cn-modal .j-save').click();
         await sleep(600);
-        t('新增写库51卡', dtCards() === DATA.length + 1 && !!localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
+        t('新增写库' + (DATA.length + 1) + '卡', dtCards() === DATA.length + 1 && !!localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
         t('新增置顶', firstDeskName() === '测试影片');
         t('新增frontmatter', fmField('测试影片', '评分') === '5');
         await sleep(900); // storage 桥 → 移动端防抖自动刷新
@@ -343,7 +366,7 @@
           && confirm.textContent.includes('回收站'));
         clickReal(confirm.querySelector('.j-del'));
         await sleep(600);
-        t('删除后50卡', dtCards() === DATA.length && !localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
+        t('删除后' + DATA.length + '卡', dtCards() === DATA.length && !localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
         await sleep(900);
         t('删除同步到移动', mobCards() === DATA.length);
 

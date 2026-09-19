@@ -11,7 +11,8 @@
       不补这层就看不出「域样式漏写 justify-content 被宿主 center 压盖」这类真机差异）
     - 载入 prototype-behavior.js（真 ui.ts 依赖链，alias obsidian→fake）
     - boot + openCinema：午夜场面板 append 到本页 body（iframe 即全屏视口），
-      桌面视图 920×640 = 900×620 面板居中；移动视图 396×780 = Platform.isMobile（视口判定）
+      桌面视图 920×640 = 900×620 面板居中；移动视图 412×915（小米13U 1:1，见 ../mob-1to1.css）
+      = Platform.isMobile（视口判定），面板铺满整个外景
   宿主差异（数据/图标/视口）由 fake/fake-obsidian / prototype-icons.js 提供；
   午夜场自绘主题变量挂 .bz-cinema--midnight 域根类，随 body.theme-light/dark 翻转。
 -->
@@ -38,14 +39,11 @@
 </head>
 <body class="theme-light">
 <script>
-  /* 宿主保真（演示钩子，评审壳专用）：Obsidian 移动端原生顶栏/底栏占位（约 44px+44px）
-     在 webview 视口之外，使 --bz-vvh（visualViewport 口径，issue 266）短于 100vh——
-     真机上面板若走 overlay 居中链，顶部会空出 44px（用户真机反馈 2026-09-10）。
-     壳按此口径模拟（--bz-vvh = 100vh - 88px），复现顶距供评审；配合 styles.css 里
-     「移动壳顶部对齐」修复，可见面板贴顶、底边落在可视视口下沿。 */
-  if (new URLSearchParams(location.search).get('mob')) {
-    document.documentElement.style.setProperty('--bz-vvh', 'calc(100vh - 88px)');
-  }
+  /* 注意：这里**不再**模拟 --bz-vvh 的「webview 视口比 100vh 短 88px」（原按真机原生顶/底栏
+     44+44px 削高）。移动外景的 412×915 就是面板能拿到的那块视口，系统栏在 webview 之外、
+     不由面板负责；照旧削高只会在外景底部凭空留 88px 空隙，评审时看着像「面板没铺满」
+     （用户 2026-09-20 反馈；gameshelf 2026-09-17 同款反馈已先摘）。真机口径由 core/viewport.ts
+     现场量 visualViewport 写 --bz-vvh，默认值 100dvh 即「铺满外景」。 */
 </script>
 <script>
   (function () {

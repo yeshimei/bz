@@ -49,12 +49,12 @@ describe('cinema 设置 schema', () => {
     expect(grid.min).toBe(2);
     expect(grid.max).toBe(12);
     expect(grid.binding.get()).toBe(5);
-    // 剧集按季合并（issue 376 / ADR-0168）：toggle 行 + 布尔键，默认关（列表形态变化的设置必须显式开）
+    // 剧集按季合并（issue 376 / ADR-0168）：toggle 行 + 布尔键；2026-09-20 用户拍板默认**开**
     const merge = view.rows[3] as any;
     expect(merge.type).toBe('toggle');
     expect(merge.name).toBe('剧集按季合并');
     expect(merge.binding.key).toBe('cinemaMergeSeasons');
-    expect(DEFAULT_SETTINGS.cinemaMergeSeasons).toBe(false);
+    expect(DEFAULT_SETTINGS.cinemaMergeSeasons).toBe(true);
     // 默认值与选项集一致
     expect(DEFAULT_SETTINGS.cinemaSortMode).toBe('date');
     expect(DEFAULT_SETTINGS.cinemaStatusFilter).toBe('');

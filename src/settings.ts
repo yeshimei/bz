@@ -700,7 +700,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
   cinemaGridColumns: '5',
-  cinemaMergeSeasons: false,
+  // 剧集按季合并（issue 376 / ADR-0168）：2026-09-20 用户改默认**开**（合并已是常态视图）
+  cinemaMergeSeasons: true,
   cinemaStyle: 'midnight',
   cinemaApizeroKey: '',
   cinemaDoubanCookie: '',
