@@ -14,7 +14,7 @@ import { notice, notify, notifyActionError } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
-import { openFlowDialog } from '../core/flow-dialog';
+import { openFlowDialog, cancelActiveFlowDialog } from '../core/flow-dialog';
 import { createOverlay, topifyZ } from '../core/dom';
 import {
   attachItemActions,
@@ -96,7 +96,7 @@ const LOCK_KIND_META: Record<
  * 内联保证无样式时也不破版）。有词才显示（hidden 同步见 bindSearchInput）。
  */
 function searchClearHtml(): string {
-  return `<button type="button" class="bz-search-clear" data-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0">${vIc('x', 12)}</button>`;
+  return `<button type="button" class="bz-search-clear" data-search-clear title="清除搜索" aria-label="清除搜索" hidden>${vIc('x', 12)}</button>`;
 }
 
 export interface EncryptUIConfig {
@@ -1852,6 +1852,8 @@ export class UIManager {
     document.querySelectorAll('body > .bz-vault-dlg-mask').forEach((el) => el.remove());
     document.querySelectorAll('body > .bz-lockscreen--mask').forEach((el) => el.remove());
     this.hideHealthDialog();
+    // 批B残款收口：流程确认框（还原/清理等 openFlowDialog）挂 body 独立浮层，上锁收场一并取消
+    cancelActiveFlowDialog();
   }
 
   /**
@@ -2185,7 +2187,15 @@ export class UIManager {
         this.toast('正文解密失败，无法还原', true);
         return;
       }
-      const ok = await this.dataManager.restoreDiaryEntry(note.id, plain);
+      // 目录真源=diary 域 DIARY_DIRECTORY 快照（applyDirectories 维护）：函数级动态 import
+      // 延迟解析（ADR-0002，encrypt→diary 面反方向），取不到时 data 层回落 settings 兜底
+      let diaryDir: string | undefined;
+      try {
+        diaryDir = (await import('../diary/config')).DIARY_DIRECTORY;
+      } catch {
+        /* 测试/极端环境：交 data 层 settings 兜底 */
+      }
+      const ok = await this.dataManager.restoreDiaryEntry(note.id, plain, diaryDir);
       if (h) h.hide();
       if (ok) {
         if (this._selNoteId === note.id) this._selNoteId = null;

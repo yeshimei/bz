@@ -240,5 +240,5 @@ export async function reclassifyEntry(noteId: string, newTags: string[]): Promis
   await realignRestorePath(noteId); // D9：还原目录按当前设置重算
   const block = await buildRestoreBlock(noteId, newTags);
   if (block === null) return false;
-  return getSafeManager().restoreDiaryEntry(noteId, block);
+  return getSafeManager().restoreDiaryEntry(noteId, block, DIARY_DIRECTORY);
 }

@@ -1,4 +1,4 @@
-/* 源指纹 9519a29e519f44d9 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 19e8497217726e12 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -42,9 +42,9 @@ var BZW_diary = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -4563,6 +4563,12 @@ var BZW_diary = (() => {
     if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
     return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
   }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
   function stripMdExt(name) {
     return String(name || "").replace(/\.md$/i, "");
   }
@@ -5154,6 +5160,26 @@ var BZW_diary = (() => {
   });
 
   // src/diary/config.ts
+  var config_exports = {};
+  __export(config_exports, {
+    DIARY_DIRECTORY: () => DIARY_DIRECTORY,
+    ENCRYPT_TAG: () => ENCRYPT_TAG,
+    LETTER_DIRECTORY: () => LETTER_DIRECTORY,
+    applyDirectories: () => applyDirectories,
+    bookDirectory: () => bookDirectory,
+    buildTagMaps: () => buildTagMaps,
+    emojiToTagMap: () => emojiToTagMap,
+    getParentPrimaryTag: () => getParentPrimaryTag,
+    getPrimaryTagsInDisplayOrder: () => getPrimaryTagsInDisplayOrder,
+    getSortedTagsForAddDialog: () => getSortedTagsForAddDialog,
+    getSubTagsOfPrimary: () => getSubTagsOfPrimary,
+    getTagEmoji: () => getTagEmoji,
+    inWallDirs: () => inWallDirs,
+    isSubTag: () => isSubTag,
+    movieDirectory: () => movieDirectory,
+    resetTagsConfig: () => resetTagsConfig,
+    tagToEmojiMap: () => tagToEmojiMap
+  });
   function movieDirectory() {
     return safeResolve(resolveCinemaFolderPath, "我的/影视");
   }
@@ -5188,6 +5214,10 @@ var BZW_diary = (() => {
     const rest = tags.filter((t) => t !== ENCRYPT_TAG);
     rest.push(ENCRYPT_TAG);
     return rest;
+  }
+  function resetTagsConfig() {
+    PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+    buildTagMaps();
   }
   function buildTagMaps() {
     for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
@@ -5504,6 +5534,25 @@ var BZW_diary = (() => {
   });
 
   // src/core/ui/icons.ts
+  function uiIconSpan(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  function mountIcons(root) {
+    root.querySelectorAll("[data-lucide]").forEach((el) => {
+      const name = el.getAttribute("data-lucide") || "";
+      if (!name) return;
+      try {
+        const fresh = uiIconSpan(name);
+        const cls = el.className;
+        if (cls && cls !== "bz-ic") fresh.className = cls;
+        el.replaceWith(fresh);
+      } catch (e) {
+      }
+    });
+  }
   var init_icons = __esm({
     "src/core/ui/icons.ts"() {
       init_fake_obsidian();
@@ -6534,6 +6583,9 @@ var BZW_diary = (() => {
       const focusBtn = document.getElementById(parts.focusId);
       if (focusBtn) focusBtn.focus();
     });
+  }
+  function cancelActiveFlowDialog() {
+    if (activeSettle) activeSettle(void 0);
   }
   function confirmDiscard(proceed, message, className) {
     void openFlowDialog({
@@ -8117,6 +8169,17 @@ var BZW_diary = (() => {
   function flatName() {
     return "." + randToken(11) + ".enc";
   }
+  function isOrphanEncName(name) {
+    if (name === ".safe.enc") return false;
+    if (!name.startsWith(".") || !name.endsWith(".enc")) return false;
+    const stem = name.slice(1, -4);
+    return stem !== "" && !stem.includes("/") && !stem.includes("\\") && !stem.includes("..");
+  }
+  function currentDiaryDirectory() {
+    const raw = tryGetSettings().diaryDirectory;
+    const t = (raw || "").trim().replace(/\/+$/, "");
+    return t || "我的/日记";
+  }
   function genNoteId() {
     return "enc-" + Date.now() + "-" + randToken(6);
   }
@@ -8147,6 +8210,7 @@ var BZW_diary = (() => {
       init_domain_bus();
       init_crypto();
       init_storage();
+      init_settings_provider();
       init_diary_format();
       ENCRYPT_CHANGED_CHANNEL = "encrypt:changed";
       ENCRYPT_UNLOCK_CHANGED_CHANNEL = "encrypt:unlock-changed";
@@ -8234,12 +8298,12 @@ var BZW_diary = (() => {
             this.manifest = parsed;
             this.password = password;
             this.unlocked = true;
-            (_a = this.onUnlockChange) == null ? void 0 : _a.call(this, true);
-            emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
             try {
-              await this.selfHeal();
+              await this.enqueueOp(() => this.selfHeal());
             } catch (e) {
             }
+            (_a = this.onUnlockChange) == null ? void 0 : _a.call(this, true);
+            emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
             return true;
           } catch (e) {
             return false;
@@ -8281,9 +8345,10 @@ var BZW_diary = (() => {
             return false;
           }
         }
-        /** 加锁：清内存态（含派生密钥缓存，密钥不残留） */
+        /** 加锁：清内存态（含派生密钥缓存，密钥不残留）。幂等短路：已锁再锁直接返回，不重复广播 */
         lock() {
           var _a;
+          if (!this.unlocked) return;
           this.unlocked = false;
           this.password = null;
           this.manifest = { version: 1, notes: [] };
@@ -8677,8 +8742,7 @@ var BZW_diary = (() => {
                 const listing = await this.adapter.list(this.root);
                 for (const f of listing.files) {
                   const name = f.slice(f.lastIndexOf("/") + 1);
-                  if (name === ".safe.enc") continue;
-                  if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
+                  if (!isOrphanEncName(name)) continue;
                   if (referenced.has(name)) continue;
                   fresh.push({ cat: "orphan-file", key: "file:" + name, label: name, ref: name });
                 }
@@ -8771,7 +8835,7 @@ var BZW_diary = (() => {
             for (const key of keys) {
               if (!key.startsWith("file:")) continue;
               const name = key.slice("file:".length);
-              if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
+              if (!isOrphanEncName(name)) continue;
               try {
                 if (await this.adapter.exists(this.resolveRef(name))) {
                   await this.adapter.remove(this.resolveRef(name));
@@ -9006,7 +9070,6 @@ var BZW_diary = (() => {
             }
             return { note, conflicts: [...conflicts, note.path], removed: false };
           }
-          await this.deleteNoteMirrors(note);
           const idx = this.manifest.notes.indexOf(note);
           if (idx !== -1) this.manifest.notes.splice(idx, 1);
           try {
@@ -9014,6 +9077,7 @@ var BZW_diary = (() => {
           } catch (e) {
             return { note, conflicts, removed: false, manifestSaveFailed: true };
           }
+          await this.deleteNoteMirrors(note);
           return { note, conflicts, removed: true };
         }
         /** 目标文件内容与待还原明文是否一致（归一化行尾；占用幂等放行判断用） */
@@ -9046,13 +9110,26 @@ var BZW_diary = (() => {
           return this.readMirror(note.contentRef);
         }
         /**
-         * 加密日记条目还原：还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
+         * 加密日记条目还原（操作级互斥入口）：与 lockNote/restoreNote/removeNote 共享同一串行链
+         * （E13 收编补漏——阶段一逐附件解密窗口为 PBKDF2 秒级，此前游离在队列外可与并发
+         * removeNote/lockNote 互踩清单）。
+         * 还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
          * 原子语义同 restoreNote：全部附件解密/校验成功且块就绪才写回；任一失败零落盘。
+         * `diaryDir`：当前日记目录（D9 同源真值=diary 域 applyDirectories 维护的 DIARY_DIRECTORY 快照，
+         * 由调用方注入——diary 侧直传、encrypt 面板侧动态 import；未注入时回落 settings 读取兜底）。
          */
-        async restoreDiaryEntry(noteId, finalBlock) {
+        restoreDiaryEntry(noteId, finalBlock, diaryDir) {
+          return this.enqueueOp(() => this.restoreDiaryEntrySerial(noteId, finalBlock, diaryDir));
+        }
+        async restoreDiaryEntrySerial(noteId, finalBlock, diaryDir) {
           if (!this.unlocked || !this.password) throw new Error("未解锁，无法还原加密日记");
           const note = this.manifest.notes.find((n) => n.id === noteId);
           if (!note || note.kind !== "diary-entry") throw new Error("未找到该加密日记条目");
+          const base = note.path.split("/").pop() || "";
+          if (diaryMetaFromEntryPath(base)) {
+            const target = (diaryDir || currentDiaryDirectory()) + "/" + base;
+            if (target !== note.path) note.path = target;
+          }
           const conflicts = [];
           const plainAttachments = await mapLimit(
             note.attachments,
@@ -9083,7 +9160,6 @@ var BZW_diary = (() => {
             }
             return false;
           }
-          await this.deleteNoteMirrors(note);
           const idx = this.manifest.notes.indexOf(note);
           if (idx !== -1) this.manifest.notes.splice(idx, 1);
           try {
@@ -9091,6 +9167,7 @@ var BZW_diary = (() => {
           } catch (e) {
             return false;
           }
+          await this.deleteNoteMirrors(note);
           return true;
         }
         /** 解加密日记正文明文（供日记域准备还原块；退回 null 表示解密失败） */
@@ -9230,10 +9307,13 @@ var BZW_diary = (() => {
           });
         }
         /**
-         * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
+         * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像）。
          * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
          * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
          * E13：整体入 opQueue（理由同 removeNote——清单读改写与 lockNote/restoreNote 串行互斥）。
+         * 深审新-6：contentRef 已存在时清单零变化——跳过整库重加密落盘（此前密码本每存一条
+         * 全量重写 .safe.enc 一次），改为显式广播 encrypt:changed（同频道同事件，noteId 语义补真，
+         * 缓解订阅方按 null 盲比对）；仅新分配 contentRef（清单结构变化）才落盘（尾部自带广播）。
          */
         updateNotePayload(noteId, plainContent) {
           return this.enqueueOp(async () => {
@@ -9243,12 +9323,13 @@ var BZW_diary = (() => {
             const encrypted = await CryptoService.encrypt(plainContent, this.password);
             if (note.contentRef) {
               await this.replaceMirrorAtomic(note.contentRef, encrypted);
+              emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId });
             } else {
               const ref = flatName();
               await this.replaceMirrorAtomic(ref, encrypted);
               note.contentRef = ref;
+              await this.saveManifest();
             }
-            await this.saveManifest();
           });
         }
         /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
@@ -9619,6 +9700,9 @@ var BZW_diary = (() => {
   function vIc(name, size = 14) {
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
   }
+  function statusbarHtml(unlocked) {
+    return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
+  }
   function overviewHTML(stats) {
     const { counts, attachments, attBytes, recent: recent2, health } = stats;
     const kb = attBytes > 0 ? (attBytes / 1024).toFixed(1) + " KB" : "—";
@@ -9626,15 +9710,15 @@ var BZW_diary = (() => {
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
             <span class="tm">${escapeHtml2(r.time)}</span></div>`;
-    }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
+    }).join("") : emptyHtmlStr("lock", "还没有动态", "笔记或日记入库后，最近动态在这里显示");
     return `
   <div class="bz-vault-hero">
     <div class="ht">${vIc("lock", 14)} 保险库已解锁 · 笔记集中管理</div>
-    <div class="hn">${counts.note} 项资产${counts.note > 0 ? " · 尽在掌握" : ""}</div>
+    <div class="hn">${counts.note + counts.diary} 项资产${counts.note + counts.diary > 0 ? " · 尽在掌握" : ""}</div>
     <div class="hd">同一把主密码 · AES-256-GCM</div>
     <div class="hbtns">
       <button class="hbtn" data-hero="lock-note">${vIc("file-lock", 14)} 存入笔记</button>
@@ -9689,7 +9773,7 @@ var BZW_diary = (() => {
     const created = new Date(note.createdAt).toLocaleString("zh-CN", { hour12: false });
     const actionBtns = kind === "note" ? `<button class="bbtn teal" data-detail="preview">${vIc("eye", 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc("download", 14)} 取出还原</button>
-         <button class="bbtn danger" data-detail="delete">${vIc("trash-2", 14)} 销毁</button>` : `<button class="bbtn" style="background:${color};color:#fff" data-detail="restore-diary">${vIc("download", 14)} 还原回日记</button>
+         <button class="bbtn danger" data-detail="delete">${vIc("trash-2", 14)} 销毁</button>` : `<button class="bbtn indigo" data-detail="restore-diary">${vIc("download", 14)} 还原回日记</button>
          <button class="bbtn" data-detail="copy-diary">${vIc("copy", 14)} 复制正文</button>
          <button class="bbtn danger" data-detail="destroy-diary">${vIc("trash-2", 14)} 彻底销毁</button>`;
     return `
@@ -9709,6 +9793,7 @@ var BZW_diary = (() => {
   var init_vault_assets_view = __esm({
     "src/encrypt/vault-assets-view.ts"() {
       init_utils();
+      init_str();
       ASSET_COLOR = {
         note: "#2e7d68",
         diary: "#5a63a8"
@@ -9935,8 +10020,15 @@ var BZW_diary = (() => {
   });
 
   // src/encrypt/ui.ts
-  function statusbarHtml(unlocked) {
-    return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
+  function searchClearHtml() {
+    return `<button type="button" class="bz-search-clear" data-search-clear title="清除搜索" aria-label="清除搜索" hidden>${vIc("x", 12)}</button>`;
+  }
+  function safeDecode(s) {
+    try {
+      return decodeURIComponent(s);
+    } catch (e) {
+      return s;
+    }
   }
   function collectNoteAttachments(content, embedLinks, vaultFiles) {
     const refs = /* @__PURE__ */ new Set();
@@ -9960,7 +10052,7 @@ var BZW_diary = (() => {
     const valid = /* @__PURE__ */ new Set();
     for (const r of refs) {
       if (!r) continue;
-      const clean = decodeURIComponent(r).replace(/^\.\//, "");
+      const clean = safeDecode(r).replace(/^\.\//, "");
       let hit;
       if (paths.has(clean)) hit = clean;
       else if (!clean.includes("/")) hit = byName.get(clean);
@@ -10006,7 +10098,7 @@ var BZW_diary = (() => {
       if (!o || o.path === notePath) continue;
       for (const l of o.links || []) {
         if (!l || typeof l !== "string") continue;
-        const clean = decodeURIComponent(l.split("#")[0].trim()).replace(/^\.\//, "");
+        const clean = safeDecode(l.split("#")[0].trim()).replace(/^\.\//, "");
         if (!clean) continue;
         let hit;
         if (cand.has(clean)) hit = clean;
@@ -10101,7 +10193,7 @@ var BZW_diary = (() => {
     return { text: out, slots, inlined };
   }
   function findAttachment(target, attachments) {
-    const t = decodeURIComponent(target).trim();
+    const t = safeDecode(target).trim();
     return attachments.find((a) => a.path === t || a.path.endsWith("/" + t));
   }
   function mediaHtml(a, dataUrl) {
@@ -10212,7 +10304,7 @@ var BZW_diary = (() => {
       ]
     };
   }
-  var LOCK_KIND_META, lastVisitedAsset, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
+  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, _UIManager, UIManager, _EncryptAppController, EncryptAppController;
   var init_ui2 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -10228,6 +10320,7 @@ var BZW_diary = (() => {
       init_settings_modal();
       init_settings_common();
       init_data2();
+      init_domain_bus();
       init_preview();
       init_data3();
       init_vault_assets_view();
@@ -10269,6 +10362,7 @@ var BZW_diary = (() => {
         }
       };
       lastVisitedAsset = "note";
+      activeUnlock = null;
       _UIManager = class _UIManager {
         constructor(dataManager, config, pwDataManager) {
           /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
@@ -10307,9 +10401,23 @@ var BZW_diary = (() => {
           this.idleLockTimer = null;
           /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
           this._lastRenderedAsset = null;
+          /** 空闲计时 bump（document 捕获阶段；见 bindVaultShell 尾部） */
+          this._idleBump = null;
+          /** encrypt:unlock-changed 订阅句柄（ensureElements 挂 / detachGlobalListeners 摘） */
+          this._unlockOff = null;
+          /** 体检进行中旗标（T9 重入守卫：扫描中「重新体检」/清理后自动复扫不再并发双扫） */
+          this._scanning = false;
+          // ---------- 统一工作台渲染 ----------
+          /**
+           * 共享锁密码载荷装载旗标（效率整改 4：load 仅解锁后首次 renderList 执行——
+           * 统计无需逐次刷新，loadCache 本就按密文判等；上锁后复位，下次解锁重新装载）
+           */
+          this._pwLoadedSinceUnlock = false;
           /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
           this.lockStatsCache = {};
           this._selNoteId = null;
+          /** 预览 Markdown 渲染生命周期句柄（T13）：closePreview/下一次填充前 unload，渲染任务不滞留 */
+          this._previewComponent = null;
           this.dataManager = dataManager;
           this.config = config;
           this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager);
@@ -10349,6 +10457,7 @@ var BZW_diary = (() => {
           <div class="bz-vault-item on" data-asset="overview">${vIc("layout-grid", 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
           <div class="bz-vault-item k-note" data-asset="note">${vIc("file-lock", 16)}笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-diary" data-asset="diary">${vIc("book-lock", 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
           <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
@@ -10375,10 +10484,11 @@ var BZW_diary = (() => {
           <span class="st" data-mob-unlock>已解锁</span>
           <button class="bz-vault-mobclose bz-touch-target--xl" data-act="mob-close" aria-label="关闭">${vIc("x", 15)}</button>
         </div>
-        <div class="bz-vault-msearch">${vIc("search", 13)}<input placeholder="搜索全部资产…" data-mob-search></div>
+        <div class="bz-vault-msearch" style="position:relative">${vIc("search", 13)}<input placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
           <span class="sg on" data-masset="overview">概览</span>
           <span class="sg" data-masset="note">笔记</span>
+          <span class="sg" data-masset="diary">日记</span>
         </div>
         <div class="bz-vault-mbody" data-mob-body></div>
       </div>`;
@@ -10407,13 +10517,16 @@ var BZW_diary = (() => {
           document.body.appendChild(this.previewPopup);
           this.bindVaultShell();
           this.registerEscape();
+          this._unlockOff = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+            if (evt && evt.unlocked === false) this.onExternalLock();
+          });
           this._initialized = true;
         }
         /** 统一骨架交互：资产导航 / 顶栏动作 / 搜索防抖 / 移动端 seg */
         bindVaultShell() {
           var _a, _b, _c;
           const setAsset = (a) => {
-            if (a === "pw" || a === "diary") a = "note";
+            if (a === "pw") a = "note";
             this.asset = a;
             lastVisitedAsset = a;
             this.searchKw = "";
@@ -10442,16 +10555,31 @@ var BZW_diary = (() => {
           this.mask.addEventListener("click", () => {
             if (this.mask.style.display === "block") this.hide();
           });
-          const bump = () => this.bumpIdleLock();
-          this.popup.addEventListener("pointerdown", bump, true);
-          this.popup.addEventListener("keydown", bump, true);
+          this._idleBump = () => this.bumpIdleLock();
+          document.addEventListener("pointerdown", this._idleBump, true);
+          document.addEventListener("keydown", this._idleBump, true);
+        }
+        /** 全局监听摘除（cleanup 专用）：document 空闲 bump + 域事件订阅均不随 DOM 摘除自动回收 */
+        detachGlobalListeners() {
+          if (this._idleBump) {
+            document.removeEventListener("pointerdown", this._idleBump, true);
+            document.removeEventListener("keydown", this._idleBump, true);
+            this._idleBump = null;
+          }
+          if (this._unlockOff) {
+            this._unlockOff();
+            this._unlockOff = null;
+          }
         }
         /**
          * 搜索输入绑定（桌面列表头框 / 移动端常驻框共用一条语义）。
          * 桌面框随列表头重建，故每次渲染都要重挂一次——抽成方法避免两处逻辑漂移。
+         * 效率整改 3：ESC 有词清词（stopPropagation 截断 escManager 关面板链，安全模式不误上锁）、
+         * 无词放行；尾部 ✕ 一键清除（对齐 clipbook「ESC 清词 + ✕」定稿范式）。
          * @param isMob 输入源是移动端框：决定把关键词同步到哪一侧（桌面框是动态的，现取）
          */
         bindSearchInput(input, isMob) {
+          var _a, _b;
           input.addEventListener("input", () => {
             const v = input.value.trim();
             if (this.asset === "overview" && v) {
@@ -10465,8 +10593,38 @@ var BZW_diary = (() => {
             } else {
               this.mob.search.value = v;
             }
+            this.syncSearchClear();
             this.searchDebounced();
           });
+          input.addEventListener("keydown", (e) => {
+            if (e.key !== "Escape" || !input.value.trim()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            this.clearSearchKw();
+            input.focus();
+          });
+          (_b = (_a = input.parentElement) == null ? void 0 : _a.querySelector("[data-search-clear]")) == null ? void 0 : _b.addEventListener("click", () => {
+            this.clearSearchKw();
+            input.focus();
+          });
+        }
+        /** ✕ 显隐同步（有词才显示；两框词互同步后一起刷，clipbook syncDeskSearchClear 同款） */
+        syncSearchClear() {
+          var _a, _b;
+          const v = !!this.searchKw || !!this.mob.search.value.trim() || !!((_a = this.deskSearch) == null ? void 0 : _a.value.trim());
+          for (const box of [(_b = this.deskSearch) == null ? void 0 : _b.parentElement, this.mob.search.parentElement]) {
+            const btn = box == null ? void 0 : box.querySelector("[data-search-clear]");
+            if (btn) btn.hidden = !v;
+          }
+        }
+        /** 清词统一出口（ESC / ✕ 共用）：两框同清 + 立即重绘（不走防抖） */
+        clearSearchKw() {
+          this.searchKw = "";
+          const deskSearch = this.deskSearch;
+          if (deskSearch) deskSearch.value = "";
+          this.mob.search.value = "";
+          this.syncSearchClear();
+          this.renderAll();
         }
         createMask(id) {
           const mask = document.createElement("div");
@@ -10493,10 +10651,13 @@ var BZW_diary = (() => {
           this.startSessionTimers();
         }
         hide(suppressAutoLockNotice = false) {
+          this.closePreview();
+          this.closeAllDialogs();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
           if (this.isSecurityMode()) {
+            if (this.dataManager.unlocked) this.captureLockStats();
             this.dataManager.lock();
             this.pwDataManager.lock();
             this._selNoteId = null;
@@ -10609,6 +10770,7 @@ var BZW_diary = (() => {
           cleanBtn.onclick = () => void this.confirmHealthCleanup();
           const rescanBtn = document.createElement("button");
           rescanBtn.className = "bz-encrypt-dialog-btn";
+          rescanBtn.id = "bz-encrypt-health-rescan";
           rescanBtn.textContent = "重新体检";
           rescanBtn.onclick = () => void this.runHealthScan();
           foot.appendChild(cleanBtn);
@@ -10636,41 +10798,66 @@ var BZW_diary = (() => {
           if (!this.healthPopup) return;
           const body = this.healthPopup.querySelector("#bz-encrypt-health-body");
           if (!body) return;
-          body.innerHTML = "";
-          const progress = document.createElement("div");
-          progress.className = "bz-encrypt-health-progress";
-          progress.textContent = "体检中…";
-          const bar = uiProgress({ value: 0 });
-          bar.el.classList.add("bz-encrypt-health-bar");
-          body.appendChild(progress);
-          body.appendChild(bar.el);
-          const live2 = document.createElement("div");
-          live2.className = "bz-encrypt-health-live";
-          const liveTitle = document.createElement("div");
-          liveTitle.className = "bz-encrypt-health-section-title";
-          liveTitle.textContent = "发现的异常";
-          live2.appendChild(liveTitle);
-          body.appendChild(live2);
+          if (this._scanning) return;
+          this._scanning = true;
           try {
-            const report = await this.dataManager.scanHealth((p) => {
-              progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
-              bar.setValue(Math.round(p.done / p.total * 100));
-              for (const item of p.found) {
-                const row = document.createElement("div");
-                row.className = "bz-encrypt-health-item " + (item.cat === "corrupted-body" || item.cat === "corrupted-attachment" ? "bz-encrypt-health-item--bad" : item.cat === "missing-attachment" ? "bz-encrypt-health-item--warn" : "");
-                row.textContent = item.label;
-                live2.appendChild(row);
-              }
-            });
-            this.lastHealth = { issues: report.items.length, lastChecked: (/* @__PURE__ */ new Date()).toLocaleString() };
-            this.renderHealthReport(report, body);
-            this.renderNav();
-          } catch (e) {
+            if (!this.dataManager.unlocked) {
+              body.innerHTML = "";
+              const locked = document.createElement("div");
+              locked.className = "bz-encrypt-health-summary";
+              locked.textContent = "保险库已上锁，无法体检";
+              body.appendChild(locked);
+              this.setHealthButtonsDisabled(true);
+              return;
+            }
+            this.setHealthButtonsDisabled(true);
             body.innerHTML = "";
-            const err = document.createElement("div");
-            err.textContent = "体检失败：" + e.message;
-            body.appendChild(err);
+            const progress = document.createElement("div");
+            progress.className = "bz-encrypt-health-progress";
+            progress.textContent = "体检中…";
+            const bar = uiProgress({ value: 0 });
+            bar.el.classList.add("bz-encrypt-health-bar");
+            body.appendChild(progress);
+            body.appendChild(bar.el);
+            const live2 = document.createElement("div");
+            live2.className = "bz-encrypt-health-live";
+            const liveTitle = document.createElement("div");
+            liveTitle.className = "bz-encrypt-health-section-title";
+            liveTitle.textContent = "发现的异常";
+            live2.appendChild(liveTitle);
+            body.appendChild(live2);
+            try {
+              const report = await this.dataManager.scanHealth((p) => {
+                progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
+                bar.setValue(Math.round(p.done / p.total * 100));
+                for (const item of p.found) {
+                  const row = document.createElement("div");
+                  row.className = "bz-encrypt-health-item " + (item.cat === "corrupted-body" || item.cat === "corrupted-attachment" ? "bz-encrypt-health-item--bad" : item.cat === "missing-attachment" ? "bz-encrypt-health-item--warn" : "");
+                  row.textContent = item.label;
+                  live2.appendChild(row);
+                }
+              });
+              this.lastHealth = { issues: report.items.length, lastChecked: (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", { hour12: false }) };
+              this.renderHealthReport(report, body);
+              this.renderNav();
+            } catch (e) {
+              body.innerHTML = "";
+              const err = document.createElement("div");
+              err.textContent = "体检失败：" + e.message;
+              body.appendChild(err);
+            }
+            this.setHealthButtonsDisabled(false);
+          } finally {
+            this._scanning = false;
           }
+        }
+        /** 体检窗底部两按钮（清理/重扫）禁用态：扫描中与锁定态防重入（true=禁用） */
+        setHealthButtonsDisabled(disabled) {
+          if (!this.healthPopup) return;
+          const clean = this.healthPopup.querySelector("#bz-encrypt-health-clean");
+          const rescan = this.healthPopup.querySelector("#bz-encrypt-health-rescan");
+          if (clean) clean.disabled = disabled;
+          if (rescan) rescan.disabled = disabled;
         }
         /** 渲染体检报告（UI 保证解锁后调用，integrityChecked 恒 true）：可清理类默认不全选；损坏/缺失只展示 */
         renderHealthReport(report, body) {
@@ -10817,89 +11004,122 @@ var BZW_diary = (() => {
           ];
           openItemMenu(x, y, actions, true, "bz-vault-menu");
         }
-        /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入 */
+        /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入。
+         *  N11 单例守卫：已有解锁屏在进行中 → 复用同一 Promise（快速双触发不再连开两层）。 */
         async showPasswordDialog(kind = "vault") {
+          if (activeUnlock) {
+            if (activeUnlock.el && !activeUnlock.el.isConnected) activeUnlock = null;
+            else return activeUnlock.promise;
+          }
+          let resolveFn;
+          let cancelled = false;
+          const promise = new Promise((resolve) => {
+            resolveFn = resolve;
+          });
+          activeUnlock = {
+            el: null,
+            promise,
+            cancel: () => {
+              cancelled = true;
+              if ((activeUnlock == null ? void 0 : activeUnlock.promise) === promise) activeUnlock = null;
+              resolveFn(false);
+            }
+          };
+          try {
+            return await this.openUnlockScreen(kind, promise, resolveFn, () => cancelled);
+          } catch (e) {
+            if ((activeUnlock == null ? void 0 : activeUnlock.promise) === promise) activeUnlock = null;
+            throw e;
+          }
+        }
+        /** 实际构建解锁屏（单例登记在 showPasswordDialog，唯一收场出口为 done()） */
+        async openUnlockScreen(kind, promise, resolveFn, isCancelled) {
           const exists = await this.dataManager.exists();
           const meta = LOCK_KIND_META[kind];
           const stats = this.lockStatsCache[kind] || await readLockStats(kind) || meta.stats.map((s) => ({ ...s, num: "—" }));
-          return new Promise((resolve) => {
-            const ls = uiLockScreen({
-              kind,
-              icon: meta.icon,
-              title: exists ? meta.title : "设置主密码",
-              sub: exists ? meta.sub : "请设置一个主密码（用于加密所有数据）",
-              stats,
-              action: exists ? meta.action : "设置并解锁",
-              firstSetup: !exists,
-              warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
-              ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
-              secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
-              secTone: "warn",
-              hint: exists ? "" : "建议使用密码本保存此密码"
-            });
-            topifyZ(ls.el);
-            document.body.appendChild(ls.el);
-            const esc2 = escManager.register("bz-vault-unlock", {
-              isVisible: () => ls.el.isConnected,
-              close: () => done(false)
-            });
-            const done = (ok) => {
-              esc2.unregister();
-              ls.close();
-              resolve(ok);
-            };
-            const setErr = (m) => {
-              ls.setError(m);
-              setTimeout(() => {
-                if (ls.input.value) ls.setError("");
-              }, 2600);
-            };
-            ls.actionBtn.onclick = async () => {
-              const pw = ls.input.value;
-              if (!pw) {
-                this.rejectInput("请输入密码", setErr);
+          if (isCancelled()) return promise;
+          const ls = uiLockScreen({
+            kind,
+            icon: meta.icon,
+            title: exists ? meta.title : "设置主密码",
+            sub: exists ? meta.sub : "请设置一个主密码（用于加密所有数据）",
+            stats,
+            action: exists ? meta.action : "设置并解锁",
+            firstSetup: !exists,
+            warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
+            ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
+            secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
+            secTone: "warn",
+            hint: exists ? "" : "建议使用密码本保存此密码"
+          });
+          topifyZ(ls.el);
+          document.body.appendChild(ls.el);
+          const esc2 = escManager.register("bz-vault-unlock", {
+            isVisible: () => ls.el.isConnected,
+            close: () => done(false)
+          });
+          const done = (ok) => {
+            if (activeUnlock && activeUnlock.promise === promise) activeUnlock = null;
+            esc2.unregister();
+            ls.close();
+            resolveFn(ok);
+          };
+          const setErr = (m) => {
+            ls.setError(m);
+            setTimeout(() => {
+              if (ls.input.value) ls.setError("");
+            }, 2600);
+          };
+          ls.actionBtn.onclick = async () => {
+            const pw = ls.input.value;
+            if (!pw) {
+              this.rejectInput("请输入密码", setErr);
+              return;
+            }
+            if (!exists) {
+              if (ls.input2.style.display === "none") {
+                ls.showSecondInput(true);
+                ls.input2.value = "";
+                ls.setMessage("请再次输入主密码确认");
+                ls.focus();
                 return;
               }
-              if (!exists) {
-                if (ls.input2.style.display === "none") {
-                  ls.showSecondInput(true);
-                  ls.input2.value = "";
-                  ls.setMessage("请再次输入主密码确认");
-                  ls.focus();
-                  return;
-                }
-                if (pw !== ls.input2.value) {
-                  this.rejectInput("两次密码不一致", setErr);
-                  return;
-                }
-                if (pw.length < 4) {
-                  this.rejectInput("主密码至少 4 位", setErr);
-                  return;
-                }
-                if (!ls.ackBox || !ls.ackBox.checked) {
-                  this.rejectInput("请先勾选风险确认", setErr);
-                  return;
-                }
-                try {
-                  const ok = await this.dataManager.unlock(pw);
-                  if (ok) {
-                    done(true);
-                    notice("密码已设置，数据已加密", "success");
-                  } else {
-                    notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
-                    done(false);
-                  }
-                } catch (e) {
-                  notifyActionError(e, "设置主密码");
+              if (pw !== ls.input2.value) {
+                this.rejectInput("两次密码不一致", setErr);
+                return;
+              }
+              if (pw.length < 4) {
+                this.rejectInput("主密码至少 4 位", setErr);
+                return;
+              }
+              if (!ls.ackBox || !ls.ackBox.checked) {
+                this.rejectInput("请先勾选风险确认", setErr);
+                return;
+              }
+              ls.setBusy(true);
+              try {
+                const ok = await this.dataManager.unlock(pw);
+                if (ok) {
+                  done(true);
+                  notice("密码已设置，数据已加密", "success");
+                } else {
+                  notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
                   done(false);
                 }
-                return;
+              } catch (e) {
+                ls.setBusy(false);
+                notifyActionError(e, "设置主密码");
+                done(false);
               }
-              const remainMs = this.unlockCooldownUntil - Date.now();
-              if (remainMs > 0) {
-                this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, setErr, "warning");
-                return;
-              }
+              return;
+            }
+            const remainMs = this.unlockCooldownUntil - Date.now();
+            if (remainMs > 0) {
+              this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, setErr, "warning");
+              return;
+            }
+            ls.setBusy(true);
+            try {
               const success = await this.dataManager.unlock(pw);
               if (success) {
                 this.resetUnlockThrottle();
@@ -10909,6 +11129,7 @@ var BZW_diary = (() => {
               } else {
                 const issue = this.dataManager.manifestIssue;
                 if (issue === "empty" || issue === "corrupt") {
+                  ls.setBusy(false);
                   void openFlowDialog({
                     title: "清单疑似损坏",
                     message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
@@ -10934,48 +11155,58 @@ var BZW_diary = (() => {
                     }
                   });
                 } else {
-                  this.rejectInput("密码错误，请重试", setErr, "error");
+                  ls.setBusy(false);
                   const delaySec = this.registerUnlockFailure();
-                  notice(`${delaySec} 秒后可再次尝试`, "warning");
+                  this.rejectInput(`密码错误，${delaySec} 秒后可重试`, setErr, "error");
                   ls.input.value = "";
                   ls.focus();
                 }
               }
-            };
-            ls.el.addEventListener("click", (e) => {
-              if (e.target === ls.el) done(false);
-            });
-            ls.focus();
-            setTimeout(() => ls.focus(), 150);
+            } catch (e) {
+              ls.setBusy(false);
+              notifyActionError(e, "解锁");
+            }
+          };
+          ls.el.addEventListener("click", (e) => {
+            if (e.target === ls.el) done(false);
           });
+          ls.focus();
+          setTimeout(() => ls.focus(), 150);
+          activeUnlock = { el: ls.el, promise, cancel: () => done(false) };
+          return promise;
         }
-        /** 输入框聚焦（不滚动页面）+ 兼容性兜底；移动端靠二次聚焦触发系统键盘 */
-        focusUnlockInput(el) {
-          try {
-            el.focus({ preventScroll: true });
-          } catch (e) {
-            el.focus();
-          }
-        }
-        // ---------- 统一工作台渲染 ----------
         /** show/解锁/外部变更/资产切换统一入口：加载 → 全量重绘 */
         async renderList() {
           if (!this.listContainer) return;
           if (this.dataManager.unlocked) {
-            try {
-              await this.pwDataManager.load();
-            } catch (e) {
+            if (!this._pwLoadedSinceUnlock) {
+              this._pwLoadedSinceUnlock = true;
+              try {
+                await this.pwDataManager.load();
+              } catch (e) {
+              }
             }
+          } else {
+            this._pwLoadedSinceUnlock = false;
           }
           this.renderAll();
         }
         /** 全量重绘：导航计数 + 概览/资产内容 + 移动端 + 健康卡 + 顶栏标题 */
         renderAll() {
           if (!this.rootVisible()) return;
-          if (this.dataManager.unlocked) this.captureLockStats();
           this.renderNav();
           this.renderDesktop();
           this.renderMobile();
+        }
+        /** 列表头搜索框聚焦（openManager 渲染收口后补挂；无列表头/面板未显示时静默） */
+        focusListSearch() {
+          const search = this.deskSearch;
+          if (!search) return;
+          try {
+            search.focus({ preventScroll: true });
+          } catch (e) {
+            search.focus();
+          }
         }
         rootVisible() {
           return !!(this.popup && this.popup.style.display === "flex");
@@ -11032,6 +11263,7 @@ var BZW_diary = (() => {
           };
           setCnt("overview", c.note + c.diary);
           setCnt("note", c.note);
+          setCnt("diary", c.diary);
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el) => {
             el.classList.toggle("on", el.getAttribute("data-asset") === this.asset);
           });
@@ -11060,21 +11292,24 @@ var BZW_diary = (() => {
           const pureNotes = vaultNotes.filter((n) => n.kind !== "diary-entry");
           const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
           const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
+          const candidates = vaultNotes.map((n) => ({
+            n,
+            kind: n.kind === "diary-entry" ? "diary" : "note",
+            ts: Date.parse(n.createdAt || "") || 0
+          }));
+          candidates.sort((a, b) => b.ts - a.ts);
           const recent2 = [];
-          const pushRecent = (kind, id, title, sub, time, ts) => recent2.push({ kind, id, title, sub, time, ts });
-          for (const n of vaultNotes.slice(0, 6)) {
-            const kind = n.kind === "diary-entry" ? "diary" : "note";
-            pushRecent(
+          for (const { n, kind, ts } of candidates.slice(0, 6)) {
+            recent2.push({
               kind,
-              kind === "note" ? n.id : void 0,
-              // diary 落笔记列表后无法定位（无独立资产），不带 id
-              n.title,
-              `${n.attachments.length} 个附件 · ${n.path}`,
-              formatRelativeTime(n.createdAt),
-              Date.parse(n.createdAt || "") || 0
-            );
+              id: n.id,
+              // 笔记/日记均可定位：点击流水直落对应资产列表并选中该条目
+              title: n.title,
+              sub: `${n.attachments.length} 个附件 · ${n.path}`,
+              time: formatRelativeTime(n.createdAt),
+              ts
+            });
           }
-          recent2.sort((a, b) => b.ts - a.ts);
           return {
             counts: c,
             attachments,
@@ -11109,13 +11344,23 @@ var BZW_diary = (() => {
         }
         /** 桌面概览：hero 计数 + 统计卡 + 最近 + 体检摘要（点击跳资产/动作） */
         renderDeskOverview() {
-          var _a, _b;
           const stats = this.overviewStats();
           this.setVaultHead("保险库");
           const detail = this.desk.detail;
           const area = document.createElement("div");
           area.className = "bz-vault-area";
           area.innerHTML = overviewHTML(stats);
+          this.bindOverviewArea(area);
+          detail.appendChild(area);
+        }
+        /**
+         * 概览区交互绑定（桌面跨栏区 / 移动概览页共用，效率整改 4——移动概览此前零绑定全哑：
+         * hero 按钮/统计卡/最近流水/体检卡点了没反应）。
+         * 流水行按 data-recent 真实资产值分流（diary 行落加密日记列表并定位条目）。
+         */
+        bindOverviewArea(area) {
+          var _a, _b;
+          mountIcons(area);
           area.querySelectorAll(".card[data-nav]").forEach(
             (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-nav")))
           );
@@ -11134,7 +11379,6 @@ var BZW_diary = (() => {
               this.setAssetFromNav(el.getAttribute("data-recent"));
             })
           );
-          detail.appendChild(area);
         }
         /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
         /**
@@ -11153,17 +11397,19 @@ var BZW_diary = (() => {
             notes = notes.filter((n) => (n.title || "").toLowerCase().includes(lower) || (n.path || "").toLowerCase().includes(lower));
           }
           let listBody = keepHead ? list.querySelector(".bz-vault-lc-body") : null;
+          const prevScroll = listBody ? listBody.scrollTop : 0;
           if (!listBody) {
             list.innerHTML = "";
             if (kind === "note") {
               const head = document.createElement("div");
               head.className = "bz-vault-lc-head";
-              head.innerHTML = `<div class="bz-vault-search">${vIc("search", 14)}<input placeholder="搜索笔记…" data-vault-search></div>`;
+              head.innerHTML = `<div class="bz-vault-search" style="position:relative">${vIc("search", 14)}<input placeholder="搜索笔记…" data-vault-search>${searchClearHtml()}</div>`;
               list.appendChild(head);
               const headSearch = head.querySelector("[data-vault-search]");
               if (headSearch) {
                 headSearch.value = kw;
                 this.bindSearchInput(headSearch, false);
+                this.syncSearchClear();
               }
             }
             listBody = document.createElement("div");
@@ -11196,6 +11442,7 @@ var BZW_diary = (() => {
             this.attachNoteDrawer(el, n, kind);
             listBody.appendChild(el);
           }
+          if (keepHead) listBody.scrollTop = prevScroll;
           this.renderNoteDetail(detail, notes.find((n) => n.id === selId) || notes[0], kind);
         }
         /** 加密笔记/日记详情（异步解密日记正文预览） */
@@ -11297,9 +11544,20 @@ var BZW_diary = (() => {
           head.appendChild(body);
           return head;
         }
-        /** 卸载辅助：移除 body 上无 id 的弹窗遮罩（平台编辑等一次性弹层；G：cleanup 此前不清） */
+        /**
+         * 卸载/上锁收场：清 body 上的一次性弹层（幂等）。
+         * - 进行中的解锁屏先走正规取消链（done(false)）：解挂 ESC 层 + 等待方 resolve(false) 不悬挂；
+         * - 现行解锁屏/销毁确认走 core uiLockScreen 直挂 body（bz-lockscreen--mask）：摘 DOM 后
+         *   其 ESC 层 isVisible(=isConnected) 自灭——禁用/重载插件不再残留可交互锁屏（新-3）；
+         * - 体检窗挂独立 id 遮罩，一并收起（窗内为密文体检发现，不随上锁残留）。
+         */
         closeAllDialogs() {
+          var _a;
+          if (activeUnlock && ((_a = activeUnlock.el) == null ? void 0 : _a.isConnected)) activeUnlock.cancel();
           document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
+          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => el.remove());
+          this.hideHealthDialog();
+          cancelActiveFlowDialog();
         }
         /**
          * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
@@ -11322,7 +11580,7 @@ var BZW_diary = (() => {
         // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
         // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
         setAssetFromNav(a) {
-          if (a === "pw" || a === "diary") a = "note";
+          if (a === "pw") a = "note";
           this.asset = a;
           lastVisitedAsset = a;
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach(
@@ -11350,13 +11608,14 @@ var BZW_diary = (() => {
             search.focus();
           }
         }
-        /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落密码资产） */
+        /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落加密笔记） */
         restoreLastAsset() {
           if (!this._initialized) return;
           this.setAssetFromNav(lastVisitedAsset);
         }
         /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
         lockNow(silent = false) {
+          if (this.dataManager.unlocked) this.captureLockStats();
           this.dataManager.lock();
           this.pwDataManager.lock();
           this._selNoteId = null;
@@ -11365,10 +11624,33 @@ var BZW_diary = (() => {
           this.lastHealth = null;
           this.unlockedAt = null;
           this.stopSessionTimers();
+          this.closePreview();
+          this.closeAllDialogs();
           this.notifyUnlockUi();
           if (this.isSecurityMode()) {
             this.hide(silent);
           }
+        }
+        /**
+         * 外部上锁清场（N10 事件侧）：他域/密码本面板直调 SafeManager.lock() 不经本域 lockNow/hide，
+         * 经 encrypt:unlock-changed(false) 兜底——清会话明文与选择态、收起预览/体检浮层、面板收起
+         * （重开走状态栏重新解锁，hero 动态文案归 vault-assets-view 并行批）。
+         * 刻意不走 hide()：hide 的安全模式分支会再调 lock()，unlock-changed(false) 会递归重入；
+         * 也不全量扫 body 锁屏——他域（如日记）的解锁屏与本次上锁无关，不越界代拆。
+         */
+        onExternalLock() {
+          var _a;
+          if (!this._initialized || !((_a = this.popup) == null ? void 0 : _a.isConnected)) return;
+          this.closePreview();
+          this.hideHealthDialog();
+          this._selNoteId = null;
+          this._diaryPlain = {};
+          this.lastHealth = null;
+          this.unlockedAt = null;
+          this.stopSessionTimers();
+          if (this.mask) this.mask.style.display = "none";
+          if (this.popup) this.popup.style.display = "none";
+          if (this.dataManager.unlocked) this.captureLockStats();
         }
         /** 解锁态变更后 UI 同步（Controller attachStatusBar 也调；锁屏/已解锁文本 + 重绘）。未建 DOM 时静默 */
         notifyUnlockUi() {
@@ -11392,6 +11674,7 @@ var BZW_diary = (() => {
             const area = document.createElement("div");
             area.className = "bz-vault-mob-overview";
             area.innerHTML = overviewHTML(this.overviewStats());
+            this.bindOverviewArea(area);
             body.appendChild(area);
             return;
           }
@@ -11463,19 +11746,19 @@ var BZW_diary = (() => {
         }
         // ---------- 加密笔记/日记销毁/还原 ----------
         /**
-         * 销毁加密笔记：重输主密码二次确认（高危操作防误触）。
-         * 确认窗复用共享解锁屏（全屏遮罩模式），提交走 verifyPassword 只读校验——
-         * 通过才执行 removeNote；这是防误触确认而非解锁，不进解锁冷却节流。
+         * 销毁确认共通壳（T4）：复用共享解锁屏（全屏遮罩模式），重输主密码 + verifyPassword
+         * 只读校验——通过才执行 onConfirmed。这是防误触确认而非解锁，不进解锁冷却节流。
+         * 加密笔记销毁与日记彻底销毁同款防护（此前日记仅普通确认框，防护不对齐）。
          */
-        confirmDeleteNote(note) {
+        confirmDestroyWithPassword(opts) {
           const ls = uiLockScreen({
             kind: "vault",
             icon: "lock",
-            title: "销毁确认",
-            sub: `将永久销毁「${note.title}」的正文与全部附件密文，销毁后不可恢复`,
+            title: opts.title,
+            sub: opts.sub,
             stats: [],
             placeholder: "重输主密码确认",
-            action: "确认销毁",
+            action: opts.action,
             secText: "销毁后密文不可恢复",
             secTone: "bad"
           });
@@ -11495,11 +11778,7 @@ var BZW_diary = (() => {
             esc2.unregister();
             ls.close();
             if (!ok) return;
-            void this.dataManager.removeNote(note.id).then(() => {
-              if (this._selNoteId === note.id) this._selNoteId = null;
-              this.renderList();
-              this.toast(`已销毁笔记「${note.title}」`);
-            }).catch((e) => this.toast("销毁失败：" + e.message, true));
+            opts.onConfirmed();
           };
           const submit = async () => {
             const pw = ls.input.value;
@@ -11528,6 +11807,21 @@ var BZW_diary = (() => {
           ls.focus();
           setTimeout(() => ls.focus(), 150);
         }
+        /** 销毁加密笔记：重输主密码二次确认（高危操作防误触），通过后执行移除。 */
+        confirmDeleteNote(note) {
+          this.confirmDestroyWithPassword({
+            title: "销毁确认",
+            sub: `将永久销毁「${note.title}」的正文与全部附件密文，销毁后不可恢复`,
+            action: "确认销毁",
+            onConfirmed: () => {
+              void this.dataManager.removeNote(note.id).then(() => {
+                if (this._selNoteId === note.id) this._selNoteId = null;
+                this.renderList();
+                this.toast(`已销毁笔记「${note.title}」`);
+              }).catch((e) => notifyActionError(e, "销毁"));
+            }
+          });
+        }
         /** 日记还原回日记（复用 diary reclassifyEntry 语义：还原块 merge 回原日期 md） */
         confirmRestoreDiary(note) {
           this.askConfirm(
@@ -11551,7 +11845,12 @@ var BZW_diary = (() => {
               this.toast("正文解密失败，无法还原", true);
               return;
             }
-            const ok = await this.dataManager.restoreDiaryEntry(note.id, plain);
+            let diaryDir;
+            try {
+              diaryDir = (await Promise.resolve().then(() => (init_config(), config_exports))).DIARY_DIRECTORY;
+            } catch (e) {
+            }
+            const ok = await this.dataManager.restoreDiaryEntry(note.id, plain, diaryDir);
             if (h) h.hide();
             if (ok) {
               if (this._selNoteId === note.id) this._selNoteId = null;
@@ -11562,7 +11861,7 @@ var BZW_diary = (() => {
             }
           } catch (e) {
             if (h) h.hide();
-            this.toast("还原失败：" + e.message, true);
+            notifyActionError(e, "还原日记");
           }
         }
         copyDiaryText(note) {
@@ -11575,21 +11874,19 @@ var BZW_diary = (() => {
           }).catch(() => this.toast("正文解密失败", true));
         }
         confirmDestroyDiary(note) {
-          this.askConfirm(
-            "彻底销毁日记",
-            `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
-            "永久销毁",
-            true,
-            // danger：永久销毁密文（不可撤销）→ 主按钮中性底 + 红字（手册 §9/§10）
-            () => {
+          this.confirmDestroyWithPassword({
+            title: "彻底销毁日记",
+            sub: `将永久销毁「${note.title}」的密文（含附件），销毁后不可恢复`,
+            action: "永久销毁",
+            onConfirmed: () => {
               void this.dataManager.removeNote(note.id).then(() => {
                 delete this._diaryPlain[note.id];
                 if (this._selNoteId === note.id) this._selNoteId = null;
                 this.renderList();
                 this.toast(`已销毁「${note.title}」`);
-              }).catch((e) => this.toast("销毁失败：" + e.message, true));
+              }).catch((e) => notifyActionError(e, "销毁"));
             }
-          );
+          });
         }
         confirmRestore(note) {
           this.askConfirm(
@@ -11649,7 +11946,10 @@ var BZW_diary = (() => {
          */
         async openPreview(note) {
           if (!this.previewPopup) this.ensureElements();
-          if (!this.dataManager.unlocked || !this.dataManager.password) return;
+          if (!this.dataManager.unlocked || !this.dataManager.password) {
+            notice("保险库已上锁，请先解锁再预览", "warning");
+            return;
+          }
           this.revokePreviewUrls();
           const popup = this.previewPopup;
           const mask = this.previewMask;
@@ -11691,23 +11991,32 @@ var BZW_diary = (() => {
             const [plain, previewResults] = await Promise.all([bodyP, Promise.all(previewP)]);
             const dataUrls = /* @__PURE__ */ new Map();
             for (const r of previewResults) dataUrls.set(r.path, r.du);
-            const { text, slots, inlined } = collectMediaSlots(plain != null ? plain : "", note.attachments);
-            const { ok: rendered, el: mdElRaw } = await this.renderWithTimeout(getApp(), text, note.path);
-            const mdEl = mdElRaw;
-            mdEl.className = "bz-encrypt-preview-md";
-            if (rendered) {
-              let html = mdEl.innerHTML;
-              for (const slot of slots) {
-                const a = slot.attachment;
-                if (a) html = html.split(slot.token).join(mediaHtml(a, dataUrls.get(a.path)));
-                else html = html.split(slot.token).join("");
-              }
-              mdEl.innerHTML = html;
+            let bodyEl;
+            let inlined = /* @__PURE__ */ new Set();
+            if (plain === null) {
+              const err = document.createElement("div");
+              err.textContent = "正文解密失败";
+              bodyEl = err;
             } else {
-              mdEl.textContent = plain;
+              const { text, slots, inlined: inl } = collectMediaSlots(plain, note.attachments);
+              inlined = inl;
+              const { ok: rendered, el: mdEl } = await this.renderWithTimeout(getApp(), text, note.path);
+              mdEl.className = "bz-encrypt-preview-md";
+              if (rendered) {
+                let html = mdEl.innerHTML;
+                for (const slot of slots) {
+                  const a = slot.attachment;
+                  if (a) html = html.split(slot.token).join(mediaHtml(a, dataUrls.get(a.path)));
+                  else html = html.split(slot.token).join("");
+                }
+                mdEl.innerHTML = html;
+              } else {
+                mdEl.textContent = plain;
+              }
+              bodyEl = mdEl;
             }
             body.innerHTML = "";
-            body.appendChild(mdEl);
+            body.appendChild(bodyEl);
             const residuals = note.attachments.filter((a) => !inlined.has(a.path));
             if (residuals.length) {
               const gallery = document.createElement("div");
@@ -11730,15 +12039,29 @@ var BZW_diary = (() => {
             body.appendChild(err);
           }
         }
+        unloadPreviewComponent() {
+          const c = this._previewComponent;
+          this._previewComponent = null;
+          if (c) {
+            try {
+              c.unload();
+            } catch (e) {
+            }
+          }
+        }
         /**
          * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
          * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
          * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
+         * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
          */
         async renderWithTimeout(app, text, path, timeoutMs = 3e3) {
+          this.unloadPreviewComponent();
           const el = document.createElement("div");
+          const component = new Component();
+          this._previewComponent = component;
           let finished = false;
-          const render = MarkdownRenderer.render(app, text, el, path, new Component()).then(
+          const render = MarkdownRenderer.render(app, text, el, path, component).then(
             () => {
               finished = true;
             },
@@ -11747,8 +12070,8 @@ var BZW_diary = (() => {
             }
           );
           await Promise.race([render, new Promise((r) => setTimeout(r, timeoutMs))]);
-          if (!finished) return { ok: false, el: document.createElement("div") };
-          return { ok: true, el };
+          if (!finished) return { ok: false, el: document.createElement("div"), component };
+          return { ok: true, el, component };
         }
         /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
         bindMediaClicks(root, attachments) {
@@ -11830,6 +12153,7 @@ var BZW_diary = (() => {
         }
         closePreview() {
           this.revokePreviewUrls();
+          this.unloadPreviewComponent();
           if (this.previewMask) unregisterSheetCompanion(this.previewMask);
           if (this.previewMask) this.previewMask.style.display = "none";
           if (this.previewPopup) this.previewPopup.style.display = "none";
@@ -11892,16 +12216,15 @@ var BZW_diary = (() => {
         /** 打开保险库主面板：解锁成功直落加密笔记资产并聚焦搜索；
          *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
         async openManager() {
-          if (!this.dataManager.unlocked) {
+          const needUnlock = !this.dataManager.unlocked;
+          if (needUnlock) {
             const ok = await this.uiManager.showPasswordDialog();
-            if (ok) {
-              this.uiManager.show();
-              this.uiManager.enterPwQuickAccess();
-            }
-          } else {
-            this.uiManager.show();
-            this.uiManager.restoreLastAsset();
+            if (!ok) return;
           }
+          if (needUnlock) this.uiManager.enterPwQuickAccess();
+          else this.uiManager.restoreLastAsset();
+          this.uiManager.show();
+          if (needUnlock) this.uiManager.focusListSearch();
         }
         /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
         async confirmLockProceed(file, attCount, sharedCount = 0) {
@@ -12011,6 +12334,8 @@ var BZW_diary = (() => {
               if (h) h.hide();
               notifyActionError(e, "加密");
             }
+          } catch (e) {
+            notifyActionError(e, "加密当前笔记");
           } finally {
             this._locking = false;
           }
@@ -12023,6 +12348,7 @@ var BZW_diary = (() => {
             if (el) el.remove();
           }
           this.uiManager.closeAllDialogs();
+          this.uiManager.detachGlobalListeners();
           cancelClipboardClear();
           this.uiManager.stopSessionTimers();
           this.uiManager.pwDataManager.destroy();
@@ -12074,22 +12400,20 @@ var BZW_diary = (() => {
   }
   async function ensureEncrypt(app) {
     if (initialized) return;
-    initialized = true;
     await getController().init();
-  }
-  function statusbarHtml2(unlocked) {
-    return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
+    initialized = true;
   }
   function mountEncryptStatusBar(container) {
     if (statusBarEl) return;
     const el = document.createElement("span");
     el.className = "bz-encrypt-statusbar";
     el.title = "保险库：点击打开";
-    el.innerHTML = statusbarHtml2(false);
+    el.innerHTML = statusbarHtml(false);
     el.addEventListener("click", () => openEncrypt(getApp()));
     container.appendChild(el);
     statusBarEl = el;
-    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el));
+    void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el)).catch(() => {
+    });
   }
   function unmountEncryptStatusBar() {
     if (statusBarEl) {
@@ -12098,16 +12422,20 @@ var BZW_diary = (() => {
     }
   }
   function openEncrypt(app) {
-    void ensureEncrypt(app).then(() => getController().openManager());
+    void ensureEncrypt(app).then(() => getController().openManager()).catch(() => notice("保险库初始化失败，请重试", "error"));
   }
   function encryptCurrentNote(app) {
-    void ensureEncrypt(app).then(() => getController().lockCurrentNote());
+    void ensureEncrypt(app).then(() => getController().lockCurrentNote()).catch(() => notice("保险库初始化失败，请重试", "error"));
   }
   function getSafeManager() {
     return getController().dataManager;
   }
   async function lockSafe(app) {
-    await ensureEncrypt(app);
+    try {
+      await ensureEncrypt(app);
+    } catch (e) {
+      return false;
+    }
     if (!getSafeManager().unlocked) return false;
     getController().uiManager.lockNow(true);
     return true;
@@ -12295,7 +12623,7 @@ ${entry.content.trim()}`;
     await realignRestorePath(noteId);
     const block = await buildRestoreBlock(noteId, newTags);
     if (block === null) return false;
-    return getSafeManager().restoreDiaryEntry(noteId, block);
+    return getSafeManager().restoreDiaryEntry(noteId, block, DIARY_DIRECTORY);
   }
   var ATTACHMENT_MAX_BYTES;
   var init_encrypt2 = __esm({

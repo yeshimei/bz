@@ -1,4 +1,4 @@
-/* 源指纹 f10f361d8d9c5ffc · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e6477ead521141da · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -135,7 +135,8 @@ var BZR_home = (() => {
     { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
     { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
     // 移动附件（attach 域）：2026-09-10 用户拍板自首页入口移除（命令仍可在命令面板调用）
-    { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "密码·加密笔记·日记", icon: iconOf("encrypt") },
+    // 保险库入口副题两资产口径（ADR-0158：密码视图已摘，密码入口在密码本磁贴）
+    { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
     // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
     { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
     { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }

@@ -106,6 +106,15 @@ interface FakeFile {
   content: string;
 }
 
+/** TFile 桩：聚合链引入的域源码（如 bookshelf/data.ts）按 obsidian 契约 import TFile——
+ *  secondbrain 演示库种子无 md 笔记，仅满足模块加载，无行为面。 */
+export class TFile {
+  path = '';
+  name = '';
+  basename = '';
+  extension = 'md';
+}
+
 export class FakeVault {
   private static key(path: string): string {
     return 'bz-sb-sim:' + path;

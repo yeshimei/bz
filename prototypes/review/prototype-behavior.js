@@ -1,4 +1,4 @@
-/* 源指纹 c6e1e74b019f9aa2 · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 07b3e9568b06823b · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -42,9 +42,9 @@ var BZW_review = (() => {
   ));
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // ../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
+  // node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js
   var require_moment = __commonJS({
-    "../../bz/node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
+    "node_modules/.pnpm/moment@2.30.1/node_modules/moment/moment.js"(exports, module) {
       (function(global, factory) {
         typeof exports === "object" && typeof module !== "undefined" ? module.exports = factory() : typeof define === "function" && define.amd ? define(factory) : global.moment = factory();
       })(exports, function() {
@@ -15987,9 +15987,19 @@ ${countsToText(s.missing)}
   });
 
   // src/cinema/state.ts
+  function resolveCinemaFolderPath() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
+    } catch (e) {
+      return DEFAULT_FOLDER;
+    }
+  }
+  var DEFAULT_FOLDER;
   var init_state2 = __esm({
     "src/cinema/state.ts"() {
       init_settings_provider();
+      DEFAULT_FOLDER = "我的/影视";
     }
   });
 
@@ -17370,7 +17380,8 @@ ${countsToText(s.missing)}
         { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
         { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
         // 移动附件（attach 域）：2026-09-10 用户拍板自首页入口移除（命令仍可在命令面板调用）
-        { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "密码·加密笔记·日记", icon: iconOf("encrypt") },
+        // 保险库入口副题两资产口径（ADR-0158：密码视图已摘，密码入口在密码本磁贴）
+        { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
         // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
         { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
         { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
@@ -17796,6 +17807,45 @@ ${countsToText(s.missing)}
   });
 
   // src/diary/config.ts
+  var config_exports = {};
+  __export(config_exports, {
+    DIARY_DIRECTORY: () => DIARY_DIRECTORY,
+    ENCRYPT_TAG: () => ENCRYPT_TAG,
+    LETTER_DIRECTORY: () => LETTER_DIRECTORY,
+    applyDirectories: () => applyDirectories,
+    bookDirectory: () => bookDirectory,
+    buildTagMaps: () => buildTagMaps,
+    emojiToTagMap: () => emojiToTagMap,
+    getParentPrimaryTag: () => getParentPrimaryTag,
+    getPrimaryTagsInDisplayOrder: () => getPrimaryTagsInDisplayOrder,
+    getSortedTagsForAddDialog: () => getSortedTagsForAddDialog,
+    getSubTagsOfPrimary: () => getSubTagsOfPrimary,
+    getTagEmoji: () => getTagEmoji,
+    inWallDirs: () => inWallDirs,
+    isSubTag: () => isSubTag,
+    movieDirectory: () => movieDirectory,
+    resetTagsConfig: () => resetTagsConfig,
+    tagToEmojiMap: () => tagToEmojiMap
+  });
+  function movieDirectory() {
+    return safeResolve(resolveCinemaFolderPath, "我的/影视");
+  }
+  function bookDirectory() {
+    return safeResolve(resolveFolderPath, "书库");
+  }
+  function safeResolve(resolver, fallback) {
+    try {
+      const v = resolver();
+      return v && v.trim() ? v : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function inWallDirs(p) {
+    return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
+      (d) => p.startsWith(d + "/") || p === d + ".md"
+    );
+  }
   function applyDirectories(settings) {
     const clean = (v, fallback) => {
       const t = (v || "").trim().replace(/\/+$/, "");
@@ -17803,6 +17853,18 @@ ${countsToText(s.missing)}
     };
     DIARY_DIRECTORY = clean(settings.diaryDirectory, "我的/日记");
     LETTER_DIRECTORY = clean(settings.letterDirectory, "我的/信");
+  }
+  function getPrimaryTagsInDisplayOrder() {
+    const tags = Object.keys(PRIMARY_TAGS_CONFIG);
+    const idx = tags.indexOf(ENCRYPT_TAG);
+    if (idx === -1) return tags;
+    const rest = tags.filter((t) => t !== ENCRYPT_TAG);
+    rest.push(ENCRYPT_TAG);
+    return rest;
+  }
+  function resetTagsConfig() {
+    PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+    buildTagMaps();
   }
   function buildTagMaps() {
     for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
@@ -17818,13 +17880,51 @@ ${countsToText(s.missing)}
       }
     }
   }
-  var DIARY_DIRECTORY, LETTER_DIRECTORY, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
+  function getTagEmoji(tag) {
+    return tagToEmojiMap[tag] || "📖";
+  }
+  function getSubTagsOfPrimary(primaryTag) {
+    const config = PRIMARY_TAGS_CONFIG[primaryTag];
+    return config && config.subTags ? config.subTags : null;
+  }
+  function isSubTag(tag) {
+    for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function getParentPrimaryTag(subTag) {
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
+        return primary;
+      }
+    }
+    return null;
+  }
+  function getSortedTagsForAddDialog() {
+    const result = [];
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (primary === "加密") continue;
+      if (config.subTags && config.subTags.length > 0) {
+        for (const sub of config.subTags) {
+          result.push(sub.tag);
+        }
+      } else {
+        result.push(primary);
+      }
+    }
+    return result;
+  }
+  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
   var init_config2 = __esm({
     "src/diary/config.ts"() {
       init_state2();
       init_data2();
       DIARY_DIRECTORY = "我的/日记";
       LETTER_DIRECTORY = "我的/信";
+      ENCRYPT_TAG = "加密";
       DEFAULT_TAGS_CONFIG = {
         日记: { emoji: "📖" },
         加密: { emoji: "🔐" },
@@ -42613,6 +42713,17 @@ GitHub 仓库：${ghInfo.title}
   function flatName() {
     return "." + randToken(11) + ".enc";
   }
+  function isOrphanEncName(name) {
+    if (name === ".safe.enc") return false;
+    if (!name.startsWith(".") || !name.endsWith(".enc")) return false;
+    const stem = name.slice(1, -4);
+    return stem !== "" && !stem.includes("/") && !stem.includes("\\") && !stem.includes("..");
+  }
+  function currentDiaryDirectory() {
+    const raw = tryGetSettings().diaryDirectory;
+    const t = (raw || "").trim().replace(/\/+$/, "");
+    return t || "我的/日记";
+  }
   function genNoteId() {
     return "enc-" + Date.now() + "-" + randToken(6);
   }
@@ -42643,6 +42754,7 @@ GitHub 仓库：${ghInfo.title}
       init_domain_bus();
       init_crypto();
       init_storage();
+      init_settings_provider();
       init_diary_format();
       ENCRYPT_CHANGED_CHANNEL = "encrypt:changed";
       ENCRYPT_UNLOCK_CHANGED_CHANNEL = "encrypt:unlock-changed";
@@ -42730,12 +42842,12 @@ GitHub 仓库：${ghInfo.title}
             this.manifest = parsed;
             this.password = password;
             this.unlocked = true;
-            (_a2 = this.onUnlockChange) == null ? void 0 : _a2.call(this, true);
-            emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
             try {
-              await this.selfHeal();
+              await this.enqueueOp(() => this.selfHeal());
             } catch (e) {
             }
+            (_a2 = this.onUnlockChange) == null ? void 0 : _a2.call(this, true);
+            emitDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, { unlocked: true });
             return true;
           } catch (e) {
             return false;
@@ -42777,9 +42889,10 @@ GitHub 仓库：${ghInfo.title}
             return false;
           }
         }
-        /** 加锁：清内存态（含派生密钥缓存，密钥不残留） */
+        /** 加锁：清内存态（含派生密钥缓存，密钥不残留）。幂等短路：已锁再锁直接返回，不重复广播 */
         lock() {
           var _a2;
+          if (!this.unlocked) return;
           this.unlocked = false;
           this.password = null;
           this.manifest = { version: 1, notes: [] };
@@ -43173,8 +43286,7 @@ GitHub 仓库：${ghInfo.title}
                 const listing = await this.adapter.list(this.root);
                 for (const f of listing.files) {
                   const name = f.slice(f.lastIndexOf("/") + 1);
-                  if (name === ".safe.enc") continue;
-                  if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
+                  if (!isOrphanEncName(name)) continue;
                   if (referenced.has(name)) continue;
                   fresh.push({ cat: "orphan-file", key: "file:" + name, label: name, ref: name });
                 }
@@ -43267,7 +43379,7 @@ GitHub 仓库：${ghInfo.title}
             for (const key of keys) {
               if (!key.startsWith("file:")) continue;
               const name = key.slice("file:".length);
-              if (!name.startsWith(".") || !name.endsWith(".enc")) continue;
+              if (!isOrphanEncName(name)) continue;
               try {
                 if (await this.adapter.exists(this.resolveRef(name))) {
                   await this.adapter.remove(this.resolveRef(name));
@@ -43502,7 +43614,6 @@ GitHub 仓库：${ghInfo.title}
             }
             return { note, conflicts: [...conflicts, note.path], removed: false };
           }
-          await this.deleteNoteMirrors(note);
           const idx = this.manifest.notes.indexOf(note);
           if (idx !== -1) this.manifest.notes.splice(idx, 1);
           try {
@@ -43510,6 +43621,7 @@ GitHub 仓库：${ghInfo.title}
           } catch (e) {
             return { note, conflicts, removed: false, manifestSaveFailed: true };
           }
+          await this.deleteNoteMirrors(note);
           return { note, conflicts, removed: true };
         }
         /** 目标文件内容与待还原明文是否一致（归一化行尾；占用幂等放行判断用） */
@@ -43542,13 +43654,26 @@ GitHub 仓库：${ghInfo.title}
           return this.readMirror(note.contentRef);
         }
         /**
-         * 加密日记条目还原：还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
+         * 加密日记条目还原（操作级互斥入口）：与 lockNote/restoreNote/removeNote 共享同一串行链
+         * （E13 收编补漏——阶段一逐附件解密窗口为 PBKDF2 秒级，此前游离在队列外可与并发
+         * removeNote/lockNote 互踩清单）。
+         * 还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
          * 原子语义同 restoreNote：全部附件解密/校验成功且块就绪才写回；任一失败零落盘。
+         * `diaryDir`：当前日记目录（D9 同源真值=diary 域 applyDirectories 维护的 DIARY_DIRECTORY 快照，
+         * 由调用方注入——diary 侧直传、encrypt 面板侧动态 import；未注入时回落 settings 读取兜底）。
          */
-        async restoreDiaryEntry(noteId, finalBlock) {
+        restoreDiaryEntry(noteId, finalBlock, diaryDir) {
+          return this.enqueueOp(() => this.restoreDiaryEntrySerial(noteId, finalBlock, diaryDir));
+        }
+        async restoreDiaryEntrySerial(noteId, finalBlock, diaryDir) {
           if (!this.unlocked || !this.password) throw new Error("未解锁，无法还原加密日记");
           const note = this.manifest.notes.find((n) => n.id === noteId);
           if (!note || note.kind !== "diary-entry") throw new Error("未找到该加密日记条目");
+          const base = note.path.split("/").pop() || "";
+          if (diaryMetaFromEntryPath(base)) {
+            const target = (diaryDir || currentDiaryDirectory()) + "/" + base;
+            if (target !== note.path) note.path = target;
+          }
           const conflicts = [];
           const plainAttachments = await mapLimit(
             note.attachments,
@@ -43579,7 +43704,6 @@ GitHub 仓库：${ghInfo.title}
             }
             return false;
           }
-          await this.deleteNoteMirrors(note);
           const idx = this.manifest.notes.indexOf(note);
           if (idx !== -1) this.manifest.notes.splice(idx, 1);
           try {
@@ -43587,6 +43711,7 @@ GitHub 仓库：${ghInfo.title}
           } catch (e) {
             return false;
           }
+          await this.deleteNoteMirrors(note);
           return true;
         }
         /** 解加密日记正文明文（供日记域准备还原块；退回 null 表示解密失败） */
@@ -43726,10 +43851,13 @@ GitHub 仓库：${ghInfo.title}
           });
         }
         /**
-         * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像；清单同步持久化）。
+         * 更新条目正文镜像（覆盖同一 contentRef，不产生孤儿镜像）。
          * 供密码本整表（password-vault）等高频改写载荷用：重用既有镜像名，避免每次新镜像堆积。
          * 覆盖走 replaceMirrorAtomic（P0-1）：暂存+rename 原子换入，任何写失败正式位保持旧完整密文。
          * E13：整体入 opQueue（理由同 removeNote——清单读改写与 lockNote/restoreNote 串行互斥）。
+         * 深审新-6：contentRef 已存在时清单零变化——跳过整库重加密落盘（此前密码本每存一条
+         * 全量重写 .safe.enc 一次），改为显式广播 encrypt:changed（同频道同事件，noteId 语义补真，
+         * 缓解订阅方按 null 盲比对）；仅新分配 contentRef（清单结构变化）才落盘（尾部自带广播）。
          */
         updateNotePayload(noteId, plainContent) {
           return this.enqueueOp(async () => {
@@ -43739,12 +43867,13 @@ GitHub 仓库：${ghInfo.title}
             const encrypted = await CryptoService.encrypt(plainContent, this.password);
             if (note.contentRef) {
               await this.replaceMirrorAtomic(note.contentRef, encrypted);
+              emitDomainEvent(ENCRYPT_CHANGED_CHANNEL, { noteId });
             } else {
               const ref = flatName();
               await this.replaceMirrorAtomic(ref, encrypted);
               note.contentRef = ref;
+              await this.saveManifest();
             }
-            await this.saveManifest();
           });
         }
         /** 解附件预览层 → dataUrl 明文（预览窗用；无预览层返回 null） */
@@ -43863,13 +43992,12 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/password-vault/data.ts
-  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, DEFAULT_PW_CHARSET, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
+  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
   var init_data12 = __esm({
     "src/password-vault/data.ts"() {
       init_domain_bus();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
       ENCRYPT_CHANGED_CHANNEL2 = "encrypt:changed";
-      DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       VAULT_KIND = "password-vault";
       VAULT_PATH = "CONFIG/.ENCRYPT/passwords";
       VAULT_TITLE = "密码本";
@@ -44116,6 +44244,9 @@ GitHub 仓库：${ghInfo.title}
   function vIc(name, size = 14) {
     return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
   }
+  function statusbarHtml(unlocked) {
+    return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
+  }
   function overviewHTML(stats) {
     const { counts, attachments, attBytes, recent: recent2, health } = stats;
     const kb = attBytes > 0 ? (attBytes / 1024).toFixed(1) + " KB" : "—";
@@ -44123,15 +44254,15 @@ GitHub 仓库：${ghInfo.title}
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
             <span class="tm">${escapeHtml2(r.time)}</span></div>`;
-    }).join("") : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc("lock", 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
+    }).join("") : emptyHtmlStr("lock", "还没有动态", "笔记或日记入库后，最近动态在这里显示");
     return `
   <div class="bz-vault-hero">
     <div class="ht">${vIc("lock", 14)} 保险库已解锁 · 笔记集中管理</div>
-    <div class="hn">${counts.note} 项资产${counts.note > 0 ? " · 尽在掌握" : ""}</div>
+    <div class="hn">${counts.note + counts.diary} 项资产${counts.note + counts.diary > 0 ? " · 尽在掌握" : ""}</div>
     <div class="hd">同一把主密码 · AES-256-GCM</div>
     <div class="hbtns">
       <button class="hbtn" data-hero="lock-note">${vIc("file-lock", 14)} 存入笔记</button>
@@ -44186,7 +44317,7 @@ GitHub 仓库：${ghInfo.title}
     const created = new Date(note.createdAt).toLocaleString("zh-CN", { hour12: false });
     const actionBtns = kind === "note" ? `<button class="bbtn teal" data-detail="preview">${vIc("eye", 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc("download", 14)} 取出还原</button>
-         <button class="bbtn danger" data-detail="delete">${vIc("trash-2", 14)} 销毁</button>` : `<button class="bbtn" style="background:${color};color:#fff" data-detail="restore-diary">${vIc("download", 14)} 还原回日记</button>
+         <button class="bbtn danger" data-detail="delete">${vIc("trash-2", 14)} 销毁</button>` : `<button class="bbtn indigo" data-detail="restore-diary">${vIc("download", 14)} 还原回日记</button>
          <button class="bbtn" data-detail="copy-diary">${vIc("copy", 14)} 复制正文</button>
          <button class="bbtn danger" data-detail="destroy-diary">${vIc("trash-2", 14)} 彻底销毁</button>`;
     return `
@@ -44206,6 +44337,7 @@ GitHub 仓库：${ghInfo.title}
   var init_vault_assets_view = __esm({
     "src/encrypt/vault-assets-view.ts"() {
       init_utils();
+      init_str();
       ASSET_COLOR = {
         note: "#2e7d68",
         diary: "#5a63a8"
@@ -44434,9 +44566,7 @@ GitHub 仓库：${ghInfo.title}
   // src/encrypt/ui.ts
   var ui_exports8 = {};
   __export(ui_exports8, {
-    DEFAULT_PW_CHARSET: () => DEFAULT_PW_CHARSET,
     EncryptAppController: () => EncryptAppController,
-    LOCK_KIND_META: () => LOCK_KIND_META,
     UIManager: () => UIManager3,
     collectMediaSlots: () => collectMediaSlots,
     collectNoteAttachmentPaths: () => collectNoteAttachmentPaths,
@@ -44448,8 +44578,15 @@ GitHub 仓库：${ghInfo.title}
     mimeOf: () => mimeOf,
     truncateName: () => truncateName
   });
-  function statusbarHtml(unlocked) {
-    return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
+  function searchClearHtml() {
+    return `<button type="button" class="bz-search-clear" data-search-clear title="清除搜索" aria-label="清除搜索" hidden>${vIc("x", 12)}</button>`;
+  }
+  function safeDecode(s) {
+    try {
+      return decodeURIComponent(s);
+    } catch (e) {
+      return s;
+    }
   }
   function collectNoteAttachments(content, embedLinks, vaultFiles) {
     const refs = /* @__PURE__ */ new Set();
@@ -44473,7 +44610,7 @@ GitHub 仓库：${ghInfo.title}
     const valid = /* @__PURE__ */ new Set();
     for (const r of refs) {
       if (!r) continue;
-      const clean = decodeURIComponent(r).replace(/^\.\//, "");
+      const clean = safeDecode(r).replace(/^\.\//, "");
       let hit;
       if (paths.has(clean)) hit = clean;
       else if (!clean.includes("/")) hit = byName.get(clean);
@@ -44519,7 +44656,7 @@ GitHub 仓库：${ghInfo.title}
       if (!o || o.path === notePath) continue;
       for (const l of o.links || []) {
         if (!l || typeof l !== "string") continue;
-        const clean = decodeURIComponent(l.split("#")[0].trim()).replace(/^\.\//, "");
+        const clean = safeDecode(l.split("#")[0].trim()).replace(/^\.\//, "");
         if (!clean) continue;
         let hit;
         if (cand.has(clean)) hit = clean;
@@ -44614,7 +44751,7 @@ GitHub 仓库：${ghInfo.title}
     return { text: out, slots, inlined };
   }
   function findAttachment(target, attachments) {
-    const t = decodeURIComponent(target).trim();
+    const t = safeDecode(target).trim();
     return attachments.find((a) => a.path === t || a.path.endsWith("/" + t));
   }
   function mediaHtml(a, dataUrl) {
@@ -44725,7 +44862,7 @@ GitHub 仓库：${ghInfo.title}
       ]
     };
   }
-  var LOCK_KIND_META, lastVisitedAsset, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
+  var LOCK_KIND_META, lastVisitedAsset, activeUnlock, _UIManager, UIManager3, _EncryptAppController, EncryptAppController;
   var init_ui11 = __esm({
     "src/encrypt/ui.ts"() {
       init_fake_obsidian();
@@ -44741,6 +44878,7 @@ GitHub 仓库：${ghInfo.title}
       init_settings_modal();
       init_settings_common();
       init_data11();
+      init_domain_bus();
       init_preview();
       init_data12();
       init_vault_assets_view();
@@ -44782,6 +44920,7 @@ GitHub 仓库：${ghInfo.title}
         }
       };
       lastVisitedAsset = "note";
+      activeUnlock = null;
       _UIManager = class _UIManager {
         constructor(dataManager3, config, pwDataManager) {
           /** 顶部「加密当前笔记」按钮回调（由 Controller 注入，调 lockCurrentNote） */
@@ -44820,9 +44959,23 @@ GitHub 仓库：${ghInfo.title}
           this.idleLockTimer = null;
           /** 上次渲染的资产：资产未变时保留列表头（连同搜索框），避免搜索输入被重建而掉焦点 */
           this._lastRenderedAsset = null;
+          /** 空闲计时 bump（document 捕获阶段；见 bindVaultShell 尾部） */
+          this._idleBump = null;
+          /** encrypt:unlock-changed 订阅句柄（ensureElements 挂 / detachGlobalListeners 摘） */
+          this._unlockOff = null;
+          /** 体检进行中旗标（T9 重入守卫：扫描中「重新体检」/清理后自动复扫不再并发双扫） */
+          this._scanning = false;
+          // ---------- 统一工作台渲染 ----------
+          /**
+           * 共享锁密码载荷装载旗标（效率整改 4：load 仅解锁后首次 renderList 执行——
+           * 统计无需逐次刷新，loadCache 本就按密文判等；上锁后复位，下次解锁重新装载）
+           */
+          this._pwLoadedSinceUnlock = false;
           /** 解锁屏统计快照（会话内缓存；冷启动回落 lock-stats.json 上次快照，见 core/lock-stats） */
           this.lockStatsCache = {};
           this._selNoteId = null;
+          /** 预览 Markdown 渲染生命周期句柄（T13）：closePreview/下一次填充前 unload，渲染任务不滞留 */
+          this._previewComponent = null;
           this.dataManager = dataManager3;
           this.config = config;
           this.pwDataManager = pwDataManager || new PasswordVaultDataManager(dataManager3);
@@ -44862,6 +45015,7 @@ GitHub 仓库：${ghInfo.title}
           <div class="bz-vault-item on" data-asset="overview">${vIc("layout-grid", 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
           <div class="bz-vault-item k-note" data-asset="note">${vIc("file-lock", 16)}笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-diary" data-asset="diary">${vIc("book-lock", 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
           <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
@@ -44888,10 +45042,11 @@ GitHub 仓库：${ghInfo.title}
           <span class="st" data-mob-unlock>已解锁</span>
           <button class="bz-vault-mobclose bz-touch-target--xl" data-act="mob-close" aria-label="关闭">${vIc("x", 15)}</button>
         </div>
-        <div class="bz-vault-msearch">${vIc("search", 13)}<input placeholder="搜索全部资产…" data-mob-search></div>
+        <div class="bz-vault-msearch" style="position:relative">${vIc("search", 13)}<input placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
           <span class="sg on" data-masset="overview">概览</span>
           <span class="sg" data-masset="note">笔记</span>
+          <span class="sg" data-masset="diary">日记</span>
         </div>
         <div class="bz-vault-mbody" data-mob-body></div>
       </div>`;
@@ -44920,13 +45075,16 @@ GitHub 仓库：${ghInfo.title}
           document.body.appendChild(this.previewPopup);
           this.bindVaultShell();
           this.registerEscape();
+          this._unlockOff = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+            if (evt && evt.unlocked === false) this.onExternalLock();
+          });
           this._initialized = true;
         }
         /** 统一骨架交互：资产导航 / 顶栏动作 / 搜索防抖 / 移动端 seg */
         bindVaultShell() {
           var _a2, _b2, _c;
           const setAsset = (a) => {
-            if (a === "pw" || a === "diary") a = "note";
+            if (a === "pw") a = "note";
             this.asset = a;
             lastVisitedAsset = a;
             this.searchKw = "";
@@ -44955,16 +45113,31 @@ GitHub 仓库：${ghInfo.title}
           this.mask.addEventListener("click", () => {
             if (this.mask.style.display === "block") this.hide();
           });
-          const bump = () => this.bumpIdleLock();
-          this.popup.addEventListener("pointerdown", bump, true);
-          this.popup.addEventListener("keydown", bump, true);
+          this._idleBump = () => this.bumpIdleLock();
+          document.addEventListener("pointerdown", this._idleBump, true);
+          document.addEventListener("keydown", this._idleBump, true);
+        }
+        /** 全局监听摘除（cleanup 专用）：document 空闲 bump + 域事件订阅均不随 DOM 摘除自动回收 */
+        detachGlobalListeners() {
+          if (this._idleBump) {
+            document.removeEventListener("pointerdown", this._idleBump, true);
+            document.removeEventListener("keydown", this._idleBump, true);
+            this._idleBump = null;
+          }
+          if (this._unlockOff) {
+            this._unlockOff();
+            this._unlockOff = null;
+          }
         }
         /**
          * 搜索输入绑定（桌面列表头框 / 移动端常驻框共用一条语义）。
          * 桌面框随列表头重建，故每次渲染都要重挂一次——抽成方法避免两处逻辑漂移。
+         * 效率整改 3：ESC 有词清词（stopPropagation 截断 escManager 关面板链，安全模式不误上锁）、
+         * 无词放行；尾部 ✕ 一键清除（对齐 clipbook「ESC 清词 + ✕」定稿范式）。
          * @param isMob 输入源是移动端框：决定把关键词同步到哪一侧（桌面框是动态的，现取）
          */
         bindSearchInput(input, isMob) {
+          var _a2, _b2;
           input.addEventListener("input", () => {
             const v = input.value.trim();
             if (this.asset === "overview" && v) {
@@ -44978,8 +45151,38 @@ GitHub 仓库：${ghInfo.title}
             } else {
               this.mob.search.value = v;
             }
+            this.syncSearchClear();
             this.searchDebounced();
           });
+          input.addEventListener("keydown", (e) => {
+            if (e.key !== "Escape" || !input.value.trim()) return;
+            e.preventDefault();
+            e.stopPropagation();
+            this.clearSearchKw();
+            input.focus();
+          });
+          (_b2 = (_a2 = input.parentElement) == null ? void 0 : _a2.querySelector("[data-search-clear]")) == null ? void 0 : _b2.addEventListener("click", () => {
+            this.clearSearchKw();
+            input.focus();
+          });
+        }
+        /** ✕ 显隐同步（有词才显示；两框词互同步后一起刷，clipbook syncDeskSearchClear 同款） */
+        syncSearchClear() {
+          var _a2, _b2;
+          const v = !!this.searchKw || !!this.mob.search.value.trim() || !!((_a2 = this.deskSearch) == null ? void 0 : _a2.value.trim());
+          for (const box of [(_b2 = this.deskSearch) == null ? void 0 : _b2.parentElement, this.mob.search.parentElement]) {
+            const btn = box == null ? void 0 : box.querySelector("[data-search-clear]");
+            if (btn) btn.hidden = !v;
+          }
+        }
+        /** 清词统一出口（ESC / ✕ 共用）：两框同清 + 立即重绘（不走防抖） */
+        clearSearchKw() {
+          this.searchKw = "";
+          const deskSearch = this.deskSearch;
+          if (deskSearch) deskSearch.value = "";
+          this.mob.search.value = "";
+          this.syncSearchClear();
+          this.renderAll();
         }
         createMask(id) {
           const mask = document.createElement("div");
@@ -45006,10 +45209,13 @@ GitHub 仓库：${ghInfo.title}
           this.startSessionTimers();
         }
         hide(suppressAutoLockNotice = false) {
+          this.closePreview();
+          this.closeAllDialogs();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
           if (this.isSecurityMode()) {
+            if (this.dataManager.unlocked) this.captureLockStats();
             this.dataManager.lock();
             this.pwDataManager.lock();
             this._selNoteId = null;
@@ -45122,6 +45328,7 @@ GitHub 仓库：${ghInfo.title}
           cleanBtn.onclick = () => void this.confirmHealthCleanup();
           const rescanBtn = document.createElement("button");
           rescanBtn.className = "bz-encrypt-dialog-btn";
+          rescanBtn.id = "bz-encrypt-health-rescan";
           rescanBtn.textContent = "重新体检";
           rescanBtn.onclick = () => void this.runHealthScan();
           foot.appendChild(cleanBtn);
@@ -45149,41 +45356,66 @@ GitHub 仓库：${ghInfo.title}
           if (!this.healthPopup) return;
           const body = this.healthPopup.querySelector("#bz-encrypt-health-body");
           if (!body) return;
-          body.innerHTML = "";
-          const progress = document.createElement("div");
-          progress.className = "bz-encrypt-health-progress";
-          progress.textContent = "体检中…";
-          const bar = uiProgress({ value: 0 });
-          bar.el.classList.add("bz-encrypt-health-bar");
-          body.appendChild(progress);
-          body.appendChild(bar.el);
-          const live2 = document.createElement("div");
-          live2.className = "bz-encrypt-health-live";
-          const liveTitle = document.createElement("div");
-          liveTitle.className = "bz-encrypt-health-section-title";
-          liveTitle.textContent = "发现的异常";
-          live2.appendChild(liveTitle);
-          body.appendChild(live2);
+          if (this._scanning) return;
+          this._scanning = true;
           try {
-            const report = await this.dataManager.scanHealth((p) => {
-              progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
-              bar.setValue(Math.round(p.done / p.total * 100));
-              for (const item of p.found) {
-                const row = document.createElement("div");
-                row.className = "bz-encrypt-health-item " + (item.cat === "corrupted-body" || item.cat === "corrupted-attachment" ? "bz-encrypt-health-item--bad" : item.cat === "missing-attachment" ? "bz-encrypt-health-item--warn" : "");
-                row.textContent = item.label;
-                live2.appendChild(row);
-              }
-            });
-            this.lastHealth = { issues: report.items.length, lastChecked: (/* @__PURE__ */ new Date()).toLocaleString() };
-            this.renderHealthReport(report, body);
-            this.renderNav();
-          } catch (e) {
+            if (!this.dataManager.unlocked) {
+              body.innerHTML = "";
+              const locked = document.createElement("div");
+              locked.className = "bz-encrypt-health-summary";
+              locked.textContent = "保险库已上锁，无法体检";
+              body.appendChild(locked);
+              this.setHealthButtonsDisabled(true);
+              return;
+            }
+            this.setHealthButtonsDisabled(true);
             body.innerHTML = "";
-            const err = document.createElement("div");
-            err.textContent = "体检失败：" + e.message;
-            body.appendChild(err);
+            const progress = document.createElement("div");
+            progress.className = "bz-encrypt-health-progress";
+            progress.textContent = "体检中…";
+            const bar = uiProgress({ value: 0 });
+            bar.el.classList.add("bz-encrypt-health-bar");
+            body.appendChild(progress);
+            body.appendChild(bar.el);
+            const live2 = document.createElement("div");
+            live2.className = "bz-encrypt-health-live";
+            const liveTitle = document.createElement("div");
+            liveTitle.className = "bz-encrypt-health-section-title";
+            liveTitle.textContent = "发现的异常";
+            live2.appendChild(liveTitle);
+            body.appendChild(live2);
+            try {
+              const report = await this.dataManager.scanHealth((p) => {
+                progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
+                bar.setValue(Math.round(p.done / p.total * 100));
+                for (const item of p.found) {
+                  const row = document.createElement("div");
+                  row.className = "bz-encrypt-health-item " + (item.cat === "corrupted-body" || item.cat === "corrupted-attachment" ? "bz-encrypt-health-item--bad" : item.cat === "missing-attachment" ? "bz-encrypt-health-item--warn" : "");
+                  row.textContent = item.label;
+                  live2.appendChild(row);
+                }
+              });
+              this.lastHealth = { issues: report.items.length, lastChecked: (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", { hour12: false }) };
+              this.renderHealthReport(report, body);
+              this.renderNav();
+            } catch (e) {
+              body.innerHTML = "";
+              const err = document.createElement("div");
+              err.textContent = "体检失败：" + e.message;
+              body.appendChild(err);
+            }
+            this.setHealthButtonsDisabled(false);
+          } finally {
+            this._scanning = false;
           }
+        }
+        /** 体检窗底部两按钮（清理/重扫）禁用态：扫描中与锁定态防重入（true=禁用） */
+        setHealthButtonsDisabled(disabled) {
+          if (!this.healthPopup) return;
+          const clean = this.healthPopup.querySelector("#bz-encrypt-health-clean");
+          const rescan = this.healthPopup.querySelector("#bz-encrypt-health-rescan");
+          if (clean) clean.disabled = disabled;
+          if (rescan) rescan.disabled = disabled;
         }
         /** 渲染体检报告（UI 保证解锁后调用，integrityChecked 恒 true）：可清理类默认不全选；损坏/缺失只展示 */
         renderHealthReport(report, body) {
@@ -45330,89 +45562,122 @@ GitHub 仓库：${ghInfo.title}
           ];
           openItemMenu(x, y, actions, true, "bz-vault-menu");
         }
-        /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入 */
+        /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入。
+         *  N11 单例守卫：已有解锁屏在进行中 → 复用同一 Promise（快速双触发不再连开两层）。 */
         async showPasswordDialog(kind = "vault") {
+          if (activeUnlock) {
+            if (activeUnlock.el && !activeUnlock.el.isConnected) activeUnlock = null;
+            else return activeUnlock.promise;
+          }
+          let resolveFn;
+          let cancelled = false;
+          const promise = new Promise((resolve2) => {
+            resolveFn = resolve2;
+          });
+          activeUnlock = {
+            el: null,
+            promise,
+            cancel: () => {
+              cancelled = true;
+              if ((activeUnlock == null ? void 0 : activeUnlock.promise) === promise) activeUnlock = null;
+              resolveFn(false);
+            }
+          };
+          try {
+            return await this.openUnlockScreen(kind, promise, resolveFn, () => cancelled);
+          } catch (e) {
+            if ((activeUnlock == null ? void 0 : activeUnlock.promise) === promise) activeUnlock = null;
+            throw e;
+          }
+        }
+        /** 实际构建解锁屏（单例登记在 showPasswordDialog，唯一收场出口为 done()） */
+        async openUnlockScreen(kind, promise, resolveFn, isCancelled) {
           const exists = await this.dataManager.exists();
           const meta = LOCK_KIND_META[kind];
           const stats = this.lockStatsCache[kind] || await readLockStats(kind) || meta.stats.map((s) => ({ ...s, num: "—" }));
-          return new Promise((resolve2) => {
-            const ls = uiLockScreen({
-              kind,
-              icon: meta.icon,
-              title: exists ? meta.title : "设置主密码",
-              sub: exists ? meta.sub : "请设置一个主密码（用于加密所有数据）",
-              stats,
-              action: exists ? meta.action : "设置并解锁",
-              firstSetup: !exists,
-              warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
-              ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
-              secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
-              secTone: "warn",
-              hint: exists ? "" : "建议使用密码本保存此密码"
-            });
-            topifyZ(ls.el);
-            document.body.appendChild(ls.el);
-            const esc3 = escManager.register("bz-vault-unlock", {
-              isVisible: () => ls.el.isConnected,
-              close: () => done(false)
-            });
-            const done = (ok) => {
-              esc3.unregister();
-              ls.close();
-              resolve2(ok);
-            };
-            const setErr = (m) => {
-              ls.setError(m);
-              setTimeout(() => {
-                if (ls.input.value) ls.setError("");
-              }, 2600);
-            };
-            ls.actionBtn.onclick = async () => {
-              const pw = ls.input.value;
-              if (!pw) {
-                this.rejectInput("请输入密码", setErr);
+          if (isCancelled()) return promise;
+          const ls = uiLockScreen({
+            kind,
+            icon: meta.icon,
+            title: exists ? meta.title : "设置主密码",
+            sub: exists ? meta.sub : "请设置一个主密码（用于加密所有数据）",
+            stats,
+            action: exists ? meta.action : "设置并解锁",
+            firstSetup: !exists,
+            warningHtml: `${vIc("triangle-alert", 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
+            ackText: "我已了解：主密码无法找回，遗忘将导致密文永久无法恢复",
+            secText: exists ? "主密码不会存储 · 遗忘将无法恢复密文" : "",
+            secTone: "warn",
+            hint: exists ? "" : "建议使用密码本保存此密码"
+          });
+          topifyZ(ls.el);
+          document.body.appendChild(ls.el);
+          const esc3 = escManager.register("bz-vault-unlock", {
+            isVisible: () => ls.el.isConnected,
+            close: () => done(false)
+          });
+          const done = (ok) => {
+            if (activeUnlock && activeUnlock.promise === promise) activeUnlock = null;
+            esc3.unregister();
+            ls.close();
+            resolveFn(ok);
+          };
+          const setErr = (m) => {
+            ls.setError(m);
+            setTimeout(() => {
+              if (ls.input.value) ls.setError("");
+            }, 2600);
+          };
+          ls.actionBtn.onclick = async () => {
+            const pw = ls.input.value;
+            if (!pw) {
+              this.rejectInput("请输入密码", setErr);
+              return;
+            }
+            if (!exists) {
+              if (ls.input2.style.display === "none") {
+                ls.showSecondInput(true);
+                ls.input2.value = "";
+                ls.setMessage("请再次输入主密码确认");
+                ls.focus();
                 return;
               }
-              if (!exists) {
-                if (ls.input2.style.display === "none") {
-                  ls.showSecondInput(true);
-                  ls.input2.value = "";
-                  ls.setMessage("请再次输入主密码确认");
-                  ls.focus();
-                  return;
-                }
-                if (pw !== ls.input2.value) {
-                  this.rejectInput("两次密码不一致", setErr);
-                  return;
-                }
-                if (pw.length < 4) {
-                  this.rejectInput("主密码至少 4 位", setErr);
-                  return;
-                }
-                if (!ls.ackBox || !ls.ackBox.checked) {
-                  this.rejectInput("请先勾选风险确认", setErr);
-                  return;
-                }
-                try {
-                  const ok = await this.dataManager.unlock(pw);
-                  if (ok) {
-                    done(true);
-                    notice("密码已设置，数据已加密", "success");
-                  } else {
-                    notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
-                    done(false);
-                  }
-                } catch (e) {
-                  notifyActionError(e, "设置主密码");
+              if (pw !== ls.input2.value) {
+                this.rejectInput("两次密码不一致", setErr);
+                return;
+              }
+              if (pw.length < 4) {
+                this.rejectInput("主密码至少 4 位", setErr);
+                return;
+              }
+              if (!ls.ackBox || !ls.ackBox.checked) {
+                this.rejectInput("请先勾选风险确认", setErr);
+                return;
+              }
+              ls.setBusy(true);
+              try {
+                const ok = await this.dataManager.unlock(pw);
+                if (ok) {
+                  done(true);
+                  notice("密码已设置，数据已加密", "success");
+                } else {
+                  notice("设置失败：无法写入清单，请检查磁盘空间后重试", "error");
                   done(false);
                 }
-                return;
+              } catch (e) {
+                ls.setBusy(false);
+                notifyActionError(e, "设置主密码");
+                done(false);
               }
-              const remainMs = this.unlockCooldownUntil - Date.now();
-              if (remainMs > 0) {
-                this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, setErr, "warning");
-                return;
-              }
+              return;
+            }
+            const remainMs = this.unlockCooldownUntil - Date.now();
+            if (remainMs > 0) {
+              this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1e3)} 秒`, setErr, "warning");
+              return;
+            }
+            ls.setBusy(true);
+            try {
               const success = await this.dataManager.unlock(pw);
               if (success) {
                 this.resetUnlockThrottle();
@@ -45422,6 +45687,7 @@ GitHub 仓库：${ghInfo.title}
               } else {
                 const issue = this.dataManager.manifestIssue;
                 if (issue === "empty" || issue === "corrupt") {
+                  ls.setBusy(false);
                   void openFlowDialog({
                     title: "清单疑似损坏",
                     message: "保险库清单文件为空或无法解析（可能因写入中断/同步冲突损坏）。重设主密码将生成全新空清单，旧加密数据将永久无法恢复。确定重设吗？",
@@ -45447,48 +45713,58 @@ GitHub 仓库：${ghInfo.title}
                     }
                   });
                 } else {
-                  this.rejectInput("密码错误，请重试", setErr, "error");
+                  ls.setBusy(false);
                   const delaySec = this.registerUnlockFailure();
-                  notice(`${delaySec} 秒后可再次尝试`, "warning");
+                  this.rejectInput(`密码错误，${delaySec} 秒后可重试`, setErr, "error");
                   ls.input.value = "";
                   ls.focus();
                 }
               }
-            };
-            ls.el.addEventListener("click", (e) => {
-              if (e.target === ls.el) done(false);
-            });
-            ls.focus();
-            setTimeout(() => ls.focus(), 150);
+            } catch (e) {
+              ls.setBusy(false);
+              notifyActionError(e, "解锁");
+            }
+          };
+          ls.el.addEventListener("click", (e) => {
+            if (e.target === ls.el) done(false);
           });
+          ls.focus();
+          setTimeout(() => ls.focus(), 150);
+          activeUnlock = { el: ls.el, promise, cancel: () => done(false) };
+          return promise;
         }
-        /** 输入框聚焦（不滚动页面）+ 兼容性兜底；移动端靠二次聚焦触发系统键盘 */
-        focusUnlockInput(el) {
-          try {
-            el.focus({ preventScroll: true });
-          } catch (e) {
-            el.focus();
-          }
-        }
-        // ---------- 统一工作台渲染 ----------
         /** show/解锁/外部变更/资产切换统一入口：加载 → 全量重绘 */
         async renderList() {
           if (!this.listContainer) return;
           if (this.dataManager.unlocked) {
-            try {
-              await this.pwDataManager.load();
-            } catch (e) {
+            if (!this._pwLoadedSinceUnlock) {
+              this._pwLoadedSinceUnlock = true;
+              try {
+                await this.pwDataManager.load();
+              } catch (e) {
+              }
             }
+          } else {
+            this._pwLoadedSinceUnlock = false;
           }
           this.renderAll();
         }
         /** 全量重绘：导航计数 + 概览/资产内容 + 移动端 + 健康卡 + 顶栏标题 */
         renderAll() {
           if (!this.rootVisible()) return;
-          if (this.dataManager.unlocked) this.captureLockStats();
           this.renderNav();
           this.renderDesktop();
           this.renderMobile();
+        }
+        /** 列表头搜索框聚焦（openManager 渲染收口后补挂；无列表头/面板未显示时静默） */
+        focusListSearch() {
+          const search = this.deskSearch;
+          if (!search) return;
+          try {
+            search.focus({ preventScroll: true });
+          } catch (e) {
+            search.focus();
+          }
         }
         rootVisible() {
           return !!(this.popup && this.popup.style.display === "flex");
@@ -45545,6 +45821,7 @@ GitHub 仓库：${ghInfo.title}
           };
           setCnt("overview", c.note + c.diary);
           setCnt("note", c.note);
+          setCnt("diary", c.diary);
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el) => {
             el.classList.toggle("on", el.getAttribute("data-asset") === this.asset);
           });
@@ -45573,21 +45850,24 @@ GitHub 仓库：${ghInfo.title}
           const pureNotes = vaultNotes.filter((n) => n.kind !== "diary-entry");
           const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
           const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
+          const candidates = vaultNotes.map((n) => ({
+            n,
+            kind: n.kind === "diary-entry" ? "diary" : "note",
+            ts: Date.parse(n.createdAt || "") || 0
+          }));
+          candidates.sort((a, b) => b.ts - a.ts);
           const recent2 = [];
-          const pushRecent = (kind, id, title, sub, time, ts) => recent2.push({ kind, id, title, sub, time, ts });
-          for (const n of vaultNotes.slice(0, 6)) {
-            const kind = n.kind === "diary-entry" ? "diary" : "note";
-            pushRecent(
+          for (const { n, kind, ts } of candidates.slice(0, 6)) {
+            recent2.push({
               kind,
-              kind === "note" ? n.id : void 0,
-              // diary 落笔记列表后无法定位（无独立资产），不带 id
-              n.title,
-              `${n.attachments.length} 个附件 · ${n.path}`,
-              formatRelativeTime(n.createdAt),
-              Date.parse(n.createdAt || "") || 0
-            );
+              id: n.id,
+              // 笔记/日记均可定位：点击流水直落对应资产列表并选中该条目
+              title: n.title,
+              sub: `${n.attachments.length} 个附件 · ${n.path}`,
+              time: formatRelativeTime(n.createdAt),
+              ts
+            });
           }
-          recent2.sort((a, b) => b.ts - a.ts);
           return {
             counts: c,
             attachments,
@@ -45622,13 +45902,23 @@ GitHub 仓库：${ghInfo.title}
         }
         /** 桌面概览：hero 计数 + 统计卡 + 最近 + 体检摘要（点击跳资产/动作） */
         renderDeskOverview() {
-          var _a2, _b2;
           const stats = this.overviewStats();
           this.setVaultHead("保险库");
           const detail = this.desk.detail;
           const area = document.createElement("div");
           area.className = "bz-vault-area";
           area.innerHTML = overviewHTML(stats);
+          this.bindOverviewArea(area);
+          detail.appendChild(area);
+        }
+        /**
+         * 概览区交互绑定（桌面跨栏区 / 移动概览页共用，效率整改 4——移动概览此前零绑定全哑：
+         * hero 按钮/统计卡/最近流水/体检卡点了没反应）。
+         * 流水行按 data-recent 真实资产值分流（diary 行落加密日记列表并定位条目）。
+         */
+        bindOverviewArea(area) {
+          var _a2, _b2;
+          mountIcons(area);
           area.querySelectorAll(".card[data-nav]").forEach(
             (el) => el.addEventListener("click", () => this.setAssetFromNav(el.getAttribute("data-nav")))
           );
@@ -45647,7 +45937,6 @@ GitHub 仓库：${ghInfo.title}
               this.setAssetFromNav(el.getAttribute("data-recent"));
             })
           );
-          detail.appendChild(area);
         }
         /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
         /**
@@ -45666,17 +45955,19 @@ GitHub 仓库：${ghInfo.title}
             notes = notes.filter((n) => (n.title || "").toLowerCase().includes(lower) || (n.path || "").toLowerCase().includes(lower));
           }
           let listBody = keepHead ? list.querySelector(".bz-vault-lc-body") : null;
+          const prevScroll = listBody ? listBody.scrollTop : 0;
           if (!listBody) {
             list.innerHTML = "";
             if (kind === "note") {
               const head = document.createElement("div");
               head.className = "bz-vault-lc-head";
-              head.innerHTML = `<div class="bz-vault-search">${vIc("search", 14)}<input placeholder="搜索笔记…" data-vault-search></div>`;
+              head.innerHTML = `<div class="bz-vault-search" style="position:relative">${vIc("search", 14)}<input placeholder="搜索笔记…" data-vault-search>${searchClearHtml()}</div>`;
               list.appendChild(head);
               const headSearch = head.querySelector("[data-vault-search]");
               if (headSearch) {
                 headSearch.value = kw;
                 this.bindSearchInput(headSearch, false);
+                this.syncSearchClear();
               }
             }
             listBody = document.createElement("div");
@@ -45709,6 +46000,7 @@ GitHub 仓库：${ghInfo.title}
             this.attachNoteDrawer(el, n, kind);
             listBody.appendChild(el);
           }
+          if (keepHead) listBody.scrollTop = prevScroll;
           this.renderNoteDetail(detail, notes.find((n) => n.id === selId) || notes[0], kind);
         }
         /** 加密笔记/日记详情（异步解密日记正文预览） */
@@ -45810,9 +46102,20 @@ GitHub 仓库：${ghInfo.title}
           head.appendChild(body);
           return head;
         }
-        /** 卸载辅助：移除 body 上无 id 的弹窗遮罩（平台编辑等一次性弹层；G：cleanup 此前不清） */
+        /**
+         * 卸载/上锁收场：清 body 上的一次性弹层（幂等）。
+         * - 进行中的解锁屏先走正规取消链（done(false)）：解挂 ESC 层 + 等待方 resolve(false) 不悬挂；
+         * - 现行解锁屏/销毁确认走 core uiLockScreen 直挂 body（bz-lockscreen--mask）：摘 DOM 后
+         *   其 ESC 层 isVisible(=isConnected) 自灭——禁用/重载插件不再残留可交互锁屏（新-3）；
+         * - 体检窗挂独立 id 遮罩，一并收起（窗内为密文体检发现，不随上锁残留）。
+         */
         closeAllDialogs() {
+          var _a2;
+          if (activeUnlock && ((_a2 = activeUnlock.el) == null ? void 0 : _a2.isConnected)) activeUnlock.cancel();
           document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
+          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => el.remove());
+          this.hideHealthDialog();
+          cancelActiveFlowDialog();
         }
         /**
          * 流程确认框（取消 / 确认 cta）：笔记/日记动作共用。
@@ -45835,7 +46138,7 @@ GitHub 仓库：${ghInfo.title}
         // 敏感文本复制（含降级兜底）+ 60s 自动清空：收口 core/utils copySensitiveWithFallback
         // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
         setAssetFromNav(a) {
-          if (a === "pw" || a === "diary") a = "note";
+          if (a === "pw") a = "note";
           this.asset = a;
           lastVisitedAsset = a;
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach(
@@ -45863,13 +46166,14 @@ GitHub 仓库：${ghInfo.title}
             search.focus();
           }
         }
-        /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落密码资产） */
+        /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落加密笔记） */
         restoreLastAsset() {
           if (!this._initialized) return;
           this.setAssetFromNav(lastVisitedAsset);
         }
         /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
         lockNow(silent = false) {
+          if (this.dataManager.unlocked) this.captureLockStats();
           this.dataManager.lock();
           this.pwDataManager.lock();
           this._selNoteId = null;
@@ -45878,10 +46182,33 @@ GitHub 仓库：${ghInfo.title}
           this.lastHealth = null;
           this.unlockedAt = null;
           this.stopSessionTimers();
+          this.closePreview();
+          this.closeAllDialogs();
           this.notifyUnlockUi();
           if (this.isSecurityMode()) {
             this.hide(silent);
           }
+        }
+        /**
+         * 外部上锁清场（N10 事件侧）：他域/密码本面板直调 SafeManager.lock() 不经本域 lockNow/hide，
+         * 经 encrypt:unlock-changed(false) 兜底——清会话明文与选择态、收起预览/体检浮层、面板收起
+         * （重开走状态栏重新解锁，hero 动态文案归 vault-assets-view 并行批）。
+         * 刻意不走 hide()：hide 的安全模式分支会再调 lock()，unlock-changed(false) 会递归重入；
+         * 也不全量扫 body 锁屏——他域（如日记）的解锁屏与本次上锁无关，不越界代拆。
+         */
+        onExternalLock() {
+          var _a2;
+          if (!this._initialized || !((_a2 = this.popup) == null ? void 0 : _a2.isConnected)) return;
+          this.closePreview();
+          this.hideHealthDialog();
+          this._selNoteId = null;
+          this._diaryPlain = {};
+          this.lastHealth = null;
+          this.unlockedAt = null;
+          this.stopSessionTimers();
+          if (this.mask) this.mask.style.display = "none";
+          if (this.popup) this.popup.style.display = "none";
+          if (this.dataManager.unlocked) this.captureLockStats();
         }
         /** 解锁态变更后 UI 同步（Controller attachStatusBar 也调；锁屏/已解锁文本 + 重绘）。未建 DOM 时静默 */
         notifyUnlockUi() {
@@ -45905,6 +46232,7 @@ GitHub 仓库：${ghInfo.title}
             const area = document.createElement("div");
             area.className = "bz-vault-mob-overview";
             area.innerHTML = overviewHTML(this.overviewStats());
+            this.bindOverviewArea(area);
             body.appendChild(area);
             return;
           }
@@ -45976,19 +46304,19 @@ GitHub 仓库：${ghInfo.title}
         }
         // ---------- 加密笔记/日记销毁/还原 ----------
         /**
-         * 销毁加密笔记：重输主密码二次确认（高危操作防误触）。
-         * 确认窗复用共享解锁屏（全屏遮罩模式），提交走 verifyPassword 只读校验——
-         * 通过才执行 removeNote；这是防误触确认而非解锁，不进解锁冷却节流。
+         * 销毁确认共通壳（T4）：复用共享解锁屏（全屏遮罩模式），重输主密码 + verifyPassword
+         * 只读校验——通过才执行 onConfirmed。这是防误触确认而非解锁，不进解锁冷却节流。
+         * 加密笔记销毁与日记彻底销毁同款防护（此前日记仅普通确认框，防护不对齐）。
          */
-        confirmDeleteNote(note) {
+        confirmDestroyWithPassword(opts) {
           const ls = uiLockScreen({
             kind: "vault",
             icon: "lock",
-            title: "销毁确认",
-            sub: `将永久销毁「${note.title}」的正文与全部附件密文，销毁后不可恢复`,
+            title: opts.title,
+            sub: opts.sub,
             stats: [],
             placeholder: "重输主密码确认",
-            action: "确认销毁",
+            action: opts.action,
             secText: "销毁后密文不可恢复",
             secTone: "bad"
           });
@@ -46008,11 +46336,7 @@ GitHub 仓库：${ghInfo.title}
             esc3.unregister();
             ls.close();
             if (!ok) return;
-            void this.dataManager.removeNote(note.id).then(() => {
-              if (this._selNoteId === note.id) this._selNoteId = null;
-              this.renderList();
-              this.toast(`已销毁笔记「${note.title}」`);
-            }).catch((e) => this.toast("销毁失败：" + e.message, true));
+            opts.onConfirmed();
           };
           const submit = async () => {
             const pw = ls.input.value;
@@ -46041,6 +46365,21 @@ GitHub 仓库：${ghInfo.title}
           ls.focus();
           setTimeout(() => ls.focus(), 150);
         }
+        /** 销毁加密笔记：重输主密码二次确认（高危操作防误触），通过后执行移除。 */
+        confirmDeleteNote(note) {
+          this.confirmDestroyWithPassword({
+            title: "销毁确认",
+            sub: `将永久销毁「${note.title}」的正文与全部附件密文，销毁后不可恢复`,
+            action: "确认销毁",
+            onConfirmed: () => {
+              void this.dataManager.removeNote(note.id).then(() => {
+                if (this._selNoteId === note.id) this._selNoteId = null;
+                this.renderList();
+                this.toast(`已销毁笔记「${note.title}」`);
+              }).catch((e) => notifyActionError(e, "销毁"));
+            }
+          });
+        }
         /** 日记还原回日记（复用 diary reclassifyEntry 语义：还原块 merge 回原日期 md） */
         confirmRestoreDiary(note) {
           this.askConfirm(
@@ -46064,7 +46403,12 @@ GitHub 仓库：${ghInfo.title}
               this.toast("正文解密失败，无法还原", true);
               return;
             }
-            const ok = await this.dataManager.restoreDiaryEntry(note.id, plain);
+            let diaryDir;
+            try {
+              diaryDir = (await Promise.resolve().then(() => (init_config2(), config_exports))).DIARY_DIRECTORY;
+            } catch (e) {
+            }
+            const ok = await this.dataManager.restoreDiaryEntry(note.id, plain, diaryDir);
             if (h) h.hide();
             if (ok) {
               if (this._selNoteId === note.id) this._selNoteId = null;
@@ -46075,7 +46419,7 @@ GitHub 仓库：${ghInfo.title}
             }
           } catch (e) {
             if (h) h.hide();
-            this.toast("还原失败：" + e.message, true);
+            notifyActionError(e, "还原日记");
           }
         }
         copyDiaryText(note) {
@@ -46088,21 +46432,19 @@ GitHub 仓库：${ghInfo.title}
           }).catch(() => this.toast("正文解密失败", true));
         }
         confirmDestroyDiary(note) {
-          this.askConfirm(
-            "彻底销毁日记",
-            `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
-            "永久销毁",
-            true,
-            // danger：永久销毁密文（不可撤销）→ 主按钮中性底 + 红字（手册 §9/§10）
-            () => {
+          this.confirmDestroyWithPassword({
+            title: "彻底销毁日记",
+            sub: `将永久销毁「${note.title}」的密文（含附件），销毁后不可恢复`,
+            action: "永久销毁",
+            onConfirmed: () => {
               void this.dataManager.removeNote(note.id).then(() => {
                 delete this._diaryPlain[note.id];
                 if (this._selNoteId === note.id) this._selNoteId = null;
                 this.renderList();
                 this.toast(`已销毁「${note.title}」`);
-              }).catch((e) => this.toast("销毁失败：" + e.message, true));
+              }).catch((e) => notifyActionError(e, "销毁"));
             }
-          );
+          });
         }
         confirmRestore(note) {
           this.askConfirm(
@@ -46162,7 +46504,10 @@ GitHub 仓库：${ghInfo.title}
          */
         async openPreview(note) {
           if (!this.previewPopup) this.ensureElements();
-          if (!this.dataManager.unlocked || !this.dataManager.password) return;
+          if (!this.dataManager.unlocked || !this.dataManager.password) {
+            notice("保险库已上锁，请先解锁再预览", "warning");
+            return;
+          }
           this.revokePreviewUrls();
           const popup = this.previewPopup;
           const mask = this.previewMask;
@@ -46204,23 +46549,32 @@ GitHub 仓库：${ghInfo.title}
             const [plain, previewResults] = await Promise.all([bodyP, Promise.all(previewP)]);
             const dataUrls = /* @__PURE__ */ new Map();
             for (const r of previewResults) dataUrls.set(r.path, r.du);
-            const { text, slots, inlined } = collectMediaSlots(plain != null ? plain : "", note.attachments);
-            const { ok: rendered, el: mdElRaw } = await this.renderWithTimeout(getApp(), text, note.path);
-            const mdEl = mdElRaw;
-            mdEl.className = "bz-encrypt-preview-md";
-            if (rendered) {
-              let html = mdEl.innerHTML;
-              for (const slot of slots) {
-                const a = slot.attachment;
-                if (a) html = html.split(slot.token).join(mediaHtml(a, dataUrls.get(a.path)));
-                else html = html.split(slot.token).join("");
-              }
-              mdEl.innerHTML = html;
+            let bodyEl3;
+            let inlined = /* @__PURE__ */ new Set();
+            if (plain === null) {
+              const err = document.createElement("div");
+              err.textContent = "正文解密失败";
+              bodyEl3 = err;
             } else {
-              mdEl.textContent = plain;
+              const { text, slots, inlined: inl } = collectMediaSlots(plain, note.attachments);
+              inlined = inl;
+              const { ok: rendered, el: mdEl } = await this.renderWithTimeout(getApp(), text, note.path);
+              mdEl.className = "bz-encrypt-preview-md";
+              if (rendered) {
+                let html = mdEl.innerHTML;
+                for (const slot of slots) {
+                  const a = slot.attachment;
+                  if (a) html = html.split(slot.token).join(mediaHtml(a, dataUrls.get(a.path)));
+                  else html = html.split(slot.token).join("");
+                }
+                mdEl.innerHTML = html;
+              } else {
+                mdEl.textContent = plain;
+              }
+              bodyEl3 = mdEl;
             }
             body.innerHTML = "";
-            body.appendChild(mdEl);
+            body.appendChild(bodyEl3);
             const residuals = note.attachments.filter((a) => !inlined.has(a.path));
             if (residuals.length) {
               const gallery = document.createElement("div");
@@ -46243,15 +46597,29 @@ GitHub 仓库：${ghInfo.title}
             body.appendChild(err);
           }
         }
+        unloadPreviewComponent() {
+          const c = this._previewComponent;
+          this._previewComponent = null;
+          if (c) {
+            try {
+              c.unload();
+            } catch (e) {
+            }
+          }
+        }
         /**
          * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
          * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
          * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
+         * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
          */
         async renderWithTimeout(app, text, path, timeoutMs = 3e3) {
+          this.unloadPreviewComponent();
           const el = document.createElement("div");
+          const component = new Component();
+          this._previewComponent = component;
           let finished = false;
-          const render2 = MarkdownRenderer.render(app, text, el, path, new Component()).then(
+          const render2 = MarkdownRenderer.render(app, text, el, path, component).then(
             () => {
               finished = true;
             },
@@ -46260,8 +46628,8 @@ GitHub 仓库：${ghInfo.title}
             }
           );
           await Promise.race([render2, new Promise((r) => setTimeout(r, timeoutMs))]);
-          if (!finished) return { ok: false, el: document.createElement("div") };
-          return { ok: true, el };
+          if (!finished) return { ok: false, el: document.createElement("div"), component };
+          return { ok: true, el, component };
         }
         /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
         bindMediaClicks(root, attachments) {
@@ -46343,6 +46711,7 @@ GitHub 仓库：${ghInfo.title}
         }
         closePreview() {
           this.revokePreviewUrls();
+          this.unloadPreviewComponent();
           if (this.previewMask) unregisterSheetCompanion(this.previewMask);
           if (this.previewMask) this.previewMask.style.display = "none";
           if (this.previewPopup) this.previewPopup.style.display = "none";
@@ -46405,16 +46774,15 @@ GitHub 仓库：${ghInfo.title}
         /** 打开保险库主面板：解锁成功直落加密笔记资产并聚焦搜索；
          *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
         async openManager() {
-          if (!this.dataManager.unlocked) {
+          const needUnlock = !this.dataManager.unlocked;
+          if (needUnlock) {
             const ok = await this.uiManager.showPasswordDialog();
-            if (ok) {
-              this.uiManager.show();
-              this.uiManager.enterPwQuickAccess();
-            }
-          } else {
-            this.uiManager.show();
-            this.uiManager.restoreLastAsset();
+            if (!ok) return;
           }
+          if (needUnlock) this.uiManager.enterPwQuickAccess();
+          else this.uiManager.restoreLastAsset();
+          this.uiManager.show();
+          if (needUnlock) this.uiManager.focusListSearch();
         }
         /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */
         async confirmLockProceed(file, attCount, sharedCount = 0) {
@@ -46524,6 +46892,8 @@ GitHub 仓库：${ghInfo.title}
               if (h) h.hide();
               notifyActionError(e, "加密");
             }
+          } catch (e) {
+            notifyActionError(e, "加密当前笔记");
           } finally {
             this._locking = false;
           }
@@ -46536,6 +46906,7 @@ GitHub 仓库：${ghInfo.title}
             if (el) el.remove();
           }
           this.uiManager.closeAllDialogs();
+          this.uiManager.detachGlobalListeners();
           cancelClipboardClear();
           this.uiManager.stopSessionTimers();
           this.uiManager.pwDataManager.destroy();

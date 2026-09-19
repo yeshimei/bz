@@ -206,9 +206,9 @@ function isOrphanEncName(name: string): boolean {
 }
 
 /**
- * 当前日记目录（还原回日记实时重算落点用）：经 core 设置访问器读统一设置（data 层依赖
- * 方向合规），与 diary 域 applyDirectories 同口径清洗（trim + 去尾斜杠）；未注入/空值
- * 回退默认——设置真相同源，与 diary 域 DIARY_DIRECTORY 恒一致。
+ * 当前日记目录（还原回日记实时重算落点的兜底读取）：经 core 设置访问器读统一设置。
+ * 真源是 diary 域 applyDirectories 维护的 DIARY_DIRECTORY 快照（D6 设计），由调用方注入；
+ * 本兜底仅在未注入时使用（如测试直调）——settings 与 diary 快照理论同值但同步存在时序。
  */
 function currentDiaryDirectory(): string {
   const raw = tryGetSettings().diaryDirectory;
@@ -1344,12 +1344,14 @@ export class SafeManager {
    * removeNote/lockNote 互踩清单）。
    * 还原附件 → 把 finalBlock（由调用方准备，可为原文或改分类降级后重建）merge 回原日期 md → 取出即删。
    * 原子语义同 restoreNote：全部附件解密/校验成功且块就绪才写回；任一失败零落盘。
+   * `diaryDir`：当前日记目录（D9 同源真值=diary 域 applyDirectories 维护的 DIARY_DIRECTORY 快照，
+   * 由调用方注入——diary 侧直传、encrypt 面板侧动态 import；未注入时回落 settings 读取兜底）。
    */
-  restoreDiaryEntry(noteId: string, finalBlock: string): Promise<boolean> {
-    return this.enqueueOp(() => this.restoreDiaryEntrySerial(noteId, finalBlock));
+  restoreDiaryEntry(noteId: string, finalBlock: string, diaryDir?: string): Promise<boolean> {
+    return this.enqueueOp(() => this.restoreDiaryEntrySerial(noteId, finalBlock, diaryDir));
   }
 
-  private async restoreDiaryEntrySerial(noteId: string, finalBlock: string): Promise<boolean> {
+  private async restoreDiaryEntrySerial(noteId: string, finalBlock: string, diaryDir?: string): Promise<boolean> {
     if (!this.unlocked || !this.password) throw new Error('未解锁，无法还原加密日记');
     const note = this.manifest.notes.find((n) => n.id === noteId);
     if (!note || note.kind !== 'diary-entry') throw new Error('未找到该加密日记条目');
@@ -1361,7 +1363,7 @@ export class SafeManager {
     // 一并落盘（还原失败不落盘，下次还原幂等重算）。
     const base = note.path.split('/').pop() || '';
     if (diaryMetaFromEntryPath(base)) {
-      const target = currentDiaryDirectory() + '/' + base;
+      const target = (diaryDir || currentDiaryDirectory()) + '/' + base;
       if (target !== note.path) note.path = target;
     }
     const conflicts: string[] = [];

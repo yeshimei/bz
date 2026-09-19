@@ -142,7 +142,7 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
       ? `<button class="bbtn teal" data-detail="preview">${vIc('eye', 14)} 解密预览</button>
          <button class="bbtn" data-detail="restore">${vIc('download', 14)} 取出还原</button>
          <button class="bbtn danger" data-detail="delete">${vIc('trash-2', 14)} 销毁</button>`
-      : `<button class="bbtn" style="background:${color};color:#fff" data-detail="restore-diary">${vIc('download', 14)} 还原回日记</button>
+      : `<button class="bbtn indigo" data-detail="restore-diary">${vIc('download', 14)} 还原回日记</button>
          <button class="bbtn" data-detail="copy-diary">${vIc('copy', 14)} 复制正文</button>
          <button class="bbtn danger" data-detail="destroy-diary">${vIc('trash-2', 14)} 彻底销毁</button>`;
   return `

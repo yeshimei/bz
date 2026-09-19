@@ -202,6 +202,8 @@
 #bz-encrypt-popup .bz-vault-search svg { width: 14px; height: 14px; color: var(--bz-text-3); flex-shrink: 0; }
 #bz-encrypt-popup .bz-vault-search input { border: none; background: none; flex: 1; padding: 7px 0; font-size: var(--bz-font-label); }
 #bz-encrypt-popup .bz-vault-search input:focus { outline: none; }
+/* 搜索 ✕ 清除钮（效率#12，原内联收编；桌面列表头/移动常驻框共用） */
+#bz-encrypt-popup .bz-search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: var(--bz-text-3); padding: 2px; line-height: 0; }
 #bz-encrypt-popup .bz-vault-pane { flex: 1; min-height: 0; display: flex; gap: 14px; padding: var(--bz-space-lg) 18px; }
 /* 概览跨栏（评审）：概览横跨中列表 + 右详情——隐藏中列表栏，让概览内容铺满整行 */
 #bz-encrypt-popup .bz-vault-pane.is-overview .bz-vault-listcol { display: none; }
