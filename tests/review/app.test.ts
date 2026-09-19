@@ -9,6 +9,15 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { reviewApp, __setReviewAwayGraceMsForTests } from '../../src/review/app';
 import { ReviewDataManager, REVIEW_FILE_PATH, ReviewItem } from '../../src/review/data';
+import { roundQueue, DEFAULT_R_THRESHOLD } from '../../src/review/queue';
+import { DEFAULT_W } from '../../src/review/fsrs';
+import { getSettings } from '../../src/core/settings-provider';
+
+/** A5：dueItems 已删（生产零消费死代码），测试改内联同口径 roundQueue */
+function dueItemsInline(items: ReviewItem[]): ReviewItem[] {
+  const rThreshold = Number((getSettings() as any).reviewRThreshold) || DEFAULT_R_THRESHOLD;
+  return roundQueue(items, rThreshold, DEFAULT_W);
+}
 
 
 /** 预置一条逾期复习数据 */
@@ -167,7 +176,7 @@ describe('markReview 阶梯分支', () => {
     await seedOverdue(vault, { stage: 1, nextReviewDate: endOfDay.toISOString() });
     const app = makeApp(vault);
     setApp(app);
-    expect(reviewApp.dueItems(await new ReviewDataManager(app).loadItems()).map((i) => i.filePath)).toContain('A.md');
+    expect(dueItemsInline(await new ReviewDataManager(app).loadItems()).map((i) => i.filePath)).toContain('A.md');
     await reviewApp.markReview('A.md', 'good');
     const items = await new ReviewDataManager(app).loadItems();
     expect(items[0].totalReviews).toBe(1); // 写盘成功
@@ -189,7 +198,7 @@ describe('markReview 阶梯分支', () => {
     });
     const app = makeApp(vault);
     setApp(app);
-    expect(reviewApp.dueItems(await new ReviewDataManager(app).loadItems()).map((i) => i.filePath)).toContain('A.md');
+    expect(dueItemsInline(await new ReviewDataManager(app).loadItems()).map((i) => i.filePath)).toContain('A.md');
     await reviewApp.markReview('A.md', 'good');
     const items = await new ReviewDataManager(app).loadItems();
     expect(items[0].totalReviews).toBe(1); // 写盘成功
@@ -608,10 +617,15 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     (reviewApp as any)._quizOverride = null;
     (reviewApp as any)._reviewNotice = null;
     (reviewApp as any)._pendingRound = null;
+    reviewApp.stopReviewLoops(); // F2 防重入守卫要求：用例间不得残留活动循环
   });
   afterEach(() => {
+    vi.useRealTimers();
+    reviewApp.stopReviewLoops();
+    reviewApp.hideReviewBar();
     vi.restoreAllMocks();
     (reviewApp as any)._reviewNotice = null;
+    (reviewApp as any)._pendingRound = null;
   });
 
   it('离篇超过宽限 → 中断收尾 + 断点保留（item 5：放宽为持续离篇数分钟才算中断）', async () => {
@@ -627,7 +641,7 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
     (app.workspace as any).getActiveFile = () => ({ path: 'OTHER.md' }); // 已切走
     setApp(app);
-    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn(), el: { isConnected: true } };
     const notifySpy = vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     // 注入短宽限（默认 120s）：tick1 记离篇起点、tick2（≥宽限）才判中断
     __setReviewAwayGraceMsForTests(500);
@@ -667,7 +681,7 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     let activePath = 'OTHER.md';
     (app.workspace as any).getActiveFile = () => ({ path: activePath });
     setApp(app);
-    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn(), el: { isConnected: true } };
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     __setReviewAwayGraceMsForTests(90_000);
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'Date'] });
@@ -696,7 +710,7 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
     (app.workspace as any).getActiveFile = () => ({ path: 'A.md' });
     setApp(app);
-    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn(), el: { isConnected: true } };
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     await reviewApp.reviewLoop([item], 0);
@@ -720,7 +734,7 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     (app.workspace as any).getLeaf = () => ({ openFile: vi.fn().mockResolvedValue(undefined) });
     (app.workspace as any).getActiveFile = () => ({ path: 'A.md' }); // 停留在目标笔记：轮询保持活动
     setApp(app);
-    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn(), el: { isConnected: true } };
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     (reviewApp as any)._reviewNotice = null;
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
@@ -936,9 +950,11 @@ describe('sprint 编排（2026-09-04 形态：startRoundSprint / startSingleSpri
     (reviewApp as any).dataManager = null;
     (reviewApp as any)._quizOverride = null;
     (reviewApp as any)._pendingRound = null;
+    reviewApp.stopReviewLoops(); // F2 防重入守卫要求：用例间不得残留活动循环
   });
   afterEach(() => {
     (reviewApp as any)._quizOverride = null;
+    reviewApp.stopReviewLoops();
     vi.restoreAllMocks();
   });
 
@@ -978,7 +994,7 @@ describe('sprint 编排（2026-09-04 形态：startRoundSprint / startSingleSpri
     expect(sessionSpy).not.toHaveBeenCalled();
   });
 
-  it('dueItems：逾期 + R<阈值 提前逾期过滤', async () => {
+  it('A5：dueItems 已删——roundQueue 内联同口径（逾期 + R<阈值 提前逾期过滤）', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
     vault.files.set('B.md', '正文');
@@ -994,7 +1010,8 @@ describe('sprint 编排（2026-09-04 形态：startRoundSprint / startSingleSpri
     const dm = new ReviewDataManager(app);
     (reviewApp as any).dataManager = dm;
     const items = await dm.loadItems();
-    const due = reviewApp.dueItems(items);
+    expect((reviewApp as any).dueItems).toBeUndefined(); // 死代码确删
+    const due = dueItemsInline(items);
     expect(due.some((i) => i.filePath === 'A.md')).toBe(true);
     // B：R(t=10, S=1) < 0.9 → 也提前逾期（FSRS 阈值）
     expect(due.some((i) => i.filePath === 'B.md')).toBe(true);
