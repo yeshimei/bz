@@ -7,6 +7,7 @@
  * 与保险库 / 影院 / 第二大脑 / 文献盒同范式。
  */
 import { makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
+import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import type { SettingsSchema } from '../core/settings-schema';
 
 /** 保险库设置 schema（外观 + 生成 + 安全；不含移动端全屏开关——恒真全屏） */
@@ -30,7 +31,18 @@ export function passwordVaultSettingsSchema(): SettingsSchema {
         { type: 'number', name: '密码生成长度', desc: '随机生成密码的字符个数', binding: numStrBinding('passwordLength', 16), min: 4, max: 128, step: 1, onCommit: warnReload },
       ]},
       { icon: 'shield', name: '安全', rows: [
-        { type: 'toggle', name: '安全模式', desc: '关闭窗口立即自动上锁', binding: { key: 'securityMode' }, onChange: warnReload },
+        // 统一「安全模式」（cons 新-1 对齐 encrypt 双键 binding）：securityMode 与
+        // encryptSecurityMode 历史双键 OR 读取、同步双写（ADR-0085 键位冻结兼容老用户）——
+        // 单键直写会让「pv 关安全模式」在 encrypt 侧旧键仍生效（关不掉）
+        { type: 'toggle', name: '安全模式', desc: '关闭密码本窗口立即自动上锁', binding: {
+          get: () => !!(tryGetSettings() as any).securityMode || !!(tryGetSettings() as any).encryptSecurityMode,
+          set: (v: boolean) => {
+            const s = getSettings() as any;
+            s.securityMode = v;
+            s.encryptSecurityMode = v;
+          },
+          save: () => saveSettings(),
+        }, onChange: warnReload },
       ]},
     ],
   };

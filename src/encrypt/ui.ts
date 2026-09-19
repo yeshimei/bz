@@ -1850,7 +1850,14 @@ export class UIManager {
   closeAllDialogs(): void {
     if (activeUnlock && activeUnlock.el?.isConnected) activeUnlock.cancel();
     document.querySelectorAll('body > .bz-vault-dlg-mask').forEach((el) => el.remove());
-    document.querySelectorAll('body > .bz-lockscreen--mask').forEach((el) => el.remove());
+    // ui 新-8：body 锁屏按 kind 过滤——只拆自家（vault）解锁屏/销毁确认，不越界代拆他域
+    // （密码本快速取密 ensureSafeUnlocked / 日记域）挂在 body 的解锁屏。对齐 onExternalLock
+    // 的边界口径（「他域解锁屏与本次上锁无关」）：否则快速取密输密码时 ESC 关保险库面板
+    // 会把取密解锁屏一并拆掉，输入丢弃、快速取密静默终止。
+    document.querySelectorAll('body > .bz-lockscreen--mask').forEach((el) => {
+      if (el.classList.contains('bz-lockscreen--password-vault') || el.classList.contains('bz-lockscreen--diary')) return;
+      el.remove();
+    });
     this.hideHealthDialog();
     // 批B残款收口：流程确认框（还原/清理等 openFlowDialog）挂 body 独立浮层，上锁收场一并取消
     cancelActiveFlowDialog();
