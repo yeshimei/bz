@@ -4,6 +4,7 @@
  * 新建笔记 / processFrontMatter 管辖键 upsert（用户正文与自定义 frontmatter 绝不覆盖）。
  */
 import type { App, TFile } from 'obsidian';
+import { stripTitleMarks } from '../core/ui/str';
 import { M, resolveGameshelfFolderPath, type GameItem } from './state';
 import { GS_FM, GS_LEGACY_FM } from './constants';
 import { buildSyncPlan, managedFm, mergeTags, migrateLegacyKeys, notePathFor, sanitizeFileName, type NoteSnapshot } from './reconcile';
@@ -33,7 +34,8 @@ function strOf(v: unknown): string | null {
 function displayBaseName(basename: string): string {
   const m = /^《(.+?)》(?:\s+\d+)?$/.exec(basename);
   if (m) return m[1];
-  return basename.replace(/^《/, '').replace(/》$/, '');
+  // 回落剥法走 core 单源（cons C10 收编，批B：域内不再自留与正典逐字同义的私货）
+  return stripTitleMarks(basename);
 }
 
 /** GameItem 逐字段浅比较（A1 复用判据：除 file 外全是解析产物标量，file 只比 path） */

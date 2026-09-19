@@ -1,4 +1,4 @@
-/* 源指纹 4efdb988fa47db4d · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 088c874df3d87684 · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -1903,6 +1903,58 @@ var BZW_gameshelf = (() => {
     }
   });
 
+  // src/core/ui/str.ts
+  function escapeHtml(s) {
+    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
+  }
+  function esc(s) {
+    return escapeHtml(String(s != null ? s : ""));
+  }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localNow() {
+    const d = /* @__PURE__ */ new Date();
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  }
+  function relTime(s, now = Date.now()) {
+    if (!s) return "";
+    const d = new Date(s.replace(" ", "T"));
+    if (isNaN(d.getTime())) return s;
+    const diff = now - d.getTime();
+    const m = 6e4, h = 36e5, day = 864e5;
+    if (diff < m) return "刚刚";
+    if (diff < h) return Math.floor(diff / m) + " 分钟前";
+    if (diff < day) return Math.floor(diff / h) + " 小时前";
+    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
+    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
+  }
+  function emptyHtmlStr(icon, title, desc) {
+    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
+  }
+  function iconSpan(name, extra = "") {
+    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  function stripMdExt(name) {
+    return String(name || "").replace(/\.md$/i, "");
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
+  }
+  function escAttr(s) {
+    return String(s != null ? s : "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  var ESC_MAP;
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+    }
+  });
+
   // src/gameshelf/constants.ts
   var GS_FM, GS_LEGACY_FM, QUEUE_HALTED_NOTICE, QUEUE_HALTED_DEDUPE_KEY;
   var init_constants = __esm({
@@ -1995,55 +2047,6 @@ var BZW_gameshelf = (() => {
   var init_http = __esm({
     "src/core/http.ts"() {
       init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/str.ts
-  function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, (c) => ESC_MAP[c]);
-  }
-  function esc(s) {
-    return escapeHtml(String(s != null ? s : ""));
-  }
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function localNow() {
-    const d = /* @__PURE__ */ new Date();
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
-  }
-  function relTime(s, now = Date.now()) {
-    if (!s) return "";
-    const d = new Date(s.replace(" ", "T"));
-    if (isNaN(d.getTime())) return s;
-    const diff = now - d.getTime();
-    const m = 6e4, h = 36e5, day = 864e5;
-    if (diff < m) return "刚刚";
-    if (diff < h) return Math.floor(diff / m) + " 分钟前";
-    if (diff < day) return Math.floor(diff / h) + " 小时前";
-    if (diff < 7 * day) return Math.floor(diff / day) + " 天前";
-    return `${d.getMonth() + 1}-${pad2(d.getDate())}`;
-  }
-  function emptyHtmlStr(icon, title, desc) {
-    return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
-  }
-  function iconSpan(name, extra = "") {
-    return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
-  }
-  function stripMdExt(name) {
-    return String(name || "").replace(/\.md$/i, "");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  function stripTitleMarks(s) {
-    return String(s || "").replace(/^《|》$/g, "");
-  }
-  var ESC_MAP;
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-      ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
     }
   });
 
@@ -2523,7 +2526,7 @@ var BZW_gameshelf = (() => {
   function displayBaseName(basename) {
     const m = /^《(.+?)》(?:\s+\d+)?$/.exec(basename);
     if (m) return m[1];
-    return basename.replace(/^《/, "").replace(/》$/, "");
+    return stripTitleMarks(basename);
   }
   function sameItem(a, b) {
     var _a2, _b2, _c, _d;
@@ -2670,6 +2673,7 @@ var BZW_gameshelf = (() => {
   }
   var init_notes = __esm({
     "src/gameshelf/notes.ts"() {
+      init_str();
       init_state();
       init_constants();
       init_reconcile();
@@ -3274,1855 +3278,6 @@ var BZW_gameshelf = (() => {
         };
       })();
       panelEscHandles = /* @__PURE__ */ new Map();
-    }
-  });
-
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/icons.ts
-  function uiIconSpan(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  function mountIcons(root) {
-    root.querySelectorAll("[data-lucide]").forEach((el) => {
-      const name = el.getAttribute("data-lucide") || "";
-      if (!name) return;
-      try {
-        const fresh = uiIconSpan(name);
-        const cls = el.className;
-        if (cls && cls !== "bz-ic") fresh.className = cls;
-        el.replaceWith(fresh);
-      } catch (e) {
-      }
-    });
-  }
-  var init_icons = __esm({
-    "src/core/ui/icons.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/button.ts
-  function uiBtn(opts) {
-    const b = document.createElement("button");
-    b.type = "button";
-    const cls = ["bz-btn"];
-    if (opts.tone && opts.tone !== "default") cls.push(`bz-btn--${opts.tone}`);
-    if (opts.size && opts.size !== "md") cls.push(`bz-btn--${opts.size}`);
-    if (opts.chip) cls.push("bz-btn--chip");
-    if (opts.on) cls.push("is-on");
-    if (opts.className) cls.push(opts.className);
-    b.className = cls.join(" ");
-    if (opts.title) b.title = opts.title;
-    if (opts.disabled) b.disabled = true;
-    if (opts.icon) {
-      if (opts.chip) {
-        const chip2 = document.createElement("span");
-        chip2.className = "bz-btn-chip";
-        chip2.appendChild(uiIcon(opts.icon));
-        b.appendChild(chip2);
-      } else {
-        b.appendChild(uiIcon(opts.icon));
-      }
-    }
-    if (opts.label) {
-      const span = document.createElement("span");
-      span.textContent = opts.label;
-      b.appendChild(span);
-    }
-    if (opts.onClick) b.addEventListener("click", opts.onClick);
-    return b;
-  }
-  function uiIconBtn(opts) {
-    const b = document.createElement("button");
-    b.type = "button";
-    const cls = ["bz-icon-btn"];
-    if (opts.on) cls.push("bz-icon-btn--on");
-    if (opts.lg) cls.push("bz-icon-btn--lg");
-    if (opts.xs) cls.push("bz-icon-btn--xs");
-    if (opts.close) cls.push("bz-icon-btn--close");
-    if (opts.className) cls.push(opts.className);
-    b.className = cls.join(" ");
-    if (opts.title) b.title = opts.title;
-    if (opts.disabled) b.disabled = true;
-    if (opts.danger) b.setAttribute("data-danger", "");
-    b.appendChild(uiIcon(opts.icon));
-    if (opts.onClick) b.addEventListener("click", opts.onClick);
-    return b;
-  }
-  function uiBtnRow(buttons, opts) {
-    const row = document.createElement("div");
-    const cls = ["bz-btn-row"];
-    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
-    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
-    row.className = cls.join(" ");
-    buttons.forEach((x) => row.appendChild(x));
-    return row;
-  }
-  function uiDialogActions(opts) {
-    const cancel = uiBtn({ label: opts.cancelText || "取消", onClick: opts.onCancel });
-    const ok = uiBtn({ label: opts.okText, tone: opts.okTone || "primary", onClick: opts.onOk });
-    const row = uiBtnRow([cancel, ok]);
-    return { row, cancelBtn: cancel, okBtn: ok };
-  }
-  var init_button = __esm({
-    "src/core/ui/button.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/chip.ts
-  function uiChip(opts) {
-    const c = document.createElement("button");
-    c.type = "button";
-    const cls = ["bz-chip"];
-    if (opts.selected) cls.push("bz-chip--on");
-    else if (opts.selectedSoft) cls.push("bz-chip--sel");
-    if (opts.locked) cls.push("bz-chip--locked");
-    c.className = cls.join(" ");
-    if (opts.title) c.title = opts.title;
-    if (opts.disabled) c.disabled = true;
-    if (opts.icon) c.appendChild(uiIcon(opts.icon));
-    const label = document.createElement("span");
-    label.textContent = opts.label;
-    c.appendChild(label);
-    if (typeof opts.count === "number") {
-      const cnt = document.createElement("span");
-      cnt.className = "bz-chip-cnt";
-      cnt.textContent = String(opts.count);
-      c.appendChild(cnt);
-    }
-    if (opts.removable && !opts.locked) {
-      const x = document.createElement("span");
-      x.className = "bz-chip-x";
-      x.setAttribute("role", "button");
-      x.setAttribute("aria-label", `移除 ${opts.label}`);
-      x.tabIndex = 0;
-      x.appendChild(uiIcon("x"));
-      x.addEventListener("click", (e) => {
-        var _a2;
-        e.stopPropagation();
-        (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
-      });
-      x.addEventListener("keydown", (e) => {
-        var _a2;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          e.stopPropagation();
-          (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
-        }
-      });
-      c.appendChild(x);
-    }
-    if (opts.onClick) c.addEventListener("click", () => {
-      var _a2;
-      return (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
-    });
-    return c;
-  }
-  var init_chip = __esm({
-    "src/core/ui/chip.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/setlist.ts
-  function uiSetlist(opts) {
-    var _a2;
-    const variant = (_a2 = opts.variant) != null ? _a2 : "chips";
-    const box = document.createElement("div");
-    box.className = `bz-setlist bz-setlist--${variant}${opts.className ? ` ${opts.className}` : ""}`;
-    if (opts.items.length === 0) {
-      if (opts.emptyText) {
-        const empty = document.createElement("div");
-        empty.className = "bz-setlist-empty";
-        empty.textContent = opts.emptyText;
-        box.appendChild(empty);
-      }
-      return box;
-    }
-    for (const it of opts.items) {
-      const item = document.createElement("div");
-      item.className = "bz-setlist-item";
-      item.dataset.key = it.key;
-      if (it.sub) item.title = it.sub;
-      if (it.imageUrl) {
-        const img = document.createElement("img");
-        img.className = "bz-setlist-avatar";
-        img.src = it.imageUrl;
-        img.alt = "";
-        img.onerror = () => img.remove();
-        item.appendChild(img);
-      }
-      const text = document.createElement("div");
-      text.className = "bz-setlist-text";
-      const name = document.createElement("div");
-      name.className = "bz-setlist-name";
-      name.textContent = it.label;
-      text.appendChild(name);
-      if (it.sub) {
-        const sub = document.createElement("div");
-        sub.className = "bz-setlist-sub";
-        sub.textContent = it.sub;
-        text.appendChild(sub);
-      }
-      item.appendChild(text);
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.className = "bz-setlist-remove bz-touch-target--xl";
-      remove.textContent = opts.removeLabel || "移除";
-      if (opts.onRemove) {
-        const key = it.key;
-        remove.addEventListener("click", () => {
-          var _a3;
-          return (_a3 = opts.onRemove) == null ? void 0 : _a3.call(opts, key);
-        });
-      }
-      item.appendChild(remove);
-      box.appendChild(item);
-    }
-    return box;
-  }
-  var init_setlist = __esm({
-    "src/core/ui/setlist.ts"() {
-    }
-  });
-
-  // src/core/ui/field.ts
-  function uiInput(opts) {
-    const inp = document.createElement("input");
-    inp.className = "bz-input" + (opts.error ? " bz-input--error" : "");
-    inp.type = opts.type || "text";
-    if (opts.placeholder) inp.placeholder = opts.placeholder;
-    if (opts.value !== void 0) inp.value = opts.value;
-    if (opts.disabled) inp.disabled = true;
-    if (opts.onInput) inp.addEventListener("input", () => {
-      var _a2;
-      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, inp.value);
-    });
-    return inp;
-  }
-  function uiField(opts) {
-    const wrap = document.createElement("label");
-    wrap.className = "bz-field";
-    if (opts.label) {
-      const l = document.createElement("span");
-      l.className = "bz-field-label";
-      l.textContent = opts.label;
-      wrap.appendChild(l);
-    }
-    wrap.appendChild(opts.control);
-    if (opts.error) {
-      if (opts.control.classList.contains("bz-input")) opts.control.classList.add("bz-input--error");
-      const e = document.createElement("span");
-      e.className = "bz-field-error";
-      e.textContent = opts.error;
-      wrap.appendChild(e);
-    } else if (opts.desc) {
-      const d = document.createElement("span");
-      d.className = "bz-field-desc";
-      d.textContent = opts.desc;
-      wrap.appendChild(d);
-    }
-    return wrap;
-  }
-  var init_field = __esm({
-    "src/core/ui/field.ts"() {
-    }
-  });
-
-  // src/core/ui/slider.ts
-  function uiRange(opts) {
-    const el = document.createElement("input");
-    el.type = "range";
-    el.className = "bz-range" + (opts.className ? " " + opts.className : "");
-    if (opts.min !== void 0) el.min = String(opts.min);
-    if (opts.max !== void 0) el.max = String(opts.max);
-    if (opts.step !== void 0) el.step = String(opts.step);
-    if (opts.value !== void 0) el.value = String(opts.value);
-    if (opts.disabled) el.disabled = true;
-    if (opts.onInput) el.addEventListener("input", () => {
-      var _a2;
-      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, parseFloat(el.value));
-    });
-    if (opts.onChange) el.addEventListener("change", () => {
-      var _a2;
-      return (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, parseFloat(el.value));
-    });
-    return el;
-  }
-  var init_slider = __esm({
-    "src/core/ui/slider.ts"() {
-    }
-  });
-
-  // src/core/ui/empty.ts
-  function uiEmpty(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-empty";
-    if (opts.icon) {
-      const ic2 = uiIcon(opts.icon);
-      ic2.classList.add("bz-empty-ic");
-      el.appendChild(ic2);
-    }
-    const t = document.createElement("div");
-    t.className = "bz-empty-title";
-    t.textContent = opts.title;
-    el.appendChild(t);
-    if (opts.desc) {
-      const d = document.createElement("div");
-      d.className = "bz-empty-desc";
-      d.textContent = opts.desc;
-      el.appendChild(d);
-    }
-    if (opts.actions) el.appendChild(opts.actions);
-    return el;
-  }
-  var init_empty = __esm({
-    "src/core/ui/empty.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/segmented.ts
-  function uiSegmented(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-segmented" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    el.setAttribute("aria-label", opts.label || "");
-    const btns = /* @__PURE__ */ new Map();
-    opts.options.forEach((o) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "bz-segmented-btn" + (o.value === opts.value ? " is-on" : "");
-      b.textContent = o.label;
-      b.setAttribute("role", "radio");
-      b.setAttribute("aria-checked", String(o.value === opts.value));
-      b.addEventListener("click", () => {
-        setValue(o.value);
-        opts.onChange(o.value);
-      });
-      b.addEventListener("keydown", (e) => {
-        var _a2;
-        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-        e.preventDefault();
-        const vals = opts.options.map((x) => x.value);
-        const curIdx = vals.indexOf(current2());
-        const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
-        const nextIdx = (curIdx + delta + vals.length) % vals.length;
-        setValue(vals[nextIdx]);
-        opts.onChange(vals[nextIdx]);
-        (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
-      });
-      btns.set(o.value, b);
-      el.appendChild(b);
-    });
-    let cur = opts.value;
-    function current2() {
-      return cur;
-    }
-    function setValue(v) {
-      cur = v;
-      btns.forEach((b, k) => {
-        const on = k === v;
-        b.classList.toggle("is-on", on);
-        b.setAttribute("aria-checked", String(on));
-      });
-    }
-    return { el, setValue };
-  }
-  var init_segmented = __esm({
-    "src/core/ui/segmented.ts"() {
-    }
-  });
-
-  // src/core/ui/choice.ts
-  function uiChoice(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-choice" + (opts.float ? " bz-choice--float" : "") + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    el.setAttribute("aria-label", opts.label || "");
-    const btns = /* @__PURE__ */ new Map();
-    let cur = opts.value;
-    const seg = document.createElement("span");
-    seg.className = "bz-choice-seg";
-    let segRAF = 0;
-    let segTries = 0;
-    const syncSeg = (animate) => {
-      if (!opts.float) return;
-      const on = el.querySelector(".bz-choice-btn.is-on");
-      if (!on) return;
-      const tb = el.getBoundingClientRect();
-      const bb = on.getBoundingClientRect();
-      if (!el.isConnected || !tb.width || !bb.width) {
-        if (segTries++ > 120) return;
-        cancelAnimationFrame(segRAF);
-        segRAF = requestAnimationFrame(() => syncSeg(false));
-        return;
-      }
-      segTries = 0;
-      if (!animate) seg.style.transition = "none";
-      seg.style.width = `${bb.width}px`;
-      seg.style.transform = `translateX(${bb.left - tb.left}px)`;
-      if (!animate) {
-        void seg.offsetWidth;
-        seg.style.transition = "";
-      }
-    };
-    const onWinResize = () => {
-      if (!el.isConnected) {
-        window.removeEventListener("resize", onWinResize);
-        return;
-      }
-      syncSeg(false);
-    };
-    if (opts.float) {
-      window.addEventListener("resize", onWinResize);
-    }
-    opts.options.forEach((o) => {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "bz-choice-btn" + (o.value === opts.value ? " is-on" : "");
-      b.dataset.value = String(o.value);
-      b.setAttribute("role", "radio");
-      b.setAttribute("aria-checked", String(o.value === opts.value));
-      if (o.dot) {
-        const d = document.createElement("span");
-        d.className = "bz-choice-dot";
-        d.style.background = o.dot;
-        b.appendChild(d);
-      }
-      b.appendChild(document.createTextNode(o.label));
-      b.addEventListener("click", () => {
-        setValue(o.value);
-        opts.onChange(o.value);
-      });
-      b.addEventListener("keydown", (e) => {
-        var _a2;
-        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-        e.preventDefault();
-        const vals = opts.options.map((x) => x.value);
-        const curIdx = vals.indexOf(cur);
-        const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
-        const nextIdx = (curIdx + delta + vals.length) % vals.length;
-        setValue(vals[nextIdx]);
-        opts.onChange(vals[nextIdx]);
-        (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
-      });
-      btns.set(o.value, b);
-      el.appendChild(b);
-    });
-    if (opts.float) el.appendChild(seg);
-    function setValue(v) {
-      cur = v;
-      btns.forEach((b, k) => {
-        const on = k === v;
-        b.classList.toggle("is-on", on);
-        b.setAttribute("aria-checked", String(on));
-      });
-      if (opts.float) syncSeg(true);
-    }
-    syncSeg(false);
-    const detach = () => {
-      cancelAnimationFrame(segRAF);
-      window.removeEventListener("resize", onWinResize);
-    };
-    return { el, setValue, detach };
-  }
-  var init_choice = __esm({
-    "src/core/ui/choice.ts"() {
-    }
-  });
-
-  // src/core/ui/cardpick.ts
-  function uiCardChoice(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "radiogroup");
-    if (opts.label) el.setAttribute("aria-label", opts.label);
-    const btns = /* @__PURE__ */ new Map();
-    let cur = opts.value;
-    const sync = (v) => {
-      cur = v;
-      btns.forEach((b, val) => {
-        const on = val === v;
-        b.classList.toggle("is-on", on);
-        b.setAttribute("aria-checked", String(on));
-      });
-    };
-    opts.options.forEach((o) => {
-      const card = document.createElement("button");
-      card.type = "button";
-      card.className = "bz-cardpick-card" + (o.value === opts.value ? " is-on" : "");
-      card.dataset.value = String(o.value);
-      card.setAttribute("role", "radio");
-      card.setAttribute("aria-checked", String(o.value === opts.value));
-      const prev = document.createElement("div");
-      prev.className = "bz-cardpick-prev" + (o.prevClass ? ` ${o.prevClass}` : "");
-      prev.setAttribute("aria-hidden", "true");
-      prev.style.height = "62px";
-      const name = document.createElement("span");
-      name.className = "bz-cardpick-name";
-      name.textContent = o.label;
-      card.append(prev, name);
-      card.addEventListener("click", () => {
-        if (cur === o.value) return;
-        sync(o.value);
-        opts.onChange(o.value);
-      });
-      btns.set(o.value, card);
-      el.appendChild(card);
-    });
-    el.addEventListener("keydown", (e) => {
-      var _a2;
-      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
-      const list = opts.options.map((o) => o.value);
-      const idx = list.indexOf(cur);
-      const next = e.key === "ArrowRight" ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
-      (_a2 = btns.get(list[next])) == null ? void 0 : _a2.focus();
-      e.preventDefault();
-    });
-    return { el, setValue: sync };
-  }
-  var init_cardpick = __esm({
-    "src/core/ui/cardpick.ts"() {
-    }
-  });
-
-  // src/core/ui/switch.ts
-  function uiSwitch(opts) {
-    const el = document.createElement("span");
-    el.className = "bz-sw" + (opts.checked ? " on" : "") + (opts.disabled ? " is-disabled" : "");
-    el.setAttribute("role", "switch");
-    el.setAttribute("aria-checked", String(!!opts.checked));
-    el.setAttribute("aria-disabled", String(!!opts.disabled));
-    el.tabIndex = opts.disabled ? -1 : 0;
-    const setChecked = (v) => {
-      el.classList.toggle("on", v);
-      el.setAttribute("aria-checked", String(v));
-    };
-    const setDisabled = (v) => {
-      el.classList.toggle("is-disabled", v);
-      el.setAttribute("aria-disabled", String(v));
-      el.tabIndex = v ? -1 : 0;
-    };
-    const enabled = () => !el.classList.contains("is-disabled");
-    const toggle = () => {
-      var _a2;
-      if (!enabled()) return;
-      const next = !el.classList.contains("on");
-      setChecked(next);
-      (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, next);
-    };
-    el.addEventListener("click", toggle);
-    el.addEventListener("keydown", (e) => {
-      if (e.key === " " || e.key === "Enter") {
-        e.preventDefault();
-        toggle();
-      }
-    });
-    return { el, setChecked, setDisabled };
-  }
-  var init_switch = __esm({
-    "src/core/ui/switch.ts"() {
-    }
-  });
-
-  // src/core/ui/select.ts
-  function uiSelect(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-select" + (opts.className ? " " + opts.className : "");
-    el.setAttribute("role", "listbox");
-    el.setAttribute("aria-expanded", "false");
-    el.tabIndex = 0;
-    const val = document.createElement("span");
-    val.className = "bz-select-val";
-    el.appendChild(val);
-    el.appendChild(uiIcon("chevron-down", "bz-select-car"));
-    let current2 = opts.value;
-    let menu = null;
-    let escHandle6 = null;
-    const labelOf = (v) => {
-      const o = opts.options.find((x) => x.value === v);
-      return o ? o.label : "";
-    };
-    const renderVal = () => {
-      val.textContent = labelOf(current2) || opts.placeholder || "";
-    };
-    renderVal();
-    const close = (notify2 = true) => {
-      var _a2;
-      if (menu) {
-        menu.remove();
-        menu = null;
-      }
-      if (escHandle6) {
-        escHandle6.unregister();
-        escHandle6 = null;
-      }
-      el.classList.remove("open");
-      el.setAttribute("aria-expanded", "false");
-      if (notify2) (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, false);
-    };
-    const open = () => {
-      var _a2;
-      close(false);
-      el.classList.add("open");
-      el.setAttribute("aria-expanded", "true");
-      (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, true);
-      const m = document.createElement("div");
-      m.className = "bz-select-menu";
-      m.setAttribute("role", "listbox");
-      menu = m;
-      opts.options.forEach((o, i) => {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "bz-select-item" + (o.value === current2 ? " is-on" : "");
-        b.setAttribute("role", "option");
-        b.setAttribute("aria-selected", String(o.value === current2));
-        b.dataset.index = String(i);
-        const span = document.createElement("span");
-        span.textContent = o.label;
-        b.appendChild(span);
-        b.appendChild(uiIcon("check", "bz-select-item-ck"));
-        b.addEventListener("click", (ev) => {
-          ev.stopPropagation();
-          setValue(o.value);
-          opts.onChange(o.value);
-          close();
-        });
-        m.appendChild(b);
-      });
-      el.appendChild(m);
-      for (let round = 0; round < 3; round++) {
-        let delta = 0;
-        m.querySelectorAll(".bz-select-item > span").forEach((sp) => {
-          delta = Math.max(delta, sp.scrollWidth - sp.clientWidth);
-        });
-        if (delta <= 0) break;
-        const cs = getComputedStyle(m);
-        const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
-        m.style.minWidth = `${m.clientWidth + delta - border}px`;
-      }
-      const vw = window.innerWidth || document.documentElement.clientWidth;
-      const rect = m.getBoundingClientRect();
-      const over = Math.ceil(rect.right - vw) + 2;
-      if (over > 0) {
-        m.style.right = `${over}px`;
-        if (m.getBoundingClientRect().left < 2) m.style.right = "";
-      }
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      const mRect = m.getBoundingClientRect();
-      const need = mRect.height || m.offsetHeight;
-      const spaceBelow = vh - mRect.bottom;
-      if (need > 0 && spaceBelow < need && spaceBelow < mRect.top) {
-        m.classList.add("is-flip-up");
-      }
-      escHandle6 = escManager.register("bz-ui-select", {
-        isVisible: () => !!menu && menu.isConnected,
-        close: () => close()
-      });
-    };
-    const setValue = (v) => {
-      current2 = v;
-      renderVal();
-      if (menu) {
-        opts.options.forEach((o, i) => {
-          const item = menu == null ? void 0 : menu.querySelectorAll(".bz-select-item")[i];
-          if (!item) return;
-          const on = o.value === v;
-          item.classList.toggle("is-on", on);
-          item.setAttribute("aria-selected", String(on));
-        });
-      }
-    };
-    const moveFocus = (delta) => {
-      if (!menu) return;
-      const curIdx = opts.options.findIndex((o) => o.value === current2);
-      const nextIdx = Math.min(opts.options.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
-      opts.options.forEach((o, i) => {
-        const item = menu == null ? void 0 : menu.querySelectorAll(".bz-select-item")[i];
-        if (!item) return;
-        const on = i === nextIdx;
-        item.classList.toggle("is-on", on);
-        item.setAttribute("aria-selected", String(on));
-      });
-    };
-    el.addEventListener("click", () => {
-      if (menu) close();
-      else open();
-    });
-    el.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        if (menu) {
-          const on = menu == null ? void 0 : menu.querySelector(".bz-select-item.is-on");
-          if (on && on !== el) {
-            const v = opts.options[Number(on.dataset.index)];
-            if (v) {
-              setValue(v.value);
-              opts.onChange(v.value);
-            }
-          }
-          close();
-        } else open();
-      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
-        e.preventDefault();
-        if (!menu) open();
-        moveFocus(e.key === "ArrowDown" ? 1 : -1);
-      } else if (e.key === "Escape") {
-        e.stopPropagation();
-        close();
-      }
-    });
-    const onDocClick = (e) => {
-      if (menu && !el.contains(e.target)) close();
-    };
-    document.addEventListener("click", onDocClick);
-    return {
-      el,
-      setValue,
-      detach: () => {
-        document.removeEventListener("click", onDocClick);
-        close(false);
-      }
-    };
-  }
-  var init_select = __esm({
-    "src/core/ui/select.ts"() {
-      init_icon();
-      init_esc_manager();
-    }
-  });
-
-  // src/core/ui/search.ts
-  function uiSearch(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-search";
-    el.appendChild(uiIcon("search"));
-    const input = uiInput({
-      placeholder: opts.placeholder,
-      value: opts.value,
-      onInput: opts.onInput
-    });
-    el.appendChild(input);
-    const setValue = (v) => {
-      input.value = v;
-    };
-    return { el, input, setValue };
-  }
-  var init_search = __esm({
-    "src/core/ui/search.ts"() {
-      init_icon();
-      init_field();
-    }
-  });
-
-  // src/core/ui/mainhead.ts
-  function uiMainHead(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-main-head";
-    const title = document.createElement("span");
-    title.className = "bz-main-title";
-    title.textContent = opts.title;
-    el.appendChild(title);
-    const count = document.createElement("span");
-    count.className = "bz-main-count";
-    el.appendChild(count);
-    const sp = document.createElement("span");
-    sp.className = "bz-main-spacer";
-    el.appendChild(sp);
-    if (opts.action) {
-      el.appendChild(uiBtn({
-        label: opts.action.label,
-        icon: opts.action.icon,
-        tone: "primary",
-        className: "bz-btn--md",
-        onClick: opts.action.onClick
-      }));
-    }
-    const setCount = (c) => {
-      if (c === void 0 || c === null || c === "") {
-        count.style.display = "none";
-        count.textContent = "";
-      } else {
-        count.style.display = "";
-        count.textContent = c;
-      }
-    };
-    setCount(opts.count);
-    return {
-      el,
-      setTitle: (t) => {
-        title.textContent = t;
-      },
-      setCount
-    };
-  }
-  var init_mainhead = __esm({
-    "src/core/ui/mainhead.ts"() {
-      init_button();
-    }
-  });
-
-  // src/core/ui/rail.ts
-  function buildRow(item) {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "bz-rail-item";
-    b.dataset.id = item.id;
-    if (item.boxedIcon) {
-      const box = document.createElement("span");
-      box.className = "bz-rail-ic";
-      box.appendChild(uiIcon(item.boxedIcon));
-      b.appendChild(box);
-    } else if (item.icon) {
-      b.appendChild(uiIcon(item.icon));
-    } else if (item.emoji) {
-      const emo = document.createElement("span");
-      emo.className = "bz-rail-emoji";
-      emo.textContent = item.emoji;
-      b.appendChild(emo);
-    } else if (item.badge) {
-      const badge = document.createElement("span");
-      badge.className = "bz-rail-badge";
-      badge.textContent = item.badge.t;
-      badge.setAttribute("aria-label", item.badge.label);
-      if (item.badge.tint) badge.style.setProperty("--bz-rail-tint", item.badge.tint);
-      b.appendChild(badge);
-    } else if (item.dot) {
-      const dot = document.createElement("span");
-      dot.className = "bz-rail-dot";
-      dot.style.setProperty("--bz-rail-tint", item.dot);
-      b.appendChild(dot);
-    }
-    const name = document.createElement("span");
-    name.className = "bz-rail-name";
-    name.textContent = item.name;
-    b.appendChild(name);
-    if (item.count !== void 0 && item.count !== null && item.count !== "") {
-      const cnt = document.createElement("span");
-      cnt.className = "bz-rail-count" + (item.pill ? " bz-rail-count--pill" : "");
-      cnt.textContent = String(item.count);
-      b.appendChild(cnt);
-    }
-    if (item.unread) {
-      const u = document.createElement("span");
-      u.className = "bz-rail-unread";
-      u.textContent = String(item.unread);
-      b.appendChild(u);
-    }
-    if (item.children && item.children.length) {
-      b.classList.add("has-sub");
-      const caret = document.createElement("span");
-      caret.className = "bz-rail-caret";
-      setIcon(caret, "chevron-right");
-      b.appendChild(caret);
-    }
-    return b;
-  }
-  function uiRail(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-rail";
-    const scroll = document.createElement("div");
-    scroll.className = "bz-rail-scroll";
-    el.appendChild(scroll);
-    const rows = /* @__PURE__ */ new Map();
-    const setActive = (id) => {
-      var _a2;
-      rows.forEach((row) => row.classList.remove("on"));
-      (_a2 = rows.get(id)) == null ? void 0 : _a2.classList.add("on");
-    };
-    opts.groups.forEach((g) => {
-      if (g.label) {
-        const lb = document.createElement("div");
-        lb.className = "bz-rail-label";
-        lb.textContent = g.label;
-        scroll.appendChild(lb);
-      }
-      g.items.forEach((item) => {
-        const row = buildRow(item);
-        rows.set(item.id, row);
-        scroll.appendChild(row);
-        if (item.children && item.children.length) {
-          const sub = document.createElement("div");
-          sub.className = "bz-rail-sub";
-          item.children.forEach((child) => {
-            const cr = buildRow(child);
-            rows.set(child.id, cr);
-            cr.addEventListener("click", () => {
-              var _a2;
-              setActive(child.id);
-              (_a2 = opts.onSelect) == null ? void 0 : _a2.call(opts, child.id);
-            });
-            sub.appendChild(cr);
-          });
-          scroll.appendChild(sub);
-          row.addEventListener("click", () => {
-            const open = !sub.classList.contains("open");
-            sub.classList.toggle("open", open);
-            row.classList.toggle("sub-open", open);
-          });
-        } else {
-          row.addEventListener("click", () => {
-            var _a2;
-            setActive(item.id);
-            (_a2 = opts.onSelect) == null ? void 0 : _a2.call(opts, item.id);
-          });
-        }
-      });
-    });
-    if (opts.foot) {
-      const foot = document.createElement("div");
-      foot.className = "bz-rail-foot";
-      foot.appendChild(opts.foot);
-      el.appendChild(foot);
-    }
-    setActive(opts.activeId);
-    return { el, setActive };
-  }
-  var init_rail = __esm({
-    "src/core/ui/rail.ts"() {
-      init_fake_obsidian();
-      init_icon();
-    }
-  });
-
-  // src/core/ui/mobstrip.ts
-  function uiMobStrip(opts) {
-    const el = document.createElement("div");
-    el.className = "bz-mobstrip";
-    const chips = /* @__PURE__ */ new Map();
-    const setValue = (id) => {
-      chips.forEach((chip2) => chip2.classList.toggle("is-on", chip2.dataset.id === id));
-    };
-    opts.items.forEach((it) => {
-      const chip2 = document.createElement("button");
-      chip2.type = "button";
-      chip2.className = "bz-mobstrip-chip";
-      chip2.dataset.id = it.id;
-      if (it.dot) {
-        const dot = document.createElement("span");
-        dot.className = "bz-mobstrip-dot";
-        dot.style.setProperty("--bz-rail-tint", it.dot);
-        chip2.appendChild(dot);
-      }
-      chip2.appendChild(document.createTextNode(it.label));
-      chip2.addEventListener("click", () => {
-        var _a2;
-        setValue(it.id);
-        (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, it.id);
-      });
-      chips.set(it.id, chip2);
-      el.appendChild(chip2);
-    });
-    setValue(opts.value);
-    return { el, setValue };
-  }
-  var init_mobstrip = __esm({
-    "src/core/ui/mobstrip.ts"() {
-    }
-  });
-
-  // src/core/ui/stat.ts
-  function uiStat(opts) {
-    const el = document.createElement("div");
-    const cls = ["bz-stat"];
-    if (opts.tone) cls.push(`bz-stat--${opts.tone}`);
-    if (opts.click) cls.push("bz-stat--click");
-    el.className = cls.join(" ");
-    const label = document.createElement("span");
-    label.className = "bz-stat-label";
-    if (opts.icon) label.appendChild(uiIcon(opts.icon));
-    label.appendChild(document.createTextNode(opts.label));
-    el.appendChild(label);
-    const num2 = document.createElement("span");
-    num2.className = "bz-stat-num";
-    num2.textContent = String(opts.num);
-    el.appendChild(num2);
-    if (opts.hint) {
-      const hint = document.createElement("span");
-      hint.className = "bz-stat-hint";
-      hint.textContent = opts.hint;
-      el.appendChild(hint);
-    }
-    if (opts.onClick) {
-      el.setAttribute("role", "button");
-      el.tabIndex = 0;
-      el.addEventListener("click", opts.onClick);
-      el.addEventListener("keydown", (e) => {
-        var _a2;
-        if (e.key !== "Enter" && e.key !== " ") return;
-        e.preventDefault();
-        (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
-      });
-    }
-    return el;
-  }
-  var init_stat = __esm({
-    "src/core/ui/stat.ts"() {
-      init_icon();
-    }
-  });
-
-  // src/core/ui/progress.ts
-  function uiProgress(opts = {}) {
-    const el = document.createElement("div");
-    const cls = ["bz-progress"];
-    if (opts.thin) cls.push("bz-progress--thin");
-    if (opts.tone) cls.push(`bz-progress--${opts.tone}`);
-    el.className = cls.join(" ");
-    const fill = document.createElement("i");
-    el.appendChild(fill);
-    const setValue = (n) => {
-      const v = Math.min(100, Math.max(0, Number(n) || 0));
-      fill.style.width = v + "%";
-    };
-    if (opts.value !== void 0) setValue(opts.value);
-    return { el, setValue };
-  }
-  var init_progress = __esm({
-    "src/core/ui/progress.ts"() {
-    }
-  });
-
-  // src/core/ui/popover.ts
-  function uiPopover(opts) {
-    var _a2;
-    const anchor = opts.anchor;
-    let current2 = (_a2 = opts.value) != null ? _a2 : "";
-    let items = opts.options;
-    let layer = null;
-    let escHandle6 = null;
-    const onDocClick = (e) => {
-      if (!layer) return;
-      const t = e.target;
-      if (anchor.contains(t)) return;
-      close();
-    };
-    const open = () => {
-      if (layer) return;
-      const m = document.createElement("div");
-      m.className = "bz-popover";
-      m.setAttribute("role", "listbox");
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "bz-popover-empty";
-        empty.textContent = opts.emptyText || "无匹配项";
-        m.appendChild(empty);
-      } else {
-        items.forEach((o) => {
-          const b = document.createElement("button");
-          b.type = "button";
-          b.className = "bz-popover-item" + (o.id === current2 ? " is-on" : "");
-          b.dataset.id = o.id;
-          b.setAttribute("role", "option");
-          b.setAttribute("aria-selected", String(o.id === current2));
-          if (o.icon) b.appendChild(uiIcon(o.icon));
-          const span = document.createElement("span");
-          span.textContent = o.label;
-          b.appendChild(span);
-          b.addEventListener("click", (ev) => {
-            var _a3;
-            ev.stopPropagation();
-            setValue(o.id);
-            (_a3 = opts.onPick) == null ? void 0 : _a3.call(opts, o.id);
-            close();
-          });
-          m.appendChild(b);
-        });
-      }
-      (anchor.parentElement || anchor).appendChild(m);
-      layer = m;
-      const vh = window.innerHeight || document.documentElement.clientHeight;
-      const rect = m.getBoundingClientRect();
-      const need = rect.height || m.offsetHeight;
-      const spaceBelow = vh - rect.bottom;
-      if (need > 0 && spaceBelow < need && spaceBelow < rect.top) {
-        m.classList.add("is-flip-up");
-      }
-      document.addEventListener("click", onDocClick);
-      escHandle6 = escManager.register("bz-ui-popover", {
-        isVisible: () => !!layer && layer.isConnected,
-        close: () => close()
-      });
-    };
-    const close = () => {
-      if (!layer) return;
-      layer.remove();
-      layer = null;
-      document.removeEventListener("click", onDocClick);
-      if (escHandle6) {
-        escHandle6.unregister();
-        escHandle6 = null;
-      }
-    };
-    const setValue = (id) => {
-      current2 = id;
-      if (!layer) return;
-      layer.querySelectorAll(".bz-popover-item").forEach((item) => {
-        const on = item.dataset.id === id;
-        item.classList.toggle("is-on", on);
-        item.setAttribute("aria-selected", String(on));
-      });
-    };
-    const setOptions = (next) => {
-      items = next;
-      if (layer) {
-        close();
-        open();
-      }
-    };
-    anchor.addEventListener("click", () => {
-      if (layer) close();
-      else open();
-    });
-    return {
-      open,
-      close,
-      setValue,
-      setOptions,
-      /** 清理：关浮层并摘除 document 监听（宿主收尾用，对齐 uiSelect.detach） */
-      detach: () => {
-        document.removeEventListener("click", onDocClick);
-        close();
-      }
-    };
-  }
-  var init_popover = __esm({
-    "src/core/ui/popover.ts"() {
-      init_icon();
-      init_esc_manager();
-    }
-  });
-
-  // src/core/ui/suggest.ts
-  function uiSuggest(opts) {
-    var _a2;
-    const anchor = opts.anchor;
-    const max = (_a2 = opts.max) != null ? _a2 : 30;
-    let layer = null;
-    let skipNextOpen = false;
-    const close = () => {
-      if (!layer) return;
-      layer.remove();
-      layer = null;
-      document.removeEventListener("mousedown", onDocDown, true);
-    };
-    const onDocDown = (e) => {
-      const t = e.target;
-      if (!anchor.isConnected) {
-        close();
-        return;
-      }
-      if ((layer == null ? void 0 : layer.contains(t)) || anchor.contains(t)) return;
-      close();
-    };
-    const pick = (raw) => {
-      var _a3;
-      anchor.value = raw;
-      close();
-      (_a3 = opts.onPick) == null ? void 0 : _a3.call(opts, raw);
-      if (document.activeElement !== anchor) {
-        skipNextOpen = true;
-        anchor.focus();
-      }
-    };
-    const draw = () => {
-      if (!layer) return;
-      const cur = anchor.value.trim();
-      const q2 = cur.toLowerCase();
-      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
-      if (!matched.length) {
-        close();
-        return;
-      }
-      layer.replaceChildren();
-      matched.forEach((raw) => {
-        var _a3;
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "bz-popover-item";
-        b.dataset.value = raw;
-        b.setAttribute("role", "option");
-        const on = raw === cur;
-        if (on) b.classList.add("is-on");
-        const icon = (_a3 = opts.iconOf) == null ? void 0 : _a3.call(opts, raw);
-        if (icon) {
-          const ic2 = document.createElement("span");
-          ic2.className = "bz-suggest-ic";
-          if (typeof icon === "string") ic2.textContent = icon;
-          else ic2.appendChild(icon);
-          b.appendChild(ic2);
-        }
-        const label = document.createElement("span");
-        label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
-        b.appendChild(label);
-        b.addEventListener("click", () => pick(raw));
-        layer.appendChild(b);
-      });
-    };
-    const open = () => {
-      if (skipNextOpen) {
-        skipNextOpen = false;
-        return;
-      }
-      if (layer) {
-        draw();
-        return;
-      }
-      const m = document.createElement("div");
-      m.className = "bz-popover";
-      m.setAttribute("role", "listbox");
-      (anchor.parentElement || anchor).appendChild(m);
-      layer = m;
-      document.addEventListener("mousedown", onDocDown, true);
-      draw();
-    };
-    const activeIdx = () => {
-      var _a3;
-      return [...(_a3 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a3 : []].findIndex((o) => o.classList.contains("is-on"));
-    };
-    const moveActive = (to) => {
-      var _a3, _b2;
-      const items = [...(_a3 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a3 : []];
-      if (!items.length) return;
-      const next = items[Math.max(0, Math.min(items.length - 1, to))];
-      items.forEach((o) => o.classList.toggle("is-on", o === next));
-      (_b2 = next.scrollIntoView) == null ? void 0 : _b2.call(next, { block: "nearest" });
-    };
-    anchor.addEventListener("focus", open);
-    anchor.addEventListener("input", () => {
-      skipNextOpen = false;
-      open();
-    });
-    anchor.addEventListener("keydown", (e) => {
-      if (!layer) return;
-      if (e.key === "ArrowDown") {
-        moveActive(activeIdx() + 1);
-        e.preventDefault();
-      } else if (e.key === "ArrowUp") {
-        moveActive(activeIdx() < 0 ? layer.querySelectorAll(".bz-popover-item").length - 1 : activeIdx() - 1);
-        e.preventDefault();
-      } else if (e.key === "Enter") {
-        const on = layer.querySelector(".bz-popover-item.is-on");
-        if (on) {
-          pick(on.dataset.value);
-          e.preventDefault();
-        }
-      } else if (e.key === "Escape") {
-        close();
-        e.stopPropagation();
-      }
-    });
-    return {
-      close,
-      /** 清理：关浮层并摘 document 监听（宿主收尾用；anchor 随表单移除时下次外点自清） */
-      detach: () => {
-        close();
-      }
-    };
-  }
-  var init_suggest = __esm({
-    "src/core/ui/suggest.ts"() {
-    }
-  });
-
-  // src/core/ui/lightbox.ts
-  function lockBodyScroll(lock) {
-    const body = document.body;
-    if (lock) {
-      body.dataset.bzLightboxScroll = body.style.overflow || "";
-      body.style.overflow = "hidden";
-    } else if (body.dataset.bzLightboxScroll !== void 0) {
-      body.style.overflow = body.dataset.bzLightboxScroll === "" ? "" : body.dataset.bzLightboxScroll;
-      delete body.dataset.bzLightboxScroll;
-    }
-  }
-  function openLightbox(opts) {
-    closeLightbox();
-    const mask = document.createElement("div");
-    mask.className = "bz-lightbox";
-    mask.style.zIndex = String(allocZ());
-    const head = document.createElement("div");
-    head.className = "bz-lightbox-head";
-    const title = document.createElement("span");
-    title.className = "bz-lightbox-title";
-    title.textContent = opts.title || "";
-    const closeBtn = document.createElement("button");
-    closeBtn.type = "button";
-    closeBtn.className = "bz-lightbox-close";
-    closeBtn.setAttribute("aria-label", "关闭");
-    closeBtn.appendChild(uiIcon("x"));
-    head.appendChild(title);
-    head.appendChild(closeBtn);
-    const media = document.createElement("div");
-    media.className = "bz-lightbox-media";
-    const bareSrc = opts.src.split("?")[0].split("#")[0];
-    const type = opts.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
-    if (type === "video") {
-      const v = document.createElement("video");
-      v.src = opts.src;
-      v.controls = true;
-      v.autoplay = true;
-      media.appendChild(v);
-    } else if (type === "audio") {
-      const a = document.createElement("audio");
-      a.src = opts.src;
-      a.controls = true;
-      a.autoplay = true;
-      media.appendChild(a);
-    } else {
-      const img = document.createElement("img");
-      img.src = opts.src;
-      img.alt = opts.title || "";
-      media.appendChild(img);
-    }
-    const foot = document.createElement("div");
-    foot.className = "bz-lightbox-foot";
-    foot.textContent = opts.caption || "";
-    mask.appendChild(head);
-    mask.appendChild(media);
-    mask.appendChild(foot);
-    document.body.appendChild(mask);
-    lockBodyScroll(true);
-    let escHandle6 = null;
-    function close() {
-      if (current !== mask) return;
-      mask.remove();
-      escHandle6 == null ? void 0 : escHandle6.unregister();
-      if (currentEscHandle === escHandle6) currentEscHandle = null;
-      current = null;
-      lockBodyScroll(false);
-    }
-    escHandle6 = escManager.register("bz-lightbox", {
-      isVisible: () => mask.isConnected,
-      close
-    });
-    currentEscHandle = escHandle6;
-    mask.addEventListener("click", (e) => {
-      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
-    });
-    closeBtn.addEventListener("click", close);
-    current = mask;
-    return { close };
-  }
-  function closeLightbox() {
-    if (current) {
-      current.remove();
-      current = null;
-      currentEscHandle == null ? void 0 : currentEscHandle.unregister();
-      currentEscHandle = null;
-      lockBodyScroll(false);
-    }
-  }
-  var current, currentEscHandle;
-  var init_lightbox = __esm({
-    "src/core/ui/lightbox.ts"() {
-      init_icon();
-      init_esc_manager();
-      init_z_order();
-      current = null;
-      currentEscHandle = null;
-    }
-  });
-
-  // src/core/mobile.ts
-  function isMobileEnv() {
-    return typeof Platform !== "undefined" && !!Platform.isMobile;
-  }
-  var init_mobile = __esm({
-    "src/core/mobile.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/focus-trap.ts
-  function isHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function firstFocusable(container) {
-    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
-      if (isHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    return list[0] || null;
-  }
-  function trapFocus(container) {
-    const onKeydown = (e) => {
-      if (e.key !== "Tab") return;
-      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el) => !isHidden(el) && !el.hasAttribute("disabled")
-      );
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active2 = document.activeElement;
-      if (e.shiftKey) {
-        if (active2 === first || !container.contains(active2)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active2 === last || !container.contains(active2)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    container.addEventListener("keydown", onKeydown);
-    return () => container.removeEventListener("keydown", onKeydown);
-  }
-  var FOCUSABLE_SELECTOR;
-  var init_focus_trap = __esm({
-    "src/core/ui/focus-trap.ts"() {
-      init_mobile();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    }
-  });
-
-  // src/core/ui/modal.ts
-  function bindFormSubmit(popup, onSubmit) {
-    popup.addEventListener("keydown", (e) => {
-      if (e.defaultPrevented || e.isComposing) return;
-      if (e.key !== "Enter") return;
-      if (!(e.ctrlKey || e.metaKey)) return;
-      e.preventDefault();
-      onSubmit();
-    });
-    popup.addEventListener("keypress", (e) => {
-      if (e.defaultPrevented) return;
-      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
-      const t = e.target;
-      if (!(t instanceof HTMLInputElement)) return;
-      if (t.dataset.bzNoFormSubmit !== void 0) return;
-      e.preventDefault();
-      onSubmit();
-    });
-  }
-  function uiModal(opts) {
-    var _a2;
-    const prevActive = document.activeElement;
-    const focusEnabled = opts.autofocus !== false;
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask";
-    mask.style.zIndex = String(allocZ());
-    const popup = document.createElement("div");
-    popup.className = "bz-overlay-popup" + (opts.className ? " " + opts.className : "");
-    if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    if (opts.title) popup.setAttribute("aria-label", opts.title);
-    if (opts.head) {
-      const head = document.createElement("div");
-      head.className = "bz-dialog-head";
-      const title = document.createElement("span");
-      title.className = "bz-dialog-title";
-      title.textContent = opts.title || "";
-      head.appendChild(title);
-      popup.appendChild(head);
-    }
-    const body = document.createElement("div");
-    body.className = "bz-dialog-body";
-    if (typeof opts.content === "string") body.innerHTML = opts.content;
-    else body.appendChild(opts.content);
-    popup.appendChild(body);
-    mask.appendChild(popup);
-    let closed = false;
-    let escHandle6 = null;
-    const releaseTrap = focusEnabled ? trapFocus(popup) : null;
-    function close() {
-      var _a3;
-      if (closed) return;
-      closed = true;
-      liveModals.delete(close);
-      releaseTrap == null ? void 0 : releaseTrap();
-      mask.remove();
-      escHandle6 == null ? void 0 : escHandle6.unregister();
-      if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
-        prevActive.focus();
-      }
-      (_a3 = opts.onClose) == null ? void 0 : _a3.call(opts);
-    }
-    const attemptClose = () => {
-      if (opts.requestClose) opts.requestClose();
-      else close();
-    };
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) attemptClose();
-    });
-    escHandle6 = escManager.register("bz-modal", {
-      isVisible: () => mask.isConnected,
-      close: attemptClose
-    });
-    document.body.appendChild(mask);
-    if (focusEnabled) (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
-    liveModals.add(close);
-    return { mask, popup, close };
-  }
-  var liveModals;
-  var init_modal = __esm({
-    "src/core/ui/modal.ts"() {
-      init_esc_manager();
-      init_z_order();
-      init_focus_trap();
-      liveModals = /* @__PURE__ */ new Set();
-    }
-  });
-
-  // src/core/ui/resize.ts
-  function hitRegion(rect, x, y, edge) {
-    const onE = x >= rect.width - edge;
-    const onS = y >= rect.height - edge;
-    const onW = x <= edge;
-    const onN = y <= edge;
-    if (onE && onS) return "se";
-    if (onE && !onW) return "e";
-    if (onS && !onN) return "s";
-    return null;
-  }
-  function uiResizable(el, opts = {}) {
-    var _a2, _b2, _c, _d, _e;
-    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) {
-      return { flush: () => {
-      }, detach: () => {
-      } };
-    }
-    const edge = (_a2 = opts.edge) != null ? _a2 : 8;
-    const minW = (_b2 = opts.minW) != null ? _b2 : 320;
-    const minH = (_c = opts.minH) != null ? _c : 240;
-    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
-    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
-    let dir = null;
-    let dragging = false;
-    let startX = 0;
-    let startY = 0;
-    let startW = 0;
-    let startH = 0;
-    const cap = (isW) => {
-      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
-      return Math.floor(Math.min(isW ? maxW : maxH, view));
-    };
-    const persist = opts.persist;
-    let persistTimer = null;
-    let lastW = 0;
-    let lastH = 0;
-    if (persist == null ? void 0 : persist.load) {
-      const saved = persist.load();
-      if (saved && saved.w > 0 && saved.h > 0) {
-        lastW = Math.min(Math.max(saved.w, minW), cap(true));
-        lastH = Math.min(Math.max(saved.h, minH), cap(false));
-        el.style.width = lastW + "px";
-        el.style.height = lastH + "px";
-      }
-    }
-    const regionAt = (e) => {
-      const rect = el.getBoundingClientRect();
-      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
-    };
-    const setCursor = (d) => {
-      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
-    };
-    const onHover = (e) => {
-      if (dragging) return;
-      setCursor(regionAt(e));
-    };
-    const onDragMove = (e) => {
-      if (!el.isConnected) {
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        return;
-      }
-      if (!dragging) return;
-      e.preventDefault();
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      let w = dir === "e" || dir === "se" ? startW + dx : startW;
-      let h = dir === "s" || dir === "se" ? startH + dy : startH;
-      w = Math.min(Math.max(w, minW), cap(true));
-      h = Math.min(Math.max(h, minH), cap(false));
-      el.style.width = w + "px";
-      el.style.height = h + "px";
-      if (opts.onChange) opts.onChange(w, h);
-      if (persist == null ? void 0 : persist.save) {
-        lastW = w;
-        lastH = h;
-        if (persistTimer !== null) clearTimeout(persistTimer);
-        persistTimer = setTimeout(() => {
-          var _a3;
-          persistTimer = null;
-          (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w, h);
-        }, 300);
-      }
-    };
-    const onMouseLeave = () => {
-      if (!dragging) setCursor(null);
-    };
-    const onMouseDown = (e) => {
-      const d = regionAt(e);
-      if (!d) return;
-      e.preventDefault();
-      dir = d;
-      dragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startW = el.getBoundingClientRect().width;
-      startH = el.getBoundingClientRect().height;
-      document.body.style.userSelect = "none";
-    };
-    const onMouseUp = () => {
-      if (!el.isConnected) {
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        return;
-      }
-      if (!dragging) return;
-      dragging = false;
-      dir = null;
-      document.body.style.userSelect = "";
-      setCursor(null);
-      swallowNextClick();
-    };
-    el.addEventListener("mousemove", onHover);
-    el.addEventListener("mouseleave", onMouseLeave);
-    el.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mousemove", onDragMove);
-    document.addEventListener("mouseup", onMouseUp);
-    const flush = () => {
-      if (persistTimer === null) return;
-      clearTimeout(persistTimer);
-      persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
-    };
-    return {
-      flush,
-      detach: () => {
-        flush();
-        el.removeEventListener("mousemove", onHover);
-        el.removeEventListener("mouseleave", onMouseLeave);
-        el.removeEventListener("mousedown", onMouseDown);
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.body.style.userSelect = "";
-        setCursor(null);
-      }
-    };
-  }
-  var init_resize = __esm({
-    "src/core/ui/resize.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/splitter.ts
-  function uiVSplitter(opts) {
-    var _a2, _b2;
-    const left = opts.left;
-    const minLeft = (_a2 = opts.minLeft) != null ? _a2 : 220;
-    const minRight = (_b2 = opts.minRight) != null ? _b2 : 320;
-    const persist = opts.persist;
-    const el = document.createElement("div");
-    el.className = "bz-vsplit";
-    el.setAttribute("role", "separator");
-    el.setAttribute("aria-orientation", "vertical");
-    el.title = "拖动调整两侧宽度";
-    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
-    if (isCoarse) {
-      return { el, restore: () => {
-      }, flush: () => {
-      }, detach: () => {
-      } };
-    }
-    let dragging = false;
-    let startX = 0;
-    let startW = 0;
-    let persistTimer = null;
-    let lastW = 0;
-    let restored = false;
-    const availW = () => {
-      const parent = left.parentElement;
-      if (!parent) return 0;
-      return parent.clientWidth - el.offsetWidth;
-    };
-    const clampW = (w) => {
-      const avail = availW();
-      const max = avail > 0 ? avail - minRight : Number.POSITIVE_INFINITY;
-      return Math.min(Math.max(w, minLeft), Math.max(minLeft, max));
-    };
-    const applyW = (w) => {
-      left.style.width = w + "px";
-    };
-    const debSave = (w) => {
-      if (!(persist == null ? void 0 : persist.save)) return;
-      lastW = w;
-      if (persistTimer !== null) clearTimeout(persistTimer);
-      persistTimer = setTimeout(() => {
-        var _a3;
-        persistTimer = null;
-        (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w);
-      }, 300);
-    };
-    const restore = () => {
-      if (restored || !(persist == null ? void 0 : persist.load) || !el.isConnected) return;
-      if (availW() <= 0) return;
-      const saved = persist.load();
-      restored = true;
-      if (saved != null && saved > 0) {
-        const w = clampW(saved);
-        applyW(w);
-        lastW = w;
-      }
-    };
-    const onDragMove = (e) => {
-      if (!left.isConnected) {
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        return;
-      }
-      if (!dragging) return;
-      e.preventDefault();
-      const w = clampW(startW + (e.clientX - startX));
-      if (w === lastW) return;
-      applyW(w);
-      lastW = w;
-      if (opts.onChange) opts.onChange(w);
-      debSave(w);
-    };
-    const onMouseDown = (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      dragging = true;
-      startX = e.clientX;
-      startW = left.getBoundingClientRect().width;
-      el.classList.add("is-drag");
-      document.body.style.userSelect = "none";
-    };
-    const onMouseUp = () => {
-      if (!left.isConnected) {
-        document.removeEventListener("mousemove", onDragMove);
-        document.removeEventListener("mouseup", onMouseUp);
-        return;
-      }
-      if (!dragging) return;
-      dragging = false;
-      el.classList.remove("is-drag");
-      document.body.style.userSelect = "";
-      swallowNextClick();
-    };
-    document.addEventListener("mousemove", onDragMove);
-    el.addEventListener("mousedown", onMouseDown);
-    document.addEventListener("mouseup", onMouseUp);
-    const flush = () => {
-      if (persistTimer === null) return;
-      clearTimeout(persistTimer);
-      persistTimer = null;
-      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
-    };
-    return {
-      el,
-      restore,
-      flush,
-      detach: () => {
-        flush();
-        document.removeEventListener("mousemove", onDragMove);
-        el.removeEventListener("mousedown", onMouseDown);
-        document.removeEventListener("mouseup", onMouseUp);
-        document.body.style.userSelect = "";
-        el.classList.remove("is-drag");
-      }
-    };
-  }
-  var init_splitter = __esm({
-    "src/core/ui/splitter.ts"() {
-      init_dom();
-    }
-  });
-
-  // src/core/ui/index.ts
-  var ui_exports = {};
-  __export(ui_exports, {
-    closeLightbox: () => closeLightbox,
-    mountIcons: () => mountIcons,
-    openLightbox: () => openLightbox,
-    uiBtn: () => uiBtn,
-    uiBtnRow: () => uiBtnRow,
-    uiCardChoice: () => uiCardChoice,
-    uiChip: () => uiChip,
-    uiChoice: () => uiChoice,
-    uiDialogActions: () => uiDialogActions,
-    uiEmpty: () => uiEmpty,
-    uiField: () => uiField,
-    uiIcon: () => uiIcon,
-    uiIconBtn: () => uiIconBtn,
-    uiIconSpan: () => uiIconSpan,
-    uiInput: () => uiInput,
-    uiMainHead: () => uiMainHead,
-    uiMobStrip: () => uiMobStrip,
-    uiModal: () => uiModal,
-    uiPopover: () => uiPopover,
-    uiProgress: () => uiProgress,
-    uiRail: () => uiRail,
-    uiRange: () => uiRange,
-    uiResizable: () => uiResizable,
-    uiSearch: () => uiSearch,
-    uiSegmented: () => uiSegmented,
-    uiSelect: () => uiSelect,
-    uiSetlist: () => uiSetlist,
-    uiStat: () => uiStat,
-    uiSuggest: () => uiSuggest,
-    uiSwitch: () => uiSwitch,
-    uiVSplitter: () => uiVSplitter
-  });
-  var init_ui = __esm({
-    "src/core/ui/index.ts"() {
-      init_icon();
-      init_icons();
-      init_button();
-      init_chip();
-      init_setlist();
-      init_field();
-      init_slider();
-      init_empty();
-      init_segmented();
-      init_choice();
-      init_cardpick();
-      init_switch();
-      init_select();
-      init_search();
-      init_mainhead();
-      init_rail();
-      init_mobstrip();
-      init_stat();
-      init_progress();
-      init_popover();
-      init_suggest();
-      init_lightbox();
-      init_modal();
-      init_resize();
-      init_splitter();
     }
   });
 
@@ -9323,6 +7478,1855 @@ var BZW_gameshelf = (() => {
     }
   });
 
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  var init_icon = __esm({
+    "src/core/ui/icon.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/icons.ts
+  function uiIconSpan(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+  function mountIcons(root) {
+    root.querySelectorAll("[data-lucide]").forEach((el) => {
+      const name = el.getAttribute("data-lucide") || "";
+      if (!name) return;
+      try {
+        const fresh = uiIconSpan(name);
+        const cls = el.className;
+        if (cls && cls !== "bz-ic") fresh.className = cls;
+        el.replaceWith(fresh);
+      } catch (e) {
+      }
+    });
+  }
+  var init_icons = __esm({
+    "src/core/ui/icons.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/button.ts
+  function uiBtn(opts) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const cls = ["bz-btn"];
+    if (opts.tone && opts.tone !== "default") cls.push(`bz-btn--${opts.tone}`);
+    if (opts.size && opts.size !== "md") cls.push(`bz-btn--${opts.size}`);
+    if (opts.chip) cls.push("bz-btn--chip");
+    if (opts.on) cls.push("is-on");
+    if (opts.className) cls.push(opts.className);
+    b.className = cls.join(" ");
+    if (opts.title) b.title = opts.title;
+    if (opts.disabled) b.disabled = true;
+    if (opts.icon) {
+      if (opts.chip) {
+        const chip2 = document.createElement("span");
+        chip2.className = "bz-btn-chip";
+        chip2.appendChild(uiIcon(opts.icon));
+        b.appendChild(chip2);
+      } else {
+        b.appendChild(uiIcon(opts.icon));
+      }
+    }
+    if (opts.label) {
+      const span = document.createElement("span");
+      span.textContent = opts.label;
+      b.appendChild(span);
+    }
+    if (opts.onClick) b.addEventListener("click", opts.onClick);
+    return b;
+  }
+  function uiIconBtn(opts) {
+    const b = document.createElement("button");
+    b.type = "button";
+    const cls = ["bz-icon-btn"];
+    if (opts.on) cls.push("bz-icon-btn--on");
+    if (opts.lg) cls.push("bz-icon-btn--lg");
+    if (opts.xs) cls.push("bz-icon-btn--xs");
+    if (opts.close) cls.push("bz-icon-btn--close");
+    if (opts.className) cls.push(opts.className);
+    b.className = cls.join(" ");
+    if (opts.title) b.title = opts.title;
+    if (opts.disabled) b.disabled = true;
+    if (opts.danger) b.setAttribute("data-danger", "");
+    b.appendChild(uiIcon(opts.icon));
+    if (opts.onClick) b.addEventListener("click", opts.onClick);
+    return b;
+  }
+  function uiBtnRow(buttons, opts) {
+    const row = document.createElement("div");
+    const cls = ["bz-btn-row"];
+    if (opts == null ? void 0 : opts.center) cls.push("bz-btn-row--center");
+    if (opts == null ? void 0 : opts.grow) cls.push("bz-btn-row--grow");
+    row.className = cls.join(" ");
+    buttons.forEach((x) => row.appendChild(x));
+    return row;
+  }
+  function uiDialogActions(opts) {
+    const cancel = uiBtn({ label: opts.cancelText || "取消", onClick: opts.onCancel });
+    const ok = uiBtn({ label: opts.okText, tone: opts.okTone || "primary", onClick: opts.onOk });
+    const row = uiBtnRow([cancel, ok]);
+    return { row, cancelBtn: cancel, okBtn: ok };
+  }
+  var init_button = __esm({
+    "src/core/ui/button.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/chip.ts
+  function uiChip(opts) {
+    const c = document.createElement("button");
+    c.type = "button";
+    const cls = ["bz-chip"];
+    if (opts.selected) cls.push("bz-chip--on");
+    else if (opts.selectedSoft) cls.push("bz-chip--sel");
+    if (opts.locked) cls.push("bz-chip--locked");
+    c.className = cls.join(" ");
+    if (opts.title) c.title = opts.title;
+    if (opts.disabled) c.disabled = true;
+    if (opts.icon) c.appendChild(uiIcon(opts.icon));
+    const label = document.createElement("span");
+    label.textContent = opts.label;
+    c.appendChild(label);
+    if (typeof opts.count === "number") {
+      const cnt = document.createElement("span");
+      cnt.className = "bz-chip-cnt";
+      cnt.textContent = String(opts.count);
+      c.appendChild(cnt);
+    }
+    if (opts.removable && !opts.locked) {
+      const x = document.createElement("span");
+      x.className = "bz-chip-x";
+      x.setAttribute("role", "button");
+      x.setAttribute("aria-label", `移除 ${opts.label}`);
+      x.tabIndex = 0;
+      x.appendChild(uiIcon("x"));
+      x.addEventListener("click", (e) => {
+        var _a2;
+        e.stopPropagation();
+        (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
+      });
+      x.addEventListener("keydown", (e) => {
+        var _a2;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          (_a2 = opts.onRemove) == null ? void 0 : _a2.call(opts);
+        }
+      });
+      c.appendChild(x);
+    }
+    if (opts.onClick) c.addEventListener("click", () => {
+      var _a2;
+      return (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
+    });
+    return c;
+  }
+  var init_chip = __esm({
+    "src/core/ui/chip.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/setlist.ts
+  function uiSetlist(opts) {
+    var _a2;
+    const variant = (_a2 = opts.variant) != null ? _a2 : "chips";
+    const box = document.createElement("div");
+    box.className = `bz-setlist bz-setlist--${variant}${opts.className ? ` ${opts.className}` : ""}`;
+    if (opts.items.length === 0) {
+      if (opts.emptyText) {
+        const empty = document.createElement("div");
+        empty.className = "bz-setlist-empty";
+        empty.textContent = opts.emptyText;
+        box.appendChild(empty);
+      }
+      return box;
+    }
+    for (const it of opts.items) {
+      const item = document.createElement("div");
+      item.className = "bz-setlist-item";
+      item.dataset.key = it.key;
+      if (it.sub) item.title = it.sub;
+      if (it.imageUrl) {
+        const img = document.createElement("img");
+        img.className = "bz-setlist-avatar";
+        img.src = it.imageUrl;
+        img.alt = "";
+        img.onerror = () => img.remove();
+        item.appendChild(img);
+      }
+      const text = document.createElement("div");
+      text.className = "bz-setlist-text";
+      const name = document.createElement("div");
+      name.className = "bz-setlist-name";
+      name.textContent = it.label;
+      text.appendChild(name);
+      if (it.sub) {
+        const sub = document.createElement("div");
+        sub.className = "bz-setlist-sub";
+        sub.textContent = it.sub;
+        text.appendChild(sub);
+      }
+      item.appendChild(text);
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "bz-setlist-remove bz-touch-target--xl";
+      remove.textContent = opts.removeLabel || "移除";
+      if (opts.onRemove) {
+        const key = it.key;
+        remove.addEventListener("click", () => {
+          var _a3;
+          return (_a3 = opts.onRemove) == null ? void 0 : _a3.call(opts, key);
+        });
+      }
+      item.appendChild(remove);
+      box.appendChild(item);
+    }
+    return box;
+  }
+  var init_setlist = __esm({
+    "src/core/ui/setlist.ts"() {
+    }
+  });
+
+  // src/core/ui/field.ts
+  function uiInput(opts) {
+    const inp = document.createElement("input");
+    inp.className = "bz-input" + (opts.error ? " bz-input--error" : "");
+    inp.type = opts.type || "text";
+    if (opts.placeholder) inp.placeholder = opts.placeholder;
+    if (opts.value !== void 0) inp.value = opts.value;
+    if (opts.disabled) inp.disabled = true;
+    if (opts.onInput) inp.addEventListener("input", () => {
+      var _a2;
+      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, inp.value);
+    });
+    return inp;
+  }
+  function uiField(opts) {
+    const wrap = document.createElement("label");
+    wrap.className = "bz-field";
+    if (opts.label) {
+      const l = document.createElement("span");
+      l.className = "bz-field-label";
+      l.textContent = opts.label;
+      wrap.appendChild(l);
+    }
+    wrap.appendChild(opts.control);
+    if (opts.error) {
+      if (opts.control.classList.contains("bz-input")) opts.control.classList.add("bz-input--error");
+      const e = document.createElement("span");
+      e.className = "bz-field-error";
+      e.textContent = opts.error;
+      wrap.appendChild(e);
+    } else if (opts.desc) {
+      const d = document.createElement("span");
+      d.className = "bz-field-desc";
+      d.textContent = opts.desc;
+      wrap.appendChild(d);
+    }
+    return wrap;
+  }
+  var init_field = __esm({
+    "src/core/ui/field.ts"() {
+    }
+  });
+
+  // src/core/ui/slider.ts
+  function uiRange(opts) {
+    const el = document.createElement("input");
+    el.type = "range";
+    el.className = "bz-range" + (opts.className ? " " + opts.className : "");
+    if (opts.min !== void 0) el.min = String(opts.min);
+    if (opts.max !== void 0) el.max = String(opts.max);
+    if (opts.step !== void 0) el.step = String(opts.step);
+    if (opts.value !== void 0) el.value = String(opts.value);
+    if (opts.disabled) el.disabled = true;
+    if (opts.onInput) el.addEventListener("input", () => {
+      var _a2;
+      return (_a2 = opts.onInput) == null ? void 0 : _a2.call(opts, parseFloat(el.value));
+    });
+    if (opts.onChange) el.addEventListener("change", () => {
+      var _a2;
+      return (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, parseFloat(el.value));
+    });
+    return el;
+  }
+  var init_slider = __esm({
+    "src/core/ui/slider.ts"() {
+    }
+  });
+
+  // src/core/ui/empty.ts
+  function uiEmpty(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-empty";
+    if (opts.icon) {
+      const ic2 = uiIcon(opts.icon);
+      ic2.classList.add("bz-empty-ic");
+      el.appendChild(ic2);
+    }
+    const t = document.createElement("div");
+    t.className = "bz-empty-title";
+    t.textContent = opts.title;
+    el.appendChild(t);
+    if (opts.desc) {
+      const d = document.createElement("div");
+      d.className = "bz-empty-desc";
+      d.textContent = opts.desc;
+      el.appendChild(d);
+    }
+    if (opts.actions) el.appendChild(opts.actions);
+    return el;
+  }
+  var init_empty = __esm({
+    "src/core/ui/empty.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/segmented.ts
+  function uiSegmented(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-segmented" + (opts.className ? " " + opts.className : "");
+    el.setAttribute("role", "radiogroup");
+    el.setAttribute("aria-label", opts.label || "");
+    const btns = /* @__PURE__ */ new Map();
+    opts.options.forEach((o) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "bz-segmented-btn" + (o.value === opts.value ? " is-on" : "");
+      b.textContent = o.label;
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", String(o.value === opts.value));
+      b.addEventListener("click", () => {
+        setValue(o.value);
+        opts.onChange(o.value);
+      });
+      b.addEventListener("keydown", (e) => {
+        var _a2;
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+        e.preventDefault();
+        const vals = opts.options.map((x) => x.value);
+        const curIdx = vals.indexOf(current2());
+        const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+        const nextIdx = (curIdx + delta + vals.length) % vals.length;
+        setValue(vals[nextIdx]);
+        opts.onChange(vals[nextIdx]);
+        (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
+      });
+      btns.set(o.value, b);
+      el.appendChild(b);
+    });
+    let cur = opts.value;
+    function current2() {
+      return cur;
+    }
+    function setValue(v) {
+      cur = v;
+      btns.forEach((b, k) => {
+        const on = k === v;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+    }
+    return { el, setValue };
+  }
+  var init_segmented = __esm({
+    "src/core/ui/segmented.ts"() {
+    }
+  });
+
+  // src/core/ui/choice.ts
+  function uiChoice(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-choice" + (opts.float ? " bz-choice--float" : "") + (opts.className ? " " + opts.className : "");
+    el.setAttribute("role", "radiogroup");
+    el.setAttribute("aria-label", opts.label || "");
+    const btns = /* @__PURE__ */ new Map();
+    let cur = opts.value;
+    const seg = document.createElement("span");
+    seg.className = "bz-choice-seg";
+    let segRAF = 0;
+    let segTries = 0;
+    const syncSeg = (animate) => {
+      if (!opts.float) return;
+      const on = el.querySelector(".bz-choice-btn.is-on");
+      if (!on) return;
+      const tb = el.getBoundingClientRect();
+      const bb = on.getBoundingClientRect();
+      if (!el.isConnected || !tb.width || !bb.width) {
+        if (segTries++ > 120) return;
+        cancelAnimationFrame(segRAF);
+        segRAF = requestAnimationFrame(() => syncSeg(false));
+        return;
+      }
+      segTries = 0;
+      if (!animate) seg.style.transition = "none";
+      seg.style.width = `${bb.width}px`;
+      seg.style.transform = `translateX(${bb.left - tb.left}px)`;
+      if (!animate) {
+        void seg.offsetWidth;
+        seg.style.transition = "";
+      }
+    };
+    const onWinResize = () => {
+      if (!el.isConnected) {
+        window.removeEventListener("resize", onWinResize);
+        return;
+      }
+      syncSeg(false);
+    };
+    if (opts.float) {
+      window.addEventListener("resize", onWinResize);
+    }
+    opts.options.forEach((o) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "bz-choice-btn" + (o.value === opts.value ? " is-on" : "");
+      b.dataset.value = String(o.value);
+      b.setAttribute("role", "radio");
+      b.setAttribute("aria-checked", String(o.value === opts.value));
+      if (o.dot) {
+        const d = document.createElement("span");
+        d.className = "bz-choice-dot";
+        d.style.background = o.dot;
+        b.appendChild(d);
+      }
+      b.appendChild(document.createTextNode(o.label));
+      b.addEventListener("click", () => {
+        setValue(o.value);
+        opts.onChange(o.value);
+      });
+      b.addEventListener("keydown", (e) => {
+        var _a2;
+        if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+        e.preventDefault();
+        const vals = opts.options.map((x) => x.value);
+        const curIdx = vals.indexOf(cur);
+        const delta = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+        const nextIdx = (curIdx + delta + vals.length) % vals.length;
+        setValue(vals[nextIdx]);
+        opts.onChange(vals[nextIdx]);
+        (_a2 = btns.get(vals[nextIdx])) == null ? void 0 : _a2.focus();
+      });
+      btns.set(o.value, b);
+      el.appendChild(b);
+    });
+    if (opts.float) el.appendChild(seg);
+    function setValue(v) {
+      cur = v;
+      btns.forEach((b, k) => {
+        const on = k === v;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+      if (opts.float) syncSeg(true);
+    }
+    syncSeg(false);
+    const detach = () => {
+      cancelAnimationFrame(segRAF);
+      window.removeEventListener("resize", onWinResize);
+    };
+    return { el, setValue, detach };
+  }
+  var init_choice = __esm({
+    "src/core/ui/choice.ts"() {
+    }
+  });
+
+  // src/core/ui/cardpick.ts
+  function uiCardChoice(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-cardpick" + (opts.className ? " " + opts.className : "");
+    el.setAttribute("role", "radiogroup");
+    if (opts.label) el.setAttribute("aria-label", opts.label);
+    const btns = /* @__PURE__ */ new Map();
+    let cur = opts.value;
+    const sync = (v) => {
+      cur = v;
+      btns.forEach((b, val) => {
+        const on = val === v;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-checked", String(on));
+      });
+    };
+    opts.options.forEach((o) => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "bz-cardpick-card" + (o.value === opts.value ? " is-on" : "");
+      card.dataset.value = String(o.value);
+      card.setAttribute("role", "radio");
+      card.setAttribute("aria-checked", String(o.value === opts.value));
+      const prev = document.createElement("div");
+      prev.className = "bz-cardpick-prev" + (o.prevClass ? ` ${o.prevClass}` : "");
+      prev.setAttribute("aria-hidden", "true");
+      prev.style.height = "62px";
+      const name = document.createElement("span");
+      name.className = "bz-cardpick-name";
+      name.textContent = o.label;
+      card.append(prev, name);
+      card.addEventListener("click", () => {
+        if (cur === o.value) return;
+        sync(o.value);
+        opts.onChange(o.value);
+      });
+      btns.set(o.value, card);
+      el.appendChild(card);
+    });
+    el.addEventListener("keydown", (e) => {
+      var _a2;
+      if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
+      const list = opts.options.map((o) => o.value);
+      const idx = list.indexOf(cur);
+      const next = e.key === "ArrowRight" ? (idx + 1) % list.length : (idx - 1 + list.length) % list.length;
+      (_a2 = btns.get(list[next])) == null ? void 0 : _a2.focus();
+      e.preventDefault();
+    });
+    return { el, setValue: sync };
+  }
+  var init_cardpick = __esm({
+    "src/core/ui/cardpick.ts"() {
+    }
+  });
+
+  // src/core/ui/switch.ts
+  function uiSwitch(opts) {
+    const el = document.createElement("span");
+    el.className = "bz-sw" + (opts.checked ? " on" : "") + (opts.disabled ? " is-disabled" : "");
+    el.setAttribute("role", "switch");
+    el.setAttribute("aria-checked", String(!!opts.checked));
+    el.setAttribute("aria-disabled", String(!!opts.disabled));
+    el.tabIndex = opts.disabled ? -1 : 0;
+    const setChecked = (v) => {
+      el.classList.toggle("on", v);
+      el.setAttribute("aria-checked", String(v));
+    };
+    const setDisabled = (v) => {
+      el.classList.toggle("is-disabled", v);
+      el.setAttribute("aria-disabled", String(v));
+      el.tabIndex = v ? -1 : 0;
+    };
+    const enabled = () => !el.classList.contains("is-disabled");
+    const toggle = () => {
+      var _a2;
+      if (!enabled()) return;
+      const next = !el.classList.contains("on");
+      setChecked(next);
+      (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, next);
+    };
+    el.addEventListener("click", toggle);
+    el.addEventListener("keydown", (e) => {
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        toggle();
+      }
+    });
+    return { el, setChecked, setDisabled };
+  }
+  var init_switch = __esm({
+    "src/core/ui/switch.ts"() {
+    }
+  });
+
+  // src/core/ui/select.ts
+  function uiSelect(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-select" + (opts.className ? " " + opts.className : "");
+    el.setAttribute("role", "listbox");
+    el.setAttribute("aria-expanded", "false");
+    el.tabIndex = 0;
+    const val = document.createElement("span");
+    val.className = "bz-select-val";
+    el.appendChild(val);
+    el.appendChild(uiIcon("chevron-down", "bz-select-car"));
+    let current2 = opts.value;
+    let menu = null;
+    let escHandle6 = null;
+    const labelOf = (v) => {
+      const o = opts.options.find((x) => x.value === v);
+      return o ? o.label : "";
+    };
+    const renderVal = () => {
+      val.textContent = labelOf(current2) || opts.placeholder || "";
+    };
+    renderVal();
+    const close = (notify2 = true) => {
+      var _a2;
+      if (menu) {
+        menu.remove();
+        menu = null;
+      }
+      if (escHandle6) {
+        escHandle6.unregister();
+        escHandle6 = null;
+      }
+      el.classList.remove("open");
+      el.setAttribute("aria-expanded", "false");
+      if (notify2) (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, false);
+    };
+    const open = () => {
+      var _a2;
+      close(false);
+      el.classList.add("open");
+      el.setAttribute("aria-expanded", "true");
+      (_a2 = opts.onOpenChange) == null ? void 0 : _a2.call(opts, true);
+      const m = document.createElement("div");
+      m.className = "bz-select-menu";
+      m.setAttribute("role", "listbox");
+      menu = m;
+      opts.options.forEach((o, i) => {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "bz-select-item" + (o.value === current2 ? " is-on" : "");
+        b.setAttribute("role", "option");
+        b.setAttribute("aria-selected", String(o.value === current2));
+        b.dataset.index = String(i);
+        const span = document.createElement("span");
+        span.textContent = o.label;
+        b.appendChild(span);
+        b.appendChild(uiIcon("check", "bz-select-item-ck"));
+        b.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          setValue(o.value);
+          opts.onChange(o.value);
+          close();
+        });
+        m.appendChild(b);
+      });
+      el.appendChild(m);
+      for (let round = 0; round < 3; round++) {
+        let delta = 0;
+        m.querySelectorAll(".bz-select-item > span").forEach((sp) => {
+          delta = Math.max(delta, sp.scrollWidth - sp.clientWidth);
+        });
+        if (delta <= 0) break;
+        const cs = getComputedStyle(m);
+        const border = (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+        m.style.minWidth = `${m.clientWidth + delta - border}px`;
+      }
+      const vw = window.innerWidth || document.documentElement.clientWidth;
+      const rect = m.getBoundingClientRect();
+      const over = Math.ceil(rect.right - vw) + 2;
+      if (over > 0) {
+        m.style.right = `${over}px`;
+        if (m.getBoundingClientRect().left < 2) m.style.right = "";
+      }
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const mRect = m.getBoundingClientRect();
+      const need = mRect.height || m.offsetHeight;
+      const spaceBelow = vh - mRect.bottom;
+      if (need > 0 && spaceBelow < need && spaceBelow < mRect.top) {
+        m.classList.add("is-flip-up");
+      }
+      escHandle6 = escManager.register("bz-ui-select", {
+        isVisible: () => !!menu && menu.isConnected,
+        close: () => close()
+      });
+    };
+    const setValue = (v) => {
+      current2 = v;
+      renderVal();
+      if (menu) {
+        opts.options.forEach((o, i) => {
+          const item = menu == null ? void 0 : menu.querySelectorAll(".bz-select-item")[i];
+          if (!item) return;
+          const on = o.value === v;
+          item.classList.toggle("is-on", on);
+          item.setAttribute("aria-selected", String(on));
+        });
+      }
+    };
+    const moveFocus = (delta) => {
+      if (!menu) return;
+      const curIdx = opts.options.findIndex((o) => o.value === current2);
+      const nextIdx = Math.min(opts.options.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+      opts.options.forEach((o, i) => {
+        const item = menu == null ? void 0 : menu.querySelectorAll(".bz-select-item")[i];
+        if (!item) return;
+        const on = i === nextIdx;
+        item.classList.toggle("is-on", on);
+        item.setAttribute("aria-selected", String(on));
+      });
+    };
+    el.addEventListener("click", () => {
+      if (menu) close();
+      else open();
+    });
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        if (menu) {
+          const on = menu == null ? void 0 : menu.querySelector(".bz-select-item.is-on");
+          if (on && on !== el) {
+            const v = opts.options[Number(on.dataset.index)];
+            if (v) {
+              setValue(v.value);
+              opts.onChange(v.value);
+            }
+          }
+          close();
+        } else open();
+      } else if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (!menu) open();
+        moveFocus(e.key === "ArrowDown" ? 1 : -1);
+      } else if (e.key === "Escape") {
+        e.stopPropagation();
+        close();
+      }
+    });
+    const onDocClick = (e) => {
+      if (menu && !el.contains(e.target)) close();
+    };
+    document.addEventListener("click", onDocClick);
+    return {
+      el,
+      setValue,
+      detach: () => {
+        document.removeEventListener("click", onDocClick);
+        close(false);
+      }
+    };
+  }
+  var init_select = __esm({
+    "src/core/ui/select.ts"() {
+      init_icon();
+      init_esc_manager();
+    }
+  });
+
+  // src/core/ui/search.ts
+  function uiSearch(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-search";
+    el.appendChild(uiIcon("search"));
+    const input = uiInput({
+      placeholder: opts.placeholder,
+      value: opts.value,
+      onInput: opts.onInput
+    });
+    el.appendChild(input);
+    const setValue = (v) => {
+      input.value = v;
+    };
+    return { el, input, setValue };
+  }
+  var init_search = __esm({
+    "src/core/ui/search.ts"() {
+      init_icon();
+      init_field();
+    }
+  });
+
+  // src/core/ui/mainhead.ts
+  function uiMainHead(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-main-head";
+    const title = document.createElement("span");
+    title.className = "bz-main-title";
+    title.textContent = opts.title;
+    el.appendChild(title);
+    const count = document.createElement("span");
+    count.className = "bz-main-count";
+    el.appendChild(count);
+    const sp = document.createElement("span");
+    sp.className = "bz-main-spacer";
+    el.appendChild(sp);
+    if (opts.action) {
+      el.appendChild(uiBtn({
+        label: opts.action.label,
+        icon: opts.action.icon,
+        tone: "primary",
+        className: "bz-btn--md",
+        onClick: opts.action.onClick
+      }));
+    }
+    const setCount = (c) => {
+      if (c === void 0 || c === null || c === "") {
+        count.style.display = "none";
+        count.textContent = "";
+      } else {
+        count.style.display = "";
+        count.textContent = c;
+      }
+    };
+    setCount(opts.count);
+    return {
+      el,
+      setTitle: (t) => {
+        title.textContent = t;
+      },
+      setCount
+    };
+  }
+  var init_mainhead = __esm({
+    "src/core/ui/mainhead.ts"() {
+      init_button();
+    }
+  });
+
+  // src/core/ui/rail.ts
+  function buildRow(item) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "bz-rail-item";
+    b.dataset.id = item.id;
+    if (item.boxedIcon) {
+      const box = document.createElement("span");
+      box.className = "bz-rail-ic";
+      box.appendChild(uiIcon(item.boxedIcon));
+      b.appendChild(box);
+    } else if (item.icon) {
+      b.appendChild(uiIcon(item.icon));
+    } else if (item.emoji) {
+      const emo = document.createElement("span");
+      emo.className = "bz-rail-emoji";
+      emo.textContent = item.emoji;
+      b.appendChild(emo);
+    } else if (item.badge) {
+      const badge = document.createElement("span");
+      badge.className = "bz-rail-badge";
+      badge.textContent = item.badge.t;
+      badge.setAttribute("aria-label", item.badge.label);
+      if (item.badge.tint) badge.style.setProperty("--bz-rail-tint", item.badge.tint);
+      b.appendChild(badge);
+    } else if (item.dot) {
+      const dot = document.createElement("span");
+      dot.className = "bz-rail-dot";
+      dot.style.setProperty("--bz-rail-tint", item.dot);
+      b.appendChild(dot);
+    }
+    const name = document.createElement("span");
+    name.className = "bz-rail-name";
+    name.textContent = item.name;
+    b.appendChild(name);
+    if (item.count !== void 0 && item.count !== null && item.count !== "") {
+      const cnt = document.createElement("span");
+      cnt.className = "bz-rail-count" + (item.pill ? " bz-rail-count--pill" : "");
+      cnt.textContent = String(item.count);
+      b.appendChild(cnt);
+    }
+    if (item.unread) {
+      const u = document.createElement("span");
+      u.className = "bz-rail-unread";
+      u.textContent = String(item.unread);
+      b.appendChild(u);
+    }
+    if (item.children && item.children.length) {
+      b.classList.add("has-sub");
+      const caret = document.createElement("span");
+      caret.className = "bz-rail-caret";
+      setIcon(caret, "chevron-right");
+      b.appendChild(caret);
+    }
+    return b;
+  }
+  function uiRail(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-rail";
+    const scroll = document.createElement("div");
+    scroll.className = "bz-rail-scroll";
+    el.appendChild(scroll);
+    const rows = /* @__PURE__ */ new Map();
+    const setActive = (id) => {
+      var _a2;
+      rows.forEach((row) => row.classList.remove("on"));
+      (_a2 = rows.get(id)) == null ? void 0 : _a2.classList.add("on");
+    };
+    opts.groups.forEach((g) => {
+      if (g.label) {
+        const lb = document.createElement("div");
+        lb.className = "bz-rail-label";
+        lb.textContent = g.label;
+        scroll.appendChild(lb);
+      }
+      g.items.forEach((item) => {
+        const row = buildRow(item);
+        rows.set(item.id, row);
+        scroll.appendChild(row);
+        if (item.children && item.children.length) {
+          const sub = document.createElement("div");
+          sub.className = "bz-rail-sub";
+          item.children.forEach((child) => {
+            const cr = buildRow(child);
+            rows.set(child.id, cr);
+            cr.addEventListener("click", () => {
+              var _a2;
+              setActive(child.id);
+              (_a2 = opts.onSelect) == null ? void 0 : _a2.call(opts, child.id);
+            });
+            sub.appendChild(cr);
+          });
+          scroll.appendChild(sub);
+          row.addEventListener("click", () => {
+            const open = !sub.classList.contains("open");
+            sub.classList.toggle("open", open);
+            row.classList.toggle("sub-open", open);
+          });
+        } else {
+          row.addEventListener("click", () => {
+            var _a2;
+            setActive(item.id);
+            (_a2 = opts.onSelect) == null ? void 0 : _a2.call(opts, item.id);
+          });
+        }
+      });
+    });
+    if (opts.foot) {
+      const foot = document.createElement("div");
+      foot.className = "bz-rail-foot";
+      foot.appendChild(opts.foot);
+      el.appendChild(foot);
+    }
+    setActive(opts.activeId);
+    return { el, setActive };
+  }
+  var init_rail = __esm({
+    "src/core/ui/rail.ts"() {
+      init_fake_obsidian();
+      init_icon();
+    }
+  });
+
+  // src/core/ui/mobstrip.ts
+  function uiMobStrip(opts) {
+    const el = document.createElement("div");
+    el.className = "bz-mobstrip";
+    const chips = /* @__PURE__ */ new Map();
+    const setValue = (id) => {
+      chips.forEach((chip2) => chip2.classList.toggle("is-on", chip2.dataset.id === id));
+    };
+    opts.items.forEach((it) => {
+      const chip2 = document.createElement("button");
+      chip2.type = "button";
+      chip2.className = "bz-mobstrip-chip";
+      chip2.dataset.id = it.id;
+      if (it.dot) {
+        const dot = document.createElement("span");
+        dot.className = "bz-mobstrip-dot";
+        dot.style.setProperty("--bz-rail-tint", it.dot);
+        chip2.appendChild(dot);
+      }
+      chip2.appendChild(document.createTextNode(it.label));
+      chip2.addEventListener("click", () => {
+        var _a2;
+        setValue(it.id);
+        (_a2 = opts.onChange) == null ? void 0 : _a2.call(opts, it.id);
+      });
+      chips.set(it.id, chip2);
+      el.appendChild(chip2);
+    });
+    setValue(opts.value);
+    return { el, setValue };
+  }
+  var init_mobstrip = __esm({
+    "src/core/ui/mobstrip.ts"() {
+    }
+  });
+
+  // src/core/ui/stat.ts
+  function uiStat(opts) {
+    const el = document.createElement("div");
+    const cls = ["bz-stat"];
+    if (opts.tone) cls.push(`bz-stat--${opts.tone}`);
+    if (opts.click) cls.push("bz-stat--click");
+    el.className = cls.join(" ");
+    const label = document.createElement("span");
+    label.className = "bz-stat-label";
+    if (opts.icon) label.appendChild(uiIcon(opts.icon));
+    label.appendChild(document.createTextNode(opts.label));
+    el.appendChild(label);
+    const num2 = document.createElement("span");
+    num2.className = "bz-stat-num";
+    num2.textContent = String(opts.num);
+    el.appendChild(num2);
+    if (opts.hint) {
+      const hint = document.createElement("span");
+      hint.className = "bz-stat-hint";
+      hint.textContent = opts.hint;
+      el.appendChild(hint);
+    }
+    if (opts.onClick) {
+      el.setAttribute("role", "button");
+      el.tabIndex = 0;
+      el.addEventListener("click", opts.onClick);
+      el.addEventListener("keydown", (e) => {
+        var _a2;
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        (_a2 = opts.onClick) == null ? void 0 : _a2.call(opts);
+      });
+    }
+    return el;
+  }
+  var init_stat = __esm({
+    "src/core/ui/stat.ts"() {
+      init_icon();
+    }
+  });
+
+  // src/core/ui/progress.ts
+  function uiProgress(opts = {}) {
+    const el = document.createElement("div");
+    const cls = ["bz-progress"];
+    if (opts.thin) cls.push("bz-progress--thin");
+    if (opts.tone) cls.push(`bz-progress--${opts.tone}`);
+    el.className = cls.join(" ");
+    const fill = document.createElement("i");
+    el.appendChild(fill);
+    const setValue = (n) => {
+      const v = Math.min(100, Math.max(0, Number(n) || 0));
+      fill.style.width = v + "%";
+    };
+    if (opts.value !== void 0) setValue(opts.value);
+    return { el, setValue };
+  }
+  var init_progress = __esm({
+    "src/core/ui/progress.ts"() {
+    }
+  });
+
+  // src/core/ui/popover.ts
+  function uiPopover(opts) {
+    var _a2;
+    const anchor = opts.anchor;
+    let current2 = (_a2 = opts.value) != null ? _a2 : "";
+    let items = opts.options;
+    let layer = null;
+    let escHandle6 = null;
+    const onDocClick = (e) => {
+      if (!layer) return;
+      const t = e.target;
+      if (anchor.contains(t)) return;
+      close();
+    };
+    const open = () => {
+      if (layer) return;
+      const m = document.createElement("div");
+      m.className = "bz-popover";
+      m.setAttribute("role", "listbox");
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "bz-popover-empty";
+        empty.textContent = opts.emptyText || "无匹配项";
+        m.appendChild(empty);
+      } else {
+        items.forEach((o) => {
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "bz-popover-item" + (o.id === current2 ? " is-on" : "");
+          b.dataset.id = o.id;
+          b.setAttribute("role", "option");
+          b.setAttribute("aria-selected", String(o.id === current2));
+          if (o.icon) b.appendChild(uiIcon(o.icon));
+          const span = document.createElement("span");
+          span.textContent = o.label;
+          b.appendChild(span);
+          b.addEventListener("click", (ev) => {
+            var _a3;
+            ev.stopPropagation();
+            setValue(o.id);
+            (_a3 = opts.onPick) == null ? void 0 : _a3.call(opts, o.id);
+            close();
+          });
+          m.appendChild(b);
+        });
+      }
+      (anchor.parentElement || anchor).appendChild(m);
+      layer = m;
+      const vh = window.innerHeight || document.documentElement.clientHeight;
+      const rect = m.getBoundingClientRect();
+      const need = rect.height || m.offsetHeight;
+      const spaceBelow = vh - rect.bottom;
+      if (need > 0 && spaceBelow < need && spaceBelow < rect.top) {
+        m.classList.add("is-flip-up");
+      }
+      document.addEventListener("click", onDocClick);
+      escHandle6 = escManager.register("bz-ui-popover", {
+        isVisible: () => !!layer && layer.isConnected,
+        close: () => close()
+      });
+    };
+    const close = () => {
+      if (!layer) return;
+      layer.remove();
+      layer = null;
+      document.removeEventListener("click", onDocClick);
+      if (escHandle6) {
+        escHandle6.unregister();
+        escHandle6 = null;
+      }
+    };
+    const setValue = (id) => {
+      current2 = id;
+      if (!layer) return;
+      layer.querySelectorAll(".bz-popover-item").forEach((item) => {
+        const on = item.dataset.id === id;
+        item.classList.toggle("is-on", on);
+        item.setAttribute("aria-selected", String(on));
+      });
+    };
+    const setOptions = (next) => {
+      items = next;
+      if (layer) {
+        close();
+        open();
+      }
+    };
+    anchor.addEventListener("click", () => {
+      if (layer) close();
+      else open();
+    });
+    return {
+      open,
+      close,
+      setValue,
+      setOptions,
+      /** 清理：关浮层并摘除 document 监听（宿主收尾用，对齐 uiSelect.detach） */
+      detach: () => {
+        document.removeEventListener("click", onDocClick);
+        close();
+      }
+    };
+  }
+  var init_popover = __esm({
+    "src/core/ui/popover.ts"() {
+      init_icon();
+      init_esc_manager();
+    }
+  });
+
+  // src/core/ui/suggest.ts
+  function uiSuggest(opts) {
+    var _a2;
+    const anchor = opts.anchor;
+    const max = (_a2 = opts.max) != null ? _a2 : 30;
+    let layer = null;
+    let skipNextOpen = false;
+    const close = () => {
+      if (!layer) return;
+      layer.remove();
+      layer = null;
+      document.removeEventListener("mousedown", onDocDown, true);
+    };
+    const onDocDown = (e) => {
+      const t = e.target;
+      if (!anchor.isConnected) {
+        close();
+        return;
+      }
+      if ((layer == null ? void 0 : layer.contains(t)) || anchor.contains(t)) return;
+      close();
+    };
+    const pick = (raw) => {
+      var _a3;
+      anchor.value = raw;
+      close();
+      (_a3 = opts.onPick) == null ? void 0 : _a3.call(opts, raw);
+      if (document.activeElement !== anchor) {
+        skipNextOpen = true;
+        anchor.focus();
+      }
+    };
+    const draw = () => {
+      if (!layer) return;
+      const cur = anchor.value.trim();
+      const q2 = cur.toLowerCase();
+      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
+      if (!matched.length) {
+        close();
+        return;
+      }
+      layer.replaceChildren();
+      matched.forEach((raw) => {
+        var _a3;
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "bz-popover-item";
+        b.dataset.value = raw;
+        b.setAttribute("role", "option");
+        const on = raw === cur;
+        if (on) b.classList.add("is-on");
+        const icon = (_a3 = opts.iconOf) == null ? void 0 : _a3.call(opts, raw);
+        if (icon) {
+          const ic2 = document.createElement("span");
+          ic2.className = "bz-suggest-ic";
+          if (typeof icon === "string") ic2.textContent = icon;
+          else ic2.appendChild(icon);
+          b.appendChild(ic2);
+        }
+        const label = document.createElement("span");
+        label.textContent = opts.labelOf ? opts.labelOf(raw) : raw;
+        b.appendChild(label);
+        b.addEventListener("click", () => pick(raw));
+        layer.appendChild(b);
+      });
+    };
+    const open = () => {
+      if (skipNextOpen) {
+        skipNextOpen = false;
+        return;
+      }
+      if (layer) {
+        draw();
+        return;
+      }
+      const m = document.createElement("div");
+      m.className = "bz-popover";
+      m.setAttribute("role", "listbox");
+      (anchor.parentElement || anchor).appendChild(m);
+      layer = m;
+      document.addEventListener("mousedown", onDocDown, true);
+      draw();
+    };
+    const activeIdx = () => {
+      var _a3;
+      return [...(_a3 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a3 : []].findIndex((o) => o.classList.contains("is-on"));
+    };
+    const moveActive = (to) => {
+      var _a3, _b2;
+      const items = [...(_a3 = layer == null ? void 0 : layer.querySelectorAll(".bz-popover-item")) != null ? _a3 : []];
+      if (!items.length) return;
+      const next = items[Math.max(0, Math.min(items.length - 1, to))];
+      items.forEach((o) => o.classList.toggle("is-on", o === next));
+      (_b2 = next.scrollIntoView) == null ? void 0 : _b2.call(next, { block: "nearest" });
+    };
+    anchor.addEventListener("focus", open);
+    anchor.addEventListener("input", () => {
+      skipNextOpen = false;
+      open();
+    });
+    anchor.addEventListener("keydown", (e) => {
+      if (!layer) return;
+      if (e.key === "ArrowDown") {
+        moveActive(activeIdx() + 1);
+        e.preventDefault();
+      } else if (e.key === "ArrowUp") {
+        moveActive(activeIdx() < 0 ? layer.querySelectorAll(".bz-popover-item").length - 1 : activeIdx() - 1);
+        e.preventDefault();
+      } else if (e.key === "Enter") {
+        const on = layer.querySelector(".bz-popover-item.is-on");
+        if (on) {
+          pick(on.dataset.value);
+          e.preventDefault();
+        }
+      } else if (e.key === "Escape") {
+        close();
+        e.stopPropagation();
+      }
+    });
+    return {
+      close,
+      /** 清理：关浮层并摘 document 监听（宿主收尾用；anchor 随表单移除时下次外点自清） */
+      detach: () => {
+        close();
+      }
+    };
+  }
+  var init_suggest = __esm({
+    "src/core/ui/suggest.ts"() {
+    }
+  });
+
+  // src/core/ui/lightbox.ts
+  function lockBodyScroll(lock) {
+    const body = document.body;
+    if (lock) {
+      body.dataset.bzLightboxScroll = body.style.overflow || "";
+      body.style.overflow = "hidden";
+    } else if (body.dataset.bzLightboxScroll !== void 0) {
+      body.style.overflow = body.dataset.bzLightboxScroll === "" ? "" : body.dataset.bzLightboxScroll;
+      delete body.dataset.bzLightboxScroll;
+    }
+  }
+  function openLightbox(opts) {
+    closeLightbox();
+    const mask = document.createElement("div");
+    mask.className = "bz-lightbox";
+    mask.style.zIndex = String(allocZ());
+    const head = document.createElement("div");
+    head.className = "bz-lightbox-head";
+    const title = document.createElement("span");
+    title.className = "bz-lightbox-title";
+    title.textContent = opts.title || "";
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "bz-lightbox-close";
+    closeBtn.setAttribute("aria-label", "关闭");
+    closeBtn.appendChild(uiIcon("x"));
+    head.appendChild(title);
+    head.appendChild(closeBtn);
+    const media = document.createElement("div");
+    media.className = "bz-lightbox-media";
+    const bareSrc = opts.src.split("?")[0].split("#")[0];
+    const type = opts.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
+    if (type === "video") {
+      const v = document.createElement("video");
+      v.src = opts.src;
+      v.controls = true;
+      v.autoplay = true;
+      media.appendChild(v);
+    } else if (type === "audio") {
+      const a = document.createElement("audio");
+      a.src = opts.src;
+      a.controls = true;
+      a.autoplay = true;
+      media.appendChild(a);
+    } else {
+      const img = document.createElement("img");
+      img.src = opts.src;
+      img.alt = opts.title || "";
+      media.appendChild(img);
+    }
+    const foot = document.createElement("div");
+    foot.className = "bz-lightbox-foot";
+    foot.textContent = opts.caption || "";
+    mask.appendChild(head);
+    mask.appendChild(media);
+    mask.appendChild(foot);
+    document.body.appendChild(mask);
+    lockBodyScroll(true);
+    let escHandle6 = null;
+    function close() {
+      if (current !== mask) return;
+      mask.remove();
+      escHandle6 == null ? void 0 : escHandle6.unregister();
+      if (currentEscHandle === escHandle6) currentEscHandle = null;
+      current = null;
+      lockBodyScroll(false);
+    }
+    escHandle6 = escManager.register("bz-lightbox", {
+      isVisible: () => mask.isConnected,
+      close
+    });
+    currentEscHandle = escHandle6;
+    mask.addEventListener("click", (e) => {
+      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
+    });
+    closeBtn.addEventListener("click", close);
+    current = mask;
+    return { close };
+  }
+  function closeLightbox() {
+    if (current) {
+      current.remove();
+      current = null;
+      currentEscHandle == null ? void 0 : currentEscHandle.unregister();
+      currentEscHandle = null;
+      lockBodyScroll(false);
+    }
+  }
+  var current, currentEscHandle;
+  var init_lightbox = __esm({
+    "src/core/ui/lightbox.ts"() {
+      init_icon();
+      init_esc_manager();
+      init_z_order();
+      current = null;
+      currentEscHandle = null;
+    }
+  });
+
+  // src/core/mobile.ts
+  function isMobileEnv() {
+    return typeof Platform !== "undefined" && !!Platform.isMobile;
+  }
+  var init_mobile = __esm({
+    "src/core/mobile.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/focus-trap.ts
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function firstFocusable(container) {
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
+      if (isHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    return list[0] || null;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active2 = document.activeElement;
+      if (e.shiftKey) {
+        if (active2 === first || !container.contains(active2)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active2 === last || !container.contains(active2)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  var FOCUSABLE_SELECTOR;
+  var init_focus_trap = __esm({
+    "src/core/ui/focus-trap.ts"() {
+      init_mobile();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    }
+  });
+
+  // src/core/ui/modal.ts
+  function bindFormSubmit(popup, onSubmit) {
+    popup.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      onSubmit();
+    });
+    popup.addEventListener("keypress", (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.dataset.bzNoFormSubmit !== void 0) return;
+      e.preventDefault();
+      onSubmit();
+    });
+  }
+  function uiModal(opts) {
+    var _a2;
+    const prevActive = document.activeElement;
+    const focusEnabled = opts.autofocus !== false;
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask";
+    mask.style.zIndex = String(allocZ());
+    const popup = document.createElement("div");
+    popup.className = "bz-overlay-popup" + (opts.className ? " " + opts.className : "");
+    if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    if (opts.title) popup.setAttribute("aria-label", opts.title);
+    if (opts.head) {
+      const head = document.createElement("div");
+      head.className = "bz-dialog-head";
+      const title = document.createElement("span");
+      title.className = "bz-dialog-title";
+      title.textContent = opts.title || "";
+      head.appendChild(title);
+      popup.appendChild(head);
+    }
+    const body = document.createElement("div");
+    body.className = "bz-dialog-body";
+    if (typeof opts.content === "string") body.innerHTML = opts.content;
+    else body.appendChild(opts.content);
+    popup.appendChild(body);
+    mask.appendChild(popup);
+    let closed = false;
+    let escHandle6 = null;
+    const releaseTrap = focusEnabled ? trapFocus(popup) : null;
+    function close() {
+      var _a3;
+      if (closed) return;
+      closed = true;
+      liveModals.delete(close);
+      releaseTrap == null ? void 0 : releaseTrap();
+      mask.remove();
+      escHandle6 == null ? void 0 : escHandle6.unregister();
+      if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
+        prevActive.focus();
+      }
+      (_a3 = opts.onClose) == null ? void 0 : _a3.call(opts);
+    }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) attemptClose();
+    });
+    escHandle6 = escManager.register("bz-modal", {
+      isVisible: () => mask.isConnected,
+      close: attemptClose
+    });
+    document.body.appendChild(mask);
+    if (focusEnabled) (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
+    liveModals.add(close);
+    return { mask, popup, close };
+  }
+  var liveModals;
+  var init_modal = __esm({
+    "src/core/ui/modal.ts"() {
+      init_esc_manager();
+      init_z_order();
+      init_focus_trap();
+      liveModals = /* @__PURE__ */ new Set();
+    }
+  });
+
+  // src/core/ui/resize.ts
+  function hitRegion(rect, x, y, edge) {
+    const onE = x >= rect.width - edge;
+    const onS = y >= rect.height - edge;
+    const onW = x <= edge;
+    const onN = y <= edge;
+    if (onE && onS) return "se";
+    if (onE && !onW) return "e";
+    if (onS && !onN) return "s";
+    return null;
+  }
+  function uiResizable(el, opts = {}) {
+    var _a2, _b2, _c, _d, _e;
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { flush: () => {
+      }, detach: () => {
+      } };
+    }
+    const edge = (_a2 = opts.edge) != null ? _a2 : 8;
+    const minW = (_b2 = opts.minW) != null ? _b2 : 320;
+    const minH = (_c = opts.minH) != null ? _c : 240;
+    const maxW = (_d = opts.maxW) != null ? _d : Number.POSITIVE_INFINITY;
+    const maxH = (_e = opts.maxH) != null ? _e : Number.POSITIVE_INFINITY;
+    let dir = null;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+    let startW = 0;
+    let startH = 0;
+    const cap = (isW) => {
+      const view = (isW ? window.innerWidth : window.innerHeight) * 0.92;
+      return Math.floor(Math.min(isW ? maxW : maxH, view));
+    };
+    const persist = opts.persist;
+    let persistTimer = null;
+    let lastW = 0;
+    let lastH = 0;
+    if (persist == null ? void 0 : persist.load) {
+      const saved = persist.load();
+      if (saved && saved.w > 0 && saved.h > 0) {
+        lastW = Math.min(Math.max(saved.w, minW), cap(true));
+        lastH = Math.min(Math.max(saved.h, minH), cap(false));
+        el.style.width = lastW + "px";
+        el.style.height = lastH + "px";
+      }
+    }
+    const regionAt = (e) => {
+      const rect = el.getBoundingClientRect();
+      return hitRegion(rect, e.clientX - rect.left, e.clientY - rect.top, edge);
+    };
+    const setCursor = (d) => {
+      el.style.cursor = d === "e" ? "ew-resize" : d === "s" ? "ns-resize" : d === "se" ? "nwse-resize" : "";
+    };
+    const onHover = (e) => {
+      if (dragging) return;
+      setCursor(regionAt(e));
+    };
+    const onDragMove = (e) => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      let w = dir === "e" || dir === "se" ? startW + dx : startW;
+      let h = dir === "s" || dir === "se" ? startH + dy : startH;
+      w = Math.min(Math.max(w, minW), cap(true));
+      h = Math.min(Math.max(h, minH), cap(false));
+      el.style.width = w + "px";
+      el.style.height = h + "px";
+      if (opts.onChange) opts.onChange(w, h);
+      if (persist == null ? void 0 : persist.save) {
+        lastW = w;
+        lastH = h;
+        if (persistTimer !== null) clearTimeout(persistTimer);
+        persistTimer = setTimeout(() => {
+          var _a3;
+          persistTimer = null;
+          (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w, h);
+        }, 300);
+      }
+    };
+    const onMouseLeave = () => {
+      if (!dragging) setCursor(null);
+    };
+    const onMouseDown = (e) => {
+      const d = regionAt(e);
+      if (!d) return;
+      e.preventDefault();
+      dir = d;
+      dragging = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = el.getBoundingClientRect().width;
+      startH = el.getBoundingClientRect().height;
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!el.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      dragging = false;
+      dir = null;
+      document.body.style.userSelect = "";
+      setCursor(null);
+      swallowNextClick();
+    };
+    el.addEventListener("mousemove", onHover);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mousemove", onDragMove);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && lastW > 0 && lastH > 0) persist.save(lastW, lastH);
+    };
+    return {
+      flush,
+      detach: () => {
+        flush();
+        el.removeEventListener("mousemove", onHover);
+        el.removeEventListener("mouseleave", onMouseLeave);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.userSelect = "";
+        setCursor(null);
+      }
+    };
+  }
+  var init_resize = __esm({
+    "src/core/ui/resize.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/splitter.ts
+  function uiVSplitter(opts) {
+    var _a2, _b2;
+    const left = opts.left;
+    const minLeft = (_a2 = opts.minLeft) != null ? _a2 : 220;
+    const minRight = (_b2 = opts.minRight) != null ? _b2 : 320;
+    const persist = opts.persist;
+    const el = document.createElement("div");
+    el.className = "bz-vsplit";
+    el.setAttribute("role", "separator");
+    el.setAttribute("aria-orientation", "vertical");
+    el.title = "拖动调整两侧宽度";
+    const isCoarse = typeof matchMedia === "function" && matchMedia("(pointer: coarse)").matches;
+    if (isCoarse) {
+      return { el, restore: () => {
+      }, flush: () => {
+      }, detach: () => {
+      } };
+    }
+    let dragging = false;
+    let startX = 0;
+    let startW = 0;
+    let persistTimer = null;
+    let lastW = 0;
+    let restored = false;
+    const availW = () => {
+      const parent = left.parentElement;
+      if (!parent) return 0;
+      return parent.clientWidth - el.offsetWidth;
+    };
+    const clampW = (w) => {
+      const avail = availW();
+      const max = avail > 0 ? avail - minRight : Number.POSITIVE_INFINITY;
+      return Math.min(Math.max(w, minLeft), Math.max(minLeft, max));
+    };
+    const applyW = (w) => {
+      left.style.width = w + "px";
+    };
+    const debSave = (w) => {
+      if (!(persist == null ? void 0 : persist.save)) return;
+      lastW = w;
+      if (persistTimer !== null) clearTimeout(persistTimer);
+      persistTimer = setTimeout(() => {
+        var _a3;
+        persistTimer = null;
+        (_a3 = persist.save) == null ? void 0 : _a3.call(persist, w);
+      }, 300);
+    };
+    const restore = () => {
+      if (restored || !(persist == null ? void 0 : persist.load) || !el.isConnected) return;
+      if (availW() <= 0) return;
+      const saved = persist.load();
+      restored = true;
+      if (saved != null && saved > 0) {
+        const w = clampW(saved);
+        applyW(w);
+        lastW = w;
+      }
+    };
+    const onDragMove = (e) => {
+      if (!left.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      e.preventDefault();
+      const w = clampW(startW + (e.clientX - startX));
+      if (w === lastW) return;
+      applyW(w);
+      lastW = w;
+      if (opts.onChange) opts.onChange(w);
+      debSave(w);
+    };
+    const onMouseDown = (e) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      dragging = true;
+      startX = e.clientX;
+      startW = left.getBoundingClientRect().width;
+      el.classList.add("is-drag");
+      document.body.style.userSelect = "none";
+    };
+    const onMouseUp = () => {
+      if (!left.isConnected) {
+        document.removeEventListener("mousemove", onDragMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        return;
+      }
+      if (!dragging) return;
+      dragging = false;
+      el.classList.remove("is-drag");
+      document.body.style.userSelect = "";
+      swallowNextClick();
+    };
+    document.addEventListener("mousemove", onDragMove);
+    el.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("mouseup", onMouseUp);
+    const flush = () => {
+      if (persistTimer === null) return;
+      clearTimeout(persistTimer);
+      persistTimer = null;
+      if ((persist == null ? void 0 : persist.save) && lastW > 0) persist.save(lastW);
+    };
+    return {
+      el,
+      restore,
+      flush,
+      detach: () => {
+        flush();
+        document.removeEventListener("mousemove", onDragMove);
+        el.removeEventListener("mousedown", onMouseDown);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.userSelect = "";
+        el.classList.remove("is-drag");
+      }
+    };
+  }
+  var init_splitter = __esm({
+    "src/core/ui/splitter.ts"() {
+      init_dom();
+    }
+  });
+
+  // src/core/ui/index.ts
+  var ui_exports = {};
+  __export(ui_exports, {
+    closeLightbox: () => closeLightbox,
+    mountIcons: () => mountIcons,
+    openLightbox: () => openLightbox,
+    uiBtn: () => uiBtn,
+    uiBtnRow: () => uiBtnRow,
+    uiCardChoice: () => uiCardChoice,
+    uiChip: () => uiChip,
+    uiChoice: () => uiChoice,
+    uiDialogActions: () => uiDialogActions,
+    uiEmpty: () => uiEmpty,
+    uiField: () => uiField,
+    uiIcon: () => uiIcon,
+    uiIconBtn: () => uiIconBtn,
+    uiIconSpan: () => uiIconSpan,
+    uiInput: () => uiInput,
+    uiMainHead: () => uiMainHead,
+    uiMobStrip: () => uiMobStrip,
+    uiModal: () => uiModal,
+    uiPopover: () => uiPopover,
+    uiProgress: () => uiProgress,
+    uiRail: () => uiRail,
+    uiRange: () => uiRange,
+    uiResizable: () => uiResizable,
+    uiSearch: () => uiSearch,
+    uiSegmented: () => uiSegmented,
+    uiSelect: () => uiSelect,
+    uiSetlist: () => uiSetlist,
+    uiStat: () => uiStat,
+    uiSuggest: () => uiSuggest,
+    uiSwitch: () => uiSwitch,
+    uiVSplitter: () => uiVSplitter
+  });
+  var init_ui = __esm({
+    "src/core/ui/index.ts"() {
+      init_icon();
+      init_icons();
+      init_button();
+      init_chip();
+      init_setlist();
+      init_field();
+      init_slider();
+      init_empty();
+      init_segmented();
+      init_choice();
+      init_cardpick();
+      init_switch();
+      init_select();
+      init_search();
+      init_mainhead();
+      init_rail();
+      init_mobstrip();
+      init_stat();
+      init_progress();
+      init_popover();
+      init_suggest();
+      init_lightbox();
+      init_modal();
+      init_resize();
+      init_splitter();
+    }
+  });
+
   // src/core/flow-dialog.ts
   function buildFlowDialogParts(title, message, actions) {
     var _a2;
@@ -9385,7 +9389,7 @@ var BZW_gameshelf = (() => {
       });
       let settled = false;
       const releaseFocusTrap = trapFocus(popup);
-      function restoreFocus() {
+      function restoreFocus2() {
         if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
           prevActive.focus();
         }
@@ -9397,7 +9401,7 @@ var BZW_gameshelf = (() => {
         releaseFocusTrap();
         escHandle6.unregister();
         mask.remove();
-        restoreFocus();
+        restoreFocus2();
         resolve2(v);
       }
       activeSettle = settle;
@@ -20168,7 +20172,7 @@ ${countsToText(s.missing)}
       const syncClear = () => {
         if (clearBtn) clearBtn.hidden = !inp.value;
       };
-      const clearSearch = (refocus) => {
+      const clearSearch2 = (refocus) => {
         debounced.cancel();
         inp.value = "";
         M5.q = "";
@@ -20177,7 +20181,7 @@ ${countsToText(s.missing)}
         if (refocus) inp.focus();
       };
       syncClear();
-      clearBtn == null ? void 0 : clearBtn.addEventListener("click", () => clearSearch(true));
+      clearBtn == null ? void 0 : clearBtn.addEventListener("click", () => clearSearch2(true));
       inp.addEventListener("input", () => {
         syncClear();
         debounced();
@@ -20186,7 +20190,7 @@ ${countsToText(s.missing)}
         if (e.key !== "Escape" || !inp.value) return;
         e.preventDefault();
         e.stopImmediatePropagation();
-        clearSearch(false);
+        clearSearch2(false);
         inp.blur();
       });
     };
@@ -51430,6 +51434,8 @@ ${n.content.slice(0, 2e3)}
   init_dom();
   init_esc_manager();
   init_settings_provider();
+  init_utils();
+  init_str();
   init_ui();
   init_state();
 
@@ -51532,7 +51538,7 @@ ${n.content.slice(0, 2e3)}
 
   // src/gameshelf/ui.ts
   init_posters();
-  var ESC_ID3 = "gameshelf";
+  var ESC_ID3 = "bz-gameshelf";
   var maskEl4 = null;
   var popupEl2 = null;
   var sortSegRef = null;
@@ -51544,16 +51550,19 @@ ${n.content.slice(0, 2e3)}
   var reelTimer = null;
   var reelCard = null;
   var selectRefs = [];
+  var bucketSelRef = null;
+  var sortSelRef = null;
   function disposeSelects() {
     for (const s of selectRefs) s.detach();
     selectRefs = [];
   }
+  var OPS_TOUCH_CLASS = "bz-touch-target--lg";
   function mountOps(app) {
     const ops = popupEl2 == null ? void 0 : popupEl2.querySelector("#bz-gs-heroops");
     if (!ops) return;
     const onStats = M.view === "stats";
     const mk = (icon, label, onClick, disabled = false) => {
-      const b = uiIconBtn({ icon, title: label, className: "bz-gs-opsbtn", onClick, disabled });
+      const b = uiIconBtn({ icon, title: label, className: `bz-gs-opsbtn ${OPS_TOUCH_CLASS}`, onClick, disabled });
       b.setAttribute("aria-label", label);
       return b;
     };
@@ -51579,10 +51588,9 @@ ${n.content.slice(0, 2e3)}
   function hoursText(min) {
     return `${numText(hoursOf(min))}h`;
   }
-  function escHtml(s) {
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  function escCssUrl(s) {
+    return escAttr(String(s != null ? s : "").replace(/'/g, "%27"));
   }
-  var escAttr = escHtml;
   function dateText(s, dash = "—") {
     const v = String(s != null ? s : "").trim();
     if (!v) return dash;
@@ -51622,17 +51630,17 @@ ${n.content.slice(0, 2e3)}
       item.lastPlayed ? `最后游玩 ${dateText(item.lastPlayed)}` : "没有游玩记录",
       `在库 ${M.items.length} 款中第 ${indexInList(item) + 1} 位`
     ].join(" · ");
-    const bg = cover ? ` style="background-image:url('${escAttr(cover)}')"` : "";
+    const bg = cover ? ` style="background-image:url('${escCssUrl(cover)}')"` : "";
     return `
   <div class="bz-gs-hero${cover ? "" : " bz-gs-hero--bare"}">
     <div class="bz-gs-hero-art"${bg}></div>
     <div class="bz-gs-hero-veil"></div>
     <div class="bz-gs-hero-in">
       <div class="bz-gs-hero-left">
-        ${peek ? "" : `<span class="bz-gs-hero-tag">${escHtml(tag)}</span>`}
-        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(zh)}</div>
-        ${orig ? `<div class="bz-gs-hero-orig">${escHtml(orig)}</div>` : ""}
-        <div class="bz-gs-hero-sub">${escHtml(sub)}</div>
+        ${peek ? "" : `<span class="bz-gs-hero-tag">${esc(tag)}</span>`}
+        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${esc(zh)}</div>
+        ${orig ? `<div class="bz-gs-hero-orig">${esc(orig)}</div>` : ""}
+        <div class="bz-gs-hero-sub">${esc(sub)}</div>
       </div>
       <div class="bz-gs-hero-side">
         <div><b>${rp.total}</b><span>在架游戏</span></div>
@@ -51642,9 +51650,15 @@ ${n.content.slice(0, 2e3)}
     </div>
   </div>`;
   }
+  var rankMemo = null;
   function indexInList(item) {
-    const all = [...M.items].sort((a, b) => b.playtimeMin - a.playtimeMin);
-    return Math.max(0, all.findIndex((it) => it.appid === item.appid));
+    var _a2;
+    if (!rankMemo || rankMemo.src !== M.items) {
+      const ranks = /* @__PURE__ */ new Map();
+      [...M.items].sort((a, b) => b.playtimeMin - a.playtimeMin).forEach((it, i) => ranks.set(it.appid, i));
+      rankMemo = { src: M.items, ranks };
+    }
+    return (_a2 = rankMemo.ranks.get(item.appid)) != null ? _a2 : 0;
   }
   function filterList(items) {
     const def = bucketOf(M.bucket);
@@ -51676,12 +51690,12 @@ ${n.content.slice(0, 2e3)}
           ${rank}
           ${trophy}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ""}
-          <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
+          <span class="bz-gs-hint"><span>${esc(hint)}</span><span class="bz-gs-hint-d">${esc(last)}</span></span>
         </span>
         <span class="bz-gs-cardbar">
           <span class="bz-gs-namebox">
-            <span class="bz-gs-name">${escHtml(zh)}</span>
-            ${orig ? `<span class="bz-gs-orig">${escHtml(orig)}</span>` : ""}
+            <span class="bz-gs-name">${esc(zh)}</span>
+            ${orig ? `<span class="bz-gs-orig">${esc(orig)}</span>` : ""}
           </span>
           <span class="bz-gs-hours">${hoursText(it.playtimeMin)}</span>
         </span>
@@ -51691,7 +51705,8 @@ ${n.content.slice(0, 2e3)}
     return `<div class="bz-gs-grid">${cards}</div>`;
   }
   function firstChar(name) {
-    return name.slice(0, 1) || "?";
+    var _a2;
+    return (_a2 = [...name][0]) != null ? _a2 : "?";
   }
   var REEL_INTERVAL_MS = 300;
   function thumbUrlOf(u) {
@@ -51823,7 +51838,7 @@ ${n.content.slice(0, 2e3)}
     const topRows = rp.top.length ? rp.top.map((t, i) => `
       <div class="bz-gs-rankrow">
         <span class="bz-gs-rankno">${String(i + 1).padStart(2, "0")}</span>
-        <span class="bz-gs-rankname" title="${escAttr(t.name)}">${escHtml(t.name)}</span>
+        <span class="bz-gs-rankname" title="${escAttr(t.name)}">${esc(t.name)}</span>
         <span class="bz-gs-rankbar"><i style="width:${Math.max(2, Math.round(t.hours / maxTop * 100))}%"></i></span>
         <span class="bz-gs-rankval">${numText(t.hours)} h</span>
       </div>`).join("") : '<div class="bz-gs-dim">库里还没有游戏</div>';
@@ -51832,7 +51847,7 @@ ${n.content.slice(0, 2e3)}
     <div class="bz-gs-col">
       <b>${b.count}</b>
       <span class="bz-gs-colbar" style="height:${Math.max(3, Math.round(b.count / maxBucket * 92))}px"></span>
-      <span class="bz-gs-collabel">${escHtml(b.label)}</span>
+      <span class="bz-gs-collabel">${esc(b.label)}</span>
     </div>`
     ).join("");
     const yearCols = rp.years.length ? rp.years.map(
@@ -51840,13 +51855,13 @@ ${n.content.slice(0, 2e3)}
     <div class="bz-gs-col${y.year === thisYear ? " is-now" : ""}">
       <b>${y.count}</b>
       <span class="bz-gs-colbar" style="height:${Math.max(3, Math.round(y.count / maxYear * 92))}px"></span>
-      <span class="bz-gs-collabel">${escHtml(y.year)}</span>
+      <span class="bz-gs-collabel">${esc(y.year)}</span>
     </div>`
     ).join("") : '<div class="bz-gs-dim">还没有带日期的游玩记录</div>';
     const platRows = rp.platforms.length ? rp.platforms.map(
       (p) => `
     <div class="bz-gs-rankrow">
-      <span class="bz-gs-rankname">${escHtml(p.label)}</span>
+      <span class="bz-gs-rankname">${esc(p.label)}</span>
       <span class="bz-gs-rankbar"><i style="width:${Math.max(2, Math.round(p.min / maxPlat * 100))}%"></i></span>
       <span class="bz-gs-rankval">${numText(hoursOf(p.min))} h</span>
     </div>`
@@ -51854,15 +51869,15 @@ ${n.content.slice(0, 2e3)}
     const latestRows = rp.latest.length ? rp.latest.map(
       (it) => `
     <div class="bz-gs-latestrow" data-appid="${it.appid}">
-      <span class="bz-gs-latestdate">${escHtml(dateText(it.lastPlayed))}</span>
-      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${escHtml(displayNameOf(it))}</span>
+      <span class="bz-gs-latestdate">${esc(dateText(it.lastPlayed))}</span>
+      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${esc(displayNameOf(it))}</span>
       <span class="bz-gs-latesth">${hoursText(it.playtimeMin)}</span>
     </div>`
     ).join("") : '<div class="bz-gs-dim">Steam 没给最后游玩日期</div>';
     const achPct = rp.total > 0 ? Math.round(rp.achCount / rp.total * 100) : 0;
     return `
   <div class="bz-gs-stats" id="bz-gs-stats"></div>
-  <div class="bz-gs-caveat">${escHtml(REPORT_CAVEAT)}</div>
+  <div class="bz-gs-caveat">${esc(REPORT_CAVEAT)}</div>
   <section class="bz-gs-sec">
     <div class="bz-gs-sectitle">时长排行 · Top 10</div>
     <div class="bz-gs-rows">${topRows}</div>
@@ -51918,12 +51933,12 @@ ${n.content.slice(0, 2e3)}
       <div class="bz-gs-detail-id">
         <div class="bz-gs-detail-name">
           ${icon ? `<img class="bz-gs-detail-icon" src="${escAttr(icon)}" data-fallback-src="${escAttr((_b2 = item.iconSrc) != null ? _b2 : "")}" alt="">` : ""}
-          <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${escHtml(zh)}</span>
+          <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${esc(zh)}</span>
         </div>
         <div class="bz-gs-detail-chips" id="bz-gs-detail-chips">
-          ${chips.map((c) => `<span class="bz-gs-chiplet">${escHtml(c)}</span>`).join("")}
+          ${chips.map((c) => `<span class="bz-gs-chiplet">${esc(c)}</span>`).join("")}
         </div>
-        <div class="bz-gs-detail-appid">${orig ? `原名 ${escHtml(orig)} · ` : ""}AppID ${item.appid}</div>
+        <div class="bz-gs-detail-appid">${orig ? `原名 ${esc(orig)} · ` : ""}AppID ${item.appid}</div>
       </div>
     </div>
     ${mineHtml(item, fm)}
@@ -51949,14 +51964,14 @@ ${n.content.slice(0, 2e3)}
     ].filter((p) => p.min > 0);
     const maxP = Math.max(1, ...pcts.map((p) => p.min));
     const plat = pcts.length ? `<div class="bz-gs-mine-plats">${pcts.map(
-      (p) => `<div class="bz-gs-platrow"><span class="bz-gs-platlabel">${escHtml(p.label)}</span>
+      (p) => `<div class="bz-gs-platrow"><span class="bz-gs-platlabel">${esc(p.label)}</span>
         <span class="bz-gs-platbar"><i style="width:${Math.max(2, Math.round(p.min / maxP * 100))}%"></i></span>
         <span class="bz-gs-platval">${numText(hoursOf(p.min))} h</span></div>`
     ).join("")}</div>` : '<div class="bz-gs-dim">Steam 没有给出平台分项时长</div>';
     const achLine = sum ? `<div class="bz-gs-mine-ach">
         <div class="bz-gs-mine-achhead"><span>成就进度</span><span class="bz-gs-mine-achval">${sum.unlocked} / ${sum.total}</span></div>
         <span class="bz-gs-platbar"><i style="width:${Math.max(1, Math.round(sum.unlocked / sum.total * 100))}%"></i></span>
-        ${sum.rare ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(sum.rare)}</div>` : ""}
+        ${sum.rare ? `<div class="bz-gs-mine-rare">稀有成就：${esc(sum.rare)}</div>` : ""}
       </div>` : "";
     return `
   <section class="bz-gs-detail-sec">
@@ -51967,8 +51982,8 @@ ${n.content.slice(0, 2e3)}
         ${item.playtimeMin > 0 ? `<em>折合 ${numText(Math.round(h / 24 * 10) / 10)} 天</em>` : "<em>从未启动</em>"}
       </div>
       <div class="bz-gs-mine-grid">
-        <div><u>最后游玩</u><span>${escHtml(dateText(item.lastPlayed, "没有记录"))}</span></div>
-        <div><u>同步时间</u><span>${escHtml(item.syncedAt ? dateText(item.syncedAt) : "没有记录")}</span></div>
+        <div><u>最后游玩</u><span>${esc(dateText(item.lastPlayed, "没有记录"))}</span></div>
+        <div><u>同步时间</u><span>${esc(item.syncedAt ? dateText(item.syncedAt) : "没有记录")}</span></div>
         <div><u>库里状态</u><span>${item.offShelf ? "已下架保留" : "在架"}</span></div>
         <div><u>成就页</u><span>${item.hasAch ? "有" : "没有"}</span></div>
       </div>
@@ -51992,12 +52007,12 @@ ${n.content.slice(0, 2e3)}
       <div class="bz-gs-achrow${r.unlocked ? " is-on" : ""}" title="${escAttr(desc)}">
         ${iconSrc ? `<img class="bz-gs-achicon${grayFallback ? " is-gray" : ""}" src="${escAttr(iconSrc)}" alt="" loading="lazy">` : '<span class="bz-gs-achicon bz-gs-achicon--none"></span>'}
         <span class="bz-gs-achtext">
-          <span class="bz-gs-achname">${escHtml(r.name)}</span>
-          ${desc ? `<span class="bz-gs-achdesc">${escHtml(desc)}</span>` : ""}
+          <span class="bz-gs-achname">${esc(r.name)}</span>
+          ${desc ? `<span class="bz-gs-achdesc">${esc(desc)}</span>` : ""}
         </span>
         <span class="bz-gs-achmeta">
-          ${pct ? `<span class="bz-gs-achpct" title="全球解锁率">${escHtml(pct)}</span>` : ""}
-          <span class="bz-gs-achwhen">${escHtml(r.unlocked ? when || "已解锁" : "未解锁")}</span>
+          ${pct ? `<span class="bz-gs-achpct" title="全球解锁率">${esc(pct)}</span>` : ""}
+          <span class="bz-gs-achwhen">${esc(r.unlocked ? when || "已解锁" : "未解锁")}</span>
         </span>
       </div>`;
       }).join("");
@@ -52006,7 +52021,7 @@ ${n.content.slice(0, 2e3)}
       <span class="bz-gs-achsum">${d.unlocked} / ${d.total}（${d.percent}%）</span>
       <span class="bz-gs-platbar"><i style="width:${Math.max(1, d.percent)}%"></i></span>
     </div>
-    ${d.rarestName ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(d.rarestName)}（全球 ${d.rarestPercent}% 拥有）</div>` : ""}
+    ${d.rarestName ? `<div class="bz-gs-mine-rare">稀有成就：${esc(d.rarestName)}（全球 ${d.rarestPercent}% 拥有）</div>` : ""}
     <div class="bz-gs-achlist">${rows}</div>
     <div class="bz-gs-sechint">按全球解锁率从稀有到常见排序${d.rows.length > 200 ? `，仅显示前 200 条（共 ${d.rows.length} 条）` : ""}</div>`;
     }
@@ -52017,16 +52032,16 @@ ${n.content.slice(0, 2e3)}
       <span class="bz-gs-achsum">${s.unlocked} / ${s.total}（${Math.round(s.unlocked / s.total * 1e3) / 10}%）</span>
       <span class="bz-gs-platbar"><i style="width:${Math.max(1, Math.round(s.unlocked / s.total * 100))}%"></i></span>
     </div>
-    ${s.rare ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(s.rare)}</div>` : ""}
-    <div class="bz-gs-dim">${escHtml(sec.error || "成就明细未拉取")}${sec.fromCache ? "（上方为上次同步缓存）" : ""}</div>`;
+    ${s.rare ? `<div class="bz-gs-mine-rare">稀有成就：${esc(s.rare)}</div>` : ""}
+    <div class="bz-gs-dim">${esc(sec.error || "成就明细未拉取")}${sec.fromCache ? "（上方为上次同步缓存）" : ""}</div>`;
     }
-    return `${head}<div class="bz-gs-dim">${escHtml(sec.error || "这款游戏没有成就页")}</div>`;
+    return `${head}<div class="bz-gs-dim">${esc(sec.error || "这款游戏没有成就页")}</div>`;
   }
   function storeRowsHtml(item, sec) {
     const m = sec.meta;
     const row = (label, v) => {
       const s = v === void 0 || v === null || v === "" ? "" : String(v);
-      return s ? `<div class="bz-gs-kv"><u>${escHtml(label)}</u><span>${escHtml(s)}</span></div>` : "";
+      return s ? `<div class="bz-gs-kv"><u>${esc(label)}</u><span>${esc(s)}</span></div>` : "";
     };
     const reviewBits = [];
     if (m.reviewsTotal !== null && m.reviewsTotal !== void 0) reviewBits.push(`${Number(m.reviewsTotal).toLocaleString("zh-CN")} 条评测`);
@@ -52049,11 +52064,11 @@ ${n.content.slice(0, 2e3)}
       row("简体中文", m.zhSupported === void 0 ? "" : m.zhSupported ? "支持" : "无官方"),
       row("官网", m.website)
     ].join("");
-    const desc = m.shortDescription ? `<div class="bz-gs-desc">${escHtml(m.shortDescription)}</div>` : "";
+    const desc = m.shortDescription ? `<div class="bz-gs-desc">${esc(m.shortDescription)}</div>` : "";
     const link = `<div class="bz-gs-detail-actions">
       <button type="button" class="bz-btn bz-btn--md" id="bz-gs-open-store"><span class="bz-ic" data-lucide="external-link"></span>在商店打开</button>
     </div>`;
-    const err = sec.error ? `<div class="bz-gs-dim">${escHtml(sec.error)}</div>` : "";
+    const err = sec.error ? `<div class="bz-gs-dim">${esc(sec.error)}</div>` : "";
     const cacheTag = sec.fromCache ? '<div class="bz-gs-sechint">以下为上次同步时缓存的资料</div>' : "";
     return `<div class="bz-gs-sectitle">游戏资料</div>${cacheTag}${err}${rows ? `<div class="bz-gs-kvlist">${rows}</div>` : ""}${desc}${link}`;
   }
@@ -52074,6 +52089,8 @@ ${n.content.slice(0, 2e3)}
     };
   }
   function openDetail(app, appid) {
+    restReel();
+    restHero();
     const item = M.items.find((it) => it.appid === appid);
     if (!item) return;
     const cached = safeDetailFm(app, item.file);
@@ -52107,7 +52124,7 @@ ${n.content.slice(0, 2e3)}
       if (storeBox && storeBox.isConnected) storeBox.innerHTML = storeRowsHtml(item, sec);
       if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(display);
       const open = popup.querySelector("#bz-gs-open-store");
-      if (open) open.addEventListener("click", () => window.open(storeUrlOf(item.appid), "_blank"));
+      if (open) open.addEventListener("click", () => openExternalUrl(app, storeUrlOf(item.appid)));
       mountIcons(popup);
     };
     void loadStore(app, item, cached).then((sec) => {
@@ -52213,7 +52230,6 @@ ${n.content.slice(0, 2e3)}
     await runSync2(app, { force: true });
     void ensurePostersFor(app);
     ensureZhNames(app, M.items);
-    renderAll5(app);
   }
   async function ensurePostersFor(app) {
     const { ensurePosters: ensurePosters2, mediaItemsOf: mediaItemsOf2 } = await Promise.resolve().then(() => (init_posters(), posters_exports));
@@ -52232,9 +52248,69 @@ ${n.content.slice(0, 2e3)}
     peekedHeroAppid = null;
     heroEl.innerHTML = heroRestHtml;
   }
+  var TYPING_GUARD_MS = 400;
+  var SOFT_RENDER_DELAY_MS = 400;
+  var softRenderTimer = null;
+  var lastInputAt = 0;
+  function isTextField(el) {
+    if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
+    return !/^(range|checkbox|radio|button|submit|reset|file|color|image)$/i.test(el.type);
+  }
+  function isTyping() {
+    if (!lastInputAt || Date.now() - lastInputAt >= TYPING_GUARD_MS) return false;
+    return isTextField(document.activeElement) && !!(popupEl2 == null ? void 0 : popupEl2.contains(document.activeElement));
+  }
+  function isSelectMenuOpen() {
+    return !!(popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-select.open"));
+  }
+  function clearSoftRender() {
+    if (softRenderTimer) {
+      clearTimeout(softRenderTimer);
+      softRenderTimer = null;
+    }
+  }
+  function renderSoft(app) {
+    if (!M.currentOverlay) return;
+    if (isTyping() || isSelectMenuOpen()) {
+      if (softRenderTimer) clearTimeout(softRenderTimer);
+      softRenderTimer = setTimeout(() => {
+        softRenderTimer = null;
+        renderAll5(app);
+      }, SOFT_RENDER_DELAY_MS);
+      return;
+    }
+    renderAll5(app);
+  }
+  function snapshotFocus() {
+    const el = document.activeElement;
+    if (!isTextField(el) || !(popupEl2 == null ? void 0 : popupEl2.contains(el))) return null;
+    let start = null;
+    let end = null;
+    try {
+      start = el.selectionStart;
+      end = el.selectionEnd;
+    } catch (e) {
+    }
+    return { value: el.value, start, end };
+  }
+  function restoreFocus(snap) {
+    if (!snap) return;
+    const el = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-search input");
+    if (!el) return;
+    if (el.value !== snap.value) el.value = snap.value;
+    el.focus();
+    if (snap.start !== null && snap.end !== null) {
+      try {
+        el.setSelectionRange(snap.start, snap.end);
+      } catch (e) {
+      }
+    }
+  }
   function renderAll5(app) {
     const frame = M.currentOverlay;
     if (!frame || !document.body.contains(frame)) return;
+    clearSoftRender();
+    const snap = snapshotFocus();
     const configured = isConfigured();
     mountOps(app);
     restReel();
@@ -52267,6 +52343,7 @@ ${n.content.slice(0, 2e3)}
       body.dataset.view = "shelf";
     }
     mountIcons(frame);
+    restoreFocus(snap);
   }
   function shelfBody(app, rp) {
     var _a2;
@@ -52296,11 +52373,13 @@ ${n.content.slice(0, 2e3)}
         onClick: () => {
           M.bucket = def.key;
           syncChipState();
+          bucketSelRef == null ? void 0 : bucketSelRef.setValue(M.bucket);
           renderList2(app);
         }
       });
       chip2.classList.add("bz-gs-chip");
       chip2.dataset.k = def.key;
+      chip2.setAttribute("aria-pressed", String(M.bucket === def.key));
       chips.appendChild(chip2);
     }
     const sortSeg = uiSegmented({
@@ -52313,6 +52392,7 @@ ${n.content.slice(0, 2e3)}
       ],
       onChange: (v) => {
         M.sort = v;
+        sortSelRef == null ? void 0 : sortSelRef.setValue(v);
         renderList2(app);
       }
     });
@@ -52353,18 +52433,51 @@ ${n.content.slice(0, 2e3)}
     wrap.querySelector("#bz-gs-bucketsel").appendChild(bucketSel.el);
     wrap.querySelector("#bz-gs-sortsel").appendChild(sortSel.el);
     selectRefs = selRefs;
+    bucketSelRef = bucketSel;
+    sortSelRef = sortSel;
     const search = uiSearch({
       placeholder: "搜索游戏名",
       value: M.query,
       onInput: (v) => {
+        lastInputAt = Date.now();
         M.query = v;
-        renderList2(app);
+        syncSearchClear();
+        searchListRender(app);
       }
     });
     search.el.classList.add("bz-gs-search");
+    const searchClear = document.createElement("button");
+    searchClear.type = "button";
+    searchClear.className = "bz-gs-search-clear";
+    searchClear.title = "清除搜索";
+    searchClear.setAttribute("aria-label", "清除搜索");
+    searchClear.hidden = !M.query.trim();
+    searchClear.innerHTML = '<i data-lucide="x" class="bz-ic"></i>';
+    searchClear.addEventListener("click", () => clearSearch(app, search.input));
+    search.input.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || e.isComposing || e.defaultPrevented) return;
+      if (!search.input.value.trim()) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      clearSearch(app, search.input);
+    });
+    search.el.appendChild(searchClear);
     wrap.querySelector("#bz-gs-search").appendChild(search.el);
     renderList2(app);
     return wrap;
+  }
+  var SEARCH_DEBOUNCE_MS4 = 180;
+  var searchListRender = debounce((app) => renderList2(app), SEARCH_DEBOUNCE_MS4);
+  function syncSearchClear() {
+    const btn = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-search-clear");
+    if (btn) btn.hidden = !M.query.trim();
+  }
+  function clearSearch(app, input) {
+    input.value = "";
+    M.query = "";
+    syncSearchClear();
+    renderList2(app);
+    input.focus();
   }
   function syncChipState() {
     popupEl2 == null ? void 0 : popupEl2.querySelectorAll(".bz-gs-chip").forEach((c) => {
@@ -52406,6 +52519,8 @@ ${n.content.slice(0, 2e3)}
         const s = popupEl2 == null ? void 0 : popupEl2.querySelector(".bz-gs-search input");
         if (s) s.value = "";
         syncChipState();
+        bucketSelRef == null ? void 0 : bucketSelRef.setValue(M.bucket);
+        syncSearchClear();
         renderList2(app);
       }
     });
@@ -52431,7 +52546,7 @@ ${n.content.slice(0, 2e3)}
   function openPanel3(app, view = "shelf") {
     createUI(app);
     M.view = view;
-    M.renderFn = () => renderAll5(app);
+    M.renderFn = () => renderSoft(app);
     renderAll5(app);
     void ensurePostersFor(app);
     ensureZhNames(app, M.items);
@@ -52440,17 +52555,26 @@ ${n.content.slice(0, 2e3)}
     var _a2;
     unregisterPanelEsc(ESC_ID3);
     restReel();
+    clearSoftRender();
+    searchListRender.cancel();
     maskEl4 == null ? void 0 : maskEl4.remove();
     maskEl4 = null;
     popupEl2 = null;
     (_a2 = M.currentOverlay) == null ? void 0 : _a2.remove();
     M.currentOverlay = null;
     disposeSelects();
+    bucketSelRef = null;
+    sortSelRef = null;
     heroEl = null;
     heroRestHtml = "";
     peekedHeroAppid = null;
     gridEl = null;
     lastReport2 = null;
+    rankMemo = null;
+    lastInputAt = 0;
+    M.statusMsg = "";
+    M.renderFn = null;
+    M.modalRepaintFn = null;
     clearDetailCache();
     unloadZhNames();
     unloadBackfill();

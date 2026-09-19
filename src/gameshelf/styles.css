@@ -21,7 +21,10 @@
   overflow: hidden;
 }
 /* ---------- 海报头（头行退役 2026-09-18）：大海报直接顶到面板顶，标题/N款一并去掉 ---------- */
-.bz-gs-heroz { flex: none; position: relative; }
+/* min-height（G3）：筛选无结果/空库时 hero 清空，heroz 高度塌 0——ops 三钮绝对定位
+   不贡献高度，会整行叠画到下方状态行上。给 ops（30px 钮 + 上下各 10px）留驻留高度；
+   移动端 ops 是 static 本就有高度，不受影响。 */
+.bz-gs-heroz { flex: none; position: relative; min-height: 50px; }
 /* 常驻操作 = 海报右上角三枚图标钮（统计↔游戏墙 / 立即同步 / 移动端关闭）：
    深色软底压在任意海报上都立得住，表意交给 title 与 aria-label */
 .bz-gs-heroops {
@@ -182,7 +185,22 @@
 /* 移动端专用的一套控件（档位/排序下拉）：桌面隐藏，工具行两套形态共用同一份状态 */
 .bz-gs-sels { display: none; }
 .bz-gs-search { min-width: 132px; }
-.bz-gs-search .bz-input { width: 100%; }
+.bz-gs-search .bz-input { width: 100%; padding-right: 22px; } /* 尾部 ✕ 让位，词长不压钮 */
+/* 搜索尾部 ✕（clipbook 效率#12 同款）：有词才显（hidden 随词同步），一键清词焦点回框 */
+.bz-gs-search-clear {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  padding: 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  color: var(--bz-text-3);
+  line-height: 0;
+}
+.bz-gs-search-clear:hover { color: var(--bz-text-1); }
 .bz-gs-sortseg .bz-segmented-btn { padding: 0 11px; }
 
 /* ---------- 封面网格 ---------- */

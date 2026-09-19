@@ -3,6 +3,8 @@
  *
  * 单源约定：markup 纯函数（heroHtml/shelfHtml/shotReelHtml/statsHtml/详情三段）与行为层同文件，
  * 插件面板与评审壳消费同一份——改一处两侧生效（docs/prototype-first.md）。
+ * HTML 转义亦走 core 单源（cons C1 收编）：文本位 esc / 双引号属性位 escAttr（core/ui/str），
+ * CSS url('…') 单引号上下文单独 escCssUrl——域内不再自留转义实现。
  * 面板基座 = core .bz-panel-overlay / .bz-panel-frame / .bz-panel-mtop（13 域同款）。
  * 头行已退役（2026-09-18 用户点版）：标题/N款全去掉，大海报直接顶到面板顶，
  * 常驻操作只剩海报右上角三枚图标钮（统计↔游戏墙 / 立即同步 / 移动端关闭）。
@@ -10,13 +12,16 @@
  *
  * 亮暗：全部消费 --bz token（tokens.css 的 .theme-dark/.theme-light 双组），零固定色——
  * 评审壳默认亮色、可切暗色，插件内跟随宿主主题。
- * 移动端：≤768px 真全屏（--bz-vvh 口径，软键盘不遮底）+ .bz-panel-mtop 44px 顶部避让。
+ * 移动端：≤768px 真全屏（100dvh，**显式不用 --bz-vvh**——本面板无贴底输入条，且 --bz-vvh
+ * 在评审壳里被模拟成「短 88px」会留底缝，理由详见 styles.css 移动端段）+ .bz-panel-mtop 44px 顶部避让。
  * 无入场动效；滚动条不自造（ADR-0122 界面级单源隐藏）。
  */
 import type { App } from 'obsidian';
 import { topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
+import { debounce, openExternalUrl } from '../core/utils';
+import { esc, escAttr } from '../core/ui/str';
 import { uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiIconBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
 import { M, displayNameOf, nameMatches, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
 import { BUCKETS, bucketOf, buildReport, REPORT_CAVEAT, type GameshelfReport } from './report';
@@ -29,7 +34,8 @@ import { ensureZhNames, unloadZhNames } from './names';
 import { unloadBackfill } from './backfill';
 import { achIconDisplayUrl, coverDisplayUrl, iconDisplayUrl, resolveShotUrls } from './posters';
 
-const ESC_ID = 'gameshelf';
+/** ESC 层 id 沿域内约定 'bz-<域>'（cons C4：全仓面板级层 id 唯一不带前缀的破例，对齐） */
+const ESC_ID = 'bz-gameshelf';
 
 let maskEl: HTMLElement | null = null;
 let popupEl: HTMLElement | null = null;
@@ -48,12 +54,20 @@ let reelTimer: ReturnType<typeof setInterval> | null = null;
 let reelCard: HTMLElement | null = null;
 /** 移动端两个下拉的句柄（每次重建工具行都要 detach——uiSelect 挂了 document 级点击监听） */
 let selectRefs: Array<{ detach: () => void }> = [];
+/** 档位/排序下拉句柄（G5 三控件互译：chips/分段改值时回写下拉，防换屏宽后另一套显示旧值） */
+let bucketSelRef: { setValue: (v: GameshelfBucket) => void } | null = null;
+let sortSelRef: { setValue: (v: GameshelfSort) => void } | null = null;
 
 /** 释放上一轮下拉（漏了就是每渲染一次攒一个 document 监听） */
 function disposeSelects(): void {
   for (const s of selectRefs) s.detach();
   selectRefs = [];
 }
+
+/** 常驻操作钮（mk 内统一挂）：触控热区外扩（G2/C5）——30px 钮在 pointer:coarse 下
+ *  经 core .bz-touch-target--lg（-8px ::after）扩到 46px ≥ §8.2 40px 下限；视觉不变，
+ *  桌面（pointer:fine）零影响。移动端关闭钮是全屏面板唯一关闭出口，热区必须有。 */
+const OPS_TOUCH_CLASS = 'bz-touch-target--lg';
 
 /** 海报右上角常驻操作（头行退役后的全部家当）：统计↔游戏墙、立即同步、移动端关闭——三枚图标钮。
  *  每次 renderAll 重挂（图标随视图变、同步钮随 syncing/configured 变）。 */
@@ -62,7 +76,7 @@ function mountOps(app: App): void {
   if (!ops) return;
   const onStats = M.view === 'stats';
   const mk = (icon: string, label: string, onClick: () => void, disabled = false): HTMLButtonElement => {
-    const b = uiIconBtn({ icon, title: label, className: 'bz-gs-opsbtn', onClick, disabled });
+    const b = uiIconBtn({ icon, title: label, className: `bz-gs-opsbtn ${OPS_TOUCH_CLASS}`, onClick, disabled });
     b.setAttribute('aria-label', label);
     return b;
   };
@@ -97,11 +111,15 @@ function hoursText(min: number): string {
   return `${numText(hoursOf(min))}h`;
 }
 
-function escHtml(s: string): string {
-  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+/**
+ * CSS `url('…')` 单引号上下文转义（G4/F9：域内唯一内联 background-image 插值）——
+ * escAttr 是「双引号属性上下文」口径、不转 `'`，罩不住内嵌 CSS 单引号串：路径含 `'`
+ * 时 url('') 提前闭合，style 整条断裂成可注入的 CSS 上下文。先百分号编码 `'`（%27 在
+ * CSS 字符串里原样保留、由 URL 解码端还原），再过 HTML 属性转义兜 `& < > "`。
+ */
+function escCssUrl(s: string): string {
+  return escAttr(String(s ?? '').replace(/'/g, '%27'));
 }
-
-const escAttr = escHtml;
 
 /** 日期串 → 本地可读（YYYY-MM-DD 原样；ISO 取前 10 位；空 → 占位） */
 function dateText(s: string | null | undefined, dash = '—'): string {
@@ -158,17 +176,17 @@ export function heroHtml(item: GameItem, cover: string, rp: GameshelfReport, tag
     item.lastPlayed ? `最后游玩 ${dateText(item.lastPlayed)}` : '没有游玩记录',
     `在库 ${M.items.length} 款中第 ${indexInList(item) + 1} 位`,
   ].join(' · ');
-  const bg = cover ? ` style="background-image:url('${escAttr(cover)}')"` : '';
+  const bg = cover ? ` style="background-image:url('${escCssUrl(cover)}')"` : '';
   return `
   <div class="bz-gs-hero${cover ? '' : ' bz-gs-hero--bare'}">
     <div class="bz-gs-hero-art"${bg}></div>
     <div class="bz-gs-hero-veil"></div>
     <div class="bz-gs-hero-in">
       <div class="bz-gs-hero-left">
-        ${peek ? '' : `<span class="bz-gs-hero-tag">${escHtml(tag)}</span>`}
-        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${escHtml(zh)}</div>
-        ${orig ? `<div class="bz-gs-hero-orig">${escHtml(orig)}</div>` : ''}
-        <div class="bz-gs-hero-sub">${escHtml(sub)}</div>
+        ${peek ? '' : `<span class="bz-gs-hero-tag">${esc(tag)}</span>`}
+        <div class="bz-gs-hero-name" title="${escAttr(item.name)}">${esc(zh)}</div>
+        ${orig ? `<div class="bz-gs-hero-orig">${esc(orig)}</div>` : ''}
+        <div class="bz-gs-hero-sub">${esc(sub)}</div>
       </div>
       <div class="bz-gs-hero-side">
         <div><b>${rp.total}</b><span>在架游戏</span></div>
@@ -184,10 +202,20 @@ function currentList(): GameItem[] {
   return sortList(filterList(M.items));
 }
 
-/** 门面里「在库第几位」按全库时长为序（不随筛选跳动，口径稳定） */
+/**
+ * 门面里「在库第几位」按全库时长为序（不随筛选跳动，口径稳定）。
+ * 位次缓存（eff E7）：悬浮换脸/每次过滤都走到这里，逐次全库拷贝排序在千款级可感——
+ * 一次算好按 appid 查表。失效键 = M.items 数组身份：条目只在 rebuildItems 整表替换时
+ * 重建（playtimeMin 无就地改写），换数组即重算；关面板随手清。
+ */
+let rankMemo: { src: GameItem[]; ranks: Map<number, number> } | null = null;
 function indexInList(item: GameItem): number {
-  const all = [...M.items].sort((a, b) => b.playtimeMin - a.playtimeMin);
-  return Math.max(0, all.findIndex((it) => it.appid === item.appid));
+  if (!rankMemo || rankMemo.src !== M.items) {
+    const ranks = new Map<number, number>();
+    [...M.items].sort((a, b) => b.playtimeMin - a.playtimeMin).forEach((it, i) => ranks.set(it.appid, i));
+    rankMemo = { src: M.items, ranks };
+  }
+  return rankMemo.ranks.get(item.appid) ?? 0;
 }
 
 /** 筛选（档位 + 搜索词；原名与中文名都参与匹配） */
@@ -239,12 +267,12 @@ export function shelfHtml(
           ${rank}
           ${trophy}
           ${it.offShelf ? '<span class="bz-gs-off">已下架</span>' : ''}
-          <span class="bz-gs-hint"><span>${escHtml(hint)}</span><span class="bz-gs-hint-d">${escHtml(last)}</span></span>
+          <span class="bz-gs-hint"><span>${esc(hint)}</span><span class="bz-gs-hint-d">${esc(last)}</span></span>
         </span>
         <span class="bz-gs-cardbar">
           <span class="bz-gs-namebox">
-            <span class="bz-gs-name">${escHtml(zh)}</span>
-            ${orig ? `<span class="bz-gs-orig">${escHtml(orig)}</span>` : ''}
+            <span class="bz-gs-name">${esc(zh)}</span>
+            ${orig ? `<span class="bz-gs-orig">${esc(orig)}</span>` : ''}
           </span>
           <span class="bz-gs-hours">${hoursText(it.playtimeMin)}</span>
         </span>
@@ -255,9 +283,9 @@ export function shelfHtml(
   return `<div class="bz-gs-grid">${cards}</div>`;
 }
 
-/** 首字符（封面加载失败时的占位字） */
+/** 首字符（封面加载失败时的占位字）：按码点取首字，emoji/扩展区汉字不锯成代理对乱码 */
 function firstChar(name: string): string {
-  return name.slice(0, 1) || '?';
+  return [...name][0] ?? '?';
 }
 
 /* ==================== 悬浮预览：卡片截图快轮播 + 门面换脸（issue 378） ==================== */
@@ -436,7 +464,7 @@ export function statsHtml(rp: GameshelfReport): string {
         .map((t, i) => `
       <div class="bz-gs-rankrow">
         <span class="bz-gs-rankno">${String(i + 1).padStart(2, '0')}</span>
-        <span class="bz-gs-rankname" title="${escAttr(t.name)}">${escHtml(t.name)}</span>
+        <span class="bz-gs-rankname" title="${escAttr(t.name)}">${esc(t.name)}</span>
         <span class="bz-gs-rankbar"><i style="width:${Math.max(2, Math.round((t.hours / maxTop) * 100))}%"></i></span>
         <span class="bz-gs-rankval">${numText(t.hours)} h</span>
       </div>`)
@@ -449,7 +477,7 @@ export function statsHtml(rp: GameshelfReport): string {
     <div class="bz-gs-col">
       <b>${b.count}</b>
       <span class="bz-gs-colbar" style="height:${Math.max(3, Math.round((b.count / maxBucket) * 92))}px"></span>
-      <span class="bz-gs-collabel">${escHtml(b.label)}</span>
+      <span class="bz-gs-collabel">${esc(b.label)}</span>
     </div>`,
     )
     .join('');
@@ -461,7 +489,7 @@ export function statsHtml(rp: GameshelfReport): string {
     <div class="bz-gs-col${y.year === thisYear ? ' is-now' : ''}">
       <b>${y.count}</b>
       <span class="bz-gs-colbar" style="height:${Math.max(3, Math.round((y.count / maxYear) * 92))}px"></span>
-      <span class="bz-gs-collabel">${escHtml(y.year)}</span>
+      <span class="bz-gs-collabel">${esc(y.year)}</span>
     </div>`,
         )
         .join('')
@@ -472,7 +500,7 @@ export function statsHtml(rp: GameshelfReport): string {
         .map(
           (p) => `
     <div class="bz-gs-rankrow">
-      <span class="bz-gs-rankname">${escHtml(p.label)}</span>
+      <span class="bz-gs-rankname">${esc(p.label)}</span>
       <span class="bz-gs-rankbar"><i style="width:${Math.max(2, Math.round((p.min / maxPlat) * 100))}%"></i></span>
       <span class="bz-gs-rankval">${numText(hoursOf(p.min))} h</span>
     </div>`,
@@ -485,8 +513,8 @@ export function statsHtml(rp: GameshelfReport): string {
         .map(
           (it) => `
     <div class="bz-gs-latestrow" data-appid="${it.appid}">
-      <span class="bz-gs-latestdate">${escHtml(dateText(it.lastPlayed))}</span>
-      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${escHtml(displayNameOf(it))}</span>
+      <span class="bz-gs-latestdate">${esc(dateText(it.lastPlayed))}</span>
+      <span class="bz-gs-rankname" title="${escAttr(it.name)}">${esc(displayNameOf(it))}</span>
       <span class="bz-gs-latesth">${hoursText(it.playtimeMin)}</span>
     </div>`,
         )
@@ -497,7 +525,7 @@ export function statsHtml(rp: GameshelfReport): string {
 
   return `
   <div class="bz-gs-stats" id="bz-gs-stats"></div>
-  <div class="bz-gs-caveat">${escHtml(REPORT_CAVEAT)}</div>
+  <div class="bz-gs-caveat">${esc(REPORT_CAVEAT)}</div>
   <section class="bz-gs-sec">
     <div class="bz-gs-sectitle">时长排行 · Top 10</div>
     <div class="bz-gs-rows">${topRows}</div>
@@ -559,12 +587,12 @@ export function detailShellHtml(item: GameItem, cover: string, fm: Record<string
       <div class="bz-gs-detail-id">
         <div class="bz-gs-detail-name">
           ${icon ? `<img class="bz-gs-detail-icon" src="${escAttr(icon)}" data-fallback-src="${escAttr(item.iconSrc ?? '')}" alt="">` : ''}
-          <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${escHtml(zh)}</span>
+          <span title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">${esc(zh)}</span>
         </div>
         <div class="bz-gs-detail-chips" id="bz-gs-detail-chips">
-          ${chips.map((c) => `<span class="bz-gs-chiplet">${escHtml(c)}</span>`).join('')}
+          ${chips.map((c) => `<span class="bz-gs-chiplet">${esc(c)}</span>`).join('')}
         </div>
-        <div class="bz-gs-detail-appid">${orig ? `原名 ${escHtml(orig)} · ` : ''}AppID ${item.appid}</div>
+        <div class="bz-gs-detail-appid">${orig ? `原名 ${esc(orig)} · ` : ''}AppID ${item.appid}</div>
       </div>
     </div>
     ${mineHtml(item, fm)}
@@ -594,7 +622,7 @@ function mineHtml(item: GameItem, fm: Record<string, unknown>): string {
   const plat = pcts.length
     ? `<div class="bz-gs-mine-plats">${pcts
         .map(
-          (p) => `<div class="bz-gs-platrow"><span class="bz-gs-platlabel">${escHtml(p.label)}</span>
+          (p) => `<div class="bz-gs-platrow"><span class="bz-gs-platlabel">${esc(p.label)}</span>
         <span class="bz-gs-platbar"><i style="width:${Math.max(2, Math.round((p.min / maxP) * 100))}%"></i></span>
         <span class="bz-gs-platval">${numText(hoursOf(p.min))} h</span></div>`,
         )
@@ -605,7 +633,7 @@ function mineHtml(item: GameItem, fm: Record<string, unknown>): string {
     ? `<div class="bz-gs-mine-ach">
         <div class="bz-gs-mine-achhead"><span>成就进度</span><span class="bz-gs-mine-achval">${sum.unlocked} / ${sum.total}</span></div>
         <span class="bz-gs-platbar"><i style="width:${Math.max(1, Math.round((sum.unlocked / sum.total) * 100))}%"></i></span>
-        ${sum.rare ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(sum.rare)}</div>` : ''}
+        ${sum.rare ? `<div class="bz-gs-mine-rare">稀有成就：${esc(sum.rare)}</div>` : ''}
       </div>`
     : '';
 
@@ -618,8 +646,8 @@ function mineHtml(item: GameItem, fm: Record<string, unknown>): string {
         ${item.playtimeMin > 0 ? `<em>折合 ${numText(Math.round((h / 24) * 10) / 10)} 天</em>` : '<em>从未启动</em>'}
       </div>
       <div class="bz-gs-mine-grid">
-        <div><u>最后游玩</u><span>${escHtml(dateText(item.lastPlayed, '没有记录'))}</span></div>
-        <div><u>同步时间</u><span>${escHtml(item.syncedAt ? dateText(item.syncedAt) : '没有记录')}</span></div>
+        <div><u>最后游玩</u><span>${esc(dateText(item.lastPlayed, '没有记录'))}</span></div>
+        <div><u>同步时间</u><span>${esc(item.syncedAt ? dateText(item.syncedAt) : '没有记录')}</span></div>
         <div><u>库里状态</u><span>${item.offShelf ? '已下架保留' : '在架'}</span></div>
         <div><u>成就页</u><span>${item.hasAch ? '有' : '没有'}</span></div>
       </div>
@@ -648,12 +676,12 @@ export function achListHtml(item: GameItem, sec: AchSection): string {
       <div class="bz-gs-achrow${r.unlocked ? ' is-on' : ''}" title="${escAttr(desc)}">
         ${iconSrc ? `<img class="bz-gs-achicon${grayFallback ? ' is-gray' : ''}" src="${escAttr(iconSrc)}" alt="" loading="lazy">` : '<span class="bz-gs-achicon bz-gs-achicon--none"></span>'}
         <span class="bz-gs-achtext">
-          <span class="bz-gs-achname">${escHtml(r.name)}</span>
-          ${desc ? `<span class="bz-gs-achdesc">${escHtml(desc)}</span>` : ''}
+          <span class="bz-gs-achname">${esc(r.name)}</span>
+          ${desc ? `<span class="bz-gs-achdesc">${esc(desc)}</span>` : ''}
         </span>
         <span class="bz-gs-achmeta">
-          ${pct ? `<span class="bz-gs-achpct" title="全球解锁率">${escHtml(pct)}</span>` : ''}
-          <span class="bz-gs-achwhen">${escHtml(r.unlocked ? (when || '已解锁') : '未解锁')}</span>
+          ${pct ? `<span class="bz-gs-achpct" title="全球解锁率">${esc(pct)}</span>` : ''}
+          <span class="bz-gs-achwhen">${esc(r.unlocked ? (when || '已解锁') : '未解锁')}</span>
         </span>
       </div>`;
       })
@@ -663,7 +691,7 @@ export function achListHtml(item: GameItem, sec: AchSection): string {
       <span class="bz-gs-achsum">${d.unlocked} / ${d.total}（${d.percent}%）</span>
       <span class="bz-gs-platbar"><i style="width:${Math.max(1, d.percent)}%"></i></span>
     </div>
-    ${d.rarestName ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(d.rarestName)}（全球 ${d.rarestPercent}% 拥有）</div>` : ''}
+    ${d.rarestName ? `<div class="bz-gs-mine-rare">稀有成就：${esc(d.rarestName)}（全球 ${d.rarestPercent}% 拥有）</div>` : ''}
     <div class="bz-gs-achlist">${rows}</div>
     <div class="bz-gs-sechint">按全球解锁率从稀有到常见排序${d.rows.length > 200 ? `，仅显示前 200 条（共 ${d.rows.length} 条）` : ''}</div>`;
   }
@@ -675,10 +703,10 @@ export function achListHtml(item: GameItem, sec: AchSection): string {
       <span class="bz-gs-achsum">${s.unlocked} / ${s.total}（${Math.round((s.unlocked / s.total) * 1000) / 10}%）</span>
       <span class="bz-gs-platbar"><i style="width:${Math.max(1, Math.round((s.unlocked / s.total) * 100))}%"></i></span>
     </div>
-    ${s.rare ? `<div class="bz-gs-mine-rare">稀有成就：${escHtml(s.rare)}</div>` : ''}
-    <div class="bz-gs-dim">${escHtml(sec.error || '成就明细未拉取')}${sec.fromCache ? '（上方为上次同步缓存）' : ''}</div>`;
+    ${s.rare ? `<div class="bz-gs-mine-rare">稀有成就：${esc(s.rare)}</div>` : ''}
+    <div class="bz-gs-dim">${esc(sec.error || '成就明细未拉取')}${sec.fromCache ? '（上方为上次同步缓存）' : ''}</div>`;
   }
-  return `${head}<div class="bz-gs-dim">${escHtml(sec.error || '这款游戏没有成就页')}</div>`;
+  return `${head}<div class="bz-gs-dim">${esc(sec.error || '这款游戏没有成就页')}</div>`;
 }
 
 /** 游戏资料段：kv 行 + 评价 + 简介 + 商店链接（拿不到的项不出现） */
@@ -686,7 +714,7 @@ export function storeRowsHtml(item: GameItem, sec: StoreSection): string {
   const m = sec.meta;
   const row = (label: string, v: unknown): string => {
     const s = v === undefined || v === null || v === '' ? '' : String(v);
-    return s ? `<div class="bz-gs-kv"><u>${escHtml(label)}</u><span>${escHtml(s)}</span></div>` : '';
+    return s ? `<div class="bz-gs-kv"><u>${esc(label)}</u><span>${esc(s)}</span></div>` : '';
   };
   const reviewBits: string[] = [];
   if (m.reviewsTotal !== null && m.reviewsTotal !== undefined) reviewBits.push(`${Number(m.reviewsTotal).toLocaleString('zh-CN')} 条评测`);
@@ -709,11 +737,11 @@ export function storeRowsHtml(item: GameItem, sec: StoreSection): string {
     row('简体中文', m.zhSupported === undefined ? '' : m.zhSupported ? '支持' : '无官方'),
     row('官网', m.website),
   ].join('');
-  const desc = m.shortDescription ? `<div class="bz-gs-desc">${escHtml(m.shortDescription)}</div>` : '';
+  const desc = m.shortDescription ? `<div class="bz-gs-desc">${esc(m.shortDescription)}</div>` : '';
   const link = `<div class="bz-gs-detail-actions">
       <button type="button" class="bz-btn bz-btn--md" id="bz-gs-open-store"><span class="bz-ic" data-lucide="external-link"></span>在商店打开</button>
     </div>`;
-  const err = sec.error ? `<div class="bz-gs-dim">${escHtml(sec.error)}</div>` : '';
+  const err = sec.error ? `<div class="bz-gs-dim">${esc(sec.error)}</div>` : '';
   const cacheTag = sec.fromCache ? '<div class="bz-gs-sechint">以下为上次同步时缓存的资料</div>' : '';
   return `<div class="bz-gs-sectitle">游戏资料</div>${cacheTag}${err}${rows ? `<div class="bz-gs-kvlist">${rows}</div>` : ''}${desc}${link}`;
 }
@@ -750,6 +778,10 @@ function withLocalAchIcons(app: App, appid: number, detail: AchSection['detail']
  * 成就与资料两段各走各的，互不阻塞。
  */
 function openDetail(app: App, appid: number): void {
+  // 进弹窗先收悬浮预览（G6）：轮播定时器与换脸在被遮住的卡上继续空转/闪，
+  // 弹窗开着时 mouseout 不会来（指针在弹窗上），只能入口处主动收
+  restReel();
+  restHero();
   const item = M.items.find((it) => it.appid === appid);
   if (!item) return;
   const cached = safeDetailFm(app, item.file);
@@ -791,7 +823,9 @@ function openDetail(app: App, appid: number): void {
     if (storeBox && storeBox.isConnected) storeBox.innerHTML = storeRowsHtml(item, sec);
     if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(display);
     const open = popup.querySelector('#bz-gs-open-store') as HTMLButtonElement | null;
-    if (open) open.addEventListener('click', () => window.open(storeUrlOf(item.appid), '_blank'));
+    // 外链收口（跨域旧账）：window.open 换 core openExternalUrl——四级兜底（app.openUrl →
+    // electron.shell → window.open → 人话提示），移动端/环境不支持时不再点了没反应
+    if (open) open.addEventListener('click', () => openExternalUrl(app, storeUrlOf(item.appid)));
     mountIcons(popup);
   };
   void loadStore(app, item, cached).then((sec) => {
@@ -924,10 +958,11 @@ function createUI(app: App): void {
 
 async function onSyncClick(app: App): Promise<void> {
   const { runSync } = await import('./sync');
+  // 收尾重渲由 runSync finally 的 M.renderFn 兜（eff E6：此处再 renderAll = 同帧整刷两遍；
+  // 入队不改 M.items，多刷一遍渲染不出任何新东西）
   await runSync(app, { force: true });
   void ensurePostersFor(app);
   ensureZhNames(app, M.items); // 新入库的游戏也要补中文名
-  renderAll(app);
 }
 
 /** 同步/打开后补本地媒体（缺封面/图标的入队后台串行下载，并把属性改写成 vault 路径） */
@@ -951,10 +986,94 @@ function fillHero(app: App, rp: GameshelfReport): void {
   heroEl.innerHTML = heroRestHtml;
 }
 
+/* ==================== 输入守护（打字/下拉菜单不被后台整刷打断，影院同款两层） ==================== */
+//
+// 起因（G1/eff E1）：names/backfill/posters 三队列逐条干活各自节流调 M.renderFn，
+// 直通 renderAll 整刷会把工具行连搜索框一起换血——回填期每 1.2s 夺一次焦点、IME 组合
+// 被打断、移动端刚点开的下拉随 disposeSelects 凭空消失。两层处理（照搬 cinema/ui.ts）：
+// 1) 后台刷新走 renderSoft：打字静默期内（含下拉菜单开着）顺延，手停/菜单收起后补刷；
+// 2) 任何整刷（含用户主动触发的）都过焦点守护：快照搜索框的值/选区，渲染后原样落回。
+// 域内文本输入只有搜索框一个，快照/落回比影院的实现简。
+
+/** 打字静默期判定（ms）：距上次键入小于此值视为还在打字 */
+const TYPING_GUARD_MS = 400;
+/** 顺延渲染的补刷延迟（ms）：手停后多久补一次后台刷新 */
+const SOFT_RENDER_DELAY_MS = 400;
+
+let softRenderTimer: ReturnType<typeof setTimeout> | null = null;
+/** 打字心跳（搜索 input 事件更新；0 = 面板内还没打过字） */
+let lastInputAt = 0;
+
+/** 文本输入判定（排除滑杆/勾选等不支持选区的输入类型） */
+function isTextField(el: Element | null): el is HTMLInputElement | HTMLTextAreaElement {
+  if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
+  return !/^(range|checkbox|radio|button|submit|reset|file|color|image)$/i.test(el.type);
+}
+
+/** 面板内是否还在打字（焦点在面板文本输入内 + 距上次键入未过静默期） */
+function isTyping(): boolean {
+  if (!lastInputAt || Date.now() - lastInputAt >= TYPING_GUARD_MS) return false;
+  return isTextField(document.activeElement) && !!popupEl?.contains(document.activeElement);
+}
+
+/** 面板内是否有下拉菜单开着（后台整刷 disposeSelects 会连带关菜单——开着就顺延） */
+function isSelectMenuOpen(): boolean {
+  return !!popupEl?.querySelector('.bz-select.open');
+}
+
+function clearSoftRender(): void {
+  if (softRenderTimer) {
+    clearTimeout(softRenderTimer);
+    softRenderTimer = null;
+  }
+}
+
+/**
+ * 后台刷新入口（M.renderFn：三队列 scheduleRerender 与 sync 共用此槽，调用点零改动）：
+ * 打字或下拉菜单开着时顺延，手停/菜单收起后补刷一次。用户主动触发的渲染（点筛选、
+ * 切视图、搜索防抖）一律走 renderAll 立即渲染，不延后。
+ */
+function renderSoft(app: App): void {
+  if (!M.currentOverlay) return;
+  if (isTyping() || isSelectMenuOpen()) {
+    if (softRenderTimer) clearTimeout(softRenderTimer);
+    softRenderTimer = setTimeout(() => {
+      softRenderTimer = null;
+      renderAll(app);
+    }, SOFT_RENDER_DELAY_MS);
+    return;
+  }
+  renderAll(app);
+}
+
+/** 渲染前快照焦点（焦点在面板文本输入内才记；value 必记——防抖前的键入不能丢） */
+function snapshotFocus(): { value: string; start: number | null; end: number | null } | null {
+  const el = document.activeElement;
+  if (!isTextField(el) || !popupEl?.contains(el)) return null;
+  let start: number | null = null;
+  let end: number | null = null;
+  try { start = el.selectionStart; end = el.selectionEnd; } catch { /* 不支持选区的类型 */ }
+  return { value: el.value, start, end };
+}
+
+/** 渲染后落回：找回搜索框（域内唯一文本输入），value 不同才回写（免打断 IME 组合），再恢复焦点与光标 */
+function restoreFocus(snap: { value: string; start: number | null; end: number | null } | null): void {
+  if (!snap) return;
+  const el = popupEl?.querySelector('.bz-gs-search input') as HTMLInputElement | null;
+  if (!el) return; // 切到统计页等没有搜索框的视图：不抢焦点
+  if (el.value !== snap.value) el.value = snap.value;
+  el.focus();
+  if (snap.start !== null && snap.end !== null) {
+    try { el.setSelectionRange(snap.start, snap.end); } catch { /* 同上 */ }
+  }
+}
+
 /** 面板全量重渲染（视图分派；海报头常驻，工具行/网格/统计整块重建） */
 export function renderAll(app: App): void {
   const frame = M.currentOverlay;
   if (!frame || !document.body.contains(frame)) return;
+  clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖
+  const snap = snapshotFocus();
   const configured = isConfigured();
   mountOps(app);
   restReel();
@@ -989,6 +1108,7 @@ export function renderAll(app: App): void {
     body.dataset.view = 'shelf';
   }
   mountIcons(frame);
+  restoreFocus(snap);
 }
 
 /**
@@ -1029,11 +1149,15 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
       onClick: () => {
         M.bucket = def.key as GameshelfBucket;
         syncChipState();
+        bucketSelRef?.setValue(M.bucket); // 回写移动端下拉（G5：两套控件只有一半回路会显示旧值）
         renderList(app);
       },
     });
     chip.classList.add('bz-gs-chip');
     chip.dataset.k = def.key;
+    // 挂载即带 aria-pressed（UX 拍板项）：core uiChip 不设缺省选中态属性，等首次点击才补
+    // 会让读屏器在首屏拿到「无态」按钮——创建时就按当前档位落一次
+    chip.setAttribute('aria-pressed', String(M.bucket === def.key));
     chips.appendChild(chip);
   }
 
@@ -1048,6 +1172,7 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
     ],
     onChange: (v) => {
       M.sort = v;
+      sortSelRef?.setValue(v); // 回写移动端下拉（G5，同上）
       renderList(app);
     },
   });
@@ -1089,21 +1214,67 @@ function shelfBody(app: App, rp: GameshelfReport): HTMLElement {
   wrap.querySelector('#bz-gs-bucketsel')!.appendChild(bucketSel.el);
   wrap.querySelector('#bz-gs-sortsel')!.appendChild(sortSel.el);
   selectRefs = selRefs;
+  // 句柄入槽（G5 互译回路）：chips/分段改值时回写下拉，跨屏宽切换另一套不显旧值
+  bucketSelRef = bucketSel;
+  sortSelRef = sortSel;
 
-  // 搜索（实时过滤；只重填列表，输入框不重建，焦点不丢）
+  // 搜索（实时过滤；只重填列表，输入框不重建，焦点不丢）。180ms 防抖（对齐保险库/
+  // 备忘录/剪藏本三域先例）：打字每键不再全网格重建 + 全库成就行重解析
   const search = uiSearch({
     placeholder: '搜索游戏名',
     value: M.query,
     onInput: (v) => {
+      lastInputAt = Date.now(); // 打字心跳：renderSoft 据此让路（含 IME 组合期）
       M.query = v;
-      renderList(app);
+      syncSearchClear();
+      searchListRender(app);
     },
   });
   search.el.classList.add('bz-gs-search');
+  // 尾部 ✕ 一键清除（clipbook 效率#12 定稿范式）：有词才显示，点 = 清词 + 刷新 + 焦点回框
+  const searchClear = document.createElement('button');
+  searchClear.type = 'button';
+  searchClear.className = 'bz-gs-search-clear';
+  searchClear.title = '清除搜索';
+  searchClear.setAttribute('aria-label', '清除搜索');
+  searchClear.hidden = !M.query.trim();
+  searchClear.innerHTML = '<i data-lucide="x" class="bz-ic"></i>'; // mountIcons 兑现成 SVG
+  searchClear.addEventListener('click', () => clearSearch(app, search.input));
+  // ESC 二段清词（clipbook 效率#11 定稿范式）：有词 = 只清词不冒泡（escManager 的
+  // document 层收不到，防「清词变成关整个面板」）；无词放行（关面板语义不变）
+  search.input.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.isComposing || e.defaultPrevented) return;
+    if (!search.input.value.trim()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    clearSearch(app, search.input);
+  });
+  search.el.appendChild(searchClear);
   wrap.querySelector('#bz-gs-search')!.appendChild(search.el);
 
   renderList(app);
   return wrap;
+}
+
+/** 防抖窗口：对齐保险库/备忘录/剪藏本（clipbook SEARCH_DEBOUNCE_MS = 180 同口径） */
+const SEARCH_DEBOUNCE_MS = 180;
+
+/** 搜索防抖（模块级单例，closePanel cancel）：尾触 180ms 后只重填列表一次 */
+const searchListRender = debounce((app: App) => renderList(app), SEARCH_DEBOUNCE_MS);
+
+/** ✕ 显隐随词同步（有词才显示） */
+function syncSearchClear(): void {
+  const btn = popupEl?.querySelector('.bz-gs-search-clear') as HTMLElement | null;
+  if (btn) btn.hidden = !M.query.trim();
+}
+
+/** 清词 + 刷新 + 焦点回框（ESC 有词段与 ✕ 共用；调用方已拦住事件冒泡） */
+function clearSearch(app: App, input: HTMLInputElement): void {
+  input.value = '';
+  M.query = '';
+  syncSearchClear();
+  renderList(app);
+  input.focus();
 }
 
 /** chips 选中态就地更新（不重建 DOM，保留 hover/焦点；选中类 = core chip 的 --sel 软底） */
@@ -1152,6 +1323,8 @@ function emptyResult(app: App): HTMLElement {
       const s = popupEl?.querySelector('.bz-gs-search input') as HTMLInputElement | null;
       if (s) s.value = '';
       syncChipState();
+      bucketSelRef?.setValue(M.bucket); // 同 G5：下拉跟回「全部」
+      syncSearchClear();
       renderList(app);
     },
   });
@@ -1184,27 +1357,38 @@ function isConfigured(): boolean {
 export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
   createUI(app);
   M.view = view;
-  M.renderFn = () => renderAll(app);
+  // 三队列 scheduleRerender 与 sync 收尾统一走 renderSoft（G1）：打字/下拉菜单开着时顺延，
+  // 不再整刷抢焦点——调用点（names/backfill/posters/sync）零改动即全收
+  M.renderFn = () => renderSoft(app);
   renderAll(app);
   void ensurePostersFor(app);
   ensureZhNames(app, M.items);
 }
 
-/** 关闭（toggle 语义的关分支）：DOM 摘除 + ESC 注销；状态保留（下次打开重建） */
+/** 关闭（toggle 语义的关分支）：DOM 摘除 + ESC 注销 + 定时器/状态清理（下次打开不背旧账） */
 export function closePanel(): void {
   unregisterPanelEsc(ESC_ID);
   restReel();
+  clearSoftRender(); // 面板已关：顺延渲染不再补，免留野定时器（影院 closeOverlay 同口径）
+  searchListRender.cancel(); // 防抖中的搜索重渲一并作废
   maskEl?.remove();
   maskEl = null;
   popupEl = null;
   M.currentOverlay?.remove();
   M.currentOverlay = null;
   disposeSelects();
+  bucketSelRef = null;
+  sortSelRef = null;
   heroEl = null;
   heroRestHtml = '';
   peekedHeroAppid = null;
   gridEl = null;
   lastReport = null;
+  rankMemo = null; // 位次缓存随库会话作废（开面板 rebuildItems 换数组本也会失效）
+  lastInputAt = 0; // 打字心跳归零：新会话不被旧心跳误判成「还在打字」
+  M.statusMsg = ''; // 状态行不跨开关残留（UX-1）：重开面板不再挂着上次的「同步完成…」
+  M.renderFn = null;
+  M.modalRepaintFn = null;
   clearDetailCache();
   unloadZhNames();
   // 后台回填（商店资料/成就三键）也随面板关闭停止：别在用户眼皮外继续改笔记，
