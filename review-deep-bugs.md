@@ -647,9 +647,9 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## settings-panel（设置面板）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致运行中，5 待槽位）
+## settings-panel（设置面板）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构运行中）
 
-> 明细：`.scratch/review-deep/settings-panel-{func,ui,efficiency}.md`。方向 1（func）：P2×2 + P3×5 + UX×1；方向 2（UI）：P2×2 + P3×6 + UX×2；方向 3（效率）：P3×6 + UX×2（无 P1/P2）。跨方向去重：搜索交互簇（F-1 恢复放出门控行 = UI-6 徽标不重算/UI-7 大小写敏感/E-5 零防抖同搜索链路，UX-2 ESC 二段与 UI-1 同刀）；1042 `-var(` 旧账由 UI-3 收编展开；R9 缝升级维持；GS3 secret 纯死特性仍按拍板不立项。**效率方向旧账补证**：#37（无全部恢复默认+E-6 移动端无重置入口加剧面）、#38（桌面跨域命中不可达+三口径分裂证据）。门禁基线：tsc 0；settings-panel 相关 83 例全绿。
+> 明细：`.scratch/review-deep/settings-panel-{func,ui,efficiency,consistency}.md`。方向 1（func）：P2×2 + P3×5 + UX×1；方向 2（UI）：P2×2 + P3×6 + UX×2；方向 3（效率）：P3×6 + UX×2；方向 4（一致）：P2×1 + P3×4。跨方向去重：**落盘兜底簇**（func F-5 批写假成功 = eff E-1 行级 reject 静默 = cons C-1 渲染器 8 处 `void acc.persist()` 未收编 core safePersist——合看即面板侧全部落盘出口无兜底，修法同刀）；搜索交互簇（F-1 恢复放出门控行 = UI-6 徽标不重算/UI-7 大小写敏感/E-5 零防抖同链路，UX-2 ESC 二段与 UI-1 同刀）；1042 `-var(` 旧账由 UI-3 收编展开；R9 缝升级维持（NaN→0 写入仍在）；GS3 secret 纯死特性仍按拍板不立项。**对表合规 2**：效率整改 5 通过（重置保留确认合规——不可逆无撤销链；danger 反焦缺仍修=E-2）；ADR-0104/0106 缓行了结现状合规。**效率方向旧账补证**：#37/#38 维持。门禁基线：tsc 0；settings-panel 相关 83 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
@@ -660,6 +660,8 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 群（ui 6 条）**：1042 `-var(` 无效声明；触控热区群低于 §8.2 下限且全域零 bz-touch-target 消费（返回/关闭 32px、菜单项 30px、chips ✕ 12px）；#bz-model-picker-popup 裸 100vh 未接 vvh；搜索过滤后组卡徽标不重算；搜索判定大小写敏感；nav 徽标「门控变化后自动跟随」注释不兑现且两套计数口径分叉。
 - **P3 R9 缝升级修法**：非法输入 NaN→0 写入 → 对齐 core「不写入+回显旧值+行内报错」口径。
 - **P3 群（eff 6 条）**：行级落盘 reject 全域静默（renderer.ts 8 处 `void acc.persist()` 无 catch，core 渲染器 N5 safePersist 已兜口径分叉）；「重置本域」确认弹窗缺 danger 反焦（全仓破坏性惯例 8+ 处本域唯一掉队，Enter 一击即重置）；零初始焦点无圈定（uiModal firstFocusable 未消费）；左栏 Tab 序 20+ 欠 roving tabindex；搜索零防抖（每键全量重建+图标物化+全行重扫）；移动端无「重置本域」入口（#37 加剧面）。
+- **P3 群（cons 4 条）**：C-2 五类行 commit 点缺 `refresh()`（值驱动 visibleWhen 面板侧不跟随，存量门控多为 toggle 暂潜伏）；C-3 路径 chips 注释/词条宣称消费 uiChip 实为域内自绘（连带 ✕ 无 role/aria/键盘）；C-4 域加载失败通知手写（未收编 notifyActionError+onRetry，非 Error 抛出物显示 "undefined"）；C-5 ESC 注册未收编 registerPanelEsc 幂等样板（八域先例，纯形制）。
+- **修复批归集（5/5 齐后定稿）**：落盘兜底簇统一 safePersist 收编、搜索交互簇（门控重求值/防抖/大小写/徽标重算）、blur flush、danger 反焦、roving tabindex、焦点圈定、visibleWhen 初始求值容错、重置假成功、移动端重置入口、chips 收编 uiChip、notifyActionError 收编、registerPanelEsc 收编、1042 calc、R9 缝、model-picker vvh、路径单源（arch 到账后补）。
 - **UX 分流（SP 系）**：输入态 ↑↓ 让路光标移动 or 保留切域（U-1 拍板）；搜索命中行词级 mark（UX-1）；搜索框 ESC 二段清词（UX-2，✕ 退役有拍板在案故仅 ESC 语义）；搜索 Enter 跳首个命中（E-7）；schemaLoader 会话级缓存+滚位保持（E-8）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
