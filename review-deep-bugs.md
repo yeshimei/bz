@@ -570,9 +570,9 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## pomodoro（番茄钟）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率 / 4 一致 / 5 架构运行中）
+## pomodoro（番茄钟）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致 / 5 架构运行中）
 
-> 明细：`.scratch/review-deep/pomodoro-{func,ui}.md`。方向 1（func）：P2×1 + P3×5（无 P1；F11/F12/F13 三条旧账已修在位且注释点名，唯 F11/F12 缺回归用例）。方向 2（UI）：P2×2 + P3×3 + UX×1。旧账复核：pomodoro 域**无在册未闭环旧账**（首轮深审）；issues/144「专注中重置加确认」已拍板待做=拍板执行项归修复批，「⚙️ 触屏可达」已随设置迁移消解。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿（并发 flake 未复现）。
+> 明细：`.scratch/review-deep/pomodoro-{func,ui,efficiency}.md`。方向 1（func）：P2×1 + P3×5（无 P1；F11/F12/F13 三条旧账已修在位且注释点名，唯 F11/F12 缺回归用例）。方向 2（UI）：P2×2 + P3×3 + UX×1。方向 3（效率）：P3×3 + UX×3（无 P1/P2；与方向 1 同根 5 条只补证据未立项）。跨方向去重：tick 每秒同值 DOM churn（func P3 = ui P3-3 = eff PE1 三向同根——8 处无条件微写 + applySkinClass 每秒 11 连 class 空转，renderStats key 早退范式已在同文件未跟随）。旧账复核：pomodoro 域无在册未闭环旧账；「专注中重置加确认」已拍板待做=拍板执行项（效率方向补充建议：改用 notifyUndo 范式少一次打断，修复批落地时斟酌）；「命令无默认热键」全域性维持；「⚙️ 触屏可达」已随设置迁移消解。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿（并发 flake 未复现）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
@@ -581,8 +581,9 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P2 统计两档切换钮可达性双缺**（ui P2-2）——约 19px 无热区 + 激活态无 aria-pressed。修：bz-touch-target + aria 状态。
 - **P3 群（func 5 条）**：强制专注下暂停/停止被拦后静默无反馈（补 toggleFocus 同款守卫提示）；暂停休息阶段 toast 恒「已暂停专注」口径分叉；备忘录「专注这个」落在暂停会话上静默续跑旧剩余时间并改归属（与「直接开始一个专注」承诺不符）；`openPomodoro`/`ensurePomodoro` load 失败裸 void 无兜底（notifyActionError 范式）；会话中改小时长 progress 参负 dashoffset 超周长毛刺（clamp）。
 - **P3 群（ui 3 条）**：ui.ts:713 层级注释失实（称不再 JS 内联 z-index 实则 allocZ 发号）；首次读盘窗口内卸载插件 in-flight promise 复活孤儿弹窗 + interval 泄漏；tick 每秒同值 DOM churn（renderStats key 早退范式未跟随）。
-- **拍板执行项**：issues/144「专注中重置加确认」确认框（已拍板待做，随批落）。
-- **UX 分流**：`#pomodoro-phase` aria-live="polite"（一行接入，拍板）。
+- **P3 群（eff 3 条）**：PE1 tick 渲染链 8 处同值微写 + applySkinClass 每秒 11 连 class 空转（与 func/ui 同根合并）；PE2 Space 快捷键点击弹窗内容区后焦点落 body 静默失效（keydown 只挂 popup，现有测试全用 dispatchEvent 未覆盖真实焦点流——补真实焦点用例）；PE3 空闲态「跳过」可点：一键意外进入短休息待开始态且静默落盘，与命令链 skipBreak warning 守卫口径不一致（补禁用或守卫）。
+- **拍板执行项**：issues/144「专注中重置加确认」确认框（已拍板待做，随批落；效率方向建议改 notifyUndo 范式少一次打断，落地时斟酌）。
+- **UX 分流**：`#pomodoro-phase` aria-live="polite"（一行接入，拍板）；「停止专注」一词三义文案对齐（菜单=暂停/命令=重置/面板分开，拍板）；保存失败 toast 缺重试出口（notifyActionError onRetry 已具备未接入——归修复批顺带）；统计档位不跨重启记忆（拍板）。
 - **测试缺口**：F11/F12 回归用例 + 各项随批补。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
