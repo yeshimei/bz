@@ -26,7 +26,7 @@ import {
   type ItemActionsOptions,
 } from '../core/item-actions';
 import {  debounce, escapeHtml, formatRelativeTime , cancelClipboardClear, copySensitiveWithFallback } from '../core/utils';
-import { uiEmpty, uiProgress } from '../core/ui';
+import { uiEmpty, uiProgress, mountIcons } from '../core/ui';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
 import { makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
@@ -34,7 +34,7 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
 import { compressImage, videoFrame } from './preview';
 import { PasswordVaultDataManager, DEFAULT_PW_CHARSET } from '../password-vault/data';
-import { overviewHTML, noteRowHTML, noteDetailHTML, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
+import { overviewHTML, noteRowHTML, noteDetailHTML, statusbarHtml, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenKind, LockScreenStat } from '../core/ui/lock-screen';
 import { readLockStats, writeLockStats } from '../core/lock-stats';
@@ -85,9 +85,16 @@ export const LOCK_KIND_META: Record<
   },
 };
 
-/** 状态栏内容：lucide 锁图标（解锁态开锁）+ 文案（与 index.ts mountEncryptStatusBar 同源，铁律：图标不用 emoji） */
-function statusbarHtml(unlocked: boolean): string {
-  return `${vIc(unlocked ? 'lock-open' : 'lock', 12)} 保险库`;
+// statusbarHtml 单源居 vault-assets-view.ts（一致性整改：本文件 attachStatusBar 与
+// index.ts mountEncryptStatusBar 两侧消费同一份，铁律：图标不用 emoji）
+
+/**
+ * 搜索框尾部 ✕ 清除钮（桌面列表头/移动常驻框共用 markup，效率整改 3）。
+ * 样式随 clipbook `bz-clip-search-clear` 既有形制内联（styles.css 归样式批；本域暂无对应类，
+ * 内联保证无样式时也不破版）。有词才显示（hidden 同步见 bindSearchInput）。
+ */
+function searchClearHtml(): string {
+  return `<button type="button" class="bz-search-clear" data-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0">${vIc('x', 12)}</button>`;
 }
 
 export interface EncryptUIConfig {
@@ -571,6 +578,7 @@ export class UIManager {
           <div class="bz-vault-item on" data-asset="overview">${vIc('layout-grid', 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
           <div class="bz-vault-item k-note" data-asset="note">${vIc('file-lock', 16)}笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-diary" data-asset="diary">${vIc('book-lock', 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
           <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
@@ -597,10 +605,11 @@ export class UIManager {
           <span class="st" data-mob-unlock>已解锁</span>
           <button class="bz-vault-mobclose bz-touch-target--xl" data-act="mob-close" aria-label="关闭">${vIc('x', 15)}</button>
         </div>
-        <div class="bz-vault-msearch">${vIc('search', 13)}<input placeholder="搜索全部资产…" data-mob-search></div>
+        <div class="bz-vault-msearch" style="position:relative">${vIc('search', 13)}<input placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
           <span class="sg on" data-masset="overview">概览</span>
           <span class="sg" data-masset="note">笔记</span>
+          <span class="sg" data-masset="diary">日记</span>
         </div>
         <div class="bz-vault-mbody" data-mob-body></div>
       </div>`;
@@ -639,7 +648,7 @@ export class UIManager {
   /** 统一骨架交互：资产导航 / 顶栏动作 / 搜索防抖 / 移动端 seg */
   private bindVaultShell(): void {
     const setAsset = (a: VaultAsset) => {
-      if ((a as string) === 'pw' || a === 'diary') a = 'note'; // 资产兜底：入口收敛后残留值落加密笔记
+      if ((a as string) === 'pw') a = 'note'; // 资产兜底：pw 入口已随 ADR-0158 摘除，残留值落加密笔记（diary 入口 ADR-0158 拍板回潮，是正规资产）
       this.asset = a;
       lastVisitedAsset = a; // 记住停留资产：下次打开直落
       this.searchKw = '';
@@ -685,6 +694,8 @@ export class UIManager {
   /**
    * 搜索输入绑定（桌面列表头框 / 移动端常驻框共用一条语义）。
    * 桌面框随列表头重建，故每次渲染都要重挂一次——抽成方法避免两处逻辑漂移。
+   * 效率整改 3：ESC 有词清词（stopPropagation 截断 escManager 关面板链，安全模式不误上锁）、
+   * 无词放行；尾部 ✕ 一键清除（对齐 clipbook「ESC 清词 + ✕」定稿范式）。
    * @param isMob 输入源是移动端框：决定把关键词同步到哪一侧（桌面框是动态的，现取）
    */
   private bindSearchInput(input: HTMLInputElement, isMob: boolean): void {
@@ -701,8 +712,42 @@ export class UIManager {
       } else {
         this.mob.search.value = v; // 桌面输入 → 同步移动端框
       }
+      this.syncSearchClear();
       this.searchDebounced();
     });
+    // ESC 清词：有词 = 只清词不冒泡（escManager 的 document 层收不到，防「清词变成关整个面板」、
+    // 安全模式不误上锁）；无词放行 → 走面板关闭链（与 clipbook 效率#11 同语义）
+    input.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !input.value.trim()) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.clearSearchKw();
+      input.focus();
+    });
+    // 尾部 ✕（效率#12）：点 = 清词 + 刷新 + 焦点回框
+    input.parentElement?.querySelector<HTMLElement>('[data-search-clear]')?.addEventListener('click', () => {
+      this.clearSearchKw();
+      input.focus();
+    });
+  }
+
+  /** ✕ 显隐同步（有词才显示；两框词互同步后一起刷，clipbook syncDeskSearchClear 同款） */
+  private syncSearchClear(): void {
+    const v = !!this.searchKw || !!this.mob.search.value.trim() || !!this.deskSearch?.value.trim();
+    for (const box of [this.deskSearch?.parentElement, this.mob.search.parentElement]) {
+      const btn = box?.querySelector<HTMLElement>('[data-search-clear]');
+      if (btn) btn.hidden = !v;
+    }
+  }
+
+  /** 清词统一出口（ESC / ✕ 共用）：两框同清 + 立即重绘（不走防抖） */
+  private clearSearchKw(): void {
+    this.searchKw = '';
+    const deskSearch = this.deskSearch;
+    if (deskSearch) deskSearch.value = '';
+    this.mob.search.value = '';
+    this.syncSearchClear();
+    this.renderAll();
   }
 
   createMask(id: string): HTMLDivElement {
@@ -1235,16 +1280,27 @@ export class UIManager {
   }
 
   // ---------- 统一工作台渲染 ----------
+  /**
+   * 共享锁密码载荷装载旗标（效率整改 4：load 仅解锁后首次 renderList 执行——
+   * 统计无需逐次刷新，loadCache 本就按密文判等；上锁后复位，下次解锁重新装载）
+   */
+  private _pwLoadedSinceUnlock = false;
+
   /** show/解锁/外部变更/资产切换统一入口：加载 → 全量重绘 */
   async renderList() {
     if (!this.listContainer) return;
-    // 密码资产数据（未解锁静默，锁屏接管）
+    // 密码资产数据（未解锁静默，锁屏接管；解锁会话内只装一次，效率整改 4）
     if (this.dataManager.unlocked) {
-      try {
-        await this.pwDataManager.load();
-      } catch (e) {
-        /* 密码载荷损坏等：保持空态，详情由 UI 呈现 */
+      if (!this._pwLoadedSinceUnlock) {
+        this._pwLoadedSinceUnlock = true;
+        try {
+          await this.pwDataManager.load();
+        } catch (e) {
+          /* 密码载荷损坏等：保持空态，详情由 UI 呈现 */
+        }
       }
+    } else {
+      this._pwLoadedSinceUnlock = false;
     }
     this.renderAll();
   }
@@ -1252,11 +1308,22 @@ export class UIManager {
   /** 全量重绘：导航计数 + 概览/资产内容 + 移动端 + 健康卡 + 顶栏标题 */
   renderAll() {
     if (!this.rootVisible()) return;
-    // 解锁态下刷新统计快照（供下次上锁后的解锁屏显示；锁定态清单不可读）
-    if (this.dataManager.unlocked) this.captureLockStats();
+    // 锁屏统计快照已从 renderAll 摘除（效率整改 4：快照只在解锁屏消费，不随最高频重绘跑；
+    // 快照落点收敛到上锁消费点——由 show/hide/lockNow 侧批次收口）
     this.renderNav();
     this.renderDesktop();
     this.renderMobile();
+  }
+
+  /** 列表头搜索框聚焦（openManager 渲染收口后补挂；无列表头/面板未显示时静默） */
+  focusListSearch(): void {
+    const search = this.deskSearch;
+    if (!search) return;
+    try {
+      search.focus({ preventScroll: true } as any);
+    } catch (e) {
+      search.focus();
+    }
   }
 
   private rootVisible(): boolean {
@@ -1323,6 +1390,7 @@ export class UIManager {
     // 概览计数/健康卡口径：密码本已移出保险库面板，只算库内加密资产（笔记+日记）
     setCnt('overview', c.note + c.diary);
     setCnt('note', c.note);
+    setCnt('diary', c.diary);
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) => {
       el.classList.toggle('on', el.getAttribute('data-asset') === this.asset);
     });
@@ -1358,23 +1426,26 @@ export class UIManager {
     const pureNotes = vaultNotes.filter((n) => n.kind !== 'diary-entry');
     const attachments = pureNotes.reduce((s, n) => s + n.attachments.length, 0);
     const attBytes = pureNotes.reduce((s, n) => s + n.attachments.reduce((b, a) => b + (a.blobSize || 0), 0), 0);
-    // 密码本已移出保险库面板，概览流水只收笔记/日记（diary 条目点击统一落笔记资产）
+    // 密码本已移出保险库面板，概览流水只收笔记/日记（diary 行按真实值落加密日记列表）
+    // 效率/一致性整改：先全量映射 {note, ts} → ts 降序排序 → 再 slice(0,6)——
+    // 旧实现先 slice(0,6) 后排序，实际显示的是清单里最早的 6 条
+    const candidates = vaultNotes.map((n) => ({
+      n,
+      kind: (n.kind === 'diary-entry' ? 'diary' : 'note') as 'note' | 'diary',
+      ts: Date.parse(n.createdAt || '') || 0,
+    }));
+    candidates.sort((a, b) => b.ts - a.ts);
     const recent: Array<{ kind: 'note' | 'diary'; id?: string; title: string; sub: string; time: string; ts: number }> = [];
-    const pushRecent = (kind: 'note' | 'diary', id: string | undefined, title: string, sub: string, time: string, ts: number) =>
-      recent.push({ kind, id, title, sub, time, ts });
-    for (const n of vaultNotes.slice(0, 6)) {
-      const kind = n.kind === 'diary-entry' ? 'diary' : 'note';
-      pushRecent(
+    for (const { n, kind, ts } of candidates.slice(0, 6)) {
+      recent.push({
         kind,
-        kind === 'note' ? n.id : undefined, // diary 落笔记列表后无法定位（无独立资产），不带 id
-        n.title,
-        `${n.attachments.length} 个附件 · ${n.path}`,
-        formatRelativeTime(n.createdAt),
-        Date.parse(n.createdAt || '') || 0,
-      );
+        id: n.id, // 笔记/日记均可定位：点击流水直落对应资产列表并选中该条目
+        title: n.title,
+        sub: `${n.attachments.length} 个附件 · ${n.path}`,
+        time: formatRelativeTime(n.createdAt),
+        ts,
+      });
     }
-    // G：按真实时间戳降序（旧实现按相对时间字符串 localeCompare——「今天」「3 天前」字典序无时序意义）
-    recent.sort((a, b) => b.ts - a.ts);
     return {
       counts: c,
       attachments,
@@ -1420,7 +1491,19 @@ export class UIManager {
     const area = document.createElement('div');
     area.className = 'bz-vault-area';
     area.innerHTML = overviewHTML(stats);
-    // 概览卡/hero 点击 → 资产跳转（卡片统一落加密笔记；pw/diary 由 setAssetFromNav 兜底收敛）
+    this.bindOverviewArea(area);
+    detail.appendChild(area);
+  }
+
+  /**
+   * 概览区交互绑定（桌面跨栏区 / 移动概览页共用，效率整改 4——移动概览此前零绑定全哑：
+   * hero 按钮/统计卡/最近流水/体检卡点了没反应）。
+   * 流水行按 data-recent 真实资产值分流（diary 行落加密日记列表并定位条目）。
+   */
+  private bindOverviewArea(area: HTMLElement): void {
+    // 空态走 emptyHtmlStr 字符版（<i data-lucide> 占位）→ 挂载后统一兑现（core mountIcons 单源）
+    mountIcons(area);
+    // 概览卡/hero 点击 → 资产跳转（卡片统一落加密笔记；pw 残留值由 setAssetFromNav 兜底收敛）
     area.querySelectorAll('.card[data-nav]').forEach((el) =>
       el.addEventListener('click', () => this.setAssetFromNav((el.getAttribute('data-nav') as VaultAsset)))
     );
@@ -1432,13 +1515,12 @@ export class UIManager {
     area.querySelector('[data-hero="recent-all"]')?.addEventListener('click', () => this.setAssetFromNav('note'));
     area.querySelectorAll('.bz-vault-minirow[data-recent]').forEach((el) =>
       el.addEventListener('click', () => {
-        // 原型口径：点流水 → 落列表并定位该条目（diary 段无 id，仅落列表）
+        // 原型口径：点流水 → 落对应资产列表并定位该条目
         const rid = el.getAttribute('data-recent-id');
         if (rid) this._selNoteId = rid;
         this.setAssetFromNav(el.getAttribute('data-recent') as 'note' | 'diary');
       })
     );
-    detail.appendChild(area);
   }
 
   /** 桌面加密笔记/日记：列表 + 详情（异步解密日记正文预览） */
@@ -1461,18 +1543,22 @@ export class UIManager {
       notes = notes.filter((n) => (n.title || '').toLowerCase().includes(lower) || (n.path || '').toLowerCase().includes(lower));
     }
     let listBody = keepHead ? list.querySelector<HTMLElement>('.bz-vault-lc-body') : null;
+    // 滚位保留（效率整改 2）：全量重建前记录 scrollTop，行挂载完毕后还原——
+    // 行选中/搜索防抖/写操作重绘不再把视口跳回顶部（重建瞬间高度塌陷会钳到 0）
+    const prevScroll = listBody ? listBody.scrollTop : 0;
     if (!listBody) {
       list.innerHTML = '';
       // 列表头按评审去掉标题与计数，只剩搜索框；日记条目视图（无搜索语义）直接无头
       if (kind === 'note') {
         const head = document.createElement('div');
         head.className = 'bz-vault-lc-head';
-        head.innerHTML = `<div class="bz-vault-search">${vIc('search', 14)}<input placeholder="搜索笔记…" data-vault-search></div>`;
+        head.innerHTML = `<div class="bz-vault-search" style="position:relative">${vIc('search', 14)}<input placeholder="搜索笔记…" data-vault-search>${searchClearHtml()}</div>`;
         list.appendChild(head);
         const headSearch = head.querySelector<HTMLInputElement>('[data-vault-search]');
         if (headSearch) {
           headSearch.value = kw;
           this.bindSearchInput(headSearch, false);
+          this.syncSearchClear(); // 带词重建（防御路径）时 ✕ 同步显隐
         }
       }
       listBody = document.createElement('div');
@@ -1508,6 +1594,7 @@ export class UIManager {
       this.attachNoteDrawer(el, n, kind);
       listBody.appendChild(el);
     }
+    if (keepHead) listBody.scrollTop = prevScroll; // 滚位还原（同资产刷新路径；切资产从顶部起算）
     this.renderNoteDetail(detail, notes.find((n) => n.id === selId) || notes[0], kind);
   }
 
@@ -1657,8 +1744,8 @@ export class UIManager {
   // （issue 365：与 password-vault 两份逐字雷同的兜底实现一并删除，两域消费同一实现）。
 
   private setAssetFromNav(a: VaultAsset): void {
-    // 资产兜底：面板只管加密笔记/加密日记（pw 入口已随 ADR-0158 摘除），旧停留值残留统一落 note
-    if ((a as string) === 'pw' || a === 'diary') a = 'note';
+    // 资产兜底：pw 入口已随 ADR-0158 摘除，旧停留值残留统一落 note（diary 是正规资产，ADR-0158 拍板回潮）
+    if ((a as string) === 'pw') a = 'note';
     this.asset = a;
     lastVisitedAsset = a; // 记住停留资产：下次打开直落
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) =>
@@ -1740,6 +1827,7 @@ export class UIManager {
       const area = document.createElement('div');
       area.className = 'bz-vault-mob-overview';
       area.innerHTML = overviewHTML(this.overviewStats());
+      this.bindOverviewArea(area); // 效率整改 4：移动概览与桌面共用一套绑定（此前零绑定全哑）
       body.appendChild(area);
       return;
     }
@@ -2315,16 +2403,18 @@ export class EncryptAppController {
   /** 打开保险库主面板：解锁成功直落加密笔记资产并聚焦搜索；
    *  已解锁直接打开则恢复上次停留资产（会话级记忆）。 */
   async openManager() {
-    if (!this.dataManager.unlocked) {
+    const needUnlock = !this.dataManager.unlocked;
+    if (needUnlock) {
       const ok = await this.uiManager.showPasswordDialog();
-      if (ok) {
-        this.uiManager.show();
-        this.uiManager.enterPwQuickAccess();
-      }
-    } else {
-      this.uiManager.show();
-      this.uiManager.restoreLastAsset();
+      if (!ok) return;
     }
+    // 效率整改 5：先落定资产再渲染一次收口——落资产入口（enterPwQuickAccess/restoreLastAsset）
+    // 的 renderAll 在面板未显示时被 rootVisible 守卫空转，show() 成为唯一一次全量渲染；
+    // 搜索框聚焦依赖渲染完成，随 show 之后补挂（focusListSearch）
+    if (needUnlock) this.uiManager.enterPwQuickAccess();
+    else this.uiManager.restoreLastAsset();
+    this.uiManager.show();
+    if (needUnlock) this.uiManager.focusListSearch();
   }
 
   /** 二次确认：正文与附件将移入保险库（原路径消失），点确认才开始；共享附件原件保留（issue 338） */

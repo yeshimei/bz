@@ -61,7 +61,7 @@ describe('统一保险库工作台（UIManager；ADR-0158 收敛为加密笔记 
     expect(document.querySelector('.bz-vault-desk')).toBeTruthy();
     expect(document.querySelector('.bz-vault-nav')).toBeTruthy();
     const items = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')];
-    expect(items.map((i) => i.getAttribute('data-asset'))).toEqual(['overview', 'note']);
+    expect(items.map((i) => i.getAttribute('data-asset'))).toEqual(['overview', 'note', 'diary']);
     expect(document.querySelector('.bz-vault-listcol')).toBeTruthy();
     expect(document.querySelector('.bz-vault-detail')).toBeTruthy();
     // 顶栏三按钮（health/lock-note/close）2026-09-12 按评审移除：顶栏只留标题
@@ -75,7 +75,7 @@ describe('统一保险库工作台（UIManager；ADR-0158 收敛为加密笔记 
     expect(menuTexts).toContain('保险库设置');
     expect(menuTexts).toContain('保险库体检');
     // 移动端 seg
-    expect([...document.querySelectorAll('.bz-vault-mseg .sg')].map((i) => i.getAttribute('data-masset'))).toEqual(['overview', 'note']);
+    expect([...document.querySelectorAll('.bz-vault-mseg .sg')].map((i) => i.getAttribute('data-masset'))).toEqual(['overview', 'note', 'diary']);
   });
 
   it('show 默认概览视图：hero 计数渲染（空库显示 0 项 + 概览卡）', async () => {
@@ -93,10 +93,9 @@ describe('统一保险库工作台（UIManager；ADR-0158 收敛为加密笔记 
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'p@ss', fav: true });
     ui.show();
     await waitFor(() => !!document.querySelector('.bz-vault-detail > .bz-vault-area'));
-    // 入口收敛：nav/seg 均无 pw/diary 项
+    // 入口收敛：nav/seg 均无 pw 项（diary 入口已随 ADR-0158 拍板回潮恢复，见 view-fix-c 回归）
     const navAssets = [...document.querySelectorAll('.bz-vault-nav .bz-vault-item')].map((i) => i.getAttribute('data-asset'));
     expect(navAssets).not.toContain('pw');
-    expect(navAssets).not.toContain('diary');
     // 密码视图已退役：直通置 pw 资产 → 渲染分支只剩笔记/日记口径（按非日记渲染），无任何密码元素
     (ui as any).asset = 'pw';
     ui.renderAll();
@@ -173,7 +172,7 @@ describe('统一保险库工作台（UIManager；ADR-0158 收敛为加密笔记 
     });
     ui.show();
     await new Promise((r) => setTimeout(r, 30));
-    ui.asset = 'diary'; // nav 日记入口已收敛；日记视图保留，直通置资产回归
+    ui.asset = 'diary'; // 日记视图保留；nav 日记入口已恢复（点击路径见 view-fix-c 回归），直通置资产亦可
     ui.renderAll();
     await new Promise((r) => setTimeout(r, 30));
     // 移动端列表行 → 详情二级页

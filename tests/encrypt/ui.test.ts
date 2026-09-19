@@ -279,7 +279,7 @@ describe('UIManager 统一保险库工作台', () => {
     ui2.mask?.remove();
   });
 
-  it('nav 计数收敛：笔记计数正确，密码/日记入口随 nav 移除；概览计数只算库内加密资产', async () => {
+  it('nav 计数：笔记/日记计数正确，密码入口随 nav 移除；概览计数只算库内加密资产', async () => {
     // beforeEach 已加 1 篇普通笔记；补日记条目 + 密码整表（密码本移出面板口径，不进概览计数）
     await dm.lockNote({ path: '我的/日记/d.md', title: '日记d', kind: 'diary-entry', content: '# x', attachments: [] });
     // 密码整表经 pwDataManager 建立（kind=password-vault 一条镜像）
@@ -288,9 +288,9 @@ describe('UIManager 统一保险库工作台', () => {
     ui.show();
     await new Promise((r) => setTimeout(r, 40));
     expect(document.querySelector('[data-cnt="note"]')!.textContent).toBe('1');
-    // 入口收敛：nav 无 pw/diary 计数槽位
+    // 入口收敛：nav 无 pw 计数槽位；diary 计数槽位在位（ADR-0158 拍板回潮）
     expect(document.querySelector('[data-cnt="pw"]')).toBeNull();
-    expect(document.querySelector('[data-cnt="diary"]')).toBeNull();
+    expect(document.querySelector('[data-cnt="diary"]')!.textContent).toBe('1');
     // 概览计数 = 库内加密资产（笔记 + 日记）= 2，不含密码本
     expect(document.querySelector('[data-cnt="overview"]')!.textContent).toBe('2');
   });
