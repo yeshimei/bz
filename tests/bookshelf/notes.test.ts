@@ -76,12 +76,11 @@ describe('updateComment / deleteHighlight', () => {
   });
 
   it('updateComment：更新 data-comment 值', async () => {
-    let done = false;
-    updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', '新批注', () => { done = true; });
-    await new Promise((r) => setTimeout(r, 20));
+    // 深审 cons C5：onDone 死参数已删，调用方按返回值回调（audit H 口径）
+    const ok = await updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', '新批注');
+    expect(ok).toBe(true);
     const out = vault.files.get('书库/活着.md')!;
     expect(out).toContain('data-comment="新批注"');
-    expect(done).toBe(true);
   });
 
   it('updateComment：清空 → 删属性', async () => {
@@ -98,10 +97,10 @@ describe('updateComment / deleteHighlight', () => {
     expect(out).toContain('<span data-comment="新增批注" data-id="h2"');
   });
 
-  it('updateComment：原文不匹配 → 「未找到对应高亮（原文不匹配），编辑失败」', async () => {
+  it('updateComment：原文不匹配 → 「编辑批注失败：未找到对应高亮（原文不匹配），请重试」（error 级）', async () => {
     updateComment(makeApp(vault), '书库/活着.md', 'h1', '不存在的原文', 'x');
     await new Promise((r) => setTimeout(r, 20));
-    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(true);
+    expect(hasNotice('编辑批注失败：未找到对应高亮（原文不匹配），请重试')).toBe(true);
     expect(vault.modifiedPaths).toHaveLength(0);
   });
 
@@ -117,29 +116,26 @@ describe('updateComment / deleteHighlight', () => {
     const done = vi.fn();
     deleteHighlight(makeApp(vault), '书库/活着.md', 'h1', '错原文', done);
     await new Promise((r) => setTimeout(r, 20));
-    expect(hasNotice('未找到对应高亮（原文不匹配），删除失败')).toBe(true);
+    expect(hasNotice('删除划线失败：未找到对应高亮（原文不匹配），请重试')).toBe(true);
     expect(done).toHaveBeenCalled(); // 失败路径也回调：UI 层据此重开壳（B2）
   });
 
   it('updateComment（P1-18）：含 $&、$`、双引号的批注往返无损——转义 &quot; 且 $ 序列不被当替换模式', async () => {
     const tricky = '说"$&"与"$`"完';
     const escaped = '说&quot;$&&quot;与&quot;$`&quot;完'; // 四个双引号全转义；$ 序列原样
-    let done = false;
-    updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', tricky, () => { done = true; });
-    await new Promise((r) => setTimeout(r, 20));
-    expect(done).toBe(true);
+    const ok = await updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', tricky);
+    expect(ok).toBe(true);
     const out = vault.files.get('书库/活着.md')!;
     // 双引号已转义；$&/$` 原样落盘（字符串替换模式注入已杜绝）；同 span 的 data-date 完好
     expect(out).toContain(`data-comment="${escaped}" data-date="2025-06-01"`);
-    // reparse 一致：读回值 = 写入的转义形态
+    // 深审 func F3：reparse 反转义——读回值 = 写入的原始文本（不再是 &quot; 实体字面量）
     const reparsed = parseBookNotes(out, '活着');
-    expect(reparsed.root.children[0].highlights[0].comment).toBe(escaped);
-    // 以读回值再存一次（幂等）：不二次转义、内容稳定
+    expect(reparsed.root.children[0].highlights[0].comment).toBe(tricky);
+    // 以读回值（原始文本）再存一次（幂等）：转义稳定不动点、内容零漂移
     clearNotices();
-    updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', escaped);
-    await new Promise((r) => setTimeout(r, 20));
+    await updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', tricky);
     expect(vault.files.get('书库/活着.md')).toBe(out);
-    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(false);
+    expect(hasNotice('编辑批注失败：未找到对应高亮（原文不匹配），请重试')).toBe(false);
   });
 
   it('updateComment（P1-18）：插入路径同样转义且不受 $ 模式影响', async () => {
@@ -150,11 +146,9 @@ describe('updateComment / deleteHighlight', () => {
   });
 
   it('updateComment（P1-18）：同值保存不再误报失败', async () => {
-    let done = false;
-    updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', '批注一', () => { done = true; });
-    await new Promise((r) => setTimeout(r, 20));
-    expect(done).toBe(true);
-    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(false);
+    const ok = await updateComment(makeApp(vault), '书库/活着.md', 'h1', '原文一', '批注一');
+    expect(ok).toBe(true);
+    expect(hasNotice('编辑批注失败：未找到对应高亮（原文不匹配），请重试')).toBe(false);
   });
 
   it('audit D：写盘走 vault.process 原子读改写，不再用 vault.modify 全文替换', async () => {
@@ -185,18 +179,16 @@ describe('updateComment / deleteHighlight', () => {
 
   it('G12 回归：预检命中后重放未命中（并发改动高亮原文）→ 失败路径，不假成功', async () => {
     const app = makeApp(vault);
-    let done = false;
     // 模拟并发改动：process 回调执行前盘上原文已被改（重放必未命中）
     const realProcess = app.vault.process.bind(app.vault);
     app.vault.process = async (file: any, fn: (c: string) => string) => {
       vault.files.set('书库/活着.md', vault.files.get('书库/活着.md')!.replace('原文一', '原文已被并发修改'));
       return realProcess(file, fn);
     };
-    const ok = await updateComment(app, '书库/活着.md', 'h1', '原文一', '新批注', () => { done = true; });
-    // 旧实现：预检命中 → 重放未命中全文原样写回仍 return true + onDone（假成功、编辑丢失）
+    const ok = await updateComment(app, '书库/活着.md', 'h1', '原文一', '新批注');
+    // 旧实现：预检命中 → 重放未命中全文原样写回仍 return true（假成功、编辑丢失）
     expect(ok).toBe(false);
-    expect(done).toBe(false); // 不关弹窗
-    expect(hasNotice('未找到对应高亮（原文不匹配），编辑失败')).toBe(true);
+    expect(hasNotice('编辑批注失败：未找到对应高亮（原文不匹配），请重试')).toBe(true);
   });
 
   it('G12 回归：deleteHighlight 重放未命中 → 失败路径（不假成功删除）', async () => {
@@ -210,14 +202,14 @@ describe('updateComment / deleteHighlight', () => {
     const ok = await deleteHighlight(app, '书库/活着.md', 'h1', '原文一', done);
     expect(ok).toBe(false);
     expect(done).toHaveBeenCalled(); // 失败也重开壳（B2）
-    expect(hasNotice('未找到对应高亮（原文不匹配），删除失败')).toBe(true);
+    expect(hasNotice('删除划线失败：未找到对应高亮（原文不匹配），请重试')).toBe(true);
     expect(vault.files.get('书库/活着.md')).toContain('原文已被并发修改'); // 划线未被破坏
   });
 
   it('audit H：文件缺失 → notice + resolve(false)（不再静默 return 悬挂弹窗）', async () => {
     const ok = await updateComment(makeApp(vault), '书库/不存在.md', 'h1', '原文一', 'x');
     expect(ok).toBe(false);
-    expect(hasNotice('文件不存在，编辑批注失败')).toBe(true);
+    expect(hasNotice('编辑批注失败：文件不存在，请重试')).toBe(true);
   });
 
   it('audit H：IO 失败（read/process reject）→ notice + false，不抛未处理 rejection', async () => {
@@ -226,7 +218,8 @@ describe('updateComment / deleteHighlight', () => {
     app.vault.process = vi.fn().mockRejectedValue(new Error('disk io')) as any;
     const ok = await updateComment(app, '书库/活着.md', 'h1', '原文一', 'x');
     expect(ok).toBe(false);
-    expect(hasNotice('编辑批注失败，请重试')).toBe(true);
+    // 深审 cons C3/U4：IO 失败走 core notifyActionError 单源（文案 = 动作 + 原因 + 请重试）
+    expect(hasNotice('编辑批注失败：disk io，请重试')).toBe(true);
     errSpy.mockRestore();
   });
 
@@ -238,7 +231,7 @@ describe('updateComment / deleteHighlight', () => {
     const ok = await deleteHighlight(app, '书库/活着.md', 'h1', '原文一', done);
     expect(ok).toBe(false);
     expect(done).toHaveBeenCalled();
-    expect(hasNotice('删除高亮失败，请重试')).toBe(true);
+    expect(hasNotice('删除划线失败：disk io，请重试')).toBe(true);
     errSpy.mockRestore();
   });
 
