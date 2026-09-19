@@ -210,7 +210,9 @@ describe('F11/F12/F13：番茄钟落盘与冻结标记', () => {
     await vi.advanceTimersByTimeAsync(10);
     await flushPomo(vault);
     expect(pomoDisk(vault).state.endTime).not.toBeNull(); // 运行态已落盘
-    btn('pomodoro-btn-reset').click(); // 重置
+    btn('pomodoro-btn-reset').click(); // 重置（深审修复批 issues/144：专注中重置加确认框——语义翻转注记：
+    // 原断言「点击即重置」与拍板冲突，确认后落盘契约本身不变，故补点确认钮再断言）
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await vi.advanceTimersByTimeAsync(10);
     await flushPomo(vault);
     const disk = pomoDisk(vault).state;

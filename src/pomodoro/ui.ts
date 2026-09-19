@@ -13,13 +13,21 @@
  * issue 357：统计两档切换（近 7 天明细 / 近 6 月趋势）+ 周归档落盘——save/initData 走
  * trimWithArchive，离开 7 天保留窗的明细按自然周归档进 pomodoro.json 可选段 archived（幂等合并），
  * 「history 只留 7 天明细」拍板不变；月趋势 = stats.lastNMonths（归档行 + 明细合成，不重复累计）。
+ * 深审修复批（bz-fix-pomo-core）：PF1 关弹窗清统计键防重开柱区空白 / PC1 月档 minutes 归一 +
+ * 柱顶小时签接线（hoursLabel 零消费收尾）/ PF2 togglePause 被 forceFocus 拦下不再静默 /
+ * PC3 forceFocus 提示三出口收敛 forceFocusHint 单源 / PF3 暂停 toast 按阶段取文案 /
+ * PF4 暂停会话「专注这个」不再续跑改归属 / PF5 load·save 失败兜底（notifyActionError 带重试）/
+ * PF6 环形进度钳制 / PE1 tick 同值微写收敛 / PE2 点内容区焦点收回面板（Space 动线）/
+ * PE3 空闲态跳过禁用 / disposed 旗标统一卸载竞态护栏 / recoveryNotified 恢复通知单发（PA-2）/
+ * issues/144 拍板执行项：专注中重置走 core flow-dialog 确认（danger 反焦）。
  */
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
 import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
-import { notice, notify, notifySaveError } from '../core/notice';
+import { notice, notify, notifyActionError } from '../core/notice';
+import { openFlowDialog } from '../core/flow-dialog';
 import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { PomodoroDataManager, trimWithArchive } from './data';
@@ -59,6 +67,16 @@ let appRef: App | null = null;
 let autoPauseMain = false;
 /** visibilitychange 监听清理引用（unload 用） */
 let visibilityHandler: (() => void) | null = null;
+/**
+ * 卸载旗标（深审 UI P3-2 + PA-3 同根统一护栏）：unloadPomodoro 置位，openPomodoro/ensurePomodoro
+ * 入口清位（卸载后再开 = 新会话）。unload 的「丢弃引用」式清理拦不住在途 promise 链的剩余步骤，
+ * 所有 async 链在此旗标上设统一取消检查点——「卸载后弹窗复活 + interval 泄漏」与「在途 save 后半段
+ * 把已清空的内存态写回脏值」同根症状一并掐断。
+ */
+let disposed = true;
+/** 恢复通知已弹标记（深审 PA-2）：并发重入共享同一 initData in-flight，`loaded` 置位挡不住
+ *  已在块内的第二个调用者——恢复通知须「每会话一次」，unloadPomodoro 复位 */
+let recoveryNotified = false;
 
 /**
  * 面板主题 → 弹窗皮肤类（未知/空值回落默认）。
@@ -69,6 +87,9 @@ function applySkinClass(): void {
   const popup = document.getElementById('pomodoro-popup');
   if (!popup) return;
   const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+  // 深审 PE1：render 每秒跑，皮肤未变（已挂 want 类）即早退——免 10 连 remove + 1 add 的空转；
+  // 皮肤类唯一变更入口是本函数（设置 onChange → render），不变式「至多挂一套皮」使早退安全
+  if (popup.classList.contains(want)) return;
   for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
   popup.classList.add(want);
 }
@@ -136,9 +157,10 @@ function notifyPhaseStarted(phase: Phase): void {
   playPhaseSound(phase);
 }
 
-/** 暂停（手动）：toast + 提示音 */
+/** 暂停（手动）：toast + 提示音（深审 PF3：按阶段取文案——暂停的是休息就说休息，不停留「专注」错相；
+ *  状态栏保持通用「已暂停」口径不动，见 statusbar.ts） */
 function notifyPaused(): void {
-  notice('已暂停专注', 'pause');
+  notice(state.phase === 'focus' ? '已暂停专注' : '已暂停休息', 'pause');
   const s = tryGetSettings();
   if (s.pomodoroSound !== false) playSound('pause', pomodoroVolume());
 }
@@ -146,6 +168,14 @@ function notifyPaused(): void {
 /** 休息阶段标签（专注完成通知里预告下一阶段） */
 function breakLabel(phase: Phase, d: Durations): string {
   return phase === 'long-break' ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
+}
+
+/**
+ * forceFocus 拦截提示单源模板（深审 PC3）：同域三出口（toggleFocus 停止 / togglePause / 
+ * startFocusForTask 手动暂停）措辞对齐，出口统一指向「番茄钟面板」；paused 变体保留「暂停中」前缀。
+ */
+function forceFocusHint(paused = false): string {
+  return paused ? '强制专注模式暂停中，请先在番茄钟面板操作' : '强制专注模式中，请先在番茄钟面板操作';
 }
 
 /**
@@ -251,43 +281,50 @@ function buildStatBars(
 /**
  * 历史统计区：今日计数+总分钟 + 统计两档（issue 357）——「近 7 天」明细柱 / 「近 6 月」趋势柱
  * （stats.lastNMonths：归档行 + 当前 7 天明细合成，两源按日不交不重复累计）；
- * 同档同数据跳过重建（防 tick 每秒 DOM churn），档位切换经 setStatMode 清键强制重建。
+ * 同档同数据跳过重建（防 tick 每秒 DOM churn），档位切换经 setStatMode 清键强制重建，
+ * 关弹窗也清键（深审 PF1：重开是全新空骨架，同键早退会留白柱区）。
+ * 档位可视态（tab 高亮/hidden/aria-pressed）随重建一并落——mode 变化必清键，早退分支不会漏更新。
  */
 let lastStatsKey = '';
 function renderStats(): void {
   const now = Date.now();
   const todayEl = document.getElementById('pomodoro-today');
-  if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+  if (todayEl) {
+    const todayText = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+    if (todayEl.textContent !== todayText) todayEl.textContent = todayText; // 深审 PE1：同值不重写
+  }
   const weekEl = document.getElementById('pomodoro-week');
   const monthsEl = document.getElementById('pomodoro-months');
   if (!weekEl || !monthsEl) return;
-  const tabWeek = document.getElementById('pomodoro-stat-tab-week');
-  const tabMonth = document.getElementById('pomodoro-stat-tab-month');
-  tabWeek?.classList.toggle('pomodoro-stat-tab-on', statMode === 'week');
-  tabMonth?.classList.toggle('pomodoro-stat-tab-on', statMode === 'month');
   if (statMode === 'month') {
-    weekEl.hidden = true;
-    monthsEl.hidden = false;
     const months = lastNMonths(archived, history, now, TREND_MONTHS);
     const key = 'm:' + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(',') + `#${archived.length}`;
     if (key === lastStatsKey) return;
     lastStatsKey = key;
+    syncStatTabs(false);
+    weekEl.hidden = true;
+    monthsEl.hidden = false;
+    // 深审 PC1（issue 357 接线收尾）：月档按 minutes 归一 + 柱顶小时数签（hoursLabel 此前零消费）——
+    // 「次数少、单次长」的月份柱高不再失真；周档维持 count 归一不动（日粒度看次数，title 已含分钟）
     buildStatBars(
       monthsEl,
       months.map((m) => ({
         label: `${parseInt(m.month.slice(5, 7), 10)}月`,
         title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
         count: m.count,
-      }))
+        minutes: m.minutes,
+      })),
+      { metric: 'minutes', valueLabel: (r) => hoursLabel(r.minutes ?? 0) }
     );
     return;
   }
-  weekEl.hidden = false;
-  monthsEl.hidden = true;
   const days = last7Days(history, now);
   const key = 'w:' + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(',');
   if (key === lastStatsKey) return;
   lastStatsKey = key;
+  syncStatTabs(true);
+  weekEl.hidden = false;
+  monthsEl.hidden = true;
   buildStatBars(
     weekEl,
     days.map((d) => ({
@@ -296,6 +333,16 @@ function renderStats(): void {
       count: d.count,
     }))
   );
+}
+
+/** 统计两档 tab 的可视态（高亮类 + aria-pressed，深审 ui P2-2：激活档给读屏非视觉指示） */
+function syncStatTabs(weekOn: boolean): void {
+  const tabWeek = document.getElementById('pomodoro-stat-tab-week');
+  const tabMonth = document.getElementById('pomodoro-stat-tab-month');
+  tabWeek?.classList.toggle('pomodoro-stat-tab-on', weekOn);
+  tabMonth?.classList.toggle('pomodoro-stat-tab-on', !weekOn);
+  tabWeek?.setAttribute('aria-pressed', String(weekOn));
+  tabMonth?.setAttribute('aria-pressed', String(!weekOn));
 }
 
 /** 统计档位切换（issue 357）：换档即强制重建柱区（lastStatsKey 清空防同键早退） */
@@ -313,9 +360,11 @@ function render(): void {
   syncPomodoroStatusBar(state, remain);
   if (!maskEl) return;
   const total = phaseDurationSec(state.phase === 'idle' ? 'focus' : state.phase, d);
-  // 环形进度：剩余比例 → dashoffset（dasharray 恒为周长，offset=C*remain/total）
+  // 环形进度：剩余比例 → dashoffset（dasharray 恒为周长，offset=C*remain/total）；
+  // 深审 PF6：会话进行中改小时长会让 total < remain（progress 参负）——钳制到 [0,1]，
+  // 防 dashoffset 超出周长出 1s 可见卷绕错位弧段（本阶段结束自愈的视觉毛刺）
   const C = 2 * Math.PI * 52;
-  const progress = total > 0 ? 1 - remain / total : 1;
+  const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 1;
   const circle = document.getElementById('pomodoro-ring-progress') as SVGElement | null;
   if (circle) {
     circle.setAttribute('stroke-dasharray', String(C));
@@ -362,7 +411,8 @@ function renderCycleDots(d: Durations): void {
     }
   }
   Array.from(cycleEl.children).forEach((dot, i) => {
-    dot.className = 'pomodoro-cycle-dot' + (i < state.cycleFocusCount ? ' pomodoro-cycle-dot-on' : '');
+    const want = 'pomodoro-cycle-dot' + (i < state.cycleFocusCount ? ' pomodoro-cycle-dot-on' : '');
+    if ((dot as HTMLElement).className !== want) (dot as HTMLElement).className = want; // 深审 PE1：同值不重写
   });
 }
 
@@ -372,10 +422,11 @@ function renderTaskLine(): void {
   if (!taskEl) return;
   if (state.task) {
     if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
-    taskEl.title = state.task;
+    if (taskEl.title !== state.task) taskEl.title = state.task; // 深审 PE1：title 同值不重写
   } else {
-    taskEl.textContent = '';
-    taskEl.removeAttribute('title');
+    // 深审 PE1：负分支（无归属居多）同值短路，免每秒 textContent=''+removeAttribute 空转
+    if (taskEl.textContent !== '') taskEl.textContent = '';
+    if (taskEl.hasAttribute('title')) taskEl.removeAttribute('title');
   }
 }
 
@@ -384,7 +435,8 @@ function updateButtons(): void {
   const startBtn = document.getElementById('pomodoro-btn-start') as HTMLButtonElement | null;
   if (!startBtn) return;
   const running = state.endTime !== null;
-  startBtn.textContent = running ? '暂停' : state.paused ? '继续' : '开始';
+  const wantStart = running ? '暂停' : state.paused ? '继续' : '开始';
+  if (startBtn.textContent !== wantStart) startBtn.textContent = wantStart; // 深审 PE1：运行中恒「暂停」，同值不重写
   const locked = options().forceFocus && state.phase === 'focus' && (running || state.paused);
   // P1-4：后台自动暂停的冻结态在重启后仍放行「开始/继续」（否则 forceFocus 下永久死锁）；
   // 手动暂停（无 pausedBy 标记，含旧数据）维持锁定。
@@ -393,7 +445,9 @@ function updateButtons(): void {
   const resetBtn = document.getElementById('pomodoro-btn-reset') as HTMLButtonElement | null;
   const skipBtn = document.getElementById('pomodoro-btn-skip') as HTMLButtonElement | null;
   if (resetBtn) resetBtn.disabled = locked;
-  if (skipBtn) skipBtn.disabled = locked;
+  // 深审 PE3：空闲态没有可跳过的阶段（跳的是当前阶段）——禁用，防一键落「短休息待开始」
+  // 意外态且 phase-completed 事件静默落盘（重启后仍是意外态）；命令链 skipBreak 的 warning 口径不变
+  if (skipBtn) skipBtn.disabled = locked || state.phase === 'idle';
 }
 
 /** 状态变更统一入口：transition → 落盘（完成事件）→ 通知/声音 → tick 生命周期 → 渲染 */
@@ -524,11 +578,15 @@ async function save(): Promise<void> {
     if (dataManager) await dataManager.save({ version: 1, state, history: t.history, ...(t.archived.length ? { archived: t.archived } : {}) });
   } catch (e: unknown) {
     console.error('番茄钟数据保存失败:', e);
-    // 保存失败提示收编 core 单源（review-deep 一致#3）；「下次保存会自动补写」承诺由
-    // 上方先落盘后改内存态的顺序兑现——失败不裁不归档，下次 save 自动重试归档
-    notifySaveError(e, '番茄钟数据');
+    // 保存失败提示收编 core 单源（review-deep 一致#3）；深审 PF5 顺带（效率线）：挂「重试」出口
+    // （notifyActionError onRetry 范式）——「下次保存会自动补写」承诺由先落盘后改内存态的顺序兑现，
+    // 失败不裁不归档，重试/下次 save 自动重试归档
+    notifyActionError(e, '保存番茄钟数据', { onRetry: () => void save() });
     return;
   }
+  // 深审 PA-3：unload 落在写盘 await 期间（disposed 已置位）→ 后半段不再写回内存态
+  //（此时 history/archived 已被 unload 重置，写回即脏值；出口本封闭，这里掐断源头）
+  if (disposed) return;
   history = t.history;
   archived = t.archived;
 }
@@ -689,12 +747,24 @@ export function pomodoroSettingsSchema(): SettingsSchema {
 function bindEvents(): void {
   const startBtn = document.getElementById('pomodoro-btn-start')!;
   startBtn.addEventListener('click', () => applyAction(state.paused ? 'resume' : state.endTime !== null ? 'pause' : 'start'));
-  document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => applyAction('reset'));
-  document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => applyAction('skip'));
+  // issues/144 拍板执行项：专注中「重置」加确认（走 core flow-dialog 单源，danger 反焦）；空闲/停止态直接重置
+  document.getElementById('pomodoro-btn-reset')!.addEventListener('click', () => void resetWithConfirm());
+  // 深审 PE3：updateButtons 已对 idle 禁用跳过；此处守卫双保险（防程序化触发绕过 disabled）
+  document.getElementById('pomodoro-btn-skip')!.addEventListener('click', () => {
+    if (state.phase === 'idle') return;
+    applyAction('skip');
+  });
   // 统计两档切换（issue 357）：近 7 天明细 / 近 6 月趋势
   document.getElementById('pomodoro-stat-tab-week')?.addEventListener('click', () => setStatMode('week'));
   document.getElementById('pomodoro-stat-tab-month')?.addEventListener('click', () => setStatMode('month'));
   const popup = document.getElementById('pomodoro-popup')!;
+  // 深审 PE2：点内容区（环形图/时间等无 tabindex 子元素）焦点落 body → Space 静默失效；
+  // 点击即把焦点收回面板。按钮自身点击不抢焦点（保留按钮聚焦的原生键盘激活语义，防 Space 双触发口径被绕开）
+  popup.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest('button, input, textarea, select, [contenteditable]')) return;
+    popup.focus();
+  });
   // Space 键切换开始/暂停（面板聚焦时；按钮聚焦走原生 Space 激活避免双触发，输入类控件跳过）
   popup.addEventListener('keydown', (e) => {
     if (e.key !== ' ') return;
@@ -706,20 +776,45 @@ function bindEvents(): void {
   });
 }
 
+/**
+ * 重置确认（issues/144 拍板执行项「专注中重置加确认」）：走 core flow-dialog 单源；
+ * 危险主动作 danger 反焦（焦点反落「继续计时」，回车不再直通重置）。空闲/停止满时长直接重置
+ * 不打扰（无进度可作废）。效率线「notifyUndo 事后撤销」替代方案仅登记不采——拍板原文是确认框。
+ */
+function resetWithConfirm(): void {
+  const focusing = state.phase === 'focus' && (state.endTime !== null || state.paused);
+  if (!focusing) {
+    applyAction('reset');
+    return;
+  }
+  void openFlowDialog({
+    title: '重置专注',
+    message: '专注进行中，重置后本阶段进度作废（不计入历史）',
+    actions: [
+      { label: '继续计时', value: 'cancel' },
+      { label: '重置', value: 'ok', cta: true, danger: true },
+    ],
+  }).then((v) => {
+    if (v === 'ok') applyAction('reset');
+  });
+}
+
 function buildDOM(): void {
   const mask = document.createElement('div');
   mask.id = 'pomodoro-mask';
   mask.className = 'bz-overlay-mask'; // issue 365：遮罩底/blur 收编 core 单源（域 CSS 仅覆写 padding 归零）
-  // 域主弹窗层级在 src/pomodoro/styles.css（#pomodoro-mask z-index，低于域设置弹窗与 Obsidian 设置页）——不再 JS 内联 z-index
+  // 层级 = ADR-0067 JS allocZ 动态发号（见下方 mask.style.zIndex，创建即显示即发号）；
+  // 样式源禁持静态 z-index 档（守卫：ui.test「遮罩 z 动态发号（JS），样式源不再持有静态档」）
   mask.innerHTML = popupShellHtml();
-  mask.style.zIndex = String(allocZ()); // ADR-0067：创建即显示即发号
+  mask.style.zIndex = String(allocZ());
   document.body.appendChild(mask);
   maskEl = mask;
   // 点击遮罩本身关闭（弹窗内部点击不关闭）——计时后台继续
   mask.addEventListener('click', (e) => {
     if (e.target === mask) closePomodoro();
   });
-  escHandle = escManager.register('pomodoro', {
+  // 层 id 随 core 样板带域前缀（深审 PC4：'bz-<域>' 约定，仅判重用）
+  escHandle = escManager.register('bz-pomodoro', {
     isVisible: () => maskEl !== null,
     close: closePomodoro,
   });
@@ -744,15 +839,23 @@ function initDataOnce(): Promise<void> {
 let openInflight: Promise<void> | null = null;
 export async function openPomodoro(app: App): Promise<void> {
   appRef = app;
+  disposed = false; // 深审 UI P3-2：入口清位（卸载后再打开 = 新会话）
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   if (!maskEl) {
     openInflight ??= (async () => {
       await initDataOnce(); // 与 ensurePomodoro 共享 in-flight（并发只跑一次 load+recover）
+      if (disposed) return; // 深审 UI P3-2：打开在途时卸载 → 不再 buildDOM/ensureTick（防弹窗复活 + interval 泄漏）
       buildDOM();
       ensureTick(); // 恢复/首次打开时若在倒计时，启动轮询继续走（修复：恢复后不 tick 的 bug）
     })();
     try {
       await openInflight;
+    } catch (e: unknown) {
+      // 深审 PF5：load 失败不再裸抛（main.ts 命令回调 / statusbar .then 均无 catch——原样挂
+      // unhandled rejection 且零提示）；错误 toast 挂「重试」出口，弹窗保持未建（maskEl 为 null）
+      console.error('番茄钟打开失败:', e);
+      notifyActionError(e, '打开番茄钟', { onRetry: () => void openPomodoro(app) });
+      return;
     } finally {
       openInflight = null;
     }
@@ -765,11 +868,24 @@ export async function openPomodoro(app: App): Promise<void> {
 /** 插件启动恢复（main.ts onLayoutReady 调用）：load+recover+落盘；正在倒计时 → 后台 tick 继续 + 弹恢复通知；popup 模式自动弹窗 */
 export async function ensurePomodoro(app: App): Promise<void> {
   appRef = app;
+  disposed = false; // 深审 UI P3-2：入口清位（卸载后再初始化 = 新会话）
   if (!dataManager) dataManager = new PomodoroDataManager(app);
   registerVisibilityListener(); // ticket 62：后台自动暂停（幂等）
   if (!loaded) {
-    await initDataOnce(); // 与 openPomodoro 共享 in-flight（并发只跑一次 load+recover）
-    if (state.endTime !== null) {
+    try {
+      await initDataOnce(); // 与 openPomodoro 共享 in-flight（并发只跑一次 load+recover）
+    } catch (e: unknown) {
+      // 深审 PF5：load 失败吞错上报（不再挂 unhandled rejection）；命令链调用方经下方
+      // `if (!loaded)` 守卫早退——不在空内存态上继续（防误开新会话 save 覆盖盘上数据）
+      console.error('番茄钟数据加载失败:', e);
+      notifyActionError(e, '加载番茄钟数据', { onRetry: () => void ensurePomodoro(app) });
+      return;
+    }
+    if (disposed) return; // 深审 UI P3-2：卸载竞态——在途链不再做恢复副作用
+    // 深审 PA-2：并发重入共享同一 in-flight，`loaded` 置位挡不住已在块内的第二个调用者——
+    // 恢复通知等派生副作用收进「每会话一次」护栏（recoveryNotified，unloadPomodoro 复位）
+    if (state.endTime !== null && !recoveryNotified) {
+      recoveryNotified = true;
       ensureTick(); // 后台继续（无弹窗时 render 只同步状态栏）
       render();
       // 恢复继续 → 弹通知（阶段 + 剩余）；暂停态（endTime 为 null）不弹
@@ -791,17 +907,23 @@ export function closePomodoro(): void {
     escHandle.unregister();
     escHandle = null;
   }
+  // 深审 PF1：重开时 render.ts 骨架是全新空容器，不清键则 renderStats 同键早退 → 柱区空白
+  //（与 setStatMode/unloadPomodoro 的清键点对齐）
+  lastStatsKey = '';
 }
 
 /**
  * 备忘录「专注这个」联动入口：直接开始一个专注番茄并把归属记到该备忘录（最小实现：只传任务标题）。
  * - 休息中（计时/暂停）→ 先跳过休息（skip 不记历史）再开始专注；
- * - 已有专注计时中 → 不重启，提示后返回；
- * - forceFocus 手动暂停维持与开始按钮同一锁定口径（P1-4）；
+ * - 已有专注（计时中或暂停中）→ 不重启，提示后返回（深审 PF4 定稿口径 a：暂停态也是「已有会话」，
+ *   不再静默续跑旧会话并改归属——与「已有专注计时中不重启」语义连续，兑现头注「直接开始一个专注」承诺；
+ *   期间自然完成的旧会话仍归属旧任务，颗粒不旁落）；
+ * - forceFocus 手动暂停维持与开始按钮同一锁定口径（P1-4：后台冻结态可由面板继续按钮解冻，无死锁出口）；
  * - 归属随状态持久化，专注自然完成写入 history.task 后清除（skip 作废归属）。
  */
 export async function startFocusForTask(app: App, taskTitle: string): Promise<void> {
   await ensurePomodoro(app);
+  if (!loaded) return; // 深审 PF5：加载失败（ensurePomodoro 已报错带重试）→ 不在空内存态上开新会话
   const o = options();
   const d = durations();
   // 休息阶段（运行/暂停/停止）：跳过休息直接进专注（skip 静默；状态变化即落盘——后续可能提前 return）
@@ -814,8 +936,10 @@ export async function startFocusForTask(app: App, taskTitle: string): Promise<vo
     notice('已有专注计时中，本次不重复开始', 'warning');
     return;
   }
-  if (o.forceFocus && state.paused && state.pausedBy !== 'autopause') {
-    notice('强制专注模式暂停中，请先在番茄钟恢复', 'warning');
+  // 深审 PF4：暂停中的专注（手动暂停或后台冻结）同样视为「已有会话」，提示后返回；
+  // forceFocus 手动暂停沿用同域拦截文案（forceFocusHint 单源，出口指向番茄钟面板）
+  if (state.paused) {
+    notice(o.forceFocus && state.pausedBy !== 'autopause' ? forceFocusHint(true) : '已有专注暂停中，本次不重复开始', 'warning');
     return;
   }
   state = { ...state, task: taskTitle };
@@ -843,10 +967,11 @@ export function isFocusing(): boolean {
  */
 export async function toggleFocus(app: App): Promise<void> {
   await ensurePomodoro(app);
+  if (!loaded) return; // 深审 PF5：加载失败（ensurePomodoro 已报错）→ 不在空内存态上继续
   if (isFocusing()) {
     const before = state;
     applyAction('reset');
-    if (state === before) notice('强制专注模式中，请先在番茄钟面板操作', 'warning');
+    if (state === before) notice(forceFocusHint(), 'warning'); // 深审 PC3：文案收敛 forceFocusHint 单源
     else notice('专注已停止');
     return;
   }
@@ -881,6 +1006,7 @@ export function menuPhase(): PomodoroPhase {
  */
 export async function skipBreak(app: App): Promise<void> {
   await ensurePomodoro(app);
+  if (!loaded) return; // 深审 PF5：加载失败（ensurePomodoro 已报错）→ 不在空内存态上继续
   if (state.phase !== 'short-break' && state.phase !== 'long-break') {
     notice('当前不在休息阶段', 'warning');
     return;
@@ -898,21 +1024,28 @@ export async function skipBreak(app: App): Promise<void> {
  */
 export async function togglePause(app: App): Promise<void> {
   await ensurePomodoro(app);
+  if (!loaded) return; // 深审 PF5：加载失败（ensurePomodoro 已报错）→ 不在空内存态上继续
   if (state.endTime === null && !state.paused) {
     notice('当前没有进行中的计时', 'warning');
     return;
   }
+  // 深审 PF2：forceFocus 拦下 pause 时 transition 返回同一引用 + none 事件——不再静默哑动作
+  //（与 toggleFocus 同款守卫；resume 恒生效，state === before 当且仅当 forceFocus 拦下暂停）
+  const before = state;
   applyAction(state.paused ? 'resume' : 'pause');
+  if (state === before) notice(forceFocusHint(), 'warning');
 }
 
 /** 卸载清理（T32 接入 onunload；测试重置） */
 export function unloadPomodoro(): void {
+  disposed = true; // 深审 UI P3-2/PA-3：置位后所有在途 async 链在检查点早退（save 后半段/openInflight 链/恢复块）
   if (timerId !== null) {
     window.clearInterval(timerId);
     timerId = null;
   }
   unregisterVisibilityListener(); // ticket 62
   autoPauseMain = false;
+  recoveryNotified = false; // 深审 PA-2：新会话恢复通知可再弹
   openInflight = null; // 丢弃未完成的初始化（下次 openPomodoro 重新走 init）
   initInflight = null; // P3：共享初始化 in-flight 一并丢弃
   closePomodoro();

@@ -1,5 +1,5 @@
-/* 源指纹 a515eb33e956b20e · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 a84764b232799bc4 · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -4357,9 +4357,12 @@ var BZW_pomodoro = (() => {
   function notice(msg, type, duration) {
     notify(msg, { type: type || "info", duration });
   }
-  function notifySaveError(err, what) {
+  function notifyActionError(err, action, opts) {
     const msg = err instanceof Error ? err.message : String(err);
-    notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
+    notify(`${action}失败：${msg}，请重试`, {
+      type: "error",
+      action: (opts == null ? void 0 : opts.onRetry) ? { label: "重试", onClick: opts.onRetry } : void 0
+    });
   }
   function isMobileView() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
@@ -4688,6 +4691,194 @@ var BZW_pomodoro = (() => {
     }
   });
 
+  // src/core/http.ts
+  var init_http = __esm({
+    "src/core/http.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/str.ts
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  var init_str = __esm({
+    "src/core/ui/str.ts"() {
+    }
+  });
+
+  // src/core/utils.ts
+  function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, (m) => {
+      if (m === "&") return "&amp;";
+      if (m === "<") return "&lt;";
+      if (m === ">") return "&gt;";
+      if (m === '"') return "&quot;";
+      return "&#39;";
+    });
+  }
+  var import_moment2;
+  var init_utils = __esm({
+    "src/core/utils.ts"() {
+      import_moment2 = __toESM(require_moment());
+      init_app();
+      init_http();
+      init_str();
+      init_notice();
+    }
+  });
+
+  // src/core/mobile.ts
+  var init_mobile = __esm({
+    "src/core/mobile.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/focus-trap.ts
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      if (e.shiftKey) {
+        if (active === first || !container.contains(active)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !container.contains(active)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  var FOCUSABLE_SELECTOR;
+  var init_focus_trap = __esm({
+    "src/core/ui/focus-trap.ts"() {
+      init_mobile();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    }
+  });
+
+  // src/core/flow-dialog.ts
+  function buildFlowDialogParts(title, message, actions) {
+    var _a;
+    let buttons;
+    if (actions.length === 2) {
+      buttons = [
+        { id: FLOW_DIALOG_CANCEL_ID, className: "", label: actions[0].label, value: actions[0].value },
+        { id: FLOW_DIALOG_OK_ID, className: "", label: actions[1].label, value: actions[1].value }
+      ];
+    } else {
+      buttons = actions.map((a, i) => {
+        const cls = ["bz-flow-dialog-action"];
+        if (a.danger) cls.push("bz-flow-dialog-danger");
+        if (a.cta) cls.push("bz-flow-dialog-cta");
+        return { id: `bz-flow-dialog-action-${i}`, className: cls.join(" "), label: a.label, value: a.value };
+      });
+    }
+    const ctaIdx = actions.findIndex((a) => a.cta);
+    const primaryIdx = ctaIdx >= 0 ? ctaIdx : actions.length - 1;
+    const dangerPrimary = !!((_a = actions[primaryIdx]) == null ? void 0 : _a.danger);
+    let focusIdx = primaryIdx;
+    if (dangerPrimary) {
+      const safeIdx = actions.findIndex((a, i) => i !== primaryIdx && !a.danger);
+      if (safeIdx >= 0) focusIdx = safeIdx;
+    }
+    const html = "<h4>" + escapeHtml(title || "确认") + "</h4><p>" + escapeHtml(message).replace(/\n/g, "<br>") + '</p><div class="confirm-actions">' + buttons.map((b) => {
+      const clsAttr = b.className ? ' class="' + b.className + '"' : "";
+      return '<button id="' + b.id + '"' + clsAttr + ">" + escapeHtml(b.label) + "</button>";
+    }).join("") + "</div>";
+    return { html, buttons, focusId: buttons[focusIdx].id, dangerPrimary };
+  }
+  function openFlowDialog(opts) {
+    if (!opts.actions || opts.actions.length === 0) {
+      return Promise.reject(new Error("openFlowDialog：actions 不能为空"));
+    }
+    return new Promise((resolve) => {
+      const prevActive = document.activeElement;
+      if (activeSettle) activeSettle(void 0);
+      const parts = buildFlowDialogParts(opts.title, opts.message, opts.actions);
+      const mask = document.createElement("div");
+      mask.id = "__shared_confirm_mask__";
+      mask.style.zIndex = String(allocZ());
+      mask.onclick = (e) => {
+        if (e.target === mask) settle(void 0);
+      };
+      const popup = document.createElement("div");
+      popup.id = "__shared_confirm_popup__";
+      popup.className = "bz-overlay-popup bz-flow-dialog" + (parts.dangerPrimary ? " bz-flow-dialog--danger" : "");
+      if (opts.className) {
+        for (const cls of opts.className.split(/\s+/)) if (cls) popup.classList.add(cls);
+      }
+      popup.setAttribute("role", "dialog");
+      popup.setAttribute("aria-modal", "true");
+      popup.innerHTML = parts.html;
+      mask.appendChild(popup);
+      document.body.appendChild(mask);
+      const escHandle2 = escManager.register("q3-confirm", {
+        isVisible: () => mask.isConnected,
+        close: () => settle(void 0)
+      });
+      let settled = false;
+      const releaseFocusTrap = trapFocus(popup);
+      function restoreFocus() {
+        if (prevActive && prevActive instanceof HTMLElement && prevActive.isConnected) {
+          prevActive.focus();
+        }
+      }
+      function settle(v) {
+        if (settled) return;
+        settled = true;
+        if (activeSettle === settle) activeSettle = null;
+        releaseFocusTrap();
+        escHandle2.unregister();
+        mask.remove();
+        restoreFocus();
+        resolve(v);
+      }
+      activeSettle = settle;
+      for (const b of parts.buttons) {
+        const btn = document.getElementById(b.id);
+        if (btn) btn.onclick = () => settle(b.value);
+      }
+      const focusBtn = document.getElementById(parts.focusId);
+      if (focusBtn) focusBtn.focus();
+    });
+  }
+  var FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID, activeSettle;
+  var init_flow_dialog = __esm({
+    "src/core/flow-dialog.ts"() {
+      init_esc_manager();
+      init_utils();
+      init_z_order();
+      init_focus_trap();
+      FLOW_DIALOG_CANCEL_ID = "__shared_confirm_cancel__";
+      FLOW_DIALOG_OK_ID = "__shared_confirm_ok__";
+      activeSettle = null;
+    }
+  });
+
   // src/core/settings-common.ts
   var init_settings_common = __esm({
     "src/core/settings-common.ts"() {
@@ -4999,38 +5190,6 @@ var BZW_pomodoro = (() => {
   var init_state = __esm({
     "src/pomodoro/state.ts"() {
       PHASES = ["idle", "focus", "short-break", "long-break"];
-    }
-  });
-
-  // src/core/http.ts
-  var init_http = __esm({
-    "src/core/http.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/str.ts
-  function pad2(n) {
-    return String(n).padStart(2, "0");
-  }
-  function localDayKey(ts = Date.now()) {
-    const d = ts instanceof Date ? ts : new Date(ts);
-    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  }
-  var init_str = __esm({
-    "src/core/ui/str.ts"() {
-    }
-  });
-
-  // src/core/utils.ts
-  var import_moment2;
-  var init_utils = __esm({
-    "src/core/utils.ts"() {
-      import_moment2 = __toESM(require_moment());
-      init_app();
-      init_http();
-      init_str();
-      init_notice();
     }
   });
 
@@ -5388,16 +5547,17 @@ var BZW_pomodoro = (() => {
     const paused = !running && state2.paused;
     statusEl.classList.toggle("pomodoro-statusbar-idle", !running && !paused);
     statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
-    statusEl.title = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
+    const wantTitle = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
+    if (statusEl.title !== wantTitle) statusEl.title = wantTitle;
     if (textSpan) {
       if (running) {
         const m = Math.floor(remainSec / 60);
         const s = remainSec % 60;
-        textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
-      } else if (paused) {
-        textSpan.textContent = "已暂停";
+        const want = `${pad2(m)}:${pad2(s)}`;
+        if (textSpan.textContent !== want) textSpan.textContent = want;
       } else {
-        textSpan.textContent = "";
+        const want = paused ? "已暂停" : "";
+        if (textSpan.textContent !== want) textSpan.textContent = want;
       }
     }
   }
@@ -5462,6 +5622,7 @@ var BZW_pomodoro = (() => {
     const popup = document.getElementById("pomodoro-popup");
     if (!popup) return;
     const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    if (popup.classList.contains(want)) return;
     for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
     popup.classList.add(want);
   }
@@ -5516,7 +5677,7 @@ var BZW_pomodoro = (() => {
     playPhaseSound(phase);
   }
   function notifyPaused() {
-    notice("已暂停专注", "pause");
+    notice(state.phase === "focus" ? "已暂停专注" : "已暂停休息", "pause");
     const s = tryGetSettings();
     if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
   }
@@ -5562,6 +5723,11 @@ var BZW_pomodoro = (() => {
     const s = sec % 60;
     return `${pad2(m)}:${pad2(s)}`;
   }
+  function hoursLabel(minutes) {
+    if (!(minutes > 0)) return null;
+    const h = minutes / 60;
+    return `${h >= 100 ? Math.round(h) : Math.round(h * 10) / 10}h`;
+  }
   function buildStatBars(container, rows, opts = {}) {
     var _a;
     const metric = (_a = opts.metric) != null ? _a : "count";
@@ -5600,37 +5766,43 @@ var BZW_pomodoro = (() => {
   function renderStats() {
     const now = Date.now();
     const todayEl = document.getElementById("pomodoro-today");
-    if (todayEl) todayEl.textContent = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+    if (todayEl) {
+      const todayText = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+      if (todayEl.textContent !== todayText) todayEl.textContent = todayText;
+    }
     const weekEl = document.getElementById("pomodoro-week");
     const monthsEl = document.getElementById("pomodoro-months");
     if (!weekEl || !monthsEl) return;
-    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
-    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
-    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", statMode === "week");
-    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", statMode === "month");
     if (statMode === "month") {
-      weekEl.hidden = true;
-      monthsEl.hidden = false;
       const months = lastNMonths(archived, history, now, TREND_MONTHS);
       const key2 = "m:" + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(",") + `#${archived.length}`;
       if (key2 === lastStatsKey) return;
       lastStatsKey = key2;
+      syncStatTabs(false);
+      weekEl.hidden = true;
+      monthsEl.hidden = false;
       buildStatBars(
         monthsEl,
         months.map((m) => ({
           label: `${parseInt(m.month.slice(5, 7), 10)}月`,
           title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
-          count: m.count
-        }))
+          count: m.count,
+          minutes: m.minutes
+        })),
+        { metric: "minutes", valueLabel: (r) => {
+          var _a;
+          return hoursLabel((_a = r.minutes) != null ? _a : 0);
+        } }
       );
       return;
     }
-    weekEl.hidden = false;
-    monthsEl.hidden = true;
     const days = last7Days(history, now);
     const key = "w:" + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
     if (key === lastStatsKey) return;
     lastStatsKey = key;
+    syncStatTabs(true);
+    weekEl.hidden = false;
+    monthsEl.hidden = true;
     buildStatBars(
       weekEl,
       days.map((d) => ({
@@ -5640,6 +5812,14 @@ var BZW_pomodoro = (() => {
         count: d.count
       }))
     );
+  }
+  function syncStatTabs(weekOn) {
+    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
+    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
+    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", weekOn);
+    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", !weekOn);
+    tabWeek == null ? void 0 : tabWeek.setAttribute("aria-pressed", String(weekOn));
+    tabMonth == null ? void 0 : tabMonth.setAttribute("aria-pressed", String(!weekOn));
   }
   function setStatMode(mode) {
     if (statMode === mode) return;
@@ -5654,7 +5834,7 @@ var BZW_pomodoro = (() => {
     if (!maskEl) return;
     const total = phaseDurationSec(state.phase === "idle" ? "focus" : state.phase, d);
     const C = 2 * Math.PI * 52;
-    const progress = total > 0 ? 1 - remain / total : 1;
+    const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 1;
     const circle = document.getElementById("pomodoro-ring-progress");
     if (circle) {
       circle.setAttribute("stroke-dasharray", String(C));
@@ -5698,7 +5878,8 @@ var BZW_pomodoro = (() => {
       }
     }
     Array.from(cycleEl.children).forEach((dot, i) => {
-      dot.className = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
+      const want = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
+      if (dot.className !== want) dot.className = want;
     });
   }
   function renderTaskLine() {
@@ -5706,24 +5887,25 @@ var BZW_pomodoro = (() => {
     if (!taskEl) return;
     if (state.task) {
       if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
-      taskEl.title = state.task;
+      if (taskEl.title !== state.task) taskEl.title = state.task;
     } else {
-      taskEl.textContent = "";
-      taskEl.removeAttribute("title");
+      if (taskEl.textContent !== "") taskEl.textContent = "";
+      if (taskEl.hasAttribute("title")) taskEl.removeAttribute("title");
     }
   }
   function updateButtons() {
     const startBtn = document.getElementById("pomodoro-btn-start");
     if (!startBtn) return;
     const running = state.endTime !== null;
-    startBtn.textContent = running ? "暂停" : state.paused ? "继续" : "开始";
+    const wantStart = running ? "暂停" : state.paused ? "继续" : "开始";
+    if (startBtn.textContent !== wantStart) startBtn.textContent = wantStart;
     const locked = options().forceFocus && state.phase === "focus" && (running || state.paused);
     const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
     startBtn.disabled = startLocked;
     const resetBtn = document.getElementById("pomodoro-btn-reset");
     const skipBtn = document.getElementById("pomodoro-btn-skip");
     if (resetBtn) resetBtn.disabled = locked;
-    if (skipBtn) skipBtn.disabled = locked;
+    if (skipBtn) skipBtn.disabled = locked || state.phase === "idle";
   }
   function applyAction(action) {
     const prev = state;
@@ -5809,9 +5991,10 @@ var BZW_pomodoro = (() => {
       if (dataManager) await dataManager.save({ version: 1, state, history: t.history, ...t.archived.length ? { archived: t.archived } : {} });
     } catch (e) {
       console.error("番茄钟数据保存失败:", e);
-      notifySaveError(e, "番茄钟数据");
+      notifyActionError(e, "保存番茄钟数据", { onRetry: () => void save() });
       return;
     }
+    if (disposed) return;
     history = t.history;
     archived = t.archived;
   }
@@ -5832,11 +6015,19 @@ var BZW_pomodoro = (() => {
     var _a, _b;
     const startBtn = document.getElementById("pomodoro-btn-start");
     startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
-    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => applyAction("reset"));
-    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => applyAction("skip"));
+    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => void resetWithConfirm());
+    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => {
+      if (state.phase === "idle") return;
+      applyAction("skip");
+    });
     (_a = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a.addEventListener("click", () => setStatMode("week"));
     (_b = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b.addEventListener("click", () => setStatMode("month"));
     const popup = document.getElementById("pomodoro-popup");
+    popup.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("button, input, textarea, select, [contenteditable]")) return;
+      popup.focus();
+    });
     popup.addEventListener("keydown", (e) => {
       if (e.key !== " ") return;
       const t = e.target;
@@ -5844,6 +6035,23 @@ var BZW_pomodoro = (() => {
       if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
       e.preventDefault();
       applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
+    });
+  }
+  function resetWithConfirm() {
+    const focusing = state.phase === "focus" && (state.endTime !== null || state.paused);
+    if (!focusing) {
+      applyAction("reset");
+      return;
+    }
+    void openFlowDialog({
+      title: "重置专注",
+      message: "专注进行中，重置后本阶段进度作废（不计入历史）",
+      actions: [
+        { label: "继续计时", value: "cancel" },
+        { label: "重置", value: "ok", cta: true, danger: true }
+      ]
+    }).then((v) => {
+      if (v === "ok") applyAction("reset");
     });
   }
   function buildDOM() {
@@ -5858,7 +6066,7 @@ var BZW_pomodoro = (() => {
     mask.addEventListener("click", (e) => {
       if (e.target === mask) closePomodoro();
     });
-    escHandle = escManager.register("pomodoro", {
+    escHandle = escManager.register("bz-pomodoro", {
       isVisible: () => maskEl !== null,
       close: closePomodoro
     });
@@ -5875,15 +6083,21 @@ var BZW_pomodoro = (() => {
   }
   async function openPomodoro(app) {
     appRef = app;
+    disposed = false;
     if (!dataManager) dataManager = new PomodoroDataManager(app);
     if (!maskEl) {
       openInflight != null ? openInflight : openInflight = (async () => {
         await initDataOnce();
+        if (disposed) return;
         buildDOM();
         ensureTick();
       })();
       try {
         await openInflight;
+      } catch (e) {
+        console.error("番茄钟打开失败:", e);
+        notifyActionError(e, "打开番茄钟", { onRetry: () => void openPomodoro(app) });
+        return;
       } finally {
         openInflight = null;
       }
@@ -5893,11 +6107,20 @@ var BZW_pomodoro = (() => {
   }
   async function ensurePomodoro(app) {
     appRef = app;
+    disposed = false;
     if (!dataManager) dataManager = new PomodoroDataManager(app);
     registerVisibilityListener();
     if (!loaded) {
-      await initDataOnce();
-      if (state.endTime !== null) {
+      try {
+        await initDataOnce();
+      } catch (e) {
+        console.error("番茄钟数据加载失败:", e);
+        notifyActionError(e, "加载番茄钟数据", { onRetry: () => void ensurePomodoro(app) });
+        return;
+      }
+      if (disposed) return;
+      if (state.endTime !== null && !recoveryNotified) {
+        recoveryNotified = true;
         ensureTick();
         render();
         const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
@@ -5916,6 +6139,7 @@ var BZW_pomodoro = (() => {
       escHandle.unregister();
       escHandle = null;
     }
+    lastStatsKey = "";
   }
   function menuPhase() {
     if (state.phase === "short-break" || state.phase === "long-break") return "break";
@@ -5923,7 +6147,7 @@ var BZW_pomodoro = (() => {
     if (state.paused) return "paused";
     return state.endTime !== null ? "focusing" : "idle";
   }
-  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle, timerId, appRef, autoPauseMain, visibilityHandler, disposed, recoveryNotified, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
   var init_ui = __esm({
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
@@ -5931,6 +6155,7 @@ var BZW_pomodoro = (() => {
       init_z_order();
       init_settings_provider();
       init_notice();
+      init_flow_dialog();
       init_settings_common();
       init_data();
       init_render();
@@ -5955,6 +6180,8 @@ var BZW_pomodoro = (() => {
       appRef = null;
       autoPauseMain = false;
       visibilityHandler = null;
+      disposed = true;
+      recoveryNotified = false;
       lastStatsKey = "";
       SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
       initInflight = null;

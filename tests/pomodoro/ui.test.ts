@@ -10,10 +10,12 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask, toggleFocus, isFocusing, menuPhase } from '../../src/pomodoro';
+import { openPomodoro, unloadPomodoro, ensurePomodoro, startFocusForTask, toggleFocus, togglePause, isFocusing, menuPhase } from '../../src/pomodoro';
 import { mountPomodoroStatusBar, unmountPomodoroStatusBar } from '../../src/pomodoro/statusbar';
 import { getPomodoroFilePath, PomodoroDataManager } from '../../src/pomodoro/data';
 import { enqueueFileTask } from '../../src/core/storage';
+import { FLOW_DIALOG_CANCEL_ID, FLOW_DIALOG_OK_ID } from '../../src/core/flow-dialog';
+import { resetPomodoroFixture } from '../helpers/pomodoro-fixture';
 
 const T0 = new Date('2026-08-10T10:00:00').getTime();
 
@@ -238,7 +240,7 @@ describe('番茄钟弹窗', () => {
     vi.useRealTimers();
   });
 
-  it('openPomodoro 渲染：遮罩/弹窗/环形进度/阶段文案/时间/按钮/⚙️', async () => {
+  it('openPomodoro 渲染：遮罩/弹窗/环形进度/阶段文案/时间/按钮（⚙ 设置钮已移除）', async () => {
     const { app } = setup();
     await openPomodoro(app);
     expect(el('pomodoro-mask')).not.toBeNull();
@@ -305,16 +307,34 @@ describe('番茄钟弹窗', () => {
     expect(audio.createOscillator.mock.results[2].value.frequency.value).toBe(880);
   });
 
-  it('重置 → 回满时长并停止（按钮回「开始」）', async () => {
-    const { app } = setup();
+  it('重置（专注中）→ 确认框（issues/144 拍板）确认后回满时长并停止，且落盘（F11 回归锁）', async () => {
+    const { app, vault } = setup();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
     await vi.advanceTimersByTimeAsync(5000);
     el('pomodoro-btn-reset').click();
+    // 确认框拦截：状态未变；danger 反焦——焦点反落「继续计时」，回车不再直通重置
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    expect(document.activeElement).toBe(document.getElementById(FLOW_DIALOG_CANCEL_ID));
+    expect(el('pomodoro-time').textContent).toBe('24:55');
+    // 取消 → 继续计时不受影响
+    document.getElementById(FLOW_DIALOG_CANCEL_ID)!.click();
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
+    expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // 仍在计时
+    // 再开确认框 → 确认重置
+    el('pomodoro-btn-reset').click();
+    document.getElementById(FLOW_DIALOG_OK_ID)!.click();
+    await vi.advanceTimersByTimeAsync(0);
     expect(el('pomodoro-time').textContent).toBe('25:00');
     expect(el('pomodoro-btn-start').textContent).toContain('开始');
     await vi.advanceTimersByTimeAsync(3000);
     expect(el('pomodoro-time').textContent).toBe('25:00');
+    // F11 回归锁：重置生效即落盘（endTime 复位 + remaining 回满）——防重启后旧计时复活弹「番茄钟继续」
+    await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.endTime).toBeNull();
+    expect(raw.state.remaining).toBe(1500);
   });
 
   it('跳过 → 流转到短休息（未开始）', async () => {
@@ -1052,5 +1072,316 @@ describe('统计两档与周归档（issue 357）', () => {
     const raw = JSON.parse(v.files.get(getPomodoroFilePath())!);
     expect(raw.history).toHaveLength(1);
     expect('archived' in raw).toBe(false);
+  });
+});
+
+/**
+ * 深审修复批回归（bz-fix-pomo-core）：PF1/PF2/PF3/PF4/PF5/PF6、ui P2-2、PC1、
+ * UI P3-2、PA-2、PE2/PE3、issues/144 重置确认框、F12 冻结标记回归锁。
+ * 清理走 PA-4 统一夹具（resetPomodoroFixture：unload + unmount + body 清空 + 通知清空）。
+ */
+describe('深审修复批回归（bz-fix-pomo-core）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    setApp(null as any);
+    setSettingsProvider(() => ({} as any));
+    resetPomodoroFixture(); // PA-4：清理三件套 + 通知清空单源夹具（新用例一律走夹具，存量 describe 不强改）
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(T0));
+  });
+  afterEach(() => {
+    vi.restoreAllMocks(); // 本 describe 有 prototype 级 load/save mock（PF5），逐例还原防跨用例泄漏
+    unloadPomodoro();
+    unmountPomodoroStatusBar();
+    vi.useRealTimers();
+  });
+
+  /** 运行中数据：专注阶段还剩 2 分钟 */
+  function runningData() {
+    return JSON.stringify({
+      version: 1,
+      state: { phase: 'focus', endTime: T0 + 120_000, remaining: 0, paused: false, cycleFocusCount: 1 },
+      history: [],
+    });
+  }
+
+  /** 暂停中的专注（手动暂停：无 pausedBy 标记） */
+  function pausedFocusData() {
+    return JSON.stringify({
+      version: 1,
+      state: { phase: 'focus', endTime: null, remaining: 900, paused: true, cycleFocusCount: 1 },
+      history: [],
+    });
+  }
+
+  it('PF1：关闭再打开弹窗，统计柱区必须重建（修复前同键早退 → 柱区空白）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    expect(document.querySelectorAll('.pomodoro-stat-day').length).toBe(7);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(document.getElementById('pomodoro-mask')).toBeNull();
+    await openPomodoro(app);
+    expect(document.querySelectorAll('.pomodoro-stat-day').length).toBe(7); // 修复前重开为 0
+  });
+
+  it('PE3：空闲态「跳过」禁用且点击不产生意外短休息态（静默落盘一并消）', async () => {
+    const { app, vault } = setup();
+    await openPomodoro(app);
+    const skipBtn = el('pomodoro-btn-skip') as HTMLButtonElement;
+    expect(skipBtn.disabled).toBe(true); // 修复前 idle 可点 → 一键落「短休息待开始」且 phase-completed 落盘
+    skipBtn.click();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(el('pomodoro-phase').textContent).toContain('番茄钟'); // 仍空闲
+    await enqueueFileTask(getPomodoroFilePath(), async () => undefined);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.phase).not.toBe('short-break'); // 意外态未落盘
+    // 开始后恢复可用（跳的是当前阶段）
+    el('pomodoro-btn-start').click();
+    expect(skipBtn.disabled).toBe(false);
+  });
+
+  it('PF2：forceFocus 下命令链暂停被拦 → warning 提示不再静默（togglePause）', async () => {
+    const { app } = setup(new MockVault(), { pomodoroForceFocus: true });
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click(); // 专注计时中（按钮 disabled 有视觉反馈）
+    await togglePause(app);
+    expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // 状态未变（仍在计时）
+    expect(hasNotice('强制专注模式中，请先在番茄钟面板操作')).toBe(true); // 修复前零提示哑动作
+  });
+
+  it('PF2：forceFocus 拦截提示三出口同文案（PC3 单源模板）', async () => {
+    // toggleFocus 停止分支：与 togglePause / startFocusForTask 同引 forceFocusHint 单源
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), pausedFocusData());
+    const { app } = setup(vault, { pomodoroForceFocus: true });
+    await openPomodoro(app);
+    await toggleFocus(app);
+    expect(hasNotice('强制专注模式中，请先在番茄钟面板操作')).toBe(true);
+    expect(el('pomodoro-btn-start').textContent).toContain('继续'); // 未被重置
+  });
+
+  it('PF3：休息阶段手动暂停 → toast「已暂停休息」（修复前恒「已暂停专注」）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 专注完成 → 短休息待开始
+    el('pomodoro-btn-start').click(); // 开始休息
+    el('pomodoro-btn-start').click(); // 暂停休息
+    expect(hasNotice('已暂停休息')).toBe(true);
+    expect(hasNotice('已暂停专注')).toBe(false);
+  });
+
+  it('PF3：专注阶段暂停文案不变（ui.test:300 相位核对：原用例即专注相位，断言无需翻转）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(2000);
+    el('pomodoro-btn-start').click();
+    expect(hasNotice('已暂停专注')).toBe(true);
+  });
+
+  it('PF4：暂停中的专注上「专注这个」→ 提示不重启不改归属（定稿口径 a）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    await startFocusForTask(app, '任务 A');
+    await vi.advanceTimersByTimeAsync(3000);
+    el('pomodoro-btn-start').click(); // 手动暂停（剩 24:57）
+    await startFocusForTask(app, '任务 B');
+    expect(hasNotice('已有专注暂停中，本次不重复开始')).toBe(true);
+    expect(el('pomodoro-task').textContent).toBe('任务 A'); // 归属未被悄悄改写
+    expect(el('pomodoro-btn-start').textContent).toContain('继续'); // 旧会话未被静默续跑
+  });
+
+  it('PF4：forceFocus 手动暂停 + 「专注这个」→ 拦截提示出口指向面板（PC3 单源 paused 变体）', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), pausedFocusData());
+    const { app } = setup(vault, { pomodoroForceFocus: true });
+    await openPomodoro(app);
+    await startFocusForTask(app, '任务 B');
+    expect(hasNotice('强制专注模式暂停中，请先在番茄钟面板操作')).toBe(true);
+    expect(el('pomodoro-btn-start').textContent).toContain('继续'); // 未续跑
+  });
+
+  it('PF5：openPomodoro load 失败 → 不抛、错误提示带「重试」、不建弹窗；重试成功', async () => {
+    const { app } = setup();
+    vi.spyOn(PomodoroDataManager.prototype, 'load').mockRejectedValueOnce(new Error('磁盘故障'));
+    await expect(openPomodoro(app)).resolves.toBeUndefined(); // 修复前直接 reject（unhandled rejection）
+    expect(document.getElementById('pomodoro-mask')).toBeNull();
+    expect(document.querySelector('.bz-notice--error')).not.toBeNull();
+    const retry = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '重试');
+    expect(retry).toBeTruthy();
+    (retry as HTMLElement).click(); // 重试 → load 已恢复（Once mock）→ 弹窗照常建立
+    await vi.advanceTimersByTimeAsync(10);
+    expect(document.getElementById('pomodoro-mask')).not.toBeNull();
+  });
+
+  it('PF5：ensurePomodoro load 失败 → 吞错上报；命令链不在空内存态上开新会话覆盖盘上数据', async () => {
+    const { app, vault } = setup();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    vi.spyOn(PomodoroDataManager.prototype, 'load').mockRejectedValue(new Error('磁盘故障'));
+    await expect(ensurePomodoro(app)).resolves.toBeUndefined(); // 修复前 unhandled rejection
+    expect(document.querySelector('.bz-notice--error')).not.toBeNull();
+    await toggleFocus(app); // 盘上明明有运行中会话，加载失败时不得误开新专注
+    expect(hasNotice('专注开始')).toBe(false);
+    expect(hasNotice('专注已停止')).toBe(false);
+    expect(vault.modifiedPaths).toEqual([]); // 无盘写发生（原数据未被覆盖）
+  });
+
+  it('PF5：保存失败 toast 挂「重试」出口（notifyActionError onRetry，效率线）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    vi.spyOn(PomodoroDataManager.prototype, 'save').mockRejectedValueOnce(new Error('磁盘故障'));
+    el('pomodoro-btn-start').click(); // started 事件 → void save()
+    await vi.advanceTimersByTimeAsync(0);
+    expect(document.querySelector('.bz-notice--error')).not.toBeNull();
+    const retry = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '重试');
+    expect(retry).toBeTruthy();
+  });
+
+  it('PF6：会话中改小时长 → 环形进度钳制在周长内（修复前 dashoffset 超界卷绕）', async () => {
+    const settings: any = {};
+    const { app } = setup(new MockVault(), settings);
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    await vi.advanceTimersByTimeAsync(20 * 60 * 1000); // 剩 5 分钟（300s）
+    settings.pomodoroWorkMin = '4'; // total=240s < remain → progress 参负
+    await vi.advanceTimersByTimeAsync(1000);
+    const C = 2 * Math.PI * 52;
+    const offset = parseFloat(el('pomodoro-ring-progress').getAttribute('stroke-dashoffset')!);
+    expect(offset).toBeGreaterThanOrEqual(0);
+    expect(offset).toBeLessThanOrEqual(C);
+  });
+
+  it('UI P3-2：打开在途时卸载 → 弹窗不复活、无 interval 残留（disposed 统一护栏）', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    (vault as any).read = async (f: any) => {
+      await gate;
+      return vault.files.get(f.path) ?? '';
+    };
+    const p = openPomodoro(app);
+    unloadPomodoro(); // 读盘窗口内插件被禁用/重载
+    release();
+    await p;
+    expect(document.getElementById('pomodoro-mask')).toBeNull(); // 修复前 appendChild 反超复活孤儿弹窗
+    expect(vi.getTimerCount()).toBe(0); // interval 不泄漏
+  });
+
+  it('PA-2：ensurePomodoro 并发重入 → 恢复通知只弹一次（修复前双弹「番茄钟继续」）', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    await Promise.all([ensurePomodoro(app), ensurePomodoro(app)]);
+    expect(document.querySelectorAll('.bz-notice').length).toBe(1);
+  });
+
+  it('PE2：点内容区焦点落 body 后，点击收回面板焦点 → Space 动线恢复（真实焦点流）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    const popup = el('pomodoro-popup');
+    expect(document.activeElement).toBe(popup); // buildDOM 聚焦
+    popup.blur(); // 真实焦点流：点无 tabindex 内容区后浏览器把焦点交回 body（jsdom 点击不迁移焦点，手动落底）
+    expect(document.activeElement).toBe(document.body);
+    el('pomodoro-time').click(); // 真实点击内容区（非合成 keydown 直发）
+    expect(document.activeElement).toBe(popup); // 修复后焦点收回面板
+    popup.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    expect(el('pomodoro-btn-start').textContent).toContain('暂停'); // Space 动线恢复
+  });
+
+  it('PE2：按钮上的点击不抢焦点（保留按钮聚焦的原生键盘激活语义）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    const startBtn = el('pomodoro-btn-start');
+    startBtn.focus();
+    startBtn.click();
+    expect(document.activeElement).toBe(startBtn); // 焦点未被 popup 收回（Space 仍走按钮原生激活，防双触发）
+  });
+
+  it('ui P2-2：统计两档激活态带 aria-pressed 且互斥（切档即翻转）', async () => {
+    const { app } = setup();
+    await openPomodoro(app);
+    expect(el('pomodoro-stat-tab-week').getAttribute('aria-pressed')).toBe('true');
+    expect(el('pomodoro-stat-tab-month').getAttribute('aria-pressed')).toBe('false');
+    el('pomodoro-stat-tab-month').click();
+    expect(el('pomodoro-stat-tab-week').getAttribute('aria-pressed')).toBe('false');
+    expect(el('pomodoro-stat-tab-month').getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('ui P2-2：统计档钮触屏热区走 coarse padding 抬档（两钮相邻，外扩类会互盖命中区）', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+    expect(/@media \(pointer: coarse\)[\s\S]*\.pomodoro-stat-tab\s*\{[^}]*padding:/.test(css)).toBe(true);
+  });
+
+  it('PC1：月档柱高按分钟归一 + 柱顶小时签（hoursLabel 接线；0 分钟月无签）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [{ ts: T0 - 3_600_000, duration: 1500 }], // 2026-08：1 个 25 分钟
+        archived: [{ week: '2026-07-06', count: 1, minutes: 180 }], // 2026-07：1 个 180 分钟
+      })
+    );
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-stat-tab-month').click();
+    const days = [...el('pomodoro-months').querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
+    const barH = (i: number) => parseInt((days[i].querySelector('.pomodoro-stat-bar') as HTMLElement).style.height, 10);
+    // 次数相同（各 1 个）而分钟悬殊 → 修复前 count 归一下柱高相等，minutes 归一下七月显著更高
+    expect(barH(4)).toBeGreaterThan(barH(5));
+    expect(days[4].querySelector('.pomodoro-stat-num')?.textContent).toBe('3h'); // 180 分钟柱顶签
+    expect(days[5].querySelector('.pomodoro-stat-num')?.textContent).toBe('0.4h'); // 25 分钟 <1h 一位小数
+    expect(days[0].querySelector('.pomodoro-stat-num')).toBeNull(); // 0 分钟月不出柱顶签
+  });
+
+  it('PC1：hoursLabel ≥100h 取整档（6000 分钟月柱顶签「100h」）', async () => {
+    const vault = new MockVault();
+    vault.files.set(
+      getPomodoroFilePath(),
+      JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 },
+        history: [],
+        archived: [{ week: '2026-06-01', count: 240, minutes: 6000 }], // 2026-06：6000 分钟
+      })
+    );
+    const { app } = setup(vault);
+    await openPomodoro(app);
+    el('pomodoro-stat-tab-month').click();
+    const days = [...el('pomodoro-months').querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
+    expect(days[3].querySelector('.pomodoro-stat-num')?.textContent).toBe('100h'); // 2026-06（≥100h 取整）
+  });
+
+  it('F12 回归锁：冻结标记随解冻清除——手动暂停后 hidden→visible 不被静默续跑', async () => {
+    const vault = new MockVault();
+    vault.files.set(getPomodoroFilePath(), runningData());
+    const app = makeApp(vault);
+    setApp(app);
+    await ensurePomodoro(app);
+    // hidden 冻结（autoPauseMain 置位 + pausedBy:'autopause' 落盘）
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    // visible 自动解冻（autoPauseMain 清除）→ 立即手动暂停
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    await togglePause(app);
+    expect(JSON.parse(vault.files.get(getPomodoroFilePath())!).state.paused).toBe(true);
+    // 再 hidden → visible：不得把手动暂停静默续跑（F12：applyAction 统一清冻结标记）
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
+    document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(true);
+    expect(raw.state.endTime).toBeNull();
   });
 });
