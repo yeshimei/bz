@@ -1,4 +1,4 @@
-/* 源指纹 399eb0c52b66d3d0 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9e10c1676a780cb2 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -12573,6 +12573,7 @@ ${String(review).trim()}`;
   // src/diary/data.ts
   init_diary_format();
   init_config();
+  init_domain_bus();
   var MEDIA_EXT_KIND = {
     jpg: "img",
     jpeg: "img",
@@ -12759,16 +12760,88 @@ ${String(review).trim()}`;
     warnFailedBatch(kind, failed);
     return entries;
   }
-  async function loadWallEntries(app) {
-    const entries = await loadDiaryEntries(app, DIARY_DIRECTORY);
-    entries.push(...await loadSpecialEntries(app, movieDirectory(), "movie", parseMovieFile));
-    entries.push(...await loadSpecialEntries(app, LETTER_DIRECTORY, "letter", parseLetterFile));
-    entries.push(...await loadSpecialEntries(app, bookDirectory(), "book", parseBookFile));
+  function watchedDirs() {
+    return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()];
+  }
+  async function readWallEntriesFresh(app) {
+    const [diaryE, movieE, letterE, bookE] = await Promise.all([
+      loadDiaryEntries(app, DIARY_DIRECTORY),
+      loadSpecialEntries(app, movieDirectory(), "movie", parseMovieFile),
+      loadSpecialEntries(app, LETTER_DIRECTORY, "letter", parseLetterFile),
+      loadSpecialEntries(app, bookDirectory(), "book", parseBookFile)
+    ]);
+    const entries = [...diaryE, ...movieE, ...letterE, ...bookE];
     entries.sort((a, b) => {
       const dateCmp = b.date.localeCompare(a.date);
       return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
     });
     return entries;
+  }
+  var wallCacheApp = null;
+  var currentCtrl = null;
+  var offFns = [];
+  function inWatchedDir(p) {
+    return watchedDirs().some((d) => p.startsWith(d + "/") || p === d + ".md");
+  }
+  function detachWallInvalidators() {
+    for (const off of offFns) off();
+    offFns = [];
+  }
+  function attachWallInvalidators(ctrl) {
+    const onPath = (p) => {
+      if (p && currentCtrl === ctrl && inWatchedDir(p)) ctrl.invalidated = true;
+    };
+    const off = (ch, handler) => {
+      offFns.push(onDomainEvent(ch, handler));
+    };
+    off("vault:md-created", (e) => onPath(e == null ? void 0 : e.path));
+    off("vault:md-modified", (e) => onPath(e == null ? void 0 : e.path));
+    off("vault:md-deleted", (e) => onPath(e == null ? void 0 : e.path));
+    off("vault:md-renamed", (e) => {
+      onPath(e == null ? void 0 : e.newPath);
+      onPath(e == null ? void 0 : e.oldPath);
+    });
+    off("diary:file-created", (e) => onPath(e == null ? void 0 : e.path));
+    off("diary:file-modified", (e) => onPath(e == null ? void 0 : e.path));
+    off("diary:file-deleted", (e) => onPath(e == null ? void 0 : e.path));
+    off("letter:file-created", (e) => onPath(e == null ? void 0 : e.path));
+    off("letter:file-modified", (e) => onPath(e == null ? void 0 : e.path));
+    off("letter:file-deleted", (e) => onPath(e == null ? void 0 : e.path));
+  }
+  async function loadWallEntries(app) {
+    if (wallCacheApp !== app) {
+      detachWallInvalidators();
+      currentCtrl = null;
+      wallCacheApp = app;
+    }
+    if (currentCtrl && !currentCtrl.invalidated) {
+      if (!currentCtrl.attached) {
+        currentCtrl.attached = true;
+        attachWallInvalidators(currentCtrl);
+      }
+      return currentCtrl.promise;
+    }
+    detachWallInvalidators();
+    const ctrl = { promise: readWallEntriesFresh(app), invalidated: false, attached: false };
+    currentCtrl = ctrl;
+    ctrl.attached = true;
+    attachWallInvalidators(ctrl);
+    try {
+      const entries = await ctrl.promise;
+      if (currentCtrl === ctrl && ctrl.invalidated) currentCtrl = null;
+      return entries;
+    } catch (e) {
+      if (currentCtrl === ctrl) currentCtrl = null;
+      throw e;
+    }
+  }
+  function invalidateWallCache() {
+    detachWallInvalidators();
+    currentCtrl = null;
+    wallCacheApp = null;
+  }
+  function resetWallCache() {
+    invalidateWallCache();
   }
   function groupByMonth(entries) {
     const map = /* @__PURE__ */ new Map();
@@ -14608,6 +14681,9 @@ ${String(review).trim()}`;
        *  两者都没变才允许对既有卡片 toggle display（否则卡片集合与 widx 不对应） */
       this._wallBaseRef = null;
       this._wallBaseKey = "";
+      /** ②：仅首开（show）允许命中预热缓存秒开；其余 loadAndRender（刷新/写后回刷/重试）默认强制回源，
+       *  保持「除首开外每次读盘」原语义。show 置真、loadAndRender 消费后复位 */
+      this._allowCacheNext = false;
     }
     static getInstance() {
       if (!_DiaryAppController.instance) {
@@ -16496,6 +16572,7 @@ ${String(review).trim()}`;
       this.subscribeUnlockEvents();
       this.subscribeWriteEvents();
       this.subscribeRefSync();
+      this._allowCacheNext = true;
       void this.loadAndRender().then(() => this.applyRestore());
     }
     hide() {
@@ -16693,6 +16770,11 @@ ${String(review).trim()}`;
       this.lockedVisible = isUnlocked();
       this.showSkeleton();
       try {
+        if (this._allowCacheNext) {
+          this._allowCacheNext = false;
+        } else {
+          invalidateWallCache();
+        }
         this.entries = await loadWallEntries(this.app());
         this._loadError = null;
       } catch (e) {
@@ -16936,6 +17018,7 @@ ${String(review).trim()}`;
 
   // src/diary/index.ts
   var initialized2 = false;
+  var prewarmed = false;
   var controller2 = null;
   function getController2() {
     if (!controller2) {
@@ -16964,6 +17047,8 @@ ${String(review).trim()}`;
     if (controller2) controller2.cleanup();
     controller2 = null;
     initialized2 = false;
+    prewarmed = false;
+    resetWallCache();
     (_a = document.getElementById("diary-tag-selector-mask")) == null ? void 0 : _a.remove();
     (_b = document.getElementById("add-diary-mask")) == null ? void 0 : _b.remove();
   }
