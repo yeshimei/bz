@@ -587,7 +587,14 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## pomodoro（番茄钟）域 · 5/5 方向到账，修复批 `bz-fix-pomo-core`（单批）定稿派发
+## pomodoro（番茄钟）域 · ✅ 闭环（2026-09-20，单批合并 + 部署 dd964a58）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-pomo-core`（184a6548，20 项全落）**：PF1 关弹窗清统计键；**PC1 月档 minutes 归一接线**（valueLabel+hoursLabel+样式，消费点 grep 达标含原型）；档钮 aria-pressed + 热区（**登记偏离已复核采纳**：两档钮 gap 4px 挂外扩类会互叠命中区，按 attach 先例 coarse padding 抬档 41px 达标）；**PA-1 checkup 白名单补 archived**（跨域一行+契约测试）；PF2/PC3 拦截守卫+提示模板单源；PF3 暂停文案按 phase；PF4 暂停会话拦截（取口径 a，头注定稿）；PF5 load/save 兜底 + **四命令链空内存态守卫**（报告未点名的关键护栏：防误开新会话覆盖盘上数据）；PF6 progress 钳制；UI-3 注释纠偏；UI/PA-3 disposed 旗标一处护栏三症状同愈；PE1 8 处同值微写收敛；PE2 Space 焦点流；PE3 idle 跳过禁用+守卫；PA-2 恢复通知单发；PA-4 测试夹具 tests/helpers/pomodoro-fixture；PC4 ESC id→bz-pomodoro；issues/144 重置确认框（flow-dialog danger 反焦，空闲/停止直通）；建-1/建-2 isFocusingPhase 直测+F11/F12 必红用例。测试 201→222。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + pomodoro 222 + checkup 71 + freshness 28；全量 6457 绿（批内）；越界登记：review-fix-clip-ui F11 老用例按 issues/144 新语义翻转（拍板项直接后果，注记在案）。
+- **部署**：dd964a58（与 home 批同批）；worktree+分支清理。
+- **残款登记**：PA-1 副作用稳态（旧 pomodoro.json 无 archived 段会出 info，可选段豁免小票归 checkup 域轮拍板）；memo/ui.ts:876 裸 void（PF5 同根，memo 队尾重审处理）；UX 拍板项在案。
 
 > 明细：`.scratch/review-deep/pomodoro-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×1 + P3×5；方向 2（UI）：P2×2 + P3×3 + UX×1；方向 3（效率）：P3×3 + UX×3；方向 4（一致）：P2×1 + P3×3；方向 5（架构）：P2×1 + P3×3 + 建议×3。跨方向去重：**月档统计 minutes 归一未接线三向同根**（ui P2-1 hoursLabel 零消费 = cons PC1 issue 357 拍板未接线（git log -S 零结果，三处注释宣称「月档按分钟说话」实际从未发生）= 建-3 半成品提交归因——函数进单源、消费点未接线、样式未配、原型同缺）、tick 每秒同值 churn（func=ui=eff 三向同根）、卸载竞态（ui P3-2 = arch PA-3 同根，统一 disposed 旗标）、ESC 层 id（cons PC4 与 gameshelf 同类旧式）。F11/F12 已修缺回归（建-2 给出修复前必红用例设计）。**跨域契约缺口 PA-1**：archived 段未进 checkup 段白名单（checks-drift.ts:30），正常归档数据必被体检误报。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿。
 
@@ -603,7 +610,15 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## home（首页）域 · 5/5 方向到账，修复批 `bz-fix-home-core`（单批）定稿派发
+## home（首页）域 · ✅ 闭环（2026-09-20，单批合并 + 主线程收口，部署 dd964a58）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-home-core`（1d26c797，20 项全落）**：**A1 全仓唯一域间环解环**（parseLocalDay 下沉 core/utils、recap 改引 core 环断、weekly 转发保兼容；deps-direction 守卫静态锁）；A2 行为流契约对账测试 + sidecar 单源（引 SMARTCAT_BEHAVIOR_SIDECAR_FILE）；eff P2-1 采集窗口随档裁剪+全库单次共享+三盒单遍历（recap 侧 7 倍砍半归 recap 域轮）；eff P2-2 滚位存回写；ui P2×3（vvh 双写/关闭钮+编辑器钮热区/周历格 34px 步距 40 防互叠/入口列滚动兜底）；func P3-1 失败三态（flowFailedHtml 行级警示）；func P3-2 reject catch；ui P3 群（tl-size 白名单/预告栏轨道收口+断言翻转/周历 aria-pressed/焦点快照/编辑器键盘排序/注释族纠偏）；eff P3×2（端门控短路/busyText 防重入）；cons P3×2（死 import 删/三件套正典收编抛错语义等价验证）；A3 代次守卫；A4 nextOff 现算；**跨域一行 D4' home.json 白名单 v3 + 契约双钉**（checkup 全绿样本 fixture 同步对齐）。测试 121→140。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + home 140 + checkup 43 + freshness 28 = 211 绿；全量 6530 绿。
+- **主线程文档收口**：CONTEXT.md:227 词条三处漂移（两列瓦片→单列/删除外部误植「移动端统计条」/顶部问候→周历+日期头）。
+- **部署**：dd964a58（与 pomodoro 批同批）；worktree+分支清理。
+- **残款登记**：recap 域轮 collectRecap 多 anchor 批量入口（7 倍读盘另一半）+ parseLocalDateTime 三形制注释；H 系 weekly 裁剪前置已具备（A1 解环完成）+ collectWeeklyStat 番茄读法分叉复活前须归一；空河引导词 data-home-go 一行（H 系拍板后顺手）。
 
 > 明细：`.scratch/review-deep/home-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P3×3 + UX×1；方向 2（UI）：P2×3 + P3×6 + UX×3；方向 3（效率）：P2×2 + P3×2 + UX×1；方向 4（一致）：P3×4；方向 5（架构）：P2×2 + P3×4 + 建议×3 + 缺口6。跨方向去重：**A1 域间环**（home⇄recap 顶层环，全仓唯一，由 weekly.ts 死模块 parseLocalDay 撑起——**给 H 系 weekly 裁剪拍板加硬前置：先解环再裁**，修复批先做解环部分）；D4' home.json 白名单（= pomodoro PA-1 同类白名单滞后）；焦点/滚位姊妹面；A5 renderAll 全量重建丢焦点的架构成因（ADR-0104 纯函数渲染结构性代价，gameshelf renderSoft 先例收敛位）。效率整改 5 home 对表通过。门禁基线：tsc 0；tests/home 121 例全绿。
 
