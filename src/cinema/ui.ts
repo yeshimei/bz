@@ -709,6 +709,22 @@ function bindMidnight(sec: HTMLElement, app: App): void {
       if (dot) restFace(dot);
     });
   }
+  // 深审批 B #4：卡片键盘可达——.pcard 已带 tabindex=0/role=button（shared.cardHtml），
+  // 聚焦后 Enter/Space 开详情（与 click 分支同一落点分流；对齐 review 域不可达卡整改范式）。
+  // sec 级委托同 click：网格每次重渲染换新元素，逐卡绑定会漏绑/泄漏。
+  sec.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const cardEl = (e.target as HTMLElement | null)?.closest?.('.pcard[data-cinema-key]') as HTMLElement | null;
+    if (!cardEl) return;
+    e.preventDefault(); // Space 兼作翻页键：开详情时吞掉滚动
+    const key = cardEl.dataset.cinemaKey;
+    // 合并卡（剧集按季合并）：点开各季明细；其余走单条目详情（click 分支同构）
+    if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app);
+    else {
+      const it = itemByKeyInState(key);
+      if (it) openDetail(sec, it, app);
+    }
+  });
   sec.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     // AI 页按钮（开始/重试/换一批/加入想看）先行分流（页内与共享弹窗内同享）

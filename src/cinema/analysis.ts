@@ -37,6 +37,8 @@ function createEmptyAnalysis(): any {
     durSum: 0, durCount: 0, groupDur: {},
     weekdays: [0, 0, 0, 0, 0, 0, 0],
     monthKeys: new Set(),
+    /** 有观影日期的**已看**条目数（月均/周末占比的分子口径 = 节奏统计只数真看过的，深审批 B #5） */
+    datedWatched: 0,
     diffSum: 0, diffCount: 0, treasure: [], disappoint: [],
     reviewKeywords: {}, reviewCount: 0, reviewCharSum: 0,
     series: {}, seasonSum: 0, seasonCount: 0, seasons: [],
@@ -62,14 +64,17 @@ function accumulateStats(data: any, it: any): void {
   if (group) data.groups[group] = (data.groups[group] || 0) + 1;
   if (typeTag) data.tags[typeTag] = (data.tags[typeTag] || 0) + 1;
 
+  // 深审批 B #5：日期类累计（years/months/weekdays/monthKeys）加已看守卫——想看条目的
+  // 观影日期是**建档日期**，此前被当观影日期计入节奏桶（评分类已有 rating>0 守卫先例）
   const d = it.watchDate ? new Date(it.watchDate) : null;
   const validD = d && !isNaN(d.getTime()) ? d : null;
-  if (validD) {
+  if (validD && status === STATUS_WATCHED) {
     const y = validD.getFullYear();
     data.years[y] = (data.years[y] || 0) + 1;
     data.months[validD.getMonth() + 1] = (data.months[validD.getMonth() + 1] || 0) + 1;
     data.weekdays[validD.getDay()]++;
     data.monthKeys.add(y + '-' + (validD.getMonth() + 1));
+    data.datedWatched++;
   }
 
   if (rating !== null && rating > 0) data.buckets[ratingBucketOf(rating)]++;
@@ -175,7 +180,8 @@ function finalizeAnalysis(data: any): void {
   data.avgDur = data.durCount ? (data.durSum / data.durCount).toFixed(0) : '—';
   data.avgDiff = data.diffCount ? (data.diffSum / data.diffCount).toFixed(2) : '—';
   data.avgSeason = data.seasonCount ? (data.seasonSum / data.seasonCount).toFixed(1) : '—';
-  data.monthFreq = data.monthKeys.size ? (data.total / data.monthKeys.size).toFixed(1) : '—';
+  // 月均观影节奏：分子 = 有观影日期的已看条目（total 含想看/在看，会虚高——深审批 B #5 同口径）
+  data.monthFreq = data.monthKeys.size ? (data.datedWatched / data.monthKeys.size).toFixed(1) : '—';
   data.reviewRate = data.total ? Math.round(data.reviewCount / data.total * 100) : 0;
   data.reviewAvgChars = data.reviewCount ? Math.round(data.reviewCharSum / data.reviewCount) : 0;
   data.wantAvgDouban = data.wantDoubanCount ? (data.wantDoubanSum / data.wantDoubanCount).toFixed(2) : '—';
@@ -256,8 +262,8 @@ export function buildAnalysisHTML(): string {
   const data = buildAnalysisData();
   if (data.total === 0) {
     return `<div class="cn-empty-page"><div class="big">还没有可统计的影视记录</div>
-      <div style="font-size:11.5px;color:var(--ink-3)">影视文件夹「${esc(M.folderPath)}」里还没有可分析的条目，添加影视后这里会生成你的观影统计</div>
-      <div style="margin-top:8px"><button class="dm-btn" data-cinema-analysis-add>添加影视</button></div></div>`;
+      <div class="cn-empty-page-sub">影视文件夹「${esc(M.folderPath)}」里还没有可分析的条目，添加影视后这里会生成你的观影统计</div>
+      <div class="cn-empty-page-act"><button class="dm-btn" data-cinema-analysis-add>添加影视</button></div></div>`;
   }
   const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(1) : '';
   const yearEntries = Object.keys(data.years).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y, value: data.years[y] as number }));
@@ -278,13 +284,13 @@ export function buildAnalysisHTML(): string {
   </div>
   ${secHTML('类型分布', 'clapperboard', softHTML(topN(data.groups, 8)))}
   ${secHTML('年度观影趋势', 'bar-chart-3', barHTML(yearEntries))}
-  ${secHTML('片龄画像', 'bar-chart-3', kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets['≥10年']}</b> 部`]) + softHTML(ageEntries) + '<div style="margin-top:10px">' + barHTML(data.eraEntries) + '</div>')}
+  ${secHTML('片龄画像', 'bar-chart-3', kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets['≥10年']}</b> 部`]) + softHTML(ageEntries) + '<div class="stat-era-gap">' + barHTML(data.eraEntries) + '</div>')}
   ${secHTML('片长画像', 'bar-chart-3', data.durCount ? kvInline([`平均片长 <b>${data.avgDur}</b> 分钟`]) + softHTML(durEntries) : '<div class="cn-empty">暂无片长数据（笔记 frontmatter 未含时长字段）</div>')}
   ${secHTML('月度观影分布', 'bar-chart-3', barHTML(monthEntries))}
-  ${secHTML('观影节奏', 'bar-chart-3', kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.total ? Math.round(weekend / data.total * 100) : 0}%）`]) + barHTML(weekEntries))}
+  ${secHTML('观影节奏', 'bar-chart-3', kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.datedWatched ? Math.round(weekend / data.datedWatched * 100) : 0}%）`]) + barHTML(weekEntries))}
   ${secHTML('个人评分分布', 'bar-chart-3', barHTML(bucketEntries))}
   ${secHTML('评分趋势（个人10分制）', 'bar-chart-3', barHTML(data.yearRatingEntries, { color: '#8fa3bd' }))}
-  ${secHTML('打分习惯（个人−豆瓣）', 'bar-chart-3', kvInline([`平均差值 <b>${data.avgDiff === '—' ? '—' : (Number(data.avgDiff) >= 0 ? '+' : '') + data.avgDiff}</b>（个人−豆瓣）`]) + '<div style="font-weight:600;font-size:12px;margin:6px 0 4px">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join('') : emptyHTML()) + '<div style="font-weight:600;font-size:12px;margin:10px 0 4px">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join('') : emptyHTML()))}
+  ${secHTML('打分习惯（个人−豆瓣）', 'bar-chart-3', kvInline([`平均差值 <b>${data.avgDiff === '—' ? '—' : (Number(data.avgDiff) >= 0 ? '+' : '') + data.avgDiff}</b>（个人−豆瓣）`]) + '<div class="stat-subhead">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join('') : emptyHTML()) + '<div class="stat-subhead stat-subhead--lg">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join('') : emptyHTML()))}
   ${secHTML('题材偏好 TOP10', 'bar-chart-3', softHTML(topN(data.genres, 10)))}
   ${secHTML('制片国家/地区 TOP10', 'bar-chart-3', softHTML(topN(data.countries, 10)))}
   ${secHTML('最爱导演 TOP10', 'bar-chart-3', softHTML(topN(data.directors, 10)))}

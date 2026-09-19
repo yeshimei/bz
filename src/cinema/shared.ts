@@ -150,7 +150,7 @@ export function facePiecesHtml(
     poster: posterInner(it, posterUrl),
     name: esc(opts.name ?? it.name),
     meta: esc([it.year || '', it.director || ''].filter(Boolean).join(' · ')),
-    stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span style="opacity:.35">未评分</span>',
+    stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>',
   };
 }
 
@@ -165,7 +165,10 @@ export function cardHtml(e: CardEntry, posterUrl: string | null, fetching = fals
   const it = e.kind === 'series' ? e.face : e.item;
   const st = cardStatus(e);
   const p = facePiecesHtml(it, posterUrl, e.kind === 'series' ? { name: e.name, rating: e.rating } : {});
-  return `<div class="pcard${e.kind === 'series' ? ' pcard-series' : ''}" data-cinema-key="${esc(e.kind === 'series' ? e.key : itemKey(it))}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
+  // 深审批 B #4：卡片键盘可达——裸 div 补 tabindex/role/aria-label（片名+状态），
+  // Enter/Space 开详情由 ui.ts 委托层承接（对齐 review 域不可达卡整改范式）
+  const label = `${e.kind === 'series' ? e.name : it.name}，${statusText(st)}`;
+  return `<div class="pcard${e.kind === 'series' ? ' pcard-series' : ''}" data-cinema-key="${esc(e.kind === 'series' ? e.key : itemKey(it))}" tabindex="0" role="button" aria-label="${esc(label)}"><div class="pw"><div class="pw-face">${p.poster}</div>${fetching ? '<div class="pw-fetch"><span class="pw-spin"></span></div>' : ''}
     ${st !== STATUS_WATCHED ? `<span class="badge" style="background:${statusColor(st)}">${statusText(st)}</span>` : ''}${e.kind === 'series' ? seasonDotsHtml(e.seasons) : ''}</div>
     <div class="pname">${p.name}</div>
     <div class="pmeta">${p.meta}</div>
@@ -207,7 +210,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
     ['上映日期', it.year ?? ''],
     ['豆瓣评分', it.doubanRating ?? ''],
   ] as [string, string][]).filter(([, v]) => v !== '');
-  return `<div class="cn-modal" style="max-width:400px;width:100%">
+  return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
         <div class="dm-badges">${badge(typeColor(it.group), it.typeTag)}
@@ -217,7 +220,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ''}
-    ${it.synopsis ? `<div class="dm-sec">简 介</div><div style="font-size:12px;line-height:1.8;color:var(--ink-2);text-align:justify">${esc(it.synopsis)}</div>` : ''}
+    ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ''}
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
 }
@@ -261,7 +264,7 @@ export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaIte
     const sub = [
       it.group !== card.group ? esc(it.group) : '', // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
       it.watchDate ? `观影 ${esc(it.watchDate.slice(0, 10))}` : '',
-      it.seasonText ? `${esc(it.seasonText)} 集` : '',
+      it.seasonText ? esc(it.seasonText) : '', // 深审批 B #6：季集原文自带单位（「2季」），不再拼「 集」出「2季 集」叠字
     ].filter(Boolean).join(' · ');
     const r = it.rating;
     return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
@@ -274,7 +277,7 @@ export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaIte
   // 小标题去掉后首行贴住头部（2026-09-20 用户看图指出），间隔改由列表自己给（styles.css）。
   const rows = card.seasons.map((s) => rowOf(s.item, '')).join('')
     + card.specials.map((it) => rowOf(it, ' s-row-special')).join('');
-  return `<div class="cn-modal" style="max-width:400px;width:100%">
+  return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
         <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
