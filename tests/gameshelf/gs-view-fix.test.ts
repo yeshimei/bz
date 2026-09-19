@@ -301,13 +301,13 @@ describe('转义单源收编（cons C1 / G4 / arch A5）', () => {
     expect(shelfHtml([item(2, '𠀀ECT', 60)], () => '')).toContain('data-initial="𠀀"');
   });
 
-  it('展示名剥书名号走 core 单源：行为不变（《名》→名；消歧尾巴维持现状）', () => {
+  it('展示名剥书名号走 core 单源：《名》→名；消歧尾巴随批A F12 一并剥（《名》 123→名）', () => {
     const f1 = { path: '我的/游戏/《小丑牌》.md', basename: '《小丑牌》', __fm: { AppID: 1 } };
     const f2 = { path: '我的/游戏/《X》 123.md', basename: '《X》 123', __fm: { AppID: 2 } };
     const app = mkApp([f1, f2]);
     setApp(app);
     rebuildItems(app);
-    expect(M.items.map((i) => i.name)).toEqual(['小丑牌', 'X》 123']);
+    expect(M.items.map((i) => i.name)).toEqual(['小丑牌', 'X']);
   });
 });
 
