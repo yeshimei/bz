@@ -23,7 +23,7 @@
  *    （今天未写不断签；ADR-0130 一目一文件口径）。
  */
 import type { App, TFile } from 'obsidian';
-import { collectRecap } from '../recap/aggregate';
+import { collectRecap, settingDir, fileIfExists, readJsonIfExists } from '../recap/aggregate';
 import { behaviorToDays, readBehaviorItems, type TimelineEvent } from './behavior-timeline';
 import type { RecapSummary } from '../recap/aggregate';
 import { tryGetSettings } from '../core/settings-provider';
@@ -40,7 +40,7 @@ import { getStoragePath as getFavoritesPath } from '../favorites/config';
 import { rebuildItems } from '../gameshelf/notes';
 import { getKnowledgeBoxes } from '../core/knowledge-boxes';
 import { getPomodoroFilePath } from '../pomodoro/data';
-import { EMPTY_COUNTS, EMPTY_SUMMARY, dateStrOf } from './shared';
+import { EMPTY_COUNTS, EMPTY_SUMMARY, dateStrOf, timelineRangeDays } from './shared';
 import type { RiverData, RiverDay, RiverCounts, RiverStreak, RiverSummary, RiverWeekDay } from './shared';
 
 // 兼容再出口：类型与规则纯函数单源在 ./shared（旧引用 `from './river'` 零改）
@@ -65,42 +65,16 @@ function toRiverDay(dateStr: string, summary: RecapSummary, events: TimelineEven
   return { dateStr, events: sorted, summary: full, firstTs: sorted.length ? sorted[0].ts : null };
 }
 
-/* ---------- 小工具（本地副本防跨文件牵连，同 recap 口径） ---------- */
-
-function settingDir(keys: string[], def: string): string {
-  const s = tryGetSettings() as Record<string, unknown>;
-  for (const k of keys) {
-    const v = s[k];
-    if (typeof v === 'string' && v.trim()) return v.trim().replace(/\/+$/, '');
-  }
-  return def;
-}
-
-function fileExists(app: App, filePath: string): boolean {
-  try {
-    return !!app.vault.getAbstractFileByPath(filePath);
-  } catch {
-    return false;
-  }
-}
-
-/** 读 json 文件原始内容（仅存在时读，不触发建文件；解析失败回落 null） */
-async function readJsonIfExists(app: App, filePath: string): Promise<unknown | null> {
-  if (!fileExists(app, filePath)) return null;
-  try {
-    const f = app.vault.getAbstractFileByPath(filePath) as TFile;
-    return JSON.parse(await app.vault.read(f));
-  } catch {
-    return null;
-  }
-}
+/* ---------- 计数采集（各源独立容错） ----------
+   只读小工具收编 recap 正典（cons P3-4）：settingDir/fileIfExists/readJsonIfExists，
+   本文件已静态依赖 recap（collectRecap），收编零新增依赖边、不引环。 */
 
 /* ---------- 计数采集（各源独立容错） ---------- */
 
 /** 复习：总数 / 逾期 / 明天到期（口径同 snapshot reviewApp.loadItems） */
 async function collectReviewCounts(app: App, now: number, c: RiverCounts): Promise<void> {
   const filePath = storageFile('review.json');
-  if (!fileExists(app, filePath)) return;
+  if (!fileIfExists(app, filePath)) return;
   reviewApp.ensure(app);
   const items = (await reviewApp.dataManager!.loadItems()) as ReviewItem[];
   c.reviewTotal = items.filter((i) => !i.isMissing).length;
@@ -151,7 +125,7 @@ async function collectClippingCounts(app: App, c: RiverCounts): Promise<void> {
 async function collectFavoritesCounts(app: App, c: RiverCounts): Promise<void> {
   const dir = settingDir(['storagePath'], 'CONFIG/STORAGE');
   const filePath = getFavoritesPath(dir);
-  if (!fileExists(app, filePath)) return;
+  if (!fileIfExists(app, filePath)) return;
   const dm = new FavoritesDataManager(filePath);
   const all = await dm.getAll();
   c.favoritesTotal = (Array.isArray(all) ? all : []).filter((i) => !(i as { archived?: boolean }).archived).length;
@@ -160,7 +134,7 @@ async function collectFavoritesCounts(app: App, c: RiverCounts): Promise<void> {
 /** 归物：登记件数（口径同 snapshot） */
 async function collectBelongingsCounts(app: App, c: RiverCounts): Promise<void> {
   const filePath = storageFile('belongings.json');
-  if (!fileExists(app, filePath)) return;
+  if (!fileIfExists(app, filePath)) return;
   const db = await loadBelongings();
   c.belongingsTotal = Object.keys((db as { items?: Record<string, unknown> }).items ?? {}).length;
 }
@@ -184,14 +158,21 @@ function collectGameshelfCounts(app: App, c: RiverCounts): void {
   c.gameshelfMinutes = items.reduce((s, it) => s + (it.playtimeMin || 0), 0);
 }
 
-/** 知识盒：文献/卡片/主题三盒各自笔记数（2026-09-18 用户点名；目录前缀 md 计数，盒目录实时读设置） */
-function collectKnowledgeCounts(app: App, c: RiverCounts): void {
+/** 知识盒：文献/卡片/主题三盒各自笔记数（2026-09-18 用户点名；目录前缀 md 计数，盒目录实时读设置）。
+ *  效率 P2-1：一次遍历三盒合计（原三次全库 filter——同一份文件列表过滤三遍）。 */
+function collectKnowledgeCounts(mdFiles: TFile[], c: RiverCounts): void {
   const boxes = getKnowledgeBoxes();
-  const files = app.vault.getMarkdownFiles();
-  const countIn = (dir: string): number => (dir ? files.filter((f) => f.path.startsWith(dir + '/')).length : 0);
-  c.knowledgeLit = countIn(boxes.lit);
-  c.knowledgeCards = countIn(boxes.cardbox);
-  c.knowledgeTopics = countIn(boxes.topic);
+  const dirs: Array<[keyof RiverCounts, string]> = [
+    ['knowledgeLit', boxes.lit],
+    ['knowledgeCards', boxes.cardbox],
+    ['knowledgeTopics', boxes.topic],
+  ];
+  for (const [key, dir] of dirs) {
+    if (!dir) continue; // 盒目录未配置 → 0（同旧 countIn 空目录口径）
+    for (const f of mdFiles) {
+      if (f.path.startsWith(dir + '/')) c[key]++;
+    }
+  }
 }
 
 /** 第二大脑：存储占用（2026-09-18 用户点名）= secondbrain.json + secondbrain.vec 字节数；
@@ -233,25 +214,24 @@ async function collectFocusing(): Promise<boolean> {
   }
 }
 
-/** 某日期是否已有日记条目（ADR-0130：目录下条目文件日期命中；格式知识单源在 core/diary-format） */
-function hasDiaryDay(app: App, dir: string, date: string): boolean {
-  return app.vault
-    .getMarkdownFiles()
-    .some((f) => f.path.startsWith(dir + '/') && diaryDateFromEntryPath(f.path) === date);
-}
-
-/** 日记总数（目录前缀 md 数，含子目录）+ 写作连击（今天未写不算断） */
-function collectDiary(app: App, now: number, c: RiverCounts): RiverStreak {
+/** 日记总数（目录前缀 md 数，含子目录）+ 写作连击（今天未写不算断）。
+ *  效率 P2-1：一次遍历把条目日期收进 Set 再数连击（原「连击天数 × 全库遍历」——
+ *  hasDiaryDay 每天一次 getMarkdownFiles().some，O(连击 × 文件数)）。 */
+function collectDiary(now: number, mdFiles: TFile[], c: RiverCounts): RiverStreak {
   const dir = settingDir(['diaryDirectory'], '我的/日记');
-  try {
-    c.diaryTotal = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(dir + '/')).length;
-  } catch {
-    /* 目录读取失败：总数留 0 */
+  const dates = new Set<string>();
+  let total = 0;
+  for (const f of mdFiles) {
+    if (!f.path.startsWith(dir + '/')) continue;
+    total++;
+    const d = diaryDateFromEntryPath(f.path);
+    if (d) dates.add(d);
   }
-  const writtenToday = hasDiaryDay(app, dir, dateStrOf(now));
+  c.diaryTotal = total;
+  const writtenToday = dates.has(dateStrOf(now));
   let streak = 0;
   // 今天已写从今天起算；未写从昨天起算（连击不断签），再往回数连续日期
-  for (let t = writtenToday ? now : now - DAY_MS; hasDiaryDay(app, dir, dateStrOf(t)); t -= DAY_MS) {
+  for (let t = writtenToday ? now : now - DAY_MS; dates.has(dateStrOf(t)); t -= DAY_MS) {
     streak++;
   }
   return { diaryStreak: streak, diaryWrittenToday: writtenToday };
@@ -259,10 +239,30 @@ function collectDiary(app: App, now: number, c: RiverCounts): RiverStreak {
 
 /* ---------- 聚合入口 ---------- */
 
+/** 采集窗口下限：渲染点评 buildNotes 要读「昨天首动」（data.yesterday.firstTs），
+ *  窗口只含今天会在渲染层崩——「当天」档也保底采 2 天，渲染层 slice 自行裁显示。 */
+const DAYS_MIN = 2;
+/** 采集窗口上限（week 档 = 周历全长） */
+const DAYS_MAX = 7;
+
+/** 采集窗口（eff P2-1）：随「时间范围」设置档裁剪（today=2 / 3d=3 / week=7）。
+ *  渲染消费面（ui.renderAll 的 days/week slice(0, rangeDays)）行为等价——
+ *  范围档本就只显示前 rangeDays 天，采集恒 7 天全量是纯浪费。 */
+function collectDaysN(): number {
+  let range = 'week';
+  try {
+    const s = tryGetSettings() as Record<string, unknown>;
+    if (typeof s.homeTimelineRange === 'string' && s.homeTimelineRange) range = s.homeTimelineRange;
+  } catch {
+    /* 设置读取失败按 week 全量 */
+  }
+  return Math.min(DAYS_MAX, Math.max(DAYS_MIN, timelineRangeDays(range)));
+}
+
 /** 采集活动河全量数据（今天/昨天时间线 + 连击 + 全部域计数；全程只读） */
 export async function collectRiver(app: App, now: number = Date.now()): Promise<RiverData> {
-  // 本周 7 天窗口（今天~6 天前）一次并行采集；recap anchor 参数天然支持任意天
-  const DAYS_N = 7;
+  // 采集窗口（今天起往回 DAYS_N 天）一次并行采集；recap anchor 参数天然支持任意天
+  const DAYS_N = collectDaysN();
   const [dayRecaps, behaviorItems] = await Promise.all([
     Promise.all(
       Array.from({ length: DAYS_N }, (_, i) => collectRecap(app, now - i * DAY_MS).catch(() => null))
@@ -277,6 +277,14 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
     Promise.resolve()
       .then(fn)
       .catch(() => undefined);
+  // 全库 md 文件列表一轮采集内取一次，计数/连击分支共享（eff P2-1 同刷新内结果复用：
+  // 原 collectDiary/collectKnowledgeCounts 各自调 getMarkdownFiles，连击循环里更是每天一遍）
+  let mdFiles: TFile[] = [];
+  try {
+    mdFiles = app.vault.getMarkdownFiles();
+  } catch {
+    mdFiles = []; // 目录读取失败：knowledge/diary 计数回落 0（同旧各自容错口径）
+  }
   // 专注相位与计数同一波并发（collectFocusing 自带失败回落 false）；
   // as const 保二元组型——否则 spread 数组并入后 focusing 会被 widen 成 void | boolean
   const [, focusing] = await Promise.all([
@@ -290,7 +298,7 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
         () => collectBelongingsCounts(app, counts),
         () => collectMemoCounts(app, counts),
         () => collectGameshelfCounts(app, counts),
-        () => collectKnowledgeCounts(app, counts),
+        () => collectKnowledgeCounts(mdFiles, counts),
         () => collectSecondbrainBytes(app, counts),
         () => collectPomodoroTotal(app, counts),
       ].map(safe)
@@ -299,7 +307,7 @@ export async function collectRiver(app: App, now: number = Date.now()): Promise<
   ] as const);
   let streak: RiverStreak = { diaryStreak: 0, diaryWrittenToday: false };
   try {
-    streak = collectDiary(app, now, counts);
+    streak = collectDiary(now, mdFiles, counts);
   } catch {
     /* 连击计算失败回落空 */
   }

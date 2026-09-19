@@ -204,3 +204,17 @@ describe('sheetHeadHtml（长按抽屉盒头）', () => {
     expect(domainColor('diary')).toBe(DOMAIN_DOT.diary);
   });
 });
+
+describe('DOMAIN_MENU busyText 槽位（eff P3-2：慢动作 busy 反馈）', () => {
+  it('只挂 keepHome 慢动作（同步/重建索引），即时类动作不挂', () => {
+    const busy: string[] = [];
+    for (const [id, acts] of Object.entries(DOMAIN_MENU)) {
+      for (const a of acts) {
+        if (!a.busyText) continue;
+        busy.push(`${id}:${a.label}`);
+        expect(a.keepHome, 'busyText 只对 keepHome 动作有意义').toBe(true);
+      }
+    }
+    expect(busy.sort()).toEqual(['gameshelf:立即同步', 'secondbrain:重建索引']);
+  });
+});

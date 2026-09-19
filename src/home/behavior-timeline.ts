@@ -12,15 +12,14 @@ import type { App, TFile } from 'obsidian';
 import { storageFile } from '../core/storage';
 import { localDayKey } from '../core/utils';
 import { pad2 } from '../core/ui/str';
+import { SMARTCAT_BEHAVIOR_SIDECAR_FILE } from '../smartcat/memory';
 import type { RiverEvent, TimelineEventKind } from './shared';
-
-/** 行为流侧车文件（单源在 smartcat/memory.ts，此处按存储路径只读） */
-const BEHAVIOR_SIDECAR = 'smartcat-behavior.json';
 
 /** 行为流 source → **首页域 id**（渲染取图标/色/名，彩点 hasEvent 也认这个 id）。
  *  语义先例见 smartcat/dashboard.ts 的来源标签表：literature / bili-downloader 是知识盒
- *  旧域名的存量来源（ADR-0072 迁出后 source 值不迁移）。未收录来源原样透传（渲染回退显示源名）。 */
-const SOURCE_DOMAIN: Record<string, string> = {
+ *  旧域名的存量来源（ADR-0072 迁出后 source 值不迁移）。未收录来源原样透传（渲染回退显示源名）。
+ *  导出供 tests/home/behavior-contract.test.ts 做发射侧×消费侧对账（arch A2）。 */
+export const SOURCE_DOMAIN: Record<string, string> = {
   movie: 'cinema',
   news: 'clipping',
   memo: 'memo',
@@ -131,10 +130,12 @@ export function mapBehaviorEvent(item: BehaviorItemLite): TimelineEvent | null {
   }
 }
 
-/** 读行为流侧车（只读契约：探测存在再读，缺失/损坏回落空数组） */
+/** 读行为流侧车（只读契约：探测存在再读，缺失/损坏回落空数组）。
+ *  文件名单源 = smartcat/memory.ts 的 SMARTCAT_BEHAVIOR_SIDECAR_FILE（home 深审 A2：
+ *  原 home 本地字面量双源，发射侧改名会静默读空） */
 export async function readBehaviorItems(app: App): Promise<BehaviorItemLite[]> {
   try {
-    const filePath = storageFile(BEHAVIOR_SIDECAR);
+    const filePath = storageFile(SMARTCAT_BEHAVIOR_SIDECAR_FILE);
     if (!app.vault.getAbstractFileByPath(filePath)) return [];
     const f = app.vault.getAbstractFileByPath(filePath) as TFile;
     const parsed: unknown = JSON.parse(await app.vault.read(f));

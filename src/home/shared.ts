@@ -204,6 +204,12 @@ export interface DomainMenuAction {
    * 缺省 false = 关首页再执行（打开别域面板/需要确认框的动作走这条）。
    */
   keepHome?: boolean;
+  /**
+   * 慢动作 busy 提示（eff P3-2）：点击瞬间到域内完成反馈之间的静默窗口（网络 IO / 全库
+   * 重建类 1-3 秒），home 侧出这条轻提示 + 在途防重入。文案单源在声明处，home 不硬编码
+   * 域语义；只给「真慢」的动作挂（锁定/暂停等即时类有域内反馈，不挂）。
+   */
+  busyText?: string;
 }
 
 /**
@@ -281,16 +287,17 @@ export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
   ],
   // 游戏库（2026-09-17 用户点名补快捷命令）：两条都是「一步成事」——
   // 立即同步 = 即时类（不关首页，拉完原地看计数）/ 数据统计 = 开面板落统计页（影院分析报告同范式）。
+  // busyText：Steam 网络拉取 1-3 秒，点击瞬间给「正在同步」反馈防重复点击（eff P3-2）。
   gameshelf: [
-    { label: '立即同步', commandId: 'bz-gameshelf-sync', icon: 'refresh-cw', keepHome: true },
+    { label: '立即同步', commandId: 'bz-gameshelf-sync', icon: 'refresh-cw', keepHome: true, busyText: '正在同步游戏库…' },
     // 图标 chart-bar 与「阅读分析报告」的 bar-chart-3 错开（enh-sweep-a 起报告/统计类图标互异的惯例）
     { label: '数据统计', commandId: 'bz-gameshelf-stats', icon: 'chart-bar' },
   ],
   secondbrain: [
     { label: '第二大脑对话', commandId: 'bz-secondbrain-chat', icon: 'message-circle' },
     { label: '参考侧栏', commandId: 'bz-secondbrain-open', icon: 'zap' },
-    // 全库重建向量索引（函数早已存在、此前没有命令入口）
-    { label: '重建索引', commandId: 'bz-secondbrain-rebuild-index', icon: 'refresh-cw', keepHome: true },
+    // 全库重建向量索引（函数早已存在、此前没有命令入口）：全库 IO 慢动作挂 busy 反馈
+    { label: '重建索引', commandId: 'bz-secondbrain-rebuild-index', icon: 'refresh-cw', keepHome: true, busyText: '正在重建索引…' },
   ],
   belongings: [{ label: '加物品', commandId: 'bz-belongings-add', icon: 'archive' }],
   // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作

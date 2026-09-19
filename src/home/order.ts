@@ -56,7 +56,7 @@ export async function loadHomeOrder(app?: App): Promise<HomeOrder> {
 }
 
 /**
- * 一次性覆盖写（设置面板「外观 → 首页入口」列表保存用）：v3 四份数组一起提交，
+ * 一次性覆盖写（设置面板「首页 → 入口」组的内联列表保存用）：v3 四份数组一起提交，
  * 避免多次读改写；经 enqueueFileTask 与其它写者串行。
  * 提交的是**读到的整份 order**（含另一端），所以本端编辑不会动到另一端的数据。
  */

@@ -6,7 +6,7 @@
  *  - 桌面端打开设置面板 → 只显示、只修改 `desk` 那套（顺序 + hiddenDesk）；
  *  - 移动端打开 → 只显示、只修改 `mob` 那套（顺序 + hiddenMob）；
  *  - 没有「桌面/移动」切换段 —— 另一端的数据本端既看不到也改不到。
- * 为何不做成可切：两端屏幕上的入口形态本就不同（桌面是入口行、移动是两列瓦片），
+ * 为何不做成可切：两端屏幕上的入口形态本就不同（桌面是入口行、移动是单列瓦片），
  * 在一端调另一端的顺序只能靠想象；拍板结论是各端只调自己。
  *
  * 版式（2026-09-11 用户拍板）：
@@ -214,7 +214,7 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
     }
     setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
     persist();
-    render();
+    render(id || undefined); // 拖拽落点后焦点跟行（键盘/连续整理场景不丢位）
   }
 
   /** total = 可排序行数（= 可见行数；移除的域排在最下面，不参与排序） */
@@ -256,17 +256,23 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
 
   function rowHtml(d: HomeDomain, isHidden: boolean): string {
     const btn = isHidden
-      ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan('plus') + '</button>'
-      : '<button type="button" class="bz-home-ent-btn" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan('x') + '</button>';
+      ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add bz-touch-target--sm" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan('plus') + '</button>'
+      : '<button type="button" class="bz-home-ent-btn bz-touch-target--sm" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan('x') + '</button>';
+    // 键盘排序（ui P3-5）：可见行拖柄 role=button + tabindex + aria-label，方向键上移/下移——
+    // 原先排序只有 Pointer 拖拽一条路，键盘用户（含辅助设备）最远只能「× 移除再 + 加回尾部」；
+    // 移除行拖柄保持 aria-hidden（visibility:hidden 不参与排序，语义一致）
+    const grip = isHidden
+      ? '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan('grip-vertical') + '</span>'
+      : '<span class="bz-home-ent-grip" role="button" tabindex="0" data-ent-grip="' + d.id + '" aria-label="调整' + d.name + '顺序（上/下方向键）">' + iconSpan('grip-vertical') + '</span>';
     return '<div class="bz-home-ent-row' + (isHidden ? ' bz-home-ent-row--off' : '') + '" data-ent-row="' + d.id + '">'
-      + '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan('grip-vertical') + '</span>'
+      + grip
       + '<span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span>'
       + '<span class="bz-home-ent-nm">' + esc(d.name) + '</span>'
       + btn
       + '</div>';
   }
 
-  function render(): void {
+  function render(refocusId?: string): void {
     if (!order) return;
     const ids = hiddenOf(order, scope);
     const visible = visibleDomains(order[scope], ids);
@@ -284,7 +290,30 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
     const rows = Array.from(listEl.querySelectorAll<HTMLElement>(ROW_SEL));
     const movable = rows.slice(0, visible.length);
     for (const el of movable) attachDrag(el, listEl, movable);
+    // render 后焦点回置（ui P3-5）：× / + / 键盘排序重建列表后，找回被操作行的新元素——
+    // 连续整理多个域不用每步重新 Tab 找位置
+    if (refocusId) {
+      const target = listEl.querySelector<HTMLElement>(`[data-ent-row="${refocusId}"] button, [data-ent-row="${refocusId}"] [data-ent-grip]`);
+      target?.focus();
+    }
   }
+
+  // 键盘排序（ui P3-5）：拖柄上 ↑/↓ = 在可见序列内挪一格，落盘 + 重渲 + 焦点跟行
+  root.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    const grip = (e.target as HTMLElement).closest('[data-ent-grip]') as HTMLElement | null;
+    if (!grip || !order) return;
+    const id = grip.dataset.entGrip || '';
+    const visibleNow = visibleDomains(order[scope], hiddenOf(order, scope));
+    const from = visibleNow.findIndex((d) => d.id === id);
+    if (from < 0) return;
+    const to = from + (e.key === 'ArrowUp' ? -1 : 1);
+    if (to < 0 || to >= visibleNow.length) return; // 已在端头：不响（不吞按键，留给滚动）
+    e.preventDefault();
+    setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
+    persist();
+    render(id);
+  });
 
   // 触屏长按：压住浏览器长按菜单（真机上不压住会先弹选择框，拖拽根本起不来）
   root.addEventListener('contextmenu', (e) => {
@@ -314,7 +343,7 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
       if (id && !ids.includes(id)) {
         setHidden([...ids, id]);
         persist();
-        render();
+        render(id); // 焦点跟行（移除行排在列表尾部，落焦到它的「加回」钮）
       }
       return;
     }
@@ -323,7 +352,7 @@ export function mountHomeEntryEditor(body: HTMLElement, app: App): void {
       const id = rs.dataset.entRestore || '';
       setHidden(hiddenOf(order, scope).filter((x) => x !== id));
       persist();
-      render();
+      render(id); // 加回尾部后焦点跟行（落焦到「移除」钮，可继续排序/移除）
     }
   });
 

@@ -6000,7 +6000,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 /* ==================== 内容首页域样式（src/home/styles.css）——活动河全域入口版（issue 232） ====================
    p16-full 原型一比一移植：头行（今日活动河+日期）+ 三栏 grid（全部域|时间线|明天预告）。
-   桌面/移动同一 DOM，≤768px 断点单列化（时间线→预告→全部域两列瓦片）。
+   桌面/移动同一 DOM，≤768px 断点单列化（全部域单列瓦片 → 明天预告 → 时间线沉底）。
    面板壳走样式库 .bz-panel-overlay/.bz-panel-frame；图标 lucide（mountIcons）。
    自绘主题变量（cinema 先例）：原型纸感浅色为基准，暗色由 .theme-dark 覆写。 */
 
@@ -6061,6 +6061,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 滚动条隐藏已由 core 界级单源通杀（ADR-0122），域内声明视为冗余清退（review-deep 一致#13） */
 .bz-home-body { flex: 1; min-height: 0; overflow: hidden; padding: var(--bz-space-sm) var(--bz-space-lg) 14px; }
 .bz-home-grid { display: grid; grid-template-columns: 232px minmax(0, 1fr) 224px; grid-template-rows: minmax(0, 1fr); gap: 20px; margin-top: var(--bz-space-md); height: 100%; }
+/* 预告卡关掉 → 第三栏整块收掉（ui P2-3 家族 / ui P3-2）：显式三轨道不随 display:none 的空
+   item 塌缩，修饰类同步切两列轨道（ui.ts 在置 display 的同处切换；移动 flex 列不受影响） */
+.bz-home-grid.bz-home-grid--no-next { grid-template-columns: 232px minmax(0, 1fr); }
 
 /* ---- 小节标题（原型 .sec-t） ---- */
 .bz-home-sec-t { font-size: var(--bz-font-caption); letter-spacing: .28em; color: var(--h-dim); margin: 0 0 10px; }
@@ -6070,6 +6073,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ---- 图标占位 ---- */
 .bz-home-entries .bz-ic, .bz-home-flow .bz-ic { width: 17px; height: 17px; }
+
+/* 全部域入口列滚动兜底（ui P2-3）：域行多（15+）+ 矮窗口（<630px）/系统字号放大时
+   列高被钳出面板，无滚动手段 = 底部域入口够不着；与时间线列（.bz-home-flow 可滚）对称。
+   常态列高不超面板不出滚动条（滚动条隐藏 core 通杀，ADR-0122）。 */
+.bz-home-entries { overflow-y: auto; min-height: 0; }
 
 /* ---- 全部域入口行（原型 .erow） ---- */
 .bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px var(--bz-space-sm) 7px 6px; border-radius: var(--bz-radius-sm); cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
@@ -6110,6 +6118,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-home-ev-note::before { content: "✦ "; }
 .bz-home-flow-empty { padding: 24px 6px; font-size: 12.5px; color: var(--h-dim); line-height: 2; }
 .bz-home-flow-empty b { color: var(--h-ink); }
+/* 失败位（func P3-1 三态之「失败」）：警示色与「加载/空」可区分，行级体量（不满列红卡） */
+.bz-home-flow-empty--fail { color: var(--h-red); }
 
 /* ---- 时间线字号档（issue 287：「设置 → 首页 → 时间线字号」）----
    用 `em` 而不是再造三套 px：档位只改一个基数，行内各处（时刻/域徽/点评/空态）
@@ -6140,12 +6150,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-home-tiles { display: none; }
 
 @media (max-width: 768px) {
-  .bz-home-panel { width: 100vw; height: 100vh; max-height: none; border: none; border-radius: 0; }
+  /* 高度接 core --bz-vvh（ui P2-1，issue 266）：移动端 Obsidian 原生顶栏/底栏占位时
+     vvh < 100vh，裸 100vh 会让沉底的时间线（最常滚的区域）被原生底栏遮一截；
+     写法对齐 memo 先例（height + max-height 双写）。border-box 兜 .bz-panel-mtop
+     移动档 44px 顶垫（content-box 下 100vh + 44px 会再溢出一截）。 */
+  .bz-home-panel { width: 100vw; height: var(--bz-vvh, 100vh); max-height: var(--bz-vvh, 100vh); box-sizing: border-box; border: none; border-radius: 0; }
   .bz-home-overlay.bz-home-overlay { padding: 0; }
 }
 
 @container (max-width: 768px) {
-  /* 单列（瓦片 → 时间线 → 预告），头行带关闭钮；日期隐藏（周历即日期） */
+  /* 单列（瓦片 order:-1 → 预告 order:0 → 时间线 order:1 沉底），头行带关闭钮；日期隐藏（周历即日期） */
   .bz-home-date { display: none; }
   .bz-home-head { position: sticky; top: 0; z-index: 5; background: var(--h-bg); padding: 14px var(--bz-space-lg) 10px; }
   .bz-home-panel .bz-home-close { display: inline-flex; align-items: center; justify-content: center; flex: none; margin-left: auto; width: 36px; height: 36px; border: 1px solid var(--h-line); border-radius: 10px; background: var(--h-card); color: var(--h-ink); cursor: pointer; }
@@ -6165,8 +6179,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-home-m-tile .bz-home-eic .bz-ic { width: 15px; height: 15px; }
   .bz-home-m-tile .bz-home-enm { font-size: 17.25px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bz-home-m-tile .bz-home-ect { margin-left: auto; font-size: 15.75px; white-space: nowrap; }
-  /* 周历/时间线/预告 同档 ×1.5（基数见基座规则；周历 11.4×1.5=17.1，时刻列加宽容纳 18px） */
-  .bz-home-panel .bz-home-wk { font-size: 17.1px; }
+  /* 周历/时间线/预告 同档 ×1.5（基数见基座规则；周历 11.4×1.5=17.1，时刻列加宽容纳 18px）。
+     触控热区（ui P2-2）：格宽 29→34（步距 34+6gap=40px 达 §8.2 下限）——不挂 bz-touch-target
+     外扩类：7 格 × 外扩会互叠串格（core 注释口径），抬格宽是行距紧凑场景的正解；
+     头行宽度余量核算：7×34+6×6=274 + 头行 gap + 关闭钮 36 ≈ 322px ≤ 360 屏可用宽。 */
+  .bz-home-panel .bz-home-wk { width: 34px; font-size: 17.1px; }
   .bz-home-sec-t { font-size: 16.5px; }
   .bz-home-ev-tm { font-size: 18px; width: 58px; }
   .bz-home-ev-tx { font-size: 21.75px; }
@@ -6194,8 +6211,9 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   /* 左边不留内边距：拖柄贴左缘（用户 2026-09-11 拍板）；右边照常留 */
   padding: 7px var(--bz-space-sm) 7px 0; border-radius: var(--bz-radius-sm);
   border-bottom: 1px solid var(--sp-line-soft, var(--background-modifier-border));
-  /* 触屏：纵向滚动归浏览器（短滑滚列表），横向不滚 → 长按拖拽不与滚动抢手势。
-     长按成立后 JS 会把本行 touch-action 临时改成 none 拿住手势（见 entry-editor.ts）。 */
+  /* 触屏：touch-action 保持 pan-y 不动（E 修复 2026-09-12 后的定案）——进行中的手势
+     中途改 touch-action 不生效，长按归属由 entry-editor.ts 的非 passive touchmove 仲裁：
+     未按满长按窗口放行原生滚动（短滑=滚列表），armed 后 preventDefault 拦滚动起拖。 */
   touch-action: pan-y;
   /* 让位动画：邻居行被跨过时反向位移一格，靠这条过渡「滑」过去 */
   transition: transform .16s cubic-bezier(.2, .7, .3, 1);
@@ -6239,7 +6257,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-home-ent-row { padding: 10px var(--bz-space-sm) 10px 0; }
   .bz-home-ent-nm { font-size: 16px; }
   .bz-home-ent-ic .bz-ic, .bz-home-ent-grip .bz-ic { width: 19px; height: 19px; }
-  .bz-home-ent-btn { width: 34px; height: 34px; }
+  /* 行尾 ×/+：34→36px（触控热区 ui P2-2：36px + markup 挂 bz-touch-target--sm 外扩 4px = 44px） */
+  .bz-home-ent-btn { width: 36px; height: 36px; }
   .bz-home-ent-btn .bz-ic { width: 19px; height: 19px; }
 }
 

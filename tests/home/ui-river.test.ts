@@ -222,7 +222,9 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(document.querySelector('.bz-home-ev-tm')).toBeNull(); // 时刻列关掉 → 连 span 都不渲染
   });
 
-  it('issue 287：明天预告卡关掉 → 第三栏整个收掉（不是只清内容）', async () => {
+  it('issue 287：明天预告卡关掉 → 第三栏整个收掉（display 断移动 flex 收缩 + 修饰类断桌面 grid 轨道收口）', async () => {
+    // ui P3-2 注记：旧断言只锁 style.display==='none'（实现手段）——display:none 只让 item
+    // 离开网格，桌面显式三轨道仍空置 224px；修复后由 grid 修饰类同步收口轨道，两手段并断。
     setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeNextCards: false }));
     const app = recApp(vault);
     openHome(app);
@@ -230,6 +232,68 @@ describe('home 活动河 UI（issue 232）', () => {
     const next = document.querySelector('[data-home-next]') as HTMLElement;
     expect(next.style.display).toBe('none');
     expect(next.innerHTML).toBe('');
+    // 修饰类挂在 grid 上（桌面轨道塌缩的正解），随设置开关切换
+    const grid = document.querySelector('.bz-home-grid') as HTMLElement;
+    expect(grid.classList.contains('bz-home-grid--no-next')).toBe(true);
+    // 开回来 → 类摘除、栏恢复
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeNextCards: true }));
+    unloadHome();
+    resetHomeState();
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const grid2 = document.querySelector('.bz-home-grid') as HTMLElement;
+    expect(grid2.classList.contains('bz-home-grid--no-next')).toBe(false);
+    expect((document.querySelector('[data-home-next]') as HTMLElement).textContent).toContain('明 天 预 告');
+  });
+
+  it('ui P3-3：周历选中格 aria-pressed 表达「当前在看哪天」，点选切换后同步', async () => {
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: yesterdayAt(9) }]);
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const today = todayStr();
+    const yesterday = yesterdayDateStr();
+    // 默认打开今天：今天格 pressed、其余 false
+    expect(document.querySelector(`[data-home-weekday="${today}"]`)!.getAttribute('aria-pressed')).toBe('true');
+    expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.getAttribute('aria-pressed')).toBe('false');
+    // 点昨天 → pressed 跟着切（局部更新，无全量重建）
+    (document.querySelector(`[data-home-weekday="${yesterday}"]`) as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.querySelector(`[data-home-weekday="${yesterday}"]`)!.getAttribute('aria-pressed')).toBe('true');
+    expect(document.querySelector(`[data-home-weekday="${today}"]`)!.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('eff P2-2：renderAll 全量重建不丢滚位（keepHome 刷新场景）', async () => {
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: todayAt(10) }]);
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    // 时间线列滚到中部（jsdom 无真实布局，直接设 scrollTop 再触发一轮刷新）
+    const flow = document.querySelector('[data-home-flow]') as HTMLElement;
+    flow.scrollTop = 120;
+    // 重开（showOverlay → refreshRiverAndRender → renderAll）后滚位保持
+    closeOverlay();
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const flow2 = document.querySelector('[data-home-flow]') as HTMLElement;
+    expect(flow2.scrollTop).toBe(120); // 修复前归零
+  });
+
+  it('ui P3-4：renderAll 全量重建后焦点落回等价新元素（入口行）', async () => {
+    writeBehavior(vault, [{ source: 'memo', type: 'added', name: '甲', dt: todayAt(10) }]);
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const row = document.querySelector('[data-home-go="cinema"]') as HTMLElement;
+    row.focus();
+    expect(document.activeElement).toBe(row);
+    // 重开触发一轮刷新（全量重建）→ 焦点应在新 DOM 的等价元素上，而不是跌回 body
+    closeOverlay();
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const fresh = document.querySelector('[data-home-go="cinema"]') as HTMLElement;
+    expect(fresh).not.toBe(row); // 元素确实是重建的新节点
+    expect(document.activeElement).toBe(fresh);
   });
 
   it('issue 287：默认打开日＝最后有动静 → 开面板落在昨天并高亮那一格', async () => {
@@ -342,5 +406,16 @@ describe('home 活动河 UI（issue 232）', () => {
     expect(H.currentOverlay).toBeNull();
     expect(H.overlayVisible).toBe(false);
     expect(H.river).toBeNull();
+  });
+
+  it('ui P3-1：字号档白名单——手改设置值含引号时白名单回落 normal，不逃逸 markup 属性位', async () => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeTimelineSize: '"><img src=x>' }));
+    const app = recApp(vault);
+    openHome(app);
+    await new Promise((r) => setTimeout(r, 20));
+    const tl = document.querySelector('.bz-home-timeline') as HTMLElement;
+    expect(tl).toBeTruthy();
+    expect(tl.dataset.tlSize).toBe('normal'); // 非三档值 → readHomeSettings 源头回落
+    expect(document.querySelector('.bz-home-timeline img')).toBeNull();
   });
 });

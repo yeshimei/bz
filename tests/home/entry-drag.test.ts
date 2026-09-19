@@ -234,4 +234,43 @@ describe('首页入口拖拽（2026-09-11 用户报 bug 重写）', () => {
     expect(rows[0].classList.contains('bz-home-ent-drag')).toBe(false);
     expect(rows[0].style.transform).toBe('');
   });
+
+  it('ui P3-5 键盘排序：拖柄方向键挪一格落盘 + 焦点跟行；端头不吞键；隐藏行拖柄无键盘语义', async () => {
+    const vault = new MockVault();
+    const host = makeHost();
+    mountHomeEntryEditor(host, mockAppWithVault(vault) as any);
+    await new Promise((r) => setTimeout(r, 20));
+    const rows = Array.from(host.querySelectorAll<HTMLElement>('[data-ent-row]'));
+    const firstId = rows[0].dataset.entRow!;
+    // 拖柄键盘语义（原 aria-hidden 纯装饰 → 可聚焦排序钮）
+    const grip = rows[0].querySelector<HTMLElement>('[data-ent-grip]')!;
+    expect(grip.getAttribute('role')).toBe('button');
+    expect(grip.getAttribute('tabindex')).toBe('0');
+    grip.focus();
+    grip.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 20));
+    // 落盘重排：原第 0 行挪到第 1 位，且真正写进 home.json
+    const after = Array.from(host.querySelectorAll<HTMLElement>('[data-ent-row]'));
+    expect(after[1].dataset.entRow).toBe(firstId);
+    const saved = JSON.parse(vault.files.get('CONFIG/STORAGE/home.json')!);
+    expect(saved.desk[1]).toBe(firstId);
+    // 焦点跟行：重建后落回该行新元素的可聚焦点，不再跌回 body
+    const refocused = document.activeElement as HTMLElement;
+    expect(refocused.closest('[data-ent-row]')?.getAttribute('data-ent-row')).toBe(firstId);
+    // 端头不吞键：第一行 ArrowUp 不动也不落盘
+    const topId = after[0].dataset.entRow!;
+    after[0].querySelector<HTMLElement>('[data-ent-grip]')!
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true, cancelable: true }));
+    await new Promise((r) => setTimeout(r, 20));
+    expect(host.querySelector<HTMLElement>('[data-ent-row]')!.dataset.entRow).toBe(topId);
+    // 隐藏行拖柄保持无键盘语义（visibility:hidden 同口径：aria-hidden + 无 role）
+    after[0].querySelector<HTMLElement>('[data-ent-remove]')!.click();
+    await new Promise((r) => setTimeout(r, 20));
+    const offRow = Array.from(host.querySelectorAll<HTMLElement>('[data-ent-row]'))
+      .find((el) => el.dataset.entRow === topId)!;
+    expect(offRow.classList.contains('bz-home-ent-row--off')).toBe(true);
+    const offGrip = offRow.querySelector('.bz-home-ent-grip')!;
+    expect(offGrip.getAttribute('role')).toBeNull();
+    expect(offGrip.getAttribute('aria-hidden')).toBe('true');
+  });
 });

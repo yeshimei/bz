@@ -587,7 +587,14 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## pomodoro（番茄钟）域 · 5/5 方向到账，修复批 `bz-fix-pomo-core`（单批）定稿派发
+## pomodoro（番茄钟）域 · ✅ 闭环（2026-09-20，单批合并 + 部署 dd964a58）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-pomo-core`（184a6548，20 项全落）**：PF1 关弹窗清统计键；**PC1 月档 minutes 归一接线**（valueLabel+hoursLabel+样式，消费点 grep 达标含原型）；档钮 aria-pressed + 热区（**登记偏离已复核采纳**：两档钮 gap 4px 挂外扩类会互叠命中区，按 attach 先例 coarse padding 抬档 41px 达标）；**PA-1 checkup 白名单补 archived**（跨域一行+契约测试）；PF2/PC3 拦截守卫+提示模板单源；PF3 暂停文案按 phase；PF4 暂停会话拦截（取口径 a，头注定稿）；PF5 load/save 兜底 + **四命令链空内存态守卫**（报告未点名的关键护栏：防误开新会话覆盖盘上数据）；PF6 progress 钳制；UI-3 注释纠偏；UI/PA-3 disposed 旗标一处护栏三症状同愈；PE1 8 处同值微写收敛；PE2 Space 焦点流；PE3 idle 跳过禁用+守卫；PA-2 恢复通知单发；PA-4 测试夹具 tests/helpers/pomodoro-fixture；PC4 ESC id→bz-pomodoro；issues/144 重置确认框（flow-dialog danger 反焦，空闲/停止直通）；建-1/建-2 isFocusingPhase 直测+F11/F12 必红用例。测试 201→222。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + pomodoro 222 + checkup 71 + freshness 28；全量 6457 绿（批内）；越界登记：review-fix-clip-ui F11 老用例按 issues/144 新语义翻转（拍板项直接后果，注记在案）。
+- **部署**：dd964a58（与 home 批同批）；worktree+分支清理。
+- **残款登记**：PA-1 副作用稳态（旧 pomodoro.json 无 archived 段会出 info，可选段豁免小票归 checkup 域轮拍板）；memo/ui.ts:876 裸 void（PF5 同根，memo 队尾重审处理）；UX 拍板项在案。
 
 > 明细：`.scratch/review-deep/pomodoro-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×1 + P3×5；方向 2（UI）：P2×2 + P3×3 + UX×1；方向 3（效率）：P3×3 + UX×3；方向 4（一致）：P2×1 + P3×3；方向 5（架构）：P2×1 + P3×3 + 建议×3。跨方向去重：**月档统计 minutes 归一未接线三向同根**（ui P2-1 hoursLabel 零消费 = cons PC1 issue 357 拍板未接线（git log -S 零结果，三处注释宣称「月档按分钟说话」实际从未发生）= 建-3 半成品提交归因——函数进单源、消费点未接线、样式未配、原型同缺）、tick 每秒同值 churn（func=ui=eff 三向同根）、卸载竞态（ui P3-2 = arch PA-3 同根，统一 disposed 旗标）、ESC 层 id（cons PC4 与 gameshelf 同类旧式）。F11/F12 已修缺回归（建-2 给出修复前必红用例设计）。**跨域契约缺口 PA-1**：archived 段未进 checkup 段白名单（checks-drift.ts:30），正常归档数据必被体检误报。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿。
 
@@ -603,7 +610,15 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## home（首页）域 · 5/5 方向到账，修复批 `bz-fix-home-core`（单批）定稿派发
+## home（首页）域 · ✅ 闭环（2026-09-20，单批合并 + 主线程收口，部署 dd964a58）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-home-core`（1d26c797，20 项全落）**：**A1 全仓唯一域间环解环**（parseLocalDay 下沉 core/utils、recap 改引 core 环断、weekly 转发保兼容；deps-direction 守卫静态锁）；A2 行为流契约对账测试 + sidecar 单源（引 SMARTCAT_BEHAVIOR_SIDECAR_FILE）；eff P2-1 采集窗口随档裁剪+全库单次共享+三盒单遍历（recap 侧 7 倍砍半归 recap 域轮）；eff P2-2 滚位存回写；ui P2×3（vvh 双写/关闭钮+编辑器钮热区/周历格 34px 步距 40 防互叠/入口列滚动兜底）；func P3-1 失败三态（flowFailedHtml 行级警示）；func P3-2 reject catch；ui P3 群（tl-size 白名单/预告栏轨道收口+断言翻转/周历 aria-pressed/焦点快照/编辑器键盘排序/注释族纠偏）；eff P3×2（端门控短路/busyText 防重入）；cons P3×2（死 import 删/三件套正典收编抛错语义等价验证）；A3 代次守卫；A4 nextOff 现算；**跨域一行 D4' home.json 白名单 v3 + 契约双钉**（checkup 全绿样本 fixture 同步对齐）。测试 121→140。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + home 140 + checkup 43 + freshness 28 = 211 绿；全量 6530 绿。
+- **主线程文档收口**：CONTEXT.md:227 词条三处漂移（两列瓦片→单列/删除外部误植「移动端统计条」/顶部问候→周历+日期头）。
+- **部署**：dd964a58（与 pomodoro 批同批）；worktree+分支清理。
+- **残款登记**：recap 域轮 collectRecap 多 anchor 批量入口（7 倍读盘另一半）+ parseLocalDateTime 三形制注释；H 系 weekly 裁剪前置已具备（A1 解环完成）+ collectWeeklyStat 番茄读法分叉复活前须归一；空河引导词 data-home-go 一行（H 系拍板后顺手）。
 
 > 明细：`.scratch/review-deep/home-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P3×3 + UX×1；方向 2（UI）：P2×3 + P3×6 + UX×3；方向 3（效率）：P2×2 + P3×2 + UX×1；方向 4（一致）：P3×4；方向 5（架构）：P2×2 + P3×4 + 建议×3 + 缺口6。跨方向去重：**A1 域间环**（home⇄recap 顶层环，全仓唯一，由 weekly.ts 死模块 parseLocalDay 撑起——**给 H 系 weekly 裁剪拍板加硬前置：先解环再裁**，修复批先做解环部分）；D4' home.json 白名单（= pomodoro PA-1 同类白名单滞后）；焦点/滚位姊妹面；A5 renderAll 全量重建丢焦点的架构成因（ADR-0104 纯函数渲染结构性代价，gameshelf renderSoft 先例收敛位）。效率整改 5 home 对表通过。门禁基线：tsc 0；tests/home 121 例全绿。
 
@@ -617,38 +632,55 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## checkup（数据体检）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率运行中，4/5 待槽位）
+## checkup（数据体检）域 · 5/5 方向到账，修复批 `bz-fix-ck-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/checkup-{func,ui}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3。跨方向去重：可选段 info（func P3-6 = UX 可选段豁免同刀）；「全部通过」矛盾（func P3-9 判定点即 ui.ts:252-261）；时态失真（func P3-5 UI 呈现面）；白名单漂移黄/info 常态 + 组头计数差（func UX-2 同刀）。**UI P2-1 跨层**：体检×设置面板 hide 型常驻层重开只 topifyZ 不重放 ESC 注册，交叉使用后按 ESC 关的是被盖住面板（esc-manager LIFO 注册序 vs ADR-0067 显示序失配）——修复面可能涉 core escManager 或两层注册时点。旧账：review-all2「ui 生命周期成对清理」与新 P2-1 不矛盾（成对清理 ≠ 重开抬栈）。门禁基线：tsc 0；tests/checkup 43 例全绿。
+### 修复批定稿（单批 `bz-fix-ck-core`）摘要见下，段头即定稿记录
+
+- **ARCH-1 写侧投影**：修复链 defaultValue 手抄三份与 emptySidecar() 脱节，「零命中修复」可凭空重建残形 stub 且被自家漂移检查报约定外段——自产自报闭环。
+
+> 明细：`.scratch/review-deep/checkup-{func,ui,efficiency,consistency}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3；方向 3（效率）：P2×1 + P3×7 + UX×2；方向 4（一致）：P3×7 + UX×1。跨方向去重：进度反馈簇（ui UX-3 = eff P2-1 = ui P3-4 同刀）；undo 动线两面（ui P3-1 语义 + eff P3-1 呈现）；失败重试（eff P3-3）；缓存面（func + eff P3-6）；ESC 注册（ui P2-1 跨层 + cons P3-5 同刀定形）；**clipDirOf 家族扩面四处一次收编**（func P3-7 原条 + cons P3-1 clipUrlSet/P3-2 影视目录/P3-3 默认形状两份 + run.ts 默认形状）。**效率整改 5 对表：批量通过（clipbook 先例背书）、单条偏离（cons P3-6 待拍板二选一）**。**旧账复核亮点**：home.json 白名单 v1/v3 已修（home 批 1d26c797 落地 + 契约在册，按已修入账）；memo 词条「14→16 已同步」随回滚失真（现两侧均 14 无运行时漂移，词条失真归主线程）。门禁基线：tsc 0；tests/checkup 43 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
 - **P2 白名单漂移簇（4 处未修 + 根治 G1）**：clipbook.json 3 键（issue 339/358 扩段 marks/savedImages/pendingSource/readLog 未同步，用过剪藏恒报 warn）、news.json 2 键（缺 lastFetchAt/fetchIntervalMin，news.json 存在即恒误报）、home.json v1（=D4'，编辑过入口顺序恒报）、belongings.json 5 vs 3 键（A1 升 P2，活跃库恒报缺段 info）。修：4 白名单对齐 + **G1 契约测试**（SEGMENT_FIELDS × 各域写侧形状常量恒等锁，根治）。
 - **P2 ESC 栈序与 z 序失配**（ui P2-1，跨层）——体检/设置面板 hide 型常驻层重开只 topifyZ 不重放 ESC 注册：交叉使用后按 ESC 关掉的是被盖住面板。修：重开重放/抬 ESC 注册（或 core escManager 语义升级，随修复批现场定）。
+- **P2 大库体检中段反馈静止**（eff P2-1）——孤儿段扫描数秒~十秒级文字常量 + 进度条仅 4 档，感知近似卡死。修：进度粒度细化（与 ui UX-3/ui P3-4 同刀）。
 - **P2 双链核对承诺不兑现**（P2-5）——检查四实为同构链比计数，语义漂移检不出。修：按词条承诺实现或修正注释+检查语义（拍板倾向随修复批定）。
 - **P3 群（9 条）**：读失败吞成不存在假绿（与 clipbook C24 口径分叉）；favorites.json 非数组形态三项检查全绿漏检；扫描清单缺 lock-stats.json；孤儿检查缺 gameshelf 封面；「已自动留档并重建」时态失真（体检当下没重建）；可选段 missing info 常态化（archived + task 双症，**待拍板：可选段豁免机制**）；clipDirOf 收编；undo 无条件覆盖用户后续编辑；summary「全部通过」与黄组 info 同屏矛盾（纯 info 场景恰是常态组合）。
 - **P3 群（ui 4 条）**：撤销修复后报告不收敛反向失真（undo 只恢复数据不重算报告）；fixOrphanIssues 中途抛错丢前序 undo 闭包 + 报告不刷新；「查看详情」钮热区 <44px 且无 aria-expanded（bz-touch-target--xl 与 clipbook aria 先例未消费）；单源偏离簇（renderRunning 步骤名副本 + `i<4` + 绕开 uiProgress 手写宽度，当前逐字一致无即时症状）。
-- **UX 分流（CK 系）**：可选段豁免机制（与 P3-6 同刀）；「全部通过」文案口径（与 summary 矛盾同刀）；移动端 86vh 接 dvh；空态双「开始体检」去一；进度条终值 75% 即切页。
+- **P3 群（eff 7 条）**：undo 通知碎化（最多 5 条 notifyUndo 堆叠挤兑，与确认框总数不符）；修复执行期无忙碌态（确认后写盘窗口零指示，数据有三层兜底仅反馈缺位）；失败重试未接满（体检失败裸 notice + 修复失败未传 onRetry）；大报告全量渲染（数千行 + 隐藏 pre 也全量进 DOM）；体检后台完成零通知；缓存无失效口径（stale 提示静态恒显无 mtime 比对）；clipbook 三修复组三次全文件读写（可批内一次）。
+- **UX 分流（CK 系）**：可选段豁免机制（与 P3-6 同刀）；「全部通过」文案口径（与 summary 矛盾同刀）；移动端 86vh 接 dvh；空态双「开始体检」去一；进度条终值 75% 即切页；一键修复作用域中间粒度（按域分组修复）；stale 提示条可操作化。
+- **P3 群（cons 7 条，clipDirOf 家族扩面）**：checkup 本地 clipUrlSet 重实现且 url 语义与 clipbook 单源分化（**非字符串 url 剪藏被误报残留，一键修复会清掉真数据——数据风险标注**）；影视目录手抄 bypass cinema/state.ts ADR-0115 唯一真源（空白设置值海报检查静默空转）；修复链手抄 clipbook 默认形状两份与导出单源 emptySidecar() 漂缺 readLog（defaultValue 兜底写出缺段文件）；检查二文案硬编码域归属失真；ESC 注册未收编（与 ui P2-1 同刀）；**逐条修复确认框与效率整改 5 单条免确认口径偏离（二选一待拍板，登记 CK 系）**；CONTEXT.md 数据体检词条漏 issue 339 三组 + memo 词条 14→16 随回滚失真（主线程文档）。
+- **UX 增补（cons）**：confirmFix `what` 形参弃用致确认框文案与语境脱节（与 eff UX-1 同刀）。
 
 ---
 
-## reading-report（阅读报告）域 · 审查入账中（方向 1 功能 + 3 效率已到账；方向 2 UI / 4 一致运行中，5 待槽位）
+## reading-report（阅读报告）域 · 5/5 方向到账，修复批 `bz-fix-rr-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/reading-report-{func,efficiency}.md`。方向 1（func）：P2×2 + P3×8 + UX×1；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1。跨方向去重与翻案：**EFF-1 桌面回墙死端**（返回钮被 CSS 桌面隐藏 + 注释声称的「左栏 ‹ 返回书架」已随书脊墙换血删除 + M.view 会话保持重开仍落报告视图）——**翻案 review-ux #23「已闭环」不成立**（func 引用的「常驻返回钮」桌面不可见）；EFF-7 双 toast 与 RR-F2 同根但手动路径独立成条；EFF-8 死字段族扩容（trends 12 字段仅消费 5，建议一刀清含 monthlyTrend）；RR-F6 补证新根因（冷开报告被 rebuildItems 串行门控，报告管线不消费 rebuild 产物可并行）。旧账：G10 eff 复核通过闭环。门禁基线：tsc 0；tests/reading-report 88 例全绿。
+> 明细：`.scratch/review-deep/reading-report-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×2 + P3×8 + UX×1；方向 2（UI）：**P1×1** + P2×2 + P3×10 + UX×2；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1；方向 4（一致）：P3×6；方向 5（架构）：P2×2 + P3×4 + 建议×1 + 缺口7。**双 P1 同根**：RR-U1 = EFF-1 桌面零返回出口（#23 翻案实锤；C-1 补五处文本残留清单同刀清）。**架构枢纽归因**：RR-A1 宿主数据接口双管线镜像无契约守护（EPUB 映射双实现 + 收录谓词三份 = RR-F1/F4/F5/F7 结构性根因；收敛路线 bookshelf/data 升格单源供数面 + 契约对照测试）；RR-A2 opts 契约缺 silent/dataSignature 维度（EFF-4/RR-F2 接口形状根因）；RR-A5 ADR-0091 决策 2/8 与两轮改版脱节五处文本失真；**RR-A6 AGENTS.md 领域清单缺 reading-report 行 + checkup 行**（主线程一并补）；RR-A3 stats 纯层藏 HTML 死模板（守卫只扫 report.ts 盲区）；RR-A4 视图状态双归宿。cons 补充：C-4 建议文案/衍生指标静默计算族（EFF-8 同族扩容，拍板一刀清或接线上屏）+ report.ts:10 死 import；C-6 dedupeKey 每轮唯一化使 notice 去重形同虚设（修=删参数）；C-3 分片进度滞后一位一行重排。测试架构：接缝三角无归属测试 + 跨文件 CSS 契约无守护 =「DOM 在但不可见」温床；epub-notes.test.ts:40 `weaveDataPath` 无效 fixture 键。门禁基线：tsc 0；tests/reading-report 88 例全绿。
+
+### 修复批定稿（单批 `bz-fix-rr-core`）
+
+- **P1**：RR-U1/EFF-1 桌面返回出口恢复（返回钮可视 + 键盘可达 + 可视性用例；C-1 五处文本残留同刀清）。
+- **P2**：RR-A1 收敛（bookshelf/data 升格单源供数面 + 契约对照测试，RR-F1/F4/F5/F7 随刀）；RR-A2 opts 扩 silent + dataSignature（EFF-4 缓存/RR-F2 静默重算随刀）；RR-F1 subjects 通道（随 A1）；EFF-3 O(n²·m) 单趟归并；EFF-5 chrome 死控件簇隐藏；EFF-2/RR-U2 键盘可达；EFF-10/RR-U3 热区挂类。
+- **P3**：func P3 群（预填多类/多样性钳 100/progress 前置+钳负/timeFormat 兜底/冷开并行先行/单文件形态/原型污染/无 type/start 幽灵月）；ui P3 群（热力图死端可供性/时长三套统一/月柱标签双源/未配对 div/速度段编造值/负 margin/骨架内联收编+守卫扩面/标签宽度/空会话默认分）；eff P3 群（notifyActionError 收编/小库静默档+注释纠偏/重复计算杂项/死字段一刀清）；cons C-2 热力色阶收编 core + 守卫扩面、C-3 进度文案重排、C-5 双通道文案同步、C-6 dedupeKey 删参数。
+- **主线程文档**：RR-A5 ADR-0091 五处失真 + C-1 文档簇 + **AGENTS.md 补 reading-report/checkup 两行** + CONTEXT.md 词条。
+- **移交**：RR-U13 宿主搜索框可点只刷隐藏墙 → bookshelf 域复核（bookshelf 已闭环，归收尾统一批处理登记）。
+- **UX 分流（RR 系）**：EFF-U1 翻年跳跃、RR-UX2 速度段空态、RR-UX3 title、RR-UX1 重算保状态（随 RR-A2/RR-F2 同刀）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
-- **P1 桌面报告视图无「返回书架」可达出口**（EFF-1，#23 翻案）——回墙主路径死端，关面板重开仍落报告。修：返回钮恢复可视（或左栏入口重建）+ 键盘可达 + 用例（现有测试结构性测不到可视性）。
-- **P2 键盘不可达簇**（EFF-2）——年卡/作者卡/分类行无 tabindex/keydown，报告内钻取整体键盘不可达。修：可达性对齐。
-- **P2 O(n²·m) 主计算热点**（EFF-3）——calculateReadingStats 逐书 concat+全量重 filter。修：单趟归并。
-- **P2 往返无缓存全量重算**（EFF-4）——重扫全库+重 parse weave-data.json+十段重渲，离开时 DOM 明明还在。修：渲染产物缓存或懒重算。
-- **P2 书架 chrome 死控件簇残留报告视图**（EFF-5）——检索/排序/标签/hint 可见可点却全在更新隐藏墙零反馈。修：报告态隐藏（旧布局处理换血时丢失）。
-- **P2 EPUB 分类未接 ADR-0099 subjects 通道**（RR-F1）——分类分布/「未分类」建议失真。修：接宿主 subjects 口径。
-- **P2 自动重算复用手动渲染全链**（RR-F2）——toast 对 + 状态全重置。修：静默重算通道（RR-UX1 终态）。
-- **P3 群（func 8 条）**：分类预填多类书筛不中 + 多样性分数可超 100%；EPUB progress 前置+钳负漂移；readingTimeFormat 兜底；冷开报告白屏（EFF 补证：rebuildItems 串行门控可并行）；自动刷新漏单文件书库形态；Record 键原型污染；EPUB 会话无 type 完成率恒 0；start 补 0 幽灵月。
-- **P3 群（eff 5 条）**：假重试文案无重试钮（notifyActionError 范式收编）；小库双 toast（clipbook QUIET_TOAST_MIN_ENTRIES「同口径」注释失实）；重复计算杂项族（热力图双跑/focusScore 一次 3 遍）；热力图死端可供性（pointer+hover 放大无点击）；热区（hm-nav 28px/rr-close 22px）。
+- **P1 桌面报告视图零返回出口**（RR-U1 = EFF-1，#23 翻案）——修：返回钮恢复可视 + 键盘可达 + 可视性用例。
+- **P2 键盘不可达簇**（EFF-2 = RR-U2 同根）——年卡/作者卡 role=button 假可达（无 tabindex/keydown）、分类行无 role、委托 click 单路、年卡无 aria-expanded。修：可达性对齐。
+- **P2 触控热区低于 §8.2**（RR-U3 = EFF-10 同根）——翻月钮 28px/移动返回钮 22px（无 aria-label）、域内零 bz-touch-target 消费。修：挂类。
+- **P2 O(n²·m) 主计算热点**（EFF-3）——单趟归并。
+- **P2 往返无缓存全量重算**（EFF-4）——渲染产物缓存或懒重算。
+- **P2 书架 chrome 死控件簇残留**（EFF-5，与 RR-U13 移交项相邻）——报告态隐藏宿主搜索/排序/标签。
+- **P2 EPUB 分类未接 subjects 通道**（RR-F1）；**P2 自动重算静默通道**（RR-F2 + EFF-7 + RR-UX1 同刀）。
+- **P3 群（func 8 条）**：分类预填多类筛不中 + 多样性超 100%；EPUB progress 前置+钳负；readingTimeFormat 兜底；冷开白屏（rebuildItems 串行门控可并行）；自动刷新漏单文件形态；Record 键原型污染；会话无 type 完成率恒 0；start 补 0 幽灵月。
+- **P3 群（ui 10 条）**：热力图 cursor 伪装可点 + hover z-index 失效 + 触屏无 tooltip；时长格式化三套混用；月柱标签双源分叉；**未配对 </div> 两处**（node 脚本验证）；速度段编造值（均值×1.2 上屏）；hm-grid 负 margin 横拖 20px；骨架占位内联样式漏收编（守卫只扫 report.ts）；图表标签宽度缺陷；空会话亮默认 50 分；EFF-6 假重试文案收编 notifyActionError；EFF-7 小库双 toast（QUIET_TOAST 注释失实）；EFF-9 重复计算杂项族。
 - **顺带**：死字段一刀清（monthlyTrend + trends 未消费 7 字段）。
-- **UX 分流（RR 系）**：重算保留翻月/展开/滚位（RR-UX1 与 RR-F2 同刀）；翻月年份跳跃导航（EFF-U1）。
+- **UX 分流（RR 系）**：翻月年份跳跃导航（EFF-U1）；速度段零数据整段消失（RR-UX2 空态形制）；topCategory 截断 title（RR-UX3）。
 
 ### 已入账条目（跨方向去重归并）
 
@@ -724,3 +756,33 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **UX 分流（拍板清单 F 系）**：无链卡点击零反馈、桌面操作唯一入口右键发现性弱（ux#16/#17 同源维持）、面板键盘焦点管理（belongings 批 B 先例）、触屏 hover 粘滞（**全域议题**，无 hover 隔离范式，建议立项拍板）、桌面磁贴行不限高多标签挤塌卡墙（限高/折叠形态待拍板）、点卡直开外链 affordance。
 - **P3 群（cons 4 条，归并后增量）**：ESC 手写旗标收编 registerPanelEsc（C3）；死 import uiInput 清理（C5）；**CONTEXT.md:75 favorites 词条三重脱节**（C1，主线程文档收口）：交互口径整段停 ADR-0083 旧版（左标签栏/搜索/排序/余额/关联笔记已随 C5 换血退役未记）+ belongings 演进史整段误植 + 删除免确认误载。
 - **测试缺口**：随修复批按报告补。
+
+
+---
+
+## auto-summary（自动摘要）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+
+> 明细：`.scratch/review-deep/auto-summary-{func,ui}.md`。方向 1（func）：新发现 P3×6 + 旧账在线 P2×1 + P3×2；方向 2（UI）：P3×5 + UX×1（无 P1/P2，本域无独立面板——ESC/vvh/热区无违例面；通知文案/ICONS 合规；设置五键单面呈现）。新归并：N-UI1 批次进度 dedupeKey 撞 core 30s 去重窗（第二批全程无进度只剩凭空「已完成」）；N-UI4 批量失败逐篇常驻 error 堆屏（`autoSummaryEnabled` 默认 true 未配 AI 首跑即刷屏）；N-UI5 回执失真（缺字段静默跳写仍报「已完成」+ 缺口每开必重触发 AI）；N-UI2/N-UI3 手动重跑短文早退与在队去重均零反馈；N5 补范式证据（同通知链「查看」可键盘「重试」不可达即铁证）。（无新 P1/P2；核心链路「缺失检测→AI→写前重读合并→写回」逐面验证扎实——P1-21 合并写、rename 联动双链、FIFO 收场对称、AI 超时 core 兜底）。旧账复核：**AS1（P2）未修在位为本轮最高在线账**（parser.ts:119 只转义引号/换行 + unquote 不反转义；与 clipbook save.ts yamlEscape C27 已修两侧不对称，含 `\` 值重建写回致值漂移或 frontmatter 解析失败）；**AS2（P3）未修在位且后果链展开**（parser.ts:36 闭合侧强制换行——无尾换行文件 fm=null → 旧 frontmatter 文本被复制进正文区，真实数据损坏面）；AS3（P3 潜伏）维持原判（判据语义错误在案但三现存入口均无双注册形态）；F9 已修闭环。门禁基线：tsc 0；tests/auto-summary 3 文件 70 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2（AS1）buildFrontmatter 反斜杠不转义**——parser.ts:119 + unquote 不反转义，与 clipbook yamlEscape（C27 已修）两侧不对称。修：转义五件套对齐（含 `\`）+ 往返用例。
+- **P3 群（AS2 + N1~N6，7 条）**：AS2 闭合侧强制换行（无尾换行 → fm=null → 旧 frontmatter 复制进正文区，数据损坏面，**升格处理**）；N1 getWatchDir 尾斜杠不归一（同键 clipbook CB4 已归一，两侧分叉，监听+命令双路径静默失效）；N2 buildFrontmatter 数组项零转义（AI tags 含引号 → 非法 YAML → 条目从列表静默消失）；N3 非严格风格流式数组 tags 判缺失后 AI 覆盖用户原标签；N4 processFile 顶层 catch 静默吞错（与自家 AI 失败分支「人话+重试」不对称）；N5 重试按钮手工 DOM 绕开 core notice action（键盘不可达）；N6 stopAutoSummary 清队不 resolve（手动重跑 Promise 永不 settle）。
+- **测试缺口 6**：AS1/AS2/AS3 均零回归锁定，修复时须补修复前必红用例。
+
+
+---
+
+## attach（附件）域 · 审查入账中（方向 1 功能已到账；方向 2 UI / 3 效率运行中，4/5 待槽位）
+
+> 明细：`.scratch/review-deep/attach-{func,ui,efficiency}.md`。方向 1（func）：P2×1 + P3×4 + UX×1；方向 2（UI）：P2×1 + P3×4 + UX×2；方向 3（效率）：P2×1 + P3×4 + UX×3。跨方向去重：键盘确认簇（AF-S1 = UI-P2-1 同根：bindFormSubmit 在位未消费 + flow-dialog「回车=确认」未对齐，大清单键盘确认 O(N)）；失败呈现簇（AF-3 = UI-P3-2 同根：无明细无重试，消失件与真失败混同）；全失败文案矛盾（AF-1 汇总宣称的兄弟面 UI-P3-3：0 成功仍报「已自动更新」）；撤销进度（EFF-4 = UI-P3-4 同根）；全选快捷（EFF-2 = UX-2）；非 md 拦截（AF-4 = UX-1）。旧账补核：「padding 抬档形态」复核成立与 §8.2 相容（coarse 行高实算 42px、gap 4px 无互叠，守卫在位）——pomodoro 批同款先例。旧账复核 2 条：F10 已修在位（data.ts:66-71，缺直接回归用例记测试缺口）；AT1（planMoves 冲突集不含文件夹）仍在未修并入报告。两个似是而非候选排除有据（md 链接 #page 锚点剥锚正确；HTML img 不收集属安全侧）。门禁基线：tsc 0；tests/attach + smoke 58 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 代码块/HTML 注释内引用误收集**（AF-1）——文件被搬走后 Obsidian renameFile 不更新代码块内引用：引用静默断链 + 汇总仍宣称「内部链接已自动更新」（node 复刻取证坐实）。修：收集链排除代码块/注释区 + 汇总文案与实际行为一致。
+- **P3 群（4 条）**：AF-2 wikilink 大小写不敏感解析缺失（`[[IMG.PNG]]` 漏搬）；AF-3 部分失败只有数字尾巴（哪几个仅 console.warn，notifyActionError+onRetry 未消费）；AF-4 命令入口不校验活动文件类型（右键菜单有校验命令没有，PDF 作活动文件报「失败」误导）；AF-5 CONTEXT.md:295 词条「无预览确认直接执行」与实现（可勾选清单预览确认）完全相反（主线程文档收口）。
+- **顺带**：AT1 planMoves 冲突集补文件夹形态 + F10 直接回归用例。
+- **UX 分流（AT 系）**：AF-S1 预览清单弹窗接 bindFormSubmit（Ctrl/⌘+Enter 确认）。
+- **P2 一条搬移动线三次全量重复计算**（EFF-1）——collectResources 在前置/onConfirm/runMove 各跑一遍 + 逐引用对全库文件线性匹配（O(引用×全库文件)），大库移动端可感知且扫描零反馈。修：单次计算结果传递 + 匹配索引化。
+- **P3 群（eff 4 条）**：EFF-2 预览清单无全选/反选/类型筛选 + 大清单无渲染护栏（core path-picker LIMIT=300 先例）；EFF-3 ESC/遮罩误关丢全部勾选（uiModal requestClose 脏拦截，belongings 先例）；EFF-4 撤销批量回滚无进度（与正向 i/N 不对称）；EFF-5 批量执行无「中止」出口。
+- **UX 增补（AT 系）**：UX-1 已全部在目标文件夹时前置预判预告；UX-2 取消勾选行置灰反馈；UX-3 重复搬移跳过预览快捷通道。
