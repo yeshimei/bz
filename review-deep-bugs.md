@@ -617,6 +617,19 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
+## checkup（数据体检）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+
+> 明细：`.scratch/review-deep/checkup-func.md`。方向 1（func）：P2×5 + P3×9 + UX×2（无 P1）。**系统性结论：白名单漂移是机制性缺口**——含已修 archived 共 5 处实锤（clipbook 3 键/news 2 键/home v1/belongings 2 键/archived），根洋试 G1 = 契约测试断言 SEGMENT_FIELDS 与各域写侧形状常量恒等（现有 fixture 按白名单手写，正是 clipbook/news 漏进来的盲区）。**P2-5 双链核对承诺不兑现**（loadItems 即 return normalizeItem，双链恒一致，除 completed 外任何字段语义漂移检不出 + 注释失真三处）。旧账：clipDirOf/A1 belongings/home.json v1 全部在案未修并入本域批；PA-1 修复有效且三例契约锁；PA-1 副作用确认稳态（P3-6 展开待拍板）；review-all2「其余五项键集一致」结论已过时。门禁基线：tsc 0；tests/checkup 2 文件 43 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 白名单漂移簇（4 处未修 + 根治 G1）**：clipbook.json 3 键（issue 339/358 扩段 marks/savedImages/pendingSource/readLog 未同步，用过剪藏恒报 warn）、news.json 2 键（缺 lastFetchAt/fetchIntervalMin，news.json 存在即恒误报）、home.json v1（=D4'，编辑过入口顺序恒报）、belongings.json 5 vs 3 键（A1 升 P2，活跃库恒报缺段 info）。修：4 白名单对齐 + **G1 契约测试**（SEGMENT_FIELDS × 各域写侧形状常量恒等锁，根治）。
+- **P2 双链核对承诺不兑现**（P2-5）——检查四实为同构链比计数，语义漂移检不出。修：按词条承诺实现或修正注释+检查语义（拍板倾向随修复批定）。
+- **P3 群（9 条）**：读失败吞成不存在假绿（与 clipbook C24 口径分叉）；favorites.json 非数组形态三项检查全绿漏检；扫描清单缺 lock-stats.json；孤儿检查缺 gameshelf 封面；「已自动留档并重建」时态失真（体检当下没重建）；可选段 missing info 常态化（archived + task 双症，**待拍板：可选段豁免机制**）；clipDirOf 收编；undo 无条件覆盖用户后续编辑；summary「全部通过」与黄组 info 同屏矛盾（纯 info 场景恰是常态组合）。
+- **UX 分流（CK 系）**：可选段豁免机制（与 P3-6 同刀）；「全部通过」文案口径（与 summary 矛盾同刀）。
+
+---
+
 ## reading-report（阅读报告）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
 
 > 明细：`.scratch/review-deep/reading-report-func.md`。方向 1（func）：P2×2 + P3×8 + UX×1（无 P1）。旧账复核：G10/样式漏注册/内联 hex/review-ux #23/#24 全部已闭环；`analyzeFocusConsistency` 字典序 bug 系测试注释在案的移植负债（随触碰收编）；`monthlyTrend` 假数据死字段不上屏（建议删）。bookshelf 闭环批接缝修复全部在位。门禁基线：tsc 0；tests/reading-report 6 文件 88 例全绿。
