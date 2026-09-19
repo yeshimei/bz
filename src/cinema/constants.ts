@@ -1,13 +1,32 @@
 /**
  * 影院（cinema）域常量：类型/状态/评分（复刻自 movie 域，独立成域不共享）
  */
-/** 状态枚举（评分推断）：想看=-1 / 在看=0 / 已看=>0 */
+/**
+ * 状态枚举：想看=0 / 在看=1 / 已看=2（面板筛选/徽标等消费口径）。
+ * 注意与「评分编码」是两套数值（错位勿混）：评分 -1=想看 / 0=在看 / >0=已看，
+ * 评分 → 状态枚举的推断在 data.ts parseMovieFile（rating === -1/0/其余）。
+ */
 export const STATUS_WANT = 0;
 export const STATUS_WATCHING = 1;
 export const STATUS_WATCHED = 2;
 
-/** 默认评分（编辑窗预填默认分；10 分制中点 5） */
+/**
+ * 默认评分（编辑窗预填默认分；10 分制中点 5）。
+ * 评分编码口径（≠上方状态枚举）：-1=想看 / 0=在看 / >0（或无评分）=已看，
+ * 消费推断唯一落点 data.ts parseMovieFile。
+ */
 export const DEFAULT_RATING = 5;
+
+/**
+ * 文件名非法字符集（Windows 保留集；名称源自文件名《X》，改名拦截/海报落盘替换共用）：
+ * 域内统一从此取口径，禁止各处内联字符类（审查批 C 收敛）。
+ * 消费：douban-fetcher（海报文件名替换 `_`）；ui.ts 改名拦截 ILLEGAL_NAME_RE 待收口切换。
+ */
+export const ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
+/** 同字符集的整词正则（.test() 拦截用；供 ui.ts 侧后续一行切换） */
+export const ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
+/** 同字符集的全局正则（.replace 全量替换用；douban-fetcher 海报文件名清洗） */
+export const ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, 'g');
 
 /** 类型分组：组 → 细分 tag 清单 */
 export const TYPE_GROUPS: Record<string, string[]> = {

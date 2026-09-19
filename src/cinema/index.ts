@@ -5,6 +5,7 @@
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { onDomainEvent } from '../core/domain-bus';
+import { unregisterPanelEsc } from '../core/esc-manager';
 import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER } from './state';
 import { rebuildItems, findPosterRenameTargets } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect, openRandomMovie } from './ui';
@@ -155,12 +156,15 @@ export function unloadCinema(): void {
   initialized = false;
   autoRefreshRegistered = false;
   posterSyncRegistered = false;
+  // 面板 ESC 层注销（对齐 bookshelf/gameshelf/home 三域样板；escManager 层不随插件卸载自动清理，
+  // 残层占住 panelEscHandles 槽位会吞掉重启用后 registerPanelEsc('bz-cinema') 的幂等注册）
+  unregisterPanelEsc('bz-cinema');
   if (posterRenameTimer) {
     clearTimeout(posterRenameTimer);
     posterRenameTimer = null;
   }
   posterRenameQueue = [];
-  shutdownDoubanQueue(); // 杀活动抓取子进程、清队列状态（卸载后会话语义重置）
+  shutdownDoubanQueue(); // 清队列与状态（ADR-0129 执行层已在插件内，无子进程可杀；卸载后会话语义重置）
   if (M.currentOverlay) {
     M.currentOverlay.remove();
     M.currentOverlay = null;

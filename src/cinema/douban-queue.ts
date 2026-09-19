@@ -121,6 +121,10 @@ export function isFetching(path: string | null | undefined): boolean {
 export function enqueueDoubanFetch(file: TFile | null, name: string): boolean {
   if (!file) return false;
   const key = file.path;
+  // G8 豁免只在「在抓被删」那一次：dequeue（删除）会无条件记 cancelled，删过**未入队**的
+  // 影片会留残留标记——同名重建后首次真失败会被 pump 当取消静默吞掉。入队即视为新会话条目，
+  // 先清残留（attempted 已由 dequeue 清除，此处兜对齐）。
+  cancelled.delete(key);
   if (attempted.has(key)) return false;
   attempted.add(key);
   pending.set(key, Date.now());

@@ -4,6 +4,7 @@
  * 设计约定：
  * - 通道命名 `<域名>:<事件>`（如 'vault:md-created'、'diary:file-created'）；通道字符串即契约，
  *   派发方与消费方共用同一字面量，不设独立常量表。
+ *   例外：'movie' 系历史契约名，属 cinema 域（ADR-0087 退役残名），emit 见 src/cinema/，勿擅改。
  * - fire-and-forget 语义：emitDomainEvent 同步扇出、无返回值；派发方不感知订阅方存在，
  *   也不等待任何异步结果（handler 内的异步逻辑自行兜底，总线只负责转交）。
  * - 错误隔离：单个 handler 抛错被隔离捕获并 console.error，不影响同通道其他 handler
