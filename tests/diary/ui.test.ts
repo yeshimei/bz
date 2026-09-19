@@ -833,6 +833,27 @@ describe('回忆墙 UI', () => {
     }, 2000);
   });
 
+  it('② 缓存闸门：开墙命中预热缓存零读盘；vault 变更回刷恒回源（UI 层语义）', async () => {
+    const app = (await import('../../src/core/app')).getApp();
+    let reads = 0;
+    const real = (app.vault as any).read.bind(app.vault);
+    vi.spyOn(app.vault as any, 'read').mockImplementation(async (f: any) => {
+      reads++;
+      return real(f);
+    });
+    const { loadWallEntries } = await import('../../src/diary/data');
+    await loadWallEntries(app); // 等价「启动预热已读完」：先填缓存
+    const afterPrewarm = reads;
+    expect(afterPrewarm).toBeGreaterThan(0);
+    await openAndWait(); // show() → 开墙读允许命中缓存
+    expect(reads).toBe(afterPrewarm); // 开墙未再读盘（秒开，闸门放行）
+    // 刷新路径（vault modify → 防抖 loadAndRender）恒回源：闸门已复位 → 作废缓存重读
+    vault.files.set('我的/日记/2609010800.md', seed('2026-09-01', '08:00', '📝', '新日记条目。'));
+    (app.vault as any).emit('modify', (app.vault as any).file('我的/日记/2609010800.md'));
+    await waitFor(() => reads > afterPrewarm, 2000);
+    expect(reads).toBeGreaterThan(afterPrewarm);
+  });
+
   it('DW8：月份点击 smooth 滚动只触发一次；DW9：视频时长角标显示真实时长', async () => {
     await openAndWait();
     const wall = document.querySelector('.bz-diary-desk .bz-diary-wall') as HTMLElement;

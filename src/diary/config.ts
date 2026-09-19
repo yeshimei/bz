@@ -38,6 +38,16 @@ function safeResolve(resolver: () => string, fallback: string): string {
   }
 }
 
+/**
+ * 墙四内容目录（日记/影视/信/书）路径命中判定——单源：data 层缓存失效订阅与
+ * ui 层 vault 订阅/引用同步共用，避免同一判定散落三份（改口径只动这里）。
+ */
+export function inWallDirs(p: string): boolean {
+  return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
+    (d) => p.startsWith(d + '/') || p === d + '.md'
+  );
+}
+
 /** 应用目录常量（设置变更时调用；日记/信两键归本域设置）。
  *  影视/书库走跨域实时解析（movieDirectory/bookDirectory），不再在此快照（D6 修复）。
  *  N6：两键 trim 尾斜杠（与 data.ts collectMdPaths 同口径 normalize）——否则监听侧

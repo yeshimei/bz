@@ -1,5 +1,5 @@
 // @vitest-environment node
-import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { buildTagMaps, resetTagsConfig } from '../../src/diary/config';
 import {
@@ -7,11 +7,13 @@ import {
   extractSegments,
   groupByMonth,
   loadWallEntries,
+  invalidateWallCache,
   mediaSrc,
   pickOnThisDay,
   stripMediaLinks,
   type WallEntry,
 } from '../../src/diary/data';
+import { emitDomainEvent } from '../../src/core/domain-bus';
 import { parseBookFile, parseLetterFile, parseMovieFile } from '../../src/diary/parser';
 import { serializeDiaryEntryFile } from '../../src/core/diary-format';
 
@@ -46,6 +48,11 @@ function makeApp(files: Record<string, string>) {
 beforeEach(() => {
   resetTagsConfig();
   buildTagMaps();
+  invalidateWallCache(); // ②：每例清缓存与域事件订阅，防跨例泄漏（模块级单例缓存）
+});
+
+afterEach(() => {
+  invalidateWallCache();
 });
 
 describe('extractSegments（issue 213：按原文顺序分段）', () => {
@@ -618,6 +625,103 @@ describe('loadWallEntries 聚合四类（日记+影视+信+书）', () => {
     expect(entries).toHaveLength(2);
     expect(entries[0]).toMatchObject({ kind: 'book', date: '2024-01-03' });
     expect(entries[1]).toMatchObject({ kind: 'diary', date: '2024-01-01' });
+  });
+});
+
+describe('② 墙数据缓存（预热用，按 app 键控 + domain-bus 事件失效）', () => {
+  const spyRead = (app: any) => {
+    let n = 0;
+    const real = app.vault.read.bind(app.vault);
+    vi.spyOn(app.vault, 'read').mockImplementation(async (f: any) => {
+      n++;
+      return real(f);
+    });
+    return () => n;
+  };
+
+  it('同一 app 连续调用命中缓存：不重复读盘', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    const a = await loadWallEntries(app);
+    const b = await loadWallEntries(app);
+    expect(reads()).toBe(1); // 第二次走缓存，无额外读盘
+    expect(b).toBe(a); // 命中同一引用（未重新分配数组）
+  });
+
+  it('invalidateWallCache 后强制回源重读', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    await loadWallEntries(app);
+    invalidateWallCache();
+    await loadWallEntries(app);
+    expect(reads()).toBe(2);
+  });
+
+  it('四目录内 md 变更（domain-bus 通用路事件）自动作废缓存', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    await loadWallEntries(app);
+    emitDomainEvent('vault:md-modified', { path: '我的/日记/2401010800.md' });
+    await loadWallEntries(app);
+    expect(reads()).toBe(2); // 事件已作废旧缓存 → 重新读盘
+  });
+
+  it('四目录外 md 变更不影响缓存', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    await loadWallEntries(app);
+    emitDomainEvent('vault:md-modified', { path: '其他/笔记.md' });
+    await loadWallEntries(app);
+    expect(reads()).toBe(1); // 目录外事件：仍命中缓存
+  });
+
+  it('并发调用在途去重：预热与开墙并发时只读一盘', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    const [a, b] = await Promise.all([loadWallEntries(app), loadWallEntries(app)]);
+    expect(reads()).toBe(1); // 第二路命中在途 promise，不重复读盘
+    expect(a).toBe(b); // 同一结果引用
+  });
+
+  it('读盘期被事件作废：本轮结果不落缓存，下次调用回源重取', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    const p = loadWallEntries(app); // 在读盘进行中（不 await）
+    emitDomainEvent('vault:md-modified', { path: '我的/日记/2401010800.md' }); // 并发编辑
+    await p;
+    await loadWallEntries(app);
+    expect(reads()).toBe(2); // 在途轮被作废未落缓存 → 第二次回源
+  });
+
+  it('加载失败不缓存：拒绝后下次调用重新读盘（无残留态）', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    // 单文件读取失败会被 readBatch 吞掉进 warnFailedBatch；改用列举阶段的抛错触达「异常即重抛」路径
+    const spy = vi.spyOn(app.vault, 'getAbstractFileByPath').mockImplementationOnce(() => {
+      throw new Error('disk boom');
+    });
+    await expect(loadWallEntries(app)).rejects.toThrow('disk boom');
+    spy.mockRestore(); // 恢复后重新读盘
+    await expect(loadWallEntries(app)).resolves.toHaveLength(1);
+  });
+
+  it('换 app 调用即失效（按 app 键控）', async () => {
+    const app1 = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], '一') });
+    const app2 = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], '二') });
+    await loadWallEntries(app1);
+    const e2 = await loadWallEntries(app2);
+    expect(e2[0].content).toBe('二'); // app2 独立读盘，不复用 app1 缓存
+  });
+
+  it('① 四目录并行：各类目录聚合结果与串行版一致（并行不改变合并/排序）', async () => {
+    const app = makeApp({
+      '我的/日记/2403100800.md': entry('2024-03-10', '08:00', ['日记'], '春游'),
+      '我的/影视/片子.md': '---\ntags: [电影]\n影评: 好\n观影日期: 2024-03-11\n---\n',
+      '我的/信/信一.md': '---\ndate: 2024-03-09 20:00\n---\n正文\n',
+      '书库/书一.md': '---\ntitle: 书一\ncompletionDate: 2024-03-12\nbookReview: 神作\n---\n',
+    });
+    const entries = await loadWallEntries(app);
+    expect(entries.map((e) => e.kind)).toEqual(['book', 'movie', 'diary', 'letter']);
+    expect(entries.map((e) => e.date)).toEqual(['2024-03-12', '2024-03-11', '2024-03-10', '2024-03-09']);
   });
 });
 
