@@ -615,6 +615,20 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **主线程文档**：CONTEXT.md:227 词条三处漂移 + 注释漂移族（styles.css:197/entry-editor.ts:9/order.ts:59）。
 - **拍板清单 H 系更新**：weekly.ts 裁剪**前置约束 = A1 解环完成**（本批落地后即可裁）；其余 H 系不变。
 
+---
+
+## reading-report（阅读报告）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+
+> 明细：`.scratch/review-deep/reading-report-func.md`。方向 1（func）：P2×2 + P3×8 + UX×1（无 P1）。旧账复核：G10/样式漏注册/内联 hex/review-ux #23/#24 全部已闭环；`analyzeFocusConsistency` 字典序 bug 系测试注释在案的移植负债（随触碰收编）；`monthlyTrend` 假数据死字段不上屏（建议删）。bookshelf 闭环批接缝修复全部在位。门禁基线：tsc 0；tests/reading-report 6 文件 88 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 EPUB 分类未接 ADR-0099 subjects 通道**（RR-F1）——stats.ts:61 硬编码「未分类」vs 宿主 data.ts subjects 回落：分类分布/「N 本未分类」建议失真，点「未分类」回墙所见非报告所指。修：接宿主 subjects 口径。
+- **P2 自动重算复用手动渲染全链**（RR-F2）——Weave 每次落盘弹一对 progress/success toast（dedupeKey 唯一化反向保证每轮必弹）+ 翻月游标/年卡展开/滚位全部重置，「只更新内容区」无感预期不兑现。修：静默重算通道（RR-UX1 终态：保留翻月/展开/滚位）。
+- **P3 群（8 条）**：分类预填口径分叉（报告拆多类 vs 墙单值精确等值，多类书筛不中）+ 多样性分数可超 100%；EPUB readingDate 无 progress 前置 + progress 不钳负（与宿主已修口径漂移）；readingTimeFormat 兜底缺失（少算时长）；冷开报告 rebuild 白屏（shelf 有占位 report 漏配）；自动刷新过滤漏单文件书库形态（三方口径不一致）；author/category 做 Record 键原型污染可达；EPUB 会话无 type → 完成率恒 0、专注分压低；会话 start 缺失补 0 → 1970 幽灵月。
+- **顺带**：monthlyTrend 死字段删除。
+- **UX 分流（RR 系）**：重算保留翻月/展开/滚位状态（RR-UX1，与 RR-F2 同刀）。
+
 ### 已入账条目（跨方向去重归并）
 
 - **P3 采集失败态只覆盖「全部域」列**（func P3-1）——时间线列永挂加载文案。修：失败态覆盖 flow 列（按 func/ui 联合设计：flow-empty 行级语义 + 一次重试恢复两列 + 三态区分）。
