@@ -21,7 +21,7 @@ import { topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { tryGetSettings } from '../core/settings-provider';
 import { debounce, openExternalUrl } from '../core/utils';
-import { esc, escAttr } from '../core/ui/str';
+import { esc, escAttr, pad2 } from '../core/ui/str';
 import { uiSegmented, uiSelect, uiStat, uiEmpty, uiBtn, uiIconBtn, uiChip, uiSearch, uiModal, mountIcons, openLightbox } from '../core/ui';
 import { M, displayNameOf, nameMatches, type GameItem, type GameshelfBucket, type GameshelfSort, type GameshelfViewKind } from './state';
 import { BUCKETS, bucketOf, buildReport, REPORT_CAVEAT, type GameshelfReport } from './report';
@@ -32,6 +32,7 @@ import {
 } from './detail';
 import { ensureZhNames, unloadZhNames } from './names';
 import { unloadBackfill } from './backfill';
+import { unloadPosters } from './posters';
 import { achIconDisplayUrl, coverDisplayUrl, iconDisplayUrl, resolveShotUrls } from './posters';
 
 /** ESC 层 id 沿域内约定 'bz-<域>'（cons C4：全仓面板级层 id 唯一不带前缀的破例，对齐） */
@@ -463,7 +464,7 @@ export function statsHtml(rp: GameshelfReport): string {
     ? rp.top
         .map((t, i) => `
       <div class="bz-gs-rankrow">
-        <span class="bz-gs-rankno">${String(i + 1).padStart(2, '0')}</span>
+        <span class="bz-gs-rankno">${pad2(i + 1)}</span>
         <span class="bz-gs-rankname" title="${escAttr(t.name)}">${esc(t.name)}</span>
         <span class="bz-gs-rankbar"><i style="width:${Math.max(2, Math.round((t.hours / maxTop) * 100))}%"></i></span>
         <span class="bz-gs-rankval">${numText(t.hours)} h</span>
@@ -1394,4 +1395,7 @@ export function closePanel(): void {
   // 后台回填（商店资料/成就三键）也随面板关闭停止：别在用户眼皮外继续改笔记，
   // 下次打开面板幂等续跑
   unloadBackfill();
+  // 媒体下载（封面/图标/成就图标/截图）同口径关停（深审 F5 关停三选二收口）：
+  // 三队列关停语义就此一致
+  unloadPosters();
 }

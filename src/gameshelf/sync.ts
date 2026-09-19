@@ -11,12 +11,6 @@ import { M, resolveGameshelfFolderPath, readSteamConfig } from './state';
 import { rebuildItems, applySyncPlan } from './notes';
 import { fetchSteamLibrary } from './steam';
 
-/**
- * Steam 配置读取转发（深审 A4 收编过渡）：正典已下沉 state.ts（store/配置层），
- * 此处仅为 detail.ts:21 的既有 import 保兼容——detail 属批 B 辖区，其 import 改线后删本转发。
- */
-export { readSteamConfig } from './state';
-
 /** 自动同步最小间隔：30 分钟（打开面板不必每开必拉，Steam 无增量推送、全量拉库不便宜） */
 export const AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1000;
 

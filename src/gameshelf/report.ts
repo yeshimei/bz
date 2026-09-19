@@ -5,6 +5,7 @@
  * 「游玩分布」按 lastPlayed 年份/月份呈现，不做无法兑现的每日时长曲线。
  * 零 IO、零 DOM、无 obsidian 依赖——node 环境可测。
  */
+import { pad2 } from '../core/ui/str';
 import { displayNameOf, type GameItem, type GameshelfBucket } from './state';
 
 /** 时长档位（游戏墙筛选与统计面板分布共用同一份口径——单源，禁止两处各写一套） */
@@ -142,14 +143,14 @@ function monthDistribution(items: GameItem[], nowMs: number): Array<{ month: str
   const keys: string[] = [];
   for (let i = MONTH_WINDOW - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    keys.push(`${d.getFullYear()}-${pad2(d.getMonth() + 1)}`);
   }
   const counts = new Map<string, number>(keys.map((k) => [k, 0]));
   for (const it of items) {
     const ms = lastPlayedMs(it.lastPlayed);
     if (ms <= 0) continue;
     const d = new Date(ms);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const key = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}`;
     if (counts.has(key)) counts.set(key, counts.get(key)! + 1);
   }
   return keys.map((k) => ({ month: k, count: counts.get(k)! }));

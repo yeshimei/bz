@@ -18,7 +18,7 @@
 import type { App, TFile } from 'obsidian';
 import { readDetailFm, upsertDetail } from './notes';
 import { ensureAchIcons, ensureShots, localAchIconPath } from './posters';
-import { readSteamConfig } from './sync';
+import { readSteamConfig } from './state';
 import {
   achRowFromText, achRowSegCount, achRowText, fetchAchievementDetail, fetchStoreMeta, steamStoreUrl,
   type AchievementDetail, type AchievementRow, type StoreMeta,

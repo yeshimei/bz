@@ -30,7 +30,7 @@ import { ensureZhNames, resetZhNameNoLocale, setZhNameInterval, unloadZhNames, Z
 import { ensureBackfill, setBackfillInterval, unloadBackfill } from '../../src/gameshelf/backfill';
 import { ensurePosters, unloadPosters, setMediaInterval } from '../../src/gameshelf/posters';
 import { DEFAULT_FOLDER, M, resetGameshelfState, resolveGameshelfFolderPath, readSteamConfig, type GameItem } from '../../src/gameshelf/state';
-import { readSteamConfig as syncReadSteamConfig } from '../../src/gameshelf/sync';
+import * as gameshelfSync from '../../src/gameshelf/sync';
 import { LEGACY_KEY_MAP, managedFm } from '../../src/gameshelf/reconcile';
 import { GS_FM, GS_LEGACY_FM } from '../../src/gameshelf/constants';
 import * as postersNs from '../../src/gameshelf/posters';
@@ -417,8 +417,8 @@ describe('F12 消歧文件名展示名剥尾巴', () => {
 /* ---------- A4 readSteamConfig 下沉 ---------- */
 
 describe('A4 readSteamConfig 正典在 state.ts', () => {
-  it('state 与 sync 两个出口同引用；读值正确、provider 抛错回落空串', () => {
-    expect(syncReadSteamConfig).toBe(readSteamConfig);
+  it('state 为唯一正典出口（A4 收尾：sync 转发已随 detail 改线删除）；读值正确、provider 抛错回落空串', () => {
+    expect((gameshelfSync as unknown as Record<string, unknown>).readSteamConfig).toBeUndefined();
     setup({ gameshelfSteamId: '76561198', gameshelfSteamApiKey: 'KEY' });
     expect(readSteamConfig()).toEqual({ steamId: '76561198', apiKey: 'KEY' });
     setSettingsProvider(() => {
