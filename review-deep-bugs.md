@@ -649,9 +649,18 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## reading-report（阅读报告）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致 / 5 架构运行中）
+## reading-report（阅读报告）域 · 5/5 方向到账，修复批 `bz-fix-rr-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/reading-report-{func,ui,efficiency}.md`。方向 1（func）：P2×2 + P3×8 + UX×1；方向 2（UI）：**P1×1** + P2×2 + P3×10 + UX×2；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1。**双 P1 同根**：RR-U1（ui）= EFF-1（eff）桌面报告视图零返回书架出口——`bz-rr-close` 桌面 display:none、注释宣称的左栏入口已随书脊墙换血退役、M.view 会话保持重开仍落报告视图，**review-ux #23 翻案实锤**（钮仅移动端显示，func 复核沿用了过时表述）。跨方向归并：EFF-8 死字段族扩容（monthlyTrend + trends 未消费 7 字段一刀清）；RR-F2 同根项（重算闪空/状态重置）不重复；RR-U13（报告视图下宿主搜索框可点只刷隐藏墙）移交 bookshelf 域复核。旧账：G10/样式漏注册/内联 hex 闭环在位、#24 缓解、字典序负债维持。门禁基线：tsc 0；tests/reading-report 88 例全绿。
+> 明细：`.scratch/review-deep/reading-report-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×2 + P3×8 + UX×1；方向 2（UI）：**P1×1** + P2×2 + P3×10 + UX×2；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1；方向 4（一致）：P3×6；方向 5（架构）：P2×2 + P3×4 + 建议×1 + 缺口7。**双 P1 同根**：RR-U1 = EFF-1 桌面零返回出口（#23 翻案实锤；C-1 补五处文本残留清单同刀清）。**架构枢纽归因**：RR-A1 宿主数据接口双管线镜像无契约守护（EPUB 映射双实现 + 收录谓词三份 = RR-F1/F4/F5/F7 结构性根因；收敛路线 bookshelf/data 升格单源供数面 + 契约对照测试）；RR-A2 opts 契约缺 silent/dataSignature 维度（EFF-4/RR-F2 接口形状根因）；RR-A5 ADR-0091 决策 2/8 与两轮改版脱节五处文本失真；**RR-A6 AGENTS.md 领域清单缺 reading-report 行 + checkup 行**（主线程一并补）；RR-A3 stats 纯层藏 HTML 死模板（守卫只扫 report.ts 盲区）；RR-A4 视图状态双归宿。cons 补充：C-4 建议文案/衍生指标静默计算族（EFF-8 同族扩容，拍板一刀清或接线上屏）+ report.ts:10 死 import；C-6 dedupeKey 每轮唯一化使 notice 去重形同虚设（修=删参数）；C-3 分片进度滞后一位一行重排。测试架构：接缝三角无归属测试 + 跨文件 CSS 契约无守护 =「DOM 在但不可见」温床；epub-notes.test.ts:40 `weaveDataPath` 无效 fixture 键。门禁基线：tsc 0；tests/reading-report 88 例全绿。
+
+### 修复批定稿（单批 `bz-fix-rr-core`）
+
+- **P1**：RR-U1/EFF-1 桌面返回出口恢复（返回钮可视 + 键盘可达 + 可视性用例；C-1 五处文本残留同刀清）。
+- **P2**：RR-A1 收敛（bookshelf/data 升格单源供数面 + 契约对照测试，RR-F1/F4/F5/F7 随刀）；RR-A2 opts 扩 silent + dataSignature（EFF-4 缓存/RR-F2 静默重算随刀）；RR-F1 subjects 通道（随 A1）；EFF-3 O(n²·m) 单趟归并；EFF-5 chrome 死控件簇隐藏；EFF-2/RR-U2 键盘可达；EFF-10/RR-U3 热区挂类。
+- **P3**：func P3 群（预填多类/多样性钳 100/progress 前置+钳负/timeFormat 兜底/冷开并行先行/单文件形态/原型污染/无 type/start 幽灵月）；ui P3 群（热力图死端可供性/时长三套统一/月柱标签双源/未配对 div/速度段编造值/负 margin/骨架内联收编+守卫扩面/标签宽度/空会话默认分）；eff P3 群（notifyActionError 收编/小库静默档+注释纠偏/重复计算杂项/死字段一刀清）；cons C-2 热力色阶收编 core + 守卫扩面、C-3 进度文案重排、C-5 双通道文案同步、C-6 dedupeKey 删参数。
+- **主线程文档**：RR-A5 ADR-0091 五处失真 + C-1 文档簇 + **AGENTS.md 补 reading-report/checkup 两行** + CONTEXT.md 词条。
+- **移交**：RR-U13 宿主搜索框可点只刷隐藏墙 → bookshelf 域复核（bookshelf 已闭环，归收尾统一批处理登记）。
+- **UX 分流（RR 系）**：EFF-U1 翻年跳跃、RR-UX2 速度段空态、RR-UX3 title、RR-UX1 重算保状态（随 RR-A2/RR-F2 同刀）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
