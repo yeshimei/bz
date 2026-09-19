@@ -570,9 +570,19 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## pomodoro（番茄钟）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 5 架构已到账；方向 4 一致运行中）
+## pomodoro（番茄钟）域 · 5/5 方向到账，修复批 `bz-fix-pomo-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/pomodoro-{func,ui,efficiency,arch}.md`。方向 1（func）：P2×1 + P3×5（无 P1；F11/F12/F13 三条旧账已修在位且注释点名，唯 F11/F12 缺回归用例）。方向 2（UI）：P2×2 + P3×3 + UX×1。方向 3（效率）：P3×3 + UX×3。方向 5（架构）：P2×1 + P3×3 + 建议×3。跨方向去重：tick 每秒同值 DOM churn（func P3 = ui P3-3 = eff PE1 三向同根）；卸载竞态（ui P3-2 buildDOM 复活 = arch PA-3 unload×在途 save 同根，架构归因 = 缺统一 disposed 旗标，一处护栏三症状同愈）；F11/F12 回归补齐位（arch 建-2 给出修复前必红用例设计）。**跨域契约缺口 PA-1**：issue 357 archived 段未同步 checkup 段白名单（checks-drift.ts:30），正常归档数据必被体检误报。秋季批 UX 旧账「近 6 月空数据零柱无占位文案」经核验仍开放（归 UI/UX 线拍板）。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿（并发 flake 未复现）。
+> 明细：`.scratch/review-deep/pomodoro-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×1 + P3×5；方向 2（UI）：P2×2 + P3×3 + UX×1；方向 3（效率）：P3×3 + UX×3；方向 4（一致）：P2×1 + P3×3；方向 5（架构）：P2×1 + P3×3 + 建议×3。跨方向去重：**月档统计 minutes 归一未接线三向同根**（ui P2-1 hoursLabel 零消费 = cons PC1 issue 357 拍板未接线（git log -S 零结果，三处注释宣称「月档按分钟说话」实际从未发生）= 建-3 半成品提交归因——函数进单源、消费点未接线、样式未配、原型同缺）、tick 每秒同值 churn（func=ui=eff 三向同根）、卸载竞态（ui P3-2 = arch PA-3 同根，统一 disposed 旗标）、ESC 层 id（cons PC4 与 gameshelf 同类旧式）。F11/F12 已修缺回归（建-2 给出修复前必红用例设计）。**跨域契约缺口 PA-1**：archived 段未进 checkup 段白名单（checks-drift.ts:30），正常归档数据必被体检误报。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿。
+
+### 修复批定稿（单批 `bz-fix-pomo-core`）
+
+- **P2**：PF1 lastStatsKey 关开早退、PC1/UI-1 月档 minutes+hoursLabel 接线（以消费点 grep 为完成标准+断言）、UI-2 切换钮热区+aria-pressed、PA-1 checkup 段白名单一行（跨域授权 `src/checkup/checks-drift.ts` + 契约测试）。
+- **P3**：PF2 强制专注拦截静默（补守卫提示，措辞按 PC3 定单源模板）、PF3 暂停文案分叉（statusbar 通用「已暂停」vs toast，先核 ui.test:300 相位）、PF4「专注这个」落在暂停会话静默续跑改归属、PF5 openPomodoro/ensurePomodoro load 失败 notifyActionError、PF6 progress 钳制、UI-3 层级注释失实纠偏、UI/PA-2/3 卸载竞态 disposed 旗标一处护栏、PE1 tick 同值微写收敛（key 早退范式）、PE2 Space 快捷键真实焦点流（+真实焦点用例）、PE3 空闲态跳过禁用/守卫、PA-2 ensurePomodoro 派生副作用收敛、PA-4 测试清理夹具统一、PC3 forceFocus 提示模板单源、PC4 ESC 层 id 对齐 `bz-<域>`。
+- **拍板执行项**：issues/144 专注中重置确认框（走 core flow-dialog 单源；notifyUndo 替代建议登记 UI 拍板总呈报时供用户重议）。
+- **建议随批**：isFocusingPhase 4 行直测、F11/F12 回归用例（修复前必红）。
+- **主线程文档**：CONTEXT.md:230「规划中」→已交付、:383 观察机制句 emitDomainEvent 纠偏。
+- **UX 分流（拍板清单加 P 系续行）**：aria-live、「停止专注」一词三义、统计档位跨重启记忆、近 6 月空柱占位。
+- **顺带**：保存失败 toast 接 notifyActionError onRetry（效率线已具备未接入）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
