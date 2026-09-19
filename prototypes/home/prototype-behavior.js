@@ -1,5 +1,5 @@
-/* 源指纹 15a466c8ce7c4af9 · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 49ae0a3d6f7be3b6 · 仓内输入 241 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -50222,7 +50222,9 @@ GitHub 仓库：${ghInfo.title}
   function resolveGameshelfFolderPath() {
     try {
       const s = tryGetSettings();
-      return typeof s.gameshelfFolderPath === "string" && s.gameshelfFolderPath.trim() ? s.gameshelfFolderPath : DEFAULT_FOLDER2;
+      const raw = typeof s.gameshelfFolderPath === "string" ? s.gameshelfFolderPath.trim() : "";
+      if (!raw) return DEFAULT_FOLDER2;
+      return raw.replace(/[/\\]+$/, "");
     } catch (e) {
       return DEFAULT_FOLDER2;
     }
@@ -50242,6 +50244,52 @@ GitHub 仓库：${ghInfo.title}
     modalRepaintFn: null
   };
 
+  // src/gameshelf/constants.ts
+  var GS_FM = {
+    /** Steam AppID（条目身份键） */
+    appId: "AppID",
+    /** 中文名（names 队列从商店接口回填；storeToFm 空值不写防覆盖） */
+    zhName: "中文名",
+    /** 封面现值：本地 vault 路径，或还没本地化时的远端地址（posters 独占写） */
+    cover: "封面",
+    /** 封面远端源（同步管辖；本地化后仍在，供删缓存后重下） */
+    coverSrc: "封面源",
+    /** 图标现值（posters 独占写） */
+    icon: "图标",
+    /** 图标远端源（同步管辖；hash 拼不出来，只有同步能刷新它） */
+    iconSrc: "图标源",
+    /** 截图本地路径数组（与截图源同序同长、失败位空串；posters 独占写） */
+    shots: "截图",
+    /** 截图远端源数组（同步/回填管辖；空数组 = 「商店查过、确实没有」的自愈标记） */
+    shotsSrc: "截图源",
+    /** 截图落盘时刻 ISO */
+    shotsAt: "截图更新",
+    /** 商店资料回填时刻 ISO（backfillNeeds 补跑判据键） */
+    detailAt: "详情时间",
+    /** 累计游玩分钟 */
+    playtimeMin: "游玩分钟",
+    /** 最后游玩 YYYY-MM-DD */
+    lastPlayed: "最后游玩",
+    /** 最近一次同步时刻 ISO */
+    syncedAt: "同步时间",
+    /** Steam 库中消失（退款/隐藏）标记；也是用户唯一会手改的管辖键（func F2 拍板项在案） */
+    offShelf: "已下架",
+    /** 有社区成就页 */
+    hasAch: "有成就",
+    windowsMin: "Windows分钟",
+    deckMin: "SteamDeck分钟",
+    macMin: "Mac分钟",
+    linuxMin: "Linux分钟"
+  };
+  var GS_LEGACY_FM = {
+    appId: "appid",
+    playtimeMin: "playtimeMin",
+    lastPlayed: "lastPlayed",
+    cover: "cover",
+    syncedAt: "syncedAt",
+    offShelf: "offShelf"
+  };
+
   // src/gameshelf/steam.ts
   init_fake_obsidian();
   init_http();
@@ -50259,40 +50307,60 @@ GitHub 仓库：${ghInfo.title}
   function strOf(v) {
     return typeof v === "string" && v.trim() ? v.trim() : null;
   }
+  function displayBaseName(basename) {
+    const m = /^《(.+?)》(?:\s+\d+)?$/.exec(basename);
+    if (m) return m[1];
+    return basename.replace(/^《/, "").replace(/》$/, "");
+  }
+  function sameItem(a, b) {
+    var _a2, _b2, _c, _d;
+    return ((_b2 = (_a2 = a.file) == null ? void 0 : _a2.path) != null ? _b2 : null) === ((_d = (_c = b.file) == null ? void 0 : _c.path) != null ? _d : null) && a.appid === b.appid && a.name === b.name && a.zhName === b.zhName && a.playtimeMin === b.playtimeMin && a.lastPlayed === b.lastPlayed && a.cover === b.cover && a.coverSrc === b.coverSrc && a.icon === b.icon && a.iconSrc === b.iconSrc && a.windowsMin === b.windowsMin && a.deckMin === b.deckMin && a.macMin === b.macMin && a.linuxMin === b.linuxMin && a.hasAch === b.hasAch && a.offShelf === b.offShelf && a.syncedAt === b.syncedAt;
+  }
   function rebuildItems2(app) {
     var _a2;
     const folder = resolveGameshelfFolderPath();
     const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+    const prevByPath = /* @__PURE__ */ new Map();
+    for (const it of M7.items) {
+      if (it.file) prevByPath.set(it.file.path, it);
+    }
     const items = [];
     for (const file of files) {
       const fm2 = (_a2 = app.metadataCache.getFileCache(file)) == null ? void 0 : _a2.frontmatter;
-      const appid = Number(readVal(fm2 != null ? fm2 : {}, "AppID", "appid"));
-      if (!fm2 || !Number.isFinite(appid) || appid <= 0) continue;
-      const icon = readVal(fm2, "图标", "");
-      const zh = fm2["中文名"];
-      const coverRaw = readVal(fm2, "封面", "cover");
-      const iconSrc = fm2["图标源"];
-      const coverSrc = fm2["封面源"];
-      items.push({
+      if (!fm2) {
+        const kept = prevByPath.get(file.path);
+        if (kept) items.push(kept);
+        continue;
+      }
+      const appid = Number(readVal(fm2, GS_FM.appId, GS_LEGACY_FM.appId));
+      if (!Number.isFinite(appid) || appid <= 0) continue;
+      const icon = readVal(fm2, GS_FM.icon, "");
+      const zh = fm2[GS_FM.zhName];
+      const coverRaw = readVal(fm2, GS_FM.cover, GS_LEGACY_FM.cover);
+      const iconSrc = fm2[GS_FM.iconSrc];
+      const coverSrc = fm2[GS_FM.coverSrc];
+      const next = {
         file,
         appid,
-        name: file.basename.replace(/^《/, "").replace(/》$/, "").trim() || `App ${appid}`,
+        name: displayBaseName(file.basename).trim() || `App ${appid}`,
         zhName: typeof zh === "string" && zh.trim() ? zh.trim() : null,
-        playtimeMin: intOf(readVal(fm2, "游玩分钟", "playtimeMin")),
-        lastPlayed: typeof readVal(fm2, "最后游玩", "lastPlayed") === "string" ? String(readVal(fm2, "最后游玩", "lastPlayed")) : "",
+        playtimeMin: intOf(readVal(fm2, GS_FM.playtimeMin, GS_LEGACY_FM.playtimeMin)),
+        lastPlayed: typeof readVal(fm2, GS_FM.lastPlayed, GS_LEGACY_FM.lastPlayed) === "string" ? String(readVal(fm2, GS_FM.lastPlayed, GS_LEGACY_FM.lastPlayed)) : "",
         // 封面/图标：既可能是本地 vault 路径（媒体队列写过），也可能是远端地址（没本地化过）
         cover: strOf(coverRaw) || steamCoverUrl(appid),
         coverSrc: strOf(coverSrc) || steamCoverUrl(appid),
         icon: strOf(icon),
         iconSrc: strOf(iconSrc),
-        windowsMin: intOf(fm2["Windows分钟"]),
-        deckMin: intOf(fm2["SteamDeck分钟"]),
-        macMin: intOf(fm2["Mac分钟"]),
-        linuxMin: intOf(fm2["Linux分钟"]),
-        hasAch: fm2["有成就"] === true,
-        offShelf: readVal(fm2, "已下架", "offShelf") === true,
-        syncedAt: typeof readVal(fm2, "同步时间", "syncedAt") === "string" ? String(readVal(fm2, "同步时间", "syncedAt")) : null
-      });
+        windowsMin: intOf(fm2[GS_FM.windowsMin]),
+        deckMin: intOf(fm2[GS_FM.deckMin]),
+        macMin: intOf(fm2[GS_FM.macMin]),
+        linuxMin: intOf(fm2[GS_FM.linuxMin]),
+        hasAch: fm2[GS_FM.hasAch] === true,
+        offShelf: readVal(fm2, GS_FM.offShelf, GS_LEGACY_FM.offShelf) === true,
+        syncedAt: typeof readVal(fm2, GS_FM.syncedAt, GS_LEGACY_FM.syncedAt) === "string" ? String(readVal(fm2, GS_FM.syncedAt, GS_LEGACY_FM.syncedAt)) : null
+      };
+      const prev = prevByPath.get(file.path);
+      items.push(prev && sameItem(prev, next) ? prev : next);
     }
     M7.items = items;
     return items;

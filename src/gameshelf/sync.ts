@@ -6,9 +6,16 @@ import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { notice } from '../core/notice';
 import { emitDomainEvent } from '../core/domain-bus';
-import { M, resolveGameshelfFolderPath } from './state';
+import { pad2 } from '../core/ui/str';
+import { M, resolveGameshelfFolderPath, readSteamConfig } from './state';
 import { rebuildItems, applySyncPlan } from './notes';
 import { fetchSteamLibrary } from './steam';
+
+/**
+ * Steam 配置读取转发（深审 A4 收编过渡）：正典已下沉 state.ts（store/配置层），
+ * 此处仅为 detail.ts:21 的既有 import 保兼容——detail 属批 B 辖区，其 import 改线后删本转发。
+ */
+export { readSteamConfig } from './state';
 
 /** 自动同步最小间隔：30 分钟（打开面板不必每开必拉，Steam 无增量推送、全量拉库不便宜） */
 export const AUTO_SYNC_INTERVAL_MS = 30 * 60 * 1000;
@@ -38,19 +45,6 @@ export function isSyncDue(syncedAts: string[], now = Date.now()): boolean {
   return now - lastSyncedAt(syncedAts) >= AUTO_SYNC_INTERVAL_MS;
 }
 
-/** Steam 配置读取（详情按需拉取与同步共用；无配置 → 空串） */
-export function readSteamConfig(): { steamId: string; apiKey: string } {
-  return readConfig();
-}
-
-function readConfig(): { steamId: string; apiKey: string } {
-  const s = tryGetSettings() as Record<string, unknown>;
-  return {
-    steamId: typeof s.gameshelfSteamId === 'string' ? s.gameshelfSteamId : '',
-    apiKey: typeof s.gameshelfSteamApiKey === 'string' ? s.gameshelfSteamApiKey : '',
-  };
-}
-
 /**
  * 同步主入口。force=true 忽略间隔（手动「立即同步」）。
  * 进行中重入返回 busy（面板按钮态在 ui 层已防，命令/自动路径兜底）。
@@ -65,7 +59,7 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     M.statusMsg = `游戏库已是最新（${fmtTime(new Date(lastSyncedAt(syncedAts)))}同步）`;
     return { ok: true, added: 0, updated: 0, offShelf: 0 };
   }
-  const { steamId, apiKey } = readConfig();
+  const { steamId, apiKey } = readSteamConfig();
   if (!steamId.trim() || !apiKey.trim()) {
     return { ok: false, added: 0, updated: 0, offShelf: 0, reason: 'config', message: '尚未配置 SteamID64 与 Web API 密钥' };
   }
@@ -91,7 +85,8 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
     if (parts.length > 0) {
       notice(`游戏库已同步：${parts.join('，')}`, 'success');
     }
-    // 行为流观察（smartcat 消费；emit-and-forget，无订阅方零成本）
+    // 行为流观察事件（emit-and-forget，零成本）：当前全仓无订阅方——原注释「smartcat 消费」
+    // 系虚指已修正（深审 C6）；真接行为流时再按总线 `<域名>:<事件>` 约定定形制
     emitDomainEvent('gameshelf', { kind: 'synced', added: r.added, updated: r.updated, offShelf: r.offShelf });
     return { ok: true, ...r };
   } catch (e) {
@@ -106,15 +101,20 @@ export async function runSync(app: App, opts?: { force?: boolean }): Promise<Syn
 }
 
 function fmtTime(d: Date): string {
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${p(d.getHours())}:${p(d.getMinutes())}`;
+  // 补零走 core/ui/str 单源 pad2（深审 C2：域内 padStart 局部补零收编，纯层零依赖可直测）
+  return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
-/** 打开面板路径：已配置且自动同步开才拉；间隔判定在 runSync 内（无笔记 syncedAt=0 必过期 → 首拉必跑） */
-export function autoSyncOnOpen(app: App): void {
+/**
+ * 打开面板路径：已配置且自动同步开才拉；间隔判定在 runSync 内（无笔记 syncedAt=0 必过期 → 首拉必跑）。
+ * 返回 runSync 的 promise（深审 F1：此前 fire-and-forget，index.afterOpen 的 await 落空——
+ * 首开空库/新游戏入账后三队列拿到的还是同步前的旧 M.items，媒体/中文名/回填整批漏启动）。
+ * 未配置 / 已关自动同步 → 同步返回 undefined，调用方 await 立即通过，行为不变。
+ */
+export function autoSyncOnOpen(app: App): Promise<void> | undefined {
   const s = tryGetSettings() as Record<string, unknown>;
-  if (s.gameshelfAutoSync === false) return; // 关闭回落纯手动（「立即同步」不受影响）
-  const { steamId, apiKey } = readConfig();
-  if (!steamId.trim() || !apiKey.trim()) return;
-  void runSync(app).then(() => M.renderFn?.());
+  if (s.gameshelfAutoSync === false) return undefined; // 关闭回落纯手动（「立即同步」不受影响）
+  const { steamId, apiKey } = readSteamConfig();
+  if (!steamId.trim() || !apiKey.trim()) return undefined;
+  return runSync(app).then(() => M.renderFn?.());
 }

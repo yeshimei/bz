@@ -1,13 +1,13 @@
-// @vitest-environment node
 /**
  * 中文名回填队列测试（names.ts）：
  * 串行拉取、已有中文名不入队（幂等）、写回 frontmatter、连错到上限即停。
  * 队列的落盘只经 fileManager.processFrontMatter（upsertDetail），故假 App 只需记录写入。
+ * 用 jsdom（vitest 默认环境）：熔断现在会弹人话通知（S2），node 环境没有 document。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
-import { ZH_NAME_MAX_FAILURES, ensureZhNames, setZhNameInterval, unloadZhNames } from '../../src/gameshelf/names';
+import { ZH_NAME_MAX_FAILURES, ensureZhNames, resetZhNameNoLocale, setZhNameInterval, unloadZhNames } from '../../src/gameshelf/names';
 import type { GameItem } from '../../src/gameshelf/state';
 
 function item(appid: number, name: string, zhName: string | null = null, file: unknown = null): GameItem {
@@ -37,6 +37,7 @@ const okReply = (name: string) => ({ status: 200, json: [{ success: true, data: 
 beforeEach(() => {
   resetObsidianMocks();
   (requestUrl as any).mockReset(); // 调用计数必须逐例清零（否则断言数会攒上一条用例的调用）
+  resetZhNameNoLocale(); // 会话级负缓存跨用例残留会让同 appid 的用例被跳过（F7）
   setZhNameInterval(0);
   unloadZhNames();
 });
