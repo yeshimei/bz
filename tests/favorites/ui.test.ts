@@ -128,8 +128,9 @@ async function setup(): Promise<Ctx> {
   let saves = 0;
   const state: Record<string, unknown> = {
     storagePath: 'CONFIG/STORAGE',
-    favoritesStoragePath: 'CONFIG/STORAGE',
-    favoritesSortKey: 'created',
+    // arch-3（深审批 A）：死键 favoritesStoragePath / favoritesSortKey 不再播种——两键在 src
+    // 全树零消费（ADR-0009 七路径收敛 / issue 364 退役），「退役不生效」语义由下方
+    // 「设置 favoritesSortKey=title 不再生效」独立用例显式承载，setup 常驻播种反成噪音。
     aiProvider: 'opencode-go',
     opencodeGoApiKey: 'sk-test',
   };

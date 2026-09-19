@@ -281,7 +281,7 @@ describe('isUrlLike（ticket 188 贴链自动搬家判定）', () => {
     expect(isUrlLike('see https://a.com and b.com')).toBe(false);
     expect(isUrlLike('')).toBe(false);
     expect(isUrlLike('   ')).toBe(false);
-    expect(isUrlLike('github.com/a/b')).toBe(false); // 无协议头且非 www.：不搬家（保存校验会补）
+    expect(isUrlLike('github.com/a/b')).toBe(false); // 无协议头且非 www.：不搬家（读侧 normalizeItems 归一补协议；写侧保存链路归深审批 B）
   });
 });
 
