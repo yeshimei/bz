@@ -11,7 +11,7 @@
  */
 
 import { type App } from 'obsidian';
-import { topifyZ, allocZ } from '../core/z-order';
+import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime, stripTitleMarks } from '../core/utils';
 import type { ReviewDataManager, ReviewItem, FittedParams } from './data';
@@ -22,10 +22,11 @@ import { uiIcon } from '../core/ui';
 let statsMask: HTMLElement | null = null;
 let statsPopup: HTMLElement | null = null;
 let statsEsc: { unregister: () => void } | null = null;
-let lastDm: ReviewDataManager | null = null;
 
-// ======================= 浅色统计卡（对齐影视 PASTEL_CARDS） =======================
-// issue 270：静态样式收编 src/review/styles.css（.bz-stats-*），仅数据驱动动态色保留内联
+// ======================= 浅色统计卡 =======================
+// issue 270：静态样式收编 src/review/styles.css（.bz-stats-*），仅数据驱动动态色保留内联。
+// 形制沿革：初版拷自 cinema 旧版统计，cinema 侧此后重构（lucide 板块头/esc 口径），
+// 本域未跟随——两侧已是各自形制，注释不再宣称「对齐影视」（深审新-13）。
 const PASTEL_CARDS = ['#D6E4FF', '#D8F3DC', '#CDF0EA', '#FADDE1', '#FFE5CC', '#E6DFF5'];
 
 function statCardHTML(label: string, value: any, idx: number): string {
@@ -36,12 +37,12 @@ function statCardHTML(label: string, value: any, idx: number): string {
   </div>`;
 }
 
-/** 色条板块容器（对齐影视 sectionHTML） */
+/** 色条板块容器：accent 色动态内联，其余静态样式在 styles.css .bz-stats-section */
 function sectionHTML(title: string, body: string, accent = '#D6E4FF'): string {
   return `<div class="bz-stats-section">
     <div class="bz-stats-section-head">
       <span class="bz-stats-section-accent" style="background:${accent};"></span>
-      <span>${title}</span>
+      <span>${escapeHtml(title)}</span>
     </div>
     ${body}
   </div>`;
@@ -51,7 +52,7 @@ function emptyHTML(): string {
   return '<p class="bz-stats-empty">暂无数据</p>';
 }
 
-/** 软进度条（对齐影视 softBarHTML） */
+/** 软进度条：fill 宽度/颜色动态内联，其余静态样式在 styles.css .bz-stats-bar-* */
 function softBarHTML(entries: Array<{ label: string; value: number }>, color: string): string {
   if (!entries.length) return emptyHTML();
   const max = Math.max(...entries.map((e) => e.value), 1);
@@ -65,7 +66,7 @@ function softBarHTML(entries: Array<{ label: string; value: number }>, color: st
     </div>`).join('');
 }
 
-/** 竖柱状图（对齐影视 barChartHTML） */
+/** 竖柱状图：容器 min-width、柱体高度/颜色动态内联，其余静态样式在 styles.css .bz-stats-chart-* */
 function barChartHTML(entries: Array<{ label: string; value: number }>, color: string): string {
   if (!entries.length) return emptyHTML();
   const max = Math.max(...entries.map((e) => e.value), 1);
@@ -85,7 +86,7 @@ function barChartHTML(entries: Array<{ label: string; value: number }>, color: s
     </div>`;
 }
 
-/** chips 行内小统计（对齐影视 statInlineHTML；支持 title 悬浮注解） */
+/** chips 行内小统计（支持 title 悬浮注解） */
 function statInlineHTML(items: Array<string | { text: string; title?: string }>): string {
   return `<div class="bz-stats-inline">${items
     .map((s) => {
@@ -95,7 +96,7 @@ function statInlineHTML(items: Array<string | { text: string; title?: string }>)
     .join('')}</div>`;
 }
 
-/** 排名列表行（对齐影视 topListHTML；点击行为由渲染方事件委托处理） */
+/** 排名列表行（点击行为由渲染方事件委托处理） */
 function rankListHTML(items: Array<{ name: string; sub: string; meta: string }>): string {
   if (!items.length) return emptyHTML();
   const badges = ['#FFF3C4', '#D8F3DC', '#D6E4FF'];
@@ -116,7 +117,6 @@ function rankListHTML(items: Array<{ name: string; sub: string; meta: string }>)
 /** 打开统计弹窗（全局视图）。R 口径与调度同源：读拟合权重 currentW()（item 12）；
  *  issue 361：同时取拟合元数据，标注当前拟合档位（基础拟合/全参拟合） */
 export async function showStatsModal(app: App, dm: ReviewDataManager): Promise<void> {
-  lastDm = dm;
   const items = await dm.loadItems();
   let w: number[] | undefined;
   let fit: FittedParams | null = null;
@@ -130,21 +130,19 @@ export async function showStatsModal(app: App, dm: ReviewDataManager): Promise<v
   renderStatsModal(app, dm, items, w, fit);
 }
 
-/** 渲染统计弹窗（600px 窄卡，影视布局） */
+/** 渲染统计弹窗（600px 窄卡） */
 function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], w?: number[], fit?: FittedParams | null): void {
   closeStatsModal();
   statsMask = document.createElement('div');
   statsMask.id = 'review-stats-mask';
   statsMask.className = 'bz-overlay-mask'; // issue 365：遮罩底/blur 收编 core 单源（弹窗 fixed 自居中不受 flex/padding 影响）
   statsMask.style.display = 'block';
-  statsMask.style.zIndex = String(allocZ());
   statsMask.onclick = closeStatsModal;
 
   statsPopup = document.createElement('div');
   statsPopup.id = 'review-stats-popup';
   statsPopup.style.display = 'flex';
-  statsPopup.style.zIndex = String(allocZ());
-  topifyZ(statsMask, statsPopup);
+  topifyZ(statsMask, statsPopup); // ADR-0067：显示时发号单形制（构造期不再 allocZ 占号）
 
   const header = document.createElement('div');
   header.className = 'bz-win-head bz-review-stats-head';
@@ -179,13 +177,13 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
     });
   });
 
-  statsEsc = escManager.register('review-stats', {
+  statsEsc = escManager.register('bz-review-stats', {
     isVisible: () => !!statsMask && statsMask.style.display === 'block',
     close: closeStatsModal,
   });
 }
 
-/** 构建统计弹窗 HTML（影视布局：浅色卡 + 色条板块） */
+/** 构建统计弹窗 HTML（浅色卡 + 色条板块） */
 function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], stats: ReturnType<typeof computeStats>, fit?: FittedParams | null): string {
   // 浅色统计卡（6 个）
   const cards = `
@@ -293,14 +291,12 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
   histMask.id = 'review-history-mask';
   histMask.className = 'bz-overlay-mask'; // issue 365：遮罩底/blur 收编 core 单源
   histMask.style.display = 'block';
-  histMask.style.zIndex = String(allocZ());
   histMask.onclick = closeTimeline;
 
   histPopup = document.createElement('div');
   histPopup.id = 'review-history-popup';
   histPopup.style.display = 'flex';
-  histPopup.style.zIndex = String(allocZ());
-  topifyZ(histMask, histPopup);
+  topifyZ(histMask, histPopup); // ADR-0067：显示时发号单形制（构造期不再 allocZ 占号）
 
   const body = document.createElement('div');
   body.id = 'review-history-body';
@@ -337,7 +333,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
     empty.className = 'bz-review-history-empty';
     empty.textContent = '暂无复习记录';
     body.appendChild(empty);
-    histEsc = escManager.register('review-history', { isVisible: () => !!histMask && histMask.style.display === 'block', close: closeTimeline });
+    histEsc = escManager.register('bz-review-history', { isVisible: () => !!histMask && histMask.style.display === 'block', close: closeTimeline });
     return;
   }
 
@@ -369,7 +365,7 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
   tl.innerHTML = itemsHTML;
   body.appendChild(tl);
 
-  histEsc = escManager.register('review-history', {
+  histEsc = escManager.register('bz-review-history', {
     isVisible: () => !!histMask && histMask.style.display === 'block',
     close: closeTimeline,
   });
