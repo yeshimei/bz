@@ -756,3 +756,16 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **UX 分流（拍板清单 F 系）**：无链卡点击零反馈、桌面操作唯一入口右键发现性弱（ux#16/#17 同源维持）、面板键盘焦点管理（belongings 批 B 先例）、触屏 hover 粘滞（**全域议题**，无 hover 隔离范式，建议立项拍板）、桌面磁贴行不限高多标签挤塌卡墙（限高/折叠形态待拍板）、点卡直开外链 affordance。
 - **P3 群（cons 4 条，归并后增量）**：ESC 手写旗标收编 registerPanelEsc（C3）；死 import uiInput 清理（C5）；**CONTEXT.md:75 favorites 词条三重脱节**（C1，主线程文档收口）：交互口径整段停 ADR-0083 旧版（左标签栏/搜索/排序/余额/关联笔记已随 C5 换血退役未记）+ belongings 演进史整段误植 + 删除免确认误载。
 - **测试缺口**：随修复批按报告补。
+
+
+---
+
+## auto-summary（自动摘要）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+
+> 明细：`.scratch/review-deep/auto-summary-func.md`。方向 1（func）：新发现 P3×6 + 旧账在线 P2×1 + P3×2（无新 P1/P2；核心链路「缺失检测→AI→写前重读合并→写回」逐面验证扎实——P1-21 合并写、rename 联动双链、FIFO 收场对称、AI 超时 core 兜底）。旧账复核：**AS1（P2）未修在位为本轮最高在线账**（parser.ts:119 只转义引号/换行 + unquote 不反转义；与 clipbook save.ts yamlEscape C27 已修两侧不对称，含 `\` 值重建写回致值漂移或 frontmatter 解析失败）；**AS2（P3）未修在位且后果链展开**（parser.ts:36 闭合侧强制换行——无尾换行文件 fm=null → 旧 frontmatter 文本被复制进正文区，真实数据损坏面）；AS3（P3 潜伏）维持原判（判据语义错误在案但三现存入口均无双注册形态）；F9 已修闭环。门禁基线：tsc 0；tests/auto-summary 3 文件 70 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2（AS1）buildFrontmatter 反斜杠不转义**——parser.ts:119 + unquote 不反转义，与 clipbook yamlEscape（C27 已修）两侧不对称。修：转义五件套对齐（含 `\`）+ 往返用例。
+- **P3 群（AS2 + N1~N6，7 条）**：AS2 闭合侧强制换行（无尾换行 → fm=null → 旧 frontmatter 复制进正文区，数据损坏面，**升格处理**）；N1 getWatchDir 尾斜杠不归一（同键 clipbook CB4 已归一，两侧分叉，监听+命令双路径静默失效）；N2 buildFrontmatter 数组项零转义（AI tags 含引号 → 非法 YAML → 条目从列表静默消失）；N3 非严格风格流式数组 tags 判缺失后 AI 覆盖用户原标签；N4 processFile 顶层 catch 静默吞错（与自家 AI 失败分支「人话+重试」不对称）；N5 重试按钮手工 DOM 绕开 core notice action（键盘不可达）；N6 stopAutoSummary 清队不 resolve（手动重跑 Promise 永不 settle）。
+- **测试缺口 6**：AS1/AS2/AS3 均零回归锁定，修复时须补修复前必红用例。
