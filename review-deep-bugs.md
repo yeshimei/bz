@@ -482,6 +482,19 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 分类色板与终稿 20 类脱节**（cons）。修：色板对齐。
 - **P3 CONTEXT 词条 439「统一行操作已接书库」失真**（cons）——随 BS1 拍板结果一并主线程文档收口（词条 96/84/439 三处漂移）。
 - **UX 登记**：报告视图重开保持与「书库」命令语义张力（cons）→ 拍板清单 BS 系；划线删除确认框维持（见头部裁决）。
+
+### 方向 5（架构/测试）补充条目（审查完成，5/5 到账）
+
+- **P3 data.ts 逆向依赖渲染纯层 + getDisplayItems 同名双形制 + shared.ts:31 注释失真**（A1 一体三面）——跨域 API 面被 ADR-0104 迁移副作用撑大。修：依赖方向理顺（渲染层回调注入/上移消费方，按现场最小改）+ 同名双形制收敛 + 注释纠偏。
+- **P3 bookshelf⇄reading-report 双向回指**（A2，复核修正 func 线「不回指」失实）——ADR-0091 宿主关系（stats.ts:6/index.ts:15 回指 bookshelf/data）。修：主线程 ADR-0091 后果节补一句显式认可（文档动作，不改码）。
+- **P3 weave-data.json 读侧损坏静默吞**（A3）——EPUB 区静默清空与「未用 Weave」不可区分、零告警（写侧零侵入是拍板契约，读侧缺最低可观测性）。修：损坏降级时一次性告警通知。+ 用例（中）。
+- 测试缺口 6（中 2：md 写盘→modify→自动刷新链路集成覆盖、读侧损坏降级；低 4：issue 291 断言冗余/裸 sleep/死 provider 注入/pragma 首行卫生）。
+
+### 修复批定稿（单批 + 主线程文档收口）
+
+- **A 核心行为与数据** `bz-fix-bs-core`（index.ts + data.ts + shared.ts + ui.ts + styles.css + notes/epub-notes 通知链 + tests）：P1 continueReading showView+收口+用例、P2 冷开报告占位、P2 100vh、P3 批注引号反转义、weave create 监听、progress 钳制、分类计数口径、resize 监听、M.renderFn 删、bindFormSubmit、自动刷新滚位+重刷收口、回落口径单源、continueReading 假空态、EPUB 编辑失败通知、热区、借书卡×+aria、失败通知三轨→notifyActionError、settings 注释三处、updateComment 理顺、分类色板对齐、A1 逆向依赖理顺、A3 读侧损坏告警、ESC 清词✕、测试缺口中 2 项。
+- **主线程收口**：CONTEXT 词条 96/84/439（读书笔记按 BS1 拍板结果、统一行操作失真句）+ ADR-0091 后果节认可句。
+- **拍板清单**：BS1 读书笔记孤岛（eff/ui/cons 三向同根）；BS2 catFilter 语义不对称；BS3 报告视图重开保持语义张力。
 - **P3 批注引号往返不反转义**（func）——批注 `"` 写入转义 `&quot;` 但读取展示不反转义，往返二次恶化。修：读侧反转义。
 - **P3 weave-data.json 只挂 modify 不挂 create**（func）——Weave 首次落盘不刷新。修：补 create 监听。
 - **P3 md progress 不钳负值**（func）。修：钳制。
