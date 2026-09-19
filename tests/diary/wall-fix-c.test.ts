@@ -335,7 +335,7 @@ describe('arch A4：v2「日期.md」路径兜底退役', () => {
   });
 });
 
-describe('效率#6：时间位置感（筛选态文案 / 清除胶囊 / 今天钮）', () => {
+describe('效率#6：时间位置感（筛选态文案 / 清除胶囊）', () => {
   it('range 带筛选态 + 「✕ 清除」胶囊一键清日期筛选', async () => {
     const c = await openAndWait();
     (c as any).selDateFilter = { year: '2026', month: '06' };
@@ -349,16 +349,6 @@ describe('效率#6：时间位置感（筛选态文案 / 清除胶囊 / 今天�
     expect((c as any).selDateFilter).toBeNull();
     expect(deskEl('.bz-diary-range').textContent).not.toContain('2026-06');
     expect(document.querySelector('.bz-diary-filter-clear')).toBeNull();
-  });
-
-  it('头行「今天」钮：清日期筛选', async () => {
-    const c = await openAndWait();
-    (c as any).selDateFilter = { year: '2025' };
-    c.renderAll();
-    const todayBtn = deskEl('[data-act="today"]');
-    expect(todayBtn).toBeTruthy();
-    todayBtn.click();
-    expect((c as any).selDateFilter).toBeNull();
   });
 });
 

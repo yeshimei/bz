@@ -1,4 +1,4 @@
-/* 源指纹 a49210809ac2094d · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 366fe21e41844853 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/diary/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/diary/render.ts → window.BZR_diary（评审壳预览包，ADR-0104） */
 var BZR_diary = (() => {
@@ -48,8 +48,6 @@ var BZR_diary = (() => {
   var ACT_ICON = {
     add: "pen-line",
     search: "search",
-    today: "calendar-check",
-    close: "x",
     "lb-close": "x",
     "lb-more": "more-horizontal",
     "lb-prev": "chevron-left",
@@ -92,8 +90,6 @@ var BZR_diary = (() => {
         <div class="bz-diary-btns">
           <button class="bz-diary-icon-btn" data-act="add" title="写日记"></button>
           <button class="bz-diary-icon-btn" data-act="search" title="搜索"></button>
-          <button class="bz-diary-icon-btn" data-act="today" title="回到今天（清除日期筛选）"></button>
-          <button class="bz-diary-icon-btn bz-diary-head-close" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>
