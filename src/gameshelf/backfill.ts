@@ -22,9 +22,11 @@
  * store.steampowered.com（直连可达），两条通道可用性互不影响，混跑会互相连坐。
  */
 import type { App, TFile } from 'obsidian';
+import { notify } from '../core/notice';
 import { achIconPathsMissing, fmToAchDetail, fmToShots, refreshAchievements, refreshStore, safeDetailFm } from './detail';
 import { achIconsMissing, ensureShots } from './posters';
 import { M, type GameItem } from './state';
+import { GS_FM, QUEUE_HALTED_NOTICE, QUEUE_HALTED_DEDUPE_KEY } from './constants';
 
 /** 队列条目间隔（毫秒） */
 export const BACKFILL_INTERVAL_MS = 900;
@@ -46,7 +48,7 @@ export function backfillNeeds(fm: Record<string, unknown>, hasAch: boolean): { s
   // `截图源` 键缺失也算该拉：全量落盘改造（2026-09-18）之前回填的存量笔记有 `详情时间`
   // 却从没写过截图源——只看详情时间它们永远判「不用拉」，截图就永远本地化不了。
   // storeToFm 现在始终写截图源（无截图写空数组），重拉一次即自愈，不会反复 churn。
-  const store = !fm['详情时间'] || fm['截图源'] === undefined;
+  const store = !fm[GS_FM.detailAt] || fm[GS_FM.shotsSrc] === undefined;
   // 缺全量列表 **或** 列表是旧格式（行只有 6 段、没有图标本地路径——ADR-0167 改造前写的）
   // → 各拉一次补齐；补过即自愈（8 段行不再命中，不会反复 churn）
   const ach = hasAch && (!fmToAchDetail(fm) || achIconPathsMissing(fm));
@@ -71,9 +73,14 @@ function drainQueue(): void {
   while (queue.length > 0) queued.delete(queue.shift()!.item.appid);
 }
 
-/** 节流重渲（统计页的成就覆盖数会随回填变化；1.2s 尾沿，别每条都整页重画） */
+/**
+ * 节流重渲（统计页的成就覆盖数会随回填变化；别每条都整页重画）。
+ * 节流（首沿）语义，与 names/posters 同构（深审 A3 收敛）：窗口内首条触发设表，1.2s 后
+ * 必刷一次——此前这里是 clearTimeout 防抖式，队列节奏 900ms < 1.2s 时每次完成都重置计时，
+ * 持续回填期间 M.renderFn 一次都不发（本地代理常态恰好落在这个区间）。
+ */
 function scheduleRerender(): void {
-  if (rerenderTimer) clearTimeout(rerenderTimer);
+  if (rerenderTimer) return;
   rerenderTimer = setTimeout(() => {
     rerenderTimer = null;
     M.renderFn?.();
@@ -111,6 +118,9 @@ async function runQueue(): Promise<void> {
   while (queue.length > 0) {
     if (failures >= BACKFILL_MAX_FAILURES) {
       drainQueue();
+      // 熔断人话收尾（S2）：此前只有 console，「已经停了、下次会继续」无一字出口。
+      // 与 names 共用文案与 dedupeKey——同窗熔断原地合并，不刷屏；下次开面板幂等续跑
+      notify(QUEUE_HALTED_NOTICE, { type: 'warning', dedupeKey: QUEUE_HALTED_DEDUPE_KEY });
       break;
     }
     const job = queue.shift()!;
@@ -145,7 +155,13 @@ function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** 卸载清空（main.ts onunload / closePanel 收尾时调用） */
+/**
+ * 卸载清空（main.ts onunload / closePanel 收尾时调用）。
+ * 不置 running = false（深审 F6）：置了会把还在途的旧循环「放行」——它 await 完成后回
+ * while 继续消费新入队的条目，同时新 ensureBackfill 看 running=false 又起第二个 runQueue，
+ * 双消费者交错把 900ms 节奏砍半（撞限流面）、failures 计数互踩提前熔断。对齐 names/posters
+ * 范式：旧循环发现队列已空自然退出并自行复位 running，期间新 ensure 只入队不启动。
+ */
 export function unloadBackfill(): void {
   queue.length = 0;
   queued.clear();
@@ -154,5 +170,4 @@ export function unloadBackfill(): void {
     clearTimeout(rerenderTimer);
     rerenderTimer = null;
   }
-  running = false;
 }

@@ -8,15 +8,37 @@ import { tryGetSettings } from '../core/settings-provider';
 /** 游戏目录默认值（gameshelfFolderPath 未配置时回落） */
 export const DEFAULT_FOLDER = '我的/游戏';
 
-/** 游戏目录解析（目录唯一真理跨域化范式，ADR-0115 同款）：显式配置优先，缺省回落默认 */
+/**
+ * 游戏目录解析（目录唯一真理跨域化范式，ADR-0115 同款）：显式配置优先，缺省回落默认。
+ * 尾斜杠归一（func F11）：配置 `我的/游戏/` 时扫描前缀会拼成 `我的/游戏//` 恒零匹配——
+ * 面板空态 + 同步链全库判新建。设置面板 renderer 不规范化该键（全仓口径如此），此处兜一手。
+ */
 export function resolveGameshelfFolderPath(): string {
   try {
     const s = tryGetSettings() as Record<string, unknown>;
-    return typeof s.gameshelfFolderPath === 'string' && s.gameshelfFolderPath.trim()
-      ? s.gameshelfFolderPath
-      : DEFAULT_FOLDER;
+    const raw = typeof s.gameshelfFolderPath === 'string' ? s.gameshelfFolderPath.trim() : '';
+    if (!raw) return DEFAULT_FOLDER;
+    return raw.replace(/[/\\]+$/, '');
   } catch {
     return DEFAULT_FOLDER;
+  }
+}
+
+/**
+ * Steam 配置读取（同步与详情按需拉取共用；无配置 → 空串）。
+ * 正典落此（深审 A4：此前在 sync.ts，detail 装配层越层去 sync 编排层拿它，方向倒置）——
+ * sync/detail 都向下取本函数。sync.ts 暂留同名转发保 detail.ts:21 既有 import 兼容
+ * （detail 属批 B 辖区，改线后删转发）。
+ */
+export function readSteamConfig(): { steamId: string; apiKey: string } {
+  try {
+    const s = tryGetSettings() as Record<string, unknown>;
+    return {
+      steamId: typeof s.gameshelfSteamId === 'string' ? s.gameshelfSteamId : '',
+      apiKey: typeof s.gameshelfSteamApiKey === 'string' ? s.gameshelfSteamApiKey : '',
+    };
+  } catch {
+    return { steamId: '', apiKey: '' };
   }
 }
 
