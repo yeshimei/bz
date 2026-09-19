@@ -24,13 +24,14 @@
 import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { longPress } from '../core/dom';
-import { escManager } from '../core/esc-manager';
+import { registerPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { openItemMenu, openItemSheet, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { getApp } from '../core/app';
 import { openExternalUrl } from '../core/utils';
-import { mountIcons, uiModal, uiInput } from '../core/ui';
+import { mountIcons, uiModal } from '../core/ui';
+import { bindFormSubmit } from '../core/ui/modal';
 import { emitDomainEvent } from '../core/domain-bus';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { favoritesEditChanges } from '../smartcat/favorites-source';
@@ -38,13 +39,17 @@ import type { SettingsSchema } from '../core/settings-schema';
 import { getTags, getTagById, newTagId, resetTagsState, setTags, getStoragePath, normalizeUrl, isUrlLike } from './config';
 import {
   actionSpecs, formHtml, pickChipsHtml, hueOf, relTime,
-  panelHtml, renderPanelView, localNow, normalizeFavSort, esc,
+  panelHtml, renderPanelView, localNow, normalizeFavSort, esc, iconSpan, emptyHtml,
+  VIEW_ALL, VIEW_ARCHIVED, RESERVED_TAG_LABELS, safeTagIcon,
   type FavActionSpec,
   type FavSort,
   type FavoritesItem,
 } from './render';
-import { FavoritesAIService } from './ai';
+import { FavoritesAIService, normalizeAiOrganizeResult } from './ai';
 import { DataManager } from './data';
+// ADR-0002：app ↔ ui 环引用仅函数级延迟解析——本 import 只在 tagManagerDm() 运行时取用，
+// 模块顶层零互访（两侧模块均已初始化后才会走到标签管理入口）
+import { FavoritesApp } from './app';
 import type { FavTag } from './types';
 
 /** 域级模块状态（模块单例；卸载/测试重置）。tag/archived 切片与纯层 FavView 结构兼容 */
@@ -154,24 +159,22 @@ function resolveOpenFilter(): { tag: string | null; archived: boolean } {
 
 // ==================== 主面板生命周期 ====================
 
-let mainEscRegistered = false;
-
 /** ESC 层注册（主面板 + 表单浮层）。
  *  openPanel 与 openForm 开头各调一次：命令（bz-favorites-add）可不经面板直开表单，
- *  ESC 层必须随表单在场（对照 belongings ensureBelongingsEsc 同款）。
- *  2026-09-11 收编 core：菜单/抽屉浮层（含 ESC 条目/遮罩点击/下滑关闭）全归 core/item-actions
- *  自持，本条目只管面板与表单；closeItemMenu 兜底收残（core 幂等，浮层未开时 no-op）。 */
+ *  ESC 层必须随表单在场。2026-09-11 收编 core：菜单/抽屉浮层（含 ESC 条目/遮罩点击/下滑关闭）
+ *  全归 core/item-actions 自持，本条目只管面板与表单；closeItemMenu 兜底收残（core 幂等，
+ *  浮层未开时 no-op）。
+ *  2026-09-19 收编 registerPanelEsc 幂等样板（C3，memo/belongings/cinema/bookshelf/home/
+ *  gameshelf 六域先例）：同 id 已注册静默跳过，层常驻由 isVisible 判活（escManager 软关 +
+ *  判活自愈语义不变，手写 mainEscRegistered 旗标退役）。 */
 function ensureFavoritesEsc(): void {
-  if (mainEscRegistered) return;
-  mainEscRegistered = true;
-  escManager.register('bz-fav', {
-    isVisible: () => !!M.overlay || !!document.querySelector('.bz-fav-form'),
-    close: () => {
+  registerPanelEsc('bz-fav',
+    () => !!M.overlay || !!document.querySelector('.bz-fav-form'),
+    () => {
       closeItemMenu();
       if (document.querySelector('.bz-fav-form')) requestCloseForm();
       else closePanel();
-    },
-  });
+    });
 }
 
 let _dm: DataManager | null = null;
@@ -224,19 +227,30 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     applyTagFilter(b.dataset.favTag as string);
   });
 
-  // 内容区：卡片点击（移动抽屉 / 桌面有链直开）+ 右键
+  // 内容区：卡片点击（移动抽屉 / 桌面有链直开）+ 右键 + 键盘（UI-06：卡片 role=button 后
+  // Enter/Space 与点击同径——键盘用户不再到不了开链/抽屉）
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
+  const openCardDefault = (it: FavoritesItem): void => {
+    if (isMobileEnv()) { openMobSheet(it); return; }
+    // 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开浏览器，无链接不动作
+    const rawUrl = (it.url || '').trim();
+    if (rawUrl) openExternal(normalizeUrl(rawUrl));
+  };
   content.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     const card = t.closest('[data-fav-id]') as HTMLElement | null;
     if (!card) return;
     e.stopPropagation();
     const it = itemById(card.dataset.favId as string);
-    if (!it) return;
-    if (isMobileEnv()) { openMobSheet(it); return; }
-    // 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开浏览器，无链接不动作
-    const rawUrl = (it.url || '').trim();
-    if (rawUrl) openExternal(normalizeUrl(rawUrl));
+    if (it) openCardDefault(it);
+  });
+  content.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const card = (e.target as HTMLElement).closest('[data-fav-id]') as HTMLElement | null;
+    if (!card || e.target !== card) return; // 只响应卡片自身聚焦（内部无嵌套交互件，防御性限定）
+    e.preventDefault(); // Space 滚动页面语义让位给「触发卡片」
+    const it = itemById(card.dataset.favId as string);
+    if (it) openCardDefault(it);
   });
   content.addEventListener('contextmenu', (e) => {
     const card = (e.target as HTMLElement).closest('[data-fav-id]') as HTMLElement | null;
@@ -258,6 +272,10 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     undefined,
     (ev: any) => isMobileEnv() && !!(ev.target as HTMLElement)?.closest?.('[data-fav-id]')
   );
+
+  // 读盘占位（UI-07）：先渲一帧空态——大库/盘慢时打开不再白板（磁贴行 + 空态立现，
+  // 数据到位后全量重渲）；读盘失败走 loadItems 的错误通知 + 空列表，占位帧语义不变
+  renderAll();
 
   void (async () => {
     await loadItems();
@@ -307,14 +325,19 @@ async function reload(): Promise<void> {
 
 function renderAll(): void {
   if (!M.overlay) return;
+  // 悬空筛选归一（UI-08）：激活标签已不在标签集（设置面板删/改名后 M.tag 悬指）→ 回落全部。
+  // 标签仍在但计数归零的激活 chip 由 chipsHtml 保渲染（灰显），不走此归一——视图不擅自切换。
+  if (!M.archived && M.tag && !getTags().some((t) => t.label === M.tag)) M.tag = null;
   const panel = M.overlay.querySelector('.bz-fav-panel') as HTMLElement;
   renderPanelView(panel, M.items, M, { mountIcons, mobile: isMobileEnv() });
 }
 
-/** 标签筛选切换语义（磁贴行委托共用）：再点当前标签 = 取消筛选回全部；点「已归档」= 归档视图 */
+/** 标签筛选切换语义（磁贴行委托共用）：再点当前标签 = 取消筛选回全部；点「已归档」= 归档视图。
+ *  只认哨兵值（UI-05/func-7）：磁贴行「全部/已归档」贴纸发 VIEW_ALL/VIEW_ARCHIVED 哨兵，
+ *  与用户自定义标签 label 分命名空间——名为「已归档」的用户标签点选即按标签筛选，不再被劫持 */
 function applyTagFilter(label: string): void {
-  if (label === '全部' || label === '__all') { M.tag = null; M.archived = false; }
-  else if (label === '已归档' || label === '__archived') { M.tag = null; M.archived = !M.archived; }
+  if (label === VIEW_ALL) { M.tag = null; M.archived = false; }
+  else if (label === VIEW_ARCHIVED) { M.tag = null; M.archived = !M.archived; }
   else { M.archived = false; M.tag = M.tag === label ? null : label; }
   renderAll();
 }
@@ -325,7 +348,10 @@ function itemById(id: string): FavoritesItem | undefined {
 
 // ==================== 行操作（桌面菜单 / 移动抽屉共用） ====================
 
-/** 动作元语 → 行为（动作序与归档/删除确认文案契约逐字保留；ADR-0101 跳转笔记/刷新余额退役） */
+/** 动作元语 → 行为。归档/删除免确认直达（E1/C2，效率整改 5 口径 2026-09-19 落地）：
+ *  接了 notifyUndo 的操作不再走 openFlowDialog 二次确认——撤销兜底已覆盖误操作风险，
+ *  确认+撤销双保险只是多一次打断；同域两制（取消归档本就免确认）随之理顺。仅不可逆
+ *  操作保留确认（本域仅「删除标签」确认框在位：bulk 迁移有跨条目副作用）。 */
 function runAction(it: FavoritesItem, spec: FavActionSpec): void {
   const rawUrl = (it.url || '').trim();
   if (spec.act === 'open') {
@@ -345,38 +371,13 @@ function runAction(it: FavoritesItem, spec: FavActionSpec): void {
   } else if (spec.act === 'edit') {
     openForm(it);
   } else if (spec.act === 'archive') {
-    // 归档（ADR-0074 数据仍在 favorites.json）
-    void openFlowDialog({
-      title: '归档收藏',
-      // issue 291：流程框挂 document.body，不在 .bz-fav-panel 树内——不显式带皮肤类就掉回 core 裸皮。
-      // `bz-fav-flow-dialog` = 本域确认框专属类（styles.css 映射表单弹窗 .bz-fav-form 那套亚麻取值）；
-      // `bz-fav-scope` 必须跟着传：亚麻/暖纸是私有 token（--pop/--pop-ink/--pop-mut/--mask/--acc），
-      // 只在 .bz-fav-scope 命中时才定义，缺它变量全部解析失败。
-      className: 'bz-fav-flow-dialog bz-fav-scope',
-      message: `确定归档收藏「${it.title}」吗？归档后不在主列表显示（数据保留），可在通知中撤销。`,
-      actions: [
-        { label: '取消', value: 'cancel' },
-        { label: '归档', value: 'ok', cta: true },
-      ],
-    }).then((v) => {
-      if (v === 'ok') void archiveItem(it);
-    });
+    // 归档（ADR-0074 数据仍在 favorites.json）：免确认直达 + notifyUndo 撤销
+    void archiveItem(it);
   } else if (spec.act === 'unarchive') {
     void unarchiveItem(it);
   } else if (spec.act === 'del') {
-    void openFlowDialog({
-      title: '删除收藏',
-      // issue 291：与归档确认同一套皮肤类（删除是危险主动作 → core 另挂 bz-flow-dialog--danger，
-      // 与皮肤类并存不冲突）。类含义见归档确认处注释。
-      className: 'bz-fav-flow-dialog bz-fav-scope',
-      message: `确定删除收藏「${it.title}」吗？删除后可在通知中撤销。`,
-      actions: [
-        { label: '取消', value: 'cancel' },
-        { label: '删除', value: 'del', danger: true, cta: true },
-      ],
-    }).then((v) => {
-      if (v === 'del') void deleteItem(it);
-    });
+    // 删除：免确认直达 + notifyUndo 撤销（撤销链完整，func-2 起撤销还补发 restored 事件）
+    void deleteItem(it);
   }
 }
 
@@ -474,6 +475,10 @@ async function deleteItem(it: FavoritesItem): Promise<void> {
       void (async () => {
         try {
           await dataManagerOf().restoreItem(snapshot);
+          // 撤销补发领域事件（func-2）：归档撤销补 unarchive 先例在位，删除撤销同制补 restored——
+          // 否则行为流只记「删除」，smartcat 上下文从此以为条目已删。kind 已双侧同步
+          // （smartcat/favorites-source.ts 联合类型 + 文案/结构化分支，契约测试对账）
+          emitDomainEvent('favorites', { kind: 'restored', title: it.title });
           await reload();
         } catch (e) {
           notifySaveError(e, '恢复收藏');
@@ -573,8 +578,16 @@ function inputVal(popup: HTMLElement, id: string): string {
  *  脏拦截经 requestClose 通道（遮罩点击/ESC → requestCloseForm，脏表单先弹放弃确认）。 */
 export function openForm(item: FavoritesItem | null): void {
   ensureFavoritesEsc(); // 命令可直开表单不经 openPanel：ESC 层随表单注册（F2），且须先于 uiModal 层入栈
-  // 单例守卫（F15）：已有表单先收掉——防多层叠加（ESC 一次只关一层、遮罩层叠点击错位）
-  if (document.querySelector('.bz-fav-form')) closeForm();
+  // 单例守卫（F15 + E3/FV2）：已有表单不再无条件 closeForm() 静默丢草稿——脏则走
+  // requestCloseForm 的 confirmDiscard 放弃确认（确认前不开新表单），干净则直关后换新表单
+  // （belongings openBelForm 守卫同款关闭纪律）
+  if (document.querySelector('.bz-fav-form')) {
+    if (formDirty()) {
+      requestCloseForm();
+      return;
+    }
+    closeForm();
+  }
   const it = item;
   const host = document.createElement('div');
   host.innerHTML = formHtml(it);
@@ -624,9 +637,20 @@ export function openForm(item: FavoritesItem | null): void {
   };
   drawPick();
 
-  // 置顶开关（原型 .sw 滑钮逐字）
+  // 置顶开关（原型 .sw 滑钮逐字；UI-06：role=switch + aria-checked + Space/Enter 键盘，
+  // core uiSwitch 范式——视觉不变，读屏与键盘用户可达）
   const pinEl = popup.querySelector('#fz-pin') as HTMLElement;
-  pinEl.addEventListener('click', () => pinEl.classList.toggle('bz-fav-on'));
+  const togglePin = () => {
+    const on = pinEl.classList.toggle('bz-fav-on');
+    pinEl.setAttribute('aria-checked', String(on));
+  };
+  pinEl.addEventListener('click', togglePin);
+  pinEl.addEventListener('keydown', (e) => {
+    if (e.key === ' ' || e.key === 'Enter') {
+      e.preventDefault();
+      togglePin();
+    }
+  });
 
   const errEl = popup.querySelector('#fz-err') as HTMLElement;
 
@@ -634,8 +658,12 @@ export function openForm(item: FavoritesItem | null): void {
   popup.querySelector('[data-fz-cancel]')?.addEventListener('click', () => requestCloseForm());
   popup.querySelector('#fz-ai')?.addEventListener('click', () => void runAiFill(popup, sel, drawPick, errEl));
   popup.querySelector('#fz-save')?.addEventListener('click', () => void saveForm(popup, it, sel, errEl));
+  // 键盘提交（UI-11/E4）：core bindFormSubmit 单源——单行 input 纯 Enter 提交、textarea
+  // 回车换行不拦、Ctrl/⌘+Enter 恒提交、isComposing 防 IME 误发（saveForm 自带 _saving 防重入）
+  bindFormSubmit(popup, () => void saveForm(popup, it, sel, errEl));
 
-  setTimeout(() => (popup.querySelector('#fz-title') as HTMLInputElement)?.focus(), 100);
+  // 初始聚焦归 uiModal firstFocusable 单源（UI-03）：桌面落 #fz-title（markup 首个 input），
+  // 移动端自动跳过 input/textarea 防软键盘顶起盖表单——原 setTimeout 强制聚焦已退役
 }
 
 // ==================== AI 整理（真实调用，契约逐字保留） ====================
@@ -678,15 +706,19 @@ async function runAiFill(
     const raw = await ai.ai.chat(text);
     const data = parseAiJson(raw);
     if (!data) throw new Error('AI 返回格式错误');
+    // func-5 接线（批 A 数据侧收口 normalizeAiOrganizeResult）：url 补协议、tags 数组化、
+    // 字段 String 纠偏——AI 按提示词「无法判断原样返回」的无协议链接不再被保存校验拦截，
+    // 「整理完即可存」闭环
+    const res = normalizeAiOrganizeResult(data);
     const setVal = (id: string, v: unknown) => {
       const el = popup.querySelector(id) as HTMLInputElement | null;
       if (el && !el.value.trim() && v) el.value = String(v);
     };
     if (ghInfo?.fetched) setVal('#fz-title', ghInfo.title);
-    setVal('#fz-title', data.title);
-    setVal('#fz-url', data.url);
-    setVal('#fz-desc', data.description);
-    const rawTags: string[] = Array.isArray(data.tags) ? data.tags.map((x: any) => String(x)) : data.tags ? [String(data.tags)] : [];
+    setVal('#fz-title', res.title);
+    setVal('#fz-url', res.url);
+    setVal('#fz-desc', res.description);
+    const rawTags: string[] = res.tags;
     const known = getTags().map((t) => t.label);
     const valid = rawTags.filter((t) => known.includes(t));
     const unknown = rawTags.filter((t) => !known.includes(t));
@@ -748,9 +780,12 @@ function parseAiJson(raw: string): { title?: string; url?: string; description?:
 async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<string>, errEl: HTMLElement): Promise<void> {
   if (_saving) return;
   const title = inputVal(popup, '#fz-title').trim();
-  const url = inputVal(popup, '#fz-url').trim();
+  // E6 写侧半：保存前 normalizeUrl 归一（无协议自动补 https://，空串跳过不产协议头）——
+  // 手输链接与贴链/读侧同一待遇，校验只拦不可救形态
+  const rawUrl = inputVal(popup, '#fz-url').trim();
+  const url = rawUrl ? normalizeUrl(rawUrl) : '';
   if (!title) { errEl.textContent = '请输入标题'; return; }
-  if (url && !/^https?:\/\//i.test(url)) { errEl.textContent = '链接需以 http(s):// 开头'; return; }
+  if (url && !/^https?:\/\//i.test(url)) { errEl.textContent = '链接需以 http(s):// 开头'; return; } // 归一后恒过，防御性保留
   if (sel.size === 0) { errEl.textContent = '请至少选择一个标签'; return; }
   const desc = inputVal(popup, '#fz-desc').trim();
   const tags = [...sel];
@@ -820,10 +855,13 @@ const TAG_ICON_CHOICES = [
   'gamepad-2', 'package', 'briefcase', 'graduation-cap', 'link', 'folder',
 ];
 
-/** 管理用数据管理器（按当前存储设置现构造；loadTags 幂等迁移旧伴生文件 + 返回生效集） */
+/** 管理用数据管理器（arch-4 收口）：改取 FavoritesApp 单例的 dataManager，与主面板同实例——
+ *  storagePath 运行中变更不热切换（语义 =「需重载插件后全面生效」，与 ADR-0009 手动迁移
+ *  Notice 同口径），双实例两轨漂移不再存在。init 前为 null（正常链路不可达：标签管理入口
+ *  都在懒加载 init 之后），现构造兜底仅承担测试/时序防御，不构成第二语义。 */
 function tagManagerDm(): DataManager {
-  const s = tryGetSettings() as any;
-  return new DataManager(getStoragePath(s?.storagePath));
+  return FavoritesApp.getInstance().dataManager
+    ?? new DataManager(getStoragePath((tryGetSettings() as any)?.storagePath));
 }
 
 /** 管理列表渲染（custom 行 render 入口）：先画当前生效集，loadTags（含旧文件迁移）完成后重画 */
@@ -840,12 +878,14 @@ function renderTagManager(body: HTMLElement, _ctx: { rowEl: HTMLElement; refresh
 function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void): void {
   wrap.innerHTML = '';
   const tags = getTags();
-  /** 行内小图标钮（域内自绘，样式 .bz-fav-tagmgr-btn） */
+  /** 行内小图标钮（域内自绘，样式 .bz-fav-tagmgr-btn；UI-13：挂 core bz-touch-target，
+   *  26px 钮 + ::after 外扩触达 ≥40px，零几何改动） */
   const icBtn = (ic: string, title: string, disabled: boolean, danger: boolean, onClick: () => void): HTMLElement => {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'bz-fav-tagmgr-btn' + (danger ? ' bz-fav-tagmgr-btn--danger' : '');
+    b.className = 'bz-fav-tagmgr-btn bz-touch-target' + (danger ? ' bz-fav-tagmgr-btn--danger' : '');
     b.title = title;
+    b.setAttribute('aria-label', title);
     b.disabled = disabled;
     b.innerHTML = `<i data-lucide="${ic}"></i>`;
     b.addEventListener('click', onClick);
@@ -856,7 +896,8 @@ function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void):
     row.className = 'bz-fav-tagmgr-row';
     const ic = document.createElement('span');
     ic.className = 'bz-fav-tagmgr-ic';
-    ic.innerHTML = `<i data-lucide="${tag.ic || 'tag'}"></i>`;
+    // UI-10：动态 tag.ic 不直插 innerHTML——safeTagIcon 白名单（不合者回落 'tag'）后经 iconSpan
+    ic.innerHTML = iconSpan(safeTagIcon(tag.ic));
     const name = document.createElement('span');
     name.className = 'bz-fav-tagmgr-name';
     name.textContent = tag.label;
@@ -895,13 +936,16 @@ async function moveTag(dm: DataManager, idx: number, delta: number, redraw: () =
   }
 }
 
-/** 新增/编辑弹窗（壳收编 core uiModal，与表单弹窗同口径 issue 365 第 5 项；markup 沿用
- *  .bz-fav-form 同皮 + .bz-fav-tageditor 内容根）：名称 + 图标胶囊；编辑改名先
- *  updateTagLabelBulk 迁条目再存定义 */
+/** 新增/编辑弹窗（壳收编 core uiModal，与表单弹窗同口径 issue 365 第 5 项；markup 用独立
+ *  内容根 .bz-fav-tageditor——不再复用 .bz-fav-form（func-6：该类是收藏表单单例守卫/ESC 判活
+ *  的专用契约钩子，复用会让守卫误命中双层遮罩；皮由 styles.css :is 组并列承载，两弹窗同皮））：
+ *  名称 + 图标胶囊；编辑改名先 updateTagLabelBulk 迁条目再存定义。
+ *  UI-12：补 requestClose 关闭礼节——名称非空且非初值时走 confirmDiscard（遮罩/ESC 不再
+ *  静默丢输入），与同域主表单同一套脏拦截纪律。 */
 function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => void): void {
   const host = document.createElement('div');
   host.innerHTML = `
-    <div class="bz-fav-form bz-fav-tageditor">
+    <div class="bz-fav-tageditor">
     <h2>${existing ? '编辑标签' : '添加标签'}</h2>
     <div class="bz-fav-fld"><label>名称</label><input id="fz-tag-name" value="${esc(existing?.label || '')}" placeholder="如：装修灵感"></div>
     <div class="bz-fav-fld"><label>图标</label><div class="bz-fav-tageditor-ics" id="fz-tag-ics"></div></div>
@@ -910,11 +954,20 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
       <button type="button" id="fz-tag-save" class="bz-fav-pri">${existing ? '保存' : '添加'}</button>
     </div>
     </div>`;
-  // 弹窗壳只挂 scope（token 域）；bz-fav-form 由内容根携带（与 openForm 同口径，F15 单例守卫不重类）
+  // 弹窗壳只挂 scope（token 域）；内容根携独立类（func-6：bz-fav-form 单例守卫不误命中）
   const { popup, close } = uiModal({
     content: host.firstElementChild as HTMLElement,
     className: 'bz-fav-scope',
     maxWidth: 380,
+    requestClose: () => {
+      const input = popup.querySelector('#fz-tag-name') as HTMLInputElement | null;
+      // 轻量脏检：名称非空且与编辑初值不同 = 有未保存输入 → 放弃确认；空白/未改直关
+      if (input && input.value.trim() && input.value.trim() !== (existing?.label || '')) {
+        confirmDiscard(() => close(), undefined, 'bz-fav-flow-dialog bz-fav-scope');
+      } else {
+        close();
+      }
+    },
   });
   mountIcons(popup);
   const input = popup.querySelector('#fz-tag-name') as HTMLInputElement;
@@ -937,6 +990,9 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
   const doSave = async (): Promise<void> => {
     const label = input.value.trim();
     if (!label) { notice('请输入标签名称'); return; }
+    // 保留字防御（func-7）：内置视图哨兵/磁贴字面值/@last 设置哨兵不可用作标签名——
+    // 撞名会让磁贴筛选分流被哨兵分支劫持（详见 shared.RESERVED_TAG_LABELS）
+    if (RESERVED_TAG_LABELS.includes(label)) { notice('该名称与内置视图冲突，请换一个名称'); return; }
     if (getTags().some((t) => t.label === label && t.id !== existing?.id)) { notice('已有同名标签'); return; }
     const next = [...getTags()];
     const prevTags = [...getTags()]; // 改动前定义快照（落盘失败回滚用）
@@ -974,10 +1030,10 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
   };
   popup.querySelector('[data-fz-tag-cancel]')?.addEventListener('click', () => close());
   popup.querySelector('#fz-tag-save')?.addEventListener('click', () => void doSave());
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); void doSave(); }
-  });
-  setTimeout(() => input.focus(), 30);
+  // 键盘提交（UI-04/C6）：手写 keydown Enter 退役，收编 core bindFormSubmit——获得 isComposing
+  // 防 IME 误发（中文候选确认键不再误触发保存）+ Ctrl/⌘+Enter 恒提交语义
+  bindFormSubmit(popup, () => void doSave());
+  // 初始聚焦归 uiModal firstFocusable 单源（UI-03）：桌面落名称框，移动端跳过 input 防软键盘
 }
 
 /** 删除标签：至少留一个；带条目时确认迁入「网站」（id 'web'，已删则取剩余第一个）。

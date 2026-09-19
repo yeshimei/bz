@@ -2,7 +2,8 @@
  * 收藏本动作观察文案层（ticket 078，ADR-0031，对齐影视/备忘录/聚合讯方法监听样板）：
  * 用户拍板——观察只来自 favorites UI 确认回调（方法监听）：favorites 域 UI 确认回调直接调
  * smartcat.notifyFavoritesAction(事件)，文案构造集中本模块（纯函数可测）。
- * 覆盖动作：添加（键值式有才加）/ 编辑（α 变化列表，只列真正变化）/ 删除（仅标题）/ 归档（仅标题，ticket 140）。
+ * 覆盖动作：添加（键值式有才加）/ 编辑（α 变化列表，只列真正变化）/ 删除（仅标题）/ 归档（仅标题，ticket 140）/
+ * 撤销删除（restored，func-2：删除撤销补发）/ 取消归档（unarchive，ticket 188）。
  * 置顶/取消置顶不观察（不单独发观察，编辑里的置顶变化也不列入变化列表）；
  * 打开链接、跳转笔记、刷新余额不观察（不落盘或系统数据）。
  * 数据语义零改动：字段对齐 favorites.json（id/tags/title/description/pinned/url/…/type/llmConfig）。
@@ -18,6 +19,7 @@ export type FavoritesActionEvent =
   | { kind: 'add'; item: FavoritesItem }
   | { kind: 'edit'; title: string; changes: string[] }
   | { kind: 'delete'; title: string }
+  | { kind: 'restored'; title: string }
   | { kind: 'archive'; title: string }
   | { kind: 'unarchive'; title: string };
 
@@ -59,6 +61,12 @@ export function favoritesDeletedText(title: string): string {
   return `你删除了收藏《${title}》`;
 }
 
+/** 撤销删除观察文案（func-2：删除撤销补发 restored 事件，与归档撤销补 unarchive 同制——
+ *  否则行为流只记「删除」，小橘上下文从此以为条目已删） */
+export function favoritesRestoredText(title: string): string {
+  return `你撤销了删除《${title}》`;
+}
+
 /** 归档观察文案（标题必填；ticket 140：与删除同构短文案，ADR-0074 冷存无查看面，观察流是唯一可读痕迹） */
 export function favoritesArchivedText(title: string): string {
   return `你归档了《${title}》`;
@@ -78,6 +86,8 @@ export function buildFavoritesActionText(evt: FavoritesActionEvent): string | nu
       return favoritesEditedText(evt.title, evt.changes);
     case 'delete':
       return favoritesDeletedText(evt.title);
+    case 'restored':
+      return favoritesRestoredText(evt.title);
     case 'archive':
       return favoritesArchivedText(evt.title);
     case 'unarchive':
@@ -99,6 +109,8 @@ export function buildFavoritesStructured(evt: FavoritesActionEvent): StructuredM
       return { entityType: 'favorite', action: 'edited', name: evt.title, extras: { changes: evt.changes } };
     case 'delete':
       return { entityType: 'favorite', action: 'deleted', name: evt.title };
+    case 'restored':
+      return { entityType: 'favorite', action: 'restored', name: evt.title };
     case 'archive':
       return { entityType: 'favorite', action: 'archived', name: evt.title };
     case 'unarchive':

@@ -51,8 +51,10 @@
 }
 .bz-fav-panel .bz-fav-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 20px; flex: none; position: relative; }
 .bz-fav-panel .bz-fav-head h1 { font-size: var(--bz-font-body); letter-spacing: 3px; color: var(--ink-title); font-weight: 700; margin: 0; }
-/* 移动端：面板即原型 .phone 内容（全屏；显式视口宽高——overlay 弹性子项不定宽会被卡墙 max-content 撑爆） */
-.bz-fav-panel.bz-fav-mob { width: 100vw; height: 100vh; max-width: 100vw; padding: var(--bz-space-lg) 14px 0; }
+/* 移动端：面板即原型 .phone 内容（全屏；显式视口宽高——overlay 弹性子项不定宽会被卡墙 max-content 撑爆）。
+   高度接 core --bz-vvh 可视视口单源（UI-01/C4，memo/belongings/clipbook/cinema 四域先例）：
+   真机原生顶栏/底栏与软键盘弹出时面板随可视视口收缩，裸 100vh 会被原生栏遮住一截 */
+.bz-fav-panel.bz-fav-mob { width: 100vw; height: var(--bz-vvh, 100vh); max-width: 100vw; max-height: var(--bz-vvh, 100vh); padding: var(--bz-space-lg) 14px 0; }
 
 /* —— 磁贴标签（原型 .tags 逐字） —— */
 /* 选择器带 .bz-fav-scope 前缀（(0,2,1)）：脱离与 core reset button:not(.clickable-icon) (0,1,1)
@@ -75,6 +77,9 @@
 .bz-fav-tags button.bz-fav-chip--grey { background: var(--chip-grey); color: var(--chip-grey-ink); }
 .bz-fav-tags button.bz-fav-chip--grey.bz-fav-on { background: #8a8171; color: #fff; }
 .bz-fav-tags button.bz-fav-chip--grey.bz-fav-on::before { background: radial-gradient(circle at 35% 30%, #fff, #6d6455 75%); }
+/* 零计数但处于激活态的标签贴纸（UI-08）：条目被清空时保渲染防面板悬空——灰显弱化 + 计数 0，
+   仍可点击（再点取消筛选回全部） */
+.bz-fav-tags button.bz-fav-chip--empty { opacity: .55; }
 .bz-fav-tags button.bz-fav-chip-add {
   background: transparent; border: 1.5px dashed var(--chip-add-bd); color: var(--chip-add-ink); box-shadow: none;
   display: inline-flex; align-items: center; gap: 5px;
@@ -84,10 +89,11 @@
 
 /* —— 卡片（原型 .card 逐字） —— */
 /* 卡墙：auto-fill 网格——列宽均分剩余空间（184 起步），行缘严格贴合内容区，左右只余对称内边距 */
-/* 左右 4px 垫 + 负 margin 找回：钉选金圈(盒外 2px)与软阴影不再被 overflow:auto 裁边，卡缘对齐不变 */
+/* 左右 4px 垫 + 负 margin 找回：钉选金圈(盒外 2px)与软阴影不再被 overflow:auto 裁边，卡缘对齐不变。
+   负 token 必须 calc（UI-02/C-UI4，clipbook 同款纠偏）：负号直连 var 的写法是无效声明，整条被浏览器丢弃 */
 .bz-fav-board {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); gap: 22px 20px;
-  align-items: start; padding: 6px var(--bz-space-xs) 0; margin: 0 -var(--bz-space-xs); flex: 1; min-height: 0; overflow: auto;
+  align-items: start; padding: 6px var(--bz-space-xs) 0; margin: 0 calc(-1 * var(--bz-space-xs)); flex: 1; min-height: 0; overflow: auto;
 }
 .bz-fav-board .bz-fav-card { width: auto; }
 .bz-fav-board .bz-fav-empty { grid-column: 1 / -1; }
@@ -165,44 +171,53 @@
   background: var(--pop); border-radius: 14px; padding: 20px 22px 18px;
   box-shadow: 0 16px 44px rgba(0,0,0,.32);
 }
-.bz-fav-form h2 { font-size: var(--bz-font-emphasis); color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
-.bz-fav-form .bz-fav-fld { margin-bottom: var(--bz-space-md); }
-.bz-fav-form .bz-fav-fld label { display: block; font-size: 11.5px; color: var(--pop-mut); margin-bottom: 5px; }
-.bz-fav-form input, .bz-fav-form textarea {
+/* 表单卡皮（func-6 独立类名后两内容根同皮）：.bz-fav-form（收藏表单）与 .bz-fav-tageditor
+   （标签编辑弹窗）各自为内容根——tageditor 不再复用 .bz-fav-form 类（该类是单例守卫/ESC
+   判活的专用契约钩子，复用会误命中双层遮罩），皮选择器以 :is 组并列承载。 */
+:is(.bz-fav-form, .bz-fav-tageditor) h2 { font-size: var(--bz-font-emphasis); color: var(--pop-ink); margin: 0 0 14px; letter-spacing: 2px; }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-fld { margin-bottom: var(--bz-space-md); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-fld label { display: block; font-size: 11.5px; color: var(--pop-mut); margin-bottom: 5px; }
+:is(.bz-fav-form, .bz-fav-tageditor) input, :is(.bz-fav-form, .bz-fav-tageditor) textarea {
   width: 100%; border: 1px solid var(--fld-bd); border-radius: var(--bz-radius-sm); background: var(--fld-bg); color: var(--fld-ink);
   font: 12.5px/1.6 var(--font-interface, 'Microsoft YaHei'); padding: 7px 10px; outline: none;
 }
-.bz-fav-form textarea { resize: vertical; min-height: 52px; }
-.bz-fav-form input:focus, .bz-fav-form textarea:focus { border-color: var(--acc); }
-.bz-fav-form .bz-fav-pick { display: flex; flex-wrap: wrap; gap: 7px; }
-.bz-fav-form .bz-fav-pick button {
+:is(.bz-fav-form, .bz-fav-tageditor) textarea { resize: vertical; min-height: 52px; }
+:is(.bz-fav-form, .bz-fav-tageditor) input:focus, :is(.bz-fav-form, .bz-fav-tageditor) textarea:focus { border-color: var(--acc); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-pick { display: flex; flex-wrap: wrap; gap: 7px; }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-pick button {
   border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink); border-radius: 99px; cursor: pointer;
   font: 11.5px/1 var(--font-interface, 'Microsoft YaHei'); padding: 6px 11px;
   display: inline-flex; align-items: center; gap: 5px;
 }
-.bz-fav-form .bz-fav-pick button.bz-fav-on { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
-.bz-fav-form .bz-fav-inline { display: flex; align-items: center; gap: var(--bz-space-sm); }
-.bz-fav-form .bz-fav-fld-desc { font-size: var(--bz-font-caption); color: var(--pop-faint); }
-.bz-fav-form .bz-fav-sw {
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-pick button.bz-fav-on { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-inline { display: flex; align-items: center; gap: var(--bz-space-sm); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-fld-desc { font-size: var(--bz-font-caption); color: var(--pop-faint); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-sw {
   position: relative; width: 32px; height: 18px; border-radius: 99px; background: #b9b2a2; cursor: pointer;
   transition: background var(--bz-dur-fast); flex: none; display: inline-block;
 }
-.bz-fav-form .bz-fav-sw::after {
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-sw::after {
   content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; border-radius: 50%; background: #fff;
   box-shadow: 0 1px 2px rgba(0,0,0,.2); transition: left var(--bz-dur-fast);
 }
-.bz-fav-form .bz-fav-sw.bz-fav-on { background: var(--acc); }
-.bz-fav-form .bz-fav-sw.bz-fav-on::after { left: 16px; }
-.bz-fav-form .bz-fav-err { color: var(--danger); font-size: var(--bz-font-meta); min-height: 16px; margin-bottom: 6px; }
-.bz-fav-form .bz-fav-btns { display: flex; justify-content: flex-end; gap: 9px; }
-.bz-fav-form .bz-fav-btns button {
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-sw.bz-fav-on { background: var(--acc); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-sw.bz-fav-on::after { left: 16px; }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-err { color: var(--danger); font-size: var(--bz-font-meta); min-height: 16px; margin-bottom: 6px; }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns { display: flex; justify-content: flex-end; gap: 9px; }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button {
   cursor: pointer; font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); padding: var(--bz-space-sm) var(--bz-space-lg); border-radius: var(--bz-radius-sm);
   border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink);
 }
-.bz-fav-form .bz-fav-btns button.bz-fav-pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
-.bz-fav-form .bz-fav-btns button:hover { filter: brightness(.97); }
-.bz-fav-form .bz-fav-btns button:disabled { opacity: .55; cursor: default; }
-.bz-fav-form .bz-fav-btns .bz-fav-ai-btn { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button.bz-fav-pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button:hover { filter: brightness(.97); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button:disabled { opacity: .55; cursor: default; }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns .bz-fav-ai-btn { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
+
+/* —— 键盘焦点可见（UI-06）：卡片 role=button + 置顶开关 role=switch 的键盘路径需要可见焦点——
+   仅 :focus-visible（键盘导航）时出现，指针点击不出现，ADR-0101 静态视觉拍板不受影响 —— */
+.bz-fav-card:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-sw:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+.bz-fav-tags button:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
 
 /* ==================== 确认流程框（core/flow-dialog，issue 291：全域子弹窗统一） ====================
    三处确认框（归档收藏 / 删除收藏 / 放弃未保存草稿，ui.ts）经
@@ -253,9 +268,12 @@
   color: var(--danger);
 }
 
-/* —— 触屏 44px 触控档（磁贴行按钮；延续 issue 219 系列守护口径） —— */
+/* —— 触屏 40/44px 触控档（UI-13：磁贴行 44px；表单标签胶囊/按钮排原 25/33px 低于 §8.2
+   40px 下限，coarse 档补齐——compact 列表用 padding 抬档，不走外扩） —— */
 @media (pointer: coarse) {
   .bz-fav-scope .bz-fav-tags button { min-height: 44px; }
+  :is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-pick button,
+  :is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button { min-height: 40px; }
 }
 
 /* —— 窄面板兜底：桌面窄窗下面板宽 <520px 时卡墙退化为移动同款双列平摊（容器查询，Obsidian Chromium 支持） —— */

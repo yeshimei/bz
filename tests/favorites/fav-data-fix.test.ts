@@ -6,7 +6,8 @@
  * - func-3：update「表单快照形态」窄化合并写（盘侧托管字段不被内存旧快照回滚）；
  * - func-4：type = tags[0] 派生字段三条写链（add/update/updateTagLabelBulk）一处收口；
  * - func-5：AI 整理结果归一 normalizeAiOrganizeResult（回填前补协议；ui 接线归深审批 B）；
- * - arch-2：域事件五 kind 发射侧（ui.ts）× smartcat 消费侧（favorites-source.ts）字面量对账锁；
+ * - arch-2：域事件 kind 发射侧（ui.ts）× smartcat 消费侧（favorites-source.ts）字面量对账锁
+ *   （restored kind 随深审批 B func-2 增补：删除撤销补发）；
  * - arch-4：DataManager 双实例路径语义现状安全面（收口方案 = tagManagerDm 取主面板同实例，
  *   接线在 ui.ts，归深审批 B；本批在 data.ts 头注释钉死方案）。
  * 纪律：纯数据层测试，全部自造 fixture，零用户 vault 数据。
@@ -299,9 +300,10 @@ describe('域事件五 kind 端到端契约锁（arch-2）', () => {
     expect(emit).toEqual(consume);
   });
 
-  it('五 kind 精确集合钉死（add/edit/delete/archive/unarchive）——新增 kind 须双侧同步并更新本断言', () => {
-    expect(consumedKinds()).toEqual(['add', 'archive', 'delete', 'edit', 'unarchive']);
-    expect(emittedKinds()).toEqual(['add', 'archive', 'delete', 'edit', 'unarchive']);
+  it('六 kind 精确集合钉死（add/edit/delete/restored/archive/unarchive）——新增 kind 须双侧同步并更新本断言', () => {
+    // restored = func-2（深审批 B）：删除撤销补发领域事件（与归档撤销补 unarchive 同制）
+    expect(consumedKinds()).toEqual(['add', 'archive', 'delete', 'edit', 'restored', 'unarchive']);
+    expect(emittedKinds()).toEqual(['add', 'archive', 'delete', 'edit', 'restored', 'unarchive']);
   });
 });
 
@@ -322,11 +324,13 @@ describe('DataManager 双实例路径语义（arch-4 现状安全面）', () => 
     expect(tagMgrDm.filePath).toBe(mainDm.filePath);
   });
 
-  it('主面板固化实例不随运行中设置变更漂移（storagePath 变更需重载插件，ADR-0009 口径；批 B 收口后 tagManagerDm 与此同源）', async () => {
+  it('主面板固化实例不随运行中设置变更漂移（storagePath 变更需重载插件，ADR-0009 口径；批 B 已收口 tagManagerDm 与此同源）', async () => {
     const mainDm = new DataManager(getStoragePath('CONFIG/STORAGE'));
     state.storagePath = '我的/数据';
     expect(mainDm.filePath).toBe('CONFIG/STORAGE/favorites.json'); // 固化语义：运行中变更不热切换
-    // 现状漂移面（tagManagerDm 现构造已定位新路径）——收口方案登记 data.ts 头注释，接线归批 B
+    // 原「现状漂移面」（tagManagerDm 现构造定位新路径）已由深审批 B 收口：ui.tagManagerDm
+    // 改取 FavoritesApp.getInstance().dataManager 与主面板同实例——恒等断言见
+    // tests/favorites/fav-view-fix.test.ts「arch-4 收口恒等」组；此处保留 getStoragePath 纯函数行为锚
     expect(getStoragePath('我的/数据')).toBe('我的/数据/favorites.json');
   });
 });

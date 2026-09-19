@@ -325,13 +325,16 @@ describe('F14/F15：favorites 打开兜底与表单单例', () => {
     expect(getNoticeMessages().some((m) => m.includes('无法打开链接'))).toBe(true); // 修复前全落空无任何提示
   });
 
-  it('F15：表单已开再开（命令/编辑入口叠加）→ 单例收敛为一层', () => {
+  it('F15：表单已开再开（命令/编辑入口叠加）→ 单例收敛为一层；脏草稿走 confirmDiscard 不静默丢（E3/FV2 深审批 B 翻转）', () => {
     favSetup();
     openForm(null);
     expect(document.querySelectorAll('.bz-fav-form').length).toBe(1);
     ((document.querySelector('#fz-title') as HTMLInputElement).value = '未保存草稿');
     openForm(null); // 修复前叠加第二层遮罩，ESC 一次只关一层
     expect(document.querySelectorAll('.bz-fav-form').length).toBe(1);
-    expect((document.querySelector('#fz-title') as HTMLInputElement).value).toBe(''); // 新表单干净
+    // E3 收口：单例守卫不再无条件 closeForm 静默丢草稿——脏表单弹放弃确认、原表单保持
+    // （原「新表单干净」断言随之翻转；净表单直换新表单的场景见 tests/favorites/fav-view-fix.test.ts E3 组）
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
+    expect((document.querySelector('#fz-title') as HTMLInputElement).value).toBe('未保存草稿');
   });
 });

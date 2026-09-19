@@ -69,7 +69,7 @@ describe('C7/C8：表单按钮类名合规', () => {
 
   it('C8：#fz-ai ID 选择器退役 → .bz-fav-ai-btn 类（ui.ts 模板与原型同步，#fz-ai 锚点保留供 JS/测试）', () => {
     expect(favCss()).not.toContain('#fz-ai');
-    expect(favCss()).toContain('.bz-fav-form .bz-fav-btns .bz-fav-ai-btn {');
+    expect(favCss()).toContain(':is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns .bz-fav-ai-btn {');
     expect(favShared()).toContain('<button type="button" id="fz-ai" class="bz-fav-ai-btn">'); // issue 242：表单 markup 单源 shared.ts，壳经 BZR_favorites 消费
     expect(favRender()).not.toContain('fz-ai');
   });
@@ -117,6 +117,33 @@ describe('C12：表单演示钩子对齐插件契约（行为单源后断言指�
     expect(proto).not.toContain("e.target.dataset.a !== 'ok'");
     expect(proto).not.toContain("e.target.closest('[data-fz-cancel]')"); // 壳不再自绘委托
     expect(proto).toContain('prototype-behavior.js');
+  });
+});
+
+describe('批 B（bz-fix-fav-view）样式契约：vvh 单源 / 负 token calc / 同皮 / 热区档', () => {
+  it('UI-01：移动面板接 core --bz-vvh 可视视口单源（裸 100vh 退役，真机原生栏/软键盘不遮面板）', () => {
+    const css = favCss();
+    expect(css).toContain('height: var(--bz-vvh, 100vh)');
+    expect(css).toContain('max-height: var(--bz-vvh, 100vh)');
+    expect(css).not.toMatch(/height:\s*100vh/); // 裸 100vh 零残留
+  });
+
+  it('UI-02（C-UI4 同形态）：负 token 必须走 calc，`-var(` 无效声明零残留', () => {
+    expect(favCss()).not.toContain('-var(');
+    expect(favCss()).toContain('margin: 0 calc(-1 * var(--bz-space-xs))');
+  });
+
+  it('func-6：标签编辑弹窗独立内容根与表单同皮（:is 组并列承载，.bz-fav-form 保持表单专用契约钩子）', () => {
+    const css = favCss();
+    expect(css).toContain(':is(.bz-fav-form, .bz-fav-tageditor)');
+  });
+
+  it('UI-13：标签管理行钮挂 bz-touch-target 外扩热区；coarse 档补表单胶囊/按钮排 40px', () => {
+    expect(favUi()).toContain('bz-fav-tagmgr-btn bz-touch-target');
+    const css = favCss();
+    expect(css).toMatch(/@media \(pointer: coarse\)/);
+    expect(css).toContain(':is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-pick button,');
+    expect(css).toContain('.bz-fav-btns button { min-height: 40px; }');
   });
 });
 
