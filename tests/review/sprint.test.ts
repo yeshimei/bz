@@ -160,7 +160,7 @@ describe('sprint 答题时序（bug2 回归）', () => {
     expect(host.querySelector('.bz-result')).toBeTruthy();
     const ratingEl = host.querySelector('.bz-result-rating');
     expect(ratingEl).toBeTruthy();
-    expect(ratingEl!.textContent).toContain('轻松'); // 全对 → 自动评级 easy
+    expect(ratingEl!.textContent).toContain('简单'); // 全对 → 自动评级 easy（A6：评级名与 stats 单源「简单」）
     host.querySelector<HTMLElement>('[data-action="next"]')!.click();
     await vi.advanceTimersByTimeAsync(30);
     // 无剩余 → 结算屏
@@ -175,7 +175,8 @@ describe('sprint 答题时序（bug2 回归）', () => {
 
   it('结果卡「下次」用 onPassed 返回的真实排期（非快照固定值）', async () => {
     vi.useFakeTimers();
-    const in3d = new Date(Date.now() + 3 * 86400_000).toISOString();
+    // F4：口径与 dueLabelOf 单源（floor 档）——+3 天留 1 小时余量，天数档稳落「3 天后」
+    const in3d = new Date(Date.now() + 3 * 86400_000 + 3600_000).toISOString();
     const { host } = setup({
       queue: [mkItem('笔记', 'n.md')],
       questionsOf: () => [mkQ('唯一题？', [0])],

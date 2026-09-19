@@ -11,8 +11,9 @@ import {
   reviewJumpOverdue, reviewMarkDialog, reviewMarkRating, dataManager, uiManager,
   reviewWatcher,
 } from '../../src/review/index';
-import { REVIEW_FILE_PATH, ReviewDataManager } from '../../src/review/data';
+import { REVIEW_FILE_PATH, ReviewDataManager, ReviewItem } from '../../src/review/data';
 import { reviewApp } from '../../src/review/app';
+import { showStatsModal } from '../../src/review/stats-ui';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
@@ -90,11 +91,11 @@ describe('ensureReview', () => {
     expect(spy).toHaveBeenCalled();
   });
 
-  it('vault modify（md 文件）→ applyReviewStyles', async () => {
+  it('vault modify（md 文件）→ applyReviewStylesForFile（F9：单文件路径复用快照）', async () => {
     const vault = new MockVault();
     seed(vault);
     const app = makeApp(vault);
-    const spy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);
+    const spy = vi.spyOn(reviewApp, 'applyReviewStylesForFile').mockResolvedValue(undefined);
     ensureReview(app);
     vault.emit('modify', vault.file('A.md'));
     await new Promise((r) => setTimeout(r, 20));
@@ -274,6 +275,7 @@ describe('unloadReview', () => {
     expect(rSpy).toHaveBeenCalledTimes(1);
     // 再 ensure：同一事件只触发一次（新实例无历史残留双触发）
     const styleSpy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);
+    const fileStyleSpy = vi.spyOn(reviewApp, 'applyReviewStylesForFile').mockResolvedValue(undefined);
     vi.spyOn(reviewApp, 'checkOverdueAndNotify').mockResolvedValue(undefined); // 屏蔽陈旧 2s 首查定时器
     ensureReview(app);
     const c2Spy = vi.spyOn(reviewWatcher!, 'onVaultCreate').mockResolvedValue(undefined);
@@ -283,10 +285,10 @@ describe('unloadReview', () => {
     app.emitMeta('resolved');
     await new Promise((r) => setTimeout(r, 20));
     expect(styleSpy).toHaveBeenCalledTimes(1);
-    styleSpy.mockClear();
+    fileStyleSpy.mockClear();
     vault.emit('modify', vault.file('A.md'));
     await new Promise((r) => setTimeout(r, 20));
-    expect(styleSpy).toHaveBeenCalledTimes(1);
+    expect(fileStyleSpy).toHaveBeenCalledTimes(1);
     emitDomainEvent('vault:md-created', { path: 'Z.md' });
     expect(c2Spy).toHaveBeenCalledTimes(1);
     unloadReview();
@@ -353,4 +355,99 @@ describe('ticket 098：监听文件夹事件（总线 vault:md-created/deleted�
     expect(items.some((i) => i.filePath === 'A.md')).toBe(false);
     unloadReview();
   }, 10000);
+});
+
+describe('批 B 修复回归：编排与命令（2026-09-19 深审）', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks(); // 前序 describe 的 spy（如 applyReviewStyles mock）不再污染本组真实调用
+    setSettingsProvider(() => ({} as any));
+  });
+
+  it('A11：ensureReview 注入共享 dataManager（reviewApp 不再自持双例）', () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    ensureReview(app);
+    expect((reviewApp as any).dataManager).toBe(dataManager);
+    unloadReview();
+    expect((reviewApp as any).dataManager).toBeNull();
+  });
+
+  it('A12/E1/C1：reviewRemoveCurrent 免前置确认直达 notifyUndo；撤销原样插回', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    app.workspace.getActiveFile = () => ({ path: 'A.md', extension: 'md', basename: 'A' });
+    ensureReview(app);
+    await reviewRemoveCurrent(app);
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull(); // 不再二次确认
+    expect((await dataManager!.loadItems()).some((i) => i.filePath === 'A.md')).toBe(false);
+    // 撤销 → restoreItem 原样插回
+    const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find(
+      (x) => x.textContent === '撤销'
+    ) as HTMLElement | undefined;
+    expect(undoBtn).toBeTruthy();
+    undoBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect((await dataManager!.loadItems()).some((i) => i.filePath === 'A.md')).toBe(true);
+    unloadReview();
+  });
+
+  it('C9：reviewAddCurrent 失败 → notifyActionError 人话 + 「重试」出口', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    app.workspace.getActiveFile = () => ({ path: 'A.md', extension: 'md', basename: 'A' });
+    ensureReview(app);
+    const addSpy = vi.spyOn(reviewApp, 'addCurrentToReview').mockRejectedValue(new Error('磁盘已满'));
+    await reviewAddCurrent(app);
+    expect(hasNotice('加入复习计划失败：磁盘已满，请重试')).toBe(true);
+    const retryBtn = [...document.querySelectorAll('.bz-notice-action')].find(
+      (x) => x.textContent === '重试'
+    ) as HTMLElement | undefined;
+    expect(retryBtn).toBeTruthy();
+    retryBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(addSpy).toHaveBeenCalledTimes(2); // 重试把动作交回用户
+    unloadReview();
+  });
+
+  it('A3/U3/T1：unloadReview 清场——统计/难度弹窗摘除 + 染色回退 + 会话态复位', async () => {
+    const vault = new MockVault();
+    seed(vault);
+    const app = makeApp(vault);
+    ensureReview(app);
+    // 统计弹窗（真 DOM；closeStatsModal 连带 closeTimeline）
+    await showStatsModal(app, dataManager!);
+    expect(document.getElementById('review-stats-mask')).not.toBeNull();
+    // 难度弹窗
+    const items = await dataManager!.loadItems();
+    uiManager!.showDifficultyDialog(items[0], () => {});
+    expect(document.querySelector('.difficulty-dialog')).not.toBeNull();
+    // 文件树染色 + 徽标
+    const treeItem = document.createElement('div');
+    treeItem.setAttribute('data-path', 'A.md');
+    const inner = document.createElement('div');
+    inner.className = 'tree-item-inner';
+    treeItem.appendChild(inner);
+    document.body.appendChild(treeItem);
+    await reviewApp.applyReviewStyles(app);
+    expect(inner.style.color).not.toBe('');
+    // 会话态预置
+    (reviewApp as any)._notifiedOverdue.add('A.md');
+    (reviewApp as any)._reviewNotice = {
+      el: { isConnected: true },
+      setMessage: vi.fn(),
+      setType: vi.fn(),
+      hide: vi.fn(),
+    } as any;
+    unloadReview();
+    expect(document.getElementById('review-stats-mask')).toBeNull();
+    expect(document.querySelector('.difficulty-dialog')).toBeNull();
+    expect(inner.style.color).toBe(''); // 染色回退
+    expect(inner.querySelector('.review-stage-badge')).toBeNull(); // 徽标摘除
+    expect((reviewApp as any)._notifiedOverdue.size).toBe(0); // diff 记忆清空（再启用后重新提醒）
+    expect((reviewApp as any)._reviewNotice).toBeNull();
+    expect((reviewApp as any)._styledPaths.size).toBe(0);
+  });
 });

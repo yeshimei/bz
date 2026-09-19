@@ -100,7 +100,9 @@
 .bz-sprint-title { font-size: var(--bz-font-title); font-weight: 700; color: var(--bz-text-1); }
 .bz-sprint-head .tools { display: flex; align-items: center; gap: 6px; }
 .bz-sprint-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 60px 20px; color: var(--bz-text-2); font-size: var(--bz-font-label); }
-.spinner { width: 16px; height: 16px; border: 2px solid var(--bz-border); border-top-color: var(--bz-brand); border-radius: 50%; animation: bz-spin .8s linear infinite; }
+/* 加载圈：深审 A15 补 bz 前缀（bz-q-spinner）——原裸 spinner 类名是无主通用名，不进全局聚合。
+   ⚠ DOM 消费在 src/review/render.ts（冲刺加载态），同步改类名前该处样式会暂时脱落（主线程收口）。 */
+.bz-q-spinner { width: 16px; height: 16px; border: 2px solid var(--bz-border); border-top-color: var(--bz-brand); border-radius: 50%; animation: bz-spin .8s linear infinite; }
 
 /* 冲刺主体：题卡（左） + 本轮队列（右） */
 .bz-sprint-body { display: flex; gap: 14px; padding: var(--bz-space-xs) 20px 14px; flex: 1; min-height: 0; }
@@ -156,8 +158,7 @@
 .bz-sq-item.doing { border-color: var(--bz-brand); }
 .bz-sq-item.passed { opacity: .8; }
 .bz-sq-item.passed .nm s { color: var(--bz-text-3); }
-.bz-sq-item.passed .meta { color: var(--bz-success); }
-.bz-sq-item.failed .meta { color: var(--bz-danger); }
+/* 深审 U7：passed/failed 的 meta 着色两行死规则已删（队列项只产 nm 节点，meta 元素不存在） */
 
 /* 结果卡 */
 .bz-result { max-width: 420px; margin: 0 auto; text-align: center; padding: 20px 10px; display: flex; flex-direction: column; align-items: center; gap: var(--bz-space-sm); }
@@ -226,12 +227,7 @@
 
 /* 监听文件夹旧 chip 渲染已退役（死规则删除；监听文件夹设置走 settings-schema） */
 
-/* 排除名单 chip */
-#review-excluded-list { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); align-items: center; padding: var(--bz-space-xs) 0; }
-.bz-review-exclude-chip { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: var(--bz-radius-md); background: var(--bz-surface-1); border: 1px solid var(--bz-border); max-width: 100%; }
-.bz-review-exclude-name { font-size: var(--bz-font-meta); color: var(--bz-text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.bz-review-exclude-remove { background: none; border: none; cursor: pointer; color: var(--bz-text-3); font-size: var(--bz-font-caption); line-height: 1; padding: 2px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: none !important; }
-.bz-review-exclude-remove:hover { color: var(--bz-danger); background: var(--bz-surface-hover); }
+/* 深审 U7：排除名单 chip 族死规则已删（名单已迁 settings 通用 list 行，无 DOM 产出） */
 
 /* 统计弹窗 / 复习历史弹窗（既有实现，容器保留）；遮罩三件套已收编 .bz-overlay-mask 单源（issue 365） */
 #review-stats-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 600px; max-height: 88vh; flex-direction: column; animation: slideUp var(--bz-dur-slow) ease-out; }
@@ -250,12 +246,12 @@
    保留行内 background/color；其余静态值逐字迁入下列类（Obsidian 变量按 --bz-* 档对档：
    primary/secondary → surface-2/1、text-normal/muted/faint → text-1/2/3、
    background-modifier-border → border）。 */
-/* 浅色统计卡（对齐影视 PASTEL_CARDS，卡色按 idx 动态内联） */
+/* 浅色统计卡（卡色按 idx 动态内联；形制沿革见 stats-ui.ts 深审新-13 注——不宣称对齐影视） */
 .bz-stats-cards { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; }
 .bz-stats-card { flex: 1; min-width: 80px; padding: 12px 6px; border-radius: 10px; text-align: center; border: 1px solid rgba(0,0,0,0.06); }
 .bz-stats-card-val { font-size: 1.3rem; font-weight: 700; color: #3D4456; line-height: 1.2; }
 .bz-stats-card-lbl { font-size: .68rem; color: rgba(61,68,86,0.65); margin-top: 3px; }
-/* 色条板块容器（对齐影视 sectionHTML，色条 background 动态内联） */
+/* 色条板块容器（accent 色动态内联） */
 .bz-stats-section { margin: 12px 16px; padding: 14px 14px 12px; background: var(--bz-surface-1); border-radius: 12px; border: 1px solid var(--bz-border); }
 .bz-stats-section-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .92rem; margin-bottom: 12px; }
 .bz-stats-section-accent { width: 4px; height: 14px; border-radius: 2px; flex-shrink: 0; }

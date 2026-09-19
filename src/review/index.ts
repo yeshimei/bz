@@ -4,14 +4,14 @@
  */
 import { stripMdExt } from '../core/utils';
 import type { App } from 'obsidian';
-import { notice, notifyUndo, notifySaveError } from '../core/notice';
-import { openFlowDialog } from '../core/flow-dialog';
+import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
 import { ReviewDataManager } from './data';
 import { ReviewWatcher } from './watch';
 import { UIManager } from './ui';
 import { reviewApp } from './app';
 import { openQuizPanel, unloadQuizPanel } from './quiz-panel';
+import { closeStatsModal } from './stats-ui';
 import type { Rating } from './fsrs';
 
 let initialized = false;
@@ -46,8 +46,9 @@ function pseudoMdFile(path: string): any {
 export function ensureReview(app: App): void {
   if (initialized) return;
   initialized = true;
-  reviewApp.ensure(app);
   dataManager = new ReviewDataManager(app);
+  // A11：注入共享单例（消除 reviewApp 自持/入口面板双实例并存；reviewApp.ensure 保留缺省兜底防独立调用时序）
+  reviewApp.dataManager = dataManager;
   uiManager = new UIManager(app, dataManager);
   // item 12：R 展示与调度排期同口径——UI 层权重源接拟合权重 currentW()（拟合重算后自动生效）
   uiManager.wSource = () => reviewApp.currentW();
@@ -68,7 +69,8 @@ export function ensureReview(app: App): void {
     await reviewApp.applyReviewStyles(app);
   });
   listen(app.vault as any, 'modify', async (file: any) => {
-    if (file.extension === 'md') await reviewApp.applyReviewStyles(app, file);
+    // F9：vault modify 高频路径改走单文件刷新（复用 60s 轮询快照/按需单读，不再每次保存任意 md 全量读）
+    if (file.extension === 'md') await reviewApp.applyReviewStylesForFile(app, file);
   });
   // ticket 098：监听文件夹自动加入（created）+ 删除/改名/移动确认（deleted/renamed）——
   // 订域事件总线通用兜底通道（obsidian-adapter 恒发、仅 md，载荷见 src/core/obsidian-adapter.ts），
@@ -124,11 +126,14 @@ export async function reviewAddCurrent(app: App): Promise<void> {
     await uiManager!.refreshPanel();
     await reviewApp.applyReviewStyles(app);
   } catch (e: any) {
-    notice('加入复习计划失败：' + e.message + '，请重试', 'error');
+    // C9：动作失败提示走 notifyActionError 单源（白拿 onRetry 挂「重试」出口，效率整改 8）
+    notifyActionError(e, '加入复习计划', { onRetry: () => void reviewAddCurrent(app) });
   }
 }
 
-/** 移出复习计划（review-remove-current） */
+/** 移出复习计划（review-remove-current）：A12/E1/C1——免前置确认直达 notifyUndo
+ *  （效率整改 5 定稿口径：接了 notifyUndo 的删除不再二次确认，restoreItem 撤销链兜底误删）；
+ *  写盘/刷新链包 try/catch + notifySaveError（对齐抽屉同动作口径，写失败不再零反馈） */
 export async function reviewRemoveCurrent(app: App): Promise<void> {
   ensureReview(app);
   const file = app.workspace.getActiveFile();
@@ -142,17 +147,7 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     notice('该笔记不在复习计划中');
     return;
   }
-  void openFlowDialog({
-    title: '移出复习计划',
-    message: `确定把「${file.basename}」移出复习计划吗？所有复习数据将被删除，移出后可在通知中撤销。`,
-    actions: [
-      { label: '取消', value: 'cancel' },
-      // danger（issue 291 评审补）：移出复习计划 = 删除该笔记的全部复习数据（可撤销但仍是删除类
-      // 主动作）→ 主钮不高亮（手册 §9/§10）
-      { label: '移出', value: 'ok', cta: true, danger: true },
-    ],
-  }).then(async (v) => {
-    if (v !== 'ok') return;
+  try {
     await dataManager!.removeItem(file.path);
     // 行为流（issue 261）：移出复习计划入小橘行为流（review:removed）
     emitDomainEvent('review', { kind: 'removed', title: file.basename });
@@ -168,7 +163,9 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
     });
     await uiManager!.refreshPanel();
     await reviewApp.applyReviewStyles(app);
-  });
+  } catch (e) {
+    notifySaveError(e, '移出复习条目');
+  }
 }
 
 /** 复习（跳转逾期）（review-jump-overdue） */
@@ -243,6 +240,14 @@ export function unloadReview(): void {
   // P3：终止 reviewLoop 1s 轮询 + 释放单例 dataManager（插件禁用后不得继续读盘/持旧 app 引用）
   reviewApp.stopReviewLoops();
   reviewApp.dataManager = null;
+  // A3/U3：浮层与会话态清场——统计/历史弹窗（closeStatsModal 内部连带 closeTimeline）、
+  // 难度弹窗、文件树染色回退、进度通知收起、diff 记忆清空（禁用→再启用后存量逾期重新提醒）
+  closeStatsModal();
+  document.querySelectorAll('.difficulty-dialog').forEach((el) => el.remove());
+  reviewApp.revertReviewStyles();
+  if (reviewApp._reviewNotice?.el?.isConnected) reviewApp._reviewNotice.hide();
+  reviewApp._reviewNotice = null;
+  reviewApp._notifiedOverdue.clear();
   // 做题练习独立面板（issue 362）：会话在途契约强制收口 + 面板 DOM/ESC 层摘除
   unloadQuizPanel();
   // P2：全部退订函数统一调用（原生 offref + 总线退订），防卸载后旧监听残留（再 ensure 后事件双触发）

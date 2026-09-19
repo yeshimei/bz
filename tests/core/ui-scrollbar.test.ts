@@ -37,12 +37,20 @@ describe('issue 277：滚动条隐藏收敛界面级单源（ADR-0122）', () =>
       '#add-diary-popup',
       '#review-entries-container',
       '#__shared_confirm_popup__',
+      // 深审 U6：review 域三个无 bz- 前缀弹层壳整树在册（内层滚动区经继承/子树形态覆盖）
+      '#review-stats-popup',
+      '#review-history-popup',
+      '#quiz-popup',
     ]) {
       expect(css, `缺选择器 ${sel}`).toContain(sel);
     }
     // webkit 档同组在册（::-webkit-scrollbar 不继承，需对元素自身 + 子树显式枚举）
     expect(css).toContain('[id^="knowledge-"]::-webkit-scrollbar');
     expect(css).toContain('#review-entries-container *::-webkit-scrollbar');
+    // U6 三壳 webkit 档同组在册
+    expect(css).toContain('#review-stats-popup *::-webkit-scrollbar');
+    expect(css).toContain('#review-history-popup *::-webkit-scrollbar');
+    expect(css).toContain('#quiz-popup *::-webkit-scrollbar');
   });
 
   it('界面级规则刻意不用顶层 * 通配（Obsidian 文件树/编辑器/核心设置不被波及）', () => {

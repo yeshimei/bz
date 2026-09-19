@@ -103,15 +103,17 @@ export function replayLogLikelihood(w: number[], series: ReplaySeries[]): number
  * 19 权重合法区间（全参放开后逐参数约束，防 19 维跑飞产出 NaN/无穷记忆曲线）。
  * 审查修复（issue 361/362 审查批）：w[4] 上界放宽 1 → 10——旧 [0,1] 与 DEFAULT_W[4]=4.93 冲突，
  * clipW 起点即把 4.93 钳到 1，拟合从被削的 D0 起步且似然够不到真值（既有缺陷，ticket 174 起）。
+ * F1 审查修复核对：D 已统一 [1,10] 语义（nextDiff clamp [min(D,1),10]，nextStab (11−D) 同域）——
+ * w[5]/w[6] 为 D 的增量/减量系数，界 [-1.5,1.5] 在 [1,10] 域内语义自洽（w[6] 负值=拟合可学出 easy 升难度的反例，方向由数据定）。
  */
 const W_BOUNDS: ReadonlyArray<readonly [number, number]> = [
   [0.01, 60], // w0  初始稳定性 again
   [0.01, 120], // w1  hard
   [0.01, 240], // w2  good
   [0.01, 480], // w3  easy
-  [0, 10], // w4  again 难度（上界放宽含 DEFAULT_W[4]=4.93；D0 消费侧经 nextDiff 钳制，拟合-调度同口径）
-  [-1.5, 1.5], // w5  hard 难度增量
-  [-1.5, 1.5], // w6  easy 难度增量
+  [0, 10], // w4  again 难度（[1,10] 域的 D0；下界 0 兼容拟合探边，消费侧经 nextDiff 钳制）
+  [-1.5, 1.5], // w5  hard 难度增量（nextDiff: D+w[5]）
+  [-1.5, 1.5], // w6  easy 难度减量（nextDiff: D−w[6]——F1 后 easy 为降方向）
   [0.01, 10], // w7  （v4 模型未用，兜底约束）
   [0.01, 10], // w8  成功演化 exp 系数
   [0.01, 5], // w9  S 幂
