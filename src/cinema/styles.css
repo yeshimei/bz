@@ -514,3 +514,33 @@
    ==================================================================== */
 .bz-cinema--midnight .pw-fetch{position:absolute;inset:0;z-index:3;display:grid;place-items:center;background:#0006}
 .bz-cinema--midnight .pw-spin{width:20px;height:20px;border:3px solid var(--chip);border-top-color:var(--gold);border-radius:50%;animation:cn-spin .8s linear infinite}
+
+/* ====================================================================
+   深审批 B（视图层与样式）：静态内联视觉收编（ADR-0020）+ 搜索 ✕ + mob 空态容器。
+   值零改动（探索稿 1:1 不破）；动态行为性样式（badge/dot/display 切换）豁免留内联。
+   ==================================================================== */
+/* 卡片未评分（原 .pstars 内联 opacity:.35 平移） */
+.bz-cinema--midnight .pstars .star-none{opacity:.35}
+/* 详情/合并卡详情弹窗宽（原 cn-modal 内联 max-width:400px;width:100% 平移；
+   特异性高于 .cn-modal 基类的 max-width:min(430px,100%)，视觉不变） */
+.bz-cinema--midnight .cn-modal--detail{max-width:400px;width:100%}
+/* 详情弹窗简介段（原内联三连 font-size/line-height/color/text-align 平移） */
+.bz-cinema--midnight .dm-synopsis{font-size:12px;line-height:1.8;color:var(--ink-2);text-align:justify}
+/* 分析页空态副文与动作行（原内联平移） */
+.bz-cinema--midnight .cn-empty-page-sub{font-size:11.5px;color:var(--ink-3)}
+.bz-cinema--midnight .cn-empty-page-act{margin-top:8px}
+/* 分析页片龄画像 · 年代条形前间隔（原内联 margin-top:10px 平移） */
+.bz-cinema--midnight .stat-era-gap{margin-top:10px}
+/* 分析页打分习惯 · 小标题（原内联 font-weight/font-size/margin 平移；--lg 档整体覆写 margin） */
+.bz-cinema--midnight .stat-subhead{font-weight:600;font-size:12px;margin:6px 0 4px}
+.bz-cinema--midnight .stat-subhead--lg{margin:10px 0 4px}
+/* 搜索框尾 ✕ 一键清词（深审批 B #3，clipbook 效率#12 定稿范式；委托走 data-cinema-clear
+   既有清空出口。有词才显示：desk 模板条件挂 hidden，mob 由 renderMidnightMob 随词同步） */
+.bz-cinema--midnight .q-clear{flex:none;width:18px;height:18px;padding:0;border:0;border-radius:50%;background:none;color:var(--ink-3);cursor:pointer;display:grid;place-items:center;font-family:inherit}
+.bz-cinema--midnight .q-clear:hover{color:var(--ink);background:var(--chip)}
+.bz-cinema--midnight .q-clear svg{width:11px;height:11px}
+/* hidden 属性兜底：display:grid 会压掉 UA 的 [hidden] 显示 */
+.bz-cinema--midnight .q-clear[hidden]{display:none}
+/* mob 列表空态：m-scroll 常态是块级滚动容器，空态页（.cn-empty-page flex:1）要撑满居中
+   → 空态时容器转 flex（与 desk .d-main 的 flex 列同效；jsdom 无布局值依赖） */
+.bz-cinema--midnight .m-scroll.cn-mempty{display:flex;flex-direction:column}

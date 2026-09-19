@@ -86,9 +86,10 @@ describe('cinema buildAnalysisData', () => {
 
   it('年度趋势 + 年度平均评分 + 星期', () => {
     const d = buildAnalysisData();
-    expect(d.years[2026]).toBe(4);
+    // 深审批 B #5：日期类累计只数已看——《想看片》的 2026-05-01 是建档日期，不再计入节奏桶
+    expect(d.years[2026]).toBe(3);
     expect(d.yearRating[2026].count).toBe(3);
-    expect(d.weekdayEntries.reduce((s: number, e: any) => s + e.value, 0)).toBe(4);
+    expect(d.weekdayEntries.reduce((s: number, e: any) => s + e.value, 0)).toBe(3);
   });
 
   it('打分习惯（个人−豆瓣）：宝藏片/失望榜', () => {

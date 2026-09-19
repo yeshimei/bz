@@ -44,14 +44,14 @@ export function midnightMobHtml(): string {
   return `<section class="mob bz-cinema--midnight bz-panel-mtop" data-cinema-root="midnight">
     <div class="m-head"><h2 class="j-mtitle">全部</h2><span class="cnt j-mcnt"></span>
       <span class="m-acts">
-        <button class="add j-madd" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
-        <button class="m-tool j-mai" title="AI 荐片">${iconSpan(ICON.ai)}</button>
-        <button class="m-tool j-mstat" title="观影分析">${iconSpan(ICON.stat)}</button>
-        <button class="m-tool j-mclose" title="关闭">${iconSpan(ICON.close)}</button>
+        <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
+        <button class="m-tool j-mai bz-touch-target bz-touch-target--lg" title="AI 荐片">${iconSpan(ICON.ai)}</button>
+        <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析">${iconSpan(ICON.stat)}</button>
+        <button class="m-tool j-mclose bz-touch-target bz-touch-target--lg" title="关闭">${iconSpan(ICON.close)}</button>
       </span>
     </div>
     <div class="m-chips j-chips"></div>
-    <label class="m-search">${iconSpan(ICON.search)}<input class="j-mq" placeholder="搜索片名 / 导演…"></label>
+    <label class="m-search">${iconSpan(ICON.search)}<input class="j-mq" placeholder="搜索片名、类型、导演、主演、影评…"><button type="button" class="q-clear" data-cinema-clear title="清空搜索" aria-label="清空搜索" hidden>${iconSpan(ICON.close)}</button></label>
     <div class="m-scroll j-mview"></div>
   </section>`;
 }
@@ -80,15 +80,17 @@ export function railHtml(cards: CardEntry[], view: CinemaView): { groups: string
   return { groups, status };
 }
 
-/** 移动端筛选 chips（全部/类型/状态横滑条；ai/stat 页同 rail 口径整体熄灭） */
+/** 移动端筛选 chips（全部/类型/状态横滑条；ai/stat 页同 rail 口径整体熄灭）。
+ *  `bz-touch-target--lg`：触屏（pointer:coarse）::after 外扩热区（core 单源，视觉零改动，
+ *  绝对定位外扩不触发横滑容器额外滚动宽度；desk 的 rail/seg 等鼠标惯用件不挂）。 */
 export function chipsHtml(view: CinemaView): string {
   const listOn = view.view === 'list';
-  let html = `<button class="chip${listOn && !view.typeFilter && !view.statusFilter ? ' is-on' : ''}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
+  let html = `<button class="chip bz-touch-target--lg${listOn && !view.typeFilter && !view.statusFilter ? ' is-on' : ''}" data-c="all">${iconSpan(ICON.grid)}全部</button>`;
   for (const name of GROUP_ORDER) {
-    html += `<button class="chip${listOn && view.typeFilter === name && !view.statusFilter ? ' is-on' : ''}" data-c="${name}">${name}</button>`;
+    html += `<button class="chip bz-touch-target--lg${listOn && view.typeFilter === name && !view.statusFilter ? ' is-on' : ''}" data-c="${name}">${name}</button>`;
   }
   for (const s of ['想看', '在看', '已看'] as const) {
-    html += `<button class="chip${listOn && view.statusFilter === s ? ' is-on' : ''}" data-s="${s}">${s}</button>`;
+    html += `<button class="chip bz-touch-target--lg${listOn && view.statusFilter === s ? ' is-on' : ''}" data-s="${s}">${s}</button>`;
   }
   return html;
 }
@@ -146,7 +148,7 @@ export function listHeadHtml(inp: MidnightRenderInput): string {
     <button class="add j-add" data-cinema-add>${iconSpan(ICON.add)}添加影片</button></div>`;
 }
 export function listToolsHtml(view: CinemaView): string {
-  return `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索影视（名称、类型、影评）..." value="${esc(view.searchKeyword)}"></label>
+  return `<div class="d-tools"><label class="d-search">${iconSpan(ICON.search)}<input class="j-q" placeholder="搜索片名、类型、导演、主演、影评…" value="${esc(view.searchKeyword)}"><button type="button" class="q-clear" data-cinema-clear title="清空搜索" aria-label="清空搜索"${view.searchKeyword ? '' : ' hidden'}>${iconSpan(ICON.close)}</button></label>
     <div class="seg j-sort">${([['date', '最近观看'], ['created', '加入先后'], ['rating', '按评分']] as const).map(([k, l]) => `<button data-k="${k}" class="${view.sortMode === k ? 'is-on' : ''}">${l}</button>`).join('')}</div></div>`;
 }
 
@@ -182,11 +184,22 @@ export function renderMidnightMob(root: HTMLElement, inp: MidnightRenderInput): 
   const cntEl = root.querySelector('.j-mcnt');
   if (titleEl) titleEl.textContent = t;
   if (cntEl) cntEl.textContent = v.view === 'list' ? `· ${inp.cards.length}` : '';
+  // 深审批 B #2/#3：搜索框值回显（mob 壳是静态 input，重开面板按旧词过滤而框空白 = 隐形筛选；
+  // 与 desk 的 value 绑定同源口径，保「会话内搜索词存续」语义）+ 尾 ✕ 显隐随词同步（有词才显示）
+  const q = root.querySelector<HTMLInputElement>('.j-mq');
+  if (q && q.value !== v.searchKeyword) q.value = v.searchKeyword;
+  const qClear = root.querySelector<HTMLElement>('.m-search .q-clear');
+  if (qClear) qClear.hidden = !v.searchKeyword;
   const mv = root.querySelector<HTMLElement>('.j-mview');
   if (mv) {
     if (v.view === 'list') {
-      mv.className = 'm-scroll j-mview';
-      mv.innerHTML = `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>`;
+      // 深审批 B #1：空态分支与 desk 同构（筛选无命中 / 空库两态）——此前 mob 恒渲染 m-grid，
+      // 空库或无命中整片空白。清词/清筛按钮走 data-cinema-clear 委托（ui.ts 全端已生效）。
+      // 空态时容器转 flex（.cn-mempty），空态页才能撑满垂直居中。
+      mv.className = inp.cards.length ? 'm-scroll j-mview' : 'm-scroll j-mview cn-mempty';
+      mv.innerHTML = inp.cards.length
+        ? `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>`
+        : emptyPageHtml(viewFiltered(v));
     } else if (v.view === 'ai') {
       mv.className = 'sp-body j-mview';
       mv.innerHTML = inp.aiHtml;
