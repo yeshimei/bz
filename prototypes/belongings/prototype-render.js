@@ -1,4 +1,4 @@
-/* 源指纹 a41b9d6d444ca516 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7d656482fc51ab3d · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/belongings/render.ts → window.BZR_belongings（评审壳预览包，ADR-0104） */
 var BZR_belongings = (() => {
@@ -24,6 +24,7 @@ var BZR_belongings = (() => {
   var render_exports = {};
   __export(render_exports, {
     ICON: () => ICON,
+    MAX_PRICE: () => MAX_PRICE,
     SORT_OPTS: () => SORT_OPTS,
     STATUS: () => STATUS,
     STATUS_LABELS: () => STATUS_LABELS,
@@ -44,6 +45,7 @@ var BZR_belongings = (() => {
     emptyHtml: () => emptyHtml,
     esc: () => esc,
     exitDateOf: () => exitDateOf,
+    exitDayTsOf: () => exitDayTsOf,
     exitedStatus: () => exitedStatus,
     filtered: () => filtered,
     flowBtnsHtml: () => flowBtnsHtml,
@@ -63,6 +65,8 @@ var BZR_belongings = (() => {
     moneyUnitLabel: () => moneyUnitLabel,
     moneyWith: () => moneyWith,
     panelHtml: () => panelHtml,
+    parseLocalDay: () => parseLocalDay,
+    recoveredOf: () => recoveredOf,
     renderPanelView: () => renderPanelView,
     resolveYear: () => resolveYear,
     segmentedHtml: () => segmentedHtml,
@@ -89,11 +93,18 @@ var BZR_belongings = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
   function emptyHtmlStr(icon, title, desc) {
     return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
 
   // src/belongings/emoji-icon-map.ts
@@ -580,6 +591,7 @@ var BZR_belongings = (() => {
     report: "bar-chart-3"
     // 年度资产报告工具行入口（issue 356）
   };
+  var MAX_PRICE = 1e12;
   var STATUS = {
     using: { label: "使用中", key: "using", ic: "check-circle" },
     idle: { label: "闲置", key: "idle", ic: "package" },
@@ -613,8 +625,7 @@ var BZR_belongings = (() => {
     return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
   }
   function todayStr() {
-    const d = /* @__PURE__ */ new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return localDayKey();
   }
   function catEmoji(cat) {
     const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
@@ -663,22 +674,28 @@ var BZR_belongings = (() => {
   function exitDateOf(it) {
     return isExited(it) ? it.exit_date || null : null;
   }
+  function exitDayTsOf(it) {
+    var _a, _b;
+    return isExited(it) ? (_b = (_a = parseLocalDay(it.exit_date)) == null ? void 0 : _a.getTime()) != null ? _b : null : null;
+  }
+  function recoveredOf(it) {
+    return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
+  }
   function parseLocalDay(raw) {
     const parts = String(raw || "").slice(0, 10).split("-").map(Number);
     const [y, m, d] = parts;
     if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d);
+    if (m < 1 || m > 12) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return dt;
   }
   function daysUsed(it) {
     const start = parseLocalDay(it.purchase_date);
     if (!start) return 0;
-    const ex = exitDateOf(it);
-    let end = /* @__PURE__ */ new Date();
-    if (ex) {
-      const parsed = parseLocalDay(ex);
-      if (parsed) end = parsed;
-    }
-    return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 864e5));
+    const ex = exitDayTsOf(it);
+    const end = ex != null ? ex : Date.now();
+    return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
   }
   function dailyCostOf(it) {
     const days = daysUsed(it);
@@ -686,7 +703,7 @@ var BZR_belongings = (() => {
     return days > 0 ? price / days : price;
   }
   function inStock(it) {
-    return it.current_status === "使用中" || it.current_status === "闲置";
+    return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
   }
   function stockCount(items) {
     return items.filter(inStock).length;
@@ -699,7 +716,7 @@ var BZR_belongings = (() => {
     let days = 0;
     for (const it of items) {
       cost += Number(it.purchase_price) || 0;
-      if (it.current_status === "已转卖" && Number(it.sold_price) > 0) cost -= Number(it.sold_price);
+      cost -= recoveredOf(it);
       days += daysUsed(it);
     }
     return days ? cost / days : 0;

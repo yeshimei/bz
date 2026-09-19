@@ -503,7 +503,7 @@ describe('归物本设置 schema（⚙️ 收敛设置面板，ticket 177）', (
   beforeEach(() => {
     resetObsidianMocks();
     document.body.innerHTML = '';
-    settings = { belongingsDataFolder: 'CONFIG/STORAGE' };
+    settings = { storagePath: 'CONFIG/STORAGE' };
     setSettingsProvider(() => settings as any);
     setSettingsSaver(async () => {});
   });

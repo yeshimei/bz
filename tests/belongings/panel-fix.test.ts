@@ -34,7 +34,7 @@ function seed(vault: MockVault, items: Record<string, any>) {
 
 async function open(vault: MockVault): Promise<HTMLElement> {
   setApp({ vault } as any);
-  setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }) as any);
+  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
   resetObsidianMocks();
   await openPanel();
   return document.querySelector('.bz-panel-overlay') as HTMLElement;
@@ -180,7 +180,7 @@ describe('归物本 review 面板组回归（H14-H20）', () => {
 
   it('H19：items 为真值非对象（字符串/数组）→ 重置空表，不派生垃圾分类不炸', async () => {
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
     resetObsidianMocks();
     // 字符串：Object.values 会按字符拆
     vault.files.set(DATA_PATH, JSON.stringify({ version: '1.0', items: 'oops' }));

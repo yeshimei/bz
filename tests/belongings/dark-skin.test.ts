@@ -96,12 +96,12 @@ describe('belongings poster 皮肤暗色模式（issue 270）', () => {
 });
 
 describe('issue 291：确认流程框带皮（core/flow-dialog）', () => {
-  it('ui.ts 两处确认框都传了皮肤类：删除物品 + confirmDiscard 第三参', () => {
+  it('confirmDiscard 第三参传皮肤类；删除已免确认直达（eff E5 拍板），无 openFlowDialog 残留', () => {
     const ui = repo('src/belongings/ui.ts');
-    expect(ui, '删除物品确认未带皮肤类').toContain("className: 'bz-bel-flow-dialog'");
     expect(ui, '放弃草稿确认未带皮肤类').toContain(
       "confirmDiscard(() => closeBelForm(), undefined, 'bz-bel-flow-dialog')"
     );
+    expect(ui, '删除应免确认直达（不再调 openFlowDialog）').not.toMatch(/openFlowDialog\(/);
   });
 
   it('皮肤类进了亮/暗两处 token 选择器列表（防「传了类但没 token」）', () => {

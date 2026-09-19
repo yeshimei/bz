@@ -28,7 +28,7 @@ describe('loadDatabase', () => {
   });
 
   it('文件不存在 → 空数据库结构（version 1.0/items {}）+ 空历史分类 + 建文件（统一读写语义）', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const db = await loadDatabase();
     expect(db.version).toBe('1.0');
     expect(db.items).toEqual({});
@@ -38,7 +38,7 @@ describe('loadDatabase', () => {
   });
 
   it('迁移（issue 231/ADR-0102）：emoji 前缀分类拆为纯文字 + icon；未映射/无 emoji/已有 icon 各归其位', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const item = (id: string, category: string, icon?: string) => ({
       id, name: '物' + id, category,
       purchase_price: 10, purchase_date: '2024-06-01',
@@ -64,7 +64,7 @@ describe('loadDatabase', () => {
   });
 
   it('历史分类派生（issue 231）：categories = 频次降序去重；categoryIcons = 分类 → 馆内首个 icon', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const item = (id: string, category: string, icon?: string) => ({
       id, name: '物' + id, category,
       purchase_price: 10, purchase_date: '2024-06-01',
@@ -86,7 +86,7 @@ describe('loadDatabase', () => {
   });
 
   it('解析失败 → 走 core 默认通知（含留档路径）+ 原样留档 CONFIG/.CORRUPT 重建 + 重置为空库', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const broken = '{broken';
     vault.files.set('CONFIG/STORAGE/belongings.json', broken);
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -106,7 +106,7 @@ describe('loadDatabase', () => {
   });
 
   it('合法空对象 {} → 视为空库不告警（修复前每次打开都弹解析失败警告）', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
     vault.files.set('CONFIG/STORAGE/belongings.json', '{}');
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     clearNotices();
@@ -118,7 +118,7 @@ describe('loadDatabase', () => {
   });
 
   it('P2 形状容错：内容为数组/null 字面量 → 「结构异常」警告 + 重置空库（非对象白屏防护）', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const warnSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // 数组
     vault.files.set('CONFIG/STORAGE/belongings.json', '[{"id":"x"}]');
@@ -135,7 +135,7 @@ describe('loadDatabase', () => {
   });
 
   it('读取已有数据（issue 231 起载入迁移：emoji 分类 → 纯文字 + icon）', async () => {
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
     const existing = {
       version: '1.0',
       last_updated: '2025-01-01T00:00:00.000Z',
@@ -170,7 +170,7 @@ describe('saveDatabase', () => {
 
   beforeEach(() => {
     vault = new MockVault();
-    setup(vault, { belongingsDataFolder: 'CONFIG/STORAGE' });
+    setup(vault, { storagePath: 'CONFIG/STORAGE' });
   });
 
   it('保存结构：version/last_updated/items（无 categories 冗余）', async () => {
@@ -194,7 +194,15 @@ describe('saveDatabase', () => {
   });
 
   it('getDataFilePath：目录尾部斜杠去除', () => {
-    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE/' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE/' }) as any);
+    expect(getDataFilePath()).toBe('CONFIG/STORAGE/belongings.json');
+  });
+
+  it('getDataFilePath：storagePath 自定义目录跟随（arch N4/N5 死键整改配套：不再靠缺省兜底巧合）', () => {
+    setSettingsProvider(() => ({ storagePath: '我的/自定数据' }) as any);
+    expect(getDataFilePath()).toBe('我的/自定数据/belongings.json');
+    // 未设 storagePath → core storageDir 缺省兜底（arch N2 收敛后由 core 单源提供）
+    setSettingsProvider(() => ({}) as any);
     expect(getDataFilePath()).toBe('CONFIG/STORAGE/belongings.json');
   });
 });

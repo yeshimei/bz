@@ -19,7 +19,7 @@
  * 计算口径（ADR-0089）：总资产/在库投入 = 在用+闲置原价合计；日均成本 =（总购入 - 转卖回本
  * Σ售价）/ 累计持有天数；单件日均 = 价格/已用天数（0 天 = 全价）；出离条目天数封口 exit_date。
  */
-import { esc, iconSpan } from '../core/ui/str';
+import { esc, iconSpan, localDayKey } from '../core/ui/str';
 import { EMOJI_ICON } from './emoji-icon-map';
 import type { BelongingsItem } from './types';
 
@@ -39,6 +39,11 @@ export const ICON = {
   chevD: 'chevron-down',
   report: 'bar-chart-3', // 年度资产报告工具行入口（issue 356）
 };
+
+/** 价格可记录上限（func P3-6/深审批A）：超过即拒收——1e308 一类粘贴值会经
+ *  Math.round(price*100) 变 Infinity、JSON.stringify 序列化为 null、读回 0 静默丢值；
+ *  1e12（一万亿）远超个人物品合理价位，同时给落盘两位小数换算留足安全余量 */
+export const MAX_PRICE = 1e12;
 
 /** 状态（数据四态精确串；key = 稳定英文标识） */
 export const STATUS: Record<string, { label: string; key: string; ic: string }> = {
@@ -98,9 +103,10 @@ export function money(n: number, unit: MoneyUnit = 'cny'): string {
 export function moneyShort(n: number, unit: MoneyUnit = 'cny'): string {
   return moneyWith((Number(n) || 0).toLocaleString('zh-CN', { maximumFractionDigits: 0 }), unit);
 }
+/** 今天（本地时区 YYYY-MM-DD）——review-deep 一致 P3-6 收编 core 正典 localDayKey
+ *  （全库最后一个域内复写点；导出名保留以稳 ui.ts/report.ts 消费面） */
 export function todayStr(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return localDayKey();
 }
 /** 分类 emoji（取首段 emoji；无 emoji 显示首字） */
 export function catEmoji(cat: string): string {
@@ -156,33 +162,52 @@ export function isExited(it: BelongingsItem): boolean {
 export function exitDateOf(it: BelongingsItem): string | null {
   return isExited(it) ? (it.exit_date || null) : null;
 }
-function parseLocalDay(raw: string | null | undefined): Date | null {
+/** 出离封口时间戳（非出离态或 exit_date 无效 = null = 无封口锚点，截至查看时点计）。
+ *  面板 daysUsed 与报告统计（原 report-stats.exitTsOf）消费的单源实现 */
+export function exitDayTsOf(it: BelongingsItem): number | null {
+  return isExited(it) ? (parseLocalDay(it.exit_date)?.getTime() ?? null) : null;
+}
+/** 转卖回血数值（仅已转卖且有正售价；与 avgDailyCost 扣减口径一致——
+ *  cons P3-7 随出离态收编自 report-stats 下沉，供 KPI/报告两侧复用） */
+export function recoveredOf(it: BelongingsItem): number {
+  return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
+}
+/**
+ * 'YYYY-MM-DD…' → 当日零点本地 Date；无效 = null（单源日期归一，func P3-5 深审批A）。
+ * 分量范围校验：月 1-12 + 年月日归一化回读比对——「2026-13-45」不再被 JS Date 静默
+ * 归一成 2027-02-14、「2025-02-30」不再漂移成 3 月（修复前面板/报告两套解析各算各年）。
+ * 无效语义（拍板：不封口）：调用方对无效出离日一律按「无封口锚点」处理——截至查看时点
+ * 计天数，不替用户编造封口日期；面板 daysUsed 与报告 exitTsOf 消费同一实现，口径恒一致
+ * （数值上「封口回落今天」与「不封口算到今天」在 daysUsed 恒等，统一取后者语义并注释）。
+ */
+export function parseLocalDay(raw: string | null | undefined): Date | null {
   const parts = String(raw || '').slice(0, 10).split('-').map(Number);
   const [y, m, d] = parts;
   if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d);
+  if (m < 1 || m > 12) return null;
+  const dt = new Date(y, m - 1, d);
+  // 归一化回读：任一分量被 Date 进位（2 月 30 日 → 3 月等）即判无效
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return dt;
 }
 /** 已用天数：本地日历日口径（原 data.ts moment 版逐语义等价的零依赖实现，随单源迁入）。
- *  出离条目封口在 exit_date（无效封口回落今天）；其余截至今天；当天/无效/早于购买日 = 0 天（全价） */
+ *  出离条目封口在 exit_date（消费 exitDayTsOf 单源：无效出离日 = 无封口锚点，截至今天）；
+ *  其余截至今天；当天/无效/早于购买日 = 0 天（全价） */
 export function daysUsed(it: BelongingsItem): number {
   const start = parseLocalDay(it.purchase_date);
   if (!start) return 0;
-  const ex = exitDateOf(it);
-  let end = new Date();
-  if (ex) {
-    const parsed = parseLocalDay(ex);
-    if (parsed) end = parsed;
-  }
-  return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 864e5));
+  const ex = exitDayTsOf(it);
+  const end = ex ?? Date.now();
+  return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
 }
 export function dailyCostOf(it: BelongingsItem): number {
   const days = daysUsed(it);
   const price = Number(it.purchase_price) || 0;
   return days > 0 ? price / days : price;
 }
-/** 在库 = 使用中 + 闲置 */
+/** 在库 = 使用中 + 闲置（状态串消费 STATUS 单源，cons P3-7 禁手抄） */
 export function inStock(it: BelongingsItem): boolean {
-  return it.current_status === '使用中' || it.current_status === '闲置';
+  return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
 }
 export function stockCount(items: BelongingsItem[]): number {
   return items.filter(inStock).length;
@@ -197,7 +222,7 @@ export function avgDailyCost(items: BelongingsItem[]): number {
   let days = 0;
   for (const it of items) {
     cost += Number(it.purchase_price) || 0;
-    if (it.current_status === '已转卖' && Number(it.sold_price) > 0) cost -= Number(it.sold_price);
+    cost -= recoveredOf(it);
     days += daysUsed(it);
   }
   return days ? cost / days : 0;
