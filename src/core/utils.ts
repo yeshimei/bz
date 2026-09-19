@@ -5,7 +5,7 @@
 import moment from 'moment';
 import { getApp } from './app';
 import { httpGetText, requestUrlAsFetch } from './http';
-import { pad2, relTime as baseRelTime, stripMdExt } from './ui/str';
+import { pad2, relTime as baseRelTime, stripMdExt, localDayKey, stripTitleMarks } from './ui/str';
 import { notice } from './notice';
 
 /** HTML 转义 */
@@ -187,21 +187,10 @@ export function bytesEqual(a: ArrayLike<number>, b: ArrayLike<number>): boolean 
 
 // ==================== 通用化收编（全域扫描 2026-09：各域重复实现上收） ====================
 
-/** localDayKey(ts)：本地时区日期键 YYYY-MM-DD（日记文件名/统计落盘键共用口径；蓝本 clipbook/constants localDayKey） */
-export function localDayKey(ts: number | Date = Date.now()): string {
-  const d = ts instanceof Date ? ts : new Date(ts);
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-}
-
-/** stripMdExt(name)：剥离结尾 .md 扩展名（大小写不敏感；各域 30+ 处内联正则收口）：
- *  实现单源 core/ui/str（零依赖区，render 纯层白名单仅 str——memo/secondbrain 的
- *  render.ts 由此消费），此处转发保持既有 import 路径兼容（pad2 同款范式） */
-export { stripMdExt };
-
-/** stripTitleMarks(s)：剥离首尾书名号《》（各域条目名清洗收口） */
-export function stripTitleMarks(s: string): string {
-  return String(s || '').replace(/^《|》$/g, '');
-}
+/** localDayKey / stripTitleMarks：实现单源 core/ui/str（零依赖区，A9/C3 审查收编——
+ *  review/stats 等纯数据层为保 node 直测引 utils 会拖 obsidian 面，正典故落 str）；
+ *  此处转发保持既有 import 路径兼容（stripMdExt / pad2 同款范式）。 */
+export { localDayKey, stripMdExt, stripTitleMarks };
 
 /** cmpZh(a, b)：中文拼音序比较器（localeCompare 'zh'；条目排序收口） */
 export function cmpZh(a: string, b: string): number {

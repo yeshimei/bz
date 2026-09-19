@@ -8,7 +8,8 @@
  */
 
 import type { ReviewItem } from './data';
-import { FSRS, DEFAULT_W } from './fsrs';
+import { DEFAULT_W, currentR } from './fsrs';
+import { localDayKey } from '../core/ui/str';
 
 /** 评级 → 中文/颜色（UI 共用） */
 export const RATING_NAMES: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
@@ -35,12 +36,10 @@ export interface ReviewStats {
   daily7: Array<{ date: string; count: number }>;
 }
 
-/** 把 timestamp 转本地日期键 YYYY-MM-DD */
+/** 把 timestamp 转本地日期键 YYYY-MM-DD（A9/C3 审查收编：实现单源 core/ui/str localDayKey——
+ *  零依赖区，纯数据层可安全引入 node 直测；此处转发保 queue/render/stats-ui 既有消费路径） */
 export function dateKey(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
+  return localDayKey(d);
 }
 
 /** 解析 reviewHistory 成 { timestamp, rating, stage, stability, R? } 列表 */
@@ -111,17 +110,15 @@ export function computeStats(items: ReviewItem[], opts?: { w?: number[] }): Revi
   const overdue = active.filter((i) => i.isOverdue);
   const overdueRate = active.length ? overdue.length / active.length : 0;
 
-  // 平均 R（FSRS 相位且有 stability+lastReviewed 的条目；R 公式与调度同源 FSRS.R）
-  const rFsrs = new FSRS(opts?.w || DEFAULT_W);
+  // 平均 R（FSRS 相位且有 stability+lastReviewed 的条目；A7 审查修复：当前 R 走 fsrs.currentR
+  // 单源——原与 queue.isEarlyDue 等五处同式复写，防口径漂移）
   let rSum = 0;
   let rN = 0;
   for (const i of items) {
-    if (i.phase === 'fsrs' && i.stability && i.lastReviewed) {
-      const t = (new Date().getTime() - new Date(i.lastReviewed).getTime()) / 86400000;
-      if (t > 0) {
-        rSum += rFsrs.R(t, i.stability);
-        rN++;
-      }
+    const r = currentR(i, opts?.w || DEFAULT_W);
+    if (r !== null) {
+      rSum += r;
+      rN++;
     }
   }
   const avgR = rN ? rSum / rN : null;
@@ -170,47 +167,6 @@ export function loadDistribution(items: ReviewItem[], nDays: number): Array<{ da
     if (item.completed || item.isCompleted || !item.nextReviewDate || item.isMissing) continue;
     const d = new Date(item.nextReviewDate);
     const key = dateKey(d);
-    const slot = out.find((x) => x.date === key);
-    if (slot) slot.count++;
-  }
-  return out;
-}
-
-/** 今日/明日预告 */
-export function loadPreview(items: ReviewItem[]): { today: number; tomorrow: number } {
-  const todayKey = dateKey(new Date());
-  const tmrDate = new Date();
-  tmrDate.setDate(tmrDate.getDate() + 1);
-  const tomorrowKey = dateKey(tmrDate);
-  let today = 0;
-  let tmr = 0;
-  for (const item of items) {
-    if (item.completed || item.isCompleted || !item.nextReviewDate || item.isMissing) continue;
-    const key = dateKey(new Date(item.nextReviewDate));
-    if (key === todayKey) today++;
-    else if (key === tomorrowKey) tmr++;
-  }
-  return { today, tomorrow: tmr };
-}
-
-/** 日历热力图：近 N 天（默认 35=5 周）每天负载，补零；含周起始对齐（周一开头） */
-export function loadHeatmap(items: ReviewItem[], nDays = 35): Array<{ date: string; count: number; weekday: number }> {
-  const out: Array<{ date: string; count: number; weekday: number }> = [];
-  const today = new Date();
-  // 对齐到本周一（JS getDay: 0=周日）作为起始
-  const start = new Date(today);
-  const dow = start.getDay(); // 0=Sun..6=Sat
-  start.setDate(start.getDate() - (dow === 0 ? 6 : dow - 1));
-  const days = Math.max(nDays, 35);
-  for (let i = 0; i < days; i++) {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    if (d > today) break;
-    out.push({ date: dateKey(d), count: 0, weekday: d.getDay() });
-  }
-  for (const item of items) {
-    if (item.completed || item.isCompleted || !item.nextReviewDate || item.isMissing) continue;
-    const key = dateKey(new Date(item.nextReviewDate));
     const slot = out.find((x) => x.date === key);
     if (slot) slot.count++;
   }

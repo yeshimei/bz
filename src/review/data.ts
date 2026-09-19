@@ -60,8 +60,10 @@ export class ReviewDataManager {
     this.app = app;
   }
 
-  /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字）。
-   *  走模块级 getApp（reviewApp 为单例 dataManager，app 参数注入会绑定旧 app 导致跨测试/重开写错 vault） */
+  /** 加载条目（向后兼容旧字段；日期兼容 ISO 字符串与数字；非法 nextReviewDate 回退 reviewStart——见下）。
+   *  走构造注入的 this.app.vault（A11 审查修复：注释如实——并非模块级 getApp）；
+   *  双 dm 实例并存期（index.ensureReview 建例 / reviewApp.ensure 自持例）由各构造方保证 app 新鲜，
+   *  勿在实例方法内改走模块级 getApp（会与「实例绑定自己的 vault」语义纠缠）。 */
   async loadItems(): Promise<ReviewItem[]> {
     const data = (await jsonFileStore<any[]>(getReviewFilePath()).read()) as any;
     const items = Array.isArray(data) ? data : [];
@@ -90,7 +92,15 @@ export class ReviewDataManager {
       if (item.phase === undefined) item.phase = item.stage >= LADDER_MAX ? 'fsrs' : 'ladder';
       const now = new Date();
       const isCompleted = item.completed || false;
-      const nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : null;
+      // F7 审查修复：非法 nextReviewDate（手改/外部写坏）不再静默滞留未来列（恒不逾期不提醒）——
+      // 回退 reviewStart（同样非法则置 null 走「待定」态）并 console.warn 留痕；回写条目，下次落盘自愈
+      let nextReview = item.nextReviewDate ? new Date(item.nextReviewDate) : null;
+      if (item.nextReviewDate && isNaN(nextReview!.getTime())) {
+        const fb = item.reviewStart ? new Date(item.reviewStart) : null;
+        nextReview = fb && !isNaN(fb.getTime()) ? fb : null;
+        console.warn('[review] nextReviewDate 非法，回退 reviewStart：', item.filePath, String(item.nextReviewDate));
+        item.nextReviewDate = nextReview ? nextReview.toISOString() : null;
+      }
       const isOverdue = !!nextReview && now > nextReview && !isCompleted;
       item.isCompleted = isCompleted;
       item.isOverdue = isOverdue;
@@ -102,7 +112,8 @@ export class ReviewDataManager {
   }
 
   /** 保存（白名单剥离运行时字段：file/isCompleted/isOverdue/isMissing/currentStage/totalStages
-   *  均为 loadItems 派生或运行时态，不落盘（数据卫生）；走模块级 getApp——见 loadItems 注释） */
+   *  均为 loadItems 派生或运行时态，不落盘（数据卫生）；写盘走 jsonFileStore，读侧走构造注入
+   *  this.app——见 loadItems 注释） */
   async saveItems(items: ReviewItem[]): Promise<void> {
     const data = items.map((i) => {
       const {
@@ -125,30 +136,56 @@ export class ReviewDataManager {
     });
   }
 
+  /** 新条目构造（addItem/addItems 共用；与旧 addItem 逐字段同口径） */
+  private newReviewItem(filePath: string, fileName: string): ReviewItem {
+    const now = new Date();
+    return {
+      id: `review_${now.getTime()}_${Math.random().toString(36).slice(2, 8)}`,
+      filePath,
+      name: fileName,
+      reviewStart: now.toISOString(),
+      stage: 0,
+      phase: 'ladder',
+      stability: 1,
+      difficulty: 0.3,
+      reviewHistory: [],
+      totalReviews: 0,
+      averageConfidence: 0,
+      nextReviewDate: new Date(now.getTime() + FSRS_FIRST_INTERVALS[0] * 86400000).toISOString(),
+      lastReviewed: null,
+      lastDifficulty: null,
+      completed: false,
+    };
+  }
+
   /** 新增条目 */
   addItem(filePath: string, fileName: string): Promise<ReviewItem> {
     return this.mutate((items) => {
       if (items.some((i) => i.filePath === filePath)) throw new Error('该笔记已在复习计划中');
-      const now = new Date();
-      const newItem: ReviewItem = {
-        id: `review_${now.getTime()}_${Math.random().toString(36).slice(2, 8)}`,
-        filePath,
-        name: fileName,
-        reviewStart: now.toISOString(),
-        stage: 0,
-        phase: 'ladder',
-        stability: 1,
-        difficulty: 0.3,
-        reviewHistory: [],
-        totalReviews: 0,
-        averageConfidence: 0,
-        nextReviewDate: new Date(now.getTime() + FSRS_FIRST_INTERVALS[0] * 86400000).toISOString(),
-        lastReviewed: null,
-        lastDifficulty: null,
-        completed: false,
-      };
+      const newItem = this.newReviewItem(filePath, fileName);
       items.push(newItem);
       return newItem;
+    });
+  }
+
+  /** 批量新增（A13/E4 审查修复：watch 存量收编等 N+1 场景——单趟 RMW，一读一写落盘）。
+   *  已存在/空路径跳过不抛错；返回 { added, skipped } 供调用方通知口径。 */
+  addItems(list: Array<{ filePath: string; fileName?: string }>): Promise<{ added: number; skipped: number }> {
+    return this.mutate((items) => {
+      const have = new Set(items.map((i) => i.filePath));
+      let added = 0;
+      let skipped = 0;
+      for (const { filePath, fileName } of list) {
+        if (!filePath || have.has(filePath)) {
+          skipped++;
+          continue;
+        }
+        have.add(filePath);
+        const name = fileName || stripMdExt(filePath.split('/').pop() || '') || filePath;
+        items.push(this.newReviewItem(filePath, name));
+        added++;
+      }
+      return { added, skipped };
     });
   }
 
@@ -168,6 +205,22 @@ export class ReviewDataManager {
         if (items[i].filePath === filePath) items.splice(i, 1);
       }
     }).then(() => undefined);
+  }
+
+  /** 批量移除（A13/E4 审查修复：watch 删除确认等 N+1 场景——单趟 RMW，一读一写落盘）。
+   *  同路径重复条目全数移除（与 removeItem 同语义）；未命中路径静默跳过；返回移除条数。 */
+  removeItems(paths: string[]): Promise<number> {
+    const set = new Set(paths);
+    return this.mutate((items) => {
+      let removed = 0;
+      for (let i = items.length - 1; i >= 0; i--) {
+        if (set.has(items[i].filePath)) {
+          items.splice(i, 1);
+          removed++;
+        }
+      }
+      return removed;
+    });
   }
 
   /** 撤销移出（ticket 141 通病 1）：原条目（含阶段/排期/历史）原样插回，不走 addItem 重置进度。

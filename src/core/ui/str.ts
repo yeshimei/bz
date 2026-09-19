@@ -75,6 +75,21 @@ export function stripMdExt(name: string): string {
   return String(name || '').replace(/\.md$/i, '');
 }
 
+/** localDayKey(ts)：本地时区日期键 YYYY-MM-DD（A9/C3 审查收编：正典实现落零依赖区——
+ *  review/stats 等纯数据层为保 node 直测不能引 core/utils（拖 moment/getApp/notice 的 obsidian 面），
+ *  复写由此而生；正典落此 + core/utils 转发保既有 import 路径（stripMdExt 同款范式），
+ *  后续各域私货 dateKey 逐批收编）。实现照抄 core/utils localDayKey 正典。 */
+export function localDayKey(ts: number | Date = Date.now()): string {
+  const d = ts instanceof Date ? ts : new Date(ts);
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+/** stripTitleMarks(s)：剥离首尾书名号《》（A9/C3 同批下沉；实现照抄 core/utils 正典，
+ *  core/utils 转发保既有 import 路径兼容）。 */
+export function stripTitleMarks(s: string): string {
+  return String(s || '').replace(/^《|》$/g, '');
+}
+
 // ==================== 属性转义 / 平台派色（encrypt×password-vault 双域收口，全域扫描 2026-09 批次 G） ====================
 
 /** 属性值 HTML 转义（data-* 属性上下文：& " < >，不转 '), 与 esc（元素文本上下文）互补 */
