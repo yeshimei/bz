@@ -531,3 +531,16 @@
 - [x] 影院（item-1789722741019-t82vuk）：编辑/新增「想看」rating 收 null 被 `?? 0` 落盘成 0 → 重解析弹回「在看」；openForm 保存回调想看分支改 -1（saveEdit/saveNew 单点全修）+ tests/cinema/ui.test.ts 回归 2 例 + 行为包重出
 - [x] 日记本（item-1789672493967-y11jgy）：创建成功后 jumpToDiaryEntry 打开新笔记 + openAddDialog 增 onSaved 回调（墙注入 hide，openDiaryWrite 不传）+ tests/diary/dialogs-entries.test.ts 回归 2 例（失败路径不打开不回调）
 - [x] 门禁：tsc 0 错 + 全量 366 文件 5780 用例绿 + 主仓库构建部署
+
+## Issue 381 — 日记本：启动后台预热墙数据 + 四目录并行加载（ADR-0170）
+
+**状态：已交付**（2026-09-19，worktree 门禁全绿 + 双轴 review 闭环；主仓构建部署随本次合并执行）
+
+- [x] 规格：`issues/381-diary-wall-prewarm-parallel-load.md` + `docs/adr/adr-0170-diary-wall-prewarm-cache.md`（ADR-0170 新增；③ 跨会话持久缓存本轮缓议）
+- [x] ① 四目录并行：`readWallEntriesFresh` 日记/影视/信/书四段 `await` 串行 → `Promise.all`，wall-clock ≈ 最慢目录；合并/排序语义零变化
+- [x] ② 启动后台预热：`onLayoutReady` 尾段 `prewarmDiary`（rAF + setTimeout 到空闲，只 `loadWallEntries` 填缓存、不建 DOM 不实例化控制器——ADR-0003 UI 仍懒加载）；幂等；禁用插件 C13 守卫不预热
+- [x] ② 会话级缓存：`loadWallEntries` 按 app 键控——在途去重 + 新鲜命中；失效订 `core/domain-bus` `vault:md-*`（adaptor 通用路，ADR-0047；命中四目录即作废，语义通道订阅冗余已退）；目录判定抽 `config.inWallDirs` 单源（data 失效 + ui 订阅/引用同步共用）
+- [x] 口径：开墙（含关墙后再开）吃缓存秒开；刷新/写后回刷/重试恒 `invalidateWallCache()` 回源；读盘期被事件作废不落缓存；加密条目不进缓存（UI 层现取）；失败不缓存下次回源
+- [x] 测试：data 层 9 例（并行合并 + 在途去重 + 读盘期作废 + 失败不缓存 + 订阅卫生）+ ui 层缓存闸门 1 例 + smoke 真预热 1 例（rAF 调度 → 缓存命中 → 无 DOM → unload 复位）
+- [x] 交付后双轴 review（子代理 Standards + Spec，固定点 `master`）：硬违规 2 已修（ADR 交叉引用 0122→0047、UI 层测试缺口）；判断项 3 已清（目录判定单源 / 死字段 `attached` / 中间人 `resetWallCache`）；Spec 口径 1 已对齐（"仅首开"→"开墙含再开"，ADR/issue/注释/spec.md 同步）
+- [x] 门禁：tsc 0 错 + 全量 390 文件 6047 用例 6037 绿（2 红均既存：clipbook 会话冻结序 4 例他会话在修、原型新鲜度 6 项主仓存量陈旧；已核 clean master 同样红）+ 日记行为包重出（源指纹同步）
