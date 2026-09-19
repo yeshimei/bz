@@ -347,6 +347,10 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **C 队列基建与文档** `bz-fix-cinema-infra`（douban-queue.ts + douban-fetcher.ts + constants.ts + index.ts + settings.ts + core/domain-bus.ts 契约注释 + tests/cinema/{douban-queue,index}.test.ts）：P3 enqueue 清 cancelled+T3、微单源三处（extractMovieName 单源/stripMdExt import/字符集常量）、BILIBILI_NONE 删、注释失真两处、unloadCinema 补 unregisterPanelEsc('bz-cinema')（ui.ts:18 死 import 归 A）、movie 通道契约登记、unload 三态断言 T6。
 - **主线程收口**：CONTEXT.md 影院词条同步（random-pick 补、M.aiTitle 死句删、review 事件按 A 落地结果改口径、「已放映」风味词注一句）；跨批 ui.ts/render.ts 冲突消解；全量门禁。
 
+### 修复与闭环记录（2026-09-20 ✅）
+
+三批分支 `bz-fix-cinema-{write,view,infra}` 合并序 C→B→A（批 A 最重后合，git 3-way 零冲突）。**主线程收口五笔**：①constants 非法字符双套归一——批 A 私有 `ILLEGAL_NAME_RE` 与批 C 导出同名合并后 TS2395，删私有副本改 `hasIllegalNameChar` 复用批 C 单源；②CONTEXT.md 影院词条收口（random-pick 补 / M.aiTitle 死句改口径 / 「已放映」风味词注）；③批 B 登记 ui.test:810 头行钮序断言补触控类；④**旧守卫翻转两例**（review-fix-b「跳过项守护」+ walkthrough-fix-c「C-8」：walkthrough 轮「风格化域不挂共享触控类」豁免与本轮批 B 收编冲突——§8.2 40px 硬下限对风格化域同约束、热区外扩不可见不涉视觉自治，断言翻转并注记，如用户异议可回退）；⑤行为包重出。**门禁**：tsc 0；tests/cinema 222 例绿；全量 6310 例（守卫翻转后全绿）；`pnpm run build` 部署 **a6ba3e6c**；三 worktree+分支清理。**残款登记**：analysis 片龄/年代桶无已看守卫（「想看片的片龄」或有意设计，斟酌项）；两处批外内联样式（analysis 想看 tag-cloud margin-top / render 空库引导 font-size，随下次 markup 触碰）；pomodoro ui.test 全量并发偶发超时（fake timers 时间敏感，单跑绿，非功能）。
+
 > 明细：`.scratch/review-deep/cinema-{func,ui,efficiency,consistency}.md`（arch 待落）。方向 1：P2×1 + P3×7；方向 2：P1×1 + P2×1 + P3×4 + [UX-Suggestion]×2；方向 3：P2×5 + P3×2 + [UX-Suggestion]×3；方向 4：P2×4 + P3×8（含 [UX-Suggestion]×3）+ 附带功能线 P2×1。跨方向去重：ui.ts:142 模板（func=ui）、焦点（ui=eff）、openDouban（func=ui=cons 记名升格）、ESC 清词（eff=cons，cons 并入 ✕ 钮定稿范式）、mob 搜索回显（eff=cons）、热区（ui=cons）。旧账复核四方向一致：已修/闭环确认在位（C1 撤回属实、C2-C10、G6-G9、跟进 B/C、一致#1/#2）；未修 1 条（AI#17，P3，随手收）；144 拍板待做账（删除可撤销 notifyUndo/脏表单拦截）与 ADR-0125 基座迁移在案不另立。门禁基线：tsc 0 错；tests/cinema 11 文件 183 例全绿。
 
 ### 已去重条目（func × ui 合并，暂记 P2×2 + P3×9；批次划分待 5 方向齐后定稿）
@@ -455,20 +459,29 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## bookshelf（书库）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4/5 审查中）
+## bookshelf（书库）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构审查中）
 
-> 明细：`.scratch/review-deep/bookshelf-{func,efficiency}.md`（ui/cons/arch 落地中，跨方向去重与批次定稿待其到账）。方向 1：P2×1 + P3×5 + 建议1；方向 3：P1×1 + P2×1 + P3×4 + 建议3。旧账复核：15 项全闭环（G12 在位、G11 维持证伪、archive 报告群已修或随 ADR-0091 内嵌化消解、「面板删不掉书/划线删除不可撤销」维持 issue 223 只读化拍板）；删除口径合规（唯一删除面=不可逆划线删除，保留确认符合效率整改5 口径）。门禁基线：tsc 0 错；tests/bookshelf 110 例全绿。
+> 明细：`.scratch/review-deep/bookshelf-{func,ui,efficiency,consistency}.md`。方向 1：P2×1+P3×5+建议1；方向 2：P1×1+P2×3+P3×4+建议3；方向 3：P1×1+P2×1+P3×4+建议3；方向 4：P1×1+P2×1+P3×5+建议5。跨方向去重：读书笔记孤岛（eff=ui F4=cons C2 → BS1 拍板）、continueReading 裸赋值（func F1=cons C1，升格 P1）、搜索 ESC 清词✕（eff=cons）、热区（ui F6=cons）、100vh（ui F3）。删除口径分歧裁决：划线删除维持确认框（func 判不可逆 + issue 223 只读化拍板在案；cons UX 判可逆属误读，异议登记不采）。旧账：G12 在位、G11 维持证伪、一致#3/issue 291 残款健在。门禁基线：tsc 0；tests/bookshelf 110 例全绿。
 
 ### 已入账条目（去重待 5 方向齐）
 
 - **P1 读书笔记弹窗全域零入口** `bookshelf/reading-note*`（eff = ui F4 同根合并）——ADR-0096「功能零回退」拍板 vs issue 223 入口移除 vs CONTEXT.md:96/ADR-0091/ADR-0096/settings.ts:173 四处文档仍宣称可用：933 行活代码 + 36 用例悬空不可达。**修法含产品决策（恢复最小入口 or 清理代码+同步四处文档），归拍板清单 BS1。**
-- **P2 `bz-bookshelf-continue` 报告视图开着时无可见效果** `index.ts:97-101 × ui.ts:147-152`（func F1）——只改 M.view 不经 showView 切容器，墙渲染进隐藏容器；漏 `cancelReadingReport` 收口。修：走 showView + 收口报告。
+- **P1 continueReading/「继续在读」裸赋 M.view 绕过 showView** `index.ts:97` × `ui.ts:147-152`（func F1 = cons C1，升格 P1）——面板停在报告视图时触发：容器显隐不切换、报告内交互分支全失联、墙渲染进隐藏容器，**面板假死只能 ESC 逃生**；漏 `cancelReadingReport` 收口。修：改调 `showView(app,'shelf')` 一行 + 收口报告。+ 覆盖用例（含死锁场景，现零覆盖）。
 - **P2 冷开报告视图「返回书库」永挂加载占位** `ui.ts:317-323 × :277`（ui F1，F2 同根）——冷开报告路径从未 renderAll，goto-shelf 也不补渲染；报告期间数据变化返回同样陈旧墙。修：冷开路径补渲染 + goto-shelf 补 renderAll。测试 :364 只断容器类切换的盲区一并补断言。
 - **P2 移动端面板/借书卡裸 100vh**（ui F3）——接 core `--bz-vvh`（clipbook/diary/cinema 先例）。
 - **P3 检索框无 ESC 清词/✕**（eff）——clipbook 效率#11/#12 + diary D-UI3 定稿范式缺口，框内 ESC 直关整面板。修：二段清词 + 尾 ✕（全库统一范式）。
 - **P3 EPUB 编辑想法保存失败零反馈** `ui F5`——同文件删除路径有 notice，编辑漏。修：补失败通知。
 - **P3 移动端排序钮 28px/书脊 22px 低于 §8.2 下限**（ui F6）——挂 `bz-touch-target` 修饰类（六域已消费，本域零消费）。
 - **P3 借书卡缺「× 关闭」钮 + dialog 无 aria-label**（ui F8）——× 系 issue 223 拍板保留项，属拍板执行补齐。
+
+### 方向 4（一致性）补充条目
+
+- **P3 失败通知类型/文案三轨**（cons）——notes.ts info/error 混用。修：收编 `notifyActionError`+onRetry 单源（与 efficiency 线同项合并）。
+- **P3 settings.ts 键注释三处陈旧**（cons）——悬空 MFS 注释/旧四档排序/十选一。修：随批纠偏。
+- **P3 `updateComment` onDone 死参数且与 `deleteHighlight` 同名反义**（cons）。修：命名与签名理顺。
+- **P3 分类色板与终稿 20 类脱节**（cons）。修：色板对齐。
+- **P3 CONTEXT 词条 439「统一行操作已接书库」失真**（cons）——随 BS1 拍板结果一并主线程文档收口（词条 96/84/439 三处漂移）。
+- **UX 登记**：报告视图重开保持与「书库」命令语义张力（cons）→ 拍板清单 BS 系；划线删除确认框维持（见头部裁决）。
 - **P3 批注引号往返不反转义**（func）——批注 `"` 写入转义 `&quot;` 但读取展示不反转义，往返二次恶化。修：读侧反转义。
 - **P3 weave-data.json 只挂 modify 不挂 create**（func）——Weave 首次落盘不刷新。修：补 create 监听。
 - **P3 md progress 不钳负值**（func）。修：钳制。
