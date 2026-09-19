@@ -24,7 +24,8 @@ import { esc, iconSpan } from '../core/ui/str';
 import { topifyZ } from '../core/z-order';
 import { CHART_PASTEL_SERIES, CHART_HIGHLIGHT, CHART_INK, CHART_RANK_BADGES } from '../core/chart-palette';
 import { moneyShort, moneyWith, type MoneyUnit } from './shared';
-import { computeYearReport, reportYears, resolveReportYear, trimDailyNum, type YearReportStats } from './report-stats';
+import { computeYearReport, reportYears, resolveReportYear, type YearReportStats } from './report-stats';
+import { trimDailyNum } from './shared';
 import type { BelongingsItem } from './types';
 
 // ==================== 模块状态（在途渲染 / 当前报告上下文） ====================

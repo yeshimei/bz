@@ -3,15 +3,16 @@
  * ./render.ts（渲染纯层，评审壳 prototype.html 经 prototype-render.js 消费同一份）——
  * 本文件只保留行为层：生命周期、事件绑定、core 服务接线、数据读写。
  *
- * 桌面：无壳头行（issue 219b/c 收藏本完全原型化范式）：海报 hero 即头，点遮罩/Esc 关闭，⚙ 收敛设置面板 →
+ * 桌面：无壳头行（issue 219b/c 收藏本完全原型化范式）：海报 hero 即头，点遮罩/Esc 关闭 →
  *   海报主区——特大字标题（= 筛选名，issue 208 头行标题语义）+ 字距标语 + KPI 行
  *   （在库件数强调/在库投入/日均成本/已离场·回收）→ 筛选 chips（全部/资产/四态带计数，
  *   再点回全部，issue 208 范式）→ 工具行（搜索 + 年份 + 排序三档 segmented + 记一笔）→
  *   大字网格（3 列纸面卡：NO.XX 编号 + 状态徽章 + 特大 emoji + 名称 + 大字价格 + meta；
  *   hover 整卡反色；离场卡灰化；末行空位补纸面 filler 防露格线）。
  *   点卡片 = 详情弹窗（字段全览 + 四态流转条 + 编辑/删除）；操作菜单仍走右键（issue 202）。
- * 移动 ≤768：真全屏；窄头行 ＋记一笔 → 🔍搜索(展开) → ✕（移动专属）；chips 横滑（bz-mobstrip）；
- *   hero 压缩 2×2；网格单列；点卡弹底部抽屉（core/item-actions）。全 icon lucide；数据 emoji 走
+ *   设置无域内 ⚙（已退役），四设置键挂统一设置面板（issue 294/ADR-0105）。
+ * 移动 ≤768：真全屏；印章头 + 常驻工具行（搜索/年份/排序/记一笔）；hero 压缩 2×2；
+ *   网格单列；点卡弹底部抽屉（core/item-actions）。全 icon lucide；数据 emoji 走
  *   emoji-icon-map 全量映射（issue 231 拍板全转），未入表 emoji 原样兜底。
  *
  * 契约保留：belongings.json 零迁移；smartcat 事件（add/edit/status/delete + belongingsEditChanges）；
@@ -1109,12 +1110,8 @@ export function openForm(it: BelongingsItem | null): void {
           if (isBelReportOpen()) void openBelongingsReportView();
           emitDomainEvent('belongings', { kind: 'add', item: newItem });
         }
-        _belBaseline = null;
-        _belFormTargetId = null;
-        unregisterSheetCompanion(mask);
         closeItemMenu();
-        belFormClose?.(); // uiModal 单一关闭路径：遮罩随 close 移除
-        belFormClose = null;
+        closeBelForm(); // 统一关闭单路径（cons⑩ 收口：原手工五连不置 belFormMask=null，模块级滞留已关遮罩引用）
       } catch (e: any) {
         notifySaveError(e);
         saving = false;

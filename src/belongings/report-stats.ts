@@ -12,22 +12,15 @@
 import type { BelongingsItem } from './types';
 import { catNameOf, parseLocalDay, exitDayTsOf, recoveredOf, exitedStatus } from './shared';
 
+// trimDailyNum（日均数值文本展示单源）已随 recoveredOf 下沉同刀平移至 shared.ts，
+// 面板/报告消费方改从 shared 引——本文件不再转发，防双出口。
+
 /** 陪伴最久榜条数（Top N；issue 356 拍板 Top 5） */
 export const COMPANION_TOP_N = 5;
 
 /** 月份固定档标签（走势图 12 列共用） */
 export function monthLabel(m: number): string {
   return `${m}月`;
-}
-
-/** 日均数值文本（批B 修复13 单源）：两位内去尾零；<0.01 保四位精度。
- *  原面板卡片（layouts/poster cellHtml 内联）与报告（report.trimNum 私有）双写且特判分叉——
- *  0.004 元/天卡片显示 0.0040、报告柱顶得 0。收口本函数供两侧同源消费；
- *  理想归宿是 shared.ts（统计/展示口径层，须与 recoveredOf 下沉同刀），shared 不在本批允许清单，
- *  暂落统计纯层（纯函数、report.ts 与面板布局均已依赖本文件方向），下沉时原样平移。 */
-export function trimDailyNum(n: number): string {
-  const v = Number(n) || 0;
-  return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 }
 
 // ---------- 日期解析（func P3-5/深审批A：单源收编 shared.parseLocalDay——

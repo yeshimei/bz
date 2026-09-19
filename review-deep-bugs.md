@@ -396,9 +396,18 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## belongings（归物本）域 · 审查入账中（方向 1 功能 + 方向 2 UI 已到账；方向 3 效率审查中，4/5 待派）
+## belongings（归物本）域 · ✅ 闭环（2026-09-20，五方向 235c764d 定稿 → 两批合并 → 部署 197aba03）
 
 > 明细：`.scratch/review-deep/belongings-{func,ui}.md`（eff 落地中）。方向 1：P3×8 + [UX-Suggestion]×2（数据安全面经往轮修复已扎实，新发现全是罕见路径静默失败与口径分叉）；方向 2：P2×5 + P3×4 + [UX-Suggestion]×2 + 测试缺口 6。跨方向去重：closePanel 收口（func P3-1 = ui P2-1 同根并入 P2）。旧账复核：H8-H20 全部在位（panel-fix.test 回归在册）、autumn 体验账 4 条中 3 已修；未修 2 条（autumn UX② 当月列空档 → 本轮修；随机 id 后缀理论可空串 → 风险趋零登记不修）；消解悬案 1 条（删除双保险口径，见拍板清单 B7）。门禁基线：tsc 0 错；tests/belongings 9 文件 185 例全绿。
+
+### ✅ 闭环记录（2026-09-20）
+
+- **批 A `bz-fix-bel-data`（66d25603，数据口径与删除链 12 项）**：价格钳制（MAX_PRICE=1e12+人话提示）、日期单源（shared.parseLocalDay 严格化+exitDayTsOf 封口；无效出离日拍板「无封口锚点，截至查看时点计」）、todayStr 收编 core localDayKey（全库最后域内复写点退役）、状态串全量 STATUS_ORDER/STATUS.*.label 单源、selfWritePending 计数器化（交叠窗口回归验证）、getDataFilePath 收敛 storageFile、清空分类 fail 口径、撤销补发 status 事件（belongings-source 文案零新增）、**删除免确认直达 notifyUndo**（openFlowDialog 段退役，func P3-3 确认在途死端随消）、loadDatabase 三入口对称兜底（notifyActionError+onRetry）、测试卫生（死键 belongingsDataFolder→storagePath 16 处+settings-modal 同款顺手清）。
+- **批 B `bz-fix-bel-view`（560db2b7，视图交互与报告 16 项）**：closePanel 收口（requestCloseBelForm 脏走 confirmDiscard+closeItemMenu）、详情保存后就地重建、删移动端 100ms 强制聚焦、100vh→--bz-vvh、bindFormSubmit Enter 提交、网格卡键盘可达（role/tabindex/Enter 委托）、搜索 ESC 二段+✕（debounce.cancel）、年份跨开合残留、防抖竞态身份比对、data-v 补 esc、报告三钮+下拉触发器挂 bz-touch-target、**KPI 回收口径**（仅已转卖且售价>0）、日均格式化单源 trimDailyNum、当月列截至今日（DailyCostCol.capped+悬浮注）、报告重入保留 ctxYear、ESC 手写旗标收编 registerPanelEsc。
+- **合并**：8a353cf8（批A）→ be957e72（批B；report-stats.ts 注释块冲突 union 解 + 7 产物冲突 rebuild 覆盖）。批 B 的合并复核网用例（openForm 插入点）全绿零复插。
+- **主线程收口**：cons⑩ 表单成功分支手工五连改走 closeBelForm() 单路径（belFormMask 引用滞留）；trimDailyNum 随 recoveredOf 同刀平移 shared.ts（三消费方改 import，report-stats 不再出口防双出口）；CONTEXT.md 词条四处收口（页脚拍板去除/印章头常驻工具行/演进段补 issue 294+356+删除免确认/空弹窗表述）+ ui.ts/styles.css 头注对齐。
+- **门禁与部署**：全量 6367 例（7 freshness 红=主线程改 src 未 rebuild，重出后 28/28 绿）+ tsc 0；`pnpm run build` 部署 **197aba03**；两 worktree + 分支清理。
+- **残款登记**：B1 移动端资产筛选不可达（拍板）；B4 0 元日均「￥0.0000」（拍板）；归物本删除口径已对齐免确认——**core/notice.ts:139 注释与 B7 行「favorites 已落地」系误记**（favorites 效率方向 E1 以 git log -S 证实 favorites 才是滞后域），注释纠偏归 favorites 修复批。
 
 ### 已去重修复项（暂 P2×4 + P3×11；批次待 5 方向齐后定稿）
 
@@ -509,20 +518,61 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## gameshelf（游戏库）域 · 审查入账中（方向 1 功能 + 方向 2 UI 已到账；方向 3/4 运行中，5 待槽位）
+## gameshelf（游戏库）域 · 5/5 方向到账，两批定稿（批 A `bz-fix-gs-sync` 已派；批 B `bz-fix-gs-view` 待槽位）
 
-> 明细：`.scratch/review-deep/gameshelf-func.md` + `gameshelf-ui.md`。方向 1：P1×1 + P2×2 + P3×11。方向 2：P1×1 + P2×1 + P3×4 + UX-Suggestion×6 + 测试缺口 7。旧账复核 11 条两方向合计（window.open 记名本域收口、同步按钮引导态已缓解、关面板中止回填维持拍板、uiSelect ESC 已修、issue 372/378、ADR-0122、铁律 3 合规等）。已核验健壮面：ESC 四层栈序、异步 detached DOM 守卫、对账 upsert 零覆盖主承诺、8 段成就行契约、同步 M.syncing 置位链、document 级监听回收、移动端 dvh/gridhost、主题 token 层档、图片三级兜底、转义主链（除 G4 单引号上下文）。门禁基线：tsc 0；tests/gameshelf 118 例全绿。
+> 明细：`.scratch/review-deep/gameshelf-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1：P1×1+P2×2+P3×11；方向 2：P1×1+P2×1+P3×4+UX×6+缺口7；方向 3 效率：P1×1+P2×2+P3×4+UX×1+缺口5；方向 4 一致：P2×1+P3×9+UX×2+缺口3；方向 5 架构：P2×2+P3×6+建议4+缺口6。跨方向去重：整刷失焦（ui G1=eff P1=cons 节流三份三语义，增量通道 renderList 已在只差接线）、转义单源（cons P2=func F9=ui G4=arch A5 四向同源，升级为 core escapeHtml 收编）、触控热区（ui G2=cons）、recent/months 死字段（eff=cons）、双套控件单向同步（eff=ui G5）、metadataCache 守卫（arch A2 是 func F1 修复的配套，防打折）。旧账复核：uiModal 焦点旧账过时（core modal.ts 已有开聚焦/trap/还原）、移动下拉 ESC 冒泡与 lightbox N7 归 core 批维持原判、review-ux-suggestions 3 条（2 缓解维持/1 拆出 GS4）。已核验健壮面：域内零环引用（队列→ui 全走 M 回调槽）、core 控件 11 件复用、原型单源机制在位、main 接线三命令三段式+onunload 链完整、M 十四字段唯一写者、ESC 四层栈序、异步 detached DOM 守卫、媒体三级兜底。门禁基线：tsc 0；tests/gameshelf 118 例全绿（五方向一致）。
+
+### 已入账条目（去重定稿）
+
+- **P1 自动同步链断点** `sync.ts:119` × `index.ts:30`（func F1）——`autoSyncOnOpen` fire-and-forget、await 落空：首开空库/新游戏入账后媒体本地化、中文名回填、商店/成就回填三队列全部不启动（命令与手动按钮路径正确，唯自动同步漏），「拉到的都存本地」承诺在首次接入主路径不兑现。修：返回 runSync promise。+ 回归。【批 A】
+- **P1 后台节流重渲整刷面板** `ui.ts:1187` × 三队列（ui G1 = eff P1 = cons）——搜索打字每约 1.2s 失焦、IME 组合被打断、移动端下拉被关、滚位归零、轮播中断；影院同病已修（renderSoft+焦点快照 c0805040 只落 cinema 源），**增量通道 renderList 已存在只差接线**。修：三 scheduleRerender 与 sync 的 `M.renderFn` 调用统一走 renderSoft（绑定点 ui.ts 一处改）+ 搜索框焦点快照。+ 回归。【批 B】
+- **P2 已下架手改被同步翻回（拍板项）** `reconcile`（func F2）——**归拍板清单 GS1**。
+- **P2 window.open 旧账收口** `ui.ts:794`（func F3）——切 `openExternalUrl`。【批 B】
+- **P2 移动端三枚常驻图标钮 30px 无热区** `styles.css:35-37`（ui G2 = cons）——含移动端唯一关闭出口，违 §8.2 40px 下限；core `.bz-touch-target--lg` 已备。修：挂类即生效。【批 B】
+- **P2 HTML 转义单源未收编** `ui.ts` 域内自写 escHtml/escAttr（cons P2 = func F9 = ui G4 = arch A5 四向同源）——域内两套自写转义是 core `escapeHtml` 五件套的弱化复写（缺 `'`，G4 单引号上下文断裂即病根）；`stripTitleMarks` 同病未收编。修：域内自写全部退役收编 core/ui/str 单源；hero 背景 `url('…')` 上下文单独转义。+ 回归。【批 B】
+- **P2 rebuildItems 整表替换 vs 三队列就地改竞态**（arch A1）——`home/river.ts:182` 开首页采集即触发，回填成果会话内丢显示。修：rebuild 保留未变对象引用（或队列持 id 查表）+ 竞态用例。【批 A】
+- **P2 metadataCache 未就绪守卫缺失**（arch A2）——cinema/bookshelf 有同款守卫本域无，批量首同步后立即重建漏新笔记（F1 修复的配套，防打折）。修：对齐 cinema 守卫 + 异步盲区用例。【批 A】
+- **P3 群（func 11 条）**：closePanel 关停三选二、unloadBackfill 双消费者、无中文名重拉永不收敛、媒体下载无超时、尾斜杠配置零匹配、消歧文件名展示带尾巴等。【批 A】
+- **P3 群（ui 4+4 条）**：空态门面塌陷叠钮（heroz min-height）、`url('…')` 单引号上下文（并入转义单源）、工具行三控件值单向同步（补 setValue 回路+互译测试）、openDetail 不收悬浮预览（restReel+restHero）；小项：状态行旧文案残留、chips 初始无 aria-pressed（含 core uiChip 缺省态对齐）、搜索无防抖（180ms 三域先例，顺带缓解整刷频率）、firstChar 代理对。【批 B】
+- **P3 群（eff）**：手动同步收尾双 renderAll、indexInList 每次悬浮全库排序（排序缓存）；recent/months 死字段（=cons 同源）。【批 B；死字段归批 A 删（数据侧）】
+- **P3 群（cons）**：pad2/localDayKey 五处漏网、ESC 层 id 违 `bz-<域>` 约定、synced 事件零订阅+契约注释虚指、节流三份三语义（并入批 A-4 统一节流）、--bz-vvh 注释/词条三处打架（注释纠偏+主线程词条）、CONTEXT.md 词条两处滞后（主线程文档收口）。【批 A/B 按文件归属】
+- **P3 群（arch）**：backfill 防抖式无限顺延（统一节流）、detail→sync 越层（readSteamConfig 下沉 state）、posterDisplayUrl 死代码、frontmatter 中文键无常量表（constants 单源+读侧收编）、AGENTS.md 领域清单缺 gameshelf 行（主线程文档收口）。【批 A + 主线程】
+- **UX 分流**：同步失败无重试 action（notifyActionError+onRetry 定稿范式，修）、队列熔断 console 静默（一次性人话收尾通知，修）、latestrow 键盘可达（**GS2 拍板**）、Steam 密钥明文框（**GS3 拍板**）、会话滚位记忆（clipbook 效率#17 先例，**GS4 拍板**）、状态行残留等小项随批修。
+- **测试缺口 21 条**（7+5+3+6，含 rebuild×队列竞态、metadataCache 异步盲区、open/close/unload 对称断言、并发消费者、节流契约、frontmatter helper 抽 tests/helpers、焦点回归、bindMediaFallback 全链路、modalRepaintFn 生命周期、renderList 集成、mountOps syncing、三控件互译、heroz 高度）——两批随修随补。
+
+### 修复批定稿（两批，文件不交叠）
+
+- **批 A `bz-fix-gs-sync`（同步链与队列架构）**：sync.ts/data.ts/state.ts/names.ts/backfill.ts/posters.ts/constants——F1 断链、A1 竞态、A2 守卫、节流统一、关停/双消费者/重拉收敛/超时/尾斜杠/消歧、A4 下沉、A6 死代码、A7 常量表（读侧）、pad2/localDayKey（本批文件内）、synced 事件、熔断收尾通知、recent/months 死字段（数据侧）+ 缺口（竞态/盲区/对称/并发/节流契约/helper）。
+- **批 B `bz-fix-gs-view`（UI 渲染与交互）**：ui.ts/detail.ts/styles.css——整刷→renderSoft+焦点、window.open 收口、热区、转义单源收编（含 stripTitleMarks）、塌陷、三控件互译、openDetail 收预览、防抖、ESC 清词✕（clipbook 范式）、aria-pressed、firstChar、状态行残留、滚位保持、双 renderAll 收口、indexInList 缓存、ESC 层 id、vvh 注释、`url('')` 转义 + 缺口（焦点/bindMediaFallback/modalRepaintFn/renderList/mountOps/互译/高度）。
+- **主线程文档收口**：AGENTS.md 领域清单补 gameshelf 行、CONTEXT.md 词条两处滞后、--bz-vvh 词条打架处。
+- **拍板清单**：GS1 已下架翻回 / GS2 latestrow 键盘 / GS3 密钥明文框 / GS4 会话滚位记忆。
+
+---
+
+## favorites（收藏夹）域 · 5/5 方向到账，两批定稿（批 A `bz-fix-fav-data` 已派；批 B `bz-fix-fav-view` 待槽位）
+
+> 明细：`.scratch/review-deep/favorites-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1。方向 2（UI）：P2×6 + P3×7 + UX×3。方向 3（效率）：P2×3 + P3×3 + UX×3。方向 4（一致）：P2×2 + P3×4。方向 5（架构）：P2×1 + P3×2 + 建议×1 + 归因 4 组。跨方向去重：哨兵撞名（func-7 = ui UI-05）、主表单 Enter 三向同根（ui UI-11 = eff E4 = cons C6，手写缺 isComposing）、单例守卫绕脏检查（eff E3 = FV2）、100vh→vvh（ui UI-01 = cons C4，已接 bz-panel-mtop 却漏 vvh 的半成品对）、ESC 旗标收编（= cons C3 六域先例）、**func-3/4/5+E6 归因收口**（arch：写侧字段维护散布→DataManager 事务收口、normalizeUrl 挂读侧、控制字面量与用户数据共用命名空间）。**文档误记三处清单**：core/notice.ts:139 + B7 行 + CONTEXT.md:75 词条（交互口径停 ADR-0083 + belongings 演进史误植 + 删除免确认误载）。**E1=C2 双向复核**：favorites 是删除口径唯一活跃滞后域（pv 拍板保留合理例外）。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
+
+### 修复批定稿（两批，文件不交叠）
+
+- **批 A `bz-fix-fav-data`（数据可靠性与写链，data.ts/ai.ts）**：arch-1 normalizeItems 读侧管道（类型漂移防御）、func-3 业务字段级合并写（data 层闭环防盘侧回滚）、func-4 派生字段三链路收口、func-5 AI 回填 normalizeUrl、E6 读侧归一、arch-2 kind 契约测试、arch-3 死键清理、arch-4 双实例收口方案。
+- **批 B `bz-fix-fav-view`（UI 交互与通知链，ui.ts/styles）**：E1 删除/归档免确认直达 + notice.ts:139 注释纠偏（测试契约面 ui.test.ts:806/881 + flow-dialog-skin 随批翻转）、E2 滚位保持、E3/FV2 守卫走 confirmDiscard、UI-01 100vh→vvh、UI-02 负 margin calc、UI-03 删强制聚焦、UI-04/11/C6 Enter→bindFormSubmit、UI-05/func-7 哨兵 markup+保留字、UI-06 aria/键盘、UI-07 加载态、UI-08 激活指示、UI-09 空态文案、UI-10 tag.ic 转义、UI-12 脏拦截、UI-13 热区、C3 registerPanelEsc 收编、C5 死 import、func-1 撤销补事件、func-6 标签弹窗类名、E5 Map 建表、E6 写侧保存路径归一。
+- **主线程文档收口**：CONTEXT.md:75 favorites 词条重写（退役件记录 + 误植段迁出 + 删除口径新载）、review-deep-bugs B7 行更正。
+- **拍板清单 F 系**：无链卡反馈、右键发现性、键盘焦点管理、触屏 hover 粘滞（全域）、磁贴限高、点卡 affordance。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
-- **P1 自动同步链断点** `sync.ts:119` × `index.ts:30`（func F1）——`autoSyncOnOpen` fire-and-forget、await 落空：首开空库/新游戏入账后媒体本地化、中文名回填、商店/成就回填三队列全部不启动（命令与手动按钮路径正确，唯自动同步漏），「拉到的都存本地」承诺在首次接入主路径不兑现。修：返回 runSync promise（一行）。+ 回归。
-- **P1 后台节流重渲整刷面板** `ui.ts:1187` × `names.ts:107-113` / `backfill.ts:75-81` / `posters.ts:394-401`（ui G1）——三队列每条完成节流直通 renderAll 整刷：搜索打字每约 1.2s 失焦、IME 组合被打断、移动端下拉被关；影院同病已修（`cinema/ui.ts:968-1047` renderSoft+焦点快照 c0805040 只落 cinema 源）。修：三 scheduleRerender 与 sync.ts `M.renderFn` 改走 renderSoft + 搜索框焦点快照（域内文本输入仅搜索框一个，可比影院更简）。+ 回归（假时钟焦点保持 + 菜单存活）。
-- **P2 已下架手改被同步翻回（拍板项）** `reconcile`（func F2）——用户手改 `已下架: true` 被下次同步「Steam 在场即恢复在架」静默翻回。设计语义 vs 用户意图冲突，**归拍板清单 GS1**。
-- **P2 window.open 旧账收口** `ui.ts:794`（func F3）——切 `openExternalUrl`（cinema 同族已清）。
-- **P2 移动端三枚常驻图标钮 30px 无热区** `styles.css:35-37`（ui G2）——含移动端唯一关闭出口（全屏无遮罩可点），违设计手册 §8.2 40px 下限；core `.bz-touch-target--lg` 基建已备（memo/diary 样板），ops 行 gap 8px 外扩后热区相切不交叠。修：挂类即生效（视觉不变）。
-- **P3 群（11 条，func）**：closePanel 关停三选二（posters 不随面板关停，与 backfill 关停理由矛盾）、unloadBackfill 置 running=false 可致双消费者、无中文名游戏每开面板重拉永不收敛、媒体下载无超时、尾斜杠配置零匹配、消歧文件名展示带尾巴等（修复批定稿时按报告展开）。
-- **P3 群（4 条，ui）**：① 空态门面塌陷（heroz 无 min-height，ops 绝对定位钮叠上状态行；`ui.ts:943-947` × `styles.css:24/28-32`，修 min-height 一行 + 回归）；② hero 背景 `url('…')` 单引号上下文未转义（`ui.ts:161` 域内自写 escHtml 缺 `'`，图断 + CSS 上下文逸出；修单独转义 + escHtml 对齐 core 五件套）；③ 工具行三控件值单向同步（chips/分段→下拉无回写 `ui.ts:1029-1052`，跨 768px 显示旧值；修补 setValue 回路 + 互译测试）；④ openDetail 不收悬浮预览（`ui.ts:894-906` 轮播定时器滞留空转、换脸滞留；修进弹窗前 `restReel()+restHero()` 一行）。
-- **P3 群（ui 方向小项，修复批顺带）**：状态行旧文案跨开关残留（closePanel 不清 `M.statusMsg`）、chips 初始无 aria-pressed（core uiChip 缺省态不设，跨域对齐点）、搜索无防抖（每键全网格重建，影院 300ms 防抖可借、顺带缓解 G1 触发频率）、firstChar 代理对乱码（`name.slice(0,1)` → `[...name][0] ?? '?'`）。
-- **测试缺口 7**（gameshelf-ui.md 文末）：G1 回归、bindMediaFallback 全链路、modalRepaintFn 生命周期、renderList 集成、mountOps syncing 态、G5 三控件互译、G3 heroz 高度——修复批随修随补。
-
-（方向 3 效率 / 4 一致运行中，5 架构待槽位——到账后去重定稿修复批次。）
+- **P2 删除/归档双保险违效率整改 5 定稿 + 文档误记三处纠偏**（eff E1 = cons C2 独立复核）——免确认直达 notifyUndo（belongings 批 A 同款落地法）；同域两制（取消归档却免确认）一并理顺；**纠偏清单**：core/notice.ts:139 注释 + review-deep-bugs B7 行 + CONTEXT.md:75 favorites 词条「删除免确认」误载。测试契约面（ui.test.ts:806/881 + flow-dialog-skin 四框收敛两框）随批翻转。
+- **P2 操作后全量重刷丢滚位**（eff E2）——置顶/归档/删除/编辑保存后长列表视野跳顶。修：滚位保持。
+- **P2 openForm 单例守卫绕过脏检查静默丢草稿**（eff E3 = 旧账 FV2）——修：单例命中走 confirmDiscard 口径。
+- **P2 裸 100vh 未接 --bz-vvh**（ui UI-01）——belongings/cinema/clipbook 已迁，真机底缘被原生栏遮挡。修：接 `--bz-vvh`。
+- **P2 负 margin 无效声明整条被丢弃**（ui UI-02）——`-var(--bz-space-xs)` CSS 解析无效，卡墙对齐漂移 4px、防裁垫底意图落空（clipbook C-UI4 同类定案坑）。修：calc() 写法。
+- **P2 表单/标签编辑器 setTimeout 强制聚焦**（ui UI-03）——打穿 core 移动端防软键盘口径（belongings 批 B 同款已删）。修：删遗留聚焦交 core uiModal。
+- **P2 标签编辑器 Enter 无 isComposing 守卫**（ui UI-04）——中文输入法候选词确认误触发保存；core bindFormSubmit 带完整守卫未消费。修：收编单源（与 UI-11/E4 同刀）。
+- **P2 标签撞名哨兵字面值 + 置顶开关无 aria**（ui UI-05+func-7、UI-06）——markup 改发 `__all/__archived` 哨兵值（防撞名双 chip/筛选不可达）；置顶 span 补 role/aria/键盘（core switch 范式）、卡片键盘可达、磁贴 chips aria-pressed。
+- **P3 群（func 6 条）**：删除撤销不补发领域事件（归档撤销补 unarchive 先例在位，补 delete 对应事件）；编辑全量覆盖写回可回滚磁盘侧修复（改窄 patch 或合并写）；编辑改标签不重算 `type=tags[0]` 派生字段；AI 整理回填 url 不过 normalizeUrl（整理完即可存断链）；标签弹窗复用 `.bz-fav-form` 类致单例守卫/ESC 层误命中（双层遮罩）；标签名保留字防御（与哨兵改发同刀）。
+- **P3 群（ui 7 条）**：开面板无加载态磁贴归零闪（补加载占位）；激活筛选计数归零 chip 消失面板悬空（保激活指示）；空态文案不区分筛选/归档视图误导；动态标签图标 `tag.ic` 未转义直插 innerHTML（防御性注入面，收编 iconSpan 转义口径）；标签管理弹窗遮罩/ESC 直关无脏拦截（requestClose 礼节对齐）；触屏热区缺口（标签管理钮 26px、表单胶囊无 coarse 档，bz-touch-target 未接）。
+- **P3 群（eff 3 条）**：表单无 Enter 提交（bindFormSubmit 在位未消费，与 UI-04/UI-11 同刀收编）；boardHtml indexOf O(n²)+每标签全量重 filter（Map 建表）；手输链接缺协议保存路径不补 normalizeUrl（粘贴路径已补，又一处域内两制）。
+- **UX 分流（拍板清单 F 系）**：无链卡点击零反馈、桌面操作唯一入口右键发现性弱（ux#16/#17 同源维持）、面板键盘焦点管理（belongings 批 B 先例）、触屏 hover 粘滞（**全域议题**，无 hover 隔离范式，建议立项拍板）、桌面磁贴行不限高多标签挤塌卡墙（限高/折叠形态待拍板）、点卡直开外链 affordance。
+- **P3 群（cons 4 条，归并后增量）**：ESC 手写旗标收编 registerPanelEsc（C3）；死 import uiInput 清理（C5）；**CONTEXT.md:75 favorites 词条三重脱节**（C1，主线程文档收口）：交互口径整段停 ADR-0083 旧版（左标签栏/搜索/排序/余额/关联笔记已随 C5 换血退役未记）+ belongings 演进史整段误植 + 删除免确认误载。
+- **测试缺口**：随修复批按报告补。

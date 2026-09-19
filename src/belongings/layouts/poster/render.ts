@@ -13,7 +13,7 @@ import {
   filtered, heroTitleText, heroSubText,
   type BelViewState, type MoneyUnit,
 } from '../../shared';
-import { trimDailyNum } from '../../report-stats';
+import { trimDailyNum } from '../../shared';
 import type { BelongingsItem } from '../../types';
 
 // ==================== markup 构建器 ====================
