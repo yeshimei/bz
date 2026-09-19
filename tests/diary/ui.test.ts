@@ -165,6 +165,32 @@ describe('回忆墙 UI', () => {
     expect(document.querySelectorAll('.bz-diary-mob').length).toBe(1);
   });
 
+  it('打开先面板后内容（issue 383）：openManager 返回时面板+骨架已在位，内容随后才到', async () => {
+    const c = DiaryAppController.getInstance();
+    await c.openManager();
+    // openManager 返回即「面板可交互」：display=flex + 骨架已在墙区；读盘/整墙渲染被让位到下一帧
+    const root = document.querySelector('.bz-diary') as HTMLElement;
+    expect(root.style.display).toBe('flex');
+    expect(document.querySelector('.bz-diary-desk .bz-diary-skel')).toBeTruthy();
+    expect(document.querySelector('.bz-diary-day-head')).toBeNull();
+    expect(c.entries.length).toBe(0);
+    // 让位结束后内容照常到达、骨架退场
+    await waitFor(() => !!document.querySelector('.bz-diary-day-head'));
+    expect(document.querySelector('.bz-diary-skel')).toBeNull();
+  });
+
+  it('打开先面板后内容：缓存命中（issue 381 预热）同样先骨架——不让位则首帧被整墙渲染堵住', async () => {
+    const app = (await import('../../src/core/app')).getApp();
+    const { loadWallEntries } = await import('../../src/diary/data');
+    await loadWallEntries(app); // 预热已读完：缓存命中路径（读盘立即 resolve）
+    const c = DiaryAppController.getInstance();
+    await c.openManager();
+    expect(document.querySelector('.bz-diary-desk .bz-diary-skel')).toBeTruthy();
+    expect(document.querySelector('.bz-diary-day-head')).toBeNull();
+    await waitFor(() => !!document.querySelector('.bz-diary-day-head'));
+    expect(document.querySelector('.bz-diary-skel')).toBeNull();
+  });
+
   it('渲染章节栏（月份倒序）+ 瀑布流（媒体块 + 文字条 + 日期节头）', async () => {
     await openAndWait();
     // 章节栏月份（倒序：2026-08 / 2026-06）——只统计桌面实例（移动无章节栏）

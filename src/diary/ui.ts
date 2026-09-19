@@ -2640,6 +2640,19 @@ export class DiaryAppController {
     }
   }
 
+  /** 让位首帧（issue 383）：rAF 后再落一拍 setTimeout——浏览器完成一次绘制（面板+骨架已
+   *  在屏上）才放行后续读盘/整墙渲染；隐藏窗口与无 rAF 环境直接 setTimeout(0)（后台标签页
+   *  rAF 不触发，等它会把刷新卡住）。对齐 prewarmDiary 的「rAF + setTimeout 到空闲」范式。 */
+  private afterPaint(): Promise<void> {
+    return new Promise((resolve) => {
+      if (typeof requestAnimationFrame !== 'function' || document.hidden) {
+        setTimeout(resolve, 0);
+        return;
+      }
+      requestAnimationFrame(() => setTimeout(resolve, 0));
+    });
+  }
+
   /** 加载数据并渲染（openManager 主路径） */
   private async loadAndRender() {
     // D9'（review-all2）：面板关闭期间保险箱可能被外部上锁（别域「立即上锁」/安全模式
@@ -2648,6 +2661,10 @@ export class DiaryAppController {
     this.lockedVisible = isUnlocked();
     // 效率#13：数据读取期间墙区骨架占位（大库首屏不再是一段「看起来像空库」的空白期）
     this.showSkeleton();
+    // issue 383 先开面板后填内容：让位首帧——等浏览器把面板+骨架画出来，再读盘/渲染。
+    // 缓存命中（issue 381 预热）时 loadWallEntries 立即 resolve，整条链会在微任务里一口气
+    // 跑到 renderAll，首帧被「读盘+整墙渲染」堵住 → 观感「点了没反应，然后整墙突然出现」。
+    await this.afterPaint();
     try {
       // ②：开墙路径（_allowCacheNext）命中缓存秒开；其余（刷新/写后回刷/重试）一律先作废回源，
       //    保持「每次刷新/写后回刷即读盘」原语义（不依赖缓存失效是否触发）
