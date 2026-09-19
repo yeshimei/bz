@@ -6,6 +6,7 @@
  * 图标用 lucide path 内联 SVG（currentColor）。
  */
 import { escapeHtml, formatRelativeTime } from '../core/utils';
+import { emptyHtmlStr } from '../core/ui/str';
 import type { SafeNote } from './data';
 
 export type VaultAsset = 'overview' | 'note' | 'diary';
@@ -29,7 +30,7 @@ export interface OverviewStats {
   attachments: number;
   /** 附件密文字节聚合（blobSize 之和，纯笔记口径） */
   attBytes: number;
-  /** 最近 N 条（笔记 + 日记；密码本已移出保险库面板）。id 供点击流水直接定位条目（diary 无独立资产不传） */
+  /** 最近 N 条（笔记 + 日记；密码本已移出保险库面板）。id 供点击流水直接定位条目（note/diary 均可定位） */
   recent: Array<{ kind: 'note' | 'diary'; id?: string; title: string; sub: string; time: string }>;
   health: { issues: number; lastChecked?: string } | null;
 }
@@ -37,6 +38,15 @@ export interface OverviewStats {
 /** 图标（供 UI 拼接按钮时复用） */
 export function vIc(name: string, size = 14): string {
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ''}</svg>`;
+}
+
+/**
+ * 状态栏内容单源（一致性整改：ui.ts attachStatusBar 与 index.ts mountEncryptStatusBar
+ * 两侧消费同一份，不再各持一份逐字副本）：lucide 锁图标（解锁态开锁）+ 文案。
+ * 铁律：图标不用 emoji。
+ */
+export function statusbarHtml(unlocked: boolean): string {
+  return `${vIc(unlocked ? 'lock-open' : 'lock', 12)} 保险库`;
 }
 
 /** 概览视图完整 HTML（host 挂到 area 后自绑 [data-hero] / .card[data-nav]） */
@@ -52,19 +62,19 @@ export function overviewHTML(stats: OverviewStats): string {
         .map((r) => {
           const color = r.kind === 'note' ? ASSET_COLOR.note : ASSET_COLOR.diary;
           const iconName = r.kind === 'note' ? 'file-lock' : 'book-lock';
-          // 日记条目已无独立资产入口，点击统一落加密笔记列表（data-recent 不再写 'diary'）；
-          // 笔记条目带 id，点击后直定位该条目（原型：点流水 → 列表选中该篇）
-          return `<div class="bz-vault-minirow" data-recent="note"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ''}>
+          // 流水行按真实资产值标记（一致性整改）：点击经 UIManager.bindOverviewArea 按值分流——
+          // note 行落笔记列表、diary 行落加密日记列表，均带 id 直定位该条目
+          return `<div class="bz-vault-minirow" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ''}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
             <span class="tm">${escapeHtml(r.time)}</span></div>`;
         })
         .join('')
-    : '<div class="bz-empty"><span class="bz-empty-ic">' + vIc('lock', 28) + '</span><div class="bz-empty-title">还没有动态</div><div class="bz-empty-desc">笔记或日记入库后，最近动态在这里显示</div></div>';
+    : emptyHtmlStr('lock', '还没有动态', '笔记或日记入库后，最近动态在这里显示');
   return `
   <div class="bz-vault-hero">
     <div class="ht">${vIc('lock', 14)} 保险库已解锁 · 笔记集中管理</div>
-    <div class="hn">${counts.note} 项资产${counts.note > 0 ? ' · 尽在掌握' : ''}</div>
+    <div class="hn">${counts.note + counts.diary} 项资产${counts.note + counts.diary > 0 ? ' · 尽在掌握' : ''}</div>
     <div class="hd">同一把主密码 · AES-256-GCM</div>
     <div class="hbtns">
       <button class="hbtn" data-hero="lock-note">${vIc('file-lock', 14)} 存入笔记</button>

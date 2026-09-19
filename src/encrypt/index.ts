@@ -8,7 +8,7 @@ import { getSettings } from '../core/settings-provider';
 import { getApp } from '../core/app';
 import { notice } from '../core/notice';
 import { EncryptAppController } from './ui';
-import { vIc } from './vault-assets-view';
+import { statusbarHtml } from './vault-assets-view';
 import type { LockScreenKind } from '../core/ui/lock-screen';
 
 let initialized = false;
@@ -32,17 +32,15 @@ function getController(): EncryptAppController {
 
 export async function ensureEncrypt(app: App): Promise<void> {
   if (initialized) return;
-  initialized = true;
   await getController().init();
+  // init 成功后再置旗标（架构整改：先置会让 init 抛错后的后续调用全部短路，无法重试）
+  initialized = true;
 }
 
 // ---------- 状态栏（补丁2：状态栏锁状态提示） ----------
 let statusBarEl: HTMLElement | null = null;
 
-/** 状态栏内容：lucide 锁图标（解锁态开锁）+ 文案（铁律：图标不用 emoji） */
-function statusbarHtml(unlocked: boolean): string {
-  return `${vIc(unlocked ? 'lock-open' : 'lock', 12)} 保险库`;
-}
+// statusbarHtml 单源居 vault-assets-view.ts（一致性整改：与 ui.ts attachStatusBar 消费同一份）
 
 /**
  * 统一保险库状态栏（main.ts onload 调用，与番茄钟同范式）：
@@ -57,7 +55,9 @@ export function mountEncryptStatusBar(container: HTMLElement): void {
   el.addEventListener('click', () => openEncrypt(getApp()));
   container.appendChild(el);
   statusBarEl = el;
-  void ensureEncrypt(getApp()).then(() => getController().attachStatusBar(el));
+  void ensureEncrypt(getApp())
+    .then(() => getController().attachStatusBar(el))
+    .catch(() => {}); // 状态栏异步接管失败静默：点击入口仍可走 openEncrypt 懒加载重试
 }
 
 /** 卸载状态栏（main.ts onunload 调用） */
@@ -69,11 +69,15 @@ export function unmountEncryptStatusBar(): void {
 }
 
 export function openEncrypt(app: App): void {
-  void ensureEncrypt(app).then(() => getController().openManager());
+  void ensureEncrypt(app)
+    .then(() => getController().openManager())
+    .catch(() => notice('保险库初始化失败，请重试', 'error'));
 }
 
 export function encryptCurrentNote(app: App): void {
-  void ensureEncrypt(app).then(() => getController().lockCurrentNote());
+  void ensureEncrypt(app)
+    .then(() => getController().lockCurrentNote())
+    .catch(() => notice('保险库初始化失败，请重试', 'error'));
 }
 
 /**
@@ -91,7 +95,11 @@ export function getSafeManager(): import('./data').SafeManager {
  * 保险库与密码本共用一个 SafeManager（一把主密码），两个域的「锁定」命令都落到这里。
  */
 export async function lockSafe(app: App): Promise<boolean> {
-  await ensureEncrypt(app);
+  try {
+    await ensureEncrypt(app);
+  } catch (e) {
+    return false; // 初始化失败按「未上锁」口径返回 false（调用方各走既有提示），不向外抛
+  }
   if (!getSafeManager().unlocked) return false;
   getController().uiManager.lockNow(true); // E11：安静上锁——通知由命令侧发一次，hide 不再补发
   return true;

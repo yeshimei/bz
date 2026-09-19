@@ -177,7 +177,11 @@ describe('锁家族修复批（encrypt UI）', () => {
 
   it('解锁态快照落盘 lock-stats.json（captureLockStats 三档合并写，issue 299）', async () => {
     await dm.unlock('long-enough-pw');
-    ui.show(); // rootVisible + unlocked → renderAll → captureLockStats
+    ui.show();
+    // 快照已从 renderAll 摘除（效率整改：不随每次重绘跑，消费点接线归 show/hide/lockNow 侧批次），
+    // 此处直调单测其三档合并写语义
+    await new Promise((r) => setTimeout(r, 60)); // 等 renderList 的共享锁载荷装载完成
+    (ui as any).captureLockStats();
     const start = Date.now();
     while (!(await readLockStats('vault'))) {
       if (Date.now() - start > 4000) throw new Error('lock-stats 落盘超时');
