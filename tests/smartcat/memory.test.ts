@@ -801,14 +801,19 @@ describe('RAG 增强（2026-08：来源标签/相对时间/情绪时段 query）
     expect(sourceLabel(undefined)).toBe('');
   });
 
-  it('formatRelativeTime：分钟/小时/天/月日分级', () => {
+  it('formatRelativeTime：分钟/小时/天 + 长程分档', () => {
     const now = Date.now();
     expect(formatRelativeTime(new Date(now - 30 * 1000).toISOString(), now)).toBe('刚刚');
     expect(formatRelativeTime(new Date(now - 5 * 60000).toISOString(), now)).toBe('5分钟前');
     expect(formatRelativeTime(new Date(now - 3 * 3600 * 1000).toISOString(), now)).toBe('3小时前');
     expect(formatRelativeTime(new Date(now - 2 * 86400000).toISOString(), now)).toBe('2天前');
-    const monthAgo = new Date(now - 40 * 86400000).toISOString();
-    expect(formatRelativeTime(monthAgo, now)).toMatch(/^\d+ 月 \d+ 日$/);
+    // 2026-09-19 审计 A10：>7 天由「3 月 5 日」改为语感分档（远近一眼可辨）
+    expect(formatRelativeTime(new Date(now - 10 * 86400000).toISOString(), now)).toBe('上周');
+    expect(formatRelativeTime(new Date(now - 20 * 86400000).toISOString(), now)).toBe('2 周前');
+    expect(formatRelativeTime(new Date(now - 40 * 86400000).toISOString(), now)).toBe('上个月');
+    expect(formatRelativeTime(new Date(now - 100 * 86400000).toISOString(), now)).toBe('3 个月前');
+    const old = new Date(now - 800 * 86400000);
+    expect(formatRelativeTime(old.toISOString(), now)).toBe(`${old.getFullYear()} 年`);
   });
 
   it('buildRetrieveQuery：用户消息 + 情绪 + 时段（无情绪省略；时段随钟点）', () => {

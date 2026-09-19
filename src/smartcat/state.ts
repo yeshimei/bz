@@ -49,7 +49,7 @@ export function ensureThinkingIndicator(container: HTMLElement | null): void {
   if (!thinkingIndicator && container) {
     thinkingIndicator = document.createElement('div');
     thinkingIndicator.id = 'thinking-indicator';
-    thinkingIndicator.className = 'thinking-indicator bz-sc-thinking';
+    thinkingIndicator.className = 'thinking-indicator';
     container.appendChild(thinkingIndicator);
   }
 }

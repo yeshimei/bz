@@ -6,12 +6,10 @@
  * - 返回值语义（memory 路由 → MemoryStreamEntry；behavior 路由 → BehaviorItem）；
  * - legacy 路径同口径全量双写（description 兜底行为条目 + memory 条目）；
  * - dedupe 短路不阻断行为条目（行为流 = 全量日志）；
- * - 滚动清理不受双写影响（settings 小容量下照常裁剪）；
- * - promoteToMemory 直接调用仍工作（面板按钮已移除后的保留接口）。
+ * - 滚动清理不受双写影响（settings 小容量下照常裁剪）。
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { MemorySystem } from '../../src/smartcat/memory';
-import { promoteToMemory } from '../../src/smartcat/memory';
 import { defaultSmartCatData } from '../../src/smartcat/data';
 import type { SmartCatData, MemoryStreamEntry, BehaviorItem } from '../../src/smartcat/types';
 
@@ -165,27 +163,6 @@ describe('滚动清理不受双写影响', () => {
   });
 });
 
-describe('promoteToMemory 保留接口（面板按钮已移除，直接调用仍工作）', () => {
-  it('双写产出的行为条目可直接提升为记忆（含 originalType/originalSource 标记）', async () => {
-    const m = make();
-    await m.addObservation('memo', { structured: { entityType: 'task', action: 'completed', name: '买菜' } });
-    const beh = data.memory.behaviorStream[0];
-    const beforeMemCount = data.memory.memoryStream.length;
-    const promoted = promoteToMemory(data, beh.id);
-    expect(promoted).not.toBeNull();
-    expect(promoted!.source).toBe('memo');
-    expect(promoted!.structured?.entityType).toBe('task');
-    expect(promoted!.structured?.extras?.originalType).toBe('completed');
-    expect(promoted!.structured?.extras?.originalSource).toBe('memo');
-    expect(data.memory.behaviorStream.some((b) => b.id === beh.id)).toBe(false); // 已移出行为流
-    expect(data.memory.memoryStream.length).toBe(beforeMemCount + 1);
-  });
-
-  it('未找到条目返回 null', () => {
-    const m = make();
-    expect(promoteToMemory(data, 'nonexistent')).toBeNull();
-  });
-});
 describe('行为流 5s 短防抖直写（ticket 159）', () => {
   it('markBehaviorDirty 5s 后触发 flushSidecars；窗口内连续标脏合并；stopScheduler 清定时器', async () => {
     vi.useFakeTimers();

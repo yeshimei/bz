@@ -42,6 +42,9 @@ export interface InteractionDeps {
   retrieveMemories?: (query: string, lexicalQuery?: string) => Promise<string>;
   /** 性格数据（ADR-0023：prompt 状态向量用；index 注入 data.personalityGrowth） */
   characterData?: () => any;
+  /** 自发行为总闸（2026-09-19 审计 A8）：安静期 / 深夜 / 非活跃时段 → true。
+   *  由 index 注入（综合 quiet-gate 与 rhythm 判断），避免 interaction 顶层互访这两个模块。 */
+  shouldStayQuiet?: () => boolean;
 }
 
 export class InteractionManager {
@@ -85,6 +88,7 @@ export class InteractionManager {
       relationship: d?.personalityGrowth?.relationship ?? null,
       emotion: d?.mood?.currentEmotion ?? null,
       memoriesText,
+      editingData: d?.editingData, // A4：缺席状态进对话
     });
   }
 
@@ -389,6 +393,9 @@ export class InteractionManager {
   /** 自动陪伴消息（原 generateAutoCompanionMessage：选中文本/无上下文/有上下文三分支；无 key 回落硬编码） */
   async generateAutoCompanionMessage(): Promise<void> {
     const cfg = this.deps.config();
+    // A8（2026-09-19 审计）：这条定时器原先完全不过门控（quiet / 作息 / 深夜全不查），
+    // 深夜照发。安静期与深夜一律静默——「要么刷屏要么几天不吭声」的直接来源就是它。
+    if (this.deps.shouldStayQuiet?.()) return;
     if (this.generateAutoCompanionMessageLock) {
       this.deps.bubble.showBubble(getSmartCatMessage('THINKING_IN_PROGRESS_MESSAGES'));
       return;

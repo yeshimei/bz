@@ -133,8 +133,9 @@ describe('批 B-4：z-index 静态大数收口（ADR-0067）', () => {
     expect(css).not.toMatch(/z-index:\s*10000\d/);
     expect(css).not.toMatch(/z-index:\s*10001\b/);
     // 指示器(3) > 气泡容器(2) > 气泡(1)，同在猫 transform 层叠上下文内
+    // 2026-09-19 机制审计 M3：voice-indicator / voice-feedback 已删（DOM + 样式均无 JS 驱动），
+    // 对应 z-index 断言随之移除；thinking-indicator 仍是猫层叠内的最高局部档
     expect(css).toMatch(/\.thinking-indicator\s*\{[^}]*z-index: 3;/);
-    expect(css).toMatch(/\.voice-indicator\s*\{[^}]*z-index: 3;/);
     expect(css).toMatch(/\.cat-bubbles-container\s*\{[^}]*z-index: 2;/);
     expect(css).toMatch(/\.cat-bubble\s*\{[^}]*z-index: 1;/);
     // 恒顶层注册仍在挂载路径上

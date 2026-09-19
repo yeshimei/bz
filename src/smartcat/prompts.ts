@@ -8,6 +8,7 @@
  */
 import type { PadDimensions, SmartCatData, CharacterTraits } from './types';
 import { formatStateVector } from './character';
+import { MOOD_MAP } from './mood';
 
 export type InteractionType =
   | 'talk' | 'pet' | 'learn' | 'note_create' | 'note_edit' | 'note_read'
@@ -19,8 +20,11 @@ const MAX_WORD_LIMITS = {
   interactionWeights: {
     pet: 0.8, learn: 1.3, note_create: 1.15, note_edit: 0.95, note_read: 1.1,
     casual_chat: 1.0, book_review: 1.35, welcome_back: 0.9, settings_updated: 0.95,
+    // 2026-09-19 审计 A9：主动关心原先无权重（=1.0 → 180 字）且 user 指令还写着「简短」，
+    // 双重压制把话磨成无差别暖句。给主动搭话留出说话空间（小冰的经验：优化「聊得久」而非最短）。
+    auto_companion: 1.4,
   },
-  absoluteMax: 265,
+  absoluteMax: 300,
 } as const;
 
 /** 计算动态最大字数（人格乘数 = traits 推导：外向/多巴胺高话多，神经质/焦虑波动） */
@@ -104,13 +108,6 @@ export function generatePrompt(
 ## 性格
 ${getCharacterDescription(traits)}
 
-## 回复字数要求
-### 字数限制
-- 最大字数：${maxWords}字
-- 要求：回复要贴合当前性格，保持内容质量的同时控制字数。
-
-请确保回复长度不超过${maxWords}字。
-
 ## 当前状态详情
 ${opts.pad ? formatMoodDetails(opts.pad, opts.currentMood, opts.currentEmotion) : ''}
 ${opts.data ? '\n## 内核状态向量（只读参考，勿复述）\n' + formatStateVector(opts.data.personalityGrowth, opts.pad || { pleasure: 55, arousal: 50, dominance: 50 }, opts.currentEmotion ?? null) : ''}
@@ -122,7 +119,7 @@ ${getResponseRequirements(interactionType, maxWords)}
 ## 用户消息
 ${userMessage ? `用户说："${userMessage}"` : '用户正在与你互动'}
 
-请根据以上状态信息，用符合当前性格和心情的语气进行回复，回复长度不超过${maxWords}字。`;
+请根据以上状态信息，用符合当前性格和心情的语气进行回复。`;
   return prompt;
 }
 
@@ -138,14 +135,9 @@ ${highlights}
 - 愉悦度：${Math.round(d.pleasure)}/100 ${getMoodEmoji(d.pleasure, '😊', '😐', '😔')}
 - 唤醒度：${Math.round(d.arousal)}/100 ${getMoodEmoji(d.arousal, '⚡', '🔋', '😴')}
 - 支配度：${Math.round(d.dominance)}/100 ${getMoodEmoji(d.dominance, '👑', '🧭', '🌊')}
-- 整体心情：${currentMood ? MOOD_STATE_TEXT[currentMood] || currentMood : '平静'}
+- 整体心情：${currentMood ? MOOD_MAP[currentMood]?.state || currentMood : '平静'}
 ${currentEmotion ? `- 当前情绪：${currentEmotion}` : ''}`;
 }
-
-/** 5 档心情文案 */
-const MOOD_STATE_TEXT: Record<string, string> = {
-  excellent: '超开心', good: '心情好', neutral: '平常心', low: '小低落', poor: '不开心',
-};
 
 /** 心情亮点（PAD 版） */
 export function getMoodHighlights(pad: PadDimensions): string[] {
@@ -171,11 +163,11 @@ export function getResponseRequirements(interactionType: string, maxWords: numbe
   const base = [
     `1. 回复长度不超过${maxWords}字`,
     '2. 保持小橘的猫咪角色设定，不要跳出角色',
-    '3. 语气自然，不要机械',
-    '4. 如果用户提到笔记内容，结合上下文回应',
-    '5. 适当使用猫咪表情（如 ~、喵、咕噜）但不要过度',
-    '6. 回复要有温度，让用户感到被陪伴',
-    '7. 用符合当前性格的方式回应（性格见上，随相处成长，不要千篇一律）',
+    '3. 语气自然，用符合当前性格和心情的方式说话（随相处成长，不要千篇一律）',
+    '4. 适当用猫咪语气词（喵、咕噜、~），但不要堆砌',
+    // 2026-09-19 审计 A9：加「具体」与「不确定就说不知道」两条——空泛关心是「空洞」的直接来源
+    '5. 可以自然地提起你们共同经历过的具体的事（见下方记忆），而不是只说泛泛的关心',
+    '6. 只说你确实知道的事；记不太清就直接说不确定，不要编造用户没提过的细节',
   ];
   return `### 回复要求
 ${base.map((b) => `- ${b}`).join('\n')}`;

@@ -64,10 +64,10 @@ describe('calculateMaxWordLimit（字数推导）', () => {
     expect(withHappyPad).toBeGreaterThan(calculateMaxWordLimit('casual_chat', 0));
   });
 
-  it('绝对上限 265 截断（权重×性格×长度全拉满仍 ≤265）', () => {
+  it('绝对上限 300 截断（权重×性格×长度全拉满仍 ≤300）', () => {
     const max = calculateMaxWordLimit('book_review', 100000, pad(90, 50, 80), { dopamine: 0.9, anxiety: 0.1 } as CharacterTraits);
-    expect(max).toBeLessThanOrEqual(265);
-    expect(max).toBe(265);
+    expect(max).toBeLessThanOrEqual(300);
+    expect(max).toBe(300);
   });
 
   it('traits 访问抛错 → 防御性 catch 回落 180（原样返回基础值）', () => {
@@ -166,9 +166,10 @@ describe('getResponseRequirements / generatePrompt 组装', () => {
     expect(prompt).toContain('你了解的用户'); // 懂你上下文段
     expect(prompt).toContain('用户最近常在深夜写代码。');
     expect(prompt).toContain('用户说："今天好累"');
-    // 字数与 calculateMaxWordLimit 一致
+    // 2026-09-19 审计 A9：重复三次的「## 回复字数要求」段已删，字数只在「回复要求」里出现一次
     const words = calculateMaxWordLimit('talk', 4, pad(80, 45, 55), data.personalityGrowth.traits);
-    expect(prompt).toContain(`最大字数：${words}字`);
+    expect(prompt).toContain(`回复长度不超过${words}字`);
+    expect(prompt).not.toContain('最大字数：');
   });
 
   it('最小 opts：无 pad/data/上下文时对应段省略；无用户消息走互动文案', () => {

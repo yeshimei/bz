@@ -534,6 +534,14 @@ export class MemorySystem {
       structured: newOpts.structured,
     };
     this.stream.push(memory);
+    // M8（2026-09-19 审计）：自动关联接线——原先 enableAutoLinking / linkWindowDays 是「用户可见的假开关」
+    //（有 UI 项、有默认值，却零消费）。这里给新签名路径接上真实实现（legacy 路径无 structured，天然不参与）。
+    try {
+      const s = tryGetSettings();
+      if (s?.enableAutoLinking !== false) {
+        linkRelatedMemories(this.stream, memory, { windowDays: Number(s?.linkWindowDays) || 7 });
+      }
+    } catch { /* 设置不可用 → 不关联，不阻断写入 */ }
     this.markMemoryDirty();
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
@@ -1626,7 +1634,11 @@ export class MemorySystem {
         else content = replaceUserReference(body);
       }
       index++;
-      lines.push(`${index}. [${memory.type}${meta ? `（${meta}）` : ''}] ${content.substring(0, 200)}...`);
+      let line = `${index}. [${memory.type}${meta ? `（${meta}）` : ''}] ${content.substring(0, 200)}...`;
+      // M8（2026-09-19 审计）：带出关联记忆（1 跳）——让「想起」有上下文，而不是孤立的一句
+      const relatedSnippet = linkedSnippetOf(this.stream, memory, 1);
+      if (relatedSnippet) line += `\n   与其相关：${relatedSnippet}`;
+      lines.push(line);
     }
     return { text: lines.join('\n'), staleRefs };
   }
@@ -1717,8 +1729,76 @@ export function formatRelativeTime(iso: string, now = Date.now()): string {
   if (h < 24) return `${h}小时前`;
   const d = Math.floor(h / 24);
   if (d < 7) return `${d}天前`;
-  const dt = new Date(t);
-  return `${dt.getMonth() + 1} 月 ${dt.getDate()} 日`;
+  // 2026-09-19 审计 A10：长程分档——原 >7 天一律落「3 月 5 日」，
+  // 模型（与人）读不出这是陈年旧事还是上个月；改成语感分档（人会说「大概三个月前」）。
+  if (d < 14) return '上周';
+  if (d < 31) return `${Math.floor(d / 7)} 周前`;
+  if (d < 60) return '上个月';
+  if (d < 365) return `${Math.floor(d / 30)} 个月前`;
+  return `${new Date(t).getFullYear()} 年`;
+}
+
+/** 关联条数上限（单侧；与旧 linkRelatedMemories 口径一致） */
+export const AUTO_LINK_CAP = 20;
+
+/**
+ * 自动关联（2026-09-19 机制审计 M8 接线）。
+ * 背景：`enableAutoLinking` / `linkWindowDays` 两个设置项此前是**用户可见的假开关**——
+ * 唯一实现 zero 调用点，拨了什么都不发生。这里给它接上真实实现。
+ * 思路取自 A-MEM（arXiv:2502.12110）「新记忆与相似记忆建链并互相更新」，
+ * 但落到本地确定性、零 AI 成本的版本：同实体（structured.entityType + name 均非空且相等）。
+ *  - 窗口 windowDays 天内、单侧上限 cap 条（取最近的）；
+ *  - 双向：新条目记旧条目，旧条目也补上新条目；
+ *  - 幂等：已存在的关联不重复写。
+ * @returns 本次新建立的关联 id（供测试与调试）
+ */
+export function linkRelatedMemories(
+  stream: MemoryStreamEntry[],
+  entry: MemoryStreamEntry,
+  opts: { windowDays: number; cap?: number; now?: number },
+): string[] {
+  const et = entry.structured?.entityType;
+  const name = entry.structured?.name;
+  if (!et || !name) return [];
+  const cap = Math.max(1, opts.cap ?? AUTO_LINK_CAP);
+  const now = opts.now ?? Date.now();
+  const since = now - Math.max(1, opts.windowDays) * 86400000;
+  const candidates: { id: string; t: number }[] = [];
+  for (const m of stream) {
+    if (!m || m.id === entry.id) continue;
+    if (m.structured?.entityType !== et || m.structured?.name !== name) continue;
+    const t = m.created ? new Date(m.created).getTime() : NaN;
+    const ts = Number.isFinite(t) ? t : 0;
+    if (ts > 0 && ts < since) continue;
+    candidates.push({ id: m.id, t: ts });
+  }
+  candidates.sort((a, b) => b.t - a.t); // 最近优先（不能按 stream 顺序——它会随裁剪/重排漂移）
+  const related = candidates.slice(0, cap).map((c) => c.id);
+  if (!related.length) return [];
+  entry.relatedIds = Array.from(new Set([...(entry.relatedIds ?? []), ...related])).slice(-cap);
+  const seen = new Set(related);
+  for (const m of stream) {
+    if (!seen.has(m.id)) continue;
+    m.relatedIds = Array.from(new Set([...(m.relatedIds ?? []), entry.id])).slice(-cap);
+  }
+  return related;
+}
+
+/** 取关联记忆的简述（1 跳、最多 limit 条），供 prompt 回显「想起的上下文」，避免孤立的一句 */
+export function linkedSnippetOf(stream: MemoryStreamEntry[], memory: MemoryStreamEntry, limit = 1): string {
+  const ids = memory.relatedIds;
+  if (!ids?.length) return '';
+  const byId = new Map(stream.map((m) => [m.id, m]));
+  const parts: string[] = [];
+  for (let i = ids.length - 1; i >= 0 && parts.length < limit; i--) {
+    const m = byId.get(ids[i]);
+    if (!m || m.id === memory.id) continue;
+    const raw = typeof m.description === 'string' ? m.description : '';
+    if (!raw) continue;
+    const t = m.created ? formatRelativeTime(m.created) : '';
+    parts.push(replaceUserReference(raw.slice(0, 60)) + (t ? `（${t}）` : ''));
+  }
+  return parts.join('；');
 }
 
 /** 检索 query 组装：用户消息 + 当前情绪 + 当前时段（缺省项自动省略；供聊天 RAG 用，mock 友好） */
@@ -1749,274 +1829,6 @@ export function emotionDensityStats(stream: MemoryStreamEntry[]): {
     coverage: observations ? r(annotated / observations) : 0,
     nonCalmShare: observations ? r(nonCalm / observations) : 0,
   };
-}
-
-// ==================== P3 用户体验层：行为流查询/管理/关联 ====================
-
-/**
- * 将行为流条目提升为记忆流条目（P3 ticket 123）
- * 从 behaviorStream 找条目 → 构造 MemoryStreamEntry → 入 memoryStream + 从 behaviorStream 移除 + 落盘。
- *
- * @param data 智能猫数据
- * @param behaviorId 行为条目 id
- * @param importance 重要度（默认 0.5）
- * @returns 新记忆条目，未找到返回 null
- */
-export function promoteToMemory(
-  data: SmartCatData,
-  behaviorId: string,
-  importance = 0.5,
-): MemoryStreamEntry | null {
-  const behavior = data.memory.behaviorStream.find((b) => b.id === behaviorId);
-  if (!behavior) return null;
-
-  // 构造记忆条目
-  const meta = behavior.metadata as StructuredMeta | undefined;
-  const structured: StructuredMeta = {
-    entityType: meta?.entityType ?? behavior.source,
-    action: meta?.action ?? behavior.type,
-    name: meta?.name,
-    tags: meta?.tags,
-    extras: {
-      ...(meta?.extras || {}),
-      originalType: behavior.type,
-      originalSource: behavior.source,
-    },
-  };
-
-  // description 生成：snapshot.summary 优先，否则 source:action name 兜底
-  let description = behavior.description;
-  if (meta?.snapshot?.summary) {
-    description = meta.snapshot.summary;
-  }
-
-  const memory: MemoryStreamEntry = {
-    id: newEntryId('memory_'),
-    created: behavior.timestamp,
-    lastAccessed: new Date().toISOString(),
-    description,
-    importance,
-    type: 'observation',
-    source: behavior.source,
-    structured,
-    credibility: 0.5,
-  };
-
-  // 入记忆流
-  data.memory.memoryStream.push(memory);
-  // 从行为流移除
-  const idx = data.memory.behaviorStream.findIndex((b) => b.id === behaviorId);
-  if (idx >= 0) data.memory.behaviorStream.splice(idx, 1);
-  data.memory.lastUpdated = new Date().toISOString();
-
-  return memory;
-}
-
-/**
- * 行为流查询（P3 ticket 123）
- * 基础过滤：source / type / since / limit。
- *
- * @param data 智能猫数据
- * @param opts 过滤选项
- * @returns 过滤后的行为流条目（时间倒序）
- */
-export function queryBehavior(
-  data: SmartCatData,
-  opts: { source?: string; type?: string; since?: string; limit?: number } = {},
-): BehaviorItem[] {
-  let items = data.memory.behaviorStream || [];
-
-  if (opts.source) {
-    items = items.filter((b) => b.source === opts.source);
-  }
-  if (opts.type) {
-    items = items.filter((b) => b.type === opts.type);
-  }
-  if (opts.since) {
-    const sinceMs = new Date(opts.since).getTime();
-    if (Number.isFinite(sinceMs)) {
-      items = items.filter((b) => {
-        const t = new Date(b.timestamp).getTime();
-        return Number.isFinite(t) && t >= sinceMs;
-      });
-    }
-  }
-
-  // 时间倒序
-  items = [...items].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-
-  if (opts.limit && opts.limit > 0) {
-    items = items.slice(0, opts.limit);
-  }
-
-  return items;
-}
-
-/**
- * 行为流聚合摘要（P3 ticket 123）
- * 按天/按来源计数 + 最近活跃时段分布（纯数据层，供未来小橘参考行为流用）。
- *
- * @param data 智能猫数据
- * @param opts 聚合选项（sinceDays 限制时间窗口）
- * @returns 行为流聚合摘要
- */
-export function summarizeBehavior(
-  data: SmartCatData,
-  opts: { sinceDays?: number } = {},
-): BehaviorSummary {
-  const items = data.memory.behaviorStream || [];
-  const now = Date.now();
-  const sinceMs = opts.sinceDays
-    ? now - opts.sinceDays * 24 * 60 * 60 * 1000
-    : -Infinity;
-
-  const filtered = items.filter((b) => {
-    const t = new Date(b.timestamp).getTime();
-    return Number.isFinite(t) && t >= sinceMs;
-  });
-
-  const byDay: Record<string, number> = {};
-  const bySource: Record<string, number> = {};
-  const hourlyDistribution = new Array(24).fill(0) as number[];
-
-  for (const item of filtered) {
-    const t = new Date(item.timestamp);
-    if (!Number.isFinite(t.getTime())) continue;
-
-    // 按天
-    const dayKey = t.toISOString().slice(0, 10);
-    byDay[dayKey] = (byDay[dayKey] || 0) + 1;
-
-    // 按来源
-    bySource[item.source] = (bySource[item.source] || 0) + 1;
-
-    // 按小时
-    const hour = t.getHours();
-    hourlyDistribution[hour] = (hourlyDistribution[hour] || 0) + 1;
-  }
-
-  return {
-    totalCount: filtered.length,
-    byDay,
-    bySource,
-    hourlyDistribution,
-  };
-}
-
-/**
- * 关联记忆自动发现（P3 ticket 123）
- * 扫描 memoryStream，同一 entityType + 同一 name 的多条记忆在时间窗口内自动互相写 relatedIds。
- * 幂等（已关联的不重复加）；上限防爆（单条 relatedIds ≤ 20）。
- *
- * @param data 智能猫数据
- * @param linkWindowDays 关联发现窗口天数（默认从 settings 取 linkWindowDays，fallback 7）
- * @returns 新建的关联数（幂等：已存在的不计入）
- */
-export function linkRelatedMemories(
-  data: SmartCatData,
-  linkWindowDays?: number,
-): number {
-  const settings = tryGetSettings();
-  // P2-1: 自动关联发现开关关闭时直接返回
-  if (settings?.enableAutoLinking === false) return 0;
-  const windowDays = linkWindowDays ?? settings?.linkWindowDays ?? 7;
-  const maxRelated = 20;
-  const stream = data.memory.memoryStream || [];
-  let newLinks = 0;
-
-  // 按 entityType+name 分组
-  const groups = new Map<string, MemoryStreamEntry[]>();
-  for (const m of stream) {
-    const et = m.structured?.entityType;
-    const name = m.structured?.name;
-    if (!et || !name) continue;
-    const key = `${et}:${name}`;
-    if (!groups.has(key)) groups.set(key, []);
-    groups.get(key)!.push(m);
-  }
-
-  for (const group of groups.values()) {
-    if (group.length < 2) continue;
-
-    for (const m of group) {
-      if (!m.structured) continue;
-      if (!m.structured.relatedIds) m.structured.relatedIds = [];
-
-      for (const other of group) {
-        if (other.id === m.id) continue;
-        // 时间窗口检查
-        const tM = new Date(m.created).getTime();
-        const tO = new Date(other.created).getTime();
-        if (Number.isFinite(tM) && Number.isFinite(tO)) {
-          const diffDays = Math.abs(tM - tO) / (24 * 60 * 60 * 1000);
-          if (diffDays > windowDays) continue;
-        }
-        // 幂等检查
-        if (m.structured.relatedIds.includes(other.id!)) continue;
-        // 上限防爆
-        if (m.structured.relatedIds.length >= maxRelated) break;
-        m.structured.relatedIds.push(other.id!);
-        newLinks++;
-      }
-    }
-  }
-
-  return newLinks;
-}
-
-/**
- * 构建故事线（P3 ticket 123）
- * 按 relatedIds / 同实体回溯出「故事线」——返回直接关联的记忆数组。
- *
- * @param data 智能猫数据
- * @param memoryId 起始记忆 id
- * @returns 关联记忆列表（含自身，按时间排序）
- */
-export function buildStoryline(
-  data: SmartCatData,
-  memoryId: string,
-): MemoryStreamEntry[] {
-  const stream = data.memory.memoryStream || [];
-  const start = stream.find((m) => m.id === memoryId);
-  if (!start) return [];
-
-  const visited = new Set<string>();
-  const result: MemoryStreamEntry[] = [];
-
-  // BFS 遍历 relatedIds
-  const queue: string[] = [memoryId];
-  while (queue.length > 0) {
-    const id = queue.shift()!;
-    if (visited.has(id)) continue;
-    visited.add(id);
-
-    const m = stream.find((s) => s.id === id);
-    if (!m) continue;
-    result.push(m);
-
-    // 加入 relatedIds
-    if (m.structured?.relatedIds) {
-      for (const rid of m.structured.relatedIds) {
-        if (!visited.has(rid)) queue.push(rid);
-      }
-    }
-
-    // 加入同实体记忆（同一 entityType+name）
-    const et = m.structured?.entityType;
-    const name = m.structured?.name;
-    if (et && name) {
-      for (const s of stream) {
-        if (s.id === id || visited.has(s.id!)) continue;
-        if (s.structured?.entityType === et && s.structured?.name === name) {
-          queue.push(s.id!);
-        }
-      }
-    }
-  }
-
-  // 按时间排序
-  result.sort((a, b) => new Date(a.created).getTime() - new Date(b.created).getTime());
-  return result;
 }
 
 // ==================== ADR-0069：存储 sidecar（smartcat-memory.json / smartcat-behavior.json） ====================

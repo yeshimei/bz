@@ -9,7 +9,6 @@ import type { Appearance, SmartCatConfig } from './types';
 export function defaultConfig(): SmartCatConfig {
   return {
     appearance: 'orange',
-    customColors: { primary: '#FF6B35', secondary: '#F7931E' },
     speakInterval: 5,
     speakProbability: 0.3,
     responseSensitivity: 'medium',
