@@ -1,5 +1,5 @@
-/* 源指纹 dd564c200fdac57c · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
+/* 源指纹 a60840d17a62be40 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/belongings/render.ts → window.BZR_belongings（评审壳预览包，ADR-0104） */
 var BZR_belongings = (() => {
   var __defProp = Object.defineProperty;
@@ -81,6 +81,7 @@ var BZR_belongings = (() => {
     stockCount: () => stockCount,
     todayStr: () => todayStr,
     totalAssets: () => totalAssets,
+    trimDailyNum: () => trimDailyNum,
     yearsAvailable: () => yearsAvailable,
     yearsOptionsHtml: () => yearsOptionsHtml
   });
@@ -681,6 +682,10 @@ var BZR_belongings = (() => {
   function recoveredOf(it) {
     return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
   }
+  function trimDailyNum(n) {
+    const v = Number(n) || 0;
+    return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+  }
   function parseLocalDay(raw) {
     const parts = String(raw || "").slice(0, 10).split("-").map(Number);
     const [y, m, d] = parts;
@@ -865,12 +870,6 @@ var BZR_belongings = (() => {
     specs.push({ icon: "pencil", label: "编辑", act: "edit", keepOpen: true });
     specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
     return specs;
-  }
-
-  // src/belongings/report-stats.ts
-  function trimDailyNum(n) {
-    const v = Number(n) || 0;
-    return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
 
   // src/belongings/layouts/poster/render.ts

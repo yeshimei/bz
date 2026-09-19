@@ -12746,8 +12746,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * #f5f2ec + 墨黑 #171512 + 赤橙 #e8481f；.theme-dark = 夜版海报深炭变体，issue 270 推翻
  * 「双主题恒定纸面」旧口径）+ .bz-bel-* 装饰类；通用件继续消费组件库
  * （chips/segmented/搜索/按钮/字段），在其上做海报皮作用域覆盖（方角/墨框/下划线）。
- * 移动端 = p20 手机壳设计：m-kpis 四格 / 工具行(搜索+年份) → 横滑 chips → 排序 seg → 单列网格
- * → 底部记一笔 → 居中脚注；判定走容器查询（评审壳手机框与真机全屏同源，见文末）。
+ * 移动端：印章头 + 常驻工具行（搜索/年份/排序/记一笔）→ 单列网格（页脚与横滑 chips 已拍板
+ * 退役，issue 356 报告页另有三钮）；判定走容器查询（评审壳手机框与真机全屏同源，见文末）。
  * 口径：标签/徽章字号 ≥11px；不持静态 z-index；触控 44px 档走 .bz-touch-target / min-height。
  */
 
@@ -13269,13 +13269,15 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-bel-panel,
 .bz-bel-report-mask { container-type: inline-size; }
 @media (max-width: 768px) {
+  /* 高度接 core 可视视口 --bz-vvh（批B 修复4，clipbook/memo/cinema 先例）：软键盘弹出时面板/
+     报告页随可视视口收缩（真机上 vvh < 100vh——Obsidian 移动端原生顶栏/底栏），底部记一笔不被遮 */
   .bz-bel-panel {
-    width: 100vw; height: 100vh; max-width: none; max-height: none;
+    width: 100vw; height: var(--bz-vvh, 100vh); max-width: none; max-height: var(--bz-vvh, 100vh);
     border-radius: 0; border: none;
   }
   .bz-overlay-popup.bz-bel-detail { width: 100vw; max-width: none; border-left: none; border-right: none; }
   .bz-bel-report {
-    width: 100vw; height: 100vh; max-width: none; max-height: none;
+    width: 100vw; height: var(--bz-vvh, 100vh); max-width: none; max-height: var(--bz-vvh, 100vh);
     border: none;
   }
   /* 报告头行 = popup 首子元素：core .bz-panel-mtop > div:first-child（防避让双份）会把
