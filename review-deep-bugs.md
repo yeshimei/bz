@@ -647,9 +647,9 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## settings-panel（设置面板）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率 / 4 一致运行中，5 待槽位）
+## settings-panel（设置面板）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致运行中，5 待槽位）
 
-> 明细：`.scratch/review-deep/settings-panel-{func,ui}.md`。方向 1（func）：P2×2 + P3×5 + UX×1。方向 2（UI）：P2×2 + P3×6 + UX×2。跨方向去重：搜索交互簇（func F-1 恢复放出门控行 = ui UI-6 徽标不重算/UI-7 大小写敏感同搜索链路；UX-2 ESC 二段与 ui UI-1 同刀）；styles.css:1042 `-var(` 旧账由 ui UI-3 收编展开（移动端返回钮右距声明整条被丢弃）；R9 缝升级维持（func 补充：core R9 修法含回显+行内报错而 panel 两者皆无）；GS3 secret 纯死特性（连 `.secret` 样式规则都没有，仍按拍板不立项）。旧账闭环确认 4 组。门禁基线：tsc 0；settings-panel 相关 83 例全绿。
+> 明细：`.scratch/review-deep/settings-panel-{func,ui,efficiency}.md`。方向 1（func）：P2×2 + P3×5 + UX×1；方向 2（UI）：P2×2 + P3×6 + UX×2；方向 3（效率）：P3×6 + UX×2（无 P1/P2）。跨方向去重：搜索交互簇（F-1 恢复放出门控行 = UI-6 徽标不重算/UI-7 大小写敏感/E-5 零防抖同搜索链路，UX-2 ESC 二段与 UI-1 同刀）；1042 `-var(` 旧账由 UI-3 收编展开；R9 缝升级维持；GS3 secret 纯死特性仍按拍板不立项。**效率方向旧账补证**：#37（无全部恢复默认+E-6 移动端无重置入口加剧面）、#38（桌面跨域命中不可达+三口径分裂证据）。门禁基线：tsc 0；settings-panel 相关 83 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
@@ -659,7 +659,8 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 群（func 5 条）**：list 行移除回调无 try/catch（core C10 口径分叉）；初始渲染 visibleWhen 求值裸奔（单行异常放大成整域「加载失败」）；「重置本域」saveSettings 裸奔假成功；搜索态 ↑↓ 在未过滤全集切换；移动端搜索缓存不做端门控过滤。
 - **P3 群（ui 6 条）**：1042 `-var(` 无效声明；触控热区群低于 §8.2 下限且全域零 bz-touch-target 消费（返回/关闭 32px、菜单项 30px、chips ✕ 12px）；#bz-model-picker-popup 裸 100vh 未接 vvh；搜索过滤后组卡徽标不重算；搜索判定大小写敏感；nav 徽标「门控变化后自动跟随」注释不兑现且两套计数口径分叉。
 - **P3 R9 缝升级修法**：非法输入 NaN→0 写入 → 对齐 core「不写入+回显旧值+行内报错」口径。
-- **UX 分流（SP 系）**：输入态 ↑↓ 让路光标移动 or 保留切域（U-1 拍板）；搜索命中行词级 mark（UX-1）；搜索框 ESC 二段清词（UX-2，✕ 退役有拍板在案故仅 ESC 语义）。
+- **P3 群（eff 6 条）**：行级落盘 reject 全域静默（renderer.ts 8 处 `void acc.persist()` 无 catch，core 渲染器 N5 safePersist 已兜口径分叉）；「重置本域」确认弹窗缺 danger 反焦（全仓破坏性惯例 8+ 处本域唯一掉队，Enter 一击即重置）；零初始焦点无圈定（uiModal firstFocusable 未消费）；左栏 Tab 序 20+ 欠 roving tabindex；搜索零防抖（每键全量重建+图标物化+全行重扫）；移动端无「重置本域」入口（#37 加剧面）。
+- **UX 分流（SP 系）**：输入态 ↑↓ 让路光标移动 or 保留切域（U-1 拍板）；搜索命中行词级 mark（UX-1）；搜索框 ESC 二段清词（UX-2，✕ 退役有拍板在案故仅 ESC 语义）；搜索 Enter 跳首个命中（E-7）；schemaLoader 会话级缓存+滚位保持（E-8）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
