@@ -918,7 +918,8 @@ export function createOverlay(app: App): void {
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号（谁后显示谁在上）
   M.currentOverlay = overlay;
-  M.renderFn = () => renderAll(app);
+  // 后台刷新（豆瓣补抓落盘 / vault 事件 / AI 流程）走 renderSoft：打字期间顺延，不抢焦点
+  M.renderFn = () => renderSoft(app);
   const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
   // 点遮罩 = 关闭主面板（桌面；移动全屏无遮罩）
@@ -929,6 +930,7 @@ export function createOverlay(app: App): void {
   bindMidnight(root, app);
   // 搜索/滑杆输入（委托；input 冒泡）
   root.addEventListener('input', (e) => {
+    M.lastInputAt = Date.now(); // 打字心跳：renderSoft 据此让路（含中文输入法组合期）
     const t = e.target as HTMLElement;
     if (t.classList.contains('j-q') || t.classList.contains('j-mq')) {
       onSearchInput(app, root, t.classList.contains('j-mq'), (t as HTMLInputElement).value);
@@ -954,12 +956,95 @@ export function createOverlay(app: App): void {
   renderAll(app);
 }
 
+// ---------- 输入守护（打字不被整刷打断） ----------
+//
+// 起因：desk 的搜索框在 .j-view 内，renderAll 重写 .j-view 会连搜索框一起换血 →
+// 焦点丢失、未满防抖（300ms）的键入被渲染回退成旧 value；打开面板时 sweepDoubanFetch
+// 把缺海报/缺豆瓣链接的条目全入队，补抓每完成一条就整刷两次，于是「打几个字就失焦」。
+// 两层处理：
+// 1) 后台刷新走 renderSoft：打字静默期内顺延，等手停了再补刷；
+// 2) 任何整刷（含用户主动触发的）都过焦点守护：快照文本输入的标识/值/选区，渲染后原样落回。
+
+/** 打字静默期判定（ms）：距上次键入小于此值视为还在打字 */
+const TYPING_GUARD_MS = 400;
+/** 顺延渲染的补刷延迟（ms）：手停后多久补一次后台刷新 */
+const SOFT_RENDER_DELAY_MS = 400;
+
+let softRenderTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** 文本输入判定（排除滑杆/勾选等不支持选区的输入类型） */
+function isTextField(el: Element | null): el is HTMLInputElement | HTMLTextAreaElement {
+  if (!(el instanceof HTMLInputElement) && !(el instanceof HTMLTextAreaElement)) return false;
+  return !/^(range|checkbox|radio|button|submit|reset|file|color|image)$/i.test(el.type);
+}
+
+/** 稳定选择器（tag + 全量 class）——渲染后按同一标识找回同名输入框 */
+function focusSelector(el: HTMLElement): string | null {
+  const cls = Array.from(el.classList).filter((c) => /^[A-Za-z][\w-]*$/.test(c));
+  return cls.length ? `${el.tagName.toLowerCase()}.${cls.join('.')}` : null;
+}
+
+interface FocusSnap { sel: string; value: string; start: number | null; end: number | null }
+
+/** 渲染前快照：焦点在面板文本输入内才记；value 必记（防抖前的键入不能丢） */
+function snapshotFocus(root: HTMLElement): FocusSnap | null {
+  const el = document.activeElement;
+  if (!isTextField(el) || !root.contains(el)) return null;
+  const sel = focusSelector(el);
+  if (!sel) return null;
+  let start: number | null = null;
+  let end: number | null = null;
+  try { start = el.selectionStart; end = el.selectionEnd; } catch { /* number/email 等不支持选区 */ }
+  return { sel, value: el.value, start, end };
+}
+
+/** 渲染后落回：value 不同才回写（免打断输入法组合），再恢复焦点与光标位置 */
+function restoreFocus(root: HTMLElement, snap: FocusSnap | null): void {
+  if (!snap) return;
+  const el = root.querySelector(snap.sel);
+  if (!isTextField(el)) return; // 视图切换后目标输入框不存在（如切到 AI 页）：不抢焦点
+  if (el.value !== snap.value) el.value = snap.value;
+  el.focus();
+  if (snap.start !== null && snap.end !== null) {
+    try { el.setSelectionRange(snap.start, snap.end); } catch { /* 同上 */ }
+  }
+}
+
+/** 面板内是否还在打字（焦点在文本输入 + 距上次键入未过静默期） */
+function isTyping(root: HTMLElement): boolean {
+  if (!M.lastInputAt || Date.now() - M.lastInputAt >= TYPING_GUARD_MS) return false;
+  return isTextField(document.activeElement) && root.contains(document.activeElement);
+}
+
+function clearSoftRender(): void {
+  if (softRenderTimer) { clearTimeout(softRenderTimer); softRenderTimer = null; }
+}
+
+/**
+ * 后台刷新入口（M.renderFn / vault 自动刷新）：打字期间顺延，手停后补刷一次。
+ * 用户主动触发的渲染（点筛选、保存、搜索防抖）一律走 renderAll 立即渲染，不延后。
+ */
+export function renderSoft(app: App): void {
+  const overlay = M.currentOverlay;
+  if (!overlay) return;
+  const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
+  if (!root) return;
+  if (isTyping(root)) {
+    if (softRenderTimer) clearTimeout(softRenderTimer);
+    softRenderTimer = setTimeout(() => { softRenderTimer = null; renderAll(app); }, SOFT_RENDER_DELAY_MS);
+    return;
+  }
+  renderAll(app);
+}
+
 /** 渲染总入口：按面板根的风格/端分发（vault 自动刷新与 M.renderFn 都走这里） */
 export function renderAll(app: App): void {
   const overlay = M.currentOverlay;
   if (!overlay) return;
   const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
+  clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖
+  const snap = snapshotFocus(root);
   // 滚位记忆（深审批A P2-6）：渲染整写 innerHTML 销毁滚动容器——标记/保存/筛选/队列完成
   // 全跳顶。渲染前存 .d-scroll/.m-scroll 的 scrollTop、渲染后原值恢复（clipbook 会话内
   // 滚位记忆同范式；视图切换时滚动容器换型，恢复自然 no-op）
@@ -978,9 +1063,11 @@ export function renderAll(app: App): void {
     if (sc) sc.scrollTop = top;
   }
   mountIcons(root);
+  restoreFocus(root, snap);
 }
 
 export function closeOverlay(): void {
+  clearSoftRender(); // 面板已关：顺延渲染不再补，免留下野定时器
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
   // 活跃弹窗层统一结算（深审批A P3-10 双保险之二）：closeOverlay 原来只移除面板树，
   // 弹窗层（详情/表单/各季明细）的 ESC 句柄靠 el.isConnected 判死不主动注销——层表残留

@@ -8,7 +8,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { unregisterPanelEsc } from '../core/esc-manager';
 import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER } from './state';
 import { rebuildItems, findPosterRenameTargets } from './data';
-import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, openAddModalDirect, openRandomMovie } from './ui';
+import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, renderSoft, openAddModalDirect, openRandomMovie } from './ui';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
 
 let initialized = false;
@@ -51,7 +51,7 @@ function registerAutoRefresh(app: App): void {
     timer = setTimeout(() => {
       if (!M.currentOverlay) return;
       rebuildItems(app);
-      renderAll(app);
+      renderSoft(app); // 后台通道：打字期间顺延，不抢搜索框焦点
     }, 300);
   };
   onDomainEvent<{ path: string }>('cinema:file-created', (evt) => schedule({ path: evt.path }));

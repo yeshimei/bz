@@ -59,6 +59,9 @@ export interface CinemaState {
   view: CinemaViewKind;
   searchKeyword: string;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null;
+  /** 面板内最近一次键入时刻（Date.now()，0=从未输入）。后台整刷（豆瓣补抓 / vault 事件）
+   *  据此判定「用户还在打字」→ 顺延渲染，不再打断输入（issue: 影院搜索框打几个字就失焦） */
+  lastInputAt: number;
   appRef: App | null;
   folderPath: string;
   renderFn: (() => void) | null;
@@ -80,6 +83,7 @@ export const M: CinemaState = {
   view: 'list',
   searchKeyword: '',
   searchDebounceTimer: null,
+  lastInputAt: 0,
   appRef: null,
   folderPath: DEFAULT_FOLDER,
   renderFn: null,
@@ -100,6 +104,7 @@ export function resetCinemaState(): void {
   M.view = 'list';
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
+  M.lastInputAt = 0;
   M.appRef = null;
   M.folderPath = DEFAULT_FOLDER;
   M.renderFn = null;
