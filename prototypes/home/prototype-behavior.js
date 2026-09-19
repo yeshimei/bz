@@ -1,4 +1,4 @@
-/* 源指纹 93f241af6650400b · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 271b572f4bdba552 · 仓内输入 240 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/home/weekly.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -43622,12 +43622,12 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/password-vault/data.ts
-  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
+  var PASSWORD_VAULT_CHANNEL, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
   var init_data12 = __esm({
     "src/password-vault/data.ts"() {
       init_domain_bus();
+      init_data11();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
-      ENCRYPT_CHANGED_CHANNEL2 = "encrypt:changed";
       VAULT_KIND = "password-vault";
       VAULT_PATH = "CONFIG/.ENCRYPT/passwords";
       VAULT_TITLE = "密码本";
@@ -43640,6 +43640,7 @@ GitHub 仓库：${ghInfo.title}
           /** 域事件退订 */
           this.offChanged = null;
           this.offEncryptChanged = null;
+          this.offUnlockChanged = null;
           /** 自身写盘中标志：save() 期间跳过外部事件重载（自己写的 encrypt:changed 广播不触发自重载） */
           this.saving = false;
           /** 外部变更回调（UI 订阅；外部改动 → 重载后回调） */
@@ -43649,10 +43650,14 @@ GitHub 仓库：${ghInfo.title}
             if ((evt == null ? void 0 : evt.source) === "password-vault") return;
             void this.reloadFromExternal();
           });
-          this.offEncryptChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL2, (evt) => {
+          this.offEncryptChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL, (evt) => {
             const note = this.vaultNote;
             if (!note || (evt == null ? void 0 : evt.noteId) && evt.noteId !== note.id) return;
             void this.reloadFromExternal();
+          });
+          this.offUnlockChanged = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+            if ((evt == null ? void 0 : evt.unlocked) !== false) return;
+            this.clearPlainCaches();
           });
         }
         /** 解锁态 = 保险库解锁态（同一把主密码） */
@@ -43737,10 +43742,14 @@ GitHub 仓库：${ghInfo.title}
           }
           emitDomainEvent(PASSWORD_VAULT_CHANNEL, { source: "password-vault" });
         }
-        lock() {
-          this.safe.lock();
+        /** 清明文缓存（pwData 整表明文 + load 缓存）；lock() 与上锁事件订阅共用同一份收口 */
+        clearPlainCaches() {
           this.pwData = [];
           this.loadCache = null;
+        }
+        lock() {
+          this.safe.lock();
+          this.clearPlainCaches();
         }
         // ---------- 平台聚合 ----------
         platforms() {
@@ -43852,7 +43861,7 @@ GitHub 仓库：${ghInfo.title}
         /** 搜索：平台/账号/备注（与旧密码本同口径） */
         search(keyword) {
           if (!this.unlocked) throw new Error("未解锁");
-          if (!keyword) return this.pwData;
+          if (!keyword) return this.pwData.slice();
           const lower = keyword.toLowerCase();
           return this.pwData.filter(
             (item) => (item.platform || "").toLowerCase().includes(lower) || (item.account || "").toLowerCase().includes(lower) || (item.note || "").toLowerCase().includes(lower)
@@ -43860,11 +43869,13 @@ GitHub 仓库：${ghInfo.title}
         }
         /** 卸载清理：退订域事件 */
         destroy() {
-          var _a2, _b2;
+          var _a2, _b2, _c;
           (_a2 = this.offChanged) == null ? void 0 : _a2.call(this);
           this.offChanged = null;
           (_b2 = this.offEncryptChanged) == null ? void 0 : _b2.call(this);
           this.offEncryptChanged = null;
+          (_c = this.offUnlockChanged) == null ? void 0 : _c.call(this);
+          this.offUnlockChanged = null;
         }
       };
     }
@@ -45743,7 +45754,10 @@ GitHub 仓库：${ghInfo.title}
           var _a2;
           if (activeUnlock && ((_a2 = activeUnlock.el) == null ? void 0 : _a2.isConnected)) activeUnlock.cancel();
           document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
-          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => el.remove());
+          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => {
+            if (el.classList.contains("bz-lockscreen--password-vault") || el.classList.contains("bz-lockscreen--diary")) return;
+            el.remove();
+          });
           this.hideHealthDialog();
           cancelActiveFlowDialog();
         }
@@ -46582,7 +46596,18 @@ GitHub 仓库：${ghInfo.title}
           { type: "number", name: "密码生成长度", desc: "随机生成密码的字符个数", binding: numStrBinding("passwordLength", 16), min: 4, max: 128, step: 1, onCommit: warnReload }
         ] },
         { icon: "shield", name: "安全", rows: [
-          { type: "toggle", name: "安全模式", desc: "关闭窗口立即自动上锁", binding: { key: "securityMode" }, onChange: warnReload }
+          // 统一「安全模式」（cons 新-1 对齐 encrypt 双键 binding）：securityMode 与
+          // encryptSecurityMode 历史双键 OR 读取、同步双写（ADR-0085 键位冻结兼容老用户）——
+          // 单键直写会让「pv 关安全模式」在 encrypt 侧旧键仍生效（关不掉）
+          { type: "toggle", name: "安全模式", desc: "关闭密码本窗口立即自动上锁", binding: {
+            get: () => !!tryGetSettings().securityMode || !!tryGetSettings().encryptSecurityMode,
+            set: (v) => {
+              const s = getSettings();
+              s.securityMode = v;
+              s.encryptSecurityMode = v;
+            },
+            save: () => saveSettings()
+          }, onChange: warnReload }
         ] }
       ]
     };
@@ -46590,6 +46615,7 @@ GitHub 仓库：${ghInfo.title}
   var init_settings7 = __esm({
     "src/password-vault/settings.ts"() {
       init_settings_common();
+      init_settings_provider();
     }
   });
 

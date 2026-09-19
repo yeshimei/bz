@@ -1,4 +1,4 @@
-/* 源指纹 19e8497217726e12 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8567ea5b1e1aadd1 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -9448,12 +9448,12 @@ var BZW_diary = (() => {
   });
 
   // src/password-vault/data.ts
-  var PASSWORD_VAULT_CHANNEL, ENCRYPT_CHANGED_CHANNEL2, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
+  var PASSWORD_VAULT_CHANNEL, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
   var init_data3 = __esm({
     "src/password-vault/data.ts"() {
       init_domain_bus();
+      init_data2();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
-      ENCRYPT_CHANGED_CHANNEL2 = "encrypt:changed";
       VAULT_KIND = "password-vault";
       VAULT_PATH = "CONFIG/.ENCRYPT/passwords";
       VAULT_TITLE = "密码本";
@@ -9466,6 +9466,7 @@ var BZW_diary = (() => {
           /** 域事件退订 */
           this.offChanged = null;
           this.offEncryptChanged = null;
+          this.offUnlockChanged = null;
           /** 自身写盘中标志：save() 期间跳过外部事件重载（自己写的 encrypt:changed 广播不触发自重载） */
           this.saving = false;
           /** 外部变更回调（UI 订阅；外部改动 → 重载后回调） */
@@ -9475,10 +9476,14 @@ var BZW_diary = (() => {
             if ((evt == null ? void 0 : evt.source) === "password-vault") return;
             void this.reloadFromExternal();
           });
-          this.offEncryptChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL2, (evt) => {
+          this.offEncryptChanged = onDomainEvent(ENCRYPT_CHANGED_CHANNEL, (evt) => {
             const note = this.vaultNote;
             if (!note || (evt == null ? void 0 : evt.noteId) && evt.noteId !== note.id) return;
             void this.reloadFromExternal();
+          });
+          this.offUnlockChanged = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+            if ((evt == null ? void 0 : evt.unlocked) !== false) return;
+            this.clearPlainCaches();
           });
         }
         /** 解锁态 = 保险库解锁态（同一把主密码） */
@@ -9563,10 +9568,14 @@ var BZW_diary = (() => {
           }
           emitDomainEvent(PASSWORD_VAULT_CHANNEL, { source: "password-vault" });
         }
-        lock() {
-          this.safe.lock();
+        /** 清明文缓存（pwData 整表明文 + load 缓存）；lock() 与上锁事件订阅共用同一份收口 */
+        clearPlainCaches() {
           this.pwData = [];
           this.loadCache = null;
+        }
+        lock() {
+          this.safe.lock();
+          this.clearPlainCaches();
         }
         // ---------- 平台聚合 ----------
         platforms() {
@@ -9678,7 +9687,7 @@ var BZW_diary = (() => {
         /** 搜索：平台/账号/备注（与旧密码本同口径） */
         search(keyword) {
           if (!this.unlocked) throw new Error("未解锁");
-          if (!keyword) return this.pwData;
+          if (!keyword) return this.pwData.slice();
           const lower = keyword.toLowerCase();
           return this.pwData.filter(
             (item) => (item.platform || "").toLowerCase().includes(lower) || (item.account || "").toLowerCase().includes(lower) || (item.note || "").toLowerCase().includes(lower)
@@ -9686,11 +9695,13 @@ var BZW_diary = (() => {
         }
         /** 卸载清理：退订域事件 */
         destroy() {
-          var _a, _b;
+          var _a, _b, _c;
           (_a = this.offChanged) == null ? void 0 : _a.call(this);
           this.offChanged = null;
           (_b = this.offEncryptChanged) == null ? void 0 : _b.call(this);
           this.offEncryptChanged = null;
+          (_c = this.offUnlockChanged) == null ? void 0 : _c.call(this);
+          this.offUnlockChanged = null;
         }
       };
     }
@@ -11555,7 +11566,10 @@ var BZW_diary = (() => {
           var _a;
           if (activeUnlock && ((_a = activeUnlock.el) == null ? void 0 : _a.isConnected)) activeUnlock.cancel();
           document.querySelectorAll("body > .bz-vault-dlg-mask").forEach((el) => el.remove());
-          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => el.remove());
+          document.querySelectorAll("body > .bz-lockscreen--mask").forEach((el) => {
+            if (el.classList.contains("bz-lockscreen--password-vault") || el.classList.contains("bz-lockscreen--diary")) return;
+            el.remove();
+          });
           this.hideHealthDialog();
           cancelActiveFlowDialog();
         }
