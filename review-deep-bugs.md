@@ -396,9 +396,18 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## belongings（归物本）域 · 审查入账中（方向 1 功能 + 方向 2 UI 已到账；方向 3 效率审查中，4/5 待派）
+## belongings（归物本）域 · ✅ 闭环（2026-09-20，五方向 235c764d 定稿 → 两批合并 → 部署 197aba03）
 
 > 明细：`.scratch/review-deep/belongings-{func,ui}.md`（eff 落地中）。方向 1：P3×8 + [UX-Suggestion]×2（数据安全面经往轮修复已扎实，新发现全是罕见路径静默失败与口径分叉）；方向 2：P2×5 + P3×4 + [UX-Suggestion]×2 + 测试缺口 6。跨方向去重：closePanel 收口（func P3-1 = ui P2-1 同根并入 P2）。旧账复核：H8-H20 全部在位（panel-fix.test 回归在册）、autumn 体验账 4 条中 3 已修；未修 2 条（autumn UX② 当月列空档 → 本轮修；随机 id 后缀理论可空串 → 风险趋零登记不修）；消解悬案 1 条（删除双保险口径，见拍板清单 B7）。门禁基线：tsc 0 错；tests/belongings 9 文件 185 例全绿。
+
+### ✅ 闭环记录（2026-09-20）
+
+- **批 A `bz-fix-bel-data`（66d25603，数据口径与删除链 12 项）**：价格钳制（MAX_PRICE=1e12+人话提示）、日期单源（shared.parseLocalDay 严格化+exitDayTsOf 封口；无效出离日拍板「无封口锚点，截至查看时点计」）、todayStr 收编 core localDayKey（全库最后域内复写点退役）、状态串全量 STATUS_ORDER/STATUS.*.label 单源、selfWritePending 计数器化（交叠窗口回归验证）、getDataFilePath 收敛 storageFile、清空分类 fail 口径、撤销补发 status 事件（belongings-source 文案零新增）、**删除免确认直达 notifyUndo**（openFlowDialog 段退役，func P3-3 确认在途死端随消）、loadDatabase 三入口对称兜底（notifyActionError+onRetry）、测试卫生（死键 belongingsDataFolder→storagePath 16 处+settings-modal 同款顺手清）。
+- **批 B `bz-fix-bel-view`（560db2b7，视图交互与报告 16 项）**：closePanel 收口（requestCloseBelForm 脏走 confirmDiscard+closeItemMenu）、详情保存后就地重建、删移动端 100ms 强制聚焦、100vh→--bz-vvh、bindFormSubmit Enter 提交、网格卡键盘可达（role/tabindex/Enter 委托）、搜索 ESC 二段+✕（debounce.cancel）、年份跨开合残留、防抖竞态身份比对、data-v 补 esc、报告三钮+下拉触发器挂 bz-touch-target、**KPI 回收口径**（仅已转卖且售价>0）、日均格式化单源 trimDailyNum、当月列截至今日（DailyCostCol.capped+悬浮注）、报告重入保留 ctxYear、ESC 手写旗标收编 registerPanelEsc。
+- **合并**：8a353cf8（批A）→ be957e72（批B；report-stats.ts 注释块冲突 union 解 + 7 产物冲突 rebuild 覆盖）。批 B 的合并复核网用例（openForm 插入点）全绿零复插。
+- **主线程收口**：cons⑩ 表单成功分支手工五连改走 closeBelForm() 单路径（belFormMask 引用滞留）；trimDailyNum 随 recoveredOf 同刀平移 shared.ts（三消费方改 import，report-stats 不再出口防双出口）；CONTEXT.md 词条四处收口（页脚拍板去除/印章头常驻工具行/演进段补 issue 294+356+删除免确认/空弹窗表述）+ ui.ts/styles.css 头注对齐。
+- **门禁与部署**：全量 6367 例（7 freshness 红=主线程改 src 未 rebuild，重出后 28/28 绿）+ tsc 0；`pnpm run build` 部署 **197aba03**；两 worktree + 分支清理。
+- **残款登记**：B1 移动端资产筛选不可达（拍板）；B4 0 元日均「￥0.0000」（拍板）；归物本删除口径已对齐免确认——**core/notice.ts:139 注释与 B7 行「favorites 已落地」系误记**（favorites 效率方向 E1 以 git log -S 证实 favorites 才是滞后域），注释纠偏归 favorites 修复批。
 
 ### 已去重修复项（暂 P2×4 + P3×11；批次待 5 方向齐后定稿）
 
@@ -537,3 +546,19 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **批 B `bz-fix-gs-view`（UI 渲染与交互）**：ui.ts/detail.ts/styles.css——整刷→renderSoft+焦点、window.open 收口、热区、转义单源收编（含 stripTitleMarks）、塌陷、三控件互译、openDetail 收预览、防抖、ESC 清词✕（clipbook 范式）、aria-pressed、firstChar、状态行残留、滚位保持、双 renderAll 收口、indexInList 缓存、ESC 层 id、vvh 注释、`url('')` 转义 + 缺口（焦点/bindMediaFallback/modalRepaintFn/renderList/mountOps/互译/高度）。
 - **主线程文档收口**：AGENTS.md 领域清单补 gameshelf 行、CONTEXT.md 词条两处滞后、--bz-vvh 词条打架处。
 - **拍板清单**：GS1 已下架翻回 / GS2 latestrow 键盘 / GS3 密钥明文框 / GS4 会话滚位记忆。
+
+---
+
+## favorites（收藏夹）域 · 审查入账中（方向 1 功能 + 3 效率已到账；方向 2 UI / 4 一致 / 5 架构运行中）
+
+> 明细：`.scratch/review-deep/favorites-{func,efficiency}.md`。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1（无 P1/P2——两轮全域修复后数据面扎实）。方向 3（效率）：P2×3 + P3×3 + UX×3。旧账复核：F14/F15/FV1/FV3/FV4 五条已修闭环（openExternalUrl/closeAllModals/withTimeout 收编均验证到源码）；FV2（单例守卫绕过脏检查）仍在升本轮 E3；UX 138 已被 issue 201 拍板关闭、132 部分缓解维持、71 属全域级。**重要复核发现（E1）**：效率整改 5 落地面账目反转——favorites 删除/归档仍「确认框+撤销」双保险（`git log -S` 证实确认文案自初版从未移除），**favorites 才是删除口径滞后域**；core/notice.ts:139 注释与本台账 B7 行「favorites 已落地免确认」均系误记，归修复批纠偏（belongings 批 A 已按正确口径落地）。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 删除/归档双保险违效率整改 5 定稿 + 文档误记纠偏**（eff E1）——免确认直达 notifyUndo（belongings 批 A 同款落地法）；同域两制（取消归档却免确认）一并理顺；core/notice.ts:139 注释纠偏。
+- **P2 操作后全量重刷丢滚位**（eff E2）——置顶/归档/删除/编辑保存后长列表视野跳顶。修：滚位保持。
+- **P2 openForm 单例守卫绕过脏检查静默丢草稿**（eff E3 = 旧账 FV2，func 复核证实仍在）——修：单例命中走 confirmDiscard 口径。
+- **P3 群（func 6 条）**：删除撤销不补发领域事件（归档撤销补 unarchive 先例在位，补 delete 对应事件）；编辑全量覆盖写回可回滚磁盘侧修复（改窄 patch 或合并写）；编辑改标签不重算 `type=tags[0]` 派生字段；AI 整理回填 url 不过 normalizeUrl（整理完即可存断链）；标签弹窗复用 `.bz-fav-form` 类致单例守卫/ESC 层误命中（双层遮罩）；标签名可取哨兵字面值（「全部/已归档/@last」）无保留字防御。
+- **P3 群（eff 3 条）**：表单无 Enter 提交（bindFormSubmit 在位未消费）；boardHtml indexOf O(n²)+每标签全量重 filter（Map 建表）；手输链接缺协议保存路径不补 normalizeUrl（粘贴路径已补，又一处域内两制）。
+- **UX 分流（拍板清单 F 系，5/5 齐后统一登记）**：无链卡点击零反馈、桌面操作唯一入口右键发现性弱（hover「…」角标）、面板键盘焦点管理（belongings 批 B 先例）。
+- **测试缺口**：随修复批按报告补。
