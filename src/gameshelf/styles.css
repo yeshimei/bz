@@ -168,7 +168,10 @@
   background: var(--bz-surface-1);
   border-bottom: 1px solid var(--bz-border);
 }
-.bz-gs-chips { display: flex; gap: var(--bz-space-sm); flex-wrap: wrap; min-width: 0; }
+.bz-gs-chips { display: flex; gap: 6px; flex-wrap: wrap; min-width: 0; }
+/* 单行化收紧（2026-09-19 用户点版：桌面档位+排序+搜索一行放不下被挤成两行）：
+   chip 与分段按钮收内边距、搜索收最宽——按 1180 面板实测溢出约 40px，这里放出 ~100px 余量 */
+.bz-gs-chips .bz-chip { padding: 0 9px; }
 .bz-gs-toolsend {
   margin-left: auto;
   display: flex;
@@ -178,8 +181,9 @@
 }
 /* 移动端专用的一套控件（档位/排序下拉）：桌面隐藏，工具行两套形态共用同一份状态 */
 .bz-gs-sels { display: none; }
-.bz-gs-search { min-width: 168px; }
+.bz-gs-search { min-width: 132px; }
 .bz-gs-search .bz-input { width: 100%; }
+.bz-gs-sortseg .bz-segmented-btn { padding: 0 11px; }
 
 /* ---------- 封面网格 ---------- */
 .bz-gs-grid {
@@ -370,8 +374,8 @@
 .bz-gs-strip > i { display: block; height: 100%; background: var(--bz-brand); opacity: 0.7; }
 .bz-gs-strip.is-full > i { opacity: 1; }
 .bz-gs-card:hover .bz-gs-strip > i { opacity: 1; }
-/* 全成就奖杯角标：小海报右上角，裸金杯 + 深投影（不套底圈，压在任何封面上都可读）。
-   金色借 --bz-warning 档（与 --bz-on-overlay 同属「图片浮层固定色」豁免口径）。 */
+/* 全成就奖杯角标：小海报右上角，🏆 字符 + 深投影（不套底圈，压在任何封面上都可读）。
+   2026-09-19 用户点版：lucide 线性杯换 emoji 字符——emoji 自带金色，不吃主题色。 */
 .bz-gs-trophy {
   position: absolute;
   top: 5px;
@@ -382,10 +386,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--bz-warning);
+  font-size: 14px;
+  line-height: 1;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.7));
 }
-.bz-gs-trophy svg { width: 18px; height: 18px; }
 .bz-gs-card:has(.bz-gs-trophy) .bz-gs-off { top: 32px; }
 
 /* ---------- 数据统计面板 ---------- */

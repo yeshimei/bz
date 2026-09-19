@@ -225,13 +225,15 @@ export function shelfHtml(
       const ach = opts.achOf?.(it) ?? null;
       const achPct = ach && ach.total > 0 ? Math.round((ach.unlocked / ach.total) * 100) : null;
       const isFull = achPct !== null && achPct >= 100;
-      const trophy = isFull ? '<span class="bz-gs-trophy" data-lucide="trophy" title="全成就达成"></span>' : '';
+      // 🏆 直接写字符（2026-09-19 用户点版：lucide 线性杯太丑）；不能带 data-lucide，否则 mountIcons 会把字符换成 SVG
+      const trophy = isFull ? '<span class="bz-gs-trophy" title="全成就达成">🏆</span>' : '';
       const hint = it.playtimeMin > 0
         ? `${numText(hoursOf(it.playtimeMin))} 小时`
         : '从未启动';
       const last = it.lastPlayed ? dateText(it.lastPlayed) : '—';
+      // 卡片不带 title（2026-09-19 用户点版：悬浮不弹游戏名原生提示，名字本就常驻卡下）
       return `
-      <button type="button" class="bz-gs-card${it.offShelf ? ' bz-gs-card--off' : ''}" data-appid="${it.appid}" title="${escAttr(orig ? `${zh} · ${orig}` : zh)}">
+      <button type="button" class="bz-gs-card${it.offShelf ? ' bz-gs-card--off' : ''}" data-appid="${it.appid}">
         <span class="bz-gs-cover" data-initial="${escAttr(firstChar(zh))}">
           ${cover ? `<img loading="lazy" src="${escAttr(cover)}" data-fallback-src="${escAttr(it.coverSrc ?? '')}" alt="">` : '<span class="bz-gs-cover-ic" data-lucide="gamepad-2"></span>'}
           ${rank}
