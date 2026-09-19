@@ -127,6 +127,10 @@ describe('锁家族修复批（password-vault）', () => {
       expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(2); // 双实例锁屏接管
       expect(dm.pwData).toEqual([]); // 明文已清
     });
+    // N16/新-2 盲区补齐：锁屏必须带内容（输入框装配在场），不得只是切了 .open 的空壳金底
+    await vi.waitFor(() =>
+      expect(document.querySelectorAll('.bz-password-vault-lock.open [data-ls="p1"]').length).toBe(2)
+    );
     expect(document.querySelector('.bz-password-vault-rows')!.textContent).not.toContain('secret');
 
     // 同会话再解锁 → 列表重载（事件驱动）
@@ -158,7 +162,7 @@ describe('锁家族修复批（password-vault）', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'secret' });
     ui.ensureElements();
     ui.show();
-    await flush();
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-mobcard')).toBeTruthy()); // 终态轮询：固定 flush 赌 load+渲染在全量负载下必颤（arch 缺口 2）
     // 进入移动端平台详情页
     const card = document.querySelector('.bz-password-vault-mobcard') as HTMLElement;
     card.click();
@@ -189,7 +193,7 @@ describe('锁家族修复批（password-vault）', () => {
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'secret' });
     ui.ensureElements();
     ui.show();
-    await flush();
+    await vi.waitFor(() => expect(document.querySelector('.bz-password-vault-mobcard')).toBeTruthy()); // 终态轮询：同上（arch 缺口 2）
     (document.querySelector('.bz-password-vault-mobcard') as HTMLElement).click();
     await flush();
     const d = dm.pwData[0];

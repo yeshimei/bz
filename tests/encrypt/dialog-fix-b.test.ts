@@ -206,6 +206,26 @@ describe('批 B · T3 锁屏清扫（closeAllDialogs + cleanup）', () => {
     expect(dm.manifest.notes.length).toBe(1); // 未重输主密码确认 → 不销毁
   });
 
+  it('closeAllDialogs 按 kind 过滤：他域（密码本快速取密/日记）body 解锁屏不代拆（ui 新-8）', async () => {
+    // 快速取密链（ensureSafeUnlocked → showPasswordDialog 同形态）挂 body 的他域解锁屏
+    const pvLock = document.createElement('div');
+    pvLock.className = 'bz-lockscreen bz-lockscreen--mask bz-lockscreen--password-vault';
+    document.body.appendChild(pvLock);
+    const diaryLock = document.createElement('div');
+    diaryLock.className = 'bz-lockscreen bz-lockscreen--mask bz-lockscreen--diary';
+    document.body.appendChild(diaryLock);
+    const p = ui.showPasswordDialog(); // 自家 vault 解锁屏
+    await waitFor(() => !!findDialog());
+    ui.closeAllDialogs();
+    expect(await p).toBe(false);
+    expect(document.querySelector('body > .bz-lockscreen--vault')).toBeNull(); // 自家照拆
+    // 修复前无差别清扫：快速取密输密码时 ESC 关保险库面板会把取密解锁屏一并拆掉
+    expect(pvLock.isConnected).toBe(true);
+    expect(diaryLock.isConnected).toBe(true);
+    pvLock.remove();
+    diaryLock.remove();
+  });
+
   it('T5 配套：解锁屏开着时禁用插件（cleanup）→ body 无锁屏残留，等待方不悬挂', async () => {
     // 摘掉 describe 级 ui 的同 id 骨架，避免与 controller 的 popup 撞 id 干扰断言
     ui.popup?.remove();

@@ -15,7 +15,8 @@ import { getSafeManager } from '../encrypt';
 import { ENCRYPT_UNLOCK_CHANGED_CHANNEL } from '../encrypt/data';
 import { onDomainEvent } from '../core/domain-bus';
 import { topifyZ, createSiteIcon } from '../core/dom';
-import { openFlowDialog } from '../core/flow-dialog';
+import { openFlowDialog, cancelActiveFlowDialog } from '../core/flow-dialog';
+import { tryGetSettings } from '../core/settings-provider';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenHandle, LockScreenStat } from '../core/ui/lock-screen';
 import { readLockStats, writeLockStats } from '../core/lock-stats';
@@ -43,9 +44,8 @@ import {
   emptyHtml,
 } from './render';
 
-/** 展示工具再导出（原 ui.ts 公共面；实现居 render.ts 纯层） */
-export { relTime, colorOf };
-export type { PasswordVaultEntry } from './data';
+// （arch 新-5 清仓：relTime/colorOf/PasswordVaultEntry 再导出零外部消费，已删——
+//   消费方请直接走 ./render 与 ./data 单源）
 
 /** 安全机制状态（Q13：完整保留保险箱行为） */
 interface LockSecurity {
@@ -106,12 +106,17 @@ export class PasswordVaultUIManager {
   selPlatform: string | null = null;
   selAccount: string | null = null;
   shownIds: Record<string, boolean> = {};
-  pendingPassword: string | null = null;
   editingId: string | null = null;
   // 安全机制（Q13）
   security: LockSecurity = { unlockFailStreak: 0, unlockCooldownUntil: 0 };
   // 计时器
   private searchTimer: ReturnType<typeof setTimeout> | null = null;
+  /** 安全模式无交互自动上锁计时器（15 分钟；document 捕获阶段交互重置，cons 新-3 对齐 encrypt 形制） */
+  private idleLockTimer: ReturnType<typeof setTimeout> | null = null;
+  /** idle bump 的 document 捕获监听（不随 DOM 摘除回收，cleanup 摘除） */
+  private idleBump: (() => void) | null = null;
+  /** 锁屏错误/冷却计时器收场句柄（bindLock 注册，cleanup 统一清） */
+  private lockTimerDisposers: Array<() => void> = [];
   private escUnregister: { unregister: () => void } | null = null;
   /** 共锁订阅（E2）：encrypt:unlock-changed 退订句柄（show 挂 / hide+cleanup 摘） */
   private unlockOff: (() => void) | null = null;
@@ -195,6 +200,12 @@ export class PasswordVaultUIManager {
     this.dataManager.onExternalChange = () => {
       this.renderAll();
     };
+    // 安全模式无交互自动上锁（cons 新-3）：任何交互重置 15 分钟倒计时（捕获阶段兜底输入框事件，
+    // N9 教训——body 弹层内的持续操作同样算「活跃使用」）。document 级监听不随 DOM 摘除回收，
+    // 摘除走 cleanup。
+    this.idleBump = () => this.bumpIdleLock();
+    document.addEventListener('pointerdown', this.idleBump, true);
+    document.addEventListener('keydown', this.idleBump, true);
   }
 
   // ---------- 交互绑定 ----------
@@ -290,8 +301,12 @@ export class PasswordVaultUIManager {
       dlg.querySelector('[data-act="cancel"]')?.addEventListener('click', () => {
         this.closeEntryDialog();
       });
-      // 保存
-      dlg.querySelector('[data-act="save"]')?.addEventListener('click', async () => {
+      // 保存（func 新-4 防重入：写盘含整表 PBKDF2 重加密为秒级窗口，busy 旗标 + 按钮
+      // disabled 双保险，快速双击只落一条不产重复条目）
+      let saving = false;
+      const saveBtn = dlg.querySelector('[data-act="save"]') as HTMLButtonElement | null;
+      saveBtn?.addEventListener('click', async () => {
+        if (saving) return;
         const platform = get('platform');
         if (!platform) {
           errEl.textContent = '平台不能为空';
@@ -308,6 +323,8 @@ export class PasswordVaultUIManager {
           password: get('password'),
           note: get('note'),
         };
+        saving = true;
+        if (saveBtn) saveBtn.disabled = true;
         try {
           if (this.editingId) {
             await this.dataManager.updateItem(this.editingId, item);
@@ -323,6 +340,9 @@ export class PasswordVaultUIManager {
           this.toast('已保存');
         } catch (e: any) {
           errEl.textContent = '保存失败：' + e.message;
+        } finally {
+          saving = false;
+          if (saveBtn) saveBtn.disabled = false;
         }
       });
     });
@@ -367,12 +387,15 @@ export class PasswordVaultUIManager {
   // ---------- 渲染 ----------
   renderAll() {
     if (!this.root) return;
-    // 解锁态下刷新统计快照（供下次上锁后的解锁屏显示；锁定态清单不可读）
-    if (this.dataManager.safeManager?.unlocked) this.captureLockStats();
+    // T12 对齐 encrypt：统计快照已从 renderAll 摘除（本域最高频入口，原先搜索防抖/点眼/
+    // 收藏每次都落盘 lock-stats.json），收敛到上锁消费点（hide 安全模式分支 / 外部上锁事件侧）
     this.renderLock();
     this.renderDeskList();
     this.renderDeskDetail();
     this.renderMobList();
+    // 解锁态即布防 idle 自动上锁（安全模式；交互经 document 捕获 bump 重置）——
+    // 布防收口在此：show / 解锁重载 / 域内动作后的重绘都汇经此处（对齐 encrypt renderList→startSessionTimers）
+    if (this.dataManager.unlocked) this.bumpIdleLock();
   }
 
   private renderLock() {
@@ -395,6 +418,17 @@ export class PasswordVaultUIManager {
   /** 渲染桌面列表（平台聚合 / 搜索展平） */
   private renderDeskList() {
     const rows = this.desk.rows;
+    if (!this.dataManager.unlocked) {
+      // 锁定态守卫（func 新-1 症状 B）：search(kw) 未解锁即 throw，kw 残留会炸断渲染链
+      // （renderAll 中断 + unhandled rejection + showLock 被跳过）——清空容器直接返回，
+      // 锁屏随后由 showLock 接管
+      rows.innerHTML = '';
+      this.desk.count.textContent = '';
+      this.desk.title.textContent = '';
+      this.root!.querySelector('[data-cnt="all"]')!.textContent = '0';
+      this.root!.querySelector('[data-cnt="fav"]')!.textContent = '0';
+      return;
+    }
     const kw = this.searchKw;
     const count = this.dataManager.pwData.length;
     this.desk.count.textContent = count + ' 条';
@@ -623,6 +657,11 @@ export class PasswordVaultUIManager {
   // ---------- 移动端渲染 ----------
   private renderMobList() {
     const list = this.mob.list;
+    if (!this.dataManager.unlocked) {
+      // 锁定态守卫：同 renderDeskList（search 未解锁即 throw，防 kw 残留炸断渲染链）
+      list.innerHTML = '';
+      return;
+    }
     const kw = this.searchKw;
     list.innerHTML = '';
     if (kw) {
@@ -939,10 +978,17 @@ export class PasswordVaultUIManager {
         const input = dlg.querySelector(`[data-f="${f}"]`) as HTMLInputElement;
         input.value = editItem ? editItem[f] || '' : preset && f !== 'password' ? preset[f as 'platform' | 'url'] || '' : '';
       });
+      // N13：弹窗重开复位 eye 三件套——上次点过明文后，再开弹窗（含添加态自动生成的
+      // 新密码）不得以明文示人
+      const pwInput = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
+      pwInput.type = 'password';
+      const eye = dlg.querySelector('[data-act="pw-eye"]') as HTMLElement | null;
+      if (eye) {
+        eye.innerHTML = ICONS.eye;
+        eye.title = '显示密码';
+      }
       if (!editItem) {
-        const staged = this.pendingPassword;
-        this.pendingPassword = null;
-        (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value = staged || this.generatePassword();
+        pwInput.value = this.generatePassword();
       }
       (dlg.querySelector('[data-f-err]') as HTMLElement).textContent = '';
       modal.classList.add('open');
@@ -955,7 +1001,6 @@ export class PasswordVaultUIManager {
   private closeEntryDialog() {
     this.root!.querySelectorAll('.bz-password-vault-modal').forEach((m) => m.classList.remove('open'));
     this.editingId = null;
-    this.pendingPassword = null;
   }
 
   // ---------- 平台编辑弹窗 ----------
@@ -1038,16 +1083,62 @@ export class PasswordVaultUIManager {
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
     this.subscribeUnlockEvents(); // E2：面板打开期间感知别域上锁/解锁（保险库「立即上锁」/安全模式/日记域）
+    this.bumpIdleLock(); // 开屏即布防 idle 自动上锁（安全模式）；后续交互经 renderAll/document bump 重置
     void this.loadAndRender();
   }
 
-  hide() {
+  /** 上锁/关面板收场：面板内双实例弹窗 + body 流程框一并收起（cons 新-2 对齐 encrypt N9 形制）——
+   *  明文密码/账号不得随弹窗浮在锁屏上方，安全承诺不被弹窗 DOM 击穿 */
+  private closeAllDialogs(): void {
+    this.closeEntryDialog();
+    this.root!.querySelectorAll('.bz-password-vault-platedit.open').forEach((el) => el.classList.remove('open'));
+    // body 级流程确认框（首设风险告知/删除确认/损坏重设）随上锁收场，按取消语义结算不悬挂
+    cancelActiveFlowDialog();
+  }
+
+  /** 收移动详情页（N14/新-4）：页体 + 平台/账号记录一并清，明文详情不跨 hide/上锁残留 */
+  private closeMobPage(): void {
+    this.mob.page.classList.remove('open');
+    this.mobPagePlatform = null;
+    this.mobPageAccount = null;
+  }
+
+  /** 清搜索过滤态（func 新-1 症状 B 配套）：kw 残留 + 两实例搜索框值一并复位 */
+  private resetSearchFilter(): void {
+    if (this.searchTimer !== null) {
+      clearTimeout(this.searchTimer);
+      this.searchTimer = null;
+    }
+    this.searchKw = '';
+    this.desk.search.value = '';
+    this.mob.search.value = '';
+  }
+
+  /** 安全模式双口径（N18②/cons 新-1 对齐 encrypt isSecurityMode）：config 是构造期快照可能
+   *  落后于设置实时值，且历史双键（securityMode/encryptSecurityMode）任一开启都生效 */
+  private isSecurityModeLive(): boolean {
+    return (
+      !!this.config.securityMode ||
+      !!(tryGetSettings() as any)?.securityMode ||
+      !!(tryGetSettings() as any)?.encryptSecurityMode
+    );
+  }
+
+  hide(suppressAutoLockNotice = false) {
     if (!this.root) return;
     this.unsubscribeUnlockEvents(); // E2：先摘订阅再走安全模式自锁，避免自己锁自己再触发一轮重绘
+    this.closeAllDialogs(); // 收场（N9 对齐）：面板内弹窗 + body 流程框随面板关闭收起
+    this.closeMobPage(); // N14：移动详情页不跨 hide/show 残留旧明文
+    this.clearIdleLock(); // 关面板即撤 idle 布防
     this.root.style.display = 'none';
-    if (this.config.securityMode) {
+    if (this.isSecurityModeLive()) {
+      // T12：统计快照挪消费点——lock() 会清空清单，锁前快照一次（无数据保持上次快照，不落零值）
+      if (this.dataManager.pwData.length) this.captureLockStats();
       this.dataManager.lock();
-      notice('安全模式：已自动上锁'); // E15：toast 挂在已隐藏面板内部永远看不见，改走全局通知
+      this.shownIds = {}; // N14：明文开关随上锁清空
+      this.resetSearchFilter();
+      // E15：toast 挂在已隐藏面板内部永远看不见，改走全局通知；E11：一次上锁只发一条
+      if (!suppressAutoLockNotice) notice('安全模式：已自动上锁');
     }
   }
 
@@ -1081,18 +1172,29 @@ export class PasswordVaultUIManager {
       await this.loadAndRender();
       return;
     }
+    // 上锁收场（N9 对齐）：面板内弹窗 + body 流程框先收，明文不再浮在锁屏上方
+    this.closeAllDialogs();
+    this.closeMobPage(); // N14：移动详情页随上锁收起
     if (this.lastUnlockSeen) {
       this.lastUnlockSeen = false; // 先落旗标再 lock：lock() 的重复广播由此短路
+      // T12：事件到达时 dm.pwData 明文尚在（lock() 才清），锁前快照一次
+      if (this.dataManager.pwData.length) this.captureLockStats();
       this.dataManager.lock(); // 清本域明文缓存（pwData/loadCache）
+      this.shownIds = {}; // N14：明文开关随上锁清空，重解锁不得直出
+      this.resetSearchFilter(); // kw 残留会炸断未解锁渲染链（func 新-1 症状 B），随上锁一并清
     }
     this.renderAll();
+    void this.showLock(); // N16/新-2：幂等重入——空锁屏容器建内容（修复空白锁屏卡死）、旧锁屏刷 title/stats/清输入
   }
 
   private async loadAndRender() {
     // 未解锁：静默（锁屏本身就是等待输入主密码，不弹「未解锁」错误通知）
     if (!this.dataManager.unlocked) {
-      this.renderAll();
-      this.showLock();
+      try {
+        this.renderAll();
+      } finally {
+        this.showLock(); // 锁屏装配必达（func 新-1：renderAll 中途异常不得跳过 showLock 致空锁屏）
+      }
       return;
     }
     try {
@@ -1103,7 +1205,6 @@ export class PasswordVaultUIManager {
     this.renderAll();
   }
 
-  /** 显示锁屏（未解锁态）；锁屏绑定一次 */
   /** 锁屏句柄（desk/mob 双实例各一份；结构由 core/ui/lock-screen 提供，三域同源） */
   private lockHandles = new WeakMap<HTMLElement, LockScreenHandle>();
   /** 统计快照：清单是密文，锁定态读不到 —— 用解锁期间的快照，冷启动回落 lock-stats.json 上次快照 */
@@ -1139,10 +1240,56 @@ export class PasswordVaultUIManager {
     if (hit) this.pwLockStatsCache = hit;
   }
 
-  /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格 */
+  // ---------- 安全模式 idle 自动上锁（cons 新-3，对齐 encrypt 形制） ----------
+
+  /** 无交互自动上锁阈值（15 分钟，与 encrypt 同滩） */
+  static readonly IDLE_LOCK_MS = 15 * 60 * 1000;
+
+  private rootVisible(): boolean {
+    return !!this.root && this.root.style.display === 'flex';
+  }
+
+  /** 空闲计时 bump（document 捕获阶段，见 ensureElements 尾部；交互即重置倒计时） */
+  private bumpIdleLock(): void {
+    this.clearIdleLock();
+    if (!this.isSecurityModeLive() || !this.dataManager.unlocked) return;
+    if (!this.rootVisible()) return;
+    this.idleLockTimer = setTimeout(() => {
+      this.idleLockTimer = null;
+      if (!this.isSecurityModeLive() || !this.dataManager.unlocked || !this.rootVisible()) return;
+      notice('安全模式：15 分钟无操作，已自动上锁');
+      this.lockNow(true); // 单通知口径：安静上锁，通知由本处发一次
+    }, PasswordVaultUIManager.IDLE_LOCK_MS);
+  }
+
+  private clearIdleLock(): void {
+    if (this.idleLockTimer !== null) {
+      clearTimeout(this.idleLockTimer);
+      this.idleLockTimer = null;
+    }
+  }
+
+  /** 立即上锁（idle 自动上锁入口；对齐 encrypt lockNow 形制）：
+   *  快照统计 → 收场弹层 → 清明文缓存/明文开关/搜索态 → 单通知 → 安全模式随锁收面板 */
+  lockNow(silent = false): void {
+    if (!this.root) return;
+    // T12：lock() 会清空清单，锁前快照一次（无数据保持上次快照，不落零值）
+    if (this.dataManager.pwData.length) this.captureLockStats();
+    this.closeAllDialogs();
+    this.closeMobPage();
+    this.dataManager.lock(); // 广播触发事件侧 onSharedLockChanged(false) 收场（重挂锁屏等）
+    this.shownIds = {};
+    this.resetSearchFilter();
+    if (!silent) notice('安全模式：已自动上锁');
+    if (this.isSecurityModeLive()) this.hide(true); // E11：安静收面板，不补发第二条通知
+  }
+
+  /** 显示锁屏（未解锁态）：core 共享骨架 + 本域口径（平台/口令条目/收藏）与金色风格；
+   *  幂等可重入——已建 handle 只刷 title/message/action/stats 并清空输入（N16/新-2） */
   private showLock() {
     void this.hydrateLockStats().then(() => this.isFirstTime()).then((firstTime) => {
-      this.root!.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((lockEl) => {
+      if (!this.root) return; // arch 新-2：卸载竞态守卫（cleanup 置空 root 后异步链不得解引用）
+      this.root.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((lockEl) => {
         lockEl.classList.add('open');
         let ls = this.lockHandles.get(lockEl);
         if (!ls) {
@@ -1180,16 +1327,64 @@ export class PasswordVaultUIManager {
     }
   }
 
-  /** 锁屏交互（原型视觉 + 保险箱安全机制） */
   /** 锁屏交互（首设双输入 + 冷却节流；语义留本域，结构走 core 共享组件） */
   private bindLock(ls: LockScreenHandle) {
     const safe = this.dataManager.safeManager;
     let busy = false;
+    // 错误行/冷却计时器（T8/N15 + ui 新-7）：错误行同一时刻只归一个来源；
+    // 收场句柄登记到 lockTimerDisposers，cleanup 统一清（防卸载后计时器孤悬）
+    let errTimer: ReturnType<typeof setTimeout> | null = null;
+    let cooldownTimer: ReturnType<typeof setInterval> | null = null;
+    let btnHeldByCooldown = false;
+    const clearErrTimer = () => {
+      if (errTimer !== null) {
+        clearTimeout(errTimer);
+        errTimer = null;
+      }
+    };
+    const clearCooldownTimer = () => {
+      if (cooldownTimer !== null) {
+        clearInterval(cooldownTimer);
+        cooldownTimer = null;
+      }
+    };
+    const cancelLockTimers = () => {
+      clearErrTimer();
+      clearCooldownTimer();
+      btnHeldByCooldown = false;
+    };
+    this.lockTimerDisposers.push(cancelLockTimers);
     const showErr = (m: string) => {
+      clearCooldownTimer(); // 与冷却倒计时互斥
+      clearErrTimer();
       ls.setError(m);
-      setTimeout(() => {
-        if (ls.input.value) ls.setError('');
+      errTimer = setTimeout(() => {
+        errTimer = null;
+        // 条件反转（ui 新-7）：空输入错误（请输入主密码）自动消失不永驻；
+        // 输入中的错误（两次不一致等）保留待用户改完再试
+        if (!ls.input.value) ls.setError('');
       }, 2600);
+    };
+    /** 冷却倒计时（N15 + ui 新-7）：单条「密码错误，N 秒后可重试」按秒刷新，归零清错误并复位按钮 */
+    const startCooldownCountdown = (totalSec: number) => {
+      clearErrTimer();
+      clearCooldownTimer();
+      btnHeldByCooldown = true;
+      ls.actionBtn.disabled = true;
+      let remain = totalSec;
+      const tick = () => {
+        if (remain <= 0) {
+          clearCooldownTimer();
+          btnHeldByCooldown = false;
+          ls.setError('');
+          ls.actionBtn.disabled = false;
+          return;
+        }
+        ls.setError(`密码错误，${remain} 秒后可重试`);
+        remain -= 1;
+      };
+      tick();
+      cooldownTimer = setInterval(tick, 1000);
     };
     const resetBtn = () => {
       void this.isFirstTime().then((f) => {
@@ -1221,6 +1416,9 @@ export class PasswordVaultUIManager {
           return;
         }
         // 首设风险确认（Q13 保留）：勾选流程确认后才能继续
+        // func 新-4 防重入：确认框打开期间动作钮置 busy——流程框可被反复点开叠加，
+        // 逐个确认后连环 unlock/reload、通知翻倍
+        ls.setBusy(true);
         void openFlowDialog({
           title: '设置主密码',
           message:
@@ -1240,14 +1438,17 @@ export class PasswordVaultUIManager {
           if (v !== 'ok') {
             ls.input.value = '';
             ls.input2.value = '';
+            ls.setBusy(false);
             showErr('已取消设置');
             return;
           }
           busy = true;
-          ls.setBusy(true);
           try {
             const ok = await safe.unlock(pw);
             if (ok) {
+              cancelLockTimers();
+              ls.input.value = '';
+              ls.input2.value = ''; // arch 新-1 纵深防御：口令不残留在已关闭的锁屏 DOM 里
               this.closeLock();
               this.toast('保险库已解锁');
               await this.reloadAfterUnlock();
@@ -1260,6 +1461,7 @@ export class PasswordVaultUIManager {
           } finally {
             busy = false;
             ls.setBusy(false);
+            if (btnHeldByCooldown) ls.actionBtn.disabled = true; // setBusy(false) 会重开按钮，冷却期按住
             resetBtn();
           }
         });
@@ -1278,6 +1480,9 @@ export class PasswordVaultUIManager {
         if (ok) {
           this.security.unlockFailStreak = 0;
           this.security.unlockCooldownUntil = 0;
+          cancelLockTimers();
+          ls.input.value = '';
+          ls.input2.value = ''; // arch 新-1 纵深防御：口令不残留在已关闭的锁屏 DOM 里
           this.closeLock();
           this.toast('保险库已解锁');
           await this.reloadAfterUnlock();
@@ -1307,6 +1512,9 @@ export class PasswordVaultUIManager {
                   if (ok2) {
                     this.security.unlockFailStreak = 0;
                     this.security.unlockCooldownUntil = 0;
+                    cancelLockTimers();
+                    ls.input.value = '';
+                    ls.input2.value = '';
                     this.closeLock();
                     this.toast('已重设主密码（旧数据不可恢复）', true);
                     await this.reloadAfterUnlock();
@@ -1321,18 +1529,19 @@ export class PasswordVaultUIManager {
             });
             return;
           }
-          showErr('密码错误，请重试');
-          // 连续失败递增冷却（1/2/4/8s 封顶）
+          // N15/ui 新-7：合并单条通知——「密码错误，请重试」原被冷却提示覆盖成两连发互顶，
+          // 现由倒计时统一刷新「密码错误，N 秒后可重试」，归零清错误并复位按钮
           this.security.unlockFailStreak += 1;
-          const delaySec = Math.min(2 ** (this.security.unlockFailStreak - 1), 8);
+          const delaySec = Math.min(2 ** (this.security.unlockFailStreak - 1), 8); // 1/2/4/8s 封顶
           this.security.unlockCooldownUntil = Date.now() + delaySec * 1000;
-          showErr(`${delaySec} 秒后可再次尝试`);
+          startCooldownCountdown(delaySec);
           ls.input.value = '';
           ls.focus();
         }
       } finally {
         busy = false;
         ls.setBusy(false);
+        if (btnHeldByCooldown) ls.actionBtn.disabled = true; // setBusy(false) 会重开按钮，冷却期按住（归零由倒计时复位）
         resetBtn();
       }
     });
@@ -1374,6 +1583,14 @@ export class PasswordVaultUIManager {
       clearTimeout(this.searchTimer);
       this.searchTimer = null;
     }
+    this.clearIdleLock(); // idle 自动上锁计时器
+    if (this.idleBump) {
+      // document 捕获监听不随 DOM 摘除回收，卸载时显式摘除（对齐 encrypt detachGlobalListeners）
+      document.removeEventListener('pointerdown', this.idleBump, true);
+      document.removeEventListener('keydown', this.idleBump, true);
+      this.idleBump = null;
+    }
+    this.lockTimerDisposers.splice(0).forEach((dispose) => dispose()); // 锁屏错误/冷却计时器
     this.escUnregister?.unregister();
     this.escUnregister = null;
     this.dataManager.destroy();

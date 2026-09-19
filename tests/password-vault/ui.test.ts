@@ -116,10 +116,13 @@ describe('PasswordVaultUIManager', () => {
     expect(nums.slice(0, 3)).toEqual(['3', '5', '1']);
   });
 
-  it('解锁态快照落盘 lock-stats.json（captureLockStats → writeLockStats，issue 299）', async () => {
+  it('上锁消费点快照落盘 lock-stats.json（T12 对齐 encrypt：renderAll 摘写盘，收敛到外部上锁事件侧）', async () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x', fav: true });
-    ui.show(); // 已解锁 → renderAll → captureLockStats
+    ui.show(); // 已解锁进入；renderAll 不再触发 writeLockStats（修复前搜索/点眼/收藏每次落盘）
+    await vi.waitFor(() => expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0));
+    expect(await readLockStats('password-vault')).toBeNull(); // renderAll 不落盘
+    sm.lock(); // 别域上锁 → 事件侧 lock() 前快照恰好一次
     await waitForAsync(async () => (await readLockStats('password-vault')) !== null);
     const hit = await readLockStats('password-vault');
     expect(hit!.map((s) => s.num)).toEqual(['1', '1', '1']);
@@ -140,11 +143,13 @@ describe('PasswordVaultUIManager', () => {
     // 输入正确密码 → 解锁 → 锁屏关闭 + 数据从磁盘重载后列表渲染
     (locks[0].querySelector('[data-ls="p1"]') as HTMLInputElement).value = 'correct-pw';
     (locks[0].querySelector('[data-ls="go"]') as HTMLButtonElement).click();
-    await new Promise((r) => setTimeout(r, 200));
-    expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0);
-    expect(dm.unlocked).toBe(true);
-    expect(dm.pwData.length).toBe(1);
-    expect(document.querySelector('.bz-password-vault-rows')!.textContent).toContain('GitHub');
+    // 终态轮询（arch 缺口 2）：固定 sleep(200) 赌 PBKDF2+重载完成，全量负载下必颤
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0);
+      expect(dm.unlocked).toBe(true);
+      expect(dm.pwData.length).toBe(1);
+      expect(document.querySelector('.bz-password-vault-rows')!.textContent).toContain('GitHub');
+    }, { timeout: 8000 });
   });
 
   it('搜索：输入 → 展平账号行；空结果 → 空态', async () => {
@@ -231,14 +236,20 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     sm.lock();
     ui.show();
-    await new Promise((r) => setTimeout(r, 30));
+    // 锁屏内容异步装配（hydrate + exists 两段 await）：等输入框本体，别赌固定 sleep（新-15）
+    await vi.waitFor(() =>
+      expect(document.querySelector('.bz-password-vault-lock.open [data-ls="p1"]')).toBeTruthy()
+    );
     const lock = document.querySelector('.bz-password-vault-lock.open') as HTMLElement;
     expect(lock.querySelector('[data-lock-sub]')).toBeNull();
     expect(lock.querySelector('[data-lock-sec]')).toBeNull();
     expect(lock.querySelector('[data-lock-hint]')).toBeNull();
-    // 聚焦（jsdom：activeElement 与查询元素引用可能不同，用 placeholder 区分）
-    const active = document.activeElement as HTMLInputElement | null;
-    expect(active && active.getAttribute('placeholder')).toBe('主密码');
+    // 聚焦（新-15 flaky 修）：desk/mob 双实例各排一帧 rAF，jsdom 下与用例时序偶发交错——
+    // 断言放宽为「任一锁屏输入框持有焦点」
+    await vi.waitFor(() => {
+      const inputs = [...document.querySelectorAll('.bz-password-vault-lock.open [data-ls="p1"]')];
+      expect(inputs.some((el) => document.activeElement === el)).toBe(true);
+    });
   });
 
   it('遮罩点击关闭窗口', async () => {
