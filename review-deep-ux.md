@@ -198,4 +198,22 @@ encrypt 域轮**不修 password-vault 文件**（cons 新-6/7/8/9、N18①、eff
 
 ---
 
-（下一域：password-vault）
+## password-vault（密码本）2026-09-20 体验线
+
+> UI 决策制第三域执行。UI/增强 9 项分流 `review-deep-ui-pending.md` pv 节（P1-P9）。
+
+### 归修复（既定拍板对齐 / 缺陷修复必要组成）
+- **FAB 弹窗焦点落隐藏实例**（ui P2）：软键盘不弹属高频路径功能受损（func 线原标增强，ui 线定性缺陷，取严）。
+- **shownIds/移动详情页 hide 不清**（N14 升 P2）：重锁再解锁明文直出，安全相关缺陷非形态偏好。
+- **renderAll 写盘 lock-stats**（P2）：encrypt T12 已定整改范式，姊妹域对齐。
+- **上锁收场弹窗 + idle 自动上锁补齐**（cons P2×2）：encrypt N9 同根修法与 idle 形制对齐。
+- **密码错误单通知+冷却倒计时**（N15+新-7）：encrypt T11 同款口径对齐。
+- **删除动作挂 notifyUndo（确认框保留）**：效率整改 5 完整形态（免确认）涉敏感数据口径分歧（cons 判拍板项、eff 判对齐面），取折中——先补撤销链纯增益，删确认框留待拍板（ui-pending P9）。
+- **口径漂移清单**（cons P3）：文案/防抖收编等既定单源对齐，非新决策。
+
+### 分流待拍板（9 项，详见 review-deep-ui-pending.md pv 节）
+生成即落库、空字段复制反馈、选择器键盘 role、移动收藏入口、移动链接可点、生成覆盖确认、批量导入导出（ux#12）、首设流程统一（随 encrypt E6）、删除免确认完整形态。
+
+---
+
+（下一域：cinema）
