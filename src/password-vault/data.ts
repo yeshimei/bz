@@ -9,15 +9,17 @@
  *  - 增删改 = 整表重加密覆盖同一镜像（updateNotePayload / lockNote 首建）；
  *  - fav 字段为新增（旧 7 字段数据缺失时默认 false，兼容性冻结不破坏）。
  * 域事件：本模块写操作后广播 'password-vault:changed'（source=password-vault 跳过自重载）；
- * 外部（日记/其他消费者）写保险库清单由 SafeManager 广播 'encrypt:changed' 后本模块订阅重载。
+ * 外部（日记/其他消费者）写保险库清单由 SafeManager 广播 'encrypt:changed' 后本模块订阅重载；
+ * 上锁（任意路径：encrypt lockSafe/锁屏/安全模式/本域 lock）由 SafeManager 广播
+ * 'encrypt:unlock-changed'(unlocked=false) 后本模块自清明文缓存（深审新-2：单源收口，UI 层不必再清）。
  */
 import { emitDomainEvent, onDomainEvent } from '../core/domain-bus';
-import { type SafeManager } from '../encrypt/data';
+// 协议常量单源（深审新-3）：encrypt:changed / encrypt:unlock-changed 一律引 encrypt/data.ts 导出，
+// 不再本地重声明字面量（改名/改值漂移即静默断链）；pv→encrypt 运行时边已存在，无环（encrypt/data 不回引本域）。
+import { ENCRYPT_CHANGED_CHANNEL, ENCRYPT_UNLOCK_CHANGED_CHANNEL, type SafeManager } from '../encrypt/data';
 
 /** 密码资产域事件通道（自己广播；source=password-vault 跳过自重载） */
 export const PASSWORD_VAULT_CHANNEL = 'password-vault:changed' as const;
-/** 保险库数据变更通道（外部消费者写 password-vault SafeNote 时广播） */
-export const ENCRYPT_CHANGED_CHANNEL = 'encrypt:changed' as const;
 
 /** 默认生成字符集（与旧密码本同款；数据域唯一定义，encrypt/ui.ts 再导出保持公共面） */
 export const DEFAULT_PW_CHARSET =
@@ -54,6 +56,7 @@ export class PasswordVaultDataManager {
   /** 域事件退订 */
   private offChanged: (() => void) | null = null;
   private offEncryptChanged: (() => void) | null = null;
+  private offUnlockChanged: (() => void) | null = null;
   /** 自身写盘中标志：save() 期间跳过外部事件重载（自己写的 encrypt:changed 广播不触发自重载） */
   private saving = false;
   /** 外部变更回调（UI 订阅；外部改动 → 重载后回调） */
@@ -73,6 +76,12 @@ export class PasswordVaultDataManager {
       const note = this.vaultNote;
       if (!note || (evt?.noteId && evt.noteId !== note.id)) return;
       void this.reloadFromExternal();
+    });
+    // 上锁自清（深审新-2）：「锁定保险库」等外部上锁路径够不到本域实例——任意 SafeManager
+    // 上锁广播 unlocked=false 即自清明文，全表密码明文不跨上锁驻留内存
+    this.offUnlockChanged = onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+      if (evt?.unlocked !== false) return; // 只关心上锁；解锁后数据按需 load
+      this.clearPlainCaches();
     });
   }
 
@@ -169,10 +178,15 @@ export class PasswordVaultDataManager {
     emitDomainEvent(PASSWORD_VAULT_CHANNEL, { source: 'password-vault' });
   }
 
-  lock() {
-    this.safe.lock();
+  /** 清明文缓存（pwData 整表明文 + load 缓存）；lock() 与上锁事件订阅共用同一份收口 */
+  private clearPlainCaches(): void {
     this.pwData = [];
     this.loadCache = null;
+  }
+
+  lock() {
+    this.safe.lock(); // 幂等短路；上锁广播会触发订阅自清，这里再显式清一道（直接调用时序兜底）
+    this.clearPlainCaches();
   }
 
   // ---------- 平台聚合 ----------
@@ -298,7 +312,9 @@ export class PasswordVaultDataManager {
   /** 搜索：平台/账号/备注（与旧密码本同口径） */
   search(keyword: string): PasswordVaultEntry[] {
     if (!this.unlocked) throw new Error('未解锁');
-    if (!keyword) return this.pwData;
+    // 空词返回拷贝（深审新-5）：渲染层对结果 .sort 就地排序，活引用会把排序回写 pwData
+    // 并随下次写盘持久化（数组序即磁盘 JSON 序）
+    if (!keyword) return this.pwData.slice();
     const lower = keyword.toLowerCase();
     return this.pwData.filter(
       (item) =>
@@ -314,5 +330,7 @@ export class PasswordVaultDataManager {
     this.offChanged = null;
     this.offEncryptChanged?.();
     this.offEncryptChanged = null;
+    this.offUnlockChanged?.();
+    this.offUnlockChanged = null;
   }
 }

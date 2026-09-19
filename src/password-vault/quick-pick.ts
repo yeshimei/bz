@@ -125,8 +125,9 @@ export function openPasswordQuickPicker(
   const state: { hits: PasswordVaultEntry[]; active: number } = { hits: [], active: 0 };
 
   const setActive = (i: number): void => {
-    // 活动行总跨度 = 1（生成新）+ 命中数；空态也恒有「生成新」可落
-    const total = 1 + state.hits.length;
+    // 活动行总跨度 = 1（生成新）+ 渲染段命中数（深审新-3：钳到 LIMIT，键盘活动行与渲染段
+    // 一致——超量命中时 ↑/↓ 不得选中「从未渲染」的条目）
+    const total = 1 + Math.min(state.hits.length, LIMIT);
     state.active = Math.max(0, Math.min(total - 1, i));
     listEl.querySelectorAll('.bz-popover-item').forEach((el, k) => {
       el.classList.toggle('is-on', k === state.active);
@@ -162,10 +163,17 @@ export function openPasswordQuickPicker(
   };
 
   const renderList = (): void => {
+    // 逐键收紧关键词时记住当前选中（active>0 时 active-1 即命中下标；0 = 生成新，无保持需求）
+    const prevId = state.active > 0 ? state.hits[state.active - 1]?.id : undefined;
     listEl.innerHTML = '';
     state.hits = fuzzyFilterEntries(entries, search.value.trim());
     listEl.appendChild(buildGenerateRow());
-    state.active = 0; // 打开/过滤后活动行回落顶部「生成新」
+    // 活动行默认落点（深审新-1，ADR-0158「搜到即复制、无命中生成」）：命中非空 → 首个命中项
+    // （Enter 直接复制，不再误触「生成新」；空查询时命中=全库，同口径落首个条目）；
+    // 命中为空（空库/关键词无命中）才落顶部「生成新」。上个选中项仍在命中里则保持不动
+    // （逐键收紧不丢选中）
+    const prevIdx = prevId ? state.hits.findIndex((d) => d.id === prevId) : -1;
+    state.active = state.hits.length ? (prevIdx >= 0 ? prevIdx + 1 : 1) : 0;
     if (state.hits.length) {
       const shown = state.hits.slice(0, LIMIT);
       shown.forEach((d, i) => {

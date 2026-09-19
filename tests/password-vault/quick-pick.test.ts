@@ -2,8 +2,10 @@
  * 快速取密统一流测试（password-vault 域，ADR-0158）：
  * 数据侧：fuzzy 匹配得分与条目过滤排序（连续子串优先、子序列兜底）。
  * UI 侧：选择器列出现有条目 + 顶部固定「生成新密码」项（不受过滤影响）；
+ * Enter 默认落点：命中非空 → 首个命中项（搜到即复制）；无命中 → 「生成新」；
  * 选中现有条目 → 复制该密码；选「生成新」→ 按设置的长度/字符集生成并复制；
- * 60s 剪贴板自动清空定时器布防；防偷窥口径（通知不含明文）；未解锁先弹主密码。
+ * 命中 >100 时键盘活动行钳在渲染段内；60s 剪贴板自动清空定时器布防；
+ * 防偷窥口径（通知不含明文）；未解锁先弹主密码。
  */
 // @vitest-environment jsdom
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
@@ -13,7 +15,7 @@ import { SafeManager } from '../../src/encrypt/data';
 import { EncryptAppController } from '../../src/encrypt/ui';
 import { unloadEncrypt } from '../../src/encrypt';
 import { PasswordVaultDataManager, type PasswordVaultEntry } from '../../src/password-vault/data';
-import { fuzzyScore, fuzzyFilterEntries, closePasswordQuickPicker } from '../../src/password-vault/quick-pick';
+import { fuzzyScore, fuzzyFilterEntries, openPasswordQuickPicker, closePasswordQuickPicker, type QuickPickAction } from '../../src/password-vault/quick-pick';
 import { copyGeneratedPassword, unloadPasswordVault } from '../../src/password-vault/index';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, clearNotices, getNoticeMessages } from '../mock-obsidian-entry';
@@ -127,8 +129,8 @@ describe('快速取密统一流（选择器 UI + 命令链路）', () => {
     await waitFor(() => rows().length === 2);
     expect(rows()[0].querySelector('.pl')!.textContent).toBe('生成新密码');
     expect(rows()[1].querySelector('.pl')!.textContent).toBe('GitHub');
-    // Enter 走活动行（活动行回落顶部「生成新」）→ ↓ 一次落到 GitHub 行
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    // Enter 走活动行：有命中时默认落首个命中项（搜到即复制，深审新-1），无需 ↓
+    expect(rows()[1].classList.contains('is-on')).toBe(true);
     search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
     await run;
     expect(writeText).toHaveBeenCalledWith('s3cret');
@@ -190,6 +192,80 @@ describe('快速取密统一流（选择器 UI + 命令链路）', () => {
     (document.getElementById('bz-password-vault-qp-mask') as HTMLElement).click();
     await run;
     expect(document.getElementById('bz-password-vault-qp-popup')).toBeNull();
+  });
+
+  it('无命中时 Enter 落「生成新」（ADR-0158 口径：命中为空才走生成，深审新-1 另半边）', async () => {
+    await dm.addItem({ platform: 'GitHub', account: 'me@x', password: 's3cret' });
+    dm.destroy();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined as any);
+    writeText.mockClear();
+    const run = await openViaCommand();
+    const search = document.querySelector('.bz-password-vault-qp-search') as HTMLInputElement;
+    search.value = 'zzz-no-hit';
+    search.dispatchEvent(new Event('input'));
+    await waitFor(() => document.querySelectorAll('.bz-password-vault-qp .bz-popover-item').length === 1);
+    // 活动行落「生成新」
+    const on = document.querySelector('.bz-password-vault-qp .bz-popover-item.is-on') as HTMLElement;
+    expect(on.querySelector('.pl')!.textContent).toBe('生成新密码');
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await run;
+    await waitFor(() => hasNotice('已生成并复制密码，60 秒后自动清空剪贴板'));
+    // 不误复制现有条目密码
+    for (const call of writeText.mock.calls) {
+      expect(call[0]).not.toBe('s3cret');
+    }
+  });
+
+  it('逐键收紧关键词：已选命中项仍在命中里则保持选中，不再命中则落首个命中项', async () => {
+    await dm.addItem({ platform: 'GitHub', account: 'me@x', password: 's3cret' });
+    await dm.addItem({ platform: 'GitLab', account: 'ops@x', password: 'p2' });
+    dm.destroy();
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined as any);
+    writeText.mockClear();
+    const run = await openViaCommand();
+    const rows = () => [...document.querySelectorAll<HTMLElement>('.bz-password-vault-qp .bz-popover-item')];
+    const search = document.querySelector('.bz-password-vault-qp-search') as HTMLInputElement;
+    // 'git' 双命中（平分按 createdAt 倒序：GitLab 后建在前）
+    search.value = 'git';
+    search.dispatchEvent(new Event('input'));
+    await waitFor(() => rows().length === 3);
+    expect(rows()[1].querySelector('.pl')!.textContent).toBe('GitLab');
+    // ↓↓ 选中第二个命中项 GitHub
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    expect(rows()[2].classList.contains('is-on')).toBe(true);
+    // 收紧为 'gith'（只命中 GitHub）：原选中仍命中 → 保持，不回落
+    search.value = 'gith';
+    search.dispatchEvent(new Event('input'));
+    await waitFor(() => rows().length === 2);
+    expect(rows()[1].classList.contains('is-on')).toBe(true);
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    await run;
+    expect(writeText).toHaveBeenCalledWith('s3cret');
+  });
+
+  it('命中 >100：键盘活动行钳在渲染段（LIMIT=100）内，Enter 复制的是已渲染末条', async () => {
+    const entries = Array.from({ length: 150 }, (_, i) =>
+      entry({ id: `pw-${i}`, platform: `站点${String(i).padStart(3, '0')}`, password: `pw-${i}` })
+    );
+    const picks: QuickPickAction[] = [];
+    openPasswordQuickPicker(entries, (a) => picks.push(a));
+    const search = document.querySelector('.bz-password-vault-qp-search') as HTMLInputElement;
+    search.value = '站点';
+    search.dispatchEvent(new Event('input'));
+    // 渲染段 = 生成新 + 前 100 条命中
+    const rows = () => [...document.querySelectorAll<HTMLElement>('.bz-password-vault-qp .bz-popover-item')];
+    await waitFor(() => rows().length === 101);
+    // 连按 ↓ 120 次：活动行停在渲染段末条（站点099），而非从未渲染的站点119
+    for (let i = 0; i < 120; i++) {
+      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    }
+    const on = rows()[100];
+    expect(on.classList.contains('is-on')).toBe(true);
+    expect(on.querySelector('.pl')!.textContent).toBe('站点099');
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    expect(picks.length).toBe(1);
+    expect(picks[0]).toMatchObject({ type: 'entry', entry: { id: 'pw-99' } });
   });
 });
 
