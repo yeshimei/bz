@@ -202,6 +202,41 @@ A 保存链与卸载收口（save/image-save/news-sources-group/core-dom/main/in
 ### clipbook 修复闭环（2026-09-19）
 五批分支 `bz-fix-clipbook-{doc,data,save,core,views}` 串行并入（合并序 E→B→A→C→D）。跨批冲突两处主线程解：index.ts import 块（B 的 flowUndoMarkAllRead × A 的 clipDir 并集）；render.ts 搜索壳行（C 的 ✕ 钮 × D 的 placeholder 文案并集）。**主线程收口**：①E 批六开关翻 true（OVERLAY_SWEEP/CLIPDIR_SINGLE_SOURCE/UNSUBSCRIBE_ON_UNLOAD/STATS_BUCKET_GUARD/DELETE_WITHOUT_CONFIRM/USES_OPEN_EXTERNAL_URL）；②漏项补修（各批边界都未认领）：window.open×2 → openExternalUrl（新-7/A6）、CB9 loader missing/corrupt 分支复位 M.stats、image-save pad2、write-queue 注释清死引用、resolveUidFromInputDetailed 调用侧分文案接线；③跨批测试适配三处：T5 findOverwriteConfirm 精确「覆盖」→含「覆盖」交集（A 主动作改「覆盖更新」）、T6 探针记账改活跃订阅表（A 退订真实生效，循环结束 delta=0）、T9 rawBefore 快照语义修正（C32：rawBefore=处理前快照）。**门禁**：tsc 0 错误；全量 403 文件 6207 例全绿（memo 闭环基线 6097）；`pnpm run build` 部署。批 A 连带：save↔image-save 环按 ADR-0002 改函数内动态 import；checkup/checks-orphans.ts:25 尚有一份本地 clipDirOf（checkup 域，记该域轮收编）。
 
+## review（复习）2026-09-19 深审
+
+> 明细：`.scratch/review-deep/review-{func,ui,efficiency,consistency,arch}.md`。5 方向并行审查；新发现合计 66 条（P0×0 + P1×0 + P2×9 + P3×57）+ [UX-Suggestion]×12 + 测试缺口 3。门禁基线：tsc 0 错；tests/review 30 文件 394 例全绿。去重后：**修复项 P2×6 + P3×34**（分 5 批）；**UI/交互类 14 项分流 `review-deep-ui-pending.md` 待拍板**（2026-09-19 用户新规：UI 改动只汇总，全域完成后统一决策）；技术债 5 项登记随触碰收。旧账复核：G1-G5、autumn-batch-bugs 1-8、autumn-batch-ux ①-④ 共 17 条全部已修在位（多方向交叉确认）；未修仅 ux#31 卡片摘要预览（建议类，转待拍板重呈）。
+
+### P2（6 项）
+- **A1 批量出题「清空先行、失败不回滚」** `app.ts:300-323`×`:288-297` — 开始本轮（做题开）先把本轮全部逾期笔记存量题整键清空落盘再发起 AI，AI 失败（未配置/断网/全败）即旧题不可逆丢失（含「答错的题留在题库」积累池）；与做题练习「有题跳过」语义相反。修：清空移入生成成功分支，mutateQuiz 按篇合并覆盖；随修 T2 回归（AI 全败 → 盘上存量键原值未动）。
+- **F1 FSRS 难度维度失真** `fsrs.ts:40-47,54,35-37`×`fit.ts:112-114` — nextDiff clamp [0,1] 与 nextStab `(11−D)` 的 [1,10] 假定失配：进入 FSRS 后首轮评级 difficulty 一律钳成 1，难度对间隔的调节作用压缩殆尽；easy 方向与标准相反（评「简单」难度上升，与「困难」同向）。修：D 值域统一（[1,10] 语义：clamp [1,10] + easy 负增量）+ fit 回放链/W_BOUNDS/`fsrs.test.ts:29-36` 锚定同步。
+- **F2 reviewLoop 无防重入** `app.ts:508-643`×`:592-596` — 连点通知「继续本轮」/复习中重开命令 → 双 interval 并行翻篇，断点/通知单槽互覆、同篇重复打开。修：入口守卫（有活动循环先 stop 或拒绝+notice「本轮复习已在进行」），resumeRound 同守卫。
+- **U1 放弃确认框键盘穿透** `sprint.ts:219-259`×`quiz-core/session.ts:283-309`×`core/flow-dialog.ts:206-208` — 确认框在途：Enter 被 handleKey preventDefault（确认框不关）且路由进题面（多选直接交卷/翻题/结算）；数字键 1-4/A-D 直接作答；quiz-core 焦点离按钮后同病。修：会话 confirming 旗标（flow-dialog 打开置位/结算复位）+ handleKey 首行拦截 + 补 BUTTON target 排除（对齐 session 惯例）。
+- **U2 冲刺 loading 态双 runNext 竞态** `sprint.ts:264-320` — 取题中点「跳过此篇」→ 旧篇 fetch 返回后 `finished` 不拦，旧题面顶掉新篇/结算屏，进度与评级计数串篇。修：会话级 runSeq 发号守卫（await 返回 seq 不符即弃）；或 loading 态禁跳。
+- **U3/A3 插件禁用清场缺口** `index.ts:233-262`×`stats-ui.ts:22-25,276-278`×`ui.ts:353-380`×`app.ts:32-52` — 禁用不关统计/历史/难度弹窗（遮罩挡死全屏，closeStatsModal 全仓无卸载调用）、文件树染色与徽标不回退、`_notifiedOverdue` 残留致同会话重启用后存量逾期不再提醒。修：unloadReview 补 closeStatsModal（连带 timeline）+ `.difficulty-dialog` 移除 + 染色回退 + 会话态复位；随修 T1 回归钉死。
+
+### P3 修复 34 项（按批摘要）
+- **数据/算法**：F3 R 阈值 desc 披露「仅用于提前判定，不改变排期」（真阈值排期待拍板）；F4 冲刺结果卡短间隔恒「1 天后」→ 复用 render dueLabelOf 天/时分口径；F6 quiz-core ensureQuiz initialized 不复位 → resetQuiz 导出+unloadReview 调用；F7 loadItems 非法 nextReviewDate 容错（回退 reviewStart+warn）；F8 markReview TOCTOU（门禁检查移入队列 fn）；F9 vault modify 全量读盘（复用轮询快照/单条读）；F12 单篇范围 TFolder 漏网（校验 extension==='md'）；A13/E4 数据层 bulk（addItems/removeItems 一趟 RMW，watch 两处改调；quiz 批量生成改一次 mutateQuiz 合并写；排除名单 onChange 一次 saveSettings）；A2 `!quiz.ai` 降级护栏失效（判据换 getAIProvider 试准，恢复四处降级分支）；A5 死代码簇（quizUpdate→updateQuiz→loadActiveItems 整链 + getAllQuestions/getUncompletedQuestions/REVIEW_DATA_PATH/lastDm/dueItems + loadHeatmap/loadPreview，测试随删）。
+- **app/编排**：E3 前半 评级链路读盘合并（onPassed 透传 fresh、markReview+updateItem 合并 RMW；applyReviewStyles 已支持可选 items）；A11 双 dm 实例（index 建好后注入 reviewApp + data.ts:64 注释如实）；U8 监听目录新笔记加入后面板不刷新（onVaultCreate 补 refresh）；F10 onVaultCreate addItem 抛错静默（catch 分型：查重静默/写盘 notifySaveError）；F11 onVaultRename 目标被占静默（notice 提示手动处理）；C10 删除确认首名带 .md（stripMdExt）；C-UX2 「是否同步移除复习记录」确认后无撤销 → 挂 notifyUndo（确认保留，两可决策）。
+- **弹窗/会话**：U4/A4/E7 难度弹窗迁 openFlowDialog（ESC/遮罩/焦点/外点/companion/ESC 关错层全收口 + 1-4 快捷键对齐做题拍板范式 + U10 onSelect try/catch→notifySaveError）；E1/C1/A12 「移出复习计划」两处免确认直达 notifyUndo（效率整改 5 既定口径对齐）+ 命令路径 catch（与抽屉同口径）；E5 做题练习切题量档位免全表重建/免重读题库 + 焦点还原 + probeBankCount 按 scope 缓存；E6 队列刷新滚位/焦点记忆（refreshPanel 前后记录还原）；U建5 答对删题失败恢复后 .correct 高亮残留（恢复回调清高亮）；U9 reviewLoop 进度通知句柄验活（对齐 _overdueNotice 先例）；C9 错误提示五处 → notifyActionError 单源（顺带 onRetry）。
+- **单源/形制**：A7 currentR 同式五处 + LADDER_MAX 字面量两处 → fsrs.currentR 单源（批内收 queue/stats，app/render/stats-ui 三处主线程收口）；A6/C5 RATING_NAMES「轻松/简单」漂移 → sprint/render 删本地改 import stats（统一「简单」）；A9 dateKey 第 6 份 → localDayKey 下沉 core/ui/str.ts + stats 转发（其余域私货逐批收编）；C3 stripTitleMarks 下沉 str.ts（render 切换主线程）；C4/A8 render 本地 ESC_MAP/esc/icon → str 单源（导出已存在）；C8 review.json 路径双单源 → manager 改 import data；C7 ESC 层 id 统一 bz-review-* + session 层 handle 存储显式注销（U5 层累积一并）；C13 统计弹窗「对齐影视」五处注释如实化 + secHTML title esc；C14 settings-schema 三处行型（出题数量 text→number+min、缩放行 min/max 声明式删 onChange 复刻、外观占位组 desc 补「预留」）；C15 构造期 z 发号冗余/静态档位三处删（仅 show 路径 topifyZ）；C11 CONTEXT.md 四词条按现状改写 +「随机抽查」零实现词条删除；U7 死样式/死分支三处（退役 chip 规则、无 DOM .meta、不可达结果卡+「打开原文」失实按钮）；U11 做题练习 note 空路径 meta 文案补「先选择一篇笔记再看题量」；U12/A14 缩放行超界回 1 → 声明式 min/max（T3 回归）。
+- **core**：U6 ADR-0122 滚动条通杀清单漏配 → components.css 补 `#review-stats-popup`/`#review-history-popup`/`#quiz-popup` 三壳。
+
+### UI/交互分流（14 项 → review-deep-ui-pending.md，本轮不修）
+F3 真阈值排期、F建1 sprintStarting 防拆、F建2/E3 后半轮询事件化、U建1/C6 quiz 题面 emoji→lucide、U建2 冲刺头行副标题、U建3 不可达卡 tabindex、U建4 时间线排名键盘、E建1 评级条键盘化、E建2 冲刺中断续跑、E6 后半大列表惰性渲染、C13 视觉重刷对齐 cinema、C-UX1 命令名括号形态、C-UX3 空列提示形制、ux#31 卡片摘要预览（旧账重呈）。
+
+### 技术债登记（随触碰收，无需拍板）
+A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族渐进收编（.spinner→.bz-q-spinner 本轮收，DOM 侧主线程）；A16 双做题引擎并存（issue 362 拍板背景，长期收敛 sprint 一份）；C16 徽标 cssText 静态七项迁 .review-stage-badge（跨 app/styles 两文件）；E4 后半 答对删题会话期内存记账批量删除（单次 RMW 容忍）。
+
+### 修复批分工（5 worktree，文件互不重叠）
+- **A 算法数据层** `bz-fix-review-algo`（fsrs/fit/data/queue/stats + core/ui/str.ts + core/utils.ts）：F1、F7、A13 bulk API、A2（data 侧无）、A5 stats 死代码、A7 建 currentR+queue/stats 改调、A9 dateKey 下沉、C3 下沉、A11 注释、F6 侧无。回归：fsrs D 域锚定翻转、fit、data 容错/bulk、dateKey、死代码删。
+- **B app 编排出题链** `bz-fix-review-orch`（app.ts、review/index.ts、watch.ts、quiz-panel-data.ts）：F2、F5、A1、A2、F8、F9、E3 前半、A3 会话态+unloadReview 收口+T1、A5 dueItems、A11 注入、A12、E1/C1 命令侧、F10/F11、U8、C10、C-UX2、F12、C9(index)。回归：T2 丢题、防重入、TOCTOU、unload 清理。
+- **C 弹窗浮层与做题练习** `bz-fix-review-dialog`（ui.ts、quiz-core/{index,manager,session}、quiz-panel.ts）：U4/A4/E7 难度弹窗迁移、E1/C1 抽屉侧、E6 滚位焦点、E5、U1 session 侧、U建5、U5/C7、C8、C9(session)、A5 quiz-core 死链、F6 resetQuiz 导出、C15(ui/quiz-panel)。回归：难度弹窗、滚位/焦点、档位、session 穿透。
+- **D 冲刺会话与渲染层** `bz-fix-review-sprint`（sprint.ts、render.ts）：U1 sprint 侧、U2、F4、A6、C9(sprint)、C7(sprint id)、U7 死分支、U11、C4/A8 render 改 str。回归：穿透/竞态（ui 批建议款）、结果卡时分。
+- **E 统计设置样式与文档** `bz-fix-review-panel`（stats-ui.ts、settings-schema.ts、styles.css、core/ui/components.css、CONTEXT.md）：U6、C13、C14 三处、U12/A14+T3、F3 desc、A5 lastDm、C15(stats-ui)、C7(stats-ui id)、U7 死样式、A15 .spinner、C11 词条。回归：滚动条契约、schema 行为。
+
+### 主线程收口清单（合并后）
+① F6：unloadReview 补 `resetQuiz()` 调用（批 C 建导出）；② A7：app.ts:158-163 / render.ts:75-80 / stats-ui.ts:321-328 三处切 fsrs.currentR（批 A 建单源）；③ C3：render.ts:550 切 str.stripTitleMarks；④ A15：.spinner 使用处 DOM 类名随 .bz-q-spinner（grep 定位）；⑤ E 批「现状钉死」开关翻转；⑥ 跨批守卫计数/mock 适配；⑦ 各批边界漏项。
+
 ---
 
-（下一域：review，5 方向审查并行中）
+（下一域：encrypt）
