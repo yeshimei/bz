@@ -65,16 +65,14 @@ function art(partial: Partial<ClipArticle>): ClipArticle {
 
 // ==================== render 纯层 markup ====================
 
-describe('批 D·rail ✓✓ 批量已读钮（效率#4 markup 单源）', () => {
-  it('markAllN>0 挂 data-clip-rail-markall + title 写明 N 篇；缺省/0 不挂', () => {
+describe('批 D·rail 行内批量已读钮退役（2026-09-19 用户拍板）', () => {
+  it('rail 源行 markup 不再挂 data-clip-rail-markall / ✓✓ 图标（无论未读数）', () => {
     const sel = { kind: 'site', site: '果壳' } as any;
-    const withBtn = railItemHtml(sel, '果壳', 3, 10, 'feed', '#fff', false, '', 3);
-    expect(withBtn).toContain('data-clip-rail-markall');
-    expect(withBtn).toContain('全部标为已读（3 篇）');
-    expect(withBtn).toContain('check-check');
-    const noBtn = railItemHtml(sel, '果壳', 0, 10, 'feed', '#fff', false, '');
-    expect(noBtn).not.toContain('data-clip-rail-markall');
-    expect(railItemHtml(sel, '果壳', 0, 10, 'feed', '#fff', false, '', 0)).not.toContain('data-clip-rail-markall');
+    const withUnread = railItemHtml(sel, '果壳', 3, 10, 'feed', '#fff', false, '');
+    expect(withUnread).not.toContain('data-clip-rail-markall');
+    expect(withUnread).not.toContain('check-check');
+    const noUnread = railItemHtml(sel, '果壳', 0, 10, 'feed', '#fff', false, '');
+    expect(noUnread).not.toContain('data-clip-rail-markall');
   });
 
   it('移动章头常驻灰态钮：markAllN>0 挂 data-clip-ch-markall；mobTocHtml 透传章 markAllN', () => {
@@ -250,10 +248,9 @@ describe('批 D·样式断言', () => {
     expect(dark![1]).toContain('color: var(--bz-danger)');
   });
 
-  it('效率#4：rail ✓✓ 钮与移动章头灰态钮样式在位', () => {
+  it('效率#4：rail 行内钮样式已撤（退役），移动章头灰态钮样式在位', () => {
     const css = cssOf();
-    expect(css).toContain('.bz-clip-rail .bz-clip-rail-markall');
-    expect(css).toContain('.bz-clip-rail .bz-rail-item:hover .bz-clip-rail-markall');
+    expect(css).not.toContain('.bz-clip-rail .bz-clip-rail-markall');
     expect(css).toContain('.bz-clip-mob-ch-mark');
   });
 
@@ -324,36 +321,34 @@ describe('批 D·UI 行为', () => {
     });
   });
 
-  it('效率#4：rail 源行 ✓✓ 钮可见（有未读的行挂钮）且点击走「全部标为已读（N 篇）」确认流', async () => {
+  it('rail 行内 ✓✓ 钮退役后：右键菜单仍是源级批量已读唯一入口（全部标为已读（N 篇）确认流）', async () => {
     const { vault } = await openDesktop();
     const allRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => (r as HTMLElement).textContent!.includes('全部未读')) as HTMLElement;
-    const mark = allRow.querySelector('[data-clip-rail-markall]') as HTMLElement;
-    expect(mark).toBeTruthy();
-    expect(mark.getAttribute('title')).toContain('2 篇');
-    // 剪藏本源行（无未读语义）不挂钮
-    const clipRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => (r as HTMLElement).textContent!.includes('剪藏本')) as HTMLElement;
-    expect(clipRow.querySelector('[data-clip-rail-markall]')).toBeNull();
-    // 点击 → 同款确认框（不切源）
-    mark.click();
+    expect(allRow).toBeTruthy();
+    // 行内快捷钮已撤：任何 rail 行都不再挂钮（含本来有未读的「全部未读」行）
+    expect(document.querySelectorAll('.bz-rail-item [data-clip-rail-markall]')).toHaveLength(0);
+    // 右键 → 源级动作菜单（唯一路径）
+    allRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, clientX: 12, clientY: 12 }));
+    const menu = await vi.waitFor(() => {
+      const el = document.querySelector('.bz-item-menu') as HTMLElement;
+      expect(el).toBeTruthy();
+      return el;
+    });
+    const item = [...menu.querySelectorAll('.bz-item-menu-item')].find((b) => (b as HTMLElement).textContent!.includes('全部标为已读')) as HTMLElement;
+    expect(item).toBeTruthy();
+    expect(item.textContent).toContain('2 篇');
+    item.click();
     const popup = await vi.waitFor(() => {
       const el = document.querySelector('#__shared_confirm_popup__') as HTMLElement;
       expect(el).toBeTruthy();
       return el;
     });
     expect(popup.textContent).toContain('2 篇');
-    expect(M.sel.kind).toBe('all'); // 点击钮不触发源切换
     (document.querySelector('#__shared_confirm_ok__') as HTMLElement).click();
     await drainNewsWritesForTests();
     await vi.waitFor(() => {
       const unread = JSON.parse((vault as any).files.get('CONFIG/STORAGE/news.json')).articles.filter((a: any) => !a.read);
       expect(unread).toHaveLength(0);
-    });
-    // 落盘后 rail 重渲：未读归零 → 钮消失（实时文档查询——renderRail 是 innerHTML 整列重建，
-    // 旧 allRow 引用已脱管，不能拿它断言新状态）
-    await vi.waitFor(() => {
-      const freshAllRow = [...document.querySelectorAll('.bz-rail-item')].find((r) => (r as HTMLElement).textContent!.includes('全部未读')) as HTMLElement;
-      expect(freshAllRow).toBeTruthy();
-      expect(freshAllRow.querySelector('[data-clip-rail-markall]')).toBeNull();
     });
   });
 

@@ -715,8 +715,7 @@ function renderRail(): void {
     queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source, M.upInfo).filter(matchesSearch).length;
   const allHit = countOf({ kind: 'all' });
   // V1 计数口径（issue 214）：未读（搜索态 = 命中数）/ 总数（全量含已处理）
-  // markAllN（效率#4）：有未读 news 时挂「✓✓」小钮（批量已读可见入口，同款确认流）
-  let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '', railUnreadN({ kind: 'all' }));
+  let html = railItemHtml({ kind: 'all' }, '全部未读', allHit, arts.length, 'inbox', '#58a6ff', M.sel.kind === 'all', '');
 
   // 站点行动态聚合（issue 222：rail 按 site 属性分类，issue 206 平台聚合行退役）——
   // 全库站点 = 剪藏全量 + 未读 news 面（行总数 = 该源列表长度，口径同 queryBySource site 源）；
@@ -726,9 +725,7 @@ function renderRail(): void {
     const unreadN = full.filter((a) => a.st !== 'saved').length;
     const hit = countOf({ kind: 'site', site: row.site });
     const active = M.sel.kind === 'site' && M.sel.site === row.site;
-    // markAllN（效率#4）：该源未读 news 数 >0 时行内挂「✓✓」批量已读小钮（口径 = buildRailActions 的 N）
-    const markN = railUnreadN({ kind: 'site', site: row.site });
-    html += railItemHtml({ kind: 'site', site: row.site }, row.site, searchKw ? hit : unreadN, full.length, 'feed', siteTint(row.site), active, '', markN);
+    html += railItemHtml({ kind: 'site', site: row.site }, row.site, searchKw ? hit : unreadN, full.length, 'feed', siteTint(row.site), active, '');
   }
 
   // B站 UP 展开（C2：Map 按 author/uid 去重；C6：upInfo 回填名字显示）。
@@ -749,8 +746,7 @@ function renderRail(): void {
     // G：UP 行 data-src 携带 platform=B站 + up=uid（旧实现 platform=展示名、up=null，
     // 点击后按平台名过滤恒空——UP 源点开是空列表且高亮不复位）
     // B站徽标色由 .bz-clip-rail .bz-rail-badge.bili 样式侧单源承担（不再内联传 #8b7cf6）
-    const markN = railUnreadN({ kind: 'inbox', platform: 'B站', up: uid });
-    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, upTotal, 'bili', '', active, name.slice(0, 1), markN);
+    html += railItemHtml({ kind: 'inbox', platform: 'B站', up: uid }, name, cnt, upTotal, 'bili', '', active, name.slice(0, 1));
   }
 
   // 剪藏本（聚合，saved 语义；搜索时显示命中数）——剪藏本源无未读语义，不挂批量已读钮
@@ -784,24 +780,7 @@ function renderRail(): void {
           : { kind: 'all' as const };
     const actions = buildRailActions(String(row.title || ''), source);
     if (actions.length) attachItemActions(row, actions, { sheetTitle: String(row.title || ''), menuClass: 'bz-clip-menu-editorial' });
-    // 行内「✓✓」小钮（效率#4）：与右键同一条「全部标为已读（N 篇）」确认流——stopPropagation
-    // 防冒泡触发 railListEl 的源切换委托
-    const markBtn = row.querySelector('[data-clip-rail-markall]') as HTMLElement | null;
-    if (markBtn && actions.length) {
-      markBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        actions[0].onClick();
-      });
-    }
   });
-}
-
-/** 该源未读 news 数（效率#4）：rail ✓✓ 钮的显隐与 N 口径 = buildRailActions 的 unreadList.length
- *  （queryBySource 未处理流 ∩ origin==='news'；剪藏条目无未读语义不计） */
-function railUnreadN(source: SrcFilter): number {
-  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo)
-    .filter((a) => a.origin === 'news').length;
 }
 
 /** 报告 Top5 回看入口（效率#20）：按条目 key（articleKeyOf / clip:<path>）定位并选中。
@@ -828,7 +807,16 @@ export function revealArticleByKey(key: string): void {
     .catch(() => { /* 装载失败保持原状 */ });
 }
 
-/** rail 源级动作（enh 包 4）：该源还有未读时提供「全部标为已读」；剪藏本源无未读语义不挂 */
+/** 该源未读 news 数（效率#4）：移动章头常驻灰态钮的显隐与 N 口径 = buildRailActions 的
+ *  unreadList.length（queryBySource 未处理流 ∩ origin==='news'；剪藏条目无未读语义不计）。
+ *  桌面 rail 的行内 ✓✓ 钮已退役（2026-09-19），本函数现服务移动章头 + rail 源级动作判定。 */
+function railUnreadN(source: SrcFilter): number {
+  return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo)
+    .filter((a) => a.origin === 'news').length;
+}
+
+/** rail 源级动作（enh 包 4）：该源还有未读时提供「全部标为已读」；剪藏本源无未读语义不挂。
+ *  2026-09-19 起是桌面端源级批量已读的唯一入口（行内钮退役，右键菜单触发）。 */
 function buildRailActions(label: string, source: SrcFilter): ItemAction[] {
   const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source, M.upInfo)
     .filter((a) => a.origin === 'news');
@@ -1805,6 +1793,9 @@ function showTextSelBar(info: { text: string; rect: { top: number; left: number;
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="term" title="存为知识盒名词，并在此处留下锚定双链">存为名词</button>
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="passage" title="存为知识盒段落，并在此处留下锚定双链">存为段落</button>`;
   bar.style.display = 'flex';
+  topifyZ(bar); // 显示即发号（ADR-0067）：浮框挂 body 无静态档，主面板经 topifyZ 有号——
+  // 不发号则 z-index:auto 恒被面板遮罩（z-index 数值元素）压住，工具框「看不见」但 DOM 在
+  // （CSS 注释里写的 allocZ 此前从未接线，2026-09-19 用户报「被主弹窗遮挡」补齐）
   placeSelBar(info.rect);
   armSelBarEsc();
 }
@@ -1823,6 +1814,7 @@ function showImageSelBar(imgEl: HTMLImageElement): void {
     ${localImg ? '' : '<button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="save-img" title="下载图片到剪藏图片文件夹">保存图片</button>'}
     <button type="button" class="bz-clip-selbar-btn" data-clip-selbar-act="img-note" title="存为知识盒图版（读图成文）">存为图版</button>`;
   bar.style.display = 'flex';
+  topifyZ(bar); // 显示即发号（同上：不抬顶会被主面板遮罩压住）
   const r = typeof imgEl.getBoundingClientRect === 'function' ? imgEl.getBoundingClientRect() : null;
   placeSelBar(r || ({ top: 0, left: 0, bottom: 0, right: 0 } as any));
   armSelBarEsc();

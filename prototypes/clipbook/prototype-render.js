@@ -1,4 +1,4 @@
-/* 源指纹 8343e254096d1318 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 016ceffd4817a2d0 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/clipbook/report-stats.ts","src/core/chart-palette.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
@@ -175,16 +175,14 @@ var BZR_clipbook = (() => {
   function stateLabel(st) {
     return st === "saved" ? "已保存" : st === "reading" ? "在读" : st === "read" ? "已读" : "未读";
   }
-  function railItemHtml(sel, label, unread, total, icon, color, active, sub, markAllN = 0) {
+  function railItemHtml(sel, label, unread, total, icon, color, active, sub) {
     const badge = icon === "feed" ? `<span class="bz-rail-badge" style="--bz-rail-tint:${color || "#58a6ff"}">${esc(sub || label.slice(0, 1))}</span>` : icon === "bili" ? `<span class="bz-rail-badge bili">${esc(sub || label.slice(0, 1))}</span>` : icon === "clip" ? `<span class="bz-rail-ic">${iconSpan("scissors")}</span>` : `<span class="bz-rail-ic${sel.kind === "all" ? " bz-rail-ic--accent" : ""}">${icon ? iconSpan(icon) : ""}</span>`;
     const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
-    const markAll = markAllN > 0 ? `<span class="bz-clip-rail-markall" data-clip-rail-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, "bz-ic--xs")}</span>` : "";
     return `
     <div class="bz-rail-item${active ? " on" : ""}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
       ${badge}
       <span class="bz-rail-name">${esc(label)}</span>
       <span class="bz-clip-lead"></span>
-      ${markAll}
       ${count}
     </div>`;
   }

@@ -13,7 +13,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp, getApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { openClipbookReport, closeClipbookReport, unloadClipbookReport } from '../../src/clipbook/report-ui';
-import { unloadClipbook } from '../../src/clipbook';
+import { openClipbook, unloadClipbook } from '../../src/clipbook';
 import { cleanupNotices } from '../../src/core/notice';
 import { M } from '../../src/clipbook/state';
 import { setReadingSession, flushReadingSession } from '../../src/clipbook/flow';
@@ -217,6 +217,25 @@ describe('clipbook 阅读报告弹层', () => {
     // 桌面遮罩点击关闭：点在 overlay 本体（frame 之外）才收口
     overlay.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(overlay.style.display).toBe('none');
+  });
+
+  it('z-index 动态发号（ADR-0067）：每次打开抬顶，压过同时开着的剪藏本主面板', async () => {
+    bootWithLog([{ key: 'url:a', title: '甲', src: 's', minutes: 3, ts: Date.now() }]);
+    // 主面板先开（rail 脚注「我读了什么」的常态场景）→ 它经 topifyZ 持号
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    const panel = document.querySelector('.bz-panel-overlay:not(.bz-clip-report-overlay)') as HTMLElement;
+    expect(panel).toBeTruthy();
+    expect(panel.style.zIndex).not.toBe('');
+    await openClipbookReport(getApp());
+    const overlay = document.querySelector('.bz-clip-report-overlay') as HTMLElement;
+    expect(overlay.style.zIndex).not.toBe(''); // 不发号 = z-index:auto 恒被面板压住（本次修复点）
+    expect(Number(overlay.style.zIndex)).toBeGreaterThan(Number(panel.style.zIndex));
+    const first = Number(overlay.style.zIndex);
+    closeClipbookReport();
+    await openClipbookReport(getApp()); // 重开再抬顶（号只增不减）
+    expect(Number(overlay.style.zIndex)).toBeGreaterThan(first);
+    unloadClipbook();
   });
 
   it('关闭钮收口：弹层隐藏；unloadClipbook 摘 DOM', async () => {
