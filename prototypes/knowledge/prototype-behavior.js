@@ -1,4 +1,4 @@
-/* 源指纹 895929c693e722e2 · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a3e68f514567edad · 仓内输入 41 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -7976,7 +7976,6 @@ ${c}`
       `title: ${quoteYaml(term)}`,
       "type: term",
       `domain: ${quoteYaml(domain)}`,
-      `term: ${quoteYaml(term)}`,
       `date: ${quoteYaml(nowStamp())}`
     ];
     const src = serializeTermSource(opts.source);
@@ -8192,6 +8191,33 @@ ${content || ""}`;
     if (!hit) return src;
     return lines.join(src.includes("\r\n") ? "\r\n" : "\n");
   }
+  function dropTermKeyIfTyped(content) {
+    var _a;
+    const src = String(content != null ? content : "");
+    const lines = src.split(/\r?\n/);
+    if (((_a = lines[0]) == null ? void 0 : _a.trim()) !== "---") return src;
+    let close = -1;
+    for (let i = 1; i < lines.length; i++) {
+      if (lines[i].trim() === "---") {
+        close = i;
+        break;
+      }
+    }
+    if (close === -1) return src;
+    let termAt = -1;
+    let isTermType = false;
+    for (let i = 1; i < close; i++) {
+      if (/^term:/.test(lines[i])) termAt = i;
+      else if (/^type:/.test(lines[i])) {
+        const v = lines[i].slice("type:".length).trim();
+        const quoted = v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'");
+        isTermType = (quoted ? v.slice(1, -1) : v) === "term";
+      }
+    }
+    if (termAt < 0 || !isTermType) return src;
+    lines.splice(termAt, 1);
+    return lines.join(src.includes("\r\n") ? "\r\n" : "\n");
+  }
   async function backfillNotes(opts = {}) {
     var _a, _b;
     const app = getApp();
@@ -8209,6 +8235,12 @@ ${content || ""}`;
         content = migrated;
         filled++;
       }
+      const pruned = dropTermKeyIfTyped(content);
+      if (pruned !== content) {
+        await app.vault.modify(f, pruned);
+        content = pruned;
+        filled++;
+      }
       const fm = parseFrontmatter2(content);
       const hasType = fm.type === "video" || fm.type === "term";
       const hasDomain = !!fm.domain;
@@ -8220,7 +8252,7 @@ ${content || ""}`;
       }
       if (!hasDomain) needDomain.push({ file: f });
       if (patch.length) {
-        const updated = injectFrontmatter(content, patch);
+        const updated = dropTermKeyIfTyped(injectFrontmatter(content, patch));
         if (updated !== content) {
           await app.vault.modify(f, updated);
           filled++;
@@ -15709,7 +15741,6 @@ CBTI 即针对失眠的认知行为疗法，是一种非药物治疗失眠的循
 title: "既视感"
 type: term
 domain: "心理"
-term: "既视感"
 date: "2026-09-04 07:47:38"
 ---
 
@@ -15722,7 +15753,6 @@ date: "2026-09-04 07:47:38"
 title: "昼夜节律"
 type: term
 domain: "心理"
-term: "昼夜节律"
 date: "2026-09-03 21:10:00"
 source: "https://zhuanlan.zhihu.com/p/12345678"
 sourceTitle: "什么是昼夜节律"
@@ -15737,7 +15767,6 @@ sourceTitle: "什么是昼夜节律"
 title: "松果体"
 type: term
 domain: "医学"
-term: "松果体"
 date: "2026-08-28 10:00:00"
 ---
 
@@ -15911,7 +15940,6 @@ category: 医学
 title: 睡眠结构
 type: term
 domain: 医学
-term: 睡眠结构
 date: 2026-09-12 21:20:00
 related:
   - "[[卡片盒/睡眠结构]]"
@@ -15934,7 +15962,6 @@ related:
 title: 慢波睡眠
 type: term
 domain: 医学
-term: 慢波睡眠
 date: 2026-09-12 20:50:00
 related:
   - "[[卡片盒/慢波睡眠]]"
@@ -15949,7 +15976,6 @@ related:
 title: 睡眠纺锤波
 type: term
 domain: 医学
-term: 睡眠纺锤波
 date: 2026-09-11 22:40:00
 related:
   - "[[卡片盒/睡眠纺锤波]]"
@@ -15964,7 +15990,6 @@ related:
 title: 睡眠日记
 type: term
 domain: 医学
-term: 睡眠日记
 date: 2026-09-08 20:00:00
 ---
 
@@ -15977,7 +16002,6 @@ date: 2026-09-08 20:00:00
 title: 睡眠债
 type: term
 domain: 医学
-term: 睡眠债
 date: 2026-09-07 20:30:00
 ---
 

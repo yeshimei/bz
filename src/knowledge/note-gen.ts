@@ -3,9 +3,10 @@
  * - 视频文献（type: video，frontmatter 九键：title/tags/summary/source/date/author/sourceTitle/type/domain，
  *   正文 = 润色转录 + 视频双链——ticket 151 补回：videoPath 非空时正文尾部嵌 `![[路径]]`，
  *   ADR-0066「保留视频原件」关（keepVideo=false）时 videoPath 为 null，无视频段）
- * - 术语文献（type: term，frontmatter 五键：title/type/domain/term/date + 可选 source/sourceTitle（术语来源，ADR-0116），正文=一段百科式简介）
+ * - 术语文献（type: term，frontmatter 四键：title/type/domain/date + 可选 source/sourceTitle（术语来源，ADR-0116），
+ *   正文=一段百科式简介；term 与 title 同值的历史冗余键已退役，ADR-0169——存量由 backfillNotes 清理）
  * - 段落文献（type: passage，issue 309：用户粘一段文字 → AI 自动出标题 + 领域 + 整理正文；
- *   frontmatter 五键同术语结构，无 term 键，正文=原文事实的整理，不得添加原文没有的信息）
+ *   frontmatter 四键同术语结构，正文=原文事实的整理，不得添加原文没有的信息）
  * - 图版文献（type: image，issue 312：拖入/粘贴一张图 → AI 读图出标题 + 领域 + 解读正文；
  *   图片本体落 `<文献目录>/assets/`，正文 = 图片嵌入 + 解读，嵌入写 vault 相对全路径）
  * - 旧笔记自动补全（type 启发式 + domain AI，补过落库不重复）
@@ -262,7 +263,7 @@ ${t}`,
 }
 
 /**
- * 生成术语文献笔记：frontmatter（title/type/domain/term/date + 可选 source/sourceTitle）+ 简介正文落盘。
+ * 生成术语文献笔记：frontmatter（title/type/domain/date + 可选 source/sourceTitle）+ 简介正文落盘。
  * 返回 vault 相对笔记路径。
  * 可选 summary/domain：传入即**跳过 AI、所见即所得**（终审 P1-4——术语面板确认写入传面板当前值，
  * 不再重跑一次 AI 造成与预览不一致、也不浪费一次调用）；不传则走 generateTermDraft（AI 生成）。
@@ -294,7 +295,6 @@ export async function generateTermNote(opts: {
     `title: ${quoteYaml(term)}`,
     'type: term',
     `domain: ${quoteYaml(domain)}`,
-    `term: ${quoteYaml(term)}`,
     `date: ${quoteYaml(nowStamp())}`,
   ];
   const src = serializeTermSource(opts.source);
@@ -592,6 +592,34 @@ export function migrateVideoSourceKeys(content: string): string {
 }
 
 /**
+ * 存量键清理（ADR-0169）：术语文献的 `term` 与 `title` 恒同值（历史冗余），退役删除。
+ * 手术边界：仅当 frontmatter 里 `type` 的值确为 term（含引号包裹）且存在 `term:` 行时删该行；
+ * 缺 type 的存量**不动**（type 补全还要靠 term 判型，见 ADR-0073）——由调用方在 type 落地后同趟清。
+ * 其余键与正文零扰动；换行符保真；幂等。导出供单测直接断言。
+ */
+export function dropTermKeyIfTyped(content: string): string {
+  const src = String(content ?? '');
+  const lines = src.split(/\r?\n/);
+  if (lines[0]?.trim() !== '---') return src;
+  let close = -1;
+  for (let i = 1; i < lines.length; i++) { if (lines[i].trim() === '---') { close = i; break; } }
+  if (close === -1) return src;
+  let termAt = -1;
+  let isTermType = false;
+  for (let i = 1; i < close; i++) {
+    if (/^term:/.test(lines[i])) termAt = i;
+    else if (/^type:/.test(lines[i])) {
+      const v = lines[i].slice('type:'.length).trim();
+      const quoted = (v.startsWith('"') && v.endsWith('"')) || (v.startsWith("'") && v.endsWith("'"));
+      isTermType = (quoted ? v.slice(1, -1) : v) === 'term';
+    }
+  }
+  if (termAt < 0 || !isTermType) return src;
+  lines.splice(termAt, 1);
+  return lines.join(src.includes('\r\n') ? '\r\n' : '\n');
+}
+
+/**
  * 旧笔记自动补全：type 用启发式（有 author → video；有 term → term），
  * domain 用 AI 分类；补过落库不再重复；AI 未配置跳过。返回 {scanned, filled, aiSkipped}。
  * ticket 138 §1.3：单次 AI 调用带超时（默认 25s），超时/失败即跳过该条继续，不卡死整批；
@@ -600,6 +628,8 @@ export function migrateVideoSourceKeys(content: string): string {
  * 避免用读入时的旧 content 整体覆盖回滚 type 补丁；P3-3 由 parseFrontmatter 剥引号兜底。
  * 2026-09-16：入口先跑一次存量键迁移（见 migrateVideoSourceKeys）——必须排在
  * 「已补全即跳过」之前，否则已有 type+domain 的存量笔记永远轮不到迁移。
+ * 2026-09-19（ADR-0169）：term 冗余键清理（dropTermKeyIfTyped）同排在此位；
+ * type 缺失但 term 在的存量（判型靠 term）在补 type 落盘时同趟清——两处都不留残余。
  */
 export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promise<{ scanned: number; filled: number; aiSkipped: boolean }> {
   const app = getApp();
@@ -618,6 +648,13 @@ export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promis
       content = migrated;
       filled++;
     }
+    // term 冗余键清理（ADR-0169）：type 已定的存量直接清；缺 type 的留到下方补 type 后同趟清
+    const pruned = dropTermKeyIfTyped(content);
+    if (pruned !== content) {
+      await app.vault.modify(f, pruned);
+      content = pruned;
+      filled++;
+    }
     const fm = parseFrontmatter(content);
     const hasType = fm.type === 'video' || fm.type === 'term';
     const hasDomain = !!fm.domain;
@@ -632,7 +669,8 @@ export async function backfillNotes(opts: { aiTimeoutMs?: number } = {}): Promis
     // domain 补全队列入列时只记 file——domain 写回时现读补丁后的最新内容
     if (!hasDomain) needDomain.push({ file: f });
     if (patch.length) {
-      const updated = injectFrontmatter(content, patch);
+      // type 落地即同趟清 term（缺 type 存量判型后场景，ADR-0169）
+      const updated = dropTermKeyIfTyped(injectFrontmatter(content, patch));
       if (updated !== content) { await app.vault.modify(f, updated); filled++; }
     }
   }

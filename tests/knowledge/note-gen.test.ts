@@ -18,6 +18,7 @@ import {
   parseFrontmatter,
   injectFrontmatter,
   migrateVideoSourceKeys,
+  dropTermKeyIfTyped,
   generateVideoNote,
   generateTermDraft,
   generatePassageDraft,
@@ -399,7 +400,7 @@ describe('findDuplicateTermNote（名词重名查重，ADR-0143/issue 328）', (
   });
 });
 
-describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）', () => {
+describe('generateTermNote（术语文献：四键 frontmatter + 一段简介）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
@@ -413,7 +414,7 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
     setSettingsProvider(() => ({}) as any);
   });
 
-  it('术语词作文件名与 title，落盘五键 frontmatter（title/type/domain/term/date）+ 简介正文', async () => {
+  it('术语词作文件名与 title，落盘四键 frontmatter（title/type/domain/date）+ 简介正文', async () => {
     const path = await generateTermNote({ term: '心理' });
 
     expect(path).toBe('文献盒/心理.md');
@@ -421,12 +422,12 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
 
     const content = vault.files.get(path)!;
     const fm = vaultParseFrontmatter(content)!;
-    // 五键：title/type/domain/term/date；不得混入视频专有键（tags/summary/author/sourceTitle），
+    // 四键：title/type/domain/date（term 冗余键已退役，ADR-0169）；不得混入视频专有键（tags/summary/author/sourceTitle），
     // 未传 source → 来源两键一个都不落
     expect(fm.title).toBe('心理');
     expect(fm.type).toBe('term');
     expect(fm.domain).toBe('心理');
-    expect(fm.term).toBe('心理');
+    expect(fm.term).toBeUndefined();
     expect(fm.date).toBeTruthy();
     expect(fm.tags).toBeUndefined();
     expect(fm.summary).toBeUndefined();
@@ -462,8 +463,8 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
     expect(fm.title).toBe('黑洞');
     expect(fm.type).toBe('term');
     expect(fm.domain).toBe('天体物理');
-    expect(fm.term).toBe('黑洞');
-    expect(fm.summary).toBeUndefined(); // 五键，无 summary 键
+    expect(fm.term).toBeUndefined();
+    expect(fm.summary).toBeUndefined(); // 四键，无 summary 键
     expect(content).toContain('\n\n手改后的简介'); // 正文 = 传入的 summary
   });
 
@@ -508,7 +509,7 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
     expect(fm.source).toBe('https://zhuanlan.zhihu.com/p/123456');
     expect(fm.sourceTitle).toBe('心流是什么');
     expect(content).toContain('date:');
-    expect(content.indexOf('date:')).toBeLessThan(content.indexOf('source:')); // 五键顺序不变，来源追加在后
+    expect(content.indexOf('date:')).toBeLessThan(content.indexOf('source:')); // 四键顺序不变，来源追加在后
   });
 
   it('外部链接不带标题 → 只有 source 无 sourceTitle；URL 尾随标点（粘贴带入）落库前净化', async () => {
@@ -521,7 +522,7 @@ describe('generateTermNote（术语文献：五键 frontmatter + 一段简介）
     expect(fm.sourceTitle).toBeUndefined();
   });
 
-  it('source 为 null/空值 → 不写来源键（五键原样）', async () => {
+  it('source 为 null/空值 → 不写来源键（四键原样）', async () => {
     const path = await generateTermNote({ term: '心流', summary: 's', domain: '心理', source: null });
     const content = vault.files.get(path)!;
     expect(content).not.toContain('source:');
@@ -608,14 +609,54 @@ describe('backfillNotes（旧笔记自动补全；ticket 138 §1.3：单次 AI �
     expect(migrateVideoSourceKeys('---\ntitle: "T"\n---\nurl: "正文里的"\n')).toBe('---\ntitle: "T"\n---\nurl: "正文里的"\n');
   });
 
-  it('单缺 type（已有 domain）：只做启发式补 type，不调 AI', async () => {
+  it('term 冗余键清理（dropTermKeyIfTyped，ADR-0169）：仅 type=term 时删；缺 type 判型窗口不动', () => {
+    // type: term 且带 term 行 → 删 term 行，其余逐字节保留
+    expect(dropTermKeyIfTyped('---\ntitle: "T"\ntype: term\ndomain: "D"\nterm: "T"\ndate: "2025"\n---\n\n正文'))
+      .toBe('---\ntitle: "T"\ntype: term\ndomain: "D"\ndate: "2025"\n---\n\n正文');
+    // 引号包裹 type（P3-3 形态）同样认
+    expect(dropTermKeyIfTyped('---\ntype: "term"\nterm: "T"\n---\n\n正文')).toBe('---\ntype: "term"\n---\n\n正文');
+    // 缺 type：判型窗口，term 必须留给 type 启发式（ADR-0073），原样返回
+    expect(dropTermKeyIfTyped('---\ndomain: "D"\nterm: "T"\n---\n\n正文')).toBe('---\ndomain: "D"\nterm: "T"\n---\n\n正文');
+    // type 为其它值 → 不动（防误删手写键）
+    expect(dropTermKeyIfTyped('---\ntype: video\nterm: "T"\n---\n\n正文')).toBe('---\ntype: video\nterm: "T"\n---\n\n正文');
+    // 幂等：清理过的内容再喂一次逐字节相同
+    const once = dropTermKeyIfTyped('---\ntype: term\nterm: "T"\n---\n\n正文');
+    expect(dropTermKeyIfTyped(once)).toBe(once);
+    // 无 frontmatter / 无 term 行 → 原样
+    expect(dropTermKeyIfTyped('正文而已')).toBe('正文而已');
+    expect(dropTermKeyIfTyped('---\ntype: term\n---\n\n正文')).toBe('---\ntype: term\n---\n\n正文');
+    // CRLF 保真
+    expect(dropTermKeyIfTyped('---\r\ntype: term\r\nterm: "T"\r\n---\r\n\r\n正文')).toBe('---\r\ntype: term\r\n---\r\n\r\n正文');
+    // 正文里的 term: 行不受影响（只扫 frontmatter）
+    expect(dropTermKeyIfTyped('---\ntype: term\n---\nterm: "正文里的"\n')).toBe('---\ntype: term\n---\nterm: "正文里的"\n');
+  });
+
+  it('单缺 type（已有 domain）：只做启发式补 type，不调 AI；term 冗余键同趟清（ADR-0169）', async () => {
     vault.files.set('文献盒/B.md', '---\ndomain: "物理"\nterm: "贝叶斯"\n---\n\n正文B');
 
     const res = await backfillNotes();
 
     expect(res).toEqual({ scanned: 1, filled: 1, aiSkipped: false });
-    expect(vault.files.get('文献盒/B.md')).toContain('type: "term"');
+    const content = vault.files.get('文献盒/B.md')!;
+    expect(content).toContain('type: "term"');
+    expect(content).not.toContain('term:'); // 判型用后即删，不留残余
+    expect(content).toContain('正文B');
     expect(aiStub.json).not.toHaveBeenCalled(); // 有 domain 不进 AI 补全队列
+  });
+
+  it('已补全的术语笔记（type+domain+term）：term 冗余键照清，其余零扰动（ADR-0169）', async () => {
+    vault.files.set('文献盒/T.md', '---\ntitle: "贝叶斯"\ntype: term\ndomain: "数学"\nterm: "贝叶斯"\ndate: "2025-01-01 00:00:00"\n---\n\n正文T');
+
+    const res = await backfillNotes();
+
+    expect(res).toEqual({ scanned: 1, filled: 1, aiSkipped: false });
+    expect(aiStub.json).not.toHaveBeenCalled(); // domain 已有，不进 AI 队列
+    const content = vault.files.get('文献盒/T.md')!;
+    expect(content).not.toContain('term:');
+    expect(content).toContain('title: "贝叶斯"');
+    expect(content).toContain('type: term');
+    expect(content).toContain('domain: "数学"');
+    expect(content).toContain('正文T');
   });
 
   it('单缺 domain（已有 type）：只 AI 补 domain', async () => {
@@ -730,7 +771,7 @@ describe('generateImageDraft（图版读图草稿：走多模态通道，不落�
   });
 });
 
-describe('generateImageNote（图版文献：图片本体 + 五键 frontmatter + 先文字后图片）', () => {
+describe('generateImageNote（图版文献：图片本体 + 四键 frontmatter + 先文字后图片）', () => {
   let vault: MockVault;
 
   beforeEach(() => {
