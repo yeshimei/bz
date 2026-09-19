@@ -5,7 +5,6 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setApp } from '../../src/core/app';
-import { setSettingsProvider } from '../../src/core/settings-provider';
 import {
   loadEpubBookNotes,
   buildEpubJumpLink,
@@ -59,7 +58,6 @@ describe('epub-notes（bookshelf）', () => {
     document.body.innerHTML = '';
     vault = new MockVault();
     setApp(makeApp(vault));
-    setSettingsProvider(() => ({ weaveDataPath: 'CONFIG/STORAGE' }) as any);
   });
 
   it('encodeCfiForWikilink 编码 [ ] | 保留其余', () => {

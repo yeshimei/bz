@@ -5,7 +5,7 @@
  *  - jumpToHighlight：openLinkText(path#^id) + 150ms 后编辑器聚焦；
  *  - updateComment / deleteHighlight：写盘收口 vault.process 原子读改写（audit D 保持）。
  */
-import { notice } from '../core/notice';
+import { notice, notifyActionError } from '../core/notice';
 
 export interface BookNoteNode {
   level: number;
@@ -29,6 +29,13 @@ export interface BookHighlight {
 export interface ParsedBookNotes {
   bookTitle: string;
   root: BookNoteNode;
+}
+
+/** 批注属性值反转义（深审 func F3）：写入侧 `"` → `&quot;` 落盘（HTML 属性引号定界），
+ *  读侧展示/再编辑必须反转义，否则含英文双引号的批注重开显示实体字面量、再保存二次
+ *  转义（&amp;quot;）逐次恶化；amp 后置防 `&amp;quot;` 被二次误拆 */
+function unescapeComment(raw: string): string {
+  return raw.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
 }
 
 /** 解析读书笔记：headings + cm-highlight spans 建树 */
@@ -55,7 +62,7 @@ export function parseBookNotes(content: string, bookTitle: string): ParsedBookNo
     const commentMatch = fullTag.match(/data-comment="([^"]*)"/);
     const dateMatch = fullTag.match(/data-date="([^"]*)"/);
     const id = idMatch ? idMatch[1] : null;
-    const comment = commentMatch ? commentMatch[1] : null;
+    const comment = commentMatch ? unescapeComment(commentMatch[1]) : null;
     const date = dateMatch ? dateMatch[1] : null;
     if (id) {
       highlights.push({
@@ -167,20 +174,22 @@ function rewriteHighlightSpan(
  * 更新批注：命中替换 data-comment，清空删属性。
  * audit D：写盘收口 vault.process 原子读改写——旧 read→modify 全文替换窗口会把
  * 他域并发落盘的 frontmatter 修改静默回滚。
- * audit H：返回 Promise<boolean>（成功 true；文件缺失/未命中/IO 失败 false + notice），
- * 不再静默悬挂编辑弹窗；onDone 保留（成功时回调）兼容既有调用面。
+ * audit H：返回 Promise<boolean>（成功 true；文件缺失/未命中/IO 失败 false + notice）。
+ * 深审 cons C5：删 onDone 死参数（唯一调用方 notes-ui 只传 5 参、靠返回值自行回调），
+ * 与 deleteHighlight 的「onDone=终结回调」同名反义一并消解。
+ * 深审 cons C3：失败通知收编——失败面统一 error 级 +「请重试」尾巴；IO 异常走
+ * core notifyActionError 单源（clipbook 范式）。
  */
 export async function updateComment(
   app: any,
   filePath: string,
   highlightId: string,
   text: string,
-  newComment: string,
-  onDone?: () => void
+  newComment: string
 ): Promise<boolean> {
   const file = app.vault.getAbstractFileByPath(filePath);
   if (!file) {
-    notice('文件不存在，编辑批注失败');
+    notice('编辑批注失败：文件不存在，请重试', 'error');
     return false;
   }
   // P1-18：newComment 以 HTML 属性值嵌入（data-comment 属性机制不变），双引号转义 &quot;；
@@ -201,7 +210,7 @@ export async function updateComment(
     const { replaced } = rewriteHighlightSpan(content, highlightId, text, applyEdit);
     // 命中与否按「是否处理过目标 span」判定：同值保存全文不变，旧的全文本比对会误报失败
     if (!replaced) {
-      notice('未找到对应高亮（原文不匹配），编辑失败');
+      notice('编辑批注失败：未找到对应高亮（原文不匹配），请重试', 'error');
       return false;
     }
     // 原子读改写：对最新盘上内容重放替换（read→write 窗口不再吃掉他域并发写入）。
@@ -214,14 +223,13 @@ export async function updateComment(
       return replay.next;
     });
     if (!replayReplaced) {
-      notice('未找到对应高亮（原文不匹配），编辑失败');
+      notice('编辑批注失败：未找到对应高亮（原文不匹配），请重试', 'error');
       return false;
     }
-    if (onDone) onDone();
     return true;
   } catch (e) {
     console.error(`更新批注失败: ${filePath}`, e);
-    notice('编辑批注失败，请重试', 'error');
+    notifyActionError(e, '编辑批注');
     return false;
   }
 }
@@ -245,6 +253,7 @@ export async function deleteHighlight(
   };
   const file = app.vault.getAbstractFileByPath(filePath);
   if (!file) {
+    notice('删除划线失败：文件不存在，请重试', 'error');
     done();
     return false;
   }
@@ -252,7 +261,7 @@ export async function deleteHighlight(
     const content = await app.vault.read(file);
     const { replaced } = rewriteHighlightSpan(content, highlightId, text, () => '');
     if (!replaced) {
-      notice('未找到对应高亮（原文不匹配），删除失败');
+      notice('删除划线失败：未找到对应高亮（原文不匹配），请重试', 'error');
       done(); // 失败也重开壳（B2）
       return false;
     }
@@ -264,7 +273,7 @@ export async function deleteHighlight(
       return replay.next;
     });
     if (!replayReplaced) {
-      notice('未找到对应高亮（原文不匹配），删除失败');
+      notice('删除划线失败：未找到对应高亮（原文不匹配），请重试', 'error');
       done(); // 失败也重开壳（B2）
       return false;
     }
@@ -272,7 +281,7 @@ export async function deleteHighlight(
     return true;
   } catch (e) {
     console.error(`删除高亮失败: ${filePath}`, e);
-    notice('删除高亮失败，请重试', 'error');
+    notifyActionError(e, '删除划线');
     done(); // 失败也重开壳（B2）
     return false;
   }

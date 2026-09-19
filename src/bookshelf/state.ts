@@ -59,7 +59,6 @@ export interface BookshelfState {
   searchKeyword: string;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null;
   appRef: App | null;
-  renderFn: (() => void) | null;
   /** 面板内当前视图：书架列表 / 阅读分析报告（重开面板保持；unload 复位） */
   view: BookshelfView;
 }
@@ -73,7 +72,6 @@ export const M: BookshelfState = {
   searchKeyword: '',
   searchDebounceTimer: null,
   appRef: null,
-  renderFn: null,
   view: 'shelf',
 };
 
@@ -81,11 +79,15 @@ export const M: BookshelfState = {
  * 打开面板时的默认视图接线（issue 194）：每次冷开读设置，非法值回落。
  * 排序旧值零感知迁移（issue 218）：date/author → recent、progress → time、title 沿用。
  * 与收藏本 openPanel 同语义：设置是「下次打开的初始值」，面板内改选为会话内临时态。
+ * 回落口径单源（深审 eff E5/func S1）：分类筛选同归设置口径（恒复位 all）——
+ * 否则「设置改了默认筛选 × 残留分类」交叉窄筛开局，墙只剩交集像「书丢了」；
+ * 会话残留只留 searchKeyword + view 两项（重开有回写/高亮兜底可见）。
  */
 export function applyDefaultView(): void {
   const s = tryGetSettings() as Record<string, unknown>;
   const side = s.bookshelfDefaultSide;
   M.side = side === 'reading' || side === 'unread' || side === 'done' ? side : 'all';
+  M.catFilter = 'all';
   const sort = s.bookshelfSortMode;
   if (sort === 'title') M.sortMode = 'title';
   else if (sort === 'progress') M.sortMode = 'time';
@@ -102,6 +104,5 @@ export function resetBookshelfState(): void {
   M.searchKeyword = '';
   M.searchDebounceTimer = null;
   M.appRef = null;
-  M.renderFn = null;
   M.view = 'shelf';
 }

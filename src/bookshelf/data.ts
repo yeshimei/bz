@@ -1,17 +1,19 @@
 /**
- * 书架墙（bookshelf）域数据层：书库 md 书目解析 / EPUB(weave-data) 条目 / 排序 / 筛选 / 统计。
+ * 书架墙（bookshelf）域数据层：书库 md 书目解析 / EPUB(weave-data) 条目 / 统计。
  * 复刻迁移自旧 src/library/items.ts（同语义、独立实现；新旧域并存互不依赖）。
  * - md 书：书库目录（bookshelfFolderPath 空 = 运行时回落旧 libraryFolderPath 存量值）下 frontmatter tags 含 bookTag（旧键存量值）的笔记
- * - EPUB 书：<weaveDataPath>/weave-data.json 聚合（ADR-0013 口径；与旧域同源同格式）
+ * - EPUB 书：Weave 插件 settings.dataPath（ticket 65；bz 侧无独立路径设置键，缺省回落
+ *   CONFIG/STORAGE）下的 weave-data.json 聚合（ADR-0013 口径；与旧域同源同格式）
  * - status 派生：readingDate && !completionDate → 在读；都有 → 已读；否则未读
+ * 筛选/排序管道在渲染纯层 shared.ts（ADR-0104）；本文件不依赖渲染层（深审 arch A1）。
  */
 import { TFile } from 'obsidian';
 import type { App } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { localDayKey } from '../core/utils';
+import { notice } from '../core/notice';
 import type { BookshelfItem } from './state';
 import { M } from './state';
-import { getDisplayItems as pipeDisplay } from './render';
 const WEAVE_PLUGIN_ID = 'weave-epub-reader';
 /** Weave 阅读数据文件名（EPUB 自动刷新按此后缀识别 json 通道；index.ts 引用） */
 export const WEAVE_DATA_FILE = 'weave-data.json';
@@ -94,7 +96,8 @@ export function parseBookFile(file: TFile, app: App, folderPath: string, bookTag
     bookReview,
     readingDate,
     completionDate,
-    progress: progress > 100 ? 100 : progress,
+    // 深审 func F5：上下界都钳——frontmatter 手滑负数会出「-5%」书脊/进度条
+    progress: Math.max(0, Math.min(100, progress)),
     readingTimeFormat,
     readingTimeMs: parseReadingTimeMs(fm),
     highlights,
@@ -237,21 +240,33 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
   };
 }
 
-/** 读 weave-data.json 聚合（缺失/解析失败返回 []） */
+/** 读侧损坏已告警旗标（深审 arch A3：损坏降级一次性告警；恢复正常后复位） */
+let weaveCorruptWarned = false;
+
+/** 读 weave-data.json 聚合（缺失/解析失败返回 []）。
+ *  静默语义两侧区分（深审 arch A3）：写侧 mutateWeaveBook 损坏静默 false 是「weave
+ *  不在时零侵入」契约；读侧静默吞掉则是排查黑洞——EPUB 区静默清空与「从未用过
+ *  Weave」不可区分，故损坏（json 存在但读/解析失败）降级为空时给一次性告警。 */
 export async function readWeaveAggregates(app: App): Promise<any[]> {
+  const dataPath = resolveWeaveDataPath(app);
+  const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
+  const file = app?.vault?.getAbstractFileByPath?.(dataFilePath);
+  if (!file) return [];
+  let parsed: any;
   try {
-    const dataPath = resolveWeaveDataPath(app);
-    const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
-    const file = app?.vault?.getAbstractFileByPath?.(dataFilePath);
-    if (!file) return [];
-    const content = await app.vault.adapter.read(dataFilePath);
-    const parsed = JSON.parse(content);
-    const books = parsed?.books;
-    if (!books || typeof books !== 'object') return [];
-    return Object.values(books);
-  } catch {
+    parsed = JSON.parse(await app.vault.adapter.read(dataFilePath));
+  } catch (e) {
+    console.warn('weave-data.json 读取/解析失败，EPUB 条目降级为空:', dataFilePath, e);
+    if (!weaveCorruptWarned) {
+      weaveCorruptWarned = true;
+      notice('weave 阅读数据文件损坏，书库 EPUB 条目暂时无法显示', 'warning');
+    }
     return [];
   }
+  const books = parsed?.books;
+  if (!books || typeof books !== 'object') return [];
+  weaveCorruptWarned = false; // 恢复正常：下次再损坏可再次告警
+  return Object.values(books);
 }
 
 /** EPUB 条目（异步；缺文件返回 []） */
@@ -279,10 +294,4 @@ export async function rebuildItems(app: App): Promise<BookshelfItem[]> {
   M.items.length = 0;
   M.items.push(...merged);
   return merged;
-}
-
-
-/** 当前展示列表（状态 + 分类 + 关键字 + 排序），UI 层统一入口（读 M；纯管道在 render.ts） */
-export function getDisplayItems(): BookshelfItem[] {
-  return pipeDisplay(M.items, { side: M.side, catFilter: M.catFilter, q: M.searchKeyword, sortMode: M.sortMode });
 }

@@ -22,9 +22,10 @@ import { uiModal, mountIcons } from '../core/ui';
 import { notice } from '../core/notice';
 import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
 import { M, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
-import { rebuildItems, getDisplayItems, resolveFolderPath, resolveBookTag } from './data';
+import { rebuildItems, resolveFolderPath, resolveBookTag } from './data';
 import {
   detailBodyHtml, labelsHtml, panelHtml, renderWallInto, sortSegHtml, wallLoadingHTML,
+  getDisplayItems as pipeDisplay,
 } from './render';
 import { closeBookNoteModals } from './notes-ui';
 
@@ -60,15 +61,35 @@ function bindCoverFallback(container: HTMLElement): void {
 
 // ---------- 渲染（render.ts 胶水：标签/排序/整墙各回各的挂点） ----------
 
-function renderAll(_app?: unknown): void {
+/** 当前展示列表（状态+分类+关键字+排序；读 M）。
+ *  深审 arch A1：自 data.ts 迁入——数据层是八处跨域消费的对外 API 面，不该源级
+ *  依赖渲染纯层（store→ui 逆向边）；显式入参的纯管道在 shared.ts，读 M 的状态
+ *  包装归 ui 层（本域唯一消费方）。 */
+function getDisplayItems(): BookshelfItem[] {
+  return pipeDisplay(M.items, { side: M.side, catFilter: M.catFilter, q: M.searchKeyword, sortMode: M.sortMode });
+}
+
+/** 展示列表签名（滚位保持判定用）：条目 id 序列 + 状态（影响分区归属）。
+ *  刻意不含 progress 等数字——读书中后台落盘只动进度/划线数，墙的形状没变，
+ *  滚位应保持（深审 eff E4 主症状）；筛选/排序/增删才会变签名。 */
+function displaySignature(): string {
+  return getDisplayItems().map((it) => `${it.file?.path ?? it.epubVaultPath}:${it.status}`).join('|');
+}
+
+/** 上次整墙渲染的展示签名（滚位保持判定；深审 eff E4：自动刷新/重装箱不再把
+ *  用户滚到一半的墙打回顶——同签名渲染前记实时滚位、渲染后写回） */
+let lastWallSig = '';
+
+function renderWall(): void {
   const overlay = M.currentOverlay;
   if (!overlay) return;
-  const labels = overlay.querySelector('#bz-bs-labels') as HTMLElement | null;
-  if (labels) labels.innerHTML = labelsHtml(M.items, M.side, M.catFilter);
-  const seg = overlay.querySelector('#bz-bs-sortseg') as HTMLElement | null;
-  if (seg) seg.innerHTML = sortSegHtml(M.sortMode);
   const shelf = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;
   if (!shelf) return;
+  const sig = displaySignature();
+  const room = shelf.closest('.bz-bs-room') as HTMLElement | null;
+  // 渲染前取用户实时滚位（innerHTML 重建会瞬时塌陷内容高度，浏览器把 scrollTop clamp 回 0）
+  const prevScroll = room ? room.scrollTop : 0;
+  const keepScroll = sig === lastWallSig;
   renderWallInto(shelf, {
     hint: overlay.querySelector('#bz-bs-hint') as HTMLElement | null,
     all: M.items,
@@ -78,6 +99,24 @@ function renderAll(_app?: unknown): void {
     emptyTag: resolveBookTag(),
     hooks: HOOKS,
   });
+  lastWallSig = sig;
+  if (room && keepScroll) room.scrollTop = prevScroll;
+}
+
+/** 头行标签 + 排序 seg（labels 只依赖 items/side/catFilter、seg 只依赖 sortMode——
+ *  搜索键入只刷墙不重刷这两块，深审 eff E4 重刷收口） */
+function renderChrome(): void {
+  const overlay = M.currentOverlay;
+  if (!overlay) return;
+  const labels = overlay.querySelector('#bz-bs-labels') as HTMLElement | null;
+  if (labels) labels.innerHTML = labelsHtml(M.items, M.side, M.catFilter);
+  const seg = overlay.querySelector('#bz-bs-sortseg') as HTMLElement | null;
+  if (seg) seg.innerHTML = sortSegHtml(M.sortMode);
+}
+
+function renderAll(_app?: unknown): void {
+  renderChrome();
+  renderWall();
 }
 export { renderAll };
 
@@ -85,7 +124,11 @@ export { renderAll };
 
 function syncSearchInputs(): void {
   const input = M.currentOverlay?.querySelector('#bz-bs-dsearch') as HTMLInputElement | null;
-  if (input) input.value = M.searchKeyword;
+  if (!input) return;
+  input.value = M.searchKeyword;
+  // 尾 ✕ 显隐随词同步（报告筛选回墙预填路径）
+  const clearBtn = M.currentOverlay?.querySelector('[data-bs-search-clear]') as HTMLElement | null;
+  if (clearBtn) clearBtn.hidden = !input.value.trim();
 }
 
 // ---------- 面板内视图（报告内嵌化：命令 bz-reading-report-open 专用，墙面无入口） ----------
@@ -100,7 +143,7 @@ function startReportRender(app: App): void {
   });
 }
 
-/** 报告点作者/分类行 → 切回书脊墙并预填筛选 */
+/** 报告点作者/分类行 → 切回书脊墙并预填筛选（renderAll 由 showView shelf 分支统一兜底） */
 function applyReportFilter(app: App, kind: 'author' | 'category', value: string): void {
   if (!value) return;
   if (kind === 'author') {
@@ -112,20 +155,27 @@ function applyReportFilter(app: App, kind: 'author' | 'category', value: string)
   }
   syncSearchInputs();
   showView(app, 'shelf');
-  renderAll();
 }
 
-/** 面板内切换视图（报告视图启动分片渲染；离开视图作废在途渲染） */
+/**
+ * 面板内切换视图（报告视图启动分片渲染；离开视图作废在途渲染）。
+ * 深审 func F1/ui F1+F2：shelf 分支统一 renderAll 兜底——冷开报告后「返回书库」
+ * 墙位永挂加载占位、报告存续期间数据变化回墙显旧墙，都是「showView 只切容器
+ * 不重画墙」的同根缺陷；视图切换收口到本函数单口后，goto-shelf/报告筛选回墙/
+ * continueReading 热切三路一并覆盖（changed 时 cancelReadingReport 语义不变）。
+ */
 function showView(app: App, view: BookshelfView): void {
   const changed = M.view !== view;
   M.view = view;
   paintViewContainers();
   if (view === 'report') {
     startReportRender(app);
-  } else if (changed) {
-    cancelReadingReport();
+  } else {
+    if (changed) cancelReadingReport();
+    renderAll();
   }
 }
+export { showView };
 
 /** 打开报告视图（命令 bz-reading-report-open；面板未开先开面板） */
 export function openReportView(app: App): void {
@@ -172,7 +222,9 @@ function continueBook(app: App, it: BookshelfItem): void {
 }
 
 /** 借书卡（issue 223 只读版：pull-note + 纸卡双栏 + 台账 + 静态进度条 + 批注密度条 + 印章；
- *  markup 走 render.ts detailBodyHtml，本层只负责封面资源与 uiModal 壳） */
+ *  markup 走 render.ts detailBodyHtml，本层只负责封面资源与 uiModal 壳）。
+ *  深审 ui F8（issue 223 拍板保留项补齐）：补「× 关闭」钮——移动端无 ESC、遮罩只剩
+ *  16px 精确命中；同批传 title 给 uiModal，dialog 有可读名（aria-label 随 head 透出）。 */
 function openBookDetail(it: BookshelfItem, app: App): void {
   const body = document.createElement('div');
   body.className = 'bz-bs-detail';
@@ -181,10 +233,15 @@ function openBookDetail(it: BookshelfItem, app: App): void {
     content: body,
     maxWidth: 640,
     head: false,
+    title: `书籍详情：${it.title}`,
     className: `bz-bs-d-popup ${bsSkinClass()}`,
     onClose: () => { detailModalClose = null; },
   });
   detailModalClose = close;
+  popup.querySelector('[data-bs-d-close]')?.addEventListener('click', () => {
+    if (detailModalClose === close) detailModalClose = null;
+    close();
+  });
   popup.querySelector('[data-bs-d-continue]')?.addEventListener('click', () => continueBook(app, it));
   bindCoverFallback(popup);
 }
@@ -231,7 +288,6 @@ export function createOverlay(app: App): void {
 
   document.body.appendChild(overlay);
   M.currentOverlay = overlay;
-  M.renderFn = () => renderAll();
 
   // 单一委托：匾额关闭（移动端）/ 标签筛选 / 排序 / 报告视图交互 / 书脊详情
   overlay.addEventListener('click', (e) => {
@@ -290,17 +346,45 @@ export function createOverlay(app: App): void {
     }
   });
 
-  // 检索（200ms 防抖）
+  // 检索（200ms 防抖）：只刷墙不重刷标签/排序（深审 eff E4 重刷收口——labels/seg 不依赖关键字）
   const searchInput = overlay.querySelector('#bz-bs-dsearch') as HTMLInputElement;
+  const clearBtn = overlay.querySelector('[data-bs-search-clear]') as HTMLElement | null;
+  const syncSearchClear = () => {
+    if (clearBtn) clearBtn.hidden = !searchInput.value.trim();
+  };
+  const clearSearch = () => {
+    // 清词三件套：取消防抖尾触（防关键词「复活」）+ 清输入与状态 + 只重画墙
+    if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+    M.searchDebounceTimer = null;
+    searchInput.value = '';
+    M.searchKeyword = '';
+    syncSearchClear();
+    renderWall();
+  };
   searchInput.addEventListener('input', () => {
+    syncSearchClear();
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     M.searchDebounceTimer = setTimeout(() => {
       M.searchKeyword = searchInput.value.trim();
-      renderAll();
+      renderWall();
     }, 200);
+  });
+  // 深审 eff E2（clipbook 效率#11/#12 定稿范式）：搜索框内 ESC 清词——有词 = 只清词不冒泡
+  // （escManager 的 document 层收不到，防「清词变成关整个面板」）；无词放行（关面板语义不变）
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || !searchInput.value.trim()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    clearSearch();
+  });
+  // 效率#12：尾部 ✕ 一键清除（有词才显示）——点 = 清词 + 刷新，焦点留在框内
+  clearBtn?.addEventListener('click', () => {
+    clearSearch();
+    searchInput.focus();
   });
   // 重开残留回写：防「墙被不可见关键字过滤但输入框为空」的排查黑洞
   if (M.searchKeyword) searchInput.value = M.searchKeyword;
+  syncSearchClear();
 
   // 窗口缩放 → 防抖重装箱（墙宽变化）
   wallResizeHandler = () => {
@@ -336,7 +420,7 @@ export function closeOverlay(): void {
     M.currentOverlay.remove();
     M.currentOverlay = null;
   }
-  M.renderFn = null;
+  lastWallSig = '';
 }
 
 // ---------- ESC（主面板） ----------

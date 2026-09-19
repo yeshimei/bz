@@ -1,4 +1,4 @@
-/* 源指纹 5485e24ad2a762b8 · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ac92669077764aa1 · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -10843,50 +10843,8 @@ var BZW_settings_panel = (() => {
         searchKeyword: "",
         searchDebounceTimer: null,
         appRef: null,
-        renderFn: null,
         view: "shelf"
       };
-    }
-  });
-
-  // src/bookshelf/constants.ts
-  var STATUS_UNREAD, STATUS_READING, STATUS_DONE, STATUS_COLORS;
-  var init_constants = __esm({
-    "src/bookshelf/constants.ts"() {
-      STATUS_UNREAD = "未读";
-      STATUS_READING = "在读";
-      STATUS_DONE = "已读";
-      STATUS_COLORS = {
-        [STATUS_UNREAD]: "var(--bz-text-3)",
-        [STATUS_READING]: "var(--bz-brand)",
-        [STATUS_DONE]: "var(--bz-success)"
-      };
-    }
-  });
-
-  // src/bookshelf/shared.ts
-  var init_shared2 = __esm({
-    "src/bookshelf/shared.ts"() {
-      init_str();
-      init_constants();
-    }
-  });
-
-  // src/bookshelf/layouts/wall/render.ts
-  var init_render3 = __esm({
-    "src/bookshelf/layouts/wall/render.ts"() {
-      init_str();
-      init_constants();
-      init_shared2();
-      init_constants();
-    }
-  });
-
-  // src/bookshelf/render.ts
-  var init_render4 = __esm({
-    "src/bookshelf/render.ts"() {
-      init_shared2();
-      init_render3();
     }
   });
 
@@ -10953,7 +10911,8 @@ var BZW_settings_panel = (() => {
       bookReview,
       readingDate,
       completionDate,
-      progress: progress > 100 ? 100 : progress,
+      // 深审 func F5：上下界都钳——frontmatter 手滑负数会出「-5%」书脊/进度条
+      progress: Math.max(0, Math.min(100, progress)),
       readingTimeFormat,
       readingTimeMs: parseReadingTimeMs(fm),
       highlights,
@@ -11074,19 +11033,25 @@ var BZW_settings_panel = (() => {
   }
   async function readWeaveAggregates(app) {
     var _a2, _b2;
+    const dataPath = resolveWeaveDataPath(app);
+    const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
+    const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, dataFilePath);
+    if (!file) return [];
+    let parsed;
     try {
-      const dataPath = resolveWeaveDataPath(app);
-      const dataFilePath = `${dataPath}/${WEAVE_DATA_FILE}`;
-      const file = (_b2 = (_a2 = app == null ? void 0 : app.vault) == null ? void 0 : _a2.getAbstractFileByPath) == null ? void 0 : _b2.call(_a2, dataFilePath);
-      if (!file) return [];
-      const content = await app.vault.adapter.read(dataFilePath);
-      const parsed = JSON.parse(content);
-      const books = parsed == null ? void 0 : parsed.books;
-      if (!books || typeof books !== "object") return [];
-      return Object.values(books);
+      parsed = JSON.parse(await app.vault.adapter.read(dataFilePath));
     } catch (e) {
+      console.warn("weave-data.json 读取/解析失败，EPUB 条目降级为空:", dataFilePath, e);
+      if (!weaveCorruptWarned) {
+        weaveCorruptWarned = true;
+        notice("weave 阅读数据文件损坏，书库 EPUB 条目暂时无法显示", "warning");
+      }
       return [];
     }
+    const books = parsed == null ? void 0 : parsed.books;
+    if (!books || typeof books !== "object") return [];
+    weaveCorruptWarned = false;
+    return Object.values(books);
   }
   async function loadEpubItems(app) {
     const aggregates = await readWeaveAggregates(app);
@@ -11097,17 +11062,18 @@ var BZW_settings_panel = (() => {
     }
     return items;
   }
-  var WEAVE_PLUGIN_ID, WEAVE_DATA_FILE, COVER_EXTENSIONS;
+  var WEAVE_PLUGIN_ID, WEAVE_DATA_FILE, COVER_EXTENSIONS, weaveCorruptWarned;
   var init_data = __esm({
     "src/bookshelf/data.ts"() {
       init_fake_obsidian();
       init_settings_provider();
       init_utils();
+      init_notice();
       init_state();
-      init_render4();
       WEAVE_PLUGIN_ID = "weave-epub-reader";
       WEAVE_DATA_FILE = "weave-data.json";
       COVER_EXTENSIONS = ["jpg", "jpeg", "png", "webp", "gif"];
+      weaveCorruptWarned = false;
     }
   });
 
@@ -11447,7 +11413,7 @@ ${countsToText(s.missing)}
     return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
   }
   var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, ILLEGAL_NAME_CHARS, ILLEGAL_NAME_RE, ILLEGAL_NAME_RE_GLOBAL, TYPE_GROUPS, ALL_TAGS;
-  var init_constants2 = __esm({
+  var init_constants = __esm({
     "src/cinema/constants.ts"() {
       STATUS_WANT = 0;
       STATUS_WATCHING = 1;
@@ -11476,7 +11442,7 @@ ${countsToText(s.missing)}
   var init_douban_fetcher = __esm({
     "src/cinema/douban-fetcher.ts"() {
       init_str();
-      init_constants2();
+      init_constants();
       POSTER_FOLDER = "CONFIG/MOVIE POSTER";
     }
   });
@@ -11553,7 +11519,7 @@ ${countsToText(s.missing)}
   }
   var init_data2 = __esm({
     "src/cinema/data.ts"() {
-      init_constants2();
+      init_constants();
       init_douban_fetcher();
       init_state2();
     }
@@ -12849,7 +12815,7 @@ ${countsToText(s.missing)}
     return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
   }
   var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS;
-  var init_shared3 = __esm({
+  var init_shared2 = __esm({
     "src/home/shared.ts"() {
       init_str();
       init_domain_icons();
@@ -13159,7 +13125,7 @@ ${countsToText(s.missing)}
       init_notice();
       init_ui();
       init_str();
-      init_shared3();
+      init_shared2();
       init_order();
       ROW_SEL = "[data-ent-row]";
       DRAG_PX = 10;
@@ -14414,7 +14380,7 @@ ${countsToText(s.missing)}
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
   }
   var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE;
-  var init_render5 = __esm({
+  var init_render3 = __esm({
     "src/memo/render.ts"() {
       init_str();
       MEMO_ICONS = {
@@ -14926,7 +14892,7 @@ ${countsToText(s.missing)}
     return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
   }
   var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
-  var init_render6 = __esm({
+  var init_render4 = __esm({
     "src/pomodoro/render.ts"() {
       POMODORO_SKIN_THEMES = [
         { value: "tomato", label: "番茄" },
@@ -15764,8 +15730,8 @@ ${countsToText(s.missing)}
       init_notice();
       init_settings_common();
       init_data4();
-      init_render6();
-      init_render6();
+      init_render4();
+      init_render4();
       init_sound();
       init_statusbar();
       init_stats();
@@ -16752,7 +16718,7 @@ ${countsToText(s.missing)}
       init_utils();
       init_data3();
       init_due();
-      init_render5();
+      init_render3();
       init_state3();
       SEARCH_DEBOUNCE_MS = 180;
       searchDebounced = debounce((v) => {
@@ -17672,7 +17638,7 @@ ${countsToText(s.missing)}
     <div class="bz-btn-row bz-bel-detail-btns">
       <div class="bz-bel-form-spacer"></div>
       <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON2.del, "bz-ic--sm")} 删除</button>
+      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON.del, "bz-ic--sm")} 删除</button>
     </div>
   </div>`;
   }
@@ -17753,14 +17719,14 @@ ${countsToText(s.missing)}
     specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
     return specs;
   }
-  var ICON2, MAX_PRICE, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
-  var init_shared4 = __esm({
+  var ICON, MAX_PRICE, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
+  var init_shared3 = __esm({
     "src/belongings/shared.ts"() {
       init_str();
       init_emoji_icon_map();
       init_emoji_icon_map();
       init_str();
-      ICON2 = {
+      ICON = {
         add: "plus",
         search: "search",
         close: "x",
@@ -17912,7 +17878,7 @@ ${countsToText(s.missing)}
   var COMPANION_TOP_N, DAY_MS;
   var init_report_stats = __esm({
     "src/belongings/report-stats.ts"() {
-      init_shared4();
+      init_shared3();
       COMPANION_TOP_N = 5;
       DAY_MS = 864e5;
     }
@@ -18274,7 +18240,7 @@ ${countsToText(s.missing)}
       init_str();
       init_z_order();
       init_chart_palette();
-      init_shared4();
+      init_shared3();
       init_report_stats();
       renderSeq = 0;
       progressToastSeq = 0;
@@ -18295,7 +18261,7 @@ ${countsToText(s.missing)}
   });
 
   // src/belongings/layouts/poster/render.ts
-  function panelHtml2() {
+  function panelHtml() {
     return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
   <div class="bz-bel-body">
     <div class="bz-bel-hero">
@@ -18310,27 +18276,27 @@ ${countsToText(s.missing)}
           <div class="bz-bel-mobhead-t">归物本</div>
           <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
         </div>
-        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON2.close)}</button>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
       </div>
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON2.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
+      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
       <div class="bz-bel-yearsel">
-        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON2.report)}</button>
-      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON2.add, "bz-ic--sm")} 记一笔</button>
+      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON.report)}</button>
+      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
     </div>
     <div class="bz-mobstrip" data-bel-mobstatus></div>
     <div class="bz-bel-content" data-bel-content></div>
-    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON2.add, "bz-ic--sm")} 记一笔</button>
+    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
   </div>
 </div>`;
   }
@@ -18378,7 +18344,7 @@ ${countsToText(s.missing)}
   }
   function emptyHtml(noMatch) {
     return emptyHtmlStr(
-      ICON2.empty,
+      ICON.empty,
       noMatch ? "没有符合条件的物品" : "这里还没有物品",
       noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
     );
@@ -18452,18 +18418,18 @@ ${countsToText(s.missing)}
     }
     hooks.mountIcons(content);
   }
-  var init_render7 = __esm({
+  var init_render5 = __esm({
     "src/belongings/layouts/poster/render.ts"() {
       init_str();
-      init_shared4();
+      init_shared3();
     }
   });
 
   // src/belongings/render.ts
-  var init_render8 = __esm({
+  var init_render6 = __esm({
     "src/belongings/render.ts"() {
-      init_shared4();
-      init_render7();
+      init_shared3();
+      init_render5();
     }
   });
 
@@ -18808,7 +18774,7 @@ ${countsToText(s.missing)}
     M4.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
-    overlay2.innerHTML = panelHtml2();
+    overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
     M4.overlay = overlay2;
@@ -19546,7 +19512,7 @@ ${countsToText(s.missing)}
       init_belongings_source();
       init_data5();
       init_report();
-      init_render8();
+      init_render6();
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;
@@ -19598,7 +19564,7 @@ ${countsToText(s.missing)}
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
-  var init_constants3 = __esm({
+  var init_constants2 = __esm({
     "src/clipbook/constants.ts"() {
       init_str();
       init_utils();
@@ -19861,7 +19827,7 @@ ${countsToText(s.missing)}
       init_app();
       init_storage();
       init_http();
-      init_constants3();
+      init_constants2();
       STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
       DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
       DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
@@ -21769,7 +21735,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     return out;
   }
-  function itemId2(it) {
+  function itemId(it) {
     var _a2;
     const p = (_a2 = it.path) != null ? _a2 : it.target;
     return it.subpath ? `${p}#${it.subpath}` : p;
@@ -21822,7 +21788,7 @@ ${bodyText.substring(0, 6e3)}`;
     else if (it.kind === "para") title = (body ? body.split("\n")[0].trim().slice(0, 24) : "") || `^${String((_g = it.subpath) != null ? _g : "").replace(/^\^/, "")}`;
     else title = it.missing ? it.target : baseName(path) || it.target;
     return {
-      id: itemId2(it),
+      id: itemId(it),
       path,
       title,
       kind: it.kind,
@@ -21877,7 +21843,7 @@ ${bodyText.substring(0, 6e3)}`;
       const items = upstream ? await inboundItems(scan, node.path) : await outboundItems(scan, node.path);
       for (const it of items) {
         if (!upstream && isSelfItem(it, node.path)) continue;
-        const id = upstream ? normSlashes((_c = (_b2 = it.container) != null ? _b2 : it.path) != null ? _c : it.target) : itemId2(it);
+        const id = upstream ? normSlashes((_c = (_b2 = it.container) != null ? _b2 : it.path) != null ? _c : it.target) : itemId(it);
         let child = (_d = nodes.get(id)) != null ? _d : null;
         let fresh = false;
         if (!child) {
@@ -30788,7 +30754,7 @@ ${body}`;
       init_settings_provider();
       init_notice();
       init_flow_dialog();
-      init_constants3();
+      init_constants2();
       init_anchor();
       yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
     }
@@ -31070,9 +31036,9 @@ ${body}`;
     "src/clipbook/flow.ts"() {
       init_domain_bus();
       init_news_data();
-      init_constants3();
+      init_constants2();
       init_save();
-      init_constants3();
+      init_constants2();
       init_data6();
       init_write_queue();
       curKey = "";
@@ -31205,7 +31171,7 @@ ${body}`;
   });
 
   // src/clipbook/render.ts
-  function panelHtml3() {
+  function panelHtml2() {
     return `
     <div class="bz-panel-frame bz-clip-frame bz-panel-mtop">
       <!-- 桌面三栏 -->
@@ -31507,7 +31473,7 @@ ${body}`;
     </div>`;
   }
   var ICO;
-  var init_render9 = __esm({
+  var init_render7 = __esm({
     "src/clipbook/render.ts"() {
       init_str();
       init_chart_palette();
@@ -31773,11 +31739,11 @@ ${body}`;
       init_esc_manager();
       init_data6();
       init_news_data();
-      init_constants3();
+      init_constants2();
       init_state5();
       init_flow();
       init_report_stats2();
-      init_render9();
+      init_render7();
       init_clipbook();
       init_ui7();
       overlayEl = null;
@@ -32589,7 +32555,7 @@ ${c.trim()}
       init_app();
       init_notice();
       init_news_data();
-      init_constants3();
+      init_constants2();
       init_write_queue();
       WINDOW_MS = 24 * 60 * 60 * 1e3;
       RSS_MAX_PER_FEED = 30;
@@ -33259,7 +33225,7 @@ ${c.trim()}
   var init_store = __esm({
     "src/clipbook/store.ts"() {
       init_utils();
-      init_constants3();
+      init_constants2();
       PLATFORM_DOMAIN = {
         "B站": "bilibili.com",
         "果壳科学人": "guokr.com",
@@ -33419,7 +33385,7 @@ ${c.trim()}
       init_anchor();
       init_scan();
       init_store();
-      init_constants3();
+      init_constants2();
       init_settings_provider();
       init_app();
       init_state5();
@@ -33596,7 +33562,7 @@ ${c.trim()}
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
     overlayEl2.style.display = "none";
-    overlayEl2.innerHTML = panelHtml3();
+    overlayEl2.innerHTML = panelHtml2();
     mountIcons(overlayEl2);
     document.body.appendChild(overlayEl2);
     railListEl = overlayEl2.querySelector("[data-clip-rail]");
@@ -35242,11 +35208,11 @@ ${c.trim()}
       init_settings_provider();
       init_auto_summary();
       init_news_sources_group();
-      init_constants3();
+      init_constants2();
       init_news_source_settings();
       init_md();
       init_store();
-      init_render9();
+      init_render7();
       init_state5();
       init_loader();
       init_news_data();
@@ -35391,15 +35357,15 @@ ${c.trim()}
   }
   function actionSpecs2(it) {
     const acts = [];
-    if ((it.url || "").trim()) acts.push({ icon: ICON3.open, label: "打开", act: "open" });
+    if ((it.url || "").trim()) acts.push({ icon: ICON2.open, label: "打开", act: "open" });
     acts.push({
-      icon: it.pinned ? ICON3.pinOff : ICON3.pin,
+      icon: it.pinned ? ICON2.pinOff : ICON2.pin,
       label: it.pinned ? "取消置顶" : "置顶",
       act: "pin"
     });
-    acts.push({ icon: ICON3.edit, label: "编辑", act: "edit" });
-    acts.push(it.archived ? { icon: ICON3.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON3.archive, label: "归档", act: "archive" });
-    acts.push({ icon: ICON3.del, label: "删除", act: "del", danger: true });
+    acts.push({ icon: ICON2.edit, label: "编辑", act: "edit" });
+    acts.push(it.archived ? { icon: ICON2.unarchive, label: "取消归档", act: "unarchive" } : { icon: ICON2.archive, label: "归档", act: "archive" });
+    acts.push({ icon: ICON2.del, label: "删除", act: "del", danger: true });
     return acts;
   }
   function pickChipsHtml(sel) {
@@ -35420,19 +35386,19 @@ ${c.trim()}
     <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（memo/cinema/diary 多数派，
          与本域标签表单 existing ? '保存' : '添加' 对齐，域内不再二分） -->
     <div class="bz-fav-btns">
-      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON3.ai, "bz-ic--xs")} <span>AI 整理</span></button>
+      <button type="button" id="fz-ai" class="bz-fav-ai-btn">${iconSpan(ICON2.ai, "bz-ic--xs")} <span>AI 整理</span></button>
       <button type="button" data-fz-cancel>取消</button>
       <button type="button" id="fz-save" class="bz-fav-pri">${editing ? "保存" : "添加"}</button>
     </div>
   </div>`;
   }
-  var ICON3;
-  var init_shared5 = __esm({
+  var ICON2;
+  var init_shared4 = __esm({
     "src/favorites/shared.ts"() {
       init_str();
       init_config();
       init_str();
-      ICON3 = {
+      ICON2 = {
         close: "x",
         add: "plus",
         open: "external-link",
@@ -35448,17 +35414,17 @@ ${c.trim()}
   });
 
   // src/favorites/layouts/board/render.ts
-  function panelHtml4(mobile) {
+  function panelHtml3(mobile) {
     const mob = mobile ? " bz-fav-mob bz-panel-mtop" : "";
     return `<div class="bz-fav-panel bz-fav-scope${mob}">
-  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON3.close, "bz-ic--xs")}</button></div>
+  <div class="bz-fav-head"><h1>收藏本</h1><button class="bz-fav-mob-close bz-touch-target bz-touch-target--xl" data-fav-close title="关闭">${iconSpan(ICON2.close, "bz-ic--xs")}</button></div>
   <div class="bz-fav-tags" data-fav-tags></div>
   <div class="bz-fav-board" data-fav-content></div>
 </div>`;
   }
   function chipsHtml2(items, view, mobile) {
     const mk = (label, ic2, cnt, active2, grey = false) => `<button class="bz-fav-chip${active2 ? " bz-fav-on" : ""}${grey ? " bz-fav-chip--grey" : ""}" data-fav-tag="${esc(label)}">${ic2 ? iconSpan(ic2, "bz-ic--xs") : ""}<span>${esc(label)} ${cnt}</span></button>`;
-    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON3.add, "bz-ic--xs")}<span>新收藏</span></button>`;
+    const add = `<button class="bz-fav-chip-add" data-fav-add title="添加收藏">${iconSpan(ICON2.add, "bz-ic--xs")}<span>新收藏</span></button>`;
     const chips = mk("全部", "", visibleItems(items).length, !view.archived && view.tag === null) + mk("已归档", "archive", archivedItems(items).length, view.archived, true) + getTags().map((t) => {
       const n = tagCount(items, t.label);
       return n ? mk(t.label, t.ic, n, !view.archived && view.tag === t.label) : "";
@@ -35484,19 +35450,19 @@ ${c.trim()}
     const board = panel2.querySelector("[data-fav-content]");
     if (board) renderBoardInto(board, items, view, hooks);
   }
-  var init_render10 = __esm({
+  var init_render8 = __esm({
     "src/favorites/layouts/board/render.ts"() {
       init_str();
       init_config();
-      init_shared5();
+      init_shared4();
     }
   });
 
   // src/favorites/render.ts
-  var init_render11 = __esm({
+  var init_render9 = __esm({
     "src/favorites/render.ts"() {
-      init_shared5();
-      init_render10();
+      init_shared4();
+      init_render8();
     }
   });
 
@@ -35766,7 +35732,7 @@ ${c.trim()}
     }
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
-    overlay2.innerHTML = panelHtml4(isMobileEnv());
+    overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
     M6.overlay = overlay2;
@@ -36515,7 +36481,7 @@ GitHub 仓库：${ghInfo.title}
       init_settings_provider();
       init_favorites_source();
       init_config();
-      init_render11();
+      init_render9();
       init_data8();
       M6 = {
         overlay: null,
@@ -36770,6 +36736,47 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/bookshelf/constants.ts
+  var STATUS_UNREAD, STATUS_READING, STATUS_DONE, STATUS_COLORS;
+  var init_constants3 = __esm({
+    "src/bookshelf/constants.ts"() {
+      STATUS_UNREAD = "未读";
+      STATUS_READING = "在读";
+      STATUS_DONE = "已读";
+      STATUS_COLORS = {
+        [STATUS_UNREAD]: "var(--bz-text-3)",
+        [STATUS_READING]: "var(--bz-brand)",
+        [STATUS_DONE]: "var(--bz-success)"
+      };
+    }
+  });
+
+  // src/bookshelf/shared.ts
+  var init_shared5 = __esm({
+    "src/bookshelf/shared.ts"() {
+      init_str();
+      init_constants3();
+    }
+  });
+
+  // src/bookshelf/layouts/wall/render.ts
+  var init_render10 = __esm({
+    "src/bookshelf/layouts/wall/render.ts"() {
+      init_str();
+      init_constants3();
+      init_shared5();
+      init_constants3();
+    }
+  });
+
+  // src/bookshelf/render.ts
+  var init_render11 = __esm({
+    "src/bookshelf/render.ts"() {
+      init_shared5();
+      init_render10();
+    }
+  });
+
   // src/bookshelf/notes.ts
   var init_notes = __esm({
     "src/bookshelf/notes.ts"() {
@@ -36793,6 +36800,7 @@ GitHub 仓库：${ghInfo.title}
       init_dom();
       init_flow_dialog();
       init_ui();
+      init_modal();
       init_ui9();
       init_notes();
       init_epub_notes();
@@ -36826,7 +36834,7 @@ GitHub 仓库：${ghInfo.title}
       init_reading_report();
       init_state();
       init_data();
-      init_render4();
+      init_render11();
       init_notes_ui();
       SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];
     }

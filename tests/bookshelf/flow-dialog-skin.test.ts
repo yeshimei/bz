@@ -32,6 +32,9 @@ describe('issue 291：bookshelf 删除划线确认框挂域皮肤类', () => {
       'md 与 EPUB 两条删除路径各需一处 className'
     ).toBe(2);
     expect(src).toContain("import { bsSkinClass } from './ui';");
+    // 两处 openFlowDialog 都在（防只改一处后另一处悄悄漏）——原 notes-ui.test.ts 冗余断言
+    // 收敛归本文件单源（TG3：同一事实两处锁，实现一改两处同改）
+    expect(src.match(/openFlowDialog\(\{/g)?.length).toBe(2);
     // 负向守护：不允许把皮肤类写死成某一肤（皮肤由设置驱动）
     expect(src).not.toMatch(/bz-bs-flow-dialog bz-bs-skin-/);
   });
