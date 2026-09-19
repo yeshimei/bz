@@ -199,20 +199,11 @@ describe('D-UI2：标签选择器 ESC 层 + 脏表单分流', () => {
 });
 
 describe('效率#1：标签过滤 + 频次前置 + sticky 底栏', () => {
-  it('过滤输入即筛 chip（两浮层共用同一数据源）；清空恢复全量', () => {
+  it('写弹窗不再有过滤框（2026-09-19 移除）；标签选择器浮层过滤仍工作', () => {
     openWriteDialog();
-    const filter = addPopup()!.querySelector('.bz-diary-tag-filter input') as HTMLInputElement;
-    filter.value = '骑';
-    filter.dispatchEvent(new Event('input', { bubbles: true }));
-    const chips = [...document.querySelectorAll<HTMLElement>('#add-diary-type-container .diary-tag-selector-btn')];
-    expect(chips.find((b) => b.dataset.tag === '骑行')!.style.display).toBe('');
-    expect(chips.find((b) => b.dataset.tag === '日记')!.style.display).toBe('none');
-    filter.value = '';
-    filter.dispatchEvent(new Event('input', { bubbles: true }));
-    expect(chips.every((b) => b.style.display === '')).toBe(true);
-  });
-
-  it('标签选择器同款过滤', () => {
+    // 写弹窗侧「筛选类型」过滤框已按用户要求移除：chips 直选即可
+    expect(addPopup()!.querySelector('.bz-diary-tag-filter')).toBeNull();
+    // 选择器浮层的过滤框不受影响（回归钉）
     const popup = openPicker(['日记']);
     const filter = popup.querySelector('.bz-diary-tag-filter input') as HTMLInputElement;
     filter.value = '日';
@@ -394,13 +385,7 @@ describe('效率#2：bindFormSubmit 接入（写弹窗 → saveNewEntry / 选择
     expect(addMask()).not.toBeNull();
   });
 
-  it('过滤框回车不提交（data-bz-no-form-submit 豁免）', async () => {
-    openWriteDialog();
-    const filter = addPopup()!.querySelector('.bz-diary-tag-filter input') as HTMLInputElement;
-    filter.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true, cancelable: true }));
-    await flush();
-    expect(getNoticeMessages().join('\n')).not.toContain('请至少选择一个类型');
-  });
+  // 「过滤框回车不提交」随写弹窗过滤框移除一并退役（2026-09-19）；豁免机制由 bindFormSubmit 单元覆盖
 });
 
 describe('useFileDateTime 既有行为不受迁壳影响（回归钉）', () => {

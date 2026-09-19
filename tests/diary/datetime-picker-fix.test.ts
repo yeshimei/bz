@@ -103,30 +103,8 @@ describe("D2' 年/月滚轮溢出漂移钳制", () => {
 });
 
 describe('效率#4 补写昨晚路径', () => {
-  it('日期行常驻「此刻 / 昨天」chip：昨天 = now 减一天且时刻保留', () => {
-    const ctrl = mountControl(true);
-    resetDateTimeControl(moment('2020-01-02 03:04', 'YYYY-MM-DD HH:mm', true));
-    const chips = [...ctrl.querySelectorAll<HTMLElement>('.dt-quick-chip')];
-    expect(chips.map((c) => c.textContent)).toEqual(['此刻', '昨天']);
-    chips[1].click();
-    const hidden = document.getElementById('add-diary-datetime') as HTMLInputElement;
-    expect(hidden.value).toBe(moment().subtract(1, 'day').format('YYYY-MM-DD HH:mm'));
-    chips[0].click();
-    expect(hidden.value).toBe(moment().format('YYYY-MM-DD HH:mm'));
-  });
-
-  it('手输模式下点快捷 chip：先退手输回到显示区，再应用 chip 时刻', () => {
-    const ctrl = mountControl(true);
-    const display = ctrl.querySelector('#datetime-display-area') as HTMLElement;
-    display.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-    const manual = ctrl.querySelector('input[placeholder*="YYYY-MM-DD"]') as HTMLInputElement;
-    expect(manual.style.display).toBe('block');
-    (ctrl.querySelectorAll('.dt-quick-chip')[1] as HTMLElement).click();
-    expect(manual.style.display).toBe('none');
-    expect(display.style.display).toBe('flex');
-    const hidden = document.getElementById('add-diary-datetime') as HTMLInputElement;
-    expect(hidden.value).toBe(moment().subtract(1, 'day').format('YYYY-MM-DD HH:mm'));
-  });
+  // 常驻快捷 chip「此刻 / 昨天」已按用户要求移除（2026-09-19）：补写走滚轮/手输；
+  // 滚轮弹层内「此刻」钮保留（见 datetime-picker-cov.test.ts）
 
   it('单击显示区立即开滚轮（原 200ms 延迟已去），滚轮内有「手输」切换钮', () => {
     const ctrl = mountControl(true);

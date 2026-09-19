@@ -173,10 +173,6 @@
 .bz-diary .bz-diary-icon-btn--on:hover {
   background: var(--dw-active-hover);
 }
-/* 头行关闭钮：仅移动端显示（桌面维持 2026-09-10 头行精简口径——ESC/点遮罩关闭） */
-.bz-diary-desk .bz-diary-head-close {
-  display: none;
-}
 
 /* ============ 类型 chips 行 ============ */
 .bz-diary-chiprow {
@@ -1404,27 +1400,6 @@
   background: var(--dw-surface);
   color: var(--dw-accent);
 }
-/* 关闭钮：规格同 .bz-diary-icon-btn（22×26 / muted / hover 表面底） */
-.bz-diary-datefilter .bz-diary-datefilter-close {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 26px;
-  padding: 0;
-  border: none;
-  border-radius: var(--bz-radius-xs);
-  background: none;
-  box-shadow: none;
-  color: var(--dw-muted);
-  font-size: var(--bz-font-body);
-  line-height: 1;
-  cursor: pointer;
-  transition: background var(--bz-dur-fast);
-}
-.bz-diary-datefilter .bz-diary-datefilter-close:hover {
-  background: var(--dw-surface);
-}
 /* 年份 chips：与 .bz-diary-chip 同规格（11px 药丸 / surface 底 / 计数 faint） */
 .bz-diary-datefilter-years {
   display: flex;
@@ -1539,12 +1514,6 @@
   .bz-diary-datefilter .bz-diary-datefilter-reset {
     font-size: 13px;
   }
-  .bz-diary-datefilter .bz-diary-datefilter-close {
-    /* D-UI9（review-deep P3）：弹窗内唯一显式关闭路径，触控命中 ≥40×40 绝对下限（原 32×36） */
-    width: 40px;
-    height: 40px;
-    font-size: 18px;
-  }
   .bz-diary-datefilter .bz-diary-datefilter-year {
     padding: 6px 13px;
     font-size: 13.5px;
@@ -1589,28 +1558,6 @@
 }
 .bz-diary-tag-filter {
   margin-bottom: var(--bz-space-sm);
-}
-/* 效率#4①：日期行常驻快捷 chip「此刻 / 昨天」（补写昨晚路径；行由 datetime-picker 注入弹窗内） */
-.dt-quick-row {
-  display: flex;
-  gap: 8px;
-  margin-top: 6px;
-}
-.dt-quick-chip {
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 999px;
-  background: var(--background-primary);
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 12.5px;
-  font-family: inherit;
-  padding: 4px 14px;
-  min-height: 30px;
-  box-sizing: border-box;
-}
-.dt-quick-chip:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
 }
 
 /* D-UI16：手输日期聚焦软键盘顶起——写日记弹窗上移一档。

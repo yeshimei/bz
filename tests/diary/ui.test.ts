@@ -383,44 +383,24 @@ describe('回忆墙 UI', () => {
   });
 
   // ===== v2 新功能 =====
-  it('头行按钮组 =「写日记 / 搜索 / 今天 / 关闭」——今天钮效率#6 补回（清日期筛选+滚回顶）；关闭钮仅移动端显示（图标 lucide 化）', async () => {
+  it('头行按钮组 =「写日记 / 搜索」（2026-09-19 精简：今天/关闭钮移除，图标 lucide 化）', async () => {
     await openAndWait();
     const btns = Array.from(document.querySelectorAll('.bz-diary-desk .bz-diary-btns [data-act]')).map(
       (b) => (b as HTMLElement).dataset.act
     );
-    expect(btns).toEqual(['add', 'search', 'today', 'close']);
-    // 头行图标：pen-line / search / calendar-check / x（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
+    expect(btns).toEqual(['add', 'search']);
+    // 头行图标：pen-line / search（uiIcon 经 setIcon 渲染，mock 记录到 dataset.icon）
     const icons = Array.from(
       document.querySelectorAll<HTMLElement>('.bz-diary-desk .bz-diary-btns [data-act] .bz-ic')
     ).map((i) => i.dataset.icon);
-    expect(icons).toEqual(['pen-line', 'search', 'calendar-check', 'x']);
-    // 退役按钮（设置/按年月跳转）在头行不再存在；关闭钮在桌面实例隐藏（.bz-diary-head-close）
-    for (const act of ['settings', 'date-picker']) {
+    expect(icons).toEqual(['pen-line', 'search']);
+    // 退役按钮（设置/按年月跳转/今天/关闭）在头行不再存在
+    for (const act of ['settings', 'date-picker', 'today', 'close']) {
       expect(document.querySelector(`.bz-diary-desk .bz-diary-btns [data-act="${act}"]`), act).toBeNull();
     }
-    const closeBtn = document.querySelector('.bz-diary-desk .bz-diary-btns [data-act="close"]') as HTMLElement;
-    expect(closeBtn.classList.contains('bz-diary-head-close')).toBe(true);
     // 日期筛选入口仍由品牌行承担
     const brand = document.querySelector('.bz-diary-desk .bz-diary-brand') as HTMLElement;
     expect(brand.dataset.act).toBe('date-picker');
-  });
-
-  it('头行关闭「复位优先」（clipbook 同款语义）：搜索栏开着先收搜索不关面板，已收再点才退出', async () => {
-    await openAndWait();
-    const root = document.querySelector('.bz-diary') as HTMLElement;
-    const desk = document.querySelector('.bz-diary-desk')!;
-    const row = desk.querySelector<HTMLElement>('.bz-diary-searchrow')!;
-    expect(row.style.display).toBe('none');
-    // 开搜索栏（真实路径：点头行搜索钮）
-    desk.querySelector<HTMLElement>('[data-act="search"]')!.click();
-    expect(row.style.display).toBe('block');
-    // ✕ 第一击：只收搜索栏，面板不关
-    desk.querySelector<HTMLElement>('[data-act="close"]')!.click();
-    expect(row.style.display).toBe('none');
-    expect(root.style.display).toBe('flex');
-    // ✕ 第二击：搜索栏已收（无待复位态）→ 才退出面板
-    desk.querySelector<HTMLElement>('[data-act="close"]')!.click();
-    expect(root.style.display).toBe('none');
   });
 
   it('章节栏视频格：从头到尾不出现播放角标；小图落地后格内只有图', async () => {
@@ -661,8 +641,8 @@ describe('回忆墙 UI', () => {
     popup = document.querySelector('.bz-diary-datefilter') as HTMLElement;
     expect(popup.querySelectorAll('.bz-diary-datefilter-month').length).toBe(12);
     expect(c.selDateFilter).toBeNull(); // 年份只是浏览临时值
-    // ✕ 关闭：筛选仍未生效，列表未被过滤
-    (popup.querySelector('.bz-diary-datefilter-close') as HTMLElement)!.click();
+    // 关闭（点遮罩——关闭钮已移除）：筛选仍未生效，列表未被过滤
+    (popup as HTMLElement).click(); // e.target === wrap → 遮罩关闭
     expect(document.querySelector('.bz-diary-datefilter')).toBeNull();
     expect(c.selDateFilter).toBeNull();
     expect(document.querySelectorAll('.bz-diary-desk .bz-diary-day-head').length).toBe(3);

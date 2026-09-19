@@ -370,16 +370,7 @@ export class DiaryAppController {
     ui.head.querySelector('[data-act="add"]')?.addEventListener('click', () => this.openAddEntry());
     // 搜索：toggle 真搜索框
     ui.head.querySelector('[data-act="search"]')?.addEventListener('click', () => this.toggleSearch(ui));
-    // 「关闭」复位优先（clipbook 同款语义）：搜索栏开着先收搜索不关面板，已收起再点 ✕ 才退出
-    // （2026-09-11 移动端评审补回关闭钮：全屏页无遮罩可点；桌面由 CSS 隐藏该钮）
-    ui.head.querySelector('[data-act="close"]')?.addEventListener('click', () => {
-      const row = ui.searchRow;
-      if (row && row.style.display !== 'none') {
-        this.toggleSearch(ui);
-      } else {
-        this.hide();
-      }
-    });
+    // 头行「关闭」已按用户要求移除（2026-09-19）：关闭走 ESC 与点遮罩；搜索栏收起走搜索钮自身 toggle
     // 关闭（ESC / 点遮罩）与设置直达的按钮已随头行精简移除，见 render.ts wallPanelHTML 注释
     // 灯箱关闭按钮（双实例各自一份）
     ui.lb.querySelector('[data-act="lb-close"]')?.addEventListener('click', (e) => {
@@ -406,8 +397,6 @@ export class DiaryAppController {
         ui.searchBox.blur();
       }
     });
-    // 效率#6：「今天」钮——清日期筛选 + 滚回墙顶（离今天远了时的一键回家）
-    ui.head.querySelector('[data-act="today"]')?.addEventListener('click', () => this.backToToday(ui));
   }
 
   /** 灯箱通用绑定（双实例各一份；增强 #1：左右按钮 + 触摸滑动连看） */
@@ -2753,7 +2742,8 @@ export class DiaryAppController {
     // 年份高亮：浏览中的年份优先，未浏览时回落已生效筛选的年份
     const activeYear = viewYear ?? cur?.year ?? null;
 
-    // 头部：标题 +（有筛选时）全部 + 关闭——规格对齐头行（左标题、右动作）
+    // 头部：标题 +（有筛选时）全部——规格对齐头行（左标题、右动作）；
+    // 「关闭」钮已按用户要求移除（2026-09-19）：关闭走点遮罩与 ESC
     const head = document.createElement('div');
     head.className = 'bz-diary-datefilter-head';
     const title = document.createElement('div');
@@ -2772,12 +2762,6 @@ export class DiaryAppController {
       });
       head.appendChild(resetBtn);
     }
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'bz-diary-datefilter-close';
-    closeBtn.title = '关闭';
-    closeBtn.appendChild(uiIcon('x')); // 增强 #4：lucide 线条图标
-    closeBtn.addEventListener('click', () => this.closeDateFilter());
-    head.appendChild(closeBtn);
     card.appendChild(head);
 
     // 年份行 chips（规格对齐类型 chips：11px 药丸 + 计数 faint）
@@ -2892,17 +2876,7 @@ export class DiaryAppController {
     }
   }
 
-  /** 效率#6：回到今天——清日期筛选 + 滚回墙顶（开墙默认在最新，此钮只在离今天远了时有意义） */
-  private backToToday(ui: typeof this.desk) {
-    this.selDateFilter = null;
-    this.renderAll();
-    try {
-      // scrollTo({behavior:'smooth'}) 老内核/jsdom 缺失：滚顶是增强，缺 API 静默跳过
-      ui.wall.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch {
-      /* 忽略 */
-    }
-  }
+  /** 效率#6「回到今天」钮已按用户要求移除（2026-09-19）：清筛选走 chips 行「全部」 */
 
   /** App 实例（生产由主实现注入；测试 setApp——diary/app.ts 单例，与 diary 域同口径） */
   private app(): App {

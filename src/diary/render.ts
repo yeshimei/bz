@@ -10,12 +10,11 @@ import type { WallEntry, WallMedia } from './types';
 
 // ===== 头行/灯箱按钮 → lucide 图标名（ui 侧经 core/ui uiIcon 挂载） =====
 // 注意：日期筛选入口是【品牌行】div[data-act="date-picker"]（非 button，不注图标），
-// 故此处无 date-picker 词条；关闭/设置按钮已按用户要求从头行移除（关闭走 ESC 与点遮罩）。
+// 故此处无 date-picker 词条；设置/今天/关闭按钮已按用户要求先后从头行移除
+// （关闭走 ESC 与点遮罩；清筛选走 chips 行「全部」）。
 export const ACT_ICON: Record<string, string> = {
   add: 'pen-line',
   search: 'search',
-  today: 'calendar-check',
-  close: 'x',
   'lb-close': 'x',
   'lb-more': 'more-horizontal',
   'lb-prev': 'chevron-left',
@@ -64,8 +63,8 @@ export function mimeOfMediaName(name: string): string {
  * 底部抽屉不在此 markup（2026-09-11 换核 core openItemSheet：与 favorites/belongings/cinema
  * 同源，壳/动作行/关闭手势全归共享层，域内只出富媒体头 mkSheetHead）。
  *
- * 头行按钮组：「写日记 / 搜索」+「关闭」（2026-09-11 移动端评审补回——全屏页无遮罩可点，
- * 关闭钮仅移动端显示，桌面由 CSS 隐藏、维持 ESC/点遮罩口径与 2026-09-10 头行精简决定）。
+ * 头行按钮组：「写日记 / 搜索」（2026-09-19 再次精简：「回到今天」「关闭」按用户要求移除——
+ * 清筛选走 chips 行「全部」，关闭维持 ESC/点遮罩口径与 2026-09-10 头行精简决定）。
  * 日期筛选入口仍由品牌行承担（点「日记本」标题即开筛选弹窗，title 已注明）。
  */
 export function wallPanelHTML(): string {
@@ -78,8 +77,6 @@ export function wallPanelHTML(): string {
         <div class="bz-diary-btns">
           <button class="bz-diary-icon-btn" data-act="add" title="写日记"></button>
           <button class="bz-diary-icon-btn" data-act="search" title="搜索"></button>
-          <button class="bz-diary-icon-btn" data-act="today" title="回到今天（清除日期筛选）"></button>
-          <button class="bz-diary-icon-btn bz-diary-head-close" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>

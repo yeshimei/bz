@@ -670,26 +670,6 @@ export function createDateTimeControl() {
   displayArea.appendChild(colon);
   displayArea.appendChild(minuteSpan);
 
-  // 效率#4①：日期行常驻快捷 chip「此刻 / 昨天」（补写昨晚路径；「昨天」保留当前时刻）
-  const quickRow = document.createElement('div');
-  quickRow.className = 'dt-quick-row';
-  const mkQuickChip = (text: string, title: string, toMoment: () => any) => {
-    const chip = document.createElement('button');
-    chip.type = 'button';
-    chip.className = 'dt-quick-chip';
-    chip.textContent = text;
-    chip.title = title;
-    chip.addEventListener('click', () => {
-      const m = toMoment();
-      if (!m || typeof m.isValid !== 'function' || !m.isValid()) return;
-      exitManualMode();
-      setMoment(m);
-    });
-    quickRow.appendChild(chip);
-  };
-  mkQuickChip('此刻', '设为当前时刻', () => moment());
-  mkQuickChip('昨天', '昨天同一时刻（补写昨晚）', () => moment().subtract(1, 'day'));
-
   const hiddenInput = document.createElement('input');
   hiddenInput.type = 'text';
   hiddenInput.id = 'add-diary-datetime';
@@ -807,7 +787,7 @@ export function createDateTimeControl() {
   });
 
   container.appendChild(displayArea);
-  container.appendChild(quickRow);
+  // 常驻快捷 chip「此刻 / 昨天」已按用户要求移除（2026-09-19）；滚轮弹层内「此刻」钮保留
   container.appendChild(manualInput);
   container.appendChild(hiddenInput);
   return container;

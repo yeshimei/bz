@@ -431,7 +431,8 @@ export function openAddDialog(opts?: { yearRange?: { min: number; max: number };
   typeContainer.className = 'diary-tag-selector-buttons bz-diary-chip-scroll';
 
   content.appendChild(typeLabel);
-  content.appendChild(createTagFilter(typeContainer)); // 效率#1：标签过滤（输入即筛 chip）
+  // 写弹窗的「筛选类型」过滤框已按用户要求移除（2026-09-19）：chips 直选即可；
+  // 标签选择器浮层的过滤框不受影响（createTagFilter 另有挂载点）
   content.appendChild(typeContainer);
 
   const foot = document.createElement('div');
