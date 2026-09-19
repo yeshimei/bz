@@ -54,6 +54,31 @@ describe('getSmartCatMessage', () => {
   });
 });
 
+describe('getSmartCatMessage 复读抑制（ADR-0172）', () => {
+  it('短窗口内不连续返回同一条（原先纯随机极易重复 → 像群发通知）', async () => {
+    const { __resetMessageRotationForTests } = await import('../../src/smartcat/messages');
+    __resetMessageRotationForTests();
+    const picks: string[] = [];
+    for (let i = 0; i < 30; i++) picks.push(getSmartCatMessage('PET_MESSAGES'));
+    for (let i = 1; i < picks.length; i++) expect(picks[i]).not.toBe(picks[i - 1]);
+  });
+
+  it('池子仍会被遍历到（不是把选择锁死成几条）', async () => {
+    const { __resetMessageRotationForTests } = await import('../../src/smartcat/messages');
+    __resetMessageRotationForTests();
+    const seen = new Set<string>();
+    for (let i = 0; i < 200; i++) seen.add(getSmartCatMessage('PET_MESSAGES'));
+    expect(seen.size).toBeGreaterThan(10);
+  });
+
+  it('重置后可复现（模块级状态不跨用例泄漏）', async () => {
+    const { __resetMessageRotationForTests } = await import('../../src/smartcat/messages');
+    __resetMessageRotationForTests();
+    const first = getSmartCatMessage('THINKING_IN_PROGRESS_MESSAGES');
+    expect(SMART_CAT_MESSAGES.THINKING_IN_PROGRESS_MESSAGES).toContain(first);
+  });
+});
+
 describe('MESSAGE_KEYS 枚举', () => {
   it('与 SMART_CAT_MESSAGES key 一致', () => {
     expect([...MESSAGE_KEYS].sort()).toEqual(Object.keys(SMART_CAT_MESSAGES).sort());

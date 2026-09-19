@@ -74,3 +74,63 @@ describe('generatePrompt 注入（companionContext）', () => {
     expect(noCtx).not.toContain('你了解的用户');
   });
 });
+// ---------------- ADR-0172：关系阶段 / 自我披露 / 追问线 ----------------
+
+describe('buildCompanionContext（ADR-0172 她的一半）', () => {
+  const NOW = new Date('2026-09-20T15:00:00Z').getTime();
+
+  it('关系行由「两个小数」升格为派生阶段（含相处方式）', () => {
+    const stream = [entry(new Date(NOW - 100 * 86400000).toISOString())];
+    const c = buildCompanionContext({
+      memoryStream: stream,
+      relationship: { trust: 0.7, attachment: 0.6 },
+      interactionCount: 100,
+      now: NOW,
+    });
+    expect(c).toContain('阶段');
+    expect(c).toContain('信任 0.70');
+    expect(c).not.toContain('你们'); // 称呼替换不该拼出「包仔们」
+  });
+
+  it('够亲近（≥朋友档）→ 额外给出表达许可', () => {
+    const stream = [entry(new Date(NOW - 200 * 86400000).toISOString())];
+    const c = buildCompanionContext({
+      memoryStream: stream,
+      relationship: { trust: 0.85, attachment: 0.8 },
+      interactionCount: 500,
+      now: NOW,
+    });
+    expect(c).toContain('不用一直顺着你');
+  });
+
+  it('给了 PAD → 注入「小橘自己的事」（她有独立于用户的状态）', () => {
+    const c = buildCompanionContext({ memoryStream: [], pad: { pleasure: 80, arousal: 60, dominance: 55 }, now: NOW });
+    expect(c).toContain('小橘自己的事');
+    expect(c).toContain('此刻的状态');
+  });
+
+  it('没给 PAD/特质/缺席 → 不出现「小橘自己的事」节', () => {
+    const c = buildCompanionContext({ memoryStream: [], now: NOW });
+    expect(c).not.toContain('小橘自己的事');
+  });
+
+  it('editingData.openThreads 有待回访的线 → 注入「还没聊完的线」', () => {
+    const c = buildCompanionContext({
+      memoryStream: [],
+      editingData: {
+        openThreads: [{
+          id: 't1', createdAt: NOW - 3 * 86400000, text: '打算学吉他',
+          keywords: ['打算', '学吉', '吉他'],
+        }],
+      },
+      now: NOW,
+    });
+    expect(c).toContain('还没聊完的线');
+    expect(c).toContain('学吉他');
+  });
+
+  it('无 openThreads / 非数组脏数据 → 不炸也不注入', () => {
+    expect(buildCompanionContext({ memoryStream: [], editingData: { openThreads: 'x' as any }, now: NOW })).not.toContain('还没聊完的线');
+    expect(buildCompanionContext({ memoryStream: [], editingData: { openThreads: [] }, now: NOW })).not.toContain('还没聊完的线');
+  });
+});

@@ -48,6 +48,8 @@ import { normalizeMemoryDirectories } from './config';
 import { parseDiaryEntryFile, resolveDiaryEntryMeta } from '../core/diary-format';
 import { buildInsightShortIndex, isSupersededInsight, MANUAL_SUPERSEDED_BY, sanitizeInsightTheme } from './insight-version';
 import { lazyAttachment, buildAbsenceCard } from './absence'; // ticket 093：读侧依恋视图 + 缺席状态卡
+// ADR-0172：关系阶段派生（面板展示「我们现在算什么」，派生不选择）
+import { relationshipStage, stageProgress, daysKnownFrom, RELATIONSHIP_STAGES } from './relationship';
 import { readQuietMode } from './quiet-gate'; // ticket 095：安静陪伴期状态（097 A2 chip 只读消费）
 import {
   analyzeEmotionTrend,
@@ -602,13 +604,26 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
 
   // 感情（关系张量）——口径统一（097 B1）：依恋改走与总览 computeDashboardStats 相同的
   // lazyAttachment 读侧分离衰减视图（trust 无衰减语义仍直读基线）；只影响展示，绝不写盘
+  // ADR-0172：升格为**派生阶段**展示——两个小数没人读得出「我们现在算什么」，
+  // 阶段名 + 阶段进度 + 相处方式才是用户能感知的东西（阶段由数据派生，无任何用户可调项）
   const relTrust = g?.relationship?.trust ?? 0.5;
   const relAttachmentView = lazyAttachment(
     g?.relationship?.attachment ?? 0.5,
     data.editingData?.lastPresenceAt,
     Date.now(),
   );
-  const relCard = card('感情（关系张量）');
+  const relInput = {
+    trust: relTrust,
+    attachment: relAttachmentView,
+    interactions: g?.behaviorStats?.interactionCount ?? 0,
+    daysKnown: daysKnownFrom((data.memory?.memoryStream ?? []).map((m) => m.created), Date.now()),
+  };
+  const relStage = relationshipStage(relInput);
+  const relStageIdx = RELATIONSHIP_STAGES.findIndex((s) => s.id === relStage.id);
+  const relNext = RELATIONSHIP_STAGES[relStageIdx + 1];
+  const relCard = card(`感情（关系阶段：${relStage.name}）`);
+  relCard.body.appendChild(barRow(relNext ? `阶段进度 → ${relNext.name}` : '阶段进度（已到顶）', stageProgress(relInput), 'warm'));
+  relCard.body.appendChild(el('div', 'bz-sc-dash-hint', relStage.manner));
   relCard.body.appendChild(barRow('信任', relTrust, 'warm'));
   relCard.body.appendChild(barRow('依恋', relAttachmentView, 'warm'));
   const tone = g?.behaviorStats?.emotionalTone || 0;
@@ -616,7 +631,7 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
   relCard.body.appendChild(el(
     'div',
     'bz-sc-dash-hint',
-    `情绪基调 ${tone >= 0 ? '+' : ''}${tone.toFixed(2)}（-1 冷淡 ~ +1 温暖）；信任/依恋随相处缓慢生长；依恋已按缺席分离衰减（读侧视图，不写盘）。`,
+    `相处 ${relInput.daysKnown} 天 / 互动 ${relInput.interactions} 次；阶段由信任、依恋、互动量与相处时长共同派生（没有可调项）；依恋已按缺席分离衰减（读侧视图，不写盘）。`,
   ));
   pane.appendChild(relCard.root);
 

@@ -212,6 +212,15 @@ export interface MemoryStreamEntry {
   /** 自动关联（2026-09-19 审计 M8）：同实体（structured.entityType + name）的记忆互链 id；
    *  上限 20、窗口 linkWindowDays 天；prompt 回显、面板徽标与检索 1 跳展开都读它。可选字段旧数据容忍。 */
   relatedIds?: string[];
+  // ---- ADR-0172：事实失效（自动冲突检测，全程无用户介入） ----
+  /** 失效时间（ISO）：这条记忆陈述的事实**已不再为真**（被后来的说法推翻）。
+   *  与 supersededBy 的区别：那是个洞察被新洞察取代，这是事实本身过期。
+   *  失效条目不删除（085 拍板：记忆流不裁剪），只在检索与 prompt 前置剔除。可选字段旧数据容忍。 */
+  invalidatedAt?: string;
+  /** 失效原因（当前仅 'revision' = 被后来的修正语句推翻） */
+  invalidReason?: string;
+  /** 本条修正/推翻了哪些旧条目 id（反向指针，供面板核对「这条是怎么来的」） */
+  revisesIds?: string[];
   // ---- ADR-0069：引用型记忆条目（笔记记忆库） ----
   /** 引用定位（有值 = 引用型条目）：description 存 vault 路径(+#定位符)，prompt 拼装命中时经 refResolver 当场读正文，
    *  向量对笔记全文 embedding（超长分块、一条目挂多向量）。可选字段，事件类/洞察条目不写。 */

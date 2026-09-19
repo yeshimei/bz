@@ -534,6 +534,12 @@ export class MemorySystem {
       structured: newOpts.structured,
     };
     this.stream.push(memory);
+    // ADR-0172：自动冲突检测——新说法若推翻了旧记忆，旧条目当场失效（全程无用户介入）。
+    // 放在自动关联之前：失效标记会影响后续检索/prompt，越早落越好。
+    try {
+      const revises = applyRevisionInvalidation(this.stream, memory.id, description);
+      if (revises.length) memory.revisesIds = revises;
+    } catch { /* 冲突检测失败不影响写入 */ }
     // M8（2026-09-19 审计）：自动关联接线——原先 enableAutoLinking / linkWindowDays 是「用户可见的假开关」
     //（有 UI 项、有默认值，却零消费）。这里给新签名路径接上真实实现（legacy 路径无 structured，天然不参与）。
     try {
@@ -647,6 +653,11 @@ export class MemorySystem {
       suspicious: detectInjection(description) || undefined,
     };
     this.stream.push(memory);
+    // ADR-0172：旧签名路径同样跑自动冲突检测（domain: 观测走这条，不能漏）
+    try {
+      const revises = applyRevisionInvalidation(this.stream, memory.id, description);
+      if (revises.length) memory.revisesIds = revises;
+    } catch { /* 冲突检测失败不影响写入 */ }
     this.markMemoryDirty();
     await this.dataSaver(this.dataProvider());
     await this.appendVector(memory);
@@ -663,6 +674,11 @@ export class MemorySystem {
   async addInsight(description: string, evidenceIds: string[], importance = 0.75, emotion?: string, source = 'reflection', theme?: string): Promise<MemoryStreamEntry> {
     const memory = this.makeInsightMemory(description, evidenceIds, importance, emotion, source, theme);
     this.stream.push(memory);
+    // ADR-0172：自动冲突检测（洞察走 supersede 通道，见 applyRevisionInvalidation）
+    try {
+      const revises = applyRevisionInvalidation(this.stream, memory.id, description);
+      if (revises.length) memory.revisesIds = revises;
+    } catch { /* 冲突检测失败不影响写入 */ }
     // ticket 160：insight 不计反思素材（反思只吃观察，防自指素材污染）
     this.markMemoryDirty();
     await this.dataSaver(this.dataProvider());
@@ -841,7 +857,8 @@ export class MemorySystem {
     // 情绪/时间两路只作为 prompt 子集的槽位修饰（formatMemoriesForPrompt 层），不进本公式。
     // 092 方向二（ADR-0039）：已废弃洞察（supersededBy 有值）**排序前剔除**——不进 GA 加法分空间，
     // 也不挤占 topN 名额；topN=10 与三处调用点是冻结契约，剔除只发生在排序管线内部
-    const pool = this.stream.filter((m) => !isSupersededInsight(m));
+    // ADR-0172：事实失效条目（invalidatedAt 有值）同样前置剔除——被后来的说法推翻了就别再想起来
+    const pool = this.stream.filter((m) => !isSupersededInsight(m) && !isInvalidatedMemory(m));
     const scored = pool.map((m) => {
       const hours = (now - new Date(m.lastAccessed || m.created).getTime()) / 3.6e6;
       const recency = Math.pow(MEMORY_CONFIG.decay, Math.max(0, hours));
@@ -1356,6 +1373,14 @@ export class MemorySystem {
     if (supersedeRef !== null && firstNewInsightId) {
       try { applySupersede(this.stream, supersedeRef, firstNewInsightId, candidates.indexMap); } catch { /* 非法引用忽略 */ }
     }
+    // ADR-0172：本批洞察若带修正语气（不再/改成/其实不是…），自动让被它推翻的旧条目失效。
+    // 洞察走既有 supersede 通道（092 的语义就是「旧洞察被新洞察推翻」），观察走 invalidatedAt。
+    for (const m of entries) {
+      try {
+        const revises = applyRevisionInvalidation(this.stream, m.id, m.description);
+        if (revises.length) m.revisesIds = revises;
+      } catch { /* 冲突检测失败不影响反思主流程 */ }
+    }
     data.memory.reflection.lastReflectAt = now;
     data.memory.reflection.count = (data.memory.reflection.count || 0) + 1;
     this.pendingSinceReflect = 0;
@@ -1454,7 +1479,7 @@ export class MemorySystem {
    * 「星期几 / 周年」两类强锚点。不传 maxEntries 保持既有全量行为（向后兼容）。
    */
   formatMemoriesForPrompt(memories: MemoryStreamEntry[], maxEntries?: number): string {
-    const alive = memories.filter((memory) => !isSupersededInsight(memory));
+    const alive = memories.filter((memory) => !isSupersededInsight(memory) && !isInvalidatedMemory(memory));
     const picked = maxEntries !== undefined && alive.length > maxEntries
       ? selectSlotMemories(alive, {
           maxEntries,
@@ -1470,7 +1495,9 @@ export class MemorySystem {
         const label = sourceLabel(memory.source);
         const time = memory.created ? formatRelativeTime(memory.created) : '';
         const meta = [label, time].filter(Boolean).join('·');
-        return `${index + 1}. [${memory.type}${meta ? `（${meta}）` : ''}] ${content.substring(0, 200)}...`;
+        // 2026-09-20 ADR-0172：不确定语感——人会记不清，全知全能的回显反而不像回忆
+        const hedge = memoryHedge(memory);
+        return `${index + 1}. [${memory.type}${meta ? `（${meta}）` : ''}]${hedge ? ` ${hedge}` : ''} ${content.substring(0, 200)}...`;
       })
       .join('\n');
   }
@@ -1738,8 +1765,172 @@ export function formatRelativeTime(iso: string, now = Date.now()): string {
   return `${new Date(t).getFullYear()} 年`;
 }
 
+/**
+ * 记忆回显的不确定语感（2026-09-20 ADR-0172）。
+ * 人类回忆从不「全知全能」：细节会糊、随口的事不敢打包票。此前的回显把每条记忆斩钉截铁地
+ * 甩给模型，模型自然也就说得斩钉截铁——这是「不像回忆」最直接的一处。
+ * 只加前缀，不改内容、不改排序、不动检索公式（GA 冻结契约）。
+ *  - credibility < 0.45（低可信来源/被杀过信）→ （记不太清）
+ *  - suspicious（H4/087 注入特征命中）→ （你当时随口一提，我没核实）
+ *  - 入库 240 天以上且从未被检索过 → （模模糊糊记得）
+ */
+export function memoryHedge(m: MemoryStreamEntry, now = Date.now()): string {
+  if (!m) return '';
+  const cred = typeof m.credibility === 'number' && Number.isFinite(m.credibility) ? m.credibility : 0.5;
+  if (cred < 0.45) return '（记不太清）';
+  if (m.suspicious) return '（你当时随口一提，我没核实）';
+  const created = m.created ? new Date(m.created).getTime() : NaN;
+  const accessed = m.lastAccessed ? new Date(m.lastAccessed).getTime() : NaN;
+  const neverRecalled = Number.isFinite(created) && Number.isFinite(accessed) && Math.abs(accessed - created) < 1000;
+  if (neverRecalled && Number.isFinite(created) && now - created > 240 * 86400000) return '（模模糊糊记得）';
+  return '';
+}
+
 /** 关联条数上限（单侧；与旧 linkRelatedMemories 口径一致） */
 export const AUTO_LINK_CAP = 20;
+
+// ---------------- ADR-0172：事实失效（自动冲突检测，全程无用户介入） ----------------
+
+/**
+ * 修正/推翻语句标记。人推翻自己先前说法时，句子通常带这些词。
+ * **只在命中标记时**才做冲突检测——否则「今天又去跑步了」这种正常重复会被误判成推翻。
+ */
+export const REVISION_MARKERS = /不再|不再是|不吃了|戒了|改成|改为|换成|其实不是|并不是|已经?不|取消了|退回了|撤回了|搬走|搬去|离职|辞职|分手|搬家|转学|换了(?:工作|公司|城市|专业)|以前.{0,10}(?:现在|如今|后来)/;
+
+/** 高频虚词二元组（不参与重叠判定；中文无空格，二元组是最省事且不引入词典的分词近似） */
+const CONTENT_STOP_BIGRAMS = new Set([
+  '这个', '那个', '什么', '怎么', '因为', '所以', '但是', '如果', '还是', '就是', '可以', '应该',
+  '我们', '你们', '他们', '自己', '现在', '今天', '明天', '以后', '最近', '然后', '有点', '一下',
+  '一个', '不是', '没有', '可能', '觉得', '知道', '记得', '事情', '东西', '时候', '问题', '已经',
+  '用户', '他的', '她的', '你的', '我的', '正在', '比较', '不过', '一些', '这样', '那样',
+]);
+
+/**
+ * 内容二元组（中文按相邻两字切 + 西文按词）。中文没有空格，用整段连续汉字当 token
+ * 会让「我不再喜欢跑步」与「用户喜欢跑步」重叠为 0——所以退一步用 bigram 近似分词，
+ * 这是不引入词典/分词库时最稳的做法（关键词重叠本来就是粗判，不需要真分词）。
+ */
+export function contentBigrams(text: string): string[] {
+  const s = String(text || '');
+  if (!s) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (t: string) => {
+    if (!t || CONTENT_STOP_BIGRAMS.has(t) || seen.has(t)) return;
+    seen.add(t);
+    out.push(t);
+  };
+  for (const run of s.matchAll(/[\u4e00-\u9fa5]+/g)) {
+    const r = run[0];
+    if (r.length === 1) continue;
+    for (let i = 0; i + 1 < r.length; i++) push(r.slice(i, i + 2));
+  }
+  for (const m of s.matchAll(/[A-Za-z][A-Za-z0-9_-]{2,}/g)) push(m[0].toLowerCase());
+  return out;
+}
+
+/** 最长公共子串长度（截断到 LCS_MAX_LEN 字符、命中 cap 即早退——只用于「≥3 即强信号」判定） */
+const LCS_MAX_LEN = 120;
+export function commonSubstringLen(a: string, b: string, cap = 3): number {
+  const s1 = String(a || '').slice(0, LCS_MAX_LEN);
+  const s2 = String(b || '').slice(0, LCS_MAX_LEN);
+  if (!s1 || !s2) return 0;
+  let best = 0;
+  const prev = new Array(s2.length + 1).fill(0);
+  for (let i = 1; i <= s1.length; i++) {
+    let diag = 0;
+    for (let j = 1; j <= s2.length; j++) {
+      const tmp = prev[j];
+      prev[j] = s1[i - 1] === s2[j - 1] ? diag + 1 : 0;
+      if (prev[j] > best) best = prev[j];
+      diag = tmp;
+      if (best >= cap) return best;
+    }
+  }
+  return best;
+}
+
+/** 事实已失效（陈述不再为真）。与 isSupersededInsight 并列：前者是事实过期，后者是洞察被取代。 */
+export function isInvalidatedMemory(m: MemoryStreamEntry | null | undefined): boolean {
+  return !!m && typeof m.invalidatedAt === 'string' && m.invalidatedAt.length > 0;
+}
+
+/** 冲突检测扫描上限（倒序扫描，命中窗口即停——正常路径只有命中原语句才触发） */
+const REVISION_SCAN_LIMIT = 400;
+
+/**
+ * 检测新说法推翻了哪些旧记忆（纯函数，零 AI）。
+ * 判据 = ①新描述含修正标记 ②与旧条目**说的是同一件事** ③旧条目在 windowDays 内且未失效。
+ * 「同一件事」用双重近似：内容 bigram 重叠 ≥2，**或**共有 ≥3 字连续子串（后者兜住
+ * 「不再喜欢跑步」vs「喜欢跑步」这类因虚词差异导致 bigram 重叠不足的情况）。
+ * 用户不想手工纠错（黑匣子硬约束），所以错误记忆只能靠这条自动通道兜住。
+ * @returns 被判为「被推翻」的旧条目 id（按时间升序）
+ */
+export function detectRevisions(
+  stream: MemoryStreamEntry[],
+  candidate: { id?: string; description: string },
+  opts: { now?: number; windowDays?: number; minOverlap?: number } = {},
+): string[] {
+  const desc = String(candidate?.description || '');
+  if (!desc || !REVISION_MARKERS.test(desc)) return [];
+  const keys = contentBigrams(desc);
+  if (keys.length < 2) return [];
+  const keySet = new Set(keys);
+  const now = opts.now ?? Date.now();
+  const windowDays = Math.max(1, opts.windowDays ?? 180);
+  const minOverlap = Math.max(1, opts.minOverlap ?? 2);
+  const since = now - windowDays * 86400000;
+  const list = Array.isArray(stream) ? stream : [];
+  const hits: { id: string; t: number }[] = [];
+  const floor = Math.max(0, list.length - REVISION_SCAN_LIMIT);
+  for (let i = list.length - 1; i >= floor; i--) {
+    const m = list[i];
+    if (!m?.id || m.id === candidate.id || !m.description) continue;
+    if (isInvalidatedMemory(m)) continue;
+    const t = m.created ? new Date(m.created).getTime() : NaN;
+    if (!Number.isFinite(t) || t > now) continue;
+    if (t < since) break; // 流按时间追加，越往前越旧 → 可提前收敛
+    let shared = 0;
+    for (const k of contentBigrams(m.description)) if (keySet.has(k)) shared++;
+    if (shared >= minOverlap || commonSubstringLen(desc, m.description, 3) >= 3) hits.push({ id: m.id, t });
+  }
+  return hits.sort((a, b) => a.t - b.t).map((h) => h.id);
+}
+
+/**
+ * 执行失效标记（就地改写 stream 中命中条目）。**不删除任何数据**（085 拍板：记忆流不裁剪）。
+ *
+ * 两条通道，按被命中条目的类型分流——不另起第二套语义：
+ *  - **洞察** → 复用 ADR-0039 既有的 `supersededBy`（洞察被新洞察推翻就是它的定义），
+ *    前提是新条目本身也是洞察并且有 id；否则退回 invalidatedAt。
+ *  - **观察** → `invalidatedAt`（事实过期；观察没有 supersede 语义，不该硬套）。
+ * 观察额外把 credibility 折半（不归零：万一判错，痕迹还在，面板可核对）。
+ * @returns 被失效的条目 id（回填到新条目的 revisesIds）
+ */
+export function applyRevisionInvalidation(
+  stream: MemoryStreamEntry[],
+  entryId: string | undefined,
+  description: string,
+  opts: { now?: number; windowDays?: number; minOverlap?: number } = {},
+): string[] {
+  const ids = detectRevisions(stream, { id: entryId, description }, opts);
+  if (!ids.length) return [];
+  const iso = new Date(opts.now ?? Date.now()).toISOString();
+  const hit = new Set(ids);
+  for (const m of stream) {
+    if (!m?.id || !hit.has(m.id)) continue;
+    if (m.type === 'insight' && entryId) {
+      // 洞察：走既有 supersede 通道（检索/prompt 的前置剔除已覆盖它）
+      m.supersededBy = entryId;
+    } else {
+      m.invalidatedAt = iso;
+      m.invalidReason = 'revision';
+      const base = typeof m.credibility === 'number' && Number.isFinite(m.credibility) ? m.credibility : 0.5;
+      m.credibility = Math.max(0.05, Number((base * 0.5).toFixed(3)));
+    }
+  }
+  return ids;
+}
 
 /**
  * 自动关联（2026-09-19 机制审计 M8 接线）。

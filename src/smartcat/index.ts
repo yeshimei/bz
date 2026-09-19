@@ -49,6 +49,8 @@ import { buildRhythmProfile, isActiveNow, describeRhythm, periodText, isoWeekKey
 import { buildWeeklyReportData, generateWeeklyReport } from './report';
 import { appendDossierEvent, getDossierEvents, shouldScanDossierNarrative, buildNarrativeInput, generateDossierNarrative, advanceDossierScanKey } from './dossier';
 import { buildCompanionContext } from './companion-context';
+// ADR-0172：追问线（未聊完的话题）——抽取/去重/了结/召回，纯本地零 AI
+import { extractOpenThreads, mergeThreads, resolveThreads, pruneThreads, pendingThreads, markThreadsOffered, type OpenThread } from './open-threads';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend, checkContradiction, extractStoredFacts, initBanditArm, sampleThompson, updateBandit } from './cognitive';
 import { openSmartcatDashboard, closeSmartcatDashboard, registerInsightPatchChannel } from './dashboard';
 import { AbsenceSystem } from './absence';
@@ -331,6 +333,8 @@ export async function ensureSmartCat(app: App): Promise<void> {
       } catch { /* 门控失败 → 不阻断（保持原行为） */ }
       return false;
     },
+    // ADR-0172：上下文构建完成 → 记未完成线的「已提供」冷却起点
+    onCompanionContextBuilt: () => { void markOpenThreadsOffered(); },
     // ADR-0021：记忆流检索注入聊天上下文（格式化后返回；失败返回空串）
     // ADR-0025：第二参 lexicalQuery 供词法降级模式（纯用户消息，免「情绪/时段」噪音）
     // 096 方向一：retrieve topN=10 冻结不动，≤6 收缩只落 formatMemoriesForPrompt 的 maxEntries（槽位保留制，ADR-0043）
@@ -562,6 +566,35 @@ function dispatchResidentTick(): void {
   }
 }
 
+// ---------------- 追问线（ADR-0172：接住没聊完的话） ----------------
+
+/**
+ * 用户消息 → 更新未完成话题池（抽取新线 + 了结旧线 + 过期清理）。
+ * 纯本地确定性，零 AI 调用：判定与抽取都在 open-threads.ts 的纯函数里。
+ * 存 editingData.openThreads（同 proactiveCare 先例，不新增顶层字段 → 零迁移）。
+ */
+export async function updateOpenThreads(userMessage: string, now = Date.now()): Promise<void> {
+  const d = dataProvider();
+  try {
+    const current: OpenThread[] = Array.isArray(d.editingData?.openThreads) ? d.editingData.openThreads : [];
+    const next = mergeThreads(pruneThreads(resolveThreads(current, userMessage, now), now), extractOpenThreads(userMessage, { now }), now);
+    d.editingData = { ...(d.editingData || {}), openThreads: next };
+    await dataSaver(d);
+  } catch { /* 追问线失败不影响聊天主流程 */ }
+}
+
+/** 上下文已构建 = 这些线已被提供给模型 → 记冷却起点（防同一条每轮复读） */
+export async function markOpenThreadsOffered(now = Date.now()): Promise<void> {
+  const d = dataProvider();
+  try {
+    const current: OpenThread[] = Array.isArray(d.editingData?.openThreads) ? d.editingData.openThreads : [];
+    const offered = pendingThreads(current, now);
+    if (!offered.length) return;
+    d.editingData = { ...(d.editingData || {}), openThreads: markThreadsOffered(current, offered, now) };
+    await dataSaver(d);
+  } catch { /* 忽略 */ }
+}
+
 // ---------------- 主动关心（作息模型判定时机，2026-08-23 用户拍板） ----------------
 
 /** 读取主动关心状态（editingData 可空/旧数据无 → 默认） */
@@ -745,6 +778,10 @@ export async function maybeProactiveCare(): Promise<void> {
         emotion: moodSystem.getCurrentEmotion(),
         memoriesText,
         editingData: data.editingData, // A4：缺席状态进对话
+        // ADR-0172：关系阶段 / 自我披露 / 追问线一并生效于欢迎回来通道
+        interactionCount: data.personalityGrowth?.behaviorStats?.interactionCount ?? 0,
+        pad: moodSystem.pad,
+        traits: data.personalityGrowth?.traits ?? null,
       });
       const prompt = generatePrompt('auto_companion', '', {
         pad: moodSystem.pad,
@@ -898,6 +935,10 @@ async function generateBookReview(): Promise<void> {
       relationship: data.personalityGrowth?.relationship ?? null,
       emotion: moodSystem.getCurrentEmotion(),
       editingData: data.editingData, // A4：缺席状态进对话
+      // ADR-0172：书评通道同样带上阶段与她的状态
+      interactionCount: data.personalityGrowth?.behaviorStats?.interactionCount ?? 0,
+      pad: moodSystem.pad,
+      traits: data.personalityGrowth?.traits ?? null,
     });
     const prompt = generatePrompt('book_review', `请基于以下书籍数据给出简短评价：${bookDescription}`, {
       pad: moodSystem.pad,
@@ -1051,6 +1092,8 @@ async function sendChatMessage(message: string): Promise<void> {
   void absenceSystem?.onPresenceSignal();
   // Bandit reward 回填（ticket 035；A6：带用户回应内容 → 多信号 reward）
   void rewardProactiveArm(message);
+  // ADR-0172：追问线——抽取用户话里「留了尾巴」的事，并判定旧线是否已了结
+  void updateOpenThreads(message);
 
   const userMessageEl = document.createElement('div');
   userMessageEl.className = 'message user-message';

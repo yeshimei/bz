@@ -211,17 +211,46 @@ export class MoodSystem {
   private static readonly DECAY_LAMBDA = { pleasure: 0.07, arousal: 0.10, dominance: 0.20 };
   private lastSavedPad: PadDimensions | null = null;
 
+  /**
+   * 情绪惯性（2026-09-20 ADR-0172，缺口③「没有纵向时间」的第一块）。
+   * 原实现每条互动独立结算：一次大怒/大喜几小时就被指数回摆抹平，没有「情绪留得住」这回事。
+   * 认知上，情绪强度本身就是回落的阻尼——偏离基线越远，消退越慢（Mood-congruent 维持），
+   * 且负面消退慢于正面（Gross 情绪调节：未被处理的负面情绪滞留更久）。
+   *
+   * 返回**回摆速率乘数**（≤1；1 = 原行为）：
+   *  - 偏离基线越远越慢，U 形，正负同侧（|Δ|=50 → ×0.5，|Δ|=25 → ×0.75）；
+   *  - 愉悦侧 <35 额外 ×0.7（低落粘人）；>70 额外 ×0.85（高兴也留一会儿）；
+   *  - 唤醒侧 >75 额外 ×0.8（交感兴奋有滞后）；<25 额外 ×0.9（疲惫也缓）。
+   * 该乘数只作用于衰减速率，不改变基线/半衰常量本身，也不影响增益路径。
+   */
+  static inertiaFactor(axis: 'pleasure' | 'arousal' | 'dominance', value: number): number {
+    const v = Number.isFinite(value) ? value : 50;
+    const dev = Math.min(1, Math.abs(v - 50) / 50);
+    let f = 1 - 0.5 * dev;
+    if (axis === 'pleasure') {
+      if (v < 35) f *= 0.7;
+      else if (v > 70) f *= 0.85;
+    } else if (axis === 'arousal') {
+      if (v > 75) f *= 0.8;
+      else if (v < 25) f *= 0.9;
+    }
+    return Math.max(0.2, Math.min(1, f));
+  }
+
   startAutoDecay(): void {
     if (this.decayTimer) clearInterval(this.decayTimer);
     this.decayTimer = setInterval(() => {
       const mod = this.getCharacterModulators();
       for (const [axis, lambda] of Object.entries(MoodSystem.DECAY_LAMBDA)) {
         const multiplier = mod.padMultipliers[axis as keyof PadDimensions] || 1.0;
-        // 回摆速率 ÷ 人格乘数（高 dopamine/serotonin → 回落更慢，与 updatePad 增益同侧调制）
-        // dt=60s → 指数小时速率 λ（/h）折算到分钟：k=exp(−λ·dt/3600)
-        const k = Math.exp(-lambda / multiplier * (60 / 3600));
         const attract = MoodSystem.BASE_PAD_ATTRACT[axis as keyof PadDimensions];
         const old = this.pad[axis as keyof PadDimensions] || 50;
+        // 2026-09-20 ADR-0172：叠加情绪惯性——偏离基线越远回摆越慢（负面更慢），
+        // 让「今天被气到了」能带到明天，而不是几小时后归零当无事发生。
+        const inertia = MoodSystem.inertiaFactor(axis as 'pleasure' | 'arousal' | 'dominance', old);
+        // 回摆速率 ÷ 人格乘数（高 dopamine/serotonin → 回落更慢，与 updatePad 增益同侧调制）
+        // dt=60s → 指数小时速率 λ（/h）折算到分钟：k=exp(−λ·inertia·dt/3600)
+        const k = Math.exp(-lambda * inertia / multiplier * (60 / 3600));
         // 保留浮点精度（60s 微移 ~0.006，round 会吞掉回摆；落盘仍到 0.1 精度）
         this.pad[axis as keyof PadDimensions] = Math.max(0, Math.min(100, attract + (old - attract) * k));
       }

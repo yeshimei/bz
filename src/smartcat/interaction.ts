@@ -45,6 +45,9 @@ export interface InteractionDeps {
   /** 自发行为总闸（2026-09-19 审计 A8）：安静期 / 深夜 / 非活跃时段 → true。
    *  由 index 注入（综合 quiet-gate 与 rhythm 判断），避免 interaction 顶层互访这两个模块。 */
   shouldStayQuiet?: () => boolean;
+  /** 上下文构建完成钩子（ADR-0172）：此时的 openThreads 已实际进了 prompt，
+   *  由 index 记「已提供」冷却起点，防同一条线每轮复读。失败不影响主流程。 */
+  onCompanionContextBuilt?: () => void;
 }
 
 export class InteractionManager {
@@ -83,13 +86,20 @@ export class InteractionManager {
   /** 懂你上下文块（ADR-0025）：作息/情绪趋势/关系/相关记忆统一注入各 AI 通道 */
   private getCompanionContext(memoriesText = ''): string {
     const d = this.deps.characterData?.() ?? null;
-    return buildCompanionContext({
+    const ctx = buildCompanionContext({
       memoryStream: d?.memory?.memoryStream ?? [],
       relationship: d?.personalityGrowth?.relationship ?? null,
       emotion: d?.mood?.currentEmotion ?? null,
       memoriesText,
-      editingData: d?.editingData, // A4：缺席状态进对话
+      editingData: d?.editingData, // A4：缺席状态进对话；ADR-0172：openThreads 从同一处读
+      // ADR-0172：关系阶段 + 自我披露的数据源
+      interactionCount: d?.personalityGrowth?.behaviorStats?.interactionCount ?? 0,
+      pad: this.deps.mood.pad,
+      traits: d?.personalityGrowth?.traits ?? null,
     });
+    // ADR-0172：此刻这些未完成线已真的进了 prompt → 通知 index 记冷却（防复读）
+    try { this.deps.onCompanionContextBuilt?.(); } catch { /* 钩子失败不影响主流程 */ }
+    return ctx;
   }
 
   /** 检索相关记忆（词法降级用 query——失败返回空串，不阻断主流程） */

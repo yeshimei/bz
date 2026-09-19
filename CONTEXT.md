@@ -312,6 +312,31 @@ _Avoid_: 心情维度（8 维，已废弃）、心情状态机（指断线 5 档
 **情绪 (Emotion)**: 小橘的瞬时情绪层（三层模型：情绪→心情→人格）——`mood.currentEmotion` 记录最近的情绪标签（happy/sad/curious/sleepy/playful/focused/calm/upset），由事件/记忆标注；记忆流条目 `emotion` 字段承载情绪归属（LLM 顺带 + 词法兜底）。**ADR-0025 拍板推翻旧「情绪不直接改写 PAD」**：每条观察（日记/闪念/聊天/域事件）经 `memorySystem.onObservation` 钩子 → `registerEmotion` + `applyEmotionResonance`（温和共振，见下）；情绪趋势（近 48h）经 30 分钟节流 `applyTrendDrift` 温和回写心情。
 _Avoid_: 情感记忆（EmotionalMemory 类已删除，语义并入记忆流 emotion 字段）
 
+**关系阶段 (Relationship Stage)**: 由 trust 0.45 + attachment 0.25 + 互动量 0.20 + 相识天数 0.10 派生的五档
+（初见/熟人/朋友/知交/老友，`src/smartcat/relationship.ts`），门槛**同时卡分数、互动次数、相处天数**（防刷分跳级）。
+**派生而非选择**——Replika 让用户手选关系状态是社区排除表点名的反模式；面板感情卡与 prompt 都读它，
+没有任何可调项。阶段还给出 `initiative`（主动许可 0-1），供后续调度层消费。
+_Avoid_: 关系等级、亲密度设置（用户可调的关系档位，明确排除）
+
+**小橘自己的事 (Self-Disclosure)**: 注入 prompt 的「她的一半」节，由**她自己的状态**
+（PAD 档位/时段/特质/缺席天数/待回访线数）确定性合成，**输入不含任何用户数据**——
+这是「她有独立内心、不是纯镜像」的最小可落地形态（社会渗透理论：披露是双向的）。
+文案按日键散列选，同日稳定、跨日变化（不用 `Math.random()`，否则同场对话里说法来回跳）。
+_Avoid_: 人设文案、性格预设（静态文案；本词条指由实时状态合成的披露）
+
+**追问线 (Open Thread)**: 从用户消息里确定性抽取的「未完成话题」池（`src/smartcat/open-threads.ts`，
+存 `editingData.openThreads`）——前瞻标记（改天/下次/还没/打算/明天…）切句 + bigram 关键词，
+同话题再现即刷新而非新增，TTL 21 天，进 prompt ≤2 条、6 小时冷却。
+了结判定保守（重叠 ≥1 且带完成标记，或重叠 ≥3 且本条非新的前瞻句）——**误收会让她再也不追问**。
+_Avoid_: 待办事项（那是 memo 域）、follow-up 队列（口语）
+
+**记忆失效 (Memory Invalidation)**: 新说法推翻旧记忆时的自动处置（ADR-0172，全自动无用户介入）——
+修正语气闸门（不再/改成/其实不是…）命中后，按被命中条目类型分流：**洞察**复用 ADR-0039 的
+`supersededBy`，**观察**写 `invalidatedAt`/`invalidReason`/`revisesIds`（credibility 折半，下限 0.05）。
+**不删数据**（085 拍板：记忆流不裁剪），只在检索与 prompt 前置剔除。
+「同一件事」判据 = 内容 bigram 重叠 ≥2 **或**共有 ≥3 字连续子串。
+_Avoid_: 记忆删除、裁剪（明确禁止）、用户纠错入口（违反黑匣子硬约束）
+
 **温和共振 (Emotion Resonance)**: ADR-0025 的情绪→心情闭环机制——`emotionResonanceDelta`（纯函数）把观察情绪经 `emotionToVAD` 换算为 PAD 差量：愉悦按 valence 距中性 0.35 起算（负面增益 6 > 正面 4，共情优先）、calm/neutral 趋近 0（不误动心情）、唤醒/支配按偏移缩放；差量走既有 `updatePad`（人格乘数/抵抗力 + 60s 指数衰减回基线 50），小橘会温和跟随你的近期情绪，但四层约束保证它不是你的情绪镜子。
 _Avoid_: 情绪直接镜像（整量复制用户 VAD）、情绪不落心情（旧拍板，已废除）
 

@@ -189,13 +189,21 @@ describe('097 B1 感情卡惰性视图口径', () => {
     const popup = document.getElementById('smartcat-dashboard-panel')!;
     (popup.querySelector('[data-tab="personality"]') as HTMLElement).click();
     const pane = popup.querySelector('[data-pane="personality"]') as HTMLElement;
-    const relCard = [...pane.querySelectorAll('.bz-sc-dash-card')].find((c) => (c.querySelector('.bz-sc-dash-card-title')?.textContent || '').includes('感情（关系张量）')) as HTMLElement;
+    // ADR-0172：卡名由「感情（关系张量）」升格为「感情（关系阶段：<阶段>）」——
+    // 两个小数没人读得出「我们现在算什么」，阶段名 + 进度才是可感知的
+    const relCard = [...pane.querySelectorAll('.bz-sc-dash-card')].find((c) => (c.querySelector('.bz-sc-dash-card-title')?.textContent || '').includes('感情（关系阶段')) as HTMLElement;
+    expect(relCard).toBeTruthy();
     const attachRow = [...relCard.querySelectorAll('.bz-sc-dash-row')].find((r) => r.querySelector('.bz-sc-dash-row-name')?.textContent === '依恋') as HTMLElement;
     const shown = Number(attachRow.querySelector('.bz-sc-dash-row-val')!.textContent);
     expect(shown).toBe(Math.round(lazyAttachment(0.61, d.editingData.lastPresenceAt, Date.now()) * 100));
     expect(shown).toBe(Math.round(computeDashboardStats(d).attachment * 100)); // 与总览口径一致
     expect(shown).not.toBe(61); // 确实经过分离衰减而非直读基线
     expect(relCard.textContent).toContain('已按缺席分离衰减（读侧视图，不写盘）');
+    // ADR-0172：阶段行存在、且卡名带派生的阶段名（用户不需要点任何东西）
+    const relRows = [...relCard.querySelectorAll('.bz-sc-dash-row-name')].map((r) => r.textContent || '');
+    expect(relRows.some((t) => t.includes('阶段进度'))).toBe(true);
+    expect(relCard.querySelector('.bz-sc-dash-card-title')!.textContent).toMatch(/感情（关系阶段：.+）/);
+    expect(relCard.textContent).toContain('相处 ');
     closeSmartcatDashboard();
   });
 });

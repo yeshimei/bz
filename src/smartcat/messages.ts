@@ -478,9 +478,31 @@ export const MESSAGE_KEYS = [
   'THINKING_IN_PROGRESS_MESSAGES',
 ] as const;
 
-/** 随机取一条（原 window.smartCat.getSmartCatMessage 逐字） */
+/**
+ * 近期已用过的文案（防复读，ADR-0172）。
+ * 原先纯粹 `Math.random()` 取一条：200+ 条池子看着很丰富，实际短窗口内极易抽到重复，
+ * 用户体感就是「像群发的通知」。这里记住每个 key 最近返回过的几条并从候选里排除；
+ * 池子小的时候按池子大小自适应（深度 = min(3, 池长−1)），池子只剩一条时自然回落全池，
+ * 不会因为「全被排除」而返回空串。
+ */
+const recentPicks = new Map<string, string[]>();
+const RECENT_PICK_DEPTH = 3;
+
+/** 随机取一条（原 window.smartCat.getSmartCatMessage 逐字 + ADR-0172 近期去重） */
 export function getSmartCatMessage(messageType: string): string {
   const messages = SMART_CAT_MESSAGES[messageType];
-  if (messages && messages.length > 0) return messages[Math.floor(Math.random() * messages.length)];
-  return '';
+  if (!messages || messages.length === 0) return '';
+  const depth = Math.min(RECENT_PICK_DEPTH, Math.max(0, messages.length - 1));
+  if (depth === 0) return messages[0];
+  const recent = recentPicks.get(messageType) ?? [];
+  const pool = messages.filter((m) => !recent.includes(m));
+  const usable = pool.length ? pool : messages;
+  const chosen = usable[Math.floor(Math.random() * usable.length)];
+  recentPicks.set(messageType, [chosen, ...recent.filter((m) => m !== chosen)].slice(0, depth));
+  return chosen;
+}
+
+/** 测试辅助：清空复读记忆（模块级状态会跨用例累积） */
+export function __resetMessageRotationForTests(): void {
+  recentPicks.clear();
 }
