@@ -775,7 +775,7 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ## attach（附件）域 · 审查入账中（方向 1 功能已到账；方向 2 UI / 3 效率运行中，4/5 待槽位）
 
-> 明细：`.scratch/review-deep/attach-{func,efficiency}.md`。方向 1（func）：P2×1 + P3×4 + UX×1；方向 3（效率）：P2×1 + P3×4 + UX×3。旧账复核 2 条：F10 已修在位（data.ts:66-71，缺直接回归用例记测试缺口）；AT1（planMoves 冲突集不含文件夹）仍在未修并入报告。两个似是而非候选排除有据（md 链接 #page 锚点剥锚正确；HTML img 不收集属安全侧）。门禁基线：tsc 0；tests/attach + smoke 58 例全绿。
+> 明细：`.scratch/review-deep/attach-{func,ui,efficiency}.md`。方向 1（func）：P2×1 + P3×4 + UX×1；方向 2（UI）：P2×1 + P3×4 + UX×2；方向 3（效率）：P2×1 + P3×4 + UX×3。跨方向去重：键盘确认簇（AF-S1 = UI-P2-1 同根：bindFormSubmit 在位未消费 + flow-dialog「回车=确认」未对齐，大清单键盘确认 O(N)）；失败呈现簇（AF-3 = UI-P3-2 同根：无明细无重试，消失件与真失败混同）；全失败文案矛盾（AF-1 汇总宣称的兄弟面 UI-P3-3：0 成功仍报「已自动更新」）；撤销进度（EFF-4 = UI-P3-4 同根）；全选快捷（EFF-2 = UX-2）；非 md 拦截（AF-4 = UX-1）。旧账补核：「padding 抬档形态」复核成立与 §8.2 相容（coarse 行高实算 42px、gap 4px 无互叠，守卫在位）——pomodoro 批同款先例。旧账复核 2 条：F10 已修在位（data.ts:66-71，缺直接回归用例记测试缺口）；AT1（planMoves 冲突集不含文件夹）仍在未修并入报告。两个似是而非候选排除有据（md 链接 #page 锚点剥锚正确；HTML img 不收集属安全侧）。门禁基线：tsc 0；tests/attach + smoke 58 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
