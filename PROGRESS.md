@@ -565,3 +565,22 @@
 - [x] 边界：数据层零改动（ADR-0170 语义原样）；重开旧墙 `showSkeleton` 跳过（旧内容留场无骨闪烁）；不加人为 loading 下限
 - [x] 测试：`tests/diary/ui.test.ts` 新增 2 例（冷开 / 缓存命中命中路径均「openManager 返回时骨架在位、内容未到」，内容到达后骨架退场）
 - [x] 门禁：tsc 0 错 + diary 子集 79/79 + 全量测试 + 自审 + diff 审查 + 主仓构建部署
+
+## Issue 384 — 剪藏本：保存图片后自动复制嵌入 wikilink 到剪贴板
+
+**状态：已实现**（2026-09-19，memo-code-fix worktree 门禁）
+
+- [x] 规格：`issues/384-clipbook-save-image-copy-embed-wikilink.md`（备忘录 item-1789790237962-3884qs）
+- [x] `actSaveImage` 成功路径新增 `copyImageEmbedLink`：`![[本地路径]]` 写剪贴板；不另发成功通知防双弹；API 缺席静默、被拒 notifyActionError 带因
+- [x] 测试：`tests/clipbook/image-save-clipboard.test.ts` 3 例（成功格式 / 写入被拒容错 / 无 clipboard API 静默）
+- [x] 门禁：tsc 0 错 + worktree 全量 6127/6127 + 自审 + diff 审查 + 主仓终态全量 + 构建部署
+
+## Issue 385 — 日记本：头行与弹窗 UI 减法（今天/关闭钮、筛选窗 ✕、写弹窗此刻/昨天 chips 与筛选类型框）
+
+**状态：已实现**（2026-09-19，memo-code-fix worktree 门禁）
+
+- [x] 规格：`issues/385-diary-ui-subtraction-today-close-chips.md`（备忘录 item-1789787088977-ua9g8n；覆盖 2026-09-11 移动端关闭钮补回决定）
+- [x] 三处纯减法：头行 today/close 钮（backToToday 连带删）、mkDateFilter ✕ 钮（关闭走遮罩/ESC）、写弹窗 dt-quick chips 与 createTagFilter 写弹窗挂载
+- [x] 口径：滚轮弹层内「此刻」钮保留（二级选择器功能钮）；标签选择器浮层过滤框保留；`.bz-diary-tag-filter` 样式保留
+- [x] 测试同步 6 处：ui.test 头行断言收敛 + 关闭复位优先退役 + E6 改遮罩关闭；wall-fix-c 今天钮退役；datetime-picker-fix chips 2 例退役；dialogs-fix-a 改回归钉
+- [x] 原型 `prototypes/diary/` build-preview 重出；门禁：tsc 0 错 + worktree 全量 6118/6118 + 自审 + diff 审查 + 主仓终态全量 + 构建部署
