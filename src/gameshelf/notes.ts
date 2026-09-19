@@ -4,6 +4,7 @@
  * 新建笔记 / processFrontMatter 管辖键 upsert（用户正文与自定义 frontmatter 绝不覆盖）。
  */
 import type { App, TFile } from 'obsidian';
+import { stripTitleMarks } from '../core/ui/str';
 import { M, resolveGameshelfFolderPath, type GameItem } from './state';
 import { buildSyncPlan, managedFm, mergeTags, migrateLegacyKeys, notePathFor, sanitizeFileName, type NoteSnapshot } from './reconcile';
 import type { SteamOwnedGame } from './steam';
@@ -41,7 +42,8 @@ export function rebuildItems(app: App): GameItem[] {
     items.push({
       file,
       appid,
-      name: file.basename.replace(/^《/, '').replace(/》$/, '').trim() || `App ${appid}`,
+      // 展示名剥书名号走 core 单源（cons C10 收编：域内自写与正典逐字同义，防止日后分叉）
+      name: stripTitleMarks(file.basename).trim() || `App ${appid}`,
       zhName: typeof zh === 'string' && zh.trim() ? zh.trim() : null,
       playtimeMin: intOf(readVal(fm, '游玩分钟', 'playtimeMin')),
       lastPlayed: typeof readVal(fm, '最后游玩', 'lastPlayed') === 'string' ? String(readVal(fm, '最后游玩', 'lastPlayed')) : '',
