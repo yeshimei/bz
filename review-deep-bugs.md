@@ -617,18 +617,20 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## checkup（数据体检）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率运行中，4/5 待槽位）
+## checkup（数据体检）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致运行中，5 待槽位）
 
-> 明细：`.scratch/review-deep/checkup-{func,ui}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3。跨方向去重：可选段 info（func P3-6 = UX 可选段豁免同刀）；「全部通过」矛盾（func P3-9 判定点即 ui.ts:252-261）；时态失真（func P3-5 UI 呈现面）；白名单漂移黄/info 常态 + 组头计数差（func UX-2 同刀）。**UI P2-1 跨层**：体检×设置面板 hide 型常驻层重开只 topifyZ 不重放 ESC 注册，交叉使用后按 ESC 关的是被盖住面板（esc-manager LIFO 注册序 vs ADR-0067 显示序失配）——修复面可能涉 core escManager 或两层注册时点。旧账：review-all2「ui 生命周期成对清理」与新 P2-1 不矛盾（成对清理 ≠ 重开抬栈）。门禁基线：tsc 0；tests/checkup 43 例全绿。
+> 明细：`.scratch/review-deep/checkup-{func,ui,efficiency}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3；方向 3（效率）：P2×1 + P3×7 + UX×2。跨方向去重：进度反馈簇（ui UX-3 进度终值 = eff P2-1 中段静止 = ui P3-4 uiProgress 绕开同刀）；undo 动线两面（ui P3-1 撤销后报告不收敛语义面 + eff P3-1 通知碎化呈现面）；失败重试（eff P3-3 两条失败路径都未接 core 范式）；缓存面（func 缓存 + eff P3-6 无失效口径）。旧账：review-ux #13 维持开放（缓存命中已把二次成本降零，优先级不高）。门禁基线：tsc 0；tests/checkup 43 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
 - **P2 白名单漂移簇（4 处未修 + 根治 G1）**：clipbook.json 3 键（issue 339/358 扩段 marks/savedImages/pendingSource/readLog 未同步，用过剪藏恒报 warn）、news.json 2 键（缺 lastFetchAt/fetchIntervalMin，news.json 存在即恒误报）、home.json v1（=D4'，编辑过入口顺序恒报）、belongings.json 5 vs 3 键（A1 升 P2，活跃库恒报缺段 info）。修：4 白名单对齐 + **G1 契约测试**（SEGMENT_FIELDS × 各域写侧形状常量恒等锁，根治）。
 - **P2 ESC 栈序与 z 序失配**（ui P2-1，跨层）——体检/设置面板 hide 型常驻层重开只 topifyZ 不重放 ESC 注册：交叉使用后按 ESC 关掉的是被盖住面板。修：重开重放/抬 ESC 注册（或 core escManager 语义升级，随修复批现场定）。
+- **P2 大库体检中段反馈静止**（eff P2-1）——孤儿段扫描数秒~十秒级文字常量 + 进度条仅 4 档，感知近似卡死。修：进度粒度细化（与 ui UX-3/ui P3-4 同刀）。
 - **P2 双链核对承诺不兑现**（P2-5）——检查四实为同构链比计数，语义漂移检不出。修：按词条承诺实现或修正注释+检查语义（拍板倾向随修复批定）。
 - **P3 群（9 条）**：读失败吞成不存在假绿（与 clipbook C24 口径分叉）；favorites.json 非数组形态三项检查全绿漏检；扫描清单缺 lock-stats.json；孤儿检查缺 gameshelf 封面；「已自动留档并重建」时态失真（体检当下没重建）；可选段 missing info 常态化（archived + task 双症，**待拍板：可选段豁免机制**）；clipDirOf 收编；undo 无条件覆盖用户后续编辑；summary「全部通过」与黄组 info 同屏矛盾（纯 info 场景恰是常态组合）。
 - **P3 群（ui 4 条）**：撤销修复后报告不收敛反向失真（undo 只恢复数据不重算报告）；fixOrphanIssues 中途抛错丢前序 undo 闭包 + 报告不刷新；「查看详情」钮热区 <44px 且无 aria-expanded（bz-touch-target--xl 与 clipbook aria 先例未消费）；单源偏离簇（renderRunning 步骤名副本 + `i<4` + 绕开 uiProgress 手写宽度，当前逐字一致无即时症状）。
-- **UX 分流（CK 系）**：可选段豁免机制（与 P3-6 同刀）；「全部通过」文案口径（与 summary 矛盾同刀）；移动端 86vh 接 dvh；空态双「开始体检」去一；进度条终值 75% 即切页。
+- **P3 群（eff 7 条）**：undo 通知碎化（最多 5 条 notifyUndo 堆叠挤兑，与确认框总数不符）；修复执行期无忙碌态（确认后写盘窗口零指示，数据有三层兜底仅反馈缺位）；失败重试未接满（体检失败裸 notice + 修复失败未传 onRetry）；大报告全量渲染（数千行 + 隐藏 pre 也全量进 DOM）；体检后台完成零通知；缓存无失效口径（stale 提示静态恒显无 mtime 比对）；clipbook 三修复组三次全文件读写（可批内一次）。
+- **UX 分流（CK 系）**：可选段豁免机制（与 P3-6 同刀）；「全部通过」文案口径（与 summary 矛盾同刀）；移动端 86vh 接 dvh；空态双「开始体检」去一；进度条终值 75% 即切页；一键修复作用域中间粒度（按域分组修复）；stale 提示条可操作化。
 
 ---
 
