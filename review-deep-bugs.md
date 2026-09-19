@@ -615,6 +615,41 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **主线程文档**：CONTEXT.md:227 词条三处漂移 + 注释漂移族（styles.css:197/entry-editor.ts:9/order.ts:59）。
 - **拍板清单 H 系更新**：weekly.ts 裁剪**前置约束 = A1 解环完成**（本批落地后即可裁）；其余 H 系不变。
 
+---
+
+## checkup（数据体检）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率运行中，4/5 待槽位）
+
+> 明细：`.scratch/review-deep/checkup-{func,ui}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3。跨方向去重：可选段 info（func P3-6 = UX 可选段豁免同刀）；「全部通过」矛盾（func P3-9 判定点即 ui.ts:252-261）；时态失真（func P3-5 UI 呈现面）；白名单漂移黄/info 常态 + 组头计数差（func UX-2 同刀）。**UI P2-1 跨层**：体检×设置面板 hide 型常驻层重开只 topifyZ 不重放 ESC 注册，交叉使用后按 ESC 关的是被盖住面板（esc-manager LIFO 注册序 vs ADR-0067 显示序失配）——修复面可能涉 core escManager 或两层注册时点。旧账：review-all2「ui 生命周期成对清理」与新 P2-1 不矛盾（成对清理 ≠ 重开抬栈）。门禁基线：tsc 0；tests/checkup 43 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 白名单漂移簇（4 处未修 + 根治 G1）**：clipbook.json 3 键（issue 339/358 扩段 marks/savedImages/pendingSource/readLog 未同步，用过剪藏恒报 warn）、news.json 2 键（缺 lastFetchAt/fetchIntervalMin，news.json 存在即恒误报）、home.json v1（=D4'，编辑过入口顺序恒报）、belongings.json 5 vs 3 键（A1 升 P2，活跃库恒报缺段 info）。修：4 白名单对齐 + **G1 契约测试**（SEGMENT_FIELDS × 各域写侧形状常量恒等锁，根治）。
+- **P2 ESC 栈序与 z 序失配**（ui P2-1，跨层）——体检/设置面板 hide 型常驻层重开只 topifyZ 不重放 ESC 注册：交叉使用后按 ESC 关掉的是被盖住面板。修：重开重放/抬 ESC 注册（或 core escManager 语义升级，随修复批现场定）。
+- **P2 双链核对承诺不兑现**（P2-5）——检查四实为同构链比计数，语义漂移检不出。修：按词条承诺实现或修正注释+检查语义（拍板倾向随修复批定）。
+- **P3 群（9 条）**：读失败吞成不存在假绿（与 clipbook C24 口径分叉）；favorites.json 非数组形态三项检查全绿漏检；扫描清单缺 lock-stats.json；孤儿检查缺 gameshelf 封面；「已自动留档并重建」时态失真（体检当下没重建）；可选段 missing info 常态化（archived + task 双症，**待拍板：可选段豁免机制**）；clipDirOf 收编；undo 无条件覆盖用户后续编辑；summary「全部通过」与黄组 info 同屏矛盾（纯 info 场景恰是常态组合）。
+- **P3 群（ui 4 条）**：撤销修复后报告不收敛反向失真（undo 只恢复数据不重算报告）；fixOrphanIssues 中途抛错丢前序 undo 闭包 + 报告不刷新；「查看详情」钮热区 <44px 且无 aria-expanded（bz-touch-target--xl 与 clipbook aria 先例未消费）；单源偏离簇（renderRunning 步骤名副本 + `i<4` + 绕开 uiProgress 手写宽度，当前逐字一致无即时症状）。
+- **UX 分流（CK 系）**：可选段豁免机制（与 P3-6 同刀）；「全部通过」文案口径（与 summary 矛盾同刀）；移动端 86vh 接 dvh；空态双「开始体检」去一；进度条终值 75% 即切页。
+
+---
+
+## reading-report（阅读报告）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致 / 5 架构运行中）
+
+> 明细：`.scratch/review-deep/reading-report-{func,ui,efficiency}.md`。方向 1（func）：P2×2 + P3×8 + UX×1；方向 2（UI）：**P1×1** + P2×2 + P3×10 + UX×2；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1。**双 P1 同根**：RR-U1（ui）= EFF-1（eff）桌面报告视图零返回书架出口——`bz-rr-close` 桌面 display:none、注释宣称的左栏入口已随书脊墙换血退役、M.view 会话保持重开仍落报告视图，**review-ux #23 翻案实锤**（钮仅移动端显示，func 复核沿用了过时表述）。跨方向归并：EFF-8 死字段族扩容（monthlyTrend + trends 未消费 7 字段一刀清）；RR-F2 同根项（重算闪空/状态重置）不重复；RR-U13（报告视图下宿主搜索框可点只刷隐藏墙）移交 bookshelf 域复核。旧账：G10/样式漏注册/内联 hex 闭环在位、#24 缓解、字典序负债维持。门禁基线：tsc 0；tests/reading-report 88 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P1 桌面报告视图零返回出口**（RR-U1 = EFF-1，#23 翻案）——修：返回钮恢复可视 + 键盘可达 + 可视性用例。
+- **P2 键盘不可达簇**（EFF-2 = RR-U2 同根）——年卡/作者卡 role=button 假可达（无 tabindex/keydown）、分类行无 role、委托 click 单路、年卡无 aria-expanded。修：可达性对齐。
+- **P2 触控热区低于 §8.2**（RR-U3 = EFF-10 同根）——翻月钮 28px/移动返回钮 22px（无 aria-label）、域内零 bz-touch-target 消费。修：挂类。
+- **P2 O(n²·m) 主计算热点**（EFF-3）——单趟归并。
+- **P2 往返无缓存全量重算**（EFF-4）——渲染产物缓存或懒重算。
+- **P2 书架 chrome 死控件簇残留**（EFF-5，与 RR-U13 移交项相邻）——报告态隐藏宿主搜索/排序/标签。
+- **P2 EPUB 分类未接 subjects 通道**（RR-F1）；**P2 自动重算静默通道**（RR-F2 + EFF-7 + RR-UX1 同刀）。
+- **P3 群（func 8 条）**：分类预填多类筛不中 + 多样性超 100%；EPUB progress 前置+钳负；readingTimeFormat 兜底；冷开白屏（rebuildItems 串行门控可并行）；自动刷新漏单文件形态；Record 键原型污染；会话无 type 完成率恒 0；start 补 0 幽灵月。
+- **P3 群（ui 10 条）**：热力图 cursor 伪装可点 + hover z-index 失效 + 触屏无 tooltip；时长格式化三套混用；月柱标签双源分叉；**未配对 </div> 两处**（node 脚本验证）；速度段编造值（均值×1.2 上屏）；hm-grid 负 margin 横拖 20px；骨架占位内联样式漏收编（守卫只扫 report.ts）；图表标签宽度缺陷；空会话亮默认 50 分；EFF-6 假重试文案收编 notifyActionError；EFF-7 小库双 toast（QUIET_TOAST 注释失实）；EFF-9 重复计算杂项族。
+- **顺带**：死字段一刀清（monthlyTrend + trends 未消费 7 字段）。
+- **UX 分流（RR 系）**：翻月年份跳跃导航（EFF-U1）；速度段零数据整段消失（RR-UX2 空态形制）；topCategory 截断 title（RR-UX3）。
+
 ### 已入账条目（跨方向去重归并）
 
 - **P3 采集失败态只覆盖「全部域」列**（func P3-1）——时间线列永挂加载文案。修：失败态覆盖 flow 列（按 func/ui 联合设计：flow-empty 行级语义 + 一次重试恢复两列 + 三态区分）。
@@ -633,9 +668,17 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## settings-panel（设置面板）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率 / 4 一致运行中，5 待槽位）
+## settings-panel（设置面板）域 · 5/5 方向到账，修复批 `bz-fix-sp-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/settings-panel-{func,ui}.md`。方向 1（func）：P2×2 + P3×5 + UX×1。方向 2（UI）：P2×2 + P3×6 + UX×2。跨方向去重：搜索交互簇（func F-1 恢复放出门控行 = ui UI-6 徽标不重算/UI-7 大小写敏感同搜索链路；UX-2 ESC 二段与 ui UI-1 同刀）；styles.css:1042 `-var(` 旧账由 ui UI-3 收编展开（移动端返回钮右距声明整条被丢弃）；R9 缝升级维持（func 补充：core R9 修法含回显+行内报错而 panel 两者皆无）；GS3 secret 纯死特性（连 `.secret` 样式规则都没有，仍按拍板不立项）。旧账闭环确认 4 组。门禁基线：tsc 0；settings-panel 相关 83 例全绿。
+> 明细：`.scratch/review-deep/settings-panel-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×2 + P3×5 + UX×1；方向 2（UI）：P2×2 + P3×6 + UX×2；方向 3（效率）：P3×6 + UX×2；方向 4（一致）：P2×1 + P3×4；方向 5（架构）：P2×1 + P3×4 + 建议×3。**枢纽归因 ARCH-1（P2）**：渲染器行为内核双实现（core 与面板「协议共享、行为复刻」），core 历轮加固（N5 safePersist/R9 钳制/C10 容错/H6）均不传导——C-1/C-2/R9/F-3/F-4 五项同根，修法 = safePersist/CommitWarn/number 钳制下沉 core 导出一次收口。跨方向簇：落盘兜底簇（F-5+E-1+C-1）、搜索交互簇（F-1+UI-6/UI-7+E-5）。**对表合规 2**：效率整改 5 通过（重置保留确认合规，danger 反焦缺仍修）；ADR-0104/0106 缓行了结现状合规（依赖方向全链合规 19 域 loader 动态 import、双产物指纹守卫覆盖）。旧账：R9/1042/GS3/#37/#38 对账毕。门禁基线：tsc 0；settings-panel 相关 113 例全绿。
+
+### 修复批定稿（单批 `bz-fix-sp-core`）
+
+- **P2 枢纽**：ARCH-1 渲染器内核下沉（safePersist/CommitWarn/number 钳制 core 导出、面板双渲染器消费——F-3/F-4/C-1/C-2/R9 五项随刀消）；F-1 搜索恢复按门控重求值；F-2 移除聚焦行前 flush 防抖；UI-1/UI-2 自绘下拉对齐 core uiSelect 范式（ESC 内层语义 + 触发器可达）。
+- **P2/P3 UI 面**：UI-3 1042 calc；UI-4 热区挂类；UI-5 model-picker vvh；E-2 danger 反焦；E-3 firstFocusable 焦点圈定；E-4 roving tabindex；F-5/E-6 重置假成功+移动端重置入口；C-3 chips 收编 uiChip；C-4 notifyActionError 收编；C-5 registerPanelEsc 收编。
+- **P3 效率/架构**：E-5 搜索防抖；UI-6/UI-7 徽标重算+大小写不敏感；UI-8 计数口径统一；E-8/ARCH-2 schemaLoader 会话缓存 + preloadAllBadges in-flight 单飞；ARCH-3 DOMAINS 遍历契约锁测试；ARCH-4 中文组名锚点断言；ARCH-5 徽标硬编码断言改契约承接。
+- **主线程文档**：CONTEXT.md:463 chips 句纠偏。
+- **UX 分流（SP 系）**：U-1/E-7/E-8 缓存滚位/UX-1 词级 mark/UX-2 ESC 二段——拍板。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
@@ -645,7 +688,10 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 群（func 5 条）**：list 行移除回调无 try/catch（core C10 口径分叉）；初始渲染 visibleWhen 求值裸奔（单行异常放大成整域「加载失败」）；「重置本域」saveSettings 裸奔假成功；搜索态 ↑↓ 在未过滤全集切换；移动端搜索缓存不做端门控过滤。
 - **P3 群（ui 6 条）**：1042 `-var(` 无效声明；触控热区群低于 §8.2 下限且全域零 bz-touch-target 消费（返回/关闭 32px、菜单项 30px、chips ✕ 12px）；#bz-model-picker-popup 裸 100vh 未接 vvh；搜索过滤后组卡徽标不重算；搜索判定大小写敏感；nav 徽标「门控变化后自动跟随」注释不兑现且两套计数口径分叉。
 - **P3 R9 缝升级修法**：非法输入 NaN→0 写入 → 对齐 core「不写入+回显旧值+行内报错」口径。
-- **UX 分流（SP 系）**：输入态 ↑↓ 让路光标移动 or 保留切域（U-1 拍板）；搜索命中行词级 mark（UX-1）；搜索框 ESC 二段清词（UX-2，✕ 退役有拍板在案故仅 ESC 语义）。
+- **P3 群（eff 6 条）**：行级落盘 reject 全域静默（renderer.ts 8 处 `void acc.persist()` 无 catch，core 渲染器 N5 safePersist 已兜口径分叉）；「重置本域」确认弹窗缺 danger 反焦（全仓破坏性惯例 8+ 处本域唯一掉队，Enter 一击即重置）；零初始焦点无圈定（uiModal firstFocusable 未消费）；左栏 Tab 序 20+ 欠 roving tabindex；搜索零防抖（每键全量重建+图标物化+全行重扫）；移动端无「重置本域」入口（#37 加剧面）。
+- **P3 群（cons 4 条）**：C-2 五类行 commit 点缺 `refresh()`（值驱动 visibleWhen 面板侧不跟随，存量门控多为 toggle 暂潜伏）；C-3 路径 chips 注释/词条宣称消费 uiChip 实为域内自绘（连带 ✕ 无 role/aria/键盘）；C-4 域加载失败通知手写（未收编 notifyActionError+onRetry，非 Error 抛出物显示 "undefined"）；C-5 ESC 注册未收编 registerPanelEsc 幂等样板（八域先例，纯形制）。
+- **修复批归集（5/5 齐后定稿）**：落盘兜底簇统一 safePersist 收编、搜索交互簇（门控重求值/防抖/大小写/徽标重算）、blur flush、danger 反焦、roving tabindex、焦点圈定、visibleWhen 初始求值容错、重置假成功、移动端重置入口、chips 收编 uiChip、notifyActionError 收编、registerPanelEsc 收编、1042 calc、R9 缝、model-picker vvh、路径单源（arch 到账后补）。
+- **UX 分流（SP 系）**：输入态 ↑↓ 让路光标移动 or 保留切域（U-1 拍板）；搜索命中行词级 mark（UX-1）；搜索框 ESC 二段清词（UX-2，✕ 退役有拍板在案故仅 ESC 语义）；搜索 Enter 跳首个命中（E-7）；schemaLoader 会话级缓存+滚位保持（E-8）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
