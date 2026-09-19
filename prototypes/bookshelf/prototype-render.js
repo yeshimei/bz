@@ -1,4 +1,4 @@
-/* 源指纹 12597b2e540d9fe7 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0f63f9215cb90760 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/bookshelf/constants.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/bookshelf/render.ts → window.BZR_bookshelf（评审壳预览包，ADR-0104） */
 var BZR_bookshelf = (() => {

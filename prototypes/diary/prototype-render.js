@@ -1,4 +1,4 @@
-/* 源指纹 366fe21e41844853 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 18994f532e5686b9 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/diary/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/diary/render.ts → window.BZR_diary（评审壳预览包，ADR-0104） */
 var BZR_diary = (() => {
