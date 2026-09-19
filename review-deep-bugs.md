@@ -526,7 +526,15 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## gameshelf（游戏库）域 · 5/5 方向到账两批定稿；批 A 已合并（63881bb1），批 B `bz-fix-gs-view` 运行中
+## gameshelf（游戏库）域 · ✅ 闭环（2026-09-20，两批合并 + 主线程收口，部署 ca994a2d）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **批 B `bz-fix-gs-view`（cdc3b032→027f7671，19 项）**：P1 renderSoft 两层（400ms 打字静默顺延 + 焦点快照落回，`M.renderFn` 绑定改指 renderSoft——三队列/sync 调用点零改动全收；下拉菜单存活判据）；window.open→openExternalUrl；三枚图标钮挂 bz-touch-target--lg；**转义单源收编**（域内 escHtml/escAttr 退役 → core esc/escAttr + escCssUrl 单引号上下文；notes.ts stripTitleMarks 收编并与批 A displayBaseName 并集）；heroz min-height；三控件 setValue 互译；openDetail 收预览；搜索防抖 180ms + ESC 二段清词 + 尾✕；closePanel 清理清单一次收口；chips aria-pressed；firstChar 码点；indexInList 身份失效缓存；ESC id→bz-gameshelf；vvh 注释纠偏。测试 +26。
+- **合并与主线程收口**：d49be1fa（产物冲突 rebuild 收敛）；c20ce418 三笔——**F5 关停三选二**（closePanel 补 unloadPosters()，三队列关停语义一致）、**A4 收尾**（detail.ts:21 import 改 ./state + 删 sync 转发；守卫用例翻转「正典唯一出口」）、**C2 余量**（report 月键/ui 排行序号 pad2）。
+- **文档收口**：AGENTS.md 领域清单补 gameshelf 行（A8）；CONTEXT.md 词条 C8a「游戏架」→「游戏库」、C8b 立即同步补「详情回填」三队列；C7 vvh 注释随批 B 已纠。
+- **门禁与部署**：tsc 0 + gameshelf 169 + freshness 28；全量 6511 全绿；部署 **ca994a2d**；worktree + 分支清理。
+- **残款登记**：core uiChip 缺省 aria-pressed（跨域 core 批，收尾统一）；eff E6 sync.ts then/finally 重复 + index.ts 收尾 renderAll（编排区登记）；GS1-GS4 拍板在案。
 
 > 明细：`.scratch/review-deep/gameshelf-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1：P1×1+P2×2+P3×11；方向 2：P1×1+P2×1+P3×4+UX×6+缺口7；方向 3 效率：P1×1+P2×2+P3×4+UX×1+缺口5；方向 4 一致：P2×1+P3×9+UX×2+缺口3；方向 5 架构：P2×2+P3×6+建议4+缺口6。跨方向去重：整刷失焦（ui G1=eff P1=cons 节流三份三语义，增量通道 renderList 已在只差接线）、转义单源（cons P2=func F9=ui G4=arch A5 四向同源，升级为 core escapeHtml 收编）、触控热区（ui G2=cons）、recent/months 死字段（eff=cons）、双套控件单向同步（eff=ui G5）、metadataCache 守卫（arch A2 是 func F1 修复的配套，防打折）。旧账复核：uiModal 焦点旧账过时（core modal.ts 已有开聚焦/trap/还原）、移动下拉 ESC 冒泡与 lightbox N7 归 core 批维持原判、review-ux-suggestions 3 条（2 缓解维持/1 拆出 GS4）。已核验健壮面：域内零环引用（队列→ui 全走 M 回调槽）、core 控件 11 件复用、原型单源机制在位、main 接线三命令三段式+onunload 链完整、M 十四字段唯一写者、ESC 四层栈序、异步 detached DOM 守卫、媒体三级兜底。门禁基线：tsc 0；tests/gameshelf 118 例全绿（五方向一致）。
 
@@ -557,7 +565,16 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## favorites（收藏夹）域 · 5/5 方向到账两批定稿；批 A 已合并，批 B `bz-fix-fav-view` 运行中
+## favorites（收藏夹）域 · ✅ 闭环（2026-09-20，两批合并 + 主线程收口，部署 ca994a2d）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **批 A `bz-fix-fav-data`（ad5aa9fd，数据可靠性）**：normalizeItems 读侧归一管道（漂移防御 + 剔除告警 + url 归一）、编辑窄化合并写（盘侧 linkedNote/balance 系不被表单回滚）、type=tags[0] 三链路收口、normalizeAiOrganizeResult、kind 契约锁、死键清理、双实例方案钉死。测试 150→172。
+- **批 B `bz-fix-fav-view`（bda19b82→069919e1，17 项）**：**E1 删除/归档免确认直达 notifyUndo**（确认框退役 + core/notice.ts:139 注释纠偏 + 契约翻转）；滚位保持；E3/FV2 守卫走 requestCloseForm；100vh→vvh；负 margin calc；强制聚焦退役；Enter 双表单收编 bindFormSubmit；标签哨兵值 + 保留字拒收；卡片/置顶键盘可达（role=button/switch）；加载占位/激活 chip 灰显/空态分视图/safeTagIcon 白名单/标签弹窗脏拦截 + 独立类名/热区；boardHtml O(n) 建表；保存路径 normalizeUrl；**restored 撤销补发事件**（六 kind 契约）；C3 registerPanelEsc 收编；C5 死 import；批 A 移交接线两行（normalizeAiOrganizeResult 消费 + tagManagerDm 双实例收口）。测试 172→200。
+- **合并**：439f5465（产物冲突 rebuild 收敛）。
+- **文档收口**：**CONTEXT.md:75 favorites 词条迁正**——昨日 belongings 词条收口时锚点串在两词条同现、replace 全量替换把 belongings 演进段误植进 favorites 词条（cons C1 报告捕获，主线程自纠）：误植段迁回 belongings 词条，favorites 补本域真实演进段（C5 换血注记 + 批A/B 收口清单）；**B7 行勘误**（「favorites 已落地」误记更正，两域现已真落地）。
+- **门禁与部署**：tsc 0 + favorites 200 + gameshelf 169 + freshness 28；全量 6511 全绿；部署 **ca994a2d**；worktree + 分支清理。
+- **残款登记**：GS3 同款 secret 死特性确认（全仓 secret: 零使用，拍板项）；settings-panel:1042 负 margin 同族（随其域轮）；prototypes/favorites/PROTOTYPE.md vvh 注记过时（文档小票）；F 系拍板 6 项在案。
 
 > 明细：`.scratch/review-deep/favorites-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1。方向 2（UI）：P2×6 + P3×7 + UX×3。方向 3（效率）：P2×3 + P3×3 + UX×3。方向 4（一致）：P2×2 + P3×4。方向 5（架构）：P2×1 + P3×2 + 建议×1 + 归因 4 组。跨方向去重：哨兵撞名（func-7 = ui UI-05）、主表单 Enter 三向同根（ui UI-11 = eff E4 = cons C6，手写缺 isComposing）、单例守卫绕脏检查（eff E3 = FV2）、100vh→vvh（ui UI-01 = cons C4，已接 bz-panel-mtop 却漏 vvh 的半成品对）、ESC 旗标收编（= cons C3 六域先例）、**func-3/4/5+E6 归因收口**（arch：写侧字段维护散布→DataManager 事务收口、normalizeUrl 挂读侧、控制字面量与用户数据共用命名空间）。**文档误记三处清单**：core/notice.ts:139 + B7 行 + CONTEXT.md:75 词条（交互口径停 ADR-0083 + belongings 演进史误植 + 删除免确认误载）。**E1=C2 双向复核**：favorites 是删除口径唯一活跃滞后域（pv 拍板保留合理例外）。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
 
@@ -586,11 +603,19 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## home（首页）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率运行中，4/5 待槽位）
+## home（首页）域 · 5/5 方向到账，修复批 `bz-fix-home-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/home-{func,ui}.md`。方向 1（func）：P3×3 + UX×1（无 P1/P2；命令对账零漂移、行为流换源口径闭环）。方向 2（UI）：P2×3 + P3×6 + UX×3。旧账复核 8 项全对账：gameshelf 批 A river 竞态获独立复核确认、图标单源/保险库副题/ESC 注销在位；review-ux #34/#36 维持、**#35（移动端滑两屏）已被 order:-1 改版实质消化**（其引用的失实注释即本轮 P3-6）。func 方向专节给出了失败态 UI 呈现设计建议（flow 列行级失败位+一次重试恢复两列+三态区分），修复批照落。门禁基线：tsc 0；tests/home 121 例全绿。
+> 明细：`.scratch/review-deep/home-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P3×3 + UX×1；方向 2（UI）：P2×3 + P3×6 + UX×3；方向 3（效率）：P2×2 + P3×2 + UX×1；方向 4（一致）：P3×4；方向 5（架构）：P2×2 + P3×4 + 建议×3 + 缺口6。跨方向去重：**A1 域间环**（home⇄recap 顶层环，全仓唯一，由 weekly.ts 死模块 parseLocalDay 撑起——**给 H 系 weekly 裁剪拍板加硬前置：先解环再裁**，修复批先做解环部分）；D4' home.json 白名单（= pomodoro PA-1 同类白名单滞后）；焦点/滚位姊妹面；A5 renderAll 全量重建丢焦点的架构成因（ADR-0104 纯函数渲染结构性代价，gameshelf renderSoft 先例收敛位）。效率整改 5 home 对表通过。门禁基线：tsc 0；tests/home 121 例全绿。
 
-### 已入账条目（跨方向去重待 5 方向齐）
+### 修复批定稿（单批 `bz-fix-home-core`）
+
+- **P2**：A1 解环（parseLocalDay 收编 core 单源、river 改引，环断；weekly 本体留 H 系拍板）、A2 行为流契约对账测试 + sidecar 路径单源（引 smartcat/memory 导出）、ui P2×3（vvh/热区/入口列滚动兜底）、eff P2×2（采集窗口裁剪+同刷新复用/滚位记忆）。
+- **P3**：func P3-1 失败态三态设计（flow-empty 行级+一次重试恢复两列）、P3-2 reject catch；ui P3×6（转义/空轨道+断言翻转/周历 aria/焦点保持/排序键盘可达/注释纠偏主线程）；eff P3×2（隐藏端入口短路/keepHome 防重入反馈）；cons P3×4（escManager 死 import/三副本收编单源随批，词条与注释漂移归主线程）；A3 await 后存活守卫、A4 nextOff 删变量现算、A5 焦点保持按 renderSoft 先例、A6 随 A1/H 系；**D4' home.json 段白名单 v3 一行 + 契约测试（跨域授权 `src/checkup/checks-drift.ts`）**。
+- **建议随批**：render-purity 可变状态半边、采集器形态记录维持；app: any 类型面渐进。
+- **主线程文档**：CONTEXT.md:227 词条三处漂移 + 注释漂移族（styles.css:197/entry-editor.ts:9/order.ts:59）。
+- **拍板清单 H 系更新**：weekly.ts 裁剪**前置约束 = A1 解环完成**（本批落地后即可裁）；其余 H 系不变。
+
+### 已入账条目（跨方向去重归并）
 
 - **P3 采集失败态只覆盖「全部域」列**（func P3-1）——时间线列永挂加载文案。修：失败态覆盖 flow 列（按 func/ui 联合设计：flow-empty 行级语义 + 一次重试恢复两列 + 三态区分）。
 - **P3 runCommand 直达命令 Promise reject 静默**（func P3-2）——Promise 挂 catch → 人话通知。
@@ -599,21 +624,28 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P2 桌面「全部域」入口列溢出不可滚**（ui P2-3）——15 行 ≈600px 压 580px 面板上限，矮窗口必裁无兜底。修：max-height+overflow 滚动兜底。
 - **P3 群（ui 6 条）**：data-tl-size 属性插值未转义（域内唯一裸插值）；预告栏关闭后桌面空轨道留白 224px（display:none 不塌缩显式 grid 轨道，与注释意图相反，现有测试断言的正是实现手段故全绿——翻转断言）；周历选中格无 aria 状态（原型同源需两侧同步修）；renderAll 全量重建丢焦点（周历切天已会局部保焦点，全量路径补同等待遇）；入口编辑器排序键盘不可达（Pointer 拖拽单路 + innerHTML 重建丢焦点）；移动端单列顺序注释三处矛盾（实际=瓦片→预告→时间线沉底，ui.ts:7 与 styles.css 自相矛盾——注释纠偏）。
 - **P3 weekly.ts「R1 生活周报」死代码**（func P3-3）——**处置拍板：裁 or 注明预留**（H 系）。
-- **UX 分流（H 系）**：外观组 homeLayout/homeSkin 可选可存不消费（占位接上 or 注明）；大面板无初始焦点/焦点圈闭（域族话题）；骨架期「全 部 域」标题数据到达后消失（原型同款）；过滤空态设置指引不可直达。
+- **UX 分流（H 系）**：外观组 homeLayout/homeSkin 可选可存不消费（占位接上 or 注明）；大面板无初始焦点/焦点圈闭（域族话题）；骨架期「全 部 域」标题数据到达后消失（原型同款）；过滤空态设置指引不可直达；空河空态引导词不可点（与过滤空态指引同刀）。
+- **P2 采集链 7/8 倍重复读盘解析**（eff P2-1）——collectRecap 按天调 7 次影院逐文件解析/json 读盘/书库扫描重复 7 遍 + home 计数段叠 1 遍，消费面只有 summary 五数字（items 全弃）；rangeDays 档位不裁剪采集窗口。修：窗口裁剪 + 同刷新内结果复用。
+- **P2 滚动视野零记忆**（eff P2-2，与 ui P3-4 焦点同链不同面）——closeOverlay display:none 复用丢滚位 + renderAll 全量重建丢滚位；keepHome 高频动作全是触发点。修：clipbook 效率#17 样板。
+- **P3 群（eff 2 条）**：隐藏端入口行照挂菜单（sheetHeadHtml + SVG 物化 + 监听每轮翻倍开销，端门控短路）；keepHome 慢动作静默窗口（home 侧防重入+即时反馈）。
+- **P3 群（cons 4 条）**：CONTEXT.md:227 home 词条三处漂移（「两列瓦片」实为单列/「移动端统计条」系外部 主页.md 误植/「顶部问候」头行已无——主线程文档收口）；注释漂移族三处（styles.css:197 教人复活死手势旧实现/entry-editor.ts:9 两列/order.ts:59 旧组路径）；escManager 死 import（ui.ts:24）；settingDir/fileExists/readJsonIfExists 三副本失败语义分化（recap 版抛错 vs home 版回 null，river.ts 静态依赖 recap 却重写其已 export 的 settingDir——收编单源）。
+- **修复批归集（home 5/5 齐后定稿）**：func P3-1 失败态三态设计、P3-2 reject catch、ui P2×3（vvh/热区/入口列滚动）+ P3×6、eff P2×2 + P3×2、cons P3×4（词条/注释主线程、死 import/三副本收编随批）、**D4' home.json 白名单一行+契约测试**、weekly 死代码（H 系拍板后处置）。
 
 ---
 
-## settings-panel（设置面板）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+## settings-panel（设置面板）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率 / 4 一致运行中，5 待槽位）
 
-> 明细：`.scratch/review-deep/settings-panel-func.md`。方向 1（func）：P2×2 + P3×5 + UX×1。旧账复核 8 组：已闭环 3 组（DOMAIN_ICONS/H1-H10 全闭环/linkAgentMinScore onChange 钳制）；**仍在 4 组**——R9 缝升级（非法输入 NaN→0 **写入**，比 core「不写入回显旧值」口径更重，建议升级修法）、styles.css:1042 `-var(` 无效声明（与 favorites UI-02 同族跨域记档）、GS3 密钥框确认全仓 `secret:` 零使用属预留死特性（拍板项）、core-consistency 提示手写实为已收编 notifySaveError（闭环）；F-2 即 core-func 新-1 的本域落账。门禁基线：tsc 0；settings-panel 相关 4 文件 69 例全绿。
+> 明细：`.scratch/review-deep/settings-panel-{func,ui}.md`。方向 1（func）：P2×2 + P3×5 + UX×1。方向 2（UI）：P2×2 + P3×6 + UX×2。跨方向去重：搜索交互簇（func F-1 恢复放出门控行 = ui UI-6 徽标不重算/UI-7 大小写敏感同搜索链路；UX-2 ESC 二段与 ui UI-1 同刀）；styles.css:1042 `-var(` 旧账由 ui UI-3 收编展开（移动端返回钮右距声明整条被丢弃）；R9 缝升级维持（func 补充：core R9 修法含回显+行内报错而 panel 两者皆无）；GS3 secret 纯死特性（连 `.secret` 样式规则都没有，仍按拍板不立项）。旧账闭环确认 4 组。门禁基线：tsc 0；settings-panel 相关 83 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
 - **P2 搜索过滤恢复放出门控行**（F-1）——恢复分支无条件 `display=''`，visibleWhen 门控隐藏的行/组（DeepSeek 密钥行、移动端组）整批放出直到下次 refresh。修：恢复按门控重求值。
 - **P2 卸载清理不派 blur，防抖窗口文本静默丢失**（F-2 = core-func 新-1 本域落账）——↑↓ 切域/卸载清理移除聚焦输入框不派 blur。修：移除前 flush 防抖（或派 blur）。
-- **P3 群（5 条）**：list 行移除回调无 try/catch（core C10 口径分叉）；初始渲染 visibleWhen 求值裸奔（单行异常放大成整域「加载失败」，H6 容错只守 refresh）；「重置本域」saveSettings 裸奔假成功；搜索态 ↑↓ 在未过滤全集切换（可切到不可见域无反馈）；移动端搜索缓存不做端门控过滤（命中隐藏行定位静默失效）。
-- **P3 R9 缝升级修法**：非法输入 NaN→0 写入 → 对齐 core「不写入回显旧值」口径。
-- **UX 分流（SP 系）**：单行输入框聚焦时 ↑↓ 直接切域与光标移动习惯冲突（U-1，与 F-2 同现象交互面——修复时拍板：输入态让路光标移动 or 保留切域）。
+- **P2 自绘下拉菜单无 ESC 内层语义 + 触发器裸 div**（ui UI-1/UI-2）——ESC 直关整个面板、纯键盘改不了任何下拉型设置；choiceCards radio 语义缺失；toggle 有 role=switch 同文件标准不一（原型同缺按 cinema P2-1 先例不豁免）。修：对齐 core uiSelect 范式。
+- **P3 群（func 5 条）**：list 行移除回调无 try/catch（core C10 口径分叉）；初始渲染 visibleWhen 求值裸奔（单行异常放大成整域「加载失败」）；「重置本域」saveSettings 裸奔假成功；搜索态 ↑↓ 在未过滤全集切换；移动端搜索缓存不做端门控过滤。
+- **P3 群（ui 6 条）**：1042 `-var(` 无效声明；触控热区群低于 §8.2 下限且全域零 bz-touch-target 消费（返回/关闭 32px、菜单项 30px、chips ✕ 12px）；#bz-model-picker-popup 裸 100vh 未接 vvh；搜索过滤后组卡徽标不重算；搜索判定大小写敏感；nav 徽标「门控变化后自动跟随」注释不兑现且两套计数口径分叉。
+- **P3 R9 缝升级修法**：非法输入 NaN→0 写入 → 对齐 core「不写入+回显旧值+行内报错」口径。
+- **UX 分流（SP 系）**：输入态 ↑↓ 让路光标移动 or 保留切域（U-1 拍板）；搜索命中行词级 mark（UX-1）；搜索框 ESC 二段清词（UX-2，✕ 退役有拍板在案故仅 ESC 语义）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
