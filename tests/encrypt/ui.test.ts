@@ -101,9 +101,10 @@ describe('UIManager 解锁弹窗', () => {
     confirmBtn.click();
     await new Promise((r) => setTimeout(r, 200));
     expect(dm.unlocked).toBe(false);
-    expect(hasNotice('密码错误，请重试')).toBe(true);
-    // 连续失败节流（P2）：失败后进入 1 秒冷却并提示剩余等待
-    expect(hasNotice(/1 秒后可再次尝试/)).toBe(true);
+    // 密码错误单通知（效率新-8）：行内报错与冷却提示合并为一条「密码错误，N 秒后可重试」
+    expect(hasNotice(/密码错误，1 秒后可重试/)).toBe(true);
+    expect(hasNotice('密码错误，请重试')).toBe(false);
+    expect(hasNotice(/1 秒后可再次尝试/)).toBe(false);
     await new Promise((r) => setTimeout(r, 1100)); // 等冷却结束再试
     (inputs[0] as HTMLInputElement).value = 'master123';
     confirmBtn.click();
@@ -1105,7 +1106,8 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     (inputs[0] as HTMLInputElement).value = 'wrong';
     confirmBtn.click();
     await new Promise((r) => setTimeout(r, 200));
-    expect(hasNotice('密码错误，请重试')).toBe(true);
+    // 密码错误（清单正常）走单通知「密码错误，N 秒后可重试」，无损坏确认
+    expect(hasNotice(/密码错误，1 秒后可重试/)).toBe(true);
     expect(document.getElementById('__shared_confirm_mask__')).toBeNull(); // 无损坏确认
     await new Promise((r) => setTimeout(r, 1100)); // 等失败节流冷却（P2）结束再试
     (inputs[0] as HTMLInputElement).value = 'pw';
@@ -1142,9 +1144,9 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
         prevUntil = (ui as any).unlockCooldownUntil;
         return delay;
       };
-      // 失败 #1 → 冷却 1s 并提示剩余等待；冷却期内再点被拒（不再触发 unlock）
+      // 失败 #1 → 冷却 1s 且单通知带剩余等待；冷却期内再点被拒（不再触发 unlock）
       expectDelayNear(await failOnce(), 1000);
-      expect(hasNotice(/1 秒后可再次尝试/)).toBe(true);
+      expect(hasNotice(/密码错误，1 秒后可重试/)).toBe(true);
       (inputs[0] as HTMLInputElement).value = 'wrong'; // 失败分支已清空输入，重新填入再试
       confirmBtn.click();
       await new Promise((r) => setTimeout(r, 30));
@@ -1177,7 +1179,7 @@ describe('解锁弹窗：清单损坏重设确认 + 首设写失败（雷 1/4 UI
     const confirmBtn2 = dialog2.querySelector('.bz-lockscreen-action') as HTMLElement;
     (inputs2[0] as HTMLInputElement).value = 'wrong';
     confirmBtn2.click();
-    await waitFor(() => hasNotice(/1 秒后可再次尝试/));
+    await waitFor(() => hasNotice(/密码错误，1 秒后可重试/));
   });
 
   it('解锁弹窗：打开即自动聚焦密码输入框（移动端直接弹键盘）', async () => {

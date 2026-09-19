@@ -153,10 +153,11 @@ describe('保险库增强包（UIManager / Controller）', () => {
     vi.useFakeTimers();
     try {
       // 交互重置：14 分钟时交互一次 → 再 14 分钟仍解锁
-      ui2.popup!.dispatchEvent(new Event('pointerdown'));
+      // （N9：bump 改挂 document 捕获——预览窗/弹窗内交互同样重置，故事件派发到 document）
+      document.dispatchEvent(new Event('pointerdown'));
       await vi.advanceTimersByTimeAsync(14 * 60 * 1000);
       expect(sm.unlocked).toBe(true);
-      ui2.popup!.dispatchEvent(new Event('pointerdown'));
+      document.dispatchEvent(new Event('pointerdown'));
       await vi.advanceTimersByTimeAsync(14 * 60 * 1000);
       expect(sm.unlocked).toBe(true);
       // 累计满 15 分钟无交互 → 自动上锁（面板收起 + 通知；虚拟时间停在此刻，通知仍存活）

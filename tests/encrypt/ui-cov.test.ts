@@ -353,14 +353,15 @@ describe('解锁弹窗覆盖补测', () => {
     const confirmBtn = dialog.querySelector('.bz-lockscreen-action') as HTMLElement;
     input.value = 'wrong';
     confirmBtn.click();
-    // 同时等两条通知都出现（失败后生产会清空输入框，重试前需重新填入）
-    await waitFor(() => hasNotice('密码错误，请重试') && hasNotice(/1 秒后可再次尝试/));
+    // 密码错误单通知（效率新-8）：行内报错与冷却提示合并为一条（失败后生产会清空输入框，重试前需重新填入）
+    await waitFor(() => hasNotice(/密码错误，1 秒后可重试/));
     input.value = 'wrong';
     confirmBtn.click(); // 冷却窗口内立即重试 → 被拒
     expect(hasNotice(/尝试过于频繁，请再等 \d+ 秒/)).toBe(true);
     expect((dm as any).unlock.mock.calls.length).toBe(1); // 第二次请求根本没发出
-    dialog.remove();
-    void p;
+    // 遮罩点击正规取消（清解锁屏单例句柄，等待方 resolve(false) 不悬挂）
+    findDialog()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await expect(p).resolves.toBe(false);
   });
 
   it('清单损坏（manifestIssue=corrupt）：确认弹窗取消 → 不重设；确认 → 强制重设成功', async () => {
@@ -405,8 +406,9 @@ describe('解锁弹窗覆盖补测', () => {
     (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 30));
     expect(hasNotice('重设失败：无法写入清单')).toBe(true);
-    dialog.remove();
-    void p;
+    // 遮罩点击正规取消（清解锁屏单例句柄，等待方 resolve(false) 不悬挂）
+    findDialog()!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await expect(p).resolves.toBe(false);
   });
 
   it('首设流程：unlock 写盘抛错 → 「设置失败」，Promise 以 false 结束；Enter 键等效点确认', async () => {
