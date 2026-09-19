@@ -1,4 +1,4 @@
-/* 源指纹 1ceb052b01cefd68 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 2c682af3deaeac86 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5227,6 +5227,10 @@ var BZW_cinema = (() => {
     for (let j = full; j < 5; j++) s += "☆";
     return s;
   }
+  var ILLEGAL_NAME_HINT = '名称含非法字符（\\ / : * ? " < > |）';
+  function hasIllegalNameChar(name) {
+    return ILLEGAL_NAME_RE.test(name);
+  }
 
   // src/core/ui/str.ts
   var ESC_MAP = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
@@ -6015,6 +6019,27 @@ var BZW_cinema = (() => {
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
   }
+  function openExternalUrl(app, url) {
+    try {
+      app.openUrl(url);
+      return;
+    } catch (e) {
+    }
+    try {
+      const electron = window.require && window.require("electron");
+      if (electron && electron.shell) {
+        electron.shell.openExternal(url);
+        return;
+      }
+    } catch (e) {
+    }
+    try {
+      const w = window.open(url, "_blank");
+      if (w) return;
+    } catch (e) {
+    }
+    notice("无法打开链接，请复制到浏览器打开", "error");
+  }
 
   // src/core/mobile.ts
   function isMobileEnv() {
@@ -6567,6 +6592,26 @@ var BZW_cinema = (() => {
     });
   }
 
+  // src/core/ui/modal.ts
+  function bindFormSubmit(popup, onSubmit) {
+    popup.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      onSubmit();
+    });
+    popup.addEventListener("keypress", (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.dataset.bzNoFormSubmit !== void 0) return;
+      e.preventDefault();
+      onSubmit();
+    });
+  }
+
   // src/cinema/douban-queue.ts
   var FETCH_GAP_MS = 15e3;
   var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
@@ -6834,7 +6879,7 @@ var BZW_cinema = (() => {
   function parseRecommendJson(raw) {
     try {
       let cleaned = raw.trim();
-      const codeBlockMatch = cleaned.match(/```json\s*([\s\S]*?)```/);
+      const codeBlockMatch = cleaned.match(/```[a-zA-Z]*\s*([\s\S]*?)```/);
       if (codeBlockMatch) cleaned = codeBlockMatch[1].trim();
       const data = JSON.parse(cleaned);
       if (Array.isArray(data)) return data;
@@ -6854,6 +6899,10 @@ var BZW_cinema = (() => {
       notice("推荐条目缺少片名，已跳过加入想看");
       return;
     }
+    if (hasIllegalNameChar(trimmedName)) {
+      notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, "error");
+      return;
+    }
     const tag = GROUP_DEFAULT_TAG[type] || "电影";
     let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
     if (!folderObj) await app.vault.createFolder(M.folderPath);
@@ -6866,14 +6915,14 @@ var BZW_cinema = (() => {
     const content = `---
 tags:
 - ${tag}
-观影日期: ${now}
+观影日期: "${now}"
 评分: -1
 海报: 
 ---
 `;
     try {
       const f = await app.vault.create(filePath, content);
-      notice(`已加入想看：${trimmedName}`, "success");
+      notice(`已加入想看：「${trimmedName}」`, "success");
       emitDomainEvent("movie", { kind: "created", name: trimmedName, status: "want", rating: null, review: null });
       enqueueDoubanFetch(f, trimmedName);
       refreshDataAndView(app);
@@ -7762,7 +7811,7 @@ tags:
   function posterUrl(item, app) {
     if (!item.poster) return null;
     const f = app.vault.getAbstractFileByPath(item.poster);
-    if (f && f instanceof TFile && /\.(png|jpe?g|gif|webp)$/i.test(f.name)) {
+    if (f && f instanceof TFile && /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(f.name)) {
       return app.vault.getResourcePath(f);
     }
     return null;
@@ -7772,10 +7821,7 @@ tags:
   }
   function openDouban(item) {
     const url = item.doubanUrl || doubanSearchUrl(item.name);
-    try {
-      window.open(url, "_blank");
-    } catch (e) {
-    }
+    openExternalUrl(M.appRef, url);
   }
   async function markStatus(item, target, app) {
     const fromSt = item.status === STATUS_WANT ? "want" : item.status === STATUS_WATCHING ? "watching" : "watched";
@@ -7820,7 +7866,6 @@ tags:
     );
     return out;
   }
-  var ILLEGAL_NAME_RE2 = /[\\/:*?"<>|]/;
   async function persistItem(item, app, edit) {
     var _a;
     if (!item.file) {
@@ -7832,14 +7877,18 @@ tags:
       const content = `---
 tags:
 - ${item.typeTag}
-观影日期: ${item.watchDate || localNow()}
+观影日期: "${item.watchDate || localNow()}"
 评分: ${(_a = item.rating) != null ? _a : 0}
-${item.review ? `影评: ${item.review}
-` : ""}海报: 
+海报: 
 ---
 `;
       const f = await app.vault.create(filePath, content);
       item.file = f;
+      if (item.review) {
+        await app.fileManager.processFrontMatter(f, (fm) => {
+          fm["影评"] = item.review;
+        });
+      }
       return;
     }
     if (edit && item.name !== edit.prevName) {
@@ -7906,7 +7955,7 @@ ${item.review ? `影评: ${item.review}
     }
     return host;
   }
-  var ovlSeq = 0;
+  var liveOvlCloses = /* @__PURE__ */ new Set();
   function ovl(sec, html, opts = {}) {
     const el = document.createElement("div");
     el.className = "cn-ovl";
@@ -7914,11 +7963,13 @@ ${item.review ? `影评: ${item.review}
     ovHost(sec).appendChild(el);
     let close = () => {
     };
-    const handle = escManager.register(`bz-cinema-ovl-${++ovlSeq}`, { isVisible: () => el.isConnected, close: () => close() });
+    const handle = escManager.register("bz-cinema-ovl", { isVisible: () => el.isConnected, close: () => close() });
     close = () => {
       handle.unregister();
+      liveOvlCloses.delete(close);
       el.remove();
     };
+    liveOvlCloses.add(close);
     el.addEventListener("click", (e) => {
       if (e.target === el && !opts.sticky) close();
     });
@@ -8085,7 +8136,12 @@ ${item.review ? `影评: ${item.review}
       el.querySelector(".j-rating").style.display = show ? "" : "none";
       el.querySelector(".j-review").style.display = show ? "" : "none";
     }));
+    bindFormSubmit(el, () => {
+      var _a2;
+      return (_a2 = el.querySelector(".j-save")) == null ? void 0 : _a2.click();
+    });
     (_b = el.querySelector(".j-save")) == null ? void 0 : _b.addEventListener("click", () => {
+      var _a2;
       const name = el.querySelector(".j-name").value.trim();
       if (!name) {
         notice("请输入名称", "warning");
@@ -8102,7 +8158,7 @@ ${item.review ? `影评: ${item.review}
       const stChanged = !editing || !item || item.status !== (cur.st === "想看" ? STATUS_WANT : cur.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED);
       const date = stChanged ? localNow() : item.watchDate || localNow();
       const rating = cur.st === "已看" ? parseFloat(el.querySelector(".j-range").value) : cur.st === "在看" ? 0 : -1;
-      const review = cur.st === "已看" ? el.querySelector(".j-review-t").value.trim() : "";
+      const review = cur.st === "已看" ? el.querySelector(".j-review-t").value.trim() : editing && item ? (_a2 = item.review) != null ? _a2 : "" : "";
       if (editing && item) {
         void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
       } else {
@@ -8112,6 +8168,10 @@ ${item.review ? `影评: ${item.review}
   }
   async function saveNew(p, app, close) {
     var _a;
+    if (hasIllegalNameChar(p.name)) {
+      notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
+      return;
+    }
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
     const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
@@ -8138,13 +8198,13 @@ ${item.review ? `影评: ${item.review}
     }
   }
   async function saveEdit(item, p, app, close) {
-    var _a;
+    var _a, _b, _c;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
-    const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review };
+    const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review, file: item.file, filePath: (_c = (_b = item.file) == null ? void 0 : _b.path) != null ? _c : null };
     if (p.name !== item.name) {
-      if (ILLEGAL_NAME_RE2.test(p.name)) {
-        notice('名称含非法字符（\\ / : * ? " < > |），请修改', "error");
+      if (hasIllegalNameChar(p.name)) {
+        notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
         return;
       }
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
@@ -8170,10 +8230,23 @@ ${item.review ? `影评: ${item.review}
       if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
         emitDomainEvent("movie", { kind: "rated", name: item.name, fromRating: prevRating, toRating: item.rating });
       }
+      const prevReview = prev.review || null;
+      const toReview = item.review || null;
+      if (prevReview !== toReview) {
+        emitDomainEvent("movie", { kind: "review", name: item.name, fromReview: prevReview, toReview });
+      }
       close();
       notice(`已保存「${p.name}」`, "success");
       renderAll(app);
     } catch (e) {
+      if (item.file && prev.filePath && item.file.path !== prev.filePath) {
+        try {
+          await app.fileManager.renameFile(item.file, prev.filePath);
+        } catch (re) {
+          console.error("回滚影视笔记改名失败:", re);
+          renderAll(app);
+        }
+      }
       Object.assign(item, prev);
       notifySaveError(e);
       console.error(e);
@@ -8228,6 +8301,7 @@ ${item.review ? `影评: ${item.review}
   }
   function midnightInput(app) {
     const merge = mergeSeasonsOn();
+    const onList = M.view === "list";
     return {
       allCards: mergeSeasonCards(M.items, merge),
       cards: mergeSeasonCards(getDisplayItems(), merge),
@@ -8241,9 +8315,9 @@ ${item.review ? `影评: ${item.review}
       cols: gridColumns(),
       title: listTitle(),
       watchedCount: watchedCount(),
-      aiHtml: aiPageHtml(aiInput()),
+      aiHtml: onList ? "" : aiPageHtml(aiInput()),
       aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-      statHtml: buildAnalysisHTML(),
+      statHtml: onList ? "" : buildAnalysisHTML(),
       poster: (it) => posterUrl(it, app),
       fetching: (it) => {
         var _a;
@@ -8268,6 +8342,17 @@ ${item.review ? `影评: ${item.review}
       }
     }, 300);
   }
+  function clearSearchKeyword(app, sec, isMob) {
+    if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+    M.searchDebounceTimer = null;
+    M.searchKeyword = "";
+    renderAll(app);
+    const el = sec.querySelector(isMob ? ".j-mq" : ".j-q");
+    if (el) {
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+    }
+  }
   function refreshDeskList(app, sec) {
     const view = sec.querySelector(".j-view");
     if (!view) {
@@ -8279,6 +8364,11 @@ ${item.review ? `影评: ${item.review}
     const list = getDisplayItems();
     if (!body || !head || !list.length) {
       renderAll(app);
+      const el = sec.querySelector(".j-q");
+      if (el) {
+        el.focus();
+        el.setSelectionRange(el.value.length, el.value.length);
+      }
       return;
     }
     const cards = mergeSeasonCards(list, mergeSeasonsOn());
@@ -8445,6 +8535,15 @@ ${item.review ? `影评: ${item.review}
         if (out) out.textContent = Number(t.value).toFixed(1);
       }
     });
+    root.addEventListener("keydown", (e) => {
+      if (e.key !== "Escape" || e.isComposing || e.defaultPrevented) return;
+      const t = e.target;
+      if (!(t.classList.contains("j-q") || t.classList.contains("j-mq"))) return;
+      if (!M.searchKeyword) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      clearSearchKeyword(app, root, t.classList.contains("j-mq"));
+    });
     rebuildItems(app);
     renderAll(app);
   }
@@ -8453,15 +8552,25 @@ ${item.review ? `影评: ${item.review}
     if (!overlay) return;
     const root = overlay.querySelector("[data-cinema-root]");
     if (!root) return;
+    const scrollMemo = /* @__PURE__ */ new Map();
+    for (const sel of [".d-scroll", ".m-scroll"]) {
+      const sc = root.querySelector(sel);
+      if (sc) scrollMemo.set(sel, sc.scrollTop);
+    }
     const inp = midnightInput(app);
     if (root.classList.contains("mob")) {
       renderMidnightMob(root, inp);
       attachLongPress(root, app);
     } else renderMidnightDesk(root, inp);
+    for (const [sel, top] of scrollMemo) {
+      const sc = root.querySelector(sel);
+      if (sc) sc.scrollTop = top;
+    }
     mountIcons(root);
   }
   function closeOverlay() {
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+    for (const close of [...liveOvlCloses]) close();
     closeItemMenu();
     if (M.currentOverlay) {
       M.currentOverlay.remove();

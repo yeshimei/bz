@@ -87,13 +87,11 @@ export function getStarString(rating: number): string {
 
 // ======================= 名称合法性（深审批A P3-7：三入口统一校验） =======================
 
-/** 文件名非法字符（Windows 保留集；名称源自文件名《X》，建档/改名前拦截） */
-const ILLEGAL_NAME_RE = /[\\/:*?"<>|]/;
-
 /** 人话提示主干（编辑改名/新增建档/AI 加想看同源，尾巴按入口补动作指引） */
 export const ILLEGAL_NAME_HINT = '名称含非法字符（\\ / : * ? " < > |）';
 
-/** 名称是否含非法字符（saveEdit / saveNew / quickAddWant 统一跑，不再只有编辑改名一入口把关） */
+/** 名称是否含非法字符（saveEdit / saveNew / quickAddWant 统一跑，不再只有编辑改名一入口把关）；
+ *  正则复用上方批 C 单源 ILLEGAL_NAME_RE（主线程收口归一：批 A 原私有副本与此同名，去重） */
 export function hasIllegalNameChar(name: string): boolean {
   return ILLEGAL_NAME_RE.test(name);
 }
