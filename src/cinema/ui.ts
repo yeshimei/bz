@@ -4,7 +4,8 @@
  * 弹窗）在 shared.ts，午夜场 desk/mob 壳与渲染胶水在 layouts/midnight/——ui.ts 经域入口
  * render.ts 消费同一份（与原型壳 prototype-render.js 同源）。本文件只留：
  * 事件绑定 / core 服务（落盘、通知、域事件、ESC、全屏、图标物化）/ AI·分析·海报守护接线。
- * 三风格单键 cinemaStyle（清单 CINEMA_STYLES）；共享弹窗宿主为 display:contents 的
+ * 三风格单键 = cinemaStyle 设置键（settings.ts，深审批A P3-17 措辞修正：无 CINEMA_STYLES
+ * 清单常量，风格枚举即该设置键的合法值域）；共享弹窗宿主为 display:contents 的
  * .bz-cinema--midnight 锚类容器。业务层零迁移：persistItem 落盘 / smartcat movie 域事件 /
  * AI 推荐 / 分析统计 / 海报守护全部原样。
  * 落域适配（ADR-0103 §5，原型不出）：移动头行补 ✕ 关闭钮；移动 ✦ 再点回列表。
@@ -15,15 +16,17 @@ import { TFile } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
-import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { escManager, registerPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { tryGetSettings } from '../core/settings-provider';
 import { mountIcons } from '../core/ui';
+import { openExternalUrl } from '../core/utils';
+import { bindFormSubmit } from '../core/ui/modal';
 import {
   STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, DEFAULT_RATING,
-  getGroupForTag,
+  getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT,
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { rebuildItems, getDisplayItems } from './data';
@@ -44,11 +47,13 @@ import { mergeSeasonCards, isSeriesKey, cardFace, type SeriesCard } from './seas
 
 // ---------- 海报 ----------
 
-/** 海报资源 URL（vault 资源路径）；无图返回 null（markup 侧只认 URL，资源解析留行为层） */
+/** 海报资源 URL（vault 资源路径）；无图返回 null（markup 侧只认 URL，资源解析留行为层）。
+ *  白名单补齐 avif/bmp/svg（深审批A P3-12）——Obsidian 库内合法图片格式都能给到资源路径，
+ *  真不支持的格式由 posterInner 的 onerror 兜底 */
 function posterUrl(item: CinemaItem, app: App): string | null {
   if (!item.poster) return null;
   const f = app.vault.getAbstractFileByPath(item.poster);
-  if (f && f instanceof TFile && /\.(png|jpe?g|gif|webp)$/i.test(f.name)) {
+  if (f && f instanceof TFile && /\.(png|jpe?g|gif|webp|avif|bmp|svg)$/i.test(f.name)) {
     return app.vault.getResourcePath(f);
   }
   return null;
@@ -62,14 +67,12 @@ function itemByKeyInState(key: string | undefined): CinemaItem | undefined {
 
 // ---------- 通用业务（菜单/抽屉动作、快速状态、豆瓣） ----------
 
-/** 在豆瓣打开：有豆瓣链接走链接，否则走片名搜索页（新窗） */
+/** 在豆瓣打开：有豆瓣链接走链接，否则走片名搜索页（openExternalUrl 单源：
+ *  openUrl → electron shell → window.open 兜底链 + 全链失败人话提示；深审批A P3-9，
+ *  私有裸 window.open + try/catch 退役） */
 function openDouban(item: CinemaItem): void {
   const url = item.doubanUrl || doubanSearchUrl(item.name);
-  try {
-    window.open(url, '_blank');
-  } catch {
-    /* jsdom 未实现 window.open：忽略 */
-  }
+  openExternalUrl(M.appRef, url);
 }
 
 /** 快速标记状态（菜单/抽屉「标记在看」）：状态流转 + 刷新观影日期 + 域事件补发。
@@ -125,9 +128,6 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
 
 // ---------- 落盘（数据契约零改动） ----------
 
-/** 文件名非法字符（Windows 保留集；名称源自文件名《X》，改名前拦截） */
-const ILLEGAL_NAME_RE = /[\\/:*?"<>|]/;
-
 /**
  * 把条目落盘：新增建笔记，编辑/快速状态写 frontmatter（保留海报/豆瓣字段）；
  * 改名走 fileManager.renameFile（自动更新双链）；类型写入 frontmatter tags。
@@ -139,9 +139,19 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
       await app.vault.createFolder(folder);
     }
     const filePath = `${folder}/《${item.name}》.md`;
-    const content = `---\ntags:\n- ${item.typeTag}\n观影日期: ${item.watchDate || localNow()}\n评分: ${item.rating ?? 0}\n${item.review ? `影评: ${item.review}\n` : ''}海报: \n---\n`;
+    // 建档模板只写最小安全集（无影评，深审批A P2-1）：影评值可多行/含「: 」「#」，
+    // 裸值直拼模板会写破 YAML → 影片从面板黏性消失、豆瓣 sweep 永不补抓。
+    // 影评在建档后与编辑路径同通道（processFrontMatter，Obsidian YAML 序列化兜底）写入。
+    // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）
+    // → 展示英文星期；评分/(tags 列表项) 是纯数字/固定枚举，无需引号。
+    const content = `---\ntags:\n- ${item.typeTag}\n观影日期: "${item.watchDate || localNow()}"\n评分: ${item.rating ?? 0}\n海报: \n---\n`;
     const f = await app.vault.create(filePath, content);
     item.file = f;
+    if (item.review) {
+      await app.fileManager.processFrontMatter(f, (fm: Record<string, unknown>) => {
+        fm['影评'] = item.review;
+      });
+    }
     return;
   }
   if (edit && item.name !== edit.prevName) {
@@ -236,7 +246,11 @@ function ovHost(sec: HTMLElement): HTMLElement {
 
 interface OvlHandle { el: HTMLDivElement; close: () => void }
 
-let ovlSeq = 0;
+/** 活跃弹窗层 close 句柄集（深审批A P3-10 双保险之一）：关面板时统一结算。
+ *  ESC 层 id 固定 'bz-cinema-ovl' 交 escManager 同 id 清扫自愈（原递增 id 会随
+ *  close 未走到的路径在层表里无限堆积）；这里再留 close 引用，closeOverlay 遍历
+ *  补一刀 unregister，双路径都能把层表清干净。 */
+const liveOvlCloses = new Set<() => void>();
 
 /** 面板内弹窗层（.cn-ovl 挂共享宿主；ESC 走 escManager 层级，后注册先关） */
 function ovl(sec: HTMLElement, html: string, opts: { sticky?: boolean } = {}): OvlHandle {
@@ -245,8 +259,9 @@ function ovl(sec: HTMLElement, html: string, opts: { sticky?: boolean } = {}): O
   el.innerHTML = html;
   ovHost(sec).appendChild(el);
   let close = () => {};
-  const handle = escManager.register(`bz-cinema-ovl-${++ovlSeq}`, { isVisible: () => el.isConnected, close: () => close() });
-  close = () => { handle.unregister(); el.remove(); };
+  const handle = escManager.register('bz-cinema-ovl', { isVisible: () => el.isConnected, close: () => close() });
+  close = () => { handle.unregister(); liveOvlCloses.delete(close); el.remove(); };
+  liveOvlCloses.add(close);
   el.addEventListener('click', (e) => { if (e.target === el && !opts.sticky) close(); });
   return { el, close };
 }
@@ -486,6 +501,9 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     (el.querySelector('.j-rating') as HTMLElement).style.display = show ? '' : 'none';
     (el.querySelector('.j-review') as HTMLElement).style.display = show ? '' : 'none';
   }));
+  // 表单 Enter 提交（深审批A P3-13）：core bindFormSubmit——名称框纯 Enter 直存，
+  // 影评 textarea 回车换行天然豁免；Ctrl/⌘+Enter 恒提交。autofocus 不做（用户拍板项）
+  bindFormSubmit(el, () => (el.querySelector('.j-save') as HTMLElement | null)?.click());
   el.querySelector('.j-save')?.addEventListener('click', () => {
     const name = (el.querySelector('.j-name') as HTMLInputElement).value.trim();
     if (!name) { notice('请输入名称', 'warning'); return; }
@@ -496,7 +514,12 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
     // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回
     const rating = cur.st === '已看' ? parseFloat((el.querySelector('.j-range') as HTMLInputElement).value) : cur.st === '在看' ? 0 : -1;
-    const review = cur.st === '已看' ? (el.querySelector('.j-review-t') as HTMLTextAreaElement).value.trim() : '';
+    // 非「已看」态保留原影评不写空（深审批A P2-2）：影评框在非已看态隐藏，原实现在这里
+    // 强置空串 + persistItem `delete fm['影评']`——「已看」影片改回想看/在看保存，影评被静默清空。
+    // 影评只在「已看」态的输入框里被用户显式改写/清空（空串保存 = 显式删除，语义保留）
+    const review = cur.st === '已看'
+      ? (el.querySelector('.j-review-t') as HTMLTextAreaElement).value.trim()
+      : (editing && item ? item.review ?? '' : '');
     if (editing && item) {
       void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
     } else {
@@ -509,6 +532,12 @@ interface FormPayload { name: string; tag: string; st: string; rating: number | 
 
 /** 新增落盘（CM2：重名/落盘失败回退；created 域事件 + 抓取队列接管） */
 async function saveNew(p: FormPayload, app: App, close: () => void): Promise<void> {
+  // 非法字符校验（深审批A P3-7）：原只有编辑改名把关，新增建档裸放行——名称进文件名
+  // 《X》.md，含 / : 等直接建档失败或被 Obsidian 改名出「未识别文件」
+  if (hasIllegalNameChar(p.name)) {
+    notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error');
+    return;
+  }
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
   const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null };
@@ -539,10 +568,12 @@ async function saveNew(p: FormPayload, app: App, close: () => void): Promise<voi
 async function saveEdit(item: CinemaItem, p: FormPayload, app: App, close: () => void): Promise<void> {
   const group = getGroupForTag(p.tag) ?? '其他';
   const st = p.st === '想看' ? STATUS_WANT : p.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED;
-  const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review };
+  // G7 快照回滚 + P3-11（深审批A）：filePath 单独记字符串——真机 renameFile 原地更新同一
+  // TFile 引用，比较对象路径（item.file === prev.file）永远相等，半失败检测必须走路径快照
+  const prev = { name: item.name, typeTag: item.typeTag, group: item.group, status: item.status, rating: item.rating, watchDate: item.watchDate, review: item.review, file: item.file, filePath: item.file?.path ?? null };
   if (p.name !== item.name) {
-    if (ILLEGAL_NAME_RE.test(p.name)) {
-      notice('名称含非法字符（\\ / : * ? " < > |），请修改', 'error');
+    if (hasIllegalNameChar(p.name)) {
+      notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error');
       return;
     }
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
@@ -565,10 +596,28 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, close: () =>
     if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
       emitDomainEvent('movie', { kind: 'rated', name: item.name, fromRating: prevRating, toRating: item.rating });
     }
+    // 影评写/改/删补发 review 域事件（深审批A P2-3）：契约（smartcat/movie-source.ts）与
+    // 文案层（movieReviewText）三方俱在唯缺 emitter。prev→new 无变化不发（改状态不改影评时零噪音）
+    const prevReview = prev.review || null;
+    const toReview = item.review || null;
+    if (prevReview !== toReview) {
+      emitDomainEvent('movie', { kind: 'review', name: item.name, fromReview: prevReview, toReview });
+    }
     close();
     notice(`已保存「${p.name}」`, 'success');
     renderAll(app);
   } catch (e) {
+    // 改名半失败回滚（深审批A P3-11）：renameFile 已成功、后续 processFrontMatter 失败 →
+    // 文件留在新路径而内存其余字段回旧值的不一致态。先尝试 renameFile 回旧路径；
+    // 回滚再失败 console 留痕 + renderAll 兜底（面板至少重刷到当前真实状态）
+    if (item.file && prev.filePath && item.file.path !== prev.filePath) {
+      try {
+        await app.fileManager.renameFile(item.file, prev.filePath);
+      } catch (re) {
+        console.error('回滚影视笔记改名失败:', re);
+        renderAll(app);
+      }
+    }
     Object.assign(item, prev);
     notifySaveError(e);
     console.error(e);
@@ -640,6 +689,10 @@ function aiInput(): AiPageInput {
 
 function midnightInput(app: App): MidnightRenderInput {
   const merge = mergeSeasonsOn();
+  // 惰性构建（深审批A P3-14）：list 页不预算 AI 页与分析页两份大字符串——分析页是
+  // 19 板块全量统计，而列表页每次标记/筛选/搜索整刷都走这里，两份大 HTML 恒算纯浪费；
+  // list 视图的渲染胶水不读这两个字段，真进 ai/stat 页才构建
+  const onList = M.view === 'list';
   return {
     allCards: mergeSeasonCards(M.items, merge),
     cards: mergeSeasonCards(getDisplayItems(), merge),
@@ -653,9 +706,9 @@ function midnightInput(app: App): MidnightRenderInput {
     cols: gridColumns(),
     title: listTitle(),
     watchedCount: watchedCount(),
-    aiHtml: aiPageHtml(aiInput()),
+    aiHtml: onList ? '' : aiPageHtml(aiInput()),
     aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-    statHtml: buildAnalysisHTML(),
+    statHtml: onList ? '' : buildAnalysisHTML(),
     poster: (it) => posterUrl(it, app),
     fetching: (it) => isFetching(it.file?.path),
   };
@@ -678,6 +731,18 @@ function onSearchInput(app: App, sec: HTMLElement, isMob: boolean, raw: string):
   }, 300);
 }
 
+/** 清搜索词（搜索框 ESC 二段清词出口，深审批A P2-5）：清 M.searchKeyword + 取消防抖 +
+ *  刷新 + 焦点回框光标在尾（与 onSearchInput 的 mob 回焦样板同款；清词语义与
+ *  data-cinema-clear 出口的清词段一致——只清词不动类型/状态筛选） */
+function clearSearchKeyword(app: App, sec: HTMLElement, isMob: boolean): void {
+  if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+  M.searchDebounceTimer = null;
+  M.searchKeyword = '';
+  renderAll(app);
+  const el = sec.querySelector(isMob ? '.j-mq' : '.j-q') as HTMLInputElement | null;
+  if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+}
+
 /** 输入时只刷列表与计数（保焦点；空了整刷出空态，原型 refreshList 同语义） */
 function refreshDeskList(app: App, sec: HTMLElement): void {
   const view = sec.querySelector('.j-view');
@@ -685,7 +750,14 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
   const body = view.querySelector('.d-scroll');
   const head = view.querySelector('.d-head');
   const list = getDisplayItems();
-  if (!body || !head || !list.length) { renderAll(app); return; }
+  if (!body || !head || !list.length) {
+    renderAll(app);
+    // 空态整刷重建了工具行（深审批A P2-4）：焦点跨过空态落到 body，用户接着输入无效——
+    // 对 .j-q 补回焦 + 光标到尾（mob 回焦样板同款）
+    const el = sec.querySelector('.j-q') as HTMLInputElement | null;
+    if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+    return;
+  }
   const cards = mergeSeasonCards(list, mergeSeasonsOn());
   const cnt = head.querySelector('.j-cnt');
   if (cnt) cnt.textContent = `· ${cards.length} 部`;
@@ -849,6 +921,18 @@ export function createOverlay(app: App): void {
       if (out) out.textContent = Number((t as HTMLInputElement).value).toFixed(1);
     }
   });
+  // 搜索框 ESC 二段清词（深审批A P2-5，委托挂 root——搜索框随整刷重建，逐个绑会漏）：
+  // 有词时第一段 ESC 只清词（clearSearchKeyword），preventDefault + stopImmediatePropagation
+  // 阻断冒泡到 escManager 的关层链；无词放行——ESC 关弹窗/面板语义不变
+  root.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.isComposing || e.defaultPrevented) return;
+    const t = e.target as HTMLElement;
+    if (!(t.classList.contains('j-q') || t.classList.contains('j-mq'))) return;
+    if (!M.searchKeyword) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    clearSearchKeyword(app, root, t.classList.contains('j-mq'));
+  });
 
   rebuildItems(app);
   renderAll(app);
@@ -860,16 +944,32 @@ export function renderAll(app: App): void {
   if (!overlay) return;
   const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
+  // 滚位记忆（深审批A P2-6）：渲染整写 innerHTML 销毁滚动容器——标记/保存/筛选/队列完成
+  // 全跳顶。渲染前存 .d-scroll/.m-scroll 的 scrollTop、渲染后原值恢复（clipbook 会话内
+  // 滚位记忆同范式；视图切换时滚动容器换型，恢复自然 no-op）
+  const scrollMemo = new Map<string, number>();
+  for (const sel of ['.d-scroll', '.m-scroll']) {
+    const sc = root.querySelector(sel) as HTMLElement | null;
+    if (sc) scrollMemo.set(sel, sc.scrollTop);
+  }
   const inp = midnightInput(app);
   if (root.classList.contains('mob')) {
     renderMidnightMob(root, inp);
     attachLongPress(root, app); // m-grid 卡片重渲染重建后重挂（原 mob 渲染胶水同语义）
   } else renderMidnightDesk(root, inp);
+  for (const [sel, top] of scrollMemo) {
+    const sc = root.querySelector(sel) as HTMLElement | null;
+    if (sc) sc.scrollTop = top;
+  }
   mountIcons(root);
 }
 
 export function closeOverlay(): void {
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
+  // 活跃弹窗层统一结算（深审批A P3-10 双保险之二）：closeOverlay 原来只移除面板树，
+  // 弹窗层（详情/表单/各季明细）的 ESC 句柄靠 el.isConnected 判死不主动注销——层表残留
+  // 堆积。这里遍历句柄补 unregister（close 幂等：句柄集先删后 remove，遍历副本安全）
+  for (const close of [...liveOvlCloses]) close();
   closeItemMenu(); // 浮层（跟手菜单/抽屉）挂 body，不随面板移除 → 关面板时一并收掉
   if (M.currentOverlay) {
     M.currentOverlay.remove();

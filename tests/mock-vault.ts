@@ -246,7 +246,10 @@ export class MockVault {
   }
 }
 
-/** 解析 frontmatter（简易 YAML 子集：key: value 行 + `  - ` 列表项） */
+/** 解析 frontmatter（简易 YAML 子集：key: value 行 + `  - ` 列表项）。
+ *  fail-closed（深审批A T2）：值含「: 」与「key: 值后裸行」两种破损形态返回 null——
+ *  真机 js-yaml 对两者整体解析失效（Obsidian 视为无 frontmatter），mock 原先 fail-open
+ *  照收导致 FM 破坏类缺陷在测试环境不可见。 */
 export function parseFrontmatter(content: string): Record<string, any> | null {
   const m = content.match(/^---\n([\s\S]*?)\n---\s*(?:\n|$)/);
   if (!m) return null;
@@ -271,11 +274,26 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
         (value.startsWith('"') && value.endsWith('"')) ||
         (value.startsWith("'") && value.endsWith("'"))
       ) {
+        const raw = value;
         value = value.slice(1, -1); // 与 Obsidian parseFrontmatter 一致：剥引号
+        // YAML 双引号标量的转义（\n \" \\）与 JSON 兼容：经 processFrontMatter 序列化
+        // （JSON.stringify 包裹）写回的多行/特殊值在此还原（T2 mock 保真配套）
+        if (raw.startsWith('"')) {
+          try {
+            value = JSON.parse(raw);
+          } catch {
+            /* 非法转义：保留剥引号结果 */
+          }
+        }
       } else if (/^-?\d+(\.\d+)?$/.test(value)) {
         value = Number(value); // 与 Obsidian parseFrontmatter 一致：数字
       } else if (value === 'true') {
         value = true;
+      } else if (/:\s/.test(value)) {
+        // fail-closed（深审批A T2）：非引号值内再出现「: 」——真机 js-yaml 报
+        // 「mapping values are not allowed here」**整体失效**（Obsidian 视为无 frontmatter），
+        // mock 原先按首个冒号切分照收 → FM 破坏类缺陷在测试环境不可见。对齐 fail-closed。
+        return null;
       }
       fm[key] = value;
     } else if (/^\s*-\s+/.test(line)) {
@@ -288,6 +306,11 @@ export function parseFrontmatter(content: string): Record<string, any> | null {
         if (/^-?\d+(\.\d+)?$/.test(v)) v = Number(v);
         fm[lastKey].push(v);
       }
+    } else if (line.trim() !== '') {
+      // fail-closed（深审批A T2）：无冒号且非列表项的裸行（多行文本裸插 frontmatter 的
+      // 第二行起，如旧建档模板把多行影评直拼进 YAML）——真机 js-yaml 报 bad indentation
+      // 整体失效，mock 原先静默跳过照收。对齐 fail-closed；空行在 YAML 块映射中合法，放行。
+      return null;
     }
   }
   return fm;
@@ -389,7 +412,10 @@ export function mockAppWithVault(vault: MockVault) {
       getActiveFile: () => null,
     },
     fileManager: {
-      /** processFrontMatter：读文件 → 回调改 fm → 序列化写回（保留正文；数组用 [] 简式） */
+      /** processFrontMatter：读文件 → 回调改 fm → 序列化写回（保留正文；数组用 [] 简式）。
+       *  字符串值序列化保真（T2 配套）：多行 / 含「: 」的裸值直拼会写破 YAML（真机走
+       *  js-yaml 序列化不产生破损）——双引号包裹转义（JSON 字符串字面量 ≈ YAML 双引号标量子集），
+       *  parseFrontmatter 侧按双引号转义还原。 */
       processFrontMatter: async (file: any, cb: (fm: Record<string, any>) => void) => {
         const path = typeof file === 'string' ? file : file.path;
         const content = vault.files.get(path) ?? '';
@@ -399,6 +425,12 @@ export function mockAppWithVault(vault: MockVault) {
         const lines = ['---'];
         for (const [k, v] of Object.entries(fm)) {
           if (Array.isArray(v)) lines.push(`${k}: [${v.join(', ')}]`);
+          // 字符串值序列化保真（T2 配套）：多行 / 含「: 」/ date-like 的裸值要么写破 YAML、
+          // 要么被真机 YAML 重新解析成 timestamp（Moment 对象 → 英文星期）——真机
+          // processFrontMatter 由 js-yaml 序列化会加引号保型，mock 同样双引号包裹转义
+          // （JSON 字符串字面量 ≈ YAML 双引号标量子集），parseFrontmatter 侧按双引号转义还原
+          else if (typeof v === 'string' && (/[\r\n]/.test(v) || /:\s/.test(v) || /^\d{4}-\d{2}-\d{2}/.test(v)))
+            lines.push(`${k}: ${JSON.stringify(v)}`);
           else lines.push(`${k}: ${v}`);
         }
         lines.push('---');

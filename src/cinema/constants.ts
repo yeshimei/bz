@@ -65,3 +65,16 @@ export function getStarString(rating: number): string {
 
 // 当前仅午夜场上岸（gazette/booth 为 styles.css 预留段，设置项见 settings.ts）；
 // 未来多风格时在此定义风格 id 联合类型（读设置取值属行为层，ADR-0104 纯度守卫）。
+
+// ======================= 名称合法性（深审批A P3-7：三入口统一校验） =======================
+
+/** 文件名非法字符（Windows 保留集；名称源自文件名《X》，建档/改名前拦截） */
+const ILLEGAL_NAME_RE = /[\\/:*?"<>|]/;
+
+/** 人话提示主干（编辑改名/新增建档/AI 加想看同源，尾巴按入口补动作指引） */
+export const ILLEGAL_NAME_HINT = '名称含非法字符（\\ / : * ? " < > |）';
+
+/** 名称是否含非法字符（saveEdit / saveNew / quickAddWant 统一跑，不再只有编辑改名一入口把关） */
+export function hasIllegalNameChar(name: string): boolean {
+  return ILLEGAL_NAME_RE.test(name);
+}
