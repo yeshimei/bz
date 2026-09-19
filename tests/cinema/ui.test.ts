@@ -7,11 +7,11 @@ import { makeApp } from '../helpers/app';
  * 业务回归保留：落盘/改名/tags 落盘/回收站删除/域事件/CM2 重名拦截/CM3 稳定键。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { MockVault, mockAppWithVault } from '../mock-vault';
+import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, Platform } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
-import { runAIRecommend, runSimilarRecommend } from '../../src/cinema/recommend';
+import { runAIRecommend, runSimilarRecommend, quickAddWant, parseRecommendJson } from '../../src/cinema/recommend';
 import { createOverlay, closeOverlay, openAddModalDirect, openRandomMovie, renderAll } from '../../src/cinema/ui';
 import { ensureCinema, unloadCinema, openCinemaAnalysis, pickRandomCinema } from '../../src/cinema';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
@@ -1224,5 +1224,285 @@ tags: [电影]
     expect(dot).toBeTruthy();
     dot!.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
     expect(root.querySelector('.pcard-series')?.classList.contains('is-peek')).toBe(false);
+  });
+});
+
+/**
+ * 深审修复批 A（写路径与 ui 行为）回归：
+ * P2-1 建档影评经 processFrontMatter 写入 / P2-2 非已看态影评保留 / P2-3 review 域事件 /
+ * P2-4 桌面搜索空态回焦 / P2-5 搜索 ESC 二段清词 / P2-6 renderAll 滚位记忆 /
+ * P3-7 三入口非法字符校验 / P3-8 建档日期引号 / P3-9 openDouban 走 openExternalUrl /
+ * P3-10 closeOverlay 收口弹窗层 / P3-11 改名半失败回滚 / P3-13 表单 Enter 提交 /
+ * P3-14 list 页惰性构建 / P3-15 parseRecommendJson 围栏放宽
+ */
+describe('深审批A：写路径与 ui 行为回归', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    Platform.isMobile = false;
+    unloadCinema();
+    vi.restoreAllMocks();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  // P2-1：建档模板只写最小安全集，影评走 processFrontMatter 同通道——多行/含「: 」的影评
+  // 裸拼模板会写破 YAML → 影片从面板黏性消失、豆瓣 sweep 永不补抓（mock fail-closed 后旧实现必红）
+  it('P2-1：建档写多行影评 → frontmatter 可解析、重开面板影片可见且影评完整', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="已看"]'));
+    (form.querySelector('.j-name') as HTMLInputElement).value = '多行影评片';
+    (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '第一幕: 开场\n第二幕: 高潮 #好';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《多行影评片》.md')).toBe(true));
+    const content = vault.files.get('我的/影视/《多行影评片》.md')!;
+    // P3-8：建档日期双引号（裸日期真机被 YAML 解析成 timestamp → Moment → 英文星期）
+    expect(content).toContain('观影日期: "');
+    // 模板本身无影评裸值 + 影评经 processFrontMatter 写入 → YAML 整体合法
+    const fm = parseFrontmatter(content);
+    expect(fm, 'frontmatter 应可解析（多行/含「: 」影评不再写破 YAML）').toBeTruthy();
+    expect(fm!['影评']).toBe('第一幕: 开场\n第二幕: 高潮 #好');
+    // 模拟重开面板（清内存从盘解析）：破 FM 下真机影片黏性消失、sweep 永不补抓
+    resetCinemaState();
+    M.folderPath = '我的/影视';
+    rebuildItems(app);
+    const it = M.items.find((i) => i.name === '多行影评片');
+    expect(it, '重建后影片应可见').toBeTruthy();
+    expect(it!.review).toBe('第一幕: 开场\n第二幕: 高潮 #好');
+  });
+
+  // P2-2：非「已看」态保留原影评不写空（空影评在已看态显式清空保存 = 显式删除，语义不变）
+  it('P2-2：编辑已看影片改回想看/在看保存 → 影评保留不静默清空；已看态清空影评仍可显式删除', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    let form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="在看"]'));
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true));
+    const item = M.items.find((i) => i.name === '星际穿越')!;
+    expect(item.status).toBe(1); // STATUS_WATCHING
+    // 旧缺陷：表单强置 review='' + persistItem delete fm['影评'] → 影评静默清空
+    expect(item.review).toBe('爱是穿越维度的唯一力量');
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).toContain('影评: 爱是穿越维度的唯一力量');
+    // 已看态影评框清空 → 保存 = 显式删除（FM 影评键移除）
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="已看"]'));
+    (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(M.items.find((i) => i.name === '星际穿越')!.review).toBe(''));
+    expect(vault.files.get('我的/影视/《星际穿越》.md')).not.toContain('影评');
+  });
+
+  // P2-3：影评写/改/删补发 review 域事件（契约与文案层俱在唯缺 emitter）；无变化不发
+  it('P2-3：编辑写/改影评 → movie 域 review 事件（fromReview/toReview）；影评不变时零噪音', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const evts: any[] = [];
+    const offMovie = onDomainEvent('movie', (e: any) => evts.push(e));
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '新影评文本';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「/)).toBe(true));
+    expect(evts).toContainEqual(
+      expect.objectContaining({ kind: 'review', name: '星际穿越', fromReview: '爱是穿越维度的唯一力量', toReview: '新影评文本' })
+    );
+    // 再保存一次（影评不变）：不补发 review 事件
+    const reviewCount = evts.filter((e) => e.kind === 'review').length;
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-save'));
+    await vi.waitFor(() => expect(hasNotice(/已保存「星际穿越」/)).toBe(true));
+    expect(evts.filter((e) => e.kind === 'review').length).toBe(reviewCount);
+    offMovie();
+  });
+
+  // P2-4：桌面搜索空态整刷重建工具行，焦点跨过空态落 body → 后续输入无效
+  it('P2-4：桌面搜索整刷出空态后焦点回到搜索框且光标在尾', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const input = root.querySelector('.j-q') as HTMLInputElement;
+    input.focus();
+    input.value = '库里有也搜不到的片名xyz';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(root.querySelector('.cn-empty-page')).toBeTruthy(), { timeout: 2000 });
+    const q = root.querySelector('.j-q') as HTMLInputElement;
+    expect(document.activeElement, '空态整刷后焦点应回到搜索框').toBe(q);
+    expect(q.selectionStart).toBe(q.value.length);
+    expect(q.selectionEnd).toBe(q.value.length);
+  });
+
+  // P2-5：搜索框 ESC 二段清词——有词先清词（回焦不断打字），无词放行关面板语义不变
+  it('P2-5：搜索框有词 ESC → 只清词不关面板且焦点回框；无词 ESC → 放行关面板', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const input = root.querySelector('.j-q') as HTMLInputElement;
+    input.value = '瑞克';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await vi.waitFor(() => expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(1), { timeout: 2000 });
+    (root.querySelector('.j-q') as HTMLInputElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+    expect(M.searchKeyword).toBe('');
+    expect(M.currentOverlay, '有词 ESC 不应关面板').not.toBeNull();
+    await vi.waitFor(() => expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(4));
+    expect(document.activeElement).toBe(root.querySelector('.j-q'));
+    // 无词放行：keydown 不被消费，冒泡到 escManager 关面板
+    (root.querySelector('.j-q') as HTMLInputElement).dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true })
+    );
+    expect(M.currentOverlay).toBeNull();
+  });
+
+  // P2-6：renderAll 整写 innerHTML 销毁滚动容器——渲染前存 scrollTop、渲染后恢复
+  it('P2-6：renderAll 前后 d-scroll/m-scroll 滚位保持（标记/保存/筛选不再跳顶）', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    (root.querySelector('.d-scroll') as HTMLElement).scrollTop = 240;
+    renderAll(app);
+    expect((root.querySelector('.d-scroll') as HTMLElement).scrollTop).toBe(240);
+    // mob 壳同口径
+    Platform.isMobile = true;
+    closeOverlay();
+    createOverlay(app);
+    const mobRoot = document.querySelector('section.mob[data-cinema-root]') as HTMLElement;
+    (mobRoot.querySelector('.m-scroll') as HTMLElement).scrollTop = 120;
+    renderAll(app);
+    expect((mobRoot.querySelector('.m-scroll') as HTMLElement).scrollTop).toBe(120);
+  });
+
+  // P3-7：非法字符三入口统一校验（原只有编辑改名把关）
+  it('P3-7：新增建档名称含非法字符 → 拦截不落盘；AI ＋想看同名拦截', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-name') as HTMLInputElement).value = '非法/片名';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(hasNotice(/非法字符/)).toBe(true));
+    expect(vault.files.has('我的/影视/《非法/片名》.md')).toBe(false);
+    expect(root.querySelector('.cn-modal .j-name'), '弹窗留在原地').toBeTruthy();
+    // quickAddWant 入口（AI title 不受控）
+    await quickAddWant(app, '坏:名字', '电影');
+    expect(hasNotice(/非法字符/)).toBe(true);
+    expect(vault.files.has('我的/影视/《坏:名字》.md')).toBe(false);
+  });
+
+  // P3-9：openDouban 走 core openExternalUrl 单源（私有裸 window.open + try/catch 退役）
+  it('P3-9：菜单「在豆瓣打开」→ openExternalUrl 链路（window.open 收到豆瓣搜索地址）', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const openSpy = vi.spyOn(window, 'open').mockReturnValue({} as any);
+    pcardByName(root, '想看片').dispatchEvent(
+      new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 })
+    );
+    const menu = document.querySelector('.bz-item-menu.cn-menu-skin') as HTMLElement;
+    clickEl(Array.from(menu.querySelectorAll('.bz-item-menu-item')).find((b) => b.textContent?.includes('在豆瓣打开')));
+    expect(openSpy).toHaveBeenCalledTimes(1);
+    expect(String(openSpy.mock.calls[0][0])).toContain('movie.douban.com');
+    expect(String(openSpy.mock.calls[0][0])).toContain(encodeURIComponent('想看片'));
+  });
+
+  // P3-10：关面板统一结算活跃弹窗层（ESC 层固定 id + closeOverlay 遍历句柄）
+  it('P3-10：closeOverlay 收口面板内弹窗（cn-ovl 无残留），重开面板行为正常', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    expect(root.querySelector('.cn-ovl .cn-modal')).toBeTruthy();
+    closeOverlay();
+    expect(document.querySelectorAll('.cn-ovl').length).toBe(0);
+    createOverlay(app);
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(M.currentOverlay).toBeNull();
+  });
+
+  // P3-11：改名半失败（renameFile 成功、processFrontMatter 失败）→ renameFile 回旧路径
+  it('P3-11：改名半失败 → 文件回滚到旧路径、内存条目与文件一致', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const spy = vi.spyOn(app.fileManager, 'processFrontMatter').mockRejectedValue(new Error('磁盘占用'));
+    clickEl(pcardByName(root, '瑞克和莫蒂'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-name') as HTMLInputElement).value = '瑞克和莫蒂 第二季';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(spy).toHaveBeenCalled());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(vault.files.has('我的/影视/《瑞克和莫蒂》.md'), '改名应回滚到旧路径').toBe(true);
+    expect(vault.files.has('我的/影视/《瑞克和莫蒂 第二季》.md')).toBe(false);
+    const it = M.items.find((i) => i.name === '瑞克和莫蒂');
+    expect(it, '内存条目应回滚旧名').toBeTruthy();
+    expect(it!.file?.path).toBe('我的/影视/《瑞克和莫蒂》.md');
+    expect(hasNotice(/保存失败/)).toBe(true);
+  });
+
+  // P3-13：表单 Enter 提交（core bindFormSubmit）——名称框纯 Enter 直存，Ctrl+Enter 恒提交
+  it('P3-13：表单名称框 Enter 提交建档；影评框 Ctrl+Enter 恒提交', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    let form = root.querySelector('.cn-modal') as HTMLElement;
+    const nameInput = form.querySelector('.j-name') as HTMLInputElement;
+    nameInput.value = '回车新片';
+    nameInput.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《回车新片》.md')).toBe(true));
+    // 影评 textarea 聚焦时 Ctrl+Enter 恒提交（纯 Enter 换行不拦由 core 契约保证）
+    clickEl(root.querySelector('[data-cinema-add]'));
+    form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-name') as HTMLInputElement).value = '组合键影片';
+    clickEl(form.querySelector('[data-f-st="已看"]'));
+    const review = form.querySelector('.j-review-t') as HTMLTextAreaElement;
+    review.value = '组合键写的影评';
+    review.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true }));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《组合键影片》.md')).toBe(true));
+    expect(M.items.find((i) => i.name === '组合键影片')!.review).toBe('组合键写的影评');
+  });
+
+  // P3-14：list 页不预算 AI 页/分析页两份大字符串（分析页 19 板块全量统计），进页才构建
+  it('P3-14：list 页惰性构建——buildAnalysisHTML 仅在进分析页时调用', async () => {
+    const analysisMod = await import('../../src/cinema/analysis');
+    const spy = vi.spyOn(analysisMod, 'buildAnalysisHTML');
+    const { app } = seedVault();
+    createOverlay(app);
+    expect(spy).not.toHaveBeenCalled();
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-tool="stat"]'));
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(root.querySelectorAll('.sec').length).toBe(19); // 分析页内容不受惰性影响
+    clickEl(root.querySelector('.j-back'));
+    expect(M.view).toBe('list');
+  });
+
+  // P3-15：parseRecommendJson 围栏放宽——裸 ``` 与任意语言标注均可解析
+  it('P3-15：parseRecommendJson 兼容裸 ``` 围栏与任意语言标注', () => {
+    const data = [{ title: 'A', type: '电影' }];
+    expect(parseRecommendJson('```json\n' + JSON.stringify(data) + '\n```')).toEqual(data); // 既有口径
+    expect(parseRecommendJson('```\n' + JSON.stringify(data) + '\n```')).toEqual(data); // 裸围栏（AI 实测会出）
+    expect(parseRecommendJson('```JSON\n' + JSON.stringify(data) + '\n```')).toEqual(data); // 大写标注
+    expect(parseRecommendJson('```text\n' + JSON.stringify(data) + '\n```')).toEqual(data); // 其他标注
   });
 });

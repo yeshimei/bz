@@ -1,5 +1,5 @@
-import { makeApp } from '../helpers/app';
 // @vitest-environment node
+import { makeApp } from '../helpers/app';
 /**
  * 影院（cinema）数据层测试：解析/排序/筛选
  */

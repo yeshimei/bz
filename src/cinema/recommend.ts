@@ -11,7 +11,7 @@ import { notice, notifySaveError } from '../core/notice';
 import { localNow } from '../core/ui/str';
 import { createAI } from '../core/ai';
 import { emitDomainEvent } from '../core/domain-bus';
-import { STATUS_WATCHED } from './constants';
+import { STATUS_WATCHED, hasIllegalNameChar, ILLEGAL_NAME_HINT } from './constants';
 import type { CinemaItem } from './state';
 import { M } from './state';
 import { refreshDataAndView } from './data';
@@ -151,7 +151,9 @@ async function refineRecommend(first: any[]): Promise<any[]> {
 export function parseRecommendJson(raw: string): any[] | null {
   try {
     let cleaned = raw.trim();
-    const codeBlockMatch = cleaned.match(/```json\s*([\s\S]*?)```/);
+    // 围栏放宽（深审批A P3-15，AI#17 旧账）：语言标注任意（```JSON/```text/裸 ```）——
+    // 模型实测会输出无 json 标注的围栏，原 /```json\s*/ 只认小写 json 一种，其余整段解析失败
+    const codeBlockMatch = cleaned.match(/```[a-zA-Z]*\s*([\s\S]*?)```/);
     if (codeBlockMatch) cleaned = codeBlockMatch[1].trim();
     const data = JSON.parse(cleaned);
     if (Array.isArray(data)) return data;
@@ -173,6 +175,11 @@ export async function quickAddWant(app: App, name: string, type: string): Promis
     notice('推荐条目缺少片名，已跳过加入想看');
     return;
   }
+  // 非法字符校验（深审批A P3-7）：名称进文件名《X》.md，AI 返回的 title 不受控
+  if (hasIllegalNameChar(trimmedName)) {
+    notice(`${ILLEGAL_NAME_HINT}，已跳过加入想看`, 'error');
+    return;
+  }
   const tag = GROUP_DEFAULT_TAG[type] || '电影';
   let folderObj = app.vault.getAbstractFileByPath(M.folderPath);
   if (!folderObj) await app.vault.createFolder(M.folderPath);
@@ -182,17 +189,18 @@ export async function quickAddWant(app: App, name: string, type: string): Promis
     return;
   }
   const now = localNow();
+  // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）→ 英文星期
   const content = `---
 tags:
 - ${tag}
-观影日期: ${now}
+观影日期: "${now}"
 评分: -1
 海报: 
 ---
 `;
   try {
     const f = await app.vault.create(filePath, content);
-    notice(`已加入想看：${trimmedName}`, 'success');
+    notice(`已加入想看：「${trimmedName}」`, 'success'); // 引号形制与全域一致（深审批A P3-16）
     // 事件补发（smartcat 行为流观察；ADR-0087 cinema 接管）：created want
     emitDomainEvent('movie', { kind: 'created', name: trimmedName, status: 'want', rating: null, review: null });
     // 入抓取队列（ADR-0113）：卡片 loading 反馈，无通知
