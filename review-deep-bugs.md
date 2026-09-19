@@ -120,6 +120,8 @@
 
 ## memo（备忘录）2026-09-19 深审
 
+> ⚠️ **2026-09-19 回滚失效**：用户当日 revert `a0de3395` 将备忘录域整体强制回滚至 f6a0bc90 基准（周期/月历/子任务引入之前），本节全部闭环修复随滚不在当前代码。memo 已列入队尾重新深审；本节仅存方法与结论线索，重审须按回滚后代码逐条重新取证。回滚后基线：tsc 零错、tests/memo+checkup 202 例全绿。
+
 > 明细：`.scratch/review-deep/memo-{func,ui,efficiency,consistency,arch}.md`。5 方向并行审查；去重后 P1×1 + P2×13 + P3×22 + 测试缺口 9；旧账 N8（jumpToNote）三方向复核确认仍未修，并入本轮。门禁基线：tests/memo 15 文件 229 例全绿。
 
 ### P1
