@@ -1709,3 +1709,58 @@ tags: [美剧]
     expect(btn.textContent).toContain('展开全文');
   });
 });
+
+describe('cinema 合并卡行序（各季 + 特别篇统一按上映日期升序）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+  });
+  afterEach(() => {
+    Platform.isMobile = false;
+    unloadCinema();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  it('季与特别篇同一口径：按上映日期升序，最早的在前（不再先排季后排特别篇）', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《老友记 第一季》.md', md(`---
+tags: [美剧]
+评分: 9.2
+观影日期: 2026-06-18
+上映日期: 1995-09-21
+---`));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md(`---
+tags: [美剧]
+评分: 0
+观影日期: 2026-08-18
+上映日期: 1996-09-19
+---`));
+    vault.files.set('我的/影视/《老友记 幕后1994》.md', md(`---
+tags: [电影]
+评分: 7
+观影日期: 2026-09-20
+上映日期: 1994-05-01
+---`));
+    vault.files.set('我的/影视/《老友记 重聚特辑》.md', md(`---
+tags: [电影]
+评分: 8.6
+观影日期: 2026-09-19
+上映日期: 2021-05-27
+---`));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.pcard-series'));
+    const rows = Array.from(root.querySelectorAll('.cn-modal .s-row'));
+    expect(rows.map((r) => r.querySelector('.s-name')?.textContent)).toEqual([
+      '老友记 幕后1994', '老友记 第一季', '老友记 第二季', '老友记 重聚特辑',
+    ]);
+  });
+});

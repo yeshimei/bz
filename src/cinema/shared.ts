@@ -21,6 +21,7 @@ import {
 } from './constants';
 import type { CinemaItem } from './state';
 import type { CardEntry, SeasonSlot, SeriesCard } from './seasons';
+import { cmpByRelease, seasonsByRelease } from './seasons';
 
 // ---------- 图标名 ----------
 
@@ -251,8 +252,9 @@ export function seriesCountsText(card: SeriesCard): string {
 
 /**
  * 合并卡详情弹窗内容。头部 = 正脸（最近看的）海报 + 片名 + 共 N 季（并入条目按类型再带
- * 「· M 部电影」）+ 聚合状态 + 最新评分；正文 = 各季明细行，**特别篇不单开区段**
- * （2026-09-20 用户拍板：不区分季与特别篇，顺在季后面接着排），行内
+ * 「· M 部电影」）+ 聚合状态 + 最新评分；正文 = 明细行，**特别篇不单开区段**
+ * （2026-09-20 用户拍板：不区分季与特别篇；同日拍板整列一个口径——各季与特别篇
+ * **统一按上映日期升序**，不再是「先排季、特别篇顺在其后」），行内
  * `data-cinema-season-key` = 行内条目键，点击进该条目详情、右键 / 长按出该条目的动作——
  * 季行与特别篇行同一套结构与同一套绑定。
  * **不放分节小标题与操作提示**（用户 2026-09-20 点名去掉，弹窗只留头部 + 行）。
@@ -280,11 +282,16 @@ export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaIte
       <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? '' : ' none'}">${r && r > 0 ? Number(r).toFixed(1) : '—'}</span></div>`;
   };
-  // 行序 = 各季（季号升序）在前，特别篇顺在其后（同一列表，无分隔标题）。
+  // 行序 = **各季与特别篇统一按上映日期升序**（最早在前）——2026-09-20 用户拍板：不再
+  // 「先排季、特别篇顺在其后」，整列一个口径看上映先后。缺上映日期的排最后；日期相同
+  // 季在前（季内按季号）、特别篇之间保库内原序（sort 稳定）。
   // 整列包一层 .s-list：原来头部与首行之间的间隔由「各 季 明 细」小标题的 border-top + margin 顶着，
   // 小标题去掉后首行贴住头部（2026-09-20 用户看图指出），间隔改由列表自己给（styles.css）。
-  const rows = card.seasons.map((s) => rowOf(s.item, '')).join('')
-    + card.specials.map((it) => rowOf(it, ' s-row-special')).join('');
+  const rowSrc: { it: CinemaItem; special: boolean }[] = [
+    ...seasonsByRelease(card.seasons).map((s) => ({ it: s.item, special: false })),
+    ...card.specials.map((it) => ({ it, special: true })),
+  ].sort((a, b) => cmpByRelease(a.it, b.it) || (a.special === b.special ? 0 : a.special ? 1 : -1));
+  const rows = rowSrc.map(({ it, special }) => rowOf(it, special ? ' s-row-special' : '')).join('');
   return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>

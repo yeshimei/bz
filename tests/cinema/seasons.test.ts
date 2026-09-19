@@ -10,7 +10,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   seasonNumber, parseSeasonName, seriesKeyOf, isSeriesKey,
-  mergeSeasonCards, cardFace, cardGroup, type SeriesCard,
+  mergeSeasonCards, cardFace, cardGroup, seasonsByRelease, cmpByRelease,
+  type SeriesCard, type SeasonSlot,
 } from '../../src/cinema/seasons';
 import { cardHtml, pcardHtml, facePiecesHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesCountsText, seriesDetailModalHtml } from '../../src/cinema/shared';
 import type { CinemaItem } from '../../src/cinema/state';
@@ -340,5 +341,32 @@ describe('cinema 特别篇前缀并入（只按片名前缀认）', () => {
     // 特别篇行标出组（看着不像「某一季」），季行不标（与卡片同组，本就是同一部剧）
     expect(modal).toContain('<div class="s-sub">电影 · 观影 2026-09-19</div>');
     expect(modal).toContain('<div class="s-sub">观影 2026-06-18</div>');
+  });
+});
+
+describe('cinema 上映日期升序（合并卡行序单源）', () => {
+  const slot = (no: number, name: string, rel?: string): SeasonSlot => ({
+    no,
+    item: item(name, { releaseDate: rel ?? null, year: rel ? rel.slice(0, 4) : null }),
+  });
+  const names = (slots: SeasonSlot[]) => slots.map((s) => s.item.name);
+
+  it('季行按上映日期升序：前传 / 延期季按实际先后，不再被季号带偏', () => {
+    const slots = [slot(1, 'X 第一季', '2011-04-17'), slot(2, 'X 第二季', '2012-04-01'), slot(0, 'X 前传', '2009-01-01')];
+    expect(names(seasonsByRelease(slots))).toEqual(['X 前传', 'X 第一季', 'X 第二季']);
+  });
+
+  it('缺上映日期的排最后；日期相同按季号兜底（稳定）', () => {
+    const slots = [slot(3, 'X 第三季'), slot(2, 'X 第二季', '2012-04-01'), slot(1, 'X 第一季', '2012-04-01')];
+    expect(names(seasonsByRelease(slots))).toEqual(['X 第一季', 'X 第二季', 'X 第三季']);
+  });
+
+  it('cmpByRelease：完整日期与仅年份混排按时序；缺日期恒排最后', () => {
+    const full = (d: string) => item('a', { releaseDate: d, year: d.slice(0, 4) });
+    const yearOnly = (y: string) => item('b', { year: y });
+    expect(cmpByRelease(full('2013-01-08'), full('2013-05-01'))).toBeLessThan(0);
+    expect(cmpByRelease(yearOnly('2013'), full('2013-01-08'))).toBeLessThan(0); // 同年无月日排该年最前
+    expect(cmpByRelease(item('c'), full('1999-01-01'))).toBeGreaterThan(0); // 无日期排最后
+    expect(cmpByRelease(item('c'), item('d'))).toBe(0);
   });
 });

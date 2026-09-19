@@ -1,4 +1,4 @@
-/* 源指纹 a9f83bf58ea6afda · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 bd489cf49ef3ccc4 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -7290,6 +7290,151 @@ tags:
   ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
   }
 
+  // src/cinema/seasons.ts
+  var MERGE_GROUPS = ["剧集", "动漫"];
+  var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  function seasonNumber(raw) {
+    if (/^\d+$/.test(raw)) return Number(raw);
+    if (raw === "十") return 10;
+    const m = raw.match(/^(.)?十(.)?$/);
+    if (m) {
+      const tens = m[1] ? CN_NUM[m[1]] : 1;
+      const ones = m[2] ? CN_NUM[m[2]] : 0;
+      return tens == null || ones == null ? null : tens * 10 + ones;
+    }
+    return raw.length === 1 && CN_NUM[raw] != null ? CN_NUM[raw] : null;
+  }
+  var SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
+  function parseSeasonName(name) {
+    var _a, _b;
+    const m = SEASON_RE.exec(name);
+    if (!m) return null;
+    const season = seasonNumber((_b = (_a = m[1]) != null ? _a : m[2]) != null ? _b : "");
+    if (season == null || season <= 0) return null;
+    const base = (name.slice(0, m.index) + name.slice(m.index + m[0].length)).replace(/[\s\-–—·:：]+$/, "").replace(/[\s\-–—·:：]{2,}/g, " ").replace(/\s{2,}/g, " ").trim();
+    return base ? { base, season } : null;
+  }
+  function cmpByRelease(a, b) {
+    var _a, _b, _c, _d;
+    const ra = (_b = (_a = a.releaseDate) != null ? _a : a.year) != null ? _b : "";
+    const rb = (_d = (_c = b.releaseDate) != null ? _c : b.year) != null ? _d : "";
+    if (ra === rb) return 0;
+    if (!ra) return 1;
+    if (!rb) return -1;
+    return ra < rb ? -1 : 1;
+  }
+  function seasonsByRelease(slots) {
+    return [...slots].sort((a, b) => cmpByRelease(a.item, b.item) || a.no - b.no);
+  }
+  var SPECIAL_SEP_RE = /^[\s:：·\-—－]+/;
+  function seriesKeyOf(group, base) {
+    return `series:${group}:${base}`;
+  }
+  function isSeriesKey(key) {
+    return !!key && key.startsWith("series:");
+  }
+  function cardFace(e) {
+    return e.kind === "series" ? e.face : e.item;
+  }
+  function cardGroup(e) {
+    return e.kind === "series" ? e.group : e.item.group;
+  }
+  function watchTs(it) {
+    if (!it.watchDate) return 0;
+    const t = new Date(it.watchDate).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  }
+  function pickFace(slots) {
+    let best = slots[0];
+    for (const s of slots) {
+      const t = watchTs(s.item);
+      const bt = watchTs(best.item);
+      if (t > bt || t === bt && s.no > best.no) best = s;
+    }
+    return best.item;
+  }
+  function latestRated(items) {
+    const rated = items.filter((it) => it.rating != null && it.rating > 0);
+    if (!rated.length) return null;
+    return rated.reduce((best, it) => watchTs(it) >= watchTs(best) ? it : best, rated[0]).rating;
+  }
+  function specialHostOf(name, cards) {
+    let hit = null;
+    for (const c of cards) {
+      if (!c.name || name.length <= c.name.length) continue;
+      if (hit && c.name.length <= hit.name.length) continue;
+      if (!name.startsWith(c.name)) continue;
+      const rest = name.slice(c.name.length);
+      const sep = SPECIAL_SEP_RE.exec(rest);
+      if (!sep || !rest.slice(sep[0].length).trim()) continue;
+      hit = c;
+    }
+    return hit;
+  }
+  function mergeSeasonCards(list, merge) {
+    if (!merge) return list.map((item) => ({ kind: "single", item }));
+    const grouped = /* @__PURE__ */ new Map();
+    for (const it of list) {
+      if (!MERGE_GROUPS.includes(it.group)) continue;
+      const parsed = parseSeasonName(it.name);
+      if (!parsed) continue;
+      const key = seriesKeyOf(it.group, parsed.base);
+      const slots = grouped.get(key);
+      if (slots) {
+        if (!slots.some((s) => s.no === parsed.season)) slots.push({ no: parsed.season, item: it });
+      } else {
+        grouped.set(key, [{ no: parsed.season, item: it }]);
+      }
+    }
+    const merged = /* @__PURE__ */ new Map();
+    for (const [key, slots] of grouped) {
+      if (slots.length < 2) continue;
+      slots.sort((a, b) => a.no - b.no);
+      merged.set(key, {
+        kind: "series",
+        key,
+        name: parseSeasonName(slots[0].item.name).base,
+        group: slots[0].item.group,
+        seasons: slots,
+        specials: [],
+        face: pickFace(slots),
+        rating: null
+        // 统一在特别篇并入后算（口径含特别篇）
+      });
+    }
+    const cards = [...merged.values()];
+    const absorbed = /* @__PURE__ */ new Set();
+    for (const it of list) {
+      if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
+      const host = specialHostOf(it.name, cards);
+      if (!host) continue;
+      host.specials.push(it);
+      absorbed.add(it);
+    }
+    const allItemsOf = (c) => c.seasons.map((s) => s.item).concat(c.specials);
+    for (const c of cards) c.rating = latestRated(allItemsOf(c));
+    const out = [];
+    const emitted = /* @__PURE__ */ new Set();
+    for (const it of list) {
+      if (absorbed.has(it)) continue;
+      let key = null;
+      if (MERGE_GROUPS.includes(it.group)) {
+        const parsed = parseSeasonName(it.name);
+        key = parsed ? seriesKeyOf(it.group, parsed.base) : null;
+      }
+      const card = key ? merged.get(key) : void 0;
+      if (card) {
+        if (!emitted.has(card.key)) {
+          out.push(card);
+          emitted.add(card.key);
+        }
+        continue;
+      }
+      out.push({ kind: "single", item: it });
+    }
+    return out;
+  }
+
   // src/cinema/shared.ts
   var ICON = {
     ai: "bot",
@@ -7455,7 +7600,11 @@ tags:
       <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? "" : " none"}">${r && r > 0 ? Number(r).toFixed(1) : "—"}</span></div>`;
     };
-    const rows = card.seasons.map((s) => rowOf(s.item, "")).join("") + card.specials.map((it) => rowOf(it, " s-row-special")).join("");
+    const rowSrc = [
+      ...seasonsByRelease(card.seasons).map((s) => ({ it: s.item, special: false })),
+      ...card.specials.map((it) => ({ it, special: true }))
+    ].sort((a, b) => cmpByRelease(a.it, b.it) || (a.special === b.special ? 0 : a.special ? 1 : -1));
+    const rows = rowSrc.map(({ it, special }) => rowOf(it, special ? " s-row-special" : "")).join("");
     return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ""}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
@@ -7547,139 +7696,6 @@ tags:
   function seriesSheetHeadHtml(card, posterUrl2) {
     return `<div class="cn-sheet-head">${posterUrl2 ? `<img class="cn-sheet-poster" src="${esc(posterUrl2)}" onerror="this.remove()">` : ""}
     <div><div class="cn-sheet-name">${esc(card.name)}</div><div class="cn-sheet-sub">${esc(seriesCountsText(card))}</div></div></div>`;
-  }
-
-  // src/cinema/seasons.ts
-  var MERGE_GROUPS = ["剧集", "动漫"];
-  var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
-  function seasonNumber(raw) {
-    if (/^\d+$/.test(raw)) return Number(raw);
-    if (raw === "十") return 10;
-    const m = raw.match(/^(.)?十(.)?$/);
-    if (m) {
-      const tens = m[1] ? CN_NUM[m[1]] : 1;
-      const ones = m[2] ? CN_NUM[m[2]] : 0;
-      return tens == null || ones == null ? null : tens * 10 + ones;
-    }
-    return raw.length === 1 && CN_NUM[raw] != null ? CN_NUM[raw] : null;
-  }
-  var SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
-  function parseSeasonName(name) {
-    var _a, _b;
-    const m = SEASON_RE.exec(name);
-    if (!m) return null;
-    const season = seasonNumber((_b = (_a = m[1]) != null ? _a : m[2]) != null ? _b : "");
-    if (season == null || season <= 0) return null;
-    const base = (name.slice(0, m.index) + name.slice(m.index + m[0].length)).replace(/[\s\-–—·:：]+$/, "").replace(/[\s\-–—·:：]{2,}/g, " ").replace(/\s{2,}/g, " ").trim();
-    return base ? { base, season } : null;
-  }
-  var SPECIAL_SEP_RE = /^[\s:：·\-—－]+/;
-  function seriesKeyOf(group, base) {
-    return `series:${group}:${base}`;
-  }
-  function isSeriesKey(key) {
-    return !!key && key.startsWith("series:");
-  }
-  function cardFace(e) {
-    return e.kind === "series" ? e.face : e.item;
-  }
-  function cardGroup(e) {
-    return e.kind === "series" ? e.group : e.item.group;
-  }
-  function watchTs(it) {
-    if (!it.watchDate) return 0;
-    const t = new Date(it.watchDate).getTime();
-    return Number.isNaN(t) ? 0 : t;
-  }
-  function pickFace(slots) {
-    let best = slots[0];
-    for (const s of slots) {
-      const t = watchTs(s.item);
-      const bt = watchTs(best.item);
-      if (t > bt || t === bt && s.no > best.no) best = s;
-    }
-    return best.item;
-  }
-  function latestRated(items) {
-    const rated = items.filter((it) => it.rating != null && it.rating > 0);
-    if (!rated.length) return null;
-    return rated.reduce((best, it) => watchTs(it) >= watchTs(best) ? it : best, rated[0]).rating;
-  }
-  function specialHostOf(name, cards) {
-    let hit = null;
-    for (const c of cards) {
-      if (!c.name || name.length <= c.name.length) continue;
-      if (hit && c.name.length <= hit.name.length) continue;
-      if (!name.startsWith(c.name)) continue;
-      const rest = name.slice(c.name.length);
-      const sep = SPECIAL_SEP_RE.exec(rest);
-      if (!sep || !rest.slice(sep[0].length).trim()) continue;
-      hit = c;
-    }
-    return hit;
-  }
-  function mergeSeasonCards(list, merge) {
-    if (!merge) return list.map((item) => ({ kind: "single", item }));
-    const grouped = /* @__PURE__ */ new Map();
-    for (const it of list) {
-      if (!MERGE_GROUPS.includes(it.group)) continue;
-      const parsed = parseSeasonName(it.name);
-      if (!parsed) continue;
-      const key = seriesKeyOf(it.group, parsed.base);
-      const slots = grouped.get(key);
-      if (slots) {
-        if (!slots.some((s) => s.no === parsed.season)) slots.push({ no: parsed.season, item: it });
-      } else {
-        grouped.set(key, [{ no: parsed.season, item: it }]);
-      }
-    }
-    const merged = /* @__PURE__ */ new Map();
-    for (const [key, slots] of grouped) {
-      if (slots.length < 2) continue;
-      slots.sort((a, b) => a.no - b.no);
-      merged.set(key, {
-        kind: "series",
-        key,
-        name: parseSeasonName(slots[0].item.name).base,
-        group: slots[0].item.group,
-        seasons: slots,
-        specials: [],
-        face: pickFace(slots),
-        rating: null
-        // 统一在特别篇并入后算（口径含特别篇）
-      });
-    }
-    const cards = [...merged.values()];
-    const absorbed = /* @__PURE__ */ new Set();
-    for (const it of list) {
-      if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
-      const host = specialHostOf(it.name, cards);
-      if (!host) continue;
-      host.specials.push(it);
-      absorbed.add(it);
-    }
-    const allItemsOf = (c) => c.seasons.map((s) => s.item).concat(c.specials);
-    for (const c of cards) c.rating = latestRated(allItemsOf(c));
-    const out = [];
-    const emitted = /* @__PURE__ */ new Set();
-    for (const it of list) {
-      if (absorbed.has(it)) continue;
-      let key = null;
-      if (MERGE_GROUPS.includes(it.group)) {
-        const parsed = parseSeasonName(it.name);
-        key = parsed ? seriesKeyOf(it.group, parsed.base) : null;
-      }
-      const card = key ? merged.get(key) : void 0;
-      if (card) {
-        if (!emitted.has(card.key)) {
-          out.push(card);
-          emitted.add(card.key);
-        }
-        continue;
-      }
-      out.push({ kind: "single", item: it });
-    }
-    return out;
   }
 
   // src/cinema/layouts/midnight/render.ts
