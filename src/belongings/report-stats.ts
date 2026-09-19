@@ -10,7 +10,7 @@
  *   - 陪伴天数 = 购入日 →（出离日 | 截止日）的日历日；无效/倒挂日期 = 0 天不参与。
  */
 import type { BelongingsItem } from './types';
-import { catNameOf } from './shared';
+import { catNameOf, parseLocalDay, exitDayTsOf, recoveredOf, exitedStatus } from './shared';
 
 /** 陪伴最久榜条数（Top N；issue 356 拍板 Top 5） */
 export const COMPANION_TOP_N = 5;
@@ -20,14 +20,12 @@ export function monthLabel(m: number): string {
   return `${m}月`;
 }
 
-// ---------- 日期解析（本地日历日口径，与 shared.parseLocalDay 同语义） ----------
+// ---------- 日期解析（func P3-5/深审批A：单源收编 shared.parseLocalDay——
+// 严格分量校验版，「2026-13-45」不再被归一化漂移到次年；无效 = null 与面板口径一致） ----------
 
-/** 'YYYY-MM-DD…' → 当日零点本地时间戳；无效 = null（缺字段/残串照常跳过） */
+/** 日期串 → 当日零点本地时间戳；无效 = null（缺字段/残串/越界分量照常跳过） */
 function parseDayTs(raw: string | null | undefined): number | null {
-  const parts = String(raw || '').slice(0, 10).split('-').map(Number);
-  const [y, m, d] = parts;
-  if (!y || !m || !d) return null;
-  return new Date(y, m - 1, d).getTime();
+  return parseLocalDay(raw)?.getTime() ?? null;
 }
 
 /** 年份四字串（'2025-06-01…' → '2025'；无效 = ''） */
@@ -38,20 +36,12 @@ function yearOf(raw: string | null | undefined): string {
 
 const DAY_MS = 864e5;
 
-/** 出离封口时间戳（仅出离态且有 exit_date；与 shared.exitDateOf 同语义的时间戳版） */
-function exitTsOf(it: BelongingsItem): number | null {
-  const exited = it.current_status === '已转卖' || it.current_status === '已丢弃';
-  return exited ? parseDayTs(it.exit_date) : null;
-}
+// 出离封口时间戳与转卖回血（cons P3-7 收编 shared 单源：exitDayTsOf / recoveredOf，
+// 出离态判定/状态串不再本地重写——头注「与 shared 同语义」的平行实现由此退役）
 
 /** 价格数值容错（缺字段/非数字 = 0） */
 function priceOf(it: BelongingsItem): number {
   return Number(it.purchase_price) || 0;
-}
-
-/** 转卖回血数值（仅已转卖且有正售价；与 shared.avgDailyCost 扣减口径一致） */
-function recoveredOf(it: BelongingsItem): number {
-  return it.current_status === '已转卖' && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
 }
 
 // ---------- 年份清单与解析 ----------
@@ -63,7 +53,7 @@ export function reportYears(items: BelongingsItem[]): string[] {
     const py = yearOf(it.purchase_date);
     if (py) set.add(py);
     const ey = yearOf(it.exit_date);
-    if (ey && (it.current_status === '已转卖' || it.current_status === '已丢弃')) set.add(ey);
+    if (ey && exitedStatus(it.current_status)) set.add(ey);
   }
   return [...set].sort().reverse();
 }
@@ -140,7 +130,7 @@ export function avgDailyCostAsOf(items: BelongingsItem[], cutoffTs: number): num
     const p = parseDayTs(it.purchase_date);
     if (p == null || p >= cutoffTs) continue;
     cost += priceOf(it);
-    const ex = exitTsOf(it);
+    const ex = exitDayTsOf(it);
     const capped = ex != null && ex < cutoffTs;
     if (capped) cost -= recoveredOf(it);
     days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
@@ -165,12 +155,7 @@ export function computeYearReport(
   });
   const exitedInYear = items.filter((it) => {
     const ex = parseDayTs(it.exit_date);
-    return (
-      ex != null &&
-      ex >= yearStart &&
-      ex < yearEnd &&
-      (it.current_status === '已转卖' || it.current_status === '已丢弃')
-    );
+    return ex != null && ex >= yearStart && ex < yearEnd && exitedStatus(it.current_status);
   });
 
   // 月度花销（当年购入按月桶；固定 12 列）
@@ -222,7 +207,7 @@ export function computeYearReport(
     .map((it) => {
       const p = parseDayTs(it.purchase_date);
       if (p == null || p >= companionCutoff) return null;
-      const ex = exitTsOf(it);
+      const ex = exitDayTsOf(it);
       const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
       return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
     })

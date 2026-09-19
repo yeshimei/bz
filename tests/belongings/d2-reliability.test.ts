@@ -20,7 +20,7 @@ function makeApp(vault: MockVault) {
 const dbOf = (ids: string[]) => ({
   version: '1.0',
   last_updated: '2026-09-04T10:00:00.000Z',
-  items: Object.fromEntries(ids.map((id) => [id, { id, name: '物品' + id, category: '数码', price: 100, purchase_date: '2025-01-01' }])),
+  items: Object.fromEntries(ids.map((id) => [id, { id, name: '物品' + id, category: '数码', purchase_price: 100, purchase_date: '2025-01-01' }])),
 });
 
 describe('belongings.json D2 可靠写契约', () => {

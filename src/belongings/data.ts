@@ -4,15 +4,14 @@
  * 历史分类派生 + emoji 分类迁移（issue 231/ADR-0102：内置预设 1226 条退役）
  */
 import { notice } from '../core/notice';
-import { getSettings } from '../core/settings-provider';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { splitEmojiCategory } from './emoji-icon-map';
 import type { BelongingsDatabase } from './types';
 
-/** 数据文件路径（ADR-0009：storagePath 优先，旧 dataFolder 兼容兜底） */
+/** 数据文件路径（ADR-0009）——arch N2 收敛：兜底表达式不再域内复写，
+ *  直接走 core storageFile 单源（storageDir 内含 storagePath 缺省 CONFIG/STORAGE + 尾斜杠 trim） */
 export function getDataFilePath(): string {
-  const s = getSettings() as any;
-  return storageFile('belongings.json', s.storagePath || 'CONFIG/STORAGE');
+  return storageFile('belongings.json');
 }
 
 /** 空数据库结构 */

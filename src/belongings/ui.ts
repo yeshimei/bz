@@ -22,7 +22,7 @@
  * 视觉换血按 ADR-0097 判例：.bz-bel--poster 域内 token 作用域覆盖 + .bz-bel-* 装饰类，
  *   chips/segmented/空态在 render.ts 串里沿用组件库皮（bz-chip/bz-segmented/bz-empty，ADR-0094 视觉）。
  */
-import { notice, notifyUndo, notifySaveError } from '../core/notice';
+import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { escManager } from '../core/esc-manager';
@@ -30,7 +30,7 @@ import { isMobileEnv } from '../core/mobile';
 import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
-import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
+import { confirmDiscard } from '../core/flow-dialog';
 import { mountIcons, uiModal, uiSuggest, uiIconSpan } from '../core/ui';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -44,6 +44,7 @@ import {
   renderPanelView, panelHtml,
   belDetailHtml, flowBtnsHtml, belFormHtml, belFormInit, statusPickHtml, sheetHeadHtml,
   actionSpecs, todayStr, isExited, exitedStatus, SORT_OPTS,
+  STATUS, STATUS_ORDER, MAX_PRICE,
   type MoneyUnit,
 } from './render';
 import type { BelongingsDatabase, BelongingsItem } from './types';
@@ -100,13 +101,16 @@ function currencyUnit(): MoneyUnit {
   return v === 'yuan' || v === 'usd' || v === 'none' || v === 'cny' ? v : 'cny';
 }
 
-/** 新记条目默认状态（belongingsNewStatus，issue 294；非法值回落「使用中」；编辑回填不受影响） */
+/** 新记条目默认状态（belongingsNewStatus，issue 294；非法值回落「使用中」；编辑回填不受影响）。
+ *  状态串消费 STATUS 单源（cons P3-7 禁手抄） */
 function newItemStatus(): string {
-  return (tryGetSettings() as Record<string, unknown>).belongingsNewStatus === '闲置' ? '闲置' : '使用中';
+  return (tryGetSettings() as Record<string, unknown>).belongingsNewStatus === STATUS.idle.label
+    ? STATUS.idle.label
+    : STATUS.using.label;
 }
 
-/** 默认状态筛选合法值（与 chips 同源；空串=全部） */
-const DEFAULT_STATUS_VALUES = ['', 'using', 'idle', 'sold', 'discard'];
+/** 默认状态筛选合法值（与 chips 同源；空串=全部）——从 STATUS_ORDER 派生，禁再手抄（cons P3-7） */
+const DEFAULT_STATUS_VALUES = ['', 'asset', ...STATUS_ORDER.map((s) => s.key)];
 
 export function belongingSettingsSchema(): SettingsSchema {
   return {
@@ -145,12 +149,10 @@ export function belongingSettingsSchema(): SettingsSchema {
             name: '默认状态筛选',
             desc: '打开面板时选中的物品状态',
             binding: { key: 'belongingsDefaultStatus' },
+            // 选项从 STATUS_ORDER 派生（cons P3-7：key/label 不再手抄第二份；「全部」置顶）
             options: [
               { value: '', label: '全部' },
-              { value: 'using', label: '使用中' },
-              { value: 'idle', label: '闲置' },
-              { value: 'sold', label: '已转卖' },
-              { value: 'discard', label: '已丢弃' },
+              ...STATUS_ORDER.map((s) => ({ value: s.key, label: s.label })),
             ],
           },
           {
@@ -187,10 +189,8 @@ export function belongingSettingsSchema(): SettingsSchema {
             name: '新增物品默认状态',
             desc: '记一笔时物品的初始状态',
             binding: { key: 'belongingsNewStatus' },
-            options: [
-              { value: '使用中', label: '使用中' },
-              { value: '闲置', label: '闲置' },
-            ],
+            // 在库两态（出离态不作为新记默认；选项随 STATUS 单源派生，cons P3-7）
+            options: [STATUS.using, STATUS.idle].map((s) => ({ value: s.label, label: s.label })),
           },
         ],
       },
@@ -239,8 +239,10 @@ function ensureBelongingsEsc(): void {
 }
 /** 数据文件 modify 自动刷新（打开期间注册，关闭注销——用户拍板实时刷新） */
 let autoRefreshOff: (() => void) | null = null;
-/** 本会话写盘标记（自写短路：modify 事件不回读重渲） */
-let selfWritePending = false;
+/** 本会话写盘在途计数（自写短路：modify 事件不回读重渲，P44 去双渲染）。
+ *  arch A4 整改：单布尔在并发 saveAndRender 交叠时先完成者 finally 复位会让后写者的
+ *  落盘 modify 穿透守卫——改引用计数，>0 即短路，窗口覆盖全部在途写 */
+let selfWritePending = 0;
 /** 主题变化监听（模块级持有，卸载时断开） */
 let bodyThemeObserver: MutationObserver | null = null;
 /** 打开中互斥（loadDatabase await 窗口内重入直接忽略，杜绝双触发双遮罩——僵尸遮罩只能重载） */
@@ -255,6 +257,11 @@ export async function openPanel(): Promise<void> {
   opening = true;
   try {
     await openPanelInner();
+  } catch (e: unknown) {
+    // func P3-2/深审批A：loadDatabase reject（IO 失败/目录创建失败等非解析类错误）不再
+    // 被 void 吞成「点了没反应」——三入口兜底对称（openForm B7 / 报告 / 本入口），
+    // 统一 notifyActionError + 重试出口（cons P3-3 范式）
+    notifyActionError(e, '归物本数据加载', { onRetry: () => void openPanel() });
   } finally {
     opening = false;
   }
@@ -438,10 +445,25 @@ function startAutoRefresh(): void {
   const filePath = getDataFilePath();
   const off = (app.vault as any).on('modify', (file: any) => {
     if (file?.path !== filePath) return;
-    if (selfWritePending) return;
+    if (selfWritePending > 0) return;
     void (async () => {
-      M.db = await loadDatabase();
-      M.renderFn?.();
+      try {
+        M.db = await loadDatabase();
+        M.renderFn?.();
+      } catch (e: unknown) {
+        // arch A2：自动刷新路径 reject 不再 unhandled rejection（旧库保留，下次 modify 自然重试，
+        // 重试按钮给即时出口）——通知口径与三入口统一
+        notifyActionError(e, '归物本数据自动刷新', {
+          onRetry: () => {
+            void (async () => {
+              try {
+                M.db = await loadDatabase();
+                M.renderFn?.();
+              } catch { /* 重试仍失败：通知由 notifyActionError 本轮已给，静默等下次 modify */ }
+            })();
+          },
+        });
+      }
     })();
   });
   autoRefreshOff = () => (app.vault as any).offref(off);
@@ -474,14 +496,14 @@ function observeTheme(): void {
   bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 }
 
-/** 保存 + 渲染单点入口（自写短路标记） */
+/** 保存 + 渲染单点入口（自写短路标记：引用计数，见 selfWritePending 注释） */
 async function saveAndRender(): Promise<void> {
   if (!M.db) return;
-  selfWritePending = true;
+  selfWritePending++;
   try {
     await saveDatabase(M.db);
   } finally {
-    selfWritePending = false;
+    selfWritePending--;
   }
   M.renderFn?.();
 }
@@ -519,8 +541,8 @@ export async function openBelongingsReportView(): Promise<void> {
     try {
       items = Object.values((await loadDatabase()).items);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : String(e);
-      notice('数据加载失败：' + msg, 'error');
+      // cons P3-3：与主面板/表单入口同款 notifyActionError + 重试出口（三入口对称）
+      notifyActionError(e, '归物本数据加载', { onRetry: () => void openBelongingsReportView() });
       return;
     }
   }
@@ -640,6 +662,10 @@ async function applyFlowWithUndo(it: BelongingsItem, s: string): Promise<void> {
         else if (now.exit_date != null) now.exit_date = null;
         now.last_updated = new Date().toISOString();
         await saveAndRender();
+        // func P3-8/深审批A：撤销 = 一次状态回转，补发 status 事件（favorites unarchive 先例）——
+        // 复用既有 kind 契约（smartcat 文案层已有四态动词，「转卖」撤销记「你重新用起了《X》」），
+        // 修复前行为流单向失真（记了转卖、无撤销记录）。写失败路径仍不发（catch 分支）
+        emitDomainEvent('belongings', { kind: 'status', title: now.name, status: prevStatus });
         notice(`已撤销，「${now.name}」回到${prevStatus}`, 'success');
       } catch (e) {
         // 撤销写盘失败（H15）：内存已改必须从盘回滚，否则后续任意保存把未落盘的撤销补刀持久化
@@ -695,22 +721,17 @@ function openMobSheet(it: BelongingsItem): void {
   openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl(it) });
 }
 
-// ==================== 删除（ticket 189：去威慑文案，确认后接撤销 toast） ====================
+// ==================== 删除（eff E5 拍板落地：免确认直达 + notifyUndo 撤销链） ====================
 
+/**
+ * 可撤销删除免确认（core/notice.ts 效率整改 5 口径：接了 notifyUndo 的删除不走
+ * openFlowDialog 二次确认——撤销兜底已覆盖误删风险，favorites 先例；本域删除按快照
+ * 原样写回完全可逆，无不可逆销毁类操作，故全量免确认）。顺带消解 func P3-3
+ * 「确认框在途时命令关面板 → 确认后静默 no-op」死端（确认框不复存在）。
+ */
 async function deleteItem(it: BelongingsItem): Promise<void> {
-  const v = await openFlowDialog({
-    title: '删除物品',
-    message: `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`,
-    // 皮肤类（issue 291）：确认框挂 body、脱离面板根，必须显式带 .bz-bel-flow-dialog
-    // 才能拿到海报 token（否则掉回 core 裸样式，与「物品详情」不同源）
-    className: 'bz-bel-flow-dialog',
-    actions: [
-      { label: '取消', value: 'cancel' },
-      { label: '删除', value: 'del', danger: true, cta: true },
-    ],
-  });
-  if (v !== 'del' || !M.db) return;
-  // 外部 modify 自动刷新会把 M.db 整体换新——确认后仍按 id 校验当前库中存在
+  if (!M.db) return;
+  // 外部 modify 自动刷新会把 M.db 整体换新——按 id 校验当前库中存在
   if (!M.db.items[it.id]) {
     notice('该物品已被外部变更删除，列表已刷新', 'warning');
     M.renderFn?.();
@@ -834,8 +855,8 @@ export function openForm(it: BelongingsItem | null): void {
         openForm(it);
       })
       .catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : String(e);
-        notice('数据加载失败：' + msg, 'error');
+        // cons P3-3：与主面板/报告入口同款 notifyActionError + 重试出口（三入口对称）
+        notifyActionError(e, '归物本数据加载', { onRetry: () => openForm(it) });
       });
     return;
   }
@@ -903,9 +924,9 @@ export function openForm(it: BelongingsItem | null): void {
   const soldField = mask.querySelector('#bm-soldfield') as HTMLElement;
   let curStatus = it?.current_status || newItemStatus();
   const syncExitRow = () => {
-    const exited = curStatus === '已转卖' || curStatus === '已丢弃';
+    const exited = exitedStatus(curStatus);
     exitRow.hidden = !exited;
-    soldField.hidden = curStatus !== '已转卖';
+    soldField.hidden = curStatus !== STATUS.sold.label;
   };
   const drawStatus = () => {
     statusPick.innerHTML = statusPickHtml(curStatus);
@@ -956,12 +977,18 @@ export function openForm(it: BelongingsItem | null): void {
     const price = parseFloat((mask.querySelector('#bm-price') as HTMLInputElement).value);
     const date = (mask.querySelector('#bm-date') as HTMLInputElement).value;
     if (!name) { fail('请输入物品名称'); return; }
-    if (isNaN(price) || price < 0) { fail('请输入有效的价格'); return; }
+    // 价格校验（func P3-6/深审批A）：非有限值（Infinity 粘贴）与超上限（1e308 一类科学
+    // 计数法会把 Math.round(price*100) 变 Infinity → JSON 落盘 null → 读回 0 静默丢值）
+    // 一律拦截，人话提示
+    if (!Number.isFinite(price) || price < 0) { fail('请输入有效的价格'); return; }
+    if (price > MAX_PRICE) { fail('价格超出可记录范围（上限一万亿），请检查是否多输了几位'); return; }
     if (!date) { fail('请选择购买日期'); return; }
-    const category = catInput.value.trim() || init.catVal;
+    // 分类校验（func P3-7/深审批A）：编辑清空与新增同口径——去掉 `|| init.catVal` 静默回填，
+    // 清空即 fail 提示（修复前「我明明删了」的静默回填困惑点）
+    const category = catInput.value.trim();
     if (!category) { fail('请选择或输入分类'); return; }
     // 出离字段（ADR-0089）：转卖售价可选但填了必须合法
-    const exited = curStatus === '已转卖' || curStatus === '已丢弃';
+    const exited = exitedStatus(curStatus);
     const exitVal = exited ? (mask.querySelector('#bm-exitdate') as HTMLInputElement).value : '';
     // 出离日期倒挂校验（H16）：早于购买日期会让「陪伴 N 天」与日均成本分母口径失真，保存前拦下
     const exitDate = exited ? (exitVal || todayStr()) : '';
@@ -969,11 +996,12 @@ export function openForm(it: BelongingsItem | null): void {
       fail('出离日期不能早于购买日期');
       return;
     }
-    const soldRaw = curStatus === '已转卖' ? (mask.querySelector('#bm-soldprice') as HTMLInputElement).value.trim() : '';
+    const soldRaw = curStatus === STATUS.sold.label ? (mask.querySelector('#bm-soldprice') as HTMLInputElement).value.trim() : '';
     let soldPrice: number | null = null;
     if (soldRaw !== '') {
       const sp = parseFloat(soldRaw);
-      if (isNaN(sp) || sp < 0) { fail('请输入有效的售价'); return; }
+      if (!Number.isFinite(sp) || sp < 0) { fail('请输入有效的售价'); return; }
+      if (sp > MAX_PRICE) { fail('售价超出可记录范围（上限一万亿），请检查是否多输了几位'); return; }
       soldPrice = Math.round(sp * 100) / 100;
     }
     const desc = (mask.querySelector('#bm-desc') as HTMLTextAreaElement).value.trim();
@@ -1005,7 +1033,7 @@ export function openForm(it: BelongingsItem | null): void {
           // 出离字段（ADR-0089）：只在出离态写值；退出出离态且旧值存在才清（避免给老记录写冗余 null）
           if (exited) cur.exit_date = exitDate;
           else if (cur.exit_date != null) cur.exit_date = null;
-          if (curStatus === '已转卖') cur.sold_price = soldPrice;
+          if (curStatus === STATUS.sold.label) cur.sold_price = soldPrice;
           else if (cur.sold_price != null) cur.sold_price = null; // 丢弃/在用态无售价语义
           cur.last_updated = new Date().toISOString();
           await saveAndRender();
@@ -1026,7 +1054,7 @@ export function openForm(it: BelongingsItem | null): void {
             created_date: new Date().toISOString(),
             last_updated: new Date().toISOString(),
             ...(exited ? { exit_date: exitDate } : {}),
-            ...(curStatus === '已转卖' ? { sold_price: soldPrice } : {}),
+            ...(curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {}),
             ...(formIcon ? { icon: formIcon } : {}),
           };
           M.db.items[newItem.id] = newItem; // 用当前库（外部 modify 换新后旧 db 引用会丢写）

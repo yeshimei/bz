@@ -1,4 +1,4 @@
-/* 源指纹 0dc963e0548dbea6 · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 16274b963ec31d8b · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
@@ -21510,8 +21510,7 @@ ${countsToText(s.missing)}
 
   // src/belongings/data.ts
   function getDataFilePath() {
-    const s = getSettings();
-    return storageFile("belongings.json", s.storagePath || "CONFIG/STORAGE");
+    return storageFile("belongings.json");
   }
   function emptyDatabase() {
     return {
@@ -21576,7 +21575,6 @@ ${countsToText(s.missing)}
   var init_data6 = __esm({
     "src/belongings/data.ts"() {
       init_notice();
-      init_settings_provider();
       init_storage();
       init_emoji_icon_map();
     }
@@ -21609,8 +21607,7 @@ ${countsToText(s.missing)}
     return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
   }
   function todayStr() {
-    const d = /* @__PURE__ */ new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return localDayKey();
   }
   function catEmoji(cat) {
     const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
@@ -21656,25 +21653,28 @@ ${countsToText(s.missing)}
   function isExited(it) {
     return exitedStatus(it.current_status);
   }
-  function exitDateOf(it) {
-    return isExited(it) ? it.exit_date || null : null;
+  function exitDayTsOf(it) {
+    var _a2, _b2;
+    return isExited(it) ? (_b2 = (_a2 = parseLocalDay(it.exit_date)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null : null;
+  }
+  function recoveredOf(it) {
+    return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
   }
   function parseLocalDay(raw) {
     const parts = String(raw || "").slice(0, 10).split("-").map(Number);
     const [y, m, d] = parts;
     if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d);
+    if (m < 1 || m > 12) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return dt;
   }
   function daysUsed(it) {
     const start = parseLocalDay(it.purchase_date);
     if (!start) return 0;
-    const ex = exitDateOf(it);
-    let end = /* @__PURE__ */ new Date();
-    if (ex) {
-      const parsed = parseLocalDay(ex);
-      if (parsed) end = parsed;
-    }
-    return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 864e5));
+    const ex = exitDayTsOf(it);
+    const end = ex != null ? ex : Date.now();
+    return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
   }
   function dailyCostOf(it) {
     const days = daysUsed(it);
@@ -21682,7 +21682,7 @@ ${countsToText(s.missing)}
     return days > 0 ? price / days : price;
   }
   function inStock(it) {
-    return it.current_status === "使用中" || it.current_status === "闲置";
+    return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
   }
   function stockCount(items) {
     return items.filter(inStock).length;
@@ -21695,7 +21695,7 @@ ${countsToText(s.missing)}
     let days = 0;
     for (const it of items) {
       cost += Number(it.purchase_price) || 0;
-      if (it.current_status === "已转卖" && Number(it.sold_price) > 0) cost -= Number(it.sold_price);
+      cost -= recoveredOf(it);
       days += daysUsed(it);
     }
     return days ? cost / days : 0;
@@ -21845,7 +21845,7 @@ ${countsToText(s.missing)}
     specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
     return specs;
   }
-  var ICON2, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
+  var ICON2, MAX_PRICE, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
   var init_shared4 = __esm({
     "src/belongings/shared.ts"() {
       init_str();
@@ -21862,6 +21862,7 @@ ${countsToText(s.missing)}
         report: "bar-chart-3"
         // 年度资产报告工具行入口（issue 356）
       };
+      MAX_PRICE = 1e12;
       STATUS = {
         using: { label: "使用中", key: "using", ic: "check-circle" },
         idle: { label: "闲置", key: "idle", ic: "package" },
@@ -21888,24 +21889,15 @@ ${countsToText(s.missing)}
     return `${m}月`;
   }
   function parseDayTs(raw) {
-    const parts = String(raw || "").slice(0, 10).split("-").map(Number);
-    const [y, m, d] = parts;
-    if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d).getTime();
+    var _a2, _b2;
+    return (_b2 = (_a2 = parseLocalDay(raw)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null;
   }
   function yearOf(raw) {
     const s = String(raw || "").slice(0, 4);
     return /^\d{4}$/.test(s) ? s : "";
   }
-  function exitTsOf(it) {
-    const exited = it.current_status === "已转卖" || it.current_status === "已丢弃";
-    return exited ? parseDayTs(it.exit_date) : null;
-  }
   function priceOf(it) {
     return Number(it.purchase_price) || 0;
-  }
-  function recoveredOf(it) {
-    return it.current_status === "已转卖" && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
   }
   function reportYears(items) {
     const set = /* @__PURE__ */ new Set();
@@ -21913,7 +21905,7 @@ ${countsToText(s.missing)}
       const py = yearOf(it.purchase_date);
       if (py) set.add(py);
       const ey = yearOf(it.exit_date);
-      if (ey && (it.current_status === "已转卖" || it.current_status === "已丢弃")) set.add(ey);
+      if (ey && exitedStatus(it.current_status)) set.add(ey);
     }
     return [...set].sort().reverse();
   }
@@ -21928,7 +21920,7 @@ ${countsToText(s.missing)}
       const p = parseDayTs(it.purchase_date);
       if (p == null || p >= cutoffTs) continue;
       cost += priceOf(it);
-      const ex = exitTsOf(it);
+      const ex = exitDayTsOf(it);
       const capped = ex != null && ex < cutoffTs;
       if (capped) cost -= recoveredOf(it);
       days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
@@ -21946,7 +21938,7 @@ ${countsToText(s.missing)}
     });
     const exitedInYear = items.filter((it) => {
       const ex = parseDayTs(it.exit_date);
-      return ex != null && ex >= yearStart && ex < yearEnd && (it.current_status === "已转卖" || it.current_status === "已丢弃");
+      return ex != null && ex >= yearStart && ex < yearEnd && exitedStatus(it.current_status);
     });
     const monthlySpend = Array.from({ length: 12 }, (_, i) => ({
       label: monthLabel(i + 1),
@@ -21987,7 +21979,7 @@ ${countsToText(s.missing)}
     const companions = items.map((it) => {
       const p = parseDayTs(it.purchase_date);
       if (p == null || p >= companionCutoff) return null;
-      const ex = exitTsOf(it);
+      const ex = exitDayTsOf(it);
       const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
       return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
     }).filter((r) => r != null).sort(
@@ -22769,7 +22761,7 @@ ${countsToText(s.missing)}
     return v === "yuan" || v === "usd" || v === "none" || v === "cny" ? v : "cny";
   }
   function newItemStatus() {
-    return tryGetSettings().belongingsNewStatus === "闲置" ? "闲置" : "使用中";
+    return tryGetSettings().belongingsNewStatus === STATUS.idle.label ? STATUS.idle.label : STATUS.using.label;
   }
   function belongingSettingsSchema() {
     return {
@@ -22808,12 +22800,10 @@ ${countsToText(s.missing)}
               name: "默认状态筛选",
               desc: "打开面板时选中的物品状态",
               binding: { key: "belongingsDefaultStatus" },
+              // 选项从 STATUS_ORDER 派生（cons P3-7：key/label 不再手抄第二份；「全部」置顶）
               options: [
                 { value: "", label: "全部" },
-                { value: "using", label: "使用中" },
-                { value: "idle", label: "闲置" },
-                { value: "sold", label: "已转卖" },
-                { value: "discard", label: "已丢弃" }
+                ...STATUS_ORDER.map((s) => ({ value: s.key, label: s.label }))
               ]
             },
             {
@@ -22850,10 +22840,8 @@ ${countsToText(s.missing)}
               name: "新增物品默认状态",
               desc: "记一笔时物品的初始状态",
               binding: { key: "belongingsNewStatus" },
-              options: [
-                { value: "使用中", label: "使用中" },
-                { value: "闲置", label: "闲置" }
-              ]
+              // 在库两态（出离态不作为新记默认；选项随 STATUS 单源派生，cons P3-7）
+              options: [STATUS.using, STATUS.idle].map((s) => ({ value: s.label, label: s.label }))
             }
           ]
         }
@@ -22898,6 +22886,8 @@ ${countsToText(s.missing)}
     opening = true;
     try {
       await openPanelInner();
+    } catch (e) {
+      notifyActionError(e, "归物本数据加载", { onRetry: () => void openPanel() });
     } finally {
       opening = false;
     }
@@ -23069,11 +23059,26 @@ ${countsToText(s.missing)}
     const filePath = getDataFilePath();
     const off = app.vault.on("modify", (file) => {
       if ((file == null ? void 0 : file.path) !== filePath) return;
-      if (selfWritePending) return;
+      if (selfWritePending > 0) return;
       void (async () => {
         var _a2;
-        M4.db = await loadDatabase();
-        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        try {
+          M4.db = await loadDatabase();
+          (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        } catch (e) {
+          notifyActionError(e, "归物本数据自动刷新", {
+            onRetry: () => {
+              void (async () => {
+                var _a3;
+                try {
+                  M4.db = await loadDatabase();
+                  (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+                } catch (e2) {
+                }
+              })();
+            }
+          });
+        }
       })();
     });
     autoRefreshOff = () => app.vault.offref(off);
@@ -23110,11 +23115,11 @@ ${countsToText(s.missing)}
   async function saveAndRender() {
     var _a2;
     if (!M4.db) return;
-    selfWritePending = true;
+    selfWritePending++;
     try {
       await saveDatabase(M4.db);
     } finally {
-      selfWritePending = false;
+      selfWritePending--;
     }
     (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
   }
@@ -23138,8 +23143,7 @@ ${countsToText(s.missing)}
       try {
         items = Object.values((await loadDatabase()).items);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        notice("数据加载失败：" + msg, "error");
+        notifyActionError(e, "归物本数据加载", { onRetry: () => void openBelongingsReportView() });
         return;
       }
     }
@@ -23248,6 +23252,7 @@ ${countsToText(s.missing)}
           else if (now.exit_date != null) now.exit_date = null;
           now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
           await saveAndRender();
+          emitDomainEvent("belongings", { kind: "status", title: now.name, status: prevStatus });
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
@@ -23297,18 +23302,7 @@ ${countsToText(s.missing)}
   }
   async function deleteItem(it) {
     var _a2, _b2;
-    const v = await openFlowDialog({
-      title: "删除物品",
-      message: `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`,
-      // 皮肤类（issue 291）：确认框挂 body、脱离面板根，必须显式带 .bz-bel-flow-dialog
-      // 才能拿到海报 token（否则掉回 core 裸样式，与「物品详情」不同源）
-      className: "bz-bel-flow-dialog",
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "删除", value: "del", danger: true, cta: true }
-      ]
-    });
-    if (v !== "del" || !M4.db) return;
+    if (!M4.db) return;
     if (!M4.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
       (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
@@ -23390,8 +23384,7 @@ ${countsToText(s.missing)}
         M4.db = db;
         openForm(it);
       }).catch((e) => {
-        const msg = e instanceof Error ? e.message : String(e);
-        notice("数据加载失败：" + msg, "error");
+        notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
       });
       return;
     }
@@ -23461,9 +23454,9 @@ ${countsToText(s.missing)}
     const soldField = mask.querySelector("#bm-soldfield");
     let curStatus = (it == null ? void 0 : it.current_status) || newItemStatus();
     const syncExitRow = () => {
-      const exited = curStatus === "已转卖" || curStatus === "已丢弃";
+      const exited = exitedStatus(curStatus);
       exitRow.hidden = !exited;
-      soldField.hidden = curStatus !== "已转卖";
+      soldField.hidden = curStatus !== STATUS.sold.label;
     };
     const drawStatus = () => {
       statusPick.innerHTML = statusPickHtml(curStatus);
@@ -23517,32 +23510,40 @@ ${countsToText(s.missing)}
         fail("请输入物品名称");
         return;
       }
-      if (isNaN(price) || price < 0) {
+      if (!Number.isFinite(price) || price < 0) {
         fail("请输入有效的价格");
+        return;
+      }
+      if (price > MAX_PRICE) {
+        fail("价格超出可记录范围（上限一万亿），请检查是否多输了几位");
         return;
       }
       if (!date) {
         fail("请选择购买日期");
         return;
       }
-      const category = catInput.value.trim() || init.catVal;
+      const category = catInput.value.trim();
       if (!category) {
         fail("请选择或输入分类");
         return;
       }
-      const exited = curStatus === "已转卖" || curStatus === "已丢弃";
+      const exited = exitedStatus(curStatus);
       const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
       const exitDate = exited ? exitVal || todayStr() : "";
       if (exitDate && exitDate < date) {
         fail("出离日期不能早于购买日期");
         return;
       }
-      const soldRaw = curStatus === "已转卖" ? mask.querySelector("#bm-soldprice").value.trim() : "";
+      const soldRaw = curStatus === STATUS.sold.label ? mask.querySelector("#bm-soldprice").value.trim() : "";
       let soldPrice = null;
       if (soldRaw !== "") {
         const sp = parseFloat(soldRaw);
-        if (isNaN(sp) || sp < 0) {
+        if (!Number.isFinite(sp) || sp < 0) {
           fail("请输入有效的售价");
+          return;
+        }
+        if (sp > MAX_PRICE) {
+          fail("售价超出可记录范围（上限一万亿），请检查是否多输了几位");
           return;
         }
         soldPrice = Math.round(sp * 100) / 100;
@@ -23572,7 +23573,7 @@ ${countsToText(s.missing)}
             cur.description = desc;
             if (exited) cur.exit_date = exitDate;
             else if (cur.exit_date != null) cur.exit_date = null;
-            if (curStatus === "已转卖") cur.sold_price = soldPrice;
+            if (curStatus === STATUS.sold.label) cur.sold_price = soldPrice;
             else if (cur.sold_price != null) cur.sold_price = null;
             cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
             await saveAndRender();
@@ -23592,7 +23593,7 @@ ${countsToText(s.missing)}
               created_date: (/* @__PURE__ */ new Date()).toISOString(),
               last_updated: (/* @__PURE__ */ new Date()).toISOString(),
               ...exited ? { exit_date: exitDate } : {},
-              ...curStatus === "已转卖" ? { sold_price: soldPrice } : {},
+              ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
             M4.db.items[newItem.id] = newItem;
@@ -23651,10 +23652,10 @@ ${countsToText(s.missing)}
         renderFn: null
       };
       dropDocClick = null;
-      DEFAULT_STATUS_VALUES = ["", "using", "idle", "sold", "discard"];
+      DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
       mainEscRegistered = false;
       autoRefreshOff = null;
-      selfWritePending = false;
+      selfWritePending = 0;
       bodyThemeObserver = null;
       opening = false;
       belDetailClose = null;

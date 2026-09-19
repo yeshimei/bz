@@ -105,7 +105,7 @@ function clickAction(label: string) {
 /** 打开面板（内部 setApp/setSettingsProvider/resetObsidianMocks + loadDatabase 完成） */
 async function open(vault: MockVault, settings: any = {}) {
   setApp({ vault } as any);
-  setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE', ...settings }) as any);
+  setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE', ...settings }) as any);
   resetObsidianMocks();
   await openPanel();
   return panel()!;
@@ -154,7 +154,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     setupDom();
     vault = new MockVault();
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
     resetObsidianMocks();
   });
   afterEach(() => {
@@ -217,7 +217,7 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
   it('openPanel 重入保护：loadDatabase await 窗口内并发二次触发不产生双遮罩（僵尸遮罩修复）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1' }) });
     setApp({ vault } as any);
-    setSettingsProvider(() => ({ belongingsDataFolder: 'CONFIG/STORAGE' }) as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
     resetObsidianMocks();
     const p1 = openPanel();
     const p2 = openPanel(); // 首次 await loadDatabase 期间同步重入
@@ -227,6 +227,18 @@ describe('归物本面板：开合 / 空态 / 清理', () => {
     // 重入被忽略后 toggle 语义不受影响：再开一次仍能正常关闭
     await openPanel();
     expect(panel()).toBeNull();
+  });
+
+  it('openPanel loadDatabase reject → notifyActionError 通知可达 + 面板不开（修复前 void 吞成静默无反应）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1' }) }); // 文件已存在才会走 vault.read
+    setApp({ vault } as any);
+    setSettingsProvider(() => ({ storagePath: 'CONFIG/STORAGE' }) as any);
+    resetObsidianMocks();
+    (vault as any).read = async () => { throw new Error('io locked'); };
+    await openPanel();
+    expect(panel()).toBeNull();
+    expect(hasNotice(/归物本数据加载失败：io locked，请重试/)).toBe(true);
+    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '重试')).toBe(true);
   });
 
   it('工具行主按钮开表单；表单取消钮关闭；表单遮罩点击关闭；面板不受影响', async () => {
@@ -821,7 +833,7 @@ describe('归物本详情弹窗（P20）', () => {
     expect(detailMask()).toBeNull();
   });
 
-  it('详情编辑钮 → 表单打开（回填）；详情删除钮 → 确认流，确认后删除 + 详情关', async () => {
+  it('详情编辑钮 → 表单打开（回填）；详情删除钮 → 免确认直达删除 + 详情关', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
     clickCell(cells()[0]);
@@ -830,21 +842,10 @@ describe('归物本详情弹窗（P20）', () => {
     expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).not.toBeNull();
     expect(nameInp().value).toBe('键盘');
     (formMask().querySelector('[data-bm-cancel]') as HTMLElement).click();
-    // 删除
+    // 删除（eff E5：免确认直达，撤销兜底）
     (detailBox()!.querySelector('[data-bd-del]') as HTMLElement).click();
     await flush();
-    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
-    // issue 291：确认框挂 body，须带域皮肤类才拿到海报 token（与详情/表单同皮）
-    expect(
-      document.getElementById('__shared_confirm_popup__')!.classList.contains('bz-bel-flow-dialog')
-    ).toBe(true);
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    await flush();
-    expect(detailBox()).not.toBeNull(); // 取消：详情保持
-    (detailBox()!.querySelector('[data-bd-del]') as HTMLElement).click();
-    await flush();
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await flush();
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
     expect(detailMask()).toBeNull(); // 删除后详情随之关
     expect(events).toEqual([{ kind: 'delete', title: '键盘' }]);
@@ -1038,41 +1039,24 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     expect(cells()[0].querySelector('.bz-bel-tag')!.textContent).toContain('使用中');
   });
 
-  it('删除确认流：文案/按钮；取消不删（无事件无 notice）；确认删除 → 落盘删除 + delete 事件 + notice', async () => {
+  it('删除免确认直达（eff E5 拍板）：点删除立即落盘删除 + delete 事件 + 撤销 toast；无确认框', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
     rightClick(cells()[0]);
     clickAction('删除');
     await flush();
-    // 流程框（标准双动作：取消左 / 确认右）；ticket 189 去掉「不可撤销」威慑文案
-    const popup = document.getElementById('__shared_confirm_popup__')!;
-    expect(popup).not.toBeNull();
-    expect(popup.querySelector('h4')!.textContent).toBe('删除物品');
-    expect(popup.textContent).toContain('确定要删除物品「键盘」吗？');
-    expect(popup.textContent).not.toContain('不可撤销');
-    expect((document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).textContent).toBe('取消');
-    expect((document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).textContent).toBe('删除');
-    // 取消：不删、无事件、无 notice
-    (document.getElementById('__shared_confirm_cancel__') as HTMLButtonElement).click();
-    await flush();
-    expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1).toBeTruthy();
-    expect(cells()).toHaveLength(1);
-    expect(events).toHaveLength(0);
-    expect(hasNotice(/已删除/)).toBe(false);
-    // 重开删除确认 → 确认删除
-    rightClick(cells()[0]);
-    clickAction('删除');
-    await flush();
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await flush();
+    // 不再弹确认框（撤销兜底已覆盖误删风险，favorites 先例）
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
+    // 直达落盘：条目删除 + delete 事件 + notifyUndo 撤销按钮
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
     expect(cells()).toHaveLength(0);
     expect(content()!.querySelector('.bz-empty-title')!.textContent).toBe('这里还没有物品');
     expect(events).toEqual([{ kind: 'delete', title: '键盘' }]);
     expect(hasNotice('已删除「键盘」')).toBe(true);
+    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(true);
   });
 
-  it('移动抽屉删除：非 keepOpen 先关抽屉再确认；确认后删除', async () => {
+  it('移动抽屉删除：非 keepOpen 先关抽屉再删除；免确认直达', async () => {
     Platform.isMobile = true;
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '旧手机', purchase_date: '2024-06-01' }) });
     await open(vault);
@@ -1082,9 +1066,7 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     clickAction('删除');
     await flush();
     expect(document.querySelector('.bz-item-sheet')).toBeNull(); // 抽屉先收
-    expect(document.getElementById('__shared_confirm_mask__')).not.toBeNull();
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await flush();
+    expect(document.getElementById('__shared_confirm_mask__')).toBeNull(); // 免确认直达
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
     expect(events).toEqual([{ kind: 'delete', title: '旧手机' }]);
     expect(hasNotice('已删除「旧手机」')).toBe(true);
@@ -1110,20 +1092,18 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     expect(hasNotice('「外部改名」已标记为闲置')).toBe(true);
   });
 
-  it('外部 modify 删除条目后：删除确认按 id 校验，不产生幽灵删除通知', async () => {
+  it('外部 modify 删除条目后：删除按 id 校验（免确认直达同样防幽灵删除）', async () => {
     seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
     await open(vault);
-    rightClick(cells()[0]);
-    clickAction('删除');
-    await flush();
-    // 确认框开着期间外部已删除该条目 → modify 换库
+    rightClick(cells()[0]); // 菜单开着（捕获打开时的条目引用）
+    // 外部已删除该条目 → modify 换库后再点删除
     const db = JSON.parse(vault.files.get(DATA_PATH)!);
     delete db.items.item_1;
     vault.files.set(DATA_PATH, JSON.stringify(db));
     vault.emit('modify', { path: DATA_PATH });
     await flush();
     await tick(20);
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
+    clickAction('删除');
     await flush();
     const saved = JSON.parse(vault.files.get(DATA_PATH)!);
     expect(saved.items.item_1).toBeUndefined();
@@ -1171,8 +1151,6 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
       rightClick(cells()[0]);
       clickAction('删除');
       await flush();
-      (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-      await flush();
       await tick(20);
       expect(hasNotice('保存失败（删除物品）：disk full')).toBe(true);
       expect(events).toHaveLength(0);
@@ -1183,11 +1161,9 @@ describe('归物本动作（状态流转 / 删除确认流）', () => {
     } finally {
       (vault as any).modify = origModify;
     }
-    // 回滚生效：再次删除成功落盘
+    // 回滚生效：再次删除成功落盘（免确认直达）
     rightClick(cells()[0]);
     clickAction('删除');
-    await flush();
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await flush();
     await tick(20);
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
@@ -1258,6 +1234,65 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     saveBtn().click();
     expect(errEl().textContent).toBe('请选择或输入分类');
     expect(events).toHaveLength(0);
+  });
+
+  it('价格上限钳制（深审批A）：1e308 / Infinity / 超上限 → 拦截提示，不落盘不发事件', async () => {
+    await open(vault);
+    openAddForm(panel()!);
+    nameInp().value = '天价物';
+    catInp().value = '稀奇古怪';
+    dateInp().value = '2024-06-01';
+    // 科学计数法粘贴（有限数但超上限：修复前落盘 JSON null → 读回 0 静默丢值）
+    priceInp().value = '1e308';
+    saveBtn().click();
+    expect(errEl().textContent).toBe('价格超出可记录范围（上限一万亿），请检查是否多输了几位');
+    // Infinity 非有限值
+    priceInp().value = 'Infinity';
+    saveBtn().click();
+    expect(errEl().textContent).toBe('请输入有效的价格');
+    // 上限 + 1 亦拦
+    priceInp().value = '1000000000001';
+    saveBtn().click();
+    expect(errEl().textContent).toContain('价格超出可记录范围');
+    // 全部拦截：无任何保存
+    expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
+    expect(events).toHaveLength(0);
+    // 边界值恰为上限（1e12）放行落盘
+    priceInp().value = '1000000000000';
+    saveBtn().click();
+    await flush();
+    const saved: any = Object.values(JSON.parse(vault.files.get(DATA_PATH)!).items)[0];
+    expect(saved.purchase_price).toBe(1e12);
+  });
+
+  it('售价同口径钳制：超上限拦截（修复前 Math.round 变 Infinity 落盘 null）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
+    await open(vault);
+    rightClick(cells()[0]);
+    clickAction('编辑');
+    await flush();
+    (formMask().querySelector('[data-status="已转卖"]') as HTMLElement).click();
+    await flush();
+    const sold = formMask().querySelector('#bm-soldprice') as HTMLInputElement;
+    sold.value = '1e308';
+    saveBtn().click();
+    expect(errEl().textContent).toBe('售价超出可记录范围（上限一万亿），请检查是否多输了几位');
+    expect(events).toHaveLength(0);
+  });
+
+  it('编辑清空分类与新增同口径（深审批A）：原分类非空时清空 → fail 提示，不静默回填旧值', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', category: '机械键盘' }) });
+    await open(vault);
+    rightClick(cells()[0]);
+    clickAction('编辑');
+    await flush();
+    expect(catInp().value).toBe('机械键盘');
+    catInp().value = ''; // 用户明确清空
+    saveBtn().click();
+    expect(errEl().textContent).toBe('请选择或输入分类'); // 修复前静默回填「机械键盘」保存成功
+    expect(events).toHaveLength(0);
+    // 落盘未发生：原分类保持
+    expect(JSON.parse(vault.files.get(DATA_PATH)!).items.item_1.category).toBe('机械键盘');
   });
 
   it('分类下拉：输入过滤 + 选项点击回填（弹层收起；候选 = 历史分类，issue 231）', async () => {
@@ -1427,7 +1462,7 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
   });
 
-  it('B7：命令路径数据加载失败 → error 通知，表单不开（修复前静默无任何反馈）', async () => {
+  it('B7：命令路径数据加载失败 → notifyActionError（带重试出口），表单不开（修复前静默无任何反馈）', async () => {
     setApp({ vault } as any);
     setSettingsProvider((() => { throw new Error('设置读取失败'); }) as any);
     resetObsidianMocks();
@@ -1435,7 +1470,9 @@ describe('归物本表单（记一笔 / 编辑）', () => {
     await flush();
     await tick(20);
     expect(document.querySelector('.bz-overlay-popup.bz-bel-form')).toBeNull();
-    expect(hasNotice('数据加载失败：设置读取失败')).toBe(true);
+    // cons P3-3 收编：动作名 + 原因 + 重试途径
+    expect(hasNotice(/归物本数据加载失败：设置读取失败，请重试/)).toBe(true);
+    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '重试')).toBe(true);
   });
 
   it('编辑：菜单「编辑」→ 回填 → 改名改价保存 → 落盘 + edit 事件（belongingsEditChanges）+ 表单关', async () => {
@@ -1610,6 +1647,79 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
     expect(cells()).toHaveLength(2);
   });
 
+  it('自动刷新 loadDatabase reject → notifyActionError（修复前 unhandled rejection 静默中断刷新链）', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘' }) });
+    await open(vault);
+    const origRead = vault.read.bind(vault);
+    (vault as any).read = async () => { throw new Error('io locked'); };
+    try {
+      vault.emit('modify', { path: DATA_PATH });
+      await flush();
+      await tick(20);
+      expect(hasNotice(/归物本数据自动刷新失败：io locked，请重试/)).toBe(true);
+      // 旧库保留：面板仍显示原数据
+      expect(cells()).toHaveLength(1);
+    } finally {
+      (vault as any).read = origRead;
+    }
+    // 恢复后下次 modify 自然重试成功
+    vault.emit('modify', { path: DATA_PATH });
+    await flush();
+    await tick(20);
+    expect(cells()).toHaveLength(1);
+  });
+
+  it('并发写交叠窗口短路（arch A4 计数化）：首个写完成、第二个写在途时 modify 事件不穿透重载', async () => {
+    seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中' }) });
+    await open(vault);
+    // 手工控制写盘时序：逐次挂起 vault.modify，精确构造两个 saveAndRender 交叠
+    const pendings: Array<() => void> = [];
+    const origModify = vault.modify.bind(vault);
+    (vault as any).modify = (...args: any[]) => new Promise<void>((res) => {
+      pendings.push(() => origModify(...(args as [any, string])).then(res, res));
+    });
+    try {
+      // 写 1：流转闲置（saveAndRender A 在途，计数 = 1）
+      rightClick(cells()[0]);
+      clickAction('标记为闲置');
+      await flush();
+      expect(pendings.length).toBe(1);
+      // 写 2：再流转已转卖（saveAndRender B 入队，计数 = 2；B 的 write 在队列中等 A）
+      rightClick(cells()[0]);
+      clickAction('标记为已转卖');
+      await flush();
+      expect(pendings.length).toBe(1); // B 尚未进到 write（A 未完成）
+      // 放行写 1 → A finally（计数 2→1），队列推进 B 的 write（modify 第二次调用挂起）
+      const first = pendings.shift()!;
+      first();
+      await flush();
+      expect(pendings.length).toBe(1); // B 的 write 在途
+      // 此刻落盘触发的 modify 事件：计数 >0 应短路（修复前单布尔已被 A 复位 → 穿透重载）
+      const db = JSON.parse(vault.files.get(DATA_PATH)!);
+      db.items.item_ext = makeItem({ id: 'item_ext', name: '外部插入', purchase_date: '2024-08-01T12:00:00' });
+      vault.files.set(DATA_PATH, JSON.stringify(db));
+      vault.emit('modify', { path: DATA_PATH });
+      await flush();
+      await tick(20);
+      expect(content()!.textContent).not.toContain('外部插入'); // 短路生效，无多余重载
+      // 放行写 2 → 全部在途写完成（计数归零）后外部 modify 恢复正常重载
+      // （写 2 落盘会以自身内容覆盖 files，item_ext 被冲掉——重插模拟持续存在的外部状态）
+      const second = pendings.shift()!;
+      second();
+      await flush();
+      await tick(20);
+      const db2 = JSON.parse(vault.files.get(DATA_PATH)!);
+      db2.items.item_ext = makeItem({ id: 'item_ext', name: '外部插入', purchase_date: '2024-08-01T12:00:00' });
+      vault.files.set(DATA_PATH, JSON.stringify(db2));
+      vault.emit('modify', { path: DATA_PATH });
+      await flush();
+      await tick(20);
+      expect(content()!.textContent).toContain('外部插入');
+    } finally {
+      (vault as any).modify = origModify;
+    }
+  });
+
   it('自写同路径 modify 不丢内存新值（saveAndRender 后模拟外部事件：回读数据一致，列表仍在）', async () => {
     seed(vault, {});
     await open(vault);
@@ -1653,17 +1763,15 @@ describe('归物本自动刷新 / 事件载荷 / schema / XSS', () => {
       name: '鼠标', category: '🖱 鼠标', purchase_price: 99,
       purchase_date: '2024-07-01', current_status: '使用中', description: '',
     });
-    // delete
+    // delete（免确认直达）
     rightClick(cells().find((r) => r.dataset.belId === 'item_1')!);
     clickAction('删除');
-    await flush();
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
     await flush();
     expect(events[2]).toEqual({ kind: 'delete', title: '键盘' });
   });
 
   it('belongingSettingsSchema：外观组（布局/主题占位单卡）+ 显示组', () => {
-    const settings = { belongingsDataFolder: 'CONFIG/STORAGE' };
+    const settings = { storagePath: 'CONFIG/STORAGE' };
     setSettingsProvider(() => settings as any);
     const schema = belongingSettingsSchema();
     expect(schema.groups).toHaveLength(3); // 外观 + 显示 + 记一笔（issue 294 新增第三组）
@@ -1806,6 +1914,31 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
     }
   });
 
+  it('撤销补发领域事件（深审批A）：撤销回转补 status 事件（smartcat 行为流不再单向失真）', async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2025-06-15T12:00:00'));
+    const evts: any[] = [];
+    const offEv = onDomainEvent('belongings', (e) => evts.push(e));
+    try {
+      seed(vault, { item_1: makeItem({ id: 'item_1', name: '键盘', current_status: '使用中', purchase_date: '2024-06-01T12:00:00' }) });
+      await open(vault);
+      rightClick(cells()[0]);
+      clickAction('标记为已转卖');
+      await drain();
+      // 撤销 → 回使用中，补发 prevStatus 的 status 事件（复用既有 kind，文案层「你重新用起了」）
+      const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;
+      undoBtn.click();
+      await drain();
+      expect(evts).toEqual([
+        { kind: 'status', title: '键盘', status: '已转卖' },
+        { kind: 'status', title: '键盘', status: '使用中' },
+      ]);
+    } finally {
+      offEv();
+      vi.useRealTimers();
+    }
+  });
+
   it('转卖流转记出离日期（ADR-0089）；撤销后清除', async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2025-06-15T12:00:00'));
@@ -1891,7 +2024,7 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
     }
   });
 
-  it('删除撤销：确认删除后点撤销 → 条目按 snapshot 原样写回', async () => {
+  it('删除撤销：免确认直达删除后点撤销 → 条目按 snapshot 原样写回（数据完整）', async () => {
     seed(vault, {
       item_1: makeItem({ id: 'item_1', name: '键盘', purchase_price: 399, current_status: '闲置', purchase_date: '2024-06-01T12:00:00' }),
     });
@@ -1899,8 +2032,7 @@ describe('状态流转 / 删除接撤销（ticket 189）', () => {
     rightClick(cells()[0]);
     clickAction('删除');
     await flush();
-    (document.getElementById('__shared_confirm_ok__') as HTMLButtonElement).click();
-    await flush();
+    await tick(20);
     expect(JSON.parse(vault.files.get(DATA_PATH)!).items).toEqual({});
     expect(hasNotice('已删除「键盘」')).toBe(true);
     const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销') as HTMLElement;

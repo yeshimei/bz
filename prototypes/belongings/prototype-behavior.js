@@ -1,4 +1,4 @@
-/* 源指纹 9abbcbcda02ef149 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 db7eed4a1e130dd7 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -4132,12 +4132,6 @@ var BZW_belongings = (() => {
   function setSettingsProvider(fn) {
     _provider = fn;
   }
-  function getSettings() {
-    if (!_provider) {
-      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
-    }
-    return _provider();
-  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
   }
@@ -4207,6 +4201,13 @@ var BZW_belongings = (() => {
   function notifySaveError(err, what) {
     const msg = err instanceof Error ? err.message : String(err);
     notify(what ? `保存失败（${what}）：${msg}` : `保存失败：${msg}`, { type: "error" });
+  }
+  function notifyActionError(err, action, opts) {
+    const msg = err instanceof Error ? err.message : String(err);
+    notify(`${action}失败：${msg}，请重试`, {
+      type: "error",
+      action: (opts == null ? void 0 : opts.onRetry) ? { label: "重试", onClick: opts.onRetry } : void 0
+    });
   }
   function isMobileView() {
     return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia(MOBILE_QUERY).matches;
@@ -4580,11 +4581,18 @@ var BZW_belongings = (() => {
   function esc(s) {
     return escapeHtml(String(s != null ? s : ""));
   }
+  function pad2(n) {
+    return String(n).padStart(2, "0");
+  }
   function emptyHtmlStr(icon, title, desc) {
     return `<div class="bz-empty">${icon ? iconSpan(icon, "bz-empty-ic") : ""}<div class="bz-empty-title">${esc(title)}</div>${desc ? `<div class="bz-empty-desc">${esc(desc)}</div>` : ""}</div>`;
   }
   function iconSpan(name, extra = "") {
     return `<i data-lucide="${name}" class="bz-ic${extra ? " " + extra : ""}"></i>`;
+  }
+  function localDayKey(ts = Date.now()) {
+    const d = ts instanceof Date ? ts : new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
 
   // src/core/utils.ts
@@ -6147,8 +6155,7 @@ var BZW_belongings = (() => {
 
   // src/belongings/data.ts
   function getDataFilePath() {
-    const s = getSettings();
-    return storageFile("belongings.json", s.storagePath || "CONFIG/STORAGE");
+    return storageFile("belongings.json");
   }
   function emptyDatabase() {
     return {
@@ -6228,6 +6235,7 @@ var BZW_belongings = (() => {
     report: "bar-chart-3"
     // 年度资产报告工具行入口（issue 356）
   };
+  var MAX_PRICE = 1e12;
   var STATUS = {
     using: { label: "使用中", key: "using", ic: "check-circle" },
     idle: { label: "闲置", key: "idle", ic: "package" },
@@ -6261,8 +6269,7 @@ var BZW_belongings = (() => {
     return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
   }
   function todayStr() {
-    const d = /* @__PURE__ */ new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return localDayKey();
   }
   function catEmoji(cat) {
     const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
@@ -6308,25 +6315,28 @@ var BZW_belongings = (() => {
   function isExited(it) {
     return exitedStatus(it.current_status);
   }
-  function exitDateOf(it) {
-    return isExited(it) ? it.exit_date || null : null;
+  function exitDayTsOf(it) {
+    var _a, _b;
+    return isExited(it) ? (_b = (_a = parseLocalDay(it.exit_date)) == null ? void 0 : _a.getTime()) != null ? _b : null : null;
+  }
+  function recoveredOf(it) {
+    return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
   }
   function parseLocalDay(raw) {
     const parts = String(raw || "").slice(0, 10).split("-").map(Number);
     const [y, m, d] = parts;
     if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d);
+    if (m < 1 || m > 12) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return dt;
   }
   function daysUsed(it) {
     const start = parseLocalDay(it.purchase_date);
     if (!start) return 0;
-    const ex = exitDateOf(it);
-    let end = /* @__PURE__ */ new Date();
-    if (ex) {
-      const parsed = parseLocalDay(ex);
-      if (parsed) end = parsed;
-    }
-    return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 864e5));
+    const ex = exitDayTsOf(it);
+    const end = ex != null ? ex : Date.now();
+    return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
   }
   function dailyCostOf(it) {
     const days = daysUsed(it);
@@ -6334,7 +6344,7 @@ var BZW_belongings = (() => {
     return days > 0 ? price / days : price;
   }
   function inStock(it) {
-    return it.current_status === "使用中" || it.current_status === "闲置";
+    return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
   }
   function stockCount(items) {
     return items.filter(inStock).length;
@@ -6347,7 +6357,7 @@ var BZW_belongings = (() => {
     let days = 0;
     for (const it of items) {
       cost += Number(it.purchase_price) || 0;
-      if (it.current_status === "已转卖" && Number(it.sold_price) > 0) cost -= Number(it.sold_price);
+      cost -= recoveredOf(it);
       days += daysUsed(it);
     }
     return days ? cost / days : 0;
@@ -6504,25 +6514,16 @@ var BZW_belongings = (() => {
     return `${m}月`;
   }
   function parseDayTs(raw) {
-    const parts = String(raw || "").slice(0, 10).split("-").map(Number);
-    const [y, m, d] = parts;
-    if (!y || !m || !d) return null;
-    return new Date(y, m - 1, d).getTime();
+    var _a, _b;
+    return (_b = (_a = parseLocalDay(raw)) == null ? void 0 : _a.getTime()) != null ? _b : null;
   }
   function yearOf(raw) {
     const s = String(raw || "").slice(0, 4);
     return /^\d{4}$/.test(s) ? s : "";
   }
   var DAY_MS = 864e5;
-  function exitTsOf(it) {
-    const exited = it.current_status === "已转卖" || it.current_status === "已丢弃";
-    return exited ? parseDayTs(it.exit_date) : null;
-  }
   function priceOf(it) {
     return Number(it.purchase_price) || 0;
-  }
-  function recoveredOf(it) {
-    return it.current_status === "已转卖" && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
   }
   function reportYears(items) {
     const set = /* @__PURE__ */ new Set();
@@ -6530,7 +6531,7 @@ var BZW_belongings = (() => {
       const py = yearOf(it.purchase_date);
       if (py) set.add(py);
       const ey = yearOf(it.exit_date);
-      if (ey && (it.current_status === "已转卖" || it.current_status === "已丢弃")) set.add(ey);
+      if (ey && exitedStatus(it.current_status)) set.add(ey);
     }
     return [...set].sort().reverse();
   }
@@ -6545,7 +6546,7 @@ var BZW_belongings = (() => {
       const p = parseDayTs(it.purchase_date);
       if (p == null || p >= cutoffTs) continue;
       cost += priceOf(it);
-      const ex = exitTsOf(it);
+      const ex = exitDayTsOf(it);
       const capped = ex != null && ex < cutoffTs;
       if (capped) cost -= recoveredOf(it);
       days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
@@ -6563,7 +6564,7 @@ var BZW_belongings = (() => {
     });
     const exitedInYear = items.filter((it) => {
       const ex = parseDayTs(it.exit_date);
-      return ex != null && ex >= yearStart && ex < yearEnd && (it.current_status === "已转卖" || it.current_status === "已丢弃");
+      return ex != null && ex >= yearStart && ex < yearEnd && exitedStatus(it.current_status);
     });
     const monthlySpend = Array.from({ length: 12 }, (_, i) => ({
       label: monthLabel(i + 1),
@@ -6604,7 +6605,7 @@ var BZW_belongings = (() => {
     const companions = items.map((it) => {
       const p = parseDayTs(it.purchase_date);
       if (p == null || p >= companionCutoff) return null;
-      const ex = exitTsOf(it);
+      const ex = exitDayTsOf(it);
       const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
       return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
     }).filter((r) => r != null).sort(
@@ -7934,9 +7935,9 @@ var BZW_belongings = (() => {
     return v === "yuan" || v === "usd" || v === "none" || v === "cny" ? v : "cny";
   }
   function newItemStatus() {
-    return tryGetSettings().belongingsNewStatus === "闲置" ? "闲置" : "使用中";
+    return tryGetSettings().belongingsNewStatus === STATUS.idle.label ? STATUS.idle.label : STATUS.using.label;
   }
-  var DEFAULT_STATUS_VALUES = ["", "using", "idle", "sold", "discard"];
+  var DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
   function itemList() {
     return M.db ? Object.values(M.db.items) : [];
   }
@@ -7968,7 +7969,7 @@ var BZW_belongings = (() => {
     });
   }
   var autoRefreshOff = null;
-  var selfWritePending = false;
+  var selfWritePending = 0;
   var bodyThemeObserver = null;
   var opening = false;
   async function openPanel() {
@@ -7980,6 +7981,8 @@ var BZW_belongings = (() => {
     opening = true;
     try {
       await openPanelInner();
+    } catch (e) {
+      notifyActionError(e, "归物本数据加载", { onRetry: () => void openPanel() });
     } finally {
       opening = false;
     }
@@ -8142,11 +8145,26 @@ var BZW_belongings = (() => {
     const filePath = getDataFilePath();
     const off = app.vault.on("modify", (file) => {
       if ((file == null ? void 0 : file.path) !== filePath) return;
-      if (selfWritePending) return;
+      if (selfWritePending > 0) return;
       void (async () => {
         var _a;
-        M.db = await loadDatabase();
-        (_a = M.renderFn) == null ? void 0 : _a.call(M);
+        try {
+          M.db = await loadDatabase();
+          (_a = M.renderFn) == null ? void 0 : _a.call(M);
+        } catch (e) {
+          notifyActionError(e, "归物本数据自动刷新", {
+            onRetry: () => {
+              void (async () => {
+                var _a2;
+                try {
+                  M.db = await loadDatabase();
+                  (_a2 = M.renderFn) == null ? void 0 : _a2.call(M);
+                } catch (e2) {
+                }
+              })();
+            }
+          });
+        }
       })();
     });
     autoRefreshOff = () => app.vault.offref(off);
@@ -8183,11 +8201,11 @@ var BZW_belongings = (() => {
   async function saveAndRender() {
     var _a;
     if (!M.db) return;
-    selfWritePending = true;
+    selfWritePending++;
     try {
       await saveDatabase(M.db);
     } finally {
-      selfWritePending = false;
+      selfWritePending--;
     }
     (_a = M.renderFn) == null ? void 0 : _a.call(M);
   }
@@ -8211,8 +8229,7 @@ var BZW_belongings = (() => {
       try {
         items = Object.values((await loadDatabase()).items);
       } catch (e) {
-        const msg = e instanceof Error ? e.message : String(e);
-        notice("数据加载失败：" + msg, "error");
+        notifyActionError(e, "归物本数据加载", { onRetry: () => void openBelongingsReportView() });
         return;
       }
     }
@@ -8322,6 +8339,7 @@ var BZW_belongings = (() => {
           else if (now.exit_date != null) now.exit_date = null;
           now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
           await saveAndRender();
+          emitDomainEvent("belongings", { kind: "status", title: now.name, status: prevStatus });
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
@@ -8371,18 +8389,7 @@ var BZW_belongings = (() => {
   }
   async function deleteItem(it) {
     var _a, _b;
-    const v = await openFlowDialog({
-      title: "删除物品",
-      message: `确定要删除物品「${it.name}」吗？删除后可在通知中撤销。`,
-      // 皮肤类（issue 291）：确认框挂 body、脱离面板根，必须显式带 .bz-bel-flow-dialog
-      // 才能拿到海报 token（否则掉回 core 裸样式，与「物品详情」不同源）
-      className: "bz-bel-flow-dialog",
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "删除", value: "del", danger: true, cta: true }
-      ]
-    });
-    if (v !== "del" || !M.db) return;
+    if (!M.db) return;
     if (!M.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
       (_a = M.renderFn) == null ? void 0 : _a.call(M);
@@ -8468,8 +8475,7 @@ var BZW_belongings = (() => {
         M.db = db;
         openForm(it);
       }).catch((e) => {
-        const msg = e instanceof Error ? e.message : String(e);
-        notice("数据加载失败：" + msg, "error");
+        notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
       });
       return;
     }
@@ -8539,9 +8545,9 @@ var BZW_belongings = (() => {
     const soldField = mask.querySelector("#bm-soldfield");
     let curStatus = (it == null ? void 0 : it.current_status) || newItemStatus();
     const syncExitRow = () => {
-      const exited = curStatus === "已转卖" || curStatus === "已丢弃";
+      const exited = exitedStatus(curStatus);
       exitRow.hidden = !exited;
-      soldField.hidden = curStatus !== "已转卖";
+      soldField.hidden = curStatus !== STATUS.sold.label;
     };
     const drawStatus = () => {
       statusPick.innerHTML = statusPickHtml(curStatus);
@@ -8595,32 +8601,40 @@ var BZW_belongings = (() => {
         fail("请输入物品名称");
         return;
       }
-      if (isNaN(price) || price < 0) {
+      if (!Number.isFinite(price) || price < 0) {
         fail("请输入有效的价格");
+        return;
+      }
+      if (price > MAX_PRICE) {
+        fail("价格超出可记录范围（上限一万亿），请检查是否多输了几位");
         return;
       }
       if (!date) {
         fail("请选择购买日期");
         return;
       }
-      const category = catInput.value.trim() || init.catVal;
+      const category = catInput.value.trim();
       if (!category) {
         fail("请选择或输入分类");
         return;
       }
-      const exited = curStatus === "已转卖" || curStatus === "已丢弃";
+      const exited = exitedStatus(curStatus);
       const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
       const exitDate = exited ? exitVal || todayStr() : "";
       if (exitDate && exitDate < date) {
         fail("出离日期不能早于购买日期");
         return;
       }
-      const soldRaw = curStatus === "已转卖" ? mask.querySelector("#bm-soldprice").value.trim() : "";
+      const soldRaw = curStatus === STATUS.sold.label ? mask.querySelector("#bm-soldprice").value.trim() : "";
       let soldPrice = null;
       if (soldRaw !== "") {
         const sp = parseFloat(soldRaw);
-        if (isNaN(sp) || sp < 0) {
+        if (!Number.isFinite(sp) || sp < 0) {
           fail("请输入有效的售价");
+          return;
+        }
+        if (sp > MAX_PRICE) {
+          fail("售价超出可记录范围（上限一万亿），请检查是否多输了几位");
           return;
         }
         soldPrice = Math.round(sp * 100) / 100;
@@ -8650,7 +8664,7 @@ var BZW_belongings = (() => {
             cur.description = desc;
             if (exited) cur.exit_date = exitDate;
             else if (cur.exit_date != null) cur.exit_date = null;
-            if (curStatus === "已转卖") cur.sold_price = soldPrice;
+            if (curStatus === STATUS.sold.label) cur.sold_price = soldPrice;
             else if (cur.sold_price != null) cur.sold_price = null;
             cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
             await saveAndRender();
@@ -8670,7 +8684,7 @@ var BZW_belongings = (() => {
               created_date: (/* @__PURE__ */ new Date()).toISOString(),
               last_updated: (/* @__PURE__ */ new Date()).toISOString(),
               ...exited ? { exit_date: exitDate } : {},
-              ...curStatus === "已转卖" ? { sold_price: soldPrice } : {},
+              ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
             M.db.items[newItem.id] = newItem;
