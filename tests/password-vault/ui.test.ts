@@ -120,7 +120,12 @@ describe('PasswordVaultUIManager', () => {
     await sm.unlock('pw');
     await dm.addItem({ platform: 'GitHub', account: 'me', password: 'x', fav: true });
     ui.show(); // 已解锁进入；renderAll 不再触发 writeLockStats（修复前搜索/点眼/收藏每次落盘）
-    await vi.waitFor(() => expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0));
+    // 等解锁渲染真正就绪（账号卡出 DOM）再上锁——open===0 锁定前恒真，过早 lock 会赶在
+    // renderAll 刷新统计快照之前，消费点 flush 落空
+    await vi.waitFor(() => {
+      expect(document.querySelectorAll('.bz-password-vault-lock.open').length).toBe(0);
+      expect(document.querySelector('.bz-password-vault-mobcard')).toBeTruthy();
+    });
     expect(await readLockStats('password-vault')).toBeNull(); // renderAll 不落盘
     sm.lock(); // 别域上锁 → 事件侧 lock() 前快照恰好一次
     await waitForAsync(async () => (await readLockStats('password-vault')) !== null);

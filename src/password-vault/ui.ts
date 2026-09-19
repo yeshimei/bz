@@ -387,8 +387,9 @@ export class PasswordVaultUIManager {
   // ---------- 渲染 ----------
   renderAll() {
     if (!this.root) return;
-    // T12 对齐 encrypt：统计快照已从 renderAll 摘除（本域最高频入口，原先搜索防抖/点眼/
-    // 收藏每次都落盘 lock-stats.json），收敛到上锁消费点（hide 安全模式分支 / 外部上锁事件侧）
+    // T12 对齐 encrypt：renderAll 不落盘（本域最高频入口，原先搜索防抖/点眼/收藏每次都写
+    // lock-stats.json）——只刷内存快照供上锁消费点取用，写盘收敛到消费点（hide/外部上锁/lockNow）
+    this.refreshLockStatsCache();
     this.renderLock();
     this.renderDeskList();
     this.renderDeskDetail();
@@ -1132,8 +1133,8 @@ export class PasswordVaultUIManager {
     this.clearIdleLock(); // 关面板即撤 idle 布防
     this.root.style.display = 'none';
     if (this.isSecurityModeLive()) {
-      // T12：统计快照挪消费点——lock() 会清空清单，锁前快照一次（无数据保持上次快照，不落零值）
-      if (this.dataManager.pwData.length) this.captureLockStats();
+      // T12：统计落盘收敛到消费点——写最近一次解锁期内存快照（渲染期已备好，不依赖此刻 pwData）
+      this.flushLockStats();
       this.dataManager.lock();
       this.shownIds = {}; // N14：明文开关随上锁清空
       this.resetSearchFilter();
@@ -1177,8 +1178,8 @@ export class PasswordVaultUIManager {
     this.closeMobPage(); // N14：移动详情页随上锁收起
     if (this.lastUnlockSeen) {
       this.lastUnlockSeen = false; // 先落旗标再 lock：lock() 的重复广播由此短路
-      // T12：事件到达时 dm.pwData 明文尚在（lock() 才清），锁前快照一次
-      if (this.dataManager.pwData.length) this.captureLockStats();
+      // T12：外部上锁也落盘统计——数据层订阅（批 A）在同一广播上先清 pwData，此处只落内存快照
+      this.flushLockStats();
       this.dataManager.lock(); // 清本域明文缓存（pwData/loadCache）
       this.shownIds = {}; // N14：明文开关随上锁清空，重解锁不得直出
       this.resetSearchFilter(); // kw 残留会炸断未解锁渲染链（func 新-1 症状 B），随上锁一并清
@@ -1213,11 +1214,14 @@ export class PasswordVaultUIManager {
     { num: '—', label: '口令条目' },
     { num: '—', label: '收藏' },
   ];
-  /** 冷启动已从 lock-stats.json 回落过（仅首显 hydrate 一次，此后由 captureLockStats 维护） */
+  /** 冷启动已从 lock-stats.json 回落过（仅首显 hydrate 一次，此后由 refreshLockStatsCache 维护） */
   private pwLockStatsHydrated = false;
+  /** 解锁期间刷新过真值快照（flush 前置条件：占位「—」/锁定态不落盘，防垃圾覆写） */
+  private pwLockStatsFresh = false;
 
-  /** 快照本域统计（解锁态调用） */
-  private captureLockStats(): void {
+  /** 解锁态刷新内存统计快照（渲染期只备值不落盘——本域最高频入口，写盘收敛到上锁消费点） */
+  private refreshLockStatsCache(): void {
+    if (!this.dataManager.unlocked) return;
     try {
       const plats = this.dataManager.platforms();
       this.pwLockStatsCache = [
@@ -1225,11 +1229,17 @@ export class PasswordVaultUIManager {
         { num: String(this.dataManager.pwData.length), label: '口令条目' },
         { num: String(plats.filter((x) => this.dataManager.hasFav(x.platform)).length), label: '收藏' },
       ];
-      // 快照即落明文档（fire-and-forget：统计丢一拍不伤数据，下次解锁会重写）
-      void writeLockStats('password-vault', this.pwLockStatsCache).catch(() => {});
-    } catch (e) {
-      /* 未解锁时保持上一次快照 */
+      this.pwLockStatsFresh = true;
+    } catch {
+      /* 保持上一次快照 */
     }
+  }
+
+  /** 上锁消费点落盘（hide 安全模式分支 / 外部上锁事件侧 / lockNow）：写最近一次解锁期快照。
+   *  不读 pwData——批 A 起数据层订阅在同一广播上先于 UI 自清明文，事件时刻 pwData 已空 */
+  private flushLockStats(): void {
+    if (!this.pwLockStatsFresh) return;
+    void writeLockStats('password-vault', this.pwLockStatsCache).catch(() => {});
   }
 
   /** 冷启动从 lock-stats.json 回落上次快照（ADR-0124 决策 4 修订；读到才覆盖「—」初值） */
@@ -1237,7 +1247,8 @@ export class PasswordVaultUIManager {
     if (this.pwLockStatsHydrated) return;
     this.pwLockStatsHydrated = true;
     const hit = await readLockStats('password-vault');
-    if (hit) this.pwLockStatsCache = hit;
+    // 解锁渲染已刷出真值快照时不用文件旧值回写（晚到的 hydrate 不得倒灌）
+    if (hit && !this.pwLockStatsFresh) this.pwLockStatsCache = hit;
   }
 
   // ---------- 安全模式 idle 自动上锁（cons 新-3，对齐 encrypt 形制） ----------
@@ -1273,8 +1284,8 @@ export class PasswordVaultUIManager {
    *  快照统计 → 收场弹层 → 清明文缓存/明文开关/搜索态 → 单通知 → 安全模式随锁收面板 */
   lockNow(silent = false): void {
     if (!this.root) return;
-    // T12：lock() 会清空清单，锁前快照一次（无数据保持上次快照，不落零值）
-    if (this.dataManager.pwData.length) this.captureLockStats();
+    // T12：lock() 会清空清单，锁前落盘最近一次解锁期统计快照
+    this.flushLockStats();
     this.closeAllDialogs();
     this.closeMobPage();
     this.dataManager.lock(); // 广播触发事件侧 onSharedLockChanged(false) 收场（重挂锁屏等）
