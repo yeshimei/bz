@@ -31,9 +31,10 @@ import { tryGetSettings, getSettings, saveSettings } from '../core/settings-prov
 import { openSettingsModal } from '../core/settings-modal';
 import { makeReloadWarnOnce, numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
-import { SafeManager, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
+import { SafeManager, ENCRYPT_UNLOCK_CHANGED_CHANNEL, base64ToBytes, bytesToBase64, type SafeNote, type SafeAttachment, type HealthReport, type HealthItem, type LockAttachmentInput } from './data';
+import { onDomainEvent } from '../core/domain-bus';
 import { compressImage, videoFrame } from './preview';
-import { PasswordVaultDataManager, DEFAULT_PW_CHARSET } from '../password-vault/data';
+import { PasswordVaultDataManager } from '../password-vault/data';
 import { overviewHTML, noteRowHTML, noteDetailHTML, type VaultAsset, type OverviewStats, vIc } from './vault-assets-view';
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenKind, LockScreenStat } from '../core/ui/lock-screen';
@@ -41,12 +42,13 @@ import { readLockStats, writeLockStats } from '../core/lock-stats';
 
 /**
  * 解锁屏三域口径（结构同源，内容与统计按域注入；ADR-0002：共享壳在 core，语义在数据域）
+ * 模块常量（T15 降级：无外部消费，不再导出——解锁屏语义只归本域 showPasswordDialog）。
  * 统计口径：
  *   - vault：笔记条目 / 随库附件 / 附件密文（正文 .enc 大小清单未记，故只统计附件镜像）
  *   - password-vault：平台 / 口令条目 / 收藏
  *   - diary：加密条目 / 随库附件 / 附件密文
  */
-export const LOCK_KIND_META: Record<
+const LOCK_KIND_META: Record<
   LockScreenKind,
   { icon: 'shield' | 'key' | 'lock'; title: string; sub: string; action: string; stats: LockScreenStat[] }
 > = {
@@ -99,15 +101,30 @@ export interface EncryptUIConfig {
   securityMode: boolean;
 }
 
-/** 默认生成字符集（唯一定义居 password-vault/data；此处再导出保持 ui.ts 公共面） */
-export { DEFAULT_PW_CHARSET };
-
 // cancelClipboardClear / copySensitiveWithFallback（含 textarea+execCommand 降级兜底，issue 365 收口）
 // 收口 core/utils（与 password-vault 同源共用单定时器，批次 G）；密码生成/强度计算随
 // ADR-0158 密码视图退役归 password-vault 域，本域仅保留日记正文复制（60s 清空）链路。
+// （T15：DEFAULT_PW_CHARSET 再导出已删——唯一定义与唯一消费均在 password-vault 域。）
 
 /** 上次停留资产（会话级记忆）：下次打开面板直落该资产，不回概览 */
 let lastVisitedAsset: VaultAsset = 'note';
+
+/**
+ * 解锁屏单例句柄（N11）：模块级存活登记，进行中复用同一 Promise——
+ * 状态栏/命令快速双触发不再连开两层解锁屏（两层同名 ESC 层、解锁一次另一层悬着）。
+ * cancel 供 closeAllDialogs 收场时走正规取消链（等待方 resolve(false) 不悬挂）。
+ */
+let activeUnlock: { el: HTMLElement; promise: Promise<boolean>; cancel(): void } | null = null;
+
+/** 解码附件引用（P1）：附件名含孤立 `%`（如 `![[100%.png]]`）时 decodeURIComponent 抛
+ *  URIError，「加密当前笔记」整链静默失败——解不动就按原文匹配，不阻断加密链。 */
+function safeDecode(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch (e) {
+    return s;
+  }
+}
 
 /**
  * 收集笔记引用的图片/视频附件路径（纯函数，只读，便于单测）。
@@ -147,7 +164,7 @@ export function collectNoteAttachments(
   const valid = new Set<string>();
   for (const r of refs) {
     if (!r) continue;
-    const clean = decodeURIComponent(r).replace(/^\.\//, '');
+    const clean = safeDecode(r).replace(/^\.\//, '');
     let hit: string | undefined;
     if (paths.has(clean)) hit = clean;
     else if (!clean.includes('/')) hit = byName.get(clean);
@@ -215,7 +232,7 @@ export function findSharedAttachmentPaths(
     if (!o || o.path === notePath) continue; // 排除被加密笔记自身
     for (const l of o.links || []) {
       if (!l || typeof l !== 'string') continue;
-      const clean = decodeURIComponent(l.split('#')[0].trim()).replace(/^\.\//, '');
+      const clean = safeDecode(l.split('#')[0].trim()).replace(/^\.\//, '');
       if (!clean) continue;
       let hit: string | undefined;
       if (cand.has(clean)) hit = clean;
@@ -327,7 +344,7 @@ export function collectMediaSlots(md: string, attachments: SafeAttachment[]): {
 
 /** 按路径（basename 或全路径后缀）匹配附件 */
 function findAttachment(target: string, attachments: SafeAttachment[]): SafeAttachment | undefined {
-  const t = decodeURIComponent(target).trim();
+  const t = safeDecode(target).trim();
   return attachments.find((a) => a.path === t || a.path.endsWith('/' + t));
 }
 
@@ -633,6 +650,10 @@ export class UIManager {
     // 绑定
     this.bindVaultShell();
     this.registerEscape();
+    // N10：外部上锁事件侧清场（他域/密码本面板直调 SafeManager.lock() 不经本域 lockNow/hide）
+    this._unlockOff = onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
+      if (evt && evt.unlocked === false) this.onExternalLock();
+    });
     this._initialized = true;
   }
 
@@ -676,10 +697,32 @@ export class UIManager {
     this.mask!.addEventListener('click', () => {
       if (this.mask!.style.display === 'block') this.hide();
     });
-    // 安全模式防偷看自动上锁：面板内任何交互重置 15 分钟倒计时（捕获阶段兜底输入框事件）
-    const bump = () => this.bumpIdleLock();
-    this.popup!.addEventListener('pointerdown', bump, true);
-    this.popup!.addEventListener('keydown', bump, true);
+    // 安全模式防偷看自动上锁：任何交互重置 15 分钟倒计时（捕获阶段兜底输入框事件）。
+    // N9/新-2：改挂 document 捕获——预览窗/解锁屏/销毁确认/体检窗等 body 弹层内的持续
+    // 操作同样算「活跃使用」，到点不再把长确认流程拦腰打断、活跃看图时不再被误上锁。
+    // document 级监听不随 DOM 摘除自动回收，摘除走 detachGlobalListeners（cleanup 调）。
+    this._idleBump = () => this.bumpIdleLock();
+    document.addEventListener('pointerdown', this._idleBump, true);
+    document.addEventListener('keydown', this._idleBump, true);
+  }
+
+  /** 空闲计时 bump（document 捕获阶段；见 bindVaultShell 尾部） */
+  private _idleBump: (() => void) | null = null;
+
+  /** encrypt:unlock-changed 订阅句柄（ensureElements 挂 / detachGlobalListeners 摘） */
+  private _unlockOff: (() => void) | null = null;
+
+  /** 全局监听摘除（cleanup 专用）：document 空闲 bump + 域事件订阅均不随 DOM 摘除自动回收 */
+  detachGlobalListeners(): void {
+    if (this._idleBump) {
+      document.removeEventListener('pointerdown', this._idleBump, true);
+      document.removeEventListener('keydown', this._idleBump, true);
+      this._idleBump = null;
+    }
+    if (this._unlockOff) {
+      this._unlockOff();
+      this._unlockOff = null;
+    }
   }
 
   /**
@@ -734,10 +777,16 @@ export class UIManager {
   }
 
   hide(suppressAutoLockNotice = false) {
+    // 收场（N9/新-2 同根）：预览明文浮层与 body 弹层（解锁屏/销毁确认/体检窗）随面板
+    // 关闭一并收起，已解密内容不再残留屏上
+    this.closePreview();
+    this.closeAllDialogs();
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
     this.stopSessionTimers();
     if (this.isSecurityMode()) {
+      // T12：统计快照挪消费点——上锁前快照一次（lock() 会清空清单，锁后只能取到零值）
+      if (this.dataManager.unlocked) this.captureLockStats();
       this.dataManager.lock();
       this.pwDataManager.lock(); // 共享锁：本侧密码明文缓存一并清出
       this._selNoteId = null;
@@ -862,6 +911,7 @@ export class UIManager {
     cleanBtn.onclick = () => void this.confirmHealthCleanup();
     const rescanBtn = document.createElement('button');
     rescanBtn.className = 'bz-encrypt-dialog-btn';
+    rescanBtn.id = 'bz-encrypt-health-rescan'; // 体检重入守卫/锁定态禁用按 id 取用
     rescanBtn.textContent = '重新体检';
     rescanBtn.onclick = () => void this.runHealthScan();
     // 无底部关闭按钮（用户拍板）：关闭走遮罩点击 / ESC
@@ -890,56 +940,89 @@ export class UIManager {
     if (this.healthPopup) this.healthPopup.style.display = 'none';
   }
 
+  /** 体检进行中旗标（T9 重入守卫：扫描中「重新体检」/清理后自动复扫不再并发双扫） */
+  private _scanning = false;
+
   /** 体检执行：动态显示（用户拍板）——扫描是长任务（逐镜像 PBKDF2），
    *  顶部实时进度（计数 + 当前对象），发现的问题即时追加，扫完再整理成完整勾选报告。 */
   private async runHealthScan() {
     if (!this.healthPopup) return;
     const body = this.healthPopup.querySelector('#bz-encrypt-health-body') as HTMLElement | null;
     if (!body) return;
-    body.innerHTML = '';
-    // 骨架：进度区（文本 + 条，宽度为功能性动态计算）+ 实时发现区
-    const progress = document.createElement('div');
-    progress.className = 'bz-encrypt-health-progress';
-    progress.textContent = '体检中…';
-    const bar = uiProgress({ value: 0 });
-    bar.el.classList.add('bz-encrypt-health-bar'); // 域内仅保留 8px 下距（styles.css），条形基线走样式库 .bz-progress
-    body.appendChild(progress);
-    body.appendChild(bar.el);
-    const live = document.createElement('div');
-    live.className = 'bz-encrypt-health-live';
-    const liveTitle = document.createElement('div');
-    liveTitle.className = 'bz-encrypt-health-section-title';
-    liveTitle.textContent = '发现的异常';
-    live.appendChild(liveTitle);
-    body.appendChild(live);
+    if (this._scanning) return; // 重入直接忽略：两个扫描共享同一 body，进度互踩 + PBKDF2 双跑
+    this._scanning = true;
     try {
-      const report = await this.dataManager.scanHealth((p) => {
-        progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
-        bar.setValue(Math.round((p.done / p.total) * 100));
-        for (const item of p.found) {
-          const row = document.createElement('div');
-          row.className =
-            'bz-encrypt-health-item ' +
-            (item.cat === 'corrupted-body' || item.cat === 'corrupted-attachment'
-              ? 'bz-encrypt-health-item--bad'
-              : item.cat === 'missing-attachment'
-                ? 'bz-encrypt-health-item--warn'
-                : '');
-          row.textContent = item.label;
-          live.appendChild(row);
-        }
-      });
-      // 扫描完成：缓存问题数供概览健康卡（E5）+ 全量重渲染（分类规整 + 勾选框 + 底部按钮计数）
-      this.lastHealth = { issues: report.items.length, lastChecked: new Date().toLocaleString() };
-      this.renderHealthReport(report, body);
-      // 概览健康卡即时跟随（若正停在概览视图）
-      this.renderNav();
-    } catch (e: any) {
+      // T10 锁定态如实呈现（外部上锁后体检窗若仍开着）：不再被汇报成「0 个问题全绿」；
+      // 清理/重扫一并禁用，解锁后重开体检窗自愈
+      if (!this.dataManager.unlocked) {
+        body.innerHTML = '';
+        const locked = document.createElement('div');
+        locked.className = 'bz-encrypt-health-summary';
+        locked.textContent = '保险库已上锁，无法体检';
+        body.appendChild(locked);
+        this.setHealthButtonsDisabled(true);
+        return;
+      }
+      this.setHealthButtonsDisabled(true); // 扫描中禁用清理/重扫（连点/清理并发被旗标+disabled 双路拦下）
       body.innerHTML = '';
-      const err = document.createElement('div');
-      err.textContent = '体检失败：' + e.message;
-      body.appendChild(err);
+      // 骨架：进度区（文本 + 条，宽度为功能性动态计算）+ 实时发现区
+      const progress = document.createElement('div');
+      progress.className = 'bz-encrypt-health-progress';
+      progress.textContent = '体检中…';
+      const bar = uiProgress({ value: 0 });
+      bar.el.classList.add('bz-encrypt-health-bar'); // 域内仅保留 8px 下距（styles.css），条形基线走样式库 .bz-progress
+      body.appendChild(progress);
+      body.appendChild(bar.el);
+      const live = document.createElement('div');
+      live.className = 'bz-encrypt-health-live';
+      const liveTitle = document.createElement('div');
+      liveTitle.className = 'bz-encrypt-health-section-title';
+      liveTitle.textContent = '发现的异常';
+      live.appendChild(liveTitle);
+      body.appendChild(live);
+      try {
+        const report = await this.dataManager.scanHealth((p) => {
+          progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
+          bar.setValue(Math.round((p.done / p.total) * 100));
+          for (const item of p.found) {
+            const row = document.createElement('div');
+            row.className =
+              'bz-encrypt-health-item ' +
+              (item.cat === 'corrupted-body' || item.cat === 'corrupted-attachment'
+                ? 'bz-encrypt-health-item--bad'
+                : item.cat === 'missing-attachment'
+                  ? 'bz-encrypt-health-item--warn'
+                  : '');
+            row.textContent = item.label;
+            live.appendChild(row);
+          }
+        });
+        // 扫描完成：缓存问题数供概览健康卡（E5）+ 全量重渲染（分类规整 + 勾选框 + 底部按钮计数）
+        // T15：时间格式统一 zh-CN 24 小时制（此前 toLocaleString 随环境locale/12小时制漂移）
+        this.lastHealth = { issues: report.items.length, lastChecked: new Date().toLocaleString('zh-CN', { hour12: false }) };
+        this.renderHealthReport(report, body);
+        // 概览健康卡即时跟随（若正停在概览视图）
+        this.renderNav();
+      } catch (e: any) {
+        body.innerHTML = '';
+        const err = document.createElement('div');
+        err.textContent = '体检失败：' + e.message;
+        body.appendChild(err);
+      }
+      // 扫描收场（成功/失败两路）：恢复按钮可用（锁定态分支已在上方提前返回保持禁用）
+      this.setHealthButtonsDisabled(false);
+    } finally {
+      this._scanning = false;
     }
+  }
+
+  /** 体检窗底部两按钮（清理/重扫）禁用态：扫描中与锁定态防重入（true=禁用） */
+  private setHealthButtonsDisabled(disabled: boolean): void {
+    if (!this.healthPopup) return;
+    const clean = this.healthPopup.querySelector<HTMLButtonElement>('#bz-encrypt-health-clean');
+    const rescan = this.healthPopup.querySelector<HTMLButtonElement>('#bz-encrypt-health-rescan');
+    if (clean) clean.disabled = disabled;
+    if (rescan) rescan.disabled = disabled;
   }
 
   /** 渲染体检报告（UI 保证解锁后调用，integrityChecked 恒 true）：可清理类默认不全选；损坏/缺失只展示 */
@@ -1098,78 +1181,126 @@ export class UIManager {
     openItemMenu(x, y, actions, true, 'bz-vault-menu');
   }
 
-  /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入 */
+  /** 解锁屏：三域共用骨架（core/ui/lock-screen），文案与统计按域注入。
+   *  N11 单例守卫：已有解锁屏在进行中 → 复用同一 Promise（快速双触发不再连开两层）。 */
   async showPasswordDialog(kind: LockScreenKind = 'vault'): Promise<boolean> {
+    // 存活自愈：句柄在而解锁屏 DOM 已被外部摘除（绕过正规取消链）→ 视为已结束，不再复用；
+    // el 为 null = 占位构建中（exists()/readLockStats 的 await 窗口），必须复用不可清
+    if (activeUnlock) {
+      if (activeUnlock.el && !activeUnlock.el.isConnected) activeUnlock = null;
+      else return activeUnlock.promise;
+    }
+    let resolveFn!: (ok: boolean) => void;
+    let cancelled = false;
+    const promise = new Promise<boolean>((resolve) => { resolveFn = resolve; });
+    // 同步占位登记：exists()/readLockStats 的 await 窗口内再触发同样复用（完成构建后补挂 el）
+    activeUnlock = {
+      el: null as unknown as HTMLElement,
+      promise,
+      cancel: () => {
+        cancelled = true;
+        if (activeUnlock?.promise === promise) activeUnlock = null;
+        resolveFn(false);
+      },
+    };
+    try {
+      return await this.openUnlockScreen(kind, promise, resolveFn, () => cancelled);
+    } catch (e) {
+      if (activeUnlock?.promise === promise) activeUnlock = null;
+      throw e;
+    }
+  }
+
+  /** 实际构建解锁屏（单例登记在 showPasswordDialog，唯一收场出口为 done()） */
+  private async openUnlockScreen(
+    kind: LockScreenKind,
+    promise: Promise<boolean>,
+    resolveFn: (ok: boolean) => void,
+    isCancelled: () => boolean
+  ): Promise<boolean> {
     const exists = await this.dataManager.exists();
     const meta = LOCK_KIND_META[kind];
     // 统计项：会话快照优先，冷启动回落 lock-stats.json 上次快照（ADR-0124 决策 4 修订），都没有才「—」
     const stats =
       this.lockStatsCache[kind] || (await readLockStats(kind)) || meta.stats.map((s) => ({ ...s, num: '—' }));
-    return new Promise((resolve) => {
-      const ls = uiLockScreen({
-        kind,
-        icon: meta.icon,
-        title: exists ? meta.title : '设置主密码',
-        sub: exists ? meta.sub : '请设置一个主密码（用于加密所有数据）',
-        stats,
-        action: exists ? meta.action : '设置并解锁',
-        firstSetup: !exists,
-        warningHtml:
-          `${vIc('triangle-alert', 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
-        ackText: '我已了解：主密码无法找回，遗忘将导致密文永久无法恢复',
-        secText: exists ? '主密码不会存储 · 遗忘将无法恢复密文' : '',
-        secTone: 'warn',
-        hint: exists ? '' : '建议使用密码本保存此密码',
-      });
-      topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
-      document.body.appendChild(ls.el);
-      // 挂 body 弹层自声明 ESC 层（兜底链）：解锁屏开着时 ESC 只关解锁屏，不穿透主面板
-      const esc = escManager.register('bz-vault-unlock', {
-        isVisible: () => ls.el.isConnected,
-        close: () => done(false),
-      });
+    // 占位期已被收场（closeAllDialogs 等）：不再开屏，等待方已按取消放行
+    if (isCancelled()) return promise;
+    const ls = uiLockScreen({
+      kind,
+      icon: meta.icon,
+      title: exists ? meta.title : '设置主密码',
+      sub: exists ? meta.sub : '请设置一个主密码（用于加密所有数据）',
+      stats,
+      action: exists ? meta.action : '设置并解锁',
+      firstSetup: !exists,
+      warningHtml:
+        `${vIc('triangle-alert', 14)} <strong>重要提醒</strong><br>• 主密码 <b>不会存储</b>，也无法找回，请务必牢记！<br>• 若遗忘密码，库内笔记及其附件将永久丢失。<br>• 建议使用密码本（如 Bitwarden）保存此密码。`,
+      ackText: '我已了解：主密码无法找回，遗忘将导致密文永久无法恢复',
+      secText: exists ? '主密码不会存储 · 遗忘将无法恢复密文' : '',
+      secTone: 'warn',
+      hint: exists ? '' : '建议使用密码本保存此密码',
+    });
+    topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
+    document.body.appendChild(ls.el);
+    // 挂 body 弹层自声明 ESC 层（兜底链）：解锁屏开着时 ESC 只关解锁屏，不穿透主面板
+    const esc = escManager.register('bz-vault-unlock', {
+      isVisible: () => ls.el.isConnected,
+      close: () => done(false),
+    });
 
-      const done = (ok: boolean) => { esc.unregister(); ls.close(); resolve(ok); };
-      const setErr = (m: string) => {
-        ls.setError(m);
-        setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
-      };
+    // 唯一出口：清单例句柄（防悬挂）→ 解挂 ESC 层 → 摘 DOM → 放行等待方
+    const done = (ok: boolean) => {
+      if (activeUnlock && activeUnlock.promise === promise) activeUnlock = null;
+      esc.unregister();
+      ls.close();
+      resolveFn(ok);
+    };
+    const setErr = (m: string) => {
+      ls.setError(m);
+      setTimeout(() => { if (ls.input.value) ls.setError(''); }, 2600);
+    };
 
-      ls.actionBtn.onclick = async () => {
-        const pw = ls.input.value;
-        if (!pw) { this.rejectInput('请输入密码', setErr); return; }
-        if (!exists) {
-          // 首设：第二遍确认（功能性显隐）+ 风险勾选
-          if (ls.input2.style.display === 'none') {
-            ls.showSecondInput(true);
-            ls.input2.value = '';
-            ls.setMessage('请再次输入主密码确认');
-            ls.focus();
-            return;
-          }
-          if (pw !== ls.input2.value) { this.rejectInput('两次密码不一致', setErr); return; }
-          // E18（自 master 锁家族修复批并入）：与密码本锁屏同规则——首设至少 4 位
-          if (pw.length < 4) { this.rejectInput('主密码至少 4 位', setErr); return; }
-          if (!ls.ackBox || !ls.ackBox.checked) { this.rejectInput('请先勾选风险确认', setErr); return; }
-          try {
-            const ok = await this.dataManager.unlock(pw);
-            if (ok) {
-              done(true);
-              notice('密码已设置，数据已加密', 'success');
-            } else {
-              // 数据层已回滚解锁态；写盘失败必须明示并收场（不再假装成功、也不把用户困在弹窗里）
-              notice('设置失败：无法写入清单，请检查磁盘空间后重试', 'error');
-              done(false);
-            }
-          } catch (e: any) {
-            notifyActionError(e, '设置主密码');
-            done(false);
-          }
+    ls.actionBtn.onclick = async () => {
+      const pw = ls.input.value;
+      if (!pw) { this.rejectInput('请输入密码', setErr); return; }
+      if (!exists) {
+        // 首设：第二遍确认（功能性显隐）+ 风险勾选
+        if (ls.input2.style.display === 'none') {
+          ls.showSecondInput(true);
+          ls.input2.value = '';
+          ls.setMessage('请再次输入主密码确认');
+          ls.focus();
           return;
         }
-        // 冷却期内（P2 节流）：拒绝本次尝试并提示剩余等待
-        const remainMs = this.unlockCooldownUntil - Date.now();
-        if (remainMs > 0) { this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1000)} 秒`, setErr, 'warning'); return; }
+        if (pw !== ls.input2.value) { this.rejectInput('两次密码不一致', setErr); return; }
+        // E18（自 master 锁家族修复批并入）：与密码本锁屏同规则——首设至少 4 位
+        if (pw.length < 4) { this.rejectInput('主密码至少 4 位', setErr); return; }
+        if (!ls.ackBox || !ls.ackBox.checked) { this.rejectInput('请先勾选风险确认', setErr); return; }
+        // T7 busy 防重（对齐销毁确认先例）：PBKDF2/写盘窗口内 Enter/连点不再并发提交
+        ls.setBusy(true);
+        try {
+          const ok = await this.dataManager.unlock(pw);
+          if (ok) {
+            done(true);
+            notice('密码已设置，数据已加密', 'success');
+          } else {
+            // 数据层已回滚解锁态；写盘失败必须明示并收场（不再假装成功、也不把用户困在弹窗里）
+            notice('设置失败：无法写入清单，请检查磁盘空间后重试', 'error');
+            done(false);
+          }
+        } catch (e: any) {
+          ls.setBusy(false);
+          notifyActionError(e, '设置主密码');
+          done(false);
+        }
+        return;
+      }
+      // 冷却期内（P2 节流）：拒绝本次尝试并提示剩余等待
+      const remainMs = this.unlockCooldownUntil - Date.now();
+      if (remainMs > 0) { this.rejectInput(`尝试过于频繁，请再等 ${Math.ceil(remainMs / 1000)} 秒`, setErr, 'warning'); return; }
+      // T7 busy 防重：派生密钥窗口内回车/连点不再并发 unlock
+      ls.setBusy(true);
+      try {
         const success = await this.dataManager.unlock(pw);
         if (success) {
           this.resetUnlockThrottle();
@@ -1180,6 +1311,7 @@ export class UIManager {
           // 区分「清单损坏」与「密码错误」：损坏必须显式确认后才能重设，绝不静默
           const issue = this.dataManager.manifestIssue;
           if (issue === 'empty' || issue === 'corrupt') {
+            ls.setBusy(false); // 损坏确认是独立弹窗：解锁屏复位可输入态，取消后可继续重试
             void openFlowDialog({
               title: '清单疑似损坏',
               message:
@@ -1207,31 +1339,29 @@ export class UIManager {
               }
             });
           } else {
-            this.rejectInput('密码错误，请重试', setErr, 'error');
-            // 连续失败递增冷却（1s/2s/4s…封顶 8s；成功复位）
+            ls.setBusy(false);
+            // T11 密码错误单通知（效率新-8）：行内报错与冷却提示合并为一条，不再两连发互顶
             const delaySec = this.registerUnlockFailure();
-            notice(`${delaySec} 秒后可再次尝试`, 'warning');
+            this.rejectInput(`密码错误，${delaySec} 秒后可重试`, setErr, 'error');
             ls.input.value = '';
             ls.focus();
           }
         }
-      };
-      // （输入框回车提交已由 uiLockScreen 内置：Enter → 主按钮，效率整改 13）
-      // 点遮罩（非内容区）关闭弹窗 = 取消
-      ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
-      // 焦点：元素挂载后再聚焦才生效；移动端 WebView 需二次聚焦才弹键盘
-      ls.focus();
-      setTimeout(() => ls.focus(), 150);
-    });
-  }
-
-  /** 输入框聚焦（不滚动页面）+ 兼容性兜底；移动端靠二次聚焦触发系统键盘 */
-  private focusUnlockInput(el: HTMLInputElement) {
-    try {
-      el.focus({ preventScroll: true } as any);
-    } catch (e) {
-      el.focus();
-    }
+      } catch (e: any) {
+        // unlock 抛错（读盘失败等）：复位 busy，弹窗保留可重试，如实报错不静默
+        ls.setBusy(false);
+        notifyActionError(e, '解锁');
+      }
+    };
+    // （输入框回车提交已由 uiLockScreen 内置：Enter → 主按钮，效率整改 13；busy 期按钮 disabled 天然防重）
+    // 点遮罩（非内容区）关闭弹窗 = 取消
+    ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
+    // 焦点：元素挂载后再聚焦才生效；移动端 WebView 需二次聚焦才弹键盘
+    ls.focus();
+    setTimeout(() => ls.focus(), 150);
+    // 单例登记（N11）：进行中复用同一 Promise；cancel 供 closeAllDialogs 收场走正规取消链
+    activeUnlock = { el: ls.el, promise, cancel: () => done(false) };
+    return promise;
   }
 
   // ---------- 统一工作台渲染 ----------
@@ -1623,9 +1753,18 @@ export class UIManager {
     return head;
   }
 
-  /** 卸载辅助：移除 body 上无 id 的弹窗遮罩（平台编辑等一次性弹层；G：cleanup 此前不清） */
+  /**
+   * 卸载/上锁收场：清 body 上的一次性弹层（幂等）。
+   * - 进行中的解锁屏先走正规取消链（done(false)）：解挂 ESC 层 + 等待方 resolve(false) 不悬挂；
+   * - 现行解锁屏/销毁确认走 core uiLockScreen 直挂 body（bz-lockscreen--mask）：摘 DOM 后
+   *   其 ESC 层 isVisible(=isConnected) 自灭——禁用/重载插件不再残留可交互锁屏（新-3）；
+   * - 体检窗挂独立 id 遮罩，一并收起（窗内为密文体检发现，不随上锁残留）。
+   */
   closeAllDialogs(): void {
+    if (activeUnlock && activeUnlock.el?.isConnected) activeUnlock.cancel();
     document.querySelectorAll('body > .bz-vault-dlg-mask').forEach((el) => el.remove());
+    document.querySelectorAll('body > .bz-lockscreen--mask').forEach((el) => el.remove());
+    this.hideHealthDialog();
   }
 
   /**
@@ -1689,7 +1828,7 @@ export class UIManager {
     }
   }
 
-  /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落密码资产） */
+  /** 直落上次停留资产（已解锁直接打开面板时；无记忆回落加密笔记） */
   restoreLastAsset(): void {
     if (!this._initialized) return;
     this.setAssetFromNav(lastVisitedAsset);
@@ -1697,6 +1836,8 @@ export class UIManager {
 
   /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
   lockNow(silent = false): void {
+    // T12：统计快照挪消费点——上锁前快照一次（lock() 会清空清单，锁后只能取到零值）
+    if (this.dataManager.unlocked) this.captureLockStats();
     this.dataManager.lock();
     this.pwDataManager.lock(); // 共享锁：本侧密码明文缓存一并清出
     this._selNoteId = null;
@@ -1709,11 +1850,38 @@ export class UIManager {
     // 解锁会话计时终止（已解锁时长/无交互自动上锁）
     this.unlockedAt = null;
     this.stopSessionTimers();
+    // 收场（N9/新-2 同根）：预览明文浮层 + body 弹层随上锁一并收起（非安全模式面板保持打开也照收）
+    this.closePreview();
+    this.closeAllDialogs();
     this.notifyUnlockUi();
     if (this.isSecurityMode()) {
       // G：与 hide() 同双口径（securityMode 可能只写在旧全局键上——单读 config 会漏上锁）
       this.hide(silent);
     }
+  }
+
+  /**
+   * 外部上锁清场（N10 事件侧）：他域/密码本面板直调 SafeManager.lock() 不经本域 lockNow/hide，
+   * 经 encrypt:unlock-changed(false) 兜底——清会话明文与选择态、收起预览/体检浮层、面板收起
+   * （重开走状态栏重新解锁，hero 动态文案归 vault-assets-view 并行批）。
+   * 刻意不走 hide()：hide 的安全模式分支会再调 lock()，unlock-changed(false) 会递归重入；
+   * 也不全量扫 body 锁屏——他域（如日记）的解锁屏与本次上锁无关，不越界代拆。
+   */
+  private onExternalLock(): void {
+    // 非活实例（popup 已摘/未挂载）不抢戏：重载与测试场景存在多实例并存
+    if (!this._initialized || !this.popup?.isConnected) return;
+    this.closePreview();
+    this.hideHealthDialog();
+    this._selNoteId = null;
+    this._diaryPlain = {};
+    this.lastHealth = null;
+    this.unlockedAt = null;
+    this.stopSessionTimers();
+    if (this.mask) this.mask.style.display = 'none';
+    if (this.popup) this.popup.style.display = 'none';
+    // T12 快照兜底：此刻清单已被 lock() 清空，重拍会以零值覆盖真实统计——
+    // 仅防御异常时序（事件先于清单清空）才补拍得到真实值，否则保持上次快照
+    if (this.dataManager.unlocked) this.captureLockStats();
   }
 
   /** 解锁态变更后 UI 同步（Controller attachStatusBar 也调；锁屏/已解锁文本 + 重绘）。未建 DOM 时静默 */
@@ -1825,19 +1993,24 @@ export class UIManager {
 
   // ---------- 加密笔记/日记销毁/还原 ----------
   /**
-   * 销毁加密笔记：重输主密码二次确认（高危操作防误触）。
-   * 确认窗复用共享解锁屏（全屏遮罩模式），提交走 verifyPassword 只读校验——
-   * 通过才执行 removeNote；这是防误触确认而非解锁，不进解锁冷却节流。
+   * 销毁确认共通壳（T4）：复用共享解锁屏（全屏遮罩模式），重输主密码 + verifyPassword
+   * 只读校验——通过才执行 onConfirmed。这是防误触确认而非解锁，不进解锁冷却节流。
+   * 加密笔记销毁与日记彻底销毁同款防护（此前日记仅普通确认框，防护不对齐）。
    */
-  confirmDeleteNote(note: SafeNote) {
+  private confirmDestroyWithPassword(opts: {
+    title: string;
+    sub: string;
+    action: string;
+    onConfirmed: () => void;
+  }): void {
     const ls = uiLockScreen({
       kind: 'vault',
       icon: 'lock',
-      title: '销毁确认',
-      sub: `将永久销毁「${note.title}」的正文与全部附件密文，销毁后不可恢复`,
+      title: opts.title,
+      sub: opts.sub,
       stats: [],
       placeholder: '重输主密码确认',
-      action: '确认销毁',
+      action: opts.action,
       secText: '销毁后密文不可恢复',
       secTone: 'bad',
     });
@@ -1855,14 +2028,7 @@ export class UIManager {
       esc.unregister();
       ls.close();
       if (!ok) return;
-      void this.dataManager
-        .removeNote(note.id)
-        .then(() => {
-          if (this._selNoteId === note.id) this._selNoteId = null;
-          this.renderList();
-          this.toast(`已销毁笔记「${note.title}」`);
-        })
-        .catch((e: any) => this.toast('销毁失败：' + e.message, true));
+      opts.onConfirmed();
     };
     const submit = async () => {
       const pw = ls.input.value;
@@ -1887,6 +2053,25 @@ export class UIManager {
     ls.el.addEventListener('click', (e) => { if (e.target === ls.el) done(false); });
     ls.focus();
     setTimeout(() => ls.focus(), 150);
+  }
+
+  /** 销毁加密笔记：重输主密码二次确认（高危操作防误触），通过后执行移除。 */
+  confirmDeleteNote(note: SafeNote) {
+    this.confirmDestroyWithPassword({
+      title: '销毁确认',
+      sub: `将永久销毁「${note.title}」的正文与全部附件密文，销毁后不可恢复`,
+      action: '确认销毁',
+      onConfirmed: () => {
+        void this.dataManager
+          .removeNote(note.id)
+          .then(() => {
+            if (this._selNoteId === note.id) this._selNoteId = null;
+            this.renderList();
+            this.toast(`已销毁笔记「${note.title}」`);
+          })
+          .catch((e: any) => notifyActionError(e, '销毁')); // T14：错误文案收口 notifyActionError 单源
+      },
+    });
   }
 
   /** 日记还原回日记（复用 diary reclassifyEntry 语义：还原块 merge 回原日期 md） */
@@ -1923,7 +2108,7 @@ export class UIManager {
       }
     } catch (e: any) {
       if (h) h.hide();
-      this.toast('还原失败：' + e.message, true);
+      notifyActionError(e, '还原日记'); // T14：错误文案收口 notifyActionError 单源（不再手拼 toast）
     }
   }
 
@@ -1941,12 +2126,12 @@ export class UIManager {
   }
 
   confirmDestroyDiary(note: SafeNote) {
-    this.askConfirm(
-      '彻底销毁日记',
-      `将永久销毁「${note.title}」的密文（含附件）。此操作不可撤销，确定继续吗？`,
-      '永久销毁',
-      true, // danger：永久销毁密文（不可撤销）→ 主按钮中性底 + 红字（手册 §9/§10）
-      () => {
+    // T4 防护对齐（原仅普通确认框）：日记彻底销毁同为不可逆密文销毁 → 升级重输主密码 + verifyPassword
+    this.confirmDestroyWithPassword({
+      title: '彻底销毁日记',
+      sub: `将永久销毁「${note.title}」的密文（含附件），销毁后不可恢复`,
+      action: '永久销毁',
+      onConfirmed: () => {
         void this.dataManager
           .removeNote(note.id)
           .then(() => {
@@ -1955,9 +2140,9 @@ export class UIManager {
             this.renderList();
             this.toast(`已销毁「${note.title}」`);
           })
-          .catch((e: any) => this.toast('销毁失败：' + e.message, true));
-      }
-    );
+          .catch((e: any) => notifyActionError(e, '销毁')); // T14：错误文案收口 notifyActionError 单源
+      },
+    });
   }
 
   confirmRestore(note: SafeNote) {
@@ -2027,7 +2212,11 @@ export class UIManager {
    */
   async openPreview(note: SafeNote) {
     if (!this.previewPopup) this.ensureElements();
-    if (!this.dataManager.unlocked || !this.dataManager.password) return;
+    if (!this.dataManager.unlocked || !this.dataManager.password) {
+      // N10：锁定态早退不再静默——给出原因，避免「点了没反应」
+      notice('保险库已上锁，请先解锁再预览', 'warning');
+      return;
+    }
     // 连开多篇预览不关窗：先释放上一批 Blob URL（防内存泄漏）
     this.revokePreviewUrls();
     const popup = this.previewPopup!;
@@ -2074,28 +2263,39 @@ export class UIManager {
       const [plain, previewResults] = await Promise.all([bodyP, Promise.all(previewP)]);
       const dataUrls = new Map<string, string>();
       for (const r of previewResults) dataUrls.set(r.path, r.du);
-      // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
-      const { text, slots, inlined } = collectMediaSlots(plain ?? '', note.attachments);
-      // Markdown 渲染（占位 token 原样保留）——带超时：render 挂起时降级纯文本而不是让弹窗空白
-      const { ok: rendered, el: mdElRaw } = await this.renderWithTimeout(getApp(), text, note.path);
-      const mdEl = mdElRaw;
-      mdEl.className = 'bz-encrypt-preview-md';
-      if (rendered) {
-        // 原位替换 token → 预览图，实现图随文走
-        let html = mdEl.innerHTML;
-        for (const slot of slots) {
-          const a = slot.attachment;
-          if (a) html = html.split(slot.token).join(mediaHtml(a, dataUrls.get(a.path)));
-          else html = html.split(slot.token).join('');
-        }
-        mdEl.innerHTML = html;
+      let bodyEl: HTMLElement;
+      let inlined = new Set<string>();
+      if (plain === null) {
+        // 新-7：null=解密失败/镜像缺失（data.ts 合同）——显式占位（与 throw 分支同文案），
+        // 不再静默空白；附件仍走底部画廊兜底
+        const err = document.createElement('div');
+        err.textContent = '正文解密失败';
+        bodyEl = err;
       } else {
-        // 渲染失败/超时 → 纯文本兜底（至少能看正文）
-        mdEl.textContent = plain;
+        // 先把嵌入改写占位 token（按文档顺序混排），渲染后再原位替换为预览图
+        const { text, slots, inlined: inl } = collectMediaSlots(plain, note.attachments);
+        inlined = inl;
+        // Markdown 渲染（占位 token 原样保留）——带超时：render 挂起时降级纯文本而不是让弹窗空白
+        const { ok: rendered, el: mdEl } = await this.renderWithTimeout(getApp(), text, note.path);
+        mdEl.className = 'bz-encrypt-preview-md';
+        if (rendered) {
+          // 原位替换 token → 预览图，实现图随文走
+          let html = mdEl.innerHTML;
+          for (const slot of slots) {
+            const a = slot.attachment;
+            if (a) html = html.split(slot.token).join(mediaHtml(a, dataUrls.get(a.path)));
+            else html = html.split(slot.token).join('');
+          }
+          mdEl.innerHTML = html;
+        } else {
+          // 渲染失败/超时 → 纯文本兜底（至少能看正文）
+          mdEl.textContent = plain;
+        }
+        bodyEl = mdEl;
       }
       body.innerHTML = '';
-      body.appendChild(mdEl);
-      // 底部画廊：未被正文引用的附件兜底展示（避免漏看）
+      body.appendChild(bodyEl);
+      // 底部画廊：未被正文引用的附件兜底展示（避免漏看；正文解密失败时全量兜底）
       const residuals = note.attachments.filter((a) => !inlined.has(a.path));
       if (residuals.length) {
         const gallery = document.createElement('div');
@@ -2122,20 +2322,39 @@ export class UIManager {
     }
   }
 
+  /** 预览 Markdown 渲染生命周期句柄（T13）：closePreview/下一次填充前 unload，渲染任务不滞留 */
+  private _previewComponent: Component | null = null;
+
+  private unloadPreviewComponent(): void {
+    const c = this._previewComponent;
+    this._previewComponent = null;
+    if (c) {
+      try {
+        c.unload();
+      } catch (e) {
+        /* 已卸载/环境差异容错 */
+      }
+    }
+  }
+
   /**
    * 渲染带超时：3000ms 内不完成视为失败（防真实环境 render 挂起导致弹窗永久空白/不可关）。
    * E9：render 渲入私有容器——超时弃用该容器（迟到 promise 追加进孤儿节点永不入 DOM），
    * 返回全新容器给调用方走纯文本兜底，正文不再「纯文本 + 迟到渲染」叠双份。
+   * T13：返回渲染 Component，调用链在关窗/下一次填充前 unload 收掉生命周期。
    */
   private async renderWithTimeout(
     app: any,
     text: string,
     path: string,
     timeoutMs = 3000
-  ): Promise<{ ok: boolean; el: HTMLElement }> {
+  ): Promise<{ ok: boolean; el: HTMLElement; component: Component }> {
+    this.unloadPreviewComponent(); // 下一次填充前收掉上一次渲染生命周期
     const el = document.createElement('div');
+    const component = new Component();
+    this._previewComponent = component;
     let finished = false;
-    const render = MarkdownRenderer.render(app, text, el, path, new Component()).then(
+    const render = MarkdownRenderer.render(app, text, el, path, component).then(
       () => {
         finished = true;
       },
@@ -2144,8 +2363,8 @@ export class UIManager {
       }
     );
     await Promise.race([render, new Promise((r) => setTimeout(r, timeoutMs))]);
-    if (!finished) return { ok: false, el: document.createElement('div') };
-    return { ok: true, el };
+    if (!finished) return { ok: false, el: document.createElement('div'), component };
+    return { ok: true, el, component };
   }
 
   /** 预览窗内所有缩略图/占位 slot 绑定点击：只加载被点的那一张原始层 */
@@ -2238,6 +2457,8 @@ export class UIManager {
   closePreview() {
     // 释放本次预览产生的全部 Blob URL（防内存泄漏）
     this.revokePreviewUrls();
+    // T13：收掉预览 Markdown 渲染生命周期（closePreview/下一次填充前双路覆盖）
+    this.unloadPreviewComponent();
     // 抽屉来源打开时注册过附属浮层：关闭预览注销（常驻元素，非抽屉路径 unregister 为 no-op）
     if (this.previewMask) unregisterSheetCompanion(this.previewMask);
     if (this.previewMask) this.previewMask.style.display = 'none';
@@ -2452,6 +2673,10 @@ export class EncryptAppController {
         if (h) h.hide();
         notifyActionError(e, '加密');
       }
+    } catch (e: any) {
+      // T1 整链兜底：收集/读盘/确认等前置步骤的异常不再静默 reject——
+      // 此前附件名含孤立 % 触发 URIError 时「加密当前笔记」无声失败（P1）
+      notifyActionError(e, '加密当前笔记');
     } finally {
       this._locking = false;
     }
@@ -2466,6 +2691,8 @@ export class EncryptAppController {
     }
     // G：无 id 挂 body 的一次性弹层、剪贴板自动清空计时器、密码数据域事件订阅
     this.uiManager.closeAllDialogs();
+    // document 级空闲 bump + encrypt:unlock-changed 订阅：不随 DOM 摘除自动回收，随卸载显式摘除
+    this.uiManager.detachGlobalListeners();
     cancelClipboardClear();
     // 解锁会话计时（时长刷新/无交互自动上锁）
     this.uiManager.stopSessionTimers();
