@@ -507,4 +507,17 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 continueReading 陈旧数据假空态**（eff）。修：数据新鲜度校验。
 - **UX 分流**：func（catFilter 跨重开保留与 side/sort 复位语义不对称）+ eff×3（明细待报告到账后补录）→ 拍板清单 BS 系。
 
-（方向 2 UI / 4 一致 / 5 架构审查中——到账后去重定稿修复批次。）
+---
+
+## gameshelf（游戏库）域 · 审查入账中（方向 1 功能已到账；方向 2/3/4 运行中，5 待槽位）
+
+> 明细：`.scratch/review-deep/gameshelf-func.md`。方向 1：P1×1 + P2×2 + P3×11。旧账复核 6 条（window.open 记名本域收口、同步按钮引导态已缓解、关面板中止回填维持拍板、uiSelect ESC 已修等）。数据安全面核验健壮：对账 upsert 零覆盖主承诺、8 段成就行契约、截图同序同长、媒体键分工、三队列幂等熔断、Steam 解析三级兜底。门禁基线：tsc 0；tests/gameshelf 118 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P1 自动同步链断点** `sync.ts:119` × `index.ts:30`（func F1）——`autoSyncOnOpen` fire-and-forget、await 落空：首开空库/新游戏入账后媒体本地化、中文名回填、商店/成就回填三队列全部不启动（命令与手动按钮路径正确，唯自动同步漏），「拉到的都存本地」承诺在首次接入主路径不兑现。修：返回 runSync promise（一行）。+ 回归。
+- **P2 已下架手改被同步翻回（拍板项）** `reconcile`（func F2）——用户手改 `已下架: true` 被下次同步「Steam 在场即恢复在架」静默翻回。设计语义 vs 用户意图冲突，**归拍板清单 GS1**。
+- **P2 window.open 旧账收口** `ui.ts:794`（func F3）——切 `openExternalUrl`（cinema 同族已清）。
+- **P3 群（11 条，func）**：closePanel 关停三选二（posters 不随面板关停，与 backfill 关停理由矛盾）、unloadBackfill 置 running=false 可致双消费者、无中文名游戏每开面板重拉永不收敛、媒体下载无超时、尾斜杠配置零匹配、消歧文件名展示带尾巴等（修复批定稿时按报告展开）。
+
+（方向 2 UI / 3 效率 / 4 一致运行中，5 架构待槽位——到账后去重定稿修复批次。）
