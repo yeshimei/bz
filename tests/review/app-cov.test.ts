@@ -200,11 +200,15 @@ describe('reviewLoop 常驻通知复用与超时收尾', () => {
     setSettingsProvider(() => ({ forceQuizForReview: false }) as any);
     (reviewApp as any).dataManager = null;
     (reviewApp as any)._reviewNotice = null;
+    reviewApp.stopReviewLoops(); // F2 防重入守卫要求：用例间不得残留活动循环
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    reviewApp.stopReviewLoops();
+    reviewApp.hideReviewBar();
     (reviewApp as any)._reviewNotice = null;
+    (reviewApp as any)._pendingRound = null;
     vi.restoreAllMocks();
   });
 
@@ -228,7 +232,7 @@ describe('reviewLoop 常驻通知复用与超时收尾', () => {
     setApp(app);
     // A 已在 10s 前被评级 → 首 tick 判定完成直接跳 B
     vault.files.set(REVIEW_FILE_PATH, JSON.stringify([mkRow('A.md', new Date(Date.now() - 10000).toISOString()), mkRow('B.md', null)]));
-    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn(), el: { isConnected: true } };
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     // item 5：离篇宽限注入短值（默认 120s），测试内两个 tick 即判中断
     __setReviewAwayGraceMsForTests(500);
@@ -256,7 +260,7 @@ describe('reviewLoop 常驻通知复用与超时收尾', () => {
     (app.workspace as any).getActiveFile = () => ({ path: 'A.md' }); // 一直在目标笔记上但不评级
     setApp(app);
     vault.files.set(REVIEW_FILE_PATH, JSON.stringify([mkRow('A.md', null)]));
-    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn() };
+    const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn(), el: { isConnected: true } };
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     const p = reviewApp.reviewLoop([mkRow('A.md', null)], 0);
