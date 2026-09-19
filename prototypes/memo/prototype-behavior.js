@@ -1,4 +1,4 @@
-/* 源指纹 88d8b6eb9360d900 · 仓内输入 229 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6b28d5e9f675d7e9 · 仓内输入 229 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -5469,92 +5469,23 @@ var BZW_memo = (() => {
     const tags = (_a2 = cache.frontmatter) == null ? void 0 : _a2.tags;
     return !!tags && tags.includes("公开课");
   }
-  function normalizeRecur(v) {
-    if (!v || typeof v !== "object") return null;
-    const kind = v.kind;
-    if (kind === "weekly" || kind === "monthly" || kind === "yearly") {
-      const out = { kind };
-      const ad = v.anchorDay;
-      if (typeof ad === "number" && Number.isInteger(ad) && ad >= 1 && ad <= 31) out.anchorDay = ad;
-      return out;
-    }
-    if (kind === "days") {
-      const n = Number(v.interval);
-      return { kind: "days", interval: Number.isFinite(n) && n >= 1 ? Math.floor(n) : 1 };
-    }
-    return null;
-  }
-  function normalizeChecklist(v) {
-    if (!Array.isArray(v)) return null;
-    const items = v.map((c) => {
-      var _a2;
-      return { text: String((_a2 = c == null ? void 0 : c.text) != null ? _a2 : "").trim(), done: !!(c == null ? void 0 : c.done) };
-    }).filter((c) => c.text.length > 0);
-    return items.length ? items : null;
-  }
-  function nextRecurDue(recur, base, nowStr) {
-    const fmt2 = "YYYY-MM-DD HH:mm:ss";
-    const norm = (s) => s.replace("T", " ");
-    let anchor = (0, import_moment3.default)(norm(base || nowStr || (0, import_moment3.default)().format(fmt2)), fmt2);
-    if (!anchor.isValid()) anchor = (0, import_moment3.default)();
-    const now = nowStr ? (0, import_moment3.default)(norm(nowStr), fmt2) : (0, import_moment3.default)();
-    const unit = recur.kind === "weekly" ? "weeks" : recur.kind === "monthly" ? "months" : recur.kind === "yearly" ? "years" : "days";
-    const amount = unit === "days" ? recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1 : 1;
-    const anchorDay = recur.anchorDay;
-    const useAnchorDay = (recur.kind === "monthly" || recur.kind === "yearly") && typeof anchorDay === "number" && Number.isInteger(anchorDay) && anchorDay >= 1 && anchorDay <= 31;
-    const shift = (steps) => {
-      const m = anchor.clone().add(steps * amount, unit);
-      if (useAnchorDay) m.date(Math.min(anchorDay, m.daysInMonth()));
-      return m;
-    };
-    let n = 1;
-    let cur = shift(n);
-    if (now.diff(anchor, "days") > 366) {
-      const m = (0, import_moment3.default)(now).add(amount, unit);
-      if (useAnchorDay) m.date(Math.min(anchorDay, m.daysInMonth()));
-      cur = m;
-    } else {
-      let guard = 0;
-      while (cur.valueOf() <= now.valueOf() && guard++ < 366) {
-        n++;
-        cur = shift(n);
-      }
-      if (cur.valueOf() <= now.valueOf()) {
-        cur = (0, import_moment3.default)(now).add(amount, unit);
-      }
-    }
-    return cur.format(fmt2);
-  }
   function normalizeItem(item) {
-    var _a2, _b2;
-    const src = item && typeof item === "object" ? item : {};
     return {
-      id: src.id,
-      title: String((_a2 = src.title) != null ? _a2 : ""),
-      scene: String((_b2 = src.scene) != null ? _b2 : ""),
-      priority: src.priority || "minor",
-      created: src.created,
-      completed: src.completed || null,
-      due: src.due || null,
-      notePath: src.notePath || null,
-      notePosition: src.notePosition || null,
-      scriptName: src.scriptName || null,
-      courseName: src.courseName || null,
-      coursePath: src.coursePath || null,
-      linkedNote: src.linkedNote || null,
-      url: src.url || null,
-      recur: normalizeRecur(src.recur),
-      checklist: normalizeChecklist(src.checklist)
+      id: item.id,
+      title: item.title,
+      scene: item.scene,
+      priority: item.priority || "minor",
+      created: item.created,
+      completed: item.completed || null,
+      due: item.due || null,
+      notePath: item.notePath || null,
+      notePosition: item.notePosition || null,
+      scriptName: item.scriptName || null,
+      courseName: item.courseName || null,
+      coursePath: item.coursePath || null,
+      linkedNote: item.linkedNote || null,
+      url: item.url || null
     };
-  }
-  function hasPendingNextItem(items, it) {
-    if (!it.recur || !it.completed) return false;
-    return items.some(
-      (o) => {
-        var _a2;
-        return o.id !== it.id && !o.completed && o.title === it.title && o.scene === it.scene && ((_a2 = o.recur) == null ? void 0 : _a2.kind) === it.recur.kind && !!o.due && (!it.due || o.due > it.due);
-      }
-    );
   }
   var import_moment3, DEFAULT_SCENARIOS, MemoData;
   var init_data = __esm({
@@ -5563,7 +5494,6 @@ var BZW_memo = (() => {
       init_json_store();
       init_app();
       init_utils();
-      init_str();
       init_storage();
       init_notice();
       DEFAULT_SCENARIOS = ["剪藏", "工作", "学习", "生活", "代码", "公开课"];
@@ -5603,28 +5533,14 @@ var BZW_memo = (() => {
               return [];
             }
             let needWrite = false;
-            const clean = [];
-            let bad = 0;
-            for (const item of raw) {
-              if (!item || typeof item !== "object" || Array.isArray(item)) {
-                bad++;
-                needWrite = true;
-                continue;
-              }
+            const items = raw.map((item) => {
               if (!item.id) {
                 item.id = generateId();
                 needWrite = true;
               }
-              clean.push(item);
-            }
-            if (bad > 0) console.warn(`[bz:memo] memo.json 含 ${bad} 个非法条目（null/非对象），已剔除`);
-            const items = clean.map(
-              (item) => (
-                // 统一字段形状（缺省补默认值，旧数据零迁移）
-                normalizeItem(item)
-              )
-            );
-            if (needWrite) await this.write(clean);
+              return normalizeItem(item);
+            });
+            if (needWrite) await this.write(raw);
             return items;
           });
         },
@@ -5654,49 +5570,9 @@ var BZW_memo = (() => {
             await this.write(data);
           });
         },
-        /**
-         * 完成条目（issue 353 扩展）：标记 completed；周期条目（recur）自动生成下一期——
-         * 全字段克隆（场景/优先级/关联笔记/子任务等保留），新 id/created，completed 清空，
-         * due 顺延到下一周期（nextRecurDue，无 due 则锚定完成时刻起算）；
-         * 月/年周期把未钳制的锚定日记进下一代 recur.anchorDay（月末钳制不跨代漂移，审查 P1 修复批）。
-         * 返回 { next, changed }：非周期条目 next = null；已完成条目幂等短路（changed = false，
-         * UI 据此不重复发 completed 域事件，审查 P3 修复批）。
-         * 整个「读→改→写（含生成）」在同一个串行队列任务内原子完成——队列不可重入，
-         * 任务内不得再走 updateItem/addItem（同路径会死锁）。
-         */
         async completeItem(id) {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            var _a2, _b2;
-            const data = await this.read();
-            const item = data.find((d) => d.id === id);
-            if (!item) throw new Error("条目不存在");
-            if (item.completed) return { next: null, changed: false };
-            const now = localNow();
-            item.completed = now;
-            const recur = normalizeRecur(item.recur);
-            let next = null;
-            if (recur) {
-              const due = nextRecurDue(recur, item.due || now, now);
-              const nextRecur = { ...recur };
-              if ((recur.kind === "monthly" || recur.kind === "yearly") && nextRecur.anchorDay === void 0) {
-                const d = (0, import_moment3.default)((item.due || now).replace("T", " "), "YYYY-MM-DD HH:mm:ss");
-                if (d.isValid()) nextRecur.anchorDay = d.date();
-              }
-              next = normalizeItem({
-                ...item,
-                recur: nextRecur,
-                notePosition: item.notePosition ? { ...item.notePosition } : null,
-                checklist: (_b2 = (_a2 = normalizeChecklist(item.checklist)) == null ? void 0 : _a2.map((c) => ({ ...c, done: false }))) != null ? _b2 : null,
-                id: generateId(),
-                created: now,
-                completed: null,
-                due
-              });
-              data.unshift(next);
-            }
-            await this.write(data);
-            return { next, changed: true };
-          });
+          const now = (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss");
+          await this.updateItem(id, { completed: now });
         },
         /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
         async deleteItem(id) {
@@ -5719,27 +5595,6 @@ var BZW_memo = (() => {
             await this.write(data);
           });
         },
-        /**
-         * 批量清理已完成条目（效率#11）：completed 非空且早于 cutoff（字符串比较，YYYY-MM-DD
-         * HH:mm:ss 字典序即时间序）的一次性删除；cutoff 传 null = 不设时间窗（清全部已完成）。
-         * onlyIds 提供时只清该集合内的条目（UI 侧按当前视图可见口径收窄，所见即所删）。
-         * 整个读改写在同一个串行队列任务内原子完成；返回被删条目快照数组（含各自原索引，
-         * 供撤销按原索引升序逐条 restoreItem 插回原位——绝对位置 splice 须先小后大，降序会错位）。
-         */
-        async deleteCompletedBefore(cutoff, onlyIds) {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            const data = await this.read();
-            const removed = [];
-            const kept = [];
-            data.forEach((d, idx) => {
-              const hit = d && typeof d === "object" && d.completed && (cutoff === null || d.completed < cutoff) && (!onlyIds || onlyIds.has(d.id));
-              if (hit) removed.push({ item: normalizeItem(d), idx });
-              else kept.push(d);
-            });
-            if (removed.length) await this.write(kept);
-            return removed;
-          });
-        },
         /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
          *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
         async updateSceneBulk(from, to) {
@@ -5756,16 +5611,12 @@ var BZW_memo = (() => {
             return n;
           });
         },
-        /** 公开课笔记（影视目录中含 公开课 标签的文件）。
-         *  A6 前缀边界：path === dir || path.startsWith(dir + '/')（对齐 core/file-sync inFolders）——
-         *  裸 startsWith 会把同级兄弟目录「我的/影视花絮」误命中进「我的/影视」 */
+        /** 公开课笔记（影视目录中含 公开课 标签的文件） */
         async getCourseNotes() {
           const app = getApp();
           const result = [];
-          const dir = this.cinemaFolderPath;
           for (const file of app.vault.getFiles()) {
-            const inDir2 = file.path === dir || file.path.startsWith(dir + "/");
-            if (!inDir2 || file.extension !== "md") continue;
+            if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== "md") continue;
             const cache = app.metadataCache.getFileCache(file);
             if (!cache) continue;
             if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
@@ -5814,13 +5665,6 @@ var BZW_memo = (() => {
     if (days === 1) return `明天 ${timeStr} 到期`;
     return `${dateStr} ${timeStr} 到期`;
   }
-  function recurLabel(recur) {
-    if (recur.kind === "weekly") return "每周";
-    if (recur.kind === "monthly") return "每月";
-    if (recur.kind === "yearly") return "每年";
-    const n = recur.interval && recur.interval >= 1 ? Math.floor(recur.interval) : 1;
-    return `每 ${n} 天`;
-  }
   var import_moment4;
   var init_due = __esm({
     "src/memo/due.ts"() {
@@ -5842,9 +5686,6 @@ var BZW_memo = (() => {
         search: "",
         showDone: false,
         showEarlierDone: false,
-        view: "list",
-        calMonth: "",
-        calSelected: null,
         pinnedNewId: null,
         completeTimers: /* @__PURE__ */ new Map(),
         renderFn: null
@@ -6043,147 +5884,6 @@ var BZW_memo = (() => {
   var init_mobile = __esm({
     "src/core/mobile.ts"() {
       init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/focus-trap.ts
-  function isHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function firstFocusable(container) {
-    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
-      if (isHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    return list[0] || null;
-  }
-  function trapFocus(container) {
-    const onKeydown = (e) => {
-      if (e.key !== "Tab") return;
-      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el) => !isHidden(el) && !el.hasAttribute("disabled")
-      );
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active2 = document.activeElement;
-      if (e.shiftKey) {
-        if (active2 === first || !container.contains(active2)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active2 === last || !container.contains(active2)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    container.addEventListener("keydown", onKeydown);
-    return () => container.removeEventListener("keydown", onKeydown);
-  }
-  var FOCUSABLE_SELECTOR;
-  var init_focus_trap = __esm({
-    "src/core/ui/focus-trap.ts"() {
-      init_mobile();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    }
-  });
-
-  // src/core/ui/modal.ts
-  function bindFormSubmit(popup, onSubmit) {
-    popup.addEventListener("keydown", (e) => {
-      if (e.defaultPrevented || e.isComposing) return;
-      if (e.key !== "Enter") return;
-      if (!(e.ctrlKey || e.metaKey)) return;
-      e.preventDefault();
-      onSubmit();
-    });
-    popup.addEventListener("keypress", (e) => {
-      if (e.defaultPrevented) return;
-      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
-      const t = e.target;
-      if (!(t instanceof HTMLInputElement)) return;
-      if (t.dataset.bzNoFormSubmit !== void 0) return;
-      e.preventDefault();
-      onSubmit();
-    });
-  }
-  function uiModal(opts) {
-    var _a2;
-    const prevActive = document.activeElement;
-    const focusEnabled = opts.autofocus !== false;
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask";
-    mask.style.zIndex = String(allocZ());
-    const popup = document.createElement("div");
-    popup.className = "bz-overlay-popup" + (opts.className ? " " + opts.className : "");
-    if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    if (opts.title) popup.setAttribute("aria-label", opts.title);
-    if (opts.head) {
-      const head = document.createElement("div");
-      head.className = "bz-dialog-head";
-      const title = document.createElement("span");
-      title.className = "bz-dialog-title";
-      title.textContent = opts.title || "";
-      head.appendChild(title);
-      popup.appendChild(head);
-    }
-    const body = document.createElement("div");
-    body.className = "bz-dialog-body";
-    if (typeof opts.content === "string") body.innerHTML = opts.content;
-    else body.appendChild(opts.content);
-    popup.appendChild(body);
-    mask.appendChild(popup);
-    let closed = false;
-    let escHandle6 = null;
-    const releaseTrap = focusEnabled ? trapFocus(popup) : null;
-    function close() {
-      var _a3;
-      if (closed) return;
-      closed = true;
-      liveModals.delete(close);
-      releaseTrap == null ? void 0 : releaseTrap();
-      mask.remove();
-      escHandle6 == null ? void 0 : escHandle6.unregister();
-      if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
-        prevActive.focus();
-      }
-      (_a3 = opts.onClose) == null ? void 0 : _a3.call(opts);
-    }
-    const attemptClose = () => {
-      if (opts.requestClose) opts.requestClose();
-      else close();
-    };
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) attemptClose();
-    });
-    escHandle6 = escManager.register("bz-modal", {
-      isVisible: () => mask.isConnected,
-      close: attemptClose
-    });
-    document.body.appendChild(mask);
-    if (focusEnabled) (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
-    liveModals.add(close);
-    return { mask, popup, close };
-  }
-  var liveModals;
-  var init_modal = __esm({
-    "src/core/ui/modal.ts"() {
-      init_esc_manager();
-      init_z_order();
-      init_focus_trap();
-      liveModals = /* @__PURE__ */ new Set();
     }
   });
 
@@ -7538,6 +7238,129 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/core/ui/focus-trap.ts
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function firstFocusable(container) {
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
+      if (isHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    return list[0] || null;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active2 = document.activeElement;
+      if (e.shiftKey) {
+        if (active2 === first || !container.contains(active2)) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active2 === last || !container.contains(active2)) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  var FOCUSABLE_SELECTOR;
+  var init_focus_trap = __esm({
+    "src/core/ui/focus-trap.ts"() {
+      init_mobile();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+    }
+  });
+
+  // src/core/ui/modal.ts
+  function uiModal(opts) {
+    var _a2;
+    const prevActive = document.activeElement;
+    const focusEnabled = opts.autofocus !== false;
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask";
+    mask.style.zIndex = String(allocZ());
+    const popup = document.createElement("div");
+    popup.className = "bz-overlay-popup" + (opts.className ? " " + opts.className : "");
+    if (opts.maxWidth) popup.style.maxWidth = `min(${opts.maxWidth}px, calc(100vw - 32px))`;
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    if (opts.title) popup.setAttribute("aria-label", opts.title);
+    if (opts.head) {
+      const head = document.createElement("div");
+      head.className = "bz-dialog-head";
+      const title = document.createElement("span");
+      title.className = "bz-dialog-title";
+      title.textContent = opts.title || "";
+      head.appendChild(title);
+      popup.appendChild(head);
+    }
+    const body = document.createElement("div");
+    body.className = "bz-dialog-body";
+    if (typeof opts.content === "string") body.innerHTML = opts.content;
+    else body.appendChild(opts.content);
+    popup.appendChild(body);
+    mask.appendChild(popup);
+    let closed = false;
+    let escHandle6 = null;
+    const releaseTrap = focusEnabled ? trapFocus(popup) : null;
+    function close() {
+      var _a3;
+      if (closed) return;
+      closed = true;
+      liveModals.delete(close);
+      releaseTrap == null ? void 0 : releaseTrap();
+      mask.remove();
+      escHandle6 == null ? void 0 : escHandle6.unregister();
+      if (focusEnabled && prevActive instanceof HTMLElement && prevActive.isConnected) {
+        prevActive.focus();
+      }
+      (_a3 = opts.onClose) == null ? void 0 : _a3.call(opts);
+    }
+    const attemptClose = () => {
+      if (opts.requestClose) opts.requestClose();
+      else close();
+    };
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) attemptClose();
+    });
+    escHandle6 = escManager.register("bz-modal", {
+      isVisible: () => mask.isConnected,
+      close: attemptClose
+    });
+    document.body.appendChild(mask);
+    if (focusEnabled) (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
+    liveModals.add(close);
+    return { mask, popup, close };
+  }
+  var liveModals;
+  var init_modal = __esm({
+    "src/core/ui/modal.ts"() {
+      init_esc_manager();
+      init_z_order();
+      init_focus_trap();
+      liveModals = /* @__PURE__ */ new Set();
+    }
+  });
+
   // src/core/ui/resize.ts
   function hitRegion(rect, x, y, edge) {
     const onE = x >= rect.width - edge;
@@ -8425,7 +8248,8 @@ var BZW_memo = (() => {
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭" aria-label="关闭">${iconSpan(MEMO_ICONS.close)}</button>
+          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
+          <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
         </div>
       </div>
       <div class="bz-memo-body">
@@ -8444,12 +8268,8 @@ var BZW_memo = (() => {
             <button class="bz-btn bz-btn--primary bz-btn--md" data-memo-newbtn>${iconSpan(MEMO_ICONS.add, "bz-ic--sm")} 新建备忘录</button>
           </div>
           <div class="bz-toolrow">
-            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…" aria-label="搜索备忘录"><button type="button" class="bz-memo-search-clear" data-memo-search-clear title="清除搜索" aria-label="清除搜索" hidden>${iconSpan(MEMO_ICONS.close, "bz-ic--sm")}</button></div>
+            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
             <div class="bz-memo-sort" data-memo-sort></div>
-            <div class="bz-memo-viewtoggle" data-memo-viewtoggle role="tablist" aria-label="视图切换">
-              <button class="bz-memo-viewbtn bz-touch-target bz-touch-target--lg is-on" data-memo-view="list" title="列表视图" aria-label="列表视图">${iconSpan(MEMO_ICONS.list)}</button>
-              <button class="bz-memo-viewbtn bz-touch-target bz-touch-target--lg" data-memo-view="calendar" title="月历视图" aria-label="月历视图">${iconSpan(MEMO_ICONS.calendar)}</button>
-            </div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
@@ -8461,7 +8281,7 @@ var BZW_memo = (() => {
       </div>
     </div>`;
   }
-  function metaTagsHtml(it, due, relTime3, recurText = "") {
+  function metaTagsHtml(it, due, relTime3) {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
       tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
@@ -8478,7 +8298,7 @@ var BZW_memo = (() => {
       tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
     }
     if (it.notePath) {
-      const name = stripMdExt(it.notePath.split("/").pop() || "");
+      const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
       const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
       if (!isCourseSame) {
         tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
@@ -8486,9 +8306,6 @@ var BZW_memo = (() => {
     }
     const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
     tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
-    if (recurText) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${escapeHtml(recurText)}</span>`);
-    }
     if (due) {
       tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
     }
@@ -8498,84 +8315,31 @@ var BZW_memo = (() => {
     return tags.join("");
   }
   function checkHtml(it) {
-    const label = it.completed ? "恢复未完成" : "标记完成";
-    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check role="checkbox" tabindex="0" aria-checked="${it.completed ? "true" : "false"}" aria-label="${label}" title="${label}"></span>`;
+    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
   }
-  function highlightTitleHtml(title, kw) {
-    const safe = escapeHtml(title);
-    const needle = escapeHtml((kw || "").trim()).toLowerCase();
-    if (!needle) return safe;
-    const hay = safe.toLowerCase();
-    let out = "";
-    let i = 0;
-    for (; ; ) {
-      const hit = hay.indexOf(needle, i);
-      if (hit === -1) {
-        out += safe.slice(i);
-        break;
-      }
-      out += `${safe.slice(i, hit)}<mark>${safe.slice(hit, hit + needle.length)}</mark>`;
-      i = hit + needle.length;
-    }
-    return out;
-  }
-  function cardHtml(it, due, relTime3, recurText = "", kw = "") {
+  function cardHtml(it, due, relTime3) {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
-    const titleText = highlightTitleHtml(it.title, kw);
-    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${titleText}</a>` : titleText;
-    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}" tabindex="0">
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
+    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3, recurText)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3)}</div>
       </div>
     </div>`;
   }
-  function sectionLabelHtml(label, count, kind = "") {
-    return `<div class="bz-memo-section-label"${kind ? ` data-memo-sec="${kind}"` : ""}>${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
+  function sectionLabelHtml(label, count) {
+    return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
   }
   function doneBarHtml(open, count) {
-    return `<button type="button" class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar aria-expanded="${open ? "true" : "false"}">
-      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></button>`;
+    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
+      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
   }
   function doneMoreHtml(n) {
     return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
   }
-  function calHeadHtml(monthLabel2) {
-    return `<div class="bz-memo-cal-head">
-      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-prev title="上个月" aria-label="上个月">${iconSpan("chevron-left")}</button>
-      <div class="bz-memo-cal-title">${escapeHtml(monthLabel2)}</div>
-      <button class="bz-icon-btn bz-touch-target bz-touch-target--lg" data-memo-cal-next title="下个月" aria-label="下个月">${iconSpan("chevron-right")}</button>
-      <button class="bz-btn bz-btn--sm bz-memo-cal-today" data-memo-cal-today>回到今天</button>
-    </div>`;
-  }
-  function calGridHtml(cells) {
-    const wds = CAL_WEEKDAYS.map((w) => `<div class="bz-memo-cal-wd">${escapeHtml(w)}</div>`).join("");
-    const grid = cells.map((c) => {
-      if (c.blank) return `<div class="bz-memo-cal-cell is-blank"></div>`;
-      const chips = c.chips.map(
-        (ch) => ch.id ? `<div class="bz-memo-cal-chip ${ch.cls}" data-memo-cal-item="${escapeHtml(ch.id)}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>` : `<div class="bz-memo-cal-chip ${ch.cls}" title="${escapeHtml(ch.title)}"><span class="bz-memo-cal-chip-dot"></span><span class="bz-memo-cal-chip-txt">${escapeHtml(ch.title)}</span></div>`
-      ).join("");
-      return `<div class="bz-memo-cal-cell${c.today ? " is-today" : ""}${c.selected ? " is-selected" : ""}" data-memo-cal-day="${c.day}">
-        <div class="bz-memo-cal-day">${c.day}</div>
-        <div class="bz-memo-cal-chips">${chips}</div>
-      </div>`;
-    }).join("");
-    return `<div class="bz-memo-cal-grid">${wds}${grid}</div>`;
-  }
-  function calStatsHtml(monthCount, todayCount2) {
-    const todaySeg = todayCount2 === null ? "" : ` · 今日 <span class="bz-memo-cal-stats-n">${todayCount2}</span> 条`;
-    return `<div class="bz-memo-cal-stats">本月到期 <span class="bz-memo-cal-stats-n">${monthCount}</span> 条${todaySeg}</div>`;
-  }
-  function calEmptyHtml(filtered2) {
-    return filtered2 ? emptyHtmlStr("", "当前筛选下本月没有到期事项", "试试清除搜索或切换场景；设了截止时间的备忘录才会出现在月历上") : emptyHtmlStr("", "本月没有到期事项", "设了截止时间的备忘录才会出现在月历上");
-  }
-  function calDayPanelHtml(label, count, cardsHtml) {
-    const body = cardsHtml || emptyHtmlStr("", "这一天没有备忘录");
-    return `<div class="bz-memo-cal-daypanel">${sectionLabelHtml(label, count)}${body}</div>`;
-  }
-  var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE, CAL_WEEKDAYS;
+  var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE;
   var init_render = __esm({
     "src/memo/render.ts"() {
       init_str();
@@ -8597,8 +8361,6 @@ var BZW_memo = (() => {
         overdue: "circle-alert",
         clock: "clock",
         calendar: "calendar",
-        recur: "repeat",
-        list: "list",
         doneFold: "chevron-down",
         sceneAll: "layers",
         sceneToday: "sun"
@@ -8617,7 +8379,6 @@ var BZW_memo = (() => {
         重要: { icon: MEMO_ICONS.star, cls: "bz-ic--warning" }
       };
       LEADING_EMOJI_RE = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
-      CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
     }
   });
 
@@ -13782,9 +13543,7 @@ ${countsToText(s.missing)}
         "courseName",
         "coursePath",
         "linkedNote",
-        "url",
-        "recur",
-        "checklist"
+        "url"
       ];
       FAVORITES_ITEM_FIELDS = [
         "id",
@@ -30205,7 +29964,7 @@ ${body}`;
   function clipReportEntryHtml() {
     return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
   }
-  function highlightTitleHtml2(title, kw) {
+  function highlightTitleHtml(title, kw) {
     const safe = esc(title);
     const needle = esc((kw || "").trim()).toLowerCase();
     if (!needle) return safe;
@@ -30233,7 +29992,7 @@ ${body}`;
     <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
       <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
-        <div class="bz-clip-item-t"><span>${highlightTitleHtml2(a.title, kw)}</span></div>
+        <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
         <div class="bz-clip-item-meta">${esc(siteShort(a.srcName))} · ${esc(timeOf(a))}${tocTagsHtml(a.tags)}</div>
       </div>
     </div>`).join("");
@@ -47926,7 +47685,7 @@ ${n.content.slice(0, 2e3)}
 
   // src/memo/ui.ts
   function isTodayStr(s) {
-    return !!s && s.slice(0, 10) === localDayKey();
+    return !!s && s.slice(0, 10) === (0, import_moment6.default)().format("YYYY-MM-DD");
   }
   function fallbackScene() {
     const scenes = MemoData.getScenarios();
@@ -47944,9 +47703,6 @@ ${n.content.slice(0, 2e3)}
     if (v === "all") return null;
     const n = Number(v);
     return Number.isFinite(n) && n > 0 ? n : 30;
-  }
-  function saveSettingsQuiet() {
-    void saveSettings().catch((e) => console.error("[bz:memo] 设置写盘失败", e));
   }
   function resolveOpenScene() {
     const s = tryGetSettings();
@@ -47981,12 +47737,7 @@ ${n.content.slice(0, 2e3)}
   }
   async function refresh() {
     var _a2, _b2;
-    try {
-      await loadData();
-    } catch (e) {
-      notifySaveError(e, "读取备忘录");
-      return;
-    }
+    await loadData();
     (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
   }
   function dueRank(it) {
@@ -48008,14 +47759,7 @@ ${n.content.slice(0, 2e3)}
         if (it.priority !== "important") return false;
       } else if (M.activeScene !== "全部" && it.scene !== M.activeScene) return false;
       if (kw) {
-        const hay = [
-          it.title,
-          it.scene,
-          it.notePath,
-          it.scriptName,
-          it.courseName,
-          it.url
-        ].filter(Boolean).join(" ").toLowerCase();
+        const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
@@ -48067,7 +47811,6 @@ ${n.content.slice(0, 2e3)}
     return s === "editorial" ? "bz-memo-skin-editorial" : "bz-memo-skin-paper";
   }
   function openMemoPanel(app, opts) {
-    var _a2;
     if (M.overlay) {
       closeMemoPanel();
       return;
@@ -48078,9 +47821,6 @@ ${n.content.slice(0, 2e3)}
     M.showDone = tryGetSettings().memoShowArchivedByDefault === true;
     M.activeScene = (opts == null ? void 0 : opts.notePath) ? "全部" : resolveOpenScene();
     M.showEarlierDone = false;
-    M.view = "list";
-    M.calMonth = (0, import_moment6.default)().format("YYYY-MM");
-    M.calSelected = null;
     M.pinnedNewId = null;
     M.search = "";
     const overlay2 = document.createElement("div");
@@ -48106,7 +47846,7 @@ ${n.content.slice(0, 2e3)}
       onChange: (v) => {
         M.sortMode = v;
         getSettings().memoSortMode = v;
-        saveSettingsQuiet();
+        void saveSettings();
         renderAll4();
       }
     });
@@ -48130,7 +47870,7 @@ ${n.content.slice(0, 2e3)}
             const s = tryGetSettings();
             s.memoPanelWidth = w;
             s.memoPanelHeight = h;
-            saveSettingsQuiet();
+            void saveSettings();
           }
         }
       });
@@ -48139,6 +47879,11 @@ ${n.content.slice(0, 2e3)}
       const t = e.target;
       if (e.target === overlay2) {
         closeMemoPanel();
+        return;
+      }
+      const headSettings = t.closest("[data-memo-head-settings]");
+      if (headSettings) {
+        openMemoInSettings();
         return;
       }
       const headClose = t.closest("[data-memo-head-close]");
@@ -48151,13 +47896,6 @@ ${n.content.slice(0, 2e3)}
         const scene = nav.dataset.memoScene;
         M.activeScene = M.activeScene === scene ? "全部" : scene;
         M.pinnedNewId = null;
-        renderAll4();
-        return;
-      }
-      const viewBtn = t.closest("[data-memo-view]");
-      if (viewBtn) {
-        const v = viewBtn.dataset.memoView;
-        if (v === "list" || v === "calendar") M.view = v;
         renderAll4();
         return;
       }
@@ -48191,37 +47929,6 @@ ${n.content.slice(0, 2e3)}
     });
     const content = overlay2.querySelector("[data-memo-content]");
     content.addEventListener("click", (e) => {
-      const calNav = e.target.closest("[data-memo-cal-prev],[data-memo-cal-next],[data-memo-cal-today]");
-      if (calNav) {
-        const cur = (0, import_moment6.default)(`${M.calMonth}-01`, "YYYY-MM-DD");
-        if (calNav.hasAttribute("data-memo-cal-prev")) M.calMonth = cur.subtract(1, "month").format("YYYY-MM");
-        else if (calNav.hasAttribute("data-memo-cal-next")) M.calMonth = cur.add(1, "month").format("YYYY-MM");
-        else {
-          M.calMonth = (0, import_moment6.default)().format("YYYY-MM");
-          M.calSelected = localDayKey();
-        }
-        if (!calNav.hasAttribute("data-memo-cal-today")) M.calSelected = null;
-        renderAll4();
-        return;
-      }
-      const calChip = e.target.closest("[data-memo-cal-item]");
-      if (calChip && !isMobileEnv()) {
-        const it2 = M.items.find((i) => i.id === calChip.dataset.memoCalItem);
-        if (it2) {
-          e.stopPropagation();
-          openEditor(it2);
-        }
-        return;
-      }
-      const dayCell = e.target.closest("[data-memo-cal-day]");
-      if (dayCell) {
-        const d = Number(dayCell.dataset.memoCalDay);
-        if (Number.isInteger(d)) {
-          M.calSelected = `${M.calMonth}-${pad2(d)}`;
-          renderAll4();
-        }
-        return;
-      }
       const check = e.target.closest("[data-memo-check]");
       if (!check) return;
       const card = check.closest(".bz-memo-card");
@@ -48231,25 +47938,9 @@ ${n.content.slice(0, 2e3)}
       e.stopPropagation();
       toggleCheck(it);
     });
-    content.addEventListener("keydown", (e) => {
-      var _a3;
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const t = e.target;
-      const check = (_a3 = t.closest) == null ? void 0 : _a3.call(t, "[data-memo-check]");
-      if (check) {
-        const card = check.closest(".bz-memo-card");
-        const it = M.items.find((i) => i.id === (card == null ? void 0 : card.dataset.memoId));
-        if (!it) return;
-        e.preventDefault();
-        toggleCheck(it);
-      }
-    });
     const composerInput = overlay2.querySelector("[data-memo-composer-input]");
     composerInput.addEventListener("keydown", (e) => {
-      if (e.isComposing || e.keyCode === 229) return;
-      if (e.key !== "Enter") return;
-      if (isMobileEnv()) submitComposer();
-      else addFromComposer();
+      if (e.key === "Enter") addFromComposer();
     });
     composerInput.addEventListener("focus", () => {
       void (async () => {
@@ -48264,56 +47955,9 @@ ${n.content.slice(0, 2e3)}
       })();
     });
     const searchInput = overlay2.querySelector("[data-memo-search]");
-    searchInput.addEventListener("input", () => {
-      syncSearchClear();
-      searchDebounced2(searchInput.value.trim());
-    });
-    searchInput.addEventListener("keydown", (e) => {
-      if (e.key !== "Escape" || !searchInput.value.trim()) return;
-      e.preventDefault();
-      e.stopPropagation();
-      clearSearchInput();
-    });
-    (_a2 = overlay2.querySelector("[data-memo-search-clear]")) == null ? void 0 : _a2.addEventListener("click", () => {
-      clearSearchInput();
-    });
-    if (!isMobileEnv()) {
-      if (opts == null ? void 0 : opts.notePath) searchInput.focus();
-      else composerInput.focus();
-    }
-    const renderLoadError = (err) => {
-      const contentEl = overlay2.querySelector("[data-memo-content]");
-      if (!contentEl) return;
-      const reason = err instanceof Error ? err.message : String(err);
-      contentEl.innerHTML = emptyHtmlStr("circle-alert", "备忘录加载失败", reason);
-      contentEl.appendChild(
-        uiBtn({
-          label: "重试",
-          icon: "refresh-cw",
-          onClick: () => {
-            void (async () => {
-              try {
-                await loadData();
-              } catch (e2) {
-                notifySaveError(e2, "读取备忘录");
-                renderLoadError(e2);
-                return;
-              }
-              renderAll4();
-            })();
-          }
-        })
-      );
-      mountIcons(contentEl);
-    };
+    searchInput.addEventListener("input", () => searchDebounced2(searchInput.value.trim()));
     void (async () => {
-      try {
-        await loadData();
-      } catch (e) {
-        notifySaveError(e, "读取备忘录");
-        renderLoadError(e);
-        return;
-      }
+      await loadData();
       if (opts == null ? void 0 : opts.notePath) {
         M.search = opts.notePath;
         const presetInput = overlay2.querySelector("[data-memo-search]");
@@ -48327,7 +47971,7 @@ ${n.content.slice(0, 2e3)}
       const s = tryGetSettings();
       if (s) {
         s.memoLastScene = M.activeScene;
-        saveSettingsQuiet();
+        void saveSettings();
       }
       M.overlay.remove();
       M.overlay = null;
@@ -48347,46 +47991,12 @@ ${n.content.slice(0, 2e3)}
     M.completeTimers.forEach((t) => clearTimeout(t));
     M.completeTimers.clear();
   }
-  function syncSearchClear() {
-    var _a2, _b2;
-    const btn = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search-clear]");
-    const inp = (_b2 = M.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search]");
-    if (btn) btn.hidden = !(inp == null ? void 0 : inp.value.trim());
-  }
-  function clearSearchInput() {
-    var _a2;
-    const inp = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
-    if (inp) inp.value = "";
-    M.search = "";
-    syncSearchClear();
-    renderAll4();
-    inp == null ? void 0 : inp.focus();
-  }
-  function captureScroll(el) {
-    if (!el) return null;
-    return { top: el.scrollTop, left: el.scrollLeft };
-  }
-  function applyScroll(el, snap) {
-    if (!el || !snap) return;
-    el.scrollTop = snap.top;
-    el.scrollLeft = snap.left;
-  }
-  function renderAll4(searchDelta = false) {
+  function renderAll4() {
     if (!M.overlay) return;
-    const mobSnap = captureScroll(M.overlay.querySelector("[data-memo-mob-scenes]"));
     renderNav();
     renderMobScenes();
-    applyScroll(M.overlay.querySelector("[data-memo-mob-scenes]"), mobSnap);
     renderMainHead();
-    renderViewToggle();
-    renderContent(searchDelta);
-  }
-  function renderViewToggle() {
-    const wrap = M.overlay.querySelector("[data-memo-viewtoggle]");
-    if (!wrap) return;
-    wrap.querySelectorAll("[data-memo-view]").forEach((b) => {
-      b.classList.toggle("is-on", b.dataset.memoView === M.view);
-    });
+    renderContent();
   }
   function renderMainHead() {
     const overlay2 = M.overlay;
@@ -48434,32 +48044,54 @@ ${n.content.slice(0, 2e3)}
     if (!st) return null;
     return { status: st, text: formatDueText(it.due) };
   }
-  function recurTextOf(it) {
-    return it.recur && !it.completed ? recurLabel(it.recur) : "";
-  }
   function metaTags(it) {
-    return metaTagsHtml(
-      it,
-      metaDueOf(it),
-      it.created ? formatRelativeTime(it.created) : "",
-      recurTextOf(it)
-    );
+    return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
   }
-  function renderContent(searchDelta = false) {
+  function renderContent() {
     const content = M.overlay.querySelector("[data-memo-content]");
     if (!content) return;
-    const snap = captureScroll(content);
-    if (M.view === "calendar") {
-      renderCalendar(content);
-    } else {
-      renderListContent(content, searchDelta);
+    const items = getVisibleItems();
+    if (items.length === 0) {
+      content.innerHTML = "";
+      content.appendChild(uiEmpty({
+        icon: MEMO_ICONS.empty,
+        title: M.search ? "没有匹配的备忘录" : "这里还没有备忘录",
+        desc: M.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
+        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
+      }));
+      return;
     }
-    applyScroll(content, snap);
-  }
-  function cardHtmlOf(it, kw = M.search.trim()) {
-    return cardHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", recurTextOf(it), kw);
-  }
-  function wireCards(content) {
+    const active2 = items.filter((i) => !i.completed);
+    const done = items.filter((i) => i.completed);
+    const urgent = active2.filter((i) => dueRank(i) <= 1);
+    const normal = active2.filter((i) => dueRank(i) > 1);
+    const cardHtml4 = (it) => cardHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
+    const sections = [];
+    if (urgent.length) {
+      sections.push(sectionLabelHtml("到期优先", urgent.length));
+      sections.push(...urgent.map((it) => cardHtml4(it)));
+    }
+    if (normal.length) {
+      sections.push(sectionLabelHtml("其他", normal.length));
+      sections.push(...normal.map((it) => cardHtml4(it)));
+    }
+    if (done.length) {
+      const open = M.showDone;
+      const win = doneWindowDays();
+      const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
+      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
+      const earlier = done.length - recent2.length;
+      const listed = !open || M.showEarlierDone ? done : recent2;
+      sections.push(doneBarHtml(open, done.length));
+      if (open) {
+        sections.push(...listed.map((it) => cardHtml4(it)));
+        if (earlier > 0 && !M.showEarlierDone) {
+          sections.push(doneMoreHtml(earlier));
+        }
+      }
+    }
+    content.innerHTML = sections.join("");
+    mountIcons(content);
     content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.preventDefault();
@@ -48479,18 +48111,6 @@ ${n.content.slice(0, 2e3)}
       const id = card.dataset.memoId;
       const it = M.items.find((i) => i.id === id);
       if (!it) return;
-      card.addEventListener("keydown", (e) => {
-        if (e.key !== "Enter" && e.key !== " " || e.target !== card) return;
-        e.preventDefault();
-        const r = card.getBoundingClientRect();
-        openItemMenu(r.left + 24, r.bottom + 4, buildCardActions(it), true, skinClass() || void 0);
-        resetItemMenuClickGuard();
-      });
-      card.addEventListener("dblclick", (e) => {
-        if (isMobileEnv()) return;
-        if (e.target.closest("[data-memo-openitem],[data-memo-pos],[data-memo-check]")) return;
-        openEditor(it);
-      });
       attachItemActions(card, buildCardActions(it), {
         menuClass: skinClass() || void 0,
         sheetClass: skinClass() || void 0,
@@ -48499,203 +48119,8 @@ ${n.content.slice(0, 2e3)}
       });
     });
   }
-  function trySearchDelta(content, items) {
-    const cards = Array.from(content.querySelectorAll(".bz-memo-card"));
-    if (!cards.length) return false;
-    const want = new Set(items.map((i) => i.id));
-    const wall = new Set(cards.map((c) => c.dataset.memoId));
-    for (const id of want) if (!wall.has(id)) return false;
-    for (const c of cards) c.style.display = want.has(c.dataset.memoId) ? "" : "none";
-    const active2 = items.filter((i) => !i.completed);
-    const urgent = active2.filter((i) => dueRank(i) <= 1);
-    const normal = active2.filter((i) => dueRank(i) > 1);
-    const done = items.filter((i) => i.completed);
-    const syncSec = (kind, count) => {
-      const label = content.querySelector(`.bz-memo-section-label[data-memo-sec="${kind}"]`);
-      if (!label) return;
-      const cnt2 = label.querySelector(".bz-memo-sec-cnt");
-      if (cnt2) cnt2.textContent = String(count);
-      label.style.display = count ? "" : "none";
-    };
-    syncSec("urgent", urgent.length);
-    syncSec("normal", normal.length);
-    const cnt = content.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
-    if (cnt) cnt.textContent = String(done.length);
-    return true;
-  }
-  function renderListContent(content, searchDelta = false) {
-    var _a2;
-    const items = getVisibleItems();
-    if (items.length === 0) {
-      content.innerHTML = "";
-      const actions = [uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })];
-      if (M.search.trim()) {
-        actions.push(uiBtn({ label: "清除搜索", icon: MEMO_ICONS.close, onClick: () => clearSearchInput() }));
-      }
-      content.appendChild(uiEmpty({
-        icon: MEMO_ICONS.empty,
-        title: M.search ? "没有匹配的备忘录" : "这里还没有备忘录",
-        desc: M.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
-        actions: uiBtnRow(actions, { center: true })
-      }));
-      content.dataset.memoWall = "empty";
-      return;
-    }
-    if (searchDelta && trySearchDelta(content, items)) {
-      content.dataset.memoWall = "cards";
-      return;
-    }
-    const active2 = items.filter((i) => !i.completed);
-    const done = items.filter((i) => i.completed);
-    const urgent = active2.filter((i) => dueRank(i) <= 1);
-    const normal = active2.filter((i) => dueRank(i) > 1);
-    const sections = [];
-    if (urgent.length) {
-      sections.push(sectionLabelHtml("到期优先", urgent.length, "urgent"));
-      sections.push(...urgent.map((it) => cardHtmlOf(it)));
-    }
-    if (normal.length) {
-      sections.push(sectionLabelHtml("其他", normal.length, "normal"));
-      sections.push(...normal.map((it) => cardHtmlOf(it)));
-    }
-    if (done.length) {
-      const open = M.showDone;
-      const win = doneWindowDays();
-      const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
-      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
-      const earlier = done.length - recent2.length;
-      const listed = !open || M.showEarlierDone ? done : recent2;
-      const cleanBtn = cutoff === null || earlier > 0 ? `<button class="bz-memo-done-more" data-memo-doneclean>${cutoff === null ? "清理已完成" : `清理更早 ${earlier} 条`}</button>` : "";
-      sections.push(doneBarHtml(open, done.length));
-      if (open) {
-        sections.push(...listed.map((it) => cardHtmlOf(it)));
-        if (earlier > 0 && !M.showEarlierDone) {
-          sections.push(doneMoreHtml(earlier));
-        }
-        sections.push(cleanBtn);
-      } else {
-        sections.push(cleanBtn);
-      }
-    }
-    content.innerHTML = sections.join("");
-    content.dataset.memoWall = "cards";
-    mountIcons(content);
-    wireCards(content);
-    (_a2 = content.querySelector("[data-memo-doneclean]")) == null ? void 0 : _a2.addEventListener("click", (e) => {
-      e.stopPropagation();
-      void openDoneCleanDialog();
-    });
-  }
-  async function openDoneCleanDialog() {
-    const doneVisible = getVisibleItems().filter((i) => i.completed);
-    const win = doneWindowDays();
-    const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
-    const targets = cutoff === null ? doneVisible : doneVisible.filter((i) => i.completed < cutoff);
-    if (!targets.length) {
-      notice("没有可清理的已完成备忘录");
-      return;
-    }
-    const scope = M.activeScene === "全部" ? "" : `「${sceneLabel(M.activeScene)}」视图内`;
-    const message = cutoff === null ? `将删除 ${scope}${targets.length} 条已完成的备忘录。
-删除后可在通知中一键撤销。` : `将删除 ${scope}${targets.length} 条 ${win} 天前完成的备忘录。
-删除后可在通知中一键撤销。`;
-    const ok = await openFlowDialog({
-      title: "清理已完成备忘录",
-      message,
-      className: skinClass(),
-      // 流程框挂 body，须显式带皮肤类（issue 291 同口径）
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "清理", value: "clean", danger: true, cta: true }
-      ]
-    });
-    if (ok !== "clean") return;
-    try {
-      const ids = new Set(targets.map((i) => i.id));
-      const removed = await MemoData.deleteCompletedBefore(cutoff, ids);
-      if (!removed.length) {
-        notice("没有可清理的已完成备忘录");
-        return;
-      }
-      for (const r of removed) emitDomainEvent("memo", { kind: "deleted", title: r.item.title });
-      notifyUndo(`已清理 ${removed.length} 条已完成备忘录`, () => {
-        void (async () => {
-          try {
-            const sorted = [...removed].sort((a, b) => a.idx - b.idx);
-            for (const r of sorted) await MemoData.restoreItem(r.item, r.idx);
-            await refresh();
-          } catch (e) {
-            notifySaveError(e, "撤销清理");
-            console.error(e);
-          }
-        })();
-      });
-    } catch (e) {
-      notifySaveError(e, "清理已完成备忘录");
-      console.error(e);
-    }
-    await refresh();
-  }
-  function renderCalendar(content) {
-    var _a2;
-    let monthMoment = (0, import_moment6.default)(`${M.calMonth}-01`, "YYYY-MM-DD", true);
-    if (!monthMoment.isValid()) {
-      M.calMonth = (0, import_moment6.default)().format("YYYY-MM");
-      M.calSelected = null;
-      monthMoment = (0, import_moment6.default)(`${M.calMonth}-01`, "YYYY-MM-DD", true);
-    }
-    const visible = getVisibleItems();
-    const undone = visible.filter((i) => !i.completed && i.due);
-    const byDay = /* @__PURE__ */ new Map();
-    for (const it of undone) {
-      const key = it.due.slice(0, 10);
-      const bucket = byDay.get(key);
-      if (bucket) bucket.push(it);
-      else byDay.set(key, [it]);
-    }
-    const today = localDayKey();
-    const cells = [];
-    const lead = (monthMoment.day() + 6) % 7;
-    for (let i = 0; i < lead; i++) cells.push({ day: 0, blank: true, chips: [] });
-    const daysInMonth = monthMoment.daysInMonth();
-    for (let d = 1; d <= daysInMonth; d++) {
-      const key = `${M.calMonth}-${pad2(d)}`;
-      const list = byDay.get(key) || [];
-      const chips = list.slice(0, 3).map((it) => {
-        const st = getDueStatus(it.due);
-        return { id: it.id, title: it.title, cls: st === "overdue" ? "is-overdue" : st === "today" ? "is-today" : "is-future" };
-      });
-      if (list.length > 3) chips.push({ id: "", title: `还有 ${list.length - 3} 条`, cls: "is-more" });
-      cells.push({ day: d, today: key === today, selected: M.calSelected === key, chips });
-    }
-    const isCurrentMonth = M.calMonth === (0, import_moment6.default)().format("YYYY-MM");
-    const todayCount2 = isCurrentMonth ? ((_a2 = byDay.get(today)) == null ? void 0 : _a2.length) || 0 : null;
-    const monthPrefix = `${M.calMonth}-`;
-    let monthCount = 0;
-    for (const [k, v] of byDay) if (k.startsWith(monthPrefix)) monthCount += v.length;
-    const sections = [calHeadHtml(monthMoment.format("YYYY年M月")), calStatsHtml(monthCount, todayCount2), calGridHtml(cells)];
-    if (monthCount === 0) sections.push(calEmptyHtml(!!M.search.trim() || M.activeScene !== "全部"));
-    if (M.calSelected) {
-      const dayItems = visible.filter((i) => (i.due || "").slice(0, 10) === M.calSelected);
-      const label = M.calSelected === today ? `今日事项 · ${dayItems.length} 项` : `${(0, import_moment6.default)(M.calSelected).format("M月D日")} · ${dayItems.length} 项`;
-      sections.push(calDayPanelHtml(label, dayItems.length, dayItems.map((it) => cardHtmlOf(it)).join("")));
-    }
-    content.innerHTML = sections.join("");
-    mountIcons(content);
-    wireCards(content);
-    content.querySelectorAll("[data-memo-cal-item]").forEach((chipEl) => {
-      const it = M.items.find((i) => i.id === chipEl.dataset.memoCalItem);
-      if (!it) return;
-      attachItemActions(chipEl, buildCardActions(it), {
-        menuClass: skinClass() || void 0,
-        sheetClass: skinClass() || void 0,
-        // 抽屉挂 body，须自带皮肤类（与列表卡同口径）
-        sheetHead: buildSheetHead(it)
-      });
-    });
-  }
   function buildSheetHead(it) {
-    var _a2, _b2, _c;
+    var _a2;
     const head = document.createElement("div");
     head.className = "bz-item-sheet-entry bz-memo-sheet-entry";
     if (it.completed) head.classList.add("bz-memo-done");
@@ -48717,18 +48142,6 @@ ${n.content.slice(0, 2e3)}
       closeItemMenu();
       toggleCheck(it);
     });
-    (_b2 = head.querySelector("[data-memo-check]")) == null ? void 0 : _b2.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      e.preventDefault();
-      e.stopPropagation();
-      closeItemMenu();
-      toggleCheck(it);
-    });
-    (_c = head.querySelector("[data-memo-pos]")) == null ? void 0 : _c.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeItemMenu();
-      jumpToNote(it);
-    });
     return head;
   }
   function openItem(it) {
@@ -48739,10 +48152,15 @@ ${n.content.slice(0, 2e3)}
       if (file) void app.workspace.getLeaf().openFile(file);
       else notice("关联笔记不存在");
     } else if (it.url) {
-      openExternalUrl(app, it.url);
+      try {
+        app.openUrl(it.url);
+      } catch (e) {
+        const electron = window.require && window.require("electron");
+        if (electron && electron.shell) electron.shell.openExternal(it.url);
+      }
     }
   }
-  async function jumpToNote(it) {
+  function jumpToNote(it) {
     var _a2;
     if (!it.notePath) return;
     closeMemoPanel();
@@ -48753,23 +48171,13 @@ ${n.content.slice(0, 2e3)}
       return;
     }
     const leaf = app.workspace.getLeaf();
-    await leaf.openFile(file);
+    void leaf.openFile(file);
     const editor = (_a2 = leaf.view) == null ? void 0 : _a2.editor;
     if (editor && it.notePosition) {
       const { line, ch } = it.notePosition;
       editor.focus();
       editor.setCursor(line, ch || 0);
       editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
-    } else if (it.notePosition) {
-      const { line, ch } = it.notePosition;
-      requestAnimationFrame(() => {
-        var _a3;
-        const ed = (_a3 = leaf.view) == null ? void 0 : _a3.editor;
-        if (!ed) return;
-        ed.focus();
-        ed.setCursor(line, ch || 0);
-        ed.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
-      });
     }
   }
   function toggleCheck(it) {
@@ -48790,33 +48198,17 @@ ${n.content.slice(0, 2e3)}
   }
   async function completeItem(it) {
     try {
-      const { next, changed } = await MemoData.completeItem(it.id);
-      if (changed) emitDomainEvent("memo", { kind: "completed", title: it.title });
-      if (next) {
-        notice(next.due ? `下一期已排到 ${(0, import_moment6.default)(next.due).format("MM/DD HH:mm")}` : "下一期已生成", "success");
-        emitDomainEvent("memo", { kind: "added", title: next.title, scene: next.scene, priority: next.priority, due: next.due });
-      }
+      await MemoData.completeItem(it.id);
+      emitDomainEvent("memo", { kind: "completed", title: it.title });
     } catch (e) {
       notifySaveError(e, "标记完成");
       console.error(e);
     }
     await refresh();
   }
-  async function stopRecur(id) {
-    try {
-      await MemoData.updateItem(id, { recur: null });
-      notice("已停止重复，完成后不再生成下一期", "success");
-    } catch (e) {
-      notifySaveError(e, "停止重复");
-      console.error(e);
-    }
-    await refresh();
-  }
   async function restoreItem(it) {
-    const chained = hasPendingNextItem(M.items, it);
     try {
-      await MemoData.updateItem(it.id, chained ? { completed: null, recur: null } : { completed: null });
-      if (chained) notify("下一期已存在，本条恢复后不再生成新的一期", { type: "success" });
+      await MemoData.updateItem(it.id, { completed: null });
       emitDomainEvent("memo", { kind: "restored", title: it.title });
     } catch (e) {
       notifySaveError(e, "恢复未完成");
@@ -48827,31 +48219,15 @@ ${n.content.slice(0, 2e3)}
   async function postponeItem(id, days) {
     const it = M.items.find((i) => i.id === id);
     if (!it || !it.due) return;
-    const next = (0, import_moment6.default)(it.due, "YYYY-MM-DD HH:mm").add(days, "days").format("YYYY-MM-DD HH:mm");
+    const d = new Date(it.due.replace("T", " "));
+    d.setDate(d.getDate() + days);
+    const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     try {
       await MemoData.updateItem(id, { due: next });
       emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
       notice(`已延后 ${days} 天`, "success");
     } catch (e) {
       notifySaveError(e, "延后备忘录");
-      console.error(e);
-    }
-    await refresh();
-  }
-  function moveDayText(selected, now = (0, import_moment6.default)()) {
-    return (0, import_moment6.default)(selected).format((0, import_moment6.default)(selected).year() === now.year() ? "MM-DD" : "YYYY-MM-DD");
-  }
-  async function moveToDay(id, day) {
-    const it = M.items.find((i) => i.id === id);
-    if (!it) return;
-    const time = (it.due ? it.due.replace("T", " ").slice(11) : "") || "09:00";
-    const next = `${day} ${time}`;
-    try {
-      await MemoData.updateItem(id, { due: next });
-      emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
-      notice(`已移到 ${(0, import_moment6.default)(day).format("MM/DD")}`, "success");
-    } catch (e) {
-      notifySaveError(e, "改期备忘录");
       console.error(e);
     }
     await refresh();
@@ -48871,13 +48247,19 @@ ${n.content.slice(0, 2e3)}
     await refresh();
   }
   async function deleteItemConfirm(it) {
+    const ok = await openFlowDialog({
+      title: "删除备忘录",
+      message: `确定删除备忘录「${it.title}」吗？
+删除后可在通知中撤销。`,
+      className: skinClass(),
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "delete", danger: true, cta: true }
+      ]
+    });
+    if (ok !== "delete") return;
     try {
       const idx = await MemoData.deleteItem(it.id);
-      if (idx === -1) {
-        notice("该条已不存在");
-        await refresh();
-        return;
-      }
       emitDomainEvent("memo", { kind: "deleted", title: it.title });
       notifyUndo(`已删除备忘录「${it.title}」`, () => {
         void (async () => {
@@ -48934,41 +48316,23 @@ ${n.content.slice(0, 2e3)}
           await completeItem(it);
         }
       });
-      if (it.due) {
-        const postponeSub = (days) => (0, import_moment6.default)(it.due, "YYYY-MM-DD HH:mm").add(days, "days").format("MM-DD");
-        actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
-          await postponeItem(it.id, 1);
-        } });
-        actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
-          await postponeItem(it.id, 3);
-        } });
-      }
-      if (M.calSelected && (!it.due || it.due.slice(0, 10) !== M.calSelected)) {
-        actions.push({
-          icon: "calendar",
-          label: "移到选中日期",
-          title: "移到月历选中的日期",
-          sub: `→ ${moveDayText(M.calSelected)}${it.due ? "" : " 09:00"}`,
-          onClick: async () => {
-            await moveToDay(it.id, M.calSelected);
-          }
-        });
-      }
     } else {
       actions.push({ icon: "rotate-ccw", label: "恢复未完成", title: "恢复未完成", onClick: async () => {
         await restoreItem(it);
       } });
     }
-    if (it.recur && !it.completed) {
-      actions.push({
-        icon: "repeat",
-        label: "停止重复",
-        title: "停止周期重复",
-        sub: recurLabel(it.recur),
-        onClick: async () => {
-          await stopRecur(it.id);
-        }
-      });
+    if (it.due && !it.completed) {
+      const postponeSub = (days) => {
+        const d = new Date(it.due.replace("T", " "));
+        d.setDate(d.getDate() + days);
+        return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
+        await postponeItem(it.id, 1);
+      } });
+      actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
+        await postponeItem(it.id, 3);
+      } });
     }
     const isImportant = it.priority === "important";
     actions.push({
@@ -49031,16 +48395,10 @@ ${n.content.slice(0, 2e3)}
         // T5：与旧 memo 同前缀 'item'（同源 memo.json）
         title: hint ? hint.title : txt,
         scene,
-        // 默认优先级（A5）：读设置 memoDefaultPriority，与编辑弹窗（openEditor :priorityChoice
-        // 初值）同口径——设置文案承诺「新建备忘录时默认选中的优先级」，composer 快速录入
-        // 是新建入口之一，不该绕过（否则「今日/重要」聚合与提醒判定随之漏报）
-        priority: tryGetSettings().memoDefaultPriority || "minor",
-        created: localNow(),
+        priority: "minor",
+        created: (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
         completed: null,
         due: null,
-        recur: null,
-        // composer 快速录入不带周期（编辑弹窗可补）
-        checklist: null,
         notePath: null,
         notePosition: null,
         scriptName: null,
@@ -49053,9 +48411,7 @@ ${n.content.slice(0, 2e3)}
         await MemoData.addItem(it);
         emitDomainEvent("memo", { kind: "added", title: it.title, scene: it.scene, priority: it.priority, due: it.due });
         M.pinnedNewId = it.id;
-        const calHint = M.view === "calendar" ? "，未设截止不出现在月历" : "";
-        const shortTitle = it.title.length > 12 ? `${it.title.slice(0, 12)}…` : it.title;
-        notify(`已添加到「${scene}」：「${shortTitle}」${calHint}`, {
+        notify(`已添加到「${scene}」`, {
           type: "success",
           action: { label: "补全", onClick: () => openEditor(it) }
         });
@@ -49084,7 +48440,6 @@ ${n.content.slice(0, 2e3)}
     title.className = "bz-memo-form-title";
     title.textContent = isEdit ? "编辑备忘录" : "创建备忘录";
     form.appendChild(title);
-    const presetRaw = (opts == null ? void 0 : opts.presetContent) || "";
     const contentField = document.createElement("div");
     contentField.className = "bz-field";
     const contentLabel = document.createElement("span");
@@ -49092,29 +48447,15 @@ ${n.content.slice(0, 2e3)}
     contentLabel.textContent = "内容";
     const contentInput = document.createElement("textarea");
     contentInput.className = "bz-input";
-    contentInput.placeholder = PLACEHOLDER_CONTENT;
-    contentInput.value = editing ? editing.title : presetRaw;
+    contentInput.placeholder = "输入备忘录内容...";
+    contentInput.value = editing ? editing.title : (opts == null ? void 0 : opts.presetContent) || "";
     contentField.append(contentLabel, contentInput);
     form.appendChild(contentField);
-    let urlCleared = false;
-    if (isEdit && (editing == null ? void 0 : editing.url)) {
-      const linkRow = document.createElement("div");
-      linkRow.className = "bz-memo-link-row";
-      const linkBtn = uiBtn({ icon: "link", label: "清除链接", chip: true });
-      const linkLabel = linkBtn.lastElementChild;
-      linkBtn.addEventListener("click", () => {
-        urlCleared = !urlCleared;
-        linkBtn.classList.toggle("is-on", urlCleared);
-        linkLabel.textContent = urlCleared ? "保存后移除链接" : "清除链接";
-      });
-      linkRow.appendChild(linkBtn);
-      form.appendChild(linkRow);
-    }
     const titleBox = document.createElement("div");
     titleBox.className = "bz-memo-extra" + (isClip ? " bz-memo-extra-on" : "");
     const titleInput = document.createElement("input");
     titleInput.className = "bz-input";
-    titleInput.placeholder = PLACEHOLDER_TITLE;
+    titleInput.placeholder = "标题（可选）";
     titleInput.value = editing ? "" : (opts == null ? void 0 : opts.presetTitle) || "";
     titleBox.appendChild(titleInput);
     form.appendChild(titleBox);
@@ -49142,11 +48483,7 @@ ${n.content.slice(0, 2e3)}
         if (!hit) return;
         if (contentInput.value.trim()) return;
         contentInput.placeholder = hit.url;
-        contentInput.dataset.clipPrefilled = "1";
-        if (hit.title) {
-          titleInput.placeholder = hit.title;
-          titleInput.dataset.clipPrefilled = "1";
-        }
+        if (hit.title) titleInput.placeholder = hit.title;
         notifyClipPrefill();
       })();
     }
@@ -49229,50 +48566,8 @@ ${n.content.slice(0, 2e3)}
       dueClear.style.display = dueInput.value ? "inline-flex" : "none";
     });
     dueRow.append(dueInput, dueClear);
-    const dueQuick = document.createElement("div");
-    dueQuick.className = "bz-memo-due-quick";
-    const quickHM = (editing == null ? void 0 : editing.due) ? editing.due.slice(11, 16) : null;
-    [
-      { offset: 0, day: "今天", fallbackHM: "18:00" },
-      { offset: 1, day: "明天", fallbackHM: "09:00" }
-    ].forEach(({ offset, day, fallbackHM }) => {
-      const hm = quickHM || fallbackHM;
-      dueQuick.appendChild(uiBtn({
-        label: `${day} ${hm}`,
-        size: "sm",
-        onClick: () => {
-          dueInput.value = `${(0, import_moment6.default)().add(offset, "days").format("YYYY-MM-DD")}T${hm}`;
-          dueInput.dispatchEvent(new Event("input"));
-        }
-      }));
-    });
-    dueField.append(dueLabel, dueRow, dueQuick);
+    dueField.append(dueLabel, dueRow);
     form.appendChild(dueField);
-    const recurField = document.createElement("div");
-    recurField.className = "bz-field";
-    const recurLabelEl = document.createElement("span");
-    recurLabelEl.className = "bz-field-label";
-    recurLabelEl.textContent = "重复";
-    recurField.appendChild(recurLabelEl);
-    let recurTouched = false;
-    const recurChoice = uiChoice({
-      options: [
-        { value: "none", label: "不重复" },
-        { value: "weekly", label: "每周" },
-        { value: "monthly", label: "每月" },
-        { value: "yearly", label: "每年" }
-      ],
-      value: (editing == null ? void 0 : editing.recur) && editing.recur.kind !== "days" ? editing.recur.kind : "none",
-      float: true,
-      // 浮岛 segmented（与场景/优先级同范式）
-      label: "重复",
-      onChange: () => {
-        recurTouched = true;
-      }
-      // 值由保存时读取；touched 门控 days 原值保留
-    });
-    recurField.appendChild(recurChoice.el);
-    form.appendChild(recurField);
     const posRow = document.createElement("div");
     posRow.className = "bz-memo-pos-row";
     const posState = {
@@ -49317,40 +48612,18 @@ ${n.content.slice(0, 2e3)}
     };
     const modalBox = document.createElement("div");
     modalBox.className = "bz-memo-editor";
-    const cancelBtn = uiBtn({ label: "取消", onClick: () => requestClose() });
+    const cancelBtn = uiBtn({ label: "取消", onClick: () => closeModal() });
     const saveBtn = uiBtn({ label: isEdit ? "保存" : "添加", tone: "primary" });
     const actionsRow = document.createElement("div");
     actionsRow.className = "bz-memo-form-actions";
     actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
     form.appendChild(actionsRow);
     modalBox.appendChild(form);
-    const baseline = {
-      content: contentInput.value,
-      clipTitle: titleInput.value,
-      script: scriptInput.value,
-      course: courseInput.value,
-      scene: defaultScene,
-      priority: editing ? editing.priority : tryGetSettings().memoDefaultPriority || "minor",
-      due: dueInput.value,
-      recur: (editing == null ? void 0 : editing.recur) && editing.recur.kind !== "days" ? editing.recur.kind : "none",
-      notePath: posState.notePath,
-      notePosition: posState.notePosition ? { ...posState.notePosition } : null
-    };
-    function editorDirty() {
-      var _a3, _b3, _c, _d;
-      const on = (el) => {
-        var _a4;
-        return ((_a4 = el.querySelector(".bz-choice-btn.is-on")) == null ? void 0 : _a4.dataset.value) || "";
-      };
-      return contentInput.value !== baseline.content || titleInput.value !== baseline.clipTitle || scriptInput.value !== baseline.script || courseInput.value !== baseline.course || dueInput.value !== baseline.due || on(choice.el) !== baseline.scene || on(prioChoice.el) !== baseline.priority || on(recurChoice.el) !== baseline.recur || posState.notePath !== baseline.notePath || ((_a3 = posState.notePosition) == null ? void 0 : _a3.line) !== ((_b3 = baseline.notePosition) == null ? void 0 : _b3.line) || ((_c = posState.notePosition) == null ? void 0 : _c.ch) !== ((_d = baseline.notePosition) == null ? void 0 : _d.ch) || urlCleared;
-    }
-    let saving = false;
-    const saveLabelEl = saveBtn.querySelector("span");
-    const doSave2 = () => {
-      if (saving) return;
+    saveBtn.addEventListener("click", () => {
       let content = contentInput.value.trim();
       if (!content) {
-        if (contentInput.dataset.clipPrefilled === "1" && contentInput.placeholder) content = contentInput.placeholder;
+        const ph = contentInput.placeholder;
+        if (ph && ph !== "输入备忘录内容...") content = ph;
       }
       if (!content) {
         notice("请输入内容");
@@ -49361,14 +48634,12 @@ ${n.content.slice(0, 2e3)}
       if (sceneBtnOn) scene = sceneBtnOn.dataset.value || scene;
       const prioBtnOn = prioChoice.el.querySelector(".is-on");
       const priority = prioBtnOn ? prioBtnOn.dataset.value || "minor" : "minor";
-      const recurBtnOn = recurChoice.el.querySelector(".is-on");
-      const recurKind = recurBtnOn ? recurBtnOn.dataset.value || "none" : "none";
-      const recur = !recurTouched && (editing == null ? void 0 : editing.recur) ? editing.recur : recurKind === "weekly" || recurKind === "monthly" || recurKind === "yearly" ? { kind: recurKind } : null;
       const dueVal = dueInput.value;
       const due = dueVal ? dueVal.replace("T", " ") : null;
       let titleVal = titleInput.value.trim();
       if (!titleVal && scene === "剪藏") {
-        if (titleInput.dataset.clipPrefilled === "1" && titleInput.placeholder) titleVal = titleInput.placeholder;
+        const ph = titleInput.placeholder;
+        if (ph && ph !== "标题（可选）") titleVal = ph;
       }
       const scriptName = scene === "代码" ? scriptInput.value.trim() || null : null;
       let courseName = null;
@@ -49386,9 +48657,6 @@ ${n.content.slice(0, 2e3)}
       }
       const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
       const { url } = extractUrlAndDisplay(content);
-      saving = true;
-      saveBtn.disabled = true;
-      if (saveLabelEl) saveLabelEl.textContent = "保存中…";
       void (async () => {
         var _a3;
         try {
@@ -49398,15 +48666,12 @@ ${n.content.slice(0, 2e3)}
               scene,
               priority,
               due,
-              recur,
               notePath: posState.notePath,
               notePosition: posState.notePosition,
               scriptName,
               courseName,
               coursePath,
-              // 清除链接哨兵（M8）：显式点击「清除链接」→ url 落 null；否则维持原语义
-              // （内容里有链接用新链接，内容无链接保留原 url）
-              url: urlCleared ? null : url != null ? url : editing.url
+              url: url != null ? url : editing.url
             });
             emitDomainEvent("memo", { kind: "edited", old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
           } else {
@@ -49416,11 +48681,9 @@ ${n.content.slice(0, 2e3)}
               title: finalTitle,
               scene,
               priority,
-              created: localNow(),
+              created: (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
               completed: null,
               due,
-              recur,
-              checklist: null,
               notePath: posState.notePath,
               notePosition: posState.notePosition,
               scriptName,
@@ -49439,22 +48702,12 @@ ${n.content.slice(0, 2e3)}
         } catch (e) {
           notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
           console.error(e);
-        } finally {
-          saving = false;
-          saveBtn.disabled = false;
-          if (saveLabelEl) saveLabelEl.textContent = isEdit ? "保存" : "添加";
         }
       })();
-    };
-    saveBtn.addEventListener("click", doSave2);
-    const requestClose = () => {
-      if (editorDirty()) confirmDiscard(() => closeModal(), void 0, skinClass());
-      else closeModal();
-    };
-    const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
+    });
+    const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
     closeModal = close;
-    bindFormSubmit(popup, doSave2);
-    if (!isMobileEnv()) contentInput.focus();
+    contentInput.focus();
     if (!isEdit && defaultScene === "剪藏") tryEditorClipPrefill();
   }
   function uiIconBtnClear() {
@@ -49476,12 +48729,12 @@ ${n.content.slice(0, 2e3)}
     input.placeholder = "场景名称（如：健身）";
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
-    hint.textContent = "场景将写入备忘录设置（与设置面板同键）";
+    hint.textContent = "场景将写入备忘录设置（与备忘录共用）";
     const saveBtn = uiBtn({ label: "添加", tone: "primary" });
     const cancelBtn = uiBtn({ label: "取消" });
     const row = uiBtnRow([cancelBtn, saveBtn]);
     wrap.append(title, input, hint, row);
-    const { close, popup } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+    const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
     const doSave2 = () => {
       const name = input.value.trim();
       if (!name) {
@@ -49505,11 +48758,14 @@ ${n.content.slice(0, 2e3)}
         notice(`已添加场景「${name}」`, "success");
         close();
         await refresh();
-      }).catch((e) => notifySaveError(e, "添加场景"));
+      });
     };
     saveBtn.addEventListener("click", doSave2);
     cancelBtn.addEventListener("click", () => close());
-    bindFormSubmit(popup, doSave2);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doSave2();
+      if (e.key === "Escape") close();
+    });
     setTimeout(() => input.focus(), 30);
   }
   function buildSceneActions(scene) {
@@ -49535,7 +48791,7 @@ ${n.content.slice(0, 2e3)}
       MemoData.init(getSettings());
       notice(okMsg, "success");
       await refresh();
-    }).catch((e) => notifySaveError(e, "保存场景"));
+    });
   }
   function openRenameSceneDialog(scene) {
     if (DEFAULT_SCENARIOS.includes(scene)) {
@@ -49553,12 +48809,12 @@ ${n.content.slice(0, 2e3)}
     const count = M.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
-    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与设置面板同键）";
+    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与备忘录共用）";
     const saveBtn = uiBtn({ label: "保存", tone: "primary" });
     const cancelBtn = uiBtn({ label: "取消" });
     const row = uiBtnRow([cancelBtn, saveBtn]);
     wrap.append(title, input, hint, row);
-    const { close, popup } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+    const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
     const doSave2 = () => {
       const name = input.value.trim();
       if (!name) {
@@ -49578,35 +48834,26 @@ ${n.content.slice(0, 2e3)}
         notice("场景已存在");
         return;
       }
-      let rollbackMsg = null;
       void (async () => {
         try {
           const moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
-          try {
-            await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
-          } catch (e) {
-            try {
-              await MemoData.updateSceneBulk(name, scene);
-              rollbackMsg = "条目场景已还原，场景列表未改动，可稍后重试";
-            } catch (e2) {
-              rollbackMsg = `自动还原未成功：重新添加场景「${name}」即可找回已迁移的条目`;
-            }
-            throw e;
-          }
+          await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
           if (M.activeScene === scene) M.activeScene = name;
           renderAll4();
           close();
         } catch (e) {
           notifySaveError(e, "重命名场景");
-          if (rollbackMsg) notice(rollbackMsg, "warning");
           console.error(e);
         }
       })();
     };
     saveBtn.addEventListener("click", doSave2);
     cancelBtn.addEventListener("click", () => close());
-    bindFormSubmit(popup, doSave2);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doSave2();
+      if (e.key === "Escape") close();
+    });
     setTimeout(() => {
       input.focus();
       input.select();
@@ -49639,33 +48886,17 @@ ${n.content.slice(0, 2e3)}
       ]
     });
     if (ok !== "delete") return;
-    let rollbackMsg = null;
     try {
-      if (count > 0) {
-        await MemoData.updateSceneBulk(scene, target);
-        try {
-          await commitScenarios(others, `已删除场景「${scene}」`);
-        } catch (e) {
-          try {
-            await MemoData.updateSceneBulk(target, scene);
-            rollbackMsg = "条目已迁回原场景，场景列表未改动，可稍后重试";
-          } catch (e2) {
-            rollbackMsg = `自动还原未成功：重新添加场景「${scene}」即可找回已迁移的条目`;
-          }
-          throw e;
-        }
-      } else {
-        await commitScenarios(others, `已删除场景「${scene}」`);
-      }
+      if (count > 0) await MemoData.updateSceneBulk(scene, target);
+      await commitScenarios(others, `已删除场景「${scene}」`);
       if (M.activeScene === scene) M.activeScene = "全部";
       renderAll4();
     } catch (e) {
       notifySaveError(e, "删除场景");
-      if (rollbackMsg) notice(rollbackMsg, "warning");
       console.error(e);
     }
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, searchDebounced2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy, PLACEHOLDER_CONTENT, PLACEHOLDER_TITLE;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, searchDebounced2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -49674,10 +48905,8 @@ ${n.content.slice(0, 2e3)}
       init_dom();
       init_mobile();
       init_settings_provider();
-      init_modal();
       init_ui();
       init_flow_dialog();
-      init_str();
       init_domain_bus();
       init_item_actions();
       init_utils();
@@ -49689,14 +48918,12 @@ ${n.content.slice(0, 2e3)}
       SEARCH_DEBOUNCE_MS3 = 180;
       searchDebounced2 = debounce((v) => {
         M.search = v;
-        renderAll4(true);
+        renderAll4();
       }, SEARCH_DEBOUNCE_MS3);
       clipTitleHint = null;
       panelResizeDetach2 = null;
       sortSelectDetach = null;
       composerBusy = false;
-      PLACEHOLDER_CONTENT = "输入备忘录内容…";
-      PLACEHOLDER_TITLE = "标题（可选）";
     }
   });
 
@@ -49915,7 +49142,6 @@ ${n.content.slice(0, 2e3)}
 
   // src/memo/reminder.ts
   init_settings_provider();
-  init_notice();
   init_data();
   init_due();
   init_state();
@@ -49933,7 +49159,6 @@ ${n.content.slice(0, 2e3)}
     var _a2, _b2;
     if (M.overlay) {
       M.search = path;
-      M.activeScene = "全部";
       const input = M.overlay.querySelector("[data-memo-search]");
       if (input) input.value = path;
       (_b2 = (_a2 = M).renderFn) == null ? void 0 : _b2.call(_a2);
@@ -49942,14 +49167,7 @@ ${n.content.slice(0, 2e3)}
     openMemoPanel(app, { notePath: path });
   }
   async function autoPopupOnStart(app) {
-    let items;
-    try {
-      items = await MemoData.loadItems();
-    } catch (e) {
-      notifySaveError(e, "读取备忘录");
-      console.error(e);
-      return;
-    }
+    const items = await MemoData.loadItems();
     M.items = items;
     if (!hasPendingUrgent(items)) return;
     startPopupTimer = setTimeout(() => {
@@ -49965,20 +49183,15 @@ ${n.content.slice(0, 2e3)}
     fileOpenRef = app.workspace.on("file-open", (file) => {
       void (async () => {
         var _a2;
-        try {
-          if (!file) return;
-          if (((_a2 = tryGetSettings()) == null ? void 0 : _a2.openNoteReminder) === false) return;
-          const path = file.path;
-          if (!path || remindedFiles.has(path)) return;
-          const items = await MemoData.loadItems();
-          M.items = items;
-          if (hasPendingUrgent(items, path)) {
-            remindedFiles.add(path);
-            openForNote(app, path);
-          }
-        } catch (e) {
-          notifySaveError(e, "读取备忘录");
-          console.error(e);
+        if (!file) return;
+        if (((_a2 = tryGetSettings()) == null ? void 0 : _a2.openNoteReminder) === false) return;
+        const path = file.path;
+        if (!path || remindedFiles.has(path)) return;
+        const items = await MemoData.loadItems();
+        M.items = items;
+        if (hasPendingUrgent(items, path)) {
+          remindedFiles.add(path);
+          openForNote(app, path);
         }
       })();
     });

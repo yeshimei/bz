@@ -300,17 +300,14 @@ describe('memo 面板', () => {
     await vi.waitFor(() => {
       expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
     });
-    const visibleCards = () =>
-      [...document.querySelectorAll<HTMLElement>('.bz-memo-card')].filter((c) => c.style.display !== 'none');
     const inp = document.querySelector('[data-memo-search]') as HTMLInputElement;
     inp.value = 'ffmpeg';
     inp.dispatchEvent(new Event('input'));
-    // 防抖窗口内：列表未过滤（仍 3 张未完成卡可见）
-    expect(visibleCards().length).toBe(3);
+    // 防抖窗口内：列表未过滤（仍 3 张未完成卡）
+    expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
     await new Promise((r) => setTimeout(r, 250));
-    // 过滤生效（效率#9 增量显隐轻版）：命中卡可见，未命中卡 display:none 原地隐藏
-    expect(visibleCards().length).toBe(1);
-    expect(visibleCards()[0].textContent).toContain('ffmpeg 转写参数整理');
+    expect(document.querySelectorAll('.bz-memo-card').length).toBe(1);
+    expect(document.querySelectorAll('.bz-memo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
   });
 
   it('排序 = 组件库下拉（issue 268）：收起态单枚 + 展开菜单三档，切换写回设置', async () => {
@@ -400,9 +397,9 @@ describe('memo 编辑器', () => {
       expect(document.querySelector('.bz-memo-editor')).toBeTruthy();
     });
     const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
-    // 场景 + 优先级 + 重复（issue 353）三组浮岛 segmented（各含 1 枚白卡指示器节点）
-    expect(editor.querySelectorAll('.bz-choice--float').length).toBe(3);
-    expect(editor.querySelectorAll('.bz-choice--float > .bz-choice-seg').length).toBe(3);
+    // 场景 + 优先级两组浮岛 segmented（各含 1 枚白卡指示器节点）
+    expect(editor.querySelectorAll('.bz-choice--float').length).toBe(2);
+    expect(editor.querySelectorAll('.bz-choice--float > .bz-choice-seg').length).toBe(2);
     // 定位钮 = 组件库 chip 档：.bz-btn--chip > .bz-btn-chip 内 pin 图标 + 独立文字 span
     const posBtn = editor.querySelector('.bz-btn--chip') as HTMLElement;
     expect(posBtn).toBeTruthy();
@@ -735,7 +732,7 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     });
   });
 
-  it('头行钮组（issue 197 → M3-7 收敛）：品牌块 + 右侧关闭；设置钮退役，关闭即收面板', async () => {
+  it('头行钮组（issue 197）：品牌块 + 右侧设置/关闭；设置直达设置面板备忘录域，关闭即收面板', async () => {
     const { app } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
@@ -744,11 +741,19 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     // 品牌块图标 + 标题
     expect(document.querySelector('.bz-panel-brand [data-icon="list-checks"]')).toBeTruthy();
     expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('备忘录');
-    // 设置钮退役（深审 M3-7：issue 210 桌面皮肤段收整组 + issue 268 移动撤除后三端不可达）；
-    // 设置入口 = 场景项菜单「在设置中编辑」（另有独立用例覆盖 openSettingsPanel 直达）
-    expect(document.querySelector('[data-memo-head-settings]')).toBeNull();
+    // 设置钮 = 齿轮 settings（issue 200：settings-2 滑杆式改齿轮）
+    expect(document.querySelector('[data-memo-head-settings] [data-icon="settings"]')).toBeTruthy();
     // 关闭钮 → 面板收起
     (document.querySelector('[data-memo-head-close]') as HTMLElement).click();
+    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
+    // 设置钮 → 关面板 + openSettingsPanel(app, 'memo') 直达备忘录设置项
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-head-settings]')).toBeTruthy();
+    });
+    (document.querySelector('[data-memo-head-settings]') as HTMLElement).click();
+    const { openSettingsPanel } = await import('../../src/settings-panel');
+    expect(openSettingsPanel).toHaveBeenCalledWith(app, 'memo');
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
@@ -902,7 +907,7 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     expect(activeScene()).toBe('全部');
   });
 
-  it('删除免确认直达撤销（效率整改 5）：点删除直接落盘 + notifyUndo，撤销后条目插回原位', async () => {
+  it('删除接撤销：三段式确认框 + notifyUndo 撤销后条目插回原位', async () => {
     const { vault, app } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
@@ -915,12 +920,20 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
     });
     clickMenuItem('删除');
-    // 行为翻转（效率整改 5）：接撤销的删除不再弹确认框——点击即落盘
+    // 三段式确认框：标题「删除备忘录」+ 问句（「」引号）+ 后果说明
+    await vi.waitFor(() => {
+      expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy();
+    });
+    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
+    expect(popup.querySelector('h4')?.textContent).toBe('删除备忘录');
+    const msg = popup.querySelector('p')?.textContent || '';
+    expect(msg).toContain('确定删除备忘录「ffmpeg 转写参数整理」吗');
+    expect(msg).toContain('撤销');
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
     await vi.waitFor(() => {
       const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
       expect(raw.find((r: any) => r.id === 'b')).toBeUndefined();
     });
-    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     // 删除 toast 挂「撤销」按钮
     await vi.waitFor(() => {
       const undo = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销');
