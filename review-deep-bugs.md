@@ -769,3 +769,17 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P2（AS1）buildFrontmatter 反斜杠不转义**——parser.ts:119 + unquote 不反转义，与 clipbook yamlEscape（C27 已修）两侧不对称。修：转义五件套对齐（含 `\`）+ 往返用例。
 - **P3 群（AS2 + N1~N6，7 条）**：AS2 闭合侧强制换行（无尾换行 → fm=null → 旧 frontmatter 复制进正文区，数据损坏面，**升格处理**）；N1 getWatchDir 尾斜杠不归一（同键 clipbook CB4 已归一，两侧分叉，监听+命令双路径静默失效）；N2 buildFrontmatter 数组项零转义（AI tags 含引号 → 非法 YAML → 条目从列表静默消失）；N3 非严格风格流式数组 tags 判缺失后 AI 覆盖用户原标签；N4 processFile 顶层 catch 静默吞错（与自家 AI 失败分支「人话+重试」不对称）；N5 重试按钮手工 DOM 绕开 core notice action（键盘不可达）；N6 stopAutoSummary 清队不 resolve（手动重跑 Promise 永不 settle）。
 - **测试缺口 6**：AS1/AS2/AS3 均零回归锁定，修复时须补修复前必红用例。
+
+
+---
+
+## attach（附件）域 · 审查入账中（方向 1 功能已到账；方向 2 UI / 3 效率运行中，4/5 待槽位）
+
+> 明细：`.scratch/review-deep/attach-func.md`。方向 1（func）：P2×1 + P3×4 + UX×1（无 P1）。旧账复核 2 条：F10 已修在位（data.ts:66-71，缺直接回归用例记测试缺口）；AT1（planMoves 冲突集不含文件夹）仍在未修并入报告。两个似是而非候选排除有据（md 链接 #page 锚点剥锚正确；HTML img 不收集属安全侧）。门禁基线：tsc 0；tests/attach + smoke 58 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 代码块/HTML 注释内引用误收集**（AF-1）——文件被搬走后 Obsidian renameFile 不更新代码块内引用：引用静默断链 + 汇总仍宣称「内部链接已自动更新」（node 复刻取证坐实）。修：收集链排除代码块/注释区 + 汇总文案与实际行为一致。
+- **P3 群（4 条）**：AF-2 wikilink 大小写不敏感解析缺失（`[[IMG.PNG]]` 漏搬）；AF-3 部分失败只有数字尾巴（哪几个仅 console.warn，notifyActionError+onRetry 未消费）；AF-4 命令入口不校验活动文件类型（右键菜单有校验命令没有，PDF 作活动文件报「失败」误导）；AF-5 CONTEXT.md:295 词条「无预览确认直接执行」与实现（可勾选清单预览确认）完全相反（主线程文档收口）。
+- **顺带**：AT1 planMoves 冲突集补文件夹形态 + F10 直接回归用例。
+- **UX 分流（AT 系）**：AF-S1 预览清单弹窗接 bindFormSubmit（Ctrl/⌘+Enter 确认）。
