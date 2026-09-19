@@ -2038,7 +2038,9 @@ async function upgradeSourceFor(notePath: string, a: ClipArticle): Promise<void>
   }
 }
 
-/** 保存图片（图片工具框动作一）：requestUrl 落盘（URL 自带名/时间戳命名）→ 已保存直写换链 / 未保存记侧写 */
+/** 保存图片（图片工具框动作一）：requestUrl 落盘（URL 自带名/时间戳命名）→ 已保存直写换链 /
+ *  未保存记侧写 → 成功即把嵌入 wikilink `![[本地路径]]` 复制进剪贴板（memo item-1789790237962-3884qs：
+ *  不另发成功通知，复用 image-save 既有「图片已保存…」单弹；写入失败 notifyActionError 可感知） */
 async function actSaveImage(): Promise<void> {
   const snap = imgSnap;
   if (!snap) return;
@@ -2053,9 +2055,25 @@ async function actSaveImage(): Promise<void> {
     if (res.sidecar) M.sidecar = res.sidecar; // 内存侧写同步（渲染层立即换链）
     if (a.origin === 'clip' && a.notePath) invalidateClipBodyCache(a.notePath);
     refreshReadingViews(a.id); // 原位重渲（外层滚动容器不重置；移动详情打开时一并重渲，issue 329 Bug 2）
+    await copyImageEmbedLink(res.local); // 落盘路径存在才复制（原型/非安全上下文无 clipboard API 静默跳过）
   } catch (e) {
     console.warn('[剪藏本] 保存图片失败', e);
     notice('图片保存失败，请检查网络后重试', 'error');
+  }
+}
+
+/** 图片嵌入 wikilink 静默复制（不走 copyText：那会多弹一条成功通知，与「图片已保存…」双弹）。
+ *  clipboard API 整体缺席（原型 fake 环境/非安全上下文）→ 容错跳过不报错；API 在但写入被拒
+ *  （权限/焦点）→ notifyActionError 带原因反馈（一致#15）。 */
+async function copyImageEmbedLink(local: string): Promise<void> {
+  if (!local) return;
+  const clip = typeof navigator !== 'undefined' ? navigator.clipboard : undefined;
+  if (!clip || typeof clip.writeText !== 'function') return;
+  try {
+    await clip.writeText(`![[${local}]]`);
+  } catch (e) {
+    console.warn('[剪藏本] 复制图片嵌入链接失败', e);
+    notifyActionError(e, '复制图片链接');
   }
 }
 
