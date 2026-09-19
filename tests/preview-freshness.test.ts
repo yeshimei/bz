@@ -19,7 +19,7 @@ import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { BEHAVIOR_DOMAINS, PREVIEW_DOMAINS } from '../scripts/build-preview.mjs';
+import { BEHAVIOR_DOMAINS, PREVIEW_DOMAINS, normalizeEndings } from '../scripts/build-preview.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -27,14 +27,16 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const HASH_RE = /\/\* 源指纹 ([0-9a-f]{16}) ·/;
 const INPUTS_RE = /\/\*#preview-inputs=(\[[^\n]*\])\*\//;
 
-/** 单文件内容摘要（跨产物复用：同一源文件被多个域引用） */
+/** 单文件内容摘要（跨产物复用：同一源文件被多个域引用）。行尾先归一（CRLF→LF）再哈希——
+ *  与构建端 normalizeEndings 同口径：工作区行尾随 autocrlf/工具写盘而变，不归一会让同一
+ *  内容算出两个指纹，源没改也判过期（跨构建位置恒红，2026-09-19 实例见 build-preview.mjs）。 */
 const digestCache = new Map<string, string>();
 function fileDigest(rel: string): string {
   const hit = digestCache.get(rel);
   if (hit) return hit;
   let d = 'MISSING';
   try {
-    d = createHash('sha1').update(fs.readFileSync(path.join(ROOT, rel))).digest('hex');
+    d = createHash('sha1').update(normalizeEndings(fs.readFileSync(path.join(ROOT, rel)))).digest('hex');
   } catch {
     /* 读不到（被删/权限）→ 记 MISSING，与构建端保持同一口径 */
   }

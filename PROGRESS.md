@@ -544,3 +544,13 @@
 - [x] 测试：data 层 9 例（并行合并 + 在途去重 + 读盘期作废 + 失败不缓存 + 订阅卫生）+ ui 层缓存闸门 1 例 + smoke 真预热 1 例（rAF 调度 → 缓存命中 → 无 DOM → unload 复位）
 - [x] 交付后双轴 review（子代理 Standards + Spec，固定点 `master`）：硬违规 2 已修（ADR 交叉引用 0122→0047、UI 层测试缺口）；判断项 3 已清（目录判定单源 / 死字段 `attached` / 中间人 `resetWallCache`）；Spec 口径 1 已对齐（"仅首开"→"开墙含再开"，ADR/issue/注释/spec.md 同步）
 - [x] 门禁：tsc 0 错 + 全量 390 文件 6047 用例 6037 绿（2 红均既存：clipbook 会话冻结序 4 例他会话在修、原型新鲜度 6 项主仓存量陈旧；已核 clean master 同样红）+ 日记行为包重出（源指纹同步）
+
+## Issue 382 — 修复既存红×2：原型新鲜度守卫行尾敏感 + clipbook 冻结序时间敏感 fixture
+
+**状态：已实现**（2026-09-19，worktree 门禁）
+
+- [x] 规格：`issues/382-red-preview-freshness-and-clipbook-fixture.md`（无 ADR——修复既有守卫生效口径，不改语义）
+- [x] clipbook 冻结序 4 例：`seedFrozen` 已读骨架写死 2026-08-20 恰满 30 天保留线被 `applyRetention` 清出 → 日期动态化（恒取 5 天前）；生产保留逻辑不动
+- [x] 新鲜度守卫：指纹「原始字节 sha1」→ 双侧 CRLF→LF 归一（`build-preview.mjs` 导出 `normalizeEndings`，测试端 import 复用），跨构建位置/行尾稳定；全量重出 28 产物
+- [x] 顺手补齐：6 条行为包真陈旧（clipbook/gameshelf/home/memo/review/settings-panel，clipbook 行为包还带已退役行内 ✓✓ 钮代码）——守卫按设计正确抓到
+- [x] 门禁：tsc 0 错 + 全量测试 + 主仓构建部署 + 主仓重出幂等校验（归一后跨环境同指纹）
