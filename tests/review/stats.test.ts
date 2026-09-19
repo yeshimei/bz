@@ -1,9 +1,11 @@
 // @vitest-environment node
 /**
- * 复习统计与负载测试（ADR-0077，ticket 174）：streak 宽松口径/评级分布/逾期率/负载分布/热力图
+ * 复习统计与负载测试（ADR-0077，ticket 174）：streak 宽松口径/评级分布/逾期率/负载分布。
+ * A5 审查修复（2026-09）：loadPreview/loadHeatmap 死代码已删，原对应用例随之退役。
  */
 import { describe, it, expect } from 'vitest';
-import { computeStats, loadDistribution, loadPreview, loadHeatmap, dateKey } from '../../src/review/stats';
+import { computeStats, loadDistribution, dateKey } from '../../src/review/stats';
+import { currentR, DEFAULT_W } from '../../src/review/fsrs';
 import type { ReviewItem } from '../../src/review/data';
 
 /** 造一个复习条目 */
@@ -106,6 +108,23 @@ describe('computeStats', () => {
     const stats = computeStats([item]);
     expect(stats.overdueRate).toBe(0); // 活跃为 0，分母 0 → 0
   });
+
+  it('A7 单源回归：avgR = fsrs.currentR 逐条均值（FSRS 条目），阶梯/缺 lastReviewed 条目不计入', () => {
+    const now = new Date();
+    const fsrs1 = mkItem({ filePath: 'A.md', phase: 'fsrs', stability: 5, lastReviewed: new Date(now.getTime() - 2 * 86400e3).toISOString() });
+    const fsrs2 = mkItem({ filePath: 'B.md', phase: 'fsrs', stability: 0.5, lastReviewed: new Date(now.getTime() - 1 * 86400e3).toISOString() });
+    const ladder = mkItem({ filePath: 'C.md', phase: 'ladder', stability: 9, lastReviewed: now.toISOString() });
+    const noLast = mkItem({ filePath: 'D.md', phase: 'fsrs', stability: 5, lastReviewed: null });
+    const stats = computeStats([fsrs1, fsrs2, ladder, noLast]);
+    const r1 = currentR(fsrs1, DEFAULT_W)!;
+    const r2 = currentR(fsrs2, DEFAULT_W)!;
+    expect(r1).not.toBeNull();
+    expect(r2).not.toBeNull();
+    expect(stats.avgR).not.toBeNull();
+    expect(stats.avgR!).toBeCloseTo((r1 + r2) / 2, 12);
+    // 无可算条目 → null（原口径）
+    expect(computeStats([ladder]).avgR).toBeNull();
+  });
 });
 
 describe('负载', () => {
@@ -132,28 +151,5 @@ describe('负载', () => {
     ];
     const dist = loadDistribution(items, 7);
     expect(dist[0].count).toBe(0);
-  });
-
-  it('loadPreview：今日/明日预告', () => {
-    const today = new Date();
-    const tmr = new Date(today); tmr.setDate(tmr.getDate() + 1);
-    const items = [
-      mkItem({ nextReviewDate: today.toISOString() }),
-      mkItem({ filePath: 'B.md', nextReviewDate: tmr.toISOString() }),
-    ];
-    const { today: t, tomorrow } = loadPreview(items);
-    expect(t).toBe(1);
-    expect(tomorrow).toBe(1);
-  });
-
-  it('loadHeatmap：近 35 天补零、含 weekday', () => {
-    const today = new Date();
-    const items = [mkItem({ nextReviewDate: today.toISOString() })];
-    const heat = loadHeatmap(items, 35);
-    expect(heat.length).toBeGreaterThan(0);
-    expect(heat[heat.length - 1].date).toBe(dateKey(today)); // 最后一天 = 今天
-    expect(heat[0].weekday).toBeGreaterThanOrEqual(0);
-    expect(heat[0].weekday).toBeLessThanOrEqual(6);
-    expect(heat.filter((h) => h.count > 0).length).toBe(1);
   });
 });

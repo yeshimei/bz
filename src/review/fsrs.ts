@@ -28,7 +28,8 @@ export class FSRS {
   }
 
   /**
-   * 初始难度 D0（进入 FSRS：again→w[4]，其余 0.3）。
+   * 初始难度 D0（进入 FSRS：again→w[4]=4.93，天然在 [1,10] 界内；其余 0.3——历史口径，
+   * 低于界，后续首轮评级经 nextDiff 增量归入 [1,10]，存量不被钳抬）。
    * 调度（scheduleNext enteringFsrs）与拟合回放（fit.ts replayLogLikelihood 起点）共用此单源——
    * 防两处字面量漂移再造 w[4] 口径分叉（审查修复：D0 同口径；后续轮次两侧均经 nextDiff 钳制）。
    */
@@ -36,14 +37,21 @@ export class FSRS {
     return rating === 'again' ? this.w[4] : 0.3;
   }
 
-  /** 下一难度 */
+  /**
+   * 下一难度（F1 审查修复：D 统一 [1,10] 语义，与 nextStab 的 (11−D) 设计假定同域——
+   * 旧 clamp [0,1] 把首轮难度一律钳成 1，难度失去区分度且评「简单」难度反升）。
+   * - again→w[4]（4.93 天然在界，大幅升难度）；hard→D+w[5]（升）；easy→D−w[6]（降，标准方向）；
+   *   good→D 不变。
+   * - clamp [min(D,1), 10]：D≥1 时即 [1,10]；存量 D<1（旧 initD=0.3 / 旧数据）不被钳抬——
+   *   good 守「不变难度」语义，增量路径评级（hard/again）自然归入界内。
+   */
   nextDiff(D: number, rating: Rating): number {
     let newD: number;
     if (rating === 'again') newD = this.w[4]; // 4.93
-    else if (rating === 'hard') newD = D + this.w[5]; // +0.94
-    else if (rating === 'easy') newD = D + this.w[6]; // +0.86
+    else if (rating === 'hard') newD = D + this.w[5]; // +0.94 升
+    else if (rating === 'easy') newD = D - this.w[6]; // −0.86 降（标准方向：评「简单」难度下降）
     else newD = D; // good 不变
-    return Math.max(0, Math.min(1, newD));
+    return Math.max(Math.min(D, 1), Math.min(10, newD));
   }
 
   /** 下一稳定性 */
@@ -172,4 +180,22 @@ export function scheduleNext(state: ScheduleState, rating: Rating, now: Date, w:
     historyStability: Math.round(result.S * 100) / 100,
     historyDifficulty: Math.round(result.D * 100) / 100,
   };
+}
+
+/**
+ * 当前记忆保留度 R（A7 审查修复单源：同式五处复写收编——
+ * phase==='fsrs' + stability + lastReviewed 守卫 + FSRS.R(t,S)，t≤0 不可算）。
+ * queue.isEarlyDue / stats.computeStats avgR 已改调本函数；
+ * app.currentR / render.currentRPct / stats-ui.showTimeline 三处合并后主线程收口。
+ * 不可算（非 FSRS 相位 / 缺 stability 或 lastReviewed / t≤0）返回 null；now 可注入（测试/重放）。
+ */
+export function currentR(
+  item: Pick<ScheduleState, 'phase' | 'stability' | 'lastReviewed'>,
+  w: number[],
+  now: number | Date = Date.now()
+): number | null {
+  if (item.phase !== 'fsrs' || !item.stability || !item.lastReviewed) return null;
+  const t = (new Date(now).getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
+  if (!(t > 0)) return null;
+  return new FSRS(w).R(t, item.stability);
 }
