@@ -630,17 +630,23 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## reading-report（阅读报告）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+## reading-report（阅读报告）域 · 审查入账中（方向 1 功能 + 3 效率已到账；方向 2 UI / 4 一致运行中，5 待槽位）
 
-> 明细：`.scratch/review-deep/reading-report-func.md`。方向 1（func）：P2×2 + P3×8 + UX×1（无 P1）。旧账复核：G10/样式漏注册/内联 hex/review-ux #23/#24 全部已闭环；`analyzeFocusConsistency` 字典序 bug 系测试注释在案的移植负债（随触碰收编）；`monthlyTrend` 假数据死字段不上屏（建议删）。bookshelf 闭环批接缝修复全部在位。门禁基线：tsc 0；tests/reading-report 6 文件 88 例全绿。
+> 明细：`.scratch/review-deep/reading-report-{func,efficiency}.md`。方向 1（func）：P2×2 + P3×8 + UX×1；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1。跨方向去重与翻案：**EFF-1 桌面回墙死端**（返回钮被 CSS 桌面隐藏 + 注释声称的「左栏 ‹ 返回书架」已随书脊墙换血删除 + M.view 会话保持重开仍落报告视图）——**翻案 review-ux #23「已闭环」不成立**（func 引用的「常驻返回钮」桌面不可见）；EFF-7 双 toast 与 RR-F2 同根但手动路径独立成条；EFF-8 死字段族扩容（trends 12 字段仅消费 5，建议一刀清含 monthlyTrend）；RR-F6 补证新根因（冷开报告被 rebuildItems 串行门控，报告管线不消费 rebuild 产物可并行）。旧账：G10 eff 复核通过闭环。门禁基线：tsc 0；tests/reading-report 88 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
-- **P2 EPUB 分类未接 ADR-0099 subjects 通道**（RR-F1）——stats.ts:61 硬编码「未分类」vs 宿主 data.ts subjects 回落：分类分布/「N 本未分类」建议失真，点「未分类」回墙所见非报告所指。修：接宿主 subjects 口径。
-- **P2 自动重算复用手动渲染全链**（RR-F2）——Weave 每次落盘弹一对 progress/success toast（dedupeKey 唯一化反向保证每轮必弹）+ 翻月游标/年卡展开/滚位全部重置，「只更新内容区」无感预期不兑现。修：静默重算通道（RR-UX1 终态：保留翻月/展开/滚位）。
-- **P3 群（8 条）**：分类预填口径分叉（报告拆多类 vs 墙单值精确等值，多类书筛不中）+ 多样性分数可超 100%；EPUB readingDate 无 progress 前置 + progress 不钳负（与宿主已修口径漂移）；readingTimeFormat 兜底缺失（少算时长）；冷开报告 rebuild 白屏（shelf 有占位 report 漏配）；自动刷新过滤漏单文件书库形态（三方口径不一致）；author/category 做 Record 键原型污染可达；EPUB 会话无 type → 完成率恒 0、专注分压低；会话 start 缺失补 0 → 1970 幽灵月。
-- **顺带**：monthlyTrend 死字段删除。
-- **UX 分流（RR 系）**：重算保留翻月/展开/滚位状态（RR-UX1，与 RR-F2 同刀）。
+- **P1 桌面报告视图无「返回书架」可达出口**（EFF-1，#23 翻案）——回墙主路径死端，关面板重开仍落报告。修：返回钮恢复可视（或左栏入口重建）+ 键盘可达 + 用例（现有测试结构性测不到可视性）。
+- **P2 键盘不可达簇**（EFF-2）——年卡/作者卡/分类行无 tabindex/keydown，报告内钻取整体键盘不可达。修：可达性对齐。
+- **P2 O(n²·m) 主计算热点**（EFF-3）——calculateReadingStats 逐书 concat+全量重 filter。修：单趟归并。
+- **P2 往返无缓存全量重算**（EFF-4）——重扫全库+重 parse weave-data.json+十段重渲，离开时 DOM 明明还在。修：渲染产物缓存或懒重算。
+- **P2 书架 chrome 死控件簇残留报告视图**（EFF-5）——检索/排序/标签/hint 可见可点却全在更新隐藏墙零反馈。修：报告态隐藏（旧布局处理换血时丢失）。
+- **P2 EPUB 分类未接 ADR-0099 subjects 通道**（RR-F1）——分类分布/「未分类」建议失真。修：接宿主 subjects 口径。
+- **P2 自动重算复用手动渲染全链**（RR-F2）——toast 对 + 状态全重置。修：静默重算通道（RR-UX1 终态）。
+- **P3 群（func 8 条）**：分类预填多类书筛不中 + 多样性分数可超 100%；EPUB progress 前置+钳负漂移；readingTimeFormat 兜底；冷开报告白屏（EFF 补证：rebuildItems 串行门控可并行）；自动刷新漏单文件书库形态；Record 键原型污染；EPUB 会话无 type 完成率恒 0；start 补 0 幽灵月。
+- **P3 群（eff 5 条）**：假重试文案无重试钮（notifyActionError 范式收编）；小库双 toast（clipbook QUIET_TOAST_MIN_ENTRIES「同口径」注释失实）；重复计算杂项族（热力图双跑/focusScore 一次 3 遍）；热力图死端可供性（pointer+hover 放大无点击）；热区（hm-nav 28px/rr-close 22px）。
+- **顺带**：死字段一刀清（monthlyTrend + trends 未消费 7 字段）。
+- **UX 分流（RR 系）**：重算保留翻月/展开/滚位（RR-UX1 与 RR-F2 同刀）；翻月年份跳跃导航（EFF-U1）。
 
 ### 已入账条目（跨方向去重归并）
 
