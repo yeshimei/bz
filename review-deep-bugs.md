@@ -452,3 +452,33 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **A 数据口径与删除链** `bz-fix-bel-data`（data.ts + ui.ts 表单/写路径/删除链区 + tests）：P2 价格上限、脏日期口径统一、todayStr→localDayKey、STATUS_ORDER 收口、A4 selfWritePending、getDataFilePath 收敛、清空分类对称、流转撤销补事件、**E5 删除免确认直达 notifyUndo（效率整改5 落地，favorites 先例；确认框去除，顺带消解确认在途死端）**、全 loadDatabase 调用点兜底（func P3-2+cons ③+A2）。
 - **B 视图交互与报告** `bz-fix-bel-view`（layouts/poster/render.ts + report.ts + ui.ts 面板/搜索/委托区 + styles.css + tests）：P2 closePanel 收口、详情保存后刷新、移动端强制聚焦摘除、--bz-vvh、E1 bindFormSubmit、E2 卡片键盘可达、E3 搜索 ESC 二段+✕、E4 year 回落、防抖重开竞态、data-v esc、报告热区、A3 模块态复位清单、KPI 回收口径、日均格式化单源（0 元形态随 B4 拍板）、autumn UX② 当月列、表单单一关闭路径、ESC 层收编样板、搜索占位符、renderAll 口径卫生。
 - **主线程收口**：CONTEXT.md 词条（页脚/旧移动头部/issue 356 报告页/设置键/空弹窗表述）+ src 头注同步；checkup 轮记名（A1）。
+
+---
+
+## bookshelf（书库）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4/5 审查中）
+
+> 明细：`.scratch/review-deep/bookshelf-{func,efficiency}.md`（ui/cons/arch 落地中，跨方向去重与批次定稿待其到账）。方向 1：P2×1 + P3×5 + 建议1；方向 3：P1×1 + P2×1 + P3×4 + 建议3。旧账复核：15 项全闭环（G12 在位、G11 维持证伪、archive 报告群已修或随 ADR-0091 内嵌化消解、「面板删不掉书/划线删除不可撤销」维持 issue 223 只读化拍板）；删除口径合规（唯一删除面=不可逆划线删除，保留确认符合效率整改5 口径）。门禁基线：tsc 0 错；tests/bookshelf 110 例全绿。
+
+### 已入账条目（去重待 5 方向齐）
+
+- **P1 读书笔记弹窗全域零入口** `bookshelf/reading-note*`（eff = ui F4 同根合并）——ADR-0096「功能零回退」拍板 vs issue 223 入口移除 vs CONTEXT.md:96/ADR-0091/ADR-0096/settings.ts:173 四处文档仍宣称可用：933 行活代码 + 36 用例悬空不可达。**修法含产品决策（恢复最小入口 or 清理代码+同步四处文档），归拍板清单 BS1。**
+- **P2 `bz-bookshelf-continue` 报告视图开着时无可见效果** `index.ts:97-101 × ui.ts:147-152`（func F1）——只改 M.view 不经 showView 切容器，墙渲染进隐藏容器；漏 `cancelReadingReport` 收口。修：走 showView + 收口报告。
+- **P2 冷开报告视图「返回书库」永挂加载占位** `ui.ts:317-323 × :277`（ui F1，F2 同根）——冷开报告路径从未 renderAll，goto-shelf 也不补渲染；报告期间数据变化返回同样陈旧墙。修：冷开路径补渲染 + goto-shelf 补 renderAll。测试 :364 只断容器类切换的盲区一并补断言。
+- **P2 移动端面板/借书卡裸 100vh**（ui F3）——接 core `--bz-vvh`（clipbook/diary/cinema 先例）。
+- **P3 检索框无 ESC 清词/✕**（eff）——clipbook 效率#11/#12 + diary D-UI3 定稿范式缺口，框内 ESC 直关整面板。修：二段清词 + 尾 ✕（全库统一范式）。
+- **P3 EPUB 编辑想法保存失败零反馈** `ui F5`——同文件删除路径有 notice，编辑漏。修：补失败通知。
+- **P3 移动端排序钮 28px/书脊 22px 低于 §8.2 下限**（ui F6）——挂 `bz-touch-target` 修饰类（六域已消费，本域零消费）。
+- **P3 借书卡缺「× 关闭」钮 + dialog 无 aria-label**（ui F8）——× 系 issue 223 拍板保留项，属拍板执行补齐。
+- **P3 批注引号往返不反转义**（func）——批注 `"` 写入转义 `&quot;` 但读取展示不反转义，往返二次恶化。修：读侧反转义。
+- **P3 weave-data.json 只挂 modify 不挂 create**（func）——Weave 首次落盘不刷新。修：补 create 监听。
+- **P3 md progress 不钳负值**（func）。修：钳制。
+- **P3 分类标签计数 vs 筛选口径分叉**（func）——「3 册」点开 5 本（计数排除未读、筛选含未读）。修：口径统一。
+- **P3 卸载不摘 window resize 监听**（func = ui F7）。修：卸载走 closeOverlay。
+- **P3 M.renderFn 死字段**（func，全域零消费方）。修：删除。
+- **P3 编辑弹窗未接 bindFormSubmit**（eff）。
+- **P3 自动刷新丢墙滚位 + renderAll 无谓重刷/装箱强制回流**（eff）。修：滚位保持 + 重刷收口。
+- **P3 重开回落口径三层混用**（eff）。修：单源回落。
+- **P3 continueReading 陈旧数据假空态**（eff）。修：数据新鲜度校验。
+- **UX 分流**：func（catFilter 跨重开保留与 side/sort 复位语义不对称）+ eff×3（明细待报告到账后补录）→ 拍板清单 BS 系。
+
+（方向 2 UI / 4 一致 / 5 架构审查中——到账后去重定稿修复批次。）
