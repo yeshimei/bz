@@ -25,13 +25,14 @@
 import { notice, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
-import { escManager } from '../core/esc-manager';
+import { registerPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
 import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
 import { tryGetSettings } from '../core/settings-provider';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { mountIcons, uiModal, uiSuggest, uiIconSpan } from '../core/ui';
+import { bindFormSubmit } from '../core/ui/modal';
 import { openItemMenu, openItemSheet, refreshItemSheet, registerSheetCompanion, unregisterSheetCompanion, closeItemMenu, type ItemAction, resetItemMenuClickGuard } from '../core/item-actions';
 import { emitDomainEvent } from '../core/domain-bus';
 import { belongingsEditChanges } from '../smartcat/belongings-source';
@@ -212,13 +213,9 @@ function itemById(id: string): BelongingsItem | undefined {
 /** ESC 层（bz-bel）：主面板兜底层——表单/详情已各自成为 uiModal 'bz-modal' 层（后注册先关），
  *  本层的表单/详情分支仅作兜底（选择器已迁 popup 类）；年度报告（issue 356）仍为自绘遮罩，
  *  层序在详情之下、主面板之上。顶层先关，不穿透（对照 favorites bz-fav）。 */
-let mainEscRegistered = false;
 function ensureBelongingsEsc(): void {
-  if (mainEscRegistered) return;
-  mainEscRegistered = true;
-  escManager.register('bz-bel', {
-    isVisible: () => !!M.overlay || !!document.querySelector('.bz-bel-form') || !!document.querySelector('.bz-bel-detail') || !!document.querySelector('.bz-bel-report-mask'),
-    close: () => {
+  // 收编 core registerPanelEsc 幂等样板（arch 注记 N1：同 id 已注册静默跳过，层常驻 isVisible 判活）
+  registerPanelEsc('bz-bel', () => !!M.overlay || !!document.querySelector('.bz-bel-form') || !!document.querySelector('.bz-bel-detail') || !!document.querySelector('.bz-bel-report-mask'), () => {
       if (document.querySelector('.bz-bel-form')) {
         // 脏表单走 confirmDiscard 拦截（ticket 189，对照 favorites）
         requestCloseBelForm();
@@ -234,8 +231,8 @@ function ensureBelongingsEsc(): void {
         return;
       }
       closePanel();
-    },
-  });
+    }
+  );
 }
 /** 数据文件 modify 自动刷新（打开期间注册，关闭注销——用户拍板实时刷新） */
 let autoRefreshOff: (() => void) | null = null;
@@ -268,6 +265,9 @@ async function openPanelInner(): Promise<void> {
   // 默认排序接线（belongingsDefaultSort，issue 294）：每次打开读设置，非法值回「最近购入」
   const srt = (tryGetSettings() as Record<string, unknown>).belongingsDefaultSort;
   M.sort = SORT_OPTS.some((o) => o.v === srt) ? (srt as BelState['sort']) : 'recent';
+  // 年份筛选纳入同款回落口径（批B 修复8）：设置是「下次打开的初始值」，面板内改选为会话内临时态——
+  // 修复前 year 跨开合残留，重开面板列表隐性只剩旧年份（status/sort 均回落、唯独 year 成孤儿）
+  M.year = '';
   M.db = await loadDatabase();
   const overlay = document.createElement('div');
   overlay.className = 'bz-panel-overlay';
@@ -345,16 +345,39 @@ async function openPanelInner(): Promise<void> {
       return;
     }
   });
-  // 搜索（B3：防抖定时器在面板关闭后仍会触发——首行守卫 overlay 存活；渲染序列含 hero，
-  // 副题「N 件在列」计数随搜索刷新）
+  // 搜索（B3：防抖定时器在面板关闭后仍会触发——回调验面板身份而非仅存活（批B 修复9）：
+  // 关后 180ms 内重开时 M.overlay 已是新面板，存活守卫会穿透把旧搜索词灌进新面板；
+  // 渲染序列含 hero，副题「N 件在列」计数随搜索刷新）
   const bindSearch = (inp: HTMLInputElement) => {
-    // issue 365 收编 core debounce（尾触防抖 + overlay 存活守卫原样保留）
+    // issue 365 收编 core debounce（尾触防抖 + cancel 供清词出口取消防抖尾触）
     const debounced = debounce(() => {
-      if (!M.overlay) return;
+      if (M.overlay !== overlay) return;
       M.q = inp.value.trim();
       renderAll();
     }, SEARCH_DEBOUNCE_MS);
-    inp.addEventListener('input', () => debounced());
+    // 框尾 ✕ 一键清除（批B 修复7，效率#12 clipbook 范式）：有词才显示，input 同步显隐
+    const clearBtn = overlay.querySelector('[data-bel-search-clear]') as HTMLButtonElement | null;
+    const syncClear = () => { if (clearBtn) clearBtn.hidden = !inp.value; };
+    const clearSearch = (refocus: boolean) => {
+      debounced.cancel(); // 先取消防抖尾触，防清词后关键词「复活」（diary D-UI3 同款）
+      inp.value = '';
+      M.q = '';
+      syncClear();
+      renderAll();
+      if (refocus) inp.focus();
+    };
+    syncClear();
+    clearBtn?.addEventListener('click', () => clearSearch(true));
+    inp.addEventListener('input', () => { syncClear(); debounced(); });
+    // 效率#11：搜索框内 ESC 二段语义——有词 = 只清词不冒泡（escManager document 层收不到，
+    // 防「清词变成关整个面板」）；无词放行（关面板语义不变）
+    inp.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || !inp.value) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      clearSearch(false);
+      inp.blur();
+    });
   };
   bindSearch(overlay.querySelector('[data-bel-search]') as HTMLInputElement);
 
@@ -367,6 +390,18 @@ async function openPanelInner(): Promise<void> {
     const it = itemById(cell.dataset.belId as string);
     if (!it) return;
     // 桌面点卡 = 详情弹窗（P20）；移动点卡 = 底部详情抽屉（issue 202：动作菜单只走右键/抽屉）
+    if (isMobileEnv()) openMobSheet(it);
+    else openBelDetail(it);
+  });
+  // 键盘可达（批B 修复6，eff E2 / clipbook C-UI5 先例）：卡片 role=button tabindex=0（markup 侧），
+  // Enter/Space 走与点击同路——桌面开详情、移动开抽屉；preventDefault 顺带压掉 Space 滚页
+  content.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const cell = (e.target as HTMLElement).closest('[data-bel-id]') as HTMLElement | null;
+    if (!cell) return;
+    e.preventDefault();
+    const it = itemById(cell.dataset.belId as string);
+    if (!it) return;
     if (isMobileEnv()) openMobSheet(it);
     else openBelDetail(it);
   });
@@ -398,6 +433,11 @@ async function openPanelInner(): Promise<void> {
 
 export function closePanel(): void {
   stopAutoRefresh();
+  // 浮层收口（批B 修复1）：表单/右键菜单/移动抽屉开着时命令再触发（toggle 分支），面板关而浮层悬空——
+  // 表单脏态走 requestCloseBelForm（confirmDiscard 拦截，与 ESC 分支 :222-226 同语义；无表单幂等 no-op）；
+  // 右键菜单与移动抽屉一并归 core closeItemMenu（幂等）
+  requestCloseBelForm();
+  closeItemMenu();
   closeBelDetail();
   // 年度报告随面板关闭收口（issue 356：报告是面板上下文的派生视图，不留孤儿在途渲染）
   closeBelReport();
@@ -1009,6 +1049,12 @@ export function openForm(it: BelongingsItem | null): void {
           else if (cur.sold_price != null) cur.sold_price = null; // 丢弃/在用态无售价语义
           cur.last_updated = new Date().toISOString();
           await saveAndRender();
+          // 详情开着（编辑来源 = 详情弹窗）→ 按当前详情 id 就地重建（批B 修复2）：
+          // openBelDetail 开头 closeBelDetail，保存后详情头行/徽章/流转条不再残留旧数据
+          if (document.querySelector('.bz-bel-detail')) {
+            const redrew = itemById(it.id);
+            if (redrew) openBelDetail(redrew);
+          }
           // 审查修复批（issue 356）：报告持一次性快照，开着时保存后就地重开刷新（openBelReport 重入语义）
           if (isBelReportOpen()) void openBelongingsReportView();
           emitDomainEvent('belongings', { kind: 'edit', title: name, changes: belongingsEditChanges(snapshot, cur) });
@@ -1049,5 +1095,10 @@ export function openForm(it: BelongingsItem | null): void {
       }
     })();
   });
-  setTimeout(() => (mask.querySelector('#bm-name') as HTMLInputElement)?.focus(), 100);
+  // 键盘提交（批B 修复5，eff E1）：core bindFormSubmit——Ctrl/⌘+Enter 恒提交、单行 input 纯 Enter 提交
+  // （textarea 换行放行、uiSuggest 回填不双发口径内建，diary/password-vault 同款）；
+  // saving 防重入由上方 click handler 自担。原域内 100ms setTimeout 强制聚焦已删（批B 修复3）：
+  // 自绘时代遗留，移动端绕过 uiModal 防软键盘口径（focus-trap 跳过 input/textarea）唤起软键盘，
+  // 桌面首焦点已由 uiModal firstFocusable 接管（首个可交互即 #bm-name，语义不变）
+  bindFormSubmit(mask, () => saveBtn.click());
 }

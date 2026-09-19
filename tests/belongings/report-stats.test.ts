@@ -127,14 +127,20 @@ describe('computeYearReport：日均成本走势', () => {
     expect(r.dailyCostTrend[4].value).toBeCloseTo(1988 / 921, 6);
   });
 
-  it('未来月（当年未到月末）标 future、值零；往年 12 个月全 real', () => {
+  it('未来月（当年未开始的月份）标 future、值零；当月截至今日（批B 修复14）；往年 12 个月全 real', () => {
     const cur = computeYearReport(seed(), '2025', NOW);
     expect(cur.dailyCostTrend[4].future).toBe(false); // 6-01 截止 ≤ 6-15
-    expect(cur.dailyCostTrend[5].future).toBe(true); // 7-01 > 6-15
+    // 当月（6 月）不再恒空档：截止点收到「今天」（修复前 cutoff=7-01 恒 future → 6-12 月全零柱）
+    expect(cur.dailyCostTrend[5].future).toBe(false);
+    expect(cur.dailyCostTrend[5].capped).toBe(true);
+    expect(cur.dailyCostTrend[5].value).toBeGreaterThan(0);
+    expect(cur.dailyCostTrend[6].future).toBe(true); // 7-01 尚未开始
+    expect(cur.dailyCostTrend[6].capped).toBeUndefined();
     expect(cur.dailyCostTrend[11].future).toBe(true);
     expect(cur.dailyCostTrend[11].value).toBe(0);
     const past = computeYearReport(seed(), '2024', NOW);
     expect(past.dailyCostTrend.every((c) => !c.future)).toBe(true);
+    expect(past.dailyCostTrend.every((c) => !c.capped)).toBe(true); // 往年全月末时点，无截至今日列
   });
 
   it('avgDailyCostAsOf 与走势同口径（今天截止 = 全库日均）', () => {
