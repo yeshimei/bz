@@ -509,20 +509,31 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## gameshelf（游戏库）域 · 审查入账中（方向 1 功能 + 方向 2 UI 已到账；方向 3/4 运行中，5 待槽位）
+## gameshelf（游戏库）域 · 5/5 方向到账，两批定稿（批 A `bz-fix-gs-sync` 已派；批 B `bz-fix-gs-view` 待槽位）
 
-> 明细：`.scratch/review-deep/gameshelf-func.md` + `gameshelf-ui.md`。方向 1：P1×1 + P2×2 + P3×11。方向 2：P1×1 + P2×1 + P3×4 + UX-Suggestion×6 + 测试缺口 7。旧账复核 11 条两方向合计（window.open 记名本域收口、同步按钮引导态已缓解、关面板中止回填维持拍板、uiSelect ESC 已修、issue 372/378、ADR-0122、铁律 3 合规等）。已核验健壮面：ESC 四层栈序、异步 detached DOM 守卫、对账 upsert 零覆盖主承诺、8 段成就行契约、同步 M.syncing 置位链、document 级监听回收、移动端 dvh/gridhost、主题 token 层档、图片三级兜底、转义主链（除 G4 单引号上下文）。门禁基线：tsc 0；tests/gameshelf 118 例全绿。
+> 明细：`.scratch/review-deep/gameshelf-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1：P1×1+P2×2+P3×11；方向 2：P1×1+P2×1+P3×4+UX×6+缺口7；方向 3 效率：P1×1+P2×2+P3×4+UX×1+缺口5；方向 4 一致：P2×1+P3×9+UX×2+缺口3；方向 5 架构：P2×2+P3×6+建议4+缺口6。跨方向去重：整刷失焦（ui G1=eff P1=cons 节流三份三语义，增量通道 renderList 已在只差接线）、转义单源（cons P2=func F9=ui G4=arch A5 四向同源，升级为 core escapeHtml 收编）、触控热区（ui G2=cons）、recent/months 死字段（eff=cons）、双套控件单向同步（eff=ui G5）、metadataCache 守卫（arch A2 是 func F1 修复的配套，防打折）。旧账复核：uiModal 焦点旧账过时（core modal.ts 已有开聚焦/trap/还原）、移动下拉 ESC 冒泡与 lightbox N7 归 core 批维持原判、review-ux-suggestions 3 条（2 缓解维持/1 拆出 GS4）。已核验健壮面：域内零环引用（队列→ui 全走 M 回调槽）、core 控件 11 件复用、原型单源机制在位、main 接线三命令三段式+onunload 链完整、M 十四字段唯一写者、ESC 四层栈序、异步 detached DOM 守卫、媒体三级兜底。门禁基线：tsc 0；tests/gameshelf 118 例全绿（五方向一致）。
 
-### 已入账条目（跨方向去重待 5 方向齐）
+### 已入账条目（去重定稿）
 
-- **P1 自动同步链断点** `sync.ts:119` × `index.ts:30`（func F1）——`autoSyncOnOpen` fire-and-forget、await 落空：首开空库/新游戏入账后媒体本地化、中文名回填、商店/成就回填三队列全部不启动（命令与手动按钮路径正确，唯自动同步漏），「拉到的都存本地」承诺在首次接入主路径不兑现。修：返回 runSync promise（一行）。+ 回归。
-- **P1 后台节流重渲整刷面板** `ui.ts:1187` × `names.ts:107-113` / `backfill.ts:75-81` / `posters.ts:394-401`（ui G1）——三队列每条完成节流直通 renderAll 整刷：搜索打字每约 1.2s 失焦、IME 组合被打断、移动端下拉被关；影院同病已修（`cinema/ui.ts:968-1047` renderSoft+焦点快照 c0805040 只落 cinema 源）。修：三 scheduleRerender 与 sync.ts `M.renderFn` 改走 renderSoft + 搜索框焦点快照（域内文本输入仅搜索框一个，可比影院更简）。+ 回归（假时钟焦点保持 + 菜单存活）。
-- **P2 已下架手改被同步翻回（拍板项）** `reconcile`（func F2）——用户手改 `已下架: true` 被下次同步「Steam 在场即恢复在架」静默翻回。设计语义 vs 用户意图冲突，**归拍板清单 GS1**。
-- **P2 window.open 旧账收口** `ui.ts:794`（func F3）——切 `openExternalUrl`（cinema 同族已清）。
-- **P2 移动端三枚常驻图标钮 30px 无热区** `styles.css:35-37`（ui G2）——含移动端唯一关闭出口（全屏无遮罩可点），违设计手册 §8.2 40px 下限；core `.bz-touch-target--lg` 基建已备（memo/diary 样板），ops 行 gap 8px 外扩后热区相切不交叠。修：挂类即生效（视觉不变）。
-- **P3 群（11 条，func）**：closePanel 关停三选二（posters 不随面板关停，与 backfill 关停理由矛盾）、unloadBackfill 置 running=false 可致双消费者、无中文名游戏每开面板重拉永不收敛、媒体下载无超时、尾斜杠配置零匹配、消歧文件名展示带尾巴等（修复批定稿时按报告展开）。
-- **P3 群（4 条，ui）**：① 空态门面塌陷（heroz 无 min-height，ops 绝对定位钮叠上状态行；`ui.ts:943-947` × `styles.css:24/28-32`，修 min-height 一行 + 回归）；② hero 背景 `url('…')` 单引号上下文未转义（`ui.ts:161` 域内自写 escHtml 缺 `'`，图断 + CSS 上下文逸出；修单独转义 + escHtml 对齐 core 五件套）；③ 工具行三控件值单向同步（chips/分段→下拉无回写 `ui.ts:1029-1052`，跨 768px 显示旧值；修补 setValue 回路 + 互译测试）；④ openDetail 不收悬浮预览（`ui.ts:894-906` 轮播定时器滞留空转、换脸滞留；修进弹窗前 `restReel()+restHero()` 一行）。
-- **P3 群（ui 方向小项，修复批顺带）**：状态行旧文案跨开关残留（closePanel 不清 `M.statusMsg`）、chips 初始无 aria-pressed（core uiChip 缺省态不设，跨域对齐点）、搜索无防抖（每键全网格重建，影院 300ms 防抖可借、顺带缓解 G1 触发频率）、firstChar 代理对乱码（`name.slice(0,1)` → `[...name][0] ?? '?'`）。
-- **测试缺口 7**（gameshelf-ui.md 文末）：G1 回归、bindMediaFallback 全链路、modalRepaintFn 生命周期、renderList 集成、mountOps syncing 态、G5 三控件互译、G3 heroz 高度——修复批随修随补。
+- **P1 自动同步链断点** `sync.ts:119` × `index.ts:30`（func F1）——`autoSyncOnOpen` fire-and-forget、await 落空：首开空库/新游戏入账后媒体本地化、中文名回填、商店/成就回填三队列全部不启动（命令与手动按钮路径正确，唯自动同步漏），「拉到的都存本地」承诺在首次接入主路径不兑现。修：返回 runSync promise。+ 回归。【批 A】
+- **P1 后台节流重渲整刷面板** `ui.ts:1187` × 三队列（ui G1 = eff P1 = cons）——搜索打字每约 1.2s 失焦、IME 组合被打断、移动端下拉被关、滚位归零、轮播中断；影院同病已修（renderSoft+焦点快照 c0805040 只落 cinema 源），**增量通道 renderList 已存在只差接线**。修：三 scheduleRerender 与 sync 的 `M.renderFn` 调用统一走 renderSoft（绑定点 ui.ts 一处改）+ 搜索框焦点快照。+ 回归。【批 B】
+- **P2 已下架手改被同步翻回（拍板项）** `reconcile`（func F2）——**归拍板清单 GS1**。
+- **P2 window.open 旧账收口** `ui.ts:794`（func F3）——切 `openExternalUrl`。【批 B】
+- **P2 移动端三枚常驻图标钮 30px 无热区** `styles.css:35-37`（ui G2 = cons）——含移动端唯一关闭出口，违 §8.2 40px 下限；core `.bz-touch-target--lg` 已备。修：挂类即生效。【批 B】
+- **P2 HTML 转义单源未收编** `ui.ts` 域内自写 escHtml/escAttr（cons P2 = func F9 = ui G4 = arch A5 四向同源）——域内两套自写转义是 core `escapeHtml` 五件套的弱化复写（缺 `'`，G4 单引号上下文断裂即病根）；`stripTitleMarks` 同病未收编。修：域内自写全部退役收编 core/ui/str 单源；hero 背景 `url('…')` 上下文单独转义。+ 回归。【批 B】
+- **P2 rebuildItems 整表替换 vs 三队列就地改竞态**（arch A1）——`home/river.ts:182` 开首页采集即触发，回填成果会话内丢显示。修：rebuild 保留未变对象引用（或队列持 id 查表）+ 竞态用例。【批 A】
+- **P2 metadataCache 未就绪守卫缺失**（arch A2）——cinema/bookshelf 有同款守卫本域无，批量首同步后立即重建漏新笔记（F1 修复的配套，防打折）。修：对齐 cinema 守卫 + 异步盲区用例。【批 A】
+- **P3 群（func 11 条）**：closePanel 关停三选二、unloadBackfill 双消费者、无中文名重拉永不收敛、媒体下载无超时、尾斜杠配置零匹配、消歧文件名展示带尾巴等。【批 A】
+- **P3 群（ui 4+4 条）**：空态门面塌陷叠钮（heroz min-height）、`url('…')` 单引号上下文（并入转义单源）、工具行三控件值单向同步（补 setValue 回路+互译测试）、openDetail 不收悬浮预览（restReel+restHero）；小项：状态行旧文案残留、chips 初始无 aria-pressed（含 core uiChip 缺省态对齐）、搜索无防抖（180ms 三域先例，顺带缓解整刷频率）、firstChar 代理对。【批 B】
+- **P3 群（eff）**：手动同步收尾双 renderAll、indexInList 每次悬浮全库排序（排序缓存）；recent/months 死字段（=cons 同源）。【批 B；死字段归批 A 删（数据侧）】
+- **P3 群（cons）**：pad2/localDayKey 五处漏网、ESC 层 id 违 `bz-<域>` 约定、synced 事件零订阅+契约注释虚指、节流三份三语义（并入批 A-4 统一节流）、--bz-vvh 注释/词条三处打架（注释纠偏+主线程词条）、CONTEXT.md 词条两处滞后（主线程文档收口）。【批 A/B 按文件归属】
+- **P3 群（arch）**：backfill 防抖式无限顺延（统一节流）、detail→sync 越层（readSteamConfig 下沉 state）、posterDisplayUrl 死代码、frontmatter 中文键无常量表（constants 单源+读侧收编）、AGENTS.md 领域清单缺 gameshelf 行（主线程文档收口）。【批 A + 主线程】
+- **UX 分流**：同步失败无重试 action（notifyActionError+onRetry 定稿范式，修）、队列熔断 console 静默（一次性人话收尾通知，修）、latestrow 键盘可达（**GS2 拍板**）、Steam 密钥明文框（**GS3 拍板**）、会话滚位记忆（clipbook 效率#17 先例，**GS4 拍板**）、状态行残留等小项随批修。
+- **测试缺口 21 条**（7+5+3+6，含 rebuild×队列竞态、metadataCache 异步盲区、open/close/unload 对称断言、并发消费者、节流契约、frontmatter helper 抽 tests/helpers、焦点回归、bindMediaFallback 全链路、modalRepaintFn 生命周期、renderList 集成、mountOps syncing、三控件互译、heroz 高度）——两批随修随补。
 
-（方向 3 效率 / 4 一致运行中，5 架构待槽位——到账后去重定稿修复批次。）
+### 修复批定稿（两批，文件不交叠）
+
+- **批 A `bz-fix-gs-sync`（同步链与队列架构）**：sync.ts/data.ts/state.ts/names.ts/backfill.ts/posters.ts/constants——F1 断链、A1 竞态、A2 守卫、节流统一、关停/双消费者/重拉收敛/超时/尾斜杠/消歧、A4 下沉、A6 死代码、A7 常量表（读侧）、pad2/localDayKey（本批文件内）、synced 事件、熔断收尾通知、recent/months 死字段（数据侧）+ 缺口（竞态/盲区/对称/并发/节流契约/helper）。
+- **批 B `bz-fix-gs-view`（UI 渲染与交互）**：ui.ts/detail.ts/styles.css——整刷→renderSoft+焦点、window.open 收口、热区、转义单源收编（含 stripTitleMarks）、塌陷、三控件互译、openDetail 收预览、防抖、ESC 清词✕（clipbook 范式）、aria-pressed、firstChar、状态行残留、滚位保持、双 renderAll 收口、indexInList 缓存、ESC 层 id、vvh 注释、`url('')` 转义 + 缺口（焦点/bindMediaFallback/modalRepaintFn/renderList/mountOps/互译/高度）。
+- **主线程文档收口**：AGENTS.md 领域清单补 gameshelf 行、CONTEXT.md 词条两处滞后、--bz-vvh 词条打架处。
+- **拍板清单**：GS1 已下架翻回 / GS2 latestrow 键盘 / GS3 密钥明文框 / GS4 会话滚位记忆。
