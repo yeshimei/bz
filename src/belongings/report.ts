@@ -24,7 +24,7 @@ import { esc, iconSpan } from '../core/ui/str';
 import { topifyZ } from '../core/z-order';
 import { CHART_PASTEL_SERIES, CHART_HIGHLIGHT, CHART_INK, CHART_RANK_BADGES } from '../core/chart-palette';
 import { moneyShort, moneyWith, type MoneyUnit } from './shared';
-import { computeYearReport, reportYears, resolveReportYear, type YearReportStats } from './report-stats';
+import { computeYearReport, reportYears, resolveReportYear, trimDailyNum, type YearReportStats } from './report-stats';
 import type { BelongingsItem } from './types';
 
 // ==================== 模块状态（在途渲染 / 当前报告上下文） ====================
@@ -80,7 +80,9 @@ export function openBelReport(items: BelongingsItem[], unit: MoneyUnit, opts: { 
   ctxUnit = unit;
   ctxOnAdd = opts.onAdd ?? null;
   ctxYears = [];
-  ctxYear = '';
+  // 重入保留当前年份（批B 修复15，func P3-4）：面板内保存触发就地重开时，翻年选择不再被跳回最新年
+  // （悬空年份由 startReport 的 resolveReportYear 回落兜底）；首开才归零
+  if (!maskEl) ctxYear = '';
 
   if (maskEl) {
     // 重入：遮罩已在 → 只重算内容（keep 视图不闪遮罩）
@@ -94,11 +96,11 @@ export function openBelReport(items: BelongingsItem[], unit: MoneyUnit, opts: { 
     <div class="bz-bel-report-head">
       <div class="bz-bel-report-title">年度资产报告</div>
       <div class="bz-bel-report-nav">
-        <button type="button" class="bz-icon-btn" data-belr-prev title="上一年" aria-label="上一年">${iconSpan('chevron-left')}</button>
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-prev title="上一年" aria-label="上一年">${iconSpan('chevron-left')}</button>
         <span class="bz-bel-report-year" data-belr-year>—</span>
-        <button type="button" class="bz-icon-btn" data-belr-next title="下一年" aria-label="下一年">${iconSpan('chevron-right')}</button>
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-next title="下一年" aria-label="下一年">${iconSpan('chevron-right')}</button>
       </div>
-      <button type="button" class="bz-icon-btn bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan('x')}</button>
+      <button type="button" class="bz-icon-btn bz-touch-target bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan('x')}</button>
     </div>
     <div class="bz-bel-report-body" data-belr-body></div>
   </div>`;
@@ -451,26 +453,25 @@ function categoriesHtml(stats: YearReportStats): string {
   </div>`;
 }
 
-/** 日均成本走势（各月末时点的全库日均成本；未来月空档） */
+/** 日均成本走势（各月末时点的全库日均成本；未来月空档；当年当月截至今日——批B 修复14） */
 function dailyHtml(stats: YearReportStats): string {
+  // 段注随截止口径走：当年报告最后一根真实柱 = 当月截至今日（旧口径写死「各月末时点」与数据不符）
+  const hasCapped = stats.dailyCostTrend.some((c) => c.capped);
   const cols: ColSpec[] = stats.dailyCostTrend.map((c) => ({
     label: c.label,
     value: c.future ? 0 : c.value,
-    display: c.value > 0 ? trimNum(c.value) : '0',
+    display: c.value > 0 ? trimDailyNum(c.value) : '0',
     future: c.future,
     title: c.future
       ? `${c.label}末尚未到来`
-      : `${c.label}末日均 ${trimNum(c.value)}${c.value > 0 ? '/天' : ''}`,
+      : c.capped
+        ? `${c.label}截至今日日均 ${trimDailyNum(c.value)}${c.value > 0 ? '/天' : ''}`
+        : `${c.label}末日均 ${trimDailyNum(c.value)}${c.value > 0 ? '/天' : ''}`,
   }));
   return `<div class="bz-belr-sec">
-  ${secHead('日均成本走势', '口径：各月末时点 ·（总购入 − 转卖回本）/ 累计持有天数')}
+  ${secHead('日均成本走势', `口径：各月末时点${hasCapped ? '（当月截至今日）' : ''} ·（总购入 − 转卖回本）/ 累计持有天数`)}
   ${columnsHtml(cols)}
   </div>`;
-}
-
-/** 日均数值文本（两位内有效：12.5 / 0.03；不拖零尾） */
-function trimNum(n: number): string {
-  return n.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 }
 
 /** 千分位日均数值文本（审查修复批 issue 356）：整数部分与其他金额一致走 zh-CN 千分位（1,234.5） */

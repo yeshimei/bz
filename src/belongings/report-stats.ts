@@ -20,6 +20,16 @@ export function monthLabel(m: number): string {
   return `${m}月`;
 }
 
+/** 日均数值文本（批B 修复13 单源）：两位内去尾零；<0.01 保四位精度。
+ *  原面板卡片（layouts/poster cellHtml 内联）与报告（report.trimNum 私有）双写且特判分叉——
+ *  0.004 元/天卡片显示 0.0040、报告柱顶得 0。收口本函数供两侧同源消费；
+ *  理想归宿是 shared.ts（统计/展示口径层，须与 recoveredOf 下沉同刀），shared 不在本批允许清单，
+ *  暂落统计纯层（纯函数、report.ts 与面板布局均已依赖本文件方向），下沉时原样平移。 */
+export function trimDailyNum(n: number): string {
+  const v = Number(n) || 0;
+  return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+}
+
 // ---------- 日期解析（func P3-5/深审批A：单源收编 shared.parseLocalDay——
 // 严格分量校验版，「2026-13-45」不再被归一化漂移到次年；无效 = null 与面板口径一致） ----------
 
@@ -82,11 +92,13 @@ export interface CategoryShareRow {
   pct: number;
 }
 
-/** 日均成本走势列（各月末时点的全库日均成本；future = 该月末尚未到来） */
+/** 日均成本走势列（各月末时点的全库日均成本；future = 该月末尚未到来，capped = 当月截至今日） */
 export interface DailyCostCol {
   label: string;
   value: number;
   future: boolean;
+  /** 批B 修复14：当年当月列截止点收到「今天」（旧口径当月列恒 future 空档，autumn UX② 旧账） */
+  capped?: boolean;
 }
 
 /** 陪伴最久榜行（截至所选年末/今天；出离条目封口在出离日） */
@@ -190,14 +202,20 @@ export function computeYearReport(
     }))
     .sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, 'zh'));
 
-  // 日均成本走势（各月末时点；未来月标 future 且值恒 0——未实现的月份无成本语义）
+  // 日均成本走势（各月末时点；批B 修复14，autumn UX② 旧账）：未来月标 future 且值恒 0——
+  // 未开始的月份无成本语义；当年**当月**列旧口径 cutoff=下月 1 日恒 future → 全年恒空档
+  // （如 9 月开报告则 9-12 月四列空），现当月截止点收到「今天」（capped），随时间逐步补全
   const dailyCostTrend: DailyCostCol[] = Array.from({ length: 12 }, (_, i) => {
-    const cutoff = new Date(y, i + 1, 1).getTime();
-    const future = cutoff > nowTs;
+    const monthStart = new Date(y, i, 1).getTime();
+    const monthEnd = new Date(y, i + 1, 1).getTime();
+    const future = monthStart > nowTs;
+    const capped = !future && monthEnd > nowTs;
+    const cutoff = capped ? nowTs : monthEnd;
     return {
       label: monthLabel(i + 1),
       value: future ? 0 : avgDailyCostAsOf(items, cutoff),
       future,
+      ...(capped ? { capped } : {}),
     };
   });
 

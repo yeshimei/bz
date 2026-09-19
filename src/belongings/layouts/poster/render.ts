@@ -13,6 +13,7 @@ import {
   filtered, heroTitleText, heroSubText,
   type BelViewState, type MoneyUnit,
 } from '../../shared';
+import { trimDailyNum } from '../../report-stats';
 import type { BelongingsItem } from '../../types';
 
 // ==================== markup 构建器 ====================
@@ -38,13 +39,13 @@ export function panelHtml(): string {
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
+      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类 / 备注…"><button type="button" class="bz-bel-search-clear" data-bel-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
       <div class="bz-bel-yearsel">
-        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, 'bz-bel-select-chev')}</div>
+        <div class="bz-bel-select bz-touch-target" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, 'bz-bel-select-chev')}</div>
         <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, 'bz-bel-select-chev')}</div>
+        <div class="bz-bel-select bz-touch-target" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, 'bz-bel-select-chev')}</div>
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
@@ -84,10 +85,11 @@ export function mobChipsHtml(items: BelongingsItem[], view: BelViewState): strin
   }).join('');
 }
 
-/** 年份下拉选项行（自绘菜单；cur 项挂 is-cur，点击方取 data-v） */
+/** 年份下拉选项行（自绘菜单；cur 项挂 is-cur，点击方取 data-v）。
+ *  data-v 走 esc（批B 修复10）：y 来自 purchase_date.slice(0,4)，手改 json 可为任意串——域内转义链最后一个漏点 */
 export function yearsOptionsHtml(items: BelongingsItem[], cur: string): string {
   return '<div class="bz-bel-dropopt' + (cur === '' ? ' is-cur' : '') + '" data-v="" role="option">全部年份</div>'
-    + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? ' is-cur' : ''}" data-v="${y}" role="option">${y}</div>`).join('');
+    + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? ' is-cur' : ''}" data-v="${esc(y)}" role="option">${y}</div>`).join('');
 }
 
 /** 移动排序下拉选项行（同年份下拉海报皮；与桌面 seg 双向同步，用户拍板） */
@@ -104,7 +106,13 @@ export function segmentedHtml(sort: string): string {
 /** KPI 行（在库件数 hero 可点/在库投入可点/日均成本/已离场·回收；ticket 189 资产合成筛选） */
 export function kpisHtml(items: BelongingsItem[], unit: MoneyUnit = 'cny'): string {
   const gone = items.filter(isExited);
-  const recover = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
+  // 回收口径与统计层单源对齐（批B 修复12，cons ⑤）：仅「已转卖且售价>0」计入回本——
+  // 与 shared.avgDailyCost 扣减、report-stats.recoveredAmount 同一条口径；修复前对全部出离件
+  // 的 sold_price 求和，「已转卖→已丢弃」流转残留的售价也会计入，与年度报告「转卖回血」互相矛盾
+  const recover = gone.reduce(
+    (s, i) => s + (i.current_status === '已转卖' && Number(i.sold_price) > 0 ? Number(i.sold_price) : 0),
+    0,
+  );
   const kpi = (num: string, label: string, opts: { hero?: boolean; click?: boolean } = {}) =>
     `<div class="bz-bel-kpi${opts.hero ? ' bz-bel-kpi--hero' : ''}${opts.click ? ' bz-bel-kpi--click' : ''}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ''}><b>${num}</b><span>${esc(label)}</span></div>`;
   return (
@@ -145,11 +153,13 @@ export function cellHtml(it: BelongingsItem, idx: number, unit: MoneyUnit = 'cny
   const exitNote = gone
     ? `${it.exit_date ? ' → ' + esc(String(it.exit_date).slice(0, 10)) : ''}${it.current_status === '已转卖' && Number(it.sold_price) > 0 ? ' · 售出 ' + moneyShort(Number(it.sold_price), unit) : ''}`
     : '';
-  const dailyStr = daily < 0.01 ? daily.toFixed(4) : daily.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  const dailyStr = trimDailyNum(daily); // 批B 修复13：<0.01 保精度特判收口单源（原与 report.trimNum 双写分叉）
   const mut = gone
     ? `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · 陪伴 ${days || '—'} 天${exitNote}`
     : `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · ${days || '—'} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
-  return `<div class="bz-bel-cell${gone ? ' bz-bel-cell--gone' : ''}${idle ? ' bz-bel-cell--idle' : ''}" data-bel-id="${esc(it.id)}">
+  // 键盘可达（批B 修复6，eff E2 / clipbook C-UI5 先例）：role=button + tabindex + aria-label，
+  // Enter/Space 行为在 ui.ts content keydown 委托（与点击同路开详情/抽屉）
+  return `<div class="bz-bel-cell${gone ? ' bz-bel-cell--gone' : ''}${idle ? ' bz-bel-cell--idle' : ''}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, '0')} — ${esc(catNameOf(it.category) || '未分类')}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(STATUS[key]?.ic || 'box', 'bz-ic--sm')}${esc(it.current_status)}</span>
     <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
@@ -159,9 +169,10 @@ export function cellHtml(it: BelongingsItem, idx: number, unit: MoneyUnit = 'cny
   </div>`;
 }
 
-/** 网格（含 data-bel-grid 钩子；末行 filler 由 renderPanelView 量列后补） */
-export function gridHtml(items: BelongingsItem[], view: BelViewState, unit: MoneyUnit = 'cny'): string {
-  return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx, unit)).join('')}</div>`;
+/** 网格（含 data-bel-grid 钩子；末行 filler 由 renderPanelView 量列后补）。
+ *  list 可选入参（批B 杂项 eff S2）：renderPanelView 已算好的筛选清单直传，免二遍 filtered */
+export function gridHtml(items: BelongingsItem[], view: BelViewState, unit: MoneyUnit = 'cny', list?: BelongingsItem[]): string {
+  return `<div class="bz-bel-grid" data-bel-grid>${(list ?? filtered(items, view)).map((it, idx) => cellHtml(it, idx, unit)).join('')}</div>`;
 }
 
 // ==================== 面板渲染胶水（六步全量重渲；对入参 root 写 innerHTML） ====================
@@ -215,7 +226,9 @@ export function renderPanelView(root: HTMLElement, items: BelongingsItem[], view
     const noMatch = !!view.q || view.status !== null || view.year !== '';
     content.innerHTML = emptyHtml(noMatch);
   } else {
-    content.innerHTML = gridHtml(items, view, unit);
+    // 批B 杂项（eff S2 口径卫生）：同一 list 三算三份收口——筛选结果单趟算好下传 gridHtml，
+    // 不再在 gridHtml 内部二遍 filtered（heroSubText 的内部复算归 shared 签名，另行下沉）
+    content.innerHTML = gridHtml(items, view, unit, list);
     // 末行空位补纸面 filler（P20：黑缝线只出现在卡与卡之间，空区保持纸面）
     const gridEl = content.querySelector('[data-bel-grid]') as HTMLElement;
     const cols = (((getComputedStyle(gridEl).gridTemplateColumns as string) || '').split(' ').filter(Boolean).length) || 1;

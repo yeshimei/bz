@@ -1,4 +1,4 @@
-/* 源指纹 ad6f1e0c589ea8df · 仓内输入 229 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9db6ac61c1519d39 · 仓内输入 229 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -5645,7 +5645,11 @@ var BZW_memo = (() => {
   });
 
   // src/core/esc-manager.ts
-  var escManager;
+  function registerPanelEsc(id, isVisible, close) {
+    if (panelEscHandles.has(id)) return;
+    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
+  var escManager, panelEscHandles;
   var init_esc_manager = __esm({
     "src/core/esc-manager.ts"() {
       escManager = (() => {
@@ -5697,6 +5701,7 @@ var BZW_memo = (() => {
           }
         };
       })();
+      panelEscHandles = /* @__PURE__ */ new Map();
     }
   });
 
@@ -7255,6 +7260,24 @@ var BZW_memo = (() => {
   });
 
   // src/core/ui/modal.ts
+  function bindFormSubmit(popup, onSubmit) {
+    popup.addEventListener("keydown", (e) => {
+      if (e.defaultPrevented || e.isComposing) return;
+      if (e.key !== "Enter") return;
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      onSubmit();
+    });
+    popup.addEventListener("keypress", (e) => {
+      if (e.defaultPrevented) return;
+      if (e.key !== "Enter" || e.ctrlKey || e.metaKey) return;
+      const t = e.target;
+      if (!(t instanceof HTMLInputElement)) return;
+      if (t.dataset.bzNoFormSubmit !== void 0) return;
+      e.preventDefault();
+      onSubmit();
+    });
+  }
   function uiModal(opts) {
     var _a2;
     const prevActive = document.activeElement;
@@ -16712,6 +16735,10 @@ ${countsToText(s.missing)}
   function monthLabel(m) {
     return `${m}月`;
   }
+  function trimDailyNum(n) {
+    const v = Number(n) || 0;
+    return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+  }
   function parseDayTs(raw) {
     var _a2, _b2;
     return (_b2 = (_a2 = parseLocalDay(raw)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null;
@@ -16791,12 +16818,16 @@ ${countsToText(s.missing)}
       pct: purchasedAmount > 0 ? Math.round(v.amount / purchasedAmount * 1e3) / 10 : 0
     })).sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, "zh"));
     const dailyCostTrend = Array.from({ length: 12 }, (_, i) => {
-      const cutoff = new Date(y, i + 1, 1).getTime();
-      const future = cutoff > nowTs2;
+      const monthStart = new Date(y, i, 1).getTime();
+      const monthEnd = new Date(y, i + 1, 1).getTime();
+      const future = monthStart > nowTs2;
+      const capped = !future && monthEnd > nowTs2;
+      const cutoff = capped ? nowTs2 : monthEnd;
       return {
         label: monthLabel(i + 1),
         value: future ? 0 : avgDailyCostAsOf(items, cutoff),
-        future
+        future,
+        ...capped ? { capped } : {}
       };
     });
     const companionCutoff = Math.min(yearEnd, nowTs2);
@@ -16847,7 +16878,7 @@ ${countsToText(s.missing)}
     ctxUnit = unit;
     ctxOnAdd = (_a2 = opts.onAdd) != null ? _a2 : null;
     ctxYears = [];
-    ctxYear = "";
+    if (!maskEl2) ctxYear = "";
     if (maskEl2) {
       startReport();
       return;
@@ -16859,11 +16890,11 @@ ${countsToText(s.missing)}
     <div class="bz-bel-report-head">
       <div class="bz-bel-report-title">年度资产报告</div>
       <div class="bz-bel-report-nav">
-        <button type="button" class="bz-icon-btn" data-belr-prev title="上一年" aria-label="上一年">${iconSpan("chevron-left")}</button>
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-prev title="上一年" aria-label="上一年">${iconSpan("chevron-left")}</button>
         <span class="bz-bel-report-year" data-belr-year>—</span>
-        <button type="button" class="bz-icon-btn" data-belr-next title="下一年" aria-label="下一年">${iconSpan("chevron-right")}</button>
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-next title="下一年" aria-label="下一年">${iconSpan("chevron-right")}</button>
       </div>
-      <button type="button" class="bz-icon-btn bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan("x")}</button>
+      <button type="button" class="bz-icon-btn bz-touch-target bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan("x")}</button>
     </div>
     <div class="bz-bel-report-body" data-belr-body></div>
   </div>`;
@@ -17137,20 +17168,18 @@ ${countsToText(s.missing)}
   </div>`;
   }
   function dailyHtml(stats) {
+    const hasCapped = stats.dailyCostTrend.some((c) => c.capped);
     const cols = stats.dailyCostTrend.map((c) => ({
       label: c.label,
       value: c.future ? 0 : c.value,
-      display: c.value > 0 ? trimNum(c.value) : "0",
+      display: c.value > 0 ? trimDailyNum(c.value) : "0",
       future: c.future,
-      title: c.future ? `${c.label}末尚未到来` : `${c.label}末日均 ${trimNum(c.value)}${c.value > 0 ? "/天" : ""}`
+      title: c.future ? `${c.label}末尚未到来` : c.capped ? `${c.label}截至今日日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}` : `${c.label}末日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}`
     }));
     return `<div class="bz-belr-sec">
-  ${secHead("日均成本走势", "口径：各月末时点 ·（总购入 − 转卖回本）/ 累计持有天数")}
+  ${secHead("日均成本走势", `口径：各月末时点${hasCapped ? "（当月截至今日）" : ""} ·（总购入 − 转卖回本）/ 累计持有天数`)}
   ${columnsHtml(cols)}
   </div>`;
-  }
-  function trimNum(n) {
-    return n.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
   function trimNumThousands(n) {
     return (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
@@ -17231,13 +17260,13 @@ ${countsToText(s.missing)}
     </div>
     <div class="bz-bel-chips" data-bel-chips></div>
     <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON2.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类…"></div>
+      <div class="bz-search">${iconSpan(ICON2.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类 / 备注…"><button type="button" class="bz-bel-search-clear" data-bel-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
       <div class="bz-bel-yearsel">
-        <div class="bz-bel-select" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select bz-touch-target" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
       </div>
       <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-select bz-touch-target" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON2.chevD, "bz-bel-select-chev")}</div>
         <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
       </div>
       <div class="bz-bel-sort" data-bel-sort></div>
@@ -17272,7 +17301,7 @@ ${countsToText(s.missing)}
     }).join("");
   }
   function yearsOptionsHtml(items, cur) {
-    return '<div class="bz-bel-dropopt' + (cur === "" ? " is-cur" : "") + '" data-v="" role="option">全部年份</div>' + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? " is-cur" : ""}" data-v="${y}" role="option">${y}</div>`).join("");
+    return '<div class="bz-bel-dropopt' + (cur === "" ? " is-cur" : "") + '" data-v="" role="option">全部年份</div>' + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? " is-cur" : ""}" data-v="${esc(y)}" role="option">${y}</div>`).join("");
   }
   function sortOptionsHtml(cur) {
     return SORT_OPTS.map((o) => `<div class="bz-bel-dropopt${cur === o.v ? " is-cur" : ""}" data-v="${o.v}" role="option">${o.label}</div>`).join("");
@@ -17282,7 +17311,10 @@ ${countsToText(s.missing)}
   }
   function kpisHtml(items, unit = "cny") {
     const gone = items.filter(isExited);
-    const recover2 = gone.reduce((s, i) => s + (Number(i.sold_price) || 0), 0);
+    const recover2 = gone.reduce(
+      (s, i) => s + (i.current_status === "已转卖" && Number(i.sold_price) > 0 ? Number(i.sold_price) : 0),
+      0
+    );
     const kpi = (num2, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num2}</b><span>${esc(label)}</span></div>`;
     return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
   }
@@ -17307,9 +17339,9 @@ ${countsToText(s.missing)}
     const daily = dailyCostOf(it);
     const key = statusKeyOf(it.current_status);
     const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
-    const dailyStr = daily < 0.01 ? daily.toFixed(4) : daily.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+    const dailyStr = trimDailyNum(daily);
     const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
-    return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}">
+    return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
     <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
@@ -17318,8 +17350,8 @@ ${countsToText(s.missing)}
     <span class="bz-bel-mut">${mut}</span>
   </div>`;
   }
-  function gridHtml(items, view, unit = "cny") {
-    return `<div class="bz-bel-grid" data-bel-grid>${filtered(items, view).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
+  function gridHtml(items, view, unit = "cny", list) {
+    return `<div class="bz-bel-grid" data-bel-grid>${(list != null ? list : filtered(items, view)).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
   }
   function renderPanelView(root, items, view, hooks, unit = "cny") {
     var _a2;
@@ -17360,7 +17392,7 @@ ${countsToText(s.missing)}
       const noMatch = !!view.q || view.status !== null || view.year !== "";
       content.innerHTML = emptyHtml(noMatch);
     } else {
-      content.innerHTML = gridHtml(items, view, unit);
+      content.innerHTML = gridHtml(items, view, unit, list);
       const gridEl = content.querySelector("[data-bel-grid]");
       const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
       const rem = list.length % cols;
@@ -17372,6 +17404,7 @@ ${countsToText(s.missing)}
     "src/belongings/layouts/poster/render.ts"() {
       init_str();
       init_shared4();
+      init_report_stats();
     }
   });
 
@@ -17680,11 +17713,10 @@ ${countsToText(s.missing)}
     return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
   }
   function ensureBelongingsEsc() {
-    if (mainEscRegistered) return;
-    mainEscRegistered = true;
-    escManager.register("bz-bel", {
-      isVisible: () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
-      close: () => {
+    registerPanelEsc(
+      "bz-bel",
+      () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
           return;
@@ -17699,7 +17731,7 @@ ${countsToText(s.missing)}
         }
         closePanel();
       }
-    });
+    );
   }
   async function openPanel() {
     if (M4.overlay) {
@@ -17721,6 +17753,7 @@ ${countsToText(s.missing)}
     M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
     M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M4.year = "";
     M4.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
@@ -17805,11 +17838,35 @@ ${countsToText(s.missing)}
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (!M4.overlay) return;
+        if (M4.overlay !== overlay2) return;
         M4.q = inp.value.trim();
         renderAll();
       }, SEARCH_DEBOUNCE_MS);
-      inp.addEventListener("input", () => debounced());
+      const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
+      const syncClear = () => {
+        if (clearBtn) clearBtn.hidden = !inp.value;
+      };
+      const clearSearch = (refocus) => {
+        debounced.cancel();
+        inp.value = "";
+        M4.q = "";
+        syncClear();
+        renderAll();
+        if (refocus) inp.focus();
+      };
+      syncClear();
+      clearBtn == null ? void 0 : clearBtn.addEventListener("click", () => clearSearch(true));
+      inp.addEventListener("input", () => {
+        syncClear();
+        debounced();
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape" || !inp.value) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        clearSearch(false);
+        inp.blur();
+      });
     };
     bindSearch(overlay2.querySelector("[data-bel-search]"));
     const content = overlay2.querySelector("[data-bel-content]");
@@ -17817,6 +17874,16 @@ ${countsToText(s.missing)}
       const cell = e.target.closest("[data-bel-id]");
       if (!cell) return;
       e.stopPropagation();
+      const it = itemById(cell.dataset.belId);
+      if (!it) return;
+      if (isMobileEnv()) openMobSheet(it);
+      else openBelDetail(it);
+    });
+    content.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const cell = e.target.closest("[data-bel-id]");
+      if (!cell) return;
+      e.preventDefault();
       const it = itemById(cell.dataset.belId);
       if (!it) return;
       if (isMobileEnv()) openMobSheet(it);
@@ -17850,6 +17917,8 @@ ${countsToText(s.missing)}
   }
   function closePanel() {
     stopAutoRefresh();
+    requestCloseBelForm();
+    closeItemMenu();
     closeBelDetail();
     closeBelReport();
     if (bodyThemeObserver) {
@@ -18401,6 +18470,10 @@ ${countsToText(s.missing)}
             else if (cur.sold_price != null) cur.sold_price = null;
             cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
             await saveAndRender();
+            if (document.querySelector(".bz-bel-detail")) {
+              const redrew = itemById(it.id);
+              if (redrew) openBelDetail(redrew);
+            }
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
@@ -18439,12 +18512,9 @@ ${countsToText(s.missing)}
         }
       })();
     });
-    setTimeout(() => {
-      var _a3;
-      return (_a3 = mask.querySelector("#bm-name")) == null ? void 0 : _a3.focus();
-    }, 100);
+    bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, mainEscRegistered, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui4 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -18457,6 +18527,7 @@ ${countsToText(s.missing)}
       init_settings_provider();
       init_flow_dialog();
       init_ui();
+      init_modal();
       init_item_actions();
       init_domain_bus();
       init_belongings_source();
@@ -18477,7 +18548,6 @@ ${countsToText(s.missing)}
       };
       dropDocClick = null;
       DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
-      mainEscRegistered = false;
       autoRefreshOff = null;
       selfWritePending = 0;
       bodyThemeObserver = null;
@@ -34525,8 +34595,8 @@ ${c.trim()}
     return { tag: null, archived: false };
   }
   function ensureFavoritesEsc() {
-    if (mainEscRegistered2) return;
-    mainEscRegistered2 = true;
+    if (mainEscRegistered) return;
+    mainEscRegistered = true;
     escManager.register("bz-fav", {
       isVisible: () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
       close: () => {
@@ -35282,7 +35352,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, mainEscRegistered2, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M6, mainEscRegistered, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -35309,7 +35379,7 @@ GitHub 仓库：${ghInfo.title}
         sort: "new",
         renderFn: null
       };
-      mainEscRegistered2 = false;
+      mainEscRegistered = false;
       _dm = null;
       _ai = null;
       _app2 = null;
