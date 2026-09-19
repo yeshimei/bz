@@ -468,9 +468,17 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## bookshelf（书库）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构审查中）
+## bookshelf（书库）域 · ✅ 闭环（2026-09-20，单批 bz-fix-bs-core 合并部署 54568c51）
 
 > 明细：`.scratch/review-deep/bookshelf-{func,ui,efficiency,consistency}.md`。方向 1：P2×1+P3×5+建议1；方向 2：P1×1+P2×3+P3×4+建议3；方向 3：P1×1+P2×1+P3×4+建议3；方向 4：P1×1+P2×1+P3×5+建议5。跨方向去重：读书笔记孤岛（eff=ui F4=cons C2 → BS1 拍板）、continueReading 裸赋值（func F1=cons C1，升格 P1）、搜索 ESC 清词✕（eff=cons）、热区（ui F6=cons）、100vh（ui F3）。删除口径分歧裁决：划线删除维持确认框（func 判不可逆 + issue 223 只读化拍板在案；cons UX 判可逆属误读，异议登记不采）。旧账：G12 在位、G11 维持证伪、一致#3/issue 291 残款健在。门禁基线：tsc 0；tests/bookshelf 110 例全绿。
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-bs-core`（ef1fe168 + b2df5fd8 同步底，24 项全落地）**：P1 continueReading 假死（showView 统一入口 + changed 自动 cancelReadingReport + 冷开显式定 shelf）、P2 返回书库永挂占位（showView shelf 分支统一 renderAll 兜底三路同收）、100vh→--bz-vvh、批注引号反转义（unescapeComment amp 后置）、weave create/delete 三通道监听、progress 钳负、分类计数口径统一（含未读，与 catFilter 恒等）、unload 走 closeOverlay 单口摘 resize、renderFn 死字段三处删除、notes-ui bindFormSubmit（Ctrl/⌘+Enter）、滚位保持+renderWall/renderChrome 拆分+同签名早退、回落口径单源 applyDefaultView、陈旧假空态（恒 await rebuildItems）、EPUB 编辑失败通知、排序钮/书脊挂 bz-touch-target（书脊命中层 span 视觉 1:1）、借书卡 × 关闭钮 + uiModal title 得 aria、失败通知三轨收编 notifyActionError/error 级、settings 注释纠偏、updateComment 死参数删除、色板 20 类重铺、A1 逆向依赖理顺（删 data→render import，getDisplayItems 本地化）、A3 weave 损坏一次性告警、检索 ESC 二段+尾 ✕。
+- **测试**：110 → 128（+21 新增 bs-core-fix.test.ts 含 C1 死锁场景/TG1 md 写盘→modify→自动刷新集成/A3 损坏告警等；−3 issue 291 冗余断言由 flow-dialog-skin 单源承接）；翻转断言注记在用例内（计数含未读新口径/notice error 化/引号往返）。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + bookshelf 128 + freshness 28 绿；全量 6385 绿（批内）；主线程 pad2 收编后再验 299 绿；部署 **54568c51**；worktree+分支清理。
+- **主线程文档收口**：CONTEXT.md 词条 439 勘误（书库移出统一行操作已接入列表——item-actions 域内零引用，书脊墙自有交互，旧句描述书脊墙重构前形态）+ ADR-0091 后果节补双向回指认可句（stats.ts/index.ts 回指 bookshelf/data 系宿主供数非逆向依赖）。
+- **残款登记**：BS1 读书笔记孤岛拍板后同步四处文档（CONTEXT 96/84 + settings.ts:171-175 悬空 MFS 注释）；eff E4 装箱强制回流未动（与原型装箱同构，重写有漂移风险登记）；UX 拍板项（F9 hover 粘滞/F10 键盘可达/S1 catFilter 持久化/空态清词钮/防抖档位）在 BS 系+F 系。
 
 ### 已入账条目（去重待 5 方向齐）
 
@@ -518,7 +526,7 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## gameshelf（游戏库）域 · 5/5 方向到账，两批定稿（批 A `bz-fix-gs-sync` 已派；批 B `bz-fix-gs-view` 待槽位）
+## gameshelf（游戏库）域 · 5/5 方向到账两批定稿；批 A 已合并（63881bb1），批 B `bz-fix-gs-view` 运行中
 
 > 明细：`.scratch/review-deep/gameshelf-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1：P1×1+P2×2+P3×11；方向 2：P1×1+P2×1+P3×4+UX×6+缺口7；方向 3 效率：P1×1+P2×2+P3×4+UX×1+缺口5；方向 4 一致：P2×1+P3×9+UX×2+缺口3；方向 5 架构：P2×2+P3×6+建议4+缺口6。跨方向去重：整刷失焦（ui G1=eff P1=cons 节流三份三语义，增量通道 renderList 已在只差接线）、转义单源（cons P2=func F9=ui G4=arch A5 四向同源，升级为 core escapeHtml 收编）、触控热区（ui G2=cons）、recent/months 死字段（eff=cons）、双套控件单向同步（eff=ui G5）、metadataCache 守卫（arch A2 是 func F1 修复的配套，防打折）。旧账复核：uiModal 焦点旧账过时（core modal.ts 已有开聚焦/trap/还原）、移动下拉 ESC 冒泡与 lightbox N7 归 core 批维持原判、review-ux-suggestions 3 条（2 缓解维持/1 拆出 GS4）。已核验健壮面：域内零环引用（队列→ui 全走 M 回调槽）、core 控件 11 件复用、原型单源机制在位、main 接线三命令三段式+onunload 链完整、M 十四字段唯一写者、ESC 四层栈序、异步 detached DOM 守卫、媒体三级兜底。门禁基线：tsc 0；tests/gameshelf 118 例全绿（五方向一致）。
 
@@ -542,9 +550,9 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ### 修复批定稿（两批，文件不交叠）
 
-- **批 A `bz-fix-gs-sync`（同步链与队列架构）**：sync.ts/data.ts/state.ts/names.ts/backfill.ts/posters.ts/constants——F1 断链、A1 竞态、A2 守卫、节流统一、关停/双消费者/重拉收敛/超时/尾斜杠/消歧、A4 下沉、A6 死代码、A7 常量表（读侧）、pad2/localDayKey（本批文件内）、synced 事件、熔断收尾通知、recent/months 死字段（数据侧）+ 缺口（竞态/盲区/对称/并发/节流契约/helper）。
-- **批 B `bz-fix-gs-view`（UI 渲染与交互）**：ui.ts/detail.ts/styles.css——整刷→renderSoft+焦点、window.open 收口、热区、转义单源收编（含 stripTitleMarks）、塌陷、三控件互译、openDetail 收预览、防抖、ESC 清词✕（clipbook 范式）、aria-pressed、firstChar、状态行残留、滚位保持、双 renderAll 收口、indexInList 缓存、ESC 层 id、vvh 注释、`url('')` 转义 + 缺口（焦点/bindMediaFallback/modalRepaintFn/renderList/mountOps/互译/高度）。
-- **主线程文档收口**：AGENTS.md 领域清单补 gameshelf 行、CONTEXT.md 词条两处滞后、--bz-vvh 词条打架处。
+- **批 A `bz-fix-gs-sync`（同步链与队列架构）✅ 已合并（63881bb1）**：F1 断链（autoSyncOnOpen 返回 runSync promise）、A1 rebuild 竞态（frontmatter 未变条目复用对象引用）、A2 缓存未就绪守卫（cinema 同款）、A3 节流统一（backfill 防抖改首沿节流）、F6 双消费者（对齐在途自然退出）、F7 负缓存收敛（会话级 noLocale Set 不落盘保自愈）、F8 媒体下载 20s 超时、F11 尾斜杠归一、F12 消歧展示剥、A4 readSteamConfig 下沉 state（sync 留 re-export 待批 B 删）、A6 死代码删除、A7 键台账 constants GS_FM/GS_LEGACY_FM 读侧收编、C2 pad2 部分收编、C6 事件注释+契约测试、S2 熔断一次性 warning（dedupeKey 防双条）。测试 118→143（+25 gs-sync-fix + tests/helpers/frontmatter.ts 共享引擎）；全仓 6392 绿（批内）。**主线程收口已完成**：reconcile/steam 两处 pad2 收编余量（9d77fbfe）。**批 B 合并后余量**：F5 一行（closePanel 末尾 unloadPosters，批 B 在改 closePanel 防冲突）、C2 余量（reconcile lastPlayedStr✅已收/steam dateOnly✅已收/report 月键/ui 排行序号）、A7 余量（reconcile 写侧+LEGACY_KEY_MAP/detail/ui 接 GS_FM）、A4 收尾（detail.ts:21 import 改 state 后删 sync 转发）、AGENTS.md 补 gameshelf 行。
+- **批 B `bz-fix-gs-view`（UI 渲染与交互）运行中**：ui.ts/detail.ts/styles.css——整刷→renderSoft+焦点、window.open 收口、热区、转义单源收编（含 stripTitleMarks）、塌陷、三控件互译、openDetail 收预览、防抖、ESC 清词✕（clipbook 范式）、aria-pressed、firstChar、状态行残留、滚位保持、双 renderAll 收口、indexInList 缓存、ESC 层 id、vvh 注释、`url('')` 转义 + 缺口（焦点/bindMediaFallback/modalRepaintFn/renderList/mountOps/互译/高度）。
+- **主线程文档收口**：AGENTS.md 领域清单补 gameshelf 行、CONTEXT.md 词条两处滞后、--bz-vvh 词条打架处（批 B 合并后一并）。
 - **拍板清单**：GS1 已下架翻回 / GS2 latestrow 键盘 / GS3 密钥明文框 / GS4 会话滚位记忆。
 
 ---
