@@ -762,7 +762,7 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ## auto-summary（自动摘要）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
 
-> 明细：`.scratch/review-deep/auto-summary-func.md`。方向 1（func）：新发现 P3×6 + 旧账在线 P2×1 + P3×2（无新 P1/P2；核心链路「缺失检测→AI→写前重读合并→写回」逐面验证扎实——P1-21 合并写、rename 联动双链、FIFO 收场对称、AI 超时 core 兜底）。旧账复核：**AS1（P2）未修在位为本轮最高在线账**（parser.ts:119 只转义引号/换行 + unquote 不反转义；与 clipbook save.ts yamlEscape C27 已修两侧不对称，含 `\` 值重建写回致值漂移或 frontmatter 解析失败）；**AS2（P3）未修在位且后果链展开**（parser.ts:36 闭合侧强制换行——无尾换行文件 fm=null → 旧 frontmatter 文本被复制进正文区，真实数据损坏面）；AS3（P3 潜伏）维持原判（判据语义错误在案但三现存入口均无双注册形态）；F9 已修闭环。门禁基线：tsc 0；tests/auto-summary 3 文件 70 例全绿。
+> 明细：`.scratch/review-deep/auto-summary-{func,ui}.md`。方向 1（func）：新发现 P3×6 + 旧账在线 P2×1 + P3×2；方向 2（UI）：P3×5 + UX×1（无 P1/P2，本域无独立面板——ESC/vvh/热区无违例面；通知文案/ICONS 合规；设置五键单面呈现）。新归并：N-UI1 批次进度 dedupeKey 撞 core 30s 去重窗（第二批全程无进度只剩凭空「已完成」）；N-UI4 批量失败逐篇常驻 error 堆屏（`autoSummaryEnabled` 默认 true 未配 AI 首跑即刷屏）；N-UI5 回执失真（缺字段静默跳写仍报「已完成」+ 缺口每开必重触发 AI）；N-UI2/N-UI3 手动重跑短文早退与在队去重均零反馈；N5 补范式证据（同通知链「查看」可键盘「重试」不可达即铁证）。（无新 P1/P2；核心链路「缺失检测→AI→写前重读合并→写回」逐面验证扎实——P1-21 合并写、rename 联动双链、FIFO 收场对称、AI 超时 core 兜底）。旧账复核：**AS1（P2）未修在位为本轮最高在线账**（parser.ts:119 只转义引号/换行 + unquote 不反转义；与 clipbook save.ts yamlEscape C27 已修两侧不对称，含 `\` 值重建写回致值漂移或 frontmatter 解析失败）；**AS2（P3）未修在位且后果链展开**（parser.ts:36 闭合侧强制换行——无尾换行文件 fm=null → 旧 frontmatter 文本被复制进正文区，真实数据损坏面）；AS3（P3 潜伏）维持原判（判据语义错误在案但三现存入口均无双注册形态）；F9 已修闭环。门禁基线：tsc 0；tests/auto-summary 3 文件 70 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
