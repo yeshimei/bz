@@ -27,7 +27,6 @@ export const MEMO_ICONS = {
 	clock: 'clock',
 	calendar: 'calendar',
 	recur: 'repeat',
-	clist: 'list-checks',
 	list: 'list',
 	doneFold: 'chevron-down',
 	sceneAll: 'layers',
@@ -157,7 +156,7 @@ export function panelShellHtml(): string {
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
           <div class="bz-memo-composer">
-            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存；/词条 建子任务…">
+            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存…">
             <button class="bz-btn bz-btn--primary" data-memo-composer-add>${iconSpan(MEMO_ICONS.add, 'bz-ic--sm')} 添加</button>
           </div>
         </div>
@@ -168,9 +167,9 @@ export function panelShellHtml(): string {
 /** meta 行 due 注入包（状态/文案由调用方按当下时刻算好） */
 export type MetaDue = { status: 'overdue' | 'today' | 'future'; text: string } | null;
 
-/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→重复→清单进度→截止→时间；
- *  due/recur/进度文案由调用方按当下时刻算好注入——纯层不算时间） */
-export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = '', checkProgress = ''): string {
+/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→重复→截止→时间；
+ *  due/recur 文案由调用方按当下时刻算好注入——纯层不算时间） */
+export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = ''): string {
 	const tags: string[] = [];
 	// 1. 课程（公开课）
 	if (it.scene === '公开课' && it.courseName) {
@@ -201,10 +200,6 @@ export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, recurT
 	if (recurText) {
 		tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${esc(recurText)}</span>`);
 	}
-	// 5.6 清单进度（issue 354：勾完 n/N，文案调用方注入）
-	if (checkProgress) {
-		tags.push(`<span class="bz-memo-tag bz-memo-tag-check" title="子任务进度">${iconSpan(MEMO_ICONS.clist)} ${esc(checkProgress)}</span>`);
-	}
 	// 6. 截止（未完成；due 包由调用方注入）
 	if (due) {
 		tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${esc(due.text)}</span>`);
@@ -225,26 +220,9 @@ export function checkHtml(it: MemoItem): string {
 	return `<span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check role="checkbox" tabindex="0" aria-checked="${it.completed ? 'true' : 'false'}" aria-label="${label}" title="${label}"></span>`;
 }
 
-/** 清单子任务行组（issue 354，ADR-0104 纯层 markup：标题之下、meta 之上；
- *  锚点 data-memo-cl="itemId:idx"，点击行为接线在 ui.ts；父项完成态整组淡显）。
- *  键盘可达（M3-10）：行 = role="checkbox" + tabindex + aria-checked（同勾选圈口径） */
-export function checklistHtml(it: MemoItem): string {
-	const cl = it.checklist || [];
-	if (!cl.length) return '';
-	const rows = cl
-		.map(
-			(c, i) => `<div class="bz-memo-cl-row${c.done ? ' is-done' : ''}" data-memo-cl="${esc(it.id)}:${i}" role="checkbox" tabindex="0" aria-checked="${c.done ? 'true' : 'false'}">
-        <span class="bz-memo-cl-box${c.done ? ' bz-memo-cl-on' : ''}"></span>
-        <span class="bz-memo-cl-text">${esc(c.text)}</span>
-      </div>`
-		)
-		.join('');
-	return `<div class="bz-memo-cl${it.completed ? ' bz-memo-cl-dim' : ''}">${rows}</div>`;
-}
-
 /** 标题命中高亮（效率#7）：先 escapeHtml 再大小写不敏感 `<mark>` 包裹——
  *  转义后的文本与转义后的关键词做 indexOf 分段（不劈开 &amp; 等实体，防注入）；
- *  kw 空/无命中原样返回。只做 title 一段（清单/meta 命中靠条目级召回） */
+ *  kw 空/无命中原样返回。只做 title 一段（meta 命中靠条目级召回） */
 export function highlightTitleHtml(title: string, kw: string): string {
 	const safe = esc(title);
 	const needle = esc((kw || '').trim()).toLowerCase();
@@ -264,10 +242,10 @@ export function highlightTitleHtml(title: string, kw: string): string {
 	return out;
 }
 
-/** 条目卡（勾选/标题/清单子任务/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts）。
+/** 条目卡（勾选/标题/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts）。
  *  kw（效率#7）：搜索关键词，标题段命中 `<mark>` 高亮；tabindex="0"（M3-10 键盘可达，
  *  Enter/Space 开条目菜单由 ui.ts wireCards 接线） */
-export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = '', checkProgress = '', kw = ''): string {
+export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText = '', kw = ''): string {
 	const titleCls = it.completed ? ' bz-memo-done' : '';
 	const clickable = !!(it.linkedNote || it.url);
 	const titleText = highlightTitleHtml(it.title, kw);
@@ -278,8 +256,7 @@ export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, recurText 
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        ${checklistHtml(it)}
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText, checkProgress)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText)}</div>
       </div>
     </div>`;
 }

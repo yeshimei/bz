@@ -1,4 +1,4 @@
-/* 源指纹 4456677b418e7882 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 888957bad048ebd6 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -34,7 +34,6 @@ var BZR_memo = (() => {
     calStatsHtml: () => calStatsHtml,
     cardHtml: () => cardHtml,
     checkHtml: () => checkHtml,
-    checklistHtml: () => checklistHtml,
     doneBarHtml: () => doneBarHtml,
     doneMoreHtml: () => doneMoreHtml,
     dueIconName: () => dueIconName,
@@ -91,7 +90,6 @@ var BZR_memo = (() => {
     clock: "clock",
     calendar: "calendar",
     recur: "repeat",
-    clist: "list-checks",
     list: "list",
     doneFold: "chevron-down",
     sceneAll: "layers",
@@ -185,14 +183,14 @@ var BZR_memo = (() => {
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
           <div class="bz-memo-content" data-memo-content></div>
           <div class="bz-memo-composer">
-            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存；/词条 建子任务…">
+            <input class="bz-input" type="text" data-memo-composer-input placeholder="输入内容，Enter 保存…">
             <button class="bz-btn bz-btn--primary" data-memo-composer-add>${iconSpan(MEMO_ICONS.add, "bz-ic--sm")} 添加</button>
           </div>
         </div>
       </div>
     </div>`;
   }
-  function metaTagsHtml(it, due, relTime, recurText = "", checkProgress = "") {
+  function metaTagsHtml(it, due, relTime, recurText = "") {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
       tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
@@ -220,9 +218,6 @@ var BZR_memo = (() => {
     if (recurText) {
       tags.push(`<span class="bz-memo-tag bz-memo-tag-recur" title="周期重复：完成后自动生成下一期">${iconSpan(MEMO_ICONS.recur)} ${escapeHtml(recurText)}</span>`);
     }
-    if (checkProgress) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-check" title="子任务进度">${iconSpan(MEMO_ICONS.clist)} ${escapeHtml(checkProgress)}</span>`);
-    }
     if (due) {
       tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
     }
@@ -234,17 +229,6 @@ var BZR_memo = (() => {
   function checkHtml(it) {
     const label = it.completed ? "恢复未完成" : "标记完成";
     return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check role="checkbox" tabindex="0" aria-checked="${it.completed ? "true" : "false"}" aria-label="${label}" title="${label}"></span>`;
-  }
-  function checklistHtml(it) {
-    const cl = it.checklist || [];
-    if (!cl.length) return "";
-    const rows = cl.map(
-      (c, i) => `<div class="bz-memo-cl-row${c.done ? " is-done" : ""}" data-memo-cl="${escapeHtml(it.id)}:${i}" role="checkbox" tabindex="0" aria-checked="${c.done ? "true" : "false"}">
-        <span class="bz-memo-cl-box${c.done ? " bz-memo-cl-on" : ""}"></span>
-        <span class="bz-memo-cl-text">${escapeHtml(c.text)}</span>
-      </div>`
-    ).join("");
-    return `<div class="bz-memo-cl${it.completed ? " bz-memo-cl-dim" : ""}">${rows}</div>`;
   }
   function highlightTitleHtml(title, kw) {
     const safe = escapeHtml(title);
@@ -264,7 +248,7 @@ var BZR_memo = (() => {
     }
     return out;
   }
-  function cardHtml(it, due, relTime, recurText = "", checkProgress = "", kw = "") {
+  function cardHtml(it, due, relTime, recurText = "", kw = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
     const titleText = highlightTitleHtml(it.title, kw);
@@ -273,8 +257,7 @@ var BZR_memo = (() => {
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        ${checklistHtml(it)}
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText, checkProgress)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, recurText)}</div>
       </div>
     </div>`;
   }

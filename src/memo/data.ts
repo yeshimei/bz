@@ -62,35 +62,15 @@ export function normalizeRecur(v: unknown): MemoRecur | null {
 }
 
 /** checklist 字段归一（issue 354，零迁移）：逐项 {text,done} 清洗（text 转字符串、done 归布尔、
- *  空 text 行剔除）；非数组/清洗后为空一律 null（旧数据与手改脏数据都安全回落「无清单」） */
+ *  空 text 行剔除）；非数组/清洗后为空一律 null（旧数据与手改脏数据都安全回落「无清单」）。
+ *  UI 侧已退役（清单渲染/编辑/composer 语法退场），仅数据层保留：旧数据带 checklist 字段
+ *  照常载入原样落盘，不再呈现。 */
 export function normalizeChecklist(v: unknown): MemoCheckItem[] | null {
   if (!Array.isArray(v)) return null;
   const items = v
     .map((c: any) => ({ text: String(c?.text ?? '').trim(), done: !!c?.done }))
     .filter((c) => c.text.length > 0);
   return items.length ? items : null;
-}
-
-/**
- * composer 约定语法解析（issue 354）：「筹备旅行 /订机票 /订酒店」——
- * 空白分隔的 `/词条` token 逐个收进清单（词条本身不含空白与 `/`；含第二个 `/` 的
- * 形如 /etc/nginx.conf 的 Unix 路径 token 不收，归回标题，审查 P2 修复批）；
- * 其余文本为标题。全部是词条（无标题）时首词条升格为标题；无词条时 checklist = null（普通条目）。
- * 纯函数；URL 不受影响（https:// 开头不以 / 起始，路径型 token 如 24/7 也不带前导斜杠）。
- */
-export function parseComposerChecklist(raw: string): { title: string; checklist: MemoCheckItem[] | null } {
-  const text = raw.trim();
-  if (!text) return { title: '', checklist: null };
-  const items: MemoCheckItem[] = [];
-  const titleParts: string[] = [];
-  for (const tok of text.split(/\s+/)) {
-    // `/词条`：以 / 起始、长度 >1、词条内无第二个 /（Unix 绝对路径不收）
-    if (tok.length > 1 && tok.startsWith('/') && !tok.slice(1).includes('/')) items.push({ text: tok.slice(1), done: false });
-    else titleParts.push(tok);
-  }
-  let title = titleParts.join(' ').trim();
-  if (!title && items.length) title = items.shift()!.text; // 全是词条：首词条升格为标题
-  return { title, checklist: items.length ? items : null };
 }
 
 /**

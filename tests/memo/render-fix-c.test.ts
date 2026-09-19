@@ -11,7 +11,7 @@
  *   9  效率#5 搜索框 ESC 清词不关面板
  *   10 效率#6 搜索 ✕ 清除 + 空态「清除搜索」钮
  *   11 效率#7 命中高亮（先转义后 <mark>，防注入）
- *   12 效率#8 搜索域扩展（清单子任务/链接）
+ *   12 效率#8 搜索域扩展（链接；清单子任务文本部分随清单 UI 退役删除）
  *   13 效率#9 搜索增量显隐（DOM 探针证明未整墙重建）
  *   14 效率#10 桌面双击卡体直开编辑器
  *   15 一致#7 stripMdExt 下沉 core/ui/str（utils 转发 + render 消费；纯度由 render-purity 守卫）
@@ -198,7 +198,7 @@ describe('批C · 条目11 效率#7 命中高亮', () => {
     expect(highlightTitleHtml('abc', 'zz')).toBe('abc');
     const h = cardHtml(
       { id: 'k1', title: '完成阅读报告', scene: '学习', priority: 'minor', created: '', completed: null, due: null, notePath: null, notePosition: null, scriptName: null, courseName: null, coursePath: null, linkedNote: null, url: null, recur: null, checklist: null } as any,
-      null, '', '', '', '报告'
+      null, '', '', '报告'
     );
     expect(h).toContain('<mark>报告</mark>');
   });
@@ -255,22 +255,6 @@ describe('批C · 条目7 M3-10 键盘可达', () => {
       const data = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
       expect(data.find((i: any) => i.id === 'a')?.completed).toBeTruthy();
     }, { timeout: 2000 });
-  });
-
-  it('清单子任务行键盘 Space 切换勾选', async () => {
-    const { app, vault } = seedVault();
-    openMemoPanel(app);
-    await vi.waitFor(() => {
-      expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
-    });
-    const row = document.querySelector('[data-memo-cl="c:0"]') as HTMLElement;
-    expect(row.getAttribute('role')).toBe('checkbox');
-    expect(row.getAttribute('aria-checked')).toBe('false');
-    row.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
-    await vi.waitFor(() => {
-      const data = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
-      expect(data.find((i: any) => i.id === 'c')?.checklist[0].done).toBe(true);
-    });
   });
 });
 
@@ -367,19 +351,13 @@ describe('批C · 条目10 效率#6 搜索清除', () => {
 });
 
 describe('批C · 条目12 效率#8 搜索域扩展', () => {
-  it('清单子任务文本与链接可被检索', async () => {
+  it('条目链接（url）可被检索', async () => {
     const { app } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
       expect(document.querySelectorAll('.bz-memo-card').length).toBe(3);
     });
     const inp = document.querySelector('[data-memo-search]') as HTMLInputElement;
-    inp.value = '订机票';
-    inp.dispatchEvent(new Event('input'));
-    await vi.waitFor(() => {
-      expect(visibleCards().length).toBe(1);
-      expect(visibleCards()[0].dataset.memoId).toBe('c');
-    });
     inp.value = 'example.com/trip';
     inp.dispatchEvent(new Event('input'));
     await vi.waitFor(() => {
