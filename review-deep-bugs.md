@@ -237,6 +237,54 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 ### 主线程收口清单（合并后）
 ① F6：unloadReview 补 `resetQuiz()` 调用（批 C 建导出）；② A7：app.ts:158-163 / render.ts:75-80 / stats-ui.ts:321-328 三处切 fsrs.currentR（批 A 建单源）；③ C3：render.ts:550 切 str.stripTitleMarks；④ A15：.spinner 使用处 DOM 类名随 .bz-q-spinner（grep 定位）；⑤ E 批「现状钉死」开关翻转；⑥ 跨批守卫计数/mock 适配；⑦ 各批边界漏项。
 
+### review 修复闭环（2026-09-19）
+五批分支 `bz-fix-review-{algo,orch,dialog,sprint,panel}` 串行并入（合并序 A→E，零冲突）。**主线程收口九项**：①F6 unloadReview 接 `resetQuiz()`（批 C 建导出）；②A7 app.currentR/render.currentRPct/stats-ui curR 三处切 `fsrs.currentR`（批 A 建单源，queue/stats 批内已切）；③C3 render《》正则切 `str.stripTitleMarks`；④A15 render `.spinner`→`.bz-q-spinner`（DOM 侧随批 E 样式改名）；⑤watch 批量收编/移除接 `addItems/removeItems` 单趟 RMW；⑥难度弹窗死导出 `difficultyDialogHtml` + styles 自绘族两段删除（批 C 已迁 flow-dialog choice，旧 `.difficulty-dialog` 清场语句同步改 `cancelActiveFlowDialog()`）；⑦T1 卸载清场断言适配 flow-dialog 形态（`__shared_confirm_popup__`）；⑧settings-copy-lint 白名单冗余条目删；⑨（无 E 批开关——本轮无独立测试批）。**门禁**：tsc 0 错；全量 395 文件 6124 例全绿（起点 366 文件 5780；memo 回滚后基线再起步）；`pnpm run build` 部署（707769a0）。**批边界残款（登记不修）**：批 B——runSprintSession 内部 `!quiz?.ai` 为纵深防御维持、F8 仅门禁内移+透传（完整 RMW 合并需 scheduleNext 入队，风险大）；批 E 报备——settings-panel 渲染器 number 行不回写输入框（R9 缝，记 settings-panel 域轮）；批 C——难度弹窗 1-4 快捷键已挂 flow-dialog action 契约。**FSRS F1 选型**：下界取 `min(D,1)` 软钳（纯 clamp [1,10] 会打红既有 app.test 锚定；D≥1 严格 [1,10]、存量 D<1 直通，语义更守恒）。
+
+## encrypt（保险库）2026-09-19 深审
+
+> 明细：`.scratch/review-deep/encrypt-{func,ui,efficiency,consistency,arch}.md`。5 方向并行审查；新发现合计 58 条（P1×5 + P2×16 + P3×37）+ [UX-Suggestion]×7 + 测试缺口 6。门禁基线：tsc 0 错；tests/encrypt 12 文件 208 例全绿。去重后 **修复项 P1×2 + P2×12 + P3×22**（分四批）；UI/交互类 8 项分流 `review-deep-ui-pending.md`；姊妹域（password-vault）6 条记 pv 域轮；技术债 4 项登记。旧账复核：review-fix-lock E 系 12 条全部已修在位；review-all2 **N9/N10/N11 未修确认本轮收口**、N12 维持登记；ux#8/9/10/11 维持未采纳（转入待拍板历史搁置）。
+
+### P1（2 项，均多方向交叉确认）
+- **移动端 @media 全套样式被误删（issue 346 回归）** `styles.css:334-335`（func/ui/eff/cons 四方向同报，git 实锤 `bbf5bcf9` +4/−154）——ADR-0155 清退 `.bz-pwv-*` 时把整段 `@media (max-width:768px)` 连带删除（bz-vault-desk 隐藏/mob 显示/mbar/msearch/mseg/mbody/mobpage 全套），≤768px 移动壳恒隐、桌面三栏硬塞手机、移动 DOM 每轮白建。修：从 `bbf5bcf9^` 取回该段剔除 pwv 残留后恢复 + 构建产物冒烟断言防再删。
+- **加密日记资产「半退役」三方矛盾** `ui.ts:571-573,601-604,641-643,1659-1661`（cons P1）——ADR-0158 明文拍板「两资产（笔记+日记）」、CONTEXT 词条同口径，但 `b86a20c4`（无人值守自主拍板）撤了 nav/seg 日记入口且 setAsset 把 diary 兜底成 note：diary 整面 UI 不可达死面、存量老加密日记「只能经保险库面板救回」的路径消失。**拍板：恢复 diary 资产入口**（对齐 ADR-0158 权威拍板，nav/seg 补 k-diary 项 + 删两处兜底，样式与死代码本就在，恢复即活；b86a20c4 属无人值守越权且晚于其两日的 ADR-0158 未追认）。
+
+### P2（12 项）
+- **manifestSaveFailed「重试即收敛」承诺不可达** `data.ts:1257-1268,1343-1352`（func 新-3 = arch 新-1）——还原收尾先删镜像后存清单，落盘失败后重试在阶段一即判冲突永久卡死，文案误导。修：调序 saveManifest 先于 deleteNoteMirrors（孤儿密文体检可清，自洽）+ 文案修正 + T1 重试收敛回归（现有用例标题称幂等实无断言）。
+- **restoreDiaryEntry 未入 opQueue（E13 漏网）** `data.ts:1308-1353`（arch 新-2）——秒级解密窗口内并发 removeNote 按 idx splice 可删错条目密文。修：包 enqueueOp + T2 竞态探针。
+- **decodeURIComponent 未捕获 URIError** `ui.ts:150,218,330`（func 新-1 P1）——附件名含孤立 `%` 时「加密当前笔记」整链静默失败（unhandled rejection 零反馈）。修：safeDecode 三处 + lockCurrentNote 兜底 catch + notifyActionError。
+- **面板「还原回日记」不复算当前日记目录** `ui.ts:1893-1928 × data.ts:1308`（func 新-4）——改过日记目录后还原条目 merge 进旧目录「凭空消失」。修：realign 语义下沉 SafeManager.restoreDiaryEntry（basename → 当前日记目录），与 diary 域 D9 同规则。
+- **附件读取无体积守卫** `ui.ts:2352-2383`（func 新-5 = arch 附带）——数百 MB 视频全量进内存移动端 OOM。修：64MB 拦截对齐 diary 侧现成口径（超限跳过并通知，全部超限整笔拒绝）。
+- **上锁不关预览浮层/弹窗游离空闲计时（N9 同根）** `ui.ts:736-748,1699-1717,680-683`（ui 新-2）——上锁后预览明文残留屏上；弹窗内操作不重置 15 分钟计时到点照锁；lockNow/hide 不收场弹窗。修：hide/lockNow 收场 closePreview()+closeAllDialogs() + bump 改 document 捕获。
+- **卸载清不到现役锁屏（closeAllDialogs 选择器已无产出者）** `ui.ts:1627-1629`（ui 新-3 = arch 新-3）——禁用插件时解锁屏/销毁确认残留且仍可真实解锁。修：补 `.bz-lockscreen--mask` 清扫 + T5。
+- **移动端概览交互全哑** `ui.ts:1739-1745`（ui 新-4）——hero/统计卡/流水/体检卡零绑定（P1 恢复后立即暴露）。修：bindOverviewArea 抽公共供桌面/移动共用。
+- **列表滚位归零** `ui.ts:1481-1503`（eff 新-2）——选中/搜索/删除后跳顶，违会话滚位范式。修：重建前后记录还原 scrollTop。
+- **搜索 ESC 直关面板（安全模式附带误上锁）** `ui.ts:690-706`（eff 新-3）——无 ESC 清词无 ✕。修：有词清词 stopPropagation、无词放行，列表头补 ✕（范式对齐；壳收编 uiSearch 待拍板）。
+- **statusbarHtml 双份逐字实现** `ui.ts:88-91 × index.ts:42-45`（cons 新-3 = arch 新-7）——修：vault-assets-view 单源导出两侧消费。
+- **同域销毁防护双档** `ui.ts:1832-1890 vs 1943-1961`（cons 新-4）——笔记销毁重输主密码、日记销毁仅普通确认。修：confirmDestroyDiary 升级对齐笔记侧（verifyPassword 复用）。
+
+### P3（22 项，摘要）
+- **数据层**：selfHeal 不入 opQueue 且先广播后自愈（func 新-6 = arch 新-4，enqueueOp 包裹）；resolveHealth 缺 `.safe.enc` 排除（arch 新-5，isOrphanEncName 单源 + 负向用例）；updateNotePayload 冗余整库重写（arch 新-6，contentRef 未变跳过 saveManifest 改显式广播带 noteId，顺带缓解 N12）；SafeManager.lock 幂等短路（func 新-7，安全模式 4 轮广播收敛）。
+- **UI 会话**：概览先 slice 后排序（func 新-2）；hero 计数口径 + 日记流水死端点击（func 新-8/ui 新-5，随 diary 恢复拍板一并：hero=笔记+日记，流水点击落对应资产）；N10 外部上锁空态+明文缓存驻留+hero 硬编码（订阅 unlock-changed 清缓存/锁屏接管/动态化——安全敏感）；N11 解锁屏单例守卫；解锁 busy 防重（ui 新-6）；预览 null 静默空白（ui 新-7）；体检重入守卫（eff 新-7）；体检锁定态误报全绿（func 建-1，锁定态禁扫+如实提示）；密码错误双通知 encrypt 侧（eff 新-8，pv 侧记 pv 域轮）；captureLockStats 挪消费点 + pwDataManager.load 一次化（eff 新-4 + arch 新-9 最小改）；打开路径重绘 2-3 次收敛（eff 新-5）。
+- **渲染/收尾**：死代码批（focusUnlockInput、DEFAULT_PW_CHARSET 再导出、LOCK_KIND_META 降常量、restoreLastAsset 注释）；死样式整批（ui 新-8 表 + cons 新-10，含非法 `-var()`；`.k-diary` 族随入口恢复转活保留）；空态走 emptyHtmlStr（cons 新-12）；错误文案四处 notifyActionError（cons 新-5）；时间格式统一 zh-CN hour12:false（cons 新-13 encrypt 侧）；还原按钮内联样式改 .bbtn.indigo（cons 新-16）；index.ts 旗标后置 + void 链 catch（arch 新-10）；renderWithTimeout Component unload（arch 新-11）；CONTEXT.md 保险库词条四处按现状改写（cons 新-14，含 bz-encrypt-lock 语义错位备注）；home 副题「密码·加密笔记·日记」→「加密笔记·加密日记」（cons 新-15，随 diary 拍板一行）。
+
+### 姊妹域记名（password-vault 域轮处理，本轮不动 pv 文件）
+安全模式判定双口径对齐（cons 新-6）、首设流程统一 core 三态（cons 新-7）、openExternal 私有副本收编（cons 新-8）、共用口径漂移清单（cons 新-9：防抖收编/toast 语义/解锁文案/「保险箱」旧称/载荷失败文案）、N18① 冗余 lock、密码错误双通知 pv 侧、安全模式 desc 文案对齐。
+
+### UI/交互分流（8 项 → review-deep-ui-pending.md，本轮不修）
+列表多选批量、设置入口可发现性、软删除撤销对齐（拍板项）、搜索壳收编 uiSearch（行为已随批修）、图标机制统一 iconSpan/mountIcons、pv 首设流程统一、工作台键盘可达性体系（↑↓/Enter roving tabindex，全站范式未定）、旧建议 ux#8/9/10/11 重呈。
+
+### 技术债登记（随触碰收）
+明文缓存复用（预览/复制/还原重复解密——PBKDF2 LRU 已兜大头，跨批协调成本高）；N12 广播时序（arch 新-6 已缓解）；共享锁统计契约下沉 core（最小改已做，接口化待 core 线）；cons 新-13 pv desc 对齐（记 pv 域轮）。
+
+### 修复批分工（4 worktree，文件互不重叠）
+- **A 数据层** `bz-fix-encrypt-data`（data.ts + data/d2 测试）：P2×2（manifestSaveFailed 调序+T1、restoreDiaryEntry enqueueOp+T2）+ P3×4（selfHeal、resolveHealth+T4、updateNotePayload 广播、lock 短路）+ func 新-4 data 侧下沉。
+- **B ui 会话安全区** `bz-fix-encrypt-dialog`（ui.ts 弹窗/锁屏/预览/加密链/体检/收场行区 + enh-ui/ui-cov 测试）：P2×4（decodeURI、上锁收场+N9、锁屏清扫+T5、销毁防护对齐）+ P3×8（N10/N11、busy、预览 null、体检重入、体检锁定态、密码通知单条、统计快照挪点、死代码三处、错误文案四处）。
+- **C ui 渲染导航区** `bz-fix-encrypt-view`（ui.ts 渲染/列表/概览/移动/setAsset/openManager 行区 + vault-assets-view.ts + index.ts + ui.test）：P1×1（diary 入口恢复）+ P2×3（概览绑定、滚位、搜索 ESC/✕）+ P3×6（slice 排序、hero 口径、流水落点、statusbar 单源、空态单源、index 旗标、时间格式、Component unload、打开重绘收敛）。
+- **D 样式与文档** `bz-fix-encrypt-style`（styles.css + CONTEXT.md + src/home/shared.ts + 冒烟测试）：P1×1（@media 恢复+断言）+ 死样式批 + .bbtn.indigo + CONTEXT 词条 + home 副题。
+
+### 主线程收口清单（合并后）
+① `.k-diary` 族生死核对（批 C 恢复入口后批 D 须保留该族，合并序 C→D）；② statusbarHtml 三方接线核对；③ 跨批测试适配；④ preview 产物 rebuild 仪式；⑤ 各批边界漏项。
+
 ---
 
-（下一域：encrypt）
+（下一域：password-vault）
