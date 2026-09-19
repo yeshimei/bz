@@ -27,7 +27,9 @@ export const POMODORO_HISTORY_FIELDS = ['ts', 'duration', 'task'];
 
 /** 段级约定（各域数据根对象键集） */
 export const SEGMENT_FIELDS: Record<string, string[]> = {
-  'pomodoro.json': ['version', 'state', 'history'],
+  // archived = issue 357 周归档可选段（深审 PA-1：本插件自己写的正常归档数据，不得被体检
+  // 误报「约定外数据段/可能是外部写入」；旧文件缺此段走「缺少数据段」info 常态，不修数据）
+  'pomodoro.json': ['version', 'state', 'history', 'archived'],
   'clipbook.json': ['articleOverrides', 'savedArchive', 'order'],
   'news.json': ['articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds'],
   'home.json': ['version', 'pinned'],
