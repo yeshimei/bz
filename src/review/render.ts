@@ -9,9 +9,9 @@
  * 纯度契约（tests/core/render-purity.test.ts）：import 图仅限本域 + 零模块级可变状态；
  * 禁 obsidian/moment/core 服务。日期一律「now 参数注入」——可测、可评审壳重放。
  */
-import { emptyHtmlStr, esc, iconSpan } from '../core/ui/str';
+import { emptyHtmlStr, esc, iconSpan, stripTitleMarks } from '../core/ui/str';
 import type { ReviewItem } from './data';
-import { FSRS, DEFAULT_W, TOTAL_STAGES } from './fsrs';
+import { DEFAULT_W, TOTAL_STAGES, currentR as fsrsCurrentR } from './fsrs';
 import { partitionQueue, isEarlyDue } from './queue';
 import { computeStats, RATING_NAMES } from './stats';
 
@@ -70,12 +70,10 @@ export function isPlayable(item: ReviewItem, now: number = Date.now()): boolean 
   return new Date(item.nextReviewDate).getTime() <= now;
 }
 
-/** FSRS 相位当前保留率 %（与调度排期同权重源；阶梯/无 lastReviewed → null） */
+/** FSRS 相位当前保留率 %（与调度排期同权重源；阶梯/无 lastReviewed → null）。A7：公式单源 fsrs.currentR */
 export function currentRPct(item: ReviewItem, w: number[] = DEFAULT_W, now: number = Date.now()): number | null {
-  if (item.phase !== 'fsrs' || !item.stability || !item.lastReviewed) return null;
-  const t = (now - new Date(item.lastReviewed).getTime()) / 86400000;
-  if (!(t > 0)) return null;
-  return Math.round(new FSRS(w).R(t, item.stability) * 100);
+  const R = fsrsCurrentR(item, w, now);
+  return R === null ? null : Math.round(R * 100);
 }
 
 /** 卡片右上阶段号（FSRS Lv.n / 阶梯 n/10 / 挂起） */
@@ -268,7 +266,7 @@ export function sprintHeadHtml(): string {
 }
 
 export function sprintLoadingHtml(): string {
-  return `<div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
+  return `<div class="bz-sprint-loading"><span class="bz-q-spinner"></span>正在获取题目…</div>`;
 }
 
 /** 选项列（answered 后标对错；sel = 已选索引数组） */
@@ -522,19 +520,7 @@ export function quizPracticeSummaryHtml(r: { correct: number; wrong: number; ski
     </div>`;
 }
 
-// ==================== 难度弹窗 / 悬浮迷你评级条 ====================
-
-/** 难度弹窗（评分命令用；showDifficultyDialog 消费） */
-export function difficultyDialogHtml(item: { name: string }): string {
-  return `
-      <h4>标记复习：${esc(item.name)}</h4>
-      <button class="diff-btn" data-diff="again">忘了（Again）</button>
-      <button class="diff-btn" data-diff="hard">困难（Hard）</button>
-      <button class="diff-btn" data-diff="good">一般（Good）</button>
-      <button class="diff-btn" data-diff="easy">简单（Easy）</button>
-      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
-    `;
-}
+// ==================== 悬浮迷你评级条 ====================
 
 /** 悬浮迷你评级条（item 4，普通复习路径）。A6：评级中文名单源 stats.RATING_NAMES
  *  （原内联映射与 sprint 结果卡两名漂移——「简单」vs「轻松」，统一为「简单」） */
@@ -543,7 +529,7 @@ export function reviewBarHtml(p: { name: string; index: number; total: number })
     .map((r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r}" data-rating="${r}">${RATING_NAMES[r]}</button>`)
     .join('');
   return `
-    <span class="bz-review-bar-info">${esc(p.name.replace(/^《|》$/g, ''))}<i>(${p.index}/${p.total})</i></span>
+    <span class="bz-review-bar-info">${esc(stripTitleMarks(p.name))}<i>(${p.index}/${p.total})</i></span>
     <span class="bz-review-bar-act">${btns}
       <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${'跳过'}</button>
     </span>`;

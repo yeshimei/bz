@@ -1,4 +1,4 @@
-/* 源指纹 4cdcd49a05994536 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 90a7324204e56134 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
@@ -25,7 +25,6 @@ var BZR_review = (() => {
   __export(render_exports, {
     cardHtml: () => cardHtml,
     currentRPct: () => currentRPct,
-    difficultyDialogHtml: () => difficultyDialogHtml,
     dueLabelOf: () => dueLabelOf,
     futureInLabel: () => futureInLabel,
     isPlayable: () => isPlayable,
@@ -67,6 +66,9 @@ var BZR_review = (() => {
   function localDayKey(ts = Date.now()) {
     const d = ts instanceof Date ? ts : new Date(ts);
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function stripTitleMarks(s) {
+    return String(s || "").replace(/^《|》$/g, "");
   }
 
   // src/review/fsrs.ts
@@ -273,10 +275,8 @@ var BZR_review = (() => {
     return new Date(item.nextReviewDate).getTime() <= now;
   }
   function currentRPct(item, w = DEFAULT_W, now = Date.now()) {
-    if (item.phase !== "fsrs" || !item.stability || !item.lastReviewed) return null;
-    const t = (now - new Date(item.lastReviewed).getTime()) / 864e5;
-    if (!(t > 0)) return null;
-    return Math.round(new FSRS(w).R(t, item.stability) * 100);
+    const R = currentR(item, w, now);
+    return R === null ? null : Math.round(R * 100);
   }
   function stageNum(item) {
     var _a;
@@ -423,7 +423,7 @@ var BZR_review = (() => {
       </div>`;
   }
   function sprintLoadingHtml() {
-    return `<div class="bz-sprint-loading"><span class="spinner"></span>正在获取题目…</div>`;
+    return `<div class="bz-sprint-loading"><span class="bz-q-spinner"></span>正在获取题目…</div>`;
   }
   function sprintOptsHtml(q, answered, sel, lastCorrect) {
     return q.options.map((opt, i) => {
@@ -581,20 +581,10 @@ var BZR_review = (() => {
       <div class="bz-qp-foot">答错的题留在题库，下轮再见。</div>
     </div>`;
   }
-  function difficultyDialogHtml(item) {
-    return `
-      <h4>标记复习：${esc(item.name)}</h4>
-      <button class="diff-btn" data-diff="again">忘了（Again）</button>
-      <button class="diff-btn" data-diff="hard">困难（Hard）</button>
-      <button class="diff-btn" data-diff="good">一般（Good）</button>
-      <button class="diff-btn" data-diff="easy">简单（Easy）</button>
-      <button class="diff-btn diff-btn-cancel" data-diff="cancel">取消</button>
-    `;
-  }
   function reviewBarHtml(p) {
     const btns = ["again", "hard", "good", "easy"].map((r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r}" data-rating="${r}">${RATING_NAMES[r]}</button>`).join("");
     return `
-    <span class="bz-review-bar-info">${esc(p.name.replace(/^《|》$/g, ""))}<i>(${p.index}/${p.total})</i></span>
+    <span class="bz-review-bar-info">${esc(stripTitleMarks(p.name))}<i>(${p.index}/${p.total})</i></span>
     <span class="bz-review-bar-act">${btns}
       <button class="bz-review-bar-btn bz-touch-target--sm is-skip" data-rating="skip">${"跳过"}</button>
     </span>`;

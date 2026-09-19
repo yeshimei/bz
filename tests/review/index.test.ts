@@ -420,10 +420,10 @@ describe('批 B 修复回归：编排与命令（2026-09-19 深审）', () => {
     // 统计弹窗（真 DOM；closeStatsModal 连带 closeTimeline）
     await showStatsModal(app, dataManager!);
     expect(document.getElementById('review-stats-mask')).not.toBeNull();
-    // 难度弹窗
+    // 难度弹窗（批 C 已迁 flow-dialog choice 形态）
     const items = await dataManager!.loadItems();
     uiManager!.showDifficultyDialog(items[0], () => {});
-    expect(document.querySelector('.difficulty-dialog')).not.toBeNull();
+    expect(document.getElementById('__shared_confirm_popup__')).not.toBeNull();
     // 文件树染色 + 徽标
     const treeItem = document.createElement('div');
     treeItem.setAttribute('data-path', 'A.md');
@@ -443,7 +443,7 @@ describe('批 B 修复回归：编排与命令（2026-09-19 深审）', () => {
     } as any;
     unloadReview();
     expect(document.getElementById('review-stats-mask')).toBeNull();
-    expect(document.querySelector('.difficulty-dialog')).toBeNull();
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull(); // 难度弹窗（flow-dialog）随 cancelActiveFlowDialog 摘除
     expect(inner.style.color).toBe(''); // 染色回退
     expect(inner.querySelector('.review-stage-badge')).toBeNull(); // 徽标摘除
     expect((reviewApp as any)._notifiedOverdue.size).toBe(0); // diff 记忆清空（再启用后重新提醒）

@@ -11,7 +11,9 @@ import { ReviewWatcher } from './watch';
 import { UIManager } from './ui';
 import { reviewApp } from './app';
 import { openQuizPanel, unloadQuizPanel } from './quiz-panel';
+import { resetQuiz } from './quiz-core';
 import { closeStatsModal } from './stats-ui';
+import { cancelActiveFlowDialog } from '../core/flow-dialog';
 import type { Rating } from './fsrs';
 
 let initialized = false;
@@ -241,15 +243,18 @@ export function unloadReview(): void {
   reviewApp.stopReviewLoops();
   reviewApp.dataManager = null;
   // A3/U3：浮层与会话态清场——统计/历史弹窗（closeStatsModal 内部连带 closeTimeline）、
-  // 难度弹窗、文件树染色回退、进度通知收起、diff 记忆清空（禁用→再启用后存量逾期重新提醒）
+  // 在途 flow-dialog（难度弹窗已迁 flow-dialog 形态，main onunload 亦调，幂等）、
+  // 文件树染色回退、进度通知收起、diff 记忆清空（禁用→再启用后存量逾期重新提醒）
   closeStatsModal();
-  document.querySelectorAll('.difficulty-dialog').forEach((el) => el.remove());
+  cancelActiveFlowDialog();
   reviewApp.revertReviewStyles();
   if (reviewApp._reviewNotice?.el?.isConnected) reviewApp._reviewNotice.hide();
   reviewApp._reviewNotice = null;
   reviewApp._notifiedOverdue.clear();
   // 做题练习独立面板（issue 362）：会话在途契约强制收口 + 面板 DOM/ESC 层摘除
   unloadQuizPanel();
+  // F6：quiz-core 单例 initialized/ai 复位——禁用→再启用后 ensureQuiz 重建 AI/设置引用（否则旧配置常驻）
+  resetQuiz();
   // P2：全部退订函数统一调用（原生 offref + 总线退订），防卸载后旧监听残留（再 ensure 后事件双触发）
   for (const off of unsubscribers) {
     try {

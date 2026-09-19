@@ -162,7 +162,8 @@ export class ReviewWatcher {
             // 连带清理类删除同样有反悔窗口（与全域删除形制对齐）
             const cur = await this.dataManager.loadItems();
             const removed = cur.filter((i) => batch.includes(i.filePath));
-            for (const path of batch) await this.dataManager.removeItem(path);
+            // A13：单趟 RMW 批量移除（原逐篇 removeItem = N 次全文件读写）
+            await this.dataManager.removeItems(batch);
             // 仅监听目录内的删除写排除名单（防自动加回；目录外的删除无监听风险）
             await this.excludePaths(batch.filter((p) => this.isWatched(p)));
             notifyUndo(`已移除 ${n} 条复习记录`, () => {
@@ -240,16 +241,11 @@ export class ReviewWatcher {
       ],
     });
     if (v !== 'ok') return false;
-    let ok = 0;
-    for (const p of candidates) {
-      try {
-        await this.dataManager.addItem(p, stripMdExt(p.split('/').pop()!));
-        ok++;
-      } catch {
-        /* 并发已加入 → 跳过 */
-      }
-    }
-    notice(`已加入 ${ok} 篇笔记到复习计划`, 'success');
+    // A13：单趟 RMW 批量加入（原逐篇 addItem = N 次全文件读写）
+    const res = await this.dataManager.addItems(
+      candidates.map((p) => ({ filePath: p, fileName: stripMdExt(p.split('/').pop()!) }))
+    );
+    notice(`已加入 ${res.added} 篇笔记到复习计划`, 'success');
     await this.refresh();
     return true;
   }
