@@ -632,7 +632,11 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## checkup（数据体检）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构运行中）
+## checkup（数据体检）域 · 5/5 方向到账，修复批 `bz-fix-ck-core`（单批）定稿派发
+
+### 修复批定稿（单批 `bz-fix-ck-core`）摘要见下，段头即定稿记录
+
+- **ARCH-1 写侧投影**：修复链 defaultValue 手抄三份与 emptySidecar() 脱节，「零命中修复」可凭空重建残形 stub 且被自家漂移检查报约定外段——自产自报闭环。
 
 > 明细：`.scratch/review-deep/checkup-{func,ui,efficiency,consistency}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3；方向 3（效率）：P2×1 + P3×7 + UX×2；方向 4（一致）：P3×7 + UX×1。跨方向去重：进度反馈簇（ui UX-3 = eff P2-1 = ui P3-4 同刀）；undo 动线两面（ui P3-1 语义 + eff P3-1 呈现）；失败重试（eff P3-3）；缓存面（func + eff P3-6）；ESC 注册（ui P2-1 跨层 + cons P3-5 同刀定形）；**clipDirOf 家族扩面四处一次收编**（func P3-7 原条 + cons P3-1 clipUrlSet/P3-2 影视目录/P3-3 默认形状两份 + run.ts 默认形状）。**效率整改 5 对表：批量通过（clipbook 先例背书）、单条偏离（cons P3-6 待拍板二选一）**。**旧账复核亮点**：home.json 白名单 v1/v3 已修（home 批 1d26c797 落地 + 契约在册，按已修入账）；memo 词条「14→16 已同步」随回滚失真（现两侧均 14 无运行时漂移，词条失真归主线程）。门禁基线：tsc 0；tests/checkup 43 例全绿。
 
