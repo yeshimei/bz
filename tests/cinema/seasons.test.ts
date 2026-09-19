@@ -12,7 +12,7 @@ import {
   seasonNumber, parseSeasonName, seriesKeyOf, isSeriesKey,
   mergeSeasonCards, cardFace, cardGroup, type SeriesCard,
 } from '../../src/cinema/seasons';
-import { cardHtml, pcardHtml, facePiecesHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesDetailModalHtml } from '../../src/cinema/shared';
+import { cardHtml, pcardHtml, facePiecesHtml, seasonDotsHtml, seasonSegState, seriesStatus, seriesCountsText, seriesDetailModalHtml } from '../../src/cinema/shared';
 import type { CinemaItem } from '../../src/cinema/state';
 
 /** 造条目（字段默认值不参与本组断言） */
@@ -201,16 +201,144 @@ describe('cinema 季圆点与合并卡 markup（D1 定稿形态）', () => {
     expect(plain).toContain('pw-fetch');
   });
 
-  it('合并卡详情：片名带「共 N 季」，各季明细行带条目键与状态/评分', () => {
+  it('合并卡详情：片名带「共 N 季」+ 各季明细行（无分节标题、无操作提示）', () => {
     const card = mergeSeasonCards([watched, watching, want], true)[0] as SeriesCard;
     const html = seriesDetailModalHtml(card, () => null);
     expect(html).toContain('老友记<span class="dm-n">共 3 季</span>');
-    expect(html).toContain('各 季 明 细');
     expect(html.match(/class="s-row"/g)).toHaveLength(3);
     expect(html).toContain('data-cinema-season-key="new:老友记 第一季"');
     expect(html).toContain('9.2');
     expect(html).toContain('—'); // 想看季无评分
     // 合集上不落 找同类/编辑/删除（都是单季笔记级动作，ADR-0168）
     expect(html).not.toContain('dm-actions');
+    // 2026-09-20 用户点名去掉：「各 季 明 细」小标题与「点某一季…」提示都不再出现，
+    // 弹窗只留头部 + 行；没有特别篇时头部计数也不带「特别篇」
+    expect(html).not.toContain('各 季 明 细');
+    expect(html).not.toContain('dm-hint');
+    expect(html).not.toContain('特 别 篇');
+    expect(html).not.toContain('部电影');
+  });
+});
+
+/**
+ * 特别篇前缀并入（2026-09-20 用户拍板「只按前缀认」）：电影版 / 特别篇 / 外传按
+ * 「<剧名>：<副标题>」的片名前缀并进同名剧集的合并卡，不占季号、不进季圆点；
+ * 「之」刻意不作分隔符（复合词误合比漏合更伤）。
+ */
+describe('cinema 特别篇前缀并入（只按片名前缀认）', () => {
+  const s1 = item('老友记 第一季', { watchDate: '2026-06-18', rating: 9.2, status: 2 });
+  const s2 = item('老友记 第二季', { watchDate: '2026-08-18', rating: 0, status: 1 });
+  const film = (name: string, opts: Partial<CinemaItem> = {}) =>
+    item(name, { group: '电影', typeTag: '电影', ...opts });
+
+  it('「剧名：副标题」并入（全角/半角冒号、空格都认），且不再单独出卡', () => {
+    for (const name of ['老友记：重聚特辑', '老友记:重聚特辑', '老友记 重聚特辑']) {
+      const sp = film(name, { watchDate: '2026-09-19', rating: 8.0, status: 2 });
+      const cards = mergeSeasonCards([s1, sp, s2], true);
+      expect(cards.map((c) => c.kind)).toEqual(['series']); // 特别篇不再出普通卡
+      const series = cards[0] as SeriesCard;
+      expect(series.specials.map((x) => x.name)).toEqual([name]);
+      expect(series.seasons.map((x) => x.no)).toEqual([1, 2]); // 不占季号
+    }
+  });
+
+  it('副标题不能为空、必须带分隔符：「老友记：」/「老友记重聚」都不算', () => {
+    const bad = [film('老友记：'), film('老友记重聚'), film('老友记')];
+    const cards = mergeSeasonCards([s1, s2, ...bad], true);
+    expect((cards[0] as SeriesCard).specials).toEqual([]);
+    expect(cards).toHaveLength(4); // 合集 + 3 张普通卡
+  });
+
+  it('分隔符不含「之」：「老友记之重聚特辑」保持普通卡（复合词误合比漏合更伤）', () => {
+    const zhi = film('老友记之重聚特辑');
+    const cards = mergeSeasonCards([s1, s2, zhi], true);
+    expect((cards[0] as SeriesCard).specials).toEqual([]);
+    expect(cards.map((c) => (c.kind === 'single' ? c.item.name : c.name))).toEqual(['老友记', '老友记之重聚特辑']);
+  });
+
+  it('孤立特别篇（库内无同名 ≥2 季剧集）照旧出普通卡——与「单季回退」同口径', () => {
+    const lonely = [film('心灵猎人：重聚特辑'), item('心灵猎人 第一季')];
+    expect(mergeSeasonCards(lonely, true).map((c) => c.kind)).toEqual(['single', 'single']);
+  });
+
+  it('剧集/动漫组里认不出季号的条目也能并入（「老友记 特别篇」）；认得出季号的归季路径', () => {
+    const tag = item('老友记 特别篇', { group: '剧集' }); // 无「第X季」→ 走特别篇候选
+    const dup = item('老友记 第1季', { group: '剧集' }); // 季号重复：被去重丢掉，但**不算**特别篇
+    const cards = mergeSeasonCards([s1, dup, s2, tag], true);
+    const series = cards[0] as SeriesCard;
+    expect(series.specials.map((x) => x.name)).toEqual(['老友记 特别篇']);
+    expect(series.seasons.map((x) => x.no)).toEqual([1, 2]);
+    expect(cards).toHaveLength(1); // 重复季与特别篇都不出卡
+  });
+
+  it('最长 base 优先：同名更长的那张合并卡吃特别篇', () => {
+    const rm3 = item('瑞克和莫蒂 第三季');
+    const rm4 = item('瑞克和莫蒂 第四季');
+    const sp1 = item('瑞克和莫蒂 外传 第一季');
+    const sp2 = item('瑞克和莫蒂 外传 第二季');
+    const special = item('瑞克和莫蒂 外传：花絮', { group: '纪录片', typeTag: '纪录片' });
+    const cards = mergeSeasonCards([rm3, special, sp1, sp2, rm4], true);
+    const host = cards.find((c): c is SeriesCard => c.kind === 'series' && c.name === '瑞克和莫蒂 外传');
+    const main = cards.find((c): c is SeriesCard => c.kind === 'series' && c.name === '瑞克和莫蒂');
+    expect(host?.specials.map((x) => x.name)).toEqual(['瑞克和莫蒂 外传：花絮']);
+    expect(main?.specials).toEqual([]);
+    expect(cards).toHaveLength(2); // 两张合并卡，特别篇不单独出卡
+  });
+
+  it('评分与聚合状态都含特别篇（badge 读作「最近在追的那部」）', () => {
+    const sp = film('老友记：重聚特辑', { watchDate: '2026-09-19', rating: 8.6, status: 2 });
+    const series = mergeSeasonCards([s1, s2, sp], true)[0] as SeriesCard;
+    expect(series.rating).toBe(8.6); // 最新已评 = 特别篇（第一季 9.2 更早；第二季在看 0 分不算）
+    // 聚合含特别篇：在看季仍压得住已看特别篇
+    expect(seriesStatus(series.seasons, series.specials)).toBe(1);
+    // 特别篇是唯一「想看」的那条 → 聚合变想看（不含特别篇时会是「全已看」）
+    const wantSp = film('老友记：重聚特辑', { status: 0 });
+    const s = mergeSeasonCards([s1, { ...s1, name: '老友记 第二季' }, wantSp], true)[0] as SeriesCard;
+    expect(seriesStatus(s.seasons)).toBe(2); // 只看季：全已看
+    expect(seriesStatus(s.seasons, s.specials)).toBe(0); // 带上特别篇：想看
+  });
+
+  it('关闭合并：特别篇与各季一一对应出卡，顺序不变', () => {
+    const sp = film('老友记：重聚特辑', { watchDate: '2026-09-19' });
+    const cards = mergeSeasonCards([s1, sp, s2], false);
+    expect(cards.map((c) => cardFace(c).name)).toEqual(['老友记 第一季', '老友记：重聚特辑', '老友记 第二季']);
+  });
+
+  it('头部计数按并入条目的类型分组（同类合并、异类分列；空类型回落组）', () => {
+    const spFilm = film('老友记：重聚特辑');
+    const spFilm2 = film('老友记：日本版');
+    const spDoc = film('老友记 幕后纪录片', { group: '纪录片', typeTag: '纪录片' });
+    const series = mergeSeasonCards([s1, s2, spFilm, spFilm2, spDoc], true)[0] as SeriesCard;
+    expect(seriesCountsText(series)).toBe('共 2 季 · 2 部电影 · 1 部纪录片');
+    // 没并入条目 → 只有季数
+    const none = mergeSeasonCards([s1, s2], true)[0] as SeriesCard;
+    expect(seriesCountsText(none)).toBe('共 2 季');
+    // 类型为空 → 用所属组兜底
+    const bare = mergeSeasonCards([s1, s2, film('老友记 番外', { typeTag: '' })], true)[0] as SeriesCard;
+    expect(seriesCountsText(bare)).toBe('共 2 季 · 1 部电影');
+  });
+
+  it('季圆点只算季（特别篇不进圆点）；弹窗里特别篇顺在季后面，不分区段', () => {
+    const sp1 = film('老友记：重聚特辑', { watchDate: '2026-09-19', rating: 8.6, status: 2 });
+    const sp2 = film('老友记 演唱会', { watchDate: null, rating: null, status: 0 });
+    const series = mergeSeasonCards([s1, sp1, sp2, s2], true)[0] as SeriesCard;
+    // 卡面：本组 2 季 → 2 个圆点，特别篇一个都不算
+    const html = cardHtml(series, null);
+    expect(html.match(/class="(watched|watching|empty)" data-cinema-season-key/g)).toHaveLength(2);
+
+    const modal = seriesDetailModalHtml(series, () => null);
+    expect(modal).toContain('老友记<span class="dm-n">共 2 季 · 2 部电影</span>');
+    expect(modal.match(/class="s-row s-row-special"/g)).toHaveLength(2);
+    // 不分节：行序 = 季在前（季号升序）→ 特别篇顺其后；小标题/提示一律不出现
+    const keys = [...modal.matchAll(/data-cinema-season-key="([^"]+)"/g)].map((m) => m[1]);
+    expect(keys).toEqual([
+      'new:老友记 第一季', 'new:老友记 第二季', 'new:老友记：重聚特辑', 'new:老友记 演唱会',
+    ]);
+    expect(modal).not.toContain('特 别 篇');
+    expect(modal).not.toContain('各 季 明 细');
+    expect(modal).not.toContain('dm-hint');
+    // 特别篇行标出组（看着不像「某一季」），季行不标（与卡片同组，本就是同一部剧）
+    expect(modal).toContain('<div class="s-sub">电影 · 观影 2026-09-19</div>');
+    expect(modal).toContain('<div class="s-sub">观影 2026-06-18</div>');
   });
 });

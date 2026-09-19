@@ -99,9 +99,10 @@ export function seasonSegState(item: CinemaItem): SeasonSegState {
   return st === STATUS_WATCHED ? 'watched' : st === STATUS_WATCHING ? 'watching' : 'empty';
 }
 
-/** 合并卡聚合状态（角标口径）：任一看在 → 在看；否则任一想看 → 想看；全已看 → 已看 */
-export function seriesStatus(seasons: SeasonSlot[]): number {
-  const states = seasons.map((s) => statusNum(s.item.status));
+/** 合并卡聚合状态（角标口径）：任一看在 → 在看；否则任一想看 → 想看；全已看 → 已看。
+ *  `extra` = 特别篇：聚合口径**含**它们（电影版特别篇刚看完，badge 该亮「已看」而不是被季拉成「在看」）。 */
+export function seriesStatus(seasons: SeasonSlot[], extra: CinemaItem[] = []): number {
+  const states = seasons.map((s) => statusNum(s.item.status)).concat(extra.map((it) => statusNum(it.status)));
   if (states.includes(STATUS_WATCHING)) return STATUS_WATCHING;
   if (states.includes(STATUS_WANT)) return STATUS_WANT;
   return STATUS_WATCHED;
@@ -109,7 +110,7 @@ export function seriesStatus(seasons: SeasonSlot[]): number {
 
 /** 卡片状态（rail 计数与角标共用；合并卡取聚合态） */
 export function cardStatus(e: CardEntry): number {
-  return e.kind === 'series' ? seriesStatus(e.seasons) : statusNum(e.item.status);
+  return e.kind === 'series' ? seriesStatus(e.seasons, e.specials) : statusNum(e.item.status);
 }
 
 /**
@@ -223,38 +224,64 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
 
 // ---------- 合并卡详情弹窗（D1）：头部 + 各季明细行 ----------
 
+/** 合并卡条目计数文案（`共 N 季 · M 部电影`）：季按季数；并入的条目**按各自类型**（细分 tag：
+ *  电影 / 纪录片 / 日漫…）归类计数，同类合并成一个数字——2026-09-20 用户指出笼统写「特别篇」
+ *  不如写对应类型（「2 部电影」一眼知道多出来的是什么）。类型为空回落所属组。
+ *  卡片详情弹窗头与移动端抽屉头**同源**，禁各写一遍。 */
+export function seriesCountsText(card: SeriesCard): string {
+  const byType = new Map<string, number>();
+  for (const it of card.specials) {
+    const t = it.typeTag || it.group;
+    byType.set(t, (byType.get(t) ?? 0) + 1);
+  }
+  const extra = [...byType].map(([t, n]) => `${n} 部${t}`).join(' · ');
+  return `共 ${card.seasons.length} 季` + (extra ? ` · ${extra}` : '');
+}
+
 /**
- * 合并卡详情弹窗内容。头部 = 正脸（最近看的）海报 + 片名 + 共 N 季 + 聚合状态 + 最新评分；
- * 正文 = 各季明细行（`data-cinema-season-key` = 该季条目键，点击进单季详情）。
- * **不放 找同类/编辑/删除**：三者都作用在「一季的笔记」上，合并卡上无落点——
- * 要动某一季就点进那一季（口径见 ADR-0168）。
+ * 合并卡详情弹窗内容。头部 = 正脸（最近看的）海报 + 片名 + 共 N 季（并入条目按类型再带
+ * 「· M 部电影」）+ 聚合状态 + 最新评分；正文 = 各季明细行，**特别篇不单开区段**
+ * （2026-09-20 用户拍板：不区分季与特别篇，顺在季后面接着排），行内
+ * `data-cinema-season-key` = 行内条目键，点击进该条目详情、右键 / 长按出该条目的动作——
+ * 季行与特别篇行同一套结构与同一套绑定。
+ * **不放分节小标题与操作提示**（用户 2026-09-20 点名去掉，弹窗只留头部 + 行）。
+ * **不放 找同类/编辑/删除**：三者都作用在一条笔记上，合集级无落点（口径见 ADR-0168）；
+ * 行级动作落在行上。
  */
 export function seriesDetailModalHtml(card: SeriesCard, posterOf: (it: CinemaItem) => string | null): string {
   const face = card.face;
   const url = posterOf(face);
-  const st = seriesStatus(card.seasons);
+  const st = seriesStatus(card.seasons, card.specials);
   const badge = (color: string, text: string) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
   const thumb = (it: CinemaItem): string => {
     const t = posterOf(it);
     return `<div class="s-thumb">${t ? `<img src="${esc(t)}" alt="" onerror="this.remove()">` : ''}</div>`;
   };
-  const rows = card.seasons.map((s) => {
-    const sub = [s.item.watchDate ? `观影 ${esc(s.item.watchDate.slice(0, 10))}` : '', s.item.seasonText ? `${esc(s.item.seasonText)} 集` : '']
-      .filter(Boolean).join(' · ');
-    const r = s.item.rating;
-    return `<div class="s-row" data-cinema-season-key="${esc(itemKey(s.item))}">${thumb(s.item)}
-      <div class="s-mid"><div class="s-name">${esc(s.item.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ''}</div>
-      <span class="s-chip" style="background:${statusColor(s.item.status)}">${statusText(s.item.status)}</span>
+  const rowOf = (it: CinemaItem, cls: string): string => {
+    const sub = [
+      it.group !== card.group ? esc(it.group) : '', // 特别篇常是电影/纪录片：标出组，免得看着像「某一季」
+      it.watchDate ? `观影 ${esc(it.watchDate.slice(0, 10))}` : '',
+      it.seasonText ? `${esc(it.seasonText)} 集` : '',
+    ].filter(Boolean).join(' · ');
+    const r = it.rating;
+    return `<div class="s-row${cls}" data-cinema-season-key="${esc(itemKey(it))}">${thumb(it)}
+      <div class="s-mid"><div class="s-name">${esc(it.name)}</div>${sub ? `<div class="s-sub">${sub}</div>` : ''}</div>
+      <span class="s-chip" style="background:${statusColor(it.status)}">${statusText(it.status)}</span>
       <span class="s-rate${r && r > 0 ? '' : ' none'}">${r && r > 0 ? Number(r).toFixed(1) : '—'}</span></div>`;
-  }).join('');
+  };
+  // 行序 = 各季（季号升序）在前，特别篇顺在其后（同一列表，无分隔标题）。
+  // 整列包一层 .s-list：原来头部与首行之间的间隔由「各 季 明 细」小标题的 border-top + margin 顶着，
+  // 小标题去掉后首行贴住头部（2026-09-20 用户看图指出），间隔改由列表自己给（styles.css）。
+  const rows = card.seasons.map((s) => rowOf(s.item, '')).join('')
+    + card.specials.map((it) => rowOf(it, ' s-row-special')).join('');
   return `<div class="cn-modal" style="max-width:400px;width:100%">
     <div class="dm-head"><div class="dm-poster">${url ? `<img src="${esc(url)}" onerror="this.remove()">` : ''}</div>
-      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">共 ${card.seasons.length} 季</span></div>
+      <div style="flex:1;min-width:0"><div class="dm-title">${esc(card.name)}<span class="dm-n">${seriesCountsText(card)}</span></div>
         <div class="dm-badges">${badge(typeColor(card.group), face.typeTag)}
           ${st !== STATUS_WATCHED ? badge(statusColor(st), statusText(st)) : ''}
           ${card.rating && card.rating > 0 ? `<span class="dm-stars">${getStarString(card.rating)}</span><span class="dm-rating">${Number(card.rating).toFixed(1)}</span>` : ''}
-          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ''}</div></div></div>    <div class="dm-sec">各 季 明 细</div>${rows}
-    <div class="dm-hint">点某一季查看该季详情</div>
+          ${face.watchDate ? `<span class="dm-date">${esc(face.watchDate.slice(0, 10))}</span>` : ''}</div></div></div>
+    <div class="s-list">${rows}</div>
   </div>`;
 }
 
@@ -360,4 +387,11 @@ export function aiPageHtml(inp: AiPageInput): string {
 export function sheetHeadHtml(it: CinemaItem, posterUrl: string | null): string {
   return `<div class="cn-sheet-head">${posterUrl ? `<img class="cn-sheet-poster" src="${esc(posterUrl)}" onerror="this.remove()">` : ''}
     <div><div class="cn-sheet-name">${esc(it.name)}</div><div class="cn-sheet-sub">${esc(it.year || '')} · ${esc(it.director || it.group)} · ${statusText(it.status)}</div></div></div>`;
+}
+
+/** 合并卡抽屉头部（同 class 同构，数据取卡片自身）：卡片没有「哪一个条目」可指——
+ *  头部写归一剧名 + `共 N 季 · M 部电影` 计数（正脸季海报），与卡片详情弹窗头部同一套计数文案。 */
+export function seriesSheetHeadHtml(card: SeriesCard, posterUrl: string | null): string {
+  return `<div class="cn-sheet-head">${posterUrl ? `<img class="cn-sheet-poster" src="${esc(posterUrl)}" onerror="this.remove()">` : ''}
+    <div><div class="cn-sheet-name">${esc(card.name)}</div><div class="cn-sheet-sub">${esc(seriesCountsText(card))}</div></div></div>`;
 }

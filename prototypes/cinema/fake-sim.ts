@@ -29,8 +29,11 @@ import { closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
 
 /** 影视目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
 const FOLDER = '我的/影视';
-/** 种子标记：存在 = 已种子过（用户在评审壳里的增删改保留，不被覆盖） */
-const SEED_MARK = 'bz-sim:__cinema-seed-v1';
+/** 种子标记：存在 = 已种子过（用户在评审壳里的增删改保留，不被覆盖）。
+ *  **演示数据一变就提版本号**（v3：加 神探夏洛克 一/三季 + 三部电影版特别篇、我的三体 一/四季、
+ *  老友记 一/二季 + 重聚特辑、权利的游戏：最后的守夜人）——否则老浏览器停在旧种子上，
+ *  新条目静默不出现（得手点「重置演示数据」）。 */
+const SEED_MARK = 'bz-sim:__cinema-seed-v3';
 /** 设置持久键（设置弹窗保存经 saveSettings 通道写入；自检可断言） */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -106,17 +109,22 @@ function seedDatabase(): void {
   localStorage.setItem(SEED_MARK, new Date().toISOString());
 }
 
-/** 影院设置 store（真 settings-provider 注入；saveSettings 落 localStorage，设置项走插件设置页） */
+/** 影院设置 store（真 settings-provider 注入；saveSettings 落 localStorage，设置项走插件设置页）。
+ *  `cinemaMergeSeasons` 与插件默认一致 = **开**（2026-09-20 用户拍板），壳的开关按钮只负责关/开。 */
 const settingsStore: Record<string, unknown> = {
   cinemaStyle: 'midnight',
   cinemaFolderPath: FOLDER,
   cinemaSortMode: 'date',
   cinemaStatusFilter: '',
   cinemaGridColumns: '5',
+  cinemaMergeSeasons: true,
 };
 
-/** 设置注入（settings-provider + core/ai 共用同一 store；AI 无密钥 → 荐片走页内降级） */
+/** 设置注入（settings-provider + core/ai 共用同一 store；AI 无密钥 → 荐片走页内降级）
+ *  plus 评审壳开关：iframe URL 的 `?merge=0` → 关掉「剧集按季合并」（cinemaMergeSeasons，默认开）。
+ *  插件侧这个键走插件设置页，原型没有设置页入口，故由壳的 vbadge 按钮改写 iframe src 传进来。 */
 function injectSettings(): void {
+  if (new URLSearchParams(location.search).get('merge') === '0') settingsStore.cinemaMergeSeasons = false;
   setSettingsProvider(() => settingsStore as never);
   setSettingsSaver(async () => {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settingsStore));

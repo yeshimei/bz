@@ -80,7 +80,8 @@ export function cinemaSettingsSchema(): SettingsSchema {
             max: 12,
             step: 1,
           },
-          // issue 376 / ADR-0168：剧集按季合并（纯渲染层分组；同一部剧 ≥2 季才合并，单季照旧一卡）
+          // issue 376 / ADR-0168：剧集按季合并（纯渲染层分组；同一部剧 ≥2 季才合并，单季照旧一卡）。
+          // 2026-09-20：缺省**开**（用户拍板），并入的「剧名：副标题」特别篇在卡片详情里单列
           {
             type: 'toggle',
             name: '剧集按季合并',

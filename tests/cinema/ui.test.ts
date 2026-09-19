@@ -958,7 +958,7 @@ tags: [电影]
     return { app };
   }
 
-  it('默认关：逐季一卡（现状不变）', () => {
+  it('关掉开关：逐季一卡（现状不变）', () => {
     setSettingsProvider(() => ({}) as any);
     const { app } = seedSeasons();
     createOverlay(app);
@@ -1016,15 +1016,164 @@ tags: [电影]
     expect(modal.querySelector('.dm-actions')).toBeTruthy(); // 单季详情才有 找同类/编辑/删除
   });
 
-  it('合集卡右键不开单季动作菜单，而是开合集详情（无处落单季动作）', () => {
+  it('合集卡右键 → 只有「查看全部」一条（点它开合集弹窗），不像单卡那样出笔记级动作', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
     const { app } = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     const series = root.querySelector('.pcard-series') as HTMLElement;
     series.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+    expect(menu).toBeTruthy();
+    // 合集上不放标记/编辑/删除（都是笔记级动作，卡片没有具体条目可指）
+    expect(menuLabels(menu)).toEqual(['查看全部']);
+    expect(root.querySelectorAll('.s-row')).toHaveLength(0); // 右键不再直接开合集弹窗
+    clickEl(menuBtn(menu, '查看全部'));
     expect(document.querySelector('.bz-item-menu')).toBeNull();
     expect(root.querySelectorAll('.s-row')).toHaveLength(3);
+  });
+
+  /** 老友记两季（已看 9.2 / 在看 0）+ 电影版特别篇 = 3 篇笔记 → 合并后 1 张合集卡 */
+  function seedSpecial(): { app: ReturnType<typeof mockAppWithVault> } {
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《老友记 第一季》.md', md('---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-06-18\n---'));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md('---\ntags: [美剧]\n评分: 0\n观影日期: 2026-08-18\n---'));
+    vault.files.set('我的/影视/《老友记：重聚特辑》.md', md('---\ntags: [电影]\n评分: 8.6\n观影日期: 2026-09-19\n---'));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    return { app };
+  }
+
+  const menuLabels = (menu: HTMLElement): (string | null)[] =>
+    [...menu.querySelectorAll('.bz-item-menu-label')].map((x) => x.textContent);
+  const menuBtn = (menu: HTMLElement, label: string): HTMLElement =>
+    [...menu.querySelectorAll<HTMLElement>('.bz-item-menu-item')].find((b) => b.textContent?.includes(label)) as HTMLElement;
+
+  it('合并卡弹窗：特别篇单列一段（不进季圆点、不单独出卡），点特别篇行钻该条详情', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSpecial();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    // 特别篇被并入合集：网格只有 1 张卡，季圆点仍只算季（2 个）
+    expect(root.querySelectorAll('.d-scroll .pcard')).toHaveLength(1);
+    expect(root.querySelectorAll('.season-dots i')).toHaveLength(2);
+    clickEl(root.querySelector('.pcard-series'));
+    const modal = () => root.querySelector('.cn-modal') as HTMLElement;
+    expect(modal().querySelector('.dm-n')?.textContent).toBe('共 2 季 · 1 部电影');
+    const spRow = modal().querySelector('.s-row-special') as HTMLElement;
+    expect(spRow).toBeTruthy();
+    expect(spRow.querySelector('.s-name')?.textContent).toBe('老友记：重聚特辑');
+    expect(spRow.querySelector('.s-sub')?.textContent).toContain('电影'); // 标出组：看着不像「某一季」
+    expect(spRow.querySelector('.s-rate')?.textContent).toBe('8.6');
+    expect(modal().querySelectorAll('.s-row')).toHaveLength(3); // 季行与特别篇行同构
+    clickEl(spRow);
+    expect(root.querySelectorAll('.cn-modal')).toHaveLength(1);
+    expect(modal().querySelector('.dm-title')?.textContent).toBe('老友记：重聚特辑');
+    expect(modal().querySelector('.dm-actions')).toBeTruthy(); // 单条详情才有 找同类/编辑/删除
+  });
+
+  it('弹窗季行右键 → 该季跟手菜单（弹窗留着）；点动作先收弹窗再执行', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSpecial();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.pcard-series'));
+    const rows = Array.from(root.querySelectorAll<HTMLElement>('.s-row'));
+    expect(rows.map((r) => r.querySelector('.s-name')?.textContent))
+      .toEqual(['老友记 第一季', '老友记 第二季', '老友记：重聚特辑']);
+    rows[1].dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 40, clientY: 40 }));
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+    expect(menu).toBeTruthy();
+    // 动作集 = **第二季** 的（在看 → 无「标记在看」，有「标记已看」）
+    expect(menuLabels(menu)).toEqual(['打开详情', '标记已看', '找同类', '在豆瓣打开', '编辑', '删除']);
+    // 菜单是独立浮层：弹窗留着（ESC / 点外部关掉菜单后还能接着操作别的季）
+    expect(root.querySelectorAll('.s-row')).toHaveLength(3);
+    clickEl(menuBtn(menu, '编辑'));
+    expect(document.querySelector('.bz-item-menu')).toBeNull();
+    expect(root.querySelectorAll('.s-row')).toHaveLength(0); // 动作前先收弹窗
+    expect((root.querySelector('.j-name') as HTMLInputElement).value).toBe('老友记 第二季');
+  });
+
+  it('弹窗特别篇行右键 → 出的是该特别篇的动作（行级落点按行取条目，不是某一季）', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    const { app } = seedSpecial();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('.pcard-series'));
+    const spRow = root.querySelector('.s-row-special') as HTMLElement;
+    spRow.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 60, clientY: 60 }));
+    const menu = document.querySelector('.bz-item-menu') as HTMLElement;
+    // 已看 + 有评分：无「标记在看 / 标记已看」
+    expect(menuLabels(menu)).toEqual(['打开详情', '找同类', '在豆瓣打开', '编辑', '删除']);
+    clickEl(menuBtn(menu, '编辑'));
+    expect((root.querySelector('.j-name') as HTMLInputElement).value).toBe('老友记：重聚特辑');
+  });
+
+  it('移动端：季行右键只拦原生菜单（不出桌面菜单）；长按出抽屉且弹窗不关，点动作才收', () => {
+    vi.useFakeTimers();
+    try {
+      setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+      Platform.isMobile = true;
+      const { app } = seedSpecial();
+      createOverlay(app);
+      const root = document.querySelector('section.mob[data-cinema-root]') as HTMLElement;
+      clickEl(root.querySelector('.m-grid .pcard-series'));
+      const row = root.querySelector('.s-row') as HTMLElement;
+      expect(row).toBeTruthy();
+      // 真机触屏长按会同时发 contextmenu：只应拦住原生菜单
+      const ctx = new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 });
+      row.dispatchEvent(ctx);
+      expect(ctx.defaultPrevented).toBe(true);
+      expect(document.querySelector('.bz-item-menu'), '移动端不出桌面跟手菜单').toBeNull();
+
+      row.dispatchEvent(new Event('touchstart', { bubbles: true }));
+      vi.advanceTimersByTime(600); // core longPress 500ms 阈值 → 抽屉
+      const sheet = document.querySelector('.bz-item-sheet.cn-sheet-skin') as HTMLElement;
+      expect(sheet).toBeTruthy();
+      expect(sheet.querySelector('.cn-sheet-name')?.textContent).toBe('老友记 第一季');
+      // 弹窗必须留着：longPress 靠元素级捕获吞长按后的合成 click，元素一被移除，合成 click 落到
+      // document 层就被当成「外部点击」→ 抽屉开出即关（真机「长按没反应」根因守卫）
+      expect(root.querySelectorAll('.s-row'), '长按开抽屉时弹窗不能关').toHaveLength(3);
+      (document.querySelector('.bz-item-sheet-mask') as HTMLElement).click();
+      expect(document.querySelector('.bz-item-sheet'), '静置窗口内合成 click 应被吞，抽屉留住').toBeTruthy();
+      vi.advanceTimersByTime(500); // 越过静置窗口
+      const edit = [...sheet.querySelectorAll<HTMLElement>('.bz-item-sheet-item')]
+        .find((b) => b.textContent?.includes('编辑')) as HTMLElement;
+      clickEl(edit);
+      expect(document.querySelector('.bz-item-sheet')).toBeNull();
+      expect(root.querySelectorAll('.s-row')).toHaveLength(0); // 动作前先收弹窗
+      expect((root.querySelector('.j-name') as HTMLInputElement).value).toBe('老友记 第一季');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('移动端长按合集卡 → 抽屉只有「查看全部」（头 = 剧名 + 共 N 季 · M 部电影）', () => {
+    vi.useFakeTimers();
+    try {
+      setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+      Platform.isMobile = true;
+      const { app } = seedSpecial();
+      createOverlay(app);
+      const root = document.querySelector('section.mob[data-cinema-root]') as HTMLElement;
+      const card = root.querySelector('.m-grid .pcard-series') as HTMLElement;
+      card.dispatchEvent(new Event('touchstart', { bubbles: true }));
+      vi.advanceTimersByTime(600); // core longPress 500ms 阈值 → 抽屉
+      const sheet = document.querySelector('.bz-item-sheet.cn-sheet-skin') as HTMLElement;
+      expect(sheet).toBeTruthy();
+      // 头部指卡片自身（归一剧名 + 计数），不是某一季；动作只有一条
+      expect(sheet.querySelector('.cn-sheet-name')?.textContent).toBe('老友记');
+      expect(sheet.querySelector('.cn-sheet-sub')?.textContent).toBe('共 2 季 · 1 部电影');
+      expect([...sheet.querySelectorAll('.bz-item-sheet-label')].map((x) => x.textContent)).toEqual(['查看全部']);
+      expect(root.querySelectorAll('.s-row')).toHaveLength(0); // 长按不再直接开合集弹窗
+      vi.advanceTimersByTime(500); // 越过合成 click 静置窗口
+      clickEl(sheet.querySelector('.bz-item-sheet-item'));
+      expect(document.querySelector('.bz-item-sheet')).toBeNull();
+      expect(root.querySelectorAll('.s-row')).toHaveLength(3);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('鼠标落在季圆点上：卡片正脸换成该季（海报 + 名字/meta/星级），离开复原', () => {

@@ -9,6 +9,11 @@
  * 判定口径（唯一真理源，禁第二套）：
  *   可合并组 = 剧集 / 动漫；名称剥掉「第X季 / Season N」后**完全相同**才归一部；
  *   ≥2 季才合并，单季回退普通卡（不为了统一而把单季塞进合集里）。
+ *
+ * 特别篇并入（2026-09-20 用户拍板「只按前缀认」）：
+ *   「<剧名>：<副标题>」这类电影版 / 特别篇 / 外传并入同名剧集的合并卡（specials），
+ *   不看组、不看豆瓣「相关书影音」、不做 is_tv 落盘兜底——片名前缀是唯一信号。
+ *   同一套「≥2 季才建卡」的门槛：库内没有同名 ≥2 季剧集的孤立特别篇照旧出普通卡。
  */
 import type { CinemaItem } from './state';
 
@@ -68,6 +73,14 @@ export interface SeasonSlot {
   item: CinemaItem;
 }
 
+/**
+ * 特别篇前缀分隔符（片名余下部分必须以它开头才认作「剧名 + 副标题」）。
+ * **刻意不含「之」**：「我的三体之章北海传」「X之王」这类复合词既可能是独立作品、
+ * 也是汉语里最黏的连接词，误合比漏合更伤——漏合改个名（「：」）就能补，误合会悄悄吞掉一部片。
+ * 冒号（全角/半角）、空格、连字符、间隔号是「系列名：分支」的惯用写法。
+ */
+const SPECIAL_SEP_RE = /^[\s:：·\-—－]+/;
+
 /** 合并卡（剧集：库内 ≥2 季） */
 export interface SeriesCard {
   kind: 'series';
@@ -79,9 +92,15 @@ export interface SeriesCard {
   group: string;
   /** 各季（季号升序） */
   seasons: SeasonSlot[];
+  /**
+   * 特别篇 / 电影版 / 外传（片名前缀 = 本剧 + 分隔符的条目）：**不占季号、不进季圆点**，
+   * 只在合并卡详情弹窗里单独一段列出（它们是各自独立的一篇笔记，不是一个「季」）。
+   * 顺序 = 原列表顺序（与卡片落位同一口径，不做二次排序）。
+   */
+  specials: CinemaItem[];
   /** 卡片正脸（海报/年份/导演/抓取遮罩）：观影日期最新的一季 */
   face: CinemaItem;
-  /** 卡片评分：最新已评季（评分>0）的分数；全未评 = null */
+  /** 卡片评分：最新已评条目（各季 + 特别篇）的分数；全未评 = null */
   rating: number | null;
 }
 
@@ -132,10 +151,41 @@ function pickFace(slots: SeasonSlot[]): CinemaItem {
 }
 
 /**
+ * 最新已评条目的评分（各季 + 特别篇同一口径：口径含特别篇，badge 与卡片评分读作
+ * 「你最近在追的那部」——电影版特别篇刚看完打了分，正脸季还在看不评分，取特别篇的才不空）。
+ */
+function latestRated(items: CinemaItem[]): number | null {
+  const rated = items.filter((it) => it.rating != null && it.rating > 0);
+  if (!rated.length) return null;
+  return rated.reduce((best, it) => (watchTs(it) >= watchTs(best) ? it : best), rated[0]).rating;
+}
+
+/**
+ * 前缀命中判定：`name` = `<剧名> + 分隔符 + 副标题` 时返回命中的合并卡（否则 null）。
+ * 卡片名更长的优先（最长 base 优先）——「瑞克和莫蒂」与「瑞克和莫蒂 外传」两张卡同时在库时，
+ * 「瑞克和莫蒂 外传：花絮」归后者。同长并列取先建卡者（入参顺序稳定）。
+ */
+function specialHostOf(name: string, cards: SeriesCard[]): SeriesCard | null {
+  let hit: SeriesCard | null = null;
+  for (const c of cards) {
+    if (!c.name || name.length <= c.name.length) continue;
+    if (hit && c.name.length <= hit.name.length) continue;
+    if (!name.startsWith(c.name)) continue;
+    const rest = name.slice(c.name.length);
+    const sep = SPECIAL_SEP_RE.exec(rest);
+    // 分隔符后必须有非空副标题：「老友记：」（光秃秃一个冒号）不算
+    if (!sep || !rest.slice(sep[0].length).trim()) continue;
+    hit = c;
+  }
+  return hit;
+}
+
+/**
  * 条目列表 → 卡片条目。
  * - 合并关闭：一一对应（恒 single），顺序与入参完全一致；
  * - 合并开启：同组 + 归一名称相同 + ≥2 季 → 一张合并卡，**落位 = 该剧首季在原列表中的位置**
- *   （排序语义不变：首季排到哪，合并卡就在哪）；其余同剧条目不再单独出卡。
+ *   （排序语义不变：首季排到哪，合并卡就在哪）；其余同剧条目不再单独出卡；
+ *   片名前缀命中的特别篇并入该卡（`specials`），**不再单独出卡**。
  * 季号重复（「老友记 第一季」/「老友记 第1季」两种写法并存）时保留先出现的那条——
  * 进度条「一段 = 一季」的语义优先，且同目录下同名笔记本就只能存在一个。
  */
@@ -162,25 +212,41 @@ export function mergeSeasonCards(list: CinemaItem[], merge: boolean): CardEntry[
   for (const [key, slots] of grouped) {
     if (slots.length < 2) continue;
     slots.sort((a, b) => a.no - b.no);
-    const rated = slots.filter((s) => s.item.rating != null && s.item.rating > 0);
-    const latestRated = rated.length
-      ? rated.reduce((best, s) => (watchTs(s.item) >= watchTs(best.item) ? s : best), rated[0])
-      : null;
     merged.set(key, {
       kind: 'series',
       key,
       name: parseSeasonName(slots[0].item.name)!.base,
       group: slots[0].item.group,
       seasons: slots,
+      specials: [],
       face: pickFace(slots),
-      rating: latestRated ? latestRated.item.rating : null,
+      rating: null, // 统一在特别篇并入后算（口径含特别篇）
     });
   }
 
-  // 第三遍：按原序装配
+  // 第二遍半：特别篇前缀并入（最长 base 优先）
+  // 候选 = **没走季路径**的条目：非剧集/动漫组的一切（电影版/纪录片版特别篇），
+  // 以及剧集/动漫组里认不出「第X季」的（如「老友记 特别篇」）——认得出季号的条目一律归季路径
+  // （它们已在第一遍入表，哪怕因季号重复被去重丢掉也不当特别篇）。
+  const cards = [...merged.values()];
+  const absorbed = new Set<CinemaItem>();
+  for (const it of list) {
+    if (MERGE_GROUPS.includes(it.group) && parseSeasonName(it.name)) continue;
+    const host = specialHostOf(it.name, cards);
+    if (!host) continue;
+    host.specials.push(it);
+    absorbed.add(it);
+  }
+
+  // 卡片评分：最新已评条目（各季 + 特别篇）
+  const allItemsOf = (c: SeriesCard): CinemaItem[] => c.seasons.map((s) => s.item).concat(c.specials);
+  for (const c of cards) c.rating = latestRated(allItemsOf(c));
+
+  // 第三遍：按原序装配（并入的特别篇已挂在卡上，跳过、不再出普通卡）
   const out: CardEntry[] = [];
   const emitted = new Set<string>();
   for (const it of list) {
+    if (absorbed.has(it)) continue;
     let key: string | null = null;
     if (MERGE_GROUPS.includes(it.group)) {
       const parsed = parseSeasonName(it.name);

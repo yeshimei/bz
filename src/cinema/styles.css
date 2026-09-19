@@ -157,10 +157,13 @@
 .bz-cinema--midnight .dm-kv-k{color:var(--ink-3);flex:none;min-width:88px}
 .bz-cinema--midnight .dm-kv-v{color:var(--ink);word-break:break-all}
 .bz-cinema--midnight .dm-kv-v a{color:var(--gold);text-decoration:none}
-/* 合并卡详情（issue 376）：片名后的「共 N 季」+ 各季明细行（点某一行进单季详情）。
-   动作行不放——找同类/编辑/删除都作用在一篇笔记（一季）上，合集上无处落地（ADR-0168）。 */
+/* 合并卡详情（issue 376）：片名后的「共 N 季」+ 条目行（各季在前、特别篇顺其后，点某行进该条详情）。
+   动作行不放——找同类/编辑/删除都作用在一篇笔记上，合集级无处落地（ADR-0168）；
+   分节小标题与操作提示 2026-09-20 按用户要求去掉（.dm-hint 随之退役）。 */
 .bz-cinema--midnight .dm-n{color:var(--gold);font-size:var(--bz-font-meta);font-weight:600;margin-left:6px;letter-spacing:.04em}
-.bz-cinema--midnight .s-row{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px dashed var(--line);border-radius:6px;cursor:pointer}
+/* 条目列：头部与首行的间隔由自己给（原由被去掉的小标题 border-top + margin 顶着，首行会贴住头部） */
+.bz-cinema--midnight .s-list{margin-top:14px}
+.bz-cinema--midnight .s-row{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px dashed var(--line);border-radius:6px;cursor:pointer}
 .bz-cinema--midnight .s-row:hover{background:var(--chip)}
 .bz-cinema--midnight .s-row:last-child{border-bottom:0}
 .bz-cinema--midnight .s-thumb{width:30px;height:43px;border-radius:4px;overflow:hidden;flex:none;background:var(--chip);border:1px solid var(--line)}
@@ -172,7 +175,6 @@
 .bz-cinema--midnight .s-chip{font-size:var(--bz-font-caption);padding:2px 8px;border-radius:99px;color:#fff;letter-spacing:.08em;flex:none}
 .bz-cinema--midnight .s-rate{font-size:var(--bz-font-meta);font-weight:700;color:var(--star);flex:none;min-width:30px;text-align:right;font-variant-numeric:tabular-nums}
 .bz-cinema--midnight .s-rate.none{color:var(--ink-3);font-weight:400}
-.bz-cinema--midnight .dm-hint{margin-top:14px;text-align:center;font-size:var(--bz-font-caption);color:var(--ink-3);letter-spacing:.04em}
 .bz-cinema--midnight .dm-kv-v a:hover{text-decoration:underline}
 .bz-cinema--midnight .dm-actions{display:flex;justify-content:flex-end;gap:var(--bz-space-sm);margin-top:var(--bz-space-lg)}
 .bz-cinema--midnight .dm-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:none;border-radius:var(--bz-radius-sm);padding:7px 13px;font-size:var(--bz-font-meta);color:var(--ink-2);cursor:pointer;font-family:inherit}
