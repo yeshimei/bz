@@ -74,7 +74,16 @@ describe('海报墙 markup', () => {
     expect(html).toContain('width:100%'); // 69/69 满条
     expect(html).toContain('is-full');
     expect((html.match(/bz-gs-trophy/g) ?? []).length).toBe(1); // 只有全成就挂杯
+    expect(html).toContain('bz-gs-trophy" title="全成就达成">🏆</span>'); // 🏆 字符角标（2026-09-19 点版：lucide 线性杯弃用）
+    expect(html).not.toContain('data-lucide="trophy"'); // 不能带 lucide 标记，否则 mountIcons 会把字符换成 SVG
     expect(html).toContain('width:36%'); // 10/28 ≈ 36%
+  });
+
+  it('卡片不挂 title（悬浮不弹游戏名原生提示，2026-09-19 点版）', () => {
+    const zh = item(1, 'Deep Rock Galactic', 65214, '2026-07-20', false, false, '深岩银河');
+    const html = shelfHtml([zh], (it) => it.cover ?? '');
+    expect(html).toMatch(/<button type="button" class="bz-gs-card" data-appid="1">/);
+    expect(html).not.toContain('title="深岩银河 · Deep Rock Galactic"');
   });
 
   it('无封面走占位：首字 data-initial + 不注入 img', () => {
