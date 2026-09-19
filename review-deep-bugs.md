@@ -549,9 +549,16 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## favorites（收藏夹）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构运行中）
+## favorites（收藏夹）域 · 5/5 方向到账，两批定稿（批 A `bz-fix-fav-data` 已派；批 B `bz-fix-fav-view` 待槽位）
 
-> 明细：`.scratch/review-deep/favorites-{func,ui,efficiency,consistency}.md`。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1（无 P1/P2——两轮全域修复后数据面扎实）。方向 2（UI）：P2×6 + P3×7 + UX×3。方向 3（效率）：P2×3 + P3×3 + UX×3。方向 4（一致）：P2×2 + P3×4 + UX×0 新增。跨方向去重：哨兵撞名（func-7 = ui UI-05 同根——代码备了 `__all/__archived` 哨兵但 markup 仍发字面值，防了等于没防）、主表单 Enter（ui UI-11 = eff E4 = cons C6 三向同根，手写版缺 isComposing）、单例守卫绕脏检查（eff E3 = 旧账 FV2 = ui 复核仍在）、100vh→vvh（ui UI-01 = cons C4 同根：favorites 已接同族 bz-panel-mtop 却漏 vvh，同一次接入两个半成品）、ESC 手写旗标收编 registerPanelEsc（ui 旧账复核 = cons C3 升格入账；六域先例）。**文档误记三处清单（cons C1/C2 齐备）**：core/notice.ts:139 注释 + 本台账 B7 行 + **CONTEXT.md:75 favorites 词条**（词条还发现交互口径停 ADR-0083 旧版 + **belongings 演进史整段误植进 favorites 词条**——印章头/四设置键/bz-belongings-report 全是归物本内容；均归修复批文档收口）。旧账复核 11 条：F14/F15/FV1/FV3/FV4 五条已修闭环；FV2 仍在随守卫一并修；ux#16/#17 拍板维持；触控热区旧账复核非欠账（磁贴 min-height 符合 core 紧产行指引）。**重要复核发现（E1=C2 双向独立复核）**：效率整改 5 落地面账目反转——favorites 删除/归档仍「确认框+撤销」双保险（`git log -S` 证实确认文案自初版从未移除），**favorites 是唯一活跃滞后域**（belongings/clipbook/review 已落地，memo 随回滚队尾重审，password-vault 拍板保留为合理例外），归修复批纠偏。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
+> 明细：`.scratch/review-deep/favorites-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1。方向 2（UI）：P2×6 + P3×7 + UX×3。方向 3（效率）：P2×3 + P3×3 + UX×3。方向 4（一致）：P2×2 + P3×4。方向 5（架构）：P2×1 + P3×2 + 建议×1 + 归因 4 组。跨方向去重：哨兵撞名（func-7 = ui UI-05）、主表单 Enter 三向同根（ui UI-11 = eff E4 = cons C6，手写缺 isComposing）、单例守卫绕脏检查（eff E3 = FV2）、100vh→vvh（ui UI-01 = cons C4，已接 bz-panel-mtop 却漏 vvh 的半成品对）、ESC 旗标收编（= cons C3 六域先例）、**func-3/4/5+E6 归因收口**（arch：写侧字段维护散布→DataManager 事务收口、normalizeUrl 挂读侧、控制字面量与用户数据共用命名空间）。**文档误记三处清单**：core/notice.ts:139 + B7 行 + CONTEXT.md:75 词条（交互口径停 ADR-0083 + belongings 演进史误植 + 删除免确认误载）。**E1=C2 双向复核**：favorites 是删除口径唯一活跃滞后域（pv 拍板保留合理例外）。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
+
+### 修复批定稿（两批，文件不交叠）
+
+- **批 A `bz-fix-fav-data`（数据可靠性与写链，data.ts/ai.ts）**：arch-1 normalizeItems 读侧管道（类型漂移防御）、func-3 业务字段级合并写（data 层闭环防盘侧回滚）、func-4 派生字段三链路收口、func-5 AI 回填 normalizeUrl、E6 读侧归一、arch-2 kind 契约测试、arch-3 死键清理、arch-4 双实例收口方案。
+- **批 B `bz-fix-fav-view`（UI 交互与通知链，ui.ts/styles）**：E1 删除/归档免确认直达 + notice.ts:139 注释纠偏（测试契约面 ui.test.ts:806/881 + flow-dialog-skin 随批翻转）、E2 滚位保持、E3/FV2 守卫走 confirmDiscard、UI-01 100vh→vvh、UI-02 负 margin calc、UI-03 删强制聚焦、UI-04/11/C6 Enter→bindFormSubmit、UI-05/func-7 哨兵 markup+保留字、UI-06 aria/键盘、UI-07 加载态、UI-08 激活指示、UI-09 空态文案、UI-10 tag.ic 转义、UI-12 脏拦截、UI-13 热区、C3 registerPanelEsc 收编、C5 死 import、func-1 撤销补事件、func-6 标签弹窗类名、E5 Map 建表、E6 写侧保存路径归一。
+- **主线程文档收口**：CONTEXT.md:75 favorites 词条重写（退役件记录 + 误植段迁出 + 删除口径新载）、review-deep-bugs B7 行更正。
+- **拍板清单 F 系**：无链卡反馈、右键发现性、键盘焦点管理、触屏 hover 粘滞（全域）、磁贴限高、点卡 affordance。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
