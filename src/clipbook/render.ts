@@ -148,9 +148,9 @@ export function stateLabel(st: string): string {
 export type SrcSelJson = { kind: 'all' } | { kind: 'inbox'; platform: string; up: string | null } | { kind: 'clip' } | { kind: 'site'; site: string };
 
 /** rail 源行（原 ui.ts railItemHtml 平移）：徽标/图标槽位保留 DOM（编辑部皮肤 CSS 隐藏，结构给测试）。
- *  markAllN（效率#4）：该源未读 news 数 >0 时行内挂「✓✓」批量已读小钮（桌面 hover 浮出；
- *  点击流与右键「全部标为已读（N 篇）」同一条确认链，接线在 ui.ts renderRail）。 */
-export function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string, markAllN = 0): string {
+ *  行内「✓✓」批量已读小钮已退役（2026-09-19 用户拍板：hover 浮出的快捷钮删掉）——
+ *  源级批量已读只保留右键菜单一条路径（ui.ts renderRail 的 attachItemActions）。 */
+export function railItemHtml(sel: SrcSelJson, label: string, unread: number, total: number, icon: string | null, color: string | null, active: boolean, sub?: string): string {
   // G：JSON 过 esc 再进单引号属性——UP 主名含单引号时原实现提前闭合属性，点击 JSON.parse 抛错该源失效
   // 前缀槽三态保留 DOM（issue 214：编辑部皮肤在域 CSS 内隐藏徽标/图标，V1 = 纯文字点线索引）
   const badge = icon === 'feed'
@@ -162,16 +162,11 @@ export function railItemHtml(sel: SrcSelJson, label: string, unread: number, tot
         : `<span class="bz-rail-ic${sel.kind === 'all' ? ' bz-rail-ic--accent' : ''}">${icon ? iconSpan(icon) : ''}</span>`;
   // 计数 = 未读（搜索态为命中数，橘粗）/ 总数（issue 214 V1 口径）
   const count = `<span class="bz-rail-count">${unread > 0 ? `<b>${unread}</b>` : unread}/${total}</span>`;
-  // 批量已读可见入口（效率#4）：markup 单源在此，点击接线在行为层（stopPropagation 防触发源切换）
-  const markAll = markAllN > 0
-    ? `<span class="bz-clip-rail-markall" data-clip-rail-markall role="button" aria-label="全部标为已读" title="全部标为已读（${markAllN} 篇）">${iconSpan(ICO.checks, 'bz-ic--xs')}</span>`
-    : '';
   return `
     <div class="bz-rail-item${active ? ' on' : ''}" data-src='${esc(JSON.stringify(sel))}' title="${esc(label)}">
       ${badge}
       <span class="bz-rail-name">${esc(label)}</span>
       <span class="bz-clip-lead"></span>
-      ${markAll}
       ${count}
     </div>`;
 }

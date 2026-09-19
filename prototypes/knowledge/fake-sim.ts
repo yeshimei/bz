@@ -166,7 +166,6 @@ CBTI 即针对失眠的认知行为疗法，是一种非药物治疗失眠的循
 title: "既视感"
 type: term
 domain: "心理"
-term: "既视感"
 date: "2026-09-04 07:47:38"
 ---
 
@@ -179,7 +178,6 @@ date: "2026-09-04 07:47:38"
 title: "昼夜节律"
 type: term
 domain: "心理"
-term: "昼夜节律"
 date: "2026-09-03 21:10:00"
 source: "https://zhuanlan.zhihu.com/p/12345678"
 sourceTitle: "什么是昼夜节律"
@@ -194,7 +192,6 @@ sourceTitle: "什么是昼夜节律"
 title: "松果体"
 type: term
 domain: "医学"
-term: "松果体"
 date: "2026-08-28 10:00:00"
 ---
 
@@ -380,7 +377,6 @@ const SEED_MOUNT_LITERATURE: Array<{ path: string; ctime: number; content: strin
 title: 睡眠结构
 type: term
 domain: 医学
-term: 睡眠结构
 date: 2026-09-12 21:20:00
 related:
   - "[[卡片盒/睡眠结构]]"
@@ -403,7 +399,6 @@ related:
 title: 慢波睡眠
 type: term
 domain: 医学
-term: 慢波睡眠
 date: 2026-09-12 20:50:00
 related:
   - "[[卡片盒/慢波睡眠]]"
@@ -418,7 +413,6 @@ related:
 title: 睡眠纺锤波
 type: term
 domain: 医学
-term: 睡眠纺锤波
 date: 2026-09-11 22:40:00
 related:
   - "[[卡片盒/睡眠纺锤波]]"
@@ -433,7 +427,6 @@ related:
 title: 睡眠日记
 type: term
 domain: 医学
-term: 睡眠日记
 date: 2026-09-08 20:00:00
 ---
 
@@ -446,7 +439,6 @@ date: 2026-09-08 20:00:00
 title: 睡眠债
 type: term
 domain: 医学
-term: 睡眠债
 date: 2026-09-07 20:30:00
 ---
 

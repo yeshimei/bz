@@ -11,6 +11,7 @@
 import type { App } from 'obsidian';
 import { notify } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
+import { topifyZ } from '../core/dom';
 import { getApp } from '../core/app';
 import { yieldToMainThread } from '../core/utils';
 import { escManager } from '../core/esc-manager';
@@ -86,6 +87,10 @@ export async function openClipbookReport(_app?: App): Promise<void> {
   if (!overlayEl) buildDom();
   syncPeriodSeg(); // 周期跨开保留：重开时 seg 高亮对齐真实 period（骨架是静态「本周」高亮）
   overlayEl!.style.display = 'flex';
+  // 显示即发号（ADR-0067）：本弹层是独立 overlay，剪藏本主面板开着时（rail 脚注入口常是这种场景）
+  // 主面板经 topifyZ 已持号——不发号则本层 z-index:auto 恒在其下，报告「被主弹窗遮挡」。
+  // 每次打开抬顶（含重开），与「后显示恒在上」一致。
+  topifyZ(overlayEl);
   await renderBody(true);
 }
 

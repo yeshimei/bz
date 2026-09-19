@@ -162,6 +162,17 @@ describe('划选工具框出现与收起（issue 329）', () => {
     closeAndCleanup();
   });
 
+  it('浮框显示即发号：z-index 有值且高于主面板遮罩（ADR-0067，防被面板压住看不见）', async () => {
+    await openDesktop();
+    const panel = (document.querySelector('.bz-clip-frame') as HTMLElement).closest('.bz-panel-overlay') as HTMLElement;
+    expect(panel).toBeTruthy();
+    expect(panel.style.zIndex).not.toBe(''); // 主面板显示时已 topifyZ（CB1）
+    const bar = await showToolbar('量子纠缠');
+    expect(bar.style.zIndex).not.toBe('');
+    expect(Number(bar.style.zIndex)).toBeGreaterThan(Number(panel.style.zIndex));
+    closeAndCleanup();
+  });
+
   it('非正文容器内的选区不弹工具框（rail/目录区让位）', async () => {
     await openDesktop();
     const rail = document.querySelector('[data-clip-rail]') as HTMLElement;

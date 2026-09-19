@@ -394,7 +394,7 @@ describe('编辑器剪藏场景剪贴板预填（占位符形态，memo 弹窗�
     });
     await new Promise((r) => setTimeout(r, 80));
     const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
-    expect((editor.querySelector('textarea') as HTMLTextAreaElement).placeholder).toBe('输入备忘录内容…');
+    expect((editor.querySelector('textarea') as HTMLTextAreaElement).placeholder).toBe('输入备忘录内容...');
     expect((editor.querySelectorAll('.bz-memo-extra')[0].querySelector('input') as HTMLInputElement).placeholder).toBe('标题（可选）');
     void app;
   });
@@ -417,7 +417,7 @@ describe('编辑器剪藏场景剪贴板预填（占位符形态，memo 弹窗�
     const editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     const content = editor.querySelector('textarea') as HTMLTextAreaElement;
     expect(content.value).toBe('既有剪藏'); // 回填内容不被剪贴板预填覆盖
-    expect(content.placeholder).toBe('输入备忘录内容…'); // 编辑模式不触发剪藏预填
+    expect(content.placeholder).toBe('输入备忘录内容...'); // 编辑模式不触发剪藏预填
     void vault;
   });
 

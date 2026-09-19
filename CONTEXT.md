@@ -116,7 +116,7 @@ _Avoid_: 备忘录场景（用户拍板不走备忘录域）、视频剪切列�
 
 **快速流程 (Quick Flow)**: B站下载「转文字」之后的一键后续——ticket 136 起（ADR-0071）AI（标题/标签/简介/润色 + 文献类型/领域）与文献笔记落盘由 **bz 插件**完成（CLI 去 AI，产出转录临时文件交插件）；视频本体交付仍走工具，笔记嵌入交付文件。_Avoid_: 一键流程、AI 后处理
 
-**文献笔记 (Literature Note)**: 存于「文献目录」的 AI 生成笔记，两种文献类型（ADR-0073）——**视频文献**（type: video）：frontmatter 九键（title/tags/summary/url/date/author/videoTitle/type/domain），正文逐段「润色正文 + 视频双链」（ticket 151 补回：CLI 交付的 mp4 以 `![[路径]]` 嵌正文尾部「## 视频」段，keepVideo=false 未交付则无视频段）；**术语文献**（type: term）：frontmatter 五键（title/type/domain/term/date），正文一段简介（百科总结式）。区别于书库「读书笔记」与聚合讯「剪藏文章」。**title 生成契约为完整陈述句**（ADR-0122/issue 276）：AI 标题不得写成新闻式问句（禁疑问句与疑问语气——为何/为什么/怎么/如何/吗/呢），反例「……为何拥有六只相机眼」→ 正例「……拥有六只相机眼」；措辞是唯一约束点，存量笔记标题不迁移。_Avoid_: 读书笔记、视频笔记（指本词时）
+**文献笔记 (Literature Note)**: 存于「文献目录」的 AI 生成笔记，两种文献类型（ADR-0073）——**视频文献**（type: video）：frontmatter 九键（title/tags/summary/url/date/author/videoTitle/type/domain），正文逐段「润色正文 + 视频双链」（ticket 151 补回：CLI 交付的 mp4 以 `![[路径]]` 嵌正文尾部「## 视频」段，keepVideo=false 未交付则无视频段）；**术语文献**（type: term）：frontmatter 四键（title/type/domain/date；term 与 title 恒同值的历史冗余键已退役，ADR-0169，存量由 backfill 清理），正文一段简介（百科总结式）。区别于书库「读书笔记」与聚合讯「剪藏文章」。**title 生成契约为完整陈述句**（ADR-0122/issue 276）：AI 标题不得写成新闻式问句（禁疑问句与疑问语气——为何/为什么/怎么/如何/吗/呢），反例「……为何拥有六只相机眼」→ 正例「……拥有六只相机眼」；措辞是唯一约束点，存量笔记标题不迁移。_Avoid_: 读书笔记、视频笔记（指本词时）
 
 **文献预览 (Literature Preview)**: 知识盒「部壹 · 文献」行点击后的只读弹层（标题形如「文献预览 · 影像 / 词条」，卡片预览与主题预览共用同一样式与同一渲染入口）——正文整段交 Obsidian `MarkdownRenderer`（`![[…mp4]]` 内嵌为原生播放器；**笔记内容与嵌入位置一律不动**）+ 关联 chips + 可点来源外开，关闭走 ✕/ESC。**渲染契约**（ADR-0122）：渲染容器初始为空、渲染前清空，仅渲染抛错或无产出元素时才回退纯文本段落；测试 mock 与原型 fake 层同款追加语义。_Avoid_: 第二大脑预览（该域只有检索 chunk 的悬停浮卡，不含文献笔记正文）、文献详情页
 

@@ -102,7 +102,23 @@
   width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line);
   border-radius: 0; padding: var(--bz-space-xs) 2px 5px 22px; font-size: 12.5px; font-style: italic; color: var(--clip-ink);
 }
-.bz-clip-head-search .bz-input:focus { border-bottom-color: var(--clip-accent); box-shadow: none; }
+/* 宿主表单底色的伪类覆盖修复（2026-09-19）：Obsidian app.css 的
+   `input[type='text']:hover { background-color: var(--background-modifier-form-field-hover) }`
+   特异性 (0,2,1) 高于上面的 `.bz-clip-head-search .bz-input` (0,2,0)——基线那句
+   background: transparent 压不住它，鼠标一进搜索框就冒出宿主表单底色（白块）盖掉透明下划线皮肤。
+   此处用同形态加伪类（0,3,0）反压：hover/focus 两态的背景与边框全部钉回透明底 + 墨线。
+   顺序有意义——focus 在后，悬停中聚焦仍取橘底线（同特异性后到者胜）。 */
+.bz-clip-head-search .bz-input:hover {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--clip-line);
+}
+.bz-clip-head-search .bz-input:focus {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--clip-accent);
+  box-shadow: none;
+}
 
 .bz-clip-desk-body { flex: 1; display: flex; min-height: 0; }
 
@@ -144,14 +160,8 @@
 .bz-clip-rail .bz-rail-count { margin-left: auto; font-size: 10.5px; color: var(--clip-muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .bz-clip-rail .bz-rail-count b { color: var(--clip-accent); font-weight: 700; }
 .bz-clip-rail .bz-rail-item.on .bz-rail-count b { color: var(--clip-accent-soft); }
-/* rail 源行「✓✓」批量已读小钮（效率#4）：hover 浮出的可见入口——右键菜单语义不变；
-   移动端 rail 整体隐藏无此面（移动章头常驻灰态钮承担） */
-.bz-clip-rail .bz-clip-rail-markall {
-  display: none; flex-shrink: 0; align-items: center; justify-content: center;
-  padding: 2px; line-height: 1; color: var(--clip-muted); cursor: pointer;
-}
-.bz-clip-rail .bz-rail-item:hover .bz-clip-rail-markall { display: inline-flex; }
-.bz-clip-rail .bz-clip-rail-markall:hover { color: var(--clip-accent); }
+/* rail 源行行内「✓✓」批量已读小钮已退役（2026-09-19 用户拍板）：hover 浮出的快捷钮删掉，
+   源级批量已读只剩右键菜单一条路径；移动端章头常驻灰态钮（.bz-clip-mob-ch-mark）不受影响 */
 /* rail 脚注：今日已读（报脚式细线 + 橘大数字） */
 .bz-clip-rail-foot {
   flex-shrink: 0; margin: 0 18px; padding: 14px 2px var(--bz-space-lg); border-top: 1px solid var(--clip-line);
@@ -577,7 +587,8 @@
   font-size: var(--bz-font-label);
   color: var(--clip-ink);
   white-space: nowrap;
-  /* z-index 走动态发号（allocZ，ADR-0067），不写静态档 */
+  /* z-index 不写静态档：行为层在每次显示时 topifyZ 发号（ADR-0067）。
+     2026-09-19 补齐接线——此前只有注释没有发号，浮框 z-index:auto 被已发号的主面板遮罩压住。 */
 }
 .bz-clip-selbar-btn {
   border: none;

@@ -340,7 +340,8 @@ async function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, 
 }
 
 // ===== RSS 订阅管理弹窗（ADR-0121）=====
-// 与 UP 主管理同范式的独立 overlay（bz-rss-manager-mask/-popup，z 序 10100/10101）；
+// 与 UP 主管理同范式的独立 overlay（bz-rss-manager-mask/-popup，z-index 经 core createOverlay
+// 动态发号 ADR-0067，不再是静态档）；
 // 添加源时 requestUrl 试拉校验并预取 feed 自带标题（守护 30 分钟才拉一轮，坏 URL 当场拦截）。
 
 /** RSS 弹窗 schema 构建入参（lint 注册时以最小参数调用即可） */
