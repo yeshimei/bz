@@ -6545,7 +6545,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 卡片键盘可达（M3-10）：tabindex 聚焦环（focus-visible 才显，鼠标点击不出环） */
 .bz-memo-card:focus-visible,
 .bz-memo-check:focus-visible,
-.bz-memo-cl-row:focus-visible,
 .bz-memo-donebar:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: -2px; }
 
 /* 搜索框尾部清除钮（效率#6）：core .bz-search 只有左图标位，域内补右缘 ✕——
@@ -6560,26 +6559,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-memo-panel .bz-memo-search-clear:hover { color: var(--bz-text-1); background: var(--bz-surface-hover); }
 .bz-memo-panel .bz-memo-search-clear .bz-ic { width: 12px; height: 12px; }
-
-/* ---- 清单子任务（issue 354）：标题之下、meta 之上的勾选行组 ---- */
-.bz-memo-cl { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; }
-.bz-memo-cl-row { display: flex; align-items: flex-start; gap: 8px; padding: 2px 0; cursor: pointer; }
-.bz-memo-cl-box {
-  width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
-  border: 1.5px solid var(--bz-border-strong); background: var(--bz-surface-2);
-  position: relative; box-sizing: border-box; cursor: pointer; display: inline-block;
-}
-.bz-memo-cl-row:hover .bz-memo-cl-box { border-color: var(--bz-brand); }
-.bz-memo-cl-box.bz-memo-cl-on { background: var(--bz-brand); border-color: var(--bz-brand); }
-.bz-memo-cl-box.bz-memo-cl-on::after {
-  content: ''; position: absolute; left: 3.5px; top: 0.5px;
-  width: 3.5px; height: 6.5px; border: solid var(--bz-on-brand); border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-}
-.bz-memo-cl-text { font-size: var(--bz-font-meta); color: var(--bz-text-2); line-height: 1.6; word-break: break-word; }
-.bz-memo-cl-row.is-done .bz-memo-cl-text { text-decoration: line-through; color: var(--bz-text-3); }
-/* 父项已完成：整组淡显（与卡片 done 暗淡同语汇），行仍可点（取消勾选即恢复父项） */
-.bz-memo-cl.bz-memo-cl-dim { opacity: 0.72; }
 
 /* ---- 移动抽屉头（buildSheetHead，ADR-0104 markup 单源）----
    勾选圈复用上方 .bz-memo-check 单源规则（抽屉经 sheetClass 挂皮肤类，纸感/编辑部皮肤自动随行，
@@ -6666,22 +6645,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-memo-addscene .bz-btn-row { margin-top: var(--bz-space-xs); }
 .bz-memo-addscene-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.5; }
 
-/* ---- 编辑器清单子任务区（issue 354）：勾选框 + 文案输入 + 删除钮行 ---- */
-.bz-memo-cl-edit { display: flex; flex-direction: column; gap: 6px; }
-.bz-memo-cl-edit-row { display: flex; align-items: center; gap: 6px; }
-.bz-memo-cl-edit-row .bz-memo-cl-box { margin-top: 0; flex-shrink: 0; }
-.bz-memo-cl-edit-row .bz-input { flex: 1; min-width: 0; height: 30px; }
-.bz-memo-cl-edit-row .bz-icon-btn { flex-shrink: 0; }
-.bz-memo-cl-addbtn {
-  align-self: flex-start; display: inline-flex; align-items: center; gap: 4px;
-  margin-top: 2px; padding: 4px 10px;
-  border: 1px dashed var(--bz-border-strong); border-radius: var(--bz-radius-sm);
-  background: transparent; color: var(--bz-text-3); cursor: pointer;
-  font-size: var(--bz-font-meta); font-family: inherit;
-}
-.bz-memo-cl-addbtn:hover { color: var(--bz-brand); border-color: var(--bz-brand); background: var(--bz-brand-soft); }
-.bz-memo-cl-addbtn .bz-ic { width: 12px; height: 12px; }
-
 /* （issue 266 的「移动端专属头行新建钮」在 issue 268 退役：移动端新建入口归底部
    录入「添加」（打开创建弹窗）与场景条尾部「添加场景」，故此处原有的
    `@media (min-width:769px){ .bz-memo-head-…{display:none} }` 一并删除。
@@ -6722,10 +6685,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   .bz-memo-sheet-entry .bz-memo-check::after { content: ''; position: absolute; inset: -13px; }
   .bz-memo-card .bz-memo-card-title { font-size: var(--bz-font-emphasis); }
   .bz-memo-composer .bz-input { height: 40px; }
-  /* 清单子任务触控档（issue 354）：行加高 + 勾选框 16px，整行即热区 */
-  .bz-memo-cl-row { padding: 5px 0; gap: 9px; }
-  .bz-memo-cl-row .bz-memo-cl-box { width: 16px; height: 16px; }
-  .bz-memo-cl-row .bz-memo-cl-text { font-size: var(--bz-font-body); }
   /* 月历触控档（issue 355）：格子收矮成色点热区——chip 隐文字显圆点，日数留格；
      chip 间距 2px → 4px（审查体验 P2 修复批：色点行距放宽，少粘连） */
   .bz-memo-cal-cell { min-height: 44px; padding: 2px 3px; }
