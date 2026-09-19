@@ -554,3 +554,14 @@
 - [x] 新鲜度守卫：指纹「原始字节 sha1」→ 双侧 CRLF→LF 归一（`build-preview.mjs` 导出 `normalizeEndings`，测试端 import 复用），跨构建位置/行尾稳定；全量重出 28 产物
 - [x] 顺手补齐：6 条行为包真陈旧（clipbook/gameshelf/home/memo/review/settings-panel，clipbook 行为包还带已退役行内 ✓✓ 钮代码）——守卫按设计正确抓到
 - [x] 门禁：tsc 0 错 + 全量测试 + 主仓构建部署 + 主仓重出幂等校验（归一后跨环境同指纹）
+
+## Issue 383 — 日记本打开「先面板后内容」：首帧让位读盘与整墙渲染
+
+**状态：已实现**（2026-09-19，worktree 门禁）
+
+- [x] 规格：`issues/383-diary-open-first-paint.md` + `docs/adr/adr-0171-diary-open-first-paint.md`（spec 日记段 item 29）
+- [x] 根因：issue 381 后缓存命中时 `loadWallEntries` 立即 resolve，`show() → loadAndRender` 微任务里一口气跑到 `renderAll`，首帧被「读盘 + 整墙 DOM 构建」堵住 → 观感「点了没反应，然后整墙突然出现」
+- [x] 修法：`loadAndRender` 在 `showSkeleton()` 后 `await this.afterPaint()`（rAF→setTimeout 一拍；`document.hidden`/无 rAF → setTimeout(0)，后台标签页 rAF 不触发不能等）——面板+骨架先上屏才放行读盘/整墙渲染；插一处覆盖全部调用点
+- [x] 边界：数据层零改动（ADR-0170 语义原样）；重开旧墙 `showSkeleton` 跳过（旧内容留场无骨闪烁）；不加人为 loading 下限
+- [x] 测试：`tests/diary/ui.test.ts` 新增 2 例（冷开 / 缓存命中命中路径均「openManager 返回时骨架在位、内容未到」，内容到达后骨架退场）
+- [x] 门禁：tsc 0 错 + diary 子集 79/79 + 全量测试 + 自审 + diff 审查 + 主仓构建部署
