@@ -13503,6 +13503,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .dm-kv-k{color:var(--ink-3);flex:none;min-width:88px}
 .bz-cinema--midnight .dm-kv-v{color:var(--ink);word-break:break-all}
 .bz-cinema--midnight .dm-kv-v a{color:var(--gold);text-decoration:none}
+/* 热门短评（451/687 有值）：引文式左侧竖线，长评收 3 行 + 展开钮（行为层 data-dm-fold 接线） */
+.bz-cinema--midnight .dm-quote{font-size:12.5px;color:var(--ink-2);line-height:1.85;text-align:justify;border-left:2px solid var(--line);padding-left:10px}
+.bz-cinema--midnight .dm-quote.is-fold{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.bz-cinema--midnight .dm-fold{margin-top:6px;padding:0;border:0;background:none;font-size:var(--bz-font-caption);color:var(--gold);cursor:pointer}
 /* 合并卡详情（issue 376）：片名后的「共 N 季」+ 条目行（各季在前、特别篇顺其后，点某行进该条详情）。
    动作行不放——找同类/编辑/删除都作用在一篇笔记上，合集级无处落地（ADR-0168）；
    分节小标题与操作提示 2026-09-20 按用户要求去掉（.dm-hint 随之退役）。 */
