@@ -10,7 +10,8 @@
  *  - 跳过此篇（item 7）：头行 skip-forward，该篇回 pending 移到队尾，不评级不写盘
  *  - 答对题持久化出库（quiz manager.removeQuestion）；答错仅移出本轮（不删题）
  *  - 右栏「本轮队列」：排队/做题中/已通过/未通过 实时更新
- *  - 一篇答完自动评级（accuracyToRating）→ 结果卡：通过 → 下一篇/结束；未通过 → 复习此笔记
+ *  - 一篇答完自动评级（accuracyToRating）→ 结果卡：通过 → 下一篇/结束；未通过 → 会话结束
+ *    （U7：无失败结果卡，onFailed 写排期挂待重做并由调用方打开原文）
  *  - 队列耗尽 → 结算屏（评级分布 + 连续 N 天 + 完成回面板）
  *  - 图标全 lucide（占位渲染后组件库 mountIcons 统一替换），正文无 emoji
  *
@@ -19,16 +20,17 @@
  */
 import { stripMdExt, stripTitleMarks } from '../core/utils';
 import type { App } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notifyActionError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { mountIcons } from '../core/ui';
 import { escManager } from '../core/esc-manager';
 import type { ReviewItem } from './data';
 import type { QuizQuestion } from './quiz-core/manager';
 import type { QuizMasterUI } from './quiz-core/session';
+import { RATING_NAMES } from './stats'; // A6：评级中文名单源（「简单」，与评级条/统计一致），本地「轻松」映射已删
 import {
   sprintHeadHtml, sprintLoadingHtml, sprintQuestionHtml, sprintBodyHtml,
-  sprintResultHtml, sprintSummaryHtml,
+  sprintResultHtml, sprintSummaryHtml, futureInLabel,
 } from './render';
 
 /** 答对后亮绿到自动进下一题的延时（ticket 156 用户拍板 0.8s） */
@@ -108,6 +110,12 @@ export class SprintSession {
   /** 当前视图态（键盘路由：题面/结果卡/结算屏 Enter 语义不同） */
   private view: 'loading' | 'question' | 'result' | 'summary' = 'loading';
   private finished = false;
+  /** 放弃确认框在途（review-deep U1）：flow-dialog 打开期间挂起 document 层键盘路由，
+   *  防 Enter 被 preventDefault 吃掉确认框按钮原生 click + 数字键穿透作答 */
+  private confirming = false;
+  /** 取题发号（review-deep U2）：runNext 每次进入递增；await fetchQuestions 返回后
+   *  seq 不等当前号即丢弃——loading 中「跳过此篇」触发的并发取题不再顶掉新视图 */
+  private runSeq = 0;
   private resolveDone: ((reason: 'done' | 'quit' | 'fail') => void) | null = null;
   private started = false;
 
@@ -145,7 +153,7 @@ export class SprintSession {
     this.started = true;
     return new Promise<'done' | 'quit' | 'fail'>((resolve) => {
       this.resolveDone = resolve;
-      this.escHandle = escManager.register('review-sprint', {
+      this.escHandle = escManager.register('bz-review-sprint', {
         isVisible: () => !this.finished,
         close: () => this.requestQuit(),
       });
@@ -157,7 +165,10 @@ export class SprintSession {
 
   /** 放弃确认（ESC/放弃按钮） */
   requestQuit(): void {
-    if (this.finished) return;
+    if (this.finished || this.confirming) return;
+    // U1：确认框在途先挂起键盘路由——否则 Enter 会被 handleKey preventDefault，
+    // 确认框按钮的原生 click 失效，同时按键穿透题面（多选直接交卷/翻题/结算）
+    this.confirming = true;
     void openFlowDialog({
       title: '放弃本次做题？',
       message: '未完成的题目将丢弃，本轮复习按已完成篇目结算',
@@ -168,6 +179,7 @@ export class SprintSession {
         { label: '放弃', value: 'ok', cta: true },
       ],
     }).then((v) => {
+      this.confirming = false; // settle 复位：取消/确认/ESC 关闭都恢复键盘
       if (v !== 'ok' || this.finished) return;
       this.finish('quit');
     });
@@ -217,13 +229,17 @@ export class SprintSession {
   /** 键盘路由：1-4/a-d 答题；Enter 提交→下一题→结束并结算；结果卡/结算屏走主按钮。
    *  输入框/文本域聚焦时跳过（不劫持打字）。 */
   private handleKey(e: KeyboardEvent): void {
-    if (this.finished) return;
+    // U1：确认框在途一律放行（不 preventDefault、不路由）——确认框按钮的原生 Enter=click 优先
+    if (this.finished || this.confirming) return;
     const t = e.target as HTMLElement | null;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     // G2：焦点在选项上按 Enter/空格——选项自身 keydown 已处理作答（renderQuestion 绑定），
     // document 层直接放行；否则 activate 与本 handler 先后命中同一事件：
     // 答错反馈/解析/「下一题」被跳过直接翻题，末题答完直接结算（quiz-core/session.ts:283 排除 BUTTON 同惯例）
     if (t && typeof t.closest === 'function' && t.closest('.bz-sprint-opt')) return;
+    // BUTTON 同 quiz-core/session.ts:288 惯例：焦点在按钮上 Enter 交还原生 click
+    // （qfoot「下一题/提交」等），document 层不再抢路由（顺带兜住今后其他弹层按钮）
+    if (t && t.tagName === 'BUTTON') return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
 
     if (e.key !== 'Enter') {
@@ -251,8 +267,8 @@ export class SprintSession {
       return;
     }
     if (this.view === 'result') {
-      const entry = this.entry();
-      void this.handleResult(entry && entry.state === 'passed' ? 'next' : 'note');
+      // 结果卡仅通过态可达（U7），Enter 恒 = 下一篇/结算
+      void this.handleResult('next');
       return;
     }
     if (this.view === 'summary') this.finish('done');
@@ -268,6 +284,9 @@ export class SprintSession {
     const othersPending = this.entries.some((en, i) => i !== this.cur && en.state === 'pending');
     entry.state = 'pending';
     if (!othersPending) {
+      // U2：此处不走 runNext（无新号发出），须显式作废在途取题——否则旧篇 fetch 返回
+      // 会把题面硬顶到结算屏上（一篇已被「跳过结算」的题还能继续答）
+      this.runSeq++;
       this.showSummary();
       return;
     }
@@ -288,13 +307,16 @@ export class SprintSession {
       this.showSummary();
       return;
     }
+    // U2：发号守卫——本 await 在途期间若有 runNext 重入（loading 中跳过此篇）或
+    // 结算屏作废在途结果（runSeq 递增），旧 fetch 返回后 seq 失配即整体丢弃
+    const seq = ++this.runSeq;
     this.cur = nextIdx;
     const entry = this.entries[nextIdx];
     entry.state = 'doing';
     this.showLoading(entry);
 
     const questions = await this.opts.fetchQuestions(entry.item);
-    if (this.finished) return;
+    if (this.finished || seq !== this.runSeq) return;
     if (!questions || !questions.length) {
       // 无题：跳过该篇（不写评级；保持逾期等下次）
       notice(`「${entry.item.name}」暂无题目，已跳过`, 'warning');
@@ -352,11 +374,14 @@ export class SprintSession {
     return this.entries[this.cur];
   }
 
-  /** 通过后的下次间隔展示（onPassed 返回的写盘后 nextReviewDate） */
+  /** 通过后的下次间隔展示（onPassed 返回的写盘后 nextReviewDate）。
+   *  F4：<1 天不再 Math.max(1) 恒「1 天后」假间隔，天/小时/分钟口径与到期标签单源（render.futureInLabel）；
+   *  已是过去时点（排期落在当下之前）返回空回退「已排期」，不展示负数 */
   private nextIntervalNote(nextReviewAt: string | null | undefined): string {
     if (!nextReviewAt) return '';
-    const days = Math.max(1, Math.round((new Date(nextReviewAt).getTime() - Date.now()) / 86400000));
-    return `${days} 天后`;
+    const diff = new Date(nextReviewAt).getTime() - Date.now();
+    if (diff <= 0) return '';
+    return futureInLabel(diff);
   }
 
   // ================= 答题 =================
@@ -442,7 +467,8 @@ export class SprintSession {
         correctIndices: q.correctIndices,
       });
     } catch (e: any) {
-      notice('删除题目失败：' + e.message + '，请重试', 'error');
+      // C9：动作失败提示单源（core/notice notifyActionError），不再手拼同款文案
+      notifyActionError(e, '删除题目');
     }
   }
 
@@ -466,12 +492,10 @@ export class SprintSession {
 
   // ================= 结果/结算动作 =================
 
-  private async handleResult(action: 'next' | 'end' | 'note'): Promise<void> {
-    if (action === 'note') {
-      // 打开原文（未通过已在 onFailed 内开过？这里防御：只退出）
-      this.finish('quit');
-      return;
-    }
+  // U7：'note'（结果卡「复习此笔记 · 打开原文」）随 render.ts 死分支一并删除——
+  // 未通过路径 finishNote 直接 finish('fail')（onFailed 内已开原文），从不进结果卡
+
+  private async handleResult(action: 'next' | 'end'): Promise<void> {
     if (action === 'end') {
       this.showSummary();
       return;
@@ -527,7 +551,6 @@ export class SprintSession {
     const total = entry.acc + entry.wrong;
     const acc = total ? Math.round((entry.acc / total) * 100) : 0;
     const rating = accuracyToRating(acc);
-    const passed = rating === 'easy' || rating === 'good';
     const remain = this.remainingCount;
     const name = stripTitleMarks(entry.item.name);
     const nextLabel =
@@ -544,13 +567,13 @@ export class SprintSession {
         ? `${RATING_NAMES[rating]} · 已解除待重做`
         : `${RATING_NAMES[rating]} · 下次 ${entry.passNote || '已排期'}`;
     this.view = 'result';
+    // U7：结果卡仅通过态可达（未通过走 finish('fail') 中断，不出卡），markup 随死分支删除
     this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintBodyHtml(
       sprintResultHtml({
         name,
         acc: entry.acc,
         wrong: entry.wrong,
-        passed,
-        ratingLine: passed ? ratingLine : `${RATING_NAMES[rating]} · 待重做`,
+        ratingLine,
         nextLabel,
         showEnd: remain > 0 && this.mode !== 'single',
       }),
@@ -560,7 +583,6 @@ export class SprintSession {
     this.bindTop();
     this.opts.host.querySelector('[data-action="next"]')?.addEventListener('click', () => void this.handleResult('next'));
     this.opts.host.querySelector('[data-action="end"]')?.addEventListener('click', () => void this.handleResult('end'));
-    this.opts.host.querySelector('[data-action="note"]')?.addEventListener('click', () => void this.handleResult('note'));
     this.opts.onProgress?.();
   }
 
@@ -589,6 +611,3 @@ export class SprintSession {
     this.opts.host.querySelector('[data-action="skip"]')?.addEventListener('click', () => this.skipCurrent());
   }
 }
-
-/** 评级中文名（本地映射，避免依赖 stats 大模块） */
-const RATING_NAMES: Record<string, string> = { easy: '轻松', good: '一般', hard: '困难', again: '忘了' };
