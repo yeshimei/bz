@@ -509,15 +509,20 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## gameshelf（游戏库）域 · 审查入账中（方向 1 功能已到账；方向 2/3/4 运行中，5 待槽位）
+## gameshelf（游戏库）域 · 审查入账中（方向 1 功能 + 方向 2 UI 已到账；方向 3/4 运行中，5 待槽位）
 
-> 明细：`.scratch/review-deep/gameshelf-func.md`。方向 1：P1×1 + P2×2 + P3×11。旧账复核 6 条（window.open 记名本域收口、同步按钮引导态已缓解、关面板中止回填维持拍板、uiSelect ESC 已修等）。数据安全面核验健壮：对账 upsert 零覆盖主承诺、8 段成就行契约、截图同序同长、媒体键分工、三队列幂等熔断、Steam 解析三级兜底。门禁基线：tsc 0；tests/gameshelf 118 例全绿。
+> 明细：`.scratch/review-deep/gameshelf-func.md` + `gameshelf-ui.md`。方向 1：P1×1 + P2×2 + P3×11。方向 2：P1×1 + P2×1 + P3×4 + UX-Suggestion×6 + 测试缺口 7。旧账复核 11 条两方向合计（window.open 记名本域收口、同步按钮引导态已缓解、关面板中止回填维持拍板、uiSelect ESC 已修、issue 372/378、ADR-0122、铁律 3 合规等）。已核验健壮面：ESC 四层栈序、异步 detached DOM 守卫、对账 upsert 零覆盖主承诺、8 段成就行契约、同步 M.syncing 置位链、document 级监听回收、移动端 dvh/gridhost、主题 token 层档、图片三级兜底、转义主链（除 G4 单引号上下文）。门禁基线：tsc 0；tests/gameshelf 118 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
 - **P1 自动同步链断点** `sync.ts:119` × `index.ts:30`（func F1）——`autoSyncOnOpen` fire-and-forget、await 落空：首开空库/新游戏入账后媒体本地化、中文名回填、商店/成就回填三队列全部不启动（命令与手动按钮路径正确，唯自动同步漏），「拉到的都存本地」承诺在首次接入主路径不兑现。修：返回 runSync promise（一行）。+ 回归。
+- **P1 后台节流重渲整刷面板** `ui.ts:1187` × `names.ts:107-113` / `backfill.ts:75-81` / `posters.ts:394-401`（ui G1）——三队列每条完成节流直通 renderAll 整刷：搜索打字每约 1.2s 失焦、IME 组合被打断、移动端下拉被关；影院同病已修（`cinema/ui.ts:968-1047` renderSoft+焦点快照 c0805040 只落 cinema 源）。修：三 scheduleRerender 与 sync.ts `M.renderFn` 改走 renderSoft + 搜索框焦点快照（域内文本输入仅搜索框一个，可比影院更简）。+ 回归（假时钟焦点保持 + 菜单存活）。
 - **P2 已下架手改被同步翻回（拍板项）** `reconcile`（func F2）——用户手改 `已下架: true` 被下次同步「Steam 在场即恢复在架」静默翻回。设计语义 vs 用户意图冲突，**归拍板清单 GS1**。
 - **P2 window.open 旧账收口** `ui.ts:794`（func F3）——切 `openExternalUrl`（cinema 同族已清）。
+- **P2 移动端三枚常驻图标钮 30px 无热区** `styles.css:35-37`（ui G2）——含移动端唯一关闭出口（全屏无遮罩可点），违设计手册 §8.2 40px 下限；core `.bz-touch-target--lg` 基建已备（memo/diary 样板），ops 行 gap 8px 外扩后热区相切不交叠。修：挂类即生效（视觉不变）。
 - **P3 群（11 条，func）**：closePanel 关停三选二（posters 不随面板关停，与 backfill 关停理由矛盾）、unloadBackfill 置 running=false 可致双消费者、无中文名游戏每开面板重拉永不收敛、媒体下载无超时、尾斜杠配置零匹配、消歧文件名展示带尾巴等（修复批定稿时按报告展开）。
+- **P3 群（4 条，ui）**：① 空态门面塌陷（heroz 无 min-height，ops 绝对定位钮叠上状态行；`ui.ts:943-947` × `styles.css:24/28-32`，修 min-height 一行 + 回归）；② hero 背景 `url('…')` 单引号上下文未转义（`ui.ts:161` 域内自写 escHtml 缺 `'`，图断 + CSS 上下文逸出；修单独转义 + escHtml 对齐 core 五件套）；③ 工具行三控件值单向同步（chips/分段→下拉无回写 `ui.ts:1029-1052`，跨 768px 显示旧值；修补 setValue 回路 + 互译测试）；④ openDetail 不收悬浮预览（`ui.ts:894-906` 轮播定时器滞留空转、换脸滞留；修进弹窗前 `restReel()+restHero()` 一行）。
+- **P3 群（ui 方向小项，修复批顺带）**：状态行旧文案跨开关残留（closePanel 不清 `M.statusMsg`）、chips 初始无 aria-pressed（core uiChip 缺省态不设，跨域对齐点）、搜索无防抖（每键全网格重建，影院 300ms 防抖可借、顺带缓解 G1 触发频率）、firstChar 代理对乱码（`name.slice(0,1)` → `[...name][0] ?? '?'`）。
+- **测试缺口 7**（gameshelf-ui.md 文末）：G1 回归、bindMediaFallback 全链路、modalRepaintFn 生命周期、renderList 集成、mountOps syncing 态、G5 三控件互译、G3 heroz 高度——修复批随修随补。
 
-（方向 2 UI / 3 效率 / 4 一致运行中，5 架构待槽位——到账后去重定稿修复批次。）
+（方向 3 效率 / 4 一致运行中，5 架构待槽位——到账后去重定稿修复批次。）

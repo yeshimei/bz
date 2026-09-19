@@ -79,6 +79,8 @@
 
 | BS1 | 读书笔记弹窗整树 933 行 + 43 用例运行时不可达（issue 223 拍板移除入口 vs ADR-0096 功能零回退 vs CONTEXT.md:96/84/439 + settings.ts:173 四处文档仍宣称可用） | `src/bookshelf/reading-note*` | 拍板：恢复最小入口（形态待定）or 整体退役+同步四处文档 | 功能契约 |
 | GS1 | 用户手改「已下架: true」被下次同步「Steam 在场即恢复在架」静默翻回 | `src/gameshelf/sync.ts` reconcile | 拍板：维持同步语义 or 手改粘滞（尊重用户意图） | 同步语义 |
+| GS2 | 统计页「最近玩过」行可点但键盘不可达（可点 div 无 tabindex/role/Enter 路径；同页卡片是 button 无此问题） | `src/gameshelf/ui.ts:487-491` × `901-905` | 拍板形态：改 button or tabindex+role+keydown | 键盘可达 |
+| GS3 | Steam Web API 密钥明文输入框（旁人瞄屏可见；跨域观察，settings-panel 无 secret 档位） | `src/settings.ts:64-69` `gameshelfSteamApiKey` | 拍板：settings-panel 增 password/secret 档位后接入（跨域基建先行） | 隐私 |
 
 ### 历史搁置项（此前无人值守拍板暂缓，收尾呈报时可一并重议）
 
