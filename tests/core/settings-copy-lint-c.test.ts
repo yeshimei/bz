@@ -20,10 +20,8 @@ import { knowledgeSettingsSchema } from '../../src/knowledge/ui';
 const WHITELIST = new Set<string>([
   // secondbrain 本机局域网 IP：desc 为探测到的 IP/接口列表（ticket 122 自查信息本体，符号不可避免）
   'secondbrain#本机局域网 IP:*',
-  // 复习「每篇笔记出题数量」desc「固定每篇笔记出题的数量，留空/0=自动」：f8-quiz 用户拍板文案
-  //（「留空/0=自动」语义），既有 UI 测试锁定该描述子串（review/ui.test.ts），改动需主会话评审——局部豁免。
-  'review#每篇笔记出题数量:desc-symbol',
   // 2026-09-12：「启用」开关已随 secondBrainEnabled 键退役（启动常驻），其 title-length 豁免一并删除
+  // 2026-09-19：review「每篇笔记出题数量」desc 豁免随批 E 改 number 行新文案删除（desc 已合规）
 ]);
 
 const TARGETS = [

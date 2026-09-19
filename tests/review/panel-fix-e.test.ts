@@ -184,7 +184,7 @@ describe('批 E：域样式契约（U7/A15）', () => {
     expect(c).not.toContain('.meta');
   });
 
-  it('U7 边界守护：.difficulty-dialog 族保留（批 C 迁移难度弹窗，生死由主线程定）', () => {
-    expect(css()).toContain('.difficulty-dialog');
+  it('主线程收口：难度弹窗自绘族随 flow-dialog 迁移删除（不再有死样式）', () => {
+    expect(css()).not.toContain('.difficulty-dialog');
   });
 });

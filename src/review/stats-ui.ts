@@ -16,7 +16,7 @@ import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime, stripTitleMarks } from '../core/utils';
 import type { ReviewDataManager, ReviewItem, FittedParams } from './data';
 import { computeStats, loadDistribution, historyOf, dateKey, RATING_NAMES, RATING_COLORS } from './stats';
-import { FSRS, DEFAULT_W } from './fsrs';
+import { DEFAULT_W, currentR as fsrsCurrentR } from './fsrs';
 import { uiIcon } from '../core/ui';
 
 let statsMask: HTMLElement | null = null;
@@ -313,15 +313,9 @@ export async function showTimeline(app: App, dm: ReviewDataManager, item: Review
   const stageText = item.phase === 'fsrs'
     ? `FSRS Lv.${(item.stage || 0) - 9 + 1}`
     : `${(item.stage || 0) + 1}/10`;
-  let curR: string | null = null;
-  if (item.phase === 'fsrs' && item.stability && item.lastReviewed) {
-    const t = (new Date().getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
-    if (t > 0) {
-      // R 公式与调度同源 FSRS.R（权重=拟合 currentW 回退默认）
-      const R = new FSRS(w || DEFAULT_W).R(t, item.stability);
-      curR = ` · 当前 R ${Math.round(R * 100)}%`;
-    }
-  }
+  // A7：R 公式单源 fsrs.currentR（权重=拟合 currentW 回退默认）
+  const R = fsrsCurrentR(item, w || DEFAULT_W);
+  const curR = R === null ? null : ` · 当前 R ${Math.round(R * 100)}%`;
   status.innerHTML = `
     <div class="bz-review-history-name">${escapeHtml(stripTitleMarks(item.name))}</div>
     <div class="bz-review-history-sub">${stageText} · 共 ${history.length} 次复习${curR || ''}</div>
