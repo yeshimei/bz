@@ -11,6 +11,8 @@
  *   成绩小结（对/错/跳过、正确率、可再来一轮）。
  * - 行为流：会话开始 emitDomainEvent('review', { kind: 'started' })（小橘订阅端未装时静默）。
  * - AI 未配置：人话提示 + 「去设置」直达设置面板——不出题不崩。
+ * - 深审批 C（2026-09-19）：E5 切「本轮题量」档位只切选中态不重建视图、题库计数按范围键
+ *   缓存、视图重建后焦点还原；C15 构造期 zIndex 静态档位删（ADR-0067 显示时发号）。
  */
 import type { App } from 'obsidian';
 import { getApp } from '../core/app';
@@ -92,7 +94,7 @@ class QuizPracticePanel {
     this.mask.id = MASK_ID;
     this.mask.classList.add('bz-panel-overlay');
     this.mask.style.display = 'none';
-    this.mask.style.zIndex = '0';
+    // C15（ADR-0067）：不置静态档位——present 时 topifyZ 显示即发号
     this.mask.onclick = () => this.hide();
 
     this.popup = document.createElement('div');
@@ -101,7 +103,6 @@ class QuizPracticePanel {
     // ≤768px 满宽真全屏（顶距避让移动端头，components.css 统一档）
     this.popup.classList.add('bz-panel-mtop');
     this.popup.style.display = 'none';
-    this.popup.style.zIndex = '0';
     this.content = document.createElement('div');
     this.content.className = 'bz-quiz-practice-container';
     this.popup.appendChild(this.content);
@@ -114,6 +115,7 @@ class QuizPracticePanel {
 
   show(): void {
     this.cancelled = false; // 重开复位（取消只针对关面板/卸载时在途的备题流程）
+    this.bankCacheKey = ''; // E5：重开面板题库可能已变（上轮答对出库/补出题），计数重算一次
     this.present();
     void this.renderSetup();
   }
@@ -150,7 +152,13 @@ class QuizPracticePanel {
 
   // ==================== 设置视图 ====================
 
+  /** E5：题库计数缓存键（scope+folders+notePath）——切「本轮题量」等纯本地档位不再重读整库 */
+  private bankCacheKey = '';
+  private bankCacheCount: number | null = null;
+
   private async renderSetup(): Promise<void> {
+    // E5：重建前记录面板内焦点控件（innerHTML 重建会丢焦点），渲染后还原到同位控件
+    const focusKey = this.captureFocusKey();
     const count = await this.probeBankCount();
     this.content.innerHTML = quizPracticeSetupHtml({
       scope: this.state.scope,
@@ -161,19 +169,48 @@ class QuizPracticePanel {
     });
     mountIcons(this.content);
     this.bindSetup();
+    if (focusKey) this.restoreFocus(focusKey);
   }
 
-  /** 范围内现有题数（一次读题库文件内存账，null = 读取失败不挡开面板） */
+  /** E5：面板内焦点控件 → data-* 特征键，null = 面板外/无可记忆焦点 */
+  private captureFocusKey(): string | null {
+    const el = document.activeElement;
+    if (!(el instanceof HTMLElement) || !this.content.contains(el)) return null;
+    for (const attr of ['data-scope', 'data-batch', 'data-rm-folder', 'data-act', 'data-role']) {
+      const v = el.getAttribute(attr);
+      if (v != null) return `${attr}=${v}`;
+    }
+    return null;
+  }
+
+  private restoreFocus(key: string): void {
+    const eq = key.indexOf('=');
+    const el = this.content.querySelector<HTMLElement>(
+      `[${key.slice(0, eq)}="${CSS.escape(key.slice(eq + 1))}"]`
+    );
+    el?.focus();
+  }
+
+  /** 范围内现有题数（一次读题库文件内存账，null = 读取失败不挡开面板）。
+   *  E5：按 scope+folders+notePath 键缓存，仅范围变化重算——题库读盘不再跟随每次档位点击。 */
   private async probeBankCount(): Promise<number | null> {
+    const key = `${this.state.scope}|${this.state.folders.join('\n')}|${this.state.notePath}`;
+    if (key === this.bankCacheKey) return this.bankCacheCount;
     try {
       const paths = resolveScopeNotes(this.app, this.state.scope, this.state.folders, this.state.notePath);
-      if (!paths.length) return 0;
+      if (!paths.length) {
+        this.bankCacheKey = key;
+        this.bankCacheCount = 0;
+        return 0;
+      }
       const bank = await quizUI.manager.loadQuiz(this.app);
       let count = 0;
       for (const p of paths) count += bank.notes[p]?.length || 0;
+      this.bankCacheKey = key;
+      this.bankCacheCount = count;
       return count;
     } catch {
-      return null;
+      return null; // 读取失败不缓存（下次重算重试）
     }
   }
 
@@ -191,10 +228,14 @@ class QuizPracticePanel {
     this.content.querySelectorAll<HTMLButtonElement>('[data-batch]').forEach((btn) => {
       btn.addEventListener('click', () => {
         const v = Number(btn.dataset.batch);
-        if (!Number.isNaN(v) && v !== this.state.batch) {
-          this.state.batch = v;
-          void this.renderSetup();
-        }
+        if (Number.isNaN(v) || v === this.state.batch) return;
+        this.state.batch = v;
+        // E5：纯本地档位只切 is-on 选中态 + 记 state，不整表重渲染、不重读题库
+        this.content.querySelectorAll<HTMLButtonElement>('[data-batch]').forEach((b) => {
+          const on = Number(b.dataset.batch) === v;
+          b.classList.toggle('is-on', on);
+          b.setAttribute('aria-checked', String(on));
+        });
       });
     });
     this.content.querySelectorAll<HTMLButtonElement>('[data-rm-folder]').forEach((btn) => {
@@ -302,6 +343,7 @@ class QuizPracticePanel {
   // ==================== 成绩小结 ====================
 
   private showSummary(results: QuizReviewResults): void {
+    this.bankCacheKey = ''; // E5：本轮答题已改题库（答对出库），「再来一轮」回设置视图须重算计数
     const skipped = Math.max(0, this.roundSize - results.total);
     this.content.innerHTML = quizPracticeSummaryHtml({
       correct: results.correct,
