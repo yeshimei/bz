@@ -438,4 +438,17 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 CONTEXT.md 词条脱节 + src 头注同病**（cons ⑨）——仍写已拍板去除的页脚/旧移动头部，issue 356 报告页与四设置键零提及，「归物本为空弹窗」表述过时。修：主线程文档收口随批同步。
 - 滚动条/命令 ID/事件契约（emit 四 kinds 与 smartcat 逐字段对齐）/设置 schema 形制——核验全绿。
 
-（方向 5 架构审查中——到账后定稿修复批次。）
+### 方向 5（架构/测试）补充条目（审查完成，5/5 到账）
+
+- **P3 checkup SEGMENT_FIELDS 旧 5 键约定误报**（A1，跨域记 checkup 轮）——`checks-drift.ts:34` 仍按旧 5 键约定，而 `saveDatabase` 自 ADR-0102 起只落 3 键（categories/categoryIcons 内存派生）：活跃库每次数据体检恒报 info「缺少数据段」。零测试锁定。**归 checkup 域轮修**（该文件属 checkup，不跨批）。
+- **P3 startAutoRefresh 的 modify 回调 loadDatabase 无兜底** `ui.ts:442-445`（A2，与 func P3-2/cons ③ 合并为「域内全部 loadDatabase 调用点兜底收口」）。
+- **P3 表单模块态游离于复位清单**（A3）——`_belBaseline/_belFormTargetId/belFormMask` 等不在 `resetBelongingsState`/cleanup 复位清单，unload 靠 DOM 自愈兜底，对照 `unloadBelReport` 全清先例。修：纳入复位清单。
+- **P3 selfWritePending 单布尔并发交叠失效**（A4）——P44「去双渲染」口径弱化（多余重渲、数据无损）。修：计数器/时间戳化（小改）。
+- 注记五条随批顺带：ESC 层手写旗标收编 registerPanelEsc 样板（favorites 同款）、getDataFilePath 重复兜底表达式收敛、测试 setup 死键 `belongingsDataFolder`、d2 fixture 字段名漂移、表单双轨收口（=cons ⑩）。
+- 架构主体验证全数过验：依赖方向（唯一他域 import=smartcat 纯函数单向，有先例）/纯层纯度机械守卫/原型样式单源/命令契约/数据写链测试锁定。
+
+### 修复批定稿（2 worktree，ui.ts 按行区拆分）
+
+- **A 数据口径与删除链** `bz-fix-bel-data`（data.ts + ui.ts 表单/写路径/删除链区 + tests）：P2 价格上限、脏日期口径统一、todayStr→localDayKey、STATUS_ORDER 收口、A4 selfWritePending、getDataFilePath 收敛、清空分类对称、流转撤销补事件、**E5 删除免确认直达 notifyUndo（效率整改5 落地，favorites 先例；确认框去除，顺带消解确认在途死端）**、全 loadDatabase 调用点兜底（func P3-2+cons ③+A2）。
+- **B 视图交互与报告** `bz-fix-bel-view`（layouts/poster/render.ts + report.ts + ui.ts 面板/搜索/委托区 + styles.css + tests）：P2 closePanel 收口、详情保存后刷新、移动端强制聚焦摘除、--bz-vvh、E1 bindFormSubmit、E2 卡片键盘可达、E3 搜索 ESC 二段+✕、E4 year 回落、防抖重开竞态、data-v esc、报告热区、A3 模块态复位清单、KPI 回收口径、日均格式化单源（0 元形态随 B4 拍板）、autumn UX② 当月列、表单单一关闭路径、ESC 层收编样板、搜索占位符、renderAll 口径卫生。
+- **主线程收口**：CONTEXT.md 词条（页脚/旧移动头部/issue 356 报告页/设置键/空弹窗表述）+ src 头注同步；checkup 轮记名（A1）。
