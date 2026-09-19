@@ -27,7 +27,8 @@ vi.mock('../../src/home/order', () => ({
   loadHomeOrder: (...args: unknown[]) => orderMock.load(...args),
 }));
 
-import { createOverlay, closeOverlay } from '../../src/home/ui';
+import { createOverlay, closeOverlay, showOverlay } from '../../src/home/ui';
+import { unloadHome } from '../../src/home';
 import { mountHomeEntryEditor } from '../../src/home/entry-editor';
 
 /** 最小合法 RiverData（today/yesterday/days(7)/week/streak/counts） */
@@ -89,11 +90,113 @@ describe('内容首页 review 回归（H11-H13）', () => {
     expect(entries.querySelector('.bz-empty-title')?.textContent).toContain('采集失败');
     const retry = [...entries.querySelectorAll('button')].find((b) => b.textContent === '重试') as HTMLElement;
     expect(retry).toBeTruthy();
-    // 重试：采集恢复 → 正常渲染入口行
+    // 失败三态（func P3-1）：时间线列同步出失败位——不再永挂「正在汇入…」假加载文案；
+    // 重试入口只在 entries 大卡上一颗（两列同源恢复，不各挂一个）
+    const flow = H.currentOverlay!.querySelector('[data-home-flow]') as HTMLElement;
+    expect(flow.textContent).toContain('没能汇入');
+    expect(flow.textContent).not.toContain('正在汇入');
+    // 重试：采集恢复 → 两列一并恢复正常渲染（entries 出入口行、flow 换掉失败位）
     collectRiverMock.mockResolvedValue(makeRiver());
     retry.click();
     await waitFor(() => !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
     expect(H.currentOverlay!.querySelector('[data-home-entries] .bz-empty')).toBeNull();
+    expect((H.currentOverlay!.querySelector('[data-home-flow]') as HTMLElement).textContent).not.toContain('没能汇入');
+    closeOverlay();
+  });
+
+  it('arch A3：unload 后 in-flight 采集不写回（存活守卫）——H.river 保持归零态', async () => {
+    let resolveRiver!: (v: RiverData) => void;
+    collectRiverMock.mockImplementation(() => new Promise<RiverData>((res) => { resolveRiver = res; }));
+    const app = { vault: new MockVault() } as any;
+    H.appRef = app;
+    createOverlay(app);
+    unloadHome(); // 同步卸载：remove + resetHomeState（H 全字段归零）
+    resolveRiver(makeRiver()); // in-flight 采集稍后落地
+    await tick();
+    expect(H.currentOverlay).toBeNull();
+    expect(H.river).toBeNull(); // 修复前：脏写回把旧数据填回已清零的 H（重开闪现上一会话渲染）
+    expect(H.riverFailed).toBe(false);
+  });
+
+  it('arch A3：并发刷新乱序——晚完成的旧一轮不得覆盖新一轮数据（代次守卫）', async () => {
+    const app = { vault: new MockVault() } as any;
+    H.appRef = app;
+    let resolve1!: (v: RiverData) => void;
+    let resolve2!: (v: RiverData) => void;
+    collectRiverMock.mockImplementationOnce(() => new Promise<RiverData>((res) => { resolve1 = res; }));
+    createOverlay(app); // 刷新 #1 采集挂起（showOverlay 入口同源）
+    collectRiverMock.mockImplementationOnce(() => new Promise<RiverData>((res) => { resolve2 = res; }));
+    closeOverlay();
+    showOverlay(); // 刷新 #2（keepHome 动作落地同款并发入口）
+    await waitFor(() => collectRiverMock.mock.calls.length >= 2);
+    resolve2(makeRiver()); // 新一轮 #2 先落地
+    await waitFor(() => H.river !== null);
+    const newest = H.river;
+    resolve1(makeRiver()); // 旧一轮 #1 晚落地（乱序晚完成者）
+    await tick();
+    expect(H.river).toBe(newest); // 代次守卫拦截：旧数据不得覆盖新数据
+    closeOverlay();
+  });
+
+  it('keepHome 行为链：菜单动作 → 不关面板 + busy 提示 + 落地刷新 + 在途防重入；reject 分支出提示', async () => {
+    let resolveSync!: () => void;
+    let rejectSync: ((e: Error) => void) | null = null;
+    const exec = vi.fn((_id: string) => new Promise<void>((res, rej) => {
+      resolveSync = res;
+      rejectSync = rej;
+    }));
+    const app = { vault: new MockVault(), commands: { executeCommandById: exec } } as any;
+    H.appRef = app;
+    createOverlay(app);
+    await waitFor(() => !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
+    const row = H.currentOverlay!.querySelector('[data-home-go="gameshelf"]') as HTMLElement;
+    expect(row).toBeTruthy();
+    row.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await waitFor(() => !!document.querySelector('.bz-item-menu'));
+    const item = [...document.querySelectorAll('.bz-item-menu button')]
+      .find((b) => b.textContent === '立即同步') as HTMLElement;
+    expect(item).toBeTruthy();
+    clearNotices();
+    item.click();
+    // 点击瞬间：busy 轻提示（文案单源 DOMAIN_MENU.busyText）+ 面板保留 + 命令已发
+    expect(hasNotice(/正在同步游戏库/)).toBe(true);
+    expect(H.overlayVisible).toBe(true);
+    expect(exec).toHaveBeenCalledTimes(1);
+    // 在途重复点击不再重复发命令（eff P3-2 防重入）
+    item.click();
+    expect(exec).toHaveBeenCalledTimes(1);
+    // Promise 落地 → 刷新发生（collectRiver 重采）
+    const calls0 = collectRiverMock.mock.calls.length;
+    resolveSync();
+    await waitFor(() => collectRiverMock.mock.calls.length > calls0);
+    // reject 分支（func P3-2 同刀）：不再静默，出人话提示；失败后仍刷新（数据可能部分变化）
+    const calls1 = collectRiverMock.mock.calls.length;
+    (H.currentOverlay!.querySelector('[data-home-go="gameshelf"]') as HTMLElement)
+      .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 10, clientY: 10 }));
+    await waitFor(() => !!document.querySelector('.bz-item-menu'));
+    const item2 = [...document.querySelectorAll('.bz-item-menu button')]
+      .find((b) => b.textContent === '立即同步') as HTMLElement;
+    clearNotices();
+    item2.click();
+    expect(rejectSync).toBeTruthy();
+    rejectSync!(new Error('sync boom'));
+    await waitFor(() => hasNotice(/动作没有执行成功/));
+    await waitFor(() => collectRiverMock.mock.calls.length > calls1);
+    closeOverlay();
+  });
+
+  it('func P3-2：直达命令（关面板路径）promise reject → 人话通知，不再 unhandled 静默', async () => {
+    const app = {
+      vault: new MockVault(),
+      commands: { executeCommandById: () => Promise.reject(new Error('domain boom')) },
+    } as any;
+    H.appRef = app;
+    createOverlay(app);
+    await waitFor(() => !!H.currentOverlay!.querySelector('[data-home-entries] .bz-home-erow'));
+    clearNotices();
+    (H.currentOverlay!.querySelector('[data-home-go="cinema"]') as HTMLElement).click();
+    await tick();
+    expect(hasNotice(/暂时不可用/)).toBe(true);
     closeOverlay();
   });
 

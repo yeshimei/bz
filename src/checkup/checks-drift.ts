@@ -32,7 +32,7 @@ export const SEGMENT_FIELDS: Record<string, string[]> = {
   'pomodoro.json': ['version', 'state', 'history', 'archived'],
   'clipbook.json': ['articleOverrides', 'savedArchive', 'order'],
   'news.json': ['articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds'],
-  'home.json': ['version', 'pinned'],
+  'home.json': ['version', 'desk', 'mob', 'hiddenDesk', 'hiddenMob'],
   'belongings.json': ['version', 'last_updated', 'items', 'categories', 'categoryIcons'],
   'quiz.json': ['notes'],
 };

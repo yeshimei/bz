@@ -1,4 +1,4 @@
-/* 源指纹 e6477ead521141da · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9bd2f401f7405c77 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -44,6 +44,7 @@ var BZR_home = (() => {
     eventKind: () => eventKind,
     eventVisible: () => eventVisible,
     filterEvents: () => filterEvents,
+    flowFailedHtml: () => flowFailedHtml,
     flowHtml: () => flowHtml,
     headDateText: () => headDateText,
     hiddenOf: () => hiddenOf,
@@ -254,16 +255,17 @@ var BZR_home = (() => {
     ],
     // 游戏库（2026-09-17 用户点名补快捷命令）：两条都是「一步成事」——
     // 立即同步 = 即时类（不关首页，拉完原地看计数）/ 数据统计 = 开面板落统计页（影院分析报告同范式）。
+    // busyText：Steam 网络拉取 1-3 秒，点击瞬间给「正在同步」反馈防重复点击（eff P3-2）。
     gameshelf: [
-      { label: "立即同步", commandId: "bz-gameshelf-sync", icon: "refresh-cw", keepHome: true },
+      { label: "立即同步", commandId: "bz-gameshelf-sync", icon: "refresh-cw", keepHome: true, busyText: "正在同步游戏库…" },
       // 图标 chart-bar 与「阅读分析报告」的 bar-chart-3 错开（enh-sweep-a 起报告/统计类图标互异的惯例）
       { label: "数据统计", commandId: "bz-gameshelf-stats", icon: "chart-bar" }
     ],
     secondbrain: [
       { label: "第二大脑对话", commandId: "bz-secondbrain-chat", icon: "message-circle" },
       { label: "参考侧栏", commandId: "bz-secondbrain-open", icon: "zap" },
-      // 全库重建向量索引（函数早已存在、此前没有命令入口）
-      { label: "重建索引", commandId: "bz-secondbrain-rebuild-index", icon: "refresh-cw", keepHome: true }
+      // 全库重建向量索引（函数早已存在、此前没有命令入口）：全库 IO 慢动作挂 busy 反馈
+      { label: "重建索引", commandId: "bz-secondbrain-rebuild-index", icon: "refresh-cw", keepHome: true, busyText: "正在重建索引…" }
     ],
     belongings: [{ label: "加物品", commandId: "bz-belongings-add", icon: "archive" }],
     // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
@@ -488,7 +490,7 @@ var BZR_home = (() => {
       <div class="bz-home-head">
         <div class="bz-home-week" data-home-week></div>
         <span class="bz-home-date" data-home-date></span>
-        <div role="button" tabindex="0" class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan("x")}</div>
+        <div role="button" tabindex="0" class="bz-home-close bz-touch-target--sm" data-home-close title="关闭" aria-label="关闭">${iconSpan("x")}</div>
       </div>
       <div class="bz-home-body">
         <div class="bz-home-grid">
@@ -506,10 +508,14 @@ var BZR_home = (() => {
   function loadingFlowHtml() {
     return '<div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
   }
+  function flowFailedHtml() {
+    return '<div class="bz-home-flow-empty bz-home-flow-empty--fail">时间线没能汇入今天的痕迹。</div>';
+  }
   function weekHtml(week, todayDateStr, selDate) {
     return week.map((w) => {
       const isToday = w.dateStr === todayDateStr;
-      return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? " bz-home-wk--hit" : "") + (w.dateStr === selDate ? " bz-home-wk--sel" : "") + '" data-home-weekday="' + w.dateStr + '" aria-label="' + (isToday ? "今天" : w.label) + (w.hit ? "，有动静" : "") + '"><i></i><span class="bz-home-wk-n">' + (isToday ? "今" : w.dayOfMonth) + "</span></div>";
+      const sel = w.dateStr === selDate;
+      return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? " bz-home-wk--hit" : "") + (sel ? " bz-home-wk--sel" : "") + '" data-home-weekday="' + w.dateStr + '" aria-pressed="' + (sel ? "true" : "false") + '" aria-label="' + (isToday ? "今天" : w.label) + (w.hit ? "，有动静" : "") + '"><i></i><span class="bz-home-wk-n">' + (isToday ? "今" : w.dayOfMonth) + "</span></div>";
     }).join("");
   }
   function entriesHtml(data, order, hidden) {

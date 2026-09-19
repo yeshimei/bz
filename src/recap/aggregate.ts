@@ -21,8 +21,7 @@
 import type { App, TFile } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
 import { storageFile } from '../core/storage';
-import { localDayKey } from '../core/utils';
-import { parseLocalDay } from '../home/weekly';
+import { localDayKey, parseLocalDay } from '../core/utils';
 import { parseEntryFile } from '../diary/parser';
 import { diaryDateFromEntryPath } from '../core/diary-format';
 import { parseMovieFile } from '../cinema/data';
@@ -115,7 +114,7 @@ export function todayRange(anchor: number): DayRange {
 
 /** 'YYYY-MM-DD[ HH:mm[:ss]]' 日期串 → 本地毫秒（无时间部分取 0 点；非法返回 null）。
  *  刻意不走 new Date(str)：'YYYY-MM-DD' 会被按 UTC 解析，时区西移处周边界漂移一天
- *  （同 home/weekly.ts parseLocalDay 的坑；此处扩展出时间部分供备忘录完成时刻排序） */
+ *  （解析单源 core/utils.parseLocalDay——home 深审 A1 解环收编；此处扩展出时间部分供备忘录完成时刻排序） */
 export function parseLocalDateTime(s: unknown): number | null {
   const m = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})(?:[T ](\d{1,2}):(\d{2})(?::(\d{2}))?)?/.exec(String(s ?? ''));
   if (!m) return null;
@@ -241,7 +240,9 @@ export function buildRecap(
   return { summary, items };
 }
 
-/* ---------- 采集 helpers（与 home/weekly.ts 同款只读口径；本地副本防跨文件牵连） ---------- */
+/* ---------- 采集 helpers（只读三件套正典：home 深审 cons P3-4 收编——home/river、
+   home/weekly 改引此处，不再各持本地副本；失败语义 = 缺失 undefined（合法空）、
+   存在但读取/解析失败**抛错**，由调用方 per-source 容错） ---------- */
 
 export function settingDir(keys: string[], def: string): string {
   const s = tryGetSettings() as Record<string, unknown>;
@@ -257,7 +258,7 @@ function numOr0(v: unknown): number {
 }
 
 /** 文件存在才返回文件对象（不触发建文件） */
-function fileIfExists(app: App, filePath: string): TFile | null {
+export function fileIfExists(app: App, filePath: string): TFile | null {
   try {
     const f = app.vault.getAbstractFileByPath(filePath);
     return f && 'basename' in (f as object) ? (f as TFile) : null;
@@ -268,7 +269,7 @@ function fileIfExists(app: App, filePath: string): TFile | null {
 
 /** 读 json 文件：缺失返回 undefined（合法空，不算失败）；存在但读取/解析失败抛错，
  *  由调用方 per-source 容错记入 failed（摘要 N/A，同「某域读取失败不炸面板」契约） */
-async function readJsonIfExists(app: App, filePath: string): Promise<unknown | undefined> {
+export async function readJsonIfExists(app: App, filePath: string): Promise<unknown | undefined> {
   const f = fileIfExists(app, filePath);
   if (!f) return undefined;
   return JSON.parse(await app.vault.read(f));

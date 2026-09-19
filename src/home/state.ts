@@ -39,6 +39,13 @@ export interface HomeState {
    * 导致的非预期渲染；显式保留 DOM 后重开显示旧渲染成为预期，该前提不再成立。
    */
   riverView: string | null;
+  /**
+   * 滚位记忆（eff P2-2）：closeOverlay 时保存两滚动容器（.bz-home-body 整页 / .bz-home-flow
+   * 时间线列）的 scrollTop——display:none 期间 Chromium 丢布局，恢复显示后 scrollTop 归零；
+   * renderAll 全量重建前后也走保存/恢复（keepHome 动作落地刷新不再跳顶）。
+   * **必须挂在 H 里**（同 riverView 教训：模块级变量 resetHomeState 归不到零）。
+   */
+  scroll: { body: number; flow: number };
 }
 
 export const H: HomeState = {
@@ -50,6 +57,7 @@ export const H: HomeState = {
   order: { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] },
   pomodoroPhase: 'idle',
   riverView: null,
+  scroll: { body: 0, flow: 0 },
 };
 
 /** 测试/重建用：整体重置模块状态 */
@@ -62,4 +70,5 @@ export function resetHomeState(): void {
   H.order = { version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
   H.pomodoroPhase = 'idle';
   H.riverView = null;
+  H.scroll = { body: 0, flow: 0 };
 }

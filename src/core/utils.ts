@@ -197,6 +197,21 @@ export function cmpZh(a: string, b: string): number {
   return String(a || '').localeCompare(String(b || ''), 'zh');
 }
 
+/** parseLocalDay(s)：日期串前缀 'YYYY-MM-DD…' → 本地当日 0 点毫秒（非法返回 null）。
+ *  刻意不走 new Date(str)：'YYYY-MM-DD' 会被按 UTC 解析，时区西移处周边界漂移一天。
+ *  单源收编（home 深审 A1）：原宿主 home/weekly.ts（零 UI 消费的死模块），recap/aggregate
+ *  跨域顶层拉它曾构成全仓唯一的域间顶层静态环（home/river → recap/aggregate → home/weekly，
+ *  违反 ADR-0002）——下沉重单源后 recap 改引此处，环断；日期串工具与 localDayKey 同居。 */
+export function parseLocalDay(s: unknown): number | null {
+  const m = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s ?? ''));
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+  return new Date(y, mo - 1, d).getTime();
+}
+
 /** isUnderFolder(folder, path)：目录边界判定——path 恰为 folder 或位于其下（递归语义；蓝本 review/watch.ts） */
 export function isUnderFolder(folder: string, path: string): boolean {
   const f = (folder || '').trim().replace(/\/+$/, '');

@@ -4,7 +4,7 @@
  * 规则纯函数（buildNotes/buildPreviews/buildDots/riverCountText）+ collectRiver
  * 只读采集集成（MockVault；时间线吃小橘行为流、计数各源容错、日记连击、不建文件）。
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { diaryEntryPath } from '../../src/core/diary-format';
 import { setApp } from '../../src/core/app';
@@ -408,5 +408,42 @@ describe('collectRiver（只读采集集成）', () => {
     expect(data.counts.knowledgeLit).toBe(0);
     expect(data.counts.secondbrainBytes).toBe(0);
     expect(data.counts.pomodoroTotal).toBe(0);
+  });
+
+  it('eff P2-1：采集窗口随「时间范围」档裁剪（today 档保底 2 天，yesterday 恒在）', async () => {
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeTimelineRange: 'today' }));
+    const data = await collectRiver(mockAppWithVault(vault) as any, NOW);
+    // 下限 2：渲染点评 buildNotes 读「昨天首动」，窗口只含今天会在渲染层崩
+    expect(data.days.length).toBe(2);
+    expect(data.days[0].dateStr).toBe(dateStrOf(NOW));
+    expect(data.yesterday).toBe(data.days[1]);
+    expect(data.week.length).toBe(2);
+    // 渲染消费面（ui.renderAll slice(0, rangeDays=1)）口径等价：仍只显示今天一格
+    expect(data.week.slice(0, 1).map((w) => w.dateStr)).toEqual([dateStrOf(NOW)]);
+    // week 档恒 7 天（默认档行为零变化）
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeTimelineRange: 'week' }));
+    const full = await collectRiver(mockAppWithVault(vault) as any, NOW);
+    expect(full.days.length).toBe(7);
+  });
+
+  it('eff P2-1：重复读盘收敛——vault.read 调用数随窗口档裁剪（防回退计数守卫）', async () => {
+    for (let i = 0; i < 4; i++) {
+      vault.files.set(`我的/影视/《片${i}》.md`, '---\ntags:\n- 电影\n评分: 0\n---\n');
+    }
+    vault.files.set('CONFIG/STORAGE/memo.json', JSON.stringify([{ title: 'a', created: '2026-09-01 09:00:00', completed: null }]));
+    vault.files.set('CONFIG/STORAGE/pomodoro.json', JSON.stringify({ version: 1, state: {}, history: [], archived: [] }));
+    const app = mockAppWithVault(vault) as any;
+    const spy = vi.spyOn(vault, 'read');
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeTimelineRange: 'week' }));
+    await collectRiver(app, NOW);
+    const weekReads = spy.mock.calls.length;
+    spy.mockClear();
+    setSettingsProvider(() => ({ ...DEFAULT_SETTINGS, homeTimelineRange: 'today' }));
+    await collectRiver(app, NOW);
+    const todayReads = spy.mock.calls.length;
+    spy.mockRestore();
+    expect(weekReads).toBeGreaterThan(0);
+    expect(todayReads).toBeLessThan(weekReads); // 窗口 7→2 天，read 面随之收
+    expect(todayReads).toBeLessThanOrEqual(Math.ceil(weekReads / 3));
   });
 });

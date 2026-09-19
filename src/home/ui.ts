@@ -4,7 +4,8 @@
  * 形态（桌面/移动同一 overlay，CSS ≤768px 断点切换；与 cinema 同构）：
  *  - 桌面：头行（今日活动河 + 日期）+ 三栏 grid（全部域 | 时间线 | 明天预告）；
  *          点遮罩/ESC 关闭（无关闭钮，头行去设置/关闭范式）
- *  - 移动：头行（活动河 + 关闭钮）+ 单列（时间线 → 明天预告 → 全部域单列瓦片）
+ *  - 移动：头行（活动河 + 关闭钮）+ 单列（全部域单列瓦片 → 明天预告 → 时间线沉底；
+ *          顺序以 styles.css 移动档 order 值为准——瓦片 order:-1 置顶，入口第一屏可达）
  *  - 入口行/瓦片：今日动静彩点（ok/warn/hot/off）+ lucide 图标 + 实时计数，点击执行域命令
  *  - 入口菜单（2026-09-10 用户拍板）：桌面右键跟手菜单 / 移动长按底部抽屉（core/item-actions
  *    统一件）——菜单内容 = `shared.DOMAIN_MENU` 里的域快捷动作；
@@ -21,7 +22,7 @@
  * （渲染纯层，与原型壳消费同一份）；本文件只剩行为层——生命周期/事件绑定/ESC/命令直达。
  */
 import type { IconName } from 'obsidian';
-import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { notice } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn } from '../core/ui';
 import { topifyZ } from '../core/dom';
@@ -38,12 +39,9 @@ import { isFocusingPhase } from '../core/pomodoro-phase';
 import { collectRiver, type RiverData } from './river';
 import { loadHomeOrder } from './order';
 import {
-  headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml,
+  headDateText, panelFrameHtml, loadingEntriesHtml, loadingFlowHtml, flowFailedHtml,
   weekHtml, entriesHtml, flowHtml, nextHtml, tilesHtml, sheetHeadHtml, menuHeadHtml, type FlowOpts,
 } from './render';
-
-/** 明天预告卡：本次打开是否被设置关掉（关掉时要连第三栏一起收敛，不能只清内容） */
-let nextOff = true;
 
 /* ---------- 设置读取（issue 287：首页时间线六项） ---------- */
 
@@ -64,12 +62,16 @@ function readHomeSettings(): { filter: TimelineFilter; flow: FlowOpts; rangeDays
   };
   // 范围缺省 = week（用户 2026-09-11 拍板：默认能往回翻整周）；老 data.json 无此键时同样落 week
   const range = str(s.homeTimelineRange) ?? 'week';
+  // 字号档白名单（ui P3-1）：data-tl-size 进 markup 属性位，非法旧值/手改值一律回落 normal——
+  // 域内「插值一律 esc」纪律下这里是唯一属性直插点，白名单在源头收口（渲染层零改）
+  const TL_SIZES = ['compact', 'normal', 'loose'];
+  const sizeRaw = str(s.homeTimelineSize) ?? 'normal';
   return {
     filter,
     flow: {
       filter,
       showTime: bool(s.homeTimelineTime, true),
-      size: str(s.homeTimelineSize) ?? 'normal',
+      size: TL_SIZES.includes(sizeRaw) ? sizeRaw : 'normal',
     },
     rangeDays: timelineRangeDays(range),
     defaultDay: str(s.homeDefaultDay) ?? 'today',
@@ -89,6 +91,27 @@ function pickInitialView(river: RiverData, defaultDay: string, rangeDays: number
   const window = river.days.slice(0, Math.max(1, rangeDays));
   const hit = window.find((d) => d.events.length > 0);
   return hit && hit.dateStr !== today ? hit.dateStr : null;
+}
+
+/* ---------- 滚位记忆（eff P2-2；clipbook 效率#17 样板） ---------- */
+
+/** 两滚动容器：桌面时间线列内部滚（.bz-home-flow）、移动整页滚（.bz-home-body）。
+ *  触发面 = 重开（display:none 复用丢滚位）与 renderAll 全量重建（keepHome 动作落地/失败重试），
+ *  移动单列时间线沉底（order:1）放大跳顶感——归零即跳过瓦片+预告两段。 */
+function saveScroll(overlay: HTMLElement): void {
+  const body = overlay.querySelector<HTMLElement>('.bz-home-body');
+  const flow = overlay.querySelector<HTMLElement>('.bz-home-flow');
+  H.scroll.body = body ? body.scrollTop : 0;
+  H.scroll.flow = flow ? flow.scrollTop : 0;
+}
+
+/** 写回滚位（仅显示中；隐藏期间写回无效——display:none 的元素 scrollTop 恒 0） */
+function restoreScroll(overlay: HTMLElement): void {
+  if (!H.overlayVisible) return;
+  const body = overlay.querySelector<HTMLElement>('.bz-home-body');
+  const flow = overlay.querySelector<HTMLElement>('.bz-home-flow');
+  if (body) body.scrollTop = H.scroll.body;
+  if (flow) flow.scrollTop = H.scroll.flow;
 }
 
 /* ---------- 生命周期 ---------- */
@@ -123,14 +146,26 @@ async function readPomodoroPhase(app: any): Promise<PomodoroPhase> {
   }
 }
 
-/** 重新采集活动河数据 + 读入口顺序/隐藏域 + 番茄钟相位（并发取回，避免多趟闪） */
+/** 刷新代次（arch A3）：并发刷新（showOverlay 与 keepHome 落地同时发）时晚完成者不得
+ *  用旧数据覆盖新数据——发号在采集前、校验在写回前，非最新代次直接作废 */
+let refreshSeq = 0;
+
+/** 重新采集活动河数据 + 读入口顺序/番茄钟相位（并发取回，避免多趟闪） */
 async function refreshRiverAndRender(): Promise<void> {
   if (!H.currentOverlay || !H.appRef) return;
+  const overlay = H.currentOverlay;
+  const seq = ++refreshSeq;
   const [river, order, phase] = await Promise.all([
     collectRiver(H.appRef).catch(() => null),
     loadHomeOrder(H.appRef),
     readPomodoroPhase(H.appRef),
   ]);
+  // 存活守卫（arch A3）：await 期间面板被卸载（unloadHome → remove + resetHomeState 全字段
+  // 归零）或重建（currentOverlay 换新）→ 本次采集作废，不得把脏数据写回已清零的 H
+  //（否则同会话禁用→重启用首页会闪现上一会话旧渲染，跨天时头行日期与时间线列错位）
+  if (H.currentOverlay !== overlay) return;
+  // 代次守卫（arch A3）：晚完成的旧一轮不得覆盖新一轮数据
+  if (seq !== refreshSeq) return;
   // 番茄相位并入数据流（item-1789106079981：彩点 warn 条件）——collectRiver 只读裸相位，
   // 这里以 ensure 兜底后的实时值为准写回。彩点口径 = **专注进行中（计时或暂停）**，
   // 休息阶段不算；布尔口径与 pomodoro/ui.isFocusing 同出 core.isFocusingPhase 单源。
@@ -157,20 +192,23 @@ async function refreshRiverAndRender(): Promise<void> {
  * 关闭（issue 290）= 隐藏保留 DOM：面板壳、上次渲染、采集数据、入口顺序、查看日全部原地保留，
  * 重开（openHome → showOverlay）秒显旧内容再动态刷新，不重建不闪骨架。
  * 真销毁只有一条路：unloadHome（插件卸载，remove + resetHomeState）。
+ * 滚位（eff P2-2）：display:none 期间 Chromium 丢布局 → scrollTop 归零，隐藏前先存。
  */
 export function closeOverlay(): void {
   if (!H.currentOverlay || !H.overlayVisible) return;
+  saveScroll(H.currentOverlay);
   H.currentOverlay.style.display = 'none';
   H.overlayVisible = false;
 }
 
-/** 重开复用（issue 290）：恢复显示 + 重新发号（谁后显示谁在上）+ 立即动态刷新数据 */
+/** 重开复用（issue 290）：恢复显示 + 重新发号（谁后显示谁在上）+ 立即动态刷新数据；滚位写回 */
 export function showOverlay(): void {
   const overlay = H.currentOverlay;
   if (!overlay || H.overlayVisible) return;
   overlay.style.display = '';
   topifyZ(overlay);
   H.overlayVisible = true;
+  restoreScroll(overlay);
   void refreshRiverAndRender();
 }
 
@@ -203,14 +241,18 @@ function bindEvents(overlay: HTMLElement, app: any): void {
       if (id && DOMAIN_MAP.has(id)) openDomain(id, app);
       return;
     }
-    // 周历切天：切换选中格并只重渲时间线（数据已在采集窗口内）
+    // 周历切天：切换选中格并只重渲时间线（数据已在采集窗口内）。
+    // aria-pressed 同步（ui P3-3）：选中态只存在于视觉 class 的话，读屏听不出「当前在看哪天」
     const wk = t.closest('[data-home-weekday]') as HTMLElement | null;
     if (wk && H.river) {
       H.riverView = wk.dataset.homeWeekday || null;
       const overlay2 = H.currentOverlay;
       if (overlay2) {
-        overlay2.querySelectorAll('[data-home-weekday]').forEach((b) =>
-          b.classList.toggle('bz-home-wk--sel', (b as HTMLElement).dataset.homeWeekday === H.riverView));
+        overlay2.querySelectorAll('[data-home-weekday]').forEach((b) => {
+          const sel = (b as HTMLElement).dataset.homeWeekday === H.riverView;
+          b.classList.toggle('bz-home-wk--sel', sel);
+          b.setAttribute('aria-pressed', sel ? 'true' : 'false');
+        });
         const flow = overlay2.querySelector('[data-home-flow]') as HTMLElement | null;
         if (flow) {
           flow.innerHTML = flowHtml(H.river!, H.riverView ?? '', readHomeSettings().flow);
@@ -228,10 +270,15 @@ function openDomain(id: string, app: any): void {
   runCommand(d.commandId, app, `「${d.name}」暂时不可用`);
 }
 
-/** 直达命令（菜单快捷动作/入口打开共用）：FakeApp 等无 commands 环境降级为通知，不崩 */
+/** 直达命令（菜单快捷动作/入口打开共用）：FakeApp 等无 commands 环境降级为通知，不崩。
+ *  异步失败不再静默（func P3-2）：命令 Promise reject 时原样 void 丢弃 = 用户面对
+ *  「点了没反应」，挂 catch 出人话提示（同步异常走同一文案）。 */
 function runCommand(commandId: string, app: any, failText = '该功能暂时不可用'): void {
   try {
-    void app.commands.executeCommandById(commandId);
+    const ret = app.commands.executeCommandById(commandId) as unknown;
+    if (ret && typeof (ret as Promise<unknown>).catch === 'function') {
+      void (ret as Promise<unknown>).catch(() => notice(failText, 'warning'));
+    }
   } catch {
     notice(failText, 'warning');
   }
@@ -242,8 +289,14 @@ function runCommand(commandId: string, app: any, failText = '该功能暂时不�
  * executeCommandById 返回 Promise（命令可能是异步：先弹确认框再写盘）——等它落地再刷新，
  * 否则会在用户还没确认时就刷新（看不到计数变化），或在写入前读到旧值。
  * 无 commands / 非 Promise 环境（原型壳）就地跳过刷新，不崩。
+ * 慢动作即时反馈 + 防重入（eff P3-2）：立即同步/重建索引类网络/全库 IO 落地前面板纹丝不动，
+ * 点击瞬间出 busyText 轻提示（文案单源在 DOMAIN_MENU 声明，home 不硬编码域语义）；
+ * 在途命令重复点击不再重复发（会话级在途表，落地即清）。
  */
-function runCommandAndRefresh(commandId: string, app: any): void {
+const activeCommands = new Set<string>();
+
+function runCommandAndRefresh(commandId: string, app: any, busyText?: string): void {
+  if (activeCommands.has(commandId)) return; // 在途：静默忽略重复点击（反馈已在首击的提示上）
   let ret: unknown;
   try {
     ret = app.commands.executeCommandById(commandId);
@@ -251,8 +304,21 @@ function runCommandAndRefresh(commandId: string, app: any): void {
     notice('该功能暂时不可用', 'warning');
     return;
   }
+  if (busyText) notice(busyText, 'info');
   if (ret && typeof (ret as Promise<unknown>).then === 'function') {
-    void (ret as Promise<unknown>).then(() => refreshRiverAndRender(), () => refreshRiverAndRender());
+    activeCommands.add(commandId);
+    void (ret as Promise<unknown>).then(
+      () => {
+        activeCommands.delete(commandId);
+        return refreshRiverAndRender();
+      },
+      () => {
+        // 失败分支（func P3-2 同刀）：不再静默刷新（用户视角「点了像没点」）
+        activeCommands.delete(commandId);
+        notice('动作没有执行成功', 'warning');
+        return refreshRiverAndRender();
+      },
+    );
   } else {
     void refreshRiverAndRender();
   }
@@ -289,8 +355,9 @@ function attachRowMenu(el: HTMLElement, app: any, river: RiverData): void {
       kind: spec.kind === 'danger' ? 'danger' : 'normal',
       onClick: () => {
         if (spec.keepHome) {
-          // 即时类：面板留着，动作跑完刷新一次数据（计数/彩点当场归位）
-          runCommandAndRefresh(spec.commandId, app);
+          // 即时类：面板留着，动作跑完刷新一次数据（计数/彩点当场归位）；
+          // busyText 槽位 = 慢动作（同步/重建索引）点击瞬间的即时反馈（eff P3-2）
+          runCommandAndRefresh(spec.commandId, app, spec.busyText);
           return;
         }
         closeOverlay();
@@ -311,15 +378,39 @@ function attachRowMenu(el: HTMLElement, app: any, river: RiverData): void {
   });
 }
 
-/** 渲染后重挂入口菜单；render 是 innerHTML 重建，元素全新不会重复绑定 */
+/** 渲染后重挂入口菜单；render 是 innerHTML 重建，元素全新不会重复绑定。
+ *  前端门控（eff P3-1）：只挂当前布局可见端的容器——桌面 tiles 整块 display:none、
+ *  移动 entries 同，隐藏容器里的行永不可达，照挂菜单+预构建盒头等于白花一半开销。
+ *  判据用面板容器宽度（对齐 CSS @container/@media 的 768 断点，桌面窄窗口同切移动布局；
+ *  不用 Platform.isMobile——它判平台不判宽度）。宽度 0（未布局/测试环境）保守全挂，
+ *  行为与旧版一致。 */
 function mountRowInteractions(overlay: HTMLElement, app: any, river: RiverData): void {
-  const entries = overlay.querySelector<HTMLElement>('[data-home-entries]');
-  if (entries) for (const el of rowEls(entries)) attachRowMenu(el, app, river);
-  const tiles = overlay.querySelector<HTMLElement>('[data-home-tiles]');
-  if (tiles) for (const el of rowEls(tiles)) attachRowMenu(el, app, river);
+  const panel = overlay.querySelector<HTMLElement>('.bz-home-panel');
+  const w = panel?.clientWidth ?? 0;
+  const narrow = w > 0 && w <= 768;
+  if (w === 0 || !narrow) {
+    const entries = overlay.querySelector<HTMLElement>('[data-home-entries]');
+    if (entries) for (const el of rowEls(entries)) attachRowMenu(el, app, river);
+  }
+  if (w === 0 || narrow) {
+    const tiles = overlay.querySelector<HTMLElement>('[data-home-tiles]');
+    if (tiles) for (const el of rowEls(tiles)) attachRowMenu(el, app, river);
+  }
 }
 
 /* ---------- 渲染（胶水：把单源 markup 灌进骨架数据区） ---------- */
+
+/** 焦点定位键（ui P3-4）：renderAll 全量重建会丢焦点——重建前从 activeElement 提取
+ *  委托定位键（入口行/瓦片/预告卡的 data-home-go、周历格的 data-home-weekday），
+ *  重建后对等价新元素回焦；找不到（域被隐藏等）即放弃，不抢焦点。 */
+function focusKeyOf(el: Element | null): { attr: string; value: string } | null {
+  if (!el) return null;
+  const go = el.closest('[data-home-go]') as HTMLElement | null;
+  if (go) return { attr: 'data-home-go', value: go.dataset.homeGo || '' };
+  const wk = el.closest('[data-home-weekday]') as HTMLElement | null;
+  if (wk) return { attr: 'data-home-weekday', value: wk.dataset.homeWeekday || '' };
+  return null;
+}
 
 function renderAll(): void {
   const overlay = H.currentOverlay;
@@ -327,8 +418,18 @@ function renderAll(): void {
   const date = overlay.querySelector('[data-home-date]');
   if (date) date.textContent = headDateText();
 
+  // 全量重建前的双记忆（eff P2-2 / ui P3-4）：滚位 + 焦点——keepHome 动作落地刷新
+  // 与失败重试不再把浏览位置/键盘焦点打回面板顶部
+  const preGrid = overlay.querySelector('.bz-home-grid');
+  saveScroll(overlay);
+  const active = document.activeElement as HTMLElement | null;
+  const fk = active && overlay.contains(active) ? focusKeyOf(active) : null;
+
   if (!H.river) {
     // 数据未到：结构占位（骨架），不闪空内容；采集失败（H12）→ 失败空态 + 重试，不再永挂骨架
+    // 骨架期也按设置收敛第三栏（预告卡关掉时空列 224px 只闪现到数据到达，同刀收口）
+    const { next: nextOn } = readHomeSettings();
+    preGrid?.classList.toggle('bz-home-grid--no-next', !nextOn);
     const entries = overlay.querySelector('[data-home-entries]') as HTMLElement;
     const flow = overlay.querySelector('[data-home-flow]') as HTMLElement;
     const next = overlay.querySelector('[data-home-next]') as HTMLElement;
@@ -350,10 +451,13 @@ function renderAll(): void {
       entries.innerHTML = '';
       entries.appendChild(empty);
       mountIcons(entries);
+      // 失败三态（func P3-1）：flow 列同步出失败位（行级文案，避免「正在汇入…」假加载）——
+      // 重试入口只在 entries 大卡上挂一个，成功后随 renderAll 两列一并恢复
+      flow.innerHTML = flowFailedHtml();
     } else {
       entries.innerHTML = loadingEntriesHtml();
+      flow.innerHTML = loadingFlowHtml();
     }
-    flow.innerHTML = loadingFlowHtml();
     next.innerHTML = '';
     (overlay.querySelector('[data-home-tiles]') as HTMLElement).innerHTML = '';
     (overlay.querySelector('[data-home-week]') as HTMLElement).innerHTML = '';
@@ -375,9 +479,11 @@ function renderAll(): void {
   entries.innerHTML = entriesHtml(river, H.order.desk, H.order.hiddenDesk);
   flow.innerHTML = flowHtml(river, view ?? today, cfg.flow);
   next.innerHTML = nextHtml(river, cfg.next);
-  // 预告卡关掉 → 第三栏整块收掉（只清内容会留一条空列，桌面 grid 里就是一道空白）
-  nextOff = !cfg.next;
+  // 预告卡关掉 → 第三栏整块收掉：桌面 grid 显式三轨道不随空 item 塌缩（display:none 只对
+  // 移动 flex 生效），修饰类同步切两列轨道（ui P3-2——原实现注释宣称收掉、实际留 224px 白）
+  const nextOff = !cfg.next;
   next.style.display = nextOff ? 'none' : '';
+  preGrid?.classList.toggle('bz-home-grid--no-next', nextOff);
   const tiles = overlay.querySelector('[data-home-tiles]') as HTMLElement;
   tiles.innerHTML = tilesHtml(river, H.order.mob, H.order.hiddenMob);
   mountIcons(week);
@@ -386,6 +492,12 @@ function renderAll(): void {
   mountIcons(next);
   mountIcons(tiles);
   mountRowInteractions(overlay, H.appRef, river);
+  restoreScroll(overlay);
+  // 焦点回置（ui P3-4）：等价新元素在场且面板显示中才回焦，找不到不抢
+  if (fk && fk.value && H.overlayVisible) {
+    const target = overlay.querySelector(`[${fk.attr}="${fk.value}"]`) as HTMLElement | null;
+    target?.focus();
+  }
 }
 
 /* ---------- ESC / 通知 ---------- */
