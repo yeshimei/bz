@@ -172,6 +172,14 @@ export function exitDayTsOf(it: BelongingsItem): number | null {
 export function recoveredOf(it: BelongingsItem): number {
   return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
 }
+/** 日均数值文本（展示单源）：两位内去尾零；<0.01 保四位精度。
+ *  原面板卡片与报告柱顶双写且特判分叉（0.004 元/天卡片显示 0.0040、报告柱顶得 0），
+ *  批B 修复13 暂落 report-stats 纯层，主线程随 recoveredOf 下沉同刀平移至此；
+ *  面板 layouts/poster 与报告 report.ts 两侧同源消费。 */
+export function trimDailyNum(n: number): string {
+  const v = Number(n) || 0;
+  return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+}
 /**
  * 'YYYY-MM-DD…' → 当日零点本地 Date；无效 = null（单源日期归一，func P3-5 深审批A）。
  * 分量范围校验：月 1-12 + 年月日归一化回读比对——「2026-13-45」不再被 JS Date 静默

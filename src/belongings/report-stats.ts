@@ -12,6 +12,9 @@
 import type { BelongingsItem } from './types';
 import { catNameOf, parseLocalDay, exitDayTsOf, recoveredOf, exitedStatus } from './shared';
 
+// trimDailyNum（日均数值文本展示单源）已随 recoveredOf 下沉同刀平移至 shared.ts，
+// 面板/报告消费方改从 shared 引——本文件不再转发，防双出口。
+
 /** 陪伴最久榜条数（Top N；issue 356 拍板 Top 5） */
 export const COMPANION_TOP_N = 5;
 
@@ -82,11 +85,13 @@ export interface CategoryShareRow {
   pct: number;
 }
 
-/** 日均成本走势列（各月末时点的全库日均成本；future = 该月末尚未到来） */
+/** 日均成本走势列（各月末时点的全库日均成本；future = 该月末尚未到来，capped = 当月截至今日） */
 export interface DailyCostCol {
   label: string;
   value: number;
   future: boolean;
+  /** 批B 修复14：当年当月列截止点收到「今天」（旧口径当月列恒 future 空档，autumn UX② 旧账） */
+  capped?: boolean;
 }
 
 /** 陪伴最久榜行（截至所选年末/今天；出离条目封口在出离日） */
@@ -190,14 +195,20 @@ export function computeYearReport(
     }))
     .sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, 'zh'));
 
-  // 日均成本走势（各月末时点；未来月标 future 且值恒 0——未实现的月份无成本语义）
+  // 日均成本走势（各月末时点；批B 修复14，autumn UX② 旧账）：未来月标 future 且值恒 0——
+  // 未开始的月份无成本语义；当年**当月**列旧口径 cutoff=下月 1 日恒 future → 全年恒空档
+  // （如 9 月开报告则 9-12 月四列空），现当月截止点收到「今天」（capped），随时间逐步补全
   const dailyCostTrend: DailyCostCol[] = Array.from({ length: 12 }, (_, i) => {
-    const cutoff = new Date(y, i + 1, 1).getTime();
-    const future = cutoff > nowTs;
+    const monthStart = new Date(y, i, 1).getTime();
+    const monthEnd = new Date(y, i + 1, 1).getTime();
+    const future = monthStart > nowTs;
+    const capped = !future && monthEnd > nowTs;
+    const cutoff = capped ? nowTs : monthEnd;
     return {
       label: monthLabel(i + 1),
       value: future ? 0 : avgDailyCostAsOf(items, cutoff),
       future,
+      ...(capped ? { capped } : {}),
     };
   });
 

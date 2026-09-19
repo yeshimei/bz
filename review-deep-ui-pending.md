@@ -81,6 +81,7 @@
 | GS1 | 用户手改「已下架: true」被下次同步「Steam 在场即恢复在架」静默翻回 | `src/gameshelf/sync.ts` reconcile | 拍板：维持同步语义 or 手改粘滞（尊重用户意图） | 同步语义 |
 | GS2 | 统计页「最近玩过」行可点但键盘不可达（可点 div 无 tabindex/role/Enter 路径；同页卡片是 button 无此问题） | `src/gameshelf/ui.ts:487-491` × `901-905` | 拍板形态：改 button or tabindex+role+keydown | 键盘可达 |
 | GS3 | Steam Web API 密钥明文输入框（旁人瞄屏可见；跨域观察，settings-panel 无 secret 档位） | `src/settings.ts:64-69` `gameshelfSteamApiKey` | 拍板：settings-panel 增 password/secret 档位后接入（跨域基建先行） | 隐私 |
+| GS4 | 会话滚位记忆：重开面板回到上次浏览位置（clipbook 效率#17 先例） | `src/gameshelf/ui.ts` openPanel/closePanel | 拍板：加 or 维持每次回顶 | 效率增强 |
 
 ### 历史搁置项（此前无人值守拍板暂缓，收尾呈报时可一并重议）
 
