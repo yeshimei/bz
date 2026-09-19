@@ -549,13 +549,13 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## favorites（收藏夹）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致 / 5 架构运行中）
+## favorites（收藏夹）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构运行中）
 
-> 明细：`.scratch/review-deep/favorites-{func,ui,efficiency}.md`。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1（无 P1/P2——两轮全域修复后数据面扎实）。方向 2（UI）：P2×6 + P3×7 + UX×3。方向 3（效率）：P2×3 + P3×3 + UX×3。跨方向去重：哨兵撞名（func-7 = ui UI-05 同根——代码备了 `__all/__archived` 哨兵但 markup 仍发字面值，防了等于没防）、主表单 Enter（func？= ui UI-11 = eff E4 同根）、单例守卫绕脏检查（eff E3 = 旧账 FV2 = ui 复核仍在）、ESC 手写旗标未收编 registerPanelEsc（ui 旧账复核；belongings/bookshelf/cinema 已收编）。旧账复核 11 条：F14/F15/FV1/FV3/FV4 五条已修闭环；FV2 仍在随守卫一并修；ux#16/#17 拍板维持；#6 部分闭环。**重要复核发现（E1）**：效率整改 5 落地面账目反转——favorites 删除/归档仍「确认框+撤销」双保险（`git log -S` 证实确认文案自初版从未移除），**favorites 才是删除口径滞后域**；core/notice.ts:139 注释与本台账 B7 行「favorites 已落地免确认」均系误记，归修复批纠偏（belongings 批 A 已按正确口径落地）。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
+> 明细：`.scratch/review-deep/favorites-{func,ui,efficiency,consistency}.md`。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1（无 P1/P2——两轮全域修复后数据面扎实）。方向 2（UI）：P2×6 + P3×7 + UX×3。方向 3（效率）：P2×3 + P3×3 + UX×3。方向 4（一致）：P2×2 + P3×4 + UX×0 新增。跨方向去重：哨兵撞名（func-7 = ui UI-05 同根——代码备了 `__all/__archived` 哨兵但 markup 仍发字面值，防了等于没防）、主表单 Enter（ui UI-11 = eff E4 = cons C6 三向同根，手写版缺 isComposing）、单例守卫绕脏检查（eff E3 = 旧账 FV2 = ui 复核仍在）、100vh→vvh（ui UI-01 = cons C4 同根：favorites 已接同族 bz-panel-mtop 却漏 vvh，同一次接入两个半成品）、ESC 手写旗标收编 registerPanelEsc（ui 旧账复核 = cons C3 升格入账；六域先例）。**文档误记三处清单（cons C1/C2 齐备）**：core/notice.ts:139 注释 + 本台账 B7 行 + **CONTEXT.md:75 favorites 词条**（词条还发现交互口径停 ADR-0083 旧版 + **belongings 演进史整段误植进 favorites 词条**——印章头/四设置键/bz-belongings-report 全是归物本内容；均归修复批文档收口）。旧账复核 11 条：F14/F15/FV1/FV3/FV4 五条已修闭环；FV2 仍在随守卫一并修；ux#16/#17 拍板维持；触控热区旧账复核非欠账（磁贴 min-height 符合 core 紧产行指引）。**重要复核发现（E1=C2 双向独立复核）**：效率整改 5 落地面账目反转——favorites 删除/归档仍「确认框+撤销」双保险（`git log -S` 证实确认文案自初版从未移除），**favorites 是唯一活跃滞后域**（belongings/clipbook/review 已落地，memo 随回滚队尾重审，password-vault 拍板保留为合理例外），归修复批纠偏。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
-- **P2 删除/归档双保险违效率整改 5 定稿 + 文档误记纠偏**（eff E1）——免确认直达 notifyUndo（belongings 批 A 同款落地法）；同域两制（取消归档却免确认）一并理顺；core/notice.ts:139 注释纠偏。
+- **P2 删除/归档双保险违效率整改 5 定稿 + 文档误记三处纠偏**（eff E1 = cons C2 独立复核）——免确认直达 notifyUndo（belongings 批 A 同款落地法）；同域两制（取消归档却免确认）一并理顺；**纠偏清单**：core/notice.ts:139 注释 + review-deep-bugs B7 行 + CONTEXT.md:75 favorites 词条「删除免确认」误载。测试契约面（ui.test.ts:806/881 + flow-dialog-skin 四框收敛两框）随批翻转。
 - **P2 操作后全量重刷丢滚位**（eff E2）——置顶/归档/删除/编辑保存后长列表视野跳顶。修：滚位保持。
 - **P2 openForm 单例守卫绕过脏检查静默丢草稿**（eff E3 = 旧账 FV2）——修：单例命中走 confirmDiscard 口径。
 - **P2 裸 100vh 未接 --bz-vvh**（ui UI-01）——belongings/cinema/clipbook 已迁，真机底缘被原生栏遮挡。修：接 `--bz-vvh`。
@@ -567,4 +567,5 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 群（ui 7 条）**：开面板无加载态磁贴归零闪（补加载占位）；激活筛选计数归零 chip 消失面板悬空（保激活指示）；空态文案不区分筛选/归档视图误导；动态标签图标 `tag.ic` 未转义直插 innerHTML（防御性注入面，收编 iconSpan 转义口径）；标签管理弹窗遮罩/ESC 直关无脏拦截（requestClose 礼节对齐）；触屏热区缺口（标签管理钮 26px、表单胶囊无 coarse 档，bz-touch-target 未接）。
 - **P3 群（eff 3 条）**：表单无 Enter 提交（bindFormSubmit 在位未消费，与 UI-04/UI-11 同刀收编）；boardHtml indexOf O(n²)+每标签全量重 filter（Map 建表）；手输链接缺协议保存路径不补 normalizeUrl（粘贴路径已补，又一处域内两制）。
 - **UX 分流（拍板清单 F 系）**：无链卡点击零反馈、桌面操作唯一入口右键发现性弱（ux#16/#17 同源维持）、面板键盘焦点管理（belongings 批 B 先例）、触屏 hover 粘滞（**全域议题**，无 hover 隔离范式，建议立项拍板）、桌面磁贴行不限高多标签挤塌卡墙（限高/折叠形态待拍板）、点卡直开外链 affordance。
+- **P3 群（cons 4 条，归并后增量）**：ESC 手写旗标收编 registerPanelEsc（C3）；死 import uiInput 清理（C5）；**CONTEXT.md:75 favorites 词条三重脱节**（C1，主线程文档收口）：交互口径整段停 ADR-0083 旧版（左标签栏/搜索/排序/余额/关联笔记已随 C5 换血退役未记）+ belongings 演进史整段误植 + 删除免确认误载。
 - **测试缺口**：随修复批按报告补。
