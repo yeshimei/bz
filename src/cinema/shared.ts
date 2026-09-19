@@ -199,6 +199,9 @@ export function viewFiltered(view: CinemaView): boolean {
 
 // ---------- 共享弹窗（ADR-0103 §3：三风格共用，scoped 午夜场锚样式零复制） ----------
 
+/** 热门短评折叠阈值（字）：超过则收成 3 行（451/687 有值，中位 39 字、最长 465） */
+const HOT_FOLD_MIN = 120;
+
 /** 详情弹窗内容（.cn-modal dm-*；海报 URL 由调用方解析） */
 export function detailModalHtml(it: CinemaItem, posterUrl: string | null): string {
   const badge = (color: string, text: string) => `<span class="dm-chip" style="background:${color}">${esc(text)}</span>`;
@@ -207,9 +210,13 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
     ['导演', it.director ?? ''],
     ['主演', it.actors ?? ''],
     ['制片国家/地区', it.region ?? ''],
-    ['上映日期', it.year ?? ''],
+    ['上映日期', it.releaseDate ?? it.year ?? ''], // 完整年月日（year 只留年，卡片/统计用）
+    ['片长', it.duration ?? ''],
+    ['季集', it.seasonText ? `${it.seasonText} 集` : ''],
     ['豆瓣评分', it.doubanRating ?? ''],
   ] as [string, string][]).filter(([, v]) => v !== '');
+  const hot = (it.hotComment ?? '').trim();
+  const hotFold = hot.length > HOT_FOLD_MIN; // 长评收起，行为层 data-dm-fold 接线展开/收起
   return `<div class="cn-modal cn-modal--detail">
     <div class="dm-head"><div class="dm-poster">${posterUrl ? `<img src="${esc(posterUrl)}" onerror="this.remove()">` : ''}</div>
       <div style="flex:1;min-width:0"><div class="dm-title">${esc(it.name)}</div>
@@ -220,6 +227,7 @@ export function detailModalHtml(it: CinemaItem, posterUrl: string | null): strin
         ${it.review ? `<div class="dm-review">${esc(it.review)}</div>` : ''}</div></div>
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}
     ${it.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(it.doubanUrl)}" target="_blank" rel="noopener">${esc(it.doubanUrl)}</a></span></div>` : ''}
+    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote${hotFold ? ' is-fold' : ''}" data-dm-quote>${esc(hot)}</div>${hotFold ? `<button type="button" class="dm-fold j-quote-fold" data-dm-fold>展开全文（${hot.length} 字）</button>` : ''}` : ''}
     ${it.synopsis ? `<div class="dm-sec">简 介</div><div class="dm-synopsis">${esc(it.synopsis)}</div>` : ''}
     <div class="dm-actions"><button class="dm-btn j-similar">${iconSpan(ICON.ai)}找同类</button><button class="dm-btn j-edit">${iconSpan(ICON.edit)}编辑</button><button class="dm-btn danger j-del">${iconSpan(ICON.del)}删除</button></div>
   </div>`;
