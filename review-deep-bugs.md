@@ -584,6 +584,20 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **UX 分流（拍板清单加 P 系续行）**：aria-live、「停止专注」一词三义、统计档位跨重启记忆、近 6 月空柱占位。
 - **顺带**：保存失败 toast 接 notifyActionError onRetry（效率线已具备未接入）。
 
+---
+
+## home（首页）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+
+> 明细：`.scratch/review-deep/home-func.md`。方向 1（func）：P3×3 + UX×1（无 P1/P2）。**核心正面结论**：命令对账零漂移（16 磁贴 + 27 菜单动作全部在 COMMANDS 表在册）、行为流换源读写口径闭环、只读契约与转义链全过。旧账复核 4 条全部已闭环：gameshelf 批 A 的 river 竞态修复获 home 方向独立复核确认、图标单源已迁 DOMAIN_ICONS、保险库副题已落地、ESC 注销在位（反为 cinema 对齐基准）。门禁基线：tsc 0；tests/home 9 文件 121 例全绿 + smoke/render-purity 19 例。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P3 采集失败态只覆盖「全部域」列**（func P3-1）——时间线列永挂「正在汇入今天的痕迹…」加载文案（renderAll 失败分支不涉 flow 列），用户误以为还在加载。修：失败态覆盖 flow 列（可重试出口）。
+- **P3 runCommand 直达命令 Promise reject 静默**（func P3-2）——只 try-catch 同步异常，异步 reject 无提示（「点了没反应」）。修：Promise 挂 catch → 人话通知。
+- **P3 weekly.ts「R1 生活周报」死代码**（func P3-3）——采集链约 220 行 + 243 行测试零消费，唯一活出口 parseLocalDay（recap 引用）。**处置拍板：裁 or 注明预留**（登记拍板清单 H 系——功能裁剪决策非纯技术）。
+- **UX 分流（H 系）**：设置「外观」组 homeLayout/homeSkin 可选可存但首页不消费（issue 246 占位范式，接上 or 注明占位）。
+- **测试缺口 4**：keepHome 行为链、失败态 flow 断言、promise rejection 路径、死链测试——修复批随补。
+
 ### 已入账条目（跨方向去重待 5 方向齐）
 
 - **P2 统计柱区关闭重开不重建**（func PF1）——`lastStatsKey` 只在换档/卸载清空，关开弹窗同键早退，近 7 天/近 6 月柱状图空白。修：一行（openPanel 清 key 或早退条件补面板生命周期）。
