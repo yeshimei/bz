@@ -1343,7 +1343,7 @@ describe('SafeManager 原子还原（优化五：全部成功才落盘）', () =
     expect(vault.files.has('CONFIG/.ENCRYPT/' + note.contentRef)).toBe(false);
   });
 
-  it('清单落盘失败（磁盘异常）：文件已还原、manifestSaveFailed=true、内存条目移除，可幂等重试', async () => {
+  it('清单落盘失败（磁盘异常）：文件已还原且镜像俱在、manifestSaveFailed=true；下次解锁重试还原幂等收敛 removed=true', async () => {
     makeApp(vault);
     const sm = new SafeManager('CONFIG/.ENCRYPT');
     await sm.unlock('pw');
@@ -1353,22 +1353,35 @@ describe('SafeManager 原子还原（优化五：全部成功才落盘）', () =
       content: '# 待还原',
       attachments: [],
     });
-    const origSave = sm.saveManifest.bind(sm);
     const spy = vi.spyOn(sm, 'saveManifest').mockRejectedValue(new Error('disk error'));
     try {
       const { conflicts, removed, manifestSaveFailed } = await sm.restoreNote(noteStash.id);
       expect(conflicts).toEqual([]);
       expect(removed).toBe(false);
       expect(manifestSaveFailed).toBe(true);
-      // 文件已还原到原位置
+      // 文件已还原到原位置；收尾调序（深审新-1）：清单落盘失败时镜像俱在——
+      // 重试还原阶段一可正常解密、走「目标一致 → 放行」收敛（旧序镜像已删，重试恒判冲突死路）
       expect(vault.files.get('我的/日记/a.md')).toContain('# 待还原');
-      // 镜像已删、内存条目已移除（列表刷新后不再显示，磁盘清单留待下次保存）
-      expect(vault.files.has('CONFIG/.ENCRYPT/' + noteStash.contentRef)).toBe(false);
-      expect(sm.manifest.notes.some((n) => n.id === noteStash.id)).toBe(false);
+      expect(vault.files.has('CONFIG/.ENCRYPT/' + noteStash.contentRef)).toBe(true);
+      expect(sm.manifest.notes.some((n) => n.id === noteStash.id)).toBe(false); // 内存条目已移除
     } finally {
       spy.mockRestore();
-      void origSave;
     }
+    // 下次解锁（磁盘清单未固化移除，仍含该条目）后重试还原：端到端收敛
+    sm.lock();
+    const sm2 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm2.unlock('pw')).toBe(true);
+    expect(sm2.manifest.notes.some((n) => n.id === noteStash.id)).toBe(true);
+    const retry = await sm2.restoreNote(noteStash.id);
+    expect(retry.conflicts).toEqual([]);
+    expect(retry.removed).toBe(true); // 收敛：摘条目落盘 + 删镜像
+    expect(vault.files.has('CONFIG/.ENCRYPT/' + noteStash.contentRef)).toBe(false);
+    expect(vault.files.get('我的/日记/a.md')).toContain('# 待还原');
+    // 收敛已固化：三开解锁清单为空，条目不再悬挂
+    sm2.lock();
+    const sm3 = new SafeManager('CONFIG/.ENCRYPT');
+    expect(await sm3.unlock('pw')).toBe(true);
+    expect(sm3.manifest.notes.length).toBe(0);
   });
 });
 
