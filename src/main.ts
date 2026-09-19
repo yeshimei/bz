@@ -35,7 +35,7 @@ import { openClipbook, markAllUnreadRead, openClipbookReport, unloadClipbook, en
 import { maybeFetchNews, fetchNowNews, notifyManualFetchResult } from './clipbook/news-fetcher';
 // 统一保险库（encrypt 域，ADR-0085）：密码管理已并入 encrypt，旧 password-vault 域已删除
 // 日记本（diary 域，ADR-0115：原回忆墙升格正名，旧编辑域退役；媒体墙 + 写链路单一 UI）
-import { openDiary, openDiaryWrite, unloadDiary } from './diary';
+import { openDiary, openDiaryWrite, prewarmDiary, unloadDiary } from './diary';
 import { applyDirectories } from './diary/config';
 import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorites';
 // 阅读数据分析报告（读书报告内嵌化：独立弹窗退役，unloadReadingReport 只作废在途渲染/toast）
@@ -337,6 +337,9 @@ export default class BzPlugin extends Plugin {
       setTimeout(() => { if (!this.unloaded) void maybeFetchNews(); }, 0);
       // 小橘：启动即挂载（smartcatEnabled 开关；桌面宠物常驻）
       if (this.settings.smartcatEnabled) void ensureSmartCat(this.app);
+      // 日记本后台预热（②）：延迟一拍到空闲只读数据填缓存、不建 DOM（ADR-0003 兼容），
+      // 首开日记本命中缓存秒开；四目录任一 md 变更经 domain-bus 事件自动失效。禁用插件时不预热（C13）。
+      prewarmDiary(this.app, () => this.unloaded);
     });
   }
 

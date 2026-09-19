@@ -41,7 +41,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
-import { loadWallEntries, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, extractSegments, stripMediaLinks, type WallEntry, type WallMedia } from './data';
+import { loadWallEntries, invalidateWallCache, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, extractSegments, stripMediaLinks, type WallEntry, type WallMedia } from './data';
 import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
 // markup 单源（ADR-0104）：壳模板/图标表/MIME/统计/题注在 render.ts，原型壳与插件同源消费
 import { wallPanelHTML, ACT_ICON, KIND_ICON, mimeOfMediaName, dayStats, statHtml, lbCaption, lbSubText, mediaCapHtml, WEEK } from './render';
@@ -264,6 +264,9 @@ export class DiaryAppController {
    *  两者都没变才允许对既有卡片 toggle display（否则卡片集合与 widx 不对应） */
   private _wallBaseRef: WallEntry[] | null = null;
   private _wallBaseKey = '';
+  /** ②：仅首开（show）允许命中预热缓存秒开；其余 loadAndRender（刷新/写后回刷/重试）默认强制回源，
+   *  保持「除首开外每次读盘」原语义。show 置真、loadAndRender 消费后复位 */
+  private _allowCacheNext = false;
 
   // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
   ensureElements() {
@@ -2438,6 +2441,8 @@ export class DiaryAppController {
     this.subscribeWriteEvents(); // 写链路域事件防抖回刷（含整文件删除等 vault delete 无 modify 的路径）
     this.subscribeRefSync(); // issue 339：改名/删除内存路径同步
     // 增强 #11：loadAndRender 完成后一次性恢复跳走前的筛选与滚动位置
+    // ②：开墙首读允许命中预热缓存秒开（闭合期写改已由 domain-bus 事件作废缓存，不会读到脏数据）
+    this._allowCacheNext = true;
     void this.loadAndRender().then(() => this.applyRestore());
   }
 
@@ -2648,6 +2653,13 @@ export class DiaryAppController {
     // 效率#13：数据读取期间墙区骨架占位（大库首屏不再是一段「看起来像空库」的空白期）
     this.showSkeleton();
     try {
+      // ②：仅首开（_allowCacheNext）命中预热缓存秒开；其余一律先作废缓存回源读盘，
+      //    保持「每次刷新/写后回刷即读盘」原语义（不依赖缓存失效是否触发）
+      if (this._allowCacheNext) {
+        this._allowCacheNext = false;
+      } else {
+        invalidateWallCache();
+      }
       this.entries = await loadWallEntries(this.app());
       this._loadError = null;
     } catch (e: any) {

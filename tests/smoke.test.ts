@@ -294,6 +294,18 @@ describe('bz 骨架冒烟', () => {
     expect(document.getElementById('add-diary-mask')).toBeNull();
   });
 
+  it('日记本后台预热（②）：prewarmDiary 幂等不抛、只热数据不建 DOM（ADR-0003 兼容）', async () => {
+    const app = makeMockApp();
+    await createPlugin(app);
+    const { prewarmDiary, unloadDiary } = await import('../src/diary');
+    // isUnloaded 恒真 → 到点短路，不触发真实读盘（预热是加速，失败/短路都不该冒到 UI）
+    expect(() => prewarmDiary(app as any, () => true)).not.toThrow();
+    expect(() => prewarmDiary(app as any, () => true)).not.toThrow(); // 幂等：二次不重复调度
+    // 关键不变量：预热只读数据，绝不拉起日记本面板 DOM
+    expect(document.querySelector('.bz-diary')).toBeNull();
+    unloadDiary();
+  });
+
   it('onunload 清理 toast 容器（UX 整改 l2-toast）', async () => {
     const plugin = await createPlugin(makeMockApp());
     // createPlugin 期间日记本 mock 加载失败会弹一条 error 通知（既有噪音），先清空再精确计数

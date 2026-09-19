@@ -15,6 +15,7 @@ import type { App, TFile } from 'obsidian';
 import { parseEntryFile, parseMovieFile, parseLetterFile, parseBookFile } from './parser';
 import { diaryMetaFromEntryPath } from '../core/diary-format';
 import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory } from './config';
+import { onDomainEvent } from '../core/domain-bus';
 import type { DiaryEntry } from './types';
 
 // WallEntry 家族类型已上移 ./types（render 纯层经 types 引用，不触本文件 obsidian 依赖）
@@ -270,17 +271,22 @@ async function loadSpecialEntries(
   return entries;
 }
 
-/**
- * 聚合加载回忆墙全部内容（日记 + 影视 + 信 + 书），统一 date 降序、time 降序混排。
- * 目录常量取自自身 config（DIARY/MOVIE/LETTER/BOOK_DIRECTORY，自包含）。
- * 影视/信/书的 filename 为完整 vault 路径，日记的 filename 为 dateStr（UI 跳转时区分）。
- */
-export async function loadWallEntries(app: App): Promise<WallEntry[]> {
-  const entries = await loadDiaryEntries(app, DIARY_DIRECTORY);
-  // 聚合影视/信/书（影视/书库目录实时解析，D6）
-  entries.push(...(await loadSpecialEntries(app, movieDirectory(), 'movie', parseMovieFile)));
-  entries.push(...(await loadSpecialEntries(app, LETTER_DIRECTORY, 'letter', parseLetterFile)));
-  entries.push(...(await loadSpecialEntries(app, bookDirectory(), 'book', parseBookFile)));
+/** 四个内容目录当前值（影视/书库实时解析，D6）：缓存失效判定与加载侧同源 */
+function watchedDirs(): string[] {
+  return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()];
+}
+
+/** 无缓存聚合读（① 四目录并行）：四类内容各自读盘解析后合并，统一 date 降序、time 降序混排。 */
+async function readWallEntriesFresh(app: App): Promise<WallEntry[]> {
+  // ① 并行：旧实现四段 await 串行，wall-clock ≈ 四目录耗时之和；改 Promise.all 后 ≈ 最慢目录。
+  //   目录常量同步取值（await 前），与事件失效判定同源。
+  const [diaryE, movieE, letterE, bookE] = await Promise.all([
+    loadDiaryEntries(app, DIARY_DIRECTORY),
+    loadSpecialEntries(app, movieDirectory(), 'movie', parseMovieFile),
+    loadSpecialEntries(app, LETTER_DIRECTORY, 'letter', parseLetterFile),
+    loadSpecialEntries(app, bookDirectory(), 'book', parseBookFile),
+  ]);
+  const entries: WallEntry[] = [...diaryE, ...movieE, ...letterE, ...bookE];
 
   // 排序：日期降序、时间降序（HH:mm 字典序与数值序一致）
   entries.sort((a, b) => {
@@ -288,6 +294,105 @@ export async function loadWallEntries(app: App): Promise<WallEntry[]> {
     return dateCmp !== 0 ? dateCmp : b.time.localeCompare(a.time);
   });
   return entries;
+}
+
+// ---------- ② 墙数据缓存（后台预热用，按 app 键控；加密条目不在此层，恒经 UI mergeEncryptedEntries 现取） ----------
+
+/** 一次在途/已完成的加载：invalidated 由事件订阅按「本轮 ctrl」置位；attached 保证每轮只挂一次域事件订阅 */
+interface WallLoadCtrl {
+  promise: Promise<WallEntry[]>;
+  invalidated: boolean;
+  attached: boolean;
+}
+let wallCacheApp: App | null = null;
+let currentCtrl: WallLoadCtrl | null = null;
+let offFns: Array<() => void> = [];
+
+/** 该文件路径是否落在四个内容目录下（与 UI subscribeVaultModify 的 hit 同口径） */
+function inWatchedDir(p: string): boolean {
+  return watchedDirs().some((d) => p.startsWith(d + '/') || p === d + '.md');
+}
+
+/** 摘除当前域事件订阅（幂等：退订函数本身幂等，clear 后置空数组） */
+function detachWallInvalidators(): void {
+  for (const off of offFns) off();
+  offFns = [];
+}
+
+/** 挂墙数据失效订阅：经 core/domain-bus 订 vault:md-*（全插件唯一 vault 订阅点转译，不自挂 app.vault.on）。
+ *  md 命中四目录、或 diary/letter 语义事件即作废缓存；cinema（影视目录）语义事件已由 vault:md-* 兜住，book 走通用兜底。 */
+function attachWallInvalidators(ctrl: WallLoadCtrl): void {
+  const onPath = (p?: string): void => {
+    // 仅当前轮次的加载在位才作废（换 app/新一轮后 currentCtrl 已指向新对象，旧订阅回调自然空转）
+    if (p && currentCtrl === ctrl && inWatchedDir(p)) ctrl.invalidated = true;
+  };
+  const off = (ch: string, handler: (evt: any) => void): void => {
+    offFns.push(onDomainEvent(ch, handler));
+  };
+  off('vault:md-created', (e: any) => onPath(e?.path));
+  off('vault:md-modified', (e: any) => onPath(e?.path));
+  off('vault:md-deleted', (e: any) => onPath(e?.path));
+  off('vault:md-renamed', (e: any) => {
+    onPath(e?.newPath);
+    onPath(e?.oldPath);
+  });
+  off('diary:file-created', (e: any) => onPath(e?.path));
+  off('diary:file-modified', (e: any) => onPath(e?.path));
+  off('diary:file-deleted', (e: any) => onPath(e?.path));
+  off('letter:file-created', (e: any) => onPath(e?.path));
+  off('letter:file-modified', (e: any) => onPath(e?.path));
+  off('letter:file-deleted', (e: any) => onPath(e?.path));
+}
+
+/**
+ * 聚合加载回忆墙全部内容（日记 + 影视 + 信 + 书），统一 date 降序、time 降序混排。
+ * ②：按 app 键控缓存——同一 app 的重复/并发调用命中在途或新鲜结果，不再整盘重读；
+ *    域事件（四目录 md 变更/增删/改名）置 invalidated 后自动回源。app 切换（含测试逐例新建）即失效。
+ *    UI 首开命中预热缓存秒开；刷新路径经 invalidateWallCache 强制回源（见 ui.loadAndRender）。
+ */
+export async function loadWallEntries(app: App): Promise<WallEntry[]> {
+  // 换 app：作废旧订阅 + 缓存，按新 app 重新预热
+  if (wallCacheApp !== app) {
+    detachWallInvalidators();
+    currentCtrl = null;
+    wallCacheApp = app;
+  }
+  // 命中：在途去重 + 新鲜缓存直接复用（挂订阅幂等）
+  if (currentCtrl && !currentCtrl.invalidated) {
+    if (!currentCtrl.attached) {
+      currentCtrl.attached = true;
+      attachWallInvalidators(currentCtrl);
+    }
+    return currentCtrl.promise;
+  }
+  // 回源：先摘上一轮遗留订阅（防 offFns 累积泄漏），再起新加载
+  detachWallInvalidators();
+  const ctrl: WallLoadCtrl = { promise: readWallEntriesFresh(app), invalidated: false, attached: false };
+  currentCtrl = ctrl;
+  ctrl.attached = true;
+  attachWallInvalidators(ctrl);
+  try {
+    const entries = await ctrl.promise;
+    // 读盘/合并期间被事件作废（并发编辑）→ 本轮结果不写缓存，下次调用回源重取
+    if (currentCtrl === ctrl && ctrl.invalidated) currentCtrl = null;
+    return entries;
+  } catch (e) {
+    // 加载失败不缓存：复位，下次调用重新读盘（保持旧「异常即重抛、无残留态」语义）
+    if (currentCtrl === ctrl) currentCtrl = null;
+    throw e;
+  }
+}
+
+/** 作废旧订阅 + 缓存：下次 loadWallEntries 强制回源重读（UI 主渲染路径 / 预热未起来时兜底） */
+export function invalidateWallCache(): void {
+  detachWallInvalidators();
+  currentCtrl = null;
+  wallCacheApp = null;
+}
+
+/** 插件卸载复位：与 invalidateWallCache 同效，语义化命名供 unloadDiary 调用 */
+export function resetWallCache(): void {
+  invalidateWallCache();
 }
 
 /** 按月份分组（key 为 'YYYY-MM'），组内保持传入顺序 */
