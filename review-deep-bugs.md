@@ -632,23 +632,23 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## reading-report（阅读报告）域 · 审查入账中（方向 1 功能 + 3 效率已到账；方向 2 UI / 4 一致运行中，5 待槽位）
+## reading-report（阅读报告）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致 / 5 架构运行中）
 
-> 明细：`.scratch/review-deep/reading-report-{func,efficiency}.md`。方向 1（func）：P2×2 + P3×8 + UX×1；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1。跨方向去重与翻案：**EFF-1 桌面回墙死端**（返回钮被 CSS 桌面隐藏 + 注释声称的「左栏 ‹ 返回书架」已随书脊墙换血删除 + M.view 会话保持重开仍落报告视图）——**翻案 review-ux #23「已闭环」不成立**（func 引用的「常驻返回钮」桌面不可见）；EFF-7 双 toast 与 RR-F2 同根但手动路径独立成条；EFF-8 死字段族扩容（trends 12 字段仅消费 5，建议一刀清含 monthlyTrend）；RR-F6 补证新根因（冷开报告被 rebuildItems 串行门控，报告管线不消费 rebuild 产物可并行）。旧账：G10 eff 复核通过闭环。门禁基线：tsc 0；tests/reading-report 88 例全绿。
+> 明细：`.scratch/review-deep/reading-report-{func,ui,efficiency}.md`。方向 1（func）：P2×2 + P3×8 + UX×1；方向 2（UI）：**P1×1** + P2×2 + P3×10 + UX×2；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1。**双 P1 同根**：RR-U1（ui）= EFF-1（eff）桌面报告视图零返回书架出口——`bz-rr-close` 桌面 display:none、注释宣称的左栏入口已随书脊墙换血退役、M.view 会话保持重开仍落报告视图，**review-ux #23 翻案实锤**（钮仅移动端显示，func 复核沿用了过时表述）。跨方向归并：EFF-8 死字段族扩容（monthlyTrend + trends 未消费 7 字段一刀清）；RR-F2 同根项（重算闪空/状态重置）不重复；RR-U13（报告视图下宿主搜索框可点只刷隐藏墙）移交 bookshelf 域复核。旧账：G10/样式漏注册/内联 hex 闭环在位、#24 缓解、字典序负债维持。门禁基线：tsc 0；tests/reading-report 88 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
-- **P1 桌面报告视图无「返回书架」可达出口**（EFF-1，#23 翻案）——回墙主路径死端，关面板重开仍落报告。修：返回钮恢复可视（或左栏入口重建）+ 键盘可达 + 用例（现有测试结构性测不到可视性）。
-- **P2 键盘不可达簇**（EFF-2）——年卡/作者卡/分类行无 tabindex/keydown，报告内钻取整体键盘不可达。修：可达性对齐。
-- **P2 O(n²·m) 主计算热点**（EFF-3）——calculateReadingStats 逐书 concat+全量重 filter。修：单趟归并。
-- **P2 往返无缓存全量重算**（EFF-4）——重扫全库+重 parse weave-data.json+十段重渲，离开时 DOM 明明还在。修：渲染产物缓存或懒重算。
-- **P2 书架 chrome 死控件簇残留报告视图**（EFF-5）——检索/排序/标签/hint 可见可点却全在更新隐藏墙零反馈。修：报告态隐藏（旧布局处理换血时丢失）。
-- **P2 EPUB 分类未接 ADR-0099 subjects 通道**（RR-F1）——分类分布/「未分类」建议失真。修：接宿主 subjects 口径。
-- **P2 自动重算复用手动渲染全链**（RR-F2）——toast 对 + 状态全重置。修：静默重算通道（RR-UX1 终态）。
-- **P3 群（func 8 条）**：分类预填多类书筛不中 + 多样性分数可超 100%；EPUB progress 前置+钳负漂移；readingTimeFormat 兜底；冷开报告白屏（EFF 补证：rebuildItems 串行门控可并行）；自动刷新漏单文件书库形态；Record 键原型污染；EPUB 会话无 type 完成率恒 0；start 补 0 幽灵月。
-- **P3 群（eff 5 条）**：假重试文案无重试钮（notifyActionError 范式收编）；小库双 toast（clipbook QUIET_TOAST_MIN_ENTRIES「同口径」注释失实）；重复计算杂项族（热力图双跑/focusScore 一次 3 遍）；热力图死端可供性（pointer+hover 放大无点击）；热区（hm-nav 28px/rr-close 22px）。
+- **P1 桌面报告视图零返回出口**（RR-U1 = EFF-1，#23 翻案）——修：返回钮恢复可视 + 键盘可达 + 可视性用例。
+- **P2 键盘不可达簇**（EFF-2 = RR-U2 同根）——年卡/作者卡 role=button 假可达（无 tabindex/keydown）、分类行无 role、委托 click 单路、年卡无 aria-expanded。修：可达性对齐。
+- **P2 触控热区低于 §8.2**（RR-U3 = EFF-10 同根）——翻月钮 28px/移动返回钮 22px（无 aria-label）、域内零 bz-touch-target 消费。修：挂类。
+- **P2 O(n²·m) 主计算热点**（EFF-3）——单趟归并。
+- **P2 往返无缓存全量重算**（EFF-4）——渲染产物缓存或懒重算。
+- **P2 书架 chrome 死控件簇残留**（EFF-5，与 RR-U13 移交项相邻）——报告态隐藏宿主搜索/排序/标签。
+- **P2 EPUB 分类未接 subjects 通道**（RR-F1）；**P2 自动重算静默通道**（RR-F2 + EFF-7 + RR-UX1 同刀）。
+- **P3 群（func 8 条）**：分类预填多类筛不中 + 多样性超 100%；EPUB progress 前置+钳负；readingTimeFormat 兜底；冷开白屏（rebuildItems 串行门控可并行）；自动刷新漏单文件形态；Record 键原型污染；会话无 type 完成率恒 0；start 补 0 幽灵月。
+- **P3 群（ui 10 条）**：热力图 cursor 伪装可点 + hover z-index 失效 + 触屏无 tooltip；时长格式化三套混用；月柱标签双源分叉；**未配对 </div> 两处**（node 脚本验证）；速度段编造值（均值×1.2 上屏）；hm-grid 负 margin 横拖 20px；骨架占位内联样式漏收编（守卫只扫 report.ts）；图表标签宽度缺陷；空会话亮默认 50 分；EFF-6 假重试文案收编 notifyActionError；EFF-7 小库双 toast（QUIET_TOAST 注释失实）；EFF-9 重复计算杂项族。
 - **顺带**：死字段一刀清（monthlyTrend + trends 未消费 7 字段）。
-- **UX 分流（RR 系）**：重算保留翻月/展开/滚位（RR-UX1 与 RR-F2 同刀）；翻月年份跳跃导航（EFF-U1）。
+- **UX 分流（RR 系）**：翻月年份跳跃导航（EFF-U1）；速度段零数据整段消失（RR-UX2 空态形制）；topCategory 截断 title（RR-UX3）。
 
 ### 已入账条目（跨方向去重归并）
 
