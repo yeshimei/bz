@@ -3,7 +3,7 @@
  *  1 脏表单拦截（一致#1/issue 144 通病 3）  2 anchorDay 未触碰门控（M1）
  *  3 编辑器保存防重入（M2-1）              4 bindFormSubmit 三弹窗接入（A4）
  *  5 清除链接出口（M8）                    6 场景两段写补偿（M12）
- *  7 移动聚焦分流（M3-4）                  8 子任务行焦点/回车追加（M3-6）
+ *  7 移动聚焦分流（M3-4）
  *  9 截止快捷档 chip（效率#3）             10 场景 hint 文案（一致#9）
  *  11 placeholder 常量 + dataset 状态位（一致#10）
  *  12 core uiModal 存活登记表 closeAllModals（M13/A1，全域收口）
@@ -350,30 +350,6 @@ describe('memo 弹窗族修复批 A', () => {
     openEditor(M.items[0]);
     await vi.waitFor(() => expect(editorEl()).toBeTruthy());
     expect(document.activeElement).not.toBe(editorTextarea());
-  });
-
-  // ---------- #8 子任务行（M3-6） ----------
-
-  it('M3-6：子任务输入框回车追加下一行并聚焦；删行后焦点落回同行', async () => {
-    const { app } = seed([item()]);
-    await openPanelAndWait(app);
-    openEditor(null);
-    await vi.waitFor(() => expect(editorEl()).toBeTruthy());
-    (editorEl().querySelector('.bz-memo-cl-addbtn') as HTMLElement).click();
-    const rowInputs = () => [...editorEl().querySelectorAll('.bz-memo-cl-edit-row input')] as HTMLInputElement[];
-    expect(rowInputs().length).toBe(1);
-    rowInputs()[0].value = '第一行';
-    rowInputs()[0].dispatchEvent(new Event('input', { bubbles: true })); // 同步进 clDraft（渲染单源）
-    rowInputs()[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
-    expect(rowInputs().length).toBe(2); // 回车 = 追加一行
-    expect(document.activeElement).toBe(rowInputs()[1]); // 焦点跟到新行
-    rowInputs()[1].value = '第二行';
-    rowInputs()[1].dispatchEvent(new Event('input', { bubbles: true }));
-    // 删第 1 行：原第 2 行顶上同位置，焦点落该行不落空
-    ((editorEl().querySelectorAll('.bz-memo-cl-edit-row .bz-icon-btn')[0]) as HTMLElement).click();
-    expect(rowInputs().length).toBe(1);
-    expect(rowInputs()[0].value).toBe('第二行'); // 顶上来的是原第 2 行
-    expect(document.activeElement).toBe(rowInputs()[0]);
   });
 
   // ---------- #9 截止快捷档 chip（效率#3） ----------

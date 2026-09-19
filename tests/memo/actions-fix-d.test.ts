@@ -2,7 +2,8 @@
  * memo 域修复批 D 回归：条目动作 / 周期撤链 / 删除口径 / composer。
  * 对号（.scratch/review-deep/memo-{func,ui,arch}.md）：
  *  1. N8/A2 jumpToNote await openFile 后定位新 view editor（必要时 rAF 兜底）
- *  2. M4 清单取消勾选自动恢复复用 hasPendingNextItem 撤链 + restored 域事件
+ *  2. M4 已完成周期条目恢复复用 hasPendingNextItem 撤链 + restored 域事件
+ *     （清单子任务 UI 退役后恢复触发统一走勾选圈路径）
  *  3. M5+M2-2 composer Enter isComposing/229 守卫 + 移动分流开创建弹窗（issue 268）
  *  4. M2-3 postponeItem/postponeSub 算术 moment 化（iOS WebKit Invalid Date → NaN due）
  *  5. 效率整改 5 删除免确认直达 notifyUndo（M11：idx=-1 防陈旧快照复活）
@@ -157,7 +158,7 @@ describe('批 D · 1 jumpToNote 定位竞态（N8/A2）', () => {
   });
 });
 
-describe('批 D · 2 清单取消勾选自动恢复撤链（M4）', () => {
+describe('批 D · 2 已完成周期条目恢复撤链（M4）', () => {
   beforeEach(() => {
     resetObsidianMocks();
     resetMemoState();
@@ -181,7 +182,7 @@ describe('批 D · 2 清单取消勾选自动恢复撤链（M4）', () => {
     return seed([r1, r1n]);
   }
 
-  it('已完成周期条目取消子任务勾选 → recur 一并清空（不再重复生成）+ restored 域事件', async () => {
+  it('已完成周期条目恢复 → recur 一并清空（不再重复生成）+ restored 域事件', async () => {
     const { vault, app } = seedRecur();
     const restoredEvents: any[] = [];
     const { onDomainEvent } = await import('../../src/core/domain-bus');
@@ -189,8 +190,8 @@ describe('批 D · 2 清单取消勾选自动恢复撤链（M4）', () => {
     openMemoPanel(app);
     await vi.waitFor(() => expect(document.querySelector('.bz-memo-donebar')).toBeTruthy());
     (document.querySelector('.bz-memo-donebar') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('[data-memo-cl="r1:0"]')).toBeTruthy());
-    (document.querySelector('[data-memo-cl="r1:0"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card[data-memo-id="r1"] [data-memo-check]')).toBeTruthy());
+    (document.querySelector('.bz-memo-card[data-memo-id="r1"] [data-memo-check]') as HTMLElement).click();
     await vi.waitFor(() => {
       const r1 = rawItems(vault).find((r) => r.id === 'r1');
       expect(r1.completed).toBeNull();
@@ -204,9 +205,9 @@ describe('批 D · 2 清单取消勾选自动恢复撤链（M4）', () => {
     openMemoPanel(app);
     await vi.waitFor(() => expect(document.querySelector('.bz-memo-donebar')).toBeTruthy());
     (document.querySelector('.bz-memo-donebar') as HTMLElement).click();
-    await vi.waitFor(() => expect(document.querySelector('[data-memo-cl="r1:0"]')).toBeTruthy());
-    // 第一步：取消勾选 → 恢复 + 撤链
-    (document.querySelector('[data-memo-cl="r1:0"]') as HTMLElement).click();
+    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card[data-memo-id="r1"] [data-memo-check]')).toBeTruthy());
+    // 第一步：勾选圈恢复 → 撤链
+    (document.querySelector('.bz-memo-card[data-memo-id="r1"] [data-memo-check]') as HTMLElement).click();
     await vi.waitFor(() => {
       expect(rawItems(vault).find((r) => r.id === 'r1').recur).toBeNull();
     });
