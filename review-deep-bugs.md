@@ -632,9 +632,9 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## checkup（数据体检）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致运行中，5 待槽位）
+## checkup（数据体检）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构运行中）
 
-> 明细：`.scratch/review-deep/checkup-{func,ui,efficiency}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3；方向 3（效率）：P2×1 + P3×7 + UX×2。跨方向去重：进度反馈簇（ui UX-3 进度终值 = eff P2-1 中段静止 = ui P3-4 uiProgress 绕开同刀）；undo 动线两面（ui P3-1 撤销后报告不收敛语义面 + eff P3-1 通知碎化呈现面）；失败重试（eff P3-3 两条失败路径都未接 core 范式）；缓存面（func 缓存 + eff P3-6 无失效口径）。旧账：review-ux #13 维持开放（缓存命中已把二次成本降零，优先级不高）。门禁基线：tsc 0；tests/checkup 43 例全绿。
+> 明细：`.scratch/review-deep/checkup-{func,ui,efficiency,consistency}.md`。方向 1（func）：P2×5 + P3×9 + UX×2；方向 2（UI）：P2×1 + P3×4 + UX×3；方向 3（效率）：P2×1 + P3×7 + UX×2；方向 4（一致）：P3×7 + UX×1。跨方向去重：进度反馈簇（ui UX-3 = eff P2-1 = ui P3-4 同刀）；undo 动线两面（ui P3-1 语义 + eff P3-1 呈现）；失败重试（eff P3-3）；缓存面（func + eff P3-6）；ESC 注册（ui P2-1 跨层 + cons P3-5 同刀定形）；**clipDirOf 家族扩面四处一次收编**（func P3-7 原条 + cons P3-1 clipUrlSet/P3-2 影视目录/P3-3 默认形状两份 + run.ts 默认形状）。**效率整改 5 对表：批量通过（clipbook 先例背书）、单条偏离（cons P3-6 待拍板二选一）**。**旧账复核亮点**：home.json 白名单 v1/v3 已修（home 批 1d26c797 落地 + 契约在册，按已修入账）；memo 词条「14→16 已同步」随回滚失真（现两侧均 14 无运行时漂移，词条失真归主线程）。门禁基线：tsc 0；tests/checkup 43 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
@@ -646,6 +646,8 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 群（ui 4 条）**：撤销修复后报告不收敛反向失真（undo 只恢复数据不重算报告）；fixOrphanIssues 中途抛错丢前序 undo 闭包 + 报告不刷新；「查看详情」钮热区 <44px 且无 aria-expanded（bz-touch-target--xl 与 clipbook aria 先例未消费）；单源偏离簇（renderRunning 步骤名副本 + `i<4` + 绕开 uiProgress 手写宽度，当前逐字一致无即时症状）。
 - **P3 群（eff 7 条）**：undo 通知碎化（最多 5 条 notifyUndo 堆叠挤兑，与确认框总数不符）；修复执行期无忙碌态（确认后写盘窗口零指示，数据有三层兜底仅反馈缺位）；失败重试未接满（体检失败裸 notice + 修复失败未传 onRetry）；大报告全量渲染（数千行 + 隐藏 pre 也全量进 DOM）；体检后台完成零通知；缓存无失效口径（stale 提示静态恒显无 mtime 比对）；clipbook 三修复组三次全文件读写（可批内一次）。
 - **UX 分流（CK 系）**：可选段豁免机制（与 P3-6 同刀）；「全部通过」文案口径（与 summary 矛盾同刀）；移动端 86vh 接 dvh；空态双「开始体检」去一；进度条终值 75% 即切页；一键修复作用域中间粒度（按域分组修复）；stale 提示条可操作化。
+- **P3 群（cons 7 条，clipDirOf 家族扩面）**：checkup 本地 clipUrlSet 重实现且 url 语义与 clipbook 单源分化（**非字符串 url 剪藏被误报残留，一键修复会清掉真数据——数据风险标注**）；影视目录手抄 bypass cinema/state.ts ADR-0115 唯一真源（空白设置值海报检查静默空转）；修复链手抄 clipbook 默认形状两份与导出单源 emptySidecar() 漂缺 readLog（defaultValue 兜底写出缺段文件）；检查二文案硬编码域归属失真；ESC 注册未收编（与 ui P2-1 同刀）；**逐条修复确认框与效率整改 5 单条免确认口径偏离（二选一待拍板，登记 CK 系）**；CONTEXT.md 数据体检词条漏 issue 339 三组 + memo 词条 14→16 随回滚失真（主线程文档）。
+- **UX 增补（cons）**：confirmFix `what` 形参弃用致确认框文案与语境脱节（与 eff UX-1 同刀）。
 
 ---
 
