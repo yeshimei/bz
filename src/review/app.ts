@@ -6,7 +6,7 @@ import { notice, notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
 import { getSettings } from '../core/settings-provider';
-import { FSRS, FSRS_FIRST_TEXTS, scheduleNext } from './fsrs';
+import { FSRS, FSRS_FIRST_TEXTS, scheduleNext, currentR as fsrsCurrentR } from './fsrs';
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
@@ -179,12 +179,9 @@ export const reviewApp = {
     return this._fittedW || DEFAULT_W;
   },
 
-  /** ADR-0077：某条目当前记忆保留度 R（FSRS 相位且已复习过才可算；否则 null） */
+  /** ADR-0077：某条目当前记忆保留度 R（FSRS 相位且已复习过才可算；否则 null）——A7 单源 fsrs.currentR */
   currentR(item: ReviewItem): number | null {
-    if (item.phase !== 'fsrs' || !item.stability || !item.lastReviewed) return null;
-    const t = (new Date().getTime() - new Date(item.lastReviewed).getTime()) / 86400000;
-    if (!(t > 0)) return null;
-    return new FSRS(this.currentW()).R(t, item.stability);
+    return fsrsCurrentR(item, this.currentW());
   },
 
   /** ADR-0077：逾期队列排序 + 每日上限截断。

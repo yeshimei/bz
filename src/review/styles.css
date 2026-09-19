@@ -214,16 +214,7 @@
 .bz-review-bar-btn.is-skip { color: var(--bz-text-2); }
 
 /* ==================== 既有保留块 ==================== */
-/* 难度弹窗（评分命令用） */
-.difficulty-dialog { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); padding: var(--bz-space-xl); min-width: 220px; display: none; }
-.difficulty-dialog h4 { margin: 0 0 var(--bz-space-md) 0; font-size: 16px; }
-.difficulty-dialog .diff-btn { display: block; width: 100%; padding: 10px; margin: 6px 0; border: none; border-radius: 6px; background: var(--bz-surface-1); cursor: pointer; font-size: var(--bz-font-body); text-align: left; }
-.difficulty-dialog .diff-btn:hover { background: var(--bz-brand); color: var(--bz-on-brand); }
-.difficulty-dialog .diff-btn[data-diff='again'] { border-left: 3px solid var(--bz-danger); }
-.difficulty-dialog .diff-btn[data-diff='hard'] { border-left: 3px solid var(--bz-warning); }
-.difficulty-dialog .diff-btn[data-diff='good'] { border-left: 3px solid var(--bz-success); }
-.difficulty-dialog .diff-btn[data-diff='easy'] { border-left: 3px solid var(--bz-success); }
-.difficulty-dialog .diff-btn.diff-btn-cancel { margin-top: var(--bz-space-md); color: var(--bz-text-2); }
+/* 难度弹窗自绘族已随批 C 迁 flow-dialog choice 删除（A4/U4/E7） */
 
 /* 监听文件夹旧 chip 渲染已退役（死规则删除；监听文件夹设置走 settings-schema） */
 
@@ -476,11 +467,6 @@
   .bz-review-bar-info { font-size: 14px; max-width: 100%; flex: 1 0 100%; text-align: center; }
   .bz-review-bar-act { flex: 1 1 100%; justify-content: center; gap: 8px; flex-wrap: wrap; }
   .bz-review-bar-btn { font-size: 14.5px; padding: 10px 12px; min-height: 44px; }
-
-  /* ---- 难度弹窗（评分命令） ---- */
-  .difficulty-dialog { width: min(92vw, 320px); min-width: 0; padding: var(--bz-space-xl) var(--bz-space-lg); }
-  .difficulty-dialog h4 { font-size: 18px; }
-  .difficulty-dialog .diff-btn { font-size: 16px; padding: 13px 14px; }
 
   /* ---- 统计弹窗 / 复习历史弹窗（底行两条入口的落点，rem 小字同档抬升） ---- */
   #review-stats-popup .bz-review-stats-head .bz-review-title { font-size: 1.05rem !important; }
