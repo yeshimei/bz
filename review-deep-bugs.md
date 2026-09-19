@@ -668,9 +668,17 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## settings-panel（设置面板）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率 + 4 一致已到账；方向 5 架构运行中）
+## settings-panel（设置面板）域 · 5/5 方向到账，修复批 `bz-fix-sp-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/settings-panel-{func,ui,efficiency,consistency}.md`。方向 1（func）：P2×2 + P3×5 + UX×1；方向 2（UI）：P2×2 + P3×6 + UX×2；方向 3（效率）：P3×6 + UX×2；方向 4（一致）：P2×1 + P3×4。跨方向去重：**落盘兜底簇**（func F-5 批写假成功 = eff E-1 行级 reject 静默 = cons C-1 渲染器 8 处 `void acc.persist()` 未收编 core safePersist——合看即面板侧全部落盘出口无兜底，修法同刀）；搜索交互簇（F-1 恢复放出门控行 = UI-6 徽标不重算/UI-7 大小写敏感/E-5 零防抖同链路，UX-2 ESC 二段与 UI-1 同刀）；1042 `-var(` 旧账由 UI-3 收编展开；R9 缝升级维持（NaN→0 写入仍在）；GS3 secret 纯死特性仍按拍板不立项。**对表合规 2**：效率整改 5 通过（重置保留确认合规——不可逆无撤销链；danger 反焦缺仍修=E-2）；ADR-0104/0106 缓行了结现状合规。**效率方向旧账补证**：#37/#38 维持。门禁基线：tsc 0；settings-panel 相关 83 例全绿。
+> 明细：`.scratch/review-deep/settings-panel-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×2 + P3×5 + UX×1；方向 2（UI）：P2×2 + P3×6 + UX×2；方向 3（效率）：P3×6 + UX×2；方向 4（一致）：P2×1 + P3×4；方向 5（架构）：P2×1 + P3×4 + 建议×3。**枢纽归因 ARCH-1（P2）**：渲染器行为内核双实现（core 与面板「协议共享、行为复刻」），core 历轮加固（N5 safePersist/R9 钳制/C10 容错/H6）均不传导——C-1/C-2/R9/F-3/F-4 五项同根，修法 = safePersist/CommitWarn/number 钳制下沉 core 导出一次收口。跨方向簇：落盘兜底簇（F-5+E-1+C-1）、搜索交互簇（F-1+UI-6/UI-7+E-5）。**对表合规 2**：效率整改 5 通过（重置保留确认合规，danger 反焦缺仍修）；ADR-0104/0106 缓行了结现状合规（依赖方向全链合规 19 域 loader 动态 import、双产物指纹守卫覆盖）。旧账：R9/1042/GS3/#37/#38 对账毕。门禁基线：tsc 0；settings-panel 相关 113 例全绿。
+
+### 修复批定稿（单批 `bz-fix-sp-core`）
+
+- **P2 枢纽**：ARCH-1 渲染器内核下沉（safePersist/CommitWarn/number 钳制 core 导出、面板双渲染器消费——F-3/F-4/C-1/C-2/R9 五项随刀消）；F-1 搜索恢复按门控重求值；F-2 移除聚焦行前 flush 防抖；UI-1/UI-2 自绘下拉对齐 core uiSelect 范式（ESC 内层语义 + 触发器可达）。
+- **P2/P3 UI 面**：UI-3 1042 calc；UI-4 热区挂类；UI-5 model-picker vvh；E-2 danger 反焦；E-3 firstFocusable 焦点圈定；E-4 roving tabindex；F-5/E-6 重置假成功+移动端重置入口；C-3 chips 收编 uiChip；C-4 notifyActionError 收编；C-5 registerPanelEsc 收编。
+- **P3 效率/架构**：E-5 搜索防抖；UI-6/UI-7 徽标重算+大小写不敏感；UI-8 计数口径统一；E-8/ARCH-2 schemaLoader 会话缓存 + preloadAllBadges in-flight 单飞；ARCH-3 DOMAINS 遍历契约锁测试；ARCH-4 中文组名锚点断言；ARCH-5 徽标硬编码断言改契约承接。
+- **主线程文档**：CONTEXT.md:463 chips 句纠偏。
+- **UX 分流（SP 系）**：U-1/E-7/E-8 缓存滚位/UX-1 词级 mark/UX-2 ESC 二段——拍板。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
