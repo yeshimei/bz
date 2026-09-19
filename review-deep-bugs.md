@@ -426,4 +426,16 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 renderAll 口径卫生** （eff S2）——filtered×3 + 计数 filter×10+，单趟收口（非性能硬伤）。
 - 滚位记忆核验无欠账（content 容器不重建，renderAll 天然保滚位）。[UX-Suggestion] S1（新增保存后新卡定位反馈）归拍板清单。
 
-（方向 4 一致 / 5 架构审查中——到账后定稿修复批次。）
+### 方向 4（一致性）补充条目（同根并入：ESC 清词✕→E3、bindFormSubmit→E1、year 残留→E4）
+
+- **P3 KPI「回收」与统计层口径矛盾**（cons ⑤，本方向最优先）——KPI「回收」不筛状态 vs 统计层仅认已转卖：「转卖记售价→流转丢弃」可达路径上两处数字矛盾。修：口径统一（回收=已转卖）。+ 断言。
+- **P3 加载失败通知收编 notifyActionError+onRetry**（cons ③，与 func P3-2 void 吞 reject 同链合并）——命令入口补 catch + 通知走 core 单源带重试出口（clipbook/pv/encrypt 先例）。
+- **P3 todayStr 域内复写**（cons ④）——全库仅本域未收编 core `localDayKey`。修：切单源。
+- **P3 状态串字面量散布 8+ 处**（cons ⑦）——违反域内「禁再手抄」自规。修：收口 STATUS_ORDER/constants 单源。
+- **P3 日均格式化双写**（cons ⑧）——cellHtml 内联 vs report.trimNum，`<0.01` 特判行为不同。修：单源格式化；0 元显示形态归拍板 B4。
+- **P3 表单成功保存绕开 closeBelForm 单一关闭路径**（cons ⑩）——belFormMask 残留（危害趋零）。修：收口单一关闭路径。
+- **P3 搜索占位符未提可搜字段**（cons 低值观察）——实际匹配 name/category/description。修：顺手改「搜索名称 / 分类 / 备注…」。
+- **P3 CONTEXT.md 词条脱节 + src 头注同病**（cons ⑨）——仍写已拍板去除的页脚/旧移动头部，issue 356 报告页与四设置键零提及，「归物本为空弹窗」表述过时。修：主线程文档收口随批同步。
+- 滚动条/命令 ID/事件契约（emit 四 kinds 与 smartcat 逐字段对齐）/设置 schema 形制——核验全绿。
+
+（方向 5 架构审查中——到账后定稿修复批次。）
