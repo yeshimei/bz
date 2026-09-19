@@ -807,7 +807,12 @@ tags: [电影]
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
     const acts = [...root.querySelectorAll('.m-acts button')];
-    expect(acts.map((b) => b.className)).toEqual(['add j-madd', 'm-tool j-mai', 'm-tool j-mstat', 'm-tool j-mclose']);
+    expect(acts.map((b) => b.className)).toEqual([
+      'add j-madd bz-touch-target bz-touch-target--lg',
+      'm-tool j-mai bz-touch-target bz-touch-target--lg',
+      'm-tool j-mstat bz-touch-target bz-touch-target--lg',
+      'm-tool j-mclose bz-touch-target bz-touch-target--lg',
+    ]);
     expect(root.querySelector('.j-mgear')).toBeNull();
   });
 

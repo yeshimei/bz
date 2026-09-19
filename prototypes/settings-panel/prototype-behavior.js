@@ -1,4 +1,4 @@
-/* 源指纹 44e2212630792b9e · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 04b6fb6891107f3e · 仓内输入 225 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -11446,12 +11446,15 @@ ${countsToText(s.missing)}
     var _a2;
     return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
   }
-  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, TYPE_GROUPS, ALL_TAGS;
+  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, ILLEGAL_NAME_CHARS, ILLEGAL_NAME_RE, ILLEGAL_NAME_RE_GLOBAL, TYPE_GROUPS, ALL_TAGS;
   var init_constants2 = __esm({
     "src/cinema/constants.ts"() {
       STATUS_WANT = 0;
       STATUS_WATCHING = 1;
       STATUS_WATCHED = 2;
+      ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
+      ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
+      ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, "g");
       TYPE_GROUPS = {
         电影: ["电影"],
         剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
@@ -11460,6 +11463,21 @@ ${countsToText(s.missing)}
         公开课: ["公开课", "TED"]
       };
       ALL_TAGS = Object.values(TYPE_GROUPS).flat();
+    }
+  });
+
+  // src/cinema/douban-fetcher.ts
+  function extractMovieName(filename) {
+    const basename = stripMdExt(filename);
+    const m = basename.match(/《(.+)》/);
+    return m ? m[1] : basename;
+  }
+  var POSTER_FOLDER;
+  var init_douban_fetcher = __esm({
+    "src/cinema/douban-fetcher.ts"() {
+      init_str();
+      init_constants2();
+      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
     }
   });
 
@@ -11482,12 +11500,11 @@ ${countsToText(s.missing)}
 
   // src/cinema/data.ts
   function parseMovieFile(file, app) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u;
     const cache = app.metadataCache.getFileCache(file);
     if (!cache || !cache.frontmatter) return null;
     const fm = cache.frontmatter;
-    const basename = file.basename;
-    const name = (_b2 = (_a2 = basename.match(/《(.+)》/)) == null ? void 0 : _a2[1]) != null ? _b2 : basename;
+    const name = extractMovieName(file.basename);
     let rawTags = fm.tags;
     if (typeof rawTags === "string") rawTags = [rawTags];
     const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
@@ -11502,7 +11519,7 @@ ${countsToText(s.missing)}
       if (tags.length === 0) return null;
       typeTag = tags[0];
     }
-    const watchDate = (_d = (_c = fm["观影日期"]) == null ? void 0 : _c.toString()) != null ? _d : null;
+    const watchDate = (_b2 = (_a2 = fm["观影日期"]) == null ? void 0 : _a2.toString()) != null ? _b2 : null;
     const rawRating = fm["评分"];
     const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
     let status;
@@ -11517,24 +11534,25 @@ ${countsToText(s.missing)}
       watchDate,
       rating,
       status,
-      poster: (_f = (_e = fm["海报"]) == null ? void 0 : _e.toString()) != null ? _f : null,
-      review: (_h = (_g = fm["影评"]) == null ? void 0 : _g.toString()) != null ? _h : null,
-      genre: (_j = (_i = fm["类型"]) == null ? void 0 : _i.toString()) != null ? _j : null,
-      director: (_l = (_k = fm["导演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
-      actors: (_n = (_m = fm["主演"]) == null ? void 0 : _m.toString()) != null ? _n : null,
-      region: (_p = (_o = fm["制片国家/地区"]) == null ? void 0 : _o.toString()) != null ? _p : null,
+      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
+      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
+      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
+      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
+      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
+      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
       year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
       doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
-      doubanUrl: /^https?:\/\//.test(String((_q = fm["豆瓣链接"]) != null ? _q : "")) ? String(fm["豆瓣链接"]) : null,
-      synopsis: (_s = (_r = fm["简介"]) == null ? void 0 : _r.toString()) != null ? _s : null,
+      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
+      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
       // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
-      duration: (_u = (_t = fm["片长"]) == null ? void 0 : _t.toString()) != null ? _u : null,
-      seasonText: (_w = (_v = fm["季集"]) == null ? void 0 : _v.toString()) != null ? _w : null
+      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
+      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null
     };
   }
   var init_data2 = __esm({
     "src/cinema/data.ts"() {
       init_constants2();
+      init_douban_fetcher();
       init_state2();
     }
   });
@@ -36535,14 +36553,6 @@ GitHub 仓库：${ghInfo.title}
         "link",
         "folder"
       ];
-    }
-  });
-
-  // src/cinema/douban-fetcher.ts
-  var POSTER_FOLDER;
-  var init_douban_fetcher = __esm({
-    "src/cinema/douban-fetcher.ts"() {
-      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
     }
   });
 
