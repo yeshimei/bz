@@ -393,6 +393,21 @@ describe('G8：删除影片出队豆瓣抓取队列', () => {
     expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
   });
 
+  it('批C回归：删过未入队影片不留 cancelled 残留——同名重建后真失败必须记失败通知（不被豁免）', async () => {
+    const vault = new MockVault();
+    const [a] = seedTwo(vault);
+    configureFetchQueue({ ...TEST_HOOKS, fetch: async () => ({ ok: false, reason: 'notfound' }) });
+    // 删除一部**从未入队**的影片（openConfirm → dequeueDoubanFetch；队列/去重无条目可清）
+    dequeueDoubanFetch(a.file!.path);
+    // 同名重建（同路径）入队 → 首次抓取失败
+    expect(enqueueDoubanFetch(a.file!, '甲')).toBe(true);
+    await settle();
+    // 修复前：dequeue 无条件记 cancelled、enqueue 不清残留 → pump 把真失败当「在抓被删」静默吞。
+    // G8 豁免只该覆盖「在抓被删」那一次，重建后的条目是活条目，失败必须聚合计入通知
+    expect(hasNotice(/豆瓣信息获取失败/)).toBe(true);
+    expect(getNoticeMessages().some((m) => m.includes('甲'))).toBe(true);
+  });
+
   it('审计#12（issue 337）：抓取目标被插件外删除 → 写回前守卫静默出队，零通知，同名重建可重抓', async () => {
     const vault = new MockVault();
     const [a] = seedTwo(vault);

@@ -9,14 +9,13 @@
  * 纯逻辑 + 依赖注入（httpGet / downloadBinary），node 环境可测。
  */
 import type { App, TFile } from 'obsidian';
+import { stripMdExt } from '../core/ui/str';
+import { ILLEGAL_NAME_RE_GLOBAL } from './constants';
 
 /** 海报目录（对齐 CLI config 默认值） */
 export const POSTER_FOLDER = 'CONFIG/MOVIE POSTER';
 
 const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
-const BILIBILI_NONE = ''; // 占位防误用（无实际引用）
-
-void BILIBILI_NONE;
 
 // ---------- 依赖注入 ----------
 
@@ -41,9 +40,11 @@ export interface DoubanFetchDeps {
 
 // ---------- 纯函数（照搬 douban-client.js 正则口径） ----------
 
-/** 从文件名提取影视名称（《名称》.md 与 名称.md 两种格式，照搬 note-processor） */
+/** 从文件名提取影视名称（《名称》.md 与 名称.md 两种格式，照搬 note-processor）。
+ *  stripMdExt 走 core/ui/str 零依赖单源（审查批 C 收敛）；data.ts parseMovieFile
+ *  对 basename（无扩展名）消费同一函数，语义一致 */
 export function extractMovieName(filename: string): string {
-  const basename = filename.replace(/\.md$/i, '');
+  const basename = stripMdExt(filename);
   const m = basename.match(/《(.+)》/);
   return m ? m[1] : basename;
 }
@@ -346,7 +347,7 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
     try {
       await deps.mkdir(posterFolder);
       const ext = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
-      const safeName = name.replace(/[/\\:*?"<>|]/g, '_');
+      const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, '_');
       const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
       posterRelative = `${posterFolder}/${fileName}`;
       await deps.writeBinary(posterRelative, buf);

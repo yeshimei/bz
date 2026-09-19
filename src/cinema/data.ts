@@ -3,6 +3,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { ALL_TAGS, getGroupSafe, STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from './constants';
+import { extractMovieName } from './douban-fetcher';
 import type { CinemaItem } from './state';
 import { M } from './state';
 
@@ -12,8 +13,8 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
   if (!cache || !cache.frontmatter) return null;
   const fm = cache.frontmatter;
 
-  const basename = file.basename;
-  const name = basename.match(/《(.+)》/)?.[1] ?? basename;
+  // 《名称》提取域内单源（审查批 C 收敛）：basename 无扩展名，与 fetcher 版（先剥 .md）语义一致
+  const name = extractMovieName(file.basename);
 
   // tags → typeTag（ALL_TAGS 顺序优先；无固定 tag 取首个；完全无 tag 跳过）
   let rawTags = fm.tags;
