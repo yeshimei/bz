@@ -1,4 +1,4 @@
-/* 源指纹 e0ac85f63c9e4e23 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9519a29e519f44d9 · 仓内输入 78 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -13052,8 +13052,6 @@ ${String(review).trim()}`;
   var ACT_ICON = {
     add: "pen-line",
     search: "search",
-    today: "calendar-check",
-    close: "x",
     "lb-close": "x",
     "lb-more": "more-horizontal",
     "lb-prev": "chevron-left",
@@ -13096,8 +13094,6 @@ ${String(review).trim()}`;
         <div class="bz-diary-btns">
           <button class="bz-diary-icon-btn" data-act="add" title="写日记"></button>
           <button class="bz-diary-icon-btn" data-act="search" title="搜索"></button>
-          <button class="bz-diary-icon-btn" data-act="today" title="回到今天（清除日期筛选）"></button>
-          <button class="bz-diary-icon-btn bz-diary-head-close" data-act="close" title="关闭"></button>
         </div>
       </div>
       <div class="bz-diary-chiprow"></div>
@@ -13938,24 +13934,6 @@ ${String(review).trim()}`;
     displayArea.appendChild(hourSpan);
     displayArea.appendChild(colon);
     displayArea.appendChild(minuteSpan);
-    const quickRow = document.createElement("div");
-    quickRow.className = "dt-quick-row";
-    const mkQuickChip = (text, title, toMoment) => {
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "dt-quick-chip";
-      chip.textContent = text;
-      chip.title = title;
-      chip.addEventListener("click", () => {
-        const m = toMoment();
-        if (!m || typeof m.isValid !== "function" || !m.isValid()) return;
-        exitManualMode();
-        setMoment(m);
-      });
-      quickRow.appendChild(chip);
-    };
-    mkQuickChip("此刻", "设为当前时刻", () => (0, import_moment.default)());
-    mkQuickChip("昨天", "昨天同一时刻（补写昨晚）", () => (0, import_moment.default)().subtract(1, "day"));
     const hiddenInput = document.createElement("input");
     hiddenInput.type = "text";
     hiddenInput.id = "add-diary-datetime";
@@ -14057,7 +14035,6 @@ ${String(review).trim()}`;
       }
     });
     container.appendChild(displayArea);
-    container.appendChild(quickRow);
     container.appendChild(manualInput);
     container.appendChild(hiddenInput);
     return container;
@@ -14409,7 +14386,6 @@ ${String(review).trim()}`;
     typeContainer.id = "add-diary-type-container";
     typeContainer.className = "diary-tag-selector-buttons bz-diary-chip-scroll";
     content.appendChild(typeLabel);
-    content.appendChild(createTagFilter(typeContainer));
     content.appendChild(typeContainer);
     const foot = document.createElement("div");
     foot.className = "bz-diary-dialog-foot";
@@ -14720,21 +14696,13 @@ ${String(review).trim()}`;
     }
     // ---------- 交互绑定 ----------
     bindPanel(ui) {
-      var _a, _b, _c, _d, _e;
+      var _a, _b, _c;
       ui.head.querySelectorAll('[data-act="date-picker"]').forEach((el) => {
         el.addEventListener("click", () => this.openDatePicker());
       });
       (_a = ui.head.querySelector('[data-act="add"]')) == null ? void 0 : _a.addEventListener("click", () => this.openAddEntry());
       (_b = ui.head.querySelector('[data-act="search"]')) == null ? void 0 : _b.addEventListener("click", () => this.toggleSearch(ui));
-      (_c = ui.head.querySelector('[data-act="close"]')) == null ? void 0 : _c.addEventListener("click", () => {
-        const row = ui.searchRow;
-        if (row && row.style.display !== "none") {
-          this.toggleSearch(ui);
-        } else {
-          this.hide();
-        }
-      });
-      (_d = ui.lb.querySelector('[data-act="lb-close"]')) == null ? void 0 : _d.addEventListener("click", (e) => {
+      (_c = ui.lb.querySelector('[data-act="lb-close"]')) == null ? void 0 : _c.addEventListener("click", (e) => {
         e.stopPropagation();
         this.closeLightbox();
       });
@@ -14754,7 +14722,6 @@ ${String(review).trim()}`;
           ui.searchBox.blur();
         }
       });
-      (_e = ui.head.querySelector('[data-act="today"]')) == null ? void 0 : _e.addEventListener("click", () => this.backToToday(ui));
     }
     /** 灯箱通用绑定（双实例各一份；增强 #1：左右按钮 + 触摸滑动连看） */
     bindLightbox() {
@@ -16821,12 +16788,6 @@ ${String(review).trim()}`;
         });
         head.appendChild(resetBtn);
       }
-      const closeBtn = document.createElement("button");
-      closeBtn.className = "bz-diary-datefilter-close";
-      closeBtn.title = "关闭";
-      closeBtn.appendChild(uiIcon("x"));
-      closeBtn.addEventListener("click", () => this.closeDateFilter());
-      head.appendChild(closeBtn);
       card.appendChild(head);
       const yearLabel = document.createElement("div");
       yearLabel.className = "bz-diary-datefilter-label";
@@ -16919,15 +16880,7 @@ ${String(review).trim()}`;
         btn == null ? void 0 : btn.classList.remove("bz-diary-icon-btn--on");
       }
     }
-    /** 效率#6：回到今天——清日期筛选 + 滚回墙顶（开墙默认在最新，此钮只在离今天远了时有意义） */
-    backToToday(ui) {
-      this.selDateFilter = null;
-      this.renderAll();
-      try {
-        ui.wall.scrollTo({ top: 0, behavior: "smooth" });
-      } catch (e) {
-      }
-    }
+    /** 效率#6「回到今天」钮已按用户要求移除（2026-09-19）：清筛选走 chips 行「全部」 */
     /** App 实例（生产由主实现注入；测试 setApp——diary/app.ts 单例，与 diary 域同口径） */
     app() {
       return getApp();
