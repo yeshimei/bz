@@ -215,7 +215,9 @@ describe('检查二：字段漂移', () => {
       [`${DIR}/favorites.json`]: JSON.stringify([fullFavItem()]),
       [`${DIR}/clipbook.json`]: JSON.stringify({ articleOverrides: {}, savedArchive: [], order: [] }),
       [`${DIR}/news.json`]: JSON.stringify({ articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: {}, rssFeeds: [] }),
-      [`${DIR}/home.json`]: JSON.stringify({ version: 1, pinned: [] }),
+      // v3 形状（order.ts 落盘键集；白名单对齐见 tests/home/home-json-drift.test.ts——
+      // 旧 v1 pinned 段自 home 深审跨域一行起按约定外段报告，属预期行为）
+      [`${DIR}/home.json`]: JSON.stringify({ version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] }),
     });
     const sec = await checkFieldDrift(app);
     expect(sec!.issues).toEqual([]);

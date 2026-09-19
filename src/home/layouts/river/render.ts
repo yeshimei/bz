@@ -12,14 +12,16 @@ import {
 
 /* ---------- 面板骨架 ---------- */
 
-/** 面板框架（头行 + 三栏 grid；数据区留空由 renderAll 填充，与 ui.ts createOverlay 同构） */
+/** 面板框架（头行 + 三栏 grid；数据区留空由 renderAll 填充，与 ui.ts createOverlay 同构）。
+ *  关闭钮挂 core 触控热区（ui P2-2，设计手册 §8.2）：36px + --sm 外扩 4px = 44px 命中
+ *  （仅 pointer:coarse 生效，桌面零影响） */
 export function panelFrameHtml(): string {
   return `
     <div class="bz-panel-frame bz-home-panel bz-panel-mtop">
       <div class="bz-home-head">
         <div class="bz-home-week" data-home-week></div>
         <span class="bz-home-date" data-home-date></span>
-        <div role="button" tabindex="0" class="bz-home-close" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</div>
+        <div role="button" tabindex="0" class="bz-home-close bz-touch-target--sm" data-home-close title="关闭" aria-label="关闭">${iconSpan('x')}</div>
       </div>
       <div class="bz-home-body">
         <div class="bz-home-grid">
@@ -42,14 +44,24 @@ export function loadingFlowHtml(): string {
   return '<div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';
 }
 
+/** 时间线列失败位（func P3-1 三态之「失败」）：行级警示文案，与「正在汇入…」（加载）、
+ *  「还没有留下痕迹」（空）可区分——不用「正在」系时态词防与加载态混淆；
+ *  重试入口不在此重复挂（entries 失败大卡上一颗重试钮，成功后两列一并恢复） */
+export function flowFailedHtml(): string {
+  return '<div class="bz-home-flow-empty bz-home-flow-empty--fail">时间线没能汇入今天的痕迹。</div>';
+}
+
 /* ---------- 周历（7 格动静历，hit=当天有动静，sel=当前查看日） ---------- */
 
-/** 倒排：最新在前；今天显示「今」不写数字（原型拍板） */
+/** 倒排：最新在前；今天显示「今」不写数字（原型拍板）。
+ *  aria-pressed 表达选中态（ui P3-3）：读屏用户 Tab 进周历能听出「当前在看哪天」；
+ *  点选切换走 ui.ts 局部更新（周历 DOM 不重建），aria 属性在那边同步 */
 export function weekHtml(week: RiverWeekDay[], todayDateStr: string, selDate: string): string {
   return week.map((w) => {
     const isToday = w.dateStr === todayDateStr;
-    return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (w.dateStr === selDate ? ' bz-home-wk--sel' : '') + '"'
-      + ' data-home-weekday="' + w.dateStr + '" aria-label="' + (isToday ? '今天' : w.label) + (w.hit ? '，有动静' : '') + '">'
+    const sel = w.dateStr === selDate;
+    return '<div role="button" tabindex="0" class="bz-home-wk' + (w.hit ? ' bz-home-wk--hit' : '') + (sel ? ' bz-home-wk--sel' : '') + '"'
+      + ' data-home-weekday="' + w.dateStr + '" aria-pressed="' + (sel ? 'true' : 'false') + '" aria-label="' + (isToday ? '今天' : w.label) + (w.hit ? '，有动静' : '') + '">'
       + '<i></i><span class="bz-home-wk-n">' + (isToday ? '今' : w.dayOfMonth) + '</span></div>';
   }).join('');
 }

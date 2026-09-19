@@ -16,13 +16,18 @@
  *  - diary    日记目录条目文件名（题目 `YYMMDDHHmm(-N)`，ADR-0130/0131）落本周条数
  */
 import type { App, TFile } from 'obsidian';
-import { tryGetSettings } from '../core/settings-provider';
 import { diaryDateFromEntryPath } from '../core/diary-format';
+import { parseLocalDay } from '../core/utils';
 import { storageFile } from '../core/storage';
 import { parseMovieFile } from '../cinema/data';
 import { STATUS_WATCHED } from '../cinema/constants';
 import { scanMarkdownBooks } from '../bookshelf/data';
 import { PomodoroDataManager } from '../pomodoro/data';
+import { settingDir, fileIfExists, readJsonIfExists } from '../recap/aggregate';
+
+// 兼容再出口：解析器实现单源 core/utils（home 深审 A1 解环——recap 改引 core 后，
+// 本文件不再是被跨域拉取的宿主；re-export 保 weekly.test.ts 旧引用路径不变）
+export { parseLocalDay };
 
 /** 周窗口（本地毫秒）：start = 本周一 0 点（含），end = 下周一 0 点（不含） */
 export interface WeekRange {
@@ -66,18 +71,6 @@ export function currentWeekRange(anchor: number): WeekRange {
   d.setHours(0, 0, 0, 0);
   const start = d.getTime() - ((d.getDay() + 6) % 7) * DAY_MS; // 周一=0（getDay 0=周日）
   return { start, end: start + 7 * DAY_MS };
-}
-
-/** 日期串前缀解析（'YYYY-MM-DD…' → 本地当日 0 点毫秒；非法返回 null）。
- *  刻意不走 new Date(str)：'YYYY-MM-DD' 会被按 UTC 解析，时区西移处周边界漂移一天 */
-export function parseLocalDay(s: unknown): number | null {
-  const m = /^\s*(\d{4})-(\d{1,2})-(\d{1,2})/.exec(String(s ?? ''));
-  if (!m) return null;
-  const y = Number(m[1]);
-  const mo = Number(m[2]);
-  const d = Number(m[3]);
-  if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-  return new Date(y, mo - 1, d).getTime();
 }
 
 /** 时间戳是否落在周窗口 [start, end) */
@@ -141,35 +134,8 @@ export function countDiaryThisWeek(basenames: string[], range: WeekRange): numbe
   return basenames.filter((n) => inWeek(parseLocalDay(diaryDateFromEntryPath(`${n}.md`)), range)).length;
 }
 
-/* ---------- 采集 helpers（与 snapshot.ts 同款只读口径；本地副本防跨文件牵连） ---------- */
-
-function settingDir(keys: string[], def: string): string {
-  const s = tryGetSettings() as Record<string, unknown>;
-  for (const k of keys) {
-    const v = s[k];
-    if (typeof v === 'string' && v.trim()) return v.trim().replace(/\/+$/, '');
-  }
-  return def;
-}
-
-function fileExists(app: App, filePath: string): boolean {
-  try {
-    return !!app.vault.getAbstractFileByPath(filePath);
-  } catch {
-    return false;
-  }
-}
-
-/** 读 json 文件原始内容（仅文件存在时读，不触发建文件；解析失败回落 null） */
-async function readJsonIfExists(app: App, filePath: string): Promise<unknown | null> {
-  if (!fileExists(app, filePath)) return null;
-  try {
-    const f = app.vault.getAbstractFileByPath(filePath) as TFile;
-    return JSON.parse(await app.vault.read(f));
-  } catch {
-    return null;
-  }
-}
+/* ---------- 采集 helpers（收编 recap 只读三件套正典，home 深审 cons P3-4——
+   本文件原持本地副本；失败语义（解析失败抛错→各段 catch 回落 0）与原 null 版等价） ---------- */
 
 /** 目录下 md 文件 basename 清单（目录不存在返回 []，不建目录） */
 function dirMdBasenames(app: App, dir: string): string[] {
@@ -221,7 +187,7 @@ export async function collectWeeklyStat(app: App, now: number = Date.now()): Pro
   // 番茄：pomodoro.json history（文件缺失不建文件）
   try {
     const filePath = storageFile('pomodoro.json');
-    if (fileExists(app, filePath)) {
+    if (fileIfExists(app, filePath)) {
       const data = await new PomodoroDataManager(app).load();
       const history = (data as { history?: Array<{ ts: number; duration: number }> })?.history ?? [];
       const s = sumPomodoroWeek(history, range);
