@@ -70,6 +70,20 @@ describe('范围解析（issue 362）', () => {
     expect(resolveScopeNotes(app, 'note', [], 'GHOST.md')).toEqual([]);
     expect(resolveScopeNotes(app, 'all', [], '')).toEqual(['A.md', 'sub/B.md']);
   });
+
+  it('F12：note 范围命中文件夹（TFolder 无 extension）→ 过滤为空，不再把 vault.read 打爆', () => {
+    const vault = new MockVault();
+    vault.files.set('A.md', 'x');
+    const app = mockAppWithVault(vault);
+    // 复刻 getAbstractFileByPath 对目录/文件的双形态返回（TFolder 无 extension 字段）
+    (app.vault as any).getAbstractFileByPath = (p: string) => {
+      if (p === 'sub') return { path: 'sub', children: [] }; // TFolder
+      if (p === 'A.md') return { path: 'A.md', extension: 'md', basename: 'A' }; // TFile
+      return null;
+    };
+    expect(resolveScopeNotes(app, 'note', [], 'sub')).toEqual([]); // 文件夹漏网已堵
+    expect(resolveScopeNotes(app, 'note', [], 'A.md')).toEqual(['A.md']); // md 文件照常放行
+  });
 });
 
 describe('交错选题（pickRoundQuestions）', () => {

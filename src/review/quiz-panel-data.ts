@@ -45,7 +45,9 @@ export function notesInFolders(app: App, folders: string[]): string[] {
 
 /** 按范围解析笔记路径清单（scope = all 整库 / folder 目录展开 / note 单篇）。
  *  单篇校验存在性（审查修复）：手输路径不存在（被移动/改名/拼错）→ 返回空清单，
- *  由面板给人话提示，不再拿幽灵路径去出题误导。 */
+ *  由面板给人话提示，不再拿幽灵路径去出题误导。
+ *  F12：TFolder（文件夹）同样命中 getAbstractFileByPath——仅放行 md 文件对象，
+ *  防手输文件夹路径把 ensureQuestions 的 vault.read 打爆成 unhandled rejection。 */
 export function resolveScopeNotes(
   app: App,
   scope: 'all' | 'folder' | 'note',
@@ -54,7 +56,8 @@ export function resolveScopeNotes(
 ): string[] {
   if (scope === 'folder') return notesInFolders(app, folders);
   if (scope === 'note') {
-    return notePath && app?.vault?.getAbstractFileByPath?.(notePath) ? [notePath] : [];
+    const hit = notePath ? app?.vault?.getAbstractFileByPath?.(notePath) : null;
+    return hit && (hit as { extension?: string }).extension === 'md' ? [notePath] : [];
   }
   return listVaultNotes(app);
 }

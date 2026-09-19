@@ -8,7 +8,7 @@
  */
 import { isUnderFolder as isUnderFolderCore, stripMdExt } from '../core/utils';
 import type { App, TFile } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notifySaveError, notifyUndo } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { ReviewDataManager } from './data';
@@ -103,7 +103,16 @@ export class ReviewWatcher {
     if (this.isExcluded(file.path)) return;
     const items = await this.dataManager.loadItems();
     if (items.some((i) => i.filePath === file.path)) return;
-    await this.dataManager.addItem(file.path, file.basename);
+    try {
+      await this.dataManager.addItem(file.path, file.basename);
+    } catch (e) {
+      // F10：查重类错误（并发已加入）静默；写盘类失败给人话提示——自动加入不再静默失败
+      if (e instanceof Error && e.message.includes('已在复习计划中')) return;
+      notifySaveError(e, '自动加入复习计划');
+      return;
+    }
+    // U8：面板开着时列表即时补卡（对齐 rename 路径的「列表即时、通知合并」）
+    void this.refresh();
     // 提醒开关（默认开）：3 秒窗口内多条合并成一条通知
     const s = tryGetSettings() as any;
     if (s && s.reviewAutoAddNotice === false) return;
@@ -133,7 +142,8 @@ export class ReviewWatcher {
         this.deleteQueue = [];
         if (!batch.length) return;
         const n = batch.length;
-        const firstName = (batch[0] || '').split('/').pop();
+        // C10：口径与 confirmBatchAddForFolder 对齐——展示名剥 .md 扩展名
+        const firstName = stripMdExt((batch[0] || '').split('/').pop() || '');
         void openFlowDialog({
           title: n > 1 ? `删除 ${n} 篇笔记` : '笔记已删除',
           message:
@@ -148,10 +158,23 @@ export class ReviewWatcher {
           ],
         }).then(async (v) => {
           if (v === 'ok') {
+            // C-UX2：先快照待移除条目（撤销原样插回），移除后挂撤销通知——
+            // 连带清理类删除同样有反悔窗口（与全域删除形制对齐）
+            const cur = await this.dataManager.loadItems();
+            const removed = cur.filter((i) => batch.includes(i.filePath));
             for (const path of batch) await this.dataManager.removeItem(path);
             // 仅监听目录内的删除写排除名单（防自动加回；目录外的删除无监听风险）
             await this.excludePaths(batch.filter((p) => this.isWatched(p)));
-            notice(`已移除 ${n} 条复习记录`, 'success');
+            notifyUndo(`已移除 ${n} 条复习记录`, () => {
+              void (async () => {
+                try {
+                  for (const item of removed) await this.dataManager.restoreItem(item);
+                  await this.refresh();
+                } catch (e) {
+                  notifySaveError(e, '恢复复习记录');
+                }
+              })();
+            });
             await this.refresh();
           } else {
             void this.refresh();
@@ -170,7 +193,11 @@ export class ReviewWatcher {
       const items = await this.dataManager.loadItems();
       if (!items.some((i) => i.filePath === oldPath)) return;
       const updated = await this.dataManager.updateFilePath(oldPath, file.path, file.basename);
-      if (!updated) return;
+      if (!updated) {
+        // F11：新路径已被另一条目占用 → 条目悬挂旧路径成删除线，给人话提示而非静默
+        notice('新路径已存在复习条目，未能自动更新路径，请手动处理');
+        return;
+      }
       await this.refresh(); // 列表自动更新（即时）
       this.renameQueue.push(file.basename);
       if (this.renameTimer) return;
