@@ -557,22 +557,63 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## favorites（收藏夹）域 · 5/5 方向到账，两批定稿（批 A `bz-fix-fav-data` 已派；批 B `bz-fix-fav-view` 待槽位）
+## favorites（收藏夹）域 · 5/5 方向到账两批定稿；批 A 已合并，批 B `bz-fix-fav-view` 运行中
 
 > 明细：`.scratch/review-deep/favorites-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P3 新账×6 + 旧账仍在×1 + UX×1。方向 2（UI）：P2×6 + P3×7 + UX×3。方向 3（效率）：P2×3 + P3×3 + UX×3。方向 4（一致）：P2×2 + P3×4。方向 5（架构）：P2×1 + P3×2 + 建议×1 + 归因 4 组。跨方向去重：哨兵撞名（func-7 = ui UI-05）、主表单 Enter 三向同根（ui UI-11 = eff E4 = cons C6，手写缺 isComposing）、单例守卫绕脏检查（eff E3 = FV2）、100vh→vvh（ui UI-01 = cons C4，已接 bz-panel-mtop 却漏 vvh 的半成品对）、ESC 旗标收编（= cons C3 六域先例）、**func-3/4/5+E6 归因收口**（arch：写侧字段维护散布→DataManager 事务收口、normalizeUrl 挂读侧、控制字面量与用户数据共用命名空间）。**文档误记三处清单**：core/notice.ts:139 + B7 行 + CONTEXT.md:75 词条（交互口径停 ADR-0083 + belongings 演进史误植 + 删除免确认误载）。**E1=C2 双向复核**：favorites 是删除口径唯一活跃滞后域（pv 拍板保留合理例外）。门禁基线：tsc 0；tests/favorites 6 文件 150 例全绿。
 
 ### 修复批定稿（两批，文件不交叠）
 
-- **批 A `bz-fix-fav-data`（数据可靠性与写链，data.ts/ai.ts）**：arch-1 normalizeItems 读侧管道（类型漂移防御）、func-3 业务字段级合并写（data 层闭环防盘侧回滚）、func-4 派生字段三链路收口、func-5 AI 回填 normalizeUrl、E6 读侧归一、arch-2 kind 契约测试、arch-3 死键清理、arch-4 双实例收口方案。
+- **批 A `bz-fix-fav-data`（数据可靠性与写链，data.ts/ai.ts）✅ 已合并**：arch-1 normalizeItems 读侧归一管道（类型漂移防御+剔除告警+url 读盘归一）、func-3 五业务字段齐=表单快照的窄化合并写（盘侧 linkedNote/balance 系/llmConfig/archived 系保留盘上值，checkup 修复不被回滚）、func-4 type=tags[0] 三链路收口（add/update/bulk 重算）+ 读侧兜底、func-5 normalizeAiOrganizeResult（接线归批 B）、arch-2 kind 契约锁（发射侧×消费侧对账恒等+五 kind 精确集合双钉）、arch-3 死键播种清理、arch-4 双实例方案钉死头注释+安全面用例（接线归批 B）。测试 150→172（+22 fav-data-fix.node 纯数据侧）。合并后门禁：tsc 0 + favorites 172 + freshness 28 绿。**批 B 移交**：runAiFill 消费 normalizeAiOrganizeResult 一行、tagManagerDm 改 getInstance().dataManager 一行（收口后翻转 fav-data-fix 漂移面断言）、E6 写侧半。
 - **批 B `bz-fix-fav-view`（UI 交互与通知链，ui.ts/styles）**：E1 删除/归档免确认直达 + notice.ts:139 注释纠偏（测试契约面 ui.test.ts:806/881 + flow-dialog-skin 随批翻转）、E2 滚位保持、E3/FV2 守卫走 confirmDiscard、UI-01 100vh→vvh、UI-02 负 margin calc、UI-03 删强制聚焦、UI-04/11/C6 Enter→bindFormSubmit、UI-05/func-7 哨兵 markup+保留字、UI-06 aria/键盘、UI-07 加载态、UI-08 激活指示、UI-09 空态文案、UI-10 tag.ic 转义、UI-12 脏拦截、UI-13 热区、C3 registerPanelEsc 收编、C5 死 import、func-1 撤销补事件、func-6 标签弹窗类名、E5 Map 建表、E6 写侧保存路径归一。
 - **主线程文档收口**：CONTEXT.md:75 favorites 词条重写（退役件记录 + 误植段迁出 + 删除口径新载）、review-deep-bugs B7 行更正。
 - **拍板清单 F 系**：无链卡反馈、右键发现性、键盘焦点管理、触屏 hover 粘滞（全域）、磁贴限高、点卡 affordance。
 
 ---
 
-## pomodoro（番茄钟）域 · 审查入账中（方向 1 功能 + 2 UI + 3 效率已到账；方向 4 一致 / 5 架构运行中）
+## pomodoro（番茄钟）域 · 5/5 方向到账，修复批 `bz-fix-pomo-core`（单批）定稿派发
 
-> 明细：`.scratch/review-deep/pomodoro-{func,ui,efficiency}.md`。方向 1（func）：P2×1 + P3×5（无 P1；F11/F12/F13 三条旧账已修在位且注释点名，唯 F11/F12 缺回归用例）。方向 2（UI）：P2×2 + P3×3 + UX×1。方向 3（效率）：P3×3 + UX×3（无 P1/P2；与方向 1 同根 5 条只补证据未立项）。跨方向去重：tick 每秒同值 DOM churn（func P3 = ui P3-3 = eff PE1 三向同根——8 处无条件微写 + applySkinClass 每秒 11 连 class 空转，renderStats key 早退范式已在同文件未跟随）。旧账复核：pomodoro 域无在册未闭环旧账；「专注中重置加确认」已拍板待做=拍板执行项（效率方向补充建议：改用 notifyUndo 范式少一次打断，修复批落地时斟酌）；「命令无默认热键」全域性维持；「⚙️ 触屏可达」已随设置迁移消解。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿（并发 flake 未复现）。
+> 明细：`.scratch/review-deep/pomodoro-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×1 + P3×5；方向 2（UI）：P2×2 + P3×3 + UX×1；方向 3（效率）：P3×3 + UX×3；方向 4（一致）：P2×1 + P3×3；方向 5（架构）：P2×1 + P3×3 + 建议×3。跨方向去重：**月档统计 minutes 归一未接线三向同根**（ui P2-1 hoursLabel 零消费 = cons PC1 issue 357 拍板未接线（git log -S 零结果，三处注释宣称「月档按分钟说话」实际从未发生）= 建-3 半成品提交归因——函数进单源、消费点未接线、样式未配、原型同缺）、tick 每秒同值 churn（func=ui=eff 三向同根）、卸载竞态（ui P3-2 = arch PA-3 同根，统一 disposed 旗标）、ESC 层 id（cons PC4 与 gameshelf 同类旧式）。F11/F12 已修缺回归（建-2 给出修复前必红用例设计）。**跨域契约缺口 PA-1**：archived 段未进 checkup 段白名单（checks-drift.ts:30），正常归档数据必被体检误报。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿。
+
+### 修复批定稿（单批 `bz-fix-pomo-core`）
+
+- **P2**：PF1 lastStatsKey 关开早退、PC1/UI-1 月档 minutes+hoursLabel 接线（以消费点 grep 为完成标准+断言）、UI-2 切换钮热区+aria-pressed、PA-1 checkup 段白名单一行（跨域授权 `src/checkup/checks-drift.ts` + 契约测试）。
+- **P3**：PF2 强制专注拦截静默（补守卫提示，措辞按 PC3 定单源模板）、PF3 暂停文案分叉（statusbar 通用「已暂停」vs toast，先核 ui.test:300 相位）、PF4「专注这个」落在暂停会话静默续跑改归属、PF5 openPomodoro/ensurePomodoro load 失败 notifyActionError、PF6 progress 钳制、UI-3 层级注释失实纠偏、UI/PA-2/3 卸载竞态 disposed 旗标一处护栏、PE1 tick 同值微写收敛（key 早退范式）、PE2 Space 快捷键真实焦点流（+真实焦点用例）、PE3 空闲态跳过禁用/守卫、PA-2 ensurePomodoro 派生副作用收敛、PA-4 测试清理夹具统一、PC3 forceFocus 提示模板单源、PC4 ESC 层 id 对齐 `bz-<域>`。
+- **拍板执行项**：issues/144 专注中重置确认框（走 core flow-dialog 单源；notifyUndo 替代建议登记 UI 拍板总呈报时供用户重议）。
+- **建议随批**：isFocusingPhase 4 行直测、F11/F12 回归用例（修复前必红）。
+- **主线程文档**：CONTEXT.md:230「规划中」→已交付、:383 观察机制句 emitDomainEvent 纠偏。
+- **UX 分流（拍板清单加 P 系续行）**：aria-live、「停止专注」一词三义、统计档位跨重启记忆、近 6 月空柱占位。
+- **顺带**：保存失败 toast 接 notifyActionError onRetry（效率线已具备未接入）。
+
+---
+
+## home（首页）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率运行中，4/5 待槽位）
+
+> 明细：`.scratch/review-deep/home-{func,ui}.md`。方向 1（func）：P3×3 + UX×1（无 P1/P2；命令对账零漂移、行为流换源口径闭环）。方向 2（UI）：P2×3 + P3×6 + UX×3。旧账复核 8 项全对账：gameshelf 批 A river 竞态获独立复核确认、图标单源/保险库副题/ESC 注销在位；review-ux #34/#36 维持、**#35（移动端滑两屏）已被 order:-1 改版实质消化**（其引用的失实注释即本轮 P3-6）。func 方向专节给出了失败态 UI 呈现设计建议（flow 列行级失败位+一次重试恢复两列+三态区分），修复批照落。门禁基线：tsc 0；tests/home 121 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P3 采集失败态只覆盖「全部域」列**（func P3-1）——时间线列永挂加载文案。修：失败态覆盖 flow 列（按 func/ui 联合设计：flow-empty 行级语义 + 一次重试恢复两列 + 三态区分）。
+- **P3 runCommand 直达命令 Promise reject 静默**（func P3-2）——Promise 挂 catch → 人话通知。
+- **P2 移动端面板高度硬编码 100vh**（ui P2-1）——被遮的恰是沉底时间线列。修：接 `--bz-vvh`。
+- **P2 §8.2 触控热区全域缺席**（ui P2-2）——关闭钮 36px/周历格 29px/编辑器行尾钮 34px，10+ 先例域都在用 bz-touch-target 而 home 缺席。修：挂类。
+- **P2 桌面「全部域」入口列溢出不可滚**（ui P2-3）——15 行 ≈600px 压 580px 面板上限，矮窗口必裁无兜底。修：max-height+overflow 滚动兜底。
+- **P3 群（ui 6 条）**：data-tl-size 属性插值未转义（域内唯一裸插值）；预告栏关闭后桌面空轨道留白 224px（display:none 不塌缩显式 grid 轨道，与注释意图相反，现有测试断言的正是实现手段故全绿——翻转断言）；周历选中格无 aria 状态（原型同源需两侧同步修）；renderAll 全量重建丢焦点（周历切天已会局部保焦点，全量路径补同等待遇）；入口编辑器排序键盘不可达（Pointer 拖拽单路 + innerHTML 重建丢焦点）；移动端单列顺序注释三处矛盾（实际=瓦片→预告→时间线沉底，ui.ts:7 与 styles.css 自相矛盾——注释纠偏）。
+- **P3 weekly.ts「R1 生活周报」死代码**（func P3-3）——**处置拍板：裁 or 注明预留**（H 系）。
+- **UX 分流（H 系）**：外观组 homeLayout/homeSkin 可选可存不消费（占位接上 or 注明）；大面板无初始焦点/焦点圈闭（域族话题）；骨架期「全 部 域」标题数据到达后消失（原型同款）；过滤空态设置指引不可直达。
+
+---
+
+## settings-panel（设置面板）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+
+> 明细：`.scratch/review-deep/settings-panel-func.md`。方向 1（func）：P2×2 + P3×5 + UX×1。旧账复核 8 组：已闭环 3 组（DOMAIN_ICONS/H1-H10 全闭环/linkAgentMinScore onChange 钳制）；**仍在 4 组**——R9 缝升级（非法输入 NaN→0 **写入**，比 core「不写入回显旧值」口径更重，建议升级修法）、styles.css:1042 `-var(` 无效声明（与 favorites UI-02 同族跨域记档）、GS3 密钥框确认全仓 `secret:` 零使用属预留死特性（拍板项）、core-consistency 提示手写实为已收编 notifySaveError（闭环）；F-2 即 core-func 新-1 的本域落账。门禁基线：tsc 0；settings-panel 相关 4 文件 69 例全绿。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 搜索过滤恢复放出门控行**（F-1）——恢复分支无条件 `display=''`，visibleWhen 门控隐藏的行/组（DeepSeek 密钥行、移动端组）整批放出直到下次 refresh。修：恢复按门控重求值。
+- **P2 卸载清理不派 blur，防抖窗口文本静默丢失**（F-2 = core-func 新-1 本域落账）——↑↓ 切域/卸载清理移除聚焦输入框不派 blur。修：移除前 flush 防抖（或派 blur）。
+- **P3 群（5 条）**：list 行移除回调无 try/catch（core C10 口径分叉）；初始渲染 visibleWhen 求值裸奔（单行异常放大成整域「加载失败」，H6 容错只守 refresh）；「重置本域」saveSettings 裸奔假成功；搜索态 ↑↓ 在未过滤全集切换（可切到不可见域无反馈）；移动端搜索缓存不做端门控过滤（命中隐藏行定位静默失效）。
+- **P3 R9 缝升级修法**：非法输入 NaN→0 写入 → 对齐 core「不写入回显旧值」口径。
+- **UX 分流（SP 系）**：单行输入框聚焦时 ↑↓ 直接切域与光标移动习惯冲突（U-1，与 F-2 同现象交互面——修复时拍板：输入态让路光标移动 or 保留切域）。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
@@ -582,8 +623,11 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 群（func 5 条）**：强制专注下暂停/停止被拦后静默无反馈（补 toggleFocus 同款守卫提示）；暂停休息阶段 toast 恒「已暂停专注」口径分叉；备忘录「专注这个」落在暂停会话上静默续跑旧剩余时间并改归属（与「直接开始一个专注」承诺不符）；`openPomodoro`/`ensurePomodoro` load 失败裸 void 无兜底（notifyActionError 范式）；会话中改小时长 progress 参负 dashoffset 超周长毛刺（clamp）。
 - **P3 群（ui 3 条）**：ui.ts:713 层级注释失实（称不再 JS 内联 z-index 实则 allocZ 发号）；首次读盘窗口内卸载插件 in-flight promise 复活孤儿弹窗 + interval 泄漏；tick 每秒同值 DOM churn（renderStats key 早退范式未跟随）。
 - **P3 群（eff 3 条）**：PE1 tick 渲染链 8 处同值微写 + applySkinClass 每秒 11 连 class 空转（与 func/ui 同根合并）；PE2 Space 快捷键点击弹窗内容区后焦点落 body 静默失效（keydown 只挂 popup，现有测试全用 dispatchEvent 未覆盖真实焦点流——补真实焦点用例）；PE3 空闲态「跳过」可点：一键意外进入短休息待开始态且静默落盘，与命令链 skipBreak warning 守卫口径不一致（补禁用或守卫）。
+- **P2 跨域契约：archived 段未同步 checkup 白名单**（arch PA-1）——issue 357 新增 archived 段未进 checks-drift.ts:30 段白名单，正常归档数据必被体检误报「约定外数据段」。修：白名单补键 + 体检契约测试（涉 `src/checkup/checks-drift.ts`，修复批授权跨域一行）。
+- **P3 群（arch 3 条）**：PA-2 ensurePomodoro 并发重入 in-flight 只收敛加载不收敛派生副作用（恢复通知双弹）；PA-3 unload×在途 save 竞态（与 ui P3-2 同根，统一 disposed 旗标一处护栏三症状同愈）；PA-4 域测试清理三件套无统一夹具（11 文件手拼、顺序耦合注释实证）。
 - **拍板执行项**：issues/144「专注中重置加确认」确认框（已拍板待做，随批落；效率方向建议改 notifyUndo 范式少一次打断，落地时斟酌）。
-- **UX 分流**：`#pomodoro-phase` aria-live="polite"（一行接入，拍板）；「停止专注」一词三义文案对齐（菜单=暂停/命令=重置/面板分开，拍板）；保存失败 toast 缺重试出口（notifyActionError onRetry 已具备未接入——归修复批顺带）；统计档位不跨重启记忆（拍板）。
+- **建议 3**：isFocusingPhase 单源判定 4 行直测；F11/F12 回归补齐位（重置落盘断言 + autopause 冻结续跑用例，修复前必红）；P2-1 修复以消费点 grep 为完成标准。
+- **UX 分流**：`#pomodoro-phase` aria-live="polite"（一行接入，拍板）；「停止专注」一词三义文案对齐（菜单=暂停/命令=重置/面板分开，拍板）；保存失败 toast 缺重试出口（notifyActionError onRetry 已具备未接入——归修复批顺带）；统计档位不跨重启记忆（拍板）；近 6 月空数据零柱无占位文案（秋季批旧账仍开放，拍板）。
 - **测试缺口**：F11/F12 回归用例 + 各项随批补。
 
 ### 已入账条目（跨方向去重待 5 方向齐）

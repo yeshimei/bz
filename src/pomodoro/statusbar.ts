@@ -50,16 +50,19 @@ export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): 
   const paused = !running && state.paused;
   statusEl.classList.toggle('pomodoro-statusbar-idle', !running && !paused);
   statusEl.classList.toggle('pomodoro-statusbar-paused', paused);
-  statusEl.title = state.task ? `番茄钟：${state.task}` : '番茄钟';
+  // 深审 PE1：render 每秒驱动本函数，同值短路（textContent/title setter 同值也会重建文本节点）
+  const wantTitle = state.task ? `番茄钟：${state.task}` : '番茄钟';
+  if (statusEl.title !== wantTitle) statusEl.title = wantTitle;
   if (textSpan) {
     if (running) {
       const m = Math.floor(remainSec / 60);
       const s = remainSec % 60;
-      textSpan.textContent = `${pad2(m)}:${pad2(s)}`;
-    } else if (paused) {
-      textSpan.textContent = '已暂停';
+      const want = `${pad2(m)}:${pad2(s)}`;
+      if (textSpan.textContent !== want) textSpan.textContent = want;
     } else {
-      textSpan.textContent = '';
+      // 暂停（含后台自动暂停）恒「已暂停」通用标签（PF3 口径：toast 按阶段取文案，状态栏保持通用）
+      const want = paused ? '已暂停' : '';
+      if (textSpan.textContent !== want) textSpan.textContent = want;
     }
   }
 }

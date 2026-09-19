@@ -44,6 +44,9 @@
     .pomodoro-week[hidden] { display: none; }
     .pomodoro-stat-day { display: flex; flex-direction: column; align-items: center; gap: 2px; }
     .pomodoro-stat-col { display: flex; align-items: flex-end; height: 40px; }
+    /* 柱顶数值签（深审 PC1 接线收尾，issue 357 月档「柱顶小时数」）：caption 档、muted 兜底链，
+       与短签同 2px gap（.pomodoro-stat-day），不另设 margin */
+    .pomodoro-stat-num { font-size: var(--bz-font-caption); color: var(--pz-muted, var(--text-muted)); line-height: 1; }
     .pomodoro-stat-bar { width: 10px; border-radius: 3px 3px 0 0; background: var(--interactive-accent); min-height: 2px; }
     .pomodoro-stat-label { font-size: var(--bz-font-caption); color: var(--pz-faint, var(--text-faint)); }
 
@@ -145,4 +148,9 @@
    控制按钮 = --sm(-4px)；此处仅保留 padding 抬档。 */
 @media (pointer: coarse) {
     .pomodoro-btn { padding: 10px var(--bz-space-lg); }
+    /* 统计两档切换钮触屏抬档（深审 ui P2-2，§8.2 40px 点按下限；裸钮约 19px）：
+       两钮左右相邻（gap 4px），挂 bz-touch-target--lg/-xl 的 ::after 外扩热区会互相盖住
+       命中区（右钮压左钮右缘）——故走 padding 抬档先例（attach 清单行同款）：
+       caption 11px + 上下 12px ≈ 41px 达标，仅触屏生效不扰桌面布局 */
+    .pomodoro-stat-tab { padding: var(--bz-space-md); }
 }

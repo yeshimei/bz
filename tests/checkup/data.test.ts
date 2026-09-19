@@ -16,6 +16,7 @@ import {
   MEMO_ITEM_FIELDS,
   FAVORITES_ITEM_FIELDS,
   POMODORO_HISTORY_FIELDS,
+  SEGMENT_FIELDS,
   analyzeItemDrift,
   analyzeSegmentDrift,
   checkFieldDrift,
@@ -168,6 +169,44 @@ describe('检查二：字段漂移', () => {
     const warn = sec!.issues.find((i) => i.severity === 'warn' && i.title.includes('番茄钟'));
     expect(warn).toBeTruthy();
     expect(warn!.title).toContain('约定外字段');
+  });
+
+  it('PA-1：pomodoro.json 带 archived 周归档段（issue 357 正常数据）→ 不误报约定外数据段', async () => {
+    const { app } = makeApp({
+      [`${DIR}/pomodoro.json`]: JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false },
+        history: [],
+        archived: [{ week: '2026-07-06', count: 2, minutes: 50 }],
+      }),
+    });
+    const sec = await checkFieldDrift(app);
+    const pomoWarn = sec!.issues.filter((i) => i.severity === 'warn' && i.title.includes('番茄钟'));
+    expect(pomoWarn).toEqual([]); // 修复前：本插件自己写的 archived 段被误报「约定外数据段/可能是外部写入」
+  });
+
+  it('PA-1：白名单外的真异常段仍 warn（契约不松，且不得把 archived 误列）；旧文件缺 archived 只 info 不 warn', async () => {
+    const { app } = makeApp({
+      [`${DIR}/pomodoro.json`]: JSON.stringify({
+        version: 1,
+        state: { phase: 'idle', endTime: null, remaining: 0, paused: false },
+        history: [],
+        ghost: 1, // 真异常段
+      }),
+    });
+    const sec = await checkFieldDrift(app);
+    const warns = sec!.issues.filter((i) => i.severity === 'warn' && i.title.includes('番茄钟'));
+    expect(warns).toHaveLength(1);
+    expect(warns[0].title).toContain('约定外数据段');
+    expect(warns[0].title).toContain('ghost');
+    expect(warns[0].title).not.toContain('archived'); // archived 已入白名单，不算异常
+    // 旧文件无 archived 段（issue 357 前的形状）→ 缺段只走 info 常态，不产生 warn
+    const missingInfo = sec!.issues.find((i) => i.severity === 'info' && i.title.includes('archived'));
+    expect(missingInfo).toBeTruthy();
+  });
+
+  it('PA-1：SEGMENT_FIELDS 番茄钟段契约锁（version/state/history/archived）', () => {
+    expect(SEGMENT_FIELDS['pomodoro.json']).toEqual(['version', 'state', 'history', 'archived']);
   });
 
   it('全绿样本：全字段条目 + 段级齐全 → 零问题', async () => {
