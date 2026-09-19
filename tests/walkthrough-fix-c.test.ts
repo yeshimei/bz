@@ -137,11 +137,11 @@ describe('批 C-7：移动端主头行添加钮触控抬档', () => {
 });
 
 describe('批 C-8：cinema 触控热区收编 .bz-touch-target', () => {
-  it('域内 pointer:coarse ::after 外扩块撤除；风格化后不再挂共享 .bz-touch-target（ADR-0103 域内自绘）', () => {
+  it('域内 pointer:coarse ::after 外扩块维持撤除；2026-09-20 深审批B 起头行钮/chips 挂共享类（§8.2 40px 硬下限对风格化域同约束，热区外扩不可见不涉视觉自治，原 ADR-0103 豁免不再覆盖）', () => {
     expect(cineCss()).not.toMatch(/@media \(pointer: coarse\)/);
     const ui = repo('src/cinema/layouts/midnight/render.ts'); // ADR-0104 markup 单源：m-head 工具钮在午夜场布局层
     expect(ui).toContain('m-tool j-mclose'); // 原型 m-head 工具钮（逐字同构；设置钮已退役，设置走插件设置页）
-    expect(ui).not.toMatch(/bz-touch-target/);
+    expect(ui).toMatch(/bz-touch-target/);
   });
 });
 
