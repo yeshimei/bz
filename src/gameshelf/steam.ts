@@ -20,6 +20,7 @@
  */
 import { requestUrl } from 'obsidian';
 import { withTimeout } from '../core/http';
+import { pad2 } from '../core/ui/str';
 
 const API_BASE = 'https://api.steampowered.com';
 const STORE_BASE = 'https://store.steampowered.com';
@@ -345,8 +346,7 @@ function dateOnly(iso: string | null): string {
   if (!iso) return '-';
   const d = new Date(iso);
   if (!Number.isFinite(d.getTime())) return '-';
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; // C2 余量：pad2 收编 core 单源（深审批A 登记）
 }
 
 /**

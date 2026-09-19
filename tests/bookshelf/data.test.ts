@@ -1,5 +1,5 @@
-import { makeApp } from '../helpers/app';
 // @vitest-environment node
+import { makeApp } from '../helpers/app';
 /**
  * 书架墙（bookshelf）数据层测试：md 解析/状态派生/EPUB 聚合/排序/统计/目录回落
  */
@@ -10,9 +10,13 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
   scanMarkdownBooks, loadEpubItems, resolveFolderPath, resolveBookTag, formatReadingTime,
-  rebuildItems, getDisplayItems,
+  rebuildItems,
 } from '../../src/bookshelf/data';
-import { sortItems, kwFilter, currentSideItems, catFilterItems } from '../../src/bookshelf/render';
+// 深审 arch A1：data.ts 不再依赖渲染纯层（读 M 的状态包装迁 ui.ts）——
+// 数据层测试改断言纯管道形态（显式入参，语义等价）
+import {
+  sortItems, kwFilter, currentSideItems, catFilterItems, getDisplayItems,
+} from '../../src/bookshelf/render';
 
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
@@ -284,6 +288,8 @@ describe('bookshelf 数据层', () => {
   it('catFilterItems + getDisplayItems：分类与状态正交叠加', () => {
     const { app } = seedVault();
     M.items = [...scanMarkdownBooks(app)];
+    // 深审 arch A1：改走纯管道形态（显式入参 = M 当前视图快照）
+    const view = () => ({ side: M.side, catFilter: M.catFilter, q: M.searchKeyword, sortMode: M.sortMode });
     // 只分类
     expect(catFilterItems(M.items, '成长').map((i) => i.title)).toEqual(['认知觉醒']);
     expect(catFilterItems(M.items, '未分类').length).toBe(2);
@@ -291,12 +297,12 @@ describe('bookshelf 数据层', () => {
     // 状态 × 分类正交：已读 ∩ 成长 = 空
     M.side = 'done';
     M.catFilter = '成长';
-    expect(getDisplayItems().length).toBe(0);
+    expect(getDisplayItems(M.items, view()).length).toBe(0);
     M.catFilter = 'all';
-    expect(getDisplayItems().map((i) => i.title)).toEqual(['围城']);
+    expect(getDisplayItems(M.items, view()).map((i) => i.title)).toEqual(['围城']);
     M.side = 'all';
     M.catFilter = '未分类';
-    expect(getDisplayItems().length).toBe(2);
+    expect(getDisplayItems(M.items, view()).length).toBe(2);
   });
 
     it('audit I：rebuildItems 并发交错——旧重建晚到不回写覆盖新数据（序号守卫）', async () => {

@@ -9,6 +9,7 @@ import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { requestUrl } from 'obsidian';
+import { parseFm, serializeFm } from '../helpers/frontmatter';
 import { runSync, isSyncDue } from '../../src/gameshelf/sync';
 import { rebuildItems } from '../../src/gameshelf/notes';
 import { M, resetGameshelfState, DEFAULT_FOLDER } from '../../src/gameshelf/state';
@@ -19,52 +20,13 @@ import { closePanel, renderAll } from '../../src/gameshelf/ui';
 
 const vault = new MockVault();
 
-/** 极简 frontmatter 解析（测试内自持，覆盖本域产出形态：tags 列表 + 扁平标量键） */
-function parseFm(path: string): Record<string, any> {
-  const raw = vault.files.get(path) ?? '';
-  const m = raw.match(/^---\n([\s\S]*?)\n---/);
-  const fm: Record<string, any> = {};
-  if (!m) return fm;
-  let lastKey = '';
-  for (const line of m[1].split('\n')) {
-    if (line.startsWith('- ')) {
-      (fm[lastKey] ??= []).push(line.slice(2).trim());
-      continue;
-    }
-    const i = line.indexOf(':');
-    if (i < 0) continue;
-    lastKey = line.slice(0, i).trim();
-    const v = line.slice(i + 1).trim();
-    if (v === 'true') fm[lastKey] = true;
-    else if (v === 'false') fm[lastKey] = false;
-    else if (v !== '' && /^-?\d+(\.\d+)?$/.test(v)) fm[lastKey] = Number(v);
-    else if (v !== '') fm[lastKey] = v.replace(/^"|"$/g, '');
-    else fm[lastKey] = undefined;
-  }
-  return fm;
-}
-
-/** 序列化回 frontmatter（与解析同一套规则，保 upsert 幂等） */
-function serializeFm(fm: Record<string, any>): string {
-  const lines: string[] = ['---'];
-  for (const [k, v] of Object.entries(fm)) {
-    if (Array.isArray(v)) {
-      lines.push(`${k}:`);
-      for (const item of v) lines.push(`- ${item}`);
-    } else if (typeof v === 'string') lines.push(`${k}: "${v}"`);
-    else lines.push(`${k}: ${v}`);
-  }
-  lines.push('---', '');
-  return lines.join('\n');
-}
-
 function makeApp() {
   return {
     vault,
-    metadataCache: { getFileCache: (file: any) => ({ frontmatter: parseFm(file.path) }) },
+    metadataCache: { getFileCache: (file: any) => ({ frontmatter: parseFm(vault, file.path) }) },
     fileManager: {
       processFrontMatter: async (file: any, cb: (fm: Record<string, any>) => void) => {
-        const fm = parseFm(file.path);
+        const fm = parseFm(vault, file.path);
         cb(fm);
         const raw = vault.files.get(file.path)!;
         const body = raw.replace(/^---\n[\s\S]*?\n---\n?/, '');
@@ -119,7 +81,7 @@ describe('runSync 同步链路（issue 368）', () => {
     expect(r.added).toBe(1);
     const path = `${DEFAULT_FOLDER}/《Deep Rock Galactic》.md`;
     expect(vault.files.has(path)).toBe(true);
-    const fm = parseFm(path);
+    const fm = parseFm(vault, path);
     expect(fm["AppID"]).toBe(548430);
     expect(fm["游玩分钟"]).toBe(65214);
     expect(fm["最后游玩"]).toBe("2026-02-24");
@@ -144,7 +106,7 @@ describe('runSync 同步链路（issue 368）', () => {
     const content = vault.files.get(path)!;
     expect(content).toContain('我的感想随便写。');
     expect(content).toContain('myNote');
-    const fm = parseFm(path);
+    const fm = parseFm(vault, path);
     expect(fm["游玩分钟"]).toBe(120);
   });
 
@@ -157,12 +119,12 @@ describe('runSync 同步链路（issue 368）', () => {
     expect(r2.offShelf).toBe(1);
     const path = `${DEFAULT_FOLDER}/《A》.md`;
     expect(vault.files.has(path)).toBe(true);
-    expect(parseFm(path)["已下架"]).toBe(true);
+    expect(parseFm(vault, path)["已下架"]).toBe(true);
     mockSteam([{ appid: 1, name: 'A', playtime_forever: 20 }]);
     const r3 = await runSync(makeApp(), { force: true });
     expect(r3.updated).toBe(1);
-    expect(parseFm(path)["已下架"]).toBe(false);
-    expect(parseFm(path)["游玩分钟"]).toBe(20);
+    expect(parseFm(vault, path)["已下架"]).toBe(false);
+    expect(parseFm(vault, path)["游玩分钟"]).toBe(20);
   });
 
   it('未配置 → reason=config 且零请求；密钥错 → reason=auth 人话报错', async () => {

@@ -15,14 +15,31 @@
  * 「代理没开」连带把中文名也拉不到。分开跑，各自失败各自退化。
  */
 import type { App, TFile } from 'obsidian';
+import { notify } from '../core/notice';
 import { upsertDetail } from './notes';
 import { M, type GameItem } from './state';
 import { fetchZhName } from './steam';
+import { GS_FM, QUEUE_HALTED_NOTICE, QUEUE_HALTED_DEDUPE_KEY } from './constants';
 
 /** 队列条目间隔（毫秒） */
 export const ZH_NAME_INTERVAL_MS = 900;
 /** 连续失败上限：到此为止，剩下的下次开面板再试 */
 export const ZH_NAME_MAX_FAILURES = 3;
+
+/**
+ * 会话级负缓存（深审 F7）：Steam 未做本地化的款（商店返回 = 原名，如 Bongo Cat）记入，
+ * 本会话不再重拉——此前只更新内存条目的 zhName，rebuildItems 整表换新后标记即丢，
+ * 每开面板对这批游戏各重发一次商店请求，永不收敛。
+ * 只记内存不落盘：插件重载后重试一轮，Steam 后来补了官方中文名的款能自愈；
+ * 落盘负标记（或把英文名写进「中文名」）反而把这条自愈路堵死。
+ * 面板关开不清（unloadZhNames 不动它）——一清就回到「每开面板重拉一轮」；随插件卸载整个模块态消亡。
+ */
+const noLocale = new Set<number>();
+
+/** 测试隔离用：清空会话级负缓存 */
+export function resetZhNameNoLocale(): void {
+  noLocale.clear();
+}
 
 interface Job {
   app: App;
@@ -52,6 +69,7 @@ export function ensureZhNames(app: App, items: GameItem[]): void {
   let added = 0;
   for (const it of items) {
     if (it.zhName) continue;
+    if (noLocale.has(it.appid)) continue; // F7：本会话已确认 Steam 无本地化，不再白拉
     if (queued.has(it.appid)) continue;
     queued.add(it.appid);
     queue.push({ app, item: it, file: it.file });
@@ -66,6 +84,9 @@ async function runQueue(): Promise<void> {
   while (queue.length > 0) {
     if (failures >= ZH_NAME_MAX_FAILURES) {
       drainQueue();
+      // 熔断人话收尾（S2）：此前只有 console，用户视角「中文名一直是英文」无一字出口。
+      // 与 backfill 共用文案与 dedupeKey——同窗熔断原地合并，不刷屏；下次开面板幂等续跑
+      notify(QUEUE_HALTED_NOTICE, { type: 'warning', dedupeKey: QUEUE_HALTED_DEDUPE_KEY });
       break;
     }
     const job = queue.shift()!;
@@ -75,11 +96,13 @@ async function runQueue(): Promise<void> {
         failures = 0;
         // 先更新内存（列表立刻能显示），再落盘（写回失败也不影响本次会话的显示）
         job.item.zhName = r.data;
-        // Steam 没做本地化时返回的还是英文名（如 Bongo Cat）——只记内存让列表不再重复请求，
-        // **不写盘**：把英文名写成「中文名」是脏数据，而且会让笔记属性看不出到底有没有本地化。
+        // Steam 没做本地化时返回的还是英文名（如 Bongo Cat）——记会话负缓存（F7），
+        // **不写盘**：把英文名写成「中文名」是脏数据，而且会让笔记属性看不出到底
+        // 有没有本地化、还堵死 Steam 后补本地化的自愈路。
+        if (r.data === job.item.name) noLocale.add(job.item.appid);
         if (job.file && r.data !== job.item.name) {
           try {
-            await upsertDetail(job.app, job.file, { 中文名: r.data });
+            await upsertDetail(job.app, job.file, { [GS_FM.zhName]: r.data });
           } catch (e) {
             console.warn('bz 游戏库：中文名写回失败:', job.item.name, e);
           }
@@ -112,7 +135,11 @@ function scheduleRerender(): void {
   }, 1200);
 }
 
-/** 卸载收口：清队列与节流计时器（在途请求随响应自然落地，不阻塞卸载） */
+/**
+ * 卸载收口：清队列与节流计时器（在途请求随响应自然落地，不阻塞卸载）。
+ * 不动 noLocale（F7 会话负缓存，见其注释）也不动 running——提前复位 running 会放第二个
+ * runQueue 进来与本循环并发消费同一队列（深审 F6 同款缺陷），对齐「在途自然退出」范式。
+ */
 export function unloadZhNames(): void {
   queue.length = 0;
   queued.clear();

@@ -13,16 +13,16 @@ import { currentSideItems } from './shared';
 import { resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';
 import {
   createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler,
-  renderAll, refreshReportView, openReportView,
+  renderAll, refreshReportView, openReportView, showView,
 } from './ui';
 import { cancelReadingReport } from '../reading-report';
 import { closeBookNoteModals } from './notes-ui';
 
 let initialized = false;
 let autoRefreshRegistered = false;
-// B5：订阅句柄统一收集（域事件退订函数 + vault modify EventRef），卸载时全部释放
+// B5：订阅句柄统一收集（域事件退订函数 + vault EventRef），卸载时全部释放
 let autoRefreshOffs: (() => void)[] = [];
-let weaveVaultRef: EventRef | null = null;
+let weaveVaultRefs: EventRef[] = [];
 
 /** 幂等初始化（懒加载）：目录设置注入 + ESC + 自动刷新 */
 export function ensureBookshelf(app: App): void {
@@ -57,10 +57,15 @@ function registerAutoRefresh(app: App): void {
     autoRefreshOffs.push(onDomainEvent<{ path: string }>(ch, (evt) => schedule({ path: evt.path })));
   }
   // B4：EPUB 数据来自 weave-data.json（外部 Weave 阅读器直写，core vault 适配器只转发 .md），
-  // 域内自挂 vault modify 补 json 通道；B5：EventRef 一并登记，卸载 offref
-  weaveVaultRef = app.vault.on('modify', (file) => {
-    schedule({ path: (file as { path?: string })?.path });
-  });
+  // 域内自挂 vault modify 补 json 通道；B5：EventRef 一并登记，卸载 offref。
+  // 深审 func F4：补 create/delete——json 尚不存在时 Weave 首次落盘走 create（面板开着不刷新），
+  // json 被外部删除走 delete（EPUB 区残留旧数据），与 modify 复用同一 schedule，零额外成本
+  const weaveFile = app.vault;
+  weaveVaultRefs = [
+    weaveFile.on('modify', (file) => schedule({ path: (file as { path?: string })?.path })),
+    weaveFile.on('create', (file) => schedule({ path: (file as { path?: string })?.path })),
+    weaveFile.on('delete', (file) => schedule({ path: (file as { path?: string })?.path })),
+  ];
 }
 
 /** 打开书架墙（命令 bz-bookshelf-open，toggle 语义） */
@@ -86,39 +91,47 @@ export function openBookshelfReport(app: App): void {
  * 开书架墙并直接落到「在读」分栏（首页入口有在读时才亮彩点，见 home/shared.buildDots）。
  * 在读为空 → 只提示不面板（空白分栏比一句提示更让人困惑）；
  * 面板已开则就地切分栏重渲染，不 toggle 关闭（与「阅读分析报告」同一幂等口径）。
+ * 深审 cons C1/eff E6：
+ *  - 视图切换必须经 showView 单口——裸赋 M.view 绕过 paintViewContainers，报告视图
+ *    存活时命令假死（墙渲染进隐藏容器，连「返回书库」钮都失联）；showView changed
+ *    时自动 cancelReadingReport，在途报告分片渲染不再向隐藏容器续写；
+ *  - 恒 rebuild 保数据新鲜——M.items 是上次会话快照，期间读完/开新书不反映，
+ *    「首页彩点亮 → 点进来却说没有在读」的入口承诺矛盾（修法是删条件不是加缓存）。
  */
 export async function continueReading(app: App): Promise<void> {
   ensureBookshelf(app);
-  const items = M.items.length ? M.items : await rebuildItems(app);
+  const items = await rebuildItems(app);
   if (!currentSideItems(items, 'reading').length) {
     notice('书库里还没有在读的书', 'warning');
     return;
   }
-  M.view = 'shelf';
   M.side = 'reading';
   M.catFilter = 'all';
-  if (M.currentOverlay) renderAll();
-  else createOverlay(app);
+  if (M.currentOverlay) {
+    showView(app, 'shelf');
+  } else {
+    // 冷开：面板未开，直接定视图后随 createOverlay 初始化（同 openReportView 冷开先例）——
+    // 「继续在读」承诺落在读墙，不复现上次会话的报告视图
+    M.view = 'shelf';
+    createOverlay(app);
+  }
 }
 
 /** 卸载清理（main.ts onunload 调用） */
 export function unloadBookshelf(): void {
   initialized = false;
   autoRefreshRegistered = false;
-  // B5：退订全部域事件 + vault modify
+  // B5：退订全部域事件 + vault EventRef
   autoRefreshOffs.forEach((off) => off());
   autoRefreshOffs = [];
-  if (weaveVaultRef) {
-    M.appRef?.vault.offref(weaveVaultRef);
-    weaveVaultRef = null;
-  }
+  for (const ref of weaveVaultRefs) M.appRef?.vault.offref(ref);
+  weaveVaultRefs = [];
   unregisterEscapeHandler(); // B1：注销 ESC 层
-  closeBookNoteModals(); // 读书笔记弹窗（迁移自旧 library 域）：卸载不留孤儿浮层
-  cancelReadingReport(); // 报告视图在途分片渲染作废 + progress toast 收起
-  if (M.currentOverlay) {
-    M.currentOverlay.remove();
-    M.currentOverlay = null;
-  }
+  closeBookNoteModals(); // 读书笔记弹窗（uiModal 壳挂 body，面板未开也可能存活）：卸载不留孤儿浮层
+  // 深审 func F2/ui F7：卸载也走 closeOverlay 单口——window resize 监听、搜索/resize
+  // 防抖 timer、借书卡弹窗、报告在途渲染、面板壳一并收口（内部各步幂等，重复调用无害；
+  // 原先手工 overlay.remove() 漏摘 resize 监听，禁用→启用循环每次残留一个）
+  closeOverlay();
   // 孤儿浮层兜底清理（按域锚点：面板壳已改共享 .bz-panel-overlay，经本域 .bz-bs-panel 定位其遮罩根，
   // 防止误删同时开着的其他域面板）
   document.querySelectorAll('.bz-bs-panel').forEach((el) => {

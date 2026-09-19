@@ -1,4 +1,4 @@
-/* 源指纹 0f63f9215cb90760 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 17d6a65d58b98d83 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/bookshelf/constants.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/bookshelf/render.ts → window.BZR_bookshelf（评审壳预览包，ADR-0104） */
 var BZR_bookshelf = (() => {
@@ -145,6 +145,7 @@ var BZR_bookshelf = (() => {
     const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 36e5).toFixed(1) + " 小时" : "—");
     const prog = Math.round(it.progress);
     return `
+    <button type="button" class="bz-icon-btn bz-bs-d-close" data-bs-d-close title="关闭" aria-label="关闭">${iconSpan(ICON.close)}</button>
     <div class="bz-bs-d-pull">已抽出这本书</div>
     <div class="bz-bs-d-card">
       <div class="bz-bs-d-cover">${cover}</div>
@@ -177,19 +178,26 @@ var BZR_bookshelf = (() => {
 
   // src/bookshelf/layouts/wall/render.ts
   var CAT = {
-    "文学": { bg: "#8f4a3a", fg: "#f2e4d8" },
     "推理": { bg: "#7a3b52", fg: "#f2dee6" },
-    "哲学": { bg: "#4f6f52", fg: "#e9efe6" },
     "科幻": { bg: "#3d5a73", fg: "#e2ecf4" },
-    "心理学": { bg: "#5c5273", fg: "#e9e4f2" },
-    "摄影": { bg: "#2f4858", fg: "#dbe8f0" },
-    "天文学": { bg: "#1f3242", fg: "#c9dde9" },
-    "生物学": { bg: "#6d7a3f", fg: "#eef0dc" },
-    "龙与地下城": { bg: "#4a3626", fg: "#e8d9b0" },
-    "历史": { bg: "#8a6d3b", fg: "#f5ecd8" },
-    "武侠": { bg: "#9a5a2f", fg: "#f7ead9" },
     "奇幻": { bg: "#3f5a4a", fg: "#dfeee4" },
+    "恐怖": { bg: "#3a2a33", fg: "#e3d5dc" },
+    "武侠": { bg: "#9a5a2f", fg: "#f7ead9" },
+    "戏剧": { bg: "#6e3b57", fg: "#f0dfe9" },
+    "历史小说": { bg: "#8a6d3b", fg: "#f5ecd8" },
+    "历史": { bg: "#7c6844", fg: "#f0e8d4" },
+    "哲学": { bg: "#4f6f52", fg: "#e9efe6" },
+    "心理学": { bg: "#5c5273", fg: "#e9e4f2" },
+    "科学": { bg: "#2f5679", fg: "#dbe9f4" },
+    "社科": { bg: "#5f5a45", fg: "#ece7d6" },
     "艺术": { bg: "#6b4a6e", fg: "#efe2f0" },
+    "摄影": { bg: "#2f4858", fg: "#dbe8f0" },
+    "中国古典文学": { bg: "#8f4a3a", fg: "#f2e4d8" },
+    "中国现当代文学": { bg: "#a0552f", fg: "#f6e6da" },
+    "中国散文": { bg: "#6d7a3f", fg: "#eef0dc" },
+    "外国小说": { bg: "#455a7a", fg: "#e0e7f2" },
+    "外国散文": { bg: "#57707a", fg: "#e2ecf0" },
+    "纪实": { bg: "#4a5245", fg: "#e4e8de" },
     "未分类": { bg: "#6b6257", fg: "#ded8ce" }
   };
   var FALLBACKS = ["#8a6d3b", "#4f6f52", "#3d5a73", "#8f4a3a", "#5c5273", "#7a3b52", "#6d7a3f", "#2f4858"];
@@ -242,6 +250,7 @@ var BZR_bookshelf = (() => {
     <span class="bz-bs-spine-title"></span>
     ${it.status === "已读" ? '<span class="stamp">讫</span>' : ""}
     ${it.status === "在读" ? '<span class="ribbon"></span>' : ""}
+    <span class="bz-bs-touch bz-touch-target--xl" aria-hidden="true"></span>
   </div>`;
   }
   function mkBookend() {
@@ -299,7 +308,6 @@ var BZR_bookshelf = (() => {
     ];
     const cats = /* @__PURE__ */ new Map();
     for (const b of items) {
-      if (b.status === "未读") continue;
       const k = b.category || "未分类";
       const c = cats.get(k) || { n: 0, ms: 0 };
       c.n++;
@@ -326,7 +334,7 @@ var BZR_bookshelf = (() => {
     return `${html}<div class="bz-bs-cats">${catHtml}</div>`;
   }
   function sortSegHtml(sortMode) {
-    return Object.keys(SORT_LABEL).map((k) => `<button type="button" data-bs-sort="${k}"${sortMode === k ? ' class="on"' : ""}>${SORT_LABEL[k]}</button>`).join("");
+    return Object.keys(SORT_LABEL).map((k) => `<button type="button" class="bz-touch-target${sortMode === k ? " on" : ""}" data-bs-sort="${k}">${SORT_LABEL[k]}</button>`).join("");
   }
   function panelHtml(skinClass) {
     return `
@@ -337,7 +345,10 @@ var BZR_bookshelf = (() => {
         <div class="bz-bs-labels" id="bz-bs-labels"></div>
       </div>
         <div class="bz-bs-tools">
-          <input id="bz-bs-dsearch" class="bz-bs-search" type="text" placeholder="检索书名或作者…" autocomplete="off">
+          <div class="bz-bs-searchbox">
+            <input id="bz-bs-dsearch" class="bz-bs-search" type="text" placeholder="检索书名或作者…" autocomplete="off">
+            <button type="button" class="bz-icon-btn bz-bs-search-clear" data-bs-search-clear title="清除检索" aria-label="清除检索" hidden>${iconSpan(ICON.close)}</button>
+          </div>
           <div class="bz-bs-seg" id="bz-bs-sortseg"></div>
           <div class="bz-bs-hint" id="bz-bs-hint"></div>
         </div>
