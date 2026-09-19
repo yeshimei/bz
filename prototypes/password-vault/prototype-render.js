@@ -1,4 +1,4 @@
-/* 源指纹 77d0f45dd1d18f88 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7c39ad57fb9a4790 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/password-vault/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/password-vault/render.ts → window.BZR_password_vault（评审壳预览包，ADR-0104） */
 var BZR_password_vault = (() => {
