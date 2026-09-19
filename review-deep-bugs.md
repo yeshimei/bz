@@ -775,7 +775,7 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ## attach（附件）域 · 审查入账中（方向 1 功能已到账；方向 2 UI / 3 效率运行中，4/5 待槽位）
 
-> 明细：`.scratch/review-deep/attach-func.md`。方向 1（func）：P2×1 + P3×4 + UX×1（无 P1）。旧账复核 2 条：F10 已修在位（data.ts:66-71，缺直接回归用例记测试缺口）；AT1（planMoves 冲突集不含文件夹）仍在未修并入报告。两个似是而非候选排除有据（md 链接 #page 锚点剥锚正确；HTML img 不收集属安全侧）。门禁基线：tsc 0；tests/attach + smoke 58 例全绿。
+> 明细：`.scratch/review-deep/attach-{func,efficiency}.md`。方向 1（func）：P2×1 + P3×4 + UX×1；方向 3（效率）：P2×1 + P3×4 + UX×3。旧账复核 2 条：F10 已修在位（data.ts:66-71，缺直接回归用例记测试缺口）；AT1（planMoves 冲突集不含文件夹）仍在未修并入报告。两个似是而非候选排除有据（md 链接 #page 锚点剥锚正确；HTML img 不收集属安全侧）。门禁基线：tsc 0；tests/attach + smoke 58 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
@@ -783,3 +783,6 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **P3 群（4 条）**：AF-2 wikilink 大小写不敏感解析缺失（`[[IMG.PNG]]` 漏搬）；AF-3 部分失败只有数字尾巴（哪几个仅 console.warn，notifyActionError+onRetry 未消费）；AF-4 命令入口不校验活动文件类型（右键菜单有校验命令没有，PDF 作活动文件报「失败」误导）；AF-5 CONTEXT.md:295 词条「无预览确认直接执行」与实现（可勾选清单预览确认）完全相反（主线程文档收口）。
 - **顺带**：AT1 planMoves 冲突集补文件夹形态 + F10 直接回归用例。
 - **UX 分流（AT 系）**：AF-S1 预览清单弹窗接 bindFormSubmit（Ctrl/⌘+Enter 确认）。
+- **P2 一条搬移动线三次全量重复计算**（EFF-1）——collectResources 在前置/onConfirm/runMove 各跑一遍 + 逐引用对全库文件线性匹配（O(引用×全库文件)），大库移动端可感知且扫描零反馈。修：单次计算结果传递 + 匹配索引化。
+- **P3 群（eff 4 条）**：EFF-2 预览清单无全选/反选/类型筛选 + 大清单无渲染护栏（core path-picker LIMIT=300 先例）；EFF-3 ESC/遮罩误关丢全部勾选（uiModal requestClose 脏拦截，belongings 先例）；EFF-4 撤销批量回滚无进度（与正向 i/N 不对称）；EFF-5 批量执行无「中止」出口。
+- **UX 增补（AT 系）**：UX-1 已全部在目标文件夹时前置预判预告；UX-2 取消勾选行置灰反馈；UX-3 重复搬移跳过预览快捷通道。
