@@ -15,7 +15,7 @@
  */
 import type { App } from 'obsidian';
 import { DiaryAppController } from './ui';
-import { loadWallEntries, resetWallCache } from './data';
+import { loadWallEntries, invalidateWallCache } from './data';
 import { createAddDialog, createTagPicker, openAddDialog } from './ui/dialogs';
 
 let initialized = false;
@@ -76,7 +76,7 @@ export function unloadDiary(): void {
   controller = null;
   initialized = false;
   prewarmed = false;
-  resetWallCache(); // ②：复位墙数据缓存 + 摘域事件失效订阅，重新启用插件时重新预热
+  invalidateWallCache(); // ②：复位墙数据缓存 + 摘域事件失效订阅，重新启用插件时重新预热
   document.getElementById('diary-tag-selector-mask')?.remove();
   document.getElementById('add-diary-mask')?.remove();
 }

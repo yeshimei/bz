@@ -40,7 +40,7 @@ import { onDomainEvent, emitDomainEvent } from '../core/domain-bus';
 import { openFlowDialog } from '../core/flow-dialog';
 import { notice } from '../core/notice';
 import { getApp } from '../core/app';
-import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
+import { DIARY_DIRECTORY, LETTER_DIRECTORY, movieDirectory, bookDirectory, inWallDirs, getSubTagsOfPrimary, getPrimaryTagsInDisplayOrder, getTagEmoji } from './config';
 import { loadWallEntries, invalidateWallCache, mediaSrc, groupByMonth, pickOnThisDay, extractMedia, extractSegments, stripMediaLinks, type WallEntry, type WallMedia } from './data';
 import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRailThumb, makeImageThumb, makeVideoThumb } from './thumb-cache';
 // markup 单源（ADR-0104）：壳模板/图标表/MIME/统计/题注在 render.ts，原型壳与插件同源消费
@@ -264,8 +264,9 @@ export class DiaryAppController {
    *  两者都没变才允许对既有卡片 toggle display（否则卡片集合与 widx 不对应） */
   private _wallBaseRef: WallEntry[] | null = null;
   private _wallBaseKey = '';
-  /** ②：仅首开（show）允许命中预热缓存秒开；其余 loadAndRender（刷新/写后回刷/重试）默认强制回源，
-   *  保持「除首开外每次读盘」原语义。show 置真、loadAndRender 消费后复位 */
+  /** ②：开墙（show）路径允许命中预热/上次刷新后的缓存秒开（含关墙后再开）；其余 loadAndRender
+   *  （刷新/写后回刷/重试）恒先 invalidateWallCache 回源，保持「每次刷新即读盘」原语义。
+   *  show 置真、loadAndRender 消费后复位 */
   private _allowCacheNext = false;
 
   // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
@@ -2441,7 +2442,7 @@ export class DiaryAppController {
     this.subscribeWriteEvents(); // 写链路域事件防抖回刷（含整文件删除等 vault delete 无 modify 的路径）
     this.subscribeRefSync(); // issue 339：改名/删除内存路径同步
     // 增强 #11：loadAndRender 完成后一次性恢复跳走前的筛选与滚动位置
-    // ②：开墙首读允许命中预热缓存秒开（闭合期写改已由 domain-bus 事件作废缓存，不会读到脏数据）
+    // ②：开墙读允许命中预热/上次刷新后的缓存秒开（闭合期写改已由 domain-bus 事件作废缓存，不会读到脏数据）
     this._allowCacheNext = true;
     void this.loadAndRender().then(() => this.applyRestore());
   }
@@ -2527,10 +2528,6 @@ export class DiaryAppController {
    */
   private subscribeRefSync(): void {
     if (this._refSyncOff) return;
-    const inWallDirs = (p: string) =>
-      [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
-        (d) => p.startsWith(d + '/') || p === d + '.md'
-      );
     const offRename = onDomainEvent<{ oldPath: string; newPath: string }>('vault:md-renamed', (evt) => {
       const oldPath = (evt as { oldPath?: string } | null)?.oldPath || '';
       const newPath = (evt as { newPath?: string } | null)?.newPath || '';
@@ -2598,12 +2595,11 @@ export class DiaryAppController {
   }
 
   /** DW3：vault modify 自动刷新（clipbook 同款模式）——墙开着时日记/影视/信/书被编辑 → 防抖重读重渲染；
-   *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效）；隐藏期不订阅不刷新。
+   *  只关心四个数据源目录（影视/书库实时解析，D6：改影院/书架目录后新目录即刻生效；判定单源 config.inWallDirs）；
+   *  隐藏期不订阅不刷新。
    *  N5：create（外部新建/拖入/其他工具写入条目文件）同路回刷——此前纯外部变更是盲区，直到手动重开面板。 */
   private subscribeVaultModify(): void {
     if (this._modifyRef) return;
-    const dirs = () => [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()];
-    const hit = (p: string) => dirs().some((d) => p.startsWith(d + '/') || p === d + '.md');
     const schedule = () => {
       if (this._modifyTimer !== null) clearTimeout(this._modifyTimer);
       this._modifyTimer = setTimeout(() => {
@@ -2615,13 +2611,13 @@ export class DiaryAppController {
     this._modifyRef = this.app().vault.on('modify', (file: { path?: string }) => {
       const p = (file as { path?: string } | null)?.path;
       if (!p || this.root?.style.display !== 'flex') return;
-      if (!hit(p)) return;
+      if (!inWallDirs(p)) return;
       schedule();
     });
     this._createRef = this.app().vault.on('create', (file: { path?: string }) => {
       const p = (file as { path?: string } | null)?.path;
       if (!p || this.root?.style.display !== 'flex') return;
-      if (!hit(p)) return;
+      if (!inWallDirs(p)) return;
       schedule();
     });
   }
@@ -2653,7 +2649,7 @@ export class DiaryAppController {
     // 效率#13：数据读取期间墙区骨架占位（大库首屏不再是一段「看起来像空库」的空白期）
     this.showSkeleton();
     try {
-      // ②：仅首开（_allowCacheNext）命中预热缓存秒开；其余一律先作废缓存回源读盘，
+      // ②：开墙路径（_allowCacheNext）命中缓存秒开；其余（刷新/写后回刷/重试）一律先作废回源，
       //    保持「每次刷新/写后回刷即读盘」原语义（不依赖缓存失效是否触发）
       if (this._allowCacheNext) {
         this._allowCacheNext = false;

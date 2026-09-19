@@ -8,7 +8,6 @@ import {
   groupByMonth,
   loadWallEntries,
   invalidateWallCache,
-  resetWallCache,
   mediaSrc,
   pickOnThisDay,
   stripMediaLinks,
@@ -49,11 +48,11 @@ function makeApp(files: Record<string, string>) {
 beforeEach(() => {
   resetTagsConfig();
   buildTagMaps();
-  resetWallCache(); // ②：每例清缓存与域事件订阅，防跨例泄漏（模块级单例缓存）
+  invalidateWallCache(); // ②：每例清缓存与域事件订阅，防跨例泄漏（模块级单例缓存）
 });
 
 afterEach(() => {
-  resetWallCache();
+  invalidateWallCache();
 });
 
 describe('extractSegments（issue 213：按原文顺序分段）', () => {
@@ -658,11 +657,11 @@ describe('② 墙数据缓存（预热用，按 app 键控 + domain-bus 事件�
     expect(reads()).toBe(2);
   });
 
-  it('四目录内 md 变更（domain-bus 事件）自动作废缓存', async () => {
+  it('四目录内 md 变更（domain-bus 通用路事件）自动作废缓存', async () => {
     const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
     const reads = spyRead(app);
     await loadWallEntries(app);
-    emitDomainEvent('diary:file-modified', { path: '我的/日记/2401010800.md' });
+    emitDomainEvent('vault:md-modified', { path: '我的/日记/2401010800.md' });
     await loadWallEntries(app);
     expect(reads()).toBe(2); // 事件已作废旧缓存 → 重新读盘
   });
@@ -674,6 +673,35 @@ describe('② 墙数据缓存（预热用，按 app 键控 + domain-bus 事件�
     emitDomainEvent('vault:md-modified', { path: '其他/笔记.md' });
     await loadWallEntries(app);
     expect(reads()).toBe(1); // 目录外事件：仍命中缓存
+  });
+
+  it('并发调用在途去重：预热与开墙并发时只读一盘', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    const [a, b] = await Promise.all([loadWallEntries(app), loadWallEntries(app)]);
+    expect(reads()).toBe(1); // 第二路命中在途 promise，不重复读盘
+    expect(a).toBe(b); // 同一结果引用
+  });
+
+  it('读盘期被事件作废：本轮结果不落缓存，下次调用回源重取', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    const reads = spyRead(app);
+    const p = loadWallEntries(app); // 在读盘进行中（不 await）
+    emitDomainEvent('vault:md-modified', { path: '我的/日记/2401010800.md' }); // 并发编辑
+    await p;
+    await loadWallEntries(app);
+    expect(reads()).toBe(2); // 在途轮被作废未落缓存 → 第二次回源
+  });
+
+  it('加载失败不缓存：拒绝后下次调用重新读盘（无残留态）', async () => {
+    const app = makeApp({ '我的/日记/2401010800.md': entry('2024-01-01', '08:00', ['日记'], 'x') });
+    // 单文件读取失败会被 readBatch 吞掉进 warnFailedBatch；改用列举阶段的抛错触达「异常即重抛」路径
+    const spy = vi.spyOn(app.vault, 'getAbstractFileByPath').mockImplementationOnce(() => {
+      throw new Error('disk boom');
+    });
+    await expect(loadWallEntries(app)).rejects.toThrow('disk boom');
+    spy.mockRestore(); // 恢复后重新读盘
+    await expect(loadWallEntries(app)).resolves.toHaveLength(1);
   });
 
   it('换 app 调用即失效（按 app 键控）', async () => {

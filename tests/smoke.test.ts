@@ -7,6 +7,7 @@ import BzPlugin, { BzSettingTab } from '../src/main';
 import { MockVault } from './mock-vault';
 import { resetObsidianMocks, getNoticeMessages, hasNotice, clearNotices } from './mock-obsidian-entry';
 import { notify } from '../src/core/notice';
+import { serializeDiaryEntryFile } from '../src/core/diary-format';
 
 // ai-agent 域解散后的新注册点隔离：ensureMemoFileSync/ensureFavoritesFileSync 换 spy
 // （vi.mock 局部替换，其余导出保持真实实现，命令回调冒烟等用例不受影响）
@@ -294,16 +295,36 @@ describe('bz 骨架冒烟', () => {
     expect(document.getElementById('add-diary-mask')).toBeNull();
   });
 
-  it('日记本后台预热（②）：prewarmDiary 幂等不抛、只热数据不建 DOM（ADR-0003 兼容）', async () => {
+  it('日记本后台预热（②）：启动调度真实读盘填缓存、只热数据不建 DOM；unload 复位（ADR-0003 兼容）', async () => {
     const app = makeMockApp();
-    await createPlugin(app);
-    const { prewarmDiary, unloadDiary } = await import('../src/diary');
-    // isUnloaded 恒真 → 到点短路，不触发真实读盘（预热是加速，失败/短路都不该冒到 UI）
-    expect(() => prewarmDiary(app as any, () => true)).not.toThrow();
-    expect(() => prewarmDiary(app as any, () => true)).not.toThrow(); // 幂等：二次不重复调度
+    const vault = app.vault as MockVault;
+    vault.files.set(
+      '我的/日记/2601010800.md',
+      serializeDiaryEntryFile({ date: '2026-01-01', time: '08:00' }, ['日记'], '预热样张')
+    );
+    let diaryReads = 0;
+    const real = vault.read.bind(vault);
+    vi.spyOn(vault, 'read').mockImplementation(async (f: any) => {
+      if (f && typeof f.path === 'string' && f.path.startsWith('我的/日记/')) diaryReads++;
+      return real(f);
+    });
+    const plugin = await createPlugin(app); // onLayoutReady（mock 同步回调）内已调度 prewarmDiary
+    const { prewarmDiary } = await import('../src/diary');
+    expect(() => prewarmDiary(app as any, () => false)).not.toThrow(); // 幂等：已调度过，二次调用不抛
+    // 等 rAF + setTimeout(0) 一拍落地（预热真实读盘）
+    const t0 = Date.now();
+    while (diaryReads === 0 && Date.now() - t0 < 1000) await new Promise((r) => setTimeout(r, 10));
+    expect(diaryReads).toBeGreaterThan(0); // 预热真的走到了读盘
     // 关键不变量：预热只读数据，绝不拉起日记本面板 DOM
     expect(document.querySelector('.bz-diary')).toBeNull();
-    unloadDiary();
+    const { loadWallEntries } = await import('../src/diary/data');
+    const before = diaryReads;
+    const entries = await loadWallEntries(app as any); // 开墙首读命中预热缓存
+    expect(entries.some((e) => e.content.includes('预热样张'))).toBe(true);
+    expect(diaryReads).toBe(before); // 命中缓存，不再读盘
+    await plugin.onunload(); // unloadDiary → 缓存/订阅复位
+    await loadWallEntries(app as any);
+    expect(diaryReads).toBeGreaterThan(before); // 复位后重新读盘
   });
 
   it('onunload 清理 toast 容器（UX 整改 l2-toast）', async () => {
