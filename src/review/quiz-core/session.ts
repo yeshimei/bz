@@ -1,14 +1,18 @@
 /**
  * 做题家 UI（ticket 17 修正版：对齐源码 QuizMasterUI 逐字）
  * 模块单例 quizUI（复习域联动）。
+ * 深审批 C（2026-09-19）：U1 放弃确认在途 confirming 旗标拦截键盘穿透；U建5 答对持久化失败
+ * 恢复作答态时清正确项高亮；U5/C7 ESC 层 id 改 'bz-review-quiz' + handle 存实例、
+ * _teardownModal 显式注销（消 N 题累积）；C9 删题失败文案收口 notifyActionError；
+ * A5 删生产死链 updateQuiz（quiz-core/index.quizUpdate 同批删）。
  */
 import type { App } from 'obsidian';
-import { notice, notify } from '../../core/notice';
+import { notice, notify, notifyActionError } from '../../core/notice';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { escManager } from '../../core/esc-manager';
 import { allocZ } from '../../core/z-order';
 import { getApp } from '../../core/app';
-import { QuizManager, loadActiveItems } from './manager';
+import { QuizManager } from './manager';
 import { QuestionGenerator } from './generator';
 import { escapeHtml } from '../../core/utils';
 import type { QuizQuestion } from './manager';
@@ -71,6 +75,11 @@ export class QuizMasterUI {
   private _keyHandler: ((e: KeyboardEvent) => void) | null = null;
   /** ticket 156：答对自动跳题延时句柄（亮绿 0.8s 再进下一题） */
   private _jumpTimer: ReturnType<typeof setTimeout> | null = null;
+  /** U5/C7：题面 ESC 层句柄（renderModal 注册、_teardownModal 显式注销——消 N 题层累积） */
+  private _escHandle: { unregister: () => void } | null = null;
+  /** U1：放弃确认框在途旗标——打开置位、settle 复位；_keyHandler/finishQuiz 首行拦截，
+   *  防确认框期间 Enter/1-4 穿透题面（确认框不关、底下会话被键盘走完） */
+  private confirming = false;
 
   shuffleArray<T>(arr: T[]): T[] {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -80,37 +89,8 @@ export class QuizMasterUI {
     return arr;
   }
 
-  /** 更新题库（基于活跃笔记，空题目则生成；失败 Notice 逐字） */
-  async updateQuiz(): Promise<void> {
-    const app = getApp();
-    try {
-      const activeItems = await loadActiveItems(app);
-      if (!activeItems.length) {
-        // G3：全清走 RMW 事务（基于磁盘现值清空 notes，不整体覆盖并发写）
-        await this.manager.mutateQuiz(app, (quiz) => {
-          for (const notePath of Object.keys(quiz.notes)) delete quiz.notes[notePath];
-        });
-        return;
-      }
-
-      const activePaths = new Set(activeItems.map((i: any) => i.filePath));
-      // G3：删除已不在活跃列表中的笔记条目——RMW 事务基于磁盘现值删，不再用陈旧快照整体覆盖
-      await this.manager.mutateQuiz(app, (quiz) => {
-        for (const notePath of Object.keys(quiz.notes)) {
-          if (!activePaths.has(notePath)) {
-            delete quiz.notes[notePath];
-          }
-        }
-      });
-
-      // 2. 为缺少题目的笔记批量生成
-      const notePaths = activeItems.map((i: any) => i.filePath);
-      await this.ensureQuestions(notePaths);
-    } catch (e: any) {
-      notice('更新题库失败：' + e.message + '，请重试', 'error');
-      console.error(e);
-    }
-  }
+  /** A5（深审批 C）：updateQuiz 删除——「更新题库」入口已随 ADR-0045 退役，
+   *  quiz-core/index.quizUpdate → 本方法 → manager.loadActiveItems 整链生产死（仅测试直达）。 */
 
   /** 确保指定笔记都有题目（源码 L346-398 逐字） */
   async ensureQuestions(notePaths: string[]): Promise<void> {
@@ -196,6 +176,7 @@ export class QuizMasterUI {
    */
   startReviewSession(opts: { questions: QuizQuestion[]; onComplete: ((results: QuizReviewResults) => void) | null }): void {
     this._sessionActive = true;
+    this.confirming = false; // U1 防御：上一轮强制 close 时若确认框在途，新会话不复用旧旗标
     const shuffle = QuizMasterUI.settings?.shuffleQuestions !== false;
     this.currentQuestions = shuffle ? this.shuffleArray([...opts.questions]) : [...opts.questions];
     this.currentIndex = 0;
@@ -266,7 +247,8 @@ export class QuizMasterUI {
 
     mask.appendChild(popup);
     document.body.appendChild(mask);
-    escManager.register('quiz', {
+    // U5/C7：句柄存实例字段（_teardownModal 显式注销，消 N 题层累积）；id 归 `bz-<域>` 约定
+    this._escHandle = escManager.register('bz-review-quiz', {
       isVisible: () => !!(this.mask && this.mask.isConnected),
       close: () => this.finishQuiz(),
     });
@@ -283,6 +265,8 @@ export class QuizMasterUI {
   private _bindKeyboard(): void {
     this._unbindKeyboard();
     this._keyHandler = (e: KeyboardEvent) => {
+      // U1：放弃确认框在途 → 键盘不穿透题面（Enter/1-4/A-D 一律忽略，确认框按钮走原生焦点）
+      if (this.confirming) return;
       if (!this.mask || !this.mask.isConnected) return;
       const target = e.target as HTMLElement | null;
       if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'BUTTON')) return;
@@ -352,7 +336,8 @@ export class QuizMasterUI {
             });
             this._answerCorrect(q, app, () => {
               answeredRef.value = false;
-              optionElements.forEach((b) => b.classList.remove('disabled'));
+              // U建5：恢复作答态须同时熄掉正确项高亮——不亮答案，可无痕重答
+              optionElements.forEach((b) => b.classList.remove('disabled', 'correct'));
             });
           } else {
             // 答错：显示正确答案，仅移出本轮会话（不落盘删除，留给重做队列），「下一题」按钮继续
@@ -407,7 +392,8 @@ export class QuizMasterUI {
           this._answerCorrect(q, app, () => {
             answeredRef.value = false;
             submitBtn.disabled = false;
-            optionElements.forEach((b) => b.classList.remove('disabled'));
+            // U建5：同单选——恢复作答态清正确项高亮（多选同病灶，一并收口）
+            optionElements.forEach((b) => b.classList.remove('disabled', 'correct'));
           });
         } else {
           // 答错：同单选——仅移出本轮会话（不落盘删除），「下一题」按钮继续
@@ -442,7 +428,8 @@ export class QuizMasterUI {
         }, CORRECT_JUMP_DELAY_MS);
       })
       .catch((e) => {
-        notice('删除题目失败：' + e.message + '，请重试', 'error');
+        // C9：错误文案走 core 单源（不再手拼「X失败：msg，请重试」）
+        notifyActionError(e, '删除题目');
         onFailRestore();
       });
   }
@@ -488,9 +475,12 @@ export class QuizMasterUI {
     popup.appendChild(nextBtn);
   }
 
-  /** 仅拆除弹窗 DOM（换题/结果卡等内部过渡用，不走结算语义；连带注销键盘监听） */
+  /** 仅拆除弹窗 DOM（换题/结果卡等内部过渡用，不走结算语义；连带注销键盘监听与 ESC 层） */
   private _teardownModal(): void {
     this._unbindKeyboard();
+    // U5/C7：显式注销 ESC 层——换题每题注册一次，不注销则层随题数在栈中累积
+    this._escHandle?.unregister();
+    this._escHandle = null;
     if (this.mask && this.mask.parentNode) this.mask.remove();
     this.mask = null;
     this.popup = null;
@@ -503,6 +493,9 @@ export class QuizMasterUI {
    */
   finishQuiz(): void {
     if (!this._sessionActive || !this.onComplete) return;
+    // U1：确认框在途防重入（连点遮罩/ESC 不再重开第二个确认框）
+    if (this.confirming) return;
+    this.confirming = true;
     void openFlowDialog({
       title: '放弃本次做题？',
       message: '未完成的题目将丢弃，本次复习将按已答题目结算评级',
@@ -513,6 +506,7 @@ export class QuizMasterUI {
         { label: '放弃', value: 'ok', cta: true },
       ],
     }).then((v) => {
+      this.confirming = false; // U1：settle 复位（取消/确认都走这里）
       if (v !== 'ok') return;
       this._clearJumpTimer();
       const cb = this.onComplete;

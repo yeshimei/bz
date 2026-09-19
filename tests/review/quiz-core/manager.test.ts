@@ -1,12 +1,15 @@
 /**
  * 做题家数据层测试（ticket 17 修正版）：async 读盘接口/removeQuestion 不删空键
+ * A5（深审批 C）：loadActiveItems/getUncompletedQuestions/getAllQuestions/REVIEW_DATA_PATH/
+ * getReviewDataPath 死代码链删除——对应用例删或改走 loadQuiz 断言，不给死代码续命。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault, mockAppWithVault } from '../../mock-vault';
 import { resetObsidianMocks } from '../../mock-obsidian-entry';
 import { setApp } from '../../../src/core/app';
 import { setSettingsProvider } from '../../../src/core/settings-provider';
-import { QuizManager, QUIZ_FILE_PATH, loadActiveItems, REVIEW_DATA_PATH, getQuizFilePath, getReviewDataPath } from '../../../src/review/quiz-core/manager';
+import { getReviewFilePath } from '../../../src/review/data';
+import { QuizManager, QUIZ_FILE_PATH, getQuizFilePath } from '../../../src/review/quiz-core/manager';
 
 describe('QuizManager', () => {
   beforeEach(() => {
@@ -15,7 +18,7 @@ describe('QuizManager', () => {
     document.body.innerHTML = '';
   });
 
-  it('saveQuestionsForNote → getUncompletedQuestions 往返（补 notePath/_index，无 completed）', async () => {
+  it('saveQuestionsForNote 往返（落盘无 completed 运行时字段）', async () => {
     const vault = new MockVault();
     const app = mockAppWithVault(vault);
     setApp(app);
@@ -27,11 +30,9 @@ describe('QuizManager', () => {
     const raw = JSON.parse(vault.files.get(QUIZ_FILE_PATH)!);
     expect(raw.notes['A.md']).toHaveLength(2);
     expect(raw.notes['A.md'][0].completed).toBeUndefined();
-    const all = await qm.getUncompletedQuestions(app);
-    expect(all).toHaveLength(2);
-    expect(all[0].notePath).toBe('A.md');
-    expect(all[0]._index).toBe(0);
-    expect(all[1]._index).toBe(1);
+    const quiz = await qm.loadQuiz(app);
+    expect(quiz.notes['A.md']).toHaveLength(2);
+    expect(quiz.notes['A.md'][0].question).toBe('Q1');
   });
 
   it('removeQuestion 稳定定位（P0-2）：按题目内容定位删除，不依赖下标；空键保留', async () => {
@@ -52,7 +53,7 @@ describe('QuizManager', () => {
     await qm.removeQuestion(app, 'A.md', { question: 'Q1', options: ['a', 'b', 'c', 'd'], correctIndices: [0] });
     const quiz = await qm.loadQuiz(app);
     expect(quiz.notes['A.md']).toEqual([]);
-    expect(await qm.getUncompletedQuestions(app)).toHaveLength(0);
+    expect(quiz.notes['A.md']).toHaveLength(0);
   });
 
   it('removeQuestion：correctIndices 顺序不敏感；目标不在库中 → 静默成功（终态已达成）', async () => {
@@ -143,23 +144,6 @@ describe('QuizManager', () => {
     const qm = new QuizManager();
     expect(await qm.getQuestionsForNote(app, 'X.md')).toBeNull();
   });
-
-  it('loadActiveItems：读 review.json 过滤 completed', async () => {
-    const vault = new MockVault();
-    const now = new Date();
-    vault.files.set(REVIEW_DATA_PATH, JSON.stringify([
-      { filePath: 'A.md', completed: false },
-      { filePath: 'B.md', completed: true },
-      null,
-    ]));
-    const app = mockAppWithVault(vault);
-    setApp(app);
-    const items = await loadActiveItems(app);
-    expect(items).toHaveLength(1);
-    expect(items[0].filePath).toBe('A.md');
-    expect(items).toHaveLength(1);
-    expect(items[0].filePath).toBe('A.md');
-  });
 });
 
 describe('数据文件路径设置', () => {
@@ -170,10 +154,11 @@ describe('数据文件路径设置', () => {
     expect(getQuizFilePath()).toBe('CONFIG/STORAGE/quiz.json');
   });
 
-  it('getReviewDataPath 读取 storagePath 设置，缺省回退 CONFIG/STORAGE', () => {
+  it('C8：review.json 路径单源——getQuizFilePath 与 data.getReviewFilePath 同目录口径', () => {
     setSettingsProvider(() => ({ storagePath: '自定义/数据' }) as any);
-    expect(getReviewDataPath()).toBe('自定义/数据/review.json');
+    expect(getQuizFilePath()).toBe('自定义/数据/quiz.json');
+    expect(getReviewFilePath()).toBe('自定义/数据/review.json');
     setSettingsProvider(() => ({} as any));
-    expect(getReviewDataPath()).toBe('CONFIG/STORAGE/review.json');
+    expect(getReviewFilePath()).toBe('CONFIG/STORAGE/review.json');
   });
 });

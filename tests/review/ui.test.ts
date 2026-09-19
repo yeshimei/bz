@@ -74,7 +74,7 @@ describe('UIManager 三区队列', () => {
     vi.restoreAllMocks(); // spy 跨用例/重试累积清零
   });
 
-  it('构造即建常驻 DOM（display none）+ zIndex 发号', () => {
+  it('构造即建常驻 DOM（display none）；构造期不发号，showMain 时才 topifyZ 发号', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
@@ -85,10 +85,14 @@ describe('UIManager 三区队列', () => {
     expect(mask).not.toBeNull();
     expect(popup).not.toBeNull();
     expect(mask.style.display).toBe('none');
-    expect(Number.isFinite(parseInt(mask.style.zIndex, 10))).toBe(true);
+    // C15（ADR-0067 仅显示时发号）：display:none 壳构造期不占号
+    expect(mask.style.zIndex).toBe('');
+    expect(popup.style.zIndex).toBe('');
     expect(document.getElementById('review-entries-container')).not.toBeNull();
     // 无 .bz-win-head 头行按钮组（拍板去按钮）
     expect(popup.querySelector('.bz-win-head')).toBeNull();
+    await ui.showMain();
+    expect(mask.style.zIndex).not.toBe(''); // 显示路径 topifyZ 发号
     ui.destroy();
     expect(document.getElementById('review-mask')).toBeNull();
   });
@@ -161,7 +165,7 @@ describe('UIManager 三区队列', () => {
     ui.destroy();
   });
 
-  it('难度弹窗（评分命令用）：按钮触发 onSelect + XSS 文件名转义', async () => {
+  it('难度弹窗（openFlowDialog choice 形态）：按钮触发 onSelect + XSS 文件名转义', async () => {
     const vault = new MockVault();
     seed(vault);
     const { dm, ui } = await makeUI(vault);
@@ -169,12 +173,17 @@ describe('UIManager 三区队列', () => {
     const evil = { ...items[0], name: '<img src=x onerror=alert(1)>' };
     const onSelect = vi.fn();
     ui.showDifficultyDialog(evil, onSelect);
-    const dlg = document.querySelector('.difficulty-dialog')!;
-    expect(dlg.textContent).toContain('标记复习');
-    expect(dlg.querySelector('img')).toBeNull(); // XSS 转义
-    (dlg.querySelector('.diff-btn[data-diff="good"]') as HTMLElement).click();
-    expect(onSelect).toHaveBeenCalledWith('good');
+    // U4/A4：迁 core flow-dialog choice 形态——不再产出旧自绘 .difficulty-dialog
     expect(document.querySelector('.difficulty-dialog')).toBeNull();
+    const popup = document.getElementById('__shared_confirm_popup__')!;
+    expect(popup.textContent).toContain('标记复习');
+    expect(popup.querySelector('img')).toBeNull(); // XSS 转义
+    const actions = popup.querySelectorAll('.bz-flow-dialog-action');
+    expect(actions.length).toBe(5); // 四档 + 取消
+    (actions[2] as HTMLElement).click(); // 一般（Good）
+    await Promise.resolve(); // settle → promise 微任务
+    expect(onSelect).toHaveBeenCalledWith('good');
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull();
     ui.destroy();
   });
 

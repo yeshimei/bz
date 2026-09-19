@@ -3,6 +3,8 @@
  * G3：quiz.json 全部读改写事务收编 core per-path 串行队列（与 review.json D3 原语 1 同法，
  * enqueueFileTask 键 = quiz.json 路径）——AI 批量出题长耗时窗口内的并发删题（答题出库）与
  * 批量写回按序落盘，写回方不再用陈旧快照覆盖（答对的题复活）。纯读方法保持无锁原语。
+ * C8：review.json 路径不再在此另持解析链——单源 = review/data.getReviewFilePath
+ * （manager.test 钉住两者同 storagePath 口径；本文件只管 quiz.json 自身路径）。
  */
 import type { App } from 'obsidian';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../../core/storage';
@@ -10,22 +12,11 @@ import { tryGetSettings } from '../../core/settings-provider';
 
 /** 默认数据文件路径 */
 export const QUIZ_FILE_PATH = 'CONFIG/STORAGE/quiz.json';
-export const REVIEW_DATA_PATH = 'CONFIG/STORAGE/review.json';
 
-/** 共享数据目录（ADR-0009；trim 收敛至 storageFile） */
-function storageDir(): string {
-  const s = tryGetSettings() as any;
-  return (s && s.storagePath) || 'CONFIG/STORAGE';
-}
-
-/** 做题家数据文件路径 */
+/** 做题家数据文件路径（与复习计划共用 storagePath，解析口径与 data.getReviewFilePath 同式） */
 export function getQuizFilePath(): string {
-  return storageFile('quiz.json', storageDir());
-}
-
-/** 复习数据文件路径（设置可配，默认 CONFIG/STORAGE/review.json） */
-export function getReviewDataPath(): string {
-  return storageFile('review.json', storageDir());
+  const s = tryGetSettings() as any;
+  return storageFile('quiz.json', (s && s.storagePath) || 'CONFIG/STORAGE');
 }
 
 export interface QuizQuestion {
@@ -36,13 +27,6 @@ export interface QuizQuestion {
   explain?: string;
   notePath?: string;
   _index?: number;
-}
-
-/** 复习数据读取（源码做题家.js 内嵌 ReviewDataManager L16-28） */
-export async function loadActiveItems(app: App): Promise<any[]> {
-  const data = await jsonFileStore<any[]>(getReviewDataPath(), { app }).read();
-  const items = Array.isArray(data) ? data : [];
-  return items.filter((f: any) => f && !f.completed);
 }
 
 /** 题目同一性判断（P0-2 稳定定位）：question + options 逐项相等，correctIndices 视为集合 */
@@ -134,22 +118,5 @@ export class QuizManager {
       list.splice(idx, 1);
       return undefined as void;
     });
-  }
-
-  /** 源码 L59-72：遍历补 notePath/_index */
-  async getUncompletedQuestions(app: App): Promise<QuizQuestion[]> {
-    const quiz = await this.loadQuiz(app);
-    const out: QuizQuestion[] = [];
-    for (const [notePath, questions] of Object.entries(quiz.notes)) {
-      questions.forEach((q, i) => {
-        out.push({ ...q, notePath, _index: i });
-      });
-    }
-    return out;
-  }
-
-  /** 源码 L74-87 */
-  async getAllQuestions(app: App): Promise<QuizQuestion[]> {
-    return this.getUncompletedQuestions(app);
   }
 }

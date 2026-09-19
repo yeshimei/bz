@@ -13,7 +13,7 @@
  * 依赖方向：只依赖 data/fsrs 类型（纯数据层，可 node 环境直测）。
  */
 import type { ReviewItem } from './data';
-import { FSRS, DEFAULT_W } from './fsrs';
+import { DEFAULT_W, currentR } from './fsrs';
 import { dateKey } from './stats';
 
 /** R 阈值缺省值（设置 reviewRThreshold 未配置/非法时的回退；markReview 放行、开始本轮、三区列共用） */
@@ -26,12 +26,11 @@ export function isDueToday(item: ReviewItem): boolean {
   return dateKey(new Date(item.nextReviewDate)) === dateKey(new Date());
 }
 
-/** R 阈值提前复习判定：fsrs 相位 + 可算 R + R<threshold（与 markReview 放行、调度排期同口径） */
+/** R 阈值提前复习判定：fsrs 相位 + 可算 R + R<threshold（与 markReview 放行、调度排期同口径）。
+ *  A7 审查修复：当前 R 计算收编 fsrs.currentR 单源（原五处同式复写之一）。 */
 export function isEarlyDue(item: ReviewItem, rThreshold: number, w: number[]): boolean {
-  if (item.phase !== 'fsrs' || !item.stability || !item.lastReviewed) return false;
-  const t = (Date.now() - new Date(item.lastReviewed).getTime()) / 86400000;
-  if (!(t > 0)) return false;
-  return new FSRS(w).R(t, item.stability) < rThreshold;
+  const r = currentR(item, w);
+  return r !== null && r < rThreshold;
 }
 
 /** 队列条目可用性：非完成非挂起（分区前置过滤） */

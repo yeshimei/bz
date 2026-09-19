@@ -9,11 +9,11 @@
  * 纯度契约（tests/core/render-purity.test.ts）：import 图仅限本域 + 零模块级可变状态；
  * 禁 obsidian/moment/core 服务。日期一律「now 参数注入」——可测、可评审壳重放。
  */
-import { emptyHtmlStr } from '../core/ui/str';
+import { emptyHtmlStr, esc, iconSpan } from '../core/ui/str';
 import type { ReviewItem } from './data';
 import { FSRS, DEFAULT_W, TOTAL_STAGES } from './fsrs';
 import { partitionQueue, isEarlyDue } from './queue';
-import { computeStats } from './stats';
+import { computeStats, RATING_NAMES } from './stats';
 
 /** 题面结构面（对齐 quiz-core/manager 的 QuizQuestion；此处只读 markup 所需字段） */
 interface QuestionLike {
@@ -23,16 +23,10 @@ interface QuestionLike {
   explain?: string;
 }
 
-const ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-/** HTML 转义（评审壳与插件同源；勿在两侧另写） */
-export function esc(s: string): string {
-  return String(s).replace(/[&<>"']/g, (c) => ESC[c]);
-}
-
-/** lucide 占位（默认挂 .bz-q-ic 域内尺寸钩子；渲染后组件库 mountIcons 统一替换） */
-export function icon(name: string, extra = 'bz-q-ic'): string {
-  return `<span class="bz-ic${extra ? ' ' + extra : ''}" data-lucide="${name}"></span>`;
-}
+// C4/A8：本地 ESC_MAP + esc() + icon() 已删——转义/图标占位收编 core/ui/str 单源
+// （esc / iconSpan `<i data-lucide>`；mountIcons 按 [data-lucide] 属性兑现、class 原样保留，
+// 与标签名无关，样式均挂 .bz-ic/.bz-q-ic/.bz-sprint-ic 类，span→i 无行为差异）。
+// 原 icon() 默认类 bz-q-ic 的调用点改为 iconSpan(name, 'bz-q-ic')。
 
 /** 对错标记（lucide check/x 占位；尺寸随 .bz-mark 字号档） */
 export function markHtml(kind: 'ok' | 'bad', size: '' | 'lg' = ''): string {
@@ -48,19 +42,24 @@ export function todayLabel(now: Date = new Date()): string {
 
 // ==================== 到期/阶段口径 ====================
 
+/** 未来倒计时口径单源（F4）：>0 的毫秒差 → 天/小时/分钟档「N 后」文案。
+ *  dueLabelOf 到期标签与 sprint 结果卡「下次 N 后」共用——分钟档 Math.max(1,…)
+ *  保底「1 分钟后」，短间隔不再被天数档吞成假「1 天后」 */
+export function futureInLabel(diffMs: number): string {
+  const days = Math.floor(diffMs / 86400000);
+  const hours = Math.floor((diffMs % 86400000) / 3600000);
+  if (days > 0) return `${days} 天后`;
+  if (hours > 0) return `${hours} 小时后`;
+  return `${Math.max(1, Math.floor(diffMs / 60000))} 分钟后`;
+}
+
 /** 到期标签（missing → 文件缺失；无排期 → 待定；未来按 天/小时/分钟；其余已逾期） */
 export function dueLabelOf(item: ReviewItem, now: number = Date.now()): { label: string; cls: string } {
   if (item.isMissing) return { label: '文件缺失', cls: 'is-missing' };
   if (item.isCompleted) return { label: '已完成', cls: 'is-done' };
   if (!item.nextReviewDate) return { label: '待定', cls: 'is-future' };
   const diff = new Date(item.nextReviewDate).getTime() - now;
-  if (diff > 0) {
-    const days = Math.floor(diff / 86400000);
-    const hours = Math.floor((diff % 86400000) / 3600000);
-    if (days > 0) return { label: `${days} 天后`, cls: 'is-future' };
-    if (hours > 0) return { label: `${hours} 小时后`, cls: 'is-future' };
-    return { label: `${Math.max(1, Math.floor(diff / 60000))} 分钟后`, cls: 'is-future' };
-  }
+  if (diff > 0) return { label: futureInLabel(diff), cls: 'is-future' };
   return { label: '已逾期', cls: 'is-overdue' };
 }
 
@@ -174,7 +173,7 @@ export function queueViewHtml(items: ReviewItem[], ctx: QueueViewCtx = {}): stri
 
   const head = `
       <div class="bz-panel-head">
-        <div class="bz-panel-brand">${icon('repeat-2', 'bz-ic--sm')}</div>
+        <div class="bz-panel-brand">${iconSpan('repeat-2', 'bz-ic--sm')}</div>
         <div class="bz-panel-title">复习计划</div>
         <div class="bz-panel-head-pipe"></div>
         <div class="bz-panel-head-sub">${todayLabel(new Date(now))}</div>
@@ -182,7 +181,7 @@ export function queueViewHtml(items: ReviewItem[], ctx: QueueViewCtx = {}): stri
         <div class="bz-panel-head-btns">
           <!-- ⚙设置直达钮两端退役（issue 254 迭代拍板，设置走插件设置页）；✕ 桌面隐藏
               （styles.css ≥769px 规则，点遮罩/ESC 关），仅移动端全屏保留 -->
-          <button class="bz-icon-btn" data-act="close" title="关闭">${icon('x')}</button>
+          <button class="bz-icon-btn" data-act="close" title="关闭">${iconSpan('x', 'bz-q-ic')}</button>
       </div>
       </div>`;
 
@@ -236,17 +235,17 @@ export function queueViewHtml(items: ReviewItem[], ctx: QueueViewCtx = {}): stri
   const stats = computeStats(items);
   const archItem = ctx.showArchived
     ? `<span class="bz-q-fitem bz-touch-target--lg is-back" data-act="arch" title="点此返回队列">
-        ${icon('undo-2')}<span class="lbl">返回队列</span>
+        ${iconSpan('undo-2', 'bz-q-ic')}<span class="lbl">返回队列</span>
       </span>`
     : `<span class="bz-q-fitem bz-touch-target--lg" data-act="arch" title="查看已完成复习">
-        ${icon('folder')}<span class="lbl">已完成 <b>${col.done.length}</b> 篇</span>
+        ${iconSpan('folder', 'bz-q-ic')}<span class="lbl">已完成 <b>${col.done.length}</b> 篇</span>
       </span>`;
   const footer = `
       <div class="bz-q-footer">
         ${archItem}
         <i class="sep"></i>
         <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${icon('bar-chart-3')}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
+          ${iconSpan('bar-chart-3', 'bz-q-ic')}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
 
@@ -262,8 +261,8 @@ export function sprintHeadHtml(): string {
           <div class="bz-sprint-title">做题冲刺</div>
         </div>
         <div class="tools">
-          <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${icon('skip-forward', 'bz-sprint-ic')}</button>
-          <button class="bz-icon-btn" data-action="quit" title="回面板">${icon('x', 'bz-sprint-ic')}</button>
+          <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${iconSpan('skip-forward', 'bz-sprint-ic')}</button>
+          <button class="bz-icon-btn" data-action="quit" title="回面板">${iconSpan('x', 'bz-sprint-ic')}</button>
         </div>
       </div>`;
 }
@@ -321,7 +320,7 @@ export function sprintQuestionHtml(
     st.answered && !st.lastCorrect && st.remaining
       ? `<button class="bz-btn bz-btn--primary" data-action="next">下一题 →</button>`
       : lastWrong
-        ? `<button class="bz-btn bz-btn--primary" data-action="note">${icon('flag', 'bz-sprint-ic')} 结束并结算</button>`
+        ? `<button class="bz-btn bz-btn--primary" data-action="note">${iconSpan('flag', 'bz-sprint-ic')} 结束并结算</button>`
         : '';
   const submit = needSubmit ? `<button class="bz-btn bz-btn--primary bz-sprint-submit" data-action="submit">提交答案</button>` : '';
   // item 3：答错一行解析（随题存取的 explain；存量题无此字段静默不显示，零迁移）
@@ -369,32 +368,26 @@ export function sprintBodyHtml(mainHtml: string, entries: Array<{ name: string; 
       </div>`;
 }
 
-/** 结果卡（通过/未通过同构；ratingLine = 「一般 · 下次 12 天后」等由调用方拼） */
+/** 结果卡（U7：仅通过态可达——未通过路径 finishNote 直接 finish('fail') 中断会话、
+ *  由 onFailed 打开原文，从不进结果卡；原「复习此笔记 · 打开原文」失败分支 markup 为
+ *  不可达死代码且文案失实，已删。ratingLine = 「简单 · 下次 12 天后」等由调用方拼） */
 export function sprintResultHtml(p: {
   name: string;
   acc: number;
   wrong: number;
-  passed: boolean;
   ratingLine: string;
   nextLabel: string;
   showEnd: boolean;
 }): string {
   const total = p.acc + p.wrong;
-  const inner = p.passed
-    ? `
+  return `<div class="bz-result">
         <div class="bz-result-ic">${markHtml('ok', 'lg')}</div>
         <div class="bz-result-name">${esc(p.name)}</div>
         <div class="bz-result-score">${p.acc}<span class="sl">/${total}</span></div>
         <span class="bz-result-rating pass">${p.ratingLine}</span>
         <button class="bz-btn bz-btn--primary bz-btn--block" data-action="next">${p.nextLabel}</button>
-        ${p.showEnd ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ''}`
-    : `
-        <div class="bz-result-ic bad">${markHtml('bad', 'lg')}</div>
-        <div class="bz-result-name">${esc(p.name)}</div>
-        <div class="bz-result-score">${p.acc}<span class="sl">/${total}</span></div>
-        <span class="bz-result-rating fail">${p.ratingLine}</span>
-        <button class="bz-btn bz-btn--danger bz-btn--block" data-action="note">${icon('file-text', 'bz-sprint-ic')} 复习此笔记 · 打开原文</button>`;
-  return `<div class="bz-result">${inner}</div>`;
+        ${p.showEnd ? `<button class="bz-btn bz-btn--ghost bz-btn--block" data-action="end">结束这次复习</button>` : ''}
+      </div>`;
 }
 
 /** 结算屏 */
@@ -455,13 +448,13 @@ export function quizPracticeSetupHtml(ctx: QuizPracticeSetupCtx): string {
   } else if (ctx.scope === 'folder') {
     // 监听文件夹名单（review-deep 一致#12）：正典应走 uiSetlist({variant:'chips', removeLabel, onRemove})，
     // 但本文件是 render 纯层——组件库 barrel 会拖入 obsidian（render-purity 白名单外），
-    // 故保留手搓胶囊 markup 仅把移除钮文本 ✕ 收编 lucide 占位（同文件 icon() 先例 +
+    // 故保留手搓胶囊 markup 仅把移除钮文本 ✕ 收编 lucide 占位（同文件 iconSpan() 先例 +
     // 渲染后 mountIcons 兑现）；data-rm-folder 即 onRemove 的 key 通道，行为层接线不变。
     const chips = ctx.folders.length
       ? ctx.folders
           .map((f) => {
             const label = f === '' ? '（库根目录）' : f;
-            return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc(label)}">${esc(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc(f)}" aria-label="移除 ${esc(label)}">${icon('x')}</button></span>`;
+            return `<span class="bz-qp-chip"><span class="bz-qp-chip-name" title="${esc(label)}">${esc(label)}</span><button type="button" class="bz-qp-chip-x" data-rm-folder="${esc(f)}" aria-label="移除 ${esc(label)}">${iconSpan('x', 'bz-q-ic')}</button></span>`;
           })
           .join('')
       : `<span class="bz-qp-detail">还没选文件夹</span>`;
@@ -469,25 +462,28 @@ export function quizPracticeSetupHtml(ctx: QuizPracticeSetupCtx): string {
   } else {
     detail = `<div class="bz-qp-note-field"><input type="text" class="bz-input bz-qp-note-input" data-role="note-input" placeholder="输入笔记名筛选，点选确定" value="${esc(ctx.notePath)}"></div>`;
   }
-  // 题库 meta（体验修复）：folder 范围未选文件夹时给引导文案（原先显示「还没有题目」
-  // 与上方「还没选文件夹」矛盾）；null = 统计中/未统计，meta 行占位空
+  // 题库 meta（体验修复）：范围未就绪时给引导文案（原先显示「还没有题目」
+  // 与上方「还没选文件夹」矛盾）；null = 统计中/未统计，meta 行占位空。
+  // U11：note 单篇空路径补同款引导（对齐 folder 空名单先例）
   const meta =
     ctx.scope === 'folder' && !ctx.folders.length
       ? '先选择文件夹再看题量'
-      : ctx.bankCount === null
-        ? ''
-        : ctx.bankCount > 0
-          ? `当前范围现有 <b>${ctx.bankCount}</b> 题`
-          : '当前范围还没有题目，开始后会自动出题';
+      : ctx.scope === 'note' && !ctx.notePath
+        ? '先选择一篇笔记再看题量'
+        : ctx.bankCount === null
+          ? ''
+          : ctx.bankCount > 0
+            ? `当前范围现有 <b>${ctx.bankCount}</b> 题`
+            : '当前范围还没有题目，开始后会自动出题';
   return `
     <div class="bz-qp-view">
       <div class="bz-panel-head">
-        <div class="bz-panel-brand">${icon('graduation-cap', 'bz-ic--sm')}</div>
+        <div class="bz-panel-brand">${iconSpan('graduation-cap', 'bz-ic--sm')}</div>
         <div class="bz-panel-title">做题练习</div>
         <div class="bz-panel-head-pipe"></div>
         <div class="bz-panel-head-sub">只刷题 · 不排期复习</div>
         <span class="bz-panel-head-sp"></span>
-        <button class="bz-icon-btn" data-act="close" title="关闭">${icon('x')}</button>
+        <button class="bz-icon-btn" data-act="close" title="关闭">${iconSpan('x', 'bz-q-ic')}</button>
       </div>
       <div class="bz-qp-body">
         <div class="bz-qp-sec">
@@ -540,11 +536,11 @@ export function difficultyDialogHtml(item: { name: string }): string {
     `;
 }
 
-/** 悬浮迷你评级条（item 4，普通复习路径） */
+/** 悬浮迷你评级条（item 4，普通复习路径）。A6：评级中文名单源 stats.RATING_NAMES
+ *  （原内联映射与 sprint 结果卡两名漂移——「简单」vs「轻松」，统一为「简单」） */
 export function reviewBarHtml(p: { name: string; index: number; total: number }): string {
-  const names: Record<string, string> = { again: '忘了', hard: '困难', good: '一般', easy: '简单' };
   const btns = ['again', 'hard', 'good', 'easy']
-    .map((r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r}" data-rating="${r}">${names[r]}</button>`)
+    .map((r) => `<button class="bz-review-bar-btn bz-touch-target--sm is-${r}" data-rating="${r}">${RATING_NAMES[r]}</button>`)
     .join('');
   return `
     <span class="bz-review-bar-info">${esc(p.name.replace(/^《|》$/g, ''))}<i>(${p.index}/${p.total})</i></span>

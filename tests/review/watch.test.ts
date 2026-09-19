@@ -3,9 +3,9 @@ import { makeApp } from '../helpers/app';
  * 复习计划监听器测试（ticket 098；ticket 099 修订+追加）：isUnderFolder / 自动加入四态 /
  * 收编确认（取消=什么都不做）/ 删除确认移除/保留 / 改名自动更新 / 移除目录清空其下排除记录
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault } from '../mock-vault';
-import { resetObsidianMocks } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, clearNotices } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { isUnderFolder, ReviewWatcher, __setAutoAddMergeMsForTests, __setRenameMergeMsForTests } from '../../src/review/watch';
@@ -307,4 +307,125 @@ describe('ReviewWatcher 自动加入', () => {
     expect(cleared2).toBe(0);
     expect(settings.reviewWatchedFolders).toEqual(['卡片盒']);
   });
+});
+
+describe('批 B 修复回归：watch 事件链（2026-09-19 深审）', () => {
+  function makeSettings() {
+    return { reviewWatchedFolders: [] as string[], reviewExcludedNotes: [] as string[] };
+  }
+
+  function setupWatched(settings: { reviewWatchedFolders: string[]; reviewExcludedNotes: string[] }) {
+    settings.reviewWatchedFolders = ['我的/复习'];
+    setSettingsProvider(() => settings as any);
+  }
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    document.body.innerHTML = '';
+    clearNotices();
+    setSettingsProvider(() => ({} as any));
+  });
+
+  function seedOne(vault: MockVault, path: string) {
+    const now = new Date();
+    vault.files.set(path, '正文');
+    vault.files.set(REVIEW_FILE_PATH, JSON.stringify([
+      { id: '1', filePath: path, reviewStart: now.toISOString(), stage: 0, phase: 'ladder', stability: 1, difficulty: 0.3, reviewHistory: [], totalReviews: 0, averageConfidence: 0, nextReviewDate: new Date(now.getTime() - 1000).toISOString(), lastReviewed: null, lastDifficulty: null, completed: false },
+    ]));
+  }
+
+  it('F10：onVaultCreate 写盘失败 → notifySaveError 人话；查重类错误静默', async () => {
+    const vault = new MockVault();
+    seedOne(vault, '我的/复习/A.md');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const settings = makeSettings();
+    setupWatched(settings);
+    const w = new ReviewWatcher(app, dm);
+    const addSpy = vi.spyOn(dm, 'addItem');
+    // 查重类错误（并发已加入）→ 静默，无新通知
+    addSpy.mockRejectedValue(new Error('该笔记已在复习计划中'));
+    const before = document.querySelectorAll('.bz-notice').length;
+    await w.onVaultCreate({ path: '我的/复习/E.md', extension: 'md', basename: 'E' } as any);
+    expect(document.querySelectorAll('.bz-notice').length).toBe(before);
+    // 写盘类失败 → 人话提示
+    addSpy.mockRejectedValue(new Error('JSON 序列化失败'));
+    await w.onVaultCreate({ path: '我的/复习/F.md', extension: 'md', basename: 'F' } as any);
+    expect(hasNotice('保存失败（自动加入复习计划）：JSON 序列化失败')).toBe(true);
+  });
+
+  it('U8：onVaultCreate 加入成功 → 立即 refresh（面板开着即时补卡，不等通知窗口）', async () => {
+    const vault = new MockVault();
+    seedOne(vault, '我的/复习/A.md');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const settings = makeSettings();
+    setupWatched(settings);
+    const w = new ReviewWatcher(app, dm);
+    const { reviewApp } = await import('../../src/review/app');
+    const styleSpy = vi.spyOn(reviewApp, 'applyReviewStyles').mockResolvedValue(undefined);
+    await w.onVaultCreate({ path: '我的/复习/E.md', extension: 'md', basename: 'E' } as any);
+    expect(styleSpy).toHaveBeenCalled(); // refresh 链跑过（列表 + 染色）
+    expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/E.md')).toBe(true);
+  });
+
+  it('F11：rename 目标路径被另一条目占用 → 人话提示，不再静默悬挂', async () => {
+    const vault = new MockVault();
+    seedOne(vault, '我的/复习/A.md');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    await dm.addItem('我的/复习/A2.md', 'A2'); // 目标路径已被占用
+    const settings = makeSettings();
+    setupWatched(settings);
+    const w = new ReviewWatcher(app, dm);
+    w.onVaultRename({ path: '我的/复习/A2.md', extension: 'md', basename: 'A2' } as any, '我的/复习/A.md');
+    await new Promise((r) => setTimeout(r, 30));
+    expect(hasNotice('新路径已存在复习条目，未能自动更新路径，请手动处理')).toBe(true);
+    expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true); // 原条目未动
+  });
+
+  it('C10：删除确认文案剥 .md 扩展名（与收编/改名通知同口径）', async () => {
+    const vault = new MockVault();
+    seedOne(vault, '我的/复习/A.md');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const settings = makeSettings();
+    setupWatched(settings);
+    const w = new ReviewWatcher(app, dm);
+    w.onVaultDelete({ path: '我的/复习/A.md', extension: 'md', basename: 'A' } as any);
+    await new Promise((r) => setTimeout(r, 350)); // 防抖 300ms
+    const popup = document.getElementById('__shared_confirm_popup__')!;
+    expect(popup.textContent).toContain('「A」已从 vault 删除');
+    expect(popup.textContent).not.toContain('A.md');
+    (document.getElementById('__shared_confirm_cancel__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+  }, 10000);
+
+  it('C-UX2：确认移除 → notifyUndo 撤销原样插回（不再只发一条不可反悔的 success）', async () => {
+    const vault = new MockVault();
+    seedOne(vault, '我的/复习/A.md');
+    const app = makeApp(vault);
+    setApp(app);
+    const dm = new ReviewDataManager(app);
+    const settings = makeSettings();
+    setupWatched(settings);
+    const w = new ReviewWatcher(app, dm);
+    w.onVaultDelete({ path: '我的/复习/A.md', extension: 'md', basename: 'A' } as any);
+    await new Promise((r) => setTimeout(r, 350));
+    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(false);
+    expect(hasNotice(/已移除 1 条复习记录/)).toBe(true);
+    const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find(
+      (x) => x.textContent === '撤销'
+    ) as HTMLElement | undefined;
+    expect(undoBtn).toBeTruthy();
+    undoBtn!.click();
+    await new Promise((r) => setTimeout(r, 30));
+    expect((await dm.loadItems()).some((i) => i.filePath === '我的/复习/A.md')).toBe(true); // 原样插回
+  }, 10000);
 });

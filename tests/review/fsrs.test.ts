@@ -2,6 +2,7 @@
 /**
  * 复习计划 FSRS 测试（ticket 16）：R/initS/nextDiff/nextStab/nextInterval 数值断言。
  * 增补（2026-09 满血 FSRS 拍板）：scheduleNext 调度纯函数——9 级前爬阶梯、9 级后动态间隔。
+ * 改写（2026-09 审查 F1）：D 统一 [1,10] 语义 + easy 负增量——旧「三档 clamp 后全=1」锚定退役。
  */
 import { describe, it, expect } from 'vitest';
 import { FSRS, FSRS_FIRST_INTERVALS, FSRS_FIRST_TEXTS, TOTAL_STAGES, LADDER_MAX, DEFAULT_W, scheduleNext } from '../../src/review/fsrs';
@@ -26,30 +27,61 @@ describe('FSRS.initS', () => {
 });
 
 describe('FSRS.nextDiff', () => {
-  it('again→4.93；hard→+0.94；easy→+0.86；good 不变；clamp [0,1]', () => {
-    expect(fsrs.nextDiff(0.3, 'again')).toBe(1); // w[4]=4.93 被 clamp 到 [0,1]
-    expect(fsrs.nextDiff(0.3, 'hard')).toBe(1); // 1.24 clamp 到 1
-    expect(fsrs.nextDiff(0.3, 'easy')).toBe(1); // 1.16 clamp 到 1
-    expect(fsrs.nextDiff(0.3, 'good')).toBe(0.3);
-    expect(fsrs.nextDiff(0.9, 'easy')).toBe(1); // clamp
-    expect(fsrs.nextDiff(0.1, 'hard')).toBe(1); // 1.04 clamp 到 1
+  it('F1 [1,10] 域：again→w[4]=4.93；hard 升（+0.94）；easy 降（−0.86）；good 不变；上界钳 10', () => {
+    expect(fsrs.nextDiff(4.93, 'again')).toBe(4.93); // again 恒回 w[4]（天然在界不钳）
+    expect(fsrs.nextDiff(2, 'hard')).toBeCloseTo(2.94, 10);
+    expect(fsrs.nextDiff(2, 'easy')).toBeCloseTo(1.14, 10);
+    expect(fsrs.nextDiff(2, 'good')).toBe(2);
+    expect(fsrs.nextDiff(9.9, 'hard')).toBe(10); // 上界
+    expect(fsrs.nextDiff(1, 'easy')).toBe(1); // 下界钳 1
+  });
+
+  it('F1 回归：easy 降难度 / hard 升难度 / again 大幅升难度（方向与幅度，标准语义）', () => {
+    const D0 = 3;
+    expect(fsrs.nextDiff(D0, 'easy')).toBeLessThan(D0); // 评「简单」难度下降
+    expect(fsrs.nextDiff(D0, 'hard')).toBeGreaterThan(D0); // 评「困难」难度上升
+    expect(fsrs.nextDiff(D0, 'again') - D0).toBeCloseTo(1.93, 10); // 评「忘了」大幅升（回 w[4]=4.93）
+    // 反复评「简单」vs「困难」的难度分道扬镳（旧缺陷：两序列同向且全钳 1）
+    let dEasy = 5;
+    let dHard = 5;
+    for (let i = 0; i < 4; i++) {
+      dEasy = fsrs.nextDiff(dEasy, 'easy');
+      dHard = fsrs.nextDiff(dHard, 'hard');
+    }
+    expect(dEasy).toBeLessThan(dHard);
+  });
+
+  it('F1 存量兼容：D<1（旧 initD=0.3 口径）不被钳抬——good 守不变语义，增量路径归入 [1,10]', () => {
+    expect(fsrs.nextDiff(0.3, 'good')).toBe(0.3); // 不抬升（good 不变难度）
+    expect(fsrs.nextDiff(0.3, 'easy')).toBe(0.3); // 只降不抬
+    expect(fsrs.nextDiff(0.3, 'hard')).toBeCloseTo(1.24, 10); // 增量自然入界
+    expect(fsrs.nextDiff(0.3, 'again')).toBe(4.93);
   });
 });
 
 describe('FSRS.nextInterval', () => {
-  it('S=0.4, D=0.3, R=R(30,0.4) 四档', () => {
+  it('S=0.4, D=0.3, R=R(30,0.4) 四档（F1 [1,10] 域锚定）', () => {
     const R = fsrs.R(30, 0.4);
     const again = fsrs.nextInterval(0.4, 0.3, 'again', R);
-    expect(again.S).toBeCloseTo(0.0707, 2);
-    expect(again.D).toBe(1);
+    expect(again.S).toBeCloseTo(0.0405, 2); // again 分支 D^−w12 消费 D=4.93
+    expect(again.D).toBe(4.93); // w[4] 全须全尾不再钳成 1
     const hard = fsrs.nextInterval(0.4, 0.3, 'hard', R);
-    expect(hard.S).toBeCloseTo(49.32, 1);
+    expect(hard.S).toBeCloseTo(48.14, 1); // D_new=1.24 → (11−1.24) 同域
     const good = fsrs.nextInterval(0.4, 0.3, 'good', R);
     expect(good.S).toBeCloseTo(53.17, 1);
-    expect(good.D).toBe(0.3);
+    expect(good.D).toBe(0.3); // 存量 0.3 pass-through
     const easy = fsrs.nextInterval(0.4, 0.3, 'easy', R);
-    expect(easy.S).toBeCloseTo(117.92, 1);
-    expect(easy.D).toBe(1);
+    expect(easy.S).toBeCloseTo(126.18, 1); // D 保持 0.3（不反升钳 1）
+    expect(easy.D).toBe(0.3);
+  });
+
+  it('F1 回归：D 对间隔调节生效（同 S 同 R，高难度 → 后继稳定性更小）', () => {
+    const R = fsrs.R(5, 2.4);
+    const sEasy = fsrs.nextInterval(2.4, 2, 'good', R).S; // D=2 → (11−2)=9
+    const sHard = fsrs.nextInterval(2.4, 9, 'good', R).S; // D=9 → (11−9)=2
+    expect(sEasy).toBeGreaterThan(sHard);
+    // strict 比例走 nextStab hard 分支（S·base 原样消费 D：base ∝ (11−D)；good 是 S·(base+1) 不正比）
+    expect(fsrs.nextStab(2.4, 2, 'hard', R) / fsrs.nextStab(2.4, 9, 'hard', R)).toBeCloseTo(9 / 2, 5); // 调节幅度与 (11−D) 严格同域（旧钳 [0,1] 时恒 [10,11] 的 10%）
   });
 });
 
@@ -202,6 +234,22 @@ describe('scheduleNext 满血 FSRS（9 级后动态）', () => {
     w2[8] = 3; // exp(w[8]) 放大 base
     const b = scheduleNext(st, 'good', NOW, w2);
     expect(b.intervalDays).toBeGreaterThan(a.intervalDays);
+  });
+
+  it('F1 回归：难度链经调度演化——easy 降 / hard 升 / D 差异传导到间隔（存盘难度不再失真）', () => {
+    // 进入点 D=0.3（initD good 口径）→ easy 不反升钳 1，hard 增量入界
+    const st = fsrsState(9, 5.8);
+    const dEasy = scheduleNext(st, 'easy', NOW);
+    expect(dEasy.difficulty).toBe(0.3);
+    const dHard = scheduleNext(st, 'hard', NOW);
+    expect(dHard.difficulty).toBeCloseTo(1.24, 10);
+    // D=5 的成熟条目：easy 连评难度逐次下降（(11−D) 同域，间隔随之拉长）
+    let cur = { ...fsrsState(9, 2), difficulty: 5, lastReviewed: new Date(NOW.getTime() - 86400e3).toISOString() };
+    const d0 = scheduleNext(cur, 'good', NOW);
+    cur = { ...cur, difficulty: d0.difficulty! };
+    const d1 = scheduleNext(cur, 'easy', NOW);
+    expect(d1.difficulty!).toBeLessThan(5); // easy 降难度
+    expect(d1.difficulty!).toBeCloseTo(Math.max(1, 5 - DEFAULT_W[6]), 10);
   });
 
   it('lastReviewed 缺失回退 reviewStart；两者皆缺 t=0 不抛错', () => {
