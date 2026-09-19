@@ -327,7 +327,25 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## cinema（影院）域 · 审查入账中（方向 1 功能 + 方向 2 UI + 方向 3 效率 + 方向 4 一致已到账；方向 5 架构审查中，本节待补全后定稿批次）
+## cinema（影院）域 · 审查完成（5/5 方向到账，三修复批已定稿）
+
+> 明细：`.scratch/review-deep/cinema-{func,ui,efficiency,consistency,arch}.md`。五方向新发现合计（去重前）：func P2×1+P3×7；ui P1×1+P2×1+P3×4+建议2；eff P2×5+P3×2+建议3；cons P2×4+P3×8+建议3+附带功能 P2×1；arch P2×1+P3×7+测试缺口7。跨方向去重：ui.ts:142 模板（func=ui=arch）、焦点（ui=eff）、openDouban（func=ui=cons）、ESC 清词（eff=cons，并入 ✕）、mob 回显（eff=cons）、热区（ui=cons）、ovl 层泄漏（func=arch，arch 补 closeOverlay 结算面）、非法字符（func=ui=arch）、改名半失败（func=arch）、季行叠字（ui=arch shared.ts:242）。旧账复核五方向一致：C1-C10（C1 撤回）/G6-G9/跟进 B/C/一致#1#2 全在位；AI#17 未修随手收；144 拍板账（notifyUndo/脏表单）与 ADR-0125 基座迁移不另立。门禁基线：tsc 0 错；tests/cinema 183 例全绿。**修复分三批**：A 写路径与 ui 行为 `bz-fix-cinema-write` / B 视图层与样式 `bz-fix-cinema-view` / C 队列基建与文档 `bz-fix-cinema-infra`（分工见批次段）。
+
+### 方向 5（架构/测试）补充条目
+
+- **P3 closeOverlay 不结算 ovl escManager 注册** `ui.ts:791-800` × `:238-239`（arch 新-2，并入上方 ovl id 项）——带弹窗关主面板（遮罩/✕/toggle）滞留 layer 闭包持脱树 DOM，seq 递增 id 令同 id 自清永不命中、无上限累积。修：ovl 改固定 id 交同 id 清扫 + closeOverlay 遍历活跃句柄统一 close（双保险）。
+- **P3 豆瓣队列 enqueue 不清 cancelled 残留** `douban-queue.ts:121-131/:142/:195`（arch 新-5）——删过未入队影片留 cancelled 标记，同名重建后首次真失败被静默吞（G8 语义只该豁免「在抓被删」那一次）。修：enqueueDoubanFetch 首行 `cancelled.delete(key)` + 缺口 T3 用例。
+- **P3 movie 通道名违总线契约** `ui.ts:93,95,446,486,490,537` × `recommend.ts:197` × `smartcat/index.ts:1337`（arch 新-6）——core/domain-bus.ts:5 立约 `<域名>:<事件>`，7 个发射点用退役域名 `movie`。改名要动 smartcat 消费端（排除域），取最小动作：emit 点 + 契约注释登记「movie=历史契约名，属 cinema 域，勿擅改」。
+- **P3 死代码/悬空引用** `douban-fetcher.ts:17-19`（BILIBILI_NONE 占位常量删）、`ui.ts:7`/`styles.css:21`/`prototypes/cinema/PROTOTYPE.md:40`（CINEMA_STYLES 清单不存在，措辞改指 cinemaStyle 设置键单源）、`ui.ts:18`（unregisterPanelEsc 死 import，随 unload 注销一并消化）（arch 新-7）。
+- **P3 注释失真两处** `constants.ts:4`（STATUS 枚举注释误写评分编码 -1/0/>0，两套语义错位，照注释写消费代码必错）、`settings.ts:3`（指向已不存在的 index.ts readDefaultView，实名 applyDefaultView）（arch 新-8）。
+- **测试缺口收编**：T2【高·结构性】`tests/mock-vault.ts:249` parseFrontmatter 无报错 fail-open——「值后裸行」「值含 `: `」真机 js-yaml 整体失效而 mock 照收，FM 破坏类缺陷（C3/C4/模板新-1 同族）在测试环境不可见；修 fail-closed（裸行/值内 `: ` 返回 null）+ 全量 tests/cinema 回归防存量 fixture 误伤。T5【低】data.test.ts `@vitest-environment node` 挪首行。T6【低】unloadCinema 三态断言用例。T1/T3/T4 随各自修复项落地。
+
+### 修复批分工（3 worktree，文件簇互斥）
+
+- **A 写路径与 ui 行为** `bz-fix-cinema-write`（ui.ts 全域 + recommend.ts + tests/mock-vault.ts + tests/cinema/ui.test.ts 与新写路径测试文件）：P2 模板 YAML（processFrontMatter 通道/formatYamlValue 单源导出 + mock T2 fail-closed + 往返回归）、P2 影评静默清空、P2 review 事件补发、P2 桌面空态焦点、P2 ESC 二段清词 keydown（✕ markup 归 B，共用 data-cinema-clear 出口）、P2 滚位存/恢复；P3 非法字符、日期引号（含 recommend.ts:188）、openExternalUrl、ovl 固定 id+closeOverlay 结算、改名 prev 补 file、海报白名单、bindFormSubmit Enter、renderAll 惰性构建、AI#17 围栏+用例、recommend.ts:195 引号、ui.ts:7 CINEMA_STYLES 措辞、ui.ts:18 死 import、mock T2、pragma T5。
+- **B 视图层与样式** `bz-fix-cinema-view`（layouts/midnight/render.ts + shared.ts + styles.css + analysis.ts + ui.ts 仅委托层 keydown 一处（键盘可达 Enter/Space 分支，ui.ts:636-721 区）+ 新建 tests/cinema/view-fix.test.ts，不碰 ui.test.ts）：P2 移动端零空态、P2 mob 搜索回显、P2 搜索 ✕ 钮 markup（两端，复用 data-cinema-clear）、P2 卡片键盘可达（tabindex/role/aria + 委托分支）；P3 节奏统计 status 守卫、季行单位、热区（bz-touch-target 类 + pointer:coarse ::after）、占位文案统一、内联样式收编。
+- **C 队列基建与文档** `bz-fix-cinema-infra`（douban-queue.ts + douban-fetcher.ts + constants.ts + index.ts + settings.ts + core/domain-bus.ts 契约注释 + tests/cinema/{douban-queue,index}.test.ts）：P3 enqueue 清 cancelled+T3、微单源三处（extractMovieName 单源/stripMdExt import/字符集常量）、BILIBILI_NONE 删、注释失真两处、unloadCinema 补 unregisterPanelEsc('bz-cinema')（ui.ts:18 死 import 归 A）、movie 通道契约登记、unload 三态断言 T6。
+- **主线程收口**：CONTEXT.md 影院词条同步（random-pick 补、M.aiTitle 死句删、review 事件按 A 落地结果改口径、「已放映」风味词注一句）；跨批 ui.ts/render.ts 冲突消解；全量门禁。
 
 > 明细：`.scratch/review-deep/cinema-{func,ui,efficiency,consistency}.md`（arch 待落）。方向 1：P2×1 + P3×7；方向 2：P1×1 + P2×1 + P3×4 + [UX-Suggestion]×2；方向 3：P2×5 + P3×2 + [UX-Suggestion]×3；方向 4：P2×4 + P3×8（含 [UX-Suggestion]×3）+ 附带功能线 P2×1。跨方向去重：ui.ts:142 模板（func=ui）、焦点（ui=eff）、openDouban（func=ui=cons 记名升格）、ESC 清词（eff=cons，cons 并入 ✕ 钮定稿范式）、mob 搜索回显（eff=cons）、热区（ui=cons）。旧账复核四方向一致：已修/闭环确认在位（C1 撤回属实、C2-C10、G6-G9、跟进 B/C、一致#1/#2）；未修 1 条（AI#17，P3，随手收）；144 拍板待做账（删除可撤销 notifyUndo/脏表单拦截）与 ADR-0125 基座迁移在案不另立。门禁基线：tsc 0 错；tests/cinema 11 文件 183 例全绿。
 
@@ -372,4 +390,30 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 ### 已核验无问题摘要（func+ui）
 面板生命周期/手势浮层单源/渲染竞态/数据-UI 对账/styles（滚动条零自造、--bz-vvh 守卫）/设置接线/main.ts 四命令三段式——逐面确认无新洞（详见 cinema-ui.md §三、cinema-func.md §三）。
 
-（方向 3 效率 / 4 一致 / 5 架构审查中——到账后补本节并定稿修复批次。）
+---
+
+## belongings（归物本）域 · 审查入账中（方向 1 功能 + 方向 2 UI 已到账；方向 3 效率审查中，4/5 待派）
+
+> 明细：`.scratch/review-deep/belongings-{func,ui}.md`（eff 落地中）。方向 1：P3×8 + [UX-Suggestion]×2（数据安全面经往轮修复已扎实，新发现全是罕见路径静默失败与口径分叉）；方向 2：P2×5 + P3×4 + [UX-Suggestion]×2 + 测试缺口 6。跨方向去重：closePanel 收口（func P3-1 = ui P2-1 同根并入 P2）。旧账复核：H8-H20 全部在位（panel-fix.test 回归在册）、autumn 体验账 4 条中 3 已修；未修 2 条（autumn UX② 当月列空档 → 本轮修；随机 id 后缀理论可空串 → 风险趋零登记不修）；消解悬案 1 条（删除双保险口径，见拍板清单 B7）。门禁基线：tsc 0 错；tests/belongings 9 文件 185 例全绿。
+
+### 已去重修复项（暂 P2×4 + P3×11；批次待 5 方向齐后定稿）
+
+- **P2 closePanel 收口不全（浮层悬空）** `ui.ts:399-419`（func P3-1 = ui P2-1）——表单（uiModal 壳挂 body）/移动抽屉/右键菜单开着时再触发 `bz-belongings-open`（toggle 直关面板）：面板关而浮层悬空，孤儿表单「保存」会写到已关面板会话外。修：closePanel 开头 `requestCloseBelForm()`（与 ESC 分支 :222-226 同语义）+ closeItemMenu + 收抽屉。
+- **P2 详情弹窗编辑保存后不刷新** `ui.ts:983-1050`——保存成功详情仍显旧价格/旧状态（「保存没生效」视角）。修：保存后按当前详情 id 重建详情。+ 断言。
+- **P2 移动端开表单 100ms 强制聚焦** `ui.ts:1052`——遗留 setTimeout 聚焦绕过 core uiModal 防软键盘口径，软键盘顶起遮状态格/保存钮。修：删遗留聚焦交 core 口径。
+- **P2 裸 100vh 未接 --bz-vvh**（移动面板/报告页）——clipbook/memo/cinema 均已接，本域唯一异类，软键盘顶起遮底钮。修：接 `--bz-vvh` 同口径。
+- **P3 openPanel loadDatabase reject 被 void 吞** `index.ts:15-17`——命令静默无反应；openForm/报告入口有 catch，三入口兜底不对称。修：补 catch 人话通知。
+- **P3 删除确认框在途时命令关面板** `ui.ts:712`——确认后 `!M.db` 静默 no-op。修：no-op 前给提示（或拒绝在途关面板，取小改）。
+- **P3 报告开着面板内保存触发重入** `report.ts:81-83`——ctxYear 每次清空，翻年上下文跳回最新年。修：重入保留 ctxYear。
+- **P3 脏日期/无效 exit_date 口径分叉**——面板字符串前缀 vs 报告解析两套归一；`daysUsed`（回落今天）与 `exitTsOf`（不封口）天数语义不同。修：统一口径（实施时按报告细节定单源）。
+- **P3 价格无上限校验** `ui.ts:959/1001/977`——`1e308` → Infinity → JSON 序列化 null → 读回 0。修：非有限值拦截 + 合理上限钳制。
+- **P3 编辑清空分类被静默回填旧值** `ui.ts:961`——与新增 fail 提示不对称。修：清空走同新增校验口径。
+- **P3 流转撤销不补发领域事件**——smartcat 行为流记「转卖」无撤销记录。修：撤销补发事件（favorites unarchive 补发先例）。
+- **P3 搜索防抖「关后 180ms 内重开」竞态**——旧词灌新面板。修：closeOverlay 清 timer 或回调验面板存活。
+- **P3 年份下拉 `data-v` 漏 esc**——域内唯一转义漏点。修：escAttr。
+- **P3 触控热区不足**——报告头行三钮 + 移动端下拉触发器。修：`bz-touch-target` 修饰类。
+- **P3 autumn UX②（旧账未修）当年日均走势当月列恒空档** `report-stats.ts:209-217`——9-12 月四列空档。修。
+
+### UI/体验分流（7 项 → review-deep-ui-pending.md：B1 移动资产筛选不可达（拍板敏感）/ B2 聚焦无 ring / B3 图标无法清除 / B4 0 元 ¥0.0000 / B5 下拉键盘 ESC 粒度 / B6 AI 换图标不触发脏检测 / B7 删除口径全局定稿（全局项））
+
+（方向 3 效率审查中，4/5 待槽位派——到账后补本节并定稿修复批次。）
