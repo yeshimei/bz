@@ -414,9 +414,9 @@ describe('通知系统', () => {
     });
   });
 
-  // ==================== 修复批 B（R6 / 效率 7 / 8 / 9 / 一致 7，2026-09-18） ====================
+  // ==================== 修复批 B（R6 / 效率 8 / 9 / 一致 7，2026-09-18） ====================
 
-  describe('修复批 B：操作按钮键盘可达 + 常驻帧关闭策略 + setAction（R6/效率 7/8/9）', () => {
+  describe('修复批 B：操作按钮键盘可达 + 点击关闭 + setAction（R6/效率 8/9）', () => {
     beforeEach(() => {
       vi.useFakeTimers();
       __resetNoticeForTests();
@@ -438,23 +438,16 @@ describe('通知系统', () => {
       expect(onClick).toHaveBeenCalledTimes(2);
     });
 
-    it('效率7：duration<=0 常驻帧点击本体不关，右上 ✕ 专职关闭', () => {
+    it('常驻帧（duration<=0）：无 ✕ 钮（关闭钮已退役），点击本体即关', async () => {
       const h = notify('常驻错误', { type: 'error', duration: 0 });
       const el = h.el;
-      // 常驻帧挂显式关闭钮（推右 ✕）
-      const closeBtn = el.querySelector('.bz-notice-close') as HTMLElement;
-      expect(closeBtn).not.toBeNull();
-      // 点击本体不再关闭
+      expect(el.querySelector('.bz-notice-close')).toBeNull();
       el.click();
-      vi.advanceTimersByTime(400);
-      expect(el.isConnected).toBe(true);
-      // ✕ 点击关闭（带退出动画）
-      closeBtn.click();
-      vi.advanceTimersByTime(300);
+      await vi.advanceTimersByTimeAsync(300);
       expect(el.isConnected).toBe(false);
     });
 
-    it('效率7：自动消失帧保持点击本体即关，且不挂 ✕', async () => {
+    it('自动消失帧点击本体即关，且不挂 ✕', async () => {
       const h = notify('普通提示');
       expect(h.el.querySelector('.bz-notice-close')).toBeNull();
       h.el.click();
@@ -462,9 +455,9 @@ describe('通知系统', () => {
       expect(h.el.isConnected).toBe(false);
     });
 
-    it('效率7：setType 接管计时退出常驻后摘 ✕、恢复点本体即关', async () => {
+    it('progress 常驻帧同样无 ✕ 钮、点击本体即关（setType 后行为一致）', async () => {
       const h = notify('处理中', { type: 'progress' }); // progress 默认常驻
-      expect(h.el.querySelector('.bz-notice-close')).not.toBeNull();
+      expect(h.el.querySelector('.bz-notice-close')).toBeNull();
       h.setType('success'); // 转自动消失
       expect(h.el.querySelector('.bz-notice-close')).toBeNull();
       h.el.click();

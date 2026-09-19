@@ -4262,31 +4262,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-caption);
   color: var(--ls-faint);
 }
-
-/* ═══════════ 通知常驻帧关闭钮 .bz-notice-close（notice.ts 效率整改 7） ═══════════
-   duration<=0 常驻帧点击本体不再关闭，右上一枚 ✕ 专职关闭。独立类（不与
-   .bz-notice-action 混用，避免污染 action 计数/去重口径），形制对齐 action。 */
-.bz-notice-close {
-  flex: 0 0 auto;
-  align-self: center;
-  margin-left: auto;
-  padding: 2px;
-  border-radius: var(--bz-radius-xs);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--bz-text-3);
-  font-size: var(--bz-font-meta);
-  line-height: 1;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-}
-.bz-notice-close:hover {
-  background: var(--background-modifier-hover);
-  border-color: var(--background-modifier-border);
-  color: var(--bz-text-1);
-}
-.bz-notice-close .bz-ic { width: 12px; height: 12px; }
 /* ==================== 日记本域样式（src/diary/styles.css）—— 原回忆墙升格正名（ADR-0115） ==================== */
 /* ==================== 日记本（媒体墙原型 v5：章节固定 + 滚动高亮 + 性能优化） ==================== */
 /* 铁律 8：视觉样式写域源头，构建时聚合进根 styles.css；类名 bz- 前缀；禁止运行时注入 <style>。

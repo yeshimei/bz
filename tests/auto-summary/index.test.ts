@@ -145,9 +145,9 @@ describe('auto-summary 入口', () => {
     const out = vault.files.get('归档/网页剪藏/x.md')!;
     expect(out).toContain('summary: "摘要"');
     expect(out).toContain('  - "AI"');
-    // 动态链路（ticket 25）：单条通知原地更新为结果
+    // 动态链路（ticket 25）：单条通知原地更新为「已完成」回执（2026-09-19 拍板）
     expect(getNoticeMessages()).toHaveLength(1);
-    expect(getNoticeMessages()[0]).toBe('《已有标题》\n\n摘要\n\n#AI');
+    expect(getNoticeMessages()[0]).toBe('已完成');
   });
 
   it('create + file-open 同一文件去重 → 只处理一次', async () => {
@@ -455,7 +455,7 @@ describe('auto-summary 入口', () => {
     await vi.advanceTimersByTimeAsync(1600);
     const msgs = getNoticeMessages();
     expect(msgs).toHaveLength(1); // 进度原地合并为结果，单条
-    expect(msgs[0]).toBe('《孤篇》\n\nS\n\n#a');
+    expect(msgs[0]).toBe('已完成');
     expect(msgs.some((m) => m.includes('正在生成摘要'))).toBe(false); // 无聚合通知
   });
 

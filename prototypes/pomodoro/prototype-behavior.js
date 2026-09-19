@@ -1,5 +1,5 @@
-/* 源指纹 444c479383e4626b · 仓内输入 23 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/icon.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 bcfead4b8c77d2ff · 仓内输入 22 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/http.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -4349,19 +4349,6 @@ var BZW_pomodoro = (() => {
     }
   });
 
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-  var init_icon = __esm({
-    "src/core/ui/icon.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
   // src/core/notice.ts
   function maxVisible() {
     const v = Number(noticePref("noticeMaxVisible"));
@@ -4486,35 +4473,6 @@ var BZW_pomodoro = (() => {
       window.setTimeout(() => removeInternal(n), LEAVE_MS);
     }
   }
-  function buildCloseBtn(n) {
-    const btn = document.createElement("span");
-    btn.className = "bz-notice-close";
-    btn.setAttribute("role", "button");
-    btn.setAttribute("aria-label", "关闭");
-    btn.title = "关闭";
-    btn.tabIndex = 0;
-    btn.appendChild(uiIcon("x"));
-    const fire = (e) => {
-      e.stopPropagation();
-      hideNow(n);
-    };
-    btn.addEventListener("click", fire);
-    btn.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        fire(e);
-      }
-    });
-    return btn;
-  }
-  function syncPersistentUi(n) {
-    const closeBtn = n.el.querySelector(".bz-notice-close");
-    if (n.persistent && !closeBtn) {
-      n.el.appendChild(buildCloseBtn(n));
-    } else if (!n.persistent && closeBtn) {
-      closeBtn.remove();
-    }
-  }
   function armTimer(n, kind, explicitDuration, text) {
     if (n.timer !== null) {
       window.clearTimeout(n.timer);
@@ -4537,7 +4495,6 @@ var BZW_pomodoro = (() => {
         n.timer = window.setTimeout(() => hideNow(n), dur);
       }
     }
-    syncPersistentUi(n);
   }
   function noopHandle() {
     return {
@@ -4572,9 +4529,7 @@ var BZW_pomodoro = (() => {
         fire(e);
       }
     });
-    const closeBtn = n.el.querySelector(".bz-notice-close");
-    if (closeBtn) n.el.insertBefore(btn, closeBtn);
-    else n.el.appendChild(btn);
+    n.el.appendChild(btn);
   }
   function makeHandle(n) {
     return {
@@ -4685,10 +4640,7 @@ var BZW_pomodoro = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => {
-      if (n.persistent) return;
-      hideNow(n);
-    });
+    el.addEventListener("click", () => hideNow(n));
     container.style.zIndex = String(allocZ());
     container.appendChild(el);
     live.push(n);
@@ -4705,7 +4657,6 @@ var BZW_pomodoro = (() => {
     "src/core/notice.ts"() {
       init_z_order();
       init_settings_provider();
-      init_icon();
       MAX_VISIBLE_DEFAULT = 5;
       LEAVE_MS = 200;
       DEDUPE_WINDOW_MS = 3e4;

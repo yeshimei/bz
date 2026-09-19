@@ -130,15 +130,6 @@ async function renameToTitle(app: any, file: any, title: string): Promise<Rename
   }
 }
 
-/** 通知文案：《title》 + 空行 + summary + 空行 + #tags（缺哪段不显示哪段） */
-export function formatSummaryNotice(fm: Record<string, any>): string {
-  const parts: string[] = [];
-  if (fm.title) parts.push(`《${fm.title}》`);
-  if (fm.summary) parts.push(String(fm.summary));
-  if (Array.isArray(fm.tags) && fm.tags.length) parts.push(fm.tags.map((t: any) => `#${t}`).join(' '));
-  return parts.join('\n\n');
-}
-
 /** 处理单个文件：缺什么补什么（title/summary/tags），字段齐全跳过；成功通知。
  *  ticket 124（Q8 详设）：摘要长度/标签开关数量/时机由设置驱动。
  *  enh 包 1：force 档跳过缺失检测直接重建，且只重建 summary/tags——title 不进目标
@@ -236,27 +227,23 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
       notify('自动改名失败，标题已写入笔记，请手动重命名', { type: 'warning' });
     }
 
-    const msg = formatSummaryNotice(mergedFm);
-    if (msg) {
-      // 成功：同去重键原地合并 → 切换 success 图标并按显式时长驻留（≥8s，正文无 emoji）；
-      // 挂「查看」action（enh 包 3）：打开剪藏本面板并选中该条——clipbook 与本域互为
-      // 依赖面（clipbook/ui ← 本域入口），环引用按项目规约走函数级延迟解析（动态 import）
-      notify(msg, {
-        type: 'success',
-        dedupeKey: key,
-        duration: 8000,
-        action: {
-          label: '查看',
-          onClick: () => {
-            import('../clipbook/ui')
-              .then((m) => m.revealClipArticle(targetFile.path))
-              .catch(() => { /* 剪藏本面板不可用（如卸载中）时忽略 */ });
-          },
+    // 成功：同去重键原地合并 → 切换 success 图标按默认时长驻留（2026-09-19 拍板：
+    // 正文固定「已完成」不再回显 title/summary/tags，toast 只做完成回执；时长回归默认档，
+    // 不再 8s 显式驻留）。挂「查看」action（enh 包 3）：打开剪藏本面板并选中该条——
+    // clipbook 与本域互为依赖面（clipbook/ui ← 本域入口），环引用按项目规约走函数级
+    // 延迟解析（动态 import）
+    notify('已完成', {
+      type: 'success',
+      dedupeKey: key,
+      action: {
+        label: '查看',
+        onClick: () => {
+          import('../clipbook/ui')
+            .then((m) => m.revealClipArticle(targetFile.path))
+            .catch(() => { /* 剪藏本面板不可用（如卸载中）时忽略 */ });
         },
-      });
-    } else if (h) {
-      h.hide();
-    }
+      },
+    });
   } catch (e) {
     if (h) h.hide();
     console.error(`[自动摘要] 处理失败: ${file.basename}`, e);

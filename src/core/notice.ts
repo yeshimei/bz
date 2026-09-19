@@ -21,12 +21,11 @@
  * - 时长：默认 info/success/warning 3s、error 5s；显式 duration 优先；
  *   未指定时按文字长度动态计算（≤20 字用默认值，>20 字每多 1 字加 60ms，上限 15s）；
  *   progress 类型默认不自动消失（调用方控制）
- * - 点击通知本体即关闭
+ * - 点击通知本体即关闭（含常驻帧；2026-09-19 拍板：常驻帧 ✕ 关闭钮退役，点本体即关）
  * - z-index 动态发号（ADR-0067）：每次弹出抬顶容器——toast 永远盖过最新打开的 overlay
  */
 import { allocZ } from './z-order';
 import { tryGetSettings } from './settings-provider';
-import { uiIcon } from './ui/icon';
 
 export type NoticeType =
   | 'info'
@@ -367,43 +366,6 @@ function hideNow(n: InternalNotice): void {
   }
 }
 
-/** 常驻帧显式关闭钮（效率整改 7）：点击本体不再关闭的常驻帧的唯一关闭出口。
- *  独立 .bz-notice-close 类（不与 .bz-notice-action 混用，避免污染 action 计数/去重口径），
- *  键盘 Enter/Space 同触发（R6 同口径） */
-function buildCloseBtn(n: InternalNotice): HTMLElement {
-  const btn = document.createElement('span');
-  btn.className = 'bz-notice-close';
-  btn.setAttribute('role', 'button');
-  btn.setAttribute('aria-label', '关闭');
-  btn.title = '关闭';
-  btn.tabIndex = 0;
-  btn.appendChild(uiIcon('x'));
-  const fire = (e: Event) => {
-    e.stopPropagation();
-    hideNow(n);
-  };
-  btn.addEventListener('click', fire);
-  btn.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      fire(e);
-    }
-  });
-  return btn;
-}
-
-/** 常驻态 ↔ UI 同步（效率整改 7）：persistent 帧挂 ✕ 关闭钮（点击本体的关闭对常驻帧失效，
- *  防选中错误文本/点歪误关）；退出常驻（setType 接管计时等）则摘钮恢复「点本体即关」。
- *  armTimer 是 persistent 的唯一写入口，创建/去重合并/setType 三路径经此统一收口 */
-function syncPersistentUi(n: InternalNotice): void {
-  const closeBtn = n.el.querySelector<HTMLElement>('.bz-notice-close');
-  if (n.persistent && !closeBtn) {
-    n.el.appendChild(buildCloseBtn(n));
-  } else if (!n.persistent && closeBtn) {
-    closeBtn.remove();
-  }
-}
-
 /**
  * 按类型/显式 duration 设定自动消失计时。
  * - 显式 duration 优先
@@ -435,8 +397,6 @@ function armTimer(n: InternalNotice, kind: NoticeKind, explicitDuration?: number
       n.timer = window.setTimeout(() => hideNow(n), dur);
     }
   }
-  // 常驻态 ↔ UI 同步（效率整改 7）：所有路径出口统一收口
-  syncPersistentUi(n);
 }
 
 /**
@@ -500,10 +460,7 @@ function appendActionBtn(n: InternalNotice, action: NoticeAction): void {
       fire(e);
     }
   });
-  // 常驻帧的 ✕ 关闭钮恒居最右：动作按钮插在它之前（效率整改 7）
-  const closeBtn = n.el.querySelector<HTMLElement>('.bz-notice-close');
-  if (closeBtn) n.el.insertBefore(btn, closeBtn);
-  else n.el.appendChild(btn);
+  n.el.appendChild(btn);
 }
 
 /** 真句柄工厂（效率整改 9）：指向存活帧；dedupe 合并路径与常规创建路径共用 */
@@ -641,13 +598,9 @@ export function notify(msg: string, opts?: NoticeOptions): NoticeHandle {
   }
   for (const a of actions) appendActionBtn(n, a);
 
-  // 点击本体关闭；常驻帧除外（效率整改 7）：duration<=0 常驻帧「一碰就没」太易误关
-  // （选中文本松手即关、点歪连带重试入口一起没），点击不再关闭，右上 ✕ 钮专职关闭
-  // （✕ 钮的挂摘由 armTimer → syncPersistentUi 按 persistent 统一收口）
-  el.addEventListener('click', () => {
-    if (n.persistent) return;
-    hideNow(n);
-  });
+  // 点击本体关闭（全帧型统一，含常驻帧）：2026-09-19 拍板——常驻帧 ✕ 关闭钮退役，
+  // 「一碰就没」的误关风险让位于单一点按出口的直觉
+  el.addEventListener('click', () => hideNow(n));
 
   // 抬顶（ADR-0067）：toast 与 overlay 共享动态层级空间，弹出时重发号保证永远可见
   container.style.zIndex = String(allocZ());

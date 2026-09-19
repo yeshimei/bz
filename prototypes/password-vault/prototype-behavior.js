@@ -1,4 +1,4 @@
-/* 源指纹 97a5610fe469ec9d · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 9c8a70c828dc2459 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -4351,14 +4351,6 @@ var BZW_password_vault = (() => {
     });
   }
 
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-
   // src/core/notice.ts
   var MAX_VISIBLE_DEFAULT = 5;
   function maxVisible() {
@@ -4518,35 +4510,6 @@ var BZW_password_vault = (() => {
       window.setTimeout(() => removeInternal(n), LEAVE_MS);
     }
   }
-  function buildCloseBtn(n) {
-    const btn = document.createElement("span");
-    btn.className = "bz-notice-close";
-    btn.setAttribute("role", "button");
-    btn.setAttribute("aria-label", "关闭");
-    btn.title = "关闭";
-    btn.tabIndex = 0;
-    btn.appendChild(uiIcon("x"));
-    const fire = (e) => {
-      e.stopPropagation();
-      hideNow(n);
-    };
-    btn.addEventListener("click", fire);
-    btn.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        fire(e);
-      }
-    });
-    return btn;
-  }
-  function syncPersistentUi(n) {
-    const closeBtn = n.el.querySelector(".bz-notice-close");
-    if (n.persistent && !closeBtn) {
-      n.el.appendChild(buildCloseBtn(n));
-    } else if (!n.persistent && closeBtn) {
-      closeBtn.remove();
-    }
-  }
   function armTimer(n, kind, explicitDuration, text) {
     if (n.timer !== null) {
       window.clearTimeout(n.timer);
@@ -4569,7 +4532,6 @@ var BZW_password_vault = (() => {
         n.timer = window.setTimeout(() => hideNow(n), dur);
       }
     }
-    syncPersistentUi(n);
   }
   function noopHandle() {
     return {
@@ -4604,9 +4566,7 @@ var BZW_password_vault = (() => {
         fire(e);
       }
     });
-    const closeBtn = n.el.querySelector(".bz-notice-close");
-    if (closeBtn) n.el.insertBefore(btn, closeBtn);
-    else n.el.appendChild(btn);
+    n.el.appendChild(btn);
   }
   function makeHandle(n) {
     return {
@@ -4717,10 +4677,7 @@ var BZW_password_vault = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => {
-      if (n.persistent) return;
-      hideNow(n);
-    });
+    el.addEventListener("click", () => hideNow(n));
     container.style.zIndex = String(allocZ());
     container.appendChild(el);
     live.push(n);
@@ -5622,6 +5579,14 @@ var BZW_password_vault = (() => {
       void 0,
       opts == null ? void 0 : opts.longPressFilter
     );
+  }
+
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
   }
 
   // src/core/ui/setlist.ts

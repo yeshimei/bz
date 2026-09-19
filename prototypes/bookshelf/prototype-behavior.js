@@ -1,4 +1,4 @@
-/* 源指纹 d31a0c22a4a8b6ce · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 02edc80a7242a1ea · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -4293,14 +4293,6 @@ var BZW_bookshelf = (() => {
     return allocZBlock(1);
   }
 
-  // src/core/ui/icon.ts
-  function uiIcon(name, extraClass = "") {
-    const i = document.createElement("span");
-    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
-    setIcon(i, name);
-    return i;
-  }
-
   // src/core/notice.ts
   var MAX_VISIBLE_DEFAULT = 5;
   function maxVisible() {
@@ -4449,35 +4441,6 @@ var BZW_bookshelf = (() => {
       window.setTimeout(() => removeInternal(n), LEAVE_MS);
     }
   }
-  function buildCloseBtn(n) {
-    const btn = document.createElement("span");
-    btn.className = "bz-notice-close";
-    btn.setAttribute("role", "button");
-    btn.setAttribute("aria-label", "关闭");
-    btn.title = "关闭";
-    btn.tabIndex = 0;
-    btn.appendChild(uiIcon("x"));
-    const fire = (e) => {
-      e.stopPropagation();
-      hideNow(n);
-    };
-    btn.addEventListener("click", fire);
-    btn.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        fire(e);
-      }
-    });
-    return btn;
-  }
-  function syncPersistentUi(n) {
-    const closeBtn = n.el.querySelector(".bz-notice-close");
-    if (n.persistent && !closeBtn) {
-      n.el.appendChild(buildCloseBtn(n));
-    } else if (!n.persistent && closeBtn) {
-      closeBtn.remove();
-    }
-  }
   function armTimer(n, kind, explicitDuration, text) {
     if (n.timer !== null) {
       window.clearTimeout(n.timer);
@@ -4500,7 +4463,6 @@ var BZW_bookshelf = (() => {
         n.timer = window.setTimeout(() => hideNow(n), dur);
       }
     }
-    syncPersistentUi(n);
   }
   function noopHandle() {
     return {
@@ -4535,9 +4497,7 @@ var BZW_bookshelf = (() => {
         fire(e);
       }
     });
-    const closeBtn = n.el.querySelector(".bz-notice-close");
-    if (closeBtn) n.el.insertBefore(btn, closeBtn);
-    else n.el.appendChild(btn);
+    n.el.appendChild(btn);
   }
   function makeHandle(n) {
     return {
@@ -4648,10 +4608,7 @@ var BZW_bookshelf = (() => {
       }
     }
     for (const a of actions) appendActionBtn(n, a);
-    el.addEventListener("click", () => {
-      if (n.persistent) return;
-      hideNow(n);
-    });
+    el.addEventListener("click", () => hideNow(n));
     container.style.zIndex = String(allocZ());
     container.appendChild(el);
     live.push(n);
@@ -5328,6 +5285,14 @@ var BZW_bookshelf = (() => {
   // src/core/mobile.ts
   function isMobileEnv() {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
+  }
+
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
   }
 
   // src/core/ui/icons.ts

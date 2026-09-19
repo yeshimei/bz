@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setApp } from '../../src/core/app';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { aiProcess, processFile, formatSummaryNotice } from '../../src/auto-summary/processor';
+import { aiProcess, processFile } from '../../src/auto-summary/processor';
 import { MockVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 
@@ -132,19 +132,6 @@ describe('aiProcess', () => {
   });
 });
 
-describe('formatSummaryNotice', () => {
-  it('《title》+ 空行 + summary + 空行 + #tags', () => {
-    expect(formatSummaryNotice({ title: '标题', summary: '摘要', tags: ['AI', '阅读'] })).toBe(
-      '《标题》\n\n摘要\n\n#AI #阅读'
-    );
-  });
-
-  it('缺哪段不显示哪段', () => {
-    expect(formatSummaryNotice({ summary: '只有摘要' })).toBe('只有摘要');
-    expect(formatSummaryNotice({})).toBe('');
-  });
-});
-
 describe('processFile', () => {
   let vault: MockVault;
 
@@ -169,9 +156,9 @@ describe('processFile', () => {
     expect(out).toContain('  - "AI"');
     expect(out).toContain('  - "阅读"');
     expect(out).toContain('url: "https://x.com/a"'); // 原字段保留
-    // 通知：摘要单条原地更新为结果 + 改名成功独立弹出「已重命名为《X》」（ticket a1）
+    // 通知：摘要单条原地更新为「已完成」回执 + 改名成功独立弹出「已重命名为《X》」（ticket a1）
     const msgs = getNoticeMessages();
-    expect(msgs).toContain('《新标题》\n\n摘要内容\n\n#AI #阅读');
+    expect(msgs).toContain('已完成');
     expect(msgs).toContain('已重命名为《新标题》');
   });
 
@@ -189,7 +176,7 @@ describe('processFile', () => {
     expect(out).toContain('summary: "已有摘要"');
     expect(out).toContain('  - "新标签"');
     expect(getNoticeMessages()).toHaveLength(1);
-    expect(getNoticeMessages()[0]).toBe('《已有标题》\n\n已有摘要\n\n#新标签');
+    expect(getNoticeMessages()[0]).toBe('已完成');
   });
 
   it('字段齐全 → 跳过（不 modify、不通知、不调 AI）', async () => {
@@ -308,7 +295,7 @@ describe('processFile', () => {
       processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/m1.md')),
       processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/m2.md')),
     ]);
-    expect(getNoticeMessages().filter((m) => m.includes('摘要一'))).toHaveLength(2);
+    expect(getNoticeMessages().filter((m) => m === '已完成')).toHaveLength(2);
   });
 
   it('AI 处理期间外部追加（P1-21）：写回基于最新读——自定义 frontmatter 与正文段落保留，摘要字段已更新', async () => {
@@ -365,7 +352,7 @@ describe('processFile', () => {
     expect(out).toContain('note: "用户笔记"'); // 外部 frontmatter 保留
     expect(out).toContain('用户新增段落'); // 正文取磁盘最新
     expect(getNoticeMessages()).toHaveLength(1);
-    expect(getNoticeMessages()[0]).toBe('《已有标题》\n\n新摘要');
+    expect(getNoticeMessages()[0]).toBe('已完成');
   });
 
   it('外来剪藏 frontmatter 不丢行（审计修复）：中文键/注释/无缩进 tags 原样保留，tags 不被 AI 覆盖', async () => {
@@ -484,7 +471,7 @@ describe('processFile force 与「查看」/quiet（enh-autosum 包）', () => {
     await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/quiet.md'), { quiet: true });
     const msgs = getNoticeMessages();
     expect(msgs.some((m) => m.includes('正在为《'))).toBe(false); // 无逐篇 progress
-    expect(msgs.some((m) => m.includes('安静摘要'))).toBe(true); // 完成通知照常
+    expect(msgs.some((m) => m === '已完成')).toBe(true); // 完成通知照常（固定回执文案）
   });
 });
 
