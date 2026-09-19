@@ -6,6 +6,7 @@
 import type { App, TFile } from 'obsidian';
 import { stripTitleMarks } from '../core/ui/str';
 import { M, resolveGameshelfFolderPath, type GameItem } from './state';
+import { GS_FM, GS_LEGACY_FM } from './constants';
 import { buildSyncPlan, managedFm, mergeTags, migrateLegacyKeys, notePathFor, sanitizeFileName, type NoteSnapshot } from './reconcile';
 import type { SteamOwnedGame } from './steam';
 import { steamCoverUrl } from './steam';
@@ -25,41 +26,105 @@ function strOf(v: unknown): string | null {
   return typeof v === 'string' && v.trim() ? v.trim() : null;
 }
 
-/** 扫描游戏目录全部笔记 → 条目（AppID 缺失/非法的文件跳过——不是本域数据不碰） */
+/**
+ * 展示名解析：`《名》.md` → 名（深审 F12）——同名消歧文件名 `《名》 12345.md` 连尾巴
+ * 一起剥，否则卡片/门面/弹窗显示成「名》 12345」，搜索匹配与名称排序也随之歪。
+ * 不匹配书名号形态的回落旧剥法（只剥首《与尾》），用户手建的怪名行为不变。
+ */
+function displayBaseName(basename: string): string {
+  const m = /^《(.+?)》(?:\s+\d+)?$/.exec(basename);
+  if (m) return m[1];
+  // 回落剥法走 core 单源（cons C10 收编，批B：域内不再自留与正典逐字同义的私货）
+  return stripTitleMarks(basename);
+}
+
+/** GameItem 逐字段浅比较（A1 复用判据：除 file 外全是解析产物标量，file 只比 path） */
+function sameItem(a: GameItem, b: GameItem): boolean {
+  return (
+    (a.file?.path ?? null) === (b.file?.path ?? null) &&
+    a.appid === b.appid &&
+    a.name === b.name &&
+    a.zhName === b.zhName &&
+    a.playtimeMin === b.playtimeMin &&
+    a.lastPlayed === b.lastPlayed &&
+    a.cover === b.cover &&
+    a.coverSrc === b.coverSrc &&
+    a.icon === b.icon &&
+    a.iconSrc === b.iconSrc &&
+    a.windowsMin === b.windowsMin &&
+    a.deckMin === b.deckMin &&
+    a.macMin === b.macMin &&
+    a.linuxMin === b.linuxMin &&
+    a.hasAch === b.hasAch &&
+    a.offShelf === b.offShelf &&
+    a.syncedAt === b.syncedAt
+  );
+}
+
+/**
+ * 扫描游戏目录全部笔记 → 条目（AppID 缺失/非法的文件跳过——不是本域数据不碰）。
+ *
+ * 两条与队列的契约（深审 A1/A2，改动前先读）：
+ * - **A1 未变条目复用旧对象**：names/posters 等后台队列持「入队时的条目引用」就地写回填
+ *   成果（zhName/cover），本函数整表替换 M.items 时若连对象一起换新，在途队列的成果就写进
+ *   无人引用的旧对象（home 首页采集、同步链 rebuild 都会触发）。frontmatter 未变的条目
+ *   保持同一引用 = 队列写的就是 M.items 现值，渐进渲染才有意义。
+ * - **A2 缓存未就绪保留既有条目**：metadataCache 对新建文件的索引是异步的，同步批量建完
+ *   立即重建时会追不上——cache 为 null 的文件从上一轮 M.items 按 path 保留（cinema
+ *   data.ts 同款守卫，issue 256），缓存就绪的下一次重建正常解析接管。
+ */
 export function rebuildItems(app: App): GameItem[] {
   const folder = resolveGameshelfFolderPath();
   const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + '/'));
+  const prevByPath = new Map<string, GameItem>();
+  for (const it of M.items) {
+    if (it.file) prevByPath.set(it.file.path, it);
+  }
   const items: GameItem[] = [];
   for (const file of files) {
     const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-    const appid = Number(readVal(fm ?? {}, 'AppID', 'appid'));
-    if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
-    const icon = readVal(fm, '图标', '');
-    const zh = fm['中文名'];
-    const coverRaw = readVal(fm, '封面', 'cover');
-    const iconSrc = fm['图标源'];
-    const coverSrc = fm['封面源'];
-    items.push({
+    if (!fm) {
+      // A2：文件在而缓存未索引 → 保留上一轮既有条目（没有就不凭空造——不是本域数据不碰）
+      const kept = prevByPath.get(file.path);
+      if (kept) items.push(kept);
+      continue;
+    }
+    const appid = Number(readVal(fm, GS_FM.appId, GS_LEGACY_FM.appId));
+    if (!Number.isFinite(appid) || appid <= 0) continue;
+    const icon = readVal(fm, GS_FM.icon, '');
+    const zh = fm[GS_FM.zhName];
+    const coverRaw = readVal(fm, GS_FM.cover, GS_LEGACY_FM.cover);
+    const iconSrc = fm[GS_FM.iconSrc];
+    const coverSrc = fm[GS_FM.coverSrc];
+    const next: GameItem = {
       file,
       appid,
-      // 展示名剥书名号走 core 单源（cons C10 收编：域内自写与正典逐字同义，防止日后分叉）
-      name: stripTitleMarks(file.basename).trim() || `App ${appid}`,
+      name: displayBaseName(file.basename).trim() || `App ${appid}`,
       zhName: typeof zh === 'string' && zh.trim() ? zh.trim() : null,
-      playtimeMin: intOf(readVal(fm, '游玩分钟', 'playtimeMin')),
-      lastPlayed: typeof readVal(fm, '最后游玩', 'lastPlayed') === 'string' ? String(readVal(fm, '最后游玩', 'lastPlayed')) : '',
+      playtimeMin: intOf(readVal(fm, GS_FM.playtimeMin, GS_LEGACY_FM.playtimeMin)),
+      lastPlayed:
+        typeof readVal(fm, GS_FM.lastPlayed, GS_LEGACY_FM.lastPlayed) === 'string'
+          ? String(readVal(fm, GS_FM.lastPlayed, GS_LEGACY_FM.lastPlayed))
+          : '',
       // 封面/图标：既可能是本地 vault 路径（媒体队列写过），也可能是远端地址（没本地化过）
       cover: strOf(coverRaw) || steamCoverUrl(appid),
       coverSrc: strOf(coverSrc) || steamCoverUrl(appid),
       icon: strOf(icon),
       iconSrc: strOf(iconSrc),
-      windowsMin: intOf(fm['Windows分钟']),
-      deckMin: intOf(fm['SteamDeck分钟']),
-      macMin: intOf(fm['Mac分钟']),
-      linuxMin: intOf(fm['Linux分钟']),
-      hasAch: fm['有成就'] === true,
-      offShelf: readVal(fm, '已下架', 'offShelf') === true,
-      syncedAt: typeof readVal(fm, '同步时间', 'syncedAt') === 'string' ? String(readVal(fm, '同步时间', 'syncedAt')) : null,
-    });
+      windowsMin: intOf(fm[GS_FM.windowsMin]),
+      deckMin: intOf(fm[GS_FM.deckMin]),
+      macMin: intOf(fm[GS_FM.macMin]),
+      linuxMin: intOf(fm[GS_FM.linuxMin]),
+      hasAch: fm[GS_FM.hasAch] === true,
+      offShelf: readVal(fm, GS_FM.offShelf, GS_LEGACY_FM.offShelf) === true,
+      syncedAt:
+        typeof readVal(fm, GS_FM.syncedAt, GS_LEGACY_FM.syncedAt) === 'string'
+          ? String(readVal(fm, GS_FM.syncedAt, GS_LEGACY_FM.syncedAt))
+          : null,
+    };
+    // A1：frontmatter 未变 → 沿用上一轮对象（契约见函数头注释）
+    const prev = prevByPath.get(file.path);
+    items.push(prev && sameItem(prev, next) ? prev : next);
   }
   M.items = items;
   return items;
@@ -71,16 +136,18 @@ export function scanSnapshots(app: App, folder: string): NoteSnapshot[] {
   const out: NoteSnapshot[] = [];
   for (const file of files) {
     const fm = app.metadataCache.getFileCache(file)?.frontmatter;
-    const appid = Number(readVal(fm ?? {}, 'AppID', 'appid'));
+    const appid = Number(readVal(fm ?? {}, GS_FM.appId, GS_LEGACY_FM.appId));
     if (!fm || !Number.isFinite(appid) || appid <= 0) continue;
     out.push({
       path: file.path,
       appid,
-      playtimeMin: Number.isFinite(Number(readVal(fm, '游玩分钟', 'playtimeMin'))) ? Math.max(0, Math.floor(Number(readVal(fm, '游玩分钟', 'playtimeMin')))) : null,
-      offShelf: readVal(fm, '已下架', 'offShelf') === true,
-      legacy: 'appid' in fm || 'playtimeMin' in fm,
+      playtimeMin: Number.isFinite(Number(readVal(fm, GS_FM.playtimeMin, GS_LEGACY_FM.playtimeMin)))
+        ? Math.max(0, Math.floor(Number(readVal(fm, GS_FM.playtimeMin, GS_LEGACY_FM.playtimeMin))))
+        : null,
+      offShelf: readVal(fm, GS_FM.offShelf, GS_LEGACY_FM.offShelf) === true,
+      legacy: GS_LEGACY_FM.appId in fm || GS_LEGACY_FM.playtimeMin in fm,
       // 媒体本地化改造前建的笔记没有「封面源」→ 借这次同步补齐（补过即自愈，不再 churn）
-      mediaPending: fm['封面源'] === undefined,
+      mediaPending: fm[GS_FM.coverSrc] === undefined,
     });
   }
   return out;
@@ -117,8 +184,8 @@ export async function applySyncPlan(app: App, folder: string, owned: SteamOwnedG
     const file = byPath.get(note.path);
     if (!file) continue;
     await app.fileManager.processFrontMatter(file, (fm: Record<string, unknown>) => {
-      fm['已下架'] = true;
-      delete fm['offShelf']; // 旧键迁移（offShelf 语义唯一出口 = 已下架）
+      fm[GS_FM.offShelf] = true;
+      delete fm[GS_LEGACY_FM.offShelf]; // 旧键迁移（offShelf 语义唯一出口 = 已下架）
     });
   }
   return { added: plan.toCreate.length, updated: plan.toUpdate.length, offShelf: plan.toOffShelf.length };
@@ -131,23 +198,23 @@ function noteMarkdown(game: SteamOwnedGame, nowIso: string): string {
     '---',
     'tags:',
     '- 游戏',
-    `AppID: ${fm.AppID}`,
-    `游玩分钟: ${fm['游玩分钟']}`,
+    `AppID: ${fm[GS_FM.appId]}`,
+    `游玩分钟: ${fm[GS_FM.playtimeMin]}`,
   ];
-  if (fm['最后游玩']) lines.push(`最后游玩: "${fm['最后游玩']}"`);
+  if (fm[GS_FM.lastPlayed]) lines.push(`最后游玩: "${fm[GS_FM.lastPlayed]}"`);
   lines.push(
     // 源键（同步管辖）+ 现值：新建时现值先填远端，媒体队列拉到本地后改写成 vault 路径
-    `封面源: ${fm['封面源']}`,
-    `封面: ${fm['封面源']}`,
-    `图标源: ${fm['图标源'] || '""'}`,
-    `图标: ${fm['图标源'] || '""'}`,
-    `同步时间: "${fm['同步时间']}"`,
-    `已下架: ${fm['已下架']}`,
-    `Windows分钟: ${fm['Windows分钟']}`,
-    `SteamDeck分钟: ${fm['SteamDeck分钟']}`,
-    `Mac分钟: ${fm['Mac分钟']}`,
-    `Linux分钟: ${fm['Linux分钟']}`,
-    `有成就: ${fm['有成就']}`,
+    `封面源: ${fm[GS_FM.coverSrc]}`,
+    `封面: ${fm[GS_FM.coverSrc]}`,
+    `图标源: ${fm[GS_FM.iconSrc] || '""'}`,
+    `图标: ${fm[GS_FM.iconSrc] || '""'}`,
+    `同步时间: "${fm[GS_FM.syncedAt]}"`,
+    `已下架: ${fm[GS_FM.offShelf]}`,
+    `Windows分钟: ${fm[GS_FM.windowsMin]}`,
+    `SteamDeck分钟: ${fm[GS_FM.deckMin]}`,
+    `Mac分钟: ${fm[GS_FM.macMin]}`,
+    `Linux分钟: ${fm[GS_FM.linuxMin]}`,
+    `有成就: ${fm[GS_FM.hasAch]}`,
     '---',
     '',
     '',

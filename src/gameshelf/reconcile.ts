@@ -11,6 +11,7 @@
  */
 import type { SteamOwnedGame } from './steam';
 import { steamCoverUrl } from './steam';
+import { pad2 } from '../core/ui/str';
 
 /** 游戏笔记统一 tag（frontmatter tags 保底一项；用户可自行追加，upsert 不清） */
 export const GAME_TAG = '游戏';
@@ -136,8 +137,7 @@ export function lastPlayedStr(tsMs: number): string {
   if (!tsMs || tsMs <= 0) return '';
   const d = new Date(tsMs);
   if (isNaN(d.getTime())) return '';
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; // C2 余量：pad2 收编 core 单源（深审批A 登记）
 }
 
 /**

@@ -91,6 +91,17 @@
   padding: var(--bz-space-sm) 14px; width: 280px; font-size: var(--bz-font-label); font-family: var(--bsw-sans);
   box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.5); outline: none; transform: rotate(-0.4deg);
 }
+/* 检索框包裹层（效率#12 尾 ✕ 载体）：✕ 绝对定位框内右侧，clipbook search-clear 同构 */
+.bz-bs-searchbox { position: relative; transform: rotate(-0.4deg); }
+.bz-bs-searchbox .bz-bs-search { transform: none; }
+.bz-bs-search-clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  width: 18px; height: 18px; padding: 0; border: none; background: transparent;
+  color: var(--bsw-muted); cursor: pointer; line-height: 0; display: inline-flex;
+  align-items: center; justify-content: center;
+}
+.bz-bs-search-clear .bz-ic { width: 12px; height: 12px; }
+.bz-bs-search-clear:hover { color: var(--bsw-ink); }
 .bz-bs-search:focus { box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.5), 0 0 0 2px var(--bsw-brass); }
 .bz-bs-search::placeholder { color: #a08e6e; }
 .bz-bs-seg { display: flex; border: 1px solid var(--bsw-brass); }
@@ -135,6 +146,9 @@
 .bz-bs-wall-empty { padding: 48px var(--bz-space-xl); display: flex; justify-content: center; }
 
 /* —— 书脊 —— */
+/* 触屏命中层（bz-touch-target--xl 载体，深审 ui F6）：透明覆盖书脊面，
+   coarse 下由 core 热区类经 ::after 外扩命中面 ≥40px；桌面无伪元素、同面覆盖行为无差 */
+.bz-bs-spine .bz-bs-touch { position: absolute; inset: 0; }
 .bz-bs-spine {
   writing-mode: vertical-rl; display: flex; align-items: center; justify-content: center;
   cursor: pointer; position: relative; flex: none; border-radius: 2px 2px 0 0;
@@ -183,6 +197,10 @@
 
 /* ==================== 借书卡详情（纸卡 + 台账 + 印章；编辑控件融卡内） ==================== */
 .bz-bs-d-popup.bz-overlay-popup { max-width: min(660px, calc(100vw - 32px)); height: min(72vh, 600px); background: var(--bsw-paper); border: 1px solid var(--bsw-line); overflow: hidden; }
+/* 「× 关闭」（issue 223 拍板保留项，深审 ui F8 补齐）：右上红签下方悬置——移动端无 ESC、
+   遮罩只剩窄边可点；桌面与 ESC/点遮罩等价出口 */
+.bz-bs-d-close { position: absolute; top: 40px; right: 8px; z-index: 3; color: var(--bsw-muted); }
+.bz-bs-d-close:hover { color: var(--bsw-ink); }
 /* 固定高：卡不随书评拉长，内容多寡只影响内部滚动区的可滚量 */
 .bz-bs-d-popup .bz-dialog-body { flex: 1; min-height: 0; }
 .bz-bs-detail { position: relative; display: flex; flex: 1; min-height: 0; color: var(--bsw-ink); font-family: var(--bsw-sans); }
@@ -617,7 +635,9 @@
 /* ==================== 移动端（≤768px：同构书脊墙，缩距不换形） ==================== */
 @media (max-width: 768px) {
   .bz-bs-panel {
-    width: 100vw; height: 100vh; max-width: none; max-height: none; border-radius: 0; border: none;
+    /* 高度接 core 可视视口 --bz-vvh（C-UI6：软键盘弹出时面板随可视视口收缩，
+       检索结果不被键盘遮——clipbook/diary/cinema 同款先例） */
+    width: 100vw; height: var(--bz-vvh, 100vh); max-width: none; max-height: none; border-radius: 0; border: none;
     background: var(--bsw-wall);
     /* 安全区避让域内接管（头行等值 margin，见 .bz-bs-header），core 顶距让位给整幅墙纸 */
     padding-top: 0 !important;
@@ -637,14 +657,16 @@
   .bz-bs-taglabel.dim-cat { flex: none; white-space: nowrap; }
   .bz-bs-taglabel .n { font-size: 18px; }
   .bz-bs-tools { padding: 10px 14px 0; }
+  .bz-bs-searchbox { width: 100%; }
   .bz-bs-search { width: 100%; }
   .bz-bs-room { padding: 14px 10px 10px; }
   .bz-bs-zone { padding: 0 var(--bz-space-sm); min-height: 240px; }
   .bz-bs-divider { margin: 0 10px var(--bz-space-md); letter-spacing: 5px; font-size: var(--bz-font-label); min-height: 190px; }
   .bz-bs-wallnote { font-size: var(--bz-font-caption); letter-spacing: 2px; padding: 0 var(--bz-space-md); }
-  /* 借书卡：窄屏单列 + 流程要求的弹窗留边（不全屏贴边；点遮罩/Esc 关） */
+  /* 借书卡：窄屏单列 + 流程要求的弹窗留边（不全屏贴边；点遮罩/Esc 关）；
+     限高接 core 可视视口（同面板 --bz-vvh 口径，软键盘不遮借书卡） */
   .bz-bs-d-card { flex-direction: column; }
   .bz-bs-d-cover { width: 110px; }
-  .bz-bs-d-popup.bz-overlay-popup { width: min(430px, 100vw - 32px); max-width: none !important; max-height: calc(100vh - 48px); }
+  .bz-bs-d-popup.bz-overlay-popup { width: min(430px, 100vw - 32px); max-width: none !important; max-height: calc(var(--bz-vvh, 100vh) - 48px); }
   .bz-bs-d-seal { display: none; }
 }

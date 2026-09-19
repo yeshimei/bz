@@ -13,7 +13,7 @@
  * 由各端 mountIcons 物化。窗口缩放墙内标尺以 BsWallScale 显式传递（wallScale() 计算）。
  */
 import { esc, iconSpan } from '../core/ui/str';
-import { STATUS_COLORS } from './constants';
+import { STATUS_COLORS, ICON } from './constants';
 import type { BookshelfItem, SideId, SortKey } from './state';
 
 // ---------- 小工具 ----------
@@ -28,7 +28,8 @@ export function itemId(it: BookshelfItem): string {
   return it.file?.path ?? it.epubVaultPath ?? (it as BookshelfItem & { id?: string }).id ?? '';
 }
 
-// ---------- 筛选排序管道（data.ts 迁入；data.ts re-export 兼容旧引用） ----------
+// ---------- 筛选排序管道（ADR-0104 自旧 data.ts/ui.ts 收敛的纯管道单源；
+//  显式入参、禁模块级可变状态——读 M 的状态包装在 ui.ts，data.ts 不再依赖本层） ----------
 
 /** 条目主日期（排序）：读完日 > 开始日；无日期按文件创建时间（演示数据走 ctime 字段） */
 export function primaryDate(it: BookshelfItem): number {
@@ -109,7 +110,10 @@ export function detailBodyHtml(it: BookshelfItem, coverSrc: string | null): stri
     : '';
   const hoursText = it.readingTimeFormat || (it.readingTimeMs > 0 ? (it.readingTimeMs / 3600000).toFixed(1) + ' 小时' : '—');
   const prog = Math.round(it.progress);
+  /* 「× 关闭」（issue 223 拍板保留项，深审 ui F8 补齐）：移动端无 ESC、遮罩只剩窄边可点；
+     行为接线在 ui.ts openBookDetail（data-bs-d-close → 关闭弹窗） */
   return `
+    <button type="button" class="bz-icon-btn bz-bs-d-close" data-bs-d-close title="关闭" aria-label="关闭">${iconSpan(ICON.close)}</button>
     <div class="bz-bs-d-pull">已抽出这本书</div>
     <div class="bz-bs-d-card">
       <div class="bz-bs-d-cover">${cover}</div>

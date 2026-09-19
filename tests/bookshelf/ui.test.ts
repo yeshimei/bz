@@ -25,6 +25,15 @@ async function waitReport(content: HTMLElement, timeout = 6000): Promise<void> {
   void content;
 }
 
+/** 轮询等待断言（TG4：裸 sleep 对并行负载敏感；spines 数量稳定即过） */
+async function waitFor(fn: () => boolean, timeout = 3000, step = 15): Promise<void> {
+  const start = Date.now();
+  while (!fn()) {
+    if (Date.now() - start > timeout) throw new Error('waitFor: 断言轮询超时');
+    await new Promise((r) => setTimeout(r, step));
+  }
+}
+
 /** 本地时区日期串（YYYY-MM-DD） */
 function dateStr(d: Date): string {
   const p = (n: number) => String(n).padStart(2, '0');
@@ -96,8 +105,9 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     expect(overlay.querySelectorAll('.bz-bs-taglabel.off').length).toBe(0);
     // 标签行：全馆 3 / 已读 1 / 在读 1 / 未读 1 + 分类（成长/科幻）
     const labels = Array.from(overlay.querySelectorAll('.bz-bs-taglabel'));
-    // 分类标签只数在架书（围城无分类 → 「未分类」也出标签；科幻是未读书专属分类 → 不出，未读统一在倒叠区）
-    expect(labels.length).toBe(6);
+    // 分类标签计数与筛选同口径（深审 func F6 翻转：旧板排除未读致「3 册」点开 5 本——
+    // catFilter 过滤含未读，标签册数一并计入；科幻是未读书专属分类 → 出「1 册」标签）
+    expect(labels.length).toBe(7);
     expect(labels[0].textContent).toContain('全馆藏书');
     expect(labels[0].textContent).toContain('3');
     expect(labels[1].textContent).toContain('已读 · 讫');
@@ -105,10 +115,12 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     expect(labels[3].textContent).toContain('未读 · 倒叠');
     expect(labels.some((l) => l.textContent?.includes('成长'))).toBe(true);
     expect(labels.some((l) => l.textContent?.includes('未分类'))).toBe(true);
-    expect(labels.some((l) => l.textContent?.includes('科幻'))).toBe(false);
+    expect(labels.some((l) => l.textContent?.includes('科幻'))).toBe(true);
+    const scifi = labels.find((l) => l.textContent?.includes('科幻')) as HTMLElement;
+    expect(scifi.textContent).toContain('1 册');
     // 分类标签独立子容器（桌面 display:contents 隐身；移动端并入头行一行横滑；与原型 renderLabels 同构契约）
     const catsBox = header.querySelector('.bz-bs-cats');
-    expect(catsBox?.querySelectorAll('[data-bs-cat]').length).toBe(2);
+    expect(catsBox?.querySelectorAll('[data-bs-cat]').length).toBe(3); // 成长/未分类/科幻（含未读口径）
     expect(catsBox?.querySelectorAll('[data-bs-side]').length).toBe(0);
     expect(header.querySelectorAll('#bz-bs-labels > .bz-bs-taglabel[data-bs-side]').length).toBe(4);
     // 工具行：检索 + 三档排序 + 在墙计数
@@ -190,15 +202,13 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     const input = document.querySelector('#bz-bs-dsearch') as HTMLInputElement;
     input.value = '钱钟书';
     input.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250)); // 防抖 200ms
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    expect(spines(overlay).length).toBe(1);
+    await waitFor(() => spines(overlay).length === 1); // 防抖 200ms 后重画
     expect((spines(overlay)[0] as HTMLElement).title).toContain('围城');
     expect(overlay.querySelector('#bz-bs-hint')?.textContent).toContain('1 册在墙');
     input.value = '';
     input.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250));
-    expect(spines(overlay).length).toBe(3);
+    await waitFor(() => spines(overlay).length === 3);
     closeOverlay();
   });
 
@@ -208,7 +218,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     const input = document.querySelector('#bz-bs-dsearch') as HTMLInputElement;
     input.value = '钱钟书';
     input.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250));
+    await waitFor(() => M.searchKeyword === '钱钟书');
     closeOverlay();
     createOverlay(app);
     await new Promise((r) => setTimeout(r, 20));
@@ -299,11 +309,10 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     const input = document.querySelector('#bz-bs-dsearch') as HTMLInputElement;
     input.value = '不存在的书名';
     input.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250));
-    expect(overlay.querySelector('#bz-bs-shelf [data-icon="search-x"]')).toBeTruthy();
+    await waitFor(() => !!overlay.querySelector('#bz-bs-shelf [data-icon="search-x"]'));
     input.value = '';
     input.dispatchEvent(new Event('input'));
-    await new Promise((r) => setTimeout(r, 250));
+    await waitFor(() => !overlay.querySelector('#bz-bs-shelf [data-icon="search-x"]'));
     M.items = M.items.filter((x) => x.title === '围城');
     M.side = 'reading';
     const { renderAll } = await import('../../src/bookshelf/ui');
@@ -328,7 +337,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
       },
     }));
     vault.emit('modify', vault.file('CONFIG/STORAGE/weave-data.json'));
-    await new Promise((r) => setTimeout(r, 420));
+    await waitFor(() => spines(document.querySelector('.bz-panel-overlay') as HTMLElement).length === 5, 5000); // 300ms 防抖 + rebuild
     overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(spines(overlay).length).toBe(5); // 3 md + 2 epub
     closeOverlay();
@@ -345,7 +354,7 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     vault.files.set('书库/新书.md', '---\ntags: [book]\n---');
     vault.emit('modify', vault.file('书库/新书.md'));
-    await new Promise((r) => setTimeout(r, 420));
+    await new Promise((r) => setTimeout(r, 80)); // 越过未注销时期的防抖触发点（如误订阅早该刷新）
     expect(spines(overlay).length).toBe(3); // 未刷新
     closeOverlay();
   });
@@ -431,10 +440,6 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     closeOverlay();
   });
 });
-
-/** 关闭书架墙筛选抽屉（历史测试辅助；抽屉已退役保留空实现防悬挂引用） */
-function closeDrawerHelper(): void { /* issue 218 抽屉退役 */ }
-void closeDrawerHelper;
 
 describe('bookshelf 面板皮肤（issue 216）', () => {
   beforeEach(() => {

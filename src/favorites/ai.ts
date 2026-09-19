@@ -5,6 +5,7 @@ import { requestUrl } from 'obsidian';
 import { withTimeout } from '../core/http';
 import { createAI, getAIProvider } from '../core/ai';
 import type { AIService } from '../core/ai';
+import { normalizeUrl } from './config';
 
 // ==================== AI 服务 ====================
 export class FavoritesAIService {
@@ -69,4 +70,35 @@ export class FavoritesAIService {
     }
     return { title, description, fetched };
   }
+}
+
+/**
+ * AI 整理结果归一（func-5 数据侧收口）：提示词允许「无法判断则原样返回」无协议链接，
+ * 若把 AI 原样返回直接回填表单，保存校验（只认 http(s):// 前缀）必拦截——「整理完即可存」
+ * 断链。本函数是回填前的唯一归一出口：url 过 normalizeUrl（config 单源，与读侧/打开链路
+ * 同口径；空值跳过不产 'https://'），title/description 收敛字符串（非串 String 纠偏），
+ * tags 收敛字符串数组（数组元素非串 String 纠偏、空值剔除；单串按单元素收编）。
+ * 消费点：ui.runAiFill 解析 AI JSON 后经本函数再回填表单（接线归深审批 B，本批先行
+ * 落数据侧与用例）。
+ */
+export function normalizeAiOrganizeResult(data: {
+  title?: unknown;
+  url?: unknown;
+  description?: unknown;
+  tags?: unknown;
+}): { title: string; url: string; description: string; tags: string[] } {
+  const s = (v: unknown): string =>
+    v === undefined || v === null ? '' : typeof v === 'string' ? v : String(v);
+  const url = s(data.url).trim();
+  const tags = Array.isArray(data.tags)
+    ? data.tags.map((t) => s(t)).filter((t) => t !== '')
+    : data.tags
+      ? [s(data.tags)]
+      : [];
+  return {
+    title: s(data.title),
+    url: url ? normalizeUrl(url) : '',
+    description: s(data.description),
+    tags,
+  };
 }

@@ -21,12 +21,21 @@
  */
 import type { App, TFile } from 'obsidian';
 import { requestUrl } from 'obsidian';
+import { withTimeout } from '../core/http';
 import { tryGetSettings } from '../core/settings-provider';
 import { upsertDetail } from './notes';
 import { M, type GameItem } from './state';
 import { steamCoverUrl } from './steam';
+import { GS_FM } from './constants';
 
 export const DEFAULT_POSTER_FOLDER = 'CONFIG/游戏海报';
+
+/**
+ * 单张媒体下载超时（深审 F8）：对照本域 steam 通道 withTimeout(…, 20s)。此前裸 requestUrl，
+ * 网络劣化时一张挂起图让串行队列整体停摆到传输层自身超时——几千张成就图标/截图排队时
+ * 尤其致命。超时仅弃结果（requestUrl 无中止能力，core/http 同款语义），失败位走原有兜底。
+ */
+const MEDIA_DOWNLOAD_TIMEOUT_MS = 20_000;
 
 /** 海报文件夹解析（显式配置优先，缺省回落） */
 export function resolvePosterFolder(): string {
@@ -93,11 +102,6 @@ export function iconDisplayUrl(app: App, appid: number, value: string | null, sr
   if (local) return local;
   if (isRemote(value)) return value as string;
   return isRemote(src) ? (src as string) : '';
-}
-
-/** 显示用封面 URL（旧签名保留：本地优先、远端兜底；新代码用 coverDisplayUrl） */
-export function posterDisplayUrl(app: App, appid: number, remote: string | null): string {
-  return coverDisplayUrl(app, appid, remote);
 }
 
 /** 队列条目（appid + 属性现状 + 远端源；file 为 null 时只显示不落盘——测试场景） */
@@ -169,10 +173,14 @@ export function ensurePosters(app: App, items: MediaItem[]): void {
   if (added > 0 && !running) void runQueue();
 }
 
-/** 下载到 vault（成功 true；HTTP 非 2xx / 无 arrayBuffer / 异常 → false） */
+/** 下载到 vault（成功 true；HTTP 非 2xx / 无 arrayBuffer / 超时 / 异常 → false） */
 async function download(app: App, path: string, url: string): Promise<boolean> {
   try {
-    const resp = await requestUrl({ url, method: 'GET', throw: false });
+    const resp = await withTimeout(
+      requestUrl({ url, method: 'GET', throw: false }),
+      MEDIA_DOWNLOAD_TIMEOUT_MS,
+      url,
+    );
     // obsidian 的 RequestUrlResponse.arrayBuffer 是属性（非方法）；mock 环境缺省 undefined
     const buf = (resp as { arrayBuffer?: ArrayBuffer }).arrayBuffer;
     if (resp.status >= 200 && resp.status < 300 && buf) {
@@ -195,23 +203,24 @@ async function runQueue(): Promise<void> {
       // 封面：本地文件优先；没有则按「封面源」（缺省 CDN 直拼）下载
       const coverPath = `${resolvePosterFolder()}/${item.appid}.jpg`;
       if (hasFile(app, coverPath)) {
-        if (item.cover !== coverPath) wrote['封面'] = coverPath;
+        if (item.cover !== coverPath) wrote[GS_FM.cover] = coverPath;
       } else if (await download(app, coverPath, item.coverSrc || steamCoverUrl(item.appid))) {
-        wrote['封面'] = coverPath;
+        wrote[GS_FM.cover] = coverPath;
       }
       // 图标：只认「图标源」（hash 拼不出，没源就跳过——下次同步会补上）
       if (isRemote(item.iconSrc)) {
         const iconPath = `${resolvePosterFolder()}/${item.appid}-icon.jpg`;
         if (hasFile(app, iconPath)) {
-          if (item.icon !== iconPath) wrote['图标'] = iconPath;
+          if (item.icon !== iconPath) wrote[GS_FM.icon] = iconPath;
         } else if (await download(app, iconPath, item.iconSrc as string)) {
-          wrote['图标'] = iconPath;
+          wrote[GS_FM.icon] = iconPath;
         }
       }
       if (Object.keys(wrote).length > 0) {
         // 内存态先跟上（本会话立刻显示本地图），再落盘（同步不碰这两个键，故只写一次）
-        if (typeof wrote['封面'] === 'string') item.cover = wrote['封面'];
-        if (typeof wrote['图标'] === 'string') item.icon = wrote['图标'] as string;
+        const coverWrote = wrote[GS_FM.cover];
+        if (typeof coverWrote === 'string') item.cover = coverWrote;
+        if (typeof wrote[GS_FM.icon] === 'string') item.icon = wrote[GS_FM.icon] as string;
         if (item.file) {
           try {
             await upsertDetail(app, item.file, wrote);
@@ -348,7 +357,7 @@ export function ensureShots(app: App, job: ShotJob): void {
       const same = wanted.length === paths.length && wanted.every((v, i) => v === paths[i]);
       if (job.file && (downloaded > 0 || !same)) {
         try {
-          await upsertDetail(app, job.file, { 截图: paths });
+          await upsertDetail(app, job.file, { [GS_FM.shots]: paths });
           scheduleRerender();
         } catch (e) {
           console.warn('bz 游戏库：截图路径写回失败:', job.appid, e);

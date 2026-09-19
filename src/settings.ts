@@ -176,9 +176,10 @@ export default interface BzSettings {
   /** 📚 书架墙：默认筛选（all=全部/reading=在读/unread=未读/done=已读；打开面板时侧栏选中态，
    *  非法值回落 all。issue 194） */
   bookshelfDefaultSide: string;
-  /** 📚 书架墙：默认排序（date=最近阅读/title=书名/author=作者/progress=进度；非法值回落 date） */
+  /** 📚 书架墙：默认排序（recent=最近读完/time=时长最长/title=书名，issue 218 三档；
+   *  存量值零感知迁移 date/author→recent、progress→time（state.applyDefaultView）；非法值回落 recent） */
   bookshelfSortMode: string;
-  /** 📚 书架墙：面板皮肤（issue 216；nordic=雪松白默认，十选一，设置面板 choiceCards） */
+  /** 📚 书架墙：面板皮肤（issue 216/236；nordic=雪松白默认，五选一，设置面板 choiceCards） */
   bookshelfSkin: string;
   bookshelfLayout: string;
 

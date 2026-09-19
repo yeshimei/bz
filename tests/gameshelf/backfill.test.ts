@@ -1,9 +1,9 @@
-// @vitest-environment node
 /**
  * 后台全量回填测试（backfill.ts）：商店资料 + 成就三键 → 笔记属性。
  * 幂等（有「详情时间」不入队）、写回内容、连错到上限即停。
  * 落盘只经 fileManager.processFrontMatter（upsertDetail），假 App 记录写入即可；
  * frontmatter 读取走 metadataCache（readDetailFm），假 file 用 __fm 带 frontmatter。
+ * 用 jsdom（vitest 默认环境）：熔断现在会弹人话通知（S2），node 环境没有 document。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { requestUrl } from 'obsidian';

@@ -1,4 +1,4 @@
-/* 源指纹 7ca6ce17c3bff691 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 224263d3d422e740 · 仓内输入 55 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4757,6 +4757,80 @@ var BZW_favorites = (() => {
   }
 
   // src/favorites/data.ts
+  function normalizeItems(raw) {
+    var _a;
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    let dropped = 0;
+    let fixed = 0;
+    for (const r of raw) {
+      if (!r || typeof r !== "object" || Array.isArray(r)) {
+        dropped++;
+        continue;
+      }
+      const o = r;
+      if (o.id === void 0 || o.id === null || o.id === "") {
+        dropped++;
+        continue;
+      }
+      const it = { ...o };
+      if (typeof o.id !== "string") {
+        fixed++;
+        it.id = String(o.id);
+      }
+      if (Array.isArray(o.tags)) {
+        const tags = [];
+        for (const t of o.tags) {
+          if (t === void 0 || t === null || t === "") continue;
+          if (typeof t !== "string") fixed++;
+          tags.push(typeof t === "string" ? t : String(t));
+        }
+        it.tags = tags;
+      } else if (typeof o.tags === "string" && o.tags) {
+        fixed++;
+        it.tags = [o.tags];
+      } else {
+        if (o.tags !== void 0 && o.tags !== null && o.tags !== "") fixed++;
+        it.tags = [];
+      }
+      for (const k of ["title", "description", "created"]) {
+        if (typeof o[k] !== "string") {
+          fixed++;
+          it[k] = o[k] === void 0 || o[k] === null ? "" : String(o[k]);
+        }
+      }
+      if (typeof o.url !== "string") fixed++;
+      const rawUrl = typeof o.url === "string" ? o.url : o.url === void 0 || o.url === null ? "" : String(o.url);
+      it.url = rawUrl.trim() ? normalizeUrl(rawUrl) : "";
+      if (typeof o.pinned !== "boolean") {
+        fixed++;
+        it.pinned = false;
+      }
+      if ("archived" in o && typeof o.archived !== "boolean") {
+        fixed++;
+        it.archived = false;
+      }
+      if ("archivedAt" in o && o.archivedAt !== null && typeof o.archivedAt !== "string") {
+        fixed++;
+        it.archivedAt = null;
+      }
+      if (typeof o.type !== "string") {
+        fixed++;
+        it.type = (_a = it.tags[0]) != null ? _a : "";
+      } else if (!o.type && it.tags[0]) {
+        fixed++;
+        it.type = it.tags[0];
+      }
+      out.push(it);
+    }
+    if (dropped || fixed) {
+      console.warn(
+        `[favorites] favorites.json 条目归一：纠偏 ${fixed} 处字段漂移、剔除 ${dropped} 条不可救条目（纯读不动盘上原值，写操作后将固化归一形态；checkup 漂移检查可复核）`
+      );
+    }
+    return out;
+  }
+  var FORM_SNAPSHOT_FIELDS = ["title", "url", "description", "tags", "pinned"];
   function legacyTagsPath(favoritesPath) {
     const idx = favoritesPath.lastIndexOf("/");
     const dir = idx >= 0 ? favoritesPath.slice(0, idx) : "";
@@ -4777,7 +4851,7 @@ var BZW_favorites = (() => {
       this.filePath = storagePath;
     }
     async read() {
-      return this.store.read();
+      return normalizeItems(await this.store.read());
     }
     async write(data) {
       return this.store.write(data);
@@ -4793,7 +4867,10 @@ var BZW_favorites = (() => {
     }
     add(item) {
       return this.mutateAll((data) => {
-        data.unshift(item);
+        var _a;
+        const entry = { ...item };
+        if (Array.isArray(entry.tags)) entry.type = (_a = entry.tags[0]) != null ? _a : "";
+        data.unshift(entry);
       });
     }
     delete(id) {
@@ -4814,8 +4891,19 @@ var BZW_favorites = (() => {
     }
     update(id, newData) {
       return this.mutateAll((data) => {
+        var _a;
         const idx = data.findIndex((d) => d.id === id);
-        if (idx !== -1) data[idx] = { ...data[idx], ...newData };
+        if (idx === -1) return;
+        const isFormSnapshot = FORM_SNAPSHOT_FIELDS.every((k) => k in newData);
+        const patch = {};
+        if (isFormSnapshot) {
+          for (const k of FORM_SNAPSHOT_FIELDS) patch[k] = newData[k];
+        } else {
+          Object.assign(patch, newData);
+        }
+        const merged = { ...data[idx], ...patch };
+        if (Array.isArray(merged.tags)) merged.type = (_a = merged.tags[0]) != null ? _a : "";
+        data[idx] = merged;
       });
     }
     async getAll() {
@@ -4878,10 +4966,10 @@ var BZW_favorites = (() => {
       }
     }
     /**
-     * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to
-     * 且 type 同步（type = tags[0] 派生字段），返回迁移条数；零匹配不写盘。
-     * 审查修复：触达条件改 or——type===from 但 tags[] 不含的脏条目（历史数据 type 与 tags 失同步）
-     * 也一并跟随，不再残留脱钩旧标签。
+     * 条目标签批量跟随（改名/删除迁移；范式 = memo updateSceneBulk）：tags[] 内 from → to，
+     * 迁移后 type 统一重算为 tags[0]（func-4 派生口径收口：跟随语义在 type 正确时与重算等价，
+     * 对 type===from 但 tags[] 不含 from 的历史脏条目，重算直接落到 tags[0] 彻底归位）；
+     * 返回迁移条数；零匹配不写盘。
      */
     async updateTagLabelBulk(from, to) {
       if (!from || from === to) return 0;
@@ -4889,9 +4977,10 @@ var BZW_favorites = (() => {
         const data = await this.read();
         let n = 0;
         data.forEach((d) => {
+          var _a;
           if ((d.tags || []).includes(from) || d.type === from) {
             d.tags = (d.tags || []).map((t) => t === from ? to : t);
-            if (d.type === from) d.type = to;
+            d.type = (_a = d.tags[0]) != null ? _a : "";
             n++;
           }
         });

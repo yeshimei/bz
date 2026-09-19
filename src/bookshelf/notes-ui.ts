@@ -14,6 +14,7 @@ import { localDayKey } from '../core/utils';
 import { longPress } from '../core/dom';
 import { openFlowDialog } from '../core/flow-dialog';
 import { uiModal, uiEmpty } from '../core/ui';
+import { bindFormSubmit } from '../core/ui/modal';
 import { bsSkinClass } from './ui';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
 import type { BookNoteNode } from './notes';
@@ -386,6 +387,8 @@ function renderEpubHighlightBlock(
 /**
  * 编辑弹窗共用外壳（编辑批注 openEditCommentModal 与编辑想法 openEpubEditCommentModal 合并）。
  * onSave 返回 Promise<boolean>（true 才关闭）。
+ * 深审 eff E3：接 core bindFormSubmit——Ctrl/⌘+Enter 恒提交（textarea 在内），
+ * 键盘流（长按唤起 → 输入 → 提交）不再断在最后一步的鼠标点按。
  */
 function openNoteEditModal(opts: {
   title: string;
@@ -415,7 +418,7 @@ function openNoteEditModal(opts: {
   cancelBtn.type = 'button';
   cancelBtn.textContent = '取消';
   cancelBtn.addEventListener('click', () => close());
-  const { close } = uiModal({
+  const { popup, close } = uiModal({
     content: body,
     maxWidth: 420,
     head: true, // 标题头行保留；✕ 已在 core uiModal 退役（issue 271：点遮罩/ESC 关闭）
@@ -438,6 +441,8 @@ function openNoteEditModal(opts: {
         notifySaveError(e, '批注');
       });
   });
+  // 深审 eff E3：Ctrl/⌘+Enter 恒提交、单行 input 回车提交（textarea 换行不拦）
+  bindFormSubmit(popup, () => saveBtn.click());
 
   btnGroup.appendChild(cancelBtn);
   btnGroup.appendChild(saveBtn);
@@ -469,7 +474,9 @@ export function openEditCommentModal(
   });
 }
 
-/** 编辑想法弹窗（EPUB：直改 weave-data.json）。 */
+/** 编辑想法弹窗（EPUB：直改 weave-data.json）。
+ *  深审 ui F5：保存失败（书被移除/文件缺失/json 损坏 → false）补明确 toast——
+ *  同文件删除路径已有失败 notice（B2），编辑路径此前零反馈像没点一样。 */
 export function openEpubEditCommentModal(
   app: App,
   vaultPath: string,
@@ -483,6 +490,7 @@ export function openEpubEditCommentModal(
     initial: note.comment || '',
     onSave: async (v: string) => {
       const ok = await updateEpubNoteComment(app, vaultPath, highlightId, v);
+      if (!ok) notice('保存想法失败，请重试', 'error');
       if (ok && onDone) onDone();
       return ok;
     },
