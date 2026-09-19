@@ -586,17 +586,20 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## home（首页）域 · 审查入账中（方向 1 功能已到账；方向 2 UI 运行中，3/4/5 待槽位）
+## home（首页）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率运行中，4/5 待槽位）
 
-> 明细：`.scratch/review-deep/home-func.md`。方向 1（func）：P3×3 + UX×1（无 P1/P2）。**核心正面结论**：命令对账零漂移（16 磁贴 + 27 菜单动作全部在 COMMANDS 表在册）、行为流换源读写口径闭环、只读契约与转义链全过。旧账复核 4 条全部已闭环：gameshelf 批 A 的 river 竞态修复获 home 方向独立复核确认、图标单源已迁 DOMAIN_ICONS、保险库副题已落地、ESC 注销在位（反为 cinema 对齐基准）。门禁基线：tsc 0；tests/home 9 文件 121 例全绿 + smoke/render-purity 19 例。
+> 明细：`.scratch/review-deep/home-{func,ui}.md`。方向 1（func）：P3×3 + UX×1（无 P1/P2；命令对账零漂移、行为流换源口径闭环）。方向 2（UI）：P2×3 + P3×6 + UX×3。旧账复核 8 项全对账：gameshelf 批 A river 竞态获独立复核确认、图标单源/保险库副题/ESC 注销在位；review-ux #34/#36 维持、**#35（移动端滑两屏）已被 order:-1 改版实质消化**（其引用的失实注释即本轮 P3-6）。func 方向专节给出了失败态 UI 呈现设计建议（flow 列行级失败位+一次重试恢复两列+三态区分），修复批照落。门禁基线：tsc 0；tests/home 121 例全绿。
 
 ### 已入账条目（跨方向去重待 5 方向齐）
 
-- **P3 采集失败态只覆盖「全部域」列**（func P3-1）——时间线列永挂「正在汇入今天的痕迹…」加载文案（renderAll 失败分支不涉 flow 列），用户误以为还在加载。修：失败态覆盖 flow 列（可重试出口）。
-- **P3 runCommand 直达命令 Promise reject 静默**（func P3-2）——只 try-catch 同步异常，异步 reject 无提示（「点了没反应」）。修：Promise 挂 catch → 人话通知。
-- **P3 weekly.ts「R1 生活周报」死代码**（func P3-3）——采集链约 220 行 + 243 行测试零消费，唯一活出口 parseLocalDay（recap 引用）。**处置拍板：裁 or 注明预留**（登记拍板清单 H 系——功能裁剪决策非纯技术）。
-- **UX 分流（H 系）**：设置「外观」组 homeLayout/homeSkin 可选可存但首页不消费（issue 246 占位范式，接上 or 注明占位）。
-- **测试缺口 4**：keepHome 行为链、失败态 flow 断言、promise rejection 路径、死链测试——修复批随补。
+- **P3 采集失败态只覆盖「全部域」列**（func P3-1）——时间线列永挂加载文案。修：失败态覆盖 flow 列（按 func/ui 联合设计：flow-empty 行级语义 + 一次重试恢复两列 + 三态区分）。
+- **P3 runCommand 直达命令 Promise reject 静默**（func P3-2）——Promise 挂 catch → 人话通知。
+- **P2 移动端面板高度硬编码 100vh**（ui P2-1）——被遮的恰是沉底时间线列。修：接 `--bz-vvh`。
+- **P2 §8.2 触控热区全域缺席**（ui P2-2）——关闭钮 36px/周历格 29px/编辑器行尾钮 34px，10+ 先例域都在用 bz-touch-target 而 home 缺席。修：挂类。
+- **P2 桌面「全部域」入口列溢出不可滚**（ui P2-3）——15 行 ≈600px 压 580px 面板上限，矮窗口必裁无兜底。修：max-height+overflow 滚动兜底。
+- **P3 群（ui 6 条）**：data-tl-size 属性插值未转义（域内唯一裸插值）；预告栏关闭后桌面空轨道留白 224px（display:none 不塌缩显式 grid 轨道，与注释意图相反，现有测试断言的正是实现手段故全绿——翻转断言）；周历选中格无 aria 状态（原型同源需两侧同步修）；renderAll 全量重建丢焦点（周历切天已会局部保焦点，全量路径补同等待遇）；入口编辑器排序键盘不可达（Pointer 拖拽单路 + innerHTML 重建丢焦点）；移动端单列顺序注释三处矛盾（实际=瓦片→预告→时间线沉底，ui.ts:7 与 styles.css 自相矛盾——注释纠偏）。
+- **P3 weekly.ts「R1 生活周报」死代码**（func P3-3）——**处置拍板：裁 or 注明预留**（H 系）。
+- **UX 分流（H 系）**：外观组 homeLayout/homeSkin 可选可存不消费（占位接上 or 注明）；大面板无初始焦点/焦点圈闭（域族话题）；骨架期「全 部 域」标题数据到达后消失（原型同款）；过滤空态设置指引不可直达。
 
 ---
 
