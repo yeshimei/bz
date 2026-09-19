@@ -10,6 +10,7 @@ import { notice } from '../core/notice';
 import { copySensitiveWithFallback } from '../core/utils';
 import { lockSafe, ensureSafeUnlocked } from '../encrypt';
 import { PasswordVaultAppController } from './ui';
+import { DEFAULT_PW_CHARSET } from './data';
 import { openPasswordQuickPicker, closePasswordQuickPicker } from './quick-pick';
 
 let initialized = false;
@@ -19,9 +20,7 @@ function getController(): PasswordVaultAppController {
   if (!controller) {
     const s = getSettings();
     // 生成器设置复用现有全局键（与旧密码本同源；Q7：字符集/长度用现有全局设置）
-    const charset =
-      s.passwordCharset ||
-      '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+';
+    const charset = s.passwordCharset || DEFAULT_PW_CHARSET;
     const length = String(parseInt(s.passwordLength) || 16);
     const securityMode = !!s.securityMode;
     controller = PasswordVaultAppController.getInstance({ charset, length, securityMode });

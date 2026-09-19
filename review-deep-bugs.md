@@ -416,4 +416,14 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ### UI/体验分流（7 项 → review-deep-ui-pending.md：B1 移动资产筛选不可达（拍板敏感）/ B2 聚焦无 ring / B3 图标无法清除 / B4 0 元 ¥0.0000 / B5 下拉键盘 ESC 粒度 / B6 AI 换图标不触发脏检测 / B7 删除口径全局定稿（全局项））
 
-（方向 3 效率审查中，4/5 待槽位派——到账后补本节并定稿修复批次。）
+### 方向 3（效率）补充条目
+
+- **P3 表单无 Enter/Ctrl+Enter 提交** `ui.ts:953`（eff E1）——core `bindFormSubmit` 在位未消费（diary 先例），8 字段填完必须摸鼠标。修：接 bindFormSubmit。**B7 消解**：E5 核实效率整改 5 拍板口径（core/notice.ts:137-139 在案）+ favorites 免确认直达先例——删除口径已定，belongings 属落地欠账归修复批，不再列待拍板。
+- **P3 网格卡片键盘不可达** `layouts/poster/render.ts:152`（eff E2）——cellHtml 无 tabindex/role，Tab 序跳过内容区。修：clipbook C-UI5 先例平移（tabindex+role+aria+委托 Enter）。
+- **P3 搜索 ESC 直落关面板 + 无 ✕** （eff E3）——clipbook 定稿范式未跟。修：二段清词 + 尾部 ✕（diary ui.ts:390-400 样板，含防抖 cancel）。
+- **P3 年份筛选跨开合残留** `ui.ts:266-270/417-418`（eff E4）——closePanel 清 q 不清 year、openPanel 重置 status/sort 不重置 year，四态三回落一孤儿，重开列表隐性变少。修：year 纳入回落口径。
+- **P3 删除仍「确认+撤销」双保险** （eff E5，效率整改 5 最后滞后域）——对齐免确认直达 notifyUndo（favorites 先例），顺带消解 func P3-3 确认在途死端。**确认框去除属拍板口径内的落地执行，随修复批做。**
+- **P3 renderAll 口径卫生** （eff S2）——filtered×3 + 计数 filter×10+，单趟收口（非性能硬伤）。
+- 滚位记忆核验无欠账（content 容器不重建，renderAll 天然保滚位）。[UX-Suggestion] S1（新增保存后新卡定位反馈）归拍板清单。
+
+（方向 4 一致 / 5 架构审查中——到账后定稿修复批次。）

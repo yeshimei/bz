@@ -5,6 +5,7 @@
  * 默认值均提取自各脚本源码 settings.options.defaultValue。
  */
 import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxes';
+import { DEFAULT_PW_CHARSET } from './password-vault/data';
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
@@ -676,8 +677,8 @@ export const DEFAULT_SETTINGS: BzSettings = {
   clipbookImageFolder: '',
 
 
-  passwordCharset:
-    '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+',
+  // 字符集默认值收编 password-vault/data 单源（原字面量第三份拷贝，深审批 C 口径漂移清单）
+  passwordCharset: DEFAULT_PW_CHARSET,
   passwordLength: '16',
   securityMode: false,
   // 外观组（2026-09-12）：布局/主题各一档（与保险库 · 影院 · 第二大脑同范式）

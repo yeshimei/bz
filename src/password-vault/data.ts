@@ -126,12 +126,12 @@ export class PasswordVaultDataManager {
       return;
     }
     const plain = await this.safe.decryptNoteBody(note);
-    if (plain === null) throw new Error('保险库数据解密失败');
+    if (plain === null) throw new Error('密码本数据解密失败');
     let parsed: unknown;
     try {
       parsed = JSON.parse(plain);
     } catch (e) {
-      throw new Error('保险库数据损坏');
+      throw new Error('密码本数据损坏');
     }
     // 脏数据防御（P2，与旧密码本同款）：过滤非对象元素 + 归一化补齐字段
     this.pwData = Array.isArray(parsed)

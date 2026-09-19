@@ -11157,31 +11157,57 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 11px;
   font-size: 13.5px;
 }
+/* 密码行（pv 深审新-1 P1）：pwdrow 补 flex 布局 + dialog 上下文 .mini 规则——
+   此前 .mini 样式只有 acctcard/seg/mf 三个容器前缀，弹窗内 eye 按钮裸奔，
+   内嵌 SVG 按 300×150 默认尺寸渲染把弹窗（max-width 420px）横向撑坏（双端必现）。
+   .mini 对齐 .bz-password-vault-acctcard .mini 既有规格（30×30 圆角、svg 15px、hover 金底）。 */
 .bz-password-vault-dialog .pwdrow {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
   margin-bottom: 2px;
 }
 .bz-password-vault-dialog .pwdrow input {
-  width: 100%;
+  flex: 1;
+  width: auto;
+  min-width: 0;
   padding: 11px var(--bz-space-md);
   border-radius: 11px;
   font-size: 13.5px;
 }
+.bz-password-vault-dialog .mini {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--bz-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pwv-muted);
+  transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
+  flex-shrink: 0;
+}
+.bz-password-vault-dialog .mini:hover {
+  background: var(--pwv-gold-soft);
+  color: #fff;
+}
+.bz-password-vault-dialog .mini svg {
+  width: 15px;
+  height: 15px;
+}
+/* 生成钮随 pwdrow 收编为行内小钮（原全宽下挂条形在 flex 行内会挤压输入框；
+   取值对齐域内既有小动作钮 .bz-password-vault-accthead .add 规格） */
 .bz-password-vault-dialog .gen {
-  display: block;
-  width: 100%;
+  flex-shrink: 0;
   text-align: center;
-  padding: 6px 0;
-  border: none;
-  border-radius: 0 0 11px 11px;
-  background: var(--pwv-surface2);
+  padding: 8px 14px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
   color: var(--pwv-gold-ink);
   font-size: 12.5px;
   font-weight: 600;
-  border: 1px solid var(--pwv-line);
-  border-top: none;
 }
 .bz-password-vault-dialog .gen:hover {
-  background: color-mix(in srgb, var(--interactive-accent) 14%, transparent);
+  background: color-mix(in srgb, var(--interactive-accent) 24%, transparent);
 }
 .bz-password-vault-dialog .btns {
   display: flex;
