@@ -26,6 +26,21 @@ export const TRAIT_GROUPS = {
   existential: ['exist_depth', 'familiarity', 'concern'],          // Yalom，从 0.0 起（仅反思成长）
 } as const;
 
+/**
+ * 会演化的特质（2026-09-19 机制审计 M9）。
+ * 全库特质写入点只有三处：characterTransition（warmth/self_worth/others_trust/exist_depth/optimism/humor）、
+ * characterFromExperience（warmth/others_trust/optimism/self_worth/anxiety/cortisol/dopamine/creativity）、
+ * mood.ts applyReflectionInsights 的 TRAIT_ATTRIBUTION_CANDIDATES（exist_depth/familiarity/concern/creativity/oxytocin）。
+ * 其余 19 项出生后永不变化（其中 11 项连 OCEAN 出生映射都没有、恒为 0.5）——
+ * 它们仍是 MATE 全量对齐的结构（ADR-0023），但**不再当作「成长」展示或注入 prompt**，
+ * 免得用户看到一多半是永不动的横线。接入新的演化驱动后，把对应键加进这里即可。
+ */
+export const EVOLVING_TRAITS: readonly (keyof CharacterTraits)[] = [
+  'warmth', 'self_worth', 'others_trust', 'optimism', 'humor',
+  'anxiety', 'cortisol', 'dopamine', 'creativity', 'oxytocin',
+  'exist_depth', 'familiarity', 'concern',
+];
+
 export const DEFAULT_TRAITS: CharacterTraits = {
   // attachment (Bowlby)
   anxiety: 0.5, avoidance: 0.5, separation_tol: 0.5,
@@ -207,7 +222,9 @@ export function characterHomeostasis(traits: CharacterTraits, seed: CharacterTra
 export function formatStateVector(g: PersonalityGrowthData, pad: { pleasure: number; arousal: number; dominance: number }, emotion: string | null): string {
   const o = g.ocean;
   const r = g.relationship;
-  const keyTraits = ['warmth', 'directness', 'beh_depth', 'humor', 'self_worth', 'anxiety', 'others_trust', 'optimism'] as const;
+  // 2026-09-19 审计 M9：原 keyTraits 含 directness/beh_depth——两者都是死键
+  //（directness 只有出生值、beh_depth 恒 0.5），等于往 prompt 里注入不会动的数字。换成真在演化的键。
+  const keyTraits = ['warmth', 'humor', 'optimism', 'self_worth', 'anxiety', 'others_trust', 'creativity', 'dopamine'] as const;
   const t = keyTraits.map((k) => `${k}=${g.traits[k].toFixed(2)}`).join(' ');
   const emo = emotion ? ` emo=${emotion}` : '';
   return `<state>

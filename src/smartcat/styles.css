@@ -251,27 +251,6 @@
   opacity: 1;
   animation: thinkingPulse 1.5s ease-in-out infinite;
 }
-/* 语音指示器 */
-#smart-companion-cat .voice-indicator {
-  position: absolute;
-  top: -18px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.3), 0 0 10px 4px rgba(255, 107, 107, 0.2);
-  opacity: 0;
-  transition: all var(--bz-dur-slow) cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: 3;
-  pointer-events: none;
-}
-#smart-companion-cat .voice-indicator.active {
-  opacity: 1;
-  animation: voiceIndicatorPulse 1.5s ease-in-out infinite;
-}
-
 /* 气泡容器与气泡（原 cat-bubbles-container / cat-bubble；堆叠 transform 动态计算保留内联）
    用户反馈原 65px 太靠下 → 上移 95px，气泡浮在猫头顶上方更明显；
    2026-08-23 修偏移：容器锚头顶正上方水平居中（原右对齐——移动端容器比猫体宽时气泡整体偏右），
@@ -543,14 +522,9 @@
   0%, 100% { transform: scaleY(1); }
   50% { transform: scaleY(1.3); }
 }
-@keyframes happyBouncePulse { /* 保留占位，未用 */ }
 @keyframes thinkingPulse {
   0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.7; }
   50% { transform: translateX(-50%) scale(1.4); opacity: 1; }
-}
-@keyframes voiceIndicatorPulse {
-  0%, 100% { transform: translateX(-50%) scale(1); }
-  50% { transform: translateX(-50%) scale(1.5); }
 }
 @keyframes heartbeat {
   0%, 100% { transform: scale(1); }

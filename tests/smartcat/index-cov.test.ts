@@ -20,6 +20,7 @@ import {
   __getSmartcatInternals, __setDiarySettleMsForTests, __setNoteSettleMsForTests,
   __setNewsSaveTimeoutForTests, __getNewsPendingSavesForTests,
   __getDiaryTimersForTests, __getNoteTimersForTests, __setLibraryDebounceMsForTests,
+  proactiveRewardOf,
 } from '../../src/smartcat/index';
 import { eventSystem } from '../../src/smartcat/state';
 import { EVENTS } from '../../src/smartcat/types';
@@ -711,4 +712,38 @@ describe('域 JSON 感知（library 盲通道）', () => {
     };
     expect(await hasDossier()).toBe(true);
   }, 20000);
+});
+
+describe('proactiveRewardOf（A6 多信号 reward + 防刷分）', () => {
+  it('无回应 → 0', () => {
+    expect(proactiveRewardOf(false, '随便什么')).toBe(0);
+    expect(proactiveRewardOf(false)).toBe(0);
+  });
+
+  it('缺省 userMessage → 退化二值 1（兼容旧口径）', () => {
+    expect(proactiveRewardOf(true)).toBe(1);
+    expect(proactiveRewardOf(true, '   ')).toBe(1);
+  });
+
+  it('有实质长度 + 反问 + 情绪正向 → 满分', () => {
+    expect(proactiveRewardOf(true, '今天挺开心的，你最近在读什么书？')).toBe(1);
+  });
+
+  it('只有回应、内容中性简短 → 基础分 0.4', () => {
+    expect(proactiveRewardOf(true, '在写代码')).toBe(0.4);
+  });
+
+  it('浅附和封顶 0.3（防刷分：不让「刷一句甜话换回应」被强化）', () => {
+    expect(proactiveRewardOf(true, '嗯')).toBe(0.3);
+    expect(proactiveRewardOf(true, '哈哈！')).toBe(0.3);
+    expect(proactiveRewardOf(true, '想你')).toBe(0.3);
+  });
+
+  it('分值域恒在 [0,1]', () => {
+    for (const t of ['', '嗯', '在写代码', '今天很开心，你呢？要不要一起看看这本？']) {
+      const v = proactiveRewardOf(true, t);
+      expect(v).toBeGreaterThanOrEqual(0);
+      expect(v).toBeLessThanOrEqual(1);
+    }
+  });
 });

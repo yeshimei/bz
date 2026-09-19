@@ -203,7 +203,7 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
     });
   }
 
-  it('桌面端九组：外观/可视化/互动/记忆/记忆目录/存储与记忆/记忆巩固/关联/显示，图标与项数徽标正确', () => {
+  it('桌面端六组：外观/互动/记忆/记忆来源/存储与记忆/数据面板，图标与项数徽标正确', () => {
     const hooks = { saves: [] as any[], appearances: [] as string[] };
     Platform.isMobile = false;
     openWith(baseConfig(), hooks);
@@ -225,10 +225,8 @@ describe('分组卡片结构（2026-08 方案 A）与文案规范', () => {
       { icon: 'folder-open', name: '记忆来源', count: '1 项' },
       // P3 新增三组（ticket 123）
       { icon: 'database', name: '存储与记忆', count: '2 项' },
-      // ticket 162 记忆巩固精简（反思阈值 + 引用摘录两行；移动端组已挪到面板末尾）
-      // ticket 163：+1 反思洞察条数上限（共 3 行）
-      { icon: 'moon', name: '记忆巩固', count: '3 项' },
-      { icon: 'link', name: '关联', count: '2 项' },
+      // 2026-09-19 审计 A13：「记忆巩固」（3 项）与「关联」（2 项）两组已从面板移除——
+      // 键与消费路径保留（取默认值），只是不再把机制的旋钮摊给用户调
       // 「打开数据面板」为 button 操作行（bz-setting-action-row 豁免徽标计数，ticket 131 声明式语义）
       { icon: 'eye', name: '数据面板', count: '1 项' },
     ]);

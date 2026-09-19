@@ -171,11 +171,6 @@ describe('playPartAnimation 局部部件动画', () => {
     }
   });
 
-  it('triggerRandomAction：五选一池内动作落到对应部件', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.4); // index 2 = tailFlick(tail)
-    anim.triggerRandomAction();
-    expectAnimVars(anim.tail, 'tailFlick', '1000ms');
-  });
 });
 
 describe('setupInteractions 交互监听', () => {
@@ -292,21 +287,4 @@ describe('全动作池随机调度（去心情筛选）', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
-  it('startRandomActions 定时调度：8s tick、30% 概率、busy 守卫', () => {
-    vi.spyOn(Math, 'random').mockReturnValue(0.01);
-    vi.spyOn(anim, 'triggerRandomAction');
-    anim.startRandomActions();
-    // isBusy 不触发
-    anim.isBusy = true;
-    vi.advanceTimersByTime(8000);
-    expect(anim.triggerRandomAction).not.toHaveBeenCalled();
-    // 空闲 + 概率命中 → 触发
-    anim.isBusy = false;
-    vi.advanceTimersByTime(8000);
-    expect(anim.triggerRandomAction).toHaveBeenCalledTimes(1);
-    // 概率未命中 → 不触发
-    vi.spyOn(Math, 'random').mockReturnValue(0.99);
-    vi.advanceTimersByTime(8000);
-    expect(anim.triggerRandomAction).toHaveBeenCalledTimes(1);
-  });
 });

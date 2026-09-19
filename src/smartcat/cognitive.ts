@@ -169,18 +169,20 @@ export function analyzeEmotionTrend(snapshots: EmotionSnapshot[]): EmotionTrend 
   return { dominantEmotion: dominant, trend, volatility: Math.round(volatility * 100) / 100, currentVad: cur, count: sorted.length };
 }
 
+/** 情绪中文标签（单源：趋势描述与数据面板 emotionLabel 共用；未收录词回显原值） */
+export const EMOTION_ZH: Record<string, string> = {
+  happy: '开心', excited: '兴奋', content: '满足', calm: '平静', grateful: '感激', proud: '自豪',
+  hopeful: '满怀希望', amused: '愉悦', loving: '有爱', neutral: '平常', sad: '难过', anxious: '焦虑',
+  stressed: '压力大', angry: '生气', frustrated: '沮丧', fearful: '害怕', disappointed: '失望',
+  lonely: '孤独', bored: '无聊', confused: '困惑', overwhelmed: '不堪重负',
+  // H3/096 补类中文名
+  curious: '好奇', sleepy: '困倦', playful: '玩闹', focused: '专注', upset: '不满',
+};
+
 /** 情绪趋势中文描述（prompt/周报用） */
 export function describeEmotionTrend(t: EmotionTrend): string {
   if (t.count === 0) return '情绪趋势：数据不足';
-  const emoZh: Record<string, string> = {
-    happy: '开心', excited: '兴奋', content: '满足', calm: '平静', grateful: '感激', proud: '自豪',
-    hopeful: '满怀希望', amused: '愉悦', loving: '有爱', neutral: '平常', sad: '难过', anxious: '焦虑',
-    stressed: '压力大', angry: '生气', frustrated: '沮丧', fearful: '害怕', disappointed: '失望',
-    lonely: '孤独', bored: '无聊', confused: '困惑', overwhelmed: '不堪重负',
-    // H3/096 补类中文名
-    curious: '好奇', sleepy: '困倦', playful: '玩闹', focused: '专注', upset: '不满',
-  };
-  const emo = emoZh[t.dominantEmotion] || t.dominantEmotion;
+  const emo = EMOTION_ZH[t.dominantEmotion] || t.dominantEmotion;
   const trendText = t.trend === 'improving' ? '正在转好' : t.trend === 'declining' ? '有些转差' : '平稳';
   const vol = t.volatility >= 0.5 ? '，情绪波动明显' : '';
   return `最近常出现「${emo}」情绪，趋势${trendText}${vol}（基于 ${t.count} 条情绪记录）`;

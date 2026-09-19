@@ -7,6 +7,8 @@
  */
 import { describeRhythm, buildRhythmProfile, periodText } from './rhythm';
 import { analyzeEmotionTrend, buildEmotionSnapshots, describeEmotionTrend } from './cognitive';
+// A4（2026-09-19 审计）：缺席状态机接线——原先只进 dashboard 卡片，对话侧完全不知道「多久没见」
+import { readAbsenceState, daysSincePresence } from './absence';
 // ticket 163：生成的背景行涉及用户（「你通常…」「你和小橘的关系」）——喂 AI 前替换为称呼
 import { replaceUserReference } from './memory';
 
@@ -21,6 +23,8 @@ export interface CompanionContextInput {
   hour?: number;
   /** 检索记忆已格式化文本（formatMemoriesForPrompt 输出；可选） */
   memoriesText?: string;
+  /** 编辑态数据（缺席状态机 phase/since + lastPresenceAt）；缺省则不注入「多久没见」行 */
+  editingData?: { absenceState?: unknown; lastPresenceAt?: unknown } | null;
   now?: number;
 }
 
@@ -45,6 +49,19 @@ export function buildCompanionContext(i: CompanionContextInput): string {
   if (rel && typeof rel.trust === 'number') {
     const attach = typeof rel.attachment === 'number' ? ` / 依恋 ${rel.attachment.toFixed(2)}` : '';
     parts.push(replaceUserReference(`你和小橘的关系：信任 ${rel.trust.toFixed(2)}${attach}`));
+  }
+
+  // A4（2026-09-19 审计）：缺席状态进对话——机制早已就绪（ADR-0040 单一缺席状态机），
+  // 但此前只进 dashboard 卡片，聊天/主动关心/prompt 全都不含它（最像人的设计躲在没人点的卡片里）。
+  const ed = i.editingData;
+  if (ed) {
+    const phase = readAbsenceState(ed).phase;
+    const days = daysSincePresence(ed.lastPresenceAt, now);
+    if (phase === 'missing' && days >= 1) {
+      parts.push(replaceUserReference(`你已经 ${days} 天没出现了，小橘一直惦记着这件事`));
+    } else if (phase === 'reunion') {
+      parts.push(replaceUserReference('小橘刚重新见到你（你之前离开了一阵子，它有点高兴）'));
+    }
   }
 
   const lines: string[] = [];

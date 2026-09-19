@@ -20,12 +20,8 @@ export const CAT_CONTAINER_ID = 'smart-companion-cat';
 /** 13 皮肤 key 全集（basic 5 + advanced 8） */
 export const SKINS: Appearance[] = ['orange', 'gray', 'black', 'white', 'calico', 'neon', 'galaxy', 'liquidMetal', 'fire', 'crystal', 'cyberpunk', 'rainbow', 'hologram'];
 
-/** 猫本体 HTML（原 CAT_UI 模板，结构逐字：voice 指示器/思考圆点/气泡容器/cat-body） */
+/** 猫本体 HTML（原 CAT_UI 模板：思考圆点/气泡容器/cat-body；voice 指示器 2026-09-19 审计删除——无任何 JS 驱动） */
 const CAT_HTML = `
-        <!-- 语音指示器 -->
-        <div class="voice-indicator" id="voice-indicator"></div>
-        <div class="voice-feedback" id="voice-feedback"></div>
-
         <!-- 思考指示器（绿色小圆点） -->
         <div class="thinking-indicator" id="thinking-indicator"></div>
 
@@ -328,27 +324,10 @@ export function smartcatSettingsSchema(opts: {
           { type: 'number', name: '行为流最大条数', desc: '行为流最多保留 100 到 10000 条，超出部分删除最旧条目', binding: bindBehavior('behaviorMaxCount'), min: 100, max: 10000, step: 100 },
         ],
       },
-      // ticket 160 记忆巩固；ticket 162 精简——反思攒够素材即归纳（证据池全量、洞察条数 AI 定）、
-      // 行为小结为反思前置步骤（上次反思以来全部行为流→1 条，首次 24h，不占素材额度）、
-      // 周报窗口=上次周报以来（首次 7 天）
-      {
-        icon: 'moon',
-        name: '记忆巩固',
-        rows: [
-          { type: 'number', name: '反思观察阈值', desc: '自上次反思记忆流新增多少条观察就归纳一次洞察，范围 1 到 50', binding: bindBehavior('smartcatReflectMinNew'), min: 1, max: 50, step: 1 },
-          // ticket 163：洞察条数上限（默认 3——LLM 输出按序截断，防一次性生成过多）
-          { type: 'number', name: '反思洞察条数上限', desc: '每次反思最多归纳几条洞察，范围 1 到 10', binding: bindBehavior('smartcatReflectMaxInsights'), min: 1, max: 10, step: 1 },
-          { type: 'number', name: '引用摘录字数', desc: '反思时引用笔记原文的最大字数，设为 0 不附原文，范围 0 到 2000', binding: bindBehavior('smartcatRefExcerptLimit'), min: 0, max: 2000, step: 50 },
-        ],
-      },
-      {
-        icon: 'link',
-        name: '关联',
-        rows: [
-          { type: 'toggle', name: '启用关联自动发现', desc: '自动为同名实体的记忆建立关联 relatedIds', binding: bindBehaviorOn('enableAutoLinking') },
-          { type: 'number', name: '关联发现窗口天数', desc: '同一实体在 1 到 30 天内的记忆自动关联', binding: bindBehavior('linkWindowDays'), min: 1, max: 30, step: 1 },
-        ],
-      },
+      // 2026-09-19 机制审计 A13：「记忆巩固」（反思观察阈值 / 洞察条数上限 / 引用摘录字数）与
+      // 「关联」（启用开关 / 窗口天数）两组共 5 项已从面板移除——用户明确要求记忆与情感
+      // 「全自动、像黑匣子」，不该把这些机制的旋钮摊给他调。
+      // 键与消费路径原样保留（取 settings 默认值：20 / 3 / 120 / true / 7），随时可回退或重新开出来。
       {
         icon: 'eye',
         // 2026-09-12：原「可视化」（按钮）+「显示」（开关）合并为一组，挪到面板末尾

@@ -39,7 +39,8 @@ async function loadDashboardData(app: App): Promise<SmartCatData> {
   return data;
 }
 import { MOOD_MAP, moodLevelFromPad } from './mood';
-import { TRAIT_GROUPS } from './character';
+import { EMOTION_ZH } from './cognitive';
+import { TRAIT_GROUPS, EVOLVING_TRAITS } from './character';
 import { sourceLabel, formatRelativeTime, emotionDensityStats } from './memory';
 import { noteMemoryDiaryDate } from './note-memory';
 // ticket 163：来源分布按「记忆目录」的追查目录分行（标签随设置走）
@@ -102,12 +103,6 @@ export const TRAIT_LABELS: Record<keyof CharacterTraits, string> = {
   exist_depth: '存在深度', familiarity: '熟悉感', concern: '关怀',
 };
 
-/** 记忆流词法情绪中文（detectEmotion 词表 8 类；LLM 打分可能给出表外词，回显原值） */
-const EMOTION_LABELS: Record<string, string> = {
-  happy: '开心', sad: '难过', curious: '好奇', sleepy: '困倦',
-  playful: '玩心', focused: '专注', calm: '平静', upset: '烦躁',
-};
-
 /** 成长轨迹来源中文（PersonalityGrowth.growthHistory.source 三路驱动） */
 const GROWTH_SOURCE_LABELS: Record<string, string> = {
   interaction: '互动微移',
@@ -115,9 +110,9 @@ const GROWTH_SOURCE_LABELS: Record<string, string> = {
   reflection: '反思成长',
 };
 
-/** 情绪中文标签（未知词回显原值） */
+/** 情绪中文标签（单源 EMOTION_ZH，与趋势描述同一张表；未知词回显原值） */
 export function emotionLabel(emotion: string): string {
-  return EMOTION_LABELS[emotion] || emotion;
+  return EMOTION_ZH[emotion] || emotion;
 }
 
 // ---------------- 纯函数（统计/序列构建，可测） ----------------
@@ -637,13 +632,16 @@ function renderPersonality(pane: HTMLElement, data: SmartCatData): void {
   }
   pane.appendChild(oceanCard.root);
 
-  // 30 特质九群组
+  // 特质成长（2026-09-19 审计 M9）：只展示真正会演化的 13 项——原先 32 项全列，
+  // 其中 19 项出生后再不变（11 项恒 0.5），用户看到的「人格」大半是永不动的横线。
   const traits = g?.traits;
-  const traitCard = card('特质成长（30 特质 · 随相处与反思演化）');
+  const traitCard = card(`特质成长（${EVOLVING_TRAITS.length} 项随相处与反思演化）`);
   if (traits) {
     for (const [group, keys] of Object.entries(TRAIT_GROUPS)) {
+      const evolving = (keys as readonly (keyof CharacterTraits)[]).filter((k) => EVOLVING_TRAITS.includes(k));
+      if (!evolving.length) continue; // 该群组无演化特质 → 不渲染组标题
       traitCard.body.appendChild(el('div', 'bz-sc-dash-group-title', TRAIT_GROUP_LABELS[group] || group));
-      for (const key of keys as readonly (keyof CharacterTraits)[]) {
+      for (const key of evolving) {
         traitCard.body.appendChild(barRow(TRAIT_LABELS[key] || key, traits[key] ?? 0));
       }
     }
@@ -807,6 +805,9 @@ function renderMemory(pane: HTMLElement, data: SmartCatData): void {
       if (src) meta.appendChild(el('span', '', src));
       if (m.created) meta.appendChild(el('span', '', formatDetailedDate(m.created)));
       meta.appendChild(el('span', '', `重要度 ${Math.round((m.importance ?? 0) * 100)}`));
+      // M8（2026-09-19 审计）：关联条数徽标——让「自动关联」开关的生效对用户可见
+      const relCount = m.relatedIds?.length ?? 0;
+      if (relCount > 0) meta.appendChild(el('span', 'bz-sc-dash-badge', `关联 ${relCount}`));
       // 092 设计第 7 条 + P1-29：Dashboard「固定/废弃」人工修正（经常驻实例通道写点）
       if (m.type === 'insight' && m.id && dashState?.app) meta.appendChild(buildInsightActions(m));
       item.appendChild(meta);

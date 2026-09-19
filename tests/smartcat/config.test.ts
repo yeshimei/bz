@@ -10,7 +10,6 @@ describe('defaultConfig', () => {
   it('默认值与源码 ConfigManager 一致（无预设人格字段）', () => {
     const c = defaultConfig();
     expect(c.appearance).toBe('orange');
-    expect(c.customColors).toEqual({ primary: '#FF6B35', secondary: '#F7931E' });
     expect((c as any).personality).toBeUndefined();
     expect((c as any).customPersonality).toBeUndefined();
     expect(c.speakInterval).toBe(5);

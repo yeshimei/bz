@@ -91,13 +91,14 @@ describe('页面可见性状态', () => {
 });
 
 describe('thinking 思考计数与指示器', () => {
-  it('ensureThinkingIndicator：有容器时创建 #thinking-indicator 且类名齐全', () => {
+  it('ensureThinkingIndicator：有容器时创建 #thinking-indicator（无冗余类名）', () => {
     const container = document.createElement('div');
     document.body.appendChild(container);
     ensureThinkingIndicator(container);
     const el = document.getElementById('thinking-indicator');
     expect(el).not.toBeNull();
-    expect(el!.className).toBe('thinking-indicator bz-sc-thinking');
+    // 2026-09-19 审计：去掉从未有样式定义的 bz-sc-thinking 类，只留语义类
+    expect(el!.className).toBe('thinking-indicator');
     expect(el!.parentElement).toBe(container);
   });
 

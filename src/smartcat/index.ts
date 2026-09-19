@@ -319,6 +319,18 @@ export async function ensureSmartCat(app: App): Promise<void> {
     mood: moodSystem,
     openChat: () => openChat(),
     openSettings: () => openSettings(),
+    // A8（2026-09-19 审计）：自发行为总闸——原先自言自语定时器完全不过门控
+    //（quiet / 作息 / 深夜全不查），是「忽冷忽热」的机制来源之一
+    shouldStayQuiet: () => {
+      try {
+        if (quietGateSystem?.isQuiet()) return true; // 安静陪伴期（情绪门控）
+        const h = new Date().getHours();
+        if (h >= 23 || h < 7) return true;           // 深夜 / 凌晨一律不出声
+        const profile = buildRhythmProfile(dataProvider().memory.memoryStream, 30, Date.now());
+        if (profile.total >= 3 && !isActiveNow(profile)) return true; // 明显不在你的活跃时段
+      } catch { /* 门控失败 → 不阻断（保持原行为） */ }
+      return false;
+    },
     // ADR-0021：记忆流检索注入聊天上下文（格式化后返回；失败返回空串）
     // ADR-0025：第二参 lexicalQuery 供词法降级模式（纯用户消息，免「情绪/时段」噪音）
     // 096 方向一：retrieve topN=10 冻结不动，≤6 收缩只落 formatMemoriesForPrompt 的 maxEntries（槽位保留制，ADR-0043）
@@ -601,8 +613,35 @@ function markProactiveArm(armId: string): void {
   void dataSaver(d);
 }
 
-/** 用户回应（聊天消息）时：回填上次主动关心的 reward（10 分钟内回应 = 1，超时 = 0） */
-async function rewardProactiveArm(): Promise<void> {
+/** 情绪正向回应特征（A6 多信号 reward 用） */
+const POSITIVE_REPLY_RE = /开心|高兴|好耶|谢谢|喜欢|不错|有用|哈哈|嘿嘿|😊|😄|😆|❤|👍/;
+/** 浅附和特征（A6 防刷分：短、纯情绪、无信息量） */
+const SHALLOW_REPLY_RE = /^(嗯+|哦+|好|行|知道了|谢谢|哈哈+|呵呵+|想你|爱你|抱抱|么么|喵)[!！。~～\s]*$/;
+
+/**
+ * 主动关心的多信号 reward（2026-09-19 审计 A6）。
+ * 原先 reward 是二值 `responded ? 1 : 0`，判据只有「10 分钟内发过任意聊天消息」——
+ * 一句「嗯」和一段长回复同分，Bandit 学到的只是「哪句话最容易让你回一个字」。
+ * Meta 的 RLUF（arXiv:2505.14946）警告的正是这一类：过度优化单一信号会长出刷分话术
+ * （Replika 被骂「黏人」的机制来源）。改为多信号标量：
+ *   0.4 有回应 · +0.3 有实质长度（≥8 字）· +0.2 带反问 · +0.1 情绪正向
+ *   浅附和（「嗯」「哈哈」「想你」这类）封顶 0.3——防「刷一句甜话换回应」被强化
+ * userMessage 缺省时退化为原二值口径（1），兼容既有调用方与测试。
+ */
+export function proactiveRewardOf(responded: boolean, userMessage?: string): number {
+  if (!responded) return 0;
+  const text = (userMessage ?? '').trim();
+  if (!text) return 1;
+  let score = 0.4;
+  if (text.length >= 8) score += 0.3;
+  if (/[?？]/.test(text)) score += 0.2;
+  if (POSITIVE_REPLY_RE.test(text)) score += 0.1;
+  if (SHALLOW_REPLY_RE.test(text)) score = Math.min(score, 0.3);
+  return Math.min(1, Number(score.toFixed(2)));
+}
+
+/** 用户回应（聊天消息）时：回填上次主动关心的 reward（A6：多信号；10 分钟窗口，超时 = 0） */
+async function rewardProactiveArm(userMessage?: string): Promise<void> {
   const d = dataProvider();
   const s = (d.editingData?.ceBandit || {}) as Record<string, any>;
   const armId = s.pendingArm as string | undefined;
@@ -611,7 +650,7 @@ async function rewardProactiveArm(): Promise<void> {
   const responded = Date.now() - at < 10 * 60 * 1000;
   const arm = getBanditArms().find((a) => a.actionId === armId);
   if (arm) {
-    const updated = updateBandit(arm, banditContext(), responded ? 1 : 0);
+    const updated = updateBandit(arm, banditContext(), proactiveRewardOf(responded, userMessage));
     await saveBanditArm(updated);
   }
   d.editingData = { ...(d.editingData || {}), ceBandit: { ...(d.editingData?.ceBandit || {}), pendingArm: undefined, pendingAt: undefined } };
@@ -705,6 +744,7 @@ export async function maybeProactiveCare(): Promise<void> {
         relationship: data.personalityGrowth?.relationship ?? null,
         emotion: moodSystem.getCurrentEmotion(),
         memoriesText,
+        editingData: data.editingData, // A4：缺席状态进对话
       });
       const prompt = generatePrompt('auto_companion', '', {
         pad: moodSystem.pad,
@@ -715,7 +755,7 @@ export async function maybeProactiveCare(): Promise<void> {
       });
       const response = await callChat([
         { role: 'system', content: prompt + '\n\n' + USER_CONTENT_BOUNDARY },
-        { role: 'user', content: `你主动关心用户一次（温和、简短、像老朋友）。本次侧重：${styleHint}。最近记忆有：${recent}。\n\n你了解到的背景：\n${companionContext}` },
+        { role: 'user', content: `你主动找用户说句话（像老朋友自然搭话，不要像系统通知）。本次侧重：${styleHint}。最近记忆有：${recent}。\n\n你了解到的背景：\n${companionContext}` },
       ]);
       if (response) bubbleManager.showBubble(response);
       else bubbleManager.showBubble('喵~ 我注意到你最近常在深夜写东西，记得照顾好自己。');
@@ -857,6 +897,7 @@ async function generateBookReview(): Promise<void> {
       memoryStream: data.memory.memoryStream,
       relationship: data.personalityGrowth?.relationship ?? null,
       emotion: moodSystem.getCurrentEmotion(),
+      editingData: data.editingData, // A4：缺席状态进对话
     });
     const prompt = generatePrompt('book_review', `请基于以下书籍数据给出简短评价：${bookDescription}`, {
       pad: moodSystem.pad,
@@ -1008,8 +1049,8 @@ async function sendChatMessage(message: string): Promise<void> {
   touchPresence(data);
   // ticket 093：在场信号 → 缺席状态机（重逢判定 = 在场 + phase ≠ normal）
   void absenceSystem?.onPresenceSignal();
-  // Bandit reward 回填（ticket 035）：用户主动发消息 = 对上次主动关心的回应
-  void rewardProactiveArm();
+  // Bandit reward 回填（ticket 035；A6：带用户回应内容 → 多信号 reward）
+  void rewardProactiveArm(message);
 
   const userMessageEl = document.createElement('div');
   userMessageEl.className = 'message user-message';

@@ -242,7 +242,6 @@ export class SmartCatAnimation {
   animationQueue: { animationName: string; duration: number }[] = [];
   isBusy = false;
   lastInteraction = Date.now();
-  private randomTimer: ReturnType<typeof setInterval> | null = null;
   private enhancedTimer: ReturnType<typeof setInterval> | null = null;
   private pendingTimeouts: ReturnType<typeof setTimeout>[] = [];
 
@@ -258,7 +257,6 @@ export class SmartCatAnimation {
   initialize(): void {
     this.setBaseAnimations();
     this.setupInteractions();
-    this.startRandomActions();
     this.startEnhancedRandomActions();
   }
 
@@ -277,28 +275,6 @@ export class SmartCatAnimation {
     this.ears.forEach((e) => e.classList.remove('bz-sc-anim'));
     this.tail.classList.remove('bz-sc-anim');
     this.face.classList.remove('bz-sc-anim');
-  }
-
-  /** 随机小动作（原 triggerRandomAction 5 选 1） */
-  triggerRandomAction(): void {
-    const actions = [
-      { name: 'earFlickLeft', part: 'ears' as AnimPart, duration: 800 },
-      { name: 'earFlickRight', part: 'ears' as AnimPart, duration: 800 },
-      { name: 'tailFlick', part: 'tail' as AnimPart, duration: 1000 },
-      { name: 'contentStretch', part: 'body' as AnimPart, duration: 1200 },
-      { name: 'blinkQuick', part: 'eyes' as AnimPart, duration: 500 },
-    ];
-    const randomAction = actions[Math.floor(Math.random() * actions.length)];
-    this.playPartAnimation(randomAction.part, randomAction.name, randomAction.duration);
-  }
-
-  /** 随机动作调度（原 startRandomActions：8s，30% 概率） */
-  startRandomActions(): void {
-    if (this.randomTimer) clearInterval(this.randomTimer);
-    this.randomTimer = setInterval(() => {
-      if (this.isBusy) return;
-      if (Math.random() < 0.3) this.triggerRandomAction();
-    }, 8000);
   }
 
   /** 整身一次性动画（原 playAnimation：busy 排队（blinkQuick 例外）→ none+重绘 → 应用 → duration 后恢复基础动画 + 播队内下一支） */
@@ -454,9 +430,8 @@ export class SmartCatAnimation {
 
   /** 卸载清理：清 interval + 挂起 timeout（原版无清理，移植必须补） */
   dispose(): void {
-    if (this.randomTimer) clearInterval(this.randomTimer);
     if (this.enhancedTimer) clearInterval(this.enhancedTimer);
-    this.randomTimer = this.enhancedTimer = null;
+    this.enhancedTimer = null;
     for (const t of this.pendingTimeouts) clearTimeout(t);
     this.pendingTimeouts = [];
     this.animationQueue = [];
