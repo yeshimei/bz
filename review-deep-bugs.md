@@ -560,6 +560,23 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **主线程文档收口**：CONTEXT.md:75 favorites 词条重写（退役件记录 + 误植段迁出 + 删除口径新载）、review-deep-bugs B7 行更正。
 - **拍板清单 F 系**：无链卡反馈、右键发现性、键盘焦点管理、触屏 hover 粘滞（全域）、磁贴限高、点卡 affordance。
 
+---
+
+## pomodoro（番茄钟）域 · 审查入账中（方向 1 功能 + 2 UI 已到账；方向 3 效率 / 4 一致 / 5 架构运行中）
+
+> 明细：`.scratch/review-deep/pomodoro-{func,ui}.md`。方向 1（func）：P2×1 + P3×5（无 P1；F11/F12/F13 三条旧账已修在位且注释点名，唯 F11/F12 缺回归用例）。方向 2（UI）：P2×2 + P3×3 + UX×1。旧账复核：pomodoro 域**无在册未闭环旧账**（首轮深审）；issues/144「专注中重置加确认」已拍板待做=拍板执行项归修复批，「⚙️ 触屏可达」已随设置迁移消解。门禁基线：tsc 0；tests/pomodoro 11 文件 201 例全绿（并发 flake 未复现）。
+
+### 已入账条目（跨方向去重待 5 方向齐）
+
+- **P2 统计柱区关闭重开不重建**（func PF1）——`lastStatsKey` 只在换档/卸载清空，关开弹窗同键早退，近 7 天/近 6 月柱状图空白。修：一行（openPanel 清 key 或早退条件补面板生命周期）。
+- **P2 月档统计「分钟归一+柱顶小时数」修复未接线**（ui P2-1）——`hoursLabel` 定义后全仓库零消费，`buildStatBars` 月档未传 `{metric:'minutes', valueLabel}`，issue 357 修复只写了函数没接线：月趋势柱仍按次数归一、对比失真（原型同缺，单源一致地漏）。修：接线 + 断言。
+- **P2 统计两档切换钮可达性双缺**（ui P2-2）——约 19px 无热区 + 激活态无 aria-pressed。修：bz-touch-target + aria 状态。
+- **P3 群（func 5 条）**：强制专注下暂停/停止被拦后静默无反馈（补 toggleFocus 同款守卫提示）；暂停休息阶段 toast 恒「已暂停专注」口径分叉；备忘录「专注这个」落在暂停会话上静默续跑旧剩余时间并改归属（与「直接开始一个专注」承诺不符）；`openPomodoro`/`ensurePomodoro` load 失败裸 void 无兜底（notifyActionError 范式）；会话中改小时长 progress 参负 dashoffset 超周长毛刺（clamp）。
+- **P3 群（ui 3 条）**：ui.ts:713 层级注释失实（称不再 JS 内联 z-index 实则 allocZ 发号）；首次读盘窗口内卸载插件 in-flight promise 复活孤儿弹窗 + interval 泄漏；tick 每秒同值 DOM churn（renderStats key 早退范式未跟随）。
+- **拍板执行项**：issues/144「专注中重置加确认」确认框（已拍板待做，随批落）。
+- **UX 分流**：`#pomodoro-phase` aria-live="polite"（一行接入，拍板）。
+- **测试缺口**：F11/F12 回归用例 + 各项随批补。
+
 ### 已入账条目（跨方向去重待 5 方向齐）
 
 - **P2 删除/归档双保险违效率整改 5 定稿 + 文档误记三处纠偏**（eff E1 = cons C2 独立复核）——免确认直达 notifyUndo（belongings 批 A 同款落地法）；同域两制（取消归档却免确认）一并理顺；**纠偏清单**：core/notice.ts:139 注释 + review-deep-bugs B7 行 + CONTEXT.md:75 favorites 词条「删除免确认」误载。测试契约面（ui.test.ts:806/881 + flow-dialog-skin 四框收敛两框）随批翻转。
