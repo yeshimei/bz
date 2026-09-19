@@ -37,6 +37,7 @@
 | password-vault（密码本） | `CONFIG/.ENCRYPT/`（kind=password-vault SafeNote，与 encrypt 共锁同库） |
 | bookshelf（书库） | `书库/*.md`、EPUB |
 | cinema（影院） | `我的/影视/*.md` |
+| gameshelf（游戏库） | `我的/游戏/*.md` |
 | home（首页） | 各域命令入口 |
 | literature（知识盒） |  |
 | settings-panel（设置面板） | 插件设置键（域内 schema.ts 定义） |
