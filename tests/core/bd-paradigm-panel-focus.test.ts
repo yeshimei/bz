@@ -154,10 +154,12 @@ const WIRING: Array<[string, string]> = [
   ['src/encrypt/ui.ts', 'trapPanelFocus(this.popup!);'],
   ['src/pomodoro/ui.ts', 'trapPanelFocus(panel);'],
   ['src/checkup/ui.ts', 'trapPanelFocus'],
+  // memo 队尾豁免已摘除（memo2-consistency 新-2，随重审统一接线）：打开路径一行接线
+  ['src/memo/ui.ts', 'panelFocusRelease = trapPanelFocus(panelEl);'],
 ];
 
 describe('呈报#13 接线契约：全域大面板逐域在册', () => {
-  it('十三个面板接线在位（打开/show 路径各一行，core trapPanelFocus 单源）', () => {
+  it('十四个面板接线在位（打开/show 路径各一行，core trapPanelFocus 单源）', () => {
     for (const [file, anchor] of WIRING) {
       const src = repo(file);
       expect(src.includes('trapPanelFocus(') || file === 'src/settings-panel/ui.ts', `${file} 缺 trapPanelFocus 接线`).toBe(true);
@@ -172,8 +174,8 @@ describe('呈报#13 接线契约：全域大面板逐域在册', () => {
     expect(src).not.toContain('trapPanelFocus('); // 不改用容器入焦
   });
 
-  it('memo 豁免在册：不动 memo（同型面板随队尾重审统一处理）', () => {
+  it('memo 豁免已摘除（memo2-consistency 新-2，随队尾重审接线落地）：面板入焦 + 圈闭在位', () => {
     const src = repo('src/memo/ui.ts');
-    expect(src.includes('trapPanelFocus(')).toBe(false);
+    expect(src).toContain('trapPanelFocus(');
   });
 });

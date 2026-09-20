@@ -35,6 +35,7 @@ import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
 import { notice, notify, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
@@ -368,6 +369,10 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   const panelEl = overlay.querySelector('.bz-memo-panel') as HTMLElement;
   applyMemoSkin(tryGetSettings().memoSkin);
   mountIcons(overlay);
+  // memo2-consistency 新-2（呈报#13 F3+H3 全域范式，13 面板先例照抄；范式批对 memo
+  // 豁免「随队尾重审处理」，本次重审落地）：打开即把焦点放进面板容器本体（不落输入框，
+  // 移动端不弹软键盘），Tab/Shift+Tab 圈闭在面板内
+  panelFocusRelease = trapPanelFocus(panelEl);
 
   // 排序 = 组件库下拉（issue 268 用户拍板：三档平铺占宽把搜索框挤窄，改单枚下拉——
   // 收起态只占一行文案宽，搜索框（.bz-search flex:1）随之变长；展开菜单走 .bz-select-menu，
@@ -588,6 +593,11 @@ export function closeMemoPanel(): void {
     sortSelectDetach();
     sortSelectDetach = null;
   }
+  // 摘面板入焦圈闭（trapPanelFocus 解绑）
+  if (panelFocusRelease) {
+    panelFocusRelease();
+    panelFocusRelease = null;
+  }
   M.renderFn = null;
   M.pinnedNewId = null;
   clipTitleHint = null; // 剪贴板预填候选随面板生命周期清空
@@ -603,6 +613,8 @@ export function registerEscapeHandler(): void {
 let panelResizeDetach: { detach: () => void } | null = null;
 /** 排序下拉（uiSelect）的 document 级监听 detach（面板关闭时摘除，防孤儿监听） */
 let sortSelectDetach: (() => void) | null = null;
+/** 面板入焦圈闭解绑（trapPanelFocus，打开时挂、关闭时摘） */
+let panelFocusRelease: (() => void) | null = null;
 
 // ---------- 渲染 ----------
 
