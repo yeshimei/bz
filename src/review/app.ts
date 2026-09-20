@@ -10,7 +10,7 @@ import { FSRS, FSRS_FIRST_TEXTS, scheduleNext, currentR as fsrsCurrentR } from '
 import type { Rating } from './fsrs';
 import type { ReviewItem } from './data';
 import { ReviewDataManager } from './data';
-import { loadFittedParams, saveFittedParams, FIT_PARAMS_VERSION, type FittedParams } from './data';
+import { loadFittedParams, saveFittedParams, FIT_PARAMS_VERSION, getReviewFilePath, type FittedParams } from './data';
 import { fitFromItems, mergeFittedW } from './fit';
 import { DEFAULT_W } from './fsrs';
 import { DEFAULT_R_THRESHOLD, isDueToday, isEarlyDue, roundQueue } from './queue';
@@ -22,6 +22,10 @@ export let REVIEW_AWAY_GRACE_MS = 120000;
 export function __setReviewAwayGraceMsForTests(ms: number): void {
   REVIEW_AWAY_GRACE_MS = ms;
 }
+
+/** 呈报#38（R3）：普通复习翻篇轮询间隔（ms）——拍板 B：从 1s 降频到 2.5s（2-3 秒档），
+ *  配合「命中才读盘」把大库空耗降下来；120 次 × 2.5s = 300s，超时绝对时长与旧 300×1s 持平 */
+export const REVIEW_POLL_INTERVAL_MS = 2500;
 
 /** A2：AI 就绪权威判据——getAIProvider 试准（同 quiz-panel aiReadyOrGuide 口径，缺配置即抛人话错误）。
  *  ensureQuiz 无条件 createAI 不校验配置，quiz.ai 恒 truthy 使「!quiz.ai」降级分支死路；
@@ -378,8 +382,19 @@ export const reviewApp = {
     return out;
   },
 
-  /** 单条做题冲刺（点队列到期卡片）：该篇直接进入做题会话 */
+  /** 单条做题冲刺（点队列到期卡片）：该篇直接进入做题会话。
+   *  呈报#4（R2）拍板「提示版」：整轮复习（普通轮/做题会话）进行中 → 拦截并给一句提示，
+   *  不再无声忽略（forceQuiz 开的原路径会静默开第二个会话与普通轮并行），也不自动收旧轮。 */
   async startSingleSprint(item: ReviewItem): Promise<void> {
+    if (this._reviewLoops.size > 0) {
+      notice('本轮复习进行中，先完成当前轮次再做单条');
+      return;
+    }
+    const { uiManager } = await import('./index');
+    if (uiManager?.inSprint) {
+      notice('本轮复习进行中，先完成当前轮次再做单条');
+      return;
+    }
     const app = getApp();
     this.ensure(app);
     // 行为流（issue 261）：开始复习入小橘行为流（review:started）
@@ -396,8 +411,15 @@ export const reviewApp = {
     await this.runSprintSession([item], 'single');
   },
 
-  /** 开始本轮（队列视图「开始本轮」）：待重做优先 → 逾期队列 → 做题/普通分流 */
+  /** 开始本轮（队列视图「开始本轮」）：待重做优先 → 逾期队列 → 做题/普通分流。
+   *  呈报#4（R2）对称面：做题会话进行中 → 拦截并提示（否则 reviewLoop 与冲刺静默并行，
+   *  悬浮评级条与题面同屏互扰）；单条做题防抖（sprintStarting in-flight）不受影响。 */
   async startRoundSprint(): Promise<void> {
+    const { uiManager } = await import('./index');
+    if (uiManager?.inSprint) {
+      notice('做题冲刺进行中，先结束当前会话再开始本轮');
+      return;
+    }
     const app = getApp();
     this.ensure(app);
     // 行为流（issue 261）：开始本轮复习入小橘行为流（review:started）
@@ -624,9 +646,22 @@ export const reviewApp = {
     })();
 
     let checkCount = 0;
-    const maxChecks = 300;
+    const maxChecks = 120; // 120 × 2.5s = 300s：超时绝对时长与旧 300×1s 持平（拍板「行为语义不变」）
     let advanced = false;
     let awaySince: number | null = null; // item 5：持续离篇起点（null=在篇上）
+    // 呈报#38（R3）「命中才读盘」：轻量探测 review.json 的 stat.mtime（getAbstractFileByPath
+    // 走 vault 内存缓存，无 IO），与上次全量读的基线对比——有变化才全量读。大库空耗从
+    // 「每 tick 一次全量 JSON 解析」降为「每 2.5s 一次内存 stat 对比」。
+    // 基线 null（首轮/探测不可用）→ 保守回退全量读，翻篇检测不劣化。
+    let lastMtime: number | null = null;
+    const storageMtime = (): number | null => {
+      try {
+        const f = app.vault.getAbstractFileByPath(getReviewFilePath()) as { stat?: { mtime?: number } } | null;
+        return f?.stat?.mtime ?? null;
+      } catch {
+        return null;
+      }
+    };
     const advance = async (): Promise<void> => {
       if (advanced) return;
       advanced = true;
@@ -659,15 +694,7 @@ export const reviewApp = {
         return;
       }
       awaySince = null; // 回到篇上：宽限计时复位
-      const updatedItems = await dm.loadItems();
-      const updated = updatedItems.find((i) => i.filePath === item.filePath);
-      if (updated && updated.lastReviewed) {
-        const last = new Date(updated.lastReviewed);
-        if (Date.now() - last.getTime() < 30000) {
-          await advance();
-          return;
-        }
-      }
+      // 超时判定在读盘前（R3 降频后 mtime 未变的 tick 会提前 return，判定不可再挂在读盘之后）
       if (checkCount >= maxChecks) {
         advanced = true;
         this.hideReviewBar();
@@ -684,8 +711,21 @@ export const reviewApp = {
           dedupeKey: 'review-loop-timeout',
           action: { label: '继续本轮', onClick: () => void reviewApp.resumeRound() },
         });
+        return;
       }
-    }, 1000);
+      const mtime = storageMtime();
+      if (lastMtime !== null && mtime !== null && mtime === lastMtime) return; // 未变：本 tick 不读盘
+      const updatedItems = await dm.loadItems();
+      lastMtime = storageMtime();
+      const updated = updatedItems.find((i) => i.filePath === item.filePath);
+      if (updated && updated.lastReviewed) {
+        const last = new Date(updated.lastReviewed);
+        if (Date.now() - last.getTime() < 30000) {
+          await advance();
+          return;
+        }
+      }
+    }, REVIEW_POLL_INTERVAL_MS);
     // P3：句柄入账（stopReviewLoops 统一清理），防插件禁用后轮询残留
     this._reviewLoops.add(interval);
     const clearLoop = (): void => {

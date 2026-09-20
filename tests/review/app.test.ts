@@ -7,7 +7,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { reviewApp, __setReviewAwayGraceMsForTests } from '../../src/review/app';
+import { reviewApp, REVIEW_POLL_INTERVAL_MS, __setReviewAwayGraceMsForTests } from '../../src/review/app';
 import { ReviewDataManager, REVIEW_FILE_PATH, ReviewItem } from '../../src/review/data';
 import { roundQueue, DEFAULT_R_THRESHOLD } from '../../src/review/queue';
 import { DEFAULT_W } from '../../src/review/fsrs';
@@ -648,9 +648,10 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     // Date 一并伪造：宽限判定走 Date.now()，否则两次 tick 间真实间隔≈0 不出宽限
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'Date'] });
     await reviewApp.reviewLoop([item], 0);
-    await vi.advanceTimersByTimeAsync(1100); // 首个 tick：宽限期内，不判中断
+    // 呈报#38（R3）：轮询降频 2.5s——首 tick 记离篇起点（宽限期内不判中断）
+    await vi.advanceTimersByTimeAsync(REVIEW_POLL_INTERVAL_MS + 100);
     expect(handle.setMessage).not.toHaveBeenCalledWith('已离开当前笔记，本轮复习中断');
-    await vi.advanceTimersByTimeAsync(1100); // 第二个 tick：离篇 1s ≥ 宽限 0.5s → 中断
+    await vi.advanceTimersByTimeAsync(REVIEW_POLL_INTERVAL_MS + 100); // 第二个 tick：离篇 2.5s ≥ 宽限 0.5s → 中断
     vi.useRealTimers();
     __setReviewAwayGraceMsForTests(120000);
     expect(handle.setMessage).toHaveBeenCalledWith('已离开当前笔记，本轮复习中断');
@@ -721,7 +722,7 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     (reviewApp as any)._reviewNotice = null;
   });
 
-  it('P3 回归：stopReviewLoops 终止 1s 轮询（卸载后不再读盘）', async () => {
+  it('P3 回归：stopReviewLoops 终止轮询（卸载后不再读盘）', async () => {
     const vault = new MockVault();
     vault.files.set('A.md', '正文');
     const now = new Date();
@@ -737,14 +738,21 @@ describe('P1-2 回归：reviewLoop 活动文件切走收尾', () => {
     const handle = { setType: vi.fn(), setMessage: vi.fn(), hide: vi.fn(), el: { isConnected: true } };
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     (reviewApp as any)._reviewNotice = null;
+    // 呈报#38（R3）命中才读盘：mtime 每 tick 递增 → 每 tick 必命中读盘，stop 后计数不再增长才真有效
+    let mt = 1;
+    const orig = app.vault.getAbstractFileByPath.bind(app.vault);
+    vi.spyOn(app.vault, 'getAbstractFileByPath').mockImplementation((p: string) => {
+      if (p === REVIEW_FILE_PATH) return { path: p, stat: { mtime: mt++ } } as any;
+      return orig(p);
+    });
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     await reviewApp.reviewLoop([item], 0);
     const loadSpy = vi.spyOn((reviewApp as any).dataManager, 'loadItems');
-    await vi.advanceTimersByTimeAsync(2100);
+    await vi.advanceTimersByTimeAsync(REVIEW_POLL_INTERVAL_MS * 2 + 100);
     const pollsBefore = loadSpy.mock.calls.length;
     expect(pollsBefore).toBeGreaterThan(0); // 轮询进行中
     reviewApp.stopReviewLoops();
-    await vi.advanceTimersByTimeAsync(10000);
+    await vi.advanceTimersByTimeAsync(30000);
     expect(loadSpy.mock.calls.length).toBe(pollsBefore); // 终止后不再读盘
     vi.useRealTimers();
     (reviewApp as any)._reviewNotice = null;
