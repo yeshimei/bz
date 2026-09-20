@@ -9341,6 +9341,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 同名冲突将改名的目标路径用警告色提示（数据语义状态色） */
 .bz-attach-preview-to--renamed { color: var(--bz-warning); }
 .bz-attach-preview-badge { flex-shrink: 0; align-self: center; }
+
+/* 全选/全不选工具条（EFF-2）：文字钮，取值随组件库 token */
+.bz-attach-preview-tools { display: flex; gap: var(--bz-space-sm); margin-top: var(--bz-space-xs); }
+.bz-attach-preview-toggle {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-2);
+  cursor: pointer;
+}
+.bz-attach-preview-toggle:hover { color: var(--bz-text-1); text-decoration: underline; }
+/* 大清单渲染护栏提示（RENDER_LIMIT，EFF-2）：全量口径说明行 */
+.bz-attach-preview-more { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; }
 /* ==================== 保险库域样式（src/encrypt/styles.css） ==================== */
 /* ==================== 加密保险库（encrypt，ticket NN：移出式清单容器加密） ==================== */
 /* 遮罩统一 --bz-overlay + token 毛玻璃 --bz-overlay-blur（memo item-1789106289860 拍板全仓遮罩采用毛玻璃，推翻原 §5.2「明确不采用」口径） */
