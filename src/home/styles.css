@@ -71,6 +71,13 @@
 .bz-home-sec-t--ai { color: var(--h-ai); }
 .bz-home-sec-t--ai::before { content: "✦ "; }
 
+/* ---- 骨架线条占位（H4/呈报#31）：骨架期「全部域」列不放标题（数据到达后本就无标题，
+   先放会让标题闪现后消失），改线条占位同位呼吸；色取 --h-line，亮暗随域 token 自动反转 ---- */
+.bz-home-sk { display: flex; flex-direction: column; gap: 10px; padding-top: 2px; }
+.bz-home-sk-line { display: block; height: 12px; border-radius: 6px; background: var(--h-line); animation: bz-home-sk-pulse 1.4s ease-in-out infinite; }
+.bz-home-sk-line:nth-child(2n) { animation-delay: .2s; }
+@keyframes bz-home-sk-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+
 /* ---- 图标占位 ---- */
 .bz-home-entries .bz-ic, .bz-home-flow .bz-ic { width: 17px; height: 17px; }
 

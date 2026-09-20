@@ -34,9 +34,18 @@ export function panelFrameHtml(): string {
     </div>`;
 }
 
-/** 数据未到/采集失败的骨架占位：全部域列（不闪空内容） */
+/** 数据未到/采集失败的骨架占位：全部域列（不闪空内容）。
+ *  H4（呈报#31）：骨架期不放「全 部 域」标题——数据到达后的 entriesHtml 并无此标题，
+ *  骨架期先放会让标题闪现后消失；改骨架线条占位（宽度错落模拟行列表；常量串无注入面） */
 export function loadingEntriesHtml(): string {
-  return '<div class="bz-home-sec-t">全 部 域</div>';
+  return '<div class="bz-home-sk">'
+    + '<span class="bz-home-sk-line" style="width:46%"></span>'
+    + '<span class="bz-home-sk-line" style="width:88%"></span>'
+    + '<span class="bz-home-sk-line" style="width:70%"></span>'
+    + '<span class="bz-home-sk-line" style="width:82%"></span>'
+    + '<span class="bz-home-sk-line" style="width:64%"></span>'
+    + '<span class="bz-home-sk-line" style="width:58%"></span>'
+    + '</div>';
 }
 
 /** 数据未到/采集失败的骨架占位：时间线列 */
