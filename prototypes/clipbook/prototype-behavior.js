@@ -1,4 +1,4 @@
-/* 源指纹 af98428f70f13c14 · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 71cca54124cd73cc · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -20455,6 +20455,9 @@ ${bodyText.substring(0, 6e3)}`;
   function textareaHtml(value, placeholder) {
     return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ""}>${esc(value)}</textarea>`;
   }
+  function secretInputHtml(opts) {
+    return `<div class="bz-sp-secret"><input class="bz-input bz-sp-secret-input" type="password" value="${esc(opts.value)}" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ""}><button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan("eye")}</button></div>`;
+  }
   function sliderHtml(min, max, step, value) {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
   }
@@ -20558,16 +20561,49 @@ ${bodyText.substring(0, 6e3)}`;
     closeAllSelectMenus: () => closeAllSelectMenus,
     makePathRowCtrl: () => makePathRowCtrl,
     refreshGroupCounts: () => refreshGroupCounts,
-    renderPanelSchema: () => renderPanelSchema
+    renderPanelSchema: () => renderPanelSchema,
+    secretRow: () => secretRow
   });
   function snapshot() {
     return getSettings();
+  }
+  function secretRow(row) {
+    return row;
   }
   function notifyWriteError(e) {
     notifySaveError(e, "设置写入");
   }
   function makeCtx(rowEl, refreshVisibility) {
     return { rowEl, refreshVisibility };
+  }
+  function bindTextCommit(input, onCommit) {
+    let timer = null;
+    let dirty2 = false;
+    const commit = () => {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      if (!dirty2) return;
+      const echo = onCommit(input.value);
+      if (typeof echo === "string" && input.value !== echo) {
+        dirty2 = false;
+        input.value = echo;
+      }
+    };
+    input.addEventListener("input", () => {
+      dirty2 = true;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
+    });
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") commit();
+    });
+    displaySetters.set(input, (v) => {
+      dirty2 = false;
+      if (input.value !== v) input.value = v;
+    });
   }
   function regRefreshDisplay(regRefresh, ref, input) {
     if (!regRefresh || ref === void 0) return;
@@ -20591,34 +20627,24 @@ ${bodyText.substring(0, 6e3)}`;
       max: opts.max
     });
     const input = holder.firstElementChild;
-    let timer = null;
-    let dirty2 = false;
-    const commit = () => {
-      if (timer !== null) {
-        window.clearTimeout(timer);
-        timer = null;
-      }
-      if (!dirty2) return;
-      const echo = opts.onCommit(input.value);
-      if (typeof echo === "string" && input.value !== echo) {
-        dirty2 = false;
-        input.value = echo;
-      }
-    };
-    input.addEventListener("input", () => {
-      dirty2 = true;
-      if (timer !== null) window.clearTimeout(timer);
-      timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
-    });
-    input.addEventListener("blur", commit);
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") commit();
-    });
-    displaySetters.set(input, (v) => {
-      dirty2 = false;
-      if (input.value !== v) input.value = v;
-    });
+    bindTextCommit(input, opts.onCommit);
     return input;
+  }
+  function makeSecretInput(opts) {
+    const holder = document.createElement("div");
+    holder.innerHTML = secretInputHtml({ value: opts.value, placeholder: opts.placeholder });
+    const input = holder.querySelector(".bz-sp-secret-input");
+    const eye = holder.querySelector(".bz-sp-secret-eye");
+    bindTextCommit(input, opts.onCommit);
+    eye.addEventListener("click", () => {
+      const reveal = input.type === "password";
+      input.type = reveal ? "text" : "password";
+      eye.setAttribute("aria-pressed", String(reveal));
+      eye.setAttribute("aria-label", reveal ? "隐藏密钥" : "显示密钥");
+      eye.innerHTML = iconSpan(reveal ? "eye-off" : "eye");
+      mountIcons(eye);
+    });
+    return holder.firstElementChild;
   }
   function makePathRowCtrl(opts) {
     const readValue = () => {
@@ -20711,7 +20737,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function renderRow(row, refresh, regRefresh) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     const rowName = row.name;
     const bindKey = (_a = row.binding) == null ? void 0 : _a.key;
     const isCustom = row.type === "custom";
@@ -20780,12 +20806,30 @@ ${bodyText.substring(0, 6e3)}`;
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
       }
+      case "secret": {
+        const sec = row;
+        const acc = bindValue(sec.binding);
+        const input = makeSecretInput({
+          value: String((_d = acc.read()) != null ? _d : ""),
+          placeholder: sec.placeholder,
+          onCommit: (v) => {
+            var _a2;
+            acc.write(v);
+            safePersist(() => acc.persist(), rowName || "密钥设置");
+            (_a2 = sec.onChange) == null ? void 0 : _a2.call(sec, v, ctx);
+            refresh();
+          }
+        });
+        ctrlEl.appendChild(input);
+        regRefreshDisplay(regRefresh, sec.refreshKey, input.querySelector(".bz-sp-secret-input"));
+        break;
+      }
       case "textarea": {
         const acc = bindValue(row.binding);
         const taHolder = document.createElement("div");
-        taHolder.innerHTML = textareaHtml((_d = acc.read()) != null ? _d : "", row.placeholder);
+        taHolder.innerHTML = textareaHtml((_e = acc.read()) != null ? _e : "", row.placeholder);
         const ta = taHolder.firstElementChild;
-        const warn = new CommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
+        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
         let timer = null;
         let dirty2 = false;
         const commit = () => {
@@ -20822,9 +20866,9 @@ ${bodyText.substring(0, 6e3)}`;
       case "number": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
+        const warn = new CommitWarn(String((_g = acc.read()) != null ? _g : ""), row.onCommit);
         const input = makeInput({
-          value: String((_g = acc.read()) != null ? _g : ""),
+          value: String((_h = acc.read()) != null ? _h : ""),
           type: "number",
           num: true,
           placeholder: ph,
@@ -20843,7 +20887,7 @@ ${bodyText.substring(0, 6e3)}`;
             return String(v) !== raw.trim() ? String(v) : void 0;
           }
         });
-        input.step = String((_h = row.step) != null ? _h : 1);
+        input.step = String((_i = row.step) != null ? _i : 1);
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
@@ -20853,7 +20897,7 @@ ${bodyText.substring(0, 6e3)}`;
         const acc = bindValue(row.binding);
         const options = row.options;
         const labelOf = (v) => (options.find((o) => o.value === v) || { label: v }).label;
-        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_i = acc.read()) != null ? _i : "") || options[0] && options[0].value || ""));
+        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_j = acc.read()) != null ? _j : "") || options[0] && options[0].value || ""));
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
         let group = null;
@@ -20961,8 +21005,8 @@ ${bodyText.substring(0, 6e3)}`;
       }
       case "slider": {
         const acc = bindValue(row.binding);
-        const cur = (_k = (_j = acc.read()) != null ? _j : row.min) != null ? _k : 0;
-        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_l = row.step) != null ? _l : 1, cur);
+        const cur = (_l = (_k = acc.read()) != null ? _k : row.min) != null ? _l : 0;
+        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_m = row.step) != null ? _m : 1, cur);
         const range = ctrlEl.querySelector('input[type="range"]');
         const em = ctrlEl.querySelector(".bz-sp-slider-val");
         range.addEventListener("input", () => {
@@ -20974,7 +21018,7 @@ ${bodyText.substring(0, 6e3)}`;
           (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
           refresh();
         });
-        for (const a of (_m = row.actions) != null ? _m : []) {
+        for (const a of (_n = row.actions) != null ? _n : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -20996,7 +21040,7 @@ ${bodyText.substring(0, 6e3)}`;
         ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_n = acc.read()) != null ? _n : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_o = acc.read()) != null ? _o : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -21028,7 +21072,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
       case "info": {
         ctrlEl.innerHTML = badgeHtml(row.name);
-        for (const a of (_o = row.actions) != null ? _o : []) {
+        for (const a of (_p = row.actions) != null ? _p : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -21068,13 +21112,13 @@ ${bodyText.substring(0, 6e3)}`;
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_p = snapshot()[layoutKey]) != null ? _p : "") : "";
+        const curLayout = layoutKey ? String((_q = snapshot()[layoutKey]) != null ? _q : "") : "";
         let opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
         if (!opts2.length) opts2 = row.options;
-        const cur = String((_q = acc.read()) != null ? _q : "") || opts2[0] && opts2[0].value || "";
+        const cur = String((_r = acc.read()) != null ? _r : "") || opts2[0] && opts2[0].value || "";
         ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,

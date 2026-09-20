@@ -1,4 +1,4 @@
-/* 源指纹 1f9a84cc3d6073d6 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 98f085474175123f · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
@@ -38,6 +38,7 @@ var BZR_settings_panel = (() => {
     pageHeadHtml: () => pageHeadHtml,
     rowBtnHtml: () => rowBtnHtml,
     rowHtml: () => rowHtml,
+    secretInputHtml: () => secretInputHtml,
     selectItemHtml: () => selectItemHtml,
     selectTriggerHtml: () => selectTriggerHtml,
     sliderHtml: () => sliderHtml,
@@ -83,6 +84,9 @@ var BZR_settings_panel = (() => {
   }
   function textareaHtml(value, placeholder) {
     return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ""}>${esc(value)}</textarea>`;
+  }
+  function secretInputHtml(opts) {
+    return `<div class="bz-sp-secret"><input class="bz-input bz-sp-secret-input" type="password" value="${esc(opts.value)}" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ""}><button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan("eye")}</button></div>`;
   }
   function sliderHtml(min, max, step, value) {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;

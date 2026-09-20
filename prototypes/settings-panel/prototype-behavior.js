@@ -1,4 +1,4 @@
-/* 源指纹 a6bbca6143b0bad7 · 仓内输入 230 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 f7b38927c1b254b4 · 仓内输入 230 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -8537,6 +8537,9 @@ var BZW_settings_panel = (() => {
   function textareaHtml(value, placeholder) {
     return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ""}>${esc(value)}</textarea>`;
   }
+  function secretInputHtml(opts) {
+    return `<div class="bz-sp-secret"><input class="bz-input bz-sp-secret-input" type="password" value="${esc(opts.value)}" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ""}><button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan("eye")}</button></div>`;
+  }
   function sliderHtml(min, max, step, value) {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
   }
@@ -8662,16 +8665,49 @@ var BZW_settings_panel = (() => {
     closeAllSelectMenus: () => closeAllSelectMenus,
     makePathRowCtrl: () => makePathRowCtrl,
     refreshGroupCounts: () => refreshGroupCounts,
-    renderPanelSchema: () => renderPanelSchema
+    renderPanelSchema: () => renderPanelSchema,
+    secretRow: () => secretRow
   });
   function snapshot() {
     return getSettings();
+  }
+  function secretRow(row) {
+    return row;
   }
   function notifyWriteError(e) {
     notifySaveError(e, "设置写入");
   }
   function makeCtx(rowEl, refreshVisibility) {
     return { rowEl, refreshVisibility };
+  }
+  function bindTextCommit(input, onCommit) {
+    let timer = null;
+    let dirty2 = false;
+    const commit = () => {
+      if (timer !== null) {
+        window.clearTimeout(timer);
+        timer = null;
+      }
+      if (!dirty2) return;
+      const echo = onCommit(input.value);
+      if (typeof echo === "string" && input.value !== echo) {
+        dirty2 = false;
+        input.value = echo;
+      }
+    };
+    input.addEventListener("input", () => {
+      dirty2 = true;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
+    });
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") commit();
+    });
+    displaySetters.set(input, (v) => {
+      dirty2 = false;
+      if (input.value !== v) input.value = v;
+    });
   }
   function regRefreshDisplay(regRefresh, ref, input) {
     if (!regRefresh || ref === void 0) return;
@@ -8695,34 +8731,24 @@ var BZW_settings_panel = (() => {
       max: opts.max
     });
     const input = holder.firstElementChild;
-    let timer = null;
-    let dirty2 = false;
-    const commit = () => {
-      if (timer !== null) {
-        window.clearTimeout(timer);
-        timer = null;
-      }
-      if (!dirty2) return;
-      const echo = opts.onCommit(input.value);
-      if (typeof echo === "string" && input.value !== echo) {
-        dirty2 = false;
-        input.value = echo;
-      }
-    };
-    input.addEventListener("input", () => {
-      dirty2 = true;
-      if (timer !== null) window.clearTimeout(timer);
-      timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
-    });
-    input.addEventListener("blur", commit);
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") commit();
-    });
-    displaySetters.set(input, (v) => {
-      dirty2 = false;
-      if (input.value !== v) input.value = v;
-    });
+    bindTextCommit(input, opts.onCommit);
     return input;
+  }
+  function makeSecretInput(opts) {
+    const holder = document.createElement("div");
+    holder.innerHTML = secretInputHtml({ value: opts.value, placeholder: opts.placeholder });
+    const input = holder.querySelector(".bz-sp-secret-input");
+    const eye = holder.querySelector(".bz-sp-secret-eye");
+    bindTextCommit(input, opts.onCommit);
+    eye.addEventListener("click", () => {
+      const reveal = input.type === "password";
+      input.type = reveal ? "text" : "password";
+      eye.setAttribute("aria-pressed", String(reveal));
+      eye.setAttribute("aria-label", reveal ? "隐藏密钥" : "显示密钥");
+      eye.innerHTML = iconSpan(reveal ? "eye-off" : "eye");
+      mountIcons(eye);
+    });
+    return holder.firstElementChild;
   }
   function makePathRowCtrl(opts) {
     const readValue = () => {
@@ -8815,7 +8841,7 @@ var BZW_settings_panel = (() => {
     }
   }
   function renderRow(row, refresh2, regRefresh) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q;
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
     const rowName = row.name;
     const bindKey = (_a2 = row.binding) == null ? void 0 : _a2.key;
     const isCustom = row.type === "custom";
@@ -8884,12 +8910,30 @@ var BZW_settings_panel = (() => {
         regRefreshDisplay(regRefresh, row.refreshKey, input);
         break;
       }
+      case "secret": {
+        const sec = row;
+        const acc = bindValue(sec.binding);
+        const input = makeSecretInput({
+          value: String((_d = acc.read()) != null ? _d : ""),
+          placeholder: sec.placeholder,
+          onCommit: (v) => {
+            var _a3;
+            acc.write(v);
+            safePersist(() => acc.persist(), rowName || "密钥设置");
+            (_a3 = sec.onChange) == null ? void 0 : _a3.call(sec, v, ctx);
+            refresh2();
+          }
+        });
+        ctrlEl.appendChild(input);
+        regRefreshDisplay(regRefresh, sec.refreshKey, input.querySelector(".bz-sp-secret-input"));
+        break;
+      }
       case "textarea": {
         const acc = bindValue(row.binding);
         const taHolder = document.createElement("div");
-        taHolder.innerHTML = textareaHtml((_d = acc.read()) != null ? _d : "", row.placeholder);
+        taHolder.innerHTML = textareaHtml((_e = acc.read()) != null ? _e : "", row.placeholder);
         const ta = taHolder.firstElementChild;
-        const warn = new CommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
+        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
         let timer = null;
         let dirty2 = false;
         const commit = () => {
@@ -8926,9 +8970,9 @@ var BZW_settings_panel = (() => {
       case "number": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
+        const warn = new CommitWarn(String((_g = acc.read()) != null ? _g : ""), row.onCommit);
         const input = makeInput({
-          value: String((_g = acc.read()) != null ? _g : ""),
+          value: String((_h = acc.read()) != null ? _h : ""),
           type: "number",
           num: true,
           placeholder: ph,
@@ -8947,7 +8991,7 @@ var BZW_settings_panel = (() => {
             return String(v) !== raw.trim() ? String(v) : void 0;
           }
         });
-        input.step = String((_h = row.step) != null ? _h : 1);
+        input.step = String((_i = row.step) != null ? _i : 1);
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
         ctrlEl.appendChild(input);
         regRefreshDisplay(regRefresh, row.refreshKey, input);
@@ -8957,7 +9001,7 @@ var BZW_settings_panel = (() => {
         const acc = bindValue(row.binding);
         const options2 = row.options;
         const labelOf = (v) => (options2.find((o) => o.value === v) || { label: v }).label;
-        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_i = acc.read()) != null ? _i : "") || options2[0] && options2[0].value || ""));
+        ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_j = acc.read()) != null ? _j : "") || options2[0] && options2[0].value || ""));
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
         let group = null;
@@ -9065,8 +9109,8 @@ var BZW_settings_panel = (() => {
       }
       case "slider": {
         const acc = bindValue(row.binding);
-        const cur = (_k = (_j = acc.read()) != null ? _j : row.min) != null ? _k : 0;
-        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_l = row.step) != null ? _l : 1, cur);
+        const cur = (_l = (_k = acc.read()) != null ? _k : row.min) != null ? _l : 0;
+        ctrlEl.innerHTML = sliderHtml(row.min, row.max, (_m = row.step) != null ? _m : 1, cur);
         const range = ctrlEl.querySelector('input[type="range"]');
         const em = ctrlEl.querySelector(".bz-sp-slider-val");
         range.addEventListener("input", () => {
@@ -9078,7 +9122,7 @@ var BZW_settings_panel = (() => {
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           refresh2();
         });
-        for (const a of (_m = row.actions) != null ? _m : []) {
+        for (const a of (_n = row.actions) != null ? _n : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -9100,7 +9144,7 @@ var BZW_settings_panel = (() => {
         ctrlEl.appendChild(makePathRowCtrl({
           name: row.name,
           mode: row.mode,
-          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_n = acc.read()) != null ? _n : ""),
+          value: multi ? Array.isArray(acc.read()) ? [...acc.read()] : [] : String((_o = acc.read()) != null ? _o : ""),
           pickerTitle: row.pickerTitle,
           pickerDesc: row.pickerDesc,
           buttonText: row.buttonText,
@@ -9132,7 +9176,7 @@ var BZW_settings_panel = (() => {
       }
       case "info": {
         ctrlEl.innerHTML = badgeHtml(row.name);
-        for (const a of (_o = row.actions) != null ? _o : []) {
+        for (const a of (_p = row.actions) != null ? _p : []) {
           const holder2 = document.createElement("div");
           holder2.innerHTML = rowBtnHtml(a.text, a.cta);
           const btn = holder2.firstElementChild;
@@ -9172,13 +9216,13 @@ var BZW_settings_panel = (() => {
       case "choiceCards": {
         const acc = bindValue(row.binding);
         const layoutKey = row.layoutKey;
-        const curLayout = layoutKey ? String((_p = snapshot()[layoutKey]) != null ? _p : "") : "";
+        const curLayout = layoutKey ? String((_q = snapshot()[layoutKey]) != null ? _q : "") : "";
         let opts2 = row.options.filter((o) => {
           const lo = o.layout;
           return !lo || !layoutKey || lo === curLayout;
         });
         if (!opts2.length) opts2 = row.options;
-        const cur = String((_q = acc.read()) != null ? _q : "") || opts2[0] && opts2[0].value || "";
+        const cur = String((_r = acc.read()) != null ? _r : "") || opts2[0] && opts2[0].value || "";
         ctrlEl.innerHTML = cardpickHtml(opts2.map((o) => ({
           value: o.value,
           label: o.label,
@@ -23155,6 +23199,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       url: item.url || null
     };
   }
+  function purgeStaleFields(data) {
+    if (!Array.isArray(data)) return data;
+    const stale = (it) => !!it && typeof it === "object" && ("recur" in it || "checklist" in it);
+    if (!data.some(stale)) return data;
+    return data.map((it) => {
+      if (!stale(it)) return it;
+      const rest = { ...it };
+      delete rest.recur;
+      delete rest.checklist;
+      return rest;
+    });
+  }
   var import_moment4, DEFAULT_SCENARIOS, MemoData;
   var init_data5 = __esm({
     "src/memo/data.ts"() {
@@ -23180,7 +23236,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           return this._store.read();
         },
         async write(data) {
-          return this._store.write(data);
+          return this._store.write(purgeStaleFields(data));
         },
         /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
          *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
@@ -23206,6 +23262,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
                 item.id = generateId();
                 needWrite = true;
               }
+              if ("recur" in item || "checklist" in item) needWrite = true;
               return normalizeItem(item);
             });
             if (needWrite) await this.write(raw);
@@ -28716,6 +28773,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function trimDailyNum(n) {
     const v = Number(n) || 0;
+    if (v === 0) return "—";
     return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
   function parseLocalDay(raw) {
@@ -29275,10 +29333,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
   }
   function emptyYearHtml(year) {
-    return `<div class="bz-belr-emptyyear">
-    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
-    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"}</div>
-  </div>`;
+    return emptyHtmlStr(
+      "calendar-days",
+      `${year} 年没有物品记录`,
+      ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"
+    );
   }
   function buildReportSections(stats) {
     return [
@@ -29326,7 +29385,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (stats.purchasedAmount === 0) {
       return `<div class="bz-belr-sec">
     ${secHead("月度花销走势", "当年无购入")}
-    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
+    ${emptyHtmlStr("trending-up", "这一年没有购入记录，只有出离", "月度花销无可绘制")}
     </div>`;
     }
     const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
@@ -29346,7 +29405,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (stats.purchasedAmount === 0) {
       return `<div class="bz-belr-sec">
     ${secHead("分类占比", "当年无购入")}
-    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
+    ${emptyHtmlStr("chart-bar", "当年无购入 · 只有出离记录", "分类占比无可统计")}
     </div>`;
     }
     const MAX_ROWS = 8;
@@ -29395,7 +29454,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (stats.companions.length === 0) {
       return `<div class="bz-belr-sec">
     ${secHead("陪伴最久榜")}
-    <p class="bz-belr-none">暂无可统计的物品</p>
+    ${emptyHtmlStr("history", "暂无可统计的物品")}
     </div>`;
     }
     const asOf = stats.companionAsOf === "today" ? "截至今日" : `截至 ${stats.year} 年末`;
@@ -29423,6 +29482,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_utils();
       init_notice();
       init_ui();
+      init_str();
       init_str();
       init_z_order();
       init_chart_palette();
@@ -29548,7 +29608,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const key = statusKeyOf(it.current_status);
     const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
     const dailyStr = trimDailyNum(daily);
-    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
+    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : (
+      // 呈报#20（B4）：0 元日均 trimDailyNum 给「—」，不再套 moneyWith（否则出「￥—」）
+      `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${dailyStr === "—" ? dailyStr : moneyWith(dailyStr, unit)}`
+    );
     return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
@@ -29920,6 +29983,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     var _a2;
     return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
   }
+  function closeAllDrops() {
+    document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
+      w.classList.remove("is-open");
+      w.querySelectorAll(".bz-bel-dropopt.is-active").forEach((o) => o.classList.remove("is-active"));
+    });
+  }
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
@@ -29935,6 +30004,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         }
         if (document.querySelector(".bz-bel-report-mask")) {
           closeBelReport();
+          return;
+        }
+        if (document.querySelector(".bz-bel-yearsel.is-open")) {
+          closeAllDrops();
           return;
         }
         closePanel();
@@ -29974,8 +30047,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     mountIcons(overlay2);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
-    const closeDrops = () => {
-      overlay2.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
+    const moveDropActive = (wrap, delta) => {
+      const items = [...wrap.querySelectorAll(".bz-bel-dropopt")];
+      if (!items.length) return;
+      const cur = items.findIndex((o) => o.classList.contains("is-active"));
+      const next = Math.min(items.length - 1, Math.max(0, (cur < 0 ? 0 : cur) + delta));
+      items.forEach((o, i) => o.classList.toggle("is-active", i === next));
+    };
+    const pickDropOpt = (opt) => {
+      var _a3;
+      closeAllDrops();
+      const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
+      if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
+      else M4.sort = v;
+      renderAll2();
     };
     const onDocClick = (e) => {
       var _a3;
@@ -29984,23 +30069,43 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (trig) {
         const wrap = trig.parentElement;
         const wasOpen = wrap.classList.contains("is-open");
-        closeDrops();
-        if (!wasOpen) wrap.classList.add("is-open");
+        closeAllDrops();
+        if (!wasOpen) {
+          wrap.classList.add("is-open");
+          (_a3 = wrap.querySelector(".bz-bel-dropopt.is-cur")) == null ? void 0 : _a3.classList.add("is-active");
+        }
         return;
       }
       const opt = t.closest(".bz-bel-dropopt");
       if (opt) {
-        closeDrops();
-        const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-        if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
-        else M4.sort = v;
-        renderAll2();
+        pickDropOpt(opt);
         return;
       }
-      closeDrops();
+      closeAllDrops();
     };
     const onDropKey = (e) => {
+      var _a3;
       const t = e.target;
+      const openWrap = overlay2.querySelector(".bz-bel-yearsel.is-open");
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (openWrap) {
+          e.preventDefault();
+          moveDropActive(openWrap, e.key === "ArrowDown" ? 1 : -1);
+          return;
+        }
+        if ((_a3 = t.closest) == null ? void 0 : _a3.call(t, "[data-bel-year],[data-bel-mobsortsel]")) {
+          e.preventDefault();
+          t.click();
+        }
+        return;
+      }
+      if (e.key === "Enter" && openWrap) {
+        e.preventDefault();
+        const opt = t.closest(".bz-bel-dropopt") || openWrap.querySelector(".bz-bel-dropopt.is-active");
+        if (opt) pickDropOpt(opt);
+        else closeAllDrops();
+        return;
+      }
       if ((e.key === "Enter" || e.key === " ") && t.closest(".bz-bel-select")) {
         e.preventDefault();
         t.click();
@@ -37717,13 +37822,15 @@ GitHub 仓库：${ghInfo.title}
               binding: { key: "gameshelfSteamId" },
               placeholder: "76561198000000000"
             },
-            {
-              type: "text",
+            // GS3（呈报#48）：密钥行接「密钥型」档位——type=password 掩码显示 + 眼睛切换明文，
+            // 原明文 text 行退役（旁人瞄屏不可见）；提交链与 text 行同内核
+            secretRow({
+              type: "secret",
               name: "Web API 密钥",
               desc: "在 Steam 官网开发者页免费申请",
               binding: { key: "gameshelfSteamApiKey" },
               placeholder: "32 位十六进制串"
-            },
+            }),
             {
               type: "toggle",
               name: "自动同步",
@@ -37737,6 +37844,7 @@ GitHub 仓库：${ghInfo.title}
   }
   var init_settings5 = __esm({
     "src/gameshelf/settings.ts"() {
+      init_renderer();
     }
   });
 
