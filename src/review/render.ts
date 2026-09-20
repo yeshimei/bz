@@ -150,14 +150,16 @@ export function cardHtml(item: ReviewItem, ctx: QueueViewCtx = {}): string {
     stageTagHtml(item, w, now),
   ].join('');
   return `
-      <div class="${cls}" data-id="${item.id}" role="button" tabindex="0" aria-disabled="${canPlay ? 'false' : 'true'}">
+      <div class="${cls}" data-id="${item.id}" role="button" tabindex="${canPlay ? '0' : '-1'}" aria-disabled="${canPlay ? 'false' : 'true'}">
         <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${item.isMissing ? '挂起' : stageNum(item)}</span></div>
         <div class="bz-q-card-meta">${tags}</div>
       </div>`;
 }
 
 function cardsOf(items: ReviewItem[], ctx: QueueViewCtx): string {
-  if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
+  // 呈报#19-R13：列内空态统一 uiEmpty 小图标口径（emptyHtmlStr 与 core uiEmpty 同 markup 单源，
+  // 渲染后由 ui.renderEntries 的 mountIcons 兑现 inbox 图标；原纯文本 .bz-q-hint 第三形制退役）
+  if (!items.length) return emptyHtmlStr('inbox', '没有条目');
   return items.map((it) => cardHtml(it, ctx)).join('');
 }
 
@@ -252,11 +254,20 @@ export function queueViewHtml(items: ReviewItem[], ctx: QueueViewCtx = {}): stri
 
 // ==================== 整窗冲刺视图 ====================
 
-export function sprintHeadHtml(): string {
+/** 冲刺模式 → 头行副标题（呈报#57/R5；规格文案取 sprint.ts 头注释：
+ *  开始本轮 / 待重做 / 单条复习。与 SprintMode 字面量对齐，本地定义防 render→sprint 环） */
+export function sprintModeLabel(mode: 'round' | 'single' | 'redo'): string {
+  return mode === 'round' ? '开始本轮' : mode === 'redo' ? '待重做' : '单条复习';
+}
+
+/** 冲刺头行（mode 缺省 = 无副标题，兼容旧契约） */
+export function sprintHeadHtml(mode?: 'round' | 'single' | 'redo'): string {
+  const sub = mode ? `<div class="bz-sprint-sub">${sprintModeLabel(mode)}</div>` : '';
   return `
       <div class="bz-sprint-head">
         <div class="t">
           <div class="bz-sprint-title">做题冲刺</div>
+          ${sub}
         </div>
         <div class="tools">
           <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${iconSpan('skip-forward', 'bz-sprint-ic')}</button>
@@ -354,7 +365,7 @@ export function sprintAsideHtml(entries: Array<{ name: string; state: string }>)
     .join('');
   return `
       <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || emptyHtmlStr('', '队列完毕')}</div>`;
+      <div class="bz-sq-list">${rows || emptyHtmlStr('inbox', '队列完毕')}</div>`;
 }
 
 /** 冲刺主体壳（左内容 + 右本轮队列） */

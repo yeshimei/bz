@@ -11,7 +11,7 @@ import { MockVault, mockAppWithVault } from '../mock-vault';
 import { resetObsidianMocks, getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { reviewApp, __setReviewAwayGraceMsForTests } from '../../src/review/app';
+import { reviewApp, REVIEW_POLL_INTERVAL_MS, __setReviewAwayGraceMsForTests } from '../../src/review/app';
 import { ReviewDataManager, REVIEW_FILE_PATH } from '../../src/review/data';
 
 
@@ -239,11 +239,12 @@ describe('reviewLoop 常驻通知复用与超时收尾', () => {
     // Date 一并伪造：宽限判定用真实 Date.now()，不伪造则两次 tick 间真实间隔≈0 永远不出宽限
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'Date'] });
     const p = reviewApp.reviewLoop([mkRow('A.md', null), mkRow('B.md', null)], 0);
-    await vi.advanceTimersByTimeAsync(1100); // 第一篇：发现 A 已复习 → 进第二篇（通知复用）
+    // 呈报#38（R3）：轮询降频 2.5s——推进一个新间隔完成第一篇翻篇（发现 A 已复习 → 进第二篇）
+    await vi.advanceTimersByTimeAsync(REVIEW_POLL_INTERVAL_MS + 100);
     expect(handle.setMessage).toHaveBeenLastCalledWith(expect.stringContaining('(2/2): B.md'));
     // 切走活动文件 → 宽限 500ms 后（两个 tick）中断收尾
     activePath = 'OTHER.md';
-    await vi.advanceTimersByTimeAsync(2100);
+    await vi.advanceTimersByTimeAsync(REVIEW_POLL_INTERVAL_MS * 2 + 100);
     vi.useRealTimers();
     __setReviewAwayGraceMsForTests(120000);
     await expect(p).resolves.toBeUndefined();
@@ -264,7 +265,8 @@ describe('reviewLoop 常驻通知复用与超时收尾', () => {
     vi.spyOn(await import('../../src/core/notice'), 'notify').mockReturnValue(handle as any);
     vi.useFakeTimers({ toFake: ['setTimeout', 'setInterval', 'clearTimeout', 'clearInterval'] });
     const p = reviewApp.reviewLoop([mkRow('A.md', null)], 0);
-    await vi.advanceTimersByTimeAsync(301 * 1000); // 超过 maxChecks=300
+    // 呈报#38（R3）：间隔 2.5s、maxChecks=120（=300s，超时绝对时长不变）
+    await vi.advanceTimersByTimeAsync(121 * REVIEW_POLL_INTERVAL_MS); // 超过 maxChecks=120
     vi.useRealTimers();
     await expect(p).resolves.toBeUndefined();
     expect(handle.setMessage).toHaveBeenCalledWith('复习超时，请手动继续');

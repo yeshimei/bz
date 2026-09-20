@@ -104,17 +104,19 @@ describe('issue 270-B：stats-ui.ts 内联样式收编', () => {
     }
   });
 
-  it('收编类在 styles.css 有规则：统计卡/板块/条/柱/chip/排名 + 历史时间线', () => {
+  it('收编类在 styles.css 有规则（呈报#55/R11 重刷：影院形制类 scoped 在 #review-stats-popup）', () => {
     const css = reviewCss();
     const selectors = [
-      '.bz-stats-cards', '.bz-stats-card', '.bz-stats-card-val', '.bz-stats-card-lbl',
-      '.bz-stats-section', '.bz-stats-section-head', '.bz-stats-section-accent',
+      // R11 影院形制内容件（scoped 前缀防他域误伤）
+      '#review-stats-popup .stat-cards', '#review-stats-popup .stat-card', '#review-stats-popup .stat-card .v', '#review-stats-popup .stat-card .k',
+      '#review-stats-popup .sec', '#review-stats-popup .sec-title', '#review-stats-popup .sec-title .bz-ic',
+      '#review-stats-popup .bar-row', '#review-stats-popup .bar-label', '#review-stats-popup .bar-track', '#review-stats-popup .bar-fill', '#review-stats-popup .bar-num',
+      '#review-stats-popup .soft-row', '#review-stats-popup .soft-track', '#review-stats-popup .soft-fill',
+      '#review-stats-popup .kv-inline',
+      '#review-stats-popup .top-row', '#review-stats-popup .top-name', '#review-stats-popup .top-sub', '#review-stats-popup .top-val',
       '.bz-stats-empty',
-      '.bz-stats-bar-row', '.bz-stats-bar-lbl', '.bz-stats-bar-track', '.bz-stats-bar-fill', '.bz-stats-bar-val',
-      '.bz-stats-chart-scroll', '.bz-stats-chart', '.bz-stats-chart-col', '.bz-stats-chart-bar', '.bz-stats-chart-lbl',
-      '.bz-stats-inline', '.bz-stats-inline-chip',
-      '.bz-stats-rank-badge', '.bz-stats-rank-plain', '.bz-stats-rank-name', '.bz-stats-rank-sub', '.bz-stats-rank-meta',
       '.bz-stats-hint',
+      // 历史时间线（未随重刷改动）
       '.bz-review-history-status', '.bz-review-history-name', '.bz-review-history-sub', '.bz-review-history-empty',
       '.bz-review-history-tl', '.bz-review-history-item', '.bz-review-history-item.is-last',
       '.bz-review-history-line', '.bz-review-history-dot', '.bz-review-history-row',
@@ -125,9 +127,9 @@ describe('issue 270-B：stats-ui.ts 内联样式收编', () => {
     }
   });
 
-  it('stats-ui.ts 引用收编类（markup 与样式接驳）', () => {
+  it('stats-ui.ts 引用现行形制类（markup 与样式接驳）', () => {
     const ts = statsUi();
-    for (const cls of ['bz-stats-card', 'bz-stats-section', 'bz-stats-bar-fill', 'bz-stats-chart-bar', 'bz-stats-rank-badge', 'bz-stats-hint', 'bz-review-history-item', 'bz-review-history-dot', 'bz-review-history-rating']) {
+    for (const cls of ['stat-card', 'sec-title', 'bar-fill', 'soft-fill', 'kv-inline', 'top-row', 'bz-stats-hint', 'bz-review-history-item', 'bz-review-history-dot', 'bz-review-history-rating']) {
       expect(ts.includes(cls), `stats-ui.ts 未引用 ${cls}`).toBe(true);
     }
   });

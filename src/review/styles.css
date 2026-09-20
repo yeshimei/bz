@@ -77,6 +77,14 @@
 /* item 10：空态宿主（uiEmpty 组件库类不重复定义，仅限宽居中） */
 .bz-q-empty-wrap { align-items: center; justify-content: center; }
 .bz-q-hint { font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; padding: 18px var(--bz-space-sm); }
+/* 呈报#19-R13：列内空态统一 uiEmpty 小图标口径（markup 由 render.emptyHtmlStr 单源产出）——
+   列内空间小，图标/留白相对整面板空态收一档 */
+.bz-q-col .bz-empty { padding: 14px 8px; gap: 4px; }
+.bz-q-col .bz-empty-ic { width: 22px; height: 22px; margin-bottom: 0; }
+.bz-q-col .bz-empty-title { font-size: var(--bz-font-meta); }
+.bz-sq-list .bz-empty { padding: 16px 6px; }
+.bz-sq-list .bz-empty-ic { width: 22px; height: 22px; margin-bottom: 0; }
+.bz-sq-list .bz-empty-title { font-size: var(--bz-font-meta); }
 
 /* ==================== 底部信息行（归档/统计的非按钮落位，整行可点无引导小字） ==================== */
 .bz-q-footer { display: flex; align-items: center; gap: 10px; padding: var(--bz-space-sm) 20px var(--bz-space-md); border-top: 1px solid var(--bz-border); flex-shrink: 0; }
@@ -98,6 +106,8 @@
 .bz-sprint-head { display: flex; align-items: center; justify-content: space-between; gap: var(--bz-space-sm); padding: 14px 20px 6px; flex-shrink: 0; }
 .bz-sprint-head .t { display: flex; align-items: baseline; gap: var(--bz-space-sm); }
 .bz-sprint-title { font-size: var(--bz-font-title); font-weight: 700; color: var(--bz-text-1); }
+/* 呈报#57（R5）：头行模式副标题（开始本轮/待重做/单条复习），弱化形态对齐 .bz-panel-head-sub */
+.bz-sprint-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-sprint-head .tools { display: flex; align-items: center; gap: 6px; }
 .bz-sprint-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 60px 20px; color: var(--bz-text-2); font-size: var(--bz-font-label); }
 /* 加载圈：深审 A15 补 bz 前缀（bz-q-spinner）——原裸 spinner 类名是无主通用名，不进全局聚合。
@@ -201,6 +211,8 @@
 
 /* ==================== 普通复习悬浮迷你评级条（item 4，屏幕底部） ==================== */
 .bz-review-bar { position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: var(--bz-space-sm) var(--bz-space-md); background: var(--bz-surface-2); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); max-width: min(92vw, 560px); }
+/* R8 键盘化：容器 tabindex=-1 为程序化 focus 落点，不显示焦点框（按钮各自有 hover/focus 表达） */
+.bz-review-bar:focus { outline: none; }
 .bz-review-bar-info { font-size: 12.5px; color: var(--bz-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
 .bz-review-bar-info i { font-style: normal; color: var(--bz-text-3); margin-left: var(--bz-space-xs); }
 .bz-review-bar-act { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
@@ -225,51 +237,48 @@
 #review-stats-body { flex: 1; overflow-y: auto; }
 .bz-review-stats-head { padding: var(--bz-space-sm) 18px 6px !important; }
 .bz-review-stats-head .bz-review-title { font-size: .92rem !important; font-weight: 600 !important; margin: 0 !important; }
-.bz-review-stats-tl-row:hover { background: var(--bz-surface-hover); }
 #review-history-popup { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); width: 92%; max-width: 480px; max-height: 80vh; flex-direction: column; overflow: hidden; animation: slideUp var(--bz-dur-slow) ease-out; }
 #review-history-body { flex: 1; overflow-y: auto; position: relative; }
-/* 排名/时间线行（issue 270：stats-ui 内联收编并入本类，值逐字搬运——
-   display/gap/padding/border-bottom 原为行内联，此处合并后内联删除） */
-.bz-review-stats-tl-row { text-align: left; display: flex; align-items: center; gap: 8px; padding: 7px 4px; border-radius: var(--bz-radius-sm); border: none; border-bottom: 1px solid var(--bz-border); background: var(--bz-surface-1); color: var(--bz-text-1); font-size: var(--bz-font-label); cursor: pointer; }
 
-/* ==================== 统计弹窗内容件（issue 270：stats-ui.ts 内联样式收编） ====================
-   浅色统计卡 PASTEL_CARDS / 色条 accent / 评级色 RATING_COLORS 为数据驱动动态色，
-   保留行内 background/color；其余静态值逐字迁入下列类（Obsidian 变量按 --bz-* 档对档：
-   primary/secondary → surface-2/1、text-normal/muted/faint → text-1/2/3、
-   background-modifier-border → border）。 */
-/* 浅色统计卡（卡色按 idx 动态内联；形制沿革见 stats-ui.ts 深审新-13 注——不宣称对齐影视） */
-.bz-stats-cards { display: flex; flex-wrap: wrap; gap: 8px; padding: 16px 16px 0; }
-.bz-stats-card { flex: 1; min-width: 80px; padding: 12px 6px; border-radius: 10px; text-align: center; border: 1px solid rgba(0,0,0,0.06); }
-.bz-stats-card-val { font-size: 1.3rem; font-weight: 700; color: #3D4456; line-height: 1.2; }
-.bz-stats-card-lbl { font-size: .68rem; color: rgba(61,68,86,0.65); margin-top: 3px; }
-/* 色条板块容器（accent 色动态内联） */
-.bz-stats-section { margin: 12px 16px; padding: 14px 14px 12px; background: var(--bz-surface-1); border-radius: 12px; border: 1px solid var(--bz-border); }
-.bz-stats-section-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: .92rem; margin-bottom: 12px; }
-.bz-stats-section-accent { width: 4px; height: 14px; border-radius: 2px; flex-shrink: 0; }
-/* 空态 */
-.bz-stats-empty { text-align: center; color: var(--bz-text-2); font-size: .8rem; padding: 12px 0; }
-/* 软进度条（fill 的 width/background 动态内联） */
-.bz-stats-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 7px; }
-.bz-stats-bar-lbl { width: 56px; flex-shrink: 0; font-size: .76rem; color: var(--bz-text-2); text-align: right; white-space: nowrap; }
-.bz-stats-bar-track { flex: 1; height: 10px; background: var(--bz-border); border-radius: 5px; overflow: hidden; }
-.bz-stats-bar-fill { height: 100%; border-radius: 5px; }
-.bz-stats-bar-val { width: 30px; flex-shrink: 0; font-size: .76rem; color: var(--bz-text-1); text-align: right; }
-/* 竖柱状图（容器 min-width、柱体 height/background 动态内联） */
-.bz-stats-chart-scroll { overflow-x: auto; margin: 8px 0 4px; }
-.bz-stats-chart { display: flex; align-items: flex-end; gap: 6px; padding: 0 4px; }
-.bz-stats-chart-col { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 0; }
-.bz-stats-chart-bar { width: 100%; min-width: 22px; border-radius: 6px 6px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 3px; color: #3D4456; font-weight: 700; font-size: .7rem; }
-.bz-stats-chart-lbl { margin-top: 5px; font-size: .66rem; color: var(--bz-text-2); text-align: center; white-space: nowrap; }
-/* chips 行内小统计 */
-.bz-stats-inline { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.bz-stats-inline-chip { font-size: .74rem; color: var(--bz-text-2); background: var(--bz-surface-2); border: 1px solid var(--bz-border); border-radius: 8px; padding: 3px 10px; }
-/* 排名列表（前三徽章 background 动态内联） */
-.bz-stats-rank-badge { width: 20px; height: 20px; flex-shrink: 0; border-radius: 50%; color: #3D4456; font-size: .68rem; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgba(0,0,0,0.06); }
-.bz-stats-rank-plain { width: 20px; flex-shrink: 0; font-size: .72rem; color: var(--bz-text-2); text-align: center; }
-.bz-stats-rank-name { flex: 1; font-size: .83rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.bz-stats-rank-sub { font-size: .7rem; color: var(--bz-text-2); flex-shrink: 0; }
-.bz-stats-rank-meta { font-size: .72rem; color: var(--bz-text-2); flex-shrink: 0; }
-.bz-stats-hint { font-size: .68rem; color: var(--bz-text-3); text-align: center; padding-top: 8px; }
+/* ==================== 统计弹窗内容件（呈报#55/R11 重刷：影院现行统计形制） ====================
+   markup 对齐 cinema/analysis.ts（stat-cards/sec/sec-title+板块 lucide/bar-row/soft-row/
+   kv-inline/top-row），静态样式 scoped 在 #review-stats-popup（构建后全局聚合，
+   cinema 同名裸类规则 scoped 在 .bz-cinema--midnight，两侧互不误伤）；cinema 侧零改动，
+   不抽公共组件（拍板：先重刷，抽公共件另议）。评级色 RATING_COLORS 为数据驱动动态色，
+   保留行内 background/color。cinema 硬编码值按 --bz-* 档对档（ink/line/chip/gold →
+   text-*/border/surface-*/warning）。 */
+#review-stats-popup .stat-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px 16px 0; }
+#review-stats-popup .stat-card { background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: 10px; padding: 11px 13px; }
+#review-stats-popup .stat-card .v { font-family: Georgia, serif; font-size: 19px; font-weight: 700; color: var(--bz-text-1); }
+#review-stats-popup .stat-card .k { font-size: var(--bz-font-caption); letter-spacing: .14em; color: var(--bz-text-3); margin-top: 3px; }
+#review-stats-popup .sec { background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: 11px; padding: 13px 15px; margin: 12px 16px; }
+#review-stats-popup .sec-title { display: flex; align-items: center; gap: var(--bz-space-sm); font-size: var(--bz-font-label); font-weight: 700; color: var(--bz-text-1); margin-bottom: 11px; }
+#review-stats-popup .sec-title .bz-ic { display: inline-flex; width: 13px; height: 13px; color: var(--bz-warning); }
+#review-stats-popup .sec-title .bz-ic svg { width: 100%; height: 100%; }
+#review-stats-popup .sec-title::after { content: ""; flex: 1; height: 1px; background: var(--bz-border); }
+#review-stats-popup .bar-row { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
+#review-stats-popup .bar-label { width: 76px; flex: none; font-size: var(--bz-font-caption); color: var(--bz-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+#review-stats-popup .bar-track { flex: 1; height: 12px; background: var(--bz-surface-3, var(--bz-border)); border-radius: var(--bz-radius-xs); overflow: hidden; }
+#review-stats-popup .bar-fill { display: block; height: 100%; border-radius: var(--bz-radius-xs); }
+#review-stats-popup .bar-num { width: 30px; flex: none; font-size: var(--bz-font-caption); color: var(--bz-text-3); font-variant-numeric: tabular-nums; text-align: right; }
+#review-stats-popup .soft-row { display: flex; align-items: center; gap: 9px; margin-bottom: 6px; }
+#review-stats-popup .soft-track { flex: 1; height: 9px; background: var(--bz-surface-3, var(--bz-border)); border-radius: 99px; overflow: hidden; }
+#review-stats-popup .soft-fill { display: block; height: 100%; border-radius: 99px; }
+#review-stats-popup .kv-inline { display: flex; flex-wrap: wrap; gap: 6px var(--bz-space-lg); font-size: var(--bz-font-meta); color: var(--bz-text-2); margin-bottom: 9px; }
+#review-stats-popup .kv-inline b { color: var(--bz-text-1); font-weight: 700; }
+/* 排名行（cinema top-row 形制；R7：role=button 键盘可达） */
+#review-stats-popup .top-row { display: flex; align-items: center; gap: 9px; padding: 6px 4px; border-bottom: 1px dashed var(--bz-border); font-size: var(--bz-font-meta); color: var(--bz-text-1); cursor: pointer; border-radius: var(--bz-radius-sm); }
+#review-stats-popup .top-row:last-of-type { border-bottom: 0; }
+#review-stats-popup .top-row:hover { background: var(--bz-surface-hover); }
+#review-stats-popup .top-row:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 1px; }
+#review-stats-popup .top-no { width: 20px; flex: none; text-align: center; font-family: Georgia, serif; font-style: italic; color: var(--bz-text-3); }
+#review-stats-popup .top-row.is-top .top-no { color: var(--bz-warning); font-weight: 700; }
+#review-stats-popup .top-name { flex: 1; min-width: 0; color: var(--bz-text-1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#review-stats-popup .top-sub { flex: none; font-size: var(--bz-font-caption); color: var(--bz-text-2); }
+#review-stats-popup .top-val { flex: none; font-size: var(--bz-font-caption); color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
+/* 空态（形制对齐 cinema cn-empty：居中小字 + 字距） */
+.bz-stats-empty { padding: 18px 0; text-align: center; font-size: var(--bz-font-caption); color: var(--bz-text-3); letter-spacing: .1em; }
+.bz-stats-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); text-align: center; padding-top: 8px; }
 
 /* ==================== 复习历史时间线（issue 270：时间轴竖线式内联收编） ====================
    圆点/评级字色为 RATING_COLORS 数据驱动动态色，保留行内 background/color。 */
@@ -313,6 +322,9 @@
 #quiz-popup { background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); padding: 24px; max-width: 600px; width: 90%; max-height: 82vh; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: none; }
 .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .bz-quiz-title { font-size: 15px; font-weight: 600; }
+/* 呈报#54（R4）：题头 file-text 图标（uiIconSpan 产 .bz-ic）尺寸对齐标题行 */
+.bz-quiz-note-ic { display: inline-flex; width: 16px; height: 16px; color: var(--bz-text-2); }
+.bz-quiz-note-ic svg { width: 100%; height: 100%; }
 .bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--bz-text-1); }
 .bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
 .bz-quiz-option-text { flex: 1; }
@@ -348,6 +360,9 @@
 .quiz-option-btn.selected { border-color:var(--bz-brand); background:var(--bz-surface-hover); }
 .quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; flex-shrink:0; }
 .quiz-option-btn.selected .check-mark { opacity:1; }
+/* R4：check-mark 的 lucide 对勾尺寸（iconSpan 占位兑现为 span.bz-ic） */
+.check-mark .bz-ic { display: inline-flex; width: 14px; height: 14px; }
+.check-mark .bz-ic svg { width: 100%; height: 100%; }
 .quiz-submit-btn {
   margin-top:16px;
   padding:8px 20px;
@@ -401,6 +416,7 @@
   #review-popup .bz-panel-brand .bz-ic { width: 16px; height: 16px; }
   #review-popup .bz-panel-head-pipe { height: 16px; }
   .bz-sprint-title { font-size: 20px; }
+  .bz-sprint-sub { font-size: 13px; }
   .bz-summary-title { font-size: 22px; }
 
   /* ---- L5 控件：面板内主钮 + 头行图标钮（唯一关闭入口，抬到触控档） ---- */
@@ -470,23 +486,20 @@
 
   /* ---- 统计弹窗 / 复习历史弹窗（底行两条入口的落点，rem 小字同档抬升） ---- */
   #review-stats-popup .bz-review-stats-head .bz-review-title { font-size: 1.05rem !important; }
-  #review-stats-popup .bz-stats-card-val { font-size: 1.5rem; }
-  #review-stats-popup .bz-stats-card-lbl { font-size: .8rem; }
-  #review-stats-popup .bz-stats-section-head { font-size: 1.05rem; }
+  #review-stats-popup .stat-cards { grid-template-columns: repeat(2, 1fr); }
+  #review-stats-popup .stat-card .v { font-size: 22px; }
+  #review-stats-popup .stat-card .k { font-size: .8rem; }
+  #review-stats-popup .sec-title { font-size: 1.05rem; }
   #review-stats-popup .bz-stats-empty { font-size: .9rem; }
-  #review-stats-popup .bz-stats-bar-lbl { width: 64px; font-size: .85rem; }
-  #review-stats-popup .bz-stats-bar-track { height: 12px; }
-  #review-stats-popup .bz-stats-bar-val { width: 34px; font-size: .85rem; }
-  #review-stats-popup .bz-stats-chart-bar { min-width: 26px; font-size: .8rem; }
-  #review-stats-popup .bz-stats-chart-lbl { font-size: .78rem; }
-  #review-stats-popup .bz-stats-inline-chip { font-size: .85rem; padding: 4px 10px; }
-  #review-stats-popup .bz-stats-rank-badge { width: 22px; height: 22px; font-size: .78rem; }
-  #review-stats-popup .bz-stats-rank-plain { width: 22px; font-size: .82rem; }
-  #review-stats-popup .bz-stats-rank-name { font-size: .95rem; }
-  #review-stats-popup .bz-stats-rank-sub,
-  #review-stats-popup .bz-stats-rank-meta { font-size: .8rem; }
+  #review-stats-popup .bar-label { width: 64px; font-size: .85rem; }
+  #review-stats-popup .bar-track { height: 12px; }
+  #review-stats-popup .bar-num { width: 34px; font-size: .85rem; }
+  #review-stats-popup .kv-inline { font-size: .85rem; }
+  #review-stats-popup .top-row { font-size: 15px; }
+  #review-stats-popup .top-name { font-size: .95rem; }
+  #review-stats-popup .top-sub,
+  #review-stats-popup .top-val { font-size: .8rem; }
   #review-stats-popup .bz-stats-hint { font-size: .78rem; }
-  #review-stats-popup .bz-review-stats-tl-row { font-size: 15px; }
   #review-history-popup .bz-review-history-name { font-size: 18px; }
   #review-history-popup .bz-review-history-sub { font-size: 13.5px; }
   #review-history-popup .bz-review-history-empty { font-size: 14.5px; }

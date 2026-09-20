@@ -2,10 +2,15 @@
  * 复习统计弹窗 + 复习历史弹窗（ADR-0077，ticket 174 修订版）
  *
  * 用户拍板（2026-09-01）：
- *  - 统计界面参考影视统计布局：600px 窄卡、浅色统计卡 + 色条板块容器
- *  - 复习历史：独立弹窗，无标题栏、无「返回统计」按钮、无 🔁 名称标题行
+ *  - 复习历史：独立弹窗，无标题栏、无「返回统计」按钮、无名称标题行
  *  - 统计页「复习时间线」点文件 → 弹独立复习历史界面
  *  - 日期统一用 bz 相对日期函数 formatRelativeTime
+ *
+ * 呈报#55（R11，2026-09-20 拍板）：统计弹窗按影院现行统计外观重刷——内容件对齐
+ * cinema/analysis.ts 形制（stat-card 统计卡 / sec+sec-title+lucide 板块头 / bar-row·soft-row
+ * 条形 / kv-inline 摘要 / top-row 排名行），样式 scoped 在 #review-stats-popup（styles.css），
+ * cinema 侧零改动、不抽公共组件（拍板：先重刷，抽公共件另议）。数据驱动的评级色
+ * （RATING_COLORS）仍走内联。旧 pastel 彩卡/accent 色条/竖柱图/chip 形制退役。
  *
  * 签名保持：showStatsModal(app, dm) / showTimeline(app, dm, item) / closeStatsModal()（测试依赖）
  */
@@ -14,103 +19,80 @@ import { type App } from 'obsidian';
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
 import { escapeHtml, formatRelativeTime, stripTitleMarks } from '../core/utils';
+import { mountIcons } from '../core/ui';
 import type { ReviewDataManager, ReviewItem, FittedParams } from './data';
 import { computeStats, loadDistribution, historyOf, dateKey, RATING_NAMES, RATING_COLORS } from './stats';
 import { DEFAULT_W, currentR as fsrsCurrentR } from './fsrs';
-import { uiIcon } from '../core/ui';
 
 let statsMask: HTMLElement | null = null;
 let statsPopup: HTMLElement | null = null;
 let statsEsc: { unregister: () => void } | null = null;
 
-// ======================= 浅色统计卡 =======================
-// issue 270：静态样式收编 src/review/styles.css（.bz-stats-*），仅数据驱动动态色保留内联。
-// 形制沿革：初版拷自 cinema 旧版统计，cinema 侧此后重构（lucide 板块头/esc 口径），
-// 本域未跟随——两侧已是各自形制，注释不再宣称「对齐影视」（深审新-13）。
-const PASTEL_CARDS = ['#D6E4FF', '#D8F3DC', '#CDF0EA', '#FADDE1', '#FFE5CC', '#E6DFF5'];
+// ======================= 影院形制内容件（R11 重刷） =======================
 
-function statCardHTML(label: string, value: any, idx: number): string {
-  const bg = PASTEL_CARDS[idx % PASTEL_CARDS.length];
-  return `<div class="bz-stats-card" style="background:${bg};">
-    <div class="bz-stats-card-val">${value}</div>
-    <div class="bz-stats-card-lbl">${label}</div>
-  </div>`;
+function esc(s: unknown): string {
+  return escapeHtml(String(s ?? ''));
 }
 
-/** 色条板块容器：accent 色动态内联，其余静态样式在 styles.css .bz-stats-section */
-function sectionHTML(title: string, body: string, accent = '#D6E4FF'): string {
-  return `<div class="bz-stats-section">
-    <div class="bz-stats-section-head">
-      <span class="bz-stats-section-accent" style="background:${accent};"></span>
-      <span>${escapeHtml(title)}</span>
-    </div>
-    ${body}
-  </div>`;
+/** 统计卡（cinema stat-card 形制：大数 .v + 小标 .k） */
+function statCardHTML(label: string, value: any): string {
+  return `<div class="stat-card"><div class="v">${esc(value)}</div><div class="k">${esc(label)}</div></div>`;
+}
+
+/** 板块容器（cinema sec 形制：lucide 板块头 + 标题 + 延伸线；icon = 板块语义 lucide 名） */
+function sectionHTML(title: string, icon: string, body: string): string {
+  return `<div class="sec"><div class="sec-title"><i data-lucide="${icon}" class="bz-ic"></i>${esc(title)}</div>${body}</div>`;
 }
 
 function emptyHTML(): string {
   return '<p class="bz-stats-empty">暂无数据</p>';
 }
 
-/** 软进度条：fill 宽度/颜色动态内联，其余静态样式在 styles.css .bz-stats-bar-* */
-function softBarHTML(entries: Array<{ label: string; value: number }>, color: string): string {
+/** 水平条形行（cinema bar-row 形制；color 数据驱动内联——评级色/板块主题色） */
+function barRowHTML(entries: Array<{ label: string; value: number }>, color: string): string {
   if (!entries.length) return emptyHTML();
   const max = Math.max(...entries.map((e) => e.value), 1);
   return entries.map((e) => `
-    <div class="bz-stats-bar-row">
-      <span class="bz-stats-bar-lbl">${e.label}</span>
-      <div class="bz-stats-bar-track">
-        <div class="bz-stats-bar-fill" style="width:${Math.max((e.value / max) * 100, 2)}%;background:${color};"></div>
-      </div>
-      <span class="bz-stats-bar-val">${e.value}</span>
+    <div class="bar-row">
+      <span class="bar-label">${esc(e.label)}</span>
+      <span class="bar-track"><span class="bar-fill" style="width:${Math.round((e.value / max) * 100)}%;background:${color};"></span></span>
+      <span class="bar-num">${e.value}</span>
     </div>`).join('');
 }
 
-/** 竖柱状图：容器 min-width、柱体高度/颜色动态内联，其余静态样式在 styles.css .bz-stats-chart-* */
-function barChartHTML(entries: Array<{ label: string; value: number }>, color: string): string {
+/** 软条行（cinema soft-row 形制；圆角胶囊） */
+function softRowHTML(entries: Array<{ label: string; value: number }>, color: string): string {
   if (!entries.length) return emptyHTML();
   const max = Math.max(...entries.map((e) => e.value), 1);
-  const minH = 26, maxH = 92;
-  return `
-    <div class="bz-stats-chart-scroll">
-      <div class="bz-stats-chart" style="min-width:${Math.max(entries.length * 34, 200)}px;">
-      ${entries.map((e) => {
-    const h = max > 0 ? minH + (e.value / max) * (maxH - minH) : minH;
-    return `
-        <div class="bz-stats-chart-col">
-          <div class="bz-stats-chart-bar" style="height:${h}px;background:${color};">${e.value || ''}</div>
-          <div class="bz-stats-chart-lbl">${e.label}</div>
-        </div>`;
-  }).join('')}
-      </div>
-    </div>`;
+  return entries.map((e) => `
+    <div class="soft-row">
+      <span class="bar-label">${esc(e.label)}</span>
+      <span class="soft-track"><span class="soft-fill" style="width:${Math.round((e.value / max) * 100)}%;background:${color};"></span></span>
+      <span class="bar-num">${e.value}</span>
+    </div>`).join('');
 }
 
-/** chips 行内小统计（支持 title 悬浮注解） */
+/** kv 摘要行（cinema kv-inline 形制；title 悬浮注解保留） */
 function statInlineHTML(items: Array<string | { text: string; title?: string }>): string {
-  return `<div class="bz-stats-inline">${items
+  return `<div class="kv-inline">${items
     .map((s) => {
       const o = typeof s === 'string' ? { text: s } : s;
-      return `<span class="bz-stats-inline-chip"${o.title ? ` title="${escapeHtml(o.title)}"` : ''}>${o.text}</span>`;
+      return `<span${o.title ? ` title="${escapeHtml(o.title)}"` : ''}>${o.text}</span>`;
     })
     .join('')}</div>`;
 }
 
-/** 排名列表行（点击行为由渲染方事件委托处理） */
+/** 排名列表行（cinema top-row 形制；R7 键盘可达：role=button + tabindex，行为由渲染方委托） */
 function rankListHTML(items: Array<{ name: string; sub: string; meta: string }>): string {
   if (!items.length) return emptyHTML();
-  const badges = ['#FFF3C4', '#D8F3DC', '#D6E4FF'];
-  return items.map((it, i) => {
-    const rank = i < 3
-      ? `<span class="bz-stats-rank-badge" style="background:${badges[i]};">${i + 1}</span>`
-      : `<span class="bz-stats-rank-plain">${i + 1}</span>`;
-    return `<div class="bz-review-stats-tl-row" data-idx="${i}">
-      ${rank}
-      <span class="bz-stats-rank-name">${escapeHtml(it.name)}</span>
-      ${it.sub ? `<span class="bz-stats-rank-sub">${it.sub}</span>` : ''}
-      <span class="bz-stats-rank-meta">${it.meta}</span>
-    </div>`;
-  }).join('');
+  return items.map((it, i) => `
+    <div class="top-row${i < 3 ? ' is-top' : ''}" data-idx="${i}" role="button" tabindex="0"
+      aria-label="查看 ${escapeHtml(it.name)} 的复习历史" title="查看复习历史">
+      <span class="top-no">${i + 1}</span>
+      <span class="top-name">${escapeHtml(it.name)}</span>
+      ${it.sub ? `<span class="top-sub">${it.sub}</span>` : ''}
+      <span class="top-val">${it.meta}</span>
+    </div>`).join('');
 }
 
 // ======================= 统计弹窗 =======================
@@ -162,18 +144,26 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
 
   const stats = computeStats(items, { w });
   body.innerHTML = buildStatsHTML(app, dm, items, stats, fit);
+  mountIcons(body); // R11：sec 板块头 lucide 兑现
 
-  // 时间线列表行 → 独立复习历史弹窗
-  body.querySelectorAll('.bz-review-stats-tl-row').forEach((el) => {
-    el.addEventListener('click', () => {
-      const idx = Number((el as HTMLElement).dataset.idx);
-      const target = items.filter((i) => (i.reviewHistory || []).length)
-        .sort((a, b) => {
-          const la = a.reviewHistory?.[a.reviewHistory.length - 1]?.timestamp || '';
-          const lb = b.reviewHistory?.[b.reviewHistory.length - 1]?.timestamp || '';
-          return lb.localeCompare(la);
-        })[idx];
-      if (target) void showTimeline(app, dm, target);
+  // 时间线列表行 → 独立复习历史弹窗（click + 键盘 Enter/Space，R7 可达）
+  const openTimeline = (el: HTMLElement): void => {
+    const idx = Number(el.dataset.idx);
+    const target = items.filter((i) => (i.reviewHistory || []).length)
+      .sort((a, b) => {
+        const la = a.reviewHistory?.[a.reviewHistory.length - 1]?.timestamp || '';
+        const lb = b.reviewHistory?.[b.reviewHistory.length - 1]?.timestamp || '';
+        return lb.localeCompare(la);
+      })[idx];
+    if (target) void showTimeline(app, dm, target);
+  };
+  body.querySelectorAll<HTMLElement>('.top-row[data-idx]').forEach((el) => {
+    el.addEventListener('click', () => openTimeline(el));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openTimeline(el);
+      }
     });
   });
 
@@ -183,20 +173,20 @@ function renderStatsModal(app: App, dm: ReviewDataManager, items: ReviewItem[], 
   });
 }
 
-/** 构建统计弹窗 HTML（浅色卡 + 色条板块） */
+/** 构建统计弹窗 HTML（影院形制：stat-card + sec 板块） */
 function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], stats: ReturnType<typeof computeStats>, fit?: FittedParams | null): string {
-  // 浅色统计卡（6 个）
+  // 统计卡（cinema stat-cards 形制；6 卡）
   const cards = `
-    <div class="bz-stats-cards">
-      ${statCardHTML('总复习（天）', stats.totalReviews, 0)}
-      ${statCardHTML('连续天数', stats.streak, 1)}
-      ${statCardHTML('今日复习', stats.todayReviews, 2)}
-      ${statCardHTML('逾期率', Math.round(stats.overdueRate * 100) + '%', 3)}
-      ${statCardHTML('平均 R', stats.avgR === null ? '-' : Math.round(stats.avgR * 100) + '%', 4)}
-      ${statCardHTML('复习笔记', stats.reviewedNotes, 5)}
+    <div class="stat-cards">
+      ${statCardHTML('总复习（天）', stats.totalReviews)}
+      ${statCardHTML('连续天数', stats.streak)}
+      ${statCardHTML('今日复习', stats.todayReviews)}
+      ${statCardHTML('逾期率', Math.round(stats.overdueRate * 100) + '%')}
+      ${statCardHTML('平均 R', stats.avgR === null ? '-' : Math.round(stats.avgR * 100) + '%')}
+      ${statCardHTML('复习笔记', stats.reviewedNotes)}
     </div>`;
 
-  // 拟合档位标注（issue 361；审查体验修复——「全参拟合/基础拟合」是天书，改人话 + title 悬浮注解）：
+  // 拟合档位标注（issue 361；人话 + title 悬浮注解保留）：
   // 全参 = 按你的记录定制（19 参数全拟合）；基础 = 简化版（8 参数）；默认参数 = 尚未拟合。
   // 附样本量与拟合时间。
   const fitChips = fit
@@ -212,18 +202,18 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
       ])
     : statInlineHTML([{ text: '记忆曲线：默认参数，复习积累后自动拟合', title: '复习记录攒够（约 100 条评级）后会自动拟合你的记忆曲线' }]);
 
-  // 评级分布（软进度条，窄卡更紧凑）
+  // 评级分布（soft-row 软条 + 评级色数据驱动）
   const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;
   const ratingBars = (['again', 'hard', 'good', 'easy'] as const).map((r) => ({
     label: RATING_NAMES[r],
     value: stats.ratingDist[r] || 0,
+    color: RATING_COLORS[r] || '#D6E4FF',
   }));
-  const ratingHTML = sectionHTML('评级分布',
-    softBarHTML(ratingBars, '#D6E4FF') +
-    statInlineHTML([`共 ${total} 次评级`]),
-    '#FFE5CC');
+  const ratingHTML = sectionHTML('评级分布', 'gauge',
+    ratingBars.map((e) => softRowHTML([e], e.color)).join('') +
+    statInlineHTML([`共 ${total} 次评级`]));
 
-  // 复习负载：今日/明日 + 未来 14 天分布 + 日历热力图
+  // 复习负载：今日/明日 + 未来 14 天分布（bar-row 水平条）
   const dist = loadDistribution(items, 14);
   const tmr = new Date();
   tmr.setDate(tmr.getDate() + 1);
@@ -236,12 +226,11 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
     label: d.date === todayKey ? '今' : `+${dist.indexOf(d)}`,
     value: d.count,
   }));
-  const loadHTML = sectionHTML('复习负载',
+  const loadHTML = sectionHTML('复习负载', 'calendar-days',
     statInlineHTML([`今日 ${todayCnt} 篇`, `明日 ${tmrCnt} 篇`, `峰值 ${maxDist} 篇/天`]) +
-    barChartHTML(distBars, '#D6E4FF'),
-    '#D6E4FF');
+    barRowHTML(distBars, '#D6E4FF'));
 
-  // 复习时间线（点文件 → 独立复习历史弹窗）
+  // 复习时间线（top-row 排名行，点行/Enter → 独立复习历史弹窗）
   const withHistory = items
     .filter((i) => (i.reviewHistory || []).length)
     .sort((a, b) => {
@@ -259,13 +248,12 @@ function buildStatsHTML(app: App, dm: ReviewDataManager, items: ReviewItem[], st
       meta: lastTs ? formatRelativeTime(new Date(lastTs)) : '',
     };
   });
-  const timelineHTML = sectionHTML('复习时间线',
-    rankListHTML(tlItems) + '<div class="bz-stats-hint">点击笔记查看复习历史</div>',
-    '#FADDE1');
+  const timelineHTML = sectionHTML('复习时间线', 'history',
+    rankListHTML(tlItems) + '<div class="bz-stats-hint">点击笔记查看复习历史</div>');
 
-  // 最近 7 天
+  // 最近 7 天（bar-row 水平条）
   const daily7 = stats.daily7.map((d) => ({ label: d.date.slice(5).replace('-', '/'), value: d.count }));
-  const weekHTML = sectionHTML('最近 7 天复习量', barChartHTML(daily7, '#E6DFF5'), '#E6DFF5');
+  const weekHTML = sectionHTML('最近 7 天复习量', 'bar-chart-3', barRowHTML(daily7, '#E6DFF5'));
 
   return cards + fitChips + ratingHTML + loadHTML + timelineHTML + weekHTML;
 }
@@ -275,7 +263,7 @@ let histMask: HTMLElement | null = null;
 let histPopup: HTMLElement | null = null;
 let histEsc: { unregister: () => void } | null = null;
 
-/** 单条笔记复习历史（独立弹窗：无标题栏、无返回统计按钮、无 🔁 名称标题行；时间轴竖线式）。
+/** 单条笔记复习历史（独立弹窗：无标题栏、无返回统计按钮、无名称标题行；时间轴竖线式）。
  *  当前 R 展示与调度同口径：读拟合权重 currentW()（item 12；取不到回退默认） */
 export async function showTimeline(app: App, dm: ReviewDataManager, item: ReviewItem): Promise<void> {
   closeTimeline();

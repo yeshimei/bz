@@ -198,11 +198,11 @@ describe('bz 骨架冒烟', () => {
     expect(byId('bz-memo-add').name).toBe('加备忘录');
     // t2：四套叫法统一「阅读分析报告」（走查批 D；home 磁贴保留短名「阅读报告」）
     expect(byId('bz-reading-report-open').name).toBe('阅读分析报告');
-    // f3：评级四命令去英文后缀、统一「复习（X）」标点（issue 362 起做题家面板依赖，保留）
-    expect(byId('bz-review-again').name).toBe('复习（忘了）');
-    expect(byId('bz-review-hard').name).toBe('复习（困难）');
-    expect(byId('bz-review-good').name).toBe('复习（一般）');
-    expect(byId('bz-review-easy').name).toBe('复习（简单）');
+    // f3：评级四命令去英文后缀（issue 362 起做题家面板依赖，保留）；呈报#56/R12 动宾式更名
+    expect(byId('bz-review-again').name).toBe('复习评级：忘了');
+    expect(byId('bz-review-hard').name).toBe('复习评级：困难');
+    expect(byId('bz-review-good').name).toBe('复习评级：一般');
+    expect(byId('bz-review-easy').name).toBe('复习评级：简单');
     // issue 362：做题家独立面板入口（graduation-cap 与复习域设置分组「做题家」同款）
     expect(byId('bz-review-quiz-open').name).toBe('做题练习');
     expect(byId('bz-review-quiz-open').icon).toBe('graduation-cap');
