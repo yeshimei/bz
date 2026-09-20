@@ -7,7 +7,6 @@
  */
 import {
   formatReadingTime,
-  formatSessionDuration,
   analyzeReadingHabits,
   analyzeReadingTrends,
   analyzeReadingFocus,
@@ -49,14 +48,16 @@ export interface ReportBarRow {
   rank?: number;
 }
 
-/** 水平条形行（时段/分类/互动三个环形图的替代范式；pastel 系列色按行循环取色） */
+/** 水平条形行（时段/分类/互动三个环形图的替代范式；pastel 系列色按行循环取色）。
+ *  可点筛选行挂 role="button" + tabindex（深审 EFF-2 键盘可达：Enter/Space 由内容区
+ *  keydown 委托合成 click，走宿主既有委托路径）。 */
 export function generateBarRows(rows: ReportBarRow[]): string {
   return rows
     .map((row, index) => {
       const color = CHART_PASTEL_SERIES[index % CHART_PASTEL_SERIES.length];
       const width = Math.max(0, Math.min(100, row.value));
       const attrs = row.linkAttr
-        ? ` ${row.linkAttr.name}="${escapeHtml(row.linkAttr.value)}" title="在书架中查看"`
+        ? ` ${row.linkAttr.name}="${escapeHtml(row.linkAttr.value)}" role="button" tabindex="0" title="在书架中查看" aria-label="${escapeHtml(`${row.label}，在书架中查看`)}"`
         : '';
       const cls = row.linkAttr ? 'bz-rr-bar-row bz-rr-bar-row--link' : 'bz-rr-bar-row';
       const trophies =
@@ -121,11 +122,17 @@ export interface ReportSection {
   generate: () => string;
 }
 
-export function buildReportSections(stats: ReadingStats, bookNotes: BookNoteEntry[]): ReportSection[] {
+/** 分段渲染附加选项（RR-A2/RR-UX1：silent 重算透传翻月游标，段内网格与内部游标恒一致） */
+export interface ReportSectionOpts {
+  /** 热力图段初始游标月（缺省 = 最近有阅读的月份） */
+  heatmapCursor?: string;
+}
+
+export function buildReportSections(stats: ReadingStats, bookNotes: BookNoteEntry[], sectionOpts: ReportSectionOpts = {}): ReportSection[] {
   return [
     { key: 'stats', label: '统计概览', generate: () => generateStatsReport(stats) },
     { key: 'interaction', label: '笔记互动分析', generate: () => generateReadingNotesInteractionAnalysis(bookNotes) },
-    { key: 'heatmap', label: '阅读热力图', generate: () => generateReadingHeatmap(stats.readingSessions) },
+    { key: 'heatmap', label: '阅读热力图', generate: () => generateReadingHeatmap(stats.readingSessions, sectionOpts.heatmapCursor) },
     { key: 'habits', label: '阅读习惯分析', generate: () => generateReadingHabitsDeepAnalysis2(stats.readingSessions) },
     { key: 'focus', label: '阅读专注度分析', generate: () => generateReadingFocusAnalysis(stats, bookNotes) },
     { key: 'yearly', label: '年度统计', generate: () => generateYearlyStats(stats) },
@@ -146,7 +153,6 @@ export function generateFullStatsReport(stats: ReadingStats, bookNotes: BookNote
 export function generateStatsReport(stats: ReadingStats): string {
   const totalFormattedTime = formatReadingTime(stats.totalReadingTime);
   const avgReadingTime = formatReadingTime(stats.totalReadingTime / Math.max(stats.readBooks, 1));
-
   return `
   <div class="bz-rr-grid">
 
@@ -173,7 +179,7 @@ export function generateStatsReport(stats: ReadingStats): string {
 
   <div class="bz-rr-panel">
   <div class="bz-rr-total">
-  ${totalFormattedTime.replace('h', '小时').replace('m', '分钟')}
+  ${totalFormattedTime}
   </div>
 
   <div class="bz-rr-metric-row">
@@ -225,7 +231,8 @@ export function generateYearlyStats(stats: ReadingStats): string {
       );
       return `
     <div class="bz-rr-year-cell">
-    <div class="bz-rr-year-card" data-rr-year="${year}" title="点击展开 ${year} 年逐月阅读" role="button">
+    <!-- 深审 EFF-2：tabindex + aria-expanded 键盘可达（Enter/Space 走内容区 keydown 委托合成 click） -->
+    <div class="bz-rr-year-card" data-rr-year="${year}" title="点击展开 ${year} 年逐月阅读" role="button" tabindex="0" aria-expanded="false">
     <div class="bz-rr-year-title">${year}年<i data-lucide="chevron-down" class="bz-ic bz-ic--sm bz-rr-year-chev"></i></div>
     <div class="bz-rr-hero-num">${data.booksRead}</div>
     <div>阅读数量</div>
@@ -268,7 +275,9 @@ export function generateAuthorStats(stats: ReadingStats): string {
       const rankColors = CHART_AUTHOR_RANK_COLORS;
 
       return `
-    <div class="bz-rr-author-card" data-rr-author="${escapeHtml(author)}" title="在书架中搜索该作者" role="button"
+    <!-- 深审 EFF-2：tabindex 键盘可达（同上合成 click 路径） -->
+    <div class="bz-rr-author-card" data-rr-author="${escapeHtml(author)}" title="在书架中搜索该作者" role="button" tabindex="0"
+    aria-label="作者 ${escapeHtml(author)}，在书架中搜索"
     style="background: linear-gradient(135deg, ${rankColors[index] || CHART_FALLBACK}, ${rankColors[index] ? rankColors[index] + 'cc' : CHART_RANK_FALLBACK_DEEP});">
     <div class="bz-rr-author-rank">${index + 1}</div>
     <div class="bz-rr-author-name">${escapeHtml(author)}</div>
@@ -364,13 +373,10 @@ export function generateReadingSpeedAnalysis(stats: ReadingStats): string {
   <div class="bz-rr-cell-num--sm bz-rr-c-violet">${speedAnalysis.readingType}</div>
   </div>
 
+  <!-- 深审 RR-U8：「最佳速度」为均值×1.2 编造值已删（无真实统计不上屏）；
+       「平均时长」实为平均每本口径，标签如实标注 -->
   <div class="bz-rr-cell">
-  <div class="bz-rr-cell-label">最佳速度</div>
-  <div class="bz-rr-cell-num bz-rr-c-sky">${speedAnalysis.bestSpeed}页/小时</div>
-  </div>
-
-  <div class="bz-rr-cell">
-  <div class="bz-rr-cell-label">平均时长</div>
+  <div class="bz-rr-cell-label">平均每本时长</div>
   <div class="bz-rr-cell-num bz-rr-c-coral">${speedAnalysis.avgSessionTime}</div>
   </div>
   </div>
@@ -417,7 +423,7 @@ export function generateReadingHabitsDeepAnalysis2(readingSessions: any[]): stri
 
 /** 生成阅读趋势分析模块（移动端优化版） */
 export function generateReadingTrendsAnalysis(stats: ReadingStats, bookNotes: BookNoteEntry[]): string {
-  const trends = analyzeReadingTrends(stats, bookNotes);
+  const trends = analyzeReadingTrends(stats);
 
   return `
   <div class="bz-rr-card">
@@ -453,7 +459,8 @@ export function generateReadingTrendsAnalysis(stats: ReadingStats, bookNotes: Bo
   `;
 }
 
-/** 移动端优化的趋势图表（月柱与年度卡展开共用 generateMonthBarColumns 生成） */
+/** 移动端优化的趋势图表（月柱与年度卡展开共用 generateMonthBarColumns 生成；
+ *  RR-U6：月标与 getYearMonthBars 单源同形——数字直拼无前导零，不再「06月」vs「6月」分叉） */
 export function generateMobileFriendlyTrendChart(recentMonths: any[]): string {
   if (recentMonths.length === 0) {
     return '<p class="bz-rr-empty bz-rr-empty--pad-sm">暂无月度数据</p>';
@@ -461,7 +468,7 @@ export function generateMobileFriendlyTrendChart(recentMonths: any[]): string {
 
   return generateMonthBarColumns(
     recentMonths.map((data, index) => ({
-      label: data.month.split('-')[1] + '月',
+      label: `${parseInt(data.month.split('-')[1], 10)}月`,
       count: data.booksRead,
       accent: index === 0, // 首位 = 最近月份（图表高亮语义保留）
     })),
@@ -479,7 +486,8 @@ export function heatmapMonthTitle(monthKey: string): string {
   return `${year}年${name}`;
 }
 
-/** 生成阅读会话热力图模块（移动端优化版；段头 ‹ › 翻月——去原 slice(0,1) 硬编码） */
+/** 生成阅读会话热力图模块（移动端优化版；段头 ‹ › 翻月——去原 slice(0,1) 硬编码）。
+ *  cursorMonth 供重渲透传（深审 RR-A2/RR-UX1：silent 重算保翻月游标，缺省落最新月）。 */
 export function generateReadingHeatmap(readingSessions: any[], cursorMonth?: string): string {
   if (!readingSessions || readingSessions.length === 0) {
     return `<div class="bz-rr-card">
@@ -492,8 +500,9 @@ export function generateReadingHeatmap(readingSessions: any[], cursorMonth?: str
   // 翻月游标：缺省落在最近有阅读的月份（原 slice(0,1) 语义，现在可 ‹ › 在全部月份间移动）
   const cursor = cursorMonth && monthKeys.includes(cursorMonth) ? cursorMonth : monthKeys[monthKeys.length - 1];
   const idx = monthKeys.indexOf(cursor);
+  // EFF-10：28px 档钮挂 core 热区类（pointer:coarse 外扩至 40px+，桌面零变化）
   const navBtn = (dir: 'prev' | 'next', disabled: boolean) =>
-    `<button class="bz-rr-hm-nav" data-rr-hm-${dir}${disabled ? ' disabled' : ''} title="${dir === 'prev' ? '上一月' : '下一月'}" aria-label="${dir === 'prev' ? '上一月' : '下一月'}"><i data-lucide="chevron-${dir === 'prev' ? 'left' : 'right'}" class="bz-ic bz-ic--sm"></i></button>`;
+    `<button class="bz-rr-hm-nav bz-touch-target bz-touch-target--lg" data-rr-hm-${dir}${disabled ? ' disabled' : ''} title="${dir === 'prev' ? '上一月' : '下一月'}" aria-label="${dir === 'prev' ? '上一月' : '下一月'}"><i data-lucide="chevron-${dir === 'prev' ? 'left' : 'right'}" class="bz-ic bz-ic--sm"></i></button>`;
 
   return `
   <div class="bz-rr-card">
@@ -642,8 +651,14 @@ export function generateHeatmapCell(cell: any): string {
 
 // ---------- 专注度 ----------
 
-/** 生成阅读专注度分析模块 */
+/** 生成阅读专注度分析模块（深审 RR-U12：无会话 → 空态卡对齐热力图段形制，不亮默认 50 分） */
 export function generateReadingFocusAnalysis(stats: ReadingStats, bookNotes: BookNoteEntry[]): string {
+  if (!stats.readingSessions || stats.readingSessions.length === 0) {
+    return `<div class="bz-rr-card">
+    <p class="bz-rr-empty">暂无阅读会话数据，无法评估专注度</p>
+    </div>`;
+  }
+
   const focusData = analyzeReadingFocus(stats.readingSessions, bookNotes);
 
   return `
@@ -709,14 +724,7 @@ export function generateReadingFocusAnalysis(stats: ReadingStats, bookNotes: Boo
         </div>
     </div>
 
-    </div>
-
-    <!-- 专注度对比 -->
-    <div class="bz-rr-block">
-
-        <div class="bz-rr-block-grid">
-        </div>
-    </div>
+    <!-- 深审 RR-U7：专注度对比空块与两处未配对 </div>（逐字移植遗留）已删 -->
 </div> `;
 }
 
@@ -742,7 +750,8 @@ export function generateReadingCategoryAnalysis(bookNotes: BookNoteEntry[]): str
   </div>
 
   <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--col bz-rr-hero--mint">
-  <div class="bz-rr-hero-num--clamp">${escapeHtml(categoryAnalysis.topCategory.name)}</div>
+  <!-- RR-UX3：clamp 截断补 title 全文（一行顺手项） -->
+  <div class="bz-rr-hero-num--clamp" title="${escapeHtml(categoryAnalysis.topCategory.name)}">${escapeHtml(categoryAnalysis.topCategory.name)}</div>
   <div class="bz-rr-hero-label--mt">最常阅读</div>
   </div>
 
@@ -775,7 +784,7 @@ export function generateReadingCategoryAnalysis(bookNotes: BookNoteEntry[]): str
   </div>
   </div>
   </div>
-  </div>
+  <!-- 深审 RR-U7：段尾多余 </div>（逐字移植遗留）已删 -->
   `;
 }
 
