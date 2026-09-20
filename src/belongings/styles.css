@@ -134,6 +134,13 @@
 .bz-bel-form .bz-input:focus,
 .bz-bel-detail .bz-input:focus { outline: none; box-shadow: none; }
 
+/* 呈报#12-B2：表单/详情输入框焦点视觉替代——上方「去轮廓」未给替代致键盘焦点不可见。
+   :focus-visible 仅键盘焦点出现（鼠标点击不弹环，兼顾纸面顾虑）；形态与全域焦点口径一致
+   （core components.css .bz-btn 等先例），色取域强调色贴海报皮。须置于去轮廓规则之后
+   （同特异性靠源序取胜，tests/belongings/bd-b2-focus-visible.test.ts 守卫） */
+.bz-bel-form .bz-input:focus-visible,
+.bz-bel-detail .bz-input:focus-visible { outline: 2px solid var(--bz-bel-accent); outline-offset: 1px; }
+
 /* ---- 筛选 chips（p20 .chip 逐字：方角墨框、on=墨底纸字、计数弱化；组件库 .bz-chip 皮） ---- */
 .bz-bel-chips { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); padding: var(--bz-space-md) 22px 0; flex-shrink: 0; }
 .bz-bel-chips .bz-chip {
