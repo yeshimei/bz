@@ -1403,18 +1403,18 @@ describe('保险箱状态栏（补丁：锁状态提示）', () => {
     document.body.innerHTML = '';
   });
 
-  it('挂载后显示锁定态；解锁成功变解锁态、lock() 回锁定态（收尾扫尾：锁图标 lucide 化）', async () => {
+  it('挂载后显示锁定态；解锁成功变解锁态、lock() 回锁定态（锁图标 lucide 化；E5 收编后占位经 mountIcons 兑现）', async () => {
     const c = new EncryptAppController(CONFIG);
     const el = document.createElement('span');
     document.body.appendChild(el);
     c.attachStatusBar(el);
-    // 锁定态：lucide lock svg + 文案（原 🔒 emoji 退役）
-    expect(el.querySelector('svg')).not.toBeNull();
+    // 锁定态：lucide lock（占位兑现记 dataset.icon；原 🔒 emoji 退役）
+    expect(el.querySelector('[data-icon="lock"]')).not.toBeNull();
     expect(el.textContent).toContain('保险库');
     const lockedHtml = el.innerHTML;
     await c.dataManager.unlock('pw');
-    // 解锁态：开锁图标（innerHTML 随 path 切换）+ 文案不变
-    expect(el.querySelector('svg')).not.toBeNull();
+    // 解锁态：开锁图标（innerHTML 随图标名切换）+ 文案不变
+    expect(el.querySelector('[data-icon="lock-open"]')).not.toBeNull();
     expect(el.textContent).toContain('保险库');
     expect(el.innerHTML).not.toBe(lockedHtml);
     c.dataManager.lock();

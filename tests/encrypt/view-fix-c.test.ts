@@ -274,10 +274,11 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
     expect(ids).not.toContain('n102');
   });
 
-  it('T7 statusbarHtml 单源：vault-assets-view 导出，attachStatusBar 消费同一份', async () => {
+  it('T7 statusbarHtml 单源：vault-assets-view 导出，attachStatusBar 消费同一份（E5 收编后为 data-lucide 占位串）', async () => {
     expect(statusbarHtml(false)).toContain('保险库');
-    expect(statusbarHtml(false)).toContain('<svg'); // lucide 内联 SVG，无 emoji
-    expect(statusbarHtml(true)).not.toBe(statusbarHtml(false)); // 解锁态翻转为开锁图标
+    expect(statusbarHtml(false)).toContain('data-lucide="lock"'); // lucide 统一占位，无 emoji
+    expect(statusbarHtml(true)).toContain('data-lucide="lock-open"'); // 解锁态翻转为开锁图标
+    expect(statusbarHtml(true)).not.toBe(statusbarHtml(false));
     // Controller 接管状态栏时消费的是同一导出（innerHTML 归一化自闭合标签，先 round-trip 再比）
     const norm = (s: string) => {
       const d = document.createElement('div');
@@ -290,9 +291,12 @@ describe('批 C 修复回归：日记入口/概览绑定/滚位/搜索/流水口
       const el = document.createElement('span');
       document.body.appendChild(el);
       c.attachStatusBar(el);
-      expect(el.innerHTML).toBe(norm(statusbarHtml(false)));
+      // attachStatusBar 内部 mountIcons 已把占位兑现成 [data-icon] span——按兑现后形态对账
+      const iconOf = (root: HTMLElement) => root.querySelector('[data-icon]')?.getAttribute('data-icon');
+      expect(iconOf(el)).toBe('lock');
+      expect(el.textContent).toContain('保险库');
       await sm2Unlock(c);
-      expect(el.innerHTML).toBe(norm(statusbarHtml(true)));
+      expect(iconOf(el)).toBe('lock-open');
       c.dataManager.lock();
     } finally {
       ['bz-encrypt-mask', 'bz-encrypt-popup'].forEach((id) => document.getElementById(id)?.remove());

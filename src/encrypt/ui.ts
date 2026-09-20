@@ -622,7 +622,7 @@ export class UIManager {
           <span class="st" data-mob-unlock>已解锁</span>
           <button class="bz-vault-mobclose bz-touch-target--xl" data-act="mob-close" aria-label="关闭">${vIc('x', 15)}</button>
         </div>
-        <div class="bz-vault-msearch" style="position:relative">${vIc('search', 13)}<input placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
+        <div class="bz-search bz-vault-msearch"><i data-lucide="search" class="bz-ic"></i><input class="bz-input" placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
           <span class="sg on" data-masset="overview">概览</span>
           <span class="sg" data-masset="note">笔记</span>
@@ -659,6 +659,9 @@ export class UIManager {
     // 绑定
     this.bindVaultShell();
     this.registerEscape();
+    // 呈报#59/E5：骨架 innerHTML 里的 <i data-lucide> 占位统一兑现（core mountIcons 单源，
+    // 随 Obsidian lucide 升级自动跟随）
+    mountIcons(this.popup!);
     // N10：外部上锁事件侧清场（他域/密码本面板直调 SafeManager.lock() 不经本域 lockNow/hide）
     this._unlockOff = onDomainEvent<{ unlocked: boolean }>(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
       if (evt && evt.unlocked === false) this.onExternalLock();
@@ -1287,6 +1290,8 @@ export class UIManager {
     });
     topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
     document.body.appendChild(ls.el);
+    // 呈报#59/E5：首设风险提醒（triangle-alert）等占位兑现
+    mountIcons(ls.el);
     // 挂 body 弹层自声明 ESC 层（兜底链）：解锁屏开着时 ESC 只关解锁屏，不穿透主面板
     const esc = escManager.register('bz-vault-unlock', {
       isVisible: () => ls.el.isConnected,
@@ -1678,12 +1683,15 @@ export class UIManager {
     const prevScroll = listBody ? listBody.scrollTop : 0;
     if (!listBody) {
       list.innerHTML = '';
-      // 列表头按评审去掉标题与计数，只剩搜索框；日记条目视图（无搜索语义）直接无头
+      // 列表头按评审去掉标题与计数，只剩搜索框；日记条目视图（无搜索语义）直接无头。
+      // 壳收编 core .bz-search 公共壳 + .bz-input 基线（呈报#60/E4，样式单源 components.css E 段）
       if (kind === 'note') {
         const head = document.createElement('div');
         head.className = 'bz-vault-lc-head';
-        head.innerHTML = `<div class="bz-vault-search" style="position:relative">${vIc('search', 14)}<input placeholder="搜索笔记…" data-vault-search>${searchClearHtml()}</div>`;
+        head.innerHTML = `<div class="bz-search"><i data-lucide="search" class="bz-ic"></i><input class="bz-input" placeholder="搜索笔记…" data-vault-search>${searchClearHtml()}</div>`;
         list.appendChild(head);
+        // 呈报#59/E5：壳内搜索图标占位兑现（bindSearchInput 绑 input 引用，不受 mountIcons 替换影响）
+        mountIcons(head);
         const headSearch = head.querySelector<HTMLInputElement>('[data-vault-search]');
         if (headSearch) {
           headSearch.value = kw;
@@ -1724,6 +1732,8 @@ export class UIManager {
       this.attachNoteDrawer(el, n, kind);
       listBody.appendChild(el);
     }
+    // 呈报#59/E5：行内资产图标（file-lock/book-lock）占位兑现
+    mountIcons(listBody);
     if (keepHead) listBody.scrollTop = prevScroll; // 滚位还原（同资产刷新路径；切资产从顶部起算）
     this.renderNoteDetail(detail, notes.find((n) => n.id === selId) || notes[0], kind);
   }
@@ -1734,6 +1744,8 @@ export class UIManager {
   private renderNoteDetail(detail: HTMLElement, note: SafeNote, kind: 'note' | 'diary') {
     const plain = kind === 'diary' ? this._diaryPlain[note.id] : undefined;
     detail.innerHTML = noteDetailHTML(note, kind, plain);
+    // 呈报#59/E5：详情卡大图标 + 动作按钮图标占位兑现
+    mountIcons(detail);
     const bind = (a: string, fn: () => void) => {
       detail.querySelector(`[data-detail="${a}"]`)?.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -1824,6 +1836,8 @@ export class UIManager {
     emoji.className = 'bz-item-sheet-emoji';
     // 抽屉头资产图标：lucide 锁系（笔记=文件锁 / 日记=本子锁，对齐保险库资产图标语言），不用 emoji
     emoji.innerHTML = vIc(isDiary ? 'book-lock' : 'file-lock', 16);
+    // 呈报#59/E5：占位兑现
+    mountIcons(emoji);
     body.appendChild(emoji);
     const info = document.createElement('div');
     info.style.cssText = 'flex:1; min-width:0;';
@@ -2046,6 +2060,8 @@ export class UIManager {
     const page = document.createElement('div');
     page.className = 'bz-vault-mobpage';
     page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc('chevron-left', 16)}</button><div class="t">${titleHtml}</div><button class="ic" data-mob-menu>${vIc('more-h', 16)}</button></div><div class="body"></div>`;
+    // 呈报#59/E5：顶栏返回/菜单图标占位兑现
+    mountIcons(page);
     return { page, body: page.querySelector('.body') as HTMLElement };
   }
 
@@ -2053,6 +2069,8 @@ export class UIManager {
     // 移动端详情 = 全屏二级页（复用桌面详情 HTML，顶部带返回）
     const { page, body } = this.createMobPage(kind === 'note' ? '笔记' : '加密日记');
     body.innerHTML = noteDetailHTML(note, kind);
+    // 呈报#59/E5：详情卡图标占位兑现（createMobPage 只兑现了页头，正文体此处另挂）
+    mountIcons(body);
     // 详情动作（复用 bind 逻辑）
     const bind = (a: string, fn: () => void) => {
       body.querySelector(`[data-detail="${a}"]`)?.addEventListener('click', (e) => {
@@ -2625,7 +2643,11 @@ export class EncryptAppController {
   attachStatusBar(el: HTMLElement) {
     this.statusBarEl = el;
     this.dataManager.onUnlockChange = (unlocked) => {
-      if (this.statusBarEl) this.statusBarEl.innerHTML = statusbarHtml(unlocked);
+      if (this.statusBarEl) {
+        this.statusBarEl.innerHTML = statusbarHtml(unlocked);
+        // 呈报#59/E5：状态栏锁图标占位兑现（innerHTML 重绘后必须重挂）
+        mountIcons(this.statusBarEl);
+      }
       // 解锁/上锁后 UI 同步（密码数据加载/锁屏态）
       this.uiManager.notifyUnlockUi?.();
     };
