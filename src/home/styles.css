@@ -48,9 +48,11 @@
 .bz-home-panel .bz-home-wk { width: 29px; border: 0; background: none; padding: 0; text-align: center; font-family: var(--h-mono); font-size: 11.4px; color: var(--h-dim); display: flex; flex-direction: column; gap: 2px; cursor: pointer; }
 .bz-home-wk .bz-home-wk-n { letter-spacing: 0; }
 .bz-home-wk i { display: block; height: 26px; border-radius: 7px; background: #efede3; }
-.theme-dark .bz-home-wk i { background: #33312a; }
+.theme-dark .bz-home-wk i { background: #33312a; }@media (hover: hover) {
+
 .bz-home-panel .bz-home-wk:hover i { background: #e6e3d5; }
 .theme-dark .bz-home-wk:hover i { background: #3d3b32; }
+}
 .bz-home-wk.bz-home-wk--hit i { background: var(--h-ok); opacity: .8; }
 .bz-home-wk.bz-home-wk--sel i { background: var(--h-ink); }
 .bz-home-panel .bz-home-wk.bz-home-wk--sel { color: var(--h-ink); font-weight: 700; }
@@ -87,9 +89,11 @@
 .bz-home-entries { overflow-y: auto; min-height: 0; }
 
 /* ---- 全部域入口行（原型 .erow） ---- */
-.bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px var(--bz-space-sm) 7px 6px; border-radius: var(--bz-radius-sm); cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }
+.bz-home-panel .bz-home-erow { display: flex; align-items: center; gap: 9px; padding: 7px var(--bz-space-sm) 7px 6px; border-radius: var(--bz-radius-sm); cursor: pointer; border: 0; border-bottom: 1px solid var(--h-line); background: none; font-family: inherit; color: inherit; width: 100%; text-align: left; font-size: 100%; }@media (hover: hover) {
+
 .bz-home-panel .bz-home-erow:hover { background: #f0eee4; }
 .theme-dark .bz-home-erow:hover { background: #2e2c25; }
+}
 .bz-home-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--h-ok); flex: none; }
 .bz-home-dot--off { background: none; border: 1.5px dashed #cfcabb; }
 .theme-dark .bz-home-dot--off { border-color: #55523f; }
@@ -144,8 +148,10 @@
 .bz-home-timeline[data-tl-time="0"] .bz-home-ev { padding-left: var(--bz-space-lg); }
 
 /* ---- 明天预告（原型 .pr） ---- */
-.bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px var(--bz-space-lg); margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }
+.bz-home-panel .bz-home-pr { display: block; background: var(--h-ai-soft); border: 1px solid var(--h-ai-line); border-radius: 11px; padding: 13px var(--bz-space-lg); margin-bottom: 10px; font-size: var(--bz-font-label); line-height: 1.75; cursor: pointer; text-align: left; font-family: inherit; color: inherit; width: 100%; }@media (hover: hover) {
+
 .bz-home-panel .bz-home-pr:hover { border-color: var(--h-ai); }
+}
 .bz-home-pr-h { font-size: 12.5px; font-weight: 700; color: var(--h-ai); margin-bottom: 3px; }
 .bz-home-pr-h::before { content: "✦ "; }
 .bz-home-pr-go { display: inline-block; margin-top: 7px; font-size: 11.5px; color: var(--h-ai); font-weight: 700; }
@@ -180,8 +186,10 @@
   .bz-home-flow { order: 1; margin-top: 18px; background: none; border: none; border-radius: 0; padding: 0; }
   /* 2026-09-09 用户拍板：瓦片一行一个 + 移动端字体 ×1.5（基数见基座各规则） */
   .bz-home-m-tiles { display: grid; grid-template-columns: 1fr; gap: var(--bz-space-sm); }
-  .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-sm); padding: 7px var(--bz-space-sm); cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }
+  .bz-home-panel .bz-home-m-tile { display: flex; align-items: center; gap: 6px; background: var(--h-card); border: 1px solid var(--h-line); border-radius: var(--bz-radius-sm); padding: 7px var(--bz-space-sm); cursor: pointer; font-family: inherit; color: inherit; text-align: left; min-width: 0; font-size: 100%; }@media (hover: hover) {
+
   .bz-home-panel .bz-home-m-tile:hover { border-color: var(--h-dim); }
+}
   .bz-home-m-tile .bz-home-dot { width: 5px; height: 5px; }
   .bz-home-m-tile .bz-home-eic .bz-ic { width: 15px; height: 15px; }
   .bz-home-m-tile .bz-home-enm { font-size: 17.25px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -225,8 +233,10 @@
   /* 让位动画：邻居行被跨过时反向位移一格，靠这条过渡「滑」过去 */
   transition: transform .16s cubic-bezier(.2, .7, .3, 1);
 }
-.bz-home-ent-row:last-child { border-bottom: 0; }
+.bz-home-ent-row:last-child { border-bottom: 0; }@media (hover: hover) {
+
 .bz-home-ent-row:hover { background: var(--sp-line-soft, var(--background-modifier-hover)); }
+}
 /* 拖拽期间：所有行都别响应长按/选择（手指还在屏上，选中文本会打断观感） */
 .bz-home-ent-list:has(.bz-home-ent-drag) { user-select: none; -webkit-user-select: none; }
 .bz-home-ent-grip { display: inline-flex; color: var(--sp-ink-3, var(--text-faint)); cursor: grab; }
@@ -240,9 +250,11 @@
   width: 26px; height: 26px; padding: 0; flex: none;
   border: none; border-radius: 7px; background: transparent; box-shadow: none;
   color: var(--sp-ink-3, var(--text-faint)); cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-home-ent-btn:hover { background: var(--sp-line-soft, var(--background-modifier-hover)); color: var(--text-error); }
 .bz-home-ent-btn--add:hover { color: var(--color-green); }
+}
 .bz-home-ent-btn .bz-ic { width: 15px; height: 15px; }
 /* 已移除（隐藏）的行：排在同一列表最下面，弱化但可辨；
    不参与排序（拖柄隐掉，恢复只走 + 按钮）—— 排序下标只对可见行计数（见 shared.reorderTo） */
@@ -316,7 +328,9 @@
 }
 .bz-item-menu.bz-home-menu .bz-item-menu-head { color: var(--h-dim); }
 .bz-item-menu.bz-home-menu .bz-item-menu-sep { background: var(--h-line); }
-.bz-item-menu.bz-home-menu button.bz-item-menu-item { color: var(--h-ink); }
+.bz-item-menu.bz-home-menu button.bz-item-menu-item { color: var(--h-ink); }@media (hover: hover) {
+
 /* 悬停：跟随首页入口行的暖色低透明叠加，不引主题灰（否则浅色下偏冷、显脏） */
 .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(23, 21, 18, 0.06) !important; }
 .theme-dark .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(236, 233, 223, 0.08) !important; }
+}

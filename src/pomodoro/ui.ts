@@ -24,6 +24,7 @@
 import type { App } from 'obsidian';
 import { setIcon } from 'obsidian';
 import { escManager } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { allocZ } from '../core/z-order';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { notice, notify, notifyActionError } from '../core/notice';
@@ -830,8 +831,10 @@ function buildDOM(): void {
   });
   bindEvents();
   render();
-  // 面板聚焦（tabindex=-1）：打开即可用 Space 切换开始/暂停
-  (document.getElementById('pomodoro-popup') as HTMLElement | null)?.focus();
+  // 面板聚焦（tabindex=-1）：打开即可用 Space 切换开始/暂停。
+  // 呈报#13 F3+H3 升级为全域范式单源：trapPanelFocus = 容器入焦 + Tab 圈闭（焦点管理收编 core）
+  const panel = document.getElementById('pomodoro-popup');
+  if (panel) trapPanelFocus(panel);
 }
 
 /** 共享初始化 in-flight（P3）：ensurePomodoro 与 openPomodoro 并发调用只跑一次 initData */

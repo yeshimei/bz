@@ -15,6 +15,7 @@ import { topifyZ } from '../core/dom';
 import { getApp } from '../core/app';
 import { yieldToMainThread } from '../core/utils';
 import { escManager } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { readClipbookData, type ClipReadLogEntry } from './data';
 import { readNewsData } from './news-data';
 import { articleKeyOf } from './constants';
@@ -91,6 +92,8 @@ export async function openClipbookReport(_app?: App): Promise<void> {
   // 主面板经 topifyZ 已持号——不发号则本层 z-index:auto 恒在其下，报告「被主弹窗遮挡」。
   // 每次打开抬顶（含重开），与「后显示恒在上」一致。
   topifyZ(overlayEl);
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
+  trapPanelFocus(overlayEl!.querySelector<HTMLElement>('.bz-clip-report-frame') ?? overlayEl!);
   await renderBody(true);
 }
 

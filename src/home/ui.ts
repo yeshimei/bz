@@ -23,6 +23,7 @@
  */
 import type { IconName } from 'obsidian';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn } from '../core/ui';
 import { topifyZ } from '../core/dom';
@@ -127,6 +128,8 @@ export function createOverlay(app: any): void {
   mountIcons(overlay); // 头行关闭钮等静态占位（renderAll 只挂数据区图标）
   bindEvents(overlay, app);
   renderAll();
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
+  trapPanelFocus(overlay);
   void refreshRiverAndRender();
 }
 

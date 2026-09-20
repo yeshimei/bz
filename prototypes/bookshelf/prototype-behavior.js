@@ -1,4 +1,4 @@
-/* 源指纹 961e124abfee35b5 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b6855fd6bac882f7 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -5089,6 +5089,61 @@ var BZW_bookshelf = (() => {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
 
+  // src/core/ui/focus-trap.ts
+  var FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function firstFocusable(container) {
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
+      if (isHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    return list[0] || null;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && active !== container && container.contains(active);
+      if (e.shiftKey) {
+        if (active === first || !inside) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !inside) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  var PANEL_FOCUS_CLASS = "bz-panel-focushost";
+  function trapPanelFocus(panel) {
+    panel.classList.add(PANEL_FOCUS_CLASS);
+    if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+    const release = trapFocus(panel);
+    panel.focus({ preventScroll: true });
+    return release;
+  }
+
   // src/core/ui/icon.ts
   function uiIcon(name, extraClass = "") {
     const i = document.createElement("span");
@@ -5180,52 +5235,6 @@ var BZW_bookshelf = (() => {
     }
     if (opts.actions) el.appendChild(opts.actions);
     return el;
-  }
-
-  // src/core/ui/focus-trap.ts
-  var FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-  function isHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function firstFocusable(container) {
-    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
-      if (isHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    return list[0] || null;
-  }
-  function trapFocus(container) {
-    const onKeydown = (e) => {
-      if (e.key !== "Tab") return;
-      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el) => !isHidden(el) && !el.hasAttribute("disabled")
-      );
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey) {
-        if (active === first || !container.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !container.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    container.addEventListener("keydown", onKeydown);
-    return () => container.removeEventListener("keydown", onKeydown);
   }
 
   // src/core/ui/modal.ts
@@ -7457,12 +7466,14 @@ var BZW_bookshelf = (() => {
   var wallResizeHandler = null;
   var wallResizeTimer = null;
   function createOverlay(app) {
+    var _a;
     const overlay = document.createElement("div");
     overlay.className = "bz-panel-overlay";
     overlay.style.zIndex = String(allocZ());
     overlay.innerHTML = panelHtml(bsSkinClass());
     document.body.appendChild(overlay);
     M.currentOverlay = overlay;
+    trapPanelFocus((_a = overlay.querySelector(".bz-bs-panel")) != null ? _a : overlay);
     overlay.addEventListener("click", (e) => {
       const t = e.target;
       if (e.target === overlay) {
@@ -7520,8 +7531,8 @@ var BZW_bookshelf = (() => {
       if (spine && M.view === "shelf") {
         const epub = spine.dataset.bsEpub === "1";
         const it = M.items.find((x) => {
-          var _a;
-          return epub ? x.epubVaultPath === spine.dataset.bsId : ((_a = x.file) == null ? void 0 : _a.path) === spine.dataset.bsId;
+          var _a2;
+          return epub ? x.epubVaultPath === spine.dataset.bsId : ((_a2 = x.file) == null ? void 0 : _a2.path) === spine.dataset.bsId;
         });
         if (it) openBookDetail(it, app);
         return;

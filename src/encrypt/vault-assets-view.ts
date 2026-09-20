@@ -85,7 +85,7 @@ export function overviewHTML(stats: OverviewStats): string {
           const iconName = r.kind === 'note' ? 'file-lock' : 'book-lock';
           // 流水行按真实资产值标记（一致性整改）：点击经 UIManager.bindOverviewArea 按值分流——
           // note 行落笔记列表、diary 行落加密日记列表，均带 id 直定位该条目
-          return `<div class="bz-vault-minirow" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ''}>
+          return `<div class="bz-vault-minirow" role="button" tabindex="0" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml(r.id)}"` : ''}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml(r.title)}</div><div class="b">${escapeHtml(r.sub)}</div></div>
             <span class="tm">${escapeHtml(r.time)}</span></div>`;
@@ -103,17 +103,17 @@ export function overviewHTML(stats: OverviewStats): string {
     </div>
   </div>
   <div class="bz-vault-cards">
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('file-lock', 13)}</span>笔记条目</div>
       <div class="num">${counts.note}<small>篇</small></div>
       <div class="cd">${counts.note ? '正文与附件全量密文' : '还没有笔记'}</div>
     </div>
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('image', 13)}</span>随库附件</div>
       <div class="num">${attachments}<small>个</small></div>
       <div class="cd">随笔记一并加密镜像</div>
     </div>
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc('lock', 13)}</span>附件密文</div>
       <div class="num">${kb}</div>
       <div class="cd">附件镜像密文字节</div>
@@ -121,10 +121,10 @@ export function overviewHTML(stats: OverviewStats): string {
   </div>
   <div class="bz-vault-two">
     <div class="panel">
-      <div class="pt">最近加密<span class="more" data-hero="recent-all">查看全部 →</span></div>
+      <div class="pt">最近加密<span class="more" role="button" tabindex="0" data-hero="recent-all">查看全部 →</span></div>
       ${recentRows}
     </div>
-    <div class="panel" data-hero="health" title="打开保险库体检">
+    <div class="panel" role="button" tabindex="0" data-hero="health" title="打开保险库体检">
       <div class="pt">保险库体检<span class="more">查看 →</span></div>
       ${healthRows}
       <div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-text-3)"></span><span class="lbl">完整性校验</span><span class="n">${health?.lastChecked || '—'}</span></div>
@@ -141,7 +141,7 @@ export function noteRowHTML(note: SafeNote, kind: 'note' | 'diary', active: bool
       ? `${note.attachments.length} 个附件 · ${escapeHtml(note.path)}`
       : (note.path.split('/').pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : '');
   return `
-    <div class="bz-vault-row ${active ? 'on' : ''}" data-noteid="${escapeHtml(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active ? 'on' : ''}" role="button" tabindex="0" data-noteid="${escapeHtml(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
       <div class="mid"><div class="t1">${escapeHtml(note.title)}</div><div class="t2">${sub}</div></div>
       <span class="tm">${escapeHtml(formatRelativeTime(note.createdAt))}</span>

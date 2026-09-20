@@ -13,7 +13,8 @@ import { MarkdownRenderer, Component } from 'obsidian';
 import { notice, notify, notifyActionError } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getApp } from '../core/app';
-import { escManager } from '../core/esc-manager';
+import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { openFlowDialog, cancelActiveFlowDialog } from '../core/flow-dialog';
 import { createOverlay, topifyZ } from '../core/dom';
 import {
@@ -592,16 +593,16 @@ export class UIManager {
             <div class="seal">${vIc('lock', 19)}</div>
             <div class="nm">保险库<small>VAULT</small></div>
           </div>
-          <div class="bz-vault-item on" data-asset="overview">${vIc('layout-grid', 16)}概览<span class="cnt" data-cnt="overview"></span></div>
+          <div class="bz-vault-item on" role="button" tabindex="0" data-asset="overview">${vIc('layout-grid', 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
-          <div class="bz-vault-item k-note" data-asset="note">${vIc('file-lock', 16)}笔记<span class="cnt" data-cnt="note"></span></div>
-          <div class="bz-vault-item k-diary" data-asset="diary">${vIc('book-lock', 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
+          <div class="bz-vault-item k-note" role="button" tabindex="0" data-asset="note">${vIc('file-lock', 16)}笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-diary" role="button" tabindex="0" data-asset="diary">${vIc('book-lock', 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
-          <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
+          <div class="bz-vault-health" role="button" tabindex="0" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
             <div class="hd" data-health-d>未体检</div>
           </div>
-          <div class="bz-vault-lockbtn" data-act="lock"><span class="lbl">${vIc('lock', 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
+          <div class="bz-vault-lockbtn" role="button" tabindex="0" data-act="lock"><span class="lbl">${vIc('lock', 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
         </div>
         <div class="bz-vault-main">
           <!-- 顶栏只留标题：右侧三按钮（存入笔记/体检/关闭）按评审去掉——关闭走 Esc 或点遮罩，
@@ -624,9 +625,9 @@ export class UIManager {
         </div>
         <div class="bz-search bz-vault-msearch"><i data-lucide="search" class="bz-ic"></i><input class="bz-input" placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
-          <span class="sg on" data-masset="overview">概览</span>
-          <span class="sg" data-masset="note">笔记</span>
-          <span class="sg" data-masset="diary">日记</span>
+          <span class="sg on" role="button" tabindex="0" data-masset="overview">概览</span>
+          <span class="sg" role="button" tabindex="0" data-masset="note">笔记</span>
+          <span class="sg" role="button" tabindex="0" data-masset="diary">日记</span>
         </div>
         <div class="bz-vault-mbody" data-mob-body></div>
       </div>`;
@@ -701,6 +702,22 @@ export class UIManager {
     });
     // 左栏健康卡：读真实体检状态 + 点击直达体检（顶栏体检按钮已按评审删除，这里是唯一入口）
     this.popup!.querySelector('[data-act="health-card"]')?.addEventListener('click', () => void this.openHealthDialog());
+    // 呈报#12-E7 工作台键盘化：div 化控件（导航项/列表行/健康卡/上锁钮/概览卡/流水行）统一
+    // 「role=button + tabindex=0 + Enter/Space → click」一条键盘路径（委托，随渲染重建免重挂）。
+    // 行选中会整刷列表，键盘触发后把焦点接回当前选中行，Tab 序不断（鼠标点击不抢焦）。
+    // 备忘：memo 同型工作台面板随 memo 队尾重审统一处理（呈报#12 备注），本轮不动 memo。
+    this.popup!.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (e.isComposing || e.defaultPrevented) return;
+      const t = e.target as HTMLElement | null;
+      const btn = t?.closest?.('[role="button"]') as HTMLElement | null;
+      if (!btn || !this.popup!.contains(btn)) return;
+      e.preventDefault();
+      btn.click();
+      if (btn.classList.contains('bz-vault-row')) {
+        this.popup!.querySelector<HTMLElement>('.bz-vault-row.on')?.focus();
+      }
+    });
     // 搜索防抖（资产内过滤）：概览页输入 → 自动切到加密笔记结果（保留关键词）。
     // 桌面搜索框已下移到列表头里、随渲染重建，故绑定在 renderDeskNotes 里每次重挂；
     // 这里只挂移动端常驻框（两框共用一个绑定方法，语义不裂）。
@@ -819,6 +836,8 @@ export class UIManager {
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
+    // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源；E7 键盘化起点）
+    trapPanelFocus(this.popup!);
     this.notifyUnlockUi();
     void this.renderList();
     this.startSessionTimers();
@@ -1527,10 +1546,14 @@ export class UIManager {
     setCnt('note', c.note);
     setCnt('diary', c.diary);
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) => {
-      el.classList.toggle('on', el.getAttribute('data-asset') === this.asset);
+      const on = el.getAttribute('data-asset') === this.asset;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-current', on ? 'true' : 'false');
     });
     this.mob.seg.querySelectorAll('.sg').forEach((el) => {
-      el.classList.toggle('on', el.getAttribute('data-masset') === this.asset);
+      const on = el.getAttribute('data-masset') === this.asset;
+      el.classList.toggle('on', on);
+      el.setAttribute('aria-current', on ? 'true' : 'false');
     });
     // 健康卡（真实体检状态：未体检/健康/N 个待处理；点击直达体检——绑定见 bindVaultShell）
     const ht = this.popup!.querySelector('[data-health-t]');
@@ -2596,13 +2619,23 @@ export class UIManager {
   }
 
   registerEscape() {
-    escManager.register('encrypt', {
-      isVisible: () => !!(this.mask && this.mask.style.display === 'block') || !!(this.previewMask && this.previewMask.style.display === 'block'),
-      close: () => {
+    // 呈报#12-E7：ESC 层收编 registerPanelEsc 样板，层 id 对齐 'bz-<域>' 约定（原 'encrypt'）。
+    // 先 unregister 再挂（settings-panel C-5 重放注册先例）：工作台壳 ensureElements 一生一次，
+    // 但测试/多实例场景下重放注册保证 ESC 栈始终指向最新实例；层可见性由 isVisible 判活，
+    // 且带 isConnected（cleanup 摘 DOM 后旧层自愈失活）。工作台 ESC 语义不变：预览窗 > 主面板。
+    unregisterPanelEsc('bz-encrypt');
+    registerPanelEsc(
+      'bz-encrypt',
+      // isVisible 判活带 isConnected（六域先例口径：判「还在屏上」而非仅样式位）——
+      // cleanup 摘 DOM 后旧层自愈失活，不会吞掉重启用后新面板的 ESC
+      () =>
+        !!(this.mask && this.mask.isConnected && this.mask.style.display === 'block') ||
+        !!(this.previewMask && this.previewMask.isConnected && this.previewMask.style.display === 'block'),
+      () => {
         if (this.previewMask && this.previewMask.style.display === 'block') this.closePreview();
         else if (this.mask && this.mask.style.display === 'block') this.hide();
       },
-    });
+    );
   }
 }
 

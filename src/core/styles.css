@@ -88,7 +88,8 @@
   align-items: center !important;
   justify-content: center !important;
   line-height: 1 !important;
-}
+}@media (hover: hover) {
+
 .bz-win-head button:hover,
 .diary-popup-header button:hover,
 .bz-memo-head-btns button:hover,
@@ -98,6 +99,7 @@
 .bz-encrypt-head-btns button:hover,
 .news-close-btn:hover {
   background: var(--background-secondary) !important;
+}
 }
 /* 关闭按钮再小 2px（用户拍板）：20×24/12px（元素选择器提特异性，压过统一按钮组） */
 button.bz-icon-btn--close,
@@ -276,10 +278,12 @@ button.news-close-btn {
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-notice-action:hover {
   background: var(--background-modifier-hover);
   border-color: var(--background-modifier-border);
+}
 }
 .bz-notice-progress {
   position: absolute;
@@ -480,19 +484,23 @@ button.bz-flow-dialog-action {
   flex: 1;
   white-space: nowrap;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 #__shared_confirm_cancel__:hover,
 button.bz-flow-dialog-action:hover {
   background: var(--bz-surface-hover);
+}
 }
 #__shared_confirm_ok__,
 button.bz-flow-dialog-action.bz-flow-dialog-cta {
   background: var(--bz-brand);
   color: var(--bz-on-brand);
-}
+}@media (hover: hover) {
+
 #__shared_confirm_ok__:hover,
 button.bz-flow-dialog-action.bz-flow-dialog-cta:hover {
   background: var(--bz-brand-hover);
+}
 }
 button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   color: var(--bz-danger);
@@ -513,9 +521,11 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   border: 1px solid transparent;
   border-radius: var(--bz-radius-sm);
   box-shadow: none;
-}
+}@media (hover: hover) {
+
 #__shared_confirm_popup__.bz-flow-dialog.bz-flow-dialog--danger #__shared_confirm_ok__:hover {
   background: var(--bz-surface-hover);
+}
 }
 
 /* 通用遮罩/弹窗（原 core/dom.ts createOverlay 内联；zIndex/width/maxWidth/display 仍为功能性内联） */
@@ -555,9 +565,11 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   font-size: var(--bz-font-body);
   width: 22px;
   height: 26px;
-}
+}@media (hover: hover) {
+
 .bz-icon-btn:hover {
   background: var(--background-secondary);
+}
 }
 .bz-icon-btn--close {
   font-size: var(--bz-font-label);
@@ -661,9 +673,11 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   padding: var(--bz-space-sm) 10px;
   margin: 0 -10px;
   transition: background-color var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-settings-group-body .setting-item:hover {
   background: var(--background-modifier-hover);
+}
 }
 .bz-settings-group-body .setting-item:last-child {
   margin-bottom: 0;
@@ -721,8 +735,10 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   border-radius: 6px !important;
   box-shadow: none !important;
   cursor: pointer; text-align: left !important;
-}
+}@media (hover: hover) {
+
 .bz-item-menu button.bz-item-menu-item:hover { background: var(--background-modifier-hover) !important; }
+}
 .bz-item-menu button.bz-item-menu-item--danger { color: var(--text-error) !important; }
 /* 强调色调：整行（文字 + 图标 + 小字）同步换强调色（如解锁态加密/解密）；未解锁保持默认外观。
    高特异性 + !important 抗 Obsidian 默认 button 样式压盖；桌面菜单无小字（不渲染） */
@@ -757,10 +773,12 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   border-radius: 0 !important;
   box-shadow: none !important;
   cursor: pointer; text-align: left !important;
-}
+}@media (hover: hover) {
+
 .bz-item-sheet button.bz-item-sheet-item:hover,
 .bz-item-sheet button.bz-item-sheet-item:active {
   background: transparent !important; /* 无背景反馈，保持纯粹 */
+}
 }
 .bz-item-sheet button.bz-item-sheet-item--danger { color: var(--text-error) !important; }
 /* 动作项右侧小字（次级/动态数据，如「123 字」）：右对齐、faint 弱化，不参与换行；仅移动端抽屉（桌面菜单不渲染小字） */
@@ -919,8 +937,10 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   color: var(--text-normal);
   cursor: pointer;
   user-select: none;
-}
+}@media (hover: hover) {
+
 .bz-path-picker-row:hover { background: var(--background-modifier-hover); }
+}
 .bz-path-picker-row--sel { background: var(--background-modifier-hover); color: var(--interactive-accent); font-weight: 600; }
 .bz-path-picker-check {
   flex: 0 0 auto;
@@ -978,14 +998,18 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   background: var(--background-secondary);
   color: var(--text-normal);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-path-picker-btn:hover { background: var(--background-modifier-hover); }
+}
 .bz-path-picker-btn--primary {
   border: none;
   background: var(--interactive-accent);
   color: var(--text-on-accent);
-}
+}@media (hover: hover) {
+
 .bz-path-picker-btn--primary:hover { opacity: 0.88; }
+}
 
 /* ticket 133：设置行「选择…/添加…」紧凑次级按钮（空态专用；已选态按钮移出 DOM）——
    去 accent 主色、缩小内边距/字号，与 chips 同视觉重量 */
@@ -998,11 +1022,15 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   color: var(--text-normal);
   cursor: pointer;
   line-height: 1.4;
-}
+}@media (hover: hover) {
+
 .bz-path-picker-btn--slim:hover { background: var(--background-modifier-hover); }
+}
 /* 已选 chip 文本可点重开选择器（ticket 133）：指针 + 悬停强调；✕ 保持独立按钮语义 */
-.bz-path-picker-chip--click .bz-path-picker-chip-name { cursor: pointer; }
+.bz-path-picker-chip--click .bz-path-picker-chip-name { cursor: pointer; }@media (hover: hover) {
+
 .bz-path-picker-chip--click .bz-path-picker-chip-name:hover { color: var(--interactive-accent); }
+}
 
 /* 已选 chips（设置行控件区内与选择器共用；随控件区 flex-wrap 自动折行） */
 .bz-path-picker-chips {
@@ -1039,8 +1067,10 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   cursor: pointer;
   font-size: var(--bz-font-caption);
   line-height: 1;
-}
+}@media (hover: hover) {
+
 .bz-path-picker-chip-x:hover { background: var(--background-secondary); color: var(--text-normal); }
+}
 .bz-path-picker-chips-empty {
   font-size: var(--bz-font-meta);
   color: var(--text-faint);
@@ -1110,9 +1140,11 @@ button.bz-flow-dialog-action.bz-flow-dialog-danger:not(.bz-flow-dialog-cta) {
   padding: var(--bz-space-sm) 10px;
   border-radius: 6px;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-model-picker-row:hover {
   background: var(--background-modifier-hover);
+}
 }
 .bz-model-picker-row.is-current {
   background: var(--background-modifier-active-hover);

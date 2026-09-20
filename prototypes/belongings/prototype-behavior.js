@@ -1,4 +1,4 @@
-/* 源指纹 6f182148b31abcb1 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 4d36d044109d2841 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -4575,6 +4575,61 @@ var BZW_belongings = (() => {
     return typeof Platform !== "undefined" && !!Platform.isMobile;
   }
 
+  // src/core/ui/focus-trap.ts
+  var FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function firstFocusable(container) {
+    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
+      if (isHidden(el)) return false;
+      if (isMobileEnv()) {
+        const tag = el.tagName;
+        if (tag === "INPUT" || tag === "TEXTAREA") return false;
+      }
+      return true;
+    });
+    return list[0] || null;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && active !== container && container.contains(active);
+      if (e.shiftKey) {
+        if (active === first || !inside) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !inside) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  var PANEL_FOCUS_CLASS = "bz-panel-focushost";
+  function trapPanelFocus(panel) {
+    panel.classList.add(PANEL_FOCUS_CLASS);
+    if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+    const release = trapFocus(panel);
+    panel.focus({ preventScroll: true });
+    return release;
+  }
+
   // src/core/utils.ts
   var import_moment = __toESM(require_moment());
 
@@ -4700,52 +4755,6 @@ var BZW_belongings = (() => {
     el.addEventListener("touchmove", move, { passive: true });
     el.addEventListener("touchcancel", endFromTouch);
     el.addEventListener("click", onClick, true);
-  }
-
-  // src/core/ui/focus-trap.ts
-  var FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-  function isHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function firstFocusable(container) {
-    const list = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((el) => {
-      if (isHidden(el)) return false;
-      if (isMobileEnv()) {
-        const tag = el.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA") return false;
-      }
-      return true;
-    });
-    return list[0] || null;
-  }
-  function trapFocus(container) {
-    const onKeydown = (e) => {
-      if (e.key !== "Tab") return;
-      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el) => !isHidden(el) && !el.hasAttribute("disabled")
-      );
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey) {
-        if (active === first || !container.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !container.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    container.addEventListener("keydown", onKeydown);
-    return () => container.removeEventListener("keydown", onKeydown);
   }
 
   // src/core/flow-dialog.ts
@@ -8017,6 +8026,7 @@ var BZW_belongings = (() => {
     }
   }
   async function openPanelInner() {
+    var _a;
     const st = tryGetSettings().belongingsDefaultStatus;
     M.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
@@ -8032,11 +8042,12 @@ var BZW_belongings = (() => {
     M.renderFn = () => renderAll();
     mountIcons(overlay);
     ensureBelongingsEsc();
+    trapPanelFocus((_a = overlay.querySelector(".bz-bel-panel")) != null ? _a : overlay);
     const closeDrops = () => {
       overlay.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
     };
     const onDocClick = (e) => {
-      var _a;
+      var _a2;
       const t = e.target;
       const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
       if (trig) {
@@ -8049,7 +8060,7 @@ var BZW_belongings = (() => {
       const opt = t.closest(".bz-bel-dropopt");
       if (opt) {
         closeDrops();
-        const v = (_a = opt.dataset.v) != null ? _a : "";
+        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
         if (opt.closest("[data-bel-yearmenu]")) M.year = v;
         else M.sort = v;
         renderAll();
@@ -8167,16 +8178,16 @@ var BZW_belongings = (() => {
     longPress(
       content,
       (ev) => {
-        var _a, _b;
-        const cell = (_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-bel-id]");
+        var _a2, _b;
+        const cell = (_b = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b.call(_a2, "[data-bel-id]");
         if (!cell) return;
         const it = itemById(cell.dataset.belId);
         if (it) openMobSheet(it);
       },
       void 0,
       (ev) => {
-        var _a, _b;
-        return isMobileEnv() && !!((_b = (_a = ev.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, "[data-bel-id]"));
+        var _a2, _b;
+        return isMobileEnv() && !!((_b = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b.call(_a2, "[data-bel-id]"));
       }
     );
     renderAll();

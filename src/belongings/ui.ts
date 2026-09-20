@@ -27,6 +27,7 @@ import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/
 import { topifyZ } from '../core/z-order';
 import { getApp } from '../core/app';
 import { registerPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
 import { debounce } from '../core/utils';
 import { longPress } from '../core/dom';
@@ -288,6 +289,10 @@ async function openPanelInner(): Promise<void> {
 
   // ESC（主面板 + 表单/详情多窗口径；表单也可能先于面板打开——命令路径）
   ensureBelongingsEsc();
+
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式；本域 uiModal 表单先例的容器版，
+  // 纯接线一行：core trapPanelFocus 单源，焦点落面板容器不落输入框防软键盘）
+  trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-bel-panel') ?? overlay);
 
   // ---- 年份/移动排序下拉（自绘海报菜单，原生 select 弹层退役；与桌面 seg 双向同步） ----
   // 触发器开合 + 选项点选 + 外点收起，一处 document 委托；closePanel 时摘除

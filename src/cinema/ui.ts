@@ -17,6 +17,7 @@ import { notice, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import { escManager, registerPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
@@ -969,6 +970,8 @@ export function createOverlay(app: App): void {
   M.renderFn = () => renderSoft(app);
   const root = overlay.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
+  trapPanelFocus(root);
   // 点遮罩 = 关闭主面板（桌面；移动全屏无遮罩）
   overlay.addEventListener('click', (e) => {
     if (e.target === overlay) closeOverlay();

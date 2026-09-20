@@ -15,6 +15,7 @@
 import type { App } from 'obsidian';
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice, notify, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { uiBtn, uiIcon, uiEmpty, uiProgress } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -49,6 +50,8 @@ export function openDataCheckup(app: App): void {
   if (!overlay) build(app);
   topifyZ(overlay!); // ADR-0067：显示即发号（重开抬顶，谁后显示谁在上）
   overlay!.style.display = 'flex';
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源；重开幂等）
+  trapPanelFocus(overlay!.querySelector<HTMLElement>(`#${FRAME_ID}`) ?? overlay!);
   // ESC 栈序与 z 序重同步（深审 ui P2-1）：hide 型常驻层重开只抬 z 不抬 ESC 栈会失配
   //（z 序正确、ESC 却先关底下被盖住的面板）。显示路径重放注册——register 内 splice
   // 掉不可见同 id 旧层再 push 尾（esc-manager 自愈语义），注册序自此跟随显示序。

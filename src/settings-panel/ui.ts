@@ -23,7 +23,7 @@ import { renderPanelSchema, closeAllSelectMenus, refreshGroupCounts } from './re
 import { notice, notifyActionError, notifySaveError } from '../core/notice';
 import { getApp } from '../core/app';
 import { uiIconBtn, uiBtn, uiEmpty, mountIcons } from '../core/ui';
-import { firstFocusable } from '../core/ui/focus-trap';
+import { firstFocusable, trapFocus } from '../core/ui/focus-trap';
 import { debounce } from '../core/utils';
 // markup 单源（ADR-0104/0105）：面板壳/导航/页头结构串全出自渲染纯层；
 // 行为单源（ADR-0106，issue 245 范式）：本文件即唯一真理，原型壳为双 iframe 评审壳
@@ -375,6 +375,9 @@ export class SettingsPanelUI {
     // E-3：打开即聚焦首个可交互元素（core uiModal firstFocusable 范式）——桌面 = 头行搜索框，
     // 键盘流第一步可达（搜索 → ↑↓ 切域 → ESC 关全链键盘闭环）；移动端跳过输入框聚焦关闭钮
     firstFocusable(popup)?.focus();
+    // 呈报#13 F3+H3：补 Tab 圈闭（入焦保持 E-3 的首个可交互元素口径，不夺焦；纯接线一行）——
+    // build 每开重建 popup，监听随元素弃置，无需存句柄
+    trapFocus(popup);
   }
 
   /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */

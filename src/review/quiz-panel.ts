@@ -18,6 +18,7 @@ import type { App } from 'obsidian';
 import { getApp } from '../core/app';
 import { notice, notify } from '../core/notice';
 import { escManager } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { topifyZ } from '../core/z-order';
 import { emitDomainEvent } from '../core/domain-bus';
 import { openFlowDialog } from '../core/flow-dialog';
@@ -125,6 +126,8 @@ class QuizPracticePanel {
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
+    // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源；幂等可重入）
+    trapPanelFocus(this.popup);
     if (!this.escHandle) {
       this.escHandle = escManager.register(ESC_ID, {
         isVisible: () => this.mask.style.display === 'block',

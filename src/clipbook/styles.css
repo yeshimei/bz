@@ -101,7 +101,8 @@
 .bz-clip-head-search .bz-input {
   width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line);
   border-radius: 0; padding: var(--bz-space-xs) 2px 5px 22px; font-size: 12.5px; font-style: italic; color: var(--clip-ink);
-}
+}@media (hover: hover) {
+
 /* 宿主表单底色的伪类覆盖修复（2026-09-19）：Obsidian app.css 的
    `input[type='text']:hover { background-color: var(--background-modifier-form-field-hover) }`
    特异性 (0,2,1) 高于上面的 `.bz-clip-head-search .bz-input` (0,2,0)——基线那句
@@ -112,6 +113,7 @@
   background: transparent;
   border: none;
   border-bottom: 1px solid var(--clip-line);
+}
 }
 .bz-clip-head-search .bz-input:focus {
   background: transparent;
@@ -137,8 +139,10 @@
   display: flex; align-items: baseline; gap: var(--bz-space-sm);
   padding: 10px 18px 10px 22px; border-radius: 0;
   border: none; background: transparent; position: relative;
-}
+}@media (hover: hover) {
+
 .bz-clip-rail .bz-rail-item:hover { background: var(--clip-cream); }
+}
 .bz-clip-rail .bz-rail-item.on { background: transparent; }
 .bz-clip-rail .bz-rail-item.on::before {
   content: ''; position: absolute; left: 8px; top: 50%;
@@ -181,8 +185,10 @@
   padding: 13px var(--bz-space-xl); border-radius: 0; cursor: pointer;
   border: 1px solid transparent; border-top-color: var(--clip-line-soft); position: relative;
 }
-.bz-clip-item:first-child { border-top-color: transparent; }
+.bz-clip-item:first-child { border-top-color: transparent; }@media (hover: hover) {
+
 .bz-clip-item:hover { background: var(--clip-cream); }
+}
 .bz-clip-item.on { background: var(--clip-cream-2); border-color: transparent; box-shadow: inset 3px 0 0 var(--clip-accent); }
 /* 序号 = 大号衬线数字；未读唯一视觉 = 序号颜色（未读橘 / 在读琥珀 / 其余灰） */
 .bz-clip-no {
@@ -213,8 +219,10 @@
 .bz-clip-desk-fold {
   display: flex; align-items: center; gap: 10px;
   padding: var(--bz-space-md) var(--bz-space-xl) var(--bz-space-xs); cursor: pointer; user-select: none;
-}
+}@media (hover: hover) {
+
 .bz-clip-desk-fold:hover .bz-clip-desk-fold-lab { color: var(--clip-accent); }
+}
 .bz-clip-desk-fold-rule { flex: 1; border: none; border-bottom: 1px dotted var(--clip-line); }
 .bz-clip-desk-fold-lab {
   font-family: var(--clip-serif); font-size: var(--bz-font-caption); letter-spacing: 2px;
@@ -323,15 +331,19 @@
 .bz-clip-art-md a.bz-clip-md-link, .bz-clip-mob-d-md a.bz-clip-md-link {
   color: var(--clip-accent); text-decoration: underline; text-decoration-thickness: 1px;
   text-underline-offset: 3px; cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-clip-art-md a.bz-clip-md-link:hover { color: var(--clip-accent-soft); }
+}
 /* 剪藏条目「打开笔记」编辑部文字脚（issue 214：文末唯一保留动作，文字链非按钮） */
 .bz-clip-art-foot { margin-top: 20px; padding-top: 14px; border-top: 2px solid var(--clip-ink); display: flex; gap: 18px; }
 .bz-clip-art-foot span {
   color: var(--clip-accent); font-weight: var(--bz-weight-semibold); letter-spacing: 1px;
   font-size: var(--bz-font-meta); cursor: pointer; display: inline-flex; align-items: center; gap: var(--bz-space-xs); line-height: 1.6;
-}
+}@media (hover: hover) {
+
 .bz-clip-art-foot span:hover { color: var(--clip-accent-soft); }
+}
 .bz-clip-art-foot .bz-ic { width: 12px; height: 12px; }
 
 /* ---- 右键菜单编辑部换肤（issue 214 三轮）：菜单挂 body，域内后代选择器不可达——
@@ -344,10 +356,14 @@
 .bz-clip-menu-editorial .bz-item-menu-item {
   font-family: var(--clip-serif); letter-spacing: 2px; border-radius: 0;
   padding: 10px 18px; gap: 10px; font-size: var(--bz-font-label); color: var(--clip-ink-2);
-}
+}@media (hover: hover) {
+
 .bz-clip-menu-editorial .bz-item-menu-item:hover { background: var(--clip-ink); color: var(--clip-paper); }
-.bz-clip-menu-editorial .bz-item-menu-item--danger { color: #b3261e; }
+}
+.bz-clip-menu-editorial .bz-item-menu-item--danger { color: #b3261e; }@media (hover: hover) {
+
 .bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: var(--clip-paper); }
+}
 
 /* ==================== 移动端（m3 目录索引逐字落域；ADR-0107 修订：样式/结构 = 原型逐字） ====================
    2026-09-09 用户拍板：移动端文字全量 ×1.5（基数 = m3 逐字值；.bz-clip-mob-* 类桌面 display:none
@@ -373,8 +389,10 @@
 /* 触控热区（C-UI2/效率#18）：移动 ×1.5 字号口径下五组高频可点目标抬档至高 ≥40px（下限口径）。
    .bz-clip-mob-* 类桌面 display:none 独享移动端，改基座值即单源生效；
    折叠行走 padding 抬档不外扩（防相邻热区重叠） */
-.bz-clip-mob-act { font-family: var(--clip-serif); font-size: 16.5px; letter-spacing: 1.5px; color: var(--clip-dim); cursor: pointer; padding: 10px 6px; }
+.bz-clip-mob-act { font-family: var(--clip-serif); font-size: 16.5px; letter-spacing: 1.5px; color: var(--clip-dim); cursor: pointer; padding: 10px 6px; }@media (hover: hover) {
+
 .bz-clip-mob-act:hover { color: var(--clip-accent); }
+}
 .bz-clip-mob-searchbar { padding: 10px 18px 0; flex-shrink: 0; }
 .bz-clip-mob-searchbar .bz-input { width: 100%; background: transparent; border: none; border-bottom: 1px solid var(--clip-line); border-radius: 0; padding: var(--bz-space-xs) 0 5px; font-family: var(--clip-serif); font-size: 18.75px; font-style: italic; color: var(--clip-ink); outline: none; box-shadow: none; }
 .bz-clip-mob-searchbar .bz-input::placeholder { color: var(--clip-muted); }
@@ -396,8 +414,10 @@
   flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
   width: 40px; height: 40px; margin: -9px 0;
   color: var(--clip-muted); cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-clip-mob-ch-mark:hover { color: var(--clip-accent); }
+}
 .bz-clip-mob-ch-items { padding: var(--bz-space-xs) 0 2px; }
 /* 章内条目（原型 .c-it 一行式：点 · 标题 · [在读] · 时间） */
 .bz-clip-mob-item { display: flex; align-items: baseline; gap: 9px; padding: 11px 0; cursor: pointer; border-bottom: 1px dotted var(--clip-soft); }
@@ -412,8 +432,10 @@
 .bz-clip-mob-time { flex-shrink: 0; font-size: 15.75px; color: var(--clip-muted); font-variant-numeric: tabular-nums; align-self: flex-start; margin-top: 5px; }
 .bz-clip-mob-tag { flex-shrink: 0; font-size: 15.75px; border: 1px solid var(--clip-accent); color: var(--clip-accent); padding: 2px 7px; letter-spacing: 1.5px; align-self: flex-start; margin-top: 3px; font-family: var(--clip-serif); }
 /* 已收折叠行（原型 .c-fold：点线夹计数；三角 = 纯 CSS 下三角，.on 翻转）；padding 抬档 ≥40px（C-UI2） */
-.bz-clip-mob-fold { display: flex; align-items: center; gap: 10px; padding: 10px 2px; cursor: pointer; user-select: none; }
+.bz-clip-mob-fold { display: flex; align-items: center; gap: 10px; padding: 10px 2px; cursor: pointer; user-select: none; }@media (hover: hover) {
+
 .bz-clip-mob-fold:hover .bz-clip-mob-fold-lab { color: var(--clip-accent); }
+}
 .bz-clip-mob-fold-rule { flex: 1; border: none; border-bottom: 1px dotted var(--clip-line); }
 .bz-clip-mob-fold-lab { font-family: var(--clip-serif); font-size: 16.5px; letter-spacing: 2px; color: var(--clip-dim); white-space: nowrap; }
 .bz-clip-mob-fold-lab b { color: var(--clip-accent); font-weight: 700; }
@@ -428,8 +450,10 @@
 /* ---- 移动详情（屏2 overlay，原型 .detail-screen） ---- */
 .bz-clip-mob-detail { position: absolute; inset: 0; background: var(--clip-paper); display: none; flex-direction: column; z-index: 2; }
 .bz-clip-mob-detail-top { display: flex; align-items: center; gap: 10px; padding: var(--bz-space-md) var(--bz-space-lg); flex-shrink: 0; border-bottom: 2px solid var(--clip-ink); }
-.bz-clip-mob-d-back { font-family: var(--clip-serif); font-size: 19.5px; letter-spacing: 1px; color: var(--clip-ink-2); cursor: pointer; padding: 6px var(--bz-space-xs); }
+.bz-clip-mob-d-back { font-family: var(--clip-serif); font-size: 19.5px; letter-spacing: 1px; color: var(--clip-ink-2); cursor: pointer; padding: 6px var(--bz-space-xs); }@media (hover: hover) {
+
 .bz-clip-mob-d-back:hover { color: var(--clip-accent); }
+}
 .bz-clip-mob-detail-title { flex: 1; text-align: center; font-family: var(--clip-serif); font-size: 17.25px; letter-spacing: 4px; color: var(--clip-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bz-clip-mob-save { font-family: var(--clip-serif); font-size: 18px; letter-spacing: 1px; color: var(--clip-accent); cursor: pointer; padding: 10px 6px; }
 .bz-clip-mob-save.saved { color: var(--clip-dim); }
@@ -447,8 +471,10 @@
   margin: 2px 0 14px;
 }
 .bz-clip-mob-d-foot { margin-top: var(--bz-space-xl); padding-top: 14px; border-top: 1px solid var(--clip-ink); display: flex; align-items: baseline; }
-.bz-clip-mob-d-next { font-family: var(--clip-serif); font-size: 18px; letter-spacing: 1.5px; color: var(--clip-accent); cursor: pointer; padding: 10px 0; }
+.bz-clip-mob-d-next { font-family: var(--clip-serif); font-size: 18px; letter-spacing: 1.5px; color: var(--clip-accent); cursor: pointer; padding: 10px 0; }@media (hover: hover) {
+
 .bz-clip-mob-d-next:hover { color: var(--clip-accent-soft); }
+}
 .bz-clip-mob-d-fch { margin-left: auto; font-size: 15.75px; letter-spacing: 2px; color: var(--clip-muted); font-family: var(--clip-serif); }
 
 /* 桌面端在窄视口隐藏（移动真全屏场景：overlay 内部是 frame 相对定位） */
@@ -495,14 +521,18 @@
   border-radius: 0; background: transparent; border: 1px solid #1c1a17; color: #3d3a34;
   font-family: var(--clip-serif);
   font-size: var(--bz-font-label); letter-spacing: 1px; padding: var(--bz-space-sm) 20px; flex: 0 1 auto;
-}
+}@media (hover: hover) {
+
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__:hover { background: #efe9dd; }
+}
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__ {
   border-radius: 0; background: #1c1a17; color: #faf8f3;
   font-family: var(--clip-serif);
   font-size: var(--bz-font-label); letter-spacing: 2px; font-weight: 700; padding: var(--bz-space-sm) 20px; flex: 0 1 auto;
-}
+}@media (hover: hover) {
+
 #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__:hover { background: #c2410c; }
+}
 /* 危险主动作（删除条目 / 删除剪藏，issue 291 评审补）：core 的 `.bz-flow-dialog--danger`
    会把主钮压回中性次级形制（透明描边 + radius-sm + 去阴影）。编辑部的「方角 + 墨线」是本皮
    的按钮形制本身，压掉会让同框两钮一个圆一个方，故按 core 注释指明的口径用 `.bz-flow-dialog--danger`
@@ -513,8 +543,10 @@
    tests/core/flow-dialog-danger-neutral.test.ts 的跨域不变量锁住。 */
 #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__ {
   background: transparent; border: 1px solid #1c1a17; border-radius: 0; color: var(--bz-danger);
-}
+}@media (hover: hover) {
+
 #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #efe9dd; }
+}
 
 
 /* ==================== 暗色皮（2026-09-10 用户需求） ====================
@@ -541,22 +573,28 @@
 .theme-dark .bz-clip-lead { border-bottom-color: #46423a; }
 /* 右键菜单：墨色阴影在暗底换成纯黑；危险色提亮保证对比 */
 .theme-dark .bz-item-menu.bz-clip-menu-editorial { box-shadow: 5px 5px 0 rgba(0, 0, 0, .5); }
-.theme-dark .bz-clip-menu-editorial .bz-item-menu-item--danger { color: #e8776b; }
+.theme-dark .bz-clip-menu-editorial .bz-item-menu-item--danger { color: #e8776b; }@media (hover: hover) {
+
 .theme-dark .bz-clip-menu-editorial .bz-item-menu-item--danger:hover { background: #b3261e; color: #faf8f3; }
+}
 /* 删除确认弹窗皮：挂 body 无 --clip 链（值写死），暗色单项覆写 */
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial { background: #1b1a17; border-color: #ece8dd; box-shadow: 6px 6px 0 rgba(0, 0, 0, .5); }
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial h4 { color: #ece8dd; }
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial p { color: #928b7c; }
-.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__ { border-color: #ece8dd; color: #cdc7b8; }
+.theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__ { border-color: #ece8dd; color: #cdc7b8; }@media (hover: hover) {
+
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_cancel__:hover { background: #2e2b25; }
+}
 .theme-dark #__shared_confirm_popup__.bz-clip-dialog-editorial #__shared_confirm_ok__ { background: #ece8dd; color: #1b1a17; }
 /* 暗色危险态：`.theme-dark` 那条（2,2,0）与 core 危险规则同特异性且后到，会把手写体墨章又压回来，
    故同样用 `.bz-flow-dialog--danger` 限定覆写（补 `.bz-overlay-popup` 提到 2,4,0 稳赢）：
    墨线换亮色、底透明、文字危险色。 */
 .theme-dark #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__ {
   background: transparent; border-color: #ece8dd; color: var(--bz-danger);
-}
+}@media (hover: hover) {
+
 .theme-dark #__shared_confirm_popup__.bz-overlay-popup.bz-clip-dialog-editorial.bz-flow-dialog--danger #__shared_confirm_ok__:hover { background: #2e2b25; }
+}
 
 
 /* ==================== 划选工具框（issue 329 / ADR-0144） ====================
@@ -600,10 +638,12 @@
   padding: var(--bz-space-xs) var(--bz-space-sm);
   border-radius: var(--bz-radius-xs);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-clip-selbar-btn:hover {
   background: var(--clip-cream);
   color: var(--clip-accent);
+}
 }
 .bz-clip-selbar-btn:active { color: var(--clip-accent-soft); }
 .theme-dark .bz-clip-selbar {
@@ -674,8 +714,10 @@
   color: var(--clip-dim);
   padding: 3px 10px;
   border-radius: var(--bz-radius-sm);
-}
+}@media (hover: hover) {
+
 .bz-clp-rep-seg-btn:hover { color: var(--clip-accent); background: var(--clip-cream); }
+}
 .bz-clp-rep-seg-btn.on { color: var(--clip-paper); background: var(--clip-accent); }
 .bz-clp-rep-close {
   display: flex;
@@ -686,8 +728,10 @@
   border-radius: var(--bz-radius-sm);
   color: var(--clip-dim);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-clp-rep-close:hover { color: var(--clip-ink); background: var(--clip-cream); }
+}
 
 /* ---- 体：滚动容器（滚动功能保留，条由 core 通杀隐藏） ---- */
 .bz-clp-rep-body {
@@ -823,8 +867,10 @@
   font-size: var(--bz-font-caption);
   letter-spacing: 1px;
   padding: 4px 2px;
-}
+}@media (hover: hover) {
+
 .bz-clp-rep-top-open:hover { color: var(--clip-accent-soft); }
+}
 
 /* ---- 来源分布：水平条形行（与 reading-report generateBarRows 同范式） ---- */
 .bz-clp-rep-bars { display: flex; flex-direction: column; gap: 10px; }
@@ -908,8 +954,10 @@
   letter-spacing: 1px;
   color: var(--clip-dim);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-clp-rep-entry:hover { color: var(--clip-accent); }
+}
 
 /* ---- 移动端：真全屏跟随 .bz-panel-mtop（core 统一避让），卡宽自适应 ---- */
 @media (max-width: 768px) {

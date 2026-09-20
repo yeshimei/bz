@@ -135,9 +135,11 @@
   color: var(--dw-muted);
   font-weight: 400;
   transition: color var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary-brand:hover .bz-diary-range {
   color: var(--dw-accent);
+}
 }
 .bz-diary-btns {
   display: flex;
@@ -161,17 +163,21 @@
   cursor: pointer;
   padding: 0;
   transition: background var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-icon-btn:hover {
   background: var(--dw-surface);
+}
 }
 /* 搜索按钮打开态（toggle 视觉反馈：搜索框展开时按钮高亮） */
 .bz-diary .bz-diary-icon-btn--on {
   background: var(--dw-active-hover);
   color: var(--dw-accent);
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-icon-btn--on:hover {
   background: var(--dw-active-hover);
+}
 }
 
 /* ============ 类型 chips 行 ============ */
@@ -210,9 +216,11 @@
   line-height: 1.25;
   transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-chip:hover {
   background: var(--dw-hover);
+}
 }
 .bz-diary-chip-cnt {
   font-size: var(--bz-font-caption);
@@ -222,10 +230,12 @@
   background: var(--dw-accent);
   color: var(--dw-on-accent);
   box-shadow: none;
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-chip--on:hover {
   background: var(--dw-accent);
   color: var(--dw-on-accent);
+}
 }
 .bz-diary .bz-diary-chip--on .bz-diary-chip-cnt {
   color: rgba(255, 255, 255, 0.75);
@@ -234,9 +244,11 @@
 .bz-diary .bz-diary-chip--locked {
   border: 1px dashed var(--dw-line);
   opacity: 0.72;
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-chip--locked:hover {
   opacity: 1;
+}
 }
 
 /* 二级标签行（选中主标签后显示其子标签 chips） */
@@ -270,9 +282,11 @@
   line-height: 1.25;
   transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-subchip:hover {
   background: var(--dw-hover);
+}
 }
 .bz-diary .bz-diary-subchip--on {
   background: var(--dw-accent);
@@ -431,9 +445,11 @@
   cursor: pointer;
   font-family: inherit;
   transition: opacity var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-memory:hover {
   opacity: 0.85;
+}
 }
 .bz-diary-memory-thumb {
   width: 100%;
@@ -691,9 +707,11 @@
   background: linear-gradient(transparent, rgba(0, 0, 0, 0.6));
   opacity: 0;
   transition: opacity var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary-media:hover .bz-diary-cap {
   opacity: 1;
+}
 }
 /* 视频 ▶ 播放角标（hover 浮现） */
 .bz-diary-play {
@@ -712,9 +730,11 @@
   pointer-events: none;
   opacity: 0;
   transition: opacity var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary-media:hover .bz-diary-play {
   opacity: 1;
+}
 }
 /* 时长角标（视频） */
 .bz-diary-dur {
@@ -738,9 +758,11 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
+}@media (hover: hover) {
+
 .bz-diary-text:hover {
   background: var(--dw-hover);
+}
 }
 .bz-diary-text-row {
   display: flex;
@@ -832,9 +854,11 @@
 .bz-diary-md a {
   color: var(--dw-accent);
   text-decoration: none;
-}
+}@media (hover: hover) {
+
 .bz-diary-md a:hover {
   text-decoration: underline;
+}
 }
 .bz-diary-md hr {
   border: none;
@@ -927,9 +951,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-lbclose:hover {
   background: rgba(255, 255, 255, 0.25);
+}
 }
 /* 增强 #1：灯箱左右连看按钮（到头循环；方向键 / 移动端滑动同口径） */
 .bz-diary .bz-diary-lbnav {
@@ -947,9 +973,11 @@
   align-items: center;
   justify-content: center;
   transition: background var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-lbnav:hover {
   background: rgba(255, 255, 255, 0.25);
+}
 }
 .bz-diary .bz-diary-lbnav--prev {
   left: 20px;
@@ -1061,10 +1089,12 @@
 .bz-diary .bz-diary-filter-clear .bz-ic {
   width: 11px;
   height: 11px;
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-filter-clear:hover {
   background: var(--dw-hover);
   color: var(--dw-accent);
+}
 }
 /* 效率#9：搜索命中词轻高亮（文字卡 <mark>，accent 底） */
 .bz-diary mark.bz-diary-mark {
@@ -1089,9 +1119,11 @@
   align-items: center;
   justify-content: center;
   transition: background var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary .bz-diary-lbmore:hover {
   background: rgba(255, 255, 255, 0.25);
+}
 }
 /* 效率#13：loadAndRender 读取期骨架占位（shimmer 渐变卡 + 一句话；媒体占位表面 token） */
 .bz-diary-skel {
@@ -1395,10 +1427,12 @@
   font-size: var(--bz-font-caption);
   cursor: pointer;
   transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary-datefilter .bz-diary-datefilter-reset:hover {
   background: var(--dw-surface);
   color: var(--dw-accent);
+}
 }
 /* 年份 chips：与 .bz-diary-chip 同规格（11px 药丸 / surface 底 / 计数 faint） */
 .bz-diary-datefilter-years {
@@ -1422,9 +1456,11 @@
   cursor: pointer;
   white-space: nowrap;
   transition: background var(--bz-dur-fast), color var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary-datefilter .bz-diary-datefilter-year:hover {
   background: var(--dw-hover);
+}
 }
 .bz-diary-datefilter .bz-diary-datefilter-year--on {
   background: var(--dw-accent);
@@ -1460,9 +1496,11 @@
   box-shadow: none;
   cursor: pointer;
   transition: background var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-diary-datefilter .bz-diary-datefilter-month:hover {
   background: var(--dw-hover);
+}
 }
 .bz-diary-datefilter .bz-diary-datefilter-month--on {
   background: var(--dw-accent);
@@ -1476,9 +1514,11 @@
   border: 1px dashed var(--dw-line);
   opacity: 0.6;
   cursor: not-allowed;
-}
+}@media (hover: hover) {
+
 .bz-diary-datefilter .bz-diary-datefilter-month--empty:hover {
   background: none;
+}
 }
 .bz-diary-datefilter-month-name {
   font-size: var(--bz-font-meta);
@@ -1700,9 +1740,11 @@
   background: var(--interactive-accent);
   color: var(--text-on-accent, #fff);
   font-size: var(--font-ui-small);
-}
+}@media (hover: hover) {
+
 .bz-button:hover {
   background: var(--interactive-accent-hover);
+}
 }
 
 /* ============ 解锁屏（三域共用骨架 · 加密日记口径） ============

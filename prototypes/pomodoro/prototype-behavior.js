@@ -1,4 +1,4 @@
-/* 源指纹 47539c5610b750b8 · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 558567d64062013a · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4330,6 +4330,63 @@ var BZW_pomodoro = (() => {
     }
   });
 
+  // src/core/mobile.ts
+  var init_mobile = __esm({
+    "src/core/mobile.ts"() {
+      init_fake_obsidian();
+    }
+  });
+
+  // src/core/ui/focus-trap.ts
+  function isHidden(el) {
+    let cur = el;
+    while (cur && cur !== document.body) {
+      if (cur.classList.contains("bz-setting-hidden")) return true;
+      if (cur.style.display === "none") return true;
+      cur = cur.parentElement;
+    }
+    return false;
+  }
+  function trapFocus(container) {
+    const onKeydown = (e) => {
+      if (e.key !== "Tab") return;
+      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
+        (el) => !isHidden(el) && !el.hasAttribute("disabled")
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && active !== container && container.contains(active);
+      if (e.shiftKey) {
+        if (active === first || !inside) {
+          e.preventDefault();
+          last.focus();
+        }
+      } else if (active === last || !inside) {
+        e.preventDefault();
+        first.focus();
+      }
+    };
+    container.addEventListener("keydown", onKeydown);
+    return () => container.removeEventListener("keydown", onKeydown);
+  }
+  function trapPanelFocus(panel) {
+    panel.classList.add(PANEL_FOCUS_CLASS);
+    if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+    const release = trapFocus(panel);
+    panel.focus({ preventScroll: true });
+    return release;
+  }
+  var FOCUSABLE_SELECTOR, PANEL_FOCUS_CLASS;
+  var init_focus_trap = __esm({
+    "src/core/ui/focus-trap.ts"() {
+      init_mobile();
+      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      PANEL_FOCUS_CLASS = "bz-panel-focushost";
+    }
+  });
+
   // src/core/z-order.ts
   function syncAlwaysOnTop() {
     for (const el of alwaysOnTop) {
@@ -4738,54 +4795,6 @@ var BZW_pomodoro = (() => {
       init_http();
       init_str();
       init_notice();
-    }
-  });
-
-  // src/core/mobile.ts
-  var init_mobile = __esm({
-    "src/core/mobile.ts"() {
-      init_fake_obsidian();
-    }
-  });
-
-  // src/core/ui/focus-trap.ts
-  function isHidden(el) {
-    let cur = el;
-    while (cur && cur !== document.body) {
-      if (cur.classList.contains("bz-setting-hidden")) return true;
-      if (cur.style.display === "none") return true;
-      cur = cur.parentElement;
-    }
-    return false;
-  }
-  function trapFocus(container) {
-    const onKeydown = (e) => {
-      if (e.key !== "Tab") return;
-      const items = Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter(
-        (el) => !isHidden(el) && !el.hasAttribute("disabled")
-      );
-      if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
-      const active = document.activeElement;
-      if (e.shiftKey) {
-        if (active === first || !container.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else if (active === last || !container.contains(active)) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    container.addEventListener("keydown", onKeydown);
-    return () => container.removeEventListener("keydown", onKeydown);
-  }
-  var FOCUSABLE_SELECTOR;
-  var init_focus_trap = __esm({
-    "src/core/ui/focus-trap.ts"() {
-      init_mobile();
-      FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
     }
   });
 
@@ -6071,7 +6080,6 @@ var BZW_pomodoro = (() => {
     });
   }
   function buildDOM() {
-    var _a;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
     mask.className = "bz-overlay-mask";
@@ -6088,7 +6096,8 @@ var BZW_pomodoro = (() => {
     });
     bindEvents();
     render();
-    (_a = document.getElementById("pomodoro-popup")) == null ? void 0 : _a.focus();
+    const panel = document.getElementById("pomodoro-popup");
+    if (panel) trapPanelFocus(panel);
   }
   function initDataOnce() {
     if (loaded) return Promise.resolve();
@@ -6168,6 +6177,7 @@ var BZW_pomodoro = (() => {
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
       init_esc_manager();
+      init_focus_trap();
       init_z_order();
       init_settings_provider();
       init_notice();

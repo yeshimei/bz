@@ -15,6 +15,7 @@
 import type { App } from 'obsidian';
 import { TFile } from 'obsidian';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { allocZ } from '../core/z-order';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
@@ -293,6 +294,8 @@ export function createOverlay(app: App): void {
 
   document.body.appendChild(overlay);
   M.currentOverlay = overlay;
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源；纯接线一行）
+  trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-bs-panel') ?? overlay);
 
   // 单一委托：匾额关闭（移动端）/ 标签筛选 / 排序 / 报告视图交互 / 书脊详情
   overlay.addEventListener('click', (e) => {

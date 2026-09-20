@@ -54,26 +54,35 @@
   white-space: nowrap;
   font-family: inherit;
   transition: background-color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease, opacity var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-btn:hover { background: var(--bz-surface-hover) !important; }
+}
 .bz-btn:active { background: var(--bz-surface-active) !important; }
 .bz-btn:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .bz-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-btn .bz-ic { width: 14px; height: 14px; }
 
-.bz-btn--primary { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; border-color: transparent; }
+.bz-btn--primary { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; border-color: transparent; }@media (hover: hover) {
+
 .bz-btn--primary:hover { background: var(--bz-brand-hover) !important; }
+}
 .bz-btn--primary:active { background: var(--bz-brand-hover) !important; opacity: 0.9; }
 
-.bz-btn--danger { background: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
+.bz-btn--danger { background: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }@media (hover: hover) {
+
 .bz-btn--danger:hover { background: var(--bz-danger) !important; opacity: 0.9; }
+}
 
 /* 描边 danger 档（ghost 形制 + danger 色；与实底 --danger 互补）：常态透底 danger 描边字，
    hover 转实底 on-danger（先例：书架墙详情删除钮） */
-.bz-btn--danger-ghost { background: transparent !important; border-color: var(--bz-danger) !important; color: var(--bz-danger) !important; }
-.bz-btn--danger-ghost:hover { background: var(--bz-danger) !important; border-color: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
+.bz-btn--danger-ghost { background: transparent !important; border-color: var(--bz-danger) !important; color: var(--bz-danger) !important; }@media (hover: hover) {
 
-.bz-btn--ghost { background: transparent !important; border-color: var(--bz-border-strong) !important; color: var(--bz-text-1) !important; }
+.bz-btn--danger-ghost:hover { background: var(--bz-danger) !important; border-color: var(--bz-danger) !important; color: var(--bz-on-danger) !important; }
+}
+
+.bz-btn--ghost { background: transparent !important; border-color: var(--bz-border-strong) !important; color: var(--bz-text-1) !important; }@media (hover: hover) {
+
 .bz-btn--ghost:hover { background: var(--bz-surface-hover) !important; }
 
 /* hover 品牌档（悬停才显品牌色的静态变体）：常态走基线，hover 转品牌软底 + 品牌前景描边
@@ -82,6 +91,7 @@
   background: var(--bz-brand-soft) !important;
   border-color: var(--bz-brand) !important;
   color: var(--bz-brand) !important;
+}
 }
 
 .bz-btn--sm { height: var(--bz-control-h-sm); padding: 0 10px; font-size: var(--bz-font-meta); border-radius: 6px; }
@@ -95,15 +105,19 @@
   background: transparent !important;
   border-color: transparent !important;
   color: var(--bz-text-2) !important;
-}
+}@media (hover: hover) {
+
 .bz-btn.bz-btn--chip:hover { color: var(--bz-text-1) !important; }
+}
 .bz-btn-chip {
   width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
   background: var(--bz-surface-hover); color: inherit;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.bz-btn-chip .bz-ic { width: 13px; height: 13px; }
+.bz-btn-chip .bz-ic { width: 13px; height: 13px; }@media (hover: hover) {
+
 .bz-btn--chip:hover .bz-btn-chip { background: var(--bz-brand-soft); color: var(--bz-brand); }
+}
 .bz-btn--chip.is-on { color: var(--bz-brand) !important; font-weight: var(--bz-weight-medium); }
 .bz-btn--chip.is-on .bz-btn-chip { background: var(--bz-brand-soft); color: var(--bz-brand); }
 
@@ -129,28 +143,35 @@
   cursor: pointer;
   padding: 0;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-icon-btn:hover { background: var(--bz-surface-hover) !important; color: var(--bz-text-1) !important; }
+}
 .bz-icon-btn:active { background: var(--bz-surface-active) !important; }
 .bz-icon-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 .bz-icon-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-icon-btn .bz-ic { width: 14px; height: 14px; }
 
-.bz-icon-btn--on { color: var(--bz-brand) !important; }
+.bz-icon-btn--on { color: var(--bz-brand) !important; }@media (hover: hover) {
+
 .bz-icon-btn--on:hover { color: var(--bz-brand) !important; background: var(--bz-brand-soft) !important; }
+}
 .bz-icon-btn--lg { width: var(--bz-icon-btn-lg); height: var(--bz-icon-btn-lg); border-radius: var(--bz-radius-sm); font-size: 16px; }
 .bz-icon-btn--lg .bz-ic { width: 16px; height: 16px; }
 .bz-icon-btn--xs { width: 18px; height: 18px; border-radius: 50%; }
 .bz-icon-btn--xs .bz-ic { width: 12px; height: 12px; }
 .bz-icon-btn--close { width: 20px; height: 24px; font-size: 12px; }
-.bz-icon-btn[data-danger] { color: var(--bz-danger) !important; }
+.bz-icon-btn[data-danger] { color: var(--bz-danger) !important; }@media (hover: hover) {
+
 .bz-icon-btn[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent) !important; }
+}
 /* 盒装变体：浮在面板底色上的头行钮（先例 home hero 编辑/关闭）——surface 底 + 描边，
    取代域内对基线 transparent 底的 !important 对抗 */
 .bz-icon-btn--boxed {
   background: var(--bz-surface-2) !important;
   border: 1px solid var(--bz-border);
-}
+}@media (hover: hover) {
+
 .bz-icon-btn--boxed:hover { border-color: var(--bz-border-hover); }
 /* 开关激活变体：品牌实底 + on-brand 前景（编辑模式开启等 toggle 态）；
    声明在 --boxed 之后——同钮叠加两修饰时激活底覆盖盒装底 */
@@ -161,13 +182,16 @@
   border-color: transparent;
 }
 .bz-icon-btn--active:hover { background: var(--bz-brand-hover) !important; }
+}
 /* 强调图标钮（品牌色图标 + 卡片底描边）：列表卡内行动钮等需要从灰调里跳出来的单图标钮 */
 .bz-icon-btn--accent {
   color: var(--bz-brand) !important;
   background: var(--bz-surface-2) !important;
   border: 1px solid var(--bz-border);
-}
+}@media (hover: hover) {
+
 .bz-icon-btn--accent:hover { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
+}
 
 /* ═══════════ Chip .bz-chip ═══════════ */
 .bz-chip {
@@ -188,17 +212,25 @@
   white-space: nowrap;
   font-family: inherit;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-chip:hover { background: var(--bz-surface-hover) !important; color: var(--bz-text-1) !important; }
+}
 .bz-chip:disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 .bz-chip .bz-ic, .bz-chip-ic { width: 12px; height: 12px; flex-shrink: 0; }
 
-.bz-chip--on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }
+.bz-chip--on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }@media (hover: hover) {
+
 .bz-chip--on:hover { background: var(--bz-brand-hover) !important; color: var(--bz-on-brand) !important; }
-.bz-chip--sel { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
+}
+.bz-chip--sel { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }@media (hover: hover) {
+
 .bz-chip--sel:hover { background: var(--bz-brand-soft) !important; color: var(--bz-brand) !important; }
-.bz-chip--locked { border: 1px dashed var(--bz-border-strong); opacity: 0.55; cursor: not-allowed; background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
+}
+.bz-chip--locked { border: 1px dashed var(--bz-border-strong); opacity: 0.55; cursor: not-allowed; background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }@media (hover: hover) {
+
 .bz-chip--locked:hover { background: var(--bz-surface-1) !important; color: var(--bz-text-2) !important; }
+}
 /* 数据语义色徽标（域经内联 --bz-chip-tint / --bz-chip-tint-fg 注入底色/前景，如影院类型/状态徽标）；
    底色仍走 !important 链路（压过基线 .bz-chip），域内不再自写覆盖规则 */
 .bz-chip--tint {
@@ -206,7 +238,8 @@
   color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
   border-color: transparent !important;
   cursor: default;
-}
+}@media (hover: hover) {
+
 .bz-chip--tint:hover {
   background: var(--bz-chip-tint, var(--bz-surface-2)) !important;
   color: var(--bz-chip-tint-fg, var(--bz-text-1)) !important;
@@ -216,6 +249,7 @@
   background: var(--bz-brand-soft) !important;
   border-color: var(--bz-brand) !important;
   color: var(--bz-brand) !important;
+}
 }
 .bz-chip-cnt { margin-left: 2px; font-size: 11px; font-weight: 600; opacity: 0.75; }
 
@@ -232,8 +266,10 @@
   justify-content: center;
   cursor: pointer;
   padding: 0;
-}
+}@media (hover: hover) {
+
 .bz-chip-x:hover { background: rgba(0, 0, 0, 0.15) !important; }
+}
 .bz-chip-x .bz-ic { width: 10px; height: 10px; }
 
 /* ═══════════ 徽标 .bz-badge ═══════════ */
@@ -270,8 +306,10 @@
   line-height: var(--bz-leading-tight);
   transition: border-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease;
 }
-.bz-input::placeholder { color: var(--bz-text-3); }
+.bz-input::placeholder { color: var(--bz-text-3); }@media (hover: hover) {
+
 .bz-input:hover { border-color: var(--bz-border-hover); }
+}
 .bz-input:focus { outline: none; border-color: var(--bz-brand); box-shadow: 0 0 0 2px var(--bz-brand-soft); }
 .bz-input:disabled { opacity: 0.5; cursor: not-allowed; }
 .bz-input--error { border-color: var(--bz-danger); }
@@ -334,8 +372,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   font-family: inherit;
   white-space: nowrap;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-segmented-btn:hover { color: var(--bz-text-1) !important; }
+}
 .bz-segmented-btn.is-on { background: var(--bz-surface-2) !important; color: var(--bz-text-1) !important; font-weight: 600; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06) !important; }
 
 /* ═══════════ 平铺单选组 .bz-choice（choice.ts） ═══════════
@@ -363,11 +403,15 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   white-space: nowrap;
   font-family: inherit;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-choice-btn:hover { background: var(--bz-surface-hover) !important; }
+}
 .bz-choice-btn:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
-.bz-choice-btn.is-on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }
+.bz-choice-btn.is-on { background: var(--bz-brand) !important; color: var(--bz-on-brand) !important; }@media (hover: hover) {
+
 .bz-choice-btn.is-on:hover { background: var(--bz-brand-hover) !important; }
+}
 .bz-choice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 /* 浮岛 segmented（float: true，issue 199 组件化；issue 200 拍板：视觉 = .bz-segmented
    同款取值，仅加白卡滑动指示器（choice.ts 量位 transform/width 200ms）。
@@ -402,10 +446,14 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: transparent !important;
   color: var(--bz-text-2) !important;
   transition: color var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-choice--float .bz-choice-btn:hover { background: transparent !important; color: var(--bz-text-1) !important; }
-.bz-choice--float .bz-choice-btn.is-on { background: transparent !important; color: var(--bz-text-1) !important; font-weight: 600; }
+}
+.bz-choice--float .bz-choice-btn.is-on { background: transparent !important; color: var(--bz-text-1) !important; font-weight: 600; }@media (hover: hover) {
+
 .bz-choice--float .bz-choice-btn.is-on:hover { background: transparent !important; }
+}
 
 /* ═══════════ 开关 .bz-sw（switch.ts） ═══════════
    设置/表单行的滑块开关（40×22）：关 = 轨道中性、开 = 品牌实底。
@@ -434,10 +482,14 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   background: var(--bz-thumb);
   box-shadow: var(--bz-shadow-sm);
   transition: transform var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-sw:hover { border-color: var(--bz-border-hover); }
-.bz-sw.on { background: var(--bz-brand); border-color: var(--bz-brand); }
+}
+.bz-sw.on { background: var(--bz-brand); border-color: var(--bz-brand); }@media (hover: hover) {
+
 .bz-sw.on:hover { background: var(--bz-brand-hover); }
+}
 .bz-sw.on::after { transform: translateX(18px); }
 .bz-sw:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-sw.is-disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
@@ -464,8 +516,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   cursor: pointer;
   font-family: inherit;
   transition: border-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-select:hover { border-color: var(--bz-border-hover); }
+}
 .bz-select.open { border-color: var(--bz-brand); box-shadow: 0 0 0 2px var(--bz-brand-soft); }
 .bz-select-val {
   flex: 1;
@@ -518,8 +572,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
+}@media (hover: hover) {
+
 .bz-select-item:hover { background: var(--bz-surface-hover); }
+}
 .bz-select-item.is-on { color: var(--bz-brand); font-weight: var(--bz-weight-semibold); }
 .bz-select-item-ck { width: 12px; height: 12px; flex-shrink: 0; visibility: hidden; }
 .bz-select-item.is-on .bz-select-item-ck { visibility: visible; }
@@ -556,8 +612,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-lightbox-close:hover { background: rgba(255, 255, 255, 0.24); }
+}
 .bz-lightbox-close .bz-ic { width: 16px; height: 16px; }
 .bz-lightbox-media {
   max-width: min(900px, 92vw);
@@ -804,6 +862,12 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   overflow: hidden;
 }
 
+/* 呈报#13（F3+H3）：大面板「打开即入焦 + Tab 圈闭」——焦点壳（trapPanelFocus 落焦的
+   面板容器，tabindex=-1）不画焦点圈：圈会框住整个视口级面板，纯视觉噪音；
+   面板内部控件（按钮/输入框/role=button 行）的焦点圈照常。 */
+.bz-panel-focushost:focus,
+.bz-panel-focushost:focus-visible { outline: none; }
+
 /* ═══════════ A2. 竖向分割线 .bz-vsplit（issue 222）═══════════
    多栏面板栏间可拖分条（uiVSplitter）：平时零视觉（贴合面板底色），
    hover/拖拽点亮 brand-soft；触屏隐藏（移动端布局无栏宽拖拽）。 */
@@ -813,9 +877,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   cursor: col-resize;
   background: transparent;
   transition: background var(--bz-dur-fast) var(--bz-ease-out);
-}
+}@media (hover: hover) {
+
 .bz-vsplit:hover,
 .bz-vsplit.is-drag { background: var(--bz-brand-soft); }
+}
 @media (pointer: coarse) {
   .bz-vsplit { display: none; }
 }
@@ -942,8 +1008,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   text-align: left;
   font-family: inherit;
   flex-shrink: 0;
-}
+}@media (hover: hover) {
+
 .bz-rail-item:hover { background: var(--bz-surface-hover); }
+}
 .bz-rail-item.on {
   background: var(--bz-brand);
   color: var(--bz-on-brand);
@@ -1036,8 +1104,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 /* 二级子列表（可选，影院分类树式）：父项 .has-sub 行尾箭头旋转 */
 .bz-rail-sub { display: none; flex-direction: column; gap: 1px; margin: 2px 0 2px 14px; }
 .bz-rail-sub.open { display: flex; }
-.bz-rail-sub .bz-rail-item { padding: var(--bz-space-xs) var(--bz-space-md); font-size: var(--bz-font-meta); color: var(--bz-text-2); }
+.bz-rail-sub .bz-rail-item { padding: var(--bz-space-xs) var(--bz-space-md); font-size: var(--bz-font-meta); color: var(--bz-text-2); }@media (hover: hover) {
+
 .bz-rail-sub .bz-rail-item:hover { color: var(--bz-text-1); }
+}
 .bz-rail-caret { width: 12px; height: 12px; flex-shrink: 0; color: var(--bz-text-3); transition: transform var(--bz-dur-fast) ease; }
 .bz-rail-item.sub-open .bz-rail-caret { transform: rotate(90deg); }
 /* 底部固定区（工具/入口） */
@@ -1142,9 +1212,11 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
 .bz-stat--main .bz-stat-label,
 .bz-stat--main .bz-stat-num { color: var(--bz-brand); }
 /* 可点统计卡（点击=切筛选）：hover 轻提背景 */
-.bz-stat--click { cursor: pointer; }
+.bz-stat--click { cursor: pointer; }@media (hover: hover) {
+
 .bz-stat--click:hover { background: var(--bz-surface-hover); }
 .bz-stat--main.bz-stat--click:hover { background: color-mix(in srgb, var(--bz-brand) 12%, transparent); }
+}
 /* 文字主卡变体（纪念日等标题档数字；2 行钳制——窄卡单行省略只剩两三字，issue 204） */
 .bz-stat--text .bz-stat-num {
   font-size: var(--bz-font-emphasis);
@@ -1194,8 +1266,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border: none;
   text-align: left;
   font-family: inherit;
-}
+}@media (hover: hover) {
+
 .bz-popover-item:hover { background: var(--bz-surface-hover); }
+}
 .bz-popover-item.is-on { background: var(--bz-brand-soft); font-weight: var(--bz-weight-semibold); color: var(--bz-brand); }
 .bz-popover-item .bz-ic { width: 13px; height: 13px; color: var(--bz-text-3); flex-shrink: 0; }
 .bz-popover-item.is-on .bz-ic { color: var(--bz-brand); }
@@ -1301,8 +1375,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   color: var(--bz-text-2);
   cursor: pointer;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-tab:hover { color: var(--bz-text-1); }
+}
 .bz-tab.is-on {
   color: var(--bz-brand);
   border-bottom-color: var(--bz-brand);
@@ -1337,13 +1413,17 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-menu-item:hover { background: var(--bz-surface-hover); }
+}
 .bz-menu-item .bz-ic { width: 13px; height: 13px; color: var(--bz-text-3); flex-shrink: 0; }
 .bz-menu-item .bz-kbd { margin-left: auto; }
 .bz-menu-item[data-danger] { color: var(--bz-danger); }
-.bz-menu-item[data-danger] .bz-ic { color: var(--bz-danger); }
+.bz-menu-item[data-danger] .bz-ic { color: var(--bz-danger); }@media (hover: hover) {
+
 .bz-menu-item[data-danger]:hover { background: color-mix(in srgb, var(--bz-danger) 12%, transparent); }
+}
 .bz-menu-sep { height: 1px; background: var(--bz-border); margin: 4px 6px; }
 
 /* ── 键帽 .bz-kbd ── */
@@ -1401,8 +1481,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: 4px;
   display: inline-flex;
   flex-shrink: 0;
-}
+}@media (hover: hover) {
+
 .bz-alert-x:hover { color: var(--bz-text-1); background: var(--bz-surface-hover); }
+}
 .bz-alert-x .bz-ic { width: 12px; height: 12px; }
 
 /* ── 消息卡 .bz-msg（toast 通知卡） ── */
@@ -1523,8 +1605,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   text-align: left;
   cursor: pointer;
   transition: background var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-sheet-act:hover { background: var(--bz-surface-hover); }
+}
 .bz-sheet-act-ic {
   width: 22px;
   display: inline-flex;
@@ -1639,8 +1723,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   transition: background-color var(--bz-dur-fast) ease, border-color var(--bz-dur-fast) ease;
 }
 .bz-checkbox { border-radius: 4px; }
-.bz-radio { border-radius: 50%; }
+.bz-radio { border-radius: 50%; }@media (hover: hover) {
+
 .bz-checkbox:hover, .bz-radio:hover { border-color: var(--bz-border-hover); }
+}
 .bz-checkbox:checked {
   background: var(--bz-brand) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 6 9 17l-5-5'/%3E%3C/svg%3E") center/10px no-repeat;
   border-color: var(--bz-brand);
@@ -1670,8 +1756,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-input-number-btn:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
+}
 .bz-input-number-val {
   width: 40px;
   display: inline-flex;
@@ -1717,8 +1805,10 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   color: var(--bz-text-3);
   white-space: nowrap;
 }
-a.bz-crumb, button.bz-crumb { cursor: pointer; }
+a.bz-crumb, button.bz-crumb { cursor: pointer; }@media (hover: hover) {
+
 a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
+}
 .bz-crumb--current { color: var(--bz-text-1); font-weight: var(--bz-weight-medium); }
 .bz-crumb-sep { color: var(--bz-text-3); display: inline-flex; }
 .bz-crumb-sep .bz-ic { width: 11px; height: 11px; }
@@ -1839,8 +1929,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   align-items: center;
   justify-content: center;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-media-play:hover { background: rgba(0, 0, 0, 0.65); }
+}
 .bz-media-play .bz-ic { width: 15px; height: 15px; }
 
 /* ── 头像 .bz-avatar ── */
@@ -1877,8 +1969,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   cursor: pointer;
   box-shadow: var(--bz-shadow-md);
   transition: background-color var(--bz-dur-fast) ease, box-shadow var(--bz-dur-fast) ease, transform var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-fab:hover { background: var(--bz-brand-hover); box-shadow: var(--bz-shadow-lg); }
+}
 .bz-fab:active { transform: scale(0.96); }
 
 /* ── 工具提示 [data-tip]（纯 CSS hover） ── */
@@ -1901,8 +1995,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   pointer-events: none;
   transition: opacity var(--bz-dur-fast) ease;
   z-index: 80;
-}
+}@media (hover: hover) {
+
 [data-tip]:hover::after { opacity: 1; }
+}
 
 /* ── 多选下拉 .bz-multiselect ── */
 .bz-multiselect {
@@ -1952,8 +2048,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   cursor: pointer;
   text-align: left;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-multiselect-opt:hover { background: var(--bz-surface-hover); }
+}
 .bz-multiselect-opt .bz-ck {
   width: 14px;
   height: 14px;
@@ -1998,8 +2096,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   flex-direction: column;
   align-items: center;
   gap: 1px;
-}
+}@media (hover: hover) {
+
 .bz-mp-month:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
+}
 .bz-mp-month.is-on { background: var(--bz-brand-soft); color: var(--bz-brand); font-weight: var(--bz-weight-semibold); }
 .bz-mp-month-cnt { font-size: 10px; color: var(--bz-text-3); font-variant-numeric: tabular-nums; }
 
@@ -2048,8 +2148,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-page-btn:hover { background: var(--bz-surface-hover); color: var(--bz-text-1); }
+}
 .bz-page-btn.is-on { background: var(--bz-brand); color: var(--bz-on-brand); font-weight: var(--bz-weight-semibold); }
 .bz-page-btn[disabled] { opacity: 0.4; cursor: default; pointer-events: none; }
 .bz-page-btn .bz-ic { width: 12px; height: 12px; }
@@ -2078,8 +2180,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-label);
   color: var(--bz-text-1);
   text-align: left;
-}
+}@media (hover: hover) {
+
 .bz-collapse-head:hover { background: var(--bz-surface-hover); }
+}
 .bz-collapse-head .bz-ic { width: 13px; height: 13px; color: var(--bz-text-3); flex-shrink: 0; }
 .bz-collapse-caret { margin-left: auto; transition: transform var(--bz-dur-fast) ease; }
 .bz-collapse.open .bz-collapse-caret { transform: rotate(90deg); }
@@ -2190,8 +2294,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   /* Obsidian 核心/主题会给 button 钉高度——显式放开，防内部预览区被 flex 压扁（用户实测塌陷根因） */
   height: auto;
   min-height: 0;
-}
+}@media (hover: hover) {
+
 .bz-cardpick-card:hover { border-color: var(--bz-border-hover); }
+}
 .bz-cardpick-card:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-cardpick-card.is-on {
   border-color: var(--bz-brand);
@@ -2271,11 +2377,13 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   height: auto;
   box-shadow: none;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-setlist-remove:hover {
   color: var(--bz-text-1);
   border-color: var(--bz-border-strong);
   background: transparent;
+}
 }
 .bz-setlist-empty {
   padding: 10px 8px;
@@ -2340,8 +2448,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   align-items: center;
   justify-content: center;
 }
-.bz-setlist--chips .bz-setlist-remove::before { content: '×'; font-size: 15px; line-height: 1; }
+.bz-setlist--chips .bz-setlist-remove::before { content: '×'; font-size: 15px; line-height: 1; }@media (hover: hover) {
+
 .bz-setlist--chips .bz-setlist-remove:hover { color: var(--bz-text-1); }
+}
 
 /* dense：紧密分隔行——无条目底、发丝分隔线，适合长名单密集浏览 */
 .bz-setlist--dense { gap: 0; padding: 0; }
@@ -2353,8 +2463,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border: 0;
   border-top: 1px solid var(--bz-border);
 }
-.bz-setlist--dense .bz-setlist-item:first-child { border-top: 0; }
+.bz-setlist--dense .bz-setlist-item:first-child { border-top: 0; }@media (hover: hover) {
+
 .bz-setlist--dense .bz-setlist-item:hover { background: var(--bz-surface-2); }
+}
 
 /* ═══════════ 解锁屏（三域共用骨架：保险库 / 密码本 / 加密日记） ═══════════
  * 结构同源、槽位驱动：文案与统计由调用域注入，风格由各域按 --ls-accent 等变量覆盖。
@@ -2521,9 +2633,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-label);
   font-weight: 600;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-lockscreen-action:hover {
   opacity: 0.92;
+}
 }
 .bz-lockscreen-action:disabled {
   opacity: 0.55;
