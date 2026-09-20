@@ -275,6 +275,9 @@ export function buildAnalysisHTML(): string {
   const weekEntries = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'].map((w, i) => ({ label: w, value: data.weekdays[(i + 1) % 7] as number }));
   const cmpRow = (it: any) => topRow('', `《${esc(it.name)}》`, `我 ${Number(it.rating).toFixed(1)} / 豆 ${Number(it.douban).toFixed(1)}`);
 
+  // 板块图标按语义各配（呈报#58 / C6：此前 18 个板块共用 bar-chart-3 失去区分度）。
+  // lucide 清单（Obsidian setIcon 内置全量）：日历=趋势/分布、时钟/沙漏=片长/片龄、
+  // 星/奖杯=评分、globe/视频/人群=产地/导演/演员，各板块一眼可辨；样式沿用 .sec-title .bz-ic。
   return `${kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部`, `有影评 <b>${data.reviewCount}</b> 篇`])}
   <div class="stat-cards">
     <div class="stat-card"><div class="v">${data.total}</div><div class="k">馆藏总数</div></div>
@@ -283,22 +286,22 @@ export function buildAnalysisHTML(): string {
     <div class="stat-card"><div class="v">${data.avgDiff === '—' ? '—' : (Number(data.avgDiff) >= 0 ? '+' : '') + data.avgDiff}</div><div class="k">个人−豆瓣</div></div>
   </div>
   ${secHTML('类型分布', 'clapperboard', softHTML(topN(data.groups, 8)))}
-  ${secHTML('年度观影趋势', 'bar-chart-3', barHTML(yearEntries))}
-  ${secHTML('片龄画像', 'bar-chart-3', kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets['≥10年']}</b> 部`]) + softHTML(ageEntries) + '<div class="stat-era-gap">' + barHTML(data.eraEntries) + '</div>')}
-  ${secHTML('片长画像', 'bar-chart-3', data.durCount ? kvInline([`平均片长 <b>${data.avgDur}</b> 分钟`]) + softHTML(durEntries) : '<div class="cn-empty">暂无片长数据（笔记 frontmatter 未含时长字段）</div>')}
-  ${secHTML('月度观影分布', 'bar-chart-3', barHTML(monthEntries))}
-  ${secHTML('观影节奏', 'bar-chart-3', kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.datedWatched ? Math.round(weekend / data.datedWatched * 100) : 0}%）`]) + barHTML(weekEntries))}
-  ${secHTML('个人评分分布', 'bar-chart-3', barHTML(bucketEntries))}
-  ${secHTML('评分趋势（个人10分制）', 'bar-chart-3', barHTML(data.yearRatingEntries, { color: '#8fa3bd' }))}
-  ${secHTML('打分习惯（个人−豆瓣）', 'bar-chart-3', kvInline([`平均差值 <b>${data.avgDiff === '—' ? '—' : (Number(data.avgDiff) >= 0 ? '+' : '') + data.avgDiff}</b>（个人−豆瓣）`]) + '<div class="stat-subhead">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join('') : emptyHTML()) + '<div class="stat-subhead stat-subhead--lg">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join('') : emptyHTML()))}
-  ${secHTML('题材偏好 TOP10', 'bar-chart-3', softHTML(topN(data.genres, 10)))}
-  ${secHTML('制片国家/地区 TOP10', 'bar-chart-3', softHTML(topN(data.countries, 10)))}
-  ${secHTML('最爱导演 TOP10', 'bar-chart-3', softHTML(topN(data.directors, 10)))}
-  ${secHTML('最爱主演 TOP10', 'bar-chart-3', softHTML(topN(data.actors, 10)))}
-  ${secHTML('真爱重复', 'bar-chart-3', kvInline([`导演≥3部 <b>${data.dirRepeat}</b> 人`, `主演≥3部 <b>${data.actRepeat}</b> 人`]) + softHTML([{ label: '导演≥3部', value: data.dirRepeat as number }, { label: '主演≥3部', value: data.actRepeat as number }]))}
-  ${secHTML('影评关键词', 'bar-chart-3', kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc(k)} <b>${v as number}</b></span>`).join('')}</div>` : emptyHTML()))}
-  ${secHTML('我的高分 TOP10', 'bar-chart-3', data.topRated.length ? data.topRated.map((it: any, i: number) => topRow(String(i + 1), esc(it.name), Number(it.rating).toFixed(1))).join('') : emptyHTML())}
-  ${secHTML('系列追踪', 'bar-chart-3', data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => topRow(String(i + 1), `《${esc(k)}》`, `${v as number} 部`)).join('') : emptyHTML())}
-  ${secHTML('追剧深度', 'bar-chart-3', data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s: any, i: number) => topRow(String(i + 1), `《${esc(s.name)}》`, `${s.seasons} 季`)).join('') : emptyHTML())}
-  ${secHTML(`想看清单（${data.wantTotal ?? data.wantList.length}）`, 'bar-chart-3', (data.wantList.length ? data.wantList.map((it: any, i: number) => topRow(String(i + 1), esc(it.name) + (it.doubanRating ? ' · 豆瓣 ' + esc(it.doubanRating) : ''), '')).join('') : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span class="tag-pill">${esc(t)} <b>${c as number}</b></span>`).join('') + '</div>' : ''))}`;
+  ${secHTML('年度观影趋势', 'calendar-days', barHTML(yearEntries))}
+  ${secHTML('片龄画像', 'hourglass', kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets['≥10年']}</b> 部`]) + softHTML(ageEntries) + '<div class="stat-era-gap">' + barHTML(data.eraEntries) + '</div>')}
+  ${secHTML('片长画像', 'clock', data.durCount ? kvInline([`平均片长 <b>${data.avgDur}</b> 分钟`]) + softHTML(durEntries) : '<div class="cn-empty">暂无片长数据（笔记 frontmatter 未含时长字段）</div>')}
+  ${secHTML('月度观影分布', 'calendar', barHTML(monthEntries))}
+  ${secHTML('观影节奏', 'activity', kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.datedWatched ? Math.round(weekend / data.datedWatched * 100) : 0}%）`]) + barHTML(weekEntries))}
+  ${secHTML('个人评分分布', 'star', barHTML(bucketEntries))}
+  ${secHTML('评分趋势（个人10分制）', 'trending-up', barHTML(data.yearRatingEntries, { color: '#8fa3bd' }))}
+  ${secHTML('打分习惯（个人−豆瓣）', 'scale', kvInline([`平均差值 <b>${data.avgDiff === '—' ? '—' : (Number(data.avgDiff) >= 0 ? '+' : '') + data.avgDiff}</b>（个人−豆瓣）`]) + '<div class="stat-subhead">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join('') : emptyHTML()) + '<div class="stat-subhead stat-subhead--lg">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join('') : emptyHTML()))}
+  ${secHTML('题材偏好 TOP10', 'tags', softHTML(topN(data.genres, 10)))}
+  ${secHTML('制片国家/地区 TOP10', 'globe', softHTML(topN(data.countries, 10)))}
+  ${secHTML('最爱导演 TOP10', 'video', softHTML(topN(data.directors, 10)))}
+  ${secHTML('最爱主演 TOP10', 'users', softHTML(topN(data.actors, 10)))}
+  ${secHTML('真爱重复', 'repeat', kvInline([`导演≥3部 <b>${data.dirRepeat}</b> 人`, `主演≥3部 <b>${data.actRepeat}</b> 人`]) + softHTML([{ label: '导演≥3部', value: data.dirRepeat as number }, { label: '主演≥3部', value: data.actRepeat as number }]))}
+  ${secHTML('影评关键词', 'quote', kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc(k)} <b>${v as number}</b></span>`).join('')}</div>` : emptyHTML()))}
+  ${secHTML('我的高分 TOP10', 'trophy', data.topRated.length ? data.topRated.map((it: any, i: number) => topRow(String(i + 1), esc(it.name), Number(it.rating).toFixed(1))).join('') : emptyHTML())}
+  ${secHTML('系列追踪', 'layers', data.seriesList.length ? data.seriesList.map(([k, v]: any, i: number) => topRow(String(i + 1), `《${esc(k)}》`, `${v as number} 部`)).join('') : emptyHTML())}
+  ${secHTML('追剧深度', 'tv', data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s: any, i: number) => topRow(String(i + 1), `《${esc(s.name)}》`, `${s.seasons} 季`)).join('') : emptyHTML())}
+  ${secHTML(`想看清单（${data.wantTotal ?? data.wantList.length}）`, 'bookmark', (data.wantList.length ? data.wantList.map((it: any, i: number) => topRow(String(i + 1), esc(it.name) + (it.doubanRating ? ' · 豆瓣 ' + esc(it.doubanRating) : ''), '')).join('') : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([t, c]) => `<span class="tag-pill">${esc(t)} <b>${c as number}</b></span>`).join('') + '</div>' : ''))}`;
 }
