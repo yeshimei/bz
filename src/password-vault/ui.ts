@@ -214,17 +214,28 @@ export class PasswordVaultUIManager {
     document.addEventListener('keydown', this.idleBump, true);
   }
 
+  /** 视图切换单出口（呈报#16/P4）：双端实例（桌面导航 + 移动 tabs）高亮联动后重绘 */
+  private setView(v: 'all' | 'fav'): void {
+    if (v !== 'all' && v !== 'fav') return;
+    this.view = v;
+    const root = this.root!;
+    root.querySelectorAll('.bz-password-vault-navitem').forEach((x) =>
+      x.classList.toggle('on', x.getAttribute('data-view') === v)
+    );
+    root.querySelectorAll('[data-mobview]').forEach((x) => {
+      const on = x.getAttribute('data-mobview') === v;
+      x.classList.toggle('on', on);
+      x.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+    this.renderAll();
+  }
+
   // ---------- 交互绑定 ----------
   private bindDesk() {
     const root = this.root!;
-    // 导航
+    // 导航（呈报#16/P4：切换统一走 setView，双端实例高亮联动）
     root.querySelectorAll('.bz-password-vault-navitem').forEach((it) => {
-      it.addEventListener('click', () => {
-        root.querySelectorAll('.bz-password-vault-navitem').forEach((x) => x.classList.remove('on'));
-        it.classList.add('on');
-        this.view = (it.getAttribute('data-view') as 'all' | 'fav');
-        this.renderAll();
-      });
+      it.addEventListener('click', () => this.setView(it.getAttribute('data-view') as 'all' | 'fav'));
     });
     // 搜索防抖（双实例共用一支 applySearch）
     this.desk.search.addEventListener('input', (e) => {
@@ -240,6 +251,10 @@ export class PasswordVaultUIManager {
 
   private bindMob() {
     const root = this.root!;
+    // 视图切换（呈报#16/P4：移动端「已收藏」此前无入口，顶栏下补 全部/收藏 分段）
+    root.querySelectorAll('[data-mobview]').forEach((it) => {
+      it.addEventListener('click', () => this.setView(it.getAttribute('data-mobview') as 'all' | 'fav'));
+    });
     // 搜索（双实例共用一支 applySearch）
     this.mob.search.addEventListener('input', (e) => {
       this.applySearch((e.target as HTMLInputElement).value.trim());
@@ -263,6 +278,16 @@ export class PasswordVaultUIManager {
         });
       }
     });
+    // 呈报#16/P5：移动详情页网址可点——委托拦截 a[data-extlink] 走 core openExternalUrl
+    // 单源（preventDefault 截断浏览器默认跳转 + stopPropagation 防冒泡开卡）；
+    // pageBody 是持久节点，委托在此绑一次，页面内容重建不叠加监听
+    this.mob.pageBody.addEventListener('click', (e) => {
+      const a = (e.target as HTMLElement).closest('a[data-extlink]') as HTMLAnchorElement | null;
+      if (!a) return;
+      e.preventDefault();
+      e.stopPropagation();
+      openExternalUrl(getApp(), a.getAttribute('href') || '');
+    });
   }
 
   private mobPagePlatform: string | null = null;
@@ -279,9 +304,18 @@ export class PasswordVaultUIManager {
       modal.addEventListener('click', (e) => {
         if (e.target === modal) this.closeEntryDialog();
       });
-      // 生成
+      // 生成（呈报#3/P6）：密码框为空直接生成；已手填非空 → 先经 core 流程框确认一声，
+      // 防手滑把手工密码无声顶掉（确认/取消均不动原值，确认后才覆盖）
       dlg.querySelector('[data-act="gen"]')?.addEventListener('click', () => {
-        (dlg.querySelector('[data-f="password"]') as HTMLInputElement).value = this.generatePassword();
+        const pwInput = dlg.querySelector('[data-f="password"]') as HTMLInputElement;
+        if (pwInput.value) {
+          this.askConfirm('覆盖已填密码？', '密码框已有内容，生成新密码将替换它，替换后无法找回。', false, () => {
+            pwInput.value = this.generatePassword();
+            this.toast('已生成新密码');
+          });
+          return;
+        }
+        pwInput.value = this.generatePassword();
         this.toast('已生成新密码');
       });
       // eye 切换（E5）：默认掩码，点击明文/掩码互换（对齐 encrypt 侧同弹窗）
@@ -616,9 +650,18 @@ export class PasswordVaultUIManager {
   private async handleAccountAction(d: PasswordVaultEntry, act: string) {
     const t = (m: string, err = false) => this.toast(m, err);
     if (act === 'copy-ac') {
-      (await copySensitiveWithFallback(d.account || '')) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+      // 呈报#21/P2：空值不执行复制（复制到空气还报成功），提示真实状态
+      if (!d.account) {
+        t('该条目无账号');
+        return;
+      }
+      (await copySensitiveWithFallback(d.account)) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
     } else if (act === 'copy-pw') {
-      (await copySensitiveWithFallback(d.password || '')) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+      if (!d.password) {
+        t('该条目无密码');
+        return;
+      }
+      (await copySensitiveWithFallback(d.password)) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
     } else if (act === 'eye') {
       this.shownIds[d.id] = !this.shownIds[d.id];
       this.renderAll();
@@ -904,7 +947,12 @@ export class PasswordVaultUIManager {
         label: '复制账号',
         onClick: () => {
           void (async () => {
-            (await copySensitiveWithFallback(d.account || '')) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+            // 呈报#21/P2：空值不执行复制（同卡片按钮口径）
+            if (!d.account) {
+              t('该条目无账号');
+              return;
+            }
+            (await copySensitiveWithFallback(d.account)) ? t('账号已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
           })();
         },
       },
@@ -913,7 +961,11 @@ export class PasswordVaultUIManager {
         label: '复制密码',
         onClick: () => {
           void (async () => {
-            (await copySensitiveWithFallback(d.password || '')) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
+            if (!d.password) {
+              t('该条目无密码');
+              return;
+            }
+            (await copySensitiveWithFallback(d.password)) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
           })();
         },
       },
@@ -984,7 +1036,12 @@ export class PasswordVaultUIManager {
         label: '复制最近账号',
         onClick: () => {
           void (async () => {
-            (await copySensitiveWithFallback(recent.account || '')) ? t('最近账号已复制（60 秒后自动清空）') : t('复制失败', true);
+            // 呈报#21/P2：空值不执行复制（同卡片按钮口径）
+            if (!recent.account) {
+              t('该条目无账号');
+              return;
+            }
+            (await copySensitiveWithFallback(recent.account)) ? t('最近账号已复制（60 秒后自动清空）') : t('复制失败', true);
           })();
         },
       });
@@ -993,7 +1050,11 @@ export class PasswordVaultUIManager {
         label: '复制最近密码',
         onClick: () => {
           void (async () => {
-            (await copySensitiveWithFallback(recent.password || '')) ? t('最近密码已复制（60 秒后自动清空）') : t('复制失败', true);
+            if (!recent.password) {
+              t('该条目无密码');
+              return;
+            }
+            (await copySensitiveWithFallback(recent.password)) ? t('最近密码已复制（60 秒后自动清空）') : t('复制失败', true);
           })();
         },
       });

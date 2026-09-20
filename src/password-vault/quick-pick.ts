@@ -119,7 +119,9 @@ export function openPasswordQuickPicker(
   search.setAttribute('aria-label', '搜索密码条目或生成新密码');
 
   const listEl = document.createElement('div');
+  // 呈报#12-P3：listbox 语义（行 = option，活动行经 aria-activedescendant 播报）
   listEl.className = 'bz-password-vault-qp-list';
+  listEl.setAttribute('role', 'listbox');
 
   // 状态：过滤结果 + 键盘活动行（0 = 顶部「生成新」，1..n = 命中条目）
   const state: { hits: PasswordVaultEntry[]; active: number } = { hits: [], active: 0 };
@@ -129,9 +131,17 @@ export function openPasswordQuickPicker(
     // 一致——超量命中时 ↑/↓ 不得选中「从未渲染」的条目）
     const total = 1 + Math.min(state.hits.length, LIMIT);
     state.active = Math.max(0, Math.min(total - 1, i));
-    listEl.querySelectorAll('.bz-popover-item').forEach((el, k) => {
+    const items = listEl.querySelectorAll('.bz-popover-item');
+    items.forEach((el, k) => {
       el.classList.toggle('is-on', k === state.active);
+      el.setAttribute('aria-selected', k === state.active ? 'true' : 'false');
     });
+    // 呈报#12-P3：活动行 id 同步给 listbox（读屏 aria-activedescendant 播报）
+    const on = listEl.querySelector('.bz-popover-item.is-on');
+    if (on) {
+      if (!on.id) on.id = 'bz-password-vault-qp-opt-' + state.active;
+      listEl.setAttribute('aria-activedescendant', on.id);
+    }
     listEl.querySelector('.bz-popover-item.is-on')?.scrollIntoView({ block: 'nearest' });
   };
 
@@ -155,6 +165,8 @@ export function openPasswordQuickPicker(
     key.textContent = 'Enter 生成';
     row.appendChild(mid);
     row.appendChild(key);
+    // 呈报#12-P3：mousedown 圈闭——按下行不把焦点从搜索框抢走（选择仍由 click 完成）
+    row.addEventListener('mousedown', (e) => e.preventDefault());
     row.addEventListener('click', () => {
       closePasswordQuickPicker();
       onPick({ type: 'generate' });
@@ -195,6 +207,8 @@ export function openPasswordQuickPicker(
         key.textContent = 'Enter 复制';
         row.appendChild(mid);
         row.appendChild(key);
+        // 呈报#12-P3：同上，行按下不抢焦点
+        row.addEventListener('mousedown', (e) => e.preventDefault());
         row.addEventListener('click', () => {
           closePasswordQuickPicker();
           onPick({ type: 'entry', entry: d });
@@ -217,15 +231,16 @@ export function openPasswordQuickPicker(
   };
 
   search.addEventListener('input', () => renderList());
-  // 键盘：↑/↓ 换活动行（含顶部「生成新」），Enter 走活动行，Esc 走 escManager 层
-  search.addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowDown') {
+  // 键盘：↑/↓ 换活动行（含顶部「生成新」），Enter 走活动行，Esc 走 escManager 层。
+  // 呈报#12-P3（键盘圈闭）：监听挂弹窗容器而非搜索框——焦点出框（Tab 移出/点过列表空白）
+  // 后 ↑↓/Enter 依然生效；可打印字符自动把焦点领回搜索框继续输入，全程焦点不丢。
+  popup.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
-      setActive(state.active + 1);
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setActive(state.active - 1);
-    } else if (e.key === 'Enter') {
+      setActive(state.active + (e.key === 'ArrowDown' ? 1 : -1));
+      return;
+    }
+    if (e.key === 'Enter') {
       e.preventDefault();
       if (state.active === 0) {
         closePasswordQuickPicker();
@@ -237,6 +252,11 @@ export function openPasswordQuickPicker(
         closePasswordQuickPicker();
         onPick({ type: 'entry', entry: d });
       }
+      return;
+    }
+    // 焦点不在搜索框时来了可打印字符 → 领回搜索框让字符正常落入（不拦截默认行为）
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement !== search) {
+      search.focus();
     }
   });
 

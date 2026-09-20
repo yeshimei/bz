@@ -159,13 +159,17 @@ export function deskHTML(): string {
     `;
 }
 
-/** 移动骨架：顶栏 + 搜索 + 列表 + FAB + 详情页 + 锁屏/弹层 */
+/** 移动骨架：顶栏 + 视图切换（呈报#16/P4：全部/收藏，移动端此前无收藏入口）+ 搜索 + 列表 + FAB + 详情页 + 锁屏/弹层 */
 export function mobHTML(): string {
   return `
       <div class="bz-password-vault-mobbar">
         <div class="seal">${ICONS.seal}</div>
         <div class="t">密码本</div>
         <button class="bz-password-vault-mobclose bz-touch-target" data-act="mob-close" aria-label="关闭">${ICONS.x}</button>
+      </div>
+      <div class="bz-password-vault-mobtabs" data-mobtabs role="tablist" aria-label="视图切换">
+        <button class="tab on" data-mobview="all" role="tab" aria-selected="true">全部</button>
+        <button class="tab" data-mobview="fav" role="tab" aria-selected="false">已收藏</button>
       </div>
       <div class="bz-password-vault-mobsearch">${ICONS.search}<input placeholder="搜索平台、账号、备注…"></div>
       <div class="bz-password-vault-moblist"></div>
@@ -274,16 +278,19 @@ export function mobPlatCardHtml(opts: { platform: string; url: string; account: 
         <div class="go">${ICONS.go}</div>`;
 }
 
-/** 移动详情页头（平台名/链接 + 新增账号钮；平台页与账号页共用） */
+/** 移动详情页头（平台名/链接 + 新增账号钮；平台页与账号页共用）。
+ *  呈报#16/P5：链接带 data-extlink，点击由 ui 层统一拦截走 core openExternalUrl 单源。 */
 export function mobPlatHeadHtml(opts: { platform: string; url: string; fav: boolean }): string {
   const favStar = opts.fav ? ' <span style="color:var(--pwv-warn)">★</span>' : '';
   return `<div class="bz-password-vault-mobplathead">
-      <div><div style="font-size:17px;font-weight:700">${esc(opts.platform)}${favStar}</div>${opts.url ? `<a style="font-size:12px;color:var(--pwv-gold-ink)" href="${esc(opts.url)}" target="_blank" rel="noopener">${esc(opts.url)} ↗</a>` : '<div style="font-size:12px;color:var(--pwv-faint)">无链接</div>'}</div>
+      <div><div style="font-size:17px;font-weight:700">${esc(opts.platform)}${favStar}</div>${opts.url ? `<a style="font-size:12px;color:var(--pwv-gold-ink)" href="${esc(opts.url)}" data-extlink>${esc(opts.url)} ↗</a>` : '<div style="font-size:12px;color:var(--pwv-faint)">无链接</div>'}</div>
       <button class="bz-password-vault-btn gold" data-act="add">+ 新增账号</button>
     </div>`;
 }
 
-/** 移动账号段（withId=平台页多账号态，按钮带 data-id；账号页单卡态不带） */
+/** 移动账号段（withId=平台页多账号态，按钮带 data-id；账号页单卡态不带）。
+ *  呈报#16/P5：segmeta 网址从纯文本改为可点 <a data-extlink>（移动端此前点不开），
+ *  点击由 ui 层拦截走 core openExternalUrl 单源（对齐桌面详情链接可点口径）。 */
 export function mobSegHtml(d: PasswordVaultEntry, shown: boolean, withId: boolean): string {
   // N17：id 与其余字段同口径 escAttr（id 由数据层生成，防御脏数据/手拼串吞 markup）
   const idAttr = withId ? ` data-id="${escAttr(d.id)}"` : '';
@@ -294,6 +301,6 @@ export function mobSegHtml(d: PasswordVaultEntry, shown: boolean, withId: boolea
             <button class="mini bz-touch-target--lg" data-act="eye"${idAttr}>${shown ? ICONS.eyeoff : ICONS.eye}</button>
             <button class="mini bz-touch-target--lg" data-act="copy-pw"${idAttr}>${ICONS.copy}</button></div>
           ${d.note ? `<div class="note">${esc(d.note)}</div>` : ''}
-          <div class="segmeta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? ' · ' + esc(d.url.replace('https://', '')) : ''}</div>
+          <div class="segmeta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? ' · <a href="' + escAttr(d.url) + '" data-extlink>' + esc(d.url.replace('https://', '')) + ' ↗</a>' : ''}</div>
         </div>`;
 }

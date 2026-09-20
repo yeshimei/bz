@@ -1,4 +1,4 @@
-/* 源指纹 5cbaa92f163c80ff · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a15286ec42307ae9 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/password-vault/fake-sim.ts","prototypes/password-vault/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts","src/password-vault/index.ts","src/password-vault/quick-pick.ts","src/password-vault/render.ts","src/password-vault/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/password-vault/fake-sim.ts → window.BZW_password_vault（行为单源预览包，issue 245/ADR-0106） */
 var BZW_password_vault = (() => {
@@ -9127,8 +9127,13 @@ var BZW_password_vault = (() => {
     note: "#2e7d68",
     diary: "#5a63a8"
   };
+  var LUCIDE_ALIAS = {
+    "more-h": "more-horizontal",
+    "star-outline": "star"
+  };
   function vIc(name, size = 14) {
-    return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ""}</svg>`;
+    const lucide = LUCIDE_ALIAS[name] || name;
+    return `<i data-lucide="${lucide}" class="bz-vault-ic bz-vault-ic--${size}" aria-hidden="true"></i>`;
   }
   function statusbarHtml(unlocked) {
     return `${vIc(unlocked ? "lock-open" : "lock", 12)} 保险库`;
@@ -9219,32 +9224,6 @@ var BZW_password_vault = (() => {
       <div class="bigbtns">${actionBtns}</div>
     </div>`;
   }
-  var ICON_PATHS = {
-    lock: '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
-    "lock-open": '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 7.9-.9"/>',
-    key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
-    "file-lock": '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 12v4"/><circle cx="12" cy="9" r="1.4" fill="currentColor" stroke="none"/>',
-    "book-lock": '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-    eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-    download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
-    "trash-2": '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',
-    copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-    "more-h": '<circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
-    stethoscope: '<path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>',
-    search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
-    "refresh-cw": '<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>',
-    settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.01a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>',
-    x: '<path d="M18 6 6 18M6 6l12 12"/>',
-    "chevron-left": '<path d="m15 18-6-6 6-6"/>',
-    star: '<path d="M12 2 15 9l7 .8-5.3 4.7 1.6 6.9L12 17.8 5.7 21.4l1.6-6.9L2 9.8 9 9z"/>',
-    "star-outline": '<path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
-    "layout-grid": '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
-    plus: '<path d="M12 5v14M5 12h14"/>',
-    "eye-off": '<path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/>',
-    "triangle-alert": '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 20h16a2 2 0 0 0 1.73-2"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
-    film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
-    image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>'
-  };
 
   // src/core/ui/lock-screen.ts
   function uiLockScreen(opts) {
@@ -9870,7 +9849,7 @@ var BZW_password_vault = (() => {
           <span class="st" data-mob-unlock>已解锁</span>
           <button class="bz-vault-mobclose bz-touch-target--xl" data-act="mob-close" aria-label="关闭">${vIc("x", 15)}</button>
         </div>
-        <div class="bz-vault-msearch" style="position:relative">${vIc("search", 13)}<input placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
+        <div class="bz-search bz-vault-msearch"><i data-lucide="search" class="bz-ic"></i><input class="bz-input" placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
           <span class="sg on" data-masset="overview">概览</span>
           <span class="sg" data-masset="note">笔记</span>
@@ -9903,6 +9882,7 @@ var BZW_password_vault = (() => {
       document.body.appendChild(this.previewPopup);
       this.bindVaultShell();
       this.registerEscape();
+      mountIcons(this.popup);
       this._unlockOff = onDomainEvent(ENCRYPT_UNLOCK_CHANGED_CHANNEL, (evt) => {
         if (evt && evt.unlocked === false) this.onExternalLock();
       });
@@ -10440,6 +10420,7 @@ var BZW_password_vault = (() => {
       });
       topifyZ(ls.el);
       document.body.appendChild(ls.el);
+      mountIcons(ls.el);
       const esc2 = escManager.register("bz-vault-unlock", {
         isVisible: () => ls.el.isConnected,
         close: () => done(false)
@@ -10789,8 +10770,9 @@ var BZW_password_vault = (() => {
         if (kind === "note") {
           const head = document.createElement("div");
           head.className = "bz-vault-lc-head";
-          head.innerHTML = `<div class="bz-vault-search" style="position:relative">${vIc("search", 14)}<input placeholder="搜索笔记…" data-vault-search>${searchClearHtml()}</div>`;
+          head.innerHTML = `<div class="bz-search"><i data-lucide="search" class="bz-ic"></i><input class="bz-input" placeholder="搜索笔记…" data-vault-search>${searchClearHtml()}</div>`;
           list.appendChild(head);
+          mountIcons(head);
           const headSearch = head.querySelector("[data-vault-search]");
           if (headSearch) {
             headSearch.value = kw;
@@ -10828,6 +10810,7 @@ var BZW_password_vault = (() => {
         this.attachNoteDrawer(el, n, kind);
         listBody.appendChild(el);
       }
+      mountIcons(listBody);
       if (keepHead) listBody.scrollTop = prevScroll;
       this.renderNoteDetail(detail, notes.find((n) => n.id === selId) || notes[0], kind);
     }
@@ -10835,6 +10818,7 @@ var BZW_password_vault = (() => {
     renderNoteDetail(detail, note, kind) {
       const plain = kind === "diary" ? this._diaryPlain[note.id] : void 0;
       detail.innerHTML = noteDetailHTML(note, kind, plain);
+      mountIcons(detail);
       const bind = (a, fn) => {
         var _a;
         (_a = detail.querySelector(`[data-detail="${a}"]`)) == null ? void 0 : _a.addEventListener("click", (e) => {
@@ -10915,6 +10899,7 @@ var BZW_password_vault = (() => {
       const emoji = document.createElement("span");
       emoji.className = "bz-item-sheet-emoji";
       emoji.innerHTML = vIc(isDiary ? "book-lock" : "file-lock", 16);
+      mountIcons(emoji);
       body.appendChild(emoji);
       const info = document.createElement("div");
       info.style.cssText = "flex:1; min-width:0;";
@@ -11096,12 +11081,14 @@ var BZW_password_vault = (() => {
       const page = document.createElement("div");
       page.className = "bz-vault-mobpage";
       page.innerHTML = `<div class="head"><button class="back bz-touch-target--xl" data-mob-back>${vIc("chevron-left", 16)}</button><div class="t">${titleHtml}</div><button class="ic" data-mob-menu>${vIc("more-h", 16)}</button></div><div class="body"></div>`;
+      mountIcons(page);
       return { page, body: page.querySelector(".body") };
     }
     openNoteMobPage(note, kind) {
       var _a, _b;
       const { page, body } = this.createMobPage(kind === "note" ? "笔记" : "加密日记");
       body.innerHTML = noteDetailHTML(note, kind);
+      mountIcons(body);
       const bind = (a, fn) => {
         var _a2;
         (_a2 = body.querySelector(`[data-detail="${a}"]`)) == null ? void 0 : _a2.addEventListener("click", (e) => {
@@ -11592,7 +11579,10 @@ var BZW_password_vault = (() => {
       this.statusBarEl = el;
       this.dataManager.onUnlockChange = (unlocked) => {
         var _a, _b;
-        if (this.statusBarEl) this.statusBarEl.innerHTML = statusbarHtml(unlocked);
+        if (this.statusBarEl) {
+          this.statusBarEl.innerHTML = statusbarHtml(unlocked);
+          mountIcons(this.statusBarEl);
+        }
         (_b = (_a = this.uiManager).notifyUnlockUi) == null ? void 0 : _b.call(_a);
       };
       this.dataManager.onUnlockChange(this.dataManager.unlocked);
@@ -11887,6 +11877,10 @@ var BZW_password_vault = (() => {
         <div class="t">密码本</div>
         <button class="bz-password-vault-mobclose bz-touch-target" data-act="mob-close" aria-label="关闭">${ICONS2.x}</button>
       </div>
+      <div class="bz-password-vault-mobtabs" data-mobtabs role="tablist" aria-label="视图切换">
+        <button class="tab on" data-mobview="all" role="tab" aria-selected="true">全部</button>
+        <button class="tab" data-mobview="fav" role="tab" aria-selected="false">已收藏</button>
+      </div>
       <div class="bz-password-vault-mobsearch">${ICONS2.search}<input placeholder="搜索平台、账号、备注…"></div>
       <div class="bz-password-vault-moblist"></div>
       <button class="bz-password-vault-fab">${ICONS2.plus}</button>
@@ -11964,7 +11958,7 @@ var BZW_password_vault = (() => {
   function mobPlatHeadHtml(opts) {
     const favStar = opts.fav ? ' <span style="color:var(--pwv-warn)">★</span>' : "";
     return `<div class="bz-password-vault-mobplathead">
-      <div><div style="font-size:17px;font-weight:700">${esc(opts.platform)}${favStar}</div>${opts.url ? `<a style="font-size:12px;color:var(--pwv-gold-ink)" href="${esc(opts.url)}" target="_blank" rel="noopener">${esc(opts.url)} ↗</a>` : '<div style="font-size:12px;color:var(--pwv-faint)">无链接</div>'}</div>
+      <div><div style="font-size:17px;font-weight:700">${esc(opts.platform)}${favStar}</div>${opts.url ? `<a style="font-size:12px;color:var(--pwv-gold-ink)" href="${esc(opts.url)}" data-extlink>${esc(opts.url)} ↗</a>` : '<div style="font-size:12px;color:var(--pwv-faint)">无链接</div>'}</div>
       <button class="bz-password-vault-btn gold" data-act="add">+ 新增账号</button>
     </div>`;
   }
@@ -11977,7 +11971,7 @@ var BZW_password_vault = (() => {
             <button class="mini bz-touch-target--lg" data-act="eye"${idAttr}>${shown ? ICONS2.eyeoff : ICONS2.eye}</button>
             <button class="mini bz-touch-target--lg" data-act="copy-pw"${idAttr}>${ICONS2.copy}</button></div>
           ${d.note ? `<div class="note">${esc(d.note)}</div>` : ""}
-          <div class="segmeta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? " · " + esc(d.url.replace("https://", "")) : ""}</div>
+          <div class="segmeta">创建于 ${esc(fmtDate(d.createdAt))}${d.url ? ' · <a href="' + escAttr(d.url) + '" data-extlink>' + esc(d.url.replace("https://", "")) + " ↗</a>" : ""}</div>
         </div>`;
   }
 
@@ -12107,16 +12101,26 @@ var BZW_password_vault = (() => {
       document.addEventListener("pointerdown", this.idleBump, true);
       document.addEventListener("keydown", this.idleBump, true);
     }
+    /** 视图切换单出口（呈报#16/P4）：双端实例（桌面导航 + 移动 tabs）高亮联动后重绘 */
+    setView(v) {
+      if (v !== "all" && v !== "fav") return;
+      this.view = v;
+      const root = this.root;
+      root.querySelectorAll(".bz-password-vault-navitem").forEach(
+        (x) => x.classList.toggle("on", x.getAttribute("data-view") === v)
+      );
+      root.querySelectorAll("[data-mobview]").forEach((x) => {
+        const on = x.getAttribute("data-mobview") === v;
+        x.classList.toggle("on", on);
+        x.setAttribute("aria-selected", on ? "true" : "false");
+      });
+      this.renderAll();
+    }
     // ---------- 交互绑定 ----------
     bindDesk() {
       const root = this.root;
       root.querySelectorAll(".bz-password-vault-navitem").forEach((it) => {
-        it.addEventListener("click", () => {
-          root.querySelectorAll(".bz-password-vault-navitem").forEach((x) => x.classList.remove("on"));
-          it.classList.add("on");
-          this.view = it.getAttribute("data-view");
-          this.renderAll();
-        });
+        it.addEventListener("click", () => this.setView(it.getAttribute("data-view")));
       });
       this.desk.search.addEventListener("input", (e) => {
         this.applySearch(e.target.value.trim());
@@ -12130,6 +12134,9 @@ var BZW_password_vault = (() => {
     bindMob() {
       var _a, _b, _c, _d;
       const root = this.root;
+      root.querySelectorAll("[data-mobview]").forEach((it) => {
+        it.addEventListener("click", () => this.setView(it.getAttribute("data-mobview")));
+      });
       this.mob.search.addEventListener("input", (e) => {
         this.applySearch(e.target.value.trim());
       });
@@ -12147,6 +12154,13 @@ var BZW_password_vault = (() => {
           });
         }
       });
+      this.mob.pageBody.addEventListener("click", (e) => {
+        const a = e.target.closest("a[data-extlink]");
+        if (!a) return;
+        e.preventDefault();
+        e.stopPropagation();
+        openExternalUrl(getApp(), a.getAttribute("href") || "");
+      });
     }
     /** 绑定添加/编辑弹窗的保存/取消/生成按钮（双实例各一份） */
     bindDialogs() {
@@ -12159,7 +12173,15 @@ var BZW_password_vault = (() => {
           if (e.target === modal) this.closeEntryDialog();
         });
         (_a = dlg.querySelector('[data-act="gen"]')) == null ? void 0 : _a.addEventListener("click", () => {
-          dlg.querySelector('[data-f="password"]').value = this.generatePassword();
+          const pwInput = dlg.querySelector('[data-f="password"]');
+          if (pwInput.value) {
+            this.askConfirm("覆盖已填密码？", "密码框已有内容，生成新密码将替换它，替换后无法找回。", false, () => {
+              pwInput.value = this.generatePassword();
+              this.toast("已生成新密码");
+            });
+            return;
+          }
+          pwInput.value = this.generatePassword();
           this.toast("已生成新密码");
         });
         (_b = dlg.querySelector('[data-act="pw-eye"]')) == null ? void 0 : _b.addEventListener("click", () => {
@@ -12467,9 +12489,17 @@ var BZW_password_vault = (() => {
     async handleAccountAction(d, act) {
       const t = (m, err = false) => this.toast(m, err);
       if (act === "copy-ac") {
-        await copySensitiveWithFallback(d.account || "") ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
+        if (!d.account) {
+          t("该条目无账号");
+          return;
+        }
+        await copySensitiveWithFallback(d.account) ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
       } else if (act === "copy-pw") {
-        await copySensitiveWithFallback(d.password || "") ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
+        if (!d.password) {
+          t("该条目无密码");
+          return;
+        }
+        await copySensitiveWithFallback(d.password) ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
       } else if (act === "eye") {
         this.shownIds[d.id] = !this.shownIds[d.id];
         this.renderAll();
@@ -12741,7 +12771,11 @@ var BZW_password_vault = (() => {
           label: "复制账号",
           onClick: () => {
             void (async () => {
-              await copySensitiveWithFallback(d.account || "") ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
+              if (!d.account) {
+                t("该条目无账号");
+                return;
+              }
+              await copySensitiveWithFallback(d.account) ? t("账号已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
             })();
           }
         },
@@ -12750,7 +12784,11 @@ var BZW_password_vault = (() => {
           label: "复制密码",
           onClick: () => {
             void (async () => {
-              await copySensitiveWithFallback(d.password || "") ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
+              if (!d.password) {
+                t("该条目无密码");
+                return;
+              }
+              await copySensitiveWithFallback(d.password) ? t("密码已复制（60 秒后自动清空）") : t("复制失败，请手动复制", true);
             })();
           }
         },
@@ -12819,7 +12857,11 @@ var BZW_password_vault = (() => {
           label: "复制最近账号",
           onClick: () => {
             void (async () => {
-              await copySensitiveWithFallback(recent2.account || "") ? t("最近账号已复制（60 秒后自动清空）") : t("复制失败", true);
+              if (!recent2.account) {
+                t("该条目无账号");
+                return;
+              }
+              await copySensitiveWithFallback(recent2.account) ? t("最近账号已复制（60 秒后自动清空）") : t("复制失败", true);
             })();
           }
         });
@@ -12828,7 +12870,11 @@ var BZW_password_vault = (() => {
           label: "复制最近密码",
           onClick: () => {
             void (async () => {
-              await copySensitiveWithFallback(recent2.password || "") ? t("最近密码已复制（60 秒后自动清空）") : t("复制失败", true);
+              if (!recent2.password) {
+                t("该条目无密码");
+                return;
+              }
+              await copySensitiveWithFallback(recent2.password) ? t("最近密码已复制（60 秒后自动清空）") : t("复制失败", true);
             })();
           }
         });
