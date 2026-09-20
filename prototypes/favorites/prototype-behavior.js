@@ -1,4 +1,4 @@
-/* 源指纹 3a86d2d9719ef64b · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e5038a3aff903b71 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -4146,87 +4146,6 @@ var BZW_favorites = (() => {
     return _provider ? _provider() : {};
   }
 
-  // src/favorites/config.ts
-  var CONFIG = {
-    /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
-    DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
-    /** 数据文件名（固定，不允许用户修改） */
-    STORAGE_FILE: "favorites.json",
-    /** 标签定义设置键（data.json；旧伴生文件 favorites.tags.json 仅迁移期识别，见 data.ts） */
-    TAGS_SETTINGS_KEY: "favoriteTags"
-  };
-  var DEFAULT_TAGS = [
-    { id: "github", label: "GitHub", ic: "github" },
-    { id: "desktop", label: "桌面软件", ic: "app-window" },
-    { id: "web", label: "网站", ic: "globe" },
-    { id: "llm", label: "大模型", ic: "brain-circuit" },
-    { id: "pi", label: "pi", ic: "keyboard" },
-    { id: "claude", label: "Claude", ic: "bot" },
-    { id: "skills", label: "skills", ic: "zap" },
-    { id: "pub", label: "酒馆", ic: "beer" },
-    { id: "dsh", label: "DeepSeek Harness", ic: "waypoints" }
-  ];
-  var currentTags = null;
-  function tagsFromSettings() {
-    var _a;
-    return normalizeTags((_a = tryGetSettings()) == null ? void 0 : _a[CONFIG.TAGS_SETTINGS_KEY]);
-  }
-  function getTags() {
-    if (!currentTags) {
-      const tags = tagsFromSettings();
-      currentTags = tags.length ? tags : DEFAULT_TAGS;
-    }
-    return currentTags;
-  }
-  function setTags(tags) {
-    currentTags = tags;
-    tryGetSettings()[CONFIG.TAGS_SETTINGS_KEY] = tags;
-  }
-  function getTagById(id) {
-    var _a;
-    return (_a = getTags().find((t) => t.id === id)) != null ? _a : null;
-  }
-  var tagIdSeq = 0;
-  function newTagId() {
-    tagIdSeq = (tagIdSeq + 1) % 1679616;
-    return "t" + Date.now().toString(36) + tagIdSeq.toString(36);
-  }
-  function normalizeTags(raw) {
-    if (!Array.isArray(raw)) return [];
-    const out = [];
-    for (const r of raw) {
-      if (!r || typeof r !== "object") continue;
-      const o = r;
-      const label = typeof o.label === "string" ? o.label.trim() : "";
-      if (!label) continue;
-      out.push({
-        id: typeof o.id === "string" && o.id ? o.id : newTagId(),
-        label,
-        ic: typeof o.ic === "string" && o.ic ? o.ic : "tag"
-      });
-    }
-    return out;
-  }
-  function getStorageDir(value) {
-    let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, "");
-    if (/\.json$/i.test(dir)) {
-      const idx = dir.lastIndexOf("/");
-      dir = idx >= 0 ? dir.slice(0, idx) : "";
-    }
-    return dir || CONFIG.DEFAULT_STORAGE_PATH;
-  }
-  function getStoragePath(value) {
-    return getStorageDir(value) + "/" + CONFIG.STORAGE_FILE;
-  }
-  function normalizeUrl(url) {
-    const u = (url || "").trim();
-    return /^https?:\/\//i.test(u) ? u : "https://" + u;
-  }
-  function isUrlLike(text) {
-    const t = (text || "").trim();
-    return t.length > 0 && !/\s/.test(t) && (/^https?:\/\//i.test(t) || /^www\./i.test(t));
-  }
-
   // src/core/z-order.ts
   var zCounter = 1e5;
   var alwaysOnTop = /* @__PURE__ */ new Set();
@@ -4599,6 +4518,23 @@ var BZW_favorites = (() => {
   }
 
   // src/core/storage.ts
+  var DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
+  function normalizeStorageDir(value) {
+    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
+    if (/\.json$/i.test(dir)) {
+      const idx = dir.lastIndexOf("/");
+      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    }
+    return dir || DEFAULT_STORAGE_DIR;
+  }
+  function storageDir() {
+    const s = tryGetSettings();
+    return normalizeStorageDir(s && s.storagePath);
+  }
+  function storageFile(name, base) {
+    const dir = (base || storageDir()).trim().replace(/\/+$/, "");
+    return `${dir}/${name}`;
+  }
   var fileTaskQueues = /* @__PURE__ */ new Map();
   function enqueueFileTask(filePath, task) {
     var _a;
@@ -4755,6 +4691,82 @@ var BZW_favorites = (() => {
         await modifyWithBackup(app, cur, c);
       }
     };
+  }
+
+  // src/favorites/config.ts
+  var CONFIG = {
+    /** 默认存储目录（文件名固定 favorites.json，设置只允许改目录） */
+    DEFAULT_STORAGE_PATH: "CONFIG/STORAGE",
+    /** 数据文件名（固定，不允许用户修改） */
+    STORAGE_FILE: "favorites.json",
+    /** 标签定义设置键（data.json；旧伴生文件 favorites.tags.json 仅迁移期识别，见 data.ts） */
+    TAGS_SETTINGS_KEY: "favoriteTags"
+  };
+  var DEFAULT_TAGS = [
+    { id: "github", label: "GitHub", ic: "github" },
+    { id: "desktop", label: "桌面软件", ic: "app-window" },
+    { id: "web", label: "网站", ic: "globe" },
+    { id: "llm", label: "大模型", ic: "brain-circuit" },
+    { id: "pi", label: "pi", ic: "keyboard" },
+    { id: "claude", label: "Claude", ic: "bot" },
+    { id: "skills", label: "skills", ic: "zap" },
+    { id: "pub", label: "酒馆", ic: "beer" },
+    { id: "dsh", label: "DeepSeek Harness", ic: "waypoints" }
+  ];
+  var currentTags = null;
+  function tagsFromSettings() {
+    var _a;
+    return normalizeTags((_a = tryGetSettings()) == null ? void 0 : _a[CONFIG.TAGS_SETTINGS_KEY]);
+  }
+  function getTags() {
+    if (!currentTags) {
+      const tags = tagsFromSettings();
+      currentTags = tags.length ? tags : DEFAULT_TAGS;
+    }
+    return currentTags;
+  }
+  function setTags(tags) {
+    currentTags = tags;
+    tryGetSettings()[CONFIG.TAGS_SETTINGS_KEY] = tags;
+  }
+  function getTagById(id) {
+    var _a;
+    return (_a = getTags().find((t) => t.id === id)) != null ? _a : null;
+  }
+  var tagIdSeq = 0;
+  function newTagId() {
+    tagIdSeq = (tagIdSeq + 1) % 1679616;
+    return "t" + Date.now().toString(36) + tagIdSeq.toString(36);
+  }
+  function normalizeTags(raw) {
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const r of raw) {
+      if (!r || typeof r !== "object") continue;
+      const o = r;
+      const label = typeof o.label === "string" ? o.label.trim() : "";
+      if (!label) continue;
+      out.push({
+        id: typeof o.id === "string" && o.id ? o.id : newTagId(),
+        label,
+        ic: typeof o.ic === "string" && o.ic ? o.ic : "tag"
+      });
+    }
+    return out;
+  }
+  function getStorageDir(value) {
+    return normalizeStorageDir(value);
+  }
+  function getStoragePath(value) {
+    return storageFile(CONFIG.STORAGE_FILE, getStorageDir(value));
+  }
+  function normalizeUrl(url) {
+    const u = (url || "").trim();
+    return /^https?:\/\//i.test(u) ? u : "https://" + u;
+  }
+  function isUrlLike(text) {
+    const t = (text || "").trim();
+    return t.length > 0 && !/\s/.test(t) && (/^https?:\/\//i.test(t) || /^www\./i.test(t));
   }
 
   // src/core/json-store.ts

@@ -10,6 +10,7 @@
  * setTags 写设置层（持久化由 data.saveTags / 旧文件迁移任务收口，首次改动才落盘）。
  */
 import { tryGetSettings } from '../core/settings-provider';
+import { normalizeStorageDir, storageFile } from '../core/storage';
 import type { FavTag } from './types';
 
 export const CONFIG = {
@@ -108,21 +109,24 @@ export function normalizeTags(raw: unknown): FavTag[] {
 
 
 /**
- * 归一化存储目录：设置只允许填目录；兼容旧值（旧设置可能存了完整文件路径，
- * 以 .json 结尾时取其所在目录）。
+ * 归一化存储目录。
+ *
+ * @deprecated 单源收编（深审 ARCH-2，bz-fix-core-pledges）：目录解析本体已上沉
+ * core/storage normalizeStorageDir（含 .json 尾段剥除防御），本口仅为存量消费方
+ * （checkup files.ts / home river.ts / 域内 app·ui）保留的兼容转发，勿新增引用。
  */
 export function getStorageDir(value?: string): string {
-  let dir = (value || CONFIG.DEFAULT_STORAGE_PATH).trim().replace(/\/+$/, '');
-  if (/\.json$/i.test(dir)) {
-    const idx = dir.lastIndexOf('/');
-    dir = idx >= 0 ? dir.slice(0, idx) : '';
-  }
-  return dir || CONFIG.DEFAULT_STORAGE_PATH;
+  return normalizeStorageDir(value);
 }
 
-/** 完整数据文件路径（目录 + 固定文件名） */
+/**
+ * 完整数据文件路径（目录 + 固定文件名）。
+ *
+ * @deprecated 同 getStorageDir：兼容转发 ≡ storageFile(STORAGE_FILE, normalizeStorageDir(value))，
+ * 新代码直接走 core/storage 单源。
+ */
 export function getStoragePath(value?: string): string {
-  return getStorageDir(value) + '/' + CONFIG.STORAGE_FILE;
+  return storageFile(CONFIG.STORAGE_FILE, getStorageDir(value));
 }
 
 

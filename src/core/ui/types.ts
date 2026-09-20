@@ -37,8 +37,8 @@ export interface BzChipOpts {
   label: string;
   icon?: BzIconName;
   count?: number;          // 徽标计数
-  selected?: boolean;      // 选中实底 --on
-  selectedSoft?: boolean;  // 选中软底 --sel（品牌软底，区别于实底）
+  selected?: boolean;      // 选中实底 --on（显式声明即切换 chip：缺省挂 aria-pressed 并随态落 true/false）
+  selectedSoft?: boolean;  // 选中软底 --sel（品牌软底，区别于实底；同样缺省挂 aria-pressed）
   removable?: boolean;     // 带删除钮（不暗示选中态；选中与否由 selected/selectedSoft 显式声明）
   locked?: boolean;        // 锁定虚线
   title?: string;
