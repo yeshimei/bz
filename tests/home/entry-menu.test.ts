@@ -2,6 +2,7 @@
 /**
  * 首页入口菜单纯层契约（core/item-actions 的接线面，2026-09-10）：
  *  - DOMAIN_MENU 形状：只放域自己的快捷动作（无「打开 X」、无「整理顺序」）；
+ *  - 末尾统一「设置」直达项（issue 388，2026-09-21）：每域动作后恒追加一条，定位该域设置页；
  *  - pomodoroMenuAction：番茄钟是唯一**相位敏感项**（四相位互斥、一次只出一条：
  *    未开始→开始专注 / 专注中→停止专注 / 暂停中→继续专注 / 休息中→跳过休息）；
  *  - sheetHeadHtml：长按抽屉盒头 = 域彩色图标 + 域名 + **入口行那行灰字**（口径与 riverCountText 同源，
@@ -10,8 +11,8 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  DOMAIN_MENU, DOMAIN_MAP, DOMAIN_DOT, domainColor,
-  pomodoroMenuAction, sheetHeadHtml, menuHeadHtml, riverCountText, EMPTY_COUNTS,
+  DOMAIN_MENU, DOMAIN_MAP, DOMAIN_DOT, DOMAIN_ICONS, domainColor,
+  pomodoroMenuAction, settingsMenuAction, sheetHeadHtml, menuHeadHtml, riverCountText, EMPTY_COUNTS,
 } from '../../src/home/render';
 import type { RiverData, RiverStreak } from '../../src/home/render';
 
@@ -64,7 +65,9 @@ describe('DOMAIN_MENU 形状', () => {
       .filter(([, list]) => list.some((a) => a.dynamic))
       .map(([id]) => id);
     expect(dyn).toEqual(['pomodoro']);
-    expect(DOMAIN_MENU.pomodoro.length).toBe(1);
+    // 1 条域动作 + 末尾统一「设置」直达（issue 388）；相位敏感的仍只有那一条
+    expect(DOMAIN_MENU.pomodoro.length).toBe(2);
+    expect(DOMAIN_MENU.pomodoro.filter((a) => a.dynamic).length).toBe(1);
     expect(DOMAIN_MENU.pomodoro[0].dynamic).toBe('phase');
     // 静态声明 = idle 兜底（挂菜单时整条被 pomodoroMenuAction 盖掉）
     expect(DOMAIN_MENU.pomodoro[0].label).toBe(pomodoroMenuAction('idle').label);
@@ -105,7 +108,8 @@ describe('DOMAIN_MENU 形状', () => {
 
   it('2026-09-17 游戏库：立即同步（即时类，不关首页）+ 数据统计（开面板落统计页）', () => {
     const list = DOMAIN_MENU.gameshelf;
-    expect(list.length).toBe(2);
+    // 2 条域动作 + 末尾统一「设置」直达（issue 388，形状见下方专门 describe）
+    expect(list.length).toBe(3);
     // 顺序：即时类在前（与影院/书库的「先动作后报告」一致）
     expect(list[0].label).toBe('立即同步');
     expect(list[0].commandId).toBe('bz-gameshelf-sync');
@@ -117,6 +121,42 @@ describe('DOMAIN_MENU 形状', () => {
     expect(list[1].icon).not.toBe(DOMAIN_MENU.bookshelf[0].icon);
     // 菜单项不许叫「打开游戏库」（入口本身就是打开）
     expect(list.some((a) => a.label.startsWith('打开'))).toBe(false);
+  });
+});
+
+describe('DOMAIN_MENU 设置直达（2026-09-21 拍板，issues 388）', () => {
+  it('每个有菜单的域末尾统一追加一条「设置」，直达本域设置页', () => {
+    const ids = Object.keys(DOMAIN_MENU);
+    expect(ids.length).toBe(14); // 14 个有快捷动作的域全追加；settings/attach 本就不在表内
+    for (const id of ids) {
+      const last = DOMAIN_MENU[id][DOMAIN_MENU[id].length - 1];
+      expect(last.label, id).toBe('设置'); // 末位恒为设置项（域动作在前）
+      expect(last.label.startsWith('打开'), id).toBe(false); // 不违反「无『打开 X』」契约
+      expect(last.commandId).toBe('bz-settings-panel-open');
+      expect(last.keepHome, '开设置面板 = 关首页再开（非 keepHome）').toBeUndefined();
+      expect(last.busyText).toBeUndefined();
+    }
+  });
+
+  it('settingsDeep 域 id 映射：vault→password-vault 异名一处，其余同名直通', () => {
+    for (const [id, list] of Object.entries(DOMAIN_MENU)) {
+      const last = list[list.length - 1];
+      expect(last.settingsDeep, id).toBe(id === 'vault' ? 'password-vault' : id);
+    }
+    expect(DOMAIN_MENU.vault[DOMAIN_MENU.vault.length - 1].settingsDeep).toBe('password-vault');
+  });
+
+  it('settingsMenuAction 纯函数与导出表末尾项同源（id 归一化出口单源）', () => {
+    expect(settingsMenuAction('vault')).toMatchObject({ label: '设置', commandId: 'bz-settings-panel-open', settingsDeep: 'password-vault' });
+    expect(settingsMenuAction('diary').settingsDeep).toBe('diary');
+    // 图标与「设置」入口磁贴同款（domain-icons 单源 settings-2，原型图标表已有，零新增）
+    expect(settingsMenuAction('diary').icon).toBe(DOMAIN_ICONS['settings-panel']);
+  });
+
+  it('settings / attach 维持不挂浮层（设置入口点开本就是设置面板，不加冗余尾部项）', () => {
+    for (const id of ['settings', 'attach']) {
+      expect(DOMAIN_MENU[id], id).toBeUndefined();
+    }
   });
 });
 

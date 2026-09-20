@@ -343,6 +343,8 @@ function rowEls(container: HTMLElement): HTMLElement[] {
  * `keepHome` 的动作**不关首页**（即时类，如锁定保险库/暂停专注）：关面板再执行会让用户
  * 看不到结果、下次还得重开；执行完刷新面板数据（未读计数/彩点即时归位）。
  * 其余动作（开别域面板、需要确认框的批量改写）先关首页再执行——避免两层面板叠着。
+ * `settingsDeep` 项（shared 层统一追加的「设置」直达，issues 388）：同「开别域面板」先关
+ * 首页，再动态 import 设置面板定位到该域设置页（函数级依赖，同 memo/gameshelf 惯例）。
  */
 function attachRowMenu(el: HTMLElement, app: any, river: RiverData): void {
   const d = DOMAIN_MAP.get(el.dataset.homeGo || '');
@@ -352,11 +354,18 @@ function attachRowMenu(el: HTMLElement, app: any, river: RiverData): void {
   const actions: ItemAction[] = menu.map((a) => {
     // 相位敏感项：静态声明只是 idle 兜底，这里按实时相位整体换掉（见 shared.pomodoroMenuAction）
     const spec = a.dynamic === 'phase' ? { ...a, ...pomodoroMenuAction(H.pomodoroPhase) } : a;
+    const deep = spec.settingsDeep;
     return {
       icon: spec.icon as IconName,
       label: spec.label,
       kind: spec.kind === 'danger' ? 'danger' : 'normal',
       onClick: () => {
+        if (deep) {
+          // 设置直达：关首页再开设置面板（定位该域设置页），避免两层面板叠着
+          closeOverlay();
+          void import('../settings-panel').then((m) => m.openSettingsPanel(app, deep));
+          return;
+        }
         if (spec.keepHome) {
           // 即时类：面板留着，动作跑完刷新一次数据（计数/彩点当场归位）；
           // busyText 槽位 = 慢动作（同步/重建索引）点击瞬间的即时反馈（eff P3-2）

@@ -210,6 +210,12 @@ export interface DomainMenuAction {
    * 域语义；只给「真慢」的动作挂（锁定/暂停等即时类有域内反馈，不挂）。
    */
   busyText?: string;
+  /**
+   * 设置直达槽位（2026-09-21 拍板，issues 388）：填 **settings-panel 的域 id**——
+   * ui.ts 据此改走 `openSettingsPanel(app, 该 id)`（定位到该域设置页）而非 executeCommandById；
+   * commandId 仍恒填 `bz-settings-panel-open`（类型契约不动，兜底路径可直跑命令）。
+   */
+  settingsDeep?: string;
 }
 
 /**
@@ -242,8 +248,12 @@ export function pomodoroMenuAction(phase: PomodoroPhase): DomainMenuAction {
  *
  * 2026-09-11 补 9 条（用户点名采纳）：全部是「不开面板、一步完成」的动作，
  * 其中即时类带 `keepHome`（不关首页）；清空类带 `kind: 'danger'`（红字 + 二次确认）。
+ *
+ * 2026-09-21 修订（用户拍板，issues 388）：导出表 `DOMAIN_MENU` 在每域动作末尾**统一追加
+ * 「设置」直达项**（settingsMenuAction）——唯一例外于「只放域自己的快捷功能」的通用尾部项，
+ * 直达该域设置页；本表（DOMAIN_MENU_RAW）仍只声明域自己的动作。
  */
-export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
+export const DOMAIN_MENU_RAW: Record<string, DomainMenuAction[]> = {
   diary: [{ label: '写日记', commandId: 'bz-diary-write', icon: 'pen-line' }],
   memo: [
     { label: '写备忘', commandId: 'bz-memo-add', icon: 'clipboard-list' },
@@ -315,6 +325,30 @@ export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = {
     { label: '锁定密码本', commandId: 'bz-password-vault-lock', icon: 'lock', keepHome: true },
   ],
 };
+
+/** home 域 id → settings-panel 域 id（仅异名处登记，ICON_KEY 同款惯例；缺省同名直通） */
+const SETTINGS_DOMAIN_KEY: Record<string, string> = { vault: 'password-vault' };
+
+/**
+ * 每域菜单末尾统一追加的「设置」直达项（2026-09-21 拍板，issues 388；纯函数，node 可测）。
+ * 文案就叫「设置」——桌面菜单有单行盒头标域名，不违反「无『打开 X』」形状契约；
+ * 图标与「设置」入口磁贴同源（settings-2，已在原型图标表，零新增）。
+ * 声明序注意:本函数在下方 DOMAIN_MENU 模块顶层即被消费,SETTINGS_DOMAIN_KEY 必须先初始化。
+ */
+export function settingsMenuAction(id: string): DomainMenuAction {
+  return {
+    label: '设置',
+    commandId: 'bz-settings-panel-open',
+    icon: iconOf('settings'),
+    settingsDeep: SETTINGS_DOMAIN_KEY[id] ?? id,
+  };
+}
+
+/** 消费表 = DOMAIN_MENU_RAW 每域动作 + 末尾统一「设置」直达（14 域全追加）；
+ *  settings/attach 本就不在 RAW 表内 = 维持不挂浮层，形状契约测试锁死。 */
+export const DOMAIN_MENU: Record<string, DomainMenuAction[]> = Object.fromEntries(
+  Object.entries(DOMAIN_MENU_RAW).map(([id, actions]) => [id, [...actions, settingsMenuAction(id)]]),
+);
 
 /** 域色（入口行 / 移动瓦片 / 抽屉盒头共用单一口径；未登记的域回落中性灰） */
 export function domainColor(id: string): string {
