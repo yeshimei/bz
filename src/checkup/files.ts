@@ -4,9 +4,10 @@
  * 各域数据文件路径在此收敛（读各域 data 层同款解析逻辑的常量/函数，不改域代码）：
  * 全部经 core/storage 的 storageDir()/storageFile() 解析（跟随 storagePath 设置），
  * weave-data.json 走书架墙的 Weave 插件 dataPath 解析。
- * storagePath 双轨登记（深审 ARCH-2，归属 core/favorites 线）：favorites.json 走
- * favorites/config getStoragePath（会剥误配的 .json 尾段），其余走 core storageFile
- * （不剥）——各随其主属域的解析器，体检口径与其属主读取链一致，属主一致即不漂。
+ * 深审 ARCH-2 storagePath 双轨已收敛（bz-fix-core-pledges）：.json 尾段剥除上沉
+ * core/storage normalizeStorageDir 单源，favorites/config getStoragePath 降级为
+ * @deprecated 兼容转发——收藏本与其余各域同一解析口径，行为恒等（契约见
+ * tests/core/pledge-storage-path.test.ts）。
  *
  * 只读纪律：体检绝不走 jsonFileStore.read()——那会触发「损坏留档 + 重建」写路径，
  * 把待报告的坏文件原地重建、毁掉现场。这里一律 adapter 直读原文。

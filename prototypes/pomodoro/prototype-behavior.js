@@ -1,4 +1,4 @@
-/* 源指纹 558567d64062013a · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3469cd3640305e67 · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4906,9 +4906,17 @@ var BZW_pomodoro = (() => {
   });
 
   // src/core/storage.ts
+  function normalizeStorageDir(value) {
+    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
+    if (/\.json$/i.test(dir)) {
+      const idx = dir.lastIndexOf("/");
+      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    }
+    return dir || DEFAULT_STORAGE_DIR;
+  }
   function storageDir() {
     const s = tryGetSettings();
-    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+    return normalizeStorageDir(s && s.storagePath);
   }
   function storageFile(name, base) {
     const dir = (base || storageDir()).trim().replace(/\/+$/, "");
@@ -5067,12 +5075,13 @@ var BZW_pomodoro = (() => {
       }
     };
   }
-  var fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
+  var DEFAULT_STORAGE_DIR, fileTaskQueues, CORRUPT_BACKUP_DIR, CORRUPT_NOTIFY_DEDUPE_MS, corruptNotifyAt;
   var init_storage = __esm({
     "src/core/storage.ts"() {
       init_app();
       init_settings_provider();
       init_notice();
+      DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
       fileTaskQueues = /* @__PURE__ */ new Map();
       CORRUPT_BACKUP_DIR = "CONFIG/.CORRUPT";
       CORRUPT_NOTIFY_DEDUPE_MS = 3e4;

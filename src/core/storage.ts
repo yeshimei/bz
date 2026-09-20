@@ -25,10 +25,42 @@
  *
  * 路径 helper（storageDir/storageFile）收敛全仓 storagePath 解析的多种写法：
  *  - storageFile(name, base) 的 base 供目录类工具函数使用，清理逻辑集中此处。
+ *  - 误配 .json 尾段剥除（旧设置可能存了完整文件路径）由 normalizeStorageDir 单源提供
+ *    （深审 ARCH-2 双轨收敛：原 favorites/config getStorageDir 私有防御上沉，favorites 两口
+ *    自此为 @deprecated 兼容转发，全库单一解析口径）。
  */
 import { getApp } from './app';
 import { tryGetSettings } from './settings-provider';
 import { notify } from './notice';
+
+/** 共享数据目录缺省值（storagePath 未设/空/剥空时回退） */
+export const DEFAULT_STORAGE_DIR = 'CONFIG/STORAGE';
+
+/**
+ * 共享数据目录归一（纯函数，storagePath 解析唯一入口）：
+ * trim 去尾斜杠；误配 .json 尾段剥到所在目录（旧设置可能存了完整文件路径——原 favorites
+ * getStorageDir 既有防御上沉单源）；剥空/未设回退 CONFIG/STORAGE。
+ */
+export function normalizeStorageDir(value?: string): string {
+  let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, '');
+  if (/\.json$/i.test(dir)) {
+    const idx = dir.lastIndexOf('/');
+    dir = idx >= 0 ? dir.slice(0, idx) : '';
+  }
+  return dir || DEFAULT_STORAGE_DIR;
+}
+
+/** 共享数据目录（settings.storagePath 经 normalizeStorageDir 归一，全域单一口径） */
+export function storageDir(): string {
+  const s = tryGetSettings() as any;
+  return normalizeStorageDir(s && s.storagePath);
+}
+
+/** 共享数据文件路径（base 可覆盖 storagePath——旧字段兜底域用 storagePath||xxxPath） */
+export function storageFile(name: string, base?: string): string {
+  const dir = (base || storageDir()).trim().replace(/\/+$/, '');
+  return `${dir}/${name}`;
+}
 
 export interface JsonFileStoreOptions<T> {
   /** 缺失/损坏时落盘的初始值（默认 []）。传函数则每次读取时求值（防共享引用被外部 mutate） */
@@ -44,18 +76,6 @@ export interface JsonFileStoreOptions<T> {
 export interface JsonFileStore<T> {
   read(): Promise<T>;
   write(data: T): Promise<void>;
-}
-
-/** 共享数据目录（storagePath，trim 去尾斜杠，空回退 CONFIG/STORAGE） */
-export function storageDir(): string {
-  const s = tryGetSettings() as any;
-  return ((s && s.storagePath) || 'CONFIG/STORAGE').trim().replace(/\/+$/, '');
-}
-
-/** 共享数据文件路径（base 可覆盖 storagePath——旧字段兜底域用 storagePath||xxxPath） */
-export function storageFile(name: string, base?: string): string {
-  const dir = (base || storageDir()).trim().replace(/\/+$/, '');
-  return `${dir}/${name}`;
 }
 
 /**

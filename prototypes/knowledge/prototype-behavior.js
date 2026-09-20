@@ -1,4 +1,4 @@
-/* 源指纹 97816b5f84e2995e · 仓内输入 40 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 38102e5222bf6fc7 · 仓内输入 40 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/knowledge/fake-sim.ts","prototypes/knowledge/fake/ai-index.ts","prototypes/knowledge/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/icons.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/knowledge/fake-sim.ts → window.BZW_knowledge（行为单源预览包，issue 245/ADR-0106） */
 var BZW_knowledge = (() => {
@@ -5638,9 +5638,18 @@ var BZW_knowledge = (() => {
   }
 
   // src/core/storage.ts
+  var DEFAULT_STORAGE_DIR = "CONFIG/STORAGE";
+  function normalizeStorageDir(value) {
+    let dir = (value || DEFAULT_STORAGE_DIR).trim().replace(/\/+$/, "");
+    if (/\.json$/i.test(dir)) {
+      const idx = dir.lastIndexOf("/");
+      dir = idx >= 0 ? dir.slice(0, idx) : "";
+    }
+    return dir || DEFAULT_STORAGE_DIR;
+  }
   function storageDir() {
     const s = tryGetSettings();
-    return (s && s.storagePath || "CONFIG/STORAGE").trim().replace(/\/+$/, "");
+    return normalizeStorageDir(s && s.storagePath);
   }
   function storageFile(name, base) {
     const dir = (base || storageDir()).trim().replace(/\/+$/, "");
