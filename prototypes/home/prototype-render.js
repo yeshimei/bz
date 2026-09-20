@@ -1,4 +1,4 @@
-/* 源指纹 d774682875ccddd8 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 fd4efc9d59d8ec1f · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -30,7 +30,6 @@ var BZR_home = (() => {
     DOMAIN_ICONS: () => DOMAIN_ICONS,
     DOMAIN_MAP: () => DOMAIN_MAP,
     DOMAIN_MENU: () => DOMAIN_MENU,
-    DOMAIN_MENU_RAW: () => DOMAIN_MENU_RAW,
     EMPTY_COUNTS: () => EMPTY_COUNTS,
     EMPTY_SUMMARY: () => EMPTY_SUMMARY,
     applyOrder: () => applyOrder,
