@@ -1,4 +1,4 @@
-/* 源指纹 6578e9bbc91e3798 · 仓内输入 243 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 25d5cbb4ca67fa36 · 仓内输入 243 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -24256,14 +24256,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return !!tags && tags.includes("公开课");
   }
   function normalizeItem(item) {
+    const due = item.due == null ? null : String(item.due);
     return {
       id: item.id,
-      title: item.title,
-      scene: item.scene,
+      title: item.title == null ? "" : String(item.title),
+      scene: item.scene == null ? "" : String(item.scene),
       priority: item.priority || "minor",
       created: item.created,
       completed: item.completed || null,
-      due: item.due || null,
+      due: due && !/^NaN/i.test(due) ? due : null,
       notePath: item.notePath || null,
       notePosition: item.notePosition || null,
       scriptName: item.scriptName || null,
@@ -24272,6 +24273,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       linkedNote: item.linkedNote || null,
       url: item.url || null
     };
+  }
+  function purgeStaleFields(data) {
+    if (!Array.isArray(data)) return data;
+    const stale = (it) => !!it && typeof it === "object" && ("recur" in it || "checklist" in it);
+    if (!data.some(stale)) return data;
+    return data.map((it) => {
+      if (!stale(it)) return it;
+      const rest = { ...it };
+      delete rest.recur;
+      delete rest.checklist;
+      return rest;
+    });
   }
   var import_moment3, DEFAULT_SCENARIOS, MemoData;
   var init_data5 = __esm({
@@ -24288,17 +24301,21 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         scenarios: [],
         _store: null,
         cinemaFolderPath: "我的/影视",
+        /** 公开课笔记会话级缓存（memo2-efficiency 新-3）：每次开编辑弹窗都全 vault 扫一遍纯空耗，
+         *  结果在弹窗生命周期内不变；init（场景/目录设置变更）时失效。 */
+        _courseNotesCache: null,
         init(settings) {
           this.memoFilePath = storageFile("memo.json", settings.storagePath || "CONFIG/STORAGE");
           this._store = jsonStore(this.memoFilePath);
           this.scenarios = parseScenarios(settings.memoScenarios);
           this.cinemaFolderPath = settings.cinemaFolderPath || "我的/影视";
+          this._courseNotesCache = null;
         },
         async read() {
           return this._store.read();
         },
         async write(data) {
-          return this._store.write(data);
+          return this._store.write(purgeStaleFields(data));
         },
         /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
          *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
@@ -24319,14 +24336,24 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               return [];
             }
             let needWrite = false;
-            const items = raw.map((item) => {
+            const items = [];
+            for (const item of raw) {
+              if (!item || typeof item !== "object" || Array.isArray(item)) {
+                needWrite = true;
+                continue;
+              }
               if (!item.id) {
                 item.id = generateId();
                 needWrite = true;
               }
-              return normalizeItem(item);
-            });
-            if (needWrite) await this.write(raw);
+              if ("recur" in item || "checklist" in item) needWrite = true;
+              if (item.due != null && /^NaN/i.test(String(item.due))) {
+                item.due = null;
+                needWrite = true;
+              }
+              items.push(normalizeItem(item));
+            }
+            if (needWrite) await this.write(raw.filter((it) => it && typeof it === "object" && !Array.isArray(it)));
             return items;
           });
         },
@@ -24397,16 +24424,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             return n;
           });
         },
-        /** 公开课笔记（影视目录中含 公开课 标签的文件） */
+        /** 公开课笔记（影视目录中含 公开课 标签的文件；结果走会话级缓存，见 _courseNotesCache 注） */
         async getCourseNotes() {
+          if (this._courseNotesCache) return this._courseNotesCache;
           const app = getApp();
           const result = [];
           for (const file of app.vault.getFiles()) {
-            if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== "md") continue;
+            if (!isUnderFolder(this.cinemaFolderPath, file.path) || file.extension !== "md") continue;
             const cache = app.metadataCache.getFileCache(file);
             if (!cache) continue;
             if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
           }
+          this._courseNotesCache = result;
           return result;
         },
         getScenarios() {
@@ -26482,13 +26511,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return tags.join("");
   }
   function checkHtml(it) {
-    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
+    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check role="checkbox" aria-checked="${it.completed ? "true" : "false"}" tabindex="0" title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
   }
   function cardHtml(it, due, relTime3) {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
     const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
-    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
+    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
@@ -26500,7 +26529,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
   }
   function doneBarHtml(open, count) {
-    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
+    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar role="button" tabindex="0">
       ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
   }
   function doneMoreHtml(n) {
@@ -27993,8 +28022,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/memo/ui.ts
-  function isTodayStr(s) {
-    return !!s && s.slice(0, 10) === (0, import_moment5.default)().format("YYYY-MM-DD");
+  function isTodayStr(s, today = localDayKey()) {
+    return !!s && s.slice(0, 10) === today;
   }
   function fallbackScene() {
     const scenes = MemoData.getScenarios();
@@ -28026,7 +28055,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     notify("已从剪贴板预填链接", { type: "info", dedupeKey: "memo-clip-prefill" });
   }
   async function loadData() {
-    M4.items = await MemoData.loadItems();
+    try {
+      M4.items = await MemoData.loadItems();
+      loadFailed = false;
+    } catch (e) {
+      loadFailed = true;
+      notifyActionError(e, "读取备忘录", { onRetry: () => void refresh() });
+      console.error(e);
+    }
   }
   async function refresh() {
     var _a2, _b2;
@@ -28040,12 +28076,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function getVisibleItems() {
     const kw = M4.search.trim().toLowerCase();
+    const today = localDayKey();
     let list = M4.items.filter((it) => {
       if (M4.activeScene === "今日") {
         if (!it.completed) {
           const st = getDueStatus(it.due);
           if (st !== "overdue" && st !== "today") return false;
-        } else if (!isTodayStr(it.completed)) {
+        } else if (!isTodayStr(it.completed, today)) {
           return false;
         }
       } else if (M4.activeScene === "重要") {
@@ -28079,17 +28116,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     return list;
   }
-  function sceneCount(scene) {
-    if (scene === "今日") {
-      return M4.items.filter((it) => {
-        if (it.completed) return isTodayStr(it.completed);
+  function sceneCounts() {
+    const today = localDayKey();
+    const counts = /* @__PURE__ */ new Map([
+      ["全部", M4.items.length],
+      ["今日", 0],
+      ["重要", 0]
+    ]);
+    for (const it of M4.items) {
+      if (it.scene) counts.set(it.scene, (counts.get(it.scene) || 0) + 1);
+      if (it.priority === "important") counts.set("重要", (counts.get("重要") || 0) + 1);
+      const todayHit = it.completed ? isTodayStr(it.completed, today) : (() => {
         const st = getDueStatus(it.due);
         return st === "overdue" || st === "today";
-      }).length;
+      })();
+      if (todayHit) counts.set("今日", (counts.get("今日") || 0) + 1);
     }
-    if (scene === "重要") return M4.items.filter((it) => it.priority === "important").length;
-    if (scene === "全部") return M4.items.length;
-    return M4.items.filter((it) => it.scene === scene).length;
+    return counts;
   }
   function applyMemoSkin(skin) {
     if (!M4.overlay) return;
@@ -28108,12 +28151,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const s = tryGetSettings();
       if (s) {
         s.memoLastScene = M4.activeScene;
-        void saveSettings();
+        void saveSettings().catch((e) => console.error("[memo] 上次场景保存失败", e));
       }
       M4.overlay.remove();
       M4.overlay = null;
     }
     searchDebounced.cancel();
+    for (const [id, t] of M4.completeTimers) {
+      clearTimeout(t);
+      const it = M4.items.find((i) => i.id === id);
+      if (it) void completeItem(it);
+    }
+    M4.completeTimers.clear();
     if (panelResizeDetach) {
       panelResizeDetach.detach();
       panelResizeDetach = null;
@@ -28122,26 +28171,28 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       sortSelectDetach();
       sortSelectDetach = null;
     }
+    if (panelFocusRelease) {
+      panelFocusRelease();
+      panelFocusRelease = null;
+    }
     M4.renderFn = null;
     M4.pinnedNewId = null;
     clipTitleHint = null;
-    M4.completeTimers.forEach((t) => clearTimeout(t));
-    M4.completeTimers.clear();
   }
   function renderAll() {
     if (!M4.overlay) return;
+    const items = getVisibleItems();
     renderNav();
     renderMobScenes();
-    renderMainHead();
-    renderContent();
+    renderMainHead(items);
+    renderContent(items);
   }
-  function renderMainHead() {
+  function renderMainHead(items) {
     const overlay2 = M4.overlay;
     const titleEl = overlay2.querySelector("[data-memo-main-title]");
     const countEl = overlay2.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
     titleEl.textContent = sceneLabel(M4.activeScene);
-    const items = getVisibleItems();
     const undone = items.filter((i) => !i.completed).length;
     countEl.innerHTML = mainCountHtml(items.length, undone);
   }
@@ -28160,16 +28211,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function renderNav() {
     const nav = M4.overlay.querySelector("[data-memo-nav]");
     if (!nav) return;
-    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M4.activeScene === o.scene, sceneCount(o.scene))).join("");
+    const counts = sceneCounts();
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M4.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
     mountIcons(nav);
     nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
     });
   }
   function renderMobScenes() {
+    if (!isMobileEnv()) return;
     const wrap = M4.overlay.querySelector("[data-memo-mob-scenes]");
     if (!wrap) return;
+    const keepLeft = wrap.scrollLeft;
     wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M4.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    wrap.scrollLeft = keepLeft;
     mountIcons(wrap);
     wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
@@ -28184,12 +28239,21 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function metaTags(it) {
     return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
   }
-  function renderContent() {
+  function renderContent(items) {
     const content = M4.overlay.querySelector("[data-memo-content]");
     if (!content) return;
-    const items = getVisibleItems();
+    const keepTop = content.scrollTop;
     if (items.length === 0) {
       content.innerHTML = "";
+      if (loadFailed) {
+        content.appendChild(uiEmpty({
+          icon: MEMO_ICONS.overdue,
+          title: "备忘录读取失败",
+          desc: "数据文件暂时无法读取，可点击重试",
+          actions: uiBtnRow([uiBtn({ label: "重试", icon: MEMO_ICONS.clock, tone: "primary", onClick: () => void refresh() })], { center: true })
+        }));
+        return;
+      }
       content.appendChild(uiEmpty({
         icon: MEMO_ICONS.empty,
         title: M4.search ? "没有匹配的备忘录" : "这里还没有备忘录",
@@ -28229,6 +28293,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     content.innerHTML = sections.join("");
     mountIcons(content);
+    content.scrollTop = keepTop;
     content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.preventDefault();
@@ -28257,7 +28322,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
   }
   function buildSheetHead(it) {
-    var _a2;
+    var _a2, _b2;
     const head = document.createElement("div");
     head.className = "bz-item-sheet-entry bz-memo-sheet-entry";
     if (it.completed) head.classList.add("bz-memo-done");
@@ -28279,43 +28344,49 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       closeItemMenu();
       toggleCheck(it);
     });
+    (_b2 = head.querySelector("[data-memo-pos]")) == null ? void 0 : _b2.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeItemMenu();
+      jumpToNote(it);
+    });
     return head;
   }
   function openItem(it) {
-    closeMemoPanel();
     const app = M4.appRef;
     if (it.linkedNote) {
       const file = app.vault.getAbstractFileByPath(it.linkedNote);
-      if (file) void app.workspace.getLeaf().openFile(file);
-      else notice("关联笔记不存在");
-    } else if (it.url) {
-      try {
-        app.openUrl(it.url);
-      } catch (e) {
-        const electron = window.require && window.require("electron");
-        if (electron && electron.shell) electron.shell.openExternal(it.url);
+      if (!file) {
+        notice("关联笔记不存在");
+        return;
       }
+      closeMemoPanel();
+      void app.workspace.getLeaf().openFile(file);
+    } else if (it.url) {
+      closeMemoPanel();
+      openExternalUrl(app, it.url);
     }
   }
   function jumpToNote(it) {
-    var _a2;
     if (!it.notePath) return;
-    closeMemoPanel();
     const app = M4.appRef;
     const file = app.vault.getAbstractFileByPath(it.notePath);
     if (!file) {
       notice("关联笔记不存在");
       return;
     }
+    closeMemoPanel();
     const leaf = app.workspace.getLeaf();
-    void leaf.openFile(file);
-    const editor = (_a2 = leaf.view) == null ? void 0 : _a2.editor;
-    if (editor && it.notePosition) {
-      const { line, ch } = it.notePosition;
-      editor.focus();
-      editor.setCursor(line, ch || 0);
-      editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
-    }
+    void (async () => {
+      var _a2;
+      await leaf.openFile(file);
+      const editor = (_a2 = leaf.view) == null ? void 0 : _a2.editor;
+      if (editor && it.notePosition) {
+        const { line, ch } = it.notePosition;
+        editor.focus();
+        editor.setCursor(line, ch || 0);
+        editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+      }
+    })();
   }
   function toggleCheck(it) {
     if (it.completed) {
@@ -28356,9 +28427,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function postponeItem(id, days) {
     const it = M4.items.find((i) => i.id === id);
     if (!it || !it.due) return;
-    const d = new Date(it.due.replace("T", " "));
-    d.setDate(d.getDate() + days);
-    const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const keepHm = it.due.replace("T", " ").slice(11, 16) || "09:00";
+    const next = (0, import_moment5.default)(it.due.replace("T", " ").slice(0, 10), "YYYY-MM-DD").add(days, "days").format(`YYYY-MM-DD ${keepHm}`);
     try {
       await MemoData.updateItem(id, { due: next });
       emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
@@ -28383,20 +28453,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
     await refresh();
   }
-  async function deleteItemConfirm(it) {
-    const ok = await openFlowDialog({
-      title: "删除备忘录",
-      message: `确定删除备忘录「${it.title}」吗？
-删除后可在通知中撤销。`,
-      className: skinClass(),
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "删除", value: "delete", danger: true, cta: true }
-      ]
-    });
-    if (ok !== "delete") return;
+  async function deleteItemWithUndo(it) {
     try {
       const idx = await MemoData.deleteItem(it.id);
+      if (idx === -1) {
+        notice("该备忘录已不存在，列表已刷新");
+        await refresh();
+        return;
+      }
       emitDomainEvent("memo", { kind: "deleted", title: it.title });
       notifyUndo(`已删除备忘录「${it.title}」`, () => {
         void (async () => {
@@ -28459,11 +28523,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       } });
     }
     if (it.due && !it.completed) {
-      const postponeSub = (days) => {
-        const d = new Date(it.due.replace("T", " "));
-        d.setDate(d.getDate() + days);
-        return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      };
+      const postponeSub = (days) => (0, import_moment5.default)(it.due.replace("T", " ").slice(0, 10), "YYYY-MM-DD").add(days, "days").format("MM-DD");
       actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
         await postponeItem(it.id, 1);
       } });
@@ -28485,13 +28545,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       label: "复制内容",
       title: "复制内容",
       sub: `${it.title.length} 字`,
+      // memo2-consistency 新-6：剪贴板权限拒绝/环境不支持此前静默 unhandled——
+      // 走 notifyActionError 口径（与全域非写盘动作失败人话提示对齐）
       onClick: async () => {
-        await navigator.clipboard.writeText(it.title);
-        notice("内容已复制", "success");
+        try {
+          await navigator.clipboard.writeText(it.title);
+          notice("内容已复制", "success");
+        } catch (e) {
+          notifyActionError(e, "复制内容");
+        }
       }
     });
     actions.push({ icon: "pencil", label: "编辑", title: "编辑", onClick: () => openEditor(it) });
-    actions.push({ icon: "trash-2", label: "删除", title: "删除", kind: "danger", onClick: () => void deleteItemConfirm(it) });
+    actions.push({ icon: "trash-2", label: "删除", title: "删除", kind: "danger", onClick: () => void deleteItemWithUndo(it) });
     return actions;
   }
   function openEditor(item, opts) {
@@ -28613,7 +28679,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       courseNotes = notes;
       const extra = notes.map((n) => n.name);
       knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
-      if (courseBox.classList.contains("bz-memo-extra-on")) courseInput.dispatchEvent(new Event("focus"));
     });
     const dueField = document.createElement("div");
     dueField.className = "bz-field";
@@ -28689,7 +28754,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
     form.appendChild(actionsRow);
     modalBox.appendChild(form);
-    saveBtn.addEventListener("click", () => {
+    let editorBusy = false;
+    const readScene = () => {
+      const on = choice.el.querySelector(".is-on");
+      return (on == null ? void 0 : on.dataset.value) || defaultScene;
+    };
+    const readPrio = () => {
+      const on = prioChoice.el.querySelector(".is-on");
+      return (on == null ? void 0 : on.dataset.value) || "minor";
+    };
+    const doSave2 = () => {
+      if (editorBusy) return;
       let content = contentInput.value.trim();
       if (!content) {
         const ph = contentInput.placeholder;
@@ -28699,11 +28774,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         notice("请输入内容");
         return;
       }
-      let scene = defaultScene;
-      const sceneBtnOn = choice.el.querySelector(".is-on");
-      if (sceneBtnOn) scene = sceneBtnOn.dataset.value || scene;
-      const prioBtnOn = prioChoice.el.querySelector(".is-on");
-      const priority = prioBtnOn ? prioBtnOn.dataset.value || "minor" : "minor";
+      const scene = readScene();
+      const priority = readPrio();
       const dueVal = dueInput.value;
       const due = dueVal ? dueVal.replace("T", " ") : null;
       let titleVal = titleInput.value.trim();
@@ -28727,6 +28799,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
       const { url } = extractUrlAndDisplay(content);
+      editorBusy = true;
       void (async () => {
         var _a3;
         try {
@@ -28741,7 +28814,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               scriptName,
               courseName,
               coursePath,
-              url: url != null ? url : editing.url
+              // memo2-arch 新-1 / memo2-func #9 / memo2-ui MR2-3：url 按场景分流——
+              // 非剪藏跟随内容（新内容无链接即清除，「移除链接」意图可表达，data 层
+              // 自动提取分支也不再被恒有值短路）；剪藏保留兜底（标题=页面标题、正文
+              // 无 URL 的形态防丢链）
+              url: scene === "剪藏" ? url != null ? url : editing.url : url
             });
             emitDomainEvent("memo", { kind: "edited", old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
           } else {
@@ -28766,18 +28843,41 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
             M4.pinnedNewId = it.id;
           }
+          editorBusy = false;
           closeModal();
           (_a3 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a3.call(opts);
           await refresh();
         } catch (e) {
+          editorBusy = false;
           notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
           console.error(e);
         }
       })();
-    });
-    const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
+    };
+    saveBtn.addEventListener("click", doSave2);
+    const formSnapshot = () => JSON.stringify([
+      contentInput.value,
+      titleInput.value,
+      scriptInput.value,
+      courseInput.value,
+      readScene(),
+      readPrio(),
+      dueInput.value,
+      posState.notePath,
+      posState.notePosition
+    ]);
+    const formBaseline = formSnapshot();
+    const requestClose = () => {
+      if (formSnapshot() === formBaseline) {
+        closeModal();
+        return;
+      }
+      confirmDiscard(() => closeModal(), void 0, skinClass());
+    };
+    const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
     closeModal = close;
-    contentInput.focus();
+    bindFormSubmit(popup, doSave2);
+    if (!isMobileEnv()) contentInput.focus();
     if (!isEdit && defaultScene === "剪藏") tryEditorClipPrefill();
   }
   function uiIconBtnClear() {
@@ -28829,12 +28929,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const count = M4.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
-    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与备忘录共用）";
+    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与设置面板同键）";
     const saveBtn = uiBtn({ label: "保存", tone: "primary" });
     const cancelBtn = uiBtn({ label: "取消" });
     const row = uiBtnRow([cancelBtn, saveBtn]);
     wrap.append(title, input, hint, row);
-    const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+    const { close, popup } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
     const doSave2 = () => {
       const name = input.value.trim();
       if (!name) {
@@ -28855,14 +28955,21 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         return;
       }
       void (async () => {
+        let moved = 0;
         try {
-          const moved = await MemoData.updateSceneBulk(scene, name);
+          moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
           await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
           if (M4.activeScene === scene) M4.activeScene = name;
           renderAll();
           close();
         } catch (e) {
+          if (moved > 0) {
+            try {
+              await MemoData.updateSceneBulk(name, scene);
+            } catch (e2) {
+            }
+          }
           notifySaveError(e, "重命名场景");
           console.error(e);
         }
@@ -28870,11 +28977,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
     saveBtn.addEventListener("click", doSave2);
     cancelBtn.addEventListener("click", () => close());
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doSave2();
-      if (e.key === "Escape") close();
-    });
-    setTimeout(() => {
+    bindFormSubmit(popup, doSave2);
+    if (!isMobileEnv()) setTimeout(() => {
       input.focus();
       input.select();
     }, 30);
@@ -28906,26 +29010,35 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       ]
     });
     if (ok !== "delete") return;
+    let moved = 0;
     try {
-      if (count > 0) await MemoData.updateSceneBulk(scene, target);
+      moved = count > 0 ? await MemoData.updateSceneBulk(scene, target) : 0;
       await commitScenarios(others, `已删除场景「${scene}」`);
       if (M4.activeScene === scene) M4.activeScene = "全部";
       renderAll();
     } catch (e) {
+      if (moved > 0) {
+        try {
+          await MemoData.updateSceneBulk(target, scene);
+        } catch (e2) {
+        }
+      }
       notifySaveError(e, "删除场景");
       console.error(e);
     }
   }
-  var import_moment5, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach;
+  var import_moment5, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, loadFailed, panelResizeDetach, sortSelectDetach, panelFocusRelease;
   var init_ui5 = __esm({
     "src/memo/ui.ts"() {
       import_moment5 = __toESM(require_moment());
       init_notice();
       init_esc_manager();
+      init_focus_trap();
       init_dom();
       init_mobile();
       init_settings_provider();
       init_ui();
+      init_modal();
       init_flow_dialog();
       init_domain_bus();
       init_item_actions();
@@ -28940,8 +29053,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         renderAll();
       }, SEARCH_DEBOUNCE_MS);
       clipTitleHint = null;
+      loadFailed = false;
       panelResizeDetach = null;
       sortSelectDetach = null;
+      panelFocusRelease = null;
     }
   });
 
