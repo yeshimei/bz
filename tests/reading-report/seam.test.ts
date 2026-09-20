@@ -25,9 +25,10 @@ describe('报告↔书架接缝（跨文件契约）', () => {
     expect(markup).toContain('data-rr-goto-shelf');
     expect(markup).toContain('aria-label="返回书库"');
     expect(markup).toMatch(/bz-rr-close[^"]*bz-touch-target/);
-    // CSS 侧（域 styles.css）：.bz-rr-close 规则不再 display:none（桌面可见）
+    // CSS 侧（域 styles.css）：.bz-rr-close 规则不得 display:none（桌面/移动同一可见出口）
     const closeRule = rrStyles().match(/\.bz-rr-close[^{]*\{[^}]*\}/);
-    expect(closeRule, '.bz-rr-close 应为恒可见（桌面/移动同一出口）').toBeNull();
+    expect(closeRule, '.bz-rr-close 应有恒可见规则').not.toBeNull();
+    expect(closeRule![0]).not.toContain('display: none');
   });
 
   it('EFF-5：报告态隐藏宿主 chrome——域 CSS 状态规则 + 宿主结构选择器在场（防选择器漂移）', () => {

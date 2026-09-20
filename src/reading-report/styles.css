@@ -19,6 +19,9 @@
 }
 /* 深审 RR-U1/EFF-1：返回钮桌面/移动恒可见——旧拍板的「桌面靠面板内导航返回」前提已随
  * 书脊墙换血退役（该导航不存在），头行返回钮 = 全宽度唯一面板内返回出口（markup 归宿主 render.ts） */
+.bz-rr-close {
+  display: inline-flex;
+}
 .bz-rr-content {
   flex: 1; min-height: 0; overflow-y: auto;
   padding: var(--bz-space-xs) var(--bz-space-lg) var(--bz-space-lg);
