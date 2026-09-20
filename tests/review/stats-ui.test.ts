@@ -139,8 +139,8 @@ describe('统计弹窗拟合档位标注（issue 361）', () => {
     expect(text).toContain('样本 356 条');
     expect(text).not.toContain('简化版');
     expect(text).not.toContain('全参拟合');
-    // title 悬浮注解挂在档位 chip 上
-    const chip = [...body.querySelectorAll('.bz-stats-inline-chip')].find((el) =>
+    // title 悬浮注解挂在档位 kv 项上（R11 重刷：kv-inline 形制）
+    const chip = [...body.querySelectorAll('.kv-inline span')].find((el) =>
       (el.textContent || '').includes('按你的记录定制')
     ) as HTMLElement;
     expect(chip?.title).toContain('19 个记忆参数');
@@ -162,7 +162,7 @@ describe('统计弹窗拟合档位标注（issue 361）', () => {
     const text = body.textContent || '';
     expect(text).toContain('默认参数');
     expect(text).not.toContain('按你的记录定制');
-    const chip = [...body.querySelectorAll('.bz-stats-inline-chip')].find((el) =>
+    const chip = [...body.querySelectorAll('.kv-inline span')].find((el) =>
       (el.textContent || '').includes('默认参数')
     ) as HTMLElement;
     expect(chip?.title).toContain('自动拟合');
