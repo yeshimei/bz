@@ -930,6 +930,7 @@ describe('cinema 剧集按季合并（issue 376）', () => {
     unloadCinema();
     document.body.innerHTML = '';
     setSettingsProvider(() => ({}) as any);
+    delete (window as any).matchMedia; // 悬浮能力 stub 清理（季圆点通道改能力判定后防串用例）
   });
 
   /** 老友记三季（已看/在看/想看）+ 一部电影 = 4 篇笔记 */
@@ -1183,6 +1184,11 @@ tags: [电影]
 
   it('鼠标落在季圆点上：卡片正脸换成该季（海报 + 名字/meta/星级），离开复原', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    // 悬浮通道改能力判定（gameshelf hoverCapable 同口径）：jsdom 无真 hover 能力，桌面用例显式开
+    (window as any).matchMedia = (q: string) => ({
+      matches: q === '(hover: hover) and (pointer: fine)',
+      media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    });
     const { app } = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;

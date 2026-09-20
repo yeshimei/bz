@@ -781,9 +781,24 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
 
 // ---------- 事件绑定（sec 级委托一次；重渲染内容全覆盖） ----------
 
-function bindMidnight(sec: HTMLElement, app: App): void {
-  // 季圆点悬浮预览（仅桌面壳——hover 是鼠标惯用件，触屏 tap 会发 mouseover 却不发 mouseout，
-  // 换脸会滞留）。sec 级委托：网格每次重渲染都换新卡片元素，逐个绑定会漏绑/泄漏。
+/** 季圆点悬浮通道的能力单判（gameshelf/ui.ts hoverCapable 同口径：'(hover: hover) and
+ *  (pointer: fine)'）：触屏 tap 会发 mouseover 却不发 mouseout，悬浮换脸会滞留——只有真
+ *  鼠标惯用件才挂。core 尚无此口径单源，与 gameshelf 各持一份（跨域提取涉两域，待收口批
+ *  上提，不在本批白名单内动）。测试/评审壳经 bindMidnight 第三参显式开（jsdom 无真 hover
+ *  能力，默认关）。 */
+function hoverCapable(): boolean {
+  try {
+    return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+  } catch {
+    return false;
+  }
+}
+
+function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): void {
+  // 季圆点悬浮预览（悬浮能力判定——hover 是鼠标惯用件，触屏 tap 会发 mouseover 却不发
+  // mouseout，换脸会滞留；旧按 .mob 壳近似「桌面=有鼠标」，桌面宽度的触屏（宽壳 + 无悬浮
+  // 能力）仍会粘脸，现与范式批 CSS @media (hover: hover) 全域口径对齐）。sec 级委托：网格
+  // 每次重渲染都换新卡片元素，逐个绑定会漏绑/泄漏。
   // 呈报#14（C3）：圆点本体 6px，悬浮换脸经常点不中。外观一点不动（2026-09-18 拍板），
   // 只放宽**委托目标**做等效热区——衬底/间隙也计入命中，落点不在圆点上时取几何最近的一枚
   // （core .bz-touch-target 的 ::after 外扩范式是 pointer:coarse 档，圆点换脸是桌面 hover
@@ -816,7 +831,7 @@ function bindMidnight(sec: HTMLElement, app: App): void {
     else if (peekedDot) restFace(peekedDot);
     peekedDot = dot;
   };
-  if (!sec.classList.contains('mob')) {
+  if (hoverable) {
     sec.addEventListener('mouseover', peekNearest);
     sec.addEventListener('mousemove', peekNearest); // 衬底/间隙内滑行不换元素也跟进最近圆点
     sec.addEventListener('mouseout', (e) => {

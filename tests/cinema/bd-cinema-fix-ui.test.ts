@@ -57,7 +57,17 @@ afterEach(() => {
   Platform.isMobile = false;
   unloadCinema();
   document.body.innerHTML = '';
+  delete (window as any).matchMedia; // 悬浮能力 stub 清理（季圆点通道改能力判定后防串用例）
 });
+
+/** 季圆点悬浮通道已改能力判定（gameshelf hoverCapable 同口径）：jsdom 无真 hover 能力，
+ *  桌面悬浮用例显式开/关（按 query 分发，不误伤其他 matchMedia 消费方） */
+function stubHoverCapable(on: boolean): void {
+  (window as any).matchMedia = (q: string) => ({
+    matches: on && q === '(hover: hover) and (pointer: fine)',
+    media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+  });
+}
 
 describe('呈报#7（C2）：添加/编辑表单打开自动定位名称框', () => {
   it('桌面端：添加表单打开即聚焦名称框', () => {
@@ -103,6 +113,7 @@ describe('呈报#14（C3）：季圆点等效热区（外观不动，落点取�
 
   it('落点在容器衬底/间隙：取几何最近圆点换脸（修复前 mousemove 无监听，不换脸）', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    stubHoverCapable(true);
     const app = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -135,6 +146,7 @@ describe('呈报#14（C3）：季圆点等效热区（外观不动，落点取�
 
   it('圆点本体直击与容器内滑动不误换季：近处圆点优先且不打回静息态', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    stubHoverCapable(true);
     const app = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
