@@ -219,7 +219,7 @@ function tocTagsHtml(tags: string[]): string {
  *  kw（效率#13）：搜索关键词，标题段命中 `<mark>` 高亮；meta 行不高亮。 */
 export function tocListHtml(list: ClipArticle[], curId: string | null, timeOf: (a: ClipArticle) => string, kw = ''): string {
   return list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? ' on' : ''}" data-id="${esc(a.id)}">
+    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? ' on' : ''}" role="button" tabindex="0" data-id="${esc(a.id)}">
       <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
@@ -345,7 +345,7 @@ export function mobChHeadHtml(site: string, unread: number, readN: number, saved
 export function mobFoldHtml(kind: 'read' | 'saved', n: number, open: boolean): string {
   const label = kind === 'read' ? '已读' : '已收';
   return `
-    <div class="bz-clip-mob-fold${open ? ' on' : ''}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
+    <div class="bz-clip-mob-fold${open ? ' on' : ''}" data-fold data-fold-kind="${kind}" role="button" tabindex="0" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
       <span class="bz-clip-mob-fold-lab">${open ? '收起' : `${label} <b>${n}</b> 篇`}</span>
       <span class="bz-clip-mob-fold-ar"></span>
