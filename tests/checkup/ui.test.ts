@@ -190,7 +190,7 @@ describe('数据体检面板（checkup UI）', () => {
     expect(popup.querySelector('.bz-checkup-summary')).toBeNull();
   });
 
-  it('一键修复撤销链：确认后清除失效关联 + 撤销通知 + 自动重新体检收敛报告', async () => {
+  it('单条修复免确认直达（呈报#10/CK2）：不再弹确认框，清除失效关联 + 撤销通知 + 自动重新体检收敛报告', async () => {
     const fav = [
       { id: 'a', tags: [], title: 'T', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: '我的/gone.md', created: '', type: '', llmConfig: null },
     ];
@@ -199,17 +199,10 @@ describe('数据体检面板（checkup UI）', () => {
     const popup = document.getElementById('bz-checkup-popup')!;
     ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
     await waitFor(() => !!popup.querySelector('.bz-checkup-group--warn'));
-    // 逐条修复按钮
+    // 逐条修复按钮：免确认直达（确认框有且只有批量走，见 bd-checkup-fix-ui 批量用例）
     const fixBtn = [...popup.querySelectorAll<HTMLButtonElement>('.bz-checkup-group--warn button')].find((b) => b.textContent!.includes('清除关联'))!;
     fixBtn.click();
-    expect(flowMock).toHaveBeenCalled();
-    // issue 291 评审补：「清除」是删除类主动作（从数据文件里删失效引用/残留，可撤销）→
-    // 必须标 danger，主按钮不高亮（设计手册 §9/§10）
-    expect(flowMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        actions: expect.arrayContaining([expect.objectContaining({ label: '清除', danger: true })]),
-      })
-    );
+    expect(flowMock).not.toHaveBeenCalled();
     await waitFor(() => getNoticeMessages().some((m) => m.includes('已清除 1 项失效引用：收藏关联 1')));
     // 数据落盘：linkedNote 置 null
     const after = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);
@@ -221,20 +214,25 @@ describe('数据体检面板（checkup UI）', () => {
     });
   });
 
-  it('一键修复取消：确认框返回取消则不写盘', async () => {
+  it('批量修复取消：确认框返回取消则不写盘（单条已免确认，取消出口只在批量档）', async () => {
     flowMock.mockImplementation(() => Promise.resolve<string | undefined>('cancel'));
     const fav = [
       { id: 'a', tags: [], title: 'T', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: '我的/gone.md', created: '', type: '', llmConfig: null },
     ];
-    const { app, vault } = makeApp({ [`${DIR}/favorites.json`]: JSON.stringify(fav) });
+    const sidecar = { articleOverrides: {}, savedArchive: [{ url: 'https://gone', title: '甲', savedAt: '1' }], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    const { app, vault } = makeApp({
+      [`${DIR}/favorites.json`]: JSON.stringify(fav),
+      [`${DIR}/clipbook.json`]: JSON.stringify(sidecar),
+    });
     openDataCheckup(app);
     const popup = document.getElementById('bz-checkup-popup')!;
     ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
     await waitFor(() => !!popup.querySelector('.bz-checkup-group--warn'));
-    ;[...popup.querySelectorAll<HTMLButtonElement>('.bz-checkup-group--warn button')].find((b) => b.textContent!.includes('清除关联'))!.click();
+    ;[...popup.querySelectorAll<HTMLButtonElement>('.bz-checkup-group--warn button')].find((b) => b.textContent!.includes('一键修复'))!.click();
     await waitFor(() => !!popup.querySelector('.bz-checkup-summary'));
     const after = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);
     expect(after[0].linkedNote).toBe('我的/gone.md');
+    expect(JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!).savedArchive).toHaveLength(1);
   });
 
   it('设置面板通用组「数据体检」按钮行：点击直达体检面板', async () => {

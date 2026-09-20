@@ -25,10 +25,32 @@ export const FAVORITES_ITEM_FIELDS = [
 /** 番茄钟 history 条目约定字段（ticket 63：target 等残留视为约定外） */
 export const POMODORO_HISTORY_FIELDS = ['ts', 'duration', 'task'];
 
+/**
+ * 可选段豁免清单（呈报#50/CK1 拍板）：这些根段是「功能未用到就不写」的正常形态，
+ * 不属旧数据损坏——体检不再对它们计缺（出「缺少数据段」info 属狼来了噪音）。
+ * - pomodoro.json 'archived'：issue 357 周归档段，写侧无归档时条件展开省键（pomodoro/data.ts）
+ * 白名单（SEGMENT_FIELDS）仍完整登记这些键（防「约定外」误报）；本清单只豁免 missing，
+ * extra（约定外段）与真异常仍照报。登记新可选段时同步 contract.test.ts 契约行。
+ */
+export const OPTIONAL_SEGMENTS: Record<string, string[]> = {
+  'pomodoro.json': ['archived'],
+};
+
+/**
+ * 可选字段豁免清单（呈报#50/CK1 拍板，与 OPTIONAL_SEGMENTS 同口径的条目级面）：
+ * 这些条目字段是「功能未用到就不写」的可选项，不再计缺（出「部分条目缺少常见字段」info）。
+ * - favorites 'archived'/'archivedAt'：ADR-0074 条目归档字段，未归档条目即缺
+ * - pomodoro history 'task'：专注任务可选字段（state.ts task?，不用任务功能即缺）
+ */
+export const OPTIONAL_ITEM_FIELDS: Record<string, string[]> = {
+  'favorites.json': ['archived', 'archivedAt'],
+  'pomodoro.json': ['task'],
+};
+
 /** 段级约定（各域数据根对象键集；与域写侧形状单源的恒等锁见 tests/checkup/contract.test.ts） */
 export const SEGMENT_FIELDS: Record<string, string[]> = {
   // archived = issue 357 周归档可选段（深审 PA-1：本插件自己写的正常归档数据，不得被体检
-  // 误报「约定外数据段/可能是外部写入」；旧文件缺此段走「缺少数据段」info 常态，不修数据）
+  // 误报「约定外数据段/可能是外部写入」；缺段属「功能未启用」正常形态，豁免清单见 OPTIONAL_SEGMENTS）
   'pomodoro.json': ['version', 'state', 'history', 'archived'],
   // clipbook 7 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
   // + issue 358 readLog 扩段；func P2-1：此前漏 4 段致用过剪藏本即恒误报）
@@ -61,11 +83,12 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return !!v && typeof v === 'object' && !Array.isArray(v);
 }
 
-/** 纯函数：数组原文 × 约定字段 → 漂移统计 */
-export function analyzeItemDrift(rawItems: unknown, known: string[]): ItemDriftStats {
+/** 纯函数：数组原文 × 约定字段 → 漂移统计（optional=可选字段，CK1：不计缺只计约定外） */
+export function analyzeItemDrift(rawItems: unknown, known: string[], optional: string[] = []): ItemDriftStats {
   const stats: ItemDriftStats = { scanned: 0, nonObject: 0, extra: {}, missing: {} };
   if (!Array.isArray(rawItems)) return stats;
   const knownSet = new Set(known);
+  const optionalSet = new Set(optional);
   for (const it of rawItems) {
     if (!isPlainObject(it)) {
       stats.nonObject += 1;
@@ -76,7 +99,7 @@ export function analyzeItemDrift(rawItems: unknown, known: string[]): ItemDriftS
       if (!knownSet.has(key)) stats.extra[key] = (stats.extra[key] || 0) + 1;
     }
     for (const key of known) {
-      if (!(key in it)) stats.missing[key] = (stats.missing[key] || 0) + 1;
+      if (!(key in it) && !optionalSet.has(key)) stats.missing[key] = (stats.missing[key] || 0) + 1;
     }
   }
   return stats;
@@ -91,17 +114,18 @@ export interface SegmentDriftStats {
   missing: string[];
 }
 
-/** 纯函数：根对象原文 × 约定段 → 段漂移统计 */
-export function analyzeSegmentDrift(raw: unknown, known: string[]): SegmentDriftStats {
+/** 纯函数：根对象原文 × 约定段 → 段漂移统计（optional=可选段，CK1：不计缺只计约定外） */
+export function analyzeSegmentDrift(raw: unknown, known: string[], optional: string[] = []): SegmentDriftStats {
   if (Array.isArray(raw)) return { isArray: true, isObject: false, extra: [], missing: [] };
   if (!isPlainObject(raw)) return { isArray: false, isObject: false, extra: [], missing: [] };
   const knownSet = new Set(known);
+  const optionalSet = new Set(optional);
   const keys = Object.keys(raw);
   return {
     isArray: false,
     isObject: true,
     extra: keys.filter((k) => !knownSet.has(k)),
-    missing: known.filter((k) => !(k in raw)),
+    missing: known.filter((k) => !(k in raw) && !optionalSet.has(k)),
   };
 }
 
@@ -239,14 +263,16 @@ export async function checkFieldDrift(app: App, opts: CheckOpts = {}): Promise<C
     const parsed = await readRawJson(app, plan.file);
     if (parsed && parsed.ok) {
       if (plan.kind === 'item') {
-        results.push({ plan, parsed, item: analyzeItemDrift(parsed.data, plan.file.endsWith('favorites.json') ? FAVORITES_ITEM_FIELDS : MEMO_ITEM_FIELDS) });
+        const optional = plan.file.endsWith('favorites.json') ? OPTIONAL_ITEM_FIELDS['favorites.json'] : undefined;
+        results.push({ plan, parsed, item: analyzeItemDrift(parsed.data, plan.file.endsWith('favorites.json') ? FAVORITES_ITEM_FIELDS : MEMO_ITEM_FIELDS, optional) });
       } else if (plan.kind === 'history') {
-        const root = analyzeSegmentDrift(parsed.data, SEGMENT_FIELDS['pomodoro.json']);
-        const hist = analyzeItemDrift(isPlainObject(parsed.data) ? (parsed.data as any).history : undefined, POMODORO_HISTORY_FIELDS);
+        const root = analyzeSegmentDrift(parsed.data, SEGMENT_FIELDS['pomodoro.json'], OPTIONAL_SEGMENTS['pomodoro.json']);
+        const hist = analyzeItemDrift(isPlainObject(parsed.data) ? (parsed.data as any).history : undefined, POMODORO_HISTORY_FIELDS, OPTIONAL_ITEM_FIELDS['pomodoro.json']);
         results.push({ plan, parsed, seg: root, item: hist });
       } else {
-        const known = SEGMENT_FIELDS[plan.file.split('/').pop() || ''] || [];
-        results.push({ plan, parsed, seg: analyzeSegmentDrift(parsed.data, known) });
+        const base = plan.file.split('/').pop() || '';
+        const known = SEGMENT_FIELDS[base] || [];
+        results.push({ plan, parsed, seg: analyzeSegmentDrift(parsed.data, known, OPTIONAL_SEGMENTS[base]) });
       }
     } else {
       results.push({ plan, parsed });
