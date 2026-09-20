@@ -80,8 +80,9 @@ describe('QuizMasterUI（纯复习会话）', () => {
     const texts = [...spans].map((s) => s.textContent || '');
     expect(texts.some((t) => t.includes('a < b & c'))).toBe(true);
     expect(texts.some((t) => t.includes('x>y'))).toBe(true);
-    // 未被当作 HTML 解析（每个按钮 3 个 span：标签/文本/check-mark，4 按钮 = 12）
-    expect(popup.querySelectorAll('.quiz-option-btn span').length).toBe(12);
+    // 未被当作 HTML 解析（每按钮 4 个 span：标签/文本/check-mark/图标（R4 后 mountIcons
+    // 在 mock 下兑现 check 为 span.bz-ic），4 按钮 = 16；若选项文本被当 HTML 解析会产出额外节点）
+    expect(popup.querySelectorAll('.quiz-option-btn span').length).toBe(16);
   });
 
   it('单选答对：标绿 + 持久化成功自动进入下一题（无「下一题」按钮）+ splice 计数', async () => {
@@ -546,7 +547,7 @@ describe('复习联动契约', () => {
     const popup = document.getElementById('quiz-popup')!;
     expect(popup.querySelector('.quiz-multi-badge')).toBeNull();
     expect(popup.textContent).not.toContain('本题为多选题');
-    expect(popup.textContent).toContain('📝 A (1/2)');
+    expect(popup.textContent).toContain('A (1/2)'); // R4：📝 退役（lucide file-text），笔记名与题号保留
     const opts = popup.querySelectorAll('.quiz-option-btn');
     const submit = popup.querySelector('.quiz-submit-btn') as HTMLElement;
     // submit 与最后一个选项同容器且位于其后（compareDocumentPosition：FOLLOWING=4）

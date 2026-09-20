@@ -11,6 +11,8 @@ import { notice, notify, notifyActionError } from '../../core/notice';
 import { openFlowDialog } from '../../core/flow-dialog';
 import { escManager } from '../../core/esc-manager';
 import { allocZ } from '../../core/z-order';
+import { uiIconSpan, mountIcons } from '../../core/ui';
+import { iconSpan } from '../../core/ui/str';
 import { getApp } from '../../core/app';
 import { QuizManager } from './manager';
 import { QuestionGenerator } from './generator';
@@ -211,6 +213,9 @@ export class QuizMasterUI {
 
     const header = document.createElement('div');
     header.className = 'bz-quiz-head';
+    // 呈报#54（R4）：题头 📝 退役 → lucide file-text（uiIconSpan 经 setIcon 兑现；
+    // 全站 emoji 清零收尾）。笔记名与题号文本不变。
+    header.appendChild(uiIconSpan('file-text', 'bz-quiz-note-ic'));
     const title = document.createElement('span');
     title.className = 'bz-quiz-title';
     // 使用固定的总题数 this.totalQuestions；题号 = 已消费题数 + 1：
@@ -219,7 +224,7 @@ export class QuizMasterUI {
     // ticket 099：notePath 判空降级（待重做队列曾缺 notePath → q.notePath!.split 崩溃）
     const noteName = q.notePath ? q.notePath.split('/').pop()!.replace('.md', '') : '';
     const doneCount = this.totalQuestions - this.currentQuestions.length;
-    title.textContent = noteName ? `📝 ${noteName} (${doneCount + 1}/${this.totalQuestions})` : `📝 (${doneCount + 1}/${this.totalQuestions})`;
+    title.textContent = noteName ? `${noteName} (${doneCount + 1}/${this.totalQuestions})` : `(${doneCount + 1}/${this.totalQuestions})`;
     header.appendChild(title);
     // ticket 156：头部对错计数删除（用户拍板去掉右上角 ✅/❌ 统计；结算面板统计保留）
     popup.appendChild(header);
@@ -247,6 +252,8 @@ export class QuizMasterUI {
 
     mask.appendChild(popup);
     document.body.appendChild(mask);
+    // R4：题头/选项的 lucide 占位统一兑现（本弹窗此前无图标消费）
+    mountIcons(popup);
     // U5/C7：句柄存实例字段（_teardownModal 显式注销，消 N 题层累积）；id 归 `bz-<域>` 约定
     this._escHandle = escManager.register('bz-review-quiz', {
       isVisible: () => !!(this.mask && this.mask.isConnected),
@@ -318,7 +325,8 @@ export class QuizMasterUI {
       btn.className = 'quiz-option-btn';
       // 清理选项文本，避免重复前缀
       const cleanText = cleanOptionText(opt);
-      btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml(cleanText)}</span><span class="check-mark">✔️</span>`;
+      // 呈报#54（R4）：✔️ 退役 → lucide check 占位（renderModal 尾部 mountIcons 兑现）
+      btn.innerHTML = `<span>${optionLabels[idx]}.</span><span class="bz-quiz-option-text">${escapeHtml(cleanText)}</span><span class="check-mark">${iconSpan('check')}</span>`;
       btn.dataset.index = String(idx);
 
       btn.onclick = () => {

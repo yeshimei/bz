@@ -77,6 +77,14 @@
 /* item 10：空态宿主（uiEmpty 组件库类不重复定义，仅限宽居中） */
 .bz-q-empty-wrap { align-items: center; justify-content: center; }
 .bz-q-hint { font-size: var(--bz-font-meta); color: var(--bz-text-3); text-align: center; padding: 18px var(--bz-space-sm); }
+/* 呈报#19-R13：列内空态统一 uiEmpty 小图标口径（markup 由 render.emptyHtmlStr 单源产出）——
+   列内空间小，图标/留白相对整面板空态收一档 */
+.bz-q-col .bz-empty { padding: 14px 8px; gap: 4px; }
+.bz-q-col .bz-empty-ic { width: 22px; height: 22px; margin-bottom: 0; }
+.bz-q-col .bz-empty-title { font-size: var(--bz-font-meta); }
+.bz-sq-list .bz-empty { padding: 16px 6px; }
+.bz-sq-list .bz-empty-ic { width: 22px; height: 22px; margin-bottom: 0; }
+.bz-sq-list .bz-empty-title { font-size: var(--bz-font-meta); }
 
 /* ==================== 底部信息行（归档/统计的非按钮落位，整行可点无引导小字） ==================== */
 .bz-q-footer { display: flex; align-items: center; gap: 10px; padding: var(--bz-space-sm) 20px var(--bz-space-md); border-top: 1px solid var(--bz-border); flex-shrink: 0; }
@@ -98,6 +106,8 @@
 .bz-sprint-head { display: flex; align-items: center; justify-content: space-between; gap: var(--bz-space-sm); padding: 14px 20px 6px; flex-shrink: 0; }
 .bz-sprint-head .t { display: flex; align-items: baseline; gap: var(--bz-space-sm); }
 .bz-sprint-title { font-size: var(--bz-font-title); font-weight: 700; color: var(--bz-text-1); }
+/* 呈报#57（R5）：头行模式副标题（开始本轮/待重做/单条复习），弱化形态对齐 .bz-panel-head-sub */
+.bz-sprint-sub { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
 .bz-sprint-head .tools { display: flex; align-items: center; gap: 6px; }
 .bz-sprint-loading { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 60px 20px; color: var(--bz-text-2); font-size: var(--bz-font-label); }
 /* 加载圈：深审 A15 补 bz 前缀（bz-q-spinner）——原裸 spinner 类名是无主通用名，不进全局聚合。
@@ -313,6 +323,9 @@
 #quiz-popup { background: var(--bz-surface-2); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); padding: 24px; max-width: 600px; width: 90%; max-height: 82vh; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: none; }
 .bz-quiz-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 .bz-quiz-title { font-size: 15px; font-weight: 600; }
+/* 呈报#54（R4）：题头 file-text 图标（uiIconSpan 产 .bz-ic）尺寸对齐标题行 */
+.bz-quiz-note-ic { display: inline-flex; width: 16px; height: 16px; color: var(--bz-text-2); }
+.bz-quiz-note-ic svg { width: 100%; height: 100%; }
 .bz-quiz-question { font-size: 17px; font-weight: 500; margin-bottom: 20px; color: var(--bz-text-1); }
 .bz-quiz-options { display: flex; flex-direction: column; gap: 6px; }
 .bz-quiz-option-text { flex: 1; }
@@ -348,6 +361,9 @@
 .quiz-option-btn.selected { border-color:var(--bz-brand); background:var(--bz-surface-hover); }
 .quiz-option-btn .check-mark { opacity:0; transition:opacity 0.2s; flex-shrink:0; }
 .quiz-option-btn.selected .check-mark { opacity:1; }
+/* R4：check-mark 的 lucide 对勾尺寸（iconSpan 占位兑现为 span.bz-ic） */
+.check-mark .bz-ic { display: inline-flex; width: 14px; height: 14px; }
+.check-mark .bz-ic svg { width: 100%; height: 100%; }
 .quiz-submit-btn {
   margin-top:16px;
   padding:8px 20px;
@@ -401,6 +417,7 @@
   #review-popup .bz-panel-brand .bz-ic { width: 16px; height: 16px; }
   #review-popup .bz-panel-head-pipe { height: 16px; }
   .bz-sprint-title { font-size: 20px; }
+  .bz-sprint-sub { font-size: 13px; }
   .bz-summary-title { font-size: 22px; }
 
   /* ---- L5 控件：面板内主钮 + 头行图标钮（唯一关闭入口，抬到触控档） ---- */

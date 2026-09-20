@@ -115,7 +115,6 @@ describe('呈报#4（R2）：轮次互斥时给提示（不再无声拦截）', 
       fetchQuestions: () => new Promise<any[] | null>(() => undefined),
       onPassed: async () => undefined,
       onFailed: async () => undefined,
-      onExit: () => undefined,
     });
     await Promise.resolve();
     await Promise.resolve();

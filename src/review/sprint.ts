@@ -507,7 +507,7 @@ export class SprintSession {
 
   private showLoading(entry: SprintEntry): void {
     this.view = 'loading';
-    this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintLoadingHtml()}`;
+    this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintLoadingHtml()}`;
     this.bindTop();
   }
 
@@ -526,7 +526,7 @@ export class SprintSession {
       { answered: q.answered, sel: [...q.sel], lastCorrect: q.lastCorrect, remaining: q.list.length }
     );
     this.view = 'question';
-    this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintBodyHtml(main, this.asideStates())}`;
+    this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintBodyHtml(main, this.asideStates())}`;
     mountIcons(this.opts.host);
     this.bindTop();
     this.opts.host.querySelector('[data-action="submit"]')?.addEventListener('click', () => this.submitMulti());
@@ -568,7 +568,7 @@ export class SprintSession {
         : `${RATING_NAMES[rating]} · 下次 ${entry.passNote || '已排期'}`;
     this.view = 'result';
     // U7：结果卡仅通过态可达（未通过走 finish('fail') 中断，不出卡），markup 随死分支删除
-    this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintBodyHtml(
+    this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintBodyHtml(
       sprintResultHtml({
         name,
         acc: entry.acc,
@@ -598,7 +598,7 @@ export class SprintSession {
     const total = passed + failed;
     // item 8：结算屏追加连续 N 天（computeStats.streak 由调用方算好传入；0/缺省不展示）
     const streak = this.opts.streakDays ?? 0;
-    this.opts.host.innerHTML = `${sprintHeadHtml()}${sprintSummaryHtml({ total, passed, failed, streak })}`;
+    this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintSummaryHtml({ total, passed, failed, streak })}`;
     mountIcons(this.opts.host);
     this.bindTop();
     this.opts.host.querySelector('[data-action="done"]')?.addEventListener('click', () => this.finish('done'));
