@@ -6566,6 +6566,34 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    宽度自适应由上一行管；皮肤观感（墨边贴纸/方角描边）见皮肤段排序下拉组 */
 .bz-memo-sortsel { flex-shrink: 0; }
 
+/* 搜索框尾部 ✕ 一键清词（呈报#5 5A；clipbook 效率#12 定稿范式，gameshelf
+   .bz-gs-search-clear 同款）：绝对定位贴输入框右缘，有词才现（hidden 由 ui.ts
+   syncSearchClear 驱动），点 = 清词 + 光标回框。输入框右侧让位防词长压钮。 */
+.bz-memo-search .bz-input { padding-right: 26px; }
+.bz-memo-search-clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; padding: 2px;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--bz-text-3); line-height: 0;
+}@media (hover: hover) {
+
+.bz-memo-search-clear:hover { color: var(--bz-text-1); }
+}
+
+.bz-memo-search-clear .bz-ic { width: 13px; height: 13px; }
+/* hidden 属性显式守卫（belongings/cinema 同款坑）：下方 inline-flex 是作者规则，
+   UA 的 [hidden]{display:none} 同origin低序压不住，无词态必须显式钉死 */
+.bz-memo-search-clear[hidden] { display: none; }
+
+/* 搜索命中词高亮（呈报#6 6A；settings-panel SP2 .bz-sp-mark 先例口径）：
+   品牌实底 + on-brand 字（亮暗 token 均配好），卡片纯文本内一眼定位 */
+.bz-memo-hit {
+  background: var(--bz-brand);
+  color: var(--bz-on-brand);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 /* 移动场景条尾部「添加场景」虚线 chip（issue 268，markup 见 render.mobAddSceneChipHtml）：
    动作磁贴跟在全部场景之后，与左栏 .bz-memo-side-add 同语义、收藏本 .bz-fav-chip-add
    同款虚线范式。选择器带 .bz-mobstrip-chip 复合（0,2,0）稳压组件库基类。 */
@@ -6618,6 +6646,21 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }@media (hover: hover) {
 
 .bz-memo-done-more:hover { background: var(--bz-brand-soft); }
+}
+
+/* 完成去向轻反馈（呈报#13 13A）：条目挪进默认收起的折叠区后，折叠条短暂高亮 +
+   计数跳动（类 bz-memo-donebar-bump 由 ui.ts bumpDoneBar 挂，随下次渲染自然消失；
+   不自动展开，13B 拍板不做）。动画播放期压过静态声明，位置无关层叠。 */
+.bz-memo-donebar.bz-memo-donebar-bump { animation: bz-memo-donebar-bump 0.9s ease; }
+.bz-memo-donebar.bz-memo-donebar-bump .bz-memo-donebar-cnt { animation: bz-memo-donebar-cnt-bump 0.45s ease; }
+@keyframes bz-memo-donebar-bump {
+  0% { background: var(--bz-brand-soft); border-color: var(--bz-brand); color: var(--bz-text-1); }
+  100% { background: var(--bz-surface-1); }
+}
+@keyframes bz-memo-donebar-cnt-bump {
+  0% { color: var(--bz-brand); transform: scale(1.3); }
+  70% { color: var(--bz-brand); transform: scale(1); }
+  100% { color: var(--bz-text-3); transform: scale(1); }
 }
 
 
@@ -6705,9 +6748,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    纵向排布 + 防溢出；顶部间距由 form 的 margin-top 自管。全 token 取值，
    两肤 × 亮暗四组合随皮肤作用域 token 自动协调 */
 .bz-memo-editor { display: flex; flex-direction: column; min-width: 0; }
-/* 底部按钮行包裹：右对齐（内部 .bz-btn-row 同向双保险）；margin-top 沿用
-   addscene 按钮行惯例（表单 gap 之上再垫 xs 档，动作行与字段分离） */
-.bz-memo-form-actions { display: flex; justify-content: flex-end; margin-top: var(--bz-space-xs); }
+/* 底部按钮行包裹：右对齐（内部 .bz-btn-row 同向双保险）；margin-top 取 md 档——
+   呈报#18 18A 起动作行挂 form **外**（modalBox 直下，移动端钉底依赖此结构），
+   不再吃 form 的 flex gap，原地补回与末字段的间距（addscene 按钮行同档） */
+.bz-memo-form-actions { display: flex; justify-content: flex-end; margin-top: var(--bz-space-md); }
 /* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器：输入框满宽
    （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199）；
    position:relative 供联想 .bz-popover 浮层锚定（issue 201） */
@@ -7580,6 +7624,57 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: #141414;
 }
 
+/* ═══════════ 拍板执行批 · 勾选待定态 + 移动弹窗键盘适配（呈报#12/#18）═══════════
+   落位要求：两个皮肤段**之后**（待定态 (0,2,0) 与肤内勾选圈基础规则同特异性，
+   靠后写者赢才能压住换装）、移动端收口段**之前**（该段须保持文件最后一节）。 */
+
+/* 勾选 300ms 反悔窗口「待定」态（呈报#12 12A）：品牌色边底 + 半亮呼吸——窗口内一眼
+   可知「点上了，正在等落定」，防「没点上」二击误反悔；落定（checked 划线）与反悔
+   （类摘除）即恢复。窗口仅 300ms，无限循环动画实际只存活一瞬。
+   reduced-motion 降级放缓不减义（clipbook 先例：不用 animation:none 一刀切）。 */
+.bz-memo-check.bz-memo-pending {
+  border-color: var(--bz-brand);
+  background: var(--bz-brand-soft);
+  animation: bz-memo-check-pending 0.55s ease-in-out infinite alternate;
+}
+@keyframes bz-memo-check-pending {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-memo-check.bz-memo-pending { animation-duration: 1.8s; }
+}
+
+/* 移动端编辑弹窗键盘适配（呈报#18 18A）：
+   core 公共壳 .bz-overlay-popup 是 max-height:82vh + 遮罩 align-items:center
+   （components.css 公共壳，不动 core）——不吃键盘高度，软键盘一弹，场景/优先级/
+   截止/保存钮全压在键盘底下（面板本体已修，弹窗漏了）。编辑弹窗 popup 挂
+   bz-memo-editor-popup（uiModal className，ui.ts openEditor），域内覆盖三点：
+   1) 高度上限改随键盘收缩的 --bz-vvh（面板侧 .bz-memo-panel 先例同源；减 32px =
+      遮罩上下 padding，顶对齐后底边落在键盘上沿之上）；
+   2) 顶对齐（遮罩 align-items:center 的反制，同 .bz-memo-panel align-self 先例）；
+   3) 弹窗整体不滚、字段区（.bz-memo-form）自滚、保存钮行（.bz-memo-form-actions，
+      18A 已移出 form 挂 modalBox 直下）钉底恒可见。
+   仅 ≤768px 生效，桌面零影响。 */
+@media (max-width: 768px) {
+  .bz-overlay-popup.bz-memo-editor-popup {
+    max-height: calc(var(--bz-vvh, 100vh) - 32px);
+    align-self: flex-start;
+    overflow: hidden; /* 弹窗整体不再滚——滚动移交字段区，保存钮行才能钉底 */
+  }
+  .bz-overlay-popup.bz-memo-editor-popup .bz-dialog-body,
+  .bz-overlay-popup.bz-memo-editor-popup .bz-memo-editor {
+    flex: 1 1 auto; min-height: 0; overflow: hidden;
+  }
+  .bz-overlay-popup.bz-memo-editor-popup .bz-memo-form {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; /* 字段区自滚（滚动条走 core 单源） */
+  }
+  .bz-overlay-popup.bz-memo-editor-popup .bz-memo-form-actions {
+    flex-shrink: 0; /* 保存钮行钉底恒可见（18A 拍板口径） */
+    padding-bottom: max(var(--bz-space-xs), env(safe-area-inset-bottom, 0px));
+  }
+}
+
 /* ═══════════ 移动端收口段（issue 266 → 269 收敛）═══════════
    位置要求：必须在前方两个皮肤段（`.bz-memo-skin-* .bz-panel-head-btns
    { display: none }`）**之后**——媒体查询不增特异性，同特异性
@@ -7661,14 +7756,16 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     border: 1.5px solid var(--bz-skin-ink) !important;
     border-radius: 3px;
   }@media (hover: hover) {
-
-  .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close:hover {
-    background: var(--bz-skin-ink) !important;
-    color: #ffffff !important;
+    .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close:hover {
+      background: var(--bz-skin-ink) !important;
+      color: #ffffff !important;
+    }
   }
 
   /* 5) 触控热区抬档（memo2-ui M3-1，设计手册 §8.2 ≥44px 硬规则）：工具行/录入行/
-        折叠条此前 28~32px、位置 meta 标签 18px，均低于硬规则。 */
+        折叠条此前 28~32px、位置 meta 标签 18px，均低于硬规则。
+        （本组属文件末节媒体收口段本体，必须在 (hover:hover) 块**外**——触屏无悬浮，
+        收进悬浮块整组失效；tests/memo/verdict-styles-structure.test.ts 守卫。） */
   /* 排序下拉与搜索框、composer 按钮抬到 40px（绝对下限档；composer 同排 40/32 错位一并消除）。
      皮肤段 .bz-memo-skin-* .bz-memo-sort .bz-select 高 32px 的 (0,3,0) 由本段同特异性靠后覆盖。 */
   .bz-memo-panel .bz-memo-sort .bz-select { height: 40px; }
@@ -7681,8 +7778,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
      标签自身 relative 供伪元素锚定） */
   .bz-memo-tag.bz-memo-tag-pos { position: relative; }
   .bz-memo-tag.bz-memo-tag-pos::after { content: ''; position: absolute; inset: -13px; }
-}
-
 }
 /* ==================== 剪藏本域样式（src/clipbook/styles.css） ==================== */
 /* 剪藏本融合域（ADR-0082 / issue 177）：桌面三栏 + 移动双屏工作台。
