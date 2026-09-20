@@ -1,4 +1,4 @@
-/* 源指纹 4e7b28e19b04150c · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 3637e34c2f29a740 · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -24530,29 +24530,29 @@ ${bodyText.substring(0, 6e3)}`;
               type: "toggle",
               name: "自动摘要",
               desc: "新剪藏的文章自动生成 AI 摘要",
-              binding: { key: "autoSummaryEnabled" },
+              binding: { key: AUTO_SUMMARY_KEYS.enabled },
               onChange: (v) => {
                 if (v) ensureAutoSummary(getApp());
                 else stopAutoSummary();
               }
             },
-            { type: "select", name: "摘要长度", desc: "控制生成的摘要详略程度", binding: { key: "autoSummaryLength" }, options: [
+            { type: "select", name: "摘要长度", desc: "控制生成的摘要详略程度", binding: { key: AUTO_SUMMARY_KEYS.length }, options: [
               { value: "simple", label: "简短（50-100 字）" },
               { value: "standard", label: "标准（150-250 字）" },
               { value: "detailed", label: "详细（300-400 字）" }
-            ], visibleWhen: (s) => s.autoSummaryEnabled === true, isChild: true },
-            { type: "toggle", name: "生成标签", desc: "为剪藏生成中文标签", binding: { key: "autoSummaryTagsEnabled" }, visibleWhen: (s) => s.autoSummaryEnabled === true, isChild: true },
-            { type: "text", name: "标签数量", desc: "生成的标签个数写成区间，如 3-6", binding: { key: "autoSummaryTagCount" }, visibleWhen: (s) => s.autoSummaryEnabled === true && s.autoSummaryTagsEnabled === true, isChild: true },
+            ], visibleWhen: (s) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
+            { type: "toggle", name: "生成标签", desc: "为剪藏生成中文标签", binding: { key: AUTO_SUMMARY_KEYS.tagsEnabled }, visibleWhen: (s) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
+            { type: "text", name: "标签数量", desc: "生成的标签个数写成区间，如 3-6", binding: { key: AUTO_SUMMARY_KEYS.tagCount }, visibleWhen: (s) => s[AUTO_SUMMARY_KEYS.enabled] === true && s[AUTO_SUMMARY_KEYS.tagsEnabled] === true, isChild: true },
             {
               type: "select",
               name: "摘要时机",
               desc: "保存后立刻生成，或仅打开文件时才补全",
-              binding: { key: "autoSummaryTiming" },
+              binding: { key: AUTO_SUMMARY_KEYS.timing },
               options: [
                 { value: "immediate", label: "保存后立刻" },
                 { value: "lazy", label: "懒触发（打开时）" }
               ],
-              visibleWhen: (s) => s.autoSummaryEnabled === true,
+              visibleWhen: (s) => s[AUTO_SUMMARY_KEYS.enabled] === true,
               isChild: true,
               // 时机变更即时生效：重注册监听（lazy↔immediate 切换无需重启；对齐上方自动摘要开关）
               onChange: () => {
@@ -24600,6 +24600,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_settings_modal();
       init_settings_provider();
       init_auto_summary();
+      init_keys();
       init_news_sources_group();
       init_constants();
       init_news_source_settings();

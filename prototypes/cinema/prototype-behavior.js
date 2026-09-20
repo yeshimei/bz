@@ -1,4 +1,4 @@
-/* 源指纹 75372df256cea848 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 71aca44169236a45 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -6633,7 +6633,9 @@ var BZW_cinema = (() => {
   var attempted = /* @__PURE__ */ new Set();
   var cancelled = /* @__PURE__ */ new Set();
   var failedNames = [];
+  var failedEntries = [];
   var blockedNames = [];
+  var blockedEntries = [];
   var pumping = false;
   var fetchFn = null;
   var gapMs = FETCH_GAP_MS;
@@ -6758,8 +6760,13 @@ var BZW_cinema = (() => {
           continue;
         }
         if (!r.ok) {
-          if (r.reason === "blocked") blockedNames.push(entry.name);
-          else failedNames.push(entry.name);
+          if (r.reason === "blocked") {
+            blockedNames.push(entry.name);
+            blockedEntries.push(entry);
+          } else {
+            failedNames.push(entry.name);
+            failedEntries.push(entry);
+          }
         }
         refreshAfterFetch();
       }
@@ -6767,13 +6774,42 @@ var BZW_cinema = (() => {
       pumping = false;
     }
     if (blockedNames.length > 0) {
-      notice(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join("、")}（重启 Obsidian（重载插件）后会自动重试）`, "error");
+      const entries = blockedEntries;
+      notify(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join("、")}（重启 Obsidian（重载插件）后会自动重试）`, {
+        type: "error",
+        action: { label: "重试", onClick: () => requeueFailed(entries) }
+      });
       blockedNames = [];
+      blockedEntries = [];
     }
     if (failedNames.length > 0) {
-      notice(`以下影片豆瓣信息获取失败：${failedNames.join("、")}（重启 Obsidian（重载插件）后会自动重试）`, "error");
+      const entries = failedEntries;
+      notify(`以下影片豆瓣信息获取失败：${failedNames.join("、")}（重启 Obsidian（重载插件）后会自动重试）`, {
+        type: "error",
+        action: { label: "重试", onClick: () => requeueFailed(entries) }
+      });
       failedNames.length = 0;
+      failedEntries = [];
     }
+  }
+  function requeueFailed(entries) {
+    const app = M.appRef;
+    if (!app) return;
+    let added = 0;
+    let gone = 0;
+    for (let i = entries.length - 1; i >= 0; i--) {
+      const e = entries[i];
+      entries.splice(i, 1);
+      attempted.delete(e.file.path);
+      const file = app.vault.getAbstractFileByPath(e.file.path);
+      if (!file) {
+        gone++;
+        continue;
+      }
+      if (enqueueDoubanFetch(file, e.name)) added++;
+    }
+    if (added > 0) notice(`已重新入队 ${added} 部影片的豆瓣抓取`);
+    else if (gone > 0) notice("没有可重试的影片", "warning");
   }
   function refreshAfterFetch() {
     var _a, _b;
@@ -7278,24 +7314,24 @@ tags:
     <div class="stat-card"><div class="v">${data.avgDiff === "—" ? "—" : (Number(data.avgDiff) >= 0 ? "+" : "") + data.avgDiff}</div><div class="k">个人−豆瓣</div></div>
   </div>
   ${secHTML("类型分布", "clapperboard", softHTML(topN(data.groups, 8)))}
-  ${secHTML("年度观影趋势", "bar-chart-3", barHTML(yearEntries))}
-  ${secHTML("片龄画像", "bar-chart-3", kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets["≥10年"]}</b> 部`]) + softHTML(ageEntries) + '<div class="stat-era-gap">' + barHTML(data.eraEntries) + "</div>")}
-  ${secHTML("片长画像", "bar-chart-3", data.durCount ? kvInline([`平均片长 <b>${data.avgDur}</b> 分钟`]) + softHTML(durEntries) : '<div class="cn-empty">暂无片长数据（笔记 frontmatter 未含时长字段）</div>')}
-  ${secHTML("月度观影分布", "bar-chart-3", barHTML(monthEntries))}
-  ${secHTML("观影节奏", "bar-chart-3", kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.datedWatched ? Math.round(weekend / data.datedWatched * 100) : 0}%）`]) + barHTML(weekEntries))}
-  ${secHTML("个人评分分布", "bar-chart-3", barHTML(bucketEntries))}
-  ${secHTML("评分趋势（个人10分制）", "bar-chart-3", barHTML(data.yearRatingEntries, { color: "#8fa3bd" }))}
-  ${secHTML("打分习惯（个人−豆瓣）", "bar-chart-3", kvInline([`平均差值 <b>${data.avgDiff === "—" ? "—" : (Number(data.avgDiff) >= 0 ? "+" : "") + data.avgDiff}</b>（个人−豆瓣）`]) + '<div class="stat-subhead">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join("") : emptyHTML()) + '<div class="stat-subhead stat-subhead--lg">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join("") : emptyHTML()))}
-  ${secHTML("题材偏好 TOP10", "bar-chart-3", softHTML(topN(data.genres, 10)))}
-  ${secHTML("制片国家/地区 TOP10", "bar-chart-3", softHTML(topN(data.countries, 10)))}
-  ${secHTML("最爱导演 TOP10", "bar-chart-3", softHTML(topN(data.directors, 10)))}
-  ${secHTML("最爱主演 TOP10", "bar-chart-3", softHTML(topN(data.actors, 10)))}
-  ${secHTML("真爱重复", "bar-chart-3", kvInline([`导演≥3部 <b>${data.dirRepeat}</b> 人`, `主演≥3部 <b>${data.actRepeat}</b> 人`]) + softHTML([{ label: "导演≥3部", value: data.dirRepeat }, { label: "主演≥3部", value: data.actRepeat }]))}
-  ${secHTML("影评关键词", "bar-chart-3", kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc2(k)} <b>${v}</b></span>`).join("")}</div>` : emptyHTML()))}
-  ${secHTML("我的高分 TOP10", "bar-chart-3", data.topRated.length ? data.topRated.map((it, i) => topRow(String(i + 1), esc2(it.name), Number(it.rating).toFixed(1))).join("") : emptyHTML())}
-  ${secHTML("系列追踪", "bar-chart-3", data.seriesList.length ? data.seriesList.map(([k, v], i) => topRow(String(i + 1), `《${esc2(k)}》`, `${v} 部`)).join("") : emptyHTML())}
-  ${secHTML("追剧深度", "bar-chart-3", data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s, i) => topRow(String(i + 1), `《${esc2(s.name)}》`, `${s.seasons} 季`)).join("") : emptyHTML())}
-  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bar-chart-3", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
+  ${secHTML("年度观影趋势", "calendar-days", barHTML(yearEntries))}
+  ${secHTML("片龄画像", "hourglass", kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets["≥10年"]}</b> 部`]) + softHTML(ageEntries) + '<div class="stat-era-gap">' + barHTML(data.eraEntries) + "</div>")}
+  ${secHTML("片长画像", "clock", data.durCount ? kvInline([`平均片长 <b>${data.avgDur}</b> 分钟`]) + softHTML(durEntries) : '<div class="cn-empty">暂无片长数据（笔记 frontmatter 未含时长字段）</div>')}
+  ${secHTML("月度观影分布", "calendar", barHTML(monthEntries))}
+  ${secHTML("观影节奏", "activity", kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.datedWatched ? Math.round(weekend / data.datedWatched * 100) : 0}%）`]) + barHTML(weekEntries))}
+  ${secHTML("个人评分分布", "star", barHTML(bucketEntries))}
+  ${secHTML("评分趋势（个人10分制）", "trending-up", barHTML(data.yearRatingEntries, { color: "#8fa3bd" }))}
+  ${secHTML("打分习惯（个人−豆瓣）", "scale", kvInline([`平均差值 <b>${data.avgDiff === "—" ? "—" : (Number(data.avgDiff) >= 0 ? "+" : "") + data.avgDiff}</b>（个人−豆瓣）`]) + '<div class="stat-subhead">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join("") : emptyHTML()) + '<div class="stat-subhead stat-subhead--lg">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join("") : emptyHTML()))}
+  ${secHTML("题材偏好 TOP10", "tags", softHTML(topN(data.genres, 10)))}
+  ${secHTML("制片国家/地区 TOP10", "globe", softHTML(topN(data.countries, 10)))}
+  ${secHTML("最爱导演 TOP10", "video", softHTML(topN(data.directors, 10)))}
+  ${secHTML("最爱主演 TOP10", "users", softHTML(topN(data.actors, 10)))}
+  ${secHTML("真爱重复", "repeat", kvInline([`导演≥3部 <b>${data.dirRepeat}</b> 人`, `主演≥3部 <b>${data.actRepeat}</b> 人`]) + softHTML([{ label: "导演≥3部", value: data.dirRepeat }, { label: "主演≥3部", value: data.actRepeat }]))}
+  ${secHTML("影评关键词", "quote", kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc2(k)} <b>${v}</b></span>`).join("")}</div>` : emptyHTML()))}
+  ${secHTML("我的高分 TOP10", "trophy", data.topRated.length ? data.topRated.map((it, i) => topRow(String(i + 1), esc2(it.name), Number(it.rating).toFixed(1))).join("") : emptyHTML())}
+  ${secHTML("系列追踪", "layers", data.seriesList.length ? data.seriesList.map(([k, v], i) => topRow(String(i + 1), `《${esc2(k)}》`, `${v} 部`)).join("") : emptyHTML())}
+  ${secHTML("追剧深度", "tv", data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s, i) => topRow(String(i + 1), `《${esc2(s.name)}》`, `${s.seasons} 季`)).join("") : emptyHTML())}
+  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bookmark", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
   }
 
   // src/cinema/seasons.ts
@@ -8150,7 +8186,7 @@ tags:
     });
   }
   function openForm(sec, item, app, presetSt) {
-    var _a, _b;
+    var _a, _b, _c;
     const editing = !!item;
     const initTag = item ? item.typeTag : "电影";
     const initSt = presetSt != null ? presetSt : item ? statusText(item.status) : "想看";
@@ -8182,7 +8218,8 @@ tags:
       var _a2;
       return (_a2 = el.querySelector(".j-save")) == null ? void 0 : _a2.click();
     });
-    (_b = el.querySelector(".j-save")) == null ? void 0 : _b.addEventListener("click", () => {
+    if (!isMobileEnv()) (_b = el.querySelector(".j-name")) == null ? void 0 : _b.focus();
+    (_c = el.querySelector(".j-save")) == null ? void 0 : _c.addEventListener("click", () => {
       var _a2;
       const name = el.querySelector(".j-name").value.trim();
       if (!name) {
@@ -8421,14 +8458,46 @@ tags:
     mountIcons(sec);
   }
   function bindMidnight(sec, app) {
-    if (!sec.classList.contains("mob")) {
-      sec.addEventListener("mouseover", (e) => {
-        const dot = e.target.closest(".season-dots i");
-        if (dot) peekSeasonDot(dot, app);
+    const nearestSeasonDot = (target, e) => {
+      var _a;
+      const el = target;
+      const box = (_a = el == null ? void 0 : el.closest) == null ? void 0 : _a.call(el, ".season-dots");
+      if (!box) return null;
+      const direct = el.closest(".season-dots i");
+      if (direct) return direct;
+      let best = null;
+      let bestDist = Infinity;
+      box.querySelectorAll("i").forEach((d) => {
+        const r = d.getBoundingClientRect();
+        const dx = e.clientX - (r.left + r.width / 2);
+        const dy = e.clientY - (r.top + r.height / 2);
+        const dist = dx * dx + dy * dy;
+        if (dist < bestDist) {
+          bestDist = dist;
+          best = d;
+        }
       });
+      return best;
+    };
+    let peekedDot = null;
+    const peekNearest = (e) => {
+      const dot = nearestSeasonDot(e.target, e);
+      if (dot === peekedDot) return;
+      if (dot) peekSeasonDot(dot, app);
+      else if (peekedDot) restFace(peekedDot);
+      peekedDot = dot;
+    };
+    if (!sec.classList.contains("mob")) {
+      sec.addEventListener("mouseover", peekNearest);
+      sec.addEventListener("mousemove", peekNearest);
       sec.addEventListener("mouseout", (e) => {
-        const dot = e.target.closest(".season-dots i");
-        if (dot) restFace(dot);
+        var _a;
+        const to = e.relatedTarget;
+        if ((_a = to == null ? void 0 : to.closest) == null ? void 0 : _a.call(to, ".season-dots")) return;
+        if (peekedDot) {
+          restFace(peekedDot);
+          peekedDot = null;
+        }
       });
     }
     sec.addEventListener("keydown", (e) => {

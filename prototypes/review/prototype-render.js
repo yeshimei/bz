@@ -1,4 +1,4 @@
-/* 源指纹 90a7324204e56134 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 13379b55f14d0e4f · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/review/fsrs.ts","src/review/queue.ts","src/review/render.ts","src/review/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/review/render.ts → window.BZR_review（评审壳预览包，ADR-0104） */
 var BZR_review = (() => {
@@ -38,6 +38,7 @@ var BZR_review = (() => {
     sprintBodyHtml: () => sprintBodyHtml,
     sprintHeadHtml: () => sprintHeadHtml,
     sprintLoadingHtml: () => sprintLoadingHtml,
+    sprintModeLabel: () => sprintModeLabel,
     sprintQuestionHtml: () => sprintQuestionHtml,
     sprintResultHtml: () => sprintResultHtml,
     sprintSummaryHtml: () => sprintSummaryHtml,
@@ -336,13 +337,13 @@ var BZR_review = (() => {
       stageTagHtml(item, w, now)
     ].join("");
     return `
-      <div class="${cls}" data-id="${item.id}" role="button" tabindex="0" aria-disabled="${canPlay ? "false" : "true"}">
+      <div class="${cls}" data-id="${item.id}" role="button" tabindex="${canPlay ? "0" : "-1"}" aria-disabled="${canPlay ? "false" : "true"}">
         <div class="bz-q-card-top"><span class="bz-q-card-title">${title}</span><span class="bz-q-card-stage">${item.isMissing ? "挂起" : stageNum(item)}</span></div>
         <div class="bz-q-card-meta">${tags}</div>
       </div>`;
   }
   function cardsOf(items, ctx) {
-    if (!items.length) return `<div class="bz-q-hint">没有条目</div>`;
+    if (!items.length) return emptyHtmlStr("inbox", "没有条目");
     return items.map((it) => cardHtml(it, ctx)).join("");
   }
   function queueViewHtml(items, ctx = {}) {
@@ -410,11 +411,16 @@ var BZR_review = (() => {
       </div>`;
     return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
   }
-  function sprintHeadHtml() {
+  function sprintModeLabel(mode) {
+    return mode === "round" ? "开始本轮" : mode === "redo" ? "待重做" : "单条复习";
+  }
+  function sprintHeadHtml(mode) {
+    const sub = mode ? `<div class="bz-sprint-sub">${sprintModeLabel(mode)}</div>` : "";
     return `
       <div class="bz-sprint-head">
         <div class="t">
           <div class="bz-sprint-title">做题冲刺</div>
+          ${sub}
         </div>
         <div class="tools">
           <button class="bz-icon-btn" data-action="skip" title="跳过此篇（不评级，移到队尾）">${iconSpan("skip-forward", "bz-sprint-ic")}</button>
@@ -475,7 +481,7 @@ var BZR_review = (() => {
     }).join("");
     return `
       <div class="bz-sq-head"><b>本轮队列</b></div>
-      <div class="bz-sq-list">${rows || emptyHtmlStr("", "队列完毕")}</div>`;
+      <div class="bz-sq-list">${rows || emptyHtmlStr("inbox", "队列完毕")}</div>`;
   }
   function sprintBodyHtml(mainHtml, entries) {
     return `

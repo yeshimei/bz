@@ -1,4 +1,4 @@
-/* 源指纹 1a1f18237dda3ba9 · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 8164fd642f76f80b · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
@@ -4254,6 +4254,15 @@ var BZW_pomodoro = (() => {
   function setSettingsSaver(fn) {
     _saver = fn;
   }
+  function saveSettings() {
+    return _saver ? _saver() : Promise.resolve();
+  }
+  function getSettings() {
+    if (!_provider) {
+      throw new Error("bz: 设置提供者未注入（main.ts onload 应调用 setSettingsProvider）");
+    }
+    return _provider();
+  }
   function tryGetSettings() {
     return _provider ? _provider() : {};
   }
@@ -5618,6 +5627,10 @@ var BZW_pomodoro = (() => {
   });
 
   // src/pomodoro/ui.ts
+  function statModePref() {
+    var _a;
+    return ((_a = tryGetSettings()) == null ? void 0 : _a.pomodoroStatMode) === "month" ? "month" : "week";
+  }
   function applySkinClass() {
     const popup = document.getElementById("pomodoro-popup");
     if (!popup) return;
@@ -5825,6 +5838,8 @@ var BZW_pomodoro = (() => {
     if (statMode === mode) return;
     statMode = mode;
     lastStatsKey = "";
+    getSettings().pomodoroStatMode = mode;
+    void saveSettings();
     render();
   }
   function render() {
@@ -6001,6 +6016,7 @@ var BZW_pomodoro = (() => {
   async function initData() {
     var _a;
     const data = await dataManager.load();
+    statMode = statModePref();
     const r = recover(data.state, data.history, Date.now(), durations(), options());
     state = r.state;
     const t = trimWithArchive(r.history, data.archived, Date.now());
