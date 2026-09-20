@@ -778,7 +778,15 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## auto-summary（自动摘要）域 · 5/5 方向到账，修复批 `bz-fix-as-core`（单批）定稿派发
+## auto-summary（自动摘要）域 · ✅ 闭环（2026-09-20，单批合并 + 主线程收口，部署 db6c6f71）——**全域深审修复循环收官域**
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-as-core`（ae8ecb4b→223c6881，27 文件，P2×3 + P3 群 20 项全落）**：**AS1+A8/一致#1 YAML 转义 core 单源**（core/utils escapeYamlText/yamlEscapeQuoted/yamlScalarOf/unescapeYamlText 四件套；auto-summary/clipbook/cinema 三域改引，逐值等价测试佐证——防第四份平行实现）；**A1 管辖键白名单重写**（OWNED_KEYS=title/summary/tags，非管辖键原文行 extraLines——类型零漂移）；AS2 闭合换行兼容（数据损坏面修）；A2 AI 结果 schema 校验（`[object Object].md` 改名事故根因消）；A3 watch 顶层限定对齐剪藏本；N1/一致#3 getWatchDir 直引 clipDir（A 案）尾斜杠+缺省串一次到位；N3 保守判定不覆盖；N4/A5 ProcessOutcome 七值结果契约；N5 重试钮收编 core action；N6/A4/AS3/A9 stop/ensure 语义理顺+单真相源；N-UI1 批次键/N-UI2 短文 info/N-UI3 插队反馈/N-UI5 回执 gate/EFF-1 成功聚合/EFF-2 插队+位次/**EFF-3 失败退避熔断**（连续失败暂停队列+汇总通知）；A6 keys.ts 五键域内单源；A10 createAI 生命周期。测试 70→94 + yaml-escape-single-source 21 例（round-trip 契约+三域防退役）+ deep-review-fix 23 例。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + 跨域 818 绿；全量 6719 绿。
+- **主线程文档收口**：CONTEXT.md:110 词条终态改写（总开关/模型不写死/管辖键白名单/core 单源/顶层限定/熔断重试/auto-summary→clipbook 顶层边备案）。
+- **部署**：db6c6f71；worktree+分支清理。
+- **残款登记**：A6 跨域字面（settings.ts/clipbook ui 五键字面改引 keys.ts，归收尾统一批）；U1 title 披露面 + U-EFF1/U-EFF2 拍板项（AS 系）；一致#2 词条已收口。
 
 > 明细：`.scratch/review-deep/auto-summary-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：新 P3×6 + 旧账 AS1(P2)/AS2/AS3；方向 2（UI）：P3×5 + UX×1；方向 3（eff）：P3×3 + UX×2；方向 4（一致）：P3×3；方向 5（arch）：**P2×1（A1）** + P3×5 + 建议×4 + 缺口6。**架构枢纽归因**：**A1（P2）整文件重序列化致非管辖键类型漂移**（用户属性/第三方键经一次补全 YAML 类型变字符串——修法：管辖键白名单重写 title/summary/tags，非管辖键原文行 extraLines 保留）；A2 AI 结果无 schema 校验（title 类型错位 → `[object Object].md` 真实改名，tags 是唯一设防字段）；A3 watch 目录递归 vs clipbook 顶层不一致（子目录个人笔记被 AI 补全改名且剪藏本永不显示——管辖口径收窄）；A5 processFile 返回 void + 全吞异常（EFF-3 熔断/N-UI4 聚合/EFF-1 汇总三案共同前置契约缺口，派单先改契约）；A7/A8 YAML 转义与 watch 目录双源上移 core（与 cons 一致#1 三域收编合流）；A9 监听注册单真相源（AS3 归因）；A10 AI 实例生命周期。修复前必红用例设计位六处已在 arch 报告。门禁基线：tsc 0；tests/auto-summary 70 例全绿。
 
@@ -837,3 +845,15 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 ## recap（回顾）域 · ✅ 按拍板标注完结（不投资深审，2026-09-20）
 
 > ADR-0157：recap 面板已退役（域存、面板亡），summary 纯函数库与单测保留、暂无 UI 出口；用户拍板本轮深审「只标注不投资」。标注依据：recap 的 aggregate/summarize 纯函数被 home 时间线（ADR-0132 换源）与 home 修复批（三件套正典 export 收编）消费，其质量已由 home 域轮交叉覆盖（home cons P3-4 三副本收编 + home 批 deps-direction 守卫）；后续若复活面板 UI，届时按「新域落域」流程重新深审。
+
+---
+
+# 🏁 全域深审修复循环 · 收官总账（2026-09-20）
+
+**循环范围**：21 功能域中 18 域全流程深审（5 方向×并行只读审查 → 去重入账 → 聚簇修复批 → 串行合并 → 全量门禁 → 部署）+ recap 按拍板标注完结 + smartcat/secondbrain/knowledge 按用户拍板排除 + memo 队尾待确认。
+
+**产出规模**：约 300+ 项发现全数入账（P1×9/P2×40+/P3×200+/UX 建议若干），20+ 修复批全部合并部署，测试从循环起点约 6232 例增长至 **6719 例全绿**（每批带回归，多项「修复前必红」守卫）。核心架构级收口：YAML 转义/日期解析/HTML 转义/触控热区/失败通知五类跨域单源化；全仓唯一域间环解除；两处「渲染器双实现」内核下沉；三处机制性缺口契约锁根治（白名单漂移/域事件 kind/行为流 source）。
+
+**拍板项**：64 项五类聚类呈报文档 `review-deep-ui-pending-report.md` 就绪待用户拍板（★建议可直接采纳）。
+
+**挂账**：memo 队尾重审（待用户确认回滚动机与 memo.json 兼容策略）；RR-U13 宿主搜索框（bookshelf 收尾批）；A6 跨域键字面（settings/clipbook 引 keys.ts，收尾统一批）；各域 UX 拍板项按呈报结果执行。
