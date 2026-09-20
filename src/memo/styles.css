@@ -971,9 +971,9 @@
   .bz-memo-skin-paper .bz-panel-head-btns,
   .bz-memo-skin-editorial .bz-panel-head-btns { display: flex; }
 
-  /* 2) 设置钮（issue 268）：移动端头行撤除——桌面由皮肤段整组收掉，移动端从此只留关闭。
-        设置入口仍在：场景项右键/长按菜单「在设置中编辑」（buildSceneActions）。 */
-  .bz-memo-panel .bz-memo-head-settings { display: none; }
+  /* （原「2) 设置钮移动端撤除」规则随 memo2-ui M3-7 删除——头行设置钮在桌面被皮肤段
+        整组藏起、移动端再 display:none，按钮与委托分支全端不可达（死 UI），markup 与
+        规则一并退役；设置入口保留在场景菜单「在设置中编辑」。） */
 
   /* 3) 关闭钮 = 移动端头行唯一按钮，28px 可视档（issue 269 两轮收小：38 → 34 → 28）+
         皮肤贴纸形态。28px 与头行品牌块同尺寸（`.bz-memo-skin-paper .bz-panel-brand`

@@ -137,13 +137,15 @@ describe('issue 266 · A. 移动端真全屏关闭按钮必须可见可用', () 
 });
 
 describe('issue 268 · B. 移动端头行只留关闭，设置/新建撤出', () => {
-  it('设置钮移动端 display:none（桌面本就由皮肤段整组收掉）', () => {
-    const css = read('src/memo/styles.css');
-    const closing = css.slice(css.lastIndexOf('移动端收口段'));
-    const block = mobileBlock(closing);
-    expect(block).toMatch(/\.bz-memo-head-settings\s*\{\s*display:\s*none/);
-    // 设置入口仍在（场景项菜单「在设置中编辑」）——撤的只是头行那一枚
+  it('头行设置钮整体退役（memo2-ui M3-7：皮肤段藏 + 移动 display:none 全端不可达的死 UI）', () => {
+    // markup 与委托分支一并删除（设置入口保留在场景菜单「在设置中编辑」）
+    const render = read('src/memo/render.ts');
+    expect(render).not.toContain('bz-memo-head-settings');
     const ts = read('src/memo/ui.ts');
+    expect(ts).not.toContain('data-memo-head-settings');
+    const css = read('src/memo/styles.css');
+    expect(css).not.toContain('bz-memo-head-settings');
+    // 设置入口仍在（场景项菜单「在设置中编辑」）
     expect(ts).toContain('openMemoInSettings');
     expect(ts).toContain("label: '在设置中编辑'");
   });

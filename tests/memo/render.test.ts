@@ -63,7 +63,8 @@ describe('memo render 纯层（markup 口径冻结）', () => {
   it('panelShellHtml：全部行为锚点在场', () => {
     const h = panelShellHtml();
     for (const anchor of [
-      'data-memo-head-settings', 'data-memo-head-close', 'data-memo-nav', 'data-memo-addscene',
+      // data-memo-head-settings 已随 memo2-ui M3-7 死 UI 清理退役，不再在册
+      'data-memo-head-close', 'data-memo-nav', 'data-memo-addscene',
       'data-memo-main-title', 'data-memo-main-count', 'data-memo-newbtn', 'data-memo-search',
       'data-memo-sort', 'data-memo-mob-scenes', 'data-memo-content',
       'data-memo-composer-input', 'data-memo-composer-add',

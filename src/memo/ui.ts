@@ -429,9 +429,8 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       closeMemoPanel();
       return;
     }
-    // 头行钮组：设置直达（关面板 → 设置面板定位备忘录域）/ 关闭
-    const headSettings = t.closest('[data-memo-head-settings]');
-    if (headSettings) { openMemoInSettings(); return; }
+    // 头行钮组：关闭（设置钮已随 memo2-ui M3-7 退役——皮肤段恒 display:none 死 UI，
+    // 设置入口保留在场景菜单「在设置中编辑」）
     const headClose = t.closest('[data-memo-head-close]');
     if (headClose) { closeMemoPanel(); return; }
     // 场景切换（左栏 / 移动 chips）
@@ -478,6 +477,37 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     if (!it) return;
     e.stopPropagation();
     toggleCheck(it);
+  });
+
+  // 键盘可达（memo2-ui M3-10，core UX 整改 38 按钮范式）：卡片 Enter/Space 开操作菜单；
+  // 勾选圈 Enter/Space 切换；已完成折叠条 Enter/Space 展开收起（markup 侧补 role/tabindex）
+  content.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const t = e.target as HTMLElement;
+    if (!t || t.closest('a')) return; // 标题链接保留原生语义
+    const check = t.closest?.('[data-memo-check]');
+    if (check) {
+      e.preventDefault();
+      const card = (check as HTMLElement).closest('.bz-memo-card') as HTMLElement | null;
+      const it = card ? M.items.find((i) => i.id === card.dataset.memoId) : null;
+      if (it) toggleCheck(it);
+      return;
+    }
+    if (t.closest?.('[data-memo-donebar]')) {
+      e.preventDefault();
+      M.showDone = !M.showDone;
+      renderAll();
+      return;
+    }
+    if (t.classList?.contains('bz-memo-card')) {
+      e.preventDefault();
+      const card = t as HTMLElement;
+      const it = M.items.find((i) => i.id === card.dataset.memoId);
+      if (!it) return;
+      const r = card.getBoundingClientRect();
+      openItemMenu(r.left + 24, r.top + 24, buildCardActions(it), false, skinClass() || undefined);
+      resetItemMenuClickGuard(); // 键盘开菜单无右键时序，复位残余 click 抑制（issue 198 同款）
+    }
   });
 
   // 底部录入 Enter（memo2-func #8：isComposing 守卫——中文 IME 组词确认的 Enter
@@ -787,6 +817,13 @@ function buildSheetHead(it: MemoItem): HTMLElement {
     closeItemMenu();
     toggleCheck(it);
   });
+  // memo2-ui M3-3：抽屉头的「位置」标签此前死可点——样式 cursor:pointer 但点击只接在
+  // [data-memo-content] 内，抽屉挂 body 不在接线范围。补「先关抽屉再跳转」（勾选圈同款收束）。
+  head.querySelector('[data-memo-pos]')?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    closeItemMenu();
+    jumpToNote(it);
+  });
   return head;
 }
 
@@ -1005,7 +1042,16 @@ function buildCardActions(it: MemoItem): ItemAction[] {
   actions.push({
     icon: 'copy', label: '复制内容', title: '复制内容',
     sub: `${it.title.length} 字`,
-    onClick: async () => { await navigator.clipboard.writeText(it.title); notice('内容已复制', 'success'); },
+    // memo2-consistency 新-6：剪贴板权限拒绝/环境不支持此前静默 unhandled——
+    // 走 notifyActionError 口径（与全域非写盘动作失败人话提示对齐）
+    onClick: async () => {
+      try {
+        await navigator.clipboard.writeText(it.title);
+        notice('内容已复制', 'success');
+      } catch (e) {
+        notifyActionError(e, '复制内容');
+      }
+    },
   });
   // 编辑紧贴删除之上；删除永远垫底（danger）
   actions.push({ icon: 'pencil', label: '编辑', title: '编辑', onClick: () => openEditor(it) });
@@ -1255,7 +1301,9 @@ export function openEditor(
     courseNotes = notes;
     const extra = notes.map((n) => n.name);
     knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
-    if (courseBox.classList.contains('bz-memo-extra-on')) courseInput.dispatchEvent(new Event('focus'));
+    // memo2-ui MR2-2：不再合成 focus 事件「刷新候选」——合成事件同样触发 uiSuggest 的
+    // focus=open，编辑公开课时联想层不请自来（真实焦点还在内容框，键盘导航无效）。
+    // source 闭包读同一数组，候选随 push 自动生效，无需任何触发。
   });
 
   // 截止时间
@@ -1401,7 +1449,11 @@ export function openEditor(
             scriptName,
             courseName,
             coursePath,
-            url: url ?? editing.url,
+            // memo2-arch 新-1 / memo2-func #9 / memo2-ui MR2-3：url 按场景分流——
+            // 非剪藏跟随内容（新内容无链接即清除，「移除链接」意图可表达，data 层
+            // 自动提取分支也不再被恒有值短路）；剪藏保留兜底（标题=页面标题、正文
+            // 无 URL 的形态防丢链）
+            url: scene === '剪藏' ? (url ?? editing.url) : url,
           });
           emitDomainEvent('memo', { kind: 'edited', old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
         } else {
@@ -1438,7 +1490,23 @@ export function openEditor(
   };
   saveBtn.addEventListener('click', doSave);
 
-  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
+  // 脏表单拦截（memo2-consistency 旧-1，favorites/clipbook 同款）：开弹窗前对全部字段
+  // 做快照，requestClose 内脏检测——脏 → confirmDiscard 确认后才放行关闭（点遮罩/ESC）
+  const formSnapshot = (): string =>
+    JSON.stringify([
+      contentInput.value, titleInput.value, scriptInput.value, courseInput.value,
+      readScene(), readPrio(), dueInput.value, posState.notePath, posState.notePosition,
+    ]);
+  const formBaseline = formSnapshot();
+  const requestClose = (): void => {
+    if (formSnapshot() === formBaseline) {
+      closeModal();
+      return;
+    }
+    confirmDiscard(() => closeModal(), undefined, skinClass());
+  };
+
+  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
   closeModal = close;
   bindFormSubmit(popup, doSave);
   if (!isMobileEnv()) contentInput.focus();

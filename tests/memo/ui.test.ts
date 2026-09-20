@@ -521,6 +521,7 @@ describe('memo 编辑器', () => {
       expect(courseInput.parentElement!.querySelector('.bz-popover-item')).toBeTruthy();
     });
     const sug = [...editor.querySelectorAll('.bz-popover-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
+    console.log('DBG items:', JSON.stringify([...editor.querySelectorAll('.bz-popover-item')].map((b) => b.textContent)), 'sug=', !!sug);
     sug.click();
     expect(courseInput.value).toBe('动手学深度学习');
     const saveBtn = [...editor.querySelectorAll('.bz-btn')].find((b) => b.textContent?.includes('添加')) as HTMLElement;
@@ -546,11 +547,14 @@ describe('memo 编辑器', () => {
     let editor = document.querySelector('.bz-memo-editor') as HTMLElement;
     expect(editor).toBeTruthy();
     const courseInput = editor.querySelectorAll('.bz-memo-extra')[2].querySelector('input') as HTMLInputElement;
-    // 触发建议（异步课程建议装载后可见）→ 点笔记名建议（覆盖原书名号名）
+    // 触发建议（异步课程建议装载后可见；候选到货不再合成 focus 自动弹层——MR2-2 修复后
+    // 联想层只随真实输入/聚焦弹出，故输入后在 waitFor 内重放 input 等候选就位）→ 点笔记名建议（覆盖原书名号名）
     courseInput.value = '动手学';
-    courseInput.dispatchEvent(new Event('input'));
+    // 候选到货不再合成 focus 自动弹层（MR2-2）——waitFor 用 expect 抛错式轮询：
+    // 每轮重放 input（真实用户输入驱动），直到课程笔记候选就位
     await vi.waitFor(() => {
-      return [...editor.querySelectorAll('.bz-popover-item')].some((b) => b.textContent === '动手学深度学习');
+      courseInput.dispatchEvent(new Event('input'));
+      expect([...editor.querySelectorAll('.bz-popover-item')].some((b) => b.textContent === '动手学深度学习')).toBe(true);
     });
     const sug = [...editor.querySelectorAll('.bz-popover-item')].find((b) => b.textContent === '动手学深度学习') as HTMLElement;
     sug.click();
@@ -741,7 +745,7 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     });
   });
 
-  it('头行钮组（issue 197）：品牌块 + 右侧设置/关闭；设置直达设置面板备忘录域，关闭即收面板', async () => {
+  it('头行钮组：品牌块 + 关闭钮（设置钮已退役，memo2-ui M3-7 死 UI 清理）；关闭即收面板', async () => {
     const { app } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
@@ -750,19 +754,10 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     // 品牌块图标 + 标题
     expect(document.querySelector('.bz-panel-brand [data-icon="list-checks"]')).toBeTruthy();
     expect((document.querySelector('.bz-panel-title') as HTMLElement).textContent).toBe('备忘录');
-    // 设置钮 = 齿轮 settings（issue 200：settings-2 滑杆式改齿轮）
-    expect(document.querySelector('[data-memo-head-settings] [data-icon="settings"]')).toBeTruthy();
+    // 设置钮 markup 已删（死 UI 清理：全端不可达）
+    expect(document.querySelector('[data-memo-head-settings]')).toBeNull();
     // 关闭钮 → 面板收起
     (document.querySelector('[data-memo-head-close]') as HTMLElement).click();
-    expect(document.querySelector('.bz-panel-overlay')).toBeNull();
-    // 设置钮 → 关面板 + openSettingsPanel(app, 'memo') 直达备忘录设置项
-    openMemoPanel(app);
-    await vi.waitFor(() => {
-      expect(document.querySelector('[data-memo-head-settings]')).toBeTruthy();
-    });
-    (document.querySelector('[data-memo-head-settings]') as HTMLElement).click();
-    const { openSettingsPanel } = await import('../../src/settings-panel');
-    expect(openSettingsPanel).toHaveBeenCalledWith(app, 'memo');
     expect(document.querySelector('.bz-panel-overlay')).toBeNull();
   });
 
