@@ -442,14 +442,11 @@
 .bz-bel-report-body { flex: 1; overflow-y: auto; padding: 14px var(--bz-space-xl) 18px; min-height: 0; }
 .bz-bel-reportbtn { flex-shrink: 0; }
 
-/* 骨架 / 错误 / 空年（人话占位） */
+/* 骨架 / 错误占位（空态形制已统一 core 小图标版 bz-empty，见 components.css——
+ * 呈报#19-B8 拍板：.bz-belr-emptyyear 系与 .bz-belr-none 自绘形制随刀退役） */
 .bz-belr-skeleton { text-align: center; padding: 48px 0; color: var(--bz-text-3); }
 .bz-belr-error { padding: 24px 0; text-align: center; color: var(--bz-text-3); }
 .bz-belr-error-t { font-size: 1.2em; margin-bottom: 8px; color: var(--bz-bel-ink); }
-.bz-belr-emptyyear { text-align: center; padding: 56px 0; }
-.bz-belr-emptyyear-t { font-size: 18px; font-weight: 800; color: var(--bz-bel-ink); }
-.bz-belr-emptyyear-d { margin-top: 8px; font-size: var(--bz-font-label); color: var(--bz-text-3); }
-.bz-belr-none { text-align: center; color: var(--bz-text-3); padding: 12px 0; }
 
 /* 段落骨架 */
 .bz-belr-sec { margin-bottom: var(--bz-space-lg); }
