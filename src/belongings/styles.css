@@ -204,6 +204,10 @@
 
 .bz-bel-dropopt.is-cur:hover { background: var(--bz-bel-accent); color: var(--bz-bel-paper); }
 }
+/* 呈报#12-B5：键盘高亮（↑↓ 移动 is-active，与 hover 反色同视觉）——键盘聚焦态非悬浮
+   语义、仅键盘操作产生（触屏无粘滞面），故不随 hover:hover 隔离 */
+.bz-bel-dropopt.is-active { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
+.bz-bel-dropopt.is-cur.is-active { background: var(--bz-bel-accent); color: var(--bz-bel-paper); }
 /* 记一笔 = p20 .btn：墨底纸字、hover 转赤橙（桌面工具行 + 移动底部同款） */
 .bz-bel-addbtn,
 .bz-bel-mobadd {
