@@ -29,13 +29,18 @@
  * - AC-1：用户可见文案「资源/资源文件」→「附件」，destLabel 引号形制统一。
  * - ARCH-3：getSettings?.() 假防御改 tryGetSettings + BzSettings 类型（settings-provider 契约）。
  * - ARCH-5：dest 归一化 normalizeDest 单源。
+ * 拍板修复批（2026-09，bz-fix-bd-checkup-attach）：
+ * - AT1（呈报#64）：动作动词全线统一「搬移」——命令/预览弹窗原「移动」与右键「搬移此笔记附件」双名收一。
+ * - AT2（呈报#11）：预览弹窗加「跳过预览直接搬（本会话）」快捷出口——会话内生效（实现最小面：
+ *   落设置需持久化与退出通道，单次生效退化为确认钮重复），后续搬移选完文件夹直接执行。
+ * - AT3（呈报#34）：进选择器前先对上次目标试规划，附件已全部在上次目标时预告终止（可一键转「换个文件夹」）。
  */
 import { notice, notify, notifyUndo, notifyActionError } from '../core/notice';
 import { tryGetSettings, saveSettings } from '../core/settings-provider';
 import { openPathPicker } from '../core/path-picker';
-import { uiModal, uiDialogActions } from '../core/ui';
+import { uiModal, uiDialogActions, uiBtn } from '../core/ui';
 import { bindFormSubmit } from '../core/ui/modal';
-import { confirmDiscard } from '../core/flow-dialog';
+import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
 import type BzSettings from '../settings';
 import { collectResources, collectResourcesCached, planMoves, type MoveOp } from './data';
@@ -130,6 +135,14 @@ export interface MoveScan {
 /** 批量执行防重入（UI-P3-1/ARCH-2）：runMove 并行时后入者提示并拒绝（renameFile 序列不竞争） */
 let moveInFlight = false;
 
+/**
+ * 跳过预览会话旗标（呈报#11/AT2）：预览弹窗点「跳过预览直接搬（本会话）」后置位，
+ * 本会话内后续搬移在选择器确认后直接执行（不再弹预览清单）；插件重载自然复位。
+ * 取会话内生效是实现最小面：落设置要持久化+退出通道，单次生效退化为确认钮重复；
+ * 模式激活在选择器 desc 明示，用户有知情。
+ */
+let skipPreviewSession = false;
+
 /** 失败重试出口（AF-3）：对失败项重跑 runMove（planMoves 幂等：已在目标的自动跳过） */
 function retryMove(app: any, note: any, dest: string, fromPaths: string[]): () => void {
   return () => void runMove(app, note, dest, fromPaths);
@@ -140,7 +153,7 @@ function reportFailures(app: any, note: any, dest: string, failedOps: MoveFailur
   const missing = failedOps.filter((f) => f.missing);
   const errored = failedOps.filter((f) => !f.missing);
   const parts: string[] = [];
-  if (errored.length) parts.push(`${errored.length} 个移动出错（如 ${errored[0].fromPath}）`);
+  if (errored.length) parts.push(`${errored.length} 个搬移出错（如 ${errored[0].fromPath}）`);
   if (missing.length) parts.push(`${missing.length} 个源文件已不存在`);
   notifyActionError(new Error(parts.join('；')), '附件搬移', {
     onRetry: retryMove(app, note, dest, failedOps.map((f) => f.fromPath)),
@@ -167,7 +180,7 @@ export async function runMove(app: any, note: any, destFolder: string, only?: st
     const allFiles = scan?.allFiles ?? listAllFilePaths(app);
     const resources = scan?.resources ?? collectForNote(app, note, await app.vault.read(note), allFiles);
     if (resources.length === 0) {
-      notice('当前笔记没有可移动的附件', 'info');
+      notice('当前笔记没有可搬移的附件', 'info');
       return null;
     }
     let moves = planMoves(resources, dest, allFiles);
@@ -176,7 +189,7 @@ export async function runMove(app: any, note: any, destFolder: string, only?: st
       moves = moves.filter((m) => allow.has(m.fromPath));
     }
     if (moves.length === 0) {
-      notice(only ? '未勾选任何要移动的附件' : '附件已全部在目标文件夹', 'info');
+      notice(only ? '未勾选任何要搬移的附件' : '附件已全部在目标文件夹', 'info');
       return null;
     }
 
@@ -186,14 +199,14 @@ export async function runMove(app: any, note: any, destFolder: string, only?: st
     const movedOps: MoveOp[] = [];
     const failedOps: MoveFailure[] = [];
     // 大批量进度反馈：≥ PROGRESS_MIN 个用 progress 形态逐个更新「i/N」（常驻通知，循环不再像卡死）
-    const prog = moves.length >= PROGRESS_MIN ? notify(`正在移动附件 0/${moves.length}`, { type: 'progress' }) : null;
+    const prog = moves.length >= PROGRESS_MIN ? notify(`正在搬移附件 0/${moves.length}`, { type: 'progress' }) : null;
     // 中止出口（EFF-5）：progress 帧挂「中止」，循环每轮检查——已移动部分照常出汇总 + 撤销
     let aborted = false;
     prog?.setAction({ label: '中止', onClick: () => { aborted = true; } });
     for (let i = 0; i < moves.length; i++) {
       if (aborted) break;
       const m = moves[i];
-      prog?.setMessage(`正在移动附件 ${i + 1}/${moves.length}`);
+      prog?.setMessage(`正在搬移附件 ${i + 1}/${moves.length}`);
       prog?.setProgress(Math.round(((i + 1) / moves.length) * 100));
       const f = app.vault.getAbstractFileByPath(m.fromPath);
       if (!f) {
@@ -230,10 +243,10 @@ export async function runMove(app: any, note: any, destFolder: string, only?: st
     // 全失败挂「重试」出口（AF-3），全中止为用户主动行为挂 info 即可
     if (movedOps.length === 0) {
       if (aborted) {
-        notice(`附件搬移已中止：0/${moves.length} 个移动（原文件未改动）`, 'info');
+        notice(`附件搬移已中止：0/${moves.length} 个搬移（原文件未改动）`, 'info');
         return null;
       }
-      notify(`附件搬移失败：0/${moves.length} 个移动成功（原文件未改动）`, {
+      notify(`附件搬移失败：0/${moves.length} 个搬移成功（原文件未改动）`, {
         type: 'error',
         action: { label: '重试', onClick: retryMove(app, note, dest, moves.map((m) => m.fromPath)) },
       });
@@ -244,7 +257,7 @@ export async function runMove(app: any, note: any, destFolder: string, only?: st
     const failTail = failed ? `，失败 ${failed} 个` : '';
     const abortTail = aborted ? '，已中止' : '';
     const linkTail = linksAuto ? '，内部链接已自动更新' : '，链接未自动更新';
-    const summaryMsg = `已移动 ${movedOps.length} 个附件到「${destLabel}」，改名 ${renamedCount} 个${linkTail}${failTail}${abortTail}`;
+    const summaryMsg = `已搬移 ${movedOps.length} 个附件到「${destLabel}」，改名 ${renamedCount} 个${linkTail}${failTail}${abortTail}`;
     // 撤销搬移（误搬兜底）：点击「撤销」逆序 renameFile 回原路径，链接由 Obsidian 内建自动回改
     notifyUndo(summaryMsg, () => void undoMove(app, movedOps), { type: 'restore' });
     // AF-3：部分失败明细 + 重试出口（与撤销钮并存——撤销是误搬兜底、重试是补救，语义不冲突）
@@ -298,13 +311,15 @@ async function undoMove(app: any, ops: MoveOp[]): Promise<void> {
 }
 
 /**
- * 可勾选移动清单预览（组件库 uiModal 自绘小弹窗）：逐行 from→to + 复选框默认全选，
+ * 可勾选搬移清单预览（组件库 uiModal 自绘小弹窗）：逐行 from→to + 复选框默认全选，
  * 可排除个别不想动的附件；按钮/弹窗壳走组件库（uiModal/uiDialogActions），
  * 域 styles.css 只做清单行布局。
  * - 键盘确认（UI-P2-1/AF-S1）：bindFormSubmit 接 Ctrl/⌘+Enter 直提（0 勾选 no-op）。
  * - requestClose 脏关闭拦截（EFF-3/SUG-2，belongings 同款）：有取消勾选项时 ESC/遮罩先弹放弃确认。
  * - 全选/全不选工具条 + 大清单渲染护栏（EFF-2）：勾选状态以「排除集」单源（未渲染行默认勾选），
  *   渲染截断不丢行语义；提交集合按排除集反向推导。
+ * - 「跳过预览直接搬」快捷出口（呈报#11/AT2）：确认之外的第二执行出口，置位会话旗标后
+ *   后续搬移免预览。
  * scan（可选，EFF-1）：透传给 runMove，执行段不再重收集。
  */
 export function openMovePreview(app: any, note: any, dest: string, moves: MoveOp[], scan?: MoveScan): void {
@@ -316,12 +331,12 @@ export function openMovePreview(app: any, note: any, dest: string, moves: MoveOp
 
   const sum = document.createElement('div');
   sum.className = 'bz-attach-preview-sum';
-  sum.textContent = `将移动 ${moves.length} 个附件到「${destLabel}」${renamedCount ? `，${renamedCount} 个将改名（目标已有同名文件）` : ''}`;
+  sum.textContent = `将搬移 ${moves.length} 个附件到「${destLabel}」${renamedCount ? `，${renamedCount} 个将改名（目标已有同名文件）` : ''}`;
   body.appendChild(sum);
 
   const hint = document.createElement('div');
   hint.className = 'bz-attach-preview-hint';
-  hint.textContent = '移动后全库引用这些附件的链接会自动更新；不想动的附件可取消勾选。';
+  hint.textContent = '搬移后全库引用这些附件的链接会自动更新；不想动的附件可取消勾选。';
   body.appendChild(hint);
 
   // 勾选状态单源 = 被排除集（EFF-2 渲染护栏配套）：只渲染前 RENDER_LIMIT 行建 DOM，
@@ -415,11 +430,13 @@ export function openMovePreview(app: any, note: any, dest: string, moves: MoveOp
   };
   // close 句柄先声明后赋值（requestClose/onOk 闭包异步触发时已就绪）
   let closePreview: () => void = () => {};
+  // 当前勾选集合（onOk 与 AT2 快捷出口共用）
+  const collectOnly = (): string[] => moves.filter((m) => !excluded.has(m.fromPath)).map((m) => m.fromPath);
 
   const actions = uiDialogActions({
-    okText: `移动 ${moves.length} 个`,
+    okText: `搬移 ${moves.length} 个`,
     onOk: () => {
-      const only = moves.filter((m) => !excluded.has(m.fromPath)).map((m) => m.fromPath);
+      const only = collectOnly();
       closePreview();
       void runMove(app, note, dest, only, scan);
     },
@@ -427,18 +444,32 @@ export function openMovePreview(app: any, note: any, dest: string, moves: MoveOp
   });
   okBtnRef = actions.okBtn;
   actions.okBtn.id = 'bz-attach-preview-ok';
+  // 「跳过预览直接搬」快捷出口（呈报#11/AT2）：本次按当前勾选照常执行，并置位会话旗标——
+  // 后续搬移选完文件夹直接执行不再弹预览（重复搬移免两段确认；模式在选择器 desc 明示）
+  const skipBtn = uiBtn({
+    label: '跳过预览直接搬（本会话）',
+    onClick: () => {
+      skipPreviewSession = true;
+      const only = collectOnly();
+      closePreview();
+      void runMove(app, note, dest, only, scan);
+    },
+  });
+  skipBtn.id = 'bz-attach-preview-skip';
+  actions.row.insertBefore(skipBtn, actions.okBtn);
   const syncOk = (): void => {
     const n = moves.length - excluded.size;
     actions.okBtn.disabled = n === 0;
+    skipBtn.disabled = n === 0; // 0 勾选与确认钮同禁（无可搬集合）
     const label = actions.okBtn.querySelector('span') || actions.okBtn;
-    label.textContent = `移动 ${n} 个`;
+    label.textContent = `搬移 ${n} 个`;
   };
 
   const { popup, close } = uiModal({
     content: body,
     maxWidth: 480,
     head: true, // 标题头行保留；✕ 已在 core uiModal 退役（issue 271：点遮罩/ESC 关闭）
-    title: '移动附件',
+    title: '搬移附件',
     className: 'bz-attach-preview-pop',
     // EFF-3/SUG-2 脏关闭拦截（belongings requestCloseBelForm 同款）：有取消勾选项时
     // ESC/遮罩先弹放弃确认，零勾选改动直关
@@ -453,12 +484,14 @@ export function openMovePreview(app: any, note: any, dest: string, moves: MoveOp
   body.appendChild(actions.row);
 }
 
-/** 命令入口：当前笔记 → 前置收集附件数（0 个直接提示终止）→ 统一路径选择器选目标文件夹（记忆上次 attachLastFolder → 初始高亮）→ 可勾选清单预览 → 执行 */
+/** 命令入口：当前笔记 → 前置收集附件数（0 个直接提示终止）→ 上次目标预判预告（AT3）→
+ *  统一路径选择器选目标文件夹（记忆上次 attachLastFolder → 初始高亮）→ 可勾选清单预览 → 执行
+ *  （跳过预览模式生效时确认文件夹后直接执行，AT2）。 */
 export function moveAttachments(app: any, noteOverride?: any): void {
   void (async () => {
     // 防重入（UI-P3-1/ARCH-2）：预览弹窗存活不叠开（DOM 判定，belongings openForm 先例）
     if (document.querySelector('.bz-attach-preview-pop')) {
-      notice('移动清单已打开，请先确认或关闭', 'info');
+      notice('搬移清单已打开，请先确认或关闭', 'info');
       return;
     }
     if (moveInFlight) {
@@ -482,17 +515,32 @@ export function moveAttachments(app: any, noteOverride?: any): void {
       const noteContent = await app.vault.read(note);
       const resources = collectForNote(app, note, noteContent, allFiles);
       if (resources.length === 0) {
-        notice('当前笔记没有可移动的附件', 'info');
+        notice('当前笔记没有可搬移的附件', 'info');
         return;
       }
       // 记忆上次文件夹（attachLastFolder 持久化设置字段，不入设置页）：选择器初始高亮
       const settings = tryGetSettings() as BzSettings;
       const last = normalizeDest((settings && settings.attachLastFolder) || '');
+      // 前置预判（呈报#34/AT3）：附件已全部在上次目标时进选择器就是「搬了个寂寞」——
+      // 先预告终止省掉选择器+预览两步；「换个文件夹」保留改投他处的出路
+      if (last && planMoves(resources, last, allFiles).length === 0) {
+        const v = await openFlowDialog({
+          title: '无需搬移',
+          message: `当前笔记引用的 ${resources.length} 个附件均已在上次目标「${last || '库根目录'}」，无需搬移。\n要搬到其他文件夹吗？`,
+          actions: [
+            { label: '不用了', value: 'cancel' },
+            { label: '换个文件夹', value: 'other', cta: true },
+          ],
+        });
+        if (v !== 'other') return;
+      }
       openPathPicker({
         title: '选择目标文件夹',
         mode: 'single',
         // 确认键用选择器缺省「下一步」（两段式：选目录 → 下一步看清单）
-        desc: `当前笔记引用 ${resources.length} 个附件，选好目标文件夹后进入移动清单确认（同名冲突自动改名，全库引用链接自动更新）`,
+        desc: `当前笔记引用 ${resources.length} 个附件，选好目标文件夹后进入搬移清单确认（同名冲突自动改名，全库引用链接自动更新）${
+          skipPreviewSession ? '；跳过预览模式生效（本会话）：确认文件夹后直接搬移' : ''
+        }`,
         selected: last ? [last] : [],
         onConfirm: (list) => {
           const dest = normalizeDest(list[0] || '');
@@ -501,6 +549,11 @@ export function moveAttachments(app: any, noteOverride?: any): void {
             const moves = planMoves(resources, dest, allFiles);
             if (moves.length === 0) {
               notice('附件已全部在目标文件夹', 'info');
+              return;
+            }
+            // 跳过预览模式（呈报#11/AT2）：重复搬移免两段确认，直接按全量规划执行
+            if (skipPreviewSession) {
+              void runMove(app, note, dest, undefined, { resources, allFiles });
               return;
             }
             openMovePreview(app, note, dest, moves, { resources, allFiles });

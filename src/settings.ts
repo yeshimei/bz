@@ -6,6 +6,7 @@
  */
 import { getKnowledgeBoxes, isBoxDir, parseDirList } from './core/knowledge-boxes';
 import { DEFAULT_PW_CHARSET } from './password-vault/data';
+import { AUTO_SUMMARY_KEYS } from './auto-summary/keys';
 
 export default interface BzSettings {
   // ===== 🤖 AI 全局（Q3 语义，spec「AI 全局」）=====
@@ -662,11 +663,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
 
   // 剪藏本
   articleDirectory: '归档/网页剪藏',
-  autoSummaryEnabled: true,
-  autoSummaryLength: 'standard',
-  autoSummaryTagsEnabled: true,
-  autoSummaryTagCount: '3-6',
-  autoSummaryTiming: 'immediate',
+  // 自动摘要五键改引 keys.ts 单源（A6 跨域字面收口，呈报批 A6）：键名唯一定义处
+  // src/auto-summary/keys.ts，改名只动一处（字面量散布时漏改一处即静默回退默认值）
+  [AUTO_SUMMARY_KEYS.enabled]: true,
+  [AUTO_SUMMARY_KEYS.length]: 'standard',
+  [AUTO_SUMMARY_KEYS.tagsEnabled]: true,
+  [AUTO_SUMMARY_KEYS.tagCount]: '3-6',
+  [AUTO_SUMMARY_KEYS.timing]: 'immediate',
   newsRetentionUnsavedDays: '30',
   // clipbook（ADR-0082）：移动端默认全屏对齐 clipping 默认开
   // clipbook：右栏阅读字号三档（small/medium/large）

@@ -154,7 +154,8 @@ function renderIdle(): void {
   renderFoot();
 }
 
-/** 底部按钮：空闲=开始/重新体检；运行=取消体检 */
+/** 底部按钮：空闲=重新体检；运行=取消体检；空态（还没体检过）留白——
+ *  「开始体检」由空态 CTA 承担，不再同屏双钮（呈报#28/CK5，深审 ui UX-2） */
 function renderFoot(): void {
   const foot = footEl();
   foot.innerHTML = '';
@@ -162,9 +163,9 @@ function renderFoot(): void {
     foot.appendChild(uiBtn({ label: fixing ? '修复中…' : '取消体检', onClick: () => cancelRun(), disabled: fixing }));
     return;
   }
-  const last = getLastCheckupReport();
+  if (!getLastCheckupReport()) return; // 空态：入口唯一（uiEmpty 的 CTA）
   foot.appendChild(
-    uiBtn({ label: last ? '重新体检' : '开始体检', icon: 'stethoscope', tone: 'primary', onClick: () => void startRun() })
+    uiBtn({ label: '重新体检', icon: 'stethoscope', tone: 'primary', onClick: () => void startRun() })
   );
 }
 
@@ -276,11 +277,16 @@ function renderReport(report: CheckupReport, stale: boolean): void {
     const hint = document.createElement('div');
     hint.className = 'bz-checkup-stale';
     // 缓存失效动态口径（eff P3-6）：数据指纹（mtime）全未变 → 「此后数据未变化」；
-    // 有变化/无法判定 → 维持「可能已变化」促重跑口径
-    hint.textContent =
-      hostApp && cacheFreshness(hostApp) === 'clean'
-        ? `上次体检：${report.finishedAt} · 此后数据未变化`
-        : `上次体检：${report.finishedAt} · 数据可能已变化，可重新体检`;
+    // 有变化/无法判定 → 维持「数据可能已变化」促重跑口径，并就地挂「重新体检」行动钮
+    //（呈报#30/CK8：提示即可行动，不必再到 foot 找入口）
+    if (hostApp && cacheFreshness(hostApp) === 'clean') {
+      hint.textContent = `上次体检：${report.finishedAt} · 此后数据未变化`;
+    } else {
+      hint.classList.add('bz-checkup-stale--actionable');
+      const txt = document.createElement('span');
+      txt.textContent = `上次体检：${report.finishedAt} · 数据可能已变化，`;
+      hint.append(txt, uiBtn({ label: '重新体检', size: 'sm', onClick: () => void startRun() }));
+    }
     body.appendChild(hint);
   }
 
@@ -310,6 +316,16 @@ function renderReport(report: CheckupReport, stale: boolean): void {
   appendCleanGroup(body, report, cleanSections);
 }
 
+/**
+ * 修复组 → 域归并（呈报#51/CK7 按域分组修复中间档）：fixGroup 数据层五组语义不动，
+ * UI 层归并为三个域档——「剪藏本」合并残留/标注/待回写来源三组（同文件，run.ts 批内一次读写）。
+ */
+const FIX_DOMAINS: Array<{ label: string; groups: string[] }> = [
+  { label: '收藏本', groups: ['favorites'] },
+  { label: '剪藏本', groups: ['clipbook', 'clipbook-marks', 'clipbook-source'] },
+  { label: '知识盒', groups: ['knowledge'] },
+];
+
 /** 问题分组（红/黄）：组头 + 逐项（可修复带修复钮，全部带查看详情） */
 function appendIssueGroup(
   body: HTMLElement,
@@ -335,6 +351,28 @@ function appendIssueGroup(
     );
   }
   sec.appendChild(head);
+  if (fixAll) {
+    // 按域分组修复（呈报#51/CK7）：「全域一键」与「逐条」之间的中间档。只有单一域
+    // 有可修项时不重复出档（此时一键修复即该域）；域内多项共享确认框一次过。
+    const domainRows = FIX_DOMAINS.map((d) => ({
+      label: d.label,
+      issues: fixAll.issues.filter((i) => d.groups.includes(i.fixGroup || '')),
+    })).filter((d) => d.issues.length > 0);
+    if (domainRows.length >= 2) {
+      const row = document.createElement('div');
+      row.className = 'bz-checkup-fixdomains';
+      for (const d of domainRows) {
+        row.appendChild(
+          uiBtn({
+            label: `修${d.label}（${d.issues.length}）`,
+            size: 'sm',
+            onClick: () => void confirmFix(d.issues, `修复${d.label}`),
+          })
+        );
+      }
+      sec.appendChild(row);
+    }
+  }
   for (const issue of issues) sec.appendChild(issueRow(issue));
   body.appendChild(sec);
 }
@@ -424,23 +462,33 @@ function setFixing(on: boolean): void {
   renderFoot();
 }
 
-/** 修复确认（写明清除数量与可撤销）→ 执行 → 聚合撤销通知 → 自动重新体检收敛报告 */
+/**
+ * 修复执行（写明清除数量与可撤销）→ 聚合撤销通知 → 自动重新体检收敛报告。
+ *
+ * 确认口径（呈报#10/CK2 拍板，效率整改 5「免确认+可撤销」全域定稿）：
+ * - 单条修复免确认直达——五组修复面（收藏关联/剪藏残留/剪藏标注/剪藏待回写来源/知识盒引用）
+ *   全部带 notifyUndo 撤销链（run.ts undo 闭包）+ 修复后自动重跑体检收敛，双重兜底在位；
+ * - 批量（一键修复/按域分组）保留确认框：写明清除数量的知情确认有 clipbook
+ *   markAllUnreadRead 跨域批量先例背书（checkup-consistency P3-6 对表裁定批量通过）。
+ */
 async function confirmFix(issues: CheckIssue[], what: string): Promise<void> {
   if (!hostApp || fixing) return;
   const fixable = issues.filter((i) => i.fixGroup && i.fixKey);
   if (!fixable.length) return;
-  const v = await openFlowDialog({
-    // 动作名入题（cons UX-1：消费 what 形参，逐条/批量确认语境有区分）
-    title: what === '一键修复' ? '修复确认' : `${what}确认`,
-    message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
-    actions: [
-      { label: '取消', value: 'cancel' },
-      // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
-      // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
-      { label: '清除', value: 'ok', cta: true, danger: true },
-    ],
-  });
-  if (v !== 'ok') return;
+  if (fixable.length > 1) {
+    const v = await openFlowDialog({
+      // 动作名入题（cons UX-1：消费 what 形参，批量确认语境有区分）
+      title: what === '一键修复' ? '修复确认' : `${what}确认`,
+      message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
+      actions: [
+        { label: '取消', value: 'cancel' },
+        // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
+        // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
+        { label: '清除', value: 'ok', cta: true, danger: true },
+      ],
+    });
+    if (v !== 'ok') return;
+  }
   setFixing(true);
   let failures: string[] = [];
   try {

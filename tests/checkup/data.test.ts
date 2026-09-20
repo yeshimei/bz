@@ -217,7 +217,7 @@ describe('检查二：字段漂移', () => {
     expect(pomoWarn).toEqual([]); // 修复前：本插件自己写的 archived 段被误报「约定外数据段/可能是外部写入」
   });
 
-  it('PA-1：白名单外的真异常段仍 warn（契约不松，且不得把 archived 误列）；旧文件缺 archived 只 info 不 warn', async () => {
+  it('PA-1：白名单外的真异常段仍 warn（契约不松，且不得把 archived 误列）；旧文件缺 archived 为可选段豁免不再出 info（呈报#50/CK1）', async () => {
     const { app } = makeApp({
       [`${DIR}/pomodoro.json`]: JSON.stringify({
         version: 1,
@@ -232,9 +232,9 @@ describe('检查二：字段漂移', () => {
     expect(warns[0].title).toContain('约定外数据段');
     expect(warns[0].title).toContain('ghost');
     expect(warns[0].title).not.toContain('archived'); // archived 已入白名单，不算异常
-    // 旧文件无 archived 段（issue 357 前的形状）→ 缺段只走 info 常态，不产生 warn
+    // 旧文件无 archived 段（issue 357 前的形状）→ 可选段豁免（CK1 拍板）：不再计缺出 info
     const missingInfo = sec!.issues.find((i) => i.severity === 'info' && i.title.includes('archived'));
-    expect(missingInfo).toBeTruthy();
+    expect(missingInfo).toBeUndefined();
   });
 
   it('PA-1：SEGMENT_FIELDS 番茄钟段契约锁（version/state/history/archived）', () => {

@@ -85,6 +85,20 @@
   border-radius: var(--bz-radius-sm);
 }
 
+/* 可操作 stale 提示条（呈报#30/CK8）：文案 + 就地「重新体检」行动钮同行 */
+.bz-checkup-stale--actionable {
+  display: flex;
+  align-items: center;
+  gap: var(--bz-space-sm);
+}
+
+/* 按域分组修复行（呈报#51/CK7）：黄组头下方一排域档小钮 */
+.bz-checkup-fixdomains {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--bz-space-xs);
+}
+
 .bz-checkup-summary {
   font-size: var(--bz-font-emphasis);
   font-weight: var(--bz-weight-semibold);
@@ -214,7 +228,10 @@
 @media (max-width: 768px) {
   .bz-checkup-popup {
     width: calc(100vw - 24px);
+    /* 动态视口高（呈报#62/CK4）：真机地址栏收展时 vh 不准；老内核不认 dvh →
+       前一行 86vh 兜底，与改造前一致零劣化（gameshelf 先例） */
     max-height: 86vh;
+    max-height: 86dvh;
   }
 
   .bz-checkup-body,
