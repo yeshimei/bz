@@ -5,17 +5,39 @@
  * enh 包 2：pending 触发收敛为一条 FIFO 串行队列（监听触发与手动重跑共用），
  * 多篇并发逐个处理；批量（>1 篇）进度合并为单条「正在生成摘要 k/N…」逐个更新。
  * enh 包 1：regenerateSummary / redoSummaryForActiveFile 手动重跑入口（force 重建）。
+ *
+ * 深审修复批（bz-fix-as-core）：
+ * - N1/一致#3：getWatchDir 直引 clipDir 单源（尾斜杠归一 + 缺省串单处；save.ts 零回边，
+ *   静态单向引不构成模块环——宿主单源消费，ADR-0002 合规）；
+ * - A3：watch 口径收窄至顶层（对齐 clipbook scanClipDirectory）——子目录个人笔记不再被补全改名；
+ * - A10：AI 实例统一「每任务 createAI」（监听路径闭包共享单例退役）；
+ * - EFF-2：手动任务插队（unshift 队头）+ 入队反馈；N-UI3：在队去重命中给反馈；
+ * - EFF-3：连续失败熔断（≥3 篇暂停泵，常驻提示挂「继续」）；
+ * - EFF-1/N-UI4：批量批次收场成败汇总（逐篇 quiet，单篇批次仍逐篇回执）；
+ * - N-UI1：批次聚合通知 dedupeKey 带批次序号（不再撞 core 30s 去重窗吞掉紧随批次）；
+ * - N6/A4：stop 清队逐个 resolve 存量 Promise + 只摘「排队」态去重（in-flight 防双跑保留）；
+ * - AS3：重注册判据改看 openListenerRef（lazy 档 fileListenerRef 恒 null 的语义错误修正）。
  */
 import { createAI } from '../core/ai';
 import { tryGetSettings } from '../core/settings-provider';
 import { notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
-import { processFile } from './processor';
+import { clipDir } from '../clipbook/save';
+import { AUTO_SUMMARY_KEYS } from './keys';
+import { processFile, type ProcessOutcome } from './processor';
 
-/** 监听目录与剪藏本设置一致（articleDirectory，默认 归档/网页剪藏） */
+/** 监听目录与剪藏本设置一致（articleDirectory）：直引 clipDir 单源（N1/一致#3） */
 function getWatchDir(): string {
-  const s = tryGetSettings() as any;
-  return (s && s.articleDirectory) || '归档/网页剪藏';
+  return clipDir();
+}
+
+/** watch 目录顶层判定（A3）：仅目录直属文件命中，子目录（递归）不归本域管辖——
+ *  clipbook scanClipDirectory 只扫顶层，两域共用同一设置键必须同半径，
+ *  否则子目录里的非剪藏笔记会被 AI 补全甚至改名，而剪藏本列表永不显示它们 */
+function isWatchedTopLevel(path: string): boolean {
+  const dir = getWatchDir();
+  const prefix = dir + '/';
+  return path.startsWith(prefix) && !path.slice(prefix.length).includes('/');
 }
 
 let initialized = false;
@@ -52,16 +74,26 @@ let batchTotal = 0;
 let batchDone = 0;
 /** 批量进度聚合通知（单条，逐任务 setMessage 更新） */
 let batchNotice: NoticeHandle | null = null;
+/** 批次聚合通知键序号（N-UI1）：常量键跨批复用会撞 core 30s 去重窗——
+ *  上一批开跑后 30s 内的紧随批次整批零进度指示；带序号每批复用新键 */
+let batchSeq = 0;
+/** EFF-3 熔断：连续失败计数与暂停挂起（非空 = 泵暂停中，等待「继续」唤醒） */
+let consecutiveFailures = 0;
+let resumeDrain: (() => void) | null = null;
+/** 熔断阈值：连续失败 N 篇暂停队列（剩余任务留队不丢弃） */
+const FAIL_LIMIT = 3;
 
-/** 入队（同一文件去重：已入队/处理中不再入队）；返回该任务完成时刻 */
-function enqueueJob(job: SummaryJob): Promise<void> {
+/** 入队（同一文件去重：已入队/处理中不再入队）；priority=手动任务插队队头（EFF-2） */
+function enqueueJob(job: SummaryJob, priority = false): Promise<void> {
   return new Promise((resolve) => {
     if (processingPaths.has(job.file.path)) {
       resolve();
       return;
     }
     processingPaths.add(job.file.path);
-    jobQueue.push({ ...job, resolve });
+    const queued = { ...job, resolve };
+    if (priority) jobQueue.unshift(queued);
+    else jobQueue.push(queued);
     batchTotal++;
     if (drainTimer === null) {
       drainTimer = setTimeout(() => {
@@ -76,25 +108,73 @@ function enqueueJob(job: SummaryJob): Promise<void> {
 async function drainQueue(): Promise<void> {
   if (draining) return;
   draining = true;
+  // 批次成败计数（EFF-1/N-UI4）：收场汇总只在批量（quiet）批次发，单篇批次由 processor 逐篇回执
+  let okCount = 0;
+  let failCount = 0;
   try {
     while (jobQueue.length > 0) {
       const job = jobQueue.shift()!;
       batchDone++;
       updateBatchNotice();
+      let outcome: ProcessOutcome = 'error';
       try {
-        await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
+        outcome = await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
       } catch (e) {
-        // processFile 内部已兜底（失败人话化 + 重试 + 日志）；此处防单任务异常打断整条队列
+        // processFile 返回结果契约（A5）且内部已兜底；此处防意外异常打断整条队列
       } finally {
         processingPaths.delete(job.file.path);
         job.resolve?.();
       }
+      if (outcome === 'ok' || outcome === 'partial') {
+        okCount++;
+        consecutiveFailures = 0;
+      } else if (outcome === 'ai-failed' || outcome === 'write-failed') {
+        failCount++;
+        consecutiveFailures++;
+      } else {
+        consecutiveFailures = 0; // skipped-*/error 是正常早退或环境意外，不计服务连续失败
+      }
+      // EFF-3 熔断：连续失败 ≥3 且仍有存量任务 → 暂停泵（任务留队），常驻提示挂「继续」；
+      // 挂起不收场（批次态与进度通知保留），继续后原地续跑，stop 则清队唤醒自然收场
+      if (consecutiveFailures >= FAIL_LIMIT && jobQueue.length > 0) {
+        const remaining = jobQueue.length;
+        notify(`AI 连续失败 ${FAIL_LIMIT} 篇，批量摘要已暂停，剩余 ${remaining} 篇待处理`, {
+          type: 'warning',
+          duration: 0,
+          actions: [
+            {
+              label: '继续',
+              onClick: () => {
+                const r = resumeDrain;
+                resumeDrain = null;
+                consecutiveFailures = 0;
+                r?.();
+              },
+            },
+          ],
+        });
+        await new Promise<void>((resolve) => {
+          resumeDrain = resolve;
+        });
+      }
     }
   } finally {
     draining = false;
+    resumeDrain = null;
     if (batchNotice) {
       batchNotice.hide();
       batchNotice = null;
+    }
+    // EFF-1/N-UI4 批次收场汇总：批量（quiet）批次逐篇回执已静音，成败比单条收口；
+    // 全部早退（字段齐全/过短）无 AI 产出不发汇总
+    if (batchTotal > 1) {
+      if (failCount > 0 && okCount > 0) {
+        notify(`已生成 ${okCount} 篇摘要，${failCount} 篇失败`, { type: 'warning' });
+      } else if (failCount > 0) {
+        notify(`批量摘要生成失败（${failCount} 篇）`, { type: 'error', duration: 0 });
+      } else if (okCount > 0) {
+        notify(`已生成 ${okCount} 篇摘要`, { type: 'success' });
+      }
     }
     batchTotal = 0;
     batchDone = 0;
@@ -109,43 +189,56 @@ function updateBatchNotice(): void {
   if (batchNotice) {
     batchNotice.setMessage(msg);
   } else {
-    batchNotice = notify(msg, { type: 'progress', dedupeKey: 'auto-summary:batch' });
+    // N-UI1：dedupeKey 带批次序号——常量键跨批复用会被 core 30s 去重窗吞掉紧随批次
+    batchNotice = notify(msg, { type: 'progress', dedupeKey: `auto-summary:batch#${++batchSeq}` });
   }
 }
 
-function queueProcess(app: any, ai: any, file: any): void {
+function queueProcess(app: any, file: any): void {
   if (!file || file.extension !== 'md') return;
-  if (!file.path.startsWith(getWatchDir() + '/')) return;
+  if (!isWatchedTopLevel(file.path)) return; // A3：顶层口径（含 N1 尾斜杠归一后的目录）
   if (pendingPaths.has(file.path)) return;
   // 延迟处理，等 frontmatter 写入完成；timer id 入表（stop/unload 统一 clearTimeout，防停用后仍触发 AI）
   const timer = setTimeout(() => {
     pendingPaths.delete(file.path);
-    void enqueueJob({ app, ai, file });
+    // A10：AI 实例统一「每任务 createAI」（与手动入口一致；AIService 构造纯赋值，实例随任务生命周期走）
+    void enqueueJob({ app, ai: createAI(), file });
   }, 1500);
   pendingPaths.set(file.path, timer);
 }
 
 /** 手动重跑摘要（enh 包 1）：force 跳过缺失检测直接重建（只动 summary/tags，
- *  不动用户自定义标题）；走同一 FIFO 串行队列，与监听触发互斥串行 */
+ *  不动用户自定义标题）；走同一 FIFO 串行队列，与监听触发互斥串行。
+ *  EFF-2：手动任务插队队头（unshift）；N-UI3：撞在队/处理中去重给反馈不静默吞。 */
 export function regenerateSummary(app: any, file: any): Promise<void> {
   if (!file || file.extension !== 'md') return Promise.resolve();
-  return enqueueJob({ app, ai: createAI(), file, force: true });
+  if (processingPaths.has(file.path)) {
+    notify('该篇正在处理中，请稍后再试', { type: 'info' });
+    return Promise.resolve();
+  }
+  if (draining) notify('已加入摘要队列，当前篇完成后优先处理', { type: 'info' });
+  return enqueueJob({ app, ai: createAI(), file, force: true }, true);
 }
 
 /** 失败通知「重试」入口（F9）：与手动重跑共用 FIFO 串行队列——processingPaths 去重，
  *  双击/并发点按只跑一次 AI（直调 processFile 会绕过去重双倍花费）；force 语义与 AI 服务
- *  实例由调用方（processor 失败通知）透传，重试行为不变 */
+ *  实例由调用方（processor 失败通知）透传，重试行为不变。EFF-2 插队 + N-UI3 反馈同上。 */
 export function retrySummaryWithAI(app: any, ai: any, file: any, force: boolean): Promise<void> {
   if (!file || file.extension !== 'md') return Promise.resolve();
-  return enqueueJob({ app, ai, file, force });
+  if (processingPaths.has(file.path)) {
+    notify('该篇正在处理中，请稍后再试', { type: 'info' });
+    return Promise.resolve();
+  }
+  if (draining) notify('已加入摘要队列，当前篇完成后优先处理', { type: 'info' });
+  return enqueueJob({ app, ai, file, force }, true);
 }
 
 /** 命令 bz-auto-summary-redo（enh 包 1）：对当前打开的笔记重跑摘要；
- *  非剪藏笔记（监听目录外）给人话提示，不触发 AI */
+ *  非剪藏笔记（监听目录顶层外）给人话提示，不触发 AI */
 export async function redoSummaryForActiveFile(app: any): Promise<void> {
   const ws = app && app.workspace;
   const file = ws && typeof ws.getActiveFile === 'function' ? ws.getActiveFile() : null;
-  if (!file || file.extension !== 'md' || !String(file.path || '').startsWith(getWatchDir() + '/')) {
+  if (!file || file.extension !== 'md' || !isWatchedTopLevel(String(file.path || ''))) {
     notify('当前打开的不是剪藏笔记，无法重新生成摘要', { type: 'info' });
     return;
   }
@@ -156,17 +249,16 @@ export async function redoSummaryForActiveFile(app: any): Promise<void> {
  *  ticket 124（Q14 详设三）：timing=lazy 时只注册 file-open（仅打开文件时补全），
  *  immediate（默认）保持 create+file-open 双监听（保存后立刻）。 */
 function scheduleRegister(app: any): void {
-  const ai = createAI();
   registerTimer = setTimeout(() => {
     registerTimer = null; // 注册完成即清引用（stop 后再开的判断依据）
     if (!vaultRef) return;
-    const timing = (tryGetSettings() as any)?.autoSummaryTiming || 'immediate';
+    const timing = (tryGetSettings() as any)?.[AUTO_SUMMARY_KEYS.timing] || 'immediate';
     if (timing !== 'lazy') {
-      fileListenerRef = vaultRef.on('create', (file: any) => queueProcess(app, ai, file));
+      fileListenerRef = vaultRef.on('create', (file: any) => queueProcess(app, file));
     }
     // 打开文件同样触发（file-open 关闭时传 null，queueProcess 内跳过）
     if (workspaceRef && typeof workspaceRef.on === 'function') {
-      openListenerRef = workspaceRef.on('file-open', (file: any) => queueProcess(app, ai, file));
+      openListenerRef = workspaceRef.on('file-open', (file: any) => queueProcess(app, file));
     }
   }, 2000);
 }
@@ -174,8 +266,10 @@ function scheduleRegister(app: any): void {
 /** 幂等初始化；stop 后再开启时复用 initialized 状态重新注册监听 */
 export function ensureAutoSummary(app: any): void {
   if (initialized) {
-    // stop 摘除过监听且无待注册定时器 → 重新注册
-    if (!registerTimer && !fileListenerRef) scheduleRegister(app);
+    // stop 摘除过监听且无待注册定时器 → 重新注册。
+    // AS3：判据看 openListenerRef（两档时机下 file-open 监听恒注册，是「监听在位」的
+    // 单一真相信号）——旧判据看 fileListenerRef 在 lazy 档恒 null，重复 ensure 会双注册
+    if (!registerTimer && !openListenerRef) scheduleRegister(app);
     return;
   }
   initialized = true;
@@ -206,19 +300,31 @@ export function stopAutoSummary(): void {
   for (const timer of pendingPaths.values()) clearTimeout(timer);
   pendingPaths.clear();
   // 清空待处理队列、泵定时器与批次聚合态（enh 包 2）：正在处理中的单个任务不可中断，
-  // 完成即止；drain 泵见队列已空自然收尾，不再处理后续任务
+  // 完成即止；drain 泵见队列已空自然收尾，不再处理后续任务。
+  // N6：清队前逐个 resolve 队内任务——await 的手动入口（regenerateSummary）不再永挂；
+  // A4：只摘「排队」态的去重标记（in-flight「处理中」标记保留至泵 finally 自摘，防双跑窗口）
+  if (resumeDrain) {
+    // 熔断暂停中的泵先唤醒：队列已清空，收场对称
+    const r = resumeDrain;
+    resumeDrain = null;
+    r();
+  }
+  for (const j of jobQueue) {
+    processingPaths.delete(j.file.path);
+    j.resolve?.();
+  }
+  jobQueue.length = 0;
   if (drainTimer !== null) {
     clearTimeout(drainTimer);
     drainTimer = null;
   }
-  jobQueue.length = 0;
   if (batchNotice) {
     batchNotice.hide();
     batchNotice = null;
   }
   batchTotal = 0;
   batchDone = 0;
-  processingPaths.clear();
+  consecutiveFailures = 0;
 }
 
 /** 卸载清理（main.ts onunload 可调用） */
@@ -227,4 +333,16 @@ export function unloadAutoSummary(): void {
   initialized = false;
   vaultRef = null;
   workspaceRef = null;
+}
+
+/**
+ * 测试 seam（T5）：冲洗模块级队列/注册/批次/熔断全部状态——
+ * 替代测试 afterEach 手工微任务冲洗与门控放行兜底，消除跨用例滞留（draining 曾经咬人）。
+ */
+export function __resetForTest(): void {
+  stopAutoSummary();
+  unloadAutoSummary();
+  consecutiveFailures = 0;
+  resumeDrain = null;
+  batchSeq = 0;
 }

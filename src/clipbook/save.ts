@@ -21,9 +21,10 @@ import { readArticleTracking, applyBodyTransforms, clearArticleTracking, linkAli
 import type { ClipSavedImage } from './data';
 
 // C27：先转义反斜杠（\ → \\）再转义引号/换行——否则 url/author/summary 含 `\` 时
-// 产出 `\\"` 之类被 YAML 当转义序列解读，值读取时变形
-const yamlEscape = (v: any): string =>
-  String(v ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/[\r\n]+/g, ' ');
+// 产出 `\\"` 之类被 YAML 当转义序列解读，值读取时变形。
+// 一致#1 收编：转义实现单源 core/utils（escapeYamlText 裸转义核心——引号由下方
+// md 模板内嵌，yamlEscapeQuoted 是恒包裹出口，此处用裸核心保持原语义逐值等价）
+import { escapeYamlText as yamlEscape } from '../core/utils';
 
 /**
  * 剪藏目录单源（CB4/A3）：读设置 articleDirectory，尾斜杠归一（去尾 `/{1,}`）——

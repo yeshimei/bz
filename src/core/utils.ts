@@ -8,6 +8,55 @@ import { httpGetText, requestUrlAsFetch } from './http';
 import { pad2, relTime as baseRelTime, stripMdExt, localDayKey, stripTitleMarks } from './ui/str';
 import { notice } from './notice';
 
+// ==================== YAML 标量转义单源（AS1/C27/一致#1 三域收编） ====================
+
+/**
+ * YAML 双引号标量转义核心（纯串进纯串出）：先 `\` 后 `"` 再换行折空格。
+ * 顺序铁律：必须先转义反斜杠——否则值含 `\` 时产出 `\\"` 之类被 YAML 当转义序列
+ * 解读，值读取时变形或整体解析失败（C27/AS1 同根）。
+ * 三域收编（一致#1）：clipbook save 写侧（恒包裹）、auto-summary parser 重建
+ * （恒包裹 + unquote 反转义对齐）、cinema 影片模板（条件包裹）此前各持一份私有实现，
+ * 收编为本原语 + 两个形态出口。
+ */
+export function escapeYamlText(s: string): string {
+  return String(s ?? '')
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"')
+    .replace(/[\r\n]+/g, ' ');
+}
+
+/**
+ * YAML 恒包裹形态：值一律输出为 `"…"` 双引号标量。
+ * clipbook 写侧契约（url/author/site/summary/date 标量与 tags 数组项）与
+ * auto-summary frontmatter 重建共用——读侧 unquote 反转义同源对齐（AS1）。
+ */
+export function yamlEscapeQuoted(v: unknown): string {
+  return `"${escapeYamlText(String(v ?? ''))}"`;
+}
+
+/**
+ * YAML 条件包裹形态（cinema 影片模板契约）：换行先行单行化（C3），
+ * 仅含 YAML 特殊字符或空格时才双引号包裹，否则裸输出（保持既有序列化策略，
+ * 不与恒包裹强并——一致#1 修法：两出口一原语）。
+ */
+export function yamlScalarOf(val: unknown): string {
+  let s = String(val);
+  if (/[\r\n]/.test(s)) s = s.replace(/[ \t]*[\r\n]+[ \t]*/g, ' ');
+  if (/[:"\-#[\]{}|>'?]/.test(s) || s.includes(' ')) {
+    return '"' + escapeYamlText(s) + '"';
+  }
+  return s;
+}
+
+/**
+ * 双引号标量反转义（写侧 escapeYamlText 的逆）：`\\` → `\`、`\"` → `"`。
+ * 仅处理写侧会产出的两形转义，未知转义序列（`\n` 等字面）原样保留——
+ * 写侧把真换行折成空格、不产出 `\n` 转义，字面 `\n` 两字符经 `\\` 转义往返不变形（AS1）。
+ */
+export function unescapeYamlText(s: string): string {
+  return s.replace(/\\(.)/g, (m: string, c: string) => (c === '"' || c === '\\' ? c : m));
+}
+
 /** HTML 转义 */
 export function escapeHtml(str: string): string {
   return str.replace(/[&<>"']/g, (m) => {

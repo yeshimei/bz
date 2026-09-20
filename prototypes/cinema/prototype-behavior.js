@@ -1,4 +1,4 @@
-/* 源指纹 0684cef8881c7666 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 75372df256cea848 · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5255,395 +5255,8 @@ var BZW_cinema = (() => {
     return String(name || "").replace(/\.md$/i, "");
   }
 
-  // src/cinema/douban-fetcher.ts
-  var POSTER_FOLDER = "CONFIG/MOVIE POSTER";
-  function extractMovieName(filename) {
-    const basename = stripMdExt(filename);
-    const m = basename.match(/《(.+)》/);
-    return m ? m[1] : basename;
-  }
-  function parseSearchResults(html) {
-    const results = [];
-    const itemRegex = /class="result"[\s\S]*?<div class="pic">[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*>[\s\S]*?<div class="title">[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
-    let match;
-    while ((match = itemRegex.exec(html)) !== null) {
-      const rawUrl = match[1];
-      const posterUrl2 = match[2];
-      const title = match[3].trim();
-      const urlMatch = rawUrl.match(/url=([^&]+)/);
-      const detailUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : rawUrl;
-      results.push({ title, detailUrl, posterUrl: posterUrl2 });
-    }
-    return results;
-  }
-  function searchLooksBlocked(html) {
-    if (!html) return true;
-    if (html.length < 8e3) return true;
-    return !html.includes('class="result"') && !html.includes("没有找到") && !html.includes("没有相关的搜索结果");
-  }
-  function upgradePosterUrl(url) {
-    return url.replace("s_ratio_poster", "l_ratio_poster");
-  }
-  function normalizeListValue(val) {
-    return val.replace(/[,，]\s*/g, " / ");
-  }
-  function extractSid(detailUrl) {
-    const m = detailUrl.match(/subject\/(\d+)/);
-    return m ? m[1] : null;
-  }
-  function parseCelebrities(data) {
-    if (!data || data.msg) return { directors: "", writers: "", casts: "" };
-    const directors = (data.directors || []).map((d) => d.name || d).join(" / ");
-    const ws = (data.celebrities || []).filter((c) => (c.roles || []).some((r) => /编剧/.test(r)));
-    const writers = ws.map((w) => w.name).join(" / ");
-    const actors = data.actors || [];
-    const casts = actors.length ? (typeof actors[0] === "object" ? actors.slice(0, 6).map((a) => a.name || "").filter(Boolean) : actors.slice(0, 6)).join(" / ") : "";
-    return { directors, writers, casts };
-  }
-  async function fetchApizeroInfo(sid, key, httpGet2) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
-    const text = await httpGet2(`https://v1.apizero.cn/api/douban-movie?id=${encodeURIComponent(sid)}`, {
-      Authorization: `Bearer ${key}`
-    });
-    if (!text) return null;
-    try {
-      const j = JSON.parse(text);
-      if (!j || j.code !== 0 || !j.data) return null;
-      const d = j.data;
-      return {
-        name: String((_a = d.name) != null ? _a : ""),
-        year: String((_b = d.year) != null ? _b : ""),
-        score: String((_c = d.score) != null ? _c : ""),
-        director: String((_d = d.director) != null ? _d : ""),
-        actor: String((_e = d.actor) != null ? _e : ""),
-        genre: String((_f = d.genre) != null ? _f : ""),
-        area: String((_g = d.area) != null ? _g : ""),
-        duration: String((_h = d.duration) != null ? _h : ""),
-        episodes: String((_i = d.episodes) != null ? _i : ""),
-        isTv: d.is_tv === true,
-        doubanUrl: String(d.douban_url || `https://movie.douban.com/subject/${sid}/`),
-        shortComment: String((_j = d.short_comment) != null ? _j : ""),
-        commentAuthor: String((_k = d.comment_author) != null ? _k : "")
-      };
-    } catch (e) {
-      return null;
-    }
-  }
-  async function fetchCelebrities(sid, httpGet2, cookie) {
-    const headers = { Referer: `https://m.douban.com/movie/subject/${sid}/` };
-    if (cookie) headers.Cookie = cookie;
-    for (const type of ["tv", "movie"]) {
-      const text = await httpGet2(`https://m.douban.com/rexxar/api/v2/${type}/${sid}/celebrities`, headers);
-      if (text && text.length > 150) {
-        try {
-          const data = JSON.parse(text);
-          if (!data.msg) {
-            const c = parseCelebrities(data);
-            return { ...c, mediaType: type };
-          }
-        } catch (e) {
-        }
-      }
-    }
-    return null;
-  }
-  function updateFrontmatterFields(content, fields) {
-    const fmMatch = content.match(/^(---\r?\n)([\s\S]*?)(\r?\n---)/);
-    if (!fmMatch) {
-      const fmLines = ["---"];
-      for (const [k, spec] of Object.entries(fields)) {
-        const v = typeof spec === "string" ? spec : spec.value;
-        if (v) fmLines.push(`${k}: ${formatYamlValue(v)}`);
-      }
-      fmLines.push("---");
-      return fmLines.join("\n") + "\n" + content;
-    }
-    const header = fmMatch[1];
-    const footer = fmMatch[3];
-    const rest = content.slice(fmMatch[0].length);
-    const lines = fmMatch[2].split(/\r?\n/);
-    let insertIdx = lines.length;
-    for (let i = 0; i < lines.length; i++) {
-      if (lines[i].match(/^\s+- /)) insertIdx = i + 1;
-    }
-    const existingKeys = /* @__PURE__ */ new Map();
-    for (const line of lines) {
-      const m = line.match(/^([^:]+):/);
-      if (m) existingKeys.set(m[1].trim(), m[1]);
-    }
-    const lineValue = (key) => {
-      const m = lines.map((l) => l.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"))).find(Boolean);
-      if (!m) return null;
-      const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
-      return v || null;
-    };
-    const newLines = [];
-    for (const [key, spec] of Object.entries(fields)) {
-      const val = typeof spec === "string" ? spec : spec.value;
-      if (!val || val === "") continue;
-      if (existingKeys.has(key)) {
-        if (typeof spec !== "string" && spec.ifMissing && lineValue(key)) continue;
-        const lineKey = existingKeys.get(key);
-        for (let i = 0; i < lines.length; i++) {
-          if (lines[i].match(new RegExp(`^${lineKey}:`))) {
-            lines[i] = `${lineKey}: ${formatYamlValue(val)}`;
-            break;
-          }
-        }
-      } else {
-        newLines.push(`${key}: ${formatYamlValue(val)}`);
-      }
-    }
-    if (newLines.length > 0) lines.splice(insertIdx, 0, ...newLines);
-    return header + lines.join("\n") + footer + rest;
-  }
-  function formatYamlValue(val) {
-    let s = String(val);
-    if (/[\r\n]/.test(s)) s = s.replace(/[ \t]*[\r\n]+[ \t]*/g, " ");
-    if (/[:"\-#[\]{}|>'?]/.test(s) || s.includes(" ")) {
-      return '"' + s.replace(/\\/g, "\\\\").replace(/"/g, '\\"') + '"';
-    }
-    return s;
-  }
-  function insertPosterEmbed(content, posterPath) {
-    const embedLink = `![[${posterPath}]]`;
-    if (content.includes(embedLink)) return content;
-    const fmMatch = content.match(/^(---\r?\n[\s\S]*?\r?\n---)(\r?\n)?/);
-    if (fmMatch) {
-      if (fmMatch[2]) {
-        return fmMatch[0] + embedLink + "\n" + content.slice(fmMatch[0].length);
-      }
-      return fmMatch[1] + "\n" + embedLink + "\n" + content.slice(fmMatch[1].length);
-    }
-    return embedLink + "\n" + content;
-  }
-  function fieldValue(content, key) {
-    const m = content.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"));
-    if (!m) return null;
-    const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
-    return v || null;
-  }
-  async function fetchNoteDouban(app, file, deps) {
-    var _a, _b;
-    const name = extractMovieName(file.name);
-    let content;
-    try {
-      content = await app.vault.read(file);
-    } catch (e) {
-      return { ok: false, reason: "network" };
-    }
-    const hasPoster = !!fieldValue(content, "海报");
-    const doubanUrlRaw = fieldValue(content, "豆瓣链接");
-    const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
-    if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
-    const searchHeaders = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
-    if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
-    let html;
-    try {
-      html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, searchHeaders);
-    } catch (e) {
-      return { ok: false, reason: "network" };
-    }
-    if (searchLooksBlocked(html)) return { ok: false, reason: "blocked" };
-    const results = parseSearchResults(html);
-    if (results.length === 0) return { ok: false, reason: "notfound" };
-    const first = results[0];
-    const sid = extractSid(first.detailUrl);
-    if (!sid) return { ok: false, reason: "notfound" };
-    const posterFolder = ((_a = deps.posterFolder) == null ? void 0 : _a.trim()) || POSTER_FOLDER;
-    let posterRelative = fieldValue(content, "海报");
-    if (!hasPoster && first.posterUrl) {
-      let buf;
-      try {
-        buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: "https://movie.douban.com/" });
-      } catch (e) {
-        return { ok: false, reason: "network" };
-      }
-      if (!buf) return { ok: false, reason: "network" };
-      try {
-        await deps.mkdir(posterFolder);
-        const ext = ((_b = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _b[1]) || "jpg";
-        const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, "_");
-        const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
-        posterRelative = `${posterFolder}/${fileName}`;
-        await deps.writeBinary(posterRelative, buf);
-      } catch (e) {
-        return { ok: false, reason: "write" };
-      }
-    }
-    const fields = {};
-    if (posterRelative) fields["海报"] = { value: posterRelative, ifMissing: true };
-    fields["豆瓣链接"] = first.detailUrl;
-    let az = null;
-    if (deps.apizeroKey) {
-      az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-      if (az) {
-        if (az.score) fields["豆瓣评分"] = { value: az.score, ifMissing: true };
-        if (az.director) fields["导演"] = { value: normalizeListValue(az.director), ifMissing: true };
-        if (az.actor) fields["主演"] = { value: normalizeListValue(az.actor), ifMissing: true };
-        if (az.genre) fields["类型"] = { value: normalizeListValue(az.genre), ifMissing: true };
-        if (az.area) fields["制片国家/地区"] = { value: normalizeListValue(az.area), ifMissing: true };
-        if (az.duration) fields["片长"] = { value: az.duration, ifMissing: true };
-        if (az.year) fields["上映日期"] = { value: az.year, ifMissing: true };
-        if (az.shortComment) fields["热门短评"] = { value: az.shortComment, ifMissing: true };
-      }
-    }
-    const needCelebrities = !az || !az.director || !az.actor;
-    if (needCelebrities) {
-      const cel = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
-      if (cel) {
-        if (!fields["导演"] && cel.directors) fields["导演"] = { value: cel.directors, ifMissing: true };
-        if (cel.writers) fields["编剧"] = { value: cel.writers, ifMissing: true };
-        if (!fields["主演"] && cel.casts) fields["主演"] = { value: cel.casts, ifMissing: true };
-      }
-    }
-    try {
-      await app.vault.process(file, (c) => {
-        let next = updateFrontmatterFields(c, fields);
-        if (posterRelative && !hasPoster && !fieldValue(c, "海报")) next = insertPosterEmbed(next, posterRelative);
-        return next;
-      });
-    } catch (e) {
-      return { ok: false, reason: "write" };
-    }
-    return { ok: true };
-  }
-
-  // src/cinema/data.ts
-  function parseMovieFile(file, app) {
-    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
-    const cache = app.metadataCache.getFileCache(file);
-    if (!cache || !cache.frontmatter) return null;
-    const fm = cache.frontmatter;
-    const name = extractMovieName(file.basename);
-    let rawTags = fm.tags;
-    if (typeof rawTags === "string") rawTags = [rawTags];
-    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
-    let typeTag = null;
-    for (const t of ALL_TAGS) {
-      if (tags.includes(t)) {
-        typeTag = t;
-        break;
-      }
-    }
-    if (!typeTag) {
-      if (tags.length === 0) return null;
-      typeTag = tags[0];
-    }
-    const watchDate = (_b = (_a = fm["观影日期"]) == null ? void 0 : _a.toString()) != null ? _b : null;
-    const rawRating = fm["评分"];
-    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
-    let status;
-    if (rating === -1) status = STATUS_WANT;
-    else if (rating === 0) status = STATUS_WATCHING;
-    else status = STATUS_WATCHED;
-    return {
-      file,
-      name,
-      typeTag,
-      group: getGroupSafe(typeTag),
-      watchDate,
-      rating,
-      status,
-      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
-      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
-      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
-      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
-      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
-      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
-      year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
-      releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
-      doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
-      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
-      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
-      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
-      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
-      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
-      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
-    };
-  }
-  function findPosterRenameTargets(app, oldPath) {
-    var _a;
-    if (!oldPath) return [];
-    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(M.folderPath + "/"));
-    const hits = [];
-    for (const file of files) {
-      const fm = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter;
-      if (fm && fm["海报"] != null && String(fm["海报"]) === oldPath) hits.push(file);
-    }
-    return hits;
-  }
-  function rebuildItems(app) {
-    const newItems = [];
-    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(M.folderPath + "/"));
-    for (const file of files) {
-      try {
-        const item = parseMovieFile(file, app);
-        if (item) {
-          newItems.push(item);
-          continue;
-        }
-        if (!app.metadataCache.getFileCache(file)) {
-          const kept = M.items.find((p) => {
-            var _a;
-            return ((_a = p.file) == null ? void 0 : _a.path) === file.path;
-          });
-          if (kept) newItems.push(kept);
-        }
-      } catch (error) {
-        console.warn("处理影视文件失败:", file.path, error);
-      }
-    }
-    M.items.length = 0;
-    M.items.push(...newItems);
-    return newItems;
-  }
-  function dateVal(it) {
-    if (!it.watchDate) return 0;
-    const t = new Date(it.watchDate).getTime();
-    return isNaN(t) ? 0 : t;
-  }
-  function sortByDateDesc(list) {
-    return [...list].sort((a, b) => dateVal(b) - dateVal(a));
-  }
-  function sortByCreatedDesc(list) {
-    return [...list].sort((a, b) => {
-      const ta = a.file ? a.file.stat.ctime : 0;
-      const tb = b.file ? b.file.stat.ctime : 0;
-      if (ta !== tb) return tb - ta;
-      return (b.name || "").localeCompare(a.name || "");
-    });
-  }
-  function sortByRatingDesc(list) {
-    return [...list].sort((a, b) => {
-      const ar = a.rating && a.rating > 0 ? a.rating : -1;
-      const br = b.rating && b.rating > 0 ? b.rating : -1;
-      if (ar !== br) return br - ar;
-      return dateVal(b) - dateVal(a);
-    });
-  }
-  function applySortMode(list, mode) {
-    if (mode === "created") return sortByCreatedDesc(list);
-    if (mode === "rating") return sortByRatingDesc(list);
-    return sortByDateDesc(list);
-  }
-  function getDisplayItems() {
-    let list = [...M.items];
-    if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
-    if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === "想看" ? STATUS_WANT : M.statusFilter === "在看" ? STATUS_WATCHING : STATUS_WATCHED));
-    if (M.searchKeyword) {
-      const kw = M.searchKeyword.toLowerCase();
-      list = list.filter((it) => {
-        return it.name && it.name.toLowerCase().includes(kw) || it.typeTag && it.typeTag.toLowerCase().includes(kw) || it.review && it.review.toLowerCase().includes(kw) || it.director && it.director.toLowerCase().includes(kw) || it.actors && it.actors.toLowerCase().includes(kw);
-      });
-    }
-    return applySortMode(list, M.sortMode);
-  }
-  function refreshDataAndView(app) {
-    var _a, _b;
-    rebuildItems(app);
-    (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
-  }
+  // src/core/utils.ts
+  var import_moment = __toESM(require_moment());
 
   // src/core/z-order.ts
   var zCounter = 1e5;
@@ -6009,7 +5622,17 @@ var BZW_cinema = (() => {
   }
 
   // src/core/utils.ts
-  var import_moment = __toESM(require_moment());
+  function escapeYamlText(s) {
+    return String(s != null ? s : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
+  }
+  function yamlScalarOf(val) {
+    let s = String(val);
+    if (/[\r\n]/.test(s)) s = s.replace(/[ \t]*[\r\n]+[ \t]*/g, " ");
+    if (/[:"\-#[\]{}|>'?]/.test(s) || s.includes(" ")) {
+      return '"' + escapeYamlText(s) + '"';
+    }
+    return s;
+  }
   function escapeHtml2(str) {
     return str.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
@@ -6042,6 +5665,391 @@ var BZW_cinema = (() => {
     } catch (e) {
     }
     notice("无法打开链接，请复制到浏览器打开", "error");
+  }
+
+  // src/cinema/douban-fetcher.ts
+  var POSTER_FOLDER = "CONFIG/MOVIE POSTER";
+  function extractMovieName(filename) {
+    const basename = stripMdExt(filename);
+    const m = basename.match(/《(.+)》/);
+    return m ? m[1] : basename;
+  }
+  function parseSearchResults(html) {
+    const results = [];
+    const itemRegex = /class="result"[\s\S]*?<div class="pic">[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*>[\s\S]*?<div class="title">[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
+    let match;
+    while ((match = itemRegex.exec(html)) !== null) {
+      const rawUrl = match[1];
+      const posterUrl2 = match[2];
+      const title = match[3].trim();
+      const urlMatch = rawUrl.match(/url=([^&]+)/);
+      const detailUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : rawUrl;
+      results.push({ title, detailUrl, posterUrl: posterUrl2 });
+    }
+    return results;
+  }
+  function searchLooksBlocked(html) {
+    if (!html) return true;
+    if (html.length < 8e3) return true;
+    return !html.includes('class="result"') && !html.includes("没有找到") && !html.includes("没有相关的搜索结果");
+  }
+  function upgradePosterUrl(url) {
+    return url.replace("s_ratio_poster", "l_ratio_poster");
+  }
+  function normalizeListValue(val) {
+    return val.replace(/[,，]\s*/g, " / ");
+  }
+  function extractSid(detailUrl) {
+    const m = detailUrl.match(/subject\/(\d+)/);
+    return m ? m[1] : null;
+  }
+  function parseCelebrities(data) {
+    if (!data || data.msg) return { directors: "", writers: "", casts: "" };
+    const directors = (data.directors || []).map((d) => d.name || d).join(" / ");
+    const ws = (data.celebrities || []).filter((c) => (c.roles || []).some((r) => /编剧/.test(r)));
+    const writers = ws.map((w) => w.name).join(" / ");
+    const actors = data.actors || [];
+    const casts = actors.length ? (typeof actors[0] === "object" ? actors.slice(0, 6).map((a) => a.name || "").filter(Boolean) : actors.slice(0, 6)).join(" / ") : "";
+    return { directors, writers, casts };
+  }
+  async function fetchApizeroInfo(sid, key, httpGet2) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k;
+    const text = await httpGet2(`https://v1.apizero.cn/api/douban-movie?id=${encodeURIComponent(sid)}`, {
+      Authorization: `Bearer ${key}`
+    });
+    if (!text) return null;
+    try {
+      const j = JSON.parse(text);
+      if (!j || j.code !== 0 || !j.data) return null;
+      const d = j.data;
+      return {
+        name: String((_a = d.name) != null ? _a : ""),
+        year: String((_b = d.year) != null ? _b : ""),
+        score: String((_c = d.score) != null ? _c : ""),
+        director: String((_d = d.director) != null ? _d : ""),
+        actor: String((_e = d.actor) != null ? _e : ""),
+        genre: String((_f = d.genre) != null ? _f : ""),
+        area: String((_g = d.area) != null ? _g : ""),
+        duration: String((_h = d.duration) != null ? _h : ""),
+        episodes: String((_i = d.episodes) != null ? _i : ""),
+        isTv: d.is_tv === true,
+        doubanUrl: String(d.douban_url || `https://movie.douban.com/subject/${sid}/`),
+        shortComment: String((_j = d.short_comment) != null ? _j : ""),
+        commentAuthor: String((_k = d.comment_author) != null ? _k : "")
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+  async function fetchCelebrities(sid, httpGet2, cookie) {
+    const headers = { Referer: `https://m.douban.com/movie/subject/${sid}/` };
+    if (cookie) headers.Cookie = cookie;
+    for (const type of ["tv", "movie"]) {
+      const text = await httpGet2(`https://m.douban.com/rexxar/api/v2/${type}/${sid}/celebrities`, headers);
+      if (text && text.length > 150) {
+        try {
+          const data = JSON.parse(text);
+          if (!data.msg) {
+            const c = parseCelebrities(data);
+            return { ...c, mediaType: type };
+          }
+        } catch (e) {
+        }
+      }
+    }
+    return null;
+  }
+  function updateFrontmatterFields(content, fields) {
+    const fmMatch = content.match(/^(---\r?\n)([\s\S]*?)(\r?\n---)/);
+    if (!fmMatch) {
+      const fmLines = ["---"];
+      for (const [k, spec] of Object.entries(fields)) {
+        const v = typeof spec === "string" ? spec : spec.value;
+        if (v) fmLines.push(`${k}: ${formatYamlValue(v)}`);
+      }
+      fmLines.push("---");
+      return fmLines.join("\n") + "\n" + content;
+    }
+    const header = fmMatch[1];
+    const footer = fmMatch[3];
+    const rest = content.slice(fmMatch[0].length);
+    const lines = fmMatch[2].split(/\r?\n/);
+    let insertIdx = lines.length;
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].match(/^\s+- /)) insertIdx = i + 1;
+    }
+    const existingKeys = /* @__PURE__ */ new Map();
+    for (const line of lines) {
+      const m = line.match(/^([^:]+):/);
+      if (m) existingKeys.set(m[1].trim(), m[1]);
+    }
+    const lineValue = (key) => {
+      const m = lines.map((l) => l.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"))).find(Boolean);
+      if (!m) return null;
+      const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
+      return v || null;
+    };
+    const newLines = [];
+    for (const [key, spec] of Object.entries(fields)) {
+      const val = typeof spec === "string" ? spec : spec.value;
+      if (!val || val === "") continue;
+      if (existingKeys.has(key)) {
+        if (typeof spec !== "string" && spec.ifMissing && lineValue(key)) continue;
+        const lineKey = existingKeys.get(key);
+        for (let i = 0; i < lines.length; i++) {
+          if (lines[i].match(new RegExp(`^${lineKey}:`))) {
+            lines[i] = `${lineKey}: ${formatYamlValue(val)}`;
+            break;
+          }
+        }
+      } else {
+        newLines.push(`${key}: ${formatYamlValue(val)}`);
+      }
+    }
+    if (newLines.length > 0) lines.splice(insertIdx, 0, ...newLines);
+    return header + lines.join("\n") + footer + rest;
+  }
+  function formatYamlValue(val) {
+    return yamlScalarOf(val);
+  }
+  function insertPosterEmbed(content, posterPath) {
+    const embedLink = `![[${posterPath}]]`;
+    if (content.includes(embedLink)) return content;
+    const fmMatch = content.match(/^(---\r?\n[\s\S]*?\r?\n---)(\r?\n)?/);
+    if (fmMatch) {
+      if (fmMatch[2]) {
+        return fmMatch[0] + embedLink + "\n" + content.slice(fmMatch[0].length);
+      }
+      return fmMatch[1] + "\n" + embedLink + "\n" + content.slice(fmMatch[1].length);
+    }
+    return embedLink + "\n" + content;
+  }
+  function fieldValue(content, key) {
+    const m = content.match(new RegExp(`^${key}:[ \\t]*(.*)$`, "m"));
+    if (!m) return null;
+    const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
+    return v || null;
+  }
+  async function fetchNoteDouban(app, file, deps) {
+    var _a, _b;
+    const name = extractMovieName(file.name);
+    let content;
+    try {
+      content = await app.vault.read(file);
+    } catch (e) {
+      return { ok: false, reason: "network" };
+    }
+    const hasPoster = !!fieldValue(content, "海报");
+    const doubanUrlRaw = fieldValue(content, "豆瓣链接");
+    const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
+    if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
+    const searchHeaders = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
+    if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
+    let html;
+    try {
+      html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, searchHeaders);
+    } catch (e) {
+      return { ok: false, reason: "network" };
+    }
+    if (searchLooksBlocked(html)) return { ok: false, reason: "blocked" };
+    const results = parseSearchResults(html);
+    if (results.length === 0) return { ok: false, reason: "notfound" };
+    const first = results[0];
+    const sid = extractSid(first.detailUrl);
+    if (!sid) return { ok: false, reason: "notfound" };
+    const posterFolder = ((_a = deps.posterFolder) == null ? void 0 : _a.trim()) || POSTER_FOLDER;
+    let posterRelative = fieldValue(content, "海报");
+    if (!hasPoster && first.posterUrl) {
+      let buf;
+      try {
+        buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: "https://movie.douban.com/" });
+      } catch (e) {
+        return { ok: false, reason: "network" };
+      }
+      if (!buf) return { ok: false, reason: "network" };
+      try {
+        await deps.mkdir(posterFolder);
+        const ext = ((_b = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _b[1]) || "jpg";
+        const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, "_");
+        const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
+        posterRelative = `${posterFolder}/${fileName}`;
+        await deps.writeBinary(posterRelative, buf);
+      } catch (e) {
+        return { ok: false, reason: "write" };
+      }
+    }
+    const fields = {};
+    if (posterRelative) fields["海报"] = { value: posterRelative, ifMissing: true };
+    fields["豆瓣链接"] = first.detailUrl;
+    let az = null;
+    if (deps.apizeroKey) {
+      az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
+      if (az) {
+        if (az.score) fields["豆瓣评分"] = { value: az.score, ifMissing: true };
+        if (az.director) fields["导演"] = { value: normalizeListValue(az.director), ifMissing: true };
+        if (az.actor) fields["主演"] = { value: normalizeListValue(az.actor), ifMissing: true };
+        if (az.genre) fields["类型"] = { value: normalizeListValue(az.genre), ifMissing: true };
+        if (az.area) fields["制片国家/地区"] = { value: normalizeListValue(az.area), ifMissing: true };
+        if (az.duration) fields["片长"] = { value: az.duration, ifMissing: true };
+        if (az.year) fields["上映日期"] = { value: az.year, ifMissing: true };
+        if (az.shortComment) fields["热门短评"] = { value: az.shortComment, ifMissing: true };
+      }
+    }
+    const needCelebrities = !az || !az.director || !az.actor;
+    if (needCelebrities) {
+      const cel = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+      if (cel) {
+        if (!fields["导演"] && cel.directors) fields["导演"] = { value: cel.directors, ifMissing: true };
+        if (cel.writers) fields["编剧"] = { value: cel.writers, ifMissing: true };
+        if (!fields["主演"] && cel.casts) fields["主演"] = { value: cel.casts, ifMissing: true };
+      }
+    }
+    try {
+      await app.vault.process(file, (c) => {
+        let next = updateFrontmatterFields(c, fields);
+        if (posterRelative && !hasPoster && !fieldValue(c, "海报")) next = insertPosterEmbed(next, posterRelative);
+        return next;
+      });
+    } catch (e) {
+      return { ok: false, reason: "write" };
+    }
+    return { ok: true };
+  }
+
+  // src/cinema/data.ts
+  function parseMovieFile(file, app) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    const cache = app.metadataCache.getFileCache(file);
+    if (!cache || !cache.frontmatter) return null;
+    const fm = cache.frontmatter;
+    const name = extractMovieName(file.basename);
+    let rawTags = fm.tags;
+    if (typeof rawTags === "string") rawTags = [rawTags];
+    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
+    let typeTag = null;
+    for (const t of ALL_TAGS) {
+      if (tags.includes(t)) {
+        typeTag = t;
+        break;
+      }
+    }
+    if (!typeTag) {
+      if (tags.length === 0) return null;
+      typeTag = tags[0];
+    }
+    const watchDate = (_b = (_a = fm["观影日期"]) == null ? void 0 : _a.toString()) != null ? _b : null;
+    const rawRating = fm["评分"];
+    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
+    let status;
+    if (rating === -1) status = STATUS_WANT;
+    else if (rating === 0) status = STATUS_WATCHING;
+    else status = STATUS_WATCHED;
+    return {
+      file,
+      name,
+      typeTag,
+      group: getGroupSafe(typeTag),
+      watchDate,
+      rating,
+      status,
+      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
+      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
+      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
+      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
+      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
+      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
+      year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
+      releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
+      doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
+      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
+      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
+      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
+      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
+      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
+      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
+    };
+  }
+  function findPosterRenameTargets(app, oldPath) {
+    var _a;
+    if (!oldPath) return [];
+    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(M.folderPath + "/"));
+    const hits = [];
+    for (const file of files) {
+      const fm = (_a = app.metadataCache.getFileCache(file)) == null ? void 0 : _a.frontmatter;
+      if (fm && fm["海报"] != null && String(fm["海报"]) === oldPath) hits.push(file);
+    }
+    return hits;
+  }
+  function rebuildItems(app) {
+    const newItems = [];
+    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(M.folderPath + "/"));
+    for (const file of files) {
+      try {
+        const item = parseMovieFile(file, app);
+        if (item) {
+          newItems.push(item);
+          continue;
+        }
+        if (!app.metadataCache.getFileCache(file)) {
+          const kept = M.items.find((p) => {
+            var _a;
+            return ((_a = p.file) == null ? void 0 : _a.path) === file.path;
+          });
+          if (kept) newItems.push(kept);
+        }
+      } catch (error) {
+        console.warn("处理影视文件失败:", file.path, error);
+      }
+    }
+    M.items.length = 0;
+    M.items.push(...newItems);
+    return newItems;
+  }
+  function dateVal(it) {
+    if (!it.watchDate) return 0;
+    const t = new Date(it.watchDate).getTime();
+    return isNaN(t) ? 0 : t;
+  }
+  function sortByDateDesc(list) {
+    return [...list].sort((a, b) => dateVal(b) - dateVal(a));
+  }
+  function sortByCreatedDesc(list) {
+    return [...list].sort((a, b) => {
+      const ta = a.file ? a.file.stat.ctime : 0;
+      const tb = b.file ? b.file.stat.ctime : 0;
+      if (ta !== tb) return tb - ta;
+      return (b.name || "").localeCompare(a.name || "");
+    });
+  }
+  function sortByRatingDesc(list) {
+    return [...list].sort((a, b) => {
+      const ar = a.rating && a.rating > 0 ? a.rating : -1;
+      const br = b.rating && b.rating > 0 ? b.rating : -1;
+      if (ar !== br) return br - ar;
+      return dateVal(b) - dateVal(a);
+    });
+  }
+  function applySortMode(list, mode) {
+    if (mode === "created") return sortByCreatedDesc(list);
+    if (mode === "rating") return sortByRatingDesc(list);
+    return sortByDateDesc(list);
+  }
+  function getDisplayItems() {
+    let list = [...M.items];
+    if (M.typeFilter) list = list.filter((it) => it.group === M.typeFilter);
+    if (M.statusFilter) list = list.filter((it) => it.status === (M.statusFilter === "想看" ? STATUS_WANT : M.statusFilter === "在看" ? STATUS_WATCHING : STATUS_WATCHED));
+    if (M.searchKeyword) {
+      const kw = M.searchKeyword.toLowerCase();
+      list = list.filter((it) => {
+        return it.name && it.name.toLowerCase().includes(kw) || it.typeTag && it.typeTag.toLowerCase().includes(kw) || it.review && it.review.toLowerCase().includes(kw) || it.director && it.director.toLowerCase().includes(kw) || it.actors && it.actors.toLowerCase().includes(kw);
+      });
+    }
+    return applySortMode(list, M.sortMode);
+  }
+  function refreshDataAndView(app) {
+    var _a, _b;
+    rebuildItems(app);
+    (_b = (_a = M).renderFn) == null ? void 0 : _b.call(_a);
   }
 
   // src/core/mobile.ts

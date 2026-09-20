@@ -10,6 +10,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { stripMdExt } from '../core/ui/str';
+import { yamlScalarOf } from '../core/utils';
 import { ILLEGAL_NAME_RE_GLOBAL } from './constants';
 
 /** 海报目录（对齐 CLI config 默认值） */
@@ -258,15 +259,11 @@ export function updateFrontmatterFields(content: string, fields: Record<string, 
   return header + lines.join('\n') + footer + rest;
 }
 
-/** YAML 值序列化（照搬 formatYamlValue）：含特殊字符/空格双引号包裹并转义。
- *  换行先行单行化（审查 C3）：裸 \n/\r 进 frontmatter 会破坏 YAML 解析、影片从面板消失 */
+/** YAML 值序列化：含特殊字符/空格双引号包裹并转义。
+ *  换行先行单行化（审查 C3）：裸 \n/\r 进 frontmatter 会破坏 YAML 解析、影片从面板消失。
+ *  一致#1 收编：转义单源 core/utils（escapeYamlText），条件包裹策略保留在本地（两出口一原语） */
 function formatYamlValue(val: string): string {
-  let s = String(val);
-  if (/[\r\n]/.test(s)) s = s.replace(/[ \t]*[\r\n]+[ \t]*/g, ' ');
-  if (/[:"\-#[\]{}|>'?]/.test(s) || s.includes(' ')) {
-    return '"' + s.replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-  }
-  return s;
+  return yamlScalarOf(val);
 }
 
 /** 正文 frontmatter 后插入海报 embed（纯函数，照搬 insertPosterEmbed；已存在跳过）。
