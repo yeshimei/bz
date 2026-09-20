@@ -162,11 +162,16 @@ export function cardHtml(it: FavoritesItem, idx: number): string {
   const hue = hueOf((it.tags || [])[0] || '');
   // 胶带三色轮换：基础类恒在（承载 absolute 定位/尺寸），变体类只换色与角度
   const tape = 'bz-fav-tape' + (idx % 3 ? [' bz-fav-tape--r', ' bz-fav-tape--g'][idx % 3 - 1] : '');
+  // 外链标识角标（F6/呈报#25）：有链接卡片常驻 external-link 微标——「点卡=开网页」的
+  // 点击前暗示（桌面点卡直开浏览器，此前唯一提示只有 cursor:pointer）
+  const ext = (it.url || '').trim()
+    ? `<span class="bz-fav-ext" title="打开外部链接">${iconSpan(ICON.open, 'bz-ic--xs')}</span>`
+    : '';
   // 键盘可达（UI-06③）：卡片最小语义 role=button + tabindex=0——Enter/Space 走与点击同径
   // （移动抽屉 / 桌面直开），keydown 委托在 ui.ts content 容器
   return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>${ext}
     <h3>${esc(it.title || '无标题')}</h3>
     <p>${esc(it.description || '（这张卡只写了个名字）')}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {

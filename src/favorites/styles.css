@@ -80,6 +80,11 @@
 /* 零计数但处于激活态的标签贴纸（UI-08）：条目被清空时保渲染防面板悬空——灰显弱化 + 计数 0，
    仍可点击（再点取消筛选回全部） */
 .bz-fav-tags button.bz-fav-chip--empty { opacity: .55; }
+/* 桌面磁贴行限高（F5/呈报#61）：自定义标签无上界（issue 363），几十枚 chip 换行占高会把
+   卡墙（flex:1 min-height:0）挤到塌陷——限高约三行 + 纵向滚动保布局稳；顶垫 5px 防 chip
+   磁点 ::before(top:-4px) 被 overflow 裁边（移动单行横滑同款垫法，移动态不受本条限高）。
+   滚动条样式 core 界级单源通杀（ADR-0122），域内不自造 */
+.bz-fav-panel:not(.bz-fav-mob) .bz-fav-tags { max-height: 116px; overflow-y: auto; padding: 5px 0 6px; }
 .bz-fav-tags button.bz-fav-chip-add {
   background: transparent; border: 1.5px dashed var(--chip-add-bd); color: var(--chip-add-ink); box-shadow: none;
   display: inline-flex; align-items: center; gap: 5px;
@@ -111,6 +116,24 @@
 .bz-fav-card .bz-fav-dot {
   position: absolute; top: 10px; right: 10px; width: 12px; height: 12px; border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #fff 0 20%, var(--c) 75%); box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+/* 外链标识角标（F6/呈报#25）：有链接卡片左上常驻 external-link 微标（与右上磁圆点对称），
+   「点卡=开网页」的点击前暗示；淡底不抢胶带/标题视觉，hover 卡片时点亮 */
+.bz-fav-card .bz-fav-ext {
+  position: absolute; top: 10px; left: 10px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--chip); color: var(--ink-faint);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.bz-fav-card:hover .bz-fav-ext { color: var(--acc); }
+.bz-fav-card .bz-fav-ext .bz-ic { width: 11px !important; height: 11px !important; }
+/* 无链卡片点按反馈（F1/呈报#24）：轻微晃动示意「这张卡没有可打开的链接」——类由 ui.ts
+   点击/Enter 时挂上，animationend 摘类（可重复触发）；持续覆盖 hover 的 translateY 无妨 */
+.bz-fav-card.bz-fav-nolink { animation: bz-fav-nudge .28s ease; }
+@keyframes bz-fav-nudge {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  55% { transform: translateX(3px); }
+  80% { transform: translateX(-2px); }
 }
 .bz-fav-card h3 { font-size: var(--bz-font-body); margin: 0 0 6px; color: var(--ink-strong); }
 .bz-fav-card p {
