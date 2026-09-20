@@ -157,13 +157,14 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-review-quiz-open', name: '做题练习', icon: 'graduation-cap', callback: () => openQuizPractice(getApp()) },
   { id: 'bz-review-add', name: '加入复习计划', icon: 'plus', callback: () => reviewAddCurrent(getApp()) },
   { id: 'bz-review-remove', name: '移出复习计划', icon: 'minus', callback: () => reviewRemoveCurrent(getApp()) },
-  { id: 'bz-review-overdue', name: '复习（跳转逾期）', icon: 'alarm-clock', callback: () => reviewJumpOverdue(getApp()) },
-  { id: 'bz-review-rate', name: '复习（选择难度）', icon: 'gauge', callback: () => reviewMarkDialog(getApp()) },
-  // f3：评级四命令去英文后缀并统一「复习（X）」标点（id 不动；issue 362 起做题家面板依赖评级动作）
-  { id: 'bz-review-again', name: '复习（忘了）', icon: 'rotate-ccw', callback: () => reviewMarkRating(getApp(), 'again') },
-  { id: 'bz-review-hard', name: '复习（困难）', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
-  { id: 'bz-review-good', name: '复习（一般）', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
-  { id: 'bz-review-easy', name: '复习（简单）', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
+  // 呈报#56（R12）：六条复习命令 name 括号式 → 动宾式（命令面板顺读；id 一律不动）
+  { id: 'bz-review-overdue', name: '跳转逾期复习', icon: 'alarm-clock', callback: () => reviewJumpOverdue(getApp()) },
+  { id: 'bz-review-rate', name: '选择复习难度', icon: 'gauge', callback: () => reviewMarkDialog(getApp()) },
+  // f3：评级四命令去英文后缀（issue 362 起做题家面板依赖评级动作——保留）；R12 动宾式更名
+  { id: 'bz-review-again', name: '复习评级：忘了', icon: 'rotate-ccw', callback: () => reviewMarkRating(getApp(), 'again') },
+  { id: 'bz-review-hard', name: '复习评级：困难', icon: 'trending-up', callback: () => reviewMarkRating(getApp(), 'hard') },
+  { id: 'bz-review-good', name: '复习评级：一般', icon: 'check', callback: () => reviewMarkRating(getApp(), 'good') },
+  { id: 'bz-review-easy', name: '复习评级：简单', icon: 'sparkles', callback: () => reviewMarkRating(getApp(), 'easy') },
   // 第二大脑（ticket 103：原闪念正名接管，主面板为统一入口）
   { id: 'bz-secondbrain-panel', name: '第二大脑面板', icon: DOMAIN_ICONS.secondbrain, callback: () => openSecondBrainPanel(getApp()) },
   // f7：与「第二大脑面板」区分——本命令打开参考侧边栏（右侧窄窗/移动端抽屉参考 tab）

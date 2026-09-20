@@ -170,7 +170,7 @@ export async function reviewRemoveCurrent(app: App): Promise<void> {
   }
 }
 
-/** 复习（跳转逾期）（review-jump-overdue） */
+/** 跳转逾期复习（bz-review-overdue；R12 动宾式更名前为「复习（跳转逾期）」） */
 export async function reviewJumpOverdue(app: App): Promise<void> {
   ensureReview(app);
   await reviewApp.autoJumpOverdue();
@@ -182,7 +182,7 @@ export async function reviewStart(app: App): Promise<void> {
   await reviewApp.autoJumpOverdue();
 }
 
-/** 复习（选择难度）（review-mark-dialog） */
+/** 选择复习难度（bz-review-rate；R12 动宾式更名前为「复习（选择难度）」） */
 export async function reviewMarkDialog(app: App): Promise<void> {
   ensureReview(app);
   const file = app.workspace.getActiveFile();
