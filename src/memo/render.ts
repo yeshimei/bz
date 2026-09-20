@@ -123,7 +123,6 @@ export function panelShellHtml(): string {
         <div class="bz-panel-title">备忘录</div>
         <div class="bz-panel-head-sp"></div>
         <div class="bz-panel-head-btns">
-          <button class="bz-icon-btn bz-memo-head-settings" data-memo-head-settings title="打开备忘录设置">${iconSpan(MEMO_ICONS.settings)}</button>
           <button class="bz-icon-btn bz-touch-target bz-touch-target--lg bz-memo-head-close" data-memo-head-close title="关闭">${iconSpan(MEMO_ICONS.close)}</button>
         </div>
       </div>
@@ -200,19 +199,21 @@ export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string): strin
 }
 
 /** 勾选圈（列表卡与移动抽屉头共用，ADR-0104 markup 单源；完成态带 bz-memo-checked，
- *  title 随态换文案，data-memo-check 锚点两处同款——点击行为各自接线在 ui.ts） */
+ *  title 随态换文案，data-memo-check 锚点两处同款——点击行为各自接线在 ui.ts）。
+ *  role/tabindex 供键盘可达（memo2-ui M3-10：Enter/Space 切换，行为接线在 ui.ts 委托） */
 export function checkHtml(it: MemoItem): string {
-	return `<span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check title="${it.completed ? '恢复未完成' : '标记完成'}"></span>`;
+  return `<span class="bz-memo-check${it.completed ? ' bz-memo-checked' : ''}" data-memo-check role="checkbox" aria-checked="${it.completed ? 'true' : 'false'}" tabindex="0" title="${it.completed ? '恢复未完成' : '标记完成'}"></span>`;
 }
 
-/** 条目卡（勾选/标题/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts） */
+/** 条目卡（勾选/标题/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts）。
+ *  tabindex 供键盘可达（memo2-ui M3-10：卡聚焦后 Enter/Space 开操作菜单） */
 export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
 	const titleCls = it.completed ? ' bz-memo-done' : '';
 	const clickable = !!(it.linkedNote || it.url);
 	const titleHtml = clickable
 		? `<a href="javascript:void(0)" data-memo-openitem="${esc(it.id)}">${esc(it.title)}</a>`
 		: esc(it.title);
-	return `<div class="bz-memo-card${titleCls}" data-memo-id="${esc(it.id)}">
+	return `<div class="bz-memo-card${titleCls}" data-memo-id="${esc(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
@@ -226,9 +227,9 @@ export function sectionLabelHtml(label: string, count: number): string {
 	return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
 }
 
-/** 已完成折叠条（open = 展开态） */
+/** 已完成折叠条（open = 展开态；role/tabindex 供键盘可达——memo2-ui M3-10） */
 export function doneBarHtml(open: boolean, count: number): string {
-	return `<div class="bz-memo-donebar${open ? ' bz-memo-donebar-open' : ''}" data-memo-donebar>
+	return `<div class="bz-memo-donebar${open ? ' bz-memo-donebar-open' : ''}" data-memo-donebar role="button" tabindex="0">
       ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
 }
 

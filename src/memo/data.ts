@@ -7,7 +7,7 @@
 import moment from 'moment';
 import { jsonStore } from '../core/json-store';
 import { getApp } from '../core/app';
-import { generateId, extractUrlAndDisplay } from '../core/utils';
+import { generateId, extractUrlAndDisplay, isUnderFolder } from '../core/utils';
 import { backupOriginal, enqueueFileTask, storageFile } from '../core/storage';
 import { notify } from '../core/notice';
 import type { MemoItem } from './types';
@@ -41,16 +41,21 @@ function hasCourseTag(cache: any): boolean {
   return !!tags && tags.includes('公开课'); // 数组与字符串均有 includes
 }
 
-/** 条目字段归一（缺省补默认值，旧数据零迁移）——与旧 memo loadItems 逐字段等价 */
+/** 条目字段归一（缺省补默认值，旧数据零迁移）——与旧 memo loadItems 逐字段等价。
+ *  健壮性兜底（memo2-func #2）：title/scene 做 String 兜底（外部同步合并冲突可能产出
+ *  null/非串形态，不兜底会炸渲染面 esc(it.title)/it.title.length）；due 识别 iOS 延后
+ *  落盘的 'NaN-…' 脏串（memo2-func #4 遗留清洗）置 null——getDueStatus 对 NaN 串的
+ *  字符串比较行为不定，到期标记永久失真，清掉回归「无截止」。 */
 export function normalizeItem(item: any): MemoItem {
+  const due = item.due == null ? null : String(item.due);
   return {
     id: item.id,
-    title: item.title,
-    scene: item.scene,
+    title: item.title == null ? '' : String(item.title),
+    scene: item.scene == null ? '' : String(item.scene),
     priority: item.priority || 'minor',
     created: item.created,
     completed: item.completed || null,
-    due: item.due || null,
+    due: due && !/^NaN/i.test(due) ? due : null,
     notePath: item.notePath || null,
     notePosition: item.notePosition || null,
     scriptName: item.scriptName || null,
@@ -81,6 +86,9 @@ export const MemoData = {
   scenarios: [] as string[],
   _store: null as ReturnType<typeof jsonStore> | null,
   cinemaFolderPath: '我的/影视',
+  /** 公开课笔记会话级缓存（memo2-efficiency 新-3）：每次开编辑弹窗都全 vault 扫一遍纯空耗，
+   *  结果在弹窗生命周期内不变；init（场景/目录设置变更）时失效。 */
+  _courseNotesCache: null as { name: string; path: string }[] | null,
 
   init(settings: MemoSettingsLike) {
     // memo.json 路径（ADR-0009 共享数据路径）
@@ -89,6 +97,7 @@ export const MemoData = {
     // 场景：设置可编辑（逗号分隔），空则内置默认（与旧 memo 共用 memoScenarios 键）
     this.scenarios = parseScenarios(settings.memoScenarios);
     this.cinemaFolderPath = settings.cinemaFolderPath || '我的/影视';
+    this._courseNotesCache = null; // 目录设置可能变更，公开课笔记缓存失效
   },
 
   async read() {
@@ -123,17 +132,30 @@ export const MemoData = {
         return [];
       }
       let needWrite = false;
-      const items = raw.map((item: any) => {
+      // 元素级守卫（memo2-func #2）：数组内 null/非对象元素此前在 item.id 直接 TypeError，
+      // 全部读路径无 catch → 面板永久空白且无提示。剔除坏元素并置清档标记（D1 口径留痕于写盘）。
+      const items: MemoItem[] = [];
+      for (const item of raw) {
+        if (!item || typeof item !== 'object' || Array.isArray(item)) {
+          needWrite = true;
+          continue;
+        }
         if (!item.id) {
           item.id = generateId();
           needWrite = true;
         }
         // 残留回滚字段（recur/checklist）也触发回写清档：载入即剥（内存态 normalizeItem 白名单本就不带，盘上见 write 消毒）
         if ('recur' in item || 'checklist' in item) needWrite = true;
+        // iOS 延后落盘的 NaN 脏 due（memo2-func #4 遗留清洗）：内存归一为 null 之外，
+        // 盘上脏串也要清掉——就地置 null（同上补 id 的 raw 就地修模式）并置回写标记
+        if (item.due != null && /^NaN/i.test(String(item.due))) {
+          item.due = null;
+          needWrite = true;
+        }
         // 统一字段形状（缺省补默认值，旧数据零迁移）
-        return normalizeItem(item);
-      });
-      if (needWrite) await this.write(raw);
+        items.push(normalizeItem(item));
+      }
+      if (needWrite) await this.write(raw.filter((it: any) => it && typeof it === 'object' && !Array.isArray(it)));
       return items;
     });
   },
@@ -212,16 +234,20 @@ export const MemoData = {
     });
   },
 
-  /** 公开课笔记（影视目录中含 公开课 标签的文件） */
+  /** 公开课笔记（影视目录中含 公开课 标签的文件；结果走会话级缓存，见 _courseNotesCache 注） */
   async getCourseNotes(): Promise<{ name: string; path: string }[]> {
+    if (this._courseNotesCache) return this._courseNotesCache;
     const app = getApp();
     const result: { name: string; path: string }[] = [];
     for (const file of app.vault.getFiles()) {
-      if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== 'md') continue;
+      // 目录边界（memo2-func #15 / memo2-arch A6）：裸 startsWith 会把相邻同名目录
+      // （如「我的/影视花絮/」）误命中，走 core isUnderFolder 单源（dir + '/' 口径）
+      if (!isUnderFolder(this.cinemaFolderPath, file.path) || file.extension !== 'md') continue;
       const cache = app.metadataCache.getFileCache(file);
       if (!cache) continue;
       if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
     }
+    this._courseNotesCache = result;
     return result;
   },
 

@@ -10,10 +10,11 @@
  */
 import type { App, EventRef } from 'obsidian';
 import { tryGetSettings } from '../core/settings-provider';
+import { notifyActionError } from '../core/notice';
 import { MemoData } from './data';
 import { getDueStatus } from './due';
 import { M } from './state';
-import { openMemoPanel } from './ui';
+import { openMemoPanel, memoDataReady } from './ui';
 import type { MemoItem } from './types';
 
 /** 是否存在未完成的重要或到期备忘录（path 给定时只看该笔记的关联备忘录）——memo/app.ts 同款语义 */
@@ -41,17 +42,23 @@ function openForNote(app: App, path: string): void {
     M.search = path;
     const input = M.overlay.querySelector('[data-memo-search]') as HTMLInputElement | null;
     if (input) input.value = path;
+    // memo2-func #5 / memo2-arch A3：已开分支此前不重置场景——用户停在具体场景/「今日」/
+    // 「重要」时，搜索词虽命中但目标条目被场景过滤挡掉，提醒定位静默失效。对齐冷开分支
+    // 口径（openMemoPanel notePath 分支恒「全部」，注释明言「场景过滤会把目标条目挡掉」）。
+    M.activeScene = '全部';
+    M.pinnedNewId = null;
     M.renderFn?.();
     return;
   }
   openMemoPanel(app, { notePath: path });
 }
 
-/** 启动自动弹出（memo init 同款 300ms 延迟；无重要/到期未完成备忘录不弹） */
+/** 启动自动弹出（memo init 同款 300ms 延迟；无重要/到期未完成备忘录不弹）。
+ *  memo2-efficiency 新-5：await memoDataReady() 消费 ensureMemo 已启动的那次读盘，
+ *  不再背靠背二读 memo.json。 */
 async function autoPopupOnStart(app: App): Promise<void> {
-  const items = await MemoData.loadItems();
-  M.items = items;
-  if (!hasPendingUrgent(items)) return;
+  await memoDataReady();
+  if (!hasPendingUrgent(M.items)) return;
   startPopupTimer = setTimeout(() => {
     startPopupTimer = null;
     if (!M.overlay) openMemoPanel(app);
@@ -72,11 +79,22 @@ export function ensureMemoReminders(app: App): void {
       if (tryGetSettings()?.openNoteReminder === false) return;
       const path = file.path as string;
       if (!path || remindedFiles.has(path)) return;
-      const items = await MemoData.loadItems();
-      M.items = items;
-      if (hasPendingUrgent(items, path)) {
-        remindedFiles.add(path);
-        openForNote(app, path);
+      // memo2-efficiency 新-2：file-open 是切笔记级高频事件，此前每次都全量读盘
+      // memo.json。先以内存 M.items 预判（ensureMemo/autoPopup 已装载），命中才重读确认
+      // （防 file-sync 刚改的 stale）；miss 直接返回——绝大多数切换零 IO。
+      // M.items 为空 = 启动窗口尚未装载（或读失败），不预判直读，保提醒不漏。
+      if (M.items.length && !hasPendingUrgent(M.items, path)) return;
+      try {
+        const items = await MemoData.loadItems();
+        M.items = items;
+        if (hasPendingUrgent(items, path)) {
+          remindedFiles.add(path);
+          openForNote(app, path);
+        }
+      } catch (e) {
+        // memo2-func #7 / memo2-arch A9：读盘通道级失败此前沿 void 链静默断，提醒失效无解释
+        notifyActionError(e, '读取备忘录');
+        console.error(e);
       }
     })();
   });
