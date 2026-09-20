@@ -4,40 +4,37 @@
  * 域条目里指向库内文件的引用，指向的文件已不存在 = 孤儿：
  * - 影院：影视条目的「海报」附件缺失（frontmatter 海报路径指向的文件不存在）；
  * - 书架墙：md 书目封面缺失 / EPUB 条目指向的 EPUB 文件缺失（weave 阅读数据残留）；
+ * - 游戏库：游戏条目「封面」/「截图」本地路径指向的文件缺失（只报告，同影院海报口径）；
  * - 剪藏本：clipbook.json 侧写 savedArchive 残留指向的剪藏笔记已不存在（可修复）；
  *   划词标注 marks / 待回写来源 pendingSource 指向的笔记已不存在（issue 339 扩展，可修复）；
  * - 收藏本：条目「关联笔记」指向的笔记不存在（可修复 = 清空关联字段，条目本体保留）；
  * - 知识盒：knowledge.json 任务的文献笔记 notePath / 视频文件 videoPath 指向缺失
  *   （issue 339 扩展，可修复 = 清字段，任务本体保留）。
  *
- * 修复边界（只读纪律）：影院海报/书架封面在用户笔记 frontmatter 里、EPUB 清单是
- * weave 插件的数据文件——一律只报告不动；可修复的只有插件自有 json
+ * 修复边界（只读纪律）：影院海报/书架封面/游戏封面截图在用户笔记 frontmatter 里、
+ * EPUB 清单是 weave 插件的数据文件——一律只报告不动；可修复的只有插件自有 json
  * （favorites/clipbook/knowledge）。修复口径跟随 run.ts 的 fixOrphanIssues 现有模式。
+ *
+ * 单源收编（深审 cons P3-1/P3-2 + func P3-7）：剪藏目录走 clipbook/save clipDir、
+ * 剪藏笔记扫描与 url 提取走 clipbook/scan scanClipDirectory（url 命中语义与域读取链
+ * 完全一致——非字符串 url 由单源 String 化，不再误报残留）、影视目录走 cinema/state
+ * resolveCinemaFolderPath（ADR-0115 目录唯一真理，空白设置值回落默认不再静默漏检）。
  */
 import type { App } from 'obsidian';
 import type { CheckIssue, CheckOpts, CheckResult, CheckSection } from './types';
 import { fileExists, readRawJson, jsonScanTargets } from './files';
-import { tryGetSettings } from '../core/settings-provider';
+import { clipDir } from '../clipbook/save';
+import { scanClipDirectory } from '../clipbook/scan';
+import { clipUrlSet } from '../clipbook/store';
+import { resolveCinemaFolderPath } from '../cinema/state';
+import { resolveGameshelfFolderPath } from '../gameshelf/state';
+import { GS_FM } from '../gameshelf/constants';
 import { parseMovieFile } from '../cinema/data';
 import { scanMarkdownBooks, loadEpubItems } from '../bookshelf/data';
 
-/** 默认剪藏目录（clipbook 域 clipDir 同默认：articleDirectory 设置可改） */
-function clipDirOf(): string {
-  const s = tryGetSettings() as any;
-  return ((s && s.articleDirectory) || '归档/网页剪藏').replace(/\/+$/, '');
-}
-
-/** 剪藏目录内全部笔记的 frontmatter url 集合（url 命中判定与 clipbook/store 同款） */
-async function clipUrlSet(app: App): Promise<Set<string>> {
-  const dir = clipDirOf();
-  const set = new Set<string>();
-  const files = app.vault.getMarkdownFiles().filter((f: any) => f.path.startsWith(dir + '/'));
-  for (const f of files) {
-    const cache = app.metadataCache.getFileCache(f as any);
-    const url = cache?.frontmatter?.url;
-    if (typeof url === 'string' && url) set.add(url);
-  }
-  return set;
+/** 本地 vault 路径判定：非空且非远端地址（http/https/data 开头视为远端，本地缺失不适用） */
+function isLocalPath(v: unknown): v is string {
+  return typeof v === 'string' && !!v.trim() && !/^(https?:)?\/\//i.test(v.trim()) && !v.trim().startsWith('data:');
 }
 
 /** 检查三：孤儿条目（只读；逐域让出主线程） */
@@ -47,12 +44,11 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
 
   // 1) 影院：影视条目海报缺失（frontmatter「海报」路径指向的文件不存在）
   {
-    const s = tryGetSettings() as any;
-    const folder = (s && s.cinemaFolderPath) || '我的/影视';
+    const folder = resolveCinemaFolderPath();
     const files = app.vault.getMarkdownFiles().filter((f: any) => f.path.startsWith(folder + '/'));
-    for (const f of files) {
+    for (let i = 0; i < files.length; i++) {
       if (opts.isCancelled?.()) return null;
-      const item = parseMovieFile(f as any, app);
+      const item = parseMovieFile(files[i] as any, app);
       if (!item) continue;
       scanned += 1;
       const poster = (item.poster || '').trim();
@@ -60,18 +56,19 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
         issues.push({
           severity: 'warn',
           title: `影视《${item.name}》的海报文件不存在`,
-          detail: `笔记：${f.path}\n海报路径：${poster}\n详情页会显示占位图；请补回文件或清空笔记的「海报」字段。`,
+          detail: `笔记：${files[i].path}\n海报路径：${poster}\n详情页会显示占位图；请补回文件或清空笔记的「海报」字段。`,
         });
       }
-      await opts.tick?.(`影院 · ${item.name}`);
+      await opts.tick?.(`影院 · ${item.name}`, { done: i + 1, total: files.length });
     }
   }
 
   // 2) 书架墙：md 书封面缺失 / EPUB 文件缺失
   {
     const mdBooks = scanMarkdownBooks(app);
-    for (const b of mdBooks) {
+    for (let i = 0; i < mdBooks.length; i++) {
       if (opts.isCancelled?.()) return null;
+      const b = mdBooks[i];
       scanned += 1;
       const cover = (b.cover || '').trim();
       if (cover && !fileExists(app, cover)) {
@@ -81,11 +78,12 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
           detail: `笔记：${(b.file as any)?.path || '(未知)'}\n封面路径：${cover}\n书库会显示占位封面；请补回文件或清空笔记的 cover 字段。`,
         });
       }
-      await opts.tick?.(`书库 · ${b.title}`);
+      await opts.tick?.(`书库 · ${b.title}`, { done: i + 1, total: mdBooks.length });
     }
     const epubs = await loadEpubItems(app);
-    for (const b of epubs) {
+    for (let i = 0; i < epubs.length; i++) {
       if (opts.isCancelled?.()) return null;
+      const b = epubs[i];
       scanned += 1;
       const p = (b.epubVaultPath || '').trim();
       if (p && !fileExists(app, p)) {
@@ -95,7 +93,38 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
           detail: `EPUB 路径：${p}\n该条目来自 weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。`,
         });
       }
-      await opts.tick?.(`书库 · ${b.title}`);
+      await opts.tick?.(`书库 · ${b.title}`, { done: mdBooks.length + i + 1, total: mdBooks.length + epubs.length });
+    }
+  }
+
+  // 2b) 游戏库：封面 / 截图本地路径缺失（func P3-4；frontmatter 本地引用，只报告不可修）
+  {
+    const folder = resolveGameshelfFolderPath();
+    const files = app.vault.getMarkdownFiles().filter((f: any) => f.path.startsWith(folder + '/'));
+    for (let i = 0; i < files.length; i++) {
+      if (opts.isCancelled?.()) return null;
+      const f = files[i];
+      const cache = app.metadataCache.getFileCache(f);
+      const fm = cache?.frontmatter as Record<string, unknown> | undefined;
+      const cover = fm?.[GS_FM.cover];
+      scanned += 1;
+      // 截图本地路径数组（GS_FM.shots 同序同长、失败位空串——键台账口径，容错解析同 fmToShots）
+      const rawShots = fm?.[GS_FM.shots];
+      const shots: unknown[] = Array.isArray(rawShots) ? rawShots : [];
+      const missing: string[] = [];
+      if (isLocalPath(cover) && !fileExists(app, cover.trim())) missing.push(String(cover).trim());
+      for (const s of shots) {
+        if (isLocalPath(s) && !fileExists(app, String(s).trim())) missing.push(String(s).trim());
+      }
+      if (missing.length) {
+        const name = (f as any).basename || f.path;
+        issues.push({
+          severity: 'warn',
+          title: `游戏《${name}》的封面/截图文件不存在`,
+          detail: `笔记：${f.path}\n缺失路径：\n${missing.map((m) => `- ${m}`).join('\n')}\n详情页对应位置会显示占位图；请补回文件或清空笔记的「${GS_FM.cover}」/「${GS_FM.shots}」字段。`,
+        });
+      }
+      await opts.tick?.(`游戏库 · ${(f as any).basename || f.path}`, { done: i + 1, total: files.length });
     }
   }
 
@@ -107,31 +136,41 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
     if (data) {
       const savedArchive = data.savedArchive;
       if (Array.isArray(savedArchive)) {
-        const urls = await clipUrlSet(app);
-        for (const entry of savedArchive) {
+        // 剪藏目录扫描与 url 命中收编 clipbook 单源（cons P3-1）：scanClipDirectory +
+        // clipUrlSet 与域读取链同扫描面、同 url 语义（非字符串 url String 化收编）
+        const scannedNotes = (await scanClipDirectory(clipDir(), { vault: app.vault })) || [];
+        const urls = clipUrlSet(scannedNotes);
+        for (let i = 0; i < savedArchive.length; i++) {
           if (opts.isCancelled?.()) return null;
+          const entry = savedArchive[i];
           scanned += 1;
           const url = entry && typeof entry === 'object' ? String((entry as any).url || '') : '';
           if (url && !urls.has(url)) {
             issues.push({
               severity: 'warn',
               title: `剪藏残留《${String((entry as any).title || url)}》对应的剪藏笔记不存在`,
-              detail: `侧写文件：${sidecarFile}\n链接：${url}\n剪藏目录（${clipDirOf()}）里已没有该链接的笔记，这条「已保存」残留失去意义，可清除。`,
+              detail: `侧写文件：${sidecarFile}\n链接：${url}\n剪藏目录（${clipDir()}）里已没有该链接的笔记，这条「已保存」残留失去意义，可清除。`,
               fixGroup: 'clipbook',
               fixKey: url,
               fixLabel: '清除残留',
             });
           }
-          await opts.tick?.('剪藏本 · 已保存残留');
+          await opts.tick?.(`剪藏残留 ${i + 1}/${savedArchive.length}`, { done: i + 1, total: savedArchive.length });
         }
       }
 
       // 3b) 划词标注（issue 339 / ADR-0144）：标注 notePath 指向的笔记不存在 → 保存物化时该条被跳过
       const marks = data.marks && typeof data.marks === 'object' && !Array.isArray(data.marks) ? data.marks : {};
-      for (const [articleKey, list] of Object.entries(marks)) {
+      const markKeys = Object.keys(marks);
+      let markDone = 0;
+      let markTotal = 0;
+      for (const list of markKeys) markTotal += Array.isArray(marks[list]) ? marks[list].length : 0;
+      for (const articleKey of markKeys) {
+        const list = marks[articleKey];
         if (!Array.isArray(list)) continue;
         for (const mk of list) {
           if (opts.isCancelled?.()) return null;
+          markDone += 1;
           if (!mk || typeof mk !== 'object') continue;
           scanned += 1;
           const notePath = String((mk as any).notePath || '').trim();
@@ -146,7 +185,7 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
               fixLabel: '清除标注',
             });
           }
-          await opts.tick?.('剪藏本 · 划词标注');
+          await opts.tick?.(`剪藏标注 ${markDone}/${markTotal}`, { done: markDone, total: markTotal });
         }
       }
 
@@ -155,10 +194,16 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
         data.pendingSource && typeof data.pendingSource === 'object' && !Array.isArray(data.pendingSource)
           ? data.pendingSource
           : {};
-      for (const [articleKey, list] of Object.entries(pendingSource)) {
+      const pendingKeys = Object.keys(pendingSource);
+      let pendingDone = 0;
+      let pendingTotal = 0;
+      for (const list of pendingKeys) pendingTotal += Array.isArray(pendingSource[list]) ? pendingSource[list].length : 0;
+      for (const articleKey of pendingKeys) {
+        const list = pendingSource[articleKey];
         if (!Array.isArray(list)) continue;
         for (const p of list) {
           if (opts.isCancelled?.()) return null;
+          pendingDone += 1;
           scanned += 1;
           const notePath = String(p || '').trim();
           if (notePath && !fileExists(app, notePath)) {
@@ -171,7 +216,7 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
               fixLabel: '清除待回写来源',
             });
           }
-          await opts.tick?.('剪藏本 · 待回写来源');
+          await opts.tick?.(`剪藏待回写来源 ${pendingDone}/${pendingTotal}`, { done: pendingDone, total: pendingTotal });
         }
       }
     }
@@ -182,8 +227,10 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
     const favFile = jsonScanTargets(app).find((t) => t.file.endsWith('/favorites.json'))?.file || 'CONFIG/STORAGE/favorites.json';
     const parsed = await readRawJson(app, favFile);
     if (parsed && parsed.ok && Array.isArray(parsed.data)) {
-      for (const it of parsed.data) {
+      const list = parsed.data as unknown[];
+      for (let i = 0; i < list.length; i++) {
         if (opts.isCancelled?.()) return null;
+        const it = list[i];
         if (!it || typeof it !== 'object') continue;
         scanned += 1;
         const note = String((it as any).linkedNote || '').trim();
@@ -197,7 +244,7 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
             fixLabel: '清除关联',
           });
         }
-        await opts.tick?.('收藏本 · 关联笔记');
+        await opts.tick?.('收藏本 · 关联笔记', { done: i + 1, total: list.length });
       }
     }
   }
@@ -207,8 +254,10 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
     const kbFile = jsonScanTargets(app).find((t) => t.file.endsWith('/knowledge.json'))?.file || 'CONFIG/STORAGE/knowledge.json';
     const parsed = await readRawJson(app, kbFile);
     if (parsed && parsed.ok && Array.isArray(parsed.data)) {
-      for (const it of parsed.data) {
+      const list = parsed.data as unknown[];
+      for (let i = 0; i < list.length; i++) {
         if (opts.isCancelled?.()) return null;
+        const it = list[i];
         if (!it || typeof it !== 'object') continue;
         scanned += 1;
         const id = String((it as any).id || '');
@@ -235,7 +284,7 @@ export async function checkOrphans(app: App, opts: CheckOpts = {}): Promise<Chec
             fixLabel: '清除视频路径',
           });
         }
-        await opts.tick?.('知识盒 · 任务引用');
+        await opts.tick?.('知识盒 · 任务引用', { done: i + 1, total: list.length });
       }
     }
   }

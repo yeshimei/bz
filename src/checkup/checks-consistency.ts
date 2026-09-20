@@ -1,13 +1,15 @@
 /**
  * 数据体检·检查四：同源一致性（D4 检查 d）。
  *
- * memo.json 是备忘录（memo）的同源数据文件，单例与直读两条独立读取链各自加载同一条目集，
- * 口径必须一致。口径必须一致。本检查对磁盘原文做双链核对：
- * - 单例链：memo/data.ts loadItems 的归一口径快照（completed: item.completed || null）；
+ * memo.json 是备忘录（memo）的同源数据文件。本检查对磁盘原文做双链核对：
+ * - 口径快照链：memo/data.ts loadItems 的归一口径快照（下方 memoNormalize，手抄冻结）；
  * - 直读链：memo/data.ts 的 normalizeItem 实际归一（同一约定字段集）；
- * 两链对同一份磁盘数据各自归一后比对条数/完成数——两条归一链任何一侧改字段语义
- * （或磁盘数据让两链产出分叉）都会在这里报红。另抓结构问题：非对象条目（红）、
- * 重复 id（黄）、缺标题（黄）、缺 id（提示）。
+ * 现状声明（func P2-5）：memo loadItems 目前就是「逐条 return normalizeItem」的恒等转发，
+ * 双链比对实为「手抄快照 × 活函数」——normalizeItem 任何字段语义变化（默认值、字段增删、
+ * 归一规则改动）都会让两链产出分叉，在这里逐键比对报红（func P2-5 方案 b：字段级
+ * Object.is 逐键核对，不再只比条数/完成数）。
+ * 体检禁止走域写路径（loadItems 缺 id 时会写盘），故取快照而非复用调用。
+ * 另抓结构问题：非对象条目（红）、重复 id（黄）、缺标题（黄）、缺 id（提示）。
  */
 import type { App } from 'obsidian';
 import type { CheckIssue, CheckOpts, CheckResult, CheckSection } from './types';
@@ -39,7 +41,17 @@ function memoNormalize(item: Record<string, unknown>): Record<string, unknown> {
   };
 }
 
-/** 单视角计数：条数 + 完成数（memo 口径 = completed 非 null；memo 口径 = completed 真值） */
+/** 纯函数：双链归一产物逐键比对，返回 Object.is 不等的键名（func P2-5 字段级核对） */
+export function divergedKeysOf(a: Record<string, unknown>, b: Record<string, unknown>): string[] {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+  const out: string[] = [];
+  for (const k of keys) {
+    if (!Object.is(a[k], b[k])) out.push(k);
+  }
+  return out.sort();
+}
+
+/** 单视角计数：条数 + 完成数（快照口径 = completed 非 null；直读口径 = completed 真值） */
 interface ViewCount {
   total: number;
   done: number;
@@ -57,9 +69,11 @@ export interface MemoConsistencyStats {
   duplicateId: number;
   /** 缺标题条目数 */
   missingTitle: number;
-  /** memo 视角：条数/完成数（loadItems 口径快照归一） */
+  /** 字段级归一分叉：键 → 分叉条目数（func P2-5；正常数据恒为空——分叉即归一链路 bug） */
+  divergedKeys: Record<string, number>;
+  /** 快照视角：条数/完成数（loadItems 口径快照归一） */
   storeView: ViewCount;
-  /** memo 视角：条数/完成数（normalizeItem 实际归一） */
+  /** 直读视角：条数/完成数（normalizeItem 实际归一） */
   rawView: ViewCount;
 }
 
@@ -75,6 +89,7 @@ export function analyzeMemoConsistency(raw: unknown): MemoConsistencyStats {
     missingId: 0,
     duplicateId: 0,
     missingTitle: 0,
+    divergedKeys: {},
     storeView: { total: 0, done: 0 },
     rawView: { total: 0, done: 0 },
   };
@@ -91,13 +106,17 @@ export function analyzeMemoConsistency(raw: unknown): MemoConsistencyStats {
     else seenIds.add(id);
     if (!it.title || !String(it.title).trim()) stats.missingTitle += 1;
 
-    // 双视角各自归一后计数（memo: 非 null 计完成；memo: 真值计完成——各自域的真实口径）
+    // 双视角各自归一：先按旧口径计数（兼容展示），再逐键 Object.is 核对（func P2-5）——
+    // normalizeItem 任何字段语义漂移都会在这里现形
     const m = memoNormalize(it);
+    const t = normalizeItem(it) as unknown as Record<string, unknown>;
     if (m.completed !== null) stats.storeView.done += 1;
-    const t = normalizeItem(it);
     if (t.completed) stats.rawView.done += 1;
     stats.storeView.total += 1;
     stats.rawView.total += 1;
+    for (const k of divergedKeysOf(m, t)) {
+      stats.divergedKeys[k] = (stats.divergedKeys[k] || 0) + 1;
+    }
   }
   return stats;
 }
@@ -123,6 +142,18 @@ export function consistencyIssuesOf(stats: MemoConsistencyStats): { summary: str
       severity: 'error',
       title: `双链计数不一致：单例读 ${stats.storeView.total} 条/完成 ${stats.storeView.done}，直读 ${stats.rawView.total} 条/完成 ${stats.rawView.done}`,
       detail: '同一份 memo.json，两条读取链的统计口径出现分叉，说明字段归一链路有 bug，请反馈修复。',
+    });
+  }
+  // 字段级归一分叉（func P2-5）：快照与 normalizeItem 逐键 Object.is 核对——
+  // normalizeItem 任何字段语义变化（默认值/归一规则/字段增删）都会在这里报红
+  const diverged = Object.keys(stats.divergedKeys || {}).sort(
+    (a, b) => (stats.divergedKeys[b] || 0) - (stats.divergedKeys[a] || 0)
+  );
+  if (diverged.length) {
+    issues.push({
+      severity: 'error',
+      title: `双链归一分叉：${diverged.map((k) => `${k} ×${stats.divergedKeys[k]}`).join('、')}`,
+      detail: '同一份 memo.json，「归一口径快照」与 normalizeItem 实际归一对上述字段产出不同结果，说明字段归一链路有 bug，请反馈修复。',
     });
   }
   if (stats.nonObject > 0) {

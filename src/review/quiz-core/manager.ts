@@ -13,6 +13,11 @@ import { tryGetSettings } from '../../core/settings-provider';
 /** 默认数据文件路径 */
 export const QUIZ_FILE_PATH = 'CONFIG/STORAGE/quiz.json';
 
+/** quiz.json 空形状单源（导出供 checkup 段白名单契约锁引用，防键集漂移） */
+export function emptyQuiz(): { notes: Record<string, QuizQuestion[]> } {
+  return { notes: {} };
+}
+
 /** 做题家数据文件路径（与复习计划共用 storagePath，解析口径与 data.getReviewFilePath 同式） */
 export function getQuizFilePath(): string {
   const s = tryGetSettings() as any;
@@ -53,7 +58,7 @@ export class QuizManager {
   async loadQuiz(app: App): Promise<{ notes: Record<string, QuizQuestion[]> }> {
     try {
       const data = await jsonFileStore<{ notes: Record<string, QuizQuestion[]> }>(getQuizFilePath(), {
-        defaultValue: { notes: {} },
+        defaultValue: emptyQuiz(),
         app,
       }).read();
       if (data && typeof data === 'object' && data.notes) return data;

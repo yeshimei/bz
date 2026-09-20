@@ -4,6 +4,9 @@
  * 各域数据文件路径在此收敛（读各域 data 层同款解析逻辑的常量/函数，不改域代码）：
  * 全部经 core/storage 的 storageDir()/storageFile() 解析（跟随 storagePath 设置），
  * weave-data.json 走书架墙的 Weave 插件 dataPath 解析。
+ * storagePath 双轨登记（深审 ARCH-2，归属 core/favorites 线）：favorites.json 走
+ * favorites/config getStoragePath（会剥误配的 .json 尾段），其余走 core storageFile
+ * （不剥）——各随其主属域的解析器，体检口径与其属主读取链一致，属主一致即不漂。
  *
  * 只读纪律：体检绝不走 jsonFileStore.read()——那会触发「损坏留档 + 重建」写路径，
  * 把待报告的坏文件原地重建、毁掉现场。这里一律 adapter 直读原文。
@@ -23,7 +26,14 @@ export interface JsonScanTarget {
   label: string;
 }
 
-/** 全部域数据 json 清单（与各域 data 层路径解析同款；新增域数据文件时在此补一行） */
+/**
+ * 全部域数据 json 清单（与各域 data 层路径解析同款；新增域数据文件时在此补一行，
+ * 并到 tests/checkup/contract.test.ts 补契约锁行）。
+ *
+ * 豁免边界（有意不在清单）：encrypt 加密 manifest（CONFIG/.ENCRYPT/ 密文域，由保险库域
+ * 自己的体检覆盖，明文巡检不碰密文）；secondbrain.vec（向量文件，非 json）；
+ * gameshelf（数据在条目 frontmatter，无根 json——指向缺失归检查三孤儿面）。
+ */
 export function jsonScanTargets(app: App): JsonScanTarget[] {
   const s = tryGetSettings() as any;
   return [
@@ -37,6 +47,9 @@ export function jsonScanTargets(app: App): JsonScanTarget[] {
     { file: storageFile('review-fit.json'), label: '复习拟合参数' },
     { file: storageFile('home.json'), label: '内容首页' },
     { file: storageFile('smartcat.json'), label: '小橘' },
+    { file: storageFile('smartcat-memory.json'), label: '小橘记忆流' },
+    { file: storageFile('smartcat-behavior.json'), label: '小橘行为流' },
+    { file: storageFile('lock-stats.json'), label: '锁屏统计' },
     { file: storageFile('knowledge.json'), label: '知识盒' },
     { file: storageFile('secondbrain.json'), label: '第二大脑' },
     { file: storageFile('quiz.json'), label: '复习做题' },

@@ -71,7 +71,8 @@ export interface ReadNewsResult {
   corrupt: boolean;
 }
 
-function emptyData(): NewsData {
+/** news.json 空数据形状单源（导出供 checkup 白名单契约锁引用，防段集漂移） */
+export function emptyData(): NewsData {
   return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
 }
 

@@ -2,11 +2,12 @@
  * 数据体检面板（checkup 域 UI，D4）：overlay 范式（对齐各域面板）。
  *
  * - 交互仿保险库体检：跑一次缓存结果、可点直达、清理后自动重新体检收敛报告；
- * - 「开始体检」逐项跑（runCheckup 分片让出主线程），顶部实时进度，体检中可取消；
+ * - 「开始体检」逐项跑（runCheckup 分片让出主线程），顶部实时进度（检查项内
+ *   子任务插值，eff P2-1——大库体检中段不再静止），体检中可取消；
  * - 结果页绿/黄/红三态分组：红=必须处理（坏 json/结构异常）、黄=建议处理（漂移/孤儿，含可修复项）、
- *   绿=通过项；可修复项给「一键修复」（确认框 → 定点清理 → notifyUndo 撤销链）；
+ *   绿=通过项；可修复项给「一键修复」（确认框 → 定点清理 → 聚合撤销通知）；
  *   不可修复项给「查看详情」展开说明与路径；
- * - 重开面板显示上次结果 + 提示可重跑（内存级缓存）。
+ * - 重开面板显示上次结果 + 按数据指纹动态提示缓存可信度（eff P3-6）。
  * 视觉走样式库/组件库（铁律 6）：面板壳/头行走样式库共享类
  * （.bz-panel-overlay/.bz-panel-frame + .bz-panel-head 族），布局自有 styles.css，
  * 按钮/图标/空态/进度条消费 core/ui。
@@ -14,11 +15,11 @@
 import type { App } from 'obsidian';
 import { topifyZ } from '../core/z-order';
 import { escManager } from '../core/esc-manager';
-import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
-import { uiBtn, uiIcon, uiIconBtn, uiEmpty, uiProgress } from '../core/ui';
+import { notice, notify, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
+import { uiBtn, uiIcon, uiEmpty, uiProgress } from '../core/ui';
 import { openFlowDialog } from '../core/flow-dialog';
 import type { CheckIssue, CheckupReport } from './types';
-import { getLastCheckupReport, runCheckup, fixOrphanIssues } from './run';
+import { getLastCheckupReport, runCheckup, fixOrphanIssues, CHECK_LABELS, cacheFreshness } from './run';
 
 let overlay: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
@@ -26,6 +27,10 @@ let escHandle: { unregister: () => void } | null = null;
 let runSeq = 0;
 /** 当前正在跑（面板重建时恢复运行态视图） */
 let running = false;
+/** 修复执行期忙碌态（eff P3-2）：写盘窗口内禁用面板全部按钮，防误触双确认 */
+let fixing = false;
+/** 进度条组件句柄（ui P3-4：保留 setValue，进度条不再绕开单源手写宽度） */
+let progressCtl: { el: HTMLElement; setValue: (n: number) => void } | null = null;
 /** 宿主 app（命令注入；卸载后置 null） */
 let hostApp: App | null = null;
 
@@ -33,12 +38,26 @@ let hostApp: App | null = null;
 const OVERLAY_ID = 'bz-checkup-mask';
 const FRAME_ID = 'bz-checkup-popup';
 
+/** 面板当前是否可见（hide 型常驻层：display:none 只藏不拆） */
+function isPanelVisible(): boolean {
+  return !!overlay && overlay.style.display === 'flex';
+}
+
 /** 打开数据体检面板（重复打开 = 抬顶；运行态/缓存态照常恢复显示） */
 export function openDataCheckup(app: App): void {
   hostApp = app;
   if (!overlay) build(app);
   topifyZ(overlay!); // ADR-0067：显示即发号（重开抬顶，谁后显示谁在上）
   overlay!.style.display = 'flex';
+  // ESC 栈序与 z 序重同步（深审 ui P2-1）：hide 型常驻层重开只抬 z 不抬 ESC 栈会失配
+  //（z 序正确、ESC 却先关底下被盖住的面板）。显示路径重放注册——register 内 splice
+  // 掉不可见同 id 旧层再 push 尾（esc-manager 自愈语义），注册序自此跟随显示序。
+  // 注：registerPanelEsc 幂等样板「已注册即跳过」不解决重开抬栈，故此处保留手写注册。
+  escHandle?.unregister();
+  escHandle = escManager.register('bz-checkup', {
+    isVisible: isPanelVisible,
+    close: () => hide(),
+  });
   renderBody();
 }
 
@@ -46,9 +65,11 @@ export function openDataCheckup(app: App): void {
 export function unloadDataCheckup(): void {
   runSeq += 1;
   running = false;
+  fixing = false;
   hostApp = null;
   escHandle?.unregister();
   escHandle = null;
+  progressCtl = null;
   overlay?.remove();
   overlay = null;
 }
@@ -88,11 +109,6 @@ function build(app: App): void {
   });
   document.body.appendChild(ov);
   overlay = ov;
-
-  escHandle = escManager.register('bz-checkup', {
-    isVisible: () => !!overlay && overlay.style.display === 'flex',
-    close: () => hide(),
-  });
   void app;
 }
 
@@ -142,8 +158,8 @@ function renderIdle(): void {
 function renderFoot(): void {
   const foot = footEl();
   foot.innerHTML = '';
-  if (running) {
-    foot.appendChild(uiBtn({ label: '取消体检', onClick: () => cancelRun() }));
+  if (running || fixing) {
+    foot.appendChild(uiBtn({ label: fixing ? '修复中…' : '取消体检', onClick: () => cancelRun(), disabled: fixing }));
     return;
   }
   const last = getLastCheckupReport();
@@ -163,41 +179,57 @@ async function startRun(): Promise<void> {
       isCancelled: () => seq !== runSeq,
       onProgress: (p) => {
         if (seq !== runSeq) return;
-        updateProgress(p.index, p.total, p.label);
+        updateProgress(p.index, p.total, p.label, p.subDone, p.subTotal);
       },
     });
     if (seq !== runSeq) return; // 已被取消/重开取代：不渲染
     running = false;
-    if (report) renderReport(report, false);
-    else renderBody();
+    if (report) {
+      progressCtl?.setValue(100);
+      renderReport(report, false);
+      // 后台完成反馈（eff P3-5）：面板已关时体检静默跑完也要出声——带计数 + 「查看」直达
+      if (!isPanelVisible()) {
+        const counts = severityCounts(report);
+        const text = counts.error
+          ? `体检完成：${counts.error} 个问题需要处理`
+          : counts.warn + counts.info
+            ? `体检完成：${counts.warn + counts.info} 处建议处理`
+            : '体检完成：未发现问题';
+        notify(text, { action: { label: '查看', onClick: () => hostApp && openDataCheckup(hostApp) } });
+      }
+    } else renderBody();
   } catch (e) {
     running = false;
     if (seq !== runSeq) return;
-    notice('体检失败：' + (e instanceof Error ? e.message : String(e)), 'error');
+    // 失败重试出口（eff P3-3）：notifyActionError 挂「重试」action（startRun 有 running/hostApp 守卫，重入安全）
+    notifyActionError(e, '体检', { onRetry: () => void startRun() });
     renderBody();
   }
 }
 
 /** 取消体检：作废在途 run，回到上次结果/空态 */
 function cancelRun(): void {
+  if (fixing) return; // 修复写盘窗口不可取消（eff P3-2）
   runSeq += 1;
   running = false;
   renderBody();
 }
 
-/** 运行态视图：进度条 + 四项检查清单（等待/进行/完成）。进度条走组件库 uiProgress（.bz-progress 品牌档） */
+/** 运行态视图：进度条 + 检查项清单（等待/进行/完成）。步骤名走 run.ts CHECK_LABELS 单源（ui P3-4） */
 function renderRunning(): void {
   renderFoot();
   const body = bodyEl();
   body.innerHTML = '';
   const progress = document.createElement('div');
   progress.className = 'bz-checkup-progress';
-  progress.textContent = '体检中…';
-  body.append(progress, uiProgress().el);
+  // 首帧直接用第一项名（不再写会被立即覆盖的死文案）
+  progress.textContent = `体检中（1/${CHECK_LABELS.length}）：${CHECK_LABELS[0]}`;
+  progressCtl = uiProgress();
+  body.append(progress, progressCtl.el);
 
   const list = document.createElement('div');
   list.className = 'bz-checkup-steps';
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < CHECK_LABELS.length; i++) {
     const row = document.createElement('div');
     row.className = 'bz-checkup-step';
     row.dataset.step = String(i);
@@ -205,20 +237,21 @@ function renderRunning(): void {
     mark.className = 'bz-checkup-step-mark';
     const name = document.createElement('span');
     name.className = 'bz-checkup-step-name';
-    name.textContent = ['数据文件可解析', '字段漂移', '孤儿条目', '同源一致性'][i];
+    name.textContent = CHECK_LABELS[i];
     row.append(mark, name);
     list.appendChild(row);
   }
   body.appendChild(list);
 }
 
-/** 运行中进度刷新（step 状态 + 进度条；宽度为功能性动态计算，写 .bz-progress 内 i 填充） */
-function updateProgress(index: number, total: number, label: string): void {
+/** 运行中进度刷新（step 状态 + 进度条走 uiProgress.setValue 单源）。
+ *  宽度 = (已完成检查项 + 段内子任务进度) / 总项数（eff P2-1：大库体检中段插值推进） */
+function updateProgress(index: number, total: number, label: string, subDone?: number, subTotal?: number): void {
   if (!overlay) return;
   const progress = overlay.querySelector('.bz-checkup-progress') as HTMLElement | null;
-  const fill = overlay.querySelector('.bz-progress i') as HTMLElement | null;
   if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
-  if (fill) fill.style.width = Math.round((index / total) * 100) + '%';
+  const sub = subTotal && subTotal > 0 ? Math.min(1, Math.max(0, subDone || 0) / subTotal) : 0;
+  progressCtl?.setValue(((index + sub) / total) * 100);
   overlay.querySelectorAll<HTMLElement>('.bz-checkup-step').forEach((row) => {
     const i = Number(row.dataset.step);
     row.classList.toggle('is-done', i < index);
@@ -242,17 +275,25 @@ function renderReport(report: CheckupReport, stale: boolean): void {
   if (stale) {
     const hint = document.createElement('div');
     hint.className = 'bz-checkup-stale';
-    hint.textContent = `上次体检：${report.finishedAt} · 数据可能已变化，可重新体检`;
+    // 缓存失效动态口径（eff P3-6）：数据指纹（mtime）全未变 → 「此后数据未变化」；
+    // 有变化/无法判定 → 维持「可能已变化」促重跑口径
+    hint.textContent =
+      hostApp && cacheFreshness(hostApp) === 'clean'
+        ? `上次体检：${report.finishedAt} · 此后数据未变化`
+        : `上次体检：${report.finishedAt} · 数据可能已变化，可重新体检`;
     body.appendChild(hint);
   }
 
   const counts = severityCounts(report);
+  // 「全部通过」判定并入 info（func P3-9）：纯 info 报告也是「有待处理提示」，
+  // 与下方黄组「建议处理（N）」呈现保持一致，不再自相矛盾
+  const warnsCount = counts.warn + counts.info;
   const summary = document.createElement('div');
-  summary.className = 'bz-checkup-summary' + (counts.error ? ' bz-checkup-summary--bad' : counts.warn ? ' bz-checkup-summary--warn' : ' bz-checkup-summary--ok');
+  summary.className = 'bz-checkup-summary' + (counts.error ? ' bz-checkup-summary--bad' : warnsCount ? ' bz-checkup-summary--warn' : ' bz-checkup-summary--ok');
   summary.textContent = counts.error
     ? `体检完成：${counts.error} 个问题需要处理`
-    : counts.warn
-      ? `体检完成：${counts.warn} 处建议处理`
+    : warnsCount
+      ? `体检完成：${warnsCount} 处建议处理`
       : '体检完成：全部通过';
   body.appendChild(summary);
 
@@ -339,16 +380,24 @@ function issueRow(issue: CheckIssue): HTMLElement {
   if (issue.detail) {
     const toggle = document.createElement('button');
     toggle.type = 'button';
-    toggle.className = 'bz-checkup-detail-toggle';
+    // bz-touch-target--lg（core components.css 修饰类，可独立挂）：小字链触屏热区外扩——
+    // 用 --lg（-8px）保守档：问题行行距紧凑，--xl（-12px）外扩会盖住相邻行命中（ui P3-3）
+    toggle.className = 'bz-checkup-detail-toggle bz-touch-target--lg';
     toggle.textContent = '查看详情';
+    toggle.setAttribute('aria-expanded', 'false');
     const detail = document.createElement('pre');
     detail.className = 'bz-checkup-detail';
-    detail.textContent = issue.detail;
     detail.style.display = 'none';
+    let filled = false; // eff P3-4：隐藏详情不全量进 DOM，首次展开才填充
     toggle.addEventListener('click', () => {
       const open = detail.style.display !== 'none';
+      if (!filled) {
+        detail.textContent = issue.detail || '';
+        filled = true;
+      }
       detail.style.display = open ? 'none' : 'block';
       toggle.textContent = open ? '查看详情' : '收起详情';
+      toggle.setAttribute('aria-expanded', open ? 'false' : 'true');
     });
     main.appendChild(toggle);
     main.appendChild(detail);
@@ -365,14 +414,24 @@ function issueRow(issue: CheckIssue): HTMLElement {
   return row;
 }
 
-/** 修复确认（写明清除数量与可撤销）→ 执行 → notifyUndo → 自动重新体检收敛报告 */
+/** 修复执行期忙碌态（eff P3-2）：禁用面板全部按钮；修复期间 foot 显「修复中…」 */
+function setFixing(on: boolean): void {
+  fixing = on;
+  if (!overlay) return;
+  overlay.querySelectorAll<HTMLButtonElement>('button').forEach((b) => {
+    b.disabled = on;
+  });
+  renderFoot();
+}
+
+/** 修复确认（写明清除数量与可撤销）→ 执行 → 聚合撤销通知 → 自动重新体检收敛报告 */
 async function confirmFix(issues: CheckIssue[], what: string): Promise<void> {
-  if (!hostApp) return;
-  void what;
+  if (!hostApp || fixing) return;
   const fixable = issues.filter((i) => i.fixGroup && i.fixKey);
   if (!fixable.length) return;
   const v = await openFlowDialog({
-    title: '修复确认',
+    // 动作名入题（cons UX-1：消费 what 形参，逐条/批量确认语境有区分）
+    title: what === '一键修复' ? '修复确认' : `${what}确认`,
     message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
     actions: [
       { label: '取消', value: 'cancel' },
@@ -382,21 +441,42 @@ async function confirmFix(issues: CheckIssue[], what: string): Promise<void> {
     ],
   });
   if (v !== 'ok') return;
+  setFixing(true);
+  let failures: string[] = [];
   try {
-    const outcomes = await fixOrphanIssues(hostApp, fixable);
-    let any = false;
-    for (const o of outcomes) {
-      if (!o.fixed) continue;
-      any = true;
-      notifyUndo(o.label, () => {
-        o.undo().catch((e) => notifySaveError(e, '撤销清除'));
+    const result = await fixOrphanIssues(hostApp, fixable);
+    failures = result.failures;
+    // 聚合撤销通知（eff P3-1）：一组一条改成单条汇总（总数 + 分组计数）——撤销出口
+    // 不再被通知挤兑拆散；undo 顺序回滚各组，任一失败提示并继续其余
+    const hit = result.outcomes.filter((o) => o.fixed > 0);
+    if (hit.length) {
+      const total = hit.reduce((a, o) => a + o.fixed, 0);
+      const detail = hit.map((o) => `${o.group} ${o.fixed}`).join('、');
+      notifyUndo(`已清除 ${total} 项失效引用：${detail}`, () => {
+        (async () => {
+          for (const o of hit) await o.undo();
+        })()
+          .then(() => {
+            // 撤销后报告收敛（ui P3-1）：数据回到失效态，报告必须跟着回去
+            return startRun();
+          })
+          .catch((e) => notifySaveError(e, '撤销清除'));
+      });
+    } else if (!failures.length) {
+      notice('没有需要清除的项（数据已变化）');
+    }
+    if (failures.length) {
+      // 部分组失败（ui P3-2）：已落盘组的撤销链照常在，失败组单独提示 + 重试出口
+      notifyActionError(new Error('未完成：' + failures.join('、')), '清除失效引用', {
+        onRetry: () => void confirmFix(issues, what),
       });
     }
-    if (!any) notice('没有需要清除的项（数据已变化）');
   } catch (e) {
-    notifyActionError(e, '清除失效引用');
+    setFixing(false);
+    notifyActionError(e, '清除失效引用', { onRetry: () => void confirmFix(issues, what) });
     return;
   }
+  setFixing(false);
   // 清理后自动重新体检，报告收敛（仿保险库体检）
   await startRun();
 }

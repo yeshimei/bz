@@ -316,6 +316,12 @@ export class SettingsPanelUI {
       topifyZ(this.mask, this.popup);
       this.mask.style.display = 'block';
       this.popup.style.display = 'flex';
+      // ESC 栈序与 z 序重同步（checkup 深审 ui P2-1 同刀）：hide 型常驻层重开只抬 z 不抬
+      // ESC 栈会失配（z 序正确、ESC 却先关底下被盖住的面板）。重放注册——registerPanelEsc
+      // 的幂等样板「已注册即跳过」不解决抬栈，须先 unregisterPanelEsc 再挂，注册序自此
+      // 跟随显示序。
+      unregisterPanelEsc('bz-settings-panel');
+      this.armPanelEsc();
       if (deep && isMobileEnv()) {
         void this.pushDomain(deep);
       } else if (deep) {
@@ -361,11 +367,7 @@ export class SettingsPanelUI {
     topifyZ(mask, popup);
 
     // C-5：面板 ESC 注册收编 registerPanelEsc 幂等样板（八域先例，删 escHandle 手写形制）
-    registerPanelEsc('bz-settings-panel', () => !!this.mask && this.mask.style.display === 'block', () => {
-      // 移动端推入页先弹回首页，再次 ESC 才收面板
-      if (this.popup?.classList.contains('bz-sp-mob-pushed')) this.popDomain();
-      else this.hide();
-    });
+    this.armPanelEsc();
     // E-3：打开即聚焦首个可交互元素（core uiModal firstFocusable 范式）——桌面 = 头行搜索框，
     // 键盘流第一步可达（搜索 → ↑↓ 切域 → ESC 关全链键盘闭环）；移动端跳过输入框聚焦关闭钮
     firstFocusable(popup)?.focus();
@@ -859,6 +861,15 @@ export class SettingsPanelUI {
     this.mobPushed = false;
     this.renderSeq++; // 作废未完成的域渲染任务
     this.popup?.classList.remove('bz-sp-mob-pushed');
+  }
+
+  /** 面板 ESC 层注册（build 与重开共用；重开由 open 先 unregisterPanelEsc 再走本方法抬栈） */
+  private armPanelEsc(): void {
+    registerPanelEsc('bz-settings-panel', () => !!this.mask && this.mask.style.display === 'block', () => {
+      // 移动端推入页先弹回首页，再次 ESC 才收面板
+      if (this.popup?.classList.contains('bz-sp-mob-pushed')) this.popDomain();
+      else this.hide();
+    });
   }
 
   hide(): void {

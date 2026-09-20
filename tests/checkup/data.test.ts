@@ -1,16 +1,19 @@
 // @vitest-environment node
 /**
  * 数据体检（checkup 域，D4）数据层回归：
- * - 检查一 json 可解析：全绿样本 / 坏 json + CONFIG/.CORRUPT 留档路径列出；
+ * - 检查一 json 可解析：全绿样本 / 坏 json + CONFIG/.CORRUPT 留档路径列出 / 读失败≠缺失；
  * - 检查二 字段漂移：约定外字段/缺失字段统计、段级漂移（只报告不修）；
- * - 检查三 孤儿条目：影院海报 / 书架 md 封面与 EPUB / 剪藏 savedArchive 残留 / 收藏关联笔记；
- * - 检查四 同源一致性：双链计数（含不一致样本）/ 非对象 / 重复 id / 缺 id / 缺标题；
- * - 一键修复 + 撤销链：favorites 关联清空与还原、clipbook savedArchive 移除与插回。
+ * - 检查三 孤儿条目：影院海报 / 书架 md 封面与 EPUB / 游戏封面截图 / 剪藏 savedArchive 残留 /
+ *   收藏关联笔记（剪藏目录与 url 命中已收编 clipbook 单源）；
+ * - 检查四 同源一致性：双链计数（含不一致样本）/ 字段级归一分叉 / 非对象 / 重复 id；
+ * - 一键修复 + 撤销链：favorites 关联清空与还原、clipbook 三组合批一次读写、
+ *   文件缺失不建 stub、undo 不顶掉用户新编辑。
  * 全部只读纪律断言：体检/检查不写任何文件（仅修复写定点数据文件）。
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { MockVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
+import { setSettingsProvider } from '../../src/core/settings-provider';
 import { verdictOfJsonTarget, checkJsonFiles, jsonIssuesOf } from '../../src/checkup/checks-json';
 import {
   MEMO_ITEM_FIELDS,
@@ -27,8 +30,11 @@ import {
   analyzeMemoConsistency,
   consistencyIssuesOf,
   checkSameSourceConsistency,
+  divergedKeysOf,
 } from '../../src/checkup/checks-consistency';
-import { fixOrphanIssues, runCheckup, getLastCheckupReport, __resetCheckupCacheForTests } from '../../src/checkup/run';
+import { fixOrphanIssues, runCheckup, getLastCheckupReport, __resetCheckupCacheForTests, CHECK_LABELS } from '../../src/checkup/run';
+import { emptySidecar } from '../../src/clipbook/data';
+import { emptyData } from '../../src/clipbook/news-data';
 
 const DIR = 'CONFIG/STORAGE';
 const CORRUPT = 'CONFIG/.CORRUPT';
@@ -52,10 +58,11 @@ function fullFavItem(over: Record<string, unknown> = {}): Record<string, unknown
   };
 }
 
-/** 构造 mock app：vault 文件 + metadataCache frontmatter 按路径返回 */
+/** 构造 mock app：vault 文件 + metadataCache frontmatter 按路径返回（settings 可选注入） */
 function makeApp(
   files: Record<string, string> = {},
-  frontmatter: Record<string, Record<string, unknown>> = {}
+  frontmatter: Record<string, Record<string, unknown>> = {},
+  settings: Record<string, unknown> = {}
 ): { app: any; vault: MockVault } {
   const vault = new MockVault();
   for (const [p, c] of Object.entries(files)) vault.files.set(p, c);
@@ -70,6 +77,7 @@ function makeApp(
     plugins: {},
   };
   setApp(app as never);
+  setSettingsProvider(() => settings as never);
   return { app: app as any, vault };
 }
 
@@ -93,7 +101,7 @@ describe('检查一：json 可解析', () => {
     expect(sec!.scanned).toBe(2);
   });
 
-  it('坏 json 样本：红色问题列出文件与 CONFIG/.CORRUPT 留档路径', async () => {
+  it('坏 json 样本：红色问题列出文件与 CONFIG/.CORRUPT 留档路径；时态文案对（func P3-5：体检当下未重建）', async () => {
     const { app } = makeApp({
       [`${DIR}/memo.json`]: '{oops',
       [`${CORRUPT}/memo.json.20260904-120000.bak`]: '[]',
@@ -105,11 +113,35 @@ describe('检查一：json 可解析', () => {
     expect(errs[0].title).toContain('备忘录');
     expect(errs[0].detail).toContain(`${DIR}/memo.json`);
     expect(errs[0].detail).toContain(`${CORRUPT}/memo.json.20260904-120000.bak`);
+    // func P3-5：留档+重建发生在「对应功能下次读取时」，体检当下什么都没发生——文案不得写成已完成时态
+    const d1 = sec!.issues.find((i) => i.title.includes('自动留档'));
+    expect(d1).toBeTruthy();
+    expect(d1!.title).toContain('下次读取时');
+    expect(d1!.title).not.toContain('已由存储层');
     // 无留档时的坏文件也照报（留档：暂无）
     const { app: app2 } = makeApp({ [`${DIR}/memo.json`]: '{oops' });
     const sec2 = await checkJsonFiles(app2);
     const err2 = sec2!.issues.find((i) => i.severity === 'error');
     expect(err2!.detail).toContain('暂无');
+  });
+
+  it('P3-1：文件存在但读不动（IO/占用）→ warn 提示重试，不吞成 missing 假绿', async () => {
+    const { app, vault } = makeApp({ [`${DIR}/memo.json`]: '[]' });
+    (vault.adapter as any).read = async () => {
+      throw new Error('device busy');
+    };
+    const sec = await checkJsonFiles(app);
+    const stuck = sec!.issues.find((i) => i.title.includes('读不动'));
+    expect(stuck).toBeTruthy();
+    expect(stuck!.severity).toBe('warn');
+    expect(stuck!.title).toContain('读不动');
+    expect(stuck!.detail).toContain('重新体检');
+    expect(sec!.summary).toContain('读不动');
+
+    // 对照：文件真不存在 → 仍按 missing 处理，不出问题项
+    const { app: app2 } = makeApp({});
+    const sec2 = await checkJsonFiles(app2);
+    expect(sec2!.issues).toEqual([]);
   });
 
   it('jsonIssuesOf：无坏文件时不出「D1 留档」说明', () => {
@@ -209,12 +241,15 @@ describe('检查二：字段漂移', () => {
     expect(SEGMENT_FIELDS['pomodoro.json']).toEqual(['version', 'state', 'history', 'archived']);
   });
 
-  it('全绿样本：全字段条目 + 段级齐全 → 零问题', async () => {
+  it('全绿样本：全字段条目 + 段级齐全（域写侧形状派生，TA-1 防手写盲区）→ 零问题', async () => {
     const { app } = makeApp({
       [`${DIR}/memo.json`]: JSON.stringify([fullMemoItem()]),
       [`${DIR}/favorites.json`]: JSON.stringify([fullFavItem()]),
-      [`${DIR}/clipbook.json`]: JSON.stringify({ articleOverrides: {}, savedArchive: [], order: [] }),
-      [`${DIR}/news.json`]: JSON.stringify({ articles: [], stats: {}, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: '', sources: {}, rssFeeds: [] }),
+      // 段级样本直接从域写侧单源派生（emptySidecar 7 段 / emptyData 10 键）——
+      // 不再按白名单手写（func P2-1/P2-2 正是从手写盲区漏进来的）
+      [`${DIR}/clipbook.json`]: JSON.stringify(emptySidecar()),
+      [`${DIR}/news.json`]: JSON.stringify(emptyData()),
+      [`${DIR}/belongings.json`]: JSON.stringify({ version: '1.0', last_updated: '2026-01-01T00:00:00.000Z', items: {} }),
       // v3 形状（order.ts 落盘键集；白名单对齐见 tests/home/home-json-drift.test.ts——
       // 旧 v1 pinned 段自 home 深审跨域一行起按约定外段报告，属预期行为）
       [`${DIR}/home.json`]: JSON.stringify({ version: 3, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] }),
@@ -222,6 +257,62 @@ describe('检查二：字段漂移', () => {
     const sec = await checkFieldDrift(app);
     expect(sec!.issues).toEqual([]);
     expect(sec!.summary).not.toContain('漂移');
+  });
+
+  it('func P2-1 翻版：clipbook.json 7 段齐全（emptySidecar 派生）→ 零 warn；真异常段仍 warn', async () => {
+    const { app } = makeApp({
+      [`${DIR}/clipbook.json`]: JSON.stringify(emptySidecar()),
+    });
+    const sec = await checkFieldDrift(app);
+    expect(sec!.issues.filter((i) => i.severity === 'warn' && i.title.includes('剪藏'))).toEqual([]);
+
+    const { app: app2 } = makeApp({
+      [`${DIR}/clipbook.json`]: JSON.stringify({ ...emptySidecar(), ghost: 1 }),
+    });
+    const sec2 = await checkFieldDrift(app2);
+    const warn = sec2!.issues.find((i) => i.severity === 'warn' && i.title.includes('约定外数据段'));
+    expect(warn).toBeTruthy();
+    expect(warn!.title).toContain('ghost');
+  });
+
+  it('func P2-2 翻版：news.json 10 键齐全（emptyData 派生，含抓取元数据）→ 零 warn', async () => {
+    const { app } = makeApp({
+      [`${DIR}/news.json`]: JSON.stringify(emptyData()),
+    });
+    const sec = await checkFieldDrift(app);
+    expect(sec!.issues.filter((i) => i.severity === 'warn' && i.title.includes('剪藏本'))).toEqual([]);
+  });
+
+  it('func P2-4 翻版：belongings.json 3 键落盘形状（ADR-0102 派生段不落盘）→ 零 info「缺少数据段」', async () => {
+    const { app } = makeApp({
+      [`${DIR}/belongings.json`]: JSON.stringify({ version: '1.0', last_updated: '2026-01-01T00:00:00.000Z', items: {} }),
+    });
+    const sec = await checkFieldDrift(app);
+    expect(sec!.issues.filter((i) => i.title.includes('归物本'))).toEqual([]);
+  });
+
+  it('func P3-2：favorites.json 根形态被写成对象（非数组）→ warn「读取链会失败」，不再静默漏检', async () => {
+    const { app } = makeApp({
+      [`${DIR}/favorites.json`]: JSON.stringify({ oops: true }),
+    });
+    const sec = await checkFieldDrift(app);
+    const warn = sec!.issues.find((i) => i.severity === 'warn' && i.title.includes('不是条目数组形态'));
+    expect(warn).toBeTruthy();
+    expect(warn!.title).toContain('收藏本');
+  });
+
+  it('cons P3-4：favorites 非对象条目文案域中性（不再硬编码「两条读取链/备忘录」）', async () => {
+    const { app } = makeApp({
+      [`${DIR}/favorites.json`]: JSON.stringify(['oops', 42]),
+    });
+    const sec = await checkFieldDrift(app);
+    const err = sec!.issues.find((i) => i.severity === 'error' && i.title.includes('非对象条目'));
+    expect(err).toBeTruthy();
+    expect(err!.title).toContain('收藏本');
+    expect(err!.title).not.toContain('两条');
+    expect(err!.title).not.toContain('备忘录');
+    expect(err!.detail).toContain('收藏本的读取链');
+    expect(err!.detail).not.toContain('备忘录的读取链');
   });
 
   it('漂移字段常量与域 normalize 契约一致（14/15/3）', () => {
@@ -280,14 +371,15 @@ describe('检查三：孤儿条目', () => {
     expect(sec!.issues.some((i) => i.title.includes('EPUB 书目《E书》'))).toBe(true);
   });
 
-  it('剪藏本：savedArchive 残留指向不存在笔记 → 可修复项；url 命中剪藏则不报', async () => {
+  it('剪藏本：savedArchive 残留指向不存在笔记 → 可修复项；url 命中剪藏（单源契约 url+created）则不报', async () => {
     const sidecar = JSON.stringify({ articleOverrides: {}, savedArchive: [{ url: 'https://x', title: '甲', savedAt: '1' }], order: [] });
+    // 收编 clipbook 单源后扫描面/契约同 loader：剪藏笔记需 url + created（缺一拒收）
     const { app } = makeApp(
       {
         [`${DIR}/clipbook.json`]: sidecar,
         '归档/网页剪藏/n.md': '# n',
       },
-      { '归档/网页剪藏/n.md': { url: 'https://y' } }
+      { '归档/网页剪藏/n.md': { url: 'https://y', created: '2026-01-01' } }
     );
     const sec = await checkOrphans(app);
     const hit = sec!.issues.find((i) => i.fixGroup === 'clipbook');
@@ -297,10 +389,62 @@ describe('检查三：孤儿条目', () => {
 
     const { app: app2 } = makeApp(
       { [`${DIR}/clipbook.json`]: sidecar, '归档/网页剪藏/n.md': '# n' },
-      { '归档/网页剪藏/n.md': { url: 'https://x' } }
+      { '归档/网页剪藏/n.md': { url: 'https://x', created: '2026-01-01' } }
     );
     const sec2 = await checkOrphans(app2);
     expect(sec2!.issues.find((i) => i.fixGroup === 'clipbook')).toBeUndefined();
+  });
+
+  it('cons P3-1：非字符串 url（Obsidian 属性面板数字形态）按单源语义 String 化命中，不再误报残留', async () => {
+    // 单源 parseClipFile 对 fm.url 任意真值 String 化——url: 12345 的剪藏是「已保存」；
+    // 旧本地实现只认字符串 url，会把残留误报孤儿并进一键修复清单（清掉真数据）
+    const sidecar = JSON.stringify({ articleOverrides: {}, savedArchive: [{ url: '12345', title: '数字链', savedAt: '1' }], order: [] });
+    const { app } = makeApp(
+      { [`${DIR}/clipbook.json`]: sidecar, '归档/网页剪藏/n.md': '# n' },
+      { '归档/网页剪藏/n.md': { url: 12345, created: '2026-01-01' } }
+    );
+    const sec = await checkOrphans(app);
+    expect(sec!.issues.find((i) => i.fixGroup === 'clipbook')).toBeUndefined();
+  });
+
+  it('cons P3-2：cinemaFolderPath 空白串回落默认目录（ADR-0115 唯一真理），海报缺失照报不静默漏检', async () => {
+    const fm = { '我的/影视/《T》.md': { tags: ['电影'], 海报: 'CONFIG/BOOK/p.png' } };
+    const { app } = makeApp({ '我的/影视/《T》.md': '# T' }, fm, { cinemaFolderPath: '   ' });
+    const sec = await checkOrphans(app);
+    expect(sec!.issues.find((i) => i.title.includes('影视《T》'))).toBeTruthy();
+  });
+
+  it('func P3-4：gameshelf 封面/截图本地路径缺失报告（远端地址与文件在则不报；只报告无 fixGroup）', async () => {
+    const fm = {
+      '我的/游戏/G.md': { 封面: 'CONFIG/BOOK/g.png', 截图: ['CONFIG/BOOK/s1.png', ''], 封面源: 'https://cdn/x.png' },
+    };
+    const { app } = makeApp({ '我的/游戏/G.md': '# G' }, fm);
+    const sec = await checkOrphans(app);
+    const hit = sec!.issues.find((i) => i.title.includes('游戏《G》'));
+    expect(hit).toBeTruthy();
+    expect(hit!.detail).toContain('CONFIG/BOOK/g.png');
+    expect(hit!.detail).toContain('CONFIG/BOOK/s1.png');
+    expect(hit!.fixGroup).toBeUndefined(); // 用户笔记 frontmatter，只报告不可修
+
+    // 文件齐 + 远端封面 → 不报
+    const { app: app2 } = makeApp(
+      { '我的/游戏/G.md': '# G', 'CONFIG/BOOK/g.png': 'img', 'CONFIG/BOOK/s1.png': 'img' },
+      fm
+    );
+    const sec2 = await checkOrphans(app2);
+    expect(sec2!.issues.find((i) => i.title.includes('游戏《G》'))).toBeUndefined();
+  });
+
+  it('eff P2-1/G-E1：大库孤儿段 tick label 带条目计数推进（修复前恒为同一常量）', async () => {
+    const saved = Array.from({ length: 5 }, (_, i) => ({ url: `https://g${i}`, title: `甲${i}`, savedAt: '1' }));
+    const { app } = makeApp({
+      [`${DIR}/clipbook.json`]: JSON.stringify({ articleOverrides: {}, savedArchive: saved, order: [] }),
+    });
+    const labels: string[] = [];
+    await checkOrphans(app, { tick: (label) => void labels.push(label) });
+    const savedTicks = labels.filter((l) => l.startsWith('剪藏残留'));
+    expect(savedTicks.length).toBeGreaterThanOrEqual(2);
+    expect(new Set(savedTicks).size).toBeGreaterThanOrEqual(2); // 段内 label 随条目推进出现 ≥2 个不同值
   });
 
   it('收藏本：关联笔记不存在 → 可修复项；存在则不报', async () => {
@@ -342,13 +486,40 @@ describe('检查四：同源一致性', () => {
 
   it('双链不一致样本：计数分叉报红', () => {
     const { issues } = consistencyIssuesOf({
-      total: 3, nonObject: 0, missingId: 0, duplicateId: 0, missingTitle: 0,
+      total: 3, nonObject: 0, missingId: 0, duplicateId: 0, missingTitle: 0, divergedKeys: {},
       storeView: { total: 3, done: 2 },
       rawView: { total: 2, done: 1 },
     });
     const err = issues.find((i) => i.severity === 'error');
     expect(err).toBeTruthy();
     expect(err!.title).toContain('双链计数不一致');
+  });
+
+  it('P2-5 方案 b：字段级归一分叉报红（normalizeItem 语义漂移检测，超出现有数据可造的分叉）', () => {
+    // 快照 vs 活函数逐键 Object.is：人为制造归一差异验证判定与呈现
+    const a = { id: 'x', priority: 'high' };
+    const b = { id: 'x', priority: 'minor', url: 'https://y' };
+    expect(divergedKeysOf(a, b)).toEqual(['priority', 'url']);
+    expect(divergedKeysOf({ a: null }, { a: undefined })).toEqual(['a']); // Object.is 严格区分 null/undefined
+    expect(divergedKeysOf(a, a)).toEqual([]);
+
+    const { issues } = consistencyIssuesOf({
+      total: 2, nonObject: 0, missingId: 0, duplicateId: 0, missingTitle: 0,
+      divergedKeys: { priority: 2, url: 1 },
+      storeView: { total: 2, done: 0 },
+      rawView: { total: 2, done: 0 },
+    });
+    const err = issues.find((i) => i.severity === 'error' && i.title.includes('双链归一分叉'));
+    expect(err).toBeTruthy();
+    expect(err!.title).toContain('priority');
+    expect(err!.title).toContain('url');
+  });
+
+  it('P2-5：正常数据（快照与 normalizeItem 等价）零分叉', () => {
+    const items = [fullMemoItem(), fullMemoItem({ id: 'i2', priority: '', completed: '2026-01-02' })];
+    const stats = analyzeMemoConsistency(items);
+    expect(stats.divergedKeys).toEqual({});
+    expect(Object.keys(stats.divergedKeys)).toHaveLength(0);
   });
 
   it('非对象条目报红（两条读取链都会中断）', async () => {
@@ -393,7 +564,9 @@ describe('一键修复 + 撤销链', () => {
     const issues = [
       { severity: 'warn' as const, title: 't', fixGroup: 'favorites', fixKey: 'a' },
     ];
-    const [outcome] = await fixOrphanIssues(app, issues);
+    const { outcomes, failures } = await fixOrphanIssues(app, issues);
+    expect(failures).toEqual([]);
+    const [outcome] = outcomes;
     expect(outcome.fixed).toBe(1);
     const after = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);
     expect(after[0].linkedNote).toBeNull();
@@ -402,6 +575,22 @@ describe('一键修复 + 撤销链', () => {
     await outcome.undo();
     const restored = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);
     expect(restored[0].linkedNote).toBe('我的/gone.md');
+  });
+
+  it('func P3-8：撤销不顶掉用户新编辑——撤销窗口内已设新关联则跳过恢复', async () => {
+    const raw = JSON.stringify([fullFavItem({ id: 'a', linkedNote: '我的/gone.md' })]);
+    const { app, vault } = makeApp({ [`${DIR}/favorites.json`]: raw });
+    const issues = [{ severity: 'warn' as const, title: 't', fixGroup: 'favorites', fixKey: 'a' }];
+    const { outcomes } = await fixOrphanIssues(app, issues);
+    const [outcome] = outcomes;
+    expect(JSON.parse(vault.files.get(`${DIR}/favorites.json`)!)[0].linkedNote).toBeNull();
+    // 用户在撤销窗口内给同一条目设置了新关联
+    const cur = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);
+    cur[0].linkedNote = '我的/new-note.md';
+    vault.files.set(`${DIR}/favorites.json`, JSON.stringify(cur));
+    await outcome.undo();
+    const after = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);
+    expect(after[0].linkedNote).toBe('我的/new-note.md'); // 新关联保留，旧失效值不复活
   });
 
   it('clipbook：移除失效 savedArchive 残留，undo 按原索引插回', async () => {
@@ -419,7 +608,8 @@ describe('一键修复 + 撤销链', () => {
       { severity: 'warn' as const, title: 't', fixGroup: 'clipbook', fixKey: 'https://gone' },
       { severity: 'warn' as const, title: 't2', fixGroup: 'clipbook', fixKey: 'https://gone2' },
     ];
-    const [outcome] = await fixOrphanIssues(app, issues);
+    const { outcomes } = await fixOrphanIssues(app, issues);
+    const [outcome] = outcomes;
     expect(outcome.fixed).toBe(2);
     const mid = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
     expect(mid.savedArchive.map((s: any) => s.url)).toEqual(['https://stay']);
@@ -430,9 +620,75 @@ describe('一键修复 + 撤销链', () => {
 
   it('无可修复组时不写盘、返回空', async () => {
     const { app, vault } = makeApp({ [`${DIR}/memo.json`]: '[]' });
-    const outcomes = await fixOrphanIssues(app, [{ severity: 'warn', title: '海报缺失' }]);
+    const { outcomes, failures } = await fixOrphanIssues(app, [{ severity: 'warn', title: '海报缺失' }]);
     expect(outcomes).toEqual([]);
+    expect(failures).toEqual([]);
     expect(vault.modifiedPaths).toEqual([]);
+  });
+
+  it('ARCH-1：文件在扫描后、修复前被删 → 零命中修复不凭空建 stub 文件', async () => {
+    const { app, vault } = makeApp({ [`${DIR}/memo.json`]: '[]' });
+    const issues = [
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook', fixKey: 'https://gone' },
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-marks', fixKey: JSON.stringify(['u', 'f', 'p.md']) },
+    ];
+    const { outcomes } = await fixOrphanIssues(app, issues);
+    expect(outcomes.every((o) => o.fixed === 0)).toBe(true);
+    expect(vault.files.has(`${DIR}/clipbook.json`)).toBe(false); // 不落盘 defaultValue 残形 stub
+    expect(vault.modifiedPaths).toEqual([]);
+  });
+
+  it('eff P3-7：剪藏三组（残留/标注/待回写）合批一次读写——clipbook.json 恰写 1 次', async () => {
+    const raw = JSON.stringify({
+      articleOverrides: {},
+      savedArchive: [{ url: 'https://gone', title: '甲', savedAt: '1' }],
+      order: [],
+      marks: { 'url:https://x': [{ find: '选', notePath: '文献盒/gone.md', kind: 'term' }] },
+      savedImages: {},
+      pendingSource: { 'url:https://x': ['文献盒/gone.md'] },
+      readLog: [],
+    });
+    const { app, vault } = makeApp({ [`${DIR}/clipbook.json`]: raw });
+    const before = vault.modifiedPaths.filter((p) => p.endsWith('clipbook.json')).length;
+    const issues = [
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook', fixKey: 'https://gone' },
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-marks', fixKey: JSON.stringify(['url:https://x', '选', '文献盒/gone.md']) },
+      { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-source', fixKey: JSON.stringify(['url:https://x', '文献盒/gone.md']) },
+    ];
+    const { outcomes } = await fixOrphanIssues(app, issues);
+    expect(outcomes.map((o) => o.fixed)).toEqual([1, 1, 1]);
+    const writes = vault.modifiedPaths.filter((p) => p.endsWith('clipbook.json')).length - before;
+    expect(writes).toBe(1); // 旧实现三组各自读改写 = 3 次
+    // 三组 undo 逐一仍还原
+    for (const o of outcomes) await o.undo();
+    const restored = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
+    expect(restored.savedArchive.map((s: any) => s.url)).toEqual(['https://gone']);
+    expect(restored.marks['url:https://x']).toHaveLength(1);
+    expect(restored.pendingSource['url:https://x']).toEqual(['文献盒/gone.md']);
+  });
+
+  it('ui P3-2：一组写盘抛错不丢前序已落盘组的撤销链（failures 单独上报）', async () => {
+    const raw = JSON.stringify([fullFavItem({ id: 'a', linkedNote: '我的/gone.md' })]);
+    const { app, vault } = makeApp({
+      [`${DIR}/favorites.json`]: raw,
+      [`${DIR}/knowledge.json`]: JSON.stringify([{ id: 'kt', notePath: '文献盒/gone.md' }]),
+    });
+    // knowledge.json 读取抛错（模拟磁盘故障）：knowledge 组失败，favorites 组已落盘
+    const origRead = vault.read.bind(vault);
+    (vault as any).read = (f: any) => {
+      if (String(f.path).endsWith('knowledge.json')) throw new Error('EIO');
+      return origRead(f);
+    };
+    const issues = [
+      { severity: 'warn' as const, title: 't', fixGroup: 'favorites', fixKey: 'a' },
+      { severity: 'warn' as const, title: 't', fixGroup: 'knowledge', fixKey: 'kt|note' },
+    ];
+    const { outcomes, failures } = await fixOrphanIssues(app, issues);
+    expect(failures).toEqual(['知识盒任务引用']);
+    const favOutcome = outcomes.find((o) => o.group === '收藏关联');
+    expect(favOutcome).toBeTruthy();
+    expect(favOutcome!.fixed).toBe(1); // 前序组照常返回（撤销链不随异常丢失）
+    expect(JSON.parse(vault.files.get(`${DIR}/favorites.json`)!)[0].linkedNote).toBeNull();
   });
 });
 
@@ -472,6 +728,37 @@ describe('编排器与结果缓存', () => {
     expect(orphan.issues[0].severity).toBe('error');
     expect(orphan.issues[0].detail).toContain('boom');
     expect(report!.sections).toHaveLength(4);
+  });
+
+  it('补维-1：CHECK_LABELS 与 CHECKS 注册表同源（id/label/runner 单源，运行态步骤不再手抄）', async () => {
+    expect(CHECK_LABELS).toEqual(['数据文件可解析', '字段漂移', '孤儿条目', '同源一致性']);
+    const { app } = makeApp({ [`${DIR}/memo.json`]: '[]' });
+    const report = await runCheckup(app);
+    // section 顺序/id 与注册表对齐（检查四 name 带「（备忘录）」域内后缀，label 即其前缀）
+    expect(report!.sections.map((s) => s.id)).toEqual(['json', 'drift', 'orphan', 'consistency']);
+    report!.sections.forEach((s, i) => expect(s.name.startsWith(CHECK_LABELS[i])).toBe(true));
+  });
+
+  it('eff P2-1：onProgress 携带子任务进度（subDone/subTotal），检查项内可插值', async () => {
+    const { app } = makeApp({ [`${DIR}/memo.json`]: '[]', [`${DIR}/favorites.json`]: '[]' });
+    const subs: Array<{ index: number; subDone?: number; subTotal?: number }> = [];
+    await runCheckup(app, {
+      onProgress: (p) => subs.push({ index: p.index, subDone: p.subDone, subTotal: p.subTotal }),
+    });
+    const jsonSubs = subs.filter((s) => s.index === 0 && s.subTotal);
+    expect(jsonSubs.length).toBeGreaterThanOrEqual(2);
+    const last = jsonSubs[jsonSubs.length - 1]!;
+    expect(last.subDone).toBe(last.subTotal);
+  });
+
+  it('eff P3-6：缓存数据指纹——数据未变 clean；扫描文件消失后 changed', async () => {
+    const { cacheFreshness } = await import('../../src/checkup/run');
+    const { app, vault } = makeApp({ [`${DIR}/memo.json`]: '[]' });
+    await runCheckup(app);
+    expect(cacheFreshness(app)).toBe('clean'); // mtime 未变（MockVault 恒定 stat）
+    // 任一扫描文件消失 → 指纹键数变化 → changed
+    vault.files.delete(`${DIR}/memo.json`);
+    expect(cacheFreshness(app)).toBe('changed');
   });
 });
 
@@ -543,7 +830,8 @@ describe('一键修复扩展（issue 339）', () => {
       { severity: 'warn' as const, title: 't', fixGroup: 'knowledge', fixKey: 'kt-1|note' },
       { severity: 'warn' as const, title: 't', fixGroup: 'knowledge', fixKey: 'kt-1|video' },
     ];
-    const [outcome] = await fixOrphanIssues(app, issues);
+    const { outcomes: fixOutcomes } = await fixOrphanIssues(app, issues);
+    const [outcome] = fixOutcomes;
     expect(outcome.fixed).toBe(2);
     const mid = JSON.parse(vault.files.get(`${DIR}/knowledge.json`)!);
     expect(mid[0].notePath).toBeNull();
@@ -576,7 +864,8 @@ describe('一键修复扩展（issue 339）', () => {
       { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-marks', fixKey: JSON.stringify(['url:https://x', '甲', '文献盒/gone.md']) },
       { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-marks', fixKey: JSON.stringify(['url:https://y', '丙', '文献盒/gone2.md']) },
     ];
-    const [outcome] = await fixOrphanIssues(app, issues);
+    const { outcomes: fixOutcomes } = await fixOrphanIssues(app, issues);
+    const [outcome] = fixOutcomes;
     expect(outcome.fixed).toBe(2);
     const mid = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
     expect(mid.marks['url:https://x'].map((m: any) => m.find)).toEqual(['乙']); // 命中者保留
@@ -599,7 +888,8 @@ describe('一键修复扩展（issue 339）', () => {
     const issues = [
       { severity: 'warn' as const, title: 't', fixGroup: 'clipbook-source', fixKey: JSON.stringify(['url:https://x', '文献盒/gone.md']) },
     ];
-    const [outcome] = await fixOrphanIssues(app, issues);
+    const { outcomes: fixOutcomes } = await fixOrphanIssues(app, issues);
+    const [outcome] = fixOutcomes;
     expect(outcome.fixed).toBe(1);
     const mid = JSON.parse(vault.files.get(`${DIR}/clipbook.json`)!);
     expect(mid.pendingSource['url:https://x']).toEqual(['文献盒/keep.md']);
