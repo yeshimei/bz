@@ -212,8 +212,9 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   } },
   // 重跑挂载建议（issue 319）：当前白板主卡的建议重跑；没开白板就提示
   { id: 'bz-knowledge-mount-refresh', name: '重跑挂载建议', icon: 'refresh-cw', callback: () => void refreshMountTree() },
-  // 附件搬移（ticket 65 新域：移动当前笔记附件到指定文件夹，fileManager 自动更新内部链接）
-  { id: ATTACH_COMMAND_ID, name: '移动附件', icon: DOMAIN_ICONS.attach, callback: () => openAttachMove(getApp()) },
+  // 附件搬移（ticket 65 新域：搬移当前笔记附件到指定文件夹，fileManager 自动更新内部链接；
+  // 呈报#64/AT1：命令/弹窗「移动附件」与右键「搬移此笔记附件」双动词统一为「搬移」）
+  { id: ATTACH_COMMAND_ID, name: '搬移附件', icon: DOMAIN_ICONS.attach, callback: () => openAttachMove(getApp()) },
   // 保险箱（encrypt 域：移出式清单容器加密；原名「加密保险箱」，ticket 68 更名仅文案）
   { id: 'bz-encrypt-open', name: '保险库', icon: DOMAIN_ICONS.encrypt, callback: () => openEncrypt(getApp()) },
   { id: 'bz-encrypt-lock', name: '加密当前笔记', icon: 'lock-keyhole', callback: () => encryptCurrentNote(getApp()) },

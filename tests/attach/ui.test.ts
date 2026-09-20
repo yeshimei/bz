@@ -96,7 +96,7 @@ describe('runMove 执行编排（fileManager.renameFile）', () => {
     expect(vault.files.get('笔记/章.md')).toBe('图：![[a.png]] 见 [[note2]] 与 ![x](assets/b.png)');
     expect(vault.files.get('其他.md')).toBe('也引用 ![[a.png]]');
     expect(settings.attachLastFolder).toBe('附件');
-    expect(hasNotice(/已移动 2 个附件到「附件」，改名 0 个，内部链接已自动更新/)).toBe(true);
+    expect(hasNotice(/已搬移 2 个附件到「附件」，改名 0 个，内部链接已自动更新/)).toBe(true);
     // AC-1 术语守卫：用户可见文案不含「资源」字样（CONTEXT.md _Avoid_ 清单）
     expect(hasNotice(/资源/)).toBe(false);
   });
@@ -126,7 +126,7 @@ describe('runMove 执行编排（fileManager.renameFile）', () => {
     const res = await runMove(app, vault.getAbstractFileByPath('n.md'), '附件');
     expect(res).toBeNull();
     expect(calls).toHaveLength(0);
-    expect(hasNotice('当前笔记没有可移动的附件')).toBe(true);
+    expect(hasNotice('当前笔记没有可搬移的附件')).toBe(true);
   });
 
   it('附件已在目标文件夹 → 提示且不重复移动', async () => {
@@ -163,7 +163,7 @@ describe('runMove 执行编排（fileManager.renameFile）', () => {
     const res = await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件', []);
     expect(res).toBeNull();
     expect(calls).toHaveLength(0);
-    expect(hasNotice('未勾选任何要移动的附件')).toBe(true);
+    expect(hasNotice('未勾选任何要搬移的附件')).toBe(true);
   });
 
   it('无 fileManager.renameFile（异常环境）→ 回退 vault.rename，通知链接未自动更新', async () => {
@@ -182,7 +182,7 @@ describe('runMove 执行编排（fileManager.renameFile）', () => {
     expect(summary).toEqual({ moved: 1, renamed: 0, linksAuto: false });
     expect(vault.files.has('笔记/a.png')).toBe(false);
     expect(vault.files.has('附件/a.png')).toBe(true);
-    expect(hasNotice(/已移动 1 个附件到「附件」，改名 0 个，链接未自动更新/)).toBe(true);
+    expect(hasNotice(/已搬移 1 个附件到「附件」，改名 0 个，链接未自动更新/)).toBe(true);
   });
 
   it('回归（P2 口径）：部分移动失败 → moved 只计成功数 + failedOps 明细 + 重试出口补搬', async () => {
@@ -204,9 +204,9 @@ describe('runMove 执行编排（fileManager.renameFile）', () => {
     expect(summary).toEqual({ moved: 1, renamed: 0, linksAuto: true, failedOps: [{ fromPath: '笔记/b.png', missing: false }] });
     expect(vault.files.has('附件/a.png')).toBe(true);
     expect(vault.files.has('笔记/b.png')).toBe(true); // 失败的原文件未动
-    expect(hasNotice('已移动 1 个附件到「附件」，改名 0 个，内部链接已自动更新，失败 1 个')).toBe(true);
+    expect(hasNotice('已搬移 1 个附件到「附件」，改名 0 个，内部链接已自动更新，失败 1 个')).toBe(true);
     // 失败明细通知（notifyActionError 范式）+「重试」出口
-    expect(hasNotice(/附件搬移失败：1 个移动出错（如 笔记\/b.png），请重试/)).toBe(true);
+    expect(hasNotice(/附件搬移失败：1 个搬移出错（如 笔记\/b.png），请重试/)).toBe(true);
     const retryBtn = [...document.querySelectorAll('.bz-notice-action')].find((el) => el.textContent === '重试');
     expect(retryBtn).toBeTruthy();
     failB = false;
@@ -305,7 +305,7 @@ describe('撤销搬移（notifyUndo，误搬兜底）', () => {
 
     expect(summary).toBeNull();
     // AC-2/UI-P3-3 文案 gate：0 成功不宣称「链接已自动更新」，专用文案如实
-    expect(hasNotice('附件搬移失败：0/1 个移动成功（原文件未改动）')).toBe(true);
+    expect(hasNotice('附件搬移失败：0/1 个搬移成功（原文件未改动）')).toBe(true);
     expect(hasNotice(/链接已自动更新|链接未自动更新/)).toBe(false);
     // 全失败无撤销；action 出口是「重试」而非撤销（AF-3）
     const action = document.querySelector('.bz-notice-action');
@@ -343,12 +343,12 @@ describe('大批量进度反馈（≥10 个 progress i/N）', () => {
     const p = runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件');
     await new Promise((r) => setTimeout(r, 0));
     // 首个移动未放行 → 进度通知停留在 1/12（逐个更新语义）
-    expect(hasNotice('正在移动附件 1/12')).toBe(true);
+    expect(hasNotice('正在搬移附件 1/12')).toBe(true);
     release();
     await p;
 
     expect(vault.files.has('附件/f11.png')).toBe(true);
-    expect(hasNotice(/已移动 12 个附件到「附件」/)).toBe(true);
+    expect(hasNotice(/已搬移 12 个附件到「附件」/)).toBe(true);
     // 批量执行「中止」出口（EFF-5）：progress 帧挂「中止」钮
     // （中止行为用例见下方「批量执行中止」组，此处只验钮在）
   });
@@ -362,8 +362,8 @@ describe('大批量进度反馈（≥10 个 progress i/N）', () => {
 
     await runMove(app, vault.getAbstractFileByPath('笔记/章.md'), '附件');
 
-    expect(hasNotice(/正在移动附件/)).toBe(false);
-    expect(hasNotice(/已移动 9 个附件到「附件」/)).toBe(true);
+    expect(hasNotice(/正在搬移附件/)).toBe(false);
+    expect(hasNotice(/已搬移 9 个附件到「附件」/)).toBe(true);
   });
 
   it('批量执行中止（EFF-5）：点「中止」后后续不再移动，已移动部分照常出汇总 + 撤销', async () => {
@@ -398,7 +398,7 @@ describe('大批量进度反馈（≥10 个 progress i/N）', () => {
     // 循环在第 2 轮前退出：仅第 1 个附件移动
     expect(summary?.aborted).toBe(true);
     expect(summary?.moved).toBe(1);
-    expect(hasNotice('已移动 1 个附件到「附件」，改名 0 个，内部链接已自动更新，已中止')).toBe(true);
+    expect(hasNotice('已搬移 1 个附件到「附件」，改名 0 个，内部链接已自动更新，已中止')).toBe(true);
     // 已移动部分可撤销
     const undoBtn = [...document.querySelectorAll('.bz-notice-action')].find((el) => el.textContent === '撤销');
     expect(undoBtn).toBeTruthy();
@@ -427,8 +427,8 @@ describe('可勾选清单预览（openMovePreview）', () => {
 
     const pop = document.querySelector('.bz-attach-preview-pop') as HTMLElement;
     expect(pop).not.toBeNull();
-    expect(pop.querySelector('.bz-dialog-title')!.textContent).toBe('移动附件');
-    expect(pop.textContent).toContain('将移动 2 个附件到「附件」');
+    expect(pop.querySelector('.bz-dialog-title')!.textContent).toBe('搬移附件');
+    expect(pop.textContent).toContain('将搬移 2 个附件到「附件」');
     expect(pop.textContent).toContain('1 个将改名');
     const rows = [...pop.querySelectorAll<HTMLElement>('.bz-attach-preview-row')];
     expect(rows).toHaveLength(2);
@@ -440,14 +440,14 @@ describe('可勾选清单预览（openMovePreview）', () => {
     const boxes = [...pop.querySelectorAll<HTMLInputElement>('.bz-attach-preview-check')];
     expect(boxes.every((b) => b.checked)).toBe(true);
     const ok = document.getElementById('bz-attach-preview-ok') as HTMLButtonElement;
-    expect(ok.textContent).toContain('移动 2 个');
+    expect(ok.textContent).toContain('搬移 2 个');
     // 全部取消勾选 → 禁用
     for (const b of boxes) {
       b.checked = false;
       b.dispatchEvent(new Event('change'));
     }
     expect(ok.disabled).toBe(true);
-    expect(ok.textContent).toContain('移动 0 个');
+    expect(ok.textContent).toContain('搬移 0 个');
   });
 
   it('取消勾选个别附件 → 确认后只移动勾选项', async () => {
@@ -463,7 +463,7 @@ describe('可勾选清单预览（openMovePreview）', () => {
     boxes[1].checked = false; // 排除 b（改名那个）
     boxes[1].dispatchEvent(new Event('change'));
     const ok = document.getElementById('bz-attach-preview-ok') as HTMLButtonElement;
-    expect(ok.textContent).toContain('移动 1 个');
+    expect(ok.textContent).toContain('搬移 1 个');
     ok.click();
     await new Promise((r) => setTimeout(r, 0));
 
@@ -498,7 +498,7 @@ describe('moveAttachments 命令入口', () => {
     const { app } = withRename(vault, 'n.md');
     moveAttachments(app);
     await new Promise((r) => setTimeout(r, 0));
-    expect(hasNotice('当前笔记没有可移动的附件')).toBe(true);
+    expect(hasNotice('当前笔记没有可搬移的附件')).toBe(true);
     expect(document.getElementById('bz-path-picker-mask')).toBeNull();
   });
 
@@ -549,7 +549,7 @@ describe('moveAttachments 命令入口', () => {
     // 可勾选清单预览弹出（执行前文件未动）
     await vi.waitFor(() => expect(document.querySelector('.bz-attach-preview-pop')).not.toBeNull());
     const pop = document.querySelector('.bz-attach-preview-pop') as HTMLElement;
-    expect(pop.textContent).toContain('将移动 1 个附件到「附件」');
+    expect(pop.textContent).toContain('将搬移 1 个附件到「附件」');
     expect(pop.textContent).toContain('1 个将改名');
     const previewRow = pop.querySelector('.bz-attach-preview-row') as HTMLElement;
     expect(previewRow.dataset.from).toBe('笔记/a.png');
@@ -561,7 +561,7 @@ describe('moveAttachments 命令入口', () => {
     await new Promise((r) => setTimeout(r, 50));
     expect(calls).toEqual([['笔记/a.png', '附件/a (1).png']]);
     expect(vault.files.has('附件/a (1).png')).toBe(true);
-    expect(hasNotice(/已移动 1 个附件到「附件」，改名 1 个/)).toBe(true);
+    expect(hasNotice(/已搬移 1 个附件到「附件」，改名 1 个/)).toBe(true);
   });
 
   it('P20 修复自相矛盾：选「（库根目录）」不再被「未选择目标文件夹」拒绝——空串目标 = 移动到 vault 根', async () => {
@@ -583,7 +583,7 @@ describe('moveAttachments 命令入口', () => {
     expect(summary).toEqual({ moved: 1, renamed: 0, linksAuto: true });
     expect(calls).toEqual([['笔记/a.png', 'a.png']]);
     expect(vault.files.has('a.png')).toBe(true);
-    expect(hasNotice(/已移动 1 个附件到「库根目录」/)).toBe(true);
+    expect(hasNotice(/已搬移 1 个附件到「库根目录」/)).toBe(true);
   });
 
   it('统一路径选择器（ticket 128）：记忆上次文件夹 attachLastFolder → 初始高亮；选（库根目录）→ 空串目标', async () => {
@@ -619,7 +619,7 @@ describe('moveAttachments 命令入口', () => {
     (document.getElementById('bz-attach-preview-ok') as HTMLElement).click();
     await new Promise((r) => setTimeout(r, 60));
     expect(calls).toEqual([['笔记/a.png', 'a.png']]);
-    expect(hasNotice(/已移动 1 个附件到「库根目录」/)).toBe(true);
+    expect(hasNotice(/已搬移 1 个附件到「库根目录」/)).toBe(true);
   });
 });
 
@@ -708,7 +708,7 @@ describe('文件右键菜单入口（ensureAttachFileMenu）', () => {
 
     expect(calls).toEqual([['笔记/a.png', '归档/a.png']]);
     expect(vault.files.has('归档/a.png')).toBe(true);
-    expect(hasNotice(/已移动 1 个附件到「归档」/)).toBe(true);
+    expect(hasNotice(/已搬移 1 个附件到「归档」/)).toBe(true);
   });
 });
 
@@ -837,7 +837,7 @@ describe('防重入守卫（UI-P3-1/ARCH-2）', () => {
     await new Promise((r) => setTimeout(r, 0));
 
     expect(document.querySelectorAll('.bz-attach-preview-pop')).toHaveLength(1);
-    expect(hasNotice('移动清单已打开，请先确认或关闭')).toBe(true);
+    expect(hasNotice('搬移清单已打开，请先确认或关闭')).toBe(true);
   });
 
   it('runMove 并行拦截：上一轮进行中再次调用只提示不竞争', async () => {
@@ -953,10 +953,10 @@ describe('预览弹窗交互增强（AF-S1 键盘 / EFF-3 requestClose / EFF-2 �
     expect(toggles.map((t) => t.textContent)).toEqual(['全选', '全不选']);
     const ok = document.getElementById('bz-attach-preview-ok') as HTMLButtonElement;
     toggles[1].click(); // 全不选
-    expect(ok.textContent).toContain('移动 0 个');
+    expect(ok.textContent).toContain('搬移 0 个');
     expect(ok.disabled).toBe(true);
     toggles[0].click(); // 全选
-    expect(ok.textContent).toContain('移动 2 个');
+    expect(ok.textContent).toContain('搬移 2 个');
     expect(ok.disabled).toBe(false);
   });
 
@@ -978,13 +978,13 @@ describe('预览弹窗交互增强（AF-S1 键盘 / EFF-3 requestClose / EFF-2 �
     expect(pop.querySelectorAll('.bz-attach-preview-row')).toHaveLength(300); // 渲染截断
     expect(pop.querySelector('.bz-attach-preview-more')!.textContent).toContain('已显示前 300 个（共 305 个附件）');
     const ok = document.getElementById('bz-attach-preview-ok') as HTMLButtonElement;
-    expect(ok.textContent).toContain('移动 305 个'); // 勾选语义不因渲染截断丢行
+    expect(ok.textContent).toContain('搬移 305 个'); // 勾选语义不因渲染截断丢行
 
     // 排除一个已渲染行 → 提交集合按排除集反向推导（未渲染行保持默认勾选）
     const firstBox = pop.querySelector<HTMLInputElement>('.bz-attach-preview-check')!;
     firstBox.checked = false;
     firstBox.dispatchEvent(new Event('change'));
-    expect(ok.textContent).toContain('移动 304 个');
+    expect(ok.textContent).toContain('搬移 304 个');
 
     ok.click();
     await vi.waitFor(() => expect(calls.length).toBe(304));
