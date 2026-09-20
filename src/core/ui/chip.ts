@@ -1,6 +1,6 @@
 /* ============================================================
  * bz 组件库 · Chip（src/core/ui/chip.ts）
- * 胶囊 chip：选中/锁定/计数/可删。
+ * 胶囊 chip：选中/锁定/计数/可删；切换型（显式声明选中态）缺省带 aria-pressed。
  * ============================================================ */
 import type { BzChipOpts } from './types';
 import { uiIcon } from './icon';
@@ -11,10 +11,18 @@ export function uiChip(opts: BzChipOpts): HTMLButtonElement {
   c.type = 'button';
   const cls = ['bz-chip'];
   // 选中态必须显式声明（selected=实底 / selectedSoft=软底）；removable 不再自动暗示选中（L3）
+  // 显式声明选中态即「可按压切换」chip → 缺省挂 aria-pressed（深审残款：读屏器首屏即拿到按压态，
+  // 消费方重渲重建新实例时属性随态更新）；未声明 = 纯静态标签/动作/锁定 chip，不强加（动作钮
+  // 不该伪装成 toggle）。两态都声明时 selected 优先（与 --on/--sel 的 if/else 序一致）。
+  const pressed =
+    opts.selected !== undefined ? !!opts.selected :
+    opts.selectedSoft !== undefined ? !!opts.selectedSoft :
+    null;
   if (opts.selected) cls.push('bz-chip--on');
   else if (opts.selectedSoft) cls.push('bz-chip--sel');
   if (opts.locked) cls.push('bz-chip--locked');
   c.className = cls.join(' ');
+  if (pressed !== null) c.setAttribute('aria-pressed', String(pressed));
   if (opts.title) c.title = opts.title;
   if (opts.disabled) c.disabled = true;
   if (opts.icon) c.appendChild(uiIcon(opts.icon));
