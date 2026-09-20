@@ -927,8 +927,19 @@ function jumpToNote(it: MemoItem): void {
   })();
 }
 
+/** 勾选 300ms 防抖窗口的「待定」视觉态（呈报#12 12A）：窗口内勾选圈挂 bz-memo-pending
+ *  （域样式呼吸/半亮），落定/反悔即摘除。直接切 DOM 类不整卡重渲——窗口内列表 DOM
+ *  不动、键盘焦点（checkHtml tabindex）不丢；列表卡与移动抽屉头两处勾选圈同锚点扫 */
+function syncPendingCheck(id: string, pending: boolean): void {
+  document
+    .querySelectorAll<HTMLElement>(
+      `.bz-memo-card[data-memo-id="${id}"] [data-memo-check], .bz-memo-sheet-entry [data-memo-check]`,
+    )
+    .forEach((el) => el.classList.toggle('bz-memo-pending', pending));
+}
+
 /** 行内勾选切换（列表卡与移动抽屉头共用）：已完成 = 恢复；未完成 = 300ms 防抖后标记完成
- *  （防抖窗口内再点 = 反悔取消） */
+ *  （防抖窗口内再点 = 反悔取消；呈报#12 12A：窗口内勾选圈挂「待定」态，防「没点上」二击） */
 function toggleCheck(it: MemoItem): void {
   // 已恢复路径（已完成条目勾选 = 恢复）
   if (it.completed) {
@@ -939,13 +950,27 @@ function toggleCheck(it: MemoItem): void {
   if (M.completeTimers.has(it.id)) {
     clearTimeout(M.completeTimers.get(it.id));
     M.completeTimers.delete(it.id);
+    syncPendingCheck(it.id, false); // 反悔：待定态即摘
     return;
   }
   const timer = setTimeout(() => {
     M.completeTimers.delete(it.id);
+    syncPendingCheck(it.id, false); // 落定：待定态摘除，refresh 后划线
     void completeItem(it);
   }, 300);
   M.completeTimers.set(it.id, timer);
+  syncPendingCheck(it.id, true); // 待定：窗口内呼吸/半亮
+}
+
+/** 完成去向轻反馈（呈报#13 13A）：条目挪进已完成折叠区（默认收起）后，折叠条短暂
+ *  高亮 + 计数跳动——「确实勾上了、去哪了」当场有说法；不做自动展开（13B 拍板不做）。
+ *  reflow 抖位重启动画防连续完成粘连；类随下次 renderAll 重建 DOM 自然消失。 */
+function bumpDoneBar(): void {
+  const bar = M.overlay?.querySelector('[data-memo-donebar]') as HTMLElement | null;
+  if (!bar) return;
+  bar.classList.remove('bz-memo-donebar-bump');
+  void bar.offsetWidth; // 强制 reflow：重启动画
+  bar.classList.add('bz-memo-donebar-bump');
 }
 
 async function completeItem(it: MemoItem): Promise<void> {
@@ -957,6 +982,7 @@ async function completeItem(it: MemoItem): Promise<void> {
     console.error(e);
   }
   await refresh();
+  bumpDoneBar();
 }
 
 async function restoreItem(it: MemoItem): Promise<void> {

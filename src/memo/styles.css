@@ -124,6 +124,21 @@
 .bz-memo-done-more:hover { background: var(--bz-brand-soft); }
 }
 
+/* 完成去向轻反馈（呈报#13 13A）：条目挪进默认收起的折叠区后，折叠条短暂高亮 +
+   计数跳动（类 bz-memo-donebar-bump 由 ui.ts bumpDoneBar 挂，随下次渲染自然消失；
+   不自动展开，13B 拍板不做）。动画播放期压过静态声明，位置无关层叠。 */
+.bz-memo-donebar.bz-memo-donebar-bump { animation: bz-memo-donebar-bump 0.9s ease; }
+.bz-memo-donebar.bz-memo-donebar-bump .bz-memo-donebar-cnt { animation: bz-memo-donebar-cnt-bump 0.45s ease; }
+@keyframes bz-memo-donebar-bump {
+  0% { background: var(--bz-brand-soft); border-color: var(--bz-brand); color: var(--bz-text-1); }
+  100% { background: var(--bz-surface-1); }
+}
+@keyframes bz-memo-donebar-cnt-bump {
+  0% { color: var(--bz-brand); transform: scale(1.3); }
+  70% { color: var(--bz-brand); transform: scale(1); }
+  100% { color: var(--bz-text-3); transform: scale(1); }
+}
+
 
 /* ---- 条目卡（右键菜单 / 长按抽屉由 core/item-actions 提供） ---- */
 .bz-memo-card {
@@ -1082,6 +1097,27 @@
 .bz-skinprev-editorial::after {
   content: ''; position: absolute; left: 16%; top: 18%; width: 46%; height: 16%;
   background: #141414;
+}
+
+/* ═══════════ 拍板执行批 · 勾选待定态 + 移动弹窗键盘适配（呈报#12/#18）═══════════
+   落位要求：两个皮肤段**之后**（待定态 (0,2,0) 与肤内勾选圈基础规则同特异性，
+   靠后写者赢才能压住换装）、移动端收口段**之前**（该段须保持文件最后一节）。 */
+
+/* 勾选 300ms 反悔窗口「待定」态（呈报#12 12A）：品牌色边底 + 半亮呼吸——窗口内一眼
+   可知「点上了，正在等落定」，防「没点上」二击误反悔；落定（checked 划线）与反悔
+   （类摘除）即恢复。窗口仅 300ms，无限循环动画实际只存活一瞬。
+   reduced-motion 降级放缓不减义（clipbook 先例：不用 animation:none 一刀切）。 */
+.bz-memo-check.bz-memo-pending {
+  border-color: var(--bz-brand);
+  background: var(--bz-brand-soft);
+  animation: bz-memo-check-pending 0.55s ease-in-out infinite alternate;
+}
+@keyframes bz-memo-check-pending {
+  from { opacity: 1; }
+  to { opacity: 0.4; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bz-memo-check.bz-memo-pending { animation-duration: 1.8s; }
 }
 
 /* ═══════════ 移动端收口段（issue 266 → 269 收敛）═══════════
