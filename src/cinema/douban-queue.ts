@@ -8,7 +8,7 @@
  */
 import type { App, TFile } from 'obsidian';
 import { requestUrl } from 'obsidian';
-import { notice } from '../core/notice';
+import { notice, notify } from '../core/notice';
 import { sleep } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { M } from './state';
@@ -42,8 +42,11 @@ const attempted = new Set<string>();
 /** G8：已删除影片的取消集合——正在抓取时影片被删，完成后不再记失败 */
 const cancelled = new Set<string>();
 const failedNames: string[] = [];
+/** 本轮失败条目（呈报#23 / C4「重试」动作的重入队数据源，随 failedNames 同步清） */
+let failedEntries: QueueEntry[] = [];
 /** 风控失败单独聚合（文案区分：重启 Obsidian 重载插件后随 sweep 自动重试，非数据缺失） */
 let blockedNames: string[] = [];
+let blockedEntries: QueueEntry[] = [];
 let pumping = false;
 /** 测试注入 */
 let fetchFn: FetchNote | null = null;
@@ -210,8 +213,13 @@ async function pump(): Promise<void> {
         continue;
       }
       if (!r.ok) {
-        if (r.reason === 'blocked') blockedNames.push(entry.name);
-        else failedNames.push(entry.name);
+        if (r.reason === 'blocked') {
+          blockedNames.push(entry.name);
+          blockedEntries.push(entry);
+        } else {
+          failedNames.push(entry.name);
+          failedEntries.push(entry);
+        }
       }
       refreshAfterFetch();
     }
@@ -219,15 +227,52 @@ async function pump(): Promise<void> {
     pumping = false;
   }
   // 失败聚合通知：风控与一般失败分开文案。
-  //  会话去重只在插件卸载时重置，重开面板 sweep 会被拦下、不会重试（C5：文案如实）
+  //  会话去重只在插件卸载时重置，重开面板 sweep 会被拦下、不会重试（C5：文案如实）。
+  //  呈报#23（C4）：两份通知都挂「重试」动作——清会话去重标记重新入队（一键替代重启重载）。
+  //  C5 文案保留不冲突：不重试它仍会在重启重载后自动补抓。
   if (blockedNames.length > 0) {
-    notice(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join('、')}（重启 Obsidian（重载插件）后会自动重试）`, 'error');
+    const entries = blockedEntries; // 先捕获本轮数组：模块变量随通知清零，onClick 以捕获值为准
+    notify(`豆瓣风控拦截，以下影片本轮未抓到：${blockedNames.join('、')}（重启 Obsidian（重载插件）后会自动重试）`, {
+      type: 'error',
+      action: { label: '重试', onClick: () => requeueFailed(entries) },
+    });
     blockedNames = [];
+    blockedEntries = [];
   }
   if (failedNames.length > 0) {
-    notice(`以下影片豆瓣信息获取失败：${failedNames.join('、')}（重启 Obsidian（重载插件）后会自动重试）`, 'error');
+    const entries = failedEntries;
+    notify(`以下影片豆瓣信息获取失败：${failedNames.join('、')}（重启 Obsidian（重载插件）后会自动重试）`, {
+      type: 'error',
+      action: { label: '重试', onClick: () => requeueFailed(entries) },
+    });
     failedNames.length = 0;
+    failedEntries = [];
   }
+}
+
+/**
+ * 失败通知「重试」（呈报#23 / C4）：清会话去重标记后重新入队（enqueueDoubanFetch 内会
+ * 重置 loading 打点与队列快照）。笔记已删除的条目跳过并对齐审计#12 口径清去重标记；
+ * 全部不可重试时如实说明。条目**消费即出列**——重复点击不重复入队（防重复请求踩限流）。
+ */
+function requeueFailed(entries: QueueEntry[]): void {
+  const app = M.appRef;
+  if (!app) return;
+  let added = 0;
+  let gone = 0;
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const e = entries[i];
+    entries.splice(i, 1);
+    attempted.delete(e.file.path);
+    const file = app.vault.getAbstractFileByPath(e.file.path) as TFile | null;
+    if (!file) {
+      gone++;
+      continue;
+    }
+    if (enqueueDoubanFetch(file, e.name)) added++;
+  }
+  if (added > 0) notice(`已重新入队 ${added} 部影片的豆瓣抓取`);
+  else if (gone > 0) notice('没有可重试的影片', 'warning');
 }
 
 /** 抓取落盘后刷新：立即一次（loading 退场）+ 延迟一次（等 metadataCache 消化磁盘变化，
@@ -251,6 +296,8 @@ export function shutdownDoubanQueue(): void {
   attempted.clear();
   cancelled.clear();
   failedNames.length = 0;
+  failedEntries = [];
   blockedNames = [];
+  blockedEntries = [];
   pumping = false;
 }

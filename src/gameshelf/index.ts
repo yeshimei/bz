@@ -12,7 +12,7 @@ import { rebuildItems } from './notes';
 import { ensurePosters, mediaItemsOf, unloadPosters } from './posters';
 import { ensureBackfill, unloadBackfill } from './backfill';
 import { ensureZhNames, unloadZhNames } from './names';
-import { closePanel, openPanel, renderAll } from './ui';
+import { closePanel, openPanel, renderAll, resetScrollMemo } from './ui';
 
 let initialized = false;
 
@@ -90,6 +90,7 @@ export async function syncGameshelf(app: App): Promise<void> {
 export function unloadGameshelf(): void {
   initialized = false;
   closePanel();
+  resetScrollMemo(); // GS4：滚位记忆是会话内的——插件卸载即作废，重装/重载后从顶部开始
   unloadPosters();
   unloadZhNames();
   unloadBackfill();

@@ -511,8 +511,11 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     (el.querySelector('.j-review') as HTMLElement).style.display = show ? '' : 'none';
   }));
   // 表单 Enter 提交（深审批A P3-13）：core bindFormSubmit——名称框纯 Enter 直存，
-  // 影评 textarea 回车换行天然豁免；Ctrl/⌘+Enter 恒提交。autofocus 不做（用户拍板项）
+  // 影评 textarea 回车换行天然豁免；Ctrl/⌘+Enter 恒提交
   bindFormSubmit(el, () => (el.querySelector('.j-save') as HTMLElement | null)?.click());
+  // 桌面端打开即聚焦名称框（呈报#7 / C2，2026-09-19 拍板改口径：省一次点击）；
+  // 移动端维持不聚焦——弹窗即弹软键盘遮挡表单（core settings-modal「移动端跳过 input 聚焦」同款口径）
+  if (!isMobileEnv()) (el.querySelector('.j-name') as HTMLInputElement | null)?.focus();
   el.querySelector('.j-save')?.addEventListener('click', () => {
     const name = (el.querySelector('.j-name') as HTMLInputElement).value.trim();
     if (!name) { notice('请输入名称', 'warning'); return; }
@@ -780,14 +783,49 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
 function bindMidnight(sec: HTMLElement, app: App): void {
   // 季圆点悬浮预览（仅桌面壳——hover 是鼠标惯用件，触屏 tap 会发 mouseover 却不发 mouseout，
   // 换脸会滞留）。sec 级委托：网格每次重渲染都换新卡片元素，逐个绑定会漏绑/泄漏。
-  if (!sec.classList.contains('mob')) {
-    sec.addEventListener('mouseover', (e) => {
-      const dot = (e.target as HTMLElement).closest('.season-dots i') as HTMLElement | null;
-      if (dot) peekSeasonDot(dot, app);
+  // 呈报#14（C3）：圆点本体 6px，悬浮换脸经常点不中。外观一点不动（2026-09-18 拍板），
+  // 只放宽**委托目标**做等效热区——衬底/间隙也计入命中，落点不在圆点上时取几何最近的一枚
+  // （core .bz-touch-target 的 ::after 外扩范式是 pointer:coarse 档，圆点换脸是桌面 hover
+  // 主路径且外扩圆会盖住相邻圆点造成误换季，故走「委托改容器最近圆点匹配」这一路）。
+  const nearestSeasonDot = (target: EventTarget | null, e: MouseEvent): HTMLElement | null => {
+    const el = target as HTMLElement | null;
+    const box = el?.closest?.('.season-dots');
+    if (!box) return null;
+    const direct = el!.closest('.season-dots i') as HTMLElement | null;
+    if (direct) return direct;
+    let best: HTMLElement | null = null;
+    let bestDist = Infinity;
+    box.querySelectorAll<HTMLElement>('i').forEach((d) => {
+      const r = d.getBoundingClientRect();
+      const dx = e.clientX - (r.left + r.width / 2);
+      const dy = e.clientY - (r.top + r.height / 2);
+      const dist = dx * dx + dy * dy;
+      if (dist < bestDist) {
+        bestDist = dist;
+        best = d;
+      }
     });
+    return best;
+  };
+  let peekedDot: HTMLElement | null = null; // 当前换脸中的圆点：同点不重刷（防 mousemove 反复重写 innerHTML 闪图）
+  const peekNearest = (e: MouseEvent): void => {
+    const dot = nearestSeasonDot(e.target, e);
+    if (dot === peekedDot) return;
+    if (dot) peekSeasonDot(dot, app);
+    else if (peekedDot) restFace(peekedDot);
+    peekedDot = dot;
+  };
+  if (!sec.classList.contains('mob')) {
+    sec.addEventListener('mouseover', peekNearest);
+    sec.addEventListener('mousemove', peekNearest); // 衬底/间隙内滑行不换元素也跟进最近圆点
     sec.addEventListener('mouseout', (e) => {
-      const dot = (e.target as HTMLElement).closest('.season-dots i') as HTMLElement | null;
-      if (dot) restFace(dot);
+      // 还在圆点容器内（圆点↔圆点、圆点↔衬底）交给 mouseover/mousemove 换脸，不打回静息态
+      const to = e.relatedTarget as HTMLElement | null;
+      if (to?.closest?.('.season-dots')) return;
+      if (peekedDot) {
+        restFace(peekedDot);
+        peekedDot = null;
+      }
     });
   }
   // 深审批 B #4：卡片键盘可达——.pcard 已带 tabindex=0/role=button（shared.cardHtml），

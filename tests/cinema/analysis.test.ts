@@ -269,7 +269,29 @@ describe('ADR-0090 内嵌页板块对照（19 板块不丢能力）', () => {
     const icons = html.match(/data-lucide="/g) || [];
     expect(icons.length).toBeGreaterThanOrEqual(19);
     expect(html).toContain('data-lucide="clapperboard"'); // 类型分布（原型 SVG.film）
-    expect(html).toContain('data-lucide="bar-chart-3"'); // 其余板块（原型 SVG.stat）
+    // 呈报#58（C6）：19 板块按语义各配图标，不再共用 bar-chart-3
+    expect(html).not.toContain('data-lucide="bar-chart-3"');
+    expect(html).toContain('data-lucide="calendar-days"'); // 年度观影趋势
+    expect(html).toContain('data-lucide="hourglass"'); // 片龄画像
+    expect(html).toContain('data-lucide="clock"'); // 片长画像
+    expect(html).toContain('data-lucide="calendar"'); // 月度观影分布
+    expect(html).toContain('data-lucide="activity"'); // 观影节奏
+    expect(html).toContain('data-lucide="star"'); // 个人评分分布
+    expect(html).toContain('data-lucide="trending-up"'); // 评分趋势
+    expect(html).toContain('data-lucide="scale"'); // 打分习惯
+    expect(html).toContain('data-lucide="tags"'); // 题材偏好
+    expect(html).toContain('data-lucide="globe"'); // 制片国家/地区
+    expect(html).toContain('data-lucide="video"'); // 最爱导演
+    expect(html).toContain('data-lucide="users"'); // 最爱主演
+    expect(html).toContain('data-lucide="repeat"'); // 真爱重复
+    expect(html).toContain('data-lucide="quote"'); // 影评关键词
+    expect(html).toContain('data-lucide="trophy"'); // 我的高分
+    expect(html).toContain('data-lucide="layers"'); // 系列追踪
+    expect(html).toContain('data-lucide="tv"'); // 追剧深度
+    expect(html).toContain('data-lucide="bookmark"'); // 想看清单
+    // 源码注释不得漏进模板串（漏了会渲染成正文文本——自审抓过的回归）
+    expect(html).not.toContain('呈报#');
+    expect(html).not.toContain('// 板块图标');
     // 原 19 板块标题 emoji 全无残留
     for (const emoji of ['🎬', '📅', '🕰', '⏱', '🗓', '📆', '⭐', '📈', '⚖', '🎭', '🌍', '🎥', '👥', '❤', '💬', '🏆', '🔗', '📺', '📌']) {
       expect(html).not.toContain(emoji);
@@ -308,7 +330,7 @@ describe('ADR-0090 头行小计 + 空态动作 + 整页组装', () => {
     const html = buildAnalysisHTML();
     expect(html).not.toContain('bz-cinema-page-head'); // 页头退役：sp-head 在 ui.ts
     expect(html).toContain('stat-cards');
-    expect(html).toContain('data-lucide="bar-chart-3"');
+    expect(html).toContain('data-lucide="calendar-days"'); // 板块图标语义化（呈报#58）
     expect(html).toContain('类型分布');
     expect(html).toContain('想看清单');
   });
