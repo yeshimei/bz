@@ -121,9 +121,9 @@ describe('DOMAIN_MENU 形状', () => {
 });
 
 describe('pomodoroMenuAction（相位敏感的单个动作）', () => {
-  it('用户口径四条：未开始→开始专注 / 专注中→停止专注 / 暂停中→继续专注 / 休息中→跳过休息', () => {
+  it('用户口径四条：未开始→开始专注 / 专注中→暂停专注 / 暂停中→继续专注 / 休息中→跳过休息', () => {
     expect(pomodoroMenuAction('idle').label).toBe('开始专注');
-    expect(pomodoroMenuAction('focusing').label).toBe('停止专注');
+    expect(pomodoroMenuAction('focusing').label).toBe('暂停专注'); // PM2 残款：随命令侧对齐（原「停止专注」）
     expect(pomodoroMenuAction('paused').label).toBe('继续专注');
     expect(pomodoroMenuAction('break').label).toBe('跳过休息');
   });
