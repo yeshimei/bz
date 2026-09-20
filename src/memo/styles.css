@@ -1232,14 +1232,16 @@
     border: 1.5px solid var(--bz-skin-ink) !important;
     border-radius: 3px;
   }@media (hover: hover) {
-
-  .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close:hover {
-    background: var(--bz-skin-ink) !important;
-    color: #ffffff !important;
+    .bz-memo-panel.bz-memo-skin-editorial .bz-memo-head-close:hover {
+      background: var(--bz-skin-ink) !important;
+      color: #ffffff !important;
+    }
   }
 
   /* 5) 触控热区抬档（memo2-ui M3-1，设计手册 §8.2 ≥44px 硬规则）：工具行/录入行/
-        折叠条此前 28~32px、位置 meta 标签 18px，均低于硬规则。 */
+        折叠条此前 28~32px、位置 meta 标签 18px，均低于硬规则。
+        （本组属文件末节媒体收口段本体，必须在 (hover:hover) 块**外**——触屏无悬浮，
+        收进悬浮块整组失效；tests/memo/verdict-styles-structure.test.ts 守卫。） */
   /* 排序下拉与搜索框、composer 按钮抬到 40px（绝对下限档；composer 同排 40/32 错位一并消除）。
      皮肤段 .bz-memo-skin-* .bz-memo-sort .bz-select 高 32px 的 (0,3,0) 由本段同特异性靠后覆盖。 */
   .bz-memo-panel .bz-memo-sort .bz-select { height: 40px; }
@@ -1252,6 +1254,4 @@
      标签自身 relative 供伪元素锚定） */
   .bz-memo-tag.bz-memo-tag-pos { position: relative; }
   .bz-memo-tag.bz-memo-tag-pos::after { content: ''; position: absolute; inset: -13px; }
-}
-
 }
