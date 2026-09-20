@@ -128,3 +128,68 @@
 | AT1 | 动词双名「移动附件」（命令/弹窗）vs「搬移此笔记附件」（右键） | attach | 统一动词 | 文案 |
 | AT2 | 重复搬移跳过预览快捷通道 | attach | 快捷通道 | 效率 |
 | AT3 | 已全部在目标文件夹前置预告 | attach | 前置预判 | 效率 |
+---
+
+## ✅ 拍板结果（2026-09-19 用户回复，本节为权威执行口径）
+
+> 用户原话：「5B 6B 12A，其他按照你的来」「8 15 18 22 32 33 35 36 37 39 40 41 42 43 44 45 46 47 52 历1 历2 历3 历4不采纳，不做任何改动」。
+> 即：呈报编号 5/6 选 B、12 选 A；所列 23 项（含历 4 项）不采纳不做任何改动；其余一律按★建议执行。执行分两波：Wave1 五批并行（review / cinema+gameshelf+pomodoro / password-vault+encrypt / checkup+attach+A6 / favorites+home+settings-panel），Wave2 两批（core 范式：悬浮隔离+入焦圈闭+E7 工作台；belongings+密钥档位+RR-U13）。
+
+### 采纳执行表（39 项代码 + 4 项维持现状记录）
+
+| 呈报# | 原编号 | 拍板 | 去向 |
+|---|---|---|---|
+| 1 | P9 | ★B 密码本保留确认框（敏感域例外） | 维持现状，无代码 |
+| 2 | E3 | ★B 销毁不可逆维持 | 维持现状，无代码 |
+| 3 | P6 | ★A 生成覆盖手填前先确认 | Wave1 pv 批 |
+| 4 | R2 | ★A 单条做题被拦时给提示 | Wave1 review 批 |
+| 5 | R9 | **B 不做**「稍后继续」 | 无代码 |
+| 6 | C5 | **B 维持**走完整表单 | 无代码 |
+| 7 | C2 | ★A 影院表单桌面端自动聚焦 | Wave1 cinema 批 |
+| 9 | F4 | ★A 立项触屏悬浮隔离范式 | Wave2 core 批 |
+| 10 | CK2 | ★A 单条修复免确认（可撤销类） | Wave1 checkup 批 |
+| 11 | AT2 | ★A 附件跳过预览快捷通道 | Wave1 attach |
+| 12 | R6/R7/R8/GS2/P3/B5/B2/E7 | **A 全量补齐（含工作台体系）** | 缺陷五处随 Wave1 各域批；B5/B2 Wave2；E7 工作台 Wave2（memo 侧缓办待重审） |
+| 13 | F3+H3 | ★A 大面板入焦+圈闭全域推广 | Wave2 core 批（全域接线） |
+| 14 | C3 | ★A 季圆点只放大热区 | Wave1 cinema 批 |
+| 16 | P4+P5 | ★A 移动端切换入口+网址可点 | Wave1 pv 批 |
+| 17 | SP1/3/4 | ★A 搜索键盘三处闭环 | Wave1 sp 批 |
+| 19 | R13+B8 | ★A 空态统一小图标版 | review 侧 Wave1；belongings 侧 Wave2 |
+| 20 | B4 | ★A 0 元日均显示「—」 | Wave2 belongings 批 |
+| 21 | P2 | ★A 空值复制置灰/提示 | Wave1 pv 批 |
+| 23 | C4 | ★A 豆瓣失败通知加重试 | Wave1 cinema 批 |
+| 24 | F1 | ★A 无链接卡片点按反馈 | Wave1 favorites |
+| 25 | F6 | ★A 外链卡片补标识 | Wave1 favorites |
+| 26 | SP2 | ★A 搜索命中词高亮 | Wave1 sp 批 |
+| 27 | CK3 | ★A 「全部通过」判定修正 | Wave1 checkup 批 |
+| 28 | CK5 | ★A 空态双按钮去一 | Wave1 checkup 批 |
+| 29 | CK6 | ★A 进度条补满再切 | Wave1 checkup 批 |
+| 30 | CK8 | ★A 过期提示条挂行动钮 | Wave1 checkup 批 |
+| 31 | H4 | ★A 骨架期不放标题 | Wave1 home |
+| 34 | AT3 | ★A 已全部在目标位置前置预告 | Wave1 attach |
+| 35 | BS1 | **不采纳**（A/B 皆不做，现状维持） | 无代码 |
+| 38 | R3 | ★B 读盘降频 2-3 秒+命中才读 | Wave1 review 批 |
+| 48 | GS3 | ★A 密钥型输入档位+Steam 接入 | Wave2（settings-panel 基建+gameshelf 接线同批做，避并行撞） |
+| 49 | GS4+PM3+SP5 | ★A 三处记忆全做 | GS/PM 随 Wave1 各域批；SP5 Wave1 sp 批 |
+| 50 | CK1 | ★A 可选段豁免降噪 | Wave1 checkup 批 |
+| 51 | CK7 | ★A 按域分组修复 | Wave1 checkup 批 |
+| 53 | H2 | ★A 裁首页周报死代码 | Wave1 home |
+| 54 | R4 | ★A 题面 emoji 换 lucide | Wave1 review 批 |
+| 55 | R11 | ★A 统计弹窗对齐影院样式重刷 | Wave1 review 批 |
+| 56 | R12 | ★A 六条复习命令改动宾式名 | Wave1 review 批（只改 name，ID 不动） |
+| 57 | R5 | ★A 冲刺头行补模式说明 | Wave1 review 批 |
+| 58 | C6 | ★A 分析页板块各配图标 | Wave1 cinema 批 |
+| 59 | E5 | ★A 26 枚手绘图标收编统一机制 | Wave1 enc 批 |
+| 60 | E4 | ★A 保险库搜索框收编公共样式 | Wave1 enc 批 |
+| 61 | F5 | ★A 磁贴行限高 | Wave1 favorites |
+| 62 | CK4 | ★A 86vh→dvh | Wave1 checkup 批 |
+| 63 | PM2 | ★A 「停止专注」三处文案拆分 | Wave1 pomodoro |
+| 64 | AT1 | ★A 动词统一为「搬移」 | Wave1 attach |
+| A6 | — | 预登记：五键字面改引 keys.ts | Wave1 attach 批顺带 |
+| RR-U13 | — | 预登记：宿主搜索框只刷隐藏墙 | Wave2 belongings 批顺带 |
+
+### 不采纳清单（23 项，不做任何改动）
+
+8（E6+P8 首建流程统一）、15（E2+F2 右键入口显化）、18（PM1 读屏播报）、22（C1 集合外标签示型）、32（H5 过滤空态出路）、33（PM4 零柱占位）、36（B1 移动端资产筛选）、37（R1 目标阈值=★B 同效）、39（R10 队列懒加载）、40（R14 正文摘要）、41（E1 批量操作）、42（P1 生成落库）、43（P7 导入导出）、44（E8 四条旧建议）、45（B3 图标清除）、46（B6 图标改动检测）、47（GS1 手改已下架，折中通知亦不加）、52（H1 占位键标注）、历1（滑动手势）、历2（剪藏正文搜索）、历3（UP Cookie 行）、历4（字段级合并）、35（BS1 读书笔记孤岛，A/B 皆不动）。
+
+> 备注：46（B6 图标不触发改动检测，接近纯缺陷）用户明确不采纳，登记为「用户拍板不修」，后续不再重提。memo 侧 E7 工作台键盘化随 memo 队尾重审一并处理，本轮不动 memo。
