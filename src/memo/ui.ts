@@ -764,11 +764,27 @@ function renderContent(items: MemoItem[]): void {
       }));
       return;
     }
+    // 空态文案（呈报#16 16A）：搜索态保持既有口径；「今日」「重要」伪场景各说各话
+    // ——别处可能有几百条，只是今天没到期/没标重要，通用「还没有备忘录」是误导
+    const emptyCopy = M.search
+      ? { title: '没有匹配的备忘录', desc: '试试其他关键词，或清除搜索' }
+      : M.activeScene === '今日'
+        ? { title: '今日没有备忘录', desc: '今天到期或已完成的备忘录会显示在这里' }
+        : M.activeScene === '重要'
+          ? { title: '还没有标为重要的备忘录', desc: '在条目菜单选「转为重要」，它就会出现在这里' }
+          : { title: '这里还没有备忘录', desc: '随手记一条，别让它溜走' };
+    // 呈报#5 5A：搜索空态补「清除搜索」按钮——兑现 desc 里「或清除搜索」的承诺
+    const emptyActions = M.search
+      ? [
+          uiBtn({ label: '清除搜索', icon: ICON.close, onClick: () => clearMemoSearch() }),
+          uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) }),
+        ]
+      : [uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })];
     content.appendChild(uiEmpty({
       icon: ICON.empty,
-      title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
-      desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
-      actions: uiBtnRow([uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
+      title: emptyCopy.title,
+      desc: emptyCopy.desc,
+      actions: uiBtnRow(emptyActions, { center: true }),
     }));
     return;
   }
