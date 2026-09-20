@@ -39,6 +39,7 @@ import { openSettingsModal } from '../core/settings-modal';
 import type { SettingsSchema } from '../core/settings-schema';
 import { saveSettings, tryGetSettings } from '../core/settings-provider';
 import { ensureAutoSummary, stopAutoSummary, regenerateSummary } from '../auto-summary';
+import { AUTO_SUMMARY_KEYS } from '../auto-summary/keys';
 import { dataSourceGroupRows } from './news-sources-group';
 import { articleKeyOf } from './constants';
 import { readDataSourceState, type DataSourceState } from './news-source-settings';
@@ -2234,23 +2235,23 @@ export function clipbookSettingsSchema(dataSource: DataSourceState): SettingsSch
         name: '自动摘要',
         rows: [
           {
-            type: 'toggle', name: '自动摘要', desc: '新剪藏的文章自动生成 AI 摘要', binding: { key: 'autoSummaryEnabled' },
+            type: 'toggle', name: '自动摘要', desc: '新剪藏的文章自动生成 AI 摘要', binding: { key: AUTO_SUMMARY_KEYS.enabled },
             onChange: (v: boolean) => {
               if (v) ensureAutoSummary(getApp());
               else stopAutoSummary();
             },
           },
-          { type: 'select', name: '摘要长度', desc: '控制生成的摘要详略程度', binding: { key: 'autoSummaryLength' }, options: [
+          { type: 'select', name: '摘要长度', desc: '控制生成的摘要详略程度', binding: { key: AUTO_SUMMARY_KEYS.length }, options: [
             { value: 'simple', label: '简短（50-100 字）' },
             { value: 'standard', label: '标准（150-250 字）' },
             { value: 'detailed', label: '详细（300-400 字）' },
-          ], visibleWhen: (s: any) => s.autoSummaryEnabled === true, isChild: true },
-          { type: 'toggle', name: '生成标签', desc: '为剪藏生成中文标签', binding: { key: 'autoSummaryTagsEnabled' }, visibleWhen: (s: any) => s.autoSummaryEnabled === true, isChild: true },
-          { type: 'text', name: '标签数量', desc: '生成的标签个数写成区间，如 3-6', binding: { key: 'autoSummaryTagCount' }, visibleWhen: (s: any) => s.autoSummaryEnabled === true && s.autoSummaryTagsEnabled === true, isChild: true },
-          { type: 'select', name: '摘要时机', desc: '保存后立刻生成，或仅打开文件时才补全', binding: { key: 'autoSummaryTiming' }, options: [
+          ], visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
+          { type: 'toggle', name: '生成标签', desc: '为剪藏生成中文标签', binding: { key: AUTO_SUMMARY_KEYS.tagsEnabled }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true },
+          { type: 'text', name: '标签数量', desc: '生成的标签个数写成区间，如 3-6', binding: { key: AUTO_SUMMARY_KEYS.tagCount }, visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true && s[AUTO_SUMMARY_KEYS.tagsEnabled] === true, isChild: true },
+          { type: 'select', name: '摘要时机', desc: '保存后立刻生成，或仅打开文件时才补全', binding: { key: AUTO_SUMMARY_KEYS.timing }, options: [
             { value: 'immediate', label: '保存后立刻' },
             { value: 'lazy', label: '懒触发（打开时）' },
-          ], visibleWhen: (s: any) => s.autoSummaryEnabled === true, isChild: true,
+          ], visibleWhen: (s: any) => s[AUTO_SUMMARY_KEYS.enabled] === true, isChild: true,
           // 时机变更即时生效：重注册监听（lazy↔immediate 切换无需重启；对齐上方自动摘要开关）
           onChange: () => {
             stopAutoSummary();
