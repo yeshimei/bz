@@ -19,6 +19,7 @@
 import type { App } from 'obsidian';
 import { topifyZ } from '../core/dom';
 import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { tryGetSettings } from '../core/settings-provider';
 import { debounce, openExternalUrl } from '../core/utils';
 import { esc, escAttr, pad2 } from '../core/ui/str';
@@ -992,6 +993,8 @@ function createUI(app: App): void {
   popupEl = frame;
   M.currentOverlay = frame;
   registerPanelEsc(ESC_ID, () => !!M.currentOverlay, closePanel);
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源；纯接线一行）
+  trapPanelFocus(frame);
 }
 
 async function onSyncClick(app: App): Promise<void> {

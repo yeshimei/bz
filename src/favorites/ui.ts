@@ -25,6 +25,7 @@ import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
 import { topifyZ } from '../core/z-order';
 import { longPress } from '../core/dom';
 import { registerPanelEsc } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { openItemMenu, openItemSheet, closeItemMenu, type ItemAction } from '../core/item-actions';
@@ -211,6 +212,10 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
 
   // ESC（主面板 + 浮层栈：菜单 → 抽屉 → 表单 → 面板）
   ensureFavoritesEsc();
+
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）：
+  // 焦点落面板容器本体（非输入框，移动端不弹软键盘），Tab 不再跑到面板背后
+  trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-fav-panel') ?? overlay);
 
   // ---- 事件委托（overlay 顶层） ----
   overlay.addEventListener('click', (e) => {

@@ -33,6 +33,7 @@ import { cmpZh, debounce, formatRelativeTime, localDayKey, openExternalUrl } fro
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ } from '../core/dom';
 import { escManager } from '../core/esc-manager';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
 import { openFlowDialog } from '../core/flow-dialog';
 import { openSettingsModal } from '../core/settings-modal';
@@ -129,6 +130,8 @@ export function showPanel(): void {
   }
   overlayEl!.style.display = 'flex';
   topifyZ(overlayEl); // CB1：显示即发号（ADR-0067）——与已发号的其他面板同屏时「后显示恒在上」
+  // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源；show/hide 复用壳幂等）
+  trapPanelFocus(overlayEl!.querySelector<HTMLElement>('.bz-clip-frame') ?? overlayEl!);
   panelSplit?.restore(); // 分割线尺寸记忆（容器可见后 restore 才能按实际宽度钳制）
   M.open = true;
   beginSession();
@@ -493,6 +496,15 @@ function buildDom(app: any): void {
     const item = (e.target as HTMLElement).closest('[data-id]') as HTMLElement | null;
     if (!item) return;
     openMobDetail(item.dataset.id || '');
+  });
+  // 呈报#12-E7（同型面板）：移动折叠行 data-fold role=button + tabindex=0（markup 侧），
+  // Enter/Space → 与点击同一落点（开合）；与桌面折叠行 C-UI5 键盘线对称补齐
+  mobListEl!.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const fold = (e.target as HTMLElement).closest('[data-fold]') as HTMLElement | null;
+    if (!fold) return;
+    e.preventDefault();
+    toggleMobArch(fold);
   });
 }
 
@@ -983,6 +995,15 @@ function bindItemMenus(): void {
       selectArticle(art.id);
       // 效率#6：焦点接力右栏——点目录即「通电」j/k，不必再点一下右栏才知道快捷键活着
       if (!isMobileEnv()) readPaneEl?.focus({ preventScroll: true });
+    });
+    // 呈报#12-E7 工作台键盘化（同型面板）：行 role=button + tabindex=0（markup 侧），
+    // Enter/Space → 与点击同一落点（选中 → 阅读接力右栏）。桌面折叠行 C-UI5 同款先例。
+    // 备忘：memo 同型工作台面板随 memo 队尾重审统一处理（呈报#12 备注），本轮不动 memo。
+    card.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      if (e.defaultPrevented) return;
+      e.preventDefault();
+      card.click();
     });
   });
   // 桌面折叠行点击/键盘开合（已读/已收两段独立；renderList 重建 DOM 后重挂）。

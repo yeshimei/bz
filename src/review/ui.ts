@@ -28,6 +28,7 @@
  */
 import { type App, type TFile } from 'obsidian';
 import { topifyZ, allocZ } from '../core/z-order';
+import { trapPanelFocus } from '../core/ui/focus-trap';
 import { notice, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { escManager } from '../core/esc-manager';
@@ -150,6 +151,8 @@ export class UIManager {
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
+    // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
+    trapPanelFocus(this.popup);
     await this.showQueue();
   }
 
