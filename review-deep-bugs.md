@@ -700,7 +700,13 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## settings-panel（设置面板）域 · 5/5 方向到账，修复批 `bz-fix-sp-core`（单批）定稿派发
+## settings-panel（设置面板）域 · ✅ 闭环（2026-09-20，单批合并 + 部署 d09168f8）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-sp-core`（渲染器内核 + 交互收编，11 项组全落）**：**ARCH-1 枢纽落地**——safePersist/CommitWarn/TEXT_COMMIT_DELAY core 导出（parseClampedNumber 原有），面板 8 处 `void acc.persist()` 全收编（C-1）、C-2 五类行 commit 点补 refresh、F-3 list 容错、F-4 初始求值容错、**R9 非法不写入回显旧值**（makeInput 支持回显返回值）；F-1 applyHitFilter 亲手藏标记+refresh 重求值；F-2 flushPendingTextCommit 双路径；**UI-1/UI-2 select 全重写**（escManager 菜单层+触发器键盘开合+role=option/radio）；呈现簇（1042 calc/开关 40px/vvh/chips ✕ 抬档/danger 反焦/初始焦点）；E-4 roving tabindex；F-6 搜索态导航命中集同源；E-6 移动重置入口（replaceChildren 防叠挂）；搜索簇（E-5 180ms 防抖/UI-6 refreshGroupCounts/UI-7 spMatch 四处归一/UI-8 isChild 合成）；形制收编（C-3 uiChip/uiBtn 真收编——**词条 463 由「过度宣称」转为属实无需改**、C-4 notifyActionError+onRetry、C-5 registerPanelEsc）；F-5 saveSettings 兜底；E-8 schemaCache + ARCH-2 单飞（**H9 原测试未改一字全绿**——recomputeBadgesFromCache 合流）；ARCH-3/4/5 契约锁（COUNT_BASELINE 一处维护+锚点断言+徽标自洽契约）。测试 113→140（+27 四文件）。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + sp 相关 115 绿；全量 6557 绿；部署 **d09168f8**；worktree+分支清理。
+- **残款登记**：F-7 移动端搜索缓存端门控过滤（维持登记）；GS3/U-1/UX-1/UX-2/E-7 拍板项；#37 全部恢复默认（跨域登记）。
 
 > 明细：`.scratch/review-deep/settings-panel-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×2 + P3×5 + UX×1；方向 2（UI）：P2×2 + P3×6 + UX×2；方向 3（效率）：P3×6 + UX×2；方向 4（一致）：P2×1 + P3×4；方向 5（架构）：P2×1 + P3×4 + 建议×3。**枢纽归因 ARCH-1（P2）**：渲染器行为内核双实现（core 与面板「协议共享、行为复刻」），core 历轮加固（N5 safePersist/R9 钳制/C10 容错/H6）均不传导——C-1/C-2/R9/F-3/F-4 五项同根，修法 = safePersist/CommitWarn/number 钳制下沉 core 导出一次收口。跨方向簇：落盘兜底簇（F-5+E-1+C-1）、搜索交互簇（F-1+UI-6/UI-7+E-5）。**对表合规 2**：效率整改 5 通过（重置保留确认合规，danger 反焦缺仍修）；ADR-0104/0106 缓行了结现状合规（依赖方向全链合规 19 域 loader 动态 import、双产物指纹守卫覆盖）。旧账：R9/1042/GS3/#37/#38 对账毕。门禁基线：tsc 0；settings-panel 相关 113 例全绿。
 
