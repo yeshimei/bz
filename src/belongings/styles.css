@@ -134,6 +134,13 @@
 .bz-bel-form .bz-input:focus,
 .bz-bel-detail .bz-input:focus { outline: none; box-shadow: none; }
 
+/* 呈报#12-B2：表单/详情输入框焦点视觉替代——上方「去轮廓」未给替代致键盘焦点不可见。
+   :focus-visible 仅键盘焦点出现（鼠标点击不弹环，兼顾纸面顾虑）；形态与全域焦点口径一致
+   （core components.css .bz-btn 等先例），色取域强调色贴海报皮。须置于去轮廓规则之后
+   （同特异性靠源序取胜，tests/belongings/bd-b2-focus-visible.test.ts 守卫） */
+.bz-bel-form .bz-input:focus-visible,
+.bz-bel-detail .bz-input:focus-visible { outline: 2px solid var(--bz-bel-accent); outline-offset: 1px; }
+
 /* ---- 筛选 chips（p20 .chip 逐字：方角墨框、on=墨底纸字、计数弱化；组件库 .bz-chip 皮） ---- */
 .bz-bel-chips { display: flex; flex-wrap: wrap; gap: var(--bz-space-sm); padding: var(--bz-space-md) 22px 0; flex-shrink: 0; }
 .bz-bel-chips .bz-chip {
@@ -197,6 +204,10 @@
 
 .bz-bel-dropopt.is-cur:hover { background: var(--bz-bel-accent); color: var(--bz-bel-paper); }
 }
+/* 呈报#12-B5：键盘高亮（↑↓ 移动 is-active，与 hover 反色同视觉）——键盘聚焦态非悬浮
+   语义、仅键盘操作产生（触屏无粘滞面），故不随 hover:hover 隔离 */
+.bz-bel-dropopt.is-active { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
+.bz-bel-dropopt.is-cur.is-active { background: var(--bz-bel-accent); color: var(--bz-bel-paper); }
 /* 记一笔 = p20 .btn：墨底纸字、hover 转赤橙（桌面工具行 + 移动底部同款） */
 .bz-bel-addbtn,
 .bz-bel-mobadd {
@@ -442,14 +453,11 @@
 .bz-bel-report-body { flex: 1; overflow-y: auto; padding: 14px var(--bz-space-xl) 18px; min-height: 0; }
 .bz-bel-reportbtn { flex-shrink: 0; }
 
-/* 骨架 / 错误 / 空年（人话占位） */
+/* 骨架 / 错误占位（空态形制已统一 core 小图标版 bz-empty，见 components.css——
+ * 呈报#19-B8 拍板：.bz-belr-emptyyear 系与 .bz-belr-none 自绘形制随刀退役） */
 .bz-belr-skeleton { text-align: center; padding: 48px 0; color: var(--bz-text-3); }
 .bz-belr-error { padding: 24px 0; text-align: center; color: var(--bz-text-3); }
 .bz-belr-error-t { font-size: 1.2em; margin-bottom: 8px; color: var(--bz-bel-ink); }
-.bz-belr-emptyyear { text-align: center; padding: 56px 0; }
-.bz-belr-emptyyear-t { font-size: 18px; font-weight: 800; color: var(--bz-bel-ink); }
-.bz-belr-emptyyear-d { margin-top: 8px; font-size: var(--bz-font-label); color: var(--bz-text-3); }
-.bz-belr-none { text-align: center; color: var(--bz-text-3); padding: 12px 0; }
 
 /* 段落骨架 */
 .bz-belr-sec { margin-bottom: var(--bz-space-lg); }

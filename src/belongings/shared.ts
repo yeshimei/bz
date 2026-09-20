@@ -172,12 +172,15 @@ export function exitDayTsOf(it: BelongingsItem): number | null {
 export function recoveredOf(it: BelongingsItem): number {
   return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
 }
-/** 日均数值文本（展示单源）：两位内去尾零；<0.01 保四位精度。
+/** 日均数值文本（展示单源）：两位内去尾零；<0.01 保四位精度；0 元显示「—」。
  *  原面板卡片与报告柱顶双写且特判分叉（0.004 元/天卡片显示 0.0040、报告柱顶得 0），
  *  批B 修复13 暂落 report-stats 纯层，主线程随 recoveredOf 下沉同刀平移至此；
- *  面板 layouts/poster 与报告 report.ts 两侧同源消费。 */
+ *  面板 layouts/poster 与报告 report.ts 两侧同源消费。
+ *  呈报#20（B4）拍板：0 元日均无「￥0.0000」语义（观感像 bug），单源特判显示「—」；
+ *  消费侧对「—」不再套 moneyWith 货币符号（poster/render cellHtml 单点处理）。 */
 export function trimDailyNum(n: number): string {
   const v = Number(n) || 0;
+  if (v === 0) return '—';
   return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
 }
 /**

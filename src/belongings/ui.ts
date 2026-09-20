@@ -210,6 +210,14 @@ function itemById(id: string): BelongingsItem | undefined {
   return M.db?.items[id];
 }
 
+/** 收全部自绘下拉 + 清键盘高亮（呈报#12-B5：ESC 二段第一段 / 外点收起 / 选项提交共用） */
+function closeAllDrops(): void {
+  document.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => {
+    w.classList.remove('is-open');
+    w.querySelectorAll('.bz-bel-dropopt.is-active').forEach((o) => o.classList.remove('is-active'));
+  });
+}
+
 // ==================== 主面板生命周期 ====================
 
 /** ESC 层（bz-bel）：主面板兜底层——表单/详情已各自成为 uiModal 'bz-modal' 层（后注册先关），
@@ -230,6 +238,12 @@ function ensureBelongingsEsc(): void {
       // 年度报告（issue 356）：层序在详情之下、主面板之上——报告先关，再落主面板
       if (document.querySelector('.bz-bel-report-mask')) {
         closeBelReport();
+        return;
+      }
+      // 呈报#12-B5：自绘下拉开态 ESC 只收下拉（二段第一段），面板层保持可见——
+      // 再按一次才退出面板；语义收在 registerPanelEsc 层内，不私挂 document 监听
+      if (document.querySelector('.bz-bel-yearsel.is-open')) {
+        closeAllDrops();
         return;
       }
       closePanel();
@@ -295,9 +309,23 @@ async function openPanelInner(): Promise<void> {
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-bel-panel') ?? overlay);
 
   // ---- 年份/移动排序下拉（自绘海报菜单，原生 select 弹层退役；与桌面 seg 双向同步） ----
-  // 触发器开合 + 选项点选 + 外点收起，一处 document 委托；closePanel 时摘除
-  const closeDrops = () => {
-    overlay.querySelectorAll('.bz-bel-yearsel.is-open').forEach((w) => w.classList.remove('is-open'));
+  // 触发器开合 + 选项点选 + 外点收起，一处 document 委托；closePanel 时摘除。
+  // 呈报#12-B5 键盘路径：触发器关态 ↓/↑ 开下拉并定位当前项；开态 ↑↓ 移高亮（is-active，
+  // 钳界不回绕）、Enter 提交高亮项（无高亮仅收起，settings-panel select 同口径）
+  const moveDropActive = (wrap: HTMLElement, delta: number) => {
+    const items = [...wrap.querySelectorAll('.bz-bel-dropopt')] as HTMLElement[];
+    if (!items.length) return;
+    const cur = items.findIndex((o) => o.classList.contains('is-active'));
+    const next = Math.min(items.length - 1, Math.max(0, (cur < 0 ? 0 : cur) + delta));
+    items.forEach((o, i) => o.classList.toggle('is-active', i === next));
+  };
+  /** 选项提交（点击与键盘 Enter 同路）：收下拉 + 写状态 + 全量重渲 */
+  const pickDropOpt = (opt: HTMLElement) => {
+    closeAllDrops();
+    const v = opt.dataset.v ?? '';
+    if (opt.closest('[data-bel-yearmenu]')) M.year = v;
+    else M.sort = v as BelState['sort'];
+    renderAll();
   };
   const onDocClick = (e: MouseEvent) => {
     const t = e.target as HTMLElement;
@@ -305,23 +333,46 @@ async function openPanelInner(): Promise<void> {
     if (trig) {
       const wrap = trig.parentElement as HTMLElement;
       const wasOpen = wrap.classList.contains('is-open');
-      closeDrops();
-      if (!wasOpen) wrap.classList.add('is-open');
+      closeAllDrops();
+      if (!wasOpen) {
+        wrap.classList.add('is-open');
+        // 开时定位当前值（is-cur）为键盘高亮项——原生 select 打开即停在所选
+        wrap.querySelector('.bz-bel-dropopt.is-cur')?.classList.add('is-active');
+      }
       return;
     }
     const opt = t.closest('.bz-bel-dropopt') as HTMLElement | null;
     if (opt) {
-      closeDrops();
-      const v = opt.dataset.v ?? '';
-      if (opt.closest('[data-bel-yearmenu]')) M.year = v;
-      else M.sort = v as BelState['sort'];
-      renderAll();
+      pickDropOpt(opt);
       return;
     }
-    closeDrops();
+    closeAllDrops();
   };
   const onDropKey = (e: KeyboardEvent) => {
     const t = e.target as HTMLElement;
+    const openWrap = overlay.querySelector('.bz-bel-yearsel.is-open') as HTMLElement | null;
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      if (openWrap) {
+        e.preventDefault();
+        moveDropActive(openWrap, e.key === 'ArrowDown' ? 1 : -1);
+        return;
+      }
+      // 关态：触发器上 ↓/↑ = 开下拉并定位当前项（原生 select 键入同款）
+      if (t.closest?.('[data-bel-year],[data-bel-mobsortsel]')) {
+        e.preventDefault();
+        (t as HTMLElement).click();
+      }
+      return;
+    }
+    // 开态 Enter = 提交（选项行直提；否则提高亮项，无高亮仅收起）
+    if (e.key === 'Enter' && openWrap) {
+      e.preventDefault();
+      const opt = (t.closest('.bz-bel-dropopt') as HTMLElement | null)
+        || (openWrap.querySelector('.bz-bel-dropopt.is-active') as HTMLElement | null);
+      if (opt) pickDropOpt(opt);
+      else closeAllDrops();
+      return;
+    }
     if ((e.key === 'Enter' || e.key === ' ') && t.closest('.bz-bel-select')) {
       e.preventDefault();
       (t as HTMLElement).click();

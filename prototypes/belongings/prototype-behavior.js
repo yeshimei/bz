@@ -1,4 +1,4 @@
-/* 源指纹 19f7e43edc4b08f6 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 776de7c94a44e808 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/belongings/fake-sim.ts","prototypes/belongings/fake/fake-obsidian.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/smartcat/belongings-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/belongings/fake-sim.ts → window.BZW_belongings（行为单源预览包，issue 245/ADR-0106） */
 var BZW_belongings = (() => {
@@ -6364,6 +6364,7 @@ var BZW_belongings = (() => {
   }
   function trimDailyNum(n) {
     const v = Number(n) || 0;
+    if (v === 0) return "—";
     return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
   function parseLocalDay(raw) {
@@ -6883,10 +6884,11 @@ var BZW_belongings = (() => {
     });
   }
   function emptyYearHtml(year) {
-    return `<div class="bz-belr-emptyyear">
-    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
-    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"}</div>
-  </div>`;
+    return emptyHtmlStr(
+      "calendar-days",
+      `${year} 年没有物品记录`,
+      ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"
+    );
   }
   function buildReportSections(stats) {
     return [
@@ -6934,7 +6936,7 @@ var BZW_belongings = (() => {
     if (stats.purchasedAmount === 0) {
       return `<div class="bz-belr-sec">
     ${secHead("月度花销走势", "当年无购入")}
-    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
+    ${emptyHtmlStr("trending-up", "这一年没有购入记录，只有出离", "月度花销无可绘制")}
     </div>`;
     }
     const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
@@ -6954,7 +6956,7 @@ var BZW_belongings = (() => {
     if (stats.purchasedAmount === 0) {
       return `<div class="bz-belr-sec">
     ${secHead("分类占比", "当年无购入")}
-    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
+    ${emptyHtmlStr("chart-bar", "当年无购入 · 只有出离记录", "分类占比无可统计")}
     </div>`;
     }
     const MAX_ROWS = 8;
@@ -7003,7 +7005,7 @@ var BZW_belongings = (() => {
     if (stats.companions.length === 0) {
       return `<div class="bz-belr-sec">
     ${secHead("陪伴最久榜")}
-    <p class="bz-belr-none">暂无可统计的物品</p>
+    ${emptyHtmlStr("history", "暂无可统计的物品")}
     </div>`;
     }
     const asOf = stats.companionAsOf === "today" ? "截至今日" : `截至 ${stats.year} 年末`;
@@ -7127,7 +7129,10 @@ var BZW_belongings = (() => {
     const key = statusKeyOf(it.current_status);
     const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
     const dailyStr = trimDailyNum(daily);
-    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
+    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : (
+      // 呈报#20（B4）：0 元日均 trimDailyNum 给「—」，不再套 moneyWith（否则出「￥—」）
+      `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${dailyStr === "—" ? dailyStr : moneyWith(dailyStr, unit)}`
+    );
     return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a = STATUS[key]) == null ? void 0 : _a.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
@@ -7994,6 +7999,12 @@ var BZW_belongings = (() => {
     var _a;
     return (_a = M.db) == null ? void 0 : _a.items[id];
   }
+  function closeAllDrops() {
+    document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
+      w.classList.remove("is-open");
+      w.querySelectorAll(".bz-bel-dropopt.is-active").forEach((o) => o.classList.remove("is-active"));
+    });
+  }
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
@@ -8009,6 +8020,10 @@ var BZW_belongings = (() => {
         }
         if (document.querySelector(".bz-bel-report-mask")) {
           closeBelReport();
+          return;
+        }
+        if (document.querySelector(".bz-bel-yearsel.is-open")) {
+          closeAllDrops();
           return;
         }
         closePanel();
@@ -8052,8 +8067,20 @@ var BZW_belongings = (() => {
     mountIcons(overlay);
     ensureBelongingsEsc();
     trapPanelFocus((_a = overlay.querySelector(".bz-bel-panel")) != null ? _a : overlay);
-    const closeDrops = () => {
-      overlay.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
+    const moveDropActive = (wrap, delta) => {
+      const items = [...wrap.querySelectorAll(".bz-bel-dropopt")];
+      if (!items.length) return;
+      const cur = items.findIndex((o) => o.classList.contains("is-active"));
+      const next = Math.min(items.length - 1, Math.max(0, (cur < 0 ? 0 : cur) + delta));
+      items.forEach((o, i) => o.classList.toggle("is-active", i === next));
+    };
+    const pickDropOpt = (opt) => {
+      var _a2;
+      closeAllDrops();
+      const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
+      if (opt.closest("[data-bel-yearmenu]")) M.year = v;
+      else M.sort = v;
+      renderAll();
     };
     const onDocClick = (e) => {
       var _a2;
@@ -8062,23 +8089,43 @@ var BZW_belongings = (() => {
       if (trig) {
         const wrap = trig.parentElement;
         const wasOpen = wrap.classList.contains("is-open");
-        closeDrops();
-        if (!wasOpen) wrap.classList.add("is-open");
+        closeAllDrops();
+        if (!wasOpen) {
+          wrap.classList.add("is-open");
+          (_a2 = wrap.querySelector(".bz-bel-dropopt.is-cur")) == null ? void 0 : _a2.classList.add("is-active");
+        }
         return;
       }
       const opt = t.closest(".bz-bel-dropopt");
       if (opt) {
-        closeDrops();
-        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
-        if (opt.closest("[data-bel-yearmenu]")) M.year = v;
-        else M.sort = v;
-        renderAll();
+        pickDropOpt(opt);
         return;
       }
-      closeDrops();
+      closeAllDrops();
     };
     const onDropKey = (e) => {
+      var _a2;
       const t = e.target;
+      const openWrap = overlay.querySelector(".bz-bel-yearsel.is-open");
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (openWrap) {
+          e.preventDefault();
+          moveDropActive(openWrap, e.key === "ArrowDown" ? 1 : -1);
+          return;
+        }
+        if ((_a2 = t.closest) == null ? void 0 : _a2.call(t, "[data-bel-year],[data-bel-mobsortsel]")) {
+          e.preventDefault();
+          t.click();
+        }
+        return;
+      }
+      if (e.key === "Enter" && openWrap) {
+        e.preventDefault();
+        const opt = t.closest(".bz-bel-dropopt") || openWrap.querySelector(".bz-bel-dropopt.is-active");
+        if (opt) pickDropOpt(opt);
+        else closeAllDrops();
+        return;
+      }
       if ((e.key === "Enter" || e.key === " ") && t.closest(".bz-bel-select")) {
         e.preventDefault();
         t.click();

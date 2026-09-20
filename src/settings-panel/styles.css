@@ -801,6 +801,21 @@
   resize: vertical;
   font-family: inherit;
 }
+/* ═══ 密钥型行（GS3 档位，呈报#48）：掩码输入 + 眼睛切换明文 ═══
+   input 占满余宽（mono 同档等宽字体利于核对十六进制串）；眼睛钮 = 裸图标钮
+   （text-3 → text-1 悬浮提亮，hover 包 hover:hover 档），焦点 ring 与全域
+   :focus-visible 口径一致（core components.css .bz-btn 先例） */
+.bz-sp-secret { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.bz-sp-secret .bz-input { flex: 1; min-width: 0; font-family: ui-monospace, Consolas, monospace; }
+.bz-sp-secret-eye {
+  border: none; background: transparent; cursor: pointer;
+  color: var(--bz-text-3); padding: 4px; line-height: 0;
+  display: inline-flex; border-radius: 4px; flex: none;
+}
+.bz-sp-secret-eye:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
+@media (hover: hover) {
+  .bz-sp-secret-eye:hover { color: var(--bz-text-1); }
+}
 .bz-sp-desk .bz-input.num,
 .bz-sp-mobile .bz-input.num,
 .bz-sp-mobile .bz-input.num { width: 90px; }

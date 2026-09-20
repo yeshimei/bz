@@ -20,6 +20,7 @@
 import { yieldToMainThread as yieldToMainThreadCore } from '../core/utils';
 import { notify } from '../core/notice';
 import { mountIcons, uiEmpty, uiBtn, uiBtnRow } from '../core/ui';
+import { emptyHtmlStr } from '../core/ui/str';
 import { esc, iconSpan } from '../core/ui/str';
 import { topifyZ } from '../core/z-order';
 import { CHART_PASTEL_SERIES, CHART_HIGHLIGHT, CHART_INK, CHART_RANK_BADGES } from '../core/chart-palette';
@@ -307,12 +308,14 @@ function buildLibraryEmpty(): HTMLElement {
   });
 }
 
-/** 空年空态（人话：这一年没有记录；导航提示） */
+/** 空年空态（呈报#19-B8 拍板：统一 uiEmpty 小图标口径——emptyHtmlStr 与 core uiEmpty 同
+ *  markup 单源 bz-empty/bz-empty-ic，图标占位由分片循环后的 mountIcons 兑现；人话文案不变） */
 function emptyYearHtml(year: string): string {
-  return `<div class="bz-belr-emptyyear">
-    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
-    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? '用上方 ‹ › 切换到有记录的年份' : '在归物本补记这一年的物品后，这里会生成报告'}</div>
-  </div>`;
+  return emptyHtmlStr(
+    'calendar-days',
+    `${year} 年没有物品记录`,
+    ctxYears.length > 1 ? '用上方 ‹ › 切换到有记录的年份' : '在归物本补记这一年的物品后，这里会生成报告',
+  );
 }
 
 // ==================== 段落构建（懒生成；分片循环逐段拼装） ====================
@@ -400,9 +403,10 @@ function columnsHtml(cols: ColSpec[]): string {
  *  纯离场年（当年零购入，审查修复批 issue 356）：12 根零柱像渲染坏了 → 换人话空态 */
 function monthlyHtml(stats: YearReportStats): string {
   if (stats.purchasedAmount === 0) {
+    // 呈报#19-B8：纯文本空态退役，统一小图标版（trending-up 走势语义，文案不变）
     return `<div class="bz-belr-sec">
     ${secHead('月度花销走势', '当年无购入')}
-    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
+    ${emptyHtmlStr('trending-up', '这一年没有购入记录，只有出离', '月度花销无可绘制')}
     </div>`;
   }
   const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
@@ -423,9 +427,10 @@ function monthlyHtml(stats: YearReportStats): string {
  *  纯离场年（当年零购入，审查修复批 issue 356）：「共 0 类」+ 空行区像渲染坏了 → 换人话空态 */
 function categoriesHtml(stats: YearReportStats): string {
   if (stats.purchasedAmount === 0) {
+    // 呈报#19-B8：统一小图标版（chart-bar 占比语义，文案不变）
     return `<div class="bz-belr-sec">
     ${secHead('分类占比', '当年无购入')}
-    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
+    ${emptyHtmlStr('chart-bar', '当年无购入 · 只有出离记录', '分类占比无可统计')}
     </div>`;
   }
   const MAX_ROWS = 8;
@@ -483,9 +488,10 @@ function trimNumThousands(n: number): string {
 /** 陪伴最久榜（Top N；截止口径随 companionAsOf——当年截至今日 / 往年截至年末，审查修复批 issue 356） */
 function companionsHtml(stats: YearReportStats): string {
   if (stats.companions.length === 0) {
+    // 呈报#19-B8：统一小图标版（history 陪伴时长语义，文案不变）
     return `<div class="bz-belr-sec">
     ${secHead('陪伴最久榜')}
-    <p class="bz-belr-none">暂无可统计的物品</p>
+    ${emptyHtmlStr('history', '暂无可统计的物品')}
     </div>`;
   }
   const asOf = stats.companionAsOf === 'today' ? '截至今日' : `截至 ${stats.year} 年末`;

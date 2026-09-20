@@ -1,4 +1,4 @@
-/* 源指纹 a60840d17a62be40 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e5c7da38970b3d55 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/belongings/render.ts → window.BZR_belongings（评审壳预览包，ADR-0104） */
 var BZR_belongings = (() => {
@@ -684,6 +684,7 @@ var BZR_belongings = (() => {
   }
   function trimDailyNum(n) {
     const v = Number(n) || 0;
+    if (v === 0) return "—";
     return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
   }
   function parseLocalDay(raw) {
@@ -973,7 +974,10 @@ var BZR_belongings = (() => {
     const key = statusKeyOf(it.current_status);
     const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
     const dailyStr = trimDailyNum(daily);
-    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
+    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : (
+      // 呈报#20（B4）：0 元日均 trimDailyNum 给「—」，不再套 moneyWith（否则出「￥—」）
+      `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${dailyStr === "—" ? dailyStr : moneyWith(dailyStr, unit)}`
+    );
     return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
     <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
     <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a = STATUS[key]) == null ? void 0 : _a.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>

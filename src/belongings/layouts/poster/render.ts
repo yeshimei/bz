@@ -156,7 +156,8 @@ export function cellHtml(it: BelongingsItem, idx: number, unit: MoneyUnit = 'cny
   const dailyStr = trimDailyNum(daily); // 批B 修复13：<0.01 保精度特判收口单源（原与 report.trimNum 双写分叉）
   const mut = gone
     ? `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · 陪伴 ${days || '—'} 天${exitNote}`
-    : `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · ${days || '—'} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
+    : // 呈报#20（B4）：0 元日均 trimDailyNum 给「—」，不再套 moneyWith（否则出「￥—」）
+      `${esc(String(it.purchase_date || '').slice(0, 10) || '日期未知')} 起 · ${days || '—'} 天 · 日均 ${dailyStr === '—' ? dailyStr : moneyWith(dailyStr, unit)}`;
   // 键盘可达（批B 修复6，eff E2 / clipbook C-UI5 先例）：role=button + tabindex + aria-label，
   // Enter/Space 行为在 ui.ts content keydown 委托（与点击同路开详情/抽屉）
   return `<div class="bz-bel-cell${gone ? ' bz-bel-cell--gone' : ''}${idle ? ' bz-bel-cell--idle' : ''}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
