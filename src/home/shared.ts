@@ -253,7 +253,7 @@ export function pomodoroMenuAction(phase: PomodoroPhase): DomainMenuAction {
  * 「设置」直达项**（settingsMenuAction）——唯一例外于「只放域自己的快捷功能」的通用尾部项，
  * 直达该域设置页；本表（DOMAIN_MENU_RAW）仍只声明域自己的动作。
  */
-export const DOMAIN_MENU_RAW: Record<string, DomainMenuAction[]> = {
+const DOMAIN_MENU_RAW: Record<string, DomainMenuAction[]> = {
   diary: [{ label: '写日记', commandId: 'bz-diary-write', icon: 'pen-line' }],
   memo: [
     { label: '写备忘', commandId: 'bz-memo-add', icon: 'clipboard-list' },
@@ -333,7 +333,7 @@ const SETTINGS_DOMAIN_KEY: Record<string, string> = { vault: 'password-vault' };
  * 每域菜单末尾统一追加的「设置」直达项（2026-09-21 拍板，issues 388；纯函数，node 可测）。
  * 文案就叫「设置」——桌面菜单有单行盒头标域名，不违反「无『打开 X』」形状契约；
  * 图标与「设置」入口磁贴同源（settings-2，已在原型图标表，零新增）。
- * 声明序注意:本函数在下方 DOMAIN_MENU 模块顶层即被消费,SETTINGS_DOMAIN_KEY 必须先初始化。
+ * 声明序注意：消费表 DOMAIN_MENU 在模块顶层初始化即调用本函数，SETTINGS_DOMAIN_KEY 必须先初始化。
  */
 export function settingsMenuAction(id: string): DomainMenuAction {
   return {
