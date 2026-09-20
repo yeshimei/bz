@@ -15,14 +15,13 @@ import { createOverlay, closeOverlay, applyBookshelfSkin, bsSkinClass } from '..
 import { setSettingsProvider } from '../../src/core/settings-provider';
 
 
-/** 轮询等待报告分片渲染完成（成功反馈 toast = finishDone 标记） */
+/** 轮询等待报告分片渲染完成（EFF-7 后小库静默：以内容区段数 ≥9 为完成标记，与 toast 档位解耦） */
 async function waitReport(content: HTMLElement, timeout = 6000): Promise<void> {
   const start = Date.now();
-  while (!document.querySelector('#bz-notice-container')?.textContent?.includes('阅读统计完成')) {
+  while (content.querySelectorAll('.bz-rr-card').length < 9) {
     if (Date.now() - start > timeout) throw new Error('waitReport: 报告渲染超时');
     await new Promise((r) => setTimeout(r, 15));
   }
-  void content;
 }
 
 /** 轮询等待断言（TG4：裸 sleep 对并行负载敏感；spines 数量稳定即过） */
@@ -72,6 +71,11 @@ wordCount: 130000
 async function openPanel(vault: MockVault, app: ReturnType<typeof mockAppWithVault>) {
   createOverlay(app);
   await new Promise((r) => setTimeout(r, 20)); // rebuildItems 微任务
+}
+
+/** 面板遮罩根（深审接缝用例取 .bz-rr-content 用） */
+function overlayEl(): HTMLElement {
+  return document.querySelector('.bz-panel-overlay') as HTMLElement;
 }
 
 /** 墙上书脊（借书卡详情/计数断言统一入口） */
@@ -385,6 +389,52 @@ describe('bookshelf 书脊墙（issue 218）', () => {
     (overlay.querySelector('[data-rr-goto-shelf]') as HTMLElement).click();
     expect(M.view).toBe('shelf');
     expect(overlay.querySelector('.bz-bs-view-shelf')?.classList.contains('active')).toBe(true);
+    closeOverlay();
+  });
+
+  it('深审接缝三角：报告分类行点击 → catFilter 预填 → 视图回墙精确筛中（RR-F3 多类口径单源）', async () => {
+    const { vault, app } = seedVault();
+    // 多类书：frontmatter category 为拼接串「小说,文学」（宿主 parseBookFile 单值口径）
+    vault.files.set('书库/多类书.md', `---
+tags: [book]
+author: 双栖作者
+category: 小说,文学
+readingDate: 2026-08-01
+---`);
+    await openPanel(vault, app);
+    openBookshelfReport(app);
+    const overlay = overlayEl();
+    const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
+    const start = Date.now();
+    while (!(content.querySelector('[data-rr-cat="小说,文学"]') as HTMLElement | null) && Date.now() - start < 8000) {
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    // 点分类行（多类拼接串）→ 回墙 + 预填 → 墙精确等值筛中该书（旧拆分口径下点「小说」筛不中）
+    (content.querySelector('[data-rr-cat="小说,文学"]') as HTMLElement).click();
+    expect(M.view).toBe('shelf');
+    expect(M.catFilter).toBe('小说,文学');
+    await waitFor(() => spines(overlay).length === 1);
+    expect(spines(overlay)[0].title).toContain('多类书');
+    // 同步回写检索无关（分类走 catFilter 通道）
+    expect(M.searchKeyword).toBe('');
+    closeOverlay();
+  });
+
+  it('深审 EFF-2：报告内作者卡键盘 Enter → 合成 click 走宿主委托预填（键盘可达动线）', async () => {
+    const { vault, app } = seedVault();
+    await openPanel(vault, app);
+    openBookshelfReport(app);
+    const overlay = overlayEl();
+    const content = overlay.querySelector('.bz-rr-content') as HTMLElement;
+    const start = Date.now();
+    while (!(content.querySelector('[data-rr-author="周岭"]') as HTMLElement | null) && Date.now() - start < 8000) {
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    const authorCard = content.querySelector('[data-rr-author="周岭"]') as HTMLElement;
+    expect(authorCard.getAttribute('tabindex')).toBe('0');
+    authorCard.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(M.view).toBe('shelf');
+    expect(M.searchKeyword).toBe('周岭');
     closeOverlay();
   });
 

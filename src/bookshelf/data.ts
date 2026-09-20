@@ -37,6 +37,15 @@ export function resolveBookTag(): string {
   return typeof s.bookTag === 'string' && s.bookTag.trim() ? s.bookTag.trim() : 'book';
 }
 
+/**
+ * 收录谓词（深审 RR-A1 路线 A 供数面单源）：路径是否落在书库目录内。
+ * 两形态同权：目录前缀（`书库/…`）与目录本身是单个 md 笔记（`书库.md`）；
+ * 三处消费点同刀收敛——scanMarkdownBooks 回落分支、reading-report getAllBookNotes、
+ * bookshelf/index 自动刷新 schedule（RR-F7 单文件形态由此补齐）。
+ */
+export function isBookshelfPath(path: string, folderPath: string): boolean {
+  return path === `${folderPath}.md` || path.startsWith(`${folderPath}/`);
+}
 
 function parseStatus(readingDate: string | null, completionDate: string | null): string {
   if (readingDate && !completionDate) return '在读';
@@ -45,8 +54,9 @@ function parseStatus(readingDate: string | null, completionDate: string | null):
 }
 
 /** md 书阅读时长毫秒（issue 226 修书脊全同高）：frontmatter `readingTime`（毫秒数）直读；
- *  缺了再解析 `readingTimeFormat`——中文「N小时M分/N分」或 weave 英文「NhMmSs」双格式 */
-function parseReadingTimeMs(fm: Record<string, unknown> | undefined | null): number {
+ *  缺了再解析 `readingTimeFormat`——中文「N小时M分/N分」或 weave 英文「NhMmSs」双格式。
+ *  深审 RR-A1/RR-F5 供数面导出：reading-report 统计层同源消费（时长口径两侧恒等）。 */
+export function parseReadingTimeMs(fm: Record<string, unknown> | undefined | null): number {
   const raw = Number(fm?.readingTime);
   if (Number.isFinite(raw) && raw > 0) return Math.round(raw);
   const fmt = String(fm?.readingTimeFormat ?? '').trim();
@@ -127,7 +137,8 @@ export function scanMarkdownBooks(app: App): BookshelfItem[] {
     }
   } else {
     // 回落：目录对象缺失（目录不存在/目录本身是单个 md 笔记）时全量过滤
-    files.push(...app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + '/') || f.path === folderPath + '.md'));
+    // （收录谓词单源 isBookshelfPath：目录前缀 + 目录本身单文件两形态，RR-A1 收敛）
+    files.push(...app.vault.getMarkdownFiles().filter((f) => isBookshelfPath(f.path, folderPath)));
   }
   const items: BookshelfItem[] = [];
   for (const file of files) {
@@ -190,7 +201,31 @@ function toDateString(timestamp: number | undefined): string | null {
   return localDayKey(timestamp as number);
 }
 
-/** 单本 EPUB 聚合 → 书架条目（缺 title/vaultPath 跳过） */
+/** 单本 EPUB 聚合 → 书架条目（缺 title/vaultPath 跳过）
+ *  深审 RR-A1 供数面：progress 归一 / subjects 分类 / readingDate 生成三件为共享纯函数，
+ *  reading-report buildEpubBookNoteEntry 同源消费（同输入恒同输出，契约对照测试锁死）。 */
+
+/** B6：progress 归一按 CONTEXT 契约（ticket 081/ADR-0034，与 smartcat libraryWeaveDiff 同口径）：
+ *  Weave 上报 0-1 小数（1.0=读完 → 100）；>1 为旧版 0-100 口径直接取整（钳 100） */
+export function epubProgress(rawPercent: number | undefined): number {
+  const raw = typeof rawPercent === 'number' ? rawPercent : 0;
+  return raw > 1
+    ? Math.min(100, Math.round(raw))
+    : Math.round(Math.max(0, Math.min(1, raw)) * 100);
+}
+
+/** B11：分类接 Weave 元数据 subjects[0]（issue 221/ADR-0099）；无则置 null（kwFilter 搜「未分类」不误命中 EPUB） */
+export function epubCategory(meta: any): string | null {
+  const subjects: unknown[] = Array.isArray(meta?.subjects) ? meta.subjects : [];
+  return typeof subjects[0] === 'string' && subjects[0].trim() ? subjects[0].trim() : null;
+}
+
+/** readingDate 生成（深审 RR-F4 单源）：progress > 0 才带阅读日期——进度重置为 0 的重读书
+ *  两侧一致判「未读」，不再「报告按 readingDate 计在读、书架墙按 progress 判未读」分叉 */
+export function epubReadingDate(progress: number, lastReadTime: number | undefined): string | null {
+  return progress > 0 ? toDateString(lastReadTime) : null;
+}
+
 function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
   const meta = aggregate?.meta;
   const fileRef = aggregate?.file;
@@ -201,28 +236,22 @@ function buildEpubItem(app: App, aggregate: any): BookshelfItem | null {
   const title = typeof meta?.title === 'string' ? meta.title.trim() : '';
   if (!vaultPath || !title) return null;
 
-  // B6：progress 归一按 CONTEXT 契约（ticket 081/ADR-0034，与 smartcat libraryWeaveDiff 同口径）：
-  // Weave 上报 0-1 小数（1.0=读完 → 100）；>1 为旧版 0-100 口径直接取整（钳 100）
   const rawPercent = typeof reading?.position?.percent === 'number' ? reading.position.percent : 0;
-  const progress = rawPercent > 1
-    ? Math.min(100, Math.round(rawPercent))
-    : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+  const progress = epubProgress(rawPercent);
   const lastReadTime = Number.isFinite(stats?.lastReadTime) ? stats.lastReadTime : 0;
   const completedTime = Number.isFinite(stats?.completedTime) ? stats.completedTime : 0;
   const totalReadTimeMs = Number.isFinite(stats?.totalReadTime) ? stats.totalReadTime : 0;
 
-  const readingDate = progress > 0 ? toDateString(lastReadTime) : null;
+  const readingDate = epubReadingDate(progress, lastReadTime);
   const completionDate = toDateString(completedTime);
 
   const vaultFile = app?.vault?.getAbstractFileByPath?.(vaultPath);
-  // B11：分类接 Weave 元数据 subjects[0]（issue 221/ADR-0099）；无则置 null（kwFilter 搜「未分类」不误命中 EPUB）
-  const subjects: unknown[] = Array.isArray(meta?.subjects) ? meta.subjects : [];
-  const epubCategory = typeof subjects[0] === 'string' && subjects[0].trim() ? subjects[0].trim() : null;
+  const epubCategoryValue = epubCategory(meta);
   return {
     file: vaultFile instanceof TFile ? vaultFile : null,
     title,
     author: typeof meta?.author === 'string' && meta.author.trim() ? meta.author.trim() : '未知作者',
-    category: epubCategory,
+    category: epubCategoryValue,
     cover: resolveEpubCoverPath(app, meta),
     bookReview: null,
     readingDate,

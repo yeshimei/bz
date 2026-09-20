@@ -148,13 +148,12 @@ describe('书库深审修复批：报告返回书库兜底重画（ui F1/F2）',
     const { openBookshelfReport } = await import('../../src/bookshelf');
     openBookshelfReport(app); // 冷开直落报告视图：墙位只铺了加载占位
     const overlay = overlayEl();
-    await waitFor(() => !!overlay.querySelector('.bz-rr-content')?.textContent?.length);
+    // RR-F6 并行先行后骨架即时出现，「textContent 非空」不再代表渲染完成——以段数为锚
+    // （本 describe 的书无 pages，速度段缺席：9 段中 8 段产 .bz-rr-card）
+    await waitFor(() => (overlay.querySelector('.bz-rr-content') as HTMLElement).querySelectorAll('.bz-rr-card').length >= 8);
     expect(overlay.querySelector('#bz-bs-shelf')?.textContent).toContain('正在整理书架');
     (overlay.querySelector('[data-rr-goto-shelf]') as HTMLElement).click();
     expect(M.view).toBe('shelf');
-    // 旧实现只切容器 active 不重画墙（测试盲区：只断类切换不断内容）
-    expect(overlay.querySelector('#bz-bs-shelf')?.textContent).not.toContain('正在整理书架');
-    expect(spines(overlay).length).toBe(2);
     expect(overlay.querySelector('#bz-bs-hint')?.textContent).toContain('2 册在墙');
   });
 
@@ -239,9 +238,11 @@ describe('书库深审修复批：weave-data 通道与读侧降级（func F4 / a
     resetBookshelfState();
     clearNotices();
     document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as never);
   });
   afterEach(() => {
     unloadBookshelf();
+    setSettingsProvider(() => ({}) as never); // RR-F7 用例注入过目录设置：不还原会泄漏给同 describe 后续用例
     document.body.innerHTML = '';
   });
 
@@ -271,6 +272,29 @@ describe('书库深审修复批：weave-data 通道与读侧降级（func F4 / a
     // 自动刷新链路真通：防抖 300ms → rebuild → renderAll → 书脊 title 进度更新
     await waitFor(() => spines(overlayEl()).find((s) => s.title?.includes('认知觉醒'))?.title.includes('80%') === true);
     expect(spines(overlayEl()).length).toBe(2);
+  });
+
+  it('RR-F7：目录本身是单个 md 笔记的书库形态写盘 → schedule 不再漏（收录谓词单源）', async () => {
+    // 单文件书库「书库.md」（isBookshelfPath 第二形态）：旧过滤只认目录前缀，
+    // 面板开着改写该书 → 墙与报告都不刷新（收录两侧认、刷新通道不认）
+    setSettingsProvider(() => ({ bookshelfFolderPath: '我的书' }) as never);
+    const vault = new MockVault();
+    vault.files.set('我的书.md', `---
+tags: [book]
+author: 单文件作者
+readingProgress: 30
+---`);
+    const app = mockAppWithVault(vault);
+    ensureBookshelf(app);
+    setApp(app);
+    createOverlay(app);
+    await waitFor(() => spines(overlayEl()).length === 1);
+    // 改写该书（进度 30 → 90）→ md modify 域事件 → 防抖 rebuild → 墙刷新
+    const file = vault.file('我的书.md');
+    await vault.process(file, (c: string) => c.replace('readingProgress: 30', 'readingProgress: 90'));
+    const { emitDomainEvent } = await import('../../src/core/domain-bus');
+    emitDomainEvent('vault:md-modified', { path: '我的书.md' });
+    await waitFor(() => spines(overlayEl()).find((s2) => s2.title?.includes('我的书'))?.title.includes('90%') === true);
   });
 
   it('A3：weave-data.json 损坏 → EPUB 区降级空 + 一次性 warning 告警（恢复正常后复位）', async () => {

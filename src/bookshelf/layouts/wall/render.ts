@@ -237,7 +237,9 @@ export function panelHtml(skinClass: string): string {
         <div class="bz-bs-view bz-bs-view-report">
           <div class="bz-rr-head">
             <span class="bz-rr-title">${iconSpan(ICON.report, 'bz-ic--sm')}阅读分析报告</span>
-            <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书库">${iconSpan(ICON.close)}</button>
+            <!-- 深审 RR-U1/EFF-1：桌面也可见（左栏导航随书脊墙换血退役，头行返回钮 = 全宽度唯一返回出口）；
+                 RR-U3/EFF-10：22×26px icon 档挂 bz-touch-target--lg 热区外扩 + aria-label（同文件清除钮先例） -->
+            <button class="bz-icon-btn bz-rr-close bz-touch-target bz-touch-target--lg" data-rr-goto-shelf title="返回书库" aria-label="返回书库">${iconSpan(ICON.close)}</button>
           </div>
           <div class="bz-rr-content"></div>
         </div>

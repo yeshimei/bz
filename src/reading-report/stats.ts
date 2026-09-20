@@ -1,9 +1,30 @@
 /**
  * 阅读数据分析报告 stats（ticket 13）：全部数据采集与纯函数，源码逐字移植。
  * 源码：阅读数据分析报告.js（重复函数只保留最终版）
+ *
+ * 深审维护注记：
+ * - RR-A1 供数面：EPUB 字段映射（progress 归一/subjects 分类/readingDate 生成）与 md 时长
+ *   解析（parseReadingTimeMs）单源自 bookshelf/data 导出，本层消费（ADR-0091 宿主供数向），
+ *   同输入与书架墙恒同输出（契约对照测试锁死）；不再自持镜像实现。
+ * - C-4/EFF-8 一刀清：建议生成器（practical/focus/interaction/category/speed）与衍生死字段
+ *   （trends 7 字段/habits 3 字段/focus 3 字段/categories 8 字段）及 generateMonthlySpeedTrend
+ *   HTML 死模板（含内联 hex 与模拟数据）已删——上屏消费面 = report.ts 各段模板，未列字段即无产出。
+ * - RR-F9 语义拍板：EPUB 会话无 type 字段，mapWeaveSessionToReport 按有效起止派生
+ *   type:'completed'（有起止且时长 > 0 即完成会话）——会话完成率不再恒 0 压低专注分。
+ * - RR-F10：start 缺失/非法的会话直接丢弃（不再补 0 落 1970 幽灵月）。
  */
 import { pad2 } from '../core/utils';
-import { readWeaveAggregates, resolveBookTag, resolveFolderPath } from '../bookshelf/data';
+import { CHART_HEATMAP_SERIES } from '../core/chart-palette';
+import {
+  readWeaveAggregates,
+  resolveBookTag,
+  resolveFolderPath,
+  epubProgress,
+  epubCategory,
+  epubReadingDate,
+  parseReadingTimeMs,
+  isBookshelfPath,
+} from '../bookshelf/data';
 
 // ---------- 数据采集 ----------
 
@@ -13,13 +34,26 @@ export interface BookNoteEntry {
   cache: any;
 }
 
-/** 阅读会话 → 报告 frontmatter 形状（duration 秒；start 可被 new Date 解析）。 */
-function mapWeaveSessionToReport(session: any): any {
-  const start = typeof session?.start === 'number' ? session.start : 0;
+/**
+ * 阅读会话 → 报告 frontmatter 形状（duration 秒；start 可被 new Date 解析）。
+ * RR-F10：start 缺失/非法（非有限数或 <= 0）→ 返回 null 由调用方过滤——不再补 0
+ * 落 1970-01-01 幽灵月（热力图翻月可达、连续天数被孤点干扰）。
+ * RR-F9：EPUB 会话无 type 字段，按有效起止派生 type:'completed'（有起止且时长 > 0
+ * 即完成会话）——analyzeReadingSessions/analyzeSessionFocus 的完成率口径不再恒 0。
+ */
+function mapWeaveSessionToReport(session: any): any | null {
+  const rawStart = session?.start;
+  const start = typeof rawStart === 'number' && Number.isFinite(rawStart) && rawStart > 0 ? rawStart : null;
+  if (start === null) return null;
   const end = typeof session?.end === 'number' ? session.end : start;
   const durationSeconds =
     typeof session?.durationSeconds === 'number' ? Math.round(session.durationSeconds) : 0;
-  return { start, end, duration: durationSeconds };
+  return {
+    start,
+    end,
+    duration: durationSeconds,
+    type: end > start && durationSeconds > 0 ? 'completed' : undefined,
+  };
 }
 
 function toIsoDate(timestamp: number | undefined): string | null {
@@ -28,7 +62,11 @@ function toIsoDate(timestamp: number | undefined): string | null {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
 }
 
-/** 把 Weave 书籍聚合映射为报告书条目（frontmatter 口径与 md 书一致，缺 field 补缺省）。 */
+/**
+ * 把 Weave 书籍聚合映射为报告书条目（frontmatter 口径与 md 书一致，缺 field 补缺省）。
+ * RR-A1：progress 归一 / subjects 分类 / readingDate 生成经 bookshelf/data 共享纯函数，
+ * 与书架墙 buildEpubItem 同源（RR-F1 subjects 通道 / RR-F4 progress 前置随刀收敛）。
+ */
 function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
   const meta = aggregate?.meta;
   const fileRef = aggregate?.file;
@@ -39,15 +77,11 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
   const title = typeof meta?.title === 'string' ? meta.title.trim() : '';
   if (!vaultPath || !title) return null;
 
-  const rawPercent = typeof reading?.position?.percent === 'number' ? reading.position.percent : 0;
-  const progress =
-    rawPercent > 1
-      ? Math.min(100, Math.round(rawPercent))
-      : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+  const progress = epubProgress(reading?.position?.percent);
   const wordCount = typeof meta?.wordCount === 'number' && meta.wordCount > 0 ? meta.wordCount : 0;
   const pages = Math.floor(wordCount / 500);
   const sessions = Array.isArray(reading?.sessions) ? reading.sessions : [];
-  const readingDate = stats?.lastReadTime ? toIsoDate(stats.lastReadTime) : null;
+  const readingDate = epubReadingDate(progress, stats?.lastReadTime);
 
   return {
     file: {
@@ -58,10 +92,13 @@ function buildEpubBookNoteEntry(aggregate: any): BookNoteEntry | null {
     frontmatter: {
       title,
       author: typeof meta?.author === 'string' && meta.author.trim() ? meta.author.trim() : '未知作者',
-      category: '未分类',
+      // ADR-0099 subjects 通道（RR-F1）：与书架墙同源回落，无 subjects 才归「未分类」
+      category: epubCategory(meta) || '未分类',
       readingProgress: progress,
       readingTime: typeof stats?.totalReadTime === 'number' ? stats.totalReadTime : 0,
-      readingSessions: sessions.map(mapWeaveSessionToReport),
+      readingSessions: sessions
+        .map(mapWeaveSessionToReport)
+        .filter((s: any): s is NonNullable<typeof s> => s !== null),
       readingDate,
       completionDate: toIsoDate(stats?.completedTime),
       highlights: Array.isArray(notes?.highlights) ? notes.highlights.length : 0,
@@ -101,8 +138,9 @@ export function getAllBookNotes(app: any): BookNoteEntry[] {
 
   for (const file of files) {
     try {
-      // 口径：书库目录内才统计（目录前缀 / 目录本身单文件，与 bookshelf scanMarkdownBooks 回落分支一致）
-      if (file.path !== `${folderPath}.md` && !file.path.startsWith(`${folderPath}/`)) continue;
+      // 口径单源（RR-A1）：isBookshelfPath 与书架墙 scanMarkdownBooks 回落分支/宿主刷新
+      // schedule 同一谓词——目录前缀 + 目录本身单文件两形态，三处不再各写一份
+      if (!isBookshelfPath(file.path, folderPath)) continue;
       const cache = app.metadataCache.getFileCache(file);
       if (!cache || !cache.frontmatter) continue;
 
@@ -185,7 +223,9 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
     totalOutlinks: 0,
     monthlyStats: {},
     yearlyStats: {},
-    authorStats: {},
+    // RR-F8：用户数据（author/category）直接做键——用无原型空对象防 `constructor`/
+    // `__proto__` 键命中 Object.prototype 后把 count++ 写上全局原型（原型污染可达面）
+    authorStats: Object.create(null),
     readingSessions: [],
     progressDistribution: {
       unread: 0,
@@ -205,10 +245,16 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
   books.forEach((book, index) => {
     try {
       const fm = book.frontmatter;
-      const readingProgress = parseFloat(fm.readingProgress) || 0;
-      const readingTime = parseFloat(fm.readingTime) || 0;
-      if (fm.readingSessions && Array.isArray(fm.readingSessions)) {
-        stats.readingSessions = stats.readingSessions.concat(fm.readingSessions).filter((d) => d.duration > 60);
+      // RR-F4：钳 [0,100]——负数手滑不再落「刚开始」桶、超 100 进「已完成」桶（与宿主 data.ts 同款钳制）
+      const readingProgress = Math.max(0, Math.min(100, parseFloat(fm.readingProgress) || 0));
+      // RR-F5/A1 供数面：parseReadingTimeMs 单源（readingTime 毫秒直读 → readingTimeFormat 中文/weave 双格式兜底）
+      const readingTime = parseReadingTimeMs(fm);
+      // EFF-3：单趟归并——旧写法逐书 concat + 全量重 filter（O(n²·m) 大库热点），
+      // 前缀全为重复劳动；push 直写语义逐字等价（顺序、>60s 阈值不变）
+      if (Array.isArray(fm.readingSessions)) {
+        for (const d of fm.readingSessions) {
+          if (d.duration > 60) stats.readingSessions.push(d);
+        }
       }
 
       // 统计阅读状态（audit G：与 bookshelf/library 双日期口径统一——
@@ -312,29 +358,24 @@ export function calculateReadingStats(books: BookNoteEntry[]): ReadingStats {
 
 // ---------- 格式化 ----------
 
-/** 格式化阅读时间（最终版 L2072） */
+/**
+ * 格式化阅读时长（RR-U5 统一中文形制单源：报告全屏唯一时长格式）。
+ * 旧实现「Nh/Nm」英文缩写与 formatSessionDuration 中文形制同屏混用，且概览卡
+ * 靠 replace('h','小时') 链临时换写法（实现漂移即静默破功）——三处归一于此。
+ */
 export function formatReadingTime(milliseconds: number): string {
-  const totalSeconds = Math.floor(milliseconds / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
+  const totalMinutes = Math.floor(milliseconds / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
   if (hours > 0) {
-    return `${hours}h${minutes > 0 ? `${minutes}m` : ''}`;
-  } else {
-    return `${minutes}m`;
+    return minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`;
   }
+  return `${minutes}分钟`;
 }
 
-/** 格式化会话时长（最终版 L1868） */
+/** 格式化会话时长（秒入口；形制单源转发 formatReadingTime，RR-U5） */
 export function formatSessionDuration(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-
-  if (hours > 0) {
-    return `${hours}小时${minutes % 60}分钟`;
-  } else {
-    return `${minutes}分钟`;
-  }
+  return formatReadingTime(seconds * 1000);
 }
 
 // ---------- 阅读习惯 ----------
@@ -359,42 +400,19 @@ export function analyzeReadingSessions(sessions: any[]) {
   return { totalSessions, totalDuration, avgDuration, completedSessions, timeSlots };
 }
 
-/** 深度分析阅读习惯 */
+/**
+ * 分析阅读习惯（C-4 一刀清：readingPattern/focusLevel/peakTime 从不上屏——
+ * 习惯段模板只消费 timeDistribution，产出即删，防「以为在屏上」的断钩）。
+ */
 export function analyzeReadingHabits(sessions: any[]) {
   const stats = analyzeReadingSessions(sessions);
-
-  const avgDuration = stats.avgDuration;
-  let readingPattern = '';
-  if (avgDuration < 600) readingPattern = '碎片化阅读 (短时间多次)';
-  else if (avgDuration < 1800) readingPattern = '均衡型阅读';
-  else readingPattern = '深度沉浸式阅读';
-
-  const longSessions = sessions.filter((s) => s.duration > 1800).length;
-  const focusPercentage = ((longSessions / sessions.length) * 100).toFixed(1);
-  let focusLevel = '';
-  if (parseFloat(focusPercentage) > 50) focusLevel = '高度专注';
-  else if (parseFloat(focusPercentage) > 25) focusLevel = '中等专注';
-  else focusLevel = '轻度专注';
 
   const timeDistribution: Record<string, string> = {};
   Object.entries(stats.timeSlots).forEach(([slot, count]) => {
     timeDistribution[slot] = ((count as number) / sessions.length * 100).toFixed(1);
   });
 
-  const peakTime = Object.entries(stats.timeSlots).reduce((a, b) => ((a[1] as number) > (b[1] as number) ? a : b))[0];
-  const peakLabels: Record<string, string> = {
-    morning: '早晨时段最活跃',
-    afternoon: '下午时段最活跃',
-    evening: '晚间时段最活跃',
-    night: '深夜时段最活跃',
-  };
-
-  return {
-    readingPattern,
-    focusLevel: `${focusLevel} (${focusPercentage}%长时间会话)`,
-    peakTime: peakLabels[peakTime],
-    timeDistribution,
-  };
+  return { timeDistribution };
 }
 
 // ---------- 趋势 ----------
@@ -458,25 +476,25 @@ export function analyzeTrendDirection(monthlyData: any[]): string {
   return diff > 0 ? '↑' : '↓';
 }
 
-/** 分析阅读趋势（完整）；now 供测试固定「本月」 */
-export function analyzeReadingTrends(stats: ReadingStats, bookNotes: BookNoteEntry[], now: Date = new Date()) {
+/**
+ * 分析阅读趋势；now 供测试固定「本月」。
+ * C-4/EFF-8 一刀清：趋势段模板只消费 currentMonth/quarterlyAvg/completionRate/
+ * trendDirection/recentMonths 五项，monthlyAvg/focusScore/focusLevel/consistencyDays/
+ * consistencyLevel/efficiency/recommendations 七个从不上屏的死字段与四个建议生成器
+ * （generatePractical/Focus/Interaction/Category + speed.recommendation）已删；
+ * calculateFocusScore/calculateConsistencyDays 保留为导出纯函数（独立测试在位）。
+ */
+export function analyzeReadingTrends(stats: ReadingStats, now: Date = new Date()) {
   const monthlyData = getMonthlyTrendData(stats); // 升序（旧→新）
   const ascendingRecent = monthlyData.slice(-6); // 统计口径：反转前的升序切片
   const recentMonths = [...ascendingRecent].reverse(); // 最近6个月，仅供图表高亮展示（新→旧）
 
   return {
     recentMonths,
-    monthlyAvg: calculateMonthlyAverage(ascendingRecent),
     currentMonth: getCurrentMonthStats(ascendingRecent, now),
     quarterlyAvg: calculateQuarterlyAverage(ascendingRecent),
     completionRate: calculateCompletionRate(stats),
     trendDirection: analyzeTrendDirection(ascendingRecent),
-    focusScore: calculateFocusScore(bookNotes),
-    focusLevel: getFocusLevel(bookNotes),
-    consistencyDays: calculateConsistencyDays(stats),
-    consistencyLevel: getConsistencyLevel(stats),
-    efficiency: calculateReadingEfficiency(stats, bookNotes),
-    recommendations: generatePracticalRecommendations(stats, bookNotes),
   };
 }
 
@@ -504,66 +522,10 @@ export function calculateFocusScore(bookNotes: BookNoteEntry[]): number {
   return Math.round(totalScore / completedBooks.length);
 }
 
-/** 获取专注度等级 */
-function getFocusLevel(bookNotes: BookNoteEntry[]): string {
-  const score = calculateFocusScore(bookNotes);
-  if (score >= 80) return '高度专注';
-  if (score >= 60) return '中等专注';
-  if (score >= 40) return '一般专注';
-  return '需要提升';
-}
-
 /** 计算连续阅读天数（简化：月数*7，上限 30） */
 export function calculateConsistencyDays(stats: ReadingStats): number {
   const monthlyCount = Object.keys(stats.monthlyStats).length;
   return Math.min(monthlyCount * 7, 30);
-}
-
-/** 获取连续性等级 */
-function getConsistencyLevel(stats: ReadingStats): string {
-  const days = calculateConsistencyDays(stats);
-  if (days >= 20) return '优秀';
-  if (days >= 10) return '良好';
-  return '待加强';
-}
-
-/** 计算阅读效率 */
-function calculateReadingEfficiency(stats: ReadingStats, bookNotes: BookNoteEntry[]) {
-  const completedBooks = bookNotes.filter((book) => book.frontmatter.completionDate);
-  const totalReadingTime = stats.totalReadingTime / 3600000;
-  const totalPages = bookNotes.reduce((sum, book) => sum + (parseInt(book.frontmatter.pages) || 0), 0);
-
-  return {
-    pagesPerHour: totalReadingTime > 0 ? (totalPages / totalReadingTime).toFixed(1) : '0.0',
-    notesPerBook: completedBooks.length > 0 ? (stats.totalHighlights / completedBooks.length).toFixed(1) : '0.0',
-    timePerBook: completedBooks.length > 0 ? (totalReadingTime / completedBooks.length).toFixed(1) : '0.0',
-  };
-}
-
-/** 生成实用建议 */
-function generatePracticalRecommendations(stats: ReadingStats, bookNotes: BookNoteEntry[]): string {
-  const recommendations: string[] = [];
-
-  const completionRate = parseFloat(calculateCompletionRate(stats));
-  if (completionRate < 50) {
-    recommendations.push('建议优先完成已开始的书籍，提高完成率');
-  }
-
-  const efficiency = calculateReadingEfficiency(stats, bookNotes);
-  if (parseFloat(efficiency.pagesPerHour) < 20) {
-    recommendations.push('阅读速度较慢，可以尝试提升阅读技巧');
-  }
-
-  if (calculateConsistencyDays(stats) < 15) {
-    recommendations.push('建立每日阅读习惯，保持连续性');
-  }
-
-  const focusScore = calculateFocusScore(bookNotes);
-  if (focusScore < 60) {
-    recommendations.push('提升阅读时的专注度，减少干扰');
-  }
-
-  return recommendations.length > 0 ? recommendations.join('；') : '您的阅读习惯很优秀，继续保持！';
 }
 
 // ---------- 热力图 ----------
@@ -690,21 +652,19 @@ export function calculateIntensityLevel(durationHours: number): number {
   return 0;
 }
 
-/** 获取热力图颜色 */
+/** 获取热力图颜色（C-2 收编：色阶常量正典 core/chart-palette，同形系列单源） */
 export function getHeatmapColor(level: number): string {
-  const colors = [
-    'var(--background-secondary)', // 0级：无阅读（p1 主题中性色，暗色主题可读）
-    '#9be9a8', // 1级：0.5-1小时
-    '#40c463', // 2级：1-2小时
-    '#30a14e', // 3级：2-4小时
-    '#216e39', // 4级：4小时以上
-  ];
-  return colors[level] || colors[0];
+  return CHART_HEATMAP_SERIES[level] || CHART_HEATMAP_SERIES[0];
 }
 
 // ---------- 专注度（会话级） ----------
 
-/** 分析阅读专注度数据 */
+/**
+ * 分析阅读专注度数据。
+ * C-4 一刀清：专注段模板只消费 focusScore/deepSessions/bestTimeSlot/sessionDistribution/
+ * trendDescription/trendIcon/consistencyScore/efficiencyScore——avgSessionTime/completionRate/
+ * trend/recommendations（generateFocusRecommendations）从不上屏，产出即删。
+ */
 export function analyzeReadingFocus(readingSessions: any[], bookNotes: BookNoteEntry[]) {
   if (!readingSessions || readingSessions.length === 0) {
     return getDefaultFocusData();
@@ -718,14 +678,10 @@ export function analyzeReadingFocus(readingSessions: any[], bookNotes: BookNoteE
   return {
     focusScore: calculateOverallFocusScore(sessionAnalysis, timeAnalysis, consistencyAnalysis),
     deepSessions: sessionAnalysis.deepSessions,
-    avgSessionTime: formatSessionDuration(sessionAnalysis.avgDuration),
     bestTimeSlot: timeAnalysis.bestTimeSlot,
     sessionDistribution: sessionAnalysis.distribution,
-    completionRate: sessionAnalysis.completionRate,
-    trend: trendAnalysis.trend,
     trendDescription: trendAnalysis.description,
     trendIcon: trendAnalysis.icon,
-    recommendations: generateFocusRecommendations(sessionAnalysis, timeAnalysis, consistencyAnalysis),
     consistencyScore: consistencyAnalysis.score,
     efficiencyScore: calculateEfficiencyScore(bookNotes),
   };
@@ -925,41 +881,11 @@ export function calculateEfficiencyScore(bookNotes: BookNoteEntry[]): number {
   return Math.round(totalEfficiency / completedBooks.length);
 }
 
-/** 生成专注度提升建议 */
-function generateFocusRecommendations(sessionAnalysis: any, timeAnalysis: any, consistencyAnalysis: any): string {
-  const recommendations: string[] = [];
-
-  if (sessionAnalysis.avgDuration < 900) {
-    recommendations.push('尝试延长单次阅读时间至20-30分钟');
-  } else if (sessionAnalysis.avgDuration > 3600) {
-    recommendations.push('您的专注时长优秀，注意适当休息');
-  }
-
-  if (sessionAnalysis.completionRate < 60) {
-    recommendations.push('提高会话完成率，设定明确的阅读目标');
-  }
-
-  if (consistencyAnalysis.maxConsecutiveDays < 3) {
-    recommendations.push('建立每日固定阅读时段，培养连续性');
-  }
-
-  if (timeAnalysis.bestTimeSlot.includes('深夜')) {
-    recommendations.push('深夜阅读可能影响睡眠质量，建议调整时段');
-  }
-
-  if (recommendations.length === 0) {
-    return '您的阅读专注度表现优秀！继续保持良好的阅读习惯。';
-  }
-
-  return recommendations.slice(0, 3).join('；');
-}
-
-/** 获取默认专注度数据（当无会话数据时） */
+/** 获取默认专注度数据（当无会话数据时；报告层对空会话走独立空态卡，不亮默认分——RR-U12） */
 function getDefaultFocusData() {
   return {
     focusScore: 50,
     deepSessions: 0,
-    avgSessionTime: '0分钟',
     bestTimeSlot: '暂无数据',
     sessionDistribution: [
       { type: 'short', count: 0, percentage: 0 },
@@ -968,11 +894,8 @@ function getDefaultFocusData() {
       { type: 'deep', count: 0, percentage: 0 },
       { type: 'intense', count: 0, percentage: 0 },
     ],
-    completionRate: 0,
-    trend: '暂无趋势',
     trendDescription: '需要更多阅读数据',
     trendIcon: 'minus',
-    recommendations: '开始记录阅读会话以获得专注度分析',
     consistencyScore: 0,
     efficiencyScore: 0,
   };
@@ -1009,107 +932,48 @@ export function analyzeReadingSpeed(stats: ReadingStats) {
     readingType = '扫描型';
   }
 
-  let recommendation: string;
-  if (avgPagesPerHour < 15) {
-    recommendation = '建议通过速读训练提高基础阅读速度，目标达到20-30页/小时';
-  } else if (avgPagesPerHour < 30) {
-    recommendation = '您的阅读速度适中，可以尝试不同的阅读技巧来进一步提升效率';
-  } else if (avgPagesPerHour < 50) {
-    recommendation = '优秀的阅读速度！继续保持并注意理解深度的平衡';
-  } else {
-    recommendation = '极佳的阅读速度！建议关注阅读质量与知识吸收效果';
-  }
-
-  const monthlyTrend = generateMonthlySpeedTrend(stats);
-
+  /**
+   * C-4/RR-U8 一刀清：recommendation（建议文案不上屏）、monthlyTrend（死字段，原挂
+   * generateMonthlySpeedTrend HTML 死模板——含 Math.random() 模拟数据与 5 处内联 hex，
+   * RR-A3 分层违例随删）、bestSpeed（均值×1.2 的编造值，无真实统计不上屏）已删。
+   */
   return {
     speedLevel,
     speedPercentage,
     efficiencyScore,
     readingType,
-    recommendation,
-    monthlyTrend,
-    bestSpeed: Math.round(avgPagesPerHour * 1.2),
+    // 平均每本口径（总时长 ÷ 已读本数；标签在 report.ts 如实标「平均每本时长」）
     avgSessionTime: formatReadingTime(stats.totalReadingTime / Math.max(stats.readBooks, 1)),
   };
 }
 
-/** 生成月度速度趋势（模拟数据，源码语义保留） */
-function generateMonthlySpeedTrend(stats: ReadingStats): string {
-  const monthlyData = Object.entries(stats.monthlyStats || {})
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(-6);
-
-  if (monthlyData.length === 0) {
-    return '<div style="text-align: center; color: #666; padding: 20px 0;">暂无月度数据</div>';
-  }
-
-  const trendData = monthlyData.map(([month, data]) => {
-    const estimatedSpeed = 25 + Math.random() * 15; // 模拟数据
-    return {
-      month: month.substring(5),
-      speed: Math.round(estimatedSpeed),
-      books: data.booksRead || 0,
-    };
-  });
-
-  const maxSpeed = Math.max(...trendData.map((d) => d.speed));
-
-  return `
-  <div style="overflow-x: auto; margin: 8px 0;">
-  <div style="display: flex; gap: 8px; min-width: ${trendData.length * 80}px; padding: 8px 0;">
-  ${trendData
-    .map((data) => {
-      const height = (data.speed / maxSpeed) * 40;
-      return `
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-    <div style="font-size: 11px; color: #666; margin-bottom: 4px;">${data.month}月</div>
-    <div style="width: 100%; height: 40px; display: flex; align-items: end; justify-content: center;">
-    <div style="width: 80%; height: ${height}px; background: linear-gradient(to top, #667eea, #764ba2); border-radius: 2px 2px 0 0;"></div>
-    </div>
-    <div style="font-size: 12px; font-weight: 600; color: #2c3e50; margin-top: 4px;">${data.speed}</div>
-    <div style="font-size: 10px; color: #999;">${data.books}本</div>
-    </div>
-    `;
-    })
-    .join('')}
-  </div>
-  </div>
-  `;
-}
-
 // ---------- 类别 ----------
 
-/** 提取书籍分类并自动分类 */
+/**
+ * 提取书籍分类（RR-F3 口径单源对齐宿主 parseBookFile：`String(fm.category)` 原串一桶，
+ * 不再按逗号/斜杠拆分多类值——拆分展示与墙侧精确等值筛选（categoryLabel === cat）恒不
+ * 互洽，多类书点分类行回墙「筛不中该书」；数组经 String() 与宿主 toString 同为拼接串）。
+ */
 function extractAndCategorizeBooks(bookNotes: BookNoteEntry[]) {
   const categorizedBooks: any[] = [];
-  const autoCategorizedCount = 0;
 
   bookNotes.forEach((book) => {
-    let categories: string[] = [];
-
-    if (book.frontmatter.category) {
-      const rawCategories = Array.isArray(book.frontmatter.category)
-        ? book.frontmatter.category
-        : String(book.frontmatter.category).split(/[,，\/]/);
-
-      categories = rawCategories.map((cat: string) => cat.trim()).filter((cat) => cat);
-    }
-
+    const raw = book.frontmatter.category;
+    // 无分类不入分布（宿主侧书脊由供数面给「未分类」字符串；md 缺 category 维持不入桶）
+    const category = raw !== undefined && raw !== null && String(raw).trim() !== '' ? String(raw) : '';
     categorizedBooks.push({
       title: book.file ? book.file.name : '未知书籍',
-      categories,
-      readingDate: book.frontmatter.readingDate,
-      completionDate: book.frontmatter.completionDate,
+      categories: category ? [category] : [],
     });
   });
 
-  return { categorizedBooks, autoCategorizedCount };
+  return { categorizedBooks };
 }
 
 /** 计算分类分布 */
 function calculateCategoryDistribution(categorizedBooks: any[]) {
-  const categoryCount: Record<string, number> = {};
+  // RR-F8：分类名做键——无原型空对象防 `__proto__`/`constructor` 键写上 Object.prototype
+  const categoryCount: Record<string, number> = Object.create(null);
 
   categorizedBooks.forEach((book) => {
     book.categories.forEach((category: string) => {
@@ -1128,17 +992,11 @@ function calculateCategoryDistribution(categorizedBooks: any[]) {
     .sort((a, b) => b.count - a.count);
 }
 
-/** 计算前3分类占比 */
-function calculateTop3Percentage(categoryDistribution: any[]): number | string {
-  if (categoryDistribution.length === 0) return 0;
-
-  const top3Count = categoryDistribution.slice(0, 3).reduce((sum, cat) => sum + cat.count, 0);
-  const totalCount = categoryDistribution.reduce((sum, cat) => sum + cat.count, 0);
-
-  return totalCount > 0 ? ((top3Count / totalCount) * 100).toFixed(1) : 0;
-}
-
-/** 计算分类多样性（香农指数归一） */
+/**
+ * 计算分类多样性（香农指数归一）。
+ * RR-F3 同根防御：p 按 totalBooks 归一，多类口径下 Σcount 可超 totalBooks 使熵溢出
+ * （上屏 > 100%）——钳 [0,100]（口径收敛后常态到不了边界，此处只兜数据防御）。
+ */
 export function calculateCategoryDiversity(categoryDistribution: any[], totalBooks: number): number {
   if (categoryDistribution.length <= 1) return 0;
 
@@ -1153,18 +1011,7 @@ export function calculateCategoryDiversity(categoryDistribution: any[], totalBoo
   const maxDiversity = Math.log(categoryDistribution.length);
   const score = maxDiversity > 0 ? (diversity / maxDiversity) * 100 : 0;
 
-  return Math.round(score);
-}
-
-/** 获取多样性等级 */
-function getDiversityLevel(categoryDistribution: any[], totalBooks: number): string {
-  const score = calculateCategoryDiversity(categoryDistribution, totalBooks);
-
-  if (score >= 80) return '非常广泛';
-  if (score >= 60) return '较为多样';
-  if (score >= 40) return '相对集中';
-  if (score >= 20) return '比较专一';
-  return '高度集中';
+  return Math.max(0, Math.min(100, Math.round(score)));
 }
 
 /** 计算平衡度分数（基尼简化） */
@@ -1188,91 +1035,13 @@ export function calculateBalanceScore(categoryDistribution: any[]): number {
   return Math.round((1 - gini) * 100);
 }
 
-/** 获取平衡度描述 */
-function getBalanceDescription(categoryDistribution: any[]): string {
-  const balanceScore = calculateBalanceScore(categoryDistribution);
-
-  if (balanceScore >= 80) return '非常均衡';
-  if (balanceScore >= 60) return '较为均衡';
-  if (balanceScore >= 40) return '相对集中';
-  return '高度集中';
-}
-
-/** 分析分类趋势（近 6 月完成书 top5） */
-function analyzeCategoryTrends(categorizedBooks: any[]) {
-  const recentBooks = categorizedBooks
-    .filter((book) => book.completionDate && isRecentDate(book.completionDate))
-    .sort((a, b) => new Date(b.completionDate).getTime() - new Date(a.completionDate).getTime()) // 最近完成优先，避免任意取样
-    .slice(0, 10);
-
-  const recentCategories: Record<string, number> = {};
-  recentBooks.forEach((book) => {
-    book.categories.forEach((cat: string) => {
-      recentCategories[cat] = (recentCategories[cat] || 0) + 1;
-    });
-  });
-
-  return Object.entries(recentCategories)
-    .map(([name, count]) => ({ name, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
-}
-
-/** 判断是否为最近日期（6 个月内） */
-function isRecentDate(dateString: string): boolean {
-  try {
-    const date = new Date(dateString);
-    const sixMonthsAgo = new Date();
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-    return date > sixMonthsAgo;
-  } catch {
-    return false;
-  }
-}
-
-/** 生成分类建议 */
-function generateCategoryRecommendations(categoryDistribution: any[], totalBooks: number): string[] {
-  const recommendations: string[] = [];
-  const diversityScore = calculateCategoryDiversity(categoryDistribution, totalBooks);
-
-  if (diversityScore < 30) {
-    recommendations.push('您的阅读分类比较集中，建议尝试不同类型的书籍来扩展视野');
-  } else if (diversityScore > 70) {
-    recommendations.push('您的阅读分类非常广泛，继续保持这种探索精神');
-  } else {
-    recommendations.push('您的阅读分类相对均衡，可以在现有基础上尝试相近领域');
-  }
-
-  if (categoryDistribution.length < 3 && totalBooks >= 5) {
-    recommendations.push('阅读分类较少，建议设定每月尝试一个新分类的目标');
-  }
-
-  if (categoryDistribution.length > 0) {
-    const topCategory = categoryDistribution[0];
-    if (parseFloat(topCategory.percentage) > 40) {
-      recommendations.push(`您对"${topCategory.name}"类书籍有强烈偏好，可以尝试该分类下的不同子类型`);
-    }
-  }
-
-  const uncategorized = categoryDistribution.find((cat) => cat.name === '未分类');
-  if (uncategorized && uncategorized.count > 0) {
-    recommendations.push(`您有${uncategorized.count}本书未分类，建议为这些书籍添加分类标签`);
-  }
-
-  return recommendations;
-}
-
-/** 获取推荐分类 */
-export function getSuggestedCategories(categoryDistribution: any[]): string[] {
-  const allCategories = ['小说', '文学', '历史', '科技', '哲学', '心理学', '经济', '管理', '自我提升', '传记', '科普', '艺术', '教育', '健康', '旅行', '美食', '文化', '社会'];
-
-  const currentCategories = new Set(categoryDistribution.map((cat) => cat.name));
-  const suggested = allCategories.filter((cat) => !currentCategories.has(cat));
-
-  return suggested.slice(0, 6);
-}
-
-/** 分析阅读分类（完整） */
+/**
+ * 分析阅读分类。
+ * C-4 一刀清：分类段模板只消费 categoryDistribution/totalBooks/totalCategories/
+ * topCategory/diversityScore/balanceScore——top3Percentage/diversityLevel/
+ * balanceDescription/categoryTrends/recommendations/suggestedCategories/analyzedBooks/
+ * autoCategorized 从不上屏，产出与配套生成器（getSuggestedCategories 等）已删。
+ */
 export function analyzeReadingCategories(bookNotes: BookNoteEntry[]) {
   const categoryData = extractAndCategorizeBooks(bookNotes);
   const categoryDistribution = calculateCategoryDistribution(categoryData.categorizedBooks);
@@ -1286,16 +1055,8 @@ export function analyzeReadingCategories(bookNotes: BookNoteEntry[]) {
       categoryDistribution.length > 0
         ? categoryDistribution[0]
         : { name: '无数据', count: 0, percentage: '0' },
-    top3Percentage: calculateTop3Percentage(categoryDistribution),
     diversityScore: calculateCategoryDiversity(categoryDistribution, totalBooks),
-    diversityLevel: getDiversityLevel(categoryDistribution, totalBooks),
     balanceScore: calculateBalanceScore(categoryDistribution),
-    balanceDescription: getBalanceDescription(categoryDistribution),
-    categoryTrends: analyzeCategoryTrends(categoryData.categorizedBooks),
-    recommendations: generateCategoryRecommendations(categoryDistribution, totalBooks),
-    suggestedCategories: getSuggestedCategories(categoryDistribution),
-    analyzedBooks: totalBooks,
-    autoCategorized: categoryData.autoCategorizedCount,
   };
 }
 
@@ -1463,7 +1224,7 @@ function getConnectionDescription(interactionData: any): string {
   return `链接密度 ${linkRatio}%，${level}水平`;
 }
 
-/** 分析笔记互动数据（完整） */
+/** 分析笔记互动数据（C-4：recommendations 死输出与 generateInteractionRecommendations 随刀删） */
 export function analyzeNotesInteractions(bookNotes: BookNoteEntry[]) {
   const interactionData = extractNotesInteractions(bookNotes);
   const totalBooks = bookNotes.length;
@@ -1480,39 +1241,5 @@ export function analyzeNotesInteractions(bookNotes: BookNoteEntry[]) {
     thinkingDescription: getThinkingDescription(interactionData),
     connectionLevel: analyzeConnectionLevel(interactionData),
     connectionDescription: getConnectionDescription(interactionData),
-    recommendations: generateInteractionRecommendations(interactionData, totalBooks),
   };
-}
-
-/** 生成互动优化建议 */
-function generateInteractionRecommendations(interactionData: any, totalBooks: number): string[] {
-  const recommendations: string[] = [];
-  const thinkRatio = calculateThinkRatio(interactionData.totalHighlights, interactionData.totalThinks);
-  const avgInteractions = interactionData.totalInteractions / Math.max(totalBooks, 1);
-
-  if (avgInteractions < 5) {
-    recommendations.push('建议增加阅读时的互动频率，尝试对重要内容进行标记');
-  } else if (avgInteractions > 20) {
-    recommendations.push('您的互动频率很高，继续保持这种深度参与的习惯');
-  }
-
-  if (thinkRatio < 15) {
-    recommendations.push('可以尝试在划线时多加入个人思考和评论');
-  } else if (thinkRatio > 40) {
-    recommendations.push('您的思考深度很好，考虑将想法整理成更系统的笔记');
-  }
-
-  if (interactionData.totalDialogue === 0) {
-    recommendations.push('尝试参与书籍讨论，分享观点可以加深理解');
-  }
-
-  if (interactionData.totalOutlinks < interactionData.totalHighlights * 0.1) {
-    recommendations.push('可以多建立知识之间的连接，构建知识网络');
-  }
-
-  if (recommendations.length === 0) {
-    recommendations.push('您的笔记互动模式很均衡，继续保持！');
-  }
-
-  return recommendations;
 }
