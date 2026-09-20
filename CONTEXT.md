@@ -107,7 +107,7 @@ _Avoid_: 把「想法编辑」当成 bz 直写的一般能力——只此两处�
 **桌面端专属能力 (Desktop-only Capability)**: 依赖 Node.js 外部进程（child_process）、移动端（Capacitor）不可用的功能。门禁：`window.require('child_process')` 为 null 即非桌面端；移动端不注册事件监听，设置项置灰标注「仅桌面端可用」，不静默降级。（当前实例：文献盒批量处理等外部工具调用；影院海报抓取已迁插件内，ADR-0129）
 
 
-**自动摘要 (Auto Summary)**: 常驻监听 `归档/网页剪藏` 新文件 → AI（deepseek-v4-flash）生成摘要/标签写回 frontmatter。详设（ticket 124）三键：autoSummaryLength（simple/standard/detailed 摘要长度档位）、autoSummaryTagsEnabled + autoSummaryTagCount（标签生成开关与数量区间）、autoSummaryTiming（见「摘要时机」）。AI 配置走主设置页 core AI（ADR-0052）。
+**自动摘要 (Auto Summary)**: 监听 `归档/网页剪藏` 顶层新文件（`autoSummaryEnabled` 总开关，AI 模型走用户面板当前模型不写死）→ AI 生成摘要/标签写回 frontmatter——**（2026-09-20 深审批终态）**：只管辖 title/summary/tags 三键（非管辖键原文保留类型零漂移）、YAML 转义 core 单源（escapeYamlText/yamlScalarOf 三域共用）、顶层限定与剪藏本口径一致、失败有退避熔断与人话重试。auto-summary→clipbook 存在一条顶层静态边（index 引 save 的 clipDir 宿主单源消费，ADR-0002 模块级无环备案）。详设（ticket 124）三键：autoSummaryLength（simple/standard/detailed 摘要长度档位）、autoSummaryTagsEnabled + autoSummaryTagCount（标签生成开关与数量区间）、autoSummaryTiming（见「摘要时机」）。AI 配置走主设置页 core AI（ADR-0052）。
 
 **B站下载 (Bilibili Downloader)**: 输入链接 → B站 API 解析（封面/标题/清晰度）→ 下载合并（ffmpeg spawn）→ 多段剪辑（对一个下载原件定义 0..N 段落，时间 0.1s/HH:MM:SS(.S)）/合并（段序拼接）/压缩（ffmpeg，产物 ffprobe 校验兜底）→ 转文字（faster-whisper，python -c 内嵌代码）。**ticket 136 起（ADR-0071）外部工具去 AI 去网页版**：`tools/bili-downloader`（bin `bili-dl`）只保留无头批处理（`cli.js --batch`，解析/下载/剪辑/压缩/转文字/交付），产出**转录临时文件**交 bz 插件做文献笔记 AI 与落盘；网页版（server.js/public）与插件 `bz-bili-open` 命令已删除。**经 shell 启动时 `--batch` 的 JSON 改传 `b64:<base64>` 前缀**（ticket 147：JSON 引号/空格会被 cmd 对消破坏 argv，base64 无引号空格 shell 安全；cli.js `decodeBatchArg` 双形态皆收，手动命令行直传 JSON 照旧）。文献盒批处理见「文献盒」词条。术语见 `tools/bili-downloader/CONTEXT.md`。
 
