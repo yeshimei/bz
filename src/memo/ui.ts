@@ -69,6 +69,26 @@ const searchDebounced = debounce((v: string) => {
   renderAll();
 }, SEARCH_DEBOUNCE_MS);
 
+/** 搜索框 ✕ 显隐同步（呈报#5 5A）：以输入框实值为准（不等 180ms 防抖，有词即现） */
+function syncSearchClear(): void {
+  const input = M.overlay?.querySelector('[data-memo-search]') as HTMLInputElement | null;
+  const btn = M.overlay?.querySelector('[data-memo-search-clear]') as HTMLElement | null;
+  if (btn && input) btn.hidden = !input.value.trim();
+}
+
+/** 清词 + 刷新 + 光标回框（呈报#4 ESC 有词段 / #5 ✕ 与空态「清除搜索」钮共用单源；
+ *  clipbook 效率#11/#12 定稿范式）。防抖尾触必须 cancel——否则清词后尾触把旧词
+ *  写回 M.search（词复活，diary D-UI3 同款教训）。 */
+function clearMemoSearch(): void {
+  searchDebounced.cancel();
+  M.search = '';
+  const input = M.overlay?.querySelector('[data-memo-search]') as HTMLInputElement | null;
+  if (input) input.value = '';
+  syncSearchClear();
+  renderAll();
+  input?.focus();
+}
+
 // ---------- 小工具 ----------
 
 
@@ -251,9 +271,10 @@ function getVisibleItems(): MemoItem[] {
       // 跨场景聚合 star 标记条目（已完成重要项同样放行进 done 折叠区）
       if (it.priority !== 'important') return false;
     } else if (M.activeScene !== '全部' && it.scene !== M.activeScene) return false;
-    // 搜索（内容/场景/笔记名）
+    // 搜索（内容/场景/笔记名/脚本/课程/网址——呈报#7 7A：卡片渲染了链接域名，
+    // 「记得那条里有个链接」按网址却搜不到，hay 补 url 字段）
     if (kw) {
-      const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(' ').toLowerCase();
+      const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url].filter(Boolean).join(' ').toLowerCase();
       if (!hay.includes(kw)) return false;
     }
     return true;
@@ -546,7 +567,22 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
 
   // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符）
   const searchInput = overlay.querySelector('[data-memo-search]') as HTMLInputElement;
-  searchInput.addEventListener('input', () => searchDebounced(searchInput.value.trim()));
+  searchInput.addEventListener('input', () => {
+    syncSearchClear(); // 呈报#5 5A：✕ 有词即现，不等防抖
+    searchDebounced(searchInput.value.trim());
+  });
+  // 呈报#4（4A）/ clipbook 效率#11 定稿范式：搜索框内 ESC 二段——有词先清词（拦在
+  // input 层，escManager 的 document 层收不到，防「清词变成关整个面板」），没词放行
+  // （冒泡给 registerPanelEsc 关面板，口径不变）
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.isComposing || e.defaultPrevented) return;
+    if (!searchInput.value.trim()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    clearMemoSearch();
+  });
+  // 呈报#5（5A）：尾部 ✕ 一键清词（点击清词并把光标送回框）
+  overlay.querySelector('[data-memo-search-clear]')?.addEventListener('click', () => clearMemoSearch());
 
   void (async () => {
     await loadData();
@@ -555,6 +591,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       M.search = opts.notePath;
       const presetInput = overlay.querySelector('[data-memo-search]') as HTMLInputElement | null;
       if (presetInput) presetInput.value = opts.notePath;
+      syncSearchClear(); // 呈报#5 5A：定位预填长路径后 ✕ 可见（回全量列表一键可达）
     }
     renderAll();
   })();
@@ -727,11 +764,27 @@ function renderContent(items: MemoItem[]): void {
       }));
       return;
     }
+    // 空态文案（呈报#16 16A）：搜索态保持既有口径；「今日」「重要」伪场景各说各话
+    // ——别处可能有几百条，只是今天没到期/没标重要，通用「还没有备忘录」是误导
+    const emptyCopy = M.search
+      ? { title: '没有匹配的备忘录', desc: '试试其他关键词，或清除搜索' }
+      : M.activeScene === '今日'
+        ? { title: '今日没有备忘录', desc: '今天到期或已完成的备忘录会显示在这里' }
+        : M.activeScene === '重要'
+          ? { title: '还没有标为重要的备忘录', desc: '在条目菜单选「转为重要」，它就会出现在这里' }
+          : { title: '这里还没有备忘录', desc: '随手记一条，别让它溜走' };
+    // 呈报#5 5A：搜索空态补「清除搜索」按钮——兑现 desc 里「或清除搜索」的承诺
+    const emptyActions = M.search
+      ? [
+          uiBtn({ label: '清除搜索', icon: ICON.close, onClick: () => clearMemoSearch() }),
+          uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) }),
+        ]
+      : [uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })];
     content.appendChild(uiEmpty({
       icon: ICON.empty,
-      title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
-      desc: M.search ? '试试其他关键词，或清除搜索' : '随手记一条，别让它溜走',
-      actions: uiBtnRow([uiBtn({ label: '新建备忘录', icon: ICON.add, tone: 'primary', onClick: () => openEditor(null) })], { center: true }),
+      title: emptyCopy.title,
+      desc: emptyCopy.desc,
+      actions: uiBtnRow(emptyActions, { center: true }),
     }));
     return;
   }
@@ -741,7 +794,9 @@ function renderContent(items: MemoItem[]): void {
   const urgent = active.filter((i) => dueRank(i) <= 1);
   const normal = active.filter((i) => dueRank(i) > 1);
 
-  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '');
+  // 呈报#6 6A：命中词高亮——过滤用同一关键词传给卡片渲染（render.hitTextHtml 切片）
+  const kw = M.search.trim();
+  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', kw);
 
   const sections: string[] = [];
   if (urgent.length) {
@@ -888,8 +943,19 @@ function jumpToNote(it: MemoItem): void {
   })();
 }
 
+/** 勾选 300ms 防抖窗口的「待定」视觉态（呈报#12 12A）：窗口内勾选圈挂 bz-memo-pending
+ *  （域样式呼吸/半亮），落定/反悔即摘除。直接切 DOM 类不整卡重渲——窗口内列表 DOM
+ *  不动、键盘焦点（checkHtml tabindex）不丢；列表卡与移动抽屉头两处勾选圈同锚点扫 */
+function syncPendingCheck(id: string, pending: boolean): void {
+  document
+    .querySelectorAll<HTMLElement>(
+      `.bz-memo-card[data-memo-id="${id}"] [data-memo-check], .bz-memo-sheet-entry [data-memo-check]`,
+    )
+    .forEach((el) => el.classList.toggle('bz-memo-pending', pending));
+}
+
 /** 行内勾选切换（列表卡与移动抽屉头共用）：已完成 = 恢复；未完成 = 300ms 防抖后标记完成
- *  （防抖窗口内再点 = 反悔取消） */
+ *  （防抖窗口内再点 = 反悔取消；呈报#12 12A：窗口内勾选圈挂「待定」态，防「没点上」二击） */
 function toggleCheck(it: MemoItem): void {
   // 已恢复路径（已完成条目勾选 = 恢复）
   if (it.completed) {
@@ -900,13 +966,27 @@ function toggleCheck(it: MemoItem): void {
   if (M.completeTimers.has(it.id)) {
     clearTimeout(M.completeTimers.get(it.id));
     M.completeTimers.delete(it.id);
+    syncPendingCheck(it.id, false); // 反悔：待定态即摘
     return;
   }
   const timer = setTimeout(() => {
     M.completeTimers.delete(it.id);
+    syncPendingCheck(it.id, false); // 落定：待定态摘除，refresh 后划线
     void completeItem(it);
   }, 300);
   M.completeTimers.set(it.id, timer);
+  syncPendingCheck(it.id, true); // 待定：窗口内呼吸/半亮
+}
+
+/** 完成去向轻反馈（呈报#13 13A）：条目挪进已完成折叠区（默认收起）后，折叠条短暂
+ *  高亮 + 计数跳动——「确实勾上了、去哪了」当场有说法；不做自动展开（13B 拍板不做）。
+ *  reflow 抖位重启动画防连续完成粘连；类随下次 renderAll 重建 DOM 自然消失。 */
+function bumpDoneBar(): void {
+  const bar = M.overlay?.querySelector('[data-memo-donebar]') as HTMLElement | null;
+  if (!bar) return;
+  bar.classList.remove('bz-memo-donebar-bump');
+  void bar.offsetWidth; // 强制 reflow：重启动画
+  bar.classList.add('bz-memo-donebar-bump');
 }
 
 async function completeItem(it: MemoItem): Promise<void> {
@@ -918,6 +998,7 @@ async function completeItem(it: MemoItem): Promise<void> {
     console.error(e);
   }
   await refresh();
+  bumpDoneBar();
 }
 
 async function restoreItem(it: MemoItem): Promise<void> {
@@ -1383,7 +1464,10 @@ export function openEditor(
   posRow.append(posBtn, posHint);
   form.appendChild(posRow);
 
-  // 底部按钮行（先建好 modal 拿 close，再绑按钮；避免 TDZ）
+  // 底部按钮行（先建好 modal 拿 close，再绑按钮；避免 TDZ）。
+  // 呈报#18 18A：动作行挂在 form **外**（modalBox 直子、表单字段的兄弟节点）——移动端
+  // 键盘适配把滚动移交字段区（域 styles.css .bz-memo-form-actions 钉底规则依赖此结构），
+  // 动作行随视口收缩恒可见，不再跟字段一起滚走。
   let closeModal: () => void = () => {};
   const modalBox = document.createElement('div');
   modalBox.className = 'bz-memo-editor';
@@ -1392,8 +1476,7 @@ export function openEditor(
   const actionsRow = document.createElement('div');
   actionsRow.className = 'bz-memo-form-actions';
   actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
-  form.appendChild(actionsRow);
-  modalBox.appendChild(form);
+  modalBox.append(form, actionsRow);
 
   // 保存（保存逻辑提为具名 doSave 供按钮与 bindFormSubmit 键盘提交共用——memo2-ui M3-11 /
   // memo2-arch A4：memo 是主力表单域中唯一未接 bindFormSubmit 的，单行 input 回车无反应、
@@ -1518,7 +1601,9 @@ export function openEditor(
     confirmDiscard(() => closeModal(), undefined, skinClass());
   };
 
-  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
+  // 呈报#18 18A：popup 挂 bz-memo-editor-popup——移动端键盘适配的域内覆盖锚点
+  // （core 公共壳 .bz-overlay-popup 不动，覆盖规则见域 styles.css 移动适配段）
+  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: `${skinClass()} bz-memo-editor-popup`, requestClose });
   closeModal = close;
   bindFormSubmit(popup, doSave);
   if (!isMobileEnv()) contentInput.focus();
