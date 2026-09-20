@@ -34,6 +34,30 @@ function snapshot(): SettingsSnapshot {
   return getSettings() as unknown as SettingsSnapshot;
 }
 
+/* ==================== 密钥型行（GS3 档位，呈报#48） ==================== */
+
+/**
+ * 密钥型行：TextRow 的掩码档位变体——input type=password 掩码显示 + 眼睛切换明文，
+ * 提交链（防抖落盘 / 失焦回车提交 / refreshKey 联动）与 text 行同内核。
+ * core SettingsRow 判别联合未收编本档位（core 属本批改动白名单外，类型收编另行走
+ * core 批）——本域以「渲染入参放宽为 SettingsRow | SecretRow」承接；schema 侧经
+ * secretRow() 声明（运行时 type 恒 'secret'，唯一消费方 = 本渲染器 case 'secret'）。
+ */
+export interface SecretRow {
+  type: 'secret';
+  name: string;
+  desc?: string;
+  binding: RowBinding<string>;
+  placeholder?: string;
+  onChange?: (value: string, ctx: SettingsRowContext) => void;
+  refreshKey?: string | ((snapshot: SettingsSnapshot) => string);
+}
+
+/** SecretRow → SettingsRow 收口（一次受控断言；理由见 SecretRow 注） */
+export function secretRow(row: SecretRow): SettingsRow {
+  return row as unknown as SettingsRow;
+}
+
 /** 行绑定写入失败的统一提示（H5：先写后翻 UI——写入抛错时不翻 UI 只提示）；
  *  文案收编 core notifySaveError 单源（review-deep 一致#3） */
 function notifyWriteError(e: unknown): void {
@@ -49,6 +73,43 @@ function makeCtx(rowEl: HTMLElement, refreshVisibility: () => void): SettingsRow
 
 /** refreshKey 联动的程序化显示值写回入口（makeInput 与 textarea 分支均挂入；WeakMap 替代元素挂属性） */
 const displaySetters = new WeakMap<HTMLInputElement | HTMLTextAreaElement, (v: string) => void>();
+
+/** 文本提交行为内核（ARCH-1）：防抖落盘（TEXT_COMMIT_DELAY 单源 core）+ 失焦/回车提交 +
+ *  refreshKey 程序化写回入口。makeInput（text/number）与 makeSecretInput（GS3 密钥型）共用。 */
+function bindTextCommit(
+  input: HTMLInputElement,
+  onCommit: (v: string) => string | void,
+): void {
+  // 防抖落盘（TEXT_COMMIT_DELAY=800 单源 core + 失焦/回车）
+  let timer: number | null = null;
+  let dirty = false; // 用户是否实际编辑过（refreshKey 程序化 setValue 不置脏，防 blur 假写覆盖）
+  const commit = () => {
+    if (timer !== null) {
+      window.clearTimeout(timer);
+      timer = null;
+    }
+    if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘
+    const echo = onCommit(input.value);
+    if (typeof echo === 'string' && input.value !== echo) {
+      dirty = false;
+      input.value = echo;
+    }
+  };
+  input.addEventListener('input', () => {
+    dirty = true;
+    if (timer !== null) window.clearTimeout(timer);
+    timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
+  });
+  input.addEventListener('blur', commit);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') commit();
+  });
+  // refreshKey 联动刷新显示值的入口：程序化写值（不置脏——清 dirty 防后续 blur 假写覆盖）
+  displaySetters.set(input, (v: string) => {
+    dirty = false;
+    if (input.value !== v) input.value = v;
+  });
+}
 
 /**
  * refreshKey 联动注册（makeInput 系共用）：任意行变更后重读显示值，
@@ -94,36 +155,31 @@ function makeInput(opts: {
     max: opts.max,
   });
   const input = holder.firstElementChild as HTMLInputElement;
-  // 防抖落盘（TEXT_COMMIT_DELAY=800 单源 core + 失焦/回车）
-  let timer: number | null = null;
-  let dirty = false; // 用户是否实际编辑过（refreshKey 程序化 setValue 不置脏，防 blur 假写覆盖）
-  const commit = () => {
-    if (timer !== null) {
-      window.clearTimeout(timer);
-      timer = null;
-    }
-    if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘
-    const echo = opts.onCommit(input.value);
-    if (typeof echo === 'string' && input.value !== echo) {
-      dirty = false;
-      input.value = echo;
-    }
-  };
-  input.addEventListener('input', () => {
-    dirty = true;
-    if (timer !== null) window.clearTimeout(timer);
-    timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
-  });
-  input.addEventListener('blur', commit);
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') commit();
-  });
-  // refreshKey 联动刷新显示值的入口：程序化写值（不置脏——清 dirty 防后续 blur 假写覆盖）
-  displaySetters.set(input, (v: string) => {
-    dirty = false;
-    if (input.value !== v) input.value = v;
-  });
+  bindTextCommit(input, opts.onCommit); // 防抖落盘/失焦回车提交/refreshKey 写回入口（内核单源）
   return input;
+}
+
+/** 密钥型输入（GS3 档位）：type=password 掩码 + 眼睛切换明文（切换只翻显示形态，
+ *  不动值不落盘）；提交行为与 text 行同内核（bindTextCommit 单源，ARCH-1）。 */
+function makeSecretInput(opts: {
+  value: string;
+  placeholder?: string;
+  onCommit: (v: string) => string | void;
+}): HTMLDivElement {
+  const holder = document.createElement('div');
+  holder.innerHTML = R.secretInputHtml({ value: opts.value, placeholder: opts.placeholder });
+  const input = holder.querySelector('.bz-sp-secret-input') as HTMLInputElement;
+  const eye = holder.querySelector('.bz-sp-secret-eye') as HTMLButtonElement;
+  bindTextCommit(input, opts.onCommit);
+  eye.addEventListener('click', () => {
+    const reveal = input.type === 'password';
+    input.type = reveal ? 'text' : 'password';
+    eye.setAttribute('aria-pressed', String(reveal));
+    eye.setAttribute('aria-label', reveal ? '隐藏密钥' : '显示密钥');
+    eye.innerHTML = R.iconSpan(reveal ? 'eye-off' : 'eye'); // 图标随形态换（占位串 → mountIcons 兑现）
+    mountIcons(eye);
+  });
+  return holder.firstElementChild as HTMLDivElement;
 }
 
 /* ==================== 路径行（共享 chips + 选择按钮） ==================== */
@@ -261,9 +317,11 @@ function mountTextActions(
   }
 }
 
-/** 渲染单行（返回行元素；isChild 仅挂 child 语义类，样式不缩进——issue 186 全部行左缘对齐） */
+/** 渲染单行（返回行元素；isChild 仅挂 child 语义类，样式不缩进——issue 186 全部行左缘对齐）。
+ *  入参放宽为 SettingsRow | SecretRow（GS3 密钥型档位经 secretRow() 收口进联合，
+ *  运行时 type 'secret' 由 case 'secret' 单点消费——见 SecretRow 注） */
 function renderRow(
-  row: SettingsRow,
+  row: SettingsRow | SecretRow,
   refresh: () => void,
   regRefresh?: (fn: () => void) => void
 ): HTMLElement {
@@ -341,6 +399,25 @@ function renderRow(
       ctrlEl.appendChild(input);
       // refreshKey 联动：任意行变更（含 aiProvider 切换）后重读显示值写回输入框（不落盘）
       regRefreshDisplay(regRefresh, row.refreshKey, input);
+      break;
+    }
+    case 'secret': {
+      // 密钥型行（GS3，呈报#48）：password 掩码 + 眼睛切换明文；提交链走 text 行同内核
+      const sec = row as SecretRow;
+      const acc = bindValue<string>(sec.binding as unknown as RowBinding<string>);
+      const input = makeSecretInput({
+        value: String(acc.read() ?? ''),
+        placeholder: sec.placeholder,
+        onCommit: (v) => {
+          acc.write(v);
+          safePersist(() => acc.persist(), rowName || '密钥设置'); // N5 兜底（ARCH-1 单源）
+          sec.onChange?.(v, ctx);
+          refresh(); // C-2：值驱动 visibleWhen 的子行跟随（text 行 commit 点同口径）
+        },
+      });
+      ctrlEl.appendChild(input);
+      // refreshKey 联动（text 行同口径）：任意行变更后重读显示值写回输入框（不落盘）
+      regRefreshDisplay(regRefresh, sec.refreshKey, input.querySelector('.bz-sp-secret-input') as HTMLInputElement);
       break;
     }
     case 'textarea': {
@@ -735,10 +812,11 @@ function renderRow(
   return el;
 }
 
-/** 渲染整组（分组卡结构单源 R.groupCardHtml：图标块 + 名称 + 项数徽标；行渲染见 renderRow） */
+/** 渲染整组（分组卡结构单源 R.groupCardHtml：图标块 + 名称 + 项数徽标；行渲染见 renderRow）。
+ *  rows 放宽收 SecretRow（GS3；与 renderRow 同口径，见 SecretRow 注） */
 function renderGroup(
   container: HTMLElement,
-  group: { name: string; icon?: string; rows: SettingsRow[] },
+  group: { name: string; icon?: string; rows: (SettingsRow | SecretRow)[] },
   refresh: () => void,
   regRefresh?: (fn: () => void) => void
 ): HTMLElement {

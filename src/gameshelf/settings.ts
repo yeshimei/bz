@@ -5,6 +5,9 @@
  * （标题 4-8 字零符号、描述自然句不带符号花样）。
  */
 import type { SettingsSchema } from '../core/settings-schema';
+// GS3（呈报#48）：密钥型档位工厂落 settings-panel 基建（渲染器 case 'secret' 单点消费），
+// 域间单向依赖（gameshelf → settings-panel；settings-panel 对本域仅 loader 动态 import，无环）
+import { secretRow } from '../settings-panel/renderer';
 
 export function gameshelfSettingsSchema(): SettingsSchema {
   return {
@@ -61,13 +64,15 @@ export function gameshelfSettingsSchema(): SettingsSchema {
             binding: { key: 'gameshelfSteamId' },
             placeholder: '76561198000000000',
           },
-          {
-            type: 'text',
+          // GS3（呈报#48）：密钥行接「密钥型」档位——type=password 掩码显示 + 眼睛切换明文，
+          // 原明文 text 行退役（旁人瞄屏不可见）；提交链与 text 行同内核
+          secretRow({
+            type: 'secret',
             name: 'Web API 密钥',
             desc: '在 Steam 官网开发者页免费申请',
             binding: { key: 'gameshelfSteamApiKey' },
             placeholder: '32 位十六进制串',
-          },
+          }),
           {
             type: 'toggle',
             name: '自动同步',

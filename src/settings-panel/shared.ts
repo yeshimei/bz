@@ -70,6 +70,16 @@ export function textareaHtml(value: string, placeholder?: string): string {
   return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ''}>${esc(value)}</textarea>`;
 }
 
+/** 密钥型输入（GS3 档位，呈报#48）：input type=password 掩码显示 + 眼睛按钮切换明文。
+ *  行为（切换 / 防抖落盘）留 renderer.ts 行为层（makeSecretInput）；眼睛钮挂
+ *  bz-touch-target--lg 热区抬档（UI-4 口径同 rowBtnHtml）。 */
+export function secretInputHtml(opts: { value: string; placeholder?: string }): string {
+  return `<div class="bz-sp-secret">` +
+    `<input class="bz-input bz-sp-secret-input" type="password" value="${esc(opts.value)}" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ''}>` +
+    `<button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan('eye')}</button>` +
+    `</div>`;
+}
+
 /** 滑杆行（轻量读数 span）——原型 slider 分支 bz-sp-slider-row */
 export function sliderHtml(min: number | undefined, max: number | undefined, step: number | undefined, value: number): string {
   return `<div class="bz-sp-slider-row">` +
