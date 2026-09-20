@@ -140,20 +140,40 @@ describe('搜索状态机（F-1 / UI-6 / UI-7 / F-6）', () => {
     search.value = '番茄';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     await flushSearch();
-    // 修复前：↑↓ 在未过滤全集移动——可切到左栏根本没显示的域
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    // 修复前：↑↓ 在未过滤全集移动——可切到左栏根本没显示的域。
+    // SP1（呈报#17 拍板）后 ↑↓ 切域入口 = 面板本体/导航容器；搜索框输入内让路给光标移动
+    popup.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     await flush();
     expect((ui as any).activeDomainId).toBe('pomodoro'); // 命中集唯一 → 停在番茄钟
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    popup.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     await flush();
     expect((ui as any).activeDomainId).toBe('pomodoro'); // 命中集外不再越界
     // 清空搜索 → 导航全集恢复
     search.value = '';
     search.dispatchEvent(new Event('input', { bubbles: true }));
     await flushSearch();
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    popup.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
     await flush();
     expect((ui as any).activeDomainId).not.toBe('pomodoro'); // 全集内正常移动
+    ui.cleanup();
+  });
+
+  it('SP1：搜索框输入内 ↑↓ 让路给光标移动（不再切域，呈报#17 拍板）', async () => {
+    const ui = new SettingsPanelUI();
+    ui.open();
+    const popup = document.getElementById('bz-settings-panel-popup')!;
+    const deadline = Date.now() + 3000;
+    while (Date.now() < deadline && popup.querySelectorAll('.bz-sp-nav-item').length < 15) {
+      await new Promise((r) => setTimeout(r, 30));
+    }
+    const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
+    search.value = '番茄';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
+    // 修复前必红：搜索框（INPUT）内 ↓ 会借道切域到番茄钟
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    await flush();
+    expect((ui as any).activeDomainId).toBe('global'); // 输入框内 ↓ = 光标移动，不切域
     ui.cleanup();
   });
 });

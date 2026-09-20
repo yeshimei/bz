@@ -1,4 +1,4 @@
-/* 源指纹 eba3fab8ae288e79 · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a5cfb36f2eff843c · 仓内输入 56 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -6552,9 +6552,10 @@ var BZW_favorites = (() => {
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
     const tape = "bz-fav-tape" + (idx % 3 ? [" bz-fav-tape--r", " bz-fav-tape--g"][idx % 3 - 1] : "");
+    const ext = (it.url || "").trim() ? `<span class="bz-fav-ext" title="打开外部链接">${iconSpan(ICON.open, "bz-ic--xs")}</span>` : "";
     return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>${ext}
     <h3>${esc(it.title || "无标题")}</h3>
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
@@ -6792,13 +6793,22 @@ var BZW_favorites = (() => {
       applyTagFilter(b.dataset.favTag);
     });
     const content = overlay.querySelector("[data-fav-content]");
-    const openCardDefault = (it) => {
+    const openCardDefault = (it, card) => {
       if (isMobileEnv()) {
         openMobSheet(it);
         return;
       }
       const rawUrl = (it.url || "").trim();
-      if (rawUrl) openExternal(normalizeUrl(rawUrl));
+      if (rawUrl) {
+        openExternal(normalizeUrl(rawUrl));
+        return;
+      }
+      if (card) {
+        card.classList.remove("bz-fav-nolink");
+        void card.offsetWidth;
+        card.classList.add("bz-fav-nolink");
+        card.addEventListener("animationend", () => card.classList.remove("bz-fav-nolink"), { once: true });
+      }
     };
     content.addEventListener("click", (e) => {
       const t = e.target;
@@ -6806,7 +6816,7 @@ var BZW_favorites = (() => {
       if (!card) return;
       e.stopPropagation();
       const it = itemById(card.dataset.favId);
-      if (it) openCardDefault(it);
+      if (it) openCardDefault(it, card);
     });
     content.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -6814,7 +6824,7 @@ var BZW_favorites = (() => {
       if (!card || e.target !== card) return;
       e.preventDefault();
       const it = itemById(card.dataset.favId);
-      if (it) openCardDefault(it);
+      if (it) openCardDefault(it, card);
     });
     content.addEventListener("contextmenu", (e) => {
       const card = e.target.closest("[data-fav-id]");

@@ -230,11 +230,19 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   // 内容区：卡片点击（移动抽屉 / 桌面有链直开）+ 右键 + 键盘（UI-06：卡片 role=button 后
   // Enter/Space 与点击同径——键盘用户不再到不了开链/抽屉）
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
-  const openCardDefault = (it: FavoritesItem): void => {
+  const openCardDefault = (it: FavoritesItem, card?: HTMLElement | null): void => {
     if (isMobileEnv()) { openMobSheet(it); return; }
-    // 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开浏览器，无链接不动作
+    // 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开浏览器；无链接不再零反馈（F1/呈报#24，
+    // issue 201「不动作」拍板保持：仍不开链不弹层），改轻微晃动示意「这张卡没有可打开的链接」
+    // （补链入口 = 右键编辑，卡片 title 静态提示同口径）
     const rawUrl = (it.url || '').trim();
-    if (rawUrl) openExternal(normalizeUrl(rawUrl));
+    if (rawUrl) { openExternal(normalizeUrl(rawUrl)); return; }
+    if (card) {
+      card.classList.remove('bz-fav-nolink');
+      void card.offsetWidth; // 强制重排：连续点击也从头晃
+      card.classList.add('bz-fav-nolink');
+      card.addEventListener('animationend', () => card.classList.remove('bz-fav-nolink'), { once: true });
+    }
   };
   content.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -242,7 +250,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     if (!card) return;
     e.stopPropagation();
     const it = itemById(card.dataset.favId as string);
-    if (it) openCardDefault(it);
+    if (it) openCardDefault(it, card);
   });
   content.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -250,7 +258,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     if (!card || e.target !== card) return; // 只响应卡片自身聚焦（内部无嵌套交互件，防御性限定）
     e.preventDefault(); // Space 滚动页面语义让位给「触发卡片」
     const it = itemById(card.dataset.favId as string);
-    if (it) openCardDefault(it);
+    if (it) openCardDefault(it, card);
   });
   content.addEventListener('contextmenu', (e) => {
     const card = (e.target as HTMLElement).closest('[data-fav-id]') as HTMLElement | null;

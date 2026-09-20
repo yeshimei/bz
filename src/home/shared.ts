@@ -217,15 +217,17 @@ export interface DomainMenuAction {
  * 用户 2026-09-11 拍板的口径（原先把「停止专注/跳过休息/继续专注」并列 —— 停止与继续互斥，
  * 并列必自相矛盾）：
  *   ① 没开始任何专注 → 开始专注
- *   ② 正在专注       → 停止专注（= 暂停；点完就落到③那一支，故两条不会同现）
- *   ③ 停止专注了     → 继续专注
+ *   ② 正在专注       → 暂停专注（= 暂停；点完就落到③那一支，故两条不会同现）
+ *   ③ 暂停专注了     → 继续专注
  *   ④ 在休息阶段     → 跳过休息
+ * PM2 残款（2026-09-19）：② 的 label 随 pomodoro 命令侧「开始/重置专注」定稿对齐为
+ * 「暂停专注」——「停止」与命令钮的重置语义相撞，暂停才是这条 bz-pomodoro-pause 的实义。
  * 三支命令都是现成的：②③ 共用 bz-pomodoro-pause（计时中暂停 / 暂停中继续），
  * ① 走 bz-pomodoro-focus-toggle（idle 分支即开始），④ 走 bz-pomodoro-skip。
  * 类型单源 = core/pomodoro-phase（与 pomodoro/ui.ts::menuPhase 的返回值一一对应）。
  */
 export function pomodoroMenuAction(phase: PomodoroPhase): DomainMenuAction {
-  if (phase === 'focusing') return { label: '停止专注', commandId: 'bz-pomodoro-pause', icon: 'pause' };
+  if (phase === 'focusing') return { label: '暂停专注', commandId: 'bz-pomodoro-pause', icon: 'pause' };
   if (phase === 'paused') return { label: '继续专注', commandId: 'bz-pomodoro-pause', icon: 'play' };
   if (phase === 'break') return { label: '跳过休息', commandId: 'bz-pomodoro-skip', icon: 'skip-forward' };
   return { label: '开始专注', commandId: 'bz-pomodoro-focus-toggle', icon: 'timer' };

@@ -1,4 +1,4 @@
-/* 源指纹 9bd2f401f7405c77 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7515479538f142a9 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -204,7 +204,7 @@ var BZR_home = (() => {
     return applyOrder(order, domains.filter((d) => !hide.has(d.id)));
   }
   function pomodoroMenuAction(phase) {
-    if (phase === "focusing") return { label: "停止专注", commandId: "bz-pomodoro-pause", icon: "pause" };
+    if (phase === "focusing") return { label: "暂停专注", commandId: "bz-pomodoro-pause", icon: "pause" };
     if (phase === "paused") return { label: "继续专注", commandId: "bz-pomodoro-pause", icon: "play" };
     if (phase === "break") return { label: "跳过休息", commandId: "bz-pomodoro-skip", icon: "skip-forward" };
     return { label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer" };
@@ -503,7 +503,7 @@ var BZR_home = (() => {
     </div>`;
   }
   function loadingEntriesHtml() {
-    return '<div class="bz-home-sec-t">全 部 域</div>';
+    return '<div class="bz-home-sk"><span class="bz-home-sk-line" style="width:46%"></span><span class="bz-home-sk-line" style="width:88%"></span><span class="bz-home-sk-line" style="width:70%"></span><span class="bz-home-sk-line" style="width:82%"></span><span class="bz-home-sk-line" style="width:64%"></span><span class="bz-home-sk-line" style="width:58%"></span></div>';
   }
   function loadingFlowHtml() {
     return '<div class="bz-home-flow-empty">正在汇入今天的痕迹…</div>';

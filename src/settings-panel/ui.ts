@@ -295,6 +295,10 @@ export class SettingsPanelUI {
   private renderHandles: Array<{ refresh: () => void }> = [];
   /** 域渲染竞态序号（P2-4：每次 renderDomain 自增，await 后校验丢弃过期渲染） */
   private renderSeq = 0;
+  /** 域滚位会话记忆（SP5/呈报#49；clipbook 效率#17 样板）：域名 → 离开时的 scrollTop。
+   *  桌面滚动元素 = .bz-sp-desk-main（pane 父级）、移动 = .bz-sp-mob-page-body（pane 自身），
+   *  key 以端前缀区分；cleanup 随面板销毁清空（会话内有效）。 */
+  private scrollMem = new Map<string, number>();
   /** 列表重绘回调（桌面导航/移动列表各自注册；preload 解析出零项域后剔除重绘） */
   private rerenderList: (() => void) | null = null;
   /** 移动端推入状态：home = 首页列表；domain = 已推入域设置页 */
@@ -450,6 +454,34 @@ export class SettingsPanelUI {
       this.applyHitFilter(popup, this.searchQuery);
     }, SEARCH_DEBOUNCE_MS);
     searchIn.addEventListener('input', () => applySearch());
+    // 搜索键盘闭环（SP3+SP4/呈报#17；clipbook 效率#11 二段清词先例同刀）：
+    // - ESC 二段语义（✕ 清除钮已退役，ESC 是唯一清词口）：有词 = 清词复显 + 拦冒泡（escManager
+    //   在 document 层收不到，面板不关）+ 焦点回框；无词 = 放行（面板关闭语义不变）
+    // - Enter = 跳第一个命中域（与点击同一动线：导航选中态重绘 + 内容区渲染 + 跟手滚动）
+    searchIn.addEventListener('keydown', (e) => {
+      const q = searchIn.value.trim();
+      if (e.key === 'Escape' && q) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        searchIn.value = '';
+        this.searchQuery = '';
+        renderNav('');
+        this.applyHitFilter(popup, '');
+        searchIn.focus();
+        return;
+      }
+      if (e.key === 'Enter' && q) {
+        const first = this.matchedDomains(q)[0];
+        if (!first) return;
+        e.preventDefault();
+        this.activeDomainId = first.id;
+        renderNav(searchIn.value);
+        void this.renderDomain(pane, first);
+        this.navEl
+          ?.querySelector<HTMLElement>(`.bz-sp-nav-item[data-sp-domain="${first.id}"]`)
+          ?.scrollIntoView({ block: 'nearest' });
+      }
+    });
     renderNav('');
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘导航（issue 194 按端隐藏）
     this.rerenderList = () => renderNav(searchIn.value);
@@ -534,6 +566,12 @@ export class SettingsPanelUI {
     // F-2：移除聚焦输入框前先真实 blur——浏览器对「从 DOM 移除聚焦元素」不派发 blur，
     // 防抖窗口内的编辑会随元素静默丢弃（↑↓ 切域/深链重渲路径的丢字缺口）
     this.flushPendingTextCommit();
+    // SP5：离开旧域前存滚位（pane.dataset.spActive = 上次渲染成功的域 id）；
+    // 渲染完成后回填目标域滚位——切域/重进域不再每次回顶
+    const side = isMobileEnv() ? 'm' : 'd';
+    const scroller = (isMobileEnv() ? pane : pane.parentElement) ?? pane;
+    const prevId = pane.dataset.spActive;
+    if (prevId) this.scrollMem.set(`${side}:${prevId}`, scroller.scrollTop);
     // 清理旧渲染句柄
     this.renderHandles = [];
     pane.innerHTML = '';
@@ -558,6 +596,8 @@ export class SettingsPanelUI {
         `${domain.name} · 暂无设置项`,
         '该域没有可在此配置的设置（设置就近在对应功能面板）'
       ));
+      pane.dataset.spActive = domain.id;
+      scroller.scrollTop = 0;
       return;
     }
 
@@ -604,9 +644,15 @@ export class SettingsPanelUI {
       }
       // 切域/重渲后按当前搜索词复刷命中高亮与过滤（H：状态跨域保持）
       this.applyHitFilter(pane, this.searchQuery);
+      // SP5：记账本域 + 回填记忆滚位——重进域回到离开时的位置（过滤后行高已定，钳制自然兜底）
+      pane.dataset.spActive = domain.id;
+      scroller.scrollTop = this.scrollMem.get(`${side}:${domain.id}`) ?? 0;
       return;
     } catch (e) {
       body.innerHTML = '';
+      // 失败页也记账（滚位归零——失败态无位置可记，防旧域滚位错记到失败页）
+      pane.dataset.spActive = domain.id;
+      scroller.scrollTop = 0;
       // C-4：收编 notifyActionError+onRetry 定稿范式——非 Error 抛出物不再显示 "undefined"，
       // 通知自带「重试」出口；空态下沿同挂一枚重试按钮走同一回调
       const retry = () => void this.renderDomain(pane, domain);
@@ -636,6 +682,7 @@ export class SettingsPanelUI {
       }
       const hit = !!q && !!row.textContent && spMatch(row.textContent, q);
       row.classList.toggle('hit', hit);
+      this.markHitText(row, q);
       if (q && !hit && row.style.display !== 'none') {
         row.style.display = 'none';
         row.dataset.spHitHidden = '1';
@@ -661,20 +708,49 @@ export class SettingsPanelUI {
   }
 
   /**
+   * 命中词词级高亮（SP2/呈报#26；UX-1）：行名与描述段内的全部命中词包
+   * `<mark class="bz-sp-mark">`——整行色条（.hit）之外的一眼定位。原文先存
+   * data-sp-orig（行 DOM 生命周期内的还原底稿）再按小写归一切片重建文本节点，
+   * 不做动态 regex（与 UX-1 修法建议同口径，无注入面）；q 清空按 orig 还原。
+   */
+  private markHitText(row: HTMLElement, q: string): void {
+    const needle = q.trim().toLowerCase();
+    row.querySelectorAll<HTMLElement>('.bz-sp-set-name, .bz-sp-set-desc').forEach((el) => {
+      if (el.dataset.spOrig === undefined) el.dataset.spOrig = el.textContent ?? '';
+      const text = el.dataset.spOrig ?? '';
+      el.textContent = '';
+      if (!needle) {
+        el.textContent = text;
+        return;
+      }
+      const lower = text.toLowerCase();
+      let cursor = 0;
+      for (;;) {
+        const at = lower.indexOf(needle, cursor);
+        if (at < 0) break;
+        if (at > cursor) el.append(document.createTextNode(text.slice(cursor, at)));
+        const mark = document.createElement('mark');
+        mark.className = 'bz-sp-mark';
+        mark.textContent = text.slice(at, at + needle.length);
+        el.append(mark);
+        cursor = at + needle.length;
+      }
+      if (cursor < text.length) el.append(document.createTextNode(text.slice(cursor)));
+    });
+  }
+
+  /**
    * 键盘导航（2026-09-12 补，桌面）：↑↓ 在可见域间前后切换，顺序 = 导航视觉顺序
-   * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉里让位，搜索框与面板本体可用。
+   * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉 / 单行输入里让位（SP1/呈报#17：
+   * 输入框内 ↑↓ 是光标移动——搜索框与文本设置行里不再借道切域）。
    * F-6：搜索态与 renderNav 同源——只在当前命中（导航可见）集内移动，切到的一定是看得见的域；
    * 当前域不在命中集时 ↓/↑ 进首/末个命中域；命中集为空 no-op。
    */
   private onNavKey(e: KeyboardEvent, pane: HTMLElement): void {
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
     const t = e.target as HTMLElement | null;
-    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
-    const query = this.searchQuery.trim();
-    const matches = (d: DomainDef) =>
-      !query || spMatch(d.name, query) || spMatch(d.desc, query) ||
-      (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
-    const ordered = groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
+    if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.tagName === 'INPUT')) return;
+    const ordered = this.matchedDomains(this.searchQuery);
     if (!ordered.length) return;
     const idx = ordered.findIndex((d) => d.id === this.activeDomainId);
     let next: number;
@@ -692,6 +768,15 @@ export class SettingsPanelUI {
     this.navEl
       ?.querySelector<HTMLElement>(`.bz-sp-nav-item[data-sp-domain="${d.id}"]`)
       ?.scrollIntoView({ block: 'nearest' });
+  }
+
+  /** 搜索命中域集（导航视觉序；↑↓ 切域与 Enter 首跳共用同一口径，F-6 不漂移） */
+  private matchedDomains(q: string): DomainDef[] {
+    const query = q.trim();
+    const matches = (d: DomainDef) =>
+      !query || spMatch(d.name, query) || spMatch(d.desc, query) ||
+      (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
+    return groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
   }
 
   /**
@@ -821,6 +906,38 @@ export class SettingsPanelUI {
     // E-5：搜索输入 180ms 防抖（每键全量重建列表 + 图标物化收敛，同桌面口径）
     const applySearch = debounce(() => render(searchIn.value), SEARCH_DEBOUNCE_MS);
     searchIn.addEventListener('input', () => applySearch());
+    // 搜索键盘闭环（SP3+SP4/呈报#17，桌面同刀）：ESC 有词清词拦冒泡（面板不关）、无词放行；
+    // Enter 跳第一个命中（域段优先，其次设置项段——与列表渲染序一致，设置项命中带定位行）
+    searchIn.addEventListener('keydown', (e) => {
+      const q = searchIn.value.trim();
+      if (e.key === 'Escape' && q) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        searchIn.value = '';
+        render('');
+        searchIn.focus();
+        return;
+      }
+      if (e.key === 'Enter' && q) {
+        const doms = listableDomains().filter((d) => spMatch(d.name, q) || spMatch(d.desc, q));
+        if (doms.length) {
+          e.preventDefault();
+          void this.pushDomain(doms[0]);
+          return;
+        }
+        // 域段未命中时取设置项段首个命中（schemaRowCache 迭代序 = preload 加载序）
+        let hit: { domain: DomainDef; row: string } | null = null;
+        for (const [did, rowsOf] of schemaRowCache) {
+          const d = DOMAINS.find((x) => x.id === did);
+          const r = d ? rowsOf.find((rr) => spMatch(rr.name, q) || (rr.desc && spMatch(rr.desc, q))) : undefined;
+          if (d && r) { hit = { domain: d, row: r.name }; break; }
+        }
+        if (hit) {
+          e.preventDefault();
+          void this.pushDomain(hit.domain, hit.row);
+        }
+      }
+    });
     render('');
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘列表（issue 194 按端隐藏）
     this.rerenderList = () => { if (!this.mobPushed) render(searchIn.value); };
@@ -908,10 +1025,11 @@ export class SettingsPanelUI {
     this.navEl = null;
     this.rerenderList = null;
     this.preloadInFlight = null;
-    // 徽标/行缓存/已加载数/schema 会话缓存随面板销毁清空（下次打开重新动态计算）
+    // 徽标/行缓存/已加载数/schema 会话缓存/域滚位随面板销毁清空（下次打开重新动态计算）
     navBadges.clear();
     schemaRowCache.clear();
     loadedCounts.clear();
     schemaCache.clear();
+    this.scrollMem.clear();
   }
 }
