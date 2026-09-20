@@ -433,6 +433,7 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
 function openSeriesDetail(sec: HTMLElement, key: string, app: App): void {
   const card = seriesCardByKey(key);
   if (!card) return;
+  // mobile 只管长按手势挂载（维持移动壳现状）；右键菜单分流不走壳类，见行内 hoverCapable 注
   const mobile = sec.classList.contains('mob');
   const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)));
   mountIcons(el);
@@ -444,11 +445,13 @@ function openSeriesDetail(sec: HTMLElement, key: string, app: App): void {
       close();
       openDetail(sec, it, app);
     });
-    // 拦原生右键菜单：桌面换成跟手菜单；移动端只为挡「保存图片 / 复制链接」（触屏长按会同时发它）
+    // 拦原生右键菜单：桌面换成跟手菜单；移动端只为挡「保存图片 / 复制链接」（触屏长按会同时发它）。
+    // 跟手菜单走 hoverCapable（sec 级 contextmenu 同一出口）：壳类近似「桌面=有鼠标」会让
+    // 桌面宽度的触屏长按误弹鼠标菜单
     row.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       const it = rowItem(row);
-      if (!it || mobile) return;
+      if (!it || !hoverCapable()) return;
       openItemMenu(e.clientX, e.clientY, toItemActions(deferClose(itemActions(it, sec, app), close)), true, MENU_SKIN);
       resetItemMenuClickGuard();
     });
@@ -781,11 +784,12 @@ function refreshDeskList(app: App, sec: HTMLElement): void {
 
 // ---------- 事件绑定（sec 级委托一次；重渲染内容全覆盖） ----------
 
-/** 季圆点悬浮通道的能力单判（gameshelf/ui.ts hoverCapable 同口径：'(hover: hover) and
- *  (pointer: fine)'）：触屏 tap 会发 mouseover 却不发 mouseout，悬浮换脸会滞留——只有真
- *  鼠标惯用件才挂。core 尚无此口径单源，与 gameshelf 各持一份（跨域提取涉两域，待收口批
- *  上提，不在本批白名单内动）。测试/评审壳经 bindMidnight 第三参显式开（jsdom 无真 hover
- *  能力，默认关）。 */
+/** 鼠标惯用件（悬浮 + 精指针）能力单判（gameshelf/ui.ts hoverCapable 同口径：'(hover: hover)
+ *  and (pointer: fine)'）：消费方一，季圆点悬浮换脸——触屏 tap 会发 mouseover 却不发
+ *  mouseout，换脸会滞留；消费方二，桌面右键菜单分流——触屏长按会同时发 pointerdown 与
+ *  contextmenu，按壳类近似「桌面=有鼠标」会让桌面宽度的触屏误弹鼠标菜单。core 尚无此口径
+ *  单源，与 gameshelf 各持一份（跨域提取涉两域，待收口批上提，不在本批白名单内动）。
+ *  测试/评审壳经 bindMidnight 第三参显式开（jsdom 无真 hover 能力，默认关）。 */
 function hoverCapable(): boolean {
   try {
     return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches;
@@ -947,9 +951,10 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     }
   });
   sec.addEventListener('contextmenu', (e) => {
-    // 桌面壳专属：右键菜单是鼠标惯用件。移动壳分流——触屏长按会同时发 pointerdown 与
-    // contextmenu，不分流就会多弹一个鼠标菜单盖在抽屉上；移动端长按手势走 core/dom.longPress。
-    if (sec.classList.contains('mob')) return;
+    // 右键菜单是鼠标惯用件，分流走 hoverCapable（与季圆点悬浮同一出口，不再按 .mob 壳近似
+    // 「桌面=有鼠标」——桌面宽度的触屏长按会同时发 pointerdown 与 contextmenu，不分流就会
+    // 多弹一个鼠标菜单盖在抽屉上）；移动端长按手势走 core/dom.longPress。
+    if (!hoverCapable()) return;
     const cardEl = (e.target as HTMLElement).closest('.pcard') as HTMLElement | null;
     if (!cardEl) return;
     e.preventDefault();
