@@ -661,6 +661,13 @@
   font-size: var(--bz-font-caption);
   color: var(--pwv-faint);
 }
+/* 呈报#16/P5：segmeta 网址可点链接（点击走 core openExternalUrl 单源）——金色弱化态不抢 meta 视觉 */
+.bz-password-vault-seg .segmeta a[data-extlink] {
+  color: var(--pwv-gold-ink);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  word-break: break-all;
+}
 /* 移动端平台详情页头 */
 .bz-password-vault-mobplathead {
   display: flex;
@@ -1096,6 +1103,36 @@
 .bz-password-vault-mobbar .ic svg {
   width: 17px;
   height: 17px;
+}
+/* 呈报#16/P4：移动端 全部/收藏 视图切换（分段形制对齐 encrypt bz-vault-mseg 同滩；
+  on 态用域金色 token，与锁屏/品牌同语言） */
+.bz-password-vault-mobtabs {
+  display: flex;
+  gap: 6px;
+  margin: var(--bz-space-sm) var(--bz-space-lg) 0;
+  padding: var(--bz-space-xs);
+  background: var(--pwv-surface2);
+  border: 1px solid var(--pwv-line);
+  border-radius: var(--bz-radius-md);
+}
+.bz-password-vault-mobtabs .tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 7px 0;
+  border: none;
+  background: transparent;
+  border-radius: 9px;
+  font-size: var(--bz-font-meta);
+  font-weight: 600;
+  color: var(--pwv-muted);
+  cursor: pointer;
+}
+.bz-password-vault-mobtabs .tab.on {
+  background: var(--pwv-gold-soft);
+  color: var(--pwv-gold-ink);
 }
 .bz-password-vault-mobsearch {
   display: flex;

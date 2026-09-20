@@ -121,10 +121,26 @@
   display: flex; gap: 10px; justify-content: flex-end; align-items: center;
   padding: var(--bz-space-md) 20px var(--bz-space-lg); border-top: 1px solid var(--bz-border);
 }
-/* 保险库状态栏（补丁2：锁状态提示，点击打开面板；lucide 锁图标随解锁态开合切换） */
+/* 保险库状态栏（补丁2：锁状态提示，点击打开面板；lucide 锁图标随解锁态开合切换）。
+   呈报#59/E5：图标经 vIc 占位兑现为 span.bz-vault-ic 容器，对齐/间距改挂容器上 */
 .bz-encrypt-statusbar { cursor: pointer; }
 .bz-encrypt-statusbar:hover { opacity: 0.8; }
-.bz-encrypt-statusbar svg { vertical-align: -2px; margin-right: var(--bz-space-xs); }
+.bz-encrypt-statusbar .bz-vault-ic { vertical-align: -2px; margin-right: var(--bz-space-xs); }
+
+/* ═══ 呈报#59/E5 收编：vIc 占位图标容器档位表（vault-assets-view vIc 工厂产
+   class="bz-vault-ic bz-vault-ic--<size>"，core mountIcons 兑现时原样保留 class，
+   setIcon 渲染的 svg 撑满容器）。此处为缺省兜底档；容器已有 svg 尺寸规则处
+   （.bz-vault-item / .bbtn / .bz-vault-row .av / .bz-vault-dhead .big 等）以容器
+   规则为准（特异性更高，取值与旧手绘表内联 width/height 等效）。 ═══ */
+.bz-vault-ic { display: inline-flex; line-height: 0; flex-shrink: 0; }
+.bz-vault-ic svg { width: 100%; height: 100%; display: block; }
+.bz-vault-ic--12 { width: 12px; height: 12px; }
+.bz-vault-ic--13 { width: 13px; height: 13px; }
+.bz-vault-ic--14 { width: 14px; height: 14px; }
+.bz-vault-ic--15 { width: 15px; height: 15px; }
+.bz-vault-ic--16 { width: 16px; height: 16px; }
+.bz-vault-ic--19 { width: 19px; height: 19px; }
+.bz-vault-ic--21 { width: 21px; height: 21px; }
 
 
 /* ============================================================
@@ -197,13 +213,15 @@
 /* h1 flex:1 = 把右侧动作按钮推到最右（原先靠搜索框的 margin-left:auto；搜索框已按评审下移） */
 #bz-encrypt-popup .bz-vault-bar h1 { flex: 1; font-size: 18px; font-weight: 700; margin: 0; color: var(--bz-text-1); white-space: nowrap; }
 /* 搜索框（评审 2026-09-12：顶栏 → 列表头；列表头的标题与计数随后也按评审去掉，
-   现在列表头只剩它一个，占满整行、宽度随列宽自适应） */
-#bz-encrypt-popup .bz-vault-search { flex: 1; display: flex; align-items: center; gap: var(--bz-space-sm); background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: 11px; padding: 0 var(--bz-space-md); margin: 0; }
-#bz-encrypt-popup .bz-vault-search svg { width: 14px; height: 14px; color: var(--bz-text-3); flex-shrink: 0; }
-#bz-encrypt-popup .bz-vault-search input { border: none; background: none; flex: 1; padding: 7px 0; font-size: var(--bz-font-label); }
-#bz-encrypt-popup .bz-vault-search input:focus { outline: none; }
-/* 搜索 ✕ 清除钮（效率#12，原内联收编；桌面列表头/移动常驻框共用） */
-#bz-encrypt-popup .bz-search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: var(--bz-text-3); padding: 2px; line-height: 0; }
+   现在列表头只剩它一个，占满整行、宽度随列宽自适应）。
+   呈报#60/E4 收编：壳样式单源 = core components.css E 段（.bz-search 壳定位 + .bz-ic
+   前缀图标 13px 左置 + .bz-input 基线），域内不再自画 surface/border/图标定位；
+   本域 markup 见 ui.ts renderDeskNotes（div.bz-search > i.bz-ic + input.bz-input）。 */
+/* 搜索 ✕ 清除钮（效率#12，原内联收编；桌面列表头/移动常驻框共用）。
+   注：clipbook 侧同钮形制出自 `bz-clip-search-clear` 既有口径，本域沿用 .bz-search-clear
+   同名类对齐（iconSpan 12px；壳归 core，钮随域密度微调）。
+   钮内 x 图标经 vIc 占位兑现（mountIcons 保留 bz-vault-ic 类，尺寸档见下方 E5 档位表）。 */
+#bz-encrypt-popup .bz-search .bz-search-clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); border: none; background: transparent; cursor: pointer; color: var(--bz-text-3); padding: 2px; line-height: 0; }
 #bz-encrypt-popup .bz-vault-pane { flex: 1; min-height: 0; display: flex; gap: 14px; padding: var(--bz-space-lg) 18px; }
 /* 概览跨栏（评审）：概览横跨中列表 + 右详情——隐藏中列表栏，让概览内容铺满整行 */
 #bz-encrypt-popup .bz-vault-pane.is-overview .bz-vault-listcol { display: none; }
@@ -307,10 +325,10 @@
   #bz-encrypt-popup .bz-vault-mbar .st { font-size: var(--bz-font-caption); color: var(--bz-success); font-weight: 700; background: color-mix(in srgb, var(--bz-success) 12%, transparent); padding: 3px 9px; border-radius: var(--bz-radius-full); }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose { color: var(--bz-text-2); display: flex; }
   #bz-encrypt-popup .bz-vault-mbar .bz-vault-mobclose svg { width: 18px; height: 18px; }
-  #bz-encrypt-popup .bz-vault-msearch { display: flex; align-items: center; gap: var(--bz-space-sm); margin: var(--bz-space-xs) 14px var(--bz-space-sm); min-height: 44px; background: var(--bz-surface-1); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); padding: 0 var(--bz-space-md); }
-  #bz-encrypt-popup .bz-vault-msearch svg { width: 13px; height: 13px; color: var(--bz-text-3); }
-  #bz-encrypt-popup .bz-vault-msearch input { border: none; background: none; flex: 1; padding: 9px 0; font-size: var(--bz-font-label); }
-  #bz-encrypt-popup .bz-vault-msearch input:focus { outline: none; }
+  /* 呈报#60/E4 收编：壳样式（surface/border/图标定位/input 基线）单源 core .bz-search；
+     此处只留移动布局——外边距 + 44px 触达高（.bz-search 的 relative/flex:1 由 core 供） */
+  #bz-encrypt-popup .bz-search.bz-vault-msearch { margin: var(--bz-space-xs) 14px var(--bz-space-sm); min-height: 44px; }
+  #bz-encrypt-popup .bz-vault-msearch .bz-input { height: 44px; }
   #bz-encrypt-popup .bz-vault-mseg { display: flex; gap: 6px; margin: 2px 14px 10px; padding: var(--bz-space-xs); background: var(--bz-surface-hover); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); }
   #bz-encrypt-popup .bz-vault-mseg .sg { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 44px; text-align: center; padding: 7px 0; border-radius: 9px; font-size: var(--bz-font-meta); font-weight: 600; color: var(--bz-text-2); cursor: pointer; }
   #bz-encrypt-popup .bz-vault-mseg .sg.on { background: var(--bz-vault-gold-soft); color: var(--bz-on-brand); }

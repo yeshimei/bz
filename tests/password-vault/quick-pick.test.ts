@@ -131,7 +131,7 @@ describe('快速取密统一流（选择器 UI + 命令链路）', () => {
     expect(rows()[1].querySelector('.pl')!.textContent).toBe('GitHub');
     // Enter 走活动行：有命中时默认落首个命中项（搜到即复制，深审新-1），无需 ↓
     expect(rows()[1].classList.contains('is-on')).toBe(true);
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     await run;
     expect(writeText).toHaveBeenCalledWith('s3cret');
     // 防偷窥：通知只报平台/账号与 60s 口径，不含密码明文
@@ -207,7 +207,7 @@ describe('快速取密统一流（选择器 UI + 命令链路）', () => {
     // 活动行落「生成新」
     const on = document.querySelector('.bz-password-vault-qp .bz-popover-item.is-on') as HTMLElement;
     expect(on.querySelector('.pl')!.textContent).toBe('生成新密码');
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     await run;
     await waitFor(() => hasNotice('已生成并复制密码，60 秒后自动清空剪贴板'));
     // 不误复制现有条目密码
@@ -231,15 +231,15 @@ describe('快速取密统一流（选择器 UI + 命令链路）', () => {
     await waitFor(() => rows().length === 3);
     expect(rows()[1].querySelector('.pl')!.textContent).toBe('GitLab');
     // ↓↓ 选中第二个命中项 GitHub
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
     expect(rows()[2].classList.contains('is-on')).toBe(true);
     // 收紧为 'gith'（只命中 GitHub）：原选中仍命中 → 保持，不回落
     search.value = 'gith';
     search.dispatchEvent(new Event('input'));
     await waitFor(() => rows().length === 2);
     expect(rows()[1].classList.contains('is-on')).toBe(true);
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     await run;
     expect(writeText).toHaveBeenCalledWith('s3cret');
   });
@@ -258,12 +258,12 @@ describe('快速取密统一流（选择器 UI + 命令链路）', () => {
     await waitFor(() => rows().length === 101);
     // 连按 ↓ 120 次：活动行停在渲染段末条（站点099），而非从未渲染的站点119
     for (let i = 0; i < 120; i++) {
-      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+      search.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true }));
     }
     const on = rows()[100];
     expect(on.classList.contains('is-on')).toBe(true);
     expect(on.querySelector('.pl')!.textContent).toBe('站点099');
-    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+    search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     expect(picks.length).toBe(1);
     expect(picks[0]).toMatchObject({ type: 'entry', entry: { id: 'pw-99' } });
   });

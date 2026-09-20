@@ -362,6 +362,8 @@ describe('深审修复批 C（password-vault 渲染/列表/弹窗面）', () => 
     ui.show();
     await flush(10);
     ui.openEntryDialog(null);
+    // 呈报#3/P6：添加态自动预生成非空 → 点生成会弹确认；先清空走免确认直生成路径测 toast 档位
+    ((document.querySelector('.bz-password-vault-modal.open [data-f="password"]') as HTMLInputElement).value = '');
     (document.querySelector('.bz-password-vault-modal.open [data-act="gen"]') as HTMLButtonElement).click();
     const info = [...document.querySelectorAll('.bz-notice--info .bz-notice-msg')].find(
       (el) => el.textContent === '已生成新密码'

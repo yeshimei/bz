@@ -3,7 +3,7 @@
  * 统一保险库工作台的静态 HTML 生成：概览（hero+统计卡+最近+体检摘要）、
  * 加密笔记 / 加密日记的列表行与详情卡。
  * 本文件零交互绑定（绑定集中在 UIManager）——只做「数据 → HTML 字符串 / DOM 片段」。
- * 图标用 lucide path 内联 SVG（currentColor）。
+ * 图标 = `<i data-lucide>` 统一占位（呈报#59/E5 收编，vIc 工厂；挂 DOM 后 core mountIcons 兑现）。
  */
 import { escapeHtml, formatRelativeTime } from '../core/utils';
 import { emptyHtmlStr } from '../core/ui/str';
@@ -35,9 +35,30 @@ export interface OverviewStats {
   health: { issues: number; lastChecked?: string } | null;
 }
 
-/** 图标（供 UI 拼接按钮时复用） */
+/**
+ * 图标占位工厂（呈报#59/E5 收编）：产 core 统一 `<i data-lucide>` 占位串（挂 DOM 后由
+ * core/ui icons.ts `mountIcons` → Obsidian setIcon 兑现，官方 lucide 升级自动跟随），
+ * 不再维护全域独一份的手绘 ICON_PATHS 表。旧 24 枚语义一枚不丢：
+ * - 直用官方名：lock / lock-open / key / file-lock / book-lock（合并形官方图标）/
+ *   eye / download / trash-2 / copy / stethoscope / search / refresh-cw / settings /
+ *   x / chevron-left / star / layout-grid / plus / eye-off / triangle-alert / film / image；
+ * - 别名归一（统一体系无对应者，注记）：`more-h` → `more-horizontal`（lucide 无短名，
+ *   diary/render.ts 同款先例）；`star-outline` → `star`（lucide 无独立描边变体，
+ *   star 默认即描边，与旧手绘 path 逐字同形，语义不丢）。
+ * 尺寸：占位 class = `bz-vault-ic bz-vault-ic--<size>`（mountIcons 原样保留 class），
+ *   尺寸由 encrypt/styles.css 容器规则 + 档位表接管（与旧内联 width/height 等效）。
+ * 兑现点：ui.ts ensureElements / renderDeskNotes / renderNoteDetail / createMobPage /
+ *   buildSheetHead / bindOverviewArea（既有）+ index.ts mountEncryptStatusBar /
+ *   ui.ts attachStatusBar（状态栏重绘侧）。
+ */
+const LUCIDE_ALIAS: Record<string, string> = {
+  'more-h': 'more-horizontal',
+  'star-outline': 'star',
+};
+
 export function vIc(name: string, size = 14): string {
-  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON_PATHS[name] || ''}</svg>`;
+  const lucide = LUCIDE_ALIAS[name] || name;
+  return `<i data-lucide="${lucide}" class="bz-vault-ic bz-vault-ic--${size}" aria-hidden="true"></i>`;
 }
 
 /**
@@ -161,30 +182,5 @@ export function noteDetailHTML(note: SafeNote, kind: 'note' | 'diary', plainPrev
     </div>`;
 }
 
-/** lucide path 表（本域视图用；快速取密选择器图标归 password-vault 域） */
-const ICON_PATHS: Record<string, string> = {
-  lock: '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/>',
-  'lock-open': '<rect x="4" y="10" width="16" height="10" rx="3"/><path d="M8 10V7a4 4 0 0 1 7.9-.9"/>',
-  key: '<circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3L22 7l-3-3z"/>',
-  'file-lock': '<rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 12v4"/><circle cx="12" cy="9" r="1.4" fill="currentColor" stroke="none"/>',
-  'book-lock': '<rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>',
-  eye: '<path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
-  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
-  'trash-2': '<path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>',
-  copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-  'more-h': '<circle cx="5" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.6" fill="currentColor" stroke="none"/>',
-  stethoscope: '<path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/>',
-  search: '<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>',
-  'refresh-cw': '<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>',
-  settings: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1 1.55V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1-1.55 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.55-1H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.55-1 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01a1.7 1.7 0 0 0 1-1.55V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1 1.55h.01a1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01a1.7 1.7 0 0 0 1.55 1H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.55 1z"/>',
-  x: '<path d="M18 6 6 18M6 6l12 12"/>',
-  'chevron-left': '<path d="m15 18-6-6 6-6"/>',
-  star: '<path d="M12 2 15 9l7 .8-5.3 4.7 1.6 6.9L12 17.8 5.7 21.4l1.6-6.9L2 9.8 9 9z"/>',
-  'star-outline': '<path d="m12 2 3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>',
-  'layout-grid': '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
-  plus: '<path d="M12 5v14M5 12h14"/>',
-  'eye-off': '<path d="M9.9 4.24A9.1 9.1 0 0 1 12 4c6.5 0 10 8 10 8a13.2 13.2 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 2 12s3.5 8 10 8a9.7 9.7 0 0 0 5.39-1.61M2 2l20 20"/>',
-  'triangle-alert': '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 20h16a2 2 0 0 0 1.73-2"/><path d="M12 9v4"/><path d="M12 17h.01"/>',
-  film: '<rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/>',
-  image: '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
-};
+// （呈报#59/E5 收编：lucide path 手绘表 ICON_PATHS 已整表退役——图标语义映射见 vIc
+//  处注释，占位经 core mountIcons/setIcon 兑现，官方升级自动跟随，不再欠对表维护债。）
