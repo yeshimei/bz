@@ -61,6 +61,21 @@ export function normalizeItem(item: any): MemoItem {
   };
 }
 
+/** 剥离条目残留回滚字段（recur/checklist）：2026-09-19 用户拍板字段清除——两功能（周期重复/清单子任务）已随回滚废弃不再恢复。
+ *  只剥键不删条目（周期克隆出的「下一期」条目剥后即普通条目，保留）；其余字段一字不损。写盘单点消毒（MemoData.write / file-sync commit 共用）。 */
+export function purgeStaleFields<T>(data: T): T {
+  if (!Array.isArray(data)) return data;
+  const stale = (it: any) => !!it && typeof it === 'object' && ('recur' in it || 'checklist' in it);
+  if (!data.some(stale)) return data;
+  return data.map((it: any) => {
+    if (!stale(it)) return it;
+    const rest = { ...it };
+    delete rest.recur;
+    delete rest.checklist;
+    return rest;
+  }) as unknown as T;
+}
+
 export const MemoData = {
   memoFilePath: '',
   scenarios: [] as string[],
@@ -80,7 +95,8 @@ export const MemoData = {
     return this._store!.read();
   },
   async write(data: any) {
-    return this._store!.write(data);
+    // 写盘单点消毒：残留 recur/checklist 任何回写路径不得再落盘（见 purgeStaleFields 注）
+    return this._store!.write(purgeStaleFields(data));
   },
 
   /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
@@ -112,6 +128,8 @@ export const MemoData = {
           item.id = generateId();
           needWrite = true;
         }
+        // 残留回滚字段（recur/checklist）也触发回写清档：载入即剥（内存态 normalizeItem 白名单本就不带，盘上见 write 消毒）
+        if ('recur' in item || 'checklist' in item) needWrite = true;
         // 统一字段形状（缺省补默认值，旧数据零迁移）
         return normalizeItem(item);
       });
