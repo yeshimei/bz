@@ -22,6 +22,15 @@ function makeAI(result: string | null, reject = false) {
 
 const LONG_BODY = '段落内容。'.repeat(30); // >100 字
 
+/** 重试链路是异步泵，固定睡眠在全量并发下偶有不够用——按条件轮询（与 diary/bookshelf 测试同款小帮手） */
+async function waitFor(cond: () => boolean, timeout = 3000): Promise<void> {
+  const start = Date.now();
+  while (!cond()) {
+    if (Date.now() - start > timeout) throw new Error('waitFor 超时');
+    await new Promise((r) => setTimeout(r, 15));
+  }
+}
+
 describe('aiProcess', () => {
   beforeEach(() => {
     resetObsidianMocks();
@@ -282,9 +291,8 @@ describe('processFile', () => {
     const retryBtn = document.querySelector('.bz-notice .bz-notice-action') as HTMLButtonElement;
     expect(retryBtn).not.toBeNull();
     retryBtn.click(); // 点按重跑当前文件
-    await new Promise((r) => setTimeout(r, 30));
+    await waitFor(() => getNoticeMessages().some((m) => m.includes('重试标题'))); // 重试泵完成（改名+成功通知）再断言
     expect(vault.files.has('归档/网页剪藏/重试标题.md')).toBe(true);
-    expect(getNoticeMessages().some((m) => m.includes('重试标题'))).toBe(true);
   });
 
   it('连续处理两个文件 → 各自一条完成通知（ticket 1：按文件区分去重键，互不吞结果）', async () => {
@@ -450,7 +458,7 @@ describe('processFile force 与「查看」/quiet（enh-autosum 包）', () => {
     const retryBtn = document.querySelector('.bz-notice .bz-notice-action') as HTMLElement;
     expect(retryBtn.textContent).toBe('重试');
     retryBtn.click();
-    await new Promise((r) => setTimeout(r, 30));
+    await waitFor(() => (vault.files.get('归档/网页剪藏/rf.md') ?? '').includes('重试新摘要')); // 重试泵写回完成
     expect(prompt.mock.calls[1][0]).not.toContain('生成中文标题'); // 重试仍是 force
     const out = vault.files.get('归档/网页剪藏/rf.md')!;
     expect(out).toContain('summary: "重试新摘要"');
