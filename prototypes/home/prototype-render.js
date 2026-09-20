@@ -1,4 +1,4 @@
-/* 源指纹 7515479538f142a9 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 d774682875ccddd8 · 仓内输入 5 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/domain-icons.ts","src/core/ui/str.ts","src/home/layouts/river/render.ts","src/home/render.ts","src/home/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/home/render.ts → window.BZR_home（评审壳预览包，ADR-0104） */
 var BZR_home = (() => {
@@ -30,6 +30,7 @@ var BZR_home = (() => {
     DOMAIN_ICONS: () => DOMAIN_ICONS,
     DOMAIN_MAP: () => DOMAIN_MAP,
     DOMAIN_MENU: () => DOMAIN_MENU,
+    DOMAIN_MENU_RAW: () => DOMAIN_MENU_RAW,
     EMPTY_COUNTS: () => EMPTY_COUNTS,
     EMPTY_SUMMARY: () => EMPTY_SUMMARY,
     applyOrder: () => applyOrder,
@@ -57,6 +58,7 @@ var BZR_home = (() => {
     pomodoroMenuAction: () => pomodoroMenuAction,
     reorderTo: () => reorderTo,
     riverCountText: () => riverCountText,
+    settingsMenuAction: () => settingsMenuAction,
     sheetHeadHtml: () => sheetHeadHtml,
     tilesHtml: () => tilesHtml,
     timelineKind: () => timelineKind,
@@ -209,7 +211,7 @@ var BZR_home = (() => {
     if (phase === "break") return { label: "跳过休息", commandId: "bz-pomodoro-skip", icon: "skip-forward" };
     return { label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer" };
   }
-  var DOMAIN_MENU = {
+  var DOMAIN_MENU_RAW = {
     diary: [{ label: "写日记", commandId: "bz-diary-write", icon: "pen-line" }],
     memo: [
       { label: "写备忘", commandId: "bz-memo-add", icon: "clipboard-list" },
@@ -281,6 +283,19 @@ var BZR_home = (() => {
       { label: "锁定密码本", commandId: "bz-password-vault-lock", icon: "lock", keepHome: true }
     ]
   };
+  var SETTINGS_DOMAIN_KEY = { vault: "password-vault" };
+  function settingsMenuAction(id) {
+    var _a;
+    return {
+      label: "设置",
+      commandId: "bz-settings-panel-open",
+      icon: iconOf("settings"),
+      settingsDeep: (_a = SETTINGS_DOMAIN_KEY[id]) != null ? _a : id
+    };
+  }
+  var DOMAIN_MENU = Object.fromEntries(
+    Object.entries(DOMAIN_MENU_RAW).map(([id, actions]) => [id, [...actions, settingsMenuAction(id)]])
+  );
   function domainColor(id) {
     var _a;
     return (_a = DOMAIN_DOT[id]) != null ? _a : "#8a8f99";

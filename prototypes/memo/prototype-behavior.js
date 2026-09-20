@@ -1,4 +1,4 @@
-/* 源指纹 d8555ebf1dff8509 · 仓内输入 234 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 19b73ee2ad223f02 · 仓内输入 234 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
@@ -25841,11 +25841,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const hide2 = new Set(hidden != null ? hidden : []);
     return applyOrder(order, domains.filter((d) => !hide2.has(d.id)));
   }
+  function settingsMenuAction(id) {
+    var _a2;
+    return {
+      label: "设置",
+      commandId: "bz-settings-panel-open",
+      icon: iconOf("settings"),
+      settingsDeep: (_a2 = SETTINGS_DOMAIN_KEY[id]) != null ? _a2 : id
+    };
+  }
   function domainColor(id) {
     var _a2;
     return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
   }
-  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS;
+  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS, DOMAIN_MENU_RAW, SETTINGS_DOMAIN_KEY, DOMAIN_MENU;
   var init_shared2 = __esm({
     "src/home/shared.ts"() {
       init_str();
@@ -25901,6 +25910,82 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         settings: "#8a8f99"
       };
       ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
+      DOMAIN_MENU_RAW = {
+        diary: [{ label: "写日记", commandId: "bz-diary-write", icon: "pen-line" }],
+        memo: [
+          { label: "写备忘", commandId: "bz-memo-add", icon: "clipboard-list" },
+          // 打开备忘录编辑器并把**当前打开的笔记**绑定为关联（定位 chip 预置），不弹添加窗再手点定位
+          { label: "给当前笔记记一笔", commandId: "bz-memo-note-binding", icon: "notebook-pen" }
+        ],
+        cinema: [
+          { label: "加影视", commandId: "bz-cinema-add", icon: "plus" },
+          { label: "影视分析报告", commandId: "bz-cinema-analysis", icon: "bar-chart-3" },
+          // 从「想看」池随机抽一部并直接开详情（抽不动脑子时的入口）
+          { label: "随机抽一部", commandId: "bz-cinema-random-pick", icon: "shuffle" }
+        ],
+        review: [
+          { label: "开始复习", commandId: "bz-review-start", icon: "play" },
+          { label: "加入复习计划", commandId: "bz-review-add", icon: "plus" },
+          { label: "复习计划分析报告", commandId: "bz-review-report", icon: "bar-chart-3" }
+        ],
+        // 番茄钟：**相位敏感的单个动作**（见 pomodoroMenuAction）——静态项只是 idle 兜底，
+        // 挂菜单时整条按实时相位替换（文案/命令/图标），四相位互斥、一次只出一条。
+        pomodoro: [
+          { label: "开始专注", commandId: "bz-pomodoro-focus-toggle", icon: "timer", dynamic: "phase", keepHome: true }
+        ],
+        favorites: [{ label: "加收藏", commandId: "bz-favorites-add", icon: "bookmark" }],
+        // 剪藏本此前是空菜单（无域快捷动作）；这条是唯一「不开面板」的批量动作，故挂在入口上。
+        // 危险项：一次改 N 条 read 状态（面板里同款动作也是走确认框），故 kind: 'danger' + 确认框；
+        // keepHome = 确认框叠在首页上、清完当场看到「未读 N 篇」归零。
+        clipping: [
+          { label: "未读全部标为已读", commandId: "bz-clipbook-mark-all-read", icon: "check-check", kind: "danger", keepHome: true }
+        ],
+        // 知识盒：四入口补齐（2026-09-16 用户点名——此前只有名词与影像两条，段落/图版缺）。
+        // 顺序与主窗录入入口行同源（名词 → 段落 → 图版 → 影像，见 knowledge/ui.ts renderLiterature），
+        // 不在这里另立一套次序。四条都是「打开录入弹层」类动作，故都不带 keepHome（关首页再弹）。
+        knowledge: [
+          { label: "名词生成文献笔记", commandId: "bz-knowledge-note-term", icon: "file-text" },
+          { label: "段落生成文献笔记", commandId: "bz-knowledge-note-passage", icon: "align-left" },
+          { label: "图版生成文献笔记", commandId: "bz-knowledge-note-image", icon: "image" },
+          { label: "影像生成文献笔记", commandId: "bz-knowledge-note-video", icon: "list-video" }
+        ],
+        bookshelf: [
+          { label: "阅读分析报告", commandId: "bz-reading-report-open", icon: "bar-chart-3" },
+          // 直开书架墙并切到「在读」分栏（有在读时才点亮入口彩点，见 buildDots）
+          { label: "继续在读", commandId: "bz-bookshelf-continue", icon: "book-open" }
+        ],
+        // 游戏库（2026-09-17 用户点名补快捷命令）：两条都是「一步成事」——
+        // 立即同步 = 即时类（不关首页，拉完原地看计数）/ 数据统计 = 开面板落统计页（影院分析报告同范式）。
+        // busyText：Steam 网络拉取 1-3 秒，点击瞬间给「正在同步」反馈防重复点击（eff P3-2）。
+        gameshelf: [
+          { label: "立即同步", commandId: "bz-gameshelf-sync", icon: "refresh-cw", keepHome: true, busyText: "正在同步游戏库…" },
+          // 图标 chart-bar 与「阅读分析报告」的 bar-chart-3 错开（enh-sweep-a 起报告/统计类图标互异的惯例）
+          { label: "数据统计", commandId: "bz-gameshelf-stats", icon: "chart-bar" }
+        ],
+        secondbrain: [
+          { label: "第二大脑对话", commandId: "bz-secondbrain-chat", icon: "message-circle" },
+          { label: "参考侧栏", commandId: "bz-secondbrain-open", icon: "zap" },
+          // 全库重建向量索引（函数早已存在、此前没有命令入口）：全库 IO 慢动作挂 busy 反馈
+          { label: "重建索引", commandId: "bz-secondbrain-rebuild-index", icon: "refresh-cw", keepHome: true, busyText: "正在重建索引…" }
+        ],
+        belongings: [{ label: "加物品", commandId: "bz-belongings-add", icon: "archive" }],
+        // 保险库：此前是空菜单（无域快捷动作）；锁定是唯一「不开面板」的一步动作
+        // （加密当前笔记虽已有命令，但属「作用于当前笔记」，不在本次采纳范围；
+        //   快速取密已随 ADR-0158 归并密码本域——bz-encrypt-copy-password 退役）
+        encrypt: [
+          { label: "锁定保险库", commandId: "bz-encrypt-lock-vault", icon: "lock", keepHome: true }
+        ],
+        vault: [
+          // ADR-0158 统一快速取密：fuzzy 列现有密码 + 顶部「生成新」，同 id 承接旧「快速生成密码」
+          { label: "快速取密", commandId: "bz-password-vault-gen", icon: "key" },
+          // 与保险库同库同锁（一把主密码）：文案按本域名口径，行为是同一个 lockSafe
+          { label: "锁定密码本", commandId: "bz-password-vault-lock", icon: "lock", keepHome: true }
+        ]
+      };
+      SETTINGS_DOMAIN_KEY = { vault: "password-vault" };
+      DOMAIN_MENU = Object.fromEntries(
+        Object.entries(DOMAIN_MENU_RAW).map(([id, actions]) => [id, [...actions, settingsMenuAction(id)]])
+      );
     }
   });
 
