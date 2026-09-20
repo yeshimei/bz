@@ -848,6 +848,15 @@
 .bz-sp-set-note { font-size: 10.5px; color: var(--sp-ink-3); margin-top: 3px; }
 .bz-sp-set-row.hit { box-shadow: inset 3px 0 0 var(--sp-accent); background: var(--sp-accent-soft); }
 
+/* 搜索命中词词级高亮（SP2/呈报#26）：行级色条（.hit）之外，行名/描述内的命中词包 mark——
+   accent 实底 + on-accent 字（亮暗两态 token 均配好），与行级淡底（.hit）拉开层次一眼定位 */
+.bz-sp-mark {
+  background: var(--sp-accent);
+  color: var(--sp-on-accent);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 /* ═══════════ 加载态 / 空态 ═══════════ */
 .bz-sp-loading {
   display: flex;

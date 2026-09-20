@@ -1,4 +1,4 @@
-/* 源指纹 bd7a55043ff510ae · 仓内输入 230 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6cf54bc89d44726c · 仓内输入 230 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/settings-panel/fake-sim.ts","prototypes/settings-panel/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/settings-panel/fake-sim.ts → window.BZW_settings_panel（行为单源预览包，issue 245/ADR-0106） */
 var BZW_settings_panel = (() => {
@@ -36017,9 +36017,10 @@ ${c.trim()}
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
     const tape = "bz-fav-tape" + (idx % 3 ? [" bz-fav-tape--r", " bz-fav-tape--g"][idx % 3 - 1] : "");
+    const ext = (it.url || "").trim() ? `<span class="bz-fav-ext" title="打开外部链接">${iconSpan(ICON2.open, "bz-ic--xs")}</span>` : "";
     return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>${ext}
     <h3>${esc(it.title || "无标题")}</h3>
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
@@ -36687,13 +36688,22 @@ ${c.trim()}
       applyTagFilter(b.dataset.favTag);
     });
     const content = overlay2.querySelector("[data-fav-content]");
-    const openCardDefault = (it) => {
+    const openCardDefault = (it, card) => {
       if (isMobileEnv()) {
         openMobSheet2(it);
         return;
       }
       const rawUrl = (it.url || "").trim();
-      if (rawUrl) openExternal(normalizeUrl(rawUrl));
+      if (rawUrl) {
+        openExternal(normalizeUrl(rawUrl));
+        return;
+      }
+      if (card) {
+        card.classList.remove("bz-fav-nolink");
+        void card.offsetWidth;
+        card.classList.add("bz-fav-nolink");
+        card.addEventListener("animationend", () => card.classList.remove("bz-fav-nolink"), { once: true });
+      }
     };
     content.addEventListener("click", (e) => {
       const t = e.target;
@@ -36701,7 +36711,7 @@ ${c.trim()}
       if (!card) return;
       e.stopPropagation();
       const it = itemById2(card.dataset.favId);
-      if (it) openCardDefault(it);
+      if (it) openCardDefault(it, card);
     });
     content.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
@@ -36709,7 +36719,7 @@ ${c.trim()}
       if (!card || e.target !== card) return;
       e.preventDefault();
       const it = itemById2(card.dataset.favId);
-      if (it) openCardDefault(it);
+      if (it) openCardDefault(it, card);
     });
     content.addEventListener("contextmenu", (e) => {
       const card = e.target.closest("[data-fav-id]");
@@ -49940,6 +49950,10 @@ ${n.content.slice(0, 2e3)}
           this.renderHandles = [];
           /** 域渲染竞态序号（P2-4：每次 renderDomain 自增，await 后校验丢弃过期渲染） */
           this.renderSeq = 0;
+          /** 域滚位会话记忆（SP5/呈报#49；clipbook 效率#17 样板）：域名 → 离开时的 scrollTop。
+           *  桌面滚动元素 = .bz-sp-desk-main（pane 父级）、移动 = .bz-sp-mob-page-body（pane 自身），
+           *  key 以端前缀区分；cleanup 随面板销毁清空（会话内有效）。 */
+          this.scrollMem = /* @__PURE__ */ new Map();
           /** 列表重绘回调（桌面导航/移动列表各自注册；preload 解析出零项域后剔除重绘） */
           this.rerenderList = null;
           /** 移动端推入状态：home = 首页列表；domain = 已推入域设置页 */
@@ -50062,6 +50076,29 @@ ${n.content.slice(0, 2e3)}
             this.applyHitFilter(popup, this.searchQuery);
           }, SEARCH_DEBOUNCE_MS4);
           searchIn.addEventListener("input", () => applySearch());
+          searchIn.addEventListener("keydown", (e) => {
+            var _a3, _b2;
+            const q2 = searchIn.value.trim();
+            if (e.key === "Escape" && q2) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              searchIn.value = "";
+              this.searchQuery = "";
+              renderNav2("");
+              this.applyHitFilter(popup, "");
+              searchIn.focus();
+              return;
+            }
+            if (e.key === "Enter" && q2) {
+              const first = this.matchedDomains(q2)[0];
+              if (!first) return;
+              e.preventDefault();
+              this.activeDomainId = first.id;
+              renderNav2(searchIn.value);
+              void this.renderDomain(pane, first);
+              (_b2 = (_a3 = this.navEl) == null ? void 0 : _a3.querySelector(`.bz-sp-nav-item[data-sp-domain="${first.id}"]`)) == null ? void 0 : _b2.scrollIntoView({ block: "nearest" });
+            }
+          });
           renderNav2("");
           this.rerenderList = () => renderNav2(searchIn.value);
           void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
@@ -50132,9 +50169,13 @@ ${n.content.slice(0, 2e3)}
          * 无 schema 的域显示空态。
          */
         async renderDomain(pane, domain, opts = {}) {
-          var _a2;
+          var _a2, _b2, _c;
           const runId = ++this.renderSeq;
           this.flushPendingTextCommit();
+          const side = isMobileEnv() ? "m" : "d";
+          const scroller = (_a2 = isMobileEnv() ? pane : pane.parentElement) != null ? _a2 : pane;
+          const prevId = pane.dataset.spActive;
+          if (prevId) this.scrollMem.set(`${side}:${prevId}`, scroller.scrollTop);
           this.renderHandles = [];
           pane.innerHTML = "";
           let pageHead = null;
@@ -50142,7 +50183,7 @@ ${n.content.slice(0, 2e3)}
             const headHolder = document.createElement("div");
             headHolder.innerHTML = pageHeadHtml(domain.name, domain.desc, "", true);
             pageHead = headHolder.firstElementChild;
-            (_a2 = pageHead.querySelector(".bz-sp-page-reset")) == null ? void 0 : _a2.addEventListener("click", () => {
+            (_b2 = pageHead.querySelector(".bz-sp-page-reset")) == null ? void 0 : _b2.addEventListener("click", () => {
               void this.resetDomain(domain, pane);
             });
             pane.appendChild(pageHead);
@@ -50153,6 +50194,8 @@ ${n.content.slice(0, 2e3)}
               `${domain.name} · 暂无设置项`,
               "该域没有可在此配置的设置（设置就近在对应功能面板）"
             ));
+            pane.dataset.spActive = domain.id;
+            scroller.scrollTop = 0;
             return;
           }
           const body = document.createElement("div");
@@ -50188,9 +50231,13 @@ ${n.content.slice(0, 2e3)}
               ));
             }
             this.applyHitFilter(pane, this.searchQuery);
+            pane.dataset.spActive = domain.id;
+            scroller.scrollTop = (_c = this.scrollMem.get(`${side}:${domain.id}`)) != null ? _c : 0;
             return;
           } catch (e) {
             body.innerHTML = "";
+            pane.dataset.spActive = domain.id;
+            scroller.scrollTop = 0;
             const retry = () => void this.renderDomain(pane, domain);
             const actions = document.createElement("div");
             actions.className = "bz-sp-load-retry";
@@ -50217,6 +50264,7 @@ ${n.content.slice(0, 2e3)}
             }
             const hit = !!q2 && !!row.textContent && spMatch(row.textContent, q2);
             row.classList.toggle("hit", hit);
+            this.markHitText(row, q2);
             if (q2 && !hit && row.style.display !== "none") {
               row.style.display = "none";
               row.dataset.spHitHidden = "1";
@@ -50240,8 +50288,41 @@ ${n.content.slice(0, 2e3)}
           refreshGroupCounts(root);
         }
         /**
+         * 命中词词级高亮（SP2/呈报#26；UX-1）：行名与描述段内的全部命中词包
+         * `<mark class="bz-sp-mark">`——整行色条（.hit）之外的一眼定位。原文先存
+         * data-sp-orig（行 DOM 生命周期内的还原底稿）再按小写归一切片重建文本节点，
+         * 不做动态 regex（与 UX-1 修法建议同口径，无注入面）；q 清空按 orig 还原。
+         */
+        markHitText(row, q2) {
+          const needle = q2.trim().toLowerCase();
+          row.querySelectorAll(".bz-sp-set-name, .bz-sp-set-desc").forEach((el) => {
+            var _a2, _b2;
+            if (el.dataset.spOrig === void 0) el.dataset.spOrig = (_a2 = el.textContent) != null ? _a2 : "";
+            const text = (_b2 = el.dataset.spOrig) != null ? _b2 : "";
+            el.textContent = "";
+            if (!needle) {
+              el.textContent = text;
+              return;
+            }
+            const lower = text.toLowerCase();
+            let cursor = 0;
+            for (; ; ) {
+              const at = lower.indexOf(needle, cursor);
+              if (at < 0) break;
+              if (at > cursor) el.append(document.createTextNode(text.slice(cursor, at)));
+              const mark = document.createElement("mark");
+              mark.className = "bz-sp-mark";
+              mark.textContent = text.slice(at, at + needle.length);
+              el.append(mark);
+              cursor = at + needle.length;
+            }
+            if (cursor < text.length) el.append(document.createTextNode(text.slice(cursor)));
+          });
+        }
+        /**
          * 键盘导航（2026-09-12 补，桌面）：↑↓ 在可见域间前后切换，顺序 = 导航视觉顺序
-         * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉里让位，搜索框与面板本体可用。
+         * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉 / 单行输入里让位（SP1/呈报#17：
+         * 输入框内 ↑↓ 是光标移动——搜索框与文本设置行里不再借道切域）。
          * F-6：搜索态与 renderNav 同源——只在当前命中（导航可见）集内移动，切到的一定是看得见的域；
          * 当前域不在命中集时 ↓/↑ 进首/末个命中域；命中集为空 no-op。
          */
@@ -50249,10 +50330,8 @@ ${n.content.slice(0, 2e3)}
           var _a2, _b2, _c;
           if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
           const t = e.target;
-          if (t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
-          const query = this.searchQuery.trim();
-          const matches = (d2) => !query || spMatch(d2.name, query) || spMatch(d2.desc, query) || (schemaRowCache.get(d2.id) || []).some((r) => spMatch(r.name, query));
-          const ordered = groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
+          if (t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT" || t.tagName === "INPUT")) return;
+          const ordered = this.matchedDomains(this.searchQuery);
           if (!ordered.length) return;
           const idx = ordered.findIndex((d2) => d2.id === this.activeDomainId);
           let next;
@@ -50268,6 +50347,12 @@ ${n.content.slice(0, 2e3)}
           (_a2 = this.rerenderList) == null ? void 0 : _a2.call(this);
           void this.renderDomain(pane, d);
           (_c = (_b2 = this.navEl) == null ? void 0 : _b2.querySelector(`.bz-sp-nav-item[data-sp-domain="${d.id}"]`)) == null ? void 0 : _c.scrollIntoView({ block: "nearest" });
+        }
+        /** 搜索命中域集（导航视觉序；↑↓ 切域与 Enter 首跳共用同一口径，F-6 不漂移） */
+        matchedDomains(q2) {
+          const query = q2.trim();
+          const matches = (d) => !query || spMatch(d.name, query) || spMatch(d.desc, query) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
+          return groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
         }
         /**
          * 重置本域（2026-09-12 补）：把本域 schema 中带**字符串键**的行恢复为 DEFAULT_SETTINGS 值，
@@ -50384,6 +50469,38 @@ ${n.content.slice(0, 2e3)}
           };
           const applySearch = debounce(() => render2(searchIn.value), SEARCH_DEBOUNCE_MS4);
           searchIn.addEventListener("input", () => applySearch());
+          searchIn.addEventListener("keydown", (e) => {
+            const q2 = searchIn.value.trim();
+            if (e.key === "Escape" && q2) {
+              e.preventDefault();
+              e.stopImmediatePropagation();
+              searchIn.value = "";
+              render2("");
+              searchIn.focus();
+              return;
+            }
+            if (e.key === "Enter" && q2) {
+              const doms = listableDomains().filter((d) => spMatch(d.name, q2) || spMatch(d.desc, q2));
+              if (doms.length) {
+                e.preventDefault();
+                void this.pushDomain(doms[0]);
+                return;
+              }
+              let hit = null;
+              for (const [did, rowsOf] of schemaRowCache) {
+                const d = DOMAINS2.find((x) => x.id === did);
+                const r = d ? rowsOf.find((rr) => spMatch(rr.name, q2) || rr.desc && spMatch(rr.desc, q2)) : void 0;
+                if (d && r) {
+                  hit = { domain: d, row: r.name };
+                  break;
+                }
+              }
+              if (hit) {
+                e.preventDefault();
+                void this.pushDomain(hit.domain, hit.row);
+              }
+            }
+          });
           render2("");
           this.rerenderList = () => {
             if (!this.mobPushed) render2(searchIn.value);
@@ -50472,6 +50589,7 @@ ${n.content.slice(0, 2e3)}
           schemaRowCache.clear();
           loadedCounts.clear();
           schemaCache.clear();
+          this.scrollMem.clear();
         }
       };
     }
