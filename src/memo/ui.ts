@@ -39,12 +39,13 @@ import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
 import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
-import { openFlowDialog } from '../core/flow-dialog';
+import { bindFormSubmit } from '../core/ui/modal';
+import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
-import { attachItemActions, closeItemMenu, type ItemAction } from '../core/item-actions';
+import { attachItemActions, closeItemMenu, openItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import {
   debounce, formatRelativeTime, getCurrentNoteInfo, getCurrentCursorPosition, localDayKey, stripMdExt,
-  generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle,
+  generateId, extractUrlAndDisplay, escapeHtml, fetchPageTitle, openExternalUrl,
 } from '../core/utils';
 import { MemoData, DEFAULT_SCENARIOS } from './data';
 import { getDueStatus, formatDueText } from './due';
@@ -451,10 +452,18 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     toggleCheck(it);
   });
 
-  // 底部录入 Enter
+  // 底部录入 Enter（memo2-func #8：isComposing 守卫——中文 IME 组词确认的 Enter
+  // （keyCode 229 同判）不提交；memo2-func #6 / memo2-ui M2-2：移动端分流 submitComposer——
+  // 「添加」钮走弹窗（issue 268 拍板：移动 = 打开创建弹窗补场景/优先级/截止/定位），
+  // 软键盘回车此前却直落盘绕开弹窗，两入口行为分叉。桌面保持 Enter 快速落盘）
   const composerInput = overlay.querySelector('[data-memo-composer-input]') as HTMLInputElement;
+  // memo2-func #6 / memo2-ui M2-2：占位符分形态（移动端回车不开弹窗，别许诺 Enter 保存）
+  composerInput.placeholder = isMobileEnv() ? '输入内容，点「添加」补全细节…' : '输入内容，Enter 保存…';
   composerInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') addFromComposer();
+    if (e.isComposing || e.keyCode === 229) return;
+    if (e.key !== 'Enter') return;
+    if (isMobileEnv()) submitComposer();
+    else addFromComposer();
   });
 
   // 剪藏场景剪贴板预填（memo 同款逻辑）：聚焦时读剪贴板，URL 形态自动填入并抓标题；
@@ -724,40 +733,50 @@ function buildSheetHead(it: MemoItem): HTMLElement {
 // ---------- 卡片操作（菜单/抽屉动作全集） ----------
 
 function openItem(it: MemoItem): void {
-  closeMemoPanel();
   const app = M.appRef!;
   if (it.linkedNote) {
     const file = app.vault.getAbstractFileByPath(it.linkedNote);
-    if (file) void app.workspace.getLeaf().openFile(file as any);
-    else notice('关联笔记不存在');
-  } else if (it.url) {
-    try {
-      (app as any).openUrl(it.url);
-    } catch (e) {
-      const electron = (window as any).require && (window as any).require('electron');
-      if (electron && electron.shell) electron.shell.openExternal(it.url);
+    if (!file) {
+      // 呈报#15（15A 拍板，memo2-ui MR2-5）：先确认目标存在再关面板——此前首步即关面板，
+      // 失败只剩一条通知，用户丢掉整个列表视图。失败时面板留着并提示原因。
+      notice('关联笔记不存在');
+      return;
     }
+    closeMemoPanel();
+    void app.workspace.getLeaf().openFile(file as any);
+  } else if (it.url) {
+    closeMemoPanel();
+    // memo2-consistency 旧-14：换线 core openExternalUrl 单源（三级兜底 + 终末错误提示，
+    // 注释点名 memo 传 M.appRef 为预期消费方；此前域内私有两级副本缺第三级与失败提示）
+    openExternalUrl(app, it.url);
   }
 }
 
 function jumpToNote(it: MemoItem): void {
   if (!it.notePath) return;
-  closeMemoPanel();
   const app = M.appRef!;
   const file = app.vault.getAbstractFileByPath(it.notePath);
   if (!file) {
+    // 呈报#15（15A 拍板）：失败不关面板——先确认文件存在再收面板（openItem 同口径）
     notice('关联笔记不存在');
     return;
   }
+  closeMemoPanel();
   const leaf = app.workspace.getLeaf();
-  void leaf.openFile(file as any);
-  const editor = (leaf as any).view?.editor;
-  if (editor && it.notePosition) {
-    const { line, ch } = it.notePosition;
-    editor.focus();
-    editor.setCursor(line, ch || 0);
-    editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
-  }
+  // memo2-func #3 / memo2-arch A2（旧账 review-all2-bugs N8）：openFile 未 await 就同步取
+  // editor——此刻 leaf.view 多半还是旧视图，setCursor/scrollIntoView 打在上一篇笔记上，
+  // 「位置」跳转的行定位从不生效。await 后新视图已就位再定位（与 15A「失败不关面板」
+  // 组合语义：文件存在才关面板，关了就一定 await 到位再打光标）。
+  void (async () => {
+    await leaf.openFile(file as any);
+    const editor = (leaf as any).view?.editor;
+    if (editor && it.notePosition) {
+      const { line, ch } = it.notePosition;
+      editor.focus();
+      editor.setCursor(line, ch || 0);
+      editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    }
+  })();
 }
 
 /** 行内勾选切换（列表卡与移动抽屉头共用）：已完成 = 恢复；未完成 = 300ms 防抖后标记完成
@@ -806,9 +825,14 @@ async function restoreItem(it: MemoItem): Promise<void> {
 async function postponeItem(id: string, days: number): Promise<void> {
   const it = M.items.find((i) => i.id === id);
   if (!it || !it.due) return;
-  const d = new Date(it.due.replace('T', ' '));
-  d.setDate(d.getDate() + days);
-  const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  // memo2-func #4（memo2-ui M2-3）：手写 new Date('YYYY-MM-DD HH:mm') 在 iOS WebKit
+  // 解析为 Invalid Date → setDate/getHours 全 NaN → due 落盘 'NaN-NaN-NaN …' 脏数据，
+  // 到期标记永久消失。改走域内 moment 单源（due.ts/data.ts 同口径）；既有 NaN 脏串由
+  // loadItems 归一清洗（normalizeItem）。时刻沿用原条目时分（延后整天语义）。
+  const keepHm = it.due.replace('T', ' ').slice(11, 16) || '09:00';
+  const next = moment(it.due.replace('T', ' ').slice(0, 10), 'YYYY-MM-DD')
+    .add(days, 'days')
+    .format(`YYYY-MM-DD ${keepHm}`);
   try {
     await MemoData.updateItem(id, { due: next });
     emitDomainEvent('memo', { kind: 'postponed', title: it.title, due: next });
@@ -906,11 +930,10 @@ function buildCardActions(it: MemoItem): ItemAction[] {
     actions.push({ icon: 'rotate-ccw', label: '恢复未完成', title: '恢复未完成', onClick: async () => { await restoreItem(it); } });
   }
   if (it.due && !it.completed) {
-    const postponeSub = (days: number) => {
-      const d = new Date(it.due!.replace('T', ' '));
-      d.setDate(d.getDate() + days);
-      return `${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-    };
+    // memo2-func #4（memo2-ui M2-3）：延后菜单副标签同改 moment 单源（原手写 new Date
+    // 在 iOS 产出 NaN 展示）；日期算术与 postponeItem 同口径
+    const postponeSub = (days: number) =>
+      moment(it.due!.replace('T', ' ').slice(0, 10), 'YYYY-MM-DD').add(days, 'days').format('MM-DD');
     actions.push({ icon: 'clock', label: '延后 1 天', title: '延后 1 天', sub: `→ ${postponeSub(1)}`, onClick: async () => { await postponeItem(it.id, 1); } });
     actions.push({ icon: 'clock', label: '延后 3 天', title: '延后 3 天', sub: `→ ${postponeSub(3)}`, onClick: async () => { await postponeItem(it.id, 3); } });
   }
@@ -980,7 +1003,10 @@ function addFromComposer(): void {
       id: generateId(), // T5：与旧 memo 同前缀 'item'（同源 memo.json）
       title: hint ? hint.title : txt,
       scene,
-      priority: 'minor',
+      // memo2-func #14 / memo2-arch A5：读「新条目默认优先级」设置（此前恒 minor 硬编码，
+      // 设置 desc 承诺「新建备忘录时默认选中的优先级」对 composer 完全失效，两入口口径分裂；
+      // 「重要」聚合与启动提醒判定随之漏报）
+      priority: tryGetSettings().memoDefaultPriority === 'important' ? 'important' : 'minor',
       created: moment().format('YYYY-MM-DD HH:mm:ss'),
       completed: null,
       due: null,
@@ -1249,8 +1275,22 @@ export function openEditor(
   form.appendChild(actionsRow);
   modalBox.appendChild(form);
 
-  // 保存
-  saveBtn.addEventListener('click', () => {
+  // 保存（保存逻辑提为具名 doSave 供按钮与 bindFormSubmit 键盘提交共用——memo2-ui M3-11 /
+  // memo2-arch A4：memo 是主力表单域中唯一未接 bindFormSubmit 的，单行 input 回车无反应、
+  // Ctrl/⌘+Enter 未绑；textarea 纯 Enter 换行不受影响。防重入 busy 对齐 composer E19 同款
+  // ——memo2-func #1 / memo2-ui M2-1：落盘窗口期二次点击/回车此前各自走完整校验再 addItem
+  // 一次，新建态同内容双条目入库）
+  let editorBusy = false;
+  const readScene = (): string => {
+    const on = choice.el.querySelector('.is-on') as HTMLElement | null;
+    return (on?.dataset.value as string) || defaultScene;
+  };
+  const readPrio = (): string => {
+    const on = prioChoice.el.querySelector('.is-on') as HTMLElement | null;
+    return (on?.dataset.value as string) || 'minor';
+  };
+  const doSave = () => {
+    if (editorBusy) return;
     let content = contentInput.value.trim();
     if (!content) {
       // 剪藏预填兜底（memo 同款）：内容空但占位符已预填 URL → 采用占位符
@@ -1258,11 +1298,8 @@ export function openEditor(
       if (ph && ph !== '输入备忘录内容...') content = ph;
     }
     if (!content) { notice('请输入内容'); return; }
-    let scene: string = defaultScene;
-    const sceneBtnOn = choice.el.querySelector('.is-on');
-    if (sceneBtnOn) scene = (sceneBtnOn as HTMLElement).dataset.value || scene;
-    const prioBtnOn = prioChoice.el.querySelector('.is-on');
-    const priority: string = prioBtnOn ? (prioBtnOn as HTMLElement).dataset.value || 'minor' : 'minor';
+    const scene = readScene();
+    const priority = readPrio();
     const dueVal = dueInput.value;
     const due = dueVal ? dueVal.replace('T', ' ') : null;
     let titleVal = titleInput.value.trim();
@@ -1290,6 +1327,7 @@ export function openEditor(
     // 剪藏：标题可选（未填则用内容）
     const finalTitle = scene === '剪藏' && titleVal ? titleVal : content;
     const { url } = extractUrlAndDisplay(content);
+    editorBusy = true;
     void (async () => {
       try {
         if (isEdit && editing) {
@@ -1327,19 +1365,23 @@ export function openEditor(
           emitDomainEvent('memo', { kind: 'added', title: finalTitle, scene, priority, due });
           M.pinnedNewId = it.id; // 录入当场可见：伪场景过滤放行这条新目
         }
+        editorBusy = false;
         closeModal();
         opts?.onSaved?.(); // 新建成功才回调（调用方清底部录入草稿；失败分支不触发）
         await refresh();
       } catch (e) {
+        editorBusy = false;
         notifySaveError(e, isEdit ? '保存备忘录' : '新建备忘录');
         console.error(e);
       }
     })();
-  });
+  };
+  saveBtn.addEventListener('click', doSave);
 
-  const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
+  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
   closeModal = close;
-  contentInput.focus();
+  bindFormSubmit(popup, doSave);
+  if (!isMobileEnv()) contentInput.focus();
   // 剪藏默认场景：打开即尝试剪贴板预填（新建限定；与切场景入口共用 tryEditorClipPrefill）
   if (!isEdit && defaultScene === '剪藏') tryEditorClipPrefill();
 }
@@ -1371,30 +1413,38 @@ function openAddSceneDialog(): void {
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
   wrap.append(title, input, hint, row);
-  const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+  const { close, popup } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+  // memo2-arch 新-2 / memo2-ui M3-5 / memo2-func #13：doSave 改 async + try/catch →
+  // notifySaveError——此前 void saveSettings().then 无 catch，落盘 reject 时 unhandled
+  // rejection、场景未生效、弹窗不关像「点了没反应」；失败不关弹窗草稿保留（E20 同哲学）
   const doSave = () => {
     const name = input.value.trim();
     if (!name) { notice('请输入场景名称'); return; }
     if (/[,，]/.test(name)) { notice('场景名不能包含逗号'); return; }
     const scenes = MemoData.getScenarios();
     if (scenes.includes(name)) { notice('场景已存在'); return; }
-    const settings = getSettings();
-    const next = [...scenes, name].join(',');
-    settings.memoScenarios = next;
-    void saveSettings().then(async () => {
-      MemoData.init(getSettings());
-      notice(`已添加场景「${name}」`, 'success');
-      close();
-      await refresh();
-    });
+    void (async () => {
+      try {
+        const settings = getSettings();
+        settings.memoScenarios = [...scenes, name].join(',');
+        await saveSettings();
+        MemoData.init(getSettings());
+        notice(`已添加场景「${name}」`, 'success');
+        close();
+        await refresh();
+      } catch (e) {
+        notifySaveError(e, '添加场景');
+        console.error(e);
+      }
+    })();
   };
   saveBtn.addEventListener('click', doSave);
   cancelBtn.addEventListener('click', () => close());
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') doSave();
-    if (e.key === 'Escape') close();
-  });
-  setTimeout(() => input.focus(), 30);
+  // memo2-ui M3-11 / memo2-arch A4：bindFormSubmit 收编键盘提交（单行 input 回车即存、
+  // Ctrl/⌘+Enter 提交、isComposing 组词守卫内建——memo2-func #8）；Escape 关闭收编
+  // escManager/uiModal 层（memo2-consistency 旧-3：手写 Escape 与 escManager 层重复）
+  bindFormSubmit(popup, doSave);
+  if (!isMobileEnv()) setTimeout(() => input.focus(), 30);
 }
 
 // ---------- 场景管理（左栏场景项右键菜单 / 移动长按抽屉） ----------
@@ -1450,7 +1500,7 @@ function openRenameSceneDialog(scene: string): void {
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
   wrap.append(title, input, hint, row);
-  const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+  const { close, popup } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
   const doSave = () => {
     const name = input.value.trim();
     if (!name) { notice('请输入场景名称'); return; }
@@ -1459,14 +1509,20 @@ function openRenameSceneDialog(scene: string): void {
     const scenes = MemoData.getScenarios();
     if (scenes.includes(name)) { notice('场景已存在'); return; }
     void (async () => {
+      let moved = 0;
       try {
-        const moved = await MemoData.updateSceneBulk(scene, name); // 批量改条目 scene 字段（同源 memo.json）
+        moved = await MemoData.updateSceneBulk(scene, name); // 批量改条目 scene 字段（同源 memo.json）
         if (moved === 0 && count > 0) throw new Error('场景迁移未生效');
         await commitScenarios(scenes.map((s) => (s === scene ? name : s)), `已重命名为「${name}」`);
         if (M.activeScene === scene) M.activeScene = name;
         renderAll();
         close();
       } catch (e) {
+        // memo2-func #12：两段写非原子——设置串写失败时条目 scene 已改而场景列表仍旧名，
+        // 条目挂进「不可达」场景。失败分支反向迁移补偿（别追求跨文件原子，自愈即可）。
+        if (moved > 0) {
+          try { await MemoData.updateSceneBulk(name, scene); } catch { /* 补偿失败仅留痕，抛原错误 */ }
+        }
         notifySaveError(e, '重命名场景');
         console.error(e);
       }
@@ -1474,11 +1530,9 @@ function openRenameSceneDialog(scene: string): void {
   };
   saveBtn.addEventListener('click', doSave);
   cancelBtn.addEventListener('click', () => close());
-  input.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') doSave();
-    if (e.key === 'Escape') close();
-  });
-  setTimeout(() => { input.focus(); input.select(); }, 30);
+  // 键盘提交/Escape 收编：bindFormSubmit + escManager 层（openAddSceneDialog 同款，见该处注）
+  bindFormSubmit(popup, doSave);
+  if (!isMobileEnv()) setTimeout(() => { input.focus(); input.select(); }, 30);
 }
 
 /** 删除场景：非空条目确认迁入默认场景（memoDefaultScene，兜底其余场景第一个）；空场景直接确认移除
@@ -1516,12 +1570,21 @@ async function deleteSceneConfirm(scene: string): Promise<void> {
 
 // ---------- 导出（index.ts 用） ----------
 
+/** 启动链单次读盘（memo2-efficiency 新-5）：ensureMemo 发起的 loadData 由提醒后台经
+ *  memoDataReady() 复用——此前 onLayoutReady 同一链路 ensureMemo 的 void loadData 与
+ *  autoPopupOnStart 的 loadItems 背靠背全量读两遍 memo.json（同队列串行无竞态但纯冗余）。
+ *  loadData 自兜错误（不 reject），本 Promise 恒 resolve。 */
+let initialLoad: Promise<void> | null = null;
+export function memoDataReady(): Promise<void> {
+  return initialLoad ?? Promise.resolve();
+}
+
 export function ensureMemo(app: App): void {
   if (M.appRef) return;
   M.appRef = app;
   registerEscapeHandler();
   subscribeMemoSync(app); // T1：同源 memo.json 跨域同步
-  void loadData();
+  initialLoad = loadData();
 }
 
 export function addMemo(app: App): void {
