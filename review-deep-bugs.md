@@ -779,7 +779,16 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## attach（附件）域 · 审查入账中（方向 1 功能已到账；方向 2 UI / 3 效率运行中，4/5 待槽位）
+## attach（附件）域 · 5/5 方向到账，修复批 `bz-fix-at-core`（单批）定稿派发
+
+> 明细：`.scratch/review-deep/attach-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×1 + P3×4 + UX×1；方向 2（UI）：P2×1 + P3×4 + UX×2；方向 3（效率）：P2×1 + P3×4 + UX×3；方向 4（一致）：P3×3 + UX×1；方向 5（架构）：P2×1 + P3×5 + 建议×2 + 同根补维×8。**架构枢纽归因 ARCH-1（P2）**：「收集笔记引用附件」语义双机制分叉（attach 纯正则 vs encrypt「metadataCache 为主+正则兜底」）——AF-1 代码块误收集/AF-2 大小写漏搬的结构性根因；修复批取 **cache 优先对齐 encrypt** 一案（metadataCache 天然不含代码块内引用且 vault 解析自带大小写归一——AF-1/AF-2 一并根治，正则兜底保留修大小写）。SUG-1 收敛位（EFF-1 三次计算：ui 编排层扫描结果透传，纯函数边界不动）；SUG-2 requestClose 拦截（belongings 先例）优于新增状态。**旧账复核纠偏**：F10 直接回归用例已在位（review-fix-clip.test.ts:112-133，func 报告「缺直接用例」失效）；AT1 补「文件夹入冲突集应定为常态口径」；ADR-0014 第 26 行「无预览确认」是 AF-5 的 ADR 侧同根文档债；attach 不在 BEHAVIOR_DOMAINS 属合规非偏离。门禁基线：tsc 0；tests/attach 41 例全绿。
+
+### 修复批定稿（单批 `bz-fix-at-core`）
+
+- **P2**：ARCH-1 cache 优先对齐 encrypt（AF-1/AF-2 根治 + 正则兜底修大小写）；EFF-1 收敛（SUG-1 编排层透传一次计算）；UI-P2-1 键盘确认（bindFormSubmit + flow-dialog 回车范式）。
+- **P3**：AF-3/UI-P3-2 失败明细数据结构+notifyActionError 重试；AF-4/UX-1 非 md 前置拦截口径统一；UI-P3-1 防重入守卫（ARCH-2）；UI-P3-3/AC-2 全失败链接声明 gate；UI-P3-4/EFF-4 撤销 progress 对称；EFF-3 requestClose 脏拦截（SUG-2）；EFF-2 全选/反选+LIMIT 护栏；EFF-5 中止出口；AC-1 术语「资源」→「附件」清理 + destLabel 引号统一；ARCH-3 getSettings 假防御+any 修正（tryGetSettings）；ARCH-4 死导出面收敛；ARCH-5 dest 归一化四处统一；ARCH-T1 mock 假层链接语义校准（AF-1/AF-2 测试校准位）；AT1 文件夹入冲突集（常态口径）。
+- **主线程文档**：AF-5/AC-3 CONTEXT 词条 + ADR-0014 决策 3/4 文档债；AC-4 动词双名（AT 系拍板）。
+- **UX 分流（AT 系）**：UX-2 全选快捷（随 EFF-2 同刀顺手）、UX-1 已全部在目标时前置预告、UX-3 跳过预览快捷通道。
 
 > 明细：`.scratch/review-deep/attach-{func,ui,efficiency,consistency}.md`。方向 1（func）：P2×1 + P3×4 + UX×1；方向 2（UI）：P2×1 + P3×4 + UX×2；方向 3（效率）：P2×1 + P3×4 + UX×3；方向 4（一致）：P3×3 + UX×1（无 P1/P2）。cons 新归并：AC-1 通知术语「资源/资源文件」直撞 CONTEXT.md:256 _Avoid_ 清单（5 处用户可见文案）+ 同函数「附件/资源」两套称呼；AC-2 全失败分支无条件拼「内部链接已自动更新」（AF-1 兄弟面：计数半边修了链接声明半边没 gate）；AC-3 文档债扩面（ADR-0014 决策 3/4 三处漂移 + 词条缺三项能力记载，主线程）；AC-4 动词双名「移动附件/搬移此笔记附件」（词条双名口径下文案拍板，AT 系）。**对表结论 3**：coarse padding 抬档已被 core components.css §8.2 收编为正式先例；效率整改 5 免确认口径不适用于搬移域（两段动线均有选择价值，判边界合理）；42vh 为弹窗内限高与全域形制一致。跨方向去重：键盘确认簇（AF-S1 = UI-P2-1 同根：bindFormSubmit 在位未消费 + flow-dialog「回车=确认」未对齐，大清单键盘确认 O(N)）；失败呈现簇（AF-3 = UI-P3-2 同根：无明细无重试，消失件与真失败混同）；全失败文案矛盾（AF-1 汇总宣称的兄弟面 UI-P3-3：0 成功仍报「已自动更新」）；撤销进度（EFF-4 = UI-P3-4 同根）；全选快捷（EFF-2 = UX-2）；非 md 拦截（AF-4 = UX-1）。旧账补核：「padding 抬档形态」复核成立与 §8.2 相容（coarse 行高实算 42px、gap 4px 无互叠，守卫在位）——pomodoro 批同款先例。旧账复核 2 条：F10 已修在位（data.ts:66-71，缺直接回归用例记测试缺口）；AT1（planMoves 冲突集不含文件夹）仍在未修并入报告。两个似是而非候选排除有据（md 链接 #page 锚点剥锚正确；HTML img 不收集属安全侧）。门禁基线：tsc 0；tests/attach + smoke 58 例全绿。
 
