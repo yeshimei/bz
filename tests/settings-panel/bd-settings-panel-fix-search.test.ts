@@ -18,23 +18,33 @@ import { escManager } from '../../src/core/esc-manager';
 const flush = () => new Promise((r) => setTimeout(r, 5));
 const flushSearch = () => new Promise((r) => setTimeout(r, 260)); // E-5：180ms 防抖 + 余量
 
-/** 等预载填充行缓存（导航项全部出现） */
+/** 等预载填充行缓存（导航项全部出现；并发跑下动态 import 变慢，给足窗口） */
 async function waitPreload(popup: HTMLElement): Promise<void> {
-  const deadline = Date.now() + 3000;
+  const deadline = Date.now() + 8000;
   while (Date.now() < deadline && popup.querySelectorAll('.bz-sp-nav-item').length < 15) {
     await new Promise((r) => setTimeout(r, 30));
   }
 }
 
-/** 等 pane 页头出现（域内容渲染完成） */
-async function waitPageHead(popup: HTMLElement): Promise<HTMLElement | null> {
-  const deadline = Date.now() + 3000;
+/** 等 pane 页头出现且域内容渲染完成（页头在 loader await 前就位，须再等行/组就绪） */
+async function waitPageHead(popup: HTMLElement, name?: string): Promise<HTMLElement | null> {
+  const deadline = Date.now() + 5000;
   for (;;) {
     const head = popup.querySelector('.bz-sp-page-head') as HTMLElement | null;
-    if (head) return head;
-    if (Date.now() > deadline) return null;
+    const ready = head
+      && (!name || head.textContent?.includes(name))
+      && popup.querySelectorAll('.bz-sp-group, .bz-empty').length > 0;
+    if (head && ready) return head;
+    if (Date.now() > deadline) return head;
     await new Promise((r) => setTimeout(r, 30));
   }
+}
+
+/** 点击导航域项并等待该域渲染完成（并发跑下动态 import 变慢，固定 sleep 不可靠） */
+async function clickDomain(popup: HTMLElement, id: string, name: string): Promise<void> {
+  const item = popup.querySelector<HTMLElement>(`.bz-sp-nav-item[data-sp-domain="${id}"]`);
+  item!.click();
+  await waitPageHead(popup, name);
 }
 
 describe('设置面板搜索闭环与滚位回归（SP2/SP3/SP4/SP5）', () => {
@@ -90,7 +100,7 @@ describe('设置面板搜索闭环与滚位回归（SP2/SP3/SP4/SP5）', () => {
     // 修复前必红：Enter 空转，仍需鼠标点选
     search.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
     await flush();
-    const head = await waitPageHead(popup);
+    const head = await waitPageHead(popup, '番茄钟');
     expect(head?.textContent).toContain('番茄钟');
     expect(search.value).toBe('番茄'); // 词保留（跳转 ≠ 清词，清词是 ESC 的职责）
     ui.cleanup();
@@ -101,9 +111,8 @@ describe('设置面板搜索闭环与滚位回归（SP2/SP3/SP4/SP5）', () => {
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     await waitPreload(popup);
-    // 默认域 = 通用：「数据存储路径」组行名含「存储」
-    const head = await waitPageHead(popup);
-    expect(head?.textContent).toContain('通用');
+    // 默认域 = 通用：「数据存储路径」组行名含「存储」（等行真正渲染完再搜）
+    await waitPageHead(popup, '通用');
     const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '存储';
     search.dispatchEvent(new Event('input', { bubbles: true }));
@@ -132,25 +141,16 @@ describe('设置面板搜索闭环与滚位回归（SP2/SP3/SP4/SP5）', () => {
     await waitPreload(popup);
     const pane = popup.querySelector('.bz-sp-pane') as HTMLElement;
     const scroller = pane.parentElement as HTMLElement; // 桌面滚动元素 = .bz-sp-desk-main
-    await waitPageHead(popup);
-
-    const clickDomain = async (id: string): Promise<void> => {
-      const item = popup.querySelector<HTMLElement>(`.bz-sp-nav-item[data-sp-domain="${id}"]`);
-      item!.click();
-      await new Promise((r) => setTimeout(r, 60));
-    };
+    await waitPageHead(popup, '通用');
 
     // 在通用域滚下去，再切去番茄钟再切回
     scroller.scrollTop = 88;
-    await clickDomain('pomodoro');
-    await waitPageHead(popup);
+    await clickDomain(popup, 'pomodoro', '番茄钟');
     expect(scroller.scrollTop).toBe(0); // 新域从顶部开始
-    await clickDomain('global');
-    await waitPageHead(popup);
+    await clickDomain(popup, 'global', '通用');
     expect(scroller.scrollTop, '修复前必红：重进域回顶').toBe(88);
     // 切到没去过的域不回填旧值
-    await clickDomain('memo');
-    await waitPageHead(popup);
+    await clickDomain(popup, 'memo', '备忘录');
     expect(scroller.scrollTop).toBe(0);
     ui.cleanup();
     // cleanup 清会话滚位
@@ -166,19 +166,14 @@ describe('设置面板搜索闭环与滚位回归（SP2/SP3/SP4/SP5）', () => {
     await waitPreload(popup);
     readSpy.mockClear();
 
-    const clickDomain = async (id: string): Promise<void> => {
-      const item = popup.querySelector<HTMLElement>(`.bz-sp-nav-item[data-sp-domain="${id}"]`);
-      item!.click();
-      await new Promise((r) => setTimeout(r, 60));
-    };
     // 修复前必红：进域 renderDomain 每次 await schemaLoader() 重跑读盘；修复后 preload 已
     // 缓存 schema，进域零读盘
-    await clickDomain('clipping');
+    await clickDomain(popup, 'clipping', '剪藏本');
     expect(readSpy.mock.calls.length).toBe(0);
     // 切走再切回：仍零读盘
-    await clickDomain('global');
+    await clickDomain(popup, 'global', '通用');
     readSpy.mockClear();
-    await clickDomain('clipping');
+    await clickDomain(popup, 'clipping', '剪藏本');
     expect(readSpy.mock.calls.length).toBe(0);
     // 软重开（open 复用面板）：preload 重算徽标但不重跑 loader（重开不重载）
     readSpy.mockClear();
