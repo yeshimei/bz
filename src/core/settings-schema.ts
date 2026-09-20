@@ -286,8 +286,9 @@ interface SettingsRenderHandle {
   refresh: () => void;
 }
 
-/** text 行防抖窗口（ms）：连续输入不逐键落盘，停顿后才持久化（原 main.ts TEXT_COMMIT_DELAY） */
-const TEXT_COMMIT_DELAY = 800;
+/** text 行防抖窗口（ms）：连续输入不逐键落盘，停顿后才持久化（原 main.ts TEXT_COMMIT_DELAY）。
+ *  导出：settings-panel 自绘渲染器消费同一窗口（ARCH-1 行为内核单源，字面量平行复刻退役）。 */
+export const TEXT_COMMIT_DELAY = 800;
 
 /** 绑定统一读写通道：键直绑走 settings-provider（getSettings/saveSettings），外部数据走三函数 */
 export interface ValueAccess<V> {
@@ -313,8 +314,10 @@ export function bindValue<V>(binding: RowBinding<V>): ValueAccess<V> {
 /**
  * persist 统一兜底（N5，与 C10 列表行同口径）：saveQueue reject / 同步抛错不再裸奔成
  * unhandled rejection——控件已显示新值而盘上没存上，必须人话提示（notifySaveError）。
+ * 导出：settings-panel 自绘渲染器 8 处行级 persist 消费同一实现（ARCH-1 行为内核单源，
+ * core 历轮加固经此传导面板侧，不再各修一轮）。
  */
-function safePersist(persist: () => Promise<void> | void, what: string): void {
+export function safePersist(persist: () => Promise<void> | void, what: string): void {
   try {
     Promise.resolve(persist()).catch((e) => notifySaveError(e, what));
   } catch (e) {
@@ -325,8 +328,9 @@ function safePersist(persist: () => Promise<void> | void, what: string): void {
 /**
  * onCommit 一次性提示机制（原 textSetting f1 语义收口，warnedInitial 细节逐字保留）：
  * 值相对初始值有变更才触发；同一次编辑会话至多一次；改回原值后复位可再次提示。
+ * 导出：settings-panel 自绘渲染器消费同一类（ARCH-1，域内 SpCommitWarn 同语义副本退役）。
  */
-class CommitWarn {
+export class CommitWarn {
   private warnedInitial: string | null = null;
 
   constructor(

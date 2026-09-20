@@ -36,6 +36,8 @@ vi.mock('obsidian', async (importOriginal) => {
 
 /** 等渲染微任务完成（动态 import 首次加载可能 >20ms，用轮询等到分组出现或超时） */
 const tick = () => new Promise((r) => setTimeout(r, 20));
+/** 等搜索防抖（E-5：180ms 防抖 + 余量）走完 */
+const flushSearch = () => new Promise((r) => setTimeout(r, 260));
 /** 等待 pane 内出现 .bz-sp-group（最多 2s），超时返回 false */
 async function waitGroups(container: HTMLElement, min: number): Promise<boolean> {
   const deadline = Date.now() + 2000;
@@ -89,41 +91,44 @@ describe('设置面板（settings-panel）', () => {
     const crumb = popup.querySelector('.bz-sp-crumb');
     expect(crumb).toBeTruthy();
     expect(crumb!.querySelector('.bz-sp-crumb-cur')!.textContent).toBe('设置');
-    // 徽标动态计算：加载前 ·；无设置域 —；schema 加载后 = 设置项总数（非分组数，issue 186）
-    let badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
-    // 等 schema 加载完成（动态 import 首次加载较慢，轮询到首个徽标回填）
+    // 等 schema 加载完成（动态 import 首次加载较慢，轮询到徽标回填）
+    const mod = await import('../src/settings-panel/ui');
     const deadline = Date.now() + 3000;
-    while (Date.now() < deadline && (badges[0] === '·' || badges[3] === '·')) {
+    for (;;) {
+      const badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
+      if (Date.now() > deadline || (badges.length >= 19 && !badges.includes('·'))) break;
       await new Promise((r) => setTimeout(r, 30));
-      badges = [...popup.querySelectorAll('.bz-sp-nav-count')].map((b) => b.textContent);
     }
-    // 2026-09-10 侧栏重新分细组（基础/智能/记录/收集/媒体与阅读/工具/安全 七组）→ 下标整体重排
-    expect(badges[0]).toBe('3'); // 通用：外观 2 卡（原「设置」域并入）+ 数据存储路径 1 项（体检为按钮行不计）
-    expect(badges[1]).toBe('4'); // 通知：4 个 select（issue 297 建的组，2026-09-12 自通用域拆出独立成一页）
-    expect(badges[2]).toBe('12'); // 首页：外观 2 卡 + 时间线 4 + 内容过滤 4（issue 305 已跳过回归）+ 预告栏 1 + 入口内联编辑器 1 行
-    expect(badges[3]).toBe('7'); // AI 页（issue 331 拆三组）：服务商+模型名称+最大输出+思考（issue 330）+ B站 Cookie/ApiZero Key/豆瓣 Cookie（密钥行门控隐藏）；上下文窗口行已删（issue 342 后续）
-    expect(badges[5]).toBe('5'); // 日记本：ADR-0115 升格后 = 外观 2 + 目录 2 + 显示 1（维护组为按钮行，不计设置项）
-    expect(badges[6]).toBe('11'); // 备忘录（todo→memo 正名沿用待办 schema）：11 项（issue 293 增打开默认场景/已完成显示范围；issue 292 退役「到期时间格式」）
-    expect(badges[7]).toBe('6'); // 归物本：外观 2 卡 + 显示 3（默认状态筛选/默认排序/金额单位）+ 记一笔 1（issue 294）
-    expect(badges[9]).toBe('5'); // 收藏本：issue 246 外观两卡 + issue 296 显示组两行（打开默认筛选/默认排序）+ issue 363 标签管理 1（custom 行计入徽标）→ 5 项
-    // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）
+    // 徽标契约承接（ARCH-5）：逐域硬编码数字退役（issue 186/194/201/246/250/293/331/342/368
+    // 连续重锚的脆断史）——面板测试只留「与 loadedCounts 自洽」契约；每域可见项数基准在
+    // sp-contract-lock.test.ts 一处维护（失败报具体域名）
+    popup.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((item) => {
+      const id = item.dataset.spDomain!;
+      const d = mod.DOMAINS.find((x) => x.id === id)!;
+      const cnt = (mod.loadedCounts as Map<string, number>).get(id);
+      if (!cnt && cnt !== 0) return; // 未加载域允许 · 占位
+      const badge = item.querySelector('.bz-sp-nav-count')!.textContent;
+      expect(badge, `域 ${id} 徽标应与 loadedCounts 自洽`).toBe(cnt > 0 ? String(cnt) : '—');
+    });
+    // 导航图标 = lucide（setIcon mock 记 data-icon；禁止 emoji）；按 data-sp-domain 契约定位
+    //（ARCH-5：逐位下标断言退役，域清单插入/重排不再整段错位）
     const navIcons = [...popup.querySelectorAll('.bz-sp-nav-item .bz-sp-nav-ic')];
     expect(navIcons.length).toBe(19); // issue 250 补密码本 → 18；issue 368 补游戏架 → 19
-    expect(navIcons[0].getAttribute('data-icon')).toBe('settings'); // 通用
-    expect(navIcons[1].getAttribute('data-icon')).toBe('bell'); // 通知（基础组第二位，2026-09-12 独立成页）
-    expect(navIcons[2].getAttribute('data-icon')).toBe('layout-grid'); // 首页（基础组第三位，2026-09-10 侧栏重分组）
-    expect(navIcons[3].getAttribute('data-icon')).toBe('sparkles'); // AI（智能组首位）
-    expect(navIcons[5].getAttribute('data-icon')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
-    expect(navIcons[6].getAttribute('data-icon')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
-    expect(navIcons[10].getAttribute('data-icon')).toBe('clapperboard'); // 影院（媒体与阅读组首位）
-    expect(navIcons[11].getAttribute('data-icon')).toBe('book-open'); // 书库（媒体与阅读组）
-    // 游戏库（2026-09-17 归入媒体与阅读组，不再落「其他」尾组）：声明在书库之后，与首页入口同序
-    expect(navIcons[12].getAttribute('data-icon')).toBe('gamepad-2'); // 游戏库（媒体与阅读组）
-    // 拍板分组顺序（NAV_SECS）：…工具组 = 番茄钟/小橘陪伴猫；安全组 = 保险库/密码本
-    expect(navIcons[15].getAttribute('data-icon')).toBe('timer'); // 番茄钟（工具组首位）
-    expect(navIcons[16].getAttribute('data-icon')).toBe('cat'); // 小橘陪伴猫（工具组，issue 194 转可见）
-    expect(navIcons[17].getAttribute('data-icon')).toBe('lock'); // 保险库（安全组）
-    expect(navIcons[18].getAttribute('data-icon')).toBe('key'); // 密码本（安全组，issue 250 拆回独立域）
+    const iconOf = (id: string) =>
+      popup.querySelector(`.bz-sp-nav-item[data-sp-domain="${id}"] .bz-sp-nav-ic`)?.getAttribute('data-icon');
+    expect(iconOf('global')).toBe('settings'); // 通用
+    expect(iconOf('notice')).toBe('bell'); // 通知（基础组第二位，2026-09-12 独立成页）
+    expect(iconOf('home')).toBe('layout-grid'); // 首页（基础组第三位）
+    expect(iconOf('ai')).toBe('sparkles'); // AI（智能组首位）
+    expect(iconOf('diary')).toBe('notebook-pen'); // 日记本（enh-sweep-a：与 ribbon/磁贴同款，错开书架墙 book-open）
+    expect(iconOf('memo')).toBe('check-square'); // 备忘录（todo→memo 正名，图标沿用）
+    expect(iconOf('cinema')).toBe('clapperboard'); // 影院（媒体与阅读组首位）
+    expect(iconOf('bookshelf')).toBe('book-open'); // 书库（媒体与阅读组）
+    expect(iconOf('gameshelf')).toBe('gamepad-2'); // 游戏库（媒体与阅读组，2026-09-17 归位）
+    expect(iconOf('pomodoro')).toBe('timer'); // 番茄钟（工具组首位）
+    expect(iconOf('smartcat')).toBe('cat'); // 小橘陪伴猫（工具组，issue 194 转可见）
+    expect(iconOf('encrypt')).toBe('lock'); // 保险库（安全组）
+    expect(iconOf('password-vault')).toBe('key'); // 密码本（安全组，issue 250 拆回独立域）
     // 无 emoji 图标残留（头行/列表/徽标全文本或 lucide）
     expect(popup.textContent).not.toMatch(EMOJI_RE);
     ui.cleanup();
@@ -517,7 +522,7 @@ describe('设置面板（settings-panel）', () => {
     expect(chips).toBeTruthy();
     const pathBtn = chips!.querySelector('.bz-sp-path-btn') as HTMLElement;
     expect(pathBtn).toBeTruthy();
-    expect(pathBtn.classList.contains('bz-sp-btn'), '按钮走域内自绘 bz-sp-btn').toBe(true);
+    expect(pathBtn.classList.contains('bz-btn'), '按钮收编组件库 uiBtn（C-3）').toBe(true);
     // 无原生 .setting-item 嵌套（杜绝「设置行里再套一个设置行」）
     expect(popup.querySelector('.bz-sp-pane .setting-item')).toBeNull();
     // 空态（未设置路径）只显示选择按钮，无 chip
@@ -543,7 +548,7 @@ describe('设置面板（settings-panel）', () => {
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
     ) as HTMLElement;
     expect(row1).toBeTruthy();
-    const chip1 = row1.querySelector('.bz-sp-chip--locked') as HTMLElement;
+    const chip1 = row1.querySelector('.bz-chip--locked') as HTMLElement;
     expect(chip1, '空值时显示回落目录锁定 chip').toBeTruthy();
     expect(chip1.textContent).toContain('旧书库');
     // 有 chip 即无按钮（2026-09-08 拍板：按钮仅空态在场）；chip 点击重开选择器
@@ -570,7 +575,7 @@ describe('设置面板（settings-panel）', () => {
     const row2 = Array.from(popup2.querySelectorAll('.bz-sp-set-row')).find(
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
     ) as HTMLElement;
-    expect(row2.querySelector('.bz-sp-chip--locked')?.textContent).toContain('书库');
+    expect(row2.querySelector('.bz-chip--locked')?.textContent).toContain('书库');
     ui2.cleanup();
 
     // 场景 3：显式设置后回落 chip 消失（值 chip 接管，可移除）
@@ -585,7 +590,7 @@ describe('设置面板（settings-panel）', () => {
     const row3 = Array.from(popup3.querySelectorAll('.bz-sp-set-row')).find(
       (el) => el.querySelector('.bz-sp-set-name')?.textContent === '书库文件夹'
     ) as HTMLElement;
-    expect(row3.querySelector('.bz-sp-chip--locked')).toBeNull();
+    expect(row3.querySelector('.bz-chip--locked')).toBeNull();
     expect(row3.textContent).toContain('我的书');
     // 显式值 chip 在场同样隐藏按钮（chip 点击重开选择器）
     expect(row3.querySelector('.bz-sp-path-btn')).toBeNull();
@@ -601,7 +606,7 @@ describe('设置面板（settings-panel）', () => {
     expect(await waitGroups(popup, 1)).toBe(true);
     const chips = popup.querySelector('.bz-sp-chips') as HTMLElement;
     expect(chips).toBeTruthy();
-    expect(chips.querySelector('.bz-sp-chip--muted')).toBeNull();
+    expect(chips.querySelector('.bz-chip--muted')).toBeNull();
     // 打开选择器（core openPathPicker：目录聚合走 MockVault；快速首渲染即出库根行，
     // adapter 补齐在后台完成——弹窗带 .bz-sp-skin 面板皮肤）
     chips.querySelector('.bz-sp-path-btn')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
@@ -621,10 +626,10 @@ describe('设置面板（settings-panel）', () => {
     await tick();
     // 重渲后：唯一 chip =（库根目录）；muted 占位已清（清旧值选择器错类名即残留双 chip 缺陷）
     const after = popup.querySelector('.bz-sp-chips')!;
-    const chipsAll = after.querySelectorAll('.bz-sp-chip');
+    const chipsAll = after.querySelectorAll('.bz-chip');
     expect(chipsAll).toHaveLength(1);
     expect(chipsAll[0].textContent).toBe('（库根目录）');
-    expect(chipsAll[0].classList.contains('bz-sp-chip--muted')).toBe(false);
+    expect(chipsAll[0].classList.contains('bz-chip--muted')).toBe(false);
     // 键直绑落盘：库根目录 = 空串
     expect(panelState.storagePath).toBe('');
     ui.cleanup();
@@ -665,6 +670,7 @@ describe('设置面板（settings-panel）', () => {
     const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(0);
     // 未加载（无计数）的域保守显示；cleanup 清空计数
     (mod.loadedCounts as Map<string, number>).delete('cinema');
@@ -673,13 +679,14 @@ describe('设置面板（settings-panel）', () => {
     expect((mod.loadedCounts as Map<string, number>).size).toBe(0);
   });
 
-  it('桌面端：搜索过滤域导航', () => {
+  it('桌面端：搜索过滤域导航', async () => {
     const ui = new SettingsPanelUI();
     ui.open();
     const popup = document.getElementById('bz-settings-panel-popup')!;
     const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '番茄';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     const items = popup.querySelectorAll('.bz-sp-nav-item');
     expect(items.length).toBe(1);
     expect(items[0].textContent).toContain('番茄钟');
@@ -715,11 +722,13 @@ describe('设置面板（settings-panel）', () => {
     const search = popup.querySelector('.bz-sp-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     const hitNames = [...popup.querySelectorAll('.bz-sp-nav-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
     // 但可见域搜索正常
     search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     expect(popup.querySelectorAll('.bz-sp-nav-item').length).toBe(1);
     ui.cleanup();
   });
@@ -748,12 +757,14 @@ describe('设置面板（settings-panel）', () => {
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = '聚合讯';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     const hitNames = [...popup.querySelectorAll('.bz-sp-mob-name')].map((b) => b.textContent);
     expect(hitNames).not.toContain('聚合讯');
     // 但可见域搜索正常（「影院」命中：影院域 + 影视文件夹设置项——enh-sweep-a 起该行描述
     // 含「影院」区分说明，经预加载行缓存进设置项段，共 2 条）
     search.value = '影院';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     const yingyuanHits = popup.querySelectorAll('.bz-sp-mob-item').length;
     expect(yingyuanHits).toBeGreaterThanOrEqual(1);
     expect(popup.querySelector('.bz-sp-mob-name')!.textContent).toBe('影院');
@@ -832,7 +843,7 @@ describe('设置面板（settings-panel）', () => {
     ui.cleanup();
   });
 
-  it('移动端：搜索过滤域列表 + 无结果空态', () => {
+  it('移动端：搜索过滤域列表 + 无结果空态', async () => {
     mobileFlag = true;
     const ui = new SettingsPanelUI();
     ui.open();
@@ -840,6 +851,7 @@ describe('设置面板（settings-panel）', () => {
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = '不存在的域';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     expect(popup.querySelectorAll('.bz-sp-mob-item').length).toBe(0);
     expect(popup.querySelector('.bz-sp-mob-empty')).toBeTruthy();
     ui.cleanup();
@@ -863,6 +875,7 @@ describe('设置面板（settings-panel）', () => {
     const search = popup.querySelector('.bz-sp-mob-search .bz-input') as HTMLInputElement;
     search.value = 'AI';
     search.dispatchEvent(new Event('input', { bubbles: true }));
+    await flushSearch();
     expect(popup.querySelector('.bz-sp-mob-sec')).toBeTruthy();
     expect(popup.querySelectorAll('.bz-sp-mob-sec').length).toBeGreaterThanOrEqual(1);
     // 设置项段存在（含「AI 服务商」等行）

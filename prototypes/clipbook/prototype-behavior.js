@@ -1,4 +1,4 @@
-/* 源指纹 9db718cabba32448 · 仓内输入 104 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1129804210a4f8e9 · 仓内输入 104 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -17985,6 +17985,54 @@ ${body}`;
   });
 
   // src/core/ui/chip.ts
+  function uiChip(opts) {
+    const c = document.createElement("button");
+    c.type = "button";
+    const cls = ["bz-chip"];
+    if (opts.selected) cls.push("bz-chip--on");
+    else if (opts.selectedSoft) cls.push("bz-chip--sel");
+    if (opts.locked) cls.push("bz-chip--locked");
+    c.className = cls.join(" ");
+    if (opts.title) c.title = opts.title;
+    if (opts.disabled) c.disabled = true;
+    if (opts.icon) c.appendChild(uiIcon(opts.icon));
+    const label = document.createElement("span");
+    label.textContent = opts.label;
+    c.appendChild(label);
+    if (typeof opts.count === "number") {
+      const cnt = document.createElement("span");
+      cnt.className = "bz-chip-cnt";
+      cnt.textContent = String(opts.count);
+      c.appendChild(cnt);
+    }
+    if (opts.removable && !opts.locked) {
+      const x = document.createElement("span");
+      x.className = "bz-chip-x";
+      x.setAttribute("role", "button");
+      x.setAttribute("aria-label", `移除 ${opts.label}`);
+      x.tabIndex = 0;
+      x.appendChild(uiIcon("x"));
+      x.addEventListener("click", (e) => {
+        var _a;
+        e.stopPropagation();
+        (_a = opts.onRemove) == null ? void 0 : _a.call(opts);
+      });
+      x.addEventListener("keydown", (e) => {
+        var _a;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          e.stopPropagation();
+          (_a = opts.onRemove) == null ? void 0 : _a.call(opts);
+        }
+      });
+      c.appendChild(x);
+    }
+    if (opts.onClick) c.addEventListener("click", () => {
+      var _a;
+      return (_a = opts.onClick) == null ? void 0 : _a.call(opts);
+    });
+    return c;
+  }
   var init_chip = __esm({
     "src/core/ui/chip.ts"() {
       init_icon();
@@ -20218,10 +20266,10 @@ ${bodyText.substring(0, 6e3)}`;
     return `<button type="button" class="bz-sw${on ? " on" : ""}" role="switch" aria-checked="${String(on)}"></button>`;
   }
   function selectTriggerHtml(label) {
-    return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
+    return `<div class="bz-select" role="listbox" tabindex="0" aria-expanded="false" aria-haspopup="listbox"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
   }
   function selectItemHtml(label, on) {
-    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
+    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}" role="option" aria-selected="${String(on)}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
   }
   function textInputHtml(opts) {
     const cls = ["bz-input"];
@@ -20243,7 +20291,7 @@ ${bodyText.substring(0, 6e3)}`;
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
   }
   function rowBtnHtml(label, cta) {
-    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
+    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""} bz-touch-target--lg">${esc(label)}</button>`;
   }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
@@ -20291,7 +20339,7 @@ ${bodyText.substring(0, 6e3)}`;
   function cardpickHtml(cards) {
     return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
       const mini = c.kind ? miniHtml(c.kind, c.prev || {}) : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div>`;
-      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
+      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" role="radio" aria-checked="${String(c.on)}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
     }).join("") + `</div>`;
   }
   function rowHtml(vm) {
@@ -20339,7 +20387,9 @@ ${bodyText.substring(0, 6e3)}`;
   // src/settings-panel/renderer.ts
   var renderer_exports = {};
   __export(renderer_exports, {
+    closeAllSelectMenus: () => closeAllSelectMenus,
     makePathRowCtrl: () => makePathRowCtrl,
+    refreshGroupCounts: () => refreshGroupCounts,
     renderPanelSchema: () => renderPanelSchema
   });
   function snapshot() {
@@ -20381,12 +20431,16 @@ ${bodyText.substring(0, 6e3)}`;
         timer = null;
       }
       if (!dirty2) return;
-      opts.onCommit(input.value);
+      const echo = opts.onCommit(input.value);
+      if (typeof echo === "string" && input.value !== echo) {
+        dirty2 = false;
+        input.value = echo;
+      }
     };
     input.addEventListener("input", () => {
       dirty2 = true;
       if (timer !== null) window.clearTimeout(timer);
-      timer = window.setTimeout(commit, 800);
+      timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
     });
     input.addEventListener("blur", commit);
     input.addEventListener("keydown", (e) => {
@@ -20432,37 +20486,34 @@ ${bodyText.substring(0, 6e3)}`;
       });
     };
     const multi = opts.mode === "multi";
-    const addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.className = "bz-sp-btn bz-sp-path-btn";
-    addBtn.textContent = opts.buttonText || (multi ? "添加…" : "选择…");
-    addBtn.addEventListener("click", openPicker);
+    const addBtn = uiBtn({
+      label: opts.buttonText || (multi ? "添加…" : "选择…"),
+      className: "bz-sp-path-btn",
+      onClick: openPicker
+    });
     const renderChips = () => {
-      ctrl.querySelectorAll(".bz-sp-chip").forEach((c) => c.remove());
+      ctrl.querySelectorAll(".bz-chip").forEach((c) => c.remove());
       if (!current.length && opts.fallbackChip) {
-        const fb = document.createElement("span");
-        fb.className = "bz-sp-chip bz-sp-chip--locked";
-        fb.title = "未单独设置时的实际生效目录（点击可改为显式设置）";
-        fb.textContent = opts.fallbackChip;
-        fb.addEventListener("click", openPicker);
-        ctrl.appendChild(fb);
+        ctrl.appendChild(uiChip({
+          label: opts.fallbackChip,
+          locked: true,
+          title: "未单独设置时的实际生效目录（点击可改为显式设置）",
+          onClick: openPicker
+        }));
       }
       for (const path of current) {
         const label = path === "" ? "（库根目录）" : path;
-        const chip2 = document.createElement("span");
-        chip2.className = "bz-sp-chip";
-        chip2.title = label;
-        chip2.textContent = label;
-        chip2.addEventListener("click", openPicker);
-        if (multi) {
-          const x = uiIcon("x", "x");
-          x.addEventListener("click", (ev) => {
-            ev.stopPropagation();
+        ctrl.appendChild(uiChip({
+          label,
+          title: label,
+          removable: multi,
+          // ✕ 移除（uiChip 自带 role=button/aria-label/tabIndex/Enter-Space 键盘三件套）；
+          // 文本点击重开选择器（✕ 点击 stopPropagation 不连锁）
+          onRemove: multi ? () => {
             void apply(current.filter((p) => p !== path));
-          });
-          chip2.appendChild(x);
-        }
-        ctrl.appendChild(chip2);
+          } : void 0,
+          onClick: openPicker
+        }));
       }
       const empty = !current.length && !opts.fallbackChip;
       if (empty) {
@@ -20531,7 +20582,7 @@ ${bodyText.substring(0, 6e3)}`;
           }
           sw.classList.toggle("on", v);
           sw.setAttribute("aria-checked", String(v));
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "开关设置");
           (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
           refresh();
         });
@@ -20540,7 +20591,7 @@ ${bodyText.substring(0, 6e3)}`;
       case "text": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new SpCommitWarn(String((_b = acc.read()) != null ? _b : ""), row.onCommit);
+        const warn = new CommitWarn(String((_b = acc.read()) != null ? _b : ""), row.onCommit);
         const input = makeInput({
           value: (_c = acc.read()) != null ? _c : "",
           mono: !!row.mono,
@@ -20550,9 +20601,10 @@ ${bodyText.substring(0, 6e3)}`;
           onCommit: (v) => {
             var _a2;
             acc.write(v);
-            void acc.persist();
+            safePersist(() => acc.persist(), rowName || "文本设置");
             (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
             warn.fire(v);
+            refresh();
           }
         });
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh);
@@ -20565,20 +20617,21 @@ ${bodyText.substring(0, 6e3)}`;
         const taHolder = document.createElement("div");
         taHolder.innerHTML = textareaHtml((_d = acc.read()) != null ? _d : "", row.placeholder);
         const ta = taHolder.firstElementChild;
-        const warn = new SpCommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
+        const warn = new CommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
         let timer = null;
         let dirty2 = false;
         const commit = () => {
           if (timer !== null) window.clearTimeout(timer);
           if (!dirty2) return;
           acc.write(ta.value);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "多行文本设置");
           warn.fire(ta.value);
+          refresh();
         };
         ta.addEventListener("input", () => {
           dirty2 = true;
           if (timer !== null) window.clearTimeout(timer);
-          timer = window.setTimeout(commit, 800);
+          timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
         });
         ta.addEventListener("blur", commit);
         displaySetters.set(ta, (v) => {
@@ -20601,7 +20654,7 @@ ${bodyText.substring(0, 6e3)}`;
       case "number": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new SpCommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
+        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
         const input = makeInput({
           value: String((_g = acc.read()) != null ? _g : ""),
           type: "number",
@@ -20610,16 +20663,16 @@ ${bodyText.substring(0, 6e3)}`;
           min: row.min,
           max: row.max,
           onCommit: (raw) => {
-            var _a2;
+            var _a2, _b2;
             if (raw.trim() === "") return;
-            let v = Number(raw);
-            if (Number.isNaN(v)) v = 0;
-            if (row.min !== void 0 && v < row.min) v = row.min;
-            if (row.max !== void 0 && v > row.max) v = row.max;
+            const v = parseClampedNumber(raw, row.min, row.max);
+            if (v === null) return String((_a2 = acc.read()) != null ? _a2 : "");
             acc.write(v);
-            void acc.persist();
-            (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
+            safePersist(() => acc.persist(), rowName || "数字设置");
+            (_b2 = row.onChange) == null ? void 0 : _b2.call(row, v, ctx);
             warn.fire(raw);
+            refresh();
+            return String(v) !== raw.trim() ? String(v) : void 0;
           }
         });
         input.step = String((_h = row.step) != null ? _h : 1);
@@ -20635,52 +20688,106 @@ ${bodyText.substring(0, 6e3)}`;
         ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_i = acc.read()) != null ? _i : "") || options[0] && options[0].value || ""));
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
-        sel.addEventListener("click", () => {
+        let group = null;
+        let docH = null;
+        let escLayer = null;
+        const closeMenu2 = () => {
+          var _a2;
+          (_a2 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a2.remove();
+          sel.setAttribute("aria-expanded", "false");
+          if (escLayer) {
+            escLayer.unregister();
+            escLayer = null;
+          }
+          if (group && !group.querySelector(".bz-select-menu")) {
+            group.style.overflow = "";
+            group.style.zIndex = "";
+          }
+          if (docH) document.removeEventListener("click", docH);
+        };
+        const moveHighlight = (delta) => {
+          const items = [...sel.querySelectorAll(".bz-select-item")];
+          if (!items.length) return;
+          const curIdx = items.findIndex((it) => it.classList.contains("is-on"));
+          const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+          items.forEach((it, i) => {
+            const on = i === nextIdx;
+            it.classList.toggle("is-on", on);
+            it.setAttribute("aria-selected", String(on));
+          });
+        };
+        const applyOption = (o) => {
+          var _a2;
+          try {
+            acc.write(o.value);
+          } catch (e) {
+            notifyWriteError(e);
+            closeMenu2();
+            return;
+          }
+          closeMenu2();
+          vspan.textContent = labelOf(o.value);
+          safePersist(() => acc.persist(), rowName || "下拉设置");
+          (_a2 = row.onChange) == null ? void 0 : _a2.call(row, o.value, ctx);
+          refresh();
+        };
+        const openMenu = () => {
           var _a2;
           if (sel.querySelector(".bz-select-menu")) return;
-          const group = sel.closest(".bz-sp-group");
+          group = sel.closest(".bz-sp-group");
           if (group) {
             group.style.overflow = "visible";
             group.style.zIndex = "10";
           }
-          const closeMenu2 = () => {
-            var _a3;
-            (_a3 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a3.remove();
-            if (group && !group.querySelector(".bz-select-menu")) {
-              group.style.overflow = "";
-              group.style.zIndex = "";
-            }
-            document.removeEventListener("click", h);
-          };
-          const h = (ev) => {
-            if (!sel.contains(ev.target)) closeMenu2();
-          };
-          setTimeout(() => document.addEventListener("click", h));
           const menu = document.createElement("div");
           menu.className = "bz-select-menu";
+          menu.setAttribute("role", "listbox");
           const curNow = String((_a2 = acc.read()) != null ? _a2 : "") || options[0] && options[0].value || "";
           menu.innerHTML = options.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
+          menu.querySelectorAll(".bz-select-item").forEach((it) => it.classList.add("bz-touch-target--lg"));
           menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
             const o = options[i];
             it.addEventListener("click", (ev) => {
-              var _a3;
               ev.stopPropagation();
-              try {
-                acc.write(o.value);
-              } catch (e) {
-                notifyWriteError(e);
-                closeMenu2();
-                return;
-              }
-              closeMenu2();
-              vspan.textContent = labelOf(o.value);
-              void acc.persist();
-              (_a3 = row.onChange) == null ? void 0 : _a3.call(row, o.value, ctx);
-              refresh();
+              applyOption(o);
             });
           });
           sel.appendChild(menu);
+          sel.setAttribute("aria-expanded", "true");
           mountIcons(menu);
+          docH = (ev) => {
+            if (!sel.contains(ev.target)) closeMenu2();
+          };
+          setTimeout(() => document.addEventListener("click", docH));
+          escLayer = escManager.register("bz-ui-select", {
+            isVisible: () => !!sel.querySelector(".bz-select-menu"),
+            close: () => closeMenu2()
+          });
+        };
+        sel.addEventListener("click", () => {
+          if (sel.querySelector(".bz-select-menu")) closeMenu2();
+          else openMenu();
+        });
+        sel.addEventListener("keydown", (e) => {
+          const menu = sel.querySelector(".bz-select-menu");
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (menu) {
+              const items = [...menu.querySelectorAll(".bz-select-item")];
+              const idx = items.findIndex((it) => it.classList.contains("is-on"));
+              if (idx >= 0) applyOption(options[idx]);
+              else closeMenu2();
+            } else {
+              openMenu();
+            }
+            return;
+          }
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!menu) openMenu();
+            moveHighlight(e.key === "ArrowDown" ? 1 : -1);
+          }
         });
         break;
       }
@@ -20695,8 +20802,9 @@ ${bodyText.substring(0, 6e3)}`;
           em.textContent = range.value;
           const v = Number(range.value);
           acc.write(v);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "滑条设置");
           (_a2 = row.onChange) == null ? void 0 : _a2.call(row, v, ctx);
+          refresh();
         });
         for (const a of (_m = row.actions) != null ? _m : []) {
           const holder2 = document.createElement("div");
@@ -20713,7 +20821,7 @@ ${bodyText.substring(0, 6e3)}`;
         const fallbackFn = row.fallbackValue;
         const onCommit = row.onCommit;
         const initRaw = acc.read();
-        const warn = new SpCommitWarn(
+        const warn = new CommitWarn(
           multi ? JSON.stringify(initRaw != null ? initRaw : []) : String(initRaw != null ? initRaw : ""),
           onCommit
         );
@@ -20730,9 +20838,10 @@ ${bodyText.substring(0, 6e3)}`;
             var _a2;
             const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
             acc.write(v);
-            void acc.persist();
+            safePersist(() => acc.persist(), rowName || "路径设置");
             const res = (_a2 = row.onChange) == null ? void 0 : _a2.call(row, list, ctx);
             warn.fire(multi ? JSON.stringify(v) : String(v));
+            refresh();
             if (res && typeof res.then === "function") {
               return Promise.resolve(res).then(
                 (final) => Array.isArray(final) ? final : list
@@ -20773,8 +20882,13 @@ ${bodyText.substring(0, 6e3)}`;
               void (async () => {
                 var _a2;
                 const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
-                await ((_a2 = row.onChange) == null ? void 0 : _a2.call(row, cur.filter((k) => k !== key), ctx));
-                refresh();
+                try {
+                  await ((_a2 = row.onChange) == null ? void 0 : _a2.call(row, cur.filter((k) => k !== key), ctx));
+                } catch (e) {
+                  notifySaveError(e, rowName || "列表项");
+                } finally {
+                  refresh();
+                }
               })();
             }
           }));
@@ -20809,9 +20923,13 @@ ${bodyText.substring(0, 6e3)}`;
               notifyWriteError(e);
               return;
             }
-            wrap.querySelectorAll(".is-on").forEach((x) => x.classList.remove("is-on"));
+            wrap.querySelectorAll(".is-on").forEach((x) => {
+              x.classList.remove("is-on");
+              x.setAttribute("aria-checked", "false");
+            });
             c.classList.add("is-on");
-            void acc.persist();
+            c.setAttribute("aria-checked", "true");
+            safePersist(() => acc.persist(), rowName || "卡片设置");
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b2 = c.dataset.spCard) != null ? _b2 : "", ctx);
             refresh();
           });
@@ -20907,7 +21025,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (groupVw) {
         card.dataset.spGroupCond = "1";
         visibleConditions.set(card, groupVw);
-        card.style.display = groupVw(snapshot()) ? "" : "none";
+        applyCond(card, groupVw);
       }
       const parentToggleKey = (_b = (_a = g.rows.find(
         (pr) => {
@@ -20927,40 +21045,42 @@ ${bodyText.substring(0, 6e3)}`;
         if (vw) {
           rowEl.dataset.spRow = String(i);
           visibleConditions.set(rowEl, vw);
-          rowEl.style.display = vw(snapshot()) ? "" : "none";
+          applyCond(rowEl, vw);
         }
       });
     });
     mountIcons(container);
     return { refresh };
   }
-  var SpCommitWarn, displaySetters, groupCountUpdaters;
+  function closeAllSelectMenus(root) {
+    root.querySelectorAll(".bz-select").forEach((sel) => {
+      var _a;
+      if (!sel.querySelector(".bz-select-menu")) return;
+      (_a = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a.remove();
+      sel.setAttribute("aria-expanded", "false");
+      const group = sel.closest(".bz-sp-group");
+      if (group && !group.querySelector(".bz-select-menu")) {
+        group.style.overflow = "";
+        group.style.zIndex = "";
+      }
+    });
+  }
+  function refreshGroupCounts(root) {
+    root.querySelectorAll(".bz-sp-group").forEach((card) => {
+      var _a;
+      (_a = groupCountUpdaters.get(card)) == null ? void 0 : _a();
+    });
+  }
+  var displaySetters, groupCountUpdaters;
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
       init_path_picker();
       init_settings_schema();
       init_notice();
+      init_esc_manager();
       init_render2();
       init_ui2();
-      SpCommitWarn = class {
-        constructor(initial, onCommit) {
-          this.initial = initial;
-          this.onCommit = onCommit;
-          this.warnedInitial = null;
-        }
-        fire(current) {
-          if (!this.onCommit) return;
-          if (current !== this.initial) {
-            if (this.warnedInitial !== this.initial) {
-              this.warnedInitial = this.initial;
-              this.onCommit();
-            }
-          } else {
-            this.warnedInitial = null;
-          }
-        }
-      };
       displaySetters = /* @__PURE__ */ new WeakMap();
       groupCountUpdaters = /* @__PURE__ */ new WeakMap();
     }
