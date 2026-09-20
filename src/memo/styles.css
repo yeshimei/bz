@@ -194,7 +194,6 @@
 /* 定位行：垂直居中；按钮走组件库 .bz-btn--chip 图标圆底档（issue 200 F 款入库） */
 .bz-memo-pos-row { display: flex; align-items: center; gap: var(--bz-space-sm); min-height: 32px; }
 .bz-memo-pos-row .bz-memo-pos-hint { font-size: var(--bz-font-caption); color: var(--bz-text-3); }
-.bz-memo-pos-row .bz-memo-pos-hint .bz-ic { width: 12px; height: 12px; vertical-align: -2px; }
 /* 截止时间行（datetime 输入 + 清除钮）：flex 防组件库 `.bz-field .bz-input
    { width: 100% }` 把清除钮挤换行——输入框吃余量（flex-basis 覆盖 width），
    清除钮定宽贴右；间距/对齐消费 spacing token，随肤随档 */
@@ -261,6 +260,9 @@
 /* ─── 纸感手账 ─── */
 /* token 层（面板 + 弹窗通用） */
 .bz-memo-skin-paper {
+  /* 字重黑档（M3-9）：core tokens 字重档止于 bold，皮肤 900 与色值同属
+     「皮肤专属域内直给」豁免口径，域内单源成 token（十处消费） */
+  --bz-weight-black: 900;
   --bz-skin-ink: #2a2318;
   --bz-skin-serif: "Noto Serif SC", "Source Han Serif SC", "STZhongsong", "SimSun", serif;
   --bz-surface-1: #fbf7ea;
@@ -308,7 +310,7 @@
 }
 .bz-memo-skin-paper .bz-panel-title {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   font-size: var(--bz-font-title);
   letter-spacing: 0.22em;
 }
@@ -316,13 +318,13 @@
 /* 主头行：衬线大标题 + 计数数字橙色（.bz-memo-cnt-num 由 ui.ts 包裹） */
 .bz-memo-skin-paper .bz-main-title {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   font-size: 24px;
   letter-spacing: 0.02em;
 }
 .bz-memo-skin-paper .bz-memo-section-label {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   color: var(--bz-text-1);
 }
 .bz-memo-skin-paper .bz-main-count .bz-memo-cnt-num {
@@ -576,13 +578,13 @@
 
 .bz-memo-skin-paper .bz-memo-donebar-cnt {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   font-size: var(--bz-font-body);
 }
 .bz-memo-skin-paper .bz-memo-composer { border-top: 2px solid var(--bz-skin-ink); }
 .bz-memo-skin-paper .bz-dialog-title {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   letter-spacing: 0.06em;
 }
 
@@ -671,6 +673,7 @@
 /* ─── 编辑部 ─── */
 /* token 层 */
 .bz-memo-skin-editorial {
+  --bz-weight-black: 900; /* 字重黑档（M3-9），同纸感段口径 */
   --bz-skin-ink: #141414;
   --bz-skin-serif: Georgia, "Times New Roman", "Source Han Serif SC", "STZhongsong", "SimSun", serif;
   --bz-surface-1: #ffffff;
@@ -711,13 +714,13 @@
 .bz-memo-skin-editorial .bz-panel-brand { background: var(--bz-brand); border-radius: 0; }
 .bz-memo-skin-editorial .bz-panel-title {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   font-size: var(--bz-font-body);
   letter-spacing: 0.35em;
 }
 .bz-memo-skin-editorial .bz-main-title {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   font-size: 24px;
   line-height: 1.1;
 }
@@ -854,7 +857,7 @@
 
 .bz-memo-skin-editorial .bz-memo-donebar-cnt { font-family: var(--bz-skin-serif); font-style: italic; font-weight: var(--bz-weight-bold); }
 .bz-memo-skin-editorial .bz-memo-composer { border-top: 1.5px solid var(--bz-skin-ink); }
-.bz-memo-skin-editorial .bz-dialog-title { font-family: var(--bz-skin-serif); font-weight: 900; }
+.bz-memo-skin-editorial .bz-dialog-title { font-family: var(--bz-skin-serif); font-weight: var(--bz-weight-black); }
 
 /* （issue 268 之前的「编辑部排序：文字 + 激活红下条」三条规则随排序改下拉而退役，
    新形态见上方 .bz-memo-skin-editorial .bz-memo-sort .bz-select 段。） */
@@ -992,7 +995,7 @@
    的 `.bz-btn--primary`/`.bz-dialog-title` 逐值同源，保证两处按钮长得一样。 */
 #__shared_confirm_popup__.bz-memo-skin-paper h4 {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   letter-spacing: 0.06em;
 }
 /* 纸感主钮形制（凸起墨章）。danger 态必须**整条让位**：本域两个流程框（删除备忘录 / 删除场景）
@@ -1016,7 +1019,7 @@
 
 #__shared_confirm_popup__.bz-memo-skin-editorial h4 {
   font-family: var(--bz-skin-serif);
-  font-weight: 900;
+  font-weight: var(--bz-weight-black);
   letter-spacing: 0.18em;
 }
 #__shared_confirm_popup__.bz-memo-skin-editorial #__shared_confirm_ok__ {
@@ -1024,16 +1027,9 @@
   letter-spacing: 0.1em;
 }
 
-/* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态） ---- */
-.bz-skinprev-default { background: linear-gradient(150deg, #ffffff, #f0f0f4); }
-.bz-skinprev-default::before {
-  content: ''; position: absolute; left: 10%; top: 16%; width: 42%; height: 26%;
-  border-radius: var(--bz-radius-full); background: linear-gradient(135deg, #ef8352, #e2571c);
-}
-.bz-skinprev-default::after {
-  content: ''; position: absolute; left: 10%; top: 60%; width: 72%; height: 10%;
-  border-radius: var(--bz-radius-full); background: #e2e2e8;
-}
+/* ---- 皮肤选择卡预览（设置面板 .bz-cardpick-prev 变体；复刻各皮肤面板迷你形态）
+   （.bz-skinprev-default 三条规则已随 memo2-consistency 新-7 / memo2-ui M3-8 退役——
+   默认皮肤 issue 210 下线后生产代码零引用的死规则） ---- */
 .bz-skinprev-paper {
   background:
     radial-gradient(rgba(160, 140, 100, 0.3) 1px, transparent 1px) 0 0 / 10px 10px,
@@ -1146,6 +1142,21 @@
     background: var(--bz-skin-ink) !important;
     color: #ffffff !important;
   }
+
+  /* 5) 触控热区抬档（memo2-ui M3-1，设计手册 §8.2 ≥44px 硬规则）：工具行/录入行/
+        折叠条此前 28~32px、位置 meta 标签 18px，均低于硬规则。 */
+  /* 排序下拉与搜索框、composer 按钮抬到 40px（绝对下限档；composer 同排 40/32 错位一并消除）。
+     皮肤段 .bz-memo-skin-* .bz-memo-sort .bz-select 高 32px 的 (0,3,0) 由本段同特异性靠后覆盖。 */
+  .bz-memo-panel .bz-memo-sort .bz-select { height: 40px; }
+  .bz-memo-panel .bz-toolrow .bz-input { height: 40px; }
+  .bz-memo-panel .bz-memo-composer .bz-btn { height: 40px; }
+  /* 已完成折叠条 / 「更早 N 条」拉到 44px 档 */
+  .bz-memo-panel .bz-memo-donebar { min-height: 44px; }
+  .bz-memo-panel .bz-memo-done-more { min-height: 44px; }
+  /* 「位置」meta 标签：视觉 18px 不变，::after 外扩到 44px（勾选圈 halo 同范式；
+     标签自身 relative 供伪元素锚定） */
+  .bz-memo-tag.bz-memo-tag-pos { position: relative; }
+  .bz-memo-tag.bz-memo-tag-pos::after { content: ''; position: absolute; inset: -13px; }
 }
 
 }
