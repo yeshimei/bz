@@ -20,7 +20,7 @@ import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings } from '../core/settings-provider';
 import { uiModal, mountIcons } from '../core/ui';
 import { notice } from '../core/notice';
-import { renderReadingReport, cancelReadingReport, handleReportInteraction } from '../reading-report';
+import { renderReadingReport, cancelReadingReport, handleReportInteraction, type ReportRenderOptions } from '../reading-report';
 import { M, applyDefaultView, type BookshelfItem, type BookshelfView, type SideId, type SortKey } from './state';
 import { rebuildItems, resolveFolderPath, resolveBookTag } from './data';
 import {
@@ -133,13 +133,14 @@ function syncSearchInputs(): void {
 
 // ---------- 面板内视图（报告内嵌化：命令 bz-reading-report-open 专用，墙面无入口） ----------
 
-/** 渲染报告视图内容区（挂载点 .bz-rr-content） */
-function startReportRender(app: App): void {
+/** 渲染报告视图内容区（挂载点 .bz-rr-content；extraOpts 供自动刷新路径降档） */
+function startReportRender(app: App, extraOpts: ReportRenderOptions = {}): void {
   const container = M.currentOverlay?.querySelector('.bz-rr-content') as HTMLElement | null;
   if (!container) return;
   renderReadingReport(container, app, {
     onFilter: (kind, value) => applyReportFilter(app, kind, value),
     onBack: () => showView(app, 'shelf'),
+    ...extraOpts,
   });
 }
 
@@ -188,9 +189,13 @@ export function openReportView(app: App): void {
   }
 }
 
-/** 报告视图存续期间书库数据变化 → 自动重算只更新报告内容区 */
+/**
+ * 报告视图存续期间书库数据变化 → 自动重算只更新报告内容区。
+ * 深审 RR-A2/RR-F2：自动刷新走 silent 档——不弹 progress/success toast、保留翻月游标/
+ * 年卡展开/滚位（手动入口 showView('report') 保持满配重渲语义）。
+ */
 export function refreshReportView(app: App): void {
-  if (M.view === 'report' && M.currentOverlay) startReportRender(app);
+  if (M.view === 'report' && M.currentOverlay) startReportRender(app, { silent: true });
 }
 
 /** 视图容器显隐（书脊墙 / 报告内容区互斥） */
@@ -401,9 +406,12 @@ export function createOverlay(app: App): void {
   // B8：首扫加载态——rebuild 完成前墙位显示占位，防异步读 weave-data 空白闪烁
   const shelf0 = overlay.querySelector('#bz-bs-shelf') as HTMLElement | null;
   if (shelf0) shelf0.innerHTML = wallLoadingHTML();
+  // 冷开报告并行先行（深审 RR-F6 + eff 补证）：报告管线自扫全库、不消费 rebuild 产物——
+  // 门控对象错位（报告在等一份自己不会用的数据）使冷开报告串行承担两段扫描，rebuild
+  // 期间报告区白屏「像没点」；改为报告视图先行渲染（骨架即时出现），rebuild 只供墙数据
+  if (M.view === 'report') showView(app, 'report');
   void rebuildItems(app).then(() => {
-    if (M.view === 'report') showView(app, 'report');
-    else renderAll();
+    if (M.view !== 'report') renderAll();
   });
 }
 

@@ -32,6 +32,8 @@ import {
 
 const repo = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8');
 const reportSrc = () => repo('src/reading-report/report.ts');
+const statsSrc = () => repo('src/reading-report/stats.ts');
+const indexSrc = () => repo('src/reading-report/index.ts');
 const css = () => repo('src/reading-report/styles.css');
 
 describe('issue 270：report.ts 内联收编', () => {
@@ -116,7 +118,64 @@ describe('issue 270：指标数字色暗色提亮档', () => {
     }
   });
 
-  it('暗色不动饱和渐变 hero 底（两主题白字可读）：hero 渐变类无 .theme-dark 覆盖', () => {
+  it('.theme-dark 不动饱和渐变 hero 底（两主题白字可读）：hero 渐变类无 .theme-dark 覆盖', () => {
     expect(css()).not.toMatch(/\.theme-dark \.bz-rr-hero/);
+  });
+});
+
+describe('深审修复批收编守卫（bz-fix-rr-core：C-2 扩面 + RR-U 系回归）', () => {
+  it('C-2：index.ts 无静态内联 style（骨架/错误占位已迁 styles.css 类）', () => {
+    expect(indexSrc().match(/style="/g)?.length ?? 0).toBe(0);
+    expect(css()).toContain('.bz-rr-skeleton');
+    expect(css()).toContain('.bz-rr-error');
+  });
+
+  it('C-2：stats.ts 无裸 hex（热力色阶收编 core/chart-palette CHART_HEATMAP_SERIES）', () => {
+    const hexes = [...statsSrc().matchAll(/#[0-9a-fA-F]{3,8}\b/g)].map((h) => h[0]);
+    expect(hexes, `stats.ts 残留内联 hex: ${hexes.join(', ')}`).toEqual([]);
+    expect(statsSrc()).toContain('CHART_HEATMAP_SERIES');
+  });
+
+  it('RR-U9：hm-grid 无负 margin 残留（内容区不再横拖 20px）', () => {
+    expect(css()).not.toContain('margin-right: -20px');
+  });
+
+  it('RR-U4：热力数据格撤 cursor:pointer 伪装可点；hover 放大配 position:relative 使 z-index 生效', () => {
+    const rule = css().match(/\.bz-rr-hm-cell--data\s*\{[^}]*\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![0]).not.toContain('cursor: pointer');
+    expect(rule![0]).toContain('position: relative');
+  });
+
+  it('RR-U11：focus-label 去 60px 固定宽（长标签不再折行挤压轨道）；bar-label 移动端允许换行', () => {
+    const rule = css().match(/\.bz-rr-focus-label\s*\{[^}]*\}/);
+    expect(rule, '缺 .bz-rr-focus-label 规则').not.toBeNull();
+    // min-width: 60px 合规，固定 width: 60px 不合规（负向断言避开 min- 前缀）
+    expect(rule![0]).not.toMatch(/(?<![-a-z])width:\s*60px/);
+    expect(rule![0]).toContain('flex: 0 0 auto');
+    // 移动端媒体段放宽 bar-label
+    const mobile = css().match(/@media \(max-width: 768px\)\s*\{[\s\S]*\.bz-rr-bar-label[\s\S]*?\}\s*\}/);
+    expect(mobile, '缺 bar-label 移动端放宽规则').not.toBeNull();
+    expect(mobile![0]).toContain('white-space: normal');
+  });
+
+  it('RR-U7：专注度对比死块样式随死标记同删（.bz-rr-block / .bz-rr-block-grid 清零）', () => {
+    expect(css()).not.toContain('.bz-rr-block');
+    expect(css()).not.toContain('.bz-rr-block-grid');
+  });
+
+  it('C-1：失效前提注释防回潮——域文件不再引用「左栏」返回路径（书脊墙换血后不存在）', () => {
+    expect(css()).not.toContain('左栏');
+    expect(indexSrc()).not.toContain('左栏');
+  });
+
+  it('EFF-5：报告态隐藏书架 chrome 死控件（:has 状态规则在域 CSS）', () => {
+    const sheet = css();
+    expect(sheet).toContain('.bz-bs-wallpage:has(.bz-bs-view-report.active) .bz-bs-labels');
+    expect(sheet).toContain('.bz-bs-wallpage:has(.bz-bs-view-report.active) .bz-bs-tools');
+  });
+
+  it('EFF-10/RR-U3：翻月钮热区（markup 挂 bz-touch-target，见 seam.test 跨文件契约）', () => {
+    expect(css().match(/\.bz-rr-hm-nav\s*\{[^}]*\}/)).not.toBeNull();
   });
 });

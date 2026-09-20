@@ -56,3 +56,17 @@ export const CHART_SPEED_BAR_GRADIENT = 'linear-gradient(90deg, #4CAF50, #45a049
 
 /** 专注度会话分布条形色（碎片化→高度专注按序取色） */
 export const CHART_FOCUS_SERIES: string[] = ['#ff6b6b', '#ff9ff3', '#feca57', '#48dbfb', '#1dd1a1'];
+
+/**
+ * 热力图色阶（reading-report/stats.ts getHeatmapColor 按阅读强度档位取色）：
+ * 0 档 = 无阅读（主题中性变量，暗色主题可读；运行时经 var() 求值，非静态 hex），
+ * 1-4 档绿色阶（0.5-1h / 1-2h / 2-4h / 4h+）。与上方 CHART_FOCUS_SERIES 等
+ * 「固定有序色板、运行时按数据档位取色」同形（C-2 收编：色阶正典归属本文件）。
+ */
+export const CHART_HEATMAP_SERIES: string[] = [
+  'var(--background-secondary)',
+  '#9be9a8',
+  '#40c463',
+  '#30a14e',
+  '#216e39',
+];

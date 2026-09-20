@@ -1,6 +1,9 @@
 // @vitest-environment node
 /**
  * 阅读数据分析报告 stats 测试（ticket 13）：核心公式与纯函数抽样断言。
+ * 深审修复批（bz-fix-rr-core）：EFF-3 单趟归并等价钉死 / RR-F4 progress 钳制 / RR-F5
+ * readingTimeFormat 兜底 / RR-F8 原型污染守卫 / RR-F3 分类口径单源+多样性钳 100 /
+ * RR-U5 时长中文形制 / C-4 死字段清理后的产出面。
  */
 import { describe, it, expect } from 'vitest';
 import {
@@ -10,7 +13,7 @@ import {
   processHeatmapData, calculateIntensityLevel,
   analyzeFocusConsistency, calculateOverallFocusScore, calculateEfficiencyScore,
   calculateThinkRatio, calculateInteractionScore, calculateCategoryDiversity,
-  calculateBalanceScore, getSuggestedCategories, analyzeInteractionPattern,
+  calculateBalanceScore, analyzeInteractionPattern,
   analyzeConnectionLevel, extractNotesInteractions, getAllBookNotes,
   analyzeReadingTrends, analyzeReadingCategories,
   getHeatmapMonthKeys, getYearMonthBars,
@@ -83,24 +86,66 @@ describe('calculateReadingStats', () => {
     expect(s.authorStats['余华'].completedBooks).toBe(1);
   });
 
-  it('readingSessions 过滤 duration<=60', () => {
-    const books = [book({ readingSessions: [{ start: '2025-01-01T08:00:00', duration: 600 }, { start: '2025-01-02T08:00:00', duration: 30 }] })];
+  it('readingSessions 过滤 duration<=60（EFF-3 单趟归并等价：跨书顺序保持）', () => {
+    const books = [
+      book({ readingSessions: [{ start: '2025-01-01T08:00:00', duration: 600 }, { start: '2025-01-02T08:00:00', duration: 30 }] }),
+      book({ readingSessions: [{ start: '2025-01-03T08:00:00', duration: 45 }, { start: '2025-01-04T08:00:00', duration: 120 }] }),
+      book({ readingSessions: [{ start: '2025-01-05T08:00:00', duration: 61 }] }),
+    ];
     const s = calculateReadingStats(books);
-    expect(s.readingSessions.length).toBe(1);
+    // 旧 concat+全量重 filter 与新单趟 push 语义逐字等价：书序 + 书内序 + >60s 阈值
+    expect(s.readingSessions.map((d: any) => d.duration)).toEqual([600, 120, 61]);
+  });
+
+  it('RR-F4：readingProgress 钳 [0,100]——负数不进「刚开始」桶、超 100 进「已完成」桶', () => {
+    const s = calculateReadingStats([
+      book({ readingProgress: -5 }),
+      book({ readingProgress: 250 }),
+    ]);
+    expect(s.progressDistribution.unread).toBe(1);  // -5 → 钳 0 → 未读
+    expect(s.progressDistribution.completed).toBe(1); // 250 → 钳 100 → 已读
+    expect(s.progressDistribution.justStarted).toBe(0);
+  });
+
+  it('RR-F5：readingTime 缺失时 readingTimeFormat 兜底（中文 + weave 英文双格式，与宿主同源）', () => {
+    const s = calculateReadingStats([
+      book({ readingTimeFormat: '2小时30分' }),
+      book({ readingTimeFormat: '1h30m' }),
+    ]);
+    expect(s.totalReadingTime).toBe(9000000 + 5400000);
+  });
+
+  it('RR-F8：author/category 为 constructor/__proto__ 键不污染原型', () => {
+    const s = calculateReadingStats([
+      book({ author: 'constructor', readingProgress: 50 }),
+      book({ author: '__proto__', category: '__proto__', readingProgress: 80 }),
+    ]);
+    expect(s.authorStats['constructor'].count).toBe(1);
+    expect(s.authorStats['__proto__'].count).toBe(1);
+    // 污染面守卫：全局原型上不得出现 count 等统计字段
+    expect(({} as any).count).toBeUndefined();
+    expect((Object.prototype as any).count).toBeUndefined();
+    const cats = analyzeReadingCategories([
+      book({ category: 'constructor' }),
+      book({ category: '__proto__' }),
+    ]);
+    expect(cats.categoryDistribution.map((c: any) => c.name).sort()).toEqual(['__proto__', 'constructor']);
+    expect(({} as any).count).toBeUndefined();
   });
 });
 
 describe('格式化', () => {
-  it('formatReadingTime：h/m/s 规则', () => {
-    expect(formatReadingTime(3600000)).toBe('1h');
-    expect(formatReadingTime(3600000 + 30 * 60000)).toBe('1h30m');
-    expect(formatReadingTime(30 * 60000)).toBe('30m');
-    expect(formatReadingTime(5000)).toBe('0m');
+  it('formatReadingTime：中文形制（RR-U5 单源——报告全屏唯一时长格式）', () => {
+    expect(formatReadingTime(3600000)).toBe('1小时');
+    expect(formatReadingTime(3600000 + 30 * 60000)).toBe('1小时30分钟');
+    expect(formatReadingTime(30 * 60000)).toBe('30分钟');
+    expect(formatReadingTime(5000)).toBe('0分钟');
   });
 
-  it('formatSessionDuration：小时X分钟', () => {
+  it('formatSessionDuration：秒入口转发同一中文形制（单源）', () => {
     expect(formatSessionDuration(5400)).toBe('1小时30分钟');
     expect(formatSessionDuration(600)).toBe('10分钟');
+    expect(formatSessionDuration(3600)).toBe(formatReadingTime(3600000));
   });
 });
 
@@ -142,10 +187,10 @@ describe('会话分析', () => {
     expect(r.avgDuration).toBe(750);
   });
 
-  it('analyzeReadingHabits：碎片化/专注等级', () => {
+  it('analyzeReadingHabits：时段分布（C-4 清理后唯一产出面）', () => {
     const r = analyzeReadingHabits(Array.from({ length: 6 }, () => ({ start: '2025-01-01T08:00:00', duration: 300 })));
-    expect(r.readingPattern).toBe('碎片化阅读 (短时间多次)');
-    expect(r.peakTime).toBe('早晨时段最活跃');
+    expect(r.timeDistribution.morning).toBe('100.0');
+    expect(Object.keys(r.timeDistribution).sort()).toEqual(['afternoon', 'evening', 'morning', 'night']);
   });
 });
 
@@ -246,18 +291,16 @@ describe('类别与互动', () => {
     expect(calculateInteractionScore({ totalHighlights: 10000, totalThinks: 10000, totalDialogue: 10000, totalOutlinks: 10000 })).toBe(100);
   });
 
-  it('calculateCategoryDiversity：单类 → 0', () => {
+  it('calculateCategoryDiversity：单类 → 0；溢出输入钳 [0,100]（RR-F3 防御）', () => {
     expect(calculateCategoryDiversity([{ name: '小说', count: 5 }], 5)).toBe(0);
+    // 多类口径遗留防御：Σcount > totalBooks 时熵可溢出，钳制后不超 100 不为负
+    const overflow = calculateCategoryDiversity([{ name: 'a', count: 15 }, { name: 'b', count: 10 }], 10);
+    expect(overflow).toBeGreaterThanOrEqual(0);
+    expect(overflow).toBeLessThanOrEqual(100);
   });
 
   it('calculateBalanceScore：单类 → 100', () => {
     expect(calculateBalanceScore([{ name: '小说', percentage: '100.0' }])).toBe(100);
-  });
-
-  it('getSuggestedCategories：排除已有返回 6 个', () => {
-    const r = getSuggestedCategories([{ name: '小说' }, { name: '历史' }]);
-    expect(r.length).toBe(6);
-    expect(r).not.toContain('小说');
   });
 
   it('analyzeInteractionPattern：标记型', () => {
@@ -269,29 +312,31 @@ describe('类别与互动', () => {
     expect(analyzeConnectionLevel({ totalHighlights: 100, totalOutlinks: 0 })).toBe('初步连接');
   });
 
-  it('extractNotesInteractions：分布与平均值', () => {
+  it('extractNotesInteractions：分布与平均值（C-4 清理后 recommendations 不再产出）', () => {
     const r = extractNotesInteractions([book({ highlights: 10, thinks: 2, dialogue: 1, outlinks: 3 })]);
     expect(r.totalInteractions).toBe(16);
     expect(r.booksWithInteractions).toBe(1);
     expect(r.avgHighlightsPerBook).toBe('10.0');
+    expect(r.interactionDistribution.every((d: any) => typeof d.percentage === 'string')).toBe(true);
   });
 
-  it('analyzeReadingCategories.categoryTrends：按完成日期倒序取最近 10 本（P2 任意取样修复）', () => {
-    // 本地时区 ISO 日期（n 天前）
-    const isoDaysAgo = (n: number): string => {
-      const d = new Date();
-      d.setDate(d.getDate() - n);
-      const p = (v: number) => String(v).padStart(2, '0');
-      return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-    };
-    // i=0 最旧（170 天前）… i=11 最新（60 天前），全部在近 6 月内；前两本属「远类」
-    // 输入顺序故意打乱：旧实现的 slice(0,10) 取的是输入前 10（含 2 本远类），新实现取日期最近 10 本
-    const order = [5, 0, 8, 2, 11, 1, 9, 3, 7, 10, 4, 6];
-    const notes = order.map((i) =>
-      book({ category: i <= 1 ? '远类' : '近类', completionDate: isoDaysAgo(170 - i * 10), readingProgress: 100 })
-    );
+  it('RR-F3：分类口径与宿主单值恒等——多类数组/斜杠串不再拆分（点分类行回墙能筛中）', () => {
+    // 宿主 parseBookFile：String(fm.category) —— 数组 toString = 逗号拼接串，不拆分
+    const notes = [
+      book({ category: ['小说', '文学'] }),
+      book({ category: '科幻/文学' }),
+      book({ category: '小说' }),
+    ];
     const r = analyzeReadingCategories(notes);
-    expect(r.categoryTrends).toEqual([{ name: '近类', count: 10 }]);
+    const names = r.categoryDistribution.map((c: any) => c.name);
+    expect(names.sort()).toEqual(['小说', '小说,文学', '科幻/文学'].sort());
+    // Σcount === totalBooks（单值口径下多样性恒在 [0,100]）
+    expect(r.categoryDistribution.reduce((sum: number, c: any) => sum + c.count, 0)).toBe(3);
+  });
+
+  it('C-4：分类产出面收敛——死字段不再产出', () => {
+    const r = analyzeReadingCategories([book({ category: '小说' })]);
+    expect(Object.keys(r).sort()).toEqual(['balanceScore', 'categoryDistribution', 'diversityScore', 'topCategory', 'totalBooks', 'totalCategories']);
   });
 });
 
@@ -309,10 +354,9 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
   }
 
   it('升序 [1,1,1,2,2,9]：本月=9、季均≈4.33、方向 ↑；recentMonths 反转仅供图表', () => {
-    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2025, 5, 15)); // now=2025-06
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), new Date(2025, 5, 15)); // now=2025-06
     expect(t.currentMonth.books).toBe(9);
     expect(t.quarterlyAvg).toBe('4.3'); // (2+2+9)/3 ≈ 4.33
-    expect(t.monthlyAvg).toBe('2.7');   // 16/6 ≈ 2.67
     expect(t.trendDirection).toBe('↑');
     // 组合层：图表数据仍是反转后的新→旧，统计字段不受反转影响
     expect(t.recentMonths.map((m: any) => m.month)).toEqual([
@@ -322,14 +366,14 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
   });
 
   it('反向样例 [9,2,2,1,1,1]：本月=1、方向 ↓（旧实现会给出全反结论）', () => {
-    const t = analyzeReadingTrends(makeStats([9, 2, 2, 1, 1, 1]), [], new Date(2025, 5, 15)); // now=2025-06
+    const t = analyzeReadingTrends(makeStats([9, 2, 2, 1, 1, 1]), new Date(2025, 5, 15)); // now=2025-06
     expect(t.currentMonth.books).toBe(1);
     expect(t.trendDirection).toBe('↓');
   });
 
   it('audit F：当月无数据 → 本月阅读显示 0，不再取「升序末位」旧月份数据', () => {
     // 数据止于 2025-06，「现在」是 2026-09：旧实现把 2025-06 的 9 本当「本月」
-    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2026, 8, 4));
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), new Date(2026, 8, 4));
     expect(t.currentMonth.books).toBe(0);
     expect(t.currentMonth.completed).toBe(0);
     // 其余统计口径不受影响
@@ -338,9 +382,14 @@ describe('analyzeReadingTrends 趋势修复（P1-17）', () => {
   });
 
   it('audit F：当月有数据 → 按当前年月键直查对应桶', () => {
-    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), [], new Date(2025, 5, 30));
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), new Date(2025, 5, 30));
     expect(t.currentMonth.books).toBe(9);
     expect(t.currentMonth.completed).toBe(0);
+  });
+
+  it('C-4：趋势产出面收敛——死字段（monthlyAvg/focusScore/efficiency 等）不再产出', () => {
+    const t = analyzeReadingTrends(makeStats([1, 1, 1, 2, 2, 9]), new Date(2025, 5, 15));
+    expect(Object.keys(t).sort()).toEqual(['completionRate', 'currentMonth', 'quarterlyAvg', 'recentMonths', 'trendDirection']);
   });
 });
 

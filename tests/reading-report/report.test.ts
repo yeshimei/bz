@@ -265,6 +265,55 @@ describe('report 生成函数', () => {
     expect(html).toContain('效率评分');
   });
 
+  it('RR-U12：无会话 → 专注段空态卡（不亮默认 50 分）', () => {
+    const html = generateReadingFocusAnalysis(emptyStats, books);
+    expect(html).toContain('暂无阅读会话数据');
+    expect(html).not.toContain('50/100');
+    expect(html).not.toContain('专注度评分');
+  });
+
+  it('RR-U7：div 平衡守卫——每段 <div> 与 </div> 计数恒等（移植再引入即红）', () => {
+    for (const section of buildReportSections(stats, books)) {
+      const html = section.generate().replace(/<!--[\s\S]*?-->/g, '');
+      const opens = (html.match(/<div\b/g) || []).length;
+      const closes = (html.match(/<\/div>/g) || []).length;
+      expect(opens, `段 ${section.key} div 不平衡`).toBe(closes);
+    }
+  });
+
+  it('RR-U6：趋势月柱标签无前导零（与年度卡「6月」形制单源）', () => {
+    const chart = generateMobileFriendlyTrendChart([{ month: '2025-07', booksRead: 3 }, { month: '2025-10', booksRead: 1 }]);
+    expect(chart).toContain('7月');
+    expect(chart).toContain('10月');
+    expect(chart).not.toContain('07月');
+    expect(chart).not.toContain('010月');
+  });
+
+  it('RR-U5：时长形制全中文——概览卡输出无孤立英文 h/m 单位', () => {
+    const html = generateStatsReport(stats);
+    expect(html).not.toMatch(/\d+h/);
+    expect(html).not.toMatch(/\d+m(?!in)/);
+    expect(html).toContain('小时');
+  });
+
+  it('EFF-2/RR-U2：可点元素键盘可达——年卡/作者卡 tabindex + aria-expanded，分类行 role=button', () => {
+    const yearly = generateYearlyStats(stats);
+    expect(yearly).toMatch(/data-rr-year="[^"]+"[^>]*tabindex="0"/);
+    expect(yearly).toContain('aria-expanded="false"');
+    const authors = generateAuthorStats(stats);
+    expect(authors).toMatch(/data-rr-author="[^"]*"[^>]*tabindex="0"/);
+    const rows = generateBarRows([{ label: '小说', value: 50, display: '2本 · 50%', linkAttr: { name: 'data-rr-cat', value: '小说' } }]);
+    expect(rows).toContain('role="button"');
+    expect(rows).toContain('tabindex="0"');
+    expect(rows).toContain('aria-label=');
+  });
+
+  it('EFF-10：翻月钮挂 bz-touch-target 热区类', () => {
+    const html = generateReadingHeatmap(sessions);
+    expect(html).toMatch(/class="bz-rr-hm-nav bz-touch-target[^"]*" data-rr-hm-prev/);
+    expect(html).toMatch(/class="bz-rr-hm-nav bz-touch-target[^"]*" data-rr-hm-next/);
+  });
+
   it('generateReadingCategoryAnalysis：空态 + 数据态（分类条形行 + data-rr-cat 同面板筛选 + lucide 奖杯）', () => {
     expect(generateReadingCategoryAnalysis([])).toContain('暂无书籍分类数据');
     const html = generateReadingCategoryAnalysis(books);
@@ -380,7 +429,10 @@ describe('图表色收编 core/chart-palette（终局 review 批 B-2）', () => 
     expect(generateStatsReport(stats)).toContain('bz-rr-c-red');
     expect(generateStatsReport(stats)).toContain('bz-rr-c-purple');
     expect(generateReadingTrendsAnalysis(stats, books)).toContain('bz-rr-c-violet');
-    expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-c-sky');
+    // 深审 RR-U8：「最佳速度」编造值（c-sky 唯一消费点）已删，速度段只剩 coral/violet 档
+    expect(generateReadingSpeedAnalysis(stats)).not.toContain('bz-rr-c-sky');
+    expect(generateReadingSpeedAnalysis(stats)).not.toContain('>最佳速度<');
+    expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-c-coral');
     expect(generateReadingFocusAnalysis(stats, books)).toContain('bz-rr-c-orange');
     // 速度条 / 排名卡 / 专注分布系列：速度条渐变迁 CSS 类，排名卡与分布条仍运行时内联
     expect(generateReadingSpeedAnalysis(stats)).toContain('bz-rr-speed-fill');
