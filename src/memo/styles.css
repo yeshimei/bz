@@ -3,7 +3,7 @@
    移动横滑条）全部消费组件库（src/core/ui/components.css 的 .bz-* 类与 --bz-* token）；
    本文件只保留待办独有布局（面板几何/添加场景钮/条目卡/meta 标签/录入行/编辑器额外区），
    取值一律取自 tokens.css。场景色为功能色（数据语义，域内直给）。
-   与旧 memo 并存：读写同一 memo.json；后台任务由旧 memo 域执行。 */
+   memo.json 唯一属主（ADR-0092）；后台任务在域内 reminder.ts/file-sync.ts。 */
 
 /* ---- 主面板几何（遮罩/壳骨架/滚动条隐藏/头行走共享 .bz-panel-overlay/.bz-panel-frame/
    .bz-panel-head；域内只留宽高档。头行不撞 core/styles.css 旧 .bz-memo-head 的

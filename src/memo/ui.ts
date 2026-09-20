@@ -29,7 +29,7 @@
  *     更早的收进尾部「更早 N 条」放全；空态 = 组件库 .bz-empty 三件套
  * 基线：按钮/输入/弹窗/平铺选择走组件库；域内只留备忘录特有布局。
  * 图标：一律 lucide。
- * 数据：与旧 memo 域读写同一 memo.json；后台任务由旧 memo 域执行。
+ * 数据：memo.json 唯一属主（ADR-0092）；后台任务在域内 reminder.ts/file-sync.ts。
  */
 import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
@@ -1548,7 +1548,7 @@ function openAddSceneDialog(): void {
   input.placeholder = '场景名称（如：健身）';
   const hint = document.createElement('div');
   hint.className = 'bz-memo-addscene-hint';
-  hint.textContent = '场景将写入备忘录设置（与备忘录共用）';
+  hint.textContent = '场景将写入备忘录设置（与设置面板同键）';
   const saveBtn = uiBtn({ label: '添加', tone: 'primary' });
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
@@ -1635,7 +1635,7 @@ function openRenameSceneDialog(scene: string): void {
   const count = M.items.filter((i) => i.scene === scene).length;
   const hint = document.createElement('div');
   hint.className = 'bz-memo-addscene-hint';
-  hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : '场景将写入备忘录设置（与备忘录共用）';
+  hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : '场景将写入备忘录设置（与设置面板同键）';
   const saveBtn = uiBtn({ label: '保存', tone: 'primary' });
   const cancelBtn = uiBtn({ label: '取消' });
   const row = uiBtnRow([cancelBtn, saveBtn]);
