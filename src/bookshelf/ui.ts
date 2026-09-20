@@ -361,6 +361,10 @@ export function createOverlay(app: App): void {
     if (clearBtn) clearBtn.hidden = !searchInput.value.trim();
   };
   const clearSearch = () => {
+    // RR-U13（残款移交）：报告视图下宿主搜索收窄——隐藏墙不该被无声刷新。
+    // EFF-5 已拍板报告态隐藏宿主 chrome（:has() 收起），本守卫是行为层对齐：
+    // 消灭「CSS 失配/焦点残留时输入有动静但界面没变化」的假动作
+    if (M.view !== 'shelf') return;
     // 清词三件套：取消防抖尾触（防关键词「复活」）+ 清输入与状态 + 只重画墙
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     M.searchDebounceTimer = null;
@@ -370,6 +374,7 @@ export function createOverlay(app: App): void {
     renderWall();
   };
   searchInput.addEventListener('input', () => {
+    if (M.view !== 'shelf') return; // RR-U13：报告态零动作（同 clearSearch 守卫口径）
     syncSearchClear();
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     M.searchDebounceTimer = setTimeout(() => {
@@ -378,9 +383,12 @@ export function createOverlay(app: App): void {
     }, 200);
   });
   // 深审 eff E2（clipbook 效率#11/#12 定稿范式）：搜索框内 ESC 清词——有词 = 只清词不冒泡
-  // （escManager 的 document 层收不到，防「清词变成关整个面板」）；无词放行（关面板语义不变）
+  // （escManager 的 document 层收不到，防「清词变成关整个面板」）；无词放行（关面板语义不变）。
+  // RR-U13：报告态放行给 escManager 层序（清词无意义——词是回墙预填态，隐藏框收不到焦点，
+  // 此守卫仅纵深）
   searchInput.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' || !searchInput.value.trim()) return;
+    if (M.view !== 'shelf') return;
     e.preventDefault();
     e.stopImmediatePropagation();
     clearSearch();
