@@ -659,7 +659,15 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## reading-report（阅读报告）域 · 5/5 方向到账，修复批 `bz-fix-rr-core`（单批）定稿派发
+## reading-report（阅读报告）域 · ✅ 闭环（2026-09-20，单批合并 + 主线程收口，部署 a842e3cc/e929b8d5）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-rr-core`（P1 + P2×5 + P3 群 25+ 项全落）**：**P1 RR-U1/EFF-1 桌面返回出口恢复**（rr-close 恒可见 + aria-label + bz-touch-target--lg，C-1 域内残留改写含防回潮守卫）；**RR-A1 供数面收敛**（bookshelf/data 导出 isBookshelfPath/parseReadingTimeMs/epub 系，stats 切换消费 + epub-contract 两侧恒等锁 9 例——RR-F1/F4/F5/F7 随刀消）；**RR-A2 opts 扩维**（silent/dataSignature + 宿主 refreshReportView 传 silent——RR-F2/RR-UX1 状态保留：翻月游标容器 dataset 归宿=RR-A4、年卡按值恢复、滚位恢复；EFF-4 签名短路）；EFF-3 单趟归并（等价钉死测试）；EFF-5 `:has()` 隐藏 chrome 死控件簇（匾额保留=移动端唯一关闭出口）；EFF-2 键盘可达（tabindex+role+bindKeyboardActivation，aria-expanded）；EFF-10 热区；func 8 条全落（分类单源一桶/多样性钳 100/原型污染 Object.create(null)/type 派生/非法 start 丢弃/冷开并行先行）；ui 13 条全落（含未配对 div×2、速度段编造值连 cell 删除、RR-U12 空会话空态卡）；eff/cons（EFF-6 重试 action 复用句柄、EFF-7 QUIET_TOAST_MIN_BOOKS=500、**EFF-8+C-4 一刀清**——trends 7+habits 3+focus 4+categories 8 死字段+四建议生成器+generateMonthlySpeedTrend HTML 死模板、C-3 先报再做、C-5 去「控制台」、C-6 dedupeKey 删除；C-2 core CHART_HEATMAP_SERIES 收编）。测试 88→122（rr 域 8 文件）+ bookshelf 132 + walkthrough 守卫翻转。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + rr/bookshelf/freshness 288 绿；全量 6638 绿（批内）；主线程文档收口后又踩一次 freshness（clipbook 注释改后未 rebuild，e929b8d5 补）——终态 6653 绿。
+- **主线程文档收口**：ADR-0091 决策 2 终态改写（左栏退役、返回/关闭合并恒可见钮）+ CONTEXT.md 词条同句 + clipbook/report-ui.ts:45 失实互指注释纠偏。
+- **部署**：a842e3cc + e929b8d5；worktree+分支清理。
+- **残款登记**：RR-U13 宿主搜索框问题（移交 bookshelf 收尾批）；拍板豁免项（字典序负债、RR-UX2/EFF-U1）。
 
 > 明细：`.scratch/review-deep/reading-report-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×2 + P3×8 + UX×1；方向 2（UI）：**P1×1** + P2×2 + P3×10 + UX×2；方向 3（效率）：**P1×1** + P2×4 + P3×5 + UX×1；方向 4（一致）：P3×6；方向 5（架构）：P2×2 + P3×4 + 建议×1 + 缺口7。**双 P1 同根**：RR-U1 = EFF-1 桌面零返回出口（#23 翻案实锤；C-1 补五处文本残留清单同刀清）。**架构枢纽归因**：RR-A1 宿主数据接口双管线镜像无契约守护（EPUB 映射双实现 + 收录谓词三份 = RR-F1/F4/F5/F7 结构性根因；收敛路线 bookshelf/data 升格单源供数面 + 契约对照测试）；RR-A2 opts 契约缺 silent/dataSignature 维度（EFF-4/RR-F2 接口形状根因）；RR-A5 ADR-0091 决策 2/8 与两轮改版脱节五处文本失真；**RR-A6 AGENTS.md 领域清单缺 reading-report 行 + checkup 行**（主线程一并补）；RR-A3 stats 纯层藏 HTML 死模板（守卫只扫 report.ts 盲区）；RR-A4 视图状态双归宿。cons 补充：C-4 建议文案/衍生指标静默计算族（EFF-8 同族扩容，拍板一刀清或接线上屏）+ report.ts:10 死 import；C-6 dedupeKey 每轮唯一化使 notice 去重形同虚设（修=删参数）；C-3 分片进度滞后一位一行重排。测试架构：接缝三角无归属测试 + 跨文件 CSS 契约无守护 =「DOM 在但不可见」温床；epub-notes.test.ts:40 `weaveDataPath` 无效 fixture 键。门禁基线：tsc 0；tests/reading-report 88 例全绿。
 
