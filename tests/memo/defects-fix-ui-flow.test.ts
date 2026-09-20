@@ -166,6 +166,78 @@ describe('memo2-func #4（M2-3）：延后算术 moment 单源', () => {
   });
 });
 
+describe('memo2-func #10/#11/#12 + 旧-2：删除/场景/完成收尾链', () => {
+  it('func#11：删除已不存在的条目——不挂撤销、不复活陈旧快照，提示并刷新', async () => {
+    const { app, vault } = seed([
+      item({ id: 'b', title: '外部已删的条目' }),
+      item({ id: 'c', title: '别动我' }),
+    ]);
+    openMemoPanel(app);
+    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card[data-memo-id="b"]')).toBeTruthy());
+    // 模拟外部写方（双端同库）已删 b，面板未刷新——UI 仍持陈旧卡片
+    vault.files.set(PATH, JSON.stringify([item({ id: 'c', title: '别动我' })]));
+    const card = document.querySelector('.bz-memo-card[data-memo-id="b"]') as HTMLElement;
+    card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    clickMenuItem('删除');
+    await vi.waitFor(() => {
+      const msgs = [...document.querySelectorAll('.bz-notice-msg')].map((el) => el.textContent);
+      expect(msgs.some((m) => m?.includes('已不存在'))).toBe(true);
+    });
+    // 无撤销通知（防陈旧快照复活）；盘上无变化；列表刷新后 b 卡消失
+    expect([...document.querySelectorAll('.bz-notice-action')].some((b) => b.textContent === '撤销')).toBe(false);
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-card[data-memo-id="b"]')).toBeNull();
+    });
+    expect(JSON.parse(vault.files.get(PATH)!).map((r: any) => r.id)).toEqual(['c']);
+  });
+
+  it('func#10：完成防抖 300ms 窗口内关面板——挂起完成 flush 落盘（不再静默丢失）', async () => {
+    const { app, vault } = seed([item({ id: 'a', title: '要完成的条目' })]);
+    openMemoPanel(app);
+    await vi.waitFor(() => expect(document.querySelector('.bz-memo-check')).toBeTruthy());
+    (document.querySelector('.bz-memo-check') as HTMLElement).click();
+    // 300ms 窗口内立刻关面板
+    closeMemoPanel();
+    await vi.waitFor(() => {
+      const a = JSON.parse(vault.files.get(PATH)!).find((r: any) => r.id === 'a');
+      expect(a.completed).toBeTruthy(); // 完成意图不丢
+    });
+  });
+
+  it('func#12：场景重命名两段写失败——反向迁移补偿，条目不挂进不可达场景', async () => {
+    const { app, vault } = seed([item({ id: 'g', title: '副业条目', scene: '副业' })], {
+      memoScenarios: '剪藏,工作,学习,生活,代码,公开课,副业',
+    });
+    setSettingsSaver(vi.fn(async () => { throw new Error('磁盘满'); })); // 设置串写失败
+    const bulkSpy = vi.spyOn(MemoData, 'updateSceneBulk');
+    openMemoPanel(app);
+    await vi.waitFor(() => expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy());
+    (document.querySelector('[data-memo-nav] [data-memo-scene="副业"]') as HTMLElement)
+      .dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 30, clientY: 30 }));
+    await vi.waitFor(() => expect(document.querySelector('.bz-item-menu')).toBeTruthy());
+    clickMenuItem('重命名');
+    await vi.waitFor(() => expect(document.querySelector('.bz-memo-addscene')).toBeTruthy());
+    const input = (document.querySelector('.bz-memo-addscene .bz-input') as HTMLInputElement);
+    input.value = '兼职';
+    (document.querySelector('.bz-memo-addscene .bz-btn--primary') as HTMLElement).click();
+    // 失败通知（notifySaveError 口径：保存失败（重命名场景）：…）
+    await vi.waitFor(() => {
+      const msgs = [...document.querySelectorAll('.bz-notice-msg')].map((el) => el.textContent);
+      expect(msgs.some((m) => m?.includes('保存失败（重命名场景）'))).toBe(true);
+    });
+    // 补偿：正反两次批量迁移
+    expect(bulkSpy).toHaveBeenCalledTimes(2);
+    expect(bulkSpy.mock.calls[0]).toEqual(['副业', '兼职']);
+    expect(bulkSpy.mock.calls[1]).toEqual(['兼职', '副业']);
+    await vi.waitFor(() => {
+      const raw = JSON.parse(vault.files.get(PATH)!);
+      expect(raw.find((r: any) => r.id === 'g').scene).toBe('副业'); // 条目回到可达场景
+    });
+    bulkSpy.mockRestore();
+  });
+});
+
 describe('memo2-func #7 / memo2-arch A9（T9）：读盘失败错误面', () => {
   it('修复前必红形态：loadItems 拒绝 → 面板出错误空态 + 失败通知，不再静默空白；重试可恢复', async () => {
     const { app } = seed([item({ id: 'a' })]);

@@ -916,33 +916,25 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     expect(activeScene()).toBe('全部');
   });
 
-  it('删除接撤销：三段式确认框 + notifyUndo 撤销后条目插回原位', async () => {
+  it('删除免确认直达 notifyUndo（B7 全局删除口径）：条目即删 + 撤销后插回原位', async () => {
     const { vault, app } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-memo-card[data-memo-id="b"]')).toBeTruthy();
     });
-    // 右键条目 b → 菜单 → 删除
+    // 右键条目 b → 菜单 → 删除（免确认直达，memo2-consistency 旧-2）
     const card = document.querySelector('.bz-memo-card[data-memo-id="b"]') as HTMLElement;
     card.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true, clientX: 20, clientY: 20 }));
     await vi.waitFor(() => {
       expect(document.querySelector('.bz-item-menu')).toBeTruthy();
     });
     clickMenuItem('删除');
-    // 三段式确认框：标题「删除备忘录」+ 问句（「」引号）+ 后果说明
-    await vi.waitFor(() => {
-      expect(document.getElementById('__shared_confirm_popup__')).toBeTruthy();
-    });
-    const popup = document.getElementById('__shared_confirm_popup__') as HTMLElement;
-    expect(popup.querySelector('h4')?.textContent).toBe('删除备忘录');
-    const msg = popup.querySelector('p')?.textContent || '';
-    expect(msg).toContain('确定删除备忘录「ffmpeg 转写参数整理」吗');
-    expect(msg).toContain('撤销');
-    (document.getElementById('__shared_confirm_ok__') as HTMLElement).click();
+    // 无确认框：直接落盘
     await vi.waitFor(() => {
       const raw = JSON.parse(vault.files.get('CONFIG/STORAGE/memo.json')!);
       expect(raw.find((r: any) => r.id === 'b')).toBeUndefined();
     });
+    expect(document.getElementById('__shared_confirm_popup__')).toBeNull(); // 免确认
     // 删除 toast 挂「撤销」按钮
     await vi.waitFor(() => {
       const undo = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '撤销');

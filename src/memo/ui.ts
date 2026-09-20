@@ -384,8 +384,10 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     onChange: (v) => {
       M.sortMode = v;
       // 同步写入默认排序（与 memo 共用 memoSortMode 键）
+      // memo2-func #13 / memo2-consistency 旧-13：设置写盘收编——高频低价值写走 quiet
+      // 兜底（失败仅 console，不弹错误 toast 刷屏；此前 void 裸奔 + unhandled rejection）
       getSettings().memoSortMode = v;
-      void saveSettings();
+      void saveSettings().catch((e) => console.error('[memo] 排序设置保存失败', e));
       renderAll();
     },
   });
@@ -412,7 +414,8 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
           const s = tryGetSettings();
           s.memoPanelWidth = w;
           s.memoPanelHeight = h;
-          void saveSettings();
+          // 设置写盘 quiet 兜底（memo2-func #13 / 旧-13，同排序口径）
+          void saveSettings().catch((e) => console.error('[memo] 面板尺寸保存失败', e));
         },
       },
     });
@@ -528,13 +531,23 @@ export function closeMemoPanel(): void {
     const s = tryGetSettings();
     if (s) {
       s.memoLastScene = M.activeScene;
-      void saveSettings();
+      // 设置写盘 quiet 兜底（memo2-func #13 / 旧-13，同排序口径）
+      void saveSettings().catch((e) => console.error('[memo] 上次场景保存失败', e));
     }
     M.overlay.remove();
     M.overlay = null;
   }
   // 防抖窗口内关闭面板：取消挂起回调防孤儿执行
   searchDebounced.cancel();
+  // memo2-func #10：完成防抖 300ms 窗口内关面板——挂起的完成意图此前被 clearTimeout
+  // 静默丢弃（用户以为已勾完，重开发现没完成）。flush 口径：关闭前对未决 id 直接落盘
+  // （completeItem 自带错误面）；插件卸载（unloadMemo）走取消语义不 flush。
+  for (const [id, t] of M.completeTimers) {
+    clearTimeout(t);
+    const it = M.items.find((i) => i.id === id);
+    if (it) void completeItem(it);
+  }
+  M.completeTimers.clear();
   // 卸载拖动缩放（detach 幂等；persist 未落盘的尾值由工厂立即补存）
   if (panelResizeDetach) {
     panelResizeDetach.detach();
@@ -548,8 +561,6 @@ export function closeMemoPanel(): void {
   M.renderFn = null;
   M.pinnedNewId = null;
   clipTitleHint = null; // 剪贴板预填候选随面板生命周期清空
-  M.completeTimers.forEach((t) => clearTimeout(t));
-  M.completeTimers.clear();
 }
 
 export function registerEscapeHandler(): void {
@@ -908,21 +919,21 @@ async function togglePrio(id: string): Promise<void> {
   await refresh();
 }
 
-async function deleteItemConfirm(it: MemoItem): Promise<void> {
-  // 三段式确认框：标题 + 问句（名称「」引号）+ 后果说明（删除已接撤销，后果如实说明）
-  // className：流程框挂 body，须显式带皮肤类才与编辑弹窗同皮（issue 291 全域子弹窗统一）
-  const ok = await openFlowDialog({
-    title: '删除备忘录',
-    message: `确定删除备忘录「${it.title}」吗？\n删除后可在通知中撤销。`,
-    className: skinClass(),
-    actions: [
-      { label: '取消', value: 'cancel' },
-      { label: '删除', value: 'delete', danger: true, cta: true },
-    ],
-  });
-  if (ok !== 'delete') return;
+async function deleteItemWithUndo(it: MemoItem): Promise<void> {
+  // memo2-consistency 旧-2（B7 全局删除口径定稿）：接 notifyUndo 的删除不再走
+  // openFlowDialog 二次确认——撤销兜底已覆盖误删风险，确认+撤销双保险只是多一次打断
+  // （belongings/clipbook/review/favorites 先行落地）。场景删除保留确认（批量迁移 +
+  // 写设置串影响面大，且其无撤销链，口径区分见旧-2）。
   try {
     const idx = await MemoData.deleteItem(it.id);
+    // memo2-func #11：条目已在盘上不存在（外部同步/双端同库先行删除、面板未刷新）——
+    // 此前照发 deleted 事件 + notifyUndo「已删除」，点撤销把陈旧快照插回头部复活外部刚删
+    // 的数据。idx=-1 跳过事件与撤销，提示并刷新。
+    if (idx === -1) {
+      notice('该备忘录已不存在，列表已刷新');
+      await refresh();
+      return;
+    }
     emitDomainEvent('memo', { kind: 'deleted', title: it.title });
     notifyUndo(`已删除备忘录「${it.title}」`, () => {
       void (async () => {
@@ -998,7 +1009,7 @@ function buildCardActions(it: MemoItem): ItemAction[] {
   });
   // 编辑紧贴删除之上；删除永远垫底（danger）
   actions.push({ icon: 'pencil', label: '编辑', title: '编辑', onClick: () => openEditor(it) });
-  actions.push({ icon: 'trash-2', label: '删除', title: '删除', kind: 'danger', onClick: () => void deleteItemConfirm(it) });
+  actions.push({ icon: 'trash-2', label: '删除', title: '删除', kind: 'danger', onClick: () => void deleteItemWithUndo(it) });
   return actions;
 }
 
@@ -1606,12 +1617,18 @@ async function deleteSceneConfirm(scene: string): Promise<void> {
     ],
   });
   if (ok !== 'delete') return;
+  let moved = 0;
   try {
-    if (count > 0) await MemoData.updateSceneBulk(scene, target);
+    moved = count > 0 ? await MemoData.updateSceneBulk(scene, target) : 0;
     await commitScenarios(others, `已删除场景「${scene}」`);
     if (M.activeScene === scene) M.activeScene = '全部';
     renderAll();
   } catch (e) {
+    // memo2-func #12：两段写非原子——设置串写失败时条目已迁入目标场景而场景列表仍旧名，
+    // 条目挂进「不可达」场景。失败分支反向迁移补偿（重命名同款）。
+    if (moved > 0) {
+      try { await MemoData.updateSceneBulk(target, scene); } catch { /* 补偿失败仅留痕，抛原错误 */ }
+    }
     notifySaveError(e, '删除场景');
     console.error(e);
   }
