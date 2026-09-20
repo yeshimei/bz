@@ -10,7 +10,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { notice } from '../core/notice';
 import { M, resetBookshelfState, applyDefaultView } from './state';
 import { currentSideItems } from './shared';
-import { resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';
+import { isBookshelfPath, resolveFolderPath, rebuildItems, WEAVE_DATA_FILE } from './data';
 import {
   createOverlay, closeOverlay, registerEscapeHandler, unregisterEscapeHandler,
   renderAll, refreshReportView, openReportView, showView,
@@ -42,8 +42,10 @@ function registerAutoRefresh(app: App): void {
   autoRefreshRegistered = true;
   let timer: ReturnType<typeof setTimeout> | null = null;
   const schedule = (file: { path?: string }) => {
+    // 收录谓词单源（深审 RR-A1/RR-F7）：isBookshelfPath 含「目录本身是单个 md 笔记」形态——
+    // 旧过滤只认目录前缀，单文件书库（书库.md）写盘面板不刷新（收录两侧认、刷新通道不认）
     if (file && file.path && !file.path.endsWith(WEAVE_DATA_FILE)
-      && !file.path.startsWith(resolveFolderPath() + '/')) return;
+      && !isBookshelfPath(file.path, resolveFolderPath())) return;
     if (timer) clearTimeout(timer);
     timer = setTimeout(() => {
       if (!M.currentOverlay) return;

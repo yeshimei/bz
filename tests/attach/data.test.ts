@@ -5,7 +5,7 @@
  * 本层只测「解析引用 / 解析目标 / 收集资源 / 去重命名」。
  */
 import { describe, it, expect } from 'vitest';
-import { parseLinkRefs, resolveTarget, collectResources, planMoves } from '../../src/attach/data';
+import { parseLinkRefs, resolveTarget, collectResources, collectResourcesCached, planMoves, stripNonLinkSegments } from '../../src/attach/data';
 
 describe('parseLinkRefs', () => {
   it('解析 wikilink 嵌入/链接，含别名与标题/块锚点后缀', () => {
@@ -108,5 +108,115 @@ describe('planMoves', () => {
   });
   it('冲突号递增到可用', () => {
     expect(planMoves(['a/x.png'], '附件', ['a/x.png', '附件/x.png', '附件/x (1).png', 'n.md'])[0].toName).toBe('x (2).png');
+  });
+  it('AT1 常态口径：冲突集含文件夹路径——目标同名（子）文件夹占位时同样改名避让', () => {
+    // allPaths 里的 '附件/a.png' 既可能是文件也可能是文件夹路径（listAllFilePaths 混入），
+    // planMoves 一视同仁避让——此前只含文件时 renameFile 撞文件夹抛错计失败
+    const ops = planMoves(['n/a.png'], '附件', ['n/a.png', '附件/a.png']);
+    expect(ops).toEqual([{ fromPath: 'n/a.png', toPath: '附件/a (1).png', toName: 'a (1).png', renamed: true }]);
+  });
+});
+
+describe('stripNonLinkSegments（AF-1 围栏/注释剥离单源）', () => {
+  it('fenced code（``` 与 ~~~）整段剥离', () => {
+    expect(stripNonLinkSegments('前\n```\n![[a.png]]\n```\n后 [[b.png]]')).toBe('前\n\n后 [[b.png]]');
+    expect(stripNonLinkSegments('前\n~~~\n[[t.png]]\n~~~\n后')).toBe('前\n\n后');
+    // 缩进围栏与未闭合围栏（到文末）
+    expect(stripNonLinkSegments('  ```\n![[a.png]]')).not.toContain('![[a.png]]');
+  });
+  it('inline code 成对反引号段剥离；孤立反引号保留', () => {
+    const out = stripNonLinkSegments('`![[c.png]]` 与 [[b.png]]');
+    expect(out).not.toContain('![[c.png]]');
+    expect(out).toContain('与 [[b.png]]');
+    expect(stripNonLinkSegments('`` `[[x.png]]` `` 尾')).not.toContain('[[x.png]]');
+    expect(stripNonLinkSegments("it's [[b.png]]")).toContain('[[b.png]]');
+  });
+  it('HTML 注释整段剥离（跨行）', () => {
+    expect(stripNonLinkSegments('<!-- ![[a.png]] -->\n[[b.png]]')).toBe('\n[[b.png]]');
+    expect(stripNonLinkSegments('前 <!-- 多行\n![[a.png]]\n注释 --> 后 [[b.png]]')).toContain('[[b.png]]');
+  });
+  it('frontmatter 段保留（frontmatter 链接是真机 cache 承认的真引用）', () => {
+    const fm = '---\ntitle: 笔记\nbanner: "[[fm图.png]]"\n---\n正文 ![[真.png]]';
+    expect(stripNonLinkSegments(fm)).toContain('[[fm图.png]]');
+    expect(stripNonLinkSegments(fm)).toContain('![[真.png]]');
+  });
+});
+
+describe('AF-1：代码块/HTML 注释内引用不收集（正则兜底口径）', () => {
+  const files = ['模板图.png', '真.png', 'c.png', '内联.png', 'fm图.png', 't.png', 'a.png'];
+  it('fenced code 内 ![[x.png]] 不收集、正文真引用照常收集', () => {
+    const out = collectResources('示例：\n```\n![[模板图.png]]\n```\n完 ![[真.png]]', files, 'n.md');
+    expect(out).toEqual(['真.png']);
+  });
+  it('inline code 内引用不收集', () => {
+    expect(collectResources('`![[内联.png]]` 与 ![[真.png]]', files, 'n.md')).toEqual(['真.png']);
+  });
+  it('HTML 注释内引用不收集', () => {
+    expect(collectResources('<!-- ![[c.png]] --> ![[真.png]]', files, 'n.md')).toEqual(['真.png']);
+  });
+  it('frontmatter 内链接仍收集', () => {
+    const fm = '---\nbanner: "[[fm图.png]]"\n---\n正文 ![[真.png]]';
+    expect(collectResources(fm, files, 'n.md').sort()).toEqual(['fm图.png', '真.png']);
+  });
+  it('混合场景收集集恰为正文真引用集（~~~ 围栏 + inline + 注释 + 正文）', () => {
+    const content = [
+      '---',
+      'banner: "[[fm图.png]]"',
+      '---',
+      '![[真.png]] 与 [[a.png]]',
+      '~~~',
+      '[[t.png]]',
+      '~~~',
+      '`![[内联.png]]`',
+      '<!-- ![[c.png]] -->',
+    ].join('\n');
+    expect(collectResources(content, files, 'n.md').sort()).toEqual(['a.png', 'fm图.png', '真.png']);
+  });
+});
+
+describe('AF-2：链接解析大小写不敏感档（Obsidian 链接解析语义）', () => {
+  it('精确大小写敏感优先命中', () => {
+    expect(resolveTarget(['a.png', 'A.png'], 'a.png', 'n.md', 'wiki')).toBe('a.png');
+    expect(resolveTarget(['a.png', 'A.png'], 'A.png', 'n.md', 'wiki')).toBe('A.png');
+  });
+  it('大小写不同形未精确命中 → 不敏感档唯一命中', () => {
+    expect(resolveTarget(['img.png'], 'IMG.PNG', 'n.md', 'wiki')).toBe('img.png');
+    expect(resolveTarget(['a/Photo.PNG'], 'photo.png', 'n.md', 'md')).toBe('a/Photo.PNG');
+  });
+  it('扩展名推断不敏感档：[[IMG]] → img.png', () => {
+    expect(resolveTarget(['img.png'], 'IMG', 'n.md', 'wiki')).toBe('img.png');
+  });
+  it('不敏感档多命中维持 null 消歧口径（敏感零命中 + 不敏感多处同名不误搬）', () => {
+    expect(resolveTarget(['b/foo.png', 'c/FOO.PNG'], 'Foo', 'n.md', 'wiki')).toBeNull();
+    // 敏感档唯一命中优先采信（不涉不敏感档多命中的既有消歧行为不回退）
+    expect(resolveTarget(['b/foo.png', 'c/FOO.PNG'], 'FOO', 'n.md', 'wiki')).toBe('c/FOO.PNG');
+  });
+  it('basename 兜底同步不敏感（精确优先原则不变；扩展名推断形态）', () => {
+    expect(resolveTarget(['b/foo.PNG'], 'FOO', 'n.md', 'wiki')).toBe('b/foo.PNG');
+    // 敏感档唯一命中优先于不敏感档（'x' 只敏感命中 b/x.png，不涉不敏感档）
+    expect(resolveTarget(['b/x.png', 'c/X.PNG'], 'x.png', 'n.md', 'wiki')).toBe('b/x.png');
+  });
+  it('端到端：大小写 wikilink 引用可收集（此前漏搬）', () => {
+    expect(collectResources('![[IMG.PNG]]', ['img.png'], 'n.md')).toEqual(['img.png']);
+  });
+});
+
+describe('collectResourcesCached（ARCH-1 cache 主路径）', () => {
+  it('cache linktext 双档解析：wiki 短路径 + md 无前缀相对 + 百分号编码', () => {
+    const files = ['a/img.png', 'notes/assets/b.png', 'notes/My Image.png', 'notes/n.md'];
+    const links = ['img', 'assets/b.png', 'My%20Image.png'];
+    expect(collectResourcesCached(links, files, 'notes/n.md').sort()).toEqual(
+      ['a/img.png', 'notes/My Image.png', 'notes/assets/b.png'].sort()
+    );
+  });
+  it('wiki 后缀（|别名 #标题 ^锚）与 md url # 锚显式剥除', () => {
+    const files = ['a/b.png', 'docs/手册.pdf'];
+    expect(collectResourcesCached(['a/b.png|别名', 'a/b.png#图', 'a/b.png^ref', 'docs/手册.pdf#page=3'], files, 'n.md').sort()).toEqual([
+      'a/b.png',
+      'docs/手册.pdf',
+    ]);
+  });
+  it('断链丢弃；.md 目标不收；空串跳过', () => {
+    expect(collectResourcesCached(['ghost.png', 'n2', ''], ['n2.md'], 'n.md')).toEqual([]);
   });
 });

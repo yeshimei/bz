@@ -9341,6 +9341,20 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 同名冲突将改名的目标路径用警告色提示（数据语义状态色） */
 .bz-attach-preview-to--renamed { color: var(--bz-warning); }
 .bz-attach-preview-badge { flex-shrink: 0; align-self: center; }
+
+/* 全选/全不选工具条（EFF-2）：文字钮，取值随组件库 token */
+.bz-attach-preview-tools { display: flex; gap: var(--bz-space-sm); margin-top: var(--bz-space-xs); }
+.bz-attach-preview-toggle {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: var(--bz-font-caption);
+  color: var(--bz-text-2);
+  cursor: pointer;
+}
+.bz-attach-preview-toggle:hover { color: var(--bz-text-1); text-decoration: underline; }
+/* 大清单渲染护栏提示（RENDER_LIMIT，EFF-2）：全量口径说明行 */
+.bz-attach-preview-more { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; }
 /* ==================== 保险库域样式（src/encrypt/styles.css） ==================== */
 /* ==================== 加密保险库（encrypt，ticket NN：移出式清单容器加密） ==================== */
 /* 遮罩统一 --bz-overlay + token 毛玻璃 --bz-overlay-blur（memo item-1789106289860 拍板全仓遮罩采用毛玻璃，推翻原 §5.2「明确不采用」口径） */
@@ -15412,14 +15426,41 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: inline-flex; align-items: center; gap: 6px;
   font-size: var(--bz-font-label); font-weight: var(--bz-weight-semibold); color: var(--bz-text-1);
 }
-/* 报告视图关闭钮仅移动端（拍板：桌面靠左栏「‹ 返回书架」导航返回，对齐面板范式） */
-.bz-rr-close { display: none; }
-@media (max-width: 768px) {
-  .bz-rr-close { display: inline-flex; }
+/* 深审 RR-U1/EFF-1：返回钮桌面/移动恒可见——旧拍板的「桌面靠面板内导航返回」前提已随
+ * 书脊墙换血退役（该导航不存在），头行返回钮 = 全宽度唯一面板内返回出口（markup 归宿主 render.ts） */
+.bz-rr-close {
+  display: inline-flex;
 }
 .bz-rr-content {
   flex: 1; min-height: 0; overflow-y: auto;
   padding: var(--bz-space-xs) var(--bz-space-lg) var(--bz-space-lg);
+}
+
+/* 深审 EFF-5：报告态隐藏书架 chrome 死控件簇（检索/排序/状态+分类标签/hint——
+ * 这些控件只刷隐藏墙，报告视图点了零反馈；本条在域内生效，宿主 ui 不动。
+ * 匾额保留：移动端「书库」匾是唯一的收面板出口） */
+.bz-bs-wallpage:has(.bz-bs-view-report.active) .bz-bs-labels,
+.bz-bs-wallpage:has(.bz-bs-view-report.active) .bz-bs-tools {
+  display: none;
+}
+
+/* 深审 RR-U10/C-2：骨架与错误占位静态样式收编（原 index.ts 内联 style） */
+.bz-rr-skeleton {
+  text-align: center;
+  padding: 48px 0;
+  color: var(--text-muted);
+}
+
+.bz-rr-error {
+  padding: 24px 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.bz-rr-error-title {
+  font-size: 1.2em;
+  margin-bottom: 8px;
+  color: var(--text-normal);
 }
 
 .bz-rr-hm-cell {
@@ -15428,8 +15469,10 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 2px;
 }
 
+/* 深审 RR-U4/EFF-9：数据格不可点——撤掉 cursor:pointer 伪装可供性（点击无行为）；
+   position:relative 让 hover 放大的 z-index 真正生效（放大格不再被相邻格压边） */
 .bz-rr-hm-cell--data {
-  cursor: pointer;
+  position: relative;
   transition: all var(--bz-dur-base) ease;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
@@ -15480,6 +15523,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* 深审 RR-U11：去 104px 固定宽的移动端截断——窄屏允许标签换行，时段区间信息不丢 */
+@media (max-width: 768px) {
+  .bz-rr-bar-label {
+    flex-basis: auto;
+    white-space: normal;
+  }
 }
 
 /* 条形行轨道基线走样式库 .bz-progress（--lg 8px 档，填充 i 内联宽/数据语义色）；域内只留行内撑满 */
@@ -15694,10 +15745,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   margin: 25px 0;
 }
 
-.bz-rr-block {
-  margin: 20px 0;
-}
-
 .bz-rr-empty {
   text-align: center;
   color: var(--text-muted);
@@ -15781,13 +15828,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   margin-bottom: 16px;
-}
-
-/* 专注度对比空占位块（原样保留结构） */
-.bz-rr-block-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
 }
 
 /* ---------- 渐变统计卡（hero：饱和渐变底 + 白字，两主题可读不加 dark 档） ---------- */
@@ -16148,8 +16188,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   border-radius: 8px;
 }
 
+/* 深审 RR-U11：60px 固定宽必折行（「碎片化 (<10分钟)」约需 100px+）——改自然宽，
+   长标签一行放下，轨道不再错位 */
 .bz-rr-focus-label {
-  width: 60px;
+  flex: 0 0 auto;
+  min-width: 60px;
   font-size: 0.85em;
   color: var(--text-normal);
   font-weight: bold;
@@ -16218,7 +16261,6 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   gap: 3px;
-  margin-right: -20px;
 }
 
 /* 空白格（future/nodata 主题中性底；数据格色阶运行时取色仍内联） */

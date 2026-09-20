@@ -10,7 +10,7 @@ import { setSettingsProvider } from '../../src/core/settings-provider';
 import { M, resetBookshelfState } from '../../src/bookshelf/state';
 import {
   scanMarkdownBooks, loadEpubItems, resolveFolderPath, resolveBookTag, formatReadingTime,
-  rebuildItems,
+  rebuildItems, isBookshelfPath,
 } from '../../src/bookshelf/data';
 // 深审 arch A1：data.ts 不再依赖渲染纯层（读 M 的状态包装迁 ui.ts）——
 // 数据层测试改断言纯管道形态（显式入参，语义等价）
@@ -329,5 +329,18 @@ describe('bookshelf 数据层', () => {
     release(weaveJson);
     await p1;
     expect(M.items.map((i) => i.title).sort()).toEqual(['A', 'B', 'E书']);
+  });
+
+  it('深审 RR-A1/RR-F7：收录谓词单源 isBookshelfPath——目录前缀/目录本身单文件/库外三形态', () => {
+    const folder = resolveFolderPath(); // 缺省回落「书库」
+    expect(folder).toBe('书库');
+    // 目录前缀
+    expect(isBookshelfPath('书库/A.md', folder)).toBe(true);
+    expect(isBookshelfPath('书库/子/嵌套.md', folder)).toBe(true);
+    // 目录本身是单个 md 笔记（RR-F7：旧刷新通道漏此形态）
+    expect(isBookshelfPath('书库.md', folder)).toBe(true);
+    // 库外（含同名前缀目录陷阱）
+    expect(isBookshelfPath('Inbox/笔记.md', folder)).toBe(false);
+    expect(isBookshelfPath('书库别馆/A.md', folder)).toBe(false);
   });
 });

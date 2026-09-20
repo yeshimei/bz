@@ -91,7 +91,7 @@ _Avoid_: EPUB 电子书条目——指聚合列表中的书目条目（不要与
 
 **Weave 数据路径**: bz 设置中指向 Weave 阅读数据文件（`weave-data.json`）所在数据路径的设置项；书库据此读取 EPUB 书目数据。Weave 未启用或路径失效时 EPUB 条目静默缺省，markdown 部分照常。
 
-**阅读数据分析报告 (Reading Analytics, ADR-0091 内嵌化)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。自 ADR-0013 扩展起报告并入 EPUB 书目（全库 weave 书、不筛目录；缺字段按报告口径补齐后并入同一张报告）。**ADR-0091（2026-09-04）读书报告内嵌化**：独立弹窗退役，报告改为书库面板内视图（`M.view='shelf'|'report'`，reading-report 域只保留 stats/report 纯函数 + 面板内容区渲染器 index.ts）——命令 `bz-reading-report-open`（id/名称不变）= 打开书库面板并切报告视图（home 报告卡/剪藏本深链/书架左栏入口同一去向）；左栏报告入口与移动头行报告钮面板内互切、报告视图左栏变「‹ 返回书架」（桌面返回路径）、视图内关闭钮仅移动端；报告内点作者行回书架预填搜索、点分类行回书架预填分类筛（原跨面板深链作废）；统计口径只算书库目录（bookshelfFolderPath 回落链，库外 book 标签笔记不混入）；时段/分类/互动环形图升级水平条形行（core/chart-palette 粉彩系列）、热力图段头 ‹ › 翻月（去 slice(0,1)）、年卡点击展开该年 12 月柱（getYearMonthBars 与趋势月柱共用 generateMonthBarColumns）；报告视图存续期间书库变化自动重算只更新内容区；分片渲染/progress toast/错误人话化机制保留，cancelReadingReport 在切视图/关面板/卸载三路收口；空库空态带「去书库添加」主按钮；🧮/❌/🏆 emoji 换 lucide。
+**阅读数据分析报告 (Reading Analytics, ADR-0091 内嵌化)**: 基于 metadataCache 统计的阅读报告生成器（年度统计、热力图、习惯分析等），无 __utils 依赖。自 ADR-0013 扩展起报告并入 EPUB 书目（全库 weave 书、不筛目录；缺字段按报告口径补齐后并入同一张报告）。**ADR-0091（2026-09-04）读书报告内嵌化**：独立弹窗退役，报告改为书库面板内视图（`M.view='shelf'|'report'`，reading-report 域只保留 stats/report 纯函数 + 面板内容区渲染器 index.ts）——命令 `bz-reading-report-open`（id/名称不变）= 打开书库面板并切报告视图（home 报告卡/剪藏本深链/书架左栏入口同一去向）；左栏报告入口与移动头行报告钮面板内互切、报告视图右上角「返回书库」钮桌面+移动恒可见（2026-09-20 深审批终态：原「左栏返回入口/关闭钮仅移动端」随左栏退役作废）；报告内点作者行回书架预填搜索、点分类行回书架预填分类筛（原跨面板深链作废）；统计口径只算书库目录（bookshelfFolderPath 回落链，库外 book 标签笔记不混入）；时段/分类/互动环形图升级水平条形行（core/chart-palette 粉彩系列）、热力图段头 ‹ › 翻月（去 slice(0,1)）、年卡点击展开该年 12 月柱（getYearMonthBars 与趋势月柱共用 generateMonthBarColumns）；报告视图存续期间书库变化自动重算只更新内容区；分片渲染/progress toast/错误人话化机制保留，cancelReadingReport 在切视图/关面板/卸载三路收口；空库空态带「去书库添加」主按钮；🧮/❌/🏆 emoji 换 lucide。
 
 **EPUB 读书笔记**: 书库 EPUB 条目的读书笔记弹窗——划线（`text`）+ 想法（`commentText`）按章节（`chapterTitle`，缺省「第 N 章」）分组的只读视图。单击封面打开；双击划线块经 `weave-cfi` 深链跳回原书；长按内容编辑想法、长按日期删除划线（见「EPUB 想法编辑」）。
 _Avoid_: 与 markdown 读书笔记（读 `我的/读书笔记` 笔记文件建树）混淆——EPUB 版直接读 weave-data
@@ -292,7 +292,7 @@ _Avoid_: 垃圾文件、残留密文（指本域时）
 
 **自愈回滚 (Self-heal Rollback)**: 提交式加密的崩溃自我修复——解锁时对挂起标记仍在的条目判定「半提交」：把已搬入的镜像移回暂存区、丢弃该条目并清空标记与暂存。因原文件在提交完成前从不删除，回滚永远安全、不产生密文孤儿（ADR-0018）。
 
-**附件搬移 (Move Attachments)**: 命令 `bz-attach-move`（中文名「移动附件」）的语义——把当前笔记引用的附件移动到指定文件夹：弹文件夹选择器选目标（记忆上次 `attachLastFolder`）；**仅当目标文件夹已存在同名文件时才给被移动文件改名**（`原名 (N).ext`，Obsidian 同名惯例）；**不删除原空目录**、**无预览确认直接执行**；结束后 toast 汇总（移动/改名/失败数）。移动与链接更新走 Obsidian 内建 `app.fileManager.renameFile`。目标文件夹为 vault 内任意目录。
+**附件搬移 (Move Attachments)**: 命令 `bz-attach-move`（中文名「移动附件」）的语义——把当前笔记引用的附件移动到指定文件夹：弹文件夹选择器选目标（记忆上次 `attachLastFolder`）；**仅当目标文件夹已存在同名文件时才给被移动文件改名**（`原名 (N).ext`，Obsidian 同名惯例）；**不删除原空目录**；**预览确认弹窗**（可勾选清单 + 全选/全不选 + 300 条渲染护栏 + 脏关闭拦截 + Ctrl/⌘+Enter 确认，2026-09-20 深审批终态，原「无预览确认直接执行」表述作废）；支持执行中「中止」（已移动部分照常汇总+可撤销）；结束后 toast 汇总（移动/改名/失败数，失败附明细可重试补搬）。移动与链接更新走 Obsidian 内建 `app.fileManager.renameFile`。目标文件夹为 vault 内任意目录。
 _Avoid_: 搬附件、整理附件、资源整理
 
 **链接改写 (Link Rewrite)**: 附件搬移全库引用被移动附件的 wikilink / Markdown 链接自动更新，由 **Obsidian 内建 `app.fileManager.renameFile`** 完成（ADR-0014）——移动文件的同时按 Obsidian 自身消歧规则更新全库指向它的链接，插件不自研全库改写（v1 自研全库扫描 + 逐个 modify 因大库卡顿弃用）。插件自研解析逻辑仅用于「收集当前笔记附件」与「算去重后的目标路径」。

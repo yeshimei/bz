@@ -74,7 +74,10 @@ describe('批 C-4：报告头行样式归位 reading-report', () => {
     for (const sel of ['.bz-rr-head', '.bz-rr-title', '.bz-rr-close', '.bz-rr-content']) {
       expect(rule(rr, sel), `缺 ${sel}`).not.toBeNull();
     }
-    expect(rr).toMatch(/@media \(max-width: 768px\)\s*\{\s*\.bz-rr-close\s*\{\s*display: inline-flex;/);
+    // 深审 RR-U1/EFF-1（bz-fix-rr-core）：旧拍板「仅移动端显示」前提失效（左栏导航随
+    // 书脊墙换血退役），返回钮桌面/移动恒可见——不再有 display:none 与移动端恢复档
+    expect(rr).toMatch(/\.bz-rr-close[^{]*\{[^}]*display: inline-flex;/);
+    expect(rr).not.toMatch(/\.bz-rr-close[^{]*\{[^}]*display: none;/);
     // bookshelf 侧不再寄存
     const bs = bsCss();
     expect(bs).not.toMatch(/\.bz-rr-head/);

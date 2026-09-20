@@ -42,7 +42,7 @@ let reportApp: App | null = null;
 
 const YIELD_MS = 50;
 
-/** 统计 toast 判据（审查修复批 体验⑪，与 reading-report 小数据量静默同口径）：
+/** 统计 toast 判据（审查修复批 体验⑪；reading-report 侧 2026-09-20 已改 QUIET_TOAST_MIN_BOOKS=500 静默档，两侧阈值口径独立不再互指）：
  *  readLog 不足该条数时聚合毫秒级完成，progress/完成双 toast 徒增噪音——弹层内骨架已给反馈。 */
 const QUIET_TOAST_MIN_ENTRIES = 500;
 

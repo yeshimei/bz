@@ -1,4 +1,4 @@
-/* 源指纹 3032b873996f0965 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a5bfdc7db383e09a · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/bookshelf/fake-sim.ts","prototypes/bookshelf/fake/fake-obsidian.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/index.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/bookshelf/fake-sim.ts → window.BZW_bookshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_bookshelf = (() => {
@@ -4798,6 +4798,9 @@ var BZW_bookshelf = (() => {
     const s = tryGetSettings();
     return typeof s.bookTag === "string" && s.bookTag.trim() ? s.bookTag.trim() : "book";
   }
+  function isBookshelfPath(path, folderPath) {
+    return path === `${folderPath}.md` || path.startsWith(`${folderPath}/`);
+  }
   function parseStatus(readingDate, completionDate) {
     if (readingDate && !completionDate) return "在读";
     if (readingDate && completionDate) return "已读";
@@ -4878,7 +4881,7 @@ var BZW_bookshelf = (() => {
         else if ((cur == null ? void 0 : cur.extension) === "md") files.push(cur);
       }
     } else {
-      files.push(...app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + "/") || f.path === folderPath + ".md"));
+      files.push(...app.vault.getMarkdownFiles().filter((f) => isBookshelfPath(f.path, folderPath)));
     }
     const items = [];
     for (const file of files) {
@@ -4930,6 +4933,17 @@ var BZW_bookshelf = (() => {
     if (!Number.isFinite(timestamp) || !timestamp) return null;
     return localDayKey(timestamp);
   }
+  function epubProgress(rawPercent) {
+    const raw = typeof rawPercent === "number" ? rawPercent : 0;
+    return raw > 1 ? Math.min(100, Math.round(raw)) : Math.round(Math.max(0, Math.min(1, raw)) * 100);
+  }
+  function epubCategory(meta) {
+    const subjects = Array.isArray(meta == null ? void 0 : meta.subjects) ? meta.subjects : [];
+    return typeof subjects[0] === "string" && subjects[0].trim() ? subjects[0].trim() : null;
+  }
+  function epubReadingDate(progress, lastReadTime) {
+    return progress > 0 ? toDateString(lastReadTime) : null;
+  }
   function buildEpubItem(app, aggregate) {
     var _a, _b, _c;
     const meta = aggregate == null ? void 0 : aggregate.meta;
@@ -4941,20 +4955,19 @@ var BZW_bookshelf = (() => {
     const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
     if (!vaultPath || !title) return null;
     const rawPercent = typeof ((_a = reading == null ? void 0 : reading.position) == null ? void 0 : _a.percent) === "number" ? reading.position.percent : 0;
-    const progress = rawPercent > 1 ? Math.min(100, Math.round(rawPercent)) : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+    const progress = epubProgress(rawPercent);
     const lastReadTime = Number.isFinite(stats == null ? void 0 : stats.lastReadTime) ? stats.lastReadTime : 0;
     const completedTime = Number.isFinite(stats == null ? void 0 : stats.completedTime) ? stats.completedTime : 0;
     const totalReadTimeMs = Number.isFinite(stats == null ? void 0 : stats.totalReadTime) ? stats.totalReadTime : 0;
-    const readingDate = progress > 0 ? toDateString(lastReadTime) : null;
+    const readingDate = epubReadingDate(progress, lastReadTime);
     const completionDate = toDateString(completedTime);
     const vaultFile = (_c = (_b = app == null ? void 0 : app.vault) == null ? void 0 : _b.getAbstractFileByPath) == null ? void 0 : _c.call(_b, vaultPath);
-    const subjects = Array.isArray(meta == null ? void 0 : meta.subjects) ? meta.subjects : [];
-    const epubCategory = typeof subjects[0] === "string" && subjects[0].trim() ? subjects[0].trim() : null;
+    const epubCategoryValue = epubCategory(meta);
     return {
       file: vaultFile instanceof TFile ? vaultFile : null,
       title,
       author: typeof (meta == null ? void 0 : meta.author) === "string" && meta.author.trim() ? meta.author.trim() : "未知作者",
-      category: epubCategory,
+      category: epubCategoryValue,
       cover: resolveEpubCoverPath(app, meta),
       bookReview: null,
       readingDate,
@@ -5278,12 +5291,34 @@ var BZW_bookshelf = (() => {
     return { mask, popup, close };
   }
 
+  // src/core/chart-palette.ts
+  var CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
+  var CHART_FALLBACK = "#95a5a6";
+  var CHART_HIGHLIGHT = "#FFE5CC";
+  var CHART_AUTHOR_RANK_COLORS = ["#ffd700", "#c0c0c0", "#cd7f32", "#3498db", "#9b59b6"];
+  var CHART_RANK_FALLBACK_DEEP = "#7f8c8d";
+  var CHART_FOCUS_SERIES = ["#ff6b6b", "#ff9ff3", "#feca57", "#48dbfb", "#1dd1a1"];
+  var CHART_HEATMAP_SERIES = [
+    "var(--background-secondary)",
+    "#9be9a8",
+    "#40c463",
+    "#30a14e",
+    "#216e39"
+  ];
+
   // src/reading-report/stats.ts
   function mapWeaveSessionToReport(session) {
-    const start = typeof (session == null ? void 0 : session.start) === "number" ? session.start : 0;
+    const rawStart = session == null ? void 0 : session.start;
+    const start = typeof rawStart === "number" && Number.isFinite(rawStart) && rawStart > 0 ? rawStart : null;
+    if (start === null) return null;
     const end = typeof (session == null ? void 0 : session.end) === "number" ? session.end : start;
     const durationSeconds = typeof (session == null ? void 0 : session.durationSeconds) === "number" ? Math.round(session.durationSeconds) : 0;
-    return { start, end, duration: durationSeconds };
+    return {
+      start,
+      end,
+      duration: durationSeconds,
+      type: end > start && durationSeconds > 0 ? "completed" : void 0
+    };
   }
   function toIsoDate(timestamp) {
     if (!Number.isFinite(timestamp) || !timestamp) return null;
@@ -5300,12 +5335,11 @@ var BZW_bookshelf = (() => {
     const vaultPath = typeof (fileRef == null ? void 0 : fileRef.vaultPath) === "string" ? fileRef.vaultPath.trim() : "";
     const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
     if (!vaultPath || !title) return null;
-    const rawPercent = typeof ((_a = reading == null ? void 0 : reading.position) == null ? void 0 : _a.percent) === "number" ? reading.position.percent : 0;
-    const progress = rawPercent > 1 ? Math.min(100, Math.round(rawPercent)) : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+    const progress = epubProgress((_a = reading == null ? void 0 : reading.position) == null ? void 0 : _a.percent);
     const wordCount = typeof (meta == null ? void 0 : meta.wordCount) === "number" && meta.wordCount > 0 ? meta.wordCount : 0;
     const pages = Math.floor(wordCount / 500);
     const sessions = Array.isArray(reading == null ? void 0 : reading.sessions) ? reading.sessions : [];
-    const readingDate = (stats == null ? void 0 : stats.lastReadTime) ? toIsoDate(stats.lastReadTime) : null;
+    const readingDate = epubReadingDate(progress, stats == null ? void 0 : stats.lastReadTime);
     return {
       file: {
         path: vaultPath,
@@ -5315,10 +5349,11 @@ var BZW_bookshelf = (() => {
       frontmatter: {
         title,
         author: typeof (meta == null ? void 0 : meta.author) === "string" && meta.author.trim() ? meta.author.trim() : "未知作者",
-        category: "未分类",
+        // ADR-0099 subjects 通道（RR-F1）：与书架墙同源回落，无 subjects 才归「未分类」
+        category: epubCategory(meta) || "未分类",
         readingProgress: progress,
         readingTime: typeof (stats == null ? void 0 : stats.totalReadTime) === "number" ? stats.totalReadTime : 0,
-        readingSessions: sessions.map(mapWeaveSessionToReport),
+        readingSessions: sessions.map(mapWeaveSessionToReport).filter((s) => s !== null),
         readingDate,
         completionDate: toIsoDate(stats == null ? void 0 : stats.completedTime),
         highlights: Array.isArray(notes == null ? void 0 : notes.highlights) ? notes.highlights.length : 0,
@@ -5347,7 +5382,7 @@ var BZW_bookshelf = (() => {
     const bookNotes = [];
     for (const file of files) {
       try {
-        if (file.path !== `${folderPath}.md` && !file.path.startsWith(`${folderPath}/`)) continue;
+        if (!isBookshelfPath(file.path, folderPath)) continue;
         const cache = app.metadataCache.getFileCache(file);
         if (!cache || !cache.frontmatter) continue;
         const tags = cache.frontmatter.tags;
@@ -5401,7 +5436,9 @@ var BZW_bookshelf = (() => {
       totalOutlinks: 0,
       monthlyStats: {},
       yearlyStats: {},
-      authorStats: {},
+      // RR-F8：用户数据（author/category）直接做键——用无原型空对象防 `constructor`/
+      // `__proto__` 键命中 Object.prototype 后把 count++ 写上全局原型（原型污染可达面）
+      authorStats: /* @__PURE__ */ Object.create(null),
       readingSessions: [],
       progressDistribution: {
         unread: 0,
@@ -5420,10 +5457,12 @@ var BZW_bookshelf = (() => {
     books.forEach((book, index) => {
       try {
         const fm = book.frontmatter;
-        const readingProgress = parseFloat(fm.readingProgress) || 0;
-        const readingTime = parseFloat(fm.readingTime) || 0;
-        if (fm.readingSessions && Array.isArray(fm.readingSessions)) {
-          stats.readingSessions = stats.readingSessions.concat(fm.readingSessions).filter((d) => d.duration > 60);
+        const readingProgress = Math.max(0, Math.min(100, parseFloat(fm.readingProgress) || 0));
+        const readingTime = parseReadingTimeMs(fm);
+        if (Array.isArray(fm.readingSessions)) {
+          for (const d of fm.readingSessions) {
+            if (d.duration > 60) stats.readingSessions.push(d);
+          }
         }
         if (fm.readingDate && fm.completionDate) {
           stats.readBooks++;
@@ -5501,23 +5540,13 @@ var BZW_bookshelf = (() => {
     return stats;
   }
   function formatReadingTime2(milliseconds) {
-    const totalSeconds = Math.floor(milliseconds / 1e3);
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor(totalSeconds % 3600 / 60);
+    const totalMinutes = Math.floor(milliseconds / 6e4);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
     if (hours > 0) {
-      return `${hours}h${minutes > 0 ? `${minutes}m` : ""}`;
-    } else {
-      return `${minutes}m`;
+      return minutes > 0 ? `${hours}小时${minutes}分钟` : `${hours}小时`;
     }
-  }
-  function formatSessionDuration(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    if (hours > 0) {
-      return `${hours}小时${minutes % 60}分钟`;
-    } else {
-      return `${minutes}分钟`;
-    }
+    return `${minutes}分钟`;
   }
   function analyzeReadingSessions(sessions) {
     const totalSessions = sessions.length;
@@ -5536,34 +5565,11 @@ var BZW_bookshelf = (() => {
   }
   function analyzeReadingHabits(sessions) {
     const stats = analyzeReadingSessions(sessions);
-    const avgDuration = stats.avgDuration;
-    let readingPattern = "";
-    if (avgDuration < 600) readingPattern = "碎片化阅读 (短时间多次)";
-    else if (avgDuration < 1800) readingPattern = "均衡型阅读";
-    else readingPattern = "深度沉浸式阅读";
-    const longSessions = sessions.filter((s) => s.duration > 1800).length;
-    const focusPercentage = (longSessions / sessions.length * 100).toFixed(1);
-    let focusLevel = "";
-    if (parseFloat(focusPercentage) > 50) focusLevel = "高度专注";
-    else if (parseFloat(focusPercentage) > 25) focusLevel = "中等专注";
-    else focusLevel = "轻度专注";
     const timeDistribution = {};
     Object.entries(stats.timeSlots).forEach(([slot, count]) => {
       timeDistribution[slot] = (count / sessions.length * 100).toFixed(1);
     });
-    const peakTime = Object.entries(stats.timeSlots).reduce((a, b) => a[1] > b[1] ? a : b)[0];
-    const peakLabels = {
-      morning: "早晨时段最活跃",
-      afternoon: "下午时段最活跃",
-      evening: "晚间时段最活跃",
-      night: "深夜时段最活跃"
-    };
-    return {
-      readingPattern,
-      focusLevel: `${focusLevel} (${focusPercentage}%长时间会话)`,
-      peakTime: peakLabels[peakTime],
-      timeDistribution
-    };
+    return { timeDistribution };
   }
   function getMonthlyTrendData(stats) {
     const monthlyEntries = Object.entries(stats.monthlyStats).sort((a, b) => a[0].localeCompare(b[0])).slice(-12);
@@ -5608,86 +5614,17 @@ var BZW_bookshelf = (() => {
     if (Math.abs(diff) < 0.5) return "→";
     return diff > 0 ? "↑" : "↓";
   }
-  function analyzeReadingTrends(stats, bookNotes, now = /* @__PURE__ */ new Date()) {
+  function analyzeReadingTrends(stats, now = /* @__PURE__ */ new Date()) {
     const monthlyData = getMonthlyTrendData(stats);
     const ascendingRecent = monthlyData.slice(-6);
     const recentMonths = [...ascendingRecent].reverse();
     return {
       recentMonths,
-      monthlyAvg: calculateMonthlyAverage(ascendingRecent),
       currentMonth: getCurrentMonthStats(ascendingRecent, now),
       quarterlyAvg: calculateQuarterlyAverage(ascendingRecent),
       completionRate: calculateCompletionRate(stats),
-      trendDirection: analyzeTrendDirection(ascendingRecent),
-      focusScore: calculateFocusScore(bookNotes),
-      focusLevel: getFocusLevel(bookNotes),
-      consistencyDays: calculateConsistencyDays(stats),
-      consistencyLevel: getConsistencyLevel(stats),
-      efficiency: calculateReadingEfficiency(stats, bookNotes),
-      recommendations: generatePracticalRecommendations(stats, bookNotes)
+      trendDirection: analyzeTrendDirection(ascendingRecent)
     };
-  }
-  function calculateFocusScore(bookNotes) {
-    const completedBooks = bookNotes.filter((book) => book.frontmatter.completionDate && book.frontmatter.readingTime);
-    if (completedBooks.length === 0) return 0;
-    let totalScore = 0;
-    completedBooks.forEach((book) => {
-      const pages = parseInt(book.frontmatter.pages) || 200;
-      const readingTime = parseFloat(book.frontmatter.readingTime) || 0;
-      const hours = readingTime / 36e5;
-      if (hours > 0) {
-        const pagesPerHour = pages / hours;
-        let score = Math.max(0, Math.min(100, (pagesPerHour - 20) / 40 * 100));
-        totalScore += score;
-      }
-    });
-    return Math.round(totalScore / completedBooks.length);
-  }
-  function getFocusLevel(bookNotes) {
-    const score = calculateFocusScore(bookNotes);
-    if (score >= 80) return "高度专注";
-    if (score >= 60) return "中等专注";
-    if (score >= 40) return "一般专注";
-    return "需要提升";
-  }
-  function calculateConsistencyDays(stats) {
-    const monthlyCount = Object.keys(stats.monthlyStats).length;
-    return Math.min(monthlyCount * 7, 30);
-  }
-  function getConsistencyLevel(stats) {
-    const days = calculateConsistencyDays(stats);
-    if (days >= 20) return "优秀";
-    if (days >= 10) return "良好";
-    return "待加强";
-  }
-  function calculateReadingEfficiency(stats, bookNotes) {
-    const completedBooks = bookNotes.filter((book) => book.frontmatter.completionDate);
-    const totalReadingTime = stats.totalReadingTime / 36e5;
-    const totalPages = bookNotes.reduce((sum, book) => sum + (parseInt(book.frontmatter.pages) || 0), 0);
-    return {
-      pagesPerHour: totalReadingTime > 0 ? (totalPages / totalReadingTime).toFixed(1) : "0.0",
-      notesPerBook: completedBooks.length > 0 ? (stats.totalHighlights / completedBooks.length).toFixed(1) : "0.0",
-      timePerBook: completedBooks.length > 0 ? (totalReadingTime / completedBooks.length).toFixed(1) : "0.0"
-    };
-  }
-  function generatePracticalRecommendations(stats, bookNotes) {
-    const recommendations = [];
-    const completionRate = parseFloat(calculateCompletionRate(stats));
-    if (completionRate < 50) {
-      recommendations.push("建议优先完成已开始的书籍，提高完成率");
-    }
-    const efficiency = calculateReadingEfficiency(stats, bookNotes);
-    if (parseFloat(efficiency.pagesPerHour) < 20) {
-      recommendations.push("阅读速度较慢，可以尝试提升阅读技巧");
-    }
-    if (calculateConsistencyDays(stats) < 15) {
-      recommendations.push("建立每日阅读习惯，保持连续性");
-    }
-    const focusScore = calculateFocusScore(bookNotes);
-    if (focusScore < 60) {
-      recommendations.push("提升阅读时的专注度，减少干扰");
-    }
-    return recommendations.length > 0 ? recommendations.join("；") : "您的阅读习惯很优秀，继续保持！";
   }
   function processHeatmapData(readingSessions) {
     const dailyData = {};
@@ -5784,19 +5721,7 @@ var BZW_bookshelf = (() => {
     return 0;
   }
   function getHeatmapColor(level) {
-    const colors = [
-      "var(--background-secondary)",
-      // 0级：无阅读（p1 主题中性色，暗色主题可读）
-      "#9be9a8",
-      // 1级：0.5-1小时
-      "#40c463",
-      // 2级：1-2小时
-      "#30a14e",
-      // 3级：2-4小时
-      "#216e39"
-      // 4级：4小时以上
-    ];
-    return colors[level] || colors[0];
+    return CHART_HEATMAP_SERIES[level] || CHART_HEATMAP_SERIES[0];
   }
   function analyzeReadingFocus(readingSessions, bookNotes) {
     if (!readingSessions || readingSessions.length === 0) {
@@ -5809,14 +5734,10 @@ var BZW_bookshelf = (() => {
     return {
       focusScore: calculateOverallFocusScore(sessionAnalysis, timeAnalysis, consistencyAnalysis),
       deepSessions: sessionAnalysis.deepSessions,
-      avgSessionTime: formatSessionDuration(sessionAnalysis.avgDuration),
       bestTimeSlot: timeAnalysis.bestTimeSlot,
       sessionDistribution: sessionAnalysis.distribution,
-      completionRate: sessionAnalysis.completionRate,
-      trend: trendAnalysis.trend,
       trendDescription: trendAnalysis.description,
       trendIcon: trendAnalysis.icon,
-      recommendations: generateFocusRecommendations(sessionAnalysis, timeAnalysis, consistencyAnalysis),
       consistencyScore: consistencyAnalysis.score,
       efficiencyScore: calculateEfficiencyScore(bookNotes)
     };
@@ -5982,32 +5903,10 @@ var BZW_bookshelf = (() => {
     });
     return Math.round(totalEfficiency / completedBooks.length);
   }
-  function generateFocusRecommendations(sessionAnalysis, timeAnalysis, consistencyAnalysis) {
-    const recommendations = [];
-    if (sessionAnalysis.avgDuration < 900) {
-      recommendations.push("尝试延长单次阅读时间至20-30分钟");
-    } else if (sessionAnalysis.avgDuration > 3600) {
-      recommendations.push("您的专注时长优秀，注意适当休息");
-    }
-    if (sessionAnalysis.completionRate < 60) {
-      recommendations.push("提高会话完成率，设定明确的阅读目标");
-    }
-    if (consistencyAnalysis.maxConsecutiveDays < 3) {
-      recommendations.push("建立每日固定阅读时段，培养连续性");
-    }
-    if (timeAnalysis.bestTimeSlot.includes("深夜")) {
-      recommendations.push("深夜阅读可能影响睡眠质量，建议调整时段");
-    }
-    if (recommendations.length === 0) {
-      return "您的阅读专注度表现优秀！继续保持良好的阅读习惯。";
-    }
-    return recommendations.slice(0, 3).join("；");
-  }
   function getDefaultFocusData() {
     return {
       focusScore: 50,
       deepSessions: 0,
-      avgSessionTime: "0分钟",
       bestTimeSlot: "暂无数据",
       sessionDistribution: [
         { type: "short", count: 0, percentage: 0 },
@@ -6016,11 +5915,8 @@ var BZW_bookshelf = (() => {
         { type: "deep", count: 0, percentage: 0 },
         { type: "intense", count: 0, percentage: 0 }
       ],
-      completionRate: 0,
-      trend: "暂无趋势",
       trendDescription: "需要更多阅读数据",
       trendIcon: "minus",
-      recommendations: "开始记录阅读会话以获得专注度分析",
       consistencyScore: 0,
       efficiencyScore: 0
     };
@@ -6050,82 +5946,29 @@ var BZW_bookshelf = (() => {
       efficiencyScore = 10;
       readingType = "扫描型";
     }
-    let recommendation;
-    if (avgPagesPerHour < 15) {
-      recommendation = "建议通过速读训练提高基础阅读速度，目标达到20-30页/小时";
-    } else if (avgPagesPerHour < 30) {
-      recommendation = "您的阅读速度适中，可以尝试不同的阅读技巧来进一步提升效率";
-    } else if (avgPagesPerHour < 50) {
-      recommendation = "优秀的阅读速度！继续保持并注意理解深度的平衡";
-    } else {
-      recommendation = "极佳的阅读速度！建议关注阅读质量与知识吸收效果";
-    }
-    const monthlyTrend = generateMonthlySpeedTrend(stats);
     return {
       speedLevel,
       speedPercentage,
       efficiencyScore,
       readingType,
-      recommendation,
-      monthlyTrend,
-      bestSpeed: Math.round(avgPagesPerHour * 1.2),
+      // 平均每本口径（总时长 ÷ 已读本数；标签在 report.ts 如实标「平均每本时长」）
       avgSessionTime: formatReadingTime2(stats.totalReadingTime / Math.max(stats.readBooks, 1))
     };
   }
-  function generateMonthlySpeedTrend(stats) {
-    const monthlyData = Object.entries(stats.monthlyStats || {}).sort((a, b) => a[0].localeCompare(b[0])).slice(-6);
-    if (monthlyData.length === 0) {
-      return '<div style="text-align: center; color: #666; padding: 20px 0;">暂无月度数据</div>';
-    }
-    const trendData = monthlyData.map(([month, data]) => {
-      const estimatedSpeed = 25 + Math.random() * 15;
-      return {
-        month: month.substring(5),
-        speed: Math.round(estimatedSpeed),
-        books: data.booksRead || 0
-      };
-    });
-    const maxSpeed = Math.max(...trendData.map((d) => d.speed));
-    return `
-  <div style="overflow-x: auto; margin: 8px 0;">
-  <div style="display: flex; gap: 8px; min-width: ${trendData.length * 80}px; padding: 8px 0;">
-  ${trendData.map((data) => {
-      const height = data.speed / maxSpeed * 40;
-      return `
-    <div style="flex: 1; display: flex; flex-direction: column; align-items: center;">
-    <div style="font-size: 11px; color: #666; margin-bottom: 4px;">${data.month}月</div>
-    <div style="width: 100%; height: 40px; display: flex; align-items: end; justify-content: center;">
-    <div style="width: 80%; height: ${height}px; background: linear-gradient(to top, #667eea, #764ba2); border-radius: 2px 2px 0 0;"></div>
-    </div>
-    <div style="font-size: 12px; font-weight: 600; color: #2c3e50; margin-top: 4px;">${data.speed}</div>
-    <div style="font-size: 10px; color: #999;">${data.books}本</div>
-    </div>
-    `;
-    }).join("")}
-  </div>
-  </div>
-  `;
-  }
   function extractAndCategorizeBooks(bookNotes) {
     const categorizedBooks = [];
-    const autoCategorizedCount = 0;
     bookNotes.forEach((book) => {
-      let categories = [];
-      if (book.frontmatter.category) {
-        const rawCategories = Array.isArray(book.frontmatter.category) ? book.frontmatter.category : String(book.frontmatter.category).split(/[,，\/]/);
-        categories = rawCategories.map((cat) => cat.trim()).filter((cat) => cat);
-      }
+      const raw = book.frontmatter.category;
+      const category = raw !== void 0 && raw !== null && String(raw).trim() !== "" ? String(raw) : "";
       categorizedBooks.push({
         title: book.file ? book.file.name : "未知书籍",
-        categories,
-        readingDate: book.frontmatter.readingDate,
-        completionDate: book.frontmatter.completionDate
+        categories: category ? [category] : []
       });
     });
-    return { categorizedBooks, autoCategorizedCount };
+    return { categorizedBooks };
   }
   function calculateCategoryDistribution(categorizedBooks) {
-    const categoryCount = {};
+    const categoryCount = /* @__PURE__ */ Object.create(null);
     categorizedBooks.forEach((book) => {
       book.categories.forEach((category) => {
         categoryCount[category] = (categoryCount[category] || 0) + 1;
@@ -6138,12 +5981,6 @@ var BZW_bookshelf = (() => {
       percentage: (count / totalBooks * 100).toFixed(1)
     })).sort((a, b) => b.count - a.count);
   }
-  function calculateTop3Percentage(categoryDistribution) {
-    if (categoryDistribution.length === 0) return 0;
-    const top3Count = categoryDistribution.slice(0, 3).reduce((sum, cat) => sum + cat.count, 0);
-    const totalCount = categoryDistribution.reduce((sum, cat) => sum + cat.count, 0);
-    return totalCount > 0 ? (top3Count / totalCount * 100).toFixed(1) : 0;
-  }
   function calculateCategoryDiversity(categoryDistribution, totalBooks) {
     if (categoryDistribution.length <= 1) return 0;
     let diversity = 0;
@@ -6155,15 +5992,7 @@ var BZW_bookshelf = (() => {
     });
     const maxDiversity = Math.log(categoryDistribution.length);
     const score = maxDiversity > 0 ? diversity / maxDiversity * 100 : 0;
-    return Math.round(score);
-  }
-  function getDiversityLevel(categoryDistribution, totalBooks) {
-    const score = calculateCategoryDiversity(categoryDistribution, totalBooks);
-    if (score >= 80) return "非常广泛";
-    if (score >= 60) return "较为多样";
-    if (score >= 40) return "相对集中";
-    if (score >= 20) return "比较专一";
-    return "高度集中";
+    return Math.max(0, Math.min(100, Math.round(score)));
   }
   function calculateBalanceScore(categoryDistribution) {
     if (categoryDistribution.length <= 1) return 100;
@@ -6179,64 +6008,6 @@ var BZW_bookshelf = (() => {
     const gini = (2 * inequality - n - 1) / n;
     return Math.round((1 - gini) * 100);
   }
-  function getBalanceDescription(categoryDistribution) {
-    const balanceScore = calculateBalanceScore(categoryDistribution);
-    if (balanceScore >= 80) return "非常均衡";
-    if (balanceScore >= 60) return "较为均衡";
-    if (balanceScore >= 40) return "相对集中";
-    return "高度集中";
-  }
-  function analyzeCategoryTrends(categorizedBooks) {
-    const recentBooks = categorizedBooks.filter((book) => book.completionDate && isRecentDate(book.completionDate)).sort((a, b) => new Date(b.completionDate).getTime() - new Date(a.completionDate).getTime()).slice(0, 10);
-    const recentCategories = {};
-    recentBooks.forEach((book) => {
-      book.categories.forEach((cat) => {
-        recentCategories[cat] = (recentCategories[cat] || 0) + 1;
-      });
-    });
-    return Object.entries(recentCategories).map(([name, count]) => ({ name, count })).sort((a, b) => b.count - a.count).slice(0, 5);
-  }
-  function isRecentDate(dateString) {
-    try {
-      const date = new Date(dateString);
-      const sixMonthsAgo = /* @__PURE__ */ new Date();
-      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-      return date > sixMonthsAgo;
-    } catch (e) {
-      return false;
-    }
-  }
-  function generateCategoryRecommendations(categoryDistribution, totalBooks) {
-    const recommendations = [];
-    const diversityScore = calculateCategoryDiversity(categoryDistribution, totalBooks);
-    if (diversityScore < 30) {
-      recommendations.push("您的阅读分类比较集中，建议尝试不同类型的书籍来扩展视野");
-    } else if (diversityScore > 70) {
-      recommendations.push("您的阅读分类非常广泛，继续保持这种探索精神");
-    } else {
-      recommendations.push("您的阅读分类相对均衡，可以在现有基础上尝试相近领域");
-    }
-    if (categoryDistribution.length < 3 && totalBooks >= 5) {
-      recommendations.push("阅读分类较少，建议设定每月尝试一个新分类的目标");
-    }
-    if (categoryDistribution.length > 0) {
-      const topCategory = categoryDistribution[0];
-      if (parseFloat(topCategory.percentage) > 40) {
-        recommendations.push(`您对"${topCategory.name}"类书籍有强烈偏好，可以尝试该分类下的不同子类型`);
-      }
-    }
-    const uncategorized = categoryDistribution.find((cat) => cat.name === "未分类");
-    if (uncategorized && uncategorized.count > 0) {
-      recommendations.push(`您有${uncategorized.count}本书未分类，建议为这些书籍添加分类标签`);
-    }
-    return recommendations;
-  }
-  function getSuggestedCategories(categoryDistribution) {
-    const allCategories = ["小说", "文学", "历史", "科技", "哲学", "心理学", "经济", "管理", "自我提升", "传记", "科普", "艺术", "教育", "健康", "旅行", "美食", "文化", "社会"];
-    const currentCategories = new Set(categoryDistribution.map((cat) => cat.name));
-    const suggested = allCategories.filter((cat) => !currentCategories.has(cat));
-    return suggested.slice(0, 6);
-  }
   function analyzeReadingCategories(bookNotes) {
     const categoryData = extractAndCategorizeBooks(bookNotes);
     const categoryDistribution = calculateCategoryDistribution(categoryData.categorizedBooks);
@@ -6246,16 +6017,8 @@ var BZW_bookshelf = (() => {
       totalBooks,
       totalCategories: categoryDistribution.length,
       topCategory: categoryDistribution.length > 0 ? categoryDistribution[0] : { name: "无数据", count: 0, percentage: "0" },
-      top3Percentage: calculateTop3Percentage(categoryDistribution),
       diversityScore: calculateCategoryDiversity(categoryDistribution, totalBooks),
-      diversityLevel: getDiversityLevel(categoryDistribution, totalBooks),
-      balanceScore: calculateBalanceScore(categoryDistribution),
-      balanceDescription: getBalanceDescription(categoryDistribution),
-      categoryTrends: analyzeCategoryTrends(categoryData.categorizedBooks),
-      recommendations: generateCategoryRecommendations(categoryDistribution, totalBooks),
-      suggestedCategories: getSuggestedCategories(categoryDistribution),
-      analyzedBooks: totalBooks,
-      autoCategorized: categoryData.autoCategorizedCount
+      balanceScore: calculateBalanceScore(categoryDistribution)
     };
   }
   function extractNotesInteractions(bookNotes) {
@@ -6397,50 +6160,16 @@ var BZW_bookshelf = (() => {
       thinkingDepth: analyzeThinkingDepth(interactionData),
       thinkingDescription: getThinkingDescription(interactionData),
       connectionLevel: analyzeConnectionLevel(interactionData),
-      connectionDescription: getConnectionDescription(interactionData),
-      recommendations: generateInteractionRecommendations(interactionData, totalBooks)
+      connectionDescription: getConnectionDescription(interactionData)
     };
   }
-  function generateInteractionRecommendations(interactionData, totalBooks) {
-    const recommendations = [];
-    const thinkRatio = calculateThinkRatio(interactionData.totalHighlights, interactionData.totalThinks);
-    const avgInteractions = interactionData.totalInteractions / Math.max(totalBooks, 1);
-    if (avgInteractions < 5) {
-      recommendations.push("建议增加阅读时的互动频率，尝试对重要内容进行标记");
-    } else if (avgInteractions > 20) {
-      recommendations.push("您的互动频率很高，继续保持这种深度参与的习惯");
-    }
-    if (thinkRatio < 15) {
-      recommendations.push("可以尝试在划线时多加入个人思考和评论");
-    } else if (thinkRatio > 40) {
-      recommendations.push("您的思考深度很好，考虑将想法整理成更系统的笔记");
-    }
-    if (interactionData.totalDialogue === 0) {
-      recommendations.push("尝试参与书籍讨论，分享观点可以加深理解");
-    }
-    if (interactionData.totalOutlinks < interactionData.totalHighlights * 0.1) {
-      recommendations.push("可以多建立知识之间的连接，构建知识网络");
-    }
-    if (recommendations.length === 0) {
-      recommendations.push("您的笔记互动模式很均衡，继续保持！");
-    }
-    return recommendations;
-  }
-
-  // src/core/chart-palette.ts
-  var CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
-  var CHART_FALLBACK = "#95a5a6";
-  var CHART_HIGHLIGHT = "#FFE5CC";
-  var CHART_AUTHOR_RANK_COLORS = ["#ffd700", "#c0c0c0", "#cd7f32", "#3498db", "#9b59b6"];
-  var CHART_RANK_FALLBACK_DEEP = "#7f8c8d";
-  var CHART_FOCUS_SERIES = ["#ff6b6b", "#ff9ff3", "#feca57", "#48dbfb", "#1dd1a1"];
 
   // src/reading-report/report.ts
   function generateBarRows(rows) {
     return rows.map((row, index) => {
       const color = CHART_PASTEL_SERIES[index % CHART_PASTEL_SERIES.length];
       const width = Math.max(0, Math.min(100, row.value));
-      const attrs = row.linkAttr ? ` ${row.linkAttr.name}="${escapeHtml2(row.linkAttr.value)}" title="在书架中查看"` : "";
+      const attrs = row.linkAttr ? ` ${row.linkAttr.name}="${escapeHtml2(row.linkAttr.value)}" role="button" tabindex="0" title="在书架中查看" aria-label="${escapeHtml2(`${row.label}，在书架中查看`)}"` : "";
       const cls = row.linkAttr ? "bz-rr-bar-row bz-rr-bar-row--link" : "bz-rr-bar-row";
       const trophies = row.rank !== void 0 && row.rank >= 1 && row.rank <= 3 ? '<i data-lucide="trophy" class="bz-ic bz-ic--xs bz-rr-trophy"></i>'.repeat(4 - row.rank) : "";
       return `
@@ -6468,11 +6197,11 @@ var BZW_bookshelf = (() => {
     }).join("")}
   </div>`;
   }
-  function buildReportSections(stats, bookNotes) {
+  function buildReportSections(stats, bookNotes, sectionOpts = {}) {
     return [
       { key: "stats", label: "统计概览", generate: () => generateStatsReport(stats) },
       { key: "interaction", label: "笔记互动分析", generate: () => generateReadingNotesInteractionAnalysis(bookNotes) },
-      { key: "heatmap", label: "阅读热力图", generate: () => generateReadingHeatmap(stats.readingSessions) },
+      { key: "heatmap", label: "阅读热力图", generate: () => generateReadingHeatmap(stats.readingSessions, sectionOpts.heatmapCursor) },
       { key: "habits", label: "阅读习惯分析", generate: () => generateReadingHabitsDeepAnalysis2(stats.readingSessions) },
       { key: "focus", label: "阅读专注度分析", generate: () => generateReadingFocusAnalysis(stats, bookNotes) },
       { key: "yearly", label: "年度统计", generate: () => generateYearlyStats(stats) },
@@ -6511,7 +6240,7 @@ var BZW_bookshelf = (() => {
 
   <div class="bz-rr-panel">
   <div class="bz-rr-total">
-  ${totalFormattedTime.replace("h", "小时").replace("m", "分钟")}
+  ${totalFormattedTime}
   </div>
 
   <div class="bz-rr-metric-row">
@@ -6555,7 +6284,8 @@ var BZW_bookshelf = (() => {
       );
       return `
     <div class="bz-rr-year-cell">
-    <div class="bz-rr-year-card" data-rr-year="${year}" title="点击展开 ${year} 年逐月阅读" role="button">
+    <!-- 深审 EFF-2：tabindex + aria-expanded 键盘可达（Enter/Space 走内容区 keydown 委托合成 click） -->
+    <div class="bz-rr-year-card" data-rr-year="${year}" title="点击展开 ${year} 年逐月阅读" role="button" tabindex="0" aria-expanded="false">
     <div class="bz-rr-year-title">${year}年<i data-lucide="chevron-down" class="bz-ic bz-ic--sm bz-rr-year-chev"></i></div>
     <div class="bz-rr-hero-num">${data.booksRead}</div>
     <div>阅读数量</div>
@@ -6586,7 +6316,9 @@ var BZW_bookshelf = (() => {
       const completionRate = data.totalBooks > 0 ? (data.completedBooks / data.totalBooks * 100).toFixed(1) : 0;
       const rankColors = CHART_AUTHOR_RANK_COLORS;
       return `
-    <div class="bz-rr-author-card" data-rr-author="${escapeHtml2(author)}" title="在书架中搜索该作者" role="button"
+    <!-- 深审 EFF-2：tabindex 键盘可达（同上合成 click 路径） -->
+    <div class="bz-rr-author-card" data-rr-author="${escapeHtml2(author)}" title="在书架中搜索该作者" role="button" tabindex="0"
+    aria-label="作者 ${escapeHtml2(author)}，在书架中搜索"
     style="background: linear-gradient(135deg, ${rankColors[index] || CHART_FALLBACK}, ${rankColors[index] ? rankColors[index] + "cc" : CHART_RANK_FALLBACK_DEEP});">
     <div class="bz-rr-author-rank">${index + 1}</div>
     <div class="bz-rr-author-name">${escapeHtml2(author)}</div>
@@ -6675,13 +6407,10 @@ var BZW_bookshelf = (() => {
   <div class="bz-rr-cell-num--sm bz-rr-c-violet">${speedAnalysis.readingType}</div>
   </div>
 
+  <!-- 深审 RR-U8：「最佳速度」为均值×1.2 编造值已删（无真实统计不上屏）；
+       「平均时长」实为平均每本口径，标签如实标注 -->
   <div class="bz-rr-cell">
-  <div class="bz-rr-cell-label">最佳速度</div>
-  <div class="bz-rr-cell-num bz-rr-c-sky">${speedAnalysis.bestSpeed}页/小时</div>
-  </div>
-
-  <div class="bz-rr-cell">
-  <div class="bz-rr-cell-label">平均时长</div>
+  <div class="bz-rr-cell-label">平均每本时长</div>
   <div class="bz-rr-cell-num bz-rr-c-coral">${speedAnalysis.avgSessionTime}</div>
   </div>
   </div>
@@ -6716,7 +6445,7 @@ var BZW_bookshelf = (() => {
   `;
   }
   function generateReadingTrendsAnalysis(stats, bookNotes) {
-    const trends = analyzeReadingTrends(stats, bookNotes);
+    const trends = analyzeReadingTrends(stats);
     return `
   <div class="bz-rr-card">
 
@@ -6756,7 +6485,7 @@ var BZW_bookshelf = (() => {
     }
     return generateMonthBarColumns(
       recentMonths.map((data, index) => ({
-        label: data.month.split("-")[1] + "月",
+        label: `${parseInt(data.month.split("-")[1], 10)}月`,
         count: data.booksRead,
         accent: index === 0
         // 首位 = 最近月份（图表高亮语义保留）
@@ -6779,7 +6508,7 @@ var BZW_bookshelf = (() => {
     const monthKeys = getHeatmapMonthKeys(heatmapData);
     const cursor = cursorMonth && monthKeys.includes(cursorMonth) ? cursorMonth : monthKeys[monthKeys.length - 1];
     const idx = monthKeys.indexOf(cursor);
-    const navBtn = (dir, disabled) => `<button class="bz-rr-hm-nav" data-rr-hm-${dir}${disabled ? " disabled" : ""} title="${dir === "prev" ? "上一月" : "下一月"}" aria-label="${dir === "prev" ? "上一月" : "下一月"}"><i data-lucide="chevron-${dir === "prev" ? "left" : "right"}" class="bz-ic bz-ic--sm"></i></button>`;
+    const navBtn = (dir, disabled) => `<button class="bz-rr-hm-nav bz-touch-target bz-touch-target--lg" data-rr-hm-${dir}${disabled ? " disabled" : ""} title="${dir === "prev" ? "上一月" : "下一月"}" aria-label="${dir === "prev" ? "上一月" : "下一月"}"><i data-lucide="chevron-${dir === "prev" ? "left" : "right"}" class="bz-ic bz-ic--sm"></i></button>`;
     return `
   <div class="bz-rr-card">
 
@@ -6899,6 +6628,11 @@ var BZW_bookshelf = (() => {
   `;
   }
   function generateReadingFocusAnalysis(stats, bookNotes) {
+    if (!stats.readingSessions || stats.readingSessions.length === 0) {
+      return `<div class="bz-rr-card">
+    <p class="bz-rr-empty">暂无阅读会话数据，无法评估专注度</p>
+    </div>`;
+    }
     const focusData = analyzeReadingFocus(stats.readingSessions, bookNotes);
     return `
  <div class="bz-rr-card">
@@ -6959,14 +6693,7 @@ var BZW_bookshelf = (() => {
         </div>
     </div>
 
-    </div>
-
-    <!-- 专注度对比 -->
-    <div class="bz-rr-block">
-
-        <div class="bz-rr-block-grid">
-        </div>
-    </div>
+    <!-- 深审 RR-U7：专注度对比空块与两处未配对 </div>（逐字移植遗留）已删 -->
 </div> `;
   }
   function generateReadingCategoryAnalysis(bookNotes) {
@@ -6986,7 +6713,8 @@ var BZW_bookshelf = (() => {
   </div>
 
   <div class="bz-rr-hero bz-rr-hero--pad bz-rr-hero--col bz-rr-hero--mint">
-  <div class="bz-rr-hero-num--clamp">${escapeHtml2(categoryAnalysis.topCategory.name)}</div>
+  <!-- RR-UX3：clamp 截断补 title 全文（一行顺手项） -->
+  <div class="bz-rr-hero-num--clamp" title="${escapeHtml2(categoryAnalysis.topCategory.name)}">${escapeHtml2(categoryAnalysis.topCategory.name)}</div>
   <div class="bz-rr-hero-label--mt">最常阅读</div>
   </div>
 
@@ -7019,7 +6747,7 @@ var BZW_bookshelf = (() => {
   </div>
   </div>
   </div>
-  </div>
+  <!-- 深审 RR-U7：段尾多余 </div>（逐字移植遗留）已删 -->
   `;
   }
   var INTERACTION_TYPE_LABELS = {
@@ -7086,14 +6814,15 @@ var BZW_bookshelf = (() => {
 
   // src/reading-report/index.ts
   var renderSeq = 0;
-  var progressToastSeq = 0;
   var activeProgress = null;
   var lastHeatmap = null;
-  var SKELETON_HTML = '<div style="text-align: center; padding: 48px 0; color: var(--text-muted);">统计中…</div>';
-  var ERROR_HTML = `<div style="padding: 24px 0; text-align: center; color: var(--text-muted);">
-  <div style="font-size: 1.2em; margin-bottom: 8px; color: var(--text-normal);">统计失败</div>
-  <div>读取书库时出错，请查看控制台获取详情</div>
+  var lastAcceptedSignature = null;
+  var SKELETON_HTML = '<div class="bz-rr-skeleton">统计中…</div>';
+  var ERROR_HTML = `<div class="bz-rr-error">
+  <div class="bz-rr-error-title">统计失败</div>
+  <div>读取书库时出错，请重试或重新打开面板</div>
 </div>`;
+  var QUIET_TOAST_MIN_BOOKS = 500;
   var IDLE_CALLBACK_TIMEOUT_MS = 50;
   function yieldToMainThread2() {
     return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
@@ -7104,6 +6833,24 @@ var BZW_bookshelf = (() => {
       activeProgress.hide();
       activeProgress = null;
     }
+  }
+  function hasReportContent(container) {
+    return !container.querySelector(".bz-rr-skeleton") && container.querySelector(".bz-rr-card, .bz-rr-panel, .bz-rr-hero, .bz-empty") !== null;
+  }
+  function bindKeyboardActivation(container) {
+    container.onkeydown = (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const target = e.target;
+      if (!target || target === container) return;
+      const activate = target.closest("[data-rr-year], [data-rr-author], [data-rr-cat]");
+      if (!activate) return;
+      e.preventDefault();
+      if (activate.hasAttribute("data-rr-author") || activate.hasAttribute("data-rr-cat")) {
+        activate.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      } else {
+        handleReportInteraction(container, activate);
+      }
+    };
   }
   function buildEmptyState(opts, folderPath) {
     const actions = uiBtnRow(
@@ -7129,35 +6876,27 @@ var BZW_bookshelf = (() => {
     return empty;
   }
   function renderReadingReport(container, app, opts = {}) {
+    if (opts.dataSignature !== void 0 && lastAcceptedSignature === opts.dataSignature && hasReportContent(container)) {
+      return;
+    }
     cancelReadingReport();
     const seq = renderSeq;
     const alive = () => seq === renderSeq && container.isConnected;
-    container.innerHTML = SKELETON_HTML;
-    const progress = notify("正在统计阅读数据…", {
-      type: "progress",
-      duration: 0,
-      dedupeKey: `bz-reading-report-progress-${++progressToastSeq}`
-    });
-    activeProgress = progress;
-    const finishAbort = () => {
-      progress.hide();
-      if (activeProgress === progress) activeProgress = null;
-    };
-    const finishDone = (isEmpty) => {
-      if (activeProgress === progress) activeProgress = null;
-      if (isEmpty) {
-        progress.hide();
-      } else {
-        progress.setType("success");
-        progress.setMessage("阅读统计完成");
-      }
-    };
+    if (opts.dataSignature === void 0) lastAcceptedSignature = null;
+    bindKeyboardActivation(container);
+    const snapshot = opts.silent ? {
+      openYears: Array.from(container.querySelectorAll("[data-rr-year].open")).map((el) => el.getAttribute("data-rr-year") || "").filter(Boolean),
+      scrollTop: container.scrollTop
+    } : null;
+    if (!opts.silent) delete container.dataset.rrCursor;
+    if (!opts.silent) container.innerHTML = SKELETON_HTML;
+    let progress = null;
     const step = async () => {
-      progress.setMessage("正在读取书库…");
+      var _a, _b;
+      let quiet = false;
       await yieldToMainThread2();
       if (!alive()) return finishAbort();
       const bookNotes = getAllBookNotes(app);
-      progress.setMessage("正在读取 EPUB 书目…");
       await yieldToMainThread2();
       if (!alive()) return finishAbort();
       const epubEntries = await getEpubBookNotes(app);
@@ -7169,38 +6908,76 @@ var BZW_bookshelf = (() => {
         mountIcons(container);
         return finishDone(true);
       }
-      progress.setMessage("正在计算统计数据…");
+      quiet = opts.silent || allNotes.length < QUIET_TOAST_MIN_BOOKS;
+      progress = quiet ? null : notify("正在统计阅读数据…", { type: "progress", duration: 0 });
+      if (progress) activeProgress = progress;
+      const setStage = (msg) => {
+        if (progress) progress.setMessage(msg);
+      };
+      setStage("正在计算统计数据…");
       await yieldToMainThread2();
       if (!alive()) return finishAbort();
       const stats = calculateReadingStats(allNotes);
       const hmData = processHeatmapData(stats.readingSessions);
       const hmKeys = getHeatmapMonthKeys(hmData);
-      lastHeatmap = { data: hmData, keys: hmKeys, cursor: hmKeys[hmKeys.length - 1] || "" };
-      const sections = buildReportSections(stats, allNotes);
+      lastHeatmap = { data: hmData, keys: hmKeys };
+      const restoredCursor = container.dataset.rrCursor && hmKeys.includes(container.dataset.rrCursor) ? container.dataset.rrCursor : hmKeys[hmKeys.length - 1] || "";
+      container.dataset.rrCursor = restoredCursor;
+      const sections = buildReportSections(stats, allNotes, { heatmapCursor: restoredCursor });
       container.innerHTML = "";
       for (const section of sections) {
         if (!alive()) return finishAbort();
         await yieldToMainThread2();
         if (!alive()) return finishAbort();
+        setStage(`正在生成${section.label}…`);
         container.insertAdjacentHTML("beforeend", section.generate());
-        progress.setMessage(`正在生成${section.label}…`);
       }
       if (alive()) {
+        if (snapshot) {
+          for (const year of snapshot.openYears) {
+            (_a = container.querySelector(`[data-rr-year="${year}"]`)) == null ? void 0 : _a.classList.add("open");
+            (_b = container.querySelector(`[data-rr-year-body="${year}"]`)) == null ? void 0 : _b.classList.add("open");
+          }
+          container.scrollTop = snapshot.scrollTop;
+        }
         mountIcons(container);
         finishDone(false);
       } else {
         finishAbort();
       }
+      function finishAbort() {
+        if (progress) {
+          progress.hide();
+          if (activeProgress === progress) activeProgress = null;
+        }
+      }
+      function finishDone(isEmpty) {
+        if (progress && activeProgress === progress) activeProgress = null;
+        if (!quiet && !isEmpty && progress) {
+          progress.setType("success");
+          progress.setMessage("阅读统计完成");
+        } else if (progress) {
+          progress.hide();
+        }
+        if (!isEmpty && opts.dataSignature !== void 0) {
+          lastAcceptedSignature = opts.dataSignature;
+        }
+      }
     };
     void step().catch((error) => {
       console.error("读取阅读统计报告失败:", error);
-      if (activeProgress === progress) activeProgress = null;
+      if (progress && activeProgress === progress) activeProgress = null;
+      const retryAction = alive() ? { label: "重试", onClick: () => renderReadingReport(container, app, opts) } : void 0;
+      const message = "统计失败：读取书库时出错，请重试；若反复出现请重新打开面板";
       if (alive()) {
-        progress.setType("error");
-        progress.setMessage("统计失败：读取书库时出错，请重试；若反复出现请重新打开面板");
         container.innerHTML = ERROR_HTML;
-      } else {
-        progress.hide();
+      }
+      if (progress) {
+        progress.setType("error");
+        progress.setMessage(message);
+        if (retryAction) progress.setAction(retryAction);
+      } else if (alive()) {
+        notify(message, { type: "error", action: retryAction });
       }
     });
   }
@@ -7216,8 +6993,9 @@ var BZW_bookshelf = (() => {
       const year = yearCard.getAttribute("data-rr-year") || "";
       const body = container.querySelector(`[data-rr-year-body="${year}"]`);
       if (body) {
-        body.classList.toggle("open");
-        yearCard.classList.toggle("open");
+        const open = body.classList.toggle("open");
+        yearCard.classList.toggle("open", open);
+        yearCard.setAttribute("aria-expanded", String(open));
       }
       return true;
     }
@@ -7225,22 +7003,24 @@ var BZW_bookshelf = (() => {
   }
   function navHeatmap(container, dir) {
     if (!lastHeatmap || lastHeatmap.keys.length === 0) return;
-    const idx = lastHeatmap.keys.indexOf(lastHeatmap.cursor);
-    const nextIdx = Math.min(lastHeatmap.keys.length - 1, Math.max(0, idx + dir));
+    const keys = lastHeatmap.keys;
+    const cursor = container.dataset.rrCursor && keys.includes(container.dataset.rrCursor) ? container.dataset.rrCursor : keys[keys.length - 1];
+    const idx = keys.indexOf(cursor);
+    const nextIdx = Math.min(keys.length - 1, Math.max(0, idx + dir));
     if (nextIdx === idx) return;
-    lastHeatmap.cursor = lastHeatmap.keys[nextIdx];
+    const nextCursor = keys[nextIdx];
+    container.dataset.rrCursor = nextCursor;
     const body = container.querySelector("[data-rr-hm-body]");
     if (body) {
-      body.innerHTML = generateHeatmapGrid(lastHeatmap.data, lastHeatmap.cursor);
+      body.innerHTML = generateHeatmapGrid(lastHeatmap.data, nextCursor);
       mountIcons(body);
     }
     const title = container.querySelector("[data-rr-hm-title]");
-    if (title) title.textContent = heatmapMonthTitle(lastHeatmap.cursor);
-    const newIdx = lastHeatmap.keys.indexOf(lastHeatmap.cursor);
+    if (title) title.textContent = heatmapMonthTitle(nextCursor);
     const prevBtnEl = container.querySelector("[data-rr-hm-prev]");
     const nextBtnEl = container.querySelector("[data-rr-hm-next]");
-    if (prevBtnEl) prevBtnEl.disabled = newIdx <= 0;
-    if (nextBtnEl) nextBtnEl.disabled = newIdx >= lastHeatmap.keys.length - 1;
+    if (prevBtnEl) prevBtnEl.disabled = nextIdx <= 0;
+    if (nextBtnEl) nextBtnEl.disabled = nextIdx >= keys.length - 1;
   }
 
   // src/bookshelf/layouts/wall/render.ts
@@ -7428,7 +7208,9 @@ var BZW_bookshelf = (() => {
         <div class="bz-bs-view bz-bs-view-report">
           <div class="bz-rr-head">
             <span class="bz-rr-title">${iconSpan(ICON.report, "bz-ic--sm")}阅读分析报告</span>
-            <button class="bz-icon-btn bz-rr-close" data-rr-goto-shelf title="返回书库">${iconSpan(ICON.close)}</button>
+            <!-- 深审 RR-U1/EFF-1：桌面也可见（左栏导航随书脊墙换血退役，头行返回钮 = 全宽度唯一返回出口）；
+                 RR-U3/EFF-10：22×26px icon 档挂 bz-touch-target--lg 热区外扩 + aria-label（同文件清除钮先例） -->
+            <button class="bz-icon-btn bz-rr-close bz-touch-target bz-touch-target--lg" data-rr-goto-shelf title="返回书库" aria-label="返回书库">${iconSpan(ICON.close)}</button>
           </div>
           <div class="bz-rr-content"></div>
         </div>
@@ -7568,13 +7350,14 @@ var BZW_bookshelf = (() => {
     const clearBtn = (_b = M.currentOverlay) == null ? void 0 : _b.querySelector("[data-bs-search-clear]");
     if (clearBtn) clearBtn.hidden = !input.value.trim();
   }
-  function startReportRender(app) {
+  function startReportRender(app, extraOpts = {}) {
     var _a;
     const container = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector(".bz-rr-content");
     if (!container) return;
     renderReadingReport(container, app, {
       onFilter: (kind, value) => applyReportFilter(app, kind, value),
-      onBack: () => showView(app, "shelf")
+      onBack: () => showView(app, "shelf"),
+      ...extraOpts
     });
   }
   function applyReportFilter(app, kind, value) {
@@ -7610,7 +7393,7 @@ var BZW_bookshelf = (() => {
     }
   }
   function refreshReportView(app) {
-    if (M.view === "report" && M.currentOverlay) startReportRender(app);
+    if (M.view === "report" && M.currentOverlay) startReportRender(app, { silent: true });
   }
   function paintViewContainers() {
     var _a, _b;
@@ -7789,9 +7572,9 @@ var BZW_bookshelf = (() => {
     paintViewContainers();
     const shelf0 = overlay.querySelector("#bz-bs-shelf");
     if (shelf0) shelf0.innerHTML = wallLoadingHTML();
+    if (M.view === "report") showView(app, "report");
     void rebuildItems(app).then(() => {
-      if (M.view === "report") showView(app, "report");
-      else renderAll();
+      if (M.view !== "report") renderAll();
     });
   }
   function closeOverlay() {
@@ -7833,7 +7616,7 @@ var BZW_bookshelf = (() => {
     autoRefreshRegistered = true;
     let timer = null;
     const schedule = (file) => {
-      if (file && file.path && !file.path.endsWith(WEAVE_DATA_FILE) && !file.path.startsWith(resolveFolderPath() + "/")) return;
+      if (file && file.path && !file.path.endsWith(WEAVE_DATA_FILE) && !isBookshelfPath(file.path, resolveFolderPath())) return;
       if (timer) clearTimeout(timer);
       timer = setTimeout(() => {
         if (!M.currentOverlay) return;

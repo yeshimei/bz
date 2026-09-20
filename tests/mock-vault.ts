@@ -1,5 +1,9 @@
+import { stripNonLinkSegments, parseLinkRefs } from '../src/attach/data';
+
 /**
  * 内存 vault mock：可读写的虚拟文件树（UI/数据层测试复用）。
+ * getFileCache / resolvedLinks 的链接提取与 src/attach/data.ts stripNonLinkSegments
+ * 单源（ARCH-T1 校准）：假层与实现侧「代码块内引用不算链接」口径一致，防盲区对盲区假绿。
  */
 export class MockVault {
   files = new Map<string, string>();
@@ -342,7 +346,8 @@ function buildResolvedLinks(vault: MockVault): Record<string, Record<string, num
     if (!path.toLowerCase().endsWith('.md')) continue;
     // frontmatter 里的 [[...]]（related / mounted 等）**不进 resolvedLinks**——真机同样不含，
     // 它们由 frontmatter 单独承载；不剥掉会与消费方的 frontmatter 解析重复计数。
-    const body = content.replace(/^---\r?\n[\s\S]*?\r?\n---/, '');
+    // 正文再剥代码块/inline code/HTML 注释（ARCH-T1：真机 cache 排除这些段落，假层同口径）
+    const body = stripNonLinkSegments(content.replace(/^---\r?\n[\s\S]*?\r?\n---/, ''));
     const bag: Record<string, number> = {};
     const re = /!?\[\[([^\[\]]+?)\]\]/g;
     let m: RegExpExecArray | null;
@@ -365,23 +370,32 @@ export function mockAppWithVault(vault: MockVault) {
       const listeners: Record<string, Function[]> = {};
       return {
         getFileCache: (f: any) => {
-          // 兼容 TFile 对象与路径字符串（encrypt 域 embeds 收集用）
+          // 兼容 TFile 对象与路径字符串（encrypt / attach 域附件收集用）
           const path = typeof f === 'string' ? f : f?.path ?? '';
           const content = vault.files.get(path) ?? '';
           const fm = parseFrontmatter(content);
-          // 正文区（frontmatter 里的链接不算正文链接，与真机 resolvedLinks 口径一致）
-          const body = content.replace(/^---\r?\n[\s\S]*?\r?\n---/, '');
-          // wikilink 嵌入解析（Obsidian 自带链接信息；encrypt 域附件收集的主数据源）
+          // frontmatter 段与正文段分离；正文再剥真机 cache 不承认为链接的段落
+          // （fenced/inline code/HTML 注释——与 src/attach/data.ts stripNonLinkSegments
+          // 单源，ARCH-T1：假层与实现侧围栏口径对齐，防「盲区对盲区」假绿）
+          const fmBody = content.replace(/^---\r?\n[\s\S]*?\r?\n---/, '');
+          const fmSeg = fmBody === content ? '' : content.slice(0, content.length - fmBody.length);
+          const body = stripNonLinkSegments(fmBody);
+          // 四形态提取复用 attach parseLinkRefs（单源：F10 剥壳 / target 剥 |#^ 后缀同口径）——
+          // embeds = `![[...]]` wiki 嵌入 + `![](...)` md 图片嵌入（真机 FileCache.embeds 面）；
+          // links = `[[...]]` wikilink + `[](...)` md 链接（真机 FileCache.links 面，断链也在）
           const embeds: { link: string }[] = [];
-          const re = /!\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]/g;
-          let m: RegExpExecArray | null;
-          while ((m = re.exec(content)) !== null) embeds.push({ link: m[1].trim() });
-          // 普通双链（真机 FileCache.links）：**解析前**的目标名，**断链也在**——
-          // 「断链也算有挂载」这条口径靠它（resolvedLinks 只收解析成功的）
           const links: { link: string }[] = [];
-          const lre = /(?<!!)\[\[([^\]|#]+)(?:\|[^\]]*)?\]\]/g;
-          while ((m = lre.exec(body)) !== null) links.push({ link: m[1].trim() });
-          return fm || embeds.length || links.length ? { frontmatter: fm, embeds, links } : null;
+          for (const ref of parseLinkRefs(body)) {
+            (ref.embeds ? embeds : links).push({ link: ref.target });
+          }
+          // frontmatter 段内的链接（真机 FileCache.frontmatterLinks；renameFile 会更新）
+          const frontmatterLinks: { link: string }[] = [];
+          if (fmSeg) {
+            for (const ref of parseLinkRefs(fmSeg)) frontmatterLinks.push({ link: ref.target });
+          }
+          return fm || embeds.length || links.length || frontmatterLinks.length
+            ? { frontmatter: fm, embeds, links, frontmatterLinks }
+            : null;
         },
         /** 全库链接图（真机由 Obsidian 维护；见 buildResolvedLinks）。getter = 每次现算快照 */
         get resolvedLinks() {

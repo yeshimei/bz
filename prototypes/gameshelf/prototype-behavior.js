@@ -1,5 +1,5 @@
-/* 源指纹 d9a341efe3dc0f40 · 仓内输入 243 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 51207a3547128738 · 仓内输入 242 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
   var __create = Object.create;
@@ -7177,15 +7177,6 @@ var BZW_gameshelf = (() => {
   });
 
   // src/core/utils.ts
-  function escapeYamlText(s) {
-    return String(s != null ? s : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
-  }
-  function yamlEscapeQuoted(v) {
-    return `"${escapeYamlText(String(v != null ? v : ""))}"`;
-  }
-  function unescapeYamlText(s) {
-    return s.replace(/\\(.)/g, (m, c) => c === '"' || c === "\\" ? c : m);
-  }
   function escapeHtml2(str2) {
     return str2.replace(/[&<>"']/g, (m) => {
       if (m === "&") return "&amp;";
@@ -12183,6 +12174,9 @@ var BZW_gameshelf = (() => {
     const s = tryGetSettings();
     return typeof s.bookTag === "string" && s.bookTag.trim() ? s.bookTag.trim() : "book";
   }
+  function isBookshelfPath(path, folderPath) {
+    return path === `${folderPath}.md` || path.startsWith(`${folderPath}/`);
+  }
   function parseStatus(readingDate, completionDate) {
     if (readingDate && !completionDate) return "在读";
     if (readingDate && completionDate) return "已读";
@@ -12263,7 +12257,7 @@ var BZW_gameshelf = (() => {
         else if ((cur == null ? void 0 : cur.extension) === "md") files.push(cur);
       }
     } else {
-      files.push(...app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folderPath + "/") || f.path === folderPath + ".md"));
+      files.push(...app.vault.getMarkdownFiles().filter((f) => isBookshelfPath(f.path, folderPath)));
     }
     const items = [];
     for (const file of files) {
@@ -12315,6 +12309,17 @@ var BZW_gameshelf = (() => {
     if (!Number.isFinite(timestamp) || !timestamp) return null;
     return localDayKey(timestamp);
   }
+  function epubProgress(rawPercent) {
+    const raw = typeof rawPercent === "number" ? rawPercent : 0;
+    return raw > 1 ? Math.min(100, Math.round(raw)) : Math.round(Math.max(0, Math.min(1, raw)) * 100);
+  }
+  function epubCategory(meta) {
+    const subjects = Array.isArray(meta == null ? void 0 : meta.subjects) ? meta.subjects : [];
+    return typeof subjects[0] === "string" && subjects[0].trim() ? subjects[0].trim() : null;
+  }
+  function epubReadingDate(progress, lastReadTime) {
+    return progress > 0 ? toDateString(lastReadTime) : null;
+  }
   function buildEpubItem(app, aggregate) {
     var _a2, _b2, _c;
     const meta = aggregate == null ? void 0 : aggregate.meta;
@@ -12326,20 +12331,19 @@ var BZW_gameshelf = (() => {
     const title = typeof (meta == null ? void 0 : meta.title) === "string" ? meta.title.trim() : "";
     if (!vaultPath || !title) return null;
     const rawPercent = typeof ((_a2 = reading == null ? void 0 : reading.position) == null ? void 0 : _a2.percent) === "number" ? reading.position.percent : 0;
-    const progress = rawPercent > 1 ? Math.min(100, Math.round(rawPercent)) : Math.round(Math.max(0, Math.min(1, rawPercent)) * 100);
+    const progress = epubProgress(rawPercent);
     const lastReadTime = Number.isFinite(stats == null ? void 0 : stats.lastReadTime) ? stats.lastReadTime : 0;
     const completedTime = Number.isFinite(stats == null ? void 0 : stats.completedTime) ? stats.completedTime : 0;
     const totalReadTimeMs = Number.isFinite(stats == null ? void 0 : stats.totalReadTime) ? stats.totalReadTime : 0;
-    const readingDate = progress > 0 ? toDateString(lastReadTime) : null;
+    const readingDate = epubReadingDate(progress, lastReadTime);
     const completionDate = toDateString(completedTime);
     const vaultFile = (_c = (_b2 = app == null ? void 0 : app.vault) == null ? void 0 : _b2.getAbstractFileByPath) == null ? void 0 : _c.call(_b2, vaultPath);
-    const subjects = Array.isArray(meta == null ? void 0 : meta.subjects) ? meta.subjects : [];
-    const epubCategory = typeof subjects[0] === "string" && subjects[0].trim() ? subjects[0].trim() : null;
+    const epubCategoryValue = epubCategory(meta);
     return {
       file: vaultFile instanceof TFile ? vaultFile : null,
       title,
       author: typeof (meta == null ? void 0 : meta.author) === "string" && meta.author.trim() ? meta.author.trim() : "未知作者",
-      category: epubCategory,
+      category: epubCategoryValue,
       cover: resolveEpubCoverPath(app, meta),
       bookReview: null,
       readingDate,
@@ -23377,7 +23381,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         return false;
       }
     }
-    const tagsYaml = (raw.tags || []).map((t) => `  - "${escapeYamlText(t)}"`).join("\n");
+    const tagsYaml = (raw.tags || []).map((t) => `  - "${yamlEscape(t)}"`).join("\n");
     const now = localDatetime();
     const pubDate = raw.date ? toDatetime(String(raw.date)) : "";
     const rawBody = String(raw.body || "").replace(/^\s*---[\s\S]*?---\s*/, "").replace(/^\s*```dataviewjs[\s\S]*?```\s*/, "").trim();
@@ -23387,13 +23391,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const transformed = applyBodyTransforms(rawBody, tracking.marks, imageSwaps);
     const body = transformed.body;
     const md = `---
-url: "${escapeYamlText(raw.url || "")}"
-author: "${escapeYamlText(raw.author || "")}"
-site: "${escapeYamlText(raw.platform || "")}"
-summary: "${escapeYamlText(raw.summary || "")}"
+url: "${yamlEscape(raw.url || "")}"
+author: "${yamlEscape(raw.author || "")}"
+site: "${yamlEscape(raw.platform || "")}"
+summary: "${yamlEscape(raw.summary || "")}"
 tags:
 ${tagsYaml}
-date: "${escapeYamlText(pubDate)}"
+date: "${yamlEscape(pubDate)}"
 created: ${now}
 ---
 \`\`\`dataviewjs
@@ -23499,6 +23503,7 @@ ${body}`;
       ]
     }).then((v) => v === "ok" || v === "rename" ? v : void 0);
   }
+  var yamlEscape;
   var init_save = __esm({
     "src/clipbook/save.ts"() {
       init_app();
@@ -23507,7 +23512,7 @@ ${body}`;
       init_flow_dialog();
       init_constants2();
       init_anchor();
-      init_utils();
+      yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
     }
   });
 
@@ -23859,7 +23864,6 @@ ${body}`;
   var init_douban_fetcher = __esm({
     "src/cinema/douban-fetcher.ts"() {
       init_str();
-      init_utils();
       init_constants3();
       POSTER_FOLDER = "CONFIG/MOVIE POSTER";
     }
@@ -32122,28 +32126,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   });
 
-  // src/auto-summary/keys.ts
-  var AUTO_SUMMARY_KEYS;
-  var init_keys = __esm({
-    "src/auto-summary/keys.ts"() {
-      AUTO_SUMMARY_KEYS = {
-        enabled: "autoSummaryEnabled",
-        length: "autoSummaryLength",
-        tagsEnabled: "autoSummaryTagsEnabled",
-        tagCount: "autoSummaryTagCount",
-        timing: "autoSummaryTiming"
-      };
-    }
-  });
-
   // src/auto-summary/parser.ts
   function unquote(v) {
-    if (v.startsWith('"') && v.endsWith('"')) return unescapeYamlText(v.slice(1, -1));
-    if (v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
+    if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
     return v;
   }
   function parseFrontmatter2(content) {
-    const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---[ \t]*(?:\r?\n)?/);
+    const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
     if (!m) return { fm: null, body: content, extraLines: [] };
     const fm = {};
     const extraLines = [];
@@ -32151,16 +32140,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const kv = line.match(KEY_LINE_RE);
-      if (kv && !OWNED_KEYS.has(kv[1].trim())) {
-        extraLines.push(line);
-        let j = i + 1;
-        for (; j < lines.length; j++) {
-          if (KEY_LINE_RE.test(lines[j])) break;
-          extraLines.push(lines[j]);
-        }
-        i = j - 1;
-        continue;
-      }
       if (kv) {
         const key = kv[1].trim();
         let val = kv[2].trim();
@@ -32209,7 +32188,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           fm[key] = "";
           continue;
         }
-        val = unquote(val);
+        if (val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
         if (val.startsWith("[")) {
           try {
             val = JSON.parse(val);
@@ -32237,11 +32216,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     for (const [k, v] of Object.entries(fm)) {
       if (Array.isArray(v)) {
         lines.push(`${k}:`);
-        for (const item of v) lines.push(`  - ${yamlEscapeQuoted(item)}`);
+        for (const item of v) lines.push(`  - "${item}"`);
       } else if (v === null || v === void 0 || v === "") {
         lines.push(`${k}: ""`);
       } else {
-        lines.push(`${k}: ${yamlEscapeQuoted(v)}`);
+        lines.push(`${k}: "${String(v).replace(/"/g, '\\"').replace(/[\r\n]+/g, " ")}"`);
       }
     }
     lines.push(...extraLines);
@@ -32251,11 +32230,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function extractBodyForAI(body) {
     return body.replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
   }
-  var OWNED_KEYS, KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
+  var KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
   var init_parser = __esm({
     "src/auto-summary/parser.ts"() {
-      init_utils();
-      OWNED_KEYS = /* @__PURE__ */ new Set(["title", "summary", "tags"]);
       KEY_LINE_RE = /^([^\s:#-][^:]*):(.*)$/;
       LIST_ITEM_RE = /^[ \t]*-[ \t]+(.*)$/;
       BLOCK_SCALAR_RE = /^[|>][+-]?$/;
@@ -32279,16 +32256,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
 - ${tagRange || "3-6"} 个中文标签，每个不超过 5 个字
 - 涵盖：主题领域、关键技术/概念、应用场景`;
   }
-  function normalizeAIResult(raw) {
-    const out = {};
-    if (typeof raw.title === "string" && raw.title.trim()) out.title = raw.title.trim();
-    if (typeof raw.summary === "string" && raw.summary.trim()) out.summary = raw.summary.trim();
-    if (Array.isArray(raw.tags)) {
-      const tags = raw.tags.filter((t) => typeof t === "string" && t.trim()).map((t) => t.trim());
-      if (tags.length > 0) out.tags = tags;
-    }
-    return out;
-  }
   async function aiProcess(ai, bodyText, missing, opts = {}) {
     const length = opts.summaryLength || "standard";
     const summaryRule = SUMMARY_LENGTH_RULES[length] || SUMMARY_LENGTH_RULES.standard;
@@ -32310,7 +32277,7 @@ ${bodyText.substring(0, 6e3)}`;
         modelOptions: { temperature: 0.3 }
       });
       const jsonMatch = (result || "").match(/\{[\s\S]*\}/);
-      if (jsonMatch) return normalizeAIResult(JSON.parse(jsonMatch[0]));
+      if (jsonMatch) return JSON.parse(jsonMatch[0]);
     } catch (e) {
       console.warn("[自动摘要] AI 处理失败:", e);
     }
@@ -32336,38 +32303,18 @@ ${bodyText.substring(0, 6e3)}`;
       return { target: file, renamed: false, failed: true };
     }
   }
-  function tagsMissing(fm) {
-    if (!fm || !fm.tags) return true;
-    if (Array.isArray(fm.tags)) return fm.tags.length === 0;
-    return String(fm.tags).trim() === "";
-  }
-  function notifyRetryable(reason, retry) {
-    notify(reason, {
-      type: "error",
-      duration: 0,
-      action: { label: "重试", onClick: retry }
-    });
-  }
-  function retryViaQueue(app, ai, file, force) {
-    void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
-    });
-  }
   async function processFile(app, ai, file, opts = {}) {
     const force = opts.force === true;
     let h = null;
-    let delivered = false;
     const s = tryGetSettings();
-    const summaryLength = String(s[AUTO_SUMMARY_KEYS.length] || "standard");
-    const tagsEnabled = s[AUTO_SUMMARY_KEYS.tagsEnabled] !== false;
-    const tagCount2 = String(s[AUTO_SUMMARY_KEYS.tagCount] || "3-6");
+    const summaryLength = String(s.autoSummaryLength || "standard");
+    const tagsEnabled = s.autoSummaryTagsEnabled !== false;
+    const tagCount2 = String(s.autoSummaryTagCount || "3-6");
     try {
       const content = await app.vault.read(file);
       const { fm, body } = parseFrontmatter2(content);
       const bodyText = extractBodyForAI(body);
-      if (!bodyText || bodyText.length < 100) {
-        if (force) notify("正文过短（不足 100 字），未生成摘要", { type: "info" });
-        return "skipped-short";
-      }
+      if (!bodyText || bodyText.length < 100) return;
       const missing = [];
       if (force) {
         missing.push("summary");
@@ -32375,8 +32322,8 @@ ${bodyText.substring(0, 6e3)}`;
       } else {
         if (!fm || !fm.title) missing.push("title");
         if (!fm || !fm.summary) missing.push("summary");
-        if (tagsEnabled !== false && tagsMissing(fm)) missing.push("tags");
-        if (missing.length === 0) return "skipped-complete";
+        if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
+        if (missing.length === 0) return;
       }
       const startName = fm && fm.title ? fm.title : file.basename;
       const key = dedupeKeyFor(file);
@@ -32387,11 +32334,21 @@ ${bodyText.substring(0, 6e3)}`;
       if (!aiResult) {
         const reason = await humanizeFailReason();
         if (h) h.hide();
-        if (opts.quiet) console.warn("[自动摘要] AI 失败（批量批次，由收场汇总）:", reason);
-        else notifyRetryable(reason, () => retryViaQueue(app, ai, file, force));
-        return "ai-failed";
+        const errHandle = notify(reason, { type: "error", duration: 0 });
+        const retryBtn = document.createElement("span");
+        retryBtn.className = "bz-notice-action";
+        retryBtn.setAttribute("role", "button");
+        retryBtn.textContent = "重试";
+        retryBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          retryBtn.remove();
+          errHandle.hide();
+          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
+          });
+        });
+        errHandle.el.appendChild(retryBtn);
+        return;
       }
-      delivered = true;
       let targetFile = file;
       let renameFailed = false;
       if (missing.includes("title") && aiResult.title) {
@@ -32416,47 +32373,26 @@ ${bodyText.substring(0, 6e3)}`;
       if (renameFailed) {
         notify("自动改名失败，标题已写入笔记，请手动重命名", { type: "warning" });
       }
-      const notDelivered = missing.filter(
-        (f) => f === "tags" ? !(Array.isArray(aiResult.tags) && aiResult.tags.length > 0) : !aiResult[f]
-      );
-      if (notDelivered.length > 0) {
-        const got = missing.filter((f) => !notDelivered.includes(f));
-        const gotTxt = got.map((f) => FIELD_LABELS[f]).join("、");
-        const missTxt = notDelivered.map((f) => FIELD_LABELS[f]).join("、");
-        const msg = gotTxt ? `已写入${gotTxt}，${missTxt}未能生成` : `AI 未生成${missTxt}`;
-        if (opts.quiet) console.warn(`[自动摘要] 部分补全（批量批次，由收场汇总）: ${msg}`);
-        else notifyRetryable(`${msg}，可重试`, () => retryViaQueue(app, ai, targetFile, force));
-        return "partial";
-      }
-      if (!opts.quiet) {
-        notify("已完成", {
-          type: "success",
-          dedupeKey: key,
-          action: {
-            label: "查看",
-            onClick: () => {
-              Promise.resolve().then(() => (init_ui7(), ui_exports5)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
-              });
-            }
+      notify("已完成", {
+        type: "success",
+        dedupeKey: key,
+        action: {
+          label: "查看",
+          onClick: () => {
+            Promise.resolve().then(() => (init_ui7(), ui_exports5)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
+            });
           }
-        });
-      }
-      return "ok";
+        }
+      });
     } catch (e) {
       if (h) h.hide();
       console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
-      if (delivered) {
-        notifyRetryable("摘要写入失败，请重试", () => retryViaQueue(app, ai, file, force));
-        return "write-failed";
-      }
-      return "error";
     }
   }
-  var attemptSeq, FIELD_DEFS, FIELD_LABELS, SUMMARY_LENGTH_RULES;
+  var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
   var init_processor2 = __esm({
     "src/auto-summary/processor.ts"() {
       init_parser();
-      init_keys();
       init_notice();
       init_ai();
       init_settings_provider();
@@ -32466,7 +32402,6 @@ ${bodyText.substring(0, 6e3)}`;
         summary: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
         tags: '"tags": ["标签1", "标签2", "标签3"]'
       };
-      FIELD_LABELS = { title: "标题", summary: "摘要", tags: "标签" };
       SUMMARY_LENGTH_RULES = {
         simple: `"summary": "50-100字的简短摘要。提炼核心观点与关键结论。直达内容，禁止使用'本文'、'本文章'、'文章'、'作者认为'等前缀词"`,
         standard: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
@@ -32478,7 +32413,6 @@ ${bodyText.substring(0, 6e3)}`;
   // src/auto-summary/index.ts
   var auto_summary_exports = {};
   __export(auto_summary_exports, {
-    __resetForTest: () => __resetForTest,
     ensureAutoSummary: () => ensureAutoSummary,
     isAutoSummaryInitialized: () => isAutoSummaryInitialized,
     redoSummaryForActiveFile: () => redoSummaryForActiveFile,
@@ -32488,23 +32422,17 @@ ${bodyText.substring(0, 6e3)}`;
     unloadAutoSummary: () => unloadAutoSummary
   });
   function getWatchDir() {
-    return clipDir();
+    const s = tryGetSettings();
+    return s && s.articleDirectory || "归档/网页剪藏";
   }
-  function isWatchedTopLevel(path) {
-    const dir = getWatchDir();
-    const prefix = dir + "/";
-    return path.startsWith(prefix) && !path.slice(prefix.length).includes("/");
-  }
-  function enqueueJob(job, priority = false) {
+  function enqueueJob(job) {
     return new Promise((resolve2) => {
       if (processingPaths.has(job.file.path)) {
         resolve2();
         return;
       }
       processingPaths.add(job.file.path);
-      const queued3 = { ...job, resolve: resolve2 };
-      if (priority) jobQueue.unshift(queued3);
-      else jobQueue.push(queued3);
+      jobQueue.push({ ...job, resolve: resolve2 });
       batchTotal++;
       if (drainTimer === null) {
         drainTimer = setTimeout(() => {
@@ -32518,67 +32446,24 @@ ${bodyText.substring(0, 6e3)}`;
     var _a2;
     if (draining) return;
     draining = true;
-    let okCount = 0;
-    let failCount = 0;
     try {
       while (jobQueue.length > 0) {
         const job = jobQueue.shift();
         batchDone++;
         updateBatchNotice();
-        let outcome = "error";
         try {
-          outcome = await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
+          await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
         } catch (e) {
         } finally {
           processingPaths.delete(job.file.path);
           (_a2 = job.resolve) == null ? void 0 : _a2.call(job);
         }
-        if (outcome === "ok" || outcome === "partial") {
-          okCount++;
-          consecutiveFailures = 0;
-        } else if (outcome === "ai-failed" || outcome === "write-failed") {
-          failCount++;
-          consecutiveFailures++;
-        } else {
-          consecutiveFailures = 0;
-        }
-        if (consecutiveFailures >= FAIL_LIMIT && jobQueue.length > 0) {
-          const remaining = jobQueue.length;
-          notify(`AI 连续失败 ${FAIL_LIMIT} 篇，批量摘要已暂停，剩余 ${remaining} 篇待处理`, {
-            type: "warning",
-            duration: 0,
-            actions: [
-              {
-                label: "继续",
-                onClick: () => {
-                  const r = resumeDrain;
-                  resumeDrain = null;
-                  consecutiveFailures = 0;
-                  r == null ? void 0 : r();
-                }
-              }
-            ]
-          });
-          await new Promise((resolve2) => {
-            resumeDrain = resolve2;
-          });
-        }
       }
     } finally {
       draining = false;
-      resumeDrain = null;
       if (batchNotice) {
         batchNotice.hide();
         batchNotice = null;
-      }
-      if (batchTotal > 1) {
-        if (failCount > 0 && okCount > 0) {
-          notify(`已生成 ${okCount} 篇摘要，${failCount} 篇失败`, { type: "warning" });
-        } else if (failCount > 0) {
-          notify(`批量摘要生成失败（${failCount} 篇）`, { type: "error", duration: 0 });
-        } else if (okCount > 0) {
-          notify(`已生成 ${okCount} 篇摘要`, { type: "success" });
-        }
       }
       batchTotal = 0;
       batchDone = 0;
@@ -32590,63 +32475,54 @@ ${bodyText.substring(0, 6e3)}`;
     if (batchNotice) {
       batchNotice.setMessage(msg);
     } else {
-      batchNotice = notify(msg, { type: "progress", dedupeKey: `auto-summary:batch#${++batchSeq}` });
+      batchNotice = notify(msg, { type: "progress", dedupeKey: "auto-summary:batch" });
     }
   }
-  function queueProcess(app, file) {
+  function queueProcess(app, ai, file) {
     if (!file || file.extension !== "md") return;
-    if (!isWatchedTopLevel(file.path)) return;
+    if (!file.path.startsWith(getWatchDir() + "/")) return;
     if (pendingPaths.has(file.path)) return;
     const timer = setTimeout(() => {
       pendingPaths.delete(file.path);
-      void enqueueJob({ app, ai: createAI(), file });
+      void enqueueJob({ app, ai, file });
     }, 1500);
     pendingPaths.set(file.path, timer);
   }
   function regenerateSummary(app, file) {
     if (!file || file.extension !== "md") return Promise.resolve();
-    if (processingPaths.has(file.path)) {
-      notify("该篇正在处理中，请稍后再试", { type: "info" });
-      return Promise.resolve();
-    }
-    if (draining) notify("已加入摘要队列，当前篇完成后优先处理", { type: "info" });
-    return enqueueJob({ app, ai: createAI(), file, force: true }, true);
+    return enqueueJob({ app, ai: createAI(), file, force: true });
   }
   function retrySummaryWithAI(app, ai, file, force) {
     if (!file || file.extension !== "md") return Promise.resolve();
-    if (processingPaths.has(file.path)) {
-      notify("该篇正在处理中，请稍后再试", { type: "info" });
-      return Promise.resolve();
-    }
-    if (draining) notify("已加入摘要队列，当前篇完成后优先处理", { type: "info" });
-    return enqueueJob({ app, ai, file, force }, true);
+    return enqueueJob({ app, ai, file, force });
   }
   async function redoSummaryForActiveFile(app) {
     const ws = app && app.workspace;
     const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
-    if (!file || file.extension !== "md" || !isWatchedTopLevel(String(file.path || ""))) {
+    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
       notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
       return;
     }
     await regenerateSummary(app, file);
   }
   function scheduleRegister(app) {
+    const ai = createAI();
     registerTimer = setTimeout(() => {
       var _a2;
       registerTimer = null;
       if (!vaultRef) return;
-      const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2[AUTO_SUMMARY_KEYS.timing]) || "immediate";
+      const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.autoSummaryTiming) || "immediate";
       if (timing !== "lazy") {
-        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, file));
+        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, ai, file));
       }
       if (workspaceRef && typeof workspaceRef.on === "function") {
-        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, file));
+        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, ai, file));
       }
     }, 2e3);
   }
   function ensureAutoSummary(app) {
     if (initialized2) {
-      if (!registerTimer && !openListenerRef) scheduleRegister(app);
+      if (!registerTimer && !fileListenerRef) scheduleRegister(app);
       return;
     }
     initialized2 = true;
@@ -32658,7 +32534,6 @@ ${bodyText.substring(0, 6e3)}`;
     return initialized2;
   }
   function stopAutoSummary() {
-    var _a2;
     if (registerTimer) {
       clearTimeout(registerTimer);
       registerTimer = null;
@@ -32679,27 +32554,18 @@ ${bodyText.substring(0, 6e3)}`;
     }
     for (const timer of pendingPaths.values()) clearTimeout(timer);
     pendingPaths.clear();
-    if (resumeDrain) {
-      const r = resumeDrain;
-      resumeDrain = null;
-      r();
-    }
-    for (const j of jobQueue) {
-      processingPaths.delete(j.file.path);
-      (_a2 = j.resolve) == null ? void 0 : _a2.call(j);
-    }
-    jobQueue.length = 0;
     if (drainTimer !== null) {
       clearTimeout(drainTimer);
       drainTimer = null;
     }
+    jobQueue.length = 0;
     if (batchNotice) {
       batchNotice.hide();
       batchNotice = null;
     }
     batchTotal = 0;
     batchDone = 0;
-    consecutiveFailures = 0;
+    processingPaths.clear();
   }
   function unloadAutoSummary() {
     stopAutoSummary();
@@ -32707,21 +32573,12 @@ ${bodyText.substring(0, 6e3)}`;
     vaultRef = null;
     workspaceRef = null;
   }
-  function __resetForTest() {
-    stopAutoSummary();
-    unloadAutoSummary();
-    consecutiveFailures = 0;
-    resumeDrain = null;
-    batchSeq = 0;
-  }
-  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice, batchSeq, consecutiveFailures, resumeDrain, FAIL_LIMIT;
+  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
   var init_auto_summary = __esm({
     "src/auto-summary/index.ts"() {
       init_ai();
       init_settings_provider();
       init_notice();
-      init_save();
-      init_keys();
       init_processor2();
       initialized2 = false;
       vaultRef = null;
@@ -32737,10 +32594,6 @@ ${bodyText.substring(0, 6e3)}`;
       batchTotal = 0;
       batchDone = 0;
       batchNotice = null;
-      batchSeq = 0;
-      consecutiveFailures = 0;
-      resumeDrain = null;
-      FAIL_LIMIT = 3;
     }
   });
 
@@ -38664,6 +38517,7 @@ GitHub 仓库：${ghInfo.title}
   var init_stats2 = __esm({
     "src/reading-report/stats.ts"() {
       init_utils();
+      init_chart_palette();
       init_data();
     }
   });

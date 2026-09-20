@@ -1,12 +1,12 @@
 /**
  * 附件搬移域入口（ticket 65）。
  * 命令 bz-attach-move 由 main.ts 裸注册；此处提供回调 + 文件右键菜单。
+ * 导出面收敛（ARCH-4）：域 index 只出装配面符号（命令 ID / 回调 / 右键菜单）——
+ * data/ui 层符号由消费方直捣对应模块（main.ts / 域内 / 测试），不再 `export *`
+ * 让 data 层新符号自动泄入域公共 API 面。
  */
 import { getApp } from '../core/app';
 import { moveAttachments } from './ui';
-
-export { moveAttachments } from './ui';
-export * from './data';
 
 export const ATTACH_COMMAND_ID = 'bz-attach-move';
 
