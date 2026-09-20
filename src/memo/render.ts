@@ -142,7 +142,7 @@ export function panelShellHtml(): string {
             <button class="bz-btn bz-btn--primary bz-btn--md" data-memo-newbtn>${iconSpan(MEMO_ICONS.add, 'bz-ic--sm')} 新建备忘录</button>
           </div>
           <div class="bz-toolrow">
-            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
+            <div class="bz-search bz-memo-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"><button type="button" class="bz-memo-search-clear" data-memo-search-clear title="清除搜索" aria-label="清除搜索" hidden>${iconSpan(MEMO_ICONS.close)}</button></div>
             <div class="bz-memo-sort" data-memo-sort></div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
@@ -159,34 +159,57 @@ export function panelShellHtml(): string {
 /** meta 行 due 注入包（状态/文案由调用方按当下时刻算好） */
 export type MetaDue = { status: 'overdue' | 'today' | 'future'; text: string } | null;
 
-/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→截止→时间） */
-export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string): string {
+/** 搜索命中词高亮（呈报#6 6A；settings-panel SP2 `bz-sp-mark` 先例口径）：把 text 中
+ *  全部命中片段包 `<mark class="bz-memo-hit">`。不做动态 regex——小写归一 indexOf
+ *  切片重建（SP2 同款，无注入面），逐段 esc 后拼接；kw 空或未命中退化为纯 esc(text)。
+ *  过滤口径（getVisibleItems 的 hay 小写子串 includes）同为归一切片，命中必高亮。 */
+export function hitTextHtml(text: string, kw: string): string {
+  const t = text ?? '';
+  const needle = kw.trim().toLowerCase();
+  if (!t || !needle) return esc(t);
+  const lower = t.toLowerCase();
+  let out = '';
+  let cursor = 0;
+  for (;;) {
+    const at = lower.indexOf(needle, cursor);
+    if (at < 0) break;
+    out += esc(t.slice(cursor, at));
+    out += `<mark class="bz-memo-hit">${esc(t.slice(at, at + needle.length))}</mark>`;
+    cursor = at + needle.length;
+  }
+  return out + esc(t.slice(cursor));
+}
+
+/** 卡片 meta 行（顺序对齐 memo buildMeta：课程→脚本→链接→位置→场景→截止→时间）。
+ *  kw（呈报#6 6A，可选）：搜索命中词高亮只落在被搜索的可见文本上
+ *  （课程/脚本/链接域名/位置名/场景），截止与相对时间不参与搜索不高亮 */
+export function metaTagsHtml(it: MemoItem, due: MetaDue, relTime: string, kw: string = ''): string {
 	const tags: string[] = [];
 	// 1. 课程（公开课）
 	if (it.scene === '公开课' && it.courseName) {
-		tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${esc(it.courseName.replace(/^《|》$/g, ''))}</span>`);
+		tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${hitTextHtml(it.courseName.replace(/^《|》$/g, ''), kw)}</span>`);
 	}
 	// 2. 脚本（代码）
 	if (it.scene === '代码' && it.scriptName) {
-		tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${esc(it.scriptName)}</span>`);
+		tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${hitTextHtml(it.scriptName, kw)}</span>`);
 	}
 	// 3. 链接
 	if (it.url) {
 		let host = '链接';
 		try { host = new URL(it.url).hostname.replace(/^www\./, ''); } catch (e) { /* 保持默认 */ }
-		tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${esc(it.url)}">${iconSpan(MEMO_ICONS.url)} ${esc(host)}</span>`);
+		tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${esc(it.url)}">${iconSpan(MEMO_ICONS.url)} ${hitTextHtml(host, kw)}</span>`);
 	}
 	// 4. 位置（绑定笔记才显示；公开课课程同名文件不重复）
 	if (it.notePath) {
 		const name = it.notePath.split('/').pop()!.replace(/\.md$/i, '');
 		const isCourseSame = it.scene === '公开课' && it.courseName && it.courseName.replace(/^《|》$/g, '') === name;
 		if (!isCourseSame) {
-			tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${esc(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${esc(name)}</span>`);
+			tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${esc(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${hitTextHtml(name, kw)}</span>`);
 		}
 	}
 	// 5. 场景（重要红底）
 	const imp = it.priority === 'important' ? ' bz-memo-tag-important' : '';
-	tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${esc(it.scene)}</span>`);
+	tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${hitTextHtml(it.scene, kw)}</span>`);
 	// 6. 截止（未完成；due 包由调用方注入）
 	if (due) {
 		tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${esc(due.text)}</span>`);
@@ -206,18 +229,19 @@ export function checkHtml(it: MemoItem): string {
 }
 
 /** 条目卡（勾选/标题/meta；标题带 linkedNote/url 时为可点链接，点击行为接线在 ui.ts）。
- *  tabindex 供键盘可达（memo2-ui M3-10：卡聚焦后 Enter/Space 开操作菜单） */
-export function cardHtml(it: MemoItem, due: MetaDue, relTime: string): string {
+ *  tabindex 供键盘可达（memo2-ui M3-10：卡聚焦后 Enter/Space 开操作菜单）。
+ *  kw（呈报#6 6A，可选）：命中词高亮——缺省 '' 保持原形态（原型/抽屉头零波及） */
+export function cardHtml(it: MemoItem, due: MetaDue, relTime: string, kw: string = ''): string {
 	const titleCls = it.completed ? ' bz-memo-done' : '';
 	const clickable = !!(it.linkedNote || it.url);
 	const titleHtml = clickable
-		? `<a href="javascript:void(0)" data-memo-openitem="${esc(it.id)}">${esc(it.title)}</a>`
-		: esc(it.title);
+		? `<a href="javascript:void(0)" data-memo-openitem="${esc(it.id)}">${hitTextHtml(it.title, kw)}</a>`
+		: hitTextHtml(it.title, kw);
 	return `<div class="bz-memo-card${titleCls}" data-memo-id="${esc(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, kw)}</div>
       </div>
     </div>`;
 }

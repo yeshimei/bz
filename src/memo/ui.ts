@@ -69,6 +69,26 @@ const searchDebounced = debounce((v: string) => {
   renderAll();
 }, SEARCH_DEBOUNCE_MS);
 
+/** 搜索框 ✕ 显隐同步（呈报#5 5A）：以输入框实值为准（不等 180ms 防抖，有词即现） */
+function syncSearchClear(): void {
+  const input = M.overlay?.querySelector('[data-memo-search]') as HTMLInputElement | null;
+  const btn = M.overlay?.querySelector('[data-memo-search-clear]') as HTMLElement | null;
+  if (btn && input) btn.hidden = !input.value.trim();
+}
+
+/** 清词 + 刷新 + 光标回框（呈报#4 ESC 有词段 / #5 ✕ 与空态「清除搜索」钮共用单源；
+ *  clipbook 效率#11/#12 定稿范式）。防抖尾触必须 cancel——否则清词后尾触把旧词
+ *  写回 M.search（词复活，diary D-UI3 同款教训）。 */
+function clearMemoSearch(): void {
+  searchDebounced.cancel();
+  M.search = '';
+  const input = M.overlay?.querySelector('[data-memo-search]') as HTMLInputElement | null;
+  if (input) input.value = '';
+  syncSearchClear();
+  renderAll();
+  input?.focus();
+}
+
 // ---------- 小工具 ----------
 
 
@@ -251,9 +271,10 @@ function getVisibleItems(): MemoItem[] {
       // 跨场景聚合 star 标记条目（已完成重要项同样放行进 done 折叠区）
       if (it.priority !== 'important') return false;
     } else if (M.activeScene !== '全部' && it.scene !== M.activeScene) return false;
-    // 搜索（内容/场景/笔记名）
+    // 搜索（内容/场景/笔记名/脚本/课程/网址——呈报#7 7A：卡片渲染了链接域名，
+    // 「记得那条里有个链接」按网址却搜不到，hay 补 url 字段）
     if (kw) {
-      const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(' ').toLowerCase();
+      const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url].filter(Boolean).join(' ').toLowerCase();
       if (!hay.includes(kw)) return false;
     }
     return true;
@@ -546,7 +567,22 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
 
   // 搜索（防抖 180ms，对齐 favorites/belongings——修复前每键全量重渲且注释与实现不符）
   const searchInput = overlay.querySelector('[data-memo-search]') as HTMLInputElement;
-  searchInput.addEventListener('input', () => searchDebounced(searchInput.value.trim()));
+  searchInput.addEventListener('input', () => {
+    syncSearchClear(); // 呈报#5 5A：✕ 有词即现，不等防抖
+    searchDebounced(searchInput.value.trim());
+  });
+  // 呈报#4（4A）/ clipbook 效率#11 定稿范式：搜索框内 ESC 二段——有词先清词（拦在
+  // input 层，escManager 的 document 层收不到，防「清词变成关整个面板」），没词放行
+  // （冒泡给 registerPanelEsc 关面板，口径不变）
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || e.isComposing || e.defaultPrevented) return;
+    if (!searchInput.value.trim()) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    clearMemoSearch();
+  });
+  // 呈报#5（5A）：尾部 ✕ 一键清词（点击清词并把光标送回框）
+  overlay.querySelector('[data-memo-search-clear]')?.addEventListener('click', () => clearMemoSearch());
 
   void (async () => {
     await loadData();
@@ -555,6 +591,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
       M.search = opts.notePath;
       const presetInput = overlay.querySelector('[data-memo-search]') as HTMLInputElement | null;
       if (presetInput) presetInput.value = opts.notePath;
+      syncSearchClear(); // 呈报#5 5A：定位预填长路径后 ✕ 可见（回全量列表一键可达）
     }
     renderAll();
   })();
@@ -741,7 +778,9 @@ function renderContent(items: MemoItem[]): void {
   const urgent = active.filter((i) => dueRank(i) <= 1);
   const normal = active.filter((i) => dueRank(i) > 1);
 
-  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '');
+  // 呈报#6 6A：命中词高亮——过滤用同一关键词传给卡片渲染（render.hitTextHtml 切片）
+  const kw = M.search.trim();
+  const cardHtml = (it: MemoItem) => renderCard(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '', kw);
 
   const sections: string[] = [];
   if (urgent.length) {

@@ -42,6 +42,34 @@
    宽度自适应由上一行管；皮肤观感（墨边贴纸/方角描边）见皮肤段排序下拉组 */
 .bz-memo-sortsel { flex-shrink: 0; }
 
+/* 搜索框尾部 ✕ 一键清词（呈报#5 5A；clipbook 效率#12 定稿范式，gameshelf
+   .bz-gs-search-clear 同款）：绝对定位贴输入框右缘，有词才现（hidden 由 ui.ts
+   syncSearchClear 驱动），点 = 清词 + 光标回框。输入框右侧让位防词长压钮。 */
+.bz-memo-search .bz-input { padding-right: 26px; }
+.bz-memo-search-clear {
+  position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+  display: inline-flex; padding: 2px;
+  border: none; background: transparent; cursor: pointer;
+  color: var(--bz-text-3); line-height: 0;
+}@media (hover: hover) {
+
+.bz-memo-search-clear:hover { color: var(--bz-text-1); }
+}
+
+.bz-memo-search-clear .bz-ic { width: 13px; height: 13px; }
+/* hidden 属性显式守卫（belongings/cinema 同款坑）：下方 inline-flex 是作者规则，
+   UA 的 [hidden]{display:none} 同origin低序压不住，无词态必须显式钉死 */
+.bz-memo-search-clear[hidden] { display: none; }
+
+/* 搜索命中词高亮（呈报#6 6A；settings-panel SP2 .bz-sp-mark 先例口径）：
+   品牌实底 + on-brand 字（亮暗 token 均配好），卡片纯文本内一眼定位 */
+.bz-memo-hit {
+  background: var(--bz-brand);
+  color: var(--bz-on-brand);
+  border-radius: 2px;
+  padding: 0 1px;
+}
+
 /* 移动场景条尾部「添加场景」虚线 chip（issue 268，markup 见 render.mobAddSceneChipHtml）：
    动作磁贴跟在全部场景之后，与左栏 .bz-memo-side-add 同语义、收藏本 .bz-fav-chip-add
    同款虚线范式。选择器带 .bz-mobstrip-chip 复合（0,2,0）稳压组件库基类。 */

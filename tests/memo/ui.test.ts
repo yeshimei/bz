@@ -1001,7 +1001,8 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     expect(empty).toBeTruthy();
     expect(empty.querySelector('.bz-empty-ic')).toBeTruthy();
     expect(empty.querySelector('.bz-empty-title')?.textContent).toBe('没有匹配的备忘录');
-    const cta = empty.querySelector('.bz-btn') as HTMLElement;
+    // 呈报#5 5A：搜索空态前置「清除搜索」钮；「新建备忘录」动作钮改取 primary 档
+    const cta = empty.querySelector('.bz-btn--primary') as HTMLElement;
     expect(cta.textContent).toContain('新建备忘录');
     cta.click();
     await vi.waitFor(() => {
