@@ -25,15 +25,24 @@ export const FAVORITES_ITEM_FIELDS = [
 /** 番茄钟 history 条目约定字段（ticket 63：target 等残留视为约定外） */
 export const POMODORO_HISTORY_FIELDS = ['ts', 'duration', 'task'];
 
-/** 段级约定（各域数据根对象键集） */
+/** 段级约定（各域数据根对象键集；与域写侧形状单源的恒等锁见 tests/checkup/contract.test.ts） */
 export const SEGMENT_FIELDS: Record<string, string[]> = {
   // archived = issue 357 周归档可选段（深审 PA-1：本插件自己写的正常归档数据，不得被体检
   // 误报「约定外数据段/可能是外部写入」；旧文件缺此段走「缺少数据段」info 常态，不修数据）
   'pomodoro.json': ['version', 'state', 'history', 'archived'],
-  'clipbook.json': ['articleOverrides', 'savedArchive', 'order'],
-  'news.json': ['articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds'],
+  // clipbook 7 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
+  // + issue 358 readLog 扩段；func P2-1：此前漏 4 段致用过剪藏本即恒误报）
+  'clipbook.json': ['articleOverrides', 'savedArchive', 'order', 'marks', 'savedImages', 'pendingSource', 'readLog'],
+  // news 10 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2）
+  'news.json': [
+    'articles', 'stats', 'bilibiliUps', 'bilibiliUpInfo', 'bilibiliMaxItems', 'bilibiliCookie', 'sources', 'rssFeeds',
+    'lastFetchAt', 'fetchIntervalMin',
+  ],
+  // home v3 五键 = home/order.ts emptyHomeOrder()（home 批 1d26c797 已修）
   'home.json': ['version', 'desk', 'mob', 'hiddenDesk', 'hiddenMob'],
-  'belongings.json': ['version', 'last_updated', 'items', 'categories', 'categoryIcons'],
+  // belongings 3 段 = belongings/data.ts belongingsSaveShape 落盘键集（ADR-0102：categories/
+  // categoryIcons 为内存派生段设计上不落盘——func P2-4/A1：此前多列 2 键致恒报「缺少数据段」info）
+  'belongings.json': ['version', 'last_updated', 'items'],
   'quiz.json': ['notes'],
 };
 
@@ -141,14 +150,25 @@ export function driftIssuesOf(
     if (!r.parsed.ok) continue; // 坏 json 由检查一报告，此处跳过
     const bad = (n: number) => n > 0;
     let hasDrift = false;
+    // func P3-2：favorites.json 根形态守卫——被外部写成合法 JSON 对象（非数组）时
+    // analyzeItemDrift 静默零统计、域读取链会失败，必须报告（memo.json 的同型问题
+    // 由检查四双链核对报红，此处不重复立项）
+    if (r.plan.kind === 'item' && r.plan.file.endsWith('favorites.json') && r.parsed && r.parsed.ok && !Array.isArray(r.parsed.data)) {
+      hasDrift = true;
+      issues.push({
+        severity: 'warn',
+        title: `${r.plan.label}：不是条目数组形态（读取链会失败）`,
+        detail: `文件：${r.plan.file}\n当前根是 ${Array.isArray(r.parsed.data) ? '数组' : r.parsed.data && typeof r.parsed.data === 'object' ? '对象' : typeof r.parsed.data}，收藏本读取链期望「条目数组」；请从留档或备份恢复。`,
+      });
+    }
     if (r.item) {
       const s = r.item;
       if (bad(s.nonObject)) {
         hasDrift = true;
         issues.push({
           severity: 'error',
-          title: `${r.plan.label}：${s.nonObject} 条非对象条目（两条读取链都会失败）`,
-          detail: `文件：${r.plan.file}\n数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），备忘录的读取链都会在这里中断，请从留档或备份修复该文件。`,
+          title: `${r.plan.label}：${s.nonObject} 条非对象条目（读取链会在这里中断）`,
+          detail: `文件：${r.plan.file}\n数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），${r.plan.label}的读取链都会在这里中断，请从留档或备份修复该文件。`,
         });
       }
       if (Object.keys(s.extra).length) {
@@ -213,7 +233,8 @@ export function driftIssuesOf(
 export async function checkFieldDrift(app: App, opts: CheckOpts = {}): Promise<CheckResult> {
   const plans = driftPlans(app);
   const results: Array<{ plan: DriftDomainPlan; parsed: { ok: true; data: unknown } | { ok: false } | null; item?: ItemDriftStats; seg?: SegmentDriftStats }> = [];
-  for (const plan of plans) {
+  for (let i = 0; i < plans.length; i++) {
+    const plan = plans[i];
     if (opts.isCancelled?.()) return null;
     const parsed = await readRawJson(app, plan.file);
     if (parsed && parsed.ok) {
@@ -230,7 +251,7 @@ export async function checkFieldDrift(app: App, opts: CheckOpts = {}): Promise<C
     } else {
       results.push({ plan, parsed });
     }
-    await opts.tick?.(plan.label);
+    await opts.tick?.(plan.label, { done: i + 1, total: plans.length });
   }
   const { summary, issues } = driftIssuesOf(results);
   return { id: 'drift', name: '字段漂移', summary, issues, scanned: results.filter((r) => r.parsed).length };

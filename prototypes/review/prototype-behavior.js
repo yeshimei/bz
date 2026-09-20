@@ -1,5 +1,5 @@
-/* 源指纹 3ba1a7934a0fd266 · 仓内输入 227 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 7a682eb570831b68 · 仓内输入 229 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/review/fake-sim.ts","prototypes/review/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/review/fake-sim.ts → window.BZW_review（行为单源预览包，issue 245/ADR-0106） */
 var BZW_review = (() => {
   var __create = Object.create;
@@ -6923,6 +6923,9 @@ var BZW_review = (() => {
   });
 
   // src/review/quiz-core/manager.ts
+  function emptyQuiz() {
+    return { notes: {} };
+  }
   function getQuizFilePath() {
     const s = tryGetSettings();
     return storageFile("quiz.json", s && s.storagePath || "CONFIG/STORAGE");
@@ -6951,7 +6954,7 @@ var BZW_review = (() => {
         async loadQuiz(app) {
           try {
             const data = await jsonFileStore(getQuizFilePath(), {
-              defaultValue: { notes: {} },
+              defaultValue: emptyQuiz(),
               app
             }).read();
             if (data && typeof data === "object" && data.notes) return data;
@@ -15637,6 +15640,9 @@ ${n.content.slice(0, 2e3)}
       { file: storageFile("review-fit.json"), label: "复习拟合参数" },
       { file: storageFile("home.json"), label: "内容首页" },
       { file: storageFile("smartcat.json"), label: "小橘" },
+      { file: storageFile("smartcat-memory.json"), label: "小橘记忆流" },
+      { file: storageFile("smartcat-behavior.json"), label: "小橘行为流" },
+      { file: storageFile("lock-stats.json"), label: "锁屏统计" },
       { file: storageFile("knowledge.json"), label: "知识盒" },
       { file: storageFile("secondbrain.json"), label: "第二大脑" },
       { file: storageFile("quiz.json"), label: "复习做题" },
@@ -15683,14 +15689,17 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/checkup/checks-json.ts
-  function verdictOfJsonTarget(file, label, parsed, backups) {
-    if (parsed === null) return { file, label, state: "missing", backups: [] };
+  function verdictOfJsonTarget(file, label, parsed, backups, unreadable = false) {
+    if (parsed === null) {
+      return unreadable ? { file, label, state: "unreadable", backups: [] } : { file, label, state: "missing", backups: [] };
+    }
     return { file, label, state: parsed.ok ? "ok" : "corrupt", backups: parsed.ok ? [] : backups };
   }
   function jsonIssuesOf(verdicts) {
     const issues = [];
     const existing = verdicts.filter((v) => v.state !== "missing");
     const bad = verdicts.filter((v) => v.state === "corrupt");
+    const stuck = verdicts.filter((v) => v.state === "unreadable");
     for (const v of bad) {
       const lines = [`文件：${v.file}`];
       if (v.backups.length) lines.push(`留档：${v.backups.map((b) => `${CORRUPT_DIR}/${b}`).join("、")}`);
@@ -15701,25 +15710,35 @@ ${n.content.slice(0, 2e3)}
         detail: lines.join("\n")
       });
     }
-    if (issues.length) {
+    for (const v of stuck) {
       issues.push({
         severity: "warn",
-        title: `坏文件已由存储层自动留档并重建（D1 契约）`,
-        detail: `解析失败时原内容先留档到 ${CORRUPT_DIR}/ 再重建默认文件，数据不会丢；可从留档手工恢复。`
+        title: `${v.label}数据文件存在但读不动（非损坏非缺失）`,
+        detail: `文件：${v.file}
+读取时出错（可能被占用、权限不足或同步盘瞬时故障）。本次体检未检查该文件内容，请稍后重新体检。`
       });
     }
-    const summary = bad.length ? `${existing.length} 个数据文件中 ${bad.length} 个无法解析` : `${existing.length} 个数据文件全部可解析`;
+    if (bad.length) {
+      issues.push({
+        severity: "warn",
+        title: `坏文件将在对应功能下次读取时自动留档并重建（D1 契约）`,
+        detail: `对应功能下次读取该文件时，解析失败的原内容会先留档到 ${CORRUPT_DIR}/ 再重建默认文件，数据不会丢；可从留档手工恢复（体检当下不改动任何文件）。`
+      });
+    }
+    const summary = bad.length ? `${existing.length} 个数据文件中 ${bad.length} 个无法解析` : stuck.length ? `${existing.length} 个数据文件中 ${stuck.length} 个读不动（请重新体检）` : `${existing.length} 个数据文件全部可解析`;
     return { summary, issues };
   }
   async function checkJsonFiles(app, opts = {}) {
     var _a2, _b2;
     const targets = jsonScanTargets(app);
     const verdicts = [];
-    for (const t of targets) {
+    for (let i = 0; i < targets.length; i++) {
+      const t = targets[i];
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
       const parsed = await readRawJson(app, t.file);
-      verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, parsed && !parsed.ok ? corruptBackupsFor(app, t.file) : []));
-      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `${t.label}（${t.file}）`));
+      const unreadable = parsed === null && fileExists(app, t.file);
+      verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, parsed && !parsed.ok ? corruptBackupsFor(app, t.file) : [], unreadable));
+      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `${t.label}（${t.file}）`, { done: i + 1, total: targets.length }));
     }
     const { summary, issues } = jsonIssuesOf(verdicts);
     const section = { id: "json", name: "数据文件可解析", summary, issues, scanned: verdicts.filter((v) => v.state !== "missing").length };
@@ -15796,15 +15815,24 @@ ${n.content.slice(0, 2e3)}
       if (!r.parsed.ok) continue;
       const bad = (n) => n > 0;
       let hasDrift = false;
+      if (r.plan.kind === "item" && r.plan.file.endsWith("favorites.json") && r.parsed && r.parsed.ok && !Array.isArray(r.parsed.data)) {
+        hasDrift = true;
+        issues.push({
+          severity: "warn",
+          title: `${r.plan.label}：不是条目数组形态（读取链会失败）`,
+          detail: `文件：${r.plan.file}
+当前根是 ${Array.isArray(r.parsed.data) ? "数组" : r.parsed.data && typeof r.parsed.data === "object" ? "对象" : typeof r.parsed.data}，收藏本读取链期望「条目数组」；请从留档或备份恢复。`
+        });
+      }
       if (r.item) {
         const s = r.item;
         if (bad(s.nonObject)) {
           hasDrift = true;
           issues.push({
             severity: "error",
-            title: `${r.plan.label}：${s.nonObject} 条非对象条目（两条读取链都会失败）`,
+            title: `${r.plan.label}：${s.nonObject} 条非对象条目（读取链会在这里中断）`,
             detail: `文件：${r.plan.file}
-数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），备忘录的读取链都会在这里中断，请从留档或备份修复该文件。`
+数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），${r.plan.label}的读取链都会在这里中断，请从留档或备份修复该文件。`
           });
         }
         if (Object.keys(s.extra).length) {
@@ -15876,7 +15904,8 @@ ${countsToText(s.missing)}
     var _a2, _b2;
     const plans = driftPlans(app);
     const results = [];
-    for (const plan of plans) {
+    for (let i = 0; i < plans.length; i++) {
+      const plan = plans[i];
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
       const parsed = await readRawJson(app, plan.file);
       if (parsed && parsed.ok) {
@@ -15893,7 +15922,7 @@ ${countsToText(s.missing)}
       } else {
         results.push({ plan, parsed });
       }
-      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, plan.label));
+      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, plan.label, { done: i + 1, total: plans.length }));
     }
     const { summary, issues } = driftIssuesOf(results);
     return { id: "drift", name: "字段漂移", summary, issues, scanned: results.filter((r) => r.parsed).length };
@@ -15940,7863 +15969,29 @@ ${countsToText(s.missing)}
         // archived = issue 357 周归档可选段（深审 PA-1：本插件自己写的正常归档数据，不得被体检
         // 误报「约定外数据段/可能是外部写入」；旧文件缺此段走「缺少数据段」info 常态，不修数据）
         "pomodoro.json": ["version", "state", "history", "archived"],
-        "clipbook.json": ["articleOverrides", "savedArchive", "order"],
-        "news.json": ["articles", "stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds"],
+        // clipbook 7 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
+        // + issue 358 readLog 扩段；func P2-1：此前漏 4 段致用过剪藏本即恒误报）
+        "clipbook.json": ["articleOverrides", "savedArchive", "order", "marks", "savedImages", "pendingSource", "readLog"],
+        // news 10 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2）
+        "news.json": [
+          "articles",
+          "stats",
+          "bilibiliUps",
+          "bilibiliUpInfo",
+          "bilibiliMaxItems",
+          "bilibiliCookie",
+          "sources",
+          "rssFeeds",
+          "lastFetchAt",
+          "fetchIntervalMin"
+        ],
+        // home v3 五键 = home/order.ts emptyHomeOrder()（home 批 1d26c797 已修）
         "home.json": ["version", "desk", "mob", "hiddenDesk", "hiddenMob"],
-        "belongings.json": ["version", "last_updated", "items", "categories", "categoryIcons"],
+        // belongings 3 段 = belongings/data.ts belongingsSaveShape 落盘键集（ADR-0102：categories/
+        // categoryIcons 为内存派生段设计上不落盘——func P2-4/A1：此前多列 2 键致恒报「缺少数据段」info）
+        "belongings.json": ["version", "last_updated", "items"],
         "quiz.json": ["notes"]
       };
-    }
-  });
-
-  // src/cinema/constants.ts
-  function getGroupForTag(tag) {
-    for (const [group, tags] of Object.entries(TYPE_GROUPS)) {
-      if (tags.includes(tag)) return group;
-    }
-    return null;
-  }
-  function getGroupSafe(tag) {
-    var _a2;
-    return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
-  }
-  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, ILLEGAL_NAME_CHARS, ILLEGAL_NAME_RE, ILLEGAL_NAME_RE_GLOBAL, TYPE_GROUPS, ALL_TAGS;
-  var init_constants = __esm({
-    "src/cinema/constants.ts"() {
-      STATUS_WANT = 0;
-      STATUS_WATCHING = 1;
-      STATUS_WATCHED = 2;
-      ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
-      ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
-      ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, "g");
-      TYPE_GROUPS = {
-        电影: ["电影"],
-        剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
-        动漫: ["日漫", "国漫", "美漫"],
-        纪录片: ["纪录片"],
-        公开课: ["公开课", "TED"]
-      };
-      ALL_TAGS = Object.values(TYPE_GROUPS).flat();
-    }
-  });
-
-  // src/cinema/douban-fetcher.ts
-  function extractMovieName(filename) {
-    const basename = stripMdExt(filename);
-    const m = basename.match(/《(.+)》/);
-    return m ? m[1] : basename;
-  }
-  var POSTER_FOLDER;
-  var init_douban_fetcher = __esm({
-    "src/cinema/douban-fetcher.ts"() {
-      init_str();
-      init_constants();
-      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
-    }
-  });
-
-  // src/cinema/state.ts
-  function resolveCinemaFolderPath() {
-    try {
-      const s = tryGetSettings();
-      return typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
-    } catch (e) {
-      return DEFAULT_FOLDER;
-    }
-  }
-  var DEFAULT_FOLDER;
-  var init_state2 = __esm({
-    "src/cinema/state.ts"() {
-      init_settings_provider();
-      DEFAULT_FOLDER = "我的/影视";
-    }
-  });
-
-  // src/cinema/data.ts
-  function parseMovieFile(file, app) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
-    const cache = app.metadataCache.getFileCache(file);
-    if (!cache || !cache.frontmatter) return null;
-    const fm = cache.frontmatter;
-    const name = extractMovieName(file.basename);
-    let rawTags = fm.tags;
-    if (typeof rawTags === "string") rawTags = [rawTags];
-    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
-    let typeTag = null;
-    for (const t of ALL_TAGS) {
-      if (tags.includes(t)) {
-        typeTag = t;
-        break;
-      }
-    }
-    if (!typeTag) {
-      if (tags.length === 0) return null;
-      typeTag = tags[0];
-    }
-    const watchDate = (_b2 = (_a2 = fm["观影日期"]) == null ? void 0 : _a2.toString()) != null ? _b2 : null;
-    const rawRating = fm["评分"];
-    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
-    let status;
-    if (rating === -1) status = STATUS_WANT;
-    else if (rating === 0) status = STATUS_WATCHING;
-    else status = STATUS_WATCHED;
-    return {
-      file,
-      name,
-      typeTag,
-      group: getGroupSafe(typeTag),
-      watchDate,
-      rating,
-      status,
-      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
-      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
-      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
-      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
-      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
-      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
-      year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
-      releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
-      doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
-      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
-      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
-      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
-      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
-      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
-      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
-    };
-  }
-  var init_data3 = __esm({
-    "src/cinema/data.ts"() {
-      init_constants();
-      init_douban_fetcher();
-      init_state2();
-    }
-  });
-
-  // src/checkup/checks-orphans.ts
-  function clipDirOf() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  async function clipUrlSet(app) {
-    var _a2;
-    const dir = clipDirOf();
-    const set = /* @__PURE__ */ new Set();
-    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(dir + "/"));
-    for (const f of files) {
-      const cache = app.metadataCache.getFileCache(f);
-      const url = (_a2 = cache == null ? void 0 : cache.frontmatter) == null ? void 0 : _a2.url;
-      if (typeof url === "string" && url) set.add(url);
-    }
-    return set;
-  }
-  async function checkOrphans(app, opts = {}) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
-    const issues = [];
-    let scanned = 0;
-    {
-      const s = tryGetSettings();
-      const folder = s && s.cinemaFolderPath || "我的/影视";
-      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
-      for (const f of files) {
-        if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-        const item = parseMovieFile(f, app);
-        if (!item) continue;
-        scanned += 1;
-        const poster = (item.poster || "").trim();
-        if (poster && !fileExists(app, poster)) {
-          issues.push({
-            severity: "warn",
-            title: `影视《${item.name}》的海报文件不存在`,
-            detail: `笔记：${f.path}
-海报路径：${poster}
-详情页会显示占位图；请补回文件或清空笔记的「海报」字段。`
-          });
-        }
-        await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `影院 · ${item.name}`));
-      }
-    }
-    {
-      const mdBooks = scanMarkdownBooks(app);
-      for (const b of mdBooks) {
-        if ((_c = opts.isCancelled) == null ? void 0 : _c.call(opts)) return null;
-        scanned += 1;
-        const cover = (b.cover || "").trim();
-        if (cover && !fileExists(app, cover)) {
-          issues.push({
-            severity: "warn",
-            title: `书目《${b.title}》的封面文件不存在`,
-            detail: `笔记：${((_d = b.file) == null ? void 0 : _d.path) || "(未知)"}
-封面路径：${cover}
-书库会显示占位封面；请补回文件或清空笔记的 cover 字段。`
-          });
-        }
-        await ((_e = opts.tick) == null ? void 0 : _e.call(opts, `书库 · ${b.title}`));
-      }
-      const epubs = await loadEpubItems(app);
-      for (const b of epubs) {
-        if ((_f = opts.isCancelled) == null ? void 0 : _f.call(opts)) return null;
-        scanned += 1;
-        const p = (b.epubVaultPath || "").trim();
-        if (p && !fileExists(app, p)) {
-          issues.push({
-            severity: "warn",
-            title: `EPUB 书目《${b.title}》指向的文件不存在`,
-            detail: `EPUB 路径：${p}
-该条目来自 weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。`
-          });
-        }
-        await ((_g = opts.tick) == null ? void 0 : _g.call(opts, `书库 · ${b.title}`));
-      }
-    }
-    {
-      const sidecarFile = ((_h = jsonScanTargets(app).find((t) => t.file.endsWith("/clipbook.json"))) == null ? void 0 : _h.file) || "CONFIG/STORAGE/clipbook.json";
-      const parsed = await readRawJson(app, sidecarFile);
-      const data = parsed && parsed.ok && parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data) ? parsed.data : null;
-      if (data) {
-        const savedArchive = data.savedArchive;
-        if (Array.isArray(savedArchive)) {
-          const urls = await clipUrlSet(app);
-          for (const entry of savedArchive) {
-            if ((_i = opts.isCancelled) == null ? void 0 : _i.call(opts)) return null;
-            scanned += 1;
-            const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
-            if (url && !urls.has(url)) {
-              issues.push({
-                severity: "warn",
-                title: `剪藏残留《${String(entry.title || url)}》对应的剪藏笔记不存在`,
-                detail: `侧写文件：${sidecarFile}
-链接：${url}
-剪藏目录（${clipDirOf()}）里已没有该链接的笔记，这条「已保存」残留失去意义，可清除。`,
-                fixGroup: "clipbook",
-                fixKey: url,
-                fixLabel: "清除残留"
-              });
-            }
-            await ((_j = opts.tick) == null ? void 0 : _j.call(opts, "剪藏本 · 已保存残留"));
-          }
-        }
-        const marks = data.marks && typeof data.marks === "object" && !Array.isArray(data.marks) ? data.marks : {};
-        for (const [articleKey, list] of Object.entries(marks)) {
-          if (!Array.isArray(list)) continue;
-          for (const mk of list) {
-            if ((_k = opts.isCancelled) == null ? void 0 : _k.call(opts)) return null;
-            if (!mk || typeof mk !== "object") continue;
-            scanned += 1;
-            const notePath = String(mk.notePath || "").trim();
-            if (notePath && !fileExists(app, notePath)) {
-              const find = String(mk.find || "");
-              issues.push({
-                severity: "warn",
-                title: `剪藏标注指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
-                detail: `侧写文件：${sidecarFile}
-条目：${articleKey}
-标注原文：${find}
-笔记路径：${notePath}
-这条标注的目标笔记已删除，保存物化时会被跳过，可清除该标注记录。`,
-                fixGroup: "clipbook-marks",
-                fixKey: JSON.stringify([articleKey, find, notePath]),
-                fixLabel: "清除标注"
-              });
-            }
-            await ((_l = opts.tick) == null ? void 0 : _l.call(opts, "剪藏本 · 划词标注"));
-          }
-        }
-        const pendingSource = data.pendingSource && typeof data.pendingSource === "object" && !Array.isArray(data.pendingSource) ? data.pendingSource : {};
-        for (const [articleKey, list] of Object.entries(pendingSource)) {
-          if (!Array.isArray(list)) continue;
-          for (const p of list) {
-            if ((_m = opts.isCancelled) == null ? void 0 : _m.call(opts)) return null;
-            scanned += 1;
-            const notePath = String(p || "").trim();
-            if (notePath && !fileExists(app, notePath)) {
-              issues.push({
-                severity: "warn",
-                title: `剪藏待回写来源指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
-                detail: `侧写文件：${sidecarFile}
-条目：${articleKey}
-笔记路径：${notePath}
-保存物化时这条来源回写会因目标缺失被跳过，可清除该待回写记录。`,
-                fixGroup: "clipbook-source",
-                fixKey: JSON.stringify([articleKey, notePath]),
-                fixLabel: "清除待回写来源"
-              });
-            }
-            await ((_n = opts.tick) == null ? void 0 : _n.call(opts, "剪藏本 · 待回写来源"));
-          }
-        }
-      }
-    }
-    {
-      const favFile = ((_o = jsonScanTargets(app).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _o.file) || "CONFIG/STORAGE/favorites.json";
-      const parsed = await readRawJson(app, favFile);
-      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
-        for (const it of parsed.data) {
-          if ((_p = opts.isCancelled) == null ? void 0 : _p.call(opts)) return null;
-          if (!it || typeof it !== "object") continue;
-          scanned += 1;
-          const note = String(it.linkedNote || "").trim();
-          if (note && !fileExists(app, note)) {
-            issues.push({
-              severity: "warn",
-              title: `收藏「${String(it.title || it.url || "(无标题)")}」的关联笔记不存在`,
-              detail: `数据文件：${favFile}
-关联路径：${note}
-「跳转笔记」会提示文件不存在；可清除该关联（收藏条目本体保留）。`,
-              fixGroup: "favorites",
-              fixKey: String(it.id || ""),
-              fixLabel: "清除关联"
-            });
-          }
-          await ((_q = opts.tick) == null ? void 0 : _q.call(opts, "收藏本 · 关联笔记"));
-        }
-      }
-    }
-    {
-      const kbFile = ((_r = jsonScanTargets(app).find((t) => t.file.endsWith("/knowledge.json"))) == null ? void 0 : _r.file) || "CONFIG/STORAGE/knowledge.json";
-      const parsed = await readRawJson(app, kbFile);
-      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
-        for (const it of parsed.data) {
-          if ((_s = opts.isCancelled) == null ? void 0 : _s.call(opts)) return null;
-          if (!it || typeof it !== "object") continue;
-          scanned += 1;
-          const id = String(it.id || "");
-          const note = String(it.notePath || "").trim();
-          const video = String(it.videoPath || "").trim();
-          const title = String(it.title || it.url || "(无标题)");
-          if (note && !fileExists(app, note)) {
-            issues.push({
-              severity: "warn",
-              title: `知识盒任务「${title}」的文献笔记不存在`,
-              detail: `数据文件：${kbFile}
-笔记路径：${note}
-任务卡「打开文献笔记」会失败；可清除该引用（任务本体保留）。`,
-              fixGroup: "knowledge",
-              fixKey: id ? `${id}|note` : "",
-              fixLabel: "清除笔记引用"
-            });
-          }
-          if (video && !fileExists(app, video)) {
-            issues.push({
-              severity: "warn",
-              title: `知识盒任务「${title}」的视频文件不存在`,
-              detail: `数据文件：${kbFile}
-视频路径：${video}
-任务卡「复制视频路径」指向的文件已缺失；可清除该路径（任务本体保留）。`,
-              fixGroup: "knowledge",
-              fixKey: id ? `${id}|video` : "",
-              fixLabel: "清除视频路径"
-            });
-          }
-          await ((_t = opts.tick) == null ? void 0 : _t.call(opts, "知识盒 · 任务引用"));
-        }
-      }
-    }
-    const summary = issues.length ? `扫描 ${scanned} 个条目，发现 ${issues.length} 处指向缺失` : `扫描 ${scanned} 个条目，未发现指向缺失`;
-    const section = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
-    return section;
-  }
-  var init_checks_orphans = __esm({
-    "src/checkup/checks-orphans.ts"() {
-      init_files();
-      init_settings_provider();
-      init_data3();
-      init_data2();
-    }
-  });
-
-  // src/core/json-store.ts
-  function jsonStore(filePath) {
-    return jsonFileStore(filePath);
-  }
-  var init_json_store = __esm({
-    "src/core/json-store.ts"() {
-      init_storage();
-    }
-  });
-
-  // src/memo/data.ts
-  function parseScenarios(raw) {
-    if (!raw || !raw.trim()) return [...DEFAULT_SCENARIOS];
-    const list = raw.split(/[,，]/).map((s) => s.trim()).filter((s) => s.length > 0);
-    return list.length ? [...new Set(list)] : [...DEFAULT_SCENARIOS];
-  }
-  function hasCourseTag(cache) {
-    var _a2;
-    if (cache.tags && cache.tags.some((t) => t.tag === "#公开课" || t.tag === "公开课")) return true;
-    const tags = (_a2 = cache.frontmatter) == null ? void 0 : _a2.tags;
-    return !!tags && tags.includes("公开课");
-  }
-  function normalizeItem(item) {
-    return {
-      id: item.id,
-      title: item.title,
-      scene: item.scene,
-      priority: item.priority || "minor",
-      created: item.created,
-      completed: item.completed || null,
-      due: item.due || null,
-      notePath: item.notePath || null,
-      notePosition: item.notePosition || null,
-      scriptName: item.scriptName || null,
-      courseName: item.courseName || null,
-      coursePath: item.coursePath || null,
-      linkedNote: item.linkedNote || null,
-      url: item.url || null
-    };
-  }
-  var import_moment3, DEFAULT_SCENARIOS, MemoData;
-  var init_data4 = __esm({
-    "src/memo/data.ts"() {
-      import_moment3 = __toESM(require_moment());
-      init_json_store();
-      init_app();
-      init_utils();
-      init_storage();
-      init_notice();
-      DEFAULT_SCENARIOS = ["剪藏", "工作", "学习", "生活", "代码", "公开课"];
-      MemoData = {
-        memoFilePath: "",
-        scenarios: [],
-        _store: null,
-        cinemaFolderPath: "我的/影视",
-        init(settings) {
-          this.memoFilePath = storageFile("memo.json", settings.storagePath || "CONFIG/STORAGE");
-          this._store = jsonStore(this.memoFilePath);
-          this.scenarios = parseScenarios(settings.memoScenarios);
-          this.cinemaFolderPath = settings.cinemaFolderPath || "我的/影视";
-        },
-        async read() {
-          return this._store.read();
-        },
-        async write(data) {
-          return this._store.write(data);
-        },
-        /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
-         *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
-         *  的 id 形态完全一致（T5）。读改写整体入 per-path 串行队列（写竞态收敛，对照 memo/data.ts） */
-        async loadItems() {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            const raw = await this.read();
-            if (!Array.isArray(raw)) {
-              const backup = await backupOriginal(getApp(), this.memoFilePath);
-              await this.write([]);
-              try {
-                notify(
-                  backup ? `备忘录数据文件损坏（内容不是列表），原内容已留档到 ${backup}，已重建空清单继续使用` : "备忘录数据文件损坏（内容不是列表），已重建空清单继续使用",
-                  { type: "warning", dedupeKey: "memo-loaditems-corrupt" }
-                );
-              } catch (e) {
-              }
-              return [];
-            }
-            let needWrite = false;
-            const items = raw.map((item) => {
-              if (!item.id) {
-                item.id = generateId();
-                needWrite = true;
-              }
-              return normalizeItem(item);
-            });
-            if (needWrite) await this.write(raw);
-            return items;
-          });
-        },
-        async addItem(item) {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            const data = await this.read();
-            data.unshift(item);
-            await this.write(data);
-          });
-        },
-        async updateItem(id, newData) {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            const data = await this.read();
-            const idx = data.findIndex((d) => d.id === id);
-            if (idx === -1) throw new Error("条目不存在");
-            const old = data[idx];
-            if (newData.title !== void 0 && newData.url === void 0) {
-              const { url } = extractUrlAndDisplay(newData.title);
-              newData.url = url;
-            }
-            data[idx] = {
-              ...old,
-              ...newData,
-              id: old.id,
-              created: old.created
-            };
-            await this.write(data);
-          });
-        },
-        async completeItem(id) {
-          const now = (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss");
-          await this.updateItem(id, { completed: now });
-        },
-        /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
-        async deleteItem(id) {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            const data = await this.read();
-            const idx = data.findIndex((d) => d.id === id);
-            if (idx !== -1) {
-              data.splice(idx, 1);
-              await this.write(data);
-            }
-            return idx;
-          });
-        },
-        /** 撤销删除：把删除前的条目快照插回原索引（越界/未传则头部插入，对齐 addItem 语义） */
-        async restoreItem(item, idx) {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            const data = await this.read();
-            const at = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
-            data.splice(at, 0, item);
-            await this.write(data);
-          });
-        },
-        /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
-         *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
-        async updateSceneBulk(from, to) {
-          return enqueueFileTask(this.memoFilePath, async () => {
-            const data = await this.read();
-            let n = 0;
-            data.forEach((d) => {
-              if (d.scene === from) {
-                d.scene = to;
-                n++;
-              }
-            });
-            if (n > 0) await this.write(data);
-            return n;
-          });
-        },
-        /** 公开课笔记（影视目录中含 公开课 标签的文件） */
-        async getCourseNotes() {
-          const app = getApp();
-          const result = [];
-          for (const file of app.vault.getFiles()) {
-            if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== "md") continue;
-            const cache = app.metadataCache.getFileCache(file);
-            if (!cache) continue;
-            if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
-          }
-          return result;
-        },
-        getScenarios() {
-          return this.scenarios;
-        }
-      };
-    }
-  });
-
-  // src/checkup/checks-consistency.ts
-  function memoNormalize(item) {
-    const { title, scene, created } = item;
-    return {
-      id: item.id,
-      title,
-      scene,
-      priority: item.priority || "minor",
-      created,
-      completed: item.completed || null,
-      due: item.due || null,
-      notePath: item.notePath || null,
-      notePosition: item.notePosition || null,
-      scriptName: item.scriptName || null,
-      courseName: item.courseName || null,
-      coursePath: item.coursePath || null,
-      linkedNote: item.linkedNote || null,
-      url: item.url || null
-    };
-  }
-  function isPlainObject2(v) {
-    return !!v && typeof v === "object" && !Array.isArray(v);
-  }
-  function analyzeMemoConsistency(raw) {
-    const stats = {
-      total: Array.isArray(raw) ? raw.length : -1,
-      nonObject: 0,
-      missingId: 0,
-      duplicateId: 0,
-      missingTitle: 0,
-      storeView: { total: 0, done: 0 },
-      rawView: { total: 0, done: 0 }
-    };
-    if (!Array.isArray(raw)) return stats;
-    const seenIds = /* @__PURE__ */ new Set();
-    for (const it of raw) {
-      if (!isPlainObject2(it)) {
-        stats.nonObject += 1;
-        continue;
-      }
-      const id = typeof it.id === "string" && it.id ? it.id : "";
-      if (!id) stats.missingId += 1;
-      else if (seenIds.has(id)) stats.duplicateId += 1;
-      else seenIds.add(id);
-      if (!it.title || !String(it.title).trim()) stats.missingTitle += 1;
-      const m = memoNormalize(it);
-      if (m.completed !== null) stats.storeView.done += 1;
-      const t = normalizeItem(it);
-      if (t.completed) stats.rawView.done += 1;
-      stats.storeView.total += 1;
-      stats.rawView.total += 1;
-    }
-    return stats;
-  }
-  function consistencyIssuesOf(stats) {
-    const issues = [];
-    if (stats.total < 0) {
-      return {
-        summary: "文件不是条目数组形态",
-        issues: [
-          {
-            severity: "error",
-            title: "memo.json 不是条目数组形态（两条读取链都无法读取）",
-            detail: "两条读取链都期望「条目数组」；当前文件是其他形态，请从 CONFIG/.CORRUPT/ 留档或备份恢复。"
-          }
-        ]
-      };
-    }
-    if (stats.storeView.total !== stats.rawView.total || stats.storeView.done !== stats.rawView.done) {
-      issues.push({
-        severity: "error",
-        title: `双链计数不一致：单例读 ${stats.storeView.total} 条/完成 ${stats.storeView.done}，直读 ${stats.rawView.total} 条/完成 ${stats.rawView.done}`,
-        detail: "同一份 memo.json，两条读取链的统计口径出现分叉，说明字段归一链路有 bug，请反馈修复。"
-      });
-    }
-    if (stats.nonObject > 0) {
-      issues.push({
-        severity: "error",
-        title: `${stats.nonObject} 条非对象条目（两条读取链都会在这里中断）`,
-        detail: "数组里混入了非对象内容（字符串/数字等），两条链加载都会失败，请从留档或备份修复。"
-      });
-    }
-    if (stats.duplicateId > 0) {
-      issues.push({
-        severity: "warn",
-        title: `${stats.duplicateId} 条重复 id（完成/删除会同 id 联动误伤）`,
-        detail: "同 id 条目在两条读取链中都会被当成同一条处理：勾选完成一条，另一条也显示完成。"
-      });
-    }
-    if (stats.missingTitle > 0) {
-      issues.push({
-        severity: "warn",
-        title: `${stats.missingTitle} 条缺少标题（列表显示为空行）`,
-        detail: "标题是两条读取链共用的展示字段；缺失多为外部写入导致。"
-      });
-    }
-    if (stats.missingId > 0) {
-      issues.push({
-        severity: "info",
-        title: `${stats.missingId} 条缺少 id（下次读取时自动补）`,
-        detail: "加载链会自动生成 id 写回，无需处理。"
-      });
-    }
-    const bad = stats.nonObject + stats.duplicateId + stats.missingTitle;
-    const summary = issues.some((i) => i.severity === "error") ? "发现结构异常" : bad > 0 ? `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致，另有 ${bad} 处小问题` : `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致`;
-    return { summary, issues };
-  }
-  async function checkSameSourceConsistency(app, opts = {}) {
-    var _a2, _b2, _c;
-    if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-    const file = ((_b2 = jsonScanTargets(app).find((t) => t.file.endsWith("/memo.json"))) == null ? void 0 : _b2.file) || "CONFIG/STORAGE/memo.json";
-    const parsed = await readRawJson(app, file);
-    if (parsed === null) {
-      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 不存在（还没写过数据），跳过", issues: [], scanned: 0 };
-    }
-    if (!parsed.ok) {
-      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 无法解析（见「数据文件可解析」项），跳过", issues: [], scanned: 0 };
-    }
-    await ((_c = opts.tick) == null ? void 0 : _c.call(opts, "备忘录"));
-    const stats = analyzeMemoConsistency(parsed.data);
-    const { summary, issues } = consistencyIssuesOf(stats);
-    return { id: "consistency", name: "同源一致性（备忘录）", summary, issues, scanned: stats.total };
-  }
-  var init_checks_consistency = __esm({
-    "src/checkup/checks-consistency.ts"() {
-      init_files();
-      init_data4();
-    }
-  });
-
-  // src/checkup/run.ts
-  async function runCheckup(app, opts = {}) {
-    var _a2, _b2;
-    const total = CHECK_LABELS.length;
-    const runners = [
-      (o) => checkJsonFiles(app, o),
-      (o) => checkFieldDrift(app, o),
-      (o) => checkOrphans(app, o),
-      (o) => checkSameSourceConsistency(app, o)
-    ];
-    const sections = [];
-    for (let i = 0; i < runners.length; i++) {
-      if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-      (_b2 = opts.onProgress) == null ? void 0 : _b2.call(opts, { index: i, total, label: CHECK_LABELS[i] });
-      try {
-        const section = await runners[i]({
-          tick: async (label) => {
-            var _a3;
-            (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label });
-            await yieldToMainThread2();
-          },
-          isCancelled: () => {
-            var _a3;
-            return !!((_a3 = opts.isCancelled) == null ? void 0 : _a3.call(opts));
-          }
-        });
-        if (section === null) return null;
-        sections.push(section);
-      } catch (e) {
-        sections.push({
-          id: ["json", "drift", "orphan", "consistency"][i],
-          name: CHECK_LABELS[i],
-          summary: "检查未能完成",
-          issues: [{ severity: "error", title: `${CHECK_LABELS[i]}检查出错`, detail: e instanceof Error ? e.message : String(e) }],
-          scanned: 0
-        });
-      }
-    }
-    const report = { sections, finishedAt: (/* @__PURE__ */ new Date()).toLocaleString() };
-    lastReport = report;
-    return report;
-  }
-  function yieldToMainThread2() {
-    return yieldToMainThread();
-  }
-  function getLastCheckupReport() {
-    return lastReport;
-  }
-  function fixKeysOf(issues, group) {
-    return issues.filter((i) => i.fixGroup === group && i.fixKey).map((i) => i.fixKey);
-  }
-  async function fixFavorites(app, file, ids) {
-    const restored = /* @__PURE__ */ new Map();
-    const fixed = await enqueueFileTask(file, async () => {
-      var _a2;
-      const store2 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store2.read();
-      const want = new Set(ids);
-      let n = 0;
-      for (const it of data) {
-        if (!it || typeof it !== "object" || !want.has(String(it.id))) continue;
-        const note = String(it.linkedNote || "").trim();
-        if (!note) continue;
-        restored.set(String(it.id), (_a2 = it.linkedNote) != null ? _a2 : null);
-        it.linkedNote = null;
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条失效的收藏关联（条目保留）` : "没有需要清除的关联（数据已变化）",
-      undo: async () => {
-        if (!restored.size) return;
-        await enqueueFileTask(file, async () => {
-          var _a2;
-          const store2 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store2.read();
-          for (const it of data) {
-            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
-            it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixClipbook(app, file, urls) {
-    const removed = [];
-    const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, {
-        defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
-      });
-      const data = await store2.read();
-      const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
-      const want = new Set(urls);
-      const kept = [];
-      let n = 0;
-      list.forEach((entry, index) => {
-        const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
-        if (url && want.has(url)) {
-          removed.push({ url, title: String(entry.title || ""), savedAt: String(entry.savedAt || ""), index });
-          n += 1;
-        } else {
-          kept.push(entry);
-        }
-      });
-      if (n > 0) {
-        data.savedArchive = kept;
-        await store2.write(data);
-      }
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条剪藏「已保存」残留` : "没有需要清除的残留（数据已变化）",
-      undo: async () => {
-        if (!removed.length) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, {
-            defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
-          });
-          const data = await store2.read();
-          const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
-          for (const r of removed) {
-            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-            list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
-          }
-          data.savedArchive = list;
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixKnowledge(app, file, keys) {
-    const restored = /* @__PURE__ */ new Map();
-    const fixed = await enqueueFileTask(file, async () => {
-      var _a2;
-      const store2 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store2.read();
-      let n = 0;
-      for (const key of keys) {
-        const bar = key.lastIndexOf("|");
-        if (bar <= 0) continue;
-        const id = key.slice(0, bar);
-        const field = key.slice(bar + 1) === "note" ? "notePath" : "videoPath";
-        const it = (Array.isArray(data) ? data : []).find((d) => d && typeof d === "object" && String(d.id) === id);
-        if (!it) continue;
-        const cur = String(it[field] || "").trim();
-        if (!cur) continue;
-        const rec = (_a2 = restored.get(id)) != null ? _a2 : {};
-        rec[field === "notePath" ? "notePath" : "videoPath"] = it[field];
-        restored.set(id, rec);
-        it[field] = null;
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 处知识盒任务的失效引用（任务保留）` : "没有需要清除的引用（数据已变化）",
-      undo: async () => {
-        if (!restored.size) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store2.read();
-          for (const it of Array.isArray(data) ? data : []) {
-            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
-            const rec = restored.get(String(it.id));
-            if (rec.notePath !== void 0) it.notePath = rec.notePath;
-            if (rec.videoPath !== void 0) it.videoPath = rec.videoPath;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  function clipbookDefault() {
-    return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
-  }
-  function recordSectionOf(data, key) {
-    const cur = data && typeof data === "object" ? data[key] : void 0;
-    if (cur && typeof cur === "object" && !Array.isArray(cur)) return cur;
-    data[key] = {};
-    return data[key];
-  }
-  async function fixClipbookMarks(app, file, keys) {
-    const removed = [];
-    const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-      const data = await store2.read();
-      const marks = recordSectionOf(data, "marks");
-      let n = 0;
-      for (const key of keys) {
-        let articleKey = "";
-        let find = "";
-        let notePath = "";
-        try {
-          const [a, f, p] = JSON.parse(key);
-          articleKey = String(a != null ? a : "");
-          find = String(f != null ? f : "");
-          notePath = String(p != null ? p : "");
-        } catch (e) {
-          continue;
-        }
-        if (!articleKey || !notePath) continue;
-        const list = Array.isArray(marks[articleKey]) ? marks[articleKey] : [];
-        const idx = list.findIndex(
-          (m) => m && typeof m === "object" && String(m.find || "") === find && String(m.notePath || "") === notePath
-        );
-        if (idx === -1) continue;
-        removed.push({ articleKey, mark: list[idx], index: idx });
-        list.splice(idx, 1);
-        if (list.length === 0) delete marks[articleKey];
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条失效的剪藏标注` : "没有需要清除的标注（数据已变化）",
-      undo: async () => {
-        if (!removed.length) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-          const data = await store2.read();
-          const marks = recordSectionOf(data, "marks");
-          for (const r of removed) {
-            const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
-            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-            list.splice(at, 0, r.mark);
-            marks[r.articleKey] = list;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixClipbookPendingSource(app, file, keys) {
-    const removed = [];
-    const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-      const data = await store2.read();
-      const pending = recordSectionOf(data, "pendingSource");
-      let n = 0;
-      for (const key of keys) {
-        let articleKey = "";
-        let notePath = "";
-        try {
-          const [a, p] = JSON.parse(key);
-          articleKey = String(a != null ? a : "");
-          notePath = String(p != null ? p : "");
-        } catch (e) {
-          continue;
-        }
-        if (!articleKey || !notePath) continue;
-        const list = Array.isArray(pending[articleKey]) ? pending[articleKey] : [];
-        const idx = list.findIndex((p) => String(p || "") === notePath);
-        if (idx === -1) continue;
-        removed.push({ articleKey, notePath, index: idx });
-        list.splice(idx, 1);
-        if (list.length === 0) delete pending[articleKey];
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条失效的剪藏待回写来源` : "没有需要清除的待回写来源（数据已变化）",
-      undo: async () => {
-        if (!removed.length) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-          const data = await store2.read();
-          const pending = recordSectionOf(data, "pendingSource");
-          for (const r of removed) {
-            const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
-            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-            list.splice(at, 0, r.notePath);
-            pending[r.articleKey] = list;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixOrphanIssues(app, issues) {
-    const outcomes = [];
-    const targets = jsonScanTargets(app);
-    const fileOf = (suffix) => {
-      var _a2;
-      return ((_a2 = targets.find((t) => t.file.endsWith("/" + suffix))) == null ? void 0 : _a2.file) || "CONFIG/STORAGE/" + suffix;
-    };
-    const favIds = fixKeysOf(issues, "favorites");
-    if (favIds.length) outcomes.push(await fixFavorites(app, fileOf("favorites.json"), favIds));
-    const clipUrls = fixKeysOf(issues, "clipbook");
-    if (clipUrls.length) outcomes.push(await fixClipbook(app, fileOf("clipbook.json"), clipUrls));
-    const markKeys = fixKeysOf(issues, "clipbook-marks");
-    if (markKeys.length) outcomes.push(await fixClipbookMarks(app, fileOf("clipbook.json"), markKeys));
-    const srcKeys = fixKeysOf(issues, "clipbook-source");
-    if (srcKeys.length) outcomes.push(await fixClipbookPendingSource(app, fileOf("clipbook.json"), srcKeys));
-    const kbKeys = fixKeysOf(issues, "knowledge");
-    if (kbKeys.length) outcomes.push(await fixKnowledge(app, fileOf("knowledge.json"), kbKeys));
-    return outcomes;
-  }
-  var CHECK_LABELS, lastReport;
-  var init_run = __esm({
-    "src/checkup/run.ts"() {
-      init_utils();
-      init_storage();
-      init_files();
-      init_checks_json();
-      init_checks_drift();
-      init_checks_orphans();
-      init_checks_consistency();
-      CHECK_LABELS = ["数据文件可解析", "字段漂移", "孤儿条目", "同源一致性"];
-      lastReport = null;
-    }
-  });
-
-  // src/checkup/ui.ts
-  function openDataCheckup(app) {
-    hostApp = app;
-    if (!overlay) build(app);
-    topifyZ(overlay);
-    overlay.style.display = "flex";
-    renderBody();
-  }
-  function unloadDataCheckup() {
-    runSeq += 1;
-    running = false;
-    hostApp = null;
-    escHandle == null ? void 0 : escHandle.unregister();
-    escHandle = null;
-    overlay == null ? void 0 : overlay.remove();
-    overlay = null;
-  }
-  function build(app) {
-    const ov = document.createElement("div");
-    ov.id = OVERLAY_ID;
-    ov.className = "bz-panel-overlay";
-    const frame = document.createElement("div");
-    frame.id = FRAME_ID;
-    frame.className = "bz-panel-frame bz-checkup-popup";
-    const head = document.createElement("div");
-    head.className = "bz-panel-head";
-    const brand = document.createElement("div");
-    brand.className = "bz-panel-brand";
-    brand.appendChild(uiIcon("stethoscope"));
-    const title = document.createElement("div");
-    title.className = "bz-panel-title";
-    title.textContent = "数据体检";
-    const sp = document.createElement("div");
-    sp.className = "bz-panel-head-sp";
-    head.append(brand, title, sp);
-    const body = document.createElement("div");
-    body.className = "bz-checkup-body";
-    const foot = document.createElement("div");
-    foot.className = "bz-checkup-foot";
-    frame.append(head, body, foot);
-    ov.appendChild(frame);
-    ov.addEventListener("click", (e) => {
-      if (e.target === ov) hide();
-    });
-    document.body.appendChild(ov);
-    overlay = ov;
-    escHandle = escManager.register("bz-checkup", {
-      isVisible: () => !!overlay && overlay.style.display === "flex",
-      close: () => hide()
-    });
-  }
-  function hide() {
-    if (overlay) overlay.style.display = "none";
-  }
-  function bodyEl() {
-    return overlay.querySelector(".bz-checkup-body");
-  }
-  function footEl() {
-    return overlay.querySelector(".bz-checkup-foot");
-  }
-  function renderBody() {
-    if (!overlay) return;
-    if (running) {
-      renderRunning();
-      return;
-    }
-    const last = getLastCheckupReport();
-    if (last) renderReport(last, true);
-    else renderIdle();
-  }
-  function renderIdle() {
-    const body = bodyEl();
-    body.innerHTML = "";
-    const actions = document.createElement("div");
-    actions.className = "bz-btn-row bz-btn-row--center";
-    actions.appendChild(uiBtn({ label: "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() }));
-    body.appendChild(
-      uiEmpty({
-        icon: "stethoscope",
-        title: "还没体检过",
-        desc: "体检会检查各域数据文件能否解析、字段是否漂移、条目指向是否失效，全程只读不改数据",
-        actions
-      })
-    );
-    renderFoot();
-  }
-  function renderFoot() {
-    const foot = footEl();
-    foot.innerHTML = "";
-    if (running) {
-      foot.appendChild(uiBtn({ label: "取消体检", onClick: () => cancelRun() }));
-      return;
-    }
-    const last = getLastCheckupReport();
-    foot.appendChild(
-      uiBtn({ label: last ? "重新体检" : "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() })
-    );
-  }
-  async function startRun() {
-    if (!hostApp || running) return;
-    running = true;
-    const seq = ++runSeq;
-    renderRunning();
-    try {
-      const report = await runCheckup(hostApp, {
-        isCancelled: () => seq !== runSeq,
-        onProgress: (p) => {
-          if (seq !== runSeq) return;
-          updateProgress(p.index, p.total, p.label);
-        }
-      });
-      if (seq !== runSeq) return;
-      running = false;
-      if (report) renderReport(report, false);
-      else renderBody();
-    } catch (e) {
-      running = false;
-      if (seq !== runSeq) return;
-      notice("体检失败：" + (e instanceof Error ? e.message : String(e)), "error");
-      renderBody();
-    }
-  }
-  function cancelRun() {
-    runSeq += 1;
-    running = false;
-    renderBody();
-  }
-  function renderRunning() {
-    renderFoot();
-    const body = bodyEl();
-    body.innerHTML = "";
-    const progress = document.createElement("div");
-    progress.className = "bz-checkup-progress";
-    progress.textContent = "体检中…";
-    body.append(progress, uiProgress().el);
-    const list = document.createElement("div");
-    list.className = "bz-checkup-steps";
-    for (let i = 0; i < 4; i++) {
-      const row = document.createElement("div");
-      row.className = "bz-checkup-step";
-      row.dataset.step = String(i);
-      const mark = document.createElement("span");
-      mark.className = "bz-checkup-step-mark";
-      const name = document.createElement("span");
-      name.className = "bz-checkup-step-name";
-      name.textContent = ["数据文件可解析", "字段漂移", "孤儿条目", "同源一致性"][i];
-      row.append(mark, name);
-      list.appendChild(row);
-    }
-    body.appendChild(list);
-  }
-  function updateProgress(index, total, label) {
-    if (!overlay) return;
-    const progress = overlay.querySelector(".bz-checkup-progress");
-    const fill = overlay.querySelector(".bz-progress i");
-    if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
-    if (fill) fill.style.width = Math.round(index / total * 100) + "%";
-    overlay.querySelectorAll(".bz-checkup-step").forEach((row) => {
-      const i = Number(row.dataset.step);
-      row.classList.toggle("is-done", i < index);
-      row.classList.toggle("is-current", i === index);
-    });
-  }
-  function severityCounts(report) {
-    const c = { error: 0, warn: 0, info: 0 };
-    for (const s of report.sections) for (const i of s.issues) c[i.severity] += 1;
-    return c;
-  }
-  function renderReport(report, stale) {
-    renderFoot();
-    const body = bodyEl();
-    body.innerHTML = "";
-    if (stale) {
-      const hint = document.createElement("div");
-      hint.className = "bz-checkup-stale";
-      hint.textContent = `上次体检：${report.finishedAt} · 数据可能已变化，可重新体检`;
-      body.appendChild(hint);
-    }
-    const counts = severityCounts(report);
-    const summary = document.createElement("div");
-    summary.className = "bz-checkup-summary" + (counts.error ? " bz-checkup-summary--bad" : counts.warn ? " bz-checkup-summary--warn" : " bz-checkup-summary--ok");
-    summary.textContent = counts.error ? `体检完成：${counts.error} 个问题需要处理` : counts.warn ? `体检完成：${counts.warn} 处建议处理` : "体检完成：全部通过";
-    body.appendChild(summary);
-    const allIssues = report.sections.flatMap((s) => s.issues);
-    const errors = allIssues.filter((i) => i.severity === "error");
-    const warns = allIssues.filter((i) => i.severity === "warn" || i.severity === "info");
-    const cleanSections = report.sections.filter((s) => !s.issues.length);
-    if (errors.length) appendIssueGroup(body, "需要处理", "bad", errors);
-    if (warns.length) {
-      const fixable = warns.filter((i) => i.fixGroup && i.fixKey);
-      appendIssueGroup(body, "建议处理", "warn", warns, fixable.length ? { issues: fixable } : void 0);
-    }
-    appendCleanGroup(body, report, cleanSections);
-  }
-  function appendIssueGroup(body, title, tone, issues, fixAll) {
-    const sec = document.createElement("div");
-    sec.className = "bz-checkup-group bz-checkup-group--" + tone;
-    const head = document.createElement("div");
-    head.className = "bz-checkup-group-head";
-    const t = document.createElement("span");
-    t.className = "bz-checkup-group-title";
-    t.textContent = `${title}（${issues.length}）`;
-    head.appendChild(t);
-    if (fixAll) {
-      head.appendChild(
-        uiBtn({
-          label: `一键修复（${fixAll.issues.length}）`,
-          onClick: () => void confirmFix(fixAll.issues, "一键修复")
-        })
-      );
-    }
-    sec.appendChild(head);
-    for (const issue of issues) sec.appendChild(issueRow(issue));
-    body.appendChild(sec);
-  }
-  function appendCleanGroup(body, report, cleanSections) {
-    const sec = document.createElement("div");
-    sec.className = "bz-checkup-group bz-checkup-group--ok";
-    const head = document.createElement("div");
-    head.className = "bz-checkup-group-head";
-    const t = document.createElement("span");
-    t.className = "bz-checkup-group-title";
-    t.textContent = `通过（${cleanSections.length}）`;
-    head.appendChild(t);
-    sec.appendChild(head);
-    if (!cleanSections.length) {
-      const none = document.createElement("div");
-      none.className = "bz-checkup-clean-line";
-      none.textContent = "没有完全通过的检查项";
-      sec.appendChild(none);
-    }
-    for (const s of cleanSections) {
-      const line = document.createElement("div");
-      line.className = "bz-checkup-clean-line";
-      line.textContent = `${s.name}：${s.summary}`;
-      sec.appendChild(line);
-    }
-    body.appendChild(sec);
-  }
-  function issueRow(issue) {
-    const row = document.createElement("div");
-    row.className = "bz-checkup-issue";
-    const dot = document.createElement("span");
-    dot.className = "bz-checkup-dot bz-checkup-dot--" + issue.severity;
-    const main = document.createElement("div");
-    main.className = "bz-checkup-issue-main";
-    const title = document.createElement("div");
-    title.className = "bz-checkup-issue-title";
-    title.textContent = issue.title;
-    main.appendChild(title);
-    if (issue.detail) {
-      const toggle = document.createElement("button");
-      toggle.type = "button";
-      toggle.className = "bz-checkup-detail-toggle";
-      toggle.textContent = "查看详情";
-      const detail = document.createElement("pre");
-      detail.className = "bz-checkup-detail";
-      detail.textContent = issue.detail;
-      detail.style.display = "none";
-      toggle.addEventListener("click", () => {
-        const open = detail.style.display !== "none";
-        detail.style.display = open ? "none" : "block";
-        toggle.textContent = open ? "查看详情" : "收起详情";
-      });
-      main.appendChild(toggle);
-      main.appendChild(detail);
-    }
-    row.append(dot, main);
-    if (issue.fixGroup && issue.fixKey) {
-      row.appendChild(
-        uiBtn({
-          label: issue.fixLabel || "修复",
-          onClick: () => void confirmFix([issue], issue.fixLabel || "修复")
-        })
-      );
-    }
-    return row;
-  }
-  async function confirmFix(issues, what) {
-    if (!hostApp) return;
-    const fixable = issues.filter((i) => i.fixGroup && i.fixKey);
-    if (!fixable.length) return;
-    const v = await openFlowDialog({
-      title: "修复确认",
-      message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
-        // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
-        { label: "清除", value: "ok", cta: true, danger: true }
-      ]
-    });
-    if (v !== "ok") return;
-    try {
-      const outcomes = await fixOrphanIssues(hostApp, fixable);
-      let any = false;
-      for (const o of outcomes) {
-        if (!o.fixed) continue;
-        any = true;
-        notifyUndo(o.label, () => {
-          o.undo().catch((e) => notifySaveError(e, "撤销清除"));
-        });
-      }
-      if (!any) notice("没有需要清除的项（数据已变化）");
-    } catch (e) {
-      notifyActionError(e, "清除失效引用");
-      return;
-    }
-    await startRun();
-  }
-  var overlay, escHandle, runSeq, running, hostApp, OVERLAY_ID, FRAME_ID;
-  var init_ui3 = __esm({
-    "src/checkup/ui.ts"() {
-      init_z_order();
-      init_esc_manager();
-      init_notice();
-      init_ui();
-      init_flow_dialog();
-      init_run();
-      overlay = null;
-      escHandle = null;
-      runSeq = 0;
-      running = false;
-      hostApp = null;
-      OVERLAY_ID = "bz-checkup-mask";
-      FRAME_ID = "bz-checkup-popup";
-    }
-  });
-
-  // src/checkup/index.ts
-  var checkup_exports = {};
-  __export(checkup_exports, {
-    openDataCheckup: () => openDataCheckup,
-    unloadDataCheckup: () => unloadDataCheckup
-  });
-  var init_checkup = __esm({
-    "src/checkup/index.ts"() {
-      init_ui3();
-    }
-  });
-
-  // src/settings-panel/schema.ts
-  var schema_exports = {};
-  __export(schema_exports, {
-    appearanceSettingsSchema: () => appearanceSettingsSchema
-  });
-  function appearanceSettingsSchema() {
-    return {
-      groups: [
-        {
-          icon: "palette",
-          name: "外观",
-          rows: [
-            {
-              type: "choiceCards",
-              name: "布局",
-              binding: { key: "settingsPanelLayout" },
-              options: [{ value: "jingwei", label: "经纬", prevClass: "bz-sp-prev-jingwei" }]
-            },
-            {
-              type: "choiceCards",
-              name: "主题",
-              binding: { key: "settingsPanelSkin" },
-              options: [{ value: "chenhun", label: "晨昏", prevClass: "bz-sp-prev-chenhun" }]
-            }
-          ]
-        }
-      ]
-    };
-  }
-  var init_schema = __esm({
-    "src/settings-panel/schema.ts"() {
-    }
-  });
-
-  // src/home/shared.ts
-  function applyOrder(order, domains = DOMAINS) {
-    if (!order || !order.length) return domains;
-    const rank = /* @__PURE__ */ new Map();
-    order.forEach((id, i) => {
-      if (!rank.has(id)) rank.set(id, i);
-    });
-    const listed = domains.filter((d) => rank.has(d.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
-    if (listed.length === domains.length) return listed;
-    const out = [...listed];
-    for (const d of domains) {
-      if (rank.has(d.id)) continue;
-      let anchor = -1;
-      for (let k = domains.indexOf(d) - 1; k >= 0; k--) {
-        const pos = out.indexOf(domains[k]);
-        if (pos >= 0) {
-          anchor = pos;
-          break;
-        }
-      }
-      out.splice(anchor + 1, 0, d);
-    }
-    return out;
-  }
-  function reorderTo(order, id, toIndex, hidden = [], domains = DOMAINS) {
-    const all = applyOrder(order, domains).map((d) => d.id);
-    const off = new Set(hidden);
-    const visible = all.filter((x) => !off.has(x));
-    const from = visible.indexOf(id);
-    if (from < 0 || toIndex < 0 || toIndex >= visible.length) return all;
-    visible.splice(from, 1);
-    visible.splice(toIndex, 0, id);
-    return [...visible, ...all.filter((x) => off.has(x))];
-  }
-  function hiddenOf(order, scope) {
-    return scope === "mob" ? order.hiddenMob : order.hiddenDesk;
-  }
-  function visibleDomains(order, hidden, domains = DOMAINS) {
-    const hide2 = new Set(hidden != null ? hidden : []);
-    return applyOrder(order, domains.filter((d) => !hide2.has(d.id)));
-  }
-  function domainColor(id) {
-    var _a2;
-    return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
-  }
-  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS;
-  var init_shared2 = __esm({
-    "src/home/shared.ts"() {
-      init_str();
-      init_domain_icons();
-      ICON_KEY = { settings: "settings-panel", vault: "password-vault" };
-      iconOf = (id) => {
-        var _a2;
-        return DOMAIN_ICONS[(_a2 = ICON_KEY[id]) != null ? _a2 : id];
-      };
-      DOMAINS = [
-        { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念 · 回忆媒体墙", icon: iconOf("diary") },
-        // 备忘录（memo 域，ADR-0092/0117）：2026-09-10 用户拍板补入首页入口（此前只在命令面板可达）
-        { id: "memo", commandId: "bz-memo-open", name: "备忘录", sub: "随手记与待办", icon: iconOf("memo") },
-        { id: "cinema", commandId: "bz-cinema-open", name: "影院", sub: "影视想看与在看", icon: iconOf("cinema") },
-        { id: "review", commandId: "bz-review-open", name: "复习计划", sub: "到期卡片队列", icon: iconOf("review") },
-        { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
-        { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
-        { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
-        // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
-        { id: "knowledge", commandId: "bz-knowledge-open", name: "知识盒", sub: "文献录入 · 卡片 · 主题", icon: iconOf("knowledge") },
-        // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
-        { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
-        // 游戏库（gameshelf 域，issue 368）：Steam 自动拉库，无手动登记
-        { id: "gameshelf", commandId: "bz-gameshelf-open", name: "游戏库", sub: "Steam 库存与时长", icon: iconOf("gameshelf") },
-        // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
-        { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
-        { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
-        // 移动附件（attach 域）：2026-09-10 用户拍板自首页入口移除（命令仍可在命令面板调用）
-        // 保险库入口副题两资产口径（ADR-0158：密码视图已摘，密码入口在密码本磁贴）
-        { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
-        // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
-        { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
-        { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
-      ];
-      DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
-      DOMAIN_DOT = {
-        diary: "#e67341",
-        memo: "#e8590c",
-        cinema: "#e6951d",
-        review: "#7c5cd6",
-        pomodoro: "#e5534b",
-        favorites: "#f0b429",
-        clipping: "#2f9e5f",
-        knowledge: "#c2559d",
-        bookshelf: "#3d7bd6",
-        secondbrain: "#a33d2a",
-        "reading-report": "#3fa7a0",
-        belongings: "#45a35c",
-        attach: "#8a8f99",
-        encrypt: "#8a8f99",
-        vault: "#c9a227",
-        smartcat: "#e67341",
-        settings: "#8a8f99"
-      };
-      ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
-    }
-  });
-
-  // src/home/order.ts
-  function emptyHomeOrder() {
-    return { version: HOME_ORDER_VERSION, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
-  }
-  function strList(v) {
-    return Array.isArray(v) ? v.filter((x) => typeof x === "string" && !!x) : [];
-  }
-  function normalizeHomeOrder(raw) {
-    const o = raw != null ? raw : {};
-    const legacy = strList(o.hidden);
-    return {
-      version: HOME_ORDER_VERSION,
-      desk: strList(o.desk),
-      mob: strList(o.mob),
-      hiddenDesk: o.hiddenDesk === void 0 ? legacy : strList(o.hiddenDesk),
-      hiddenMob: o.hiddenMob === void 0 ? legacy : strList(o.hiddenMob)
-    };
-  }
-  async function loadHomeOrder(app) {
-    try {
-      return normalizeHomeOrder(await store(app).read());
-    } catch (e) {
-      return emptyHomeOrder();
-    }
-  }
-  async function saveHomeConfig(order, app) {
-    return enqueueFileTask(storageFile("home.json"), async () => {
-      await store(app).write({
-        version: HOME_ORDER_VERSION,
-        desk: [...order.desk],
-        mob: [...order.mob],
-        hiddenDesk: [...order.hiddenDesk],
-        hiddenMob: [...order.hiddenMob]
-      });
-    });
-  }
-  var HOME_ORDER_VERSION, store;
-  var init_order = __esm({
-    "src/home/order.ts"() {
-      init_storage();
-      HOME_ORDER_VERSION = 3;
-      store = (app) => jsonFileStore(storageFile("home.json"), { defaultValue: () => emptyHomeOrder(), app });
-    }
-  });
-
-  // src/home/entry-editor.ts
-  function mountHomeEntryEditor(body, app) {
-    blurController == null ? void 0 : blurController.abort();
-    blurController = new AbortController();
-    const scope = isMobileEnv() ? "mob" : "desk";
-    const touchMode = isMobileEnv();
-    let order = null;
-    let suppressClickUntil = 0;
-    const root = document.createElement("div");
-    root.className = "bz-home-ent";
-    root.setAttribute("data-ent-scope", scope);
-    body.appendChild(root);
-    const hostRow = body.closest(".bz-sp-set-row");
-    if (hostRow) hostRow.classList.add(FLUSH_CLS);
-    function setHidden(ids) {
-      if (!order) return;
-      order = scope === "mob" ? { ...order, hiddenMob: ids } : { ...order, hiddenDesk: ids };
-    }
-    function setScopeOrder(ids) {
-      if (!order) return;
-      order = scope === "mob" ? { ...order, mob: ids } : { ...order, desk: ids };
-    }
-    function persist() {
-      if (!order) return;
-      void saveHomeConfig(order, app).catch((e) => {
-        notifySaveError(e, "入口顺序");
-      });
-    }
-    let drag = null;
-    function onTouchMove(e) {
-      if (!drag || !drag.armed) return;
-      if (e.cancelable) e.preventDefault();
-    }
-    function applyShift(c) {
-      for (let i = 0; i < c.total; i++) {
-        if (i === c.from) continue;
-        const el = c.rows[i];
-        if (!el) continue;
-        let shift = 0;
-        if (c.to > c.from && i > c.from && i <= c.to) shift = -1;
-        else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;
-        if (shift) {
-          el.style.transform = `translateY(${shift * c.step}px)`;
-          el.classList.add(SHIFT_CLS);
-        } else {
-          el.style.transform = "";
-          el.classList.remove(SHIFT_CLS);
-        }
-      }
-    }
-    function endDrag() {
-      const c = drag;
-      drag = null;
-      if (!c) return;
-      if (c.armTimer) clearTimeout(c.armTimer);
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-      window.removeEventListener("touchmove", onTouchMove);
-      c.el.classList.remove(DRAG_CLS);
-      c.el.style.transform = "";
-      for (const el of c.rows) {
-        el.style.transform = "";
-        el.classList.remove(SHIFT_CLS);
-      }
-    }
-    function onMove(e) {
-      const c = drag;
-      if (!c) return;
-      const dy = e.clientY - c.startY;
-      if (!c.active) {
-        if (!c.armed) {
-          if (Math.abs(dy) > TOUCH_SLOP_PX) endDrag();
-          return;
-        }
-        if (Math.abs(dy) < DRAG_PX) return;
-        c.active = true;
-        c.el.classList.add(DRAG_CLS);
-      }
-      if (e.cancelable) e.preventDefault();
-      const to = Math.max(0, Math.min(c.from + Math.round(dy / c.step), c.total - 1));
-      c.to = to;
-      c.el.style.transform = `translateY(${(to - c.from) * c.step}px)`;
-      applyShift(c);
-    }
-    function onUp() {
-      const c = drag;
-      if (!c) return;
-      const { active: active2, to, from } = c;
-      const id = c.el.dataset.entRow || "";
-      endDrag();
-      if (!active2) return;
-      suppressClickUntil = Date.now() + 300;
-      if (!order || to === from || !id) {
-        render2();
-        return;
-      }
-      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
-      persist();
-      render2(id || void 0);
-    }
-    function attachDrag(el, listEl2, rows) {
-      const total = rows.length;
-      el.addEventListener("pointerdown", (e) => {
-        var _a2, _b2;
-        if (e.button) return;
-        if (e.target.closest("[data-ent-remove]")) return;
-        const from = rows.indexOf(el);
-        if (from < 0 || total < 2) return;
-        let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
-        if (rows.length >= 2) {
-          const d = rows[1].offsetTop - rows[0].offsetTop;
-          if (d > 0) step = d;
-        }
-        const c = {
-          el,
-          listEl: listEl2,
-          rows,
-          startY: e.clientY,
-          step,
-          from,
-          to: from,
-          total,
-          active: false,
-          armed: !touchMode,
-          armTimer: null
-        };
-        drag = c;
-        if (touchMode) {
-          window.addEventListener("touchmove", onTouchMove, { passive: false });
-          c.armTimer = setTimeout(() => {
-            if (drag === c) c.armed = true;
-            c.armTimer = null;
-          }, TOUCH_ARM_MS);
-        }
-        window.addEventListener("pointermove", onMove);
-        window.addEventListener("pointerup", onUp);
-        window.addEventListener("pointercancel", onUp);
-      });
-    }
-    function rowHtml2(d, isHidden2) {
-      const btn = isHidden2 ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add bz-touch-target--sm" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan("plus") + "</button>" : '<button type="button" class="bz-home-ent-btn bz-touch-target--sm" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan("x") + "</button>";
-      const grip = isHidden2 ? '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + "</span>" : '<span class="bz-home-ent-grip" role="button" tabindex="0" data-ent-grip="' + d.id + '" aria-label="调整' + d.name + '顺序（上/下方向键）">' + iconSpan("grip-vertical") + "</span>";
-      return '<div class="bz-home-ent-row' + (isHidden2 ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '">' + grip + '<span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
-    }
-    function render2(refocusId) {
-      if (!order) return;
-      const ids = hiddenOf(order, scope);
-      const visible = visibleDomains(order[scope], ids);
-      const hidden = DOMAINS.filter((d) => ids.includes(d.id));
-      root.innerHTML = '<div class="bz-home-ent-list" data-ent-list>' + visible.map((d) => rowHtml2(d, false)).join("") + hidden.map((d) => rowHtml2(d, true)).join("") + "</div>";
-      mountIcons(root);
-      const listEl2 = root.querySelector("[data-ent-list]");
-      if (!listEl2) return;
-      const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
-      const movable = rows.slice(0, visible.length);
-      for (const el of movable) attachDrag(el, listEl2, movable);
-      if (refocusId) {
-        const target = listEl2.querySelector(`[data-ent-row="${refocusId}"] button, [data-ent-row="${refocusId}"] [data-ent-grip]`);
-        target == null ? void 0 : target.focus();
-      }
-    }
-    root.addEventListener("keydown", (e) => {
-      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-      const grip = e.target.closest("[data-ent-grip]");
-      if (!grip || !order) return;
-      const id = grip.dataset.entGrip || "";
-      const visibleNow = visibleDomains(order[scope], hiddenOf(order, scope));
-      const from = visibleNow.findIndex((d) => d.id === id);
-      if (from < 0) return;
-      const to = from + (e.key === "ArrowUp" ? -1 : 1);
-      if (to < 0 || to >= visibleNow.length) return;
-      e.preventDefault();
-      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
-      persist();
-      render2(id);
-    });
-    root.addEventListener("contextmenu", (e) => {
-      if (drag) e.preventDefault();
-    });
-    window.addEventListener(
-      "blur",
-      () => {
-        if (drag) endDrag();
-      },
-      { signal: blurController.signal }
-    );
-    root.addEventListener("click", (e) => {
-      if (Date.now() < suppressClickUntil) {
-        e.stopPropagation();
-        e.preventDefault();
-        return;
-      }
-      if (!order) return;
-      const t = e.target;
-      const rm = t.closest("[data-ent-remove]");
-      if (rm) {
-        const id = rm.dataset.entRemove || "";
-        const ids = hiddenOf(order, scope);
-        if (id && !ids.includes(id)) {
-          setHidden([...ids, id]);
-          persist();
-          render2(id);
-        }
-        return;
-      }
-      const rs = t.closest("[data-ent-restore]");
-      if (rs) {
-        const id = rs.dataset.entRestore || "";
-        setHidden(hiddenOf(order, scope).filter((x) => x !== id));
-        persist();
-        render2(id);
-      }
-    });
-    render2();
-    void loadHomeOrder(app).then((o) => {
-      order = o;
-      render2();
-    });
-  }
-  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS, blurController;
-  var init_entry_editor = __esm({
-    "src/home/entry-editor.ts"() {
-      init_mobile();
-      init_notice();
-      init_ui();
-      init_str();
-      init_shared2();
-      init_order();
-      ROW_SEL = "[data-ent-row]";
-      DRAG_PX = 10;
-      TOUCH_ARM_MS = 250;
-      TOUCH_SLOP_PX = 8;
-      SHIFT_CLS = "bz-home-ent-shift";
-      DRAG_CLS = "bz-home-ent-drag";
-      FLUSH_CLS = "bz-home-ent-flush";
-      blurController = null;
-    }
-  });
-
-  // src/home/settings.ts
-  var settings_exports = {};
-  __export(settings_exports, {
-    homeSettingsSchema: () => homeSettingsSchema
-  });
-  function homeSettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 范式，与各域同款置顶）：布局/主题各一档占位单卡
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "homeLayout" }, options: [{ value: "default", label: "活动河", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "homeSkin" }, layoutKey: "homeLayout", options: [{ value: "cream", label: "米白", layout: "default", prevClass: "bz-sp-prev-cream" }] }
-          ]
-        },
-        {
-          // 时间线组（issue 288 拆分后）：只剩「时间线自己长什么样」四行——顺序按「看字 → 看多久 → 从哪天开始看 → 那一列要不要」
-          icon: "activity",
-          name: "时间线",
-          rows: [
-            {
-              type: "select",
-              name: "时间线字号",
-              desc: "紧凑压信息密度，宽松看得省力。只作用于中间那条时间线。",
-              binding: { key: "homeTimelineSize" },
-              options: [
-                { value: "compact", label: "紧凑" },
-                { value: "normal", label: "标准" },
-                { value: "loose", label: "宽松" }
-              ]
-            },
-            {
-              type: "select",
-              name: "时间范围",
-              desc: "周历能往回翻几天。当天只留今天一格，本周是完整七天。",
-              binding: { key: "homeTimelineRange" },
-              options: [
-                { value: "today", label: "当天" },
-                { value: "3d", label: "最近 3 天" },
-                { value: "week", label: "本周" }
-              ]
-            },
-            {
-              type: "select",
-              name: "默认打开日",
-              desc: "打开首页先落在哪天，选最后有动静就不会一开是空的。",
-              binding: { key: "homeDefaultDay" },
-              options: [
-                { value: "today", label: "今天" },
-                { value: "lastActive", label: "最后有动静的那天" }
-              ]
-            },
-            {
-              type: "toggle",
-              name: "显示时刻列",
-              desc: "每行左边显示时刻，关掉整列收起，正文往左靠。",
-              binding: { key: "homeTimelineTime" }
-            }
-          ]
-        },
-        {
-          // 内容过滤组（issue 288 从时间线组拆出）：只放「哪些痕迹进来」，与「长相」分开
-          icon: "funnel",
-          name: "内容过滤",
-          rows: [
-            {
-              type: "toggle",
-              name: "产出动作",
-              desc: "写下的收进的读完的，都是真正产出东西的动作。",
-              binding: { key: "homeTimelineProduce" }
-            },
-            {
-              type: "toggle",
-              name: "状态推进",
-              desc: "加入片单读到一半新增待办，这类还没成事实的推进。",
-              binding: { key: "homeTimelineProgress" }
-            },
-            {
-              type: "toggle",
-              // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
-              // issue 305 / ADR-0132：点评类含行为流的星级评价（movie:rated），描述同步覆盖
-              name: "小橘点评",
-              desc: "小橘挂在痕迹下面的那句话，也包括你给影片打的星级。",
-              binding: { key: "homeTimelineNotes" }
-            },
-            {
-              // issue 305 / ADR-0132：时间线改吃行为流，已跳过回归（默认关——聚合讯跳过量级大）
-              // 题名「跳过痕迹」：遵循设置项题名 4-8 字规范（lint），与同组「产出动作/状态推进」同构
-              type: "toggle",
-              name: "跳过痕迹",
-              desc: "聚合讯里跳过的文章痕迹，量比较大，默认不显示。",
-              binding: { key: "homeTimelineSkipped" }
-            }
-          ]
-        },
-        {
-          // 预告栏组（issue 288 拆出）：右侧那一栏不属于时间线，自己一组
-          icon: "calendar-clock",
-          name: "预告栏",
-          rows: [
-            {
-              type: "toggle",
-              name: "明天预告卡",
-              desc: "右侧那一栏复习剪藏与日记的预告，不看可以把整栏收掉。",
-              binding: { key: "homeNextCards" }
-            }
-          ]
-        },
-        {
-          // 入口组（排最后）：拖动排序 + 移除/加回，内联编辑器
-          icon: "layout-grid",
-          name: "入口",
-          rows: [
-            {
-              type: "custom",
-              render: (body) => mountHomeEntryEditor(body, getApp())
-            }
-          ]
-        }
-      ]
-    };
-  }
-  var init_settings = __esm({
-    "src/home/settings.ts"() {
-      init_app();
-      init_entry_editor();
-    }
-  });
-
-  // src/diary/config.ts
-  var config_exports = {};
-  __export(config_exports, {
-    DIARY_DIRECTORY: () => DIARY_DIRECTORY,
-    ENCRYPT_TAG: () => ENCRYPT_TAG,
-    LETTER_DIRECTORY: () => LETTER_DIRECTORY,
-    applyDirectories: () => applyDirectories,
-    bookDirectory: () => bookDirectory,
-    buildTagMaps: () => buildTagMaps,
-    emojiToTagMap: () => emojiToTagMap,
-    getParentPrimaryTag: () => getParentPrimaryTag,
-    getPrimaryTagsInDisplayOrder: () => getPrimaryTagsInDisplayOrder,
-    getSortedTagsForAddDialog: () => getSortedTagsForAddDialog,
-    getSubTagsOfPrimary: () => getSubTagsOfPrimary,
-    getTagEmoji: () => getTagEmoji,
-    inWallDirs: () => inWallDirs,
-    isSubTag: () => isSubTag,
-    movieDirectory: () => movieDirectory,
-    resetTagsConfig: () => resetTagsConfig,
-    tagToEmojiMap: () => tagToEmojiMap
-  });
-  function movieDirectory() {
-    return safeResolve(resolveCinemaFolderPath, "我的/影视");
-  }
-  function bookDirectory() {
-    return safeResolve(resolveFolderPath, "书库");
-  }
-  function safeResolve(resolver, fallback) {
-    try {
-      const v = resolver();
-      return v && v.trim() ? v : fallback;
-    } catch (e) {
-      return fallback;
-    }
-  }
-  function inWallDirs(p) {
-    return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
-      (d) => p.startsWith(d + "/") || p === d + ".md"
-    );
-  }
-  function applyDirectories(settings) {
-    const clean = (v, fallback) => {
-      const t = (v || "").trim().replace(/\/+$/, "");
-      return t || fallback;
-    };
-    DIARY_DIRECTORY = clean(settings.diaryDirectory, "我的/日记");
-    LETTER_DIRECTORY = clean(settings.letterDirectory, "我的/信");
-  }
-  function getPrimaryTagsInDisplayOrder() {
-    const tags = Object.keys(PRIMARY_TAGS_CONFIG);
-    const idx = tags.indexOf(ENCRYPT_TAG);
-    if (idx === -1) return tags;
-    const rest = tags.filter((t) => t !== ENCRYPT_TAG);
-    rest.push(ENCRYPT_TAG);
-    return rest;
-  }
-  function resetTagsConfig() {
-    PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
-    buildTagMaps();
-  }
-  function buildTagMaps() {
-    for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
-    for (const key of Object.keys(emojiToTagMap)) delete emojiToTagMap[key];
-    for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      tagToEmojiMap[tag] = config.emoji;
-      emojiToTagMap[config.emoji] = tag;
-      if (config.subTags) {
-        for (const sub of config.subTags) {
-          tagToEmojiMap[sub.tag] = sub.emoji;
-          emojiToTagMap[sub.emoji] = sub.tag;
-        }
-      }
-    }
-  }
-  function getTagEmoji(tag) {
-    return tagToEmojiMap[tag] || "📖";
-  }
-  function getSubTagsOfPrimary(primaryTag) {
-    const config = PRIMARY_TAGS_CONFIG[primaryTag];
-    return config && config.subTags ? config.subTags : null;
-  }
-  function isSubTag(tag) {
-    for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  function getParentPrimaryTag(subTag) {
-    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
-        return primary;
-      }
-    }
-    return null;
-  }
-  function getSortedTagsForAddDialog() {
-    const result = [];
-    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (primary === "加密") continue;
-      if (config.subTags && config.subTags.length > 0) {
-        for (const sub of config.subTags) {
-          result.push(sub.tag);
-        }
-      } else {
-        result.push(primary);
-      }
-    }
-    return result;
-  }
-  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
-  var init_config2 = __esm({
-    "src/diary/config.ts"() {
-      init_state2();
-      init_data2();
-      DIARY_DIRECTORY = "我的/日记";
-      LETTER_DIRECTORY = "我的/信";
-      ENCRYPT_TAG = "加密";
-      DEFAULT_TAGS_CONFIG = {
-        日记: { emoji: "📖" },
-        加密: { emoji: "🔐" },
-        念念碎: { emoji: "😶" },
-        对谈: { emoji: "🤝" },
-        随笔: { emoji: "✍️" },
-        梦: { emoji: "🌙" },
-        诗: { emoji: "🌟" },
-        书: { emoji: "📕" },
-        信: { emoji: "✉️" },
-        摘抄: { emoji: "📌" },
-        摄影: { emoji: "📸" },
-        骑行: { emoji: "🚴" },
-        代码: { emoji: "⚙️" },
-        做饭: { emoji: "🥘" },
-        游戏: { emoji: "🎮" },
-        音乐: { emoji: "🎧" },
-        电影: { emoji: "📽" },
-        电视剧: { emoji: "📺" },
-        动漫: { emoji: "🎨" },
-        纪录片: { emoji: "🎞" },
-        猫: { emoji: "🐱" },
-        狗: { emoji: "🐶" },
-        仓鼠: { emoji: "🐹" },
-        熊猫: { emoji: "🐼" },
-        博物馆: { emoji: "🏛️" },
-        美食: { emoji: "🍔" },
-        旅游: {
-          emoji: "✈️",
-          subTags: [
-            { tag: "四川", emoji: "🀄" },
-            { tag: "大理", emoji: "🛶" }
-          ]
-        },
-        收藏: {
-          emoji: "⭐",
-          subTags: [
-            { tag: "咪咪", emoji: "🐈" },
-            { tag: "广告", emoji: "📢" },
-            { tag: "神评", emoji: "🤣" },
-            { tag: "冷笑话", emoji: "😅" },
-            { tag: "抽象", emoji: "🌀" },
-            { tag: "AI", emoji: "🤖" },
-            { tag: "愚人节", emoji: "🤪" },
-            { tag: "舞蹈", emoji: "🕺" },
-            { tag: "达人秀", emoji: "🤹" },
-            { tag: "艺术", emoji: "🧑‍🎨" },
-            { tag: "摄影集", emoji: "📷" },
-            { tag: "植物", emoji: "🌳" },
-            { tag: "创意", emoji: "🧩" }
-          ]
-        }
-      };
-      PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
-      tagToEmojiMap = {};
-      emojiToTagMap = {};
-      buildTagMaps();
-    }
-  });
-
-  // src/core/diary-format.ts
-  function diaryEntryBaseName(dateStr, timeStr, seq) {
-    const d = String(dateStr || "").replace(/-/g, "");
-    const t = String(timeStr || "").replace(/:/g, "");
-    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
-    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
-  }
-  function diaryEntryPath(dir, dateStr, timeStr, seq) {
-    return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
-  }
-  function diaryMetaFromEntryPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = DIARY_ENTRY_FILE_RE.exec(base);
-    if (!m) return null;
-    const date = `20${m[1]}-${m[2]}-${m[3]}`;
-    const time = `${m[4]}:${m[5]}`;
-    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
-    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
-  }
-  function diaryDateFromLegacyPath(path) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    const m = DIARY_LEGACY_FILE_RE.exec(base);
-    if (!m) return null;
-    const date = `${m[1]}-${m[2]}-${m[3]}`;
-    return isValidDiaryDate(date) ? date : null;
-  }
-  function diaryStampText(date, time) {
-    return `${date} ${time}`;
-  }
-  function parseDiaryStamp(value) {
-    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
-    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
-  }
-  function isValidDiaryDate(s) {
-    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    const y = Number(m[1]);
-    const mo = Number(m[2]);
-    const d = Number(m[3]);
-    if (mo < 1 || mo > 12 || d < 1) return false;
-    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    return d <= days[mo - 1];
-  }
-  function isValidDiaryTime(s) {
-    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
-    if (!m) return false;
-    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
-  }
-  function serializeDiaryEntryFile(meta, tags, content) {
-    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
-    for (const t of tags) lines.push(`  - ${t}`);
-    lines.push("---", "", content);
-    let out = lines.join("\n");
-    if (!out.endsWith("\n")) out += "\n";
-    return out;
-  }
-  function parseDiaryBlockHeader(line) {
-    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
-    if (!m) return null;
-    const tags = [];
-    for (const name of m[1].split("/")) {
-      const t = name.trim();
-      if (t && !tags.includes(t)) tags.push(t);
-    }
-    return { tags, time: m[2] };
-  }
-  function readDiaryFrontmatterFieldRaw(content, key) {
-    const text = (content || "").replace(/\r\n/g, "\n");
-    if (!text.startsWith("---\n")) return null;
-    const end = text.indexOf("\n---", 4);
-    if (end < 0) return null;
-    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
-    return m ? m[1].trim() : null;
-  }
-  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
-  var init_diary_format = __esm({
-    "src/core/diary-format.ts"() {
-      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
-      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
-      DIARY_DATE_KEY = "date";
-      DIARY_TYPE_KEY = "type";
-    }
-  });
-
-  // src/diary/repair.ts
-  function lintEntryFile(path, content) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    if (DIARY_LEGACY_FILE_RE.test(base)) return "legacy";
-    const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
-    const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, "日期");
-    const fmMeta = raw ? parseDiaryStamp(raw) : null;
-    const fileMeta = diaryMetaFromEntryPath(base);
-    if (rawLegacyKey && !raw) return "unparsable";
-    if (raw && !fmMeta && !fileMeta) return "unparsable";
-    if (!fmMeta && !fileMeta) return "unparsable";
-    if (raw && !fmMeta && fileMeta) return "unparsable";
-    if (fmMeta && !fileMeta) return "name-mismatch";
-    if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
-      return "name-mismatch";
-    }
-    return null;
-  }
-  var LINT_REASON_TEXT;
-  var init_repair = __esm({
-    "src/diary/repair.ts"() {
-      init_diary_format();
-      LINT_REASON_TEXT = {
-        legacy: "旧格式日期文件（未迁移）",
-        unparsable: "无法解析为条目",
-        "name-mismatch": "属性时间与题目不一致"
-      };
-    }
-  });
-
-  // src/diary/ui/repair-modal.ts
-  function findDirRecursive(node, target) {
-    if (node.path === target) return node;
-    if (node.children) {
-      for (const child of node.children) {
-        const found = findDirRecursive(child, target);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-  async function collectDiaryFiles() {
-    const app = getApp();
-    let dir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY);
-    if (!dir || !dir.children) {
-      const root = app.vault.getRoot();
-      dir = findDirRecursive(root, DIARY_DIRECTORY);
-    }
-    if (!dir || !dir.children) return [];
-    const out = [];
-    const walk = (node) => {
-      var _a2;
-      for (const child of (_a2 = node.children) != null ? _a2 : []) {
-        if (child.children) walk(child);
-        else if (child.extension === "md") out.push(child);
-      }
-    };
-    walk(dir);
-    return out.sort((a, b) => b.name.localeCompare(a.name));
-  }
-  async function runScan(isAlive, onProgress) {
-    const app = getApp();
-    const mdFiles2 = await collectDiaryFiles();
-    const total = mdFiles2.length;
-    const scanned = [];
-    for (let i = 0; i < mdFiles2.length; i += BATCH_CONCURRENCY) {
-      if (!isAlive()) return scanned;
-      const batch = mdFiles2.slice(i, i + BATCH_CONCURRENCY);
-      const results = await Promise.all(
-        batch.map(async (file, idx) => {
-          const content = await app.vault.read(file);
-          if (isAlive()) onProgress(Math.min(i + idx + 1, total), total, file.name);
-          return { path: file.path, reason: lintEntryFile(file.path, content) };
-        })
-      );
-      scanned.push(...results);
-    }
-    return scanned;
-  }
-  async function openAtTop(path, onOpened) {
-    const app = getApp();
-    const file = app.vault.getAbstractFileByPath(path);
-    if (!file) return;
-    const leaf = app.workspace.getLeaf();
-    await leaf.openFile(file);
-    const view = leaf.view;
-    if (view && view.editor) {
-      view.editor.focus();
-      view.editor.setCursor(0, 0);
-      view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
-    }
-    onOpened();
-  }
-  function openDiaryRepairModal() {
-    const { mask, popup } = createOverlay({
-      maskId: "bz-diary-repair-mask",
-      popupId: "bz-diary-repair-popup",
-      maxWidth: 640,
-      onMaskClick: close
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = "日记格式体检";
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const handle = escManager.register("bz-diary-repair", {
-      isVisible: () => mask.isConnected,
-      close
-    });
-    function close() {
-      mask.remove();
-      popup.remove();
-      handle.unregister();
-    }
-    const progressWrap = document.createElement("div");
-    progressWrap.className = "bz-diary-repair-progress";
-    const track = document.createElement("div");
-    track.className = "bz-diary-repair-progress-track";
-    const fill = document.createElement("div");
-    fill.className = "bz-diary-repair-progress-fill";
-    const ptext = document.createElement("div");
-    ptext.className = "bz-diary-repair-progress-text";
-    ptext.textContent = "正在体检日记文件…";
-    track.appendChild(fill);
-    progressWrap.appendChild(track);
-    progressWrap.appendChild(ptext);
-    content.appendChild(progressWrap);
-    const summarize = (scanned) => {
-      content.innerHTML = "";
-      content.appendChild(progressWrap);
-      progressWrap.style.display = "none";
-      const items = [];
-      for (const s of scanned) {
-        if (s.reason) items.push({ path: s.path, reason: s.reason, detail: LINT_REASON_TEXT[s.reason] });
-      }
-      const summary = document.createElement("div");
-      summary.className = "bz-diary-repair-summary";
-      summary.textContent = items.length === 0 ? `共体检 ${scanned.length} 个日记文件：全部健康` : `共体检 ${scanned.length} 个日记文件：${items.length} 个需要处理（点击条目打开文件手工处理，面板不改写内容）。`;
-      content.appendChild(summary);
-      const order = ["legacy", "unparsable", "name-mismatch"];
-      for (const reason of order) {
-        const group = items.filter((i) => i.reason === reason);
-        if (group.length === 0) continue;
-        const sec = document.createElement("div");
-        sec.className = "bz-diary-repair-section-title";
-        sec.textContent = `${LINT_REASON_TEXT[reason]}（${group.length}）`;
-        content.appendChild(sec);
-        for (const item of group) {
-          const row = document.createElement("div");
-          row.className = "bz-diary-repair-row";
-          const link = document.createElement("span");
-          link.className = "bz-diary-repair-link";
-          link.textContent = item.path.split("/").pop() || item.path;
-          link.addEventListener("click", () => void openAtTop(item.path, close));
-          const snippet = document.createElement("span");
-          snippet.className = "bz-diary-repair-snippet";
-          snippet.textContent = item.path;
-          row.append(link, snippet);
-          content.appendChild(row);
-        }
-      }
-      mountRetryFooter();
-    };
-    function mountRetryFooter() {
-      const again = document.createElement("button");
-      again.className = "bz-button";
-      again.textContent = "重新体检";
-      again.addEventListener("click", () => void startScan());
-      const bar = document.createElement("div");
-      bar.className = "bz-diary-repair-footer";
-      bar.appendChild(again);
-      content.appendChild(bar);
-    }
-    async function startScan() {
-      progressWrap.style.display = "block";
-      fill.style.width = "0%";
-      ptext.textContent = "正在体检日记文件…";
-      content.innerHTML = "";
-      content.appendChild(progressWrap);
-      try {
-        const scanned = await runScan(
-          () => mask.isConnected,
-          (done, total, label) => {
-            fill.style.width = `${Math.round(done / total * 100)}%`;
-            ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
-          }
-        );
-        if (!mask.isConnected) return;
-        summarize(scanned);
-      } catch (e) {
-        if (!mask.isConnected) return;
-        const msg = (e == null ? void 0 : e.message) || String(e);
-        ptext.textContent = `体检失败：${msg}（可点下方按钮重试）`;
-        mountRetryFooter();
-        try {
-          notify(`日记格式体检失败：${msg}`, { type: "error" });
-        } catch (e2) {
-        }
-      }
-    }
-    void startScan();
-  }
-  var BATCH_CONCURRENCY;
-  var init_repair_modal = __esm({
-    "src/diary/ui/repair-modal.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_app();
-      init_notice();
-      init_config2();
-      init_repair();
-      BATCH_CONCURRENCY = 10;
-    }
-  });
-
-  // src/diary/settings.ts
-  var settings_exports2 = {};
-  __export(settings_exports2, {
-    diarySettingsSchema: () => diarySettingsSchema
-  });
-  function diarySettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 范式）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "diarySkin" }, options: [{ value: "default", label: "媒体墙", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "diarySkinTheme" }, layoutKey: "diarySkin", options: [{ value: "gallery", label: "画廊白", layout: "default", prevClass: "bz-sp-prev-gallery" }] }
-          ]
-        },
-        {
-          icon: "folder-open",
-          name: "目录",
-          rows: [
-            { type: "path", mode: "single", name: "日记文件夹", desc: "存放日记文件的文件夹", binding: { key: "diaryDirectory" }, onChange: () => applyDirectories(getSettings()) },
-            { type: "path", mode: "single", name: "信件文件夹", desc: "存放信件的文件夹", binding: { key: "letterDirectory" }, onChange: () => applyDirectories(getSettings()) }
-          ]
-        },
-        {
-          icon: "eye",
-          name: "显示",
-          rows: [
-            { type: "toggle", name: "默认日期取自文件", desc: "写日记时默认日期取自当前打开的日记文件，否则用当前时间", binding: { key: "useFileDateTime" } }
-          ]
-        },
-        {
-          icon: "wrench",
-          name: "维护",
-          rows: [
-            { type: "button", name: "日记格式体检", desc: "扫描全部日记条目文件，列出格式问题并跳转手工处理", buttonText: "日记格式体检", cta: true, onClick: () => openDiaryRepairModal() }
-          ]
-        }
-      ]
-    };
-  }
-  var init_settings2 = __esm({
-    "src/diary/settings.ts"() {
-      init_settings_provider();
-      init_config2();
-      init_repair_modal();
-    }
-  });
-
-  // src/memo/due.ts
-  function getNowStr() {
-    return (0, import_moment4.default)().format("YYYY-MM-DD HH:mm");
-  }
-  function getTodayStr() {
-    return localDayKey();
-  }
-  function getDueStatus(due) {
-    if (!due) return null;
-    const now = getNowStr();
-    const dueNorm = due.replace("T", " ");
-    const dueDate = due.slice(0, 10);
-    const today = getTodayStr();
-    if (dueDate < today) return "overdue";
-    if (dueDate > today) return "future";
-    if (dueNorm <= now) return "overdue";
-    return "today";
-  }
-  function formatDueText(due) {
-    const status = getDueStatus(due);
-    const dueMoment = (0, import_moment4.default)(due.replace("T", " "));
-    const timeStr = dueMoment.format("HH:mm");
-    const dateStr = dueMoment.format("MM/DD");
-    const today = getTodayStr();
-    const dueDate = due.slice(0, 10);
-    if (status === "overdue") {
-      if (dueDate === today) return `今天 ${timeStr} 已过期`;
-      const days2 = (0, import_moment4.default)().diff((0, import_moment4.default)(dueDate), "days");
-      return `${days2}天前已过期`;
-    }
-    if (status === "today") return `今天 ${timeStr} 到期`;
-    const days = (0, import_moment4.default)(dueDate).diff((0, import_moment4.default)(today), "days");
-    if (days === 1) return `明天 ${timeStr} 到期`;
-    return `${dateStr} ${timeStr} 到期`;
-  }
-  var import_moment4;
-  var init_due = __esm({
-    "src/memo/due.ts"() {
-      import_moment4 = __toESM(require_moment());
-      init_utils();
-    }
-  });
-
-  // src/memo/render.ts
-  function sceneDot(scene) {
-    return SCENE_DOTS[scene] || "#8b8f9a";
-  }
-  function dueIconName(status) {
-    if (status === "overdue") return MEMO_ICONS.overdue;
-    if (status === "today") return MEMO_ICONS.clock;
-    return MEMO_ICONS.calendar;
-  }
-  function dueTagClass(status) {
-    if (status === "overdue") return "bz-memo-tag-overdue";
-    if (status === "today") return "bz-memo-tag-today";
-    return "bz-memo-tag-future";
-  }
-  function sceneLabel(scene) {
-    return scene.replace(LEADING_EMOJI_RE, "");
-  }
-  function sceneLeadHtml(o, dotCls) {
-    var _a2, _b2;
-    const pseudo = SCENE_PSEUDO_ICONS[o.scene];
-    if (pseudo) return iconSpan(pseudo.icon, (_a2 = pseudo.cls) != null ? _a2 : "");
-    const emo = (_b2 = o.scene.match(LEADING_EMOJI_RE)) == null ? void 0 : _b2[1];
-    if (emo) return `<span class="bz-rail-emoji">${escapeHtml(emo)}</span>`;
-    if (!o.dot) return "";
-    return `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
-  }
-  function mainCountHtml(total, undone) {
-    return `· <span class="bz-memo-cnt-num">${total}</span> 项 · <span class="bz-memo-cnt-num">${undone}</span> 未完成`;
-  }
-  function navBtnHtml(o, active2, count) {
-    return `<button class="bz-rail-item${active2 ? " on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-rail-dot")}<span class="bz-rail-name">${escapeHtml(sceneLabel(o.scene))}</span><span class="bz-rail-count">${count}</span></button>`;
-  }
-  function mobChipHtml(o, active2) {
-    return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml(sceneLabel(o.scene))}</button>`;
-  }
-  function mobAddSceneChipHtml() {
-    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml("添加场景")}</button>`;
-  }
-  function metaTagsHtml(it, due, relTime3) {
-    const tags = [];
-    if (it.scene === "公开课" && it.courseName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
-    }
-    if (it.scene === "代码" && it.scriptName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml(it.scriptName)}</span>`);
-    }
-    if (it.url) {
-      let host = "链接";
-      try {
-        host = new URL(it.url).hostname.replace(/^www\./, "");
-      } catch (e) {
-      }
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
-    }
-    if (it.notePath) {
-      const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
-      const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
-      if (!isCourseSame) {
-        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
-      }
-    }
-    const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
-    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
-    if (due) {
-      tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
-    }
-    if (it.created && relTime3) {
-      tags.push(`<span class="bz-memo-time">${escapeHtml(relTime3)}</span>`);
-    }
-    return tags.join("");
-  }
-  function checkHtml(it) {
-    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
-  }
-  function cardHtml2(it, due, relTime3) {
-    const titleCls = it.completed ? " bz-memo-done" : "";
-    const clickable = !!(it.linkedNote || it.url);
-    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
-    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
-      ${checkHtml(it)}
-      <div class="bz-memo-body-text">
-        <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3)}</div>
-      </div>
-    </div>`;
-  }
-  function sectionLabelHtml(label, count) {
-    return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
-  }
-  function doneBarHtml(open, count) {
-    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
-      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
-  }
-  function doneMoreHtml(n) {
-    return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
-  }
-  var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE;
-  var init_render4 = __esm({
-    "src/memo/render.ts"() {
-      init_str();
-      MEMO_ICONS = {
-        brand: "list-checks",
-        close: "x",
-        search: "search",
-        add: "plus",
-        addScene: "tag",
-        settings: "settings",
-        empty: "inbox",
-        pos: "pin",
-        star: "star",
-        edit: "pencil",
-        del: "trash-2",
-        course: "graduation-cap",
-        script: "terminal",
-        url: "arrow-up-right",
-        overdue: "circle-alert",
-        clock: "clock",
-        calendar: "calendar",
-        doneFold: "chevron-down",
-        sceneAll: "layers",
-        sceneToday: "sun"
-      };
-      SCENE_DOTS = {
-        剪藏: "#e67341",
-        代码: "#4c82c8",
-        公开课: "#8f5fc0",
-        学习: "#4c9e6c",
-        生活: "#c27a48",
-        工作: "#b25757"
-      };
-      SCENE_PSEUDO_ICONS = {
-        全部: { icon: MEMO_ICONS.sceneAll },
-        今日: { icon: MEMO_ICONS.sceneToday },
-        重要: { icon: MEMO_ICONS.star, cls: "bz-ic--warning" }
-      };
-      LEADING_EMOJI_RE = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
-    }
-  });
-
-  // src/memo/state.ts
-  var M3;
-  var init_state3 = __esm({
-    "src/memo/state.ts"() {
-      M3 = {
-        appRef: null,
-        overlay: null,
-        items: [],
-        activeScene: "全部",
-        sortMode: "priority",
-        search: "",
-        showDone: false,
-        showEarlierDone: false,
-        pinnedNewId: null,
-        completeTimers: /* @__PURE__ */ new Map(),
-        renderFn: null
-      };
-    }
-  });
-
-  // src/core/settings-common.ts
-  function numStrBinding(key, def) {
-    return {
-      get: () => {
-        const raw = tryGetSettings()[key];
-        if (raw === "" || raw === null || raw === void 0) return def;
-        const n = Number(raw);
-        return Number.isFinite(n) && n > 0 ? n : def;
-      },
-      set: (v) => {
-        getSettings()[key] = String(v);
-      },
-      save: () => saveSettings()
-    };
-  }
-  function makeReloadWarnOnce() {
-    let reloadWarned = false;
-    return () => {
-      if (reloadWarned) return;
-      reloadWarned = true;
-      notice(RELOAD_SETTINGS_NOTICE, "info");
-    };
-  }
-  var RELOAD_SETTINGS_NOTICE;
-  var init_settings_common = __esm({
-    "src/core/settings-common.ts"() {
-      init_notice();
-      init_settings_provider();
-      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
-    }
-  });
-
-  // src/pomodoro/state.ts
-  function createInitialState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function resumePhase(state3, now) {
-    return {
-      state: { ...state3, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state3.remaining * 1e3 },
-      event: { type: "started", phase: state3.phase }
-    };
-  }
-  function activePhase(phase) {
-    return phase === "idle" ? "focus" : phase;
-  }
-  function phaseDurationSec(phase, d) {
-    if (phase === "short-break") return d.shortBreakMin * 60;
-    if (phase === "long-break") return d.longBreakMin * 60;
-    return d.workMin * 60;
-  }
-  function breakPhase(count, d) {
-    return count >= d.longBreakInterval ? "long-break" : "short-break";
-  }
-  function startPhase(state3, phase, now, d) {
-    return {
-      state: { ...state3, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
-      event: { type: "started", phase }
-    };
-  }
-  function completePhase(state3, now, d, o) {
-    const phase = state3.phase;
-    const isFocus = phase === "focus";
-    let count = state3.cycleFocusCount;
-    let historyEntry;
-    let longBreak = false;
-    if (isFocus) {
-      count += 1;
-      longBreak = count >= d.longBreakInterval;
-      if (longBreak) count = 0;
-      historyEntry = { ts: now, duration: d.workMin * 60, ...state3.task ? { task: state3.task } : {} };
-    }
-    let next;
-    let autoStarted = false;
-    if (isFocus) {
-      if (o.autoSkipBreak) {
-        next = "focus";
-        autoStarted = true;
-      } else {
-        next = longBreak ? "long-break" : "short-break";
-        autoStarted = o.autoCycle;
-      }
-    } else {
-      next = "focus";
-      autoStarted = o.autoCycle;
-    }
-    const { task: _settled, ...rest } = state3;
-    const nextState = { ...rest, phase: next, cycleFocusCount: count };
-    const res = autoStarted ? startPhase(nextState, next, now, d) : {
-      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
-      event: { type: "none" }
-    };
-    return {
-      ...res,
-      event: {
-        type: "phase-completed",
-        completedPhase: phase,
-        nextPhase: next,
-        autoStarted,
-        longBreak,
-        ...historyEntry ? { historyEntry } : {}
-      }
-    };
-  }
-  function transition(state3, action, now, d, o) {
-    if (action === "start") {
-      if (state3.paused) return resumePhase(state3, now);
-      if (state3.endTime !== null) return { state: state3, event: { type: "none" } };
-      const phase = activePhase(state3.phase);
-      return startPhase(state3, phase, now, d);
-    }
-    if (action === "pause") {
-      if (state3.endTime === null) return { state: state3, event: { type: "none" } };
-      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
-      return {
-        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
-        state: { ...state3, paused: true, pausedBy: void 0, remaining: Math.ceil((state3.endTime - now) / 1e3), endTime: null },
-        event: { type: "none" }
-      };
-    }
-    if (action === "resume") {
-      if (!state3.paused) return { state: state3, event: { type: "none" } };
-      return resumePhase(state3, now);
-    }
-    if (action === "reset") {
-      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
-      const phase = activePhase(state3.phase);
-      return {
-        state: { ...state3, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
-        event: { type: "none" }
-      };
-    }
-    if (action === "skip") {
-      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
-      const phase = activePhase(state3.phase);
-      let next;
-      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state3.cycleFocusCount, d);
-      else next = "focus";
-      const { task: _dropped, ...rest } = state3;
-      return {
-        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
-        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
-      };
-    }
-    if (action === "tick") {
-      if (state3.endTime === null || now < state3.endTime) return { state: state3, event: { type: "none" } };
-      return completePhase(state3, now, d, o);
-    }
-    return { state: state3, event: { type: "none" } };
-  }
-  function idleState() {
-    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
-  }
-  function recover(state3, history2, now, d, o) {
-    if (state3.endTime === null || now < state3.endTime) return { state: state3, history: history2.slice(), events: [] };
-    return { state: idleState(), history: history2.slice(), events: [] };
-  }
-  var PHASES;
-  var init_state4 = __esm({
-    "src/pomodoro/state.ts"() {
-      PHASES = ["idle", "focus", "short-break", "long-break"];
-    }
-  });
-
-  // src/pomodoro/stats.ts
-  function dayKey(ts) {
-    return localDayKey(ts);
-  }
-  function todayCount(history2, now) {
-    const today = dayKey(now);
-    return history2.filter((h) => dayKey(h.ts) === today).length;
-  }
-  function todayMinutes(history2, now) {
-    const today = dayKey(now);
-    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
-  }
-  function last7Days(history2, now) {
-    const counts = /* @__PURE__ */ new Map();
-    const minutes = /* @__PURE__ */ new Map();
-    const d = new Date(now);
-    d.setHours(0, 0, 0, 0);
-    for (let i = 6; i >= 0; i--) {
-      const day = new Date(d);
-      day.setDate(day.getDate() - i);
-      const key = dayKey(day.getTime());
-      counts.set(key, 0);
-      minutes.set(key, 0);
-    }
-    for (const h of history2) {
-      const key = dayKey(h.ts);
-      if (counts.has(key)) {
-        counts.set(key, counts.get(key) + 1);
-        minutes.set(key, minutes.get(key) + h.duration / 60);
-      }
-    }
-    return Array.from(counts.entries()).map(([date, count]) => ({
-      date,
-      count,
-      minutes: Math.round(minutes.get(date) || 0)
-    }));
-  }
-  function weekKeyOf(ts) {
-    const d = new Date(ts);
-    d.setHours(0, 0, 0, 0);
-    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
-    return localDayKey(d.getTime());
-  }
-  function byWeek(a, b) {
-    return a.week < b.week ? -1 : a.week > b.week ? 1 : 0;
-  }
-  function aggregateWeeks(entries) {
-    const acc = /* @__PURE__ */ new Map();
-    for (const h of entries) {
-      const wk = weekKeyOf(h.ts);
-      let row = acc.get(wk);
-      if (!row) {
-        row = { count: 0, sec: 0, tasks: /* @__PURE__ */ new Map() };
-        acc.set(wk, row);
-      }
-      row.count += 1;
-      row.sec += h.duration;
-      if (h.task) row.tasks.set(h.task, (row.tasks.get(h.task) || 0) + h.duration / 60);
-    }
-    return Array.from(acc.entries()).map(([week, r]) => ({
-      week,
-      count: r.count,
-      minutes: Math.round(r.sec / 60),
-      ...r.tasks.size ? {
-        tasks: Object.fromEntries(
-          Array.from(r.tasks.entries()).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([t, m]) => [t, Math.round(m)])
-        )
-      } : {}
-    })).sort(byWeek);
-  }
-  function mergeArchived(existing, incoming) {
-    const merged = /* @__PURE__ */ new Map();
-    for (const row of existing != null ? existing : []) merged.set(row.week, { ...row });
-    for (const row of incoming) {
-      const cur = merged.get(row.week);
-      if (!cur) {
-        merged.set(row.week, { ...row });
-        continue;
-      }
-      const tasks = { ...cur.tasks || {} };
-      for (const [t, m] of Object.entries(row.tasks || {})) {
-        tasks[t] = Math.round((tasks[t] || 0) + m);
-      }
-      merged.set(row.week, {
-        week: row.week,
-        count: cur.count + row.count,
-        minutes: cur.minutes + row.minutes,
-        ...Object.keys(tasks).length ? { tasks } : {}
-      });
-    }
-    return Array.from(merged.values()).sort(byWeek);
-  }
-  function lastNMonths(archived2, history2, now, n = TREND_MONTHS) {
-    const base = new Date(now);
-    base.setDate(1);
-    base.setHours(0, 0, 0, 0);
-    const buckets = /* @__PURE__ */ new Map();
-    const order = [];
-    for (let i = n - 1; i >= 0; i--) {
-      const m = new Date(base);
-      m.setMonth(m.getMonth() - i);
-      const key = `${m.getFullYear()}-${pad2(m.getMonth() + 1)}`;
-      buckets.set(key, { count: 0, sec: 0 });
-      order.push(key);
-    }
-    for (const row of archived2 != null ? archived2 : []) {
-      const b = buckets.get(row.week.slice(0, 7));
-      if (b) {
-        b.count += row.count;
-        b.sec += row.minutes * 60;
-      }
-    }
-    for (const h of history2) {
-      const b = buckets.get(localDayKey(h.ts).slice(0, 7));
-      if (b) {
-        b.count += 1;
-        b.sec += h.duration;
-      }
-    }
-    return order.map((month) => {
-      const b = buckets.get(month);
-      return { month, count: b.count, minutes: Math.round(b.sec / 60) };
-    });
-  }
-  var TREND_MONTHS;
-  var init_stats2 = __esm({
-    "src/pomodoro/stats.ts"() {
-      init_utils();
-      TREND_MONTHS = 6;
-    }
-  });
-
-  // src/pomodoro/data.ts
-  function getPomodoroFilePath() {
-    var _a2;
-    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
-  }
-  function defaultPomodoroData() {
-    return { version: 1, state: createInitialState(), history: [] };
-  }
-  function retentionFloor(now) {
-    const floor = new Date(now);
-    floor.setHours(0, 0, 0, 0);
-    floor.setDate(floor.getDate() - 6);
-    return floor.getTime();
-  }
-  function trimWithArchive(history2, archived2, now) {
-    const floor = retentionFloor(now);
-    const removed = history2.filter((h) => h.ts < floor);
-    const kept = removed.length ? history2.filter((h) => h.ts >= floor) : history2;
-    return { history: kept, archived: removed.length ? mergeArchived(archived2, aggregateWeeks(removed)) : archived2 != null ? archived2 : [] };
-  }
-  function normalizeData(raw) {
-    const def = defaultPomodoroData();
-    if (!raw || typeof raw !== "object") return def;
-    const state3 = normalizeState(raw.state);
-    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
-      ts: h.ts,
-      duration: h.duration,
-      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
-    })) : [];
-    const archived2 = normalizeArchived(raw.archived);
-    return { version: 1, state: state3, history: history2, ...archived2.length ? { archived: archived2 } : {} };
-  }
-  function normalizeArchived(raw) {
-    if (!Array.isArray(raw)) return [];
-    const seen = /* @__PURE__ */ new Set();
-    const rows = [];
-    for (const r of raw) {
-      if (!r || typeof r.week !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(r.week) || typeof r.count !== "number" || r.count < 0 || typeof r.minutes !== "number" || r.minutes < 0) {
-        continue;
-      }
-      const [ys, ms, ds] = r.week.split("-").map(Number);
-      const d = new Date(ys, ms - 1, ds);
-      if (d.getFullYear() !== ys || d.getMonth() !== ms - 1 || d.getDate() !== ds) continue;
-      if (d.getDay() !== 1) continue;
-      if (seen.has(r.week)) continue;
-      seen.add(r.week);
-      const tasks = {};
-      if (r.tasks && typeof r.tasks === "object" && !Array.isArray(r.tasks)) {
-        for (const [t, m] of Object.entries(r.tasks)) {
-          if (typeof m === "number" && Number.isFinite(m) && m >= 0) tasks[t] = m;
-        }
-      }
-      rows.push({
-        week: r.week,
-        count: r.count,
-        minutes: r.minutes,
-        ...Object.keys(tasks).length ? { tasks } : {}
-      });
-    }
-    return rows;
-  }
-  function normalizeState(raw) {
-    const def = createInitialState();
-    if (!raw || typeof raw !== "object") return def;
-    return {
-      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
-      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
-      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
-      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
-      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
-      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
-      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
-      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
-      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
-    };
-  }
-  var PomodoroDataManager;
-  var init_data5 = __esm({
-    "src/pomodoro/data.ts"() {
-      init_settings_provider();
-      init_storage();
-      init_state4();
-      init_stats2();
-      PomodoroDataManager = class {
-        constructor(app) {
-          this.app = app;
-        }
-        /**
-         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
-         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
-         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
-         */
-        async load() {
-          const raw = await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), {
-              defaultValue: () => defaultPomodoroData(),
-              app: this.app
-            }).read()
-          );
-          return normalizeData(raw);
-        }
-        /**
-         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
-         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
-         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
-         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
-         */
-        async save(data) {
-          await enqueueFileTask(
-            getPomodoroFilePath(),
-            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
-          );
-        }
-      };
-    }
-  });
-
-  // src/pomodoro/render.ts
-  function normalizeSkinTheme(v) {
-    const cur = String(v != null ? v : "");
-    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
-  }
-  function skinClassOf(v) {
-    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
-  }
-  function panelShellHtml() {
-    return `
-      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
-        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
-        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
-      </svg>
-      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
-      <div id="pomodoro-phase"></div>
-      <div id="pomodoro-task" class="pomodoro-task"></div>
-      <div id="pomodoro-time"></div>
-      <div class="pomodoro-controls">
-        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
-        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
-        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
-      </div>
-      <div class="pomodoro-stats">
-        <div id="pomodoro-today"></div>
-        <div class="pomodoro-stat-tabs">
-          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
-          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
-        </div>
-        <div id="pomodoro-week" class="pomodoro-week"></div>
-        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
-      </div>`;
-  }
-  function popupShellHtml() {
-    return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
-  }
-  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
-  var init_render5 = __esm({
-    "src/pomodoro/render.ts"() {
-      POMODORO_SKIN_THEMES = [
-        { value: "tomato", label: "番茄" },
-        { value: "ink", label: "墨白" },
-        { value: "grid", label: "方格纸" },
-        { value: "moss", label: "苔原" },
-        { value: "mist", label: "海雾" },
-        { value: "sand", label: "暖沙" },
-        { value: "citrus", label: "蜜柑" },
-        { value: "sakura", label: "樱粉" },
-        { value: "latte", label: "咖啡" },
-        { value: "night", label: "夜航" }
-      ];
-      DEFAULT_POMODORO_SKIN_THEME = "tomato";
-    }
-  });
-
-  // src/pomodoro/sound.ts
-  function playSound(kind, volume = 100) {
-    const w = typeof window !== "undefined" ? window : globalThis;
-    const AC = w.AudioContext || w.webkitAudioContext;
-    if (!AC) return;
-    if (volume <= 0) return;
-    try {
-      const cfg = SOUND_CONFIG[kind];
-      const ctx = new AC();
-      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = cfg.freq;
-      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(1e-3, t);
-      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
-      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + cfg.dur + 0.02);
-      const ctxRef = ctx;
-      setTimeout(() => {
-        void ctxRef.close();
-      }, cfg.dur * 1e3 + 300);
-    } catch (e) {
-    }
-  }
-  var SOUND_CONFIG;
-  var init_sound = __esm({
-    "src/pomodoro/sound.ts"() {
-      SOUND_CONFIG = {
-        "focus-start": { freq: 880, dur: 0.25 },
-        "short-break-start": { freq: 523, dur: 0.3 },
-        "long-break-start": { freq: 392, dur: 0.45 },
-        pause: { freq: 440, dur: 0.2 }
-      };
-    }
-  });
-
-  // src/pomodoro/statusbar.ts
-  function syncPomodoroStatusBar(state3, remainSec) {
-    if (!statusEl) return;
-    const running2 = state3.endTime !== null;
-    const paused = !running2 && state3.paused;
-    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
-    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
-    const wantTitle = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
-    if (statusEl.title !== wantTitle) statusEl.title = wantTitle;
-    if (textSpan) {
-      if (running2) {
-        const m = Math.floor(remainSec / 60);
-        const s = remainSec % 60;
-        const want = `${pad2(m)}:${pad2(s)}`;
-        if (textSpan.textContent !== want) textSpan.textContent = want;
-      } else {
-        const want = paused ? "已暂停" : "";
-        if (textSpan.textContent !== want) textSpan.textContent = want;
-      }
-    }
-  }
-  var statusEl, textSpan;
-  var init_statusbar = __esm({
-    "src/pomodoro/statusbar.ts"() {
-      init_fake_obsidian();
-      init_utils();
-      statusEl = null;
-      textSpan = null;
-    }
-  });
-
-  // src/pomodoro/config.ts
-  var PRESETS, CUSTOM_PRESET_ID;
-  var init_config3 = __esm({
-    "src/pomodoro/config.ts"() {
-      PRESETS = {
-        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
-        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
-        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
-        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
-        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
-        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
-        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
-        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
-        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
-        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
-        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
-      };
-      CUSTOM_PRESET_ID = "custom";
-    }
-  });
-
-  // src/core/pomodoro-phase.ts
-  function isFocusingPhase(p) {
-    return p === "focusing" || p === "paused";
-  }
-  var init_pomodoro_phase = __esm({
-    "src/core/pomodoro-phase.ts"() {
-    }
-  });
-
-  // src/pomodoro/ui.ts
-  var ui_exports3 = {};
-  __export(ui_exports3, {
-    POMODORO_SKIN_THEMES: () => POMODORO_SKIN_THEMES,
-    closePomodoro: () => closePomodoro,
-    ensurePomodoro: () => ensurePomodoro,
-    isFocusing: () => isFocusing,
-    menuPhase: () => menuPhase,
-    openPomodoro: () => openPomodoro,
-    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
-    skipBreak: () => skipBreak,
-    startFocusForTask: () => startFocusForTask,
-    toggleFocus: () => toggleFocus,
-    togglePause: () => togglePause,
-    unloadPomodoro: () => unloadPomodoro
-  });
-  function applySkinClass() {
-    const popup = document.getElementById("pomodoro-popup");
-    if (!popup) return;
-    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
-    if (popup.classList.contains(want)) return;
-    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
-    popup.classList.add(want);
-  }
-  function durations() {
-    const s = tryGetSettings();
-    const num2 = (v, def) => {
-      const n = parseInt(v != null ? v : "", 10);
-      return Number.isFinite(n) && n > 0 ? n : def;
-    };
-    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
-    return {
-      workMin: preset ? preset.workMin : num2(s.pomodoroWorkMin, 25),
-      shortBreakMin: preset ? preset.shortBreakMin : num2(s.pomodoroShortBreakMin, 5),
-      longBreakMin: preset ? preset.longBreakMin : num2(s.pomodoroLongBreakMin, 15),
-      longBreakInterval: num2(s.pomodoroLongBreakInterval, 4)
-    };
-  }
-  function options() {
-    const s = tryGetSettings();
-    return {
-      forceFocus: !!s.pomodoroForceFocus,
-      autoCycle: !!s.pomodoroAutoCycle,
-      autoSkipBreak: !!s.pomodoroAutoSkipBreak
-    };
-  }
-  function phaseLabel(phase) {
-    if (phase === "focus") return "专注";
-    if (phase === "short-break") return "短休息";
-    if (phase === "long-break") return "长休息";
-    return "番茄钟";
-  }
-  function phaseText(phase, count, d) {
-    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
-    return phaseLabel(phase);
-  }
-  function playPhaseSound(phase) {
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) {
-      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
-      playSound(kind, pomodoroVolume());
-    }
-  }
-  function notifyPhaseStarted(phase) {
-    const d = durations();
-    if (phase === "focus") {
-      notice("专注开始", "success");
-    } else if (phase === "long-break") {
-      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
-    } else {
-      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
-    }
-    playPhaseSound(phase);
-  }
-  function notifyPaused() {
-    notice(state.phase === "focus" ? "已暂停专注" : "已暂停休息", "pause");
-    const s = tryGetSettings();
-    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
-  }
-  function breakLabel(phase, d) {
-    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
-  }
-  function forceFocusHint(paused = false) {
-    return paused ? "强制专注模式暂停中，请先在番茄钟面板操作" : "强制专注模式中，请先在番茄钟面板操作";
-  }
-  function notifyPhaseComplete(e) {
-    const d = durations();
-    playPhaseSound(e.nextPhase);
-    if (e.autoStarted) {
-      if (e.completedPhase === "focus") {
-        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
-      } else {
-        notice("休息结束：开始专注", "success");
-      }
-      return;
-    }
-    if (e.completedPhase === "focus") {
-      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始休息", onClick: () => applyAction("start") }
-      });
-    } else {
-      notify("休息结束", {
-        type: "success",
-        duration: 6e3,
-        action: { label: "开始专注", onClick: () => applyAction("start") }
-      });
-    }
-  }
-  function pomodoroVolume() {
-    const v = tryGetSettings().pomodoroVolume;
-    return typeof v === "number" && v >= 0 ? v : 100;
-  }
-  function remainingSec() {
-    if (state.endTime !== null) return Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
-    if (state.phase === "idle" && state.remaining === 0) return phaseDurationSec("focus", durations());
-    return state.remaining;
-  }
-  function fmt(sec) {
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${pad2(m)}:${pad2(s)}`;
-  }
-  function hoursLabel(minutes) {
-    if (!(minutes > 0)) return null;
-    const h = minutes / 60;
-    return `${h >= 100 ? Math.round(h) : Math.round(h * 10) / 10}h`;
-  }
-  function buildStatBars(container, rows, opts = {}) {
-    var _a2;
-    const metric = (_a2 = opts.metric) != null ? _a2 : "count";
-    const values = rows.map((r) => {
-      var _a3;
-      return metric === "minutes" ? (_a3 = r.minutes) != null ? _a3 : 0 : r.count;
-    });
-    const max = Math.max(1, ...values);
-    container.innerHTML = "";
-    rows.forEach((r, i) => {
-      var _a3;
-      const bar = document.createElement("div");
-      bar.className = "pomodoro-stat-day";
-      bar.title = r.title;
-      const col = document.createElement("div");
-      col.className = "pomodoro-stat-col";
-      const numText = (_a3 = opts.valueLabel) == null ? void 0 : _a3.call(opts, r);
-      if (numText) {
-        const num2 = document.createElement("span");
-        num2.className = "pomodoro-stat-num";
-        num2.textContent = numText;
-        col.appendChild(num2);
-      }
-      const h = document.createElement("div");
-      h.className = "pomodoro-stat-bar";
-      h.style.height = `${Math.max(2, Math.round(values[i] / max * 40))}px`;
-      col.appendChild(h);
-      const label = document.createElement("span");
-      label.className = "pomodoro-stat-label";
-      label.textContent = r.label;
-      col.appendChild(label);
-      bar.appendChild(col);
-      container.appendChild(bar);
-    });
-  }
-  function renderStats() {
-    const now = Date.now();
-    const todayEl = document.getElementById("pomodoro-today");
-    if (todayEl) {
-      const todayText = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
-      if (todayEl.textContent !== todayText) todayEl.textContent = todayText;
-    }
-    const weekEl = document.getElementById("pomodoro-week");
-    const monthsEl = document.getElementById("pomodoro-months");
-    if (!weekEl || !monthsEl) return;
-    if (statMode === "month") {
-      const months = lastNMonths(archived, history, now, TREND_MONTHS);
-      const key2 = "m:" + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(",") + `#${archived.length}`;
-      if (key2 === lastStatsKey) return;
-      lastStatsKey = key2;
-      syncStatTabs(false);
-      weekEl.hidden = true;
-      monthsEl.hidden = false;
-      buildStatBars(
-        monthsEl,
-        months.map((m) => ({
-          label: `${parseInt(m.month.slice(5, 7), 10)}月`,
-          title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
-          count: m.count,
-          minutes: m.minutes
-        })),
-        { metric: "minutes", valueLabel: (r) => {
-          var _a2;
-          return hoursLabel((_a2 = r.minutes) != null ? _a2 : 0);
-        } }
-      );
-      return;
-    }
-    const days = last7Days(history, now);
-    const key = "w:" + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
-    if (key === lastStatsKey) return;
-    lastStatsKey = key;
-    syncStatTabs(true);
-    weekEl.hidden = false;
-    monthsEl.hidden = true;
-    buildStatBars(
-      weekEl,
-      days.map((d) => ({
-        label: d.date.slice(8),
-        // DD（完整日期在 title；窄面板不折行）
-        title: `${d.date}：${d.count} 个 · ${d.minutes} 分钟`,
-        count: d.count
-      }))
-    );
-  }
-  function syncStatTabs(weekOn) {
-    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
-    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
-    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", weekOn);
-    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", !weekOn);
-    tabWeek == null ? void 0 : tabWeek.setAttribute("aria-pressed", String(weekOn));
-    tabMonth == null ? void 0 : tabMonth.setAttribute("aria-pressed", String(!weekOn));
-  }
-  function setStatMode(mode) {
-    if (statMode === mode) return;
-    statMode = mode;
-    lastStatsKey = "";
-    render();
-  }
-  function render() {
-    const d = durations();
-    const remain = remainingSec();
-    syncPomodoroStatusBar(state, remain);
-    if (!maskEl) return;
-    const total = phaseDurationSec(state.phase === "idle" ? "focus" : state.phase, d);
-    const C = 2 * Math.PI * 52;
-    const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 1;
-    const circle = document.getElementById("pomodoro-ring-progress");
-    if (circle) {
-      circle.setAttribute("stroke-dasharray", String(C));
-      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
-    }
-    const phaseEl = document.getElementById("pomodoro-phase");
-    if (phaseEl) {
-      const label = phaseLabel(state.phase);
-      if (phaseEl.dataset.label !== label) {
-        phaseEl.dataset.label = label;
-        phaseEl.innerHTML = "";
-        if (state.phase === "idle") {
-          const ic2 = document.createElement("span");
-          ic2.className = "pomodoro-phase-icon";
-          setIcon(ic2, "timer");
-          phaseEl.appendChild(ic2);
-          phaseEl.appendChild(document.createTextNode(label));
-        } else {
-          phaseEl.textContent = label;
-        }
-      }
-    }
-    renderCycleDots(d);
-    renderTaskLine();
-    const timeEl = document.getElementById("pomodoro-time");
-    if (timeEl) timeEl.textContent = fmt(remain);
-    renderStats();
-    updateButtons();
-    applySkinClass();
-  }
-  function renderCycleDots(d) {
-    const cycleEl = document.getElementById("pomodoro-cycle");
-    if (!cycleEl) return;
-    const total = Math.max(1, d.longBreakInterval);
-    if (cycleEl.childElementCount !== total) {
-      cycleEl.innerHTML = "";
-      for (let i = 0; i < total; i++) {
-        const dot = document.createElement("span");
-        dot.className = "pomodoro-cycle-dot";
-        cycleEl.appendChild(dot);
-      }
-    }
-    Array.from(cycleEl.children).forEach((dot, i) => {
-      const want = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
-      if (dot.className !== want) dot.className = want;
-    });
-  }
-  function renderTaskLine() {
-    const taskEl = document.getElementById("pomodoro-task");
-    if (!taskEl) return;
-    if (state.task) {
-      if (taskEl.textContent !== state.task) taskEl.textContent = state.task;
-      if (taskEl.title !== state.task) taskEl.title = state.task;
-    } else {
-      if (taskEl.textContent !== "") taskEl.textContent = "";
-      if (taskEl.hasAttribute("title")) taskEl.removeAttribute("title");
-    }
-  }
-  function updateButtons() {
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    if (!startBtn) return;
-    const running2 = state.endTime !== null;
-    const wantStart = running2 ? "暂停" : state.paused ? "继续" : "开始";
-    if (startBtn.textContent !== wantStart) startBtn.textContent = wantStart;
-    const locked = options().forceFocus && state.phase === "focus" && (running2 || state.paused);
-    const startLocked = locked && !(state.paused && state.pausedBy === "autopause");
-    startBtn.disabled = startLocked;
-    const resetBtn = document.getElementById("pomodoro-btn-reset");
-    const skipBtn = document.getElementById("pomodoro-btn-skip");
-    if (resetBtn) resetBtn.disabled = locked;
-    if (skipBtn) skipBtn.disabled = locked || state.phase === "idle";
-  }
-  function applyAction(action) {
-    const prev = state;
-    const r = transition(state, action, Date.now(), durations(), options());
-    state = r.state;
-    if (!state.paused) autoPauseMain = false;
-    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
-    if (r.event.type === "phase-completed") {
-      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
-      if (action === "tick") notifyPhaseComplete(r.event);
-      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
-        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
-      }
-    }
-    if (action === "pause" && state.paused) notifyPaused();
-    if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
-    ensureTick();
-    render();
-  }
-  function onTick() {
-    applyAction("tick");
-  }
-  function autoPauseEnabled() {
-    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
-  }
-  function freezeRunning(s, now) {
-    if (s.endTime === null || s.paused) return s;
-    return {
-      ...s,
-      paused: true,
-      pausedBy: "autopause",
-      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
-      endTime: null
-    };
-  }
-  function unfreezeRunning(s, now) {
-    if (!s.paused) return s;
-    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
-  }
-  function pauseOnHidden() {
-    if (!autoPauseEnabled()) return;
-    const now = Date.now();
-    if (state.endTime !== null && !state.paused) {
-      state = freezeRunning(state, now);
-      autoPauseMain = true;
-    }
-    if (autoPauseMain) {
-      void save();
-      render();
-    }
-  }
-  function resumeOnVisible() {
-    const now = Date.now();
-    if (autoPauseMain && state.paused) {
-      state = unfreezeRunning(state, now);
-      autoPauseMain = false;
-      void save();
-      render();
-      return;
-    }
-    render();
-  }
-  function registerVisibilityListener() {
-    if (visibilityHandler) return;
-    visibilityHandler = () => {
-      if (document.hidden) pauseOnHidden();
-      else resumeOnVisible();
-    };
-    document.addEventListener("visibilitychange", visibilityHandler);
-  }
-  function unregisterVisibilityListener() {
-    if (visibilityHandler) {
-      document.removeEventListener("visibilitychange", visibilityHandler);
-      visibilityHandler = null;
-    }
-  }
-  function ensureTick() {
-    const needsTick = state.endTime !== null;
-    if (needsTick && timerId === null) {
-      timerId = window.setInterval(onTick, 1e3);
-    } else if (!needsTick && timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-  }
-  async function save() {
-    const t = trimWithArchive(history, archived, Date.now());
-    try {
-      if (dataManager) await dataManager.save({ version: 1, state, history: t.history, ...t.archived.length ? { archived: t.archived } : {} });
-    } catch (e) {
-      console.error("番茄钟数据保存失败:", e);
-      notifyActionError(e, "保存番茄钟数据", { onRetry: () => void save() });
-      return;
-    }
-    if (disposed) return;
-    history = t.history;
-    archived = t.archived;
-  }
-  async function initData() {
-    var _a2;
-    const data = await dataManager.load();
-    const r = recover(data.state, data.history, Date.now(), durations(), options());
-    state = r.state;
-    const t = trimWithArchive(r.history, data.archived, Date.now());
-    history = t.history;
-    archived = t.archived;
-    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
-    const archivedChanged = JSON.stringify((_a2 = data.archived) != null ? _a2 : []) !== JSON.stringify(archived);
-    if (mainChanged || archivedChanged) await dataManager.save({ version: 1, state, history, ...archived.length ? { archived } : {} });
-    loaded = true;
-  }
-  function pomodoroSettingsSchema() {
-    const soundToggle = {
-      get: () => tryGetSettings().pomodoroSound !== false,
-      set: (v) => {
-        getSettings().pomodoroSound = v;
-      },
-      save: () => saveSettings()
-    };
-    const autoPauseToggle = {
-      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
-      set: (v) => {
-        getSettings().pomodoroAutoPauseOnHide = v;
-      },
-      save: () => saveSettings()
-    };
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            {
-              type: "choiceCards",
-              name: "面板布局",
-              binding: { key: "pomodoroSkin" },
-              options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }],
-              // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
-              // 新布局的配套（layout 不符）→ 回落第一个适配主题（无适配主题则兜底第一项），
-              // 防「布局换了主题还挂旧皮」
-              onChange: () => {
-                var _a2, _b2;
-                const s = tryGetSettings();
-                const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
-                const fit2 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
-                if (!fit2.some((o) => o.value === cur)) {
-                  s.pomodoroSkinTheme = ((_b2 = fit2[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
-                  saveSettings();
-                }
-                render();
-              }
-            },
-            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
-            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
-            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "timer",
-          name: "时间方案",
-          rows: [
-            {
-              type: "select",
-              name: "预设方案",
-              desc: "选择现成的工作与休息时长组合",
-              binding: { key: "pomodoroPreset" },
-              options: [
-                ...Object.entries(PRESETS).map(([id, p]) => ({
-                  value: id,
-                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
-                })),
-                { value: CUSTOM_PRESET_ID, label: "自定义" }
-              ],
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "工作时长",
-              desc: "自定义方案的工作阶段分钟数",
-              binding: numStrBinding("pomodoroWorkMin", 25),
-              min: 1,
-              max: 120,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "短休息时长",
-              desc: "自定义方案的短休息分钟数",
-              binding: numStrBinding("pomodoroShortBreakMin", 5),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            {
-              type: "number",
-              name: "长休息时长",
-              desc: "自定义方案的长休息分钟数",
-              binding: numStrBinding("pomodoroLongBreakMin", 15),
-              min: 1,
-              max: 60,
-              step: 1,
-              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
-              onChange: () => render()
-            },
-            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
-          ]
-        },
-        {
-          icon: "sliders-horizontal",
-          name: "行为",
-          rows: [
-            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
-            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
-            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
-            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
-            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
-            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
-            {
-              type: "slider",
-              name: "提示音音量",
-              desc: "提示音大小，默认最大",
-              binding: { get: () => {
-                var _a2;
-                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
-              }, set: (v) => {
-                getSettings().pomodoroVolume = v;
-              }, save: () => saveSettings() },
-              min: 0,
-              max: 100,
-              step: 5,
-              actions: [{ text: "试听", onClick: () => {
-                var _a2;
-                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
-              } }]
-            },
-            {
-              type: "select",
-              name: "打开时恢复方式",
-              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
-              binding: { key: "pomodoroRestoreMode" },
-              options: [
-                { value: "background", label: "后台继续" },
-                { value: "popup", label: "自动弹窗" }
-              ]
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function bindEvents() {
-    var _a2, _b2;
-    const startBtn = document.getElementById("pomodoro-btn-start");
-    startBtn.addEventListener("click", () => applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start"));
-    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => void resetWithConfirm());
-    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => {
-      if (state.phase === "idle") return;
-      applyAction("skip");
-    });
-    (_a2 = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a2.addEventListener("click", () => setStatMode("week"));
-    (_b2 = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b2.addEventListener("click", () => setStatMode("month"));
-    const popup = document.getElementById("pomodoro-popup");
-    popup.addEventListener("click", (e) => {
-      const t = e.target;
-      if (t.closest("button, input, textarea, select, [contenteditable]")) return;
-      popup.focus();
-    });
-    popup.addEventListener("keydown", (e) => {
-      if (e.key !== " ") return;
-      const t = e.target;
-      const tag = t.tagName;
-      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
-      e.preventDefault();
-      applyAction(state.paused ? "resume" : state.endTime !== null ? "pause" : "start");
-    });
-  }
-  function resetWithConfirm() {
-    const focusing = state.phase === "focus" && (state.endTime !== null || state.paused);
-    if (!focusing) {
-      applyAction("reset");
-      return;
-    }
-    void openFlowDialog({
-      title: "重置专注",
-      message: "专注进行中，重置后本阶段进度作废（不计入历史）",
-      actions: [
-        { label: "继续计时", value: "cancel" },
-        { label: "重置", value: "ok", cta: true, danger: true }
-      ]
-    }).then((v) => {
-      if (v === "ok") applyAction("reset");
-    });
-  }
-  function buildDOM() {
-    var _a2;
-    const mask = document.createElement("div");
-    mask.id = "pomodoro-mask";
-    mask.className = "bz-overlay-mask";
-    mask.innerHTML = popupShellHtml();
-    mask.style.zIndex = String(allocZ());
-    document.body.appendChild(mask);
-    maskEl = mask;
-    mask.addEventListener("click", (e) => {
-      if (e.target === mask) closePomodoro();
-    });
-    escHandle2 = escManager.register("bz-pomodoro", {
-      isVisible: () => maskEl !== null,
-      close: closePomodoro
-    });
-    bindEvents();
-    render();
-    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
-  }
-  function initDataOnce() {
-    if (loaded) return Promise.resolve();
-    initInflight != null ? initInflight : initInflight = initData().finally(() => {
-      initInflight = null;
-    });
-    return initInflight;
-  }
-  async function openPomodoro(app) {
-    appRef = app;
-    disposed = false;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
-    if (!maskEl) {
-      openInflight != null ? openInflight : openInflight = (async () => {
-        await initDataOnce();
-        if (disposed) return;
-        buildDOM();
-        ensureTick();
-      })();
-      try {
-        await openInflight;
-      } catch (e) {
-        console.error("番茄钟打开失败:", e);
-        notifyActionError(e, "打开番茄钟", { onRetry: () => void openPomodoro(app) });
-        return;
-      } finally {
-        openInflight = null;
-      }
-    }
-    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
-    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
-  }
-  async function ensurePomodoro(app) {
-    appRef = app;
-    disposed = false;
-    if (!dataManager) dataManager = new PomodoroDataManager(app);
-    registerVisibilityListener();
-    if (!loaded) {
-      try {
-        await initDataOnce();
-      } catch (e) {
-        console.error("番茄钟数据加载失败:", e);
-        notifyActionError(e, "加载番茄钟数据", { onRetry: () => void ensurePomodoro(app) });
-        return;
-      }
-      if (disposed) return;
-      if (state.endTime !== null && !recoveryNotified) {
-        recoveryNotified = true;
-        ensureTick();
-        render();
-        const remainSec = Math.max(0, Math.ceil((state.endTime - Date.now()) / 1e3));
-        notice(`番茄钟继续：${phaseText(state.phase, state.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
-        const s = tryGetSettings();
-        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
-      }
-    }
-  }
-  function closePomodoro() {
-    if (maskEl) {
-      maskEl.remove();
-      maskEl = null;
-    }
-    if (escHandle2) {
-      escHandle2.unregister();
-      escHandle2 = null;
-    }
-    lastStatsKey = "";
-  }
-  async function startFocusForTask(app, taskTitle) {
-    await ensurePomodoro(app);
-    if (!loaded) return;
-    const o = options();
-    const d = durations();
-    if (state.phase === "short-break" || state.phase === "long-break") {
-      state = transition(state, "skip", Date.now(), d, o).state;
-      void save();
-      render();
-    }
-    if (state.endTime !== null) {
-      notice("已有专注计时中，本次不重复开始", "warning");
-      return;
-    }
-    if (state.paused) {
-      notice(o.forceFocus && state.pausedBy !== "autopause" ? forceFocusHint(true) : "已有专注暂停中，本次不重复开始", "warning");
-      return;
-    }
-    state = { ...state, task: taskTitle };
-    applyAction("start");
-  }
-  function isFocusing() {
-    return isFocusingPhase(menuPhase());
-  }
-  async function toggleFocus(app) {
-    await ensurePomodoro(app);
-    if (!loaded) return;
-    if (isFocusing()) {
-      const before = state;
-      applyAction("reset");
-      if (state === before) notice(forceFocusHint(), "warning");
-      else notice("专注已停止");
-      return;
-    }
-    if (state.phase === "short-break" || state.phase === "long-break") {
-      state = transition(state, "skip", Date.now(), durations(), options()).state;
-      void save();
-      render();
-    }
-    applyAction("start");
-  }
-  function menuPhase() {
-    if (state.phase === "short-break" || state.phase === "long-break") return "break";
-    if (state.phase !== "focus") return "idle";
-    if (state.paused) return "paused";
-    return state.endTime !== null ? "focusing" : "idle";
-  }
-  async function skipBreak(app) {
-    await ensurePomodoro(app);
-    if (!loaded) return;
-    if (state.phase !== "short-break" && state.phase !== "long-break") {
-      notice("当前不在休息阶段", "warning");
-      return;
-    }
-    state = transition(state, "skip", Date.now(), durations(), options()).state;
-    void save();
-    render();
-    applyAction("start");
-  }
-  async function togglePause(app) {
-    await ensurePomodoro(app);
-    if (!loaded) return;
-    if (state.endTime === null && !state.paused) {
-      notice("当前没有进行中的计时", "warning");
-      return;
-    }
-    const before = state;
-    applyAction(state.paused ? "resume" : "pause");
-    if (state === before) notice(forceFocusHint(), "warning");
-  }
-  function unloadPomodoro() {
-    disposed = true;
-    if (timerId !== null) {
-      window.clearInterval(timerId);
-      timerId = null;
-    }
-    unregisterVisibilityListener();
-    autoPauseMain = false;
-    recoveryNotified = false;
-    openInflight = null;
-    initInflight = null;
-    closePomodoro();
-    state = createInitialState();
-    history = [];
-    archived = [];
-    statMode = "week";
-    lastStatsKey = "";
-    dataManager = null;
-    appRef = null;
-    loaded = false;
-  }
-  var dataManager, state, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, autoPauseMain, visibilityHandler, disposed, recoveryNotified, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
-  var init_ui4 = __esm({
-    "src/pomodoro/ui.ts"() {
-      init_fake_obsidian();
-      init_esc_manager();
-      init_z_order();
-      init_settings_provider();
-      init_notice();
-      init_flow_dialog();
-      init_settings_common();
-      init_data5();
-      init_render5();
-      init_render5();
-      init_sound();
-      init_statusbar();
-      init_stats2();
-      init_config3();
-      init_state4();
-      init_pomodoro_phase();
-      init_utils();
-      init_domain_bus();
-      dataManager = null;
-      state = createInitialState();
-      history = [];
-      archived = [];
-      loaded = false;
-      statMode = "week";
-      maskEl = null;
-      escHandle2 = null;
-      timerId = null;
-      appRef = null;
-      autoPauseMain = false;
-      visibilityHandler = null;
-      disposed = true;
-      recoveryNotified = false;
-      lastStatsKey = "";
-      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
-      initInflight = null;
-      openInflight = null;
-    }
-  });
-
-  // src/pomodoro/index.ts
-  var pomodoro_exports = {};
-  __export(pomodoro_exports, {
-    ensurePomodoro: () => ensurePomodoro,
-    isFocusing: () => isFocusing,
-    menuPhase: () => menuPhase,
-    openPomodoro: () => openPomodoro,
-    skipBreak: () => skipBreak,
-    startFocusForTask: () => startFocusForTask,
-    toggleFocus: () => toggleFocus,
-    togglePause: () => togglePause,
-    unloadPomodoro: () => unloadPomodoro
-  });
-  var init_pomodoro = __esm({
-    "src/pomodoro/index.ts"() {
-      init_ui4();
-    }
-  });
-
-  // src/memo/ui.ts
-  function isTodayStr(s) {
-    return !!s && s.slice(0, 10) === (0, import_moment5.default)().format("YYYY-MM-DD");
-  }
-  function fallbackScene() {
-    const scenes = MemoData.getScenarios();
-    const s = tryGetSettings().memoDefaultScene;
-    return s && scenes.includes(s) ? s : scenes[0];
-  }
-  function doneWindowDays() {
-    var _a2;
-    const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2.memoDoneWindow;
-    if (v === "all") return null;
-    const n = Number(v);
-    return Number.isFinite(n) && n > 0 ? n : 30;
-  }
-  async function readClipUrl() {
-    let text = "";
-    try {
-      text = await navigator.clipboard.readText();
-    } catch (e) {
-      return null;
-    }
-    const trimmed = text.trim();
-    if (!trimmed) return null;
-    const { url, display } = extractUrlAndDisplay(trimmed);
-    if (!url) return null;
-    const title = display && display !== url ? display : await fetchPageTitle(url) || "";
-    return { url, title };
-  }
-  function notifyClipPrefill() {
-    notify("已从剪贴板预填链接", { type: "info", dedupeKey: "memo-clip-prefill" });
-  }
-  async function loadData() {
-    M3.items = await MemoData.loadItems();
-  }
-  async function refresh() {
-    var _a2, _b2;
-    await loadData();
-    (_b2 = (_a2 = M3).renderFn) == null ? void 0 : _b2.call(_a2);
-  }
-  function dueRank(it) {
-    if (!it.due) return 3;
-    const st = getDueStatus(it.due);
-    return st === "overdue" ? 0 : st === "today" ? 1 : 2;
-  }
-  function getVisibleItems() {
-    const kw = M3.search.trim().toLowerCase();
-    let list = M3.items.filter((it) => {
-      if (M3.activeScene === "今日") {
-        if (!it.completed) {
-          const st = getDueStatus(it.due);
-          if (st !== "overdue" && st !== "today") return false;
-        } else if (!isTodayStr(it.completed)) {
-          return false;
-        }
-      } else if (M3.activeScene === "重要") {
-        if (it.priority !== "important") return false;
-      } else if (M3.activeScene !== "全部" && it.scene !== M3.activeScene) return false;
-      if (kw) {
-        const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(" ").toLowerCase();
-        if (!hay.includes(kw)) return false;
-      }
-      return true;
-    });
-    if (M3.pinnedNewId && M3.activeScene !== "全部") {
-      const pinned = M3.items.find((i) => i.id === M3.pinnedNewId);
-      if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
-    }
-    list.sort((a, b) => {
-      const ac = !!a.completed, bc = !!b.completed;
-      if (ac !== bc) return ac ? 1 : -1;
-      const dr = dueRank(a) - dueRank(b);
-      if (dr !== 0) return dr;
-      if (M3.sortMode === "priority") {
-        const pa = a.priority === "important" ? 0 : 1;
-        const pb = b.priority === "important" ? 0 : 1;
-        if (pa !== pb) return pa - pb;
-      }
-      if (M3.sortMode === "created") {
-        return (b.created || "").localeCompare(a.created || "");
-      }
-      if (a.due && b.due) return a.due.localeCompare(b.due);
-      return (b.created || "").localeCompare(a.created || "");
-    });
-    return list;
-  }
-  function sceneCount(scene) {
-    if (scene === "今日") {
-      return M3.items.filter((it) => {
-        if (it.completed) return isTodayStr(it.completed);
-        const st = getDueStatus(it.due);
-        return st === "overdue" || st === "today";
-      }).length;
-    }
-    if (scene === "重要") return M3.items.filter((it) => it.priority === "important").length;
-    if (scene === "全部") return M3.items.length;
-    return M3.items.filter((it) => it.scene === scene).length;
-  }
-  function applyMemoSkin(skin) {
-    if (!M3.overlay) return;
-    const panel2 = M3.overlay.querySelector(".bz-memo-panel");
-    if (!panel2) return;
-    panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
-    const v = skin === "editorial" ? "editorial" : "paper";
-    panel2.classList.add(`bz-memo-skin-${v}`);
-  }
-  function skinClass() {
-    const s = tryGetSettings().memoSkin;
-    return s === "editorial" ? "bz-memo-skin-editorial" : "bz-memo-skin-paper";
-  }
-  function closeMemoPanel() {
-    if (M3.overlay) {
-      const s = tryGetSettings();
-      if (s) {
-        s.memoLastScene = M3.activeScene;
-        void saveSettings();
-      }
-      M3.overlay.remove();
-      M3.overlay = null;
-    }
-    searchDebounced.cancel();
-    if (panelResizeDetach) {
-      panelResizeDetach.detach();
-      panelResizeDetach = null;
-    }
-    if (sortSelectDetach) {
-      sortSelectDetach();
-      sortSelectDetach = null;
-    }
-    M3.renderFn = null;
-    M3.pinnedNewId = null;
-    clipTitleHint = null;
-    M3.completeTimers.forEach((t) => clearTimeout(t));
-    M3.completeTimers.clear();
-  }
-  function renderAll() {
-    if (!M3.overlay) return;
-    renderNav();
-    renderMobScenes();
-    renderMainHead();
-    renderContent();
-  }
-  function renderMainHead() {
-    const overlay2 = M3.overlay;
-    const titleEl = overlay2.querySelector("[data-memo-main-title]");
-    const countEl = overlay2.querySelector("[data-memo-main-count]");
-    if (!titleEl || !countEl) return;
-    titleEl.textContent = sceneLabel(M3.activeScene);
-    const items = getVisibleItems();
-    const undone = items.filter((i) => !i.completed).length;
-    countEl.innerHTML = mainCountHtml(items.length, undone);
-  }
-  function sceneOptions() {
-    return [
-      { scene: "全部", dot: "" },
-      { scene: "今日", dot: "" },
-      { scene: "重要", dot: "" },
-      ...MemoData.getScenarios().map((s) => ({ scene: s, dot: sceneDot(s) }))
-    ];
-  }
-  function attachSceneActions(el, scene) {
-    if (scene === "全部" || scene === "今日" || scene === "重要") return;
-    attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
-  }
-  function renderNav() {
-    const nav = M3.overlay.querySelector("[data-memo-nav]");
-    if (!nav) return;
-    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M3.activeScene === o.scene, sceneCount(o.scene))).join("");
-    mountIcons(nav);
-    nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
-      attachSceneActions(el, el.dataset.memoScene);
-    });
-  }
-  function renderMobScenes() {
-    const wrap = M3.overlay.querySelector("[data-memo-mob-scenes]");
-    if (!wrap) return;
-    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M3.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
-    mountIcons(wrap);
-    wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
-      attachSceneActions(el, el.dataset.memoScene);
-    });
-  }
-  function metaDueOf(it) {
-    if (!it.due || it.completed) return null;
-    const st = getDueStatus(it.due);
-    if (!st) return null;
-    return { status: st, text: formatDueText(it.due) };
-  }
-  function metaTags(it) {
-    return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
-  }
-  function renderContent() {
-    const content = M3.overlay.querySelector("[data-memo-content]");
-    if (!content) return;
-    const items = getVisibleItems();
-    if (items.length === 0) {
-      content.innerHTML = "";
-      content.appendChild(uiEmpty({
-        icon: MEMO_ICONS.empty,
-        title: M3.search ? "没有匹配的备忘录" : "这里还没有备忘录",
-        desc: M3.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
-        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
-      }));
-      return;
-    }
-    const active2 = items.filter((i) => !i.completed);
-    const done = items.filter((i) => i.completed);
-    const urgent = active2.filter((i) => dueRank(i) <= 1);
-    const normal = active2.filter((i) => dueRank(i) > 1);
-    const cardHtml4 = (it) => cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
-    const sections = [];
-    if (urgent.length) {
-      sections.push(sectionLabelHtml("到期优先", urgent.length));
-      sections.push(...urgent.map((it) => cardHtml4(it)));
-    }
-    if (normal.length) {
-      sections.push(sectionLabelHtml("其他", normal.length));
-      sections.push(...normal.map((it) => cardHtml4(it)));
-    }
-    if (done.length) {
-      const open = M3.showDone;
-      const win = doneWindowDays();
-      const cutoff = win === null ? null : (0, import_moment5.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
-      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
-      const earlier = done.length - recent2.length;
-      const listed = !open || M3.showEarlierDone ? done : recent2;
-      sections.push(doneBarHtml(open, done.length));
-      if (open) {
-        sections.push(...listed.map((it) => cardHtml4(it)));
-        if (earlier > 0 && !M3.showEarlierDone) {
-          sections.push(doneMoreHtml(earlier));
-        }
-      }
-    }
-    content.innerHTML = sections.join("");
-    mountIcons(content);
-    content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const it = M3.items.find((i) => i.id === el.dataset.memoOpenitem);
-        if (it) openItem(it);
-      });
-    });
-    content.querySelectorAll("[data-memo-pos]").forEach((el) => {
-      el.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const it = M3.items.find((i) => i.id === el.dataset.memoPos);
-        if (it) jumpToNote(it);
-      });
-    });
-    content.querySelectorAll(".bz-memo-card").forEach((card) => {
-      const id = card.dataset.memoId;
-      const it = M3.items.find((i) => i.id === id);
-      if (!it) return;
-      attachItemActions(card, buildCardActions(it), {
-        menuClass: skinClass() || void 0,
-        sheetClass: skinClass() || void 0,
-        // 抽屉挂 body，需自带皮肤类，头部勾选圈皮肤样式才随行
-        sheetHead: buildSheetHead(it)
-      });
-    });
-  }
-  function buildSheetHead(it) {
-    var _a2;
-    const head = document.createElement("div");
-    head.className = "bz-item-sheet-entry bz-memo-sheet-entry";
-    if (it.completed) head.classList.add("bz-memo-done");
-    head.insertAdjacentHTML("afterbegin", checkHtml(it));
-    const text = document.createElement("div");
-    text.className = "bz-memo-body-text";
-    const title = document.createElement("div");
-    title.textContent = it.title;
-    if (it.completed) title.classList.add("done");
-    text.appendChild(title);
-    const meta = document.createElement("div");
-    meta.className = "bz-memo-meta";
-    meta.innerHTML = metaTags(it);
-    mountIcons(meta);
-    text.appendChild(meta);
-    head.appendChild(text);
-    (_a2 = head.querySelector("[data-memo-check]")) == null ? void 0 : _a2.addEventListener("click", (e) => {
-      e.stopPropagation();
-      closeItemMenu();
-      toggleCheck(it);
-    });
-    return head;
-  }
-  function openItem(it) {
-    closeMemoPanel();
-    const app = M3.appRef;
-    if (it.linkedNote) {
-      const file = app.vault.getAbstractFileByPath(it.linkedNote);
-      if (file) void app.workspace.getLeaf().openFile(file);
-      else notice("关联笔记不存在");
-    } else if (it.url) {
-      try {
-        app.openUrl(it.url);
-      } catch (e) {
-        const electron = window.require && window.require("electron");
-        if (electron && electron.shell) electron.shell.openExternal(it.url);
-      }
-    }
-  }
-  function jumpToNote(it) {
-    var _a2;
-    if (!it.notePath) return;
-    closeMemoPanel();
-    const app = M3.appRef;
-    const file = app.vault.getAbstractFileByPath(it.notePath);
-    if (!file) {
-      notice("关联笔记不存在");
-      return;
-    }
-    const leaf = app.workspace.getLeaf();
-    void leaf.openFile(file);
-    const editor = (_a2 = leaf.view) == null ? void 0 : _a2.editor;
-    if (editor && it.notePosition) {
-      const { line, ch } = it.notePosition;
-      editor.focus();
-      editor.setCursor(line, ch || 0);
-      editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
-    }
-  }
-  function toggleCheck(it) {
-    if (it.completed) {
-      void restoreItem(it);
-      return;
-    }
-    if (M3.completeTimers.has(it.id)) {
-      clearTimeout(M3.completeTimers.get(it.id));
-      M3.completeTimers.delete(it.id);
-      return;
-    }
-    const timer = setTimeout(() => {
-      M3.completeTimers.delete(it.id);
-      void completeItem(it);
-    }, 300);
-    M3.completeTimers.set(it.id, timer);
-  }
-  async function completeItem(it) {
-    try {
-      await MemoData.completeItem(it.id);
-      emitDomainEvent("memo", { kind: "completed", title: it.title });
-    } catch (e) {
-      notifySaveError(e, "标记完成");
-      console.error(e);
-    }
-    await refresh();
-  }
-  async function restoreItem(it) {
-    try {
-      await MemoData.updateItem(it.id, { completed: null });
-      emitDomainEvent("memo", { kind: "restored", title: it.title });
-    } catch (e) {
-      notifySaveError(e, "恢复未完成");
-      console.error(e);
-    }
-    await refresh();
-  }
-  async function postponeItem(id, days) {
-    const it = M3.items.find((i) => i.id === id);
-    if (!it || !it.due) return;
-    const d = new Date(it.due.replace("T", " "));
-    d.setDate(d.getDate() + days);
-    const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
-    try {
-      await MemoData.updateItem(id, { due: next });
-      emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
-      notice(`已延后 ${days} 天`, "success");
-    } catch (e) {
-      notifySaveError(e, "延后备忘录");
-      console.error(e);
-    }
-    await refresh();
-  }
-  async function togglePrio(id) {
-    const it = M3.items.find((i) => i.id === id);
-    if (!it) return;
-    const to = it.priority === "important" ? "minor" : "important";
-    try {
-      await MemoData.updateItem(id, { priority: to });
-      emitDomainEvent("memo", { kind: "priority", title: it.title, to });
-      notice(to === "important" ? "已转为重要" : "已转为次要", "success");
-    } catch (e) {
-      notifySaveError(e, "切换优先级");
-      console.error(e);
-    }
-    await refresh();
-  }
-  async function deleteItemConfirm(it) {
-    const ok = await openFlowDialog({
-      title: "删除备忘录",
-      message: `确定删除备忘录「${it.title}」吗？
-删除后可在通知中撤销。`,
-      className: skinClass(),
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "删除", value: "delete", danger: true, cta: true }
-      ]
-    });
-    if (ok !== "delete") return;
-    try {
-      const idx = await MemoData.deleteItem(it.id);
-      emitDomainEvent("memo", { kind: "deleted", title: it.title });
-      notifyUndo(`已删除备忘录「${it.title}」`, () => {
-        void (async () => {
-          try {
-            await MemoData.restoreItem(it, idx);
-            await refresh();
-          } catch (e) {
-            notifySaveError(e, "撤销删除");
-            console.error(e);
-          }
-        })();
-      });
-    } catch (e) {
-      notifySaveError(e, "删除备忘录");
-      console.error(e);
-    }
-    await refresh();
-  }
-  function focusMemoItem(it) {
-    const app = M3.appRef;
-    if (!app) return;
-    void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
-  }
-  function buildCardActions(it) {
-    const actions = [];
-    if (it.linkedNote || it.url) {
-      let sub;
-      if (it.linkedNote) sub = stripMdExt(it.linkedNote.split("/").pop() || "");
-      else if (it.url) {
-        try {
-          sub = new URL(it.url).hostname;
-        } catch (e) {
-        }
-      }
-      actions.push({ icon: "external-link", label: "打开", title: "打开关联内容", sub, onClick: () => openItem(it) });
-    }
-    if (it.notePath) {
-      actions.push({
-        icon: "book-open",
-        label: "跳转关联笔记",
-        title: "跳转关联笔记",
-        sub: stripMdExt(it.notePath.split("/").pop() || ""),
-        onClick: () => jumpToNote(it)
-      });
-    }
-    if (!it.completed) {
-      actions.push({ icon: "timer", label: "专注这个", title: "开始一个归属到该备忘录的专注番茄", onClick: () => focusMemoItem(it) });
-      actions.push({
-        icon: "check-circle",
-        label: "标记完成",
-        title: "标记完成",
-        sub: it.due ? formatDueText(it.due) : void 0,
-        onClick: async () => {
-          await completeItem(it);
-        }
-      });
-    } else {
-      actions.push({ icon: "rotate-ccw", label: "恢复未完成", title: "恢复未完成", onClick: async () => {
-        await restoreItem(it);
-      } });
-    }
-    if (it.due && !it.completed) {
-      const postponeSub = (days) => {
-        const d = new Date(it.due.replace("T", " "));
-        d.setDate(d.getDate() + days);
-        return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-      };
-      actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
-        await postponeItem(it.id, 1);
-      } });
-      actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
-        await postponeItem(it.id, 3);
-      } });
-    }
-    const isImportant = it.priority === "important";
-    actions.push({
-      icon: "star",
-      label: isImportant ? "转为次要" : "转为重要",
-      title: "切换优先级",
-      onClick: async () => {
-        await togglePrio(it.id);
-      }
-    });
-    actions.push({
-      icon: "copy",
-      label: "复制内容",
-      title: "复制内容",
-      sub: `${it.title.length} 字`,
-      onClick: async () => {
-        await navigator.clipboard.writeText(it.title);
-        notice("内容已复制", "success");
-      }
-    });
-    actions.push({ icon: "pencil", label: "编辑", title: "编辑", onClick: () => openEditor(it) });
-    actions.push({ icon: "trash-2", label: "删除", title: "删除", kind: "danger", onClick: () => void deleteItemConfirm(it) });
-    return actions;
-  }
-  function openEditor(item, opts) {
-    var _a2, _b2;
-    const isEdit = !!item;
-    const scenes = MemoData.getScenarios();
-    const editing = item != null ? item : null;
-    const presetScene = (opts == null ? void 0 : opts.presetScene) && scenes.includes(opts.presetScene) ? opts.presetScene : null;
-    const defaultScene = editing ? editing.scene : presetScene != null ? presetScene : fallbackScene();
-    const isClip = defaultScene === "剪藏";
-    const isCode = defaultScene === "代码";
-    const isCourse = defaultScene === "公开课";
-    const form = document.createElement("div");
-    form.className = "bz-memo-form";
-    const title = document.createElement("div");
-    title.className = "bz-memo-form-title";
-    title.textContent = isEdit ? "编辑备忘录" : "创建备忘录";
-    form.appendChild(title);
-    const contentField = document.createElement("div");
-    contentField.className = "bz-field";
-    const contentLabel = document.createElement("span");
-    contentLabel.className = "bz-field-label";
-    contentLabel.textContent = "内容";
-    const contentInput = document.createElement("textarea");
-    contentInput.className = "bz-input";
-    contentInput.placeholder = "输入备忘录内容...";
-    contentInput.value = editing ? editing.title : (opts == null ? void 0 : opts.presetContent) || "";
-    contentField.append(contentLabel, contentInput);
-    form.appendChild(contentField);
-    const titleBox = document.createElement("div");
-    titleBox.className = "bz-memo-extra" + (isClip ? " bz-memo-extra-on" : "");
-    const titleInput = document.createElement("input");
-    titleInput.className = "bz-input";
-    titleInput.placeholder = "标题（可选）";
-    titleInput.value = editing ? "" : (opts == null ? void 0 : opts.presetTitle) || "";
-    titleBox.appendChild(titleInput);
-    form.appendChild(titleBox);
-    const scriptBox = document.createElement("div");
-    scriptBox.className = "bz-memo-extra" + (isCode ? " bz-memo-extra-on" : "");
-    const scriptInput = document.createElement("input");
-    scriptInput.className = "bz-input";
-    scriptInput.placeholder = "脚本名";
-    scriptInput.value = (editing == null ? void 0 : editing.scriptName) || "";
-    scriptBox.appendChild(scriptInput);
-    form.appendChild(scriptBox);
-    const courseBox = document.createElement("div");
-    courseBox.className = "bz-memo-extra" + (isCourse ? " bz-memo-extra-on" : "");
-    const courseInput = document.createElement("input");
-    courseInput.className = "bz-input";
-    courseInput.placeholder = "课程名";
-    courseInput.value = (editing == null ? void 0 : editing.courseName) || "";
-    courseBox.appendChild(courseInput);
-    form.appendChild(courseBox);
-    function tryEditorClipPrefill() {
-      void (async () => {
-        if (isEdit) return;
-        if (contentInput.value.trim()) return;
-        const hit = await readClipUrl();
-        if (!hit) return;
-        if (contentInput.value.trim()) return;
-        contentInput.placeholder = hit.url;
-        if (hit.title) titleInput.placeholder = hit.title;
-        notifyClipPrefill();
-      })();
-    }
-    const sceneField = document.createElement("div");
-    sceneField.className = "bz-field";
-    const sceneLabel2 = document.createElement("span");
-    sceneLabel2.className = "bz-field-label";
-    sceneLabel2.textContent = "场景";
-    sceneField.appendChild(sceneLabel2);
-    const choice = uiChoice({
-      options: scenes.map((s) => ({ value: s, label: s })),
-      value: defaultScene,
-      float: true,
-      // 浮岛 segmented（issue 199 拍板：滑动白卡）
-      label: "场景",
-      onChange: (v) => {
-        titleBox.classList.toggle("bz-memo-extra-on", v === "剪藏");
-        scriptBox.classList.toggle("bz-memo-extra-on", v === "代码");
-        courseBox.classList.toggle("bz-memo-extra-on", v === "公开课");
-        if (v === "剪藏") tryEditorClipPrefill();
-      }
-    });
-    sceneField.appendChild(choice.el);
-    form.appendChild(sceneField);
-    const prioField = document.createElement("div");
-    prioField.className = "bz-field";
-    const prioLabel = document.createElement("span");
-    prioLabel.className = "bz-field-label";
-    prioLabel.textContent = "优先级";
-    prioField.appendChild(prioLabel);
-    const prioChoice = uiChoice({
-      options: [
-        { value: "minor", label: "次要" },
-        { value: "important", label: "重要" }
-      ],
-      value: editing ? editing.priority : tryGetSettings().memoDefaultPriority || "minor",
-      float: true,
-      // 浮岛 segmented（issue 199 拍板）
-      label: "优先级",
-      onChange: () => {
-      }
-    });
-    prioField.appendChild(prioChoice.el);
-    form.appendChild(prioField);
-    const knownScripts = [...new Set(M3.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
-    const knownCourses = [...new Set(M3.items.map((i) => i.courseName).filter((n) => !!n))].sort();
-    function bindSug(input, list, onPick) {
-      uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
-    }
-    let courseNotes = [];
-    let pickedCourse = (editing == null ? void 0 : editing.courseName) && editing.coursePath ? { name: editing.courseName, path: editing.coursePath } : null;
-    bindSug(scriptInput, () => knownScripts);
-    bindSug(courseInput, () => knownCourses, (val) => {
-      pickedCourse = courseNotes.find((n) => n.name === val) || null;
-    });
-    void MemoData.getCourseNotes().then((notes) => {
-      courseNotes = notes;
-      const extra = notes.map((n) => n.name);
-      knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
-      if (courseBox.classList.contains("bz-memo-extra-on")) courseInput.dispatchEvent(new Event("focus"));
-    });
-    const dueField = document.createElement("div");
-    dueField.className = "bz-field";
-    const dueLabel = document.createElement("span");
-    dueLabel.className = "bz-field-label";
-    dueLabel.textContent = "截止时间（可选）";
-    const dueRow = document.createElement("div");
-    dueRow.className = "bz-memo-due-row";
-    const dueInput = document.createElement("input");
-    dueInput.type = "datetime-local";
-    dueInput.className = "bz-input";
-    if (editing == null ? void 0 : editing.due) dueInput.value = editing.due.replace(" ", "T");
-    const dueClear = uiIconBtnClear();
-    dueClear.style.display = (editing == null ? void 0 : editing.due) ? "inline-flex" : "none";
-    dueClear.addEventListener("click", () => {
-      dueInput.value = "";
-      dueClear.style.display = "none";
-    });
-    dueInput.addEventListener("input", () => {
-      dueClear.style.display = dueInput.value ? "inline-flex" : "none";
-    });
-    dueRow.append(dueInput, dueClear);
-    dueField.append(dueLabel, dueRow);
-    form.appendChild(dueField);
-    const posRow = document.createElement("div");
-    posRow.className = "bz-memo-pos-row";
-    const posState = {
-      notePath: (editing == null ? void 0 : editing.notePath) || ((_a2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _a2.path) || null,
-      notePosition: (editing == null ? void 0 : editing.notePosition) || ((_b2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _b2.position) || null
-    };
-    const posBtn = uiBtn({ icon: "pin", label: "定位到笔记", chip: true });
-    const posLabel = posBtn.lastElementChild;
-    const setPosBtn = (name, active2) => {
-      posLabel.textContent = name;
-      posBtn.classList.toggle("is-on", active2);
-    };
-    posBtn.addEventListener("click", () => {
-      if (posState.notePath) {
-        posState.notePath = null;
-        posState.notePosition = null;
-        setPosBtn("定位到笔记", false);
-        return;
-      }
-      const info = getCurrentNoteInfo();
-      const pos = getCurrentCursorPosition();
-      if (info && pos) {
-        posState.notePath = info.path;
-        posState.notePosition = { line: pos.line, ch: pos.ch };
-        setPosBtn(info.name, true);
-      } else {
-        notice("无法获取当前位置");
-      }
-    });
-    if (posState.notePath) {
-      const name = stripMdExt(posState.notePath.split("/").pop() || "");
-      setPosBtn(name, true);
-    } else {
-      setPosBtn("定位到笔记", false);
-    }
-    const posHint = document.createElement("span");
-    posHint.className = "bz-memo-pos-hint";
-    posHint.textContent = "绑定当前打开的笔记位置";
-    posRow.append(posBtn, posHint);
-    form.appendChild(posRow);
-    let closeModal = () => {
-    };
-    const modalBox = document.createElement("div");
-    modalBox.className = "bz-memo-editor";
-    const cancelBtn = uiBtn({ label: "取消", onClick: () => closeModal() });
-    const saveBtn = uiBtn({ label: isEdit ? "保存" : "添加", tone: "primary" });
-    const actionsRow = document.createElement("div");
-    actionsRow.className = "bz-memo-form-actions";
-    actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
-    form.appendChild(actionsRow);
-    modalBox.appendChild(form);
-    saveBtn.addEventListener("click", () => {
-      let content = contentInput.value.trim();
-      if (!content) {
-        const ph = contentInput.placeholder;
-        if (ph && ph !== "输入备忘录内容...") content = ph;
-      }
-      if (!content) {
-        notice("请输入内容");
-        return;
-      }
-      let scene = defaultScene;
-      const sceneBtnOn = choice.el.querySelector(".is-on");
-      if (sceneBtnOn) scene = sceneBtnOn.dataset.value || scene;
-      const prioBtnOn = prioChoice.el.querySelector(".is-on");
-      const priority = prioBtnOn ? prioBtnOn.dataset.value || "minor" : "minor";
-      const dueVal = dueInput.value;
-      const due = dueVal ? dueVal.replace("T", " ") : null;
-      let titleVal = titleInput.value.trim();
-      if (!titleVal && scene === "剪藏") {
-        const ph = titleInput.placeholder;
-        if (ph && ph !== "标题（可选）") titleVal = ph;
-      }
-      const scriptName = scene === "代码" ? scriptInput.value.trim() || null : null;
-      let courseName = null;
-      let coursePath = null;
-      if (scene === "公开课") {
-        const cv = courseInput.value.trim();
-        if (cv) {
-          courseName = cv;
-          if (pickedCourse && pickedCourse.name === cv) coursePath = pickedCourse.path;
-          else {
-            const matched = courseNotes.find((n) => n.name.toLowerCase() === cv.toLowerCase());
-            if (matched) coursePath = matched.path;
-          }
-        }
-      }
-      const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
-      const { url } = extractUrlAndDisplay(content);
-      void (async () => {
-        var _a3;
-        try {
-          if (isEdit && editing) {
-            await MemoData.updateItem(editing.id, {
-              title: finalTitle,
-              scene,
-              priority,
-              due,
-              notePath: posState.notePath,
-              notePosition: posState.notePosition,
-              scriptName,
-              courseName,
-              coursePath,
-              url: url != null ? url : editing.url
-            });
-            emitDomainEvent("memo", { kind: "edited", old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
-          } else {
-            const it = {
-              id: generateId(),
-              // T5：与旧 memo 同前缀 'item'（同源 memo.json）
-              title: finalTitle,
-              scene,
-              priority,
-              created: (0, import_moment5.default)().format("YYYY-MM-DD HH:mm:ss"),
-              completed: null,
-              due,
-              notePath: posState.notePath,
-              notePosition: posState.notePosition,
-              scriptName,
-              courseName,
-              coursePath,
-              linkedNote: null,
-              url
-            };
-            await MemoData.addItem(it);
-            emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
-            M3.pinnedNewId = it.id;
-          }
-          closeModal();
-          (_a3 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a3.call(opts);
-          await refresh();
-        } catch (e) {
-          notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
-          console.error(e);
-        }
-      })();
-    });
-    const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
-    closeModal = close;
-    contentInput.focus();
-    if (!isEdit && defaultScene === "剪藏") tryEditorClipPrefill();
-  }
-  function uiIconBtnClear() {
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "bz-icon-btn bz-icon-btn--lg";
-    b.title = "清除截止时间";
-    b.appendChild(uiIcon("x"));
-    return b;
-  }
-  function buildSceneActions(scene) {
-    const actions = [
-      { icon: MEMO_ICONS.settings, label: "在设置中编辑", title: "打开设置面板编辑场景列表", onClick: () => openMemoInSettings() }
-    ];
-    if (DEFAULT_SCENARIOS.includes(scene)) return actions;
-    actions.push(
-      { icon: MEMO_ICONS.edit, label: "重命名", title: "重命名场景", onClick: () => openRenameSceneDialog(scene) },
-      { icon: MEMO_ICONS.del, label: "删除场景", title: "删除场景", kind: "danger", onClick: () => void deleteSceneConfirm(scene) }
-    );
-    return actions;
-  }
-  function openMemoInSettings() {
-    const app = M3.appRef;
-    closeMemoPanel();
-    if (!app) return;
-    void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
-  }
-  function commitScenarios(next, okMsg) {
-    getSettings().memoScenarios = next.join(",");
-    return saveSettings().then(async () => {
-      MemoData.init(getSettings());
-      notice(okMsg, "success");
-      await refresh();
-    });
-  }
-  function openRenameSceneDialog(scene) {
-    if (DEFAULT_SCENARIOS.includes(scene)) {
-      notice("默认场景不支持重命名");
-      return;
-    }
-    const wrap = document.createElement("div");
-    wrap.className = "bz-memo-addscene";
-    const title = document.createElement("div");
-    title.className = "bz-memo-form-title";
-    title.textContent = "重命名场景";
-    const input = document.createElement("input");
-    input.className = "bz-input";
-    input.value = scene;
-    const count = M3.items.filter((i) => i.scene === scene).length;
-    const hint = document.createElement("div");
-    hint.className = "bz-memo-addscene-hint";
-    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与备忘录共用）";
-    const saveBtn = uiBtn({ label: "保存", tone: "primary" });
-    const cancelBtn = uiBtn({ label: "取消" });
-    const row = uiBtnRow([cancelBtn, saveBtn]);
-    wrap.append(title, input, hint, row);
-    const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
-    const doSave2 = () => {
-      const name = input.value.trim();
-      if (!name) {
-        notice("请输入场景名称");
-        return;
-      }
-      if (/[,，]/.test(name)) {
-        notice("场景名不能包含逗号");
-        return;
-      }
-      if (name === scene) {
-        close();
-        return;
-      }
-      const scenes = MemoData.getScenarios();
-      if (scenes.includes(name)) {
-        notice("场景已存在");
-        return;
-      }
-      void (async () => {
-        try {
-          const moved = await MemoData.updateSceneBulk(scene, name);
-          if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
-          await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
-          if (M3.activeScene === scene) M3.activeScene = name;
-          renderAll();
-          close();
-        } catch (e) {
-          notifySaveError(e, "重命名场景");
-          console.error(e);
-        }
-      })();
-    };
-    saveBtn.addEventListener("click", doSave2);
-    cancelBtn.addEventListener("click", () => close());
-    input.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") doSave2();
-      if (e.key === "Escape") close();
-    });
-    setTimeout(() => {
-      input.focus();
-      input.select();
-    }, 30);
-  }
-  async function deleteSceneConfirm(scene) {
-    if (DEFAULT_SCENARIOS.includes(scene)) {
-      notice("默认场景不支持删除");
-      return;
-    }
-    const scenes = MemoData.getScenarios();
-    const others = scenes.filter((s) => s !== scene);
-    const defSetting = tryGetSettings().memoDefaultScene;
-    const target = defSetting && others.includes(defSetting) ? defSetting : others[0];
-    if (!target) {
-      notice("至少保留一个场景");
-      return;
-    }
-    const count = M3.items.filter((i) => i.scene === scene).length;
-    const ok = await openFlowDialog({
-      title: "删除场景",
-      message: count > 0 ? `确定删除场景「${scene}」吗？
-其中 ${count} 条备忘录将迁入默认场景「${target}」。` : `确定删除场景「${scene}」吗？
-场景将从设置中移除。`,
-      className: skinClass(),
-      // 挂 body 的流程框须显式带皮肤类（issue 291）
-      actions: [
-        { label: "取消", value: "cancel" },
-        { label: "删除", value: "delete", danger: true, cta: true }
-      ]
-    });
-    if (ok !== "delete") return;
-    try {
-      if (count > 0) await MemoData.updateSceneBulk(scene, target);
-      await commitScenarios(others, `已删除场景「${scene}」`);
-      if (M3.activeScene === scene) M3.activeScene = "全部";
-      renderAll();
-    } catch (e) {
-      notifySaveError(e, "删除场景");
-      console.error(e);
-    }
-  }
-  var import_moment5, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach;
-  var init_ui5 = __esm({
-    "src/memo/ui.ts"() {
-      import_moment5 = __toESM(require_moment());
-      init_notice();
-      init_esc_manager();
-      init_dom();
-      init_mobile();
-      init_settings_provider();
-      init_ui();
-      init_flow_dialog();
-      init_domain_bus();
-      init_item_actions();
-      init_utils();
-      init_data4();
-      init_due();
-      init_render4();
-      init_state3();
-      SEARCH_DEBOUNCE_MS = 180;
-      searchDebounced = debounce((v) => {
-        M3.search = v;
-        renderAll();
-      }, SEARCH_DEBOUNCE_MS);
-      clipTitleHint = null;
-      panelResizeDetach = null;
-      sortSelectDetach = null;
-    }
-  });
-
-  // src/memo/settings.ts
-  var settings_exports3 = {};
-  __export(settings_exports3, {
-    memoSettingsSchema: () => memoSettingsSchema
-  });
-  function memoReloadScenes() {
-    MemoData.init(getSettings());
-  }
-  function memoSettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin 两肤；
-          // 布局维度待皮肤设计时接入）
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "memoLayout" }, options: [{ value: "default", label: "清单", prevClass: "bz-sp-prev-panel" }] },
-            {
-              type: "choiceCards",
-              name: "面板主题",
-              binding: { key: "memoSkin" },
-              layoutKey: "memoLayout",
-              options: [
-                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" },
-                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" }
-              ],
-              onChange: (v) => applyMemoSkin(v)
-            }
-          ]
-        },
-        {
-          icon: "eye",
-          name: "显示",
-          rows: [
-            {
-              type: "select",
-              name: "打开默认场景",
-              desc: "打开备忘录面板时默认选中的场景",
-              binding: { key: "memoOpenScene" },
-              options: [
-                { value: "@last", label: "上次停留" },
-                { value: "全部", label: "全部" },
-                { value: "今日", label: "今日" },
-                { value: "重要", label: "重要" },
-                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
-              ]
-            },
-            {
-              type: "select",
-              name: "默认排序方式",
-              desc: "面板条目按所选规则排序",
-              binding: { key: "memoSortMode" },
-              options: [
-                { value: "priority", label: "紧急优先" },
-                { value: "due", label: "仅按到期时间" },
-                { value: "created", label: "按创建时间" }
-              ]
-            },
-            {
-              type: "toggle",
-              name: "默认显示已完成",
-              desc: "打开面板时同时展开已完成折叠区",
-              binding: { key: "memoShowArchivedByDefault" }
-            },
-            {
-              type: "select",
-              name: "已完成显示范围",
-              desc: "展开已完成折叠区时列出最近多少天完成的条目",
-              binding: { key: "memoDoneWindow" },
-              options: [
-                { value: "7", label: "近 7 天" },
-                { value: "30", label: "近 30 天" },
-                { value: "90", label: "近 90 天" },
-                { value: "all", label: "全部" }
-              ]
-            }
-          ]
-        },
-        {
-          icon: "pencil-line",
-          name: "新建",
-          rows: [
-            {
-              type: "select",
-              name: "新条目默认优先级",
-              desc: "新建备忘录时默认选中的优先级",
-              binding: { key: "memoDefaultPriority" },
-              options: [
-                { value: "minor", label: "次要" },
-                { value: "important", label: "重要" }
-              ]
-            },
-            {
-              type: "select",
-              name: "新条目默认场景",
-              desc: "新建备忘录时默认选用的场景",
-              binding: { key: "memoDefaultScene" },
-              options: [
-                { value: "", label: "第一个场景" },
-                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
-              ]
-            }
-          ]
-        },
-        {
-          icon: "tags",
-          name: "场景列表",
-          rows: [
-            {
-              type: "textarea",
-              name: "自定义场景列表",
-              desc: "场景名用逗号分隔，留空使用默认场景",
-              placeholder: "剪藏,工作,学习,生活,代码,公开课",
-              binding: { key: "memoScenarios" },
-              onCommit: memoReloadScenes
-            }
-          ]
-        },
-        {
-          icon: "bell",
-          name: "提醒",
-          rows: [
-            {
-              type: "toggle",
-              name: "启动时自动弹出",
-              desc: "启动时若有重要或到期未完成的备忘录，自动打开备忘录面板提醒",
-              binding: { key: "autoPopupOnStart" }
-            },
-            {
-              type: "toggle",
-              name: "打开笔记自动提醒",
-              desc: "打开笔记时若有重要或到期的备忘录，自动弹出面板并定位到它",
-              binding: {
-                get: () => getSettings().openNoteReminder !== false,
-                set: (v) => {
-                  getSettings().openNoteReminder = v;
-                },
-                save: () => saveSettings()
-              }
-            }
-          ]
-        }
-      ]
-    };
-  }
-  var init_settings3 = __esm({
-    "src/memo/settings.ts"() {
-      init_settings_provider();
-      init_data4();
-      init_ui5();
-    }
-  });
-
-  // src/smartcat/belongings-source.ts
-  function belongingsEditChanges(snapshot2, next) {
-    var _a2, _b2, _c, _d;
-    const changes = [];
-    if (snapshot2.name !== next.name) changes.push("改了名称");
-    if (snapshot2.category !== next.category) changes.push("改了分类");
-    if (snapshot2.purchase_price !== next.purchase_price) changes.push("改了价格");
-    if (snapshot2.purchase_date !== next.purchase_date) changes.push("改了购买日期");
-    if (snapshot2.current_status !== next.current_status) changes.push("改了状态");
-    if (snapshot2.description !== next.description) changes.push("改了描述");
-    if (((_a2 = snapshot2.sold_price) != null ? _a2 : null) !== ((_b2 = next.sold_price) != null ? _b2 : null)) changes.push("改了售价");
-    if (((_c = snapshot2.exit_date) != null ? _c : null) !== ((_d = next.exit_date) != null ? _d : null)) changes.push("改了出离日期");
-    return changes;
-  }
-  var init_belongings_source = __esm({
-    "src/smartcat/belongings-source.ts"() {
-    }
-  });
-
-  // src/belongings/emoji-icon-map.ts
-  function splitEmojiCategory(cat) {
-    var _a2;
-    const s = String(cat || "");
-    const m = s.match(/^(\p{Extended_Pictographic})\uFE0F?/u);
-    if (!m) return { emoji: null, name: s, icon: null };
-    return { emoji: m[1], name: s.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, ""), icon: (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null };
-  }
-  var EMOJI_ICON;
-  var init_emoji_icon_map = __esm({
-    "src/belongings/emoji-icon-map.ts"() {
-      EMOJI_ICON = {
-        /* ---- 数码影音 ---- */
-        "📱": "smartphone",
-        "💻": "laptop",
-        "🖥": "monitor",
-        "⌚": "watch",
-        "🎧": "headphones",
-        "🔊": "speaker",
-        "🖨": "printer",
-        "📷": "camera",
-        "🔍": "aperture",
-        "📹": "video",
-        "🪞": "focus",
-        "📽": "projector",
-        "🎮": "gamepad-2",
-        "⌨": "keyboard",
-        "💾": "hard-drive",
-        "📀": "disc",
-        "🔌": "plug",
-        "🔋": "battery-charging",
-        "💡": "lightbulb",
-        "📺": "tv",
-        "📡": "router",
-        "📶": "signal",
-        "📞": "phone",
-        /* ---- 衣服饰品 ---- */
-        "👕": "shirt",
-        "👔": "shirt",
-        "🧥": "shirt",
-        "👖": "shirt",
-        "👗": "shirt",
-        "👘": "shirt",
-        "🩳": "shirt",
-        "🧦": "footprints",
-        "👙": "shirt",
-        "👠": "footprints",
-        "👞": "footprints",
-        "👟": "footprints",
-        "👜": "handbag",
-        "🎒": "backpack",
-        "🧣": "shirt",
-        "🧤": "hand",
-        "👒": "hard-hat",
-        "🕶": "glasses",
-        "👓": "glasses",
-        "💍": "gem",
-        "📿": "gem",
-        "💎": "gem",
-        "🧢": "hard-hat",
-        "🎩": "hard-hat",
-        "💄": "sparkles",
-        "💋": "heart",
-        "👁": "eye",
-        "📏": "ruler",
-        "👀": "eye",
-        "💅": "hand",
-        "🧴": "droplets",
-        "🧼": "droplets",
-        "💧": "glass-water",
-        "🛡": "shield",
-        "🎭": "smile",
-        "💆": "hand",
-        "✂": "scissors",
-        "🧽": "droplets",
-        "🪒": "zap",
-        "🚿": "shower-head",
-        "💇": "scissors",
-        /* ---- 家居 ---- */
-        "🛏": "bed",
-        "🛋": "sofa",
-        "🪑": "armchair",
-        "🗄": "archive",
-        "📚": "library",
-        "🪟": "align-justify",
-        "🧹": "brush-cleaning",
-        "🚽": "droplets",
-        "🪥": "sparkles",
-        "🧻": "scroll",
-        "🪣": "droplets",
-        "🗑": "trash-2",
-        "🔑": "key-round",
-        /* ---- 厨房餐茶 ---- */
-        "🍳": "cooking-pot",
-        "🔪": "slice",
-        "🍽": "utensils",
-        "☕": "coffee",
-        "🍶": "coffee",
-        "🍵": "coffee",
-        "🥄": "utensils",
-        "🍴": "utensils",
-        "🥢": "utensils",
-        "🧂": "soup",
-        "🍯": "droplets",
-        "🍚": "wheat",
-        "🧊": "refrigerator",
-        "🔥": "flame",
-        "🍞": "croissant",
-        "🥛": "milk",
-        "🍹": "cup-soda",
-        "❄": "snowflake",
-        "🥘": "cooking-pot",
-        "🛀": "bath",
-        "💨": "fan",
-        "🌫": "cloud-fog",
-        "📖": "book-open",
-        /* ---- 文具乐玩 ---- */
-        "✏": "pencil",
-        "🖊": "pen",
-        "📒": "notebook",
-        "🎨": "palette",
-        "🎸": "guitar",
-        "🎹": "piano",
-        "🥁": "drum",
-        "🎤": "mic",
-        "🧩": "puzzle",
-        "🎲": "dices",
-        /* ---- 运动户外 ---- */
-        "🏸": "volleyball",
-        "⚽": "volleyball",
-        "🏃": "footprints",
-        "🧘": "person-standing",
-        "🏊": "waves",
-        "🎣": "fish",
-        "🔧": "wrench",
-        "🔨": "hammer",
-        "🪛": "wrench",
-        "🔩": "cog",
-        "🛠": "hammer",
-        "🪚": "axe",
-        "🧰": "briefcase",
-        "🪓": "axe",
-        "⛏": "shovel",
-        "🖼": "image",
-        "🏺": "amphora",
-        "🧸": "baby",
-        "🔮": "sparkles",
-        "🎞": "film",
-        "🪙": "coins",
-        "🏆": "trophy",
-        "🎖": "medal",
-        "📜": "scroll",
-        "📸": "camera",
-        /* ---- 医药健康 ---- */
-        "💊": "pill",
-        "🌡": "thermometer",
-        "🩹": "bandage",
-        "🩺": "stethoscope",
-        "💉": "syringe",
-        "🦷": "sparkles",
-        "🩸": "droplet",
-        "⚖": "scale",
-        /* ---- 礼节节庆 ---- */
-        "🧳": "luggage",
-        "🎁": "gift",
-        "🕯": "flame",
-        "🧨": "bomb",
-        "🌂": "umbrella",
-        "☂": "umbrella",
-        "⛱": "umbrella",
-        "🧭": "compass",
-        "🔭": "telescope",
-        "💐": "flower",
-        "🌿": "leaf",
-        "🐠": "fish",
-        "🐶": "dog",
-        "🚗": "car",
-        "🚲": "bike",
-        "🛴": "bike",
-        "⛺": "tent",
-        "📦": "package",
-        /* ---- 办公纸媒 ---- */
-        "📎": "paperclip",
-        "📌": "pin",
-        "🖇": "paperclip",
-        "📋": "clipboard-list",
-        "📁": "folder",
-        "🗂": "folder",
-        "📊": "chart-bar",
-        "📐": "ruler",
-        "🧮": "calculator",
-        "📇": "contact",
-        "🖍": "highlighter",
-        "🖌": "paintbrush",
-        "📫": "mail",
-        "📮": "mail",
-        "✉": "mail",
-        "🏷": "tag",
-        "📑": "bookmark",
-        "🔖": "bookmark",
-        "📰": "newspaper",
-        "🗞": "newspaper",
-        "📓": "notebook",
-        "📔": "notebook-pen",
-        "📕": "book",
-        "📗": "book",
-        "📘": "book",
-        "📙": "book",
-        "🧷": "paperclip",
-        "🔒": "lock",
-        "💼": "briefcase",
-        "🗳": "vote",
-        "🖋": "pen-tool",
-        "✒": "pen-tool",
-        "📝": "pen-line",
-        "💵": "banknote",
-        "💳": "credit-card",
-        "🧾": "receipt",
-        "📄": "file-text",
-        "📃": "file-text",
-        "🗒": "notebook-pen",
-        "📅": "calendar",
-        "🕐": "alarm-clock",
-        "🗓": "calendar-days",
-        "📆": "calendar",
-        "📈": "trending-up",
-        "📉": "trending-down",
-        "🖱": "mouse",
-        "🗃": "archive",
-        "🔗": "link",
-        /* ---- 球类冰雪水上 ---- */
-        "🏀": "volleyball",
-        "🏈": "volleyball",
-        "⚾": "volleyball",
-        "🎾": "volleyball",
-        "🏐": "volleyball",
-        "🏉": "volleyball",
-        "🎱": "volleyball",
-        "🏓": "volleyball",
-        "🥅": "target",
-        "🏑": "volleyball",
-        "🏒": "volleyball",
-        "🥍": "volleyball",
-        "🏏": "volleyball",
-        "🎿": "snowflake",
-        "⛷": "snowflake",
-        "🏂": "snowflake",
-        "🪂": "umbrella",
-        "🏄": "waves",
-        "🛹": "bike",
-        "🛼": "footprints",
-        "🚴": "bike",
-        "🛶": "sailboat",
-        "🤿": "waves",
-        "⛸": "snowflake",
-        "🎯": "target",
-        "🪀": "circle-dot",
-        "🏹": "crosshair",
-        "🪁": "wind",
-        "🥊": "hand",
-        "🥋": "shirt",
-        "⚔": "swords",
-        "🤺": "swords",
-        "🥌": "circle-dot",
-        "🎳": "volleyball",
-        "🏌": "flag",
-        "⛳": "flag",
-        "🤸": "person-standing",
-        "🤽": "waves",
-        "🤾": "person-standing",
-        "🧗": "mountain",
-        "🏇": "paw-print",
-        "🤹": "orbit",
-        "🎪": "tent",
-        "🤼": "users",
-        "🥏": "disc",
-        /* ---- 奖章票庆 ---- */
-        "🥇": "medal",
-        "🥈": "medal",
-        "🥉": "medal",
-        "🏅": "medal",
-        "🎗": "ribbon",
-        "🏵": "flower",
-        "🤡": "smile",
-        "🎟": "ticket",
-        "🎫": "ticket",
-        "🎀": "ribbon",
-        "🎈": "party-popper",
-        "🎉": "party-popper",
-        "🎊": "sparkles",
-        "🎋": "sprout",
-        "🎍": "sprout",
-        "🎎": "baby",
-        "🎏": "flag",
-        "🎐": "bell",
-        "🎑": "moon",
-        "🧧": "wallet",
-        /* ---- 服饰鞋靴二批 ---- */
-        "🥽": "glasses",
-        "🥼": "shirt",
-        "🦺": "shield",
-        "🥾": "footprints",
-        "🥿": "footprints",
-        "🩰": "footprints",
-        "👢": "footprints",
-        "👡": "footprints",
-        "🩴": "footprints",
-        /* ---- 车船航空 ---- */
-        "🚙": "car",
-        "🚐": "bus",
-        "🚚": "truck",
-        "🚛": "truck",
-        "🚜": "tractor",
-        "🏎": "car",
-        "🚓": "car",
-        "🚑": "ambulance",
-        "🚒": "truck",
-        "🚨": "siren",
-        "🚔": "car",
-        "🚍": "bus",
-        "🚋": "tram-front",
-        "🚃": "train-front",
-        "🚝": "train-front",
-        "🚄": "train-front",
-        "🚅": "train-front",
-        "🚈": "tram-front",
-        "🚊": "tram-front",
-        "🚞": "train-front",
-        "🚟": "cable-car",
-        "🚠": "cable-car",
-        "🚡": "cable-car",
-        "🚢": "ship",
-        "🛳": "ship",
-        "⛴": "ship",
-        "🚤": "ship",
-        "🛥": "ship",
-        "⛵": "sailboat",
-        "🚣": "ship",
-        "🛷": "snowflake",
-        "🚁": "helicopter",
-        "✈": "plane",
-        "🛩": "plane",
-        "🛫": "plane-takeoff",
-        "🛬": "plane-landing",
-        "💺": "armchair",
-        "🚀": "rocket",
-        "🛸": "disc",
-        "🛰": "satellite",
-        "🚏": "bus",
-        "⛽": "fuel",
-        "🛞": "circle-dot",
-        "🛢": "database",
-        "🧪": "flask-conical",
-        "🧯": "flame",
-        "🔦": "flashlight",
-        "🎵": "music",
-        /* ---- 动物（lucide 无种别图的落 paw-print / 鸟禽落 bird / 海洋落 fish） ---- */
-        "🐱": "cat",
-        "🐭": "rat",
-        "🐹": "rat",
-        "🐰": "rabbit",
-        "🦊": "paw-print",
-        "🐻": "paw-print",
-        "🐼": "paw-print",
-        "🐨": "paw-print",
-        "🐯": "paw-print",
-        "🦁": "paw-print",
-        "🐮": "paw-print",
-        "🐷": "piggy-bank",
-        "🐸": "paw-print",
-        "🐙": "fish",
-        "🐵": "paw-print",
-        "🐔": "egg",
-        "🐧": "bird",
-        "🐦": "bird",
-        "🐤": "bird",
-        "🦆": "bird",
-        "🦅": "bird",
-        "🦉": "bird",
-        "🦇": "bird",
-        "🐺": "paw-print",
-        "🐗": "paw-print",
-        "🐴": "paw-print",
-        "🦄": "sparkles",
-        "🐝": "bug",
-        "🐛": "bug",
-        "🦋": "flower",
-        "🐌": "snail",
-        "🐞": "bug",
-        "🐜": "bug",
-        "🦗": "bug",
-        "🕷": "bug",
-        "🦂": "bug",
-        "🦀": "shell",
-        "🐟": "fish",
-        "🐡": "fish",
-        "🐬": "fish",
-        "🐳": "fish",
-        "🐋": "fish",
-        "🦈": "fish",
-        "🐊": "paw-print",
-        "🐅": "paw-print",
-        "🐆": "paw-print",
-        "🦓": "paw-print",
-        "🦍": "paw-print",
-        "🦧": "paw-print",
-        "🐘": "paw-print",
-        "🦛": "paw-print",
-        "🦏": "paw-print",
-        "🐫": "paw-print",
-        "🦒": "paw-print",
-        "🐃": "paw-print",
-        "🐂": "paw-print",
-        "🐄": "paw-print",
-        "🐪": "paw-print",
-        /* ---- 草木 ---- */
-        "🌱": "sprout",
-        "🌲": "tree-pine",
-        "🌳": "tree-deciduous",
-        "🌴": "tree-palm",
-        "🌵": "sprout",
-        "🌷": "flower",
-        "🌸": "flower",
-        "🌹": "flower",
-        "🌺": "flower-2",
-        "🌻": "flower-2",
-        "🌼": "flower",
-        "🌾": "wheat",
-        "🍀": "leaf",
-        "🍁": "leaf",
-        "🍂": "leaf",
-        "🍃": "leaf",
-        "🌰": "nut",
-        "🎄": "tree-pine",
-        /* ---- 虚构/宠物玩偶 ---- */
-        "🤖": "bot",
-        "👾": "ghost",
-        "🐲": "baby",
-        "🦖": "baby",
-        "🦕": "baby",
-        "🐉": "baby",
-        "🦐": "shrimp",
-        "🦞": "shrimp",
-        "🐢": "turtle",
-        "🐍": "worm",
-        "🦎": "paw-print",
-        "🐖": "piggy-bank",
-        "🐑": "paw-print",
-        "🐐": "paw-print",
-        "🐎": "paw-print",
-        /* ---- 乐器声响 ---- */
-        "🎺": "megaphone",
-        "🎷": "megaphone",
-        "🪕": "guitar",
-        "🎻": "guitar",
-        "🎼": "music",
-        "🎶": "music",
-        "📻": "radio",
-        "🎚": "audio-lines",
-        "🎛": "sliders-horizontal",
-        "📢": "megaphone",
-        "📯": "megaphone",
-        "🔔": "bell",
-        "🪗": "audio-lines",
-        "🪘": "drum",
-        "🪈": "wind",
-        "🎥": "film",
-        "💿": "disc",
-        "📼": "videotape",
-        "🗺": "map",
-        "🦟": "bug",
-        "🪢": "cable",
-        "🪜": "waves-ladder",
-        "👑": "crown"
-      };
-    }
-  });
-
-  // src/belongings/data.ts
-  function getDataFilePath() {
-    return storageFile("belongings.json");
-  }
-  function emptyDatabase() {
-    return {
-      version: "1.0",
-      last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-      items: {},
-      categories: [],
-      categoryIcons: {}
-    };
-  }
-  async function loadDatabase() {
-    const filePath = getDataFilePath();
-    const raw = await jsonFileStore(filePath, {
-      defaultValue: () => emptyDatabase()
-    }).read();
-    let db;
-    try {
-      if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-        throw new Error("数据文件结构异常（非对象）");
-      }
-      db = raw;
-    } catch (error) {
-      notice("数据文件结构异常，已按空库继续，原文件未改动", "warning", 5e3);
-      console.error("数据文件结构异常:", error);
-      db = emptyDatabase();
-    }
-    if (!db.items || typeof db.items !== "object" || Array.isArray(db.items)) {
-      console.error("数据文件 items 字段结构异常:", db.items === null ? "null" : typeof db.items);
-      db.items = {};
-    }
-    for (const it of Object.values(db.items)) {
-      if (!it || typeof it !== "object") continue;
-      const split = splitEmojiCategory(it.category);
-      if (!split.emoji) continue;
-      it.category = split.name;
-      if (split.icon && (it.icon == null || it.icon === "")) it.icon = split.icon;
-    }
-    const freq = /* @__PURE__ */ new Map();
-    const icons = {};
-    for (const it of Object.values(db.items)) {
-      if (!it || typeof it !== "object") continue;
-      const cat = String(it.category || "").trim();
-      if (!cat) continue;
-      const cur = freq.get(cat) || { n: 0, last: "" };
-      cur.n += 1;
-      cur.last = String(it.last_updated || "");
-      freq.set(cat, cur);
-      if (it.icon && !icons[cat]) icons[cat] = it.icon;
-    }
-    db.categories = [...freq.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last.localeCompare(a[1].last)).map(([c]) => c);
-    db.categoryIcons = icons;
-    return db;
-  }
-  async function saveDatabase(database) {
-    const saveData = {
-      version: database.version,
-      last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-      items: database.items
-    };
-    await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
-  }
-  var init_data6 = __esm({
-    "src/belongings/data.ts"() {
-      init_notice();
-      init_storage();
-      init_emoji_icon_map();
-    }
-  });
-
-  // src/core/chart-palette.ts
-  var CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_INK, CHART_HIGHLIGHT;
-  var init_chart_palette = __esm({
-    "src/core/chart-palette.ts"() {
-      CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
-      CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
-      CHART_INK = "#3D4456";
-      CHART_HIGHLIGHT = "#FFE5CC";
-    }
-  });
-
-  // src/belongings/shared.ts
-  function moneyUnitLabel(unit = "cny") {
-    return unit === "yuan" ? "元" : unit === "usd" ? "$" : unit === "none" ? "" : "￥";
-  }
-  function moneyWith(mid, unit = "cny") {
-    if (unit === "yuan") return `${mid} 元`;
-    if (unit === "none") return mid;
-    return moneyUnitLabel(unit) + mid;
-  }
-  function money(n, unit = "cny") {
-    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), unit);
-  }
-  function moneyShort(n, unit = "cny") {
-    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
-  }
-  function todayStr() {
-    return localDayKey();
-  }
-  function catEmoji(cat) {
-    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
-    return m ? m[1] : String(cat || "")[0] || "📦";
-  }
-  function catNameOf(cat) {
-    return String(cat || "").replace(/^\p{Extended_Pictographic}\s*/u, "");
-  }
-  function catIconOf(cat) {
-    var _a2;
-    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
-    return m ? (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null : null;
-  }
-  function catEmHtml(cat) {
-    var _a2;
-    const em = catEmoji(cat);
-    const name = catIconOf(cat) || ((_a2 = EMOJI_ICON[em]) != null ? _a2 : null);
-    return name ? iconSpan(name) : esc(em);
-  }
-  function itemIconOf(it) {
-    var _a2;
-    const raw = String(it.icon || "").trim();
-    if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
-    return catIconOf(it.category) || ((_a2 = EMOJI_ICON[catEmoji(it.category)]) != null ? _a2 : null);
-  }
-  function itemEmHtml(it) {
-    const name = itemIconOf(it);
-    return name ? iconSpan(name) : catEmHtml(it.category);
-  }
-  function statusKeyOf(label) {
-    var _a2, _b2;
-    return (_b2 = (_a2 = STATUS_ORDER.find((s) => s.label === label)) == null ? void 0 : _a2.key) != null ? _b2 : label;
-  }
-  function statusOf(keyOrLabel) {
-    const byKey = STATUS_ORDER.find((s) => s.key === keyOrLabel);
-    if (byKey) return byKey;
-    const byLabel = STATUS_ORDER.find((s) => s.label === keyOrLabel);
-    return byLabel || { key: "using", label: "使用中" };
-  }
-  function exitedStatus(st) {
-    return st === "已转卖" || st === "已丢弃";
-  }
-  function isExited(it) {
-    return exitedStatus(it.current_status);
-  }
-  function exitDayTsOf(it) {
-    var _a2, _b2;
-    return isExited(it) ? (_b2 = (_a2 = parseLocalDay(it.exit_date)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null : null;
-  }
-  function recoveredOf(it) {
-    return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
-  }
-  function trimDailyNum(n) {
-    const v = Number(n) || 0;
-    return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-  }
-  function parseLocalDay(raw) {
-    const parts = String(raw || "").slice(0, 10).split("-").map(Number);
-    const [y, m, d] = parts;
-    if (!y || !m || !d) return null;
-    if (m < 1 || m > 12) return null;
-    const dt = new Date(y, m - 1, d);
-    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-    return dt;
-  }
-  function daysUsed(it) {
-    const start = parseLocalDay(it.purchase_date);
-    if (!start) return 0;
-    const ex = exitDayTsOf(it);
-    const end = ex != null ? ex : Date.now();
-    return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
-  }
-  function dailyCostOf(it) {
-    const days = daysUsed(it);
-    const price = Number(it.purchase_price) || 0;
-    return days > 0 ? price / days : price;
-  }
-  function inStock(it) {
-    return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
-  }
-  function stockCount(items) {
-    return items.filter(inStock).length;
-  }
-  function totalAssets(items) {
-    return items.filter(inStock).reduce((s, i) => s + (Number(i.purchase_price) || 0), 0);
-  }
-  function avgDailyCost(items) {
-    let cost = 0;
-    let days = 0;
-    for (const it of items) {
-      cost += Number(it.purchase_price) || 0;
-      cost -= recoveredOf(it);
-      days += daysUsed(it);
-    }
-    return days ? cost / days : 0;
-  }
-  function statusCount(items, label) {
-    return items.filter((i) => i.current_status === label).length;
-  }
-  function filtered(items, view) {
-    return items.filter((i) => {
-      if (!view.status) return true;
-      if (view.status === "asset") return inStock(i);
-      return i.current_status === statusOf(view.status).label;
-    }).filter((i) => view.year ? String(i.purchase_date || "").startsWith(view.year) : true).filter((i) => {
-      if (!view.q) return true;
-      const q2 = view.q.toLowerCase();
-      return [i.name, i.category, i.description].join(" ").toLowerCase().includes(q2);
-    }).sort((a, b) => {
-      if (view.sort === "price") return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
-      if (view.sort === "daily") return dailyCostOf(b) - dailyCostOf(a);
-      return String(b.purchase_date || "").localeCompare(String(a.purchase_date || "")) || String(a.name || "").localeCompare(String(b.name || ""), "zh");
-    });
-  }
-  function yearsAvailable(items) {
-    const set = /* @__PURE__ */ new Set();
-    items.forEach((i) => {
-      const y = String(i.purchase_date || "").slice(0, 4);
-      if (y) set.add(y);
-    });
-    return [...set].sort().reverse();
-  }
-  function resolveYear(items, year) {
-    return year && yearsAvailable(items).includes(year) ? year : "";
-  }
-  function heroTitleText(view) {
-    if (!view.status) return "全部";
-    if (view.status === "asset") return "资产";
-    return statusOf(view.status).label;
-  }
-  function heroSubText(items, view) {
-    return view.status ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
-  }
-  function belDetailHtml(it, unit = "cny") {
-    var _a2;
-    const gone = isExited(it);
-    const key = statusKeyOf(it.current_status);
-    return `<div class="bz-bel-detail">
-    <div class="bz-bel-detail-head">
-      <div class="bz-bel-detail-title">${esc(it.name)}</div>
-    </div>
-    <div class="bz-bel-detail-idrow">
-      <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
-      <div class="bz-bel-detail-idinfo">
-        <div class="bz-bel-detail-cat">${esc(catNameOf(it.category) || "未分类")}</div>
-        <div class="bz-bel-detail-desc">${esc(it.description || "无备注")}</div>
-      </div>
-      <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
-    </div>
-    <div class="bz-bel-detail-fields">
-      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0, unit)}</b></div>
-      <div class="bz-bel-dfield"><span>购买日期</span><b>${esc(String(it.purchase_date || "").slice(0, 10) || "—")} · ${daysUsed(it)} 天</b></div>
-      <div class="bz-bel-dfield"><span>日均成本</span><b>${moneyWith(dailyCostOf(it).toFixed(2), unit)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
-      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price), unit) : ""}</b></div>` : ""}
-      <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc(String(it.created_date || "").slice(0, 10))} / ${esc(String(it.last_updated || "").slice(0, 10))}</b></div>
-    </div>
-    <div class="bz-bel-detail-acts" data-bd-acts></div>
-    <div class="bz-btn-row bz-bel-detail-btns">
-      <div class="bz-bel-form-spacer"></div>
-      <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON.del, "bz-ic--sm")} 删除</button>
-    </div>
-  </div>`;
-  }
-  function flowBtnsHtml(curStatus) {
-    return STATUS_LABELS.map(
-      (s) => `<button type="button" class="bz-bel-flowbtn${s === curStatus ? " is-cur" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-bd-flow="${esc(s)}">${esc(s)}</button>`
-    ).join("");
-  }
-  function belFormInit(it) {
-    var _a2, _b2, _c;
-    return {
-      priceVal: it ? String((_a2 = it.purchase_price) != null ? _a2 : "") : "",
-      dateVal: it ? String(it.purchase_date || "").slice(0, 10) : todayStr(),
-      catVal: (_b2 = it == null ? void 0 : it.category) != null ? _b2 : "",
-      // 新记不回填默认分类（issue 202），留空待选
-      descVal: (_c = it == null ? void 0 : it.description) != null ? _c : "",
-      // 出离字段初值（ADR-0089）：编辑回填 exit_date；新记 = 今天
-      exitDateVal: (it == null ? void 0 : it.exit_date) ? String(it.exit_date).slice(0, 10) : todayStr(),
-      soldPriceVal: (it == null ? void 0 : it.sold_price) != null && Number.isFinite(Number(it.sold_price)) ? String(it.sold_price) : "",
-      exitedInit: !!it && isExited(it)
-    };
-  }
-  function belFormHtml(it, unit = "cny") {
-    var _a2;
-    const editing = !!it;
-    const unitLabel = moneyUnitLabel(unit);
-    const { priceVal, dateVal, catVal, descVal, exitDateVal, soldPriceVal, exitedInit } = belFormInit(it);
-    return `
-  <div class="bz-bel-form">
-    <div class="bz-bel-form-title">${editing ? "编辑物品" : "记一笔"}</div>
-    <div class="bz-bel-form-body">
-      <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc((_a2 = it == null ? void 0 : it.name) != null ? _a2 : "")}" placeholder="如：iPhone 15 Pro"></div>
-      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
-      <div class="bz-bel-form-row">
-        <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ""}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
-        <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
-      </div>
-      <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
-      <div class="bz-bel-form-row" id="bm-exit"${exitedInit ? "" : " hidden"}>
-        <div class="bz-field"><span class="bz-field-label">出离日期</span><input class="bz-input" id="bm-exitdate" type="date" value="${esc(exitDateVal)}"></div>
-        <div class="bz-field" id="bm-soldfield"${(it == null ? void 0 : it.current_status) === "已转卖" ? "" : " hidden"}><span class="bz-field-label">转卖售价（可选）</span><input class="bz-input" id="bm-soldprice" type="number" min="0" step="0.01" value="${esc(soldPriceVal)}" placeholder="留空不记售价"></div>
-      </div>
-      <div class="bz-field"><span class="bz-field-label">描述（可选）</span><textarea class="bz-input" id="bm-desc" placeholder="规格、颜色、购买原因等…">${esc(descVal)}</textarea></div>
-      <div class="bz-bel-form-err" id="bm-err"></div>
-      <div class="bz-btn-row bz-bel-form-actions">
-        <div class="bz-bel-form-spacer"></div>
-        <button type="button" class="bz-btn bz-btn--ghost" data-bm-cancel>取消</button>
-        <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（favorites 同款收敛） -->
-        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? "保存" : "添加"}</button>
-      </div>
-    </div>
-  </div>`;
-  }
-  function statusPickHtml(curStatus) {
-    return STATUS_LABELS.map(
-      (s) => {
-        var _a2;
-        return `<button type="button" class="bz-choice-btn${s === curStatus ? " is-on" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-status="${esc(s)}">${iconSpan(((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(s)}</button>`;
-      }
-    ).join("");
-  }
-  function sheetHeadHtml(it, unit = "cny") {
-    const catName = catNameOf(it.category);
-    const days = daysUsed(it);
-    return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
-      <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
-      <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc(it.name)}</div>
-      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0, unit)} · 已用 ${days} 天</div></div></div></div>`;
-  }
-  function actionSpecs(it) {
-    const specs = [];
-    STATUS_LABELS.forEach((s) => {
-      var _a2;
-      if (s === it.current_status) return;
-      specs.push({ icon: ((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", label: `标记为${s}`, act: "flow", status: s, keepOpen: true });
-    });
-    specs.push({ icon: "pencil", label: "编辑", act: "edit", keepOpen: true });
-    specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
-    return specs;
-  }
-  var ICON, MAX_PRICE, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
-  var init_shared3 = __esm({
-    "src/belongings/shared.ts"() {
-      init_str();
-      init_emoji_icon_map();
-      init_emoji_icon_map();
-      init_str();
-      ICON = {
-        add: "plus",
-        search: "search",
-        close: "x",
-        del: "trash-2",
-        empty: "package",
-        chevD: "chevron-down",
-        report: "bar-chart-3"
-        // 年度资产报告工具行入口（issue 356）
-      };
-      MAX_PRICE = 1e12;
-      STATUS = {
-        using: { label: "使用中", key: "using", ic: "check-circle" },
-        idle: { label: "闲置", key: "idle", ic: "package" },
-        sold: { label: "已转卖", key: "sold", ic: "banknote" },
-        discard: { label: "已丢弃", key: "discard", ic: "archive" }
-      };
-      STATUS_ORDER = [
-        { key: "using", label: "使用中" },
-        { key: "idle", label: "闲置" },
-        { key: "sold", label: "已转卖" },
-        { key: "discard", label: "已丢弃" }
-      ];
-      STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
-      SORT_OPTS = [
-        { v: "recent", label: "最近购入" },
-        { v: "price", label: "投入最高" },
-        { v: "daily", label: "日均最高" }
-      ];
-    }
-  });
-
-  // src/belongings/report-stats.ts
-  function monthLabel(m) {
-    return `${m}月`;
-  }
-  function parseDayTs(raw) {
-    var _a2, _b2;
-    return (_b2 = (_a2 = parseLocalDay(raw)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null;
-  }
-  function yearOf(raw) {
-    const s = String(raw || "").slice(0, 4);
-    return /^\d{4}$/.test(s) ? s : "";
-  }
-  function priceOf(it) {
-    return Number(it.purchase_price) || 0;
-  }
-  function reportYears(items) {
-    const set = /* @__PURE__ */ new Set();
-    for (const it of items) {
-      const py = yearOf(it.purchase_date);
-      if (py) set.add(py);
-      const ey = yearOf(it.exit_date);
-      if (ey && exitedStatus(it.current_status)) set.add(ey);
-    }
-    return [...set].sort().reverse();
-  }
-  function resolveReportYear(items, year) {
-    const years = reportYears(items);
-    return years.includes(year) ? year : years[0] || "";
-  }
-  function avgDailyCostAsOf(items, cutoffTs) {
-    let cost = 0;
-    let days = 0;
-    for (const it of items) {
-      const p = parseDayTs(it.purchase_date);
-      if (p == null || p >= cutoffTs) continue;
-      cost += priceOf(it);
-      const ex = exitDayTsOf(it);
-      const capped = ex != null && ex < cutoffTs;
-      if (capped) cost -= recoveredOf(it);
-      days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
-    }
-    return days ? cost / days : 0;
-  }
-  function computeYearReport(items, year, now = /* @__PURE__ */ new Date()) {
-    const y = Number(year);
-    const yearStart = new Date(y, 0, 1).getTime();
-    const yearEnd = new Date(y + 1, 0, 1).getTime();
-    const nowTs2 = now.getTime();
-    const purchased = items.filter((it) => {
-      const p = parseDayTs(it.purchase_date);
-      return p != null && p >= yearStart && p < yearEnd;
-    });
-    const exitedInYear = items.filter((it) => {
-      const ex = parseDayTs(it.exit_date);
-      return ex != null && ex >= yearStart && ex < yearEnd && exitedStatus(it.current_status);
-    });
-    const monthlySpend = Array.from({ length: 12 }, (_, i) => ({
-      label: monthLabel(i + 1),
-      amount: 0,
-      count: 0
-    }));
-    for (const it of purchased) {
-      const p = parseDayTs(it.purchase_date);
-      const m = new Date(p).getMonth();
-      monthlySpend[m].amount += priceOf(it);
-      monthlySpend[m].count += 1;
-    }
-    const catMap = /* @__PURE__ */ new Map();
-    for (const it of purchased) {
-      const name = catNameOf(it.category).trim() || "未分类";
-      const cur = catMap.get(name) || { count: 0, amount: 0 };
-      cur.count += 1;
-      cur.amount += priceOf(it);
-      catMap.set(name, cur);
-    }
-    const purchasedAmount = purchased.reduce((s, i) => s + priceOf(i), 0);
-    const categoryShare = [...catMap.entries()].map(([name, v]) => ({
-      name,
-      count: v.count,
-      amount: v.amount,
-      pct: purchasedAmount > 0 ? Math.round(v.amount / purchasedAmount * 1e3) / 10 : 0
-    })).sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, "zh"));
-    const dailyCostTrend = Array.from({ length: 12 }, (_, i) => {
-      const monthStart = new Date(y, i, 1).getTime();
-      const monthEnd = new Date(y, i + 1, 1).getTime();
-      const future = monthStart > nowTs2;
-      const capped = !future && monthEnd > nowTs2;
-      const cutoff = capped ? nowTs2 : monthEnd;
-      return {
-        label: monthLabel(i + 1),
-        value: future ? 0 : avgDailyCostAsOf(items, cutoff),
-        future,
-        ...capped ? { capped } : {}
-      };
-    });
-    const companionCutoff = Math.min(yearEnd, nowTs2);
-    const companions = items.map((it) => {
-      const p = parseDayTs(it.purchase_date);
-      if (p == null || p >= companionCutoff) return null;
-      const ex = exitDayTsOf(it);
-      const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
-      return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
-    }).filter((r) => r != null).sort(
-      (a, b) => b.days - a.days || String(a.item.purchase_date || "").localeCompare(String(b.item.purchase_date || "")) || String(a.item.name || "").localeCompare(String(b.item.name || ""), "zh")
-    ).slice(0, COMPANION_TOP_N);
-    return {
-      year,
-      purchasedCount: purchased.length,
-      purchasedAmount,
-      exitedCount: exitedInYear.length,
-      recoveredAmount: exitedInYear.reduce((s, i) => s + recoveredOf(i), 0),
-      monthlySpend,
-      categoryShare,
-      dailyCostTrend,
-      companions,
-      // 审查修复批（issue 356）：段注口径随真实截止点走——当年（now 未到年末）陪伴榜实际截至今日，
-      // 旧文案写死「截至年末」与数据不符；往年 cutoff = yearEnd 才是「年末」
-      companionAsOf: companionCutoff < yearEnd ? "today" : "yearEnd",
-      hasYearData: purchased.length > 0 || exitedInYear.length > 0
-    };
-  }
-  var COMPANION_TOP_N, DAY_MS;
-  var init_report_stats = __esm({
-    "src/belongings/report-stats.ts"() {
-      init_shared3();
-      COMPANION_TOP_N = 5;
-      DAY_MS = 864e5;
-    }
-  });
-
-  // src/belongings/report.ts
-  function yieldToMainThread3() {
-    return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
-  }
-  function isBelReportOpen() {
-    return !!maskEl2;
-  }
-  function openBelReport(items, unit, opts = {}) {
-    var _a2;
-    ctxItems = items;
-    ctxUnit = unit;
-    ctxOnAdd = (_a2 = opts.onAdd) != null ? _a2 : null;
-    ctxYears = [];
-    if (!maskEl2) ctxYear = "";
-    if (maskEl2) {
-      startReport();
-      return;
-    }
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-report-mask";
-    mask.innerHTML = `
-  <div class="bz-bel-report bz-panel-mtop" role="dialog" aria-label="归物本年度资产报告">
-    <div class="bz-bel-report-head">
-      <div class="bz-bel-report-title">年度资产报告</div>
-      <div class="bz-bel-report-nav">
-        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-prev title="上一年" aria-label="上一年">${iconSpan("chevron-left")}</button>
-        <span class="bz-bel-report-year" data-belr-year>—</span>
-        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-next title="下一年" aria-label="下一年">${iconSpan("chevron-right")}</button>
-      </div>
-      <button type="button" class="bz-icon-btn bz-touch-target bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan("x")}</button>
-    </div>
-    <div class="bz-bel-report-body" data-belr-body></div>
-  </div>`;
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
-    maskEl2 = mask;
-    mask.addEventListener("click", (e) => {
-      const t = e.target;
-      if (e.target === mask) {
-        closeBelReport();
-        return;
-      }
-      if (t.closest("[data-belr-close]")) {
-        closeBelReport();
-        return;
-      }
-      if (t.closest("[data-belr-prev]")) {
-        stepYear(-1);
-        return;
-      }
-      if (t.closest("[data-belr-next]")) {
-        stepYear(1);
-        return;
-      }
-    });
-    startReport();
-  }
-  function closeBelReport() {
-    cancelBelReport();
-    if (maskEl2) {
-      maskEl2.remove();
-      maskEl2 = null;
-    }
-    ctxItems = [];
-    ctxYears = [];
-    ctxYear = "";
-    ctxOnAdd = null;
-  }
-  function cancelBelReport() {
-    renderSeq++;
-    if (activeProgress) {
-      activeProgress.hide();
-      activeProgress = null;
-    }
-  }
-  function unloadBelReport() {
-    cancelBelReport();
-    if (maskEl2) {
-      maskEl2.remove();
-      maskEl2 = null;
-    }
-    ctxItems = [];
-    ctxYears = [];
-    ctxYear = "";
-    ctxOnAdd = null;
-  }
-  function stepYear(dir) {
-    const idx = ctxYears.indexOf(ctxYear);
-    if (idx < 0) return;
-    const next = idx - dir;
-    if (next < 0 || next >= ctxYears.length) return;
-    ctxYear = ctxYears[next];
-    paintYearNav();
-    startReport(true);
-  }
-  function paintYearNav() {
-    if (!maskEl2) return;
-    const label = maskEl2.querySelector("[data-belr-year]");
-    if (label) label.textContent = ctxYear || "—";
-    const idx = ctxYears.indexOf(ctxYear);
-    const prev = maskEl2.querySelector("[data-belr-prev]");
-    const next = maskEl2.querySelector("[data-belr-next]");
-    if (prev) prev.disabled = idx < 0 || idx >= ctxYears.length - 1;
-    if (next) next.disabled = idx < 0 || idx <= 0;
-  }
-  function startReport(quiet = false) {
-    const body = maskEl2 == null ? void 0 : maskEl2.querySelector("[data-belr-body]");
-    if (!body) return;
-    cancelBelReport();
-    const seq = renderSeq;
-    const alive = () => seq === renderSeq && !!(maskEl2 == null ? void 0 : maskEl2.isConnected) && body.isConnected;
-    body.innerHTML = SKELETON_HTML;
-    ctxYears = reportYears(ctxItems);
-    ctxYear = resolveReportYear(ctxItems, ctxYear);
-    paintYearNav();
-    const progress = notify("正在统计年度数据…", {
-      type: "progress",
-      duration: 0,
-      dedupeKey: `bz-belongings-report-progress-${++progressToastSeq}`
-    });
-    activeProgress = progress;
-    const finishAbort = () => {
-      progress.hide();
-      if (activeProgress === progress) activeProgress = null;
-    };
-    const finishDone = (quiet2) => {
-      if (activeProgress === progress) activeProgress = null;
-      if (quiet2) progress.hide();
-      else {
-        progress.setType("success");
-        progress.setMessage("年度报告完成");
-      }
-    };
-    const step = async () => {
-      progress.setMessage("正在读取归物本…");
-      await yieldToMainThread3();
-      if (!alive()) return finishAbort();
-      if (ctxItems.length === 0) {
-        body.innerHTML = "";
-        body.appendChild(buildLibraryEmpty());
-        mountIcons(body);
-        return finishDone(true);
-      }
-      progress.setMessage("正在汇总购入与离场…");
-      await yieldToMainThread3();
-      if (!alive()) return finishAbort();
-      const year = ctxYear;
-      const stats = computeYearReport(ctxItems, year);
-      if (!alive()) return finishAbort();
-      if (!stats.hasYearData) {
-        body.innerHTML = emptyYearHtml(year);
-        mountIcons(body);
-        return finishDone(true);
-      }
-      const sections = buildReportSections(stats);
-      body.innerHTML = "";
-      for (const section of sections) {
-        if (!alive()) return finishAbort();
-        await yieldToMainThread3();
-        if (!alive()) return finishAbort();
-        body.insertAdjacentHTML("beforeend", section.generate());
-        progress.setMessage(`正在生成${section.label}…`);
-      }
-      if (alive()) {
-        mountIcons(body);
-        finishDone(quiet);
-      } else {
-        finishAbort();
-      }
-    };
-    void step().catch((error) => {
-      console.error("生成归物本年度报告失败:", error);
-      if (activeProgress === progress) activeProgress = null;
-      if (alive()) {
-        progress.setType("error");
-        progress.setMessage("统计失败：读取归物本数据时出错，请重试");
-        body.innerHTML = ERROR_HTML;
-      } else {
-        progress.hide();
-      }
-    });
-  }
-  function buildLibraryEmpty() {
-    const actions = uiBtnRow(
-      [
-        uiBtn({
-          label: "记一笔",
-          icon: "plus",
-          tone: "primary",
-          onClick: () => ctxOnAdd == null ? void 0 : ctxOnAdd()
-        })
-      ],
-      { center: true }
-    );
-    return uiEmpty({
-      icon: "package",
-      title: "归物本还没有物品",
-      desc: "登记物品后，这里会按年生成资产报告：购入与离场、月度花销、分类占比和陪伴最久的物件",
-      actions
-    });
-  }
-  function emptyYearHtml(year) {
-    return `<div class="bz-belr-emptyyear">
-    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
-    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"}</div>
-  </div>`;
-  }
-  function buildReportSections(stats) {
-    return [
-      { key: "summary", label: "购入与离场概览", generate: () => summaryHtml(stats) },
-      { key: "monthly", label: "月度花销走势", generate: () => monthlyHtml(stats) },
-      { key: "categories", label: "分类占比", generate: () => categoriesHtml(stats) },
-      { key: "daily", label: "日均成本走势", generate: () => dailyHtml(stats) },
-      { key: "companions", label: "陪伴最久榜", generate: () => companionsHtml(stats) }
-    ];
-  }
-  function secHead(title, note = "") {
-    return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ""}</div>`;
-  }
-  function summaryHtml(stats) {
-    const card = (num2, label, color) => `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
-      <b>${esc(num2)}</b><span>${esc(label)}</span>
-    </div>`;
-    return `<div class="bz-belr-sec">
-  ${secHead(`${stats.year} 年购入与离场`)}
-  <div class="bz-belr-grid">
-  ${card(String(stats.purchasedCount), "购入件数", CHART_PASTEL_SERIES[0])}
-  ${card(moneyShort(stats.purchasedAmount, ctxUnit), "购入金额", CHART_PASTEL_SERIES[1])}
-  ${card(String(stats.exitedCount), "离场件数", CHART_PASTEL_SERIES[2])}
-  ${card(moneyShort(stats.recoveredAmount, ctxUnit), "转卖回血", CHART_PASTEL_SERIES[4])}
-  </div>
-  </div>`;
-  }
-  function columnsHtml(cols) {
-    const max = Math.max(0, ...cols.filter((c) => !c.future).map((c) => c.value));
-    return `<div class="bz-belr-cols">
-  ${cols.map((c) => {
-      const height = !c.future && c.value > 0 && max > 0 ? 12 + Math.round(c.value / max * 48) : 3;
-      const bg = c.future ? "transparent" : c.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
-      const num2 = !c.future && c.value > 0 ? `<span class="bz-belr-col-num">${esc(c.display)}</span>` : "";
-      const cls = ["bz-belr-col", c.future ? "bz-belr-col--future" : "", c.accent ? "bz-belr-col--accent" : ""].filter(Boolean).join(" ");
-      return `<div class="${cls}"${c.title ? ` title="${esc(c.title)}"` : ""}>
-        ${num2}
-        <div class="bz-belr-col-bar" style="height:${height}px;${c.future ? "" : `background:${bg}`}"></div>
-        <div class="bz-belr-col-label">${esc(c.label)}</div>
-      </div>`;
-    }).join("")}
-  </div>`;
-  }
-  function monthlyHtml(stats) {
-    if (stats.purchasedAmount === 0) {
-      return `<div class="bz-belr-sec">
-    ${secHead("月度花销走势", "当年无购入")}
-    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
-    </div>`;
-    }
-    const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
-    const cols = stats.monthlySpend.map((m) => ({
-      label: m.label,
-      value: m.amount,
-      display: moneyShort(m.amount, ctxUnit),
-      accent: m.amount > 0 && m.amount === maxAmount,
-      title: m.count > 0 ? `${m.label}购入 ${m.count} 件 · ${moneyShort(m.amount, ctxUnit)}` : `${m.label}无购入`
-    }));
-    return `<div class="bz-belr-sec">
-  ${secHead("月度花销走势", `全年购入 ${moneyShort(stats.purchasedAmount, ctxUnit)}`)}
-  ${columnsHtml(cols)}
-  </div>`;
-  }
-  function categoriesHtml(stats) {
-    if (stats.purchasedAmount === 0) {
-      return `<div class="bz-belr-sec">
-    ${secHead("分类占比", "当年无购入")}
-    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
-    </div>`;
-    }
-    const MAX_ROWS = 8;
-    const rows = stats.categoryShare.slice(0, MAX_ROWS);
-    const rest = stats.categoryShare.slice(MAX_ROWS);
-    if (rest.length > 0) {
-      rows.push({
-        name: `其他（${rest.length} 类）`,
-        count: rest.reduce((s, r) => s + r.count, 0),
-        amount: rest.reduce((s, r) => s + r.amount, 0),
-        pct: Math.round(rest.reduce((s, r) => s + r.pct, 0) * 10) / 10
-      });
-    }
-    const line = (row, i) => {
-      const color = CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
-      const width = Math.max(0, Math.min(100, row.pct));
-      return `<div class="bz-belr-row">
-      <span class="bz-belr-row-label" title="${esc(row.name)}">${esc(row.name)}</span>
-      <div class="bz-progress bz-progress--lg bz-belr-row-track"><i style="width:${width}%;background:${color}"></i></div>
-      <span class="bz-belr-row-val">${row.count} 件 · ${esc(moneyShort(row.amount, ctxUnit))} · ${row.pct}%</span>
-    </div>`;
-    };
-    return `<div class="bz-belr-sec">
-  ${secHead("分类占比", `共 ${stats.categoryShare.length} 类 · 按购入金额`)}
-  <div class="bz-belr-rows">${rows.map(line).join("")}</div>
-  </div>`;
-  }
-  function dailyHtml(stats) {
-    const hasCapped = stats.dailyCostTrend.some((c) => c.capped);
-    const cols = stats.dailyCostTrend.map((c) => ({
-      label: c.label,
-      value: c.future ? 0 : c.value,
-      display: c.value > 0 ? trimDailyNum(c.value) : "0",
-      future: c.future,
-      title: c.future ? `${c.label}末尚未到来` : c.capped ? `${c.label}截至今日日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}` : `${c.label}末日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}`
-    }));
-    return `<div class="bz-belr-sec">
-  ${secHead("日均成本走势", `口径：各月末时点${hasCapped ? "（当月截至今日）" : ""} ·（总购入 − 转卖回本）/ 累计持有天数`)}
-  ${columnsHtml(cols)}
-  </div>`;
-  }
-  function trimNumThousands(n) {
-    return (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
-  }
-  function companionsHtml(stats) {
-    if (stats.companions.length === 0) {
-      return `<div class="bz-belr-sec">
-    ${secHead("陪伴最久榜")}
-    <p class="bz-belr-none">暂无可统计的物品</p>
-    </div>`;
-    }
-    const asOf = stats.companionAsOf === "today" ? "截至今日" : `截至 ${stats.year} 年末`;
-    const line = (row, i) => {
-      const it = row.item;
-      const price = Number(it.purchase_price) || 0;
-      const daily = row.days > 0 ? moneyWith(trimNumThousands(price / row.days), ctxUnit) : "—";
-      const badge = i < CHART_RANK_BADGES.length ? ` style="background:${CHART_RANK_BADGES[i]};color:${CHART_INK}"` : "";
-      const goneYear = it.exit_date ? String(it.exit_date).slice(0, 4) : "";
-      return `<div class="bz-belr-comp">
-      <span class="bz-belr-comp-rank"${badge}>${i + 1}</span>
-      <span class="bz-belr-comp-name" title="${esc(it.name)}">${esc(it.name)}</span>
-      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || "").slice(0, 4) || "—")} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ""} · 日均 ${esc(daily)}</span>
-      <b class="bz-belr-comp-days">${row.days.toLocaleString("zh-CN")} 天</b>
-    </div>`;
-    };
-    return `<div class="bz-belr-sec">
-  ${secHead("陪伴最久榜", `${asOf} · Top ${stats.companions.length}`)}
-  <div class="bz-belr-comps">${stats.companions.map(line).join("")}</div>
-  </div>`;
-  }
-  var renderSeq, progressToastSeq, activeProgress, maskEl2, ctxItems, ctxUnit, ctxYears, ctxYear, ctxOnAdd, SKELETON_HTML, ERROR_HTML, IDLE_CALLBACK_TIMEOUT_MS;
-  var init_report = __esm({
-    "src/belongings/report.ts"() {
-      init_utils();
-      init_notice();
-      init_ui();
-      init_str();
-      init_z_order();
-      init_chart_palette();
-      init_shared3();
-      init_report_stats();
-      init_shared3();
-      renderSeq = 0;
-      progressToastSeq = 0;
-      activeProgress = null;
-      maskEl2 = null;
-      ctxItems = [];
-      ctxUnit = "cny";
-      ctxYears = [];
-      ctxYear = "";
-      ctxOnAdd = null;
-      SKELETON_HTML = '<div class="bz-belr-skeleton">统计中…</div>';
-      ERROR_HTML = `<div class="bz-belr-error">
-  <div class="bz-belr-error-t">统计失败</div>
-  <div>读取归物本数据时出错，请关闭后重试</div>
-</div>`;
-      IDLE_CALLBACK_TIMEOUT_MS = 50;
-    }
-  });
-
-  // src/belongings/layouts/poster/render.ts
-  function panelHtml() {
-    return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
-  <div class="bz-bel-body">
-    <div class="bz-bel-hero">
-      <div class="bz-bel-hero-text">
-        <div class="bz-bel-hero-title" data-bel-herotitle>全部</div>
-        <div class="bz-bel-hero-sub" data-bel-herosub>归物本 — NOTHING MORE, NOTHING LESS</div>
-      </div>
-      <div class="bz-bel-kpis" data-bel-kpis></div>
-      <div class="bz-bel-mobhead">
-        <div class="bz-bel-stamp"><b data-bel-stampn>0</b><span>在库</span></div>
-        <div class="bz-bel-mobhead-tx">
-          <div class="bz-bel-mobhead-t">归物本</div>
-          <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
-        </div>
-        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
-      </div>
-    </div>
-    <div class="bz-bel-chips" data-bel-chips></div>
-    <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类 / 备注…"><button type="button" class="bz-bel-search-clear" data-bel-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-      <div class="bz-bel-yearsel">
-        <div class="bz-bel-select bz-touch-target" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
-        <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
-      </div>
-      <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select bz-touch-target" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
-        <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
-      </div>
-      <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON.report)}</button>
-      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
-    </div>
-    <div class="bz-mobstrip" data-bel-mobstatus></div>
-    <div class="bz-bel-content" data-bel-content></div>
-    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
-  </div>
-</div>`;
-  }
-  function chipsHtml(items, view) {
-    const defs = [
-      { key: "__all", label: "全部", cnt: items.length },
-      { key: "asset", label: "资产", cnt: stockCount(items) },
-      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
-    ];
-    return defs.map((d) => {
-      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
-      return `<button type="button" class="bz-chip${active2 ? " bz-chip--on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
-    }).join("");
-  }
-  function mobChipsHtml(items, view) {
-    const defs = [
-      { key: "__all", label: "全部", cnt: items.length },
-      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
-    ];
-    return defs.map((d) => {
-      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
-      return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
-    }).join("");
-  }
-  function yearsOptionsHtml(items, cur) {
-    return '<div class="bz-bel-dropopt' + (cur === "" ? " is-cur" : "") + '" data-v="" role="option">全部年份</div>' + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? " is-cur" : ""}" data-v="${esc(y)}" role="option">${y}</div>`).join("");
-  }
-  function sortOptionsHtml(cur) {
-    return SORT_OPTS.map((o) => `<div class="bz-bel-dropopt${cur === o.v ? " is-cur" : ""}" data-v="${o.v}" role="option">${o.label}</div>`).join("");
-  }
-  function segmentedHtml(sort) {
-    return `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) => `<button type="button" class="bz-segmented-btn${sort === o.v ? " is-on" : ""}" data-k="${o.v}" role="radio" aria-checked="${sort === o.v}">${o.label}</button>`).join("")}</div>`;
-  }
-  function kpisHtml(items, unit = "cny") {
-    const gone = items.filter(isExited);
-    const recover2 = gone.reduce(
-      (s, i) => s + (i.current_status === "已转卖" && Number(i.sold_price) > 0 ? Number(i.sold_price) : 0),
-      0
-    );
-    const kpi = (num2, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num2}</b><span>${esc(label)}</span></div>`;
-    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
-  }
-  function stampCount(items) {
-    return String(stockCount(items));
-  }
-  function mobStatsText(items, unit = "cny") {
-    return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
-  }
-  function emptyHtml(noMatch) {
-    return emptyHtmlStr(
-      ICON.empty,
-      noMatch ? "没有符合条件的物品" : "这里还没有物品",
-      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
-    );
-  }
-  function cellHtml(it, idx, unit = "cny") {
-    var _a2;
-    const gone = isExited(it);
-    const idle = it.current_status === "闲置";
-    const days = daysUsed(it);
-    const daily = dailyCostOf(it);
-    const key = statusKeyOf(it.current_status);
-    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
-    const dailyStr = trimDailyNum(daily);
-    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
-    return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
-    <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
-    <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
-    <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
-    <span class="bz-bel-name">${esc(it.name)}</span>
-    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0, unit)}</span>
-    <span class="bz-bel-mut">${mut}</span>
-  </div>`;
-  }
-  function gridHtml(items, view, unit = "cny", list) {
-    return `<div class="bz-bel-grid" data-bel-grid>${(list != null ? list : filtered(items, view)).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
-  }
-  function renderPanelView(root, items, view, hooks, unit = "cny") {
-    var _a2;
-    const q2 = (sel) => root.querySelector(sel);
-    const title = q2("[data-bel-herotitle]");
-    if (title) title.textContent = heroTitleText(view);
-    const sub = q2("[data-bel-herosub]");
-    if (sub) sub.textContent = heroSubText(items, view);
-    const chips = q2("[data-bel-chips]");
-    if (chips) chips.innerHTML = chipsHtml(items, view);
-    const mob = q2("[data-bel-mobstatus]");
-    if (mob) mob.innerHTML = mobChipsHtml(items, view);
-    view.year = resolveYear(items, view.year);
-    const yearSel = q2("[data-bel-year]");
-    if (yearSel) {
-      yearSel.querySelector(".bz-bel-select-label").textContent = view.year || "全部年份";
-      const menu = q2("[data-bel-yearmenu]");
-      if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
-    }
-    const wrap = q2("[data-bel-kpis]");
-    if (wrap) wrap.innerHTML = kpisHtml(items, unit);
-    const stampN = q2("[data-bel-stampn]");
-    if (stampN) stampN.textContent = stampCount(items);
-    const mobStats = q2("[data-bel-mobstats]");
-    if (mobStats) mobStats.textContent = mobStatsText(items, unit);
-    const sortHost = q2("[data-bel-sort]");
-    if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
-    const mobSortSel = q2("[data-bel-mobsortsel]");
-    if (mobSortSel) {
-      mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a2 = SORT_OPTS.find((o) => o.v === view.sort)) != null ? _a2 : SORT_OPTS[0]).label;
-      const menu = q2("[data-bel-mobsortmenu]");
-      if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
-    }
-    const content = q2("[data-bel-content]");
-    if (!content) return;
-    const list = filtered(items, view);
-    if (!list.length) {
-      const noMatch = !!view.q || view.status !== null || view.year !== "";
-      content.innerHTML = emptyHtml(noMatch);
-    } else {
-      content.innerHTML = gridHtml(items, view, unit, list);
-      const gridEl = content.querySelector("[data-bel-grid]");
-      const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
-      const rem = list.length % cols;
-      if (rem) gridEl.insertAdjacentHTML("beforeend", `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
-    }
-    hooks.mountIcons(content);
-  }
-  var init_render6 = __esm({
-    "src/belongings/layouts/poster/render.ts"() {
-      init_str();
-      init_shared3();
-      init_shared3();
-    }
-  });
-
-  // src/belongings/render.ts
-  var init_render7 = __esm({
-    "src/belongings/render.ts"() {
-      init_shared3();
-      init_render6();
-    }
-  });
-
-  // src/belongings/ai.ts
-  function buildCategoryPrompt(name, history2) {
-    const menu = AI_ICON_MENU.join(", ");
-    const hist = history2.length ? `我的历史分类（优先复用）：${history2.join("、")}` : "暂无历史分类。";
-    return [
-      "你是物品收纳助手。为下面的物品给出一个分类和一枚图标。",
-      `物品名称：${name}`,
-      hist,
-      "要求：",
-      "1. category：中文分类名，2-6 个字；若历史分类里有合适的就原样复用其一，否则自拟。",
-      `2. icon：只能从这个清单里选一个英文标识符：${menu}`,
-      '只输出 JSON 对象，格式：{"category":"分类名","icon":"清单中的标识符"}'
-    ].join("\n");
-  }
-  function parseCategorySuggestion(raw) {
-    var _a2, _b2;
-    let text = String(raw || "").trim();
-    const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fence) text = fence[1].trim();
-    let obj;
-    try {
-      obj = JSON.parse(text);
-    } catch (e) {
-      return null;
-    }
-    const category = splitEmojiCategory(String((_a2 = obj == null ? void 0 : obj.category) != null ? _a2 : "")).name.trim();
-    const icon = String((_b2 = obj == null ? void 0 : obj.icon) != null ? _b2 : "").trim();
-    if (!category || category.length > 16) return null;
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) {
-      return { category, icon: AI_FALLBACK_ICON };
-    }
-    return { category, icon };
-  }
-  async function aiSuggestCategory(name, history2) {
-    const ai = createAI();
-    const raw = await ai.json(buildCategoryPrompt(name, history2), {});
-    const parsed = parseCategorySuggestion(raw);
-    if (!parsed) throw new Error("返回格式无法解析");
-    return parsed;
-  }
-  var AI_ICON_MENU, AI_FALLBACK_ICON;
-  var init_ai2 = __esm({
-    "src/belongings/ai.ts"() {
-      init_ai();
-      init_emoji_icon_map();
-      AI_ICON_MENU = [
-        // 数码影音
-        "smartphone",
-        "laptop",
-        "monitor",
-        "watch",
-        "headphones",
-        "speaker",
-        "printer",
-        "camera",
-        "aperture",
-        "video",
-        "focus",
-        "projector",
-        "gamepad-2",
-        "keyboard",
-        "hard-drive",
-        "disc",
-        "plug",
-        "battery-charging",
-        "lightbulb",
-        "tv",
-        "router",
-        "signal",
-        "phone",
-        "computer",
-        // 家居日用
-        "bed",
-        "sofa",
-        "armchair",
-        "lamp",
-        "lamp-desk",
-        "fan",
-        "air-vent",
-        "refrigerator",
-        "microwave",
-        "cooking-pot",
-        "blinds",
-        "archive",
-        "library",
-        "trash-2",
-        "key-round",
-        "droplets",
-        "thermometer",
-        "package",
-        "box",
-        "brush-cleaning",
-        "shower-head",
-        "bath",
-        // 厨房餐茶
-        "utensils",
-        "coffee",
-        "cup-soda",
-        "wine",
-        "milk",
-        "chef-hat",
-        "flame",
-        "snowflake",
-        // 衣服饰品
-        "shirt",
-        "footprints",
-        "handbag",
-        "backpack",
-        "luggage",
-        "briefcase",
-        "glasses",
-        "gem",
-        "crown",
-        "sparkles",
-        "scissors",
-        // 文具乐玩
-        "book",
-        "book-open",
-        "notebook",
-        "pen-line",
-        "pencil",
-        "palette",
-        "paintbrush",
-        "guitar",
-        "piano",
-        "drum",
-        "mic",
-        "music",
-        "radio",
-        "puzzle",
-        "dices",
-        "toy-brick",
-        // 运动户外
-        "volleyball",
-        "dumbbell",
-        "person-standing",
-        "waves",
-        "fish",
-        "bike",
-        "tent",
-        "mountain",
-        "wrench",
-        "hammer",
-        "shovel",
-        "flashlight",
-        "compass",
-        "telescope",
-        // 交通
-        "car",
-        "bus",
-        "truck",
-        "train-front",
-        "plane",
-        "rocket",
-        "sailboat",
-        "ship",
-        "helicopter",
-        // 生命健康
-        "pill",
-        "syringe",
-        "stethoscope",
-        "bandage",
-        "leaf",
-        "flower",
-        "sprout",
-        "tree-pine",
-        "paw-print",
-        "dog",
-        "cat",
-        "bird",
-        "bug",
-        "shell"
-      ];
-      AI_FALLBACK_ICON = "package";
-    }
-  });
-
-  // src/belongings/ui.ts
-  var ui_exports4 = {};
-  __export(ui_exports4, {
-    belongingSettingsSchema: () => belongingSettingsSchema,
-    cleanupBelongings: () => cleanupBelongings,
-    closePanel: () => closePanel,
-    openBelongingsReportView: () => openBelongingsReportView,
-    openForm: () => openForm,
-    openPanel: () => openPanel,
-    resetBelongingsState: () => resetBelongingsState
-  });
-  function resetBelongingsState() {
-    M4.overlay = null;
-    M4.db = null;
-    M4.status = null;
-    M4.year = "";
-    M4.q = "";
-    M4.sort = "recent";
-    M4.renderFn = null;
-  }
-  function currencyUnit() {
-    const v = tryGetSettings().belongingsCurrency;
-    return v === "yuan" || v === "usd" || v === "none" || v === "cny" ? v : "cny";
-  }
-  function newItemStatus() {
-    return tryGetSettings().belongingsNewStatus === STATUS.idle.label ? STATUS.idle.label : STATUS.using.label;
-  }
-  function belongingSettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组与备忘录同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
-          // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
-          icon: "palette",
-          name: "外观",
-          rows: [
-            {
-              type: "choiceCards",
-              name: "面板布局",
-              binding: { key: "belSkin" },
-              options: [
-                { value: "poster", label: "大字报", prevClass: "bz-sp-prev-poster" }
-              ]
-            },
-            {
-              type: "choiceCards",
-              name: "面板主题",
-              binding: { key: "belSkinTheme" },
-              layoutKey: "belSkin",
-              options: [
-                { value: "warmwhite", label: "暖白", layout: "poster", prevClass: "bz-sp-prev-warmwhite" }
-              ]
-            }
-          ]
-        },
-        {
-          icon: "eye",
-          name: "显示",
-          rows: [
-            {
-              type: "select",
-              name: "默认状态筛选",
-              desc: "打开面板时选中的物品状态",
-              binding: { key: "belongingsDefaultStatus" },
-              // 选项从 STATUS_ORDER 派生（cons P3-7：key/label 不再手抄第二份；「全部」置顶）
-              options: [
-                { value: "", label: "全部" },
-                ...STATUS_ORDER.map((s) => ({ value: s.key, label: s.label }))
-              ]
-            },
-            {
-              type: "select",
-              name: "默认排序",
-              desc: "打开面板时物品的排列方式",
-              binding: { key: "belongingsDefaultSort" },
-              options: [
-                { value: "recent", label: "最近购入" },
-                { value: "price", label: "投入最高" },
-                { value: "daily", label: "日均最高" }
-              ]
-            },
-            {
-              type: "select",
-              name: "金额单位",
-              desc: "价格与统计的金额显示方式",
-              binding: { key: "belongingsCurrency" },
-              options: [
-                { value: "cny", label: "￥" },
-                { value: "yuan", label: "元" },
-                { value: "usd", label: "$" },
-                { value: "none", label: "无符号" }
-              ]
-            }
-          ]
-        },
-        {
-          icon: "pencil-line",
-          name: "记一笔",
-          rows: [
-            {
-              type: "select",
-              name: "新增物品默认状态",
-              desc: "记一笔时物品的初始状态",
-              binding: { key: "belongingsNewStatus" },
-              // 在库两态（出离态不作为新记默认；选项随 STATUS 单源派生，cons P3-7）
-              options: [STATUS.using, STATUS.idle].map((s) => ({ value: s.label, label: s.label }))
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function itemList() {
-    return M4.db ? Object.values(M4.db.items) : [];
-  }
-  function itemById(id) {
-    var _a2;
-    return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
-  }
-  function ensureBelongingsEsc() {
-    registerPanelEsc(
-      "bz-bel",
-      () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
-      () => {
-        if (document.querySelector(".bz-bel-form")) {
-          requestCloseBelForm();
-          return;
-        }
-        if (document.querySelector(".bz-bel-detail")) {
-          closeBelDetail();
-          return;
-        }
-        if (document.querySelector(".bz-bel-report-mask")) {
-          closeBelReport();
-          return;
-        }
-        closePanel();
-      }
-    );
-  }
-  async function openPanel() {
-    if (M4.overlay) {
-      closePanel();
-      return;
-    }
-    if (opening) return;
-    opening = true;
-    try {
-      await openPanelInner();
-    } catch (e) {
-      notifyActionError(e, "归物本数据加载", { onRetry: () => void openPanel() });
-    } finally {
-      opening = false;
-    }
-  }
-  async function openPanelInner() {
-    const st = tryGetSettings().belongingsDefaultStatus;
-    M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
-    const srt = tryGetSettings().belongingsDefaultSort;
-    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M4.year = "";
-    M4.db = await loadDatabase();
-    const overlay2 = document.createElement("div");
-    overlay2.className = "bz-panel-overlay";
-    overlay2.innerHTML = panelHtml();
-    document.body.appendChild(overlay2);
-    topifyZ(overlay2);
-    M4.overlay = overlay2;
-    M4.renderFn = () => renderAll2();
-    mountIcons(overlay2);
-    ensureBelongingsEsc();
-    const closeDrops = () => {
-      overlay2.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
-    };
-    const onDocClick = (e) => {
-      var _a2;
-      const t = e.target;
-      const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
-      if (trig) {
-        const wrap = trig.parentElement;
-        const wasOpen = wrap.classList.contains("is-open");
-        closeDrops();
-        if (!wasOpen) wrap.classList.add("is-open");
-        return;
-      }
-      const opt = t.closest(".bz-bel-dropopt");
-      if (opt) {
-        closeDrops();
-        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
-        if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
-        else M4.sort = v;
-        renderAll2();
-        return;
-      }
-      closeDrops();
-    };
-    const onDropKey = (e) => {
-      const t = e.target;
-      if ((e.key === "Enter" || e.key === " ") && t.closest(".bz-bel-select")) {
-        e.preventDefault();
-        t.click();
-      }
-    };
-    document.addEventListener("click", onDocClick);
-    overlay2.addEventListener("keydown", onDropKey);
-    dropDocClick = onDocClick;
-    overlay2.addEventListener("click", (e) => {
-      const t = e.target;
-      if (e.target === overlay2) {
-        closePanel();
-        return;
-      }
-      if (t.closest("[data-bel-add]")) {
-        void openForm(null);
-        return;
-      }
-      if (t.closest("[data-bel-report]")) {
-        void openBelongingsReportView();
-        return;
-      }
-      if (t.closest("[data-bel-close]")) {
-        closePanel();
-        return;
-      }
-      const chip2 = t.closest("[data-bel-st]");
-      if (chip2) {
-        applyStatusFilter(chip2.dataset.belSt);
-        return;
-      }
-      const segBtn = t.closest(".bz-segmented-btn");
-      if (segBtn) {
-        M4.sort = segBtn.dataset.k;
-        renderAll2();
-        return;
-      }
-      const kpi = t.closest("[data-bel-statclick]");
-      if (kpi) {
-        const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
-        renderAll2();
-        return;
-      }
-    });
-    const bindSearch = (inp) => {
-      const debounced = debounce(() => {
-        if (M4.overlay !== overlay2) return;
-        M4.q = inp.value.trim();
-        renderAll2();
-      }, SEARCH_DEBOUNCE_MS2);
-      const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
-      const syncClear = () => {
-        if (clearBtn) clearBtn.hidden = !inp.value;
-      };
-      const clearSearch = (refocus) => {
-        debounced.cancel();
-        inp.value = "";
-        M4.q = "";
-        syncClear();
-        renderAll2();
-        if (refocus) inp.focus();
-      };
-      syncClear();
-      clearBtn == null ? void 0 : clearBtn.addEventListener("click", () => clearSearch(true));
-      inp.addEventListener("input", () => {
-        syncClear();
-        debounced();
-      });
-      inp.addEventListener("keydown", (e) => {
-        if (e.key !== "Escape" || !inp.value) return;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        clearSearch(false);
-        inp.blur();
-      });
-    };
-    bindSearch(overlay2.querySelector("[data-bel-search]"));
-    const content = overlay2.querySelector("[data-bel-content]");
-    content.addEventListener("click", (e) => {
-      const cell = e.target.closest("[data-bel-id]");
-      if (!cell) return;
-      e.stopPropagation();
-      const it = itemById(cell.dataset.belId);
-      if (!it) return;
-      if (isMobileEnv()) openMobSheet(it);
-      else openBelDetail(it);
-    });
-    content.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const cell = e.target.closest("[data-bel-id]");
-      if (!cell) return;
-      e.preventDefault();
-      const it = itemById(cell.dataset.belId);
-      if (!it) return;
-      if (isMobileEnv()) openMobSheet(it);
-      else openBelDetail(it);
-    });
-    content.addEventListener("contextmenu", (e) => {
-      const cell = e.target.closest("[data-bel-id]");
-      if (!cell || isMobileEnv()) return;
-      e.preventDefault();
-      const it = itemById(cell.dataset.belId);
-      if (it) openRowMenuAt(it, e.clientX, e.clientY);
-    });
-    longPress(
-      content,
-      (ev) => {
-        var _a2, _b2;
-        const cell = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]");
-        if (!cell) return;
-        const it = itemById(cell.dataset.belId);
-        if (it) openMobSheet(it);
-      },
-      void 0,
-      (ev) => {
-        var _a2, _b2;
-        return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]"));
-      }
-    );
-    renderAll2();
-    startAutoRefresh();
-    observeTheme();
-  }
-  function closePanel() {
-    stopAutoRefresh();
-    requestCloseBelForm();
-    closeItemMenu();
-    closeBelDetail();
-    closeBelReport();
-    if (bodyThemeObserver) {
-      bodyThemeObserver.disconnect();
-      bodyThemeObserver = null;
-    }
-    if (dropDocClick) {
-      document.removeEventListener("click", dropDocClick);
-      dropDocClick = null;
-    }
-    if (M4.overlay) {
-      M4.overlay.remove();
-      M4.overlay = null;
-    }
-    M4.renderFn = null;
-    M4.db = null;
-    M4.q = "";
-  }
-  function cleanupBelongings() {
-    closePanel();
-    if (bodyThemeObserver) {
-      bodyThemeObserver.disconnect();
-      bodyThemeObserver = null;
-    }
-    unloadBelReport();
-    resetBelongingsState();
-  }
-  function startAutoRefresh() {
-    stopAutoRefresh();
-    const app = getApp();
-    const filePath = getDataFilePath();
-    const off = app.vault.on("modify", (file) => {
-      if ((file == null ? void 0 : file.path) !== filePath) return;
-      if (selfWritePending > 0) return;
-      void (async () => {
-        var _a2;
-        try {
-          M4.db = await loadDatabase();
-          (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-        } catch (e) {
-          notifyActionError(e, "归物本数据自动刷新", {
-            onRetry: () => {
-              void (async () => {
-                var _a3;
-                try {
-                  M4.db = await loadDatabase();
-                  (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
-                } catch (e2) {
-                }
-              })();
-            }
-          });
-        }
-      })();
-    });
-    autoRefreshOff = () => app.vault.offref(off);
-  }
-  function stopAutoRefresh() {
-    if (autoRefreshOff) {
-      try {
-        autoRefreshOff();
-      } catch (e) {
-      }
-      autoRefreshOff = null;
-    }
-  }
-  function observeTheme() {
-    if (bodyThemeObserver) {
-      bodyThemeObserver.disconnect();
-      bodyThemeObserver = null;
-    }
-    const themeOf = () => {
-      const cls = document.body.className.split(" ").find((c) => THEME_CLASSES.has(c));
-      return cls || "";
-    };
-    let prev = themeOf();
-    bodyThemeObserver = new MutationObserver(() => {
-      var _a2;
-      const now = themeOf();
-      if (now !== prev) {
-        prev = now;
-        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-      }
-    });
-    bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-  }
-  async function saveAndRender() {
-    var _a2;
-    if (!M4.db) return;
-    selfWritePending++;
-    try {
-      await saveDatabase(M4.db);
-    } finally {
-      selfWritePending--;
-    }
-    (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-  }
-  function renderAll2() {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
-    if (!panel2) return;
-    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
-  }
-  function applyStatusFilter(k) {
-    if (k === "__all") M4.status = null;
-    else M4.status = M4.status === k ? null : k;
-    renderAll2();
-  }
-  async function openBelongingsReportView() {
-    ensureBelongingsEsc();
-    let items;
-    if (M4.db) {
-      items = itemList();
-    } else {
-      try {
-        items = Object.values((await loadDatabase()).items);
-      } catch (e) {
-        notifyActionError(e, "归物本数据加载", { onRetry: () => void openBelongingsReportView() });
-        return;
-      }
-    }
-    openBelReport(items, currencyUnit(), { onAdd: () => {
-      void openForm(null);
-    } });
-  }
-  function closeBelDetail() {
-    belDetailClose == null ? void 0 : belDetailClose();
-    belDetailClose = null;
-  }
-  function openBelDetail(it) {
-    var _a2, _b2;
-    closeBelDetail();
-    const host = document.createElement("div");
-    host.innerHTML = belDetailHtml(it, currencyUnit());
-    ensureBelongingsEsc();
-    const { mask, close } = uiModal({
-      content: host.firstElementChild,
-      className: "bz-bel-detail",
-      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
-      onClose: () => {
-        belDetailClose = null;
-      }
-    });
-    belDetailClose = close;
-    mountIcons(mask);
-    const acts = mask.querySelector("[data-bd-acts]");
-    const drawActs = () => {
-      const cur = itemById(it.id);
-      if (!cur) return;
-      acts.innerHTML = flowBtnsHtml(cur.current_status);
-    };
-    drawActs();
-    acts.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-bd-flow]");
-      if (!b) return;
-      const cur = itemById(it.id);
-      if (!cur) {
-        closeBelDetail();
-        return;
-      }
-      void (async () => {
-        await applyFlowWithUndo(cur, b.dataset.bdFlow);
-        const now = itemById(it.id);
-        if (!now) {
-          closeBelDetail();
-          return;
-        }
-        openBelDetail(now);
-      })();
-    });
-    (_a2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a2.addEventListener("click", () => {
-      const cur = itemById(it.id);
-      if (cur) openForm(cur);
-    });
-    (_b2 = mask.querySelector("[data-bd-del]")) == null ? void 0 : _b2.addEventListener("click", () => {
-      const cur = itemById(it.id);
-      if (cur) void deleteItem(cur);
-    });
-  }
-  function sheetHeadEl2(it) {
-    const holder = document.createElement("div");
-    holder.innerHTML = sheetHeadHtml(it, currencyUnit());
-    mountIcons(holder);
-    return holder.firstElementChild;
-  }
-  async function applyFlowWithUndo(it, s) {
-    var _a2, _b2;
-    const cur = itemById(it.id);
-    if (!cur) {
-      notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-      return;
-    }
-    const prevStatus = cur.current_status;
-    const prevExit = cur.exit_date;
-    cur.current_status = s;
-    if (isExited(cur)) {
-      if (!exitedStatus(prevStatus)) cur.exit_date = todayStr();
-    } else if (cur.exit_date != null) {
-      cur.exit_date = null;
-    }
-    cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-    try {
-      await saveAndRender();
-    } catch (e) {
-      notifySaveError(e, "状态流转");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
-      return;
-    }
-    emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
-    notifyUndo(`「${cur.name}」已标记为${s}`, () => {
-      void (async () => {
-        var _a3;
-        try {
-          if (!M4.db) M4.db = await loadDatabase();
-          const now = itemById(it.id);
-          if (!now) {
-            notice("该物品已被外部变更删除，无法撤销", "warning");
-            return;
-          }
-          now.current_status = prevStatus;
-          if (prevExit != null) now.exit_date = prevExit;
-          else if (now.exit_date != null) now.exit_date = null;
-          now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-          await saveAndRender();
-          emitDomainEvent("belongings", { kind: "status", title: now.name, status: prevStatus });
-          notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
-        } catch (e) {
-          notifySaveError(e, "撤销状态");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
-        }
-      })();
-    }, { type: "restore" });
-  }
-  function buildActions(it, rebuild) {
-    return actionSpecs(it).map((sp) => ({
-      icon: sp.icon,
-      label: sp.label,
-      keepOpen: sp.keepOpen,
-      kind: sp.danger ? "danger" : void 0,
-      onClick: () => {
-        if (sp.act === "flow" && sp.status) {
-          void (async () => {
-            await applyFlowWithUndo(it, sp.status);
-            rebuild();
-          })();
-          return;
-        }
-        if (sp.act === "edit") {
-          openForm(it);
-          return;
-        }
-        void deleteItem(it);
-      }
-    }));
-  }
-  function makeSheetRebuild(it) {
-    const rebuild = () => {
-      const it2 = itemById(it.id);
-      if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
-    };
-    return rebuild;
-  }
-  function openRowMenuAt(it, x, y) {
-    const rebuild = makeSheetRebuild(it);
-    openItemMenu(x, y, buildActions(it, rebuild), true, "bz-bel-menu");
-    resetItemMenuClickGuard();
-  }
-  function openMobSheet(it) {
-    const rebuild = makeSheetRebuild(it);
-    openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
-  }
-  async function deleteItem(it) {
-    var _a2, _b2;
-    if (!M4.db) return;
-    if (!M4.db.items[it.id]) {
-      notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-      return;
-    }
-    const snapshot2 = { ...M4.db.items[it.id] };
-    delete M4.db.items[it.id];
-    closeBelDetail();
-    try {
-      await saveAndRender();
-    } catch (e) {
-      M4.db.items[snapshot2.id] = snapshot2;
-      notifySaveError(e, "删除物品");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
-      return;
-    }
-    emitDomainEvent("belongings", { kind: "delete", title: it.name });
-    notifyUndo(`已删除「${it.name}」`, () => {
-      void (async () => {
-        var _a3;
-        try {
-          if (!M4.db) M4.db = await loadDatabase();
-          if (M4.db.items[snapshot2.id]) {
-            notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
-            return;
-          }
-          M4.db.items[snapshot2.id] = snapshot2;
-          await saveAndRender();
-          notice(`已恢复「${snapshot2.name}」`, "success");
-        } catch (e) {
-          notifySaveError(e, "撤销删除");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
-        }
-      })();
-    }, { type: "restore" });
-  }
-  function belFormStatusNow(mask) {
-    var _a2;
-    return ((_a2 = mask.querySelector("[data-status].is-on")) == null ? void 0 : _a2.dataset.status) || "";
-  }
-  function belFormDirty() {
-    if (!_belBaseline) return false;
-    const pop = document.querySelector(".bz-bel-form");
-    if (!pop) return false;
-    const g = (id) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = pop.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
-    };
-    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(pop) !== _belBaseline.status;
-  }
-  function closeBelForm() {
-    _belBaseline = null;
-    _belFormTargetId = null;
-    if (belFormMask) unregisterSheetCompanion(belFormMask);
-    belFormMask = null;
-    belFormClose == null ? void 0 : belFormClose();
-    belFormClose = null;
-  }
-  function requestCloseBelForm() {
-    if (belFormDirty()) confirmDiscard(() => closeBelForm(), void 0, "bz-bel-flow-dialog");
-    else closeBelForm();
-  }
-  function openForm(it) {
-    var _a2, _b2, _c, _d, _e;
-    const existing = document.querySelector(".bz-bel-form");
-    if (existing) {
-      const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
-      if (_belFormTargetId === targetId) {
-        (_b2 = existing.querySelector("input, textarea")) == null ? void 0 : _b2.focus();
-      } else {
-        notice("已有打开的表单，请先保存或关闭后再编辑其他物品", "warning");
-      }
-      return;
-    }
-    if (!M4.db) {
-      void loadDatabase().then((db) => {
-        M4.db = db;
-        openForm(it);
-      }).catch((e) => {
-        notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
-      });
-      return;
-    }
-    const init = belFormInit(it);
-    ensureBelongingsEsc();
-    const host = document.createElement("div");
-    host.innerHTML = belFormHtml(it, currencyUnit());
-    const { mask, close } = uiModal({
-      content: host.firstElementChild,
-      className: "bz-bel-form",
-      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
-      requestClose: () => requestCloseBelForm(),
-      onClose: () => {
-        belFormClose = null;
-      }
-    });
-    belFormClose = close;
-    belFormMask = mask;
-    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
-    mountIcons(mask);
-    const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
-    if (it && sheetOpen) registerSheetCompanion(mask);
-    _belBaseline = {
-      name: (_d = it == null ? void 0 : it.name) != null ? _d : "",
-      cat: init.catVal,
-      price: init.priceVal,
-      date: init.dateVal,
-      status: (it == null ? void 0 : it.current_status) || newItemStatus(),
-      desc: init.descVal,
-      exitDate: init.exitDateVal,
-      soldPrice: init.soldPriceVal
-    };
-    const catInput = mask.querySelector("#bm-cat");
-    let formIcon = (it == null ? void 0 : it.icon) || null;
-    const iconChip = mask.querySelector("#bm-icon");
-    const drawIconChip = () => {
-      iconChip.replaceChildren();
-      iconChip.hidden = !formIcon;
-      if (formIcon) iconChip.appendChild(uiIconSpan(formIcon));
-    };
-    drawIconChip();
-    const historyIconOf = (cat) => {
-      var _a3, _b3;
-      return ((_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
-    };
-    uiSuggest({
-      anchor: catInput,
-      source: () => {
-        var _a3, _b3;
-        return (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
-      },
-      max: 60,
-      iconOf: (raw) => {
-        const name = historyIconOf(raw);
-        return name ? uiIconSpan(name) : "";
-      },
-      onPick: (raw) => {
-        const name = historyIconOf(raw);
-        if (name) {
-          formIcon = name;
-          drawIconChip();
-        }
-      }
-    });
-    const statusPick = mask.querySelector("#bm-status");
-    const exitRow = mask.querySelector("#bm-exit");
-    const soldField = mask.querySelector("#bm-soldfield");
-    let curStatus = (it == null ? void 0 : it.current_status) || newItemStatus();
-    const syncExitRow = () => {
-      const exited = exitedStatus(curStatus);
-      exitRow.hidden = !exited;
-      soldField.hidden = curStatus !== STATUS.sold.label;
-    };
-    const drawStatus = () => {
-      statusPick.innerHTML = statusPickHtml(curStatus);
-      mountIcons(statusPick);
-      statusPick.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => {
-        curStatus = b.dataset.status;
-        drawStatus();
-      }));
-      syncExitRow();
-    };
-    drawStatus();
-    const errEl = mask.querySelector("#bm-err");
-    const fail = (msg) => {
-      errEl.textContent = msg;
-    };
-    const saveBtn = mask.querySelector("#bm-save");
-    let saving = false;
-    const aiBtn = mask.querySelector("#bm-ai");
-    aiBtn.addEventListener("click", () => {
-      if (aiBtn.disabled) return;
-      const aiName = mask.querySelector("#bm-name").value.trim();
-      if (!aiName) {
-        fail("先填物品名称，AI 才能归类");
-        return;
-      }
-      aiBtn.disabled = true;
-      aiBtn.classList.add("is-busy");
-      void (async () => {
-        var _a3, _b3, _c2;
-        try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
-          catInput.value = sug.category;
-          formIcon = sug.icon;
-          drawIconChip();
-          errEl.textContent = "";
-        } catch (e) {
-          fail("AI 归类失败：" + ((e == null ? void 0 : e.message) || "未知错误"));
-        } finally {
-          aiBtn.disabled = false;
-          aiBtn.classList.remove("is-busy");
-        }
-      })();
-    });
-    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
-    saveBtn.addEventListener("click", () => {
-      if (saving) return;
-      const name = mask.querySelector("#bm-name").value.trim();
-      const price = parseFloat(mask.querySelector("#bm-price").value);
-      const date = mask.querySelector("#bm-date").value;
-      if (!name) {
-        fail("请输入物品名称");
-        return;
-      }
-      if (!Number.isFinite(price) || price < 0) {
-        fail("请输入有效的价格");
-        return;
-      }
-      if (price > MAX_PRICE) {
-        fail("价格超出可记录范围（上限一万亿），请检查是否多输了几位");
-        return;
-      }
-      if (!date) {
-        fail("请选择购买日期");
-        return;
-      }
-      const category = catInput.value.trim();
-      if (!category) {
-        fail("请选择或输入分类");
-        return;
-      }
-      const exited = exitedStatus(curStatus);
-      const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
-      const exitDate = exited ? exitVal || todayStr() : "";
-      if (exitDate && exitDate < date) {
-        fail("出离日期不能早于购买日期");
-        return;
-      }
-      const soldRaw = curStatus === STATUS.sold.label ? mask.querySelector("#bm-soldprice").value.trim() : "";
-      let soldPrice = null;
-      if (soldRaw !== "") {
-        const sp = parseFloat(soldRaw);
-        if (!Number.isFinite(sp) || sp < 0) {
-          fail("请输入有效的售价");
-          return;
-        }
-        if (sp > MAX_PRICE) {
-          fail("售价超出可记录范围（上限一万亿），请检查是否多输了几位");
-          return;
-        }
-        soldPrice = Math.round(sp * 100) / 100;
-      }
-      const desc = mask.querySelector("#bm-desc").value.trim();
-      saving = true;
-      saveBtn.disabled = true;
-      saveBtn.textContent = "保存中…";
-      void (async () => {
-        try {
-          if (!M4.db) M4.db = await loadDatabase();
-          if (it) {
-            const cur = itemById(it.id);
-            if (!cur) {
-              notice("该物品已被外部变更删除，本次保存未写入", "warning");
-              closeItemMenu();
-              closeBelForm();
-              return;
-            }
-            const snapshot2 = { ...cur };
-            cur.name = name;
-            cur.category = category;
-            cur.icon = formIcon;
-            cur.purchase_price = Math.round(price * 100) / 100;
-            cur.purchase_date = date;
-            cur.current_status = curStatus;
-            cur.description = desc;
-            if (exited) cur.exit_date = exitDate;
-            else if (cur.exit_date != null) cur.exit_date = null;
-            if (curStatus === STATUS.sold.label) cur.sold_price = soldPrice;
-            else if (cur.sold_price != null) cur.sold_price = null;
-            cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-            await saveAndRender();
-            if (document.querySelector(".bz-bel-detail")) {
-              const redrew = itemById(it.id);
-              if (redrew) openBelDetail(redrew);
-            }
-            if (isBelReportOpen()) void openBelongingsReportView();
-            emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
-          } else {
-            if (!M4.db) throw new Error("数据库未加载");
-            const newItem = {
-              // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
-              id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-              name,
-              category,
-              purchase_price: Math.round(price * 100) / 100,
-              purchase_date: date,
-              current_status: curStatus,
-              description: desc,
-              created_date: (/* @__PURE__ */ new Date()).toISOString(),
-              last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-              ...exited ? { exit_date: exitDate } : {},
-              ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
-              ...formIcon ? { icon: formIcon } : {}
-            };
-            M4.db.items[newItem.id] = newItem;
-            await saveAndRender();
-            if (isBelReportOpen()) void openBelongingsReportView();
-            emitDomainEvent("belongings", { kind: "add", item: newItem });
-          }
-          closeItemMenu();
-          closeBelForm();
-        } catch (e) {
-          notifySaveError(e);
-          saving = false;
-          saveBtn.disabled = false;
-          saveBtn.textContent = it ? "保存" : "添加";
-        }
-      })();
-    });
-    bindFormSubmit(mask, () => saveBtn.click());
-  }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M4, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
-  var init_ui6 = __esm({
-    "src/belongings/ui.ts"() {
-      init_notice();
-      init_z_order();
-      init_app();
-      init_esc_manager();
-      init_mobile();
-      init_utils();
-      init_dom();
-      init_settings_provider();
-      init_flow_dialog();
-      init_ui();
-      init_modal();
-      init_item_actions();
-      init_domain_bus();
-      init_belongings_source();
-      init_data6();
-      init_report();
-      init_render7();
-      init_ai2();
-      THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
-      SEARCH_DEBOUNCE_MS2 = 180;
-      M4 = {
-        overlay: null,
-        db: null,
-        status: null,
-        year: "",
-        q: "",
-        sort: "recent",
-        renderFn: null
-      };
-      dropDocClick = null;
-      DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
-      autoRefreshOff = null;
-      selfWritePending = 0;
-      bodyThemeObserver = null;
-      opening = false;
-      belDetailClose = null;
-      _belBaseline = null;
-      _belFormTargetId = null;
-      belFormClose = null;
-      belFormMask = null;
     }
   });
 
@@ -23824,884 +16019,10 @@ ${countsToText(s.missing)}
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
-  var init_constants2 = __esm({
+  var init_constants = __esm({
     "src/clipbook/constants.ts"() {
       init_str();
       init_utils();
-    }
-  });
-
-  // src/clipbook/news-data.ts
-  function getNewsFilePath() {
-    return storageFile("news.json");
-  }
-  function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
-  }
-  function parseRssFeeds(raw) {
-    var _a2, _b2;
-    if (!Array.isArray(raw)) return [];
-    const out = [];
-    for (const it of raw) {
-      if (!it || typeof it !== "object") continue;
-      const url = String((_a2 = it.url) != null ? _a2 : "").trim();
-      if (!url) continue;
-      const title = String((_b2 = it.title) != null ? _b2 : "").trim();
-      out.push(title ? { url, title } : { url });
-    }
-    return out;
-  }
-  function looksLikeFeedXml(xml) {
-    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
-  }
-  function extractFeedTitleFromXml(xml) {
-    const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-    if (!m) return null;
-    const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
-    return t || null;
-  }
-  function normalizeRssFeedUrl(text) {
-    const t = String(text || "").trim();
-    return /^https?:\/\/\S+$/i.test(t) ? t : null;
-  }
-  function parseBilibiliUpInfo(raw) {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-    const out = {};
-    for (const [uid, v] of Object.entries(raw)) {
-      if (!v || typeof v !== "object") continue;
-      const info = {};
-      if (v.name) info.name = String(v.name);
-      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
-      out[uid] = info;
-    }
-    return out;
-  }
-  function parseBilibiliMaxItems(raw) {
-    const n = Math.floor(Number(raw));
-    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-  }
-  function parseBilibiliCookie(raw) {
-    return typeof raw === "string" ? raw.trim() : "";
-  }
-  function normalizeFetchIntervalMin(raw) {
-    const n = Math.floor(Number(raw));
-    return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
-  }
-  function wrapArrayToNewsData(articles) {
-    const data = emptyData();
-    data.articles = Array.isArray(articles) ? articles : [];
-    return data;
-  }
-  function mergeStatsInto(data, oldStats) {
-    if (statsHasData(data.stats)) return data;
-    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
-    if (!s) return data;
-    return {
-      ...data,
-      stats: {
-        totalRead: Number(s.totalRead) || 0,
-        totalSaved: Number(s.totalSaved) || 0,
-        totalSkipped: Number(s.totalSkipped) || 0,
-        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
-        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
-      }
-    };
-  }
-  function statsHasData(stats) {
-    if (!stats || typeof stats !== "object") return false;
-    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
-  }
-  function parseNewsFileContent(raw) {
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      return null;
-    }
-    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
-    if (parsed && typeof parsed === "object") {
-      const obj = parsed;
-      return {
-        articles: Array.isArray(obj.articles) ? obj.articles : [],
-        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
-        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
-        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
-        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
-        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
-        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
-        rssFeeds: parseRssFeeds(obj.rssFeeds),
-        lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
-        fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin)
-      };
-    }
-    return null;
-  }
-  async function readNewsData() {
-    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
-    let corrupt = false;
-    let readThrew = false;
-    const parsed = await jsonFileStore(getNewsFilePath(), {
-      defaultValue: () => emptyData(),
-      onCorrupt: () => {
-        corrupt = true;
-        return false;
-      }
-    }).read().then(
-      (v) => v,
-      () => {
-        readThrew = true;
-        return null;
-      }
-    );
-    if (readThrew) return { ok: false, missing: false, data: emptyData(), corrupt: false };
-    if (corrupt || parsed === null) return { ok: false, missing: false, data: emptyData(), corrupt: true };
-    const content = parseNewsFileContent(JSON.stringify(parsed));
-    if (!content) return { ok: false, missing: false, data: emptyData(), corrupt: true };
-    return { ok: true, missing, data: content, corrupt: false };
-  }
-  async function writeNewsData(data) {
-    await jsonFileStore(getNewsFilePath()).write(data);
-  }
-  async function writeNewsDataMerged(intent) {
-    var _a2;
-    const res = await readNewsData();
-    if (!res.ok) return;
-    const base = res.data;
-    const next = { ...base };
-    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
-      const patchList = intent.set.articles || [];
-      const removeKeys = new Set(intent.removeArticleKeys || []);
-      const patchByKey = /* @__PURE__ */ new Map();
-      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
-      const merged = [];
-      const seen = /* @__PURE__ */ new Set();
-      for (const a of base.articles || []) {
-        const k = articleKeyOf(a);
-        if (removeKeys.has(k)) continue;
-        seen.add(k);
-        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
-      }
-      for (const a of patchList) {
-        const k = articleKeyOf(a);
-        if (!seen.has(k)) {
-          merged.push(a);
-          seen.add(k);
-        }
-      }
-      next.articles = merged;
-    }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin"]) {
-      if (intent.set[seg] !== void 0) {
-        next[seg] = intent.set[seg];
-      }
-    }
-    if (intent.patchBilibiliUpInfo) {
-      next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent.patchBilibiliUpInfo };
-    }
-    if (intent.patchRssFeedTitles) {
-      const titles = intent.patchRssFeedTitles;
-      next.rssFeeds = (next.rssFeeds || []).map(
-        (f) => titles[f.url] !== void 0 ? { ...f, title: titles[f.url] } : f
-      );
-    }
-    await writeNewsData(next);
-  }
-  function parseUidFromText(text) {
-    const t = String(text || "").trim();
-    if (!t) return null;
-    const pure = t.match(/^\d{1,10}$/);
-    if (pure) return pure[0];
-    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
-    if (space) return space[1];
-    return null;
-  }
-  function parseBvidFromText(text) {
-    const t = String(text || "").trim();
-    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
-    return m ? m[1] : null;
-  }
-  async function resolveUidFromInputDetailed(text) {
-    var _a2;
-    const local = parseUidFromText(text);
-    if (local) return { uid: local, networkFailed: false };
-    const bvid = parseBvidFromText(text);
-    if (!bvid) return { uid: null, networkFailed: false };
-    const body = await httpGetText(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
-      timeoutMs: 1e4,
-      fetchImpl: requestUrlAsFetch()
-    });
-    if (body === null) return { uid: null, networkFailed: true };
-    try {
-      const json = JSON.parse(body);
-      const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
-      return { uid: mid || null, networkFailed: false };
-    } catch (e) {
-      return { uid: null, networkFailed: false };
-    }
-  }
-  async function migrateLegacyStats(data) {
-    if (statsHasData(data.stats)) return data;
-    const app = getApp();
-    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
-    if (!af) return data;
-    try {
-      const raw = await app.vault.read(af);
-      const old = JSON.parse(raw);
-      const merged = mergeStatsInto(data, old);
-      return merged === data ? data : merged;
-    } catch (e) {
-      return data;
-    }
-  }
-  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
-    const DAY = 24 * 60 * 60 * 1e3;
-    const kept = [];
-    for (const a of articles) {
-      if (!a || a.read !== true) {
-        kept.push(a);
-        continue;
-      }
-      const state3 = a.state === "saved" ? "saved" : "skipped";
-      const days = state3 === "saved" ? savedDays : skippedDays;
-      if (!Number.isFinite(days) || days <= 0) {
-        kept.push(a);
-        continue;
-      }
-      const t = new Date(a.fetchedAt || a.date || "").getTime();
-      if (!Number.isFinite(t)) {
-        kept.push(a);
-        continue;
-      }
-      if (now - t > days * DAY) continue;
-      kept.push(a);
-    }
-    return kept;
-  }
-  function normalizeRetentionDays(v) {
-    const n = Number(String(v || "").trim());
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }
-  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN;
-  var init_news_data = __esm({
-    "src/clipbook/news-data.ts"() {
-      init_app();
-      init_storage();
-      init_http();
-      init_constants2();
-      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
-      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
-      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
-      FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
-      DEFAULT_FETCH_INTERVAL_MIN = 30;
-    }
-  });
-
-  // src/clipbook/write-queue.ts
-  function enqueueNewsWrite(op) {
-    return enqueueFileTask(getNewsFilePath(), op);
-  }
-  var init_write_queue = __esm({
-    "src/clipbook/write-queue.ts"() {
-      init_storage();
-      init_news_data();
-    }
-  });
-
-  // src/clipbook/news-source-settings.ts
-  var news_source_settings_exports = {};
-  __export(news_source_settings_exports, {
-    addBilibiliUp: () => addBilibiliUp,
-    addRssFeed: () => addRssFeed,
-    emptyDataSourceState: () => emptyDataSourceState,
-    readDataSourceState: () => readDataSourceState,
-    removeBilibiliUp: () => removeBilibiliUp,
-    removeRssFeed: () => removeRssFeed,
-    writeBilibiliCookie: () => writeBilibiliCookie,
-    writeBilibiliMaxItems: () => writeBilibiliMaxItems,
-    writeFetchInterval: () => writeFetchInterval,
-    writeSources: () => writeSources
-  });
-  function emptyDataSourceState(exists = false) {
-    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
-  }
-  async function readDataSourceState() {
-    const res = await readNewsData();
-    if (res.missing) {
-      return emptyDataSourceState(false);
-    }
-    if (!res.ok) {
-      return emptyDataSourceState(true);
-    }
-    return {
-      exists: true,
-      sources: { ...res.data.sources },
-      bilibiliUps: [...res.data.bilibiliUps],
-      bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
-      bilibiliMaxItems: res.data.bilibiliMaxItems,
-      bilibiliCookie: res.data.bilibiliCookie,
-      totalArticles: res.data.articles.length,
-      rssFeeds: [...res.data.rssFeeds],
-      lastFetchAt: res.data.lastFetchAt,
-      fetchIntervalMin: res.data.fetchIntervalMin
-    };
-  }
-  async function writeSources(sources) {
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { sources: { ...sources } } });
-      return true;
-    });
-  }
-  async function addBilibiliUp(uid) {
-    const id = String(uid || "").trim();
-    if (!id) return "invalid";
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return "read-failed";
-      if (res.data.bilibiliUps.includes(id)) return "exists";
-      await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
-      return "added";
-    });
-  }
-  async function writeBilibiliMaxItems(v) {
-    const n = Math.floor(Number(v));
-    const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
-      return true;
-    });
-  }
-  async function writeBilibiliCookie(cookie) {
-    const c = String(cookie || "").trim();
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { bilibiliCookie: c } });
-      return true;
-    });
-  }
-  async function writeFetchInterval(v) {
-    const n = normalizeFetchIntervalMin(v);
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
-      return true;
-    });
-  }
-  async function addRssFeed(url, title) {
-    const u = normalizeRssFeedUrl(url);
-    if (!u) return "invalid";
-    const t = String(title || "").trim();
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return "read-failed";
-      if (res.data.rssFeeds.some((f) => f.url === u)) return "exists";
-      const feed = t ? { url: u, title: t } : { url: u };
-      await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
-      return "added";
-    });
-  }
-  async function removeRssFeed(url) {
-    const u = String(url || "").trim();
-    if (!u) return false;
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
-      return true;
-    });
-  }
-  async function removeBilibiliUp(uid) {
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      const info = { ...res.data.bilibiliUpInfo };
-      delete info[uid];
-      await writeNewsDataMerged({
-        set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
-      });
-      return true;
-    });
-  }
-  var init_news_source_settings = __esm({
-    "src/clipbook/news-source-settings.ts"() {
-      init_news_data();
-      init_write_queue();
-    }
-  });
-
-  // src/auto-summary/parser.ts
-  function unquote(v) {
-    if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
-    return v;
-  }
-  function parseFrontmatter(content) {
-    const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
-    if (!m) return { fm: null, body: content, extraLines: [] };
-    const fm = {};
-    const extraLines = [];
-    const lines = m[1].split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const kv = line.match(KEY_LINE_RE);
-      if (kv) {
-        const key = kv[1].trim();
-        let val = kv[2].trim();
-        if (BLOCK_SCALAR_RE.test(val)) {
-          const bodyLines = [];
-          let indent = null;
-          let j = i + 1;
-          for (; j < lines.length; j++) {
-            const l = lines[j];
-            if (l.trim() === "") {
-              bodyLines.push("");
-              continue;
-            }
-            const lm = l.match(/^([ \t]+)\S/);
-            if (!lm) break;
-            if (indent === null) indent = lm[1];
-            bodyLines.push(l.startsWith(indent) ? l.slice(indent.length) : l.replace(/^[ \t]+/, ""));
-          }
-          fm[key] = bodyLines.join("\n").replace(/\n+$/, "");
-          i = j - 1;
-          continue;
-        }
-        if (val === "") {
-          const nested = [];
-          let sawNested = false;
-          let j = i + 1;
-          for (; j < lines.length; j++) {
-            const l = lines[j];
-            if (l.trim() === "") {
-              nested.push(l);
-              continue;
-            }
-            if (LIST_ITEM_RE.test(l)) break;
-            if (/^[ \t]/.test(l)) {
-              sawNested = true;
-              nested.push(l);
-              continue;
-            }
-            break;
-          }
-          if (sawNested) {
-            extraLines.push(line, ...nested);
-            i = j - 1;
-            continue;
-          }
-          fm[key] = "";
-          continue;
-        }
-        if (val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
-        if (val.startsWith("[")) {
-          try {
-            val = JSON.parse(val);
-          } catch (e) {
-          }
-        }
-        fm[key] = val;
-      } else if (LIST_ITEM_RE.test(line)) {
-        const lastKey = Object.keys(fm).pop();
-        if (lastKey && !Array.isArray(fm[lastKey])) fm[lastKey] = [];
-        if (lastKey) {
-          fm[lastKey].push(unquote(line.replace(LIST_ITEM_RE, "$1").trim()));
-        } else {
-          extraLines.push(line);
-        }
-      } else {
-        extraLines.push(line);
-      }
-    }
-    const body = content.slice(m[0].length);
-    return { fm, body, extraLines };
-  }
-  function buildFrontmatter(fm, extraLines = []) {
-    const lines = ["---"];
-    for (const [k, v] of Object.entries(fm)) {
-      if (Array.isArray(v)) {
-        lines.push(`${k}:`);
-        for (const item of v) lines.push(`  - "${item}"`);
-      } else if (v === null || v === void 0 || v === "") {
-        lines.push(`${k}: ""`);
-      } else {
-        lines.push(`${k}: "${String(v).replace(/"/g, '\\"').replace(/[\r\n]+/g, " ")}"`);
-      }
-    }
-    lines.push(...extraLines);
-    lines.push("---");
-    return lines.join("\n");
-  }
-  function extractBodyForAI(body) {
-    return body.replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
-  }
-  var KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
-  var init_parser = __esm({
-    "src/auto-summary/parser.ts"() {
-      KEY_LINE_RE = /^([^\s:#-][^:]*):(.*)$/;
-      LIST_ITEM_RE = /^[ \t]*-[ \t]+(.*)$/;
-      BLOCK_SCALAR_RE = /^[|>][+-]?$/;
-    }
-  });
-
-  // src/auto-summary/processor.ts
-  function dedupeKeyFor(file) {
-    return `auto-summary:${file.path}#${++attemptSeq}`;
-  }
-  async function humanizeFailReason() {
-    try {
-      await getAIProvider();
-      return "摘要生成失败，请重试";
-    } catch (e) {
-      return "AI 服务未配置或不可用，请到设置页配置";
-    }
-  }
-  function buildTagsRule(tagRange) {
-    return `tags 规则：
-- ${tagRange || "3-6"} 个中文标签，每个不超过 5 个字
-- 涵盖：主题领域、关键技术/概念、应用场景`;
-  }
-  async function aiProcess(ai, bodyText, missing, opts = {}) {
-    const length = opts.summaryLength || "standard";
-    const summaryRule = SUMMARY_LENGTH_RULES[length] || SUMMARY_LENGTH_RULES.standard;
-    const needed = missing.filter((f) => f !== "tags" || opts.tagsEnabled !== false);
-    const fieldLines = needed.filter((f) => FIELD_DEFS[f]).map((f) => "  " + (f === "summary" ? summaryRule : FIELD_DEFS[f]));
-    if (fieldLines.length === 0) return null;
-    const prompt = `你是一个资讯文章分析助手。以下是一篇已转换为 Markdown 的文章正文。请分析内容，返回一个 JSON 对象（只返回 JSON，不要其他文字）：
-
-{
-${fieldLines.join(",\n")}
-}
-
-${needed.includes("tags") ? buildTagsRule(opts.tagCount || "3-6") + "\n\n" : ""}文章正文：
-${bodyText.substring(0, 6e3)}`;
-    try {
-      const result = await ai.prompt(prompt, "deepseek-v4-flash", {
-        // temperature 属任务语义（分析类低温）；max_tokens 面板独裁不在此传（issue 334/ADR-0148）——
-        // 推理模型思考耗尽小预算曾致 content 空串必失败，上限唯一权威 = 设置面板后自愈
-        modelOptions: { temperature: 0.3 }
-      });
-      const jsonMatch = (result || "").match(/\{[\s\S]*\}/);
-      if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      console.warn("[自动摘要] AI 处理失败:", e);
-    }
-    return null;
-  }
-  async function renameToTitle(app, file, title) {
-    var _a2;
-    const clean = String(title).replace(/[\\/:*?"<>|\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
-    if (!clean || clean === file.basename) return { target: file, renamed: false, failed: false };
-    const dir = file.path.includes("/") ? file.path.slice(0, file.path.lastIndexOf("/")) : "/";
-    let newPath = `${dir}/${clean}.md`;
-    let n = 1;
-    while (app.vault.getAbstractFileByPath(newPath)) {
-      newPath = `${dir}/${clean} (${n++}).md`;
-    }
-    try {
-      const fmRename = (_a2 = app == null ? void 0 : app.fileManager) == null ? void 0 : _a2.renameFile;
-      if (fmRename) await fmRename.call(app.fileManager, file, newPath);
-      else await app.vault.rename(file, newPath);
-      return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
-    } catch (e) {
-      console.warn("[自动摘要] 重命名失败，仅写 frontmatter title:", e);
-      return { target: file, renamed: false, failed: true };
-    }
-  }
-  async function processFile(app, ai, file, opts = {}) {
-    const force = opts.force === true;
-    let h = null;
-    const s = tryGetSettings();
-    const summaryLength = String(s.autoSummaryLength || "standard");
-    const tagsEnabled = s.autoSummaryTagsEnabled !== false;
-    const tagCount2 = String(s.autoSummaryTagCount || "3-6");
-    try {
-      const content = await app.vault.read(file);
-      const { fm, body } = parseFrontmatter(content);
-      const bodyText = extractBodyForAI(body);
-      if (!bodyText || bodyText.length < 100) return;
-      const missing = [];
-      if (force) {
-        missing.push("summary");
-        if (tagsEnabled !== false) missing.push("tags");
-      } else {
-        if (!fm || !fm.title) missing.push("title");
-        if (!fm || !fm.summary) missing.push("summary");
-        if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
-        if (missing.length === 0) return;
-      }
-      const startName = fm && fm.title ? fm.title : file.basename;
-      const key = dedupeKeyFor(file);
-      if (!opts.quiet) {
-        h = notify(`正在为《${startName}》生成摘要…`, { type: "progress", dedupeKey: key });
-      }
-      const aiResult = await aiProcess(ai, bodyText, missing, { summaryLength, tagsEnabled, tagCount: tagCount2 });
-      if (!aiResult) {
-        const reason = await humanizeFailReason();
-        if (h) h.hide();
-        const errHandle = notify(reason, { type: "error", duration: 0 });
-        const retryBtn = document.createElement("span");
-        retryBtn.className = "bz-notice-action";
-        retryBtn.setAttribute("role", "button");
-        retryBtn.textContent = "重试";
-        retryBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          retryBtn.remove();
-          errHandle.hide();
-          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
-          });
-        });
-        errHandle.el.appendChild(retryBtn);
-        return;
-      }
-      let targetFile = file;
-      let renameFailed = false;
-      if (missing.includes("title") && aiResult.title) {
-        const outcome = await renameToTitle(app, file, aiResult.title);
-        targetFile = outcome.target;
-        if (outcome.renamed) {
-          notify(`已重命名为《${aiResult.title}》`, { type: "success" });
-        } else if (outcome.failed) {
-          renameFailed = true;
-        }
-      }
-      const latest = await app.vault.read(targetFile);
-      const latestParsed = parseFrontmatter(latest);
-      const mergedFm = { ...latestParsed.fm || {} };
-      if (missing.includes("title") && aiResult.title) mergedFm.title = aiResult.title;
-      if (missing.includes("summary") && aiResult.summary) mergedFm.summary = aiResult.summary;
-      if (missing.includes("tags") && Array.isArray(aiResult.tags) && aiResult.tags.length) {
-        mergedFm.tags = aiResult.tags;
-      }
-      const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + "\n\n" + latestParsed.body;
-      await app.vault.modify(targetFile, newContent);
-      if (renameFailed) {
-        notify("自动改名失败，标题已写入笔记，请手动重命名", { type: "warning" });
-      }
-      notify("已完成", {
-        type: "success",
-        dedupeKey: key,
-        action: {
-          label: "查看",
-          onClick: () => {
-            Promise.resolve().then(() => (init_ui8(), ui_exports6)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
-            });
-          }
-        }
-      });
-    } catch (e) {
-      if (h) h.hide();
-      console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
-    }
-  }
-  var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
-  var init_processor = __esm({
-    "src/auto-summary/processor.ts"() {
-      init_parser();
-      init_notice();
-      init_ai();
-      init_settings_provider();
-      attemptSeq = 0;
-      FIELD_DEFS = {
-        title: '"title": "生成中文标题，15-30字，完整陈述句，不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢）。禁止冒号、破折号、句中句号问号，需要连接时用逗号"',
-        summary: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
-        tags: '"tags": ["标签1", "标签2", "标签3"]'
-      };
-      SUMMARY_LENGTH_RULES = {
-        simple: `"summary": "50-100字的简短摘要。提炼核心观点与关键结论。直达内容，禁止使用'本文'、'本文章'、'文章'、'作者认为'等前缀词"`,
-        standard: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
-        detailed: `"summary": "300-400字的详尽摘要。完整覆盖核心观点、关键事实、重要数据、推论与结论，条理清晰。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`
-      };
-    }
-  });
-
-  // src/auto-summary/index.ts
-  var auto_summary_exports = {};
-  __export(auto_summary_exports, {
-    ensureAutoSummary: () => ensureAutoSummary,
-    isAutoSummaryInitialized: () => isAutoSummaryInitialized,
-    redoSummaryForActiveFile: () => redoSummaryForActiveFile,
-    regenerateSummary: () => regenerateSummary,
-    retrySummaryWithAI: () => retrySummaryWithAI,
-    stopAutoSummary: () => stopAutoSummary,
-    unloadAutoSummary: () => unloadAutoSummary
-  });
-  function getWatchDir() {
-    const s = tryGetSettings();
-    return s && s.articleDirectory || "归档/网页剪藏";
-  }
-  function enqueueJob(job) {
-    return new Promise((resolve2) => {
-      if (processingPaths.has(job.file.path)) {
-        resolve2();
-        return;
-      }
-      processingPaths.add(job.file.path);
-      jobQueue.push({ ...job, resolve: resolve2 });
-      batchTotal++;
-      if (drainTimer === null) {
-        drainTimer = setTimeout(() => {
-          drainTimer = null;
-          void drainQueue();
-        }, 0);
-      }
-    });
-  }
-  async function drainQueue() {
-    var _a2;
-    if (draining) return;
-    draining = true;
-    try {
-      while (jobQueue.length > 0) {
-        const job = jobQueue.shift();
-        batchDone++;
-        updateBatchNotice();
-        try {
-          await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
-        } catch (e) {
-        } finally {
-          processingPaths.delete(job.file.path);
-          (_a2 = job.resolve) == null ? void 0 : _a2.call(job);
-        }
-      }
-    } finally {
-      draining = false;
-      if (batchNotice) {
-        batchNotice.hide();
-        batchNotice = null;
-      }
-      batchTotal = 0;
-      batchDone = 0;
-    }
-  }
-  function updateBatchNotice() {
-    if (batchTotal <= 1) return;
-    const msg = `正在生成摘要 ${batchDone}/${batchTotal}…`;
-    if (batchNotice) {
-      batchNotice.setMessage(msg);
-    } else {
-      batchNotice = notify(msg, { type: "progress", dedupeKey: "auto-summary:batch" });
-    }
-  }
-  function queueProcess(app, ai, file) {
-    if (!file || file.extension !== "md") return;
-    if (!file.path.startsWith(getWatchDir() + "/")) return;
-    if (pendingPaths.has(file.path)) return;
-    const timer = setTimeout(() => {
-      pendingPaths.delete(file.path);
-      void enqueueJob({ app, ai, file });
-    }, 1500);
-    pendingPaths.set(file.path, timer);
-  }
-  function regenerateSummary(app, file) {
-    if (!file || file.extension !== "md") return Promise.resolve();
-    return enqueueJob({ app, ai: createAI(), file, force: true });
-  }
-  function retrySummaryWithAI(app, ai, file, force) {
-    if (!file || file.extension !== "md") return Promise.resolve();
-    return enqueueJob({ app, ai, file, force });
-  }
-  async function redoSummaryForActiveFile(app) {
-    const ws = app && app.workspace;
-    const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
-    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
-      notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
-      return;
-    }
-    await regenerateSummary(app, file);
-  }
-  function scheduleRegister(app) {
-    const ai = createAI();
-    registerTimer = setTimeout(() => {
-      var _a2;
-      registerTimer = null;
-      if (!vaultRef) return;
-      const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.autoSummaryTiming) || "immediate";
-      if (timing !== "lazy") {
-        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, ai, file));
-      }
-      if (workspaceRef && typeof workspaceRef.on === "function") {
-        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, ai, file));
-      }
-    }, 2e3);
-  }
-  function ensureAutoSummary(app) {
-    if (initialized2) {
-      if (!registerTimer && !fileListenerRef) scheduleRegister(app);
-      return;
-    }
-    initialized2 = true;
-    vaultRef = app.vault;
-    workspaceRef = app.workspace;
-    scheduleRegister(app);
-  }
-  function isAutoSummaryInitialized() {
-    return initialized2;
-  }
-  function stopAutoSummary() {
-    if (registerTimer) {
-      clearTimeout(registerTimer);
-      registerTimer = null;
-    }
-    if (fileListenerRef && vaultRef) {
-      try {
-        vaultRef.offref(fileListenerRef);
-      } catch (e) {
-      }
-      fileListenerRef = null;
-    }
-    if (openListenerRef && workspaceRef) {
-      try {
-        workspaceRef.offref(openListenerRef);
-      } catch (e) {
-      }
-      openListenerRef = null;
-    }
-    for (const timer of pendingPaths.values()) clearTimeout(timer);
-    pendingPaths.clear();
-    if (drainTimer !== null) {
-      clearTimeout(drainTimer);
-      drainTimer = null;
-    }
-    jobQueue.length = 0;
-    if (batchNotice) {
-      batchNotice.hide();
-      batchNotice = null;
-    }
-    batchTotal = 0;
-    batchDone = 0;
-    processingPaths.clear();
-  }
-  function unloadAutoSummary() {
-    stopAutoSummary();
-    initialized2 = false;
-    vaultRef = null;
-    workspaceRef = null;
-  }
-  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
-  var init_auto_summary = __esm({
-    "src/auto-summary/index.ts"() {
-      init_ai();
-      init_settings_provider();
-      init_notice();
-      init_processor();
-      initialized2 = false;
-      vaultRef = null;
-      workspaceRef = null;
-      fileListenerRef = null;
-      openListenerRef = null;
-      registerTimer = null;
-      pendingPaths = /* @__PURE__ */ new Map();
-      processingPaths = /* @__PURE__ */ new Set();
-      jobQueue = [];
-      draining = false;
-      drainTimer = null;
-      batchTotal = 0;
-      batchDone = 0;
-      batchNotice = null;
     }
   });
 
@@ -24759,7 +16080,7 @@ ${bodyText.substring(0, 6e3)}`;
     return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
   }
   var CLIPBOOK_JSON;
-  var init_data7 = __esm({
+  var init_data3 = __esm({
     "src/clipbook/data.ts"() {
       init_storage();
       CLIPBOOK_JSON = "clipbook.json";
@@ -24907,7 +16228,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_anchor = __esm({
     "src/clipbook/anchor.ts"() {
-      init_data7();
+      init_data3();
     }
   });
 
@@ -25315,10 +16636,10 @@ ${bodyText.substring(0, 6e3)}`;
     if (parts.length === 2) return Math.round(parts[0] * 60 + parts[1]);
     return Math.round(parts[0]);
   }
-  var import_moment6, TIME_RE, KnowledgeData;
-  var init_data8 = __esm({
+  var import_moment3, TIME_RE, KnowledgeData;
+  var init_data4 = __esm({
     "src/knowledge/data.ts"() {
-      import_moment6 = __toESM(require_moment());
+      import_moment3 = __toESM(require_moment());
       init_storage();
       init_settings_provider();
       init_utils();
@@ -25397,7 +16718,7 @@ ${bodyText.substring(0, 6e3)}`;
                 remark: item.remark || null,
                 notePath: item.notePath || null,
                 videoPath: item.videoPath || null,
-                created: item.created || (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
+                created: item.created || (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss"),
                 processedAt: item.processedAt || null,
                 title: item.title || null,
                 uploader: item.uploader || null,
@@ -25427,7 +16748,7 @@ ${bodyText.substring(0, 6e3)}`;
             uploader: ((_e = input.uploader) == null ? void 0 : _e.trim()) || null,
             notePath: null,
             videoPath: null,
-            created: (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
+            created: (0, import_moment3.default)().format("YYYY-MM-DD HH:mm:ss"),
             processedAt: null,
             archived: false,
             archivedAt: null,
@@ -26589,7 +17910,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     if (upgraded !== content) await app.vault.modify(file, upgraded);
     return true;
   }
-  function parseFrontmatter2(content) {
+  function parseFrontmatter(content) {
     var _a2;
     const out = {};
     const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -26703,7 +18024,7 @@ ${content || ""}`;
         content = pruned;
         filled++;
       }
-      const fm = parseFrontmatter2(content);
+      const fm = parseFrontmatter(content);
       const hasType = fm.type === "video" || fm.type === "term";
       const hasDomain = !!fm.domain;
       if (hasType && hasDomain) continue;
@@ -26818,14 +18139,14 @@ ${sample}`
     return localNow();
   }
   var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
-  var init_processor2 = __esm({
+  var init_processor = __esm({
     "src/knowledge/processor.ts"() {
       init_notice();
       init_str();
       init_domain_bus();
       init_settings_provider();
       init_app();
-      init_data8();
+      init_data4();
       init_note_gen();
       INSTALL_HINT = "请先运行 npm install -g @jwbz/bili-downloader";
       STEP_RE = /^\[bz-step\]\s*(.+)$/;
@@ -29287,7 +20608,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   }
   function buildShell() {
-    if (state2) return state2;
+    if (state) return state;
     if (typeof document === "undefined") return null;
     const mask = document.createElement("div");
     mask.id = MASK_ID;
@@ -29369,7 +20690,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       timerId: null,
       startedAt: 0
     };
-    state2 = st;
+    state = st;
     bindShellEvents(st);
     return st;
   }
@@ -29553,11 +20874,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
     };
   }
   function mountTreeOpen() {
-    return !!state2 && state2.mask.style.display !== "none";
+    return !!state && state.mask.style.display !== "none";
   }
   function closeMountTree() {
     var _a2;
-    const st = state2;
+    const st = state;
     if (!st) return;
     closeMenu();
     cancelLongPress(st);
@@ -29604,7 +20925,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     await load(st, !!(opts == null ? void 0 : opts.force));
   }
   async function confirmRefresh() {
-    const st = state2;
+    const st = state;
     if (!st || !mountTreeOpen()) return;
     const v = await openFlowDialog({
       title: "重新生成挂载建议",
@@ -29617,11 +20938,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
       ]
     });
     if (v !== "ok") return;
-    if (state2 !== st || !mountTreeOpen()) return;
+    if (state !== st || !mountTreeOpen()) return;
     await reload(true);
   }
   async function reload(force) {
-    const st = state2;
+    const st = state;
     if (!st) return;
     await load(st, force);
   }
@@ -30345,14 +21666,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
     applyTransform(st);
   }
   function zoomAtCenter(factor) {
-    const st = state2;
+    const st = state;
     if (!st) return;
     const w = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
     const h = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
     zoomAt(st, w / 2, h / 2, factor);
   }
   function fit() {
-    const st = state2;
+    const st = state;
     if (!st) return;
     const cw = st.canvasEl.clientWidth || CANVAS_FALLBACK_W;
     const ch = st.canvasEl.clientHeight || CANVAS_FALLBACK_H;
@@ -30365,7 +21686,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function openNodeMenu(nodeId, x, y) {
     var _a2, _b2, _c, _d, _e;
-    const st = state2;
+    const st = state;
     if (!st || !nodeId) return;
     const node = st.tree.nodes.find((n) => n.id === nodeId);
     if (!node) return;
@@ -30439,7 +21760,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function closeMenu() {
     var _a2;
-    const st = state2;
+    const st = state;
     (_a2 = st == null ? void 0 : st.menu) == null ? void 0 : _a2.remove();
     if (st) st.menu = null;
     if (menuOutsideHandler) {
@@ -30550,7 +21871,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     st.deps.notice("已取消建议：永久不再推荐这条", "success");
     await rebuildTreeOnly(st);
   }
-  var MASK_ID, WIN_ID, ESC_ID, CANVAS_FALLBACK_W, CANVAS_FALLBACK_H, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_FIT_MAX, FIT_PAD, DRAG_SLOP, LONG_PRESS_MS, LONG_PRESS_SLOP, DOCK_GAP, WIDTH_ROOT, WIDTH_BY_KIND, HEIGHT_BY_KIND, KIND_COLOR, KIND_LABEL, SOURCE_LABEL, state2, EMPTY_HINT_BARE, EMPTY_HINT_REFRESH, menuOutsideHandler;
+  var MASK_ID, WIN_ID, ESC_ID, CANVAS_FALLBACK_W, CANVAS_FALLBACK_H, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP, ZOOM_FIT_MAX, FIT_PAD, DRAG_SLOP, LONG_PRESS_MS, LONG_PRESS_SLOP, DOCK_GAP, WIDTH_ROOT, WIDTH_BY_KIND, HEIGHT_BY_KIND, KIND_COLOR, KIND_LABEL, SOURCE_LABEL, state, EMPTY_HINT_BARE, EMPTY_HINT_REFRESH, menuOutsideHandler;
   var init_mount_canvas = __esm({
     "src/knowledge/mount-canvas.ts"() {
       init_fake_obsidian();
@@ -30622,7 +21943,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         manual: "手动",
         ai: "AI 建议"
       };
-      state2 = null;
+      state = null;
       EMPTY_HINT_BARE = "这张卡还没有挂载——先看 AI 能不能找到关联";
       EMPTY_HINT_REFRESH = "重新生成中——建议回来连同已有的挂载一起显示";
       menuOutsideHandler = null;
@@ -30961,8 +22282,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
   });
 
   // src/knowledge/ui.ts
-  var ui_exports5 = {};
-  __export(ui_exports5, {
+  var ui_exports3 = {};
+  __export(ui_exports3, {
     UIManager: () => UIManager2,
     humanizeError: () => humanizeError,
     knowledgeSettingsSchema: () => knowledgeSettingsSchema,
@@ -31272,7 +22593,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     };
   }
   var IMAGE_ENTRY_MAX, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager2;
-  var init_ui7 = __esm({
+  var init_ui3 = __esm({
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_ai();
@@ -31291,9 +22612,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_z_order();
       init_domain_bus();
       init_app();
-      init_data8();
+      init_data4();
       init_mount_data();
-      init_processor2();
+      init_processor();
       init_mount_canvas();
       init_note_gen();
       init_source();
@@ -34647,7 +25968,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_settings_provider();
       init_storage();
       init_file_sync();
-      init_data8();
+      init_data4();
       init_source_retire();
       agent = createFileSync({
         logTag: "[knowledge-file-sync]",
@@ -34690,11 +26011,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function ensureKnowledge(app) {
     var _a2;
-    if (initialized3) return;
+    if (initialized2) return;
     try {
       KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
       uiManager = new UIManager2(app);
-      initialized3 = true;
+      initialized2 = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -34834,21 +26155,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized3 = false;
+    initialized2 = false;
   }
-  var initialized3, uiManager;
+  var initialized2, uiManager;
   var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
       init_settings_provider();
       init_link_now();
       init_notice();
-      init_data8();
-      init_ui7();
+      init_data4();
+      init_ui3();
       init_note_gen();
       init_source_retire();
       init_file_sync2();
-      initialized3 = false;
+      initialized2 = false;
       uiManager = null;
     }
   });
@@ -35014,9 +26335,9237 @@ ${body}`;
       init_settings_provider();
       init_notice();
       init_flow_dialog();
-      init_constants2();
+      init_constants();
       init_anchor();
       yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
+    }
+  });
+
+  // src/clipbook/scan.ts
+  function defaultCache(f) {
+    var _a2;
+    try {
+      const app = getApp();
+      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
+        return app.metadataCache.getFileCache(f);
+      }
+    } catch (e) {
+    }
+    return f && f.frontmatter;
+  }
+  function parseClipFile(file, getCache, getBacklinks) {
+    const cache = (getCache || defaultCache)(file);
+    const fm = cache && cache.frontmatter;
+    if (!fm) return null;
+    if (!fm.url || !fm.created) return null;
+    const title = file.basename || stripMdExt(String(file.name || ""));
+    let created = new Date(fm.created).valueOf();
+    if (isNaN(created)) created = Date.now();
+    let backlinkNames = [];
+    try {
+      const bl = (getBacklinks || (() => null))(file);
+      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
+        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
+      }
+    } catch (e) {
+    }
+    let domain = "";
+    try {
+      if (fm.url) domain = new URL(String(fm.url)).hostname;
+    } catch (e) {
+    }
+    return {
+      path: file.path,
+      file,
+      url: String(fm.url),
+      author: fm.author ? String(fm.author) : "",
+      site: fm.site ? String(fm.site) : "未知",
+      summary: fm.summary ? String(fm.summary) : "",
+      tags: Array.isArray(fm.tags) ? fm.tags.map(String) : fm.tags ? [String(fm.tags)] : [],
+      title,
+      created,
+      backlinkNames,
+      domain
+    };
+  }
+  async function scanClipDirectory(dirPath, deps) {
+    const dir = deps.vault.getAbstractFileByPath(dirPath);
+    if (!dir || !Array.isArray(dir.children)) return null;
+    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
+    const parse = deps.parse || ((f) => parseClipFile(f));
+    const notes = [];
+    const rejectedPaths = [];
+    for (const f of mdFiles2) {
+      try {
+        const n = parse(f);
+        if (n) {
+          notes.push(n);
+          continue;
+        }
+        if (f && f.path) rejectedPaths.push(String(f.path));
+      } catch (e) {
+        if (f && f.path) rejectedPaths.push(String(f.path));
+      }
+    }
+    notes.sort((a, b) => b.created - a.created);
+    const result = notes;
+    result.rejected = rejectedPaths.length;
+    result.rejectedPaths = rejectedPaths;
+    return result;
+  }
+  var init_scan = __esm({
+    "src/clipbook/scan.ts"() {
+      init_utils();
+      init_app();
+    }
+  });
+
+  // src/clipbook/store.ts
+  function siteName(a) {
+    return a.site ? String(a.site) : a.platform ? String(a.platform) : "未知";
+  }
+  function upName(a, info) {
+    const uid = String(a && a.bvid || a && a.author || "");
+    const name = info && typeof info === "object" ? info.name : null;
+    return name || uid || "";
+  }
+  function platformOf(a) {
+    const p = a.platform || "";
+    if (p === "B站") return "B站";
+    if (p === "果壳" || p === "果壳科学人") return "果壳科学人";
+    if (p === "知乎日报" || p === "知乎") return "知乎日报";
+    return p || "未知";
+  }
+  function siteDomain(a) {
+    const u = String(a.url || "").trim();
+    if (u) {
+      try {
+        return new URL(u).hostname;
+      } catch (e) {
+      }
+      try {
+        return new URL("https://" + u.replace(/^\/+/, "")).hostname;
+      } catch (e) {
+      }
+    }
+    return PLATFORM_DOMAIN[platformOf(a)] || "";
+  }
+  function cleanBody(body) {
+    return String(body || "").trim();
+  }
+  function clipArticle(a, opts) {
+    const clipByUrl = opts.clipByUrl || /* @__PURE__ */ new Set();
+    const upInfo = opts.upInfo || {};
+    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
+    const key = articleKeyOf(a);
+    const platform = platformOf(a);
+    const newsSaved = a.state === "saved";
+    const archived2 = savedKeys.has(String(a.url || ""));
+    const clipped = !!a.url && clipByUrl.has(String(a.url));
+    const saved = newsSaved || archived2 || clipped;
+    const title = String(a.title || "(无标题)");
+    const body = cleanBody(a.body);
+    const isBili = platform === "B站";
+    const feedUp = isBili ? upName(a, upInfo[String(a.author || "")]) : "";
+    const srcName = feedUp || platform;
+    const typeLabel = feedUp ? "UP主" : platform;
+    let timeText = String(a.fetchedAt || a.date || "");
+    let timeTs = new Date(a.fetchedAt || a.date || "").valueOf();
+    if (isNaN(timeTs)) {
+      timeText = "";
+      timeTs = Date.now();
+    }
+    const st = saved ? "saved" : a.read === true ? "read" : "unread";
+    return {
+      id: key,
+      origin: "news",
+      title,
+      url: String(a.url || ""),
+      site: siteName(a),
+      domain: siteDomain(a),
+      author: String(a.author || ""),
+      srcName,
+      typeLabel,
+      timeText,
+      timeTs,
+      summary: excerpt(body, 110),
+      body,
+      tags: Array.isArray(a.tags) ? a.tags.map(String) : [],
+      notePath: null,
+      st,
+      clipped,
+      raw: a,
+      backlinks: []
+    };
+  }
+  function clipFromNote(n) {
+    return {
+      id: "clip:" + n.path,
+      origin: "clip",
+      title: String(n.title || "(无标题)"),
+      url: n.url ? String(n.url) : "",
+      site: String(n.site || "未知"),
+      domain: n.domain || "",
+      author: n.author || "",
+      srcName: n.site || "剪藏",
+      typeLabel: "",
+      timeText: "",
+      timeTs: n.created || 0,
+      summary: String(n.summary || ""),
+      body: "",
+      tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
+      notePath: n.path || null,
+      st: "saved",
+      clipped: true,
+      note: n,
+      backlinks: Array.isArray(n.backlinkNames) ? n.backlinkNames : []
+    };
+  }
+  function clipUrlSet(notes) {
+    const s = /* @__PURE__ */ new Set();
+    for (const n of notes) if (n && n.url) s.add(String(n.url));
+    return s;
+  }
+  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
+      return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    const pool = (articles || []).filter((a) => !a.read);
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    if (source2.kind === "site") {
+      const s = normSite(source2.site);
+      const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
+      const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
+      return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
+    }
+    let out = [];
+    if (source2.kind === "all") {
+      out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
+    } else {
+      const isBili = source2.platform === "B站";
+      const list = pool.filter((a) => {
+        const p = platformOf(a);
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
+        return true;
+      });
+      out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
+    }
+    return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
+  }
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
+      return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
+    const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
+    let news = [];
+    let clips = [];
+    if (source2.kind === "all") {
+      news = (articles || []).filter((a) => !isClippedNews(a));
+    } else if (source2.kind === "site") {
+      const s = normSite(source2.site);
+      news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
+      clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
+    } else {
+      const isBili = source2.platform === "B站";
+      news = (articles || []).filter((a) => {
+        if (isClippedNews(a)) return false;
+        const p = platformOf(a);
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
+        return true;
+      });
+    }
+    return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
+  }
+  function bucketByState(list) {
+    const unread = [];
+    const read = [];
+    const saved = [];
+    for (const a of list) {
+      if (a.st === "saved") saved.push(a);
+      else if (a.st === "read") read.push(a);
+      else unread.push(a);
+    }
+    return { unread, read, saved };
+  }
+  function normSite(s) {
+    const t = String(s || "").trim();
+    return t || "未知";
+  }
+  function aggregateSites(articles, clipNotes, savedUrls, clipUrls) {
+    const saved = savedUrls || /* @__PURE__ */ new Set();
+    const byUrl = clipUrls || /* @__PURE__ */ new Set();
+    const rows = /* @__PURE__ */ new Map();
+    const bump = (rawSite, unread) => {
+      const site = normSite(rawSite);
+      let r = rows.get(site);
+      if (!r) {
+        r = { site, total: 0, unread: 0 };
+        rows.set(site, r);
+      }
+      r.total++;
+      if (unread) r.unread++;
+    };
+    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
+    for (const a of articles || []) {
+      if (!a || a.read) continue;
+      if (saved.has(String(a.url || ""))) continue;
+      if (a.url && byUrl.has(String(a.url))) continue;
+      bump(siteName(a), true);
+    }
+    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
+  }
+  var PLATFORM_DOMAIN;
+  var init_store = __esm({
+    "src/clipbook/store.ts"() {
+      init_utils();
+      init_constants();
+      PLATFORM_DOMAIN = {
+        "B站": "bilibili.com",
+        "果壳科学人": "guokr.com",
+        "知乎日报": "zhihu.com"
+      };
+    }
+  });
+
+  // src/cinema/state.ts
+  function resolveCinemaFolderPath() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
+    } catch (e) {
+      return DEFAULT_FOLDER;
+    }
+  }
+  var DEFAULT_FOLDER;
+  var init_state2 = __esm({
+    "src/cinema/state.ts"() {
+      init_settings_provider();
+      DEFAULT_FOLDER = "我的/影视";
+    }
+  });
+
+  // src/gameshelf/state.ts
+  function resolveGameshelfFolderPath() {
+    try {
+      const s = tryGetSettings();
+      const raw = typeof s.gameshelfFolderPath === "string" ? s.gameshelfFolderPath.trim() : "";
+      if (!raw) return DEFAULT_FOLDER2;
+      return raw.replace(/[/\\]+$/, "");
+    } catch (e) {
+      return DEFAULT_FOLDER2;
+    }
+  }
+  var DEFAULT_FOLDER2;
+  var init_state3 = __esm({
+    "src/gameshelf/state.ts"() {
+      init_settings_provider();
+      DEFAULT_FOLDER2 = "我的/游戏";
+    }
+  });
+
+  // src/gameshelf/constants.ts
+  var GS_FM;
+  var init_constants2 = __esm({
+    "src/gameshelf/constants.ts"() {
+      GS_FM = {
+        /** Steam AppID（条目身份键） */
+        appId: "AppID",
+        /** 中文名（names 队列从商店接口回填；storeToFm 空值不写防覆盖） */
+        zhName: "中文名",
+        /** 封面现值：本地 vault 路径，或还没本地化时的远端地址（posters 独占写） */
+        cover: "封面",
+        /** 封面远端源（同步管辖；本地化后仍在，供删缓存后重下） */
+        coverSrc: "封面源",
+        /** 图标现值（posters 独占写） */
+        icon: "图标",
+        /** 图标远端源（同步管辖；hash 拼不出来，只有同步能刷新它） */
+        iconSrc: "图标源",
+        /** 截图本地路径数组（与截图源同序同长、失败位空串；posters 独占写） */
+        shots: "截图",
+        /** 截图远端源数组（同步/回填管辖；空数组 = 「商店查过、确实没有」的自愈标记） */
+        shotsSrc: "截图源",
+        /** 截图落盘时刻 ISO */
+        shotsAt: "截图更新",
+        /** 商店资料回填时刻 ISO（backfillNeeds 补跑判据键） */
+        detailAt: "详情时间",
+        /** 累计游玩分钟 */
+        playtimeMin: "游玩分钟",
+        /** 最后游玩 YYYY-MM-DD */
+        lastPlayed: "最后游玩",
+        /** 最近一次同步时刻 ISO */
+        syncedAt: "同步时间",
+        /** Steam 库中消失（退款/隐藏）标记；也是用户唯一会手改的管辖键（func F2 拍板项在案） */
+        offShelf: "已下架",
+        /** 有社区成就页 */
+        hasAch: "有成就",
+        windowsMin: "Windows分钟",
+        deckMin: "SteamDeck分钟",
+        macMin: "Mac分钟",
+        linuxMin: "Linux分钟"
+      };
+    }
+  });
+
+  // src/cinema/constants.ts
+  function getGroupForTag(tag) {
+    for (const [group, tags] of Object.entries(TYPE_GROUPS)) {
+      if (tags.includes(tag)) return group;
+    }
+    return null;
+  }
+  function getGroupSafe(tag) {
+    var _a2;
+    return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
+  }
+  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, ILLEGAL_NAME_CHARS, ILLEGAL_NAME_RE, ILLEGAL_NAME_RE_GLOBAL, TYPE_GROUPS, ALL_TAGS;
+  var init_constants3 = __esm({
+    "src/cinema/constants.ts"() {
+      STATUS_WANT = 0;
+      STATUS_WATCHING = 1;
+      STATUS_WATCHED = 2;
+      ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
+      ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
+      ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, "g");
+      TYPE_GROUPS = {
+        电影: ["电影"],
+        剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
+        动漫: ["日漫", "国漫", "美漫"],
+        纪录片: ["纪录片"],
+        公开课: ["公开课", "TED"]
+      };
+      ALL_TAGS = Object.values(TYPE_GROUPS).flat();
+    }
+  });
+
+  // src/cinema/douban-fetcher.ts
+  function extractMovieName(filename) {
+    const basename = stripMdExt(filename);
+    const m = basename.match(/《(.+)》/);
+    return m ? m[1] : basename;
+  }
+  var POSTER_FOLDER;
+  var init_douban_fetcher = __esm({
+    "src/cinema/douban-fetcher.ts"() {
+      init_str();
+      init_constants3();
+      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
+    }
+  });
+
+  // src/cinema/data.ts
+  function parseMovieFile(file, app) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    const cache = app.metadataCache.getFileCache(file);
+    if (!cache || !cache.frontmatter) return null;
+    const fm = cache.frontmatter;
+    const name = extractMovieName(file.basename);
+    let rawTags = fm.tags;
+    if (typeof rawTags === "string") rawTags = [rawTags];
+    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
+    let typeTag = null;
+    for (const t of ALL_TAGS) {
+      if (tags.includes(t)) {
+        typeTag = t;
+        break;
+      }
+    }
+    if (!typeTag) {
+      if (tags.length === 0) return null;
+      typeTag = tags[0];
+    }
+    const watchDate = (_b2 = (_a2 = fm["观影日期"]) == null ? void 0 : _a2.toString()) != null ? _b2 : null;
+    const rawRating = fm["评分"];
+    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
+    let status;
+    if (rating === -1) status = STATUS_WANT;
+    else if (rating === 0) status = STATUS_WATCHING;
+    else status = STATUS_WATCHED;
+    return {
+      file,
+      name,
+      typeTag,
+      group: getGroupSafe(typeTag),
+      watchDate,
+      rating,
+      status,
+      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
+      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
+      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
+      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
+      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
+      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
+      year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
+      releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
+      doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
+      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
+      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
+      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
+      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
+      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
+      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
+    };
+  }
+  var init_data5 = __esm({
+    "src/cinema/data.ts"() {
+      init_constants3();
+      init_douban_fetcher();
+      init_state2();
+    }
+  });
+
+  // src/checkup/checks-orphans.ts
+  function isLocalPath(v) {
+    return typeof v === "string" && !!v.trim() && !/^(https?:)?\/\//i.test(v.trim()) && !v.trim().startsWith("data:");
+  }
+  async function checkOrphans(app, opts = {}) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+    const issues = [];
+    let scanned = 0;
+    {
+      const folder = resolveCinemaFolderPath();
+      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+      for (let i = 0; i < files.length; i++) {
+        if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
+        const item = parseMovieFile(files[i], app);
+        if (!item) continue;
+        scanned += 1;
+        const poster = (item.poster || "").trim();
+        if (poster && !fileExists(app, poster)) {
+          issues.push({
+            severity: "warn",
+            title: `影视《${item.name}》的海报文件不存在`,
+            detail: `笔记：${files[i].path}
+海报路径：${poster}
+详情页会显示占位图；请补回文件或清空笔记的「海报」字段。`
+          });
+        }
+        await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `影院 · ${item.name}`, { done: i + 1, total: files.length }));
+      }
+    }
+    {
+      const mdBooks = scanMarkdownBooks(app);
+      for (let i = 0; i < mdBooks.length; i++) {
+        if ((_c = opts.isCancelled) == null ? void 0 : _c.call(opts)) return null;
+        const b = mdBooks[i];
+        scanned += 1;
+        const cover = (b.cover || "").trim();
+        if (cover && !fileExists(app, cover)) {
+          issues.push({
+            severity: "warn",
+            title: `书目《${b.title}》的封面文件不存在`,
+            detail: `笔记：${((_d = b.file) == null ? void 0 : _d.path) || "(未知)"}
+封面路径：${cover}
+书库会显示占位封面；请补回文件或清空笔记的 cover 字段。`
+          });
+        }
+        await ((_e = opts.tick) == null ? void 0 : _e.call(opts, `书库 · ${b.title}`, { done: i + 1, total: mdBooks.length }));
+      }
+      const epubs = await loadEpubItems(app);
+      for (let i = 0; i < epubs.length; i++) {
+        if ((_f = opts.isCancelled) == null ? void 0 : _f.call(opts)) return null;
+        const b = epubs[i];
+        scanned += 1;
+        const p = (b.epubVaultPath || "").trim();
+        if (p && !fileExists(app, p)) {
+          issues.push({
+            severity: "warn",
+            title: `EPUB 书目《${b.title}》指向的文件不存在`,
+            detail: `EPUB 路径：${p}
+该条目来自 weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。`
+          });
+        }
+        await ((_g = opts.tick) == null ? void 0 : _g.call(opts, `书库 · ${b.title}`, { done: mdBooks.length + i + 1, total: mdBooks.length + epubs.length }));
+      }
+    }
+    {
+      const folder = resolveGameshelfFolderPath();
+      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+      for (let i = 0; i < files.length; i++) {
+        if ((_h = opts.isCancelled) == null ? void 0 : _h.call(opts)) return null;
+        const f = files[i];
+        const cache = app.metadataCache.getFileCache(f);
+        const fm = cache == null ? void 0 : cache.frontmatter;
+        const cover = fm == null ? void 0 : fm[GS_FM.cover];
+        scanned += 1;
+        const rawShots = fm == null ? void 0 : fm[GS_FM.shots];
+        const shots = Array.isArray(rawShots) ? rawShots : [];
+        const missing = [];
+        if (isLocalPath(cover) && !fileExists(app, cover.trim())) missing.push(String(cover).trim());
+        for (const s of shots) {
+          if (isLocalPath(s) && !fileExists(app, String(s).trim())) missing.push(String(s).trim());
+        }
+        if (missing.length) {
+          const name = f.basename || f.path;
+          issues.push({
+            severity: "warn",
+            title: `游戏《${name}》的封面/截图文件不存在`,
+            detail: `笔记：${f.path}
+缺失路径：
+${missing.map((m) => `- ${m}`).join("\n")}
+详情页对应位置会显示占位图；请补回文件或清空笔记的「${GS_FM.cover}」/「${GS_FM.shots}」字段。`
+          });
+        }
+        await ((_i = opts.tick) == null ? void 0 : _i.call(opts, `游戏库 · ${f.basename || f.path}`, { done: i + 1, total: files.length }));
+      }
+    }
+    {
+      const sidecarFile = ((_j = jsonScanTargets(app).find((t) => t.file.endsWith("/clipbook.json"))) == null ? void 0 : _j.file) || "CONFIG/STORAGE/clipbook.json";
+      const parsed = await readRawJson(app, sidecarFile);
+      const data = parsed && parsed.ok && parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data) ? parsed.data : null;
+      if (data) {
+        const savedArchive = data.savedArchive;
+        if (Array.isArray(savedArchive)) {
+          const scannedNotes = await scanClipDirectory(clipDir(), { vault: app.vault }) || [];
+          const urls = clipUrlSet(scannedNotes);
+          for (let i = 0; i < savedArchive.length; i++) {
+            if ((_k = opts.isCancelled) == null ? void 0 : _k.call(opts)) return null;
+            const entry = savedArchive[i];
+            scanned += 1;
+            const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
+            if (url && !urls.has(url)) {
+              issues.push({
+                severity: "warn",
+                title: `剪藏残留《${String(entry.title || url)}》对应的剪藏笔记不存在`,
+                detail: `侧写文件：${sidecarFile}
+链接：${url}
+剪藏目录（${clipDir()}）里已没有该链接的笔记，这条「已保存」残留失去意义，可清除。`,
+                fixGroup: "clipbook",
+                fixKey: url,
+                fixLabel: "清除残留"
+              });
+            }
+            await ((_l = opts.tick) == null ? void 0 : _l.call(opts, `剪藏残留 ${i + 1}/${savedArchive.length}`, { done: i + 1, total: savedArchive.length }));
+          }
+        }
+        const marks = data.marks && typeof data.marks === "object" && !Array.isArray(data.marks) ? data.marks : {};
+        const markKeys = Object.keys(marks);
+        let markDone = 0;
+        let markTotal = 0;
+        for (const list of markKeys) markTotal += Array.isArray(marks[list]) ? marks[list].length : 0;
+        for (const articleKey of markKeys) {
+          const list = marks[articleKey];
+          if (!Array.isArray(list)) continue;
+          for (const mk of list) {
+            if ((_m = opts.isCancelled) == null ? void 0 : _m.call(opts)) return null;
+            markDone += 1;
+            if (!mk || typeof mk !== "object") continue;
+            scanned += 1;
+            const notePath = String(mk.notePath || "").trim();
+            if (notePath && !fileExists(app, notePath)) {
+              const find = String(mk.find || "");
+              issues.push({
+                severity: "warn",
+                title: `剪藏标注指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
+                detail: `侧写文件：${sidecarFile}
+条目：${articleKey}
+标注原文：${find}
+笔记路径：${notePath}
+这条标注的目标笔记已删除，保存物化时会被跳过，可清除该标注记录。`,
+                fixGroup: "clipbook-marks",
+                fixKey: JSON.stringify([articleKey, find, notePath]),
+                fixLabel: "清除标注"
+              });
+            }
+            await ((_n = opts.tick) == null ? void 0 : _n.call(opts, `剪藏标注 ${markDone}/${markTotal}`, { done: markDone, total: markTotal }));
+          }
+        }
+        const pendingSource = data.pendingSource && typeof data.pendingSource === "object" && !Array.isArray(data.pendingSource) ? data.pendingSource : {};
+        const pendingKeys = Object.keys(pendingSource);
+        let pendingDone = 0;
+        let pendingTotal = 0;
+        for (const list of pendingKeys) pendingTotal += Array.isArray(pendingSource[list]) ? pendingSource[list].length : 0;
+        for (const articleKey of pendingKeys) {
+          const list = pendingSource[articleKey];
+          if (!Array.isArray(list)) continue;
+          for (const p of list) {
+            if ((_o = opts.isCancelled) == null ? void 0 : _o.call(opts)) return null;
+            pendingDone += 1;
+            scanned += 1;
+            const notePath = String(p || "").trim();
+            if (notePath && !fileExists(app, notePath)) {
+              issues.push({
+                severity: "warn",
+                title: `剪藏待回写来源指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
+                detail: `侧写文件：${sidecarFile}
+条目：${articleKey}
+笔记路径：${notePath}
+保存物化时这条来源回写会因目标缺失被跳过，可清除该待回写记录。`,
+                fixGroup: "clipbook-source",
+                fixKey: JSON.stringify([articleKey, notePath]),
+                fixLabel: "清除待回写来源"
+              });
+            }
+            await ((_p = opts.tick) == null ? void 0 : _p.call(opts, `剪藏待回写来源 ${pendingDone}/${pendingTotal}`, { done: pendingDone, total: pendingTotal }));
+          }
+        }
+      }
+    }
+    {
+      const favFile = ((_q = jsonScanTargets(app).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _q.file) || "CONFIG/STORAGE/favorites.json";
+      const parsed = await readRawJson(app, favFile);
+      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
+        const list = parsed.data;
+        for (let i = 0; i < list.length; i++) {
+          if ((_r = opts.isCancelled) == null ? void 0 : _r.call(opts)) return null;
+          const it = list[i];
+          if (!it || typeof it !== "object") continue;
+          scanned += 1;
+          const note = String(it.linkedNote || "").trim();
+          if (note && !fileExists(app, note)) {
+            issues.push({
+              severity: "warn",
+              title: `收藏「${String(it.title || it.url || "(无标题)")}」的关联笔记不存在`,
+              detail: `数据文件：${favFile}
+关联路径：${note}
+「跳转笔记」会提示文件不存在；可清除该关联（收藏条目本体保留）。`,
+              fixGroup: "favorites",
+              fixKey: String(it.id || ""),
+              fixLabel: "清除关联"
+            });
+          }
+          await ((_s = opts.tick) == null ? void 0 : _s.call(opts, "收藏本 · 关联笔记", { done: i + 1, total: list.length }));
+        }
+      }
+    }
+    {
+      const kbFile = ((_t = jsonScanTargets(app).find((t) => t.file.endsWith("/knowledge.json"))) == null ? void 0 : _t.file) || "CONFIG/STORAGE/knowledge.json";
+      const parsed = await readRawJson(app, kbFile);
+      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
+        const list = parsed.data;
+        for (let i = 0; i < list.length; i++) {
+          if ((_u = opts.isCancelled) == null ? void 0 : _u.call(opts)) return null;
+          const it = list[i];
+          if (!it || typeof it !== "object") continue;
+          scanned += 1;
+          const id = String(it.id || "");
+          const note = String(it.notePath || "").trim();
+          const video = String(it.videoPath || "").trim();
+          const title = String(it.title || it.url || "(无标题)");
+          if (note && !fileExists(app, note)) {
+            issues.push({
+              severity: "warn",
+              title: `知识盒任务「${title}」的文献笔记不存在`,
+              detail: `数据文件：${kbFile}
+笔记路径：${note}
+任务卡「打开文献笔记」会失败；可清除该引用（任务本体保留）。`,
+              fixGroup: "knowledge",
+              fixKey: id ? `${id}|note` : "",
+              fixLabel: "清除笔记引用"
+            });
+          }
+          if (video && !fileExists(app, video)) {
+            issues.push({
+              severity: "warn",
+              title: `知识盒任务「${title}」的视频文件不存在`,
+              detail: `数据文件：${kbFile}
+视频路径：${video}
+任务卡「复制视频路径」指向的文件已缺失；可清除该路径（任务本体保留）。`,
+              fixGroup: "knowledge",
+              fixKey: id ? `${id}|video` : "",
+              fixLabel: "清除视频路径"
+            });
+          }
+          await ((_v = opts.tick) == null ? void 0 : _v.call(opts, "知识盒 · 任务引用", { done: i + 1, total: list.length }));
+        }
+      }
+    }
+    const summary = issues.length ? `扫描 ${scanned} 个条目，发现 ${issues.length} 处指向缺失` : `扫描 ${scanned} 个条目，未发现指向缺失`;
+    const section = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
+    return section;
+  }
+  var init_checks_orphans = __esm({
+    "src/checkup/checks-orphans.ts"() {
+      init_files();
+      init_save();
+      init_scan();
+      init_store();
+      init_state2();
+      init_state3();
+      init_constants2();
+      init_data5();
+      init_data2();
+    }
+  });
+
+  // src/core/json-store.ts
+  function jsonStore(filePath) {
+    return jsonFileStore(filePath);
+  }
+  var init_json_store = __esm({
+    "src/core/json-store.ts"() {
+      init_storage();
+    }
+  });
+
+  // src/memo/data.ts
+  function parseScenarios(raw) {
+    if (!raw || !raw.trim()) return [...DEFAULT_SCENARIOS];
+    const list = raw.split(/[,，]/).map((s) => s.trim()).filter((s) => s.length > 0);
+    return list.length ? [...new Set(list)] : [...DEFAULT_SCENARIOS];
+  }
+  function hasCourseTag(cache) {
+    var _a2;
+    if (cache.tags && cache.tags.some((t) => t.tag === "#公开课" || t.tag === "公开课")) return true;
+    const tags = (_a2 = cache.frontmatter) == null ? void 0 : _a2.tags;
+    return !!tags && tags.includes("公开课");
+  }
+  function normalizeItem(item) {
+    return {
+      id: item.id,
+      title: item.title,
+      scene: item.scene,
+      priority: item.priority || "minor",
+      created: item.created,
+      completed: item.completed || null,
+      due: item.due || null,
+      notePath: item.notePath || null,
+      notePosition: item.notePosition || null,
+      scriptName: item.scriptName || null,
+      courseName: item.courseName || null,
+      coursePath: item.coursePath || null,
+      linkedNote: item.linkedNote || null,
+      url: item.url || null
+    };
+  }
+  var import_moment4, DEFAULT_SCENARIOS, MemoData;
+  var init_data6 = __esm({
+    "src/memo/data.ts"() {
+      import_moment4 = __toESM(require_moment());
+      init_json_store();
+      init_app();
+      init_utils();
+      init_storage();
+      init_notice();
+      DEFAULT_SCENARIOS = ["剪藏", "工作", "学习", "生活", "代码", "公开课"];
+      MemoData = {
+        memoFilePath: "",
+        scenarios: [],
+        _store: null,
+        cinemaFolderPath: "我的/影视",
+        init(settings) {
+          this.memoFilePath = storageFile("memo.json", settings.storagePath || "CONFIG/STORAGE");
+          this._store = jsonStore(this.memoFilePath);
+          this.scenarios = parseScenarios(settings.memoScenarios);
+          this.cinemaFolderPath = settings.cinemaFolderPath || "我的/影视";
+        },
+        async read() {
+          return this._store.read();
+        },
+        async write(data) {
+          return this._store.write(data);
+        },
+        /** 加载条目：读 + 缺 id 生成 + 字段归一（与旧 memo 一致：有缺 id 整写回补）。
+         *  id 前缀用 generateId() 默认 'item'——与旧 memo 域同写 memo.json，保证两域对同文件
+         *  的 id 形态完全一致（T5）。读改写整体入 per-path 串行队列（写竞态收敛，对照 memo/data.ts） */
+        async loadItems() {
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const raw = await this.read();
+            if (!Array.isArray(raw)) {
+              const backup = await backupOriginal(getApp(), this.memoFilePath);
+              await this.write([]);
+              try {
+                notify(
+                  backup ? `备忘录数据文件损坏（内容不是列表），原内容已留档到 ${backup}，已重建空清单继续使用` : "备忘录数据文件损坏（内容不是列表），已重建空清单继续使用",
+                  { type: "warning", dedupeKey: "memo-loaditems-corrupt" }
+                );
+              } catch (e) {
+              }
+              return [];
+            }
+            let needWrite = false;
+            const items = raw.map((item) => {
+              if (!item.id) {
+                item.id = generateId();
+                needWrite = true;
+              }
+              return normalizeItem(item);
+            });
+            if (needWrite) await this.write(raw);
+            return items;
+          });
+        },
+        async addItem(item) {
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const data = await this.read();
+            data.unshift(item);
+            await this.write(data);
+          });
+        },
+        async updateItem(id, newData) {
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const data = await this.read();
+            const idx = data.findIndex((d) => d.id === id);
+            if (idx === -1) throw new Error("条目不存在");
+            const old = data[idx];
+            if (newData.title !== void 0 && newData.url === void 0) {
+              const { url } = extractUrlAndDisplay(newData.title);
+              newData.url = url;
+            }
+            data[idx] = {
+              ...old,
+              ...newData,
+              id: old.id,
+              created: old.created
+            };
+            await this.write(data);
+          });
+        },
+        async completeItem(id) {
+          const now = (0, import_moment4.default)().format("YYYY-MM-DD HH:mm:ss");
+          await this.updateItem(id, { completed: now });
+        },
+        /** 删除条目；返回被删条目的原索引（未找到返回 -1），供撤销时插回原位 */
+        async deleteItem(id) {
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const data = await this.read();
+            const idx = data.findIndex((d) => d.id === id);
+            if (idx !== -1) {
+              data.splice(idx, 1);
+              await this.write(data);
+            }
+            return idx;
+          });
+        },
+        /** 撤销删除：把删除前的条目快照插回原索引（越界/未传则头部插入，对齐 addItem 语义） */
+        async restoreItem(item, idx) {
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const data = await this.read();
+            const at = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
+            data.splice(at, 0, item);
+            await this.write(data);
+          });
+        },
+        /** 批量迁移条目场景（场景重命名/删除用）：scene === from → to，返回迁移条数。
+         *  同源兼容：只改条目 scene 字段，写法与 memo 域读写同文件同形，memo 侧下次 loadItems 即读到 */
+        async updateSceneBulk(from, to) {
+          return enqueueFileTask(this.memoFilePath, async () => {
+            const data = await this.read();
+            let n = 0;
+            data.forEach((d) => {
+              if (d.scene === from) {
+                d.scene = to;
+                n++;
+              }
+            });
+            if (n > 0) await this.write(data);
+            return n;
+          });
+        },
+        /** 公开课笔记（影视目录中含 公开课 标签的文件） */
+        async getCourseNotes() {
+          const app = getApp();
+          const result = [];
+          for (const file of app.vault.getFiles()) {
+            if (!file.path.startsWith(this.cinemaFolderPath) || file.extension !== "md") continue;
+            const cache = app.metadataCache.getFileCache(file);
+            if (!cache) continue;
+            if (hasCourseTag(cache)) result.push({ name: file.basename, path: file.path });
+          }
+          return result;
+        },
+        getScenarios() {
+          return this.scenarios;
+        }
+      };
+    }
+  });
+
+  // src/checkup/checks-consistency.ts
+  function memoNormalize(item) {
+    const { title, scene, created } = item;
+    return {
+      id: item.id,
+      title,
+      scene,
+      priority: item.priority || "minor",
+      created,
+      completed: item.completed || null,
+      due: item.due || null,
+      notePath: item.notePath || null,
+      notePosition: item.notePosition || null,
+      scriptName: item.scriptName || null,
+      courseName: item.courseName || null,
+      coursePath: item.coursePath || null,
+      linkedNote: item.linkedNote || null,
+      url: item.url || null
+    };
+  }
+  function divergedKeysOf(a, b) {
+    const keys = /* @__PURE__ */ new Set([...Object.keys(a), ...Object.keys(b)]);
+    const out = [];
+    for (const k of keys) {
+      if (!Object.is(a[k], b[k])) out.push(k);
+    }
+    return out.sort();
+  }
+  function isPlainObject2(v) {
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  }
+  function analyzeMemoConsistency(raw) {
+    const stats = {
+      total: Array.isArray(raw) ? raw.length : -1,
+      nonObject: 0,
+      missingId: 0,
+      duplicateId: 0,
+      missingTitle: 0,
+      divergedKeys: {},
+      storeView: { total: 0, done: 0 },
+      rawView: { total: 0, done: 0 }
+    };
+    if (!Array.isArray(raw)) return stats;
+    const seenIds = /* @__PURE__ */ new Set();
+    for (const it of raw) {
+      if (!isPlainObject2(it)) {
+        stats.nonObject += 1;
+        continue;
+      }
+      const id = typeof it.id === "string" && it.id ? it.id : "";
+      if (!id) stats.missingId += 1;
+      else if (seenIds.has(id)) stats.duplicateId += 1;
+      else seenIds.add(id);
+      if (!it.title || !String(it.title).trim()) stats.missingTitle += 1;
+      const m = memoNormalize(it);
+      const t = normalizeItem(it);
+      if (m.completed !== null) stats.storeView.done += 1;
+      if (t.completed) stats.rawView.done += 1;
+      stats.storeView.total += 1;
+      stats.rawView.total += 1;
+      for (const k of divergedKeysOf(m, t)) {
+        stats.divergedKeys[k] = (stats.divergedKeys[k] || 0) + 1;
+      }
+    }
+    return stats;
+  }
+  function consistencyIssuesOf(stats) {
+    const issues = [];
+    if (stats.total < 0) {
+      return {
+        summary: "文件不是条目数组形态",
+        issues: [
+          {
+            severity: "error",
+            title: "memo.json 不是条目数组形态（两条读取链都无法读取）",
+            detail: "两条读取链都期望「条目数组」；当前文件是其他形态，请从 CONFIG/.CORRUPT/ 留档或备份恢复。"
+          }
+        ]
+      };
+    }
+    if (stats.storeView.total !== stats.rawView.total || stats.storeView.done !== stats.rawView.done) {
+      issues.push({
+        severity: "error",
+        title: `双链计数不一致：单例读 ${stats.storeView.total} 条/完成 ${stats.storeView.done}，直读 ${stats.rawView.total} 条/完成 ${stats.rawView.done}`,
+        detail: "同一份 memo.json，两条读取链的统计口径出现分叉，说明字段归一链路有 bug，请反馈修复。"
+      });
+    }
+    const diverged = Object.keys(stats.divergedKeys || {}).sort(
+      (a, b) => (stats.divergedKeys[b] || 0) - (stats.divergedKeys[a] || 0)
+    );
+    if (diverged.length) {
+      issues.push({
+        severity: "error",
+        title: `双链归一分叉：${diverged.map((k) => `${k} ×${stats.divergedKeys[k]}`).join("、")}`,
+        detail: "同一份 memo.json，「归一口径快照」与 normalizeItem 实际归一对上述字段产出不同结果，说明字段归一链路有 bug，请反馈修复。"
+      });
+    }
+    if (stats.nonObject > 0) {
+      issues.push({
+        severity: "error",
+        title: `${stats.nonObject} 条非对象条目（两条读取链都会在这里中断）`,
+        detail: "数组里混入了非对象内容（字符串/数字等），两条链加载都会失败，请从留档或备份修复。"
+      });
+    }
+    if (stats.duplicateId > 0) {
+      issues.push({
+        severity: "warn",
+        title: `${stats.duplicateId} 条重复 id（完成/删除会同 id 联动误伤）`,
+        detail: "同 id 条目在两条读取链中都会被当成同一条处理：勾选完成一条，另一条也显示完成。"
+      });
+    }
+    if (stats.missingTitle > 0) {
+      issues.push({
+        severity: "warn",
+        title: `${stats.missingTitle} 条缺少标题（列表显示为空行）`,
+        detail: "标题是两条读取链共用的展示字段；缺失多为外部写入导致。"
+      });
+    }
+    if (stats.missingId > 0) {
+      issues.push({
+        severity: "info",
+        title: `${stats.missingId} 条缺少 id（下次读取时自动补）`,
+        detail: "加载链会自动生成 id 写回，无需处理。"
+      });
+    }
+    const bad = stats.nonObject + stats.duplicateId + stats.missingTitle;
+    const summary = issues.some((i) => i.severity === "error") ? "发现结构异常" : bad > 0 ? `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致，另有 ${bad} 处小问题` : `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致`;
+    return { summary, issues };
+  }
+  async function checkSameSourceConsistency(app, opts = {}) {
+    var _a2, _b2, _c;
+    if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
+    const file = ((_b2 = jsonScanTargets(app).find((t) => t.file.endsWith("/memo.json"))) == null ? void 0 : _b2.file) || "CONFIG/STORAGE/memo.json";
+    const parsed = await readRawJson(app, file);
+    if (parsed === null) {
+      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 不存在（还没写过数据），跳过", issues: [], scanned: 0 };
+    }
+    if (!parsed.ok) {
+      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 无法解析（见「数据文件可解析」项），跳过", issues: [], scanned: 0 };
+    }
+    await ((_c = opts.tick) == null ? void 0 : _c.call(opts, "备忘录"));
+    const stats = analyzeMemoConsistency(parsed.data);
+    const { summary, issues } = consistencyIssuesOf(stats);
+    return { id: "consistency", name: "同源一致性（备忘录）", summary, issues, scanned: stats.total };
+  }
+  var init_checks_consistency = __esm({
+    "src/checkup/checks-consistency.ts"() {
+      init_files();
+      init_data6();
+    }
+  });
+
+  // src/checkup/run.ts
+  async function runCheckup(app, opts = {}) {
+    var _a2, _b2;
+    const total = CHECKS.length;
+    const sections = [];
+    for (let i = 0; i < CHECKS.length; i++) {
+      if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
+      (_b2 = opts.onProgress) == null ? void 0 : _b2.call(opts, { index: i, total, label: CHECKS[i].label });
+      try {
+        const section = await CHECKS[i].runner(app, {
+          tick: async (label, sub) => {
+            var _a3;
+            (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label, subDone: sub == null ? void 0 : sub.done, subTotal: sub == null ? void 0 : sub.total });
+            await yieldToMainThread();
+          },
+          isCancelled: () => {
+            var _a3;
+            return !!((_a3 = opts.isCancelled) == null ? void 0 : _a3.call(opts));
+          }
+        });
+        if (section === null) return null;
+        sections.push(section);
+      } catch (e) {
+        sections.push({
+          id: CHECKS[i].id,
+          name: CHECKS[i].label,
+          summary: "检查未能完成",
+          issues: [{ severity: "error", title: `${CHECKS[i].label}检查出错`, detail: e instanceof Error ? e.message : String(e) }],
+          scanned: 0
+        });
+      }
+    }
+    const report = { sections, finishedAt: (/* @__PURE__ */ new Date()).toLocaleString() };
+    lastReport = report;
+    lastFingerprints = collectFingerprints(app);
+    return report;
+  }
+  function collectFingerprints(app) {
+    var _a2;
+    const fp = {};
+    const get = (_a2 = app.vault) == null ? void 0 : _a2.getAbstractFileByPath;
+    if (typeof get !== "function") return fp;
+    for (const t of jsonScanTargets(app)) {
+      const f = get.call(app.vault, t.file);
+      if (f && f.stat && typeof f.stat.mtime === "number") fp[t.file] = f.stat.mtime;
+    }
+    return fp;
+  }
+  function cacheFreshness(app) {
+    if (!lastFingerprints || Object.keys(lastFingerprints).length === 0) return "changed";
+    const now = collectFingerprints(app);
+    const oldKeys = Object.keys(lastFingerprints);
+    if (oldKeys.length !== Object.keys(now).length) return "changed";
+    for (const k of oldKeys) {
+      if (now[k] !== lastFingerprints[k]) return "changed";
+    }
+    return "clean";
+  }
+  function getLastCheckupReport() {
+    return lastReport;
+  }
+  function fixKeysOf(issues, group) {
+    return issues.filter((i) => i.fixGroup === group && i.fixKey).map((i) => i.fixKey);
+  }
+  async function readJsonIfPresent(app, file, make) {
+    if (!app.vault.getAbstractFileByPath(file)) return null;
+    return make().read();
+  }
+  async function fixFavorites(app, file, ids) {
+    const restored = /* @__PURE__ */ new Map();
+    const fixed = await enqueueFileTask(file, async () => {
+      var _a2;
+      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+      if (data === null) return 0;
+      const want = new Set(ids);
+      let n = 0;
+      for (const it of data) {
+        if (!it || typeof it !== "object" || !want.has(String(it.id))) continue;
+        const note = String(it.linkedNote || "").trim();
+        if (!note) continue;
+        restored.set(String(it.id), (_a2 = it.linkedNote) != null ? _a2 : null);
+        it.linkedNote = null;
+        n += 1;
+      }
+      if (n > 0) await jsonFileStore(file, { defaultValue: [] }).write(data);
+      return n;
+    });
+    return {
+      group: "收藏关联",
+      fixed,
+      label: fixed ? `已清除 ${fixed} 条失效的收藏关联（条目保留）` : "没有需要清除的关联（数据已变化）",
+      undo: async () => {
+        if (!restored.size) return;
+        await enqueueFileTask(file, async () => {
+          var _a2;
+          const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+          if (data === null) return;
+          for (const it of data) {
+            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
+            if (String(it.linkedNote || "").trim()) continue;
+            it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
+          }
+          await jsonFileStore(file, { defaultValue: [] }).write(data);
+        });
+      }
+    };
+  }
+  function recordSectionOf(data, key) {
+    const cur = data && typeof data === "object" ? data[key] : void 0;
+    if (cur && typeof cur === "object" && !Array.isArray(cur)) return cur;
+    data[key] = {};
+    return data[key];
+  }
+  async function fixClipbookBatch(app, file, urls, markKeys, srcKeys) {
+    const removedSaved = [];
+    const removedMarks = [];
+    const removedSrc = [];
+    const hasWork = urls.length > 0 || markKeys.length > 0 || srcKeys.length > 0;
+    const counts = await enqueueFileTask(file, async () => {
+      if (!hasWork) return { saved: 0, marks: 0, src: 0 };
+      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+      if (data === null) return { saved: 0, marks: 0, src: 0 };
+      let cntSaved = 0;
+      const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
+      const want = new Set(urls);
+      const kept = [];
+      list.forEach((entry, index) => {
+        const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
+        if (url && want.has(url)) {
+          removedSaved.push({ url, title: String(entry.title || ""), savedAt: String(entry.savedAt || ""), index });
+          cntSaved += 1;
+        } else {
+          kept.push(entry);
+        }
+      });
+      if (cntSaved > 0) data.savedArchive = kept;
+      let nMarks = 0;
+      if (markKeys.length) {
+        const marks = recordSectionOf(data, "marks");
+        for (const key of markKeys) {
+          let articleKey = "";
+          let find = "";
+          let notePath = "";
+          try {
+            const [a, f, p] = JSON.parse(key);
+            articleKey = String(a != null ? a : "");
+            find = String(f != null ? f : "");
+            notePath = String(p != null ? p : "");
+          } catch (e) {
+            continue;
+          }
+          if (!articleKey || !notePath) continue;
+          const markList = Array.isArray(marks[articleKey]) ? marks[articleKey] : [];
+          const idx = markList.findIndex(
+            (m) => m && typeof m === "object" && String(m.find || "") === find && String(m.notePath || "") === notePath
+          );
+          if (idx === -1) continue;
+          removedMarks.push({ articleKey, mark: markList[idx], index: idx });
+          markList.splice(idx, 1);
+          if (markList.length === 0) delete marks[articleKey];
+          nMarks += 1;
+        }
+      }
+      let nSrc = 0;
+      if (srcKeys.length) {
+        const pending = recordSectionOf(data, "pendingSource");
+        for (const key of srcKeys) {
+          let articleKey = "";
+          let notePath = "";
+          try {
+            const [a, p] = JSON.parse(key);
+            articleKey = String(a != null ? a : "");
+            notePath = String(p != null ? p : "");
+          } catch (e) {
+            continue;
+          }
+          if (!articleKey || !notePath) continue;
+          const srcList = Array.isArray(pending[articleKey]) ? pending[articleKey] : [];
+          const idx = srcList.findIndex((p) => String(p || "") === notePath);
+          if (idx === -1) continue;
+          removedSrc.push({ articleKey, notePath, index: idx });
+          srcList.splice(idx, 1);
+          if (srcList.length === 0) delete pending[articleKey];
+          nSrc += 1;
+        }
+      }
+      if (cntSaved + nMarks + nSrc > 0) await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      return { saved: cntSaved, marks: nMarks, src: nSrc };
+    });
+    const makeSavedUndo = () => async () => {
+      if (!removedSaved.length) return;
+      await enqueueFileTask(file, async () => {
+        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        if (data === null) return;
+        const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
+        for (const r of removedSaved) {
+          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
+        }
+        data.savedArchive = list;
+        await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      });
+    };
+    const makeMarksUndo = () => async () => {
+      if (!removedMarks.length) return;
+      await enqueueFileTask(file, async () => {
+        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        if (data === null) return;
+        const marks = recordSectionOf(data, "marks");
+        for (const r of removedMarks) {
+          const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
+          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at, 0, r.mark);
+          marks[r.articleKey] = list;
+        }
+        await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      });
+    };
+    const makeSrcUndo = () => async () => {
+      if (!removedSrc.length) return;
+      await enqueueFileTask(file, async () => {
+        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        if (data === null) return;
+        const pending = recordSectionOf(data, "pendingSource");
+        for (const r of removedSrc) {
+          const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
+          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at, 0, r.notePath);
+          pending[r.articleKey] = list;
+        }
+        await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      });
+    };
+    const outcomes = [];
+    if (urls.length) {
+      outcomes.push({
+        group: "剪藏残留",
+        fixed: counts.saved,
+        label: counts.saved ? `已清除 ${counts.saved} 条剪藏「已保存」残留` : "没有需要清除的残留（数据已变化）",
+        undo: makeSavedUndo()
+      });
+    }
+    if (markKeys.length) {
+      outcomes.push({
+        group: "剪藏标注",
+        fixed: counts.marks,
+        label: counts.marks ? `已清除 ${counts.marks} 条失效的剪藏标注` : "没有需要清除的标注（数据已变化）",
+        undo: makeMarksUndo()
+      });
+    }
+    if (srcKeys.length) {
+      outcomes.push({
+        group: "剪藏待回写来源",
+        fixed: counts.src,
+        label: counts.src ? `已清除 ${counts.src} 条失效的剪藏待回写来源` : "没有需要清除的待回写来源（数据已变化）",
+        undo: makeSrcUndo()
+      });
+    }
+    return outcomes;
+  }
+  async function fixKnowledge(app, file, keys) {
+    const restored = /* @__PURE__ */ new Map();
+    const fixed = await enqueueFileTask(file, async () => {
+      var _a2;
+      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+      if (data === null) return 0;
+      let n = 0;
+      for (const key of keys) {
+        const bar = key.lastIndexOf("|");
+        if (bar <= 0) continue;
+        const id = key.slice(0, bar);
+        const field = key.slice(bar + 1) === "note" ? "notePath" : "videoPath";
+        const it = (Array.isArray(data) ? data : []).find((d) => d && typeof d === "object" && String(d.id) === id);
+        if (!it) continue;
+        const cur = String(it[field] || "").trim();
+        if (!cur) continue;
+        const rec = (_a2 = restored.get(id)) != null ? _a2 : {};
+        rec[field === "notePath" ? "notePath" : "videoPath"] = it[field];
+        restored.set(id, rec);
+        it[field] = null;
+        n += 1;
+      }
+      if (n > 0) await jsonFileStore(file, { defaultValue: [] }).write(data);
+      return n;
+    });
+    return {
+      group: "知识盒引用",
+      fixed,
+      label: fixed ? `已清除 ${fixed} 处知识盒任务的失效引用（任务保留）` : "没有需要清除的引用（数据已变化）",
+      undo: async () => {
+        if (!restored.size) return;
+        await enqueueFileTask(file, async () => {
+          const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+          if (data === null) return;
+          for (const it of Array.isArray(data) ? data : []) {
+            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
+            const rec = restored.get(String(it.id));
+            if (rec.notePath !== void 0 && !String(it.notePath || "").trim()) it.notePath = rec.notePath;
+            if (rec.videoPath !== void 0 && !String(it.videoPath || "").trim()) it.videoPath = rec.videoPath;
+          }
+          await jsonFileStore(file, { defaultValue: [] }).write(data);
+        });
+      }
+    };
+  }
+  async function fixOrphanIssues(app, issues) {
+    const outcomes = [];
+    const failures = [];
+    const targets = jsonScanTargets(app);
+    const fileOf = (suffix) => {
+      var _a2;
+      return ((_a2 = targets.find((t) => t.file.endsWith("/" + suffix))) == null ? void 0 : _a2.file) || storageFile(suffix);
+    };
+    const favIds = fixKeysOf(issues, "favorites");
+    if (favIds.length) {
+      try {
+        outcomes.push(await fixFavorites(app, fileOf("favorites.json"), favIds));
+      } catch (e) {
+        failures.push("收藏关联");
+      }
+    }
+    const clipUrls = fixKeysOf(issues, "clipbook");
+    const markKeys = fixKeysOf(issues, "clipbook-marks");
+    const srcKeys = fixKeysOf(issues, "clipbook-source");
+    if (clipUrls.length || markKeys.length || srcKeys.length) {
+      try {
+        outcomes.push(...await fixClipbookBatch(app, fileOf("clipbook.json"), clipUrls, markKeys, srcKeys));
+      } catch (e) {
+        failures.push("剪藏残留/标注/待回写来源");
+      }
+    }
+    const kbKeys = fixKeysOf(issues, "knowledge");
+    if (kbKeys.length) {
+      try {
+        outcomes.push(await fixKnowledge(app, fileOf("knowledge.json"), kbKeys));
+      } catch (e) {
+        failures.push("知识盒任务引用");
+      }
+    }
+    return { outcomes, failures };
+  }
+  var CHECKS, CHECK_LABELS, lastReport, lastFingerprints;
+  var init_run = __esm({
+    "src/checkup/run.ts"() {
+      init_utils();
+      init_storage();
+      init_files();
+      init_checks_json();
+      init_checks_drift();
+      init_checks_orphans();
+      init_checks_consistency();
+      init_data3();
+      CHECKS = [
+        { id: "json", label: "数据文件可解析", runner: checkJsonFiles },
+        { id: "drift", label: "字段漂移", runner: checkFieldDrift },
+        { id: "orphan", label: "孤儿条目", runner: checkOrphans },
+        { id: "consistency", label: "同源一致性", runner: checkSameSourceConsistency }
+      ];
+      CHECK_LABELS = CHECKS.map((c) => c.label);
+      lastReport = null;
+      lastFingerprints = null;
+    }
+  });
+
+  // src/checkup/ui.ts
+  function isPanelVisible() {
+    return !!overlay && overlay.style.display === "flex";
+  }
+  function openDataCheckup(app) {
+    hostApp = app;
+    if (!overlay) build(app);
+    topifyZ(overlay);
+    overlay.style.display = "flex";
+    escHandle == null ? void 0 : escHandle.unregister();
+    escHandle = escManager.register("bz-checkup", {
+      isVisible: isPanelVisible,
+      close: () => hide()
+    });
+    renderBody();
+  }
+  function unloadDataCheckup() {
+    runSeq += 1;
+    running = false;
+    fixing = false;
+    hostApp = null;
+    escHandle == null ? void 0 : escHandle.unregister();
+    escHandle = null;
+    progressCtl = null;
+    overlay == null ? void 0 : overlay.remove();
+    overlay = null;
+  }
+  function build(app) {
+    const ov = document.createElement("div");
+    ov.id = OVERLAY_ID;
+    ov.className = "bz-panel-overlay";
+    const frame = document.createElement("div");
+    frame.id = FRAME_ID;
+    frame.className = "bz-panel-frame bz-checkup-popup";
+    const head = document.createElement("div");
+    head.className = "bz-panel-head";
+    const brand = document.createElement("div");
+    brand.className = "bz-panel-brand";
+    brand.appendChild(uiIcon("stethoscope"));
+    const title = document.createElement("div");
+    title.className = "bz-panel-title";
+    title.textContent = "数据体检";
+    const sp = document.createElement("div");
+    sp.className = "bz-panel-head-sp";
+    head.append(brand, title, sp);
+    const body = document.createElement("div");
+    body.className = "bz-checkup-body";
+    const foot = document.createElement("div");
+    foot.className = "bz-checkup-foot";
+    frame.append(head, body, foot);
+    ov.appendChild(frame);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) hide();
+    });
+    document.body.appendChild(ov);
+    overlay = ov;
+  }
+  function hide() {
+    if (overlay) overlay.style.display = "none";
+  }
+  function bodyEl() {
+    return overlay.querySelector(".bz-checkup-body");
+  }
+  function footEl() {
+    return overlay.querySelector(".bz-checkup-foot");
+  }
+  function renderBody() {
+    if (!overlay) return;
+    if (running) {
+      renderRunning();
+      return;
+    }
+    const last = getLastCheckupReport();
+    if (last) renderReport(last, true);
+    else renderIdle();
+  }
+  function renderIdle() {
+    const body = bodyEl();
+    body.innerHTML = "";
+    const actions = document.createElement("div");
+    actions.className = "bz-btn-row bz-btn-row--center";
+    actions.appendChild(uiBtn({ label: "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() }));
+    body.appendChild(
+      uiEmpty({
+        icon: "stethoscope",
+        title: "还没体检过",
+        desc: "体检会检查各域数据文件能否解析、字段是否漂移、条目指向是否失效，全程只读不改数据",
+        actions
+      })
+    );
+    renderFoot();
+  }
+  function renderFoot() {
+    const foot = footEl();
+    foot.innerHTML = "";
+    if (running || fixing) {
+      foot.appendChild(uiBtn({ label: fixing ? "修复中…" : "取消体检", onClick: () => cancelRun(), disabled: fixing }));
+      return;
+    }
+    const last = getLastCheckupReport();
+    foot.appendChild(
+      uiBtn({ label: last ? "重新体检" : "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() })
+    );
+  }
+  async function startRun() {
+    if (!hostApp || running) return;
+    running = true;
+    const seq = ++runSeq;
+    renderRunning();
+    try {
+      const report = await runCheckup(hostApp, {
+        isCancelled: () => seq !== runSeq,
+        onProgress: (p) => {
+          if (seq !== runSeq) return;
+          updateProgress(p.index, p.total, p.label, p.subDone, p.subTotal);
+        }
+      });
+      if (seq !== runSeq) return;
+      running = false;
+      if (report) {
+        progressCtl == null ? void 0 : progressCtl.setValue(100);
+        renderReport(report, false);
+        if (!isPanelVisible()) {
+          const counts = severityCounts(report);
+          const text = counts.error ? `体检完成：${counts.error} 个问题需要处理` : counts.warn + counts.info ? `体检完成：${counts.warn + counts.info} 处建议处理` : "体检完成：未发现问题";
+          notify(text, { action: { label: "查看", onClick: () => hostApp && openDataCheckup(hostApp) } });
+        }
+      } else renderBody();
+    } catch (e) {
+      running = false;
+      if (seq !== runSeq) return;
+      notifyActionError(e, "体检", { onRetry: () => void startRun() });
+      renderBody();
+    }
+  }
+  function cancelRun() {
+    if (fixing) return;
+    runSeq += 1;
+    running = false;
+    renderBody();
+  }
+  function renderRunning() {
+    renderFoot();
+    const body = bodyEl();
+    body.innerHTML = "";
+    const progress = document.createElement("div");
+    progress.className = "bz-checkup-progress";
+    progress.textContent = `体检中（1/${CHECK_LABELS.length}）：${CHECK_LABELS[0]}`;
+    progressCtl = uiProgress();
+    body.append(progress, progressCtl.el);
+    const list = document.createElement("div");
+    list.className = "bz-checkup-steps";
+    for (let i = 0; i < CHECK_LABELS.length; i++) {
+      const row = document.createElement("div");
+      row.className = "bz-checkup-step";
+      row.dataset.step = String(i);
+      const mark = document.createElement("span");
+      mark.className = "bz-checkup-step-mark";
+      const name = document.createElement("span");
+      name.className = "bz-checkup-step-name";
+      name.textContent = CHECK_LABELS[i];
+      row.append(mark, name);
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+  }
+  function updateProgress(index, total, label, subDone, subTotal) {
+    if (!overlay) return;
+    const progress = overlay.querySelector(".bz-checkup-progress");
+    if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
+    const sub = subTotal && subTotal > 0 ? Math.min(1, Math.max(0, subDone || 0) / subTotal) : 0;
+    progressCtl == null ? void 0 : progressCtl.setValue((index + sub) / total * 100);
+    overlay.querySelectorAll(".bz-checkup-step").forEach((row) => {
+      const i = Number(row.dataset.step);
+      row.classList.toggle("is-done", i < index);
+      row.classList.toggle("is-current", i === index);
+    });
+  }
+  function severityCounts(report) {
+    const c = { error: 0, warn: 0, info: 0 };
+    for (const s of report.sections) for (const i of s.issues) c[i.severity] += 1;
+    return c;
+  }
+  function renderReport(report, stale) {
+    renderFoot();
+    const body = bodyEl();
+    body.innerHTML = "";
+    if (stale) {
+      const hint = document.createElement("div");
+      hint.className = "bz-checkup-stale";
+      hint.textContent = hostApp && cacheFreshness(hostApp) === "clean" ? `上次体检：${report.finishedAt} · 此后数据未变化` : `上次体检：${report.finishedAt} · 数据可能已变化，可重新体检`;
+      body.appendChild(hint);
+    }
+    const counts = severityCounts(report);
+    const warnsCount = counts.warn + counts.info;
+    const summary = document.createElement("div");
+    summary.className = "bz-checkup-summary" + (counts.error ? " bz-checkup-summary--bad" : warnsCount ? " bz-checkup-summary--warn" : " bz-checkup-summary--ok");
+    summary.textContent = counts.error ? `体检完成：${counts.error} 个问题需要处理` : warnsCount ? `体检完成：${warnsCount} 处建议处理` : "体检完成：全部通过";
+    body.appendChild(summary);
+    const allIssues = report.sections.flatMap((s) => s.issues);
+    const errors = allIssues.filter((i) => i.severity === "error");
+    const warns = allIssues.filter((i) => i.severity === "warn" || i.severity === "info");
+    const cleanSections = report.sections.filter((s) => !s.issues.length);
+    if (errors.length) appendIssueGroup(body, "需要处理", "bad", errors);
+    if (warns.length) {
+      const fixable = warns.filter((i) => i.fixGroup && i.fixKey);
+      appendIssueGroup(body, "建议处理", "warn", warns, fixable.length ? { issues: fixable } : void 0);
+    }
+    appendCleanGroup(body, report, cleanSections);
+  }
+  function appendIssueGroup(body, title, tone, issues, fixAll) {
+    const sec = document.createElement("div");
+    sec.className = "bz-checkup-group bz-checkup-group--" + tone;
+    const head = document.createElement("div");
+    head.className = "bz-checkup-group-head";
+    const t = document.createElement("span");
+    t.className = "bz-checkup-group-title";
+    t.textContent = `${title}（${issues.length}）`;
+    head.appendChild(t);
+    if (fixAll) {
+      head.appendChild(
+        uiBtn({
+          label: `一键修复（${fixAll.issues.length}）`,
+          onClick: () => void confirmFix(fixAll.issues, "一键修复")
+        })
+      );
+    }
+    sec.appendChild(head);
+    for (const issue of issues) sec.appendChild(issueRow(issue));
+    body.appendChild(sec);
+  }
+  function appendCleanGroup(body, report, cleanSections) {
+    const sec = document.createElement("div");
+    sec.className = "bz-checkup-group bz-checkup-group--ok";
+    const head = document.createElement("div");
+    head.className = "bz-checkup-group-head";
+    const t = document.createElement("span");
+    t.className = "bz-checkup-group-title";
+    t.textContent = `通过（${cleanSections.length}）`;
+    head.appendChild(t);
+    sec.appendChild(head);
+    if (!cleanSections.length) {
+      const none = document.createElement("div");
+      none.className = "bz-checkup-clean-line";
+      none.textContent = "没有完全通过的检查项";
+      sec.appendChild(none);
+    }
+    for (const s of cleanSections) {
+      const line = document.createElement("div");
+      line.className = "bz-checkup-clean-line";
+      line.textContent = `${s.name}：${s.summary}`;
+      sec.appendChild(line);
+    }
+    body.appendChild(sec);
+  }
+  function issueRow(issue) {
+    const row = document.createElement("div");
+    row.className = "bz-checkup-issue";
+    const dot = document.createElement("span");
+    dot.className = "bz-checkup-dot bz-checkup-dot--" + issue.severity;
+    const main = document.createElement("div");
+    main.className = "bz-checkup-issue-main";
+    const title = document.createElement("div");
+    title.className = "bz-checkup-issue-title";
+    title.textContent = issue.title;
+    main.appendChild(title);
+    if (issue.detail) {
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "bz-checkup-detail-toggle bz-touch-target--lg";
+      toggle.textContent = "查看详情";
+      toggle.setAttribute("aria-expanded", "false");
+      const detail = document.createElement("pre");
+      detail.className = "bz-checkup-detail";
+      detail.style.display = "none";
+      let filled = false;
+      toggle.addEventListener("click", () => {
+        const open = detail.style.display !== "none";
+        if (!filled) {
+          detail.textContent = issue.detail || "";
+          filled = true;
+        }
+        detail.style.display = open ? "none" : "block";
+        toggle.textContent = open ? "查看详情" : "收起详情";
+        toggle.setAttribute("aria-expanded", open ? "false" : "true");
+      });
+      main.appendChild(toggle);
+      main.appendChild(detail);
+    }
+    row.append(dot, main);
+    if (issue.fixGroup && issue.fixKey) {
+      row.appendChild(
+        uiBtn({
+          label: issue.fixLabel || "修复",
+          onClick: () => void confirmFix([issue], issue.fixLabel || "修复")
+        })
+      );
+    }
+    return row;
+  }
+  function setFixing(on) {
+    fixing = on;
+    if (!overlay) return;
+    overlay.querySelectorAll("button").forEach((b) => {
+      b.disabled = on;
+    });
+    renderFoot();
+  }
+  async function confirmFix(issues, what) {
+    if (!hostApp || fixing) return;
+    const fixable = issues.filter((i) => i.fixGroup && i.fixKey);
+    if (!fixable.length) return;
+    const v = await openFlowDialog({
+      // 动作名入题（cons UX-1：消费 what 形参，逐条/批量确认语境有区分）
+      title: what === "一键修复" ? "修复确认" : `${what}确认`,
+      message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
+        // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
+        { label: "清除", value: "ok", cta: true, danger: true }
+      ]
+    });
+    if (v !== "ok") return;
+    setFixing(true);
+    let failures = [];
+    try {
+      const result = await fixOrphanIssues(hostApp, fixable);
+      failures = result.failures;
+      const hit = result.outcomes.filter((o) => o.fixed > 0);
+      if (hit.length) {
+        const total = hit.reduce((a, o) => a + o.fixed, 0);
+        const detail = hit.map((o) => `${o.group} ${o.fixed}`).join("、");
+        notifyUndo(`已清除 ${total} 项失效引用：${detail}`, () => {
+          (async () => {
+            for (const o of hit) await o.undo();
+          })().then(() => {
+            return startRun();
+          }).catch((e) => notifySaveError(e, "撤销清除"));
+        });
+      } else if (!failures.length) {
+        notice("没有需要清除的项（数据已变化）");
+      }
+      if (failures.length) {
+        notifyActionError(new Error("未完成：" + failures.join("、")), "清除失效引用", {
+          onRetry: () => void confirmFix(issues, what)
+        });
+      }
+    } catch (e) {
+      setFixing(false);
+      notifyActionError(e, "清除失效引用", { onRetry: () => void confirmFix(issues, what) });
+      return;
+    }
+    setFixing(false);
+    await startRun();
+  }
+  var overlay, escHandle, runSeq, running, fixing, progressCtl, hostApp, OVERLAY_ID, FRAME_ID;
+  var init_ui4 = __esm({
+    "src/checkup/ui.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_notice();
+      init_ui();
+      init_flow_dialog();
+      init_run();
+      overlay = null;
+      escHandle = null;
+      runSeq = 0;
+      running = false;
+      fixing = false;
+      progressCtl = null;
+      hostApp = null;
+      OVERLAY_ID = "bz-checkup-mask";
+      FRAME_ID = "bz-checkup-popup";
+    }
+  });
+
+  // src/checkup/index.ts
+  var checkup_exports = {};
+  __export(checkup_exports, {
+    openDataCheckup: () => openDataCheckup,
+    unloadDataCheckup: () => unloadDataCheckup
+  });
+  var init_checkup = __esm({
+    "src/checkup/index.ts"() {
+      init_ui4();
+    }
+  });
+
+  // src/settings-panel/schema.ts
+  var schema_exports = {};
+  __export(schema_exports, {
+    appearanceSettingsSchema: () => appearanceSettingsSchema
+  });
+  function appearanceSettingsSchema() {
+    return {
+      groups: [
+        {
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "布局",
+              binding: { key: "settingsPanelLayout" },
+              options: [{ value: "jingwei", label: "经纬", prevClass: "bz-sp-prev-jingwei" }]
+            },
+            {
+              type: "choiceCards",
+              name: "主题",
+              binding: { key: "settingsPanelSkin" },
+              options: [{ value: "chenhun", label: "晨昏", prevClass: "bz-sp-prev-chenhun" }]
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_schema = __esm({
+    "src/settings-panel/schema.ts"() {
+    }
+  });
+
+  // src/home/shared.ts
+  function applyOrder(order, domains = DOMAINS) {
+    if (!order || !order.length) return domains;
+    const rank = /* @__PURE__ */ new Map();
+    order.forEach((id, i) => {
+      if (!rank.has(id)) rank.set(id, i);
+    });
+    const listed = domains.filter((d) => rank.has(d.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
+    if (listed.length === domains.length) return listed;
+    const out = [...listed];
+    for (const d of domains) {
+      if (rank.has(d.id)) continue;
+      let anchor = -1;
+      for (let k = domains.indexOf(d) - 1; k >= 0; k--) {
+        const pos = out.indexOf(domains[k]);
+        if (pos >= 0) {
+          anchor = pos;
+          break;
+        }
+      }
+      out.splice(anchor + 1, 0, d);
+    }
+    return out;
+  }
+  function reorderTo(order, id, toIndex, hidden = [], domains = DOMAINS) {
+    const all = applyOrder(order, domains).map((d) => d.id);
+    const off = new Set(hidden);
+    const visible = all.filter((x) => !off.has(x));
+    const from = visible.indexOf(id);
+    if (from < 0 || toIndex < 0 || toIndex >= visible.length) return all;
+    visible.splice(from, 1);
+    visible.splice(toIndex, 0, id);
+    return [...visible, ...all.filter((x) => off.has(x))];
+  }
+  function hiddenOf(order, scope) {
+    return scope === "mob" ? order.hiddenMob : order.hiddenDesk;
+  }
+  function visibleDomains(order, hidden, domains = DOMAINS) {
+    const hide2 = new Set(hidden != null ? hidden : []);
+    return applyOrder(order, domains.filter((d) => !hide2.has(d.id)));
+  }
+  function domainColor(id) {
+    var _a2;
+    return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
+  }
+  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS;
+  var init_shared2 = __esm({
+    "src/home/shared.ts"() {
+      init_str();
+      init_domain_icons();
+      ICON_KEY = { settings: "settings-panel", vault: "password-vault" };
+      iconOf = (id) => {
+        var _a2;
+        return DOMAIN_ICONS[(_a2 = ICON_KEY[id]) != null ? _a2 : id];
+      };
+      DOMAINS = [
+        { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念 · 回忆媒体墙", icon: iconOf("diary") },
+        // 备忘录（memo 域，ADR-0092/0117）：2026-09-10 用户拍板补入首页入口（此前只在命令面板可达）
+        { id: "memo", commandId: "bz-memo-open", name: "备忘录", sub: "随手记与待办", icon: iconOf("memo") },
+        { id: "cinema", commandId: "bz-cinema-open", name: "影院", sub: "影视想看与在看", icon: iconOf("cinema") },
+        { id: "review", commandId: "bz-review-open", name: "复习计划", sub: "到期卡片队列", icon: iconOf("review") },
+        { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
+        { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
+        { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
+        // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
+        { id: "knowledge", commandId: "bz-knowledge-open", name: "知识盒", sub: "文献录入 · 卡片 · 主题", icon: iconOf("knowledge") },
+        // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
+        { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
+        // 游戏库（gameshelf 域，issue 368）：Steam 自动拉库，无手动登记
+        { id: "gameshelf", commandId: "bz-gameshelf-open", name: "游戏库", sub: "Steam 库存与时长", icon: iconOf("gameshelf") },
+        // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
+        { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
+        { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
+        // 移动附件（attach 域）：2026-09-10 用户拍板自首页入口移除（命令仍可在命令面板调用）
+        // 保险库入口副题两资产口径（ADR-0158：密码视图已摘，密码入口在密码本磁贴）
+        { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
+        // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
+        { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
+        { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
+      ];
+      DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
+      DOMAIN_DOT = {
+        diary: "#e67341",
+        memo: "#e8590c",
+        cinema: "#e6951d",
+        review: "#7c5cd6",
+        pomodoro: "#e5534b",
+        favorites: "#f0b429",
+        clipping: "#2f9e5f",
+        knowledge: "#c2559d",
+        bookshelf: "#3d7bd6",
+        secondbrain: "#a33d2a",
+        "reading-report": "#3fa7a0",
+        belongings: "#45a35c",
+        attach: "#8a8f99",
+        encrypt: "#8a8f99",
+        vault: "#c9a227",
+        smartcat: "#e67341",
+        settings: "#8a8f99"
+      };
+      ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
+    }
+  });
+
+  // src/home/order.ts
+  function emptyHomeOrder() {
+    return { version: HOME_ORDER_VERSION, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
+  }
+  function strList(v) {
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string" && !!x) : [];
+  }
+  function normalizeHomeOrder(raw) {
+    const o = raw != null ? raw : {};
+    const legacy = strList(o.hidden);
+    return {
+      version: HOME_ORDER_VERSION,
+      desk: strList(o.desk),
+      mob: strList(o.mob),
+      hiddenDesk: o.hiddenDesk === void 0 ? legacy : strList(o.hiddenDesk),
+      hiddenMob: o.hiddenMob === void 0 ? legacy : strList(o.hiddenMob)
+    };
+  }
+  async function loadHomeOrder(app) {
+    try {
+      return normalizeHomeOrder(await store(app).read());
+    } catch (e) {
+      return emptyHomeOrder();
+    }
+  }
+  async function saveHomeConfig(order, app) {
+    return enqueueFileTask(storageFile("home.json"), async () => {
+      await store(app).write({
+        version: HOME_ORDER_VERSION,
+        desk: [...order.desk],
+        mob: [...order.mob],
+        hiddenDesk: [...order.hiddenDesk],
+        hiddenMob: [...order.hiddenMob]
+      });
+    });
+  }
+  var HOME_ORDER_VERSION, store;
+  var init_order = __esm({
+    "src/home/order.ts"() {
+      init_storage();
+      HOME_ORDER_VERSION = 3;
+      store = (app) => jsonFileStore(storageFile("home.json"), { defaultValue: () => emptyHomeOrder(), app });
+    }
+  });
+
+  // src/home/entry-editor.ts
+  function mountHomeEntryEditor(body, app) {
+    blurController == null ? void 0 : blurController.abort();
+    blurController = new AbortController();
+    const scope = isMobileEnv() ? "mob" : "desk";
+    const touchMode = isMobileEnv();
+    let order = null;
+    let suppressClickUntil = 0;
+    const root = document.createElement("div");
+    root.className = "bz-home-ent";
+    root.setAttribute("data-ent-scope", scope);
+    body.appendChild(root);
+    const hostRow = body.closest(".bz-sp-set-row");
+    if (hostRow) hostRow.classList.add(FLUSH_CLS);
+    function setHidden(ids) {
+      if (!order) return;
+      order = scope === "mob" ? { ...order, hiddenMob: ids } : { ...order, hiddenDesk: ids };
+    }
+    function setScopeOrder(ids) {
+      if (!order) return;
+      order = scope === "mob" ? { ...order, mob: ids } : { ...order, desk: ids };
+    }
+    function persist() {
+      if (!order) return;
+      void saveHomeConfig(order, app).catch((e) => {
+        notifySaveError(e, "入口顺序");
+      });
+    }
+    let drag = null;
+    function onTouchMove(e) {
+      if (!drag || !drag.armed) return;
+      if (e.cancelable) e.preventDefault();
+    }
+    function applyShift(c) {
+      for (let i = 0; i < c.total; i++) {
+        if (i === c.from) continue;
+        const el = c.rows[i];
+        if (!el) continue;
+        let shift = 0;
+        if (c.to > c.from && i > c.from && i <= c.to) shift = -1;
+        else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;
+        if (shift) {
+          el.style.transform = `translateY(${shift * c.step}px)`;
+          el.classList.add(SHIFT_CLS);
+        } else {
+          el.style.transform = "";
+          el.classList.remove(SHIFT_CLS);
+        }
+      }
+    }
+    function endDrag() {
+      const c = drag;
+      drag = null;
+      if (!c) return;
+      if (c.armTimer) clearTimeout(c.armTimer);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      c.el.classList.remove(DRAG_CLS);
+      c.el.style.transform = "";
+      for (const el of c.rows) {
+        el.style.transform = "";
+        el.classList.remove(SHIFT_CLS);
+      }
+    }
+    function onMove(e) {
+      const c = drag;
+      if (!c) return;
+      const dy = e.clientY - c.startY;
+      if (!c.active) {
+        if (!c.armed) {
+          if (Math.abs(dy) > TOUCH_SLOP_PX) endDrag();
+          return;
+        }
+        if (Math.abs(dy) < DRAG_PX) return;
+        c.active = true;
+        c.el.classList.add(DRAG_CLS);
+      }
+      if (e.cancelable) e.preventDefault();
+      const to = Math.max(0, Math.min(c.from + Math.round(dy / c.step), c.total - 1));
+      c.to = to;
+      c.el.style.transform = `translateY(${(to - c.from) * c.step}px)`;
+      applyShift(c);
+    }
+    function onUp() {
+      const c = drag;
+      if (!c) return;
+      const { active: active2, to, from } = c;
+      const id = c.el.dataset.entRow || "";
+      endDrag();
+      if (!active2) return;
+      suppressClickUntil = Date.now() + 300;
+      if (!order || to === from || !id) {
+        render2();
+        return;
+      }
+      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
+      persist();
+      render2(id || void 0);
+    }
+    function attachDrag(el, listEl2, rows) {
+      const total = rows.length;
+      el.addEventListener("pointerdown", (e) => {
+        var _a2, _b2;
+        if (e.button) return;
+        if (e.target.closest("[data-ent-remove]")) return;
+        const from = rows.indexOf(el);
+        if (from < 0 || total < 2) return;
+        let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
+        if (rows.length >= 2) {
+          const d = rows[1].offsetTop - rows[0].offsetTop;
+          if (d > 0) step = d;
+        }
+        const c = {
+          el,
+          listEl: listEl2,
+          rows,
+          startY: e.clientY,
+          step,
+          from,
+          to: from,
+          total,
+          active: false,
+          armed: !touchMode,
+          armTimer: null
+        };
+        drag = c;
+        if (touchMode) {
+          window.addEventListener("touchmove", onTouchMove, { passive: false });
+          c.armTimer = setTimeout(() => {
+            if (drag === c) c.armed = true;
+            c.armTimer = null;
+          }, TOUCH_ARM_MS);
+        }
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        window.addEventListener("pointercancel", onUp);
+      });
+    }
+    function rowHtml2(d, isHidden2) {
+      const btn = isHidden2 ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add bz-touch-target--sm" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan("plus") + "</button>" : '<button type="button" class="bz-home-ent-btn bz-touch-target--sm" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan("x") + "</button>";
+      const grip = isHidden2 ? '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + "</span>" : '<span class="bz-home-ent-grip" role="button" tabindex="0" data-ent-grip="' + d.id + '" aria-label="调整' + d.name + '顺序（上/下方向键）">' + iconSpan("grip-vertical") + "</span>";
+      return '<div class="bz-home-ent-row' + (isHidden2 ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '">' + grip + '<span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
+    }
+    function render2(refocusId) {
+      if (!order) return;
+      const ids = hiddenOf(order, scope);
+      const visible = visibleDomains(order[scope], ids);
+      const hidden = DOMAINS.filter((d) => ids.includes(d.id));
+      root.innerHTML = '<div class="bz-home-ent-list" data-ent-list>' + visible.map((d) => rowHtml2(d, false)).join("") + hidden.map((d) => rowHtml2(d, true)).join("") + "</div>";
+      mountIcons(root);
+      const listEl2 = root.querySelector("[data-ent-list]");
+      if (!listEl2) return;
+      const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
+      const movable = rows.slice(0, visible.length);
+      for (const el of movable) attachDrag(el, listEl2, movable);
+      if (refocusId) {
+        const target = listEl2.querySelector(`[data-ent-row="${refocusId}"] button, [data-ent-row="${refocusId}"] [data-ent-grip]`);
+        target == null ? void 0 : target.focus();
+      }
+    }
+    root.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      const grip = e.target.closest("[data-ent-grip]");
+      if (!grip || !order) return;
+      const id = grip.dataset.entGrip || "";
+      const visibleNow = visibleDomains(order[scope], hiddenOf(order, scope));
+      const from = visibleNow.findIndex((d) => d.id === id);
+      if (from < 0) return;
+      const to = from + (e.key === "ArrowUp" ? -1 : 1);
+      if (to < 0 || to >= visibleNow.length) return;
+      e.preventDefault();
+      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
+      persist();
+      render2(id);
+    });
+    root.addEventListener("contextmenu", (e) => {
+      if (drag) e.preventDefault();
+    });
+    window.addEventListener(
+      "blur",
+      () => {
+        if (drag) endDrag();
+      },
+      { signal: blurController.signal }
+    );
+    root.addEventListener("click", (e) => {
+      if (Date.now() < suppressClickUntil) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      if (!order) return;
+      const t = e.target;
+      const rm = t.closest("[data-ent-remove]");
+      if (rm) {
+        const id = rm.dataset.entRemove || "";
+        const ids = hiddenOf(order, scope);
+        if (id && !ids.includes(id)) {
+          setHidden([...ids, id]);
+          persist();
+          render2(id);
+        }
+        return;
+      }
+      const rs = t.closest("[data-ent-restore]");
+      if (rs) {
+        const id = rs.dataset.entRestore || "";
+        setHidden(hiddenOf(order, scope).filter((x) => x !== id));
+        persist();
+        render2(id);
+      }
+    });
+    render2();
+    void loadHomeOrder(app).then((o) => {
+      order = o;
+      render2();
+    });
+  }
+  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS, blurController;
+  var init_entry_editor = __esm({
+    "src/home/entry-editor.ts"() {
+      init_mobile();
+      init_notice();
+      init_ui();
+      init_str();
+      init_shared2();
+      init_order();
+      ROW_SEL = "[data-ent-row]";
+      DRAG_PX = 10;
+      TOUCH_ARM_MS = 250;
+      TOUCH_SLOP_PX = 8;
+      SHIFT_CLS = "bz-home-ent-shift";
+      DRAG_CLS = "bz-home-ent-drag";
+      FLUSH_CLS = "bz-home-ent-flush";
+      blurController = null;
+    }
+  });
+
+  // src/home/settings.ts
+  var settings_exports = {};
+  __export(settings_exports, {
+    homeSettingsSchema: () => homeSettingsSchema
+  });
+  function homeSettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 范式，与各域同款置顶）：布局/主题各一档占位单卡
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "homeLayout" }, options: [{ value: "default", label: "活动河", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "homeSkin" }, layoutKey: "homeLayout", options: [{ value: "cream", label: "米白", layout: "default", prevClass: "bz-sp-prev-cream" }] }
+          ]
+        },
+        {
+          // 时间线组（issue 288 拆分后）：只剩「时间线自己长什么样」四行——顺序按「看字 → 看多久 → 从哪天开始看 → 那一列要不要」
+          icon: "activity",
+          name: "时间线",
+          rows: [
+            {
+              type: "select",
+              name: "时间线字号",
+              desc: "紧凑压信息密度，宽松看得省力。只作用于中间那条时间线。",
+              binding: { key: "homeTimelineSize" },
+              options: [
+                { value: "compact", label: "紧凑" },
+                { value: "normal", label: "标准" },
+                { value: "loose", label: "宽松" }
+              ]
+            },
+            {
+              type: "select",
+              name: "时间范围",
+              desc: "周历能往回翻几天。当天只留今天一格，本周是完整七天。",
+              binding: { key: "homeTimelineRange" },
+              options: [
+                { value: "today", label: "当天" },
+                { value: "3d", label: "最近 3 天" },
+                { value: "week", label: "本周" }
+              ]
+            },
+            {
+              type: "select",
+              name: "默认打开日",
+              desc: "打开首页先落在哪天，选最后有动静就不会一开是空的。",
+              binding: { key: "homeDefaultDay" },
+              options: [
+                { value: "today", label: "今天" },
+                { value: "lastActive", label: "最后有动静的那天" }
+              ]
+            },
+            {
+              type: "toggle",
+              name: "显示时刻列",
+              desc: "每行左边显示时刻，关掉整列收起，正文往左靠。",
+              binding: { key: "homeTimelineTime" }
+            }
+          ]
+        },
+        {
+          // 内容过滤组（issue 288 从时间线组拆出）：只放「哪些痕迹进来」，与「长相」分开
+          icon: "funnel",
+          name: "内容过滤",
+          rows: [
+            {
+              type: "toggle",
+              name: "产出动作",
+              desc: "写下的收进的读完的，都是真正产出东西的动作。",
+              binding: { key: "homeTimelineProduce" }
+            },
+            {
+              type: "toggle",
+              name: "状态推进",
+              desc: "加入片单读到一半新增待办，这类还没成事实的推进。",
+              binding: { key: "homeTimelineProgress" }
+            },
+            {
+              type: "toggle",
+              // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
+              // issue 305 / ADR-0132：点评类含行为流的星级评价（movie:rated），描述同步覆盖
+              name: "小橘点评",
+              desc: "小橘挂在痕迹下面的那句话，也包括你给影片打的星级。",
+              binding: { key: "homeTimelineNotes" }
+            },
+            {
+              // issue 305 / ADR-0132：时间线改吃行为流，已跳过回归（默认关——聚合讯跳过量级大）
+              // 题名「跳过痕迹」：遵循设置项题名 4-8 字规范（lint），与同组「产出动作/状态推进」同构
+              type: "toggle",
+              name: "跳过痕迹",
+              desc: "聚合讯里跳过的文章痕迹，量比较大，默认不显示。",
+              binding: { key: "homeTimelineSkipped" }
+            }
+          ]
+        },
+        {
+          // 预告栏组（issue 288 拆出）：右侧那一栏不属于时间线，自己一组
+          icon: "calendar-clock",
+          name: "预告栏",
+          rows: [
+            {
+              type: "toggle",
+              name: "明天预告卡",
+              desc: "右侧那一栏复习剪藏与日记的预告，不看可以把整栏收掉。",
+              binding: { key: "homeNextCards" }
+            }
+          ]
+        },
+        {
+          // 入口组（排最后）：拖动排序 + 移除/加回，内联编辑器
+          icon: "layout-grid",
+          name: "入口",
+          rows: [
+            {
+              type: "custom",
+              render: (body) => mountHomeEntryEditor(body, getApp())
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings = __esm({
+    "src/home/settings.ts"() {
+      init_app();
+      init_entry_editor();
+    }
+  });
+
+  // src/diary/config.ts
+  var config_exports = {};
+  __export(config_exports, {
+    DIARY_DIRECTORY: () => DIARY_DIRECTORY,
+    ENCRYPT_TAG: () => ENCRYPT_TAG,
+    LETTER_DIRECTORY: () => LETTER_DIRECTORY,
+    applyDirectories: () => applyDirectories,
+    bookDirectory: () => bookDirectory,
+    buildTagMaps: () => buildTagMaps,
+    emojiToTagMap: () => emojiToTagMap,
+    getParentPrimaryTag: () => getParentPrimaryTag,
+    getPrimaryTagsInDisplayOrder: () => getPrimaryTagsInDisplayOrder,
+    getSortedTagsForAddDialog: () => getSortedTagsForAddDialog,
+    getSubTagsOfPrimary: () => getSubTagsOfPrimary,
+    getTagEmoji: () => getTagEmoji,
+    inWallDirs: () => inWallDirs,
+    isSubTag: () => isSubTag,
+    movieDirectory: () => movieDirectory,
+    resetTagsConfig: () => resetTagsConfig,
+    tagToEmojiMap: () => tagToEmojiMap
+  });
+  function movieDirectory() {
+    return safeResolve(resolveCinemaFolderPath, "我的/影视");
+  }
+  function bookDirectory() {
+    return safeResolve(resolveFolderPath, "书库");
+  }
+  function safeResolve(resolver, fallback) {
+    try {
+      const v = resolver();
+      return v && v.trim() ? v : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function inWallDirs(p) {
+    return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
+      (d) => p.startsWith(d + "/") || p === d + ".md"
+    );
+  }
+  function applyDirectories(settings) {
+    const clean = (v, fallback) => {
+      const t = (v || "").trim().replace(/\/+$/, "");
+      return t || fallback;
+    };
+    DIARY_DIRECTORY = clean(settings.diaryDirectory, "我的/日记");
+    LETTER_DIRECTORY = clean(settings.letterDirectory, "我的/信");
+  }
+  function getPrimaryTagsInDisplayOrder() {
+    const tags = Object.keys(PRIMARY_TAGS_CONFIG);
+    const idx = tags.indexOf(ENCRYPT_TAG);
+    if (idx === -1) return tags;
+    const rest = tags.filter((t) => t !== ENCRYPT_TAG);
+    rest.push(ENCRYPT_TAG);
+    return rest;
+  }
+  function resetTagsConfig() {
+    PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+    buildTagMaps();
+  }
+  function buildTagMaps() {
+    for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
+    for (const key of Object.keys(emojiToTagMap)) delete emojiToTagMap[key];
+    for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      tagToEmojiMap[tag] = config.emoji;
+      emojiToTagMap[config.emoji] = tag;
+      if (config.subTags) {
+        for (const sub of config.subTags) {
+          tagToEmojiMap[sub.tag] = sub.emoji;
+          emojiToTagMap[sub.emoji] = sub.tag;
+        }
+      }
+    }
+  }
+  function getTagEmoji(tag) {
+    return tagToEmojiMap[tag] || "📖";
+  }
+  function getSubTagsOfPrimary(primaryTag) {
+    const config = PRIMARY_TAGS_CONFIG[primaryTag];
+    return config && config.subTags ? config.subTags : null;
+  }
+  function isSubTag(tag) {
+    for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function getParentPrimaryTag(subTag) {
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
+        return primary;
+      }
+    }
+    return null;
+  }
+  function getSortedTagsForAddDialog() {
+    const result = [];
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (primary === "加密") continue;
+      if (config.subTags && config.subTags.length > 0) {
+        for (const sub of config.subTags) {
+          result.push(sub.tag);
+        }
+      } else {
+        result.push(primary);
+      }
+    }
+    return result;
+  }
+  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
+  var init_config2 = __esm({
+    "src/diary/config.ts"() {
+      init_state2();
+      init_data2();
+      DIARY_DIRECTORY = "我的/日记";
+      LETTER_DIRECTORY = "我的/信";
+      ENCRYPT_TAG = "加密";
+      DEFAULT_TAGS_CONFIG = {
+        日记: { emoji: "📖" },
+        加密: { emoji: "🔐" },
+        念念碎: { emoji: "😶" },
+        对谈: { emoji: "🤝" },
+        随笔: { emoji: "✍️" },
+        梦: { emoji: "🌙" },
+        诗: { emoji: "🌟" },
+        书: { emoji: "📕" },
+        信: { emoji: "✉️" },
+        摘抄: { emoji: "📌" },
+        摄影: { emoji: "📸" },
+        骑行: { emoji: "🚴" },
+        代码: { emoji: "⚙️" },
+        做饭: { emoji: "🥘" },
+        游戏: { emoji: "🎮" },
+        音乐: { emoji: "🎧" },
+        电影: { emoji: "📽" },
+        电视剧: { emoji: "📺" },
+        动漫: { emoji: "🎨" },
+        纪录片: { emoji: "🎞" },
+        猫: { emoji: "🐱" },
+        狗: { emoji: "🐶" },
+        仓鼠: { emoji: "🐹" },
+        熊猫: { emoji: "🐼" },
+        博物馆: { emoji: "🏛️" },
+        美食: { emoji: "🍔" },
+        旅游: {
+          emoji: "✈️",
+          subTags: [
+            { tag: "四川", emoji: "🀄" },
+            { tag: "大理", emoji: "🛶" }
+          ]
+        },
+        收藏: {
+          emoji: "⭐",
+          subTags: [
+            { tag: "咪咪", emoji: "🐈" },
+            { tag: "广告", emoji: "📢" },
+            { tag: "神评", emoji: "🤣" },
+            { tag: "冷笑话", emoji: "😅" },
+            { tag: "抽象", emoji: "🌀" },
+            { tag: "AI", emoji: "🤖" },
+            { tag: "愚人节", emoji: "🤪" },
+            { tag: "舞蹈", emoji: "🕺" },
+            { tag: "达人秀", emoji: "🤹" },
+            { tag: "艺术", emoji: "🧑‍🎨" },
+            { tag: "摄影集", emoji: "📷" },
+            { tag: "植物", emoji: "🌳" },
+            { tag: "创意", emoji: "🧩" }
+          ]
+        }
+      };
+      PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+      tagToEmojiMap = {};
+      emojiToTagMap = {};
+      buildTagMaps();
+    }
+  });
+
+  // src/core/diary-format.ts
+  function diaryEntryBaseName(dateStr, timeStr, seq) {
+    const d = String(dateStr || "").replace(/-/g, "");
+    const t = String(timeStr || "").replace(/:/g, "");
+    const stamp = `${d.slice(2, 8)}${t.slice(0, 4)}`;
+    return seq && seq > 1 ? `${stamp}-${seq}` : stamp;
+  }
+  function diaryEntryPath(dir, dateStr, timeStr, seq) {
+    return `${dir}/${diaryEntryBaseName(dateStr, timeStr, seq)}.md`;
+  }
+  function diaryMetaFromEntryPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_ENTRY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `20${m[1]}-${m[2]}-${m[3]}`;
+    const time = `${m[4]}:${m[5]}`;
+    if (!isValidDiaryDate(date) || !isValidDiaryTime(time)) return null;
+    return m[6] ? { date, time, seq: Number(m[6]) } : { date, time };
+  }
+  function diaryDateFromLegacyPath(path) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    const m = DIARY_LEGACY_FILE_RE.exec(base);
+    if (!m) return null;
+    const date = `${m[1]}-${m[2]}-${m[3]}`;
+    return isValidDiaryDate(date) ? date : null;
+  }
+  function diaryStampText(date, time) {
+    return `${date} ${time}`;
+  }
+  function parseDiaryStamp(value) {
+    const m = /^(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2})$/.exec(String(value || "").trim());
+    return m && isValidDiaryDate(m[1]) && isValidDiaryTime(m[2]) ? { date: m[1], time: m[2] } : null;
+  }
+  function isValidDiaryDate(s) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    const y = Number(m[1]);
+    const mo = Number(m[2]);
+    const d = Number(m[3]);
+    if (mo < 1 || mo > 12 || d < 1) return false;
+    const days = [31, y % 4 === 0 && y % 100 !== 0 || y % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return d <= days[mo - 1];
+  }
+  function isValidDiaryTime(s) {
+    const m = /^(\d{2}):(\d{2})$/.exec(s || "");
+    if (!m) return false;
+    return Number(m[1]) <= 23 && Number(m[2]) <= 59;
+  }
+  function serializeDiaryEntryFile(meta, tags, content) {
+    const lines = ["---", `${DIARY_DATE_KEY}: ${diaryStampText(meta.date, meta.time)}`, `${DIARY_TYPE_KEY}:`];
+    for (const t of tags) lines.push(`  - ${t}`);
+    lines.push("---", "", content);
+    let out = lines.join("\n");
+    if (!out.endsWith("\n")) out += "\n";
+    return out;
+  }
+  function parseDiaryBlockHeader(line) {
+    const m = /^#\s+(.+)\s+(\d{2}:\d{2})$/.exec(String(line || "").trim());
+    if (!m) return null;
+    const tags = [];
+    for (const name of m[1].split("/")) {
+      const t = name.trim();
+      if (t && !tags.includes(t)) tags.push(t);
+    }
+    return { tags, time: m[2] };
+  }
+  function readDiaryFrontmatterFieldRaw(content, key) {
+    const text = (content || "").replace(/\r\n/g, "\n");
+    if (!text.startsWith("---\n")) return null;
+    const end = text.indexOf("\n---", 4);
+    if (end < 0) return null;
+    const safeKey = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const m = new RegExp(`^${safeKey}:[^\\S\\n]*(.*)$`, "m").exec(text.slice(4, end));
+    return m ? m[1].trim() : null;
+  }
+  var DIARY_ENTRY_FILE_RE, DIARY_LEGACY_FILE_RE, DIARY_DATE_KEY, DIARY_TYPE_KEY;
+  var init_diary_format = __esm({
+    "src/core/diary-format.ts"() {
+      DIARY_ENTRY_FILE_RE = /^(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})(?:-(\d+))?\.md$/;
+      DIARY_LEGACY_FILE_RE = /^(\d{4})-(\d{2})-(\d{2})\.md$/;
+      DIARY_DATE_KEY = "date";
+      DIARY_TYPE_KEY = "type";
+    }
+  });
+
+  // src/diary/repair.ts
+  function lintEntryFile(path, content) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    if (DIARY_LEGACY_FILE_RE.test(base)) return "legacy";
+    const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
+    const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, "日期");
+    const fmMeta = raw ? parseDiaryStamp(raw) : null;
+    const fileMeta = diaryMetaFromEntryPath(base);
+    if (rawLegacyKey && !raw) return "unparsable";
+    if (raw && !fmMeta && !fileMeta) return "unparsable";
+    if (!fmMeta && !fileMeta) return "unparsable";
+    if (raw && !fmMeta && fileMeta) return "unparsable";
+    if (fmMeta && !fileMeta) return "name-mismatch";
+    if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
+      return "name-mismatch";
+    }
+    return null;
+  }
+  var LINT_REASON_TEXT;
+  var init_repair = __esm({
+    "src/diary/repair.ts"() {
+      init_diary_format();
+      LINT_REASON_TEXT = {
+        legacy: "旧格式日期文件（未迁移）",
+        unparsable: "无法解析为条目",
+        "name-mismatch": "属性时间与题目不一致"
+      };
+    }
+  });
+
+  // src/diary/ui/repair-modal.ts
+  function findDirRecursive(node, target) {
+    if (node.path === target) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findDirRecursive(child, target);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  async function collectDiaryFiles() {
+    const app = getApp();
+    let dir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY);
+    if (!dir || !dir.children) {
+      const root = app.vault.getRoot();
+      dir = findDirRecursive(root, DIARY_DIRECTORY);
+    }
+    if (!dir || !dir.children) return [];
+    const out = [];
+    const walk = (node) => {
+      var _a2;
+      for (const child of (_a2 = node.children) != null ? _a2 : []) {
+        if (child.children) walk(child);
+        else if (child.extension === "md") out.push(child);
+      }
+    };
+    walk(dir);
+    return out.sort((a, b) => b.name.localeCompare(a.name));
+  }
+  async function runScan(isAlive, onProgress) {
+    const app = getApp();
+    const mdFiles2 = await collectDiaryFiles();
+    const total = mdFiles2.length;
+    const scanned = [];
+    for (let i = 0; i < mdFiles2.length; i += BATCH_CONCURRENCY) {
+      if (!isAlive()) return scanned;
+      const batch = mdFiles2.slice(i, i + BATCH_CONCURRENCY);
+      const results = await Promise.all(
+        batch.map(async (file, idx) => {
+          const content = await app.vault.read(file);
+          if (isAlive()) onProgress(Math.min(i + idx + 1, total), total, file.name);
+          return { path: file.path, reason: lintEntryFile(file.path, content) };
+        })
+      );
+      scanned.push(...results);
+    }
+    return scanned;
+  }
+  async function openAtTop(path, onOpened) {
+    const app = getApp();
+    const file = app.vault.getAbstractFileByPath(path);
+    if (!file) return;
+    const leaf = app.workspace.getLeaf();
+    await leaf.openFile(file);
+    const view = leaf.view;
+    if (view && view.editor) {
+      view.editor.focus();
+      view.editor.setCursor(0, 0);
+      view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
+    }
+    onOpened();
+  }
+  function openDiaryRepairModal() {
+    const { mask, popup } = createOverlay({
+      maskId: "bz-diary-repair-mask",
+      popupId: "bz-diary-repair-popup",
+      maxWidth: 640,
+      onMaskClick: close
+    });
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = "日记格式体检";
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    const handle = escManager.register("bz-diary-repair", {
+      isVisible: () => mask.isConnected,
+      close
+    });
+    function close() {
+      mask.remove();
+      popup.remove();
+      handle.unregister();
+    }
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "bz-diary-repair-progress";
+    const track = document.createElement("div");
+    track.className = "bz-diary-repair-progress-track";
+    const fill = document.createElement("div");
+    fill.className = "bz-diary-repair-progress-fill";
+    const ptext = document.createElement("div");
+    ptext.className = "bz-diary-repair-progress-text";
+    ptext.textContent = "正在体检日记文件…";
+    track.appendChild(fill);
+    progressWrap.appendChild(track);
+    progressWrap.appendChild(ptext);
+    content.appendChild(progressWrap);
+    const summarize = (scanned) => {
+      content.innerHTML = "";
+      content.appendChild(progressWrap);
+      progressWrap.style.display = "none";
+      const items = [];
+      for (const s of scanned) {
+        if (s.reason) items.push({ path: s.path, reason: s.reason, detail: LINT_REASON_TEXT[s.reason] });
+      }
+      const summary = document.createElement("div");
+      summary.className = "bz-diary-repair-summary";
+      summary.textContent = items.length === 0 ? `共体检 ${scanned.length} 个日记文件：全部健康` : `共体检 ${scanned.length} 个日记文件：${items.length} 个需要处理（点击条目打开文件手工处理，面板不改写内容）。`;
+      content.appendChild(summary);
+      const order = ["legacy", "unparsable", "name-mismatch"];
+      for (const reason of order) {
+        const group = items.filter((i) => i.reason === reason);
+        if (group.length === 0) continue;
+        const sec = document.createElement("div");
+        sec.className = "bz-diary-repair-section-title";
+        sec.textContent = `${LINT_REASON_TEXT[reason]}（${group.length}）`;
+        content.appendChild(sec);
+        for (const item of group) {
+          const row = document.createElement("div");
+          row.className = "bz-diary-repair-row";
+          const link = document.createElement("span");
+          link.className = "bz-diary-repair-link";
+          link.textContent = item.path.split("/").pop() || item.path;
+          link.addEventListener("click", () => void openAtTop(item.path, close));
+          const snippet = document.createElement("span");
+          snippet.className = "bz-diary-repair-snippet";
+          snippet.textContent = item.path;
+          row.append(link, snippet);
+          content.appendChild(row);
+        }
+      }
+      mountRetryFooter();
+    };
+    function mountRetryFooter() {
+      const again = document.createElement("button");
+      again.className = "bz-button";
+      again.textContent = "重新体检";
+      again.addEventListener("click", () => void startScan());
+      const bar = document.createElement("div");
+      bar.className = "bz-diary-repair-footer";
+      bar.appendChild(again);
+      content.appendChild(bar);
+    }
+    async function startScan() {
+      progressWrap.style.display = "block";
+      fill.style.width = "0%";
+      ptext.textContent = "正在体检日记文件…";
+      content.innerHTML = "";
+      content.appendChild(progressWrap);
+      try {
+        const scanned = await runScan(
+          () => mask.isConnected,
+          (done, total, label) => {
+            fill.style.width = `${Math.round(done / total * 100)}%`;
+            ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
+          }
+        );
+        if (!mask.isConnected) return;
+        summarize(scanned);
+      } catch (e) {
+        if (!mask.isConnected) return;
+        const msg = (e == null ? void 0 : e.message) || String(e);
+        ptext.textContent = `体检失败：${msg}（可点下方按钮重试）`;
+        mountRetryFooter();
+        try {
+          notify(`日记格式体检失败：${msg}`, { type: "error" });
+        } catch (e2) {
+        }
+      }
+    }
+    void startScan();
+  }
+  var BATCH_CONCURRENCY;
+  var init_repair_modal = __esm({
+    "src/diary/ui/repair-modal.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_app();
+      init_notice();
+      init_config2();
+      init_repair();
+      BATCH_CONCURRENCY = 10;
+    }
+  });
+
+  // src/diary/settings.ts
+  var settings_exports2 = {};
+  __export(settings_exports2, {
+    diarySettingsSchema: () => diarySettingsSchema
+  });
+  function diarySettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 范式）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "diarySkin" }, options: [{ value: "default", label: "媒体墙", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "diarySkinTheme" }, layoutKey: "diarySkin", options: [{ value: "gallery", label: "画廊白", layout: "default", prevClass: "bz-sp-prev-gallery" }] }
+          ]
+        },
+        {
+          icon: "folder-open",
+          name: "目录",
+          rows: [
+            { type: "path", mode: "single", name: "日记文件夹", desc: "存放日记文件的文件夹", binding: { key: "diaryDirectory" }, onChange: () => applyDirectories(getSettings()) },
+            { type: "path", mode: "single", name: "信件文件夹", desc: "存放信件的文件夹", binding: { key: "letterDirectory" }, onChange: () => applyDirectories(getSettings()) }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "显示",
+          rows: [
+            { type: "toggle", name: "默认日期取自文件", desc: "写日记时默认日期取自当前打开的日记文件，否则用当前时间", binding: { key: "useFileDateTime" } }
+          ]
+        },
+        {
+          icon: "wrench",
+          name: "维护",
+          rows: [
+            { type: "button", name: "日记格式体检", desc: "扫描全部日记条目文件，列出格式问题并跳转手工处理", buttonText: "日记格式体检", cta: true, onClick: () => openDiaryRepairModal() }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings2 = __esm({
+    "src/diary/settings.ts"() {
+      init_settings_provider();
+      init_config2();
+      init_repair_modal();
+    }
+  });
+
+  // src/memo/due.ts
+  function getNowStr() {
+    return (0, import_moment5.default)().format("YYYY-MM-DD HH:mm");
+  }
+  function getTodayStr() {
+    return localDayKey();
+  }
+  function getDueStatus(due) {
+    if (!due) return null;
+    const now = getNowStr();
+    const dueNorm = due.replace("T", " ");
+    const dueDate = due.slice(0, 10);
+    const today = getTodayStr();
+    if (dueDate < today) return "overdue";
+    if (dueDate > today) return "future";
+    if (dueNorm <= now) return "overdue";
+    return "today";
+  }
+  function formatDueText(due) {
+    const status = getDueStatus(due);
+    const dueMoment = (0, import_moment5.default)(due.replace("T", " "));
+    const timeStr = dueMoment.format("HH:mm");
+    const dateStr = dueMoment.format("MM/DD");
+    const today = getTodayStr();
+    const dueDate = due.slice(0, 10);
+    if (status === "overdue") {
+      if (dueDate === today) return `今天 ${timeStr} 已过期`;
+      const days2 = (0, import_moment5.default)().diff((0, import_moment5.default)(dueDate), "days");
+      return `${days2}天前已过期`;
+    }
+    if (status === "today") return `今天 ${timeStr} 到期`;
+    const days = (0, import_moment5.default)(dueDate).diff((0, import_moment5.default)(today), "days");
+    if (days === 1) return `明天 ${timeStr} 到期`;
+    return `${dateStr} ${timeStr} 到期`;
+  }
+  var import_moment5;
+  var init_due = __esm({
+    "src/memo/due.ts"() {
+      import_moment5 = __toESM(require_moment());
+      init_utils();
+    }
+  });
+
+  // src/memo/render.ts
+  function sceneDot(scene) {
+    return SCENE_DOTS[scene] || "#8b8f9a";
+  }
+  function dueIconName(status) {
+    if (status === "overdue") return MEMO_ICONS.overdue;
+    if (status === "today") return MEMO_ICONS.clock;
+    return MEMO_ICONS.calendar;
+  }
+  function dueTagClass(status) {
+    if (status === "overdue") return "bz-memo-tag-overdue";
+    if (status === "today") return "bz-memo-tag-today";
+    return "bz-memo-tag-future";
+  }
+  function sceneLabel(scene) {
+    return scene.replace(LEADING_EMOJI_RE, "");
+  }
+  function sceneLeadHtml(o, dotCls) {
+    var _a2, _b2;
+    const pseudo = SCENE_PSEUDO_ICONS[o.scene];
+    if (pseudo) return iconSpan(pseudo.icon, (_a2 = pseudo.cls) != null ? _a2 : "");
+    const emo = (_b2 = o.scene.match(LEADING_EMOJI_RE)) == null ? void 0 : _b2[1];
+    if (emo) return `<span class="bz-rail-emoji">${escapeHtml(emo)}</span>`;
+    if (!o.dot) return "";
+    return `<span class="${dotCls}" style="--bz-rail-tint:${o.dot}"></span>`;
+  }
+  function mainCountHtml(total, undone) {
+    return `· <span class="bz-memo-cnt-num">${total}</span> 项 · <span class="bz-memo-cnt-num">${undone}</span> 未完成`;
+  }
+  function navBtnHtml(o, active2, count) {
+    return `<button class="bz-rail-item${active2 ? " on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-rail-dot")}<span class="bz-rail-name">${escapeHtml(sceneLabel(o.scene))}</span><span class="bz-rail-count">${count}</span></button>`;
+  }
+  function mobChipHtml(o, active2) {
+    return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-memo-scene="${escapeHtml(o.scene)}">${sceneLeadHtml(o, "bz-mobstrip-dot")}${escapeHtml(sceneLabel(o.scene))}</button>`;
+  }
+  function mobAddSceneChipHtml() {
+    return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml("添加场景")}</button>`;
+  }
+  function metaTagsHtml(it, due, relTime3) {
+    const tags = [];
+    if (it.scene === "公开课" && it.courseName) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
+    }
+    if (it.scene === "代码" && it.scriptName) {
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml(it.scriptName)}</span>`);
+    }
+    if (it.url) {
+      let host = "链接";
+      try {
+        host = new URL(it.url).hostname.replace(/^www\./, "");
+      } catch (e) {
+      }
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
+    }
+    if (it.notePath) {
+      const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
+      const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
+      if (!isCourseSame) {
+        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
+      }
+    }
+    const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
+    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
+    if (due) {
+      tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
+    }
+    if (it.created && relTime3) {
+      tags.push(`<span class="bz-memo-time">${escapeHtml(relTime3)}</span>`);
+    }
+    return tags.join("");
+  }
+  function checkHtml(it) {
+    return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
+  }
+  function cardHtml2(it, due, relTime3) {
+    const titleCls = it.completed ? " bz-memo-done" : "";
+    const clickable = !!(it.linkedNote || it.url);
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
+    return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}">
+      ${checkHtml(it)}
+      <div class="bz-memo-body-text">
+        <div class="bz-memo-card-title">${titleHtml}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3)}</div>
+      </div>
+    </div>`;
+  }
+  function sectionLabelHtml(label, count) {
+    return `<div class="bz-memo-section-label">${label} <span class="bz-memo-sec-cnt">${count}</span></div>`;
+  }
+  function doneBarHtml(open, count) {
+    return `<div class="bz-memo-donebar${open ? " bz-memo-donebar-open" : ""}" data-memo-donebar>
+      ${iconSpan(MEMO_ICONS.doneFold)} 已完成 <span class="bz-memo-donebar-cnt">${count}</span></div>`;
+  }
+  function doneMoreHtml(n) {
+    return `<button class="bz-memo-done-more" data-memo-donemore>更早 ${n} 条</button>`;
+  }
+  var MEMO_ICONS, SCENE_DOTS, SCENE_PSEUDO_ICONS, LEADING_EMOJI_RE;
+  var init_render4 = __esm({
+    "src/memo/render.ts"() {
+      init_str();
+      MEMO_ICONS = {
+        brand: "list-checks",
+        close: "x",
+        search: "search",
+        add: "plus",
+        addScene: "tag",
+        settings: "settings",
+        empty: "inbox",
+        pos: "pin",
+        star: "star",
+        edit: "pencil",
+        del: "trash-2",
+        course: "graduation-cap",
+        script: "terminal",
+        url: "arrow-up-right",
+        overdue: "circle-alert",
+        clock: "clock",
+        calendar: "calendar",
+        doneFold: "chevron-down",
+        sceneAll: "layers",
+        sceneToday: "sun"
+      };
+      SCENE_DOTS = {
+        剪藏: "#e67341",
+        代码: "#4c82c8",
+        公开课: "#8f5fc0",
+        学习: "#4c9e6c",
+        生活: "#c27a48",
+        工作: "#b25757"
+      };
+      SCENE_PSEUDO_ICONS = {
+        全部: { icon: MEMO_ICONS.sceneAll },
+        今日: { icon: MEMO_ICONS.sceneToday },
+        重要: { icon: MEMO_ICONS.star, cls: "bz-ic--warning" }
+      };
+      LEADING_EMOJI_RE = /^(\p{Extended_Pictographic}(?:\uFE0F|\u200D\p{Extended_Pictographic})*)\s*/u;
+    }
+  });
+
+  // src/memo/state.ts
+  var M3;
+  var init_state4 = __esm({
+    "src/memo/state.ts"() {
+      M3 = {
+        appRef: null,
+        overlay: null,
+        items: [],
+        activeScene: "全部",
+        sortMode: "priority",
+        search: "",
+        showDone: false,
+        showEarlierDone: false,
+        pinnedNewId: null,
+        completeTimers: /* @__PURE__ */ new Map(),
+        renderFn: null
+      };
+    }
+  });
+
+  // src/core/settings-common.ts
+  function numStrBinding(key, def) {
+    return {
+      get: () => {
+        const raw = tryGetSettings()[key];
+        if (raw === "" || raw === null || raw === void 0) return def;
+        const n = Number(raw);
+        return Number.isFinite(n) && n > 0 ? n : def;
+      },
+      set: (v) => {
+        getSettings()[key] = String(v);
+      },
+      save: () => saveSettings()
+    };
+  }
+  function makeReloadWarnOnce() {
+    let reloadWarned = false;
+    return () => {
+      if (reloadWarned) return;
+      reloadWarned = true;
+      notice(RELOAD_SETTINGS_NOTICE, "info");
+    };
+  }
+  var RELOAD_SETTINGS_NOTICE;
+  var init_settings_common = __esm({
+    "src/core/settings-common.ts"() {
+      init_notice();
+      init_settings_provider();
+      RELOAD_SETTINGS_NOTICE = "设置已保存，重载插件后生效";
+    }
+  });
+
+  // src/pomodoro/state.ts
+  function createInitialState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
+  }
+  function resumePhase(state3, now) {
+    return {
+      state: { ...state3, paused: false, pausedBy: void 0, remaining: 0, endTime: now + state3.remaining * 1e3 },
+      event: { type: "started", phase: state3.phase }
+    };
+  }
+  function activePhase(phase) {
+    return phase === "idle" ? "focus" : phase;
+  }
+  function phaseDurationSec(phase, d) {
+    if (phase === "short-break") return d.shortBreakMin * 60;
+    if (phase === "long-break") return d.longBreakMin * 60;
+    return d.workMin * 60;
+  }
+  function breakPhase(count, d) {
+    return count >= d.longBreakInterval ? "long-break" : "short-break";
+  }
+  function startPhase(state3, phase, now, d) {
+    return {
+      state: { ...state3, phase, endTime: now + phaseDurationSec(phase, d) * 1e3, paused: false, pausedBy: void 0, remaining: 0 },
+      event: { type: "started", phase }
+    };
+  }
+  function completePhase(state3, now, d, o) {
+    const phase = state3.phase;
+    const isFocus = phase === "focus";
+    let count = state3.cycleFocusCount;
+    let historyEntry;
+    let longBreak = false;
+    if (isFocus) {
+      count += 1;
+      longBreak = count >= d.longBreakInterval;
+      if (longBreak) count = 0;
+      historyEntry = { ts: now, duration: d.workMin * 60, ...state3.task ? { task: state3.task } : {} };
+    }
+    let next;
+    let autoStarted = false;
+    if (isFocus) {
+      if (o.autoSkipBreak) {
+        next = "focus";
+        autoStarted = true;
+      } else {
+        next = longBreak ? "long-break" : "short-break";
+        autoStarted = o.autoCycle;
+      }
+    } else {
+      next = "focus";
+      autoStarted = o.autoCycle;
+    }
+    const { task: _settled, ...rest } = state3;
+    const nextState = { ...rest, phase: next, cycleFocusCount: count };
+    const res = autoStarted ? startPhase(nextState, next, now, d) : {
+      state: { ...nextState, endTime: null, paused: false, remaining: phaseDurationSec(next, d) },
+      event: { type: "none" }
+    };
+    return {
+      ...res,
+      event: {
+        type: "phase-completed",
+        completedPhase: phase,
+        nextPhase: next,
+        autoStarted,
+        longBreak,
+        ...historyEntry ? { historyEntry } : {}
+      }
+    };
+  }
+  function transition(state3, action, now, d, o) {
+    if (action === "start") {
+      if (state3.paused) return resumePhase(state3, now);
+      if (state3.endTime !== null) return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
+      return startPhase(state3, phase, now, d);
+    }
+    if (action === "pause") {
+      if (state3.endTime === null) return { state: state3, event: { type: "none" } };
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      return {
+        // 手动暂停：清除可能残留的冻结来源标记（pausedBy 只在冻结暂停期间有效）
+        state: { ...state3, paused: true, pausedBy: void 0, remaining: Math.ceil((state3.endTime - now) / 1e3), endTime: null },
+        event: { type: "none" }
+      };
+    }
+    if (action === "resume") {
+      if (!state3.paused) return { state: state3, event: { type: "none" } };
+      return resumePhase(state3, now);
+    }
+    if (action === "reset") {
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
+      return {
+        state: { ...state3, phase, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(phase, d) },
+        event: { type: "none" }
+      };
+    }
+    if (action === "skip") {
+      if (o.forceFocus && state3.phase === "focus") return { state: state3, event: { type: "none" } };
+      const phase = activePhase(state3.phase);
+      let next;
+      if (phase === "focus") next = o.autoSkipBreak ? "focus" : breakPhase(state3.cycleFocusCount, d);
+      else next = "focus";
+      const { task: _dropped, ...rest } = state3;
+      return {
+        state: { ...rest, phase: next, endTime: null, paused: false, pausedBy: void 0, remaining: phaseDurationSec(next, d) },
+        event: { type: "phase-completed", completedPhase: phase, nextPhase: next, autoStarted: false, longBreak: false }
+      };
+    }
+    if (action === "tick") {
+      if (state3.endTime === null || now < state3.endTime) return { state: state3, event: { type: "none" } };
+      return completePhase(state3, now, d, o);
+    }
+    return { state: state3, event: { type: "none" } };
+  }
+  function idleState() {
+    return { phase: "idle", endTime: null, remaining: 0, paused: false, cycleFocusCount: 0 };
+  }
+  function recover(state3, history2, now, d, o) {
+    if (state3.endTime === null || now < state3.endTime) return { state: state3, history: history2.slice(), events: [] };
+    return { state: idleState(), history: history2.slice(), events: [] };
+  }
+  var PHASES;
+  var init_state5 = __esm({
+    "src/pomodoro/state.ts"() {
+      PHASES = ["idle", "focus", "short-break", "long-break"];
+    }
+  });
+
+  // src/pomodoro/stats.ts
+  function dayKey(ts) {
+    return localDayKey(ts);
+  }
+  function todayCount(history2, now) {
+    const today = dayKey(now);
+    return history2.filter((h) => dayKey(h.ts) === today).length;
+  }
+  function todayMinutes(history2, now) {
+    const today = dayKey(now);
+    return Math.round(history2.filter((h) => dayKey(h.ts) === today).reduce((s, h) => s + h.duration, 0) / 60);
+  }
+  function last7Days(history2, now) {
+    const counts = /* @__PURE__ */ new Map();
+    const minutes = /* @__PURE__ */ new Map();
+    const d = new Date(now);
+    d.setHours(0, 0, 0, 0);
+    for (let i = 6; i >= 0; i--) {
+      const day = new Date(d);
+      day.setDate(day.getDate() - i);
+      const key = dayKey(day.getTime());
+      counts.set(key, 0);
+      minutes.set(key, 0);
+    }
+    for (const h of history2) {
+      const key = dayKey(h.ts);
+      if (counts.has(key)) {
+        counts.set(key, counts.get(key) + 1);
+        minutes.set(key, minutes.get(key) + h.duration / 60);
+      }
+    }
+    return Array.from(counts.entries()).map(([date, count]) => ({
+      date,
+      count,
+      minutes: Math.round(minutes.get(date) || 0)
+    }));
+  }
+  function weekKeyOf(ts) {
+    const d = new Date(ts);
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - (d.getDay() + 6) % 7);
+    return localDayKey(d.getTime());
+  }
+  function byWeek(a, b) {
+    return a.week < b.week ? -1 : a.week > b.week ? 1 : 0;
+  }
+  function aggregateWeeks(entries) {
+    const acc = /* @__PURE__ */ new Map();
+    for (const h of entries) {
+      const wk = weekKeyOf(h.ts);
+      let row = acc.get(wk);
+      if (!row) {
+        row = { count: 0, sec: 0, tasks: /* @__PURE__ */ new Map() };
+        acc.set(wk, row);
+      }
+      row.count += 1;
+      row.sec += h.duration;
+      if (h.task) row.tasks.set(h.task, (row.tasks.get(h.task) || 0) + h.duration / 60);
+    }
+    return Array.from(acc.entries()).map(([week, r]) => ({
+      week,
+      count: r.count,
+      minutes: Math.round(r.sec / 60),
+      ...r.tasks.size ? {
+        tasks: Object.fromEntries(
+          Array.from(r.tasks.entries()).sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0).map(([t, m]) => [t, Math.round(m)])
+        )
+      } : {}
+    })).sort(byWeek);
+  }
+  function mergeArchived(existing, incoming) {
+    const merged = /* @__PURE__ */ new Map();
+    for (const row of existing != null ? existing : []) merged.set(row.week, { ...row });
+    for (const row of incoming) {
+      const cur = merged.get(row.week);
+      if (!cur) {
+        merged.set(row.week, { ...row });
+        continue;
+      }
+      const tasks = { ...cur.tasks || {} };
+      for (const [t, m] of Object.entries(row.tasks || {})) {
+        tasks[t] = Math.round((tasks[t] || 0) + m);
+      }
+      merged.set(row.week, {
+        week: row.week,
+        count: cur.count + row.count,
+        minutes: cur.minutes + row.minutes,
+        ...Object.keys(tasks).length ? { tasks } : {}
+      });
+    }
+    return Array.from(merged.values()).sort(byWeek);
+  }
+  function lastNMonths(archived2, history2, now, n = TREND_MONTHS) {
+    const base = new Date(now);
+    base.setDate(1);
+    base.setHours(0, 0, 0, 0);
+    const buckets = /* @__PURE__ */ new Map();
+    const order = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const m = new Date(base);
+      m.setMonth(m.getMonth() - i);
+      const key = `${m.getFullYear()}-${pad2(m.getMonth() + 1)}`;
+      buckets.set(key, { count: 0, sec: 0 });
+      order.push(key);
+    }
+    for (const row of archived2 != null ? archived2 : []) {
+      const b = buckets.get(row.week.slice(0, 7));
+      if (b) {
+        b.count += row.count;
+        b.sec += row.minutes * 60;
+      }
+    }
+    for (const h of history2) {
+      const b = buckets.get(localDayKey(h.ts).slice(0, 7));
+      if (b) {
+        b.count += 1;
+        b.sec += h.duration;
+      }
+    }
+    return order.map((month) => {
+      const b = buckets.get(month);
+      return { month, count: b.count, minutes: Math.round(b.sec / 60) };
+    });
+  }
+  var TREND_MONTHS;
+  var init_stats2 = __esm({
+    "src/pomodoro/stats.ts"() {
+      init_utils();
+      TREND_MONTHS = 6;
+    }
+  });
+
+  // src/pomodoro/data.ts
+  function getPomodoroFilePath() {
+    var _a2;
+    return storageFile("pomodoro.json", ((_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath) || "CONFIG/STORAGE");
+  }
+  function defaultPomodoroData() {
+    return { version: 1, state: createInitialState(), history: [] };
+  }
+  function retentionFloor(now) {
+    const floor = new Date(now);
+    floor.setHours(0, 0, 0, 0);
+    floor.setDate(floor.getDate() - 6);
+    return floor.getTime();
+  }
+  function trimWithArchive(history2, archived2, now) {
+    const floor = retentionFloor(now);
+    const removed = history2.filter((h) => h.ts < floor);
+    const kept = removed.length ? history2.filter((h) => h.ts >= floor) : history2;
+    return { history: kept, archived: removed.length ? mergeArchived(archived2, aggregateWeeks(removed)) : archived2 != null ? archived2 : [] };
+  }
+  function normalizeData(raw) {
+    const def = defaultPomodoroData();
+    if (!raw || typeof raw !== "object") return def;
+    const state3 = normalizeState(raw.state);
+    const history2 = Array.isArray(raw.history) ? raw.history.filter((h) => h && typeof h.ts === "number" && typeof h.duration === "number").map((h) => ({
+      ts: h.ts,
+      duration: h.duration,
+      ...typeof h.task === "string" && h.task ? { task: h.task } : {}
+    })) : [];
+    const archived2 = normalizeArchived(raw.archived);
+    return { version: 1, state: state3, history: history2, ...archived2.length ? { archived: archived2 } : {} };
+  }
+  function normalizeArchived(raw) {
+    if (!Array.isArray(raw)) return [];
+    const seen = /* @__PURE__ */ new Set();
+    const rows = [];
+    for (const r of raw) {
+      if (!r || typeof r.week !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(r.week) || typeof r.count !== "number" || r.count < 0 || typeof r.minutes !== "number" || r.minutes < 0) {
+        continue;
+      }
+      const [ys, ms, ds] = r.week.split("-").map(Number);
+      const d = new Date(ys, ms - 1, ds);
+      if (d.getFullYear() !== ys || d.getMonth() !== ms - 1 || d.getDate() !== ds) continue;
+      if (d.getDay() !== 1) continue;
+      if (seen.has(r.week)) continue;
+      seen.add(r.week);
+      const tasks = {};
+      if (r.tasks && typeof r.tasks === "object" && !Array.isArray(r.tasks)) {
+        for (const [t, m] of Object.entries(r.tasks)) {
+          if (typeof m === "number" && Number.isFinite(m) && m >= 0) tasks[t] = m;
+        }
+      }
+      rows.push({
+        week: r.week,
+        count: r.count,
+        minutes: r.minutes,
+        ...Object.keys(tasks).length ? { tasks } : {}
+      });
+    }
+    return rows;
+  }
+  function normalizeState(raw) {
+    const def = createInitialState();
+    if (!raw || typeof raw !== "object") return def;
+    return {
+      phase: PHASES.includes(raw.phase) ? raw.phase : def.phase,
+      endTime: typeof raw.endTime === "number" ? raw.endTime : def.endTime,
+      remaining: typeof raw.remaining === "number" && raw.remaining >= 0 ? raw.remaining : def.remaining,
+      paused: typeof raw.paused === "boolean" ? raw.paused : def.paused,
+      // 冻结来源标记：仅认 'autopause'，旧数据无此字段/非法值 → undefined（手动暂停语义）
+      pausedBy: raw.pausedBy === "autopause" ? "autopause" : void 0,
+      cycleFocusCount: typeof raw.cycleFocusCount === "number" && raw.cycleFocusCount >= 0 ? raw.cycleFocusCount : def.cycleFocusCount,
+      // 归属任务标题：仅字符串非空保留（旧数据/非法值 → undefined）
+      task: typeof raw.task === "string" && raw.task ? raw.task : void 0
+    };
+  }
+  var PomodoroDataManager;
+  var init_data7 = __esm({
+    "src/pomodoro/data.ts"() {
+      init_settings_provider();
+      init_storage();
+      init_state5();
+      init_stats2();
+      PomodoroDataManager = class {
+        constructor(app) {
+          this.app = app;
+        }
+        /**
+         * 读取数据（统一数据读写层：不存在 → 建默认数据文件；坏 JSON → 原文件留档 CONFIG/.CORRUPT 后重建默认）。
+         * 读也入 core per-path 串行队列：读是「load → 改 state → save」事务的读半边，
+         * 排在未落盘的写任务之后才能读到新值（读写同队列，消灭「读-写窗口交错」）。
+         */
+        async load() {
+          const raw = await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), {
+              defaultValue: () => defaultPomodoroData(),
+              app: this.app
+            }).read()
+          );
+          return normalizeData(raw);
+        }
+        /**
+         * 保存（统一数据读写层：存在 modify / 不存在 create+建目录）。
+         * D3 可靠写契约原语 1 收编：整写入 core per-path 串行队列（键 = pomodoro.json 路径）——
+         * 计时器心跳保存与用户操作保存并发时按序落盘，后写者不再用陈旧基线覆盖先写者；
+         * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
+         */
+        async save(data) {
+          await enqueueFileTask(
+            getPomodoroFilePath(),
+            () => jsonFileStore(getPomodoroFilePath(), { app: this.app }).write(data)
+          );
+        }
+      };
+    }
+  });
+
+  // src/pomodoro/render.ts
+  function normalizeSkinTheme(v) {
+    const cur = String(v != null ? v : "");
+    return POMODORO_SKIN_THEMES.some((t) => t.value === cur) ? cur : DEFAULT_POMODORO_SKIN_THEME;
+  }
+  function skinClassOf(v) {
+    return `pomodoro-skin-${normalizeSkinTheme(v)}`;
+  }
+  function panelShellHtml() {
+    return `
+      <svg id="pomodoro-ring-svg" viewBox="0 0 120 120">
+        <circle class="pomodoro-ring-track" cx="60" cy="60" r="52"></circle>
+        <circle id="pomodoro-ring-progress" class="pomodoro-ring-progress" cx="60" cy="60" r="52"></circle>
+      </svg>
+      <div id="pomodoro-cycle" class="pomodoro-cycle"></div>
+      <div id="pomodoro-phase"></div>
+      <div id="pomodoro-task" class="pomodoro-task"></div>
+      <div id="pomodoro-time"></div>
+      <div class="pomodoro-controls">
+        <button id="pomodoro-btn-start" class="pomodoro-btn pomodoro-btn-primary bz-touch-target--sm">开始</button>
+        <button id="pomodoro-btn-reset" class="pomodoro-btn bz-touch-target--sm">重置</button>
+        <button id="pomodoro-btn-skip" class="pomodoro-btn bz-touch-target--sm">跳过</button>
+      </div>
+      <div class="pomodoro-stats">
+        <div id="pomodoro-today"></div>
+        <div class="pomodoro-stat-tabs">
+          <button id="pomodoro-stat-tab-week" class="pomodoro-stat-tab" type="button">近 7 天</button>
+          <button id="pomodoro-stat-tab-month" class="pomodoro-stat-tab" type="button">近 6 月</button>
+        </div>
+        <div id="pomodoro-week" class="pomodoro-week"></div>
+        <div id="pomodoro-months" class="pomodoro-week" hidden></div>
+      </div>`;
+  }
+  function popupShellHtml() {
+    return `<div id="pomodoro-popup" tabindex="-1">${panelShellHtml()}</div>`;
+  }
+  var POMODORO_SKIN_THEMES, DEFAULT_POMODORO_SKIN_THEME;
+  var init_render5 = __esm({
+    "src/pomodoro/render.ts"() {
+      POMODORO_SKIN_THEMES = [
+        { value: "tomato", label: "番茄" },
+        { value: "ink", label: "墨白" },
+        { value: "grid", label: "方格纸" },
+        { value: "moss", label: "苔原" },
+        { value: "mist", label: "海雾" },
+        { value: "sand", label: "暖沙" },
+        { value: "citrus", label: "蜜柑" },
+        { value: "sakura", label: "樱粉" },
+        { value: "latte", label: "咖啡" },
+        { value: "night", label: "夜航" }
+      ];
+      DEFAULT_POMODORO_SKIN_THEME = "tomato";
+    }
+  });
+
+  // src/pomodoro/sound.ts
+  function playSound(kind, volume = 100) {
+    const w = typeof window !== "undefined" ? window : globalThis;
+    const AC = w.AudioContext || w.webkitAudioContext;
+    if (!AC) return;
+    if (volume <= 0) return;
+    try {
+      const cfg = SOUND_CONFIG[kind];
+      const ctx = new AC();
+      if (ctx.state === "suspended" && typeof ctx.resume === "function") void ctx.resume();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = cfg.freq;
+      const peak = 0.8 * (Math.max(1, Math.min(100, volume)) / 100);
+      const t = ctx.currentTime;
+      gain.gain.setValueAtTime(1e-3, t);
+      gain.gain.exponentialRampToValueAtTime(peak, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(1e-3, t + cfg.dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + cfg.dur + 0.02);
+      const ctxRef = ctx;
+      setTimeout(() => {
+        void ctxRef.close();
+      }, cfg.dur * 1e3 + 300);
+    } catch (e) {
+    }
+  }
+  var SOUND_CONFIG;
+  var init_sound = __esm({
+    "src/pomodoro/sound.ts"() {
+      SOUND_CONFIG = {
+        "focus-start": { freq: 880, dur: 0.25 },
+        "short-break-start": { freq: 523, dur: 0.3 },
+        "long-break-start": { freq: 392, dur: 0.45 },
+        pause: { freq: 440, dur: 0.2 }
+      };
+    }
+  });
+
+  // src/pomodoro/statusbar.ts
+  function syncPomodoroStatusBar(state3, remainSec) {
+    if (!statusEl) return;
+    const running2 = state3.endTime !== null;
+    const paused = !running2 && state3.paused;
+    statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
+    statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
+    const wantTitle = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
+    if (statusEl.title !== wantTitle) statusEl.title = wantTitle;
+    if (textSpan) {
+      if (running2) {
+        const m = Math.floor(remainSec / 60);
+        const s = remainSec % 60;
+        const want = `${pad2(m)}:${pad2(s)}`;
+        if (textSpan.textContent !== want) textSpan.textContent = want;
+      } else {
+        const want = paused ? "已暂停" : "";
+        if (textSpan.textContent !== want) textSpan.textContent = want;
+      }
+    }
+  }
+  var statusEl, textSpan;
+  var init_statusbar = __esm({
+    "src/pomodoro/statusbar.ts"() {
+      init_fake_obsidian();
+      init_utils();
+      statusEl = null;
+      textSpan = null;
+    }
+  });
+
+  // src/pomodoro/config.ts
+  var PRESETS, CUSTOM_PRESET_ID;
+  var init_config3 = __esm({
+    "src/pomodoro/config.ts"() {
+      PRESETS = {
+        classic: { label: "经典标准", workMin: 25, shortBreakMin: 5, longBreakMin: 15 },
+        neuro: { label: "神经专注", workMin: 30, shortBreakMin: 7, longBreakMin: 20 },
+        flow: { label: "深度心流", workMin: 50, shortBreakMin: 10, longBreakMin: 25 },
+        creative: { label: "创意激发", workMin: 40, shortBreakMin: 12, longBreakMin: 20 },
+        beginner: { label: "初学入门", workMin: 15, shortBreakMin: 5, longBreakMin: 12 },
+        study: { label: "高效学习", workMin: 30, shortBreakMin: 5, longBreakMin: 15 },
+        sprint: { label: "敏捷冲刺", workMin: 20, shortBreakMin: 4, longBreakMin: 12 },
+        marathon: { label: "马拉松式", workMin: 45, shortBreakMin: 15, longBreakMin: 30 },
+        recovery: { label: "疲劳恢复", workMin: 20, shortBreakMin: 10, longBreakMin: 20 },
+        intense: { label: "高强度", workMin: 50, shortBreakMin: 5, longBreakMin: 15 },
+        balanced: { label: "平衡模式", workMin: 35, shortBreakMin: 7, longBreakMin: 18 }
+      };
+      CUSTOM_PRESET_ID = "custom";
+    }
+  });
+
+  // src/core/pomodoro-phase.ts
+  function isFocusingPhase(p) {
+    return p === "focusing" || p === "paused";
+  }
+  var init_pomodoro_phase = __esm({
+    "src/core/pomodoro-phase.ts"() {
+    }
+  });
+
+  // src/pomodoro/ui.ts
+  var ui_exports4 = {};
+  __export(ui_exports4, {
+    POMODORO_SKIN_THEMES: () => POMODORO_SKIN_THEMES,
+    closePomodoro: () => closePomodoro,
+    ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
+    openPomodoro: () => openPomodoro,
+    pomodoroSettingsSchema: () => pomodoroSettingsSchema,
+    skipBreak: () => skipBreak,
+    startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
+    unloadPomodoro: () => unloadPomodoro
+  });
+  function applySkinClass() {
+    const popup = document.getElementById("pomodoro-popup");
+    if (!popup) return;
+    const want = skinClassOf(tryGetSettings().pomodoroSkinTheme);
+    if (popup.classList.contains(want)) return;
+    for (const t of POMODORO_SKIN_THEMES) popup.classList.remove(`pomodoro-skin-${t.value}`);
+    popup.classList.add(want);
+  }
+  function durations() {
+    const s = tryGetSettings();
+    const num2 = (v, def) => {
+      const n = parseInt(v != null ? v : "", 10);
+      return Number.isFinite(n) && n > 0 ? n : def;
+    };
+    const preset = s.pomodoroPreset && s.pomodoroPreset !== CUSTOM_PRESET_ID ? PRESETS[s.pomodoroPreset] : null;
+    return {
+      workMin: preset ? preset.workMin : num2(s.pomodoroWorkMin, 25),
+      shortBreakMin: preset ? preset.shortBreakMin : num2(s.pomodoroShortBreakMin, 5),
+      longBreakMin: preset ? preset.longBreakMin : num2(s.pomodoroLongBreakMin, 15),
+      longBreakInterval: num2(s.pomodoroLongBreakInterval, 4)
+    };
+  }
+  function options() {
+    const s = tryGetSettings();
+    return {
+      forceFocus: !!s.pomodoroForceFocus,
+      autoCycle: !!s.pomodoroAutoCycle,
+      autoSkipBreak: !!s.pomodoroAutoSkipBreak
+    };
+  }
+  function phaseLabel(phase) {
+    if (phase === "focus") return "专注";
+    if (phase === "short-break") return "短休息";
+    if (phase === "long-break") return "长休息";
+    return "番茄钟";
+  }
+  function phaseText(phase, count, d) {
+    if (phase === "focus") return `专注 ${count + 1}/${d.longBreakInterval}`;
+    return phaseLabel(phase);
+  }
+  function playPhaseSound(phase) {
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) {
+      const kind = phase === "focus" ? "focus-start" : phase === "long-break" ? "long-break-start" : "short-break-start";
+      playSound(kind, pomodoroVolume());
+    }
+  }
+  function notifyPhaseStarted(phase) {
+    const d = durations();
+    if (phase === "focus") {
+      notice("专注开始", "success");
+    } else if (phase === "long-break") {
+      notice(`长休息开始：${d.longBreakMin} 分钟`, "success");
+    } else {
+      notice(`休息开始：${d.shortBreakMin} 分钟`, "success");
+    }
+    playPhaseSound(phase);
+  }
+  function notifyPaused() {
+    notice(state2.phase === "focus" ? "已暂停专注" : "已暂停休息", "pause");
+    const s = tryGetSettings();
+    if (s.pomodoroSound !== false) playSound("pause", pomodoroVolume());
+  }
+  function breakLabel(phase, d) {
+    return phase === "long-break" ? `长休息 ${d.longBreakMin} 分钟` : `休息 ${d.shortBreakMin} 分钟`;
+  }
+  function forceFocusHint(paused = false) {
+    return paused ? "强制专注模式暂停中，请先在番茄钟面板操作" : "强制专注模式中，请先在番茄钟面板操作";
+  }
+  function notifyPhaseComplete(e) {
+    const d = durations();
+    playPhaseSound(e.nextPhase);
+    if (e.autoStarted) {
+      if (e.completedPhase === "focus") {
+        notice(e.nextPhase === "focus" ? "专注完成：开始下一轮专注" : `专注完成：${breakLabel(e.nextPhase, d)}`, "success");
+      } else {
+        notice("休息结束：开始专注", "success");
+      }
+      return;
+    }
+    if (e.completedPhase === "focus") {
+      notify(`专注完成：${breakLabel(e.nextPhase, d)}`, {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始休息", onClick: () => applyAction("start") }
+      });
+    } else {
+      notify("休息结束", {
+        type: "success",
+        duration: 6e3,
+        action: { label: "开始专注", onClick: () => applyAction("start") }
+      });
+    }
+  }
+  function pomodoroVolume() {
+    const v = tryGetSettings().pomodoroVolume;
+    return typeof v === "number" && v >= 0 ? v : 100;
+  }
+  function remainingSec() {
+    if (state2.endTime !== null) return Math.max(0, Math.ceil((state2.endTime - Date.now()) / 1e3));
+    if (state2.phase === "idle" && state2.remaining === 0) return phaseDurationSec("focus", durations());
+    return state2.remaining;
+  }
+  function fmt(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${pad2(m)}:${pad2(s)}`;
+  }
+  function hoursLabel(minutes) {
+    if (!(minutes > 0)) return null;
+    const h = minutes / 60;
+    return `${h >= 100 ? Math.round(h) : Math.round(h * 10) / 10}h`;
+  }
+  function buildStatBars(container, rows, opts = {}) {
+    var _a2;
+    const metric = (_a2 = opts.metric) != null ? _a2 : "count";
+    const values = rows.map((r) => {
+      var _a3;
+      return metric === "minutes" ? (_a3 = r.minutes) != null ? _a3 : 0 : r.count;
+    });
+    const max = Math.max(1, ...values);
+    container.innerHTML = "";
+    rows.forEach((r, i) => {
+      var _a3;
+      const bar = document.createElement("div");
+      bar.className = "pomodoro-stat-day";
+      bar.title = r.title;
+      const col = document.createElement("div");
+      col.className = "pomodoro-stat-col";
+      const numText = (_a3 = opts.valueLabel) == null ? void 0 : _a3.call(opts, r);
+      if (numText) {
+        const num2 = document.createElement("span");
+        num2.className = "pomodoro-stat-num";
+        num2.textContent = numText;
+        col.appendChild(num2);
+      }
+      const h = document.createElement("div");
+      h.className = "pomodoro-stat-bar";
+      h.style.height = `${Math.max(2, Math.round(values[i] / max * 40))}px`;
+      col.appendChild(h);
+      const label = document.createElement("span");
+      label.className = "pomodoro-stat-label";
+      label.textContent = r.label;
+      col.appendChild(label);
+      bar.appendChild(col);
+      container.appendChild(bar);
+    });
+  }
+  function renderStats() {
+    const now = Date.now();
+    const todayEl = document.getElementById("pomodoro-today");
+    if (todayEl) {
+      const todayText = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+      if (todayEl.textContent !== todayText) todayEl.textContent = todayText;
+    }
+    const weekEl = document.getElementById("pomodoro-week");
+    const monthsEl = document.getElementById("pomodoro-months");
+    if (!weekEl || !monthsEl) return;
+    if (statMode === "month") {
+      const months = lastNMonths(archived, history, now, TREND_MONTHS);
+      const key2 = "m:" + months.map((m) => `${m.month}:${m.count}:${m.minutes}`).join(",") + `#${archived.length}`;
+      if (key2 === lastStatsKey) return;
+      lastStatsKey = key2;
+      syncStatTabs(false);
+      weekEl.hidden = true;
+      monthsEl.hidden = false;
+      buildStatBars(
+        monthsEl,
+        months.map((m) => ({
+          label: `${parseInt(m.month.slice(5, 7), 10)}月`,
+          title: `${m.month}：${m.count} 个 · ${m.minutes} 分钟`,
+          count: m.count,
+          minutes: m.minutes
+        })),
+        { metric: "minutes", valueLabel: (r) => {
+          var _a2;
+          return hoursLabel((_a2 = r.minutes) != null ? _a2 : 0);
+        } }
+      );
+      return;
+    }
+    const days = last7Days(history, now);
+    const key = "w:" + days.map((d) => `${d.date}:${d.count}:${d.minutes}`).join(",");
+    if (key === lastStatsKey) return;
+    lastStatsKey = key;
+    syncStatTabs(true);
+    weekEl.hidden = false;
+    monthsEl.hidden = true;
+    buildStatBars(
+      weekEl,
+      days.map((d) => ({
+        label: d.date.slice(8),
+        // DD（完整日期在 title；窄面板不折行）
+        title: `${d.date}：${d.count} 个 · ${d.minutes} 分钟`,
+        count: d.count
+      }))
+    );
+  }
+  function syncStatTabs(weekOn) {
+    const tabWeek = document.getElementById("pomodoro-stat-tab-week");
+    const tabMonth = document.getElementById("pomodoro-stat-tab-month");
+    tabWeek == null ? void 0 : tabWeek.classList.toggle("pomodoro-stat-tab-on", weekOn);
+    tabMonth == null ? void 0 : tabMonth.classList.toggle("pomodoro-stat-tab-on", !weekOn);
+    tabWeek == null ? void 0 : tabWeek.setAttribute("aria-pressed", String(weekOn));
+    tabMonth == null ? void 0 : tabMonth.setAttribute("aria-pressed", String(!weekOn));
+  }
+  function setStatMode(mode) {
+    if (statMode === mode) return;
+    statMode = mode;
+    lastStatsKey = "";
+    render();
+  }
+  function render() {
+    const d = durations();
+    const remain = remainingSec();
+    syncPomodoroStatusBar(state2, remain);
+    if (!maskEl) return;
+    const total = phaseDurationSec(state2.phase === "idle" ? "focus" : state2.phase, d);
+    const C = 2 * Math.PI * 52;
+    const progress = total > 0 ? Math.min(1, Math.max(0, 1 - remain / total)) : 1;
+    const circle = document.getElementById("pomodoro-ring-progress");
+    if (circle) {
+      circle.setAttribute("stroke-dasharray", String(C));
+      circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
+    }
+    const phaseEl = document.getElementById("pomodoro-phase");
+    if (phaseEl) {
+      const label = phaseLabel(state2.phase);
+      if (phaseEl.dataset.label !== label) {
+        phaseEl.dataset.label = label;
+        phaseEl.innerHTML = "";
+        if (state2.phase === "idle") {
+          const ic2 = document.createElement("span");
+          ic2.className = "pomodoro-phase-icon";
+          setIcon(ic2, "timer");
+          phaseEl.appendChild(ic2);
+          phaseEl.appendChild(document.createTextNode(label));
+        } else {
+          phaseEl.textContent = label;
+        }
+      }
+    }
+    renderCycleDots(d);
+    renderTaskLine();
+    const timeEl = document.getElementById("pomodoro-time");
+    if (timeEl) timeEl.textContent = fmt(remain);
+    renderStats();
+    updateButtons();
+    applySkinClass();
+  }
+  function renderCycleDots(d) {
+    const cycleEl = document.getElementById("pomodoro-cycle");
+    if (!cycleEl) return;
+    const total = Math.max(1, d.longBreakInterval);
+    if (cycleEl.childElementCount !== total) {
+      cycleEl.innerHTML = "";
+      for (let i = 0; i < total; i++) {
+        const dot = document.createElement("span");
+        dot.className = "pomodoro-cycle-dot";
+        cycleEl.appendChild(dot);
+      }
+    }
+    Array.from(cycleEl.children).forEach((dot, i) => {
+      const want = "pomodoro-cycle-dot" + (i < state2.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
+      if (dot.className !== want) dot.className = want;
+    });
+  }
+  function renderTaskLine() {
+    const taskEl = document.getElementById("pomodoro-task");
+    if (!taskEl) return;
+    if (state2.task) {
+      if (taskEl.textContent !== state2.task) taskEl.textContent = state2.task;
+      if (taskEl.title !== state2.task) taskEl.title = state2.task;
+    } else {
+      if (taskEl.textContent !== "") taskEl.textContent = "";
+      if (taskEl.hasAttribute("title")) taskEl.removeAttribute("title");
+    }
+  }
+  function updateButtons() {
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    if (!startBtn) return;
+    const running2 = state2.endTime !== null;
+    const wantStart = running2 ? "暂停" : state2.paused ? "继续" : "开始";
+    if (startBtn.textContent !== wantStart) startBtn.textContent = wantStart;
+    const locked = options().forceFocus && state2.phase === "focus" && (running2 || state2.paused);
+    const startLocked = locked && !(state2.paused && state2.pausedBy === "autopause");
+    startBtn.disabled = startLocked;
+    const resetBtn = document.getElementById("pomodoro-btn-reset");
+    const skipBtn = document.getElementById("pomodoro-btn-skip");
+    if (resetBtn) resetBtn.disabled = locked;
+    if (skipBtn) skipBtn.disabled = locked || state2.phase === "idle";
+  }
+  function applyAction(action) {
+    const prev = state2;
+    const r = transition(state2, action, Date.now(), durations(), options());
+    state2 = r.state;
+    if (!state2.paused) autoPauseMain = false;
+    if (r.event.type === "started") notifyPhaseStarted(r.event.phase);
+    if (r.event.type === "phase-completed") {
+      if (r.event.historyEntry) history = history.concat(r.event.historyEntry);
+      if (action === "tick") notifyPhaseComplete(r.event);
+      if (r.event.completedPhase === "focus" && r.event.historyEntry) {
+        emitDomainEvent("pomodoro", { kind: "focus-done", minutes: durations().workMin });
+      }
+    }
+    if (action === "pause" && state2.paused) notifyPaused();
+    if (r.event.type !== "none" || action === "pause" && state2.paused || action === "reset" && r.state !== prev) void save();
+    ensureTick();
+    render();
+  }
+  function onTick() {
+    applyAction("tick");
+  }
+  function autoPauseEnabled() {
+    return tryGetSettings().pomodoroAutoPauseOnHide !== false;
+  }
+  function freezeRunning(s, now) {
+    if (s.endTime === null || s.paused) return s;
+    return {
+      ...s,
+      paused: true,
+      pausedBy: "autopause",
+      remaining: Math.max(0, Math.ceil((s.endTime - now) / 1e3)),
+      endTime: null
+    };
+  }
+  function unfreezeRunning(s, now) {
+    if (!s.paused) return s;
+    return { ...s, paused: false, pausedBy: void 0, remaining: 0, endTime: now + s.remaining * 1e3 };
+  }
+  function pauseOnHidden() {
+    if (!autoPauseEnabled()) return;
+    const now = Date.now();
+    if (state2.endTime !== null && !state2.paused) {
+      state2 = freezeRunning(state2, now);
+      autoPauseMain = true;
+    }
+    if (autoPauseMain) {
+      void save();
+      render();
+    }
+  }
+  function resumeOnVisible() {
+    const now = Date.now();
+    if (autoPauseMain && state2.paused) {
+      state2 = unfreezeRunning(state2, now);
+      autoPauseMain = false;
+      void save();
+      render();
+      return;
+    }
+    render();
+  }
+  function registerVisibilityListener() {
+    if (visibilityHandler) return;
+    visibilityHandler = () => {
+      if (document.hidden) pauseOnHidden();
+      else resumeOnVisible();
+    };
+    document.addEventListener("visibilitychange", visibilityHandler);
+  }
+  function unregisterVisibilityListener() {
+    if (visibilityHandler) {
+      document.removeEventListener("visibilitychange", visibilityHandler);
+      visibilityHandler = null;
+    }
+  }
+  function ensureTick() {
+    const needsTick = state2.endTime !== null;
+    if (needsTick && timerId === null) {
+      timerId = window.setInterval(onTick, 1e3);
+    } else if (!needsTick && timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+  }
+  async function save() {
+    const t = trimWithArchive(history, archived, Date.now());
+    try {
+      if (dataManager) await dataManager.save({ version: 1, state: state2, history: t.history, ...t.archived.length ? { archived: t.archived } : {} });
+    } catch (e) {
+      console.error("番茄钟数据保存失败:", e);
+      notifyActionError(e, "保存番茄钟数据", { onRetry: () => void save() });
+      return;
+    }
+    if (disposed) return;
+    history = t.history;
+    archived = t.archived;
+  }
+  async function initData() {
+    var _a2;
+    const data = await dataManager.load();
+    const r = recover(data.state, data.history, Date.now(), durations(), options());
+    state2 = r.state;
+    const t = trimWithArchive(r.history, data.archived, Date.now());
+    history = t.history;
+    archived = t.archived;
+    const mainChanged = data.state.endTime !== null && r.state.endTime === null;
+    const archivedChanged = JSON.stringify((_a2 = data.archived) != null ? _a2 : []) !== JSON.stringify(archived);
+    if (mainChanged || archivedChanged) await dataManager.save({ version: 1, state: state2, history, ...archived.length ? { archived } : {} });
+    loaded = true;
+  }
+  function pomodoroSettingsSchema() {
+    const soundToggle = {
+      get: () => tryGetSettings().pomodoroSound !== false,
+      set: (v) => {
+        getSettings().pomodoroSound = v;
+      },
+      save: () => saveSettings()
+    };
+    const autoPauseToggle = {
+      get: () => tryGetSettings().pomodoroAutoPauseOnHide !== false,
+      set: (v) => {
+        getSettings().pomodoroAutoPauseOnHide = v;
+      },
+      save: () => saveSettings()
+    };
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 占位单卡）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "pomodoroSkin" },
+              options: [{ value: "default", label: "计时盘", prevClass: "bz-sp-prev-panel" }],
+              // 配套回落（issue 246 a2 口径：不建 layoutPairMap）：换布局后若当前主题不属于
+              // 新布局的配套（layout 不符）→ 回落第一个适配主题（无适配主题则兜底第一项），
+              // 防「布局换了主题还挂旧皮」
+              onChange: () => {
+                var _a2, _b2;
+                const s = tryGetSettings();
+                const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
+                const fit2 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+                if (!fit2.some((o) => o.value === cur)) {
+                  s.pomodoroSkinTheme = ((_b2 = fit2[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
+                  saveSettings();
+                }
+                render();
+              }
+            },
+            // 面板主题：10 套皮（清单单源 = render.ts POMODORO_SKIN_THEMES，每套亮/暗两版，CSS 侧同名落皮）；
+            // onChange 驱动 render() 重挂皮肤类——设置面板关着弹窗换肤也要即时生效（评审 c1）
+            { type: "choiceCards", name: "面板主题", binding: { key: "pomodoroSkinTheme" }, layoutKey: "pomodoroSkin", options: SKIN_THEME_OPTIONS, onChange: () => render() }
+          ]
+        },
+        {
+          icon: "timer",
+          name: "时间方案",
+          rows: [
+            {
+              type: "select",
+              name: "预设方案",
+              desc: "选择现成的工作与休息时长组合",
+              binding: { key: "pomodoroPreset" },
+              options: [
+                ...Object.entries(PRESETS).map(([id, p]) => ({
+                  value: id,
+                  label: `${p.label}（${p.workMin}/${p.shortBreakMin}/${p.longBreakMin}）`
+                })),
+                { value: CUSTOM_PRESET_ID, label: "自定义" }
+              ],
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "工作时长",
+              desc: "自定义方案的工作阶段分钟数",
+              binding: numStrBinding("pomodoroWorkMin", 25),
+              min: 1,
+              max: 120,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "短休息时长",
+              desc: "自定义方案的短休息分钟数",
+              binding: numStrBinding("pomodoroShortBreakMin", 5),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            {
+              type: "number",
+              name: "长休息时长",
+              desc: "自定义方案的长休息分钟数",
+              binding: numStrBinding("pomodoroLongBreakMin", 15),
+              min: 1,
+              max: 60,
+              step: 1,
+              visibleWhen: (s) => s.pomodoroPreset === CUSTOM_PRESET_ID,
+              onChange: () => render()
+            },
+            { type: "number", name: "长休息间隔", desc: "每隔几个专注进入一次长休息", binding: numStrBinding("pomodoroLongBreakInterval", 4), min: 1, max: 20, step: 1, onChange: () => render() }
+          ]
+        },
+        {
+          icon: "sliders-horizontal",
+          name: "行为",
+          rows: [
+            { type: "toggle", name: "强制专注模式", desc: "专注进行中无法暂停跳过或重置", binding: { key: "pomodoroForceFocus" }, onChange: () => render() },
+            { type: "toggle", name: "自动循环", desc: "阶段结束后自动开始下一阶段", binding: { key: "pomodoroAutoCycle" }, onChange: () => render() },
+            { type: "toggle", name: "自动跳过休息", desc: "专注结束后直接进入下一个专注", binding: { key: "pomodoroAutoSkipBreak" }, onChange: () => render() },
+            { type: "toggle", name: "声音提醒", desc: "阶段切换时播放提示音", binding: soundToggle, onChange: () => render() },
+            { type: "toggle", name: "后台自动暂停", desc: "窗口隐藏时暂停，恢复可见后自动继续", binding: autoPauseToggle, onChange: () => render() },
+            // 提示音音量 + 「试听」：行内附加按钮（actions，渲染器统一实现——custom 插槽已退役）
+            {
+              type: "slider",
+              name: "提示音音量",
+              desc: "提示音大小，默认最大",
+              binding: { get: () => {
+                var _a2;
+                return (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100;
+              }, set: (v) => {
+                getSettings().pomodoroVolume = v;
+              }, save: () => saveSettings() },
+              min: 0,
+              max: 100,
+              step: 5,
+              actions: [{ text: "试听", onClick: () => {
+                var _a2;
+                return playSound("focus-start", (_a2 = tryGetSettings().pomodoroVolume) != null ? _a2 : 100);
+              } }]
+            },
+            {
+              type: "select",
+              name: "打开时恢复方式",
+              desc: "启动时正在倒计时，选择弹窗提醒或后台继续",
+              binding: { key: "pomodoroRestoreMode" },
+              options: [
+                { value: "background", label: "后台继续" },
+                { value: "popup", label: "自动弹窗" }
+              ]
+            }
+          ]
+        }
+      ]
+    };
+  }
+  function bindEvents() {
+    var _a2, _b2;
+    const startBtn = document.getElementById("pomodoro-btn-start");
+    startBtn.addEventListener("click", () => applyAction(state2.paused ? "resume" : state2.endTime !== null ? "pause" : "start"));
+    document.getElementById("pomodoro-btn-reset").addEventListener("click", () => void resetWithConfirm());
+    document.getElementById("pomodoro-btn-skip").addEventListener("click", () => {
+      if (state2.phase === "idle") return;
+      applyAction("skip");
+    });
+    (_a2 = document.getElementById("pomodoro-stat-tab-week")) == null ? void 0 : _a2.addEventListener("click", () => setStatMode("week"));
+    (_b2 = document.getElementById("pomodoro-stat-tab-month")) == null ? void 0 : _b2.addEventListener("click", () => setStatMode("month"));
+    const popup = document.getElementById("pomodoro-popup");
+    popup.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("button, input, textarea, select, [contenteditable]")) return;
+      popup.focus();
+    });
+    popup.addEventListener("keydown", (e) => {
+      if (e.key !== " ") return;
+      const t = e.target;
+      const tag = t.tagName;
+      if (tag === "BUTTON" || tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable) return;
+      e.preventDefault();
+      applyAction(state2.paused ? "resume" : state2.endTime !== null ? "pause" : "start");
+    });
+  }
+  function resetWithConfirm() {
+    const focusing = state2.phase === "focus" && (state2.endTime !== null || state2.paused);
+    if (!focusing) {
+      applyAction("reset");
+      return;
+    }
+    void openFlowDialog({
+      title: "重置专注",
+      message: "专注进行中，重置后本阶段进度作废（不计入历史）",
+      actions: [
+        { label: "继续计时", value: "cancel" },
+        { label: "重置", value: "ok", cta: true, danger: true }
+      ]
+    }).then((v) => {
+      if (v === "ok") applyAction("reset");
+    });
+  }
+  function buildDOM() {
+    var _a2;
+    const mask = document.createElement("div");
+    mask.id = "pomodoro-mask";
+    mask.className = "bz-overlay-mask";
+    mask.innerHTML = popupShellHtml();
+    mask.style.zIndex = String(allocZ());
+    document.body.appendChild(mask);
+    maskEl = mask;
+    mask.addEventListener("click", (e) => {
+      if (e.target === mask) closePomodoro();
+    });
+    escHandle2 = escManager.register("bz-pomodoro", {
+      isVisible: () => maskEl !== null,
+      close: closePomodoro
+    });
+    bindEvents();
+    render();
+    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
+  }
+  function initDataOnce() {
+    if (loaded) return Promise.resolve();
+    initInflight != null ? initInflight : initInflight = initData().finally(() => {
+      initInflight = null;
+    });
+    return initInflight;
+  }
+  async function openPomodoro(app) {
+    appRef = app;
+    disposed = false;
+    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    if (!maskEl) {
+      openInflight != null ? openInflight : openInflight = (async () => {
+        await initDataOnce();
+        if (disposed) return;
+        buildDOM();
+        ensureTick();
+      })();
+      try {
+        await openInflight;
+      } catch (e) {
+        console.error("番茄钟打开失败:", e);
+        notifyActionError(e, "打开番茄钟", { onRetry: () => void openPomodoro(app) });
+        return;
+      } finally {
+        openInflight = null;
+      }
+    }
+    const popupEl2 = maskEl ? maskEl.querySelector("#pomodoro-popup") : null;
+    popupEl2 == null ? void 0 : popupEl2.classList.add("bz-panel-mtop");
+  }
+  async function ensurePomodoro(app) {
+    appRef = app;
+    disposed = false;
+    if (!dataManager) dataManager = new PomodoroDataManager(app);
+    registerVisibilityListener();
+    if (!loaded) {
+      try {
+        await initDataOnce();
+      } catch (e) {
+        console.error("番茄钟数据加载失败:", e);
+        notifyActionError(e, "加载番茄钟数据", { onRetry: () => void ensurePomodoro(app) });
+        return;
+      }
+      if (disposed) return;
+      if (state2.endTime !== null && !recoveryNotified) {
+        recoveryNotified = true;
+        ensureTick();
+        render();
+        const remainSec = Math.max(0, Math.ceil((state2.endTime - Date.now()) / 1e3));
+        notice(`番茄钟继续：${phaseText(state2.phase, state2.cycleFocusCount, durations())}，还剩 ${fmt(remainSec)}`);
+        const s = tryGetSettings();
+        if (s.pomodoroRestoreMode === "popup") void openPomodoro(app);
+      }
+    }
+  }
+  function closePomodoro() {
+    if (maskEl) {
+      maskEl.remove();
+      maskEl = null;
+    }
+    if (escHandle2) {
+      escHandle2.unregister();
+      escHandle2 = null;
+    }
+    lastStatsKey = "";
+  }
+  async function startFocusForTask(app, taskTitle) {
+    await ensurePomodoro(app);
+    if (!loaded) return;
+    const o = options();
+    const d = durations();
+    if (state2.phase === "short-break" || state2.phase === "long-break") {
+      state2 = transition(state2, "skip", Date.now(), d, o).state;
+      void save();
+      render();
+    }
+    if (state2.endTime !== null) {
+      notice("已有专注计时中，本次不重复开始", "warning");
+      return;
+    }
+    if (state2.paused) {
+      notice(o.forceFocus && state2.pausedBy !== "autopause" ? forceFocusHint(true) : "已有专注暂停中，本次不重复开始", "warning");
+      return;
+    }
+    state2 = { ...state2, task: taskTitle };
+    applyAction("start");
+  }
+  function isFocusing() {
+    return isFocusingPhase(menuPhase());
+  }
+  async function toggleFocus(app) {
+    await ensurePomodoro(app);
+    if (!loaded) return;
+    if (isFocusing()) {
+      const before = state2;
+      applyAction("reset");
+      if (state2 === before) notice(forceFocusHint(), "warning");
+      else notice("专注已停止");
+      return;
+    }
+    if (state2.phase === "short-break" || state2.phase === "long-break") {
+      state2 = transition(state2, "skip", Date.now(), durations(), options()).state;
+      void save();
+      render();
+    }
+    applyAction("start");
+  }
+  function menuPhase() {
+    if (state2.phase === "short-break" || state2.phase === "long-break") return "break";
+    if (state2.phase !== "focus") return "idle";
+    if (state2.paused) return "paused";
+    return state2.endTime !== null ? "focusing" : "idle";
+  }
+  async function skipBreak(app) {
+    await ensurePomodoro(app);
+    if (!loaded) return;
+    if (state2.phase !== "short-break" && state2.phase !== "long-break") {
+      notice("当前不在休息阶段", "warning");
+      return;
+    }
+    state2 = transition(state2, "skip", Date.now(), durations(), options()).state;
+    void save();
+    render();
+    applyAction("start");
+  }
+  async function togglePause(app) {
+    await ensurePomodoro(app);
+    if (!loaded) return;
+    if (state2.endTime === null && !state2.paused) {
+      notice("当前没有进行中的计时", "warning");
+      return;
+    }
+    const before = state2;
+    applyAction(state2.paused ? "resume" : "pause");
+    if (state2 === before) notice(forceFocusHint(), "warning");
+  }
+  function unloadPomodoro() {
+    disposed = true;
+    if (timerId !== null) {
+      window.clearInterval(timerId);
+      timerId = null;
+    }
+    unregisterVisibilityListener();
+    autoPauseMain = false;
+    recoveryNotified = false;
+    openInflight = null;
+    initInflight = null;
+    closePomodoro();
+    state2 = createInitialState();
+    history = [];
+    archived = [];
+    statMode = "week";
+    lastStatsKey = "";
+    dataManager = null;
+    appRef = null;
+    loaded = false;
+  }
+  var dataManager, state2, history, archived, loaded, statMode, maskEl, escHandle2, timerId, appRef, autoPauseMain, visibilityHandler, disposed, recoveryNotified, lastStatsKey, SKIN_THEME_OPTIONS, initInflight, openInflight;
+  var init_ui5 = __esm({
+    "src/pomodoro/ui.ts"() {
+      init_fake_obsidian();
+      init_esc_manager();
+      init_z_order();
+      init_settings_provider();
+      init_notice();
+      init_flow_dialog();
+      init_settings_common();
+      init_data7();
+      init_render5();
+      init_render5();
+      init_sound();
+      init_statusbar();
+      init_stats2();
+      init_config3();
+      init_state5();
+      init_pomodoro_phase();
+      init_utils();
+      init_domain_bus();
+      dataManager = null;
+      state2 = createInitialState();
+      history = [];
+      archived = [];
+      loaded = false;
+      statMode = "week";
+      maskEl = null;
+      escHandle2 = null;
+      timerId = null;
+      appRef = null;
+      autoPauseMain = false;
+      visibilityHandler = null;
+      disposed = true;
+      recoveryNotified = false;
+      lastStatsKey = "";
+      SKIN_THEME_OPTIONS = POMODORO_SKIN_THEMES.map((t) => ({ value: t.value, label: t.label, layout: "default", prevClass: `bz-sp-prev-pomo-${t.value}` }));
+      initInflight = null;
+      openInflight = null;
+    }
+  });
+
+  // src/pomodoro/index.ts
+  var pomodoro_exports = {};
+  __export(pomodoro_exports, {
+    ensurePomodoro: () => ensurePomodoro,
+    isFocusing: () => isFocusing,
+    menuPhase: () => menuPhase,
+    openPomodoro: () => openPomodoro,
+    skipBreak: () => skipBreak,
+    startFocusForTask: () => startFocusForTask,
+    toggleFocus: () => toggleFocus,
+    togglePause: () => togglePause,
+    unloadPomodoro: () => unloadPomodoro
+  });
+  var init_pomodoro = __esm({
+    "src/pomodoro/index.ts"() {
+      init_ui5();
+    }
+  });
+
+  // src/memo/ui.ts
+  function isTodayStr(s) {
+    return !!s && s.slice(0, 10) === (0, import_moment6.default)().format("YYYY-MM-DD");
+  }
+  function fallbackScene() {
+    const scenes = MemoData.getScenarios();
+    const s = tryGetSettings().memoDefaultScene;
+    return s && scenes.includes(s) ? s : scenes[0];
+  }
+  function doneWindowDays() {
+    var _a2;
+    const v = (_a2 = tryGetSettings()) == null ? void 0 : _a2.memoDoneWindow;
+    if (v === "all") return null;
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : 30;
+  }
+  async function readClipUrl() {
+    let text = "";
+    try {
+      text = await navigator.clipboard.readText();
+    } catch (e) {
+      return null;
+    }
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+    const { url, display } = extractUrlAndDisplay(trimmed);
+    if (!url) return null;
+    const title = display && display !== url ? display : await fetchPageTitle(url) || "";
+    return { url, title };
+  }
+  function notifyClipPrefill() {
+    notify("已从剪贴板预填链接", { type: "info", dedupeKey: "memo-clip-prefill" });
+  }
+  async function loadData() {
+    M3.items = await MemoData.loadItems();
+  }
+  async function refresh() {
+    var _a2, _b2;
+    await loadData();
+    (_b2 = (_a2 = M3).renderFn) == null ? void 0 : _b2.call(_a2);
+  }
+  function dueRank(it) {
+    if (!it.due) return 3;
+    const st = getDueStatus(it.due);
+    return st === "overdue" ? 0 : st === "today" ? 1 : 2;
+  }
+  function getVisibleItems() {
+    const kw = M3.search.trim().toLowerCase();
+    let list = M3.items.filter((it) => {
+      if (M3.activeScene === "今日") {
+        if (!it.completed) {
+          const st = getDueStatus(it.due);
+          if (st !== "overdue" && st !== "today") return false;
+        } else if (!isTodayStr(it.completed)) {
+          return false;
+        }
+      } else if (M3.activeScene === "重要") {
+        if (it.priority !== "important") return false;
+      } else if (M3.activeScene !== "全部" && it.scene !== M3.activeScene) return false;
+      if (kw) {
+        const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(" ").toLowerCase();
+        if (!hay.includes(kw)) return false;
+      }
+      return true;
+    });
+    if (M3.pinnedNewId && M3.activeScene !== "全部") {
+      const pinned = M3.items.find((i) => i.id === M3.pinnedNewId);
+      if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
+    }
+    list.sort((a, b) => {
+      const ac = !!a.completed, bc = !!b.completed;
+      if (ac !== bc) return ac ? 1 : -1;
+      const dr = dueRank(a) - dueRank(b);
+      if (dr !== 0) return dr;
+      if (M3.sortMode === "priority") {
+        const pa = a.priority === "important" ? 0 : 1;
+        const pb = b.priority === "important" ? 0 : 1;
+        if (pa !== pb) return pa - pb;
+      }
+      if (M3.sortMode === "created") {
+        return (b.created || "").localeCompare(a.created || "");
+      }
+      if (a.due && b.due) return a.due.localeCompare(b.due);
+      return (b.created || "").localeCompare(a.created || "");
+    });
+    return list;
+  }
+  function sceneCount(scene) {
+    if (scene === "今日") {
+      return M3.items.filter((it) => {
+        if (it.completed) return isTodayStr(it.completed);
+        const st = getDueStatus(it.due);
+        return st === "overdue" || st === "today";
+      }).length;
+    }
+    if (scene === "重要") return M3.items.filter((it) => it.priority === "important").length;
+    if (scene === "全部") return M3.items.length;
+    return M3.items.filter((it) => it.scene === scene).length;
+  }
+  function applyMemoSkin(skin) {
+    if (!M3.overlay) return;
+    const panel2 = M3.overlay.querySelector(".bz-memo-panel");
+    if (!panel2) return;
+    panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
+    const v = skin === "editorial" ? "editorial" : "paper";
+    panel2.classList.add(`bz-memo-skin-${v}`);
+  }
+  function skinClass() {
+    const s = tryGetSettings().memoSkin;
+    return s === "editorial" ? "bz-memo-skin-editorial" : "bz-memo-skin-paper";
+  }
+  function closeMemoPanel() {
+    if (M3.overlay) {
+      const s = tryGetSettings();
+      if (s) {
+        s.memoLastScene = M3.activeScene;
+        void saveSettings();
+      }
+      M3.overlay.remove();
+      M3.overlay = null;
+    }
+    searchDebounced.cancel();
+    if (panelResizeDetach) {
+      panelResizeDetach.detach();
+      panelResizeDetach = null;
+    }
+    if (sortSelectDetach) {
+      sortSelectDetach();
+      sortSelectDetach = null;
+    }
+    M3.renderFn = null;
+    M3.pinnedNewId = null;
+    clipTitleHint = null;
+    M3.completeTimers.forEach((t) => clearTimeout(t));
+    M3.completeTimers.clear();
+  }
+  function renderAll() {
+    if (!M3.overlay) return;
+    renderNav();
+    renderMobScenes();
+    renderMainHead();
+    renderContent();
+  }
+  function renderMainHead() {
+    const overlay2 = M3.overlay;
+    const titleEl = overlay2.querySelector("[data-memo-main-title]");
+    const countEl = overlay2.querySelector("[data-memo-main-count]");
+    if (!titleEl || !countEl) return;
+    titleEl.textContent = sceneLabel(M3.activeScene);
+    const items = getVisibleItems();
+    const undone = items.filter((i) => !i.completed).length;
+    countEl.innerHTML = mainCountHtml(items.length, undone);
+  }
+  function sceneOptions() {
+    return [
+      { scene: "全部", dot: "" },
+      { scene: "今日", dot: "" },
+      { scene: "重要", dot: "" },
+      ...MemoData.getScenarios().map((s) => ({ scene: s, dot: sceneDot(s) }))
+    ];
+  }
+  function attachSceneActions(el, scene) {
+    if (scene === "全部" || scene === "今日" || scene === "重要") return;
+    attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
+  }
+  function renderNav() {
+    const nav = M3.overlay.querySelector("[data-memo-nav]");
+    if (!nav) return;
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M3.activeScene === o.scene, sceneCount(o.scene))).join("");
+    mountIcons(nav);
+    nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
+      attachSceneActions(el, el.dataset.memoScene);
+    });
+  }
+  function renderMobScenes() {
+    const wrap = M3.overlay.querySelector("[data-memo-mob-scenes]");
+    if (!wrap) return;
+    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M3.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    mountIcons(wrap);
+    wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
+      attachSceneActions(el, el.dataset.memoScene);
+    });
+  }
+  function metaDueOf(it) {
+    if (!it.due || it.completed) return null;
+    const st = getDueStatus(it.due);
+    if (!st) return null;
+    return { status: st, text: formatDueText(it.due) };
+  }
+  function metaTags(it) {
+    return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
+  }
+  function renderContent() {
+    const content = M3.overlay.querySelector("[data-memo-content]");
+    if (!content) return;
+    const items = getVisibleItems();
+    if (items.length === 0) {
+      content.innerHTML = "";
+      content.appendChild(uiEmpty({
+        icon: MEMO_ICONS.empty,
+        title: M3.search ? "没有匹配的备忘录" : "这里还没有备忘录",
+        desc: M3.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
+        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
+      }));
+      return;
+    }
+    const active2 = items.filter((i) => !i.completed);
+    const done = items.filter((i) => i.completed);
+    const urgent = active2.filter((i) => dueRank(i) <= 1);
+    const normal = active2.filter((i) => dueRank(i) > 1);
+    const cardHtml4 = (it) => cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
+    const sections = [];
+    if (urgent.length) {
+      sections.push(sectionLabelHtml("到期优先", urgent.length));
+      sections.push(...urgent.map((it) => cardHtml4(it)));
+    }
+    if (normal.length) {
+      sections.push(sectionLabelHtml("其他", normal.length));
+      sections.push(...normal.map((it) => cardHtml4(it)));
+    }
+    if (done.length) {
+      const open = M3.showDone;
+      const win = doneWindowDays();
+      const cutoff = win === null ? null : (0, import_moment6.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
+      const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
+      const earlier = done.length - recent2.length;
+      const listed = !open || M3.showEarlierDone ? done : recent2;
+      sections.push(doneBarHtml(open, done.length));
+      if (open) {
+        sections.push(...listed.map((it) => cardHtml4(it)));
+        if (earlier > 0 && !M3.showEarlierDone) {
+          sections.push(doneMoreHtml(earlier));
+        }
+      }
+    }
+    content.innerHTML = sections.join("");
+    mountIcons(content);
+    content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const it = M3.items.find((i) => i.id === el.dataset.memoOpenitem);
+        if (it) openItem(it);
+      });
+    });
+    content.querySelectorAll("[data-memo-pos]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const it = M3.items.find((i) => i.id === el.dataset.memoPos);
+        if (it) jumpToNote(it);
+      });
+    });
+    content.querySelectorAll(".bz-memo-card").forEach((card) => {
+      const id = card.dataset.memoId;
+      const it = M3.items.find((i) => i.id === id);
+      if (!it) return;
+      attachItemActions(card, buildCardActions(it), {
+        menuClass: skinClass() || void 0,
+        sheetClass: skinClass() || void 0,
+        // 抽屉挂 body，需自带皮肤类，头部勾选圈皮肤样式才随行
+        sheetHead: buildSheetHead(it)
+      });
+    });
+  }
+  function buildSheetHead(it) {
+    var _a2;
+    const head = document.createElement("div");
+    head.className = "bz-item-sheet-entry bz-memo-sheet-entry";
+    if (it.completed) head.classList.add("bz-memo-done");
+    head.insertAdjacentHTML("afterbegin", checkHtml(it));
+    const text = document.createElement("div");
+    text.className = "bz-memo-body-text";
+    const title = document.createElement("div");
+    title.textContent = it.title;
+    if (it.completed) title.classList.add("done");
+    text.appendChild(title);
+    const meta = document.createElement("div");
+    meta.className = "bz-memo-meta";
+    meta.innerHTML = metaTags(it);
+    mountIcons(meta);
+    text.appendChild(meta);
+    head.appendChild(text);
+    (_a2 = head.querySelector("[data-memo-check]")) == null ? void 0 : _a2.addEventListener("click", (e) => {
+      e.stopPropagation();
+      closeItemMenu();
+      toggleCheck(it);
+    });
+    return head;
+  }
+  function openItem(it) {
+    closeMemoPanel();
+    const app = M3.appRef;
+    if (it.linkedNote) {
+      const file = app.vault.getAbstractFileByPath(it.linkedNote);
+      if (file) void app.workspace.getLeaf().openFile(file);
+      else notice("关联笔记不存在");
+    } else if (it.url) {
+      try {
+        app.openUrl(it.url);
+      } catch (e) {
+        const electron = window.require && window.require("electron");
+        if (electron && electron.shell) electron.shell.openExternal(it.url);
+      }
+    }
+  }
+  function jumpToNote(it) {
+    var _a2;
+    if (!it.notePath) return;
+    closeMemoPanel();
+    const app = M3.appRef;
+    const file = app.vault.getAbstractFileByPath(it.notePath);
+    if (!file) {
+      notice("关联笔记不存在");
+      return;
+    }
+    const leaf = app.workspace.getLeaf();
+    void leaf.openFile(file);
+    const editor = (_a2 = leaf.view) == null ? void 0 : _a2.editor;
+    if (editor && it.notePosition) {
+      const { line, ch } = it.notePosition;
+      editor.focus();
+      editor.setCursor(line, ch || 0);
+      editor.scrollIntoView({ from: { line, ch: 0 }, to: { line, ch: 0 } }, true);
+    }
+  }
+  function toggleCheck(it) {
+    if (it.completed) {
+      void restoreItem(it);
+      return;
+    }
+    if (M3.completeTimers.has(it.id)) {
+      clearTimeout(M3.completeTimers.get(it.id));
+      M3.completeTimers.delete(it.id);
+      return;
+    }
+    const timer = setTimeout(() => {
+      M3.completeTimers.delete(it.id);
+      void completeItem(it);
+    }, 300);
+    M3.completeTimers.set(it.id, timer);
+  }
+  async function completeItem(it) {
+    try {
+      await MemoData.completeItem(it.id);
+      emitDomainEvent("memo", { kind: "completed", title: it.title });
+    } catch (e) {
+      notifySaveError(e, "标记完成");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function restoreItem(it) {
+    try {
+      await MemoData.updateItem(it.id, { completed: null });
+      emitDomainEvent("memo", { kind: "restored", title: it.title });
+    } catch (e) {
+      notifySaveError(e, "恢复未完成");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function postponeItem(id, days) {
+    const it = M3.items.find((i) => i.id === id);
+    if (!it || !it.due) return;
+    const d = new Date(it.due.replace("T", " "));
+    d.setDate(d.getDate() + days);
+    const next = `${localDayKey(d)} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    try {
+      await MemoData.updateItem(id, { due: next });
+      emitDomainEvent("memo", { kind: "postponed", title: it.title, due: next });
+      notice(`已延后 ${days} 天`, "success");
+    } catch (e) {
+      notifySaveError(e, "延后备忘录");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function togglePrio(id) {
+    const it = M3.items.find((i) => i.id === id);
+    if (!it) return;
+    const to = it.priority === "important" ? "minor" : "important";
+    try {
+      await MemoData.updateItem(id, { priority: to });
+      emitDomainEvent("memo", { kind: "priority", title: it.title, to });
+      notice(to === "important" ? "已转为重要" : "已转为次要", "success");
+    } catch (e) {
+      notifySaveError(e, "切换优先级");
+      console.error(e);
+    }
+    await refresh();
+  }
+  async function deleteItemConfirm(it) {
+    const ok = await openFlowDialog({
+      title: "删除备忘录",
+      message: `确定删除备忘录「${it.title}」吗？
+删除后可在通知中撤销。`,
+      className: skinClass(),
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "delete", danger: true, cta: true }
+      ]
+    });
+    if (ok !== "delete") return;
+    try {
+      const idx = await MemoData.deleteItem(it.id);
+      emitDomainEvent("memo", { kind: "deleted", title: it.title });
+      notifyUndo(`已删除备忘录「${it.title}」`, () => {
+        void (async () => {
+          try {
+            await MemoData.restoreItem(it, idx);
+            await refresh();
+          } catch (e) {
+            notifySaveError(e, "撤销删除");
+            console.error(e);
+          }
+        })();
+      });
+    } catch (e) {
+      notifySaveError(e, "删除备忘录");
+      console.error(e);
+    }
+    await refresh();
+  }
+  function focusMemoItem(it) {
+    const app = M3.appRef;
+    if (!app) return;
+    void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
+  }
+  function buildCardActions(it) {
+    const actions = [];
+    if (it.linkedNote || it.url) {
+      let sub;
+      if (it.linkedNote) sub = stripMdExt(it.linkedNote.split("/").pop() || "");
+      else if (it.url) {
+        try {
+          sub = new URL(it.url).hostname;
+        } catch (e) {
+        }
+      }
+      actions.push({ icon: "external-link", label: "打开", title: "打开关联内容", sub, onClick: () => openItem(it) });
+    }
+    if (it.notePath) {
+      actions.push({
+        icon: "book-open",
+        label: "跳转关联笔记",
+        title: "跳转关联笔记",
+        sub: stripMdExt(it.notePath.split("/").pop() || ""),
+        onClick: () => jumpToNote(it)
+      });
+    }
+    if (!it.completed) {
+      actions.push({ icon: "timer", label: "专注这个", title: "开始一个归属到该备忘录的专注番茄", onClick: () => focusMemoItem(it) });
+      actions.push({
+        icon: "check-circle",
+        label: "标记完成",
+        title: "标记完成",
+        sub: it.due ? formatDueText(it.due) : void 0,
+        onClick: async () => {
+          await completeItem(it);
+        }
+      });
+    } else {
+      actions.push({ icon: "rotate-ccw", label: "恢复未完成", title: "恢复未完成", onClick: async () => {
+        await restoreItem(it);
+      } });
+    }
+    if (it.due && !it.completed) {
+      const postponeSub = (days) => {
+        const d = new Date(it.due.replace("T", " "));
+        d.setDate(d.getDate() + days);
+        return `${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      };
+      actions.push({ icon: "clock", label: "延后 1 天", title: "延后 1 天", sub: `→ ${postponeSub(1)}`, onClick: async () => {
+        await postponeItem(it.id, 1);
+      } });
+      actions.push({ icon: "clock", label: "延后 3 天", title: "延后 3 天", sub: `→ ${postponeSub(3)}`, onClick: async () => {
+        await postponeItem(it.id, 3);
+      } });
+    }
+    const isImportant = it.priority === "important";
+    actions.push({
+      icon: "star",
+      label: isImportant ? "转为次要" : "转为重要",
+      title: "切换优先级",
+      onClick: async () => {
+        await togglePrio(it.id);
+      }
+    });
+    actions.push({
+      icon: "copy",
+      label: "复制内容",
+      title: "复制内容",
+      sub: `${it.title.length} 字`,
+      onClick: async () => {
+        await navigator.clipboard.writeText(it.title);
+        notice("内容已复制", "success");
+      }
+    });
+    actions.push({ icon: "pencil", label: "编辑", title: "编辑", onClick: () => openEditor(it) });
+    actions.push({ icon: "trash-2", label: "删除", title: "删除", kind: "danger", onClick: () => void deleteItemConfirm(it) });
+    return actions;
+  }
+  function openEditor(item, opts) {
+    var _a2, _b2;
+    const isEdit = !!item;
+    const scenes = MemoData.getScenarios();
+    const editing = item != null ? item : null;
+    const presetScene = (opts == null ? void 0 : opts.presetScene) && scenes.includes(opts.presetScene) ? opts.presetScene : null;
+    const defaultScene = editing ? editing.scene : presetScene != null ? presetScene : fallbackScene();
+    const isClip = defaultScene === "剪藏";
+    const isCode = defaultScene === "代码";
+    const isCourse = defaultScene === "公开课";
+    const form = document.createElement("div");
+    form.className = "bz-memo-form";
+    const title = document.createElement("div");
+    title.className = "bz-memo-form-title";
+    title.textContent = isEdit ? "编辑备忘录" : "创建备忘录";
+    form.appendChild(title);
+    const contentField = document.createElement("div");
+    contentField.className = "bz-field";
+    const contentLabel = document.createElement("span");
+    contentLabel.className = "bz-field-label";
+    contentLabel.textContent = "内容";
+    const contentInput = document.createElement("textarea");
+    contentInput.className = "bz-input";
+    contentInput.placeholder = "输入备忘录内容...";
+    contentInput.value = editing ? editing.title : (opts == null ? void 0 : opts.presetContent) || "";
+    contentField.append(contentLabel, contentInput);
+    form.appendChild(contentField);
+    const titleBox = document.createElement("div");
+    titleBox.className = "bz-memo-extra" + (isClip ? " bz-memo-extra-on" : "");
+    const titleInput = document.createElement("input");
+    titleInput.className = "bz-input";
+    titleInput.placeholder = "标题（可选）";
+    titleInput.value = editing ? "" : (opts == null ? void 0 : opts.presetTitle) || "";
+    titleBox.appendChild(titleInput);
+    form.appendChild(titleBox);
+    const scriptBox = document.createElement("div");
+    scriptBox.className = "bz-memo-extra" + (isCode ? " bz-memo-extra-on" : "");
+    const scriptInput = document.createElement("input");
+    scriptInput.className = "bz-input";
+    scriptInput.placeholder = "脚本名";
+    scriptInput.value = (editing == null ? void 0 : editing.scriptName) || "";
+    scriptBox.appendChild(scriptInput);
+    form.appendChild(scriptBox);
+    const courseBox = document.createElement("div");
+    courseBox.className = "bz-memo-extra" + (isCourse ? " bz-memo-extra-on" : "");
+    const courseInput = document.createElement("input");
+    courseInput.className = "bz-input";
+    courseInput.placeholder = "课程名";
+    courseInput.value = (editing == null ? void 0 : editing.courseName) || "";
+    courseBox.appendChild(courseInput);
+    form.appendChild(courseBox);
+    function tryEditorClipPrefill() {
+      void (async () => {
+        if (isEdit) return;
+        if (contentInput.value.trim()) return;
+        const hit = await readClipUrl();
+        if (!hit) return;
+        if (contentInput.value.trim()) return;
+        contentInput.placeholder = hit.url;
+        if (hit.title) titleInput.placeholder = hit.title;
+        notifyClipPrefill();
+      })();
+    }
+    const sceneField = document.createElement("div");
+    sceneField.className = "bz-field";
+    const sceneLabel2 = document.createElement("span");
+    sceneLabel2.className = "bz-field-label";
+    sceneLabel2.textContent = "场景";
+    sceneField.appendChild(sceneLabel2);
+    const choice = uiChoice({
+      options: scenes.map((s) => ({ value: s, label: s })),
+      value: defaultScene,
+      float: true,
+      // 浮岛 segmented（issue 199 拍板：滑动白卡）
+      label: "场景",
+      onChange: (v) => {
+        titleBox.classList.toggle("bz-memo-extra-on", v === "剪藏");
+        scriptBox.classList.toggle("bz-memo-extra-on", v === "代码");
+        courseBox.classList.toggle("bz-memo-extra-on", v === "公开课");
+        if (v === "剪藏") tryEditorClipPrefill();
+      }
+    });
+    sceneField.appendChild(choice.el);
+    form.appendChild(sceneField);
+    const prioField = document.createElement("div");
+    prioField.className = "bz-field";
+    const prioLabel = document.createElement("span");
+    prioLabel.className = "bz-field-label";
+    prioLabel.textContent = "优先级";
+    prioField.appendChild(prioLabel);
+    const prioChoice = uiChoice({
+      options: [
+        { value: "minor", label: "次要" },
+        { value: "important", label: "重要" }
+      ],
+      value: editing ? editing.priority : tryGetSettings().memoDefaultPriority || "minor",
+      float: true,
+      // 浮岛 segmented（issue 199 拍板）
+      label: "优先级",
+      onChange: () => {
+      }
+    });
+    prioField.appendChild(prioChoice.el);
+    form.appendChild(prioField);
+    const knownScripts = [...new Set(M3.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
+    const knownCourses = [...new Set(M3.items.map((i) => i.courseName).filter((n) => !!n))].sort();
+    function bindSug(input, list, onPick) {
+      uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
+    }
+    let courseNotes = [];
+    let pickedCourse = (editing == null ? void 0 : editing.courseName) && editing.coursePath ? { name: editing.courseName, path: editing.coursePath } : null;
+    bindSug(scriptInput, () => knownScripts);
+    bindSug(courseInput, () => knownCourses, (val) => {
+      pickedCourse = courseNotes.find((n) => n.name === val) || null;
+    });
+    void MemoData.getCourseNotes().then((notes) => {
+      courseNotes = notes;
+      const extra = notes.map((n) => n.name);
+      knownCourses.push(...extra.filter((n) => !knownCourses.includes(n)));
+      if (courseBox.classList.contains("bz-memo-extra-on")) courseInput.dispatchEvent(new Event("focus"));
+    });
+    const dueField = document.createElement("div");
+    dueField.className = "bz-field";
+    const dueLabel = document.createElement("span");
+    dueLabel.className = "bz-field-label";
+    dueLabel.textContent = "截止时间（可选）";
+    const dueRow = document.createElement("div");
+    dueRow.className = "bz-memo-due-row";
+    const dueInput = document.createElement("input");
+    dueInput.type = "datetime-local";
+    dueInput.className = "bz-input";
+    if (editing == null ? void 0 : editing.due) dueInput.value = editing.due.replace(" ", "T");
+    const dueClear = uiIconBtnClear();
+    dueClear.style.display = (editing == null ? void 0 : editing.due) ? "inline-flex" : "none";
+    dueClear.addEventListener("click", () => {
+      dueInput.value = "";
+      dueClear.style.display = "none";
+    });
+    dueInput.addEventListener("input", () => {
+      dueClear.style.display = dueInput.value ? "inline-flex" : "none";
+    });
+    dueRow.append(dueInput, dueClear);
+    dueField.append(dueLabel, dueRow);
+    form.appendChild(dueField);
+    const posRow = document.createElement("div");
+    posRow.className = "bz-memo-pos-row";
+    const posState = {
+      notePath: (editing == null ? void 0 : editing.notePath) || ((_a2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _a2.path) || null,
+      notePosition: (editing == null ? void 0 : editing.notePosition) || ((_b2 = opts == null ? void 0 : opts.presetNote) == null ? void 0 : _b2.position) || null
+    };
+    const posBtn = uiBtn({ icon: "pin", label: "定位到笔记", chip: true });
+    const posLabel = posBtn.lastElementChild;
+    const setPosBtn = (name, active2) => {
+      posLabel.textContent = name;
+      posBtn.classList.toggle("is-on", active2);
+    };
+    posBtn.addEventListener("click", () => {
+      if (posState.notePath) {
+        posState.notePath = null;
+        posState.notePosition = null;
+        setPosBtn("定位到笔记", false);
+        return;
+      }
+      const info = getCurrentNoteInfo();
+      const pos = getCurrentCursorPosition();
+      if (info && pos) {
+        posState.notePath = info.path;
+        posState.notePosition = { line: pos.line, ch: pos.ch };
+        setPosBtn(info.name, true);
+      } else {
+        notice("无法获取当前位置");
+      }
+    });
+    if (posState.notePath) {
+      const name = stripMdExt(posState.notePath.split("/").pop() || "");
+      setPosBtn(name, true);
+    } else {
+      setPosBtn("定位到笔记", false);
+    }
+    const posHint = document.createElement("span");
+    posHint.className = "bz-memo-pos-hint";
+    posHint.textContent = "绑定当前打开的笔记位置";
+    posRow.append(posBtn, posHint);
+    form.appendChild(posRow);
+    let closeModal = () => {
+    };
+    const modalBox = document.createElement("div");
+    modalBox.className = "bz-memo-editor";
+    const cancelBtn = uiBtn({ label: "取消", onClick: () => closeModal() });
+    const saveBtn = uiBtn({ label: isEdit ? "保存" : "添加", tone: "primary" });
+    const actionsRow = document.createElement("div");
+    actionsRow.className = "bz-memo-form-actions";
+    actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
+    form.appendChild(actionsRow);
+    modalBox.appendChild(form);
+    saveBtn.addEventListener("click", () => {
+      let content = contentInput.value.trim();
+      if (!content) {
+        const ph = contentInput.placeholder;
+        if (ph && ph !== "输入备忘录内容...") content = ph;
+      }
+      if (!content) {
+        notice("请输入内容");
+        return;
+      }
+      let scene = defaultScene;
+      const sceneBtnOn = choice.el.querySelector(".is-on");
+      if (sceneBtnOn) scene = sceneBtnOn.dataset.value || scene;
+      const prioBtnOn = prioChoice.el.querySelector(".is-on");
+      const priority = prioBtnOn ? prioBtnOn.dataset.value || "minor" : "minor";
+      const dueVal = dueInput.value;
+      const due = dueVal ? dueVal.replace("T", " ") : null;
+      let titleVal = titleInput.value.trim();
+      if (!titleVal && scene === "剪藏") {
+        const ph = titleInput.placeholder;
+        if (ph && ph !== "标题（可选）") titleVal = ph;
+      }
+      const scriptName = scene === "代码" ? scriptInput.value.trim() || null : null;
+      let courseName = null;
+      let coursePath = null;
+      if (scene === "公开课") {
+        const cv = courseInput.value.trim();
+        if (cv) {
+          courseName = cv;
+          if (pickedCourse && pickedCourse.name === cv) coursePath = pickedCourse.path;
+          else {
+            const matched = courseNotes.find((n) => n.name.toLowerCase() === cv.toLowerCase());
+            if (matched) coursePath = matched.path;
+          }
+        }
+      }
+      const finalTitle = scene === "剪藏" && titleVal ? titleVal : content;
+      const { url } = extractUrlAndDisplay(content);
+      void (async () => {
+        var _a3;
+        try {
+          if (isEdit && editing) {
+            await MemoData.updateItem(editing.id, {
+              title: finalTitle,
+              scene,
+              priority,
+              due,
+              notePath: posState.notePath,
+              notePosition: posState.notePosition,
+              scriptName,
+              courseName,
+              coursePath,
+              url: url != null ? url : editing.url
+            });
+            emitDomainEvent("memo", { kind: "edited", old: { title: editing.title }, next: { title: finalTitle, scene, priority, due } });
+          } else {
+            const it = {
+              id: generateId(),
+              // T5：与旧 memo 同前缀 'item'（同源 memo.json）
+              title: finalTitle,
+              scene,
+              priority,
+              created: (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss"),
+              completed: null,
+              due,
+              notePath: posState.notePath,
+              notePosition: posState.notePosition,
+              scriptName,
+              courseName,
+              coursePath,
+              linkedNote: null,
+              url
+            };
+            await MemoData.addItem(it);
+            emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
+            M3.pinnedNewId = it.id;
+          }
+          closeModal();
+          (_a3 = opts == null ? void 0 : opts.onSaved) == null ? void 0 : _a3.call(opts);
+          await refresh();
+        } catch (e) {
+          notifySaveError(e, isEdit ? "保存备忘录" : "新建备忘录");
+          console.error(e);
+        }
+      })();
+    });
+    const { close } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass() });
+    closeModal = close;
+    contentInput.focus();
+    if (!isEdit && defaultScene === "剪藏") tryEditorClipPrefill();
+  }
+  function uiIconBtnClear() {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "bz-icon-btn bz-icon-btn--lg";
+    b.title = "清除截止时间";
+    b.appendChild(uiIcon("x"));
+    return b;
+  }
+  function buildSceneActions(scene) {
+    const actions = [
+      { icon: MEMO_ICONS.settings, label: "在设置中编辑", title: "打开设置面板编辑场景列表", onClick: () => openMemoInSettings() }
+    ];
+    if (DEFAULT_SCENARIOS.includes(scene)) return actions;
+    actions.push(
+      { icon: MEMO_ICONS.edit, label: "重命名", title: "重命名场景", onClick: () => openRenameSceneDialog(scene) },
+      { icon: MEMO_ICONS.del, label: "删除场景", title: "删除场景", kind: "danger", onClick: () => void deleteSceneConfirm(scene) }
+    );
+    return actions;
+  }
+  function openMemoInSettings() {
+    const app = M3.appRef;
+    closeMemoPanel();
+    if (!app) return;
+    void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
+  }
+  function commitScenarios(next, okMsg) {
+    getSettings().memoScenarios = next.join(",");
+    return saveSettings().then(async () => {
+      MemoData.init(getSettings());
+      notice(okMsg, "success");
+      await refresh();
+    });
+  }
+  function openRenameSceneDialog(scene) {
+    if (DEFAULT_SCENARIOS.includes(scene)) {
+      notice("默认场景不支持重命名");
+      return;
+    }
+    const wrap = document.createElement("div");
+    wrap.className = "bz-memo-addscene";
+    const title = document.createElement("div");
+    title.className = "bz-memo-form-title";
+    title.textContent = "重命名场景";
+    const input = document.createElement("input");
+    input.className = "bz-input";
+    input.value = scene;
+    const count = M3.items.filter((i) => i.scene === scene).length;
+    const hint = document.createElement("div");
+    hint.className = "bz-memo-addscene-hint";
+    hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与备忘录共用）";
+    const saveBtn = uiBtn({ label: "保存", tone: "primary" });
+    const cancelBtn = uiBtn({ label: "取消" });
+    const row = uiBtnRow([cancelBtn, saveBtn]);
+    wrap.append(title, input, hint, row);
+    const { close } = uiModal({ content: wrap, maxWidth: 340, className: skinClass() });
+    const doSave2 = () => {
+      const name = input.value.trim();
+      if (!name) {
+        notice("请输入场景名称");
+        return;
+      }
+      if (/[,，]/.test(name)) {
+        notice("场景名不能包含逗号");
+        return;
+      }
+      if (name === scene) {
+        close();
+        return;
+      }
+      const scenes = MemoData.getScenarios();
+      if (scenes.includes(name)) {
+        notice("场景已存在");
+        return;
+      }
+      void (async () => {
+        try {
+          const moved = await MemoData.updateSceneBulk(scene, name);
+          if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
+          await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
+          if (M3.activeScene === scene) M3.activeScene = name;
+          renderAll();
+          close();
+        } catch (e) {
+          notifySaveError(e, "重命名场景");
+          console.error(e);
+        }
+      })();
+    };
+    saveBtn.addEventListener("click", doSave2);
+    cancelBtn.addEventListener("click", () => close());
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") doSave2();
+      if (e.key === "Escape") close();
+    });
+    setTimeout(() => {
+      input.focus();
+      input.select();
+    }, 30);
+  }
+  async function deleteSceneConfirm(scene) {
+    if (DEFAULT_SCENARIOS.includes(scene)) {
+      notice("默认场景不支持删除");
+      return;
+    }
+    const scenes = MemoData.getScenarios();
+    const others = scenes.filter((s) => s !== scene);
+    const defSetting = tryGetSettings().memoDefaultScene;
+    const target = defSetting && others.includes(defSetting) ? defSetting : others[0];
+    if (!target) {
+      notice("至少保留一个场景");
+      return;
+    }
+    const count = M3.items.filter((i) => i.scene === scene).length;
+    const ok = await openFlowDialog({
+      title: "删除场景",
+      message: count > 0 ? `确定删除场景「${scene}」吗？
+其中 ${count} 条备忘录将迁入默认场景「${target}」。` : `确定删除场景「${scene}」吗？
+场景将从设置中移除。`,
+      className: skinClass(),
+      // 挂 body 的流程框须显式带皮肤类（issue 291）
+      actions: [
+        { label: "取消", value: "cancel" },
+        { label: "删除", value: "delete", danger: true, cta: true }
+      ]
+    });
+    if (ok !== "delete") return;
+    try {
+      if (count > 0) await MemoData.updateSceneBulk(scene, target);
+      await commitScenarios(others, `已删除场景「${scene}」`);
+      if (M3.activeScene === scene) M3.activeScene = "全部";
+      renderAll();
+    } catch (e) {
+      notifySaveError(e, "删除场景");
+      console.error(e);
+    }
+  }
+  var import_moment6, SEARCH_DEBOUNCE_MS, searchDebounced, clipTitleHint, panelResizeDetach, sortSelectDetach;
+  var init_ui6 = __esm({
+    "src/memo/ui.ts"() {
+      import_moment6 = __toESM(require_moment());
+      init_notice();
+      init_esc_manager();
+      init_dom();
+      init_mobile();
+      init_settings_provider();
+      init_ui();
+      init_flow_dialog();
+      init_domain_bus();
+      init_item_actions();
+      init_utils();
+      init_data6();
+      init_due();
+      init_render4();
+      init_state4();
+      SEARCH_DEBOUNCE_MS = 180;
+      searchDebounced = debounce((v) => {
+        M3.search = v;
+        renderAll();
+      }, SEARCH_DEBOUNCE_MS);
+      clipTitleHint = null;
+      panelResizeDetach = null;
+      sortSelectDetach = null;
+    }
+  });
+
+  // src/memo/settings.ts
+  var settings_exports3 = {};
+  __export(settings_exports3, {
+    memoSettingsSchema: () => memoSettingsSchema
+  });
+  function memoReloadScenes() {
+    MemoData.init(getSettings());
+  }
+  function memoSettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin 两肤；
+          // 布局维度待皮肤设计时接入）
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "memoLayout" }, options: [{ value: "default", label: "清单", prevClass: "bz-sp-prev-panel" }] },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "memoSkin" },
+              layoutKey: "memoLayout",
+              options: [
+                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" },
+                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" }
+              ],
+              onChange: (v) => applyMemoSkin(v)
+            }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "显示",
+          rows: [
+            {
+              type: "select",
+              name: "打开默认场景",
+              desc: "打开备忘录面板时默认选中的场景",
+              binding: { key: "memoOpenScene" },
+              options: [
+                { value: "@last", label: "上次停留" },
+                { value: "全部", label: "全部" },
+                { value: "今日", label: "今日" },
+                { value: "重要", label: "重要" },
+                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
+              ]
+            },
+            {
+              type: "select",
+              name: "默认排序方式",
+              desc: "面板条目按所选规则排序",
+              binding: { key: "memoSortMode" },
+              options: [
+                { value: "priority", label: "紧急优先" },
+                { value: "due", label: "仅按到期时间" },
+                { value: "created", label: "按创建时间" }
+              ]
+            },
+            {
+              type: "toggle",
+              name: "默认显示已完成",
+              desc: "打开面板时同时展开已完成折叠区",
+              binding: { key: "memoShowArchivedByDefault" }
+            },
+            {
+              type: "select",
+              name: "已完成显示范围",
+              desc: "展开已完成折叠区时列出最近多少天完成的条目",
+              binding: { key: "memoDoneWindow" },
+              options: [
+                { value: "7", label: "近 7 天" },
+                { value: "30", label: "近 30 天" },
+                { value: "90", label: "近 90 天" },
+                { value: "all", label: "全部" }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "pencil-line",
+          name: "新建",
+          rows: [
+            {
+              type: "select",
+              name: "新条目默认优先级",
+              desc: "新建备忘录时默认选中的优先级",
+              binding: { key: "memoDefaultPriority" },
+              options: [
+                { value: "minor", label: "次要" },
+                { value: "important", label: "重要" }
+              ]
+            },
+            {
+              type: "select",
+              name: "新条目默认场景",
+              desc: "新建备忘录时默认选用的场景",
+              binding: { key: "memoDefaultScene" },
+              options: [
+                { value: "", label: "第一个场景" },
+                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
+              ]
+            }
+          ]
+        },
+        {
+          icon: "tags",
+          name: "场景列表",
+          rows: [
+            {
+              type: "textarea",
+              name: "自定义场景列表",
+              desc: "场景名用逗号分隔，留空使用默认场景",
+              placeholder: "剪藏,工作,学习,生活,代码,公开课",
+              binding: { key: "memoScenarios" },
+              onCommit: memoReloadScenes
+            }
+          ]
+        },
+        {
+          icon: "bell",
+          name: "提醒",
+          rows: [
+            {
+              type: "toggle",
+              name: "启动时自动弹出",
+              desc: "启动时若有重要或到期未完成的备忘录，自动打开备忘录面板提醒",
+              binding: { key: "autoPopupOnStart" }
+            },
+            {
+              type: "toggle",
+              name: "打开笔记自动提醒",
+              desc: "打开笔记时若有重要或到期的备忘录，自动弹出面板并定位到它",
+              binding: {
+                get: () => getSettings().openNoteReminder !== false,
+                set: (v) => {
+                  getSettings().openNoteReminder = v;
+                },
+                save: () => saveSettings()
+              }
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings3 = __esm({
+    "src/memo/settings.ts"() {
+      init_settings_provider();
+      init_data6();
+      init_ui6();
+    }
+  });
+
+  // src/smartcat/belongings-source.ts
+  function belongingsEditChanges(snapshot2, next) {
+    var _a2, _b2, _c, _d;
+    const changes = [];
+    if (snapshot2.name !== next.name) changes.push("改了名称");
+    if (snapshot2.category !== next.category) changes.push("改了分类");
+    if (snapshot2.purchase_price !== next.purchase_price) changes.push("改了价格");
+    if (snapshot2.purchase_date !== next.purchase_date) changes.push("改了购买日期");
+    if (snapshot2.current_status !== next.current_status) changes.push("改了状态");
+    if (snapshot2.description !== next.description) changes.push("改了描述");
+    if (((_a2 = snapshot2.sold_price) != null ? _a2 : null) !== ((_b2 = next.sold_price) != null ? _b2 : null)) changes.push("改了售价");
+    if (((_c = snapshot2.exit_date) != null ? _c : null) !== ((_d = next.exit_date) != null ? _d : null)) changes.push("改了出离日期");
+    return changes;
+  }
+  var init_belongings_source = __esm({
+    "src/smartcat/belongings-source.ts"() {
+    }
+  });
+
+  // src/belongings/emoji-icon-map.ts
+  function splitEmojiCategory(cat) {
+    var _a2;
+    const s = String(cat || "");
+    const m = s.match(/^(\p{Extended_Pictographic})\uFE0F?/u);
+    if (!m) return { emoji: null, name: s, icon: null };
+    return { emoji: m[1], name: s.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, ""), icon: (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null };
+  }
+  var EMOJI_ICON;
+  var init_emoji_icon_map = __esm({
+    "src/belongings/emoji-icon-map.ts"() {
+      EMOJI_ICON = {
+        /* ---- 数码影音 ---- */
+        "📱": "smartphone",
+        "💻": "laptop",
+        "🖥": "monitor",
+        "⌚": "watch",
+        "🎧": "headphones",
+        "🔊": "speaker",
+        "🖨": "printer",
+        "📷": "camera",
+        "🔍": "aperture",
+        "📹": "video",
+        "🪞": "focus",
+        "📽": "projector",
+        "🎮": "gamepad-2",
+        "⌨": "keyboard",
+        "💾": "hard-drive",
+        "📀": "disc",
+        "🔌": "plug",
+        "🔋": "battery-charging",
+        "💡": "lightbulb",
+        "📺": "tv",
+        "📡": "router",
+        "📶": "signal",
+        "📞": "phone",
+        /* ---- 衣服饰品 ---- */
+        "👕": "shirt",
+        "👔": "shirt",
+        "🧥": "shirt",
+        "👖": "shirt",
+        "👗": "shirt",
+        "👘": "shirt",
+        "🩳": "shirt",
+        "🧦": "footprints",
+        "👙": "shirt",
+        "👠": "footprints",
+        "👞": "footprints",
+        "👟": "footprints",
+        "👜": "handbag",
+        "🎒": "backpack",
+        "🧣": "shirt",
+        "🧤": "hand",
+        "👒": "hard-hat",
+        "🕶": "glasses",
+        "👓": "glasses",
+        "💍": "gem",
+        "📿": "gem",
+        "💎": "gem",
+        "🧢": "hard-hat",
+        "🎩": "hard-hat",
+        "💄": "sparkles",
+        "💋": "heart",
+        "👁": "eye",
+        "📏": "ruler",
+        "👀": "eye",
+        "💅": "hand",
+        "🧴": "droplets",
+        "🧼": "droplets",
+        "💧": "glass-water",
+        "🛡": "shield",
+        "🎭": "smile",
+        "💆": "hand",
+        "✂": "scissors",
+        "🧽": "droplets",
+        "🪒": "zap",
+        "🚿": "shower-head",
+        "💇": "scissors",
+        /* ---- 家居 ---- */
+        "🛏": "bed",
+        "🛋": "sofa",
+        "🪑": "armchair",
+        "🗄": "archive",
+        "📚": "library",
+        "🪟": "align-justify",
+        "🧹": "brush-cleaning",
+        "🚽": "droplets",
+        "🪥": "sparkles",
+        "🧻": "scroll",
+        "🪣": "droplets",
+        "🗑": "trash-2",
+        "🔑": "key-round",
+        /* ---- 厨房餐茶 ---- */
+        "🍳": "cooking-pot",
+        "🔪": "slice",
+        "🍽": "utensils",
+        "☕": "coffee",
+        "🍶": "coffee",
+        "🍵": "coffee",
+        "🥄": "utensils",
+        "🍴": "utensils",
+        "🥢": "utensils",
+        "🧂": "soup",
+        "🍯": "droplets",
+        "🍚": "wheat",
+        "🧊": "refrigerator",
+        "🔥": "flame",
+        "🍞": "croissant",
+        "🥛": "milk",
+        "🍹": "cup-soda",
+        "❄": "snowflake",
+        "🥘": "cooking-pot",
+        "🛀": "bath",
+        "💨": "fan",
+        "🌫": "cloud-fog",
+        "📖": "book-open",
+        /* ---- 文具乐玩 ---- */
+        "✏": "pencil",
+        "🖊": "pen",
+        "📒": "notebook",
+        "🎨": "palette",
+        "🎸": "guitar",
+        "🎹": "piano",
+        "🥁": "drum",
+        "🎤": "mic",
+        "🧩": "puzzle",
+        "🎲": "dices",
+        /* ---- 运动户外 ---- */
+        "🏸": "volleyball",
+        "⚽": "volleyball",
+        "🏃": "footprints",
+        "🧘": "person-standing",
+        "🏊": "waves",
+        "🎣": "fish",
+        "🔧": "wrench",
+        "🔨": "hammer",
+        "🪛": "wrench",
+        "🔩": "cog",
+        "🛠": "hammer",
+        "🪚": "axe",
+        "🧰": "briefcase",
+        "🪓": "axe",
+        "⛏": "shovel",
+        "🖼": "image",
+        "🏺": "amphora",
+        "🧸": "baby",
+        "🔮": "sparkles",
+        "🎞": "film",
+        "🪙": "coins",
+        "🏆": "trophy",
+        "🎖": "medal",
+        "📜": "scroll",
+        "📸": "camera",
+        /* ---- 医药健康 ---- */
+        "💊": "pill",
+        "🌡": "thermometer",
+        "🩹": "bandage",
+        "🩺": "stethoscope",
+        "💉": "syringe",
+        "🦷": "sparkles",
+        "🩸": "droplet",
+        "⚖": "scale",
+        /* ---- 礼节节庆 ---- */
+        "🧳": "luggage",
+        "🎁": "gift",
+        "🕯": "flame",
+        "🧨": "bomb",
+        "🌂": "umbrella",
+        "☂": "umbrella",
+        "⛱": "umbrella",
+        "🧭": "compass",
+        "🔭": "telescope",
+        "💐": "flower",
+        "🌿": "leaf",
+        "🐠": "fish",
+        "🐶": "dog",
+        "🚗": "car",
+        "🚲": "bike",
+        "🛴": "bike",
+        "⛺": "tent",
+        "📦": "package",
+        /* ---- 办公纸媒 ---- */
+        "📎": "paperclip",
+        "📌": "pin",
+        "🖇": "paperclip",
+        "📋": "clipboard-list",
+        "📁": "folder",
+        "🗂": "folder",
+        "📊": "chart-bar",
+        "📐": "ruler",
+        "🧮": "calculator",
+        "📇": "contact",
+        "🖍": "highlighter",
+        "🖌": "paintbrush",
+        "📫": "mail",
+        "📮": "mail",
+        "✉": "mail",
+        "🏷": "tag",
+        "📑": "bookmark",
+        "🔖": "bookmark",
+        "📰": "newspaper",
+        "🗞": "newspaper",
+        "📓": "notebook",
+        "📔": "notebook-pen",
+        "📕": "book",
+        "📗": "book",
+        "📘": "book",
+        "📙": "book",
+        "🧷": "paperclip",
+        "🔒": "lock",
+        "💼": "briefcase",
+        "🗳": "vote",
+        "🖋": "pen-tool",
+        "✒": "pen-tool",
+        "📝": "pen-line",
+        "💵": "banknote",
+        "💳": "credit-card",
+        "🧾": "receipt",
+        "📄": "file-text",
+        "📃": "file-text",
+        "🗒": "notebook-pen",
+        "📅": "calendar",
+        "🕐": "alarm-clock",
+        "🗓": "calendar-days",
+        "📆": "calendar",
+        "📈": "trending-up",
+        "📉": "trending-down",
+        "🖱": "mouse",
+        "🗃": "archive",
+        "🔗": "link",
+        /* ---- 球类冰雪水上 ---- */
+        "🏀": "volleyball",
+        "🏈": "volleyball",
+        "⚾": "volleyball",
+        "🎾": "volleyball",
+        "🏐": "volleyball",
+        "🏉": "volleyball",
+        "🎱": "volleyball",
+        "🏓": "volleyball",
+        "🥅": "target",
+        "🏑": "volleyball",
+        "🏒": "volleyball",
+        "🥍": "volleyball",
+        "🏏": "volleyball",
+        "🎿": "snowflake",
+        "⛷": "snowflake",
+        "🏂": "snowflake",
+        "🪂": "umbrella",
+        "🏄": "waves",
+        "🛹": "bike",
+        "🛼": "footprints",
+        "🚴": "bike",
+        "🛶": "sailboat",
+        "🤿": "waves",
+        "⛸": "snowflake",
+        "🎯": "target",
+        "🪀": "circle-dot",
+        "🏹": "crosshair",
+        "🪁": "wind",
+        "🥊": "hand",
+        "🥋": "shirt",
+        "⚔": "swords",
+        "🤺": "swords",
+        "🥌": "circle-dot",
+        "🎳": "volleyball",
+        "🏌": "flag",
+        "⛳": "flag",
+        "🤸": "person-standing",
+        "🤽": "waves",
+        "🤾": "person-standing",
+        "🧗": "mountain",
+        "🏇": "paw-print",
+        "🤹": "orbit",
+        "🎪": "tent",
+        "🤼": "users",
+        "🥏": "disc",
+        /* ---- 奖章票庆 ---- */
+        "🥇": "medal",
+        "🥈": "medal",
+        "🥉": "medal",
+        "🏅": "medal",
+        "🎗": "ribbon",
+        "🏵": "flower",
+        "🤡": "smile",
+        "🎟": "ticket",
+        "🎫": "ticket",
+        "🎀": "ribbon",
+        "🎈": "party-popper",
+        "🎉": "party-popper",
+        "🎊": "sparkles",
+        "🎋": "sprout",
+        "🎍": "sprout",
+        "🎎": "baby",
+        "🎏": "flag",
+        "🎐": "bell",
+        "🎑": "moon",
+        "🧧": "wallet",
+        /* ---- 服饰鞋靴二批 ---- */
+        "🥽": "glasses",
+        "🥼": "shirt",
+        "🦺": "shield",
+        "🥾": "footprints",
+        "🥿": "footprints",
+        "🩰": "footprints",
+        "👢": "footprints",
+        "👡": "footprints",
+        "🩴": "footprints",
+        /* ---- 车船航空 ---- */
+        "🚙": "car",
+        "🚐": "bus",
+        "🚚": "truck",
+        "🚛": "truck",
+        "🚜": "tractor",
+        "🏎": "car",
+        "🚓": "car",
+        "🚑": "ambulance",
+        "🚒": "truck",
+        "🚨": "siren",
+        "🚔": "car",
+        "🚍": "bus",
+        "🚋": "tram-front",
+        "🚃": "train-front",
+        "🚝": "train-front",
+        "🚄": "train-front",
+        "🚅": "train-front",
+        "🚈": "tram-front",
+        "🚊": "tram-front",
+        "🚞": "train-front",
+        "🚟": "cable-car",
+        "🚠": "cable-car",
+        "🚡": "cable-car",
+        "🚢": "ship",
+        "🛳": "ship",
+        "⛴": "ship",
+        "🚤": "ship",
+        "🛥": "ship",
+        "⛵": "sailboat",
+        "🚣": "ship",
+        "🛷": "snowflake",
+        "🚁": "helicopter",
+        "✈": "plane",
+        "🛩": "plane",
+        "🛫": "plane-takeoff",
+        "🛬": "plane-landing",
+        "💺": "armchair",
+        "🚀": "rocket",
+        "🛸": "disc",
+        "🛰": "satellite",
+        "🚏": "bus",
+        "⛽": "fuel",
+        "🛞": "circle-dot",
+        "🛢": "database",
+        "🧪": "flask-conical",
+        "🧯": "flame",
+        "🔦": "flashlight",
+        "🎵": "music",
+        /* ---- 动物（lucide 无种别图的落 paw-print / 鸟禽落 bird / 海洋落 fish） ---- */
+        "🐱": "cat",
+        "🐭": "rat",
+        "🐹": "rat",
+        "🐰": "rabbit",
+        "🦊": "paw-print",
+        "🐻": "paw-print",
+        "🐼": "paw-print",
+        "🐨": "paw-print",
+        "🐯": "paw-print",
+        "🦁": "paw-print",
+        "🐮": "paw-print",
+        "🐷": "piggy-bank",
+        "🐸": "paw-print",
+        "🐙": "fish",
+        "🐵": "paw-print",
+        "🐔": "egg",
+        "🐧": "bird",
+        "🐦": "bird",
+        "🐤": "bird",
+        "🦆": "bird",
+        "🦅": "bird",
+        "🦉": "bird",
+        "🦇": "bird",
+        "🐺": "paw-print",
+        "🐗": "paw-print",
+        "🐴": "paw-print",
+        "🦄": "sparkles",
+        "🐝": "bug",
+        "🐛": "bug",
+        "🦋": "flower",
+        "🐌": "snail",
+        "🐞": "bug",
+        "🐜": "bug",
+        "🦗": "bug",
+        "🕷": "bug",
+        "🦂": "bug",
+        "🦀": "shell",
+        "🐟": "fish",
+        "🐡": "fish",
+        "🐬": "fish",
+        "🐳": "fish",
+        "🐋": "fish",
+        "🦈": "fish",
+        "🐊": "paw-print",
+        "🐅": "paw-print",
+        "🐆": "paw-print",
+        "🦓": "paw-print",
+        "🦍": "paw-print",
+        "🦧": "paw-print",
+        "🐘": "paw-print",
+        "🦛": "paw-print",
+        "🦏": "paw-print",
+        "🐫": "paw-print",
+        "🦒": "paw-print",
+        "🐃": "paw-print",
+        "🐂": "paw-print",
+        "🐄": "paw-print",
+        "🐪": "paw-print",
+        /* ---- 草木 ---- */
+        "🌱": "sprout",
+        "🌲": "tree-pine",
+        "🌳": "tree-deciduous",
+        "🌴": "tree-palm",
+        "🌵": "sprout",
+        "🌷": "flower",
+        "🌸": "flower",
+        "🌹": "flower",
+        "🌺": "flower-2",
+        "🌻": "flower-2",
+        "🌼": "flower",
+        "🌾": "wheat",
+        "🍀": "leaf",
+        "🍁": "leaf",
+        "🍂": "leaf",
+        "🍃": "leaf",
+        "🌰": "nut",
+        "🎄": "tree-pine",
+        /* ---- 虚构/宠物玩偶 ---- */
+        "🤖": "bot",
+        "👾": "ghost",
+        "🐲": "baby",
+        "🦖": "baby",
+        "🦕": "baby",
+        "🐉": "baby",
+        "🦐": "shrimp",
+        "🦞": "shrimp",
+        "🐢": "turtle",
+        "🐍": "worm",
+        "🦎": "paw-print",
+        "🐖": "piggy-bank",
+        "🐑": "paw-print",
+        "🐐": "paw-print",
+        "🐎": "paw-print",
+        /* ---- 乐器声响 ---- */
+        "🎺": "megaphone",
+        "🎷": "megaphone",
+        "🪕": "guitar",
+        "🎻": "guitar",
+        "🎼": "music",
+        "🎶": "music",
+        "📻": "radio",
+        "🎚": "audio-lines",
+        "🎛": "sliders-horizontal",
+        "📢": "megaphone",
+        "📯": "megaphone",
+        "🔔": "bell",
+        "🪗": "audio-lines",
+        "🪘": "drum",
+        "🪈": "wind",
+        "🎥": "film",
+        "💿": "disc",
+        "📼": "videotape",
+        "🗺": "map",
+        "🦟": "bug",
+        "🪢": "cable",
+        "🪜": "waves-ladder",
+        "👑": "crown"
+      };
+    }
+  });
+
+  // src/belongings/data.ts
+  function getDataFilePath() {
+    return storageFile("belongings.json");
+  }
+  function emptyDatabase() {
+    return {
+      version: "1.0",
+      last_updated: (/* @__PURE__ */ new Date()).toISOString(),
+      items: {},
+      categories: [],
+      categoryIcons: {}
+    };
+  }
+  async function loadDatabase() {
+    const filePath = getDataFilePath();
+    const raw = await jsonFileStore(filePath, {
+      defaultValue: () => emptyDatabase()
+    }).read();
+    let db;
+    try {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+        throw new Error("数据文件结构异常（非对象）");
+      }
+      db = raw;
+    } catch (error) {
+      notice("数据文件结构异常，已按空库继续，原文件未改动", "warning", 5e3);
+      console.error("数据文件结构异常:", error);
+      db = emptyDatabase();
+    }
+    if (!db.items || typeof db.items !== "object" || Array.isArray(db.items)) {
+      console.error("数据文件 items 字段结构异常:", db.items === null ? "null" : typeof db.items);
+      db.items = {};
+    }
+    for (const it of Object.values(db.items)) {
+      if (!it || typeof it !== "object") continue;
+      const split = splitEmojiCategory(it.category);
+      if (!split.emoji) continue;
+      it.category = split.name;
+      if (split.icon && (it.icon == null || it.icon === "")) it.icon = split.icon;
+    }
+    const freq = /* @__PURE__ */ new Map();
+    const icons = {};
+    for (const it of Object.values(db.items)) {
+      if (!it || typeof it !== "object") continue;
+      const cat = String(it.category || "").trim();
+      if (!cat) continue;
+      const cur = freq.get(cat) || { n: 0, last: "" };
+      cur.n += 1;
+      cur.last = String(it.last_updated || "");
+      freq.set(cat, cur);
+      if (it.icon && !icons[cat]) icons[cat] = it.icon;
+    }
+    db.categories = [...freq.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last.localeCompare(a[1].last)).map(([c]) => c);
+    db.categoryIcons = icons;
+    return db;
+  }
+  function belongingsSaveShape(database) {
+    return { version: database.version, last_updated: (/* @__PURE__ */ new Date()).toISOString(), items: database.items };
+  }
+  async function saveDatabase(database) {
+    const saveData = belongingsSaveShape(database);
+    await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
+  }
+  var init_data8 = __esm({
+    "src/belongings/data.ts"() {
+      init_notice();
+      init_storage();
+      init_emoji_icon_map();
+    }
+  });
+
+  // src/core/chart-palette.ts
+  var CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_INK, CHART_HIGHLIGHT;
+  var init_chart_palette = __esm({
+    "src/core/chart-palette.ts"() {
+      CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
+      CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
+      CHART_INK = "#3D4456";
+      CHART_HIGHLIGHT = "#FFE5CC";
+    }
+  });
+
+  // src/belongings/shared.ts
+  function moneyUnitLabel(unit = "cny") {
+    return unit === "yuan" ? "元" : unit === "usd" ? "$" : unit === "none" ? "" : "￥";
+  }
+  function moneyWith(mid, unit = "cny") {
+    if (unit === "yuan") return `${mid} 元`;
+    if (unit === "none") return mid;
+    return moneyUnitLabel(unit) + mid;
+  }
+  function money(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), unit);
+  }
+  function moneyShort(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
+  }
+  function todayStr() {
+    return localDayKey();
+  }
+  function catEmoji(cat) {
+    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
+    return m ? m[1] : String(cat || "")[0] || "📦";
+  }
+  function catNameOf(cat) {
+    return String(cat || "").replace(/^\p{Extended_Pictographic}\s*/u, "");
+  }
+  function catIconOf(cat) {
+    var _a2;
+    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
+    return m ? (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null : null;
+  }
+  function catEmHtml(cat) {
+    var _a2;
+    const em = catEmoji(cat);
+    const name = catIconOf(cat) || ((_a2 = EMOJI_ICON[em]) != null ? _a2 : null);
+    return name ? iconSpan(name) : esc(em);
+  }
+  function itemIconOf(it) {
+    var _a2;
+    const raw = String(it.icon || "").trim();
+    if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
+    return catIconOf(it.category) || ((_a2 = EMOJI_ICON[catEmoji(it.category)]) != null ? _a2 : null);
+  }
+  function itemEmHtml(it) {
+    const name = itemIconOf(it);
+    return name ? iconSpan(name) : catEmHtml(it.category);
+  }
+  function statusKeyOf(label) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = STATUS_ORDER.find((s) => s.label === label)) == null ? void 0 : _a2.key) != null ? _b2 : label;
+  }
+  function statusOf(keyOrLabel) {
+    const byKey = STATUS_ORDER.find((s) => s.key === keyOrLabel);
+    if (byKey) return byKey;
+    const byLabel = STATUS_ORDER.find((s) => s.label === keyOrLabel);
+    return byLabel || { key: "using", label: "使用中" };
+  }
+  function exitedStatus(st) {
+    return st === "已转卖" || st === "已丢弃";
+  }
+  function isExited(it) {
+    return exitedStatus(it.current_status);
+  }
+  function exitDayTsOf(it) {
+    var _a2, _b2;
+    return isExited(it) ? (_b2 = (_a2 = parseLocalDay(it.exit_date)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null : null;
+  }
+  function recoveredOf(it) {
+    return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
+  }
+  function trimDailyNum(n) {
+    const v = Number(n) || 0;
+    return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+  }
+  function parseLocalDay(raw) {
+    const parts = String(raw || "").slice(0, 10).split("-").map(Number);
+    const [y, m, d] = parts;
+    if (!y || !m || !d) return null;
+    if (m < 1 || m > 12) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return dt;
+  }
+  function daysUsed(it) {
+    const start = parseLocalDay(it.purchase_date);
+    if (!start) return 0;
+    const ex = exitDayTsOf(it);
+    const end = ex != null ? ex : Date.now();
+    return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
+  }
+  function dailyCostOf(it) {
+    const days = daysUsed(it);
+    const price = Number(it.purchase_price) || 0;
+    return days > 0 ? price / days : price;
+  }
+  function inStock(it) {
+    return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
+  }
+  function stockCount(items) {
+    return items.filter(inStock).length;
+  }
+  function totalAssets(items) {
+    return items.filter(inStock).reduce((s, i) => s + (Number(i.purchase_price) || 0), 0);
+  }
+  function avgDailyCost(items) {
+    let cost = 0;
+    let days = 0;
+    for (const it of items) {
+      cost += Number(it.purchase_price) || 0;
+      cost -= recoveredOf(it);
+      days += daysUsed(it);
+    }
+    return days ? cost / days : 0;
+  }
+  function statusCount(items, label) {
+    return items.filter((i) => i.current_status === label).length;
+  }
+  function filtered(items, view) {
+    return items.filter((i) => {
+      if (!view.status) return true;
+      if (view.status === "asset") return inStock(i);
+      return i.current_status === statusOf(view.status).label;
+    }).filter((i) => view.year ? String(i.purchase_date || "").startsWith(view.year) : true).filter((i) => {
+      if (!view.q) return true;
+      const q2 = view.q.toLowerCase();
+      return [i.name, i.category, i.description].join(" ").toLowerCase().includes(q2);
+    }).sort((a, b) => {
+      if (view.sort === "price") return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
+      if (view.sort === "daily") return dailyCostOf(b) - dailyCostOf(a);
+      return String(b.purchase_date || "").localeCompare(String(a.purchase_date || "")) || String(a.name || "").localeCompare(String(b.name || ""), "zh");
+    });
+  }
+  function yearsAvailable(items) {
+    const set = /* @__PURE__ */ new Set();
+    items.forEach((i) => {
+      const y = String(i.purchase_date || "").slice(0, 4);
+      if (y) set.add(y);
+    });
+    return [...set].sort().reverse();
+  }
+  function resolveYear(items, year) {
+    return year && yearsAvailable(items).includes(year) ? year : "";
+  }
+  function heroTitleText(view) {
+    if (!view.status) return "全部";
+    if (view.status === "asset") return "资产";
+    return statusOf(view.status).label;
+  }
+  function heroSubText(items, view) {
+    return view.status ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
+  }
+  function belDetailHtml(it, unit = "cny") {
+    var _a2;
+    const gone = isExited(it);
+    const key = statusKeyOf(it.current_status);
+    return `<div class="bz-bel-detail">
+    <div class="bz-bel-detail-head">
+      <div class="bz-bel-detail-title">${esc(it.name)}</div>
+    </div>
+    <div class="bz-bel-detail-idrow">
+      <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
+      <div class="bz-bel-detail-idinfo">
+        <div class="bz-bel-detail-cat">${esc(catNameOf(it.category) || "未分类")}</div>
+        <div class="bz-bel-detail-desc">${esc(it.description || "无备注")}</div>
+      </div>
+      <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
+    </div>
+    <div class="bz-bel-detail-fields">
+      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0, unit)}</b></div>
+      <div class="bz-bel-dfield"><span>购买日期</span><b>${esc(String(it.purchase_date || "").slice(0, 10) || "—")} · ${daysUsed(it)} 天</b></div>
+      <div class="bz-bel-dfield"><span>日均成本</span><b>${moneyWith(dailyCostOf(it).toFixed(2), unit)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
+      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price), unit) : ""}</b></div>` : ""}
+      <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc(String(it.created_date || "").slice(0, 10))} / ${esc(String(it.last_updated || "").slice(0, 10))}</b></div>
+    </div>
+    <div class="bz-bel-detail-acts" data-bd-acts></div>
+    <div class="bz-btn-row bz-bel-detail-btns">
+      <div class="bz-bel-form-spacer"></div>
+      <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
+      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON.del, "bz-ic--sm")} 删除</button>
+    </div>
+  </div>`;
+  }
+  function flowBtnsHtml(curStatus) {
+    return STATUS_LABELS.map(
+      (s) => `<button type="button" class="bz-bel-flowbtn${s === curStatus ? " is-cur" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-bd-flow="${esc(s)}">${esc(s)}</button>`
+    ).join("");
+  }
+  function belFormInit(it) {
+    var _a2, _b2, _c;
+    return {
+      priceVal: it ? String((_a2 = it.purchase_price) != null ? _a2 : "") : "",
+      dateVal: it ? String(it.purchase_date || "").slice(0, 10) : todayStr(),
+      catVal: (_b2 = it == null ? void 0 : it.category) != null ? _b2 : "",
+      // 新记不回填默认分类（issue 202），留空待选
+      descVal: (_c = it == null ? void 0 : it.description) != null ? _c : "",
+      // 出离字段初值（ADR-0089）：编辑回填 exit_date；新记 = 今天
+      exitDateVal: (it == null ? void 0 : it.exit_date) ? String(it.exit_date).slice(0, 10) : todayStr(),
+      soldPriceVal: (it == null ? void 0 : it.sold_price) != null && Number.isFinite(Number(it.sold_price)) ? String(it.sold_price) : "",
+      exitedInit: !!it && isExited(it)
+    };
+  }
+  function belFormHtml(it, unit = "cny") {
+    var _a2;
+    const editing = !!it;
+    const unitLabel = moneyUnitLabel(unit);
+    const { priceVal, dateVal, catVal, descVal, exitDateVal, soldPriceVal, exitedInit } = belFormInit(it);
+    return `
+  <div class="bz-bel-form">
+    <div class="bz-bel-form-title">${editing ? "编辑物品" : "记一笔"}</div>
+    <div class="bz-bel-form-body">
+      <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc((_a2 = it == null ? void 0 : it.name) != null ? _a2 : "")}" placeholder="如：iPhone 15 Pro"></div>
+      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
+      <div class="bz-bel-form-row">
+        <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ""}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
+        <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
+      </div>
+      <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
+      <div class="bz-bel-form-row" id="bm-exit"${exitedInit ? "" : " hidden"}>
+        <div class="bz-field"><span class="bz-field-label">出离日期</span><input class="bz-input" id="bm-exitdate" type="date" value="${esc(exitDateVal)}"></div>
+        <div class="bz-field" id="bm-soldfield"${(it == null ? void 0 : it.current_status) === "已转卖" ? "" : " hidden"}><span class="bz-field-label">转卖售价（可选）</span><input class="bz-input" id="bm-soldprice" type="number" min="0" step="0.01" value="${esc(soldPriceVal)}" placeholder="留空不记售价"></div>
+      </div>
+      <div class="bz-field"><span class="bz-field-label">描述（可选）</span><textarea class="bz-input" id="bm-desc" placeholder="规格、颜色、购买原因等…">${esc(descVal)}</textarea></div>
+      <div class="bz-bel-form-err" id="bm-err"></div>
+      <div class="bz-btn-row bz-bel-form-actions">
+        <div class="bz-bel-form-spacer"></div>
+        <button type="button" class="bz-btn bz-btn--ghost" data-bm-cancel>取消</button>
+        <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（favorites 同款收敛） -->
+        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? "保存" : "添加"}</button>
+      </div>
+    </div>
+  </div>`;
+  }
+  function statusPickHtml(curStatus) {
+    return STATUS_LABELS.map(
+      (s) => {
+        var _a2;
+        return `<button type="button" class="bz-choice-btn${s === curStatus ? " is-on" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-status="${esc(s)}">${iconSpan(((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(s)}</button>`;
+      }
+    ).join("");
+  }
+  function sheetHeadHtml(it, unit = "cny") {
+    const catName = catNameOf(it.category);
+    const days = daysUsed(it);
+    return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
+      <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
+      <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc(it.name)}</div>
+      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0, unit)} · 已用 ${days} 天</div></div></div></div>`;
+  }
+  function actionSpecs(it) {
+    const specs = [];
+    STATUS_LABELS.forEach((s) => {
+      var _a2;
+      if (s === it.current_status) return;
+      specs.push({ icon: ((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", label: `标记为${s}`, act: "flow", status: s, keepOpen: true });
+    });
+    specs.push({ icon: "pencil", label: "编辑", act: "edit", keepOpen: true });
+    specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
+    return specs;
+  }
+  var ICON, MAX_PRICE, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
+  var init_shared3 = __esm({
+    "src/belongings/shared.ts"() {
+      init_str();
+      init_emoji_icon_map();
+      init_emoji_icon_map();
+      init_str();
+      ICON = {
+        add: "plus",
+        search: "search",
+        close: "x",
+        del: "trash-2",
+        empty: "package",
+        chevD: "chevron-down",
+        report: "bar-chart-3"
+        // 年度资产报告工具行入口（issue 356）
+      };
+      MAX_PRICE = 1e12;
+      STATUS = {
+        using: { label: "使用中", key: "using", ic: "check-circle" },
+        idle: { label: "闲置", key: "idle", ic: "package" },
+        sold: { label: "已转卖", key: "sold", ic: "banknote" },
+        discard: { label: "已丢弃", key: "discard", ic: "archive" }
+      };
+      STATUS_ORDER = [
+        { key: "using", label: "使用中" },
+        { key: "idle", label: "闲置" },
+        { key: "sold", label: "已转卖" },
+        { key: "discard", label: "已丢弃" }
+      ];
+      STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
+      SORT_OPTS = [
+        { v: "recent", label: "最近购入" },
+        { v: "price", label: "投入最高" },
+        { v: "daily", label: "日均最高" }
+      ];
+    }
+  });
+
+  // src/belongings/report-stats.ts
+  function monthLabel(m) {
+    return `${m}月`;
+  }
+  function parseDayTs(raw) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = parseLocalDay(raw)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null;
+  }
+  function yearOf(raw) {
+    const s = String(raw || "").slice(0, 4);
+    return /^\d{4}$/.test(s) ? s : "";
+  }
+  function priceOf(it) {
+    return Number(it.purchase_price) || 0;
+  }
+  function reportYears(items) {
+    const set = /* @__PURE__ */ new Set();
+    for (const it of items) {
+      const py = yearOf(it.purchase_date);
+      if (py) set.add(py);
+      const ey = yearOf(it.exit_date);
+      if (ey && exitedStatus(it.current_status)) set.add(ey);
+    }
+    return [...set].sort().reverse();
+  }
+  function resolveReportYear(items, year) {
+    const years = reportYears(items);
+    return years.includes(year) ? year : years[0] || "";
+  }
+  function avgDailyCostAsOf(items, cutoffTs) {
+    let cost = 0;
+    let days = 0;
+    for (const it of items) {
+      const p = parseDayTs(it.purchase_date);
+      if (p == null || p >= cutoffTs) continue;
+      cost += priceOf(it);
+      const ex = exitDayTsOf(it);
+      const capped = ex != null && ex < cutoffTs;
+      if (capped) cost -= recoveredOf(it);
+      days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
+    }
+    return days ? cost / days : 0;
+  }
+  function computeYearReport(items, year, now = /* @__PURE__ */ new Date()) {
+    const y = Number(year);
+    const yearStart = new Date(y, 0, 1).getTime();
+    const yearEnd = new Date(y + 1, 0, 1).getTime();
+    const nowTs2 = now.getTime();
+    const purchased = items.filter((it) => {
+      const p = parseDayTs(it.purchase_date);
+      return p != null && p >= yearStart && p < yearEnd;
+    });
+    const exitedInYear = items.filter((it) => {
+      const ex = parseDayTs(it.exit_date);
+      return ex != null && ex >= yearStart && ex < yearEnd && exitedStatus(it.current_status);
+    });
+    const monthlySpend = Array.from({ length: 12 }, (_, i) => ({
+      label: monthLabel(i + 1),
+      amount: 0,
+      count: 0
+    }));
+    for (const it of purchased) {
+      const p = parseDayTs(it.purchase_date);
+      const m = new Date(p).getMonth();
+      monthlySpend[m].amount += priceOf(it);
+      monthlySpend[m].count += 1;
+    }
+    const catMap = /* @__PURE__ */ new Map();
+    for (const it of purchased) {
+      const name = catNameOf(it.category).trim() || "未分类";
+      const cur = catMap.get(name) || { count: 0, amount: 0 };
+      cur.count += 1;
+      cur.amount += priceOf(it);
+      catMap.set(name, cur);
+    }
+    const purchasedAmount = purchased.reduce((s, i) => s + priceOf(i), 0);
+    const categoryShare = [...catMap.entries()].map(([name, v]) => ({
+      name,
+      count: v.count,
+      amount: v.amount,
+      pct: purchasedAmount > 0 ? Math.round(v.amount / purchasedAmount * 1e3) / 10 : 0
+    })).sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, "zh"));
+    const dailyCostTrend = Array.from({ length: 12 }, (_, i) => {
+      const monthStart = new Date(y, i, 1).getTime();
+      const monthEnd = new Date(y, i + 1, 1).getTime();
+      const future = monthStart > nowTs2;
+      const capped = !future && monthEnd > nowTs2;
+      const cutoff = capped ? nowTs2 : monthEnd;
+      return {
+        label: monthLabel(i + 1),
+        value: future ? 0 : avgDailyCostAsOf(items, cutoff),
+        future,
+        ...capped ? { capped } : {}
+      };
+    });
+    const companionCutoff = Math.min(yearEnd, nowTs2);
+    const companions = items.map((it) => {
+      const p = parseDayTs(it.purchase_date);
+      if (p == null || p >= companionCutoff) return null;
+      const ex = exitDayTsOf(it);
+      const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
+      return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
+    }).filter((r) => r != null).sort(
+      (a, b) => b.days - a.days || String(a.item.purchase_date || "").localeCompare(String(b.item.purchase_date || "")) || String(a.item.name || "").localeCompare(String(b.item.name || ""), "zh")
+    ).slice(0, COMPANION_TOP_N);
+    return {
+      year,
+      purchasedCount: purchased.length,
+      purchasedAmount,
+      exitedCount: exitedInYear.length,
+      recoveredAmount: exitedInYear.reduce((s, i) => s + recoveredOf(i), 0),
+      monthlySpend,
+      categoryShare,
+      dailyCostTrend,
+      companions,
+      // 审查修复批（issue 356）：段注口径随真实截止点走——当年（now 未到年末）陪伴榜实际截至今日，
+      // 旧文案写死「截至年末」与数据不符；往年 cutoff = yearEnd 才是「年末」
+      companionAsOf: companionCutoff < yearEnd ? "today" : "yearEnd",
+      hasYearData: purchased.length > 0 || exitedInYear.length > 0
+    };
+  }
+  var COMPANION_TOP_N, DAY_MS;
+  var init_report_stats = __esm({
+    "src/belongings/report-stats.ts"() {
+      init_shared3();
+      COMPANION_TOP_N = 5;
+      DAY_MS = 864e5;
+    }
+  });
+
+  // src/belongings/report.ts
+  function yieldToMainThread2() {
+    return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
+  }
+  function isBelReportOpen() {
+    return !!maskEl2;
+  }
+  function openBelReport(items, unit, opts = {}) {
+    var _a2;
+    ctxItems = items;
+    ctxUnit = unit;
+    ctxOnAdd = (_a2 = opts.onAdd) != null ? _a2 : null;
+    ctxYears = [];
+    if (!maskEl2) ctxYear = "";
+    if (maskEl2) {
+      startReport();
+      return;
+    }
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask bz-bel-report-mask";
+    mask.innerHTML = `
+  <div class="bz-bel-report bz-panel-mtop" role="dialog" aria-label="归物本年度资产报告">
+    <div class="bz-bel-report-head">
+      <div class="bz-bel-report-title">年度资产报告</div>
+      <div class="bz-bel-report-nav">
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-prev title="上一年" aria-label="上一年">${iconSpan("chevron-left")}</button>
+        <span class="bz-bel-report-year" data-belr-year>—</span>
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-next title="下一年" aria-label="下一年">${iconSpan("chevron-right")}</button>
+      </div>
+      <button type="button" class="bz-icon-btn bz-touch-target bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan("x")}</button>
+    </div>
+    <div class="bz-bel-report-body" data-belr-body></div>
+  </div>`;
+    document.body.appendChild(mask);
+    topifyZ(mask);
+    mountIcons(mask);
+    maskEl2 = mask;
+    mask.addEventListener("click", (e) => {
+      const t = e.target;
+      if (e.target === mask) {
+        closeBelReport();
+        return;
+      }
+      if (t.closest("[data-belr-close]")) {
+        closeBelReport();
+        return;
+      }
+      if (t.closest("[data-belr-prev]")) {
+        stepYear(-1);
+        return;
+      }
+      if (t.closest("[data-belr-next]")) {
+        stepYear(1);
+        return;
+      }
+    });
+    startReport();
+  }
+  function closeBelReport() {
+    cancelBelReport();
+    if (maskEl2) {
+      maskEl2.remove();
+      maskEl2 = null;
+    }
+    ctxItems = [];
+    ctxYears = [];
+    ctxYear = "";
+    ctxOnAdd = null;
+  }
+  function cancelBelReport() {
+    renderSeq++;
+    if (activeProgress) {
+      activeProgress.hide();
+      activeProgress = null;
+    }
+  }
+  function unloadBelReport() {
+    cancelBelReport();
+    if (maskEl2) {
+      maskEl2.remove();
+      maskEl2 = null;
+    }
+    ctxItems = [];
+    ctxYears = [];
+    ctxYear = "";
+    ctxOnAdd = null;
+  }
+  function stepYear(dir) {
+    const idx = ctxYears.indexOf(ctxYear);
+    if (idx < 0) return;
+    const next = idx - dir;
+    if (next < 0 || next >= ctxYears.length) return;
+    ctxYear = ctxYears[next];
+    paintYearNav();
+    startReport(true);
+  }
+  function paintYearNav() {
+    if (!maskEl2) return;
+    const label = maskEl2.querySelector("[data-belr-year]");
+    if (label) label.textContent = ctxYear || "—";
+    const idx = ctxYears.indexOf(ctxYear);
+    const prev = maskEl2.querySelector("[data-belr-prev]");
+    const next = maskEl2.querySelector("[data-belr-next]");
+    if (prev) prev.disabled = idx < 0 || idx >= ctxYears.length - 1;
+    if (next) next.disabled = idx < 0 || idx <= 0;
+  }
+  function startReport(quiet = false) {
+    const body = maskEl2 == null ? void 0 : maskEl2.querySelector("[data-belr-body]");
+    if (!body) return;
+    cancelBelReport();
+    const seq = renderSeq;
+    const alive = () => seq === renderSeq && !!(maskEl2 == null ? void 0 : maskEl2.isConnected) && body.isConnected;
+    body.innerHTML = SKELETON_HTML;
+    ctxYears = reportYears(ctxItems);
+    ctxYear = resolveReportYear(ctxItems, ctxYear);
+    paintYearNav();
+    const progress = notify("正在统计年度数据…", {
+      type: "progress",
+      duration: 0,
+      dedupeKey: `bz-belongings-report-progress-${++progressToastSeq}`
+    });
+    activeProgress = progress;
+    const finishAbort = () => {
+      progress.hide();
+      if (activeProgress === progress) activeProgress = null;
+    };
+    const finishDone = (quiet2) => {
+      if (activeProgress === progress) activeProgress = null;
+      if (quiet2) progress.hide();
+      else {
+        progress.setType("success");
+        progress.setMessage("年度报告完成");
+      }
+    };
+    const step = async () => {
+      progress.setMessage("正在读取归物本…");
+      await yieldToMainThread2();
+      if (!alive()) return finishAbort();
+      if (ctxItems.length === 0) {
+        body.innerHTML = "";
+        body.appendChild(buildLibraryEmpty());
+        mountIcons(body);
+        return finishDone(true);
+      }
+      progress.setMessage("正在汇总购入与离场…");
+      await yieldToMainThread2();
+      if (!alive()) return finishAbort();
+      const year = ctxYear;
+      const stats = computeYearReport(ctxItems, year);
+      if (!alive()) return finishAbort();
+      if (!stats.hasYearData) {
+        body.innerHTML = emptyYearHtml(year);
+        mountIcons(body);
+        return finishDone(true);
+      }
+      const sections = buildReportSections(stats);
+      body.innerHTML = "";
+      for (const section of sections) {
+        if (!alive()) return finishAbort();
+        await yieldToMainThread2();
+        if (!alive()) return finishAbort();
+        body.insertAdjacentHTML("beforeend", section.generate());
+        progress.setMessage(`正在生成${section.label}…`);
+      }
+      if (alive()) {
+        mountIcons(body);
+        finishDone(quiet);
+      } else {
+        finishAbort();
+      }
+    };
+    void step().catch((error) => {
+      console.error("生成归物本年度报告失败:", error);
+      if (activeProgress === progress) activeProgress = null;
+      if (alive()) {
+        progress.setType("error");
+        progress.setMessage("统计失败：读取归物本数据时出错，请重试");
+        body.innerHTML = ERROR_HTML;
+      } else {
+        progress.hide();
+      }
+    });
+  }
+  function buildLibraryEmpty() {
+    const actions = uiBtnRow(
+      [
+        uiBtn({
+          label: "记一笔",
+          icon: "plus",
+          tone: "primary",
+          onClick: () => ctxOnAdd == null ? void 0 : ctxOnAdd()
+        })
+      ],
+      { center: true }
+    );
+    return uiEmpty({
+      icon: "package",
+      title: "归物本还没有物品",
+      desc: "登记物品后，这里会按年生成资产报告：购入与离场、月度花销、分类占比和陪伴最久的物件",
+      actions
+    });
+  }
+  function emptyYearHtml(year) {
+    return `<div class="bz-belr-emptyyear">
+    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
+    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"}</div>
+  </div>`;
+  }
+  function buildReportSections(stats) {
+    return [
+      { key: "summary", label: "购入与离场概览", generate: () => summaryHtml(stats) },
+      { key: "monthly", label: "月度花销走势", generate: () => monthlyHtml(stats) },
+      { key: "categories", label: "分类占比", generate: () => categoriesHtml(stats) },
+      { key: "daily", label: "日均成本走势", generate: () => dailyHtml(stats) },
+      { key: "companions", label: "陪伴最久榜", generate: () => companionsHtml(stats) }
+    ];
+  }
+  function secHead(title, note = "") {
+    return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ""}</div>`;
+  }
+  function summaryHtml(stats) {
+    const card = (num2, label, color) => `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
+      <b>${esc(num2)}</b><span>${esc(label)}</span>
+    </div>`;
+    return `<div class="bz-belr-sec">
+  ${secHead(`${stats.year} 年购入与离场`)}
+  <div class="bz-belr-grid">
+  ${card(String(stats.purchasedCount), "购入件数", CHART_PASTEL_SERIES[0])}
+  ${card(moneyShort(stats.purchasedAmount, ctxUnit), "购入金额", CHART_PASTEL_SERIES[1])}
+  ${card(String(stats.exitedCount), "离场件数", CHART_PASTEL_SERIES[2])}
+  ${card(moneyShort(stats.recoveredAmount, ctxUnit), "转卖回血", CHART_PASTEL_SERIES[4])}
+  </div>
+  </div>`;
+  }
+  function columnsHtml(cols) {
+    const max = Math.max(0, ...cols.filter((c) => !c.future).map((c) => c.value));
+    return `<div class="bz-belr-cols">
+  ${cols.map((c) => {
+      const height = !c.future && c.value > 0 && max > 0 ? 12 + Math.round(c.value / max * 48) : 3;
+      const bg = c.future ? "transparent" : c.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+      const num2 = !c.future && c.value > 0 ? `<span class="bz-belr-col-num">${esc(c.display)}</span>` : "";
+      const cls = ["bz-belr-col", c.future ? "bz-belr-col--future" : "", c.accent ? "bz-belr-col--accent" : ""].filter(Boolean).join(" ");
+      return `<div class="${cls}"${c.title ? ` title="${esc(c.title)}"` : ""}>
+        ${num2}
+        <div class="bz-belr-col-bar" style="height:${height}px;${c.future ? "" : `background:${bg}`}"></div>
+        <div class="bz-belr-col-label">${esc(c.label)}</div>
+      </div>`;
+    }).join("")}
+  </div>`;
+  }
+  function monthlyHtml(stats) {
+    if (stats.purchasedAmount === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("月度花销走势", "当年无购入")}
+    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
+    </div>`;
+    }
+    const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
+    const cols = stats.monthlySpend.map((m) => ({
+      label: m.label,
+      value: m.amount,
+      display: moneyShort(m.amount, ctxUnit),
+      accent: m.amount > 0 && m.amount === maxAmount,
+      title: m.count > 0 ? `${m.label}购入 ${m.count} 件 · ${moneyShort(m.amount, ctxUnit)}` : `${m.label}无购入`
+    }));
+    return `<div class="bz-belr-sec">
+  ${secHead("月度花销走势", `全年购入 ${moneyShort(stats.purchasedAmount, ctxUnit)}`)}
+  ${columnsHtml(cols)}
+  </div>`;
+  }
+  function categoriesHtml(stats) {
+    if (stats.purchasedAmount === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("分类占比", "当年无购入")}
+    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
+    </div>`;
+    }
+    const MAX_ROWS = 8;
+    const rows = stats.categoryShare.slice(0, MAX_ROWS);
+    const rest = stats.categoryShare.slice(MAX_ROWS);
+    if (rest.length > 0) {
+      rows.push({
+        name: `其他（${rest.length} 类）`,
+        count: rest.reduce((s, r) => s + r.count, 0),
+        amount: rest.reduce((s, r) => s + r.amount, 0),
+        pct: Math.round(rest.reduce((s, r) => s + r.pct, 0) * 10) / 10
+      });
+    }
+    const line = (row, i) => {
+      const color = CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
+      const width = Math.max(0, Math.min(100, row.pct));
+      return `<div class="bz-belr-row">
+      <span class="bz-belr-row-label" title="${esc(row.name)}">${esc(row.name)}</span>
+      <div class="bz-progress bz-progress--lg bz-belr-row-track"><i style="width:${width}%;background:${color}"></i></div>
+      <span class="bz-belr-row-val">${row.count} 件 · ${esc(moneyShort(row.amount, ctxUnit))} · ${row.pct}%</span>
+    </div>`;
+    };
+    return `<div class="bz-belr-sec">
+  ${secHead("分类占比", `共 ${stats.categoryShare.length} 类 · 按购入金额`)}
+  <div class="bz-belr-rows">${rows.map(line).join("")}</div>
+  </div>`;
+  }
+  function dailyHtml(stats) {
+    const hasCapped = stats.dailyCostTrend.some((c) => c.capped);
+    const cols = stats.dailyCostTrend.map((c) => ({
+      label: c.label,
+      value: c.future ? 0 : c.value,
+      display: c.value > 0 ? trimDailyNum(c.value) : "0",
+      future: c.future,
+      title: c.future ? `${c.label}末尚未到来` : c.capped ? `${c.label}截至今日日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}` : `${c.label}末日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}`
+    }));
+    return `<div class="bz-belr-sec">
+  ${secHead("日均成本走势", `口径：各月末时点${hasCapped ? "（当月截至今日）" : ""} ·（总购入 − 转卖回本）/ 累计持有天数`)}
+  ${columnsHtml(cols)}
+  </div>`;
+  }
+  function trimNumThousands(n) {
+    return (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+  }
+  function companionsHtml(stats) {
+    if (stats.companions.length === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("陪伴最久榜")}
+    <p class="bz-belr-none">暂无可统计的物品</p>
+    </div>`;
+    }
+    const asOf = stats.companionAsOf === "today" ? "截至今日" : `截至 ${stats.year} 年末`;
+    const line = (row, i) => {
+      const it = row.item;
+      const price = Number(it.purchase_price) || 0;
+      const daily = row.days > 0 ? moneyWith(trimNumThousands(price / row.days), ctxUnit) : "—";
+      const badge = i < CHART_RANK_BADGES.length ? ` style="background:${CHART_RANK_BADGES[i]};color:${CHART_INK}"` : "";
+      const goneYear = it.exit_date ? String(it.exit_date).slice(0, 4) : "";
+      return `<div class="bz-belr-comp">
+      <span class="bz-belr-comp-rank"${badge}>${i + 1}</span>
+      <span class="bz-belr-comp-name" title="${esc(it.name)}">${esc(it.name)}</span>
+      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || "").slice(0, 4) || "—")} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ""} · 日均 ${esc(daily)}</span>
+      <b class="bz-belr-comp-days">${row.days.toLocaleString("zh-CN")} 天</b>
+    </div>`;
+    };
+    return `<div class="bz-belr-sec">
+  ${secHead("陪伴最久榜", `${asOf} · Top ${stats.companions.length}`)}
+  <div class="bz-belr-comps">${stats.companions.map(line).join("")}</div>
+  </div>`;
+  }
+  var renderSeq, progressToastSeq, activeProgress, maskEl2, ctxItems, ctxUnit, ctxYears, ctxYear, ctxOnAdd, SKELETON_HTML, ERROR_HTML, IDLE_CALLBACK_TIMEOUT_MS;
+  var init_report = __esm({
+    "src/belongings/report.ts"() {
+      init_utils();
+      init_notice();
+      init_ui();
+      init_str();
+      init_z_order();
+      init_chart_palette();
+      init_shared3();
+      init_report_stats();
+      init_shared3();
+      renderSeq = 0;
+      progressToastSeq = 0;
+      activeProgress = null;
+      maskEl2 = null;
+      ctxItems = [];
+      ctxUnit = "cny";
+      ctxYears = [];
+      ctxYear = "";
+      ctxOnAdd = null;
+      SKELETON_HTML = '<div class="bz-belr-skeleton">统计中…</div>';
+      ERROR_HTML = `<div class="bz-belr-error">
+  <div class="bz-belr-error-t">统计失败</div>
+  <div>读取归物本数据时出错，请关闭后重试</div>
+</div>`;
+      IDLE_CALLBACK_TIMEOUT_MS = 50;
+    }
+  });
+
+  // src/belongings/layouts/poster/render.ts
+  function panelHtml() {
+    return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
+  <div class="bz-bel-body">
+    <div class="bz-bel-hero">
+      <div class="bz-bel-hero-text">
+        <div class="bz-bel-hero-title" data-bel-herotitle>全部</div>
+        <div class="bz-bel-hero-sub" data-bel-herosub>归物本 — NOTHING MORE, NOTHING LESS</div>
+      </div>
+      <div class="bz-bel-kpis" data-bel-kpis></div>
+      <div class="bz-bel-mobhead">
+        <div class="bz-bel-stamp"><b data-bel-stampn>0</b><span>在库</span></div>
+        <div class="bz-bel-mobhead-tx">
+          <div class="bz-bel-mobhead-t">归物本</div>
+          <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
+        </div>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
+      </div>
+    </div>
+    <div class="bz-bel-chips" data-bel-chips></div>
+    <div class="bz-toolrow bz-bel-toolrow">
+      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类 / 备注…"><button type="button" class="bz-bel-search-clear" data-bel-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+      <div class="bz-bel-yearsel">
+        <div class="bz-bel-select bz-touch-target" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
+      </div>
+      <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
+        <div class="bz-bel-select bz-touch-target" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
+      </div>
+      <div class="bz-bel-sort" data-bel-sort></div>
+      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON.report)}</button>
+      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
+    </div>
+    <div class="bz-mobstrip" data-bel-mobstatus></div>
+    <div class="bz-bel-content" data-bel-content></div>
+    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
+  </div>
+</div>`;
+  }
+  function chipsHtml(items, view) {
+    const defs = [
+      { key: "__all", label: "全部", cnt: items.length },
+      { key: "asset", label: "资产", cnt: stockCount(items) },
+      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
+    ];
+    return defs.map((d) => {
+      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
+      return `<button type="button" class="bz-chip${active2 ? " bz-chip--on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
+    }).join("");
+  }
+  function mobChipsHtml(items, view) {
+    const defs = [
+      { key: "__all", label: "全部", cnt: items.length },
+      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
+    ];
+    return defs.map((d) => {
+      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
+      return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
+    }).join("");
+  }
+  function yearsOptionsHtml(items, cur) {
+    return '<div class="bz-bel-dropopt' + (cur === "" ? " is-cur" : "") + '" data-v="" role="option">全部年份</div>' + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? " is-cur" : ""}" data-v="${esc(y)}" role="option">${y}</div>`).join("");
+  }
+  function sortOptionsHtml(cur) {
+    return SORT_OPTS.map((o) => `<div class="bz-bel-dropopt${cur === o.v ? " is-cur" : ""}" data-v="${o.v}" role="option">${o.label}</div>`).join("");
+  }
+  function segmentedHtml(sort) {
+    return `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) => `<button type="button" class="bz-segmented-btn${sort === o.v ? " is-on" : ""}" data-k="${o.v}" role="radio" aria-checked="${sort === o.v}">${o.label}</button>`).join("")}</div>`;
+  }
+  function kpisHtml(items, unit = "cny") {
+    const gone = items.filter(isExited);
+    const recover2 = gone.reduce(
+      (s, i) => s + (i.current_status === "已转卖" && Number(i.sold_price) > 0 ? Number(i.sold_price) : 0),
+      0
+    );
+    const kpi = (num2, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num2}</b><span>${esc(label)}</span></div>`;
+    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
+  }
+  function stampCount(items) {
+    return String(stockCount(items));
+  }
+  function mobStatsText(items, unit = "cny") {
+    return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
+  }
+  function emptyHtml(noMatch) {
+    return emptyHtmlStr(
+      ICON.empty,
+      noMatch ? "没有符合条件的物品" : "这里还没有物品",
+      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
+    );
+  }
+  function cellHtml(it, idx, unit = "cny") {
+    var _a2;
+    const gone = isExited(it);
+    const idle = it.current_status === "闲置";
+    const days = daysUsed(it);
+    const daily = dailyCostOf(it);
+    const key = statusKeyOf(it.current_status);
+    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
+    const dailyStr = trimDailyNum(daily);
+    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
+    return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
+    <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
+    <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
+    <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
+    <span class="bz-bel-name">${esc(it.name)}</span>
+    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0, unit)}</span>
+    <span class="bz-bel-mut">${mut}</span>
+  </div>`;
+  }
+  function gridHtml(items, view, unit = "cny", list) {
+    return `<div class="bz-bel-grid" data-bel-grid>${(list != null ? list : filtered(items, view)).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
+  }
+  function renderPanelView(root, items, view, hooks, unit = "cny") {
+    var _a2;
+    const q2 = (sel) => root.querySelector(sel);
+    const title = q2("[data-bel-herotitle]");
+    if (title) title.textContent = heroTitleText(view);
+    const sub = q2("[data-bel-herosub]");
+    if (sub) sub.textContent = heroSubText(items, view);
+    const chips = q2("[data-bel-chips]");
+    if (chips) chips.innerHTML = chipsHtml(items, view);
+    const mob = q2("[data-bel-mobstatus]");
+    if (mob) mob.innerHTML = mobChipsHtml(items, view);
+    view.year = resolveYear(items, view.year);
+    const yearSel = q2("[data-bel-year]");
+    if (yearSel) {
+      yearSel.querySelector(".bz-bel-select-label").textContent = view.year || "全部年份";
+      const menu = q2("[data-bel-yearmenu]");
+      if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
+    }
+    const wrap = q2("[data-bel-kpis]");
+    if (wrap) wrap.innerHTML = kpisHtml(items, unit);
+    const stampN = q2("[data-bel-stampn]");
+    if (stampN) stampN.textContent = stampCount(items);
+    const mobStats = q2("[data-bel-mobstats]");
+    if (mobStats) mobStats.textContent = mobStatsText(items, unit);
+    const sortHost = q2("[data-bel-sort]");
+    if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
+    const mobSortSel = q2("[data-bel-mobsortsel]");
+    if (mobSortSel) {
+      mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a2 = SORT_OPTS.find((o) => o.v === view.sort)) != null ? _a2 : SORT_OPTS[0]).label;
+      const menu = q2("[data-bel-mobsortmenu]");
+      if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
+    }
+    const content = q2("[data-bel-content]");
+    if (!content) return;
+    const list = filtered(items, view);
+    if (!list.length) {
+      const noMatch = !!view.q || view.status !== null || view.year !== "";
+      content.innerHTML = emptyHtml(noMatch);
+    } else {
+      content.innerHTML = gridHtml(items, view, unit, list);
+      const gridEl = content.querySelector("[data-bel-grid]");
+      const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
+      const rem = list.length % cols;
+      if (rem) gridEl.insertAdjacentHTML("beforeend", `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
+    }
+    hooks.mountIcons(content);
+  }
+  var init_render6 = __esm({
+    "src/belongings/layouts/poster/render.ts"() {
+      init_str();
+      init_shared3();
+      init_shared3();
+    }
+  });
+
+  // src/belongings/render.ts
+  var init_render7 = __esm({
+    "src/belongings/render.ts"() {
+      init_shared3();
+      init_render6();
+    }
+  });
+
+  // src/belongings/ai.ts
+  function buildCategoryPrompt(name, history2) {
+    const menu = AI_ICON_MENU.join(", ");
+    const hist = history2.length ? `我的历史分类（优先复用）：${history2.join("、")}` : "暂无历史分类。";
+    return [
+      "你是物品收纳助手。为下面的物品给出一个分类和一枚图标。",
+      `物品名称：${name}`,
+      hist,
+      "要求：",
+      "1. category：中文分类名，2-6 个字；若历史分类里有合适的就原样复用其一，否则自拟。",
+      `2. icon：只能从这个清单里选一个英文标识符：${menu}`,
+      '只输出 JSON 对象，格式：{"category":"分类名","icon":"清单中的标识符"}'
+    ].join("\n");
+  }
+  function parseCategorySuggestion(raw) {
+    var _a2, _b2;
+    let text = String(raw || "").trim();
+    const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) text = fence[1].trim();
+    let obj;
+    try {
+      obj = JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+    const category = splitEmojiCategory(String((_a2 = obj == null ? void 0 : obj.category) != null ? _a2 : "")).name.trim();
+    const icon = String((_b2 = obj == null ? void 0 : obj.icon) != null ? _b2 : "").trim();
+    if (!category || category.length > 16) return null;
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) {
+      return { category, icon: AI_FALLBACK_ICON };
+    }
+    return { category, icon };
+  }
+  async function aiSuggestCategory(name, history2) {
+    const ai = createAI();
+    const raw = await ai.json(buildCategoryPrompt(name, history2), {});
+    const parsed = parseCategorySuggestion(raw);
+    if (!parsed) throw new Error("返回格式无法解析");
+    return parsed;
+  }
+  var AI_ICON_MENU, AI_FALLBACK_ICON;
+  var init_ai2 = __esm({
+    "src/belongings/ai.ts"() {
+      init_ai();
+      init_emoji_icon_map();
+      AI_ICON_MENU = [
+        // 数码影音
+        "smartphone",
+        "laptop",
+        "monitor",
+        "watch",
+        "headphones",
+        "speaker",
+        "printer",
+        "camera",
+        "aperture",
+        "video",
+        "focus",
+        "projector",
+        "gamepad-2",
+        "keyboard",
+        "hard-drive",
+        "disc",
+        "plug",
+        "battery-charging",
+        "lightbulb",
+        "tv",
+        "router",
+        "signal",
+        "phone",
+        "computer",
+        // 家居日用
+        "bed",
+        "sofa",
+        "armchair",
+        "lamp",
+        "lamp-desk",
+        "fan",
+        "air-vent",
+        "refrigerator",
+        "microwave",
+        "cooking-pot",
+        "blinds",
+        "archive",
+        "library",
+        "trash-2",
+        "key-round",
+        "droplets",
+        "thermometer",
+        "package",
+        "box",
+        "brush-cleaning",
+        "shower-head",
+        "bath",
+        // 厨房餐茶
+        "utensils",
+        "coffee",
+        "cup-soda",
+        "wine",
+        "milk",
+        "chef-hat",
+        "flame",
+        "snowflake",
+        // 衣服饰品
+        "shirt",
+        "footprints",
+        "handbag",
+        "backpack",
+        "luggage",
+        "briefcase",
+        "glasses",
+        "gem",
+        "crown",
+        "sparkles",
+        "scissors",
+        // 文具乐玩
+        "book",
+        "book-open",
+        "notebook",
+        "pen-line",
+        "pencil",
+        "palette",
+        "paintbrush",
+        "guitar",
+        "piano",
+        "drum",
+        "mic",
+        "music",
+        "radio",
+        "puzzle",
+        "dices",
+        "toy-brick",
+        // 运动户外
+        "volleyball",
+        "dumbbell",
+        "person-standing",
+        "waves",
+        "fish",
+        "bike",
+        "tent",
+        "mountain",
+        "wrench",
+        "hammer",
+        "shovel",
+        "flashlight",
+        "compass",
+        "telescope",
+        // 交通
+        "car",
+        "bus",
+        "truck",
+        "train-front",
+        "plane",
+        "rocket",
+        "sailboat",
+        "ship",
+        "helicopter",
+        // 生命健康
+        "pill",
+        "syringe",
+        "stethoscope",
+        "bandage",
+        "leaf",
+        "flower",
+        "sprout",
+        "tree-pine",
+        "paw-print",
+        "dog",
+        "cat",
+        "bird",
+        "bug",
+        "shell"
+      ];
+      AI_FALLBACK_ICON = "package";
+    }
+  });
+
+  // src/belongings/ui.ts
+  var ui_exports5 = {};
+  __export(ui_exports5, {
+    belongingSettingsSchema: () => belongingSettingsSchema,
+    cleanupBelongings: () => cleanupBelongings,
+    closePanel: () => closePanel,
+    openBelongingsReportView: () => openBelongingsReportView,
+    openForm: () => openForm,
+    openPanel: () => openPanel,
+    resetBelongingsState: () => resetBelongingsState
+  });
+  function resetBelongingsState() {
+    M4.overlay = null;
+    M4.db = null;
+    M4.status = null;
+    M4.year = "";
+    M4.q = "";
+    M4.sort = "recent";
+    M4.renderFn = null;
+  }
+  function currencyUnit() {
+    const v = tryGetSettings().belongingsCurrency;
+    return v === "yuan" || v === "usd" || v === "none" || v === "cny" ? v : "cny";
+  }
+  function newItemStatus() {
+    return tryGetSettings().belongingsNewStatus === STATUS.idle.label ? STATUS.idle.label : STATUS.using.label;
+  }
+  function belongingSettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组与备忘录同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
+          // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "belSkin" },
+              options: [
+                { value: "poster", label: "大字报", prevClass: "bz-sp-prev-poster" }
+              ]
+            },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "belSkinTheme" },
+              layoutKey: "belSkin",
+              options: [
+                { value: "warmwhite", label: "暖白", layout: "poster", prevClass: "bz-sp-prev-warmwhite" }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "显示",
+          rows: [
+            {
+              type: "select",
+              name: "默认状态筛选",
+              desc: "打开面板时选中的物品状态",
+              binding: { key: "belongingsDefaultStatus" },
+              // 选项从 STATUS_ORDER 派生（cons P3-7：key/label 不再手抄第二份；「全部」置顶）
+              options: [
+                { value: "", label: "全部" },
+                ...STATUS_ORDER.map((s) => ({ value: s.key, label: s.label }))
+              ]
+            },
+            {
+              type: "select",
+              name: "默认排序",
+              desc: "打开面板时物品的排列方式",
+              binding: { key: "belongingsDefaultSort" },
+              options: [
+                { value: "recent", label: "最近购入" },
+                { value: "price", label: "投入最高" },
+                { value: "daily", label: "日均最高" }
+              ]
+            },
+            {
+              type: "select",
+              name: "金额单位",
+              desc: "价格与统计的金额显示方式",
+              binding: { key: "belongingsCurrency" },
+              options: [
+                { value: "cny", label: "￥" },
+                { value: "yuan", label: "元" },
+                { value: "usd", label: "$" },
+                { value: "none", label: "无符号" }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "pencil-line",
+          name: "记一笔",
+          rows: [
+            {
+              type: "select",
+              name: "新增物品默认状态",
+              desc: "记一笔时物品的初始状态",
+              binding: { key: "belongingsNewStatus" },
+              // 在库两态（出离态不作为新记默认；选项随 STATUS 单源派生，cons P3-7）
+              options: [STATUS.using, STATUS.idle].map((s) => ({ value: s.label, label: s.label }))
+            }
+          ]
+        }
+      ]
+    };
+  }
+  function itemList() {
+    return M4.db ? Object.values(M4.db.items) : [];
+  }
+  function itemById(id) {
+    var _a2;
+    return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
+  }
+  function ensureBelongingsEsc() {
+    registerPanelEsc(
+      "bz-bel",
+      () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => {
+        if (document.querySelector(".bz-bel-form")) {
+          requestCloseBelForm();
+          return;
+        }
+        if (document.querySelector(".bz-bel-detail")) {
+          closeBelDetail();
+          return;
+        }
+        if (document.querySelector(".bz-bel-report-mask")) {
+          closeBelReport();
+          return;
+        }
+        closePanel();
+      }
+    );
+  }
+  async function openPanel() {
+    if (M4.overlay) {
+      closePanel();
+      return;
+    }
+    if (opening) return;
+    opening = true;
+    try {
+      await openPanelInner();
+    } catch (e) {
+      notifyActionError(e, "归物本数据加载", { onRetry: () => void openPanel() });
+    } finally {
+      opening = false;
+    }
+  }
+  async function openPanelInner() {
+    const st = tryGetSettings().belongingsDefaultStatus;
+    M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    const srt = tryGetSettings().belongingsDefaultSort;
+    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M4.year = "";
+    M4.db = await loadDatabase();
+    const overlay2 = document.createElement("div");
+    overlay2.className = "bz-panel-overlay";
+    overlay2.innerHTML = panelHtml();
+    document.body.appendChild(overlay2);
+    topifyZ(overlay2);
+    M4.overlay = overlay2;
+    M4.renderFn = () => renderAll2();
+    mountIcons(overlay2);
+    ensureBelongingsEsc();
+    const closeDrops = () => {
+      overlay2.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
+    };
+    const onDocClick = (e) => {
+      var _a2;
+      const t = e.target;
+      const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
+      if (trig) {
+        const wrap = trig.parentElement;
+        const wasOpen = wrap.classList.contains("is-open");
+        closeDrops();
+        if (!wasOpen) wrap.classList.add("is-open");
+        return;
+      }
+      const opt = t.closest(".bz-bel-dropopt");
+      if (opt) {
+        closeDrops();
+        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
+        if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
+        else M4.sort = v;
+        renderAll2();
+        return;
+      }
+      closeDrops();
+    };
+    const onDropKey = (e) => {
+      const t = e.target;
+      if ((e.key === "Enter" || e.key === " ") && t.closest(".bz-bel-select")) {
+        e.preventDefault();
+        t.click();
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    overlay2.addEventListener("keydown", onDropKey);
+    dropDocClick = onDocClick;
+    overlay2.addEventListener("click", (e) => {
+      const t = e.target;
+      if (e.target === overlay2) {
+        closePanel();
+        return;
+      }
+      if (t.closest("[data-bel-add]")) {
+        void openForm(null);
+        return;
+      }
+      if (t.closest("[data-bel-report]")) {
+        void openBelongingsReportView();
+        return;
+      }
+      if (t.closest("[data-bel-close]")) {
+        closePanel();
+        return;
+      }
+      const chip2 = t.closest("[data-bel-st]");
+      if (chip2) {
+        applyStatusFilter(chip2.dataset.belSt);
+        return;
+      }
+      const segBtn = t.closest(".bz-segmented-btn");
+      if (segBtn) {
+        M4.sort = segBtn.dataset.k;
+        renderAll2();
+        return;
+      }
+      const kpi = t.closest("[data-bel-statclick]");
+      if (kpi) {
+        const kind = kpi.dataset.belStatclick;
+        if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
+        renderAll2();
+        return;
+      }
+    });
+    const bindSearch = (inp) => {
+      const debounced = debounce(() => {
+        if (M4.overlay !== overlay2) return;
+        M4.q = inp.value.trim();
+        renderAll2();
+      }, SEARCH_DEBOUNCE_MS2);
+      const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
+      const syncClear = () => {
+        if (clearBtn) clearBtn.hidden = !inp.value;
+      };
+      const clearSearch = (refocus) => {
+        debounced.cancel();
+        inp.value = "";
+        M4.q = "";
+        syncClear();
+        renderAll2();
+        if (refocus) inp.focus();
+      };
+      syncClear();
+      clearBtn == null ? void 0 : clearBtn.addEventListener("click", () => clearSearch(true));
+      inp.addEventListener("input", () => {
+        syncClear();
+        debounced();
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape" || !inp.value) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        clearSearch(false);
+        inp.blur();
+      });
+    };
+    bindSearch(overlay2.querySelector("[data-bel-search]"));
+    const content = overlay2.querySelector("[data-bel-content]");
+    content.addEventListener("click", (e) => {
+      const cell = e.target.closest("[data-bel-id]");
+      if (!cell) return;
+      e.stopPropagation();
+      const it = itemById(cell.dataset.belId);
+      if (!it) return;
+      if (isMobileEnv()) openMobSheet(it);
+      else openBelDetail(it);
+    });
+    content.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const cell = e.target.closest("[data-bel-id]");
+      if (!cell) return;
+      e.preventDefault();
+      const it = itemById(cell.dataset.belId);
+      if (!it) return;
+      if (isMobileEnv()) openMobSheet(it);
+      else openBelDetail(it);
+    });
+    content.addEventListener("contextmenu", (e) => {
+      const cell = e.target.closest("[data-bel-id]");
+      if (!cell || isMobileEnv()) return;
+      e.preventDefault();
+      const it = itemById(cell.dataset.belId);
+      if (it) openRowMenuAt(it, e.clientX, e.clientY);
+    });
+    longPress(
+      content,
+      (ev) => {
+        var _a2, _b2;
+        const cell = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]");
+        if (!cell) return;
+        const it = itemById(cell.dataset.belId);
+        if (it) openMobSheet(it);
+      },
+      void 0,
+      (ev) => {
+        var _a2, _b2;
+        return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]"));
+      }
+    );
+    renderAll2();
+    startAutoRefresh();
+    observeTheme();
+  }
+  function closePanel() {
+    stopAutoRefresh();
+    requestCloseBelForm();
+    closeItemMenu();
+    closeBelDetail();
+    closeBelReport();
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
+    if (dropDocClick) {
+      document.removeEventListener("click", dropDocClick);
+      dropDocClick = null;
+    }
+    if (M4.overlay) {
+      M4.overlay.remove();
+      M4.overlay = null;
+    }
+    M4.renderFn = null;
+    M4.db = null;
+    M4.q = "";
+  }
+  function cleanupBelongings() {
+    closePanel();
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
+    unloadBelReport();
+    resetBelongingsState();
+  }
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    const app = getApp();
+    const filePath = getDataFilePath();
+    const off = app.vault.on("modify", (file) => {
+      if ((file == null ? void 0 : file.path) !== filePath) return;
+      if (selfWritePending > 0) return;
+      void (async () => {
+        var _a2;
+        try {
+          M4.db = await loadDatabase();
+          (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        } catch (e) {
+          notifyActionError(e, "归物本数据自动刷新", {
+            onRetry: () => {
+              void (async () => {
+                var _a3;
+                try {
+                  M4.db = await loadDatabase();
+                  (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+                } catch (e2) {
+                }
+              })();
+            }
+          });
+        }
+      })();
+    });
+    autoRefreshOff = () => app.vault.offref(off);
+  }
+  function stopAutoRefresh() {
+    if (autoRefreshOff) {
+      try {
+        autoRefreshOff();
+      } catch (e) {
+      }
+      autoRefreshOff = null;
+    }
+  }
+  function observeTheme() {
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
+    const themeOf = () => {
+      const cls = document.body.className.split(" ").find((c) => THEME_CLASSES.has(c));
+      return cls || "";
+    };
+    let prev = themeOf();
+    bodyThemeObserver = new MutationObserver(() => {
+      var _a2;
+      const now = themeOf();
+      if (now !== prev) {
+        prev = now;
+        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      }
+    });
+    bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  }
+  async function saveAndRender() {
+    var _a2;
+    if (!M4.db) return;
+    selfWritePending++;
+    try {
+      await saveDatabase(M4.db);
+    } finally {
+      selfWritePending--;
+    }
+    (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+  }
+  function renderAll2() {
+    if (!M4.overlay) return;
+    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
+    if (!panel2) return;
+    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
+  }
+  function applyStatusFilter(k) {
+    if (k === "__all") M4.status = null;
+    else M4.status = M4.status === k ? null : k;
+    renderAll2();
+  }
+  async function openBelongingsReportView() {
+    ensureBelongingsEsc();
+    let items;
+    if (M4.db) {
+      items = itemList();
+    } else {
+      try {
+        items = Object.values((await loadDatabase()).items);
+      } catch (e) {
+        notifyActionError(e, "归物本数据加载", { onRetry: () => void openBelongingsReportView() });
+        return;
+      }
+    }
+    openBelReport(items, currencyUnit(), { onAdd: () => {
+      void openForm(null);
+    } });
+  }
+  function closeBelDetail() {
+    belDetailClose == null ? void 0 : belDetailClose();
+    belDetailClose = null;
+  }
+  function openBelDetail(it) {
+    var _a2, _b2;
+    closeBelDetail();
+    const host = document.createElement("div");
+    host.innerHTML = belDetailHtml(it, currencyUnit());
+    ensureBelongingsEsc();
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-detail",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
+      onClose: () => {
+        belDetailClose = null;
+      }
+    });
+    belDetailClose = close;
+    mountIcons(mask);
+    const acts = mask.querySelector("[data-bd-acts]");
+    const drawActs = () => {
+      const cur = itemById(it.id);
+      if (!cur) return;
+      acts.innerHTML = flowBtnsHtml(cur.current_status);
+    };
+    drawActs();
+    acts.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-bd-flow]");
+      if (!b) return;
+      const cur = itemById(it.id);
+      if (!cur) {
+        closeBelDetail();
+        return;
+      }
+      void (async () => {
+        await applyFlowWithUndo(cur, b.dataset.bdFlow);
+        const now = itemById(it.id);
+        if (!now) {
+          closeBelDetail();
+          return;
+        }
+        openBelDetail(now);
+      })();
+    });
+    (_a2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a2.addEventListener("click", () => {
+      const cur = itemById(it.id);
+      if (cur) openForm(cur);
+    });
+    (_b2 = mask.querySelector("[data-bd-del]")) == null ? void 0 : _b2.addEventListener("click", () => {
+      const cur = itemById(it.id);
+      if (cur) void deleteItem(cur);
+    });
+  }
+  function sheetHeadEl2(it) {
+    const holder = document.createElement("div");
+    holder.innerHTML = sheetHeadHtml(it, currencyUnit());
+    mountIcons(holder);
+    return holder.firstElementChild;
+  }
+  async function applyFlowWithUndo(it, s) {
+    var _a2, _b2;
+    const cur = itemById(it.id);
+    if (!cur) {
+      notice("该物品已被外部变更删除，列表已刷新", "warning");
+      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      return;
+    }
+    const prevStatus = cur.current_status;
+    const prevExit = cur.exit_date;
+    cur.current_status = s;
+    if (isExited(cur)) {
+      if (!exitedStatus(prevStatus)) cur.exit_date = todayStr();
+    } else if (cur.exit_date != null) {
+      cur.exit_date = null;
+    }
+    cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+    try {
+      await saveAndRender();
+    } catch (e) {
+      notifySaveError(e, "状态流转");
+      M4.db = await loadDatabase().catch(() => null);
+      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      return;
+    }
+    emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
+    notifyUndo(`「${cur.name}」已标记为${s}`, () => {
+      void (async () => {
+        var _a3;
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          const now = itemById(it.id);
+          if (!now) {
+            notice("该物品已被外部变更删除，无法撤销", "warning");
+            return;
+          }
+          now.current_status = prevStatus;
+          if (prevExit != null) now.exit_date = prevExit;
+          else if (now.exit_date != null) now.exit_date = null;
+          now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+          await saveAndRender();
+          emitDomainEvent("belongings", { kind: "status", title: now.name, status: prevStatus });
+          notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销状态");
+          M4.db = await loadDatabase().catch(() => null);
+          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+        }
+      })();
+    }, { type: "restore" });
+  }
+  function buildActions(it, rebuild) {
+    return actionSpecs(it).map((sp) => ({
+      icon: sp.icon,
+      label: sp.label,
+      keepOpen: sp.keepOpen,
+      kind: sp.danger ? "danger" : void 0,
+      onClick: () => {
+        if (sp.act === "flow" && sp.status) {
+          void (async () => {
+            await applyFlowWithUndo(it, sp.status);
+            rebuild();
+          })();
+          return;
+        }
+        if (sp.act === "edit") {
+          openForm(it);
+          return;
+        }
+        void deleteItem(it);
+      }
+    }));
+  }
+  function makeSheetRebuild(it) {
+    const rebuild = () => {
+      const it2 = itemById(it.id);
+      if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
+    };
+    return rebuild;
+  }
+  function openRowMenuAt(it, x, y) {
+    const rebuild = makeSheetRebuild(it);
+    openItemMenu(x, y, buildActions(it, rebuild), true, "bz-bel-menu");
+    resetItemMenuClickGuard();
+  }
+  function openMobSheet(it) {
+    const rebuild = makeSheetRebuild(it);
+    openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
+  }
+  async function deleteItem(it) {
+    var _a2, _b2;
+    if (!M4.db) return;
+    if (!M4.db.items[it.id]) {
+      notice("该物品已被外部变更删除，列表已刷新", "warning");
+      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      return;
+    }
+    const snapshot2 = { ...M4.db.items[it.id] };
+    delete M4.db.items[it.id];
+    closeBelDetail();
+    try {
+      await saveAndRender();
+    } catch (e) {
+      M4.db.items[snapshot2.id] = snapshot2;
+      notifySaveError(e, "删除物品");
+      M4.db = await loadDatabase().catch(() => null);
+      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      return;
+    }
+    emitDomainEvent("belongings", { kind: "delete", title: it.name });
+    notifyUndo(`已删除「${it.name}」`, () => {
+      void (async () => {
+        var _a3;
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          if (M4.db.items[snapshot2.id]) {
+            notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
+            return;
+          }
+          M4.db.items[snapshot2.id] = snapshot2;
+          await saveAndRender();
+          notice(`已恢复「${snapshot2.name}」`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销删除");
+          M4.db = await loadDatabase().catch(() => null);
+          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+        }
+      })();
+    }, { type: "restore" });
+  }
+  function belFormStatusNow(mask) {
+    var _a2;
+    return ((_a2 = mask.querySelector("[data-status].is-on")) == null ? void 0 : _a2.dataset.status) || "";
+  }
+  function belFormDirty() {
+    if (!_belBaseline) return false;
+    const pop = document.querySelector(".bz-bel-form");
+    if (!pop) return false;
+    const g = (id) => {
+      var _a2, _b2;
+      return (_b2 = (_a2 = pop.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
+    };
+    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(pop) !== _belBaseline.status;
+  }
+  function closeBelForm() {
+    _belBaseline = null;
+    _belFormTargetId = null;
+    if (belFormMask) unregisterSheetCompanion(belFormMask);
+    belFormMask = null;
+    belFormClose == null ? void 0 : belFormClose();
+    belFormClose = null;
+  }
+  function requestCloseBelForm() {
+    if (belFormDirty()) confirmDiscard(() => closeBelForm(), void 0, "bz-bel-flow-dialog");
+    else closeBelForm();
+  }
+  function openForm(it) {
+    var _a2, _b2, _c, _d, _e;
+    const existing = document.querySelector(".bz-bel-form");
+    if (existing) {
+      const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
+      if (_belFormTargetId === targetId) {
+        (_b2 = existing.querySelector("input, textarea")) == null ? void 0 : _b2.focus();
+      } else {
+        notice("已有打开的表单，请先保存或关闭后再编辑其他物品", "warning");
+      }
+      return;
+    }
+    if (!M4.db) {
+      void loadDatabase().then((db) => {
+        M4.db = db;
+        openForm(it);
+      }).catch((e) => {
+        notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
+      });
+      return;
+    }
+    const init = belFormInit(it);
+    ensureBelongingsEsc();
+    const host = document.createElement("div");
+    host.innerHTML = belFormHtml(it, currencyUnit());
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-form",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
+      requestClose: () => requestCloseBelForm(),
+      onClose: () => {
+        belFormClose = null;
+      }
+    });
+    belFormClose = close;
+    belFormMask = mask;
+    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
+    mountIcons(mask);
+    const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
+    if (it && sheetOpen) registerSheetCompanion(mask);
+    _belBaseline = {
+      name: (_d = it == null ? void 0 : it.name) != null ? _d : "",
+      cat: init.catVal,
+      price: init.priceVal,
+      date: init.dateVal,
+      status: (it == null ? void 0 : it.current_status) || newItemStatus(),
+      desc: init.descVal,
+      exitDate: init.exitDateVal,
+      soldPrice: init.soldPriceVal
+    };
+    const catInput = mask.querySelector("#bm-cat");
+    let formIcon = (it == null ? void 0 : it.icon) || null;
+    const iconChip = mask.querySelector("#bm-icon");
+    const drawIconChip = () => {
+      iconChip.replaceChildren();
+      iconChip.hidden = !formIcon;
+      if (formIcon) iconChip.appendChild(uiIconSpan(formIcon));
+    };
+    drawIconChip();
+    const historyIconOf = (cat) => {
+      var _a3, _b3;
+      return ((_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+    };
+    uiSuggest({
+      anchor: catInput,
+      source: () => {
+        var _a3, _b3;
+        return (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+      },
+      max: 60,
+      iconOf: (raw) => {
+        const name = historyIconOf(raw);
+        return name ? uiIconSpan(name) : "";
+      },
+      onPick: (raw) => {
+        const name = historyIconOf(raw);
+        if (name) {
+          formIcon = name;
+          drawIconChip();
+        }
+      }
+    });
+    const statusPick = mask.querySelector("#bm-status");
+    const exitRow = mask.querySelector("#bm-exit");
+    const soldField = mask.querySelector("#bm-soldfield");
+    let curStatus = (it == null ? void 0 : it.current_status) || newItemStatus();
+    const syncExitRow = () => {
+      const exited = exitedStatus(curStatus);
+      exitRow.hidden = !exited;
+      soldField.hidden = curStatus !== STATUS.sold.label;
+    };
+    const drawStatus = () => {
+      statusPick.innerHTML = statusPickHtml(curStatus);
+      mountIcons(statusPick);
+      statusPick.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => {
+        curStatus = b.dataset.status;
+        drawStatus();
+      }));
+      syncExitRow();
+    };
+    drawStatus();
+    const errEl = mask.querySelector("#bm-err");
+    const fail = (msg) => {
+      errEl.textContent = msg;
+    };
+    const saveBtn = mask.querySelector("#bm-save");
+    let saving = false;
+    const aiBtn = mask.querySelector("#bm-ai");
+    aiBtn.addEventListener("click", () => {
+      if (aiBtn.disabled) return;
+      const aiName = mask.querySelector("#bm-name").value.trim();
+      if (!aiName) {
+        fail("先填物品名称，AI 才能归类");
+        return;
+      }
+      aiBtn.disabled = true;
+      aiBtn.classList.add("is-busy");
+      void (async () => {
+        var _a3, _b3, _c2;
+        try {
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          catInput.value = sug.category;
+          formIcon = sug.icon;
+          drawIconChip();
+          errEl.textContent = "";
+        } catch (e) {
+          fail("AI 归类失败：" + ((e == null ? void 0 : e.message) || "未知错误"));
+        } finally {
+          aiBtn.disabled = false;
+          aiBtn.classList.remove("is-busy");
+        }
+      })();
+    });
+    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
+    saveBtn.addEventListener("click", () => {
+      if (saving) return;
+      const name = mask.querySelector("#bm-name").value.trim();
+      const price = parseFloat(mask.querySelector("#bm-price").value);
+      const date = mask.querySelector("#bm-date").value;
+      if (!name) {
+        fail("请输入物品名称");
+        return;
+      }
+      if (!Number.isFinite(price) || price < 0) {
+        fail("请输入有效的价格");
+        return;
+      }
+      if (price > MAX_PRICE) {
+        fail("价格超出可记录范围（上限一万亿），请检查是否多输了几位");
+        return;
+      }
+      if (!date) {
+        fail("请选择购买日期");
+        return;
+      }
+      const category = catInput.value.trim();
+      if (!category) {
+        fail("请选择或输入分类");
+        return;
+      }
+      const exited = exitedStatus(curStatus);
+      const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
+      const exitDate = exited ? exitVal || todayStr() : "";
+      if (exitDate && exitDate < date) {
+        fail("出离日期不能早于购买日期");
+        return;
+      }
+      const soldRaw = curStatus === STATUS.sold.label ? mask.querySelector("#bm-soldprice").value.trim() : "";
+      let soldPrice = null;
+      if (soldRaw !== "") {
+        const sp = parseFloat(soldRaw);
+        if (!Number.isFinite(sp) || sp < 0) {
+          fail("请输入有效的售价");
+          return;
+        }
+        if (sp > MAX_PRICE) {
+          fail("售价超出可记录范围（上限一万亿），请检查是否多输了几位");
+          return;
+        }
+        soldPrice = Math.round(sp * 100) / 100;
+      }
+      const desc = mask.querySelector("#bm-desc").value.trim();
+      saving = true;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "保存中…";
+      void (async () => {
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          if (it) {
+            const cur = itemById(it.id);
+            if (!cur) {
+              notice("该物品已被外部变更删除，本次保存未写入", "warning");
+              closeItemMenu();
+              closeBelForm();
+              return;
+            }
+            const snapshot2 = { ...cur };
+            cur.name = name;
+            cur.category = category;
+            cur.icon = formIcon;
+            cur.purchase_price = Math.round(price * 100) / 100;
+            cur.purchase_date = date;
+            cur.current_status = curStatus;
+            cur.description = desc;
+            if (exited) cur.exit_date = exitDate;
+            else if (cur.exit_date != null) cur.exit_date = null;
+            if (curStatus === STATUS.sold.label) cur.sold_price = soldPrice;
+            else if (cur.sold_price != null) cur.sold_price = null;
+            cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+            await saveAndRender();
+            if (document.querySelector(".bz-bel-detail")) {
+              const redrew = itemById(it.id);
+              if (redrew) openBelDetail(redrew);
+            }
+            if (isBelReportOpen()) void openBelongingsReportView();
+            emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
+          } else {
+            if (!M4.db) throw new Error("数据库未加载");
+            const newItem = {
+              // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
+              id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+              name,
+              category,
+              purchase_price: Math.round(price * 100) / 100,
+              purchase_date: date,
+              current_status: curStatus,
+              description: desc,
+              created_date: (/* @__PURE__ */ new Date()).toISOString(),
+              last_updated: (/* @__PURE__ */ new Date()).toISOString(),
+              ...exited ? { exit_date: exitDate } : {},
+              ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
+              ...formIcon ? { icon: formIcon } : {}
+            };
+            M4.db.items[newItem.id] = newItem;
+            await saveAndRender();
+            if (isBelReportOpen()) void openBelongingsReportView();
+            emitDomainEvent("belongings", { kind: "add", item: newItem });
+          }
+          closeItemMenu();
+          closeBelForm();
+        } catch (e) {
+          notifySaveError(e);
+          saving = false;
+          saveBtn.disabled = false;
+          saveBtn.textContent = it ? "保存" : "添加";
+        }
+      })();
+    });
+    bindFormSubmit(mask, () => saveBtn.click());
+  }
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M4, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var init_ui7 = __esm({
+    "src/belongings/ui.ts"() {
+      init_notice();
+      init_z_order();
+      init_app();
+      init_esc_manager();
+      init_mobile();
+      init_utils();
+      init_dom();
+      init_settings_provider();
+      init_flow_dialog();
+      init_ui();
+      init_modal();
+      init_item_actions();
+      init_domain_bus();
+      init_belongings_source();
+      init_data8();
+      init_report();
+      init_render7();
+      init_ai2();
+      THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
+      SEARCH_DEBOUNCE_MS2 = 180;
+      M4 = {
+        overlay: null,
+        db: null,
+        status: null,
+        year: "",
+        q: "",
+        sort: "recent",
+        renderFn: null
+      };
+      dropDocClick = null;
+      DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
+      autoRefreshOff = null;
+      selfWritePending = 0;
+      bodyThemeObserver = null;
+      opening = false;
+      belDetailClose = null;
+      _belBaseline = null;
+      _belFormTargetId = null;
+      belFormClose = null;
+      belFormMask = null;
+    }
+  });
+
+  // src/clipbook/news-data.ts
+  function getNewsFilePath() {
+    return storageFile("news.json");
+  }
+  function emptyData() {
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+  }
+  function parseRssFeeds(raw) {
+    var _a2, _b2;
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const it of raw) {
+      if (!it || typeof it !== "object") continue;
+      const url = String((_a2 = it.url) != null ? _a2 : "").trim();
+      if (!url) continue;
+      const title = String((_b2 = it.title) != null ? _b2 : "").trim();
+      out.push(title ? { url, title } : { url });
+    }
+    return out;
+  }
+  function looksLikeFeedXml(xml) {
+    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
+  }
+  function extractFeedTitleFromXml(xml) {
+    const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (!m) return null;
+    const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+    return t || null;
+  }
+  function normalizeRssFeedUrl(text) {
+    const t = String(text || "").trim();
+    return /^https?:\/\/\S+$/i.test(t) ? t : null;
+  }
+  function parseBilibiliUpInfo(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const out = {};
+    for (const [uid, v] of Object.entries(raw)) {
+      if (!v || typeof v !== "object") continue;
+      const info = {};
+      if (v.name) info.name = String(v.name);
+      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
+      out[uid] = info;
+    }
+    return out;
+  }
+  function parseBilibiliMaxItems(raw) {
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+  }
+  function parseBilibiliCookie(raw) {
+    return typeof raw === "string" ? raw.trim() : "";
+  }
+  function normalizeFetchIntervalMin(raw) {
+    const n = Math.floor(Number(raw));
+    return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
+  }
+  function wrapArrayToNewsData(articles) {
+    const data = emptyData();
+    data.articles = Array.isArray(articles) ? articles : [];
+    return data;
+  }
+  function mergeStatsInto(data, oldStats) {
+    if (statsHasData(data.stats)) return data;
+    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
+    if (!s) return data;
+    return {
+      ...data,
+      stats: {
+        totalRead: Number(s.totalRead) || 0,
+        totalSaved: Number(s.totalSaved) || 0,
+        totalSkipped: Number(s.totalSkipped) || 0,
+        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
+        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
+      }
+    };
+  }
+  function statsHasData(stats) {
+    if (!stats || typeof stats !== "object") return false;
+    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
+  }
+  function parseNewsFileContent(raw) {
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
+    if (parsed && typeof parsed === "object") {
+      const obj = parsed;
+      return {
+        articles: Array.isArray(obj.articles) ? obj.articles : [],
+        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
+        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
+        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
+        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
+        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
+        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
+        rssFeeds: parseRssFeeds(obj.rssFeeds),
+        lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
+        fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin)
+      };
+    }
+    return null;
+  }
+  async function readNewsData() {
+    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
+    let corrupt = false;
+    let readThrew = false;
+    const parsed = await jsonFileStore(getNewsFilePath(), {
+      defaultValue: () => emptyData(),
+      onCorrupt: () => {
+        corrupt = true;
+        return false;
+      }
+    }).read().then(
+      (v) => v,
+      () => {
+        readThrew = true;
+        return null;
+      }
+    );
+    if (readThrew) return { ok: false, missing: false, data: emptyData(), corrupt: false };
+    if (corrupt || parsed === null) return { ok: false, missing: false, data: emptyData(), corrupt: true };
+    const content = parseNewsFileContent(JSON.stringify(parsed));
+    if (!content) return { ok: false, missing: false, data: emptyData(), corrupt: true };
+    return { ok: true, missing, data: content, corrupt: false };
+  }
+  async function writeNewsData(data) {
+    await jsonFileStore(getNewsFilePath()).write(data);
+  }
+  async function writeNewsDataMerged(intent) {
+    var _a2;
+    const res = await readNewsData();
+    if (!res.ok) return;
+    const base = res.data;
+    const next = { ...base };
+    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
+      const patchList = intent.set.articles || [];
+      const removeKeys = new Set(intent.removeArticleKeys || []);
+      const patchByKey = /* @__PURE__ */ new Map();
+      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
+      const merged = [];
+      const seen = /* @__PURE__ */ new Set();
+      for (const a of base.articles || []) {
+        const k = articleKeyOf(a);
+        if (removeKeys.has(k)) continue;
+        seen.add(k);
+        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
+      }
+      for (const a of patchList) {
+        const k = articleKeyOf(a);
+        if (!seen.has(k)) {
+          merged.push(a);
+          seen.add(k);
+        }
+      }
+      next.articles = merged;
+    }
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin"]) {
+      if (intent.set[seg] !== void 0) {
+        next[seg] = intent.set[seg];
+      }
+    }
+    if (intent.patchBilibiliUpInfo) {
+      next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent.patchBilibiliUpInfo };
+    }
+    if (intent.patchRssFeedTitles) {
+      const titles = intent.patchRssFeedTitles;
+      next.rssFeeds = (next.rssFeeds || []).map(
+        (f) => titles[f.url] !== void 0 ? { ...f, title: titles[f.url] } : f
+      );
+    }
+    await writeNewsData(next);
+  }
+  function parseUidFromText(text) {
+    const t = String(text || "").trim();
+    if (!t) return null;
+    const pure = t.match(/^\d{1,10}$/);
+    if (pure) return pure[0];
+    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
+    if (space) return space[1];
+    return null;
+  }
+  function parseBvidFromText(text) {
+    const t = String(text || "").trim();
+    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
+    return m ? m[1] : null;
+  }
+  async function resolveUidFromInputDetailed(text) {
+    var _a2;
+    const local = parseUidFromText(text);
+    if (local) return { uid: local, networkFailed: false };
+    const bvid = parseBvidFromText(text);
+    if (!bvid) return { uid: null, networkFailed: false };
+    const body = await httpGetText(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
+      timeoutMs: 1e4,
+      fetchImpl: requestUrlAsFetch()
+    });
+    if (body === null) return { uid: null, networkFailed: true };
+    try {
+      const json = JSON.parse(body);
+      const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
+      return { uid: mid || null, networkFailed: false };
+    } catch (e) {
+      return { uid: null, networkFailed: false };
+    }
+  }
+  async function migrateLegacyStats(data) {
+    if (statsHasData(data.stats)) return data;
+    const app = getApp();
+    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
+    if (!af) return data;
+    try {
+      const raw = await app.vault.read(af);
+      const old = JSON.parse(raw);
+      const merged = mergeStatsInto(data, old);
+      return merged === data ? data : merged;
+    } catch (e) {
+      return data;
+    }
+  }
+  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
+    const DAY = 24 * 60 * 60 * 1e3;
+    const kept = [];
+    for (const a of articles) {
+      if (!a || a.read !== true) {
+        kept.push(a);
+        continue;
+      }
+      const state3 = a.state === "saved" ? "saved" : "skipped";
+      const days = state3 === "saved" ? savedDays : skippedDays;
+      if (!Number.isFinite(days) || days <= 0) {
+        kept.push(a);
+        continue;
+      }
+      const t = new Date(a.fetchedAt || a.date || "").getTime();
+      if (!Number.isFinite(t)) {
+        kept.push(a);
+        continue;
+      }
+      if (now - t > days * DAY) continue;
+      kept.push(a);
+    }
+    return kept;
+  }
+  function normalizeRetentionDays(v) {
+    const n = Number(String(v || "").trim());
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN;
+  var init_news_data = __esm({
+    "src/clipbook/news-data.ts"() {
+      init_app();
+      init_storage();
+      init_http();
+      init_constants();
+      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
+      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
+      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
+      FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
+      DEFAULT_FETCH_INTERVAL_MIN = 30;
+    }
+  });
+
+  // src/clipbook/write-queue.ts
+  function enqueueNewsWrite(op) {
+    return enqueueFileTask(getNewsFilePath(), op);
+  }
+  var init_write_queue = __esm({
+    "src/clipbook/write-queue.ts"() {
+      init_storage();
+      init_news_data();
+    }
+  });
+
+  // src/clipbook/news-source-settings.ts
+  var news_source_settings_exports = {};
+  __export(news_source_settings_exports, {
+    addBilibiliUp: () => addBilibiliUp,
+    addRssFeed: () => addRssFeed,
+    emptyDataSourceState: () => emptyDataSourceState,
+    readDataSourceState: () => readDataSourceState,
+    removeBilibiliUp: () => removeBilibiliUp,
+    removeRssFeed: () => removeRssFeed,
+    writeBilibiliCookie: () => writeBilibiliCookie,
+    writeBilibiliMaxItems: () => writeBilibiliMaxItems,
+    writeFetchInterval: () => writeFetchInterval,
+    writeSources: () => writeSources
+  });
+  function emptyDataSourceState(exists = false) {
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+  }
+  async function readDataSourceState() {
+    const res = await readNewsData();
+    if (res.missing) {
+      return emptyDataSourceState(false);
+    }
+    if (!res.ok) {
+      return emptyDataSourceState(true);
+    }
+    return {
+      exists: true,
+      sources: { ...res.data.sources },
+      bilibiliUps: [...res.data.bilibiliUps],
+      bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
+      bilibiliMaxItems: res.data.bilibiliMaxItems,
+      bilibiliCookie: res.data.bilibiliCookie,
+      totalArticles: res.data.articles.length,
+      rssFeeds: [...res.data.rssFeeds],
+      lastFetchAt: res.data.lastFetchAt,
+      fetchIntervalMin: res.data.fetchIntervalMin
+    };
+  }
+  async function writeSources(sources) {
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { sources: { ...sources } } });
+      return true;
+    });
+  }
+  async function addBilibiliUp(uid) {
+    const id = String(uid || "").trim();
+    if (!id) return "invalid";
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return "read-failed";
+      if (res.data.bilibiliUps.includes(id)) return "exists";
+      await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
+      return "added";
+    });
+  }
+  async function writeBilibiliMaxItems(v) {
+    const n = Math.floor(Number(v));
+    const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
+      return true;
+    });
+  }
+  async function writeBilibiliCookie(cookie) {
+    const c = String(cookie || "").trim();
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+      return true;
+    });
+  }
+  async function writeFetchInterval(v) {
+    const n = normalizeFetchIntervalMin(v);
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
+      return true;
+    });
+  }
+  async function addRssFeed(url, title) {
+    const u = normalizeRssFeedUrl(url);
+    if (!u) return "invalid";
+    const t = String(title || "").trim();
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return "read-failed";
+      if (res.data.rssFeeds.some((f) => f.url === u)) return "exists";
+      const feed = t ? { url: u, title: t } : { url: u };
+      await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
+      return "added";
+    });
+  }
+  async function removeRssFeed(url) {
+    const u = String(url || "").trim();
+    if (!u) return false;
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
+      return true;
+    });
+  }
+  async function removeBilibiliUp(uid) {
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      const info = { ...res.data.bilibiliUpInfo };
+      delete info[uid];
+      await writeNewsDataMerged({
+        set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
+      });
+      return true;
+    });
+  }
+  var init_news_source_settings = __esm({
+    "src/clipbook/news-source-settings.ts"() {
+      init_news_data();
+      init_write_queue();
+    }
+  });
+
+  // src/auto-summary/parser.ts
+  function unquote(v) {
+    if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
+    return v;
+  }
+  function parseFrontmatter2(content) {
+    const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
+    if (!m) return { fm: null, body: content, extraLines: [] };
+    const fm = {};
+    const extraLines = [];
+    const lines = m[1].split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const kv = line.match(KEY_LINE_RE);
+      if (kv) {
+        const key = kv[1].trim();
+        let val = kv[2].trim();
+        if (BLOCK_SCALAR_RE.test(val)) {
+          const bodyLines = [];
+          let indent = null;
+          let j = i + 1;
+          for (; j < lines.length; j++) {
+            const l = lines[j];
+            if (l.trim() === "") {
+              bodyLines.push("");
+              continue;
+            }
+            const lm = l.match(/^([ \t]+)\S/);
+            if (!lm) break;
+            if (indent === null) indent = lm[1];
+            bodyLines.push(l.startsWith(indent) ? l.slice(indent.length) : l.replace(/^[ \t]+/, ""));
+          }
+          fm[key] = bodyLines.join("\n").replace(/\n+$/, "");
+          i = j - 1;
+          continue;
+        }
+        if (val === "") {
+          const nested = [];
+          let sawNested = false;
+          let j = i + 1;
+          for (; j < lines.length; j++) {
+            const l = lines[j];
+            if (l.trim() === "") {
+              nested.push(l);
+              continue;
+            }
+            if (LIST_ITEM_RE.test(l)) break;
+            if (/^[ \t]/.test(l)) {
+              sawNested = true;
+              nested.push(l);
+              continue;
+            }
+            break;
+          }
+          if (sawNested) {
+            extraLines.push(line, ...nested);
+            i = j - 1;
+            continue;
+          }
+          fm[key] = "";
+          continue;
+        }
+        if (val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
+        if (val.startsWith("[")) {
+          try {
+            val = JSON.parse(val);
+          } catch (e) {
+          }
+        }
+        fm[key] = val;
+      } else if (LIST_ITEM_RE.test(line)) {
+        const lastKey = Object.keys(fm).pop();
+        if (lastKey && !Array.isArray(fm[lastKey])) fm[lastKey] = [];
+        if (lastKey) {
+          fm[lastKey].push(unquote(line.replace(LIST_ITEM_RE, "$1").trim()));
+        } else {
+          extraLines.push(line);
+        }
+      } else {
+        extraLines.push(line);
+      }
+    }
+    const body = content.slice(m[0].length);
+    return { fm, body, extraLines };
+  }
+  function buildFrontmatter(fm, extraLines = []) {
+    const lines = ["---"];
+    for (const [k, v] of Object.entries(fm)) {
+      if (Array.isArray(v)) {
+        lines.push(`${k}:`);
+        for (const item of v) lines.push(`  - "${item}"`);
+      } else if (v === null || v === void 0 || v === "") {
+        lines.push(`${k}: ""`);
+      } else {
+        lines.push(`${k}: "${String(v).replace(/"/g, '\\"').replace(/[\r\n]+/g, " ")}"`);
+      }
+    }
+    lines.push(...extraLines);
+    lines.push("---");
+    return lines.join("\n");
+  }
+  function extractBodyForAI(body) {
+    return body.replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
+  }
+  var KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
+  var init_parser = __esm({
+    "src/auto-summary/parser.ts"() {
+      KEY_LINE_RE = /^([^\s:#-][^:]*):(.*)$/;
+      LIST_ITEM_RE = /^[ \t]*-[ \t]+(.*)$/;
+      BLOCK_SCALAR_RE = /^[|>][+-]?$/;
+    }
+  });
+
+  // src/auto-summary/processor.ts
+  function dedupeKeyFor(file) {
+    return `auto-summary:${file.path}#${++attemptSeq}`;
+  }
+  async function humanizeFailReason() {
+    try {
+      await getAIProvider();
+      return "摘要生成失败，请重试";
+    } catch (e) {
+      return "AI 服务未配置或不可用，请到设置页配置";
+    }
+  }
+  function buildTagsRule(tagRange) {
+    return `tags 规则：
+- ${tagRange || "3-6"} 个中文标签，每个不超过 5 个字
+- 涵盖：主题领域、关键技术/概念、应用场景`;
+  }
+  async function aiProcess(ai, bodyText, missing, opts = {}) {
+    const length = opts.summaryLength || "standard";
+    const summaryRule = SUMMARY_LENGTH_RULES[length] || SUMMARY_LENGTH_RULES.standard;
+    const needed = missing.filter((f) => f !== "tags" || opts.tagsEnabled !== false);
+    const fieldLines = needed.filter((f) => FIELD_DEFS[f]).map((f) => "  " + (f === "summary" ? summaryRule : FIELD_DEFS[f]));
+    if (fieldLines.length === 0) return null;
+    const prompt = `你是一个资讯文章分析助手。以下是一篇已转换为 Markdown 的文章正文。请分析内容，返回一个 JSON 对象（只返回 JSON，不要其他文字）：
+
+{
+${fieldLines.join(",\n")}
+}
+
+${needed.includes("tags") ? buildTagsRule(opts.tagCount || "3-6") + "\n\n" : ""}文章正文：
+${bodyText.substring(0, 6e3)}`;
+    try {
+      const result = await ai.prompt(prompt, "deepseek-v4-flash", {
+        // temperature 属任务语义（分析类低温）；max_tokens 面板独裁不在此传（issue 334/ADR-0148）——
+        // 推理模型思考耗尽小预算曾致 content 空串必失败，上限唯一权威 = 设置面板后自愈
+        modelOptions: { temperature: 0.3 }
+      });
+      const jsonMatch = (result || "").match(/\{[\s\S]*\}/);
+      if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.warn("[自动摘要] AI 处理失败:", e);
+    }
+    return null;
+  }
+  async function renameToTitle(app, file, title) {
+    var _a2;
+    const clean = String(title).replace(/[\\/:*?"<>|\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+    if (!clean || clean === file.basename) return { target: file, renamed: false, failed: false };
+    const dir = file.path.includes("/") ? file.path.slice(0, file.path.lastIndexOf("/")) : "/";
+    let newPath = `${dir}/${clean}.md`;
+    let n = 1;
+    while (app.vault.getAbstractFileByPath(newPath)) {
+      newPath = `${dir}/${clean} (${n++}).md`;
+    }
+    try {
+      const fmRename = (_a2 = app == null ? void 0 : app.fileManager) == null ? void 0 : _a2.renameFile;
+      if (fmRename) await fmRename.call(app.fileManager, file, newPath);
+      else await app.vault.rename(file, newPath);
+      return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
+    } catch (e) {
+      console.warn("[自动摘要] 重命名失败，仅写 frontmatter title:", e);
+      return { target: file, renamed: false, failed: true };
+    }
+  }
+  async function processFile(app, ai, file, opts = {}) {
+    const force = opts.force === true;
+    let h = null;
+    const s = tryGetSettings();
+    const summaryLength = String(s.autoSummaryLength || "standard");
+    const tagsEnabled = s.autoSummaryTagsEnabled !== false;
+    const tagCount2 = String(s.autoSummaryTagCount || "3-6");
+    try {
+      const content = await app.vault.read(file);
+      const { fm, body } = parseFrontmatter2(content);
+      const bodyText = extractBodyForAI(body);
+      if (!bodyText || bodyText.length < 100) return;
+      const missing = [];
+      if (force) {
+        missing.push("summary");
+        if (tagsEnabled !== false) missing.push("tags");
+      } else {
+        if (!fm || !fm.title) missing.push("title");
+        if (!fm || !fm.summary) missing.push("summary");
+        if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
+        if (missing.length === 0) return;
+      }
+      const startName = fm && fm.title ? fm.title : file.basename;
+      const key = dedupeKeyFor(file);
+      if (!opts.quiet) {
+        h = notify(`正在为《${startName}》生成摘要…`, { type: "progress", dedupeKey: key });
+      }
+      const aiResult = await aiProcess(ai, bodyText, missing, { summaryLength, tagsEnabled, tagCount: tagCount2 });
+      if (!aiResult) {
+        const reason = await humanizeFailReason();
+        if (h) h.hide();
+        const errHandle = notify(reason, { type: "error", duration: 0 });
+        const retryBtn = document.createElement("span");
+        retryBtn.className = "bz-notice-action";
+        retryBtn.setAttribute("role", "button");
+        retryBtn.textContent = "重试";
+        retryBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          retryBtn.remove();
+          errHandle.hide();
+          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
+          });
+        });
+        errHandle.el.appendChild(retryBtn);
+        return;
+      }
+      let targetFile = file;
+      let renameFailed = false;
+      if (missing.includes("title") && aiResult.title) {
+        const outcome = await renameToTitle(app, file, aiResult.title);
+        targetFile = outcome.target;
+        if (outcome.renamed) {
+          notify(`已重命名为《${aiResult.title}》`, { type: "success" });
+        } else if (outcome.failed) {
+          renameFailed = true;
+        }
+      }
+      const latest = await app.vault.read(targetFile);
+      const latestParsed = parseFrontmatter2(latest);
+      const mergedFm = { ...latestParsed.fm || {} };
+      if (missing.includes("title") && aiResult.title) mergedFm.title = aiResult.title;
+      if (missing.includes("summary") && aiResult.summary) mergedFm.summary = aiResult.summary;
+      if (missing.includes("tags") && Array.isArray(aiResult.tags) && aiResult.tags.length) {
+        mergedFm.tags = aiResult.tags;
+      }
+      const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + "\n\n" + latestParsed.body;
+      await app.vault.modify(targetFile, newContent);
+      if (renameFailed) {
+        notify("自动改名失败，标题已写入笔记，请手动重命名", { type: "warning" });
+      }
+      notify("已完成", {
+        type: "success",
+        dedupeKey: key,
+        action: {
+          label: "查看",
+          onClick: () => {
+            Promise.resolve().then(() => (init_ui8(), ui_exports6)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
+            });
+          }
+        }
+      });
+    } catch (e) {
+      if (h) h.hide();
+      console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
+    }
+  }
+  var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
+  var init_processor2 = __esm({
+    "src/auto-summary/processor.ts"() {
+      init_parser();
+      init_notice();
+      init_ai();
+      init_settings_provider();
+      attemptSeq = 0;
+      FIELD_DEFS = {
+        title: '"title": "生成中文标题，15-30字，完整陈述句，不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢）。禁止冒号、破折号、句中句号问号，需要连接时用逗号"',
+        summary: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
+        tags: '"tags": ["标签1", "标签2", "标签3"]'
+      };
+      SUMMARY_LENGTH_RULES = {
+        simple: `"summary": "50-100字的简短摘要。提炼核心观点与关键结论。直达内容，禁止使用'本文'、'本文章'、'文章'、'作者认为'等前缀词"`,
+        standard: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
+        detailed: `"summary": "300-400字的详尽摘要。完整覆盖核心观点、关键事实、重要数据、推论与结论，条理清晰。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`
+      };
+    }
+  });
+
+  // src/auto-summary/index.ts
+  var auto_summary_exports = {};
+  __export(auto_summary_exports, {
+    ensureAutoSummary: () => ensureAutoSummary,
+    isAutoSummaryInitialized: () => isAutoSummaryInitialized,
+    redoSummaryForActiveFile: () => redoSummaryForActiveFile,
+    regenerateSummary: () => regenerateSummary,
+    retrySummaryWithAI: () => retrySummaryWithAI,
+    stopAutoSummary: () => stopAutoSummary,
+    unloadAutoSummary: () => unloadAutoSummary
+  });
+  function getWatchDir() {
+    const s = tryGetSettings();
+    return s && s.articleDirectory || "归档/网页剪藏";
+  }
+  function enqueueJob(job) {
+    return new Promise((resolve2) => {
+      if (processingPaths.has(job.file.path)) {
+        resolve2();
+        return;
+      }
+      processingPaths.add(job.file.path);
+      jobQueue.push({ ...job, resolve: resolve2 });
+      batchTotal++;
+      if (drainTimer === null) {
+        drainTimer = setTimeout(() => {
+          drainTimer = null;
+          void drainQueue();
+        }, 0);
+      }
+    });
+  }
+  async function drainQueue() {
+    var _a2;
+    if (draining) return;
+    draining = true;
+    try {
+      while (jobQueue.length > 0) {
+        const job = jobQueue.shift();
+        batchDone++;
+        updateBatchNotice();
+        try {
+          await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
+        } catch (e) {
+        } finally {
+          processingPaths.delete(job.file.path);
+          (_a2 = job.resolve) == null ? void 0 : _a2.call(job);
+        }
+      }
+    } finally {
+      draining = false;
+      if (batchNotice) {
+        batchNotice.hide();
+        batchNotice = null;
+      }
+      batchTotal = 0;
+      batchDone = 0;
+    }
+  }
+  function updateBatchNotice() {
+    if (batchTotal <= 1) return;
+    const msg = `正在生成摘要 ${batchDone}/${batchTotal}…`;
+    if (batchNotice) {
+      batchNotice.setMessage(msg);
+    } else {
+      batchNotice = notify(msg, { type: "progress", dedupeKey: "auto-summary:batch" });
+    }
+  }
+  function queueProcess(app, ai, file) {
+    if (!file || file.extension !== "md") return;
+    if (!file.path.startsWith(getWatchDir() + "/")) return;
+    if (pendingPaths.has(file.path)) return;
+    const timer = setTimeout(() => {
+      pendingPaths.delete(file.path);
+      void enqueueJob({ app, ai, file });
+    }, 1500);
+    pendingPaths.set(file.path, timer);
+  }
+  function regenerateSummary(app, file) {
+    if (!file || file.extension !== "md") return Promise.resolve();
+    return enqueueJob({ app, ai: createAI(), file, force: true });
+  }
+  function retrySummaryWithAI(app, ai, file, force) {
+    if (!file || file.extension !== "md") return Promise.resolve();
+    return enqueueJob({ app, ai, file, force });
+  }
+  async function redoSummaryForActiveFile(app) {
+    const ws = app && app.workspace;
+    const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
+    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
+      notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
+      return;
+    }
+    await regenerateSummary(app, file);
+  }
+  function scheduleRegister(app) {
+    const ai = createAI();
+    registerTimer = setTimeout(() => {
+      var _a2;
+      registerTimer = null;
+      if (!vaultRef) return;
+      const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.autoSummaryTiming) || "immediate";
+      if (timing !== "lazy") {
+        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, ai, file));
+      }
+      if (workspaceRef && typeof workspaceRef.on === "function") {
+        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, ai, file));
+      }
+    }, 2e3);
+  }
+  function ensureAutoSummary(app) {
+    if (initialized3) {
+      if (!registerTimer && !fileListenerRef) scheduleRegister(app);
+      return;
+    }
+    initialized3 = true;
+    vaultRef = app.vault;
+    workspaceRef = app.workspace;
+    scheduleRegister(app);
+  }
+  function isAutoSummaryInitialized() {
+    return initialized3;
+  }
+  function stopAutoSummary() {
+    if (registerTimer) {
+      clearTimeout(registerTimer);
+      registerTimer = null;
+    }
+    if (fileListenerRef && vaultRef) {
+      try {
+        vaultRef.offref(fileListenerRef);
+      } catch (e) {
+      }
+      fileListenerRef = null;
+    }
+    if (openListenerRef && workspaceRef) {
+      try {
+        workspaceRef.offref(openListenerRef);
+      } catch (e) {
+      }
+      openListenerRef = null;
+    }
+    for (const timer of pendingPaths.values()) clearTimeout(timer);
+    pendingPaths.clear();
+    if (drainTimer !== null) {
+      clearTimeout(drainTimer);
+      drainTimer = null;
+    }
+    jobQueue.length = 0;
+    if (batchNotice) {
+      batchNotice.hide();
+      batchNotice = null;
+    }
+    batchTotal = 0;
+    batchDone = 0;
+    processingPaths.clear();
+  }
+  function unloadAutoSummary() {
+    stopAutoSummary();
+    initialized3 = false;
+    vaultRef = null;
+    workspaceRef = null;
+  }
+  var initialized3, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
+  var init_auto_summary = __esm({
+    "src/auto-summary/index.ts"() {
+      init_ai();
+      init_settings_provider();
+      init_notice();
+      init_processor2();
+      initialized3 = false;
+      vaultRef = null;
+      workspaceRef = null;
+      fileListenerRef = null;
+      openListenerRef = null;
+      registerTimer = null;
+      pendingPaths = /* @__PURE__ */ new Map();
+      processingPaths = /* @__PURE__ */ new Set();
+      jobQueue = [];
+      draining = false;
+      drainTimer = null;
+      batchTotal = 0;
+      batchDone = 0;
+      batchNotice = null;
     }
   });
 
@@ -35296,10 +35845,10 @@ ${body}`;
     "src/clipbook/flow.ts"() {
       init_domain_bus();
       init_news_data();
-      init_constants2();
+      init_constants();
       init_save();
-      init_constants2();
-      init_data7();
+      init_constants();
+      init_data3();
       init_write_queue();
       curKey = "";
       curMeta = null;
@@ -35333,7 +35882,7 @@ ${body}`;
     M5.mobDetailOpen = false;
   }
   var M5;
-  var init_state5 = __esm({
+  var init_state6 = __esm({
     "src/clipbook/state.ts"() {
       M5 = {
         appRef: null,
@@ -35997,10 +36546,10 @@ ${body}`;
       init_app();
       init_utils();
       init_esc_manager();
-      init_data7();
+      init_data3();
       init_news_data();
-      init_constants2();
-      init_state5();
+      init_constants();
+      init_state6();
       init_flow();
       init_report_stats2();
       init_render8();
@@ -36099,7 +36648,7 @@ ${body}`;
       init_settings_provider();
       init_file_sync();
       init_save();
-      init_data7();
+      init_data3();
       agent2 = createFileSync({
         logTag: "[clipbook-file-sync]",
         failNotice: "剪藏本同步失败，数据可能不一致",
@@ -36815,7 +37364,7 @@ ${c.trim()}
       init_app();
       init_notice();
       init_news_data();
-      init_constants2();
+      init_constants();
       init_write_queue();
       WINDOW_MS = 24 * 60 * 60 * 1e3;
       RSS_MAX_PER_FEED = 30;
@@ -37283,296 +37832,6 @@ ${c.trim()}
     }
   });
 
-  // src/clipbook/store.ts
-  function siteName(a) {
-    return a.site ? String(a.site) : a.platform ? String(a.platform) : "未知";
-  }
-  function upName(a, info) {
-    const uid = String(a && a.bvid || a && a.author || "");
-    const name = info && typeof info === "object" ? info.name : null;
-    return name || uid || "";
-  }
-  function platformOf(a) {
-    const p = a.platform || "";
-    if (p === "B站") return "B站";
-    if (p === "果壳" || p === "果壳科学人") return "果壳科学人";
-    if (p === "知乎日报" || p === "知乎") return "知乎日报";
-    return p || "未知";
-  }
-  function siteDomain(a) {
-    const u = String(a.url || "").trim();
-    if (u) {
-      try {
-        return new URL(u).hostname;
-      } catch (e) {
-      }
-      try {
-        return new URL("https://" + u.replace(/^\/+/, "")).hostname;
-      } catch (e) {
-      }
-    }
-    return PLATFORM_DOMAIN[platformOf(a)] || "";
-  }
-  function cleanBody(body) {
-    return String(body || "").trim();
-  }
-  function clipArticle(a, opts) {
-    const clipByUrl = opts.clipByUrl || /* @__PURE__ */ new Set();
-    const upInfo = opts.upInfo || {};
-    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
-    const key = articleKeyOf(a);
-    const platform = platformOf(a);
-    const newsSaved = a.state === "saved";
-    const archived2 = savedKeys.has(String(a.url || ""));
-    const clipped = !!a.url && clipByUrl.has(String(a.url));
-    const saved = newsSaved || archived2 || clipped;
-    const title = String(a.title || "(无标题)");
-    const body = cleanBody(a.body);
-    const isBili = platform === "B站";
-    const feedUp = isBili ? upName(a, upInfo[String(a.author || "")]) : "";
-    const srcName = feedUp || platform;
-    const typeLabel = feedUp ? "UP主" : platform;
-    let timeText = String(a.fetchedAt || a.date || "");
-    let timeTs = new Date(a.fetchedAt || a.date || "").valueOf();
-    if (isNaN(timeTs)) {
-      timeText = "";
-      timeTs = Date.now();
-    }
-    const st = saved ? "saved" : a.read === true ? "read" : "unread";
-    return {
-      id: key,
-      origin: "news",
-      title,
-      url: String(a.url || ""),
-      site: siteName(a),
-      domain: siteDomain(a),
-      author: String(a.author || ""),
-      srcName,
-      typeLabel,
-      timeText,
-      timeTs,
-      summary: excerpt(body, 110),
-      body,
-      tags: Array.isArray(a.tags) ? a.tags.map(String) : [],
-      notePath: null,
-      st,
-      clipped,
-      raw: a,
-      backlinks: []
-    };
-  }
-  function clipFromNote(n) {
-    return {
-      id: "clip:" + n.path,
-      origin: "clip",
-      title: String(n.title || "(无标题)"),
-      url: n.url ? String(n.url) : "",
-      site: String(n.site || "未知"),
-      domain: n.domain || "",
-      author: n.author || "",
-      srcName: n.site || "剪藏",
-      typeLabel: "",
-      timeText: "",
-      timeTs: n.created || 0,
-      summary: String(n.summary || ""),
-      body: "",
-      tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
-      notePath: n.path || null,
-      st: "saved",
-      clipped: true,
-      note: n,
-      backlinks: Array.isArray(n.backlinkNames) ? n.backlinkNames : []
-    };
-  }
-  function clipUrlSet2(notes) {
-    const s = /* @__PURE__ */ new Set();
-    for (const n of notes) if (n && n.url) s.add(String(n.url));
-    return s;
-  }
-  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
-    if (source2.kind === "clip") {
-      return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    const pool = (articles || []).filter((a) => !a.read);
-    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    if (source2.kind === "site") {
-      const s = normSite(source2.site);
-      const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
-      const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
-      return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
-    }
-    let out = [];
-    if (source2.kind === "all") {
-      out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
-    } else {
-      const isBili = source2.platform === "B站";
-      const list = pool.filter((a) => {
-        const p = platformOf(a);
-        if (p !== source2.platform) return false;
-        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
-        return true;
-      });
-      out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
-    }
-    return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
-  }
-  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
-    if (source2.kind === "clip") {
-      return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
-    const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
-    let news = [];
-    let clips = [];
-    if (source2.kind === "all") {
-      news = (articles || []).filter((a) => !isClippedNews(a));
-    } else if (source2.kind === "site") {
-      const s = normSite(source2.site);
-      news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
-      clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
-    } else {
-      const isBili = source2.platform === "B站";
-      news = (articles || []).filter((a) => {
-        if (isClippedNews(a)) return false;
-        const p = platformOf(a);
-        if (p !== source2.platform) return false;
-        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
-        return true;
-      });
-    }
-    return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
-  }
-  function bucketByState(list) {
-    const unread = [];
-    const read = [];
-    const saved = [];
-    for (const a of list) {
-      if (a.st === "saved") saved.push(a);
-      else if (a.st === "read") read.push(a);
-      else unread.push(a);
-    }
-    return { unread, read, saved };
-  }
-  function normSite(s) {
-    const t = String(s || "").trim();
-    return t || "未知";
-  }
-  function aggregateSites(articles, clipNotes, savedUrls, clipUrls) {
-    const saved = savedUrls || /* @__PURE__ */ new Set();
-    const byUrl = clipUrls || /* @__PURE__ */ new Set();
-    const rows = /* @__PURE__ */ new Map();
-    const bump = (rawSite, unread) => {
-      const site = normSite(rawSite);
-      let r = rows.get(site);
-      if (!r) {
-        r = { site, total: 0, unread: 0 };
-        rows.set(site, r);
-      }
-      r.total++;
-      if (unread) r.unread++;
-    };
-    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
-    for (const a of articles || []) {
-      if (!a || a.read) continue;
-      if (saved.has(String(a.url || ""))) continue;
-      if (a.url && byUrl.has(String(a.url))) continue;
-      bump(siteName(a), true);
-    }
-    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
-  }
-  var PLATFORM_DOMAIN;
-  var init_store = __esm({
-    "src/clipbook/store.ts"() {
-      init_utils();
-      init_constants2();
-      PLATFORM_DOMAIN = {
-        "B站": "bilibili.com",
-        "果壳科学人": "guokr.com",
-        "知乎日报": "zhihu.com"
-      };
-    }
-  });
-
-  // src/clipbook/scan.ts
-  function defaultCache(f) {
-    var _a2;
-    try {
-      const app = getApp();
-      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
-        return app.metadataCache.getFileCache(f);
-      }
-    } catch (e) {
-    }
-    return f && f.frontmatter;
-  }
-  function parseClipFile(file, getCache, getBacklinks) {
-    const cache = (getCache || defaultCache)(file);
-    const fm = cache && cache.frontmatter;
-    if (!fm) return null;
-    if (!fm.url || !fm.created) return null;
-    const title = file.basename || stripMdExt(String(file.name || ""));
-    let created = new Date(fm.created).valueOf();
-    if (isNaN(created)) created = Date.now();
-    let backlinkNames = [];
-    try {
-      const bl = (getBacklinks || (() => null))(file);
-      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
-        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
-      }
-    } catch (e) {
-    }
-    let domain = "";
-    try {
-      if (fm.url) domain = new URL(String(fm.url)).hostname;
-    } catch (e) {
-    }
-    return {
-      path: file.path,
-      file,
-      url: String(fm.url),
-      author: fm.author ? String(fm.author) : "",
-      site: fm.site ? String(fm.site) : "未知",
-      summary: fm.summary ? String(fm.summary) : "",
-      tags: Array.isArray(fm.tags) ? fm.tags.map(String) : fm.tags ? [String(fm.tags)] : [],
-      title,
-      created,
-      backlinkNames,
-      domain
-    };
-  }
-  async function scanClipDirectory(dirPath, deps) {
-    const dir = deps.vault.getAbstractFileByPath(dirPath);
-    if (!dir || !Array.isArray(dir.children)) return null;
-    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
-    const parse = deps.parse || ((f) => parseClipFile(f));
-    const notes = [];
-    const rejectedPaths = [];
-    for (const f of mdFiles2) {
-      try {
-        const n = parse(f);
-        if (n) {
-          notes.push(n);
-          continue;
-        }
-        if (f && f.path) rejectedPaths.push(String(f.path));
-      } catch (e) {
-        if (f && f.path) rejectedPaths.push(String(f.path));
-      }
-    }
-    notes.sort((a, b) => b.created - a.created);
-    const result = notes;
-    result.rejected = rejectedPaths.length;
-    result.rejectedPaths = rejectedPaths;
-    return result;
-  }
-  var init_scan = __esm({
-    "src/clipbook/scan.ts"() {
-      init_utils();
-      init_app();
-    }
-  });
-
   // src/clipbook/loader.ts
   async function readNewsAndSidecar() {
     var _a2;
@@ -37629,7 +37888,7 @@ ${c.trim()}
     if (clipNotes && clipNotes.rejected > 0) {
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
-    const clipUrls = clipUrlSet2(clipNotes || []);
+    const clipUrls = clipUrlSet(clipNotes || []);
     M5.articles = data.articles;
     M5.stats = data.stats;
     M5.sidecar = sidecar;
@@ -37641,14 +37900,14 @@ ${c.trim()}
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
       init_news_data();
-      init_data7();
+      init_data3();
       init_anchor();
       init_scan();
       init_store();
-      init_constants2();
+      init_constants();
       init_settings_provider();
       init_app();
-      init_state5();
+      init_state6();
       init_write_queue();
       init_save();
     }
@@ -39468,12 +39727,12 @@ ${c.trim()}
       init_settings_provider();
       init_auto_summary();
       init_news_sources_group();
-      init_constants2();
+      init_constants();
       init_news_source_settings();
       init_md();
       init_store();
       init_render8();
-      init_state5();
+      init_state6();
       init_loader();
       init_news_data();
       init_knowledge_boxes();
@@ -41257,7 +41516,7 @@ GitHub 仓库：${ghInfo.title}
 
   // src/bookshelf/constants.ts
   var STATUS_UNREAD, STATUS_READING, STATUS_DONE, STATUS_COLORS;
-  var init_constants3 = __esm({
+  var init_constants4 = __esm({
     "src/bookshelf/constants.ts"() {
       STATUS_UNREAD = "未读";
       STATUS_READING = "在读";
@@ -41274,7 +41533,7 @@ GitHub 仓库：${ghInfo.title}
   var init_shared5 = __esm({
     "src/bookshelf/shared.ts"() {
       init_str();
-      init_constants3();
+      init_constants4();
     }
   });
 
@@ -41282,9 +41541,9 @@ GitHub 仓库：${ghInfo.title}
   var init_render11 = __esm({
     "src/bookshelf/layouts/wall/render.ts"() {
       init_str();
-      init_constants3();
+      init_constants4();
       init_shared5();
-      init_constants3();
+      init_constants4();
     }
   });
 
@@ -48549,7 +48808,7 @@ GitHub 仓库：${ghInfo.title}
         home: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).homeSettingsSchema(),
         diary: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).diarySettingsSchema(),
         memo: async () => (await Promise.resolve().then(() => (init_settings3(), settings_exports3))).memoSettingsSchema(),
-        belongings: async () => (await Promise.resolve().then(() => (init_ui6(), ui_exports4))).belongingSettingsSchema(),
+        belongings: async () => (await Promise.resolve().then(() => (init_ui7(), ui_exports5))).belongingSettingsSchema(),
         // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
         clipping: async () => {
           const { readDataSourceState: readDataSourceState2 } = await Promise.resolve().then(() => (init_news_source_settings(), news_source_settings_exports));
@@ -48568,11 +48827,11 @@ GitHub 仓库：${ghInfo.title}
           return reviewSettingsSchema2({ app, dataManager: reviewApp2.dataManager });
         },
         secondbrain: async () => (await Promise.resolve().then(() => (init_panel(), panel_exports))).secondBrainSettingsSchema(),
-        pomodoro: async () => (await Promise.resolve().then(() => (init_ui4(), ui_exports3))).pomodoroSettingsSchema(),
+        pomodoro: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports4))).pomodoroSettingsSchema(),
         encrypt: async () => (await Promise.resolve().then(() => (init_ui11(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings7(), settings_exports7))).passwordVaultSettingsSchema(),
         knowledge: async () => {
-          const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui7(), ui_exports5));
+          const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui3(), ui_exports3));
           return knowledgeSettingsSchema2({
             onClearSuggestCache: async () => {
               const { clearSuggestCache: clearSuggestCache2 } = await Promise.resolve().then(() => (init_mount_suggest(), mount_suggest_exports));

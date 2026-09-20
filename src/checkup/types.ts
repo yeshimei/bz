@@ -49,8 +49,12 @@ export interface CheckupReport {
 
 /** 检查函数可选参数：分片让出主线程 + 取消（纯数据层测试可不传） */
 export interface CheckOpts {
-  /** 每处理一批调用一次（UI 层借它让出主线程并刷新进度） */
-  tick?: (current: string) => Promise<void> | void;
+  /**
+   * 每处理一批调用一次（UI 层借它让出主线程并刷新进度）。
+   * sub（eff P2-1）：检查项内的子任务进度（如逐文件/逐条目 done/total），
+   * 供进度条在检查项之间插值——大库体检中段不再静止。
+   */
+  tick?: (current: string, sub?: { done: number; total: number }) => Promise<void> | void;
   /** 返回 true = 已取消，检查尽快返回 null */
   isCancelled?: () => boolean;
 }
