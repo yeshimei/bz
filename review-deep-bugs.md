@@ -870,3 +870,20 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 - **收藏夹+首页+设置批 `bz-fix-bd-fav-home-sp`（8 项，3d970ab3 合并）**：F1 无链卡点按晃动反馈（issue 201 不动作本体保持）；F6 外链卡常驻 external-link 角标；F5 磁贴行 116px 限高滚动；H4 骨架期标题改骨架线条；H2 weekly.ts 死代码整裁（parseLocalDay 覆盖用例迁守护、recap 活链路回归锁）；SP1 输入框内 ↑↓ 让路光标；SP3 ESC 二段清词（clipbook 先例同刀）；SP4 回车跳首命中；SP2 命中词 mark 高亮（data-sp-orig 归一切片重建）；SP5 域滚位会话记忆（重开不重载此前已在位，本批补回归锁）；**PM2 残款**：home 菜单 focusing label「停止专注」→「暂停专注」（主线程跨批补送条目）+ core/pomodoro-phase.ts 注释对齐。新测试 5 文件 20 例。
 - **主线程收口**：拍板结果入账（341ec9e6）；auto-summary 重试两用例固定睡眠改 waitFor 条件轮询修稳既有并发抖动；FV2 复核为误报（批 B 已闭环，ui.ts:589 守卫在位）；产物冲突三度走「theirs + rebuild + add」预期模式。Wave1 合并后全量门禁 **446 文件 / 6818 例全绿 + tsc 0**（smartcat 排除域曾现负载型浮动红，空闲复跑全绿，非本批引入）。
 - **Wave2 派发**：范式批 `bz-fix-bd-paradigm` 运行中（#9 触屏悬浮隔离范式 + #13 大面板入焦圈闭全域推广 + E7 工作台键盘化 enc/clipbook 侧，memo 侧留重审）；收尾批待其合并后派（belongings B5/B2/B8/#20 + #48 密钥型档位 + RR-U13）。
+
+---
+
+# 🏁 拍板执行与 memo 重审 · 全部收官（2026-09-21）
+
+> 承「📋 拍板后执行 · Wave1 五批闭环」。Wave2 + memo 线全部合并部署，最终门禁 **470 文件 / 6977 例全绿 + tsc 0**，部署 **53b2c231**。
+
+**Wave2 拍板批**：范式批 `bz-fix-bd-paradigm`（#9 触屏悬浮隔离——20 样式文件约 440 条 hover 规则全量包 @media (hover:hover)，契约测试钉口径；#13 大面板入焦+Tab 圈闭——core trapPanelFocus 单源接线 13 浮层面板；E7 保险库工作台键盘化 + 剪藏本同型，memo 侧留重审）；收尾批 `bz-fix-bd-belongings-misc`（B5 下拉键盘+ESC 二段 / B2 :focus-visible 焦点环 / B8 空态统一 / B4 0 元日均「—」/ GS3 密钥型输入档位基建+Steam 密钥接入 / RR-U13 宿主搜索报告态收窄）；影院悬浮判定小批（季圆点 + 右键菜单两处 .mob 壳类判定改 hoverCapable 悬浮能力判定）；core 挂账清偿批 `bz-fix-core-pledges`（uiChip 缺省 aria-pressed + ARCH-2 storagePath 双轨收敛单源化，全域获得误配完整路径自动矫正收益）。
+
+**memo 队尾重审（用户拍板：回滚=不满功能，字段清除）**：
+- **字段清除批 `bz-fix-memo-purge-fields`**：memo.json 条目残留 recur/checklist 两键载入即剥 + 全部写盘路径消毒（MemoData.write 单点 + file-sync 直写口），只剥字段不删条目；月历视图为内存态无持久化残留。
+- **五方向重审**（memo2-* 五份明细，90 条发现：func16/ui20/eff21/cons22/arch11）：被砍功能相关条目全部作废；旧账逐条对回滚后代码重验。
+- **功能缺陷修复批 `bz-fix-memo-defects`**（9 提交）：func 16/16 全修（双击双插、loadItems 裸崩、jumpToNote await、iOS NaN 脏 due 载入清洗、提醒场景重置等）、eff 纯缺陷 6/6、arch/consistency 点名项全落、删除/完成/场景链对齐「免确认+notifyUndo」、trapPanelFocus+悬浮隔离补接线（豁免清单翻转）、CONTEXT 词条回滚口径对齐、测试净增 53。
+- **拍板执行批 `bz-fix-memo-verdict`**（5 提交）：呈报 20 项中用户批复 12 项——重叠三项（1A 回车提交 bindFormSubmit 全口径/2A 防连点/15A 跳转失败不关面板）随修复批落地；其余 8 项（搜索 ESC 先清词/✕ 清词+空态清除钮/命中词高亮/网址可搜/勾选 300ms 待定态/完成去向轻反馈/伪场景空态文案/移动弹窗 vvh+顶对齐+保存钮钉底）本批全落；8 项不做零改动（#20 不做=维持场景删除确认框现状）。
+- **收口缺陷**：memo 样式「触控热区抬档」组曾被悬浮机械包裹误关进嵌套 hover:hover 块（触屏整组失效）——归还移动端媒体块 + verdict-styles-structure.test.ts 三例结构守卫（剪块验在/归属断言/括号配平）。
+
+**残款登记**：影院/游戏库各持一份 hoverCapable 待上提 core 单源（两域注释已互标）；宽壳触屏长按列表卡原生病原生菜单兜底属独立语义决策；gameshelf 搜索 ✕ 缺 [hidden] 显式守卫（同坑先例已在 memo/belongings/cinema 落）；settings-panel 旧 `secret` 修饰死管道与 SettingsRow 联合未收编 SecretRow（域内受控收口暂代）；`src/settings.ts:630` 默认值与 DEFAULT_STORAGE_DIR 字面双写；arch A7 write 猴子补丁下沉、consistency 新-5/新-9/旧-10/旧-12 微项（memo-fix 报告在案）；smartcat/auto-summary 负载型时序抖动待专项收口（processor 重试用例已修稳）。
