@@ -13,6 +13,7 @@ import { tryGetSettings } from '../core/settings-provider';
 import { enqueueFileTask, jsonFileStore, storageFile } from '../core/storage';
 import { SYNC_WATCHED_FOLDERS } from '../core/settings-common';
 import { createFileSync, type FileSyncRenameEvent } from '../core/file-sync';
+import { purgeStaleFields } from './data';
 
 // ---------- 同步纯函数（域内私有） ----------
 
@@ -92,7 +93,8 @@ const agent = createFileSync<SyncItem[], MemoRenameEvent>({
     const path = getMemoPath();
     await enqueueFileTask(path, async () => {
       const items = await jsonFileStore<any[]>(path).read();
-      if (apply(items)) await jsonFileStore<any[]>(path).write(items);
+      // 直写绕过 MemoData.write，残留 recur/checklist 同样消毒（见 data.ts purgeStaleFields 注）
+      if (apply(items)) await jsonFileStore<any[]>(path).write(purgeStaleFields(items));
     });
   },
   /** E22：范围外笔记只要被 memo.json 实际引用（notePath/linkedNote 命中）也放行同步——
