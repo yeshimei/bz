@@ -41,6 +41,9 @@
 | home（首页） | 各域命令入口 |
 | literature（知识盒） |  |
 | settings-panel（设置面板） | 插件设置键（域内 schema.ts 定义） |
+| checkup（数据体检） | 全域 json 只读巡检（无独立数据文件） |
+| reading-report（阅读报告） | 书库墙面板内视图（ADR-0091，借宿主数据无独立文件） |
+| recap（回顾） | ADR-0157 面板已退役（summary 纯函数库保留，供 home 消费） |
 | smartcat（小橘） | STORAGE/smartcat |
 
 ## 测试与质量门禁

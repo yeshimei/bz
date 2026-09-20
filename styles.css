@@ -11441,7 +11441,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
  * 拍板重设计（2026-09-07，原型 .zcode/ui-prototypes/settings-5/p1-full.html 定稿）：
  * 布局 = P1 系统面板（顶栏面包屑+搜索 / 左侧四组域导航带项数徽标 / 右侧域页头 + 分组卡行式表单）；
  * 双皮 = S1 亚麻暖白（亮，跟随 Obsidian 亮色）/ S3 炭黑夜航（暗，跟随 .theme-dark），
- * tokens 挂面板根作用域；控件层全部域内自绘（.bz-sw/.bz-select/.bz-input/.bz-sp-btn/.bz-sp-chip/.bz-sp-cardpick——原型逐字，组件库工厂退役）
+ * tokens 挂面板根作用域；控件层消费组件库（.bz-sw/.bz-select/.bz-input/.bz-chip——C-3 起 chips 收编 uiChip）
  * 在面板作用域内覆写观感——renderer/ui 的组件库消费与 DOM 契约不变（测试契约同保）。
  * 本文件只服务设置面板域（bz-sp-*）；滚动条全隐藏（滚动功能保留）。
  * 消费端：ui.ts（桌面/移动壳）、renderer.ts（行/组渲染）。
@@ -12050,11 +12050,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 
 /* ═══════════ 控件覆写（组件库 DOM 不变，观感对齐拍板皮） ═══════════ */
 
-/* 开关 .bz-sw：S1 赤橙 / S3 琥珀 */
+/* 开关 .bz-sw：S1 赤橙 / S3 琥珀（UI-4：轨道宽对齐 core 同组件 40px 档） */
 .bz-sp-desk .bz-sw,
 .bz-sp-mobile .bz-sw,
 .bz-sp-mobile .bz-sw {
-  width: 38px;
+  width: 40px;
   height: 22px;
   background: var(--sp-ctl-off);
   border: 0;
@@ -12075,12 +12075,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--sp-accent);
   border-color: var(--sp-accent);
 }
-/* on 态旋钮：transform 单机制（与核心 components.css 同机制同属性，38 轨 - 18 钮 - 2px×2 边距 = 16px）。
+/* on 态旋钮：transform 单机制（与核心 components.css 同机制同属性，40 轨 - 18 钮 - 2px×2 边距 = 18px）。
    切勿再引入 left 位移——left + transform 分属两机制，同时在场会叠加把旋钮推出轨道（2026-09-08 二修） */
 .bz-sp-desk .bz-sw.on::after,
 .bz-sp-mobile .bz-sw.on::after,
 .bz-sp-mobile .bz-sw.on::after {
-  transform: translateX(16px);
+  transform: translateX(18px);
 }
 .bz-sp-desk .bz-sw:focus-visible,
 .bz-sp-mobile .bz-sw:focus-visible,
@@ -12117,6 +12117,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-desk .bz-select:hover,
 .bz-sp-mobile .bz-select:hover,
 .bz-sp-mobile .bz-select:hover { border-color: var(--sp-ink-3); }
+/* UI-2：触发器可聚焦（tabindex）——键盘焦点光圈与开关 focus-visible 同档 */
+.bz-sp-desk .bz-select:focus-visible,
+.bz-sp-mobile .bz-select:focus-visible {
+  outline: 2px solid var(--sp-accent);
+  outline-offset: 2px;
+}
 .bz-sp-desk .bz-select-menu,
 .bz-sp-mobile .bz-select-menu,
 .bz-sp-mobile .bz-select-menu {
@@ -12478,7 +12484,8 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   background: var(--sp-panel) !important;
   color: var(--sp-ink-2) !important;
   border-radius: var(--bz-radius-sm) !important;
-  margin-right: -var(--bz-space-xs);
+  /* UI-3（favorites-ui UI-02 旧账收口）：-var( 非法记号整条声明被浏览器丢弃——负 token 须 calc */
+  margin-right: calc(-1 * var(--bz-space-xs));
 }
 .bz-sp-mob-back-btn:hover { color: var(--sp-accent) !important; }
 
@@ -12665,7 +12672,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
     transform: translate(-50%, -50%);
     width: 94vw !important;
     max-width: 94vw !important;
-    max-height: calc(100vh - max(44px, env(safe-area-inset-top, 0px)) - max(12px, env(safe-area-inset-bottom, 0px)) - 24px);
+    max-height: calc(var(--bz-vvh, 100vh) - max(44px, env(safe-area-inset-top, 0px)) - max(12px, env(safe-area-inset-bottom, 0px)) - 24px); /* UI-5：--bz-vvh 随软键盘收缩（diary D-UI7 同族） */
     border-radius: 14px;
   }
   /* 卡片高度按内容自适应（上限由上方 max-height 夹住），列表超出则内部滚动 */
@@ -12713,36 +12720,25 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 #bz-model-picker-popup .bz-model-picker-detail { color: var(--sp-ink-3); }
 #bz-model-picker-popup .bz-settings-empty { color: var(--sp-ink-2); }
 
-.bz-sp-desk .bz-sp-chip,
-.bz-sp-mobile .bz-sp-chip,
-.bz-sp-mobile .bz-sp-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: var(--sp-bg);
-  border: 1px solid var(--sp-line);
-  border-radius: 7px;
-  padding: var(--bz-space-xs) 9px;
-  color: var(--sp-ink);
-  font-size: 11.5px;
-  font-family: ui-monospace, Consolas, monospace;
+/* 路径 chips 收编组件库 uiChip（C-3：.bz-sp-chip 自绘族退役，chip 本体走 core .bz-chip）。
+   面板仅保留长路径截断适配（mono 字形承自路径语义）+ ✕ 热区抬档（UI-4：16px 命中
+   padding 抬档并负 margin 视觉对位——横排紧凑行不外扩防互盖）。 */
+.bz-sp-desk .bz-sp-chips .bz-chip,
+.bz-sp-mobile .bz-sp-chips .bz-chip {
   max-width: 260px;
+  font-family: ui-monospace, Consolas, monospace;
+}
+.bz-sp-desk .bz-sp-chips .bz-chip > span:first-child,
+.bz-sp-mobile .bz-sp-chips .bz-chip > span:first-child {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.bz-sp-chip--locked {
-  border-style: dashed;
-  color: var(--sp-ink-2);
-  background: transparent;
+.bz-sp-desk .bz-sp-chips .bz-chip-x,
+.bz-sp-mobile .bz-sp-chips .bz-chip-x {
+  padding: 4px;
+  margin: -4px;
 }
-.bz-sp-chip .x {
-  font-style: normal;
-  color: var(--sp-ink-3);
-  cursor: pointer;
-  flex: none;
-}
-.bz-sp-chip .x:hover { color: var(--sp-accent); }
 
 .bz-sp-slider-val {
   font-family: ui-monospace, Consolas, monospace;

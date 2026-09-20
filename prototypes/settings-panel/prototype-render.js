@@ -1,4 +1,4 @@
-/* 源指纹 867b32f483bf7080 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1f9a84cc3d6073d6 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/settings-panel/render.ts → window.BZR_settings_panel（评审壳预览包，ADR-0104） */
 var BZR_settings_panel = (() => {
@@ -63,10 +63,10 @@ var BZR_settings_panel = (() => {
     return `<button type="button" class="bz-sw${on ? " on" : ""}" role="switch" aria-checked="${String(on)}"></button>`;
   }
   function selectTriggerHtml(label) {
-    return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
+    return `<div class="bz-select" role="listbox" tabindex="0" aria-expanded="false" aria-haspopup="listbox"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
   }
   function selectItemHtml(label, on) {
-    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
+    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}" role="option" aria-selected="${String(on)}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
   }
   function textInputHtml(opts) {
     const cls = ["bz-input"];
@@ -88,7 +88,7 @@ var BZR_settings_panel = (() => {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
   }
   function rowBtnHtml(label, cta) {
-    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
+    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""} bz-touch-target--lg">${esc(label)}</button>`;
   }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
@@ -136,7 +136,7 @@ var BZR_settings_panel = (() => {
   function cardpickHtml(cards) {
     return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
       const mini = c.kind ? miniHtml(c.kind, c.prev || {}) : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div>`;
-      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
+      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" role="radio" aria-checked="${String(c.on)}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
     }).join("") + `</div>`;
   }
   function rowHtml(vm) {

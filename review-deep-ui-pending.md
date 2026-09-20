@@ -91,3 +91,40 @@
 | clipbook 深审 效率#15 | clip 正文阈值搜索 | `src/clipbook/render.ts` | 分寸待拍板，本轮只做 news 面 body/url（review-deep-ux.md:149） |
 | clipbook 深审 新-1 | 「UP 管理」Cookie 行 | `src/clipbook/` | 尊重 09-12 移除拍板，展示形态待拍板（review-deep-ux.md:150） |
 | clipbook 深审 新-3 | 覆盖保存 summary/tags 字段级合并 | `src/clipbook/` 保存链 | 语义待拍板，本轮只做损失披露副文案（review-deep-ux.md:151） |
+
+
+### 后半程域拍板补录（2026-09-20，自各域台账 UX 分流行归集——呈报前统一登记）
+
+| # | 条目 | 位置 | 建议 | 影响 |
+|---|---|---|---|---|
+| F1 | 无链卡片点击零反馈 | favorites 卡墙 | 补一句提示或反馈动效 | 反馈 |
+| F2 | 桌面操作唯一入口右键发现性弱 | favorites | hover「…」角标 | 发现性 |
+| F3 | 面板键盘焦点管理（初始焦点/圈闭） | favorites（域族话题） | belongings 批 B 先例推广 | 可达性 |
+| F4 | 触屏 hover 粘滞 | **全域议题**（favorites 首报） | 立项 hover 隔离范式 | 全域 |
+| F5 | 桌面磁贴行不限高挤塌卡墙 | favorites | 限高滚动 or 折叠 | 布局 |
+| F6 | 点卡直开外链 affordance | favorites | ux#16/#17 同源 | affordance |
+| SP1 | 输入框聚焦时 ↑↓ 让路光标 or 保留切域 | settings-panel | 二选一 | 键盘语义 |
+| SP2 | 搜索命中行词级 mark 高亮 | settings-panel | 补 mark | 呈现 |
+| SP3 | 搜索框 ESC 二段清词（✕ 已退役故仅 ESC） | settings-panel | 二段清词 | 一致性 |
+| SP4 | 搜索 Enter 跳首个命中 | settings-panel | 键盘闭环 | 效率 |
+| SP5 | schemaLoader 会话缓存 + 滚位保持 | settings-panel | 缓存+滚位 | 效率 |
+| CK1 | 可选段豁免机制（archived/task 段 missing info 常态化） | checkup | 豁免 or 降噪 | 误报 |
+| CK2 | 逐条修复确认二选一（批量有先例通过、单条违免确认定稿） | checkup | 免确认 or 维持 | 删除口径 |
+| CK3 | 「全部通过」与 info 同屏矛盾文案口径 | checkup | 判定修正 | 文案 |
+| CK4 | 移动端报告 86vh 接 dvh | checkup | 一行 | 适配 |
+| CK5 | 空态同屏双「开始体检」去一 | checkup | 去一 | 呈现 |
+| CK6 | 进度条终值 75% 即切结果页 | checkup | 补满或直接切 | 呈现 |
+| CK7 | 一键修复作用域中间粒度（按域分组修复） | checkup | 分组修复 | 效率 |
+| CK8 | stale 提示条可操作化（行动钮就近） | checkup | 挂钮 | 效率 |
+| H1 | 外观组 homeLayout/homeSkin 占位键可选可存不消费 | home | 接上 or 注明占位 | 功能取舍 |
+| H2 | weekly.ts「R1 生活周报」死代码裁 or 预留 | home/weekly.ts（**A1 解环前置已完成**） | 裁 or 预留 | 功能取舍 |
+| H3 | 大面板初始焦点/焦点圈闭 | home（域族话题） | core firstFocusable 推广 | 可达性 |
+| H4 | 骨架期「全 部 域」标题数据到达后消失 | home | 原型同款需拍板 | 呈现 |
+| H5 | 过滤空态设置指引直达 + 空河引导词可点 | home | 挂 data-home-go | 效率 |
+| PM1 | `#pomodoro-phase` 接 aria-live="polite" | pomodoro | 一行接入 | 可达性 |
+| PM2 | 「停止专注」一词三义文案统一 | pomodoro | 菜单=暂停/命令=重置/面板分开 | 文案 |
+| PM3 | 统计档位跨重启记忆 | pomodoro | 记忆 or 恒回近 7 天 | 效率 |
+| PM4 | 近 6 月空数据零柱无占位文案 | pomodoro | 占位文案 | 呈现 |
+| AT1 | 动词双名「移动附件」（命令/弹窗）vs「搬移此笔记附件」（右键） | attach | 统一动词 | 文案 |
+| AT2 | 重复搬移跳过预览快捷通道 | attach | 快捷通道 | 效率 |
+| AT3 | 已全部在目标文件夹前置预告 | attach | 前置预判 | 效率 |

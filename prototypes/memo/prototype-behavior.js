@@ -1,5 +1,5 @@
-/* 源指纹 6c3439e4e0113d2a · 仓内输入 231 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/settings.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 26309361d3a0198e · 仓内输入 233 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -5649,6 +5649,11 @@ var BZW_memo = (() => {
     if (panelEscHandles.has(id)) return;
     panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
   }
+  function unregisterPanelEsc(id) {
+    var _a2;
+    (_a2 = panelEscHandles.get(id)) == null ? void 0 : _a2.unregister();
+    panelEscHandles.delete(id);
+  }
   var escManager, panelEscHandles;
   var init_esc_manager = __esm({
     "src/core/esc-manager.ts"() {
@@ -10869,10 +10874,10 @@ var BZW_memo = (() => {
     return `<button type="button" class="bz-sw${on ? " on" : ""}" role="switch" aria-checked="${String(on)}"></button>`;
   }
   function selectTriggerHtml(label) {
-    return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
+    return `<div class="bz-select" role="listbox" tabindex="0" aria-expanded="false" aria-haspopup="listbox"><span class="bz-select-val">${esc(label)}</span>${iconSpan("chevron-right", "bz-select-car")}</div>`;
   }
   function selectItemHtml(label, on) {
-    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
+    return `<button type="button" class="bz-select-item${on ? " is-on" : ""}" role="option" aria-selected="${String(on)}"><span>${esc(label)}</span><span class="bz-ic bz-select-item-ck">${iconSpan("check")}</span></button>`;
   }
   function textInputHtml(opts) {
     const cls = ["bz-input"];
@@ -10894,7 +10899,7 @@ var BZW_memo = (() => {
     return `<div class="bz-sp-slider-row"><input type="range"${min !== void 0 ? ` min="${min}"` : ""}${max !== void 0 ? ` max="${max}"` : ""} step="${step != null ? step : 1}" value="${value}"><span class="bz-sp-slider-val">${value}</span></div>`;
   }
   function rowBtnHtml(label, cta) {
-    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""}">${esc(label)}</button>`;
+    return `<button type="button" class="bz-sp-btn${cta ? " bz-sp-btn--primary" : ""} bz-touch-target--lg">${esc(label)}</button>`;
   }
   function badgeHtml(label) {
     return `<span class="bz-badge">${esc(label)}</span>`;
@@ -10942,7 +10947,7 @@ var BZW_memo = (() => {
   function cardpickHtml(cards) {
     return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
       const mini = c.kind ? miniHtml(c.kind, c.prev || {}) : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ""}" aria-hidden="true"></div>`;
-      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
+      return `<button type="button" class="bz-sp-cardpick-card${c.on ? " is-on" : ""}" role="radio" aria-checked="${String(c.on)}" data-sp-card="${esc(c.value)}">` + mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
     }).join("") + `</div>`;
   }
   function rowHtml(vm) {
@@ -11012,7 +11017,9 @@ var BZW_memo = (() => {
   // src/settings-panel/renderer.ts
   var renderer_exports = {};
   __export(renderer_exports, {
+    closeAllSelectMenus: () => closeAllSelectMenus,
     makePathRowCtrl: () => makePathRowCtrl,
+    refreshGroupCounts: () => refreshGroupCounts,
     renderPanelSchema: () => renderPanelSchema
   });
   function snapshot() {
@@ -11054,12 +11061,16 @@ var BZW_memo = (() => {
         timer = null;
       }
       if (!dirty2) return;
-      opts.onCommit(input.value);
+      const echo = opts.onCommit(input.value);
+      if (typeof echo === "string" && input.value !== echo) {
+        dirty2 = false;
+        input.value = echo;
+      }
     };
     input.addEventListener("input", () => {
       dirty2 = true;
       if (timer !== null) window.clearTimeout(timer);
-      timer = window.setTimeout(commit, 800);
+      timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
     });
     input.addEventListener("blur", commit);
     input.addEventListener("keydown", (e) => {
@@ -11105,37 +11116,34 @@ var BZW_memo = (() => {
       });
     };
     const multi = opts.mode === "multi";
-    const addBtn = document.createElement("button");
-    addBtn.type = "button";
-    addBtn.className = "bz-sp-btn bz-sp-path-btn";
-    addBtn.textContent = opts.buttonText || (multi ? "添加…" : "选择…");
-    addBtn.addEventListener("click", openPicker);
+    const addBtn = uiBtn({
+      label: opts.buttonText || (multi ? "添加…" : "选择…"),
+      className: "bz-sp-path-btn",
+      onClick: openPicker
+    });
     const renderChips = () => {
-      ctrl.querySelectorAll(".bz-sp-chip").forEach((c) => c.remove());
+      ctrl.querySelectorAll(".bz-chip").forEach((c) => c.remove());
       if (!current2.length && opts.fallbackChip) {
-        const fb = document.createElement("span");
-        fb.className = "bz-sp-chip bz-sp-chip--locked";
-        fb.title = "未单独设置时的实际生效目录（点击可改为显式设置）";
-        fb.textContent = opts.fallbackChip;
-        fb.addEventListener("click", openPicker);
-        ctrl.appendChild(fb);
+        ctrl.appendChild(uiChip({
+          label: opts.fallbackChip,
+          locked: true,
+          title: "未单独设置时的实际生效目录（点击可改为显式设置）",
+          onClick: openPicker
+        }));
       }
       for (const path of current2) {
         const label = path === "" ? "（库根目录）" : path;
-        const chip2 = document.createElement("span");
-        chip2.className = "bz-sp-chip";
-        chip2.title = label;
-        chip2.textContent = label;
-        chip2.addEventListener("click", openPicker);
-        if (multi) {
-          const x = uiIcon("x", "x");
-          x.addEventListener("click", (ev) => {
-            ev.stopPropagation();
+        ctrl.appendChild(uiChip({
+          label,
+          title: label,
+          removable: multi,
+          // ✕ 移除（uiChip 自带 role=button/aria-label/tabIndex/Enter-Space 键盘三件套）；
+          // 文本点击重开选择器（✕ 点击 stopPropagation 不连锁）
+          onRemove: multi ? () => {
             void apply(current2.filter((p) => p !== path));
-          });
-          chip2.appendChild(x);
-        }
-        ctrl.appendChild(chip2);
+          } : void 0,
+          onClick: openPicker
+        }));
       }
       const empty = !current2.length && !opts.fallbackChip;
       if (empty) {
@@ -11204,7 +11212,7 @@ var BZW_memo = (() => {
           }
           sw.classList.toggle("on", v);
           sw.setAttribute("aria-checked", String(v));
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "开关设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
           refresh2();
         });
@@ -11213,7 +11221,7 @@ var BZW_memo = (() => {
       case "text": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new SpCommitWarn(String((_b2 = acc.read()) != null ? _b2 : ""), row.onCommit);
+        const warn = new CommitWarn(String((_b2 = acc.read()) != null ? _b2 : ""), row.onCommit);
         const input = makeInput({
           value: (_c = acc.read()) != null ? _c : "",
           mono: !!row.mono,
@@ -11223,9 +11231,10 @@ var BZW_memo = (() => {
           onCommit: (v) => {
             var _a3;
             acc.write(v);
-            void acc.persist();
+            safePersist(() => acc.persist(), rowName || "文本设置");
             (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
             warn.fire(v);
+            refresh2();
           }
         });
         mountTextActions(ctrlEl, input, acc, row.actions, ctx, refresh2);
@@ -11238,20 +11247,21 @@ var BZW_memo = (() => {
         const taHolder = document.createElement("div");
         taHolder.innerHTML = textareaHtml((_d = acc.read()) != null ? _d : "", row.placeholder);
         const ta = taHolder.firstElementChild;
-        const warn = new SpCommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
+        const warn = new CommitWarn(String((_e = acc.read()) != null ? _e : ""), row.onCommit);
         let timer = null;
         let dirty2 = false;
         const commit = () => {
           if (timer !== null) window.clearTimeout(timer);
           if (!dirty2) return;
           acc.write(ta.value);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "多行文本设置");
           warn.fire(ta.value);
+          refresh2();
         };
         ta.addEventListener("input", () => {
           dirty2 = true;
           if (timer !== null) window.clearTimeout(timer);
-          timer = window.setTimeout(commit, 800);
+          timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
         });
         ta.addEventListener("blur", commit);
         displaySetters.set(ta, (v) => {
@@ -11274,7 +11284,7 @@ var BZW_memo = (() => {
       case "number": {
         const acc = bindValue(row.binding);
         const ph = typeof row.placeholder === "function" ? row.placeholder(snapshot()) : row.placeholder;
-        const warn = new SpCommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
+        const warn = new CommitWarn(String((_f = acc.read()) != null ? _f : ""), row.onCommit);
         const input = makeInput({
           value: String((_g = acc.read()) != null ? _g : ""),
           type: "number",
@@ -11283,16 +11293,16 @@ var BZW_memo = (() => {
           min: row.min,
           max: row.max,
           onCommit: (raw) => {
-            var _a3;
+            var _a3, _b3;
             if (raw.trim() === "") return;
-            let v = Number(raw);
-            if (Number.isNaN(v)) v = 0;
-            if (row.min !== void 0 && v < row.min) v = row.min;
-            if (row.max !== void 0 && v > row.max) v = row.max;
+            const v = parseClampedNumber(raw, row.min, row.max);
+            if (v === null) return String((_a3 = acc.read()) != null ? _a3 : "");
             acc.write(v);
-            void acc.persist();
-            (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+            safePersist(() => acc.persist(), rowName || "数字设置");
+            (_b3 = row.onChange) == null ? void 0 : _b3.call(row, v, ctx);
             warn.fire(raw);
+            refresh2();
+            return String(v) !== raw.trim() ? String(v) : void 0;
           }
         });
         input.step = String((_h = row.step) != null ? _h : 1);
@@ -11308,52 +11318,106 @@ var BZW_memo = (() => {
         ctrlEl.innerHTML = selectTriggerHtml(labelOf(String((_i = acc.read()) != null ? _i : "") || options2[0] && options2[0].value || ""));
         const sel = ctrlEl.querySelector(".bz-select");
         const vspan = sel.querySelector(".bz-select-val");
-        sel.addEventListener("click", () => {
+        let group = null;
+        let docH = null;
+        let escLayer = null;
+        const closeMenu2 = () => {
+          var _a3;
+          (_a3 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a3.remove();
+          sel.setAttribute("aria-expanded", "false");
+          if (escLayer) {
+            escLayer.unregister();
+            escLayer = null;
+          }
+          if (group && !group.querySelector(".bz-select-menu")) {
+            group.style.overflow = "";
+            group.style.zIndex = "";
+          }
+          if (docH) document.removeEventListener("click", docH);
+        };
+        const moveHighlight = (delta) => {
+          const items = [...sel.querySelectorAll(".bz-select-item")];
+          if (!items.length) return;
+          const curIdx = items.findIndex((it) => it.classList.contains("is-on"));
+          const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+          items.forEach((it, i) => {
+            const on = i === nextIdx;
+            it.classList.toggle("is-on", on);
+            it.setAttribute("aria-selected", String(on));
+          });
+        };
+        const applyOption = (o) => {
+          var _a3;
+          try {
+            acc.write(o.value);
+          } catch (e) {
+            notifyWriteError(e);
+            closeMenu2();
+            return;
+          }
+          closeMenu2();
+          vspan.textContent = labelOf(o.value);
+          safePersist(() => acc.persist(), rowName || "下拉设置");
+          (_a3 = row.onChange) == null ? void 0 : _a3.call(row, o.value, ctx);
+          refresh2();
+        };
+        const openMenu = () => {
           var _a3;
           if (sel.querySelector(".bz-select-menu")) return;
-          const group = sel.closest(".bz-sp-group");
+          group = sel.closest(".bz-sp-group");
           if (group) {
             group.style.overflow = "visible";
             group.style.zIndex = "10";
           }
-          const closeMenu2 = () => {
-            var _a4;
-            (_a4 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a4.remove();
-            if (group && !group.querySelector(".bz-select-menu")) {
-              group.style.overflow = "";
-              group.style.zIndex = "";
-            }
-            document.removeEventListener("click", h);
-          };
-          const h = (ev) => {
-            if (!sel.contains(ev.target)) closeMenu2();
-          };
-          setTimeout(() => document.addEventListener("click", h));
           const menu = document.createElement("div");
           menu.className = "bz-select-menu";
+          menu.setAttribute("role", "listbox");
           const curNow = String((_a3 = acc.read()) != null ? _a3 : "") || options2[0] && options2[0].value || "";
           menu.innerHTML = options2.map((o) => selectItemHtml(o.label, o.value === curNow)).join("");
+          menu.querySelectorAll(".bz-select-item").forEach((it) => it.classList.add("bz-touch-target--lg"));
           menu.querySelectorAll(".bz-select-item").forEach((it, i) => {
             const o = options2[i];
             it.addEventListener("click", (ev) => {
-              var _a4;
               ev.stopPropagation();
-              try {
-                acc.write(o.value);
-              } catch (e) {
-                notifyWriteError(e);
-                closeMenu2();
-                return;
-              }
-              closeMenu2();
-              vspan.textContent = labelOf(o.value);
-              void acc.persist();
-              (_a4 = row.onChange) == null ? void 0 : _a4.call(row, o.value, ctx);
-              refresh2();
+              applyOption(o);
             });
           });
           sel.appendChild(menu);
+          sel.setAttribute("aria-expanded", "true");
           mountIcons(menu);
+          docH = (ev) => {
+            if (!sel.contains(ev.target)) closeMenu2();
+          };
+          setTimeout(() => document.addEventListener("click", docH));
+          escLayer = escManager.register("bz-ui-select", {
+            isVisible: () => !!sel.querySelector(".bz-select-menu"),
+            close: () => closeMenu2()
+          });
+        };
+        sel.addEventListener("click", () => {
+          if (sel.querySelector(".bz-select-menu")) closeMenu2();
+          else openMenu();
+        });
+        sel.addEventListener("keydown", (e) => {
+          const menu = sel.querySelector(".bz-select-menu");
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            if (menu) {
+              const items = [...menu.querySelectorAll(".bz-select-item")];
+              const idx = items.findIndex((it) => it.classList.contains("is-on"));
+              if (idx >= 0) applyOption(options2[idx]);
+              else closeMenu2();
+            } else {
+              openMenu();
+            }
+            return;
+          }
+          if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+            e.preventDefault();
+            e.stopPropagation();
+            if (!menu) openMenu();
+            moveHighlight(e.key === "ArrowDown" ? 1 : -1);
+          }
         });
         break;
       }
@@ -11368,8 +11432,9 @@ var BZW_memo = (() => {
           em.textContent = range.value;
           const v = Number(range.value);
           acc.write(v);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || "滑条设置");
           (_a3 = row.onChange) == null ? void 0 : _a3.call(row, v, ctx);
+          refresh2();
         });
         for (const a of (_m = row.actions) != null ? _m : []) {
           const holder2 = document.createElement("div");
@@ -11386,7 +11451,7 @@ var BZW_memo = (() => {
         const fallbackFn = row.fallbackValue;
         const onCommit = row.onCommit;
         const initRaw = acc.read();
-        const warn = new SpCommitWarn(
+        const warn = new CommitWarn(
           multi ? JSON.stringify(initRaw != null ? initRaw : []) : String(initRaw != null ? initRaw : ""),
           onCommit
         );
@@ -11403,9 +11468,10 @@ var BZW_memo = (() => {
             var _a3;
             const v = multi ? list : (list[0] || "").trim().replace(/^\/+|\/+$/g, "");
             acc.write(v);
-            void acc.persist();
+            safePersist(() => acc.persist(), rowName || "路径设置");
             const res = (_a3 = row.onChange) == null ? void 0 : _a3.call(row, list, ctx);
             warn.fire(multi ? JSON.stringify(v) : String(v));
+            refresh2();
             if (res && typeof res.then === "function") {
               return Promise.resolve(res).then(
                 (final) => Array.isArray(final) ? final : list
@@ -11446,8 +11512,13 @@ var BZW_memo = (() => {
               void (async () => {
                 var _a3;
                 const cur = (typeof row.items === "function" ? row.items() : row.items).map((x) => x.key);
-                await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, cur.filter((k) => k !== key), ctx));
-                refresh2();
+                try {
+                  await ((_a3 = row.onChange) == null ? void 0 : _a3.call(row, cur.filter((k) => k !== key), ctx));
+                } catch (e) {
+                  notifySaveError(e, rowName || "列表项");
+                } finally {
+                  refresh2();
+                }
               })();
             }
           }));
@@ -11482,9 +11553,13 @@ var BZW_memo = (() => {
               notifyWriteError(e);
               return;
             }
-            wrap.querySelectorAll(".is-on").forEach((x) => x.classList.remove("is-on"));
+            wrap.querySelectorAll(".is-on").forEach((x) => {
+              x.classList.remove("is-on");
+              x.setAttribute("aria-checked", "false");
+            });
             c.classList.add("is-on");
-            void acc.persist();
+            c.setAttribute("aria-checked", "true");
+            safePersist(() => acc.persist(), rowName || "卡片设置");
             (_c2 = row.onChange) == null ? void 0 : _c2.call(row, (_b3 = c.dataset.spCard) != null ? _b3 : "", ctx);
             refresh2();
           });
@@ -11580,7 +11655,7 @@ var BZW_memo = (() => {
       if (groupVw) {
         card.dataset.spGroupCond = "1";
         visibleConditions.set(card, groupVw);
-        card.style.display = groupVw(snapshot()) ? "" : "none";
+        applyCond(card, groupVw);
       }
       const parentToggleKey = (_b2 = (_a2 = g.rows.find(
         (pr) => {
@@ -11600,40 +11675,42 @@ var BZW_memo = (() => {
         if (vw) {
           rowEl.dataset.spRow = String(i);
           visibleConditions.set(rowEl, vw);
-          rowEl.style.display = vw(snapshot()) ? "" : "none";
+          applyCond(rowEl, vw);
         }
       });
     });
     mountIcons(container);
     return { refresh: refresh2 };
   }
-  var SpCommitWarn, displaySetters, groupCountUpdaters;
+  function closeAllSelectMenus(root) {
+    root.querySelectorAll(".bz-select").forEach((sel) => {
+      var _a2;
+      if (!sel.querySelector(".bz-select-menu")) return;
+      (_a2 = sel.querySelector(".bz-select-menu")) == null ? void 0 : _a2.remove();
+      sel.setAttribute("aria-expanded", "false");
+      const group = sel.closest(".bz-sp-group");
+      if (group && !group.querySelector(".bz-select-menu")) {
+        group.style.overflow = "";
+        group.style.zIndex = "";
+      }
+    });
+  }
+  function refreshGroupCounts(root) {
+    root.querySelectorAll(".bz-sp-group").forEach((card) => {
+      var _a2;
+      (_a2 = groupCountUpdaters.get(card)) == null ? void 0 : _a2();
+    });
+  }
+  var displaySetters, groupCountUpdaters;
   var init_renderer = __esm({
     "src/settings-panel/renderer.ts"() {
       init_settings_provider();
       init_path_picker();
       init_settings_schema();
       init_notice();
+      init_esc_manager();
       init_render4();
       init_ui();
-      SpCommitWarn = class {
-        constructor(initial, onCommit) {
-          this.initial = initial;
-          this.onCommit = onCommit;
-          this.warnedInitial = null;
-        }
-        fire(current2) {
-          if (!this.onCommit) return;
-          if (current2 !== this.initial) {
-            if (this.warnedInitial !== this.initial) {
-              this.warnedInitial = this.initial;
-              this.onCommit();
-            }
-          } else {
-            this.warnedInitial = null;
-          }
-        }
-      };
       displaySetters = /* @__PURE__ */ new WeakMap();
       groupCountUpdaters = /* @__PURE__ */ new WeakMap();
     }
@@ -13312,6 +13389,9 @@ var BZW_memo = (() => {
       { file: storageFile("review-fit.json"), label: "复习拟合参数" },
       { file: storageFile("home.json"), label: "内容首页" },
       { file: storageFile("smartcat.json"), label: "小橘" },
+      { file: storageFile("smartcat-memory.json"), label: "小橘记忆流" },
+      { file: storageFile("smartcat-behavior.json"), label: "小橘行为流" },
+      { file: storageFile("lock-stats.json"), label: "锁屏统计" },
       { file: storageFile("knowledge.json"), label: "知识盒" },
       { file: storageFile("secondbrain.json"), label: "第二大脑" },
       { file: storageFile("quiz.json"), label: "复习做题" },
@@ -13358,14 +13438,17 @@ var BZW_memo = (() => {
   });
 
   // src/checkup/checks-json.ts
-  function verdictOfJsonTarget(file, label, parsed, backups) {
-    if (parsed === null) return { file, label, state: "missing", backups: [] };
+  function verdictOfJsonTarget(file, label, parsed, backups, unreadable = false) {
+    if (parsed === null) {
+      return unreadable ? { file, label, state: "unreadable", backups: [] } : { file, label, state: "missing", backups: [] };
+    }
     return { file, label, state: parsed.ok ? "ok" : "corrupt", backups: parsed.ok ? [] : backups };
   }
   function jsonIssuesOf(verdicts) {
     const issues = [];
     const existing = verdicts.filter((v) => v.state !== "missing");
     const bad = verdicts.filter((v) => v.state === "corrupt");
+    const stuck = verdicts.filter((v) => v.state === "unreadable");
     for (const v of bad) {
       const lines = [`文件：${v.file}`];
       if (v.backups.length) lines.push(`留档：${v.backups.map((b) => `${CORRUPT_DIR}/${b}`).join("、")}`);
@@ -13376,25 +13459,35 @@ var BZW_memo = (() => {
         detail: lines.join("\n")
       });
     }
-    if (issues.length) {
+    for (const v of stuck) {
       issues.push({
         severity: "warn",
-        title: `坏文件已由存储层自动留档并重建（D1 契约）`,
-        detail: `解析失败时原内容先留档到 ${CORRUPT_DIR}/ 再重建默认文件，数据不会丢；可从留档手工恢复。`
+        title: `${v.label}数据文件存在但读不动（非损坏非缺失）`,
+        detail: `文件：${v.file}
+读取时出错（可能被占用、权限不足或同步盘瞬时故障）。本次体检未检查该文件内容，请稍后重新体检。`
       });
     }
-    const summary = bad.length ? `${existing.length} 个数据文件中 ${bad.length} 个无法解析` : `${existing.length} 个数据文件全部可解析`;
+    if (bad.length) {
+      issues.push({
+        severity: "warn",
+        title: `坏文件将在对应功能下次读取时自动留档并重建（D1 契约）`,
+        detail: `对应功能下次读取该文件时，解析失败的原内容会先留档到 ${CORRUPT_DIR}/ 再重建默认文件，数据不会丢；可从留档手工恢复（体检当下不改动任何文件）。`
+      });
+    }
+    const summary = bad.length ? `${existing.length} 个数据文件中 ${bad.length} 个无法解析` : stuck.length ? `${existing.length} 个数据文件中 ${stuck.length} 个读不动（请重新体检）` : `${existing.length} 个数据文件全部可解析`;
     return { summary, issues };
   }
   async function checkJsonFiles(app, opts = {}) {
     var _a2, _b2;
     const targets = jsonScanTargets(app);
     const verdicts = [];
-    for (const t of targets) {
+    for (let i = 0; i < targets.length; i++) {
+      const t = targets[i];
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
       const parsed = await readRawJson(app, t.file);
-      verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, parsed && !parsed.ok ? corruptBackupsFor(app, t.file) : []));
-      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `${t.label}（${t.file}）`));
+      const unreadable = parsed === null && fileExists(app, t.file);
+      verdicts.push(verdictOfJsonTarget(t.file, t.label, parsed, parsed && !parsed.ok ? corruptBackupsFor(app, t.file) : [], unreadable));
+      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `${t.label}（${t.file}）`, { done: i + 1, total: targets.length }));
     }
     const { summary, issues } = jsonIssuesOf(verdicts);
     const section = { id: "json", name: "数据文件可解析", summary, issues, scanned: verdicts.filter((v) => v.state !== "missing").length };
@@ -13471,15 +13564,24 @@ var BZW_memo = (() => {
       if (!r.parsed.ok) continue;
       const bad = (n) => n > 0;
       let hasDrift = false;
+      if (r.plan.kind === "item" && r.plan.file.endsWith("favorites.json") && r.parsed && r.parsed.ok && !Array.isArray(r.parsed.data)) {
+        hasDrift = true;
+        issues.push({
+          severity: "warn",
+          title: `${r.plan.label}：不是条目数组形态（读取链会失败）`,
+          detail: `文件：${r.plan.file}
+当前根是 ${Array.isArray(r.parsed.data) ? "数组" : r.parsed.data && typeof r.parsed.data === "object" ? "对象" : typeof r.parsed.data}，收藏本读取链期望「条目数组」；请从留档或备份恢复。`
+        });
+      }
       if (r.item) {
         const s = r.item;
         if (bad(s.nonObject)) {
           hasDrift = true;
           issues.push({
             severity: "error",
-            title: `${r.plan.label}：${s.nonObject} 条非对象条目（两条读取链都会失败）`,
+            title: `${r.plan.label}：${s.nonObject} 条非对象条目（读取链会在这里中断）`,
             detail: `文件：${r.plan.file}
-数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），备忘录的读取链都会在这里中断，请从留档或备份修复该文件。`
+数组里混入了 ${s.nonObject} 条非对象内容（字符串/数字等），${r.plan.label}的读取链都会在这里中断，请从留档或备份修复该文件。`
           });
         }
         if (Object.keys(s.extra).length) {
@@ -13551,7 +13653,8 @@ ${countsToText(s.missing)}
     var _a2, _b2;
     const plans = driftPlans(app);
     const results = [];
-    for (const plan of plans) {
+    for (let i = 0; i < plans.length; i++) {
+      const plan = plans[i];
       if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
       const parsed = await readRawJson(app, plan.file);
       if (parsed && parsed.ok) {
@@ -13568,7 +13671,7 @@ ${countsToText(s.missing)}
       } else {
         results.push({ plan, parsed });
       }
-      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, plan.label));
+      await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, plan.label, { done: i + 1, total: plans.length }));
     }
     const { summary, issues } = driftIssuesOf(results);
     return { id: "drift", name: "字段漂移", summary, issues, scanned: results.filter((r) => r.parsed).length };
@@ -13615,5025 +13718,29 @@ ${countsToText(s.missing)}
         // archived = issue 357 周归档可选段（深审 PA-1：本插件自己写的正常归档数据，不得被体检
         // 误报「约定外数据段/可能是外部写入」；旧文件缺此段走「缺少数据段」info 常态，不修数据）
         "pomodoro.json": ["version", "state", "history", "archived"],
-        "clipbook.json": ["articleOverrides", "savedArchive", "order"],
-        "news.json": ["articles", "stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds"],
+        // clipbook 7 段 = clipbook/data.ts emptySidecar()（issue 339 marks/savedImages/pendingSource
+        // + issue 358 readLog 扩段；func P2-1：此前漏 4 段致用过剪藏本即恒误报）
+        "clipbook.json": ["articleOverrides", "savedArchive", "order", "marks", "savedImages", "pendingSource", "readLog"],
+        // news 10 段 = clipbook/news-data.ts emptyData()（issue 302 lastFetchAt/fetchIntervalMin 扩段；func P2-2）
+        "news.json": [
+          "articles",
+          "stats",
+          "bilibiliUps",
+          "bilibiliUpInfo",
+          "bilibiliMaxItems",
+          "bilibiliCookie",
+          "sources",
+          "rssFeeds",
+          "lastFetchAt",
+          "fetchIntervalMin"
+        ],
+        // home v3 五键 = home/order.ts emptyHomeOrder()（home 批 1d26c797 已修）
         "home.json": ["version", "desk", "mob", "hiddenDesk", "hiddenMob"],
-        "belongings.json": ["version", "last_updated", "items", "categories", "categoryIcons"],
+        // belongings 3 段 = belongings/data.ts belongingsSaveShape 落盘键集（ADR-0102：categories/
+        // categoryIcons 为内存派生段设计上不落盘——func P2-4/A1：此前多列 2 键致恒报「缺少数据段」info）
+        "belongings.json": ["version", "last_updated", "items"],
         "quiz.json": ["notes"]
       };
-    }
-  });
-
-  // src/cinema/constants.ts
-  function getGroupForTag(tag) {
-    for (const [group, tags] of Object.entries(TYPE_GROUPS)) {
-      if (tags.includes(tag)) return group;
-    }
-    return null;
-  }
-  function getGroupSafe(tag) {
-    var _a2;
-    return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
-  }
-  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, ILLEGAL_NAME_CHARS, ILLEGAL_NAME_RE, ILLEGAL_NAME_RE_GLOBAL, TYPE_GROUPS, ALL_TAGS;
-  var init_constants = __esm({
-    "src/cinema/constants.ts"() {
-      STATUS_WANT = 0;
-      STATUS_WATCHING = 1;
-      STATUS_WATCHED = 2;
-      ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
-      ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
-      ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, "g");
-      TYPE_GROUPS = {
-        电影: ["电影"],
-        剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
-        动漫: ["日漫", "国漫", "美漫"],
-        纪录片: ["纪录片"],
-        公开课: ["公开课", "TED"]
-      };
-      ALL_TAGS = Object.values(TYPE_GROUPS).flat();
-    }
-  });
-
-  // src/cinema/douban-fetcher.ts
-  function extractMovieName(filename) {
-    const basename = stripMdExt(filename);
-    const m = basename.match(/《(.+)》/);
-    return m ? m[1] : basename;
-  }
-  var POSTER_FOLDER;
-  var init_douban_fetcher = __esm({
-    "src/cinema/douban-fetcher.ts"() {
-      init_str();
-      init_constants();
-      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
-    }
-  });
-
-  // src/cinema/state.ts
-  function resolveCinemaFolderPath() {
-    try {
-      const s = tryGetSettings();
-      return typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
-    } catch (e) {
-      return DEFAULT_FOLDER;
-    }
-  }
-  var DEFAULT_FOLDER;
-  var init_state4 = __esm({
-    "src/cinema/state.ts"() {
-      init_settings_provider();
-      DEFAULT_FOLDER = "我的/影视";
-    }
-  });
-
-  // src/cinema/data.ts
-  function parseMovieFile(file, app) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
-    const cache = app.metadataCache.getFileCache(file);
-    if (!cache || !cache.frontmatter) return null;
-    const fm = cache.frontmatter;
-    const name = extractMovieName(file.basename);
-    let rawTags = fm.tags;
-    if (typeof rawTags === "string") rawTags = [rawTags];
-    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
-    let typeTag = null;
-    for (const t of ALL_TAGS) {
-      if (tags.includes(t)) {
-        typeTag = t;
-        break;
-      }
-    }
-    if (!typeTag) {
-      if (tags.length === 0) return null;
-      typeTag = tags[0];
-    }
-    const watchDate = (_b2 = (_a2 = fm["观影日期"]) == null ? void 0 : _a2.toString()) != null ? _b2 : null;
-    const rawRating = fm["评分"];
-    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
-    let status;
-    if (rating === -1) status = STATUS_WANT;
-    else if (rating === 0) status = STATUS_WATCHING;
-    else status = STATUS_WATCHED;
-    return {
-      file,
-      name,
-      typeTag,
-      group: getGroupSafe(typeTag),
-      watchDate,
-      rating,
-      status,
-      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
-      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
-      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
-      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
-      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
-      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
-      year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
-      releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
-      doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
-      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
-      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
-      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
-      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
-      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
-      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
-    };
-  }
-  var init_data4 = __esm({
-    "src/cinema/data.ts"() {
-      init_constants();
-      init_douban_fetcher();
-      init_state4();
-    }
-  });
-
-  // src/checkup/checks-orphans.ts
-  function clipDirOf() {
-    const s = tryGetSettings();
-    return (s && s.articleDirectory || "归档/网页剪藏").replace(/\/+$/, "");
-  }
-  async function clipUrlSet(app) {
-    var _a2;
-    const dir = clipDirOf();
-    const set = /* @__PURE__ */ new Set();
-    const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(dir + "/"));
-    for (const f of files) {
-      const cache = app.metadataCache.getFileCache(f);
-      const url = (_a2 = cache == null ? void 0 : cache.frontmatter) == null ? void 0 : _a2.url;
-      if (typeof url === "string" && url) set.add(url);
-    }
-    return set;
-  }
-  async function checkOrphans(app, opts = {}) {
-    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t;
-    const issues = [];
-    let scanned = 0;
-    {
-      const s = tryGetSettings();
-      const folder = s && s.cinemaFolderPath || "我的/影视";
-      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
-      for (const f of files) {
-        if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-        const item = parseMovieFile(f, app);
-        if (!item) continue;
-        scanned += 1;
-        const poster = (item.poster || "").trim();
-        if (poster && !fileExists(app, poster)) {
-          issues.push({
-            severity: "warn",
-            title: `影视《${item.name}》的海报文件不存在`,
-            detail: `笔记：${f.path}
-海报路径：${poster}
-详情页会显示占位图；请补回文件或清空笔记的「海报」字段。`
-          });
-        }
-        await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `影院 · ${item.name}`));
-      }
-    }
-    {
-      const mdBooks = scanMarkdownBooks(app);
-      for (const b of mdBooks) {
-        if ((_c = opts.isCancelled) == null ? void 0 : _c.call(opts)) return null;
-        scanned += 1;
-        const cover = (b.cover || "").trim();
-        if (cover && !fileExists(app, cover)) {
-          issues.push({
-            severity: "warn",
-            title: `书目《${b.title}》的封面文件不存在`,
-            detail: `笔记：${((_d = b.file) == null ? void 0 : _d.path) || "(未知)"}
-封面路径：${cover}
-书库会显示占位封面；请补回文件或清空笔记的 cover 字段。`
-          });
-        }
-        await ((_e = opts.tick) == null ? void 0 : _e.call(opts, `书库 · ${b.title}`));
-      }
-      const epubs = await loadEpubItems(app);
-      for (const b of epubs) {
-        if ((_f = opts.isCancelled) == null ? void 0 : _f.call(opts)) return null;
-        scanned += 1;
-        const p = (b.epubVaultPath || "").trim();
-        if (p && !fileExists(app, p)) {
-          issues.push({
-            severity: "warn",
-            title: `EPUB 书目《${b.title}》指向的文件不存在`,
-            detail: `EPUB 路径：${p}
-该条目来自 weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。`
-          });
-        }
-        await ((_g = opts.tick) == null ? void 0 : _g.call(opts, `书库 · ${b.title}`));
-      }
-    }
-    {
-      const sidecarFile = ((_h = jsonScanTargets(app).find((t) => t.file.endsWith("/clipbook.json"))) == null ? void 0 : _h.file) || "CONFIG/STORAGE/clipbook.json";
-      const parsed = await readRawJson(app, sidecarFile);
-      const data = parsed && parsed.ok && parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data) ? parsed.data : null;
-      if (data) {
-        const savedArchive = data.savedArchive;
-        if (Array.isArray(savedArchive)) {
-          const urls = await clipUrlSet(app);
-          for (const entry of savedArchive) {
-            if ((_i = opts.isCancelled) == null ? void 0 : _i.call(opts)) return null;
-            scanned += 1;
-            const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
-            if (url && !urls.has(url)) {
-              issues.push({
-                severity: "warn",
-                title: `剪藏残留《${String(entry.title || url)}》对应的剪藏笔记不存在`,
-                detail: `侧写文件：${sidecarFile}
-链接：${url}
-剪藏目录（${clipDirOf()}）里已没有该链接的笔记，这条「已保存」残留失去意义，可清除。`,
-                fixGroup: "clipbook",
-                fixKey: url,
-                fixLabel: "清除残留"
-              });
-            }
-            await ((_j = opts.tick) == null ? void 0 : _j.call(opts, "剪藏本 · 已保存残留"));
-          }
-        }
-        const marks = data.marks && typeof data.marks === "object" && !Array.isArray(data.marks) ? data.marks : {};
-        for (const [articleKey, list] of Object.entries(marks)) {
-          if (!Array.isArray(list)) continue;
-          for (const mk of list) {
-            if ((_k = opts.isCancelled) == null ? void 0 : _k.call(opts)) return null;
-            if (!mk || typeof mk !== "object") continue;
-            scanned += 1;
-            const notePath = String(mk.notePath || "").trim();
-            if (notePath && !fileExists(app, notePath)) {
-              const find = String(mk.find || "");
-              issues.push({
-                severity: "warn",
-                title: `剪藏标注指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
-                detail: `侧写文件：${sidecarFile}
-条目：${articleKey}
-标注原文：${find}
-笔记路径：${notePath}
-这条标注的目标笔记已删除，保存物化时会被跳过，可清除该标注记录。`,
-                fixGroup: "clipbook-marks",
-                fixKey: JSON.stringify([articleKey, find, notePath]),
-                fixLabel: "清除标注"
-              });
-            }
-            await ((_l = opts.tick) == null ? void 0 : _l.call(opts, "剪藏本 · 划词标注"));
-          }
-        }
-        const pendingSource = data.pendingSource && typeof data.pendingSource === "object" && !Array.isArray(data.pendingSource) ? data.pendingSource : {};
-        for (const [articleKey, list] of Object.entries(pendingSource)) {
-          if (!Array.isArray(list)) continue;
-          for (const p of list) {
-            if ((_m = opts.isCancelled) == null ? void 0 : _m.call(opts)) return null;
-            scanned += 1;
-            const notePath = String(p || "").trim();
-            if (notePath && !fileExists(app, notePath)) {
-              issues.push({
-                severity: "warn",
-                title: `剪藏待回写来源指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
-                detail: `侧写文件：${sidecarFile}
-条目：${articleKey}
-笔记路径：${notePath}
-保存物化时这条来源回写会因目标缺失被跳过，可清除该待回写记录。`,
-                fixGroup: "clipbook-source",
-                fixKey: JSON.stringify([articleKey, notePath]),
-                fixLabel: "清除待回写来源"
-              });
-            }
-            await ((_n = opts.tick) == null ? void 0 : _n.call(opts, "剪藏本 · 待回写来源"));
-          }
-        }
-      }
-    }
-    {
-      const favFile = ((_o = jsonScanTargets(app).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _o.file) || "CONFIG/STORAGE/favorites.json";
-      const parsed = await readRawJson(app, favFile);
-      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
-        for (const it of parsed.data) {
-          if ((_p = opts.isCancelled) == null ? void 0 : _p.call(opts)) return null;
-          if (!it || typeof it !== "object") continue;
-          scanned += 1;
-          const note = String(it.linkedNote || "").trim();
-          if (note && !fileExists(app, note)) {
-            issues.push({
-              severity: "warn",
-              title: `收藏「${String(it.title || it.url || "(无标题)")}」的关联笔记不存在`,
-              detail: `数据文件：${favFile}
-关联路径：${note}
-「跳转笔记」会提示文件不存在；可清除该关联（收藏条目本体保留）。`,
-              fixGroup: "favorites",
-              fixKey: String(it.id || ""),
-              fixLabel: "清除关联"
-            });
-          }
-          await ((_q = opts.tick) == null ? void 0 : _q.call(opts, "收藏本 · 关联笔记"));
-        }
-      }
-    }
-    {
-      const kbFile = ((_r = jsonScanTargets(app).find((t) => t.file.endsWith("/knowledge.json"))) == null ? void 0 : _r.file) || "CONFIG/STORAGE/knowledge.json";
-      const parsed = await readRawJson(app, kbFile);
-      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
-        for (const it of parsed.data) {
-          if ((_s = opts.isCancelled) == null ? void 0 : _s.call(opts)) return null;
-          if (!it || typeof it !== "object") continue;
-          scanned += 1;
-          const id = String(it.id || "");
-          const note = String(it.notePath || "").trim();
-          const video = String(it.videoPath || "").trim();
-          const title = String(it.title || it.url || "(无标题)");
-          if (note && !fileExists(app, note)) {
-            issues.push({
-              severity: "warn",
-              title: `知识盒任务「${title}」的文献笔记不存在`,
-              detail: `数据文件：${kbFile}
-笔记路径：${note}
-任务卡「打开文献笔记」会失败；可清除该引用（任务本体保留）。`,
-              fixGroup: "knowledge",
-              fixKey: id ? `${id}|note` : "",
-              fixLabel: "清除笔记引用"
-            });
-          }
-          if (video && !fileExists(app, video)) {
-            issues.push({
-              severity: "warn",
-              title: `知识盒任务「${title}」的视频文件不存在`,
-              detail: `数据文件：${kbFile}
-视频路径：${video}
-任务卡「复制视频路径」指向的文件已缺失；可清除该路径（任务本体保留）。`,
-              fixGroup: "knowledge",
-              fixKey: id ? `${id}|video` : "",
-              fixLabel: "清除视频路径"
-            });
-          }
-          await ((_t = opts.tick) == null ? void 0 : _t.call(opts, "知识盒 · 任务引用"));
-        }
-      }
-    }
-    const summary = issues.length ? `扫描 ${scanned} 个条目，发现 ${issues.length} 处指向缺失` : `扫描 ${scanned} 个条目，未发现指向缺失`;
-    const section = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
-    return section;
-  }
-  var init_checks_orphans = __esm({
-    "src/checkup/checks-orphans.ts"() {
-      init_files();
-      init_settings_provider();
-      init_data4();
-      init_data3();
-    }
-  });
-
-  // src/checkup/checks-consistency.ts
-  function memoNormalize(item) {
-    const { title, scene, created } = item;
-    return {
-      id: item.id,
-      title,
-      scene,
-      priority: item.priority || "minor",
-      created,
-      completed: item.completed || null,
-      due: item.due || null,
-      notePath: item.notePath || null,
-      notePosition: item.notePosition || null,
-      scriptName: item.scriptName || null,
-      courseName: item.courseName || null,
-      coursePath: item.coursePath || null,
-      linkedNote: item.linkedNote || null,
-      url: item.url || null
-    };
-  }
-  function isPlainObject2(v) {
-    return !!v && typeof v === "object" && !Array.isArray(v);
-  }
-  function analyzeMemoConsistency(raw) {
-    const stats = {
-      total: Array.isArray(raw) ? raw.length : -1,
-      nonObject: 0,
-      missingId: 0,
-      duplicateId: 0,
-      missingTitle: 0,
-      storeView: { total: 0, done: 0 },
-      rawView: { total: 0, done: 0 }
-    };
-    if (!Array.isArray(raw)) return stats;
-    const seenIds = /* @__PURE__ */ new Set();
-    for (const it of raw) {
-      if (!isPlainObject2(it)) {
-        stats.nonObject += 1;
-        continue;
-      }
-      const id = typeof it.id === "string" && it.id ? it.id : "";
-      if (!id) stats.missingId += 1;
-      else if (seenIds.has(id)) stats.duplicateId += 1;
-      else seenIds.add(id);
-      if (!it.title || !String(it.title).trim()) stats.missingTitle += 1;
-      const m = memoNormalize(it);
-      if (m.completed !== null) stats.storeView.done += 1;
-      const t = normalizeItem(it);
-      if (t.completed) stats.rawView.done += 1;
-      stats.storeView.total += 1;
-      stats.rawView.total += 1;
-    }
-    return stats;
-  }
-  function consistencyIssuesOf(stats) {
-    const issues = [];
-    if (stats.total < 0) {
-      return {
-        summary: "文件不是条目数组形态",
-        issues: [
-          {
-            severity: "error",
-            title: "memo.json 不是条目数组形态（两条读取链都无法读取）",
-            detail: "两条读取链都期望「条目数组」；当前文件是其他形态，请从 CONFIG/.CORRUPT/ 留档或备份恢复。"
-          }
-        ]
-      };
-    }
-    if (stats.storeView.total !== stats.rawView.total || stats.storeView.done !== stats.rawView.done) {
-      issues.push({
-        severity: "error",
-        title: `双链计数不一致：单例读 ${stats.storeView.total} 条/完成 ${stats.storeView.done}，直读 ${stats.rawView.total} 条/完成 ${stats.rawView.done}`,
-        detail: "同一份 memo.json，两条读取链的统计口径出现分叉，说明字段归一链路有 bug，请反馈修复。"
-      });
-    }
-    if (stats.nonObject > 0) {
-      issues.push({
-        severity: "error",
-        title: `${stats.nonObject} 条非对象条目（两条读取链都会在这里中断）`,
-        detail: "数组里混入了非对象内容（字符串/数字等），两条链加载都会失败，请从留档或备份修复。"
-      });
-    }
-    if (stats.duplicateId > 0) {
-      issues.push({
-        severity: "warn",
-        title: `${stats.duplicateId} 条重复 id（完成/删除会同 id 联动误伤）`,
-        detail: "同 id 条目在两条读取链中都会被当成同一条处理：勾选完成一条，另一条也显示完成。"
-      });
-    }
-    if (stats.missingTitle > 0) {
-      issues.push({
-        severity: "warn",
-        title: `${stats.missingTitle} 条缺少标题（列表显示为空行）`,
-        detail: "标题是两条读取链共用的展示字段；缺失多为外部写入导致。"
-      });
-    }
-    if (stats.missingId > 0) {
-      issues.push({
-        severity: "info",
-        title: `${stats.missingId} 条缺少 id（下次读取时自动补）`,
-        detail: "加载链会自动生成 id 写回，无需处理。"
-      });
-    }
-    const bad = stats.nonObject + stats.duplicateId + stats.missingTitle;
-    const summary = issues.some((i) => i.severity === "error") ? "发现结构异常" : bad > 0 ? `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致，另有 ${bad} 处小问题` : `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致`;
-    return { summary, issues };
-  }
-  async function checkSameSourceConsistency(app, opts = {}) {
-    var _a2, _b2, _c;
-    if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-    const file = ((_b2 = jsonScanTargets(app).find((t) => t.file.endsWith("/memo.json"))) == null ? void 0 : _b2.file) || "CONFIG/STORAGE/memo.json";
-    const parsed = await readRawJson(app, file);
-    if (parsed === null) {
-      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 不存在（还没写过数据），跳过", issues: [], scanned: 0 };
-    }
-    if (!parsed.ok) {
-      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 无法解析（见「数据文件可解析」项），跳过", issues: [], scanned: 0 };
-    }
-    await ((_c = opts.tick) == null ? void 0 : _c.call(opts, "备忘录"));
-    const stats = analyzeMemoConsistency(parsed.data);
-    const { summary, issues } = consistencyIssuesOf(stats);
-    return { id: "consistency", name: "同源一致性（备忘录）", summary, issues, scanned: stats.total };
-  }
-  var init_checks_consistency = __esm({
-    "src/checkup/checks-consistency.ts"() {
-      init_files();
-      init_data();
-    }
-  });
-
-  // src/checkup/run.ts
-  async function runCheckup(app, opts = {}) {
-    var _a2, _b2;
-    const total = CHECK_LABELS.length;
-    const runners = [
-      (o) => checkJsonFiles(app, o),
-      (o) => checkFieldDrift(app, o),
-      (o) => checkOrphans(app, o),
-      (o) => checkSameSourceConsistency(app, o)
-    ];
-    const sections = [];
-    for (let i = 0; i < runners.length; i++) {
-      if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
-      (_b2 = opts.onProgress) == null ? void 0 : _b2.call(opts, { index: i, total, label: CHECK_LABELS[i] });
-      try {
-        const section = await runners[i]({
-          tick: async (label) => {
-            var _a3;
-            (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label });
-            await yieldToMainThread2();
-          },
-          isCancelled: () => {
-            var _a3;
-            return !!((_a3 = opts.isCancelled) == null ? void 0 : _a3.call(opts));
-          }
-        });
-        if (section === null) return null;
-        sections.push(section);
-      } catch (e) {
-        sections.push({
-          id: ["json", "drift", "orphan", "consistency"][i],
-          name: CHECK_LABELS[i],
-          summary: "检查未能完成",
-          issues: [{ severity: "error", title: `${CHECK_LABELS[i]}检查出错`, detail: e instanceof Error ? e.message : String(e) }],
-          scanned: 0
-        });
-      }
-    }
-    const report = { sections, finishedAt: (/* @__PURE__ */ new Date()).toLocaleString() };
-    lastReport = report;
-    return report;
-  }
-  function yieldToMainThread2() {
-    return yieldToMainThread();
-  }
-  function getLastCheckupReport() {
-    return lastReport;
-  }
-  function fixKeysOf(issues, group) {
-    return issues.filter((i) => i.fixGroup === group && i.fixKey).map((i) => i.fixKey);
-  }
-  async function fixFavorites(app, file, ids) {
-    const restored = /* @__PURE__ */ new Map();
-    const fixed = await enqueueFileTask(file, async () => {
-      var _a2;
-      const store2 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store2.read();
-      const want = new Set(ids);
-      let n = 0;
-      for (const it of data) {
-        if (!it || typeof it !== "object" || !want.has(String(it.id))) continue;
-        const note = String(it.linkedNote || "").trim();
-        if (!note) continue;
-        restored.set(String(it.id), (_a2 = it.linkedNote) != null ? _a2 : null);
-        it.linkedNote = null;
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条失效的收藏关联（条目保留）` : "没有需要清除的关联（数据已变化）",
-      undo: async () => {
-        if (!restored.size) return;
-        await enqueueFileTask(file, async () => {
-          var _a2;
-          const store2 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store2.read();
-          for (const it of data) {
-            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
-            it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixClipbook(app, file, urls) {
-    const removed = [];
-    const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, {
-        defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
-      });
-      const data = await store2.read();
-      const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
-      const want = new Set(urls);
-      const kept = [];
-      let n = 0;
-      list.forEach((entry, index) => {
-        const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
-        if (url && want.has(url)) {
-          removed.push({ url, title: String(entry.title || ""), savedAt: String(entry.savedAt || ""), index });
-          n += 1;
-        } else {
-          kept.push(entry);
-        }
-      });
-      if (n > 0) {
-        data.savedArchive = kept;
-        await store2.write(data);
-      }
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条剪藏「已保存」残留` : "没有需要清除的残留（数据已变化）",
-      undo: async () => {
-        if (!removed.length) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, {
-            defaultValue: () => ({ articleOverrides: {}, savedArchive: [], order: [] })
-          });
-          const data = await store2.read();
-          const list = Array.isArray(data && data.savedArchive) ? data.savedArchive : [];
-          for (const r of removed) {
-            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-            list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
-          }
-          data.savedArchive = list;
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixKnowledge(app, file, keys) {
-    const restored = /* @__PURE__ */ new Map();
-    const fixed = await enqueueFileTask(file, async () => {
-      var _a2;
-      const store2 = jsonFileStore(file, { defaultValue: [] });
-      const data = await store2.read();
-      let n = 0;
-      for (const key of keys) {
-        const bar = key.lastIndexOf("|");
-        if (bar <= 0) continue;
-        const id = key.slice(0, bar);
-        const field = key.slice(bar + 1) === "note" ? "notePath" : "videoPath";
-        const it = (Array.isArray(data) ? data : []).find((d) => d && typeof d === "object" && String(d.id) === id);
-        if (!it) continue;
-        const cur = String(it[field] || "").trim();
-        if (!cur) continue;
-        const rec = (_a2 = restored.get(id)) != null ? _a2 : {};
-        rec[field === "notePath" ? "notePath" : "videoPath"] = it[field];
-        restored.set(id, rec);
-        it[field] = null;
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 处知识盒任务的失效引用（任务保留）` : "没有需要清除的引用（数据已变化）",
-      undo: async () => {
-        if (!restored.size) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, { defaultValue: [] });
-          const data = await store2.read();
-          for (const it of Array.isArray(data) ? data : []) {
-            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
-            const rec = restored.get(String(it.id));
-            if (rec.notePath !== void 0) it.notePath = rec.notePath;
-            if (rec.videoPath !== void 0) it.videoPath = rec.videoPath;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  function clipbookDefault() {
-    return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {} };
-  }
-  function recordSectionOf(data, key) {
-    const cur = data && typeof data === "object" ? data[key] : void 0;
-    if (cur && typeof cur === "object" && !Array.isArray(cur)) return cur;
-    data[key] = {};
-    return data[key];
-  }
-  async function fixClipbookMarks(app, file, keys) {
-    const removed = [];
-    const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-      const data = await store2.read();
-      const marks = recordSectionOf(data, "marks");
-      let n = 0;
-      for (const key of keys) {
-        let articleKey = "";
-        let find = "";
-        let notePath = "";
-        try {
-          const [a, f, p] = JSON.parse(key);
-          articleKey = String(a != null ? a : "");
-          find = String(f != null ? f : "");
-          notePath = String(p != null ? p : "");
-        } catch (e) {
-          continue;
-        }
-        if (!articleKey || !notePath) continue;
-        const list = Array.isArray(marks[articleKey]) ? marks[articleKey] : [];
-        const idx = list.findIndex(
-          (m) => m && typeof m === "object" && String(m.find || "") === find && String(m.notePath || "") === notePath
-        );
-        if (idx === -1) continue;
-        removed.push({ articleKey, mark: list[idx], index: idx });
-        list.splice(idx, 1);
-        if (list.length === 0) delete marks[articleKey];
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条失效的剪藏标注` : "没有需要清除的标注（数据已变化）",
-      undo: async () => {
-        if (!removed.length) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-          const data = await store2.read();
-          const marks = recordSectionOf(data, "marks");
-          for (const r of removed) {
-            const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
-            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-            list.splice(at, 0, r.mark);
-            marks[r.articleKey] = list;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixClipbookPendingSource(app, file, keys) {
-    const removed = [];
-    const fixed = await enqueueFileTask(file, async () => {
-      const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-      const data = await store2.read();
-      const pending = recordSectionOf(data, "pendingSource");
-      let n = 0;
-      for (const key of keys) {
-        let articleKey = "";
-        let notePath = "";
-        try {
-          const [a, p] = JSON.parse(key);
-          articleKey = String(a != null ? a : "");
-          notePath = String(p != null ? p : "");
-        } catch (e) {
-          continue;
-        }
-        if (!articleKey || !notePath) continue;
-        const list = Array.isArray(pending[articleKey]) ? pending[articleKey] : [];
-        const idx = list.findIndex((p) => String(p || "") === notePath);
-        if (idx === -1) continue;
-        removed.push({ articleKey, notePath, index: idx });
-        list.splice(idx, 1);
-        if (list.length === 0) delete pending[articleKey];
-        n += 1;
-      }
-      if (n > 0) await store2.write(data);
-      return n;
-    });
-    return {
-      fixed,
-      label: fixed ? `已清除 ${fixed} 条失效的剪藏待回写来源` : "没有需要清除的待回写来源（数据已变化）",
-      undo: async () => {
-        if (!removed.length) return;
-        await enqueueFileTask(file, async () => {
-          const store2 = jsonFileStore(file, { defaultValue: clipbookDefault });
-          const data = await store2.read();
-          const pending = recordSectionOf(data, "pendingSource");
-          for (const r of removed) {
-            const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
-            const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-            list.splice(at, 0, r.notePath);
-            pending[r.articleKey] = list;
-          }
-          await store2.write(data);
-        });
-      }
-    };
-  }
-  async function fixOrphanIssues(app, issues) {
-    const outcomes = [];
-    const targets = jsonScanTargets(app);
-    const fileOf = (suffix) => {
-      var _a2;
-      return ((_a2 = targets.find((t) => t.file.endsWith("/" + suffix))) == null ? void 0 : _a2.file) || "CONFIG/STORAGE/" + suffix;
-    };
-    const favIds = fixKeysOf(issues, "favorites");
-    if (favIds.length) outcomes.push(await fixFavorites(app, fileOf("favorites.json"), favIds));
-    const clipUrls = fixKeysOf(issues, "clipbook");
-    if (clipUrls.length) outcomes.push(await fixClipbook(app, fileOf("clipbook.json"), clipUrls));
-    const markKeys = fixKeysOf(issues, "clipbook-marks");
-    if (markKeys.length) outcomes.push(await fixClipbookMarks(app, fileOf("clipbook.json"), markKeys));
-    const srcKeys = fixKeysOf(issues, "clipbook-source");
-    if (srcKeys.length) outcomes.push(await fixClipbookPendingSource(app, fileOf("clipbook.json"), srcKeys));
-    const kbKeys = fixKeysOf(issues, "knowledge");
-    if (kbKeys.length) outcomes.push(await fixKnowledge(app, fileOf("knowledge.json"), kbKeys));
-    return outcomes;
-  }
-  var CHECK_LABELS, lastReport;
-  var init_run = __esm({
-    "src/checkup/run.ts"() {
-      init_utils();
-      init_storage();
-      init_files();
-      init_checks_json();
-      init_checks_drift();
-      init_checks_orphans();
-      init_checks_consistency();
-      CHECK_LABELS = ["数据文件可解析", "字段漂移", "孤儿条目", "同源一致性"];
-      lastReport = null;
-    }
-  });
-
-  // src/checkup/ui.ts
-  function openDataCheckup(app) {
-    hostApp = app;
-    if (!overlay) build(app);
-    topifyZ(overlay);
-    overlay.style.display = "flex";
-    renderBody();
-  }
-  function unloadDataCheckup() {
-    runSeq += 1;
-    running = false;
-    hostApp = null;
-    escHandle2 == null ? void 0 : escHandle2.unregister();
-    escHandle2 = null;
-    overlay == null ? void 0 : overlay.remove();
-    overlay = null;
-  }
-  function build(app) {
-    const ov = document.createElement("div");
-    ov.id = OVERLAY_ID;
-    ov.className = "bz-panel-overlay";
-    const frame = document.createElement("div");
-    frame.id = FRAME_ID;
-    frame.className = "bz-panel-frame bz-checkup-popup";
-    const head = document.createElement("div");
-    head.className = "bz-panel-head";
-    const brand = document.createElement("div");
-    brand.className = "bz-panel-brand";
-    brand.appendChild(uiIcon("stethoscope"));
-    const title = document.createElement("div");
-    title.className = "bz-panel-title";
-    title.textContent = "数据体检";
-    const sp = document.createElement("div");
-    sp.className = "bz-panel-head-sp";
-    head.append(brand, title, sp);
-    const body = document.createElement("div");
-    body.className = "bz-checkup-body";
-    const foot = document.createElement("div");
-    foot.className = "bz-checkup-foot";
-    frame.append(head, body, foot);
-    ov.appendChild(frame);
-    ov.addEventListener("click", (e) => {
-      if (e.target === ov) hide();
-    });
-    document.body.appendChild(ov);
-    overlay = ov;
-    escHandle2 = escManager.register("bz-checkup", {
-      isVisible: () => !!overlay && overlay.style.display === "flex",
-      close: () => hide()
-    });
-  }
-  function hide() {
-    if (overlay) overlay.style.display = "none";
-  }
-  function bodyEl() {
-    return overlay.querySelector(".bz-checkup-body");
-  }
-  function footEl() {
-    return overlay.querySelector(".bz-checkup-foot");
-  }
-  function renderBody() {
-    if (!overlay) return;
-    if (running) {
-      renderRunning();
-      return;
-    }
-    const last = getLastCheckupReport();
-    if (last) renderReport(last, true);
-    else renderIdle();
-  }
-  function renderIdle() {
-    const body = bodyEl();
-    body.innerHTML = "";
-    const actions = document.createElement("div");
-    actions.className = "bz-btn-row bz-btn-row--center";
-    actions.appendChild(uiBtn({ label: "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() }));
-    body.appendChild(
-      uiEmpty({
-        icon: "stethoscope",
-        title: "还没体检过",
-        desc: "体检会检查各域数据文件能否解析、字段是否漂移、条目指向是否失效，全程只读不改数据",
-        actions
-      })
-    );
-    renderFoot();
-  }
-  function renderFoot() {
-    const foot = footEl();
-    foot.innerHTML = "";
-    if (running) {
-      foot.appendChild(uiBtn({ label: "取消体检", onClick: () => cancelRun() }));
-      return;
-    }
-    const last = getLastCheckupReport();
-    foot.appendChild(
-      uiBtn({ label: last ? "重新体检" : "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() })
-    );
-  }
-  async function startRun() {
-    if (!hostApp || running) return;
-    running = true;
-    const seq = ++runSeq;
-    renderRunning();
-    try {
-      const report = await runCheckup(hostApp, {
-        isCancelled: () => seq !== runSeq,
-        onProgress: (p) => {
-          if (seq !== runSeq) return;
-          updateProgress(p.index, p.total, p.label);
-        }
-      });
-      if (seq !== runSeq) return;
-      running = false;
-      if (report) renderReport(report, false);
-      else renderBody();
-    } catch (e) {
-      running = false;
-      if (seq !== runSeq) return;
-      notice("体检失败：" + (e instanceof Error ? e.message : String(e)), "error");
-      renderBody();
-    }
-  }
-  function cancelRun() {
-    runSeq += 1;
-    running = false;
-    renderBody();
-  }
-  function renderRunning() {
-    renderFoot();
-    const body = bodyEl();
-    body.innerHTML = "";
-    const progress = document.createElement("div");
-    progress.className = "bz-checkup-progress";
-    progress.textContent = "体检中…";
-    body.append(progress, uiProgress().el);
-    const list = document.createElement("div");
-    list.className = "bz-checkup-steps";
-    for (let i = 0; i < 4; i++) {
-      const row = document.createElement("div");
-      row.className = "bz-checkup-step";
-      row.dataset.step = String(i);
-      const mark = document.createElement("span");
-      mark.className = "bz-checkup-step-mark";
-      const name = document.createElement("span");
-      name.className = "bz-checkup-step-name";
-      name.textContent = ["数据文件可解析", "字段漂移", "孤儿条目", "同源一致性"][i];
-      row.append(mark, name);
-      list.appendChild(row);
-    }
-    body.appendChild(list);
-  }
-  function updateProgress(index, total, label) {
-    if (!overlay) return;
-    const progress = overlay.querySelector(".bz-checkup-progress");
-    const fill = overlay.querySelector(".bz-progress i");
-    if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
-    if (fill) fill.style.width = Math.round(index / total * 100) + "%";
-    overlay.querySelectorAll(".bz-checkup-step").forEach((row) => {
-      const i = Number(row.dataset.step);
-      row.classList.toggle("is-done", i < index);
-      row.classList.toggle("is-current", i === index);
-    });
-  }
-  function severityCounts(report) {
-    const c = { error: 0, warn: 0, info: 0 };
-    for (const s of report.sections) for (const i of s.issues) c[i.severity] += 1;
-    return c;
-  }
-  function renderReport(report, stale) {
-    renderFoot();
-    const body = bodyEl();
-    body.innerHTML = "";
-    if (stale) {
-      const hint = document.createElement("div");
-      hint.className = "bz-checkup-stale";
-      hint.textContent = `上次体检：${report.finishedAt} · 数据可能已变化，可重新体检`;
-      body.appendChild(hint);
-    }
-    const counts = severityCounts(report);
-    const summary = document.createElement("div");
-    summary.className = "bz-checkup-summary" + (counts.error ? " bz-checkup-summary--bad" : counts.warn ? " bz-checkup-summary--warn" : " bz-checkup-summary--ok");
-    summary.textContent = counts.error ? `体检完成：${counts.error} 个问题需要处理` : counts.warn ? `体检完成：${counts.warn} 处建议处理` : "体检完成：全部通过";
-    body.appendChild(summary);
-    const allIssues = report.sections.flatMap((s) => s.issues);
-    const errors = allIssues.filter((i) => i.severity === "error");
-    const warns = allIssues.filter((i) => i.severity === "warn" || i.severity === "info");
-    const cleanSections = report.sections.filter((s) => !s.issues.length);
-    if (errors.length) appendIssueGroup(body, "需要处理", "bad", errors);
-    if (warns.length) {
-      const fixable = warns.filter((i) => i.fixGroup && i.fixKey);
-      appendIssueGroup(body, "建议处理", "warn", warns, fixable.length ? { issues: fixable } : void 0);
-    }
-    appendCleanGroup(body, report, cleanSections);
-  }
-  function appendIssueGroup(body, title, tone, issues, fixAll) {
-    const sec = document.createElement("div");
-    sec.className = "bz-checkup-group bz-checkup-group--" + tone;
-    const head = document.createElement("div");
-    head.className = "bz-checkup-group-head";
-    const t = document.createElement("span");
-    t.className = "bz-checkup-group-title";
-    t.textContent = `${title}（${issues.length}）`;
-    head.appendChild(t);
-    if (fixAll) {
-      head.appendChild(
-        uiBtn({
-          label: `一键修复（${fixAll.issues.length}）`,
-          onClick: () => void confirmFix(fixAll.issues, "一键修复")
-        })
-      );
-    }
-    sec.appendChild(head);
-    for (const issue of issues) sec.appendChild(issueRow(issue));
-    body.appendChild(sec);
-  }
-  function appendCleanGroup(body, report, cleanSections) {
-    const sec = document.createElement("div");
-    sec.className = "bz-checkup-group bz-checkup-group--ok";
-    const head = document.createElement("div");
-    head.className = "bz-checkup-group-head";
-    const t = document.createElement("span");
-    t.className = "bz-checkup-group-title";
-    t.textContent = `通过（${cleanSections.length}）`;
-    head.appendChild(t);
-    sec.appendChild(head);
-    if (!cleanSections.length) {
-      const none = document.createElement("div");
-      none.className = "bz-checkup-clean-line";
-      none.textContent = "没有完全通过的检查项";
-      sec.appendChild(none);
-    }
-    for (const s of cleanSections) {
-      const line = document.createElement("div");
-      line.className = "bz-checkup-clean-line";
-      line.textContent = `${s.name}：${s.summary}`;
-      sec.appendChild(line);
-    }
-    body.appendChild(sec);
-  }
-  function issueRow(issue) {
-    const row = document.createElement("div");
-    row.className = "bz-checkup-issue";
-    const dot = document.createElement("span");
-    dot.className = "bz-checkup-dot bz-checkup-dot--" + issue.severity;
-    const main = document.createElement("div");
-    main.className = "bz-checkup-issue-main";
-    const title = document.createElement("div");
-    title.className = "bz-checkup-issue-title";
-    title.textContent = issue.title;
-    main.appendChild(title);
-    if (issue.detail) {
-      const toggle = document.createElement("button");
-      toggle.type = "button";
-      toggle.className = "bz-checkup-detail-toggle";
-      toggle.textContent = "查看详情";
-      const detail = document.createElement("pre");
-      detail.className = "bz-checkup-detail";
-      detail.textContent = issue.detail;
-      detail.style.display = "none";
-      toggle.addEventListener("click", () => {
-        const open = detail.style.display !== "none";
-        detail.style.display = open ? "none" : "block";
-        toggle.textContent = open ? "查看详情" : "收起详情";
-      });
-      main.appendChild(toggle);
-      main.appendChild(detail);
-    }
-    row.append(dot, main);
-    if (issue.fixGroup && issue.fixKey) {
-      row.appendChild(
-        uiBtn({
-          label: issue.fixLabel || "修复",
-          onClick: () => void confirmFix([issue], issue.fixLabel || "修复")
-        })
-      );
-    }
-    return row;
-  }
-  async function confirmFix(issues, what) {
-    if (!hostApp) return;
-    const fixable = issues.filter((i) => i.fixGroup && i.fixKey);
-    if (!fixable.length) return;
-    const v = await openFlowDialog({
-      title: "修复确认",
-      message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
-      actions: [
-        { label: "取消", value: "cancel" },
-        // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
-        // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
-        { label: "清除", value: "ok", cta: true, danger: true }
-      ]
-    });
-    if (v !== "ok") return;
-    try {
-      const outcomes = await fixOrphanIssues(hostApp, fixable);
-      let any = false;
-      for (const o of outcomes) {
-        if (!o.fixed) continue;
-        any = true;
-        notifyUndo(o.label, () => {
-          o.undo().catch((e) => notifySaveError(e, "撤销清除"));
-        });
-      }
-      if (!any) notice("没有需要清除的项（数据已变化）");
-    } catch (e) {
-      notifyActionError(e, "清除失效引用");
-      return;
-    }
-    await startRun();
-  }
-  var overlay, escHandle2, runSeq, running, hostApp, OVERLAY_ID, FRAME_ID;
-  var init_ui3 = __esm({
-    "src/checkup/ui.ts"() {
-      init_z_order();
-      init_esc_manager();
-      init_notice();
-      init_ui();
-      init_flow_dialog();
-      init_run();
-      overlay = null;
-      escHandle2 = null;
-      runSeq = 0;
-      running = false;
-      hostApp = null;
-      OVERLAY_ID = "bz-checkup-mask";
-      FRAME_ID = "bz-checkup-popup";
-    }
-  });
-
-  // src/checkup/index.ts
-  var checkup_exports = {};
-  __export(checkup_exports, {
-    openDataCheckup: () => openDataCheckup,
-    unloadDataCheckup: () => unloadDataCheckup
-  });
-  var init_checkup = __esm({
-    "src/checkup/index.ts"() {
-      init_ui3();
-    }
-  });
-
-  // src/settings-panel/schema.ts
-  var schema_exports = {};
-  __export(schema_exports, {
-    appearanceSettingsSchema: () => appearanceSettingsSchema
-  });
-  function appearanceSettingsSchema() {
-    return {
-      groups: [
-        {
-          icon: "palette",
-          name: "外观",
-          rows: [
-            {
-              type: "choiceCards",
-              name: "布局",
-              binding: { key: "settingsPanelLayout" },
-              options: [{ value: "jingwei", label: "经纬", prevClass: "bz-sp-prev-jingwei" }]
-            },
-            {
-              type: "choiceCards",
-              name: "主题",
-              binding: { key: "settingsPanelSkin" },
-              options: [{ value: "chenhun", label: "晨昏", prevClass: "bz-sp-prev-chenhun" }]
-            }
-          ]
-        }
-      ]
-    };
-  }
-  var init_schema = __esm({
-    "src/settings-panel/schema.ts"() {
-    }
-  });
-
-  // src/home/shared.ts
-  function applyOrder(order, domains = DOMAINS) {
-    if (!order || !order.length) return domains;
-    const rank = /* @__PURE__ */ new Map();
-    order.forEach((id, i) => {
-      if (!rank.has(id)) rank.set(id, i);
-    });
-    const listed = domains.filter((d) => rank.has(d.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
-    if (listed.length === domains.length) return listed;
-    const out = [...listed];
-    for (const d of domains) {
-      if (rank.has(d.id)) continue;
-      let anchor = -1;
-      for (let k = domains.indexOf(d) - 1; k >= 0; k--) {
-        const pos = out.indexOf(domains[k]);
-        if (pos >= 0) {
-          anchor = pos;
-          break;
-        }
-      }
-      out.splice(anchor + 1, 0, d);
-    }
-    return out;
-  }
-  function reorderTo(order, id, toIndex, hidden = [], domains = DOMAINS) {
-    const all = applyOrder(order, domains).map((d) => d.id);
-    const off = new Set(hidden);
-    const visible = all.filter((x) => !off.has(x));
-    const from = visible.indexOf(id);
-    if (from < 0 || toIndex < 0 || toIndex >= visible.length) return all;
-    visible.splice(from, 1);
-    visible.splice(toIndex, 0, id);
-    return [...visible, ...all.filter((x) => off.has(x))];
-  }
-  function hiddenOf(order, scope) {
-    return scope === "mob" ? order.hiddenMob : order.hiddenDesk;
-  }
-  function visibleDomains(order, hidden, domains = DOMAINS) {
-    const hide2 = new Set(hidden != null ? hidden : []);
-    return applyOrder(order, domains.filter((d) => !hide2.has(d.id)));
-  }
-  function domainColor(id) {
-    var _a2;
-    return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
-  }
-  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS;
-  var init_shared2 = __esm({
-    "src/home/shared.ts"() {
-      init_str();
-      init_domain_icons();
-      ICON_KEY = { settings: "settings-panel", vault: "password-vault" };
-      iconOf = (id) => {
-        var _a2;
-        return DOMAIN_ICONS[(_a2 = ICON_KEY[id]) != null ? _a2 : id];
-      };
-      DOMAINS = [
-        { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念 · 回忆媒体墙", icon: iconOf("diary") },
-        // 备忘录（memo 域，ADR-0092/0117）：2026-09-10 用户拍板补入首页入口（此前只在命令面板可达）
-        { id: "memo", commandId: "bz-memo-open", name: "备忘录", sub: "随手记与待办", icon: iconOf("memo") },
-        { id: "cinema", commandId: "bz-cinema-open", name: "影院", sub: "影视想看与在看", icon: iconOf("cinema") },
-        { id: "review", commandId: "bz-review-open", name: "复习计划", sub: "到期卡片队列", icon: iconOf("review") },
-        { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
-        { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
-        { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
-        // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
-        { id: "knowledge", commandId: "bz-knowledge-open", name: "知识盒", sub: "文献录入 · 卡片 · 主题", icon: iconOf("knowledge") },
-        // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
-        { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
-        // 游戏库（gameshelf 域，issue 368）：Steam 自动拉库，无手动登记
-        { id: "gameshelf", commandId: "bz-gameshelf-open", name: "游戏库", sub: "Steam 库存与时长", icon: iconOf("gameshelf") },
-        // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
-        { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
-        { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
-        // 移动附件（attach 域）：2026-09-10 用户拍板自首页入口移除（命令仍可在命令面板调用）
-        // 保险库入口副题两资产口径（ADR-0158：密码视图已摘，密码入口在密码本磁贴）
-        { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
-        // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
-        { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
-        { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
-      ];
-      DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
-      DOMAIN_DOT = {
-        diary: "#e67341",
-        memo: "#e8590c",
-        cinema: "#e6951d",
-        review: "#7c5cd6",
-        pomodoro: "#e5534b",
-        favorites: "#f0b429",
-        clipping: "#2f9e5f",
-        knowledge: "#c2559d",
-        bookshelf: "#3d7bd6",
-        secondbrain: "#a33d2a",
-        "reading-report": "#3fa7a0",
-        belongings: "#45a35c",
-        attach: "#8a8f99",
-        encrypt: "#8a8f99",
-        vault: "#c9a227",
-        smartcat: "#e67341",
-        settings: "#8a8f99"
-      };
-      ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
-    }
-  });
-
-  // src/home/order.ts
-  function emptyHomeOrder() {
-    return { version: HOME_ORDER_VERSION, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
-  }
-  function strList(v) {
-    return Array.isArray(v) ? v.filter((x) => typeof x === "string" && !!x) : [];
-  }
-  function normalizeHomeOrder(raw) {
-    const o = raw != null ? raw : {};
-    const legacy = strList(o.hidden);
-    return {
-      version: HOME_ORDER_VERSION,
-      desk: strList(o.desk),
-      mob: strList(o.mob),
-      hiddenDesk: o.hiddenDesk === void 0 ? legacy : strList(o.hiddenDesk),
-      hiddenMob: o.hiddenMob === void 0 ? legacy : strList(o.hiddenMob)
-    };
-  }
-  async function loadHomeOrder(app) {
-    try {
-      return normalizeHomeOrder(await store(app).read());
-    } catch (e) {
-      return emptyHomeOrder();
-    }
-  }
-  async function saveHomeConfig(order, app) {
-    return enqueueFileTask(storageFile("home.json"), async () => {
-      await store(app).write({
-        version: HOME_ORDER_VERSION,
-        desk: [...order.desk],
-        mob: [...order.mob],
-        hiddenDesk: [...order.hiddenDesk],
-        hiddenMob: [...order.hiddenMob]
-      });
-    });
-  }
-  var HOME_ORDER_VERSION, store;
-  var init_order = __esm({
-    "src/home/order.ts"() {
-      init_storage();
-      HOME_ORDER_VERSION = 3;
-      store = (app) => jsonFileStore(storageFile("home.json"), { defaultValue: () => emptyHomeOrder(), app });
-    }
-  });
-
-  // src/home/entry-editor.ts
-  function mountHomeEntryEditor(body, app) {
-    blurController == null ? void 0 : blurController.abort();
-    blurController = new AbortController();
-    const scope = isMobileEnv() ? "mob" : "desk";
-    const touchMode = isMobileEnv();
-    let order = null;
-    let suppressClickUntil = 0;
-    const root = document.createElement("div");
-    root.className = "bz-home-ent";
-    root.setAttribute("data-ent-scope", scope);
-    body.appendChild(root);
-    const hostRow = body.closest(".bz-sp-set-row");
-    if (hostRow) hostRow.classList.add(FLUSH_CLS);
-    function setHidden(ids) {
-      if (!order) return;
-      order = scope === "mob" ? { ...order, hiddenMob: ids } : { ...order, hiddenDesk: ids };
-    }
-    function setScopeOrder(ids) {
-      if (!order) return;
-      order = scope === "mob" ? { ...order, mob: ids } : { ...order, desk: ids };
-    }
-    function persist() {
-      if (!order) return;
-      void saveHomeConfig(order, app).catch((e) => {
-        notifySaveError(e, "入口顺序");
-      });
-    }
-    let drag = null;
-    function onTouchMove(e) {
-      if (!drag || !drag.armed) return;
-      if (e.cancelable) e.preventDefault();
-    }
-    function applyShift(c) {
-      for (let i = 0; i < c.total; i++) {
-        if (i === c.from) continue;
-        const el = c.rows[i];
-        if (!el) continue;
-        let shift = 0;
-        if (c.to > c.from && i > c.from && i <= c.to) shift = -1;
-        else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;
-        if (shift) {
-          el.style.transform = `translateY(${shift * c.step}px)`;
-          el.classList.add(SHIFT_CLS);
-        } else {
-          el.style.transform = "";
-          el.classList.remove(SHIFT_CLS);
-        }
-      }
-    }
-    function endDrag() {
-      const c = drag;
-      drag = null;
-      if (!c) return;
-      if (c.armTimer) clearTimeout(c.armTimer);
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("pointerup", onUp);
-      window.removeEventListener("pointercancel", onUp);
-      window.removeEventListener("touchmove", onTouchMove);
-      c.el.classList.remove(DRAG_CLS);
-      c.el.style.transform = "";
-      for (const el of c.rows) {
-        el.style.transform = "";
-        el.classList.remove(SHIFT_CLS);
-      }
-    }
-    function onMove(e) {
-      const c = drag;
-      if (!c) return;
-      const dy = e.clientY - c.startY;
-      if (!c.active) {
-        if (!c.armed) {
-          if (Math.abs(dy) > TOUCH_SLOP_PX) endDrag();
-          return;
-        }
-        if (Math.abs(dy) < DRAG_PX) return;
-        c.active = true;
-        c.el.classList.add(DRAG_CLS);
-      }
-      if (e.cancelable) e.preventDefault();
-      const to = Math.max(0, Math.min(c.from + Math.round(dy / c.step), c.total - 1));
-      c.to = to;
-      c.el.style.transform = `translateY(${(to - c.from) * c.step}px)`;
-      applyShift(c);
-    }
-    function onUp() {
-      const c = drag;
-      if (!c) return;
-      const { active: active2, to, from } = c;
-      const id = c.el.dataset.entRow || "";
-      endDrag();
-      if (!active2) return;
-      suppressClickUntil = Date.now() + 300;
-      if (!order || to === from || !id) {
-        render2();
-        return;
-      }
-      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
-      persist();
-      render2(id || void 0);
-    }
-    function attachDrag(el, listEl2, rows) {
-      const total = rows.length;
-      el.addEventListener("pointerdown", (e) => {
-        var _a2, _b2;
-        if (e.button) return;
-        if (e.target.closest("[data-ent-remove]")) return;
-        const from = rows.indexOf(el);
-        if (from < 0 || total < 2) return;
-        let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
-        if (rows.length >= 2) {
-          const d = rows[1].offsetTop - rows[0].offsetTop;
-          if (d > 0) step = d;
-        }
-        const c = {
-          el,
-          listEl: listEl2,
-          rows,
-          startY: e.clientY,
-          step,
-          from,
-          to: from,
-          total,
-          active: false,
-          armed: !touchMode,
-          armTimer: null
-        };
-        drag = c;
-        if (touchMode) {
-          window.addEventListener("touchmove", onTouchMove, { passive: false });
-          c.armTimer = setTimeout(() => {
-            if (drag === c) c.armed = true;
-            c.armTimer = null;
-          }, TOUCH_ARM_MS);
-        }
-        window.addEventListener("pointermove", onMove);
-        window.addEventListener("pointerup", onUp);
-        window.addEventListener("pointercancel", onUp);
-      });
-    }
-    function rowHtml2(d, isHidden2) {
-      const btn = isHidden2 ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add bz-touch-target--sm" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan("plus") + "</button>" : '<button type="button" class="bz-home-ent-btn bz-touch-target--sm" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan("x") + "</button>";
-      const grip = isHidden2 ? '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + "</span>" : '<span class="bz-home-ent-grip" role="button" tabindex="0" data-ent-grip="' + d.id + '" aria-label="调整' + d.name + '顺序（上/下方向键）">' + iconSpan("grip-vertical") + "</span>";
-      return '<div class="bz-home-ent-row' + (isHidden2 ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '">' + grip + '<span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
-    }
-    function render2(refocusId) {
-      if (!order) return;
-      const ids = hiddenOf(order, scope);
-      const visible = visibleDomains(order[scope], ids);
-      const hidden = DOMAINS.filter((d) => ids.includes(d.id));
-      root.innerHTML = '<div class="bz-home-ent-list" data-ent-list>' + visible.map((d) => rowHtml2(d, false)).join("") + hidden.map((d) => rowHtml2(d, true)).join("") + "</div>";
-      mountIcons(root);
-      const listEl2 = root.querySelector("[data-ent-list]");
-      if (!listEl2) return;
-      const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
-      const movable = rows.slice(0, visible.length);
-      for (const el of movable) attachDrag(el, listEl2, movable);
-      if (refocusId) {
-        const target = listEl2.querySelector(`[data-ent-row="${refocusId}"] button, [data-ent-row="${refocusId}"] [data-ent-grip]`);
-        target == null ? void 0 : target.focus();
-      }
-    }
-    root.addEventListener("keydown", (e) => {
-      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
-      const grip = e.target.closest("[data-ent-grip]");
-      if (!grip || !order) return;
-      const id = grip.dataset.entGrip || "";
-      const visibleNow = visibleDomains(order[scope], hiddenOf(order, scope));
-      const from = visibleNow.findIndex((d) => d.id === id);
-      if (from < 0) return;
-      const to = from + (e.key === "ArrowUp" ? -1 : 1);
-      if (to < 0 || to >= visibleNow.length) return;
-      e.preventDefault();
-      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
-      persist();
-      render2(id);
-    });
-    root.addEventListener("contextmenu", (e) => {
-      if (drag) e.preventDefault();
-    });
-    window.addEventListener(
-      "blur",
-      () => {
-        if (drag) endDrag();
-      },
-      { signal: blurController.signal }
-    );
-    root.addEventListener("click", (e) => {
-      if (Date.now() < suppressClickUntil) {
-        e.stopPropagation();
-        e.preventDefault();
-        return;
-      }
-      if (!order) return;
-      const t = e.target;
-      const rm = t.closest("[data-ent-remove]");
-      if (rm) {
-        const id = rm.dataset.entRemove || "";
-        const ids = hiddenOf(order, scope);
-        if (id && !ids.includes(id)) {
-          setHidden([...ids, id]);
-          persist();
-          render2(id);
-        }
-        return;
-      }
-      const rs = t.closest("[data-ent-restore]");
-      if (rs) {
-        const id = rs.dataset.entRestore || "";
-        setHidden(hiddenOf(order, scope).filter((x) => x !== id));
-        persist();
-        render2(id);
-      }
-    });
-    render2();
-    void loadHomeOrder(app).then((o) => {
-      order = o;
-      render2();
-    });
-  }
-  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS, blurController;
-  var init_entry_editor = __esm({
-    "src/home/entry-editor.ts"() {
-      init_mobile();
-      init_notice();
-      init_ui();
-      init_str();
-      init_shared2();
-      init_order();
-      ROW_SEL = "[data-ent-row]";
-      DRAG_PX = 10;
-      TOUCH_ARM_MS = 250;
-      TOUCH_SLOP_PX = 8;
-      SHIFT_CLS = "bz-home-ent-shift";
-      DRAG_CLS = "bz-home-ent-drag";
-      FLUSH_CLS = "bz-home-ent-flush";
-      blurController = null;
-    }
-  });
-
-  // src/home/settings.ts
-  var settings_exports = {};
-  __export(settings_exports, {
-    homeSettingsSchema: () => homeSettingsSchema
-  });
-  function homeSettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 范式，与各域同款置顶）：布局/主题各一档占位单卡
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "homeLayout" }, options: [{ value: "default", label: "活动河", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "homeSkin" }, layoutKey: "homeLayout", options: [{ value: "cream", label: "米白", layout: "default", prevClass: "bz-sp-prev-cream" }] }
-          ]
-        },
-        {
-          // 时间线组（issue 288 拆分后）：只剩「时间线自己长什么样」四行——顺序按「看字 → 看多久 → 从哪天开始看 → 那一列要不要」
-          icon: "activity",
-          name: "时间线",
-          rows: [
-            {
-              type: "select",
-              name: "时间线字号",
-              desc: "紧凑压信息密度，宽松看得省力。只作用于中间那条时间线。",
-              binding: { key: "homeTimelineSize" },
-              options: [
-                { value: "compact", label: "紧凑" },
-                { value: "normal", label: "标准" },
-                { value: "loose", label: "宽松" }
-              ]
-            },
-            {
-              type: "select",
-              name: "时间范围",
-              desc: "周历能往回翻几天。当天只留今天一格，本周是完整七天。",
-              binding: { key: "homeTimelineRange" },
-              options: [
-                { value: "today", label: "当天" },
-                { value: "3d", label: "最近 3 天" },
-                { value: "week", label: "本周" }
-              ]
-            },
-            {
-              type: "select",
-              name: "默认打开日",
-              desc: "打开首页先落在哪天，选最后有动静就不会一开是空的。",
-              binding: { key: "homeDefaultDay" },
-              options: [
-                { value: "today", label: "今天" },
-                { value: "lastActive", label: "最后有动静的那天" }
-              ]
-            },
-            {
-              type: "toggle",
-              name: "显示时刻列",
-              desc: "每行左边显示时刻，关掉整列收起，正文往左靠。",
-              binding: { key: "homeTimelineTime" }
-            }
-          ]
-        },
-        {
-          // 内容过滤组（issue 288 从时间线组拆出）：只放「哪些痕迹进来」，与「长相」分开
-          icon: "funnel",
-          name: "内容过滤",
-          rows: [
-            {
-              type: "toggle",
-              name: "产出动作",
-              desc: "写下的收进的读完的，都是真正产出东西的动作。",
-              binding: { key: "homeTimelineProduce" }
-            },
-            {
-              type: "toggle",
-              name: "状态推进",
-              desc: "加入片单读到一半新增待办，这类还没成事实的推进。",
-              binding: { key: "homeTimelineProgress" }
-            },
-            {
-              type: "toggle",
-              // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
-              // issue 305 / ADR-0132：点评类含行为流的星级评价（movie:rated），描述同步覆盖
-              name: "小橘点评",
-              desc: "小橘挂在痕迹下面的那句话，也包括你给影片打的星级。",
-              binding: { key: "homeTimelineNotes" }
-            },
-            {
-              // issue 305 / ADR-0132：时间线改吃行为流，已跳过回归（默认关——聚合讯跳过量级大）
-              // 题名「跳过痕迹」：遵循设置项题名 4-8 字规范（lint），与同组「产出动作/状态推进」同构
-              type: "toggle",
-              name: "跳过痕迹",
-              desc: "聚合讯里跳过的文章痕迹，量比较大，默认不显示。",
-              binding: { key: "homeTimelineSkipped" }
-            }
-          ]
-        },
-        {
-          // 预告栏组（issue 288 拆出）：右侧那一栏不属于时间线，自己一组
-          icon: "calendar-clock",
-          name: "预告栏",
-          rows: [
-            {
-              type: "toggle",
-              name: "明天预告卡",
-              desc: "右侧那一栏复习剪藏与日记的预告，不看可以把整栏收掉。",
-              binding: { key: "homeNextCards" }
-            }
-          ]
-        },
-        {
-          // 入口组（排最后）：拖动排序 + 移除/加回，内联编辑器
-          icon: "layout-grid",
-          name: "入口",
-          rows: [
-            {
-              type: "custom",
-              render: (body) => mountHomeEntryEditor(body, getApp())
-            }
-          ]
-        }
-      ]
-    };
-  }
-  var init_settings = __esm({
-    "src/home/settings.ts"() {
-      init_app();
-      init_entry_editor();
-    }
-  });
-
-  // src/diary/config.ts
-  var config_exports = {};
-  __export(config_exports, {
-    DIARY_DIRECTORY: () => DIARY_DIRECTORY,
-    ENCRYPT_TAG: () => ENCRYPT_TAG,
-    LETTER_DIRECTORY: () => LETTER_DIRECTORY,
-    applyDirectories: () => applyDirectories,
-    bookDirectory: () => bookDirectory,
-    buildTagMaps: () => buildTagMaps,
-    emojiToTagMap: () => emojiToTagMap,
-    getParentPrimaryTag: () => getParentPrimaryTag,
-    getPrimaryTagsInDisplayOrder: () => getPrimaryTagsInDisplayOrder,
-    getSortedTagsForAddDialog: () => getSortedTagsForAddDialog,
-    getSubTagsOfPrimary: () => getSubTagsOfPrimary,
-    getTagEmoji: () => getTagEmoji,
-    inWallDirs: () => inWallDirs,
-    isSubTag: () => isSubTag,
-    movieDirectory: () => movieDirectory,
-    resetTagsConfig: () => resetTagsConfig,
-    tagToEmojiMap: () => tagToEmojiMap
-  });
-  function movieDirectory() {
-    return safeResolve(resolveCinemaFolderPath, "我的/影视");
-  }
-  function bookDirectory() {
-    return safeResolve(resolveFolderPath, "书库");
-  }
-  function safeResolve(resolver, fallback) {
-    try {
-      const v = resolver();
-      return v && v.trim() ? v : fallback;
-    } catch (e) {
-      return fallback;
-    }
-  }
-  function inWallDirs(p) {
-    return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
-      (d) => p.startsWith(d + "/") || p === d + ".md"
-    );
-  }
-  function applyDirectories(settings) {
-    const clean = (v, fallback) => {
-      const t = (v || "").trim().replace(/\/+$/, "");
-      return t || fallback;
-    };
-    DIARY_DIRECTORY = clean(settings.diaryDirectory, "我的/日记");
-    LETTER_DIRECTORY = clean(settings.letterDirectory, "我的/信");
-  }
-  function getPrimaryTagsInDisplayOrder() {
-    const tags = Object.keys(PRIMARY_TAGS_CONFIG);
-    const idx = tags.indexOf(ENCRYPT_TAG);
-    if (idx === -1) return tags;
-    const rest = tags.filter((t) => t !== ENCRYPT_TAG);
-    rest.push(ENCRYPT_TAG);
-    return rest;
-  }
-  function resetTagsConfig() {
-    PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
-    buildTagMaps();
-  }
-  function buildTagMaps() {
-    for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
-    for (const key of Object.keys(emojiToTagMap)) delete emojiToTagMap[key];
-    for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      tagToEmojiMap[tag] = config.emoji;
-      emojiToTagMap[config.emoji] = tag;
-      if (config.subTags) {
-        for (const sub of config.subTags) {
-          tagToEmojiMap[sub.tag] = sub.emoji;
-          emojiToTagMap[sub.emoji] = sub.tag;
-        }
-      }
-    }
-  }
-  function getTagEmoji(tag) {
-    return tagToEmojiMap[tag] || "📖";
-  }
-  function getSubTagsOfPrimary(primaryTag) {
-    const config = PRIMARY_TAGS_CONFIG[primaryTag];
-    return config && config.subTags ? config.subTags : null;
-  }
-  function isSubTag(tag) {
-    for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
-        return true;
-      }
-    }
-    return false;
-  }
-  function getParentPrimaryTag(subTag) {
-    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
-        return primary;
-      }
-    }
-    return null;
-  }
-  function getSortedTagsForAddDialog() {
-    const result = [];
-    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
-      if (primary === "加密") continue;
-      if (config.subTags && config.subTags.length > 0) {
-        for (const sub of config.subTags) {
-          result.push(sub.tag);
-        }
-      } else {
-        result.push(primary);
-      }
-    }
-    return result;
-  }
-  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
-  var init_config3 = __esm({
-    "src/diary/config.ts"() {
-      init_state4();
-      init_data3();
-      DIARY_DIRECTORY = "我的/日记";
-      LETTER_DIRECTORY = "我的/信";
-      ENCRYPT_TAG = "加密";
-      DEFAULT_TAGS_CONFIG = {
-        日记: { emoji: "📖" },
-        加密: { emoji: "🔐" },
-        念念碎: { emoji: "😶" },
-        对谈: { emoji: "🤝" },
-        随笔: { emoji: "✍️" },
-        梦: { emoji: "🌙" },
-        诗: { emoji: "🌟" },
-        书: { emoji: "📕" },
-        信: { emoji: "✉️" },
-        摘抄: { emoji: "📌" },
-        摄影: { emoji: "📸" },
-        骑行: { emoji: "🚴" },
-        代码: { emoji: "⚙️" },
-        做饭: { emoji: "🥘" },
-        游戏: { emoji: "🎮" },
-        音乐: { emoji: "🎧" },
-        电影: { emoji: "📽" },
-        电视剧: { emoji: "📺" },
-        动漫: { emoji: "🎨" },
-        纪录片: { emoji: "🎞" },
-        猫: { emoji: "🐱" },
-        狗: { emoji: "🐶" },
-        仓鼠: { emoji: "🐹" },
-        熊猫: { emoji: "🐼" },
-        博物馆: { emoji: "🏛️" },
-        美食: { emoji: "🍔" },
-        旅游: {
-          emoji: "✈️",
-          subTags: [
-            { tag: "四川", emoji: "🀄" },
-            { tag: "大理", emoji: "🛶" }
-          ]
-        },
-        收藏: {
-          emoji: "⭐",
-          subTags: [
-            { tag: "咪咪", emoji: "🐈" },
-            { tag: "广告", emoji: "📢" },
-            { tag: "神评", emoji: "🤣" },
-            { tag: "冷笑话", emoji: "😅" },
-            { tag: "抽象", emoji: "🌀" },
-            { tag: "AI", emoji: "🤖" },
-            { tag: "愚人节", emoji: "🤪" },
-            { tag: "舞蹈", emoji: "🕺" },
-            { tag: "达人秀", emoji: "🤹" },
-            { tag: "艺术", emoji: "🧑‍🎨" },
-            { tag: "摄影集", emoji: "📷" },
-            { tag: "植物", emoji: "🌳" },
-            { tag: "创意", emoji: "🧩" }
-          ]
-        }
-      };
-      PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
-      tagToEmojiMap = {};
-      emojiToTagMap = {};
-      buildTagMaps();
-    }
-  });
-
-  // src/diary/repair.ts
-  function lintEntryFile(path, content) {
-    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
-    if (DIARY_LEGACY_FILE_RE.test(base)) return "legacy";
-    const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
-    const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, "日期");
-    const fmMeta = raw ? parseDiaryStamp(raw) : null;
-    const fileMeta = diaryMetaFromEntryPath(base);
-    if (rawLegacyKey && !raw) return "unparsable";
-    if (raw && !fmMeta && !fileMeta) return "unparsable";
-    if (!fmMeta && !fileMeta) return "unparsable";
-    if (raw && !fmMeta && fileMeta) return "unparsable";
-    if (fmMeta && !fileMeta) return "name-mismatch";
-    if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
-      return "name-mismatch";
-    }
-    return null;
-  }
-  var LINT_REASON_TEXT;
-  var init_repair = __esm({
-    "src/diary/repair.ts"() {
-      init_diary_format();
-      LINT_REASON_TEXT = {
-        legacy: "旧格式日期文件（未迁移）",
-        unparsable: "无法解析为条目",
-        "name-mismatch": "属性时间与题目不一致"
-      };
-    }
-  });
-
-  // src/diary/ui/repair-modal.ts
-  function findDirRecursive(node, target) {
-    if (node.path === target) return node;
-    if (node.children) {
-      for (const child of node.children) {
-        const found = findDirRecursive(child, target);
-        if (found) return found;
-      }
-    }
-    return null;
-  }
-  async function collectDiaryFiles() {
-    const app = getApp();
-    let dir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY);
-    if (!dir || !dir.children) {
-      const root = app.vault.getRoot();
-      dir = findDirRecursive(root, DIARY_DIRECTORY);
-    }
-    if (!dir || !dir.children) return [];
-    const out = [];
-    const walk = (node) => {
-      var _a2;
-      for (const child of (_a2 = node.children) != null ? _a2 : []) {
-        if (child.children) walk(child);
-        else if (child.extension === "md") out.push(child);
-      }
-    };
-    walk(dir);
-    return out.sort((a, b) => b.name.localeCompare(a.name));
-  }
-  async function runScan(isAlive, onProgress) {
-    const app = getApp();
-    const mdFiles2 = await collectDiaryFiles();
-    const total = mdFiles2.length;
-    const scanned = [];
-    for (let i = 0; i < mdFiles2.length; i += BATCH_CONCURRENCY) {
-      if (!isAlive()) return scanned;
-      const batch = mdFiles2.slice(i, i + BATCH_CONCURRENCY);
-      const results = await Promise.all(
-        batch.map(async (file, idx) => {
-          const content = await app.vault.read(file);
-          if (isAlive()) onProgress(Math.min(i + idx + 1, total), total, file.name);
-          return { path: file.path, reason: lintEntryFile(file.path, content) };
-        })
-      );
-      scanned.push(...results);
-    }
-    return scanned;
-  }
-  async function openAtTop(path, onOpened) {
-    const app = getApp();
-    const file = app.vault.getAbstractFileByPath(path);
-    if (!file) return;
-    const leaf = app.workspace.getLeaf();
-    await leaf.openFile(file);
-    const view = leaf.view;
-    if (view && view.editor) {
-      view.editor.focus();
-      view.editor.setCursor(0, 0);
-      view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
-    }
-    onOpened();
-  }
-  function openDiaryRepairModal() {
-    const { mask, popup } = createOverlay({
-      maskId: "bz-diary-repair-mask",
-      popupId: "bz-diary-repair-popup",
-      maxWidth: 640,
-      onMaskClick: close
-    });
-    const header = document.createElement("div");
-    header.className = "bz-settings-header";
-    const title = document.createElement("h3");
-    title.className = "bz-settings-title";
-    title.textContent = "日记格式体检";
-    header.appendChild(title);
-    const content = document.createElement("div");
-    content.className = "bz-settings-content";
-    popup.appendChild(header);
-    popup.appendChild(content);
-    document.body.appendChild(mask);
-    document.body.appendChild(popup);
-    mask.style.display = "block";
-    popup.style.display = "flex";
-    popup.setAttribute("role", "dialog");
-    popup.setAttribute("aria-modal", "true");
-    const handle = escManager.register("bz-diary-repair", {
-      isVisible: () => mask.isConnected,
-      close
-    });
-    function close() {
-      mask.remove();
-      popup.remove();
-      handle.unregister();
-    }
-    const progressWrap = document.createElement("div");
-    progressWrap.className = "bz-diary-repair-progress";
-    const track = document.createElement("div");
-    track.className = "bz-diary-repair-progress-track";
-    const fill = document.createElement("div");
-    fill.className = "bz-diary-repair-progress-fill";
-    const ptext = document.createElement("div");
-    ptext.className = "bz-diary-repair-progress-text";
-    ptext.textContent = "正在体检日记文件…";
-    track.appendChild(fill);
-    progressWrap.appendChild(track);
-    progressWrap.appendChild(ptext);
-    content.appendChild(progressWrap);
-    const summarize = (scanned) => {
-      content.innerHTML = "";
-      content.appendChild(progressWrap);
-      progressWrap.style.display = "none";
-      const items = [];
-      for (const s of scanned) {
-        if (s.reason) items.push({ path: s.path, reason: s.reason, detail: LINT_REASON_TEXT[s.reason] });
-      }
-      const summary = document.createElement("div");
-      summary.className = "bz-diary-repair-summary";
-      summary.textContent = items.length === 0 ? `共体检 ${scanned.length} 个日记文件：全部健康` : `共体检 ${scanned.length} 个日记文件：${items.length} 个需要处理（点击条目打开文件手工处理，面板不改写内容）。`;
-      content.appendChild(summary);
-      const order = ["legacy", "unparsable", "name-mismatch"];
-      for (const reason of order) {
-        const group = items.filter((i) => i.reason === reason);
-        if (group.length === 0) continue;
-        const sec = document.createElement("div");
-        sec.className = "bz-diary-repair-section-title";
-        sec.textContent = `${LINT_REASON_TEXT[reason]}（${group.length}）`;
-        content.appendChild(sec);
-        for (const item of group) {
-          const row = document.createElement("div");
-          row.className = "bz-diary-repair-row";
-          const link = document.createElement("span");
-          link.className = "bz-diary-repair-link";
-          link.textContent = item.path.split("/").pop() || item.path;
-          link.addEventListener("click", () => void openAtTop(item.path, close));
-          const snippet = document.createElement("span");
-          snippet.className = "bz-diary-repair-snippet";
-          snippet.textContent = item.path;
-          row.append(link, snippet);
-          content.appendChild(row);
-        }
-      }
-      mountRetryFooter();
-    };
-    function mountRetryFooter() {
-      const again = document.createElement("button");
-      again.className = "bz-button";
-      again.textContent = "重新体检";
-      again.addEventListener("click", () => void startScan());
-      const bar = document.createElement("div");
-      bar.className = "bz-diary-repair-footer";
-      bar.appendChild(again);
-      content.appendChild(bar);
-    }
-    async function startScan() {
-      progressWrap.style.display = "block";
-      fill.style.width = "0%";
-      ptext.textContent = "正在体检日记文件…";
-      content.innerHTML = "";
-      content.appendChild(progressWrap);
-      try {
-        const scanned = await runScan(
-          () => mask.isConnected,
-          (done, total, label) => {
-            fill.style.width = `${Math.round(done / total * 100)}%`;
-            ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
-          }
-        );
-        if (!mask.isConnected) return;
-        summarize(scanned);
-      } catch (e) {
-        if (!mask.isConnected) return;
-        const msg = (e == null ? void 0 : e.message) || String(e);
-        ptext.textContent = `体检失败：${msg}（可点下方按钮重试）`;
-        mountRetryFooter();
-        try {
-          notify(`日记格式体检失败：${msg}`, { type: "error" });
-        } catch (e2) {
-        }
-      }
-    }
-    void startScan();
-  }
-  var BATCH_CONCURRENCY;
-  var init_repair_modal = __esm({
-    "src/diary/ui/repair-modal.ts"() {
-      init_dom();
-      init_esc_manager();
-      init_app();
-      init_notice();
-      init_config3();
-      init_repair();
-      BATCH_CONCURRENCY = 10;
-    }
-  });
-
-  // src/diary/settings.ts
-  var settings_exports2 = {};
-  __export(settings_exports2, {
-    diarySettingsSchema: () => diarySettingsSchema
-  });
-  function diarySettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组（issue 246 范式）：布局/主题各一档，域 UI 消费待皮肤设计时接入
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "diarySkin" }, options: [{ value: "default", label: "媒体墙", prevClass: "bz-sp-prev-panel" }] },
-            { type: "choiceCards", name: "面板主题", binding: { key: "diarySkinTheme" }, layoutKey: "diarySkin", options: [{ value: "gallery", label: "画廊白", layout: "default", prevClass: "bz-sp-prev-gallery" }] }
-          ]
-        },
-        {
-          icon: "folder-open",
-          name: "目录",
-          rows: [
-            { type: "path", mode: "single", name: "日记文件夹", desc: "存放日记文件的文件夹", binding: { key: "diaryDirectory" }, onChange: () => applyDirectories(getSettings()) },
-            { type: "path", mode: "single", name: "信件文件夹", desc: "存放信件的文件夹", binding: { key: "letterDirectory" }, onChange: () => applyDirectories(getSettings()) }
-          ]
-        },
-        {
-          icon: "eye",
-          name: "显示",
-          rows: [
-            { type: "toggle", name: "默认日期取自文件", desc: "写日记时默认日期取自当前打开的日记文件，否则用当前时间", binding: { key: "useFileDateTime" } }
-          ]
-        },
-        {
-          icon: "wrench",
-          name: "维护",
-          rows: [
-            { type: "button", name: "日记格式体检", desc: "扫描全部日记条目文件，列出格式问题并跳转手工处理", buttonText: "日记格式体检", cta: true, onClick: () => openDiaryRepairModal() }
-          ]
-        }
-      ]
-    };
-  }
-  var init_settings2 = __esm({
-    "src/diary/settings.ts"() {
-      init_settings_provider();
-      init_config3();
-      init_repair_modal();
-    }
-  });
-
-  // src/memo/settings.ts
-  var settings_exports3 = {};
-  __export(settings_exports3, {
-    memoSettingsSchema: () => memoSettingsSchema
-  });
-  function memoReloadScenes() {
-    MemoData.init(getSettings());
-  }
-  function memoSettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin 两肤；
-          // 布局维度待皮肤设计时接入）
-          icon: "palette",
-          name: "外观",
-          rows: [
-            { type: "choiceCards", name: "面板布局", binding: { key: "memoLayout" }, options: [{ value: "default", label: "清单", prevClass: "bz-sp-prev-panel" }] },
-            {
-              type: "choiceCards",
-              name: "面板主题",
-              binding: { key: "memoSkin" },
-              layoutKey: "memoLayout",
-              options: [
-                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" },
-                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" }
-              ],
-              onChange: (v) => applyMemoSkin(v)
-            }
-          ]
-        },
-        {
-          icon: "eye",
-          name: "显示",
-          rows: [
-            {
-              type: "select",
-              name: "打开默认场景",
-              desc: "打开备忘录面板时默认选中的场景",
-              binding: { key: "memoOpenScene" },
-              options: [
-                { value: "@last", label: "上次停留" },
-                { value: "全部", label: "全部" },
-                { value: "今日", label: "今日" },
-                { value: "重要", label: "重要" },
-                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
-              ]
-            },
-            {
-              type: "select",
-              name: "默认排序方式",
-              desc: "面板条目按所选规则排序",
-              binding: { key: "memoSortMode" },
-              options: [
-                { value: "priority", label: "紧急优先" },
-                { value: "due", label: "仅按到期时间" },
-                { value: "created", label: "按创建时间" }
-              ]
-            },
-            {
-              type: "toggle",
-              name: "默认显示已完成",
-              desc: "打开面板时同时展开已完成折叠区",
-              binding: { key: "memoShowArchivedByDefault" }
-            },
-            {
-              type: "select",
-              name: "已完成显示范围",
-              desc: "展开已完成折叠区时列出最近多少天完成的条目",
-              binding: { key: "memoDoneWindow" },
-              options: [
-                { value: "7", label: "近 7 天" },
-                { value: "30", label: "近 30 天" },
-                { value: "90", label: "近 90 天" },
-                { value: "all", label: "全部" }
-              ]
-            }
-          ]
-        },
-        {
-          icon: "pencil-line",
-          name: "新建",
-          rows: [
-            {
-              type: "select",
-              name: "新条目默认优先级",
-              desc: "新建备忘录时默认选中的优先级",
-              binding: { key: "memoDefaultPriority" },
-              options: [
-                { value: "minor", label: "次要" },
-                { value: "important", label: "重要" }
-              ]
-            },
-            {
-              type: "select",
-              name: "新条目默认场景",
-              desc: "新建备忘录时默认选用的场景",
-              binding: { key: "memoDefaultScene" },
-              options: [
-                { value: "", label: "第一个场景" },
-                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
-              ]
-            }
-          ]
-        },
-        {
-          icon: "tags",
-          name: "场景列表",
-          rows: [
-            {
-              type: "textarea",
-              name: "自定义场景列表",
-              desc: "场景名用逗号分隔，留空使用默认场景",
-              placeholder: "剪藏,工作,学习,生活,代码,公开课",
-              binding: { key: "memoScenarios" },
-              onCommit: memoReloadScenes
-            }
-          ]
-        },
-        {
-          icon: "bell",
-          name: "提醒",
-          rows: [
-            {
-              type: "toggle",
-              name: "启动时自动弹出",
-              desc: "启动时若有重要或到期未完成的备忘录，自动打开备忘录面板提醒",
-              binding: { key: "autoPopupOnStart" }
-            },
-            {
-              type: "toggle",
-              name: "打开笔记自动提醒",
-              desc: "打开笔记时若有重要或到期的备忘录，自动弹出面板并定位到它",
-              binding: {
-                get: () => getSettings().openNoteReminder !== false,
-                set: (v) => {
-                  getSettings().openNoteReminder = v;
-                },
-                save: () => saveSettings()
-              }
-            }
-          ]
-        }
-      ]
-    };
-  }
-  var init_settings3 = __esm({
-    "src/memo/settings.ts"() {
-      init_settings_provider();
-      init_data();
-      init_ui13();
-    }
-  });
-
-  // src/smartcat/belongings-source.ts
-  function belongingsEditChanges(snapshot2, next) {
-    var _a2, _b2, _c, _d;
-    const changes = [];
-    if (snapshot2.name !== next.name) changes.push("改了名称");
-    if (snapshot2.category !== next.category) changes.push("改了分类");
-    if (snapshot2.purchase_price !== next.purchase_price) changes.push("改了价格");
-    if (snapshot2.purchase_date !== next.purchase_date) changes.push("改了购买日期");
-    if (snapshot2.current_status !== next.current_status) changes.push("改了状态");
-    if (snapshot2.description !== next.description) changes.push("改了描述");
-    if (((_a2 = snapshot2.sold_price) != null ? _a2 : null) !== ((_b2 = next.sold_price) != null ? _b2 : null)) changes.push("改了售价");
-    if (((_c = snapshot2.exit_date) != null ? _c : null) !== ((_d = next.exit_date) != null ? _d : null)) changes.push("改了出离日期");
-    return changes;
-  }
-  var init_belongings_source = __esm({
-    "src/smartcat/belongings-source.ts"() {
-    }
-  });
-
-  // src/belongings/emoji-icon-map.ts
-  function splitEmojiCategory(cat) {
-    var _a2;
-    const s = String(cat || "");
-    const m = s.match(/^(\p{Extended_Pictographic})\uFE0F?/u);
-    if (!m) return { emoji: null, name: s, icon: null };
-    return { emoji: m[1], name: s.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, ""), icon: (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null };
-  }
-  var EMOJI_ICON;
-  var init_emoji_icon_map = __esm({
-    "src/belongings/emoji-icon-map.ts"() {
-      EMOJI_ICON = {
-        /* ---- 数码影音 ---- */
-        "📱": "smartphone",
-        "💻": "laptop",
-        "🖥": "monitor",
-        "⌚": "watch",
-        "🎧": "headphones",
-        "🔊": "speaker",
-        "🖨": "printer",
-        "📷": "camera",
-        "🔍": "aperture",
-        "📹": "video",
-        "🪞": "focus",
-        "📽": "projector",
-        "🎮": "gamepad-2",
-        "⌨": "keyboard",
-        "💾": "hard-drive",
-        "📀": "disc",
-        "🔌": "plug",
-        "🔋": "battery-charging",
-        "💡": "lightbulb",
-        "📺": "tv",
-        "📡": "router",
-        "📶": "signal",
-        "📞": "phone",
-        /* ---- 衣服饰品 ---- */
-        "👕": "shirt",
-        "👔": "shirt",
-        "🧥": "shirt",
-        "👖": "shirt",
-        "👗": "shirt",
-        "👘": "shirt",
-        "🩳": "shirt",
-        "🧦": "footprints",
-        "👙": "shirt",
-        "👠": "footprints",
-        "👞": "footprints",
-        "👟": "footprints",
-        "👜": "handbag",
-        "🎒": "backpack",
-        "🧣": "shirt",
-        "🧤": "hand",
-        "👒": "hard-hat",
-        "🕶": "glasses",
-        "👓": "glasses",
-        "💍": "gem",
-        "📿": "gem",
-        "💎": "gem",
-        "🧢": "hard-hat",
-        "🎩": "hard-hat",
-        "💄": "sparkles",
-        "💋": "heart",
-        "👁": "eye",
-        "📏": "ruler",
-        "👀": "eye",
-        "💅": "hand",
-        "🧴": "droplets",
-        "🧼": "droplets",
-        "💧": "glass-water",
-        "🛡": "shield",
-        "🎭": "smile",
-        "💆": "hand",
-        "✂": "scissors",
-        "🧽": "droplets",
-        "🪒": "zap",
-        "🚿": "shower-head",
-        "💇": "scissors",
-        /* ---- 家居 ---- */
-        "🛏": "bed",
-        "🛋": "sofa",
-        "🪑": "armchair",
-        "🗄": "archive",
-        "📚": "library",
-        "🪟": "align-justify",
-        "🧹": "brush-cleaning",
-        "🚽": "droplets",
-        "🪥": "sparkles",
-        "🧻": "scroll",
-        "🪣": "droplets",
-        "🗑": "trash-2",
-        "🔑": "key-round",
-        /* ---- 厨房餐茶 ---- */
-        "🍳": "cooking-pot",
-        "🔪": "slice",
-        "🍽": "utensils",
-        "☕": "coffee",
-        "🍶": "coffee",
-        "🍵": "coffee",
-        "🥄": "utensils",
-        "🍴": "utensils",
-        "🥢": "utensils",
-        "🧂": "soup",
-        "🍯": "droplets",
-        "🍚": "wheat",
-        "🧊": "refrigerator",
-        "🔥": "flame",
-        "🍞": "croissant",
-        "🥛": "milk",
-        "🍹": "cup-soda",
-        "❄": "snowflake",
-        "🥘": "cooking-pot",
-        "🛀": "bath",
-        "💨": "fan",
-        "🌫": "cloud-fog",
-        "📖": "book-open",
-        /* ---- 文具乐玩 ---- */
-        "✏": "pencil",
-        "🖊": "pen",
-        "📒": "notebook",
-        "🎨": "palette",
-        "🎸": "guitar",
-        "🎹": "piano",
-        "🥁": "drum",
-        "🎤": "mic",
-        "🧩": "puzzle",
-        "🎲": "dices",
-        /* ---- 运动户外 ---- */
-        "🏸": "volleyball",
-        "⚽": "volleyball",
-        "🏃": "footprints",
-        "🧘": "person-standing",
-        "🏊": "waves",
-        "🎣": "fish",
-        "🔧": "wrench",
-        "🔨": "hammer",
-        "🪛": "wrench",
-        "🔩": "cog",
-        "🛠": "hammer",
-        "🪚": "axe",
-        "🧰": "briefcase",
-        "🪓": "axe",
-        "⛏": "shovel",
-        "🖼": "image",
-        "🏺": "amphora",
-        "🧸": "baby",
-        "🔮": "sparkles",
-        "🎞": "film",
-        "🪙": "coins",
-        "🏆": "trophy",
-        "🎖": "medal",
-        "📜": "scroll",
-        "📸": "camera",
-        /* ---- 医药健康 ---- */
-        "💊": "pill",
-        "🌡": "thermometer",
-        "🩹": "bandage",
-        "🩺": "stethoscope",
-        "💉": "syringe",
-        "🦷": "sparkles",
-        "🩸": "droplet",
-        "⚖": "scale",
-        /* ---- 礼节节庆 ---- */
-        "🧳": "luggage",
-        "🎁": "gift",
-        "🕯": "flame",
-        "🧨": "bomb",
-        "🌂": "umbrella",
-        "☂": "umbrella",
-        "⛱": "umbrella",
-        "🧭": "compass",
-        "🔭": "telescope",
-        "💐": "flower",
-        "🌿": "leaf",
-        "🐠": "fish",
-        "🐶": "dog",
-        "🚗": "car",
-        "🚲": "bike",
-        "🛴": "bike",
-        "⛺": "tent",
-        "📦": "package",
-        /* ---- 办公纸媒 ---- */
-        "📎": "paperclip",
-        "📌": "pin",
-        "🖇": "paperclip",
-        "📋": "clipboard-list",
-        "📁": "folder",
-        "🗂": "folder",
-        "📊": "chart-bar",
-        "📐": "ruler",
-        "🧮": "calculator",
-        "📇": "contact",
-        "🖍": "highlighter",
-        "🖌": "paintbrush",
-        "📫": "mail",
-        "📮": "mail",
-        "✉": "mail",
-        "🏷": "tag",
-        "📑": "bookmark",
-        "🔖": "bookmark",
-        "📰": "newspaper",
-        "🗞": "newspaper",
-        "📓": "notebook",
-        "📔": "notebook-pen",
-        "📕": "book",
-        "📗": "book",
-        "📘": "book",
-        "📙": "book",
-        "🧷": "paperclip",
-        "🔒": "lock",
-        "💼": "briefcase",
-        "🗳": "vote",
-        "🖋": "pen-tool",
-        "✒": "pen-tool",
-        "📝": "pen-line",
-        "💵": "banknote",
-        "💳": "credit-card",
-        "🧾": "receipt",
-        "📄": "file-text",
-        "📃": "file-text",
-        "🗒": "notebook-pen",
-        "📅": "calendar",
-        "🕐": "alarm-clock",
-        "🗓": "calendar-days",
-        "📆": "calendar",
-        "📈": "trending-up",
-        "📉": "trending-down",
-        "🖱": "mouse",
-        "🗃": "archive",
-        "🔗": "link",
-        /* ---- 球类冰雪水上 ---- */
-        "🏀": "volleyball",
-        "🏈": "volleyball",
-        "⚾": "volleyball",
-        "🎾": "volleyball",
-        "🏐": "volleyball",
-        "🏉": "volleyball",
-        "🎱": "volleyball",
-        "🏓": "volleyball",
-        "🥅": "target",
-        "🏑": "volleyball",
-        "🏒": "volleyball",
-        "🥍": "volleyball",
-        "🏏": "volleyball",
-        "🎿": "snowflake",
-        "⛷": "snowflake",
-        "🏂": "snowflake",
-        "🪂": "umbrella",
-        "🏄": "waves",
-        "🛹": "bike",
-        "🛼": "footprints",
-        "🚴": "bike",
-        "🛶": "sailboat",
-        "🤿": "waves",
-        "⛸": "snowflake",
-        "🎯": "target",
-        "🪀": "circle-dot",
-        "🏹": "crosshair",
-        "🪁": "wind",
-        "🥊": "hand",
-        "🥋": "shirt",
-        "⚔": "swords",
-        "🤺": "swords",
-        "🥌": "circle-dot",
-        "🎳": "volleyball",
-        "🏌": "flag",
-        "⛳": "flag",
-        "🤸": "person-standing",
-        "🤽": "waves",
-        "🤾": "person-standing",
-        "🧗": "mountain",
-        "🏇": "paw-print",
-        "🤹": "orbit",
-        "🎪": "tent",
-        "🤼": "users",
-        "🥏": "disc",
-        /* ---- 奖章票庆 ---- */
-        "🥇": "medal",
-        "🥈": "medal",
-        "🥉": "medal",
-        "🏅": "medal",
-        "🎗": "ribbon",
-        "🏵": "flower",
-        "🤡": "smile",
-        "🎟": "ticket",
-        "🎫": "ticket",
-        "🎀": "ribbon",
-        "🎈": "party-popper",
-        "🎉": "party-popper",
-        "🎊": "sparkles",
-        "🎋": "sprout",
-        "🎍": "sprout",
-        "🎎": "baby",
-        "🎏": "flag",
-        "🎐": "bell",
-        "🎑": "moon",
-        "🧧": "wallet",
-        /* ---- 服饰鞋靴二批 ---- */
-        "🥽": "glasses",
-        "🥼": "shirt",
-        "🦺": "shield",
-        "🥾": "footprints",
-        "🥿": "footprints",
-        "🩰": "footprints",
-        "👢": "footprints",
-        "👡": "footprints",
-        "🩴": "footprints",
-        /* ---- 车船航空 ---- */
-        "🚙": "car",
-        "🚐": "bus",
-        "🚚": "truck",
-        "🚛": "truck",
-        "🚜": "tractor",
-        "🏎": "car",
-        "🚓": "car",
-        "🚑": "ambulance",
-        "🚒": "truck",
-        "🚨": "siren",
-        "🚔": "car",
-        "🚍": "bus",
-        "🚋": "tram-front",
-        "🚃": "train-front",
-        "🚝": "train-front",
-        "🚄": "train-front",
-        "🚅": "train-front",
-        "🚈": "tram-front",
-        "🚊": "tram-front",
-        "🚞": "train-front",
-        "🚟": "cable-car",
-        "🚠": "cable-car",
-        "🚡": "cable-car",
-        "🚢": "ship",
-        "🛳": "ship",
-        "⛴": "ship",
-        "🚤": "ship",
-        "🛥": "ship",
-        "⛵": "sailboat",
-        "🚣": "ship",
-        "🛷": "snowflake",
-        "🚁": "helicopter",
-        "✈": "plane",
-        "🛩": "plane",
-        "🛫": "plane-takeoff",
-        "🛬": "plane-landing",
-        "💺": "armchair",
-        "🚀": "rocket",
-        "🛸": "disc",
-        "🛰": "satellite",
-        "🚏": "bus",
-        "⛽": "fuel",
-        "🛞": "circle-dot",
-        "🛢": "database",
-        "🧪": "flask-conical",
-        "🧯": "flame",
-        "🔦": "flashlight",
-        "🎵": "music",
-        /* ---- 动物（lucide 无种别图的落 paw-print / 鸟禽落 bird / 海洋落 fish） ---- */
-        "🐱": "cat",
-        "🐭": "rat",
-        "🐹": "rat",
-        "🐰": "rabbit",
-        "🦊": "paw-print",
-        "🐻": "paw-print",
-        "🐼": "paw-print",
-        "🐨": "paw-print",
-        "🐯": "paw-print",
-        "🦁": "paw-print",
-        "🐮": "paw-print",
-        "🐷": "piggy-bank",
-        "🐸": "paw-print",
-        "🐙": "fish",
-        "🐵": "paw-print",
-        "🐔": "egg",
-        "🐧": "bird",
-        "🐦": "bird",
-        "🐤": "bird",
-        "🦆": "bird",
-        "🦅": "bird",
-        "🦉": "bird",
-        "🦇": "bird",
-        "🐺": "paw-print",
-        "🐗": "paw-print",
-        "🐴": "paw-print",
-        "🦄": "sparkles",
-        "🐝": "bug",
-        "🐛": "bug",
-        "🦋": "flower",
-        "🐌": "snail",
-        "🐞": "bug",
-        "🐜": "bug",
-        "🦗": "bug",
-        "🕷": "bug",
-        "🦂": "bug",
-        "🦀": "shell",
-        "🐟": "fish",
-        "🐡": "fish",
-        "🐬": "fish",
-        "🐳": "fish",
-        "🐋": "fish",
-        "🦈": "fish",
-        "🐊": "paw-print",
-        "🐅": "paw-print",
-        "🐆": "paw-print",
-        "🦓": "paw-print",
-        "🦍": "paw-print",
-        "🦧": "paw-print",
-        "🐘": "paw-print",
-        "🦛": "paw-print",
-        "🦏": "paw-print",
-        "🐫": "paw-print",
-        "🦒": "paw-print",
-        "🐃": "paw-print",
-        "🐂": "paw-print",
-        "🐄": "paw-print",
-        "🐪": "paw-print",
-        /* ---- 草木 ---- */
-        "🌱": "sprout",
-        "🌲": "tree-pine",
-        "🌳": "tree-deciduous",
-        "🌴": "tree-palm",
-        "🌵": "sprout",
-        "🌷": "flower",
-        "🌸": "flower",
-        "🌹": "flower",
-        "🌺": "flower-2",
-        "🌻": "flower-2",
-        "🌼": "flower",
-        "🌾": "wheat",
-        "🍀": "leaf",
-        "🍁": "leaf",
-        "🍂": "leaf",
-        "🍃": "leaf",
-        "🌰": "nut",
-        "🎄": "tree-pine",
-        /* ---- 虚构/宠物玩偶 ---- */
-        "🤖": "bot",
-        "👾": "ghost",
-        "🐲": "baby",
-        "🦖": "baby",
-        "🦕": "baby",
-        "🐉": "baby",
-        "🦐": "shrimp",
-        "🦞": "shrimp",
-        "🐢": "turtle",
-        "🐍": "worm",
-        "🦎": "paw-print",
-        "🐖": "piggy-bank",
-        "🐑": "paw-print",
-        "🐐": "paw-print",
-        "🐎": "paw-print",
-        /* ---- 乐器声响 ---- */
-        "🎺": "megaphone",
-        "🎷": "megaphone",
-        "🪕": "guitar",
-        "🎻": "guitar",
-        "🎼": "music",
-        "🎶": "music",
-        "📻": "radio",
-        "🎚": "audio-lines",
-        "🎛": "sliders-horizontal",
-        "📢": "megaphone",
-        "📯": "megaphone",
-        "🔔": "bell",
-        "🪗": "audio-lines",
-        "🪘": "drum",
-        "🪈": "wind",
-        "🎥": "film",
-        "💿": "disc",
-        "📼": "videotape",
-        "🗺": "map",
-        "🦟": "bug",
-        "🪢": "cable",
-        "🪜": "waves-ladder",
-        "👑": "crown"
-      };
-    }
-  });
-
-  // src/belongings/data.ts
-  function getDataFilePath() {
-    return storageFile("belongings.json");
-  }
-  function emptyDatabase() {
-    return {
-      version: "1.0",
-      last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-      items: {},
-      categories: [],
-      categoryIcons: {}
-    };
-  }
-  async function loadDatabase() {
-    const filePath = getDataFilePath();
-    const raw = await jsonFileStore(filePath, {
-      defaultValue: () => emptyDatabase()
-    }).read();
-    let db;
-    try {
-      if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
-        throw new Error("数据文件结构异常（非对象）");
-      }
-      db = raw;
-    } catch (error) {
-      notice("数据文件结构异常，已按空库继续，原文件未改动", "warning", 5e3);
-      console.error("数据文件结构异常:", error);
-      db = emptyDatabase();
-    }
-    if (!db.items || typeof db.items !== "object" || Array.isArray(db.items)) {
-      console.error("数据文件 items 字段结构异常:", db.items === null ? "null" : typeof db.items);
-      db.items = {};
-    }
-    for (const it of Object.values(db.items)) {
-      if (!it || typeof it !== "object") continue;
-      const split = splitEmojiCategory(it.category);
-      if (!split.emoji) continue;
-      it.category = split.name;
-      if (split.icon && (it.icon == null || it.icon === "")) it.icon = split.icon;
-    }
-    const freq = /* @__PURE__ */ new Map();
-    const icons = {};
-    for (const it of Object.values(db.items)) {
-      if (!it || typeof it !== "object") continue;
-      const cat = String(it.category || "").trim();
-      if (!cat) continue;
-      const cur = freq.get(cat) || { n: 0, last: "" };
-      cur.n += 1;
-      cur.last = String(it.last_updated || "");
-      freq.set(cat, cur);
-      if (it.icon && !icons[cat]) icons[cat] = it.icon;
-    }
-    db.categories = [...freq.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last.localeCompare(a[1].last)).map(([c]) => c);
-    db.categoryIcons = icons;
-    return db;
-  }
-  async function saveDatabase(database) {
-    const saveData = {
-      version: database.version,
-      last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-      items: database.items
-    };
-    await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
-  }
-  var init_data5 = __esm({
-    "src/belongings/data.ts"() {
-      init_notice();
-      init_storage();
-      init_emoji_icon_map();
-    }
-  });
-
-  // src/core/chart-palette.ts
-  var CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_INK, CHART_HIGHLIGHT;
-  var init_chart_palette = __esm({
-    "src/core/chart-palette.ts"() {
-      CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
-      CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
-      CHART_INK = "#3D4456";
-      CHART_HIGHLIGHT = "#FFE5CC";
-    }
-  });
-
-  // src/belongings/shared.ts
-  function moneyUnitLabel(unit = "cny") {
-    return unit === "yuan" ? "元" : unit === "usd" ? "$" : unit === "none" ? "" : "￥";
-  }
-  function moneyWith(mid, unit = "cny") {
-    if (unit === "yuan") return `${mid} 元`;
-    if (unit === "none") return mid;
-    return moneyUnitLabel(unit) + mid;
-  }
-  function money(n, unit = "cny") {
-    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), unit);
-  }
-  function moneyShort(n, unit = "cny") {
-    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
-  }
-  function todayStr() {
-    return localDayKey();
-  }
-  function catEmoji(cat) {
-    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
-    return m ? m[1] : String(cat || "")[0] || "📦";
-  }
-  function catNameOf(cat) {
-    return String(cat || "").replace(/^\p{Extended_Pictographic}\s*/u, "");
-  }
-  function catIconOf(cat) {
-    var _a2;
-    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
-    return m ? (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null : null;
-  }
-  function catEmHtml(cat) {
-    var _a2;
-    const em = catEmoji(cat);
-    const name = catIconOf(cat) || ((_a2 = EMOJI_ICON[em]) != null ? _a2 : null);
-    return name ? iconSpan(name) : esc(em);
-  }
-  function itemIconOf(it) {
-    var _a2;
-    const raw = String(it.icon || "").trim();
-    if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
-    return catIconOf(it.category) || ((_a2 = EMOJI_ICON[catEmoji(it.category)]) != null ? _a2 : null);
-  }
-  function itemEmHtml(it) {
-    const name = itemIconOf(it);
-    return name ? iconSpan(name) : catEmHtml(it.category);
-  }
-  function statusKeyOf(label) {
-    var _a2, _b2;
-    return (_b2 = (_a2 = STATUS_ORDER.find((s) => s.label === label)) == null ? void 0 : _a2.key) != null ? _b2 : label;
-  }
-  function statusOf(keyOrLabel) {
-    const byKey = STATUS_ORDER.find((s) => s.key === keyOrLabel);
-    if (byKey) return byKey;
-    const byLabel = STATUS_ORDER.find((s) => s.label === keyOrLabel);
-    return byLabel || { key: "using", label: "使用中" };
-  }
-  function exitedStatus(st) {
-    return st === "已转卖" || st === "已丢弃";
-  }
-  function isExited(it) {
-    return exitedStatus(it.current_status);
-  }
-  function exitDayTsOf(it) {
-    var _a2, _b2;
-    return isExited(it) ? (_b2 = (_a2 = parseLocalDay(it.exit_date)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null : null;
-  }
-  function recoveredOf(it) {
-    return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
-  }
-  function trimDailyNum(n) {
-    const v = Number(n) || 0;
-    return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
-  }
-  function parseLocalDay(raw) {
-    const parts = String(raw || "").slice(0, 10).split("-").map(Number);
-    const [y, m, d] = parts;
-    if (!y || !m || !d) return null;
-    if (m < 1 || m > 12) return null;
-    const dt = new Date(y, m - 1, d);
-    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
-    return dt;
-  }
-  function daysUsed(it) {
-    const start = parseLocalDay(it.purchase_date);
-    if (!start) return 0;
-    const ex = exitDayTsOf(it);
-    const end = ex != null ? ex : Date.now();
-    return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
-  }
-  function dailyCostOf(it) {
-    const days = daysUsed(it);
-    const price = Number(it.purchase_price) || 0;
-    return days > 0 ? price / days : price;
-  }
-  function inStock(it) {
-    return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
-  }
-  function stockCount(items) {
-    return items.filter(inStock).length;
-  }
-  function totalAssets(items) {
-    return items.filter(inStock).reduce((s, i) => s + (Number(i.purchase_price) || 0), 0);
-  }
-  function avgDailyCost(items) {
-    let cost = 0;
-    let days = 0;
-    for (const it of items) {
-      cost += Number(it.purchase_price) || 0;
-      cost -= recoveredOf(it);
-      days += daysUsed(it);
-    }
-    return days ? cost / days : 0;
-  }
-  function statusCount(items, label) {
-    return items.filter((i) => i.current_status === label).length;
-  }
-  function filtered(items, view) {
-    return items.filter((i) => {
-      if (!view.status) return true;
-      if (view.status === "asset") return inStock(i);
-      return i.current_status === statusOf(view.status).label;
-    }).filter((i) => view.year ? String(i.purchase_date || "").startsWith(view.year) : true).filter((i) => {
-      if (!view.q) return true;
-      const q2 = view.q.toLowerCase();
-      return [i.name, i.category, i.description].join(" ").toLowerCase().includes(q2);
-    }).sort((a, b) => {
-      if (view.sort === "price") return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
-      if (view.sort === "daily") return dailyCostOf(b) - dailyCostOf(a);
-      return String(b.purchase_date || "").localeCompare(String(a.purchase_date || "")) || String(a.name || "").localeCompare(String(b.name || ""), "zh");
-    });
-  }
-  function yearsAvailable(items) {
-    const set = /* @__PURE__ */ new Set();
-    items.forEach((i) => {
-      const y = String(i.purchase_date || "").slice(0, 4);
-      if (y) set.add(y);
-    });
-    return [...set].sort().reverse();
-  }
-  function resolveYear(items, year) {
-    return year && yearsAvailable(items).includes(year) ? year : "";
-  }
-  function heroTitleText(view) {
-    if (!view.status) return "全部";
-    if (view.status === "asset") return "资产";
-    return statusOf(view.status).label;
-  }
-  function heroSubText(items, view) {
-    return view.status ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
-  }
-  function belDetailHtml(it, unit = "cny") {
-    var _a2;
-    const gone = isExited(it);
-    const key = statusKeyOf(it.current_status);
-    return `<div class="bz-bel-detail">
-    <div class="bz-bel-detail-head">
-      <div class="bz-bel-detail-title">${esc(it.name)}</div>
-    </div>
-    <div class="bz-bel-detail-idrow">
-      <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
-      <div class="bz-bel-detail-idinfo">
-        <div class="bz-bel-detail-cat">${esc(catNameOf(it.category) || "未分类")}</div>
-        <div class="bz-bel-detail-desc">${esc(it.description || "无备注")}</div>
-      </div>
-      <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
-    </div>
-    <div class="bz-bel-detail-fields">
-      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0, unit)}</b></div>
-      <div class="bz-bel-dfield"><span>购买日期</span><b>${esc(String(it.purchase_date || "").slice(0, 10) || "—")} · ${daysUsed(it)} 天</b></div>
-      <div class="bz-bel-dfield"><span>日均成本</span><b>${moneyWith(dailyCostOf(it).toFixed(2), unit)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
-      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price), unit) : ""}</b></div>` : ""}
-      <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc(String(it.created_date || "").slice(0, 10))} / ${esc(String(it.last_updated || "").slice(0, 10))}</b></div>
-    </div>
-    <div class="bz-bel-detail-acts" data-bd-acts></div>
-    <div class="bz-btn-row bz-bel-detail-btns">
-      <div class="bz-bel-form-spacer"></div>
-      <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
-      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON.del, "bz-ic--sm")} 删除</button>
-    </div>
-  </div>`;
-  }
-  function flowBtnsHtml(curStatus) {
-    return STATUS_LABELS.map(
-      (s) => `<button type="button" class="bz-bel-flowbtn${s === curStatus ? " is-cur" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-bd-flow="${esc(s)}">${esc(s)}</button>`
-    ).join("");
-  }
-  function belFormInit(it) {
-    var _a2, _b2, _c;
-    return {
-      priceVal: it ? String((_a2 = it.purchase_price) != null ? _a2 : "") : "",
-      dateVal: it ? String(it.purchase_date || "").slice(0, 10) : todayStr(),
-      catVal: (_b2 = it == null ? void 0 : it.category) != null ? _b2 : "",
-      // 新记不回填默认分类（issue 202），留空待选
-      descVal: (_c = it == null ? void 0 : it.description) != null ? _c : "",
-      // 出离字段初值（ADR-0089）：编辑回填 exit_date；新记 = 今天
-      exitDateVal: (it == null ? void 0 : it.exit_date) ? String(it.exit_date).slice(0, 10) : todayStr(),
-      soldPriceVal: (it == null ? void 0 : it.sold_price) != null && Number.isFinite(Number(it.sold_price)) ? String(it.sold_price) : "",
-      exitedInit: !!it && isExited(it)
-    };
-  }
-  function belFormHtml(it, unit = "cny") {
-    var _a2;
-    const editing = !!it;
-    const unitLabel = moneyUnitLabel(unit);
-    const { priceVal, dateVal, catVal, descVal, exitDateVal, soldPriceVal, exitedInit } = belFormInit(it);
-    return `
-  <div class="bz-bel-form">
-    <div class="bz-bel-form-title">${editing ? "编辑物品" : "记一笔"}</div>
-    <div class="bz-bel-form-body">
-      <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc((_a2 = it == null ? void 0 : it.name) != null ? _a2 : "")}" placeholder="如：iPhone 15 Pro"></div>
-      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
-      <div class="bz-bel-form-row">
-        <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ""}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
-        <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
-      </div>
-      <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
-      <div class="bz-bel-form-row" id="bm-exit"${exitedInit ? "" : " hidden"}>
-        <div class="bz-field"><span class="bz-field-label">出离日期</span><input class="bz-input" id="bm-exitdate" type="date" value="${esc(exitDateVal)}"></div>
-        <div class="bz-field" id="bm-soldfield"${(it == null ? void 0 : it.current_status) === "已转卖" ? "" : " hidden"}><span class="bz-field-label">转卖售价（可选）</span><input class="bz-input" id="bm-soldprice" type="number" min="0" step="0.01" value="${esc(soldPriceVal)}" placeholder="留空不记售价"></div>
-      </div>
-      <div class="bz-field"><span class="bz-field-label">描述（可选）</span><textarea class="bz-input" id="bm-desc" placeholder="规格、颜色、购买原因等…">${esc(descVal)}</textarea></div>
-      <div class="bz-bel-form-err" id="bm-err"></div>
-      <div class="bz-btn-row bz-bel-form-actions">
-        <div class="bz-bel-form-spacer"></div>
-        <button type="button" class="bz-btn bz-btn--ghost" data-bm-cancel>取消</button>
-        <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（favorites 同款收敛） -->
-        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? "保存" : "添加"}</button>
-      </div>
-    </div>
-  </div>`;
-  }
-  function statusPickHtml(curStatus) {
-    return STATUS_LABELS.map(
-      (s) => {
-        var _a2;
-        return `<button type="button" class="bz-choice-btn${s === curStatus ? " is-on" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-status="${esc(s)}">${iconSpan(((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(s)}</button>`;
-      }
-    ).join("");
-  }
-  function sheetHeadHtml(it, unit = "cny") {
-    const catName = catNameOf(it.category);
-    const days = daysUsed(it);
-    return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
-      <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
-      <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc(it.name)}</div>
-      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0, unit)} · 已用 ${days} 天</div></div></div></div>`;
-  }
-  function actionSpecs(it) {
-    const specs = [];
-    STATUS_LABELS.forEach((s) => {
-      var _a2;
-      if (s === it.current_status) return;
-      specs.push({ icon: ((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", label: `标记为${s}`, act: "flow", status: s, keepOpen: true });
-    });
-    specs.push({ icon: "pencil", label: "编辑", act: "edit", keepOpen: true });
-    specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
-    return specs;
-  }
-  var ICON, MAX_PRICE, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
-  var init_shared3 = __esm({
-    "src/belongings/shared.ts"() {
-      init_str();
-      init_emoji_icon_map();
-      init_emoji_icon_map();
-      init_str();
-      ICON = {
-        add: "plus",
-        search: "search",
-        close: "x",
-        del: "trash-2",
-        empty: "package",
-        chevD: "chevron-down",
-        report: "bar-chart-3"
-        // 年度资产报告工具行入口（issue 356）
-      };
-      MAX_PRICE = 1e12;
-      STATUS = {
-        using: { label: "使用中", key: "using", ic: "check-circle" },
-        idle: { label: "闲置", key: "idle", ic: "package" },
-        sold: { label: "已转卖", key: "sold", ic: "banknote" },
-        discard: { label: "已丢弃", key: "discard", ic: "archive" }
-      };
-      STATUS_ORDER = [
-        { key: "using", label: "使用中" },
-        { key: "idle", label: "闲置" },
-        { key: "sold", label: "已转卖" },
-        { key: "discard", label: "已丢弃" }
-      ];
-      STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
-      SORT_OPTS = [
-        { v: "recent", label: "最近购入" },
-        { v: "price", label: "投入最高" },
-        { v: "daily", label: "日均最高" }
-      ];
-    }
-  });
-
-  // src/belongings/report-stats.ts
-  function monthLabel(m) {
-    return `${m}月`;
-  }
-  function parseDayTs(raw) {
-    var _a2, _b2;
-    return (_b2 = (_a2 = parseLocalDay(raw)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null;
-  }
-  function yearOf(raw) {
-    const s = String(raw || "").slice(0, 4);
-    return /^\d{4}$/.test(s) ? s : "";
-  }
-  function priceOf(it) {
-    return Number(it.purchase_price) || 0;
-  }
-  function reportYears(items) {
-    const set = /* @__PURE__ */ new Set();
-    for (const it of items) {
-      const py = yearOf(it.purchase_date);
-      if (py) set.add(py);
-      const ey = yearOf(it.exit_date);
-      if (ey && exitedStatus(it.current_status)) set.add(ey);
-    }
-    return [...set].sort().reverse();
-  }
-  function resolveReportYear(items, year) {
-    const years = reportYears(items);
-    return years.includes(year) ? year : years[0] || "";
-  }
-  function avgDailyCostAsOf(items, cutoffTs) {
-    let cost = 0;
-    let days = 0;
-    for (const it of items) {
-      const p = parseDayTs(it.purchase_date);
-      if (p == null || p >= cutoffTs) continue;
-      cost += priceOf(it);
-      const ex = exitDayTsOf(it);
-      const capped = ex != null && ex < cutoffTs;
-      if (capped) cost -= recoveredOf(it);
-      days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
-    }
-    return days ? cost / days : 0;
-  }
-  function computeYearReport(items, year, now = /* @__PURE__ */ new Date()) {
-    const y = Number(year);
-    const yearStart = new Date(y, 0, 1).getTime();
-    const yearEnd = new Date(y + 1, 0, 1).getTime();
-    const nowTs2 = now.getTime();
-    const purchased = items.filter((it) => {
-      const p = parseDayTs(it.purchase_date);
-      return p != null && p >= yearStart && p < yearEnd;
-    });
-    const exitedInYear = items.filter((it) => {
-      const ex = parseDayTs(it.exit_date);
-      return ex != null && ex >= yearStart && ex < yearEnd && exitedStatus(it.current_status);
-    });
-    const monthlySpend = Array.from({ length: 12 }, (_, i) => ({
-      label: monthLabel(i + 1),
-      amount: 0,
-      count: 0
-    }));
-    for (const it of purchased) {
-      const p = parseDayTs(it.purchase_date);
-      const m = new Date(p).getMonth();
-      monthlySpend[m].amount += priceOf(it);
-      monthlySpend[m].count += 1;
-    }
-    const catMap = /* @__PURE__ */ new Map();
-    for (const it of purchased) {
-      const name = catNameOf(it.category).trim() || "未分类";
-      const cur = catMap.get(name) || { count: 0, amount: 0 };
-      cur.count += 1;
-      cur.amount += priceOf(it);
-      catMap.set(name, cur);
-    }
-    const purchasedAmount = purchased.reduce((s, i) => s + priceOf(i), 0);
-    const categoryShare = [...catMap.entries()].map(([name, v]) => ({
-      name,
-      count: v.count,
-      amount: v.amount,
-      pct: purchasedAmount > 0 ? Math.round(v.amount / purchasedAmount * 1e3) / 10 : 0
-    })).sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, "zh"));
-    const dailyCostTrend = Array.from({ length: 12 }, (_, i) => {
-      const monthStart = new Date(y, i, 1).getTime();
-      const monthEnd = new Date(y, i + 1, 1).getTime();
-      const future = monthStart > nowTs2;
-      const capped = !future && monthEnd > nowTs2;
-      const cutoff = capped ? nowTs2 : monthEnd;
-      return {
-        label: monthLabel(i + 1),
-        value: future ? 0 : avgDailyCostAsOf(items, cutoff),
-        future,
-        ...capped ? { capped } : {}
-      };
-    });
-    const companionCutoff = Math.min(yearEnd, nowTs2);
-    const companions = items.map((it) => {
-      const p = parseDayTs(it.purchase_date);
-      if (p == null || p >= companionCutoff) return null;
-      const ex = exitDayTsOf(it);
-      const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
-      return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
-    }).filter((r) => r != null).sort(
-      (a, b) => b.days - a.days || String(a.item.purchase_date || "").localeCompare(String(b.item.purchase_date || "")) || String(a.item.name || "").localeCompare(String(b.item.name || ""), "zh")
-    ).slice(0, COMPANION_TOP_N);
-    return {
-      year,
-      purchasedCount: purchased.length,
-      purchasedAmount,
-      exitedCount: exitedInYear.length,
-      recoveredAmount: exitedInYear.reduce((s, i) => s + recoveredOf(i), 0),
-      monthlySpend,
-      categoryShare,
-      dailyCostTrend,
-      companions,
-      // 审查修复批（issue 356）：段注口径随真实截止点走——当年（now 未到年末）陪伴榜实际截至今日，
-      // 旧文案写死「截至年末」与数据不符；往年 cutoff = yearEnd 才是「年末」
-      companionAsOf: companionCutoff < yearEnd ? "today" : "yearEnd",
-      hasYearData: purchased.length > 0 || exitedInYear.length > 0
-    };
-  }
-  var COMPANION_TOP_N, DAY_MS;
-  var init_report_stats = __esm({
-    "src/belongings/report-stats.ts"() {
-      init_shared3();
-      COMPANION_TOP_N = 5;
-      DAY_MS = 864e5;
-    }
-  });
-
-  // src/belongings/report.ts
-  function yieldToMainThread3() {
-    return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
-  }
-  function isBelReportOpen() {
-    return !!maskEl2;
-  }
-  function openBelReport(items, unit, opts = {}) {
-    var _a2;
-    ctxItems = items;
-    ctxUnit = unit;
-    ctxOnAdd = (_a2 = opts.onAdd) != null ? _a2 : null;
-    ctxYears = [];
-    if (!maskEl2) ctxYear = "";
-    if (maskEl2) {
-      startReport();
-      return;
-    }
-    const mask = document.createElement("div");
-    mask.className = "bz-overlay-mask bz-bel-report-mask";
-    mask.innerHTML = `
-  <div class="bz-bel-report bz-panel-mtop" role="dialog" aria-label="归物本年度资产报告">
-    <div class="bz-bel-report-head">
-      <div class="bz-bel-report-title">年度资产报告</div>
-      <div class="bz-bel-report-nav">
-        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-prev title="上一年" aria-label="上一年">${iconSpan("chevron-left")}</button>
-        <span class="bz-bel-report-year" data-belr-year>—</span>
-        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-next title="下一年" aria-label="下一年">${iconSpan("chevron-right")}</button>
-      </div>
-      <button type="button" class="bz-icon-btn bz-touch-target bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan("x")}</button>
-    </div>
-    <div class="bz-bel-report-body" data-belr-body></div>
-  </div>`;
-    document.body.appendChild(mask);
-    topifyZ(mask);
-    mountIcons(mask);
-    maskEl2 = mask;
-    mask.addEventListener("click", (e) => {
-      const t = e.target;
-      if (e.target === mask) {
-        closeBelReport();
-        return;
-      }
-      if (t.closest("[data-belr-close]")) {
-        closeBelReport();
-        return;
-      }
-      if (t.closest("[data-belr-prev]")) {
-        stepYear(-1);
-        return;
-      }
-      if (t.closest("[data-belr-next]")) {
-        stepYear(1);
-        return;
-      }
-    });
-    startReport();
-  }
-  function closeBelReport() {
-    cancelBelReport();
-    if (maskEl2) {
-      maskEl2.remove();
-      maskEl2 = null;
-    }
-    ctxItems = [];
-    ctxYears = [];
-    ctxYear = "";
-    ctxOnAdd = null;
-  }
-  function cancelBelReport() {
-    renderSeq++;
-    if (activeProgress) {
-      activeProgress.hide();
-      activeProgress = null;
-    }
-  }
-  function unloadBelReport() {
-    cancelBelReport();
-    if (maskEl2) {
-      maskEl2.remove();
-      maskEl2 = null;
-    }
-    ctxItems = [];
-    ctxYears = [];
-    ctxYear = "";
-    ctxOnAdd = null;
-  }
-  function stepYear(dir) {
-    const idx = ctxYears.indexOf(ctxYear);
-    if (idx < 0) return;
-    const next = idx - dir;
-    if (next < 0 || next >= ctxYears.length) return;
-    ctxYear = ctxYears[next];
-    paintYearNav();
-    startReport(true);
-  }
-  function paintYearNav() {
-    if (!maskEl2) return;
-    const label = maskEl2.querySelector("[data-belr-year]");
-    if (label) label.textContent = ctxYear || "—";
-    const idx = ctxYears.indexOf(ctxYear);
-    const prev = maskEl2.querySelector("[data-belr-prev]");
-    const next = maskEl2.querySelector("[data-belr-next]");
-    if (prev) prev.disabled = idx < 0 || idx >= ctxYears.length - 1;
-    if (next) next.disabled = idx < 0 || idx <= 0;
-  }
-  function startReport(quiet = false) {
-    const body = maskEl2 == null ? void 0 : maskEl2.querySelector("[data-belr-body]");
-    if (!body) return;
-    cancelBelReport();
-    const seq = renderSeq;
-    const alive = () => seq === renderSeq && !!(maskEl2 == null ? void 0 : maskEl2.isConnected) && body.isConnected;
-    body.innerHTML = SKELETON_HTML;
-    ctxYears = reportYears(ctxItems);
-    ctxYear = resolveReportYear(ctxItems, ctxYear);
-    paintYearNav();
-    const progress = notify("正在统计年度数据…", {
-      type: "progress",
-      duration: 0,
-      dedupeKey: `bz-belongings-report-progress-${++progressToastSeq}`
-    });
-    activeProgress = progress;
-    const finishAbort = () => {
-      progress.hide();
-      if (activeProgress === progress) activeProgress = null;
-    };
-    const finishDone = (quiet2) => {
-      if (activeProgress === progress) activeProgress = null;
-      if (quiet2) progress.hide();
-      else {
-        progress.setType("success");
-        progress.setMessage("年度报告完成");
-      }
-    };
-    const step = async () => {
-      progress.setMessage("正在读取归物本…");
-      await yieldToMainThread3();
-      if (!alive()) return finishAbort();
-      if (ctxItems.length === 0) {
-        body.innerHTML = "";
-        body.appendChild(buildLibraryEmpty());
-        mountIcons(body);
-        return finishDone(true);
-      }
-      progress.setMessage("正在汇总购入与离场…");
-      await yieldToMainThread3();
-      if (!alive()) return finishAbort();
-      const year = ctxYear;
-      const stats = computeYearReport(ctxItems, year);
-      if (!alive()) return finishAbort();
-      if (!stats.hasYearData) {
-        body.innerHTML = emptyYearHtml(year);
-        mountIcons(body);
-        return finishDone(true);
-      }
-      const sections = buildReportSections(stats);
-      body.innerHTML = "";
-      for (const section of sections) {
-        if (!alive()) return finishAbort();
-        await yieldToMainThread3();
-        if (!alive()) return finishAbort();
-        body.insertAdjacentHTML("beforeend", section.generate());
-        progress.setMessage(`正在生成${section.label}…`);
-      }
-      if (alive()) {
-        mountIcons(body);
-        finishDone(quiet);
-      } else {
-        finishAbort();
-      }
-    };
-    void step().catch((error) => {
-      console.error("生成归物本年度报告失败:", error);
-      if (activeProgress === progress) activeProgress = null;
-      if (alive()) {
-        progress.setType("error");
-        progress.setMessage("统计失败：读取归物本数据时出错，请重试");
-        body.innerHTML = ERROR_HTML;
-      } else {
-        progress.hide();
-      }
-    });
-  }
-  function buildLibraryEmpty() {
-    const actions = uiBtnRow(
-      [
-        uiBtn({
-          label: "记一笔",
-          icon: "plus",
-          tone: "primary",
-          onClick: () => ctxOnAdd == null ? void 0 : ctxOnAdd()
-        })
-      ],
-      { center: true }
-    );
-    return uiEmpty({
-      icon: "package",
-      title: "归物本还没有物品",
-      desc: "登记物品后，这里会按年生成资产报告：购入与离场、月度花销、分类占比和陪伴最久的物件",
-      actions
-    });
-  }
-  function emptyYearHtml(year) {
-    return `<div class="bz-belr-emptyyear">
-    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
-    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"}</div>
-  </div>`;
-  }
-  function buildReportSections(stats) {
-    return [
-      { key: "summary", label: "购入与离场概览", generate: () => summaryHtml(stats) },
-      { key: "monthly", label: "月度花销走势", generate: () => monthlyHtml(stats) },
-      { key: "categories", label: "分类占比", generate: () => categoriesHtml(stats) },
-      { key: "daily", label: "日均成本走势", generate: () => dailyHtml(stats) },
-      { key: "companions", label: "陪伴最久榜", generate: () => companionsHtml(stats) }
-    ];
-  }
-  function secHead(title, note = "") {
-    return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ""}</div>`;
-  }
-  function summaryHtml(stats) {
-    const card = (num2, label, color) => `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
-      <b>${esc(num2)}</b><span>${esc(label)}</span>
-    </div>`;
-    return `<div class="bz-belr-sec">
-  ${secHead(`${stats.year} 年购入与离场`)}
-  <div class="bz-belr-grid">
-  ${card(String(stats.purchasedCount), "购入件数", CHART_PASTEL_SERIES[0])}
-  ${card(moneyShort(stats.purchasedAmount, ctxUnit), "购入金额", CHART_PASTEL_SERIES[1])}
-  ${card(String(stats.exitedCount), "离场件数", CHART_PASTEL_SERIES[2])}
-  ${card(moneyShort(stats.recoveredAmount, ctxUnit), "转卖回血", CHART_PASTEL_SERIES[4])}
-  </div>
-  </div>`;
-  }
-  function columnsHtml(cols) {
-    const max = Math.max(0, ...cols.filter((c) => !c.future).map((c) => c.value));
-    return `<div class="bz-belr-cols">
-  ${cols.map((c) => {
-      const height = !c.future && c.value > 0 && max > 0 ? 12 + Math.round(c.value / max * 48) : 3;
-      const bg = c.future ? "transparent" : c.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
-      const num2 = !c.future && c.value > 0 ? `<span class="bz-belr-col-num">${esc(c.display)}</span>` : "";
-      const cls = ["bz-belr-col", c.future ? "bz-belr-col--future" : "", c.accent ? "bz-belr-col--accent" : ""].filter(Boolean).join(" ");
-      return `<div class="${cls}"${c.title ? ` title="${esc(c.title)}"` : ""}>
-        ${num2}
-        <div class="bz-belr-col-bar" style="height:${height}px;${c.future ? "" : `background:${bg}`}"></div>
-        <div class="bz-belr-col-label">${esc(c.label)}</div>
-      </div>`;
-    }).join("")}
-  </div>`;
-  }
-  function monthlyHtml(stats) {
-    if (stats.purchasedAmount === 0) {
-      return `<div class="bz-belr-sec">
-    ${secHead("月度花销走势", "当年无购入")}
-    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
-    </div>`;
-    }
-    const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
-    const cols = stats.monthlySpend.map((m) => ({
-      label: m.label,
-      value: m.amount,
-      display: moneyShort(m.amount, ctxUnit),
-      accent: m.amount > 0 && m.amount === maxAmount,
-      title: m.count > 0 ? `${m.label}购入 ${m.count} 件 · ${moneyShort(m.amount, ctxUnit)}` : `${m.label}无购入`
-    }));
-    return `<div class="bz-belr-sec">
-  ${secHead("月度花销走势", `全年购入 ${moneyShort(stats.purchasedAmount, ctxUnit)}`)}
-  ${columnsHtml(cols)}
-  </div>`;
-  }
-  function categoriesHtml(stats) {
-    if (stats.purchasedAmount === 0) {
-      return `<div class="bz-belr-sec">
-    ${secHead("分类占比", "当年无购入")}
-    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
-    </div>`;
-    }
-    const MAX_ROWS = 8;
-    const rows = stats.categoryShare.slice(0, MAX_ROWS);
-    const rest = stats.categoryShare.slice(MAX_ROWS);
-    if (rest.length > 0) {
-      rows.push({
-        name: `其他（${rest.length} 类）`,
-        count: rest.reduce((s, r) => s + r.count, 0),
-        amount: rest.reduce((s, r) => s + r.amount, 0),
-        pct: Math.round(rest.reduce((s, r) => s + r.pct, 0) * 10) / 10
-      });
-    }
-    const line = (row, i) => {
-      const color = CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
-      const width = Math.max(0, Math.min(100, row.pct));
-      return `<div class="bz-belr-row">
-      <span class="bz-belr-row-label" title="${esc(row.name)}">${esc(row.name)}</span>
-      <div class="bz-progress bz-progress--lg bz-belr-row-track"><i style="width:${width}%;background:${color}"></i></div>
-      <span class="bz-belr-row-val">${row.count} 件 · ${esc(moneyShort(row.amount, ctxUnit))} · ${row.pct}%</span>
-    </div>`;
-    };
-    return `<div class="bz-belr-sec">
-  ${secHead("分类占比", `共 ${stats.categoryShare.length} 类 · 按购入金额`)}
-  <div class="bz-belr-rows">${rows.map(line).join("")}</div>
-  </div>`;
-  }
-  function dailyHtml(stats) {
-    const hasCapped = stats.dailyCostTrend.some((c) => c.capped);
-    const cols = stats.dailyCostTrend.map((c) => ({
-      label: c.label,
-      value: c.future ? 0 : c.value,
-      display: c.value > 0 ? trimDailyNum(c.value) : "0",
-      future: c.future,
-      title: c.future ? `${c.label}末尚未到来` : c.capped ? `${c.label}截至今日日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}` : `${c.label}末日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}`
-    }));
-    return `<div class="bz-belr-sec">
-  ${secHead("日均成本走势", `口径：各月末时点${hasCapped ? "（当月截至今日）" : ""} ·（总购入 − 转卖回本）/ 累计持有天数`)}
-  ${columnsHtml(cols)}
-  </div>`;
-  }
-  function trimNumThousands(n) {
-    return (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
-  }
-  function companionsHtml(stats) {
-    if (stats.companions.length === 0) {
-      return `<div class="bz-belr-sec">
-    ${secHead("陪伴最久榜")}
-    <p class="bz-belr-none">暂无可统计的物品</p>
-    </div>`;
-    }
-    const asOf = stats.companionAsOf === "today" ? "截至今日" : `截至 ${stats.year} 年末`;
-    const line = (row, i) => {
-      const it = row.item;
-      const price = Number(it.purchase_price) || 0;
-      const daily = row.days > 0 ? moneyWith(trimNumThousands(price / row.days), ctxUnit) : "—";
-      const badge = i < CHART_RANK_BADGES.length ? ` style="background:${CHART_RANK_BADGES[i]};color:${CHART_INK}"` : "";
-      const goneYear = it.exit_date ? String(it.exit_date).slice(0, 4) : "";
-      return `<div class="bz-belr-comp">
-      <span class="bz-belr-comp-rank"${badge}>${i + 1}</span>
-      <span class="bz-belr-comp-name" title="${esc(it.name)}">${esc(it.name)}</span>
-      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || "").slice(0, 4) || "—")} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ""} · 日均 ${esc(daily)}</span>
-      <b class="bz-belr-comp-days">${row.days.toLocaleString("zh-CN")} 天</b>
-    </div>`;
-    };
-    return `<div class="bz-belr-sec">
-  ${secHead("陪伴最久榜", `${asOf} · Top ${stats.companions.length}`)}
-  <div class="bz-belr-comps">${stats.companions.map(line).join("")}</div>
-  </div>`;
-  }
-  var renderSeq, progressToastSeq, activeProgress, maskEl2, ctxItems, ctxUnit, ctxYears, ctxYear, ctxOnAdd, SKELETON_HTML, ERROR_HTML, IDLE_CALLBACK_TIMEOUT_MS;
-  var init_report = __esm({
-    "src/belongings/report.ts"() {
-      init_utils();
-      init_notice();
-      init_ui();
-      init_str();
-      init_z_order();
-      init_chart_palette();
-      init_shared3();
-      init_report_stats();
-      init_shared3();
-      renderSeq = 0;
-      progressToastSeq = 0;
-      activeProgress = null;
-      maskEl2 = null;
-      ctxItems = [];
-      ctxUnit = "cny";
-      ctxYears = [];
-      ctxYear = "";
-      ctxOnAdd = null;
-      SKELETON_HTML = '<div class="bz-belr-skeleton">统计中…</div>';
-      ERROR_HTML = `<div class="bz-belr-error">
-  <div class="bz-belr-error-t">统计失败</div>
-  <div>读取归物本数据时出错，请关闭后重试</div>
-</div>`;
-      IDLE_CALLBACK_TIMEOUT_MS = 50;
-    }
-  });
-
-  // src/belongings/layouts/poster/render.ts
-  function panelHtml() {
-    return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
-  <div class="bz-bel-body">
-    <div class="bz-bel-hero">
-      <div class="bz-bel-hero-text">
-        <div class="bz-bel-hero-title" data-bel-herotitle>全部</div>
-        <div class="bz-bel-hero-sub" data-bel-herosub>归物本 — NOTHING MORE, NOTHING LESS</div>
-      </div>
-      <div class="bz-bel-kpis" data-bel-kpis></div>
-      <div class="bz-bel-mobhead">
-        <div class="bz-bel-stamp"><b data-bel-stampn>0</b><span>在库</span></div>
-        <div class="bz-bel-mobhead-tx">
-          <div class="bz-bel-mobhead-t">归物本</div>
-          <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
-        </div>
-        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
-      </div>
-    </div>
-    <div class="bz-bel-chips" data-bel-chips></div>
-    <div class="bz-toolrow bz-bel-toolrow">
-      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类 / 备注…"><button type="button" class="bz-bel-search-clear" data-bel-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
-      <div class="bz-bel-yearsel">
-        <div class="bz-bel-select bz-touch-target" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
-        <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
-      </div>
-      <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
-        <div class="bz-bel-select bz-touch-target" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
-        <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
-      </div>
-      <div class="bz-bel-sort" data-bel-sort></div>
-      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON.report)}</button>
-      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
-    </div>
-    <div class="bz-mobstrip" data-bel-mobstatus></div>
-    <div class="bz-bel-content" data-bel-content></div>
-    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
-  </div>
-</div>`;
-  }
-  function chipsHtml(items, view) {
-    const defs = [
-      { key: "__all", label: "全部", cnt: items.length },
-      { key: "asset", label: "资产", cnt: stockCount(items) },
-      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
-    ];
-    return defs.map((d) => {
-      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
-      return `<button type="button" class="bz-chip${active2 ? " bz-chip--on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
-    }).join("");
-  }
-  function mobChipsHtml(items, view) {
-    const defs = [
-      { key: "__all", label: "全部", cnt: items.length },
-      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
-    ];
-    return defs.map((d) => {
-      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
-      return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
-    }).join("");
-  }
-  function yearsOptionsHtml(items, cur) {
-    return '<div class="bz-bel-dropopt' + (cur === "" ? " is-cur" : "") + '" data-v="" role="option">全部年份</div>' + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? " is-cur" : ""}" data-v="${esc(y)}" role="option">${y}</div>`).join("");
-  }
-  function sortOptionsHtml(cur) {
-    return SORT_OPTS.map((o) => `<div class="bz-bel-dropopt${cur === o.v ? " is-cur" : ""}" data-v="${o.v}" role="option">${o.label}</div>`).join("");
-  }
-  function segmentedHtml(sort) {
-    return `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) => `<button type="button" class="bz-segmented-btn${sort === o.v ? " is-on" : ""}" data-k="${o.v}" role="radio" aria-checked="${sort === o.v}">${o.label}</button>`).join("")}</div>`;
-  }
-  function kpisHtml(items, unit = "cny") {
-    const gone = items.filter(isExited);
-    const recover2 = gone.reduce(
-      (s, i) => s + (i.current_status === "已转卖" && Number(i.sold_price) > 0 ? Number(i.sold_price) : 0),
-      0
-    );
-    const kpi = (num2, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num2}</b><span>${esc(label)}</span></div>`;
-    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
-  }
-  function stampCount(items) {
-    return String(stockCount(items));
-  }
-  function mobStatsText(items, unit = "cny") {
-    return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
-  }
-  function emptyHtml(noMatch) {
-    return emptyHtmlStr(
-      ICON.empty,
-      noMatch ? "没有符合条件的物品" : "这里还没有物品",
-      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
-    );
-  }
-  function cellHtml(it, idx, unit = "cny") {
-    var _a2;
-    const gone = isExited(it);
-    const idle = it.current_status === "闲置";
-    const days = daysUsed(it);
-    const daily = dailyCostOf(it);
-    const key = statusKeyOf(it.current_status);
-    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
-    const dailyStr = trimDailyNum(daily);
-    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
-    return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
-    <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
-    <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
-    <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
-    <span class="bz-bel-name">${esc(it.name)}</span>
-    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0, unit)}</span>
-    <span class="bz-bel-mut">${mut}</span>
-  </div>`;
-  }
-  function gridHtml(items, view, unit = "cny", list) {
-    return `<div class="bz-bel-grid" data-bel-grid>${(list != null ? list : filtered(items, view)).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
-  }
-  function renderPanelView(root, items, view, hooks, unit = "cny") {
-    var _a2;
-    const q2 = (sel) => root.querySelector(sel);
-    const title = q2("[data-bel-herotitle]");
-    if (title) title.textContent = heroTitleText(view);
-    const sub = q2("[data-bel-herosub]");
-    if (sub) sub.textContent = heroSubText(items, view);
-    const chips = q2("[data-bel-chips]");
-    if (chips) chips.innerHTML = chipsHtml(items, view);
-    const mob = q2("[data-bel-mobstatus]");
-    if (mob) mob.innerHTML = mobChipsHtml(items, view);
-    view.year = resolveYear(items, view.year);
-    const yearSel = q2("[data-bel-year]");
-    if (yearSel) {
-      yearSel.querySelector(".bz-bel-select-label").textContent = view.year || "全部年份";
-      const menu = q2("[data-bel-yearmenu]");
-      if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
-    }
-    const wrap = q2("[data-bel-kpis]");
-    if (wrap) wrap.innerHTML = kpisHtml(items, unit);
-    const stampN = q2("[data-bel-stampn]");
-    if (stampN) stampN.textContent = stampCount(items);
-    const mobStats = q2("[data-bel-mobstats]");
-    if (mobStats) mobStats.textContent = mobStatsText(items, unit);
-    const sortHost = q2("[data-bel-sort]");
-    if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
-    const mobSortSel = q2("[data-bel-mobsortsel]");
-    if (mobSortSel) {
-      mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a2 = SORT_OPTS.find((o) => o.v === view.sort)) != null ? _a2 : SORT_OPTS[0]).label;
-      const menu = q2("[data-bel-mobsortmenu]");
-      if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
-    }
-    const content = q2("[data-bel-content]");
-    if (!content) return;
-    const list = filtered(items, view);
-    if (!list.length) {
-      const noMatch = !!view.q || view.status !== null || view.year !== "";
-      content.innerHTML = emptyHtml(noMatch);
-    } else {
-      content.innerHTML = gridHtml(items, view, unit, list);
-      const gridEl = content.querySelector("[data-bel-grid]");
-      const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
-      const rem = list.length % cols;
-      if (rem) gridEl.insertAdjacentHTML("beforeend", `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
-    }
-    hooks.mountIcons(content);
-  }
-  var init_render5 = __esm({
-    "src/belongings/layouts/poster/render.ts"() {
-      init_str();
-      init_shared3();
-      init_shared3();
-    }
-  });
-
-  // src/belongings/render.ts
-  var init_render6 = __esm({
-    "src/belongings/render.ts"() {
-      init_shared3();
-      init_render5();
-    }
-  });
-
-  // src/belongings/ai.ts
-  function buildCategoryPrompt(name, history2) {
-    const menu = AI_ICON_MENU.join(", ");
-    const hist = history2.length ? `我的历史分类（优先复用）：${history2.join("、")}` : "暂无历史分类。";
-    return [
-      "你是物品收纳助手。为下面的物品给出一个分类和一枚图标。",
-      `物品名称：${name}`,
-      hist,
-      "要求：",
-      "1. category：中文分类名，2-6 个字；若历史分类里有合适的就原样复用其一，否则自拟。",
-      `2. icon：只能从这个清单里选一个英文标识符：${menu}`,
-      '只输出 JSON 对象，格式：{"category":"分类名","icon":"清单中的标识符"}'
-    ].join("\n");
-  }
-  function parseCategorySuggestion(raw) {
-    var _a2, _b2;
-    let text = String(raw || "").trim();
-    const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (fence) text = fence[1].trim();
-    let obj;
-    try {
-      obj = JSON.parse(text);
-    } catch (e) {
-      return null;
-    }
-    const category = splitEmojiCategory(String((_a2 = obj == null ? void 0 : obj.category) != null ? _a2 : "")).name.trim();
-    const icon = String((_b2 = obj == null ? void 0 : obj.icon) != null ? _b2 : "").trim();
-    if (!category || category.length > 16) return null;
-    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) {
-      return { category, icon: AI_FALLBACK_ICON };
-    }
-    return { category, icon };
-  }
-  async function aiSuggestCategory(name, history2) {
-    const ai = createAI();
-    const raw = await ai.json(buildCategoryPrompt(name, history2), {});
-    const parsed = parseCategorySuggestion(raw);
-    if (!parsed) throw new Error("返回格式无法解析");
-    return parsed;
-  }
-  var AI_ICON_MENU, AI_FALLBACK_ICON;
-  var init_ai2 = __esm({
-    "src/belongings/ai.ts"() {
-      init_ai();
-      init_emoji_icon_map();
-      AI_ICON_MENU = [
-        // 数码影音
-        "smartphone",
-        "laptop",
-        "monitor",
-        "watch",
-        "headphones",
-        "speaker",
-        "printer",
-        "camera",
-        "aperture",
-        "video",
-        "focus",
-        "projector",
-        "gamepad-2",
-        "keyboard",
-        "hard-drive",
-        "disc",
-        "plug",
-        "battery-charging",
-        "lightbulb",
-        "tv",
-        "router",
-        "signal",
-        "phone",
-        "computer",
-        // 家居日用
-        "bed",
-        "sofa",
-        "armchair",
-        "lamp",
-        "lamp-desk",
-        "fan",
-        "air-vent",
-        "refrigerator",
-        "microwave",
-        "cooking-pot",
-        "blinds",
-        "archive",
-        "library",
-        "trash-2",
-        "key-round",
-        "droplets",
-        "thermometer",
-        "package",
-        "box",
-        "brush-cleaning",
-        "shower-head",
-        "bath",
-        // 厨房餐茶
-        "utensils",
-        "coffee",
-        "cup-soda",
-        "wine",
-        "milk",
-        "chef-hat",
-        "flame",
-        "snowflake",
-        // 衣服饰品
-        "shirt",
-        "footprints",
-        "handbag",
-        "backpack",
-        "luggage",
-        "briefcase",
-        "glasses",
-        "gem",
-        "crown",
-        "sparkles",
-        "scissors",
-        // 文具乐玩
-        "book",
-        "book-open",
-        "notebook",
-        "pen-line",
-        "pencil",
-        "palette",
-        "paintbrush",
-        "guitar",
-        "piano",
-        "drum",
-        "mic",
-        "music",
-        "radio",
-        "puzzle",
-        "dices",
-        "toy-brick",
-        // 运动户外
-        "volleyball",
-        "dumbbell",
-        "person-standing",
-        "waves",
-        "fish",
-        "bike",
-        "tent",
-        "mountain",
-        "wrench",
-        "hammer",
-        "shovel",
-        "flashlight",
-        "compass",
-        "telescope",
-        // 交通
-        "car",
-        "bus",
-        "truck",
-        "train-front",
-        "plane",
-        "rocket",
-        "sailboat",
-        "ship",
-        "helicopter",
-        // 生命健康
-        "pill",
-        "syringe",
-        "stethoscope",
-        "bandage",
-        "leaf",
-        "flower",
-        "sprout",
-        "tree-pine",
-        "paw-print",
-        "dog",
-        "cat",
-        "bird",
-        "bug",
-        "shell"
-      ];
-      AI_FALLBACK_ICON = "package";
-    }
-  });
-
-  // src/belongings/ui.ts
-  var ui_exports3 = {};
-  __export(ui_exports3, {
-    belongingSettingsSchema: () => belongingSettingsSchema,
-    cleanupBelongings: () => cleanupBelongings,
-    closePanel: () => closePanel,
-    openBelongingsReportView: () => openBelongingsReportView,
-    openForm: () => openForm,
-    openPanel: () => openPanel,
-    resetBelongingsState: () => resetBelongingsState
-  });
-  function resetBelongingsState() {
-    M4.overlay = null;
-    M4.db = null;
-    M4.status = null;
-    M4.year = "";
-    M4.q = "";
-    M4.sort = "recent";
-    M4.renderFn = null;
-  }
-  function currencyUnit() {
-    const v = tryGetSettings().belongingsCurrency;
-    return v === "yuan" || v === "usd" || v === "none" || v === "cny" ? v : "cny";
-  }
-  function newItemStatus() {
-    return tryGetSettings().belongingsNewStatus === STATUS.idle.label ? STATUS.idle.label : STATUS.using.label;
-  }
-  function belongingSettingsSchema() {
-    return {
-      groups: [
-        {
-          // 外观组与备忘录同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
-          // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
-          icon: "palette",
-          name: "外观",
-          rows: [
-            {
-              type: "choiceCards",
-              name: "面板布局",
-              binding: { key: "belSkin" },
-              options: [
-                { value: "poster", label: "大字报", prevClass: "bz-sp-prev-poster" }
-              ]
-            },
-            {
-              type: "choiceCards",
-              name: "面板主题",
-              binding: { key: "belSkinTheme" },
-              layoutKey: "belSkin",
-              options: [
-                { value: "warmwhite", label: "暖白", layout: "poster", prevClass: "bz-sp-prev-warmwhite" }
-              ]
-            }
-          ]
-        },
-        {
-          icon: "eye",
-          name: "显示",
-          rows: [
-            {
-              type: "select",
-              name: "默认状态筛选",
-              desc: "打开面板时选中的物品状态",
-              binding: { key: "belongingsDefaultStatus" },
-              // 选项从 STATUS_ORDER 派生（cons P3-7：key/label 不再手抄第二份；「全部」置顶）
-              options: [
-                { value: "", label: "全部" },
-                ...STATUS_ORDER.map((s) => ({ value: s.key, label: s.label }))
-              ]
-            },
-            {
-              type: "select",
-              name: "默认排序",
-              desc: "打开面板时物品的排列方式",
-              binding: { key: "belongingsDefaultSort" },
-              options: [
-                { value: "recent", label: "最近购入" },
-                { value: "price", label: "投入最高" },
-                { value: "daily", label: "日均最高" }
-              ]
-            },
-            {
-              type: "select",
-              name: "金额单位",
-              desc: "价格与统计的金额显示方式",
-              binding: { key: "belongingsCurrency" },
-              options: [
-                { value: "cny", label: "￥" },
-                { value: "yuan", label: "元" },
-                { value: "usd", label: "$" },
-                { value: "none", label: "无符号" }
-              ]
-            }
-          ]
-        },
-        {
-          icon: "pencil-line",
-          name: "记一笔",
-          rows: [
-            {
-              type: "select",
-              name: "新增物品默认状态",
-              desc: "记一笔时物品的初始状态",
-              binding: { key: "belongingsNewStatus" },
-              // 在库两态（出离态不作为新记默认；选项随 STATUS 单源派生，cons P3-7）
-              options: [STATUS.using, STATUS.idle].map((s) => ({ value: s.label, label: s.label }))
-            }
-          ]
-        }
-      ]
-    };
-  }
-  function itemList() {
-    return M4.db ? Object.values(M4.db.items) : [];
-  }
-  function itemById(id) {
-    var _a2;
-    return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
-  }
-  function ensureBelongingsEsc() {
-    registerPanelEsc(
-      "bz-bel",
-      () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
-      () => {
-        if (document.querySelector(".bz-bel-form")) {
-          requestCloseBelForm();
-          return;
-        }
-        if (document.querySelector(".bz-bel-detail")) {
-          closeBelDetail();
-          return;
-        }
-        if (document.querySelector(".bz-bel-report-mask")) {
-          closeBelReport();
-          return;
-        }
-        closePanel();
-      }
-    );
-  }
-  async function openPanel() {
-    if (M4.overlay) {
-      closePanel();
-      return;
-    }
-    if (opening) return;
-    opening = true;
-    try {
-      await openPanelInner();
-    } catch (e) {
-      notifyActionError(e, "归物本数据加载", { onRetry: () => void openPanel() });
-    } finally {
-      opening = false;
-    }
-  }
-  async function openPanelInner() {
-    const st = tryGetSettings().belongingsDefaultStatus;
-    M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
-    const srt = tryGetSettings().belongingsDefaultSort;
-    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M4.year = "";
-    M4.db = await loadDatabase();
-    const overlay2 = document.createElement("div");
-    overlay2.className = "bz-panel-overlay";
-    overlay2.innerHTML = panelHtml();
-    document.body.appendChild(overlay2);
-    topifyZ(overlay2);
-    M4.overlay = overlay2;
-    M4.renderFn = () => renderAll();
-    mountIcons(overlay2);
-    ensureBelongingsEsc();
-    const closeDrops = () => {
-      overlay2.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
-    };
-    const onDocClick = (e) => {
-      var _a2;
-      const t = e.target;
-      const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
-      if (trig) {
-        const wrap = trig.parentElement;
-        const wasOpen = wrap.classList.contains("is-open");
-        closeDrops();
-        if (!wasOpen) wrap.classList.add("is-open");
-        return;
-      }
-      const opt = t.closest(".bz-bel-dropopt");
-      if (opt) {
-        closeDrops();
-        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
-        if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
-        else M4.sort = v;
-        renderAll();
-        return;
-      }
-      closeDrops();
-    };
-    const onDropKey = (e) => {
-      const t = e.target;
-      if ((e.key === "Enter" || e.key === " ") && t.closest(".bz-bel-select")) {
-        e.preventDefault();
-        t.click();
-      }
-    };
-    document.addEventListener("click", onDocClick);
-    overlay2.addEventListener("keydown", onDropKey);
-    dropDocClick = onDocClick;
-    overlay2.addEventListener("click", (e) => {
-      const t = e.target;
-      if (e.target === overlay2) {
-        closePanel();
-        return;
-      }
-      if (t.closest("[data-bel-add]")) {
-        void openForm(null);
-        return;
-      }
-      if (t.closest("[data-bel-report]")) {
-        void openBelongingsReportView();
-        return;
-      }
-      if (t.closest("[data-bel-close]")) {
-        closePanel();
-        return;
-      }
-      const chip2 = t.closest("[data-bel-st]");
-      if (chip2) {
-        applyStatusFilter(chip2.dataset.belSt);
-        return;
-      }
-      const segBtn = t.closest(".bz-segmented-btn");
-      if (segBtn) {
-        M4.sort = segBtn.dataset.k;
-        renderAll();
-        return;
-      }
-      const kpi = t.closest("[data-bel-statclick]");
-      if (kpi) {
-        const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
-        renderAll();
-        return;
-      }
-    });
-    const bindSearch = (inp) => {
-      const debounced = debounce(() => {
-        if (M4.overlay !== overlay2) return;
-        M4.q = inp.value.trim();
-        renderAll();
-      }, SEARCH_DEBOUNCE_MS);
-      const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
-      const syncClear = () => {
-        if (clearBtn) clearBtn.hidden = !inp.value;
-      };
-      const clearSearch = (refocus) => {
-        debounced.cancel();
-        inp.value = "";
-        M4.q = "";
-        syncClear();
-        renderAll();
-        if (refocus) inp.focus();
-      };
-      syncClear();
-      clearBtn == null ? void 0 : clearBtn.addEventListener("click", () => clearSearch(true));
-      inp.addEventListener("input", () => {
-        syncClear();
-        debounced();
-      });
-      inp.addEventListener("keydown", (e) => {
-        if (e.key !== "Escape" || !inp.value) return;
-        e.preventDefault();
-        e.stopImmediatePropagation();
-        clearSearch(false);
-        inp.blur();
-      });
-    };
-    bindSearch(overlay2.querySelector("[data-bel-search]"));
-    const content = overlay2.querySelector("[data-bel-content]");
-    content.addEventListener("click", (e) => {
-      const cell = e.target.closest("[data-bel-id]");
-      if (!cell) return;
-      e.stopPropagation();
-      const it = itemById(cell.dataset.belId);
-      if (!it) return;
-      if (isMobileEnv()) openMobSheet(it);
-      else openBelDetail(it);
-    });
-    content.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter" && e.key !== " ") return;
-      const cell = e.target.closest("[data-bel-id]");
-      if (!cell) return;
-      e.preventDefault();
-      const it = itemById(cell.dataset.belId);
-      if (!it) return;
-      if (isMobileEnv()) openMobSheet(it);
-      else openBelDetail(it);
-    });
-    content.addEventListener("contextmenu", (e) => {
-      const cell = e.target.closest("[data-bel-id]");
-      if (!cell || isMobileEnv()) return;
-      e.preventDefault();
-      const it = itemById(cell.dataset.belId);
-      if (it) openRowMenuAt(it, e.clientX, e.clientY);
-    });
-    longPress(
-      content,
-      (ev) => {
-        var _a2, _b2;
-        const cell = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]");
-        if (!cell) return;
-        const it = itemById(cell.dataset.belId);
-        if (it) openMobSheet(it);
-      },
-      void 0,
-      (ev) => {
-        var _a2, _b2;
-        return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]"));
-      }
-    );
-    renderAll();
-    startAutoRefresh();
-    observeTheme();
-  }
-  function closePanel() {
-    stopAutoRefresh();
-    requestCloseBelForm();
-    closeItemMenu();
-    closeBelDetail();
-    closeBelReport();
-    if (bodyThemeObserver) {
-      bodyThemeObserver.disconnect();
-      bodyThemeObserver = null;
-    }
-    if (dropDocClick) {
-      document.removeEventListener("click", dropDocClick);
-      dropDocClick = null;
-    }
-    if (M4.overlay) {
-      M4.overlay.remove();
-      M4.overlay = null;
-    }
-    M4.renderFn = null;
-    M4.db = null;
-    M4.q = "";
-  }
-  function cleanupBelongings() {
-    closePanel();
-    if (bodyThemeObserver) {
-      bodyThemeObserver.disconnect();
-      bodyThemeObserver = null;
-    }
-    unloadBelReport();
-    resetBelongingsState();
-  }
-  function startAutoRefresh() {
-    stopAutoRefresh();
-    const app = getApp();
-    const filePath = getDataFilePath();
-    const off = app.vault.on("modify", (file) => {
-      if ((file == null ? void 0 : file.path) !== filePath) return;
-      if (selfWritePending > 0) return;
-      void (async () => {
-        var _a2;
-        try {
-          M4.db = await loadDatabase();
-          (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-        } catch (e) {
-          notifyActionError(e, "归物本数据自动刷新", {
-            onRetry: () => {
-              void (async () => {
-                var _a3;
-                try {
-                  M4.db = await loadDatabase();
-                  (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
-                } catch (e2) {
-                }
-              })();
-            }
-          });
-        }
-      })();
-    });
-    autoRefreshOff = () => app.vault.offref(off);
-  }
-  function stopAutoRefresh() {
-    if (autoRefreshOff) {
-      try {
-        autoRefreshOff();
-      } catch (e) {
-      }
-      autoRefreshOff = null;
-    }
-  }
-  function observeTheme() {
-    if (bodyThemeObserver) {
-      bodyThemeObserver.disconnect();
-      bodyThemeObserver = null;
-    }
-    const themeOf = () => {
-      const cls = document.body.className.split(" ").find((c) => THEME_CLASSES.has(c));
-      return cls || "";
-    };
-    let prev = themeOf();
-    bodyThemeObserver = new MutationObserver(() => {
-      var _a2;
-      const now = themeOf();
-      if (now !== prev) {
-        prev = now;
-        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-      }
-    });
-    bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
-  }
-  async function saveAndRender() {
-    var _a2;
-    if (!M4.db) return;
-    selfWritePending++;
-    try {
-      await saveDatabase(M4.db);
-    } finally {
-      selfWritePending--;
-    }
-    (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-  }
-  function renderAll() {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
-    if (!panel2) return;
-    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
-  }
-  function applyStatusFilter(k) {
-    if (k === "__all") M4.status = null;
-    else M4.status = M4.status === k ? null : k;
-    renderAll();
-  }
-  async function openBelongingsReportView() {
-    ensureBelongingsEsc();
-    let items;
-    if (M4.db) {
-      items = itemList();
-    } else {
-      try {
-        items = Object.values((await loadDatabase()).items);
-      } catch (e) {
-        notifyActionError(e, "归物本数据加载", { onRetry: () => void openBelongingsReportView() });
-        return;
-      }
-    }
-    openBelReport(items, currencyUnit(), { onAdd: () => {
-      void openForm(null);
-    } });
-  }
-  function closeBelDetail() {
-    belDetailClose == null ? void 0 : belDetailClose();
-    belDetailClose = null;
-  }
-  function openBelDetail(it) {
-    var _a2, _b2;
-    closeBelDetail();
-    const host = document.createElement("div");
-    host.innerHTML = belDetailHtml(it, currencyUnit());
-    ensureBelongingsEsc();
-    const { mask, close } = uiModal({
-      content: host.firstElementChild,
-      className: "bz-bel-detail",
-      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
-      onClose: () => {
-        belDetailClose = null;
-      }
-    });
-    belDetailClose = close;
-    mountIcons(mask);
-    const acts = mask.querySelector("[data-bd-acts]");
-    const drawActs = () => {
-      const cur = itemById(it.id);
-      if (!cur) return;
-      acts.innerHTML = flowBtnsHtml(cur.current_status);
-    };
-    drawActs();
-    acts.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-bd-flow]");
-      if (!b) return;
-      const cur = itemById(it.id);
-      if (!cur) {
-        closeBelDetail();
-        return;
-      }
-      void (async () => {
-        await applyFlowWithUndo(cur, b.dataset.bdFlow);
-        const now = itemById(it.id);
-        if (!now) {
-          closeBelDetail();
-          return;
-        }
-        openBelDetail(now);
-      })();
-    });
-    (_a2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a2.addEventListener("click", () => {
-      const cur = itemById(it.id);
-      if (cur) openForm(cur);
-    });
-    (_b2 = mask.querySelector("[data-bd-del]")) == null ? void 0 : _b2.addEventListener("click", () => {
-      const cur = itemById(it.id);
-      if (cur) void deleteItem(cur);
-    });
-  }
-  function sheetHeadEl2(it) {
-    const holder = document.createElement("div");
-    holder.innerHTML = sheetHeadHtml(it, currencyUnit());
-    mountIcons(holder);
-    return holder.firstElementChild;
-  }
-  async function applyFlowWithUndo(it, s) {
-    var _a2, _b2;
-    const cur = itemById(it.id);
-    if (!cur) {
-      notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-      return;
-    }
-    const prevStatus = cur.current_status;
-    const prevExit = cur.exit_date;
-    cur.current_status = s;
-    if (isExited(cur)) {
-      if (!exitedStatus(prevStatus)) cur.exit_date = todayStr();
-    } else if (cur.exit_date != null) {
-      cur.exit_date = null;
-    }
-    cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-    try {
-      await saveAndRender();
-    } catch (e) {
-      notifySaveError(e, "状态流转");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
-      return;
-    }
-    emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
-    notifyUndo(`「${cur.name}」已标记为${s}`, () => {
-      void (async () => {
-        var _a3;
-        try {
-          if (!M4.db) M4.db = await loadDatabase();
-          const now = itemById(it.id);
-          if (!now) {
-            notice("该物品已被外部变更删除，无法撤销", "warning");
-            return;
-          }
-          now.current_status = prevStatus;
-          if (prevExit != null) now.exit_date = prevExit;
-          else if (now.exit_date != null) now.exit_date = null;
-          now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-          await saveAndRender();
-          emitDomainEvent("belongings", { kind: "status", title: now.name, status: prevStatus });
-          notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
-        } catch (e) {
-          notifySaveError(e, "撤销状态");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
-        }
-      })();
-    }, { type: "restore" });
-  }
-  function buildActions(it, rebuild) {
-    return actionSpecs(it).map((sp) => ({
-      icon: sp.icon,
-      label: sp.label,
-      keepOpen: sp.keepOpen,
-      kind: sp.danger ? "danger" : void 0,
-      onClick: () => {
-        if (sp.act === "flow" && sp.status) {
-          void (async () => {
-            await applyFlowWithUndo(it, sp.status);
-            rebuild();
-          })();
-          return;
-        }
-        if (sp.act === "edit") {
-          openForm(it);
-          return;
-        }
-        void deleteItem(it);
-      }
-    }));
-  }
-  function makeSheetRebuild(it) {
-    const rebuild = () => {
-      const it2 = itemById(it.id);
-      if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
-    };
-    return rebuild;
-  }
-  function openRowMenuAt(it, x, y) {
-    const rebuild = makeSheetRebuild(it);
-    openItemMenu(x, y, buildActions(it, rebuild), true, "bz-bel-menu");
-    resetItemMenuClickGuard();
-  }
-  function openMobSheet(it) {
-    const rebuild = makeSheetRebuild(it);
-    openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
-  }
-  async function deleteItem(it) {
-    var _a2, _b2;
-    if (!M4.db) return;
-    if (!M4.db.items[it.id]) {
-      notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
-      return;
-    }
-    const snapshot2 = { ...M4.db.items[it.id] };
-    delete M4.db.items[it.id];
-    closeBelDetail();
-    try {
-      await saveAndRender();
-    } catch (e) {
-      M4.db.items[snapshot2.id] = snapshot2;
-      notifySaveError(e, "删除物品");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
-      return;
-    }
-    emitDomainEvent("belongings", { kind: "delete", title: it.name });
-    notifyUndo(`已删除「${it.name}」`, () => {
-      void (async () => {
-        var _a3;
-        try {
-          if (!M4.db) M4.db = await loadDatabase();
-          if (M4.db.items[snapshot2.id]) {
-            notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
-            return;
-          }
-          M4.db.items[snapshot2.id] = snapshot2;
-          await saveAndRender();
-          notice(`已恢复「${snapshot2.name}」`, "success");
-        } catch (e) {
-          notifySaveError(e, "撤销删除");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
-        }
-      })();
-    }, { type: "restore" });
-  }
-  function belFormStatusNow(mask) {
-    var _a2;
-    return ((_a2 = mask.querySelector("[data-status].is-on")) == null ? void 0 : _a2.dataset.status) || "";
-  }
-  function belFormDirty() {
-    if (!_belBaseline) return false;
-    const pop = document.querySelector(".bz-bel-form");
-    if (!pop) return false;
-    const g = (id) => {
-      var _a2, _b2;
-      return (_b2 = (_a2 = pop.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
-    };
-    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(pop) !== _belBaseline.status;
-  }
-  function closeBelForm() {
-    _belBaseline = null;
-    _belFormTargetId = null;
-    if (belFormMask) unregisterSheetCompanion(belFormMask);
-    belFormMask = null;
-    belFormClose == null ? void 0 : belFormClose();
-    belFormClose = null;
-  }
-  function requestCloseBelForm() {
-    if (belFormDirty()) confirmDiscard(() => closeBelForm(), void 0, "bz-bel-flow-dialog");
-    else closeBelForm();
-  }
-  function openForm(it) {
-    var _a2, _b2, _c, _d, _e;
-    const existing = document.querySelector(".bz-bel-form");
-    if (existing) {
-      const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
-      if (_belFormTargetId === targetId) {
-        (_b2 = existing.querySelector("input, textarea")) == null ? void 0 : _b2.focus();
-      } else {
-        notice("已有打开的表单，请先保存或关闭后再编辑其他物品", "warning");
-      }
-      return;
-    }
-    if (!M4.db) {
-      void loadDatabase().then((db) => {
-        M4.db = db;
-        openForm(it);
-      }).catch((e) => {
-        notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
-      });
-      return;
-    }
-    const init = belFormInit(it);
-    ensureBelongingsEsc();
-    const host = document.createElement("div");
-    host.innerHTML = belFormHtml(it, currencyUnit());
-    const { mask, close } = uiModal({
-      content: host.firstElementChild,
-      className: "bz-bel-form",
-      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
-      requestClose: () => requestCloseBelForm(),
-      onClose: () => {
-        belFormClose = null;
-      }
-    });
-    belFormClose = close;
-    belFormMask = mask;
-    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
-    mountIcons(mask);
-    const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
-    if (it && sheetOpen) registerSheetCompanion(mask);
-    _belBaseline = {
-      name: (_d = it == null ? void 0 : it.name) != null ? _d : "",
-      cat: init.catVal,
-      price: init.priceVal,
-      date: init.dateVal,
-      status: (it == null ? void 0 : it.current_status) || newItemStatus(),
-      desc: init.descVal,
-      exitDate: init.exitDateVal,
-      soldPrice: init.soldPriceVal
-    };
-    const catInput = mask.querySelector("#bm-cat");
-    let formIcon = (it == null ? void 0 : it.icon) || null;
-    const iconChip = mask.querySelector("#bm-icon");
-    const drawIconChip = () => {
-      iconChip.replaceChildren();
-      iconChip.hidden = !formIcon;
-      if (formIcon) iconChip.appendChild(uiIconSpan(formIcon));
-    };
-    drawIconChip();
-    const historyIconOf = (cat) => {
-      var _a3, _b3;
-      return ((_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
-    };
-    uiSuggest({
-      anchor: catInput,
-      source: () => {
-        var _a3, _b3;
-        return (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
-      },
-      max: 60,
-      iconOf: (raw) => {
-        const name = historyIconOf(raw);
-        return name ? uiIconSpan(name) : "";
-      },
-      onPick: (raw) => {
-        const name = historyIconOf(raw);
-        if (name) {
-          formIcon = name;
-          drawIconChip();
-        }
-      }
-    });
-    const statusPick = mask.querySelector("#bm-status");
-    const exitRow = mask.querySelector("#bm-exit");
-    const soldField = mask.querySelector("#bm-soldfield");
-    let curStatus = (it == null ? void 0 : it.current_status) || newItemStatus();
-    const syncExitRow = () => {
-      const exited = exitedStatus(curStatus);
-      exitRow.hidden = !exited;
-      soldField.hidden = curStatus !== STATUS.sold.label;
-    };
-    const drawStatus = () => {
-      statusPick.innerHTML = statusPickHtml(curStatus);
-      mountIcons(statusPick);
-      statusPick.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => {
-        curStatus = b.dataset.status;
-        drawStatus();
-      }));
-      syncExitRow();
-    };
-    drawStatus();
-    const errEl = mask.querySelector("#bm-err");
-    const fail = (msg) => {
-      errEl.textContent = msg;
-    };
-    const saveBtn = mask.querySelector("#bm-save");
-    let saving = false;
-    const aiBtn = mask.querySelector("#bm-ai");
-    aiBtn.addEventListener("click", () => {
-      if (aiBtn.disabled) return;
-      const aiName = mask.querySelector("#bm-name").value.trim();
-      if (!aiName) {
-        fail("先填物品名称，AI 才能归类");
-        return;
-      }
-      aiBtn.disabled = true;
-      aiBtn.classList.add("is-busy");
-      void (async () => {
-        var _a3, _b3, _c2;
-        try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
-          catInput.value = sug.category;
-          formIcon = sug.icon;
-          drawIconChip();
-          errEl.textContent = "";
-        } catch (e) {
-          fail("AI 归类失败：" + ((e == null ? void 0 : e.message) || "未知错误"));
-        } finally {
-          aiBtn.disabled = false;
-          aiBtn.classList.remove("is-busy");
-        }
-      })();
-    });
-    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
-    saveBtn.addEventListener("click", () => {
-      if (saving) return;
-      const name = mask.querySelector("#bm-name").value.trim();
-      const price = parseFloat(mask.querySelector("#bm-price").value);
-      const date = mask.querySelector("#bm-date").value;
-      if (!name) {
-        fail("请输入物品名称");
-        return;
-      }
-      if (!Number.isFinite(price) || price < 0) {
-        fail("请输入有效的价格");
-        return;
-      }
-      if (price > MAX_PRICE) {
-        fail("价格超出可记录范围（上限一万亿），请检查是否多输了几位");
-        return;
-      }
-      if (!date) {
-        fail("请选择购买日期");
-        return;
-      }
-      const category = catInput.value.trim();
-      if (!category) {
-        fail("请选择或输入分类");
-        return;
-      }
-      const exited = exitedStatus(curStatus);
-      const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
-      const exitDate = exited ? exitVal || todayStr() : "";
-      if (exitDate && exitDate < date) {
-        fail("出离日期不能早于购买日期");
-        return;
-      }
-      const soldRaw = curStatus === STATUS.sold.label ? mask.querySelector("#bm-soldprice").value.trim() : "";
-      let soldPrice = null;
-      if (soldRaw !== "") {
-        const sp = parseFloat(soldRaw);
-        if (!Number.isFinite(sp) || sp < 0) {
-          fail("请输入有效的售价");
-          return;
-        }
-        if (sp > MAX_PRICE) {
-          fail("售价超出可记录范围（上限一万亿），请检查是否多输了几位");
-          return;
-        }
-        soldPrice = Math.round(sp * 100) / 100;
-      }
-      const desc = mask.querySelector("#bm-desc").value.trim();
-      saving = true;
-      saveBtn.disabled = true;
-      saveBtn.textContent = "保存中…";
-      void (async () => {
-        try {
-          if (!M4.db) M4.db = await loadDatabase();
-          if (it) {
-            const cur = itemById(it.id);
-            if (!cur) {
-              notice("该物品已被外部变更删除，本次保存未写入", "warning");
-              closeItemMenu();
-              closeBelForm();
-              return;
-            }
-            const snapshot2 = { ...cur };
-            cur.name = name;
-            cur.category = category;
-            cur.icon = formIcon;
-            cur.purchase_price = Math.round(price * 100) / 100;
-            cur.purchase_date = date;
-            cur.current_status = curStatus;
-            cur.description = desc;
-            if (exited) cur.exit_date = exitDate;
-            else if (cur.exit_date != null) cur.exit_date = null;
-            if (curStatus === STATUS.sold.label) cur.sold_price = soldPrice;
-            else if (cur.sold_price != null) cur.sold_price = null;
-            cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
-            await saveAndRender();
-            if (document.querySelector(".bz-bel-detail")) {
-              const redrew = itemById(it.id);
-              if (redrew) openBelDetail(redrew);
-            }
-            if (isBelReportOpen()) void openBelongingsReportView();
-            emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
-          } else {
-            if (!M4.db) throw new Error("数据库未加载");
-            const newItem = {
-              // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
-              id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
-              name,
-              category,
-              purchase_price: Math.round(price * 100) / 100,
-              purchase_date: date,
-              current_status: curStatus,
-              description: desc,
-              created_date: (/* @__PURE__ */ new Date()).toISOString(),
-              last_updated: (/* @__PURE__ */ new Date()).toISOString(),
-              ...exited ? { exit_date: exitDate } : {},
-              ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
-              ...formIcon ? { icon: formIcon } : {}
-            };
-            M4.db.items[newItem.id] = newItem;
-            await saveAndRender();
-            if (isBelReportOpen()) void openBelongingsReportView();
-            emitDomainEvent("belongings", { kind: "add", item: newItem });
-          }
-          closeItemMenu();
-          closeBelForm();
-        } catch (e) {
-          notifySaveError(e);
-          saving = false;
-          saveBtn.disabled = false;
-          saveBtn.textContent = it ? "保存" : "添加";
-        }
-      })();
-    });
-    bindFormSubmit(mask, () => saveBtn.click());
-  }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
-  var init_ui4 = __esm({
-    "src/belongings/ui.ts"() {
-      init_notice();
-      init_z_order();
-      init_app();
-      init_esc_manager();
-      init_mobile();
-      init_utils();
-      init_dom();
-      init_settings_provider();
-      init_flow_dialog();
-      init_ui();
-      init_modal();
-      init_item_actions();
-      init_domain_bus();
-      init_belongings_source();
-      init_data5();
-      init_report();
-      init_render6();
-      init_ai2();
-      THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
-      SEARCH_DEBOUNCE_MS = 180;
-      M4 = {
-        overlay: null,
-        db: null,
-        status: null,
-        year: "",
-        q: "",
-        sort: "recent",
-        renderFn: null
-      };
-      dropDocClick = null;
-      DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
-      autoRefreshOff = null;
-      selfWritePending = 0;
-      bodyThemeObserver = null;
-      opening = false;
-      belDetailClose = null;
-      _belBaseline = null;
-      _belFormTargetId = null;
-      belFormClose = null;
-      belFormMask = null;
     }
   });
 
@@ -18661,884 +13768,10 @@ ${countsToText(s.missing)}
       return (/* @__PURE__ */ new Date()).toISOString().replace("T", " ").substring(0, 19);
     }
   }
-  var init_constants2 = __esm({
+  var init_constants = __esm({
     "src/clipbook/constants.ts"() {
       init_str();
       init_utils();
-    }
-  });
-
-  // src/clipbook/news-data.ts
-  function getNewsFilePath() {
-    return storageFile("news.json");
-  }
-  function emptyData() {
-    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
-  }
-  function parseRssFeeds(raw) {
-    var _a2, _b2;
-    if (!Array.isArray(raw)) return [];
-    const out = [];
-    for (const it of raw) {
-      if (!it || typeof it !== "object") continue;
-      const url = String((_a2 = it.url) != null ? _a2 : "").trim();
-      if (!url) continue;
-      const title = String((_b2 = it.title) != null ? _b2 : "").trim();
-      out.push(title ? { url, title } : { url });
-    }
-    return out;
-  }
-  function looksLikeFeedXml(xml) {
-    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
-  }
-  function extractFeedTitleFromXml(xml) {
-    const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
-    if (!m) return null;
-    const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
-    return t || null;
-  }
-  function normalizeRssFeedUrl(text) {
-    const t = String(text || "").trim();
-    return /^https?:\/\/\S+$/i.test(t) ? t : null;
-  }
-  function parseBilibiliUpInfo(raw) {
-    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
-    const out = {};
-    for (const [uid, v] of Object.entries(raw)) {
-      if (!v || typeof v !== "object") continue;
-      const info = {};
-      if (v.name) info.name = String(v.name);
-      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
-      out[uid] = info;
-    }
-    return out;
-  }
-  function parseBilibiliMaxItems(raw) {
-    const n = Math.floor(Number(raw));
-    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-  }
-  function parseBilibiliCookie(raw) {
-    return typeof raw === "string" ? raw.trim() : "";
-  }
-  function normalizeFetchIntervalMin(raw) {
-    const n = Math.floor(Number(raw));
-    return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
-  }
-  function wrapArrayToNewsData(articles) {
-    const data = emptyData();
-    data.articles = Array.isArray(articles) ? articles : [];
-    return data;
-  }
-  function mergeStatsInto(data, oldStats) {
-    if (statsHasData(data.stats)) return data;
-    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
-    if (!s) return data;
-    return {
-      ...data,
-      stats: {
-        totalRead: Number(s.totalRead) || 0,
-        totalSaved: Number(s.totalSaved) || 0,
-        totalSkipped: Number(s.totalSkipped) || 0,
-        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
-        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
-      }
-    };
-  }
-  function statsHasData(stats) {
-    if (!stats || typeof stats !== "object") return false;
-    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
-  }
-  function parseNewsFileContent(raw) {
-    let parsed;
-    try {
-      parsed = JSON.parse(raw);
-    } catch (e) {
-      return null;
-    }
-    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
-    if (parsed && typeof parsed === "object") {
-      const obj = parsed;
-      return {
-        articles: Array.isArray(obj.articles) ? obj.articles : [],
-        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
-        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
-        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
-        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
-        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
-        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
-        rssFeeds: parseRssFeeds(obj.rssFeeds),
-        lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
-        fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin)
-      };
-    }
-    return null;
-  }
-  async function readNewsData() {
-    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
-    let corrupt = false;
-    let readThrew = false;
-    const parsed = await jsonFileStore(getNewsFilePath(), {
-      defaultValue: () => emptyData(),
-      onCorrupt: () => {
-        corrupt = true;
-        return false;
-      }
-    }).read().then(
-      (v) => v,
-      () => {
-        readThrew = true;
-        return null;
-      }
-    );
-    if (readThrew) return { ok: false, missing: false, data: emptyData(), corrupt: false };
-    if (corrupt || parsed === null) return { ok: false, missing: false, data: emptyData(), corrupt: true };
-    const content = parseNewsFileContent(JSON.stringify(parsed));
-    if (!content) return { ok: false, missing: false, data: emptyData(), corrupt: true };
-    return { ok: true, missing, data: content, corrupt: false };
-  }
-  async function writeNewsData(data) {
-    await jsonFileStore(getNewsFilePath()).write(data);
-  }
-  async function writeNewsDataMerged(intent) {
-    var _a2;
-    const res = await readNewsData();
-    if (!res.ok) return;
-    const base = res.data;
-    const next = { ...base };
-    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
-      const patchList = intent.set.articles || [];
-      const removeKeys = new Set(intent.removeArticleKeys || []);
-      const patchByKey = /* @__PURE__ */ new Map();
-      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
-      const merged = [];
-      const seen = /* @__PURE__ */ new Set();
-      for (const a of base.articles || []) {
-        const k = articleKeyOf(a);
-        if (removeKeys.has(k)) continue;
-        seen.add(k);
-        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
-      }
-      for (const a of patchList) {
-        const k = articleKeyOf(a);
-        if (!seen.has(k)) {
-          merged.push(a);
-          seen.add(k);
-        }
-      }
-      next.articles = merged;
-    }
-    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin"]) {
-      if (intent.set[seg] !== void 0) {
-        next[seg] = intent.set[seg];
-      }
-    }
-    if (intent.patchBilibiliUpInfo) {
-      next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent.patchBilibiliUpInfo };
-    }
-    if (intent.patchRssFeedTitles) {
-      const titles = intent.patchRssFeedTitles;
-      next.rssFeeds = (next.rssFeeds || []).map(
-        (f) => titles[f.url] !== void 0 ? { ...f, title: titles[f.url] } : f
-      );
-    }
-    await writeNewsData(next);
-  }
-  function parseUidFromText(text) {
-    const t = String(text || "").trim();
-    if (!t) return null;
-    const pure = t.match(/^\d{1,10}$/);
-    if (pure) return pure[0];
-    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
-    if (space) return space[1];
-    return null;
-  }
-  function parseBvidFromText(text) {
-    const t = String(text || "").trim();
-    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
-    return m ? m[1] : null;
-  }
-  async function resolveUidFromInputDetailed(text) {
-    var _a2;
-    const local = parseUidFromText(text);
-    if (local) return { uid: local, networkFailed: false };
-    const bvid = parseBvidFromText(text);
-    if (!bvid) return { uid: null, networkFailed: false };
-    const body = await httpGetText(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
-      timeoutMs: 1e4,
-      fetchImpl: requestUrlAsFetch()
-    });
-    if (body === null) return { uid: null, networkFailed: true };
-    try {
-      const json = JSON.parse(body);
-      const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
-      return { uid: mid || null, networkFailed: false };
-    } catch (e) {
-      return { uid: null, networkFailed: false };
-    }
-  }
-  async function migrateLegacyStats(data) {
-    if (statsHasData(data.stats)) return data;
-    const app = getApp();
-    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
-    if (!af) return data;
-    try {
-      const raw = await app.vault.read(af);
-      const old = JSON.parse(raw);
-      const merged = mergeStatsInto(data, old);
-      return merged === data ? data : merged;
-    } catch (e) {
-      return data;
-    }
-  }
-  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
-    const DAY = 24 * 60 * 60 * 1e3;
-    const kept = [];
-    for (const a of articles) {
-      if (!a || a.read !== true) {
-        kept.push(a);
-        continue;
-      }
-      const state3 = a.state === "saved" ? "saved" : "skipped";
-      const days = state3 === "saved" ? savedDays : skippedDays;
-      if (!Number.isFinite(days) || days <= 0) {
-        kept.push(a);
-        continue;
-      }
-      const t = new Date(a.fetchedAt || a.date || "").getTime();
-      if (!Number.isFinite(t)) {
-        kept.push(a);
-        continue;
-      }
-      if (now - t > days * DAY) continue;
-      kept.push(a);
-    }
-    return kept;
-  }
-  function normalizeRetentionDays(v) {
-    const n = Number(String(v || "").trim());
-    return Number.isFinite(n) && n > 0 ? n : null;
-  }
-  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN;
-  var init_news_data = __esm({
-    "src/clipbook/news-data.ts"() {
-      init_app();
-      init_storage();
-      init_http();
-      init_constants2();
-      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
-      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
-      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
-      FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
-      DEFAULT_FETCH_INTERVAL_MIN = 30;
-    }
-  });
-
-  // src/clipbook/write-queue.ts
-  function enqueueNewsWrite(op) {
-    return enqueueFileTask(getNewsFilePath(), op);
-  }
-  var init_write_queue = __esm({
-    "src/clipbook/write-queue.ts"() {
-      init_storage();
-      init_news_data();
-    }
-  });
-
-  // src/clipbook/news-source-settings.ts
-  var news_source_settings_exports = {};
-  __export(news_source_settings_exports, {
-    addBilibiliUp: () => addBilibiliUp,
-    addRssFeed: () => addRssFeed,
-    emptyDataSourceState: () => emptyDataSourceState,
-    readDataSourceState: () => readDataSourceState,
-    removeBilibiliUp: () => removeBilibiliUp,
-    removeRssFeed: () => removeRssFeed,
-    writeBilibiliCookie: () => writeBilibiliCookie,
-    writeBilibiliMaxItems: () => writeBilibiliMaxItems,
-    writeFetchInterval: () => writeFetchInterval,
-    writeSources: () => writeSources
-  });
-  function emptyDataSourceState(exists = false) {
-    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
-  }
-  async function readDataSourceState() {
-    const res = await readNewsData();
-    if (res.missing) {
-      return emptyDataSourceState(false);
-    }
-    if (!res.ok) {
-      return emptyDataSourceState(true);
-    }
-    return {
-      exists: true,
-      sources: { ...res.data.sources },
-      bilibiliUps: [...res.data.bilibiliUps],
-      bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
-      bilibiliMaxItems: res.data.bilibiliMaxItems,
-      bilibiliCookie: res.data.bilibiliCookie,
-      totalArticles: res.data.articles.length,
-      rssFeeds: [...res.data.rssFeeds],
-      lastFetchAt: res.data.lastFetchAt,
-      fetchIntervalMin: res.data.fetchIntervalMin
-    };
-  }
-  async function writeSources(sources) {
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { sources: { ...sources } } });
-      return true;
-    });
-  }
-  async function addBilibiliUp(uid) {
-    const id = String(uid || "").trim();
-    if (!id) return "invalid";
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return "read-failed";
-      if (res.data.bilibiliUps.includes(id)) return "exists";
-      await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
-      return "added";
-    });
-  }
-  async function writeBilibiliMaxItems(v) {
-    const n = Math.floor(Number(v));
-    const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
-      return true;
-    });
-  }
-  async function writeBilibiliCookie(cookie) {
-    const c = String(cookie || "").trim();
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { bilibiliCookie: c } });
-      return true;
-    });
-  }
-  async function writeFetchInterval(v) {
-    const n = normalizeFetchIntervalMin(v);
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
-      return true;
-    });
-  }
-  async function addRssFeed(url, title) {
-    const u = normalizeRssFeedUrl(url);
-    if (!u) return "invalid";
-    const t = String(title || "").trim();
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return "read-failed";
-      if (res.data.rssFeeds.some((f) => f.url === u)) return "exists";
-      const feed = t ? { url: u, title: t } : { url: u };
-      await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
-      return "added";
-    });
-  }
-  async function removeRssFeed(url) {
-    const u = String(url || "").trim();
-    if (!u) return false;
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
-      return true;
-    });
-  }
-  async function removeBilibiliUp(uid) {
-    return enqueueNewsWrite(async () => {
-      const res = await readNewsData();
-      if (!res.ok) return false;
-      const info = { ...res.data.bilibiliUpInfo };
-      delete info[uid];
-      await writeNewsDataMerged({
-        set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
-      });
-      return true;
-    });
-  }
-  var init_news_source_settings = __esm({
-    "src/clipbook/news-source-settings.ts"() {
-      init_news_data();
-      init_write_queue();
-    }
-  });
-
-  // src/auto-summary/parser.ts
-  function unquote(v) {
-    if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
-    return v;
-  }
-  function parseFrontmatter(content) {
-    const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
-    if (!m) return { fm: null, body: content, extraLines: [] };
-    const fm = {};
-    const extraLines = [];
-    const lines = m[1].split("\n");
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const kv = line.match(KEY_LINE_RE);
-      if (kv) {
-        const key = kv[1].trim();
-        let val = kv[2].trim();
-        if (BLOCK_SCALAR_RE.test(val)) {
-          const bodyLines = [];
-          let indent = null;
-          let j = i + 1;
-          for (; j < lines.length; j++) {
-            const l = lines[j];
-            if (l.trim() === "") {
-              bodyLines.push("");
-              continue;
-            }
-            const lm = l.match(/^([ \t]+)\S/);
-            if (!lm) break;
-            if (indent === null) indent = lm[1];
-            bodyLines.push(l.startsWith(indent) ? l.slice(indent.length) : l.replace(/^[ \t]+/, ""));
-          }
-          fm[key] = bodyLines.join("\n").replace(/\n+$/, "");
-          i = j - 1;
-          continue;
-        }
-        if (val === "") {
-          const nested = [];
-          let sawNested = false;
-          let j = i + 1;
-          for (; j < lines.length; j++) {
-            const l = lines[j];
-            if (l.trim() === "") {
-              nested.push(l);
-              continue;
-            }
-            if (LIST_ITEM_RE.test(l)) break;
-            if (/^[ \t]/.test(l)) {
-              sawNested = true;
-              nested.push(l);
-              continue;
-            }
-            break;
-          }
-          if (sawNested) {
-            extraLines.push(line, ...nested);
-            i = j - 1;
-            continue;
-          }
-          fm[key] = "";
-          continue;
-        }
-        if (val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
-        if (val.startsWith("[")) {
-          try {
-            val = JSON.parse(val);
-          } catch (e) {
-          }
-        }
-        fm[key] = val;
-      } else if (LIST_ITEM_RE.test(line)) {
-        const lastKey = Object.keys(fm).pop();
-        if (lastKey && !Array.isArray(fm[lastKey])) fm[lastKey] = [];
-        if (lastKey) {
-          fm[lastKey].push(unquote(line.replace(LIST_ITEM_RE, "$1").trim()));
-        } else {
-          extraLines.push(line);
-        }
-      } else {
-        extraLines.push(line);
-      }
-    }
-    const body = content.slice(m[0].length);
-    return { fm, body, extraLines };
-  }
-  function buildFrontmatter(fm, extraLines = []) {
-    const lines = ["---"];
-    for (const [k, v] of Object.entries(fm)) {
-      if (Array.isArray(v)) {
-        lines.push(`${k}:`);
-        for (const item of v) lines.push(`  - "${item}"`);
-      } else if (v === null || v === void 0 || v === "") {
-        lines.push(`${k}: ""`);
-      } else {
-        lines.push(`${k}: "${String(v).replace(/"/g, '\\"').replace(/[\r\n]+/g, " ")}"`);
-      }
-    }
-    lines.push(...extraLines);
-    lines.push("---");
-    return lines.join("\n");
-  }
-  function extractBodyForAI(body) {
-    return body.replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
-  }
-  var KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
-  var init_parser = __esm({
-    "src/auto-summary/parser.ts"() {
-      KEY_LINE_RE = /^([^\s:#-][^:]*):(.*)$/;
-      LIST_ITEM_RE = /^[ \t]*-[ \t]+(.*)$/;
-      BLOCK_SCALAR_RE = /^[|>][+-]?$/;
-    }
-  });
-
-  // src/auto-summary/processor.ts
-  function dedupeKeyFor(file) {
-    return `auto-summary:${file.path}#${++attemptSeq}`;
-  }
-  async function humanizeFailReason() {
-    try {
-      await getAIProvider();
-      return "摘要生成失败，请重试";
-    } catch (e) {
-      return "AI 服务未配置或不可用，请到设置页配置";
-    }
-  }
-  function buildTagsRule(tagRange) {
-    return `tags 规则：
-- ${tagRange || "3-6"} 个中文标签，每个不超过 5 个字
-- 涵盖：主题领域、关键技术/概念、应用场景`;
-  }
-  async function aiProcess(ai, bodyText, missing, opts = {}) {
-    const length = opts.summaryLength || "standard";
-    const summaryRule = SUMMARY_LENGTH_RULES[length] || SUMMARY_LENGTH_RULES.standard;
-    const needed = missing.filter((f) => f !== "tags" || opts.tagsEnabled !== false);
-    const fieldLines = needed.filter((f) => FIELD_DEFS[f]).map((f) => "  " + (f === "summary" ? summaryRule : FIELD_DEFS[f]));
-    if (fieldLines.length === 0) return null;
-    const prompt = `你是一个资讯文章分析助手。以下是一篇已转换为 Markdown 的文章正文。请分析内容，返回一个 JSON 对象（只返回 JSON，不要其他文字）：
-
-{
-${fieldLines.join(",\n")}
-}
-
-${needed.includes("tags") ? buildTagsRule(opts.tagCount || "3-6") + "\n\n" : ""}文章正文：
-${bodyText.substring(0, 6e3)}`;
-    try {
-      const result = await ai.prompt(prompt, "deepseek-v4-flash", {
-        // temperature 属任务语义（分析类低温）；max_tokens 面板独裁不在此传（issue 334/ADR-0148）——
-        // 推理模型思考耗尽小预算曾致 content 空串必失败，上限唯一权威 = 设置面板后自愈
-        modelOptions: { temperature: 0.3 }
-      });
-      const jsonMatch = (result || "").match(/\{[\s\S]*\}/);
-      if (jsonMatch) return JSON.parse(jsonMatch[0]);
-    } catch (e) {
-      console.warn("[自动摘要] AI 处理失败:", e);
-    }
-    return null;
-  }
-  async function renameToTitle(app, file, title) {
-    var _a2;
-    const clean = String(title).replace(/[\\/:*?"<>|\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
-    if (!clean || clean === file.basename) return { target: file, renamed: false, failed: false };
-    const dir = file.path.includes("/") ? file.path.slice(0, file.path.lastIndexOf("/")) : "/";
-    let newPath = `${dir}/${clean}.md`;
-    let n = 1;
-    while (app.vault.getAbstractFileByPath(newPath)) {
-      newPath = `${dir}/${clean} (${n++}).md`;
-    }
-    try {
-      const fmRename = (_a2 = app == null ? void 0 : app.fileManager) == null ? void 0 : _a2.renameFile;
-      if (fmRename) await fmRename.call(app.fileManager, file, newPath);
-      else await app.vault.rename(file, newPath);
-      return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
-    } catch (e) {
-      console.warn("[自动摘要] 重命名失败，仅写 frontmatter title:", e);
-      return { target: file, renamed: false, failed: true };
-    }
-  }
-  async function processFile(app, ai, file, opts = {}) {
-    const force = opts.force === true;
-    let h = null;
-    const s = tryGetSettings();
-    const summaryLength = String(s.autoSummaryLength || "standard");
-    const tagsEnabled = s.autoSummaryTagsEnabled !== false;
-    const tagCount2 = String(s.autoSummaryTagCount || "3-6");
-    try {
-      const content = await app.vault.read(file);
-      const { fm, body } = parseFrontmatter(content);
-      const bodyText = extractBodyForAI(body);
-      if (!bodyText || bodyText.length < 100) return;
-      const missing = [];
-      if (force) {
-        missing.push("summary");
-        if (tagsEnabled !== false) missing.push("tags");
-      } else {
-        if (!fm || !fm.title) missing.push("title");
-        if (!fm || !fm.summary) missing.push("summary");
-        if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
-        if (missing.length === 0) return;
-      }
-      const startName = fm && fm.title ? fm.title : file.basename;
-      const key = dedupeKeyFor(file);
-      if (!opts.quiet) {
-        h = notify(`正在为《${startName}》生成摘要…`, { type: "progress", dedupeKey: key });
-      }
-      const aiResult = await aiProcess(ai, bodyText, missing, { summaryLength, tagsEnabled, tagCount: tagCount2 });
-      if (!aiResult) {
-        const reason = await humanizeFailReason();
-        if (h) h.hide();
-        const errHandle = notify(reason, { type: "error", duration: 0 });
-        const retryBtn = document.createElement("span");
-        retryBtn.className = "bz-notice-action";
-        retryBtn.setAttribute("role", "button");
-        retryBtn.textContent = "重试";
-        retryBtn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          retryBtn.remove();
-          errHandle.hide();
-          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
-          });
-        });
-        errHandle.el.appendChild(retryBtn);
-        return;
-      }
-      let targetFile = file;
-      let renameFailed = false;
-      if (missing.includes("title") && aiResult.title) {
-        const outcome = await renameToTitle(app, file, aiResult.title);
-        targetFile = outcome.target;
-        if (outcome.renamed) {
-          notify(`已重命名为《${aiResult.title}》`, { type: "success" });
-        } else if (outcome.failed) {
-          renameFailed = true;
-        }
-      }
-      const latest = await app.vault.read(targetFile);
-      const latestParsed = parseFrontmatter(latest);
-      const mergedFm = { ...latestParsed.fm || {} };
-      if (missing.includes("title") && aiResult.title) mergedFm.title = aiResult.title;
-      if (missing.includes("summary") && aiResult.summary) mergedFm.summary = aiResult.summary;
-      if (missing.includes("tags") && Array.isArray(aiResult.tags) && aiResult.tags.length) {
-        mergedFm.tags = aiResult.tags;
-      }
-      const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + "\n\n" + latestParsed.body;
-      await app.vault.modify(targetFile, newContent);
-      if (renameFailed) {
-        notify("自动改名失败，标题已写入笔记，请手动重命名", { type: "warning" });
-      }
-      notify("已完成", {
-        type: "success",
-        dedupeKey: key,
-        action: {
-          label: "查看",
-          onClick: () => {
-            Promise.resolve().then(() => (init_ui6(), ui_exports5)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
-            });
-          }
-        }
-      });
-    } catch (e) {
-      if (h) h.hide();
-      console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
-    }
-  }
-  var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
-  var init_processor = __esm({
-    "src/auto-summary/processor.ts"() {
-      init_parser();
-      init_notice();
-      init_ai();
-      init_settings_provider();
-      attemptSeq = 0;
-      FIELD_DEFS = {
-        title: '"title": "生成中文标题，15-30字，完整陈述句，不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢）。禁止冒号、破折号、句中句号问号，需要连接时用逗号"',
-        summary: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
-        tags: '"tags": ["标签1", "标签2", "标签3"]'
-      };
-      SUMMARY_LENGTH_RULES = {
-        simple: `"summary": "50-100字的简短摘要。提炼核心观点与关键结论。直达内容，禁止使用'本文'、'本文章'、'文章'、'作者认为'等前缀词"`,
-        standard: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
-        detailed: `"summary": "300-400字的详尽摘要。完整覆盖核心观点、关键事实、重要数据、推论与结论，条理清晰。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`
-      };
-    }
-  });
-
-  // src/auto-summary/index.ts
-  var auto_summary_exports = {};
-  __export(auto_summary_exports, {
-    ensureAutoSummary: () => ensureAutoSummary,
-    isAutoSummaryInitialized: () => isAutoSummaryInitialized,
-    redoSummaryForActiveFile: () => redoSummaryForActiveFile,
-    regenerateSummary: () => regenerateSummary,
-    retrySummaryWithAI: () => retrySummaryWithAI,
-    stopAutoSummary: () => stopAutoSummary,
-    unloadAutoSummary: () => unloadAutoSummary
-  });
-  function getWatchDir() {
-    const s = tryGetSettings();
-    return s && s.articleDirectory || "归档/网页剪藏";
-  }
-  function enqueueJob(job) {
-    return new Promise((resolve2) => {
-      if (processingPaths.has(job.file.path)) {
-        resolve2();
-        return;
-      }
-      processingPaths.add(job.file.path);
-      jobQueue.push({ ...job, resolve: resolve2 });
-      batchTotal++;
-      if (drainTimer === null) {
-        drainTimer = setTimeout(() => {
-          drainTimer = null;
-          void drainQueue();
-        }, 0);
-      }
-    });
-  }
-  async function drainQueue() {
-    var _a2;
-    if (draining) return;
-    draining = true;
-    try {
-      while (jobQueue.length > 0) {
-        const job = jobQueue.shift();
-        batchDone++;
-        updateBatchNotice();
-        try {
-          await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
-        } catch (e) {
-        } finally {
-          processingPaths.delete(job.file.path);
-          (_a2 = job.resolve) == null ? void 0 : _a2.call(job);
-        }
-      }
-    } finally {
-      draining = false;
-      if (batchNotice) {
-        batchNotice.hide();
-        batchNotice = null;
-      }
-      batchTotal = 0;
-      batchDone = 0;
-    }
-  }
-  function updateBatchNotice() {
-    if (batchTotal <= 1) return;
-    const msg = `正在生成摘要 ${batchDone}/${batchTotal}…`;
-    if (batchNotice) {
-      batchNotice.setMessage(msg);
-    } else {
-      batchNotice = notify(msg, { type: "progress", dedupeKey: "auto-summary:batch" });
-    }
-  }
-  function queueProcess(app, ai, file) {
-    if (!file || file.extension !== "md") return;
-    if (!file.path.startsWith(getWatchDir() + "/")) return;
-    if (pendingPaths.has(file.path)) return;
-    const timer = setTimeout(() => {
-      pendingPaths.delete(file.path);
-      void enqueueJob({ app, ai, file });
-    }, 1500);
-    pendingPaths.set(file.path, timer);
-  }
-  function regenerateSummary(app, file) {
-    if (!file || file.extension !== "md") return Promise.resolve();
-    return enqueueJob({ app, ai: createAI(), file, force: true });
-  }
-  function retrySummaryWithAI(app, ai, file, force) {
-    if (!file || file.extension !== "md") return Promise.resolve();
-    return enqueueJob({ app, ai, file, force });
-  }
-  async function redoSummaryForActiveFile(app) {
-    const ws = app && app.workspace;
-    const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
-    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
-      notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
-      return;
-    }
-    await regenerateSummary(app, file);
-  }
-  function scheduleRegister(app) {
-    const ai = createAI();
-    registerTimer = setTimeout(() => {
-      var _a2;
-      registerTimer = null;
-      if (!vaultRef) return;
-      const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.autoSummaryTiming) || "immediate";
-      if (timing !== "lazy") {
-        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, ai, file));
-      }
-      if (workspaceRef && typeof workspaceRef.on === "function") {
-        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, ai, file));
-      }
-    }, 2e3);
-  }
-  function ensureAutoSummary(app) {
-    if (initialized) {
-      if (!registerTimer && !fileListenerRef) scheduleRegister(app);
-      return;
-    }
-    initialized = true;
-    vaultRef = app.vault;
-    workspaceRef = app.workspace;
-    scheduleRegister(app);
-  }
-  function isAutoSummaryInitialized() {
-    return initialized;
-  }
-  function stopAutoSummary() {
-    if (registerTimer) {
-      clearTimeout(registerTimer);
-      registerTimer = null;
-    }
-    if (fileListenerRef && vaultRef) {
-      try {
-        vaultRef.offref(fileListenerRef);
-      } catch (e) {
-      }
-      fileListenerRef = null;
-    }
-    if (openListenerRef && workspaceRef) {
-      try {
-        workspaceRef.offref(openListenerRef);
-      } catch (e) {
-      }
-      openListenerRef = null;
-    }
-    for (const timer of pendingPaths.values()) clearTimeout(timer);
-    pendingPaths.clear();
-    if (drainTimer !== null) {
-      clearTimeout(drainTimer);
-      drainTimer = null;
-    }
-    jobQueue.length = 0;
-    if (batchNotice) {
-      batchNotice.hide();
-      batchNotice = null;
-    }
-    batchTotal = 0;
-    batchDone = 0;
-    processingPaths.clear();
-  }
-  function unloadAutoSummary() {
-    stopAutoSummary();
-    initialized = false;
-    vaultRef = null;
-    workspaceRef = null;
-  }
-  var initialized, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
-  var init_auto_summary = __esm({
-    "src/auto-summary/index.ts"() {
-      init_ai();
-      init_settings_provider();
-      init_notice();
-      init_processor();
-      initialized = false;
-      vaultRef = null;
-      workspaceRef = null;
-      fileListenerRef = null;
-      openListenerRef = null;
-      registerTimer = null;
-      pendingPaths = /* @__PURE__ */ new Map();
-      processingPaths = /* @__PURE__ */ new Set();
-      jobQueue = [];
-      draining = false;
-      drainTimer = null;
-      batchTotal = 0;
-      batchDone = 0;
-      batchNotice = null;
     }
   });
 
@@ -19596,7 +13829,7 @@ ${bodyText.substring(0, 6e3)}`;
     return { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
   }
   var CLIPBOOK_JSON;
-  var init_data6 = __esm({
+  var init_data4 = __esm({
     "src/clipbook/data.ts"() {
       init_storage();
       CLIPBOOK_JSON = "clipbook.json";
@@ -19744,7 +13977,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   var init_anchor = __esm({
     "src/clipbook/anchor.ts"() {
-      init_data6();
+      init_data4();
     }
   });
 
@@ -20153,7 +14386,7 @@ ${bodyText.substring(0, 6e3)}`;
     return Math.round(parts[0]);
   }
   var import_moment5, TIME_RE, KnowledgeData;
-  var init_data7 = __esm({
+  var init_data5 = __esm({
     "src/knowledge/data.ts"() {
       import_moment5 = __toESM(require_moment());
       init_storage();
@@ -21426,7 +15659,7 @@ ${notes.map((x) => `第 ${x.n} 张：${x.d}`).join("\n")}`;
     if (upgraded !== content) await app.vault.modify(file, upgraded);
     return true;
   }
-  function parseFrontmatter2(content) {
+  function parseFrontmatter(content) {
     var _a2;
     const out = {};
     const m = String(content || "").match(/^---\r?\n([\s\S]*?)\r?\n---/);
@@ -21540,7 +15773,7 @@ ${content || ""}`;
         content = pruned;
         filled++;
       }
-      const fm = parseFrontmatter2(content);
+      const fm = parseFrontmatter(content);
       const hasType = fm.type === "video" || fm.type === "term";
       const hasDomain = !!fm.domain;
       if (hasType && hasDomain) continue;
@@ -21655,14 +15888,14 @@ ${sample}`
     return localNow();
   }
   var INSTALL_HINT, STEP_RE, RESULT_RE, PROGRESS_RE, INFO_RE, AI_STEP_TEXT, NOTE_STEP_TEXT, BatchRunner;
-  var init_processor2 = __esm({
+  var init_processor = __esm({
     "src/knowledge/processor.ts"() {
       init_notice();
       init_str();
       init_domain_bus();
       init_settings_provider();
       init_app();
-      init_data7();
+      init_data5();
       init_note_gen();
       INSTALL_HINT = "请先运行 npm install -g @jwbz/bili-downloader";
       STEP_RE = /^\[bz-step\]\s*(.+)$/;
@@ -25798,8 +20031,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
   });
 
   // src/knowledge/ui.ts
-  var ui_exports4 = {};
-  __export(ui_exports4, {
+  var ui_exports3 = {};
+  __export(ui_exports3, {
     UIManager: () => UIManager,
     humanizeError: () => humanizeError,
     knowledgeSettingsSchema: () => knowledgeSettingsSchema,
@@ -26109,7 +20342,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     };
   }
   var IMAGE_ENTRY_MAX, REL_BG_NOTICE_KEY, STATUS_META, STEP_DONE_MAP, fmtElapsed, UIManager;
-  var init_ui5 = __esm({
+  var init_ui3 = __esm({
     "src/knowledge/ui.ts"() {
       init_fake_obsidian();
       init_ai();
@@ -26128,9 +20361,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_z_order();
       init_domain_bus();
       init_app();
-      init_data7();
+      init_data5();
       init_mount_data();
-      init_processor2();
+      init_processor();
       init_mount_canvas();
       init_note_gen();
       init_source();
@@ -29352,7 +23585,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_settings_provider();
       init_storage();
       init_file_sync();
-      init_data7();
+      init_data5();
       init_source_retire();
       agent2 = createFileSync({
         logTag: "[knowledge-file-sync]",
@@ -29395,11 +23628,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
   }
   function ensureKnowledge(app) {
     var _a2;
-    if (initialized2) return;
+    if (initialized) return;
     try {
       KnowledgeData.init({ storagePath: (_a2 = tryGetSettings()) == null ? void 0 : _a2.storagePath });
       uiManager = new UIManager(app);
-      initialized2 = true;
+      initialized = true;
     } catch (e) {
       console.error("bz: 文献盒初始化失败（下次打开命令将自动重试）", e);
       uiManager = null;
@@ -29539,21 +23772,21 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function unloadKnowledge() {
     uiManager == null ? void 0 : uiManager.destroy();
     uiManager = null;
-    initialized2 = false;
+    initialized = false;
   }
-  var initialized2, uiManager;
+  var initialized, uiManager;
   var init_knowledge = __esm({
     "src/knowledge/index.ts"() {
       init_fake_obsidian();
       init_settings_provider();
       init_link_now();
       init_notice();
-      init_data7();
-      init_ui5();
+      init_data5();
+      init_ui3();
       init_note_gen();
       init_source_retire();
       init_file_sync2();
-      initialized2 = false;
+      initialized = false;
       uiManager = null;
     }
   });
@@ -29719,9 +23952,6399 @@ ${body}`;
       init_settings_provider();
       init_notice();
       init_flow_dialog();
-      init_constants2();
+      init_constants();
       init_anchor();
       yamlEscape = (v) => String(v != null ? v : "").replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/[\r\n]+/g, " ");
+    }
+  });
+
+  // src/clipbook/scan.ts
+  function defaultCache(f) {
+    var _a2;
+    try {
+      const app = getApp();
+      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
+        return app.metadataCache.getFileCache(f);
+      }
+    } catch (e) {
+    }
+    return f && f.frontmatter;
+  }
+  function parseClipFile(file, getCache, getBacklinks) {
+    const cache = (getCache || defaultCache)(file);
+    const fm = cache && cache.frontmatter;
+    if (!fm) return null;
+    if (!fm.url || !fm.created) return null;
+    const title = file.basename || stripMdExt(String(file.name || ""));
+    let created = new Date(fm.created).valueOf();
+    if (isNaN(created)) created = Date.now();
+    let backlinkNames = [];
+    try {
+      const bl = (getBacklinks || (() => null))(file);
+      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
+        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
+      }
+    } catch (e) {
+    }
+    let domain = "";
+    try {
+      if (fm.url) domain = new URL(String(fm.url)).hostname;
+    } catch (e) {
+    }
+    return {
+      path: file.path,
+      file,
+      url: String(fm.url),
+      author: fm.author ? String(fm.author) : "",
+      site: fm.site ? String(fm.site) : "未知",
+      summary: fm.summary ? String(fm.summary) : "",
+      tags: Array.isArray(fm.tags) ? fm.tags.map(String) : fm.tags ? [String(fm.tags)] : [],
+      title,
+      created,
+      backlinkNames,
+      domain
+    };
+  }
+  async function scanClipDirectory(dirPath, deps) {
+    const dir = deps.vault.getAbstractFileByPath(dirPath);
+    if (!dir || !Array.isArray(dir.children)) return null;
+    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
+    const parse = deps.parse || ((f) => parseClipFile(f));
+    const notes = [];
+    const rejectedPaths = [];
+    for (const f of mdFiles2) {
+      try {
+        const n = parse(f);
+        if (n) {
+          notes.push(n);
+          continue;
+        }
+        if (f && f.path) rejectedPaths.push(String(f.path));
+      } catch (e) {
+        if (f && f.path) rejectedPaths.push(String(f.path));
+      }
+    }
+    notes.sort((a, b) => b.created - a.created);
+    const result = notes;
+    result.rejected = rejectedPaths.length;
+    result.rejectedPaths = rejectedPaths;
+    return result;
+  }
+  var init_scan = __esm({
+    "src/clipbook/scan.ts"() {
+      init_utils();
+      init_app();
+    }
+  });
+
+  // src/clipbook/store.ts
+  function siteName(a) {
+    return a.site ? String(a.site) : a.platform ? String(a.platform) : "未知";
+  }
+  function upName(a, info) {
+    const uid = String(a && a.bvid || a && a.author || "");
+    const name = info && typeof info === "object" ? info.name : null;
+    return name || uid || "";
+  }
+  function platformOf(a) {
+    const p = a.platform || "";
+    if (p === "B站") return "B站";
+    if (p === "果壳" || p === "果壳科学人") return "果壳科学人";
+    if (p === "知乎日报" || p === "知乎") return "知乎日报";
+    return p || "未知";
+  }
+  function siteDomain(a) {
+    const u = String(a.url || "").trim();
+    if (u) {
+      try {
+        return new URL(u).hostname;
+      } catch (e) {
+      }
+      try {
+        return new URL("https://" + u.replace(/^\/+/, "")).hostname;
+      } catch (e) {
+      }
+    }
+    return PLATFORM_DOMAIN[platformOf(a)] || "";
+  }
+  function cleanBody(body) {
+    return String(body || "").trim();
+  }
+  function clipArticle(a, opts) {
+    const clipByUrl = opts.clipByUrl || /* @__PURE__ */ new Set();
+    const upInfo = opts.upInfo || {};
+    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
+    const key = articleKeyOf(a);
+    const platform = platformOf(a);
+    const newsSaved = a.state === "saved";
+    const archived2 = savedKeys.has(String(a.url || ""));
+    const clipped = !!a.url && clipByUrl.has(String(a.url));
+    const saved = newsSaved || archived2 || clipped;
+    const title = String(a.title || "(无标题)");
+    const body = cleanBody(a.body);
+    const isBili = platform === "B站";
+    const feedUp = isBili ? upName(a, upInfo[String(a.author || "")]) : "";
+    const srcName = feedUp || platform;
+    const typeLabel = feedUp ? "UP主" : platform;
+    let timeText = String(a.fetchedAt || a.date || "");
+    let timeTs = new Date(a.fetchedAt || a.date || "").valueOf();
+    if (isNaN(timeTs)) {
+      timeText = "";
+      timeTs = Date.now();
+    }
+    const st = saved ? "saved" : a.read === true ? "read" : "unread";
+    return {
+      id: key,
+      origin: "news",
+      title,
+      url: String(a.url || ""),
+      site: siteName(a),
+      domain: siteDomain(a),
+      author: String(a.author || ""),
+      srcName,
+      typeLabel,
+      timeText,
+      timeTs,
+      summary: excerpt(body, 110),
+      body,
+      tags: Array.isArray(a.tags) ? a.tags.map(String) : [],
+      notePath: null,
+      st,
+      clipped,
+      raw: a,
+      backlinks: []
+    };
+  }
+  function clipFromNote(n) {
+    return {
+      id: "clip:" + n.path,
+      origin: "clip",
+      title: String(n.title || "(无标题)"),
+      url: n.url ? String(n.url) : "",
+      site: String(n.site || "未知"),
+      domain: n.domain || "",
+      author: n.author || "",
+      srcName: n.site || "剪藏",
+      typeLabel: "",
+      timeText: "",
+      timeTs: n.created || 0,
+      summary: String(n.summary || ""),
+      body: "",
+      tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
+      notePath: n.path || null,
+      st: "saved",
+      clipped: true,
+      note: n,
+      backlinks: Array.isArray(n.backlinkNames) ? n.backlinkNames : []
+    };
+  }
+  function clipUrlSet(notes) {
+    const s = /* @__PURE__ */ new Set();
+    for (const n of notes) if (n && n.url) s.add(String(n.url));
+    return s;
+  }
+  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
+      return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    const pool = (articles || []).filter((a) => !a.read);
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    if (source2.kind === "site") {
+      const s = normSite(source2.site);
+      const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
+      const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
+      return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
+    }
+    let out = [];
+    if (source2.kind === "all") {
+      out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
+    } else {
+      const isBili = source2.platform === "B站";
+      const list = pool.filter((a) => {
+        const p = platformOf(a);
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
+        return true;
+      });
+      out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
+    }
+    return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
+  }
+  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
+    if (source2.kind === "clip") {
+      return (clipNotes || []).map((n) => clipFromNote(n));
+    }
+    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
+    const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
+    const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
+    let news = [];
+    let clips = [];
+    if (source2.kind === "all") {
+      news = (articles || []).filter((a) => !isClippedNews(a));
+    } else if (source2.kind === "site") {
+      const s = normSite(source2.site);
+      news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
+      clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
+    } else {
+      const isBili = source2.platform === "B站";
+      news = (articles || []).filter((a) => {
+        if (isClippedNews(a)) return false;
+        const p = platformOf(a);
+        if (p !== source2.platform) return false;
+        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
+        return true;
+      });
+    }
+    return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
+  }
+  function bucketByState(list) {
+    const unread = [];
+    const read = [];
+    const saved = [];
+    for (const a of list) {
+      if (a.st === "saved") saved.push(a);
+      else if (a.st === "read") read.push(a);
+      else unread.push(a);
+    }
+    return { unread, read, saved };
+  }
+  function normSite(s) {
+    const t = String(s || "").trim();
+    return t || "未知";
+  }
+  function aggregateSites(articles, clipNotes, savedUrls, clipUrls) {
+    const saved = savedUrls || /* @__PURE__ */ new Set();
+    const byUrl = clipUrls || /* @__PURE__ */ new Set();
+    const rows = /* @__PURE__ */ new Map();
+    const bump = (rawSite, unread) => {
+      const site = normSite(rawSite);
+      let r = rows.get(site);
+      if (!r) {
+        r = { site, total: 0, unread: 0 };
+        rows.set(site, r);
+      }
+      r.total++;
+      if (unread) r.unread++;
+    };
+    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
+    for (const a of articles || []) {
+      if (!a || a.read) continue;
+      if (saved.has(String(a.url || ""))) continue;
+      if (a.url && byUrl.has(String(a.url))) continue;
+      bump(siteName(a), true);
+    }
+    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
+  }
+  var PLATFORM_DOMAIN;
+  var init_store = __esm({
+    "src/clipbook/store.ts"() {
+      init_utils();
+      init_constants();
+      PLATFORM_DOMAIN = {
+        "B站": "bilibili.com",
+        "果壳科学人": "guokr.com",
+        "知乎日报": "zhihu.com"
+      };
+    }
+  });
+
+  // src/cinema/state.ts
+  function resolveCinemaFolderPath() {
+    try {
+      const s = tryGetSettings();
+      return typeof s.cinemaFolderPath === "string" && s.cinemaFolderPath.trim() ? s.cinemaFolderPath : DEFAULT_FOLDER;
+    } catch (e) {
+      return DEFAULT_FOLDER;
+    }
+  }
+  var DEFAULT_FOLDER;
+  var init_state4 = __esm({
+    "src/cinema/state.ts"() {
+      init_settings_provider();
+      DEFAULT_FOLDER = "我的/影视";
+    }
+  });
+
+  // src/gameshelf/state.ts
+  function resolveGameshelfFolderPath() {
+    try {
+      const s = tryGetSettings();
+      const raw = typeof s.gameshelfFolderPath === "string" ? s.gameshelfFolderPath.trim() : "";
+      if (!raw) return DEFAULT_FOLDER2;
+      return raw.replace(/[/\\]+$/, "");
+    } catch (e) {
+      return DEFAULT_FOLDER2;
+    }
+  }
+  var DEFAULT_FOLDER2;
+  var init_state5 = __esm({
+    "src/gameshelf/state.ts"() {
+      init_settings_provider();
+      DEFAULT_FOLDER2 = "我的/游戏";
+    }
+  });
+
+  // src/gameshelf/constants.ts
+  var GS_FM;
+  var init_constants2 = __esm({
+    "src/gameshelf/constants.ts"() {
+      GS_FM = {
+        /** Steam AppID（条目身份键） */
+        appId: "AppID",
+        /** 中文名（names 队列从商店接口回填；storeToFm 空值不写防覆盖） */
+        zhName: "中文名",
+        /** 封面现值：本地 vault 路径，或还没本地化时的远端地址（posters 独占写） */
+        cover: "封面",
+        /** 封面远端源（同步管辖；本地化后仍在，供删缓存后重下） */
+        coverSrc: "封面源",
+        /** 图标现值（posters 独占写） */
+        icon: "图标",
+        /** 图标远端源（同步管辖；hash 拼不出来，只有同步能刷新它） */
+        iconSrc: "图标源",
+        /** 截图本地路径数组（与截图源同序同长、失败位空串；posters 独占写） */
+        shots: "截图",
+        /** 截图远端源数组（同步/回填管辖；空数组 = 「商店查过、确实没有」的自愈标记） */
+        shotsSrc: "截图源",
+        /** 截图落盘时刻 ISO */
+        shotsAt: "截图更新",
+        /** 商店资料回填时刻 ISO（backfillNeeds 补跑判据键） */
+        detailAt: "详情时间",
+        /** 累计游玩分钟 */
+        playtimeMin: "游玩分钟",
+        /** 最后游玩 YYYY-MM-DD */
+        lastPlayed: "最后游玩",
+        /** 最近一次同步时刻 ISO */
+        syncedAt: "同步时间",
+        /** Steam 库中消失（退款/隐藏）标记；也是用户唯一会手改的管辖键（func F2 拍板项在案） */
+        offShelf: "已下架",
+        /** 有社区成就页 */
+        hasAch: "有成就",
+        windowsMin: "Windows分钟",
+        deckMin: "SteamDeck分钟",
+        macMin: "Mac分钟",
+        linuxMin: "Linux分钟"
+      };
+    }
+  });
+
+  // src/cinema/constants.ts
+  function getGroupForTag(tag) {
+    for (const [group, tags] of Object.entries(TYPE_GROUPS)) {
+      if (tags.includes(tag)) return group;
+    }
+    return null;
+  }
+  function getGroupSafe(tag) {
+    var _a2;
+    return (_a2 = getGroupForTag(tag)) != null ? _a2 : "其他";
+  }
+  var STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED, ILLEGAL_NAME_CHARS, ILLEGAL_NAME_RE, ILLEGAL_NAME_RE_GLOBAL, TYPE_GROUPS, ALL_TAGS;
+  var init_constants3 = __esm({
+    "src/cinema/constants.ts"() {
+      STATUS_WANT = 0;
+      STATUS_WATCHING = 1;
+      STATUS_WATCHED = 2;
+      ILLEGAL_NAME_CHARS = '\\\\/:*?"<>|';
+      ILLEGAL_NAME_RE = new RegExp(`[${ILLEGAL_NAME_CHARS}]`);
+      ILLEGAL_NAME_RE_GLOBAL = new RegExp(`[${ILLEGAL_NAME_CHARS}]`, "g");
+      TYPE_GROUPS = {
+        电影: ["电影"],
+        剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
+        动漫: ["日漫", "国漫", "美漫"],
+        纪录片: ["纪录片"],
+        公开课: ["公开课", "TED"]
+      };
+      ALL_TAGS = Object.values(TYPE_GROUPS).flat();
+    }
+  });
+
+  // src/cinema/douban-fetcher.ts
+  function extractMovieName(filename) {
+    const basename = stripMdExt(filename);
+    const m = basename.match(/《(.+)》/);
+    return m ? m[1] : basename;
+  }
+  var POSTER_FOLDER;
+  var init_douban_fetcher = __esm({
+    "src/cinema/douban-fetcher.ts"() {
+      init_str();
+      init_constants3();
+      POSTER_FOLDER = "CONFIG/MOVIE POSTER";
+    }
+  });
+
+  // src/cinema/data.ts
+  function parseMovieFile(file, app) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v, _w;
+    const cache = app.metadataCache.getFileCache(file);
+    if (!cache || !cache.frontmatter) return null;
+    const fm = cache.frontmatter;
+    const name = extractMovieName(file.basename);
+    let rawTags = fm.tags;
+    if (typeof rawTags === "string") rawTags = [rawTags];
+    const tags = Array.isArray(rawTags) ? rawTags.map((t) => String(t)) : [];
+    let typeTag = null;
+    for (const t of ALL_TAGS) {
+      if (tags.includes(t)) {
+        typeTag = t;
+        break;
+      }
+    }
+    if (!typeTag) {
+      if (tags.length === 0) return null;
+      typeTag = tags[0];
+    }
+    const watchDate = (_b2 = (_a2 = fm["观影日期"]) == null ? void 0 : _a2.toString()) != null ? _b2 : null;
+    const rawRating = fm["评分"];
+    const rating = rawRating === void 0 || rawRating === null || rawRating === "" ? null : Number(rawRating);
+    let status;
+    if (rating === -1) status = STATUS_WANT;
+    else if (rating === 0) status = STATUS_WATCHING;
+    else status = STATUS_WATCHED;
+    return {
+      file,
+      name,
+      typeTag,
+      group: getGroupSafe(typeTag),
+      watchDate,
+      rating,
+      status,
+      poster: (_d = (_c = fm["海报"]) == null ? void 0 : _c.toString()) != null ? _d : null,
+      review: (_f = (_e = fm["影评"]) == null ? void 0 : _e.toString()) != null ? _f : null,
+      genre: (_h = (_g = fm["类型"]) == null ? void 0 : _g.toString()) != null ? _h : null,
+      director: (_j = (_i = fm["导演"]) == null ? void 0 : _i.toString()) != null ? _j : null,
+      actors: (_l = (_k = fm["主演"]) == null ? void 0 : _k.toString()) != null ? _l : null,
+      region: (_n = (_m = fm["制片国家/地区"]) == null ? void 0 : _m.toString()) != null ? _n : null,
+      year: fm["上映日期"] ? String(fm["上映日期"]).slice(0, 4) : null,
+      releaseDate: fm["上映日期"] ? String(fm["上映日期"]) : null,
+      doubanRating: fm["豆瓣评分"] !== void 0 && fm["豆瓣评分"] !== "" ? String(fm["豆瓣评分"]) : null,
+      doubanUrl: /^https?:\/\//.test(String((_o = fm["豆瓣链接"]) != null ? _o : "")) ? String(fm["豆瓣链接"]) : null,
+      synopsis: (_q = (_p = fm["简介"]) == null ? void 0 : _p.toString()) != null ? _q : null,
+      // 片长/季集：原独立观影报告的两项统计源字段（ADR-0090 并入内嵌分析页）
+      duration: (_s = (_r = fm["片长"]) == null ? void 0 : _r.toString()) != null ? _s : null,
+      seasonText: (_u = (_t = fm["季集"]) == null ? void 0 : _t.toString()) != null ? _u : null,
+      hotComment: (_w = (_v = fm["热门短评"]) == null ? void 0 : _v.toString()) != null ? _w : null
+    };
+  }
+  var init_data6 = __esm({
+    "src/cinema/data.ts"() {
+      init_constants3();
+      init_douban_fetcher();
+      init_state4();
+    }
+  });
+
+  // src/checkup/checks-orphans.ts
+  function isLocalPath(v) {
+    return typeof v === "string" && !!v.trim() && !/^(https?:)?\/\//i.test(v.trim()) && !v.trim().startsWith("data:");
+  }
+  async function checkOrphans(app, opts = {}) {
+    var _a2, _b2, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r, _s, _t, _u, _v;
+    const issues = [];
+    let scanned = 0;
+    {
+      const folder = resolveCinemaFolderPath();
+      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+      for (let i = 0; i < files.length; i++) {
+        if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
+        const item = parseMovieFile(files[i], app);
+        if (!item) continue;
+        scanned += 1;
+        const poster = (item.poster || "").trim();
+        if (poster && !fileExists(app, poster)) {
+          issues.push({
+            severity: "warn",
+            title: `影视《${item.name}》的海报文件不存在`,
+            detail: `笔记：${files[i].path}
+海报路径：${poster}
+详情页会显示占位图；请补回文件或清空笔记的「海报」字段。`
+          });
+        }
+        await ((_b2 = opts.tick) == null ? void 0 : _b2.call(opts, `影院 · ${item.name}`, { done: i + 1, total: files.length }));
+      }
+    }
+    {
+      const mdBooks = scanMarkdownBooks(app);
+      for (let i = 0; i < mdBooks.length; i++) {
+        if ((_c = opts.isCancelled) == null ? void 0 : _c.call(opts)) return null;
+        const b = mdBooks[i];
+        scanned += 1;
+        const cover = (b.cover || "").trim();
+        if (cover && !fileExists(app, cover)) {
+          issues.push({
+            severity: "warn",
+            title: `书目《${b.title}》的封面文件不存在`,
+            detail: `笔记：${((_d = b.file) == null ? void 0 : _d.path) || "(未知)"}
+封面路径：${cover}
+书库会显示占位封面；请补回文件或清空笔记的 cover 字段。`
+          });
+        }
+        await ((_e = opts.tick) == null ? void 0 : _e.call(opts, `书库 · ${b.title}`, { done: i + 1, total: mdBooks.length }));
+      }
+      const epubs = await loadEpubItems(app);
+      for (let i = 0; i < epubs.length; i++) {
+        if ((_f = opts.isCancelled) == null ? void 0 : _f.call(opts)) return null;
+        const b = epubs[i];
+        scanned += 1;
+        const p = (b.epubVaultPath || "").trim();
+        if (p && !fileExists(app, p)) {
+          issues.push({
+            severity: "warn",
+            title: `EPUB 书目《${b.title}》指向的文件不存在`,
+            detail: `EPUB 路径：${p}
+该条目来自 weave 阅读数据（weave-data.json，外部插件数据，体检不改动）；请重新导入或清理 Weave 插件数据。`
+          });
+        }
+        await ((_g = opts.tick) == null ? void 0 : _g.call(opts, `书库 · ${b.title}`, { done: mdBooks.length + i + 1, total: mdBooks.length + epubs.length }));
+      }
+    }
+    {
+      const folder = resolveGameshelfFolderPath();
+      const files = app.vault.getMarkdownFiles().filter((f) => f.path.startsWith(folder + "/"));
+      for (let i = 0; i < files.length; i++) {
+        if ((_h = opts.isCancelled) == null ? void 0 : _h.call(opts)) return null;
+        const f = files[i];
+        const cache = app.metadataCache.getFileCache(f);
+        const fm = cache == null ? void 0 : cache.frontmatter;
+        const cover = fm == null ? void 0 : fm[GS_FM.cover];
+        scanned += 1;
+        const rawShots = fm == null ? void 0 : fm[GS_FM.shots];
+        const shots = Array.isArray(rawShots) ? rawShots : [];
+        const missing = [];
+        if (isLocalPath(cover) && !fileExists(app, cover.trim())) missing.push(String(cover).trim());
+        for (const s of shots) {
+          if (isLocalPath(s) && !fileExists(app, String(s).trim())) missing.push(String(s).trim());
+        }
+        if (missing.length) {
+          const name = f.basename || f.path;
+          issues.push({
+            severity: "warn",
+            title: `游戏《${name}》的封面/截图文件不存在`,
+            detail: `笔记：${f.path}
+缺失路径：
+${missing.map((m) => `- ${m}`).join("\n")}
+详情页对应位置会显示占位图；请补回文件或清空笔记的「${GS_FM.cover}」/「${GS_FM.shots}」字段。`
+          });
+        }
+        await ((_i = opts.tick) == null ? void 0 : _i.call(opts, `游戏库 · ${f.basename || f.path}`, { done: i + 1, total: files.length }));
+      }
+    }
+    {
+      const sidecarFile = ((_j = jsonScanTargets(app).find((t) => t.file.endsWith("/clipbook.json"))) == null ? void 0 : _j.file) || "CONFIG/STORAGE/clipbook.json";
+      const parsed = await readRawJson(app, sidecarFile);
+      const data = parsed && parsed.ok && parsed.data && typeof parsed.data === "object" && !Array.isArray(parsed.data) ? parsed.data : null;
+      if (data) {
+        const savedArchive = data.savedArchive;
+        if (Array.isArray(savedArchive)) {
+          const scannedNotes = await scanClipDirectory(clipDir(), { vault: app.vault }) || [];
+          const urls = clipUrlSet(scannedNotes);
+          for (let i = 0; i < savedArchive.length; i++) {
+            if ((_k = opts.isCancelled) == null ? void 0 : _k.call(opts)) return null;
+            const entry = savedArchive[i];
+            scanned += 1;
+            const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
+            if (url && !urls.has(url)) {
+              issues.push({
+                severity: "warn",
+                title: `剪藏残留《${String(entry.title || url)}》对应的剪藏笔记不存在`,
+                detail: `侧写文件：${sidecarFile}
+链接：${url}
+剪藏目录（${clipDir()}）里已没有该链接的笔记，这条「已保存」残留失去意义，可清除。`,
+                fixGroup: "clipbook",
+                fixKey: url,
+                fixLabel: "清除残留"
+              });
+            }
+            await ((_l = opts.tick) == null ? void 0 : _l.call(opts, `剪藏残留 ${i + 1}/${savedArchive.length}`, { done: i + 1, total: savedArchive.length }));
+          }
+        }
+        const marks = data.marks && typeof data.marks === "object" && !Array.isArray(data.marks) ? data.marks : {};
+        const markKeys = Object.keys(marks);
+        let markDone = 0;
+        let markTotal = 0;
+        for (const list of markKeys) markTotal += Array.isArray(marks[list]) ? marks[list].length : 0;
+        for (const articleKey of markKeys) {
+          const list = marks[articleKey];
+          if (!Array.isArray(list)) continue;
+          for (const mk of list) {
+            if ((_m = opts.isCancelled) == null ? void 0 : _m.call(opts)) return null;
+            markDone += 1;
+            if (!mk || typeof mk !== "object") continue;
+            scanned += 1;
+            const notePath = String(mk.notePath || "").trim();
+            if (notePath && !fileExists(app, notePath)) {
+              const find = String(mk.find || "");
+              issues.push({
+                severity: "warn",
+                title: `剪藏标注指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
+                detail: `侧写文件：${sidecarFile}
+条目：${articleKey}
+标注原文：${find}
+笔记路径：${notePath}
+这条标注的目标笔记已删除，保存物化时会被跳过，可清除该标注记录。`,
+                fixGroup: "clipbook-marks",
+                fixKey: JSON.stringify([articleKey, find, notePath]),
+                fixLabel: "清除标注"
+              });
+            }
+            await ((_n = opts.tick) == null ? void 0 : _n.call(opts, `剪藏标注 ${markDone}/${markTotal}`, { done: markDone, total: markTotal }));
+          }
+        }
+        const pendingSource = data.pendingSource && typeof data.pendingSource === "object" && !Array.isArray(data.pendingSource) ? data.pendingSource : {};
+        const pendingKeys = Object.keys(pendingSource);
+        let pendingDone = 0;
+        let pendingTotal = 0;
+        for (const list of pendingKeys) pendingTotal += Array.isArray(pendingSource[list]) ? pendingSource[list].length : 0;
+        for (const articleKey of pendingKeys) {
+          const list = pendingSource[articleKey];
+          if (!Array.isArray(list)) continue;
+          for (const p of list) {
+            if ((_o = opts.isCancelled) == null ? void 0 : _o.call(opts)) return null;
+            pendingDone += 1;
+            scanned += 1;
+            const notePath = String(p || "").trim();
+            if (notePath && !fileExists(app, notePath)) {
+              issues.push({
+                severity: "warn",
+                title: `剪藏待回写来源指向的笔记不存在（${notePath.split("/").pop() || notePath}）`,
+                detail: `侧写文件：${sidecarFile}
+条目：${articleKey}
+笔记路径：${notePath}
+保存物化时这条来源回写会因目标缺失被跳过，可清除该待回写记录。`,
+                fixGroup: "clipbook-source",
+                fixKey: JSON.stringify([articleKey, notePath]),
+                fixLabel: "清除待回写来源"
+              });
+            }
+            await ((_p = opts.tick) == null ? void 0 : _p.call(opts, `剪藏待回写来源 ${pendingDone}/${pendingTotal}`, { done: pendingDone, total: pendingTotal }));
+          }
+        }
+      }
+    }
+    {
+      const favFile = ((_q = jsonScanTargets(app).find((t) => t.file.endsWith("/favorites.json"))) == null ? void 0 : _q.file) || "CONFIG/STORAGE/favorites.json";
+      const parsed = await readRawJson(app, favFile);
+      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
+        const list = parsed.data;
+        for (let i = 0; i < list.length; i++) {
+          if ((_r = opts.isCancelled) == null ? void 0 : _r.call(opts)) return null;
+          const it = list[i];
+          if (!it || typeof it !== "object") continue;
+          scanned += 1;
+          const note = String(it.linkedNote || "").trim();
+          if (note && !fileExists(app, note)) {
+            issues.push({
+              severity: "warn",
+              title: `收藏「${String(it.title || it.url || "(无标题)")}」的关联笔记不存在`,
+              detail: `数据文件：${favFile}
+关联路径：${note}
+「跳转笔记」会提示文件不存在；可清除该关联（收藏条目本体保留）。`,
+              fixGroup: "favorites",
+              fixKey: String(it.id || ""),
+              fixLabel: "清除关联"
+            });
+          }
+          await ((_s = opts.tick) == null ? void 0 : _s.call(opts, "收藏本 · 关联笔记", { done: i + 1, total: list.length }));
+        }
+      }
+    }
+    {
+      const kbFile = ((_t = jsonScanTargets(app).find((t) => t.file.endsWith("/knowledge.json"))) == null ? void 0 : _t.file) || "CONFIG/STORAGE/knowledge.json";
+      const parsed = await readRawJson(app, kbFile);
+      if (parsed && parsed.ok && Array.isArray(parsed.data)) {
+        const list = parsed.data;
+        for (let i = 0; i < list.length; i++) {
+          if ((_u = opts.isCancelled) == null ? void 0 : _u.call(opts)) return null;
+          const it = list[i];
+          if (!it || typeof it !== "object") continue;
+          scanned += 1;
+          const id = String(it.id || "");
+          const note = String(it.notePath || "").trim();
+          const video = String(it.videoPath || "").trim();
+          const title = String(it.title || it.url || "(无标题)");
+          if (note && !fileExists(app, note)) {
+            issues.push({
+              severity: "warn",
+              title: `知识盒任务「${title}」的文献笔记不存在`,
+              detail: `数据文件：${kbFile}
+笔记路径：${note}
+任务卡「打开文献笔记」会失败；可清除该引用（任务本体保留）。`,
+              fixGroup: "knowledge",
+              fixKey: id ? `${id}|note` : "",
+              fixLabel: "清除笔记引用"
+            });
+          }
+          if (video && !fileExists(app, video)) {
+            issues.push({
+              severity: "warn",
+              title: `知识盒任务「${title}」的视频文件不存在`,
+              detail: `数据文件：${kbFile}
+视频路径：${video}
+任务卡「复制视频路径」指向的文件已缺失；可清除该路径（任务本体保留）。`,
+              fixGroup: "knowledge",
+              fixKey: id ? `${id}|video` : "",
+              fixLabel: "清除视频路径"
+            });
+          }
+          await ((_v = opts.tick) == null ? void 0 : _v.call(opts, "知识盒 · 任务引用", { done: i + 1, total: list.length }));
+        }
+      }
+    }
+    const summary = issues.length ? `扫描 ${scanned} 个条目，发现 ${issues.length} 处指向缺失` : `扫描 ${scanned} 个条目，未发现指向缺失`;
+    const section = { id: "orphan", name: "孤儿条目", summary, issues, scanned };
+    return section;
+  }
+  var init_checks_orphans = __esm({
+    "src/checkup/checks-orphans.ts"() {
+      init_files();
+      init_save();
+      init_scan();
+      init_store();
+      init_state4();
+      init_state5();
+      init_constants2();
+      init_data6();
+      init_data3();
+    }
+  });
+
+  // src/checkup/checks-consistency.ts
+  function memoNormalize(item) {
+    const { title, scene, created } = item;
+    return {
+      id: item.id,
+      title,
+      scene,
+      priority: item.priority || "minor",
+      created,
+      completed: item.completed || null,
+      due: item.due || null,
+      notePath: item.notePath || null,
+      notePosition: item.notePosition || null,
+      scriptName: item.scriptName || null,
+      courseName: item.courseName || null,
+      coursePath: item.coursePath || null,
+      linkedNote: item.linkedNote || null,
+      url: item.url || null
+    };
+  }
+  function divergedKeysOf(a, b) {
+    const keys = /* @__PURE__ */ new Set([...Object.keys(a), ...Object.keys(b)]);
+    const out = [];
+    for (const k of keys) {
+      if (!Object.is(a[k], b[k])) out.push(k);
+    }
+    return out.sort();
+  }
+  function isPlainObject2(v) {
+    return !!v && typeof v === "object" && !Array.isArray(v);
+  }
+  function analyzeMemoConsistency(raw) {
+    const stats = {
+      total: Array.isArray(raw) ? raw.length : -1,
+      nonObject: 0,
+      missingId: 0,
+      duplicateId: 0,
+      missingTitle: 0,
+      divergedKeys: {},
+      storeView: { total: 0, done: 0 },
+      rawView: { total: 0, done: 0 }
+    };
+    if (!Array.isArray(raw)) return stats;
+    const seenIds = /* @__PURE__ */ new Set();
+    for (const it of raw) {
+      if (!isPlainObject2(it)) {
+        stats.nonObject += 1;
+        continue;
+      }
+      const id = typeof it.id === "string" && it.id ? it.id : "";
+      if (!id) stats.missingId += 1;
+      else if (seenIds.has(id)) stats.duplicateId += 1;
+      else seenIds.add(id);
+      if (!it.title || !String(it.title).trim()) stats.missingTitle += 1;
+      const m = memoNormalize(it);
+      const t = normalizeItem(it);
+      if (m.completed !== null) stats.storeView.done += 1;
+      if (t.completed) stats.rawView.done += 1;
+      stats.storeView.total += 1;
+      stats.rawView.total += 1;
+      for (const k of divergedKeysOf(m, t)) {
+        stats.divergedKeys[k] = (stats.divergedKeys[k] || 0) + 1;
+      }
+    }
+    return stats;
+  }
+  function consistencyIssuesOf(stats) {
+    const issues = [];
+    if (stats.total < 0) {
+      return {
+        summary: "文件不是条目数组形态",
+        issues: [
+          {
+            severity: "error",
+            title: "memo.json 不是条目数组形态（两条读取链都无法读取）",
+            detail: "两条读取链都期望「条目数组」；当前文件是其他形态，请从 CONFIG/.CORRUPT/ 留档或备份恢复。"
+          }
+        ]
+      };
+    }
+    if (stats.storeView.total !== stats.rawView.total || stats.storeView.done !== stats.rawView.done) {
+      issues.push({
+        severity: "error",
+        title: `双链计数不一致：单例读 ${stats.storeView.total} 条/完成 ${stats.storeView.done}，直读 ${stats.rawView.total} 条/完成 ${stats.rawView.done}`,
+        detail: "同一份 memo.json，两条读取链的统计口径出现分叉，说明字段归一链路有 bug，请反馈修复。"
+      });
+    }
+    const diverged = Object.keys(stats.divergedKeys || {}).sort(
+      (a, b) => (stats.divergedKeys[b] || 0) - (stats.divergedKeys[a] || 0)
+    );
+    if (diverged.length) {
+      issues.push({
+        severity: "error",
+        title: `双链归一分叉：${diverged.map((k) => `${k} ×${stats.divergedKeys[k]}`).join("、")}`,
+        detail: "同一份 memo.json，「归一口径快照」与 normalizeItem 实际归一对上述字段产出不同结果，说明字段归一链路有 bug，请反馈修复。"
+      });
+    }
+    if (stats.nonObject > 0) {
+      issues.push({
+        severity: "error",
+        title: `${stats.nonObject} 条非对象条目（两条读取链都会在这里中断）`,
+        detail: "数组里混入了非对象内容（字符串/数字等），两条链加载都会失败，请从留档或备份修复。"
+      });
+    }
+    if (stats.duplicateId > 0) {
+      issues.push({
+        severity: "warn",
+        title: `${stats.duplicateId} 条重复 id（完成/删除会同 id 联动误伤）`,
+        detail: "同 id 条目在两条读取链中都会被当成同一条处理：勾选完成一条，另一条也显示完成。"
+      });
+    }
+    if (stats.missingTitle > 0) {
+      issues.push({
+        severity: "warn",
+        title: `${stats.missingTitle} 条缺少标题（列表显示为空行）`,
+        detail: "标题是两条读取链共用的展示字段；缺失多为外部写入导致。"
+      });
+    }
+    if (stats.missingId > 0) {
+      issues.push({
+        severity: "info",
+        title: `${stats.missingId} 条缺少 id（下次读取时自动补）`,
+        detail: "加载链会自动生成 id 写回，无需处理。"
+      });
+    }
+    const bad = stats.nonObject + stats.duplicateId + stats.missingTitle;
+    const summary = issues.some((i) => i.severity === "error") ? "发现结构异常" : bad > 0 ? `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致，另有 ${bad} 处小问题` : `条数 ${stats.total} · 完成 ${stats.storeView.done}，双链口径一致`;
+    return { summary, issues };
+  }
+  async function checkSameSourceConsistency(app, opts = {}) {
+    var _a2, _b2, _c;
+    if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
+    const file = ((_b2 = jsonScanTargets(app).find((t) => t.file.endsWith("/memo.json"))) == null ? void 0 : _b2.file) || "CONFIG/STORAGE/memo.json";
+    const parsed = await readRawJson(app, file);
+    if (parsed === null) {
+      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 不存在（还没写过数据），跳过", issues: [], scanned: 0 };
+    }
+    if (!parsed.ok) {
+      return { id: "consistency", name: "同源一致性（备忘录）", summary: "memo.json 无法解析（见「数据文件可解析」项），跳过", issues: [], scanned: 0 };
+    }
+    await ((_c = opts.tick) == null ? void 0 : _c.call(opts, "备忘录"));
+    const stats = analyzeMemoConsistency(parsed.data);
+    const { summary, issues } = consistencyIssuesOf(stats);
+    return { id: "consistency", name: "同源一致性（备忘录）", summary, issues, scanned: stats.total };
+  }
+  var init_checks_consistency = __esm({
+    "src/checkup/checks-consistency.ts"() {
+      init_files();
+      init_data();
+    }
+  });
+
+  // src/checkup/run.ts
+  async function runCheckup(app, opts = {}) {
+    var _a2, _b2;
+    const total = CHECKS.length;
+    const sections = [];
+    for (let i = 0; i < CHECKS.length; i++) {
+      if ((_a2 = opts.isCancelled) == null ? void 0 : _a2.call(opts)) return null;
+      (_b2 = opts.onProgress) == null ? void 0 : _b2.call(opts, { index: i, total, label: CHECKS[i].label });
+      try {
+        const section = await CHECKS[i].runner(app, {
+          tick: async (label, sub) => {
+            var _a3;
+            (_a3 = opts.onProgress) == null ? void 0 : _a3.call(opts, { index: i, total, label, subDone: sub == null ? void 0 : sub.done, subTotal: sub == null ? void 0 : sub.total });
+            await yieldToMainThread();
+          },
+          isCancelled: () => {
+            var _a3;
+            return !!((_a3 = opts.isCancelled) == null ? void 0 : _a3.call(opts));
+          }
+        });
+        if (section === null) return null;
+        sections.push(section);
+      } catch (e) {
+        sections.push({
+          id: CHECKS[i].id,
+          name: CHECKS[i].label,
+          summary: "检查未能完成",
+          issues: [{ severity: "error", title: `${CHECKS[i].label}检查出错`, detail: e instanceof Error ? e.message : String(e) }],
+          scanned: 0
+        });
+      }
+    }
+    const report = { sections, finishedAt: (/* @__PURE__ */ new Date()).toLocaleString() };
+    lastReport = report;
+    lastFingerprints = collectFingerprints(app);
+    return report;
+  }
+  function collectFingerprints(app) {
+    var _a2;
+    const fp = {};
+    const get = (_a2 = app.vault) == null ? void 0 : _a2.getAbstractFileByPath;
+    if (typeof get !== "function") return fp;
+    for (const t of jsonScanTargets(app)) {
+      const f = get.call(app.vault, t.file);
+      if (f && f.stat && typeof f.stat.mtime === "number") fp[t.file] = f.stat.mtime;
+    }
+    return fp;
+  }
+  function cacheFreshness(app) {
+    if (!lastFingerprints || Object.keys(lastFingerprints).length === 0) return "changed";
+    const now = collectFingerprints(app);
+    const oldKeys = Object.keys(lastFingerprints);
+    if (oldKeys.length !== Object.keys(now).length) return "changed";
+    for (const k of oldKeys) {
+      if (now[k] !== lastFingerprints[k]) return "changed";
+    }
+    return "clean";
+  }
+  function getLastCheckupReport() {
+    return lastReport;
+  }
+  function fixKeysOf(issues, group) {
+    return issues.filter((i) => i.fixGroup === group && i.fixKey).map((i) => i.fixKey);
+  }
+  async function readJsonIfPresent(app, file, make) {
+    if (!app.vault.getAbstractFileByPath(file)) return null;
+    return make().read();
+  }
+  async function fixFavorites(app, file, ids) {
+    const restored = /* @__PURE__ */ new Map();
+    const fixed = await enqueueFileTask(file, async () => {
+      var _a2;
+      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+      if (data === null) return 0;
+      const want = new Set(ids);
+      let n = 0;
+      for (const it of data) {
+        if (!it || typeof it !== "object" || !want.has(String(it.id))) continue;
+        const note = String(it.linkedNote || "").trim();
+        if (!note) continue;
+        restored.set(String(it.id), (_a2 = it.linkedNote) != null ? _a2 : null);
+        it.linkedNote = null;
+        n += 1;
+      }
+      if (n > 0) await jsonFileStore(file, { defaultValue: [] }).write(data);
+      return n;
+    });
+    return {
+      group: "收藏关联",
+      fixed,
+      label: fixed ? `已清除 ${fixed} 条失效的收藏关联（条目保留）` : "没有需要清除的关联（数据已变化）",
+      undo: async () => {
+        if (!restored.size) return;
+        await enqueueFileTask(file, async () => {
+          var _a2;
+          const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+          if (data === null) return;
+          for (const it of data) {
+            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
+            if (String(it.linkedNote || "").trim()) continue;
+            it.linkedNote = (_a2 = restored.get(String(it.id))) != null ? _a2 : null;
+          }
+          await jsonFileStore(file, { defaultValue: [] }).write(data);
+        });
+      }
+    };
+  }
+  function recordSectionOf(data, key) {
+    const cur = data && typeof data === "object" ? data[key] : void 0;
+    if (cur && typeof cur === "object" && !Array.isArray(cur)) return cur;
+    data[key] = {};
+    return data[key];
+  }
+  async function fixClipbookBatch(app, file, urls, markKeys, srcKeys) {
+    const removedSaved = [];
+    const removedMarks = [];
+    const removedSrc = [];
+    const hasWork = urls.length > 0 || markKeys.length > 0 || srcKeys.length > 0;
+    const counts = await enqueueFileTask(file, async () => {
+      if (!hasWork) return { saved: 0, marks: 0, src: 0 };
+      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+      if (data === null) return { saved: 0, marks: 0, src: 0 };
+      let cntSaved = 0;
+      const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
+      const want = new Set(urls);
+      const kept = [];
+      list.forEach((entry, index) => {
+        const url = entry && typeof entry === "object" ? String(entry.url || "") : "";
+        if (url && want.has(url)) {
+          removedSaved.push({ url, title: String(entry.title || ""), savedAt: String(entry.savedAt || ""), index });
+          cntSaved += 1;
+        } else {
+          kept.push(entry);
+        }
+      });
+      if (cntSaved > 0) data.savedArchive = kept;
+      let nMarks = 0;
+      if (markKeys.length) {
+        const marks = recordSectionOf(data, "marks");
+        for (const key of markKeys) {
+          let articleKey = "";
+          let find = "";
+          let notePath = "";
+          try {
+            const [a, f, p] = JSON.parse(key);
+            articleKey = String(a != null ? a : "");
+            find = String(f != null ? f : "");
+            notePath = String(p != null ? p : "");
+          } catch (e) {
+            continue;
+          }
+          if (!articleKey || !notePath) continue;
+          const markList = Array.isArray(marks[articleKey]) ? marks[articleKey] : [];
+          const idx = markList.findIndex(
+            (m) => m && typeof m === "object" && String(m.find || "") === find && String(m.notePath || "") === notePath
+          );
+          if (idx === -1) continue;
+          removedMarks.push({ articleKey, mark: markList[idx], index: idx });
+          markList.splice(idx, 1);
+          if (markList.length === 0) delete marks[articleKey];
+          nMarks += 1;
+        }
+      }
+      let nSrc = 0;
+      if (srcKeys.length) {
+        const pending = recordSectionOf(data, "pendingSource");
+        for (const key of srcKeys) {
+          let articleKey = "";
+          let notePath = "";
+          try {
+            const [a, p] = JSON.parse(key);
+            articleKey = String(a != null ? a : "");
+            notePath = String(p != null ? p : "");
+          } catch (e) {
+            continue;
+          }
+          if (!articleKey || !notePath) continue;
+          const srcList = Array.isArray(pending[articleKey]) ? pending[articleKey] : [];
+          const idx = srcList.findIndex((p) => String(p || "") === notePath);
+          if (idx === -1) continue;
+          removedSrc.push({ articleKey, notePath, index: idx });
+          srcList.splice(idx, 1);
+          if (srcList.length === 0) delete pending[articleKey];
+          nSrc += 1;
+        }
+      }
+      if (cntSaved + nMarks + nSrc > 0) await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      return { saved: cntSaved, marks: nMarks, src: nSrc };
+    });
+    const makeSavedUndo = () => async () => {
+      if (!removedSaved.length) return;
+      await enqueueFileTask(file, async () => {
+        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        if (data === null) return;
+        const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
+        for (const r of removedSaved) {
+          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
+        }
+        data.savedArchive = list;
+        await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      });
+    };
+    const makeMarksUndo = () => async () => {
+      if (!removedMarks.length) return;
+      await enqueueFileTask(file, async () => {
+        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        if (data === null) return;
+        const marks = recordSectionOf(data, "marks");
+        for (const r of removedMarks) {
+          const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
+          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at, 0, r.mark);
+          marks[r.articleKey] = list;
+        }
+        await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      });
+    };
+    const makeSrcUndo = () => async () => {
+      if (!removedSrc.length) return;
+      await enqueueFileTask(file, async () => {
+        const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: emptySidecar }));
+        if (data === null) return;
+        const pending = recordSectionOf(data, "pendingSource");
+        for (const r of removedSrc) {
+          const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
+          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at, 0, r.notePath);
+          pending[r.articleKey] = list;
+        }
+        await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
+      });
+    };
+    const outcomes = [];
+    if (urls.length) {
+      outcomes.push({
+        group: "剪藏残留",
+        fixed: counts.saved,
+        label: counts.saved ? `已清除 ${counts.saved} 条剪藏「已保存」残留` : "没有需要清除的残留（数据已变化）",
+        undo: makeSavedUndo()
+      });
+    }
+    if (markKeys.length) {
+      outcomes.push({
+        group: "剪藏标注",
+        fixed: counts.marks,
+        label: counts.marks ? `已清除 ${counts.marks} 条失效的剪藏标注` : "没有需要清除的标注（数据已变化）",
+        undo: makeMarksUndo()
+      });
+    }
+    if (srcKeys.length) {
+      outcomes.push({
+        group: "剪藏待回写来源",
+        fixed: counts.src,
+        label: counts.src ? `已清除 ${counts.src} 条失效的剪藏待回写来源` : "没有需要清除的待回写来源（数据已变化）",
+        undo: makeSrcUndo()
+      });
+    }
+    return outcomes;
+  }
+  async function fixKnowledge(app, file, keys) {
+    const restored = /* @__PURE__ */ new Map();
+    const fixed = await enqueueFileTask(file, async () => {
+      var _a2;
+      const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+      if (data === null) return 0;
+      let n = 0;
+      for (const key of keys) {
+        const bar = key.lastIndexOf("|");
+        if (bar <= 0) continue;
+        const id = key.slice(0, bar);
+        const field = key.slice(bar + 1) === "note" ? "notePath" : "videoPath";
+        const it = (Array.isArray(data) ? data : []).find((d) => d && typeof d === "object" && String(d.id) === id);
+        if (!it) continue;
+        const cur = String(it[field] || "").trim();
+        if (!cur) continue;
+        const rec = (_a2 = restored.get(id)) != null ? _a2 : {};
+        rec[field === "notePath" ? "notePath" : "videoPath"] = it[field];
+        restored.set(id, rec);
+        it[field] = null;
+        n += 1;
+      }
+      if (n > 0) await jsonFileStore(file, { defaultValue: [] }).write(data);
+      return n;
+    });
+    return {
+      group: "知识盒引用",
+      fixed,
+      label: fixed ? `已清除 ${fixed} 处知识盒任务的失效引用（任务保留）` : "没有需要清除的引用（数据已变化）",
+      undo: async () => {
+        if (!restored.size) return;
+        await enqueueFileTask(file, async () => {
+          const data = await readJsonIfPresent(app, file, () => jsonFileStore(file, { defaultValue: [] }));
+          if (data === null) return;
+          for (const it of Array.isArray(data) ? data : []) {
+            if (!it || typeof it !== "object" || !restored.has(String(it.id))) continue;
+            const rec = restored.get(String(it.id));
+            if (rec.notePath !== void 0 && !String(it.notePath || "").trim()) it.notePath = rec.notePath;
+            if (rec.videoPath !== void 0 && !String(it.videoPath || "").trim()) it.videoPath = rec.videoPath;
+          }
+          await jsonFileStore(file, { defaultValue: [] }).write(data);
+        });
+      }
+    };
+  }
+  async function fixOrphanIssues(app, issues) {
+    const outcomes = [];
+    const failures = [];
+    const targets = jsonScanTargets(app);
+    const fileOf = (suffix) => {
+      var _a2;
+      return ((_a2 = targets.find((t) => t.file.endsWith("/" + suffix))) == null ? void 0 : _a2.file) || storageFile(suffix);
+    };
+    const favIds = fixKeysOf(issues, "favorites");
+    if (favIds.length) {
+      try {
+        outcomes.push(await fixFavorites(app, fileOf("favorites.json"), favIds));
+      } catch (e) {
+        failures.push("收藏关联");
+      }
+    }
+    const clipUrls = fixKeysOf(issues, "clipbook");
+    const markKeys = fixKeysOf(issues, "clipbook-marks");
+    const srcKeys = fixKeysOf(issues, "clipbook-source");
+    if (clipUrls.length || markKeys.length || srcKeys.length) {
+      try {
+        outcomes.push(...await fixClipbookBatch(app, fileOf("clipbook.json"), clipUrls, markKeys, srcKeys));
+      } catch (e) {
+        failures.push("剪藏残留/标注/待回写来源");
+      }
+    }
+    const kbKeys = fixKeysOf(issues, "knowledge");
+    if (kbKeys.length) {
+      try {
+        outcomes.push(await fixKnowledge(app, fileOf("knowledge.json"), kbKeys));
+      } catch (e) {
+        failures.push("知识盒任务引用");
+      }
+    }
+    return { outcomes, failures };
+  }
+  var CHECKS, CHECK_LABELS, lastReport, lastFingerprints;
+  var init_run = __esm({
+    "src/checkup/run.ts"() {
+      init_utils();
+      init_storage();
+      init_files();
+      init_checks_json();
+      init_checks_drift();
+      init_checks_orphans();
+      init_checks_consistency();
+      init_data4();
+      CHECKS = [
+        { id: "json", label: "数据文件可解析", runner: checkJsonFiles },
+        { id: "drift", label: "字段漂移", runner: checkFieldDrift },
+        { id: "orphan", label: "孤儿条目", runner: checkOrphans },
+        { id: "consistency", label: "同源一致性", runner: checkSameSourceConsistency }
+      ];
+      CHECK_LABELS = CHECKS.map((c) => c.label);
+      lastReport = null;
+      lastFingerprints = null;
+    }
+  });
+
+  // src/checkup/ui.ts
+  function isPanelVisible() {
+    return !!overlay && overlay.style.display === "flex";
+  }
+  function openDataCheckup(app) {
+    hostApp = app;
+    if (!overlay) build(app);
+    topifyZ(overlay);
+    overlay.style.display = "flex";
+    escHandle2 == null ? void 0 : escHandle2.unregister();
+    escHandle2 = escManager.register("bz-checkup", {
+      isVisible: isPanelVisible,
+      close: () => hide()
+    });
+    renderBody();
+  }
+  function unloadDataCheckup() {
+    runSeq += 1;
+    running = false;
+    fixing = false;
+    hostApp = null;
+    escHandle2 == null ? void 0 : escHandle2.unregister();
+    escHandle2 = null;
+    progressCtl = null;
+    overlay == null ? void 0 : overlay.remove();
+    overlay = null;
+  }
+  function build(app) {
+    const ov = document.createElement("div");
+    ov.id = OVERLAY_ID;
+    ov.className = "bz-panel-overlay";
+    const frame = document.createElement("div");
+    frame.id = FRAME_ID;
+    frame.className = "bz-panel-frame bz-checkup-popup";
+    const head = document.createElement("div");
+    head.className = "bz-panel-head";
+    const brand = document.createElement("div");
+    brand.className = "bz-panel-brand";
+    brand.appendChild(uiIcon("stethoscope"));
+    const title = document.createElement("div");
+    title.className = "bz-panel-title";
+    title.textContent = "数据体检";
+    const sp = document.createElement("div");
+    sp.className = "bz-panel-head-sp";
+    head.append(brand, title, sp);
+    const body = document.createElement("div");
+    body.className = "bz-checkup-body";
+    const foot = document.createElement("div");
+    foot.className = "bz-checkup-foot";
+    frame.append(head, body, foot);
+    ov.appendChild(frame);
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) hide();
+    });
+    document.body.appendChild(ov);
+    overlay = ov;
+  }
+  function hide() {
+    if (overlay) overlay.style.display = "none";
+  }
+  function bodyEl() {
+    return overlay.querySelector(".bz-checkup-body");
+  }
+  function footEl() {
+    return overlay.querySelector(".bz-checkup-foot");
+  }
+  function renderBody() {
+    if (!overlay) return;
+    if (running) {
+      renderRunning();
+      return;
+    }
+    const last = getLastCheckupReport();
+    if (last) renderReport(last, true);
+    else renderIdle();
+  }
+  function renderIdle() {
+    const body = bodyEl();
+    body.innerHTML = "";
+    const actions = document.createElement("div");
+    actions.className = "bz-btn-row bz-btn-row--center";
+    actions.appendChild(uiBtn({ label: "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() }));
+    body.appendChild(
+      uiEmpty({
+        icon: "stethoscope",
+        title: "还没体检过",
+        desc: "体检会检查各域数据文件能否解析、字段是否漂移、条目指向是否失效，全程只读不改数据",
+        actions
+      })
+    );
+    renderFoot();
+  }
+  function renderFoot() {
+    const foot = footEl();
+    foot.innerHTML = "";
+    if (running || fixing) {
+      foot.appendChild(uiBtn({ label: fixing ? "修复中…" : "取消体检", onClick: () => cancelRun(), disabled: fixing }));
+      return;
+    }
+    const last = getLastCheckupReport();
+    foot.appendChild(
+      uiBtn({ label: last ? "重新体检" : "开始体检", icon: "stethoscope", tone: "primary", onClick: () => void startRun() })
+    );
+  }
+  async function startRun() {
+    if (!hostApp || running) return;
+    running = true;
+    const seq = ++runSeq;
+    renderRunning();
+    try {
+      const report = await runCheckup(hostApp, {
+        isCancelled: () => seq !== runSeq,
+        onProgress: (p) => {
+          if (seq !== runSeq) return;
+          updateProgress(p.index, p.total, p.label, p.subDone, p.subTotal);
+        }
+      });
+      if (seq !== runSeq) return;
+      running = false;
+      if (report) {
+        progressCtl == null ? void 0 : progressCtl.setValue(100);
+        renderReport(report, false);
+        if (!isPanelVisible()) {
+          const counts = severityCounts(report);
+          const text = counts.error ? `体检完成：${counts.error} 个问题需要处理` : counts.warn + counts.info ? `体检完成：${counts.warn + counts.info} 处建议处理` : "体检完成：未发现问题";
+          notify(text, { action: { label: "查看", onClick: () => hostApp && openDataCheckup(hostApp) } });
+        }
+      } else renderBody();
+    } catch (e) {
+      running = false;
+      if (seq !== runSeq) return;
+      notifyActionError(e, "体检", { onRetry: () => void startRun() });
+      renderBody();
+    }
+  }
+  function cancelRun() {
+    if (fixing) return;
+    runSeq += 1;
+    running = false;
+    renderBody();
+  }
+  function renderRunning() {
+    renderFoot();
+    const body = bodyEl();
+    body.innerHTML = "";
+    const progress = document.createElement("div");
+    progress.className = "bz-checkup-progress";
+    progress.textContent = `体检中（1/${CHECK_LABELS.length}）：${CHECK_LABELS[0]}`;
+    progressCtl = uiProgress();
+    body.append(progress, progressCtl.el);
+    const list = document.createElement("div");
+    list.className = "bz-checkup-steps";
+    for (let i = 0; i < CHECK_LABELS.length; i++) {
+      const row = document.createElement("div");
+      row.className = "bz-checkup-step";
+      row.dataset.step = String(i);
+      const mark = document.createElement("span");
+      mark.className = "bz-checkup-step-mark";
+      const name = document.createElement("span");
+      name.className = "bz-checkup-step-name";
+      name.textContent = CHECK_LABELS[i];
+      row.append(mark, name);
+      list.appendChild(row);
+    }
+    body.appendChild(list);
+  }
+  function updateProgress(index, total, label, subDone, subTotal) {
+    if (!overlay) return;
+    const progress = overlay.querySelector(".bz-checkup-progress");
+    if (progress) progress.textContent = `体检中（${index + 1}/${total}）：${label}`;
+    const sub = subTotal && subTotal > 0 ? Math.min(1, Math.max(0, subDone || 0) / subTotal) : 0;
+    progressCtl == null ? void 0 : progressCtl.setValue((index + sub) / total * 100);
+    overlay.querySelectorAll(".bz-checkup-step").forEach((row) => {
+      const i = Number(row.dataset.step);
+      row.classList.toggle("is-done", i < index);
+      row.classList.toggle("is-current", i === index);
+    });
+  }
+  function severityCounts(report) {
+    const c = { error: 0, warn: 0, info: 0 };
+    for (const s of report.sections) for (const i of s.issues) c[i.severity] += 1;
+    return c;
+  }
+  function renderReport(report, stale) {
+    renderFoot();
+    const body = bodyEl();
+    body.innerHTML = "";
+    if (stale) {
+      const hint = document.createElement("div");
+      hint.className = "bz-checkup-stale";
+      hint.textContent = hostApp && cacheFreshness(hostApp) === "clean" ? `上次体检：${report.finishedAt} · 此后数据未变化` : `上次体检：${report.finishedAt} · 数据可能已变化，可重新体检`;
+      body.appendChild(hint);
+    }
+    const counts = severityCounts(report);
+    const warnsCount = counts.warn + counts.info;
+    const summary = document.createElement("div");
+    summary.className = "bz-checkup-summary" + (counts.error ? " bz-checkup-summary--bad" : warnsCount ? " bz-checkup-summary--warn" : " bz-checkup-summary--ok");
+    summary.textContent = counts.error ? `体检完成：${counts.error} 个问题需要处理` : warnsCount ? `体检完成：${warnsCount} 处建议处理` : "体检完成：全部通过";
+    body.appendChild(summary);
+    const allIssues = report.sections.flatMap((s) => s.issues);
+    const errors = allIssues.filter((i) => i.severity === "error");
+    const warns = allIssues.filter((i) => i.severity === "warn" || i.severity === "info");
+    const cleanSections = report.sections.filter((s) => !s.issues.length);
+    if (errors.length) appendIssueGroup(body, "需要处理", "bad", errors);
+    if (warns.length) {
+      const fixable = warns.filter((i) => i.fixGroup && i.fixKey);
+      appendIssueGroup(body, "建议处理", "warn", warns, fixable.length ? { issues: fixable } : void 0);
+    }
+    appendCleanGroup(body, report, cleanSections);
+  }
+  function appendIssueGroup(body, title, tone, issues, fixAll) {
+    const sec = document.createElement("div");
+    sec.className = "bz-checkup-group bz-checkup-group--" + tone;
+    const head = document.createElement("div");
+    head.className = "bz-checkup-group-head";
+    const t = document.createElement("span");
+    t.className = "bz-checkup-group-title";
+    t.textContent = `${title}（${issues.length}）`;
+    head.appendChild(t);
+    if (fixAll) {
+      head.appendChild(
+        uiBtn({
+          label: `一键修复（${fixAll.issues.length}）`,
+          onClick: () => void confirmFix(fixAll.issues, "一键修复")
+        })
+      );
+    }
+    sec.appendChild(head);
+    for (const issue of issues) sec.appendChild(issueRow(issue));
+    body.appendChild(sec);
+  }
+  function appendCleanGroup(body, report, cleanSections) {
+    const sec = document.createElement("div");
+    sec.className = "bz-checkup-group bz-checkup-group--ok";
+    const head = document.createElement("div");
+    head.className = "bz-checkup-group-head";
+    const t = document.createElement("span");
+    t.className = "bz-checkup-group-title";
+    t.textContent = `通过（${cleanSections.length}）`;
+    head.appendChild(t);
+    sec.appendChild(head);
+    if (!cleanSections.length) {
+      const none = document.createElement("div");
+      none.className = "bz-checkup-clean-line";
+      none.textContent = "没有完全通过的检查项";
+      sec.appendChild(none);
+    }
+    for (const s of cleanSections) {
+      const line = document.createElement("div");
+      line.className = "bz-checkup-clean-line";
+      line.textContent = `${s.name}：${s.summary}`;
+      sec.appendChild(line);
+    }
+    body.appendChild(sec);
+  }
+  function issueRow(issue) {
+    const row = document.createElement("div");
+    row.className = "bz-checkup-issue";
+    const dot = document.createElement("span");
+    dot.className = "bz-checkup-dot bz-checkup-dot--" + issue.severity;
+    const main = document.createElement("div");
+    main.className = "bz-checkup-issue-main";
+    const title = document.createElement("div");
+    title.className = "bz-checkup-issue-title";
+    title.textContent = issue.title;
+    main.appendChild(title);
+    if (issue.detail) {
+      const toggle = document.createElement("button");
+      toggle.type = "button";
+      toggle.className = "bz-checkup-detail-toggle bz-touch-target--lg";
+      toggle.textContent = "查看详情";
+      toggle.setAttribute("aria-expanded", "false");
+      const detail = document.createElement("pre");
+      detail.className = "bz-checkup-detail";
+      detail.style.display = "none";
+      let filled = false;
+      toggle.addEventListener("click", () => {
+        const open = detail.style.display !== "none";
+        if (!filled) {
+          detail.textContent = issue.detail || "";
+          filled = true;
+        }
+        detail.style.display = open ? "none" : "block";
+        toggle.textContent = open ? "查看详情" : "收起详情";
+        toggle.setAttribute("aria-expanded", open ? "false" : "true");
+      });
+      main.appendChild(toggle);
+      main.appendChild(detail);
+    }
+    row.append(dot, main);
+    if (issue.fixGroup && issue.fixKey) {
+      row.appendChild(
+        uiBtn({
+          label: issue.fixLabel || "修复",
+          onClick: () => void confirmFix([issue], issue.fixLabel || "修复")
+        })
+      );
+    }
+    return row;
+  }
+  function setFixing(on) {
+    fixing = on;
+    if (!overlay) return;
+    overlay.querySelectorAll("button").forEach((b) => {
+      b.disabled = on;
+    });
+    renderFoot();
+  }
+  async function confirmFix(issues, what) {
+    if (!hostApp || fixing) return;
+    const fixable = issues.filter((i) => i.fixGroup && i.fixKey);
+    if (!fixable.length) return;
+    const v = await openFlowDialog({
+      // 动作名入题（cons UX-1：消费 what 形参，逐条/批量确认语境有区分）
+      title: what === "一键修复" ? "修复确认" : `${what}确认`,
+      message: `将清除 ${fixable.length} 项失效引用（数据文件里的关联/残留，不动你的笔记），清除后可在通知里撤销`,
+      actions: [
+        { label: "取消", value: "cancel" },
+        // danger（issue 291 评审补）：清除会从数据文件里删掉失效引用/残留（可撤销但仍是删除类
+        // 主动作，与 belongings/favorites/memo 的可撤销删除同口径）→ 主钮不高亮（手册 §9/§10）
+        { label: "清除", value: "ok", cta: true, danger: true }
+      ]
+    });
+    if (v !== "ok") return;
+    setFixing(true);
+    let failures = [];
+    try {
+      const result = await fixOrphanIssues(hostApp, fixable);
+      failures = result.failures;
+      const hit = result.outcomes.filter((o) => o.fixed > 0);
+      if (hit.length) {
+        const total = hit.reduce((a, o) => a + o.fixed, 0);
+        const detail = hit.map((o) => `${o.group} ${o.fixed}`).join("、");
+        notifyUndo(`已清除 ${total} 项失效引用：${detail}`, () => {
+          (async () => {
+            for (const o of hit) await o.undo();
+          })().then(() => {
+            return startRun();
+          }).catch((e) => notifySaveError(e, "撤销清除"));
+        });
+      } else if (!failures.length) {
+        notice("没有需要清除的项（数据已变化）");
+      }
+      if (failures.length) {
+        notifyActionError(new Error("未完成：" + failures.join("、")), "清除失效引用", {
+          onRetry: () => void confirmFix(issues, what)
+        });
+      }
+    } catch (e) {
+      setFixing(false);
+      notifyActionError(e, "清除失效引用", { onRetry: () => void confirmFix(issues, what) });
+      return;
+    }
+    setFixing(false);
+    await startRun();
+  }
+  var overlay, escHandle2, runSeq, running, fixing, progressCtl, hostApp, OVERLAY_ID, FRAME_ID;
+  var init_ui4 = __esm({
+    "src/checkup/ui.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_notice();
+      init_ui();
+      init_flow_dialog();
+      init_run();
+      overlay = null;
+      escHandle2 = null;
+      runSeq = 0;
+      running = false;
+      fixing = false;
+      progressCtl = null;
+      hostApp = null;
+      OVERLAY_ID = "bz-checkup-mask";
+      FRAME_ID = "bz-checkup-popup";
+    }
+  });
+
+  // src/checkup/index.ts
+  var checkup_exports = {};
+  __export(checkup_exports, {
+    openDataCheckup: () => openDataCheckup,
+    unloadDataCheckup: () => unloadDataCheckup
+  });
+  var init_checkup = __esm({
+    "src/checkup/index.ts"() {
+      init_ui4();
+    }
+  });
+
+  // src/settings-panel/schema.ts
+  var schema_exports = {};
+  __export(schema_exports, {
+    appearanceSettingsSchema: () => appearanceSettingsSchema
+  });
+  function appearanceSettingsSchema() {
+    return {
+      groups: [
+        {
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "布局",
+              binding: { key: "settingsPanelLayout" },
+              options: [{ value: "jingwei", label: "经纬", prevClass: "bz-sp-prev-jingwei" }]
+            },
+            {
+              type: "choiceCards",
+              name: "主题",
+              binding: { key: "settingsPanelSkin" },
+              options: [{ value: "chenhun", label: "晨昏", prevClass: "bz-sp-prev-chenhun" }]
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_schema = __esm({
+    "src/settings-panel/schema.ts"() {
+    }
+  });
+
+  // src/home/shared.ts
+  function applyOrder(order, domains = DOMAINS) {
+    if (!order || !order.length) return domains;
+    const rank = /* @__PURE__ */ new Map();
+    order.forEach((id, i) => {
+      if (!rank.has(id)) rank.set(id, i);
+    });
+    const listed = domains.filter((d) => rank.has(d.id)).sort((a, b) => rank.get(a.id) - rank.get(b.id));
+    if (listed.length === domains.length) return listed;
+    const out = [...listed];
+    for (const d of domains) {
+      if (rank.has(d.id)) continue;
+      let anchor = -1;
+      for (let k = domains.indexOf(d) - 1; k >= 0; k--) {
+        const pos = out.indexOf(domains[k]);
+        if (pos >= 0) {
+          anchor = pos;
+          break;
+        }
+      }
+      out.splice(anchor + 1, 0, d);
+    }
+    return out;
+  }
+  function reorderTo(order, id, toIndex, hidden = [], domains = DOMAINS) {
+    const all = applyOrder(order, domains).map((d) => d.id);
+    const off = new Set(hidden);
+    const visible = all.filter((x) => !off.has(x));
+    const from = visible.indexOf(id);
+    if (from < 0 || toIndex < 0 || toIndex >= visible.length) return all;
+    visible.splice(from, 1);
+    visible.splice(toIndex, 0, id);
+    return [...visible, ...all.filter((x) => off.has(x))];
+  }
+  function hiddenOf(order, scope) {
+    return scope === "mob" ? order.hiddenMob : order.hiddenDesk;
+  }
+  function visibleDomains(order, hidden, domains = DOMAINS) {
+    const hide2 = new Set(hidden != null ? hidden : []);
+    return applyOrder(order, domains.filter((d) => !hide2.has(d.id)));
+  }
+  function domainColor(id) {
+    var _a2;
+    return (_a2 = DOMAIN_DOT[id]) != null ? _a2 : "#8a8f99";
+  }
+  var ICON_KEY, iconOf, DOMAINS, DOMAIN_MAP, DOMAIN_DOT, ALL_DOMAIN_IDS;
+  var init_shared2 = __esm({
+    "src/home/shared.ts"() {
+      init_str();
+      init_domain_icons();
+      ICON_KEY = { settings: "settings-panel", vault: "password-vault" };
+      iconOf = (id) => {
+        var _a2;
+        return DOMAIN_ICONS[(_a2 = ICON_KEY[id]) != null ? _a2 : id];
+      };
+      DOMAINS = [
+        { id: "diary", commandId: "bz-diary-open", name: "日记本", sub: "写今天的闪念 · 回忆媒体墙", icon: iconOf("diary") },
+        // 备忘录（memo 域，ADR-0092/0117）：2026-09-10 用户拍板补入首页入口（此前只在命令面板可达）
+        { id: "memo", commandId: "bz-memo-open", name: "备忘录", sub: "随手记与待办", icon: iconOf("memo") },
+        { id: "cinema", commandId: "bz-cinema-open", name: "影院", sub: "影视想看与在看", icon: iconOf("cinema") },
+        { id: "review", commandId: "bz-review-open", name: "复习计划", sub: "到期卡片队列", icon: iconOf("review") },
+        { id: "pomodoro", commandId: "bz-pomodoro-open", name: "番茄钟", sub: "专注计时", icon: iconOf("pomodoro") },
+        { id: "favorites", commandId: "bz-favorites-open", name: "收藏本", sub: "收藏条目", icon: iconOf("favorites") },
+        { id: "clipping", commandId: "bz-clipbook-open", name: "剪藏本", sub: "未读流与剪藏", icon: iconOf("clipping") },
+        // 文献盒（literature 域，ADR-0072）：文献笔记列表 + 视频/术语录入（补内容域曝光位）
+        { id: "knowledge", commandId: "bz-knowledge-open", name: "知识盒", sub: "文献录入 · 卡片 · 主题", icon: iconOf("knowledge") },
+        // 旧书库（library）域退役：本卡由书架墙（bookshelf）承接（id 变更后旧 home.json 里钉选的 library 自动失效，可在编辑模式重钉）
+        { id: "bookshelf", commandId: "bz-bookshelf-open", name: "书库", sub: "藏书与读书笔记", icon: iconOf("bookshelf") },
+        // 游戏库（gameshelf 域，issue 368）：Steam 自动拉库，无手动登记
+        { id: "gameshelf", commandId: "bz-gameshelf-open", name: "游戏库", sub: "Steam 库存与时长", icon: iconOf("gameshelf") },
+        // 第二大脑（secondbrain 域，issue 251）：主面板统一入口（检索/对话/灵感参考都从面板进）
+        { id: "secondbrain", commandId: "bz-secondbrain-panel", name: "第二大脑", sub: "笔记检索与问答", icon: iconOf("secondbrain") },
+        { id: "belongings", commandId: "bz-belongings-open", name: "归物本", sub: "物品登记", icon: iconOf("belongings") },
+        // 移动附件（attach 域）：2026-09-10 用户拍板自首页入口移除（命令仍可在命令面板调用）
+        // 保险库入口副题两资产口径（ADR-0158：密码视图已摘，密码入口在密码本磁贴）
+        { id: "encrypt", commandId: "bz-encrypt-open", name: "保险库", sub: "加密笔记·加密日记", icon: iconOf("encrypt") },
+        // 密码本（password-vault 域，ADR-0109 拆回独立域；id 沿用合并前磁贴 id，旧钉选自动复活）
+        { id: "vault", commandId: "bz-password-vault-open", name: "密码本", sub: "密码与密钥", icon: iconOf("vault") },
+        { id: "settings", commandId: "bz-settings-panel-open", name: "设置", sub: "全域设置", icon: iconOf("settings") }
+      ];
+      DOMAIN_MAP = new Map(DOMAINS.map((d) => [d.id, d]));
+      DOMAIN_DOT = {
+        diary: "#e67341",
+        memo: "#e8590c",
+        cinema: "#e6951d",
+        review: "#7c5cd6",
+        pomodoro: "#e5534b",
+        favorites: "#f0b429",
+        clipping: "#2f9e5f",
+        knowledge: "#c2559d",
+        bookshelf: "#3d7bd6",
+        secondbrain: "#a33d2a",
+        "reading-report": "#3fa7a0",
+        belongings: "#45a35c",
+        attach: "#8a8f99",
+        encrypt: "#8a8f99",
+        vault: "#c9a227",
+        smartcat: "#e67341",
+        settings: "#8a8f99"
+      };
+      ALL_DOMAIN_IDS = DOMAINS.map((d) => d.id);
+    }
+  });
+
+  // src/home/order.ts
+  function emptyHomeOrder() {
+    return { version: HOME_ORDER_VERSION, desk: [], mob: [], hiddenDesk: [], hiddenMob: [] };
+  }
+  function strList(v) {
+    return Array.isArray(v) ? v.filter((x) => typeof x === "string" && !!x) : [];
+  }
+  function normalizeHomeOrder(raw) {
+    const o = raw != null ? raw : {};
+    const legacy = strList(o.hidden);
+    return {
+      version: HOME_ORDER_VERSION,
+      desk: strList(o.desk),
+      mob: strList(o.mob),
+      hiddenDesk: o.hiddenDesk === void 0 ? legacy : strList(o.hiddenDesk),
+      hiddenMob: o.hiddenMob === void 0 ? legacy : strList(o.hiddenMob)
+    };
+  }
+  async function loadHomeOrder(app) {
+    try {
+      return normalizeHomeOrder(await store(app).read());
+    } catch (e) {
+      return emptyHomeOrder();
+    }
+  }
+  async function saveHomeConfig(order, app) {
+    return enqueueFileTask(storageFile("home.json"), async () => {
+      await store(app).write({
+        version: HOME_ORDER_VERSION,
+        desk: [...order.desk],
+        mob: [...order.mob],
+        hiddenDesk: [...order.hiddenDesk],
+        hiddenMob: [...order.hiddenMob]
+      });
+    });
+  }
+  var HOME_ORDER_VERSION, store;
+  var init_order = __esm({
+    "src/home/order.ts"() {
+      init_storage();
+      HOME_ORDER_VERSION = 3;
+      store = (app) => jsonFileStore(storageFile("home.json"), { defaultValue: () => emptyHomeOrder(), app });
+    }
+  });
+
+  // src/home/entry-editor.ts
+  function mountHomeEntryEditor(body, app) {
+    blurController == null ? void 0 : blurController.abort();
+    blurController = new AbortController();
+    const scope = isMobileEnv() ? "mob" : "desk";
+    const touchMode = isMobileEnv();
+    let order = null;
+    let suppressClickUntil = 0;
+    const root = document.createElement("div");
+    root.className = "bz-home-ent";
+    root.setAttribute("data-ent-scope", scope);
+    body.appendChild(root);
+    const hostRow = body.closest(".bz-sp-set-row");
+    if (hostRow) hostRow.classList.add(FLUSH_CLS);
+    function setHidden(ids) {
+      if (!order) return;
+      order = scope === "mob" ? { ...order, hiddenMob: ids } : { ...order, hiddenDesk: ids };
+    }
+    function setScopeOrder(ids) {
+      if (!order) return;
+      order = scope === "mob" ? { ...order, mob: ids } : { ...order, desk: ids };
+    }
+    function persist() {
+      if (!order) return;
+      void saveHomeConfig(order, app).catch((e) => {
+        notifySaveError(e, "入口顺序");
+      });
+    }
+    let drag = null;
+    function onTouchMove(e) {
+      if (!drag || !drag.armed) return;
+      if (e.cancelable) e.preventDefault();
+    }
+    function applyShift(c) {
+      for (let i = 0; i < c.total; i++) {
+        if (i === c.from) continue;
+        const el = c.rows[i];
+        if (!el) continue;
+        let shift = 0;
+        if (c.to > c.from && i > c.from && i <= c.to) shift = -1;
+        else if (c.to < c.from && i >= c.to && i < c.from) shift = 1;
+        if (shift) {
+          el.style.transform = `translateY(${shift * c.step}px)`;
+          el.classList.add(SHIFT_CLS);
+        } else {
+          el.style.transform = "";
+          el.classList.remove(SHIFT_CLS);
+        }
+      }
+    }
+    function endDrag() {
+      const c = drag;
+      drag = null;
+      if (!c) return;
+      if (c.armTimer) clearTimeout(c.armTimer);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      window.removeEventListener("touchmove", onTouchMove);
+      c.el.classList.remove(DRAG_CLS);
+      c.el.style.transform = "";
+      for (const el of c.rows) {
+        el.style.transform = "";
+        el.classList.remove(SHIFT_CLS);
+      }
+    }
+    function onMove(e) {
+      const c = drag;
+      if (!c) return;
+      const dy = e.clientY - c.startY;
+      if (!c.active) {
+        if (!c.armed) {
+          if (Math.abs(dy) > TOUCH_SLOP_PX) endDrag();
+          return;
+        }
+        if (Math.abs(dy) < DRAG_PX) return;
+        c.active = true;
+        c.el.classList.add(DRAG_CLS);
+      }
+      if (e.cancelable) e.preventDefault();
+      const to = Math.max(0, Math.min(c.from + Math.round(dy / c.step), c.total - 1));
+      c.to = to;
+      c.el.style.transform = `translateY(${(to - c.from) * c.step}px)`;
+      applyShift(c);
+    }
+    function onUp() {
+      const c = drag;
+      if (!c) return;
+      const { active: active2, to, from } = c;
+      const id = c.el.dataset.entRow || "";
+      endDrag();
+      if (!active2) return;
+      suppressClickUntil = Date.now() + 300;
+      if (!order || to === from || !id) {
+        render2();
+        return;
+      }
+      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
+      persist();
+      render2(id || void 0);
+    }
+    function attachDrag(el, listEl2, rows) {
+      const total = rows.length;
+      el.addEventListener("pointerdown", (e) => {
+        var _a2, _b2;
+        if (e.button) return;
+        if (e.target.closest("[data-ent-remove]")) return;
+        const from = rows.indexOf(el);
+        if (from < 0 || total < 2) return;
+        let step = ((_b2 = (_a2 = rows[0]) == null ? void 0 : _a2.offsetHeight) != null ? _b2 : 40) + 6;
+        if (rows.length >= 2) {
+          const d = rows[1].offsetTop - rows[0].offsetTop;
+          if (d > 0) step = d;
+        }
+        const c = {
+          el,
+          listEl: listEl2,
+          rows,
+          startY: e.clientY,
+          step,
+          from,
+          to: from,
+          total,
+          active: false,
+          armed: !touchMode,
+          armTimer: null
+        };
+        drag = c;
+        if (touchMode) {
+          window.addEventListener("touchmove", onTouchMove, { passive: false });
+          c.armTimer = setTimeout(() => {
+            if (drag === c) c.armed = true;
+            c.armTimer = null;
+          }, TOUCH_ARM_MS);
+        }
+        window.addEventListener("pointermove", onMove);
+        window.addEventListener("pointerup", onUp);
+        window.addEventListener("pointercancel", onUp);
+      });
+    }
+    function rowHtml2(d, isHidden2) {
+      const btn = isHidden2 ? '<button type="button" class="bz-home-ent-btn bz-home-ent-btn--add bz-touch-target--sm" data-ent-restore="' + d.id + '" title="重新加回" aria-label="加回' + d.name + '">' + iconSpan("plus") + "</button>" : '<button type="button" class="bz-home-ent-btn bz-touch-target--sm" data-ent-remove="' + d.id + '" title="移除（隐藏）" aria-label="移除' + d.name + '">' + iconSpan("x") + "</button>";
+      const grip = isHidden2 ? '<span class="bz-home-ent-grip" aria-hidden="true">' + iconSpan("grip-vertical") + "</span>" : '<span class="bz-home-ent-grip" role="button" tabindex="0" data-ent-grip="' + d.id + '" aria-label="调整' + d.name + '顺序（上/下方向键）">' + iconSpan("grip-vertical") + "</span>";
+      return '<div class="bz-home-ent-row' + (isHidden2 ? " bz-home-ent-row--off" : "") + '" data-ent-row="' + d.id + '">' + grip + '<span class="bz-home-ent-ic" style="color:' + domainColor(d.id) + '">' + iconSpan(d.icon) + '</span><span class="bz-home-ent-nm">' + esc(d.name) + "</span>" + btn + "</div>";
+    }
+    function render2(refocusId) {
+      if (!order) return;
+      const ids = hiddenOf(order, scope);
+      const visible = visibleDomains(order[scope], ids);
+      const hidden = DOMAINS.filter((d) => ids.includes(d.id));
+      root.innerHTML = '<div class="bz-home-ent-list" data-ent-list>' + visible.map((d) => rowHtml2(d, false)).join("") + hidden.map((d) => rowHtml2(d, true)).join("") + "</div>";
+      mountIcons(root);
+      const listEl2 = root.querySelector("[data-ent-list]");
+      if (!listEl2) return;
+      const rows = Array.from(listEl2.querySelectorAll(ROW_SEL));
+      const movable = rows.slice(0, visible.length);
+      for (const el of movable) attachDrag(el, listEl2, movable);
+      if (refocusId) {
+        const target = listEl2.querySelector(`[data-ent-row="${refocusId}"] button, [data-ent-row="${refocusId}"] [data-ent-grip]`);
+        target == null ? void 0 : target.focus();
+      }
+    }
+    root.addEventListener("keydown", (e) => {
+      if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
+      const grip = e.target.closest("[data-ent-grip]");
+      if (!grip || !order) return;
+      const id = grip.dataset.entGrip || "";
+      const visibleNow = visibleDomains(order[scope], hiddenOf(order, scope));
+      const from = visibleNow.findIndex((d) => d.id === id);
+      if (from < 0) return;
+      const to = from + (e.key === "ArrowUp" ? -1 : 1);
+      if (to < 0 || to >= visibleNow.length) return;
+      e.preventDefault();
+      setScopeOrder(reorderTo(order[scope], id, to, hiddenOf(order, scope)));
+      persist();
+      render2(id);
+    });
+    root.addEventListener("contextmenu", (e) => {
+      if (drag) e.preventDefault();
+    });
+    window.addEventListener(
+      "blur",
+      () => {
+        if (drag) endDrag();
+      },
+      { signal: blurController.signal }
+    );
+    root.addEventListener("click", (e) => {
+      if (Date.now() < suppressClickUntil) {
+        e.stopPropagation();
+        e.preventDefault();
+        return;
+      }
+      if (!order) return;
+      const t = e.target;
+      const rm = t.closest("[data-ent-remove]");
+      if (rm) {
+        const id = rm.dataset.entRemove || "";
+        const ids = hiddenOf(order, scope);
+        if (id && !ids.includes(id)) {
+          setHidden([...ids, id]);
+          persist();
+          render2(id);
+        }
+        return;
+      }
+      const rs = t.closest("[data-ent-restore]");
+      if (rs) {
+        const id = rs.dataset.entRestore || "";
+        setHidden(hiddenOf(order, scope).filter((x) => x !== id));
+        persist();
+        render2(id);
+      }
+    });
+    render2();
+    void loadHomeOrder(app).then((o) => {
+      order = o;
+      render2();
+    });
+  }
+  var ROW_SEL, DRAG_PX, TOUCH_ARM_MS, TOUCH_SLOP_PX, SHIFT_CLS, DRAG_CLS, FLUSH_CLS, blurController;
+  var init_entry_editor = __esm({
+    "src/home/entry-editor.ts"() {
+      init_mobile();
+      init_notice();
+      init_ui();
+      init_str();
+      init_shared2();
+      init_order();
+      ROW_SEL = "[data-ent-row]";
+      DRAG_PX = 10;
+      TOUCH_ARM_MS = 250;
+      TOUCH_SLOP_PX = 8;
+      SHIFT_CLS = "bz-home-ent-shift";
+      DRAG_CLS = "bz-home-ent-drag";
+      FLUSH_CLS = "bz-home-ent-flush";
+      blurController = null;
+    }
+  });
+
+  // src/home/settings.ts
+  var settings_exports = {};
+  __export(settings_exports, {
+    homeSettingsSchema: () => homeSettingsSchema
+  });
+  function homeSettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 范式，与各域同款置顶）：布局/主题各一档占位单卡
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "homeLayout" }, options: [{ value: "default", label: "活动河", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "homeSkin" }, layoutKey: "homeLayout", options: [{ value: "cream", label: "米白", layout: "default", prevClass: "bz-sp-prev-cream" }] }
+          ]
+        },
+        {
+          // 时间线组（issue 288 拆分后）：只剩「时间线自己长什么样」四行——顺序按「看字 → 看多久 → 从哪天开始看 → 那一列要不要」
+          icon: "activity",
+          name: "时间线",
+          rows: [
+            {
+              type: "select",
+              name: "时间线字号",
+              desc: "紧凑压信息密度，宽松看得省力。只作用于中间那条时间线。",
+              binding: { key: "homeTimelineSize" },
+              options: [
+                { value: "compact", label: "紧凑" },
+                { value: "normal", label: "标准" },
+                { value: "loose", label: "宽松" }
+              ]
+            },
+            {
+              type: "select",
+              name: "时间范围",
+              desc: "周历能往回翻几天。当天只留今天一格，本周是完整七天。",
+              binding: { key: "homeTimelineRange" },
+              options: [
+                { value: "today", label: "当天" },
+                { value: "3d", label: "最近 3 天" },
+                { value: "week", label: "本周" }
+              ]
+            },
+            {
+              type: "select",
+              name: "默认打开日",
+              desc: "打开首页先落在哪天，选最后有动静就不会一开是空的。",
+              binding: { key: "homeDefaultDay" },
+              options: [
+                { value: "today", label: "今天" },
+                { value: "lastActive", label: "最后有动静的那天" }
+              ]
+            },
+            {
+              type: "toggle",
+              name: "显示时刻列",
+              desc: "每行左边显示时刻，关掉整列收起，正文往左靠。",
+              binding: { key: "homeTimelineTime" }
+            }
+          ]
+        },
+        {
+          // 内容过滤组（issue 288 从时间线组拆出）：只放「哪些痕迹进来」，与「长相」分开
+          icon: "funnel",
+          name: "内容过滤",
+          rows: [
+            {
+              type: "toggle",
+              name: "产出动作",
+              desc: "写下的收进的读完的，都是真正产出东西的动作。",
+              binding: { key: "homeTimelineProduce" }
+            },
+            {
+              type: "toggle",
+              name: "状态推进",
+              desc: "加入片单读到一半新增待办，这类还没成事实的推进。",
+              binding: { key: "homeTimelineProgress" }
+            },
+            {
+              type: "toggle",
+              // 2026-09-12：「点评 ✦」→「小橘点评」（去符号；说明白这句话是谁说的）
+              // issue 305 / ADR-0132：点评类含行为流的星级评价（movie:rated），描述同步覆盖
+              name: "小橘点评",
+              desc: "小橘挂在痕迹下面的那句话，也包括你给影片打的星级。",
+              binding: { key: "homeTimelineNotes" }
+            },
+            {
+              // issue 305 / ADR-0132：时间线改吃行为流，已跳过回归（默认关——聚合讯跳过量级大）
+              // 题名「跳过痕迹」：遵循设置项题名 4-8 字规范（lint），与同组「产出动作/状态推进」同构
+              type: "toggle",
+              name: "跳过痕迹",
+              desc: "聚合讯里跳过的文章痕迹，量比较大，默认不显示。",
+              binding: { key: "homeTimelineSkipped" }
+            }
+          ]
+        },
+        {
+          // 预告栏组（issue 288 拆出）：右侧那一栏不属于时间线，自己一组
+          icon: "calendar-clock",
+          name: "预告栏",
+          rows: [
+            {
+              type: "toggle",
+              name: "明天预告卡",
+              desc: "右侧那一栏复习剪藏与日记的预告，不看可以把整栏收掉。",
+              binding: { key: "homeNextCards" }
+            }
+          ]
+        },
+        {
+          // 入口组（排最后）：拖动排序 + 移除/加回，内联编辑器
+          icon: "layout-grid",
+          name: "入口",
+          rows: [
+            {
+              type: "custom",
+              render: (body) => mountHomeEntryEditor(body, getApp())
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings = __esm({
+    "src/home/settings.ts"() {
+      init_app();
+      init_entry_editor();
+    }
+  });
+
+  // src/diary/config.ts
+  var config_exports = {};
+  __export(config_exports, {
+    DIARY_DIRECTORY: () => DIARY_DIRECTORY,
+    ENCRYPT_TAG: () => ENCRYPT_TAG,
+    LETTER_DIRECTORY: () => LETTER_DIRECTORY,
+    applyDirectories: () => applyDirectories,
+    bookDirectory: () => bookDirectory,
+    buildTagMaps: () => buildTagMaps,
+    emojiToTagMap: () => emojiToTagMap,
+    getParentPrimaryTag: () => getParentPrimaryTag,
+    getPrimaryTagsInDisplayOrder: () => getPrimaryTagsInDisplayOrder,
+    getSortedTagsForAddDialog: () => getSortedTagsForAddDialog,
+    getSubTagsOfPrimary: () => getSubTagsOfPrimary,
+    getTagEmoji: () => getTagEmoji,
+    inWallDirs: () => inWallDirs,
+    isSubTag: () => isSubTag,
+    movieDirectory: () => movieDirectory,
+    resetTagsConfig: () => resetTagsConfig,
+    tagToEmojiMap: () => tagToEmojiMap
+  });
+  function movieDirectory() {
+    return safeResolve(resolveCinemaFolderPath, "我的/影视");
+  }
+  function bookDirectory() {
+    return safeResolve(resolveFolderPath, "书库");
+  }
+  function safeResolve(resolver, fallback) {
+    try {
+      const v = resolver();
+      return v && v.trim() ? v : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+  function inWallDirs(p) {
+    return [DIARY_DIRECTORY, movieDirectory(), LETTER_DIRECTORY, bookDirectory()].some(
+      (d) => p.startsWith(d + "/") || p === d + ".md"
+    );
+  }
+  function applyDirectories(settings) {
+    const clean = (v, fallback) => {
+      const t = (v || "").trim().replace(/\/+$/, "");
+      return t || fallback;
+    };
+    DIARY_DIRECTORY = clean(settings.diaryDirectory, "我的/日记");
+    LETTER_DIRECTORY = clean(settings.letterDirectory, "我的/信");
+  }
+  function getPrimaryTagsInDisplayOrder() {
+    const tags = Object.keys(PRIMARY_TAGS_CONFIG);
+    const idx = tags.indexOf(ENCRYPT_TAG);
+    if (idx === -1) return tags;
+    const rest = tags.filter((t) => t !== ENCRYPT_TAG);
+    rest.push(ENCRYPT_TAG);
+    return rest;
+  }
+  function resetTagsConfig() {
+    PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+    buildTagMaps();
+  }
+  function buildTagMaps() {
+    for (const key of Object.keys(tagToEmojiMap)) delete tagToEmojiMap[key];
+    for (const key of Object.keys(emojiToTagMap)) delete emojiToTagMap[key];
+    for (const [tag, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      tagToEmojiMap[tag] = config.emoji;
+      emojiToTagMap[config.emoji] = tag;
+      if (config.subTags) {
+        for (const sub of config.subTags) {
+          tagToEmojiMap[sub.tag] = sub.emoji;
+          emojiToTagMap[sub.emoji] = sub.tag;
+        }
+      }
+    }
+  }
+  function getTagEmoji(tag) {
+    return tagToEmojiMap[tag] || "📖";
+  }
+  function getSubTagsOfPrimary(primaryTag) {
+    const config = PRIMARY_TAGS_CONFIG[primaryTag];
+    return config && config.subTags ? config.subTags : null;
+  }
+  function isSubTag(tag) {
+    for (const [, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === tag)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function getParentPrimaryTag(subTag) {
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (config.subTags && config.subTags.some((sub) => sub.tag === subTag)) {
+        return primary;
+      }
+    }
+    return null;
+  }
+  function getSortedTagsForAddDialog() {
+    const result = [];
+    for (const [primary, config] of Object.entries(PRIMARY_TAGS_CONFIG)) {
+      if (primary === "加密") continue;
+      if (config.subTags && config.subTags.length > 0) {
+        for (const sub of config.subTags) {
+          result.push(sub.tag);
+        }
+      } else {
+        result.push(primary);
+      }
+    }
+    return result;
+  }
+  var DIARY_DIRECTORY, LETTER_DIRECTORY, ENCRYPT_TAG, DEFAULT_TAGS_CONFIG, PRIMARY_TAGS_CONFIG, tagToEmojiMap, emojiToTagMap;
+  var init_config3 = __esm({
+    "src/diary/config.ts"() {
+      init_state4();
+      init_data3();
+      DIARY_DIRECTORY = "我的/日记";
+      LETTER_DIRECTORY = "我的/信";
+      ENCRYPT_TAG = "加密";
+      DEFAULT_TAGS_CONFIG = {
+        日记: { emoji: "📖" },
+        加密: { emoji: "🔐" },
+        念念碎: { emoji: "😶" },
+        对谈: { emoji: "🤝" },
+        随笔: { emoji: "✍️" },
+        梦: { emoji: "🌙" },
+        诗: { emoji: "🌟" },
+        书: { emoji: "📕" },
+        信: { emoji: "✉️" },
+        摘抄: { emoji: "📌" },
+        摄影: { emoji: "📸" },
+        骑行: { emoji: "🚴" },
+        代码: { emoji: "⚙️" },
+        做饭: { emoji: "🥘" },
+        游戏: { emoji: "🎮" },
+        音乐: { emoji: "🎧" },
+        电影: { emoji: "📽" },
+        电视剧: { emoji: "📺" },
+        动漫: { emoji: "🎨" },
+        纪录片: { emoji: "🎞" },
+        猫: { emoji: "🐱" },
+        狗: { emoji: "🐶" },
+        仓鼠: { emoji: "🐹" },
+        熊猫: { emoji: "🐼" },
+        博物馆: { emoji: "🏛️" },
+        美食: { emoji: "🍔" },
+        旅游: {
+          emoji: "✈️",
+          subTags: [
+            { tag: "四川", emoji: "🀄" },
+            { tag: "大理", emoji: "🛶" }
+          ]
+        },
+        收藏: {
+          emoji: "⭐",
+          subTags: [
+            { tag: "咪咪", emoji: "🐈" },
+            { tag: "广告", emoji: "📢" },
+            { tag: "神评", emoji: "🤣" },
+            { tag: "冷笑话", emoji: "😅" },
+            { tag: "抽象", emoji: "🌀" },
+            { tag: "AI", emoji: "🤖" },
+            { tag: "愚人节", emoji: "🤪" },
+            { tag: "舞蹈", emoji: "🕺" },
+            { tag: "达人秀", emoji: "🤹" },
+            { tag: "艺术", emoji: "🧑‍🎨" },
+            { tag: "摄影集", emoji: "📷" },
+            { tag: "植物", emoji: "🌳" },
+            { tag: "创意", emoji: "🧩" }
+          ]
+        }
+      };
+      PRIMARY_TAGS_CONFIG = JSON.parse(JSON.stringify(DEFAULT_TAGS_CONFIG));
+      tagToEmojiMap = {};
+      emojiToTagMap = {};
+      buildTagMaps();
+    }
+  });
+
+  // src/diary/repair.ts
+  function lintEntryFile(path, content) {
+    const base = (path || "").replace(/\\/g, "/").split("/").pop() || "";
+    if (DIARY_LEGACY_FILE_RE.test(base)) return "legacy";
+    const raw = readDiaryFrontmatterFieldRaw(content, DIARY_DATE_KEY);
+    const rawLegacyKey = readDiaryFrontmatterFieldRaw(content, "日期");
+    const fmMeta = raw ? parseDiaryStamp(raw) : null;
+    const fileMeta = diaryMetaFromEntryPath(base);
+    if (rawLegacyKey && !raw) return "unparsable";
+    if (raw && !fmMeta && !fileMeta) return "unparsable";
+    if (!fmMeta && !fileMeta) return "unparsable";
+    if (raw && !fmMeta && fileMeta) return "unparsable";
+    if (fmMeta && !fileMeta) return "name-mismatch";
+    if (fmMeta && fileMeta && diaryStampText(fmMeta.date, fmMeta.time) !== diaryStampText(fileMeta.date, fileMeta.time)) {
+      return "name-mismatch";
+    }
+    return null;
+  }
+  var LINT_REASON_TEXT;
+  var init_repair = __esm({
+    "src/diary/repair.ts"() {
+      init_diary_format();
+      LINT_REASON_TEXT = {
+        legacy: "旧格式日期文件（未迁移）",
+        unparsable: "无法解析为条目",
+        "name-mismatch": "属性时间与题目不一致"
+      };
+    }
+  });
+
+  // src/diary/ui/repair-modal.ts
+  function findDirRecursive(node, target) {
+    if (node.path === target) return node;
+    if (node.children) {
+      for (const child of node.children) {
+        const found = findDirRecursive(child, target);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+  async function collectDiaryFiles() {
+    const app = getApp();
+    let dir = app.vault.getAbstractFileByPath(DIARY_DIRECTORY);
+    if (!dir || !dir.children) {
+      const root = app.vault.getRoot();
+      dir = findDirRecursive(root, DIARY_DIRECTORY);
+    }
+    if (!dir || !dir.children) return [];
+    const out = [];
+    const walk = (node) => {
+      var _a2;
+      for (const child of (_a2 = node.children) != null ? _a2 : []) {
+        if (child.children) walk(child);
+        else if (child.extension === "md") out.push(child);
+      }
+    };
+    walk(dir);
+    return out.sort((a, b) => b.name.localeCompare(a.name));
+  }
+  async function runScan(isAlive, onProgress) {
+    const app = getApp();
+    const mdFiles2 = await collectDiaryFiles();
+    const total = mdFiles2.length;
+    const scanned = [];
+    for (let i = 0; i < mdFiles2.length; i += BATCH_CONCURRENCY) {
+      if (!isAlive()) return scanned;
+      const batch = mdFiles2.slice(i, i + BATCH_CONCURRENCY);
+      const results = await Promise.all(
+        batch.map(async (file, idx) => {
+          const content = await app.vault.read(file);
+          if (isAlive()) onProgress(Math.min(i + idx + 1, total), total, file.name);
+          return { path: file.path, reason: lintEntryFile(file.path, content) };
+        })
+      );
+      scanned.push(...results);
+    }
+    return scanned;
+  }
+  async function openAtTop(path, onOpened) {
+    const app = getApp();
+    const file = app.vault.getAbstractFileByPath(path);
+    if (!file) return;
+    const leaf = app.workspace.getLeaf();
+    await leaf.openFile(file);
+    const view = leaf.view;
+    if (view && view.editor) {
+      view.editor.focus();
+      view.editor.setCursor(0, 0);
+      view.editor.scrollIntoView({ from: { line: 0, ch: 0 }, to: { line: 0, ch: 0 } }, true);
+    }
+    onOpened();
+  }
+  function openDiaryRepairModal() {
+    const { mask, popup } = createOverlay({
+      maskId: "bz-diary-repair-mask",
+      popupId: "bz-diary-repair-popup",
+      maxWidth: 640,
+      onMaskClick: close
+    });
+    const header = document.createElement("div");
+    header.className = "bz-settings-header";
+    const title = document.createElement("h3");
+    title.className = "bz-settings-title";
+    title.textContent = "日记格式体检";
+    header.appendChild(title);
+    const content = document.createElement("div");
+    content.className = "bz-settings-content";
+    popup.appendChild(header);
+    popup.appendChild(content);
+    document.body.appendChild(mask);
+    document.body.appendChild(popup);
+    mask.style.display = "block";
+    popup.style.display = "flex";
+    popup.setAttribute("role", "dialog");
+    popup.setAttribute("aria-modal", "true");
+    const handle = escManager.register("bz-diary-repair", {
+      isVisible: () => mask.isConnected,
+      close
+    });
+    function close() {
+      mask.remove();
+      popup.remove();
+      handle.unregister();
+    }
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "bz-diary-repair-progress";
+    const track = document.createElement("div");
+    track.className = "bz-diary-repair-progress-track";
+    const fill = document.createElement("div");
+    fill.className = "bz-diary-repair-progress-fill";
+    const ptext = document.createElement("div");
+    ptext.className = "bz-diary-repair-progress-text";
+    ptext.textContent = "正在体检日记文件…";
+    track.appendChild(fill);
+    progressWrap.appendChild(track);
+    progressWrap.appendChild(ptext);
+    content.appendChild(progressWrap);
+    const summarize = (scanned) => {
+      content.innerHTML = "";
+      content.appendChild(progressWrap);
+      progressWrap.style.display = "none";
+      const items = [];
+      for (const s of scanned) {
+        if (s.reason) items.push({ path: s.path, reason: s.reason, detail: LINT_REASON_TEXT[s.reason] });
+      }
+      const summary = document.createElement("div");
+      summary.className = "bz-diary-repair-summary";
+      summary.textContent = items.length === 0 ? `共体检 ${scanned.length} 个日记文件：全部健康` : `共体检 ${scanned.length} 个日记文件：${items.length} 个需要处理（点击条目打开文件手工处理，面板不改写内容）。`;
+      content.appendChild(summary);
+      const order = ["legacy", "unparsable", "name-mismatch"];
+      for (const reason of order) {
+        const group = items.filter((i) => i.reason === reason);
+        if (group.length === 0) continue;
+        const sec = document.createElement("div");
+        sec.className = "bz-diary-repair-section-title";
+        sec.textContent = `${LINT_REASON_TEXT[reason]}（${group.length}）`;
+        content.appendChild(sec);
+        for (const item of group) {
+          const row = document.createElement("div");
+          row.className = "bz-diary-repair-row";
+          const link = document.createElement("span");
+          link.className = "bz-diary-repair-link";
+          link.textContent = item.path.split("/").pop() || item.path;
+          link.addEventListener("click", () => void openAtTop(item.path, close));
+          const snippet = document.createElement("span");
+          snippet.className = "bz-diary-repair-snippet";
+          snippet.textContent = item.path;
+          row.append(link, snippet);
+          content.appendChild(row);
+        }
+      }
+      mountRetryFooter();
+    };
+    function mountRetryFooter() {
+      const again = document.createElement("button");
+      again.className = "bz-button";
+      again.textContent = "重新体检";
+      again.addEventListener("click", () => void startScan());
+      const bar = document.createElement("div");
+      bar.className = "bz-diary-repair-footer";
+      bar.appendChild(again);
+      content.appendChild(bar);
+    }
+    async function startScan() {
+      progressWrap.style.display = "block";
+      fill.style.width = "0%";
+      ptext.textContent = "正在体检日记文件…";
+      content.innerHTML = "";
+      content.appendChild(progressWrap);
+      try {
+        const scanned = await runScan(
+          () => mask.isConnected,
+          (done, total, label) => {
+            fill.style.width = `${Math.round(done / total * 100)}%`;
+            ptext.textContent = `正在体检 ${label}（${done}/${total}）…`;
+          }
+        );
+        if (!mask.isConnected) return;
+        summarize(scanned);
+      } catch (e) {
+        if (!mask.isConnected) return;
+        const msg = (e == null ? void 0 : e.message) || String(e);
+        ptext.textContent = `体检失败：${msg}（可点下方按钮重试）`;
+        mountRetryFooter();
+        try {
+          notify(`日记格式体检失败：${msg}`, { type: "error" });
+        } catch (e2) {
+        }
+      }
+    }
+    void startScan();
+  }
+  var BATCH_CONCURRENCY;
+  var init_repair_modal = __esm({
+    "src/diary/ui/repair-modal.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_app();
+      init_notice();
+      init_config3();
+      init_repair();
+      BATCH_CONCURRENCY = 10;
+    }
+  });
+
+  // src/diary/settings.ts
+  var settings_exports2 = {};
+  __export(settings_exports2, {
+    diarySettingsSchema: () => diarySettingsSchema
+  });
+  function diarySettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组（issue 246 范式）：布局/主题各一档，域 UI 消费待皮肤设计时接入
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "diarySkin" }, options: [{ value: "default", label: "媒体墙", prevClass: "bz-sp-prev-panel" }] },
+            { type: "choiceCards", name: "面板主题", binding: { key: "diarySkinTheme" }, layoutKey: "diarySkin", options: [{ value: "gallery", label: "画廊白", layout: "default", prevClass: "bz-sp-prev-gallery" }] }
+          ]
+        },
+        {
+          icon: "folder-open",
+          name: "目录",
+          rows: [
+            { type: "path", mode: "single", name: "日记文件夹", desc: "存放日记文件的文件夹", binding: { key: "diaryDirectory" }, onChange: () => applyDirectories(getSettings()) },
+            { type: "path", mode: "single", name: "信件文件夹", desc: "存放信件的文件夹", binding: { key: "letterDirectory" }, onChange: () => applyDirectories(getSettings()) }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "显示",
+          rows: [
+            { type: "toggle", name: "默认日期取自文件", desc: "写日记时默认日期取自当前打开的日记文件，否则用当前时间", binding: { key: "useFileDateTime" } }
+          ]
+        },
+        {
+          icon: "wrench",
+          name: "维护",
+          rows: [
+            { type: "button", name: "日记格式体检", desc: "扫描全部日记条目文件，列出格式问题并跳转手工处理", buttonText: "日记格式体检", cta: true, onClick: () => openDiaryRepairModal() }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings2 = __esm({
+    "src/diary/settings.ts"() {
+      init_settings_provider();
+      init_config3();
+      init_repair_modal();
+    }
+  });
+
+  // src/memo/settings.ts
+  var settings_exports3 = {};
+  __export(settings_exports3, {
+    memoSettingsSchema: () => memoSettingsSchema
+  });
+  function memoReloadScenes() {
+    MemoData.init(getSettings());
+  }
+  function memoSettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组（标准化：与其他域同范式置顶——布局行占位单卡，主题=memoSkin 两肤；
+          // 布局维度待皮肤设计时接入）
+          icon: "palette",
+          name: "外观",
+          rows: [
+            { type: "choiceCards", name: "面板布局", binding: { key: "memoLayout" }, options: [{ value: "default", label: "清单", prevClass: "bz-sp-prev-panel" }] },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "memoSkin" },
+              layoutKey: "memoLayout",
+              options: [
+                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" },
+                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" }
+              ],
+              onChange: (v) => applyMemoSkin(v)
+            }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "显示",
+          rows: [
+            {
+              type: "select",
+              name: "打开默认场景",
+              desc: "打开备忘录面板时默认选中的场景",
+              binding: { key: "memoOpenScene" },
+              options: [
+                { value: "@last", label: "上次停留" },
+                { value: "全部", label: "全部" },
+                { value: "今日", label: "今日" },
+                { value: "重要", label: "重要" },
+                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
+              ]
+            },
+            {
+              type: "select",
+              name: "默认排序方式",
+              desc: "面板条目按所选规则排序",
+              binding: { key: "memoSortMode" },
+              options: [
+                { value: "priority", label: "紧急优先" },
+                { value: "due", label: "仅按到期时间" },
+                { value: "created", label: "按创建时间" }
+              ]
+            },
+            {
+              type: "toggle",
+              name: "默认显示已完成",
+              desc: "打开面板时同时展开已完成折叠区",
+              binding: { key: "memoShowArchivedByDefault" }
+            },
+            {
+              type: "select",
+              name: "已完成显示范围",
+              desc: "展开已完成折叠区时列出最近多少天完成的条目",
+              binding: { key: "memoDoneWindow" },
+              options: [
+                { value: "7", label: "近 7 天" },
+                { value: "30", label: "近 30 天" },
+                { value: "90", label: "近 90 天" },
+                { value: "all", label: "全部" }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "pencil-line",
+          name: "新建",
+          rows: [
+            {
+              type: "select",
+              name: "新条目默认优先级",
+              desc: "新建备忘录时默认选中的优先级",
+              binding: { key: "memoDefaultPriority" },
+              options: [
+                { value: "minor", label: "次要" },
+                { value: "important", label: "重要" }
+              ]
+            },
+            {
+              type: "select",
+              name: "新条目默认场景",
+              desc: "新建备忘录时默认选用的场景",
+              binding: { key: "memoDefaultScene" },
+              options: [
+                { value: "", label: "第一个场景" },
+                ...MemoData.getScenarios().map((sc) => ({ value: sc, label: sc }))
+              ]
+            }
+          ]
+        },
+        {
+          icon: "tags",
+          name: "场景列表",
+          rows: [
+            {
+              type: "textarea",
+              name: "自定义场景列表",
+              desc: "场景名用逗号分隔，留空使用默认场景",
+              placeholder: "剪藏,工作,学习,生活,代码,公开课",
+              binding: { key: "memoScenarios" },
+              onCommit: memoReloadScenes
+            }
+          ]
+        },
+        {
+          icon: "bell",
+          name: "提醒",
+          rows: [
+            {
+              type: "toggle",
+              name: "启动时自动弹出",
+              desc: "启动时若有重要或到期未完成的备忘录，自动打开备忘录面板提醒",
+              binding: { key: "autoPopupOnStart" }
+            },
+            {
+              type: "toggle",
+              name: "打开笔记自动提醒",
+              desc: "打开笔记时若有重要或到期的备忘录，自动弹出面板并定位到它",
+              binding: {
+                get: () => getSettings().openNoteReminder !== false,
+                set: (v) => {
+                  getSettings().openNoteReminder = v;
+                },
+                save: () => saveSettings()
+              }
+            }
+          ]
+        }
+      ]
+    };
+  }
+  var init_settings3 = __esm({
+    "src/memo/settings.ts"() {
+      init_settings_provider();
+      init_data();
+      init_ui13();
+    }
+  });
+
+  // src/smartcat/belongings-source.ts
+  function belongingsEditChanges(snapshot2, next) {
+    var _a2, _b2, _c, _d;
+    const changes = [];
+    if (snapshot2.name !== next.name) changes.push("改了名称");
+    if (snapshot2.category !== next.category) changes.push("改了分类");
+    if (snapshot2.purchase_price !== next.purchase_price) changes.push("改了价格");
+    if (snapshot2.purchase_date !== next.purchase_date) changes.push("改了购买日期");
+    if (snapshot2.current_status !== next.current_status) changes.push("改了状态");
+    if (snapshot2.description !== next.description) changes.push("改了描述");
+    if (((_a2 = snapshot2.sold_price) != null ? _a2 : null) !== ((_b2 = next.sold_price) != null ? _b2 : null)) changes.push("改了售价");
+    if (((_c = snapshot2.exit_date) != null ? _c : null) !== ((_d = next.exit_date) != null ? _d : null)) changes.push("改了出离日期");
+    return changes;
+  }
+  var init_belongings_source = __esm({
+    "src/smartcat/belongings-source.ts"() {
+    }
+  });
+
+  // src/belongings/emoji-icon-map.ts
+  function splitEmojiCategory(cat) {
+    var _a2;
+    const s = String(cat || "");
+    const m = s.match(/^(\p{Extended_Pictographic})\uFE0F?/u);
+    if (!m) return { emoji: null, name: s, icon: null };
+    return { emoji: m[1], name: s.replace(/^\p{Extended_Pictographic}\uFE0F?\s*/u, ""), icon: (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null };
+  }
+  var EMOJI_ICON;
+  var init_emoji_icon_map = __esm({
+    "src/belongings/emoji-icon-map.ts"() {
+      EMOJI_ICON = {
+        /* ---- 数码影音 ---- */
+        "📱": "smartphone",
+        "💻": "laptop",
+        "🖥": "monitor",
+        "⌚": "watch",
+        "🎧": "headphones",
+        "🔊": "speaker",
+        "🖨": "printer",
+        "📷": "camera",
+        "🔍": "aperture",
+        "📹": "video",
+        "🪞": "focus",
+        "📽": "projector",
+        "🎮": "gamepad-2",
+        "⌨": "keyboard",
+        "💾": "hard-drive",
+        "📀": "disc",
+        "🔌": "plug",
+        "🔋": "battery-charging",
+        "💡": "lightbulb",
+        "📺": "tv",
+        "📡": "router",
+        "📶": "signal",
+        "📞": "phone",
+        /* ---- 衣服饰品 ---- */
+        "👕": "shirt",
+        "👔": "shirt",
+        "🧥": "shirt",
+        "👖": "shirt",
+        "👗": "shirt",
+        "👘": "shirt",
+        "🩳": "shirt",
+        "🧦": "footprints",
+        "👙": "shirt",
+        "👠": "footprints",
+        "👞": "footprints",
+        "👟": "footprints",
+        "👜": "handbag",
+        "🎒": "backpack",
+        "🧣": "shirt",
+        "🧤": "hand",
+        "👒": "hard-hat",
+        "🕶": "glasses",
+        "👓": "glasses",
+        "💍": "gem",
+        "📿": "gem",
+        "💎": "gem",
+        "🧢": "hard-hat",
+        "🎩": "hard-hat",
+        "💄": "sparkles",
+        "💋": "heart",
+        "👁": "eye",
+        "📏": "ruler",
+        "👀": "eye",
+        "💅": "hand",
+        "🧴": "droplets",
+        "🧼": "droplets",
+        "💧": "glass-water",
+        "🛡": "shield",
+        "🎭": "smile",
+        "💆": "hand",
+        "✂": "scissors",
+        "🧽": "droplets",
+        "🪒": "zap",
+        "🚿": "shower-head",
+        "💇": "scissors",
+        /* ---- 家居 ---- */
+        "🛏": "bed",
+        "🛋": "sofa",
+        "🪑": "armchair",
+        "🗄": "archive",
+        "📚": "library",
+        "🪟": "align-justify",
+        "🧹": "brush-cleaning",
+        "🚽": "droplets",
+        "🪥": "sparkles",
+        "🧻": "scroll",
+        "🪣": "droplets",
+        "🗑": "trash-2",
+        "🔑": "key-round",
+        /* ---- 厨房餐茶 ---- */
+        "🍳": "cooking-pot",
+        "🔪": "slice",
+        "🍽": "utensils",
+        "☕": "coffee",
+        "🍶": "coffee",
+        "🍵": "coffee",
+        "🥄": "utensils",
+        "🍴": "utensils",
+        "🥢": "utensils",
+        "🧂": "soup",
+        "🍯": "droplets",
+        "🍚": "wheat",
+        "🧊": "refrigerator",
+        "🔥": "flame",
+        "🍞": "croissant",
+        "🥛": "milk",
+        "🍹": "cup-soda",
+        "❄": "snowflake",
+        "🥘": "cooking-pot",
+        "🛀": "bath",
+        "💨": "fan",
+        "🌫": "cloud-fog",
+        "📖": "book-open",
+        /* ---- 文具乐玩 ---- */
+        "✏": "pencil",
+        "🖊": "pen",
+        "📒": "notebook",
+        "🎨": "palette",
+        "🎸": "guitar",
+        "🎹": "piano",
+        "🥁": "drum",
+        "🎤": "mic",
+        "🧩": "puzzle",
+        "🎲": "dices",
+        /* ---- 运动户外 ---- */
+        "🏸": "volleyball",
+        "⚽": "volleyball",
+        "🏃": "footprints",
+        "🧘": "person-standing",
+        "🏊": "waves",
+        "🎣": "fish",
+        "🔧": "wrench",
+        "🔨": "hammer",
+        "🪛": "wrench",
+        "🔩": "cog",
+        "🛠": "hammer",
+        "🪚": "axe",
+        "🧰": "briefcase",
+        "🪓": "axe",
+        "⛏": "shovel",
+        "🖼": "image",
+        "🏺": "amphora",
+        "🧸": "baby",
+        "🔮": "sparkles",
+        "🎞": "film",
+        "🪙": "coins",
+        "🏆": "trophy",
+        "🎖": "medal",
+        "📜": "scroll",
+        "📸": "camera",
+        /* ---- 医药健康 ---- */
+        "💊": "pill",
+        "🌡": "thermometer",
+        "🩹": "bandage",
+        "🩺": "stethoscope",
+        "💉": "syringe",
+        "🦷": "sparkles",
+        "🩸": "droplet",
+        "⚖": "scale",
+        /* ---- 礼节节庆 ---- */
+        "🧳": "luggage",
+        "🎁": "gift",
+        "🕯": "flame",
+        "🧨": "bomb",
+        "🌂": "umbrella",
+        "☂": "umbrella",
+        "⛱": "umbrella",
+        "🧭": "compass",
+        "🔭": "telescope",
+        "💐": "flower",
+        "🌿": "leaf",
+        "🐠": "fish",
+        "🐶": "dog",
+        "🚗": "car",
+        "🚲": "bike",
+        "🛴": "bike",
+        "⛺": "tent",
+        "📦": "package",
+        /* ---- 办公纸媒 ---- */
+        "📎": "paperclip",
+        "📌": "pin",
+        "🖇": "paperclip",
+        "📋": "clipboard-list",
+        "📁": "folder",
+        "🗂": "folder",
+        "📊": "chart-bar",
+        "📐": "ruler",
+        "🧮": "calculator",
+        "📇": "contact",
+        "🖍": "highlighter",
+        "🖌": "paintbrush",
+        "📫": "mail",
+        "📮": "mail",
+        "✉": "mail",
+        "🏷": "tag",
+        "📑": "bookmark",
+        "🔖": "bookmark",
+        "📰": "newspaper",
+        "🗞": "newspaper",
+        "📓": "notebook",
+        "📔": "notebook-pen",
+        "📕": "book",
+        "📗": "book",
+        "📘": "book",
+        "📙": "book",
+        "🧷": "paperclip",
+        "🔒": "lock",
+        "💼": "briefcase",
+        "🗳": "vote",
+        "🖋": "pen-tool",
+        "✒": "pen-tool",
+        "📝": "pen-line",
+        "💵": "banknote",
+        "💳": "credit-card",
+        "🧾": "receipt",
+        "📄": "file-text",
+        "📃": "file-text",
+        "🗒": "notebook-pen",
+        "📅": "calendar",
+        "🕐": "alarm-clock",
+        "🗓": "calendar-days",
+        "📆": "calendar",
+        "📈": "trending-up",
+        "📉": "trending-down",
+        "🖱": "mouse",
+        "🗃": "archive",
+        "🔗": "link",
+        /* ---- 球类冰雪水上 ---- */
+        "🏀": "volleyball",
+        "🏈": "volleyball",
+        "⚾": "volleyball",
+        "🎾": "volleyball",
+        "🏐": "volleyball",
+        "🏉": "volleyball",
+        "🎱": "volleyball",
+        "🏓": "volleyball",
+        "🥅": "target",
+        "🏑": "volleyball",
+        "🏒": "volleyball",
+        "🥍": "volleyball",
+        "🏏": "volleyball",
+        "🎿": "snowflake",
+        "⛷": "snowflake",
+        "🏂": "snowflake",
+        "🪂": "umbrella",
+        "🏄": "waves",
+        "🛹": "bike",
+        "🛼": "footprints",
+        "🚴": "bike",
+        "🛶": "sailboat",
+        "🤿": "waves",
+        "⛸": "snowflake",
+        "🎯": "target",
+        "🪀": "circle-dot",
+        "🏹": "crosshair",
+        "🪁": "wind",
+        "🥊": "hand",
+        "🥋": "shirt",
+        "⚔": "swords",
+        "🤺": "swords",
+        "🥌": "circle-dot",
+        "🎳": "volleyball",
+        "🏌": "flag",
+        "⛳": "flag",
+        "🤸": "person-standing",
+        "🤽": "waves",
+        "🤾": "person-standing",
+        "🧗": "mountain",
+        "🏇": "paw-print",
+        "🤹": "orbit",
+        "🎪": "tent",
+        "🤼": "users",
+        "🥏": "disc",
+        /* ---- 奖章票庆 ---- */
+        "🥇": "medal",
+        "🥈": "medal",
+        "🥉": "medal",
+        "🏅": "medal",
+        "🎗": "ribbon",
+        "🏵": "flower",
+        "🤡": "smile",
+        "🎟": "ticket",
+        "🎫": "ticket",
+        "🎀": "ribbon",
+        "🎈": "party-popper",
+        "🎉": "party-popper",
+        "🎊": "sparkles",
+        "🎋": "sprout",
+        "🎍": "sprout",
+        "🎎": "baby",
+        "🎏": "flag",
+        "🎐": "bell",
+        "🎑": "moon",
+        "🧧": "wallet",
+        /* ---- 服饰鞋靴二批 ---- */
+        "🥽": "glasses",
+        "🥼": "shirt",
+        "🦺": "shield",
+        "🥾": "footprints",
+        "🥿": "footprints",
+        "🩰": "footprints",
+        "👢": "footprints",
+        "👡": "footprints",
+        "🩴": "footprints",
+        /* ---- 车船航空 ---- */
+        "🚙": "car",
+        "🚐": "bus",
+        "🚚": "truck",
+        "🚛": "truck",
+        "🚜": "tractor",
+        "🏎": "car",
+        "🚓": "car",
+        "🚑": "ambulance",
+        "🚒": "truck",
+        "🚨": "siren",
+        "🚔": "car",
+        "🚍": "bus",
+        "🚋": "tram-front",
+        "🚃": "train-front",
+        "🚝": "train-front",
+        "🚄": "train-front",
+        "🚅": "train-front",
+        "🚈": "tram-front",
+        "🚊": "tram-front",
+        "🚞": "train-front",
+        "🚟": "cable-car",
+        "🚠": "cable-car",
+        "🚡": "cable-car",
+        "🚢": "ship",
+        "🛳": "ship",
+        "⛴": "ship",
+        "🚤": "ship",
+        "🛥": "ship",
+        "⛵": "sailboat",
+        "🚣": "ship",
+        "🛷": "snowflake",
+        "🚁": "helicopter",
+        "✈": "plane",
+        "🛩": "plane",
+        "🛫": "plane-takeoff",
+        "🛬": "plane-landing",
+        "💺": "armchair",
+        "🚀": "rocket",
+        "🛸": "disc",
+        "🛰": "satellite",
+        "🚏": "bus",
+        "⛽": "fuel",
+        "🛞": "circle-dot",
+        "🛢": "database",
+        "🧪": "flask-conical",
+        "🧯": "flame",
+        "🔦": "flashlight",
+        "🎵": "music",
+        /* ---- 动物（lucide 无种别图的落 paw-print / 鸟禽落 bird / 海洋落 fish） ---- */
+        "🐱": "cat",
+        "🐭": "rat",
+        "🐹": "rat",
+        "🐰": "rabbit",
+        "🦊": "paw-print",
+        "🐻": "paw-print",
+        "🐼": "paw-print",
+        "🐨": "paw-print",
+        "🐯": "paw-print",
+        "🦁": "paw-print",
+        "🐮": "paw-print",
+        "🐷": "piggy-bank",
+        "🐸": "paw-print",
+        "🐙": "fish",
+        "🐵": "paw-print",
+        "🐔": "egg",
+        "🐧": "bird",
+        "🐦": "bird",
+        "🐤": "bird",
+        "🦆": "bird",
+        "🦅": "bird",
+        "🦉": "bird",
+        "🦇": "bird",
+        "🐺": "paw-print",
+        "🐗": "paw-print",
+        "🐴": "paw-print",
+        "🦄": "sparkles",
+        "🐝": "bug",
+        "🐛": "bug",
+        "🦋": "flower",
+        "🐌": "snail",
+        "🐞": "bug",
+        "🐜": "bug",
+        "🦗": "bug",
+        "🕷": "bug",
+        "🦂": "bug",
+        "🦀": "shell",
+        "🐟": "fish",
+        "🐡": "fish",
+        "🐬": "fish",
+        "🐳": "fish",
+        "🐋": "fish",
+        "🦈": "fish",
+        "🐊": "paw-print",
+        "🐅": "paw-print",
+        "🐆": "paw-print",
+        "🦓": "paw-print",
+        "🦍": "paw-print",
+        "🦧": "paw-print",
+        "🐘": "paw-print",
+        "🦛": "paw-print",
+        "🦏": "paw-print",
+        "🐫": "paw-print",
+        "🦒": "paw-print",
+        "🐃": "paw-print",
+        "🐂": "paw-print",
+        "🐄": "paw-print",
+        "🐪": "paw-print",
+        /* ---- 草木 ---- */
+        "🌱": "sprout",
+        "🌲": "tree-pine",
+        "🌳": "tree-deciduous",
+        "🌴": "tree-palm",
+        "🌵": "sprout",
+        "🌷": "flower",
+        "🌸": "flower",
+        "🌹": "flower",
+        "🌺": "flower-2",
+        "🌻": "flower-2",
+        "🌼": "flower",
+        "🌾": "wheat",
+        "🍀": "leaf",
+        "🍁": "leaf",
+        "🍂": "leaf",
+        "🍃": "leaf",
+        "🌰": "nut",
+        "🎄": "tree-pine",
+        /* ---- 虚构/宠物玩偶 ---- */
+        "🤖": "bot",
+        "👾": "ghost",
+        "🐲": "baby",
+        "🦖": "baby",
+        "🦕": "baby",
+        "🐉": "baby",
+        "🦐": "shrimp",
+        "🦞": "shrimp",
+        "🐢": "turtle",
+        "🐍": "worm",
+        "🦎": "paw-print",
+        "🐖": "piggy-bank",
+        "🐑": "paw-print",
+        "🐐": "paw-print",
+        "🐎": "paw-print",
+        /* ---- 乐器声响 ---- */
+        "🎺": "megaphone",
+        "🎷": "megaphone",
+        "🪕": "guitar",
+        "🎻": "guitar",
+        "🎼": "music",
+        "🎶": "music",
+        "📻": "radio",
+        "🎚": "audio-lines",
+        "🎛": "sliders-horizontal",
+        "📢": "megaphone",
+        "📯": "megaphone",
+        "🔔": "bell",
+        "🪗": "audio-lines",
+        "🪘": "drum",
+        "🪈": "wind",
+        "🎥": "film",
+        "💿": "disc",
+        "📼": "videotape",
+        "🗺": "map",
+        "🦟": "bug",
+        "🪢": "cable",
+        "🪜": "waves-ladder",
+        "👑": "crown"
+      };
+    }
+  });
+
+  // src/belongings/data.ts
+  function getDataFilePath() {
+    return storageFile("belongings.json");
+  }
+  function emptyDatabase() {
+    return {
+      version: "1.0",
+      last_updated: (/* @__PURE__ */ new Date()).toISOString(),
+      items: {},
+      categories: [],
+      categoryIcons: {}
+    };
+  }
+  async function loadDatabase() {
+    const filePath = getDataFilePath();
+    const raw = await jsonFileStore(filePath, {
+      defaultValue: () => emptyDatabase()
+    }).read();
+    let db;
+    try {
+      if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+        throw new Error("数据文件结构异常（非对象）");
+      }
+      db = raw;
+    } catch (error) {
+      notice("数据文件结构异常，已按空库继续，原文件未改动", "warning", 5e3);
+      console.error("数据文件结构异常:", error);
+      db = emptyDatabase();
+    }
+    if (!db.items || typeof db.items !== "object" || Array.isArray(db.items)) {
+      console.error("数据文件 items 字段结构异常:", db.items === null ? "null" : typeof db.items);
+      db.items = {};
+    }
+    for (const it of Object.values(db.items)) {
+      if (!it || typeof it !== "object") continue;
+      const split = splitEmojiCategory(it.category);
+      if (!split.emoji) continue;
+      it.category = split.name;
+      if (split.icon && (it.icon == null || it.icon === "")) it.icon = split.icon;
+    }
+    const freq = /* @__PURE__ */ new Map();
+    const icons = {};
+    for (const it of Object.values(db.items)) {
+      if (!it || typeof it !== "object") continue;
+      const cat = String(it.category || "").trim();
+      if (!cat) continue;
+      const cur = freq.get(cat) || { n: 0, last: "" };
+      cur.n += 1;
+      cur.last = String(it.last_updated || "");
+      freq.set(cat, cur);
+      if (it.icon && !icons[cat]) icons[cat] = it.icon;
+    }
+    db.categories = [...freq.entries()].sort((a, b) => b[1].n - a[1].n || b[1].last.localeCompare(a[1].last)).map(([c]) => c);
+    db.categoryIcons = icons;
+    return db;
+  }
+  function belongingsSaveShape(database) {
+    return { version: database.version, last_updated: (/* @__PURE__ */ new Date()).toISOString(), items: database.items };
+  }
+  async function saveDatabase(database) {
+    const saveData = belongingsSaveShape(database);
+    await enqueueFileTask(getDataFilePath(), () => jsonFileStore(getDataFilePath()).write(saveData));
+  }
+  var init_data7 = __esm({
+    "src/belongings/data.ts"() {
+      init_notice();
+      init_storage();
+      init_emoji_icon_map();
+    }
+  });
+
+  // src/core/chart-palette.ts
+  var CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_INK, CHART_HIGHLIGHT;
+  var init_chart_palette = __esm({
+    "src/core/chart-palette.ts"() {
+      CHART_PASTEL_SERIES = ["#D6E4FF", "#D8F3DC", "#CDF0EA", "#FADDE1", "#FFE5CC", "#E6DFF5"];
+      CHART_RANK_BADGES = ["#FFF3C4", "#D8F3DC", "#D6E4FF"];
+      CHART_INK = "#3D4456";
+      CHART_HIGHLIGHT = "#FFE5CC";
+    }
+  });
+
+  // src/belongings/shared.ts
+  function moneyUnitLabel(unit = "cny") {
+    return unit === "yuan" ? "元" : unit === "usd" ? "$" : unit === "none" ? "" : "￥";
+  }
+  function moneyWith(mid, unit = "cny") {
+    if (unit === "yuan") return `${mid} 元`;
+    if (unit === "none") return mid;
+    return moneyUnitLabel(unit) + mid;
+  }
+  function money(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }), unit);
+  }
+  function moneyShort(n, unit = "cny") {
+    return moneyWith((Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 0 }), unit);
+  }
+  function todayStr() {
+    return localDayKey();
+  }
+  function catEmoji(cat) {
+    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
+    return m ? m[1] : String(cat || "")[0] || "📦";
+  }
+  function catNameOf(cat) {
+    return String(cat || "").replace(/^\p{Extended_Pictographic}\s*/u, "");
+  }
+  function catIconOf(cat) {
+    var _a2;
+    const m = String(cat || "").match(/^(\p{Extended_Pictographic})/u);
+    return m ? (_a2 = EMOJI_ICON[m[1]]) != null ? _a2 : null : null;
+  }
+  function catEmHtml(cat) {
+    var _a2;
+    const em = catEmoji(cat);
+    const name = catIconOf(cat) || ((_a2 = EMOJI_ICON[em]) != null ? _a2 : null);
+    return name ? iconSpan(name) : esc(em);
+  }
+  function itemIconOf(it) {
+    var _a2;
+    const raw = String(it.icon || "").trim();
+    if (raw && /^[a-z0-9-]+$/i.test(raw)) return raw;
+    return catIconOf(it.category) || ((_a2 = EMOJI_ICON[catEmoji(it.category)]) != null ? _a2 : null);
+  }
+  function itemEmHtml(it) {
+    const name = itemIconOf(it);
+    return name ? iconSpan(name) : catEmHtml(it.category);
+  }
+  function statusKeyOf(label) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = STATUS_ORDER.find((s) => s.label === label)) == null ? void 0 : _a2.key) != null ? _b2 : label;
+  }
+  function statusOf(keyOrLabel) {
+    const byKey = STATUS_ORDER.find((s) => s.key === keyOrLabel);
+    if (byKey) return byKey;
+    const byLabel = STATUS_ORDER.find((s) => s.label === keyOrLabel);
+    return byLabel || { key: "using", label: "使用中" };
+  }
+  function exitedStatus(st) {
+    return st === "已转卖" || st === "已丢弃";
+  }
+  function isExited(it) {
+    return exitedStatus(it.current_status);
+  }
+  function exitDayTsOf(it) {
+    var _a2, _b2;
+    return isExited(it) ? (_b2 = (_a2 = parseLocalDay(it.exit_date)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null : null;
+  }
+  function recoveredOf(it) {
+    return it.current_status === STATUS.sold.label && Number(it.sold_price) > 0 ? Number(it.sold_price) : 0;
+  }
+  function trimDailyNum(n) {
+    const v = Number(n) || 0;
+    return v < 0.01 ? v.toFixed(4) : v.toFixed(2).replace(/(\.\d*?)0+$/, "$1").replace(/\.$/, "");
+  }
+  function parseLocalDay(raw) {
+    const parts = String(raw || "").slice(0, 10).split("-").map(Number);
+    const [y, m, d] = parts;
+    if (!y || !m || !d) return null;
+    if (m < 1 || m > 12) return null;
+    const dt = new Date(y, m - 1, d);
+    if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+    return dt;
+  }
+  function daysUsed(it) {
+    const start = parseLocalDay(it.purchase_date);
+    if (!start) return 0;
+    const ex = exitDayTsOf(it);
+    const end = ex != null ? ex : Date.now();
+    return Math.max(0, Math.floor((end - start.getTime()) / 864e5));
+  }
+  function dailyCostOf(it) {
+    const days = daysUsed(it);
+    const price = Number(it.purchase_price) || 0;
+    return days > 0 ? price / days : price;
+  }
+  function inStock(it) {
+    return it.current_status === STATUS.using.label || it.current_status === STATUS.idle.label;
+  }
+  function stockCount(items) {
+    return items.filter(inStock).length;
+  }
+  function totalAssets(items) {
+    return items.filter(inStock).reduce((s, i) => s + (Number(i.purchase_price) || 0), 0);
+  }
+  function avgDailyCost(items) {
+    let cost = 0;
+    let days = 0;
+    for (const it of items) {
+      cost += Number(it.purchase_price) || 0;
+      cost -= recoveredOf(it);
+      days += daysUsed(it);
+    }
+    return days ? cost / days : 0;
+  }
+  function statusCount(items, label) {
+    return items.filter((i) => i.current_status === label).length;
+  }
+  function filtered(items, view) {
+    return items.filter((i) => {
+      if (!view.status) return true;
+      if (view.status === "asset") return inStock(i);
+      return i.current_status === statusOf(view.status).label;
+    }).filter((i) => view.year ? String(i.purchase_date || "").startsWith(view.year) : true).filter((i) => {
+      if (!view.q) return true;
+      const q2 = view.q.toLowerCase();
+      return [i.name, i.category, i.description].join(" ").toLowerCase().includes(q2);
+    }).sort((a, b) => {
+      if (view.sort === "price") return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
+      if (view.sort === "daily") return dailyCostOf(b) - dailyCostOf(a);
+      return String(b.purchase_date || "").localeCompare(String(a.purchase_date || "")) || String(a.name || "").localeCompare(String(b.name || ""), "zh");
+    });
+  }
+  function yearsAvailable(items) {
+    const set = /* @__PURE__ */ new Set();
+    items.forEach((i) => {
+      const y = String(i.purchase_date || "").slice(0, 4);
+      if (y) set.add(y);
+    });
+    return [...set].sort().reverse();
+  }
+  function resolveYear(items, year) {
+    return year && yearsAvailable(items).includes(year) ? year : "";
+  }
+  function heroTitleText(view) {
+    if (!view.status) return "全部";
+    if (view.status === "asset") return "资产";
+    return statusOf(view.status).label;
+  }
+  function heroSubText(items, view) {
+    return view.status ? `归物本 — ${filtered(items, view).length} 件在列 · FILTERED VIEW` : "归物本 — NOTHING MORE, NOTHING LESS";
+  }
+  function belDetailHtml(it, unit = "cny") {
+    var _a2;
+    const gone = isExited(it);
+    const key = statusKeyOf(it.current_status);
+    return `<div class="bz-bel-detail">
+    <div class="bz-bel-detail-head">
+      <div class="bz-bel-detail-title">${esc(it.name)}</div>
+    </div>
+    <div class="bz-bel-detail-idrow">
+      <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
+      <div class="bz-bel-detail-idinfo">
+        <div class="bz-bel-detail-cat">${esc(catNameOf(it.category) || "未分类")}</div>
+        <div class="bz-bel-detail-desc">${esc(it.description || "无备注")}</div>
+      </div>
+      <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
+    </div>
+    <div class="bz-bel-detail-fields">
+      <div class="bz-bel-dfield"><span>购买价</span><b>${money(Number(it.purchase_price) || 0, unit)}</b></div>
+      <div class="bz-bel-dfield"><span>购买日期</span><b>${esc(String(it.purchase_date || "").slice(0, 10) || "—")} · ${daysUsed(it)} 天</b></div>
+      <div class="bz-bel-dfield"><span>日均成本</span><b>${moneyWith(dailyCostOf(it).toFixed(2), unit)}${gone ? "（已封口）" : "/天 · 越用越便宜"}</b></div>
+      ${gone ? `<div class="bz-bel-dfield"><span>出离日期</span><b>${esc(it.exit_date || "—")}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + money(Number(it.sold_price), unit) : ""}</b></div>` : ""}
+      <div class="bz-bel-dfield"><span>录入 / 更新</span><b>${esc(String(it.created_date || "").slice(0, 10))} / ${esc(String(it.last_updated || "").slice(0, 10))}</b></div>
+    </div>
+    <div class="bz-bel-detail-acts" data-bd-acts></div>
+    <div class="bz-btn-row bz-bel-detail-btns">
+      <div class="bz-bel-form-spacer"></div>
+      <button type="button" class="bz-btn bz-btn--ghost" data-bd-edit>${iconSpan("pencil", "bz-ic--sm")} 编辑</button>
+      <button type="button" class="bz-btn bz-btn--primary bz-bel-delbtn" data-bd-del>${iconSpan(ICON.del, "bz-ic--sm")} 删除</button>
+    </div>
+  </div>`;
+  }
+  function flowBtnsHtml(curStatus) {
+    return STATUS_LABELS.map(
+      (s) => `<button type="button" class="bz-bel-flowbtn${s === curStatus ? " is-cur" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-bd-flow="${esc(s)}">${esc(s)}</button>`
+    ).join("");
+  }
+  function belFormInit(it) {
+    var _a2, _b2, _c;
+    return {
+      priceVal: it ? String((_a2 = it.purchase_price) != null ? _a2 : "") : "",
+      dateVal: it ? String(it.purchase_date || "").slice(0, 10) : todayStr(),
+      catVal: (_b2 = it == null ? void 0 : it.category) != null ? _b2 : "",
+      // 新记不回填默认分类（issue 202），留空待选
+      descVal: (_c = it == null ? void 0 : it.description) != null ? _c : "",
+      // 出离字段初值（ADR-0089）：编辑回填 exit_date；新记 = 今天
+      exitDateVal: (it == null ? void 0 : it.exit_date) ? String(it.exit_date).slice(0, 10) : todayStr(),
+      soldPriceVal: (it == null ? void 0 : it.sold_price) != null && Number.isFinite(Number(it.sold_price)) ? String(it.sold_price) : "",
+      exitedInit: !!it && isExited(it)
+    };
+  }
+  function belFormHtml(it, unit = "cny") {
+    var _a2;
+    const editing = !!it;
+    const unitLabel = moneyUnitLabel(unit);
+    const { priceVal, dateVal, catVal, descVal, exitDateVal, soldPriceVal, exitedInit } = belFormInit(it);
+    return `
+  <div class="bz-bel-form">
+    <div class="bz-bel-form-title">${editing ? "编辑物品" : "记一笔"}</div>
+    <div class="bz-bel-form-body">
+      <div class="bz-field"><span class="bz-field-label">名称</span><input class="bz-input" id="bm-name" value="${esc((_a2 = it == null ? void 0 : it.name) != null ? _a2 : "")}" placeholder="如：iPhone 15 Pro"></div>
+      <div class="bz-field"><span class="bz-field-label">分类</span><span class="bz-bel-catrow"><span class="bz-bel-form-icon" id="bm-icon" title="分类图标（AI 归类或选历史分类自动带上）"></span><input class="bz-input" id="bm-cat" value="${esc(catVal)}" placeholder="输入或从历史分类选择" autocomplete="off"><button type="button" class="bz-icon-btn bz-bel-aibtn" id="bm-ai" title="AI 归类：按名称建议分类与图标">${iconSpan("sparkles", "bz-ic--sm")}</button></span></div>
+      <div class="bz-bel-form-row">
+        <div class="bz-field"><span class="bz-field-label">购买价格${unitLabel ? `（${esc(unitLabel)}）` : ""}</span><input class="bz-input" id="bm-price" type="number" min="0" step="0.01" value="${esc(priceVal)}" placeholder="0.00"></div>
+        <div class="bz-field"><span class="bz-field-label">购买日期</span><input class="bz-input" id="bm-date" type="date" value="${esc(dateVal)}"></div>
+      </div>
+      <div class="bz-field"><span class="bz-field-label">状态</span><span class="bz-bel-statuspick" id="bm-status"></span></div>
+      <div class="bz-bel-form-row" id="bm-exit"${exitedInit ? "" : " hidden"}>
+        <div class="bz-field"><span class="bz-field-label">出离日期</span><input class="bz-input" id="bm-exitdate" type="date" value="${esc(exitDateVal)}"></div>
+        <div class="bz-field" id="bm-soldfield"${(it == null ? void 0 : it.current_status) === "已转卖" ? "" : " hidden"}><span class="bz-field-label">转卖售价（可选）</span><input class="bz-input" id="bm-soldprice" type="number" min="0" step="0.01" value="${esc(soldPriceVal)}" placeholder="留空不记售价"></div>
+      </div>
+      <div class="bz-field"><span class="bz-field-label">描述（可选）</span><textarea class="bz-input" id="bm-desc" placeholder="规格、颜色、购买原因等…">${esc(descVal)}</textarea></div>
+      <div class="bz-bel-form-err" id="bm-err"></div>
+      <div class="bz-btn-row bz-bel-form-actions">
+        <div class="bz-bel-form-spacer"></div>
+        <button type="button" class="bz-btn bz-btn--ghost" data-bm-cancel>取消</button>
+        <!-- 提交动词全域拍板（review-deep 一致#9）：编辑=保存、新建=添加（favorites 同款收敛） -->
+        <button type="button" class="bz-btn bz-btn--primary" id="bm-save">${editing ? "保存" : "添加"}</button>
+      </div>
+    </div>
+  </div>`;
+  }
+  function statusPickHtml(curStatus) {
+    return STATUS_LABELS.map(
+      (s) => {
+        var _a2;
+        return `<button type="button" class="bz-choice-btn${s === curStatus ? " is-on" : ""}${s === "闲置" ? " bz-bel-c2" : ""}" data-status="${esc(s)}">${iconSpan(((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(s)}</button>`;
+      }
+    ).join("");
+  }
+  function sheetHeadHtml(it, unit = "cny") {
+    const catName = catNameOf(it.category);
+    const days = daysUsed(it);
+    return `<div class="bz-item-sheet-entry"><div class="bz-bel-sheet-head">
+      <span class="bz-item-sheet-emoji">${itemEmHtml(it)}</span>
+      <div class="bz-bel-sheet-info"><div class="bz-item-sheet-title">${esc(it.name)}</div>
+      <div class="bz-item-sheet-sub">${esc(catName)} · ${money(Number(it.purchase_price) || 0, unit)} · 已用 ${days} 天</div></div></div></div>`;
+  }
+  function actionSpecs(it) {
+    const specs = [];
+    STATUS_LABELS.forEach((s) => {
+      var _a2;
+      if (s === it.current_status) return;
+      specs.push({ icon: ((_a2 = STATUS[statusKeyOf(s)]) == null ? void 0 : _a2.ic) || "box", label: `标记为${s}`, act: "flow", status: s, keepOpen: true });
+    });
+    specs.push({ icon: "pencil", label: "编辑", act: "edit", keepOpen: true });
+    specs.push({ icon: "trash-2", label: "删除", act: "del", danger: true });
+    return specs;
+  }
+  var ICON, MAX_PRICE, STATUS, STATUS_ORDER, STATUS_LABELS, SORT_OPTS;
+  var init_shared3 = __esm({
+    "src/belongings/shared.ts"() {
+      init_str();
+      init_emoji_icon_map();
+      init_emoji_icon_map();
+      init_str();
+      ICON = {
+        add: "plus",
+        search: "search",
+        close: "x",
+        del: "trash-2",
+        empty: "package",
+        chevD: "chevron-down",
+        report: "bar-chart-3"
+        // 年度资产报告工具行入口（issue 356）
+      };
+      MAX_PRICE = 1e12;
+      STATUS = {
+        using: { label: "使用中", key: "using", ic: "check-circle" },
+        idle: { label: "闲置", key: "idle", ic: "package" },
+        sold: { label: "已转卖", key: "sold", ic: "banknote" },
+        discard: { label: "已丢弃", key: "discard", ic: "archive" }
+      };
+      STATUS_ORDER = [
+        { key: "using", label: "使用中" },
+        { key: "idle", label: "闲置" },
+        { key: "sold", label: "已转卖" },
+        { key: "discard", label: "已丢弃" }
+      ];
+      STATUS_LABELS = STATUS_ORDER.map((s) => s.label);
+      SORT_OPTS = [
+        { v: "recent", label: "最近购入" },
+        { v: "price", label: "投入最高" },
+        { v: "daily", label: "日均最高" }
+      ];
+    }
+  });
+
+  // src/belongings/report-stats.ts
+  function monthLabel(m) {
+    return `${m}月`;
+  }
+  function parseDayTs(raw) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = parseLocalDay(raw)) == null ? void 0 : _a2.getTime()) != null ? _b2 : null;
+  }
+  function yearOf(raw) {
+    const s = String(raw || "").slice(0, 4);
+    return /^\d{4}$/.test(s) ? s : "";
+  }
+  function priceOf(it) {
+    return Number(it.purchase_price) || 0;
+  }
+  function reportYears(items) {
+    const set = /* @__PURE__ */ new Set();
+    for (const it of items) {
+      const py = yearOf(it.purchase_date);
+      if (py) set.add(py);
+      const ey = yearOf(it.exit_date);
+      if (ey && exitedStatus(it.current_status)) set.add(ey);
+    }
+    return [...set].sort().reverse();
+  }
+  function resolveReportYear(items, year) {
+    const years = reportYears(items);
+    return years.includes(year) ? year : years[0] || "";
+  }
+  function avgDailyCostAsOf(items, cutoffTs) {
+    let cost = 0;
+    let days = 0;
+    for (const it of items) {
+      const p = parseDayTs(it.purchase_date);
+      if (p == null || p >= cutoffTs) continue;
+      cost += priceOf(it);
+      const ex = exitDayTsOf(it);
+      const capped = ex != null && ex < cutoffTs;
+      if (capped) cost -= recoveredOf(it);
+      days += Math.max(0, Math.floor(((capped ? ex : cutoffTs) - p) / DAY_MS));
+    }
+    return days ? cost / days : 0;
+  }
+  function computeYearReport(items, year, now = /* @__PURE__ */ new Date()) {
+    const y = Number(year);
+    const yearStart = new Date(y, 0, 1).getTime();
+    const yearEnd = new Date(y + 1, 0, 1).getTime();
+    const nowTs2 = now.getTime();
+    const purchased = items.filter((it) => {
+      const p = parseDayTs(it.purchase_date);
+      return p != null && p >= yearStart && p < yearEnd;
+    });
+    const exitedInYear = items.filter((it) => {
+      const ex = parseDayTs(it.exit_date);
+      return ex != null && ex >= yearStart && ex < yearEnd && exitedStatus(it.current_status);
+    });
+    const monthlySpend = Array.from({ length: 12 }, (_, i) => ({
+      label: monthLabel(i + 1),
+      amount: 0,
+      count: 0
+    }));
+    for (const it of purchased) {
+      const p = parseDayTs(it.purchase_date);
+      const m = new Date(p).getMonth();
+      monthlySpend[m].amount += priceOf(it);
+      monthlySpend[m].count += 1;
+    }
+    const catMap = /* @__PURE__ */ new Map();
+    for (const it of purchased) {
+      const name = catNameOf(it.category).trim() || "未分类";
+      const cur = catMap.get(name) || { count: 0, amount: 0 };
+      cur.count += 1;
+      cur.amount += priceOf(it);
+      catMap.set(name, cur);
+    }
+    const purchasedAmount = purchased.reduce((s, i) => s + priceOf(i), 0);
+    const categoryShare = [...catMap.entries()].map(([name, v]) => ({
+      name,
+      count: v.count,
+      amount: v.amount,
+      pct: purchasedAmount > 0 ? Math.round(v.amount / purchasedAmount * 1e3) / 10 : 0
+    })).sort((a, b) => b.amount - a.amount || b.count - a.count || a.name.localeCompare(b.name, "zh"));
+    const dailyCostTrend = Array.from({ length: 12 }, (_, i) => {
+      const monthStart = new Date(y, i, 1).getTime();
+      const monthEnd = new Date(y, i + 1, 1).getTime();
+      const future = monthStart > nowTs2;
+      const capped = !future && monthEnd > nowTs2;
+      const cutoff = capped ? nowTs2 : monthEnd;
+      return {
+        label: monthLabel(i + 1),
+        value: future ? 0 : avgDailyCostAsOf(items, cutoff),
+        future,
+        ...capped ? { capped } : {}
+      };
+    });
+    const companionCutoff = Math.min(yearEnd, nowTs2);
+    const companions = items.map((it) => {
+      const p = parseDayTs(it.purchase_date);
+      if (p == null || p >= companionCutoff) return null;
+      const ex = exitDayTsOf(it);
+      const end = ex != null && ex < companionCutoff ? ex : companionCutoff;
+      return { item: it, days: Math.max(0, Math.floor((end - p) / DAY_MS)) };
+    }).filter((r) => r != null).sort(
+      (a, b) => b.days - a.days || String(a.item.purchase_date || "").localeCompare(String(b.item.purchase_date || "")) || String(a.item.name || "").localeCompare(String(b.item.name || ""), "zh")
+    ).slice(0, COMPANION_TOP_N);
+    return {
+      year,
+      purchasedCount: purchased.length,
+      purchasedAmount,
+      exitedCount: exitedInYear.length,
+      recoveredAmount: exitedInYear.reduce((s, i) => s + recoveredOf(i), 0),
+      monthlySpend,
+      categoryShare,
+      dailyCostTrend,
+      companions,
+      // 审查修复批（issue 356）：段注口径随真实截止点走——当年（now 未到年末）陪伴榜实际截至今日，
+      // 旧文案写死「截至年末」与数据不符；往年 cutoff = yearEnd 才是「年末」
+      companionAsOf: companionCutoff < yearEnd ? "today" : "yearEnd",
+      hasYearData: purchased.length > 0 || exitedInYear.length > 0
+    };
+  }
+  var COMPANION_TOP_N, DAY_MS;
+  var init_report_stats = __esm({
+    "src/belongings/report-stats.ts"() {
+      init_shared3();
+      COMPANION_TOP_N = 5;
+      DAY_MS = 864e5;
+    }
+  });
+
+  // src/belongings/report.ts
+  function yieldToMainThread2() {
+    return yieldToMainThread(IDLE_CALLBACK_TIMEOUT_MS);
+  }
+  function isBelReportOpen() {
+    return !!maskEl2;
+  }
+  function openBelReport(items, unit, opts = {}) {
+    var _a2;
+    ctxItems = items;
+    ctxUnit = unit;
+    ctxOnAdd = (_a2 = opts.onAdd) != null ? _a2 : null;
+    ctxYears = [];
+    if (!maskEl2) ctxYear = "";
+    if (maskEl2) {
+      startReport();
+      return;
+    }
+    const mask = document.createElement("div");
+    mask.className = "bz-overlay-mask bz-bel-report-mask";
+    mask.innerHTML = `
+  <div class="bz-bel-report bz-panel-mtop" role="dialog" aria-label="归物本年度资产报告">
+    <div class="bz-bel-report-head">
+      <div class="bz-bel-report-title">年度资产报告</div>
+      <div class="bz-bel-report-nav">
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-prev title="上一年" aria-label="上一年">${iconSpan("chevron-left")}</button>
+        <span class="bz-bel-report-year" data-belr-year>—</span>
+        <button type="button" class="bz-icon-btn bz-touch-target" data-belr-next title="下一年" aria-label="下一年">${iconSpan("chevron-right")}</button>
+      </div>
+      <button type="button" class="bz-icon-btn bz-touch-target bz-bel-report-close" data-belr-close title="关闭" aria-label="关闭报告">${iconSpan("x")}</button>
+    </div>
+    <div class="bz-bel-report-body" data-belr-body></div>
+  </div>`;
+    document.body.appendChild(mask);
+    topifyZ(mask);
+    mountIcons(mask);
+    maskEl2 = mask;
+    mask.addEventListener("click", (e) => {
+      const t = e.target;
+      if (e.target === mask) {
+        closeBelReport();
+        return;
+      }
+      if (t.closest("[data-belr-close]")) {
+        closeBelReport();
+        return;
+      }
+      if (t.closest("[data-belr-prev]")) {
+        stepYear(-1);
+        return;
+      }
+      if (t.closest("[data-belr-next]")) {
+        stepYear(1);
+        return;
+      }
+    });
+    startReport();
+  }
+  function closeBelReport() {
+    cancelBelReport();
+    if (maskEl2) {
+      maskEl2.remove();
+      maskEl2 = null;
+    }
+    ctxItems = [];
+    ctxYears = [];
+    ctxYear = "";
+    ctxOnAdd = null;
+  }
+  function cancelBelReport() {
+    renderSeq++;
+    if (activeProgress) {
+      activeProgress.hide();
+      activeProgress = null;
+    }
+  }
+  function unloadBelReport() {
+    cancelBelReport();
+    if (maskEl2) {
+      maskEl2.remove();
+      maskEl2 = null;
+    }
+    ctxItems = [];
+    ctxYears = [];
+    ctxYear = "";
+    ctxOnAdd = null;
+  }
+  function stepYear(dir) {
+    const idx = ctxYears.indexOf(ctxYear);
+    if (idx < 0) return;
+    const next = idx - dir;
+    if (next < 0 || next >= ctxYears.length) return;
+    ctxYear = ctxYears[next];
+    paintYearNav();
+    startReport(true);
+  }
+  function paintYearNav() {
+    if (!maskEl2) return;
+    const label = maskEl2.querySelector("[data-belr-year]");
+    if (label) label.textContent = ctxYear || "—";
+    const idx = ctxYears.indexOf(ctxYear);
+    const prev = maskEl2.querySelector("[data-belr-prev]");
+    const next = maskEl2.querySelector("[data-belr-next]");
+    if (prev) prev.disabled = idx < 0 || idx >= ctxYears.length - 1;
+    if (next) next.disabled = idx < 0 || idx <= 0;
+  }
+  function startReport(quiet = false) {
+    const body = maskEl2 == null ? void 0 : maskEl2.querySelector("[data-belr-body]");
+    if (!body) return;
+    cancelBelReport();
+    const seq = renderSeq;
+    const alive = () => seq === renderSeq && !!(maskEl2 == null ? void 0 : maskEl2.isConnected) && body.isConnected;
+    body.innerHTML = SKELETON_HTML;
+    ctxYears = reportYears(ctxItems);
+    ctxYear = resolveReportYear(ctxItems, ctxYear);
+    paintYearNav();
+    const progress = notify("正在统计年度数据…", {
+      type: "progress",
+      duration: 0,
+      dedupeKey: `bz-belongings-report-progress-${++progressToastSeq}`
+    });
+    activeProgress = progress;
+    const finishAbort = () => {
+      progress.hide();
+      if (activeProgress === progress) activeProgress = null;
+    };
+    const finishDone = (quiet2) => {
+      if (activeProgress === progress) activeProgress = null;
+      if (quiet2) progress.hide();
+      else {
+        progress.setType("success");
+        progress.setMessage("年度报告完成");
+      }
+    };
+    const step = async () => {
+      progress.setMessage("正在读取归物本…");
+      await yieldToMainThread2();
+      if (!alive()) return finishAbort();
+      if (ctxItems.length === 0) {
+        body.innerHTML = "";
+        body.appendChild(buildLibraryEmpty());
+        mountIcons(body);
+        return finishDone(true);
+      }
+      progress.setMessage("正在汇总购入与离场…");
+      await yieldToMainThread2();
+      if (!alive()) return finishAbort();
+      const year = ctxYear;
+      const stats = computeYearReport(ctxItems, year);
+      if (!alive()) return finishAbort();
+      if (!stats.hasYearData) {
+        body.innerHTML = emptyYearHtml(year);
+        mountIcons(body);
+        return finishDone(true);
+      }
+      const sections = buildReportSections(stats);
+      body.innerHTML = "";
+      for (const section of sections) {
+        if (!alive()) return finishAbort();
+        await yieldToMainThread2();
+        if (!alive()) return finishAbort();
+        body.insertAdjacentHTML("beforeend", section.generate());
+        progress.setMessage(`正在生成${section.label}…`);
+      }
+      if (alive()) {
+        mountIcons(body);
+        finishDone(quiet);
+      } else {
+        finishAbort();
+      }
+    };
+    void step().catch((error) => {
+      console.error("生成归物本年度报告失败:", error);
+      if (activeProgress === progress) activeProgress = null;
+      if (alive()) {
+        progress.setType("error");
+        progress.setMessage("统计失败：读取归物本数据时出错，请重试");
+        body.innerHTML = ERROR_HTML;
+      } else {
+        progress.hide();
+      }
+    });
+  }
+  function buildLibraryEmpty() {
+    const actions = uiBtnRow(
+      [
+        uiBtn({
+          label: "记一笔",
+          icon: "plus",
+          tone: "primary",
+          onClick: () => ctxOnAdd == null ? void 0 : ctxOnAdd()
+        })
+      ],
+      { center: true }
+    );
+    return uiEmpty({
+      icon: "package",
+      title: "归物本还没有物品",
+      desc: "登记物品后，这里会按年生成资产报告：购入与离场、月度花销、分类占比和陪伴最久的物件",
+      actions
+    });
+  }
+  function emptyYearHtml(year) {
+    return `<div class="bz-belr-emptyyear">
+    <div class="bz-belr-emptyyear-t">${esc(year)} 年没有物品记录</div>
+    <div class="bz-belr-emptyyear-d">${ctxYears.length > 1 ? "用上方 ‹ › 切换到有记录的年份" : "在归物本补记这一年的物品后，这里会生成报告"}</div>
+  </div>`;
+  }
+  function buildReportSections(stats) {
+    return [
+      { key: "summary", label: "购入与离场概览", generate: () => summaryHtml(stats) },
+      { key: "monthly", label: "月度花销走势", generate: () => monthlyHtml(stats) },
+      { key: "categories", label: "分类占比", generate: () => categoriesHtml(stats) },
+      { key: "daily", label: "日均成本走势", generate: () => dailyHtml(stats) },
+      { key: "companions", label: "陪伴最久榜", generate: () => companionsHtml(stats) }
+    ];
+  }
+  function secHead(title, note = "") {
+    return `<div class="bz-belr-sec-head"><span class="bz-belr-sec-title">${esc(title)}</span>${note ? `<span class="bz-belr-sec-note">${esc(note)}</span>` : ""}</div>`;
+  }
+  function summaryHtml(stats) {
+    const card = (num2, label, color) => `<div class="bz-belr-hero" style="background:${color};color:${CHART_INK}">
+      <b>${esc(num2)}</b><span>${esc(label)}</span>
+    </div>`;
+    return `<div class="bz-belr-sec">
+  ${secHead(`${stats.year} 年购入与离场`)}
+  <div class="bz-belr-grid">
+  ${card(String(stats.purchasedCount), "购入件数", CHART_PASTEL_SERIES[0])}
+  ${card(moneyShort(stats.purchasedAmount, ctxUnit), "购入金额", CHART_PASTEL_SERIES[1])}
+  ${card(String(stats.exitedCount), "离场件数", CHART_PASTEL_SERIES[2])}
+  ${card(moneyShort(stats.recoveredAmount, ctxUnit), "转卖回血", CHART_PASTEL_SERIES[4])}
+  </div>
+  </div>`;
+  }
+  function columnsHtml(cols) {
+    const max = Math.max(0, ...cols.filter((c) => !c.future).map((c) => c.value));
+    return `<div class="bz-belr-cols">
+  ${cols.map((c) => {
+      const height = !c.future && c.value > 0 && max > 0 ? 12 + Math.round(c.value / max * 48) : 3;
+      const bg = c.future ? "transparent" : c.accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[0];
+      const num2 = !c.future && c.value > 0 ? `<span class="bz-belr-col-num">${esc(c.display)}</span>` : "";
+      const cls = ["bz-belr-col", c.future ? "bz-belr-col--future" : "", c.accent ? "bz-belr-col--accent" : ""].filter(Boolean).join(" ");
+      return `<div class="${cls}"${c.title ? ` title="${esc(c.title)}"` : ""}>
+        ${num2}
+        <div class="bz-belr-col-bar" style="height:${height}px;${c.future ? "" : `background:${bg}`}"></div>
+        <div class="bz-belr-col-label">${esc(c.label)}</div>
+      </div>`;
+    }).join("")}
+  </div>`;
+  }
+  function monthlyHtml(stats) {
+    if (stats.purchasedAmount === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("月度花销走势", "当年无购入")}
+    <p class="bz-belr-none">这一年没有购入记录，只有出离——月度花销无可绘制</p>
+    </div>`;
+    }
+    const maxAmount = Math.max(0, ...stats.monthlySpend.map((m) => m.amount));
+    const cols = stats.monthlySpend.map((m) => ({
+      label: m.label,
+      value: m.amount,
+      display: moneyShort(m.amount, ctxUnit),
+      accent: m.amount > 0 && m.amount === maxAmount,
+      title: m.count > 0 ? `${m.label}购入 ${m.count} 件 · ${moneyShort(m.amount, ctxUnit)}` : `${m.label}无购入`
+    }));
+    return `<div class="bz-belr-sec">
+  ${secHead("月度花销走势", `全年购入 ${moneyShort(stats.purchasedAmount, ctxUnit)}`)}
+  ${columnsHtml(cols)}
+  </div>`;
+  }
+  function categoriesHtml(stats) {
+    if (stats.purchasedAmount === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("分类占比", "当年无购入")}
+    <p class="bz-belr-none">当年无购入 · 只有出离记录，分类占比无可统计</p>
+    </div>`;
+    }
+    const MAX_ROWS = 8;
+    const rows = stats.categoryShare.slice(0, MAX_ROWS);
+    const rest = stats.categoryShare.slice(MAX_ROWS);
+    if (rest.length > 0) {
+      rows.push({
+        name: `其他（${rest.length} 类）`,
+        count: rest.reduce((s, r) => s + r.count, 0),
+        amount: rest.reduce((s, r) => s + r.amount, 0),
+        pct: Math.round(rest.reduce((s, r) => s + r.pct, 0) * 10) / 10
+      });
+    }
+    const line = (row, i) => {
+      const color = CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
+      const width = Math.max(0, Math.min(100, row.pct));
+      return `<div class="bz-belr-row">
+      <span class="bz-belr-row-label" title="${esc(row.name)}">${esc(row.name)}</span>
+      <div class="bz-progress bz-progress--lg bz-belr-row-track"><i style="width:${width}%;background:${color}"></i></div>
+      <span class="bz-belr-row-val">${row.count} 件 · ${esc(moneyShort(row.amount, ctxUnit))} · ${row.pct}%</span>
+    </div>`;
+    };
+    return `<div class="bz-belr-sec">
+  ${secHead("分类占比", `共 ${stats.categoryShare.length} 类 · 按购入金额`)}
+  <div class="bz-belr-rows">${rows.map(line).join("")}</div>
+  </div>`;
+  }
+  function dailyHtml(stats) {
+    const hasCapped = stats.dailyCostTrend.some((c) => c.capped);
+    const cols = stats.dailyCostTrend.map((c) => ({
+      label: c.label,
+      value: c.future ? 0 : c.value,
+      display: c.value > 0 ? trimDailyNum(c.value) : "0",
+      future: c.future,
+      title: c.future ? `${c.label}末尚未到来` : c.capped ? `${c.label}截至今日日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}` : `${c.label}末日均 ${trimDailyNum(c.value)}${c.value > 0 ? "/天" : ""}`
+    }));
+    return `<div class="bz-belr-sec">
+  ${secHead("日均成本走势", `口径：各月末时点${hasCapped ? "（当月截至今日）" : ""} ·（总购入 − 转卖回本）/ 累计持有天数`)}
+  ${columnsHtml(cols)}
+  </div>`;
+  }
+  function trimNumThousands(n) {
+    return (Number(n) || 0).toLocaleString("zh-CN", { maximumFractionDigits: 2 });
+  }
+  function companionsHtml(stats) {
+    if (stats.companions.length === 0) {
+      return `<div class="bz-belr-sec">
+    ${secHead("陪伴最久榜")}
+    <p class="bz-belr-none">暂无可统计的物品</p>
+    </div>`;
+    }
+    const asOf = stats.companionAsOf === "today" ? "截至今日" : `截至 ${stats.year} 年末`;
+    const line = (row, i) => {
+      const it = row.item;
+      const price = Number(it.purchase_price) || 0;
+      const daily = row.days > 0 ? moneyWith(trimNumThousands(price / row.days), ctxUnit) : "—";
+      const badge = i < CHART_RANK_BADGES.length ? ` style="background:${CHART_RANK_BADGES[i]};color:${CHART_INK}"` : "";
+      const goneYear = it.exit_date ? String(it.exit_date).slice(0, 4) : "";
+      return `<div class="bz-belr-comp">
+      <span class="bz-belr-comp-rank"${badge}>${i + 1}</span>
+      <span class="bz-belr-comp-name" title="${esc(it.name)}">${esc(it.name)}</span>
+      <span class="bz-belr-comp-meta">${esc(String(it.purchase_date || "").slice(0, 4) || "—")} 年购入${goneYear ? ` · ${esc(goneYear)} 年离场` : ""} · 日均 ${esc(daily)}</span>
+      <b class="bz-belr-comp-days">${row.days.toLocaleString("zh-CN")} 天</b>
+    </div>`;
+    };
+    return `<div class="bz-belr-sec">
+  ${secHead("陪伴最久榜", `${asOf} · Top ${stats.companions.length}`)}
+  <div class="bz-belr-comps">${stats.companions.map(line).join("")}</div>
+  </div>`;
+  }
+  var renderSeq, progressToastSeq, activeProgress, maskEl2, ctxItems, ctxUnit, ctxYears, ctxYear, ctxOnAdd, SKELETON_HTML, ERROR_HTML, IDLE_CALLBACK_TIMEOUT_MS;
+  var init_report = __esm({
+    "src/belongings/report.ts"() {
+      init_utils();
+      init_notice();
+      init_ui();
+      init_str();
+      init_z_order();
+      init_chart_palette();
+      init_shared3();
+      init_report_stats();
+      init_shared3();
+      renderSeq = 0;
+      progressToastSeq = 0;
+      activeProgress = null;
+      maskEl2 = null;
+      ctxItems = [];
+      ctxUnit = "cny";
+      ctxYears = [];
+      ctxYear = "";
+      ctxOnAdd = null;
+      SKELETON_HTML = '<div class="bz-belr-skeleton">统计中…</div>';
+      ERROR_HTML = `<div class="bz-belr-error">
+  <div class="bz-belr-error-t">统计失败</div>
+  <div>读取归物本数据时出错，请关闭后重试</div>
+</div>`;
+      IDLE_CALLBACK_TIMEOUT_MS = 50;
+    }
+  });
+
+  // src/belongings/layouts/poster/render.ts
+  function panelHtml() {
+    return `<div class="bz-bel-panel bz-panel-frame bz-panel-mtop bz-bel--poster">
+  <div class="bz-bel-body">
+    <div class="bz-bel-hero">
+      <div class="bz-bel-hero-text">
+        <div class="bz-bel-hero-title" data-bel-herotitle>全部</div>
+        <div class="bz-bel-hero-sub" data-bel-herosub>归物本 — NOTHING MORE, NOTHING LESS</div>
+      </div>
+      <div class="bz-bel-kpis" data-bel-kpis></div>
+      <div class="bz-bel-mobhead">
+        <div class="bz-bel-stamp"><b data-bel-stampn>0</b><span>在库</span></div>
+        <div class="bz-bel-mobhead-tx">
+          <div class="bz-bel-mobhead-t">归物本</div>
+          <div class="bz-bel-mobhead-sub" data-bel-mobstats></div>
+        </div>
+        <button class="bz-icon-btn bz-icon-btn--lg bz-touch-target bz-bel-mob-only" data-bel-close title="关闭">${iconSpan(ICON.close)}</button>
+      </div>
+    </div>
+    <div class="bz-bel-chips" data-bel-chips></div>
+    <div class="bz-toolrow bz-bel-toolrow">
+      <div class="bz-search">${iconSpan(ICON.search)}<input class="bz-input" type="text" data-bel-search placeholder="搜索名称 / 分类 / 备注…"><button type="button" class="bz-bel-search-clear" data-bel-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+      <div class="bz-bel-yearsel">
+        <div class="bz-bel-select bz-touch-target" data-bel-year role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">全部年份</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-dropmenu" data-bel-yearmenu role="listbox"></div>
+      </div>
+      <div class="bz-bel-yearsel bz-bel-mobsortsel-wrap">
+        <div class="bz-bel-select bz-touch-target" data-bel-mobsortsel role="button" tabindex="0" aria-haspopup="listbox"><span class="bz-bel-select-label">最近购入</span>${iconSpan(ICON.chevD, "bz-bel-select-chev")}</div>
+        <div class="bz-bel-dropmenu" data-bel-mobsortmenu role="listbox"></div>
+      </div>
+      <div class="bz-bel-sort" data-bel-sort></div>
+      <button class="bz-icon-btn bz-bel-reportbtn" data-bel-report title="年度资产报告" aria-label="年度资产报告">${iconSpan(ICON.report)}</button>
+      <button class="bz-btn bz-btn--md bz-bel-addbtn" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
+    </div>
+    <div class="bz-mobstrip" data-bel-mobstatus></div>
+    <div class="bz-bel-content" data-bel-content></div>
+    <button class="bz-btn bz-btn--md bz-bel-mobadd" data-bel-add>${iconSpan(ICON.add, "bz-ic--sm")} 记一笔</button>
+  </div>
+</div>`;
+  }
+  function chipsHtml(items, view) {
+    const defs = [
+      { key: "__all", label: "全部", cnt: items.length },
+      { key: "asset", label: "资产", cnt: stockCount(items) },
+      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
+    ];
+    return defs.map((d) => {
+      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
+      return `<button type="button" class="bz-chip${active2 ? " bz-chip--on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
+    }).join("");
+  }
+  function mobChipsHtml(items, view) {
+    const defs = [
+      { key: "__all", label: "全部", cnt: items.length },
+      ...STATUS_ORDER.map((s) => ({ key: s.key, label: s.label, cnt: statusCount(items, s.label) }))
+    ];
+    return defs.map((d) => {
+      const active2 = d.key === "__all" ? view.status === null : view.status === d.key;
+      return `<button class="bz-mobstrip-chip${active2 ? " is-on" : ""}" data-bel-st="${d.key}"><span>${esc(d.label)}</span><span class="bz-chip-cnt">${d.cnt}</span></button>`;
+    }).join("");
+  }
+  function yearsOptionsHtml(items, cur) {
+    return '<div class="bz-bel-dropopt' + (cur === "" ? " is-cur" : "") + '" data-v="" role="option">全部年份</div>' + yearsAvailable(items).map((y) => `<div class="bz-bel-dropopt${cur === y ? " is-cur" : ""}" data-v="${esc(y)}" role="option">${y}</div>`).join("");
+  }
+  function sortOptionsHtml(cur) {
+    return SORT_OPTS.map((o) => `<div class="bz-bel-dropopt${cur === o.v ? " is-cur" : ""}" data-v="${o.v}" role="option">${o.label}</div>`).join("");
+  }
+  function segmentedHtml(sort) {
+    return `<div class="bz-segmented" role="radiogroup" aria-label="排序">${SORT_OPTS.map((o) => `<button type="button" class="bz-segmented-btn${sort === o.v ? " is-on" : ""}" data-k="${o.v}" role="radio" aria-checked="${sort === o.v}">${o.label}</button>`).join("")}</div>`;
+  }
+  function kpisHtml(items, unit = "cny") {
+    const gone = items.filter(isExited);
+    const recover2 = gone.reduce(
+      (s, i) => s + (i.current_status === "已转卖" && Number(i.sold_price) > 0 ? Number(i.sold_price) : 0),
+      0
+    );
+    const kpi = (num2, label, opts = {}) => `<div class="bz-bel-kpi${opts.hero ? " bz-bel-kpi--hero" : ""}${opts.click ? " bz-bel-kpi--click" : ""}"${opts.click ? ' data-bel-statclick="asset" title="只看在库（使用中与闲置）"' : ""}><b>${num2}</b><span>${esc(label)}</span></div>`;
+    return kpi(String(stockCount(items)), "在库件数", { hero: true, click: true }) + kpi(moneyShort(totalAssets(items), unit), "在库投入", { click: true }) + kpi(moneyWith(avgDailyCost(items).toFixed(2), unit), "日均成本") + kpi(`${gone.length} 件 · ${moneyShort(recover2, unit)}`, "已离场 · 回收");
+  }
+  function stampCount(items) {
+    return String(stockCount(items));
+  }
+  function mobStatsText(items, unit = "cny") {
+    return `投入 ${moneyShort(totalAssets(items), unit)} · 日均 ${moneyWith(avgDailyCost(items).toFixed(2), unit)}`;
+  }
+  function emptyHtml(noMatch) {
+    return emptyHtmlStr(
+      ICON.empty,
+      noMatch ? "没有符合条件的物品" : "这里还没有物品",
+      noMatch ? "换个筛选条件，或清除搜索" : "点「记一笔」登记第一个物品"
+    );
+  }
+  function cellHtml(it, idx, unit = "cny") {
+    var _a2;
+    const gone = isExited(it);
+    const idle = it.current_status === "闲置";
+    const days = daysUsed(it);
+    const daily = dailyCostOf(it);
+    const key = statusKeyOf(it.current_status);
+    const exitNote = gone ? `${it.exit_date ? " → " + esc(String(it.exit_date).slice(0, 10)) : ""}${it.current_status === "已转卖" && Number(it.sold_price) > 0 ? " · 售出 " + moneyShort(Number(it.sold_price), unit) : ""}` : "";
+    const dailyStr = trimDailyNum(daily);
+    const mut = gone ? `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · 陪伴 ${days || "—"} 天${exitNote}` : `${esc(String(it.purchase_date || "").slice(0, 10) || "日期未知")} 起 · ${days || "—"} 天 · 日均 ${moneyWith(dailyStr, unit)}`;
+    return `<div class="bz-bel-cell${gone ? " bz-bel-cell--gone" : ""}${idle ? " bz-bel-cell--idle" : ""}" data-bel-id="${esc(it.id)}" role="button" tabindex="0" aria-label="${esc(it.name)}，${esc(it.current_status)}，${moneyShort(Number(it.purchase_price) || 0, unit)}">
+    <span class="bz-bel-cell-idx">NO.${String(idx + 1).padStart(2, "0")} — ${esc(catNameOf(it.category) || "未分类")}</span>
+    <span class="bz-bel-tag bz-bel-tag--${key}">${iconSpan(((_a2 = STATUS[key]) == null ? void 0 : _a2.ic) || "box", "bz-ic--sm")}${esc(it.current_status)}</span>
+    <span class="bz-bel-cell-em">${itemEmHtml(it)}</span>
+    <span class="bz-bel-name">${esc(it.name)}</span>
+    <span class="bz-bel-price">${moneyShort(Number(it.purchase_price) || 0, unit)}</span>
+    <span class="bz-bel-mut">${mut}</span>
+  </div>`;
+  }
+  function gridHtml(items, view, unit = "cny", list) {
+    return `<div class="bz-bel-grid" data-bel-grid>${(list != null ? list : filtered(items, view)).map((it, idx) => cellHtml(it, idx, unit)).join("")}</div>`;
+  }
+  function renderPanelView(root, items, view, hooks, unit = "cny") {
+    var _a2;
+    const q2 = (sel) => root.querySelector(sel);
+    const title = q2("[data-bel-herotitle]");
+    if (title) title.textContent = heroTitleText(view);
+    const sub = q2("[data-bel-herosub]");
+    if (sub) sub.textContent = heroSubText(items, view);
+    const chips = q2("[data-bel-chips]");
+    if (chips) chips.innerHTML = chipsHtml(items, view);
+    const mob = q2("[data-bel-mobstatus]");
+    if (mob) mob.innerHTML = mobChipsHtml(items, view);
+    view.year = resolveYear(items, view.year);
+    const yearSel = q2("[data-bel-year]");
+    if (yearSel) {
+      yearSel.querySelector(".bz-bel-select-label").textContent = view.year || "全部年份";
+      const menu = q2("[data-bel-yearmenu]");
+      if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
+    }
+    const wrap = q2("[data-bel-kpis]");
+    if (wrap) wrap.innerHTML = kpisHtml(items, unit);
+    const stampN = q2("[data-bel-stampn]");
+    if (stampN) stampN.textContent = stampCount(items);
+    const mobStats = q2("[data-bel-mobstats]");
+    if (mobStats) mobStats.textContent = mobStatsText(items, unit);
+    const sortHost = q2("[data-bel-sort]");
+    if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
+    const mobSortSel = q2("[data-bel-mobsortsel]");
+    if (mobSortSel) {
+      mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a2 = SORT_OPTS.find((o) => o.v === view.sort)) != null ? _a2 : SORT_OPTS[0]).label;
+      const menu = q2("[data-bel-mobsortmenu]");
+      if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
+    }
+    const content = q2("[data-bel-content]");
+    if (!content) return;
+    const list = filtered(items, view);
+    if (!list.length) {
+      const noMatch = !!view.q || view.status !== null || view.year !== "";
+      content.innerHTML = emptyHtml(noMatch);
+    } else {
+      content.innerHTML = gridHtml(items, view, unit, list);
+      const gridEl = content.querySelector("[data-bel-grid]");
+      const cols = (getComputedStyle(gridEl).gridTemplateColumns || "").split(" ").filter(Boolean).length || 1;
+      const rem = list.length % cols;
+      if (rem) gridEl.insertAdjacentHTML("beforeend", `<div class="bz-bel-filler" style="grid-column:span ${cols - rem}"></div>`);
+    }
+    hooks.mountIcons(content);
+  }
+  var init_render5 = __esm({
+    "src/belongings/layouts/poster/render.ts"() {
+      init_str();
+      init_shared3();
+      init_shared3();
+    }
+  });
+
+  // src/belongings/render.ts
+  var init_render6 = __esm({
+    "src/belongings/render.ts"() {
+      init_shared3();
+      init_render5();
+    }
+  });
+
+  // src/belongings/ai.ts
+  function buildCategoryPrompt(name, history2) {
+    const menu = AI_ICON_MENU.join(", ");
+    const hist = history2.length ? `我的历史分类（优先复用）：${history2.join("、")}` : "暂无历史分类。";
+    return [
+      "你是物品收纳助手。为下面的物品给出一个分类和一枚图标。",
+      `物品名称：${name}`,
+      hist,
+      "要求：",
+      "1. category：中文分类名，2-6 个字；若历史分类里有合适的就原样复用其一，否则自拟。",
+      `2. icon：只能从这个清单里选一个英文标识符：${menu}`,
+      '只输出 JSON 对象，格式：{"category":"分类名","icon":"清单中的标识符"}'
+    ].join("\n");
+  }
+  function parseCategorySuggestion(raw) {
+    var _a2, _b2;
+    let text = String(raw || "").trim();
+    const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fence) text = fence[1].trim();
+    let obj;
+    try {
+      obj = JSON.parse(text);
+    } catch (e) {
+      return null;
+    }
+    const category = splitEmojiCategory(String((_a2 = obj == null ? void 0 : obj.category) != null ? _a2 : "")).name.trim();
+    const icon = String((_b2 = obj == null ? void 0 : obj.icon) != null ? _b2 : "").trim();
+    if (!category || category.length > 16) return null;
+    if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(icon) || !AI_ICON_MENU.includes(icon)) {
+      return { category, icon: AI_FALLBACK_ICON };
+    }
+    return { category, icon };
+  }
+  async function aiSuggestCategory(name, history2) {
+    const ai = createAI();
+    const raw = await ai.json(buildCategoryPrompt(name, history2), {});
+    const parsed = parseCategorySuggestion(raw);
+    if (!parsed) throw new Error("返回格式无法解析");
+    return parsed;
+  }
+  var AI_ICON_MENU, AI_FALLBACK_ICON;
+  var init_ai2 = __esm({
+    "src/belongings/ai.ts"() {
+      init_ai();
+      init_emoji_icon_map();
+      AI_ICON_MENU = [
+        // 数码影音
+        "smartphone",
+        "laptop",
+        "monitor",
+        "watch",
+        "headphones",
+        "speaker",
+        "printer",
+        "camera",
+        "aperture",
+        "video",
+        "focus",
+        "projector",
+        "gamepad-2",
+        "keyboard",
+        "hard-drive",
+        "disc",
+        "plug",
+        "battery-charging",
+        "lightbulb",
+        "tv",
+        "router",
+        "signal",
+        "phone",
+        "computer",
+        // 家居日用
+        "bed",
+        "sofa",
+        "armchair",
+        "lamp",
+        "lamp-desk",
+        "fan",
+        "air-vent",
+        "refrigerator",
+        "microwave",
+        "cooking-pot",
+        "blinds",
+        "archive",
+        "library",
+        "trash-2",
+        "key-round",
+        "droplets",
+        "thermometer",
+        "package",
+        "box",
+        "brush-cleaning",
+        "shower-head",
+        "bath",
+        // 厨房餐茶
+        "utensils",
+        "coffee",
+        "cup-soda",
+        "wine",
+        "milk",
+        "chef-hat",
+        "flame",
+        "snowflake",
+        // 衣服饰品
+        "shirt",
+        "footprints",
+        "handbag",
+        "backpack",
+        "luggage",
+        "briefcase",
+        "glasses",
+        "gem",
+        "crown",
+        "sparkles",
+        "scissors",
+        // 文具乐玩
+        "book",
+        "book-open",
+        "notebook",
+        "pen-line",
+        "pencil",
+        "palette",
+        "paintbrush",
+        "guitar",
+        "piano",
+        "drum",
+        "mic",
+        "music",
+        "radio",
+        "puzzle",
+        "dices",
+        "toy-brick",
+        // 运动户外
+        "volleyball",
+        "dumbbell",
+        "person-standing",
+        "waves",
+        "fish",
+        "bike",
+        "tent",
+        "mountain",
+        "wrench",
+        "hammer",
+        "shovel",
+        "flashlight",
+        "compass",
+        "telescope",
+        // 交通
+        "car",
+        "bus",
+        "truck",
+        "train-front",
+        "plane",
+        "rocket",
+        "sailboat",
+        "ship",
+        "helicopter",
+        // 生命健康
+        "pill",
+        "syringe",
+        "stethoscope",
+        "bandage",
+        "leaf",
+        "flower",
+        "sprout",
+        "tree-pine",
+        "paw-print",
+        "dog",
+        "cat",
+        "bird",
+        "bug",
+        "shell"
+      ];
+      AI_FALLBACK_ICON = "package";
+    }
+  });
+
+  // src/belongings/ui.ts
+  var ui_exports4 = {};
+  __export(ui_exports4, {
+    belongingSettingsSchema: () => belongingSettingsSchema,
+    cleanupBelongings: () => cleanupBelongings,
+    closePanel: () => closePanel,
+    openBelongingsReportView: () => openBelongingsReportView,
+    openForm: () => openForm,
+    openPanel: () => openPanel,
+    resetBelongingsState: () => resetBelongingsState
+  });
+  function resetBelongingsState() {
+    M4.overlay = null;
+    M4.db = null;
+    M4.status = null;
+    M4.year = "";
+    M4.q = "";
+    M4.sort = "recent";
+    M4.renderFn = null;
+  }
+  function currencyUnit() {
+    const v = tryGetSettings().belongingsCurrency;
+    return v === "yuan" || v === "usd" || v === "none" || v === "cny" ? v : "cny";
+  }
+  function newItemStatus() {
+    return tryGetSettings().belongingsNewStatus === STATUS.idle.label ? STATUS.idle.label : STATUS.using.label;
+  }
+  function belongingSettingsSchema() {
+    return {
+      groups: [
+        {
+          // 外观组与备忘录同构（上布局行下主题行）；占位单卡（用户拍板 C）：当前仅 P20 大字报 × 暖白，
+          // 布局/主题扩展待将来开模——键与联动契约已按可扩展形态立好
+          icon: "palette",
+          name: "外观",
+          rows: [
+            {
+              type: "choiceCards",
+              name: "面板布局",
+              binding: { key: "belSkin" },
+              options: [
+                { value: "poster", label: "大字报", prevClass: "bz-sp-prev-poster" }
+              ]
+            },
+            {
+              type: "choiceCards",
+              name: "面板主题",
+              binding: { key: "belSkinTheme" },
+              layoutKey: "belSkin",
+              options: [
+                { value: "warmwhite", label: "暖白", layout: "poster", prevClass: "bz-sp-prev-warmwhite" }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "eye",
+          name: "显示",
+          rows: [
+            {
+              type: "select",
+              name: "默认状态筛选",
+              desc: "打开面板时选中的物品状态",
+              binding: { key: "belongingsDefaultStatus" },
+              // 选项从 STATUS_ORDER 派生（cons P3-7：key/label 不再手抄第二份；「全部」置顶）
+              options: [
+                { value: "", label: "全部" },
+                ...STATUS_ORDER.map((s) => ({ value: s.key, label: s.label }))
+              ]
+            },
+            {
+              type: "select",
+              name: "默认排序",
+              desc: "打开面板时物品的排列方式",
+              binding: { key: "belongingsDefaultSort" },
+              options: [
+                { value: "recent", label: "最近购入" },
+                { value: "price", label: "投入最高" },
+                { value: "daily", label: "日均最高" }
+              ]
+            },
+            {
+              type: "select",
+              name: "金额单位",
+              desc: "价格与统计的金额显示方式",
+              binding: { key: "belongingsCurrency" },
+              options: [
+                { value: "cny", label: "￥" },
+                { value: "yuan", label: "元" },
+                { value: "usd", label: "$" },
+                { value: "none", label: "无符号" }
+              ]
+            }
+          ]
+        },
+        {
+          icon: "pencil-line",
+          name: "记一笔",
+          rows: [
+            {
+              type: "select",
+              name: "新增物品默认状态",
+              desc: "记一笔时物品的初始状态",
+              binding: { key: "belongingsNewStatus" },
+              // 在库两态（出离态不作为新记默认；选项随 STATUS 单源派生，cons P3-7）
+              options: [STATUS.using, STATUS.idle].map((s) => ({ value: s.label, label: s.label }))
+            }
+          ]
+        }
+      ]
+    };
+  }
+  function itemList() {
+    return M4.db ? Object.values(M4.db.items) : [];
+  }
+  function itemById(id) {
+    var _a2;
+    return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
+  }
+  function ensureBelongingsEsc() {
+    registerPanelEsc(
+      "bz-bel",
+      () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => {
+        if (document.querySelector(".bz-bel-form")) {
+          requestCloseBelForm();
+          return;
+        }
+        if (document.querySelector(".bz-bel-detail")) {
+          closeBelDetail();
+          return;
+        }
+        if (document.querySelector(".bz-bel-report-mask")) {
+          closeBelReport();
+          return;
+        }
+        closePanel();
+      }
+    );
+  }
+  async function openPanel() {
+    if (M4.overlay) {
+      closePanel();
+      return;
+    }
+    if (opening) return;
+    opening = true;
+    try {
+      await openPanelInner();
+    } catch (e) {
+      notifyActionError(e, "归物本数据加载", { onRetry: () => void openPanel() });
+    } finally {
+      opening = false;
+    }
+  }
+  async function openPanelInner() {
+    const st = tryGetSettings().belongingsDefaultStatus;
+    M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    const srt = tryGetSettings().belongingsDefaultSort;
+    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M4.year = "";
+    M4.db = await loadDatabase();
+    const overlay2 = document.createElement("div");
+    overlay2.className = "bz-panel-overlay";
+    overlay2.innerHTML = panelHtml();
+    document.body.appendChild(overlay2);
+    topifyZ(overlay2);
+    M4.overlay = overlay2;
+    M4.renderFn = () => renderAll();
+    mountIcons(overlay2);
+    ensureBelongingsEsc();
+    const closeDrops = () => {
+      overlay2.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
+    };
+    const onDocClick = (e) => {
+      var _a2;
+      const t = e.target;
+      const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
+      if (trig) {
+        const wrap = trig.parentElement;
+        const wasOpen = wrap.classList.contains("is-open");
+        closeDrops();
+        if (!wasOpen) wrap.classList.add("is-open");
+        return;
+      }
+      const opt = t.closest(".bz-bel-dropopt");
+      if (opt) {
+        closeDrops();
+        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
+        if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
+        else M4.sort = v;
+        renderAll();
+        return;
+      }
+      closeDrops();
+    };
+    const onDropKey = (e) => {
+      const t = e.target;
+      if ((e.key === "Enter" || e.key === " ") && t.closest(".bz-bel-select")) {
+        e.preventDefault();
+        t.click();
+      }
+    };
+    document.addEventListener("click", onDocClick);
+    overlay2.addEventListener("keydown", onDropKey);
+    dropDocClick = onDocClick;
+    overlay2.addEventListener("click", (e) => {
+      const t = e.target;
+      if (e.target === overlay2) {
+        closePanel();
+        return;
+      }
+      if (t.closest("[data-bel-add]")) {
+        void openForm(null);
+        return;
+      }
+      if (t.closest("[data-bel-report]")) {
+        void openBelongingsReportView();
+        return;
+      }
+      if (t.closest("[data-bel-close]")) {
+        closePanel();
+        return;
+      }
+      const chip2 = t.closest("[data-bel-st]");
+      if (chip2) {
+        applyStatusFilter(chip2.dataset.belSt);
+        return;
+      }
+      const segBtn = t.closest(".bz-segmented-btn");
+      if (segBtn) {
+        M4.sort = segBtn.dataset.k;
+        renderAll();
+        return;
+      }
+      const kpi = t.closest("[data-bel-statclick]");
+      if (kpi) {
+        const kind = kpi.dataset.belStatclick;
+        if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
+        renderAll();
+        return;
+      }
+    });
+    const bindSearch = (inp) => {
+      const debounced = debounce(() => {
+        if (M4.overlay !== overlay2) return;
+        M4.q = inp.value.trim();
+        renderAll();
+      }, SEARCH_DEBOUNCE_MS);
+      const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
+      const syncClear = () => {
+        if (clearBtn) clearBtn.hidden = !inp.value;
+      };
+      const clearSearch = (refocus) => {
+        debounced.cancel();
+        inp.value = "";
+        M4.q = "";
+        syncClear();
+        renderAll();
+        if (refocus) inp.focus();
+      };
+      syncClear();
+      clearBtn == null ? void 0 : clearBtn.addEventListener("click", () => clearSearch(true));
+      inp.addEventListener("input", () => {
+        syncClear();
+        debounced();
+      });
+      inp.addEventListener("keydown", (e) => {
+        if (e.key !== "Escape" || !inp.value) return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        clearSearch(false);
+        inp.blur();
+      });
+    };
+    bindSearch(overlay2.querySelector("[data-bel-search]"));
+    const content = overlay2.querySelector("[data-bel-content]");
+    content.addEventListener("click", (e) => {
+      const cell = e.target.closest("[data-bel-id]");
+      if (!cell) return;
+      e.stopPropagation();
+      const it = itemById(cell.dataset.belId);
+      if (!it) return;
+      if (isMobileEnv()) openMobSheet(it);
+      else openBelDetail(it);
+    });
+    content.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const cell = e.target.closest("[data-bel-id]");
+      if (!cell) return;
+      e.preventDefault();
+      const it = itemById(cell.dataset.belId);
+      if (!it) return;
+      if (isMobileEnv()) openMobSheet(it);
+      else openBelDetail(it);
+    });
+    content.addEventListener("contextmenu", (e) => {
+      const cell = e.target.closest("[data-bel-id]");
+      if (!cell || isMobileEnv()) return;
+      e.preventDefault();
+      const it = itemById(cell.dataset.belId);
+      if (it) openRowMenuAt(it, e.clientX, e.clientY);
+    });
+    longPress(
+      content,
+      (ev) => {
+        var _a2, _b2;
+        const cell = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]");
+        if (!cell) return;
+        const it = itemById(cell.dataset.belId);
+        if (it) openMobSheet(it);
+      },
+      void 0,
+      (ev) => {
+        var _a2, _b2;
+        return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]"));
+      }
+    );
+    renderAll();
+    startAutoRefresh();
+    observeTheme();
+  }
+  function closePanel() {
+    stopAutoRefresh();
+    requestCloseBelForm();
+    closeItemMenu();
+    closeBelDetail();
+    closeBelReport();
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
+    if (dropDocClick) {
+      document.removeEventListener("click", dropDocClick);
+      dropDocClick = null;
+    }
+    if (M4.overlay) {
+      M4.overlay.remove();
+      M4.overlay = null;
+    }
+    M4.renderFn = null;
+    M4.db = null;
+    M4.q = "";
+  }
+  function cleanupBelongings() {
+    closePanel();
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
+    unloadBelReport();
+    resetBelongingsState();
+  }
+  function startAutoRefresh() {
+    stopAutoRefresh();
+    const app = getApp();
+    const filePath = getDataFilePath();
+    const off = app.vault.on("modify", (file) => {
+      if ((file == null ? void 0 : file.path) !== filePath) return;
+      if (selfWritePending > 0) return;
+      void (async () => {
+        var _a2;
+        try {
+          M4.db = await loadDatabase();
+          (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        } catch (e) {
+          notifyActionError(e, "归物本数据自动刷新", {
+            onRetry: () => {
+              void (async () => {
+                var _a3;
+                try {
+                  M4.db = await loadDatabase();
+                  (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+                } catch (e2) {
+                }
+              })();
+            }
+          });
+        }
+      })();
+    });
+    autoRefreshOff = () => app.vault.offref(off);
+  }
+  function stopAutoRefresh() {
+    if (autoRefreshOff) {
+      try {
+        autoRefreshOff();
+      } catch (e) {
+      }
+      autoRefreshOff = null;
+    }
+  }
+  function observeTheme() {
+    if (bodyThemeObserver) {
+      bodyThemeObserver.disconnect();
+      bodyThemeObserver = null;
+    }
+    const themeOf = () => {
+      const cls = document.body.className.split(" ").find((c) => THEME_CLASSES.has(c));
+      return cls || "";
+    };
+    let prev = themeOf();
+    bodyThemeObserver = new MutationObserver(() => {
+      var _a2;
+      const now = themeOf();
+      if (now !== prev) {
+        prev = now;
+        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      }
+    });
+    bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+  }
+  async function saveAndRender() {
+    var _a2;
+    if (!M4.db) return;
+    selfWritePending++;
+    try {
+      await saveDatabase(M4.db);
+    } finally {
+      selfWritePending--;
+    }
+    (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+  }
+  function renderAll() {
+    if (!M4.overlay) return;
+    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
+    if (!panel2) return;
+    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
+  }
+  function applyStatusFilter(k) {
+    if (k === "__all") M4.status = null;
+    else M4.status = M4.status === k ? null : k;
+    renderAll();
+  }
+  async function openBelongingsReportView() {
+    ensureBelongingsEsc();
+    let items;
+    if (M4.db) {
+      items = itemList();
+    } else {
+      try {
+        items = Object.values((await loadDatabase()).items);
+      } catch (e) {
+        notifyActionError(e, "归物本数据加载", { onRetry: () => void openBelongingsReportView() });
+        return;
+      }
+    }
+    openBelReport(items, currencyUnit(), { onAdd: () => {
+      void openForm(null);
+    } });
+  }
+  function closeBelDetail() {
+    belDetailClose == null ? void 0 : belDetailClose();
+    belDetailClose = null;
+  }
+  function openBelDetail(it) {
+    var _a2, _b2;
+    closeBelDetail();
+    const host = document.createElement("div");
+    host.innerHTML = belDetailHtml(it, currencyUnit());
+    ensureBelongingsEsc();
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-detail",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-detail），内容规则照旧
+      onClose: () => {
+        belDetailClose = null;
+      }
+    });
+    belDetailClose = close;
+    mountIcons(mask);
+    const acts = mask.querySelector("[data-bd-acts]");
+    const drawActs = () => {
+      const cur = itemById(it.id);
+      if (!cur) return;
+      acts.innerHTML = flowBtnsHtml(cur.current_status);
+    };
+    drawActs();
+    acts.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-bd-flow]");
+      if (!b) return;
+      const cur = itemById(it.id);
+      if (!cur) {
+        closeBelDetail();
+        return;
+      }
+      void (async () => {
+        await applyFlowWithUndo(cur, b.dataset.bdFlow);
+        const now = itemById(it.id);
+        if (!now) {
+          closeBelDetail();
+          return;
+        }
+        openBelDetail(now);
+      })();
+    });
+    (_a2 = mask.querySelector("[data-bd-edit]")) == null ? void 0 : _a2.addEventListener("click", () => {
+      const cur = itemById(it.id);
+      if (cur) openForm(cur);
+    });
+    (_b2 = mask.querySelector("[data-bd-del]")) == null ? void 0 : _b2.addEventListener("click", () => {
+      const cur = itemById(it.id);
+      if (cur) void deleteItem(cur);
+    });
+  }
+  function sheetHeadEl2(it) {
+    const holder = document.createElement("div");
+    holder.innerHTML = sheetHeadHtml(it, currencyUnit());
+    mountIcons(holder);
+    return holder.firstElementChild;
+  }
+  async function applyFlowWithUndo(it, s) {
+    var _a2, _b2;
+    const cur = itemById(it.id);
+    if (!cur) {
+      notice("该物品已被外部变更删除，列表已刷新", "warning");
+      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      return;
+    }
+    const prevStatus = cur.current_status;
+    const prevExit = cur.exit_date;
+    cur.current_status = s;
+    if (isExited(cur)) {
+      if (!exitedStatus(prevStatus)) cur.exit_date = todayStr();
+    } else if (cur.exit_date != null) {
+      cur.exit_date = null;
+    }
+    cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+    try {
+      await saveAndRender();
+    } catch (e) {
+      notifySaveError(e, "状态流转");
+      M4.db = await loadDatabase().catch(() => null);
+      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      return;
+    }
+    emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
+    notifyUndo(`「${cur.name}」已标记为${s}`, () => {
+      void (async () => {
+        var _a3;
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          const now = itemById(it.id);
+          if (!now) {
+            notice("该物品已被外部变更删除，无法撤销", "warning");
+            return;
+          }
+          now.current_status = prevStatus;
+          if (prevExit != null) now.exit_date = prevExit;
+          else if (now.exit_date != null) now.exit_date = null;
+          now.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+          await saveAndRender();
+          emitDomainEvent("belongings", { kind: "status", title: now.name, status: prevStatus });
+          notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销状态");
+          M4.db = await loadDatabase().catch(() => null);
+          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+        }
+      })();
+    }, { type: "restore" });
+  }
+  function buildActions(it, rebuild) {
+    return actionSpecs(it).map((sp) => ({
+      icon: sp.icon,
+      label: sp.label,
+      keepOpen: sp.keepOpen,
+      kind: sp.danger ? "danger" : void 0,
+      onClick: () => {
+        if (sp.act === "flow" && sp.status) {
+          void (async () => {
+            await applyFlowWithUndo(it, sp.status);
+            rebuild();
+          })();
+          return;
+        }
+        if (sp.act === "edit") {
+          openForm(it);
+          return;
+        }
+        void deleteItem(it);
+      }
+    }));
+  }
+  function makeSheetRebuild(it) {
+    const rebuild = () => {
+      const it2 = itemById(it.id);
+      if (it2) refreshItemSheet(buildActions(it2, rebuild), sheetHeadEl2(it2));
+    };
+    return rebuild;
+  }
+  function openRowMenuAt(it, x, y) {
+    const rebuild = makeSheetRebuild(it);
+    openItemMenu(x, y, buildActions(it, rebuild), true, "bz-bel-menu");
+    resetItemMenuClickGuard();
+  }
+  function openMobSheet(it) {
+    const rebuild = makeSheetRebuild(it);
+    openItemSheet(buildActions(it, rebuild), { sheetHead: sheetHeadEl2(it) });
+  }
+  async function deleteItem(it) {
+    var _a2, _b2;
+    if (!M4.db) return;
+    if (!M4.db.items[it.id]) {
+      notice("该物品已被外部变更删除，列表已刷新", "warning");
+      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      return;
+    }
+    const snapshot2 = { ...M4.db.items[it.id] };
+    delete M4.db.items[it.id];
+    closeBelDetail();
+    try {
+      await saveAndRender();
+    } catch (e) {
+      M4.db.items[snapshot2.id] = snapshot2;
+      notifySaveError(e, "删除物品");
+      M4.db = await loadDatabase().catch(() => null);
+      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      return;
+    }
+    emitDomainEvent("belongings", { kind: "delete", title: it.name });
+    notifyUndo(`已删除「${it.name}」`, () => {
+      void (async () => {
+        var _a3;
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          if (M4.db.items[snapshot2.id]) {
+            notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
+            return;
+          }
+          M4.db.items[snapshot2.id] = snapshot2;
+          await saveAndRender();
+          notice(`已恢复「${snapshot2.name}」`, "success");
+        } catch (e) {
+          notifySaveError(e, "撤销删除");
+          M4.db = await loadDatabase().catch(() => null);
+          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+        }
+      })();
+    }, { type: "restore" });
+  }
+  function belFormStatusNow(mask) {
+    var _a2;
+    return ((_a2 = mask.querySelector("[data-status].is-on")) == null ? void 0 : _a2.dataset.status) || "";
+  }
+  function belFormDirty() {
+    if (!_belBaseline) return false;
+    const pop = document.querySelector(".bz-bel-form");
+    if (!pop) return false;
+    const g = (id) => {
+      var _a2, _b2;
+      return (_b2 = (_a2 = pop.querySelector(id)) == null ? void 0 : _a2.value) != null ? _b2 : "";
+    };
+    return g("#bm-name") !== _belBaseline.name || g("#bm-cat") !== _belBaseline.cat || g("#bm-price") !== _belBaseline.price || g("#bm-date") !== _belBaseline.date || g("#bm-desc") !== _belBaseline.desc || g("#bm-exitdate") !== _belBaseline.exitDate || g("#bm-soldprice") !== _belBaseline.soldPrice || belFormStatusNow(pop) !== _belBaseline.status;
+  }
+  function closeBelForm() {
+    _belBaseline = null;
+    _belFormTargetId = null;
+    if (belFormMask) unregisterSheetCompanion(belFormMask);
+    belFormMask = null;
+    belFormClose == null ? void 0 : belFormClose();
+    belFormClose = null;
+  }
+  function requestCloseBelForm() {
+    if (belFormDirty()) confirmDiscard(() => closeBelForm(), void 0, "bz-bel-flow-dialog");
+    else closeBelForm();
+  }
+  function openForm(it) {
+    var _a2, _b2, _c, _d, _e;
+    const existing = document.querySelector(".bz-bel-form");
+    if (existing) {
+      const targetId = (_a2 = it == null ? void 0 : it.id) != null ? _a2 : null;
+      if (_belFormTargetId === targetId) {
+        (_b2 = existing.querySelector("input, textarea")) == null ? void 0 : _b2.focus();
+      } else {
+        notice("已有打开的表单，请先保存或关闭后再编辑其他物品", "warning");
+      }
+      return;
+    }
+    if (!M4.db) {
+      void loadDatabase().then((db) => {
+        M4.db = db;
+        openForm(it);
+      }).catch((e) => {
+        notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
+      });
+      return;
+    }
+    const init = belFormInit(it);
+    ensureBelongingsEsc();
+    const host = document.createElement("div");
+    host.innerHTML = belFormHtml(it, currencyUnit());
+    const { mask, close } = uiModal({
+      content: host.firstElementChild,
+      className: "bz-bel-form",
+      // 海报卡皮挂 popup（.bz-overlay-popup.bz-bel-form），内容规则照旧
+      requestClose: () => requestCloseBelForm(),
+      onClose: () => {
+        belFormClose = null;
+      }
+    });
+    belFormClose = close;
+    belFormMask = mask;
+    _belFormTargetId = (_c = it == null ? void 0 : it.id) != null ? _c : null;
+    mountIcons(mask);
+    const sheetOpen = !!document.querySelector(".bz-item-sheet-mask");
+    if (it && sheetOpen) registerSheetCompanion(mask);
+    _belBaseline = {
+      name: (_d = it == null ? void 0 : it.name) != null ? _d : "",
+      cat: init.catVal,
+      price: init.priceVal,
+      date: init.dateVal,
+      status: (it == null ? void 0 : it.current_status) || newItemStatus(),
+      desc: init.descVal,
+      exitDate: init.exitDateVal,
+      soldPrice: init.soldPriceVal
+    };
+    const catInput = mask.querySelector("#bm-cat");
+    let formIcon = (it == null ? void 0 : it.icon) || null;
+    const iconChip = mask.querySelector("#bm-icon");
+    const drawIconChip = () => {
+      iconChip.replaceChildren();
+      iconChip.hidden = !formIcon;
+      if (formIcon) iconChip.appendChild(uiIconSpan(formIcon));
+    };
+    drawIconChip();
+    const historyIconOf = (cat) => {
+      var _a3, _b3;
+      return ((_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+    };
+    uiSuggest({
+      anchor: catInput,
+      source: () => {
+        var _a3, _b3;
+        return (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+      },
+      max: 60,
+      iconOf: (raw) => {
+        const name = historyIconOf(raw);
+        return name ? uiIconSpan(name) : "";
+      },
+      onPick: (raw) => {
+        const name = historyIconOf(raw);
+        if (name) {
+          formIcon = name;
+          drawIconChip();
+        }
+      }
+    });
+    const statusPick = mask.querySelector("#bm-status");
+    const exitRow = mask.querySelector("#bm-exit");
+    const soldField = mask.querySelector("#bm-soldfield");
+    let curStatus = (it == null ? void 0 : it.current_status) || newItemStatus();
+    const syncExitRow = () => {
+      const exited = exitedStatus(curStatus);
+      exitRow.hidden = !exited;
+      soldField.hidden = curStatus !== STATUS.sold.label;
+    };
+    const drawStatus = () => {
+      statusPick.innerHTML = statusPickHtml(curStatus);
+      mountIcons(statusPick);
+      statusPick.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => {
+        curStatus = b.dataset.status;
+        drawStatus();
+      }));
+      syncExitRow();
+    };
+    drawStatus();
+    const errEl = mask.querySelector("#bm-err");
+    const fail = (msg) => {
+      errEl.textContent = msg;
+    };
+    const saveBtn = mask.querySelector("#bm-save");
+    let saving = false;
+    const aiBtn = mask.querySelector("#bm-ai");
+    aiBtn.addEventListener("click", () => {
+      if (aiBtn.disabled) return;
+      const aiName = mask.querySelector("#bm-name").value.trim();
+      if (!aiName) {
+        fail("先填物品名称，AI 才能归类");
+        return;
+      }
+      aiBtn.disabled = true;
+      aiBtn.classList.add("is-busy");
+      void (async () => {
+        var _a3, _b3, _c2;
+        try {
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          catInput.value = sug.category;
+          formIcon = sug.icon;
+          drawIconChip();
+          errEl.textContent = "";
+        } catch (e) {
+          fail("AI 归类失败：" + ((e == null ? void 0 : e.message) || "未知错误"));
+        } finally {
+          aiBtn.disabled = false;
+          aiBtn.classList.remove("is-busy");
+        }
+      })();
+    });
+    (_e = mask.querySelector("[data-bm-cancel]")) == null ? void 0 : _e.addEventListener("click", () => requestCloseBelForm());
+    saveBtn.addEventListener("click", () => {
+      if (saving) return;
+      const name = mask.querySelector("#bm-name").value.trim();
+      const price = parseFloat(mask.querySelector("#bm-price").value);
+      const date = mask.querySelector("#bm-date").value;
+      if (!name) {
+        fail("请输入物品名称");
+        return;
+      }
+      if (!Number.isFinite(price) || price < 0) {
+        fail("请输入有效的价格");
+        return;
+      }
+      if (price > MAX_PRICE) {
+        fail("价格超出可记录范围（上限一万亿），请检查是否多输了几位");
+        return;
+      }
+      if (!date) {
+        fail("请选择购买日期");
+        return;
+      }
+      const category = catInput.value.trim();
+      if (!category) {
+        fail("请选择或输入分类");
+        return;
+      }
+      const exited = exitedStatus(curStatus);
+      const exitVal = exited ? mask.querySelector("#bm-exitdate").value : "";
+      const exitDate = exited ? exitVal || todayStr() : "";
+      if (exitDate && exitDate < date) {
+        fail("出离日期不能早于购买日期");
+        return;
+      }
+      const soldRaw = curStatus === STATUS.sold.label ? mask.querySelector("#bm-soldprice").value.trim() : "";
+      let soldPrice = null;
+      if (soldRaw !== "") {
+        const sp = parseFloat(soldRaw);
+        if (!Number.isFinite(sp) || sp < 0) {
+          fail("请输入有效的售价");
+          return;
+        }
+        if (sp > MAX_PRICE) {
+          fail("售价超出可记录范围（上限一万亿），请检查是否多输了几位");
+          return;
+        }
+        soldPrice = Math.round(sp * 100) / 100;
+      }
+      const desc = mask.querySelector("#bm-desc").value.trim();
+      saving = true;
+      saveBtn.disabled = true;
+      saveBtn.textContent = "保存中…";
+      void (async () => {
+        try {
+          if (!M4.db) M4.db = await loadDatabase();
+          if (it) {
+            const cur = itemById(it.id);
+            if (!cur) {
+              notice("该物品已被外部变更删除，本次保存未写入", "warning");
+              closeItemMenu();
+              closeBelForm();
+              return;
+            }
+            const snapshot2 = { ...cur };
+            cur.name = name;
+            cur.category = category;
+            cur.icon = formIcon;
+            cur.purchase_price = Math.round(price * 100) / 100;
+            cur.purchase_date = date;
+            cur.current_status = curStatus;
+            cur.description = desc;
+            if (exited) cur.exit_date = exitDate;
+            else if (cur.exit_date != null) cur.exit_date = null;
+            if (curStatus === STATUS.sold.label) cur.sold_price = soldPrice;
+            else if (cur.sold_price != null) cur.sold_price = null;
+            cur.last_updated = (/* @__PURE__ */ new Date()).toISOString();
+            await saveAndRender();
+            if (document.querySelector(".bz-bel-detail")) {
+              const redrew = itemById(it.id);
+              if (redrew) openBelDetail(redrew);
+            }
+            if (isBelReportOpen()) void openBelongingsReportView();
+            emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
+          } else {
+            if (!M4.db) throw new Error("数据库未加载");
+            const newItem = {
+              // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
+              id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
+              name,
+              category,
+              purchase_price: Math.round(price * 100) / 100,
+              purchase_date: date,
+              current_status: curStatus,
+              description: desc,
+              created_date: (/* @__PURE__ */ new Date()).toISOString(),
+              last_updated: (/* @__PURE__ */ new Date()).toISOString(),
+              ...exited ? { exit_date: exitDate } : {},
+              ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
+              ...formIcon ? { icon: formIcon } : {}
+            };
+            M4.db.items[newItem.id] = newItem;
+            await saveAndRender();
+            if (isBelReportOpen()) void openBelongingsReportView();
+            emitDomainEvent("belongings", { kind: "add", item: newItem });
+          }
+          closeItemMenu();
+          closeBelForm();
+        } catch (e) {
+          notifySaveError(e);
+          saving = false;
+          saveBtn.disabled = false;
+          saveBtn.textContent = it ? "保存" : "添加";
+        }
+      })();
+    });
+    bindFormSubmit(mask, () => saveBtn.click());
+  }
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var init_ui5 = __esm({
+    "src/belongings/ui.ts"() {
+      init_notice();
+      init_z_order();
+      init_app();
+      init_esc_manager();
+      init_mobile();
+      init_utils();
+      init_dom();
+      init_settings_provider();
+      init_flow_dialog();
+      init_ui();
+      init_modal();
+      init_item_actions();
+      init_domain_bus();
+      init_belongings_source();
+      init_data7();
+      init_report();
+      init_render6();
+      init_ai2();
+      THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
+      SEARCH_DEBOUNCE_MS = 180;
+      M4 = {
+        overlay: null,
+        db: null,
+        status: null,
+        year: "",
+        q: "",
+        sort: "recent",
+        renderFn: null
+      };
+      dropDocClick = null;
+      DEFAULT_STATUS_VALUES = ["", "asset", ...STATUS_ORDER.map((s) => s.key)];
+      autoRefreshOff = null;
+      selfWritePending = 0;
+      bodyThemeObserver = null;
+      opening = false;
+      belDetailClose = null;
+      _belBaseline = null;
+      _belFormTargetId = null;
+      belFormClose = null;
+      belFormMask = null;
+    }
+  });
+
+  // src/clipbook/news-data.ts
+  function getNewsFilePath() {
+    return storageFile("news.json");
+  }
+  function emptyData() {
+    return { articles: [], stats: DEFAULT_STATS(), bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", sources: { ...DEFAULT_SOURCES }, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+  }
+  function parseRssFeeds(raw) {
+    var _a2, _b2;
+    if (!Array.isArray(raw)) return [];
+    const out = [];
+    for (const it of raw) {
+      if (!it || typeof it !== "object") continue;
+      const url = String((_a2 = it.url) != null ? _a2 : "").trim();
+      if (!url) continue;
+      const title = String((_b2 = it.title) != null ? _b2 : "").trim();
+      out.push(title ? { url, title } : { url });
+    }
+    return out;
+  }
+  function looksLikeFeedXml(xml) {
+    return /<(rss|feed|RDF)[\s>]/i.test(String(xml || ""));
+  }
+  function extractFeedTitleFromXml(xml) {
+    const m = String(xml || "").match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+    if (!m) return null;
+    const t = m[1].replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1").replace(/<[^>]+>/g, "").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+    return t || null;
+  }
+  function normalizeRssFeedUrl(text) {
+    const t = String(text || "").trim();
+    return /^https?:\/\/\S+$/i.test(t) ? t : null;
+  }
+  function parseBilibiliUpInfo(raw) {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
+    const out = {};
+    for (const [uid, v] of Object.entries(raw)) {
+      if (!v || typeof v !== "object") continue;
+      const info = {};
+      if (v.name) info.name = String(v.name);
+      if (v.avatar) info.avatar = String(v.avatar).replace(/^http:/, "https:");
+      out[uid] = info;
+    }
+    return out;
+  }
+  function parseBilibiliMaxItems(raw) {
+    const n = Math.floor(Number(raw));
+    return Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+  }
+  function parseBilibiliCookie(raw) {
+    return typeof raw === "string" ? raw.trim() : "";
+  }
+  function normalizeFetchIntervalMin(raw) {
+    const n = Math.floor(Number(raw));
+    return FETCH_INTERVAL_STEPS.includes(n) ? n : DEFAULT_FETCH_INTERVAL_MIN;
+  }
+  function wrapArrayToNewsData(articles) {
+    const data = emptyData();
+    data.articles = Array.isArray(articles) ? articles : [];
+    return data;
+  }
+  function mergeStatsInto(data, oldStats) {
+    if (statsHasData(data.stats)) return data;
+    const s = oldStats && typeof oldStats === "object" ? oldStats : null;
+    if (!s) return data;
+    return {
+      ...data,
+      stats: {
+        totalRead: Number(s.totalRead) || 0,
+        totalSaved: Number(s.totalSaved) || 0,
+        totalSkipped: Number(s.totalSkipped) || 0,
+        byPlatform: s.byPlatform && typeof s.byPlatform === "object" ? s.byPlatform : {},
+        byDate: s.byDate && typeof s.byDate === "object" ? s.byDate : {}
+      }
+    };
+  }
+  function statsHasData(stats) {
+    if (!stats || typeof stats !== "object") return false;
+    return (Number(stats.totalRead) || 0) > 0 || (Number(stats.totalSaved) || 0) > 0 || (Number(stats.totalSkipped) || 0) > 0 || (stats.byPlatform && Object.keys(stats.byPlatform).length > 0) === true || (stats.byDate && Object.keys(stats.byDate).length > 0) === true;
+  }
+  function parseNewsFileContent(raw) {
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (e) {
+      return null;
+    }
+    if (Array.isArray(parsed)) return wrapArrayToNewsData(parsed);
+    if (parsed && typeof parsed === "object") {
+      const obj = parsed;
+      return {
+        articles: Array.isArray(obj.articles) ? obj.articles : [],
+        stats: obj.stats && typeof obj.stats === "object" ? obj.stats : DEFAULT_STATS(),
+        bilibiliUps: Array.isArray(obj.bilibiliUps) ? obj.bilibiliUps.map((u) => String(u != null ? u : "").trim()).filter(Boolean) : [],
+        bilibiliUpInfo: parseBilibiliUpInfo(obj.bilibiliUpInfo),
+        bilibiliMaxItems: parseBilibiliMaxItems(obj.bilibiliMaxItems),
+        bilibiliCookie: parseBilibiliCookie(obj.bilibiliCookie),
+        sources: obj.sources && typeof obj.sources === "object" ? { ...DEFAULT_SOURCES, ...obj.sources } : { ...DEFAULT_SOURCES },
+        rssFeeds: parseRssFeeds(obj.rssFeeds),
+        lastFetchAt: Number(obj.lastFetchAt) > 0 ? Math.floor(Number(obj.lastFetchAt)) : 0,
+        fetchIntervalMin: normalizeFetchIntervalMin(obj.fetchIntervalMin)
+      };
+    }
+    return null;
+  }
+  async function readNewsData() {
+    const missing = !getApp().vault.getAbstractFileByPath(getNewsFilePath());
+    let corrupt = false;
+    let readThrew = false;
+    const parsed = await jsonFileStore(getNewsFilePath(), {
+      defaultValue: () => emptyData(),
+      onCorrupt: () => {
+        corrupt = true;
+        return false;
+      }
+    }).read().then(
+      (v) => v,
+      () => {
+        readThrew = true;
+        return null;
+      }
+    );
+    if (readThrew) return { ok: false, missing: false, data: emptyData(), corrupt: false };
+    if (corrupt || parsed === null) return { ok: false, missing: false, data: emptyData(), corrupt: true };
+    const content = parseNewsFileContent(JSON.stringify(parsed));
+    if (!content) return { ok: false, missing: false, data: emptyData(), corrupt: true };
+    return { ok: true, missing, data: content, corrupt: false };
+  }
+  async function writeNewsData(data) {
+    await jsonFileStore(getNewsFilePath()).write(data);
+  }
+  async function writeNewsDataMerged(intent) {
+    var _a2;
+    const res = await readNewsData();
+    if (!res.ok) return;
+    const base = res.data;
+    const next = { ...base };
+    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
+      const patchList = intent.set.articles || [];
+      const removeKeys = new Set(intent.removeArticleKeys || []);
+      const patchByKey = /* @__PURE__ */ new Map();
+      for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
+      const merged = [];
+      const seen = /* @__PURE__ */ new Set();
+      for (const a of base.articles || []) {
+        const k = articleKeyOf(a);
+        if (removeKeys.has(k)) continue;
+        seen.add(k);
+        merged.push(patchByKey.has(k) ? patchByKey.get(k) : a);
+      }
+      for (const a of patchList) {
+        const k = articleKeyOf(a);
+        if (!seen.has(k)) {
+          merged.push(a);
+          seen.add(k);
+        }
+      }
+      next.articles = merged;
+    }
+    for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin"]) {
+      if (intent.set[seg] !== void 0) {
+        next[seg] = intent.set[seg];
+      }
+    }
+    if (intent.patchBilibiliUpInfo) {
+      next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent.patchBilibiliUpInfo };
+    }
+    if (intent.patchRssFeedTitles) {
+      const titles = intent.patchRssFeedTitles;
+      next.rssFeeds = (next.rssFeeds || []).map(
+        (f) => titles[f.url] !== void 0 ? { ...f, title: titles[f.url] } : f
+      );
+    }
+    await writeNewsData(next);
+  }
+  function parseUidFromText(text) {
+    const t = String(text || "").trim();
+    if (!t) return null;
+    const pure = t.match(/^\d{1,10}$/);
+    if (pure) return pure[0];
+    const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
+    if (space) return space[1];
+    return null;
+  }
+  function parseBvidFromText(text) {
+    const t = String(text || "").trim();
+    const m = t.match(/bilibili\.com\/video\/(BV[0-9A-Za-z]+)/i);
+    return m ? m[1] : null;
+  }
+  async function resolveUidFromInputDetailed(text) {
+    var _a2;
+    const local = parseUidFromText(text);
+    if (local) return { uid: local, networkFailed: false };
+    const bvid = parseBvidFromText(text);
+    if (!bvid) return { uid: null, networkFailed: false };
+    const body = await httpGetText(`https://api.bilibili.com/x/web-interface/view?bvid=${bvid}`, {
+      timeoutMs: 1e4,
+      fetchImpl: requestUrlAsFetch()
+    });
+    if (body === null) return { uid: null, networkFailed: true };
+    try {
+      const json = JSON.parse(body);
+      const mid = json && json.data && json.data.owner ? String((_a2 = json.data.owner.mid) != null ? _a2 : "") : "";
+      return { uid: mid || null, networkFailed: false };
+    } catch (e) {
+      return { uid: null, networkFailed: false };
+    }
+  }
+  async function migrateLegacyStats(data) {
+    if (statsHasData(data.stats)) return data;
+    const app = getApp();
+    const af = app.vault.getAbstractFileByPath(STATS_JSON_PATH);
+    if (!af) return data;
+    try {
+      const raw = await app.vault.read(af);
+      const old = JSON.parse(raw);
+      const merged = mergeStatsInto(data, old);
+      return merged === data ? data : merged;
+    } catch (e) {
+      return data;
+    }
+  }
+  function applyRetention(articles, savedDays, skippedDays, now = Date.now()) {
+    const DAY = 24 * 60 * 60 * 1e3;
+    const kept = [];
+    for (const a of articles) {
+      if (!a || a.read !== true) {
+        kept.push(a);
+        continue;
+      }
+      const state3 = a.state === "saved" ? "saved" : "skipped";
+      const days = state3 === "saved" ? savedDays : skippedDays;
+      if (!Number.isFinite(days) || days <= 0) {
+        kept.push(a);
+        continue;
+      }
+      const t = new Date(a.fetchedAt || a.date || "").getTime();
+      if (!Number.isFinite(t)) {
+        kept.push(a);
+        continue;
+      }
+      if (now - t > days * DAY) continue;
+      kept.push(a);
+    }
+    return kept;
+  }
+  function normalizeRetentionDays(v) {
+    const n = Number(String(v || "").trim());
+    return Number.isFinite(n) && n > 0 ? n : null;
+  }
+  var STATS_JSON_PATH, DEFAULT_SOURCES, DEFAULT_STATS, FETCH_INTERVAL_STEPS, DEFAULT_FETCH_INTERVAL_MIN;
+  var init_news_data = __esm({
+    "src/clipbook/news-data.ts"() {
+      init_app();
+      init_storage();
+      init_http();
+      init_constants();
+      STATS_JSON_PATH = "CONFIG/STORAGE/news-stats.json";
+      DEFAULT_SOURCES = { zhihu: true, guokr: true, bilibili: true, rss: true };
+      DEFAULT_STATS = () => ({ totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} });
+      FETCH_INTERVAL_STEPS = [30, 60, 120, 360];
+      DEFAULT_FETCH_INTERVAL_MIN = 30;
+    }
+  });
+
+  // src/clipbook/write-queue.ts
+  function enqueueNewsWrite(op) {
+    return enqueueFileTask(getNewsFilePath(), op);
+  }
+  var init_write_queue = __esm({
+    "src/clipbook/write-queue.ts"() {
+      init_storage();
+      init_news_data();
+    }
+  });
+
+  // src/clipbook/news-source-settings.ts
+  var news_source_settings_exports = {};
+  __export(news_source_settings_exports, {
+    addBilibiliUp: () => addBilibiliUp,
+    addRssFeed: () => addRssFeed,
+    emptyDataSourceState: () => emptyDataSourceState,
+    readDataSourceState: () => readDataSourceState,
+    removeBilibiliUp: () => removeBilibiliUp,
+    removeRssFeed: () => removeRssFeed,
+    writeBilibiliCookie: () => writeBilibiliCookie,
+    writeBilibiliMaxItems: () => writeBilibiliMaxItems,
+    writeFetchInterval: () => writeFetchInterval,
+    writeSources: () => writeSources
+  });
+  function emptyDataSourceState(exists = false) {
+    return { exists, sources: { ...DEFAULT_SOURCES }, bilibiliUps: [], bilibiliUpInfo: {}, bilibiliMaxItems: 10, bilibiliCookie: "", totalArticles: 0, rssFeeds: [], lastFetchAt: 0, fetchIntervalMin: 30 };
+  }
+  async function readDataSourceState() {
+    const res = await readNewsData();
+    if (res.missing) {
+      return emptyDataSourceState(false);
+    }
+    if (!res.ok) {
+      return emptyDataSourceState(true);
+    }
+    return {
+      exists: true,
+      sources: { ...res.data.sources },
+      bilibiliUps: [...res.data.bilibiliUps],
+      bilibiliUpInfo: { ...res.data.bilibiliUpInfo },
+      bilibiliMaxItems: res.data.bilibiliMaxItems,
+      bilibiliCookie: res.data.bilibiliCookie,
+      totalArticles: res.data.articles.length,
+      rssFeeds: [...res.data.rssFeeds],
+      lastFetchAt: res.data.lastFetchAt,
+      fetchIntervalMin: res.data.fetchIntervalMin
+    };
+  }
+  async function writeSources(sources) {
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { sources: { ...sources } } });
+      return true;
+    });
+  }
+  async function addBilibiliUp(uid) {
+    const id = String(uid || "").trim();
+    if (!id) return "invalid";
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return "read-failed";
+      if (res.data.bilibiliUps.includes(id)) return "exists";
+      await writeNewsDataMerged({ set: { bilibiliUps: [...res.data.bilibiliUps, id] } });
+      return "added";
+    });
+  }
+  async function writeBilibiliMaxItems(v) {
+    const n = Math.floor(Number(v));
+    const maxItems = Number.isFinite(n) && n >= 1 ? Math.min(n, 50) : 10;
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { bilibiliMaxItems: maxItems } });
+      return true;
+    });
+  }
+  async function writeBilibiliCookie(cookie) {
+    const c = String(cookie || "").trim();
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { bilibiliCookie: c } });
+      return true;
+    });
+  }
+  async function writeFetchInterval(v) {
+    const n = normalizeFetchIntervalMin(v);
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { fetchIntervalMin: n } });
+      return true;
+    });
+  }
+  async function addRssFeed(url, title) {
+    const u = normalizeRssFeedUrl(url);
+    if (!u) return "invalid";
+    const t = String(title || "").trim();
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return "read-failed";
+      if (res.data.rssFeeds.some((f) => f.url === u)) return "exists";
+      const feed = t ? { url: u, title: t } : { url: u };
+      await writeNewsDataMerged({ set: { rssFeeds: [...res.data.rssFeeds, feed] } });
+      return "added";
+    });
+  }
+  async function removeRssFeed(url) {
+    const u = String(url || "").trim();
+    if (!u) return false;
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      await writeNewsDataMerged({ set: { rssFeeds: res.data.rssFeeds.filter((f) => f.url !== u) } });
+      return true;
+    });
+  }
+  async function removeBilibiliUp(uid) {
+    return enqueueNewsWrite(async () => {
+      const res = await readNewsData();
+      if (!res.ok) return false;
+      const info = { ...res.data.bilibiliUpInfo };
+      delete info[uid];
+      await writeNewsDataMerged({
+        set: { bilibiliUps: res.data.bilibiliUps.filter((u) => u !== uid), bilibiliUpInfo: info }
+      });
+      return true;
+    });
+  }
+  var init_news_source_settings = __esm({
+    "src/clipbook/news-source-settings.ts"() {
+      init_news_data();
+      init_write_queue();
+    }
+  });
+
+  // src/auto-summary/parser.ts
+  function unquote(v) {
+    if (v.startsWith('"') && v.endsWith('"') || v.startsWith("'") && v.endsWith("'")) return v.slice(1, -1);
+    return v;
+  }
+  function parseFrontmatter2(content) {
+    const m = content.match(/^\s*---\s*\n([\s\S]*?)\n\s*---\s*\n/);
+    if (!m) return { fm: null, body: content, extraLines: [] };
+    const fm = {};
+    const extraLines = [];
+    const lines = m[1].split("\n");
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const kv = line.match(KEY_LINE_RE);
+      if (kv) {
+        const key = kv[1].trim();
+        let val = kv[2].trim();
+        if (BLOCK_SCALAR_RE.test(val)) {
+          const bodyLines = [];
+          let indent = null;
+          let j = i + 1;
+          for (; j < lines.length; j++) {
+            const l = lines[j];
+            if (l.trim() === "") {
+              bodyLines.push("");
+              continue;
+            }
+            const lm = l.match(/^([ \t]+)\S/);
+            if (!lm) break;
+            if (indent === null) indent = lm[1];
+            bodyLines.push(l.startsWith(indent) ? l.slice(indent.length) : l.replace(/^[ \t]+/, ""));
+          }
+          fm[key] = bodyLines.join("\n").replace(/\n+$/, "");
+          i = j - 1;
+          continue;
+        }
+        if (val === "") {
+          const nested = [];
+          let sawNested = false;
+          let j = i + 1;
+          for (; j < lines.length; j++) {
+            const l = lines[j];
+            if (l.trim() === "") {
+              nested.push(l);
+              continue;
+            }
+            if (LIST_ITEM_RE.test(l)) break;
+            if (/^[ \t]/.test(l)) {
+              sawNested = true;
+              nested.push(l);
+              continue;
+            }
+            break;
+          }
+          if (sawNested) {
+            extraLines.push(line, ...nested);
+            i = j - 1;
+            continue;
+          }
+          fm[key] = "";
+          continue;
+        }
+        if (val.startsWith('"') && val.endsWith('"') || val.startsWith("'") && val.endsWith("'")) val = val.slice(1, -1);
+        if (val.startsWith("[")) {
+          try {
+            val = JSON.parse(val);
+          } catch (e) {
+          }
+        }
+        fm[key] = val;
+      } else if (LIST_ITEM_RE.test(line)) {
+        const lastKey = Object.keys(fm).pop();
+        if (lastKey && !Array.isArray(fm[lastKey])) fm[lastKey] = [];
+        if (lastKey) {
+          fm[lastKey].push(unquote(line.replace(LIST_ITEM_RE, "$1").trim()));
+        } else {
+          extraLines.push(line);
+        }
+      } else {
+        extraLines.push(line);
+      }
+    }
+    const body = content.slice(m[0].length);
+    return { fm, body, extraLines };
+  }
+  function buildFrontmatter(fm, extraLines = []) {
+    const lines = ["---"];
+    for (const [k, v] of Object.entries(fm)) {
+      if (Array.isArray(v)) {
+        lines.push(`${k}:`);
+        for (const item of v) lines.push(`  - "${item}"`);
+      } else if (v === null || v === void 0 || v === "") {
+        lines.push(`${k}: ""`);
+      } else {
+        lines.push(`${k}: "${String(v).replace(/"/g, '\\"').replace(/[\r\n]+/g, " ")}"`);
+      }
+    }
+    lines.push(...extraLines);
+    lines.push("---");
+    return lines.join("\n");
+  }
+  function extractBodyForAI(body) {
+    return body.replace(/^\s*```dataviewjs[\s\S]*?```\s*/m, "").trim();
+  }
+  var KEY_LINE_RE, LIST_ITEM_RE, BLOCK_SCALAR_RE;
+  var init_parser = __esm({
+    "src/auto-summary/parser.ts"() {
+      KEY_LINE_RE = /^([^\s:#-][^:]*):(.*)$/;
+      LIST_ITEM_RE = /^[ \t]*-[ \t]+(.*)$/;
+      BLOCK_SCALAR_RE = /^[|>][+-]?$/;
+    }
+  });
+
+  // src/auto-summary/processor.ts
+  function dedupeKeyFor(file) {
+    return `auto-summary:${file.path}#${++attemptSeq}`;
+  }
+  async function humanizeFailReason() {
+    try {
+      await getAIProvider();
+      return "摘要生成失败，请重试";
+    } catch (e) {
+      return "AI 服务未配置或不可用，请到设置页配置";
+    }
+  }
+  function buildTagsRule(tagRange) {
+    return `tags 规则：
+- ${tagRange || "3-6"} 个中文标签，每个不超过 5 个字
+- 涵盖：主题领域、关键技术/概念、应用场景`;
+  }
+  async function aiProcess(ai, bodyText, missing, opts = {}) {
+    const length = opts.summaryLength || "standard";
+    const summaryRule = SUMMARY_LENGTH_RULES[length] || SUMMARY_LENGTH_RULES.standard;
+    const needed = missing.filter((f) => f !== "tags" || opts.tagsEnabled !== false);
+    const fieldLines = needed.filter((f) => FIELD_DEFS[f]).map((f) => "  " + (f === "summary" ? summaryRule : FIELD_DEFS[f]));
+    if (fieldLines.length === 0) return null;
+    const prompt = `你是一个资讯文章分析助手。以下是一篇已转换为 Markdown 的文章正文。请分析内容，返回一个 JSON 对象（只返回 JSON，不要其他文字）：
+
+{
+${fieldLines.join(",\n")}
+}
+
+${needed.includes("tags") ? buildTagsRule(opts.tagCount || "3-6") + "\n\n" : ""}文章正文：
+${bodyText.substring(0, 6e3)}`;
+    try {
+      const result = await ai.prompt(prompt, "deepseek-v4-flash", {
+        // temperature 属任务语义（分析类低温）；max_tokens 面板独裁不在此传（issue 334/ADR-0148）——
+        // 推理模型思考耗尽小预算曾致 content 空串必失败，上限唯一权威 = 设置面板后自愈
+        modelOptions: { temperature: 0.3 }
+      });
+      const jsonMatch = (result || "").match(/\{[\s\S]*\}/);
+      if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    } catch (e) {
+      console.warn("[自动摘要] AI 处理失败:", e);
+    }
+    return null;
+  }
+  async function renameToTitle(app, file, title) {
+    var _a2;
+    const clean = String(title).replace(/[\\/:*?"<>|\r\n]/g, " ").replace(/\s+/g, " ").trim().slice(0, 80);
+    if (!clean || clean === file.basename) return { target: file, renamed: false, failed: false };
+    const dir = file.path.includes("/") ? file.path.slice(0, file.path.lastIndexOf("/")) : "/";
+    let newPath = `${dir}/${clean}.md`;
+    let n = 1;
+    while (app.vault.getAbstractFileByPath(newPath)) {
+      newPath = `${dir}/${clean} (${n++}).md`;
+    }
+    try {
+      const fmRename = (_a2 = app == null ? void 0 : app.fileManager) == null ? void 0 : _a2.renameFile;
+      if (fmRename) await fmRename.call(app.fileManager, file, newPath);
+      else await app.vault.rename(file, newPath);
+      return { target: app.vault.getAbstractFileByPath(newPath) || file, renamed: true, failed: false };
+    } catch (e) {
+      console.warn("[自动摘要] 重命名失败，仅写 frontmatter title:", e);
+      return { target: file, renamed: false, failed: true };
+    }
+  }
+  async function processFile(app, ai, file, opts = {}) {
+    const force = opts.force === true;
+    let h = null;
+    const s = tryGetSettings();
+    const summaryLength = String(s.autoSummaryLength || "standard");
+    const tagsEnabled = s.autoSummaryTagsEnabled !== false;
+    const tagCount2 = String(s.autoSummaryTagCount || "3-6");
+    try {
+      const content = await app.vault.read(file);
+      const { fm, body } = parseFrontmatter2(content);
+      const bodyText = extractBodyForAI(body);
+      if (!bodyText || bodyText.length < 100) return;
+      const missing = [];
+      if (force) {
+        missing.push("summary");
+        if (tagsEnabled !== false) missing.push("tags");
+      } else {
+        if (!fm || !fm.title) missing.push("title");
+        if (!fm || !fm.summary) missing.push("summary");
+        if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push("tags");
+        if (missing.length === 0) return;
+      }
+      const startName = fm && fm.title ? fm.title : file.basename;
+      const key = dedupeKeyFor(file);
+      if (!opts.quiet) {
+        h = notify(`正在为《${startName}》生成摘要…`, { type: "progress", dedupeKey: key });
+      }
+      const aiResult = await aiProcess(ai, bodyText, missing, { summaryLength, tagsEnabled, tagCount: tagCount2 });
+      if (!aiResult) {
+        const reason = await humanizeFailReason();
+        if (h) h.hide();
+        const errHandle = notify(reason, { type: "error", duration: 0 });
+        const retryBtn = document.createElement("span");
+        retryBtn.className = "bz-notice-action";
+        retryBtn.setAttribute("role", "button");
+        retryBtn.textContent = "重试";
+        retryBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          retryBtn.remove();
+          errHandle.hide();
+          void Promise.resolve().then(() => (init_auto_summary(), auto_summary_exports)).then((m) => m.retrySummaryWithAI(app, ai, file, force)).catch(() => {
+          });
+        });
+        errHandle.el.appendChild(retryBtn);
+        return;
+      }
+      let targetFile = file;
+      let renameFailed = false;
+      if (missing.includes("title") && aiResult.title) {
+        const outcome = await renameToTitle(app, file, aiResult.title);
+        targetFile = outcome.target;
+        if (outcome.renamed) {
+          notify(`已重命名为《${aiResult.title}》`, { type: "success" });
+        } else if (outcome.failed) {
+          renameFailed = true;
+        }
+      }
+      const latest = await app.vault.read(targetFile);
+      const latestParsed = parseFrontmatter2(latest);
+      const mergedFm = { ...latestParsed.fm || {} };
+      if (missing.includes("title") && aiResult.title) mergedFm.title = aiResult.title;
+      if (missing.includes("summary") && aiResult.summary) mergedFm.summary = aiResult.summary;
+      if (missing.includes("tags") && Array.isArray(aiResult.tags) && aiResult.tags.length) {
+        mergedFm.tags = aiResult.tags;
+      }
+      const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + "\n\n" + latestParsed.body;
+      await app.vault.modify(targetFile, newContent);
+      if (renameFailed) {
+        notify("自动改名失败，标题已写入笔记，请手动重命名", { type: "warning" });
+      }
+      notify("已完成", {
+        type: "success",
+        dedupeKey: key,
+        action: {
+          label: "查看",
+          onClick: () => {
+            Promise.resolve().then(() => (init_ui6(), ui_exports5)).then((m) => m.revealClipArticle(targetFile.path)).catch(() => {
+            });
+          }
+        }
+      });
+    } catch (e) {
+      if (h) h.hide();
+      console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
+    }
+  }
+  var attemptSeq, FIELD_DEFS, SUMMARY_LENGTH_RULES;
+  var init_processor2 = __esm({
+    "src/auto-summary/processor.ts"() {
+      init_parser();
+      init_notice();
+      init_ai();
+      init_settings_provider();
+      attemptSeq = 0;
+      FIELD_DEFS = {
+        title: '"title": "生成中文标题，15-30字，完整陈述句，不得使用疑问句或疑问语气（为何/为什么/怎么/如何/吗/呢）。禁止冒号、破折号、句中句号问号，需要连接时用逗号"',
+        summary: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
+        tags: '"tags": ["标签1", "标签2", "标签3"]'
+      };
+      SUMMARY_LENGTH_RULES = {
+        simple: `"summary": "50-100字的简短摘要。提炼核心观点与关键结论。直达内容，禁止使用'本文'、'本文章'、'文章'、'作者认为'等前缀词"`,
+        standard: `"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`,
+        detailed: `"summary": "300-400字的详尽摘要。完整覆盖核心观点、关键事实、重要数据、推论与结论，条理清晰。直接陈述内容，绝对禁止使用'本文'、'本文章'、'这篇文章'、'文章指出'、'作者认为'等前缀词"`
+      };
+    }
+  });
+
+  // src/auto-summary/index.ts
+  var auto_summary_exports = {};
+  __export(auto_summary_exports, {
+    ensureAutoSummary: () => ensureAutoSummary,
+    isAutoSummaryInitialized: () => isAutoSummaryInitialized,
+    redoSummaryForActiveFile: () => redoSummaryForActiveFile,
+    regenerateSummary: () => regenerateSummary,
+    retrySummaryWithAI: () => retrySummaryWithAI,
+    stopAutoSummary: () => stopAutoSummary,
+    unloadAutoSummary: () => unloadAutoSummary
+  });
+  function getWatchDir() {
+    const s = tryGetSettings();
+    return s && s.articleDirectory || "归档/网页剪藏";
+  }
+  function enqueueJob(job) {
+    return new Promise((resolve2) => {
+      if (processingPaths.has(job.file.path)) {
+        resolve2();
+        return;
+      }
+      processingPaths.add(job.file.path);
+      jobQueue.push({ ...job, resolve: resolve2 });
+      batchTotal++;
+      if (drainTimer === null) {
+        drainTimer = setTimeout(() => {
+          drainTimer = null;
+          void drainQueue();
+        }, 0);
+      }
+    });
+  }
+  async function drainQueue() {
+    var _a2;
+    if (draining) return;
+    draining = true;
+    try {
+      while (jobQueue.length > 0) {
+        const job = jobQueue.shift();
+        batchDone++;
+        updateBatchNotice();
+        try {
+          await processFile(job.app, job.ai, job.file, { force: job.force === true, quiet: batchTotal > 1 });
+        } catch (e) {
+        } finally {
+          processingPaths.delete(job.file.path);
+          (_a2 = job.resolve) == null ? void 0 : _a2.call(job);
+        }
+      }
+    } finally {
+      draining = false;
+      if (batchNotice) {
+        batchNotice.hide();
+        batchNotice = null;
+      }
+      batchTotal = 0;
+      batchDone = 0;
+    }
+  }
+  function updateBatchNotice() {
+    if (batchTotal <= 1) return;
+    const msg = `正在生成摘要 ${batchDone}/${batchTotal}…`;
+    if (batchNotice) {
+      batchNotice.setMessage(msg);
+    } else {
+      batchNotice = notify(msg, { type: "progress", dedupeKey: "auto-summary:batch" });
+    }
+  }
+  function queueProcess(app, ai, file) {
+    if (!file || file.extension !== "md") return;
+    if (!file.path.startsWith(getWatchDir() + "/")) return;
+    if (pendingPaths.has(file.path)) return;
+    const timer = setTimeout(() => {
+      pendingPaths.delete(file.path);
+      void enqueueJob({ app, ai, file });
+    }, 1500);
+    pendingPaths.set(file.path, timer);
+  }
+  function regenerateSummary(app, file) {
+    if (!file || file.extension !== "md") return Promise.resolve();
+    return enqueueJob({ app, ai: createAI(), file, force: true });
+  }
+  function retrySummaryWithAI(app, ai, file, force) {
+    if (!file || file.extension !== "md") return Promise.resolve();
+    return enqueueJob({ app, ai, file, force });
+  }
+  async function redoSummaryForActiveFile(app) {
+    const ws = app && app.workspace;
+    const file = ws && typeof ws.getActiveFile === "function" ? ws.getActiveFile() : null;
+    if (!file || file.extension !== "md" || !String(file.path || "").startsWith(getWatchDir() + "/")) {
+      notify("当前打开的不是剪藏笔记，无法重新生成摘要", { type: "info" });
+      return;
+    }
+    await regenerateSummary(app, file);
+  }
+  function scheduleRegister(app) {
+    const ai = createAI();
+    registerTimer = setTimeout(() => {
+      var _a2;
+      registerTimer = null;
+      if (!vaultRef) return;
+      const timing = ((_a2 = tryGetSettings()) == null ? void 0 : _a2.autoSummaryTiming) || "immediate";
+      if (timing !== "lazy") {
+        fileListenerRef = vaultRef.on("create", (file) => queueProcess(app, ai, file));
+      }
+      if (workspaceRef && typeof workspaceRef.on === "function") {
+        openListenerRef = workspaceRef.on("file-open", (file) => queueProcess(app, ai, file));
+      }
+    }, 2e3);
+  }
+  function ensureAutoSummary(app) {
+    if (initialized2) {
+      if (!registerTimer && !fileListenerRef) scheduleRegister(app);
+      return;
+    }
+    initialized2 = true;
+    vaultRef = app.vault;
+    workspaceRef = app.workspace;
+    scheduleRegister(app);
+  }
+  function isAutoSummaryInitialized() {
+    return initialized2;
+  }
+  function stopAutoSummary() {
+    if (registerTimer) {
+      clearTimeout(registerTimer);
+      registerTimer = null;
+    }
+    if (fileListenerRef && vaultRef) {
+      try {
+        vaultRef.offref(fileListenerRef);
+      } catch (e) {
+      }
+      fileListenerRef = null;
+    }
+    if (openListenerRef && workspaceRef) {
+      try {
+        workspaceRef.offref(openListenerRef);
+      } catch (e) {
+      }
+      openListenerRef = null;
+    }
+    for (const timer of pendingPaths.values()) clearTimeout(timer);
+    pendingPaths.clear();
+    if (drainTimer !== null) {
+      clearTimeout(drainTimer);
+      drainTimer = null;
+    }
+    jobQueue.length = 0;
+    if (batchNotice) {
+      batchNotice.hide();
+      batchNotice = null;
+    }
+    batchTotal = 0;
+    batchDone = 0;
+    processingPaths.clear();
+  }
+  function unloadAutoSummary() {
+    stopAutoSummary();
+    initialized2 = false;
+    vaultRef = null;
+    workspaceRef = null;
+  }
+  var initialized2, vaultRef, workspaceRef, fileListenerRef, openListenerRef, registerTimer, pendingPaths, processingPaths, jobQueue, draining, drainTimer, batchTotal, batchDone, batchNotice;
+  var init_auto_summary = __esm({
+    "src/auto-summary/index.ts"() {
+      init_ai();
+      init_settings_provider();
+      init_notice();
+      init_processor2();
+      initialized2 = false;
+      vaultRef = null;
+      workspaceRef = null;
+      fileListenerRef = null;
+      openListenerRef = null;
+      registerTimer = null;
+      pendingPaths = /* @__PURE__ */ new Map();
+      processingPaths = /* @__PURE__ */ new Set();
+      jobQueue = [];
+      draining = false;
+      drainTimer = null;
+      batchTotal = 0;
+      batchDone = 0;
+      batchNotice = null;
     }
   });
 
@@ -30001,10 +30624,10 @@ ${body}`;
     "src/clipbook/flow.ts"() {
       init_domain_bus();
       init_news_data();
-      init_constants2();
+      init_constants();
       init_save();
-      init_constants2();
-      init_data6();
+      init_constants();
+      init_data4();
       init_write_queue();
       curKey = "";
       curMeta = null;
@@ -30038,7 +30661,7 @@ ${body}`;
     M5.mobDetailOpen = false;
   }
   var M5;
-  var init_state5 = __esm({
+  var init_state6 = __esm({
     "src/clipbook/state.ts"() {
       M5 = {
         appRef: null,
@@ -30702,10 +31325,10 @@ ${body}`;
       init_app();
       init_utils();
       init_esc_manager();
-      init_data6();
+      init_data4();
       init_news_data();
-      init_constants2();
-      init_state5();
+      init_constants();
+      init_state6();
       init_flow();
       init_report_stats2();
       init_render7();
@@ -30804,7 +31427,7 @@ ${body}`;
       init_settings_provider();
       init_file_sync();
       init_save();
-      init_data6();
+      init_data4();
       agent3 = createFileSync({
         logTag: "[clipbook-file-sync]",
         failNotice: "剪藏本同步失败，数据可能不一致",
@@ -31520,7 +32143,7 @@ ${c.trim()}
       init_app();
       init_notice();
       init_news_data();
-      init_constants2();
+      init_constants();
       init_write_queue();
       WINDOW_MS = 24 * 60 * 60 * 1e3;
       RSS_MAX_PER_FEED = 30;
@@ -31988,296 +32611,6 @@ ${c.trim()}
     }
   });
 
-  // src/clipbook/store.ts
-  function siteName(a) {
-    return a.site ? String(a.site) : a.platform ? String(a.platform) : "未知";
-  }
-  function upName(a, info) {
-    const uid = String(a && a.bvid || a && a.author || "");
-    const name = info && typeof info === "object" ? info.name : null;
-    return name || uid || "";
-  }
-  function platformOf(a) {
-    const p = a.platform || "";
-    if (p === "B站") return "B站";
-    if (p === "果壳" || p === "果壳科学人") return "果壳科学人";
-    if (p === "知乎日报" || p === "知乎") return "知乎日报";
-    return p || "未知";
-  }
-  function siteDomain(a) {
-    const u = String(a.url || "").trim();
-    if (u) {
-      try {
-        return new URL(u).hostname;
-      } catch (e) {
-      }
-      try {
-        return new URL("https://" + u.replace(/^\/+/, "")).hostname;
-      } catch (e) {
-      }
-    }
-    return PLATFORM_DOMAIN[platformOf(a)] || "";
-  }
-  function cleanBody(body) {
-    return String(body || "").trim();
-  }
-  function clipArticle(a, opts) {
-    const clipByUrl = opts.clipByUrl || /* @__PURE__ */ new Set();
-    const upInfo = opts.upInfo || {};
-    const savedKeys = opts.savedKeys || /* @__PURE__ */ new Set();
-    const key = articleKeyOf(a);
-    const platform = platformOf(a);
-    const newsSaved = a.state === "saved";
-    const archived2 = savedKeys.has(String(a.url || ""));
-    const clipped = !!a.url && clipByUrl.has(String(a.url));
-    const saved = newsSaved || archived2 || clipped;
-    const title = String(a.title || "(无标题)");
-    const body = cleanBody(a.body);
-    const isBili = platform === "B站";
-    const feedUp = isBili ? upName(a, upInfo[String(a.author || "")]) : "";
-    const srcName = feedUp || platform;
-    const typeLabel = feedUp ? "UP主" : platform;
-    let timeText = String(a.fetchedAt || a.date || "");
-    let timeTs = new Date(a.fetchedAt || a.date || "").valueOf();
-    if (isNaN(timeTs)) {
-      timeText = "";
-      timeTs = Date.now();
-    }
-    const st = saved ? "saved" : a.read === true ? "read" : "unread";
-    return {
-      id: key,
-      origin: "news",
-      title,
-      url: String(a.url || ""),
-      site: siteName(a),
-      domain: siteDomain(a),
-      author: String(a.author || ""),
-      srcName,
-      typeLabel,
-      timeText,
-      timeTs,
-      summary: excerpt(body, 110),
-      body,
-      tags: Array.isArray(a.tags) ? a.tags.map(String) : [],
-      notePath: null,
-      st,
-      clipped,
-      raw: a,
-      backlinks: []
-    };
-  }
-  function clipFromNote(n) {
-    return {
-      id: "clip:" + n.path,
-      origin: "clip",
-      title: String(n.title || "(无标题)"),
-      url: n.url ? String(n.url) : "",
-      site: String(n.site || "未知"),
-      domain: n.domain || "",
-      author: n.author || "",
-      srcName: n.site || "剪藏",
-      typeLabel: "",
-      timeText: "",
-      timeTs: n.created || 0,
-      summary: String(n.summary || ""),
-      body: "",
-      tags: Array.isArray(n.tags) ? n.tags.map(String) : [],
-      notePath: n.path || null,
-      st: "saved",
-      clipped: true,
-      note: n,
-      backlinks: Array.isArray(n.backlinkNames) ? n.backlinkNames : []
-    };
-  }
-  function clipUrlSet2(notes) {
-    const s = /* @__PURE__ */ new Set();
-    for (const n of notes) if (n && n.url) s.add(String(n.url));
-    return s;
-  }
-  function queryBySource(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
-    if (source2.kind === "clip") {
-      return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    const pool = (articles || []).filter((a) => !a.read);
-    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    if (source2.kind === "site") {
-      const s = normSite(source2.site);
-      const newsPart = pool.filter((a) => normSite(siteName(a)) === s).map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap })).filter((a) => a.st !== "saved");
-      const clipPart = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
-      return [...newsPart, ...clipPart].sort((a, b) => b.timeTs - a.timeTs);
-    }
-    let out = [];
-    if (source2.kind === "all") {
-      out = pool.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
-    } else {
-      const isBili = source2.platform === "B站";
-      const list = pool.filter((a) => {
-        const p = platformOf(a);
-        if (p !== source2.platform) return false;
-        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
-        return true;
-      });
-      out = list.map((a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap }));
-    }
-    return out.filter((a) => a.st !== "saved").sort((a, b) => b.timeTs - a.timeTs);
-  }
-  function queryBySourceFull(articles, sidecar, clipByUrl, clipNotes, source2, upInfoMap = {}) {
-    if (source2.kind === "clip") {
-      return (clipNotes || []).map((n) => clipFromNote(n));
-    }
-    const savedKeys = new Set((sidecar.savedArchive || []).map((s) => s.url));
-    const isClippedNews = (a) => !!a && !!a.url && (savedKeys.has(String(a.url)) || clipByUrl.has(String(a.url)));
-    const mapNews = (a) => clipArticle(a, { overrides: sidecar.articleOverrides, clipByUrl, savedKeys, upInfo: upInfoMap });
-    let news = [];
-    let clips = [];
-    if (source2.kind === "all") {
-      news = (articles || []).filter((a) => !isClippedNews(a));
-    } else if (source2.kind === "site") {
-      const s = normSite(source2.site);
-      news = (articles || []).filter((a) => !isClippedNews(a) && normSite(siteName(a)) === s);
-      clips = (clipNotes || []).filter((n) => normSite(String(n && n.site || "")) === s).map((n) => clipFromNote(n));
-    } else {
-      const isBili = source2.platform === "B站";
-      news = (articles || []).filter((a) => {
-        if (isClippedNews(a)) return false;
-        const p = platformOf(a);
-        if (p !== source2.platform) return false;
-        if (isBili && source2.up && String(a.author || "") !== source2.up) return false;
-        return true;
-      });
-    }
-    return [...news.map(mapNews), ...clips].sort((x, y) => y.timeTs - x.timeTs);
-  }
-  function bucketByState(list) {
-    const unread = [];
-    const read = [];
-    const saved = [];
-    for (const a of list) {
-      if (a.st === "saved") saved.push(a);
-      else if (a.st === "read") read.push(a);
-      else unread.push(a);
-    }
-    return { unread, read, saved };
-  }
-  function normSite(s) {
-    const t = String(s || "").trim();
-    return t || "未知";
-  }
-  function aggregateSites(articles, clipNotes, savedUrls, clipUrls) {
-    const saved = savedUrls || /* @__PURE__ */ new Set();
-    const byUrl = clipUrls || /* @__PURE__ */ new Set();
-    const rows = /* @__PURE__ */ new Map();
-    const bump = (rawSite, unread) => {
-      const site = normSite(rawSite);
-      let r = rows.get(site);
-      if (!r) {
-        r = { site, total: 0, unread: 0 };
-        rows.set(site, r);
-      }
-      r.total++;
-      if (unread) r.unread++;
-    };
-    for (const n of clipNotes || []) bump(String(n && n.site || ""), false);
-    for (const a of articles || []) {
-      if (!a || a.read) continue;
-      if (saved.has(String(a.url || ""))) continue;
-      if (a.url && byUrl.has(String(a.url))) continue;
-      bump(siteName(a), true);
-    }
-    return [...rows.values()].sort((x, y) => y.total - x.total || y.unread - x.unread || cmpZh(x.site, y.site));
-  }
-  var PLATFORM_DOMAIN;
-  var init_store = __esm({
-    "src/clipbook/store.ts"() {
-      init_utils();
-      init_constants2();
-      PLATFORM_DOMAIN = {
-        "B站": "bilibili.com",
-        "果壳科学人": "guokr.com",
-        "知乎日报": "zhihu.com"
-      };
-    }
-  });
-
-  // src/clipbook/scan.ts
-  function defaultCache(f) {
-    var _a2;
-    try {
-      const app = getApp();
-      if (app && typeof ((_a2 = app.metadataCache) == null ? void 0 : _a2.getFileCache) === "function") {
-        return app.metadataCache.getFileCache(f);
-      }
-    } catch (e) {
-    }
-    return f && f.frontmatter;
-  }
-  function parseClipFile(file, getCache, getBacklinks) {
-    const cache = (getCache || defaultCache)(file);
-    const fm = cache && cache.frontmatter;
-    if (!fm) return null;
-    if (!fm.url || !fm.created) return null;
-    const title = file.basename || stripMdExt(String(file.name || ""));
-    let created = new Date(fm.created).valueOf();
-    if (isNaN(created)) created = Date.now();
-    let backlinkNames = [];
-    try {
-      const bl = (getBacklinks || (() => null))(file);
-      if (bl && bl.data && typeof bl.data.size === "number" && bl.data.size > 0) {
-        backlinkNames = Array.from(bl.data.keys()).map((p) => String(p || "").split("/").pop() || "").map((n) => stripTitleMarks(stripMdExt(n)));
-      }
-    } catch (e) {
-    }
-    let domain = "";
-    try {
-      if (fm.url) domain = new URL(String(fm.url)).hostname;
-    } catch (e) {
-    }
-    return {
-      path: file.path,
-      file,
-      url: String(fm.url),
-      author: fm.author ? String(fm.author) : "",
-      site: fm.site ? String(fm.site) : "未知",
-      summary: fm.summary ? String(fm.summary) : "",
-      tags: Array.isArray(fm.tags) ? fm.tags.map(String) : fm.tags ? [String(fm.tags)] : [],
-      title,
-      created,
-      backlinkNames,
-      domain
-    };
-  }
-  async function scanClipDirectory(dirPath, deps) {
-    const dir = deps.vault.getAbstractFileByPath(dirPath);
-    if (!dir || !Array.isArray(dir.children)) return null;
-    const mdFiles2 = dir.children.filter((f) => f && f.extension === "md");
-    const parse = deps.parse || ((f) => parseClipFile(f));
-    const notes = [];
-    const rejectedPaths = [];
-    for (const f of mdFiles2) {
-      try {
-        const n = parse(f);
-        if (n) {
-          notes.push(n);
-          continue;
-        }
-        if (f && f.path) rejectedPaths.push(String(f.path));
-      } catch (e) {
-        if (f && f.path) rejectedPaths.push(String(f.path));
-      }
-    }
-    notes.sort((a, b) => b.created - a.created);
-    const result = notes;
-    result.rejected = rejectedPaths.length;
-    result.rejectedPaths = rejectedPaths;
-    return result;
-  }
-  var init_scan = __esm({
-    "src/clipbook/scan.ts"() {
-      init_utils();
-      init_app();
-    }
-  });
-
   // src/clipbook/loader.ts
   async function readNewsAndSidecar() {
     var _a2;
@@ -32334,7 +32667,7 @@ ${c.trim()}
     if (clipNotes && clipNotes.rejected > 0) {
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
-    const clipUrls = clipUrlSet2(clipNotes || []);
+    const clipUrls = clipUrlSet(clipNotes || []);
     M5.articles = data.articles;
     M5.stats = data.stats;
     M5.sidecar = sidecar;
@@ -32346,14 +32679,14 @@ ${c.trim()}
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
       init_news_data();
-      init_data6();
+      init_data4();
       init_anchor();
       init_scan();
       init_store();
-      init_constants2();
+      init_constants();
       init_settings_provider();
       init_app();
-      init_state5();
+      init_state6();
       init_write_queue();
       init_save();
     }
@@ -34173,12 +34506,12 @@ ${c.trim()}
       init_settings_provider();
       init_auto_summary();
       init_news_sources_group();
-      init_constants2();
+      init_constants();
       init_news_source_settings();
       init_md();
       init_store();
       init_render7();
-      init_state5();
+      init_state6();
       init_loader();
       init_news_data();
       init_knowledge_boxes();
@@ -35963,7 +36296,7 @@ GitHub 仓库：${ghInfo.title}
 
   // src/bookshelf/constants.ts
   var STATUS_UNREAD, STATUS_READING, STATUS_DONE, STATUS_COLORS;
-  var init_constants3 = __esm({
+  var init_constants4 = __esm({
     "src/bookshelf/constants.ts"() {
       STATUS_UNREAD = "未读";
       STATUS_READING = "在读";
@@ -35980,7 +36313,7 @@ GitHub 仓库：${ghInfo.title}
   var init_shared5 = __esm({
     "src/bookshelf/shared.ts"() {
       init_str();
-      init_constants3();
+      init_constants4();
     }
   });
 
@@ -35988,9 +36321,9 @@ GitHub 仓库：${ghInfo.title}
   var init_render10 = __esm({
     "src/bookshelf/layouts/wall/render.ts"() {
       init_str();
-      init_constants3();
+      init_constants4();
       init_shared5();
-      init_constants3();
+      init_constants4();
     }
   });
 
@@ -36830,6 +37163,9 @@ GitHub 仓库：${ghInfo.title}
   });
 
   // src/review/quiz-core/manager.ts
+  function emptyQuiz() {
+    return { notes: {} };
+  }
   function getQuizFilePath() {
     const s = tryGetSettings();
     return storageFile("quiz.json", s && s.storagePath || "CONFIG/STORAGE");
@@ -36858,7 +37194,7 @@ GitHub 仓库：${ghInfo.title}
         async loadQuiz(app) {
           try {
             const data = await jsonFileStore(getQuizFilePath(), {
-              defaultValue: { notes: {} },
+              defaultValue: emptyQuiz(),
               app
             }).read();
             if (data && typeof data === "object" && data.notes) return data;
@@ -48010,6 +48346,13 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/settings-panel/ui.ts
+  async function loadSchemaCached(domain) {
+    const hit = schemaCache.get(domain.id);
+    if (hit) return hit;
+    const schema = await domain.schemaLoader();
+    schemaCache.set(domain.id, schema);
+    return schema;
+  }
   function cacheRowsFor(domainId, schema) {
     const rows = schema.groups.flatMap(
       (g) => g.rows.map((r) => {
@@ -48035,6 +48378,7 @@ ${n.content.slice(0, 2e3)}
     return (_a2 = navBadges.get(d.id)) != null ? _a2 : "·";
   }
   function visibleItemCount(schema) {
+    var _a2, _b2;
     let n = 0;
     for (const g of schema.groups) {
       const gvw = g.visibleWhen;
@@ -48044,21 +48388,31 @@ ${n.content.slice(0, 2e3)}
         } catch (e) {
         }
       }
+      const parentToggleKey = (_b2 = (_a2 = g.rows.find(
+        (pr) => {
+          var _a3;
+          return pr.type === "toggle" && typeof ((_a3 = pr.binding) == null ? void 0 : _a3.key) === "string";
+        }
+      )) == null ? void 0 : _a2.binding.key) != null ? _b2 : null;
       for (const r of g.rows) {
         if (r.type === "button") continue;
         const rvw = r.visibleWhen;
+        let visible = true;
         if (rvw) {
           try {
-            if (!rvw(tryGetSettings())) continue;
+            visible = !!rvw(tryGetSettings());
           } catch (e) {
           }
         }
-        n++;
+        if (visible && r.isChild && parentToggleKey) {
+          visible = tryGetSettings()[parentToggleKey] === true;
+        }
+        if (visible) n++;
       }
     }
     return n;
   }
-  var schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
+  var SEARCH_DEBOUNCE_MS3, spMatch, schemaLoaders, DOMAINS2, NAV_SECS, schemaRowCache, schemaCache, loadedCounts, listableDomains, navBadges, SettingsPanelUI;
   var init_ui12 = __esm({
     "src/settings-panel/ui.ts"() {
       init_dom();
@@ -48071,7 +48425,11 @@ ${n.content.slice(0, 2e3)}
       init_notice();
       init_app();
       init_ui();
+      init_focus_trap();
+      init_utils();
       init_render4();
+      SEARCH_DEBOUNCE_MS3 = 180;
+      spMatch = (hay, needle) => !needle || hay.toLowerCase().includes(needle.toLowerCase());
       schemaLoaders = {
         // 通用组：基础 schema（存储路径）+ 外观组（原「设置」页并入）+「数据体检」按钮行
         // （D4：检查项直达体检面板；core 不反向依赖域——入口在面板层追加，⚙️ 原生设置页不带此行）
@@ -48100,7 +48458,7 @@ ${n.content.slice(0, 2e3)}
         home: async () => (await Promise.resolve().then(() => (init_settings(), settings_exports))).homeSettingsSchema(),
         diary: async () => (await Promise.resolve().then(() => (init_settings2(), settings_exports2))).diarySettingsSchema(),
         memo: async () => (await Promise.resolve().then(() => (init_settings3(), settings_exports3))).memoSettingsSchema(),
-        belongings: async () => (await Promise.resolve().then(() => (init_ui4(), ui_exports3))).belongingSettingsSchema(),
+        belongings: async () => (await Promise.resolve().then(() => (init_ui5(), ui_exports4))).belongingSettingsSchema(),
         // 数据源组为声明行（外部 news.json 状态），先读盘预载再建 schema
         clipping: async () => {
           const { readDataSourceState: readDataSourceState2 } = await Promise.resolve().then(() => (init_news_source_settings(), news_source_settings_exports));
@@ -48123,7 +48481,7 @@ ${n.content.slice(0, 2e3)}
         encrypt: async () => (await Promise.resolve().then(() => (init_ui10(), ui_exports8))).encryptSettingsSchema(),
         "password-vault": async () => (await Promise.resolve().then(() => (init_settings7(), settings_exports7))).passwordVaultSettingsSchema(),
         knowledge: async () => {
-          const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui5(), ui_exports4));
+          const { knowledgeSettingsSchema: knowledgeSettingsSchema2 } = await Promise.resolve().then(() => (init_ui3(), ui_exports3));
           return knowledgeSettingsSchema2({
             onClearSuggestCache: async () => {
               const { clearSuggestCache: clearSuggestCache2 } = await Promise.resolve().then(() => (init_mount_suggest(), mount_suggest_exports));
@@ -48187,6 +48545,7 @@ ${n.content.slice(0, 2e3)}
         { title: "安全", ids: ["encrypt", "password-vault"] }
       ];
       schemaRowCache = /* @__PURE__ */ new Map();
+      schemaCache = /* @__PURE__ */ new Map();
       loadedCounts = /* @__PURE__ */ new Map();
       listableDomains = () => DOMAINS2.filter((d) => {
         var _a2;
@@ -48197,7 +48556,6 @@ ${n.content.slice(0, 2e3)}
         constructor() {
           this.mask = null;
           this.popup = null;
-          this.escHandle = null;
           /** 当前激活域 id（按 id 驱动：可见域过滤后索引会错位，不用数字下标） */
           this.activeDomainId = "global";
           /** 桌面导航容器引用（schema 加载后回填徽标用） */
@@ -48213,6 +48571,8 @@ ${n.content.slice(0, 2e3)}
           /** 当前搜索词（桌面：切域重渲后按它重刷命中/过滤状态）。
            *  2026-09-12 用户拍板：去掉「只看命中」开关，搜索即过滤（默认恒开）。 */
           this.searchQuery = "";
+          /** 徽标预载在途 Promise（ARCH-2 单飞：并发 open 收敛为一轮，磁盘 IO 域不双倍重跑） */
+          this.preloadInFlight = null;
         }
         /**
          * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
@@ -48226,6 +48586,8 @@ ${n.content.slice(0, 2e3)}
             topifyZ(this.mask, this.popup);
             this.mask.style.display = "block";
             this.popup.style.display = "flex";
+            unregisterPanelEsc("bz-settings-panel");
+            this.armPanelEsc();
             if (deep && isMobileEnv()) {
               void this.pushDomain(deep);
             } else if (deep) {
@@ -48233,12 +48595,14 @@ ${n.content.slice(0, 2e3)}
               const pane = this.popup.querySelector(".bz-sp-pane");
               if (pane) void this.renderDomain(pane, deep);
             }
+            this.recomputeBadgesFromCache();
             void this.preloadAllBadges();
             return;
           }
           this.build(deep);
         }
         build(deep) {
+          var _a2;
           const { mask, popup } = createOverlay({
             maskId: "bz-settings-panel-mask",
             popupId: "bz-settings-panel-popup",
@@ -48260,14 +48624,8 @@ ${n.content.slice(0, 2e3)}
           mask.style.display = "block";
           popup.style.display = "flex";
           topifyZ(mask, popup);
-          this.escHandle = escManager.register("bz-settings-panel", {
-            isVisible: () => !!this.mask && this.mask.style.display === "block",
-            close: () => {
-              var _a2;
-              if ((_a2 = this.popup) == null ? void 0 : _a2.classList.contains("bz-sp-mob-pushed")) this.popDomain();
-              else this.hide();
-            }
-          });
+          this.armPanelEsc();
+          (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
         }
         /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
         buildDesktop(popup) {
@@ -48280,11 +48638,22 @@ ${n.content.slice(0, 2e3)}
           const pane = popup.querySelector(".bz-sp-pane");
           const searchIn = popup.querySelector(".bz-sp-search .bz-input");
           popup.addEventListener("keydown", (e) => this.onNavKey(e, pane));
+          nav.tabIndex = 0;
+          nav.addEventListener("keydown", (e) => {
+            if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+            const items = [...nav.querySelectorAll(".bz-sp-nav-item")];
+            if (!items.length) return;
+            e.preventDefault();
+            e.stopPropagation();
+            const cur = items.indexOf(document.activeElement);
+            const next = cur < 0 ? e.key === "ArrowDown" ? 0 : items.length - 1 : e.key === "ArrowDown" ? Math.min(cur + 1, items.length - 1) : Math.max(cur - 1, 0);
+            items[next].focus();
+          });
           const renderNav2 = (q2) => {
             const query = q2.trim();
             nav.innerHTML = "";
             const visible = listableDomains();
-            const matches = (d) => !query || d.name.includes(query) || d.desc.includes(query) || (schemaRowCache.get(d.id) || []).some((r) => r.name.includes(query));
+            const matches = (d) => !query || spMatch(d.name, query) || spMatch(d.desc, query) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
             const secs = groupDomains(visible, matches);
             for (const sec of secs) {
               if (!sec.domains.length) continue;
@@ -48302,6 +48671,7 @@ ${n.content.slice(0, 2e3)}
             }
             mountIcons(nav);
             nav.querySelectorAll(".bz-sp-nav-item").forEach((b) => {
+              b.tabIndex = -1;
               const id = b.dataset.spDomain;
               b.addEventListener("click", () => {
                 this.activeDomainId = id;
@@ -48310,37 +48680,62 @@ ${n.content.slice(0, 2e3)}
               });
             });
           };
-          searchIn.addEventListener("input", () => {
+          const applySearch = debounce(() => {
             renderNav2(searchIn.value);
             this.searchQuery = searchIn.value.trim();
             this.applyHitFilter(popup, this.searchQuery);
-          });
+          }, SEARCH_DEBOUNCE_MS3);
+          searchIn.addEventListener("input", () => applySearch());
           renderNav2("");
           this.rerenderList = () => renderNav2(searchIn.value);
           void this.renderDomain(pane, (_a2 = DOMAINS2.find((x) => x.id === this.activeDomainId)) != null ? _a2 : DOMAINS2[0]);
         }
+        /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
+         *  新轮被收敛不重跑——缓存重算保证「重开即重算」新鲜度；visibleWhen 按当前设置实时求值） */
+        recomputeBadgesFromCache() {
+          for (const d of DOMAINS2) {
+            const schema = schemaCache.get(d.id);
+            if (!schema) continue;
+            const count = visibleItemCount(schema);
+            loadedCounts.set(d.id, count);
+            navBadges.set(d.id, count > 0 ? String(count) : "—");
+          }
+          this.refreshNavBadges();
+        }
         /**
          * 预加载全部有 schema 的域，回填左侧导航徽标（设置项总数）。
          * 面板打开即算全量徽标（用户拍板：无需先点击各域）。
-         * 只调用 schemaLoader 取结构，不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
+         * 只经会话缓存取 schema 结构（E-8），不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
          * 组级/行级 visibleWhen 门控（如移动端组）按当前端环境过滤。
+         * ARCH-2 单飞：上一轮在途时复用同一 Promise——并发 open（命令重跑/深链）不再并发重跑
+         * 全量 loader（含磁盘 IO 域，重建风暴由轮末单次重绘收敛）；软重开的新鲜度由
+         * recomputeBadgesFromCache 兜底（H9 语义保持），完成后新 open 自然起新轮。
          */
         async preloadAllBadges() {
-          const tasks = DOMAINS2.filter((d) => d.schemaLoader).map(async (d) => {
+          if (this.preloadInFlight) return this.preloadInFlight;
+          const run = (async () => {
             var _a2;
-            try {
-              const schema = await d.schemaLoader();
-              const count = visibleItemCount(schema);
-              loadedCounts.set(d.id, count);
-              navBadges.set(d.id, count > 0 ? String(count) : "—");
-              cacheRowsFor(d.id, schema);
-            } catch (e) {
-              navBadges.set(d.id, "·");
-            }
-            this.refreshNavBadges();
+            const tasks = DOMAINS2.filter((d) => d.schemaLoader).map(async (d) => {
+              try {
+                const schema = await loadSchemaCached(d);
+                const count = visibleItemCount(schema);
+                loadedCounts.set(d.id, count);
+                navBadges.set(d.id, count > 0 ? String(count) : "—");
+                cacheRowsFor(d.id, schema);
+              } catch (e) {
+                navBadges.set(d.id, "·");
+              }
+              this.refreshNavBadges();
+            });
+            await Promise.allSettled(tasks);
             (_a2 = this.rerenderList) == null ? void 0 : _a2.call(this);
-          });
-          await Promise.allSettled(tasks);
+          })();
+          this.preloadInFlight = run;
+          try {
+            await run;
+          } finally {
+            if (this.preloadInFlight === run) this.preloadInFlight = null;
+          }
         }
         /** 重绘桌面导航徽标（schema 加载/组数变化后调用；不重建导航项，只刷数字） */
         refreshNavBadges() {
@@ -48363,6 +48758,7 @@ ${n.content.slice(0, 2e3)}
         async renderDomain(pane, domain, opts = {}) {
           var _a2;
           const runId = ++this.renderSeq;
+          this.flushPendingTextCommit();
           this.renderHandles = [];
           pane.innerHTML = "";
           let pageHead = null;
@@ -48388,11 +48784,17 @@ ${n.content.slice(0, 2e3)}
           pane.appendChild(body);
           body.innerHTML = loadingHtml();
           try {
-            const schema = await domain.schemaLoader();
+            const schema = await loadSchemaCached(domain);
             if (runId !== this.renderSeq) return;
             body.innerHTML = "";
             const handle = renderPanelSchema(body, schema);
-            this.renderHandles.push(handle);
+            const refreshWithBadge = () => {
+              handle.refresh();
+              const cnt = visibleItemCount(schema);
+              navBadges.set(domain.id, cnt > 0 ? String(cnt) : "—");
+              this.refreshNavBadges();
+            };
+            this.renderHandles.push({ refresh: refreshWithBadge });
             cacheRowsFor(domain.id, schema);
             const groupEls = body.querySelectorAll(".bz-sp-group");
             const visibleGroups = [...groupEls].filter((g) => g.style.display !== "none").length;
@@ -48413,19 +48815,23 @@ ${n.content.slice(0, 2e3)}
             return;
           } catch (e) {
             body.innerHTML = "";
-            body.appendChild(this.emptyEl(
-              "alert-circle",
-              "加载失败",
-              e.message
-            ));
-            notice(`加载「${domain.name}」设置失败：${e.message}`, "error");
+            const retry = () => void this.renderDomain(pane, domain);
+            const actions = document.createElement("div");
+            actions.className = "bz-sp-load-retry";
+            actions.appendChild(uiBtn({ label: "重试", tone: "primary", onClick: retry }));
+            const empty = this.emptyEl("alert-circle", "加载失败", e instanceof Error ? e.message : String(e));
+            empty.appendChild(actions);
+            body.appendChild(empty);
+            notifyActionError(e, `加载「${domain.name}」设置`, { onRetry: retry });
           }
         }
         /**
          * 命中高亮 + 搜索过滤（2026-09-12 补，桌面；用户拍板：无开关，搜索即过滤）：
          * - q 非空时给命中行加 .hit，并隐藏未命中行与「无可见行」的组；q 清空恢复全显；
          * - **只回收自己设过的**内联 display，不触碰渲染器 visibleWhen 的隐藏
-         *   （否则一过滤就会把门控隐藏的行放出来）。
+         *   （F-1：打标只记「本次过滤亲手藏的」——display 已为 none 的门控行不碰不标，
+         *   恢复分支因此永不放行 visibleWhen 隐藏的行/组；清空后再经渲染句柄 refresh 重求值门控兜底）；
+         * - 组卡「N 项」徽标按当前可见行数重算（UI-6：搜索态计数与实际可见行数一致）。
          */
         applyHitFilter(root, q2) {
           root.querySelectorAll(".bz-sp-set-row").forEach((row) => {
@@ -48433,9 +48839,9 @@ ${n.content.slice(0, 2e3)}
               row.style.display = "";
               delete row.dataset.spHitHidden;
             }
-            const hit = !!q2 && !!row.textContent && row.textContent.includes(q2);
+            const hit = !!q2 && !!row.textContent && spMatch(row.textContent, q2);
             row.classList.toggle("hit", hit);
-            if (q2 && !hit) {
+            if (q2 && !hit && row.style.display !== "none") {
               row.style.display = "none";
               row.dataset.spHitHidden = "1";
             }
@@ -48447,26 +48853,39 @@ ${n.content.slice(0, 2e3)}
             }
             if (!q2) return;
             const any = [...g.querySelectorAll(".bz-sp-set-row")].some((r) => r.style.display !== "none");
-            if (!any) {
+            if (!any && g.style.display !== "none") {
               g.style.display = "none";
               g.dataset.spHitHidden = "1";
             }
           });
+          if (!q2) {
+            this.renderHandles.forEach((h) => h.refresh());
+          }
+          refreshGroupCounts(root);
         }
         /**
          * 键盘导航（2026-09-12 补，桌面）：↑↓ 在可见域间前后切换，顺序 = 导航视觉顺序
          * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉里让位，搜索框与面板本体可用。
+         * F-6：搜索态与 renderNav 同源——只在当前命中（导航可见）集内移动，切到的一定是看得见的域；
+         * 当前域不在命中集时 ↓/↑ 进首/末个命中域；命中集为空 no-op。
          */
         onNavKey(e, pane) {
           var _a2, _b2, _c;
           if (e.key !== "ArrowUp" && e.key !== "ArrowDown") return;
           const t = e.target;
           if (t && (t.tagName === "TEXTAREA" || t.tagName === "SELECT")) return;
-          const ordered = groupDomains(listableDomains()).flatMap((s) => s.domains);
+          const query = this.searchQuery.trim();
+          const matches = (d2) => !query || spMatch(d2.name, query) || spMatch(d2.desc, query) || (schemaRowCache.get(d2.id) || []).some((r) => spMatch(r.name, query));
+          const ordered = groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
+          if (!ordered.length) return;
           const idx = ordered.findIndex((d2) => d2.id === this.activeDomainId);
-          if (idx < 0) return;
-          const next = e.key === "ArrowDown" ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
-          if (next === idx) return;
+          let next;
+          if (idx < 0) {
+            next = e.key === "ArrowDown" ? 0 : ordered.length - 1;
+          } else {
+            next = e.key === "ArrowDown" ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
+            if (next === idx) return;
+          }
           e.preventDefault();
           const d = ordered[next];
           this.activeDomainId = d.id;
@@ -48484,9 +48903,9 @@ ${n.content.slice(0, 2e3)}
           if (!domain.schemaLoader) return;
           let schema;
           try {
-            schema = await domain.schemaLoader();
+            schema = await loadSchemaCached(domain);
           } catch (e) {
-            notice(`读取「${domain.name}」设置失败：${e.message}`, "error");
+            notifyActionError(e, `读取「${domain.name}」设置`, { onRetry: () => void this.resetDomain(domain, pane) });
             return;
           }
           const keys = /* @__PURE__ */ new Set();
@@ -48505,7 +48924,8 @@ ${n.content.slice(0, 2e3)}
             message: `把「${domain.name}」的设置项恢复为默认值（未改动的项不受影响）。确定继续吗？`,
             actions: [
               { label: "取消", value: "cancel" },
-              { label: "重置", value: "ok", cta: true }
+              // E-2：破坏性动作 danger 反焦（全仓惯例）——主按钮不默认持焦，防 Enter 一击即重置
+              { label: "重置", value: "ok", cta: true, danger: true }
             ]
           });
           if (ans !== "ok") return;
@@ -48519,7 +48939,13 @@ ${n.content.slice(0, 2e3)}
             s[k] = Array.isArray(def) ? [...def] : def;
             n++;
           }
-          await saveSettings();
+          try {
+            await saveSettings();
+          } catch (e) {
+            notifySaveError(e, `重置「${domain.name}」`);
+            void this.renderDomain(pane, domain);
+            return;
+          }
           notice(`「${domain.name}」已重置 ${n} 项`, "success");
           void this.renderDomain(pane, domain);
         }
@@ -48529,9 +48955,9 @@ ${n.content.slice(0, 2e3)}
           popup.innerHTML = mobShellHtml();
           this.mobPushed = false;
           const homeTools = popup.querySelector('[data-sp-mob-tools="home"]');
-          homeTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close", onClick: () => this.hide() }));
+          homeTools.appendChild(uiIconBtn({ icon: "x", lg: true, title: "关闭", className: "bz-sp-mob-close bz-touch-target", onClick: () => this.hide() }));
           const back = popup.querySelector("[data-sp-mob-back]");
-          back.appendChild(uiIconBtn({ icon: "arrow-left", lg: true, title: "返回", className: "bz-sp-mob-back-btn", onClick: () => this.popDomain() }));
+          back.appendChild(uiIconBtn({ icon: "arrow-left", lg: true, title: "返回", className: "bz-sp-mob-back-btn bz-touch-target", onClick: () => this.popDomain() }));
           mountIcons(popup);
           const list = popup.querySelector(".bz-sp-mob-list");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
@@ -48549,13 +48975,13 @@ ${n.content.slice(0, 2e3)}
                 sec.domains.forEach((d) => list.insertAdjacentHTML("beforeend", mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc })));
               }
             } else {
-              const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
+              const doms = listableDomains().filter((d) => spMatch(d.name, query) || spMatch(d.desc, query));
               const rows = [];
               schemaRowCache.forEach((rowsOf, did) => {
                 const d = DOMAINS2.find((x) => x.id === did);
                 if (!d) return;
                 rowsOf.forEach((r) => {
-                  if (r.name.includes(query) || r.desc && r.desc.includes(query)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
+                  if (spMatch(r.name, query) || r.desc && spMatch(r.desc, query)) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
                 });
               });
               let html = "";
@@ -48580,19 +49006,31 @@ ${n.content.slice(0, 2e3)}
             });
             mountIcons(list);
           };
-          searchIn.addEventListener("input", () => render2(searchIn.value));
+          const applySearch = debounce(() => render2(searchIn.value), SEARCH_DEBOUNCE_MS3);
+          searchIn.addEventListener("input", () => applySearch());
           render2("");
           this.rerenderList = () => {
             if (!this.mobPushed) render2(searchIn.value);
           };
         }
         /** 推入域设置页（全屏页切换；返回/ESC 弹回首页）。
-         *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。 */
+         *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。
+         *  E-6：域页工具位挂「重置本域」图标钮——移动端重置动线此前不存在（withHead:false 连带
+         *  砍掉页头重置钮），flow 确认弹窗在移动端同样可用；重复推入先清工具位防叠挂。 */
         async pushDomain(domain, focusRow) {
           const popup = this.popup;
           this.mobPushed = true;
           popup.querySelector(".bz-sp-mob-title").textContent = domain.name;
           popup.classList.add("bz-sp-mob-pushed");
+          const tools = popup.querySelector('[data-sp-mob-tools="domain"]');
+          tools.replaceChildren();
+          tools.appendChild(uiIconBtn({
+            icon: "rotate-ccw",
+            lg: true,
+            title: "重置本域",
+            className: "bz-touch-target",
+            onClick: () => void this.resetDomain(domain, popup.querySelector(".bz-sp-mob-page-body"))
+          }));
           const body = popup.querySelector(".bz-sp-mob-page-body");
           await this.renderDomain(body, domain, { withHead: false });
           if (focusRow) this.focusRowIn(body, focusRow);
@@ -48616,15 +49054,32 @@ ${n.content.slice(0, 2e3)}
           this.renderSeq++;
           (_a2 = this.popup) == null ? void 0 : _a2.classList.remove("bz-sp-mob-pushed");
         }
+        /** 面板 ESC 层注册（build 与重开共用；重开由 open 先 unregisterPanelEsc 再走本方法抬栈） */
+        armPanelEsc() {
+          registerPanelEsc("bz-settings-panel", () => !!this.mask && this.mask.style.display === "block", () => {
+            var _a2;
+            if ((_a2 = this.popup) == null ? void 0 : _a2.classList.contains("bz-sp-mob-pushed")) this.popDomain();
+            else this.hide();
+          });
+        }
         hide() {
+          if (this.popup) closeAllSelectMenus(this.popup);
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
-        cleanup() {
-          if (this.escHandle) {
-            this.escHandle.unregister();
-            this.escHandle = null;
+        /** F-2：移除聚焦输入框前 flush 防抖——面板内 INPUT/TEXTAREA 持焦时真实 blur（触发已注册
+         *  blur commit 监听立即落盘），防「从 DOM 移除聚焦元素不派发 blur」的静默丢字。 */
+        flushPendingTextCommit() {
+          var _a2;
+          const active2 = document.activeElement;
+          if (active2 instanceof HTMLElement && ((_a2 = this.popup) == null ? void 0 : _a2.contains(active2)) && (active2.tagName === "INPUT" || active2.tagName === "TEXTAREA")) {
+            active2.blur();
           }
+        }
+        cleanup() {
+          unregisterPanelEsc("bz-settings-panel");
+          this.flushPendingTextCommit();
+          if (this.popup) closeAllSelectMenus(this.popup);
           if (this.mask) {
             this.mask.remove();
             this.mask = null;
@@ -48636,9 +49091,11 @@ ${n.content.slice(0, 2e3)}
           this.renderHandles = [];
           this.navEl = null;
           this.rerenderList = null;
+          this.preloadInFlight = null;
           navBadges.clear();
           schemaRowCache.clear();
           loadedCounts.clear();
+          schemaCache.clear();
         }
       };
     }
@@ -49891,7 +50348,7 @@ ${n.content.slice(0, 2e3)}
       console.error(e);
     }
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS3, searchDebounced2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS4, searchDebounced2, clipTitleHint, panelResizeDetach2, sortSelectDetach, composerBusy;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -49910,11 +50367,11 @@ ${n.content.slice(0, 2e3)}
       init_render();
       init_state();
       PANEL = { MIN_W: 720, MIN_H: 520, MAX_W: 1280, MAX_H: 880 };
-      SEARCH_DEBOUNCE_MS3 = 180;
+      SEARCH_DEBOUNCE_MS4 = 180;
       searchDebounced2 = debounce((v) => {
         M.search = v;
         renderAll4();
-      }, SEARCH_DEBOUNCE_MS3);
+      }, SEARCH_DEBOUNCE_MS4);
       clipTitleHint = null;
       panelResizeDetach2 = null;
       sortSelectDetach = null;

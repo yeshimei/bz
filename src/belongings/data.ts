@@ -85,15 +85,24 @@ export async function loadDatabase(): Promise<BelongingsDatabase> {
 }
 
 /**
+ * belongings.json 落盘形状单源（ADR-0102：categories/categoryIcons 为读取时内存派生段，
+ * 设计上不落盘）。saveDatabase 按此收拢取值；导出供 checkup 字段漂移白名单契约锁引用，
+ * 防白名单与写侧键集漂移（深审 func P2-4 / A1）。
+ */
+export function belongingsSaveShape(database: Pick<BelongingsDatabase, 'version' | 'items'>): {
+  version: string;
+  last_updated: string;
+  items: BelongingsDatabase['items'];
+} {
+  return { version: database.version, last_updated: new Date().toISOString(), items: database.items };
+}
+
+/**
  * 保存数据库（D2 可靠写契约原语 1 收编）：写盘入 core per-path 串行队列（键 =
  * belongings.json 路径）——并发保存按序落盘，杜绝交错写导致的半截/覆盖竞态；
  * 坏文件由 jsonFileStore 留档降级（原语 3）。数据形状与 API 不变。
  */
 export async function saveDatabase(database: BelongingsDatabase): Promise<void> {
-  const saveData = {
-    version: database.version,
-    last_updated: new Date().toISOString(),
-    items: database.items,
-  };
+  const saveData = belongingsSaveShape(database);
   await enqueueFileTask(getDataFilePath(), () => jsonFileStore<any>(getDataFilePath()).write(saveData));
 }

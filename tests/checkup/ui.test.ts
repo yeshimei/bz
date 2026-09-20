@@ -23,6 +23,24 @@ vi.mock('../../src/core/flow-dialog', async (importOriginal) => {
   return { ...mod, openFlowDialog: (...args: unknown[]) => flowMock(...args) };
 });
 
+// run 模块替身开关（eff P3-3 体检失败 / P3-2 修复挂起用）：
+// failRun=true 时 runCheckup 抛错；fixGate 非空时 fixOrphanIssues 挂起至调用它放行
+let failRun = false;
+let fixGate: ((resolve: () => void) => void) | null = null;
+vi.mock('../../src/checkup/run', async (importOriginal) => {
+  const mod = await importOriginal<Record<string, any>>();
+  return {
+    ...mod,
+    runCheckup: (...args: unknown[]) => (failRun ? Promise.reject(new Error('disk exploded')) : mod.runCheckup(...args)),
+    fixOrphanIssues: (...args: unknown[]) => {
+      if (!fixGate) return mod.fixOrphanIssues(...args);
+      const gate = fixGate;
+      fixGate = null;
+      return new Promise<void>((resolve) => gate(resolve)).then(() => mod.fixOrphanIssues(...args));
+    },
+  };
+});
+
 const DIR = 'CONFIG/STORAGE';
 
 /** 轮询等待（面板运行链有 setTimeout 让出 + 自动重跑，事件驱动等待不可靠） */
@@ -55,6 +73,8 @@ describe('数据体检面板（checkup UI）', () => {
     __resetCheckupCacheForTests();
     document.body.innerHTML = '';
     unloadDataCheckup();
+    failRun = false;
+    fixGate = null;
     (escManager as any).handlers = new Map();
     flowMock.mockClear();
     flowMock.mockImplementation(() => Promise.resolve<string | undefined>('ok'));
@@ -136,9 +156,16 @@ describe('数据体检面板（checkup UI）', () => {
     const toggle = issueRowEl.querySelector('.bz-checkup-detail-toggle') as HTMLButtonElement;
     const detail = issueRowEl.querySelector('.bz-checkup-detail') as HTMLElement;
     expect(detail.style.display).toBe('none');
+    // ui P3-3：读屏语义——aria-expanded 随展开翻转
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
+    // eff P3-4：隐藏详情不全量进 DOM——展开前不填充文本
+    expect(detail.textContent).toBe('');
     toggle.click();
     expect(detail.style.display).toBe('block');
     expect(detail.textContent).toContain('我的/gone.md');
+    expect(toggle.getAttribute('aria-expanded')).toBe('true');
+    toggle.click();
+    expect(toggle.getAttribute('aria-expanded')).toBe('false');
     // 绿：至少同源一致性（坏 json 跳过）等无问题项进通过组
     expect(popup.querySelector('.bz-checkup-group--ok')).toBeTruthy();
   });
@@ -183,7 +210,7 @@ describe('数据体检面板（checkup UI）', () => {
         actions: expect.arrayContaining([expect.objectContaining({ label: '清除', danger: true })]),
       })
     );
-    await waitFor(() => getNoticeMessages().some((m) => m.includes('已清除 1 条失效的收藏关联')));
+    await waitFor(() => getNoticeMessages().some((m) => m.includes('已清除 1 项失效引用：收藏关联 1')));
     // 数据落盘：linkedNote 置 null
     const after = JSON.parse(vault.files.get(`${DIR}/favorites.json`)!);
     expect(after[0].linkedNote).toBeNull();
@@ -226,5 +253,170 @@ describe('数据体检面板（checkup UI）', () => {
     ui.cleanup();
     unloadDataCheckup();
     void app;
+  });
+
+  it('ui P2-1：hide 型常驻层重开重放注册——ESC 关最上面的体检面板，不再关底下被盖住的设置面板', async () => {
+    const { app } = makeApp({});
+    // ① 体检面板 build + 显示（ESC 注册于栈位 0）
+    openDataCheckup(app);
+    const mask = document.getElementById('bz-checkup-mask')!;
+    // ② 设置面板打开（ESC 注册于栈尾）
+    const { SettingsPanelUI } = await import('../../src/settings-panel/ui');
+    const sp = new SettingsPanelUI();
+    sp.open('global');
+    const spMask = document.getElementById('bz-settings-panel-mask')!;
+    await waitFor(() => spMask.style.display === 'block');
+    // ③ 体检面板 hide 后重开：旧实现只 topifyZ 不重放 ESC 注册 → ESC 关错层
+    mask.style.display = 'none';
+    openDataCheckup(app);
+    expect(mask.style.display).toBe('flex');
+    // ④ ESC：关最上面的体检面板，设置面板不动（修复前此断言反向必红）
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(mask.style.display).toBe('none');
+    expect(spMask.style.display).toBe('block');
+    sp.cleanup();
+    unloadDataCheckup();
+  });
+
+  it('ui P3-1：撤销后报告重算——数据回到失效态，报告跟着回去（反向收敛）', async () => {
+    const fav = [
+      { id: 'a', tags: [], title: 'T', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: '我的/gone.md', created: '', type: '', llmConfig: null },
+    ];
+    const { app } = makeApp({ [`${DIR}/favorites.json`]: JSON.stringify(fav) });
+    openDataCheckup(app);
+    const popup = document.getElementById('bz-checkup-popup')!;
+    ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
+    await waitFor(() => !!popup.querySelector('.bz-checkup-group--warn'));
+    ;[...popup.querySelectorAll<HTMLButtonElement>('.bz-checkup-group--warn button')].find((b) => b.textContent!.includes('清除关联'))!.click();
+    // 修复收敛：问题行消失
+    await waitFor(() => {
+      const warn = popup.querySelector('.bz-checkup-group--warn');
+      return !warn || !warn.textContent!.includes('关联笔记不存在');
+    });
+    // 点撤销通知
+    const undoBtn = [...document.querySelectorAll<HTMLButtonElement>('.bz-notice-action')].find((b) => b.textContent!.includes('撤销'));
+    expect(undoBtn).toBeTruthy();
+    undoBtn!.click();
+    // 报告跟着回去：失效关联问题重新出现
+    await waitFor(() => {
+      const warn = popup.querySelector('.bz-checkup-group--warn');
+      return !!warn && warn.textContent!.includes('关联笔记不存在');
+    });
+  });
+
+  it('eff P3-1：跨组一键修复撤销通知聚合单条（总数 + 分组计数），不再一组一条刷屏', async () => {
+    const fav = [
+      { id: 'a', tags: [], title: 'T', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: '我的/gone.md', created: '', type: '', llmConfig: null },
+    ];
+    const sidecar = { articleOverrides: {}, savedArchive: [{ url: 'https://gone', title: '甲', savedAt: '1' }], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    const { app } = makeApp({
+      [`${DIR}/favorites.json`]: JSON.stringify(fav),
+      [`${DIR}/clipbook.json`]: JSON.stringify(sidecar),
+    });
+    openDataCheckup(app);
+    const popup = document.getElementById('bz-checkup-popup')!;
+    ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
+    await waitFor(() => {
+      const warn = popup.querySelector('.bz-checkup-group--warn');
+      return !!warn && warn.textContent!.includes('一键修复');
+    });
+    ;[...popup.querySelectorAll<HTMLButtonElement>('.bz-checkup-group--warn button')].find((b) => b.textContent!.includes('一键修复'))!.click();
+    await waitFor(() => getNoticeMessages().some((m) => m.includes('已清除 2 项失效引用')));
+    const cleared = getNoticeMessages().filter((m) => m.includes('已清除'));
+    expect(cleared).toHaveLength(1); // 单条聚合（旧实现每组一条 = 2 条）
+    expect(cleared[0]).toContain('收藏关联 1');
+    expect(cleared[0]).toContain('剪藏残留 1');
+  });
+
+  it('eff P3-2：修复执行期忙碌态——面板按钮全部禁用、foot 显修复中，完成后恢复', async () => {
+    const fav = [
+      { id: 'a', tags: [], title: 'T', description: '', pinned: false, url: '', balance: null, balanceCacheTime: null, balanceError: null, linkedNote: '我的/gone.md', created: '', type: '', llmConfig: null },
+    ];
+    const { app } = makeApp({ [`${DIR}/favorites.json`]: JSON.stringify(fav) });
+    openDataCheckup(app);
+    const popup = document.getElementById('bz-checkup-popup')!;
+    ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
+    await waitFor(() => !!popup.querySelector('.bz-checkup-group--warn'));
+    let releaseFix: () => void = () => {};
+    fixGate = (resolve) => {
+      releaseFix = resolve;
+    };
+    ;[...popup.querySelectorAll<HTMLButtonElement>('.bz-checkup-group--warn button')].find((b) => b.textContent!.includes('清除关联'))!.click();
+    // 挂起窗口：全部按钮禁用（确认框闭幕后）
+    await waitFor(() => {
+      const btns = [...popup.querySelectorAll<HTMLButtonElement>('button')];
+      return btns.length > 0 && btns.every((b) => b.disabled);
+    });
+    releaseFix();
+    // 完成后恢复：重新体检收敛，出现可点按钮
+    await waitFor(() => {
+      const btns = [...popup.querySelectorAll<HTMLButtonElement>('button')];
+      return btns.some((b) => !b.disabled);
+    });
+  });
+
+  it('eff P3-3：体检失败通知带「重试」出口，点击后重入体检', async () => {
+    const { app } = makeApp({ [`${DIR}/memo.json`]: '[]' });
+    failRun = true;
+    openDataCheckup(app);
+    const popup = document.getElementById('bz-checkup-popup')!;
+    ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
+    await waitFor(() => getNoticeMessages().some((m) => m.includes('体检失败：disk exploded')));
+    const retry = [...document.querySelectorAll<HTMLButtonElement>('.bz-notice-action')].find((b) => b.textContent!.includes('重试'));
+    expect(retry).toBeTruthy();
+    failRun = false;
+    retry!.click();
+    await waitFor(() => !!popup.querySelector('.bz-checkup-summary'));
+  });
+
+  it('eff P3-5：体检中关面板，后台跑完出完成通知（含查看出口），点击重开面板见报告', async () => {
+    const { app, vault } = makeApp({ [`${DIR}/memo.json`]: '[]' });
+    const pending: Array<() => void> = [];
+    (vault.adapter as any).read = (path: string) =>
+      new Promise<string>((resolve) => {
+        pending.push(() => resolve(vault.files.get(path) ?? '[]'));
+      });
+    openDataCheckup(app);
+    const popup = document.getElementById('bz-checkup-popup')!;
+    const mask = document.getElementById('bz-checkup-mask')!;
+    ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
+    await waitFor(() => !!popup.querySelector('.bz-checkup-progress'));
+    // 关面板（hide 不作废在途 run），放行体检继续
+    mask.dispatchEvent(new Event('click'));
+    expect(mask.style.display).toBe('none');
+    // 持续放行挂起的逐文件读（checkJsonFiles 每个文件都会挂起一次）
+    const drain = setInterval(() => {
+      while (pending.length) pending.shift()!();
+    }, 5);
+    // 后台完成通知：带计数
+    try {
+      await waitFor(() => getNoticeMessages().some((m) => m.includes('体检完成')));
+    } finally {
+      clearInterval(drain);
+    }
+    // 点「查看」重开面板
+    const view = [...document.querySelectorAll<HTMLButtonElement>('.bz-notice-action')].find((b) => b.textContent!.includes('查看'));
+    expect(view).toBeTruthy();
+    view!.click();
+    await waitFor(() => mask.style.display === 'flex');
+    await waitFor(() => !!popup.querySelector('.bz-checkup-summary'));
+  });
+
+  it('func P3-9：纯 info 报告 summary 显示「建议处理」，不再与黄组矛盾地报「全部通过」', async () => {
+    // memo 条目缺 due 字段 → 检查二 info「部分条目缺少常见字段」（全报告唯一问题）
+    const memoNoDue = {
+      id: 'm1', title: 'T', scene: 's', priority: 'minor', created: 'c', completed: null,
+      notePath: null, notePosition: null, scriptName: null, courseName: null, coursePath: null, linkedNote: null, url: null,
+    };
+    const { app } = makeApp({ [`${DIR}/memo.json`]: JSON.stringify([memoNoDue]) });
+    openDataCheckup(app);
+    const popup = document.getElementById('bz-checkup-popup')!;
+    ;[...popup.querySelectorAll<HTMLButtonElement>('button')].find((b) => b.textContent!.includes('开始体检'))!.click();
+    await waitFor(() => !!popup.querySelector('.bz-checkup-summary'));
+    const summary = popup.querySelector('.bz-checkup-summary')!.textContent!;
+    expect(summary).toContain('1 处建议处理');
+    expect(summary).not.toContain('全部通过');
+    // 黄组确实列着这条 info
+    expect(popup.querySelector('.bz-checkup-group--warn')!.textContent).toContain('缺少常见字段');
   });
 });

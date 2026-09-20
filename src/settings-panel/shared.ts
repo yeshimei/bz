@@ -26,15 +26,17 @@ export function toggleHtml(on: boolean): string {
 }
 
 /** 下拉触发器（菜单 open 时动态渲——selectMenuHtml / selectItemHtml 同为纯串）
- *  原型 select 分支：bz-select = 值 span + chevron 右转箭头（旋转由 styles.css .bz-select-car 单源承载） */
+ *  原型 select 分支：bz-select = 值 span + chevron 右转箭头（旋转由 styles.css .bz-select-car 单源承载）。
+ *  UI-2（对齐 core uiSelect 范式）：触发器可聚焦（tabindex）+ aria-expanded/haspopup——
+ *  纯键盘用户可达（开合/导航行为挂 renderer.ts 行为层）。 */
 export function selectTriggerHtml(label: string): string {
-  return `<div class="bz-select"><span class="bz-select-val">${esc(label)}</span>` +
+  return `<div class="bz-select" role="listbox" tabindex="0" aria-expanded="false" aria-haspopup="listbox"><span class="bz-select-val">${esc(label)}</span>` +
     `${iconSpan('chevron-right', 'bz-select-car')}</div>`;
 }
 
-/** 下拉菜单项（is-on = 当前值；勾标 icon 占位由 mountIcons 兑现）——原型菜单循环项 */
+/** 下拉菜单项（is-on = 当前值；role=option + aria-selected 读屏播报；勾标 icon 占位由 mountIcons 兑现）——原型菜单循环项 */
 export function selectItemHtml(label: string, on: boolean): string {
-  return `<button type="button" class="bz-select-item${on ? ' is-on' : ''}"><span>${esc(label)}</span>` +
+  return `<button type="button" class="bz-select-item${on ? ' is-on' : ''}" role="option" aria-selected="${String(on)}"><span>${esc(label)}</span>` +
     `<span class="bz-ic bz-select-item-ck">${iconSpan('check')}</span></button>`;
 }
 
@@ -76,9 +78,10 @@ export function sliderHtml(min: number | undefined, max: number | undefined, ste
 }
 
 
-/** 行操作按钮（cta → accent 实底）——原型 button 分支 */
+/** 行操作按钮（cta → accent 实底）——原型 button 分支。
+ *  UI-4：~27px 行内钮挂触控热区修饰（--lg -8px 外扩，触屏档生效，桌面零影响）。 */
 export function rowBtnHtml(label: string, cta?: boolean): string {
-  return `<button type="button" class="bz-sp-btn${cta ? ' bz-sp-btn--primary' : ''}">${esc(label)}</button>`;
+  return `<button type="button" class="bz-sp-btn${cta ? ' bz-sp-btn--primary' : ''} bz-touch-target--lg">${esc(label)}</button>`;
 }
 
 /** 通用列表行 markup/行为已收归组件库（core/ui setlist.ts，uiSetlist）——本文件不再持有实现，
@@ -152,14 +155,15 @@ export function miniHtml(kind: string | undefined, prev: Record<string, unknown>
   return `<div class="bz-sp-mini"${bg}></div>`;
 }
 
-/** choiceCards 卡组（radiogroup；卡 = mini 预览 + 名称；is-on = 当前值；data-sp-card 契约供事件层回查）。
+/** choiceCards 卡组（radiogroup；卡 = mini 预览 + 名称；role=radio + aria-checked 读屏播报——UI-2；
+ *  is-on = 当前值；data-sp-card 契约供事件层回查）。
  *  每卡预览二选一：kind+prev（原型 renderMini 数据内联构建）或 prevClass（插件端 CSS 承载）——结构同源。 */
 export function cardpickHtml(cards: Array<{ value: string; label: string; on: boolean; kind?: string; prev?: Record<string, unknown>; prevClass?: string }>): string {
   return `<div class="bz-sp-cardpick" role="radiogroup">` + cards.map((c) => {
     const mini = c.kind
       ? miniHtml(c.kind, c.prev || {})
       : `<div class="bz-sp-mini${c.prevClass ? ` ${c.prevClass}` : ''}" aria-hidden="true"></div>`;
-    return `<button type="button" class="bz-sp-cardpick-card${c.on ? ' is-on' : ''}" data-sp-card="${esc(c.value)}">` +
+    return `<button type="button" class="bz-sp-cardpick-card${c.on ? ' is-on' : ''}" role="radio" aria-checked="${String(c.on)}" data-sp-card="${esc(c.value)}">` +
       mini + `<span class="bz-sp-cardpick-name">${esc(c.label)}</span></button>`;
   }).join('') + `</div>`;
 }

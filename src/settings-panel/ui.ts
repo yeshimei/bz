@@ -13,19 +13,30 @@
  * - 通用域/AI 域 → generalSettingsSchema()/aiSettingsSchema()（issue 186：AI 自全局拆出独立成域）。
  */
 import { createOverlay, topifyZ } from '../core/dom';
-import { escManager } from '../core/esc-manager';
+import { registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { isMobileEnv } from '../core/mobile';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openFlowDialog } from '../core/flow-dialog';
 import type { SettingsSchema } from '../core/settings-schema';
 import { DOMAIN_ICONS } from '../core/domain-icons';
-import { renderPanelSchema } from './renderer';
-import { notice } from '../core/notice';
+import { renderPanelSchema, closeAllSelectMenus, refreshGroupCounts } from './renderer';
+import { notice, notifyActionError, notifySaveError } from '../core/notice';
 import { getApp } from '../core/app';
-import { uiIconBtn, uiEmpty, mountIcons } from '../core/ui';
+import { uiIconBtn, uiBtn, uiEmpty, mountIcons } from '../core/ui';
+import { firstFocusable } from '../core/ui/focus-trap';
+import { debounce } from '../core/utils';
 // markup 单源（ADR-0104/0105）：面板壳/导航/页头结构串全出自渲染纯层；
 // 行为单源（ADR-0106，issue 245 范式）：本文件即唯一真理，原型壳为双 iframe 评审壳
 import * as R from './render';
+
+/** 搜索输入防抖窗口（E-5）：纯 UI 重绘无数据丢失面，每键全量重建导航/列表 + 图标物化 + 全行
+ *  重扫收敛为一停顿一次（core debounce 先例口径 180ms）。 */
+const SEARCH_DEBOUNCE_MS = 180;
+
+/** 搜索命中归一（UI-7）：query 与被检串同转小写再 includes——英文缩写词（api/rss/deepseek）
+ *  小写输入也可命中；中文无感。 */
+const spMatch = (hay: string, needle: string): boolean =>
+  !needle || hay.toLowerCase().includes(needle.toLowerCase());
 
 /* ==================== 域清单（全局 + 19 域；图标 = lucide 名） ==================== */
 
@@ -171,6 +182,22 @@ export const NAV_SECS: Array<{ title: string; ids: string[] }> = [
 /** 已加载域的 schema 行缓存（移动端搜索「设置项」段用：域名 → 行名/描述列表） */
 const schemaRowCache = new Map<string, Array<{ name: string; desc: string }>>();
 
+/**
+ * 会话级 schema 缓存（E-8）：同一次面板会话内每域 loader 只跑一次——预载/进域/推入/重置共享
+ * 同一份 schema（剪藏本/小橘/复习等含磁盘 IO 的 loader 不再反复重跑）；visibleWhen 求值仍在
+ * 计数/刷新时按当前设置实时判，徽标新鲜度不受影响。cleanup 清空（与三缓存同生命周期）。
+ */
+const schemaCache = new Map<string, SettingsSchema>();
+
+/** 经会话缓存取域 schema（E-8；loader 抛错不缓存，失败域下次仍可重试） */
+async function loadSchemaCached(domain: DomainDef): Promise<SettingsSchema> {
+  const hit = schemaCache.get(domain.id);
+  if (hit) return hit;
+  const schema = await domain.schemaLoader!();
+  schemaCache.set(domain.id, schema);
+  return schema;
+}
+
 /** 缓存域 schema 行（移动端搜索「设置项」段用；preload/renderDomain/openMobileDomain 三处同口径） */
 function cacheRowsFor(domainId: string, schema: SettingsSchema): void {
   const rows = schema.groups.flatMap((g) =>
@@ -205,7 +232,8 @@ export const listableDomains = (): DomainDef[] =>
   DOMAINS.filter((d) => !d.noSettings && d.schemaLoader && (!loadedCounts.has(d.id) || (loadedCounts.get(d.id) ?? 0) > 0));
 
 /** 导航徽标运行时值（域 id → 徽标文案）：初始 ·；noSettings 域 —；schema 加载后回填设置项总数。
- *  动态计算：设置项随 schema 增删或 visibleWhen 门控变化后，徽标自动跟随。 */
+ *  UI-8 口径如实化：进入域（renderDomain 联动）/重开面板（preload）时重算，refresh 链经
+ *  renderHandles 包装同步——visibleWhen 门控变化后徽标跟随，不再只是首载快照。 */
 const navBadges = new Map<string, string>();
 
 function badgeOf(d: DomainDef): string {
@@ -214,9 +242,10 @@ function badgeOf(d: DomainDef): string {
 }
 
 /** 可见设置项总数（issue 186 徽标口径 = 设置项数，非分组数）：
- *  组级/行级 visibleWhen 求值 false 的不计（求值异常保守视为可见）；
- *  button 操作行不计——与分组卡「N 项」徽标同口径。 */
-function visibleItemCount(schema: SettingsSchema): number {
+ *  组级/行级 visibleWhen 求值 false 的不计（求值异常保守视为可见）；button 操作行不计；
+ *  isChild 行按「组级父项开关」合成判定（UI-8 与组卡「N 项」徽标同口径——父关时子行不计，
+ *  与渲染器 H2 的合成条件一致）。导出供回归测试断言（与 DOMAINS/loadedCounts 同惯例）。 */
+export function visibleItemCount(schema: SettingsSchema): number {
   let n = 0;
   for (const g of schema.groups) {
     const gvw = (g as { visibleWhen?: (s: unknown) => boolean }).visibleWhen;
@@ -227,17 +256,27 @@ function visibleItemCount(schema: SettingsSchema): number {
         /* 求值异常视为可见 */
       }
     }
+    // isChild 合成（H2 同口径）：本组首个键直绑 toggle = 组级父项
+    const parentToggleKey = (
+      g.rows.find(
+        (pr) => pr.type === 'toggle' && typeof (pr.binding as { key?: string } | undefined)?.key === 'string'
+      ) as { binding: { key: string } } | undefined
+    )?.binding.key ?? null;
     for (const r of g.rows) {
       if (r.type === 'button') continue;
       const rvw = (r as { visibleWhen?: (s: unknown) => boolean }).visibleWhen;
+      let visible = true;
       if (rvw) {
         try {
-          if (!rvw(tryGetSettings() as unknown as never)) continue;
+          visible = !!rvw(tryGetSettings() as unknown as never);
         } catch {
           /* 求值异常视为可见 */
         }
       }
-      n++;
+      if (visible && (r as { isChild?: boolean }).isChild && parentToggleKey) {
+        visible = (tryGetSettings() as unknown as Record<string, unknown>)[parentToggleKey] === true;
+      }
+      if (visible) n++;
     }
   }
   return n;
@@ -248,7 +287,6 @@ function visibleItemCount(schema: SettingsSchema): number {
 export class SettingsPanelUI {
   private mask: HTMLElement | null = null;
   private popup: HTMLElement | null = null;
-  private escHandle: { unregister: () => void } | null = null;
   /** 当前激活域 id（按 id 驱动：可见域过滤后索引会错位，不用数字下标） */
   private activeDomainId = 'global';
   /** 桌面导航容器引用（schema 加载后回填徽标用） */
@@ -264,6 +302,8 @@ export class SettingsPanelUI {
   /** 当前搜索词（桌面：切域重渲后按它重刷命中/过滤状态）。
    *  2026-09-12 用户拍板：去掉「只看命中」开关，搜索即过滤（默认恒开）。 */
   private searchQuery = '';
+  /** 徽标预载在途 Promise（ARCH-2 单飞：并发 open 收敛为一轮，磁盘 IO 域不双倍重跑） */
+  private preloadInFlight: Promise<void> | null = null;
 
   /**
    * 打开面板；domainId 可选（增强包：备忘录场景菜单「在设置中编辑」直达）——
@@ -276,6 +316,12 @@ export class SettingsPanelUI {
       topifyZ(this.mask, this.popup);
       this.mask.style.display = 'block';
       this.popup.style.display = 'flex';
+      // ESC 栈序与 z 序重同步（checkup 深审 ui P2-1 同刀）：hide 型常驻层重开只抬 z 不抬
+      // ESC 栈会失配（z 序正确、ESC 却先关底下被盖住的面板）。重放注册——registerPanelEsc
+      // 的幂等样板「已注册即跳过」不解决抬栈，须先 unregisterPanelEsc 再挂，注册序自此
+      // 跟随显示序。
+      unregisterPanelEsc('bz-settings-panel');
+      this.armPanelEsc();
       if (deep && isMobileEnv()) {
         void this.pushDomain(deep);
       } else if (deep) {
@@ -285,7 +331,9 @@ export class SettingsPanelUI {
         const pane = this.popup.querySelector('.bz-sp-pane') as HTMLElement | null;
         if (pane) void this.renderDomain(pane, deep);
       }
-      // 会话内其他域徽标可能已过期（preload 只在首次 build 跑）——重开即重算（H9）
+      // 会话内其他域徽标可能已过期（preload 只在首次 build 跑）——重开即重算（H9）。
+      // 先从会话缓存同步重算（单飞在途时新轮被收敛，缓存重算保住新鲜度），再起新轮预载
+      this.recomputeBadgesFromCache();
       void this.preloadAllBadges();
       return;
     }
@@ -318,14 +366,11 @@ export class SettingsPanelUI {
     popup.style.display = 'flex';
     topifyZ(mask, popup);
 
-    this.escHandle = escManager.register('bz-settings-panel', {
-      isVisible: () => !!this.mask && this.mask.style.display === 'block',
-      close: () => {
-        // 移动端推入页先弹回首页，再次 ESC 才收面板
-        if (this.popup?.classList.contains('bz-sp-mob-pushed')) this.popDomain();
-        else this.hide();
-      },
-    });
+    // C-5：面板 ESC 注册收编 registerPanelEsc 幂等样板（八域先例，删 escHandle 手写形制）
+    this.armPanelEsc();
+    // E-3：打开即聚焦首个可交互元素（core uiModal firstFocusable 范式）——桌面 = 头行搜索框，
+    // 键盘流第一步可达（搜索 → ↑↓ 切域 → ESC 关全链键盘闭环）；移动端跳过输入框聚焦关闭钮
+    firstFocusable(popup)?.focus();
   }
 
   /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
@@ -344,15 +389,32 @@ export class SettingsPanelUI {
     // 键盘导航（2026-09-12 补）：↑↓ 在可见域间前后切换（顺序同导航视觉顺序）
     popup.addEventListener('keydown', (e) => this.onNavKey(e, pane));
 
+    // E-4 roving tabindex：左栏导航收敛为 Tab 序单站——容器可聚焦、域钮退出 Tab 序，
+    // 容器聚焦后 ↑↓ 在域钮间移焦点（Enter 原生点击），到内容区首个控件不再穿 20+ 次 Tab
+    nav.tabIndex = 0;
+    nav.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+      const items = [...nav.querySelectorAll<HTMLElement>('.bz-sp-nav-item')];
+      if (!items.length) return;
+      e.preventDefault();
+      e.stopPropagation(); // 导航容器内 ↑↓ 专用于 roving 焦点，不冒泡给面板 ↑↓ 切域
+      const cur = items.indexOf(document.activeElement as HTMLElement);
+      const next = cur < 0
+        ? (e.key === 'ArrowDown' ? 0 : items.length - 1)
+        : e.key === 'ArrowDown' ? Math.min(cur + 1, items.length - 1) : Math.max(cur - 1, 0);
+      items[next].focus();
+    });
+
     const renderNav = (q: string) => {
       const query = q.trim();
       nav.innerHTML = '';
       // 无设置项/当前端零设置项的域不在左侧列表显示（用户拍板 + issue 194）；搜索同样只搜列表可见域
       const visible = listableDomains();
-      // 搜索命中：域名/描述 + 已加载域的设置项行名（只匹配行名——desc 常含跨域引用词会误命中）
+      // 搜索命中：域名/描述 + 已加载域的设置项行名（只匹配行名——desc 常含跨域引用词会误命中；
+      // UI-7：大小写不敏感归一）
       const matches = (d: DomainDef) =>
-        !query || d.name.includes(query) || d.desc.includes(query) ||
-        (schemaRowCache.get(d.id) || []).some((r) => r.name.includes(query));
+        !query || spMatch(d.name, query) || spMatch(d.desc, query) ||
+        (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
       // 拍板原型：导航按语义分四组（基础/记录/媒体与知识/工具）；不在表内的域归「其他」尾组
       const secs = groupDomains(visible, matches);
       for (const sec of secs) {
@@ -369,6 +431,7 @@ export class SettingsPanelUI {
       }
       mountIcons(nav); // 导航图标占位物化（mock setIcon 记 data-icon）
       nav.querySelectorAll<HTMLElement>('.bz-sp-nav-item').forEach((b) => {
+        b.tabIndex = -1; // E-4：域钮退出 Tab 序（roving 由容器接管）
         const id = b.dataset.spDomain!;
         b.addEventListener('click', () => {
           this.activeDomainId = id;
@@ -378,42 +441,70 @@ export class SettingsPanelUI {
       });
     };
 
-    searchIn.addEventListener('input', () => {
+    // E-5：搜索输入 180ms 防抖（每键全量重建导航/列表收敛为一停顿一次；纯 UI 重绘无数据丢失面）
+    const applySearch = debounce(() => {
       renderNav(searchIn.value);
       // 搜索即过滤（2026-09-12 用户拍板：命中行高亮，未命中行与空组隐藏，无开关恒开）；
       // 切域重渲后按 searchQuery 以同一口径复刷
       this.searchQuery = searchIn.value.trim();
       this.applyHitFilter(popup, this.searchQuery);
-    });
+    }, SEARCH_DEBOUNCE_MS);
+    searchIn.addEventListener('input', () => applySearch());
     renderNav('');
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘导航（issue 194 按端隐藏）
     this.rerenderList = () => renderNav(searchIn.value);
     void this.renderDomain(pane, DOMAINS.find((x) => x.id === this.activeDomainId) ?? DOMAINS[0]);
   }
 
+  /** 从会话 schema 缓存同步重算全部域徽标（H9 × ARCH-2 合流：软重开遇预载单飞在途时，
+   *  新轮被收敛不重跑——缓存重算保证「重开即重算」新鲜度；visibleWhen 按当前设置实时求值） */
+  private recomputeBadgesFromCache(): void {
+    for (const d of DOMAINS) {
+      const schema = schemaCache.get(d.id);
+      if (!schema) continue;
+      const count = visibleItemCount(schema);
+      loadedCounts.set(d.id, count);
+      navBadges.set(d.id, count > 0 ? String(count) : '—');
+    }
+    this.refreshNavBadges();
+  }
+
   /**
    * 预加载全部有 schema 的域，回填左侧导航徽标（设置项总数）。
    * 面板打开即算全量徽标（用户拍板：无需先点击各域）。
-   * 只调用 schemaLoader 取结构，不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
+   * 只经会话缓存取 schema 结构（E-8），不渲染 UI；副作用与点击加载一致（review.ensure 幂等）。
    * 组级/行级 visibleWhen 门控（如移动端组）按当前端环境过滤。
+   * ARCH-2 单飞：上一轮在途时复用同一 Promise——并发 open（命令重跑/深链）不再并发重跑
+   * 全量 loader（含磁盘 IO 域，重建风暴由轮末单次重绘收敛）；软重开的新鲜度由
+   * recomputeBadgesFromCache 兜底（H9 语义保持），完成后新 open 自然起新轮。
    */
   private async preloadAllBadges(): Promise<void> {
-    const tasks = DOMAINS.filter((d) => d.schemaLoader).map(async (d) => {
-      try {
-        const schema = await d.schemaLoader!();
-        const count = visibleItemCount(schema);
-        loadedCounts.set(d.id, count);
-        navBadges.set(d.id, count > 0 ? String(count) : '—');
-        // 顺带填充移动端搜索「设置项」缓存
-        cacheRowsFor(d.id, schema);
-      } catch {
-        navBadges.set(d.id, '·'); // 加载失败保守显示占位（域保持列表可见）
-      }
-      this.refreshNavBadges();
-      // 零项域解析完成 → 从列表剔除（桌面导航/移动列表按当前端注册的重绘回调）
+    if (this.preloadInFlight) return this.preloadInFlight;
+    const run = (async () => {
+      const tasks = DOMAINS.filter((d) => d.schemaLoader).map(async (d) => {
+        try {
+          const schema = await loadSchemaCached(d);
+          const count = visibleItemCount(schema);
+          loadedCounts.set(d.id, count);
+          navBadges.set(d.id, count > 0 ? String(count) : '—');
+          // 顺带填充移动端搜索「设置项」缓存
+          cacheRowsFor(d.id, schema);
+        } catch {
+          navBadges.set(d.id, '·'); // 加载失败保守显示占位（域保持列表可见）
+        }
+        this.refreshNavBadges();
+      });
+      await Promise.allSettled(tasks);
+      // 全部解析完一次重绘（ARCH-2：每域完成各触发一次全量重建的重建风暴收敛为单次；
+      // 零项域按端剔除口径不变）
       this.rerenderList?.();
-    });
-    await Promise.allSettled(tasks);
+    })();
+    this.preloadInFlight = run;
+    try {
+      await run;
+    } finally {
+      if (this.preloadInFlight === run) this.preloadInFlight = null;
+    }
   }
 
   /** 重绘桌面导航徽标（schema 加载/组数变化后调用；不重建导航项，只刷数字） */
@@ -440,6 +531,9 @@ export class SettingsPanelUI {
     // 竞态 token（P2-4）：用户快速切换域时，前一个 schemaLoader await 完成后若已非当前域，
     // 丢弃渲染（避免往 detached body 写、旧句柄推入新渲染任务）
     const runId = ++this.renderSeq;
+    // F-2：移除聚焦输入框前先真实 blur——浏览器对「从 DOM 移除聚焦元素」不派发 blur，
+    // 防抖窗口内的编辑会随元素静默丢弃（↑↓ 切域/深链重渲路径的丢字缺口）
+    this.flushPendingTextCommit();
     // 清理旧渲染句柄
     this.renderHandles = [];
     pane.innerHTML = '';
@@ -474,11 +568,19 @@ export class SettingsPanelUI {
     body.innerHTML = R.loadingHtml(); // 加载态结构单源
 
     try {
-      const schema = await domain.schemaLoader();
+      const schema = await loadSchemaCached(domain);
       if (runId !== this.renderSeq) return; // 已有更新的渲染任务，放弃本次结果
       body.innerHTML = '';
       const handle = renderPanelSchema(body, schema);
-      this.renderHandles.push(handle);
+      // UI-8：refresh 链联动 nav 徽标——「visibleWhen 门控变化后徽标自动跟随」承诺兑现
+      //（visibleItemCount 已补 isChild 合成，与组卡「N 项」徽标同口径）
+      const refreshWithBadge = () => {
+        handle.refresh();
+        const cnt = visibleItemCount(schema);
+        navBadges.set(domain.id, cnt > 0 ? String(cnt) : '—');
+        this.refreshNavBadges();
+      };
+      this.renderHandles.push({ refresh: refreshWithBadge });
       // 记录本域 schema 行（移动端搜索「设置项」段用）
       cacheRowsFor(domain.id, schema);
       // 回填导航徽标：设置项总数（visibleWhen 门控隐藏的不计、button 操作行不计，与 preload 同口径）；
@@ -505,12 +607,16 @@ export class SettingsPanelUI {
       return;
     } catch (e) {
       body.innerHTML = '';
-      body.appendChild(this.emptyEl(
-        'alert-circle',
-        '加载失败',
-        (e as Error).message
-      ));
-      notice(`加载「${domain.name}」设置失败：${(e as Error).message}`, 'error');
+      // C-4：收编 notifyActionError+onRetry 定稿范式——非 Error 抛出物不再显示 "undefined"，
+      // 通知自带「重试」出口；空态下沿同挂一枚重试按钮走同一回调
+      const retry = () => void this.renderDomain(pane, domain);
+      const actions = document.createElement('div');
+      actions.className = 'bz-sp-load-retry';
+      actions.appendChild(uiBtn({ label: '重试', tone: 'primary', onClick: retry }));
+      const empty = this.emptyEl('alert-circle', '加载失败', e instanceof Error ? e.message : String(e));
+      empty.appendChild(actions);
+      body.appendChild(empty);
+      notifyActionError(e, `加载「${domain.name}」设置`, { onRetry: retry });
     }
   }
 
@@ -518,7 +624,9 @@ export class SettingsPanelUI {
    * 命中高亮 + 搜索过滤（2026-09-12 补，桌面；用户拍板：无开关，搜索即过滤）：
    * - q 非空时给命中行加 .hit，并隐藏未命中行与「无可见行」的组；q 清空恢复全显；
    * - **只回收自己设过的**内联 display，不触碰渲染器 visibleWhen 的隐藏
-   *   （否则一过滤就会把门控隐藏的行放出来）。
+   *   （F-1：打标只记「本次过滤亲手藏的」——display 已为 none 的门控行不碰不标，
+   *   恢复分支因此永不放行 visibleWhen 隐藏的行/组；清空后再经渲染句柄 refresh 重求值门控兜底）；
+   * - 组卡「N 项」徽标按当前可见行数重算（UI-6：搜索态计数与实际可见行数一致）。
    */
   private applyHitFilter(root: HTMLElement, q: string): void {
     root.querySelectorAll<HTMLElement>('.bz-sp-set-row').forEach((row) => {
@@ -526,9 +634,9 @@ export class SettingsPanelUI {
         row.style.display = '';
         delete row.dataset.spHitHidden;
       }
-      const hit = !!q && !!row.textContent && row.textContent.includes(q);
+      const hit = !!q && !!row.textContent && spMatch(row.textContent, q);
       row.classList.toggle('hit', hit);
-      if (q && !hit) {
+      if (q && !hit && row.style.display !== 'none') {
         row.style.display = 'none';
         row.dataset.spHitHidden = '1';
       }
@@ -540,26 +648,42 @@ export class SettingsPanelUI {
       }
       if (!q) return;
       const any = [...g.querySelectorAll<HTMLElement>('.bz-sp-set-row')].some((r) => r.style.display !== 'none');
-      if (!any) {
+      if (!any && g.style.display !== 'none') {
         g.style.display = 'none';
         g.dataset.spHitHidden = '1';
       }
     });
+    if (!q) {
+      // F-1 纵深：恢复后经渲染句柄重求值门控（搜索期间门控条件若变化，此处重新落位）
+      this.renderHandles.forEach((h) => h.refresh());
+    }
+    refreshGroupCounts(root);
   }
 
   /**
    * 键盘导航（2026-09-12 补，桌面）：↑↓ 在可见域间前后切换，顺序 = 导航视觉顺序
    * （NAV_SECS 分组序，与左栏自上而下一致）。多行文本 / 下拉里让位，搜索框与面板本体可用。
+   * F-6：搜索态与 renderNav 同源——只在当前命中（导航可见）集内移动，切到的一定是看得见的域；
+   * 当前域不在命中集时 ↓/↑ 进首/末个命中域；命中集为空 no-op。
    */
   private onNavKey(e: KeyboardEvent, pane: HTMLElement): void {
     if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
     const t = e.target as HTMLElement | null;
     if (t && (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return;
-    const ordered = groupDomains(listableDomains()).flatMap((s) => s.domains);
+    const query = this.searchQuery.trim();
+    const matches = (d: DomainDef) =>
+      !query || spMatch(d.name, query) || spMatch(d.desc, query) ||
+      (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
+    const ordered = groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
+    if (!ordered.length) return;
     const idx = ordered.findIndex((d) => d.id === this.activeDomainId);
-    if (idx < 0) return;
-    const next = e.key === 'ArrowDown' ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
-    if (next === idx) return;
+    let next: number;
+    if (idx < 0) {
+      next = e.key === 'ArrowDown' ? 0 : ordered.length - 1;
+    } else {
+      next = e.key === 'ArrowDown' ? Math.min(idx + 1, ordered.length - 1) : Math.max(idx - 1, 0);
+      if (next === idx) return;
+    }
     e.preventDefault();
     const d = ordered[next];
     this.activeDomainId = d.id;
@@ -579,9 +703,10 @@ export class SettingsPanelUI {
     if (!domain.schemaLoader) return;
     let schema: SettingsSchema;
     try {
-      schema = await domain.schemaLoader();
+      schema = await loadSchemaCached(domain);
     } catch (e) {
-      notice(`读取「${domain.name}」设置失败：${(e as Error).message}`, 'error');
+      // C-4：收编 notifyActionError+onRetry（非 Error 抛出物不再显示 "undefined"，带重试出口）
+      notifyActionError(e, `读取「${domain.name}」设置`, { onRetry: () => void this.resetDomain(domain, pane) });
       return;
     }
     const keys = new Set<string>();
@@ -600,7 +725,8 @@ export class SettingsPanelUI {
       message: `把「${domain.name}」的设置项恢复为默认值（未改动的项不受影响）。确定继续吗？`,
       actions: [
         { label: '取消', value: 'cancel' },
-        { label: '重置', value: 'ok', cta: true },
+        // E-2：破坏性动作 danger 反焦（全仓惯例）——主按钮不默认持焦，防 Enter 一击即重置
+        { label: '重置', value: 'ok', cta: true, danger: true },
       ],
     });
     if (ans !== 'ok') return;
@@ -614,7 +740,14 @@ export class SettingsPanelUI {
       s[k] = Array.isArray(def) ? [...def] : def; // 数组浅拷贝：别把 DEFAULT 里的数组引用写进设置
       n++;
     }
-    await saveSettings();
+    try {
+      await saveSettings();
+    } catch (e) {
+      // F-5：批写落盘失败不再假成功——内存已重置（所见即所得），人话提示 + 重渲，成功提示跳过
+      notifySaveError(e, `重置「${domain.name}」`);
+      void this.renderDomain(pane, domain);
+      return;
+    }
     notice(`「${domain.name}」已重置 ${n} 项`, 'success');
     void this.renderDomain(pane, domain);
   }
@@ -628,11 +761,12 @@ export class SettingsPanelUI {
     this.mobPushed = false; // 面板重建（含上次关闭时停在推入页）从首页起
 
     // 两页头行工具：**只有首页一枚关闭钮**；域页不设关闭（用户 2026-09-10 拍板——
-    // 域页已有一枚返回钮弹回首页，再叠一枚关闭会与它并排、误触率高；关面板走首页那枚）
+    // 域页已有一枚返回钮弹回首页，再叠一枚关闭会与它并排、误触率高；关面板走首页那枚）。
+    // UI-4：32px 主导航钮挂 bz-touch-target（-6px 外扩触屏达 44px 档）
     const homeTools = popup.querySelector('[data-sp-mob-tools="home"]') as HTMLElement;
-    homeTools.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', className: 'bz-sp-mob-close', onClick: () => this.hide() }));
+    homeTools.appendChild(uiIconBtn({ icon: 'x', lg: true, title: '关闭', className: 'bz-sp-mob-close bz-touch-target', onClick: () => this.hide() }));
     const back = popup.querySelector('[data-sp-mob-back]') as HTMLElement;
-    back.appendChild(uiIconBtn({ icon: 'arrow-left', lg: true, title: '返回', className: 'bz-sp-mob-back-btn', onClick: () => this.popDomain() }));
+    back.appendChild(uiIconBtn({ icon: 'arrow-left', lg: true, title: '返回', className: 'bz-sp-mob-back-btn bz-touch-target', onClick: () => this.popDomain() }));
     mountIcons(popup); // 壳内图标占位物化（搜索/返回/关闭）
 
     const list = popup.querySelector('.bz-sp-mob-list') as HTMLElement;
@@ -653,14 +787,14 @@ export class SettingsPanelUI {
           sec.domains.forEach((d) => list.insertAdjacentHTML('beforeend', R.mobItemHtml({ id: d.id, icon: d.icon, name: d.name, desc: d.desc })));
         }
       } else {
-        // 搜索：域段 + 设置项段（同样只搜列表可见域）
-        const doms = listableDomains().filter((d) => d.name.includes(query) || d.desc.includes(query));
+        // 搜索：域段 + 设置项段（同样只搜列表可见域；UI-7：大小写不敏感归一）
+        const doms = listableDomains().filter((d) => spMatch(d.name, query) || spMatch(d.desc, query));
         const rows: Array<{ domain: DomainDef; name: string; desc: string }> = [];
         schemaRowCache.forEach((rowsOf, did) => {
           const d = DOMAINS.find((x) => x.id === did);
           if (!d) return;
           rowsOf.forEach((r) => {
-            if (r.name.includes(query) || (r.desc && r.desc.includes(query))) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
+            if (spMatch(r.name, query) || (r.desc && spMatch(r.desc, query))) rows.push({ domain: d, name: r.name, desc: r.desc || d.name });
           });
         });
         let html = '';
@@ -684,19 +818,29 @@ export class SettingsPanelUI {
       mountIcons(list); // 列表项图标占位物化（render 重绘后补挂）
     };
 
-    searchIn.addEventListener('input', () => render(searchIn.value));
+    // E-5：搜索输入 180ms 防抖（每键全量重建列表 + 图标物化收敛，同桌面口径）
+    const applySearch = debounce(() => render(searchIn.value), SEARCH_DEBOUNCE_MS);
+    searchIn.addEventListener('input', () => applySearch());
     render('');
     // 注册列表重绘回调：preload 解析出零项域后按当前搜索词重绘列表（issue 194 按端隐藏）
     this.rerenderList = () => { if (!this.mobPushed) render(searchIn.value); };
   }
 
   /** 推入域设置页（全屏页切换；返回/ESC 弹回首页）。
-   *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。 */
+   *  focusRow（2026-09-12 补）：来自搜索「设置项」命中 → 渲染完成后滚动定位并高亮该行。
+   *  E-6：域页工具位挂「重置本域」图标钮——移动端重置动线此前不存在（withHead:false 连带
+   *  砍掉页头重置钮），flow 确认弹窗在移动端同样可用；重复推入先清工具位防叠挂。 */
   private async pushDomain(domain: DomainDef, focusRow?: string): Promise<void> {
     const popup = this.popup!;
     this.mobPushed = true;
     (popup.querySelector('.bz-sp-mob-title') as HTMLElement).textContent = domain.name;
     popup.classList.add('bz-sp-mob-pushed');
+    const tools = popup.querySelector('[data-sp-mob-tools="domain"]') as HTMLElement;
+    tools.replaceChildren();
+    tools.appendChild(uiIconBtn({
+      icon: 'rotate-ccw', lg: true, title: '重置本域', className: 'bz-touch-target',
+      onClick: () => void this.resetDomain(domain, popup.querySelector('.bz-sp-mob-page-body') as HTMLElement),
+    }));
     const body = popup.querySelector('.bz-sp-mob-page-body') as HTMLElement;
     await this.renderDomain(body, domain, { withHead: false });
     if (focusRow) this.focusRowIn(body, focusRow);
@@ -719,16 +863,39 @@ export class SettingsPanelUI {
     this.popup?.classList.remove('bz-sp-mob-pushed');
   }
 
+  /** 面板 ESC 层注册（build 与重开共用；重开由 open 先 unregisterPanelEsc 再走本方法抬栈） */
+  private armPanelEsc(): void {
+    registerPanelEsc('bz-settings-panel', () => !!this.mask && this.mask.style.display === 'block', () => {
+      // 移动端推入页先弹回首页，再次 ESC 才收面板
+      if (this.popup?.classList.contains('bz-sp-mob-pushed')) this.popDomain();
+      else this.hide();
+    });
+  }
+
   hide(): void {
+    // UI-1 纵深：软关前强制收起自绘下拉——菜单 DOM 与组卡提层样式不留残，重开面板不「复活」
+    if (this.popup) closeAllSelectMenus(this.popup);
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
   }
 
-  cleanup(): void {
-    if (this.escHandle) {
-      this.escHandle.unregister();
-      this.escHandle = null;
+  /** F-2：移除聚焦输入框前 flush 防抖——面板内 INPUT/TEXTAREA 持焦时真实 blur（触发已注册
+   *  blur commit 监听立即落盘），防「从 DOM 移除聚焦元素不派发 blur」的静默丢字。 */
+  private flushPendingTextCommit(): void {
+    const active = document.activeElement;
+    if (
+      active instanceof HTMLElement &&
+      this.popup?.contains(active) &&
+      (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')
+    ) {
+      active.blur();
     }
+  }
+
+  cleanup(): void {
+    unregisterPanelEsc('bz-settings-panel'); // C-5：幂等注销样板
+    this.flushPendingTextCommit(); // F-2：卸载清理路径 flush 防抖窗口文本
+    if (this.popup) closeAllSelectMenus(this.popup); // UI-1 纵深：非常规关闭路径菜单不留残
     if (this.mask) {
       this.mask.remove();
       this.mask = null;
@@ -740,9 +907,11 @@ export class SettingsPanelUI {
     this.renderHandles = [];
     this.navEl = null;
     this.rerenderList = null;
-    // 徽标/行缓存/已加载数随面板销毁清空（下次打开重新动态计算）
+    this.preloadInFlight = null;
+    // 徽标/行缓存/已加载数/schema 会话缓存随面板销毁清空（下次打开重新动态计算）
     navBadges.clear();
     schemaRowCache.clear();
     loadedCounts.clear();
+    schemaCache.clear();
   }
 }

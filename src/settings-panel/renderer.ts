@@ -16,43 +16,22 @@
  */
 import { getSettings, saveSettings } from '../core/settings-provider';
 import { openPathPicker } from '../core/path-picker';
-import { bindValue } from '../core/settings-schema';
+// 行为内核单源（ARCH-1）：safePersist（N5）/CommitWarn（H1）/parseClampedNumber（R9）/
+// TEXT_COMMIT_DELAY（防抖窗口）下沉 core 导出，两渲染器消费同一实现——core 历轮加固经此传导
+import {
+  bindValue, safePersist, CommitWarn, parseClampedNumber, TEXT_COMMIT_DELAY,
+} from '../core/settings-schema';
 import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
+import { escManager } from '../core/esc-manager';
 // markup 单源（ADR-0104/0105）：行/组/控件结构串全出自渲染纯层，本文件只留行为绑定
 import * as R from './render';
-import { mountIcons, uiSetlist, uiIcon } from '../core/ui';
+import { mountIcons, uiSetlist, uiChip, uiBtn } from '../core/ui';
 
 /** 快照读取（visibleWhen 求值输入；键直绑行从 getSettings 读，三函数行由外部提供） */
 function snapshot(): SettingsSnapshot {
   return getSettings() as unknown as SettingsSnapshot;
-}
-
-/**
- * onCommit 一次性提示（H1：比照 core/settings-schema.ts 的 CommitWarn 语义逐字收口——
- * 值相对初始值有变更才触发；同一次编辑会话至多一次；改回原值后复位可再次提示。
- * core 类未导出且域不得反向改 core（ADR-0002），故域内同语义副本，文案走 core notice）。
- */
-class SpCommitWarn {
-  private warnedInitial: string | null = null;
-
-  constructor(
-    private readonly initial: string,
-    private readonly onCommit?: () => void
-  ) {}
-
-  fire(current: string): void {
-    if (!this.onCommit) return;
-    if (current !== this.initial) {
-      if (this.warnedInitial !== this.initial) {
-        this.warnedInitial = this.initial;
-        this.onCommit();
-      }
-    } else {
-      this.warnedInitial = null;
-    }
-  }
 }
 
 /** 行绑定写入失败的统一提示（H5：先写后翻 UI——写入抛错时不翻 UI 只提示）；
@@ -99,7 +78,8 @@ function makeInput(opts: {
   placeholder?: string;
   min?: number;
   max?: number;
-  onCommit: (v: string) => void;
+  /** 提交回调；返回字符串 = 回显值（R9：number 非法输入不写入，回显生效旧值防「显示 ≠ 生效」） */
+  onCommit: (v: string) => string | void;
 }): HTMLInputElement {
   // 结构单源（R.textInputHtml 逐字原型），行为（防抖落盘/refreshKey 联动）留本层
   const holder = document.createElement('div');
@@ -114,7 +94,7 @@ function makeInput(opts: {
     max: opts.max,
   });
   const input = holder.firstElementChild as HTMLInputElement;
-  // 防抖落盘（对齐 TEXT_COMMIT_DELAY=800 + 失焦/回车）
+  // 防抖落盘（TEXT_COMMIT_DELAY=800 单源 core + 失焦/回车）
   let timer: number | null = null;
   let dirty = false; // 用户是否实际编辑过（refreshKey 程序化 setValue 不置脏，防 blur 假写覆盖）
   const commit = () => {
@@ -123,12 +103,16 @@ function makeInput(opts: {
       timer = null;
     }
     if (!dirty) return; // 未编辑（仅程序化刷新显示值）不落盘
-    opts.onCommit(input.value);
+    const echo = opts.onCommit(input.value);
+    if (typeof echo === 'string' && input.value !== echo) {
+      dirty = false;
+      input.value = echo;
+    }
   };
   input.addEventListener('input', () => {
     dirty = true;
     if (timer !== null) window.clearTimeout(timer);
-    timer = window.setTimeout(commit, 800);
+    timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
   });
   input.addEventListener('blur', commit);
   input.addEventListener('keydown', (e) => {
@@ -146,13 +130,13 @@ function makeInput(opts: {
 
 /**
  * 路径行控件区：chips（已选目录，✕ 移除、文本点击重开选择器）+ 选择按钮（空态显示）。
- * 行内 chips 面板自绘（.bz-sp-chip）；**弹窗** = core 统一选择器 openPathPicker（ADR-0061）+
- * `.bz-sp-skin` 面板皮肤（ADR-0127：全域单一实现，皮肤随宿主）。行为与 core/path-picker 的
- * renderPathSettingRow 对齐（ticket 133 形态）：
+ * 行内 chips 与按钮收编组件库（C-3：uiChip 可删 ✕ 自带 role/aria-label/tabIndex/键盘三件套，
+ * uiBtn 出 .bz-btn——注释宣称与实现自此对齐，.bz-sp-chip 自绘族退役）；**弹窗** = core 统一
+ * 选择器 openPathPicker（ADR-0061）+ `.bz-sp-skin` 面板皮肤（ADR-0127：全域单一实现，皮肤随宿主）。
+ * 行为与 core/path-picker 的 renderPathSettingRow 对齐（ticket 133 形态）：
  * - 空态只显示「选择…/添加…」按钮（无灰字占位 chip）；
  * - 有文件夹 chip（显式值或回落 chip）时按钮移出 DOM，chip 文本点击重开选择器、✕ 清除；
  * - 选择器确定 / ✕ 移除后统一回调 onChange（支持返回 Promise 改写）。
- * 视觉：组件库 uiChip（.bz-chip，removable → 选中语义色）+ uiBtn。
  */
 export function makePathRowCtrl(opts: {
   name: string;
@@ -206,42 +190,35 @@ export function makePathRowCtrl(opts: {
   };
 
   const multi = opts.mode === 'multi';
-  const addBtn = document.createElement('button');
-  addBtn.type = 'button';
-  addBtn.className = 'bz-sp-btn bz-sp-path-btn';
-  addBtn.textContent = opts.buttonText || (multi ? '添加…' : '选择…');
-  addBtn.addEventListener('click', openPicker);
+  const addBtn = uiBtn({
+    label: opts.buttonText || (multi ? '添加…' : '选择…'),
+    className: 'bz-sp-path-btn',
+    onClick: openPicker,
+  });
 
   const renderChips = () => {
-    // 重渲前清旧 chip（.bz-sp-chip 契约类——含 muted/locked；旧值残留即双 chip 缺陷）
-    ctrl.querySelectorAll('.bz-sp-chip').forEach((c) => c.remove());
+    // 重渲前清旧 chip（.bz-chip 契约类——uiChip 收编 C-3；旧值残留即双 chip 缺陷）
+    ctrl.querySelectorAll('.bz-chip').forEach((c) => c.remove());
     // 回落 chip（可选）：绑定值为空时展示「实际生效目录」锁定态 chip（不可移除；点击重开选择器改显式值）
     if (!current.length && opts.fallbackChip) {
-      const fb = document.createElement('span');
-      fb.className = 'bz-sp-chip bz-sp-chip--locked';
-      fb.title = '未单独设置时的实际生效目录（点击可改为显式设置）';
-      fb.textContent = opts.fallbackChip;
-      fb.addEventListener('click', openPicker);
-      ctrl.appendChild(fb);
+      ctrl.appendChild(uiChip({
+        label: opts.fallbackChip,
+        locked: true,
+        title: '未单独设置时的实际生效目录（点击可改为显式设置）',
+        onClick: openPicker,
+      }));
     }
     for (const path of current) {
       const label = path === '' ? '（库根目录）' : path;
-      const chip = document.createElement('span');
-      chip.className = 'bz-sp-chip';
-      chip.title = label;
-      chip.textContent = label;
-      chip.addEventListener('click', openPicker); // 文本点击重开选择器
-      if (multi) {
-        // 移除钮符号收编 lucide（review-deep 一致#6）：uiIcon 即刻 setIcon 成 SVG（免 mountIcons）；
-        // 保留 .x 域内色/cursor 钩子（styles.css .bz-sp-chip .x），尺寸随 .bz-ic 1em
-        const x = uiIcon('x', 'x');
-        x.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          void apply(current.filter((p) => p !== path));
-        });
-        chip.appendChild(x);
-      }
-      ctrl.appendChild(chip);
+      ctrl.appendChild(uiChip({
+        label,
+        title: label,
+        removable: multi,
+        // ✕ 移除（uiChip 自带 role=button/aria-label/tabIndex/Enter-Space 键盘三件套）；
+        // 文本点击重开选择器（✕ 点击 stopPropagation 不连锁）
+        onRemove: multi ? () => { void apply(current.filter((p) => p !== path)); } : undefined,
+        onClick: openPicker,
+      }));
     }
     const empty = !current.length && !opts.fallbackChip;
     // 空态只显示「选择…/添加…」按钮（「未设置/未选择」灰字 chip 已退役——2026-09-08 拍板）
@@ -335,7 +312,7 @@ function renderRow(
         }
         sw.classList.toggle('on', v);
         sw.setAttribute('aria-checked', String(v));
-        void acc.persist();
+        safePersist(() => acc.persist(), rowName || '开关设置'); // N5 兜底（ARCH-1 单源）
         row.onChange?.(v, ctx);
         refresh();
       });
@@ -344,8 +321,8 @@ function renderRow(
     case 'text': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
-      // 行级 onCommit 一次性提示（H1：与 core 渲染器同语义，见 SpCommitWarn）
-      const warn = new SpCommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
+      // 行级 onCommit 一次性提示（H1：与 core 渲染器同语义，CommitWarn 内核单源 ARCH-1）
+      const warn = new CommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       const input = makeInput({
         value: acc.read() ?? '',
         mono: !!(row as { mono?: boolean }).mono,
@@ -354,9 +331,10 @@ function renderRow(
         placeholder: ph,
         onCommit: (v) => {
           acc.write(v);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || '文本设置'); // N5 兜底（ARCH-1 单源）
           row.onChange?.(v, ctx);
           warn.fire(v);
+          refresh(); // C-2：值驱动 visibleWhen 的子行跟随（core 渲染器 commit 点 reevaluate 同口径）
         },
       });
       mountTextActions(ctrlEl, input, acc, (row as { actions?: unknown }).actions as never, ctx, refresh);
@@ -372,20 +350,21 @@ function renderRow(
       taHolder.innerHTML = R.textareaHtml(acc.read() ?? '', row.placeholder);
       const ta = taHolder.firstElementChild as HTMLTextAreaElement;
       // 行级 onCommit 一次性提示（H1：备忘录「自定义场景列表」memoReloadScenes 即 textarea 行钩子）
-      const warn = new SpCommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
+      const warn = new CommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       let timer: number | null = null;
       let dirty = false; // refreshKey 程序化写值不置脏（防 blur 假写覆盖，同 makeInput）
       const commit = () => {
         if (timer !== null) window.clearTimeout(timer);
         if (!dirty) return;
         acc.write(ta.value);
-        void acc.persist();
+        safePersist(() => acc.persist(), rowName || '多行文本设置'); // N5 兜底（ARCH-1 单源）
         warn.fire(ta.value);
+        refresh(); // C-2：值驱动 visibleWhen 的子行跟随（core commit 点 reevaluate 同口径）
       };
       ta.addEventListener('input', () => {
         dirty = true;
         if (timer !== null) window.clearTimeout(timer);
-        timer = window.setTimeout(commit, 800);
+        timer = window.setTimeout(commit, TEXT_COMMIT_DELAY);
       });
       ta.addEventListener('blur', commit);
       // 程序化写值入口（动作回填 / refreshKey 联动共用；清 dirty 防 blur 假写覆盖，同 makeInput）
@@ -410,7 +389,7 @@ function renderRow(
       const acc = bindValue<number>(row.binding as unknown as RowBinding<number>);
       const ph = typeof row.placeholder === 'function' ? row.placeholder(snapshot()) : row.placeholder;
       // 行级 onCommit 一次性提示（H1：与 core 渲染器同语义；fire 用原始输入值，同 core last 口径）
-      const warn = new SpCommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
+      const warn = new CommitWarn(String(acc.read() ?? ''), (row as { onCommit?: () => void }).onCommit);
       const input = makeInput({
         value: String(acc.read() ?? ''),
         type: 'number',
@@ -422,14 +401,17 @@ function renderRow(
           // 空串不写不删键（对齐 core 渲染器 parseClampedNumber 空→null→不写语义）：
           // 显式「0」才触发删键回落默认（见 setProviderValue 0=删键）；空串仅清显示
           if (raw.trim() === '') return;
-          let v = Number(raw);
-          if (Number.isNaN(v)) v = 0;
-          if (row.min !== undefined && v < row.min) v = row.min;
-          if (row.max !== undefined && v > row.max) v = row.max;
+          // R9 口径对齐 core（parseClampedNumber 内核单源 ARCH-1）：非空非法输入不写入——
+          // 回显生效旧值（返回值经 makeInput 回写输入框），不再 NaN→0 意外改写绑定
+          const v = parseClampedNumber(raw, row.min, row.max);
+          if (v === null) return String(acc.read() ?? '');
           acc.write(v);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || '数字设置'); // N5 兜底（ARCH-1 单源）
           row.onChange?.(v, ctx);
           warn.fire(raw);
+          refresh(); // C-2：值驱动 visibleWhen 的子行跟随
+          // 钳制值 ≠ 输入原文 → 回显钳制值（core R9 同口径：显示值不再 ≠ 落盘值）
+          return String(v) !== raw.trim() ? String(v) : undefined;
         },
       });
       (input as HTMLInputElement).step = String(row.step ?? 1);
@@ -441,56 +423,123 @@ function renderRow(
     }
     case 'select': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
-      // 下拉结构单源（R.selectTriggerHtml 触发器 + R.selectItemHtml 菜单项；旋转样式 styles.css .bz-select-car 单源）
+      // 下拉结构单源（R.selectTriggerHtml 触发器 + R.selectItemHtml 菜单项；旋转样式 styles.css .bz-select-car 单源）。
+      // UI-1/UI-2（对齐 core uiSelect 范式）：触发器带 tabindex/aria-expanded 可键盘聚焦，
+      // Enter/Space/↑↓ 开合菜单、菜单内 ↑↓ 移高亮 Enter 提交；ESC 经 escManager 层先收菜单不关面板。
       const options = row.options;
       const labelOf = (v: string) => (options.find((o) => o.value === v) || { label: v }).label;
       ctrlEl.innerHTML = R.selectTriggerHtml(labelOf(String(acc.read() ?? '') || (options[0] && options[0].value) || ''));
-      const sel = ctrlEl.querySelector('.bz-select')!;
+      const sel = ctrlEl.querySelector('.bz-select') as HTMLElement;
       const vspan = sel.querySelector('.bz-select-val')!;
-      sel.addEventListener('click', () => {
+
+      let group: HTMLElement | null = null;
+      let docH: ((ev: MouseEvent) => void) | null = null;
+      let escLayer: ReturnType<typeof escManager.register> | null = null;
+
+      const closeMenu = () => {
+        sel.querySelector('.bz-select-menu')?.remove();
+        sel.setAttribute('aria-expanded', 'false');
+        if (escLayer) {
+          escLayer.unregister();
+          escLayer = null;
+        }
+        // 组卡 overflow 还原前查本组是否还有打开的菜单（H4）：A 的 closeMenu 冒泡末段
+        // 若无条件还原会把 B 刚设的 visible 抹掉，B 菜单被组卡裁剪
+        if (group && !group.querySelector('.bz-select-menu')) {
+          group.style.overflow = '';
+          group.style.zIndex = '';
+        }
+        if (docH) document.removeEventListener('click', docH);
+      };
+
+      /** 菜单内高亮移动（键盘 ↑↓；is-on + aria-selected 同步，焦点保持在触发器上） */
+      const moveHighlight = (delta: number) => {
+        const items = [...sel.querySelectorAll<HTMLElement>('.bz-select-item')];
+        if (!items.length) return;
+        const curIdx = items.findIndex((it) => it.classList.contains('is-on'));
+        const nextIdx = Math.min(items.length - 1, Math.max(0, (curIdx < 0 ? 0 : curIdx) + delta));
+        items.forEach((it, i) => {
+          const on = i === nextIdx;
+          it.classList.toggle('is-on', on);
+          it.setAttribute('aria-selected', String(on));
+        });
+      };
+
+      /** 选项落盘统一入口（先写后翻 H5 + persist N5 兜底 ARCH-1；点击与键盘提交同路径） */
+      const applyOption = (o: { value: string }) => {
+        try {
+          acc.write(o.value);
+        } catch (e) {
+          notifyWriteError(e);
+          closeMenu();
+          return;
+        }
+        closeMenu();
+        vspan.textContent = labelOf(o.value);
+        safePersist(() => acc.persist(), rowName || '下拉设置');
+        row.onChange?.(o.value, ctx);
+        refresh();
+      };
+
+      const openMenu = () => {
         if (sel.querySelector('.bz-select-menu')) return;
         // 组卡 overflow:hidden 会裁剪伸出的菜单——展开期间放开并提层
-        const group = sel.closest<HTMLElement>('.bz-sp-group');
+        group = sel.closest<HTMLElement>('.bz-sp-group');
         if (group) { group.style.overflow = 'visible'; group.style.zIndex = '10'; }
-        const closeMenu = () => {
-          sel.querySelector('.bz-select-menu')?.remove();
-          // 组卡 overflow 还原前查本组是否还有打开的菜单（H4）：A 的 closeMenu 冒泡末段
-          // 若无条件还原会把 B 刚设的 visible 抹掉，B 菜单被组卡裁剪
-          if (group && !group.querySelector('.bz-select-menu')) {
-            group.style.overflow = '';
-            group.style.zIndex = '';
-          }
-          document.removeEventListener('click', h);
-        };
-        const h = (ev: MouseEvent) => {
-          if (!sel.contains(ev.target as Node)) closeMenu();
-        };
-        setTimeout(() => document.addEventListener('click', h));
         const menu = document.createElement('div');
         menu.className = 'bz-select-menu';
+        menu.setAttribute('role', 'listbox');
         const curNow = String(acc.read() ?? '') || (options[0] && options[0].value) || '';
         menu.innerHTML = options.map((o) => R.selectItemHtml(o.label, o.value === curNow)).join('');
+        menu.querySelectorAll<HTMLElement>('.bz-select-item').forEach((it) => it.classList.add('bz-touch-target--lg')); // UI-4：30px 菜单项热区抬档
         menu.querySelectorAll('.bz-select-item').forEach((it, i) => {
           const o = options[i];
           it.addEventListener('click', (ev) => {
             ev.stopPropagation();
-            // 先写后翻 UI（H5）：写入抛错时不改触发器显示值只提示，防显示与实际值背离
-            try {
-              acc.write(o.value);
-            } catch (e) {
-              notifyWriteError(e);
-              closeMenu();
-              return;
-            }
-            closeMenu();
-            vspan.textContent = labelOf(o.value);
-            void acc.persist();
-            row.onChange?.(o.value, ctx);
-            refresh();
+            applyOption(o);
           });
         });
         sel.appendChild(menu);
+        sel.setAttribute('aria-expanded', 'true');
         mountIcons(menu); // 菜单项勾标占位物化
+        docH = (ev: MouseEvent) => {
+          if (!sel.contains(ev.target as Node)) closeMenu();
+        };
+        setTimeout(() => document.addEventListener('click', docH!));
+        // ESC 收菜单走 escManager 层序（UI-1，core uiSelect 同款）：开着菜单按 ESC 先收菜单不关
+        // 面板（层命中后 stopImmediatePropagation 短路面板层）；焦点不在触发器上（纯鼠标流）同样可收
+        escLayer = escManager.register('bz-ui-select', {
+          isVisible: () => !!sel.querySelector('.bz-select-menu'),
+          close: () => closeMenu(),
+        });
+      };
+
+      sel.addEventListener('click', () => {
+        if (sel.querySelector('.bz-select-menu')) closeMenu();
+        else openMenu();
+      });
+      sel.addEventListener('keydown', (e) => {
+        const menu = sel.querySelector('.bz-select-menu');
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          if (menu) {
+            // 菜单开着：提交当前高亮项（无高亮则仅收起）
+            const items = [...menu.querySelectorAll<HTMLElement>('.bz-select-item')];
+            const idx = items.findIndex((it) => it.classList.contains('is-on'));
+            if (idx >= 0) applyOption(options[idx]);
+            else closeMenu();
+          } else {
+            openMenu();
+          }
+          return;
+        }
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          // 内层导航语义（UI-2）：下拉聚焦时 ↑↓ 移菜单高亮，不冒泡给面板 ↑↓ 切域（onNavKey）
+          e.stopPropagation();
+          if (!menu) openMenu();
+          moveHighlight(e.key === 'ArrowDown' ? 1 : -1);
+        }
       });
       break;
     }
@@ -505,8 +554,9 @@ function renderRow(
         em.textContent = range.value;
         const v = Number(range.value);
         acc.write(v);
-        void acc.persist();
+        safePersist(() => acc.persist(), rowName || '滑条设置'); // N5 兜底（ARCH-1 单源；拖动高频触发，写盘走 saveQueue 串行安全）
         row.onChange?.(v, ctx);
+        refresh(); // C-2：值驱动 visibleWhen 同步切换（core slider onChange reevaluate 同口径）
       });
       // 行内附加按钮（滑条右侧，如「试听」）
       for (const a of row.actions ?? []) {
@@ -525,7 +575,7 @@ function renderRow(
       // 行级 onCommit 一次性提示（H1：与 core 渲染器 path 分支同口径——清单 JSON 串比较）
       const onCommit = (row as { onCommit?: () => void }).onCommit;
       const initRaw = acc.read();
-      const warn = new SpCommitWarn(
+      const warn = new CommitWarn(
         multi ? JSON.stringify(initRaw ?? []) : String(initRaw ?? ''),
         onCommit
       );
@@ -545,11 +595,12 @@ function renderRow(
         onChange: (list) => {
           const v = multi ? list : (list[0] || '').trim().replace(/^\/+|\/+$/g, '');
           acc.write(v as string | string[]);
-          void acc.persist();
+          safePersist(() => acc.persist(), rowName || '路径设置'); // N5 兜底（ARCH-1 单源）
           // 回调在落盘后触发（原口径）；返回清单（含异步解析结果）回传 path 行作 chips 渲染口径——
           // 异步否决场景的落盘改写由回调自行负责（如外部 binding 自管写盘）
           const res = row.onChange?.(list, ctx);
           warn.fire(multi ? JSON.stringify(v) : String(v));
+          refresh(); // C-2：值驱动 visibleWhen 的子行跟随（core path onChange reevaluate 同口径）
           if (res && typeof (res as { then?: unknown }).then === 'function') {
             return Promise.resolve(res as Promise<void | string[]>).then(
               (final) => (Array.isArray(final) ? final : list)
@@ -593,8 +644,15 @@ function renderRow(
           onRemove: (key) => {
             void (async () => {
               const cur = (typeof row.items === 'function' ? row.items() : row.items).map((x) => x.key);
-              await row.onChange?.(cur.filter((k) => k !== key), ctx);
-              refresh(); // 经 refreshKey 链重读重建（含本行）——与添加同路径
+              try {
+                await row.onChange?.(cur.filter((k) => k !== key), ctx);
+              } catch (e) {
+                // F-3（与 core 渲染器 C10 同口径，内核单源 ARCH-1）：移除回调抛错 → 人话提示，
+                // refresh 照跑（列表按 items() 重读，不停在已删假象；原先 unhandled rejection 无提示）
+                notifySaveError(e, rowName || '列表项');
+              } finally {
+                refresh(); // 经 refreshKey 链重读重建（含本行）——与添加同路径
+              }
             })();
           },
         }));
@@ -634,9 +692,13 @@ function renderRow(
             notifyWriteError(e);
             return;
           }
-          wrap.querySelectorAll('.is-on').forEach((x) => x.classList.remove('is-on'));
+          wrap.querySelectorAll('.is-on').forEach((x) => {
+            x.classList.remove('is-on');
+            x.setAttribute('aria-checked', 'false');
+          });
           c.classList.add('is-on');
-          void acc.persist();
+          c.setAttribute('aria-checked', 'true'); // UI-2：radio 选中态同步播报
+          safePersist(() => acc.persist(), rowName || '卡片设置'); // N5 兜底（ARCH-1 单源）
           row.onChange?.(c.dataset.spCard ?? '', ctx);
           refresh();
         });
@@ -762,12 +824,13 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
   schema.groups.forEach((g) => {
     const card = renderGroup(container, g, refresh, (fn) => valueRefreshes.push(fn));
     card.dataset.spGroup = g.name;
-    // 组级 visibleWhen 门控：false 整组隐藏
+    // 组级 visibleWhen 门控：false 整组隐藏（F-4：初始求值走 applyCond 容错——单行异常保守可见，
+    // 不放大成整域「加载失败」，与 refresh 链 H6 口径归一）
     const groupVw = (g as { visibleWhen?: (s: SettingsSnapshot) => boolean }).visibleWhen;
     if (groupVw) {
       card.dataset.spGroupCond = '1';
       visibleConditions.set(card, groupVw);
-      card.style.display = groupVw(snapshot()) ? '' : 'none';
+      applyCond(card, groupVw);
     }
     // isChild 联动（H2，比照 core 渲染器 ticket 170 口径）：本组首个键直绑 toggle = 组级父项，
     // 所有 isChild 行跟随它显隐——与行自身 visibleWhen 取与；父项为外部绑定（无 key）不联动。
@@ -790,7 +853,7 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
       if (vw) {
         rowEl.dataset.spRow = String(i);
         visibleConditions.set(rowEl, vw);
-        rowEl.style.display = vw(snapshot()) ? '' : 'none';
+        applyCond(rowEl, vw); // F-4：初始求值容错同 refresh（异常保守可见）
       }
     });
   });
@@ -798,4 +861,28 @@ export function renderPanelSchema(container: HTMLElement, schema: SettingsSchema
   // 纯层串里的 <i data-lucide> 占位统一物化（组卡图标/下拉箭头/菜单勾标等）
   mountIcons(container);
   return { refresh };
+}
+
+/** 强制收起 root 内全部自绘下拉菜单（UI-1 纵深）：hide/cleanup 等非常规关闭路径不经
+ *  closeMenu，菜单 DOM 与组卡提层样式（overflow/zIndex）残留会在重开面板时「复活」——
+ *  此处兜底摘菜单 + 还原组卡样式。 */
+export function closeAllSelectMenus(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>('.bz-select').forEach((sel) => {
+    if (!sel.querySelector('.bz-select-menu')) return;
+    sel.querySelector('.bz-select-menu')?.remove();
+    sel.setAttribute('aria-expanded', 'false');
+    const group = sel.closest<HTMLElement>('.bz-sp-group');
+    if (group && !group.querySelector('.bz-select-menu')) {
+      group.style.overflow = '';
+      group.style.zIndex = '';
+    }
+  });
+}
+
+/** 重算 root 内全部分组卡「N 项」徽标（UI-6）：搜索过滤/恢复后与实际可见行数同步，
+ *  口径与渲染器 refresh 链同一 updateCount（排除隐藏行与 button 操作行）。 */
+export function refreshGroupCounts(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>('.bz-sp-group').forEach((card) => {
+    groupCountUpdaters.get(card)?.();
+  });
 }
