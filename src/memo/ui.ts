@@ -1464,7 +1464,10 @@ export function openEditor(
   posRow.append(posBtn, posHint);
   form.appendChild(posRow);
 
-  // 底部按钮行（先建好 modal 拿 close，再绑按钮；避免 TDZ）
+  // 底部按钮行（先建好 modal 拿 close，再绑按钮；避免 TDZ）。
+  // 呈报#18 18A：动作行挂在 form **外**（modalBox 直子、表单字段的兄弟节点）——移动端
+  // 键盘适配把滚动移交字段区（域 styles.css .bz-memo-form-actions 钉底规则依赖此结构），
+  // 动作行随视口收缩恒可见，不再跟字段一起滚走。
   let closeModal: () => void = () => {};
   const modalBox = document.createElement('div');
   modalBox.className = 'bz-memo-editor';
@@ -1473,8 +1476,7 @@ export function openEditor(
   const actionsRow = document.createElement('div');
   actionsRow.className = 'bz-memo-form-actions';
   actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
-  form.appendChild(actionsRow);
-  modalBox.appendChild(form);
+  modalBox.append(form, actionsRow);
 
   // 保存（保存逻辑提为具名 doSave 供按钮与 bindFormSubmit 键盘提交共用——memo2-ui M3-11 /
   // memo2-arch A4：memo 是主力表单域中唯一未接 bindFormSubmit 的，单行 input 回车无反应、
@@ -1599,7 +1601,9 @@ export function openEditor(
     confirmDiscard(() => closeModal(), undefined, skinClass());
   };
 
-  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
+  // 呈报#18 18A：popup 挂 bz-memo-editor-popup——移动端键盘适配的域内覆盖锚点
+  // （core 公共壳 .bz-overlay-popup 不动，覆盖规则见域 styles.css 移动适配段）
+  const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: `${skinClass()} bz-memo-editor-popup`, requestClose });
   closeModal = close;
   bindFormSubmit(popup, doSave);
   if (!isMobileEnv()) contentInput.focus();

@@ -224,9 +224,10 @@
    纵向排布 + 防溢出；顶部间距由 form 的 margin-top 自管。全 token 取值，
    两肤 × 亮暗四组合随皮肤作用域 token 自动协调 */
 .bz-memo-editor { display: flex; flex-direction: column; min-width: 0; }
-/* 底部按钮行包裹：右对齐（内部 .bz-btn-row 同向双保险）；margin-top 沿用
-   addscene 按钮行惯例（表单 gap 之上再垫 xs 档，动作行与字段分离） */
-.bz-memo-form-actions { display: flex; justify-content: flex-end; margin-top: var(--bz-space-xs); }
+/* 底部按钮行包裹：右对齐（内部 .bz-btn-row 同向双保险）；margin-top 取 md 档——
+   呈报#18 18A 起动作行挂 form **外**（modalBox 直下，移动端钉底依赖此结构），
+   不再吃 form 的 flex gap，原地补回与末字段的间距（addscene 按钮行同档） */
+.bz-memo-form-actions { display: flex; justify-content: flex-end; margin-top: var(--bz-space-md); }
 /* 第二个输入框（剪藏标题/代码脚本/公开课课程）容器：输入框满宽
    （.bz-input 默认 240px 定宽，不在 .bz-field 里的框须显式撑满，issue 199）；
    position:relative 供联想 .bz-popover 浮层锚定（issue 201） */
@@ -1118,6 +1119,36 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .bz-memo-check.bz-memo-pending { animation-duration: 1.8s; }
+}
+
+/* 移动端编辑弹窗键盘适配（呈报#18 18A）：
+   core 公共壳 .bz-overlay-popup 是 max-height:82vh + 遮罩 align-items:center
+   （components.css 公共壳，不动 core）——不吃键盘高度，软键盘一弹，场景/优先级/
+   截止/保存钮全压在键盘底下（面板本体已修，弹窗漏了）。编辑弹窗 popup 挂
+   bz-memo-editor-popup（uiModal className，ui.ts openEditor），域内覆盖三点：
+   1) 高度上限改随键盘收缩的 --bz-vvh（面板侧 .bz-memo-panel 先例同源；减 32px =
+      遮罩上下 padding，顶对齐后底边落在键盘上沿之上）；
+   2) 顶对齐（遮罩 align-items:center 的反制，同 .bz-memo-panel align-self 先例）；
+   3) 弹窗整体不滚、字段区（.bz-memo-form）自滚、保存钮行（.bz-memo-form-actions，
+      18A 已移出 form 挂 modalBox 直下）钉底恒可见。
+   仅 ≤768px 生效，桌面零影响。 */
+@media (max-width: 768px) {
+  .bz-overlay-popup.bz-memo-editor-popup {
+    max-height: calc(var(--bz-vvh, 100vh) - 32px);
+    align-self: flex-start;
+    overflow: hidden; /* 弹窗整体不再滚——滚动移交字段区，保存钮行才能钉底 */
+  }
+  .bz-overlay-popup.bz-memo-editor-popup .bz-dialog-body,
+  .bz-overlay-popup.bz-memo-editor-popup .bz-memo-editor {
+    flex: 1 1 auto; min-height: 0; overflow: hidden;
+  }
+  .bz-overlay-popup.bz-memo-editor-popup .bz-memo-form {
+    flex: 1 1 auto; min-height: 0; overflow-y: auto; /* 字段区自滚（滚动条走 core 单源） */
+  }
+  .bz-overlay-popup.bz-memo-editor-popup .bz-memo-form-actions {
+    flex-shrink: 0; /* 保存钮行钉底恒可见（18A 拍板口径） */
+    padding-bottom: max(var(--bz-space-xs), env(safe-area-inset-bottom, 0px));
+  }
 }
 
 /* ═══════════ 移动端收口段（issue 266 → 269 收敛）═══════════

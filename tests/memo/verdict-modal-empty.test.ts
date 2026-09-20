@@ -113,3 +113,52 @@ describe('呈报#16（16A）：伪场景空态专属文案', () => {
     });
   });
 });
+
+describe('呈报#18（18A）：移动端编辑弹窗键盘适配（域内覆盖，不动 core）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetMemoState();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = false;
+  });
+  afterEach(() => {
+    closeMemoPanel();
+    document.body.innerHTML = '';
+    MockPlatform.isMobile = false;
+  });
+
+  it('编辑弹窗 popup 挂 bz-memo-editor-popup 锚点类（新建/编辑同源）', async () => {
+    const { app } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => expect(document.querySelector('.bz-memo-card')).toBeTruthy());
+    openEditor(null);
+    expect(document.querySelector('.bz-overlay-popup.bz-memo-editor-popup')).toBeTruthy();
+    // 收尾：点取消关弹窗（liveModals/escManager 层不悬挂）
+    (document.querySelector('.bz-memo-form-actions .bz-btn') as HTMLElement).click();
+    expect(document.querySelector('.bz-overlay-popup.bz-memo-editor-popup')).toBeNull();
+  });
+
+  it('域 styles.css 契约：--bz-vvh 收缩 + 顶对齐 + 表单区自滚 + 保存钮行钉底，仅 ≤768px', () => {
+    const m = css().match(/\.bz-overlay-popup\.bz-memo-editor-popup\s*\{[^}]*\}/);
+    expect(m, '缺 .bz-overlay-popup.bz-memo-editor-popup 移动适配规则').not.toBeNull();
+    expect(m![0]).toContain('--bz-vvh'); // 随键盘收缩单位（面板侧 .bz-memo-panel 先例同源）
+    expect(m![0]).toContain('align-self: flex-start'); // 顶对齐（遮罩居中的反制）
+    // 保存钮行钉底（18A 拍板口径）：actions 行不随表单滚走
+    const pin = css().match(/\.bz-overlay-popup\.bz-memo-editor-popup \.bz-memo-form-actions\s*\{[^}]*\}/);
+    expect(pin, '缺保存钮行钉底规则').not.toBeNull();
+    expect(pin![0]).toContain('flex-shrink: 0');
+    // 表单区自滚
+    const scroll = css().match(/\.bz-overlay-popup\.bz-memo-editor-popup \.bz-memo-form\s*\{[^}]*\}/);
+    expect(scroll, '缺表单区自滚规则').not.toBeNull();
+    expect(scroll![0]).toContain('overflow-y: auto');
+    // 适配整段收在移动媒体查询内（桌面零影响）：规则前最近的 @media 须是 768px 档
+    const ruleIdx = css().indexOf('.bz-overlay-popup.bz-memo-editor-popup');
+    expect(ruleIdx).toBeGreaterThan(-1);
+    const mediaIdx = css().lastIndexOf('@media', ruleIdx);
+    expect(css().slice(mediaIdx, ruleIdx)).toContain('max-width: 768px');
+  });
+
+  it('不动 core：适配规则只在域内 styles.css，core 公共壳文件无 memo 专属类', () => {
+    expect(repo('src/core/ui/components.css')).not.toContain('bz-memo-editor-popup');
+  });
+});
