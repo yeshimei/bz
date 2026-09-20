@@ -72,6 +72,15 @@ function pcardByName(root: HTMLElement, name: string): HTMLElement {
   return card as HTMLElement;
 }
 
+/** 按 query 分发的 matchMedia stub：只认悬浮口径，其他查询一律 false（不误伤其他消费方）。
+ *  右键菜单分流与季圆点悬浮同一 hoverCapable 出口后，桌面用例须显式开（jsdom 无真 hover 能力） */
+function stubHover(on: boolean): void {
+  (window as any).matchMedia = (q: string) => ({
+    matches: on && q === '(hover: hover) and (pointer: fine)',
+    media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+  });
+}
+
 describe('cinema 风格化面板（issue 236）', () => {
   beforeEach(() => {
     resetObsidianMocks();
@@ -85,6 +94,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     unloadCinema();
     document.body.innerHTML = '';
     setSettingsProvider(() => ({}) as any);
+    delete (window as any).matchMedia; // 悬浮能力 stub 清理（右键菜单改能力判定后防串用例）
   });
 
   it('打开主面板（桌面午夜场）：d-rail 品牌/类型/状态/工具 + d-head 标题计数 + 排序 seg + 海报网格', () => {
@@ -217,6 +227,7 @@ describe('cinema 风格化面板（issue 236）', () => {
 
   // 桌面菜单已统一到 core/item-actions（.bz-item-menu，挂 document.body，皮肤 cn-menu-skin）
   it('右键菜单：动作集按状态显隐；「标记已看」改走编辑窗（预选已看不落盘，保存才写 frontmatter + 域事件）', async () => {
+    stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -833,9 +844,11 @@ describe('G7：快速标记落盘失败回滚', () => {
   afterEach(() => {
     unloadCinema();
     vi.restoreAllMocks();
+    delete (window as any).matchMedia; // 悬浮能力 stub 清理（右键菜单改能力判定后防串用例）
   });
 
   it('标记「在看」persistItem 失败 → 内存状态回滚（面板与磁盘一致）', async () => {
+    stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1024,6 +1037,7 @@ tags: [电影]
 
   it('合集卡右键 → 只有「查看全部」一条（点它开合集弹窗），不像单卡那样出笔记级动作', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedSeasons();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1081,6 +1095,7 @@ tags: [电影]
 
   it('弹窗季行右键 → 该季跟手菜单（弹窗留着）；点动作先收弹窗再执行', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedSpecial();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1103,6 +1118,7 @@ tags: [电影]
 
   it('弹窗特别篇行右键 → 出的是该特别篇的动作（行级落点按行取条目，不是某一季）', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedSpecial();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1255,6 +1271,7 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     vi.restoreAllMocks();
     document.body.innerHTML = '';
     setSettingsProvider(() => ({}) as any);
+    delete (window as any).matchMedia; // 悬浮能力 stub 清理（右键菜单改能力判定后防串用例）
   });
 
   // P2-1：建档模板只写最小安全集，影评走 processFrontMatter 同通道——多行/含「: 」的影评
@@ -1416,6 +1433,7 @@ describe('深审批A：写路径与 ui 行为回归', () => {
 
   // P3-9：openDouban 走 core openExternalUrl 单源（私有裸 window.open + try/catch 退役）
   it('P3-9：菜单「在豆瓣打开」→ openExternalUrl 链路（window.open 收到豆瓣搜索地址）', async () => {
+    stubHover(true); // 右键分流走 hoverCapable：桌面用例显式开
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
