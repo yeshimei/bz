@@ -469,9 +469,9 @@ describe('批B：口径统一（KPI 回收 / data-v esc / trimDailyNum / 热区�
     expect(yearOpts().length).toBe(2);
   });
 
-  it('修复13：trimDailyNum 单源（<0.01 保四位、去尾零）；卡片日均消费同源（0 元形态不动待拍板 B4）', async () => {
+  it('修复13：trimDailyNum 单源（0 元「—」呈报#20 拍板、<0.01 保四位、去尾零）；卡片日均消费同源', async () => {
     expect(trimDailyNum(0.004)).toBe('0.0040');
-    expect(trimDailyNum(0)).toBe('0.0000');
+    expect(trimDailyNum(0)).toBe('—'); // 呈报#20（B4）拍板落地：0 元日均「—」（原 '0.0000' 断言随拍板翻转）
     expect(trimDailyNum(12.5)).toBe('12.5');
     expect(trimDailyNum(5)).toBe('5');
     // 卡片侧消费单源：超小日均显示四位（与报告柱顶同形，修复前报告侧为 0）
