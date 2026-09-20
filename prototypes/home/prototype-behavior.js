@@ -1,4 +1,4 @@
-/* 源指纹 ccb85a1b6e12acca · 仓内输入 251 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 76c9673fc92deb13 · 仓内输入 251 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -29664,13 +29664,29 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function mobAddSceneChipHtml() {
     return `<button class="bz-mobstrip-chip bz-mobstrip-add" data-memo-addscene title="添加场景">${iconSpan(MEMO_ICONS.addScene)}${escapeHtml("添加场景")}</button>`;
   }
-  function metaTagsHtml(it, due, relTime3) {
+  function hitTextHtml(text, kw) {
+    const t = text != null ? text : "";
+    const needle = kw.trim().toLowerCase();
+    if (!t || !needle) return escapeHtml(t);
+    const lower = t.toLowerCase();
+    let out = "";
+    let cursor = 0;
+    for (; ; ) {
+      const at2 = lower.indexOf(needle, cursor);
+      if (at2 < 0) break;
+      out += escapeHtml(t.slice(cursor, at2));
+      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at2, at2 + needle.length))}</mark>`;
+      cursor = at2 + needle.length;
+    }
+    return out + escapeHtml(t.slice(cursor));
+  }
+  function metaTagsHtml(it, due, relTime3, kw = "") {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${hitTextHtml(it.courseName.replace(/^《|》$/g, ""), kw)}</span>`);
     }
     if (it.scene === "代码" && it.scriptName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml(it.scriptName)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${hitTextHtml(it.scriptName, kw)}</span>`);
     }
     if (it.url) {
       let host = "链接";
@@ -29678,17 +29694,17 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         host = new URL(it.url).hostname.replace(/^www\./, "");
       } catch (e) {
       }
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${hitTextHtml(host, kw)}</span>`);
     }
     if (it.notePath) {
       const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
       const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
       if (!isCourseSame) {
-        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
+        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${hitTextHtml(name, kw)}</span>`);
       }
     }
     const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
-    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
+    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${hitTextHtml(it.scene, kw)}</span>`);
     if (due) {
       tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
     }
@@ -29700,15 +29716,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function checkHtml(it) {
     return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check role="checkbox" aria-checked="${it.completed ? "true" : "false"}" tabindex="0" title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
   }
-  function cardHtml2(it, due, relTime3) {
+  function cardHtml2(it, due, relTime3, kw = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
-    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${hitTextHtml(it.title, kw)}</a>` : hitTextHtml(it.title, kw);
     return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime3, kw)}</div>
       </div>
     </div>`;
   }
@@ -31200,6 +31216,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/memo/ui.ts
+  function syncSearchClear() {
+    var _a2, _b2;
+    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const btn = (_b2 = M4.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
+    if (btn && input) btn.hidden = !input.value.trim();
+  }
+  function clearMemoSearch() {
+    var _a2;
+    searchDebounced.cancel();
+    M4.search = "";
+    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    if (input) input.value = "";
+    syncSearchClear();
+    renderAll();
+    input == null ? void 0 : input.focus();
+  }
   function isTodayStr(s, today = localDayKey()) {
     return !!s && s.slice(0, 10) === today;
   }
@@ -31267,7 +31299,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         if (it.priority !== "important") return false;
       } else if (M4.activeScene !== "全部" && it.scene !== M4.activeScene) return false;
       if (kw) {
-        const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName].filter(Boolean).join(" ").toLowerCase();
+        const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
@@ -31432,11 +31464,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         }));
         return;
       }
+      const emptyCopy = M4.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M4.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M4.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
+      const emptyActions = M4.search ? [
+        uiBtn({ label: "清除搜索", icon: MEMO_ICONS.close, onClick: () => clearMemoSearch() }),
+        uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })
+      ] : [uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })];
       content.appendChild(uiEmpty({
         icon: MEMO_ICONS.empty,
-        title: M4.search ? "没有匹配的备忘录" : "这里还没有备忘录",
-        desc: M4.search ? "试试其他关键词，或清除搜索" : "随手记一条，别让它溜走",
-        actions: uiBtnRow([uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })], { center: true })
+        title: emptyCopy.title,
+        desc: emptyCopy.desc,
+        actions: uiBtnRow(emptyActions, { center: true })
       }));
       return;
     }
@@ -31444,7 +31481,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const done = items.filter((i) => i.completed);
     const urgent = active2.filter((i) => dueRank(i) <= 1);
     const normal = active2.filter((i) => dueRank(i) > 1);
-    const cardHtml4 = (it) => cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
+    const kw = M4.search.trim();
+    const cardHtml4 = (it) => cardHtml2(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", kw);
     const sections = [];
     if (urgent.length) {
       sections.push(sectionLabelHtml("到期优先", urgent.length));
@@ -31566,6 +31604,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
     })();
   }
+  function syncPendingCheck(id, pending) {
+    document.querySelectorAll(
+      `.bz-memo-card[data-memo-id="${id}"] [data-memo-check], .bz-memo-sheet-entry [data-memo-check]`
+    ).forEach((el) => el.classList.toggle("bz-memo-pending", pending));
+  }
   function toggleCheck(it) {
     if (it.completed) {
       void restoreItem(it);
@@ -31574,13 +31617,24 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     if (M4.completeTimers.has(it.id)) {
       clearTimeout(M4.completeTimers.get(it.id));
       M4.completeTimers.delete(it.id);
+      syncPendingCheck(it.id, false);
       return;
     }
     const timer = setTimeout(() => {
       M4.completeTimers.delete(it.id);
+      syncPendingCheck(it.id, false);
       void completeItem(it);
     }, 300);
     M4.completeTimers.set(it.id, timer);
+    syncPendingCheck(it.id, true);
+  }
+  function bumpDoneBar() {
+    var _a2;
+    const bar = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
+    if (!bar) return;
+    bar.classList.remove("bz-memo-donebar-bump");
+    void bar.offsetWidth;
+    bar.classList.add("bz-memo-donebar-bump");
   }
   async function completeItem(it) {
     try {
@@ -31591,6 +31645,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await refresh();
+    bumpDoneBar();
   }
   async function restoreItem(it) {
     try {
@@ -31930,8 +31985,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const actionsRow = document.createElement("div");
     actionsRow.className = "bz-memo-form-actions";
     actionsRow.appendChild(uiBtnRow([cancelBtn, saveBtn]));
-    form.appendChild(actionsRow);
-    modalBox.appendChild(form);
+    modalBox.append(form, actionsRow);
     let editorBusy = false;
     const readScene = () => {
       const on = choice.el.querySelector(".is-on");
@@ -32052,7 +32106,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       confirmDiscard(() => closeModal(), void 0, skinClass());
     };
-    const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: skinClass(), requestClose });
+    const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: `${skinClass()} bz-memo-editor-popup`, requestClose });
     closeModal = close;
     bindFormSubmit(popup, doSave2);
     if (!isMobileEnv()) contentInput.focus();

@@ -1,4 +1,4 @@
-/* 源指纹 232a2665a54a45e0 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 66db4f4cd14c3196 · 仓内输入 2 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/core/ui/str.ts","src/memo/render.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/memo/render.ts → window.BZR_memo（评审壳预览包，ADR-0104） */
 var BZR_memo = (() => {
@@ -32,6 +32,7 @@ var BZR_memo = (() => {
     doneMoreHtml: () => doneMoreHtml,
     dueIconName: () => dueIconName,
     dueTagClass: () => dueTagClass,
+    hitTextHtml: () => hitTextHtml,
     iconSpan: () => iconSpan,
     mainCountHtml: () => mainCountHtml,
     metaTagsHtml: () => metaTagsHtml,
@@ -155,7 +156,7 @@ var BZR_memo = (() => {
             <button class="bz-btn bz-btn--primary bz-btn--md" data-memo-newbtn>${iconSpan(MEMO_ICONS.add, "bz-ic--sm")} 新建备忘录</button>
           </div>
           <div class="bz-toolrow">
-            <div class="bz-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"></div>
+            <div class="bz-search bz-memo-search">${iconSpan(MEMO_ICONS.search)}<input class="bz-input" type="text" data-memo-search placeholder="搜索内容 / 场景…"><button type="button" class="bz-memo-search-clear" data-memo-search-clear title="清除搜索" aria-label="清除搜索" hidden>${iconSpan(MEMO_ICONS.close)}</button></div>
             <div class="bz-memo-sort" data-memo-sort></div>
           </div>
           <div class="bz-mobstrip" data-memo-mob-scenes></div>
@@ -168,13 +169,29 @@ var BZR_memo = (() => {
       </div>
     </div>`;
   }
-  function metaTagsHtml(it, due, relTime) {
+  function hitTextHtml(text, kw) {
+    const t = text != null ? text : "";
+    const needle = kw.trim().toLowerCase();
+    if (!t || !needle) return escapeHtml(t);
+    const lower = t.toLowerCase();
+    let out = "";
+    let cursor = 0;
+    for (; ; ) {
+      const at = lower.indexOf(needle, cursor);
+      if (at < 0) break;
+      out += escapeHtml(t.slice(cursor, at));
+      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at, at + needle.length))}</mark>`;
+      cursor = at + needle.length;
+    }
+    return out + escapeHtml(t.slice(cursor));
+  }
+  function metaTagsHtml(it, due, relTime, kw = "") {
     const tags = [];
     if (it.scene === "公开课" && it.courseName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${escapeHtml(it.courseName.replace(/^《|》$/g, ""))}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-course">${iconSpan(MEMO_ICONS.course)} ${hitTextHtml(it.courseName.replace(/^《|》$/g, ""), kw)}</span>`);
     }
     if (it.scene === "代码" && it.scriptName) {
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${escapeHtml(it.scriptName)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-script">${iconSpan(MEMO_ICONS.script)} ${hitTextHtml(it.scriptName, kw)}</span>`);
     }
     if (it.url) {
       let host = "链接";
@@ -182,17 +199,17 @@ var BZR_memo = (() => {
         host = new URL(it.url).hostname.replace(/^www\./, "");
       } catch (e) {
       }
-      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${escapeHtml(host)}</span>`);
+      tags.push(`<span class="bz-memo-tag bz-memo-tag-url" title="${escapeHtml(it.url)}">${iconSpan(MEMO_ICONS.url)} ${hitTextHtml(host, kw)}</span>`);
     }
     if (it.notePath) {
       const name = it.notePath.split("/").pop().replace(/\.md$/i, "");
       const isCourseSame = it.scene === "公开课" && it.courseName && it.courseName.replace(/^《|》$/g, "") === name;
       if (!isCourseSame) {
-        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${escapeHtml(name)}</span>`);
+        tags.push(`<span class="bz-memo-tag bz-memo-tag-pos" data-memo-pos="${escapeHtml(it.id)}">${iconSpan(MEMO_ICONS.pos)} ${hitTextHtml(name, kw)}</span>`);
       }
     }
     const imp = it.priority === "important" ? " bz-memo-tag-important" : "";
-    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${escapeHtml(it.scene)}</span>`);
+    tags.push(`<span class="bz-memo-tag bz-memo-tag-scene${imp}">#${hitTextHtml(it.scene, kw)}</span>`);
     if (due) {
       tags.push(`<span class="bz-memo-tag ${dueTagClass(due.status)}">${iconSpan(dueIconName(due.status))} ${escapeHtml(due.text)}</span>`);
     }
@@ -204,15 +221,15 @@ var BZR_memo = (() => {
   function checkHtml(it) {
     return `<span class="bz-memo-check${it.completed ? " bz-memo-checked" : ""}" data-memo-check role="checkbox" aria-checked="${it.completed ? "true" : "false"}" tabindex="0" title="${it.completed ? "恢复未完成" : "标记完成"}"></span>`;
   }
-  function cardHtml(it, due, relTime) {
+  function cardHtml(it, due, relTime, kw = "") {
     const titleCls = it.completed ? " bz-memo-done" : "";
     const clickable = !!(it.linkedNote || it.url);
-    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${escapeHtml(it.title)}</a>` : escapeHtml(it.title);
+    const titleHtml = clickable ? `<a href="javascript:void(0)" data-memo-openitem="${escapeHtml(it.id)}">${hitTextHtml(it.title, kw)}</a>` : hitTextHtml(it.title, kw);
     return `<div class="bz-memo-card${titleCls}" data-memo-id="${escapeHtml(it.id)}" tabindex="0">
       ${checkHtml(it)}
       <div class="bz-memo-body-text">
         <div class="bz-memo-card-title">${titleHtml}</div>
-        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime)}</div>
+        <div class="bz-memo-meta">${metaTagsHtml(it, due, relTime, kw)}</div>
       </div>
     </div>`;
   }
