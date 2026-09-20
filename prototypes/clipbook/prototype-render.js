@@ -1,4 +1,4 @@
-/* 源指纹 5bf38d5680fc10d7 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 95e2efcb4bd4c091 · 仓内输入 4 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/clipbook/render.ts","src/clipbook/report-stats.ts","src/core/chart-palette.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/clipbook/render.ts → window.BZR_clipbook（评审壳预览包，ADR-0104） */
 var BZR_clipbook = (() => {
@@ -217,7 +217,7 @@ var BZR_clipbook = (() => {
   }
   function tocListHtml(list, curId, timeOf, kw = "") {
     return list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
+    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" role="button" tabindex="0" data-id="${esc(a.id)}">
       <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
@@ -287,7 +287,7 @@ var BZR_clipbook = (() => {
   function mobFoldHtml(kind, n, open) {
     const label = kind === "read" ? "已读" : "已收";
     return `
-    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" tabindex="0" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
       <span class="bz-clip-mob-fold-lab">${open ? "收起" : `${label} <b>${n}</b> 篇`}</span>
       <span class="bz-clip-mob-fold-ar"></span>

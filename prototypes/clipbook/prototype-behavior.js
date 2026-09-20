@@ -1,4 +1,4 @@
-/* 源指纹 3637e34c2f29a740 · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 af98428f70f13c14 · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
@@ -5077,12 +5077,13 @@ var BZW_clipbook = (() => {
       const first = items[0];
       const last = items[items.length - 1];
       const active = document.activeElement;
+      const inside = active instanceof Node && active !== container && container.contains(active);
       if (e.shiftKey) {
-        if (active === first || !container.contains(active)) {
+        if (active === first || !inside) {
           e.preventDefault();
           last.focus();
         }
-      } else if (active === last || !container.contains(active)) {
+      } else if (active === last || !inside) {
         e.preventDefault();
         first.focus();
       }
@@ -5090,11 +5091,19 @@ var BZW_clipbook = (() => {
     container.addEventListener("keydown", onKeydown);
     return () => container.removeEventListener("keydown", onKeydown);
   }
-  var FOCUSABLE_SELECTOR;
+  function trapPanelFocus(panel) {
+    panel.classList.add(PANEL_FOCUS_CLASS);
+    if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+    const release = trapFocus(panel);
+    panel.focus({ preventScroll: true });
+    return release;
+  }
+  var FOCUSABLE_SELECTOR, PANEL_FOCUS_CLASS;
   var init_focus_trap = __esm({
     "src/core/ui/focus-trap.ts"() {
       init_mobile();
       FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      PANEL_FOCUS_CLASS = "bz-panel-focushost";
     }
   });
 
@@ -22102,7 +22111,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function tocListHtml(list, curId, timeOf, kw = "") {
     return list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
+    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" role="button" tabindex="0" data-id="${esc(a.id)}">
       <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
@@ -22172,7 +22181,7 @@ ${bodyText.substring(0, 6e3)}`;
   function mobFoldHtml(kind, n, open) {
     const label = kind === "read" ? "已读" : "已收";
     return `
-    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" tabindex="0" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
       <span class="bz-clip-mob-fold-lab">${open ? "收起" : `${label} <b>${n}</b> 篇`}</span>
       <span class="bz-clip-mob-fold-ar"></span>
@@ -22546,6 +22555,7 @@ ${bodyText.substring(0, 6e3)}`;
     return keys;
   }
   async function openClipbookReport(_app2) {
+    var _a;
     reportApp = _app2 || null;
     await flushReadingSession();
     releaseProgress();
@@ -22553,6 +22563,7 @@ ${bodyText.substring(0, 6e3)}`;
     syncPeriodSeg();
     overlayEl.style.display = "flex";
     topifyZ(overlayEl);
+    trapPanelFocus((_a = overlayEl.querySelector(".bz-clip-report-frame")) != null ? _a : overlayEl);
     await renderBody(true);
   }
   function syncPeriodSeg() {
@@ -22761,6 +22772,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_app();
       init_utils();
       init_esc_manager();
+      init_focus_trap();
       init_data();
       init_news_data();
       init_constants();
@@ -22812,11 +22824,13 @@ ${bodyText.substring(0, 6e3)}`;
     else void loadIfNeeded();
   }
   function showPanel() {
+    var _a;
     if (!overlayEl2) {
       buildDom2(M.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
+    trapPanelFocus((_a = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
     M.open = true;
     beginSession();
@@ -23151,6 +23165,13 @@ ${bodyText.substring(0, 6e3)}`;
       const item = e.target.closest("[data-id]");
       if (!item) return;
       openMobDetail(item.dataset.id || "");
+    });
+    mobListEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const fold = e.target.closest("[data-fold]");
+      if (!fold) return;
+      e.preventDefault();
+      toggleMobArch(fold);
     });
   }
   function selectSource(src) {
@@ -23493,6 +23514,12 @@ ${bodyText.substring(0, 6e3)}`;
         if (e.target && e.target.closest(".bz-item-sheet")) return;
         selectArticle(art.id);
         if (!isMobileEnv()) readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
+      });
+      card.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        if (e.defaultPrevented) return;
+        e.preventDefault();
+        card.click();
       });
     });
     listEl.querySelectorAll("[data-desk-fold]").forEach((row) => {
@@ -24595,6 +24622,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_mobile();
       init_dom();
       init_esc_manager();
+      init_focus_trap();
       init_item_actions();
       init_flow_dialog();
       init_settings_modal();

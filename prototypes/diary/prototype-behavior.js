@@ -1,4 +1,4 @@
-/* 源指纹 3e820ca4fbd7bec1 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1faa28bd21346183 · 仓内输入 74 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/diary/fake-sim.ts","prototypes/diary/fake/fake-obsidian.ts","src/bookshelf/data.ts","src/bookshelf/state.ts","src/cinema/state.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/data.ts","src/diary/encrypt.ts","src/diary/index.ts","src/diary/parser.ts","src/diary/render.ts","src/diary/repair.ts","src/diary/store.ts","src/diary/thumb-cache.ts","src/diary/ui.ts","src/diary/ui/datetime-picker.ts","src/diary/ui/dialogs.ts","src/diary/ui/entry-actions.ts","src/diary/ui/locator.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/password-vault/data.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/diary/fake-sim.ts → window.BZW_diary（行为单源预览包，issue 245/ADR-0106） */
 var BZW_diary = (() => {
@@ -5298,7 +5298,16 @@ var BZW_diary = (() => {
   });
 
   // src/core/esc-manager.ts
-  var escManager;
+  function registerPanelEsc(id, isVisible, close) {
+    if (panelEscHandles.has(id)) return;
+    panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
+  function unregisterPanelEsc(id) {
+    var _a;
+    (_a = panelEscHandles.get(id)) == null ? void 0 : _a.unregister();
+    panelEscHandles.delete(id);
+  }
+  var escManager, panelEscHandles;
   var init_esc_manager = __esm({
     "src/core/esc-manager.ts"() {
       escManager = (() => {
@@ -5350,6 +5359,7 @@ var BZW_diary = (() => {
           }
         };
       })();
+      panelEscHandles = /* @__PURE__ */ new Map();
     }
   });
 
@@ -5893,12 +5903,13 @@ var BZW_diary = (() => {
       const first = items[0];
       const last = items[items.length - 1];
       const active = document.activeElement;
+      const inside = active instanceof Node && active !== container && container.contains(active);
       if (e.shiftKey) {
-        if (active === first || !container.contains(active)) {
+        if (active === first || !inside) {
           e.preventDefault();
           last.focus();
         }
-      } else if (active === last || !container.contains(active)) {
+      } else if (active === last || !inside) {
         e.preventDefault();
         first.focus();
       }
@@ -5906,11 +5917,19 @@ var BZW_diary = (() => {
     container.addEventListener("keydown", onKeydown);
     return () => container.removeEventListener("keydown", onKeydown);
   }
-  var FOCUSABLE_SELECTOR;
+  function trapPanelFocus(panel) {
+    panel.classList.add(PANEL_FOCUS_CLASS);
+    if (!panel.hasAttribute("tabindex")) panel.setAttribute("tabindex", "-1");
+    const release = trapFocus(panel);
+    panel.focus({ preventScroll: true });
+    return release;
+  }
+  var FOCUSABLE_SELECTOR, PANEL_FOCUS_CLASS;
   var init_focus_trap = __esm({
     "src/core/ui/focus-trap.ts"() {
       init_mobile();
       FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      PANEL_FOCUS_CLASS = "bz-panel-focushost";
     }
   });
 
@@ -9681,7 +9700,7 @@ var BZW_diary = (() => {
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" role="button" tabindex="0" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
             <span class="tm">${escapeHtml2(r.time)}</span></div>`;
@@ -9697,17 +9716,17 @@ var BZW_diary = (() => {
     </div>
   </div>
   <div class="bz-vault-cards">
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("file-lock", 13)}</span>笔记条目</div>
       <div class="num">${counts.note}<small>篇</small></div>
       <div class="cd">${counts.note ? "正文与附件全量密文" : "还没有笔记"}</div>
     </div>
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("image", 13)}</span>随库附件</div>
       <div class="num">${attachments}<small>个</small></div>
       <div class="cd">随笔记一并加密镜像</div>
     </div>
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("lock", 13)}</span>附件密文</div>
       <div class="num">${kb}</div>
       <div class="cd">附件镜像密文字节</div>
@@ -9715,10 +9734,10 @@ var BZW_diary = (() => {
   </div>
   <div class="bz-vault-two">
     <div class="panel">
-      <div class="pt">最近加密<span class="more" data-hero="recent-all">查看全部 →</span></div>
+      <div class="pt">最近加密<span class="more" role="button" tabindex="0" data-hero="recent-all">查看全部 →</span></div>
       ${recentRows}
     </div>
-    <div class="panel" data-hero="health" title="打开保险库体检">
+    <div class="panel" role="button" tabindex="0" data-hero="health" title="打开保险库体检">
       <div class="pt">保险库体检<span class="more">查看 →</span></div>
       ${healthRows}
       <div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-text-3)"></span><span class="lbl">完整性校验</span><span class="n">${(health == null ? void 0 : health.lastChecked) || "—"}</span></div>
@@ -9730,7 +9749,7 @@ var BZW_diary = (() => {
     const iconName = kind === "note" ? "file-lock" : "book-lock";
     const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml2(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
     return `
-    <div class="bz-vault-row ${active ? "on" : ""}" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active ? "on" : ""}" role="button" tabindex="0" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
       <div class="mid"><div class="t1">${escapeHtml2(note.title)}</div><div class="t2">${sub}</div></div>
       <span class="tm">${escapeHtml2(formatRelativeTime(note.createdAt))}</span>
@@ -10260,6 +10279,7 @@ var BZW_diary = (() => {
       init_notice();
       init_app();
       init_esc_manager();
+      init_focus_trap();
       init_flow_dialog();
       init_dom();
       init_item_actions();
@@ -10403,16 +10423,16 @@ var BZW_diary = (() => {
             <div class="seal">${vIc("lock", 19)}</div>
             <div class="nm">保险库<small>VAULT</small></div>
           </div>
-          <div class="bz-vault-item on" data-asset="overview">${vIc("layout-grid", 16)}概览<span class="cnt" data-cnt="overview"></span></div>
+          <div class="bz-vault-item on" role="button" tabindex="0" data-asset="overview">${vIc("layout-grid", 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
-          <div class="bz-vault-item k-note" data-asset="note">${vIc("file-lock", 16)}笔记<span class="cnt" data-cnt="note"></span></div>
-          <div class="bz-vault-item k-diary" data-asset="diary">${vIc("book-lock", 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
+          <div class="bz-vault-item k-note" role="button" tabindex="0" data-asset="note">${vIc("file-lock", 16)}笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-diary" role="button" tabindex="0" data-asset="diary">${vIc("book-lock", 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
-          <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
+          <div class="bz-vault-health" role="button" tabindex="0" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
             <div class="hd" data-health-d>未体检</div>
           </div>
-          <div class="bz-vault-lockbtn" data-act="lock"><span class="lbl">${vIc("lock", 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
+          <div class="bz-vault-lockbtn" role="button" tabindex="0" data-act="lock"><span class="lbl">${vIc("lock", 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
         </div>
         <div class="bz-vault-main">
           <!-- 顶栏只留标题：右侧三按钮（存入笔记/体检/关闭）按评审去掉——关闭走 Esc 或点遮罩，
@@ -10435,9 +10455,9 @@ var BZW_diary = (() => {
         </div>
         <div class="bz-search bz-vault-msearch"><i data-lucide="search" class="bz-ic"></i><input class="bz-input" placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
-          <span class="sg on" data-masset="overview">概览</span>
-          <span class="sg" data-masset="note">笔记</span>
-          <span class="sg" data-masset="diary">日记</span>
+          <span class="sg on" role="button" tabindex="0" data-masset="overview">概览</span>
+          <span class="sg" role="button" tabindex="0" data-masset="note">笔记</span>
+          <span class="sg" role="button" tabindex="0" data-masset="diary">日记</span>
         </div>
         <div class="bz-vault-mbody" data-mob-body></div>
       </div>`;
@@ -10501,6 +10521,19 @@ var BZW_diary = (() => {
             this.openPanelMenu(e.clientX, e.clientY);
           });
           (_c = this.popup.querySelector('[data-act="health-card"]')) == null ? void 0 : _c.addEventListener("click", () => void this.openHealthDialog());
+          this.popup.addEventListener("keydown", (e) => {
+            var _a2, _b2;
+            if (e.key !== "Enter" && e.key !== " ") return;
+            if (e.isComposing || e.defaultPrevented) return;
+            const t = e.target;
+            const btn = (_a2 = t == null ? void 0 : t.closest) == null ? void 0 : _a2.call(t, '[role="button"]');
+            if (!btn || !this.popup.contains(btn)) return;
+            e.preventDefault();
+            btn.click();
+            if (btn.classList.contains("bz-vault-row")) {
+              (_b2 = this.popup.querySelector(".bz-vault-row.on")) == null ? void 0 : _b2.focus();
+            }
+          });
           this.bindSearchInput(this.mob.search, true);
           this.mask.addEventListener("click", () => {
             if (this.mask.style.display === "block") this.hide();
@@ -10596,6 +10629,7 @@ var BZW_diary = (() => {
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          trapPanelFocus(this.popup);
           this.notifyUnlockUi();
           void this.renderList();
           this.startSessionTimers();
@@ -11216,10 +11250,14 @@ var BZW_diary = (() => {
           setCnt("note", c.note);
           setCnt("diary", c.diary);
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el) => {
-            el.classList.toggle("on", el.getAttribute("data-asset") === this.asset);
+            const on = el.getAttribute("data-asset") === this.asset;
+            el.classList.toggle("on", on);
+            el.setAttribute("aria-current", on ? "true" : "false");
           });
           this.mob.seg.querySelectorAll(".sg").forEach((el) => {
-            el.classList.toggle("on", el.getAttribute("data-masset") === this.asset);
+            const on = el.getAttribute("data-masset") === this.asset;
+            el.classList.toggle("on", on);
+            el.setAttribute("aria-current", on ? "true" : "false");
           });
           const ht = this.popup.querySelector("[data-health-t]");
           const hd = this.popup.querySelector("[data-health-d]");
@@ -12123,13 +12161,17 @@ var BZW_diary = (() => {
           openSettingsModal({ title: "保险库设置", maxWidth: 560, schema: encryptSettingsSchema() });
         }
         registerEscape() {
-          escManager.register("encrypt", {
-            isVisible: () => !!(this.mask && this.mask.style.display === "block") || !!(this.previewMask && this.previewMask.style.display === "block"),
-            close: () => {
+          unregisterPanelEsc("bz-encrypt");
+          registerPanelEsc(
+            "bz-encrypt",
+            // isVisible 判活带 isConnected（六域先例口径：判「还在屏上」而非仅样式位）——
+            // cleanup 摘 DOM 后旧层自愈失活，不会吞掉重启用后新面板的 ESC
+            () => !!(this.mask && this.mask.isConnected && this.mask.style.display === "block") || !!(this.previewMask && this.previewMask.isConnected && this.previewMask.style.display === "block"),
+            () => {
               if (this.previewMask && this.previewMask.style.display === "block") this.closePreview();
               else if (this.mask && this.mask.style.display === "block") this.hide();
             }
-          });
+          );
         }
       };
       /** 安全模式：15 分钟无面板交互自动上锁（交互即重置；非安全模式/未解锁不布防） */

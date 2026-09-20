@@ -1,4 +1,4 @@
-/* 源指纹 5bdc72a74a74f26d · 仓内输入 251 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 b169c486fa210b67 · 仓内输入 251 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
@@ -4890,12 +4890,13 @@ var BZW_home = (() => {
       const first = items[0];
       const last = items[items.length - 1];
       const active2 = document.activeElement;
+      const inside = active2 instanceof Node && active2 !== container && container.contains(active2);
       if (e.shiftKey) {
-        if (active2 === first || !container.contains(active2)) {
+        if (active2 === first || !inside) {
           e.preventDefault();
           last.focus();
         }
-      } else if (active2 === last || !container.contains(active2)) {
+      } else if (active2 === last || !inside) {
         e.preventDefault();
         first.focus();
       }
@@ -4903,11 +4904,19 @@ var BZW_home = (() => {
     container.addEventListener("keydown", onKeydown);
     return () => container.removeEventListener("keydown", onKeydown);
   }
-  var FOCUSABLE_SELECTOR;
+  function trapPanelFocus(panel2) {
+    panel2.classList.add(PANEL_FOCUS_CLASS);
+    if (!panel2.hasAttribute("tabindex")) panel2.setAttribute("tabindex", "-1");
+    const release = trapFocus(panel2);
+    panel2.focus({ preventScroll: true });
+    return release;
+  }
+  var FOCUSABLE_SELECTOR, PANEL_FOCUS_CLASS;
   var init_focus_trap = __esm({
     "src/core/ui/focus-trap.ts"() {
       init_mobile();
       FOCUSABLE_SELECTOR = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+      PANEL_FOCUS_CLASS = "bz-panel-focushost";
     }
   });
 
@@ -13286,6 +13295,7 @@ ${n.content.slice(0, 2e3)}
   var init_ui2 = __esm({
     "src/review/ui.ts"() {
       init_z_order();
+      init_focus_trap();
       init_notice();
       init_flow_dialog();
       init_esc_manager();
@@ -13355,6 +13365,7 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          trapPanelFocus(this.popup);
           await this.showQueue();
         }
         hideMain() {
@@ -28345,10 +28356,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return !!overlay && overlay.style.display === "flex";
   }
   function openDataCheckup(app) {
+    var _a2;
     hostApp = app;
     if (!overlay) build(app);
     topifyZ(overlay);
     overlay.style.display = "flex";
+    trapPanelFocus((_a2 = overlay.querySelector(`#${FRAME_ID}`)) != null ? _a2 : overlay);
     escHandle == null ? void 0 : escHandle.unregister();
     escHandle = escManager.register("bz-checkup", {
       isVisible: isPanelVisible,
@@ -28730,6 +28743,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     "src/checkup/ui.ts"() {
       init_z_order();
       init_esc_manager();
+      init_focus_trap();
       init_notice();
       init_ui();
       init_flow_dialog();
@@ -30866,7 +30880,6 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
   }
   function buildDOM() {
-    var _a2;
     const mask = document.createElement("div");
     mask.id = "pomodoro-mask";
     mask.className = "bz-overlay-mask";
@@ -30883,7 +30896,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindEvents();
     render();
-    (_a2 = document.getElementById("pomodoro-popup")) == null ? void 0 : _a2.focus();
+    const panel2 = document.getElementById("pomodoro-popup");
+    if (panel2) trapPanelFocus(panel2);
   }
   function initDataOnce() {
     if (loaded) return Promise.resolve();
@@ -31048,6 +31062,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     "src/pomodoro/ui.ts"() {
       init_fake_obsidian();
       init_esc_manager();
+      init_focus_trap();
       init_z_order();
       init_settings_provider();
       init_notice();
@@ -34102,6 +34117,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   async function openPanelInner() {
+    var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
     M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
@@ -34117,11 +34133,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     M5.renderFn = () => renderAll2();
     mountIcons(overlay2);
     ensureBelongingsEsc();
+    trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
     const closeDrops = () => {
       overlay2.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => w.classList.remove("is-open"));
     };
     const onDocClick = (e) => {
-      var _a2;
+      var _a3;
       const t = e.target;
       const trig = t.closest("[data-bel-year],[data-bel-mobsortsel]");
       if (trig) {
@@ -34134,7 +34151,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const opt = t.closest(".bz-bel-dropopt");
       if (opt) {
         closeDrops();
-        const v = (_a2 = opt.dataset.v) != null ? _a2 : "";
+        const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
         if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
         else M5.sort = v;
         renderAll2();
@@ -34252,16 +34269,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     longPress(
       content,
       (ev) => {
-        var _a2, _b2;
-        const cell = (_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]");
+        var _a3, _b2;
+        const cell = (_b2 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b2.call(_a3, "[data-bel-id]");
         if (!cell) return;
         const it = itemById(cell.dataset.belId);
         if (it) openMobSheet(it);
       },
       void 0,
       (ev) => {
-        var _a2, _b2;
-        return isMobileEnv() && !!((_b2 = (_a2 = ev.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, "[data-bel-id]"));
+        var _a3, _b2;
+        return isMobileEnv() && !!((_b2 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b2.call(_a3, "[data-bel-id]"));
       }
     );
     renderAll2();
@@ -34870,6 +34887,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_z_order();
       init_app();
       init_esc_manager();
+      init_focus_trap();
       init_mobile();
       init_utils();
       init_dom();
@@ -36450,7 +36468,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function tocListHtml(list, curId, timeOf, kw = "") {
     return list.map((a, i) => `
-    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" data-id="${esc(a.id)}">
+    <div class="bz-clip-item bz-clip-item--${a.st}${curId && curId === a.id ? " on" : ""}" role="button" tabindex="0" data-id="${esc(a.id)}">
       <span class="bz-clip-no">${pad2(i + 1)}</span>
       <div class="bz-clip-item-main">
         <div class="bz-clip-item-t"><span>${highlightTitleHtml(a.title, kw)}</span></div>
@@ -36520,7 +36538,7 @@ ${bodyText.substring(0, 6e3)}`;
   function mobFoldHtml(kind, n, open) {
     const label = kind === "read" ? "已读" : "已收";
     return `
-    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" aria-expanded="${open}">
+    <div class="bz-clip-mob-fold${open ? " on" : ""}" data-fold data-fold-kind="${kind}" role="button" tabindex="0" aria-expanded="${open}">
       <span class="bz-clip-mob-fold-rule"></span>
       <span class="bz-clip-mob-fold-lab">${open ? "收起" : `${label} <b>${n}</b> 篇`}</span>
       <span class="bz-clip-mob-fold-ar"></span>
@@ -36696,6 +36714,7 @@ ${bodyText.substring(0, 6e3)}`;
     return keys;
   }
   async function openClipbookReport(_app3) {
+    var _a2;
     reportApp = _app3 || null;
     await flushReadingSession();
     releaseProgress();
@@ -36703,6 +36722,7 @@ ${bodyText.substring(0, 6e3)}`;
     syncPeriodSeg();
     overlayEl.style.display = "flex";
     topifyZ(overlayEl);
+    trapPanelFocus((_a2 = overlayEl.querySelector(".bz-clip-report-frame")) != null ? _a2 : overlayEl);
     await renderBody2(true);
   }
   function syncPeriodSeg() {
@@ -36911,6 +36931,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_app();
       init_utils();
       init_esc_manager();
+      init_focus_trap();
       init_data5();
       init_news_data();
       init_constants2();
@@ -38303,11 +38324,13 @@ ${c.trim()}
     else void loadIfNeeded();
   }
   function showPanel() {
+    var _a2;
     if (!overlayEl2) {
       buildDom2(M6.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
+    trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
     M6.open = true;
     beginSession();
@@ -38642,6 +38665,13 @@ ${c.trim()}
       const item = e.target.closest("[data-id]");
       if (!item) return;
       openMobDetail(item.dataset.id || "");
+    });
+    mobListEl.addEventListener("keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      const fold = e.target.closest("[data-fold]");
+      if (!fold) return;
+      e.preventDefault();
+      toggleMobArch(fold);
     });
   }
   function selectSource(src) {
@@ -38984,6 +39014,12 @@ ${c.trim()}
         if (e.target && e.target.closest(".bz-item-sheet")) return;
         selectArticle(art.id);
         if (!isMobileEnv()) readPaneEl == null ? void 0 : readPaneEl.focus({ preventScroll: true });
+      });
+      card.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        if (e.defaultPrevented) return;
+        e.preventDefault();
+        card.click();
       });
     });
     listEl.querySelectorAll("[data-desk-fold]").forEach((row) => {
@@ -40086,6 +40122,7 @@ ${c.trim()}
       init_mobile();
       init_dom();
       init_esc_manager();
+      init_focus_trap();
       init_item_actions();
       init_flow_dialog();
       init_settings_modal();
@@ -40858,7 +40895,7 @@ ${c.trim()}
     _ai = ai;
   }
   function openPanel2(app, dm, ai) {
-    var _a2;
+    var _a2, _b2;
     initFavoritesUI(app, dm, ai);
     if (M7.overlay) {
       closePanel3();
@@ -40877,6 +40914,7 @@ ${c.trim()}
     M7.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
+    trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
     overlay2.addEventListener("click", (e) => {
       const t = e.target;
       if (e.target === overlay2) {
@@ -40942,16 +40980,16 @@ ${c.trim()}
     longPress(
       content,
       (ev) => {
-        var _a3, _b2;
-        const card = (_b2 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b2.call(_a3, "[data-fav-id]");
+        var _a3, _b3;
+        const card = (_b3 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "[data-fav-id]");
         if (!card) return;
         const it = itemById2(card.dataset.favId);
         if (it) openMobSheet2(it);
       },
       void 0,
       (ev) => {
-        var _a3, _b2;
-        return isMobileEnv() && !!((_b2 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b2.call(_a3, "[data-fav-id]"));
+        var _a3, _b3;
+        return isMobileEnv() && !!((_b3 = (_a3 = ev.target) == null ? void 0 : _a3.closest) == null ? void 0 : _b3.call(_a3, "[data-fav-id]"));
       }
     );
     renderAll4();
@@ -41623,6 +41661,7 @@ GitHub 仓库：${ghInfo.title}
       init_z_order();
       init_dom();
       init_esc_manager();
+      init_focus_trap();
       init_mobile();
       init_flow_dialog();
       init_item_actions();
@@ -41981,6 +42020,7 @@ GitHub 仓库：${ghInfo.title}
     "src/bookshelf/ui.ts"() {
       init_fake_obsidian();
       init_esc_manager();
+      init_focus_trap();
       init_z_order();
       init_mobile();
       init_settings_provider();
@@ -45316,7 +45356,7 @@ GitHub 仓库：${ghInfo.title}
     const recentRows = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
-      return `<div class="bz-vault-minirow" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
+      return `<div class="bz-vault-minirow" role="button" tabindex="0" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
             <span class="av" style="background:${color}">${vIc(iconName, 14)}</span>
             <div class="mid"><div class="a">${escapeHtml2(r.title)}</div><div class="b">${escapeHtml2(r.sub)}</div></div>
             <span class="tm">${escapeHtml2(r.time)}</span></div>`;
@@ -45332,17 +45372,17 @@ GitHub 仓库：${ghInfo.title}
     </div>
   </div>
   <div class="bz-vault-cards">
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("file-lock", 13)}</span>笔记条目</div>
       <div class="num">${counts.note}<small>篇</small></div>
       <div class="cd">${counts.note ? "正文与附件全量密文" : "还没有笔记"}</div>
     </div>
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("image", 13)}</span>随库附件</div>
       <div class="num">${attachments}<small>个</small></div>
       <div class="cd">随笔记一并加密镜像</div>
     </div>
-    <div class="card" data-nav="note">
+    <div class="card" role="button" tabindex="0" data-nav="note">
       <div class="ct"><span class="k" style="background:${ASSET_COLOR.note}">${vIc("lock", 13)}</span>附件密文</div>
       <div class="num">${kb}</div>
       <div class="cd">附件镜像密文字节</div>
@@ -45350,10 +45390,10 @@ GitHub 仓库：${ghInfo.title}
   </div>
   <div class="bz-vault-two">
     <div class="panel">
-      <div class="pt">最近加密<span class="more" data-hero="recent-all">查看全部 →</span></div>
+      <div class="pt">最近加密<span class="more" role="button" tabindex="0" data-hero="recent-all">查看全部 →</span></div>
       ${recentRows}
     </div>
-    <div class="panel" data-hero="health" title="打开保险库体检">
+    <div class="panel" role="button" tabindex="0" data-hero="health" title="打开保险库体检">
       <div class="pt">保险库体检<span class="more">查看 →</span></div>
       ${healthRows}
       <div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-text-3)"></span><span class="lbl">完整性校验</span><span class="n">${(health == null ? void 0 : health.lastChecked) || "—"}</span></div>
@@ -45365,7 +45405,7 @@ GitHub 仓库：${ghInfo.title}
     const iconName = kind === "note" ? "file-lock" : "book-lock";
     const sub = kind === "note" ? `${note.attachments.length} 个附件 · ${escapeHtml2(note.path)}` : (note.path.split("/").pop() || note.title) + (note.attachments.length ? ` · ${note.attachments.length} 个附件` : "");
     return `
-    <div class="bz-vault-row ${active2 ? "on" : ""}" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
+    <div class="bz-vault-row ${active2 ? "on" : ""}" role="button" tabindex="0" data-noteid="${escapeHtml2(note.id)}" data-kind="${kind}">
       <span class="av" style="background:${color}">${vIc(iconName, 16)}</span>
       <div class="mid"><div class="t1">${escapeHtml2(note.title)}</div><div class="t2">${sub}</div></div>
       <span class="tm">${escapeHtml2(formatRelativeTime(note.createdAt))}</span>
@@ -45909,6 +45949,7 @@ GitHub 仓库：${ghInfo.title}
       init_notice();
       init_app();
       init_esc_manager();
+      init_focus_trap();
       init_flow_dialog();
       init_dom();
       init_item_actions();
@@ -46052,16 +46093,16 @@ GitHub 仓库：${ghInfo.title}
             <div class="seal">${vIc("lock", 19)}</div>
             <div class="nm">保险库<small>VAULT</small></div>
           </div>
-          <div class="bz-vault-item on" data-asset="overview">${vIc("layout-grid", 16)}概览<span class="cnt" data-cnt="overview"></span></div>
+          <div class="bz-vault-item on" role="button" tabindex="0" data-asset="overview">${vIc("layout-grid", 16)}概览<span class="cnt" data-cnt="overview"></span></div>
           <div class="bz-vault-sec">资产档案</div>
-          <div class="bz-vault-item k-note" data-asset="note">${vIc("file-lock", 16)}笔记<span class="cnt" data-cnt="note"></span></div>
-          <div class="bz-vault-item k-diary" data-asset="diary">${vIc("book-lock", 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
+          <div class="bz-vault-item k-note" role="button" tabindex="0" data-asset="note">${vIc("file-lock", 16)}笔记<span class="cnt" data-cnt="note"></span></div>
+          <div class="bz-vault-item k-diary" role="button" tabindex="0" data-asset="diary">${vIc("book-lock", 16)}加密日记<span class="cnt" data-cnt="diary"></span></div>
           <div class="grow"></div>
-          <div class="bz-vault-health" data-act="health-card" title="打开保险库体检">
+          <div class="bz-vault-health" role="button" tabindex="0" data-act="health-card" title="打开保险库体检">
             <div class="ht"><span class="okdot"></span><span data-health-t>保险库健康</span></div>
             <div class="hd" data-health-d>未体检</div>
           </div>
-          <div class="bz-vault-lockbtn" data-act="lock"><span class="lbl">${vIc("lock", 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
+          <div class="bz-vault-lockbtn" role="button" tabindex="0" data-act="lock"><span class="lbl">${vIc("lock", 14)} 立即上锁</span><span class="dur" data-unlock-dur></span><span class="dot"></span></div>
         </div>
         <div class="bz-vault-main">
           <!-- 顶栏只留标题：右侧三按钮（存入笔记/体检/关闭）按评审去掉——关闭走 Esc 或点遮罩，
@@ -46084,9 +46125,9 @@ GitHub 仓库：${ghInfo.title}
         </div>
         <div class="bz-search bz-vault-msearch"><i data-lucide="search" class="bz-ic"></i><input class="bz-input" placeholder="搜索全部资产…" data-mob-search>${searchClearHtml()}</div>
         <div class="bz-vault-mseg" data-mob-seg>
-          <span class="sg on" data-masset="overview">概览</span>
-          <span class="sg" data-masset="note">笔记</span>
-          <span class="sg" data-masset="diary">日记</span>
+          <span class="sg on" role="button" tabindex="0" data-masset="overview">概览</span>
+          <span class="sg" role="button" tabindex="0" data-masset="note">笔记</span>
+          <span class="sg" role="button" tabindex="0" data-masset="diary">日记</span>
         </div>
         <div class="bz-vault-mbody" data-mob-body></div>
       </div>`;
@@ -46150,6 +46191,19 @@ GitHub 仓库：${ghInfo.title}
             this.openPanelMenu(e.clientX, e.clientY);
           });
           (_c = this.popup.querySelector('[data-act="health-card"]')) == null ? void 0 : _c.addEventListener("click", () => void this.openHealthDialog());
+          this.popup.addEventListener("keydown", (e) => {
+            var _a3, _b3;
+            if (e.key !== "Enter" && e.key !== " ") return;
+            if (e.isComposing || e.defaultPrevented) return;
+            const t = e.target;
+            const btn = (_a3 = t == null ? void 0 : t.closest) == null ? void 0 : _a3.call(t, '[role="button"]');
+            if (!btn || !this.popup.contains(btn)) return;
+            e.preventDefault();
+            btn.click();
+            if (btn.classList.contains("bz-vault-row")) {
+              (_b3 = this.popup.querySelector(".bz-vault-row.on")) == null ? void 0 : _b3.focus();
+            }
+          });
           this.bindSearchInput(this.mob.search, true);
           this.mask.addEventListener("click", () => {
             if (this.mask.style.display === "block") this.hide();
@@ -46245,6 +46299,7 @@ GitHub 仓库：${ghInfo.title}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          trapPanelFocus(this.popup);
           this.notifyUnlockUi();
           void this.renderList();
           this.startSessionTimers();
@@ -46865,10 +46920,14 @@ GitHub 仓库：${ghInfo.title}
           setCnt("note", c.note);
           setCnt("diary", c.diary);
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el) => {
-            el.classList.toggle("on", el.getAttribute("data-asset") === this.asset);
+            const on = el.getAttribute("data-asset") === this.asset;
+            el.classList.toggle("on", on);
+            el.setAttribute("aria-current", on ? "true" : "false");
           });
           this.mob.seg.querySelectorAll(".sg").forEach((el) => {
-            el.classList.toggle("on", el.getAttribute("data-masset") === this.asset);
+            const on = el.getAttribute("data-masset") === this.asset;
+            el.classList.toggle("on", on);
+            el.setAttribute("aria-current", on ? "true" : "false");
           });
           const ht = this.popup.querySelector("[data-health-t]");
           const hd = this.popup.querySelector("[data-health-d]");
@@ -47772,13 +47831,17 @@ GitHub 仓库：${ghInfo.title}
           openSettingsModal({ title: "保险库设置", maxWidth: 560, schema: encryptSettingsSchema() });
         }
         registerEscape() {
-          escManager.register("encrypt", {
-            isVisible: () => !!(this.mask && this.mask.style.display === "block") || !!(this.previewMask && this.previewMask.style.display === "block"),
-            close: () => {
+          unregisterPanelEsc("bz-encrypt");
+          registerPanelEsc(
+            "bz-encrypt",
+            // isVisible 判活带 isConnected（六域先例口径：判「还在屏上」而非仅样式位）——
+            // cleanup 摘 DOM 后旧层自愈失活，不会吞掉重启用后新面板的 ESC
+            () => !!(this.mask && this.mask.isConnected && this.mask.style.display === "block") || !!(this.previewMask && this.previewMask.isConnected && this.previewMask.style.display === "block"),
+            () => {
               if (this.previewMask && this.previewMask.style.display === "block") this.closePreview();
               else if (this.mask && this.mask.style.display === "block") this.hide();
             }
-          });
+          );
         }
       };
       /** 安全模式：15 分钟无面板交互自动上锁（交互即重置；非安全模式/未解锁不布防） */
@@ -48995,6 +49058,7 @@ GitHub 仓库：${ghInfo.title}
           topifyZ(mask, popup);
           this.armPanelEsc();
           (_a2 = firstFocusable(popup)) == null ? void 0 : _a2.focus();
+          trapFocus(popup);
         }
         /* ---------- 桌面：B 侧栏工作台（头行 + 左导航 + 右内嵌渲染） ---------- */
         buildDesktop(popup) {
@@ -49648,6 +49712,7 @@ GitHub 仓库：${ghInfo.title}
       init_app();
       init_notice();
       init_esc_manager();
+      init_focus_trap();
       init_z_order();
       init_domain_bus();
       init_flow_dialog();
@@ -49710,6 +49775,7 @@ GitHub 仓库：${ghInfo.title}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          trapPanelFocus(this.popup);
           if (!this.escHandle) {
             this.escHandle = escManager.register(ESC_ID2, {
               isVisible: () => this.mask.style.display === "block",
@@ -51031,6 +51097,7 @@ GitHub 仓库：${ghInfo.title}
 
   // src/home/ui.ts
   init_esc_manager();
+  init_focus_trap();
   init_notice();
   init_ui();
   init_dom();
@@ -54270,6 +54337,7 @@ ${piece}` : piece;
     mountIcons(overlay2);
     bindEvents2(overlay2, app);
     renderAll5();
+    trapPanelFocus(overlay2);
     void refreshRiverAndRender();
   }
   async function readPomodoroPhase(app) {
