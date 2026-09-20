@@ -857,3 +857,16 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 **拍板项**：64 项五类聚类呈报文档 `review-deep-ui-pending-report.md` 就绪待用户拍板（★建议可直接采纳）。
 
 **挂账**：memo 队尾重审（待用户确认回滚动机与 memo.json 兼容策略）；RR-U13 宿主搜索框（bookshelf 收尾批）；A6 跨域键字面（settings/clipbook 引 keys.ts，收尾统一批）；各域 UX 拍板项按呈报结果执行。
+---
+
+# 📋 拍板后执行 · Wave1 五批闭环（2026-09-19）
+
+> 用户拍板到账（5B/6B/12A + 23 项不采纳 + 其余按★），权威口径见 `review-deep-ui-pending.md`「✅ 拍板结果」节。执行分两波：Wave1 五批并行（域内不交叠）+ Wave2 两批（core 范式横切 → belongings/密钥档位收尾，串行防撞）。
+
+- **复习批 `bz-fix-bd-review`（10 项，13dc7a43 合并）**：R2 单条做题拦截提示（连带修掉 forceQuiz 静默双会话）；R3 读盘降频 1s→2.5s + mtime 命中才读盘（超时判定前移 tick 开头防不可达）；R4 题面 emoji→lucide；R11 统计弹窗对齐影院形制重刷（scoped #review-stats-popup，cinema 零改动）；R12 六命令动宾式名（id 不动，smoke 锚定补全）；R5 冲刺头行模式副标题；R6 假可达卡 tabindex -1；R7 排名行 role=button 键盘化；R8 评级条数字 1-4 评级 + ESC 局部归还焦点（守 esc-manager 立约）；R13 空态统一 uiEmpty。新测试 5 文件。
+- **影院+游戏库+番茄钟批 `bz-fix-bd-cinema-gs-pm`（8 项，218313ff 合并）**：C2 表单桌面自动聚焦（isMobileEnv 同口径）；C3 季圆点外观零改动 + 容器委托几何最近圆点热区（mouseover/mousemove 双通道）；C4 豆瓣失败通知挂「重试」（自审抓出模块变量清零坑）；C6 分析页 19 板块语义 lucide；GS2「最近玩过」行 button 化键盘可达；GS4 滚位记忆（会话边界=插件卸载，宽于 clipbook 先例并注记）；PM2 命令名「开始/重置专注」（菜单半边由 home 批补齐）；PM3 统计档位落设置键 pomodoroStatMode。新测试 4 文件 19 例。
+- **体检+附件批 `bz-fix-bd-checkup-attach`（12 项，4a08c45f 后合并）**：CK2 单条修复免确认（五组修复面全部有 notifyUndo+重跑收敛；批量档保留确认有 clipbook 先例背书）；CK3 判定已随前批落地本批核验；CK5 空态入口唯一；CK6 补满序列回归锁；CK8 过期提示挂「重新体检」；CK1 OPTIONAL_SEGMENTS/FIELDS 豁免清单 + 契约锁；CK7 按域分组修复中间档；CK4 86dvh（vh 兜底）；AT1 动词全线统一「搬移」（测试断言 24 处适配）；AT2 跳过预览快捷出口（本会话生效，选择器 desc 明示）；AT3 上次目标前置预判预告；**A6 键字面收口**（根 src/settings.ts 五键 + clipbook/ui.ts 五处改引 AUTO_SUMMARY_KEYS，勘误：settings.ts 在根不在 auto-summary 域）。新测试 4 文件 23 例。
+- **密码本+保险库批 `bz-fix-bd-pv-enc`（6 项，218313ff 合并）**：P6 生成覆盖手填先 flow-dialog 确认；P2 空值复制给真实提示（6 处链路）；P4+P5 移动端「全部/已收藏」分段切换 + 网址 openExternalUrl 单源可点；P3 快速取密键盘导航升容器级 + listbox/activedescendant；E5 保险库 24 枚手绘图标（以代码为准，非呈报 26）整表退役收编 lucide（语义一枚不丢，别名归一注记）；E4 搜索壳收编 core .bz-search 单源（行为零改动 4 守卫）。
+- **收藏夹+首页+设置批 `bz-fix-bd-fav-home-sp`（8 项，3d970ab3 合并）**：F1 无链卡点按晃动反馈（issue 201 不动作本体保持）；F6 外链卡常驻 external-link 角标；F5 磁贴行 116px 限高滚动；H4 骨架期标题改骨架线条；H2 weekly.ts 死代码整裁（parseLocalDay 覆盖用例迁守护、recap 活链路回归锁）；SP1 输入框内 ↑↓ 让路光标；SP3 ESC 二段清词（clipbook 先例同刀）；SP4 回车跳首命中；SP2 命中词 mark 高亮（data-sp-orig 归一切片重建）；SP5 域滚位会话记忆（重开不重载此前已在位，本批补回归锁）；**PM2 残款**：home 菜单 focusing label「停止专注」→「暂停专注」（主线程跨批补送条目）+ core/pomodoro-phase.ts 注释对齐。新测试 5 文件 20 例。
+- **主线程收口**：拍板结果入账（341ec9e6）；auto-summary 重试两用例固定睡眠改 waitFor 条件轮询修稳既有并发抖动；FV2 复核为误报（批 B 已闭环，ui.ts:589 守卫在位）；产物冲突三度走「theirs + rebuild + add」预期模式。Wave1 合并后全量门禁 **446 文件 / 6818 例全绿 + tsc 0**（smartcat 排除域曾现负载型浮动红，空闲复跑全绿，非本批引入）。
+- **Wave2 派发**：范式批 `bz-fix-bd-paradigm` 运行中（#9 触屏悬浮隔离范式 + #13 大面板入焦圈闭全域推广 + E7 工作台键盘化 enc/clipbook 侧，memo 侧留重审）；收尾批待其合并后派（belongings B5/B2/B8/#20 + #48 密钥型档位 + RR-U13）。
