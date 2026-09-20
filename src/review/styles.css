@@ -211,6 +211,8 @@
 
 /* ==================== 普通复习悬浮迷你评级条（item 4，屏幕底部） ==================== */
 .bz-review-bar { position: fixed; left: 50%; bottom: max(22px, env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); display: flex; align-items: center; gap: 10px; padding: var(--bz-space-sm) var(--bz-space-md); background: var(--bz-surface-2); border: 1px solid var(--bz-border); border-radius: var(--bz-radius-md); box-shadow: var(--bz-shadow-lg); max-width: min(92vw, 560px); }
+/* R8 键盘化：容器 tabindex=-1 为程序化 focus 落点，不显示焦点框（按钮各自有 hover/focus 表达） */
+.bz-review-bar:focus { outline: none; }
 .bz-review-bar-info { font-size: 12.5px; color: var(--bz-text-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 160px; }
 .bz-review-bar-info i { font-style: normal; color: var(--bz-text-3); margin-left: var(--bz-space-xs); }
 .bz-review-bar-act { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }

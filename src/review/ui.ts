@@ -518,7 +518,11 @@ interface ItemActionLite {
 // ================= 普通复习悬浮迷你评级条（item 4） =================
 
 /** 屏幕底部挂悬浮迷你评级条（reviewLoop 存续期间）。返回句柄供收起（close 幂等）。
- *  issue 253：markup 单源 render.reviewBarHtml（四档语义/评级 class 契约不变）。 */
+ *  issue 253：markup 单源 render.reviewBarHtml（四档语义/评级 class 契约不变）。
+ *  呈报#12-R8 键盘化：挂载即焦点入条（tabindex=-1 容器）→ 数字键 1-4 评级（翻篇主路径
+ *  全程可键盘完成）；焦点被用户主动拿回输入框/文本域时数字键放行（不劫持打字）；
+ *  ESC 在条内局部监听归还焦点（条保留，复习未完可再评级）——不私挂 document 级 ESC
+ *  （esc-manager 立约：ESC 一律走层级注册）。close 时注销 document 数字键监听。 */
 export function mountFloatingRatingBar(opts: {
   name: string;
   index: number;
@@ -530,10 +534,12 @@ export function mountFloatingRatingBar(opts: {
   el.className = 'bz-review-bar';
   el.style.zIndex = String(allocZ());
   el.innerHTML = reviewBarHtml(opts);
+  el.tabIndex = -1; // 程序化 focus 落点（容器不进 Tab 序，键盘 Tab 仍直达各评级按钮）
   let closed = false;
   const close = (): void => {
     if (closed) return;
     closed = true;
+    document.removeEventListener('keydown', onDigitKey);
     el.remove();
   };
   el.querySelectorAll<HTMLButtonElement>('.bz-review-bar-btn').forEach((btn) => {
@@ -544,6 +550,31 @@ export function mountFloatingRatingBar(opts: {
       close(); // 点评级/跳过即收起（评级路径由轮询翻篇重建下一条的评级条）
     });
   });
+  // 数字键 1-4 评级（document 级，先例 showDifficultyDialog 同形制）：输入态放行不劫持打字
+  const onDigitKey = (e: KeyboardEvent): void => {
+    if (closed) return;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    const i = ['1', '2', '3', '4'].indexOf(e.key);
+    if (i < 0) return;
+    const btn = el.querySelectorAll<HTMLButtonElement>('.bz-review-bar-btn')[i];
+    if (btn) {
+      e.preventDefault();
+      btn.click();
+    }
+  };
+  document.addEventListener('keydown', onDigitKey);
+  // ESC 归还焦点：条内局部监听（keydown 自条冒泡，容器截停后不到 document/escManager）——
+  // 只归还焦点不关条：普通轮尚未结束，条消失键盘用户就没有评级入口了
+  const prevFocus = document.activeElement as HTMLElement | null;
+  el.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    e.preventDefault();
+    e.stopPropagation();
+    if (prevFocus && typeof prevFocus.focus === 'function' && prevFocus !== document.body) prevFocus.focus();
+    else el.blur();
+  });
   document.body.appendChild(el);
+  el.focus({ preventScroll: true });
   return { close };
 }
