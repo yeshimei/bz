@@ -477,17 +477,28 @@
   color: var(--bz-text-2);
   font-variant-numeric: tabular-nums;
 }
+/* 最近玩过行（呈报#12-GS2 键盘可达改 button）：对宿主裸 button 基线整组显式覆盖
+   （同 .bz-gs-card 口径——inline-flex/height:30px 等基线漏一条真机就中招，每条都写） */
 .bz-gs-rows--flat .bz-gs-latestrow {
   display: grid;
   grid-template-columns: 88px minmax(0, 1fr) 64px;
-  gap: var(--bz-space-sm);
   align-items: center;
+  width: 100%;
+  height: auto;
+  min-width: 0;
+  gap: var(--bz-space-sm);
   padding: 3px 6px;
+  border: 0;
   border-radius: var(--bz-radius-xs);
+  background: none;
+  color: inherit;
+  font: inherit;
   font-size: var(--bz-font-label);
+  text-align: left;
   cursor: pointer;
 }
 .bz-gs-latestrow:hover { background: var(--bz-surface-hover); }
+.bz-gs-latestrow:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-gs-latestdate {
   color: var(--bz-text-3);
   font-size: var(--bz-font-meta);

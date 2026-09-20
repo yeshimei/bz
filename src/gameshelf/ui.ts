@@ -59,6 +59,43 @@ let selectRefs: Array<{ detach: () => void }> = [];
 let bucketSelRef: { setValue: (v: GameshelfBucket) => void } | null = null;
 let sortSelRef: { setValue: (v: GameshelfSort) => void } | null = null;
 
+/**
+ * 会话滚位记忆（呈报#49-GS4，剪藏本效率#17「记住滚位」同范式）：视图 → scrollTop。
+ * 渲染/切页前存、渲染后还；面板 toggle 重开也接回——本条拍板点名「面板重开总回顶部」，
+ * 故会话边界定在插件卸载（unloadGameshelf 清空），比剪藏本「重开面板不背旧位」更宽一层。
+ * 存取都走「当前实际滚动容器」：桌面/统计页是 .bz-gs-body（唯一滚动容器），
+ * ≤768px 的游戏墙滚动权在网格宿主 #bz-gs-grid（styles.css data-view=shelf 段）。
+ */
+const scrollMemo = new Map<GameshelfViewKind, number>();
+/** 当前 DOM 属于哪个视图（切页时旧滚位按它归账，不能记到新视图名下） */
+let renderedView: GameshelfViewKind | null = null;
+
+function activeScroller(): HTMLElement | null {
+  const body = popupEl?.querySelector<HTMLElement>('#bz-gs-body');
+  if (!body) return null;
+  if (body.dataset.view === 'shelf' && typeof window !== 'undefined' && window.matchMedia?.('(max-width: 768px)').matches) {
+    return gridEl; // 窄屏游戏墙：滚动容器是网格宿主
+  }
+  return body;
+}
+
+function saveScrollMemo(): void {
+  if (!renderedView) return;
+  const sc = activeScroller();
+  if (sc) scrollMemo.set(renderedView, sc.scrollTop);
+}
+
+function restoreScrollMemo(): void {
+  const sc = activeScroller();
+  if (sc) sc.scrollTop = scrollMemo.get(M.view) ?? 0;
+}
+
+/** 会话边界（插件卸载）：滚位记忆随域状态一并作废 */
+export function resetScrollMemo(): void {
+  scrollMemo.clear();
+  renderedView = null;
+}
+
 /** 释放上一轮下拉（漏了就是每渲染一次攒一个 document 监听） */
 function disposeSelects(): void {
   for (const s of selectRefs) s.detach();
@@ -513,11 +550,11 @@ export function statsHtml(rp: GameshelfReport): string {
     ? rp.latest
         .map(
           (it) => `
-    <div class="bz-gs-latestrow" data-appid="${it.appid}">
+    <button type="button" class="bz-gs-latestrow" data-appid="${it.appid}">
       <span class="bz-gs-latestdate">${esc(dateText(it.lastPlayed))}</span>
       <span class="bz-gs-rankname" title="${escAttr(it.name)}">${esc(displayNameOf(it))}</span>
       <span class="bz-gs-latesth">${hoursText(it.playtimeMin)}</span>
-    </div>`,
+    </button>`,
         )
         .join('')
     : '<div class="bz-gs-dim">Steam 没给最后游玩日期</div>';
@@ -1075,6 +1112,7 @@ export function renderAll(app: App): void {
   if (!frame || !document.body.contains(frame)) return;
   clearSoftRender(); // 已排期的顺延渲染作废，本次渲染已覆盖
   const snap = snapshotFocus();
+  saveScrollMemo(); // GS4：旧 DOM 的滚位按 renderedView 归账（须在 body 清空前）
   const configured = isConfigured();
   mountOps(app);
   restReel();
@@ -1096,6 +1134,7 @@ export function renderAll(app: App): void {
     }
     body.appendChild(guidanceEl(app));
     mountIcons(frame);
+    renderedView = null; // 引导态无滚位可言：不把它的 scrollTop 记到任何视图名下
     return;
   }
   const rp = buildReport(M.items);
@@ -1110,6 +1149,8 @@ export function renderAll(app: App): void {
   }
   mountIcons(frame);
   restoreFocus(snap);
+  renderedView = M.view;
+  restoreScrollMemo(); // GS4：落位后还滚位（焦点快照回写可能引发滚动，故放在它之后盖过）
 }
 
 /**
@@ -1368,6 +1409,8 @@ export function openPanel(app: App, view: GameshelfViewKind = 'shelf'): void {
 
 /** 关闭（toggle 语义的关分支）：DOM 摘除 + ESC 注销 + 定时器/状态清理（下次打开不背旧账） */
 export function closePanel(): void {
+  saveScrollMemo(); // GS4：末次渲染后用户再滚过的位置在摘除 DOM 前补记（重开接回）
+  renderedView = null; // DOM 已摘：防下次 openPanel 首渲把新空容器的 scrollTop=0 记到旧视图名下
   unregisterPanelEsc(ESC_ID);
   restReel();
   clearSoftRender(); // 面板已关：顺延渲染不再补，免留野定时器（影院 closeOverlay 同口径）
