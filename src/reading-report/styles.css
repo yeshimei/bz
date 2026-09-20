@@ -66,11 +66,13 @@
   position: relative;
   transition: all var(--bz-dur-base) ease;
   border: 1px solid rgba(255, 255, 255, 0.1);
-}
+}@media (hover: hover) {
+
 
 .bz-rr-hm-cell--data:hover {
   transform: scale(1.2);
   z-index: 10;
+}
 }
 
 @media (max-width: 768px) {
@@ -140,7 +142,8 @@
 /* 可点筛选行（分类行走条形行态；作者 Top5 走卡片态）：同面板回书架列表 */
 .bz-rr-bar-row--link {
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 
 .bz-rr-bar-row--link:hover {
   background: var(--background-modifier-hover);
@@ -148,6 +151,7 @@
 
 .bz-rr-bar-row--link:hover .bz-rr-bar-label {
   color: var(--text-accent);
+}
 }
 
 /* 奖杯（lucide 化拍板：分类行前三名，替代原 🏆 emoji 重复） */
@@ -185,11 +189,13 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 
 .bz-rr-hm-nav:hover:not(:disabled) {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
+}
 }
 
 .bz-rr-hm-nav:disabled {
@@ -247,10 +253,12 @@
   text-align: center;
   cursor: pointer;
   transition: transform var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 
 .bz-rr-year-card:hover {
   transform: translateY(-2px);
+}
 }
 
 .bz-rr-year-chev {
@@ -286,10 +294,12 @@
   border-radius: 8px;
   color: white;
   position: relative;
-}
+}@media (hover: hover) {
+
 
 .bz-rr-author-card:hover {
   transform: translateY(-2px);
+}
 }
 
 /* ============================================================

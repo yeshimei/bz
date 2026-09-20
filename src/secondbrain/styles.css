@@ -214,20 +214,24 @@
   user-select: none;
   transition: var(--bz-dur-fast);
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-sb-fbtn:hover {
   border-color: var(--sb-acc);
   color: var(--sb-acc);
+}
 }
 .bz-sb-fbtn--primary {
   background: var(--sb-dark);
   border-color: var(--sb-dark);
   color: var(--sb-on-acc);
-}
+}@media (hover: hover) {
+
 .bz-sb-fbtn--primary:hover {
   background: var(--sb-acc);
   border-color: var(--sb-acc);
   color: #fff;
+}
 }
 .bz-sb-fbtn--icon {
   width: 30px;
@@ -383,9 +387,11 @@
 .bz-sb-trend-col span {
   font-size: 9.5px;
   color: var(--sb-faint);
-}
+}@media (hover: hover) {
+
 .bz-sb-trend-col:hover .bz-sb-trend-bar {
   filter: brightness(1.08);
+}
 }
 
 /* 来源分布：树形（caret 旋转表展开） */
@@ -405,9 +411,11 @@
 }
 .bz-sb-dist-row--dir {
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-sb-dist-row--dir:hover {
   background: var(--sb-acc-soft);
+}
 }
 .bz-sb-dist-caret {
   width: 14px;
@@ -461,9 +469,11 @@
   border-bottom: 1px dashed var(--sb-line);
   cursor: pointer;
   border-radius: 6px;
-}
+}@media (hover: hover) {
+
 .bz-sb-recent-row:hover {
   background: var(--sb-acc-soft);
+}
 }
 .bz-sb-dot {
   width: 6px;
@@ -479,9 +489,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
+}@media (hover: hover) {
+
 .bz-sb-recent-row:hover .bz-sb-recent-name {
   color: var(--sb-acc);
+}
 }
 .bz-sb-recent-time {
   font-size: 10.5px;
@@ -594,9 +606,11 @@
   cursor: pointer;
   user-select: none;
   transition: var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-sb-init-btn:hover {
   background: var(--sb-acc);
+}
 }
 .bz-sb-init-btn:disabled {
   opacity: 0.6;
@@ -834,10 +848,12 @@
   font-size: var(--bz-font-meta);
   color: var(--sb-ink2);
   text-align: left;
-}
+}@media (hover: hover) {
+
 .bz-sb-chat-cite:hover {
   border-color: var(--sb-acc);
   background: var(--sb-acc-soft);
+}
 }
 .bz-sb-chat-cite-score {
   font-size: 12.5px;
@@ -853,9 +869,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
+}@media (hover: hover) {
+
 .bz-sb-chat-cite:hover .bz-sb-chat-cite-name {
   color: var(--sb-acc);
+}
 }
 /* 检索中态 */
 .bz-sb-chat-thinking {
@@ -952,10 +970,12 @@
   place-items: center;
   cursor: pointer;
   transition: var(--bz-dur-base);
-}
+}@media (hover: hover) {
+
 .bz-sb-chat-send:hover {
   background: var(--sb-acc);
   transform: scale(1.06);
+}
 }
 .bz-sb-chat-send:disabled {
   opacity: 0.5;
@@ -977,11 +997,13 @@
   cursor: pointer;
   user-select: none;
   transition: var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-sb-chat-chip:hover {
   border-color: var(--sb-acc);
   color: var(--sb-acc);
   background: var(--sb-acc-soft);
+}
 }
 @media (max-width: 768px) {
   /* createOverlay 以内联样式设宽，移动端窄视口须同级 !important 覆写 */
@@ -1069,7 +1091,8 @@
   line-height: 1;
   padding: 0;
   margin: 0;
-}
+}@media (hover: hover) {
+
 .bz-sb-float-btn:hover {
   color: var(--sb-acc);
   background: var(--sb-acc-soft);
@@ -1077,6 +1100,7 @@
 .bz-sb-float-btn.bz-sb-float-btn-close:hover {
   color: #fff;
   background: var(--sb-acc);
+}
 }
 .bz-sb-float-body {
   flex: 1;
@@ -1127,10 +1151,12 @@
   cursor: pointer;
   transition: border-color var(--bz-dur-fast), box-shadow var(--bz-dur-fast);
   position: relative;
-}
+}@media (hover: hover) {
+
 .bz-sb-ref-card:hover {
   border-color: var(--sb-acc);
   background: var(--sb-acc-soft);
+}
 }
 .bz-sb-ref-card--held {
   border-color: var(--sb-acc);
@@ -1170,9 +1196,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
+}@media (hover: hover) {
+
 .bz-sb-ref-card:hover .bz-sb-ref-card-path {
   color: var(--sb-acc);
+}
 }
 .bz-sb-ref-card-score {
   flex: none;
@@ -1558,9 +1586,11 @@
 .bz-sb-mb-chat-send svg {
   width: 13px;
   height: 13px;
-}
+}@media (hover: hover) {
+
 .bz-sb-mb-chat-send:hover {
   background: var(--sb-dark);
+}
 }
 .bz-sb-mb-chat-send:disabled {
   opacity: 0.5;
@@ -1581,11 +1611,13 @@
   padding: 3px 10px;
   cursor: pointer;
   user-select: none;
-}
+}@media (hover: hover) {
+
 .bz-sb-mb-chat-chip:hover {
   border-color: var(--sb-acc);
   color: var(--sb-acc);
   background: var(--sb-acc-soft);
+}
 }
 /* 参考卡分数条（桌面参考卡同款语言） */
 .bz-sb-mb-card-bar {
@@ -1703,21 +1735,25 @@
   background: var(--sb-card);
   border: 1px solid var(--sb-line2);
   color: var(--sb-ink3);
-}
+}@media (hover: hover) {
+
 #__shared_confirm_popup__.bz-sb-flow-dialog #__shared_confirm_cancel__:hover {
   background: var(--sb-card);
   border-color: var(--sb-acc);
   color: var(--sb-acc);
 }
+}
 #__shared_confirm_popup__.bz-sb-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__ {
   background: var(--sb-dark);
   border-color: var(--sb-dark);
   color: var(--sb-on-acc);
-}
+}@media (hover: hover) {
+
 #__shared_confirm_popup__.bz-sb-flow-dialog:not(.bz-flow-dialog--danger) #__shared_confirm_ok__:hover {
   background: var(--sb-acc);
   border-color: var(--sb-acc);
   color: #fff;
+}
 }
 /* 暗色壳影加深：与 .theme-dark .bz-sb-panel / .bz-sb-chat-modal 同值
    （黑影在深炭棕底不可见，域内该档是写死值、不走 token，故此处必须另写一条） */
@@ -1733,9 +1769,11 @@
 .bz-sb-weekly-card {
   cursor: pointer;
   transition: border-color 120ms ease;
-}
+}@media (hover: hover) {
+
 .bz-sb-weekly-card:hover {
   border-color: var(--sb-acc);
+}
 }
 .bz-sb-weekly-card:focus-visible {
   outline: 1.5px solid var(--sb-acc);
@@ -1865,12 +1903,14 @@
   border-radius: 6px;
   cursor: pointer;
   min-width: 0;
-}
+}@media (hover: hover) {
+
 .bz-sb-weekly-row:hover {
   background: var(--sb-track);
 }
 .bz-sb-weekly-row:hover .bz-sb-weekly-row-name {
   color: var(--sb-acc);
+}
 }
 .bz-sb-weekly-row:focus-visible {
   outline: 1.5px solid var(--sb-acc);
@@ -1911,9 +1951,11 @@
 }
 .bz-sb-weekly-row--hit > .bz-sb-weekly-row-name {
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-sb-weekly-row--hit > .bz-sb-weekly-row-name:hover {
   color: var(--sb-acc);
+}
 }
 .bz-sb-weekly-row-hit-arrow {
   flex: none;

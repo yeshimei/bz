@@ -84,8 +84,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-kb-mclose:hover { background: var(--chip); color: var(--ink); }
+}
 
 .bz-kb-parts {
   justify-self: start;
@@ -106,9 +108,11 @@
   border-radius: 6px;
   letter-spacing: 0.08em;
   text-align: left;
-}
+}@media (hover: hover) {
+
 
 .bz-kb-part:hover { background: var(--chip); color: var(--ink); }
+}
 .bz-kb-part.is-on { background: var(--ink); color: var(--panel); font-weight: 600; }
 
 .bz-kb-top { font-size: 9px; letter-spacing: 0.44em; color: var(--ink3); }
@@ -173,9 +177,11 @@
   border-bottom: 1px solid var(--line);
   cursor: pointer;
   min-width: 0;
-}
+}@media (hover: hover) {
+
 
 .bz-kb-lexrow:hover .bz-kb-w { color: var(--accent); }
+}
 
 .bz-kb-hw { display: flex; align-items: baseline; gap: var(--bz-space-sm); flex-wrap: wrap; min-width: 0; }
 
@@ -244,8 +250,10 @@
   letter-spacing: 0.1em;
   padding: 2px 8px;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-kb-cfilter:hover { border-color: var(--accent, #3a5f8a); color: var(--ink, #26231c); }
+}
 .bz-kb-cfilter.is-on {
   background: var(--ink, #26231c);
   border-color: var(--ink, #26231c);
@@ -253,8 +261,10 @@
   font-weight: 600;
 }
 /* 索引未统计（扫描失败）：置灰不可点，不给「灯亮着却不筛」的假状态 */
-.bz-kb-cfilter:disabled { cursor: default; opacity: 0.6; }
+.bz-kb-cfilter:disabled { cursor: default; opacity: 0.6; }@media (hover: hover) {
+
 .bz-kb-cfilter:disabled:hover { border-color: var(--line, var(--bz-border, #ddd6c4)); color: var(--ink3, var(--bz-text-3, #9b9484)); }
+}
 
 /* 行尾引用计数徽标（0 不渲染）：被 N 处用户双链（正文 wikilink + related + mounted）指到 */
 .bz-kb-refbadge {
@@ -293,8 +303,10 @@
   font-family: inherit;
   min-width: 0;
   transition: border-color var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-kb-entrybtn:hover { border-color: var(--accent); }
+}
 .bz-kb-entrybtn b {
   display: block;
   font-family: var(--font-interface-override, "Noto Serif SC", SimSun, serif);
@@ -524,8 +536,10 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
+}@media (hover: hover) {
+
 .bz-kb-tlink:hover { color: var(--accent); }
+}
 .bz-kb-turl {
   font-family: "Courier New", monospace;
   font-size: 11.5px;
@@ -577,8 +591,10 @@
   gap: var(--bz-space-sm);
   align-items: baseline;
   min-width: 0;
-}
+}@media (hover: hover) {
+
 .bz-kb-hnote:hover { color: var(--accent); }
+}
 .bz-kb-hnote-time { margin-left: auto; font-size: 10.5px; color: var(--ink3); flex: none; }
 
 /* ===== 保留弹窗的纸墨皮（术语 / 添加任务 / 头行按钮） ===== */
@@ -651,8 +667,10 @@
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 #lit-add-resolve:hover { background: var(--chip); }
+}
 #lit-add-resolve:disabled { opacity: 0.55; cursor: default; }
 
 /* 解析态提示行（解析中灰字 / 失败红字，ADR-0133） */
@@ -671,8 +689,10 @@
   cursor: pointer;
   font-family: inherit;
   flex: none;
-}
+}@media (hover: hover) {
+
 #lit-add-whole:hover { background: var(--chip); color: var(--ink); }
+}
 .bz-lit-rhint { margin-top: var(--bz-space-sm); font-size: var(--bz-font-meta); color: var(--ink3); line-height: 1.7; }
 /* 保存行与上方「清晰度」行拉开（术语壳里由 .bz-lit-term-body > .bz-lit-term-actions 给，这里同档） */
 #lit-add-more > .bz-lit-term-actions { margin-top: var(--bz-space-lg); }
@@ -743,12 +763,14 @@
   font-family: inherit;
   height: auto !important;
   transition: border-color var(--bz-dur-fast), background var(--bz-dur-fast), color var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-lit-ghost-btn:hover,
 .bz-lit-term-actions button.bz-lit-ghost-btn:hover {
   border-color: var(--accent);
   background: var(--chip);
   color: var(--ink);
+}
 }
 .bz-lit-ghost-btn:disabled { border-color: var(--line); background: none; color: var(--ink3); cursor: default; }
 
@@ -794,14 +816,18 @@
   cursor: pointer;
   border-radius: var(--bz-radius-xs);
   font-family: inherit;
-}
+}@media (hover: hover) {
+
 .bz-lit-srcchip button:hover { color: var(--red); background: var(--card); }
+}
 /* 名词重名实时提醒（ADR-0143/issue 328）：名词输入行下的内联提示，.bz-lit-term-only 管三态显隐
    （仅名词态出现），命中显示既有笔记名、改名即消 */
 .bz-lit-dup-hint { margin-top: 6px; font-size: var(--bz-font-meta); color: var(--red); word-break: break-all; }
 /* 来源可点（术语预览 meta 行 / 部壹文献预览） */
-.bz-lit-srcopen { cursor: pointer; word-break: break-all; }
+.bz-lit-srcopen { cursor: pointer; word-break: break-all; }@media (hover: hover) {
+
 .bz-lit-srcopen:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+}
 .bz-kb-cliplink .bz-lit-srcopen { color: var(--accent); }
 
 #lit-term-preview {
@@ -830,8 +856,10 @@
   border-radius: var(--bz-radius-xs);
   padding: 1px 6px;
   margin: -1px -6px;
-}
+}@media (hover: hover) {
+
 .bz-lit-term-meta-v.is-editable:hover { background: var(--chip); }
+}
 .bz-lit-term-meta-edit {
   flex: 1;
   min-width: 0;
@@ -869,8 +897,10 @@
   padding: 0 3px;
   border-radius: 99px;
   flex: none;
-}
+}@media (hover: hover) {
+
 .bz-lit-rel-chip button:hover { color: var(--red); }
+}
 
 /* 同壳三态（issue 309/312）：名词 = 一个词（单行 input）/ 段落 = 一段文字（多行 textarea）/
    图版 = 一张图（拖入区），由弹层 data-lit-entry 切换；三态共用同一套行、按钮与预览结构——
@@ -940,8 +970,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-lit-drop-item button:hover { background: var(--red); }
+}
 /* 逐图描述框（issue 329 / ADR-0145）：缩略图下一框，每张图一个；删图连描述一起没 */
 .bz-lit-drop-item .bz-lit-drop-desc {
   display: block;
@@ -1033,8 +1065,10 @@
   cursor: pointer;
   font-family: inherit;
   height: auto !important;
-}
+}@media (hover: hover) {
+
 .bz-lit-term-actions button:not(.bz-lit-accent-btn):hover { border-color: var(--accent); color: var(--accent); }
+}
 
 /* 头行（视频录入/历史标题行） */
 .bz-win-head {
@@ -1056,17 +1090,21 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-lit-head-btns button:hover { background: var(--chip) !important; }
+}
 /* 批量处理钮（▶️/⏹ 单钮态机，桌面端专属）：头行图标组内的强调档——accent 软底衬符文，
    禁用沉芯片底；成对选择器 + !important 压过同组 button 的透底档 */
 .bz-lit-head-btns button.bz-lit-run-btn {
   background: color-mix(in srgb, var(--accent) 16%, transparent) !important;
   color: var(--accent) !important;
   transition: background var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-lit-head-btns button.bz-lit-run-btn:hover {
   background: color-mix(in srgb, var(--accent) 30%, transparent) !important;
+}
 }
 .bz-lit-head-btns button.bz-lit-run-btn:disabled {
   background: var(--chip) !important;
@@ -1167,11 +1205,13 @@
   background: none;
   color: var(--ink2);
   letter-spacing: 0.08em;
-}
+}@media (hover: hover) {
+
 #__shared_confirm_popup__.bz-kb-flow-dialog #__shared_confirm_cancel__:hover {
   border-color: var(--accent);
   background: var(--chip);
   color: var(--ink);
+}
 }
 
 
@@ -1248,8 +1288,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-crumb:hover { background: var(--chip); color: var(--ink); }
+}
 .bz-kb-mt-crumb.is-cur { color: var(--ink); font-weight: 600; }
 .bz-kb-mt-sep { color: var(--ink3); padding: 0 1px; }
 .bz-kb-mt-dir {
@@ -1274,8 +1316,10 @@
   border-radius: var(--bz-radius-sm);
   cursor: pointer;
   letter-spacing: 0.06em;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-btn:hover { background: var(--chip); color: var(--ink); border-color: var(--accent); }
+}
 .bz-kb-mt-btn.is-mini { padding: 1px 8px; margin-left: 6px; font-size: 11px; }
 .bz-kb-mt-status {
   flex: none;
@@ -1300,8 +1344,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-close:hover { background: var(--chip); color: var(--ink); }
+}
 
 /* ===== 画布（拖拽平移 / 滚轮缩放；无滚动条） ===== */
 .bz-kb-mt-canvas {
@@ -1409,8 +1455,10 @@
   color: var(--ink);
   cursor: pointer;
   border-bottom: 1px dashed transparent;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-ttl:hover { border-bottom-color: var(--ink3); }
+}
 .bz-kb-mt-chip {
   font-size: 11px;
   padding: 1px 8px;
@@ -1437,10 +1485,12 @@
   border-radius: 3px;
   padding: 1px 2px;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-body .internal-link:hover,
 .bz-kb-mt-body .internal-link.is-hot {
   background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
 }
 .bz-kb-mt-body :is(h1, h2, h3, h4, h5, h6) { font-size: 13.5px; color: var(--accent); margin: 8px 0 4px; }
 .bz-kb-mt-body :is(ul, ol) { margin: 4px 0 4px 18px; font-size: 13px; color: var(--ink2); }
@@ -1546,8 +1596,10 @@
   cursor: pointer;
   font-size: 14px;
   line-height: 1;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-zbtn:hover { background: var(--chip); }
+}
 .bz-kb-mt-hint {
   position: absolute;
   left: 16px;
@@ -1600,10 +1652,14 @@
   color: var(--ink);
   border-radius: 6px;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-ctx-item:hover { background: var(--chip); }
-.bz-kb-mt-ctx-item.is-dis { opacity: 0.4; cursor: default; }
+}
+.bz-kb-mt-ctx-item.is-dis { opacity: 0.4; cursor: default; }@media (hover: hover) {
+
 .bz-kb-mt-ctx-item.is-dis:hover { background: none; }
+}
 
 /* ===== 入口按钮（卡片列表行 + 卡片预览弹层；issue 319） ===== */
 .bz-kb-mt-openbtn {
@@ -1617,5 +1673,7 @@
   cursor: pointer;
   letter-spacing: 0.06em;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-kb-mt-openbtn:hover { background: var(--chip); color: var(--ink); border-color: var(--accent); }
+}

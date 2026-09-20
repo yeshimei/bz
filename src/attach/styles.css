@@ -29,8 +29,10 @@
   font-size: var(--bz-font-meta);
   line-height: var(--bz-leading-normal);
   min-width: 0;
-}
+}@media (hover: hover) {
+
 .bz-attach-preview-row:hover { background: var(--bz-surface-hover); }
+}
 .bz-attach-preview-row input[type='checkbox'] { flex-shrink: 0; align-self: center; margin: 0; }
 /* 触屏（pointer:coarse）：清单行 padding 抬到 ≥40px 下限档（行间距紧，不用 ::after 外扩防误触邻行） */
 @media (pointer: coarse) {
@@ -52,7 +54,9 @@
   font-size: var(--bz-font-caption);
   color: var(--bz-text-2);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-attach-preview-toggle:hover { color: var(--bz-text-1); text-decoration: underline; }
+}
 /* 大清单渲染护栏提示（RENDER_LIMIT，EFF-2）：全量口径说明行 */
 .bz-attach-preview-more { font-size: var(--bz-font-caption); color: var(--bz-text-3); margin-top: 2px; }

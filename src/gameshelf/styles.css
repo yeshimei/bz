@@ -42,8 +42,10 @@
   background: rgba(0, 0, 0, 0.42);
   border-radius: var(--bz-radius-sm);
   transition: background var(--bz-dur-fast) var(--bz-ease-out);
-}
+}@media (hover: hover) {
+
 .bz-gs-heroops .bz-icon-btn:hover { background: rgba(0, 0, 0, 0.66); }
+}
 .bz-gs-heroops .bz-icon-btn:disabled { opacity: 0.5; cursor: default; }
 /* 关闭钮：桌面走点遮罩 / ESC（issue 271），海报上不放；移动端全屏面板遮不住，只在那里露出来 */
 .bz-gs-heroops .bz-gs-close { display: none; }
@@ -199,8 +201,10 @@
   cursor: pointer;
   color: var(--bz-text-3);
   line-height: 0;
-}
+}@media (hover: hover) {
+
 .bz-gs-search-clear:hover { color: var(--bz-text-1); }
+}
 .bz-gs-sortseg .bz-segmented-btn { padding: 0 11px; }
 
 /* ---------- 封面网格 ---------- */
@@ -233,8 +237,10 @@
   cursor: pointer;
   border-radius: var(--bz-radius-md);
   transition: transform var(--bz-dur-base) var(--bz-ease-out);
-}
+}@media (hover: hover) {
+
 .bz-gs-card:hover { transform: translateY(-3px); }
+}
 .bz-gs-cover {
   position: relative;
   display: block;
@@ -244,10 +250,12 @@
   background: var(--bz-surface-2);
   overflow: hidden;
   transition: border-color var(--bz-dur-fast) var(--bz-ease-out), box-shadow var(--bz-dur-fast) var(--bz-ease-out);
-}
+}@media (hover: hover) {
+
 .bz-gs-card:hover .bz-gs-cover {
   border-color: var(--bz-border-hover);
   box-shadow: var(--bz-shadow-sm);
+}
 }
 .bz-gs-cover img {
   width: 100%;
@@ -255,8 +263,10 @@
   object-fit: cover;
   display: block;
   transition: transform var(--bz-dur-slow) var(--bz-ease-out);
-}
+}@media (hover: hover) {
+
 .bz-gs-card:hover .bz-gs-cover img { transform: scale(1.04); }
+}
 /* 悬浮截图快轮播（issue 378）：hover 卡片时插到海报位的浮层，全套截图叠放、is-on 者显。
    ⚠️ 必须显式 z-index:1——hover 时封面图带 scale 变换会升级为独立层，按 DOM 序恰好盖住
    先行插入的 reel（桌面端「轮播看不见」的病根，移动端因禁了 hover 缩放才侥幸可见）；
@@ -316,8 +326,10 @@
   background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.78));
   opacity: 0;
   transition: opacity var(--bz-dur-base) var(--bz-ease-out);
-}
+}@media (hover: hover) {
+
 .bz-gs-card:hover .bz-gs-hint { opacity: 1; }
+}
 .bz-gs-hint-d { color: rgba(255, 255, 255, 0.68); }
 .bz-gs-rank {
   position: absolute;
@@ -390,8 +402,10 @@
   overflow: hidden;
 }
 .bz-gs-strip > i { display: block; height: 100%; background: var(--bz-brand); opacity: 0.7; }
-.bz-gs-strip.is-full > i { opacity: 1; }
+.bz-gs-strip.is-full > i { opacity: 1; }@media (hover: hover) {
+
 .bz-gs-card:hover .bz-gs-strip > i { opacity: 1; }
+}
 /* 全成就奖杯角标：小海报右上角，🏆 字符 + 深投影（不套底圈，压在任何封面上都可读）。
    2026-09-19 用户点版：lucide 线性杯换 emoji 字符——emoji 自带金色，不吃主题色。 */
 .bz-gs-trophy {
@@ -496,8 +510,10 @@
   font-size: var(--bz-font-label);
   text-align: left;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-gs-latestrow:hover { background: var(--bz-surface-hover); }
+}
 .bz-gs-latestrow:focus-visible { outline: 2px solid var(--bz-brand); outline-offset: 2px; }
 .bz-gs-latestdate {
   color: var(--bz-text-3);
@@ -705,8 +721,10 @@
   background: var(--bz-surface-2);
   cursor: pointer;
   aspect-ratio: 16 / 9;
-}
+}@media (hover: hover) {
+
 .bz-gs-shot:hover { border-color: var(--bz-border-hover); }
+}
 .bz-gs-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* ---------- 移动端：真全屏 + 44px 顶部避让（.bz-panel-mtop 出顶距） ---------- */
@@ -779,9 +797,11 @@
     overflow-y: auto;
     padding: 0 var(--bz-space-md) var(--bz-space-md);
   }
-  .bz-gs-hint { opacity: 1; }           /* 触屏没有 hover：时长/日期常显 */
+  .bz-gs-hint { opacity: 1; }@media (hover: hover) {
+           /* 触屏没有 hover：时长/日期常显 */
   .bz-gs-card:hover { transform: none; }
   .bz-gs-card:hover .bz-gs-cover img { transform: none; }
+}
   .bz-gs-stats { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
   .bz-gs-rankrow { grid-template-columns: 20px minmax(0, 1fr) 58px; }
   .bz-gs-rankrow .bz-gs-rankbar { display: none; }

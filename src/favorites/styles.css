@@ -89,8 +89,10 @@
   background: transparent; border: 1.5px dashed var(--chip-add-bd); color: var(--chip-add-ink); box-shadow: none;
   display: inline-flex; align-items: center; gap: 5px;
 }
-.bz-fav-tags button.bz-fav-chip-add::before { display: none; }
+.bz-fav-tags button.bz-fav-chip-add::before { display: none; }@media (hover: hover) {
+
 .bz-fav-tags button.bz-fav-chip-add:hover { border-color: var(--acc); color: var(--acc); }
+}
 
 /* —— 卡片（原型 .card 逐字） —— */
 /* 卡墙：auto-fill 网格——列宽均分剩余空间（184 起步），行缘严格贴合内容区，左右只余对称内边距 */
@@ -105,8 +107,10 @@
 .bz-fav-card {
   width: 184px; min-width: 0; background: var(--card); border-radius: 10px; padding: var(--bz-space-xl) var(--bz-space-lg) 13px; cursor: pointer; position: relative;
   box-shadow: 0 4px 12px var(--card-shadow); transition: transform var(--bz-dur-fast), box-shadow var(--bz-dur-fast);
-}
+}@media (hover: hover) {
+
 .bz-fav-card:hover { transform: translateY(-4px); box-shadow: 0 10px 22px var(--card-shadow-hi); }
+}
 .bz-fav-card .bz-fav-tape {
   position: absolute; top: -9px; left: 50%; transform: translateX(-50%) rotate(-2deg);
   width: 66px; height: 18px; border-radius: 2px; background: rgba(150,190,220,.55); box-shadow: 0 1px 2px rgba(0,0,0,.1);
@@ -123,8 +127,10 @@
   position: absolute; top: 10px; left: 10px; width: 18px; height: 18px; border-radius: 50%;
   background: var(--chip); color: var(--ink-faint);
   display: inline-flex; align-items: center; justify-content: center;
-}
+}@media (hover: hover) {
+
 .bz-fav-card:hover .bz-fav-ext { color: var(--acc); }
+}
 .bz-fav-card .bz-fav-ext .bz-ic { width: 11px !important; height: 11px !important; }
 /* 无链卡片点按反馈（F1/呈报#24）：轻微晃动示意「这张卡没有可打开的链接」——类由 ui.ts
    点击/Enter 时挂上，animationend 摘类（可重复触发）；持续覆盖 hover 的 translateY 无妨 */
@@ -231,8 +237,10 @@
   cursor: pointer; font: 12.5px/1 var(--font-interface, 'Microsoft YaHei'); padding: var(--bz-space-sm) var(--bz-space-lg); border-radius: var(--bz-radius-sm);
   border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink);
 }
-:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button.bz-fav-pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }
+:is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button.bz-fav-pri { background: var(--acc); border-color: var(--acc); color: var(--on-acc); }@media (hover: hover) {
+
 :is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button:hover { filter: brightness(.97); }
+}
 :is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns button:disabled { opacity: .55; cursor: default; }
 :is(.bz-fav-form, .bz-fav-tageditor) .bz-fav-btns .bz-fav-ai-btn { display: inline-flex; align-items: center; gap: 5px; color: var(--acc); border-color: var(--acc); }
 
@@ -330,11 +338,15 @@
   border: none; background: transparent; color: var(--chip-ink);
   display: inline-flex; align-items: center; justify-content: center;
 }
-.bz-fav-tagmgr-btn svg { width: 14px; height: 14px; }
+.bz-fav-tagmgr-btn svg { width: 14px; height: 14px; }@media (hover: hover) {
+
 .bz-fav-tagmgr-btn:hover { background: var(--menu-hover); color: var(--acc-deep); }
-.bz-fav-tagmgr-btn:disabled { opacity: .35; cursor: default; }
+}
+.bz-fav-tagmgr-btn:disabled { opacity: .35; cursor: default; }@media (hover: hover) {
+
 .bz-fav-tagmgr-btn:disabled:hover { background: transparent; color: var(--chip-ink); }
 .bz-fav-tagmgr-btn--danger:hover { color: var(--danger); }
+}
 /* 添加标签钮（虚线描边呼应面板磁贴行「新收藏」chip） */
 .bz-fav-tagmgr-add {
   margin-top: 2px; cursor: pointer;
@@ -342,8 +354,10 @@
   border-radius: 99px; font: 12px/1 var(--font-interface, system-ui); padding: var(--bz-space-sm) 14px;
   display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
 }
-.bz-fav-tagmgr-add svg { width: 13px; height: 13px; }
+.bz-fav-tagmgr-add svg { width: 13px; height: 13px; }@media (hover: hover) {
+
 .bz-fav-tagmgr-add:hover { color: var(--acc-deep); border-color: var(--acc); }
+}
 
 /* —— 编辑弹窗（壳收编 uiModal maxWidth 380 档；内容根 .bz-fav-form 同皮 + .bz-fav-btns 按钮行，补图标胶囊） —— */
 .bz-fav-tageditor-ics { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -352,6 +366,8 @@
   border: 1px solid var(--fld-bd); background: var(--fld-bg); color: var(--chip-ink);
   display: inline-flex; align-items: center; justify-content: center;
 }
-.bz-fav-tageditor-ic svg { width: 16px; height: 16px; }
+.bz-fav-tageditor-ic svg { width: 16px; height: 16px; }@media (hover: hover) {
+
 .bz-fav-tageditor-ic:hover { border-color: var(--acc); color: var(--acc-deep); }
+}
 .bz-fav-tageditor-ic.bz-fav-on { border-color: var(--acc); background: var(--acc); color: var(--on-acc); }

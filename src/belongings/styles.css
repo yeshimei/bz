@@ -124,9 +124,11 @@
 }
 .bz-bel-kpi span { display: block; margin-top: 7px; font-size: var(--bz-font-caption); letter-spacing: 2px; color: var(--bz-text-3); white-space: nowrap; }
 .bz-bel-kpi--hero b { font-size: 42px; color: var(--bz-bel-accent); }
-.bz-bel-kpi--click { cursor: pointer; }
+.bz-bel-kpi--click { cursor: pointer; }@media (hover: hover) {
+
 .bz-bel-kpi--click:hover b { color: var(--bz-bel-accent); }
 .bz-bel-kpi--click:hover span { color: var(--bz-text-2); }
+}
 /* 输入聚焦去轮廓（海报皮肤下浏览器/core 默认 focus ring 与纸面风格冲突） */
 .bz-bel-panel .bz-input:focus,
 .bz-bel-form .bz-input:focus,
@@ -140,10 +142,12 @@
   border-radius: 0; background: transparent !important;
   color: var(--bz-bel-ink) !important;
   font-size: var(--bz-font-meta); letter-spacing: 1px;
-}
+}@media (hover: hover) {
+
 .bz-bel-chips .bz-chip:hover { background: var(--bz-bel-dim) !important; }
 .bz-bel-chips .bz-chip--on,
 .bz-bel-chips .bz-chip--on:hover { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
+}
 .bz-bel-chips .bz-chip-cnt { margin-left: 5px; font-size: var(--bz-font-caption); opacity: 0.55; }
 
 /* ---- 工具行（p20 下划线输入 + 墨色记一笔；壳走组件库 .bz-toolrow） ---- */
@@ -166,8 +170,10 @@
   background: transparent; border-radius: 0; box-shadow: none;
   height: 32px; padding: 0 var(--bz-space-xl) 0 2px; font-size: var(--bz-font-body); color: var(--bz-text-1);
   font-family: inherit; cursor: pointer; min-width: 104px; user-select: none;
-}
+}@media (hover: hover) {
+
 .bz-bel-select:hover, .bz-bel-select:focus-visible { background: var(--bz-bel-dim); outline: none; }
+}
 .bz-bel-select-chev { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 13px; height: 13px; color: var(--bz-text-3); pointer-events: none; transition: transform var(--bz-dur-fast) ease; }
 .bz-bel-yearsel.is-open .bz-bel-select-chev { transform: translateY(-50%) rotate(180deg); }
 /* 弹出菜单 = .bz-bel-menu 同款海报皮：纸面墨框方角 + 硬投影；hover 墨底纸字、当前项赤橙 */
@@ -183,18 +189,24 @@
 .bz-bel-dropopt {
   padding: 9px 14px; font-size: var(--bz-font-label); letter-spacing: 1px;
   color: var(--bz-text-1); cursor: pointer; white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-bel-dropopt:hover { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
-.bz-bel-dropopt.is-cur { color: var(--bz-bel-accent); font-weight: 600; }
+}
+.bz-bel-dropopt.is-cur { color: var(--bz-bel-accent); font-weight: 600; }@media (hover: hover) {
+
 .bz-bel-dropopt.is-cur:hover { background: var(--bz-bel-accent); color: var(--bz-bel-paper); }
+}
 /* 记一笔 = p20 .btn：墨底纸字、hover 转赤橙（桌面工具行 + 移动底部同款） */
 .bz-bel-addbtn,
 .bz-bel-mobadd {
   background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important;
   letter-spacing: 3px; font-weight: 600;
-}
+}@media (hover: hover) {
+
 .bz-bel-addbtn:hover,
 .bz-bel-mobadd:hover { background: var(--bz-bel-accent) !important; }
+}
 .bz-bel-addbtn { margin-left: auto; }
 
 /* ---- 排序 seg 海报皮（p20 .seg：join 方格墨框，on=墨底纸字；横滑 chips 同皮） ---- */
@@ -208,8 +220,10 @@
   border-radius: 0; font-size: var(--bz-font-meta); letter-spacing: 1px;
   box-shadow: none !important;
 }
-.bz-bel-panel .bz-segmented-btn:last-child { border-right: none; }
+.bz-bel-panel .bz-segmented-btn:last-child { border-right: none; }@media (hover: hover) {
+
 .bz-bel-panel .bz-segmented-btn:hover { background: var(--bz-bel-dim) !important; }
+}
 .bz-bel-panel .bz-segmented-btn.is-on { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
 .bz-bel-panel .bz-mobstrip-chip {
   border: 1.5px solid var(--bz-bel-ink) !important;
@@ -235,10 +249,12 @@
   min-height: 172px; padding: 15px 17px; position: relative;
   background: var(--bz-bel-paper); color: var(--bz-bel-ink);
   cursor: default; user-select: none; -webkit-user-select: none;
-}
+}@media (hover: hover) {
+
 .bz-bel-cell:hover { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
 .bz-bel-cell:hover .bz-bel-cell-idx { color: var(--bz-bel-ink-muted); }
 .bz-bel-cell:hover .bz-bel-mut { color: var(--bz-bel-ink-muted); }
+}
 .bz-bel-cell-idx { font-size: var(--bz-font-caption); letter-spacing: 2px; color: var(--bz-text-3); }
 .bz-bel-tag {
   position: absolute; top: 13px; right: 13px;
@@ -251,25 +267,31 @@
 .bz-bel-tag--using { background: var(--bz-bel-ink); border-color: var(--bz-bel-ink); color: var(--bz-bel-paper); }
 .bz-bel-tag--idle { border-color: var(--bz-bel-accent); color: var(--bz-bel-accent); }
 .bz-bel-tag--sold { border-color: var(--bz-bel-tag-sold); color: var(--bz-bel-tag-sold); }
-.bz-bel-tag--discard { border-style: dashed; border-color: var(--bz-bel-tag-discard); color: var(--bz-bel-tag-discard); }
+.bz-bel-tag--discard { border-style: dashed; border-color: var(--bz-bel-tag-discard); color: var(--bz-bel-tag-discard); }@media (hover: hover) {
+
 .bz-bel-cell:hover .bz-bel-tag--using { background: var(--bz-bel-paper); border-color: var(--bz-bel-paper); color: var(--bz-bel-ink); }
+}
 .bz-bel-cell-em { font-size: 40px; line-height: 1; margin: auto 0; padding: 10px 0 var(--bz-space-sm); }
 .bz-bel-name {
   font-size: 19px; font-weight: 800; letter-spacing: -0.3px; line-height: 1.25;
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .bz-bel-price { font-size: 23px; font-weight: 800; margin-top: 3px; font-variant-numeric: tabular-nums; }
-.bz-bel-cell--idle .bz-bel-price { color: var(--bz-bel-accent); }
+.bz-bel-cell--idle .bz-bel-price { color: var(--bz-bel-accent); }@media (hover: hover) {
+
 .bz-bel-cell:hover .bz-bel-price { color: inherit; }
+}
 .bz-bel-mut { font-size: var(--bz-font-caption); color: var(--bz-text-3); line-height: 1.7; margin-top: 6px; }
 /* 离场卡（转卖/丢弃）：纸面灰化 + hover 同反色 */
 .bz-bel-cell--gone { background: var(--bz-bel-dim); }
 .bz-bel-cell--gone .bz-bel-cell-em,
 .bz-bel-cell--gone .bz-bel-name,
-.bz-bel-cell--gone .bz-bel-price { opacity: 0.55; }
+.bz-bel-cell--gone .bz-bel-price { opacity: 0.55; }@media (hover: hover) {
+
 .bz-bel-cell--gone:hover .bz-bel-cell-em,
 .bz-bel-cell--gone:hover .bz-bel-name,
 .bz-bel-cell--gone:hover .bz-bel-price { opacity: 0.85; }
+}
 /* 末行空位补纸（黑缝线只出现在卡与卡之间，空区保持纸面） */
 .bz-bel-filler { background: var(--bz-bel-paper); }
 
@@ -306,8 +328,10 @@
   padding: 10px 0; font-size: var(--bz-font-meta); letter-spacing: 1px;
   border-right: 1.5px solid var(--bz-bel-ink); background: transparent; color: var(--bz-bel-ink);
 }
-.bz-bel-flowbtn:last-child { border-right: none; }
+.bz-bel-flowbtn:last-child { border-right: none; }@media (hover: hover) {
+
 .bz-bel-flowbtn:hover { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
+}
 .bz-bel-flowbtn.is-cur { background: var(--bz-bel-ink); color: var(--bz-bel-paper); }
 /* p20 .cur.c2：闲置当前态 = 赤橙实底 */
 .bz-bel-flowbtn.is-cur.bz-bel-c2 { background: var(--bz-bel-accent); border-color: var(--bz-bel-accent); }
@@ -323,9 +347,11 @@
   box-shadow: 6px 6px 0 var(--bz-bel-shadow-strong);
   overflow: hidden;
 }
-.bz-item-menu.bz-bel-menu button.bz-item-menu-item { border-radius: 0 !important; padding: 10px var(--bz-space-lg); font-size: var(--bz-font-label); letter-spacing: 1px; }
+.bz-item-menu.bz-bel-menu button.bz-item-menu-item { border-radius: 0 !important; padding: 10px var(--bz-space-lg); font-size: var(--bz-font-label); letter-spacing: 1px; }@media (hover: hover) {
+
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item:hover { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
 .bz-item-menu.bz-bel-menu button.bz-item-menu-item--danger:hover { background: var(--bz-bel-accent) !important; color: var(--bz-bel-paper) !important; }
+}
 
 /* ---- 底部抽屉头（sheetHeadOf：原两处内联 flex 上岸，双端同挂类） ---- */
 .bz-bel-sheet-head { display: flex; align-items: flex-start; gap: 10px; }
@@ -348,8 +374,10 @@
   background: var(--bz-bel-paper);
   border: 1.5px solid var(--bz-bel-ink); border-radius: 0;
   box-shadow: 4px 4px 0 var(--bz-bel-shadow-pop);
-}
+}@media (hover: hover) {
+
 .bz-bel-form .bz-popover-item:hover { background: var(--bz-bel-dim); }
+}
 .bz-bel-form .bz-popover-item.is-on { background: var(--bz-bel-dim); color: var(--bz-bel-accent); }
 .bz-bel-form .bz-popover-item.is-on .bz-ic { color: var(--bz-bel-accent); }
 .bz-bel-form-title {
@@ -375,10 +403,14 @@
 }
 .bz-bel-statuspick .bz-choice-btn:last-child { border-right: none; }
 /* 核心 .bz-choice-btn.is-on 带 !important，皮覆盖须同重 */
-.bz-bel-statuspick .bz-choice-btn.is-on { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }
+.bz-bel-statuspick .bz-choice-btn.is-on { background: var(--bz-bel-ink) !important; color: var(--bz-bel-paper) !important; }@media (hover: hover) {
+
 .bz-bel-statuspick .bz-choice-btn.is-on:hover { background: var(--bz-bel-ink) !important; }
-.bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: var(--bz-on-brand, #fff) !important; }
+}
+.bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2 { background: var(--bz-bel-accent) !important; color: var(--bz-on-brand, #fff) !important; }@media (hover: hover) {
+
 .bz-bel-statuspick .bz-choice-btn.is-on.bz-bel-c2:hover { background: var(--bz-bel-accent) !important; }
+}
 
 /* ---- 年度资产报告页（issue 356，body 级 mask；材质与 .bz-bel-detail 同语言） ----
    遮罩 z 由 openBelReport 经 topifyZ 动态发号（ADR-0067）。

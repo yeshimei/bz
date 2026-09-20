@@ -907,8 +907,10 @@
   font-size: var(--bz-font-label);
   color: var(--text-muted);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-sc-dash-tab:hover { color: var(--text-normal); }
+}
 .bz-sc-dash-tab.active {
   color: var(--interactive-accent);
   border-bottom-color: var(--interactive-accent);
@@ -1119,10 +1121,12 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-sc-dash-mini-btn:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
+}
 }
 .bz-sc-dash-list {
   display: flex;
@@ -1342,9 +1346,11 @@
 .bz-sc-dash-stat-click {
   cursor: pointer;
   transition: box-shadow var(--bz-dur-fast) ease, background var(--bz-dur-fast) ease;
-}
+}@media (hover: hover) {
+
 .bz-sc-dash-stat-click:hover {
   background: var(--background-modifier-hover);
+}
 }
 .bz-sc-dash-stat-click.active {
   box-shadow: inset 0 0 0 1.5px var(--interactive-accent);
@@ -1361,10 +1367,12 @@
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-sc-dash-load-more:hover {
   background: var(--background-modifier-hover);
   color: var(--text-normal);
+}
 }
 
 /* 记忆流 structured 摘要 */

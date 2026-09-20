@@ -107,8 +107,10 @@
   padding: 6px 10px;
   font-size: 12.5px;
   color: var(--sp-ink);
-}
+}@media (hover: hover) {
+
 .bz-path-picker.bz-sp-skin .bz-path-picker-row:hover { background: var(--sp-accent-soft); }
+}
 .bz-path-picker.bz-sp-skin .bz-path-picker-row--sel {
   background: var(--sp-accent-soft);
   color: var(--sp-accent);
@@ -137,15 +139,19 @@
   border: 1px solid var(--sp-line);
   color: var(--sp-ink);
   border-radius: 7px;
-}
+}@media (hover: hover) {
+
 .bz-path-picker.bz-sp-skin .bz-path-picker-btn:hover { background: var(--sp-accent-soft); }
+}
 .bz-path-picker.bz-sp-skin .bz-path-picker-btn--primary {
   background: var(--sp-accent);
   border-color: transparent;
   color: var(--sp-on-accent);
   font-weight: 600;
-}
+}@media (hover: hover) {
+
 .bz-path-picker.bz-sp-skin .bz-path-picker-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
+}
 
 /* ═══════════ 外观域卡片预览（bz-sp-mini prevClass，视觉对照原型 renderMini） ═══════════ */
 /* 经纬：布局缩略 = head 横条 + 左栏竖块 + 主内容块（P1 系统面板形态） */
@@ -458,8 +464,10 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-}
+}@media (hover: hover) {
+
 .bz-sp-nav-item:hover { background: var(--sp-accent-soft); }
+}
 .bz-sp-nav-item.on { background: var(--sp-accent); color: var(--sp-on-accent); }
 .bz-sp-nav-item.on .bz-sp-nav-count { background: rgba(255, 255, 255, 0.25); color: inherit; }
 .theme-dark .bz-sp-nav-item.on .bz-sp-nav-count { background: rgba(27, 27, 31, 0.25); }
@@ -506,10 +514,12 @@
   border-radius: 7px;
   padding: 5px 10px;
   cursor: pointer;
-}
+}@media (hover: hover) {
+
 .bz-sp-page-reset:hover {
   color: var(--sp-ink);
   border-color: var(--sp-ink-3);
+}
 }
 .bz-sp-page-title {
   font-size: 22px;
@@ -572,10 +582,12 @@
   border-top: 1px solid var(--sp-line-soft);
   min-width: 0;
 }
-.bz-sp-group-body .bz-sp-set-row:first-child { border-top: 0; }
+.bz-sp-group-body .bz-sp-set-row:first-child { border-top: 0; }@media (hover: hover) {
+
 .bz-sp-set-row:hover { background: var(--sp-accent-soft); }
 /* custom 行（整行插槽，行体高）不参与整条 hover 变色 */
 .bz-sp-set-row--custom:hover { background: transparent; }
+}
 .bz-sp-set-info { min-width: 0; }
 .bz-sp-set-name { font-size: var(--bz-font-label); color: var(--sp-ink); }
 .bz-sp-set-desc { font-size: 11.5px; color: var(--sp-ink-2); margin-top: 2px; }
@@ -590,16 +602,20 @@
 .bz-sp-set-row--cards > .bz-sp-set-name { font-weight: 600; }
 /* 列表行（通用 .bz-setlist 的行宿主）：名称/描述一行在上，列表占满行宽在下——与 core ⚙️
    弹窗 ListRow 同构；行体不挂 hover 底（条目自带底），控件区放开整宽防条目横铺出界 */
-.bz-sp-set-row--list { flex-direction: column; align-items: stretch; gap: var(--bz-space-sm); }
+.bz-sp-set-row--list { flex-direction: column; align-items: stretch; gap: var(--bz-space-sm); }@media (hover: hover) {
+
 .bz-sp-set-row--list:hover { background: transparent; }
+}
 .bz-sp-set-row--list .bz-sp-set-ctrl { margin-left: 0; width: 100%; min-width: 0; flex-wrap: wrap; }
 /* 设置子项层级降级（enh-sweep-a）：isChild 行弱化、hover 恢复 */
 .bz-sp-desk .bz-sp-set-row.child,
 .bz-sp-mobile .bz-sp-set-row.child,
-.bz-sp-mobile .bz-sp-set-row.child { opacity: 0.6; }
+.bz-sp-mobile .bz-sp-set-row.child { opacity: 0.6; }@media (hover: hover) {
+
 .bz-sp-desk .bz-sp-set-row.child:hover,
 .bz-sp-mobile .bz-sp-set-row.child:hover,
 .bz-sp-mobile .bz-sp-set-row.child:hover { opacity: 1; }
+}
 
 /* custom 插槽：占满整行（内嵌原生 Setting 行由容器收敛） */
 .bz-sp-custom-slot--full { width: 100%; }
@@ -674,10 +690,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
+}@media (hover: hover) {
+
 .bz-sp-desk .bz-select:hover,
 .bz-sp-mobile .bz-select:hover,
 .bz-sp-mobile .bz-select:hover { border-color: var(--sp-ink-3); }
+}
 /* UI-2：触发器可聚焦（tabindex）——键盘焦点光圈与开关 focus-visible 同档 */
 .bz-sp-desk .bz-select:focus-visible,
 .bz-sp-mobile .bz-select:focus-visible {
@@ -733,10 +751,12 @@
 }
 .bz-sp-desk .bz-select-item.is-on .bz-select-item-ck,
 .bz-sp-mobile .bz-select-item.is-on .bz-select-item-ck,
-.bz-sp-mobile .bz-select-item.is-on .bz-select-item-ck { opacity: 1; }
+.bz-sp-mobile .bz-select-item.is-on .bz-select-item-ck { opacity: 1; }@media (hover: hover) {
+
 .bz-sp-desk .bz-select-item:hover,
 .bz-sp-mobile .bz-select-item:hover,
 .bz-sp-mobile .bz-select-item:hover { background: var(--sp-accent-soft); }
+}
 .bz-sp-desk .bz-select-item.is-on,
 .bz-sp-mobile .bz-select-item.is-on,
 .bz-sp-mobile .bz-select-item.is-on {
@@ -1047,8 +1067,10 @@
   background: var(--sp-panel) !important;
   color: var(--sp-ink-2) !important;
   border-radius: var(--bz-radius-sm) !important;
-}
+}@media (hover: hover) {
+
 .bz-sp-mob-close:hover { color: var(--sp-accent) !important; }
+}
 .bz-sp-mob-back-btn {
   border: 1px solid var(--sp-line) !important;
   background: var(--sp-panel) !important;
@@ -1056,8 +1078,10 @@
   border-radius: var(--bz-radius-sm) !important;
   /* UI-3（favorites-ui UI-02 旧账收口）：-var( 非法记号整条声明被浏览器丢弃——负 token 须 calc */
   margin-right: calc(-1 * var(--bz-space-xs));
-}
+}@media (hover: hover) {
+
 .bz-sp-mob-back-btn:hover { color: var(--sp-accent) !important; }
+}
 
 /* ═══════════ 域内图标基础尺寸（svg 自带 bz-ic；span 包装与 svg 自身都覆盖） ═══════════ */
 .bz-sp-desk .bz-ic,
@@ -1101,12 +1125,14 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
+}@media (hover: hover) {
+
 .bz-sp-desk .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
 .bz-sp-mobile .bz-sp-btn:hover,
 #bz-up-manager-popup .bz-sp-btn:hover,
 #bz-rss-manager-popup .bz-sp-btn:hover { background: var(--sp-accent-soft); }
+}
 .bz-sp-desk .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
 .bz-sp-mobile .bz-sp-btn--primary,
@@ -1116,12 +1142,14 @@
   border-color: transparent;
   color: var(--sp-on-accent);
   font-weight: 600;
-}
+}@media (hover: hover) {
+
 .bz-sp-desk .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
 .bz-sp-mobile .bz-sp-btn--primary:hover,
 #bz-up-manager-popup .bz-sp-btn--primary:hover,
 #bz-rss-manager-popup .bz-sp-btn--primary:hover { background: var(--sp-accent); opacity: 0.92; }
+}
 
 /* custom 插槽内原生 Setting 的按钮（AI「获取模型名」等）并入同一观感 */
 .bz-sp-desk .bz-sp-custom-slot .setting-item button,
@@ -1141,11 +1169,13 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
+}@media (hover: hover) {
+
 .bz-sp-desk .bz-sp-custom-slot .setting-item button:hover,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
 .bz-sp-mobile .bz-sp-custom-slot .setting-item button:hover,
 #bz-model-picker-popup .setting-item button:hover { background: var(--sp-accent-soft); }
+}
 
 /* custom 插槽内原生 Setting 行（剪藏数据源组、复习排除名单等）对齐面板行范式：
    信息左/控件右一行；插件端 Obsidian 行同样被本规则收敛同皮 */
@@ -1278,9 +1308,11 @@
 }
 #bz-model-picker-popup .bz-model-picker-row {
   color: var(--sp-ink);
-}
+}@media (hover: hover) {
+
 #bz-model-picker-popup .bz-model-picker-row:hover {
   background: var(--sp-accent-soft);
+}
 }
 #bz-model-picker-popup .bz-model-picker-row.is-current {
   background: var(--sp-accent-soft);
