@@ -166,6 +166,30 @@ describe('memo2-func #4（M2-3）：延后算术 moment 单源', () => {
   });
 });
 
+describe('memo2-func #7 / memo2-arch A9（T9）：读盘失败错误面', () => {
+  it('修复前必红形态：loadItems 拒绝 → 面板出错误空态 + 失败通知，不再静默空白；重试可恢复', async () => {
+    const { app } = seed([item({ id: 'a' })]);
+    const spy = vi.spyOn(MemoData, 'loadItems').mockRejectedValueOnce(new Error('磁盘被同步盘锁住'));
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      const empty = document.querySelector('.bz-empty') as HTMLElement | null;
+      expect(empty?.querySelector('.bz-empty-title')?.textContent).toBe('备忘录读取失败');
+    });
+    await vi.waitFor(() => {
+      const msgs = [...document.querySelectorAll('.bz-notice-msg')].map((el) => el.textContent);
+      expect(msgs.some((m) => m?.includes('读取备忘录失败'))).toBe(true);
+    });
+    spy.mockRestore();
+    // 重试恢复：点错误空态的「重试」→ 数据到达、正常列表渲染
+    const retry = ([...document.querySelectorAll('.bz-empty .bz-btn')] as HTMLElement[]).find((b) => b.textContent?.includes('重试'));
+    expect(retry).toBeTruthy();
+    retry!.click();
+    await vi.waitFor(() => {
+      expect(document.querySelector('.bz-memo-card[data-memo-id="a"]')).toBeTruthy();
+    });
+  });
+});
+
 describe('memo2-func #5 / memo2-arch A3（T6）：openForNote 已开分支重置场景', () => {
   function makeCaptureApp(vault: MockVault) {
     const app = mockAppWithVault(vault) as any;

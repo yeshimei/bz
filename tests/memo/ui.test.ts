@@ -80,10 +80,12 @@ describe('memo 面板', () => {
     });
     const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
     expect(overlay.querySelector('.bz-panel-title')?.textContent).toBe('备忘录');
-    // 桌面左栏场景：全部/今日/重要 + 6 默认场景；移动横滑条同 9
+    // 桌面左栏场景：全部/今日/重要 + 6 默认场景
     const navItems = overlay.querySelectorAll('[data-memo-nav] [data-memo-scene]');
     expect(navItems.length).toBe(9);
-    expect(overlay.querySelectorAll('[data-memo-mob-scenes] [data-memo-scene]').length).toBe(9);
+    // 桌面横滑条门控（memo2-efficiency 旧#9）：桌面 display:none 却照建 DOM + 逐 chip 监听
+    // 属空耗——修复后桌面不渲染移动场景条（isMobileEnv 门控）
+    expect(overlay.querySelectorAll('[data-memo-mob-scenes] [data-memo-scene]').length).toBe(0);
     // 列表卡片（3 未完成；已完成折叠不展开）
     await vi.waitFor(() => {
       expect(overlay.querySelectorAll('.bz-memo-card').length).toBe(3);
@@ -702,10 +704,17 @@ describe('memo 增强包（场景工作台已拍板项）', () => {
     expect(lead('学习').querySelector('[data-icon]')).toBeNull();
     // 计数走素数档（无 --pill 药丸底，收藏式保留给 favorites）
     expect(lead('学习').querySelector('.bz-rail-count')!.classList.contains('bz-rail-count--pill')).toBe(false);
-    // 移动横滑条同口径：伪场景图标 + 用户场景色点
+    // 移动横滑条同口径（门控后需真移动端面板）：伪场景图标 + 用户场景色点
+    MockPlatform.isMobile = true;
+    closeMemoPanel();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-mob-scenes] [data-memo-scene="学习"]')).toBeTruthy();
+    });
     const mob = (scene: string) => document.querySelector(`[data-memo-mob-scenes] [data-memo-scene="${scene}"]`) as HTMLElement;
     expect(mob('全部').querySelector('[data-icon="layers"]')).toBeTruthy();
     expect(mob('学习').querySelector('.bz-mobstrip-dot')).toBeTruthy();
+    MockPlatform.isMobile = false;
   });
 
   it('场景行头三槽（issue 200 拍板）：图标/emoji/彩圆统一槽宽；emoji 场景名剥首 emoji 显示', async () => {

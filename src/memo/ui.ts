@@ -33,7 +33,7 @@
  */
 import type { App, EventRef } from 'obsidian';
 import moment from 'moment';
-import { notice, notify, notifyUndo, notifySaveError } from '../core/notice';
+import { notice, notify, notifyUndo, notifySaveError, notifyActionError } from '../core/notice';
 import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
@@ -75,9 +75,11 @@ const esc = escapeHtml;
 
 
 
-/** 某时间串（YYYY-MM-DD HH:mm:ss）是否为今天（「今日」视图只看今天完成的口径） */
-function isTodayStr(s: string): boolean {
-  return !!s && s.slice(0, 10) === moment().format('YYYY-MM-DD');
+/** 某时间串（YYYY-MM-DD HH:mm:ss）是否为今天（「今日」视图只看今天完成的口径）。
+ *  memo2-consistency 旧-5：today 串收编 core localDayKey 单源（此前手写 moment().format
+ *  两套口径并存）；today 可注入（memo2-efficiency 新-4：大列表逐条取当前时刻是纯空耗） */
+function isTodayStr(s: string, today: string = localDayKey()): boolean {
+  return !!s && s.slice(0, 10) === today;
 }
 
 /** composer/编辑器场景缺省兜底：设置 memoDefaultScene（合法时）否则第一个场景 */
@@ -146,9 +148,23 @@ function notifyClipPrefill(): void {
 
 // ---------- 数据操作 ----------
 
-/** 读取数据（从 memo.json），清空状态计数后给 items */
+/** 读盘通道级失败标记（memo2-func #7 / memo2-arch A9 / memo2-efficiency 旧#14）：
+ *  vault.read 抛错（同步盘锁/权限/磁盘满）此前沿 void 链一路 reject——面板壳在而列表
+ *  永不渲染、无解释且 unhandled rejection。置位后面板渲染错误空态（重试钮），读成功复位。 */
+let loadFailed = false;
+
+/** 读取数据（从 memo.json），清空状态计数后给 items。
+ *  错误面：读盘失败 notifyActionError + 「重试」出口，不再沿 void 链 unhandled；
+ *  失败保持 items 原值（面板已有数据不闪空）。 */
 async function loadData(): Promise<void> {
-  M.items = await MemoData.loadItems();
+  try {
+    M.items = await MemoData.loadItems();
+    loadFailed = false;
+  } catch (e) {
+    loadFailed = true;
+    notifyActionError(e, '读取备忘录', { onRetry: () => void refresh() });
+    console.error(e);
+  }
 }
 
 /** 写盘后刷新 UI */
@@ -218,6 +234,7 @@ function dueRank(it: MemoItem): number {
 
 function getVisibleItems(): MemoItem[] {
   const kw = M.search.trim().toLowerCase();
+  const today = localDayKey(); // memo2-efficiency 新-4：今日串一次算好，不逐条目取当前时刻
   let list = M.items.filter((it) => {
     // 场景筛选
     if (M.activeScene === '今日') {
@@ -226,7 +243,7 @@ function getVisibleItems(): MemoItem[] {
       if (!it.completed) {
         const st = getDueStatus(it.due);
         if (st !== 'overdue' && st !== 'today') return false;
-      } else if (!isTodayStr(it.completed)) {
+      } else if (!isTodayStr(it.completed, today)) {
         return false;
       }
     } else if (M.activeScene === '重要') {
@@ -266,18 +283,26 @@ function getVisibleItems(): MemoItem[] {
   return list;
 }
 
-/** 场景计数（当前场景条目总数，不随搜索过滤，与其他域 nav 计数=场景总数的范式一致；伪场景与列表口径一致——今日 = 今日/逾期未完成 + 今天完成） */
-function sceneCount(scene: string): number {
-  if (scene === '今日') {
-    return M.items.filter((it) => {
-      if (it.completed) return isTodayStr(it.completed);
+/** 场景计数（memo2-efficiency 新-4：一遍 filter 顺便聚合全部场景计数——此前 renderNav
+ *  逐场景各跑一遍全量 filter，场景数×O(n)；不随搜索过滤，与其他域 nav 计数=场景总数的
+ *  范式一致；伪场景与列表口径一致——今日 = 今日/逾期未完成 + 今天完成） */
+function sceneCounts(): Map<string, number> {
+  const today = localDayKey();
+  const counts = new Map<string, number>([
+    ['全部', M.items.length],
+    ['今日', 0],
+    ['重要', 0],
+  ]);
+  for (const it of M.items) {
+    if (it.scene) counts.set(it.scene, (counts.get(it.scene) || 0) + 1);
+    if (it.priority === 'important') counts.set('重要', (counts.get('重要') || 0) + 1);
+    const todayHit = it.completed ? isTodayStr(it.completed, today) : (() => {
       const st = getDueStatus(it.due);
       return st === 'overdue' || st === 'today';
-    }).length;
+    })();
+    if (todayHit) counts.set('今日', (counts.get('今日') || 0) + 1);
   }
-  if (scene === '重要') return M.items.filter((it) => it.priority === 'important').length;
-  if (scene === '全部') return M.items.length;
-  return M.items.filter((it) => it.scene === scene).length;
+  return counts;
 }
 
 // ---------- 主面板（打开/关闭/ESC） ----------
@@ -542,14 +567,17 @@ let sortSelectDetach: (() => void) | null = null;
 
 function renderAll(): void {
   if (!M.overlay) return;
+  // memo2-efficiency 新-4：getVisibleItems（全量 filter+sort）每轮渲染只算一次，
+  // 主头行计数与列表共用（此前 renderMainHead/renderContent 各算一遍 O(n log n)×2）
+  const items = getVisibleItems();
   renderNav();
   renderMobScenes();
-  renderMainHead();
-  renderContent();
+  renderMainHead(items);
+  renderContent(items);
 }
 
 /** 主头行（原型 p1-main-head）：当前场景标题 + “· N 项 · M 未完成” + 右侧新建按钮 */
-function renderMainHead(): void {
+function renderMainHead(items: MemoItem[]): void {
   const overlay = M.overlay!;
   const titleEl = overlay.querySelector('[data-memo-main-title]') as HTMLElement | null;
   const countEl = overlay.querySelector('[data-memo-main-count]') as HTMLElement | null;
@@ -557,7 +585,6 @@ function renderMainHead(): void {
   titleEl.textContent = sceneLabel(M.activeScene);
   // 计数 = 当前场景 + 当前搜索下的条目总数与未完成数（对齐原型 updateCount）；
   // 数字包 .bz-memo-cnt-num 供皮肤染色（issue 210 纸感/编辑部计数数字着色）
-  const items = getVisibleItems();
   const undone = items.filter((i) => !i.completed).length;
   countEl.innerHTML = mainCountHtml(items.length, undone);
 }
@@ -583,8 +610,9 @@ function attachSceneActions(el: HTMLElement, scene: string): void {
 function renderNav(): void {
   const nav = M.overlay!.querySelector('[data-memo-nav]') as HTMLElement;
   if (!nav) return;
+  const counts = sceneCounts();
   nav.innerHTML = sceneOptions()
-    .map((o) => navBtnHtml(o, M.activeScene === o.scene, sceneCount(o.scene)))
+    .map((o) => navBtnHtml(o, M.activeScene === o.scene, counts.get(o.scene) || 0))
     .join('');
   mountIcons(nav);
   nav.querySelectorAll<HTMLElement>('[data-memo-scene]').forEach((el) => {
@@ -593,13 +621,20 @@ function renderNav(): void {
 }
 
 function renderMobScenes(): void {
+  // memo2-efficiency 旧#9：桌面整条 display:none（core components.css）却照建 DOM、
+  // 挂逐 chip 监听——空耗，isMobileEnv() 门控掉
+  if (!isMobileEnv()) return;
   const wrap = M.overlay!.querySelector('[data-memo-mob-scenes]') as HTMLElement;
   if (!wrap) return;
   // 「添加场景」固定挂在平铺场景条的**最后面**（issue 268 用户拍板：与收藏本磁贴行同款，
   // 动作磁贴跟在全部场景之后）；左栏桌面那条虚线钮位置不变
+  // memo2-ui M2-4：横滚位保持——重建前存 scrollLeft，重建后恢复（否则任意列表交互
+  // 都让滑到中后段的 chips 弹回起点）
+  const keepLeft = wrap.scrollLeft;
   wrap.innerHTML = sceneOptions()
     .map((o) => mobChipHtml(o, M.activeScene === o.scene))
     .join('') + mobAddSceneChipHtml();
+  wrap.scrollLeft = keepLeft;
   mountIcons(wrap);
   wrap.querySelectorAll<HTMLElement>('[data-memo-scene]').forEach((el) => {
     attachSceneActions(el, el.dataset.memoScene as string);
@@ -619,13 +654,26 @@ function metaTags(it: MemoItem): string {
   return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : '');
 }
 
-function renderContent(): void {
+function renderContent(items: MemoItem[]): void {
   const content = M.overlay!.querySelector('[data-memo-content]') as HTMLElement;
   if (!content) return;
-  const items = getVisibleItems();
+  // memo2-ui M2-4：纵滚位保持——重建前存 scrollTop，重建后恢复（长列表中段操作后
+  // 不再跳回顶部；diary「保存 scrollTop 恢复」先例同款）
+  const keepTop = content.scrollTop;
   if (items.length === 0) {
-    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 「新建备忘录」动作按钮）
+    // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 动作按钮）
     content.innerHTML = '';
+    if (loadFailed) {
+      // 读盘通道级失败错误态（memo2-func #7 / memo2-arch A9 / memo2-efficiency 旧#14）：
+      // 面板壳在而数据未达时不再伪装成「还没有备忘录」
+      content.appendChild(uiEmpty({
+        icon: ICON.overdue,
+        title: '备忘录读取失败',
+        desc: '数据文件暂时无法读取，可点击重试',
+        actions: uiBtnRow([uiBtn({ label: '重试', icon: ICON.clock, tone: 'primary', onClick: () => void refresh() })], { center: true }),
+      }));
+      return;
+    }
     content.appendChild(uiEmpty({
       icon: ICON.empty,
       title: M.search ? '没有匹配的备忘录' : '这里还没有备忘录',
@@ -669,6 +717,7 @@ function renderContent(): void {
   }
   content.innerHTML = sections.join('');
   mountIcons(content);
+  content.scrollTop = keepTop; // M2-4：滚位还原
 
   // 链接点击：打开关联内容（内部笔记 / 外部 URL），不走浏览器默认
   content.querySelectorAll('[data-memo-openitem]').forEach((el) => {
