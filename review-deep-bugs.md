@@ -800,7 +800,15 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## attach（附件）域 · 5/5 方向到账，修复批 `bz-fix-at-core`（单批）定稿派发
+## attach（附件）域 · ✅ 闭环（2026-09-20，单批合并 + 主线程文档收口，部署 04571149）
+
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-at-core`（238aa1d7→d52f80b5，15 项全落）**：**ARCH-1 cache 优先对齐 encrypt**（getFileCache embeds+links+frontmatterLinks 为主缺失退化正则，stripNonLinkSegments 剥代码块/行内代码/HTML 注释——AF-1 代码块误收集断链 + AF-2 大小写漏搬一并根治）；EFF-1/SUG-1 MoveScan 一次收集三段透传（+read 一次断言）；UI-P2-1 bindFormSubmit 键盘确认；AF-3/UI-P3-2 MoveFailure 分型+notifyActionError+onRetry+全失败专用文案；AF-4/UX-1 非 md 前置拦截统一；UI-P3-1/ARCH-2 预览 DOM 判定防叠开+moveInFlight 防并行；UI-P3-3/AC-2 链接声明 gate（仅 movedOps>0 拼接）；UI-P3-4/EFF-4 撤销 i/N progress；EFF-3/SUG-2 requestClose 脏拦截；EFF-2 全选/全不选+RENDER_LIMIT=300 护栏（未渲染行默认勾选语义不截断）；EFF-5 progress 挂「中止」；AC-1 术语 5 处「资源」→「附件」+引号统一；ARCH-3 tryGetSettings 去假防御；ARCH-4 死导出面收敛；ARCH-5 normalizeDest 单源；ARCH-T1 mock-vault 假层校准（主线程追认越界：不在允许清单但系 ARCH-T1 必然落点，全量零外溢）；AT1 文件夹入冲突集（消除环境口径分裂）。测试 41→77。
+- **合并与门禁**：主仓合并零冲突；tsc 0 + attach 112 绿；全量 6674 绿。
+- **主线程文档收口**：CONTEXT.md:295 词条终态改写（预览确认弹窗能力全录，原「无预览确认直接执行」作废）+ ADR-0014 决策 4 终态注记（决策 3 warning 已并 toast/预览确认取代/磁贴播种由 DOMAIN_MENU 承接）。
+- **部署**：04571149；worktree+分支清理。
+- **残款登记**：拍板项 AC-4 动词双名/UX-3 跳过预览（AT 系）；eff UX-1 前置预告（增强池）。
 
 > 明细：`.scratch/review-deep/attach-{func,ui,efficiency,consistency,arch}.md` 五份。方向 1（func）：P2×1 + P3×4 + UX×1；方向 2（UI）：P2×1 + P3×4 + UX×2；方向 3（效率）：P2×1 + P3×4 + UX×3；方向 4（一致）：P3×3 + UX×1；方向 5（架构）：P2×1 + P3×5 + 建议×2 + 同根补维×8。**架构枢纽归因 ARCH-1（P2）**：「收集笔记引用附件」语义双机制分叉（attach 纯正则 vs encrypt「metadataCache 为主+正则兜底」）——AF-1 代码块误收集/AF-2 大小写漏搬的结构性根因；修复批取 **cache 优先对齐 encrypt** 一案（metadataCache 天然不含代码块内引用且 vault 解析自带大小写归一——AF-1/AF-2 一并根治，正则兜底保留修大小写）。SUG-1 收敛位（EFF-1 三次计算：ui 编排层扫描结果透传，纯函数边界不动）；SUG-2 requestClose 拦截（belongings 先例）优于新增状态。**旧账复核纠偏**：F10 直接回归用例已在位（review-fix-clip.test.ts:112-133，func 报告「缺直接用例」失效）；AT1 补「文件夹入冲突集应定为常态口径」；ADR-0014 第 26 行「无预览确认」是 AF-5 的 ADR 侧同根文档债；attach 不在 BEHAVIOR_DOMAINS 属合规非偏离。门禁基线：tsc 0；tests/attach 41 例全绿。
 
