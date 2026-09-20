@@ -343,7 +343,8 @@ describe('processFile', () => {
     await new Promise((r) => setTimeout(r, 0));
     vault.files.set(path, `---\ntitle: "已有标题"\nnote: "用户笔记"\n---\n\n${LONG_BODY}\n\n用户新增段落`);
 
-    release('{"summary":"新摘要"}');
+    // AI 响应给全请求字段（missing=title 已有 → summary+tags）：聚焦 P1-21 外部追加不被覆盖
+    release('{"summary":"新摘要","tags":["t"]}');
     await running;
 
     const out = vault.files.get(path)!;
@@ -465,13 +466,16 @@ describe('processFile force 与「查看」/quiet（enh-autosum 包）', () => {
     expect(btn.textContent).toBe('查看');
   });
 
-  it('quiet（批量队列驱动）：不发单文件 progress 通知，完成通知照常', async () => {
+  it('quiet（批量队列驱动）：单文件通知全静音（EFF-1/N-UI4：进度与完成回执由队列聚合/收场汇总承载）', async () => {
     vault.files.set('归档/网页剪藏/quiet.md', `---\ntitle: "T"\n---\n\n${LONG_BODY}`);
     const ai = makeAI('{"summary":"安静摘要","tags":["a"]}');
-    await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/quiet.md'), { quiet: true });
+    const outcome = await processFile(makeApp(vault), ai, vault.file('归档/网页剪藏/quiet.md'), { quiet: true });
+    expect(outcome).toBe('ok'); // A5 结果契约
     const msgs = getNoticeMessages();
     expect(msgs.some((m) => m.includes('正在为《'))).toBe(false); // 无逐篇 progress
-    expect(msgs.some((m) => m === '已完成')).toBe(true); // 完成通知照常（固定回执文案）
+    expect(msgs.some((m) => m === '已完成')).toBe(false); // 逐篇「已完成」退役（批次收场单条汇总）
+    // 写回照常
+    expect(vault.files.get('归档/网页剪藏/quiet.md')).toContain('summary: "安静摘要"');
   });
 });
 

@@ -12,10 +12,10 @@ describe('parseFrontmatter', () => {
     expect(r.body).toBe('只有正文\n没有头部');
   });
 
-  it('基础键值 + 去引号', () => {
-    const r = parseFrontmatter('---\ntitle: "你好"\nauthor: 张三\n---\n正文');
+  it('基础键值 + 去引号（管辖键）', () => {
+    const r = parseFrontmatter('---\ntitle: "你好"\nsummary: 张三\n---\n正文');
     expect(r.fm!.title).toBe('你好');
-    expect(r.fm!.author).toBe('张三');
+    expect(r.fm!.summary).toBe('张三');
     expect(r.body).toBe('正文');
   });
 
@@ -34,12 +34,10 @@ describe('parseFrontmatter', () => {
     expect(r.fm!.tags).toEqual(['a', 'b']);
   });
 
-  it('中文键与连字符键被识别（不再落入未识别行被丢弃）', () => {
-    const r = parseFrontmatter('---\n来源: 少数派\npublished-at: 2024-01-01\n标题: 外来标题\n---\n正文');
-    expect(r.fm!['来源']).toBe('少数派');
-    expect(r.fm!['published-at']).toBe('2024-01-01');
-    expect(r.fm!['标题']).toBe('外来标题');
-    expect(r.extraLines).toHaveLength(0);
+  it('中文键与连字符键原文保留（A1 非管辖键：进 extraLines 不再丢弃，也不被重序列化）', () => {
+    const r = parseFrontmatter('---\n来源: 少数派\npublished-at: 2024-01-01\ntitle: 外来标题\n---\n正文');
+    expect(r.fm!.title).toBe('外来标题');
+    expect(r.extraLines).toEqual(['来源: 少数派', 'published-at: 2024-01-01']);
   });
 
   it('无缩进列表风格（tags:\\n- a）：tags 不再误判缺失', () => {
@@ -47,11 +45,17 @@ describe('parseFrontmatter', () => {
     expect(r.fm!.tags).toEqual(['阅读', 'AI']);
   });
 
-  it('块标量（key: |）：后续缩进行收进值，不散落成未识别行', () => {
-    const r = parseFrontmatter('---\n摘要: |\n  第一行内容。\n  第二行内容。\ntitle: "T"\n---\n正文');
-    expect(r.fm!['摘要']).toBe('第一行内容。\n第二行内容。');
+  it('块标量：管辖键后续缩进行收进值；AS2 顺带核验标准闭合', () => {
+    const r = parseFrontmatter('---\nsummary: |\n  第一行内容。\n  第二行内容。\ntitle: "T"\n---\n正文');
+    expect(r.fm!.summary).toBe('第一行内容。\n第二行内容。');
     expect(r.fm!.title).toBe('T');
     expect(r.extraLines).toHaveLength(0);
+  });
+
+  it('非管辖键块标量原文行保留（A1）', () => {
+    const r = parseFrontmatter('---\ntitle: "T"\n备注: |\n  块内容。\n---\n正文');
+    expect(r.fm!.title).toBe('T');
+    expect(r.extraLines).toEqual(['备注: |', '  块内容。']);
   });
 
   it('未识别行（注释/嵌套子映射）原文保留在 extraLines', () => {
@@ -80,24 +84,25 @@ describe('buildFrontmatter', () => {
     expect(out).toBe('---\ntitle: "T"\n# 剪藏备注\nmeta:\n  inner: v\n---');
   });
 
-  it('混合 frontmatter round-trip：中文键/无缩进列表/块标量/注释全部保留', () => {
-    const src = '---\ntitle: "已有标题"\n来源: 少数派\npublished-at: 2024-01-01\ntags:\n- 阅读\n- AI\n摘要: |\n  首段。\n  次段。\n# 剪藏备注\n---\n\n正文内容';
+  it('混合 frontmatter round-trip：管辖键/无缩进列表/注释全保留，非管辖键原文行不丢（A1）', () => {
+    const src = '---\ntitle: "已有标题"\n来源: 少数派\npublished-at: 2024-01-01\ntags:\n- 阅读\n- AI\n# 剪藏备注\n---\n\n正文内容';
     const parsed = parseFrontmatter(src);
     const out = buildFrontmatter({ ...parsed.fm!, summary: 'AI 摘要' }, parsed.extraLines) + '\n\n' + parsed.body;
-    // 全部原信息保留（键序/格式可归一，值与行不丢）
+    // 管辖键照常序列化
     expect(out).toContain('title: "已有标题"');
-    expect(out).toContain('少数派');
-    expect(out).toContain('2024-01-01');
+    expect(out).toContain('summary: "AI 摘要"');
     expect(out).toContain('  - "阅读"');
     expect(out).toContain('  - "AI"');
-    expect(out).toContain('首段。 次段。'); // 块标量值保留（换行归一为空格，与既有契约一致）
-    expect(out).toContain('# 剪藏备注'); // 注释行原样拼回
-    expect(out).toContain('summary: "AI 摘要"'); // 新字段写入
+    // 非管辖键与注释行原文拼回（值/缩进零改动——A1 保形）
+    expect(out).toContain('来源: 少数派');
+    expect(out).toContain('published-at: 2024-01-01');
+    expect(out).toContain('# 剪藏备注');
     expect(out.endsWith('\n\n正文内容')).toBe(true); // 正文不动
-    // 二次解析不再产生未识别行漂移（幂等）
+    // 二次解析幂等：非管辖键仍在原文行、tags 不漂移
     const reparsed = parseFrontmatter(out);
-    expect(reparsed.fm!['来源']).toBe('少数派');
     expect(reparsed.fm!.tags).toEqual(['阅读', 'AI']);
+    expect(reparsed.extraLines).toContain('来源: 少数派');
+    expect(reparsed.extraLines).toContain('published-at: 2024-01-01');
   });
 });
 

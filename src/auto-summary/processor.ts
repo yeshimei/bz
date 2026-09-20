@@ -1,8 +1,13 @@
 /**
  * 自动摘要 processor（ticket 22）：缺失字段 AI 补全 + 文件处理 + 通知。
  * 源码：自动摘要.js L63-121（逐字移植；ticket 22 改为缺什么补什么）
+ *
+ * 结果契约（A5/N4）：processFile 返回结构化结果（ProcessOutcome）替代 void+全吞——
+ * 队列泵据此驱动失败熔断（EFF-3）与批次成败汇总（EFF-1/N-UI4）；写盘阶段失败
+ * （AI 已成功后）发人话提示 + 重试，与 AI 失败分支同待遇。
  */
 import { parseFrontmatter, buildFrontmatter, extractBodyForAI } from './parser';
+import { AUTO_SUMMARY_KEYS } from './keys';
 import { notify } from '../core/notice';
 import type { NoticeHandle } from '../core/notice';
 import { getAIProvider, type AIService } from '../core/ai';
@@ -13,6 +18,17 @@ let attemptSeq = 0;
 function dedupeKeyFor(file: any): string {
   return `auto-summary:${file.path}#${++attemptSeq}`;
 }
+
+/** processFile 结果契约（A5）：队列泵可感知任务结局——
+ *  ok/partial=有写回产出；skipped-*=正常早退；ai-failed/write-failed/error=失败（熔断计数面） */
+export type ProcessOutcome =
+  | 'ok'
+  | 'partial'
+  | 'ai-failed'
+  | 'skipped-short'
+  | 'skipped-complete'
+  | 'write-failed'
+  | 'error';
 
 /** 失败原因人话化：AI 未配置 → 引导设置（原技术错误详情在 console）；其余通用重试文案 */
 async function humanizeFailReason(): Promise<string> {
@@ -28,7 +44,7 @@ async function humanizeFailReason(): Promise<string> {
 export interface ProcessOptions {
   /** force：跳过缺失检测直接重建——只重建 summary/tags，不动用户自定义标题（手动重跑入口） */
   force?: boolean;
-  /** quiet：批量队列驱动时抑制单文件 progress 通知（进度由队列聚合通知「正在生成摘要 k/N…」承载） */
+  /** quiet：批量队列驱动时抑制单文件通知（进度由队列聚合通知承载；成败由批次收场汇总承载） */
   quiet?: boolean;
 }
 
@@ -40,6 +56,9 @@ const FIELD_DEFS: Record<string, string> = {
     '"summary": "150-250字的详细摘要。包含核心观点、关键事实、重要数据和结论。直接陈述内容，绝对禁止使用\'本文\'、\'本文章\'、\'这篇文章\'、\'文章指出\'、\'作者认为\'等前缀词"',
   tags: '"tags": ["标签1", "标签2", "标签3"]',
 };
+
+/** 字段中文名（N-UI5 差异化回执用） */
+const FIELD_LABELS: Record<string, string> = { title: '标题', summary: '摘要', tags: '标签' };
 
 /** ticket 124（Q8 详设一）：摘要长度档位 → summary 字数要求（输出上限走设置面板，issue 334/ADR-0148） */
 export const SUMMARY_LENGTH_RULES: Record<string, string> = {
@@ -56,6 +75,22 @@ export function buildTagsRule(tagRange: string): string {
   return `tags 规则：
 - ${tagRange || '3-6'} 个中文标签，每个不超过 5 个字
 - 涵盖：主题领域、关键技术/概念、应用场景`;
+}
+
+/**
+ * AI 结果规范化（A2 schema 校验单源）：title/summary 必须非空 string、tags 必须 string[]，
+ * 违规字段按「未生成」处理——旧实现仅 truthy 守卫，`{"title":{"main":…}}` 经 String()
+ * 物化成 `[object Object]` 真实改名事故；tags 已有 isArray 设防，此处三字段守卫合一。
+ */
+function normalizeAIResult(raw: Record<string, any>): Record<string, any> {
+  const out: Record<string, any> = {};
+  if (typeof raw.title === 'string' && raw.title.trim()) out.title = raw.title.trim();
+  if (typeof raw.summary === 'string' && raw.summary.trim()) out.summary = raw.summary.trim();
+  if (Array.isArray(raw.tags)) {
+    const tags = raw.tags.filter((t: any) => typeof t === 'string' && t.trim()).map((t: string) => t.trim());
+    if (tags.length > 0) out.tags = tags;
+  }
+  return out;
 }
 
 /** AI 生成缺失字段（提示词按 missing 裁剪与设置参数；失败静默返回 null） */
@@ -87,8 +122,9 @@ ${bodyText.substring(0, 6000)}`;
       // 推理模型思考耗尽小预算曾致 content 空串必失败，上限唯一权威 = 设置面板后自愈
       modelOptions: { temperature: 0.3 },
     });
+    // A2：解析成功也过规范化层——类型错位字段按未生成处理，不物化 String()
     const jsonMatch = (result || '').match(/\{[\s\S]*\}/);
-    if (jsonMatch) return JSON.parse(jsonMatch[0]);
+    if (jsonMatch) return normalizeAIResult(JSON.parse(jsonMatch[0]));
   } catch (e) {
     console.warn('[自动摘要] AI 处理失败:', e);
   }
@@ -130,24 +166,57 @@ async function renameToTitle(app: any, file: any, title: string): Promise<Rename
   }
 }
 
-/** 处理单个文件：缺什么补什么（title/summary/tags），字段齐全跳过；成功通知。
+/** tags 缺失判定（N3 保守侧）：解析降级为非空字符串的 tags（如单引号流式数组 `['a','b']`，
+ *  本解析器不认但 YAML 合法）不判缺失——宁缺勿覆，AI 不得覆盖用户已有标签 */
+function tagsMissing(fm: Record<string, any> | null): boolean {
+  if (!fm || !fm.tags) return true;
+  if (Array.isArray(fm.tags)) return fm.tags.length === 0;
+  return String(fm.tags).trim() === '';
+}
+
+/** 失败通知 + 重试出口（N5：统一走 core notice action 通道——appendActionBtn 自带
+ *  tabIndex + Enter/Space 键盘可达，手拼 .bz-notice-action DOM 退役） */
+function notifyRetryable(reason: string, retry: () => void): void {
+  notify(reason, {
+    type: 'error',
+    duration: 0,
+    action: { label: '重试', onClick: retry },
+  });
+}
+
+/** 重试 = 回域队列（F9：retrySummaryWithAI 复用 processingPaths 去重，双击不双跑）；
+ *  函数级动态 import 解 processor←→index 环（ADR-0002） */
+function retryViaQueue(app: any, ai: AIService, file: any, force: boolean): void {
+  void import('./index')
+    .then((m) => m.retrySummaryWithAI(app, ai, file, force))
+    .catch(() => { /* 队列入口不可用（卸载中）时放弃重试 */ });
+}
+
+/** 处理单个文件：缺什么补什么（title/summary/tags），字段齐全跳过；返回结构化结果（A5）。
  *  ticket 124（Q8 详设）：摘要长度/标签开关数量/时机由设置驱动。
  *  enh 包 1：force 档跳过缺失检测直接重建，且只重建 summary/tags——title 不进目标
- *  字段（不重命名、不覆盖），用户改过的标题不吞；enh 包 2：quiet 抑制单文件进度通知。 */
-export async function processFile(app: any, ai: AIService, file: any, opts: ProcessOptions = {}): Promise<void> {
+ *  字段（不重命名、不覆盖），用户改过的标题不吞；enh 包 2：quiet 抑制单文件通知。 */
+export async function processFile(app: any, ai: AIService, file: any, opts: ProcessOptions = {}): Promise<ProcessOutcome> {
   const force = opts.force === true;
   let h: NoticeHandle | null = null;
+  // AI 有效产出已到手（此后异常 = 写回阶段失败，N4 分型依据：写盘失败必须人话可见）
+  let delivered = false;
   // 设置参数（ticket 124：摘要长度/标签开关数量由设置驱动；tryGetSettings 未注入时安全返回空对象）
   const s = tryGetSettings() as any;
-  const summaryLength = String(s.autoSummaryLength || 'standard');
-  const tagsEnabled = s.autoSummaryTagsEnabled !== false;
-  const tagCount = String(s.autoSummaryTagCount || '3-6');
+  const summaryLength = String(s[AUTO_SUMMARY_KEYS.length] || 'standard');
+  const tagsEnabled = s[AUTO_SUMMARY_KEYS.tagsEnabled] !== false;
+  const tagCount = String(s[AUTO_SUMMARY_KEYS.tagCount] || '3-6');
   try {
     const content = await app.vault.read(file);
     const { fm, body } = parseFrontmatter(content);
 
     const bodyText = extractBodyForAI(body);
-    if (!bodyText || bodyText.length < 100) return;
+    if (!bodyText || bodyText.length < 100) {
+      // N-UI2：手动（force）路径短正文早退给人话反馈——右键/命令点按后零 toast 只能归因「坏了」；
+      // 自动触发路径维持静默（无诉求）
+      if (force) notify('正文过短（不足 100 字），未生成摘要', { type: 'info' });
+      return 'skipped-short';
+    }
 
     // 缺失字段检测（空串/空数组视为缺失；ticket 124：标签开关关掉时不要求 tags）。
     // force（enh 包 1）：跳过检测直接重建——目标字段固定 summary(+tags)，title 不入列
@@ -158,12 +227,12 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
     } else {
       if (!fm || !fm.title) missing.push('title');
       if (!fm || !fm.summary) missing.push('summary');
-      if (tagsEnabled !== false && (!fm || !Array.isArray(fm.tags) || fm.tags.length === 0)) missing.push('tags');
-      if (missing.length === 0) return; // 字段齐全，无需处理
+      if (tagsEnabled !== false && tagsMissing(fm)) missing.push('tags');
+      if (missing.length === 0) return 'skipped-complete'; // 字段齐全，无需处理
     }
 
     // 开始调用 AI：动态通知（进行中 → 原地更新为结果；去重键按文件区分，连续剪藏各弹各）；
-    // quiet（批量队列驱动）不发单文件进度——由队列聚合通知承载（enh 包 2）
+    // quiet（批量队列驱动）不发单文件通知——进度与成败由队列聚合/汇总承载（enh 包 2）
     const startName = fm && fm.title ? fm.title : file.basename;
     const key = dedupeKeyFor(file);
     if (!opts.quiet) {
@@ -171,31 +240,18 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
     }
     const aiResult = await aiProcess(ai, bodyText, missing, { summaryLength, tagsEnabled, tagCount });
     if (!aiResult) {
-      // 失败：人话原因 + action「重试」（点按重跑当前文件；原技术错误详情在 console）。
-      // 失败通知常驻（duration<=0 不自动消失）：progress 句柄 setType(error) 会按类型默认 5s 重排计时，
-      // 「重试」窗口太短——改为隐藏 progress、新发常驻 error 承载重试按钮。
+      // 失败：人话原因 + action「重试」。失败通知常驻（duration<=0 不自动消失）保「重试」窗口；
+      // quiet 批量路径静音（N-UI4：逐篇常驻 error 堆屏退役，批次收场统一汇总）
       const reason = await humanizeFailReason();
       if (h) h.hide();
-      const errHandle = notify(reason, { type: 'error', duration: 0 });
-      const retryBtn = document.createElement('span');
-      retryBtn.className = 'bz-notice-action';
-      retryBtn.setAttribute('role', 'button');
-      retryBtn.textContent = '重试';
-      retryBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        retryBtn.remove();
-        errHandle.hide();
-        // F9：重试改走域队列（retrySummaryWithAI 复用 processingPaths 去重）——直调 processFile
-        // 绕过去重，双击并发跑两次 AI 双倍花费；函数级动态 import 解 processor←→index 环（ADR-0002）
-        void import('./index')
-          .then((m) => m.retrySummaryWithAI(app, ai, file, force))
-          .catch(() => { /* 队列入口不可用（卸载中）时放弃重试 */ });
-      });
-      errHandle.el.appendChild(retryBtn);
-      return;
+      if (opts.quiet) console.warn('[自动摘要] AI 失败（批量批次，由收场汇总）:', reason);
+      else notifyRetryable(reason, () => retryViaQueue(app, ai, file, force));
+      return 'ai-failed';
     }
+    delivered = true;
 
-    // AI 标题 → 重命名笔记文件（fileManager.renameFile 联动更新全库双链；失败/无需改回退原 file）
+    // AI 标题 → 重命名笔记文件（fileManager.renameFile 联动更新全库双链；失败/无需改回退原 file）。
+    // A2：aiResult.title 已规范化为非空 string——`[object Object]` 改名事故不再可达
     let targetFile = file;
     let renameFailed = false; // warning 推迟到 modify 成功后发（B5：文案承诺「标题已写入」需以真实落盘为前提）
     if (missing.includes('title') && aiResult.title) {
@@ -209,7 +265,8 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
     }
 
     // 写回前重读目标文件最新内容（AI 处理期间可能被外部修改）：正文一律取磁盘最新，
-    // 仅将 AI 生成的目标字段合并进最新 frontmatter，防盲写覆盖并发追加（P1-21；rename 后对新路径生效）
+    // 仅将 AI 生成的目标字段合并进最新 frontmatter，防盲写覆盖并发追加（P1-21；rename 后对新路径生效）。
+    // A1：latestParsed.fm 只含管辖键，非管辖键原文行在 extraLines 原样拼回——类型零漂移
     const latest = await app.vault.read(targetFile);
     const latestParsed = parseFrontmatter(latest);
     const mergedFm: Record<string, any> = { ...(latestParsed.fm || {}) };
@@ -219,7 +276,7 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
       mergedFm.tags = aiResult.tags;
     }
 
-    // 重建时原样拼回未识别原文行（注释/嵌套等），防外来剪藏 frontmatter 被重建丢行（审计修复）
+    // 重建时原样拼回未识别原文行 + 非管辖键原文行（审计修复 + A1），防外来剪藏 frontmatter 重建丢行/类型漂移
     const newContent = buildFrontmatter(mergedFm, latestParsed.extraLines) + '\n\n' + latestParsed.body;
     await app.vault.modify(targetFile, newContent);
     if (renameFailed) {
@@ -227,25 +284,51 @@ export async function processFile(app: any, ai: AIService, file: any, opts: Proc
       notify('自动改名失败，标题已写入笔记，请手动重命名', { type: 'warning' });
     }
 
+    // N-UI5 回执诚信 gate：比对「请求了但未拿到」的字段集——非空时不得谎报「已完成」
+    // （缺口不写回 → 下轮打开仍判缺失重触发，回执必须让用户知道是半成品）
+    const notDelivered = missing.filter((f) =>
+      f === 'tags' ? !(Array.isArray(aiResult.tags) && aiResult.tags.length > 0) : !aiResult[f]
+    );
+    if (notDelivered.length > 0) {
+      const got = missing.filter((f) => !notDelivered.includes(f));
+      const gotTxt = got.map((f) => FIELD_LABELS[f]).join('、');
+      const missTxt = notDelivered.map((f) => FIELD_LABELS[f]).join('、');
+      const msg = gotTxt ? `已写入${gotTxt}，${missTxt}未能生成` : `AI 未生成${missTxt}`;
+      if (opts.quiet) console.warn(`[自动摘要] 部分补全（批量批次，由收场汇总）: ${msg}`);
+      else notifyRetryable(`${msg}，可重试`, () => retryViaQueue(app, ai, targetFile, force));
+      return 'partial';
+    }
+
     // 成功：同去重键原地合并 → 切换 success 图标按默认时长驻留（2026-09-19 拍板：
-    // 正文固定「已完成」不再回显 title/summary/tags，toast 只做完成回执；时长回归默认档，
-    // 不再 8s 显式驻留）。挂「查看」action（enh 包 3）：打开剪藏本面板并选中该条——
-    // clipbook 与本域互为依赖面（clipbook/ui ← 本域入口），环引用按项目规约走函数级
-    // 延迟解析（动态 import）
-    notify('已完成', {
-      type: 'success',
-      dedupeKey: key,
-      action: {
-        label: '查看',
-        onClick: () => {
-          import('../clipbook/ui')
-            .then((m) => m.revealClipArticle(targetFile.path))
-            .catch(() => { /* 剪藏本面板不可用（如卸载中）时忽略 */ });
+    // 正文固定「已完成」不再回显 title/summary/tags，toast 只做完成回执）。
+    // quiet 批量路径静音（EFF-1：N 篇一模一样的「已完成」逐篇弹退役，批次收场单条汇总）。
+    // 挂「查看」action（enh 包 3）：打开剪藏本面板并选中该条——clipbook 与本域互为依赖面，
+    // 环引用按项目规约走函数级延迟解析（动态 import）
+    if (!opts.quiet) {
+      notify('已完成', {
+        type: 'success',
+        dedupeKey: key,
+        action: {
+          label: '查看',
+          onClick: () => {
+            import('../clipbook/ui')
+              .then((m) => m.revealClipArticle(targetFile.path))
+              .catch(() => { /* 剪藏本面板不可用（如卸载中）时忽略 */ });
+          },
         },
-      },
-    });
+      });
+    }
+    return 'ok';
   } catch (e) {
     if (h) h.hide();
     console.error(`[自动摘要] 处理失败: ${file.basename}`, e);
+    // N4 分型：写回阶段（AI 已成功、可能已改名）失败必须人话可见——与 AI 失败分支同待遇
+    // （常驻 error + 重试），旧实现全吞让 AI 花费白费且半失败态无人知晓；
+    // 读盘等早段意外（1.5s 窗内文件被删等）维持 console 静默
+    if (delivered) {
+      notifyRetryable('摘要写入失败，请重试', () => retryViaQueue(app, ai, file, force));
+      return 'write-failed';
+    }
+    return 'error';
   }
 }
