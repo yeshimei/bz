@@ -177,8 +177,10 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-secondbrain-weekly', name: '本周知识动态', icon: 'calendar-days', callback: () => openSecondBrainWeekly(getApp()) },
   // 番茄钟（ticket 26-32 新域）
   { id: 'bz-pomodoro-open', name: '番茄钟', icon: DOMAIN_ICONS.pomodoro, callback: () => openPomodoro(getApp()) },
-  // 开始/停止专注（2026-09-10：首页入口菜单联动，一把切换，等价面板「开始 / 重置」两颗钮）
-  { id: 'bz-pomodoro-focus-toggle', name: '开始/停止专注', icon: 'play', callback: () => void toggleFocus(getApp()) },
+  // 开始/重置专注（2026-09-10 首页入口菜单联动，一把切换；呈报#63-PM2 命令侧文案改「重置」：
+  // 本命令的「停」是重置回空闲、会话作废，与首页菜单「停止专注」= 暂停（可继续）是两件事，
+  // 一词两义就此拆开。等价面板「开始 / 重置」两颗钮）
+  { id: 'bz-pomodoro-focus-toggle', name: '开始/重置专注', icon: 'play', callback: () => void toggleFocus(getApp()) },
   // 跳过休息 / 暂停·继续（2026-09-11 首页入口菜单）：休息中直接进下一轮专注；有无计时决定暂停还是继续
   { id: 'bz-pomodoro-skip', name: '跳过休息', icon: 'skip-forward', callback: () => skipBreak(getApp()) },
   { id: 'bz-pomodoro-pause', name: '暂停/继续专注', icon: 'pause', callback: () => togglePause(getApp()) },

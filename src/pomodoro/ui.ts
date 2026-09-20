@@ -57,8 +57,14 @@ let history: HistoryEntry[] = [];
 /** 周归档行（issue 357）：离开 7 天保留窗的明细按周聚合落账，随 save/initData 与 history 同步落盘 */
 let archived: ArchivedWeek[] = [];
 let loaded = false;
-/** 统计档位（issue 357）：近 7 天明细 / 近 6 月趋势（归档行 + 明细合成），默认近 7 天 */
+/** 统计档位（issue 357）：近 7 天明细 / 近 6 月趋势（归档行 + 明细合成），默认近 7 天；
+ * 呈报#49-PM3：档位偏好落插件设置键 pomodoroStatMode（initData 装载、setStatMode 回写），
+ * 重启后仍记住上次档位（unloadPomodoro 只回内存默认，重开按设置键装回） */
 let statMode: 'week' | 'month' = 'week';
+/** 读档位偏好（设置键非法/缺省回 'week'） */
+function statModePref(): 'week' | 'month' {
+  return (tryGetSettings() as any)?.pomodoroStatMode === 'month' ? 'month' : 'week';
+}
 let maskEl: HTMLElement | null = null;
 let escHandle: { unregister: () => void } | null = null;
 let timerId: number | null = null;
@@ -345,11 +351,14 @@ function syncStatTabs(weekOn: boolean): void {
   tabMonth?.setAttribute('aria-pressed', String(!weekOn));
 }
 
-/** 统计档位切换（issue 357）：换档即强制重建柱区（lastStatsKey 清空防同键早退） */
+/** 统计档位切换（issue 357）：换档即强制重建柱区（lastStatsKey 清空防同键早退）；
+ * 呈报#49-PM3：偏好回写插件设置键 pomodoroStatMode——跨重启记住上次档位 */
 function setStatMode(mode: 'week' | 'month'): void {
   if (statMode === mode) return;
   statMode = mode;
   lastStatsKey = '';
+  (getSettings() as any).pomodoroStatMode = mode;
+  void saveSettings();
   render();
 }
 
@@ -594,6 +603,7 @@ async function save(): Promise<void> {
 /** 首次打开：load + 主倒计时超时恢复（静默；ticket 62 不补算——超时即回空闲） */
 async function initData(): Promise<void> {
   const data = await dataManager!.load();
+  statMode = statModePref(); // 呈报#49-PM3：装载档位偏好（重启后仍进上次的统计档）
   const r = recover(data.state, data.history, Date.now(), durations(), options());
   state = r.state;
   // F13：装载即裁剪；issue 357 被裁明细按周归档进内存（旧文件无 archived 段照常工作，首周起算）
@@ -958,7 +968,9 @@ export function isFocusing(): boolean {
 }
 
 /**
- * 开始 / 停止专注切换（首页入口菜单命令用，2026-09-10）。
+ * 开始 / 重置专注切换（命令 bz-pomodoro-focus-toggle，首页入口菜单命令用，2026-09-10；
+ * 呈报#63-PM2：命令面板文案改「开始/重置专注」——本命令的「停」是重置回空闲（会话作废），
+ * 与面板「暂停」钮（可继续）用词分开，不再共占「停止」一词）。
  * 语义 = 面板「开始」与「重置」两颗钮的合并：
  *  - 专注中（计时或暂停）→ 停止（reset 回 idle，不写 history）；
  *  - 休息阶段（计时或暂停）→ 先跳过休息，再开专注；
@@ -1052,7 +1064,7 @@ export function unloadPomodoro(): void {
   state = createInitialState();
   history = [];
   archived = []; // issue 357：归档行随历史一并重置
-  statMode = 'week'; // 统计档位回默认近 7 天
+  statMode = 'week'; // 统计档位回内存默认（偏好已落设置键，重开按 initData 装回——呈报#49-PM3）
   lastStatsKey = '';
   dataManager = null;
   appRef = null;
