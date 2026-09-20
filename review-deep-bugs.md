@@ -632,9 +632,13 @@ A10 applyReviewStyles 105 行 UI 职责搬离 app.ts；A15 styles 无前缀族�
 
 ---
 
-## checkup（数据体检）域 · 5/5 方向到账，修复批 `bz-fix-ck-core`（单批）定稿派发
+## checkup（数据体检）域 · ✅ 闭环（2026-09-20，单批合并 + 部署 52ecc83c）
 
-### 修复批定稿（单批 `bz-fix-ck-core`）摘要见下，段头即定稿记录
+### ✅ 闭环记录（2026-09-20）
+
+- **单批 `bz-fix-ck-core`（2e75926f→5b43ae46，P2×5 全落 + P3 群 20 项）**：白名单 4 处对齐（clipbook 7 段/news 10 键/belongings 3 键 + home v3 复核保持）；**G1 契约锁落地**（contract.test.ts 15 例：段级逐域键集恒等 + 条目级逐键 + 扫描清单完备性；前置 export 三处零行为改动：news emptyData/belongingsSaveShape/emptyQuiz）；**ARCH-1 自产自报收口**（修复链统一 emptySidecar + readJsonIfPresent 缺失短路——零命中修复不再凭空落盘 stub）；**P2-5 双链核对兑现**（divergedKeysOf 逐键 Object.is 出红条 + 注释如实化）；eff P2-1 进度插值 + uiProgress 收编 + CHECKS 注册表收敛；func 9（读失败 unreadable 态/favorites 非数组守卫/lock-stats+双 sidecar 补清单/gameshelf 孤儿段/时态纠偏/**clipDirOf 家族四处收编**——修「非字符串 url 误报+误清」数据风险/undo 守卫/summary 并 info）；ui 4（undo 后报告收敛/fixOrphan 逐组容错/aria-expanded+热区/ESC 重开重放注册——含 settings-panel 侧同刀 `5b43ae46`）；eff 7（撤销通知聚合单条/忙碌态/重试接满/detail 惰性填充/后台完成通知/mtime 指纹/clipbook 三组合批一次读写）；cons/ARCH-3/S-2 全落。测试 43→80。
+- **合并与门禁**：主仓合并零冲突（产物重出）；tsc 0 + checkup/clipbook/freshness 547 绿；全量 6594 绿；部署 **52ecc83c**；worktree+分支清理。
+- **残款登记**：CK 系拍板项（可选段豁免、单条确认二选一）；ARCH-2 storagePath 双轨（files.ts 头注已登记，归属 core/favorites 线）；CONTEXT.md 数据体检词条 + memo 词条（主线程收口）。
 
 - **ARCH-1 写侧投影**：修复链 defaultValue 手抄三份与 emptySidecar() 脱节，「零命中修复」可凭空重建残形 stub 且被自家漂移检查报约定外段——自产自报闭环。
 
