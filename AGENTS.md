@@ -19,6 +19,7 @@
 4. 样式写 `src/<域>/styles.css`，构建聚合至根 `styles.css`；**滚动条不自造**——bz 界面级单源隐藏（core 通杀，ADR-0122），域内禁 `scrollbar-width: thin/auto` 与自绘 thumb。
 5. 域 UI 的唯一真理源是与原型共用的实现源码——样式 / 渲染 / 行为八域全单源（详见 `docs/prototype-first.md`）。
 6. `MarkdownRenderer.render` 是**追加**语义：渲染前容器必须为空（新建空容器或先清空），纯文本只能是渲染失败后的兜底；测试 mock 与原型 fake 层必须复刻该语义（ADR-0122）。
+7. **未定稿的探索稿一律写 `.scratch/<名>/`**（gitignored，不入 git）：方案对比 / 一次性实验页 / 动效试做 / 探针脚本都不许落进 `src/<域>/`（随构建进插件）与 `prototypes/<域>/`（定稿评审壳）——方案拍板后才按单源口径上岸源与原型（详见 `docs/prototype-first.md`）。
 
 ## 领域清单（数据均在 CONFIG/STORAGE/）
 | 域 | 数据 |
