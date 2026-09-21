@@ -38,7 +38,7 @@ import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPrevi
 import { normalizeListValue, type DoubanQuery } from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
 import {
-  ICON, statusText, itemByKey, doubanSearchUrl,
+  ICON, statusText, itemByKey, doubanSearchUrl, itemKey,
   detailModalHtml, seriesDetailModalHtml, formModalHtml, formBackHtml,
   formTagChipHtml, formStChipHtml, type FormPreviewData,
   aiPageHtml, sheetHeadHtml, seriesSheetHeadHtml, cardHtml, facePiecesHtml, type AiPageInput,
@@ -263,7 +263,7 @@ function ovHost(sec: HTMLElement): HTMLElement {
   return host;
 }
 
-interface OvlHandle { el: HTMLDivElement; close: () => void }
+interface OvlHandle { el: HTMLDivElement; close: (o?: { skipReturn?: boolean }) => void }
 
 /** 活跃弹窗层 close 句柄集（深审批A P3-10 双保险之一）：关面板时统一结算。
  *  ESC 层 id 固定 'bz-cinema-ovl' 交 escManager 同 id 清扫自愈（原递增 id 会随
@@ -271,15 +271,23 @@ interface OvlHandle { el: HTMLDivElement; close: () => void }
  *  补一刀 unregister，双路径都能把层表清干净。 */
 const liveOvlCloses = new Set<() => void>();
 
-/** 面板内弹窗层（.cn-ovl 挂共享宿主；ESC 走 escManager 层级，后注册先关） */
-function ovl(sec: HTMLElement, html: string, opts: { sticky?: boolean } = {}): OvlHandle {
+/** 面板内弹窗层（.cn-ovl 挂共享宿主；ESC 走 escManager 层级，后注册先关）。
+ *  opts.onWillClose：关闭接管协议（issue 396 共享元素过渡用）——返回 true 表示动效接管本次
+ *  关闭，真正的移除由动效结束自行调用 finish()；返回 false/缺省则立即移除。ESC、点遮罩、
+ *  显式 close() 三条路径都汇到这里，动效不会漏接。close({skipReturn:true}) 供「关了马上开
+ *  下一个弹窗」的路径跳过返程动效（编辑/删除/找同类——叠两段过渡只会互相打架）。 */
+function ovl(sec: HTMLElement, html: string, opts: { sticky?: boolean; onWillClose?: (finish: () => void) => boolean } = {}): OvlHandle {
   const el = document.createElement('div');
   el.className = 'cn-ovl';
   el.innerHTML = html;
   ovHost(sec).appendChild(el);
-  let close = () => {};
+  let close: (o?: { skipReturn?: boolean }) => void = () => {};
+  const finish = (): void => { handle.unregister(); liveOvlCloses.delete(close); el.remove(); };
   const handle = escManager.register('bz-cinema-ovl', { isVisible: () => el.isConnected, close: () => close() });
-  close = () => { handle.unregister(); liveOvlCloses.delete(close); el.remove(); };
+  close = (o) => {
+    if (!o?.skipReturn && opts.onWillClose?.(finish)) return;
+    finish();
+  };
   liveOvlCloses.add(close);
   el.addEventListener('click', (e) => { if (e.target === el && !opts.sticky) close(); });
   return { el, close };
@@ -416,13 +424,20 @@ function openSheet(sec: HTMLElement, target: SheetTarget, preFire?: () => void):
 
 // ---------- 弹窗：详情 ----------
 
-function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
+function openDetail(sec: HTMLElement, it: CinemaItem, app: App, opts: { from?: HTMLElement | null } = {}): void {
   const url = posterUrl(it, app);
-  const { el, close } = ovl(sec, detailModalHtml(it, url));
+  // 共享元素过渡（issue 396）：来源卡 = 调用方显式给的（点卡片 / 键盘激活）；缺省按键反查——
+  // 菜单与抽屉动作手里只有条目没有卡元素，反查到同一张卡即可，飞行起点不会飘。
+  const from = opts.from ?? sec.querySelector<HTMLElement>(`.pcard[data-cinema-key="${CSS.escape(itemKey(it))}"]`);
+  const se = from ? createSharedFlight() : null;
+  const { el, close } = ovl(sec, detailModalHtml(it, url), { onWillClose: se?.willClose });
   mountIcons(el);
-  el.querySelector('.j-edit')?.addEventListener('click', () => { close(); openForm(sec, it, app); });
-  el.querySelector('.j-del')?.addEventListener('click', () => { close(); openConfirm(it, app); });
-  el.querySelector('.j-similar')?.addEventListener('click', () => { close(); void runSimilarRecommend(it, app); });
+  if (se) se.begin(el, from as HTMLElement);
+  // 编辑 / 删除 / 找同类：关了马上开下一个弹窗，跳过返程动效（叠两段过渡只会互相打架）；
+  // 卡片海报的归位由遮罩层移除观察者兜底，不会因为跳过返程而丢
+  el.querySelector('.j-edit')?.addEventListener('click', () => { close({ skipReturn: true }); openForm(sec, it, app); });
+  el.querySelector('.j-del')?.addEventListener('click', () => { close({ skipReturn: true }); openConfirm(it, app); });
+  el.querySelector('.j-similar')?.addEventListener('click', () => { close({ skipReturn: true }); void runSimilarRecommend(it, app); });
   // 热门短评展开/收起（纯层对超阈值长评打 .is-fold 收 3 行；短评无按钮）
   const foldBtn = el.querySelector<HTMLElement>('[data-dm-fold]');
   const quote = el.querySelector<HTMLElement>('[data-dm-quote]');
@@ -432,6 +447,184 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App): void {
       foldBtn.textContent = quote.classList.toggle('is-fold') ? foldText : '收起';
     });
   }
+}
+
+// ---------- 详情弹窗共享元素过渡（issue 396） ----------
+
+/** 过渡时长（2026-09-21 用户拍板：**很短，图片飞行 0.2s**——开 = 飞行 200 + 撑开 200，
+ *  关 = 折回 200 + 飞回 200）。刻意不做 prefers-reduced-motion 放缓分支：用户本人系统即报
+ *  reduce，时长是他试出来的明确口径，放缓分支等于替他改决定。 */
+const SE_FLIGHT = 200; // 海报单程飞行
+const SE_GROW = 200;   // 面板从海报撑开 / 折回海报
+
+/** 目标尺寸的海报克隆（飞行件）。挂哪层由调用方定：去程挂遮罩层（随弹窗生灭），
+ *  返程挂共享宿主——它是 display:contents、自己没有盒，绝对定位实际落在面板根上，
+ *  所以遮罩先走也不牵连飞行件。 */
+function spawnFlyClone(host: HTMLElement, imgSrc: string, w: number, h: number, radius: string): HTMLElement {
+  const clone = document.createElement('div');
+  clone.className = 'cn-fly';
+  clone.style.width = `${Math.round(w)}px`;
+  clone.style.height = `${Math.round(h)}px`;
+  clone.style.borderRadius = radius;
+  const img = document.createElement('img');
+  img.alt = '';
+  img.src = imgSrc;
+  clone.appendChild(img);
+  host.appendChild(clone);
+  return clone;
+}
+
+/** 飞行 keyframes：clone 是目标尺寸的盒，「平移 + 非均匀缩放」把盒对到指定矩形。
+ *  卡片 2:3 与详情 7:10 差约 5%，飞行中不可辨；transform 动画全程不触布局。 */
+function flyKeyframes(fromR: DOMRect, toR: DOMRect, base: DOMRect): Keyframe[] {
+  const w = toR.width;
+  const h = toR.height;
+  const at = (r: DOMRect): string =>
+    `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
+  return [{ transform: at(fromR) }, { transform: at(toR) }];
+}
+
+/**
+ * 共享元素过渡状态机（issue 396）。
+ *
+ * 开：卡片海报「抽出」飞到详情海报位（FLIGHT）→ 面板从海报矩形撑开（GROW）。
+ * 关：面板折回海报矩形（GROW 逆放，遮罩同步淡出）→ 海报飞回卡片位（FLIGHT）→ 落地归位。
+ * 卡片海报自抽出起保持空框、整卡压暗（.is-out），直到返程落地才归位——
+ * 「详情开着 = 这张卡被借走了」（2026-09-21 拍板）。
+ *
+ * 坑位（都踩过）：
+ * - close 闭包在 ovl 内部收口（ESC / 点遮罩都走它），外层拿不到 → 关闭接管走 ovl 的
+ *   onWillClose 协议，finish 由动效自行调用，另有超时兜底防动画事件丢失卡死弹窗层；
+ * - 返程克隆挂宿主（display:contents，无盒），坐标系是面板根——宿主的
+ *   getBoundingClientRect 是全零，照着它算位移会把海报飞到屏幕外；
+ * - 编辑 / 删除 / 找同类是「关了马上开下一个弹窗」，skipReturn 跳过返程，归位交给
+ *   宿主观察者（遮罩被移除且不在关闭流程 → 归位）；
+ * - 面板几何全部**同步**量取（visibility 不影响排版，藏着的间隙里量得准），
+ *   异步只留 transform / clip-path 动画，全程不触布局。
+ */
+function createSharedFlight(): {
+  willClose: (finish: () => void) => boolean;
+  begin: (ovlEl: HTMLElement, fromCard: HTMLElement) => void;
+  bail: () => void;
+} {
+  let phase: 'idle' | 'flying' | 'open' | 'closing' = 'idle';
+  let overlay: HTMLElement | null = null;
+  let target: HTMLElement | null = null;
+  let src: HTMLImageElement | null = null;
+
+  const setSrcOut = (out: boolean): void => {
+    if (!src) return;
+    src.style.visibility = out ? 'hidden' : '';
+    src.closest('.pcard')?.classList.toggle('is-out', out);
+  };
+
+  return {
+    /** 关闭接管：返回 true = 本模块收下这次关闭，finish 由动效结束（或超时兜底）调用 */
+    willClose(finish) {
+      // 局部非空副本：TS 的空值收窄穿不进嵌套闭包，handOver 里直接用
+      const ov = overlay;
+      const t = target;
+      const s = src;
+      if (phase === 'idle' || !ov || !t || !s) return false; // 没起飞过：按普通关闭走
+      if (phase === 'flying') { setSrcOut(false); phase = 'idle'; finish(); return true; } // 起飞途中被关：不演了
+      if (phase === 'closing') { finish(); return true; } // 重入（面板整刷连发 close）：立刻收尾
+      phase = 'closing';
+      const host = ov.parentNode as HTMLElement;
+      const frame = (ov.offsetParent as HTMLElement | null) ?? host; // 返程克隆的坐标系（见上：宿主无盒）
+      const modal = ov.querySelector<HTMLElement>('.cn-modal--detail') ?? ov;
+      // ① 面板折回海报矩形 + 遮罩同步淡出（只动遮罩背景色，面板由 clip-path 收）
+      const or = ov.getBoundingClientRect();
+      const posterR = t.getBoundingClientRect();
+      const panelRadius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
+      const foldInset = `inset(${Math.max(0, posterR.top - or.top)}px ${Math.max(0, or.right - posterR.right)}px ${Math.max(0, or.bottom - posterR.bottom)}px ${Math.max(0, posterR.left - or.left)}px round 8px)`;
+      let handed = false;
+      const handOver = (): void => {
+        if (handed || phase !== 'closing') return;
+        handed = true;
+        // ② 返程克隆挂宿主 → 移除遮罩（背景已淡到全透明，无感）→ 飞回卡片位
+        const fb = frame.getBoundingClientRect();
+        const clone = spawnFlyClone(host, s.getAttribute('src') ?? '', posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
+        const to = s.getBoundingClientRect();
+        finish();
+        const fly = clone.animate(flyKeyframes(posterR, to, fb), { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
+        const done = (): void => { setSrcOut(false); clone.remove(); phase = 'idle'; };
+        fly.finished.then(done).catch(done);
+      };
+      ov.animate([
+        { clipPath: `inset(-64px round ${panelRadius}px)`, backgroundColor: 'rgba(20,16,8,.45)' },
+        { clipPath: foldInset, backgroundColor: 'rgba(20,16,8,0)' },
+      ], { duration: SE_GROW, easing: 'cubic-bezier(.34,.06,.16,1)' });
+      const fold = ov.getAnimations().pop();
+      if (fold) fold.finished.then(handOver).catch(handOver);
+      else handOver();
+      window.setTimeout(handOver, SE_GROW + 1200); // 兜底：动画事件丢失也必须交棒，弹窗层不能赖着不走
+      return true;
+    },
+
+    begin(ovlEl, fromCard) {
+      overlay = ovlEl;
+      target = overlay.querySelector<HTMLElement>('.cn-modal--detail .dm-poster');
+      src = fromCard.querySelector<HTMLImageElement>('.pw img');
+      // 无海报 / 图对不上（季明细钻入时源是合并卡正脸，与钻入季可能不同图，硬飞会在
+      // 落地瞬间跳图）→ 不飞，维持原有整体入场
+      if (!overlay || !target || !src?.getAttribute('src')) { overlay = null; target = null; src = null; return; }
+      const dstImg = target.querySelector('img');
+      if (!dstImg || dstImg.getAttribute('src') !== src.getAttribute('src')) { overlay = null; target = null; src = null; return; }
+      try {
+        const modal = overlay.querySelector<HTMLElement>('.cn-modal--detail');
+        if (!modal) { overlay = null; target = null; src = null; return; }
+        modal.classList.add('cn-modal--fly');       // 压整体入场与内容接力（styles.css 末段）
+        modal.style.visibility = 'hidden';          // 布局照常，几何量得准
+        phase = 'flying';
+        const sr = src.getBoundingClientRect();
+        const tr = target.getBoundingClientRect();
+        const base = overlay.getBoundingClientRect();
+        if (sr.width < 8 || sr.height < 8 || tr.width < 8 || tr.height < 8) { this.bail(); return; }
+        const clone = spawnFlyClone(overlay, src.getAttribute('src') as string, tr.width, tr.height, getComputedStyle(target).borderTopLeftRadius);
+        setSrcOut(true);                            // 「抽出来」：卡片留空框、整卡压暗，详情关掉才归位
+        const fly = clone.animate(flyKeyframes(sr, tr, base), { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
+        // 宿主观察：遮罩被移除且不在关闭流程（skipReturn 的编辑/删除、异常路径）→ 源海报归位。
+        // 关闭流程中的归位由返程落地负责，这里不能抢（抢了就是飞行途中卡片先长回海报）
+        if (overlay.parentNode) {
+          const moo = new MutationObserver(() => {
+            if (overlay?.isConnected) return;
+            moo.disconnect();
+            if (phase !== 'closing') setSrcOut(false);
+          });
+          moo.observe(overlay.parentNode, { childList: true });
+        }
+        const land = (): void => {
+          if (phase !== 'flying') return;
+          phase = 'open';
+          modal.style.visibility = '';
+          clone.remove();
+          // 面板从海报矩形撑开：clip-path 只揭示、不位移，海报原地不动；
+          // 终帧外扩 64px 罩住面板投影（clip-path 连投影一起裁），fill 缺省 none，结束即卸
+          try {
+            const pr = modal.getBoundingClientRect();
+            const t2 = target!.getBoundingClientRect();
+            const radius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
+            modal.animate([
+              { clipPath: `inset(${Math.max(0, t2.top - pr.top)}px ${Math.max(0, pr.right - t2.right)}px ${Math.max(0, pr.bottom - t2.bottom)}px ${Math.max(0, t2.left - pr.left)}px round 8px)` },
+              { clipPath: `inset(-64px round ${radius}px)` },
+            ], { duration: SE_GROW, easing: 'cubic-bezier(.22,.82,.3,1)' });
+          } catch { /* 动画不可用（测试环境）：面板已在终态 */ }
+        };
+        fly.finished.then(land).catch(() => { if (phase === 'flying') this.bail(); });
+      } catch {
+        this.bail();
+      }
+    },
+
+    /** 任何一步走不下去就整体回到「没飞过」的形态，不留半藏的面板或缺一块的列表 */
+    bail() {
+      overlay?.querySelector<HTMLElement>('.cn-modal--detail')?.classList.remove('cn-modal--fly');
+      const modal = overlay?.querySelector<HTMLElement>('.cn-modal--detail');
+      if (modal) modal.style.visibility = '';
+      setSrcOut(false);
+      phase = 'idle';
+    },
+  };
 }
 
 /**
@@ -1092,7 +1285,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app);
     else {
       const it = itemByKeyInState(key);
-      if (it) openDetail(sec, it, app);
+      if (it) openDetail(sec, it, app, { from: cardEl }); // 键盘激活同样走共享元素过渡（起点 = 聚焦的卡）
     }
   });
   sec.addEventListener('click', (e) => {
@@ -1177,7 +1370,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
       if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app);
       else {
         const it = itemByKeyInState(key);
-        if (it) openDetail(sec, it, app);
+        if (it) openDetail(sec, it, app, { from: cardEl }); // 海报从这张卡「抽出」飞入详情（issue 396）
       }
     }
   });

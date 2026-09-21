@@ -1,4 +1,4 @@
-/* 源指纹 e4d847879ad22f07 · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 7201b8215d339e7f · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -8483,11 +8483,16 @@ tags:
     ovHost(sec).appendChild(el);
     let close = () => {
     };
-    const handle = escManager.register("bz-cinema-ovl", { isVisible: () => el.isConnected, close: () => close() });
-    close = () => {
+    const finish = () => {
       handle.unregister();
       liveOvlCloses.delete(close);
       el.remove();
+    };
+    const handle = escManager.register("bz-cinema-ovl", { isVisible: () => el.isConnected, close: () => close() });
+    close = (o) => {
+      var _a;
+      if (!(o == null ? void 0 : o.skipReturn) && ((_a = opts.onWillClose) == null ? void 0 : _a.call(opts, finish))) return;
+      finish();
     };
     liveOvlCloses.add(close);
     el.addEventListener("click", (e) => {
@@ -8580,31 +8585,199 @@ tags:
       sheetHead: target.head
     });
   }
-  function openDetail(sec, it, app) {
-    var _a, _b, _c, _d;
+  function openDetail(sec, it, app, opts = {}) {
+    var _a, _b, _c, _d, _e;
     const url = posterUrl(it, app);
-    const { el, close } = ovl(sec, detailModalHtml(it, url));
+    const from = (_a = opts.from) != null ? _a : sec.querySelector(`.pcard[data-cinema-key="${CSS.escape(itemKey(it))}"]`);
+    const se = from ? createSharedFlight() : null;
+    const { el, close } = ovl(sec, detailModalHtml(it, url), { onWillClose: se == null ? void 0 : se.willClose });
     mountIcons(el);
-    (_a = el.querySelector(".j-edit")) == null ? void 0 : _a.addEventListener("click", () => {
-      close();
+    if (se) se.begin(el, from);
+    (_b = el.querySelector(".j-edit")) == null ? void 0 : _b.addEventListener("click", () => {
+      close({ skipReturn: true });
       openForm(sec, it, app);
     });
-    (_b = el.querySelector(".j-del")) == null ? void 0 : _b.addEventListener("click", () => {
-      close();
+    (_c = el.querySelector(".j-del")) == null ? void 0 : _c.addEventListener("click", () => {
+      close({ skipReturn: true });
       openConfirm(it, app);
     });
-    (_c = el.querySelector(".j-similar")) == null ? void 0 : _c.addEventListener("click", () => {
-      close();
+    (_d = el.querySelector(".j-similar")) == null ? void 0 : _d.addEventListener("click", () => {
+      close({ skipReturn: true });
       void runSimilarRecommend(it, app);
     });
     const foldBtn = el.querySelector("[data-dm-fold]");
     const quote = el.querySelector("[data-dm-quote]");
     if (foldBtn && quote) {
-      const foldText = (_d = foldBtn.textContent) != null ? _d : "展开全文";
+      const foldText = (_e = foldBtn.textContent) != null ? _e : "展开全文";
       foldBtn.addEventListener("click", () => {
         foldBtn.textContent = quote.classList.toggle("is-fold") ? foldText : "收起";
       });
     }
+  }
+  var SE_FLIGHT = 200;
+  var SE_GROW = 200;
+  function spawnFlyClone(host, imgSrc, w, h, radius) {
+    const clone = document.createElement("div");
+    clone.className = "cn-fly";
+    clone.style.width = `${Math.round(w)}px`;
+    clone.style.height = `${Math.round(h)}px`;
+    clone.style.borderRadius = radius;
+    const img = document.createElement("img");
+    img.alt = "";
+    img.src = imgSrc;
+    clone.appendChild(img);
+    host.appendChild(clone);
+    return clone;
+  }
+  function flyKeyframes(fromR, toR, base) {
+    const w = toR.width;
+    const h = toR.height;
+    const at = (r) => `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
+    return [{ transform: at(fromR) }, { transform: at(toR) }];
+  }
+  function createSharedFlight() {
+    let phase = "idle";
+    let overlay = null;
+    let target = null;
+    let src = null;
+    const setSrcOut = (out) => {
+      var _a;
+      if (!src) return;
+      src.style.visibility = out ? "hidden" : "";
+      (_a = src.closest(".pcard")) == null ? void 0 : _a.classList.toggle("is-out", out);
+    };
+    return {
+      /** 关闭接管：返回 true = 本模块收下这次关闭，finish 由动效结束（或超时兜底）调用 */
+      willClose(finish) {
+        var _a, _b;
+        const ov = overlay;
+        const t = target;
+        const s = src;
+        if (phase === "idle" || !ov || !t || !s) return false;
+        if (phase === "flying") {
+          setSrcOut(false);
+          phase = "idle";
+          finish();
+          return true;
+        }
+        if (phase === "closing") {
+          finish();
+          return true;
+        }
+        phase = "closing";
+        const host = ov.parentNode;
+        const frame = (_a = ov.offsetParent) != null ? _a : host;
+        const modal = (_b = ov.querySelector(".cn-modal--detail")) != null ? _b : ov;
+        const or = ov.getBoundingClientRect();
+        const posterR = t.getBoundingClientRect();
+        const panelRadius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
+        const foldInset = `inset(${Math.max(0, posterR.top - or.top)}px ${Math.max(0, or.right - posterR.right)}px ${Math.max(0, or.bottom - posterR.bottom)}px ${Math.max(0, posterR.left - or.left)}px round 8px)`;
+        let handed = false;
+        const handOver = () => {
+          var _a2;
+          if (handed || phase !== "closing") return;
+          handed = true;
+          const fb = frame.getBoundingClientRect();
+          const clone = spawnFlyClone(host, (_a2 = s.getAttribute("src")) != null ? _a2 : "", posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
+          const to = s.getBoundingClientRect();
+          finish();
+          const fly = clone.animate(flyKeyframes(posterR, to, fb), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
+          const done = () => {
+            setSrcOut(false);
+            clone.remove();
+            phase = "idle";
+          };
+          fly.finished.then(done).catch(done);
+        };
+        ov.animate([
+          { clipPath: `inset(-64px round ${panelRadius}px)`, backgroundColor: "rgba(20,16,8,.45)" },
+          { clipPath: foldInset, backgroundColor: "rgba(20,16,8,0)" }
+        ], { duration: SE_GROW, easing: "cubic-bezier(.34,.06,.16,1)" });
+        const fold = ov.getAnimations().pop();
+        if (fold) fold.finished.then(handOver).catch(handOver);
+        else handOver();
+        window.setTimeout(handOver, SE_GROW + 1200);
+        return true;
+      },
+      begin(ovlEl, fromCard) {
+        overlay = ovlEl;
+        target = overlay.querySelector(".cn-modal--detail .dm-poster");
+        src = fromCard.querySelector(".pw img");
+        if (!overlay || !target || !(src == null ? void 0 : src.getAttribute("src"))) {
+          overlay = null;
+          target = null;
+          src = null;
+          return;
+        }
+        const dstImg = target.querySelector("img");
+        if (!dstImg || dstImg.getAttribute("src") !== src.getAttribute("src")) {
+          overlay = null;
+          target = null;
+          src = null;
+          return;
+        }
+        try {
+          const modal = overlay.querySelector(".cn-modal--detail");
+          if (!modal) {
+            overlay = null;
+            target = null;
+            src = null;
+            return;
+          }
+          modal.classList.add("cn-modal--fly");
+          modal.style.visibility = "hidden";
+          phase = "flying";
+          const sr = src.getBoundingClientRect();
+          const tr = target.getBoundingClientRect();
+          const base = overlay.getBoundingClientRect();
+          if (sr.width < 8 || sr.height < 8 || tr.width < 8 || tr.height < 8) {
+            this.bail();
+            return;
+          }
+          const clone = spawnFlyClone(overlay, src.getAttribute("src"), tr.width, tr.height, getComputedStyle(target).borderTopLeftRadius);
+          setSrcOut(true);
+          const fly = clone.animate(flyKeyframes(sr, tr, base), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
+          if (overlay.parentNode) {
+            const moo = new MutationObserver(() => {
+              if (overlay == null ? void 0 : overlay.isConnected) return;
+              moo.disconnect();
+              if (phase !== "closing") setSrcOut(false);
+            });
+            moo.observe(overlay.parentNode, { childList: true });
+          }
+          const land = () => {
+            if (phase !== "flying") return;
+            phase = "open";
+            modal.style.visibility = "";
+            clone.remove();
+            try {
+              const pr = modal.getBoundingClientRect();
+              const t2 = target.getBoundingClientRect();
+              const radius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
+              modal.animate([
+                { clipPath: `inset(${Math.max(0, t2.top - pr.top)}px ${Math.max(0, pr.right - t2.right)}px ${Math.max(0, pr.bottom - t2.bottom)}px ${Math.max(0, t2.left - pr.left)}px round 8px)` },
+                { clipPath: `inset(-64px round ${radius}px)` }
+              ], { duration: SE_GROW, easing: "cubic-bezier(.22,.82,.3,1)" });
+            } catch (e) {
+            }
+          };
+          fly.finished.then(land).catch(() => {
+            if (phase === "flying") this.bail();
+          });
+        } catch (e) {
+          this.bail();
+        }
+      },
+      /** 任何一步走不下去就整体回到「没飞过」的形态，不留半藏的面板或缺一块的列表 */
+      bail() {
+        var _a;
+        (_a = overlay == null ? void 0 : overlay.querySelector(".cn-modal--detail")) == null ? void 0 : _a.classList.remove("cn-modal--fly");
+        const modal = overlay == null ? void 0 : overlay.querySelector(".cn-modal--detail");
+        if (modal) modal.style.visibility = "";
+        setSrcOut(false);
+        phase = "idle";
+      }
+    };
   }
   function openSeriesDetail(sec, key, app) {
     const card = seriesCardByKey(key);
@@ -9129,7 +9302,7 @@ tags:
       if (isSeriesKey(key)) openSeriesDetail(sec, key, app);
       else {
         const it = itemByKeyInState(key);
-        if (it) openDetail(sec, it, app);
+        if (it) openDetail(sec, it, app, { from: cardEl });
       }
     });
     sec.addEventListener("click", (e) => {
@@ -9220,7 +9393,7 @@ tags:
         if (isSeriesKey(key)) openSeriesDetail(sec, key, app);
         else {
           const it = itemByKeyInState(key);
-          if (it) openDetail(sec, it, app);
+          if (it) openDetail(sec, it, app, { from: cardEl });
         }
       }
     });
