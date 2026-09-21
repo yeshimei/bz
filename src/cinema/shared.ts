@@ -151,8 +151,22 @@ export function facePiecesHtml(
     poster: posterInner(it, posterUrl),
     name: esc(opts.name ?? it.name),
     meta: esc([it.year || '', it.director || ''].filter(Boolean).join(' · ')),
-    stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>',
+    stars: r && r > 0 ? starsHtml(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>',
   };
+}
+
+/** 星级**元素化**唯一出口（issue 403）：逐颗点亮要有可动画的「颗」，故由纯文本 ★☆ 改成五个 `<i>`。
+ *  星数口径仍走 `getStarString`（含半星取整规则），文本内容逐字不变
+ *  （textContent 依然是「★★★★☆」），按文本断言的消费方不受影响。
+ *  `is-on` = 点亮的颗（卡片保存后逐颗点亮、表单滑杆预览都用它）。 */
+export function starsHtml(rating: number): string {
+  const lit = starsLit(rating);
+  return Array.from({ length: 5 }, (_, i) => (i < lit ? '<i class="is-on">★</i>' : '<i>☆</i>')).join('');
+}
+
+/** 点亮的颗数（表单滑杆预览按它判断「有没有多点亮一颗」；口径同 getStarString 的 ★ 数） */
+export function starsLit(rating: number): number {
+  return (getStarString(rating).match(/★/g) ?? []).length;
 }
 
 /**
@@ -336,7 +350,7 @@ export function formModalHtml(opts: { editing: boolean; name: string; typeTag: s
   const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
   const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(['想看', '在看', '已看'], initSt, 'f-st')}</div></div>`;
   const ratingField = `<div class="f-field j-rating" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>`;
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(ratingVal)}">${starsHtml(ratingVal)}</span></div></div>`;
   const reviewField = `<div class="f-field j-review" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
   if (editing) {
     return `<div class="cn-modal" style="width:100%">

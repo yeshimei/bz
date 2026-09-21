@@ -8,7 +8,7 @@ import { makeApp } from '../helpers/app';
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
-import { resetObsidianMocks, hasNotice, Platform } from '../mock-obsidian-entry';
+import { resetObsidianMocks, hasNotice, Platform, TFile } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { runAIRecommend, runSimilarRecommend, quickAddWant, parseRecommendJson } from '../../src/cinema/recommend';
@@ -2174,5 +2174,299 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
     expect(pillTransform(seg)).toBe('translate(0px, 70px)'); // 悬停「按评分」→ 滑过去
     seg.dispatchEvent(new MouseEvent('mouseleave'));
     expect(pillTransform(seg)).toBe('translate(0px, 10px)'); // 移开回落「最近观看」
+  });
+});
+
+/**
+ * 影院动效整合（issue 400-403）：打断折返 / 短评展开中间态 / 网格三件套 / 星级点亮 /
+ * 落位闪 / 保存折回 / 键盘导航。
+ *
+ * jsdom 既没有 WAAPI 也没有布局，两件替身缺一不可，否则用例会**空转**（断言「没有动画」
+ * 恒真——本仓在 .scratch/cinema-peek-lab 里吃过这个亏，故这里显式立桩）：
+ *   installAnimate() —— 记录 element.animate 调用（否则飞行 / FLIP / 闪光路径根本走不到）；
+ *   installLayout()  —— 按卡片在网格里的序号给出确定矩形（否则 getBoundingClientRect 全零，
+ *                       位移差恒为 0，「补位动画」的断言退化成空断言）。
+ */
+describe('影院动效整合（issue 400-403）', () => {
+  let calls: { el: Element; frames: any[]; opts: any }[] = [];
+  let realAnimate: unknown;
+
+  const rect = (left: number, top: number, w: number, h: number): DOMRect => ({
+    left, top, width: w, height: h, right: left + w, bottom: top + h, x: left, y: top,
+    toJSON: () => ({}),
+  }) as DOMRect;
+
+  /** WAAPI 替身：记下每次调用；finished 立即 resolve，收尾回调在下一次 await 时跑 */
+  function installAnimate(): void {
+    calls = [];
+    realAnimate = (Element.prototype as any).animate;
+    (Element.prototype as any).animate = function (this: Element, frames: any, opts: any) {
+      calls.push({ el: this, frames, opts });
+      return {
+        finished: Promise.resolve(), cancel() {}, play() {}, pause() {}, finish() {},
+        addEventListener() {}, removeEventListener() {},
+      };
+    };
+  }
+  function restoreAnimate(): void {
+    if (realAnimate) (Element.prototype as any).animate = realAnimate as any;
+    else delete (Element.prototype as any).animate;
+  }
+
+  const COL = 5, CW = 150, CH = 230, GX = 14, GY = 15;
+  let realGBCR: unknown;
+  /** 布局替身：卡片按在网格里的序号排成 5 列；容器给一块可见视口；其余元素零矩形 */
+  function installLayout(): void {
+    realGBCR = Element.prototype.getBoundingClientRect;
+    (Element.prototype as any).getBoundingClientRect = function (this: HTMLElement): DOMRect {
+      if (this.classList?.contains('grid') || this.classList?.contains('m-grid')
+        || this.classList?.contains('d-scroll') || this.classList?.contains('m-scroll')) return rect(0, 0, 900, 620);
+      // 弹窗与详情海报也要有几何：共享元素飞行的目标位（tr）量出零矩形会直接 bail
+      if (this.closest?.('.cn-modal')) {
+        return this.classList.contains('dm-poster') ? rect(320, 120, 120, 180) : rect(300, 100, 420, 560);
+      }
+      const card = this.closest?.('.pcard') as HTMLElement | null;
+      if (!card) return rect(0, 0, 0, 0);
+      const grid = card.parentElement as HTMLElement;
+      const i = [...grid.children].filter((c) => (c as HTMLElement).classList.contains('pcard')).indexOf(card);
+      const x = (i % COL) * (CW + GX);
+      const y = Math.floor(i / COL) * (CH + GY);
+      return this === card ? rect(x, y, CW, CH) : rect(x, y, CW, CH * 0.66);
+    };
+  }
+  function restoreLayout(): void {
+    if (realGBCR) (Element.prototype as any).getBoundingClientRect = realGBCR as any;
+  }
+
+  const flush = async (): Promise<void> => { for (let i = 0; i < 4; i++) await Promise.resolve(); };
+
+  /** 网格 / 键盘用例的种子：9 部（两类各若干）——够铺两行，筛选后能看出「消失的卡」 */
+  function seedGrid(): { app: ReturnType<typeof mockAppWithVault> } {
+    const vault = new MockVault();
+    const rows: [string, string, number][] = [
+      ['片甲', '电影', 9.6], ['片乙', '电影', 8.2], ['片丙', '电影', 7.4],
+      ['片丁', '电影', 6.1], ['片戊', '电影', 5.0],
+      ['剧甲', '美剧', 9.1], ['剧乙', '美剧', 8.3], ['剧丙', '美剧', 7.7], ['剧丁', '美剧', 6.6],
+    ];
+    rows.forEach(([name, tag, r], i) => {
+      vault.files.set(`我的/影视/《${name}》.md`,
+        md(`---\ntags: [${tag}]\n评分: ${r}\n观影日期: 2026-0${i + 1}-01\n---`));
+    });
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    return { app };
+  }
+
+  /** 带海报的种子：posterUrl 要 TFile 实例 + 图片扩展名；只在本用例内改 vault 查表，
+   *  不动 MockVault 全局形状（那会牵动既有几千个用例的断言面） */
+  function seedWithPoster(): { app: ReturnType<typeof mockAppWithVault> } {
+    const vault = new MockVault();
+    const posterPath = 'CONFIG/MOVIE POSTER/a.jpg';
+    vault.files.set('我的/影视/《星际穿越》.md', md('---\ntags: [电影]\n评分: 9.6\n观影日期: 2026-08-01\n海报: ' + posterPath + '\n---'));
+    vault.files.set(posterPath, '<binary>');
+    const orig = vault.getAbstractFileByPath.bind(vault);
+    (vault as any).getAbstractFileByPath = (p: string) => (p === posterPath
+      ? Object.assign(Object.create(TFile.prototype), { path: p, name: 'a.jpg', extension: 'jpg', basename: 'a' })
+      : orig(p));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    return { app };
+  }
+
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+    shutdownDoubanQueue();
+  });
+  afterEach(() => {
+    restoreAnimate();
+    restoreLayout();
+    unloadCinema();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  it('飞行途中关闭：面板撤、海报折返、卡归位（issue 401）', async () => {
+    installAnimate();
+    installLayout();
+    const { app } = seedWithPoster();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const card = pcardByName(root, '星际穿越');
+    // 守卫非空转：海报解析不出来就会走 bail 分支，下面整套断言都不成立——先钉住它
+    expect(card.querySelector('.pw img')?.getAttribute('src'), '海报须可解析').toBeTruthy();
+
+    clickEl(card);
+    expect(root.querySelector('.cn-modal--fly'), '起飞中（fly 通道）').toBeTruthy();
+    expect(card.style.display, '整卡抽离').toBe('none');
+    const flyCalls = calls.filter((c) => c.el.classList.contains('cn-fly'));
+    expect(flyCalls.length, '去程飞行件已起飞').toBe(1);
+
+    root.querySelector('.cn-ovl')!.dispatchEvent(new MouseEvent('click', { bubbles: true })); // 起飞途中关
+    await flush();
+    expect(root.querySelector('.cn-ovl'), '弹窗层已撤').toBeFalsy();
+    expect(root.querySelector('.cn-fly'), '飞行件不留').toBeFalsy();
+    expect(card.style.display, '卡已归位').toBe('');
+    // 折返 = 飞行件上的第二段动画（去程一段 + 折返一段）
+    expect(calls.filter((c) => c.el.classList.contains('cn-fly')).length, '折返动画落在飞行件上').toBe(2);
+  });
+
+  it('短评展开走高度中间态；无几何回落即时切换（issue 401）', async () => {
+    installAnimate();
+    const hot = '一'.repeat(200);
+    const vault = new MockVault();
+    vault.files.set('我的/影视/《长评片》.md', md(`---
+tags: [电影]
+评分: 8.1
+观影日期: 2026-03-01
+热门短评: ${hot}
+---`));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '长评片'));
+    const btn = root.querySelector('[data-dm-fold]') as HTMLElement;
+    const quote = root.querySelector('[data-dm-quote]') as HTMLElement;
+    expect(btn).toBeTruthy();
+
+    // ① 无几何（jsdom 的 line-height = normal）→ 即时切换，行为与旧版一致
+    clickEl(btn);
+    expect(quote.classList.contains('is-fold'), '无几何时即时展开').toBe(false);
+    expect(btn.textContent).toBe('收起');
+    expect(calls.some((c) => c.el === quote && JSON.stringify(c.frames).includes('maxHeight')), '无几何不演动画').toBe(false);
+
+    // ② 有几何 → 走 max-height 中间态（3 行 = 60px → 实测 140px）
+    const realGCS = window.getComputedStyle;
+    (window as any).getComputedStyle = ((el: Element) => (el === quote
+      ? ({ lineHeight: '20px' } as any) : realGCS(el))) as any;
+    quote.getBoundingClientRect = () => rect(0, 0, 300, 140);
+    clickEl(btn); // 收起 → 展开
+    const anim = calls.find((c) => c.el === quote && JSON.stringify(c.frames).includes('maxHeight'));
+    expect(anim, '收起/展开应有高度动画').toBeTruthy();
+    expect(anim!.frames.map((f: any) => f.maxHeight)).toEqual(['140px', '60px']); // 当前全高 → 3 行高
+    await flush();
+    expect(quote.classList.contains('is-fold'), '收尾回到收起态').toBe(true);
+    expect((quote as HTMLElement).style.maxHeight, '收尾清掉内联高度').toBe('');
+    (window as any).getComputedStyle = realGCS;
+  });
+
+  it('网格重排：留下来的补位、消失的留幽灵、幽灵自清（issue 402）', async () => {
+    installAnimate();
+    installLayout();
+    const { app } = seedGrid();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const grid = root.querySelector('.grid') as HTMLElement;
+    expect(grid.querySelectorAll('.pcard').length, '网格铺了两行').toBe(9);
+
+    // 切排序：位置重排 → 留下来的卡按位移差补位（走台账 move 档）
+    calls = [];
+    clickEl(root.querySelector('.j-sort button[data-k="rating"]'));
+    const flip = calls.filter((c) => (c.el as HTMLElement).classList.contains('pcard')
+      && JSON.stringify(c.frames).includes('translate('));
+    expect(flip.length, '重排后应有补位动画').toBeGreaterThan(0);
+    expect(flip[0].opts.duration, '补位走台账 move 档').toBe(200);
+    // 补位 = 从旧位置出发（首帧位移非零，终帧归位）——不是空动画
+    expect(flip[0].frames[0].transform, '首帧带位移').toMatch(/translate\(-?\d/);
+    expect(flip[0].frames[1].transform, '终帧归位').toBe('none');
+
+    // 筛到某一类：消失的卡按旧矩形留幽灵（数量对得上），动画收尾自清。
+    // 组名不硬编码——取 rail 上「全部」之后的第一项，测的是机制不是某个标签
+    const n1 = root.querySelectorAll('.grid .pcard').length;
+    const railItem = [...root.querySelectorAll<HTMLElement>('.rail-item[data-g]')].find((el) => el.dataset.g !== '全部');
+    calls = [];
+    clickEl(railItem);
+    const n2 = root.querySelectorAll('.grid .pcard').length;
+    expect(n2, '筛选后卡变少').toBeLessThan(n1);
+    expect(root.querySelectorAll('.grid .cn-exit').length, '消失的卡各留一枚幽灵').toBe(n1 - n2);
+    await flush();
+    expect(root.querySelectorAll('.grid .cn-exit').length, '幽灵收尾自清').toBe(0);
+  });
+
+  it('表单滑杆：星预览逐颗点亮（issue 403）', async () => {
+    installAnimate();
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const range = root.querySelector<HTMLInputElement>('.j-range') as HTMLInputElement;
+    const stars = root.querySelector('.j-stars') as HTMLElement;
+    expect(range && stars, '评分滑杆与星预览都在').toBeTruthy();
+    expect(stars.querySelectorAll('i.is-on').length, '初始按 9.6 亮 5 颗').toBe(5);
+    expect(stars.querySelectorAll('i').length, '恒五颗').toBe(5);
+
+    range.value = '4';
+    calls = [];
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(stars.querySelectorAll('i.is-on').length, '拖到 4 分 → 亮 2 颗').toBe(2);
+    expect(stars.dataset.lit).toBe('2');
+    // 星数减少不弹（往回拖是「减少」，弹一下反而吵）
+    expect(calls.filter((c) => (c.el as HTMLElement).tagName === 'I').length, '减少不补微弹').toBe(0);
+
+    range.value = '9';
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(stars.querySelectorAll('i.is-on').length, '拖到 9 分 → 亮 4 颗（9/2 取整同 getStarString）').toBe(4);
+    expect(calls.filter((c) => (c.el as HTMLElement).tagName === 'I').length, '新点亮的颗补微弹').toBeGreaterThan(0);
+  });
+
+  it('保存：卡片落位闪 + 星级点亮 + 面板折回卡片（issue 403）', async () => {
+    installAnimate();
+    installLayout();
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '星际穿越'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const range = root.querySelector<HTMLInputElement>('.j-range') as HTMLInputElement;
+    range.value = '6';
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+    calls = [];
+    clickEl(root.querySelector('.j-save'));
+    await flush();
+    await flush();
+
+    const box = calls.filter((c) => JSON.stringify(c.frames).includes('boxShadow') && JSON.stringify(c.frames).includes('224,170,75'));
+    expect(box.length, '落位闪（金边脉冲）').toBeGreaterThan(0);
+    const star = calls.filter((c) => (c.el as HTMLElement).tagName === 'I' && (c.el as HTMLElement).classList.contains('is-on'));
+    expect(star.length, '星级逐颗点亮').toBeGreaterThan(0);
+    const fold = calls.filter((c) => (c.el as HTMLElement).classList.contains('cn-ovl')
+      && JSON.stringify(c.frames).includes('clipPath'));
+    expect(fold.length, '面板按目标卡矩形折回').toBeGreaterThan(0);
+    expect(fold[0].opts.duration, '折回走台账 base 档').toBe(280);
+    expect(root.querySelector('.cn-ovl'), '折回结束层已收').toBeFalsy();
+  });
+
+  it('方向键在网格里按几何移动焦点；边界不吞键（issue 403）', () => {
+    installLayout(); // 卡片按序号排成 5 列（首行 0-4、次行 5-8），几何导航才有得算
+    const { app } = seedGrid();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const cards = [...root.querySelectorAll<HTMLElement>('.grid .pcard')];
+    expect(cards.length, '铺了两行').toBe(9);
+    const press = (el: HTMLElement, key: string): KeyboardEvent => {
+      const e = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true });
+      el.dispatchEvent(e);
+      return e;
+    };
+    cards[0].focus();
+    expect(document.activeElement).toBe(cards[0]);
+    expect(press(cards[0], 'ArrowRight').defaultPrevented, '有线可走就吞键').toBe(true);
+    expect(document.activeElement, '右 → 同行右边那张').toBe(cards[1]);
+    press(cards[1], 'ArrowDown');
+    expect(document.activeElement, '下 → 下一行同列').toBe(cards[6]);
+    press(cards[6], 'ArrowLeft');
+    expect(document.activeElement, '左 → 同行左边那张').toBe(cards[5]);
+    // 首张往左没有卡 → 不吞键、焦点不动（落回浏览器默认行为，别把方向键吃掉）
+    cards[0].focus();
+    expect(press(cards[0], 'ArrowLeft').defaultPrevented, '边界不吞键').toBe(false);
+    expect(document.activeElement, '边界焦点不动').toBe(cards[0]);
   });
 });

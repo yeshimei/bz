@@ -1,5 +1,5 @@
-/* 源指纹 e7b7f2d57310ff24 · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 be254c9460afb068 · 仓内输入 64 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -6842,6 +6842,14 @@ var BZW_cinema = (() => {
     });
   }
 
+  // src/core/ui/icon.ts
+  function uiIcon(name, extraClass = "") {
+    const i = document.createElement("span");
+    i.className = "bz-ic" + (extraClass ? " " + extraClass : "");
+    setIcon(i, name);
+    return i;
+  }
+
   // src/core/ui/icons.ts
   function uiIconSpan(name, extraClass = "") {
     const i = document.createElement("span");
@@ -6861,6 +6869,97 @@ var BZW_cinema = (() => {
       } catch (e) {
       }
     });
+  }
+
+  // src/core/ui/lightbox.ts
+  var current = null;
+  var currentEscHandle = null;
+  function lockBodyScroll(lock) {
+    const body = document.body;
+    if (lock) {
+      body.dataset.bzLightboxScroll = body.style.overflow || "";
+      body.style.overflow = "hidden";
+    } else if (body.dataset.bzLightboxScroll !== void 0) {
+      body.style.overflow = body.dataset.bzLightboxScroll === "" ? "" : body.dataset.bzLightboxScroll;
+      delete body.dataset.bzLightboxScroll;
+    }
+  }
+  function openLightbox(opts) {
+    closeLightbox();
+    const mask = document.createElement("div");
+    mask.className = "bz-lightbox";
+    mask.style.zIndex = String(allocZ());
+    const head = document.createElement("div");
+    head.className = "bz-lightbox-head";
+    const title = document.createElement("span");
+    title.className = "bz-lightbox-title";
+    title.textContent = opts.title || "";
+    const closeBtn = document.createElement("button");
+    closeBtn.type = "button";
+    closeBtn.className = "bz-lightbox-close";
+    closeBtn.setAttribute("aria-label", "关闭");
+    closeBtn.appendChild(uiIcon("x"));
+    head.appendChild(title);
+    head.appendChild(closeBtn);
+    const media = document.createElement("div");
+    media.className = "bz-lightbox-media";
+    const bareSrc = opts.src.split("?")[0].split("#")[0];
+    const type = opts.type || (bareSrc.endsWith(".mp4") || bareSrc.endsWith(".webm") ? "video" : "image");
+    if (type === "video") {
+      const v = document.createElement("video");
+      v.src = opts.src;
+      v.controls = true;
+      v.autoplay = true;
+      media.appendChild(v);
+    } else if (type === "audio") {
+      const a = document.createElement("audio");
+      a.src = opts.src;
+      a.controls = true;
+      a.autoplay = true;
+      media.appendChild(a);
+    } else {
+      const img = document.createElement("img");
+      img.src = opts.src;
+      img.alt = opts.title || "";
+      media.appendChild(img);
+    }
+    const foot = document.createElement("div");
+    foot.className = "bz-lightbox-foot";
+    foot.textContent = opts.caption || "";
+    mask.appendChild(head);
+    mask.appendChild(media);
+    mask.appendChild(foot);
+    document.body.appendChild(mask);
+    lockBodyScroll(true);
+    let escHandle = null;
+    function close() {
+      if (current !== mask) return;
+      mask.remove();
+      escHandle == null ? void 0 : escHandle.unregister();
+      if (currentEscHandle === escHandle) currentEscHandle = null;
+      current = null;
+      lockBodyScroll(false);
+    }
+    escHandle = escManager.register("bz-lightbox", {
+      isVisible: () => mask.isConnected,
+      close
+    });
+    currentEscHandle = escHandle;
+    mask.addEventListener("click", (e) => {
+      if (!e.target.closest(".bz-lightbox-media, .bz-lightbox-head, .bz-lightbox-foot")) close();
+    });
+    closeBtn.addEventListener("click", close);
+    current = mask;
+    return { close };
+  }
+  function closeLightbox() {
+    if (current) {
+      current.remove();
+      current = null;
+      currentEscHandle == null ? void 0 : currentEscHandle.unregister();
+      currentEscHandle = null;
+      lockBodyScroll(false);
+    }
   }
 
   // src/core/ui/modal.ts
@@ -7983,8 +8082,16 @@ tags:
       poster: posterInner(it, posterUrl2),
       name: esc((_a = opts.name) != null ? _a : it.name),
       meta: esc([it.year || "", it.director || ""].filter(Boolean).join(" · ")),
-      stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>'
+      stars: r && r > 0 ? starsHtml(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>'
     };
+  }
+  function starsHtml(rating) {
+    const lit = starsLit(rating);
+    return Array.from({ length: 5 }, (_, i) => i < lit ? '<i class="is-on">★</i>' : "<i>☆</i>").join("");
+  }
+  function starsLit(rating) {
+    var _a;
+    return ((_a = getStarString(rating).match(/★/g)) != null ? _a : []).length;
   }
   function cardHtml(e, posterUrl2, fetching = false) {
     const it = e.kind === "series" ? e.face : e.item;
@@ -8113,7 +8220,7 @@ tags:
     const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
     const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
     const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>`;
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(ratingVal)}">${starsHtml(ratingVal)}</span></div></div>`;
     const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
     if (editing) {
       return `<div class="cn-modal" style="width:100%">
@@ -8363,6 +8470,14 @@ tags:
     if (chips) chips.innerHTML = chipsHtml(v);
   }
 
+  // src/cinema/motion.ts
+  var MOTION = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var STAGGER = 30;
+  var EASE = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+
   // src/cinema/ui.ts
   function posterUrl(item, app) {
     if (!item.poster) return null;
@@ -8398,6 +8513,7 @@ tags:
       if (item.rating !== null && item.rating > 0 && item.rating !== prevRating) {
         emitDomainEvent("movie", { kind: "rated", name: item.name, fromRating: prevRating, toRating: item.rating });
       }
+      markCardFlash(itemKey(item), item.rating !== prevRating);
       renderAll(app);
     } catch (e) {
       Object.assign(item, prev);
@@ -8585,8 +8701,8 @@ tags:
     return headElOf(seriesSheetHeadHtml(card, url));
   }
   var peekStates = /* @__PURE__ */ new WeakMap();
-  var PEEK_MS = 260;
-  var PEEK_BACK_MS = 200;
+  var PEEK_MS = MOTION.base;
+  var PEEK_BACK_MS = MOTION.move;
   function faceSlots(card) {
     return ["pw-face", "pname", "pmeta", "pstars"].map((c) => card.querySelector(`.${c}`)).filter((x) => !!x);
   }
@@ -8612,7 +8728,7 @@ tags:
       try {
         el.animate(
           [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-          { duration: 200, delay: i * 30, easing: "cubic-bezier(.22,.82,.3,1)", fill: "backwards" }
+          { duration: MOTION.move, delay: i * STAGGER, easing: EASE.out, fill: "backwards" }
         );
       } catch (e) {
       }
@@ -8651,7 +8767,7 @@ tags:
           { clipPath: `circle(0px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` },
           { clipPath: `circle(${o.r.toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` }
         ],
-        { duration: PEEK_MS, easing: "cubic-bezier(.22,.82,.3,1)", fill: "forwards" }
+        { duration: PEEK_MS, easing: EASE.out, fill: "forwards" }
       );
     } catch (e) {
     }
@@ -8685,7 +8801,7 @@ tags:
     try {
       const fold = layer.animate(
         [{ clipPath: getComputedStyle(layer).clipPath }, { clipPath: `circle(0px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` }],
-        { duration: PEEK_BACK_MS, easing: "cubic-bezier(.22,.82,.3,1)" }
+        { duration: PEEK_BACK_MS, easing: EASE.out }
       );
       st.anim = fold;
       fold.finished.then(done).catch(done);
@@ -8748,13 +8864,65 @@ tags:
     const quote = el.querySelector("[data-dm-quote]");
     if (foldBtn && quote) {
       const foldText = (_f = foldBtn.textContent) != null ? _f : "展开全文";
-      foldBtn.addEventListener("click", () => {
-        foldBtn.textContent = quote.classList.toggle("is-fold") ? foldText : "收起";
-      });
+      foldBtn.addEventListener("click", () => toggleQuoteFold(quote, foldBtn, foldText));
+    }
+    const dmPoster = el.querySelector(".dm-poster");
+    dmPoster == null ? void 0 : dmPoster.addEventListener("click", () => {
+      var _a2;
+      const src = (_a2 = dmPoster.querySelector("img")) == null ? void 0 : _a2.getAttribute("src");
+      if (src) openLightbox({ src, type: "image", title: it.name });
+    });
+  }
+  var foldGens = /* @__PURE__ */ new WeakMap();
+  function toggleQuoteFold(quote, btn, expandText) {
+    var _a;
+    const folded = quote.classList.contains("is-fold");
+    const lh = parseFloat(getComputedStyle(quote).lineHeight);
+    const collapsed = Number.isFinite(lh) && lh > 0 ? lh * 3 : 0;
+    const setText = () => {
+      btn.textContent = folded ? "收起" : expandText;
+    };
+    if (!collapsed || typeof quote.animate !== "function") {
+      quote.classList.toggle("is-fold");
+      setText();
+      return;
+    }
+    let full;
+    if (folded) {
+      quote.classList.remove("is-fold");
+      full = quote.getBoundingClientRect().height;
+      if (!full || full <= collapsed) {
+        setText();
+        return;
+      }
+      quote.style.maxHeight = `${collapsed}px`;
+    } else {
+      full = quote.getBoundingClientRect().height;
+      quote.style.maxHeight = `${full}px`;
+    }
+    quote.style.overflow = "hidden";
+    const gen = ((_a = foldGens.get(quote)) != null ? _a : 0) + 1;
+    foldGens.set(quote, gen);
+    const done = () => {
+      if (foldGens.get(quote) !== gen) return;
+      quote.style.maxHeight = "";
+      quote.style.overflow = "";
+      if (!folded) quote.classList.add("is-fold");
+      setText();
+    };
+    try {
+      const a = quote.animate(
+        [{ maxHeight: `${folded ? collapsed : full}px` }, { maxHeight: `${folded ? full : collapsed}px` }],
+        { duration: MOTION.base, easing: EASE.out }
+      );
+      a.finished.then(done).catch(done);
+      window.setTimeout(done, MOTION.base + 400);
+    } catch (e) {
+      done();
     }
   }
-  var SE_FLIGHT = 200;
-  var SE_GROW = 200;
+  var SE_FLIGHT = MOTION.move;
+  var SE_GROW = MOTION.move;
   function spawnFlyClone(host, imgSrc, w, h, radius) {
     const clone = document.createElement("div");
     clone.className = "cn-fly";
@@ -8787,7 +8955,7 @@ tags:
       if (Math.abs(d.dx) < 1 && Math.abs(d.dy) < 1 || !near(d.now) && !near(d.before)) continue;
       d.el.animate(
         [{ transform: `translate(${d.dx.toFixed(1)}px, ${d.dy.toFixed(1)}px)` }, { transform: "none" }],
-        { duration, easing: "cubic-bezier(.22,.82,.3,1)" }
+        { duration, easing: EASE.out }
       );
     }
   }
@@ -8799,6 +8967,8 @@ tags:
     let taken = null;
     let borrow = "card";
     let boxEl = null;
+    let flyingClone = null;
+    let srcRect = null;
     const reflowSet = () => {
       if (!boxEl) return [];
       const sibs = [...boxEl.querySelectorAll(borrow === "row" ? ".s-row" : ".pcard")];
@@ -8836,15 +9006,46 @@ tags:
     return {
       /** 关闭接管：返回 true = 本模块收下这次关闭，finish 由动效结束（或超时兜底）调用 */
       willClose(finish) {
-        var _a, _b;
+        var _a, _b, _c;
         const ov = overlay;
         const t = target;
         const s = src;
         if (phase === "idle" || !ov || !t || !s) return false;
         if (phase === "flying") {
-          restoreSrc();
-          phase = "idle";
-          finish();
+          phase = "closing";
+          const host2 = ov.parentNode;
+          const frame2 = (_a = ov.offsetParent) != null ? _a : host2;
+          const clone = flyingClone;
+          const back = srcRect;
+          const land = () => {
+            if (phase !== "closing") return;
+            clone == null ? void 0 : clone.remove();
+            restoreSrc();
+            phase = "idle";
+            finish();
+          };
+          try {
+            ov.animate([{ opacity: 1 }, { opacity: 0 }], { duration: MOTION.move, easing: "linear" });
+          } catch (e) {
+          }
+          const modal2 = ov.querySelector(".cn-modal--detail");
+          if (modal2) modal2.style.visibility = "hidden";
+          if (clone && back && host2 && frame2) {
+            host2.appendChild(clone);
+            const cur = clone.getBoundingClientRect();
+            const w = clone.offsetWidth || cur.width;
+            const h = clone.offsetHeight || cur.height;
+            try {
+              const fly = clone.animate(
+                flyKeyframes(frame2.getBoundingClientRect(), w, h, cur, back),
+                { duration: MOTION.move, easing: EASE.move }
+              );
+              fly.finished.then(land).catch(land);
+              window.setTimeout(land, MOTION.move + 400);
+            } catch (e) {
+              land();
+            }
+          } else land();
           return true;
         }
         if (phase === "closing") {
@@ -8853,8 +9054,8 @@ tags:
         }
         phase = "closing";
         const host = ov.parentNode;
-        const frame = (_a = ov.offsetParent) != null ? _a : host;
-        const modal = (_b = ov.querySelector(".cn-modal--detail")) != null ? _b : ov;
+        const frame = (_b = ov.offsetParent) != null ? _b : host;
+        const modal = (_c = ov.querySelector(".cn-modal--detail")) != null ? _c : ov;
         const or = ov.getBoundingClientRect();
         const posterR = t.getBoundingClientRect();
         const panelRadius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
@@ -8874,7 +9075,7 @@ tags:
           const clone = spawnFlyClone(host, (_a2 = s.getAttribute("src")) != null ? _a2 : "", posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
           const fly = clone.animate(
             flyKeyframes(fb, posterR.width, posterR.height, posterR, to),
-            { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" }
+            { duration: SE_FLIGHT, easing: EASE.move, fill: "forwards" }
           );
           const done = () => {
             if (taken) taken.style.visibility = "";
@@ -8886,7 +9087,7 @@ tags:
         ov.animate([
           { clipPath: `inset(-64px round ${panelRadius}px)`, backgroundColor: "rgba(20,16,8,.45)" },
           { clipPath: foldInset, backgroundColor: "rgba(20,16,8,0)" }
-        ], { duration: SE_GROW, easing: "cubic-bezier(.34,.06,.16,1)" });
+        ], { duration: SE_GROW, easing: EASE.out });
         const fold = ov.getAnimations().pop();
         if (fold) fold.finished.then(handOver).catch(handOver);
         else handOver();
@@ -8925,9 +9126,11 @@ tags:
             this.bail();
             return;
           }
+          srcRect = sr;
           extractSrc();
           const clone = spawnFlyClone(overlay, src.getAttribute("src"), tr.width, tr.height, getComputedStyle(target).borderTopLeftRadius);
-          const fly = clone.animate(flyKeyframes(base, tr.width, tr.height, sr, tr), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
+          flyingClone = clone;
+          const fly = clone.animate(flyKeyframes(base, tr.width, tr.height, sr, tr), { duration: SE_FLIGHT, easing: EASE.move, fill: "forwards" });
           if (overlay.parentNode) {
             const moo = new MutationObserver(() => {
               if (overlay == null ? void 0 : overlay.isConnected) return;
@@ -8941,6 +9144,7 @@ tags:
             phase = "open";
             modal.style.visibility = "";
             clone.remove();
+            flyingClone = null;
             try {
               const pr = modal.getBoundingClientRect();
               const t2 = target.getBoundingClientRect();
@@ -8948,7 +9152,7 @@ tags:
               modal.animate([
                 { clipPath: `inset(${Math.max(0, t2.top - pr.top)}px ${Math.max(0, pr.right - t2.right)}px ${Math.max(0, pr.bottom - t2.bottom)}px ${Math.max(0, t2.left - pr.left)}px round 8px)` },
                 { clipPath: `inset(-64px round ${radius}px)` }
-              ], { duration: SE_GROW, easing: "cubic-bezier(.22,.82,.3,1)" });
+              ], { duration: SE_GROW, easing: EASE.out });
             } catch (e) {
             }
           };
@@ -8972,6 +9176,8 @@ tags:
         taken = null;
         borrow = "card";
         boxEl = null;
+        flyingClone = null;
+        srcRect = null;
         phase = "idle";
       }
     };
@@ -9224,13 +9430,13 @@ tags:
       const reviewBox = el.querySelector(".j-review-t");
       const review = reviewBox ? reviewBox.value.trim() : editing && item ? (_a2 = item.review) != null ? _a2 : "" : "";
       if (editing && item) {
-        void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
+        void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, { el, close });
       } else {
-        void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed }, app, close);
+        void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed }, app, { el, close });
       }
     });
   }
-  async function saveNew(p, app, close) {
+  async function saveNew(p, app, form) {
     var _a, _b;
     if (hasIllegalNameChar(p.name)) {
       notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
@@ -9250,9 +9456,10 @@ tags:
       if (posterRel) it.poster = posterRel;
       emitDomainEvent("movie", { kind: "created", name: p.name, status: st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched", rating: p.rating, review: p.review || null });
       if (it.file && !posterRel) enqueueDoubanFetch(it.file, it.name);
-      close();
       notice(`已添加「${p.name}」`, "success");
+      markCardFlash(itemKey(it), p.rating !== null && p.rating > 0);
       renderAll(app);
+      foldOverlayToCard(form, itemKey(it));
     } catch (e) {
       if (!it.file) {
         const i = M.items.indexOf(it);
@@ -9263,7 +9470,7 @@ tags:
       console.error(e);
     }
   }
-  async function saveEdit(item, p, app, close) {
+  async function saveEdit(item, p, app, form) {
     var _a, _b, _c;
     const group = (_a = getGroupForTag(p.tag)) != null ? _a : "其他";
     const st = p.st === "想看" ? STATUS_WANT : p.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED;
@@ -9301,9 +9508,10 @@ tags:
       if (prevReview !== toReview) {
         emitDomainEvent("movie", { kind: "review", name: item.name, fromReview: prevReview, toReview });
       }
-      close();
       notice(`已保存「${p.name}」`, "success");
+      markCardFlash(itemKey(item), item.rating !== null && item.rating > 0 && item.rating !== prev.rating);
       renderAll(app);
+      foldOverlayToCard(form, itemKey(item));
     } catch (e) {
       if (item.file && prev.filePath && item.file.path !== prev.filePath) {
         try {
@@ -9451,6 +9659,38 @@ tags:
       return false;
     }
   }
+  var ARROW_DIR = {
+    ArrowLeft: [-1, 0],
+    ArrowRight: [1, 0],
+    ArrowUp: [0, -1],
+    ArrowDown: [0, 1]
+  };
+  function nearestCardInDir(cur, dx, dy) {
+    const grid = cur.closest(".grid, .m-grid");
+    if (!grid) return null;
+    const cr = cur.getBoundingClientRect();
+    if (!cr.width) return null;
+    const cx = cr.left + cr.width / 2;
+    const cy = cr.top + cr.height / 2;
+    let best = null;
+    let bestScore = Infinity;
+    grid.querySelectorAll(".pcard[data-cinema-key]").forEach((el) => {
+      if (el === cur) return;
+      const r = el.getBoundingClientRect();
+      if (!r.width) return;
+      const px = r.left + r.width / 2;
+      const py = r.top + r.height / 2;
+      const ahead = (px - cx) * dx + (py - cy) * dy;
+      if (ahead <= 1) return;
+      const cross = Math.abs((px - cx) * dy) + Math.abs((py - cy) * dx);
+      const score = ahead + cross * 2;
+      if (score < bestScore) {
+        bestScore = score;
+        best = el;
+      }
+    });
+    return best;
+  }
   function bindMidnight(sec, app, hoverable = hoverCapable()) {
     const nearestSeasonDot = (target, e) => {
       var _a;
@@ -9497,9 +9737,20 @@ tags:
       });
     }
     sec.addEventListener("keydown", (e) => {
-      var _a, _b;
+      var _a, _b, _c, _d;
+      const dir = ARROW_DIR[e.key];
+      if (dir && !e.isComposing) {
+        const cur = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".pcard[data-cinema-key]");
+        const next = cur ? nearestCardInDir(cur, dir[0], dir[1]) : null;
+        if (next) {
+          e.preventDefault();
+          next.focus();
+          next.scrollIntoView({ block: "nearest", inline: "nearest" });
+          return;
+        }
+      }
       if (e.key !== "Enter" && e.key !== " ") return;
-      const cardEl = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".pcard[data-cinema-key]");
+      const cardEl = (_d = (_c = e.target) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, ".pcard[data-cinema-key]");
       if (!cardEl) return;
       e.preventDefault();
       endPeek();
@@ -9643,7 +9894,9 @@ tags:
         onSearchInput(app, root, t.classList.contains("j-mq"), t.value);
       } else if (t.classList.contains("j-range")) {
         const out = root.querySelector(".j-rval");
-        if (out) out.textContent = Number(t.value).toFixed(1);
+        const r = Number(t.value);
+        if (out) out.textContent = r.toFixed(1);
+        updateFormStars(t, r);
       }
     });
     root.addEventListener("keydown", (e) => {
@@ -9795,6 +10048,173 @@ tags:
       if (box) syncSlidePill(box, itemSel, hoverable, false);
     }
   }
+  function updateFormStars(range, rating) {
+    var _a, _b;
+    const box = (_a = range.closest(".f-range-row")) == null ? void 0 : _a.querySelector(".j-stars");
+    if (!box) return;
+    const lit = starsLit(rating);
+    const before = Number((_b = box.dataset.lit) != null ? _b : "-1");
+    if (lit === before) return;
+    box.dataset.lit = String(lit);
+    box.innerHTML = starsHtml(rating);
+    if (before < 0 || lit <= before) return;
+    [...box.querySelectorAll("i.is-on")].slice(before).forEach((el) => {
+      if (typeof el.animate !== "function") return;
+      try {
+        el.animate([{ transform: "scale(1.45)" }, { transform: "none" }], { duration: MOTION.fast, easing: EASE.out });
+      } catch (e) {
+      }
+    });
+  }
+  var pendingFlash = null;
+  function markCardFlash(key, stars = false) {
+    pendingFlash = { key, stars };
+  }
+  function flushCardFlash(root) {
+    const p = pendingFlash;
+    pendingFlash = null;
+    if (!p) return;
+    const card = root.querySelector(`.pcard[data-cinema-key="${CSS.escape(p.key)}"]`);
+    const pw = card == null ? void 0 : card.querySelector(".pw");
+    if (!card || !pw) return;
+    if (typeof pw.animate === "function") {
+      try {
+        pw.animate([
+          { boxShadow: "0 0 0 0 rgba(224,170,75,0)" },
+          { boxShadow: "0 0 0 3px rgba(224,170,75,.55)" },
+          { boxShadow: "0 0 0 0 rgba(224,170,75,0)" }
+        ], { duration: MOTION.impulse, easing: EASE.out });
+      } catch (e) {
+      }
+    }
+    if (!p.stars) return;
+    card.querySelectorAll(".pstars i.is-on").forEach((el, i) => {
+      if (typeof el.animate !== "function") return;
+      try {
+        el.animate(
+          [{ opacity: 0.2, transform: "scale(.7)" }, { opacity: 1, transform: "none" }],
+          { duration: MOTION.move, delay: i * STAGGER, easing: EASE.out, fill: "backwards" }
+        );
+      } catch (e) {
+      }
+    });
+  }
+  function foldOverlayToCard(form, key) {
+    var _a, _b;
+    const { el, close } = form;
+    const card = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector(`.pcard[data-cinema-key="${CSS.escape(key)}"]`);
+    const modal = el.querySelector(".cn-modal");
+    const r = (_b = card == null ? void 0 : card.querySelector(".pw")) == null ? void 0 : _b.getBoundingClientRect();
+    if (!modal || !r || r.width < 8 || typeof modal.animate !== "function") {
+      close();
+      return;
+    }
+    const o = el.getBoundingClientRect();
+    const radius = parseFloat(getComputedStyle(modal).borderTopLeftRadius) || 12;
+    const inset = `inset(${Math.max(0, r.top - o.top)}px ${Math.max(0, o.right - r.right)}px ${Math.max(0, o.bottom - r.bottom)}px ${Math.max(0, r.left - o.left)}px round 8px)`;
+    try {
+      const a = el.animate([
+        { clipPath: `inset(-64px round ${radius}px)`, backgroundColor: "rgba(20,16,8,.45)" },
+        { clipPath: inset, backgroundColor: "rgba(20,16,8,0)" }
+      ], { duration: MOTION.base, easing: EASE.out });
+      const done = () => close();
+      a.finished.then(done).catch(done);
+      window.setTimeout(done, MOTION.base + 400);
+    } catch (e) {
+      close();
+    }
+  }
+  function measureGridCards(root) {
+    const out = /* @__PURE__ */ new Map();
+    root.querySelectorAll(".pcard[data-cinema-key]").forEach((el) => {
+      var _a, _b;
+      const key = el.dataset.cinemaKey;
+      if (!key) return;
+      out.set(key, { rect: el.getBoundingClientRect(), src: (_b = (_a = el.querySelector(".pw img")) == null ? void 0 : _a.getAttribute("src")) != null ? _b : null });
+    });
+    return out;
+  }
+  var GHOST_MAX = 40;
+  var ENTER_MAX = 12;
+  var lastViewIdentity = null;
+  var viewIdentity = () => {
+    var _a, _b;
+    return [M.view, (_a = M.typeFilter) != null ? _a : "", (_b = M.statusFilter) != null ? _b : "", M.sortMode, M.searchKeyword].join("|");
+  };
+  function playGridMotion(root, before) {
+    var _a;
+    const identity = viewIdentity();
+    const identityChanged = identity !== lastViewIdentity;
+    lastViewIdentity = identity;
+    const grid = root.querySelector(".grid, .m-grid");
+    if (!grid) return;
+    const frame = grid.getBoundingClientRect();
+    if (!frame.width || !frame.height) return;
+    const viewport = ((_a = grid.closest(".d-scroll, .m-scroll")) != null ? _a : grid).getBoundingClientRect();
+    const near = (r) => r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
+    const animate = (el, frames, opts) => {
+      if (typeof el.animate !== "function") return null;
+      try {
+        return el.animate(frames, opts);
+      } catch (e) {
+        return null;
+      }
+    };
+    const seen = /* @__PURE__ */ new Set();
+    let arrival = 0;
+    for (const el of grid.querySelectorAll(".pcard[data-cinema-key]")) {
+      const key = el.dataset.cinemaKey;
+      seen.add(key);
+      const prev = before.get(key);
+      if (prev) {
+        const now = el.getBoundingClientRect();
+        const dx = prev.rect.left - now.left;
+        const dy = prev.rect.top - now.top;
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1 || !near(now) && !near(prev.rect)) continue;
+        animate(
+          el,
+          [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
+          { duration: MOTION.move, easing: EASE.out }
+        );
+      } else if (identityChanged && arrival < ENTER_MAX) {
+        if (!near(el.getBoundingClientRect())) continue;
+        animate(
+          el,
+          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+          { duration: MOTION.base, delay: arrival * STAGGER, easing: EASE.out, fill: "backwards" }
+        );
+        arrival++;
+      }
+    }
+    const gone = [...before.entries()].filter(([k]) => !seen.has(k));
+    if (!gone.length || gone.length > GHOST_MAX) return;
+    for (const [, snap] of gone) {
+      if (!near(snap.rect)) continue;
+      const ghost = document.createElement("div");
+      ghost.className = "cn-exit";
+      ghost.style.left = `${(snap.rect.left - frame.left).toFixed(1)}px`;
+      ghost.style.top = `${(snap.rect.top - frame.top).toFixed(1)}px`;
+      ghost.style.width = `${snap.rect.width.toFixed(1)}px`;
+      ghost.style.height = `${snap.rect.height.toFixed(1)}px`;
+      if (snap.src) {
+        const img = document.createElement("img");
+        img.alt = "";
+        img.src = snap.src;
+        ghost.appendChild(img);
+      }
+      grid.appendChild(ghost);
+      const drop = () => ghost.remove();
+      const a = animate(
+        ghost,
+        [{ opacity: 1, transform: "none" }, { opacity: 0, transform: "scale(.96)" }],
+        { duration: MOTION.fast, easing: EASE.out }
+      );
+      if (a) {
+        a.finished.then(drop).catch(drop);
+        window.setTimeout(drop, MOTION.fast + 400);
+      } else drop();
+    }
+  }
   function renderAll(app) {
     const overlay = M.currentOverlay;
     if (!overlay) return;
@@ -9802,6 +10222,7 @@ tags:
     if (!root) return;
     clearSoftRender();
     const snap = snapshotFocus(root);
+    const beforeCards = measureGridCards(root);
     const scrollMemo = /* @__PURE__ */ new Map();
     for (const sel of [".d-scroll", ".m-scroll"]) {
       const sc = root.querySelector(sel);
@@ -9818,10 +10239,14 @@ tags:
     }
     mountIcons(root);
     syncSlidePills(root);
+    playGridMotion(root, beforeCards);
+    flushCardFlash(root);
     restoreFocus(root, snap);
   }
   function closeOverlay() {
     clearSoftRender();
+    pendingFlash = null;
+    lastViewIdentity = null;
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
     for (const close of [...liveOvlCloses]) close();
     closeItemMenu();

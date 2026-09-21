@@ -84,19 +84,19 @@
    刻意不做 prefers-reduced-motion 分支：用户本人系统即报 reduce，而这条动效是他点名要的。 */
 .bz-cinema--midnight .slide-pill{position:absolute;left:0;top:0;border-radius:var(--bz-radius-sm);
   background:var(--chip);pointer-events:none;opacity:0;
-  transition:transform .22s cubic-bezier(.22,.82,.3,1),width .22s cubic-bezier(.22,.82,.3,1),
-    height .2s cubic-bezier(.22,.82,.3,1),opacity .14s ease}
+  transition:transform var(--cn-m-fast) var(--cn-e-out),width var(--cn-m-fast) var(--cn-e-out),
+    height var(--cn-m-fast) var(--cn-e-out),opacity var(--cn-m-fast) ease}
 .bz-cinema--midnight .slide-pill.is-visible{opacity:1}
 .bz-cinema--midnight .slide-pill.is-instant{transition:none}
 /* 排序钮：底片 = 原来那枚选中的白片（容器 .seg 自己带 chip 底轨，所以这片用面板色 + 投影） */
 .bz-cinema--midnight .seg .slide-pill{background:var(--panel);box-shadow:0 1px 3px #0002}
 .bz-cinema--midnight .d-scroll{flex:1;overflow-y:auto;padding:2px 20px 20px}
 .bz-cinema--midnight .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:15px 14px}
+/* 位移挂在**整卡**（issue 401）：原来只抬 .pw，片名与星级是 .pw 的兄弟、原地不动，
+   鼠标下卡片内距在变；抬升与推近的时长也各走一条，收势时图还在放大。
+   抬升/按下/推近一处声明（本文件末尾的动效段），这里只留结构与描边。 */
 .bz-cinema--midnight .pcard{cursor:pointer;min-width:0}
-.bz-cinema--midnight .pw{position:relative;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--chip);border:1px solid var(--line);transition:transform .18s,box-shadow .18s,border-color .18s}@media (hover: hover) {
-
-.bz-cinema--midnight .pcard:hover .pw{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 10px 22px #0004}
-}
+.bz-cinema--midnight .pw{position:relative;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--chip);border:1px solid var(--line)}
 .bz-cinema--midnight .pw img{width:100%;height:100%;object-fit:cover;display:block}
 /* 海报内芯包裹层（悬浮季圆点换脸用）：行为层只重写这一层，抓取遮罩/状态角标/季圆点原地不动。
    绝对定位铺满 → 卡片高度仍由 .pw 的 aspect-ratio 决定，不随换脸抖动。 */
@@ -202,7 +202,7 @@
 @keyframes cnPosterPulse{0%,100%{background-color:var(--chip)}50%{background-color:var(--line)}}
 .bz-cinema--midnight .form-face--back .dm-poster{animation:cnPosterPulse 1.4s ease-in-out infinite}
 .bz-cinema--midnight .form-face--back .dm-poster.is-ready{animation:none}
-.bz-cinema--midnight .form-face--back .dm-poster img{opacity:0;transition:opacity .32s ease}
+.bz-cinema--midnight .form-face--back .dm-poster img{opacity:0;transition:opacity var(--cn-m-base) ease}
 .bz-cinema--midnight .form-face--back .dm-poster.is-ready img{opacity:1}
 /* 解析按钮的转圈 */
 @keyframes cnSpin{to{transform:rotate(360deg)}}
@@ -302,7 +302,7 @@
 .bz-cinema--midnight .form-flip.is-flipped{transform:rotateY(180deg)}
 /* 旋转只走 keyframes，不叠 transition：两条同时作用于 transform 时引擎可能先起一条过渡再被动画
    覆盖，首帧会顿一下（2026-09-21 定位）。is-flipped 只作终态锚点——动画万一没生效也落在正确姿势。 */
-.bz-cinema--midnight .form-flip.is-flipping{animation:cnFlipToBack .74s cubic-bezier(.34,.06,.16,1) both}
+.bz-cinema--midnight .form-flip.is-flipping{animation:cnFlipToBack var(--cn-m-impulse) var(--cn-e-move) both}
 @keyframes cnFlipToBack{
   0%{transform:rotateY(0deg) translateZ(0)}
   44%{transform:rotateY(80deg) translateZ(22px)}
@@ -312,8 +312,8 @@
    inset 比卡片多铺 1px，避免旋转到边缘时露出未覆盖的细线。 */
 .bz-cinema--midnight .form-face::after{content:'';position:absolute;inset:-1px;border-radius:var(--bz-radius-md);
   background:#0b0906;opacity:0;pointer-events:none}
-.bz-cinema--midnight .form-flip.is-flipping .form-face--front::after{animation:cnShadeFront .74s ease-in-out both}
-.bz-cinema--midnight .form-flip.is-flipping .form-face--back::after{animation:cnShadeBack .74s ease-in-out both}
+.bz-cinema--midnight .form-flip.is-flipping .form-face--front::after{animation:cnShadeFront var(--cn-m-impulse) ease-in-out both}
+.bz-cinema--midnight .form-flip.is-flipping .form-face--back::after{animation:cnShadeBack var(--cn-m-impulse) ease-in-out both}
 @keyframes cnShadeFront{0%{opacity:0}44%{opacity:.46}100%{opacity:.46}}
 @keyframes cnShadeBack{0%{opacity:.46}52%{opacity:.46}100%{opacity:0}}
 /* 翻转弹窗：垂直居中（2026-09-21 用户要求）。居中可行性的论证见 .form-flip 那段——
@@ -707,35 +707,60 @@
 .bz-cinema--midnight .m-scroll.cn-mempty{display:flex;flex-direction:column}
 
 /* ══════════════════════════════════════════════════════════════════════════
-   影院全域动效（2026-09-21）。节奏统一三档：微交互 .16s / 面板与列表 .28s /
-   空间位移 .44s；缓动统一走 cubic-bezier(.22,.82,.3,1)（先快后缓、末尾收势），
-   免得同一屏里各动各的节奏。整段受 prefers-reduced-motion 收束（见段尾）。
+   影院动效台账（issue 400，2026-09-21 用户拍板）：本域只用这四档时长、两条曲线。
+   取值与 src/cinema/motion.ts 一一对应，由 tests/cinema/motion-ledger.test.ts 钉死——
+   新写一个「差不多」的时长会被那道门禁挡下（走查时本域曾散着十个自由值，最大差五倍）。
+   语义分档：fast 微反馈 / move 空间位移 / base 揭示 / impulse 冲量；
+   加载类循环（转圈 / 骨架 / 脉冲 / 扫描）是功能性指示，不入台账、取值不随交互节奏走。
    ══════════════════════════════════════════════════════════════════════════ */
+.bz-cinema--midnight,
+.cn-skin{
+  --cn-m-fast:.16s;    /* 微反馈：hover / 按下 / 底色 / 高亮滑行 */
+  --cn-m-move:.2s;     /* 空间位移：海报飞行、FLIP 让位、面板撑开与折回、涟漪 */
+  --cn-m-base:.28s;    /* 揭示：面板入场、下拉展开、内容接力、海报淡入、卡片抬升与推近 */
+  --cn-m-impulse:.74s; /* 冲量：表单翻转这类一次性状态切换 */
+  --cn-e-out:cubic-bezier(.22,.82,.3,1);   /* 揭示：先快后缓、末尾收势 */
+  --cn-e-move:cubic-bezier(.34,.06,.16,1); /* 迁移与冲量：起手重、收尾干脆 */
+}
+/* 口径：**不做 prefers-reduced-motion 分支**（issue 400）。与共享元素（396）、滑动高亮（398）、
+   涟漪（399）三处已拍板口径一致。不只是「求一致」——用户本人机器恒报 reduce（Windows 关窗口动画，
+   core/styles.css 有实证），该媒体查询分不清「我关了系统动画」与「我想要更少的动效」，
+   表达不了意图：真要给「少动效」一个出口，走设置项（见 issue 400 遗留），不放媒体查询。
+   功能性指示（转圈 / 骨架 / 脉冲）本来就不降级，不受本条影响。 */
 
 /* ── 弹窗：遮罩淡入 + 面板由 .96 缩放上浮（原来弹窗是硬切进来的） ── */
 @keyframes cnOvlIn{from{opacity:0}to{opacity:1}}
 @keyframes cnModalIn{from{opacity:0;transform:translateY(12px) scale(.962)}to{opacity:1;transform:none}}
-.bz-cinema--midnight .cn-ovl{animation:cnOvlIn .2s ease both}
-.bz-cinema--midnight .cn-modal{animation:cnModalIn .3s cubic-bezier(.22,.82,.3,1) both}
+.bz-cinema--midnight .cn-ovl{animation:cnOvlIn var(--cn-m-move) ease both}
+.bz-cinema--midnight .cn-modal{animation:cnModalIn var(--cn-m-base) var(--cn-e-out) both}
 
-/* ── 详情弹窗：面板浮起后内容分段接力（信息块多，逐段出现比整块砸下来耐看） ── */
+/* ── 详情弹窗：面板浮起后内容分段接力（信息块多，逐段出现比整块砸下来耐看）──
+   阶梯排到第 10 块（issue 401）：直接子元素 = 头部 + 每一条豆瓣信息行，一部片常有八九块，
+   原来 n+6 起全部 .25s 齐发，后半段接力感荡然无存；步进收到 .03s、上限 .27s。 */
 @keyframes cnRiseIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
-.bz-cinema--midnight .cn-modal--detail > *{animation:cnRiseIn .36s cubic-bezier(.22,.82,.3,1) both}
-.bz-cinema--midnight .cn-modal--detail > *:nth-child(2){animation-delay:.05s}
-.bz-cinema--midnight .cn-modal--detail > *:nth-child(3){animation-delay:.1s}
-.bz-cinema--midnight .cn-modal--detail > *:nth-child(4){animation-delay:.15s}
-.bz-cinema--midnight .cn-modal--detail > *:nth-child(5){animation-delay:.2s}
-.bz-cinema--midnight .cn-modal--detail > *:nth-child(n+6){animation-delay:.25s}
+.bz-cinema--midnight .cn-modal--detail > *{animation:cnRiseIn var(--cn-m-base) var(--cn-e-out) both}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(2){animation-delay:.03s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(3){animation-delay:.06s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(4){animation-delay:.09s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(5){animation-delay:.12s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(6){animation-delay:.15s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(7){animation-delay:.18s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(8){animation-delay:.21s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(9){animation-delay:.24s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(n+10){animation-delay:.27s}
 
-/* ── 卡片：抬升给足分量（原来只 -4px），海报跟着轻微推近；按下有回弹 ── */
-.bz-cinema--midnight .pw{transition:transform .28s cubic-bezier(.22,.82,.3,1),box-shadow .28s,border-color .2s}
-.bz-cinema--midnight .pw img{transition:transform .44s cubic-bezier(.22,.82,.3,1)}
+/* ── 卡片：整卡抬升 + 海报轻微推近，两者同期（issue 401：原来抬 .pw 而片名不动、
+   抬升 .28s / 推近 .44s 两条时长）；按下回弹也落在整卡上 ── */
+.bz-cinema--midnight .pcard{transition:transform var(--cn-m-base) var(--cn-e-out)}
+.bz-cinema--midnight .pw{transition:box-shadow var(--cn-m-base),border-color var(--cn-m-fast)}
+.bz-cinema--midnight .pw img{transition:transform var(--cn-m-base) var(--cn-e-out)}
 @media (hover: hover) {
-  .bz-cinema--midnight .pcard:hover .pw{transform:translateY(-7px);border-color:var(--gold);
+  .bz-cinema--midnight .pcard:hover{transform:translateY(-6px)}
+  .bz-cinema--midnight .pcard:hover .pw{border-color:var(--gold);
     box-shadow:0 16px 34px #00000052,0 3px 9px #0003}
   .bz-cinema--midnight .pcard:hover .pw img{transform:scale(1.045)}
 }
-.bz-cinema--midnight .pcard:active .pw{transform:translateY(-2px) scale(.986)}
+.bz-cinema--midnight .pcard:active{transform:translateY(-2px) scale(.986)}
 
 /* ── 按钮与可选项：hover 有微光、按下有回弹（原来只有颜色变化，点击缺手感） ── */
 .bz-cinema--midnight .dm-btn,
@@ -746,7 +771,7 @@
 .bz-cinema--midnight .seg button,
 .bz-cinema--midnight .rail-item,
 .bz-cinema--midnight .m-tool,
-.bz-cinema--midnight .sp-back{transition:color .16s,border-color .16s,background .16s,transform .16s,filter .16s}
+.bz-cinema--midnight .sp-back{transition:color var(--cn-m-fast),border-color var(--cn-m-fast),background var(--cn-m-fast),transform var(--cn-m-fast),filter var(--cn-m-fast)}
 .bz-cinema--midnight .dm-btn:active,
 .bz-cinema--midnight .f-choice-btn:active,
 .bz-cinema--midnight .dm-pick-item:active,
@@ -760,45 +785,40 @@
 .bz-cinema--midnight .dm-pick-list{display:flex;flex-wrap:wrap;gap:6px;
   max-height:0;opacity:0;overflow:hidden;padding:0 10px;margin-top:0;border:1px solid transparent;
   border-radius:var(--bz-radius-sm);background:var(--chip);
-  transition:max-height .28s cubic-bezier(.22,.82,.3,1),opacity .2s ease,
-    padding .28s cubic-bezier(.22,.82,.3,1),margin-top .28s,border-color .28s}
+  transition:max-height var(--cn-m-base) var(--cn-e-out),opacity var(--cn-m-move) ease,
+    padding var(--cn-m-base) var(--cn-e-out),margin-top var(--cn-m-base),border-color var(--cn-m-base)}
 .bz-cinema--midnight .dm-pick-list.is-open{max-height:280px;opacity:1;padding:8px 10px;margin-top:8px;border-color:var(--line)}
 
-/* ── 列表行与分析统计条：hover 的底色也是渐入，不是瞬变 ── */
-.bz-cinema--midnight .s-row,
-.bz-cinema--midnight .rec-row{transition:background .18s}
+/* ── 反馈与入口（issue 403）── */
+/* 星级元素化：逐颗点亮要有可动画的「颗」（文本内容不变，仍是 ★★★☆☆） */
+.bz-cinema--midnight .pstars i{display:inline-block;font-style:normal}
+/* 表单评分星预览：拖动滑杆时逐颗点亮，与卡片同一份星口径（shared.starsHtml） */
+.bz-cinema--midnight .f-stars{flex:none;min-width:54px;color:var(--star);font-size:12px;letter-spacing:1px;text-align:right}
+.bz-cinema--midnight .f-stars i{display:inline-block;font-style:normal}
+/* 键盘焦点环：.pcard 早就带 tabindex/role=button，但纯键盘浏览看不见焦点（无障碍缺口）。
+   焦点环落在海报上，与 hover 的金边同一处，避免两套「选中」视觉。 */
+.bz-cinema--midnight .pcard:focus-visible{outline:none}
+.bz-cinema--midnight .pcard:focus-visible .pw{border-color:var(--gold);box-shadow:0 0 0 2px #c9992f66,0 10px 24px #0004}
+/* 详情海报可点看大图（core 灯箱） */
+.bz-cinema--midnight .cn-modal--detail .dm-poster{cursor:zoom-in}
 
-/* ── 无障碍降级：**放缓 + 减幅**，不用 animation:none 一刀切 ──
-   ⚠️ Windows 关闭「窗口动画」时 Chromium 恒报 prefers-reduced-motion: reduce（本机 MinAnimate=0
-   实证），一刀切会把装饰动画一起杀掉，表现为「代码写了却没动」——core/styles.css:387 进度圈与
-   clipbook 面板标题都踩过同一个坑，两处的处置都是「放缓 + 减幅」。
-   本段同理：保留翻转与加载指示（功能性动效，关掉等于信息丢失），只压缩幅度、拉长周期。 */
-@media (prefers-reduced-motion: reduce) {
-  .bz-cinema--midnight .form-flip.is-flipping{animation-duration:1s}
-  .bz-cinema--midnight .cn-ovl,
-  .bz-cinema--midnight .cn-modal{animation-duration:.42s}
-  .bz-cinema--midnight .cn-modal--detail > *{animation-duration:.46s}
-  .bz-cinema--midnight .dm-pick-list{transition-duration:.46s}
-  .bz-cinema--midnight .pw{transition-duration:.42s}
-  /* 悬浮类改写必须留在 @media (hover: hover) 里（呈报#9 F4 触屏粘滞范式：圈外 :hover 清零），
-     所以这里嵌一层媒体而不是平铺——嵌套媒体同样计入门禁的媒体栈。 */
-  @media (hover: hover) {
-    .bz-cinema--midnight .pcard:hover .pw{transform:translateY(-3px)}
-    .bz-cinema--midnight .pcard:hover .pw img{transform:scale(1.018)}
-  }
-  .bz-cinema--midnight .pcard:active .pw{transform:translateY(-1px)}
-  .bz-cinema--midnight .dm-btn:active,
-  .bz-cinema--midnight .f-choice-btn:active,
-  .bz-cinema--midnight .dm-pick-item:active,
-  .bz-cinema--midnight .ai-start:active,
-  .bz-cinema--midnight .rec-add:active,
-  .bz-cinema--midnight .seg button:active{transform:none}
-}
+/* ── 网格重排（issue 402）：网格做幽灵的定位祖先；离场幽灵停在旧矩形处淡出 ──
+   幽灵不吃事件、不参与布局（绝对定位），渲染后由行为层补进来、动画收尾自清。 */
+.bz-cinema--midnight .grid,
+.bz-cinema--midnight .m-grid{position:relative}
+.bz-cinema--midnight .cn-exit{position:absolute;pointer-events:none;overflow:hidden;
+  border-radius:9px;background:var(--chip);border:1px solid var(--line)}
+.bz-cinema--midnight .cn-exit img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ── 列表行与分析统计条：hover 的底色也是渐入，不是瞬变 ── */
+.bz-cinema--midnight .s-row{transition:background var(--cn-m-fast)}
+
+/* 本段**没有** prefers-reduced-motion 块（issue 400 拍板：不做分支，理由见段首台账）。 */
 
 /* ══════════════════════════════════════════════════════════════════════════
    详情弹窗共享元素过渡（issue 396）：点卡片 → 海报「抽出」飞到详情海报位 →
-   面板从海报处撑开。几何逐次不同，飞行与撑开都走行为层 WAAPI（时长在 flyDur，
-   reduce 时放缓）；这里只做两件事：压掉会被飞行对不上的既有入场，与克隆件外观。
+   面板从海报处撑开。几何逐次不同，飞行与撑开都走行为层 WAAPI（时长与曲线见段首台账，
+   取值在 src/cinema/motion.ts）；这里只做两件事：压掉会被飞行对不上的既有入场，与克隆件外观。
    本段必须排在全域动效段之后——对 .cn-modal 的 animation:none 靠「更晚出现」取胜。 */
 
 /* fly 通道压掉面板整体入场（cnModalIn）：面板在飞行期间整体隐藏，入场动画
@@ -806,8 +826,9 @@
 .bz-cinema--midnight .cn-modal--fly{animation:none}
 /* 内容接力（cnRiseIn）同样压掉：dm-head 里的海报必须原地等克隆落地，
    其余段交给 clip-path 的撑开去揭示——两层位移动效叠在一起会互相打架。
-   接力选择器带 :nth-child 权重更高，这里只能 !important（本文件既有先例） */
-.bz-cinema--midnight .cn-modal--fly > *{animation:none !important}
+   接力规则带 :nth-child（权重 0,3,0），这里补上 .cn-modal--detail 凑到同权重、并排在更后：
+   两条入场语法的从属关系由选择器写清楚，不再用 !important 硬压（issue 401）。 */
+.bz-cinema--midnight .cn-modal--fly.cn-modal--detail > *{animation:none}
 /* 克隆海报：目标尺寸的独立合成层，transform 动画全程不触布局。
    z-index 高过 .cn-ovl（50）：返程克隆挂共享宿主（display:contents，坐标系=面板根），
    而合集弹窗还开着时克隆与弹窗层同处一个层叠上下文——压在弹窗下就看不见海报飞回行里；

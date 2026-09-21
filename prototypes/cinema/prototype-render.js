@@ -1,4 +1,4 @@
-/* 源指纹 386dd1629d09a704 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1d4533065112fbe4 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -61,6 +61,8 @@ var BZR_cinema = (() => {
     seriesStatus: () => seriesStatus,
     sheetHeadHtml: () => sheetHeadHtml,
     spHeadHtml: () => spHeadHtml,
+    starsHtml: () => starsHtml,
+    starsLit: () => starsLit,
     statusColor: () => statusColor,
     statusNum: () => statusNum,
     statusText: () => statusText,
@@ -220,8 +222,16 @@ var BZR_cinema = (() => {
       poster: posterInner(it, posterUrl),
       name: esc((_a = opts.name) != null ? _a : it.name),
       meta: esc([it.year || "", it.director || ""].filter(Boolean).join(" · ")),
-      stars: r && r > 0 ? getStarString(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>'
+      stars: r && r > 0 ? starsHtml(r) + `<span class="num">${Number(r).toFixed(1)}</span>` : '<span class="star-none">未评分</span>'
     };
+  }
+  function starsHtml(rating) {
+    const lit = starsLit(rating);
+    return Array.from({ length: 5 }, (_, i) => i < lit ? '<i class="is-on">★</i>' : "<i>☆</i>").join("");
+  }
+  function starsLit(rating) {
+    var _a;
+    return ((_a = getStarString(rating).match(/★/g)) != null ? _a : []).length;
   }
   function cardHtml(e, posterUrl, fetching = false) {
     const it = e.kind === "series" ? e.face : e.item;
@@ -353,7 +363,7 @@ var BZR_cinema = (() => {
     const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
     const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
     const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>`;
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(ratingVal)}">${starsHtml(ratingVal)}</span></div></div>`;
     const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
     if (editing) {
       return `<div class="cn-modal" style="width:100%">

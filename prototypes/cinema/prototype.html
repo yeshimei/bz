@@ -604,6 +604,104 @@
           t('排序钮底片跟着选中项', pillOn(sf('.j-sort'), sf('.j-sort button[data-k="rating"]')));
         }
 
+        // ── 动效整合（issue 400-403）：台账 token / 网格三件套 / 打断折返 / 星级 / 折回 / 方向键 ──
+        // 这一段全在真浏览器里量真几何——jsdom 全零矩形下这些断言全是空转，只能在这里守。
+        {
+          // 合集段把桌面帧重载过（prototype-view.html），外壳的 dd/dt 还指着**旧文档**（detached）——
+          // 对 detached 元素点 click 不生效、getComputedStyle 也读不出值。这里现取一次当前帧文档。
+          const dv = dtFrame().contentDocument;
+          const dq = (sel) => dv.querySelector(sel);
+          const gridSel = '.d-scroll .grid';
+          const firstCard = dq(gridSel + ' .pcard');
+          const cardMs = firstCard ? Math.round(parseFloat(getComputedStyle(firstCard).transitionDuration) * 1000) : -1;
+          t(`卡片位移走台账 base 档（.28s，实为 ${cardMs}ms）`, cardMs === 280);
+
+          // 网格重排 FLIP：切排序 → 顺序真变了 + 留下来的卡立刻在演补位
+          const order0 = [...dq(gridSel).querySelectorAll('.pcard')].map((c) => c.dataset.cinemaKey).join();
+          dq('.j-sort button[data-k="created"]').click();
+          const order1 = [...dq(gridSel).querySelectorAll('.pcard')].map((c) => c.dataset.cinemaKey).join();
+          t('切排序后顺序确实变了（FLIP 非空转的前提）', order0 !== order1);
+          const flipAnim = [...dq(gridSel).querySelectorAll('.pcard')].some((c) => (c.getAnimations?.() ?? [])
+            .some((a) => (a.effect?.getKeyframes?.() ?? []).some((k) => (k.transform || '').includes('translate'))));
+          t('重排有补位动画（FLIP）', flipAnim);
+          await sleep(400);
+
+          // 离场幽灵：筛到某一组 → 消失的卡按旧矩形留幽灵，随后自清；再切回全部
+          const railBtn = [...dv.querySelectorAll('.d-rail .rail-item[data-g]')].find((el) => el.dataset.g !== '全部');
+          const n0 = dq(gridSel).querySelectorAll('.pcard').length;
+          railBtn.click();
+          await sleep(40);
+          const n1 = dq(gridSel).querySelectorAll('.pcard').length;
+          const ghosts = dq(gridSel).querySelectorAll('.cn-exit').length;
+          // 幽灵数 ≤ 消失数：视口外的卡本来就不演（省几百个合成层），只要求「消失的都留了残影」
+          t(`离场幽灵数量对得上（${n0}→${n1} 幽灵=${ghosts}）`, n0 > n1 && ghosts > 0 && ghosts <= n0 - n1);
+          await until(() => dq(gridSel).querySelectorAll('.cn-exit').length === 0, 3000);
+          t('幽灵自清（不留残影）', dq(gridSel).querySelectorAll('.cn-exit').length === 0);
+          dq('.d-rail .rail-item[data-g="全部"]').click();
+          await sleep(300);
+
+          // 打断即折返（issue 401）：点卡起飞 → 起飞途中点遮罩 → 海报带着图飞回源卡
+          const bCard = [...dv.querySelectorAll(gridSel + ' .pcard')].find((c) => c.querySelector('.pw img[src]'));
+          t('有带海报的卡可演飞行', !!bCard);
+          if (bCard) {
+            bCard.click();
+            await sleep(60);
+            // 去掉 !important 之后（issue 401）接力动画仍必须被压住——那是「同权重 + 排在更后」
+            // 才成立的约定，这条断言就是那个约定的守卫（改回选择器权重/挪动段序会当场红）
+            const flyKid = dv.querySelector('.cn-modal--fly > *');
+            const flyModal = dv.querySelector('.cn-modal--fly');
+            t('fly 通道压住面板入场与内容接力（不靠 !important）',
+              !!flyKid && !!flyModal && getComputedStyle(flyKid).animationName === 'none'
+              && getComputedStyle(flyModal).animationName === 'none',
+              flyKid ? `段=${getComputedStyle(flyKid).animationName} 面板=${getComputedStyle(flyModal).animationName}` : '没有 .cn-modal--fly');
+            const flying = dv.querySelectorAll('.cn-fly').length;
+            dv.querySelector('.cn-ovl').click(); // 起飞途中关（ESC / 点遮罩同路径）
+            await sleep(30);
+            const folding = dv.querySelectorAll('.cn-fly').length; // 折返中：飞行件还在（被搬到共享宿主）
+            let home = false;
+            for (let i = 0; i < 80 && !home; i++) {
+              home = !dv.querySelector('.cn-ovl') && !dv.querySelector('.cn-fly') && bCard.style.display === '';
+              if (!home) await sleep(40);
+            }
+            t('起飞中关：海报折返、卡归位（不硬切）', flying === 1 && folding === 1 && home,
+              `起飞件=${flying} 折返件=${folding} 归位=${home}`);
+          }
+
+          // 星级点亮 + 保存折回（issue 403）：拖评分滑杆 → 星预览逐颗点亮；保存 → 卡落位闪、面板折回
+          dq(gridSel + ' .pcard').click();
+          await until(() => !!dv.querySelector('.cn-ovl .j-edit'), 5000);
+          dv.querySelector('.cn-ovl .j-edit').click();
+          await until(() => !!dv.querySelector('.cn-ovl .j-range'), 5000);
+          const rng = dv.querySelector('.cn-ovl .j-range');
+          const starsBox = dv.querySelector('.cn-ovl .j-stars');
+          rng.value = '4';
+          rng.dispatchEvent(new Event('input', { bubbles: true }));
+          const lit4 = starsBox.querySelectorAll('i.is-on').length;
+          rng.value = '9';
+          rng.dispatchEvent(new Event('input', { bubbles: true }));
+          const lit9 = starsBox.querySelectorAll('i.is-on').length;
+          t('评分滑杆星预览逐颗点亮', lit4 === 2 && lit9 === 4, `4分=${lit4}颗 9分=${lit9}颗`);
+
+          const formOv = dv.querySelector('.cn-ovl');
+          formOv.querySelector('.j-save').click();
+          await sleep(60);
+          const foldAnim = (formOv.getAnimations?.() ?? [])
+            .some((a) => (a.effect?.getKeyframes?.() ?? []).some((k) => !!k.clipPath));
+          t('保存后面板折回卡片（clip-path 收势）', foldAnim);
+          const flash = [...dv.querySelectorAll(gridSel + ' .pcard .pw')].some((pw) => (pw.getAnimations?.() ?? [])
+            .some((a) => (a.effect?.getKeyframes?.() ?? []).some((k) => !!k.boxShadow)));
+          t('保存后目标卡落位闪', flash);
+          for (let i = 0; i < 60 && dv.querySelector('.cn-ovl'); i++) await sleep(40);
+          t('折回结束层已收', !dv.querySelector('.cn-ovl'));
+
+          // 方向键导航（issue 403）：焦点在第一张卡 → 右 → 落到第二张（真矩形下按几何选）
+          const kbCards = [...dq(gridSel).querySelectorAll('.pcard')];
+          kbCards[0].focus();
+          kbCards[0].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true }));
+          t('方向键移动焦点（几何最近）', dv.activeElement === kbCards[1]);
+          kbCards[0].focus();
+        }
+
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
           : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;
