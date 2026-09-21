@@ -1,5 +1,5 @@
-/* 源指纹 c51bec4bd035a59a · 仓内输入 64 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 83954f375bf406c9 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/stat-film.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -7703,6 +7703,1104 @@ tags:
   ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bookmark", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
   }
 
+  // src/cinema/stat-film.ts
+  var FILM_SCENES = [
+    "s0",
+    "i1",
+    "s1",
+    "i2",
+    "s2",
+    "s10",
+    "s3",
+    "s11",
+    "s12",
+    "i3",
+    "s4",
+    "s13",
+    "s14",
+    "s15",
+    "s16",
+    "s17",
+    "s18",
+    "s19",
+    "i4",
+    "s5",
+    "s6",
+    "s7"
+  ];
+  var FILM_SCENE_H = {
+    s0: 2,
+    i1: 2.2,
+    s1: 4.4,
+    i2: 2.2,
+    s2: 3,
+    s10: 2.4,
+    s3: 4.4,
+    s11: 2.4,
+    s12: 2.4,
+    i3: 2.2,
+    s4: 2.8,
+    s13: 2.8,
+    s14: 2.8,
+    s15: 2.2,
+    s16: 2.8,
+    s17: 2.4,
+    s18: 2.2,
+    s19: 2.8,
+    i4: 2.2,
+    s5: 2.8,
+    s6: 2.8,
+    s7: 2
+  };
+  var FILM_SCENE_RATE = {
+    s0: 0.7,
+    i1: 0.9,
+    s1: 1.15,
+    i2: 0.9,
+    s2: 0.9,
+    s10: 1.05,
+    s3: 0.8,
+    s11: 0.95,
+    s12: 1.35,
+    i3: 0.9,
+    s4: 1,
+    s13: 1.05,
+    s14: 1.1,
+    s15: 1.15,
+    s16: 1.4,
+    s17: 1.2,
+    s18: 1.3,
+    s19: 0.85,
+    i4: 0.9,
+    s5: 0.8,
+    s6: 0.7,
+    s7: 1
+  };
+  var filmRateOf = (id) => {
+    var _a;
+    return (_a = FILM_SCENE_RATE[id]) != null ? _a : 1;
+  };
+  var FILM_SCENE_NAMES = {
+    s0: "倒计时",
+    i1: "入座",
+    s1: "馆藏长廊",
+    i2: "光影",
+    s2: "评分星云",
+    s10: "年份浪潮",
+    s3: "放映编年",
+    s11: "十二档期",
+    s12: "本周排片",
+    i3: "偏爱",
+    s4: "霓虹片街",
+    s13: "修片馆",
+    s14: "导演特展",
+    s15: "群像长卷",
+    s16: "打分天平",
+    s17: "连映夜",
+    s18: "追剧深度",
+    s19: "弹幕影评",
+    i4: "散场",
+    s5: "年度名人堂",
+    s6: "片尾致谢",
+    s7: "下档预告"
+  };
+  var WEEK_NAMES = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  var CN_NUM = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 };
+  var cnToNum = (s) => {
+    var _a;
+    return (_a = CN_NUM[s]) != null ? _a : parseInt(s, 10) || 0;
+  };
+  var REVIEW_KEYWORDS2 = ["好看", "喜欢", "推荐", "经典", "感动", "治愈", "失望", "无聊", "一般", "神作", "烂片", "封神", "震撼", "催泪", "熬夜", "二刷", "满分"];
+  function deriveFilmData(items) {
+    const watched = items.filter((it) => it.status === STATUS_WATCHED);
+    const rated = watched.filter((it) => {
+      var _a;
+      return ((_a = it.rating) != null ? _a : 0) > 0;
+    }).sort((a, b) => {
+      var _a, _b;
+      return ((_a = b.rating) != null ? _a : 0) - ((_b = a.rating) != null ? _b : 0);
+    });
+    const avgRating = rated.length ? rated.reduce((s, it) => {
+      var _a;
+      return s + ((_a = it.rating) != null ? _a : 0);
+    }, 0) / rated.length : 0;
+    const timeline = watched.filter((it) => !!it.watchDate).sort((a, b) => a.watchDate < b.watchDate ? -1 : 1);
+    const years = timeline.map((it) => Number(it.watchDate.slice(0, 4)));
+    const yearMin = years.length ? Math.min(...years) : 0;
+    const yearMax = years.length ? Math.max(...years) : 0;
+    const wantList = items.filter((it) => it.status === STATUS_WANT).slice(0, 3);
+    const weekN = [0, 0, 0, 0, 0, 0, 0];
+    timeline.forEach((it) => {
+      weekN[(new Date(it.watchDate).getDay() + 6) % 7]++;
+    });
+    const peakDay = weekN.indexOf(Math.max(...weekN));
+    const weekendN = weekN[5] + weekN[6];
+    const yearCnt = {};
+    timeline.forEach((it) => {
+      const y = it.watchDate.slice(0, 4);
+      yearCnt[y] = (yearCnt[y] || 0) + 1;
+    });
+    const yearArr = Object.entries(yearCnt).sort((a, b) => a[0] < b[0] ? -1 : 1);
+    const monthN = Array(12).fill(0);
+    timeline.forEach((it) => {
+      monthN[Number(it.watchDate.slice(5, 7)) - 1]++;
+    });
+    const peakMonth = monthN.indexOf(Math.max(...monthN));
+    const ageOf = (it) => it.watchDate && it.year ? Number(it.watchDate.slice(0, 4)) - Number(it.year) : null;
+    const AGES = { 当年: [], "1-3年": [], "4-10年": [], "≥10年": [] };
+    watched.forEach((it) => {
+      const a = ageOf(it);
+      if (a === null || isNaN(a)) return;
+      const k = a <= 0 ? "当年" : a <= 3 ? "1-3年" : a <= 10 ? "4-10年" : "≥10年";
+      AGES[k].push(it);
+    });
+    const ageList = watched.map(ageOf).filter((a) => a !== null && !isNaN(a));
+    const avgAge = ageList.length ? (ageList.reduce((s, a) => s + a, 0) / ageList.length).toFixed(1) : "0";
+    const entityMap = (field) => {
+      const m = {};
+      items.forEach((it) => String(it[field] || "").split(/\s*\/\s*/).forEach((x) => {
+        if (!x) return;
+        const key = x.trim();
+        (m[key] = m[key] || []).push(it);
+      }));
+      return Object.entries(m).sort((a, b) => b[1].length - a[1].length).map(([name, films]) => ({ name, count: films.length, films }));
+    };
+    const diffPairs = rated.filter((it) => !!it.doubanRating);
+    const avgDiff = diffPairs.length ? diffPairs.reduce((s, it) => {
+      var _a;
+      return s + ((_a = it.rating) != null ? _a : 0) - parseFloat(it.doubanRating);
+    }, 0) / diffPairs.length : 0;
+    const seriesMap = {};
+    items.forEach((it) => {
+      const m = String(it.name).match(/^(.*?)\s*第[一二三四五六七八九十0-9]+\s*季/);
+      if (!m || !m[1]) return;
+      (seriesMap[m[1]] = seriesMap[m[1]] || []).push(it);
+    });
+    const seriesList = Object.entries(seriesMap).filter(([, v]) => v.length >= 2).sort((a, b) => b[1].length - a[1].length).map(([base, films]) => ({ base, films }));
+    const tvItems = items.filter((it) => /第[一二三四五六七八九十0-9]+\s*季/.test(String(it.name))).map((it) => {
+      const m = String(it.name).match(/第([一二三四五六七八九十0-9]+)\s*季/);
+      return { base: String(it.name).replace(/\s*第[一二三四五六七八九十0-9]+\s*季.*/, ""), sn: m ? cnToNum(m[1]) : 1 };
+    }).reduce((acc, it) => {
+      const got = acc.find((x) => x.base === it.base);
+      if (got) got.seasons = Math.max(got.seasons, it.sn);
+      else acc.push({ base: it.base, seasons: it.sn });
+      return acc;
+    }, []).sort((a, b) => b.seasons - a.seasons);
+    const dmLines = [];
+    items.filter((it) => !!it.review).forEach((it) => {
+      String(it.review).split(/[。！？!?\n]+/).forEach((sen) => {
+        const s = sen.trim();
+        if (s.length >= 6) dmLines.push({ text: s.slice(0, 26), hit: REVIEW_KEYWORDS2.some((k) => s.includes(k)) });
+      });
+    });
+    const topOf = (field, n) => {
+      const m = {};
+      items.forEach((it) => String(it[field] || "").split(/\s*\/\s*/).forEach((x) => {
+        if (!x) return;
+        m[x] = (m[x] || 0) + 1;
+      }));
+      return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, n);
+    };
+    const monthKeys = new Set(timeline.map((it) => it.watchDate.slice(0, 7)));
+    return {
+      total: items.length,
+      watchedCount: watched.length,
+      wantCount: items.filter((it) => it.status !== STATUS_WATCHED).length,
+      rated,
+      avgRating,
+      timeline,
+      yearMin,
+      yearMax,
+      weekN,
+      peakDay,
+      weekendN,
+      yearArr,
+      peakYear: yearArr.length ? yearArr.reduce((b, x) => x[1] > b[1] ? x : b, ["", 0]) : ["", 0],
+      monthN,
+      peakMonth,
+      ageGroups: Object.entries(AGES),
+      avgAge,
+      directors: entityMap("director").slice(0, 6),
+      actors: entityMap("actors").slice(0, 6),
+      diffPairs,
+      avgDiff,
+      treasure: diffPairs.filter((it) => {
+        var _a;
+        return ((_a = it.rating) != null ? _a : 0) >= 9 && parseFloat(it.doubanRating) < 8;
+      }),
+      disappoint: diffPairs.filter((it) => {
+        var _a;
+        return ((_a = it.rating) != null ? _a : 10) <= 4 && parseFloat(it.doubanRating) >= 8.5;
+      }),
+      seriesList,
+      tvItems,
+      avgSeason: tvItems.length ? (tvItems.reduce((s, it) => s + it.seasons, 0) / tvItems.length).toFixed(1) : "0",
+      dmLines,
+      reviewCount: items.filter((it) => !!it.review).length,
+      want: wantList,
+      monthFreq: monthKeys.size ? (timeline.length / monthKeys.size).toFixed(1) : "0",
+      topGenres: topOf("genre", 5),
+      topRegions: topOf("region", 3)
+    };
+  }
+  var hashHue = (s) => {
+    var _a;
+    let h = 0;
+    for (const c of s) h = (h * 31 + ((_a = c.codePointAt(0)) != null ? _a : 0)) % 360;
+    return h;
+  };
+  function posterTag(it, posterOf) {
+    const src = posterOf(it);
+    if (src) return `<img src="${escapeHtml2(src)}" alt="${escapeHtml2(it.name)}" loading="lazy" decoding="async">`;
+    const h = hashHue(it.name);
+    return `<i class="bz-film-ph" style="--pc1:hsl(${h} 30% 17%);--pc2:hsl(${(h + 46) % 360} 38% 8%)"><span>${escapeHtml2(it.name)}</span></i>`;
+  }
+  var NEON_COLORS = { gold: "#ffd98a", warm: "#ff9d7a" };
+  function statFilmHtml(data, posterOf) {
+    var _a, _b;
+    const H = (id) => `style="height:calc(var(--film-unit) * ${FILM_SCENE_H[id]})"`;
+    const scene = (id, inner, tag = "") => `<section class="bz-film-scn" data-scene="${id}" ${H(id)}><div class="bz-film-pin">${inner}</div>${tag}</section>`;
+    const scnTag = (no, title, cap) => `<div class="bz-film-tag"><span class="no">${no}</span><h2>${escapeHtml2(title)}</h2><span class="cap">${escapeHtml2(cap)}</span></div>`;
+    const inter = (id, vol, title, sub) => scene(id, `<div class="bz-film-inter"><div class="vol">${vol}</div><h2>${escapeHtml2(title)}</h2><div class="rule"></div><div class="sub">${escapeHtml2(sub)}</div></div>`);
+    const s0 = scene("s0", `
+    <canvas class="bz-film-cv" data-cv="beam"></canvas>
+    <div class="bz-film-count">
+      <div class="dial"></div><div class="ccross"></div><div class="ccross h"></div>
+      <div class="cring"></div><div class="cring r2"></div>
+      <div class="cdiv" data-c="0"><b>叁</b></div>
+      <div class="cdiv" data-c="1"><b>贰</b></div>
+      <div class="cdiv" data-c="2"><b>壹</b></div>
+    </div>
+    <div class="bz-film-hero">
+      <h1>观影年鉴</h1><div class="rule"></div>
+      <p class="sub">私人放映史 · 馆藏 <b>${data.total}</b> 部</p>
+      <p class="meta">四本胶片 · 滚轮翻幕 · 每幕自头放映</p>
+    </div>
+    <div class="bz-film-hint">拨动滚轮 · 翻到下一幕</div>`);
+    const corridorPosters = Array.from({ length: 18 }, (_, i) => {
+      const it = data.timeline[i % data.timeline.length];
+      const side = i % 2 === 0 ? -1 : 1;
+      const row = Math.floor(i / 2);
+      return `<figure class="bz-film-p3" style="transform:translate(-50%,-50%) translate3d(var(--x),0,var(--z)) rotateY(var(--a));--x:${side * 34}%;--z:${-(300 + row * 470)}px;--a:${side * -62}deg">${posterTag(it, posterOf)}</figure>`;
+    }).join("");
+    const s1 = scene(
+      "s1",
+      `
+    <div class="bz-film-corr"><div class="bz-film-corr-inner" data-ref="corr">${corridorPosters}
+    <div class="bz-film-end-sign" data-ref="sign" style="--z:-3220px"><div class="big">馆藏长廊</div><div class="small">${data.total} 部 · 已放映 ${data.watchedCount} 部</div></div></div></div>
+    <div class="bz-film-ground"></div><div class="bz-film-fog"></div>`,
+      scnTag("第一本", "馆藏长廊", `馆藏 ${data.total} 部 · 每一格座位都有主`)
+    );
+    const s2 = scene(
+      "s2",
+      `
+    <canvas class="bz-film-cv" data-cv="nebula"></canvas>
+    <div class="bz-film-axis x"><span>${data.yearMin}</span><span>观影年份 →</span><span>${data.yearMax}</span></div>
+    <div class="bz-film-axis y">评分 →</div>
+    <div class="bz-film-neb-meta"><div class="num" data-ref="avg">0.0</div><div class="lbl">平均评分 · 十分制</div></div>
+    <div class="bz-film-neb-top">${data.rated.slice(0, 3).map((it) => `<figure class="bz-film-mini">${posterTag(it, posterOf)}<figcaption>${escapeHtml2(it.name)}</figcaption></figure>`).join("")}</div>`,
+      scnTag("第二本", "评分星云", "每星一部 · 亮度即偏爱")
+    );
+    const s10 = scene(
+      "s10",
+      `
+    <canvas class="bz-film-cv" data-cv="wave"></canvas>
+    <div class="bz-film-wave-meta"><div class="num" data-ref="wave">0</div><div class="lbl">最旺一年 · 部</div></div>`,
+      scnTag("第二本", "年份浪潮", "一年一浪 · 越滚越高")
+    );
+    const frames = data.timeline.slice(-24).map((it) => `<figure class="bz-film-frame">${posterTag(it, posterOf)}<figcaption><span class="yy">${escapeHtml2(it.watchDate.slice(0, 4))}.${escapeHtml2(it.watchDate.slice(5, 7))}</span>${escapeHtml2(it.name)}</figcaption></figure>`).join("");
+    const s3 = scene(
+      "s3",
+      `
+    <div class="bz-film-filmwrap"><div class="perf-strip"></div><div class="bz-film-strip" data-ref="strip">${frames}</div><div class="perf-strip b"></div></div>`,
+      scnTag("第二本", "放映编年", `${data.timeline.length} 次落座 · 按观影日期走片`)
+    );
+    const s11 = scene(
+      "s11",
+      `
+    <canvas class="bz-film-cv" data-cv="dial"></canvas>
+    <div class="bz-film-dial-meta"><div class="num" data-ref="dial">${data.peakMonth + 1} 月</div><div class="lbl">最旺档期 · ${data.monthN[data.peakMonth]} 部</div></div>`,
+      scnTag("第二本", "十二档期", "一月一扇 · 档期玫瑰")
+    );
+    const dayCards = WEEK_NAMES.map((nm, i) => {
+      const stubs = Array.from({ length: data.weekN[i] }, () => '<i class="bz-film-stub"></i>').join("");
+      return `<div class="bz-film-day${i >= 5 ? " is-wknd" : ""}${i === data.peakDay ? " is-peak" : ""}">
+      <span class="peak">最旺</span><div class="dn">${nm}</div><div class="dc">${data.weekN[i]}<small>场</small></div>
+      <div class="stubs">${stubs}</div></div>`;
+    }).join("");
+    const s12 = scene(
+      "s12",
+      `<div class="bz-film-week">${dayCards}</div>`,
+      scnTag("第二本", "本周排片", `周末 ${data.weekendN} 场（${data.timeline.length ? Math.round(data.weekendN / data.timeline.length * 100) : 0}%）· 最旺在${WEEK_NAMES[data.peakDay]}`)
+    );
+    const neonCols = [
+      ...data.topGenres.map(([label, n]) => ({ label, n, c: NEON_COLORS.gold })),
+      ...data.topRegions.map(([label, n]) => ({ label, n, c: NEON_COLORS.warm }))
+    ].map(({ label, n, c }) => `<div class="bz-film-neon-col" style="--nc:${c}"><div class="txt">${escapeHtml2(label)}</div><div class="cnt">${n} 部</div><div class="ref" aria-hidden="true">${escapeHtml2(label)}</div></div>`).join("");
+    const s4 = scene(
+      "s4",
+      `<div class="bz-film-street">${neonCols}</div><div class="bz-film-street-glow"></div>`,
+      scnTag("第三本", "霓虹片街", "类型与产地 · 灯牌亮度即场次")
+    );
+    const shelves = data.ageGroups.map(([label, list]) => {
+      const tint = label === "当年" ? 0 : label === "1-3年" ? 0.35 : label === "4-10年" ? 0.7 : 1;
+      const posters = list.length ? list.slice(0, 4).map((it) => posterTag(it, posterOf)).join("") : '<span class="bz-film-none">空</span>';
+      return `<div class="bz-film-shelf" data-tint="${tint}"><div class="sn">${escapeHtml2(label)}</div>
+      <div class="sc">${list.length}<small> 部</small></div><div class="sp">${posters}</div>
+      <div class="oldest">${list.length ? `最早《${escapeHtml2(list[list.length - 1].name)}》` : ""}</div></div>`;
+    }).join("");
+    const s13 = scene(
+      "s13",
+      `
+    <canvas class="bz-film-cv" data-cv="agefx"></canvas>
+    <div class="bz-film-age-head"><div class="num" data-ref="age">0</div><div class="lbl">平均片龄 · 年</div></div>
+    <div class="bz-film-vault">${shelves}</div>`,
+      scnTag("第三本", "修片馆", "越老的片子 · 越接近胶片的颜色")
+    );
+    const plaques = data.directors.map((p, i) => `<article class="bz-film-plaque${i === 0 ? " master" : ""}">
+    ${i === 0 ? '<span class="tag">御用</span>' : ""}<h3>${escapeHtml2(p.name)}</h3>
+    <div class="pn">${p.count} 部 · 全看过</div><div class="pp">${p.films.slice(0, 4).map((it) => posterTag(it, posterOf)).join("")}</div></article>`).join("");
+    const s14 = scene(
+      "s14",
+      `<div class="bz-film-spot" data-ref="spot"></div><div class="bz-film-gallery">${plaques}</div>`,
+      scnTag("第三本", "导演特展", "一遍不够 · 就多来几遍")
+    );
+    const starCards = data.actors.map((p) => `<div class="bz-film-star"><div class="nm">${escapeHtml2(p.name)}<small><b>${p.count}</b> 部</small></div>
+    <div class="ims">${p.films.slice(0, 2).map((it) => posterTag(it, posterOf)).join("")}</div></div>`).join("");
+    const s15 = scene(
+      "s15",
+      `
+    <div class="bz-film-parade"><div class="bz-film-ghost" data-ref="ghost"></div><div class="bz-film-parade-strip" data-ref="parade">${starCards}</div></div>`,
+      scnTag("第三本", "群像长卷", "常来串门的那些脸")
+    );
+    const cmpRow = (it) => {
+      var _a2, _b2;
+      return `<div class="row"><span class="nm">《${escapeHtml2(it.name)}》</span><span class="vv">我 ${((_a2 = it.rating) != null ? _a2 : 0).toFixed(1)} · 豆 ${escapeHtml2((_b2 = it.doubanRating) != null ? _b2 : "—")}</span></div>`;
+    };
+    const s16 = scene(
+      "s16",
+      `
+    <div class="bz-film-diff-head"><div class="num" data-ref="diff">+0.0</div><div class="lbl">打分天平 · 个人 − 豆瓣</div></div>
+    <div class="bz-film-balance"><div class="arm" data-ref="arm"><i class="l"></i><i class="r"></i></div><div class="ful"></div></div>
+    <div class="bz-film-scale">
+      <div class="pan left" data-ref="panL"><div class="pt">宝藏片 · 个人≥9 豆瓣&lt;8</div>
+        ${data.treasure.length ? data.treasure.map(cmpRow).join("") : '<div class="empty">暂无 —— 眼光与大众还算合拍</div>'}</div>
+      <div class="pan right" data-ref="panR"><div class="pt">失望榜 · 个人≤4 豆瓣≥8.5</div>
+        ${data.disappoint.length ? data.disappoint.map(cmpRow).join("") : '<div class="empty">暂无 —— 没有错杀的「神作」</div>'}</div>
+    </div>`,
+      scnTag("第三本", "打分天平", "宝藏与失望 · 都有名单")
+    );
+    const maros = data.seriesList.slice(0, 4).map((s) => `<div class="bz-film-maro">
+    <div class="info"><div class="marq"></div><h3>《${escapeHtml2(s.base)}》</h3><div class="n">${s.films.length} 部连映</div></div>
+    <div class="stack">${s.films.map((it) => posterTag(it, posterOf)).join("")}</div></div>`).join("");
+    const s17 = scene(
+      "s17",
+      `<div class="bz-film-marathon">${maros}</div>`,
+      scnTag("第三本", "连映夜", "同一个世界 · 一晚看穿")
+    );
+    const bingeRows = data.tvItems.slice(0, 6).map((t) => `<div class="bz-film-brow">
+    <span class="bn">《${escapeHtml2(t.base)}》</span><span class="reels">${'<i class="rl"></i>'.repeat(Math.min(t.seasons, 8))}</span>
+    <span class="bn2">追到第 ${t.seasons} 季</span></div>`).join("");
+    const s18 = scene(
+      "s18",
+      `
+    <div class="bz-film-binge"><div class="wm" data-ref="wm">${(_b = (_a = data.tvItems[0]) == null ? void 0 : _a.seasons) != null ? _b : ""}</div>
+      <div class="binge-head"><div class="num" data-ref="binge">0</div><div class="lbl">平均追到 · 季</div></div>
+      <div data-ref="bingerows">${bingeRows}</div></div>`,
+      scnTag("第三本", "追剧深度", "第几季弃的 · 都记着")
+    );
+    const s19 = scene(
+      "s19",
+      `
+    <canvas class="bz-film-cv" data-cv="dm"></canvas>
+    <div class="bz-film-dm-meta"><div class="num" data-ref="dm">0</div><div class="lbl">影评手记 · 篇</div></div>`,
+      scnTag("第三本", "弹幕影评", "散场之后 · 你留下的那句话")
+    );
+    const MEDALS = ["榜首之作", "榜眼之作", "探花之作"];
+    const awardCards = data.rated.slice(0, 3).map((it, i) => {
+      var _a2, _b2, _c, _d, _e;
+      return `<article class="bz-film-award">
+    <span class="poster">${posterTag(it, posterOf)}</span>
+    <span class="medal ${i ? `m${i + 1}` : ""}">${MEDALS[i]}</span>
+    <h3>《${escapeHtml2(it.name)}》</h3>
+    <div class="meta">${escapeHtml2((_a2 = it.year) != null ? _a2 : "—")} 年 · ${escapeHtml2((_b2 = it.director) != null ? _b2 : "")}<br>${escapeHtml2((_c = it.genre) != null ? _c : "")}</div>
+    <div class="stars"><span class="my">${((_d = it.rating) != null ? _d : 0).toFixed(1)}</span>
+      <span class="db">豆瓣 ${escapeHtml2((_e = it.doubanRating) != null ? _e : "—")}</span><span class="cap">我的评分</span></div></article>`;
+    }).join("");
+    const s5 = scene(
+      "s5",
+      `<div class="bz-film-hall"><div class="bz-film-rays" data-ref="rays"></div>${awardCards}</div>`,
+      scnTag("第四本", "年度名人堂", "你的评分 · 最高敬意")
+    );
+    const fav = (list, tag) => list[0] ? `<div class="role"><div class="r">${tag}</div><div class="n">${escapeHtml2(list[0].name)} <small>· ${list[0].count} 部</small></div></div>` : "";
+    const s6 = scene("s6", `
+    <div class="bz-film-rollbox"><div class="bz-film-roll" data-ref="roll">
+      <div class="role"><div class="r">出品</div><div class="n">包仔影业</div></div>
+      <div class="role"><div class="r">领衔主演</div><div class="n">${data.watchedCount} 部影片 <small>· 全员本色出演</small></div></div>
+      ${fav(data.directors, "御用导演")}${fav(data.actors, "座上常客")}
+      <div class="role"><div class="r">最旺一年</div><div class="n">${escapeHtml2(data.peakYear[0])} 年 <small>· ${data.peakYear[1]} 部</small></div></div>
+      <div class="role"><div class="r">最旺档期</div><div class="n">${data.peakMonth + 1} 月 <small>· ${data.monthN[data.peakMonth]} 部</small></div></div>
+      <div class="role"><div class="r">最常落座</div><div class="n">${WEEK_NAMES[data.peakDay]} <small>· ${data.weekN[data.peakDay]} 场</small></div></div>
+      <div class="role"><div class="r">月均场次</div><div class="n">${data.monthFreq} 部</div></div>
+      <div class="role"><div class="r">影评手记</div><div class="n">${data.reviewCount} 篇</div></div>
+      <div class="role"><div class="r">平均片龄</div><div class="n">${data.avgAge} 年</div></div>
+      <div class="role"><div class="r">特别鸣谢</div><div class="n">每一个愿意看完字幕的你</div></div>
+    </div></div>
+    <div class="bz-film-theend" data-ref="theend"><div class="ring"></div><div class="t">剧 终</div></div>`);
+    const nextCards = data.want.map((it) => `<figure class="bz-film-next">
+    ${posterTag(it, posterOf)}<span class="stamp">待映</span>
+    <figcaption><div class="nm">${escapeHtml2(it.name)}</div><div class="db">${it.doubanRating ? `豆瓣 ${escapeHtml2(it.doubanRating)}` : "片源锁定中"}</div></figcaption></figure>`).join("");
+    const s7 = scene("s7", `
+    <div class="bz-film-cone l"></div><div class="bz-film-cone r"></div>
+    <div class="bz-film-next-attr"><div class="soon">下 档 预 告</div>
+      <div class="bz-film-next-row" data-ref="next">${nextCards}</div>
+      <button class="bz-film-replay" data-ref="replay">重 映</button></div>`);
+    const fixed = `<div class="bz-film-fixed">
+    <canvas class="bz-film-cv bz-film-grain" data-cv="grain"></canvas>
+    <div class="bz-film-nav"><div class="bz-film-track" data-ref="track"><i class="bz-film-dot" data-ref="dot"></i></div>
+    <span class="bz-film-now" data-ref="now">倒计时</span></div></div>`;
+    const interCard = (id, vol, title, sub) => scene(id, `<div class="bz-film-inter"><div class="vol">${vol}</div><h2>${escapeHtml2(title)}</h2><div class="rule"></div><div class="sub">${escapeHtml2(sub)}</div></div>`);
+    return `<div class="bz-stat-film">${fixed}${s0}
+    ${interCard("i1", "第 一 本", "入座", "灯暗下来 · 馆藏各就各位")}${s1}
+    ${interCard("i2", "第 二 本", "光影", "光打在墙上 · 时间有了形状")}${s2}${s10}${s3}${s11}${s12}
+    ${interCard("i3", "第 三 本", "偏爱", "看什么 · 重复看什么 · 打几分")}${s4}${s13}${s14}${s15}${s16}${s17}${s18}${s19}
+    ${interCard("i4", "第 四 本", "散场", "把最好的几部 · 再放一遍")}${s5}${s6}${s7}</div>`;
+  }
+  var SPEED = 420;
+  var activeEngine = null;
+  function bindStatFilm(root, data) {
+    if (activeEngine) activeEngine.dead = true;
+    const scroller = root.closest(".sp-body");
+    const engine = { dead: !scroller };
+    activeEngine = engine;
+    const handle = {
+      film: { playing: false, scene: "s0", sceneDone: false },
+      playScene(id) {
+        playScene(id);
+      },
+      stop() {
+        engine.dead = true;
+        scroller == null ? void 0 : scroller.removeEventListener("wheel", onWheel);
+      }
+    };
+    if (!scroller) return handle;
+    const sc = scroller;
+    const q = (sel) => root.querySelector(sel);
+    const all = (sel) => [...root.querySelectorAll(sel)];
+    const size = () => {
+      root.style.setProperty("--film-unit", `${sc.clientHeight}px`);
+      all("[data-cv]").forEach((cv2) => {
+        cv2.width = sc.clientWidth;
+        cv2.height = sc.clientHeight;
+      });
+    };
+    size();
+    const cs = getComputedStyle(root);
+    const V = (n, fb) => cs.getPropertyValue(n).trim() || fb;
+    const PAL = {
+      ink: V("--sf-ink-rgb", "239,230,208"),
+      dim: V("--sf-dim-rgb", "154,140,114"),
+      faint: V("--sf-faint-rgb", "92,81,64"),
+      gold: V("--sf-gold-rgb", "201,153,47"),
+      star: V("--sf-star-rgb", "255,217,138"),
+      star2: V("--sf-star2-rgb", "159,192,232"),
+      core: V("--sf-core-rgb", "255,246,228"),
+      dust: V("--sf-dust-rgb", "239,230,208")
+    };
+    const sceneEl = (id) => root.querySelector(`[data-scene="${id}"]`);
+    const absTop = (el) => el.getBoundingClientRect().top - root.getBoundingClientRect().top + sc.scrollTop;
+    const film = handle.film;
+    const clamp01 = (x) => Math.min(1, Math.max(0, x));
+    const easeOut = (x) => 1 - Math.pow(1 - x, 3);
+    const easeOutBack = (x) => {
+      const c1 = 1.70158, c3 = c1 + 1;
+      return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+    };
+    const lerp = (a, b, t) => a + (b - a) * t;
+    const ref = (name) => root.querySelector(`[data-ref="${name}"]`);
+    const cv = (name) => {
+      var _a, _b;
+      return (_b = (_a = q(`[data-cv="${name}"]`)) == null ? void 0 : _a.getContext("2d")) != null ? _b : null;
+    };
+    function playScene(id) {
+      const el = sceneEl(id);
+      if (!el) return;
+      film.scene = id;
+      film.sceneDone = false;
+      sc.scrollTop = absTop(el);
+      film.playing = true;
+    }
+    handle.playScene = playScene;
+    const nextFrame = (cb) => {
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(cb);
+      else cb(performance.now());
+    };
+    let snapping = false;
+    let lastWheelAt = 0;
+    function snapTo(id) {
+      if (snapping) return;
+      const el = sceneEl(id);
+      if (!el) return;
+      snapping = true;
+      film.playing = false;
+      const from = sc.scrollTop;
+      const to = Math.max(0, Math.min(sc.scrollHeight - sc.clientHeight, absTop(el)));
+      const t02 = performance.now();
+      const DUR = 680;
+      const step = () => {
+        const k = Math.min(1, (performance.now() - t02) / DUR);
+        const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
+        sc.scrollTop = from + (to - from) * e;
+        if (k < 1 && !engine.dead) nextFrame(step);
+        else {
+          snapping = false;
+          playScene(id);
+        }
+      };
+      nextFrame(step);
+    }
+    function wheelSnap(dir) {
+      const idx = FILM_SCENES.indexOf(film.scene);
+      const next = FILM_SCENES[dir > 0 ? idx + 1 : idx - 1];
+      if (next) snapTo(next);
+    }
+    function onWheel(e) {
+      e.preventDefault();
+      const now = performance.now();
+      if (snapping || now - lastWheelAt < 650) return;
+      lastWheelAt = now;
+      wheelSnap(e.deltaY);
+    }
+    scroller.addEventListener("wheel", onWheel, { passive: false });
+    const scenes = [];
+    const scene = (id, update) => {
+      const el = sceneEl(id);
+      if (el) scenes.push({ id, el, update });
+    };
+    const t0 = performance.now();
+    const t0f = () => (performance.now() - t0) / 1e3;
+    const beamCtx = cv("beam");
+    const dust = Array.from({ length: 64 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      r: 0.6 + Math.random() * 1.6,
+      v: 4e-4 + Math.random() * 11e-4,
+      ph: Math.random() * 7
+    }));
+    const cdivs = all('[data-scene="s0"] .cdiv');
+    scene("s0", (p, r, vh) => {
+      cdivs.forEach((el, i) => {
+        const seg = clamp01(p * 3 - i);
+        const open = clamp01(seg / 0.32);
+        const shut = i === cdivs.length - 1 ? 1 : 1 - clamp01((seg - 0.8) / 0.2);
+        el.style.clipPath = `circle(${(easeOut(Math.min(open, shut)) * 74).toFixed(1)}% at 50% 50%)`;
+      });
+      const hp = clamp01((p - 0.82) / 0.18);
+      const heroEl = q('[data-scene="s0"] .bz-film-hero');
+      if (heroEl) {
+        heroEl.style.opacity = String(hp);
+        heroEl.style.transform = `translateY(${((1 - easeOut(hp)) * 26).toFixed(1)}px)`;
+      }
+      const countEl = q('[data-scene="s0"] .bz-film-count');
+      if (countEl) countEl.style.opacity = String(1 - clamp01((p - 0.78) / 0.12));
+      const hintEl = q('[data-scene="s0"] .bz-film-hint');
+      if (hintEl) hintEl.style.opacity = String(p > 0.1 ? clamp01((p - 0.1) / 0.2) * 0.9 : 0);
+      if (!beamCtx) return;
+      const w = r.width, h = vh;
+      beamCtx.clearRect(0, 0, w, h);
+      const flick = 0.9 + 0.1 * Math.sin(t0f() * 17.3) * Math.sin(t0f() * 5.1);
+      const dim = 1 - hp * 0.45;
+      const cx = w / 2, cy = -h * 0.12;
+      const g = beamCtx.createLinearGradient(0, 0, 0, h);
+      g.addColorStop(0, `rgba(${PAL.gold},${0.2 * flick * dim})`);
+      g.addColorStop(0.55, `rgba(${PAL.gold},${0.09 * flick * dim})`);
+      g.addColorStop(1, `rgba(${PAL.gold},0)`);
+      beamCtx.beginPath();
+      beamCtx.moveTo(cx - w * 0.015, cy);
+      beamCtx.lineTo(cx - w * 0.62, h);
+      beamCtx.lineTo(cx + w * 0.62, h);
+      beamCtx.lineTo(cx + w * 0.015, cy);
+      beamCtx.closePath();
+      beamCtx.fillStyle = g;
+      beamCtx.fill();
+      for (const d of dust) {
+        const yy = ((d.y - t0f() * d.v) % 1 + 1) % 1;
+        const x = d.x + Math.sin(t0f() * 0.5 + d.ph) * 0.012;
+        const a = (0.28 + 0.3 * Math.sin(t0f() * 1.7 + d.ph * 3)) * dim;
+        beamCtx.beginPath();
+        beamCtx.arc(x * w, yy * h, d.r, 0, 7);
+        beamCtx.fillStyle = `rgba(${PAL.dust},${Math.max(0, a)})`;
+        beamCtx.fill();
+      }
+    });
+    for (const id of ["i1", "i2", "i3", "i4"]) {
+      scene(id, (p) => {
+        const box = q(`[data-scene="${id}"] .bz-film-inter`);
+        if (!box) return;
+        box.style.opacity = String(easeOut(clamp01(p / 0.2)));
+        box.style.transform = `translateY(${((1 - easeOut(clamp01(p / 0.3))) * 18).toFixed(1)}px) scale(${(1 + p * 0.05).toFixed(3)})`;
+        const h2 = box.querySelector("h2");
+        if (h2) h2.style.letterSpacing = `${lerp(0.9, 0.5, easeOut(clamp01(p / 0.35))).toFixed(2)}em`;
+      });
+    }
+    scene("s1", (p) => {
+      const inner = ref("corr");
+      if (inner) inner.style.transform = `translate3d(0,0,${(p * 2940).toFixed(0)}px)`;
+    });
+    const nebCtx = cv("nebula");
+    const NEB_RMIN = Math.min(...data.rated.map((it) => {
+      var _a;
+      return (_a = it.rating) != null ? _a : 0;
+    }), 10) - 0.4;
+    const nebStars = data.rated.map((it) => {
+      var _a, _b, _c;
+      return {
+        it,
+        nx: data.yearMin === data.yearMax ? 0.5 : (Number(((_a = it.watchDate) != null ? _a : "").slice(0, 4)) - data.yearMin) / Math.max(1, data.yearMax - data.yearMin),
+        ny: 1 - clamp01((((_b = it.rating) != null ? _b : 5) - NEB_RMIN) / Math.max(0.5, 10.2 - NEB_RMIN)),
+        r: 1.1 + ((_c = it.rating) != null ? _c : 5) * 0.3,
+        gold: !/[剧漫]/.test(it.typeTag),
+        ph: Math.random() * 7,
+        sx: Math.random() - 0.5,
+        sy: (Math.random() - 0.5) * 1.4
+      };
+    });
+    const nebMinis = all(".bz-film-mini");
+    const avgEl = ref("avg");
+    scene("s2", (p, r, vh) => {
+      var _a;
+      if (!nebCtx) return;
+      const w = r.width, h = vh;
+      nebCtx.clearRect(0, 0, w, h);
+      const land = easeOut(clamp01(p / 0.55));
+      const px = (s) => w * (0.12 + s.nx * 0.76) + s.sx * (1 - land) * w * 0.5;
+      const py = (s) => h * (0.16 + s.ny * 0.58) + s.sy * (1 - land) * h * 0.5;
+      const lineA = clamp01((p - 0.38) / 0.22);
+      if (lineA > 0) {
+        const path = [...nebStars].sort((a, b) => {
+          var _a2, _b;
+          return ((_a2 = a.it.watchDate) != null ? _a2 : "") < ((_b = b.it.watchDate) != null ? _b : "") ? -1 : 1;
+        }).slice(0, 10);
+        nebCtx.beginPath();
+        path.forEach((s, i) => {
+          const X = px(s), Y = py(s);
+          i ? nebCtx.lineTo(X, Y) : nebCtx.moveTo(X, Y);
+        });
+        nebCtx.strokeStyle = `rgba(${PAL.gold},${0.28 * lineA})`;
+        nebCtx.lineWidth = 1;
+        nebCtx.stroke();
+      }
+      const tn = performance.now() / 1e3;
+      for (const s of nebStars) {
+        const X = px(s), Y = py(s);
+        const tw = 0.72 + 0.28 * Math.sin(tn * 2.1 + s.ph);
+        const a = clamp01(p * 3) * tw;
+        const R = 9 + ((_a = s.it.rating) != null ? _a : 5) * 2.2;
+        const g = nebCtx.createRadialGradient(X, Y, 0, X, Y, R);
+        const col = s.gold ? PAL.star : PAL.star2;
+        g.addColorStop(0, `rgba(${col},${a * 0.8})`);
+        g.addColorStop(0.4, `rgba(${col},${a * 0.2})`);
+        g.addColorStop(1, `rgba(${col},0)`);
+        nebCtx.beginPath();
+        nebCtx.arc(X, Y, R, 0, 7);
+        nebCtx.fillStyle = g;
+        nebCtx.fill();
+        nebCtx.beginPath();
+        nebCtx.arc(X, Y, s.r * 0.8, 0, 7);
+        nebCtx.fillStyle = `rgba(${PAL.core},${a})`;
+        nebCtx.fill();
+      }
+      if (avgEl) avgEl.textContent = (data.avgRating * easeOut(clamp01((p - 0.55) / 0.45))).toFixed(1);
+      nebMinis.forEach((el, i) => {
+        const rp = clamp01((p - (0.6 + i * 0.1)) / 0.22);
+        el.style.opacity = String(rp);
+        el.style.transform = `translateY(${((1 - easeOut(rp)) * 24).toFixed(1)}px)`;
+      });
+    });
+    const waveCtx = cv("wave");
+    const waveNum = ref("wave");
+    scene("s10", (p, r, vh) => {
+      if (!waveCtx || !data.yearArr.length) return;
+      const w = r.width, h = vh;
+      waveCtx.clearRect(0, 0, w, h);
+      const n = data.yearArr.length;
+      const vmax = Math.max(...data.yearArr.map(([, v]) => v));
+      const X = (i) => w * 0.1 + i / Math.max(1, n - 1) * w * 0.8;
+      const Y = (v) => h * 0.8 - v / vmax * h * 0.48;
+      const reach = easeOut(p) * (n - 1);
+      const full = Math.floor(reach);
+      waveCtx.beginPath();
+      waveCtx.moveTo(X(0), h * 0.8);
+      for (let i = 0; i <= full; i++) waveCtx.lineTo(X(i), Y(data.yearArr[i][1]));
+      if (full < n - 1) {
+        const frac = reach - full;
+        waveCtx.lineTo(lerp(X(full), X(full + 1), frac), lerp(Y(data.yearArr[full][1]), Y(data.yearArr[full + 1][1]), frac));
+      }
+      waveCtx.lineTo(X(full), h * 0.8);
+      waveCtx.closePath();
+      const gf = waveCtx.createLinearGradient(0, h * 0.3, 0, h * 0.8);
+      gf.addColorStop(0, `rgba(${PAL.gold},.3)`);
+      gf.addColorStop(1, `rgba(${PAL.gold},.02)`);
+      waveCtx.fillStyle = gf;
+      waveCtx.fill();
+      waveCtx.beginPath();
+      for (let i = 0; i <= full; i++) {
+        const X2 = X(i), Y2 = Y(data.yearArr[i][1]);
+        i ? waveCtx.lineTo(X2, Y2) : waveCtx.moveTo(X2, Y2);
+      }
+      if (full < n - 1) {
+        const frac = reach - full;
+        waveCtx.lineTo(lerp(X(full), X(full + 1), frac), lerp(Y(data.yearArr[full][1]), Y(data.yearArr[full + 1][1]), frac));
+      }
+      waveCtx.strokeStyle = `rgba(${PAL.star},.9)`;
+      waveCtx.lineWidth = 2;
+      waveCtx.stroke();
+      waveCtx.font = '11px "Noto Serif SC",serif';
+      waveCtx.textAlign = "center";
+      for (let i = 0; i < n; i++) {
+        const passed = i <= reach;
+        waveCtx.fillStyle = passed ? `rgba(${PAL.dim},.95)` : `rgba(${PAL.faint},.6)`;
+        waveCtx.fillText(data.yearArr[i][0], X(i), h * 0.8 + 24);
+        if (passed) {
+          waveCtx.fillStyle = `rgba(${PAL.ink},.9)`;
+          waveCtx.fillText(String(data.yearArr[i][1]), X(i), Y(data.yearArr[i][1]) - 14);
+        }
+      }
+      if (waveNum) waveNum.textContent = String(Math.round(data.peakYear[1] * easeOut(clamp01(p / 0.8))));
+    });
+    scene("s3", (p) => {
+      const strip = ref("strip");
+      if (!strip) return;
+      const over = Math.max(0, strip.scrollWidth - strip.clientWidth);
+      strip.style.transform = `translateX(${(-p * over).toFixed(1)}px)`;
+    });
+    const dialCtx = cv("dial");
+    const dialNum = ref("dial");
+    scene("s11", (p, r, vh) => {
+      if (!dialCtx) return;
+      const w = r.width, h = vh;
+      dialCtx.clearRect(0, 0, w, h);
+      const cx = w / 2, cy = h * 0.52, Rmax = Math.min(w, h) * 0.34;
+      const vmax = Math.max(...data.monthN, 1);
+      const sweep = easeOut(p) * Math.PI * 2;
+      for (let i = 0; i < 12; i++) {
+        const a0 = -Math.PI / 2 + i * Math.PI / 6;
+        const a1 = a0 + Math.PI / 6;
+        if (sweep <= a0 + 0.01) break;
+        const end = Math.min(a1, sweep);
+        const rad = Rmax * (0.3 + 0.7 * (data.monthN[i] / vmax));
+        const hot = data.monthN[i] === Math.max(...data.monthN);
+        dialCtx.beginPath();
+        dialCtx.moveTo(cx, cy);
+        dialCtx.arc(cx, cy, rad, a0, end);
+        dialCtx.closePath();
+        dialCtx.fillStyle = hot ? `rgba(${PAL.star},.55)` : `rgba(${PAL.gold},${0.12 + 0.3 * (data.monthN[i] / vmax)})`;
+        dialCtx.fill();
+        dialCtx.strokeStyle = `rgba(${PAL.ink},.14)`;
+        dialCtx.stroke();
+        const am = (a0 + a1) / 2;
+        dialCtx.font = '12px "Noto Serif SC",serif';
+        dialCtx.textAlign = "center";
+        dialCtx.fillStyle = hot ? `rgba(${PAL.star},.95)` : `rgba(${PAL.dim},.75)`;
+        dialCtx.fillText(`${i + 1}月`, cx + Math.cos(am) * (Rmax + 26), cy + Math.sin(am) * (Rmax + 26) + 4);
+        if (data.monthN[i]) {
+          dialCtx.fillStyle = `rgba(${PAL.ink},.85)`;
+          dialCtx.fillText(String(data.monthN[i]), cx + Math.cos(am) * (rad - 14), cy + Math.sin(am) * (rad - 14) + 4);
+        }
+      }
+      if (dialNum) dialNum.textContent = `${data.peakMonth + 1} 月`;
+    });
+    const dayEls = all(".bz-film-day");
+    scene("s12", (p) => {
+      dayEls.forEach((d, i) => {
+        const rp = easeOut(clamp01((p - (0.12 + i * 0.09)) / 0.22));
+        d.style.opacity = String(rp);
+        d.style.transform = `translateY(${((1 - rp) * 30).toFixed(1)}px)`;
+        d.querySelectorAll(".bz-film-stub").forEach((s, k) => {
+          const sp = clamp01((p - (0.2 + i * 0.09) - k * 0.012) / 0.1);
+          s.style.opacity = String(sp);
+          s.style.transform = `rotate(${k * 37 % 13 - 6}deg) scale(${sp.toFixed(2)})`;
+        });
+      });
+    });
+    const neonCols = all(".bz-film-neon-col");
+    scene("s4", (p) => {
+      neonCols.forEach((col, i) => col.classList.toggle("is-lit", p > (i + 0.5) / (neonCols.length + 1)));
+    });
+    const ageCtx = cv("agefx");
+    const ageNum = ref("age");
+    const AGEDUST = Array.from({ length: 42 }, () => ({
+      x: Math.random(),
+      y: Math.random(),
+      r: 0.5 + Math.random() * 1.4,
+      v: 3e-4 + Math.random() * 9e-4,
+      ph: Math.random() * 7
+    }));
+    const SCRATCHES = Array.from({ length: 4 }, (_, i) => ({ x: 0.12 + i * 0.22 + Math.random() * 0.1, ph: Math.random() * 7 }));
+    const shelves = all(".bz-film-shelf");
+    scene("s13", (p, r, vh) => {
+      if (ageNum) ageNum.textContent = (Number(data.avgAge) * easeOut(clamp01(p / 0.6))).toFixed(1);
+      shelves.forEach((sh, i) => {
+        var _a;
+        const rp = easeOut(clamp01((p - (0.2 + i * 0.15)) / 0.25));
+        sh.style.opacity = String(rp);
+        sh.style.transform = `translateY(${((1 - rp) * 26).toFixed(1)}px)`;
+        const tint = Number((_a = sh.dataset.tint) != null ? _a : 0.5);
+        sh.querySelectorAll(".sp img, .sp .bz-film-ph").forEach((im) => {
+          im.style.filter = `sepia(${lerp(1, tint, rp).toFixed(2)}) contrast(.96)`;
+        });
+      });
+      if (!ageCtx) return;
+      const w = r.width, h = vh, t = performance.now() / 1e3;
+      ageCtx.clearRect(0, 0, w, h);
+      for (const d of AGEDUST) {
+        const yy = ((d.y - t * d.v) % 1 + 1) % 1;
+        const a = 0.16 + 0.2 * Math.sin(t * 1.4 + d.ph * 3);
+        ageCtx.beginPath();
+        ageCtx.arc(d.x * w, yy * h, d.r, 0, 7);
+        ageCtx.fillStyle = `rgba(${PAL.dust},${Math.max(0, a)})`;
+        ageCtx.fill();
+      }
+      for (const s of SCRATCHES) {
+        const a = Math.max(0, Math.sin(t * 0.8 + s.ph)) ** 6 * 0.3;
+        if (a < 0.02) continue;
+        ageCtx.fillStyle = `rgba(${PAL.dust},${a})`;
+        ageCtx.fillRect(s.x * w + Math.sin(t + s.ph) * 2, 0, 1, h);
+      }
+    });
+    const spot = ref("spot");
+    const plaques = all(".bz-film-plaque");
+    scene("s14", (p) => {
+      if (!plaques.length) return;
+      const lit = Math.min(plaques.length - 1, Math.max(0, Math.floor(easeOut(clamp01((p - 0.18) / 0.72)) * plaques.length)));
+      plaques.forEach((el, i) => {
+        const rp = easeOut(clamp01((p - (0.1 + i * 0.12)) / 0.24));
+        el.style.opacity = String(rp * (i === lit ? 1 : 0.62));
+        el.style.transform = `translateY(${((1 - rp) * 30).toFixed(1)}px)`;
+        el.classList.toggle("is-lit", i === lit);
+      });
+      if (spot) {
+        const rr = plaques[lit].getBoundingClientRect();
+        spot.style.transform = `translateX(${(rr.left + rr.width / 2 - innerWidth * 0.5).toFixed(1)}px)`;
+        spot.style.opacity = String(clamp01(p * 2.5));
+      }
+    });
+    const paradeStrip = ref("parade");
+    const ghost = ref("ghost");
+    const starCards = all(".bz-film-star");
+    scene("s15", (p) => {
+      var _a, _b;
+      if (!paradeStrip) return;
+      const over = Math.max(0, paradeStrip.scrollWidth - sc.clientWidth);
+      paradeStrip.style.transform = `translateX(${(-easeOut(p) * over).toFixed(1)}px)`;
+      for (const el of starCards) {
+        const left = el.getBoundingClientRect().left;
+        const k = easeOut(clamp01((innerWidth * 1.06 - left) / (innerWidth * 0.55)));
+        el.style.transform = `perspective(900px) rotateY(${((1 - k) * 26).toFixed(1)}deg)`;
+      }
+      const lead = starCards.find((el) => el.getBoundingClientRect().right > innerWidth * 0.4);
+      if (lead && ghost) {
+        const nm = (_b = (_a = lead.querySelector(".nm")) == null ? void 0 : _a.textContent) != null ? _b : "";
+        if (ghost.textContent !== nm) ghost.textContent = nm;
+      }
+    });
+    const armEl = ref("arm");
+    const panL = ref("panL");
+    const panR = ref("panR");
+    const diffNum = ref("diff");
+    scene("s16", (p) => {
+      if (diffNum) diffNum.textContent = (data.avgDiff >= 0 ? "+" : "") + (data.avgDiff * easeOut(clamp01(p / 0.6))).toFixed(1);
+      if (armEl) {
+        const tilt = Math.max(-12, Math.min(12, (data.disappoint.length - data.treasure.length) * 5));
+        armEl.style.transform = `rotate(${(tilt * easeOutBack(clamp01(p / 0.5))).toFixed(2)}deg)`;
+      }
+      if (panL) {
+        panL.style.opacity = String(easeOut(clamp01((p - 0.15) / 0.25)));
+        panL.style.transform = `translateX(${((1 - easeOut(clamp01((p - 0.15) / 0.3))) * -40).toFixed(1)}px)`;
+      }
+      if (panR) {
+        panR.style.opacity = String(easeOut(clamp01((p - 0.4) / 0.25)));
+        panR.style.transform = `translateX(${((1 - easeOut(clamp01((p - 0.4) / 0.3))) * 40).toFixed(1)}px)`;
+      }
+    });
+    const maroEls = all(".bz-film-maro");
+    scene("s17", (p) => {
+      maroEls.forEach((el, i) => {
+        const rp = easeOut(clamp01((p - (0.15 + i * 0.18)) / 0.3));
+        el.style.opacity = String(rp);
+        el.style.transform = `translateX(${((1 - rp) * -40).toFixed(1)}px)`;
+        const stack = el.querySelector(".stack");
+        const kids = stack ? [...stack.children] : [];
+        kids.forEach((c, k) => {
+          const off = k - (kids.length - 1) / 2;
+          c.style.transform = `rotate(${(off * rp * 8).toFixed(1)}deg) translateY(${(Math.abs(off) * rp * 5).toFixed(1)}px)`;
+        });
+      });
+    });
+    const bingeNum = ref("binge");
+    const bingeRows = all(".bz-film-brow");
+    scene("s18", (p) => {
+      if (bingeNum) bingeNum.textContent = (Number(data.avgSeason) * easeOut(clamp01(p / 0.6))).toFixed(1);
+      bingeRows.forEach((el, i) => {
+        const rp = easeOut(clamp01((p - (0.15 + i * 0.13)) / 0.28));
+        el.style.opacity = String(rp);
+        el.style.transform = `translateX(${((1 - rp) * -30).toFixed(1)}px)`;
+        el.querySelectorAll(".rl").forEach((c, k) => {
+          const kp = easeOut(clamp01((p - (0.18 + i * 0.13) - k * 0.045) / 0.1));
+          c.style.opacity = String(kp);
+          c.style.transform = `scale(${(0.5 + 0.5 * kp).toFixed(2)})`;
+        });
+      });
+    });
+    const dmCtx = cv("dm");
+    const dmNum = ref("dm");
+    scene("s19", (p, r, vh) => {
+      if (!dmCtx) return;
+      const w = r.width, h = vh;
+      dmCtx.clearRect(0, 0, w, h);
+      if (dmNum) dmNum.textContent = String(Math.round(data.reviewCount * easeOut(clamp01(p / 0.5))));
+      const n = data.dmLines.length;
+      if (!n) return;
+      const rows = 9;
+      for (let i = 0; i < n; i++) {
+        const line = data.dmLines[i];
+        if (i / n >= p * 1.15) continue;
+        const row = i % rows;
+        const cycle = (p * 2.2 + i * 0.618) % 1;
+        const x = w * 0.92 - cycle * w * 1.5;
+        const y = h * 0.3 + row * (h * 0.56 / rows);
+        const alpha = Math.min(1, Math.sin(cycle * Math.PI) * 1.6) * clamp01(p * 2);
+        dmCtx.font = `${line.hit ? 21 : 14}px "Noto Serif SC",serif`;
+        dmCtx.fillStyle = line.hit ? `rgba(${PAL.star},${alpha})` : `rgba(${PAL.ink},${alpha * 0.8})`;
+        if (line.hit) {
+          dmCtx.shadowColor = `rgba(${PAL.gold},.8)`;
+          dmCtx.shadowBlur = 18;
+        }
+        dmCtx.fillText(`「${line.text}」`, x, y);
+        dmCtx.shadowBlur = 0;
+      }
+    });
+    const rays = ref("rays");
+    const awards = all(".bz-film-award");
+    scene("s5", (p) => {
+      if (rays) {
+        rays.style.opacity = String(clamp01(p * 2.2) * 0.9);
+        rays.style.transform = `rotate(${(p * 150).toFixed(1)}deg)`;
+      }
+      awards.forEach((el, i) => {
+        const rp = easeOut(clamp01((p - 0.02 - i * 0.2) * 3));
+        el.style.opacity = String(rp);
+        el.style.transform = `rotateX(${((1 - rp) * -62).toFixed(1)}deg) translateY(${((1 - rp) * 30).toFixed(1)}px)`;
+        el.style.setProperty("--sh", `${(125 - rp * 250).toFixed(0)}% 0`);
+      });
+    });
+    const roll = ref("roll");
+    const theend = ref("theend");
+    scene("s6", (p, _r, vh) => {
+      if (roll) {
+        const rollH = roll.offsetHeight;
+        roll.style.transform = `translateY(${lerp(vh * 0.75, -(rollH + 80), p * p).toFixed(1)}px)`;
+      }
+      if (theend) {
+        const ep = clamp01((p - 0.88) / 0.12);
+        theend.style.opacity = String(ep);
+        theend.style.clipPath = `circle(${(easeOut(ep) * 74).toFixed(1)}% at 50% 50%)`;
+      }
+    });
+    const nextCards = all(".bz-film-next");
+    const replayBtn = ref("replay");
+    scene("s7", (p) => {
+      nextCards.forEach((el, i) => {
+        const rp = easeOut(clamp01((p - 0.12 - i * 0.14) / 0.3));
+        el.style.opacity = String(rp);
+        el.style.transform = `translateY(${((1 - rp) * 40).toFixed(1)}px) rotateX(${((1 - rp) * 14).toFixed(1)}deg)`;
+        const st = el.querySelector(".stamp");
+        if (st) {
+          const kp = easeOutBack(clamp01((p - (0.3 + i * 0.14)) / 0.18));
+          st.style.opacity = String(clamp01(kp * 1.4));
+          st.style.transform = `rotate(-14deg) scale(${lerp(3, 1, kp).toFixed(2)})`;
+        }
+      });
+      if (replayBtn) replayBtn.style.opacity = String(clamp01((p - 0.6) / 0.25));
+    });
+    root.addEventListener("click", (e) => {
+      if (e.target.closest('[data-ref="replay"]')) playScene("s0");
+    });
+    const grainCtx = cv("grain");
+    let grainPat = null;
+    const grainCv = q('[data-cv="grain"]');
+    {
+      const c = document.createElement("canvas");
+      c.width = c.height = 128;
+      const x = c.getContext("2d");
+      if (x) {
+        const d = x.createImageData(128, 128);
+        for (let i = 0; i < d.data.length; i += 4) {
+          const v = Math.random() * 255;
+          d.data[i] = d.data[i + 1] = d.data[i + 2] = v;
+          d.data[i + 3] = 26;
+        }
+        x.putImageData(d, 0, 0);
+        grainPat = grainCtx ? grainCtx.createPattern(c, "repeat") : null;
+      }
+    }
+    let lastT = 0;
+    let grainFrame = 0;
+    let lastVh = -1;
+    const tick = () => {
+      var _a, _b;
+      if (engine.dead || !root.isConnected) {
+        if (activeEngine === engine) activeEngine = null;
+        return;
+      }
+      const now = performance.now();
+      const dt = Math.min(0.05, lastT ? (now - lastT) / 1e3 : 0);
+      lastT = now;
+      const vh = sc.clientHeight;
+      if (vh !== lastVh) {
+        lastVh = vh;
+        size();
+      }
+      if (film.playing) {
+        const el = sceneEl(film.scene);
+        if (el) {
+          const end = Math.min(sc.scrollHeight - vh, absTop(el) + el.offsetHeight - vh);
+          const target = sc.scrollTop + SPEED * filmRateOf(film.scene) * dt;
+          if (target >= end) {
+            sc.scrollTop = end;
+            film.playing = false;
+            film.sceneDone = true;
+          } else sc.scrollTop = target;
+        } else film.playing = false;
+      }
+      let active = film.scene;
+      for (const s of scenes) {
+        const r = s.el.getBoundingClientRect();
+        const total = r.height - vh;
+        const p = total > 0 ? clamp01(-r.top / total) : 0;
+        if (r.top < vh && r.bottom > 0) {
+          s.update(p, r, vh);
+          active = s.id;
+        }
+      }
+      const nowEl = ref("now");
+      if (nowEl && nowEl.textContent !== ((_a = FILM_SCENE_NAMES[active]) != null ? _a : "")) nowEl.textContent = (_b = FILM_SCENE_NAMES[active]) != null ? _b : "";
+      const dot = ref("dot");
+      const totalScroll = sc.scrollHeight - vh;
+      if (dot) dot.style.top = `${((totalScroll ? sc.scrollTop / totalScroll : 0) * 100).toFixed(2)}%`;
+      if (++grainFrame % 3 === 0 && grainCtx && grainPat && grainCv) {
+        grainCtx.save();
+        grainCtx.translate(Math.random() * 128 | 0, Math.random() * 128 | 0);
+        grainCtx.fillStyle = grainPat;
+        grainCtx.fillRect(-128, -128, grainCv.width + 256, grainCv.height + 256);
+        grainCtx.restore();
+      }
+      nextFrame(tick);
+    };
+    nextFrame(tick);
+    return handle;
+  }
+
   // src/core/jev.ts
   var JEV_DEFAULT_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
   var JEV_DEFAULT_MODEL = "jev-1.13.0";
@@ -7859,17 +8957,17 @@ tags:
 
   // src/cinema/seasons.ts
   var MERGE_GROUPS = ["剧集", "动漫"];
-  var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  var CN_NUM2 = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
   function seasonNumber(raw) {
     if (/^\d+$/.test(raw)) return Number(raw);
     if (raw === "十") return 10;
     const m = raw.match(/^(.)?十(.)?$/);
     if (m) {
-      const tens = m[1] ? CN_NUM[m[1]] : 1;
-      const ones = m[2] ? CN_NUM[m[2]] : 0;
+      const tens = m[1] ? CN_NUM2[m[1]] : 1;
+      const ones = m[2] ? CN_NUM2[m[2]] : 0;
       return tens == null || ones == null ? null : tens * 10 + ones;
     }
-    return raw.length === 1 && CN_NUM[raw] != null ? CN_NUM[raw] : null;
+    return raw.length === 1 && CN_NUM2[raw] != null ? CN_NUM2[raw] : null;
   }
   var SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
   function parseSeasonName(name) {
@@ -9607,7 +10705,7 @@ tags:
       inLibrary: (name) => M.items.some((it) => it.name === name)
     };
   }
-  function midnightInput(app) {
+  function midnightInput(app, mob = false) {
     const merge = mergeSeasonsOn();
     const onList = M.view === "list";
     return {
@@ -9625,13 +10723,18 @@ tags:
       watchedCount: watchedCount(),
       aiHtml: onList ? "" : aiPageHtml(aiInput()),
       aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-      statHtml: onList ? "" : buildAnalysisHTML(),
+      statHtml: onList ? "" : statViewHtml(app, mob),
       poster: (it) => posterUrl(it, app),
       fetching: (it) => {
         var _a;
         return isFetching((_a = it.file) == null ? void 0 : _a.path);
       }
     };
+  }
+  function statViewHtml(app, mob) {
+    if (mob) return buildAnalysisHTML();
+    const data = deriveFilmData(M.items);
+    return data.timeline.length ? statFilmHtml(data, (it) => posterUrl(it, app)) : buildAnalysisHTML();
   }
   function onSearchInput(app, sec, isMob, raw) {
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
@@ -10260,8 +11363,9 @@ tags:
       const sc = root.querySelector(sel);
       if (sc) scrollMemo.set(sel, sc.scrollTop);
     }
-    const inp = midnightInput(app);
-    if (root.classList.contains("mob")) {
+    const mob = root.classList.contains("mob");
+    const inp = midnightInput(app, mob);
+    if (mob) {
       renderMidnightMob(root, inp);
       attachLongPress(root, app);
     } else renderMidnightDesk(root, inp);
@@ -10273,6 +11377,7 @@ tags:
     syncSlidePills(root);
     playGridMotion(root, beforeCards);
     flushCardFlash(root);
+    if (!mob && M.view === "stat") bindStatFilm(root, deriveFilmData(M.items));
     restoreFocus(root, snap);
   }
   function closeOverlay() {

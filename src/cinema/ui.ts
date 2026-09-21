@@ -34,6 +34,7 @@ import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildAnalysisHTML } from './analysis';
+import { bindStatFilm, deriveFilmData, statFilmHtml } from './stat-film';
 import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster } from './douban-queue';
 import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
@@ -1489,7 +1490,7 @@ function aiInput(): AiPageInput {
 
 // ---------- 渲染（布局胶水入参装配；vault 自动刷新与 M.renderFn 都走 renderAll） ----------
 
-function midnightInput(app: App): MidnightRenderInput {
+function midnightInput(app: App, mob = false): MidnightRenderInput {
   const merge = mergeSeasonsOn();
   // 惰性构建（深审批A P3-14）：list 页不预算 AI 页与分析页两份大字符串——分析页是
   // 19 板块全量统计，而列表页每次标记/筛选/搜索整刷都走这里，两份大 HTML 恒算纯浪费；
@@ -1510,10 +1511,18 @@ function midnightInput(app: App): MidnightRenderInput {
     watchedCount: watchedCount(),
     aiHtml: onList ? '' : aiPageHtml(aiInput()),
     aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-    statHtml: onList ? '' : buildAnalysisHTML(),
+    statHtml: onList ? '' : statViewHtml(app, mob),
     poster: (it) => posterUrl(it, app),
     fetching: (it) => isFetching(it.file?.path),
   };
+}
+
+/** stat 页内容（issue 405）：桌面走滚动放映室（四本 22 幕，无观影日期数据时回退板块列表）；
+ *  mob 保留 19 板块列表——触屏没有滚轮翻幕，硬搬是伪交互（遗留见 issue 405） */
+function statViewHtml(app: App, mob: boolean): string {
+  if (mob) return buildAnalysisHTML();
+  const data = deriveFilmData(M.items);
+  return data.timeline.length ? statFilmHtml(data, (it) => posterUrl(it, app)) : buildAnalysisHTML();
 }
 
 // ---------- 搜索（防抖；desk 部分刷新保焦点 / mob 全刷+回焦） ----------
@@ -2228,8 +2237,9 @@ export function renderAll(app: App): void {
     const sc = root.querySelector(sel) as HTMLElement | null;
     if (sc) scrollMemo.set(sel, sc.scrollTop);
   }
-  const inp = midnightInput(app);
-  if (root.classList.contains('mob')) {
+  const mob = root.classList.contains('mob');
+  const inp = midnightInput(app, mob);
+  if (mob) {
     renderMidnightMob(root, inp);
     attachLongPress(root, app); // m-grid 卡片重渲染重建后重挂（原 mob 渲染胶水同语义）
   } else renderMidnightDesk(root, inp);
@@ -2241,6 +2251,7 @@ export function renderAll(app: App): void {
   syncSlidePills(root); // 底片跟着新选中项落位（渲染重写了 rail/排序钮的 innerHTML）
   playGridMotion(root, beforeCards); // 滚位恢复之后再演：位移差要跟最终滚位一致
   flushCardFlash(root); // 刚变更的那张卡闪一下（issue 403）
+  if (!mob && M.view === 'stat') bindStatFilm(root, deriveFilmData(M.items)); // 滚动放映室（issue 405）
   restoreFocus(root, snap);
 }
 

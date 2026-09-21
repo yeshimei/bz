@@ -655,7 +655,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     });
   });
 
-  it('分析页：sp-head 观影分析 + 4 统计卡 + 19 板块 + 空态带动作', () => {
+  it('分析页：sp-head 观影分析 + 滚动放映室 22 幕 + 空态带动作（issue 405：桌面 stat 走影片，mob 仍 19 板块）', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -663,9 +663,8 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.view).toBe('stat');
     expect(root.querySelector('.sp-head .sp-title')?.textContent).toBe('观影分析');
     expect(root.querySelector('.sp-cnt')?.textContent).toBe('· 2 部已看');
-    expect(root.querySelectorAll('.stat-card').length).toBe(4);
-    expect(root.querySelectorAll('.sec').length).toBe(19);
-    expect(root.querySelector('.stat-cards')?.textContent).toContain('馆藏总数');
+    expect(root.querySelectorAll('.bz-stat-film [data-scene]').length).toBe(22);
+    expect(root.querySelector('.bz-stat-film')?.textContent).toContain('馆藏长廊');
     // 空库：引导 + 添加直达
     closeOverlay();
     const app2 = makeApp(new MockVault());
@@ -1795,7 +1794,7 @@ describe('深审批A：写路径与 ui 行为回归', () => {
   });
 
   // P3-14：list 页不预算 AI 页/分析页两份大字符串（分析页 19 板块全量统计），进页才构建
-  it('P3-14：list 页惰性构建——buildAnalysisHTML 仅在进分析页时调用', async () => {
+  it('P3-14：list 页惰性构建——两份大字符串都不在 list 页预算（issue 405 后桌面 stat 走影片，19 板块仅 mob 消费）', async () => {
     const analysisMod = await import('../../src/cinema/analysis');
     const spy = vi.spyOn(analysisMod, 'buildAnalysisHTML');
     const { app } = seedVault();
@@ -1803,8 +1802,8 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     expect(spy).not.toHaveBeenCalled();
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(root.querySelector('[data-tool="stat"]'));
-    expect(spy).toHaveBeenCalledTimes(1);
-    expect(root.querySelectorAll('.sec').length).toBe(19); // 分析页内容不受惰性影响
+    expect(spy).not.toHaveBeenCalled(); // 桌面 stat 走滚动放映室，不再构建 19 板块
+    expect(root.querySelector('.bz-stat-film')).toBeTruthy();
     clickEl(root.querySelector('.j-back'));
     expect(M.view).toBe('list');
   });

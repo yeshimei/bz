@@ -21,8 +21,9 @@ import { MOTION, EASE, STAGGER } from '../../src/cinema/motion';
 
 const CSS = readFileSync(join(process.cwd(), 'src/cinema/styles.css'), 'utf8');
 
-/** 功能性循环时长（加载指示；改这些值时随手补进白名单即可，改交互时长则不行） */
-const FUNCTIONAL_LOOPS = ['1.1s', '1.3s', '1.4s', '.7s', '.8s'];
+/** 功能性循环时长（加载指示；改这些值时随手补进白名单即可，改交互时长则不行）。
+ *  issue 405 追影片氛围循环：.9s 灯牌闪烁 / 9s·11s 探照灯 / 14s 放映机表盘（1.1s 跑马灯已在） */
+const FUNCTIONAL_LOOPS = ['1.1s', '1.3s', '1.4s', '.7s', '.8s', '.9s', '9s', '11s', '14s'];
 
 /** 台账块范围（.bz-cinema--midnight,.cn-skin{…}）——曲线只许出现在块内 */
 function ledgerBlock(): string {
