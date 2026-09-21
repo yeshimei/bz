@@ -1384,6 +1384,100 @@ tags: [电影]
     expect(series.classList.contains('is-peek')).toBe(false);
   });
 
+  it('悬停正脸那一季的圆点不换脸；从别的季折回时层下已是静息态（issue 404）', async () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    (window as any).matchMedia = (q: string) => ({
+      matches: q === '(hover: hover) and (pointer: fine)',
+      media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    });
+    // 两季各有**可解析的海报**（posterUrl 要 TFile 实例）：否则两块都是 .ph 首字占位、字符串相同，
+    // 「层下是不是静息态那一季」就成了空断言——这正是本次要钉的那个 bug。
+    const vault = new MockVault();
+    const P = 'CONFIG/MOVIE POSTER';
+    vault.files.set('我的/影视/《老友记 第一季》.md', md(`---\ntags: [美剧]\n评分: 9.0\n观影日期: 2026-01-01\n海报: ${P}/s1.jpg\n---`));
+    vault.files.set('我的/影视/《老友记 第二季》.md', md(`---\ntags: [美剧]\n评分: 9.2\n观影日期: 2026-02-01\n海报: ${P}/s2.jpg\n---`));
+    vault.files.set('我的/影视/《老友记 第三季》.md', md(`---\ntags: [美剧]\n评分: 9.5\n观影日期: 2026-03-01\n海报: ${P}/s3.jpg\n---`));
+    for (const f of ['s1', 's2', 's3']) vault.files.set(`${P}/${f}.jpg`, '<binary>');
+    const orig = vault.getAbstractFileByPath.bind(vault);
+    (vault as any).getAbstractFileByPath = (p: string) => (p.startsWith(P + '/')
+      ? Object.assign(Object.create(TFile.prototype), { path: p, name: p.split('/').pop(), extension: 'jpg', basename: 'x' })
+      : orig(p));
+    const app = makeApp(vault);
+    ensureCinema(app);
+    rebuildItems(app);
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const series = root.querySelector('.pcard-series') as HTMLElement;
+    const dots = Array.from(series.querySelectorAll<HTMLElement>('.pw .season-dots i'));
+    const pw = series.querySelector('.pw') as HTMLElement;
+    const face = series.querySelector('.pw-face') as HTMLElement;
+    const faceRest = face.innerHTML;
+    expect(dots.length, '三季合并卡').toBe(3);
+    expect(faceRest, '正脸是最近观看的第三季（海报已解析）').toContain('s3.jpg');
+
+    // WAAPI 替身：finished 由测试自己放行 → 既能停在折回途中看「层下此刻是什么」，
+    // 又能在放行后看到收尾（文案回填）。不替身的话 jsdom 无 animate，折回直接走立即收尾分支，
+    // 中间态根本不存在 —— 这个 bug 也就测不出来。
+    const realAnimate = (Element.prototype as any).animate;
+    const pending: { finish: () => void }[] = [];
+    let release: (() => void) | null = null;
+    (Element.prototype as any).animate = function () {
+      const finished = new Promise<void>((r) => { release = () => r(); });
+      const anim = { finished, cancel() {}, play() {}, pause() {}, finish() { release?.(); }, addEventListener() {}, removeEventListener() {} };
+      pending.push(anim);
+      return anim;
+    };
+    const settle = async (): Promise<void> => { pending.forEach((a) => a.finish()); await Promise.resolve(); };
+    try {
+      // ① 悬浮正脸那一季（第三季 = dots[2]）：不建来片层、不演涟漪（海报本就是它），
+      //    但文案与其余圆点同口径——换成这一季的完整标题（2026-09-21 用户拍板）
+      dots[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(series.querySelector('.pw-in'), '正脸那一季不建来片层').toBeNull();
+      expect(series.querySelector('.pname')?.textContent, '文案换完整标题').toBe('老友记 第三季');
+      expect(series.classList.contains('is-peek'), '记账为在途换脸（离开要回填）').toBe(true);
+      dots[2].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+      expect(series.querySelector('.pname')?.textContent, '离开文案回静息态').toBe('老友记');
+      expect(series.classList.contains('is-peek')).toBe(false);
+
+      // 非空转守卫：同一套接线悬浮别的季确实会换脸
+      dots[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      const layer = series.querySelector<HTMLElement>('.pw-in');
+      expect(layer, '别的季照常换脸').toBeTruthy();
+      expect(series.querySelector('.pname')?.textContent).toBe('老友记 第一季');
+      expect(layer!.innerHTML).toContain('s1.jpg');
+      expect(face.innerHTML, '首次换脸正脸不动（层盖着它）').toBe(faceRest);
+
+      // 打断（滑到第二季）：正脸冻结成「刚才那一季」——这是旧版折回会露出的那块
+      dots[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(face.innerHTML, '打断：正脸冻结成刚才那一季').toContain('s1.jpg');
+
+      // ② 滑到正脸那一季：层当场清掉（层里层下将同一张海报，折回无信息量）、正脸回静息态、
+      //    文案**直接写**这一季完整标题——不经过「露出冻结的那一季」，也不慢半拍
+      dots[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(series.querySelector('.pw-in'), '来片层当场清掉（不演折回）').toBeNull();
+      expect(face.innerHTML, '正脸回到静息态第三季').toBe(faceRest);
+      expect(series.querySelector('.pname')?.textContent, '文案换完整标题（不慢半拍）').toBe('老友记 第三季');
+
+      // ③ 离开：文案淡回静息态
+      dots[2].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+      await settle();
+      expect(series.querySelector('.pname')?.textContent).toBe('老友记');
+      expect(face.innerHTML).toBe(faceRest);
+
+      // ④ 对照：从**别的季**离开仍走折回——文案在折回收尾才淡回（涟漪收势的节奏不变）
+      dots[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+      expect(series.querySelector('.pw-in'), '换到第二季').toBeTruthy();
+      dots[1].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+      expect(series.querySelector('.pname')?.textContent, '折回途中文案还是刚才那一季').toBe('老友记 第二季');
+      await settle();
+      expect(series.querySelector('.pw-in'), '折回收尾清层').toBeNull();
+      expect(series.querySelector('.pname')?.textContent, '收尾文案回到静息态').toBe('老友记');
+      expect(face.innerHTML).toBe(faceRest);
+    } finally {
+      (Element.prototype as any).animate = realAnimate;
+    }
+  });
+
   it('开合集/详情前先收掉换脸（否则「看到 A、飞的是 B」：飞行取的是静息态那一季的海报）', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
     (window as any).matchMedia = (q: string) => ({
@@ -1396,7 +1490,8 @@ tags: [电影]
     const series = root.querySelector('.pcard-series') as HTMLElement;
     const face = series.querySelector('.pw-face') as HTMLElement;
     const faceRest = face.innerHTML;
-    series.querySelectorAll<HTMLElement>('.pw .season-dots i')[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    // 第 1 枚（非正脸季；issue 404 起正脸那一季只换文案不建层，悬浮它不再有来片层可收）
+    series.querySelectorAll<HTMLElement>('.pw .season-dots i')[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
     expect(series.querySelector('.pw-in')).toBeTruthy();
     clickEl(series);
     expect(series.querySelector('.pw-in')).toBeNull();

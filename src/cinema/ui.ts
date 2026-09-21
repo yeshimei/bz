@@ -407,19 +407,47 @@ function peekTextFade(els: HTMLElement[]): void {
   });
 }
 
-/** 悬浮季圆点：来片层从被悬浮的那枚圆点涟漪扩散 + 文案三件淡入（格式走 shared.facePiecesHtml 单源） */
-function peekSeasonDot(dot: HTMLElement, app: App): void {
+/** 悬浮的那枚圆点是否就是卡片静息时显示的那一季（合并卡正脸 = 最近观看的那一季）。
+ *  换脸到它等于空转：层里和层下是同一张图，肉眼只会看见多余的一次折回；
+ *  更重要的是它会把「打断冻结的上一季」暴露出来（见 peekSeasonDot / restFace 注释）。 */
+function isFaceSeason(card: HTMLElement, dot: HTMLElement): boolean {
+  const key = card.dataset.cinemaKey;
+  const seasonKey = dot.dataset.cinemaSeasonKey;
+  if (!key || !seasonKey || !isSeriesKey(key)) return false;
+  const sc = seriesCardByKey(key as string);
+  return !!sc && itemKey(cardFace(sc)) === seasonKey;
+}
+
+/** 悬浮季圆点：来片层从被悬浮的那枚圆点涟漪扩散 + 文案三件淡入（格式走 shared.facePiecesHtml 单源）。
+ *  @returns 是否真的开始了换脸（false = 这枚圆点对应正脸那一季，或卡片条件不成立——调用方别记账） */
+function peekSeasonDot(dot: HTMLElement, app: App): boolean {
   const card = dot.closest<HTMLElement>('.pcard');
   const pw = card?.querySelector<HTMLElement>('.pw');
   const it = itemByKeyInState(dot.dataset.cinemaSeasonKey);
   const slots = card ? faceSlots(card) : [];
-  if (!card || !pw || !it || slots.length !== 4) return;
+  if (!card || !pw || !it || slots.length !== 4) return false;
   let st = peekStates.get(card);
   if (!st) {
     st = { snap: slots.map((s) => s.innerHTML), anim: null, origin: null, gen: 0 };
     peekStates.set(card, st);
   }
   st.gen++;
+  // 悬停的正是正脸那一季：海报本就是它——不建来片层、不演涟漪（层里层下会同一张图，
+  // 折回毫无信息量，还把打断冻结的那一季露出来）；但**文案与其余圆点同口径**，
+  // 要换成这一季的完整标题（2026-09-21 用户拍板）。手上若有在途换脸（层里还是别季海报）
+  // 先整体落回静息态再换文案，不然层盖着 A 的海报、文字却写正脸季，图和字对不上；
+  // 文案直接写、不补淡入——慢半拍的回填就是用户报的「文字闪一下」。
+  if (isFaceSeason(card, dot)) {
+    // 折回途中（is-peek 已摘但层还在飞）划回正脸季也要收：层不收会盖着别季海报，
+    // 而它的收尾回调已被新 gen 作废，没人再清层
+    if (card.classList.contains('is-peek') || pw.querySelector('.pw-in')) collapsePeek(card);
+    const p = facePiecesHtml(it, posterUrl(it, app));
+    slots[1].innerHTML = p.name;
+    slots[2].innerHTML = p.meta;
+    slots[3].innerHTML = p.stars;
+    card.classList.add('is-peek');
+    return true;
+  }
   const layer = peekLayer(pw);
   // 打断（鼠标在圆点间滑行）：来片层还在 → 先把「刚才那一季」冻结成正脸。
   // 不冻结的话，新涟漪之外露出的会是静息态那一季，划过圆点时会闪回（同点已由调用方拦掉）。
@@ -444,6 +472,23 @@ function peekSeasonDot(dot: HTMLElement, app: App): void {
       { duration: PEEK_MS, easing: EASE.out, fill: 'forwards' },
     );
   } catch { /* 动画不可用：底衬已是终态 */ }
+  return true;
+}
+
+/** 把卡片**整体一次**落回静息态：清来片层、四件全按快照回填，不演折回、不给文案补淡入。
+ *  专给「滑回正脸那一季」用——层里层下是同一张海报，任何动画都是多余信息；
+ *  gen 顶掉在途收尾，折回/涟漪的回调作废。 */
+function collapsePeek(card: HTMLElement): void {
+  const st = peekStates.get(card);
+  if (!st) return;
+  card.classList.remove('is-peek');
+  st.anim?.cancel();
+  st.anim = null;
+  st.gen++; // 在途折回/涟漪的收尾（闭包里存的是旧 gen）就此作废
+  card.querySelector('.pw-in')?.remove();
+  const slots = faceSlots(card);
+  if (slots.length !== 4) return;
+  slots.forEach((s, i) => { s.innerHTML = st.snap[i]; });
 }
 
 /** 离开圆点：涟漪折回圆点 → 清来片层 → 正脸/文案按快照回填 */
@@ -453,6 +498,11 @@ function restFace(dot: HTMLElement): void {
   if (!card || !st) return;
   const layer = card.querySelector<HTMLElement>('.pw-in');
   card.classList.remove('is-peek');
+  // 折回前先把**正脸**写回静息态：层下面若还压着「打断时冻结的那一季」，折回露出的就是它，
+  // 收尾再按快照回填 → 肉眼看到「缩回去露出上一季、再闪回静息态」（2026-09-21 用户报）。
+  // 文案三件仍在折回后回填：它们在 .pw 之外，不受这轮圆裁剪影响。
+  const slotsNow = faceSlots(card);
+  if (slotsNow.length === 4) slotsNow[0].innerHTML = st.snap[0];
   const gen = ++st.gen;
   const done = (): void => {
     if (st.gen !== gen) return; // 已被新一轮涟漪接管（本轮折回被 cancel）→ 收尾作废
@@ -1607,9 +1657,9 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
   const peekNearest = (e: MouseEvent): void => {
     const dot = nearestSeasonDot(e.target, e);
     if (dot === peekedDot) return;
-    if (dot) peekSeasonDot(dot, app);
-    else endPeek();
-    peekedDot = dot;
+    // 换脸成功才记账：悬停「正脸那一季」的圆点时 peekSeasonDot 会把手上的换脸收掉并返回 false，
+    // 此时没有在途换脸可收，mouseout 也就不该再去 rest（记账成 true 会在离开时多收一次）
+    peekedDot = dot && peekSeasonDot(dot, app) ? dot : null;
   };
   if (hoverable) {
     sec.addEventListener('mouseover', peekNearest);

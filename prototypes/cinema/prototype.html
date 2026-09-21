@@ -537,9 +537,13 @@
           //   所以下面既等归位，又要求矩形非零、圆心相对 .pw 有明显偏移（0/0 不许算通过）。
           await until(() => sCard.isConnected && sCard.style.display === '' && sCard.style.visibility === ''
             && sCard.getBoundingClientRect().width > 50, 8000);
-          const rdots = [...sCard.querySelectorAll('.pw .season-dots i')];
-          if (rdots.length >= 2) {
-            const rpw = sCard.querySelector('.pw');
+          // 挑「季数最多」的那张合集卡来验几何：正脸那一季的圆点自 issue 404 起不换脸，
+          // 少季卡可能只剩一枚可换脸的圆点，挑不出「打断」需要的第二枚
+          const richCard = [...dd.querySelectorAll('.d-scroll .pcard-series')]
+            .sort((a, b) => b.querySelectorAll('.pw .season-dots i').length - a.querySelectorAll('.pw .season-dots i').length)[0];
+          const rdots = richCard ? [...richCard.querySelectorAll('.pw .season-dots i')] : [];
+          if (rdots.length >= 3) {
+            const rpw = richCard.querySelector('.pw');
             const pa = rpw.getBoundingClientRect();
             const center = (el) => { const b = el.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; };
             const fire = (el, type) => {
@@ -547,33 +551,48 @@
               el.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: cx, clientY: cy }));
             };
             const nums = (layer) => (layer ? [...layer.style.clipPath.matchAll(/([\d.]+)px/g)].map((m) => Number(m[1])) : []);
-            const name0 = sCard.querySelector('.pname').textContent;
-            fire(rdots[1], 'mouseover');
+            const name0 = richCard.querySelector('.pname').textContent;
+            // 按行为把圆点分成「可换脸 / 正脸」各一枚：正脸那一季的圆点自 issue 404 起
+            // 只换文案不建层（海报本就是它），写死 rdots[1] 会在「正脸恰是第 2 季」的合集上空转。
+            // 打断（两枚都可换脸时圆心跟着换）本仓数据凑不出，由单测（三季 + 真海报路径）兜。
+            let peekDot = null, faceDot = null;
+            for (const d of rdots) {
+              fire(d, 'mouseover');
+              await sleep(30);
+              const ok = !!richCard.querySelector('.pw-in') && richCard.classList.contains('is-peek');
+              fire(d, 'mouseout');
+              await sleep(320); // 等折回收尾清层
+              if (ok && !peekDot) peekDot = d;
+              if (!ok && !faceDot) faceDot = d;
+              if (peekDot && faceDot) break;
+            }
+            t('圆点分成「可换脸/正脸」各一枚（几何断言的非空转前提）', !!peekDot && !!faceDot);
+            fire(peekDot, 'mouseover');
             await sleep(40);
-            const rl = sCard.querySelector('.pw-in');
+            const rl = richCard.querySelector('.pw-in');
             const c1 = nums(rl);
-            const d1 = center(rdots[1]);
+            const d1 = center(peekable[0]);
             const dx1 = d1[0] - pa.left;
             const dy1 = d1[1] - pa.top;
             t('涟漪几何可量（卡已归位·矩形非零）', pa.width > 50 && pa.height > 50 && dx1 > 4 && dy1 > 4,
               `pw=${pa.width}x${pa.height} 圆心偏移=${dx1.toFixed(1)},${dy1.toFixed(1)}`);
             t('涟漪层出现（正脸紧后·季圆点之前）', !!rl
-              && rl.previousElementSibling === sCard.querySelector('.pw-face')
+              && rl.previousElementSibling === richCard.querySelector('.pw-face')
               && !!rl.nextElementSibling?.classList.contains('season-dots'));
             t('涟漪圆心 = 被悬浮那枚圆点的中心（≤1px）', c1.length === 3
               && Math.hypot(c1[1] - dx1, c1[2] - dy1) <= 1,
               rl ? rl.style.clipPath : '无来片层');
-            fire(rdots[0], 'mouseover'); // 打断：滑轮移到第 1 枚
+            // 打断 = 滑到正脸那一季（本仓数据每组两季，另一枚必是正脸）：整体一次落回静息态，
+            // 层当场清掉、文案换完整标题；旧版这里演折回且会露出冻结的上一季（issue 404）
+            fire(faceDot, 'mouseover');
             await sleep(40);
-            const c2 = nums(rl);
-            const d0 = center(rdots[0]);
-            t('打断后圆心跟着换到新圆点（≤1px）', c2.length === 3 && d0[0] - pa.left > 4
-              && Math.hypot(c2[1] - (d0[0] - pa.left), c2[2] - (d0[1] - pa.top)) <= 1,
-              rl ? rl.style.clipPath : '无来片层');
-            fire(rdots[0], 'mouseout');
-            await until(() => !sCard.querySelector('.pw-in'), 3000);
-            t('离开圆点：折回后清层·文案回静息态', !sCard.querySelector('.pw-in')
-              && sCard.querySelector('.pname').textContent === name0);
+            t('滑到正脸季：层当场清掉·文案换完整标题', !richCard.querySelector('.pw-in')
+              && richCard.querySelector('.pname').textContent !== name0,
+              richCard.querySelector('.pname')?.textContent);
+            fire(faceDot, 'mouseout');
+            await until(() => !richCard.querySelector('.pw-in'), 3000);
+            t('离开正脸季：文案回静息态', !richCard.querySelector('.pw-in')
+              && richCard.querySelector('.pname').textContent === name0);
           }
 
           // 滑动高亮（issue 397）：侧栏一片底片跟着悬停滑（跨类型/状态/底部工具三段）、
@@ -693,6 +712,55 @@
           t('保存后目标卡落位闪', flash);
           for (let i = 0; i < 60 && dv.querySelector('.cn-ovl'); i++) await sleep(40);
           t('折回结束层已收', !dv.querySelector('.cn-ovl'));
+
+          // 悬停「正脸那一季」的圆点（issue 404）：不换脸；从别的季滑回正脸季时，
+          // 折回**期间**层下就已经是静息态——旧版这里露出的是打断时冻结的那一季，
+          // 折回收尾再按快照回填，肉眼就是「缩回去露出上一季、再闪回」。真海报下这条才有判别力。
+          // 与涟漪几何段同一取卡口径：挑季数最多的合集卡——别季海报要**不同于**正脸海报，
+          // 判别式才成立（首张合集卡可能两季共用一张海报，层里层下分不出来）
+          const sCard = [...dv.querySelectorAll(gridSel + ' .pcard-series')]
+            .sort((a, b) => b.querySelectorAll('.pw .season-dots i').length - a.querySelectorAll('.pw .season-dots i').length)[0];
+          t('有合集卡可验季圆点（含正脸+可换脸各一枚）',
+            !!sCard && sCard.querySelectorAll('.pw .season-dots i').length >= 2);
+          if (sCard) {
+            const sDots = [...sCard.querySelectorAll('.pw .season-dots i')];
+            const faceHtml = sCard.querySelector('.pw-face').innerHTML;
+            const restName = sCard.querySelector('.pname').textContent; // 剧名不写死：首个合集卡不一定是老友记
+            let faceIdx = -1;
+            let peekIdx = -1; // 正脸枚不一定排在前面，两类都找到才停
+            for (let i = 0; i < sDots.length; i++) {
+              sDots[i].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+              await sleep(30);
+              const hasLayer = !!sCard.querySelector('.pw-in');
+              if (!hasLayer) { if (faceIdx < 0) faceIdx = i; } else if (peekIdx < 0) { peekIdx = i; }
+              sDots[i].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+              await sleep(320); // 等折回收尾清层，免得下一轮读到上一轮残留的层
+              if (faceIdx >= 0 && peekIdx >= 0) break;
+            }
+            t(`正脸那一季的圆点不建来片层（认在第 ${faceIdx + 1} 枚）`, faceIdx >= 0 && peekIdx >= 0);
+            if (faceIdx >= 0 && peekIdx >= 0) {
+              sDots[peekIdx].dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); // 先换到别的季
+              await sleep(320);
+              // 前提：换到别的季后确实有来片层（正脸枚不建层，没有可判别的东西）
+              t('换到别的季：来片层出现（判别前提）', !!sCard.querySelector('.pw-in'));
+              // 滑回正脸那一季：层当场清掉（层里层下将同一张海报，折回无信息量）、正脸回静息态、
+              // 文案**直接写完整标题**（与其余圆点同口径；旧版慢半拍回填还闪一下）。
+              // 完整标题在壳里拿不到字面量，用「≠ 静息名」判别 + 离开回落静息名闭环。
+              sDots[faceIdx].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+              await sleep(30);
+              const under = sCard.querySelector('.pw-face').innerHTML;
+              const layerGone = !sCard.querySelector('.pw-in');
+              const nameNow = sCard.querySelector('.pname').textContent;
+              t(`滑回正脸季：层清+正脸归位+文案换完整标题（层已清=${layerGone}·正脸同静息=${under === faceHtml}·文案已换=${nameNow !== restName && nameNow.length > 0}）`,
+                layerGone && under === faceHtml && nameNow !== restName);
+              sDots[faceIdx].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+              await sleep(320);
+              t('离开正脸季：文案回落静息态、正脸不动', sCard.querySelector('.pw-face').innerHTML === faceHtml
+                && sCard.querySelector('.pname').textContent === restName && !sCard.querySelector('.pw-in'));
+              sDots[faceIdx].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+              await sleep(320);
+            }
+          }
 
           // 方向键导航（issue 403）：焦点在第一张卡 → 右 → 落到第二张（真矩形下按几何选）
           const kbCards = [...dq(gridSel).querySelectorAll('.pcard')];
