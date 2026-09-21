@@ -454,7 +454,7 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App, opts: { from?: H
 /** 过渡时长（2026-09-21 用户拍板：**很短，图片飞行 0.2s**——开 = 飞行 200 + 撑开 200，
  *  关 = 折回 200 + 飞回 200）。刻意不做 prefers-reduced-motion 放缓分支：用户本人系统即报
  *  reduce，时长是他试出来的明确口径，放缓分支等于替他改决定。 */
-const SE_FLIGHT = 200; // 海报单程飞行
+const SE_FLIGHT = 200; // 海报单程飞行（去程直达）
 const SE_GROW = 200;   // 面板从海报撑开 / 折回海报
 
 /** 目标尺寸的海报克隆（飞行件）。挂哪层由调用方定：去程挂遮罩层（随弹窗生灭），
@@ -474,21 +474,19 @@ function spawnFlyClone(host: HTMLElement, imgSrc: string, w: number, h: number, 
   return clone;
 }
 
-/** 飞行 keyframes：clone 是目标尺寸的盒，「平移 + 非均匀缩放」把盒对到指定矩形。
- *  卡片 2:3 与详情 7:10 差约 5%，飞行中不可辨；transform 动画全程不触布局。 */
-function flyKeyframes(fromR: DOMRect, toR: DOMRect, base: DOMRect): Keyframe[] {
-  const w = toR.width;
-  const h = toR.height;
+/** 飞行 keyframes：clone 是目标尺寸的盒，「平移 + 非均匀缩放」把盒依次对到每个途经矩形。
+ *  卡片 2:3 与详情 7:10 差约 5%，飞行中不可辨；transform 动画全程不触布局。
+ *  途经点个数不限（直飞给两个，绕行给三个），要「在某点停留」就重复给同一个矩形。 */
+function flyKeyframes(base: DOMRect, w: number, h: number, ...stops: DOMRect[]): Keyframe[] {
   const at = (r: DOMRect): string =>
     `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
-  return [{ transform: at(fromR) }, { transform: at(toR) }];
+  return stops.map((r) => ({ transform: at(r) }));
 }
 
 /** 列表重排 FLIP（issue 396）：mutate 前后各量一次，视口内的卡按位移差补一段位移动画——
  *  「其他卡片移动补齐 / 让位」读得见。视口外的卡跳变看不见，不演（也省下几百个合成层）；
- *  display:none 的卡（含正被抽离的那张）全零矩形自然落在视口判断之外。时长与飞行同长：
- *  补位和抽出是同一时刻的两半。 */
-function flipReflow(cards: HTMLElement[], viewport: DOMRect, mutate: () => void): void {
+ *  display:none 的卡（含正被抽离的那张）全零矩形自然落在视口判断之外。 */
+function flipReflow(cards: HTMLElement[], viewport: DOMRect, mutate: () => void, duration = SE_FLIGHT): void {
   const animatable = cards.filter((c) => typeof c.animate === 'function');
   if (!animatable.length) { mutate(); return; }
   const before = animatable.map((c) => c.getBoundingClientRect());
@@ -502,7 +500,7 @@ function flipReflow(cards: HTMLElement[], viewport: DOMRect, mutate: () => void)
     const dy = before[i].top - now.top;
     if ((Math.abs(dx) < 1 && Math.abs(dy) < 1) || (!near(now) && !near(before[i]))) return;
     c.animate([{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: 'none' }],
-      { duration: SE_FLIGHT, easing: 'cubic-bezier(.22,.82,.3,1)' });
+      { duration, easing: 'cubic-bezier(.22,.82,.3,1)' });
   });
 }
 
@@ -542,18 +540,23 @@ function createSharedFlight(): {
   const extractSrc = (): void => {
     const card = srcCard; // 局部非空副本：TS 的收窄穿不进 mutate 闭包
     if (!card) return;
-    flipReflow(gridCards(), (gridEl ?? card).getBoundingClientRect(), () => { card.style.display = 'none'; });
+    // 源卡必须排除在补位集合外：display:none 后它没有几何，混进去只会领一条无意义动画
+    flipReflow(gridCards().filter((c) => c !== card), (gridEl ?? card).getBoundingClientRect(), () => { card.style.display = 'none'; });
   };
 
   /** 插回：列表让出空位（其余卡让位动画），卡本体以 visibility:hidden 占位，返回海报新 rect
    *  供返程克隆瞄准；显形由调用方在克隆落地时做（揭掉 visibility） */
-  const reinsertSrc = (): DOMRect | null => {
+  const reinsertSrc = (reflowMs: number): DOMRect | null => {
     const card = srcCard;
     if (!card || !card.isConnected || !gridEl?.isConnected) return null;
-    flipReflow(gridCards(), gridEl.getBoundingClientRect(), () => {
+    // 让位时长跟返程同长：空位张开的节奏才对得上海报插回的那一下。
+    // ⚠ 源卡必须排除在让位集合外——它 display:none 时矩形是全零，混进去会领一条
+    // 「从 (0,0) 飞到空位」的纠正动画，而 getBoundingClientRect 连 transform 一起量，
+    // 返回的就是被位移污染的假坐标 → 返程克隆照着飞，落点跑到面板角落（2026-09-21 实测）
+    flipReflow(gridCards().filter((c) => c !== card), gridEl.getBoundingClientRect(), () => {
       card.style.display = '';
       card.style.visibility = 'hidden';
-    });
+    }, reflowMs);
     return src?.isConnected ? src.getBoundingClientRect() : null;
   };
 
@@ -585,13 +588,16 @@ function createSharedFlight(): {
         if (handed || phase !== 'closing') return;
         handed = true;
         // ② 列表让位（其余卡动画挪开、卡本体隐形占位）→ 移除遮罩（背景已淡到全透明，无感）
-        //    → 海报飞回空位，落地卡才显形
+        //    → 海报从详情海报位**直飞**回列表空位，落地卡才显形。
+        //    （2026-09-21 澄清：此前「绕右上角再插入」是用户报的 bug——曾把绕行误当需求实现过，
+        //     已拆。绕行若真要，flyKeyframes 的途经点形态还在，加一个矩形就行。）
         const fb = frame.getBoundingClientRect();
-        const to = reinsertSrc();
+        const to = reinsertSrc(SE_FLIGHT);
         finish();
         if (!to) { phase = 'idle'; return; } // 卡已不在线（面板整刷过）：新网格自带它，无需返程
         const clone = spawnFlyClone(host, s.getAttribute('src') ?? '', posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
-        const fly = clone.animate(flyKeyframes(posterR, to, fb), { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
+        const fly = clone.animate(flyKeyframes(fb, posterR.width, posterR.height, posterR, to),
+          { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
         const done = (): void => {
           if (srcCard) srcCard.style.visibility = ''; // 落地：卡在自己的空位里显形
           clone.remove();
@@ -633,7 +639,7 @@ function createSharedFlight(): {
         if (sr.width < 8 || sr.height < 8 || tr.width < 8 || tr.height < 8) { this.bail(); return; }
         extractSrc();                               // 整卡从列表抽离，其余卡动画补位
         const clone = spawnFlyClone(overlay, src.getAttribute('src') as string, tr.width, tr.height, getComputedStyle(target).borderTopLeftRadius);
-        const fly = clone.animate(flyKeyframes(sr, tr, base), { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
+        const fly = clone.animate(flyKeyframes(base, tr.width, tr.height, sr, tr), { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
         // 宿主观察：遮罩被移除且不在关闭流程（skipReturn 的编辑/删除、异常路径）→ 源卡归位。
         // 关闭流程中的归位由返程落地负责，这里不能抢（抢了就是飞行途中卡片先长回列表）
         if (overlay.parentNode) {

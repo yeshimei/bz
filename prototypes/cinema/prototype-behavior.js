@@ -1,4 +1,4 @@
-/* 源指纹 ed1929e66d91443e · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 46fdc595016e73e7 · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -8629,13 +8629,11 @@ tags:
     host.appendChild(clone);
     return clone;
   }
-  function flyKeyframes(fromR, toR, base) {
-    const w = toR.width;
-    const h = toR.height;
+  function flyKeyframes(base, w, h, ...stops) {
     const at = (r) => `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
-    return [{ transform: at(fromR) }, { transform: at(toR) }];
+    return stops.map((r) => ({ transform: at(r) }));
   }
-  function flipReflow(cards, viewport, mutate) {
+  function flipReflow(cards, viewport, mutate, duration = SE_FLIGHT) {
     const animatable = cards.filter((c) => typeof c.animate === "function");
     if (!animatable.length) {
       mutate();
@@ -8651,7 +8649,7 @@ tags:
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1 || !near(now) && !near(before[i])) return;
       c.animate(
         [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
-        { duration: SE_FLIGHT, easing: "cubic-bezier(.22,.82,.3,1)" }
+        { duration, easing: "cubic-bezier(.22,.82,.3,1)" }
       );
     });
   }
@@ -8666,17 +8664,17 @@ tags:
     const extractSrc = () => {
       const card = srcCard;
       if (!card) return;
-      flipReflow(gridCards(), (gridEl != null ? gridEl : card).getBoundingClientRect(), () => {
+      flipReflow(gridCards().filter((c) => c !== card), (gridEl != null ? gridEl : card).getBoundingClientRect(), () => {
         card.style.display = "none";
       });
     };
-    const reinsertSrc = () => {
+    const reinsertSrc = (reflowMs) => {
       const card = srcCard;
       if (!card || !card.isConnected || !(gridEl == null ? void 0 : gridEl.isConnected)) return null;
-      flipReflow(gridCards(), gridEl.getBoundingClientRect(), () => {
+      flipReflow(gridCards().filter((c) => c !== card), gridEl.getBoundingClientRect(), () => {
         card.style.display = "";
         card.style.visibility = "hidden";
-      });
+      }, reflowMs);
       return (src == null ? void 0 : src.isConnected) ? src.getBoundingClientRect() : null;
     };
     const restoreSrc = () => {
@@ -8717,14 +8715,17 @@ tags:
           if (handed || phase !== "closing") return;
           handed = true;
           const fb = frame.getBoundingClientRect();
-          const to = reinsertSrc();
+          const to = reinsertSrc(SE_FLIGHT);
           finish();
           if (!to) {
             phase = "idle";
             return;
           }
           const clone = spawnFlyClone(host, (_a2 = s.getAttribute("src")) != null ? _a2 : "", posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
-          const fly = clone.animate(flyKeyframes(posterR, to, fb), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
+          const fly = clone.animate(
+            flyKeyframes(fb, posterR.width, posterR.height, posterR, to),
+            { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" }
+          );
           const done = () => {
             if (srcCard) srcCard.style.visibility = "";
             clone.remove();
@@ -8775,7 +8776,7 @@ tags:
           }
           extractSrc();
           const clone = spawnFlyClone(overlay, src.getAttribute("src"), tr.width, tr.height, getComputedStyle(target).borderTopLeftRadius);
-          const fly = clone.animate(flyKeyframes(sr, tr, base), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
+          const fly = clone.animate(flyKeyframes(base, tr.width, tr.height, sr, tr), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
           if (overlay.parentNode) {
             const moo = new MutationObserver(() => {
               if (overlay == null ? void 0 : overlay.isConnected) return;
