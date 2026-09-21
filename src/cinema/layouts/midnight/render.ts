@@ -31,7 +31,7 @@ export function midnightDeskHtml(): string {
         </div>
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
-          <button class="rail-item j-tool" data-tool="stat">${iconSpan(ICON.stat)}观影分析</button>
+          <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -46,7 +46,7 @@ export function midnightMobHtml(): string {
       <span class="m-acts">
         <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
         <button class="m-tool j-mai bz-touch-target bz-touch-target--lg" title="AI 荐片">${iconSpan(ICON.ai)}</button>
-        <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析">${iconSpan(ICON.stat)}</button>
+        <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析" data-film-open>${iconSpan(ICON.stat)}</button>
         <button class="m-tool j-mclose bz-touch-target bz-touch-target--lg" title="关闭">${iconSpan(ICON.close)}</button>
       </span>
     </div>
@@ -120,14 +120,10 @@ export interface MidnightRenderInput {
   cols: number;
   /** 列表标题（组 + 状态叠加口径，listTitle） */
   title: string;
-  /** 已看部数（分析页头计数；分析页仍按笔记条数统计，不随按季合并变） */
-  watchedCount: number;
   /** AI 荐片页 HTML（shared aiPageHtml 产物） */
   aiHtml: string;
   /** AI 结果部数（页头计数；null = 无结果） */
   aiCount: number | null;
-  /** 观影分析页 HTML（analysis.buildAnalysisHTML / 壳自绘演示统计） */
-  statHtml: string;
   /** 海报资源解析（插件 vault resourcePath，壳给演示字段直读） */
   poster: (it: CinemaItem) => string | null;
   /** 后台抓取中（插件 douban-queue pending 集合，壳给演示 false） */
@@ -154,7 +150,7 @@ export function listToolsHtml(view: CinemaView): string {
 
 // ---------- 渲染胶水（desk/mob 各自回填挂点；两侧同构执行） ----------
 
-/** desk 渲染：侧栏 rail + 主视图（list/ai/stat 按视图状态装配） */
+/** desk 渲染：侧栏 rail + 主视图（list/ai 按视图状态装配；观影分析走独立全屏弹窗，不在面板内） */
 export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput): void {
   const rail = railHtml(inp.allCards, inp.view);
   const groupsEl = root.querySelector('.j-groups');
@@ -166,8 +162,6 @@ export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput):
   const v = inp.view;
   if (v.view === 'ai') {
     view.innerHTML = spHeadHtml('AI 荐片', inp.aiCount ? `· ${inp.aiCount} 部` : '') + `<div class="sp-body">${inp.aiHtml}</div>`;
-  } else if (v.view === 'stat') {
-    view.innerHTML = spHeadHtml('观影分析', `· ${inp.watchedCount} 部已看`) + `<div class="sp-body">${inp.statHtml}</div>`;
   } else {
     const body = inp.cards.length
       ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>`
@@ -176,10 +170,10 @@ export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput):
   }
 }
 
-/** mob 渲染：标题/计数 + 主视图（list=m-grid / ai、stat=sp-body）+ chips */
+/** mob 渲染：标题/计数 + 主视图（list=m-grid / ai=sp-body）+ chips */
 export function renderMidnightMob(root: HTMLElement, inp: MidnightRenderInput): void {
   const v = inp.view;
-  const t = v.view === 'list' ? inp.title : v.view === 'ai' ? 'AI 荐片' : '观影分析';
+  const t = v.view === 'list' ? inp.title : 'AI 荐片';
   const titleEl = root.querySelector('.j-mtitle');
   const cntEl = root.querySelector('.j-mcnt');
   if (titleEl) titleEl.textContent = t;
@@ -200,12 +194,9 @@ export function renderMidnightMob(root: HTMLElement, inp: MidnightRenderInput): 
       mv.innerHTML = inp.cards.length
         ? `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>`
         : emptyPageHtml(viewFiltered(v));
-    } else if (v.view === 'ai') {
-      mv.className = 'sp-body j-mview';
-      mv.innerHTML = inp.aiHtml;
     } else {
       mv.className = 'sp-body j-mview';
-      mv.innerHTML = inp.statHtml;
+      mv.innerHTML = inp.aiHtml;
     }
   }
   const chips = root.querySelector('.j-chips');

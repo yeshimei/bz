@@ -577,6 +577,23 @@ export function seedVaultFile(path: string, content: string, ctime: number): voi
   localStorage.setItem(STAT_KEY, JSON.stringify(stats));
 }
 
+/** 批量种子：与 seedVaultFile 同语义，但**只写一次 stats 表**。
+ *  单条版每写一条就把整张 stats 表 JSON 化一遍——全量演示数据（686 条）下是 O(n²)，
+ *  评审壳每次重载都要多花好几秒（2026-09-22 实测）。 */
+export function seedVaultFiles(list: { path: string; content: string; ctime: number }[]): void {
+  let stats: Record<string, FileStat> = {};
+  try {
+    stats = JSON.parse(localStorage.getItem(STAT_KEY) || '{}') as Record<string, FileStat>;
+  } catch {
+    stats = {};
+  }
+  for (const f of list) {
+    localStorage.setItem(LS_PREFIX + f.path, f.content);
+    stats[f.path] = { ctime: f.ctime, mtime: f.ctime };
+  }
+  localStorage.setItem(STAT_KEY, JSON.stringify(stats));
+}
+
 /** 评审壳种子数据（fake-sim 启动时写入） */
 export class FakeApp {
   vault = new FakeVault();

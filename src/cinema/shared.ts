@@ -197,7 +197,7 @@ export function pcardHtml(it: CinemaItem, posterUrl: string | null, fetching = f
 
 // ---------- 视图状态快照（纯层禁读 M：筛选/排序/视图显式入参） ----------
 
-export type CinemaViewKind = 'list' | 'ai' | 'stat';
+export type CinemaViewKind = 'list' | 'ai';
 
 export interface CinemaView {
   view: CinemaViewKind;
@@ -340,27 +340,19 @@ export function formChoicesHtml(values: string[], cur: string, attr: string): st
     `<button type="button" class="f-choice-btn${v === cur ? ' is-on' : ''}" data-${attr}="${v}"><span class="dot" style="background:${attr === 'f-tag' ? typeColor(getGroupForTag(v) ?? '其他') : ST_COLOR[v] ?? '#888'}"></span>${v}</button>`).join('');
 }
 
-/** 「我的记录」段字段（评分滑杆 / 影评框）：编辑单面与新增背面共用同一份 markup——
- *  可见性跟状态走（已看才显示），行为层 applyStOn 全域 querySelector('.j-rating'/'.j-review')
- *  统一开合，这里只需给好初始 display。 */
-function ratingFieldHtml(rating: number, initSt: string): string {
-  return `<div class="f-field j-rating" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${rating}"><span class="f-range-val j-rval">${Number(rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(rating)}">${starsHtml(rating)}</span></div></div>`;
-}
-function reviewFieldHtml(review: string, initSt: string): string {
-  return `<div class="f-field j-review" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(review)}</textarea></div>`;
-}
-
 /** 添加/编辑表单弹窗内容（保存 / 解析 / 翻转等接线留行为层）。
- *  新增态 = **双面卡片**（issue 395）：正面只有名称 + 状态，点「解析」拉豆瓣 → 翻到背面看全部信息；
+ *  新增态 = **双面卡片**（issue 395）：正面 = 名称 + 状态 +（已看点开）评分/影评 + 解析按钮；
+ *  点「解析」拉豆瓣 → 翻到背面看全部信息。评分/影评收在正面状态下方（2026-09-21 用户拍板：
+ *  点已看就要当场能填，不必等解析翻面；背面是豆瓣形制信息，不放记录段）。
  *  编辑态 = 单面到底：已有笔记不必重新解析，全字段直出 + 保存。 */
 export function formModalHtml(opts: { editing: boolean; name: string; typeTag: string; stText: string; rating: number; review: string }): string {
   const { editing } = opts;
   const initSt = opts.stText;
   const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
   const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(['想看', '在看', '已看'], initSt, 'f-st')}</div></div>`;
-  const ratingField = ratingFieldHtml(opts.rating, initSt);
-  const reviewField = reviewFieldHtml(opts.review, initSt);
+  const ratingField = `<div class="f-field j-rating" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">评 分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${opts.rating}"><span class="f-range-val j-rval">${Number(opts.rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(opts.rating)}">${starsHtml(opts.rating)}</span></div></div>`;
+  const reviewField = `<div class="f-field j-review" style="display:${initSt === '已看' ? '' : 'none'}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
   if (editing) {
     return `<div class="cn-modal" style="width:100%">
     <div class="cn-modal-title">编辑影视</div>
@@ -376,7 +368,7 @@ export function formModalHtml(opts: { editing: boolean; name: string; typeTag: s
     <div class="form-flip j-flip">
       <div class="form-face form-face--front">
         <div class="cn-modal-title">添加影视</div>
-        ${nameField}${stField}
+        ${nameField}${stField}${ratingField}${reviewField}
         <div class="dm-actions"><button class="dm-btn gold j-parse"><span class="f-spin"></span><span class="j-parse-text">解析</span></button></div>
       </div>
       <div class="form-face form-face--back">
@@ -409,9 +401,6 @@ export interface FormBackOpts {
   stText: string;
   /** 分类仍在判定中（2026-09-21）：徽标显示占位骨架，出结果后由行为层就地替换 */
   classifying?: boolean;
-  /** 「我的记录」段初始值（评分/影评，2026-09-21 加回背面——去掉的决定同日作废） */
-  rating: number;
-  review: string;
 }
 
 /** 分类徽标：判定中显示占位骨架（不预告默认值，避免「先看到一个错值再变」），
@@ -428,8 +417,7 @@ export function formStChipHtml(stText: string): string {
 
 /** 卡片背面（issue 395）：**与详情弹窗同形制**（dm-head + 豆瓣信息 + 热门短评）。
  *  唯一区别：详情弹窗的类型/状态是只读徽标，这里是可点下拉（点击展开候选，选中即回填）。
- *  「我的记录」段（评分滑杆 + 影评框）收在背面末尾——已看才显示（applyStOn 统一开合；
- *  2026-09-21 当日「去掉」的拍板作废：点已看就要能填评分影评，用户点名加回）。
+ *  不放「我的记录」段——评分/影评在正面状态下方（2026-09-21 用户拍板：点已看当场能填）。
  *  徽标不带小三角（2026-09-21 用户拍板：能点就够了，不额外加装饰性指示）。 */
 export function formBackHtml(d: FormPreviewData | null, o: FormBackOpts): string {
   if (!d) return '';
@@ -463,7 +451,6 @@ export function formBackHtml(d: FormPreviewData | null, o: FormBackOpts): string
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join('') : ''}
     ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ''}
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ''}
-    <div class="dm-sec">我 的 记 录</div>${ratingFieldHtml(o.rating, o.stText)}${reviewFieldHtml(o.review, o.stText)}
   `;
 }
 

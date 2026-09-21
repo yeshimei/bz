@@ -8,7 +8,7 @@ import { onDomainEvent } from '../core/domain-bus';
 import { unregisterPanelEsc } from '../core/esc-manager';
 import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER } from './state';
 import { rebuildItems, findPosterRenameTargets } from './data';
-import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, renderSoft, openAddModalDirect, openRandomMovie } from './ui';
+import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, renderSoft, openAddModalDirect, openRandomMovie, openYearbookOverlay } from './ui';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
 
 let initialized = false;
@@ -119,19 +119,12 @@ export function openCinema(app: App): void {
 }
 
 /**
- * 打开影院并切到影视分析页（命令 bz-cinema-analysis，ADR-0090 报告内嵌化）：
- * 原独立报告窗退役，命令直达影院面板分析页（不新造第二套面板）。
- * 幂等语义：面板未开则开并落分析页；已开则就地切分析页重渲染（不再 toggle 关闭）。
+ * 观影分析（命令 bz-cinema-analysis）：独立全屏长片《观影志》（2026-09-22 重写为 26 幕，
+ * 面板开不开都能看；命令 ID 与首页入口不变）。幂等语义：已开着就不叠第二层（再点晃一下提示）。
  */
 export function openCinemaAnalysis(app: App): void {
   ensureCinema(app);
-  M.view = 'stat';
-  if (M.currentOverlay) renderAll(app);
-  else {
-    applyDefaultView();
-    createOverlay(app);
-    sweepDoubanFetch(app);
-  }
+  openYearbookOverlay(app);
 }
 
 /** 添加影视（命令 bz-cinema-add） */

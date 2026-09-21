@@ -714,6 +714,7 @@
    加载类循环（转圈 / 骨架 / 脉冲 / 扫描）是功能性指示，不入台账、取值不随交互节奏走。
    ══════════════════════════════════════════════════════════════════════════ */
 .bz-cinema--midnight,
+.bz-yb,
 .cn-skin{
   --cn-m-fast:.16s;    /* 微反馈：hover / 按下 / 底色 / 高亮滑行 */
   --cn-m-move:.2s;     /* 空间位移：海报飞行、FLIP 让位、面板撑开与折回、涟漪 */
@@ -838,279 +839,681 @@
 .bz-cinema--midnight .cn-fly img{width:100%;height:100%;object-fit:cover;display:block}
 
 /* ══════════════════════════════════════════════════════════════════════════
-   观影分析 · 滚动放映室（issue 405）：stat 页整页是一部四本 22 幕的影片。
-   幕高 = --film-unit（sp-body 可视高，引擎写入）× 幕系数；配色走 --sf-* 变量
-   （午夜场壳 = 暗调；亮色壳上岸只补一组亮色变量层）。时长均为氛围循环
-   （表盘/灯牌/跑马灯/探照灯），已入台账功能性循环白名单（issue 405）。 */
-.bz-cinema--midnight .sp-body:has(.bz-stat-film){padding:0;position:relative}
-.bz-stat-film{position:relative;overflow:hidden;
-  --film-unit:600px;
-  --sf-bg:#0b0906; --sf-ink-rgb:239,230,208; --sf-dim-rgb:154,140,114; --sf-faint-rgb:92,81,64;
-  --sf-gold-rgb:201,153,47; --sf-star-rgb:255,217,138; --sf-star2-rgb:159,192,232;
-  --sf-core-rgb:255,246,228; --sf-dust-rgb:239,230,208;
-  background:var(--sf-bg);color:rgb(var(--sf-ink-rgb));
-  font-family:"Noto Serif SC","Source Han Serif SC","SimSun",serif}
-.bz-stat-film img,.bz-stat-film .bz-film-ph{object-fit:cover;display:block;background:#181209}
-.bz-film-ph{position:relative;overflow:hidden}
-.bz-film-ph::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,var(--pc1),var(--pc2))}
-.bz-film-ph>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  writing-mode:vertical-rl;font-size:14px;letter-spacing:.3em;color:#f0e6d0d9;line-height:1.5;font-style:normal}
-/* 顶栏常驻层：颗粒 + 细轨导航 */
-.bz-film-fixed{position:sticky;top:0;height:0;z-index:6}
-.bz-film-grain{position:absolute;top:0;left:0;width:100%;height:var(--film-unit);opacity:.06;pointer-events:none}
-.bz-film-nav{position:absolute;right:14px;top:0;height:var(--film-unit);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
-.bz-film-track{position:relative;width:2px;height:calc(var(--film-unit) * .42);border-radius:2px;cursor:pointer;
-  background:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 16%,transparent)}
-.bz-film-dot{position:absolute;left:50%;top:0;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);
-  background:var(--gold);box-shadow:0 0 12px color-mix(in srgb,var(--gold) 55%,transparent)}
-.bz-film-now{writing-mode:vertical-rl;font-size:11px;letter-spacing:.32em;color:rgb(var(--sf-dim-rgb))}
-/* 幕骨架 */
-.bz-film-scn{position:relative}
-.bz-film-pin{position:sticky;top:0;height:var(--film-unit);overflow:hidden}
-.bz-film-tag{position:absolute;left:4.5%;bottom:6.5%;z-index:6;display:flex;align-items:baseline;gap:14px}
-.bz-film-tag .no{font-size:11px;letter-spacing:.42em;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 33%,transparent);padding:3px 8px 3px 11px;border-radius:2px;white-space:nowrap}
-.bz-film-tag h2{font-size:24px;font-weight:600;letter-spacing:.22em;color:rgb(var(--sf-ink-rgb));white-space:nowrap}
-.bz-film-tag .cap{font-size:12px;letter-spacing:.2em;color:rgb(var(--sf-dim-rgb))}
-.bz-film-cv{position:absolute;inset:0;width:100%;height:100%}
-/* 序幕：倒计时 + 光束 */
-.bz-film-count{position:absolute;left:50%;top:44%;width:58%;height:58%;transform:translate(-50%,-50%)}
-.bz-film-count .cdiv{position:absolute;inset:0;display:grid;place-items:center;clip-path:circle(0% at 50% 50%)}
-.bz-film-count .cdiv b{font-size:calc(var(--film-unit) * .26);font-weight:600;color:rgb(var(--sf-ink-rgb));line-height:1}
-.bz-film-count .cring{position:absolute;inset:0;border:2px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 36%,transparent);border-radius:50%}
-.bz-film-count .cring.r2{inset:7.5%}
-.bz-film-count .ccross{position:absolute;left:50%;top:-8%;bottom:-8%;width:1px;background:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent)}
-.bz-film-count .ccross.h{left:-8%;right:-8%;top:50%;bottom:auto;width:auto;height:1px}
-.bz-film-count .dial{position:absolute;inset:-9%;border:1px dashed color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent);border-radius:50%;animation:dial 14s linear infinite}
-@keyframes dial{to{transform:rotate(360deg)}}
-.bz-film-hero{position:absolute;left:0;right:0;top:43%;text-align:center;opacity:0}
-.bz-film-hero h1{font-size:calc(var(--film-unit) * .1);font-weight:600;letter-spacing:.34em;text-indent:.34em;color:rgb(var(--sf-ink-rgb))}
-.bz-film-hero .rule{width:18%;height:1px;margin:2.8% auto 0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 60%,transparent),transparent)}
-.bz-film-hero .sub{margin-top:2.4%;font-size:14px;letter-spacing:.5em;text-indent:.5em;color:rgb(var(--sf-star-rgb))}
-.bz-film-hero .meta{margin-top:2%;font-size:12px;letter-spacing:.4em;text-indent:.4em;color:rgb(var(--sf-dim-rgb))}
-.bz-film-hint{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-size:12px;letter-spacing:.5em;text-indent:.5em;color:rgb(var(--sf-dim-rgb));opacity:0}
-/* 分本字幕卡：进场后常驻 */
-.bz-film-inter{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
-.bz-film-inter .vol{font-size:12px;letter-spacing:.6em;text-indent:.6em;color:var(--gold);margin-bottom:3.4%}
-.bz-film-inter h2{font-size:calc(var(--film-unit) * .095);font-weight:600;letter-spacing:.5em;text-indent:.5em;color:rgb(var(--sf-ink-rgb))}
-.bz-film-inter .rule{width:14%;height:1px;margin:3% auto;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 60%,transparent),transparent)}
-.bz-film-inter .sub{margin-top:3%;font-size:13px;letter-spacing:.34em;text-indent:.34em;color:rgb(var(--sf-dim-rgb))}
-/* 馆藏长廊 */
-.bz-film-corr{position:absolute;inset:0;perspective:1050px;perspective-origin:50% 44%}
-.bz-film-corr-inner{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
-.bz-film-p3{position:absolute;left:50%;top:50%;height:43.5%;aspect-ratio:2/3;will-change:transform}
-.bz-film-p3 img,.bz-film-p3 .bz-film-ph{width:100%;height:100%;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent);border-radius:3px}
-.bz-film-end-sign{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) translateZ(var(--z,-3220px));text-align:center;white-space:nowrap}
-.bz-film-end-sign .big{font-size:calc(var(--film-unit) * .08);letter-spacing:.3em;text-indent:.3em;color:rgb(var(--sf-star-rgb));text-shadow:0 0 34px color-mix(in srgb,var(--gold) 40%,transparent)}
-.bz-film-end-sign .small{margin-top:1.6%;font-size:13px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
-.bz-film-ground{position:absolute;left:0;right:0;bottom:0;height:26%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6))}
-.bz-film-fog{position:absolute;inset:0;background:radial-gradient(72% 62% at 50% 44%,transparent 42%,rgba(11,9,6,.88) 100%)}
-/* 星云 / 浪潮 HUD */
-.bz-film-axis{position:absolute;font-size:11px;letter-spacing:.3em;color:rgb(var(--sf-faint-rgb))}
-.bz-film-axis.x{left:10%;right:10%;bottom:12%;display:flex;justify-content:space-between}
-.bz-film-axis.y{left:3%;top:50%;transform:rotate(180deg);writing-mode:vertical-rl}
-.bz-film-neb-meta{position:absolute;right:8%;top:16%;text-align:right}
-.bz-film-neb-meta .num{font-size:calc(var(--film-unit) * .12);font-weight:600;color:rgb(var(--sf-star-rgb));line-height:1;font-variant-numeric:tabular-nums}
-.bz-film-neb-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
-.bz-film-neb-top{position:absolute;right:8%;bottom:16%;display:flex;gap:14px}
-.bz-film-mini{width:9.5%;opacity:0}
-.bz-film-mini img,.bz-film-mini .bz-film-ph{width:100%;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent)}
-.bz-film-mini figcaption{margin-top:6px;font-size:10.5px;color:rgb(var(--sf-dim-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bz-film-wave-meta{position:absolute;left:8%;top:14%}
-.bz-film-wave-meta .num{font-size:calc(var(--film-unit) * .11);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
-.bz-film-wave-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
-/* 放映编年：胶片卷 */
-.bz-film-filmwrap{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);overflow:hidden;
-  background:#050403;border-top:1px solid #1c1712;border-bottom:1px solid #1c1712}
-.perf-strip{height:26px;background:repeating-linear-gradient(90deg,transparent 0 12px,#f0e6d024 12px 30px,transparent 30px 42px)}
-.perf-strip.b{transform:scaleY(-1)}
-.bz-film-strip{display:flex;will-change:transform;padding:14px 0}
-.bz-film-frame{flex:none;width:calc(var(--film-unit) * .313);padding:0 7px;position:relative}
-.bz-film-frame img,.bz-film-frame .bz-film-ph{width:100%;height:calc(var(--film-unit) * .46);border-radius:2px;border:1px solid #f0e6d01c;filter:saturate(.92)}
-.bz-film-frame figcaption{position:absolute;left:7px;right:7px;bottom:8px;padding:6px 8px 5px;
-  background:linear-gradient(180deg,transparent,rgba(5,4,3,.88) 38%);font-size:11.5px;color:#f0e6d0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bz-film-frame figcaption .yy{color:#ffd98a;font-variant-numeric:tabular-nums;margin-right:.5em}
-/* 十二档期 HUD */
-.bz-film-dial-meta{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:2}
-.bz-film-dial-meta .num{font-size:calc(var(--film-unit) * .095);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums}
-.bz-film-dial-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
-/* 本周排片 */
-.bz-film-week{position:absolute;left:7%;right:7%;top:50%;transform:translateY(-50%);display:grid;grid-template-columns:repeat(7,1fr);gap:1.4%}
-.bz-film-day{border:1px solid #2a241b;border-radius:6px;padding:2.4% 1% 2%;background:#100d08;opacity:0;position:relative;min-height:46%}
-.bz-film-day.is-wknd{border-color:color-mix(in srgb,var(--gold) 33%,transparent)}
-.bz-film-day .dn{font-size:13px;letter-spacing:.4em;text-indent:.4em;color:rgb(var(--sf-dim-rgb));text-align:center}
-.bz-film-day.is-wknd .dn{color:rgb(var(--sf-star-rgb))}
-.bz-film-day .dc{margin-top:2%;text-align:center;font-size:26px;color:rgb(var(--sf-ink-rgb));font-variant-numeric:tabular-nums}
-.bz-film-day .dc small{font-size:11px;color:rgb(var(--sf-faint-rgb));letter-spacing:.2em;margin-left:.3em}
-.bz-film-day .stubs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4%;align-content:flex-start}
-.bz-film-stub{width:26px;height:38px;border-radius:3px;opacity:0;background:linear-gradient(170deg,color-mix(in srgb,var(--gold) 18%,transparent),color-mix(in srgb,var(--gold) 8%,transparent));border:1px dashed color-mix(in srgb,var(--gold) 33%,transparent)}
-.bz-film-day.is-wknd .bz-film-stub{border-color:color-mix(in srgb,var(--gold) 47%,transparent)}
-.bz-film-day .peak{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--gold);color:#14100a;
-  font-size:10.5px;letter-spacing:.3em;text-indent:.3em;padding:3px 9px;border-radius:2px;font-weight:600;display:none}
-.bz-film-day.is-peak .peak{display:block}
-/* 霓虹片街 */
-.bz-film-street{position:absolute;inset:0;display:flex;justify-content:center;gap:6%;align-items:flex-start;padding-top:16%}
-.bz-film-neon-col{display:flex;flex-direction:column;align-items:center}
-.bz-film-neon-col .txt{writing-mode:vertical-rl;font-size:calc(var(--film-unit) * .062);letter-spacing:.34em;font-weight:600;
-  color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);transition:color var(--cn-m-base)}
-.bz-film-neon-col .cnt{margin-top:14px;writing-mode:vertical-rl;font-size:11px;letter-spacing:.3em;color:rgb(var(--sf-faint-rgb))}
-.bz-film-neon-col .ref{margin-top:12%;writing-mode:vertical-rl;font-size:calc(var(--film-unit) * .062);letter-spacing:.34em;font-weight:600;
-  color:transparent;opacity:.5;filter:blur(3px);
-  -webkit-mask-image:linear-gradient(180deg,#000,transparent 72%);mask-image:linear-gradient(180deg,#000,transparent 72%)}
-.bz-film-neon-col.is-lit .txt{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc),0 0 70px var(--nc);animation:neon-on .9s steps(1) 1}
-.bz-film-neon-col.is-lit .ref{color:var(--nc);animation:neon-on .9s steps(1) 1}
-@keyframes neon-on{
-  0%{color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);text-shadow:none}
-  12%{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc)}
-  20%{color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);text-shadow:none}
-  28%{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc),0 0 70px var(--nc)}
-  34%{color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);text-shadow:none}
-  42%,100%{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc),0 0 70px var(--nc)}
-}
-.bz-film-street-glow{position:absolute;left:0;right:0;bottom:0;height:30%;background:radial-gradient(60% 120% at 50% 100%,color-mix(in srgb,var(--gold) 8%,transparent),transparent 70%)}
-/* 修片馆 */
-.bz-film-age-head{position:absolute;left:50%;top:11%;transform:translateX(-50%);text-align:center}
-.bz-film-age-head .num{font-size:calc(var(--film-unit) * .1);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
-.bz-film-age-head .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
-.bz-film-vault{position:absolute;left:6%;right:6%;top:34%;bottom:12%;display:grid;grid-template-columns:repeat(4,1fr);gap:1.6%}
-.bz-film-shelf{border:1px solid #2a241b;border-radius:6px;background:#100d08;padding:2.2% 1.2%;opacity:0;display:flex;flex-direction:column}
-.bz-film-shelf .sn{font-size:13px;letter-spacing:.34em;color:rgb(var(--sf-star-rgb));text-align:center}
-.bz-film-shelf .sc{margin-top:2%;text-align:center;font-size:22px;color:rgb(var(--sf-ink-rgb));font-variant-numeric:tabular-nums}
-.bz-film-shelf .sc small{font-size:11px;color:rgb(var(--sf-faint-rgb));letter-spacing:.2em}
-.bz-film-shelf .sp{display:flex;gap:8px;justify-content:center;margin-top:4%;flex-wrap:wrap}
-.bz-film-shelf .sp img,.bz-film-shelf .sp .bz-film-ph{width:86px;max-width:90%;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent)}
-.bz-film-shelf .oldest{margin-top:auto;padding-top:3%;text-align:center;font-size:11px;color:rgb(var(--sf-dim-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-/* 导演特展 */
-.bz-film-spot{position:absolute;left:18%;top:2%;width:64%;height:94%;pointer-events:none;will-change:transform;
-  background:radial-gradient(closest-side,color-mix(in srgb,var(--gold) 17%,transparent),transparent 72%)}
-.bz-film-gallery{position:absolute;left:6%;right:6%;top:16%;bottom:14%;display:grid;grid-template-columns:repeat(3,1fr);gap:2%;grid-auto-rows:1fr}
-.bz-film-plaque{border:1px solid #2a241b;border-radius:6px;background:#100d08;padding:6% 8%;position:relative;opacity:0;transition:box-shadow var(--cn-m-base),border-color var(--cn-m-base)}
-.bz-film-plaque.master{border-color:color-mix(in srgb,var(--gold) 40%,transparent)}
-.bz-film-plaque.is-lit{border-color:color-mix(in srgb,var(--gold) 60%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 20%,transparent),0 18px 50px #0009,0 0 44px color-mix(in srgb,var(--gold) 15%,transparent)}
-.bz-film-plaque .tag{position:absolute;top:-11px;left:16px;background:var(--gold);color:#14100a;font-size:10.5px;letter-spacing:.3em;text-indent:.3em;padding:3px 9px;border-radius:2px;font-weight:600}
-.bz-film-plaque h3{font-size:calc(var(--film-unit) * .038);letter-spacing:.14em;color:rgb(var(--sf-ink-rgb));font-weight:600}
-.bz-film-plaque .pn{margin-top:2%;font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.2em}
-.bz-film-plaque .pp{display:flex;gap:8px;margin-top:4%;flex-wrap:wrap}
-.bz-film-plaque .pp img,.bz-film-plaque .pp .bz-film-ph{width:62px;max-width:80%;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent)}
-/* 群像长卷 */
-.bz-film-parade{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);overflow:hidden}
-.bz-film-ghost{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:calc(var(--film-unit) * .17);
-  font-weight:600;letter-spacing:.18em;color:transparent;white-space:nowrap;-webkit-text-stroke:1px color-mix(in srgb,var(--gold) 19%,transparent);overflow:hidden}
-.bz-film-parade-strip{display:flex;gap:3%;will-change:transform;padding:0 40% 0 8%;width:max-content;position:relative}
-.bz-film-star{display:flex;gap:16px;align-items:flex-start;transform-origin:left center;will-change:transform}
-.bz-film-star .nm{writing-mode:vertical-rl;font-size:calc(var(--film-unit) * .052);letter-spacing:.3em;color:rgb(var(--sf-ink-rgb));font-weight:600}
-.bz-film-star .nm small{font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.2em;margin-top:12px}
-.bz-film-star .nm small b{font-weight:400;text-combine-upright:all}
-.bz-film-star .ims{display:flex;gap:10px}
-.bz-film-star .ims img,.bz-film-star .ims .bz-film-ph{width:120px;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent)}
-/* 打分天平 */
-.bz-film-diff-head{position:absolute;left:50%;top:9%;transform:translateX(-50%);text-align:center;z-index:2}
-.bz-film-diff-head .num{font-size:calc(var(--film-unit) * .09);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
-.bz-film-diff-head .lbl{margin-top:1%;font-size:12px;letter-spacing:.36em;color:rgb(var(--sf-dim-rgb))}
-.bz-film-balance{position:absolute;left:50%;top:23%;transform:translateX(-50%);width:36%;height:10%;z-index:2}
-.bz-film-balance .arm{position:absolute;left:0;top:20%;width:100%;height:3px;border-radius:2px;
-  background:linear-gradient(90deg,var(--gold),rgb(var(--sf-star-rgb)),var(--gold));will-change:transform}
-.bz-film-balance .arm i{position:absolute;top:-4px;width:52px;height:52px;border-radius:50%;
-  border:1px dashed color-mix(in srgb,var(--gold) 53%,transparent);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--gold) 13%,transparent),transparent 72%)}
-.bz-film-balance .arm i.l{left:-26px}
-.bz-film-balance .arm i.r{right:-26px}
-.bz-film-balance .ful{position:absolute;left:50%;top:calc(20% + 1px);width:0;height:0;margin-left:-11px;
-  border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:16px solid var(--gold)}
-.bz-film-scale{position:absolute;left:0;right:0;top:26%;bottom:12%;display:flex}
-.bz-film-scale .pan{flex:1;padding:4% 4%;overflow:hidden}
-.bz-film-scale .pan.left{background:linear-gradient(120deg,color-mix(in srgb,var(--gold) 6%,transparent),transparent 70%);border-right:1px dashed color-mix(in srgb,var(--gold) 27%,transparent)}
-.bz-film-scale .pan.right{background:linear-gradient(240deg,color-mix(in srgb,var(--red) 6%,transparent),transparent 70%)}
-.bz-film-scale .pt{font-size:15px;letter-spacing:.5em;color:rgb(var(--sf-star-rgb));margin-bottom:6%}
-.bz-film-scale .pan.right .pt{color:var(--red)}
-.bz-film-scale .row{display:flex;align-items:baseline;gap:12px;padding:3% 0;border-bottom:1px dashed color-mix(in srgb,rgb(var(--sf-ink-rgb)) 8%,transparent)}
-.bz-film-scale .row .nm{font-size:15px;color:rgb(var(--sf-ink-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bz-film-scale .row .vv{margin-left:auto;font-size:12px;color:rgb(var(--sf-dim-rgb));font-variant-numeric:tabular-nums;white-space:nowrap}
-.bz-film-scale .empty{color:rgb(var(--sf-faint-rgb));font-size:13px;letter-spacing:.3em;padding-top:2%}
-/* 连映夜 */
-.bz-film-marathon{position:absolute;left:8%;right:8%;top:20%;display:flex;flex-direction:column;gap:6%}
-.bz-film-maro{display:flex;align-items:center;gap:2.4%;opacity:0}
-.bz-film-maro .info{min-width:16%}
-.bz-film-maro .info h3{font-size:calc(var(--film-unit) * .04);letter-spacing:.12em;color:rgb(var(--sf-ink-rgb));font-weight:600}
-.bz-film-maro .info .n{margin-top:2%;font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.24em}
-.bz-film-maro .marq{height:5px;margin-bottom:3%;opacity:.7;background:repeating-linear-gradient(90deg,var(--gold) 0 8px,transparent 8px 20px);animation:marq 1.1s linear infinite}
-@keyframes marq{to{background-position:20px 0}}
-.bz-film-maro .stack{display:flex}
-.bz-film-maro .stack img,.bz-film-maro .stack .bz-film-ph{width:calc(var(--film-unit) * .095);aspect-ratio:2/3;border-radius:3px;
-  border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent);margin-left:calc(var(--film-unit) * -.075);box-shadow:-8px 0 22px #0008;transform-origin:50% 100%;will-change:transform}
-.bz-film-maro .stack img:first-child,.bz-film-maro .stack .bz-film-ph:first-child{margin-left:0}
-/* 追剧深度 */
-.bz-film-binge{position:absolute;left:12%;right:12%;top:18%}
-.bz-film-binge .wm{position:absolute;right:0;bottom:-6%;font-size:calc(var(--film-unit) * .3);font-weight:600;line-height:1;
-  color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--gold) 14%,transparent)}
-.bz-film-binge .binge-head{text-align:center;margin-bottom:5%}
-.bz-film-binge .binge-head .num{font-size:calc(var(--film-unit) * .09);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
-.bz-film-binge .binge-head .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
-.bz-film-brow{display:flex;align-items:center;gap:2%;padding:3% 0;border-bottom:1px dashed color-mix(in srgb,rgb(var(--sf-ink-rgb)) 8%,transparent);opacity:0}
-.bz-film-brow .bn{font-size:calc(var(--film-unit) * .03);color:rgb(var(--sf-ink-rgb));letter-spacing:.1em;min-width:24%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bz-film-brow .reels{display:flex;gap:10px}
-.bz-film-brow .rl{width:32px;height:32px;border-radius:50%;border:2px solid var(--gold);opacity:0;
-  box-shadow:inset 0 0 0 2px var(--sf-bg),inset 0 0 0 4px color-mix(in srgb,var(--gold) 33%,transparent);background:#141008;will-change:transform,opacity}
-.bz-film-brow .bn2{margin-left:auto;font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.2em;white-space:nowrap}
-/* 弹幕影评 HUD */
-.bz-film-dm-meta{position:absolute;left:50%;top:12%;transform:translateX(-50%);text-align:center}
-.bz-film-dm-meta .num{font-size:calc(var(--film-unit) * .09);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
-.bz-film-dm-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
-/* 名人堂 */
-.bz-film-hall{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4%;perspective:1400px}
-.bz-film-rays{position:absolute;left:50%;top:50%;width:calc(var(--film-unit) * 1.5);height:calc(var(--film-unit) * 1.5);margin:calc(var(--film-unit) * -.75);
-  border-radius:50%;pointer-events:none;opacity:0;will-change:transform,opacity;
-  background:repeating-conic-gradient(color-mix(in srgb,var(--gold) 6%,transparent) 0 6deg,transparent 6deg 14deg);
-  -webkit-mask-image:radial-gradient(circle,#000 28%,transparent 66%);mask-image:radial-gradient(circle,#000 28%,transparent 66%)}
-.bz-film-award{width:24%;max-width:330px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:6px;
-  background:linear-gradient(170deg,#171208,#0d0a06);padding:26px 24px 22px;position:relative;transform-origin:50% 100%;opacity:0;
-  box-shadow:0 24px 70px rgba(0,0,0,.66)}
-.bz-film-award::after{content:"";position:absolute;inset:0;border-radius:6px;pointer-events:none;
-  background:linear-gradient(115deg,transparent 42%,color-mix(in srgb,var(--gold) 17%,transparent) 50%,transparent 58%);
-  background-size:280% 100%;background-position:var(--sh,120%) 0}
-.bz-film-award .medal{position:absolute;top:-13px;left:24px;background:var(--gold);color:#14100a;font-size:11px;letter-spacing:.34em;text-indent:.34em;padding:4px 10px;border-radius:2px;font-weight:600}
-.bz-film-award .medal.m2{background:#b8b3a6}
-.bz-film-award .medal.m3{background:#a97b52}
-.bz-film-award .poster{float:right;width:72px;margin:0 0 8px 12px}
-.bz-film-award .poster img,.bz-film-award .poster .bz-film-ph{width:72px;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent)}
-.bz-film-award h3{font-size:22px;letter-spacing:.1em;color:rgb(var(--sf-ink-rgb));line-height:1.35;font-weight:600}
-.bz-film-award .meta{margin-top:8px;font-size:12px;color:rgb(var(--sf-dim-rgb));letter-spacing:.1em;line-height:1.9}
-.bz-film-award .stars{margin-top:14px;padding-top:12px;border-top:1px dashed color-mix(in srgb,var(--gold) 24%,transparent);display:flex;align-items:baseline;gap:10px}
-.bz-film-award .stars .my{font-size:30px;color:rgb(var(--sf-star-rgb));font-weight:600;font-variant-numeric:tabular-nums}
-.bz-film-award .stars .db{font-size:11.5px;color:rgb(var(--sf-dim-rgb));font-variant-numeric:tabular-nums}
-.bz-film-award .stars .cap{font-size:10.5px;color:rgb(var(--sf-faint-rgb));letter-spacing:.2em;margin-left:auto}
-/* 片尾致谢 */
-.bz-film-rollbox{position:absolute;inset:0;overflow:hidden;
-  -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
-  mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent)}
-.bz-film-roll{position:absolute;left:0;right:0;top:0;will-change:transform;text-align:center}
-.bz-film-roll .role{margin:4.6% 0}
-.bz-film-roll .role .r{font-size:11.5px;letter-spacing:.5em;text-indent:.5em;color:var(--gold);margin-bottom:2%}
-.bz-film-roll .role .n{font-size:22px;letter-spacing:.16em;color:rgb(var(--sf-ink-rgb))}
-.bz-film-roll .role .n small{font-size:13px;color:rgb(var(--sf-dim-rgb))}
-.bz-film-theend{position:absolute;inset:0;display:grid;place-items:center;opacity:0;clip-path:circle(0% at 50% 50%)}
-.bz-film-theend .t{font-size:calc(var(--film-unit) * .12);letter-spacing:.4em;text-indent:.4em;color:rgb(var(--sf-ink-rgb));text-shadow:0 0 70px color-mix(in srgb,var(--gold) 24%,transparent)}
-.bz-film-theend .ring{position:absolute;width:56%;aspect-ratio:1;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 21%,transparent);border-radius:50%}
-/* 下档预告 */
-.bz-film-cone{position:absolute;bottom:-6%;width:46%;height:125%;pointer-events:none;opacity:.55;will-change:transform;
-  background:linear-gradient(200deg,color-mix(in srgb,var(--gold) 11%,transparent),transparent 58%);transform-origin:50% 100%}
-.bz-film-cone.l{left:-12%;animation:sweepL 9s ease-in-out infinite alternate}
-.bz-film-cone.r{right:-12%;background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 11%,transparent),transparent 58%);animation:sweepR 11s ease-in-out infinite alternate}
-@keyframes sweepL{from{transform:rotate(-13deg)}to{transform:rotate(15deg)}}
-@keyframes sweepR{from{transform:rotate(13deg)}to{transform:rotate(-15deg)}}
-.bz-film-next-attr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.bz-film-next-attr .soon{font-size:13px;letter-spacing:.6em;text-indent:.6em;color:var(--red);margin-bottom:5%;text-shadow:0 0 22px color-mix(in srgb,var(--red) 40%,transparent)}
-.bz-film-next-row{display:flex;gap:3.4%}
-.bz-film-next{width:16%;max-width:220px;opacity:0;position:relative;will-change:transform,opacity}
-.bz-film-next img,.bz-film-next .bz-film-ph{width:100%;aspect-ratio:2/3;border-radius:4px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent);box-shadow:0 20px 60px #000a}
-.bz-film-next .stamp{position:absolute;top:7%;right:5%;padding:5px 9px;border:3px solid color-mix(in srgb,var(--red) 80%,transparent);
-  color:color-mix(in srgb,var(--red) 80%,transparent);font-size:19px;font-weight:600;letter-spacing:.3em;text-indent:.3em;border-radius:4px;
-  transform:rotate(-14deg);opacity:0;will-change:transform,opacity}
-.bz-film-next figcaption{margin-top:12px;text-align:center}
-.bz-film-next .nm{font-size:14.5px;letter-spacing:.08em;color:rgb(var(--sf-ink-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bz-film-next .db{margin-top:5px;font-size:11px;color:rgb(var(--sf-dim-rgb));letter-spacing:.14em}
-.bz-film-replay{margin-top:7%;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);background:none;color:rgb(var(--sf-star-rgb));
-  font-family:inherit;font-size:13px;letter-spacing:.5em;text-indent:.5em;padding:12px 30px;cursor:pointer;border-radius:2px;opacity:0;transition:background var(--cn-m-fast)}
-@media (hover: hover) {
-  .bz-film-replay:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}
-}
+   观影志（.bz-yb，2026-09-22 全新设计）——独立全屏长片，26 幕，一幕一屏。
 
+   与上一稿的取舍：**幕不再靠滚动进度抽帧**。26 节各占一屏（`.bz-yb-scn` 高 = 滚动口高），
+   翻一幕 = 滚一屏；翻到的那幕自己按时间轴演一遍（motions.ts）。于是没有 sticky 钉、
+   没有 absTop 换算、没有「一滚到底」——几何只剩 `scrollTop = 幕号 × 屏高`。
+
+   配色：**纸/墨/朱/靛**（编辑部数据图鉴，不是影院皮肤）。亮色默认、跟随 Obsidian 明暗
+   （.theme-dark 覆写）；所有颜色只走 `--yb-*`，画布经 kits.palette() 读同一批变量。
+   尺度：整片字体基准 = `.bz-yb` 的 font-size（随窗口缩放），幕内一律 em，不写 px。
+   ══════════════════════════════════════════════════════════════════════════ */
+.bz-yb{
+  position:fixed; inset:0; z-index:50;
+  font-size:clamp(13px,1.15vmin + 4px,19px);
+  background:var(--yb-paper); color:rgb(var(--yb-ink-rgb));
+  font-family:var(--font-interface, -apple-system, "Segoe UI", system-ui, sans-serif);
+  font-variant-numeric:tabular-nums;
+  --yb-paper:#f4f0e7;
+  --yb-ink-rgb:27,23,18;
+  --yb-dim-rgb:112,102,86;
+  --yb-faint-rgb:170,160,144;
+  --yb-red-rgb:186,58,38;
+  --yb-blue-rgb:42,78,136;
+  --yb-jade-rgb:34,104,90;
+  --yb-gold-rgb:158,112,24;
+  --yb-line:rgba(var(--yb-ink-rgb), .14);
+  --yb-hair:rgba(var(--yb-ink-rgb), .08);
+  --yb-card:rgba(var(--yb-ink-rgb), .035);
+  --yb-serif:"Songti SC","Noto Serif SC","Source Han Serif SC",serif;
+  --yb-c1:rgb(var(--yb-gold-rgb)); --yb-c2:rgb(var(--yb-red-rgb));
+  --yb-c3:rgb(var(--yb-blue-rgb)); --yb-c4:rgb(var(--yb-jade-rgb));
+  --yb-c5:rgb(var(--yb-ink-rgb));
+}
+.theme-dark .bz-yb{
+  --yb-paper:#100e0c;
+  --yb-ink-rgb:236,229,217;
+  --yb-dim-rgb:150,140,124;
+  --yb-faint-rgb:96,88,76;
+  --yb-red-rgb:226,98,74;
+  --yb-blue-rgb:128,166,222;
+  --yb-jade-rgb:96,196,170;
+  --yb-gold-rgb:226,182,104;
+}
+.bz-yb.is-nudge{animation:bzYbNudge var(--cn-m-base) var(--cn-e-out)}
+@keyframes bzYbNudge{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.bz-yb-scroll{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
+  overscroll-behavior:contain; scroll-snap-type:y mandatory}
+/* 影片根必须有确定高度：26 节的 `height:100%` 是以它为基准解析的——
+   它一旦是 auto，节高全部塌成 0，滚动口 scrollHeight 就等于屏高（2026-09-22 实测：26 幕全叠在一屏里）。 */
+.bz-yb-film{position:relative; height:100%; background:var(--yb-paper)}
+.bz-yb-close{position:absolute; top:1.1em; right:1.3em; z-index:30;
+  width:2.4em; height:2.4em; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; color:rgb(var(--yb-dim-rgb));
+  border:1px solid rgba(var(--yb-ink-rgb), .22); background:color-mix(in srgb, var(--yb-paper) 74%, transparent);
+  backdrop-filter:blur(6px);
+  transition:color var(--cn-m-fast),border-color var(--cn-m-fast),transform var(--cn-m-fast)}
+.bz-yb-close svg{width:1.05em; height:1.05em}
+@media (hover:hover){ .bz-yb-close:hover{color:rgb(var(--yb-ink-rgb)); border-color:rgba(var(--yb-ink-rgb), .5); transform:scale(1.06)} }
+
+/* ── 一幕一屏 + 幕骨架（序号/幕名/字段来源 · 主构图 · 脚注） ── */
+.bz-yb-scn{position:relative; height:100%; overflow:hidden; scroll-snap-align:start; scroll-snap-stop:always}
+/* 幕里只有主构图：顶部/底部文字已按用户拍板去掉（2026-09-22），上下留白只用于呼吸与避让底栏 */
+.yb-sc{position:absolute; inset:0; display:grid; grid-template-rows:minmax(0,1fr);
+  padding:3.2em 4em 3.6em 3.4em}
+.yb-main{position:relative; min-height:0}
+.yb-u{font-size:.62em; margin-left:.18em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.05em}
+.yb-kv{display:flex; align-items:baseline; gap:.7em; font-size:.94em}
+.yb-kv .yb-k{color:rgb(var(--yb-dim-rgb)); font-size:.86em; letter-spacing:.08em}
+.yb-kv b{font-weight:700}
+.yb-kv em{font-style:normal; color:rgb(var(--yb-dim-rgb)); font-size:.8em}
+.yb-kv.big{display:block}
+.yb-kv.big .yb-k{display:block; margin-bottom:.3em}
+.yb-kv.big b{font-size:3.2em; line-height:1.02; letter-spacing:-.02em}
+.yb-big{font-size:2.7em; font-weight:800; letter-spacing:-.02em; line-height:1.12; white-space:nowrap}
+.yb-dg i{font-style:normal}
+.yb-dg i.lit{opacity:.55; font-size:.72em; padding:0 .04em}
+.yb-ph{position:relative; overflow:hidden; display:block; background:linear-gradient(160deg,var(--pc1),var(--pc2))}
+.yb-ph>span{position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+  color:#f4efe4cc; font-size:.7em; line-height:1.35; padding:.4em; text-align:center; font-style:normal}
+.bz-yb img{object-fit:cover; display:block}
+.yb-h4{margin:0 0 .5em; font-size:.86em; letter-spacing:.06em; color:rgb(var(--yb-dim-rgb)); font-weight:600}
+.yb-empty{color:rgb(var(--yb-faint-rgb)); font-size:.9em}
+
+/* 固定层：右侧刻度尺 + 底栏 */
+.yb-fixed{position:absolute; inset:0; pointer-events:none; z-index:6}
+.yb-rail{position:absolute; right:1.35em; top:50%; transform:translateY(-50%);
+  display:flex; flex-direction:column; gap:.5em; pointer-events:auto}
+.yb-rail-t{display:block; width:.95em; height:1.5px; background:rgba(var(--yb-ink-rgb), .2);
+  cursor:pointer; transition:width var(--cn-m-fast),background var(--cn-m-fast)}
+.yb-rail-t[data-on]{width:1.9em; background:rgb(var(--yb-red-rgb))}
+@media (hover:hover){ .yb-rail-t:hover{background:rgba(var(--yb-ink-rgb), .55)} }
+.yb-bar{position:absolute; left:0; right:0; bottom:0; display:flex; align-items:center; gap:.9em;
+  padding:.8em 3.4em .9em; font-size:.8em; letter-spacing:.08em; color:rgb(var(--yb-dim-rgb));
+  background:linear-gradient(to top, var(--yb-paper) 42%, transparent);
+  transition:opacity var(--cn-m-move) ease}
+/* 第 1 幕（开卷）：整条底栏连红进度线一起收掉——开卷只有中间那团会化形的粒子 */
+.bz-yb-film[data-cur="01"] .yb-bar{opacity:0; pointer-events:none}
+.yb-bar-i{font-weight:700; color:rgb(var(--yb-red-rgb))}
+.yb-bar-line{position:relative; flex:1; height:1px; background:rgba(var(--yb-ink-rgb), .16)}
+.yb-bar-line>i{position:absolute; inset:0; background:rgb(var(--yb-red-rgb)); transform:scaleX(0); transform-origin:left center}
+.yb-pb{pointer-events:auto; cursor:pointer; font:inherit; letter-spacing:.08em;
+  padding:.28em .8em; border-radius:999px; color:rgb(var(--yb-dim-rgb));
+  border:1px solid rgba(var(--yb-ink-rgb), .22); background:transparent;
+  transition:color var(--cn-m-fast),border-color var(--cn-m-fast),background var(--cn-m-fast)}
+.yb-pb.is-on{color:var(--yb-paper); background:rgb(var(--yb-red-rgb)); border-color:transparent}
+@media (hover:hover){ .yb-pb:hover{color:rgb(var(--yb-ink-rgb)); border-color:rgba(var(--yb-ink-rgb), .5)} }
+
+/* ── 跟随浮签（指针层）：全片共用一个节点，挂在 .bz-yb 上（fixed inset:0 → 客户端坐标即根内坐标）。
+   幕里的「点」多是缩略图与画布，不给名字就读不出内容；翻幕与指针离场由引擎统一收掉。
+   位置每帧写给 left/top（不给 left/top 加过渡，也不走 transform——跟手的位移不能带滞后）。── */
+.yb-tip{position:fixed; z-index:22; pointer-events:none; max-width:22em;
+  padding:.42em .72em; border-radius:.4em; font-size:.78em; line-height:1.45; letter-spacing:.03em;
+  color:var(--yb-paper); background:rgba(var(--yb-ink-rgb), .93);
+  box-shadow:0 .35em .9em rgba(var(--yb-ink-rgb), .2);
+  transform:translate(-50%, calc(-100% - .8em));
+  opacity:0; transition:opacity var(--cn-m-fast) ease}
+.yb-tip b{font-weight:800; color:var(--yb-paper)}
+
+/* 07 长短两端：指针在尺子上量出的那道读数线（不占位、不吃事件） */
+.yb-rread{position:absolute; top:.6em; bottom:.6em; width:1px; background:rgb(var(--yb-red-rgb));
+  opacity:0; pointer-events:none; transition:opacity var(--cn-m-fast) ease}
+.yb-rread::before{content:""; position:absolute; left:-2px; right:-2px; top:-.35em; height:.7em;
+  border-radius:999px; background:rgb(var(--yb-red-rgb))}
+
+/* ── 01 开卷 ── */
+.yb-open{position:absolute; inset:0}
+.yb-open-cv{position:absolute; inset:0}
+.yb-open-cv canvas{position:absolute; inset:0; width:100%; height:100%}
+
+/* ── 02 十二年 ── */
+.yb-years{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 13.5em;
+  grid-template-rows:minmax(0,1fr) auto; gap:0 2.6em}
+.yb-years-plot{position:relative; grid-column:1; grid-row:1; min-height:0}
+.yb-years-plot canvas{position:absolute; inset:0; width:100%; height:100%}
+.yb-years-axis{grid-column:1; grid-row:2; display:flex; justify-content:space-between;
+  margin-top:.7em; padding:0 .3em; font-size:.84em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.06em}
+.yb-tick.is-peak{color:rgb(var(--yb-red-rgb)); font-weight:800}
+/* 描画时的读数光标：线走到哪一年，就在哪儿立一根细标（数值由 JS 写进 data-label） */
+/* 光标只覆盖画布里的数据带（画布内部 padT=14% / padB=20%）——按整幕高度画会穿到基线以下 */
+.yb-years-cursor{position:absolute; top:14%; bottom:20%; width:1px; background:rgb(var(--yb-red-rgb));
+  transform:translateX(-50%); opacity:0; pointer-events:none}
+.yb-years-cursor::after{content:attr(data-label); position:absolute; top:-1.5em; left:50%; transform:translateX(-50%);
+  white-space:nowrap; font-size:.8em; font-weight:700; color:rgb(var(--yb-red-rgb))}
+.yb-years-cursor::before{content:""; position:absolute; bottom:0; left:50%; width:7px; height:7px; border-radius:50%;
+  background:rgb(var(--yb-red-rgb)); transform:translate(-50%,50%)}
+.yb-years-meta{grid-column:2; grid-row:1 / span 2; align-self:center;
+  display:flex; flex-direction:column; gap:1.2em}
+.yb-years-meta .yb-kv{display:block}
+.yb-years-meta .yb-kv .yb-k{display:block; margin-bottom:.35em}
+.yb-years-meta .yb-kv b{font-size:1.75em; font-weight:800; letter-spacing:-.01em; white-space:nowrap}
+
+/* ── 03 落笔的日子 ── */
+.yb-days{position:absolute; inset:0; display:grid; grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(3,1fr); gap:.85em 1.5em}
+.yb-days::after{content:""; position:absolute; top:-.6em; bottom:-.6em; left:0; width:100%; pointer-events:none;
+  background:linear-gradient(90deg, transparent calc(var(--scan,0) * 100% - 1px),
+    rgba(var(--yb-red-rgb), .45) calc(var(--scan,0) * 100%), transparent calc(var(--scan,0) * 100% + 1px));
+  opacity:.9}
+.yb-month{display:flex; flex-direction:column; gap:.3em; min-height:0}
+.yb-mon-hd{display:flex; align-items:baseline; gap:.45em; font-size:.78em; letter-spacing:.08em; color:rgb(var(--yb-dim-rgb))}
+.yb-mon-hd b{font-size:1.25em; color:rgb(var(--yb-ink-rgb))}
+.yb-mon-grid{flex:1; display:grid; grid-template-columns:repeat(7,1fr); gap:.22em; align-content:start}
+.yb-cell{display:block; aspect-ratio:1; border-radius:1.5px; background:rgba(var(--yb-ink-rgb), .07)}
+.yb-cell.on{background:rgba(var(--yb-ink-rgb), .34)}
+.yb-cell.on.many{background:rgba(var(--yb-red-rgb), .72)}
+
+/* ── 04 星期节律：径向日晷（七根辐条绕一圈 + 指针指向最常落座那天） ── */
+.yb-dial{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 16em; gap:2.4em; align-items:center}
+.yb-dial-face{position:relative; aspect-ratio:1; width:min(100%, 34em); margin:0 auto; justify-self:center;
+  border-radius:50%; border:1px dashed rgba(var(--yb-ink-rgb), .14)}
+.yb-dial-face::after{content:""; position:absolute; inset:22%; border-radius:50%;
+  border:1px solid rgba(var(--yb-ink-rgb), .07)}
+.yb-spoke{position:absolute; left:50%; top:50%; width:46%; display:flex; align-items:center; gap:.55em;
+  transform-origin:left center; transform:rotate(var(--a,0deg)); opacity:0}
+.yb-spoke-bar{display:block; height:1.05em; width:calc(var(--len,0) * 100%); min-width:2px; border-radius:3px;
+  background:linear-gradient(to right, rgba(var(--yb-ink-rgb), .22), rgba(var(--yb-ink-rgb), .34));
+  transform:scaleX(0); transform-origin:left center}
+.yb-spoke.is-wknd .yb-spoke-bar{background:linear-gradient(to right, rgba(var(--yb-red-rgb), .28), rgba(var(--yb-red-rgb), .5))}
+.yb-spoke.is-peak .yb-spoke-bar{border-right:2px solid rgb(var(--yb-red-rgb))}
+.yb-spoke-lb{font-size:.84em; white-space:nowrap; color:rgb(var(--yb-dim-rgb)); letter-spacing:.04em;
+  transform:rotate(var(--a,0deg))}
+.yb-spoke-lb b{color:rgb(var(--yb-ink-rgb)); font-weight:800; margin-left:.2em}
+.yb-spoke.is-peak .yb-spoke-lb b{color:rgb(var(--yb-red-rgb))}
+.yb-dial-needle{position:absolute; left:50%; top:50%; width:44%; height:2px; border-radius:2px;
+  background:rgb(var(--yb-red-rgb)); transform-origin:left center; transform:rotate(var(--a,0deg)); opacity:0}
+.yb-dial-needle::after{content:""; position:absolute; right:-3px; top:50%; width:6px; height:6px;
+  border-radius:50%; background:rgb(var(--yb-red-rgb)); transform:translateY(-50%)}
+.yb-dial-hub{position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+  width:7.6em; height:7.6em; border-radius:50%; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:.05em; background:var(--yb-paper);
+  border:1px solid rgba(var(--yb-ink-rgb), .18); box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.yb-dial-hub b{font-size:1.9em; font-weight:800; line-height:1; letter-spacing:-.02em}
+.yb-dial-hub span{font-size:.72em; color:rgb(var(--yb-dim-rgb))}
+.yb-dial-side{display:flex; flex-direction:column; gap:1em}
+
+/* ── 05 连看与单日：时间缎带（连着看的那些天是一条真带子） ── */
+.yb-ribbon{position:absolute; inset:0; display:grid; grid-template-rows:auto minmax(6em,1fr) auto; gap:1.2em}
+.yb-ribbon-head{display:flex; align-items:baseline; gap:2.4em}
+.yb-sline{margin:0; font-size:.9em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.04em}
+.yb-ribbon-band{position:relative; min-height:0}
+.yb-ribbon-svg{position:absolute; inset:0; width:100%; height:100%; overflow:visible}
+.yb-rib-path{fill:none; stroke:rgb(var(--yb-ink-rgb)); stroke-width:9; stroke-linecap:round; stroke-linejoin:round; opacity:.88}
+.yb-rib-flow{fill:none; stroke:var(--yb-paper); stroke-width:2; opacity:0; stroke-linecap:round}
+.yb-rib-dot{fill:rgb(var(--yb-red-rgb)); opacity:0; transform-box:fill-box; transform-origin:center}
+.yb-busy{display:grid; gap:.6em; padding-top:.9em; border-top:1px solid var(--yb-hair)}
+.yb-busy-hd{display:flex; align-items:baseline; gap:.7em}
+.yb-busy-k{font-size:.86em; letter-spacing:.08em; color:rgb(var(--yb-dim-rgb))}
+.yb-busy-hd b{font-size:1.9em; font-weight:800; letter-spacing:-.01em}
+.yb-busy-hd em{font-style:normal; font-size:.84em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.06em}
+.yb-busy-bar{display:flex; align-items:flex-end; gap:2px; height:3.4em}
+.yb-busy-tick{display:block; flex:1 1 0; min-width:0; border-radius:1px 1px 0 0; opacity:0;
+  background:linear-gradient(to top, rgba(var(--yb-ink-rgb), .18), rgba(var(--yb-ink-rgb), .42))}
+.yb-busy-tick:nth-child(3n){background:rgba(var(--yb-red-rgb), .45)}
+.yb-blist{display:flex; flex-wrap:wrap; gap:.45em}
+.yb-btag{font-size:.82em; padding:.24em .6em; border-radius:999px;
+  background:var(--yb-card); color:rgb(var(--yb-ink-rgb)); opacity:0}
+.yb-btag.more{color:rgb(var(--yb-dim-rgb))}
+
+/* ── 06 片长画像 ── */
+.yb-len{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 15em 17.5em; gap:2.4em; align-items:stretch}
+.yb-len-bars{grid-column:1}
+.yb-len-reel{grid-column:2}
+.yb-len-side{grid-column:3}
+.yb-len-bars{display:grid; grid-template-columns:repeat(5,1fr); gap:1.1em; align-items:end; min-height:0; padding-top:2em}
+.yb-bin{position:relative; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; gap:.4em}
+.yb-bn{font-size:.9em; font-weight:700}
+.yb-bbar{display:block; width:100%; height:0;
+  background:linear-gradient(to top, rgba(var(--yb-ink-rgb), .14), rgba(var(--yb-ink-rgb), .24));
+  border-top:2px solid rgb(var(--yb-red-rgb)); border-radius:2px 2px 0 0}
+.yb-bin:nth-child(3) .yb-bbar{background:linear-gradient(to top, rgba(var(--yb-red-rgb), .14), rgba(var(--yb-red-rgb), .3))}
+.yb-bl{font-size:.82em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.04em; white-space:nowrap}
+.yb-len-side{align-self:center; display:flex; flex-direction:column; gap:.9em}
+.yb-len-reel{position:relative; min-width:0}
+.yb-len-reel canvas{position:absolute; inset:0; width:100%; height:100%}
+
+/* ── 07 长短两端 ── */
+/* 两端各留出标记文字的宽度：「201 分钟」是居中对齐的，尺子铺满时标签会顶到幕边 */
+.yb-ext{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center;
+  gap:4.2em; padding:0 3.8em}
+.yb-ruler{position:relative; height:7em; margin:0 1em}
+.yb-ruler-line{position:absolute; left:0; right:0; top:50%; height:2px; background:rgba(var(--yb-ink-rgb), .3)}
+.yb-rticks{position:absolute; left:0; right:0; top:calc(50% - .55em); height:1.1em;
+  background:repeating-linear-gradient(to right, rgba(var(--yb-ink-rgb), .28) 0 1px, transparent 1px 2.4%)}
+.yb-mark{position:absolute; top:50%; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; gap:.3em}
+.yb-mark i{display:block; width:.7em; height:.7em; border-radius:50%; background:rgb(var(--yb-ink-rgb))}
+.yb-mark.is-max i{background:rgb(var(--yb-red-rgb)); box-shadow:0 0 0 5px rgba(var(--yb-red-rgb), .14)}
+.yb-mark em{font-style:normal; font-size:1.26em; font-weight:800; white-space:nowrap}
+.yb-mark b{font-size:.98em; font-weight:500; color:rgb(var(--yb-dim-rgb)); white-space:nowrap}
+.yb-ext-cards{display:flex; gap:1.6em; justify-content:center}
+.yb-xcard{margin:0; width:8.4em; display:flex; flex-direction:column; gap:.4em; opacity:0}
+.yb-xcard img, .yb-xcard .yb-ph{width:100%; aspect-ratio:2/3; border-radius:6px; box-shadow:0 10px 22px rgb(0 0 0 / .18)}
+.yb-xcard figcaption{font-size:.78em; color:rgb(var(--yb-dim-rgb)); text-align:center; letter-spacing:.03em; min-height:2.6em}
+
+/* ── 08 类型光谱 ── */
+.yb-genres{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);
+  gap:2.6em; align-items:center}
+.yb-genres-bars{display:flex; flex-direction:column; justify-content:center; gap:.85em; min-width:0}
+.yb-genres-net{position:relative; align-self:stretch; min-width:0}
+.yb-genres-net canvas{position:absolute; inset:0; width:100%; height:100%}
+.yb-grow{position:relative; display:grid; grid-template-columns:7.5em minmax(0,1fr) 3.4em; align-items:center; gap:1em; opacity:0}
+.yb-gname{font-size:1.02em; letter-spacing:.04em}
+.yb-gbar{display:block; height:1.35em; border-radius:2px; background:rgba(var(--yb-ink-rgb), .16); width:0}
+/* 常驻扫描：首条上有一道光从左扫到右（背景渐变的百分比按条宽算，随 --scan 走） */
+.yb-grow:nth-child(1) .yb-gbar{background-image:
+  linear-gradient(90deg, transparent calc(var(--scan,0) * 100% - 3em), rgba(var(--yb-red-rgb), .45) calc(var(--scan,0) * 100%), transparent calc(var(--scan,0) * 100% + 3em)),
+  linear-gradient(to right, rgba(var(--yb-red-rgb), .3), rgba(var(--yb-red-rgb), .16))}
+.yb-grow:nth-child(2) .yb-gbar{background:rgba(var(--yb-ink-rgb), .2)}
+.yb-gn{font-size:1.02em; font-weight:800; text-align:right}
+
+/* ── 09 类型流向 ── */
+.yb-flow{position:absolute; inset:0}
+.yb-flow canvas{position:absolute; left:0; right:0; top:0; height:calc(100% - 3em); width:100%}
+.yb-flow-legend{position:absolute; left:0; bottom:0; display:flex; gap:1.4em; font-size:.84em; color:rgb(var(--yb-dim-rgb))}
+.yb-lg{display:flex; align-items:center; gap:.42em; opacity:0}
+.yb-lg i{width:.85em; height:.85em; border-radius:2px; background:var(--c)}
+
+/* ── 10 出品印章 ── */
+.yb-passport{position:absolute; inset:0; border-radius:6px; overflow:hidden;
+  background:linear-gradient(180deg, rgba(var(--yb-ink-rgb), .022), rgba(var(--yb-ink-rgb), .05));
+  border:1px solid rgba(var(--yb-ink-rgb), .1)}
+/* 地理网格：经纬只是刻度，位置由印章自己给出（不画地图轮廓，不假装是地图） */
+.yb-grat{position:absolute; inset:0; opacity:.6;
+  background-image:linear-gradient(to right, rgba(var(--yb-ink-rgb), .07) 0 1px, transparent 1px 8.33%),
+    linear-gradient(to bottom, rgba(var(--yb-ink-rgb), .07) 0 1px, transparent 1px 16.6%)}
+.yb-passport::after{content:""; position:absolute; left:0; right:0; top:50%; height:1px;
+  background:rgba(var(--yb-ink-rgb), .1)}
+.yb-stamp{position:absolute; left:var(--x); top:var(--y); transform:translate(-50%,-50%) rotate(var(--rot,0deg));
+  display:flex; flex-direction:column; align-items:flex-start; gap:.12em; z-index:1;
+  padding:.6em 1.1em .65em .95em; border-radius:4px; opacity:0;
+  border:2px solid rgba(var(--yb-red-rgb), .72); color:rgb(var(--yb-red-rgb));
+  box-shadow:0 0 0 calc(var(--hb,0) * 4px) rgba(var(--yb-red-rgb), calc(var(--hb,0) * .1))}
+.yb-stamp.is-nogeo{border-style:dashed; opacity:.72}
+.yb-stamp-ring{position:absolute; inset:-2px; border-radius:4px; border:2px solid rgb(var(--yb-red-rgb)); pointer-events:none}
+.yb-stamp-line{display:flex; align-items:baseline; gap:.22em}
+.yb-stamp-n{font-size:2.4em; font-weight:800; line-height:1}
+.yb-stamp-u{font-style:normal; font-size:.8em; color:rgba(var(--yb-red-rgb), .78)}
+.yb-stamp-name{font-size:1.02em; font-weight:600; letter-spacing:.06em}
+
+/* ── 11 年代长河 ── */
+.yb-eras{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 15em; gap:2.4em}
+.yb-eras canvas{grid-column:1; width:100%; height:100%}
+.yb-era-tags{position:absolute; left:0; top:0; display:flex; flex-direction:column; gap:.4em; pointer-events:none}
+.yb-era-tag{font-size:.78em; letter-spacing:.06em; color:rgb(var(--yb-dim-rgb))}
+.yb-era-tag.down{color:rgb(var(--yb-blue-rgb))}
+.yb-era-side{grid-column:2; align-self:center; display:flex; flex-direction:column; gap:1.1em}
+.yb-era-side b{display:block}
+.yb-era-side em{margin-left:.5em}
+
+/* ── 12 片龄横轴（0 → 最老一条轴，每部片是一枚海报刻度） ── */
+.yb-ageax{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 15em; gap:2.4em}
+.yb-ageax-plot{position:relative; min-height:0}
+.yb-aband{position:absolute; top:2.4em; bottom:0; left:var(--x0); width:calc(var(--x1) - var(--x0));
+  background:rgba(var(--yb-ink-rgb), .03); border-left:1px dashed rgba(var(--yb-ink-rgb), .14); opacity:0}
+.yb-ageax-legend{position:absolute; left:0; right:0; top:0; display:flex; gap:1.6em;
+  font-size:.8em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.04em}
+.yb-aleg{display:flex; align-items:center; gap:.4em; opacity:0}
+.yb-aleg i{width:.7em; height:.7em; border-radius:2px; background:rgba(var(--yb-ink-rgb), .16)}
+.yb-aleg[data-i="3"] i{background:rgba(var(--yb-red-rgb), .4)}
+.yb-aleg b{color:rgb(var(--yb-ink-rgb)); font-weight:800}
+.yb-aband[data-i="3"]{background:rgba(var(--yb-red-rgb), .05)}
+.yb-ageax-rule{position:absolute; left:0; right:0; bottom:3.4em; height:1px; background:rgba(var(--yb-ink-rgb), .3)}
+.yb-atick{position:absolute; left:var(--x); bottom:1.7em; transform:translateX(-50%);
+  font-size:.76em; color:rgb(var(--yb-faint-rgb)); white-space:nowrap}
+.yb-adot{position:absolute; left:var(--x); bottom:calc(3.4em + var(--lane,0em)); width:1.9em; margin-left:-.95em;
+  opacity:0; z-index:1}
+.yb-adot img, .yb-adot .yb-ph{width:100%; aspect-ratio:2/3; border-radius:1px; box-shadow:0 1px 3px rgba(0,0,0,.28)}
+.yb-ageax-side{align-self:center; display:flex; flex-direction:column; gap:1em}
+
+/* ── 13 我的评分：评分散点 × 观影年（右侧挂一条评分边缘分布） ── */
+.yb-scatter{position:absolute; inset:0; display:grid;
+  grid-template-columns:minmax(0,1fr) 11em 12em; gap:1.6em 2.2em; align-items:center}
+.yb-scatter-plot{position:relative; height:100%; min-height:0}
+.yb-sgrid{position:absolute; inset:0 0 2.4em; border-left:1px solid rgba(var(--yb-ink-rgb), .16);
+  border-bottom:1px solid rgba(var(--yb-ink-rgb), .16);
+  background-image:repeating-linear-gradient(to top, rgba(var(--yb-ink-rgb), .05) 0 1px, transparent 1px 25%)}
+.yb-sdot2{position:absolute; left:var(--x); bottom:calc(2.4em + var(--y) * .01 * (100% - 2.4em) / 1%);
+  width:5px; height:5px; margin-left:-2.5px; border-radius:1px; z-index:1;
+  background:rgba(var(--yb-ink-rgb), .34); opacity:0}
+.yb-sdot2.is-high{background:rgba(var(--yb-red-rgb), .72); width:6px; height:6px; margin-left:-3px}
+.yb-sdot2.is-low{background:rgba(var(--yb-ink-rgb), .5); border-radius:50%}
+.yb-smean{position:absolute; left:0; right:0; bottom:calc(2.4em + var(--y) * .01 * (100% - 2.4em) / 1%);
+  height:1px; background:rgb(var(--yb-red-rgb)); opacity:0}
+.yb-smean em{position:absolute; right:0; bottom:.3em; font-style:normal}
+.yb-saxis{position:absolute; left:0; right:0; bottom:0; height:2.4em}
+.yb-stick{position:absolute; left:var(--x); bottom:.2em; transform:translateX(-50%);
+  font-size:.72em; color:rgb(var(--yb-faint-rgb))}
+.yb-edge{display:flex; flex-direction:column; gap:.28em; height:100%; min-height:0; justify-content:center}
+.yb-edge-cap{font-size:.78em; letter-spacing:.08em; color:rgb(var(--yb-dim-rgb)); margin-bottom:.3em}
+.yb-erow{display:flex; align-items:center; gap:.45em; font-size:.76em; height:1.5em}
+.yb-ebar{flex:1; height:.6em; background:var(--yb-card); border-radius:2px; position:relative; overflow:hidden}
+.yb-ebar>i{position:absolute; inset:0; width:0; background:rgba(var(--yb-ink-rgb), .3); border-radius:2px}
+.yb-en{width:2.2em; text-align:right; color:rgb(var(--yb-dim-rgb))}
+.yb-ex{width:1.4em; text-align:right; color:rgb(var(--yb-faint-rgb))}
+.yb-hist-side{align-self:center; display:flex; flex-direction:column; gap:1em}
+
+/* ── 14 与豆瓣对照（背靠背） ── */
+.yb-mirror{position:absolute; inset:0; display:grid;
+  grid-template-rows:auto minmax(0,1fr) auto minmax(0,1fr) auto; gap:.35em}
+.yb-mir-head{display:flex; align-items:baseline; gap:.8em; font-size:.86em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.06em}
+.yb-mir-head b{margin-left:auto; color:rgb(var(--yb-ink-rgb)); font-size:1.15em}
+.yb-mir-plot{display:grid; grid-template-columns:repeat(11,1fr); gap:.5em; min-height:0}
+.yb-mir-plot.up{align-items:end}
+.yb-mir-plot.down{align-items:start}
+.yb-mcol{position:relative; height:100%; display:flex; flex-direction:column; justify-content:flex-end; align-items:center; opacity:0}
+.yb-mcol.down{justify-content:flex-start}
+.yb-mbar{display:block; width:100%; height:0; border-radius:2px}
+.yb-mcol.up .yb-mbar{background:rgba(var(--yb-blue-rgb), .3); border-radius:2px 2px 0 0}
+.yb-mcol.down .yb-mbar{background:rgba(var(--yb-red-rgb), .3); border-radius:0 0 2px 2px}
+.yb-mn{font-size:.76em; color:rgb(var(--yb-dim-rgb))}
+.yb-mcol.up .yb-mn{order:-1}
+.yb-mir-axis{position:relative; display:grid; grid-template-columns:repeat(11,1fr); gap:.5em; padding:.35em 0;
+  background:rgba(var(--yb-ink-rgb), .035)}
+.yb-mir-axis i{font-style:normal; font-size:.76em; text-align:center; color:rgb(var(--yb-faint-rgb))}
+.yb-mir-axis::before{content:""; position:absolute; left:0; right:0; top:0; height:1px; background:rgba(var(--yb-ink-rgb), .22)}
+.yb-mir-mean{position:absolute; top:-.5em; bottom:-.5em; width:1.5px; background:rgb(var(--yb-blue-rgb))}
+.yb-mir-mean.mine{background:rgb(var(--yb-red-rgb))}
+.yb-mir-gap{font-size:.9em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.04em}
+.yb-mir-gap b{color:rgb(var(--yb-ink-rgb)); font-size:1.15em}
+
+/* ── 15 打分天平 ── */
+.yb-bal{position:absolute; inset:0; display:grid; grid-template-rows:11em auto; gap:1.6em}
+.yb-bal-beam{position:relative; display:flex; align-items:flex-start; justify-content:center}
+.yb-bal-arm{display:block; width:64%; height:3px; background:rgba(var(--yb-ink-rgb), .55); margin-top:5.2em;
+  transform-origin:center center; border-radius:2px}
+.yb-bal-arm>i{position:absolute; left:50%; top:-2.4em; width:1px; height:2.8em; background:rgba(var(--yb-ink-rgb), .35);
+  transform:translateX(-50%)}
+.yb-bal-pan{position:absolute; top:5.2em; font-size:1.02em; font-weight:600; opacity:0;
+  padding:.35em .9em; border-radius:4px; background:var(--yb-card); transform-origin:center top}
+.yb-bal-pan em{display:block; font-style:normal; font-size:.72em; letter-spacing:.1em; color:rgb(var(--yb-dim-rgb)); margin-bottom:.12em}
+.yb-bal-pan.l{color:rgb(var(--yb-red-rgb))}
+.yb-bal-pan.r{color:rgb(var(--yb-blue-rgb))}
+.yb-bal-lists{display:grid; grid-template-columns:1fr 1fr; gap:2.6em; min-height:0}
+.yb-bal-col ul{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5em}
+.yb-drow{display:flex; align-items:baseline; gap:.6em; font-size:.88em; border-bottom:1px solid var(--yb-hair); padding-bottom:.35em; opacity:0}
+.yb-dname{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.yb-dvals{color:rgb(var(--yb-dim-rgb)); font-size:.9em; white-space:nowrap}
+.yb-dvals em{font-style:normal; font-weight:700; color:rgb(var(--yb-red-rgb))}
+
+/* ── 16 榜首三部：真领奖台（台座有高低，冠军居中，一束追光） ── */
+.yb-podium{position:absolute; inset:0; display:grid; grid-template-columns:repeat(3,1fr); gap:2.2em;
+  align-items:stretch; perspective:1200px}
+/* 台座固定高、卡片吃剩下的高度：海报按剩余空间裁切——不然三张卡各随内容长，必然顶出幕外 */
+.yb-pod-slot{position:relative; display:flex; flex-direction:column; min-height:0; opacity:0}
+.yb-pod-slot[data-i="0"]{order:2}
+.yb-pod-slot[data-i="1"]{order:1}
+.yb-pod-slot[data-i="2"]{order:3}
+.yb-pod-block{position:relative; display:flex; flex-direction:column; justify-content:center; gap:.2em;
+  flex:none; height:calc(var(--h,1) * 8.6em); padding:0 1.1em;
+  background:linear-gradient(to bottom, rgba(var(--yb-ink-rgb), .13), rgba(var(--yb-ink-rgb), .04));
+  border-top:2px solid rgba(var(--yb-red-rgb), .8)}
+.yb-pod-slot[data-i="0"] .yb-pod-block{border-top-color:rgb(var(--yb-red-rgb))}
+.yb-pod-rank{font-size:2.8em; font-weight:800; line-height:1; opacity:.16}
+.yb-pod-block em{font-style:normal; font-size:.78em; color:rgb(var(--yb-dim-rgb)); letter-spacing:.04em}
+/* 冠军的光：整格一层柔和红晕（追光锥被卡片挡住看不见，改成一整片「被打亮的空气」） */
+.yb-pod-beam{position:absolute; inset:0; pointer-events:none; z-index:0;
+  background:radial-gradient(58% 46% at 50% 26%, rgba(var(--yb-red-rgb), .2), rgba(var(--yb-red-rgb), 0) 72%)}
+.yb-pod{position:relative; z-index:1; flex:1; min-height:0; margin:0 0 -1px; display:flex; flex-direction:column;
+  gap:.5em; opacity:0; overflow:hidden; padding:1em 1em 1.1em; border-radius:6px 6px 0 0;
+  background:var(--yb-card); border:1px solid var(--yb-hair); border-bottom:none}
+.yb-pod::after{content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(104deg, transparent 42%, rgb(255 255 255 / .16) 50%, transparent 58%);
+  transform:translateX(calc(var(--shine,0) * 260% - 80%))}
+.yb-pod-poster{display:block; flex:1; min-height:0; border-radius:4px; overflow:hidden}
+.yb-pod-poster img, .yb-pod-poster .yb-ph{width:100%; height:100%; object-fit:cover}
+.yb-pod-ring{position:absolute; inset:1em 1em auto; aspect-ratio:2/3; border-radius:4px;
+  border:2px solid rgba(var(--yb-red-rgb), .6); pointer-events:none}
+.yb-pod-medal{align-self:flex-start; font-size:.76em; letter-spacing:.14em; padding:.2em .6em; border-radius:2px;
+  color:var(--yb-paper); background:rgb(var(--yb-ink-rgb))}
+.yb-pod h3{margin:0; font-size:1.2em; font-weight:700; letter-spacing:.02em}
+.yb-pod p{margin:0; font-size:.82em; color:rgb(var(--yb-dim-rgb))}
+.yb-pod-score{display:flex; align-items:baseline; gap:.6em}
+.yb-pod-score b{font-size:2.1em; font-weight:800; letter-spacing:-.02em; color:rgb(var(--yb-red-rgb))}
+.yb-pod-score span{font-size:.8em; color:rgb(var(--yb-dim-rgb))}
+
+/* ── 17 高分墙 ── */
+.yb-ninewall{position:absolute; inset:0; display:grid; grid-template-columns:8em minmax(0,1fr); gap:1.8em}
+.yb-ninewall-meta{align-self:start; display:flex; flex-direction:column; gap:.2em; padding-top:.4em}
+.yb-ninewall-meta b{font-size:3.6em; font-weight:800; line-height:1; letter-spacing:-.02em; color:rgb(var(--yb-red-rgb))}
+.yb-ninewall-meta span{font-size:.84em; color:rgb(var(--yb-dim-rgb))}
+.yb-ninewall-grid{position:relative; display:grid; grid-template-columns:repeat(9,1fr); gap:.55em; align-content:start;
+  perspective:900px}
+.yb-ninewall-grid::after{content:""; position:absolute; inset:0; pointer-events:none;
+  background:linear-gradient(100deg, transparent 44%, rgba(var(--yb-red-rgb), .09) 50%, transparent 56%);
+  transform:translateX(calc(var(--sweep,0) * 220% - 60%))}
+.yb-tile{position:relative; margin:0; aspect-ratio:2/3; border-radius:3px; overflow:hidden; opacity:0; background:var(--yb-card)}
+.yb-tile img, .yb-tile .yb-ph{width:100%; height:100%}
+.yb-tile figcaption{position:absolute; left:0; right:0; bottom:0; padding:.45em .4em .3em;
+  display:flex; flex-direction:column; gap:.1em;
+  background:linear-gradient(to top, rgb(0 0 0 / .78), transparent); color:#fff}
+.yb-tile figcaption b{font-size:.9em}
+.yb-tile figcaption span{font-size:.68em; opacity:.82; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.yb-tile.more{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.2em;
+  background:rgba(var(--yb-ink-rgb), .08); color:rgb(var(--yb-dim-rgb))}
+.yb-tile.more b{font-size:1.5em; font-weight:800; color:rgb(var(--yb-ink-rgb))}
+
+/* ── 18 御用导演 ── */
+.yb-people{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:.7em}
+.yb-prow{display:grid; grid-template-columns:2.2em 9em minmax(0,1fr) 4.4em auto; align-items:center; gap:1em; opacity:0}
+.yb-prank{font-size:.84em; color:rgb(var(--yb-faint-rgb)); letter-spacing:.08em}
+.yb-pname{font-size:1.06em; letter-spacing:.03em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.yb-pbar{display:block; height:.5em; border-radius:2px; background:rgba(var(--yb-ink-rgb), .2); transform:scaleX(0)}
+.yb-prow:first-child .yb-pbar{background:rgba(var(--yb-red-rgb), .45)}
+.yb-pn{font-size:.86em; color:rgb(var(--yb-dim-rgb)); text-align:right}
+.yb-pn b{color:rgb(var(--yb-ink-rgb)); font-size:1.1em}
+.yb-pshots{display:flex; gap:.35em}
+.yb-pshots i{display:block; width:2.1em; opacity:0}
+.yb-pshots img, .yb-pshots .yb-ph{width:100%; aspect-ratio:2/3; border-radius:2px}
+
+/* ── 19 座上常客：常驻弧线（卡片真排在一段圆弧上，进场沿弧滑入） ── */
+.yb-actors{position:absolute; inset:0; overflow:hidden}
+.yb-arc{position:absolute; left:50%; bottom:-36em; width:0; height:0; --arc-r:50em; --arc-k:1}
+.yb-acard{position:absolute; left:0; bottom:0; width:9.6em; margin-left:-4.8em;
+  transform-origin:center bottom; opacity:0;
+  transform:rotate(calc(var(--a,0deg) * var(--arc-k,1)))
+    translateY(calc(-1 * var(--arc-r,50em) + var(--dy,0em) + var(--br,0em)))
+    rotate(calc(-1 * var(--a,0deg) * var(--arc-k,1)));
+  display:flex; flex-direction:column; gap:.5em;
+  padding:.7em; border-radius:5px; background:var(--yb-card); border:1px solid var(--yb-hair)}
+.yb-acard-hd{display:flex; align-items:baseline; gap:.4em}
+.yb-acard-hd b{font-size:1.02em; letter-spacing:.02em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.yb-acard-hd span{margin-left:auto; font-size:.76em; color:rgb(var(--yb-red-rgb)); white-space:nowrap}
+.yb-acard-imgs{display:flex; gap:.35em}
+.yb-acard-imgs i{display:block; flex:1}
+.yb-acard-imgs img, .yb-acard-imgs .yb-ph{width:100%; aspect-ratio:2/3; border-radius:2px}
+
+/* ── 20 连映系列 ── */
+.yb-series{position:absolute; inset:0; display:grid; grid-template-columns:1fr 1fr; gap:2.2em 3.4em; align-content:center}
+.yb-ser{display:flex; flex-direction:column; gap:.6em; opacity:0}
+.yb-ser-hd{display:flex; align-items:baseline; gap:.6em}
+.yb-ser-hd b{font-size:1.12em; letter-spacing:.02em}
+.yb-ser-hd span{font-size:.82em; color:rgb(var(--yb-dim-rgb))}
+.yb-ser-stack{display:flex; height:7.6em; align-items:center}
+.yb-ser-c{display:block; width:3.6em; margin-right:-2.4em; transform-origin:bottom center; opacity:0}
+.yb-ser-c img, .yb-ser-c .yb-ph{width:100%; aspect-ratio:2/3; border-radius:3px; box-shadow:0 6px 14px rgb(0 0 0 / .22)}
+
+/* ── 21 追剧深度 ── */
+.yb-binge{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 13em; gap:2.6em}
+.yb-binge-rows{display:flex; flex-direction:column; justify-content:center; gap:1.4em}
+.yb-eprow{display:grid; grid-template-columns:9em minmax(0,1fr) 5.4em; align-items:center; gap:1.2em; opacity:0}
+.yb-epname{font-size:.96em; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.yb-eptape{position:relative; display:block; height:.85em; width:var(--w,100%); border-radius:2px;
+  background:rgba(var(--yb-ink-rgb), .14); transform:scaleX(0)}
+.yb-eptape::after{content:""; position:absolute; inset:0; border-radius:2px;
+  background:repeating-linear-gradient(to right, rgba(var(--yb-ink-rgb), .3) 0 1px, transparent 1px 12px)}
+.yb-eprow:first-child .yb-eptape{background:rgba(var(--yb-red-rgb), .24)}
+.yb-epn{font-size:.86em; color:rgb(var(--yb-dim-rgb)); text-align:right}
+.yb-epn b{font-size:1.5em; font-weight:800; color:rgb(var(--yb-ink-rgb)); margin-right:.2em}
+.yb-binge-side{align-self:center; display:flex; flex-direction:column; gap:1em}
+
+/* ── 22 影评手记 ── */
+.yb-notes{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 11em;
+  grid-template-rows:repeat(3,auto); gap:1em 2.4em; align-content:center}
+.yb-note{grid-column:1; margin:0; padding:1em 1.2em 1.1em; border-radius:5px; opacity:0;
+  background:var(--yb-card); border-left:3px solid rgba(var(--yb-red-rgb), .6)}
+.yb-note header{display:flex; align-items:baseline; gap:.7em; margin-bottom:.45em}
+.yb-note header b{font-size:.98em}
+.yb-note header span{font-size:.86em; color:rgb(var(--yb-red-rgb)); font-weight:700}
+.yb-note-tx{margin:0; font-family:var(--yb-serif); font-size:1.02em; line-height:1.72; letter-spacing:.01em; min-height:1.72em}
+.yb-note-tx mark{background:rgba(var(--yb-red-rgb), .14); color:rgb(var(--yb-red-rgb)); padding:0 .1em; border-radius:2px}
+.yb-caret{display:inline-block; width:.55em; height:1.05em; margin-left:.1em; vertical-align:-.14em;
+  background:rgb(var(--yb-red-rgb)); animation:ybBlink 1s steps(1) infinite}
+.yb-caret.done{animation:none; opacity:0}
+@keyframes ybBlink{0%,50%{opacity:1}51%,100%{opacity:0}}
+.yb-notes-side{grid-column:2; grid-row:1 / span 3; align-self:center; display:flex; flex-direction:column; gap:.2em}
+.yb-notes-side b{font-size:3.2em; font-weight:800; line-height:1; color:rgb(var(--yb-red-rgb))}
+.yb-notes-side span{font-size:.84em; color:rgb(var(--yb-dim-rgb))}
+
+/* ── 23 豆瓣短评 ── */
+.yb-quotes{position:absolute; inset:0; display:grid; grid-template-columns:minmax(0,1fr) 10em; gap:2.4em}
+.yb-lanes{display:grid; grid-template-columns:repeat(3,1fr); gap:1.6em; min-height:0; overflow:hidden;
+  mask-image:linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent);
+  -webkit-mask-image:linear-gradient(to bottom, transparent, #000 12%, #000 88%, transparent)}
+.yb-lane{display:flex; flex-direction:column; gap:1.1em}
+.yb-quote{margin:0; padding:.9em 1em; border-radius:5px; background:var(--yb-card); border:1px solid var(--yb-hair); opacity:0}
+.yb-quote p{margin:0 0 .45em; font-size:.92em; line-height:1.62}
+.yb-quote cite{font-style:normal; font-size:.8em; color:rgb(var(--yb-dim-rgb))}
+.yb-quotes-side{align-self:center; display:flex; flex-direction:column; gap:.2em}
+.yb-quotes-side b{font-size:3.2em; font-weight:800; line-height:1; color:rgb(var(--yb-blue-rgb))}
+.yb-quotes-side span{font-size:.84em; color:rgb(var(--yb-dim-rgb))}
+
+/* ── 24 口味矩阵 ── */
+.yb-matrix{position:absolute; inset:0; padding:2em 0 2em 6.4em; box-sizing:border-box}
+.yb-matrix canvas{position:absolute; left:6.4em; right:0; top:2em; bottom:2em; width:calc(100% - 6.4em); height:calc(100% - 4em)}
+.yb-mx-cols{position:absolute; left:6.4em; right:0; top:0; height:2em; display:grid; grid-template-columns:repeat(6,1fr);
+  align-items:end; font-size:.84em; color:rgb(var(--yb-dim-rgb)); text-align:center}
+.yb-mx-cols span{opacity:0}
+.yb-mx-rows{position:absolute; left:0; width:6.4em; top:2em; bottom:2em; display:grid; grid-template-rows:repeat(6,1fr);
+  align-items:center; font-size:.84em; color:rgb(var(--yb-dim-rgb)); text-align:right; padding-right:.7em}
+.yb-mx-rows span{opacity:0}
+
+/* ── 25 群像墙 ── */
+.yb-wall{position:absolute; inset:0; display:grid; grid-template-columns:repeat(12,1fr);
+  grid-template-rows:repeat(5,1fr); gap:.5em; align-content:center; perspective:1000px}
+.yb-wtile{margin:0; height:100%; border-radius:2px; overflow:hidden; opacity:0; background:var(--yb-card)}
+.yb-wtile img, .yb-wtile .yb-ph{width:100%; height:100%}
+
+/* ── 26 落款 ── */
+.yb-colo{position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; gap:1.8em}
+.yb-colo{justify-content:center; align-items:center}
+/* 最后一页只有四格大字，居中一行；单位在数字下方（小字但成组，不散排） */
+.yb-colo-grid{display:grid; grid-template-columns:repeat(4,auto); gap:4.4em; justify-content:center;
+  align-items:end; width:100%}
+.yb-colo-grid .yb-kv b{font-size:3.2em; font-weight:800; line-height:1; letter-spacing:-.02em; display:block}
+/* 只选**直接子级**的说明文字：翻页钟格子内部的 .cur/.nxt 也是 span，
+   写成 `.yb-kv span` 会把数字一起选中（上边距把字挤到下半格、还染成灰的） */
+.yb-colo-grid .yb-kv > span{display:block; margin-top:.6em; font-size:.88em;
+  color:rgb(var(--yb-dim-rgb)); letter-spacing:.06em}
+.yb-colo-grid .yb-kv:nth-child(3) .yb-flap:not(.is-lit){background:rgb(var(--yb-red-rgb))}
+.yb-colo-line{margin:0; font-family:var(--yb-serif); font-size:1.3em; letter-spacing:.03em;
+  padding-top:1em; border-top:1px solid var(--yb-line); transform-origin:left center}
+.yb-colo-fields{display:flex; flex-wrap:wrap; gap:.5em}
+.yb-field{font-size:.8em; letter-spacing:.06em; padding:.28em .7em; border-radius:999px;
+  color:rgb(var(--yb-dim-rgb)); background:var(--yb-card); opacity:0}
+.yb-colo-act{display:flex; align-items:center; gap:1.4em; opacity:0}
+.yb-btn{font:inherit; font-size:.94em; letter-spacing:.1em; cursor:pointer; padding:.5em 1.4em; border-radius:999px;
+  color:var(--yb-paper); background:rgb(var(--yb-ink-rgb)); border:none;
+  transition:transform var(--cn-m-fast),opacity var(--cn-m-fast)}
+@media (hover:hover){ .yb-btn:hover{transform:translateY(-1px)} }
+.yb-btn:active{transform:scale(.97)}
+.yb-colo-note{font-size:.8em; color:rgb(var(--yb-faint-rgb)); letter-spacing:.04em}
+
+/* ── 过片：换幕时两片纸从上下合到中线（留一道朱红细缝），合上那一帧完成换幕 ──
+   时长走台账：合 = fast（要对齐滚轮的手速），开 = move。 */
+.yb-shutter{position:absolute; inset:0; z-index:24; pointer-events:none; overflow:hidden}
+.yb-shutter i{position:absolute; left:0; right:0; height:50.6%; background:var(--yb-paper);
+  transform:scaleY(0); will-change:transform;
+  transition:transform var(--cn-m-move) var(--cn-e-move)}
+.yb-shutter i.t{top:0; transform-origin:top center; box-shadow:0 1px 0 rgba(var(--yb-red-rgb), .55)}
+.yb-shutter i.b{bottom:0; transform-origin:bottom center; box-shadow:0 -1px 0 rgba(var(--yb-red-rgb), .55)}
+.yb-shutter.is-close i{transform:scaleY(1); transition-duration:var(--cn-m-fast)}
+.yb-shutter.is-open i{transform:scaleY(0); transition-duration:var(--cn-m-move)}
+
+/* ── 入场定格：遮片打开后本幕内容轻轻落定（不然换幕像换了张静止图） ── */
+.bz-yb-scn.is-in .yb-sc{animation:ybSettle var(--cn-m-move) var(--cn-e-out) both}
+@keyframes ybSettle{from{opacity:.62; transform:scale(1.012)}to{opacity:1; transform:none}}
+
+/* ── 翻页钟（split-flap）：单点大数字用机械翻牌落定，不用滚动计数 ── */
+.yb-flap-row{display:flex; align-items:center; gap:.34em; font-variant-numeric:tabular-nums}
+.yb-flap{position:relative; display:inline-flex; align-items:center; justify-content:center;
+  width:1.3em; height:1.62em; font-size:.78em; border-radius:.12em; overflow:hidden;
+  font-style:normal; font-weight:800; line-height:1;
+  /* 数字走等宽数字字体：中文界面的字体行框 ascent/descent 差得远，字会被挤到格子下半截（实测踩过） */
+  font-family:ui-monospace, "Cascadia Mono", "SFMono-Regular", Consolas, monospace;
+  background:rgb(var(--yb-ink-rgb)); color:var(--yb-paper); perspective:240px}
+.yb-flap::after{content:""; position:absolute; left:0; right:0; top:50%; height:1px;
+  background:color-mix(in srgb, var(--yb-paper) 13%, transparent)}
+.yb-flap.is-lit{width:auto; min-width:1.05em; padding:0 .14em; background:transparent;
+  color:rgb(var(--yb-ink-rgb))}
+.yb-flap.is-lit::after{content:none}
+/* 字号按位宽收：位多的地方不缩字号，整行会顶穿栏宽 */
+.yb-flap-mini{font-size:.9em; gap:.16em}
+/* 窄栏 / 四格大字的拥挤，用「单位字收小一档」化解，**底板与中缝一律保留**
+   （2026-09-22 用户拍板：无框数字不算翻页钟）。格子宽度是死的：天 / 小时 / 时这类单位
+   若跟着数字一起放大，整行必然顶穿栏宽；单位格本来就没有底板，收小只是排印上的主次。 */
+.yb-len-side .yb-flap-big{font-size:1.68em; gap:.05em}
+.yb-len-side .yb-flap-big .yb-flap{width:1.2em; height:1.56em}
+.yb-len-side .yb-flap-big .yb-flap.is-lit{font-size:.68em; min-width:.85em; padding:0 .05em}
+/* 落款四格同理；`.yb-kv b` 那条 3.2em 权重更高，这里补 .yb-flap-row 凑到三档才压得住 */
+.yb-colo-grid .yb-flap-big.yb-flap-row{font-size:2.6em; gap:.2em}
+.yb-colo-grid .yb-flap-big .yb-flap.is-lit{font-size:.6em; min-width:.9em; padding:0 .06em}
+.yb-flap .cur, .yb-flap .nxt{position:absolute; inset:0; display:flex; align-items:center; justify-content:center; line-height:1}
+.yb-flap .nxt{transform-origin:center top; backface-visibility:hidden}
+.yb-flap.is-flip .nxt{animation:ybFlapIn var(--cn-m-move) var(--cn-e-move) both}
+.yb-flap.is-flip .cur{animation:ybFlapOut var(--cn-m-move) var(--cn-e-move) both}
+@keyframes ybFlapIn{from{transform:rotateX(-92deg)}to{transform:rotateX(0)}}
+@keyframes ybFlapOut{from{transform:rotateX(0)}to{transform:rotateX(92deg)}}
+
+/* 窄屏：两栏收一栏、幕内边距收紧（26 幕同一套骨架，这里只调栅格） */
+/* 窄屏重排：**不能只把栅格压成一列**——子项写死的 grid-column 会造出隐式列，
+ *  于是「钟盘/胶片盘被挤成窄条、主图整块消失」（2026-09-22 用户在窄窗口实测）。
+ *  这里按幕逐个给：该并排的并排（两列），该铺满的铺满（跨列），子项列号一并复位。 */
+@media (max-width: 900px){
+  .bz-yb{font-size:clamp(12px,2.6vmin,17px)}
+  .yb-sc{padding:1.8em 2.2em 3em 2em}
+
+  /* 06 片长画像：上排「胶片盘 + 数字」，下排柱状图铺满 */
+  .yb-len{grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);
+    grid-template-rows:minmax(0,1.1fr) minmax(0,.9fr); gap:1.6em}
+  .yb-len-reel{grid-column:1; grid-row:1}
+  .yb-len-side{grid-column:2; grid-row:1}
+  .yb-len-bars{grid-column:1 / -1; grid-row:2; padding-top:0}
+  .yb-len-side .yb-flap-big{font-size:1.5em}
+
+  /* 26 落款：四格大字在窄屏一行排不下（单「42天18时」就占 16em），折成 2×2 仍居中 */
+  .yb-colo-grid{grid-template-columns:repeat(2,auto); gap:2.4em 3.4em}
+  .yb-colo-grid .yb-flap-big.yb-flap-row{font-size:2.2em}
+
+  /* 04 日晷 / 12 片龄横轴：主图铺满，统计挪到下方一行 */
+  .yb-dial, .yb-ageax{grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr) auto; gap:1.2em}
+  .yb-dial-face{width:min(100%, 30em)}
+  .yb-dial-side, .yb-ageax-side{flex-direction:row; flex-wrap:wrap; gap:.6em 1.6em; align-items:baseline}
+  .yb-dial-side .yb-kv.big, .yb-ageax-side .yb-kv.big{width:100%}
+
+  /* 13 评分散点：散点 + 边缘直方并排，统计一行放底下 */
+  .yb-scatter{grid-template-columns:minmax(0,1fr) minmax(0,9em);
+    grid-template-rows:minmax(0,1fr) auto; gap:1em 1.4em}
+  .yb-scatter-plot{grid-column:1; grid-row:1}
+  .yb-edge{grid-column:2; grid-row:1}
+  .yb-hist-side{grid-column:1 / -1; grid-row:2; flex-direction:row; flex-wrap:wrap; gap:.4em 1.8em}
+
+  /* 08 类型光谱：条 + 星图上下排 */
+  .yb-genres{grid-template-columns:minmax(0,1fr); grid-template-rows:auto minmax(0,1fr); gap:1.2em}
+  .yb-genres-net{min-height:12em}
+
+  /* 其余两栏幕：直接收一栏（子项本来就是自动排位） */
+  .yb-eras, .yb-binge, .yb-ninewall, .yb-series, .yb-bal-lists{grid-template-columns:1fr}
+  .yb-streak{grid-template-columns:1fr; gap:1.6em}
+  .yb-days{grid-template-columns:repeat(3,1fr); grid-template-rows:repeat(4,1fr)}
+  .yb-podium{grid-template-columns:1fr; gap:1.2em}
+  .yb-wall, .yb-ninewall-grid{grid-template-columns:repeat(6,1fr)}
+  .yb-arc{--arc-r:40em; --arc-k:.62; bottom:-30em}
+  .yb-title{font-size:3.6em}
+  .yb-notes{grid-template-columns:1fr}
+  .yb-quotes{grid-template-columns:1fr}
+  .yb-era-side{position:static; transform:none; width:auto; flex-direction:row; flex-wrap:wrap; gap:.6em 1.6em}
+  .yb-pod-block{height:calc(var(--h,1) * 6em)}
+  .yb-ribbon-head{flex-wrap:wrap; gap:.4em 1.6em}
+}

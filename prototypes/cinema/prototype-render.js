@@ -1,4 +1,4 @@
-/* 源指纹 37180fc74f9262b7 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 44cfe3d4019de1e8 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -356,20 +356,14 @@ var BZR_cinema = (() => {
       return `<button type="button" class="f-choice-btn${v === cur ? " is-on" : ""}" data-${attr}="${v}"><span class="dot" style="background:${attr === "f-tag" ? typeColor((_a = getGroupForTag(v)) != null ? _a : "其他") : (_b = ST_COLOR[v]) != null ? _b : "#888"}"></span>${v}</button>`;
     }).join("");
   }
-  function ratingFieldHtml(rating, initSt) {
-    return `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${rating}"><span class="f-range-val j-rval">${Number(rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(rating)}">${starsHtml(rating)}</span></div></div>`;
-  }
-  function reviewFieldHtml(review, initSt) {
-    return `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(review)}</textarea></div>`;
-  }
   function formModalHtml(opts) {
     const { editing } = opts;
     const initSt = opts.stText;
     const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
     const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
-    const ratingField = ratingFieldHtml(opts.rating, initSt);
-    const reviewField = reviewFieldHtml(opts.review, initSt);
+    const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${opts.rating}"><span class="f-range-val j-rval">${Number(opts.rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(opts.rating)}">${starsHtml(opts.rating)}</span></div></div>`;
+    const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
     if (editing) {
       return `<div class="cn-modal" style="width:100%">
     <div class="cn-modal-title">编辑影视</div>
@@ -383,7 +377,7 @@ var BZR_cinema = (() => {
     <div class="form-flip j-flip">
       <div class="form-face form-face--front">
         <div class="cn-modal-title">添加影视</div>
-        ${nameField}${stField}
+        ${nameField}${stField}${ratingField}${reviewField}
         <div class="dm-actions"><button class="dm-btn gold j-parse"><span class="f-spin"></span><span class="j-parse-text">解析</span></button></div>
       </div>
       <div class="form-face form-face--back">
@@ -436,7 +430,6 @@ var BZR_cinema = (() => {
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
     ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ""}
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ""}
-    <div class="dm-sec">我 的 记 录</div>${ratingFieldHtml(o.rating, o.stText)}${reviewFieldHtml(o.review, o.stText)}
   `;
   }
   function aiRecName(r) {
@@ -498,7 +491,7 @@ var BZR_cinema = (() => {
         </div>
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
-          <button class="rail-item j-tool" data-tool="stat">${iconSpan(ICON.stat)}观影分析</button>
+          <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -511,7 +504,7 @@ var BZR_cinema = (() => {
       <span class="m-acts">
         <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
         <button class="m-tool j-mai bz-touch-target bz-touch-target--lg" title="AI 荐片">${iconSpan(ICON.ai)}</button>
-        <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析">${iconSpan(ICON.stat)}</button>
+        <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析" data-film-open>${iconSpan(ICON.stat)}</button>
         <button class="m-tool j-mclose bz-touch-target bz-touch-target--lg" title="关闭">${iconSpan(ICON.close)}</button>
       </span>
     </div>
@@ -584,8 +577,6 @@ var BZR_cinema = (() => {
     const v = inp.view;
     if (v.view === "ai") {
       view.innerHTML = spHeadHtml("AI 荐片", inp.aiCount ? `· ${inp.aiCount} 部` : "") + `<div class="sp-body">${inp.aiHtml}</div>`;
-    } else if (v.view === "stat") {
-      view.innerHTML = spHeadHtml("观影分析", `· ${inp.watchedCount} 部已看`) + `<div class="sp-body">${inp.statHtml}</div>`;
     } else {
       const body = inp.cards.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>` : emptyPageHtml(viewFiltered(v));
       view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
@@ -593,7 +584,7 @@ var BZR_cinema = (() => {
   }
   function renderMidnightMob(root, inp) {
     const v = inp.view;
-    const t = v.view === "list" ? inp.title : v.view === "ai" ? "AI 荐片" : "观影分析";
+    const t = v.view === "list" ? inp.title : "AI 荐片";
     const titleEl = root.querySelector(".j-mtitle");
     const cntEl = root.querySelector(".j-mcnt");
     if (titleEl) titleEl.textContent = t;
@@ -607,12 +598,9 @@ var BZR_cinema = (() => {
       if (v.view === "list") {
         mv.className = inp.cards.length ? "m-scroll j-mview" : "m-scroll j-mview cn-mempty";
         mv.innerHTML = inp.cards.length ? `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>` : emptyPageHtml(viewFiltered(v));
-      } else if (v.view === "ai") {
-        mv.className = "sp-body j-mview";
-        mv.innerHTML = inp.aiHtml;
       } else {
         mv.className = "sp-body j-mview";
-        mv.innerHTML = inp.statHtml;
+        mv.innerHTML = inp.aiHtml;
       }
     }
     const chips = root.querySelector(".j-chips");

@@ -16,13 +16,14 @@ import { TFile } from 'obsidian';
 import { notice, notifySaveError } from '../core/notice';
 import { openFlowDialog } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
-import { escManager, registerPanelEsc } from '../core/esc-manager';
+import { escManager, registerPanelEsc, unregisterPanelEsc } from '../core/esc-manager';
 import { trapPanelFocus } from '../core/ui/focus-trap';
 import { isMobileEnv } from '../core/mobile';
 import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { tryGetSettings } from '../core/settings-provider';
 import { mountIcons, openLightbox } from '../core/ui';
+import { iconSpan } from '../core/ui/str';
 import { openExternalUrl } from '../core/utils';
 import { bindFormSubmit } from '../core/ui/modal';
 import {
@@ -33,8 +34,7 @@ import { M, type CinemaItem, type CinemaSortMode } from './state';
 import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
-import { buildAnalysisHTML } from './analysis';
-import { bindStatFilm, deriveFilmData, statFilmHtml } from './stat-film';
+import { bindYearbook, deriveYb, yearbookHtml, type YbHandle } from './yearbook';
 import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster } from './douban-queue';
 import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
@@ -213,11 +213,8 @@ export function openAddModalDirect(app: App): void {
   if (root) openForm(root, null, app);
 }
 
-// ---------- 面板统计/标题 ----------
+// ---------- 面板标题 ----------
 
-function watchedCount(): number {
-  return M.items.filter((it) => it.status === STATUS_WATCHED).length;
-}
 /** 列表标题 = 筛选名（组 + 状态叠加） */
 function listTitle(): string {
   return (M.typeFilter || '全部') + (M.statusFilter ? ` · ${M.statusFilter}` : '');
@@ -1042,12 +1039,60 @@ export function openRandomMovie(app: App): void {
   const it = pool[Math.floor(Math.random() * pool.length)];
   if (!M.currentOverlay) createOverlay(app);
   // C（补扫 cinema P3）：面板已开时先整刷（pickRandomCinema 已把 M.view 回落 list，样板同
-  // openCinemaAnalysis 的「已开则 renderAll」分支）——否则详情弹窗叠在旧 ai/stat 页上，状态与画面错位
+  // openCinemaAnalysis 的「已开则 renderAll」分支）——否则详情弹窗叠在旧 ai 页上，状态与画面错位
   else renderAll(app);
   const root = M.currentOverlay?.querySelector<HTMLElement>('[data-cinema-root]');
   if (!root) return;
   openDetail(root, it, app);
   notice(want.length ? `抽到「${it.name}」` : `想看清单空着，从全部影视里抽到「${it.name}」`, 'success');
+}
+
+// ---------- 观影志：独立全屏长片（2026-09-22 重写；26 幕，一幕一屏） ----------
+
+let ybOvl: HTMLElement | null = null;
+let ybHandle: YbHandle | null = null;
+
+/** 打开观影志：整屏弹窗挂 body，与影院面板互不依赖（命令入口面板没开也能看）。
+ *  内容 = 26 幕长片（yearbook/），全部数据来自笔记 frontmatter 里的真实字段；
+ *  一条影视都没有时给空态（带「添加影视」入口）。明暗跟随 Obsidian（styles.css 的 --yb-* 变量层）。
+ *  翻幕：滚轮/方向键一滚一幕，翻到的那幕从头演一遍；「自动」按钮按各幕时长自己往下放。 */
+export function openYearbookOverlay(app: App): void {
+  if (ybOvl?.isConnected) { // 已开：不叠第二层，晃一下提示还在
+    ybOvl.classList.remove('is-nudge');
+    void ybOvl.offsetWidth;
+    ybOvl.classList.add('is-nudge');
+    return;
+  }
+  rebuildItems(app);
+  const data = deriveYb(M.items);
+  const ovl = document.createElement('div');
+  ovl.className = 'bz-yb';
+  ovl.innerHTML = `
+    <button class="bz-yb-close" data-yb-close title="关闭观影志" aria-label="关闭观影志">${iconSpan(ICON.close)}</button>
+    <div class="bz-yb-scroll">${data.total
+      ? yearbookHtml(data, (it) => posterUrl(it, app))
+      : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>`;
+  document.body.appendChild(ovl);
+  mountIcons(ovl);
+  topifyZ(ovl); // 显示即发号（ADR-0067）：叠在影院面板/其它浮层之上，关掉即销号
+  ybOvl = ovl;
+  ovl.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    if (t.closest('[data-yb-close]')) closeYearbookOverlay();
+    // 空态里的「添加影视」：先收观影志再开表单（表单在面板层，留着会把它盖住）
+    else if (t.closest('[data-cinema-analysis-add]')) { closeYearbookOverlay(); openAddModalDirect(app); }
+  });
+  registerPanelEsc('cinema-yearbook', () => !!ybOvl?.isConnected, closeYearbookOverlay);
+  if (data.total) ybHandle = bindYearbook(ovl, data);
+}
+
+/** 关闭观影志：引擎先停（rAF/监听/观察者自灭），再摘层。幂等。 */
+export function closeYearbookOverlay(): void {
+  ybHandle?.stop();
+  ybHandle = null;
+  unregisterPanelEsc('cinema-yearbook');
+  ybOvl?.remove();
+  ybOvl = null;
 }
 
 // ---------- 弹窗：添加 / 编辑表单 ----------
@@ -1154,12 +1199,14 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     else window.setTimeout(start, 16);
   };
 
-  /** 预览卡数据：字段口径与落盘一致（ApiZero 优先、rexxar 兜底） */
+  /** 预览卡数据：字段口径与落盘一致（ApiZero 优先、rexxar 兜底）。
+   *  海报**不给豆瓣直链**（2026-09-21 用户实测 418：豆瓣 CDN 拒热链）——由 ensurePreviewPoster
+   *  本地下载落库后换图；下载前维持骨架。 */
   const previewDataOf = (q: DoubanQuery | null): FormPreviewData | null => {
     if (!q) return null;
     const az = q.apizero;
     return {
-      posterUrl: q.posterUrl,
+      posterUrl: '',
       title: q.title || nameInput?.value.trim() || '',
       typeTag: cur.tag,
       genre: az?.genre ? normalizeListValue(az.genre) : '',
@@ -1172,6 +1219,37 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
       doubanUrl: q.detailUrl,
       hotComment: az?.shortComment ?? '',
     };
+  };
+
+  /** 预览海报（2026-09-21 用户实测 418）：不直连豆瓣 CDN，改为解析后**本地下载落库**
+   *  （与保存落库同一函数 downloadPreviewPoster）→ 把 vault 资源 URL 换进预览卡。
+   *  下载失败保持骨架（保存路径还会再试一次），预览卡不因海报阻塞。 */
+  let previewPosterRel: string | null = null;
+  let posterKicked = false;
+  const applyPreviewPoster = (rel: string): void => {
+    const box = backSlot?.querySelector<HTMLElement>('.dm-poster');
+    if (!box) return;
+    const f = app.vault.getAbstractFileByPath(rel);
+    if (!(f instanceof TFile)) return;
+    let img = box.querySelector('img');
+    if (!img) {
+      img = document.createElement('img');
+      img.alt = '';
+      img.addEventListener('load', () => box.classList.add('is-ready'), { once: true });
+      img.addEventListener('error', () => img?.remove(), { once: true });
+      box.appendChild(img);
+    }
+    img.src = app.vault.getResourcePath(f);
+  };
+  const ensurePreviewPoster = async (url: string | null | undefined): Promise<void> => {
+    if (!url || posterKicked) return;
+    posterKicked = true;
+    try {
+      const rel = await downloadPreviewPoster(app, nameInput?.value.trim() ?? '', url);
+      if (!rel || !el.isConnected) return;
+      previewPosterRel = rel;
+      applyPreviewPoster(rel);
+    } catch { /* 预览海报失败不阻断表单（保存路径兜底） */ }
   };
 
   /** 解析（2026-09-21 拆两段）：
@@ -1203,6 +1281,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     renderBack();
     flipToBack();
     refreshFormState();
+    void ensurePreviewPoster(q.data.posterUrl); // 海报本地落库后换图（防 418 热链拒绝）
     // ② 分类随后补：就地换徽标，不重渲染整卡（重渲染会让海报 img 重新发起请求、白闪一下）
     try {
       const az = q.data.apizero;
@@ -1221,11 +1300,11 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     refreshFormState();
   }
 
-  /** 背面渲染：与详情弹窗同形制；分类 / 状态是有下拉的徽标；
-   *  「我的记录」段（评分/影评）收在末尾，已看才显示（2026-09-21 加回） */
+  /** 背面渲染：与详情弹窗同形制；分类 / 状态是有下拉的徽标。
+   *  评分/影评不在这面——在正面状态下方（2026-09-21 用户拍板：点已看当场能填） */
   function renderBack(): void {
     if (!backSlot) return;
-    backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying, rating: ratingVal, review: item?.review ?? '' });
+    backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
     applyTagOn();
     applyStOn();
   }
@@ -1300,8 +1379,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     const date = stChanged ? localNow() : (item!.watchDate || localNow());
     // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
     // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回。
-    // 「我的记录」段编辑态直出、新增态在背面（2026-09-21 加回）——.j-range 两态都查得到，
-    // querySelector 取先出现的那个框（同屏只会有一处）。框缺失是防御分支（已看给默认分）。
+    // 评分/影评在正面状态下方（2026-09-21 用户拍板）——编辑/新增两态同一个框，querySelector 直取。
     const ratingBox = el.querySelector<HTMLInputElement>('.j-range');
     const rating = cur.st === '已看'
       ? (ratingBox ? parseFloat(ratingBox.value) : DEFAULT_RATING)
@@ -1309,18 +1387,19 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     // 非「已看」态保留原影评不写空（深审批A P2-2）：影评框在非已看态隐藏，原实现在这里
     // 强置空串 + persistItem `delete fm['影评']`——「已看」影片改回想看/在看保存，影评被静默清空。
     // 影评只在「已看」态的输入框里被用户显式改写/清空（空串保存 = 显式删除，语义保留）。
-    // 新增态背面也有影评框了（同上「我的记录」段）→ 走编辑态分支留原值 / 空串。
     const reviewBox = el.querySelector<HTMLTextAreaElement>('.j-review-t');
     const review = reviewBox ? reviewBox.value.trim() : (editing && item ? item.review ?? '' : '');
     if (editing && item) {
       void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, { el, close });
     } else {
-      void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed }, app, { el, close });
+      void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed, posterRel: previewPosterRel }, app, { el, close });
     }
   });
 }
 
-interface FormPayload { name: string; tag: string; st: string; rating: number | null; date: string; review: string; /** 解析阶段拿到的豆瓣字段（issue 395）：建档时一并写入，省掉落盘后重抓 */ douban?: DoubanQuery | null }
+interface FormPayload { name: string; tag: string; st: string; rating: number | null; date: string; review: string; /** 解析阶段拿到的豆瓣字段（issue 395）：建档时一并写入，省掉落盘后重抓 */ douban?: DoubanQuery | null;
+  /** 解析期预览海报已落库的路径（issue 406 追加）：保存不再重复下载 */
+  posterRel?: string | null }
 
 /** 新增落盘（CM2：重名/落盘失败回退；created 域事件 + 抓取队列接管） */
 /** 表单游标：`el` = 弹窗层（保存后要按它折回卡片），`close` = 收层（issue 403 起成对传递——
@@ -1346,7 +1425,8 @@ async function saveNew(p: FormPayload, app: App, form: FormHandle): Promise<void
     // 解析阶段已拿到海报与字段（issue 395）→ 保存时一并落库（海报下载进 vault + 属性写入）：
     // 建档即「齐」，于是**不入队后台抓取、也不再有抓取通知与卡片 loading**（2026-09-21 用户拍板）。
     // 只有真没落成海报（没解析 / 没网 / 写盘失败）才回退老路径交队列补齐。
-    const posterRel = p.douban?.posterUrl ? await downloadPreviewPoster(app, p.name, p.douban.posterUrl) : null;
+    // 预览期已下过（p.posterRel）直接用，不再重复下载。
+    const posterRel = p.posterRel ?? (p.douban?.posterUrl ? await downloadPreviewPoster(app, p.name, p.douban.posterUrl) : null);
     await persistItem(it, app, undefined, p.douban, posterRel);
     if (posterRel) it.poster = posterRel; // 内存同步：本次渲染即可见海报（盘上已写，重解析同值）
     emitDomainEvent('movie', { kind: 'created', name: p.name, status: st === STATUS_WANT ? 'want' : st === STATUS_WATCHING ? 'watching' : 'watched', rating: p.rating, review: p.review || null });
@@ -1491,11 +1571,10 @@ function aiInput(): AiPageInput {
 
 // ---------- 渲染（布局胶水入参装配；vault 自动刷新与 M.renderFn 都走 renderAll） ----------
 
-function midnightInput(app: App, mob = false): MidnightRenderInput {
+function midnightInput(app: App): MidnightRenderInput {
   const merge = mergeSeasonsOn();
-  // 惰性构建（深审批A P3-14）：list 页不预算 AI 页与分析页两份大字符串——分析页是
-  // 19 板块全量统计，而列表页每次标记/筛选/搜索整刷都走这里，两份大 HTML 恒算纯浪费；
-  // list 视图的渲染胶水不读这两个字段，真进 ai/stat 页才构建
+  // 惰性构建（深审批A P3-14）：list 页不预算 AI 页大字符串——列表页每次标记/筛选/搜索整刷
+  // 都走这里，恒算纯浪费；list 视图的渲染胶水不读该字段，真进 ai 页才构建
   const onList = M.view === 'list';
   return {
     allCards: mergeSeasonCards(M.items, merge),
@@ -1509,21 +1588,11 @@ function midnightInput(app: App, mob = false): MidnightRenderInput {
     },
     cols: gridColumns(),
     title: listTitle(),
-    watchedCount: watchedCount(),
     aiHtml: onList ? '' : aiPageHtml(aiInput()),
     aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-    statHtml: onList ? '' : statViewHtml(app, mob),
     poster: (it) => posterUrl(it, app),
     fetching: (it) => isFetching(it.file?.path),
   };
-}
-
-/** stat 页内容（issue 405）：桌面走滚动放映室（四本 22 幕，无观影日期数据时回退板块列表）；
- *  mob 保留 19 板块列表——触屏没有滚轮翻幕，硬搬是伪交互（遗留见 issue 405） */
-function statViewHtml(app: App, mob: boolean): string {
-  if (mob) return buildAnalysisHTML();
-  const data = deriveFilmData(M.items);
-  return data.timeline.length ? statFilmHtml(data, (it) => posterUrl(it, app)) : buildAnalysisHTML();
 }
 
 // ---------- 搜索（防抖；desk 部分刷新保焦点 / mob 全刷+回焦） ----------
@@ -1735,18 +1804,20 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     }
     const tool = t.closest('.j-tool') as HTMLElement | null;
     if (tool && tool.dataset.tool) {
-      // 进 ai/stat 不动筛选状态：rail 高亮由渲染层按视图熄灭（render.ts listOn 门控），
+      // 进 ai 不动筛选状态：rail 高亮由渲染层按视图熄灭（render.ts listOn 门控），
       // 返回列表时先前选中的筛选高亮原样恢复
-      M.view = M.view === tool.dataset.tool ? 'list' : (tool.dataset.tool as 'ai' | 'stat');
+      M.view = M.view === tool.dataset.tool ? 'list' : (tool.dataset.tool as 'ai');
       renderAll(app);
       return;
     }
+    // 观影分析：独立全屏放映室（2026-09-21 用户拍板：不镶嵌在影院面板里）
+    if (t.closest('[data-film-open]')) { openYearbookOverlay(app); return; }
     const mb = t.closest('.j-mai,.j-mstat,.j-mclose') as HTMLElement | null;
     if (mb) {
       if (mb.classList.contains('j-mclose')) closeOverlay();
+      else if (mb.classList.contains('j-mstat')) openYearbookOverlay(app);
       else {
-        const v = mb.classList.contains('j-mai') ? 'ai' : 'stat';
-        M.view = M.view === v ? 'list' : v; // 落域适配：再点回列表
+        M.view = M.view === 'ai' ? 'list' : 'ai'; // 落域适配：再点回列表
         renderAll(app);
       }
       return;
@@ -2239,7 +2310,7 @@ export function renderAll(app: App): void {
     if (sc) scrollMemo.set(sel, sc.scrollTop);
   }
   const mob = root.classList.contains('mob');
-  const inp = midnightInput(app, mob);
+  const inp = midnightInput(app);
   if (mob) {
     renderMidnightMob(root, inp);
     attachLongPress(root, app); // m-grid 卡片重渲染重建后重挂（原 mob 渲染胶水同语义）
@@ -2252,7 +2323,6 @@ export function renderAll(app: App): void {
   syncSlidePills(root); // 底片跟着新选中项落位（渲染重写了 rail/排序钮的 innerHTML）
   playGridMotion(root, beforeCards); // 滚位恢复之后再演：位移差要跟最终滚位一致
   flushCardFlash(root); // 刚变更的那张卡闪一下（issue 403）
-  if (!mob && M.view === 'stat') bindStatFilm(root, deriveFilmData(M.items)); // 滚动放映室（issue 405）
   restoreFocus(root, snap);
 }
 

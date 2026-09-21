@@ -60,7 +60,7 @@ export interface CinemaState {
   statusFilter: string | null;
   /** 排序模式 */
   sortMode: CinemaSortMode;
-  /** 当前视图：list / ai / stat */
+  /** 当前视图：list / ai */
   view: CinemaViewKind;
   searchKeyword: string;
   searchDebounceTimer: ReturnType<typeof setTimeout> | null;

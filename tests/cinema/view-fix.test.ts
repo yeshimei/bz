@@ -17,7 +17,7 @@ import { rebuildItems } from '../../src/cinema/data';
 import { createOverlay, closeOverlay, renderAll } from '../../src/cinema/ui';
 import { ensureCinema, unloadCinema } from '../../src/cinema';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { buildAnalysisData } from '../../src/cinema/analysis';
+import { deriveYb } from '../../src/cinema/yearbook';
 import { mergeSeasonCards } from '../../src/cinema/seasons';
 import { seriesDetailModalHtml } from '../../src/cinema/shared';
 import { clearDomainEvents } from '../../src/core/domain-bus';
@@ -80,18 +80,19 @@ describe('cinema 深审批 B #5：日期类统计已看守卫', () => {
     M.folderPath = '我的/影视';
   });
 
-  it('想看条目的建档日期不计入 years/months/weekdays/monthKeys（已看 3 条、想看 1 条夹具）', () => {
+  it('想看条目的建档日期不计入年份/月份/星期（已看 3 条、想看 1 条夹具）', () => {
     seedVault();
-    const d = buildAnalysisData();
+    const d = deriveYb(M.items);
     expect(d.total).toBe(4);
-    expect(d.watched).toBe(3);
+    expect(d.watchedCount).toBe(3);
     // 观影日期桶只数已看：想看片的 2026-05-01 是建档日期
-    expect(d.datedWatched).toBe(3);
-    expect(d.years[2026]).toBe(3);
-    expect(d.months[5]).toBeUndefined(); // 5 月只有想看的建档日期
-    expect(d.months[8]).toBe(2); // 星际穿越 + 老友记第二季
-    expect(d.weekdays.reduce((s: number, n: number) => s + n, 0)).toBe(3);
-    expect(d.monthKeys.size).toBe(2); // 2026-7 / 2026-8（不含 2026-5）
+    const yearMap = Object.fromEntries(d.years.map((y) => [y.y, y.films.length]));
+    expect(yearMap[2026]).toBe(3);
+    expect(d.months[4]).toBe(0); // 5 月只有想看的建档日期（索引 4 = 5 月）
+    expect(d.months[7]).toBe(2); // 8 月：星际穿越 + 老友记第二季（索引 7 = 8 月）
+    expect(d.weekN.reduce((s, n) => s + n, 0)).toBe(3);
+    const monthKeys = new Set([...d.days.keys()].map((k) => k.slice(0, 7)));
+    expect(monthKeys.size).toBe(2); // 2026-07 / 2026-08（不含 2026-05）
     // 月均 = 有观影日期的已看部数 / 有观影记录的月数 = 3 / 2
     expect(d.monthFreq).toBe('1.5');
   });

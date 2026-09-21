@@ -75,7 +75,7 @@ const EXPECTED_COMMAND_IDS = [
   'bz-favorites-open', 'bz-favorites-add',
   // 旧书库（library）域退役：bz-library-open/bz-book-notes-open 已删（读书笔记入书架墙详情弹窗）
   'bz-reading-report-open',
-  // ADR-0090：独立报告窗退役，原报告命令 id 换 bz-cinema-analysis（直达影院面板分析页）
+  // ADR-0090：独立报告窗退役，原报告命令 id 换 bz-cinema-analysis（2026-09-22 起重写为独立全屏《观影志》26 幕；命令 id 与首页入口不变）
   'bz-cinema-analysis',
   'bz-cinema-open', 'bz-cinema-add',
   // 随机抽一部（2026-09-11 首页入口菜单；想看池随机直开详情）

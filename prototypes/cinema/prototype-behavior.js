@@ -1,5 +1,5 @@
-/* 源指纹 499acf43be038d24 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/stat-film.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 4ffef5e4718b3b23 · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -4526,15 +4526,17 @@ var BZW_cinema = (() => {
       await this.vault.modify(file, serializeYaml(fm) + body);
     }
   };
-  function seedVaultFile(path, content, ctime) {
-    localStorage.setItem(LS_PREFIX + path, content);
+  function seedVaultFiles(list) {
     let stats = {};
     try {
       stats = JSON.parse(localStorage.getItem(STAT_KEY) || "{}");
     } catch (e) {
       stats = {};
     }
-    stats[path] = { ctime, mtime: ctime };
+    for (const f of list) {
+      localStorage.setItem(LS_PREFIX + f.path, f.content);
+      stats[f.path] = { ctime: f.ctime, mtime: f.ctime };
+    }
     localStorage.setItem(STAT_KEY, JSON.stringify(stats));
   }
   var FakeApp = class {
@@ -5391,6 +5393,11 @@ var BZW_cinema = (() => {
   function registerPanelEsc(id, isVisible, close) {
     if (panelEscHandles.has(id)) return;
     panelEscHandles.set(id, escManager.register(id, { isVisible, close }));
+  }
+  function unregisterPanelEsc(id) {
+    var _a;
+    (_a = panelEscHandles.get(id)) == null ? void 0 : _a.unregister();
+    panelEscHandles.delete(id);
   }
 
   // src/cinema/state.ts
@@ -7051,10 +7058,10 @@ var BZW_cinema = (() => {
   function isFetching(path) {
     var _a;
     if (!path) return false;
-    const at = pending.get(path);
-    if (!at) return false;
+    const at2 = pending.get(path);
+    if (!at2) return false;
     const ahead = (_a = waitAhead.get(path)) != null ? _a : 0;
-    return Date.now() - at < ahead * gapMs + FETCH_TIMEOUT_MS + 3e4;
+    return Date.now() - at2 < ahead * gapMs + FETCH_TIMEOUT_MS + 3e4;
   }
   function enqueueDoubanFetch(file, name) {
     if (!file) return false;
@@ -7070,8 +7077,8 @@ var BZW_cinema = (() => {
   }
   function dequeueDoubanFetch(path) {
     if (!path) return;
-    const at = queue.findIndex((e) => e.file.path === path);
-    if (at >= 0) queue.splice(at, 1);
+    const at2 = queue.findIndex((e) => e.file.path === path);
+    if (at2 >= 0) queue.splice(at2, 1);
     pending.delete(path);
     waitAhead.delete(path);
     cancelled.add(path);
@@ -7421,1386 +7428,2755 @@ tags:
 严格输出 JSON（不要输出其他内容）：{"recommendations":[{"title":"片名","year":"年份","type":"类型","director":"导演","reason":"为何与基准影片同类、为何适合我"}]}`;
   }
 
-  // src/cinema/analysis.ts
-  var REVIEW_KEYWORDS = ["好看", "喜欢", "推荐", "经典", "感动", "治愈", "失望", "无聊", "一般", "神作", "烂片", "封神", "震撼", "催泪", "熬夜", "二刷", "满分"];
-  function ratingBucketOf(r) {
-    if (r >= 9) return "≥9";
-    if (r >= 8) return "8~9";
-    if (r >= 7) return "7~8";
-    if (r >= 6) return "6~7";
-    if (r >= 5) return "5~6";
-    return "<5";
+  // src/cinema/yearbook/data.ts
+  function parseMinutes(raw) {
+    if (!raw) return null;
+    const s = String(raw);
+    const hm = s.match(/(\d+)\s*小时\s*(\d+)?\s*分?/);
+    if (hm) return Number(hm[1]) * 60 + (hm[2] ? Number(hm[2]) : 0);
+    const m = s.match(/(\d+)\s*分/);
+    if (m) return Number(m[1]);
+    const bare = s.match(/^\s*(\d+)\s*$/);
+    return bare ? Number(bare[1]) : null;
   }
-  function createEmptyAnalysis() {
-    return {
-      total: 0,
-      watched: 0,
-      watching: 0,
-      want: 0,
-      ratingSum: 0,
-      ratingCount: 0,
-      doubanSum: 0,
-      doubanCount: 0,
-      groups: {},
-      tags: {},
-      years: {},
-      months: {},
-      buckets: { "≥9": 0, "8~9": 0, "7~8": 0, "6~7": 0, "5~6": 0, "<5": 0 },
-      genres: {},
-      countries: {},
-      directors: {},
-      actors: {},
-      topRated: [],
-      wantList: [],
-      ageBuckets: { "当年": 0, "1-3年": 0, "4-10年": 0, "≥10年": 0 },
-      ageSum: 0,
-      ageCount: 0,
-      eras: {},
-      durBuckets: { "<90": 0, "90-120": 0, ">120": 0 },
-      durSum: 0,
-      durCount: 0,
-      groupDur: {},
-      weekdays: [0, 0, 0, 0, 0, 0, 0],
-      monthKeys: /* @__PURE__ */ new Set(),
-      /** 有观影日期的**已看**条目数（月均/周末占比的分子口径 = 节奏统计只数真看过的，深审批 B #5） */
-      datedWatched: 0,
-      diffSum: 0,
-      diffCount: 0,
-      treasure: [],
-      disappoint: [],
-      reviewKeywords: {},
-      reviewCount: 0,
-      reviewCharSum: 0,
-      series: {},
-      seasonSum: 0,
-      seasonCount: 0,
-      seasons: [],
-      wantDoubanSum: 0,
-      wantDoubanCount: 0,
-      wantTags: {},
-      yearRating: {}
-    };
+  function parseEpisodes(raw) {
+    if (!raw) return null;
+    const m = String(raw).match(/(\d+)/);
+    return m ? Number(m[1]) : null;
   }
-  function accumulateStats(data, it) {
-    const { status, group, typeTag, rating } = it;
-    data.total++;
-    if (status === STATUS_WATCHED) {
-      data.watched++;
-      if (rating !== null && rating > 0) {
-        data.ratingSum += rating;
-        data.ratingCount++;
-        data.topRated.push(it);
-      }
-    } else if (status === STATUS_WATCHING) data.watching++;
-    else if (status === STATUS_WANT) {
-      data.want++;
-      data.wantList.push(it);
-    }
-    if (group) data.groups[group] = (data.groups[group] || 0) + 1;
-    if (typeTag) data.tags[typeTag] = (data.tags[typeTag] || 0) + 1;
-    const d = it.watchDate ? new Date(it.watchDate) : null;
-    const validD = d && !isNaN(d.getTime()) ? d : null;
-    if (validD && status === STATUS_WATCHED) {
-      const y = validD.getFullYear();
-      data.years[y] = (data.years[y] || 0) + 1;
-      data.months[validD.getMonth() + 1] = (data.months[validD.getMonth() + 1] || 0) + 1;
-      data.weekdays[validD.getDay()]++;
-      data.monthKeys.add(y + "-" + (validD.getMonth() + 1));
-      data.datedWatched++;
-    }
-    if (rating !== null && rating > 0) data.buckets[ratingBucketOf(rating)]++;
-    const db = it.doubanRating ? Number(it.doubanRating) : NaN;
-    if (!isNaN(db) && db > 0) {
-      data.doubanSum += db;
-      data.doubanCount++;
-    }
-    const splitAdd = (str, map) => String(str || "").split("/").map((s) => s.trim()).filter(Boolean).forEach((v) => {
-      map[v] = (map[v] || 0) + 1;
-    });
-    splitAdd(it.genre, data.genres);
-    splitAdd(it.region, data.countries);
-    splitAdd(it.director, data.directors);
-    splitAdd(it.actors, data.actors);
-    const relYear = it.year ? Number(it.year) : NaN;
-    if (!isNaN(relYear) && validD) {
-      const diff = validD.getFullYear() - relYear;
-      if (diff >= 0) {
-        if (diff === 0) data.ageBuckets["当年"]++;
-        else if (diff <= 3) data.ageBuckets["1-3年"]++;
-        else if (diff <= 10) data.ageBuckets["4-10年"]++;
-        else data.ageBuckets["≥10年"]++;
-        data.ageSum += diff;
-        data.ageCount++;
-      }
-      const era = Math.floor(relYear / 10) * 10;
-      data.eras[era] = (data.eras[era] || 0) + 1;
-    }
-    const durMatch = String(it.duration || "").match(/^(\d+)/);
-    if (durMatch) {
-      const mins = Number(durMatch[1]);
-      if (mins < 90) data.durBuckets["<90"]++;
-      else if (mins <= 120) data.durBuckets["90-120"]++;
-      else data.durBuckets[">120"]++;
-      data.durSum += mins;
-      data.durCount++;
-      const gd = data.groupDur[group] = data.groupDur[group] || { sum: 0, count: 0 };
-      gd.sum += mins;
-      gd.count++;
-    }
-    if (rating !== null && rating > 0 && validD) {
-      const yr = validD.getFullYear();
-      const yrStat = data.yearRating[yr] = data.yearRating[yr] || { sum: 0, count: 0 };
-      yrStat.sum += rating;
-      yrStat.count++;
-    }
-  }
-  function accumulateExtras(data, it) {
-    const { status, typeTag, rating, name } = it;
-    const db = it.doubanRating ? Number(it.doubanRating) : NaN;
-    if (status === STATUS_WATCHED && rating !== null && rating > 0 && !isNaN(db) && db > 0) {
-      data.diffSum += rating - db;
-      data.diffCount++;
-      if (rating >= 9 && db < 8) data.treasure.push({ name, typeTag, rating, douban: db });
-      if (rating <= 4 && db >= 8.5) data.disappoint.push({ name, typeTag, rating, douban: db });
-    }
-    const review = it.review ? String(it.review).trim() : "";
-    if (review) {
-      data.reviewCount++;
-      data.reviewCharSum += review.length;
-      REVIEW_KEYWORDS.forEach((w) => {
-        if (review.includes(w)) data.reviewKeywords[w] = (data.reviewKeywords[w] || 0) + 1;
-      });
-    }
-    const serMatch = name.match(/^(.*?)(\d+)$/);
-    const serBase = serMatch && serMatch[1] ? serMatch[1] : name;
-    data.series[serBase] = (data.series[serBase] || 0) + 1;
-    const seasonMatch = String(it.seasonText || "").match(/(\d+)/);
-    if (seasonMatch) {
-      const n = Number(seasonMatch[1]);
-      data.seasonSum += n;
-      data.seasonCount++;
-      data.seasons.push({ name, seasons: n });
-    }
-    if (status === STATUS_WANT && !isNaN(db) && db > 0) {
-      data.wantDoubanSum += db;
-      data.wantDoubanCount++;
-    }
-    if (status === STATUS_WANT && typeTag) {
-      data.wantTags[typeTag] = (data.wantTags[typeTag] || 0) + 1;
-    }
-  }
-  function finalizeAnalysis(data) {
-    data.topRated.sort((a, b) => b.rating - a.rating);
-    data.topRated = data.topRated.slice(0, 10);
-    data.wantTotal = data.wantList.length;
-    data.wantList = data.wantList.slice(0, 10);
-    data.treasure = data.treasure.sort((a, b) => b.rating - a.rating).slice(0, 10);
-    data.disappoint = data.disappoint.sort((a, b) => a.rating - b.rating).slice(0, 10);
-    data.seasons = data.seasons.sort((a, b) => b.seasons - a.seasons).slice(0, 5);
-    data.seriesList = Object.entries(data.series).filter(([, v]) => v >= 2).sort((a, b) => b[1] - a[1]).slice(0, 10);
-    data.avgAge = data.ageCount ? (data.ageSum / data.ageCount).toFixed(1) : "—";
-    data.avgDur = data.durCount ? (data.durSum / data.durCount).toFixed(0) : "—";
-    data.avgDiff = data.diffCount ? (data.diffSum / data.diffCount).toFixed(2) : "—";
-    data.avgSeason = data.seasonCount ? (data.seasonSum / data.seasonCount).toFixed(1) : "—";
-    data.monthFreq = data.monthKeys.size ? (data.datedWatched / data.monthKeys.size).toFixed(1) : "—";
-    data.reviewRate = data.total ? Math.round(data.reviewCount / data.total * 100) : 0;
-    data.reviewAvgChars = data.reviewCount ? Math.round(data.reviewCharSum / data.reviewCount) : 0;
-    data.wantAvgDouban = data.wantDoubanCount ? (data.wantDoubanSum / data.wantDoubanCount).toFixed(2) : "—";
-    data.dirRepeat = Object.values(data.directors).filter((c) => c >= 3).length;
-    data.actRepeat = Object.values(data.actors).filter((c) => c >= 3).length;
-    data.eraEntries = Object.keys(data.eras).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y + "s", value: data.eras[y] }));
-    data.yearRatingEntries = Object.keys(data.yearRating).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y, value: Number((data.yearRating[y].sum / data.yearRating[y].count).toFixed(2)) }));
-    data.weekdayEntries = ["周日", "周一", "周二", "周三", "周四", "周五", "周六"].map((w, i) => ({ label: w, value: data.weekdays[i] }));
-    data.groupDurEntries = Object.entries(data.groupDur).map(([g, v]) => ({ label: g, value: Math.round(v.sum / v.count) })).sort((a, b) => b.value - a.value);
-    data.keywordEntries = Object.entries(data.reviewKeywords).sort((a, b) => b[1] - a[1]).slice(0, 12);
-    data.yearTrend = (() => {
-      const ys = Object.keys(data.years).sort((a, b) => Number(a) - Number(b));
-      const out = [];
-      for (let i = 1; i < ys.length; i++) {
-        const prev = data.years[ys[i - 1]], cur = data.years[ys[i]];
-        out.push({ label: ys[i - 1] + "→" + ys[i], value: prev ? Math.round((cur - prev) / prev * 100) : 0 });
-      }
-      return out;
-    })();
-  }
-  function buildAnalysisData() {
-    const data = createEmptyAnalysis();
-    for (const it of M.items) {
-      accumulateStats(data, it);
-      accumulateExtras(data, it);
-    }
-    finalizeAnalysis(data);
-    return data;
-  }
-  function esc2(s) {
-    return escapeHtml2(String(s != null ? s : ""));
-  }
-  function emptyHTML() {
-    return '<div class="cn-empty">暂无数据</div>';
-  }
-  function barHTML(entries, opt) {
-    if (!entries || !entries.length) return emptyHTML();
-    const max = Math.max(1, ...entries.map((e) => e.value));
-    return entries.map((e) => `<div class="bar-row"><span class="bar-label">${esc2(e.label)}</span><span class="bar-track"><span class="bar-fill" style="width:${Math.round(e.value / max * 100)}%;${(opt == null ? void 0 : opt.color) ? "background:" + opt.color + ";" : ""}"></span></span><span class="bar-num">${e.value}</span></div>`).join("");
-  }
-  function softHTML(entries) {
-    if (!entries || !entries.length) return emptyHTML();
-    const max = Math.max(1, ...entries.map((e) => e.value));
-    return entries.map((e) => `<div class="soft-row"><span class="bar-label">${esc2(e.label)}</span><span class="soft-track"><span class="soft-fill" style="width:${Math.round(e.value / max * 100)}%"></span></span><span class="bar-num">${e.value}</span></div>`).join("");
-  }
-  function secHTML(title, icon, body) {
-    return `<div class="sec"><div class="sec-title"><i data-lucide="${icon}" class="bz-ic"></i>${esc2(title)}</div>${body}</div>`;
-  }
-  function kvInline(items) {
-    return `<div class="kv-inline">${items.map((s) => `<span>${s}</span>`).join("")}</div>`;
-  }
-  function topRow(no, name, val) {
-    return `<div class="top-row"><span class="top-no">${no}</span><span class="top-name">${name}</span><span class="top-val">${val}</span></div>`;
-  }
-  var topN = (map, n) => Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, n).map(([label, value]) => ({ label, value }));
-  function buildAnalysisHTML() {
-    var _a;
-    const data = buildAnalysisData();
-    if (data.total === 0) {
-      return `<div class="cn-empty-page"><div class="big">还没有可统计的影视记录</div>
-      <div class="cn-empty-page-sub">影视文件夹「${esc2(M.folderPath)}」里还没有可分析的条目，添加影视后这里会生成你的观影统计</div>
-      <div class="cn-empty-page-act"><button class="dm-btn" data-cinema-analysis-add>添加影视</button></div></div>`;
-    }
-    const avgRating = data.ratingCount ? (data.ratingSum / data.ratingCount).toFixed(1) : "";
-    const yearEntries = Object.keys(data.years).sort((a, b) => Number(a) - Number(b)).map((y) => ({ label: y, value: data.years[y] }));
-    const monthEntries = Array.from({ length: 12 }, (_, i) => ({ label: i + 1 + "月", value: data.months[i + 1] || 0 }));
-    const bucketEntries = ["≥9", "8~9", "7~8", "6~7", "5~6", "<5"].map((b) => ({ label: b, value: data.buckets[b] }));
-    const ageEntries = Object.entries(data.ageBuckets).map(([label, value]) => ({ label, value }));
-    const durEntries = [["<90分", data.durBuckets["<90"]], ["90-120分", data.durBuckets["90-120"]], [">120分", data.durBuckets[">120"]]].map(([label, value]) => ({ label, value }));
-    const weekend = data.weekdays[0] + data.weekdays[6];
-    const weekEntries = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"].map((w, i) => ({ label: w, value: data.weekdays[(i + 1) % 7] }));
-    const cmpRow = (it) => topRow("", `《${esc2(it.name)}》`, `我 ${Number(it.rating).toFixed(1)} / 豆 ${Number(it.douban).toFixed(1)}`);
-    return `${kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部`, `有影评 <b>${data.reviewCount}</b> 篇`])}
-  <div class="stat-cards">
-    <div class="stat-card"><div class="v">${data.total}</div><div class="k">馆藏总数</div></div>
-    <div class="stat-card"><div class="v">${data.watched}</div><div class="k">已放映</div></div>
-    <div class="stat-card"><div class="v">${avgRating || "—"}</div><div class="k">平均评分</div></div>
-    <div class="stat-card"><div class="v">${data.avgDiff === "—" ? "—" : (Number(data.avgDiff) >= 0 ? "+" : "") + data.avgDiff}</div><div class="k">个人−豆瓣</div></div>
-  </div>
-  ${secHTML("类型分布", "clapperboard", softHTML(topN(data.groups, 8)))}
-  ${secHTML("年度观影趋势", "calendar-days", barHTML(yearEntries))}
-  ${secHTML("片龄画像", "hourglass", kvInline([`平均片龄 <b>${data.avgAge}</b> 年`, `片龄≥10年 <b>${data.ageBuckets["≥10年"]}</b> 部`]) + softHTML(ageEntries) + '<div class="stat-era-gap">' + barHTML(data.eraEntries) + "</div>")}
-  ${secHTML("片长画像", "clock", data.durCount ? kvInline([`平均片长 <b>${data.avgDur}</b> 分钟`]) + softHTML(durEntries) : '<div class="cn-empty">暂无片长数据（笔记 frontmatter 未含时长字段）</div>')}
-  ${secHTML("月度观影分布", "calendar", barHTML(monthEntries))}
-  ${secHTML("观影节奏", "activity", kvInline([`月均 <b>${data.monthFreq}</b> 部`, `周末 <b>${weekend}</b> 部（${data.datedWatched ? Math.round(weekend / data.datedWatched * 100) : 0}%）`]) + barHTML(weekEntries))}
-  ${secHTML("个人评分分布", "star", barHTML(bucketEntries))}
-  ${secHTML("评分趋势（个人10分制）", "trending-up", barHTML(data.yearRatingEntries, { color: "#8fa3bd" }))}
-  ${secHTML("打分习惯（个人−豆瓣）", "scale", kvInline([`平均差值 <b>${data.avgDiff === "—" ? "—" : (Number(data.avgDiff) >= 0 ? "+" : "") + data.avgDiff}</b>（个人−豆瓣）`]) + '<div class="stat-subhead">宝藏片（个人≥9 豆瓣&lt;8）</div>' + (data.treasure.length ? data.treasure.map(cmpRow).join("") : emptyHTML()) + '<div class="stat-subhead stat-subhead--lg">失望榜（个人≤4 豆瓣≥8.5）</div>' + (data.disappoint.length ? data.disappoint.map(cmpRow).join("") : emptyHTML()))}
-  ${secHTML("题材偏好 TOP10", "tags", softHTML(topN(data.genres, 10)))}
-  ${secHTML("制片国家/地区 TOP10", "globe", softHTML(topN(data.countries, 10)))}
-  ${secHTML("最爱导演 TOP10", "video", softHTML(topN(data.directors, 10)))}
-  ${secHTML("最爱主演 TOP10", "users", softHTML(topN(data.actors, 10)))}
-  ${secHTML("真爱重复", "repeat", kvInline([`导演≥3部 <b>${data.dirRepeat}</b> 人`, `主演≥3部 <b>${data.actRepeat}</b> 人`]) + softHTML([{ label: "导演≥3部", value: data.dirRepeat }, { label: "主演≥3部", value: data.actRepeat }]))}
-  ${secHTML("影评关键词", "quote", kvInline([`有影评 <b>${data.reviewCount}</b> 篇（${data.reviewRate}%）`]) + (data.keywordEntries.length ? `<div class="tag-cloud">${data.keywordEntries.map(([k, v]) => `<span class="tag-pill">${esc2(k)} <b>${v}</b></span>`).join("")}</div>` : emptyHTML()))}
-  ${secHTML("我的高分 TOP10", "trophy", data.topRated.length ? data.topRated.map((it, i) => topRow(String(i + 1), esc2(it.name), Number(it.rating).toFixed(1))).join("") : emptyHTML())}
-  ${secHTML("系列追踪", "layers", data.seriesList.length ? data.seriesList.map(([k, v], i) => topRow(String(i + 1), `《${esc2(k)}》`, `${v} 部`)).join("") : emptyHTML())}
-  ${secHTML("追剧深度", "tv", data.seasons.length ? kvInline([`平均 <b>${data.avgSeason}</b> 季`]) + data.seasons.map((s, i) => topRow(String(i + 1), `《${esc2(s.name)}》`, `${s.seasons} 季`)).join("") : emptyHTML())}
-  ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bookmark", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
-  }
-
-  // src/cinema/stat-film.ts
-  var FILM_SCENES = [
-    "s0",
-    "i1",
-    "s1",
-    "i2",
-    "s2",
-    "s10",
-    "s3",
-    "s11",
-    "s12",
-    "i3",
-    "s4",
-    "s13",
-    "s14",
-    "s15",
-    "s16",
-    "s17",
-    "s18",
-    "s19",
-    "i4",
-    "s5",
-    "s6",
-    "s7"
-  ];
-  var FILM_SCENE_H = {
-    s0: 2,
-    i1: 2.2,
-    s1: 4.4,
-    i2: 2.2,
-    s2: 3,
-    s10: 2.4,
-    s3: 4.4,
-    s11: 2.4,
-    s12: 2.4,
-    i3: 2.2,
-    s4: 2.8,
-    s13: 2.8,
-    s14: 2.8,
-    s15: 2.2,
-    s16: 2.8,
-    s17: 2.4,
-    s18: 2.2,
-    s19: 2.8,
-    i4: 2.2,
-    s5: 2.8,
-    s6: 2.8,
-    s7: 2
+  var dayOf = (it) => it.watchDate ? String(it.watchDate).slice(0, 10) : null;
+  var byDate = (a, b) => {
+    var _a, _b;
+    return ((_a = dayOf(a)) != null ? _a : "") < ((_b = dayOf(b)) != null ? _b : "") ? -1 : 1;
   };
-  var FILM_SCENE_RATE = {
-    s0: 0.7,
-    i1: 0.9,
-    s1: 1.15,
-    i2: 0.9,
-    s2: 0.9,
-    s10: 1.05,
-    s3: 0.8,
-    s11: 0.95,
-    s12: 1.35,
-    i3: 0.9,
-    s4: 1,
-    s13: 1.05,
-    s14: 1.1,
-    s15: 1.15,
-    s16: 1.4,
-    s17: 1.2,
-    s18: 1.3,
-    s19: 0.85,
-    i4: 0.9,
-    s5: 0.8,
-    s6: 0.7,
-    s7: 1
-  };
-  var filmRateOf = (id) => {
-    var _a;
-    return (_a = FILM_SCENE_RATE[id]) != null ? _a : 1;
-  };
-  var FILM_SCENE_NAMES = {
-    s0: "倒计时",
-    i1: "入座",
-    s1: "馆藏长廊",
-    i2: "光影",
-    s2: "评分星云",
-    s10: "年份浪潮",
-    s3: "放映编年",
-    s11: "十二档期",
-    s12: "本周排片",
-    i3: "偏爱",
-    s4: "霓虹片街",
-    s13: "修片馆",
-    s14: "导演特展",
-    s15: "群像长卷",
-    s16: "打分天平",
-    s17: "连映夜",
-    s18: "追剧深度",
-    s19: "弹幕影评",
-    i4: "散场",
-    s5: "年度名人堂",
-    s6: "片尾致谢",
-    s7: "下档预告"
-  };
-  var WEEK_NAMES = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
-  var CN_NUM = { 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9, 十: 10 };
-  var cnToNum = (s) => {
-    var _a;
-    return (_a = CN_NUM[s]) != null ? _a : parseInt(s, 10) || 0;
-  };
-  var REVIEW_KEYWORDS2 = ["好看", "喜欢", "推荐", "经典", "感动", "治愈", "失望", "无聊", "一般", "神作", "烂片", "封神", "震撼", "催泪", "熬夜", "二刷", "满分"];
-  function deriveFilmData(items) {
+  var rankOf = (m) => [...m.entries()].map(([name, films]) => ({ name, films })).sort((a, b) => b.films.length - a.films.length || a.name.localeCompare(b.name, "zh"));
+  var splitList = (raw) => String(raw != null ? raw : "").split(/\s*\/\s*/).map((s) => s.trim()).filter(Boolean);
+  function deriveYb(items) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
     const watched = items.filter((it) => it.status === STATUS_WATCHED);
-    const rated = watched.filter((it) => {
-      var _a;
-      return ((_a = it.rating) != null ? _a : 0) > 0;
-    }).sort((a, b) => {
-      var _a, _b;
-      return ((_a = b.rating) != null ? _a : 0) - ((_b = a.rating) != null ? _b : 0);
-    });
-    const avgRating = rated.length ? rated.reduce((s, it) => {
-      var _a;
-      return s + ((_a = it.rating) != null ? _a : 0);
-    }, 0) / rated.length : 0;
-    const timeline = watched.filter((it) => !!it.watchDate).sort((a, b) => a.watchDate < b.watchDate ? -1 : 1);
-    const years = timeline.map((it) => Number(it.watchDate.slice(0, 4)));
-    const yearMin = years.length ? Math.min(...years) : 0;
-    const yearMax = years.length ? Math.max(...years) : 0;
-    const wantList = items.filter((it) => it.status === STATUS_WANT).slice(0, 3);
+    const want = items.filter((it) => it.status === STATUS_WANT);
+    const watching = items.filter((it) => it.status === STATUS_WATCHING);
+    const groupMap = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const k = it.typeTag || "未分类";
+      ((_a = groupMap.get(k)) != null ? _a : groupMap.set(k, []).get(k)).push(it);
+    }
+    const dated = watched.filter((it) => !!dayOf(it)).sort(byDate);
+    const years = [];
+    for (const it of dated) {
+      const y = Number(dayOf(it).slice(0, 4));
+      const last = years[years.length - 1];
+      if (last && last.y === y) last.films.push(it);
+      else years.push({ y, films: [it] });
+    }
+    const months = Array(12).fill(0);
+    for (const it of dated) months[Number(dayOf(it).slice(5, 7)) - 1]++;
     const weekN = [0, 0, 0, 0, 0, 0, 0];
-    timeline.forEach((it) => {
-      weekN[(new Date(it.watchDate).getDay() + 6) % 7]++;
-    });
-    const peakDay = weekN.indexOf(Math.max(...weekN));
-    const weekendN = weekN[5] + weekN[6];
-    const yearCnt = {};
-    timeline.forEach((it) => {
-      const y = it.watchDate.slice(0, 4);
-      yearCnt[y] = (yearCnt[y] || 0) + 1;
-    });
-    const yearArr = Object.entries(yearCnt).sort((a, b) => a[0] < b[0] ? -1 : 1);
-    const monthN = Array(12).fill(0);
-    timeline.forEach((it) => {
-      monthN[Number(it.watchDate.slice(5, 7)) - 1]++;
-    });
-    const peakMonth = monthN.indexOf(Math.max(...monthN));
-    const ageOf = (it) => it.watchDate && it.year ? Number(it.watchDate.slice(0, 4)) - Number(it.year) : null;
-    const AGES = { 当年: [], "1-3年": [], "4-10年": [], "≥10年": [] };
-    watched.forEach((it) => {
-      const a = ageOf(it);
-      if (a === null || isNaN(a)) return;
-      const k = a <= 0 ? "当年" : a <= 3 ? "1-3年" : a <= 10 ? "4-10年" : "≥10年";
-      AGES[k].push(it);
-    });
-    const ageList = watched.map(ageOf).filter((a) => a !== null && !isNaN(a));
-    const avgAge = ageList.length ? (ageList.reduce((s, a) => s + a, 0) / ageList.length).toFixed(1) : "0";
-    const entityMap = (field) => {
-      const m = {};
-      items.forEach((it) => String(it[field] || "").split(/\s*\/\s*/).forEach((x) => {
-        if (!x) return;
-        const key = x.trim();
-        (m[key] = m[key] || []).push(it);
-      }));
-      return Object.entries(m).sort((a, b) => b[1].length - a[1].length).map(([name, films]) => ({ name, count: films.length, films }));
+    for (const it of dated) weekN[((/* @__PURE__ */ new Date(`${dayOf(it)}T00:00:00`)).getDay() + 6) % 7]++;
+    const days = /* @__PURE__ */ new Map();
+    for (const it of dated) {
+      const d = dayOf(it);
+      ((_b = days.get(d)) != null ? _b : days.set(d, []).get(d)).push(it);
+    }
+    let busiest = { date: "", films: [] };
+    for (const [date, films] of days) if (films.length > busiest.films.length || films.length === busiest.films.length && date < busiest.date) busiest = { date, films };
+    const sortedDays = [...days.keys()].sort();
+    let streak = { days: 0, from: "", to: "", films: [] };
+    let runStart = 0;
+    for (let i = 0; i < sortedDays.length; i++) {
+      if (i > 0) {
+        const gap = (Date.parse(sortedDays[i]) - Date.parse(sortedDays[i - 1])) / 864e5;
+        if (gap !== 1) runStart = i;
+      }
+      const len = i - runStart + 1;
+      if (len > streak.days) {
+        const slice = sortedDays.slice(runStart, i + 1);
+        streak = { days: len, from: slice[0], to: slice[slice.length - 1], films: slice.flatMap((d) => {
+          var _a2;
+          return (_a2 = days.get(d)) != null ? _a2 : [];
+        }) };
+      }
+    }
+    const spanDays = sortedDays.length ? Math.round((Date.parse(sortedDays[sortedDays.length - 1]) - Date.parse(sortedDays[0])) / 864e5) + 1 : 0;
+    const monthFreq = new Set(dated.map((it) => dayOf(it).slice(0, 7))).size ? (dated.length / new Set(dated.map((it) => dayOf(it).slice(0, 7))).size).toFixed(1) : "0";
+    const minutes = [];
+    let longest = null, longestMin = 0, shortest = null, shortestMin = 0;
+    for (const it of items) {
+      const m = parseMinutes(it.duration);
+      if (m === null) continue;
+      minutes.push(m);
+      if (m > longestMin) {
+        longestMin = m;
+        longest = it;
+      }
+      if (!shortestMin || m < shortestMin) {
+        shortestMin = m;
+        shortest = it;
+      }
+    }
+    const totalMinutes = minutes.reduce((s, m) => s + m, 0);
+    const BIN_DEF = [["≤59 分", 0, 59], ["60–89 分", 60, 89], ["90–119 分", 90, 119], ["120–149 分", 120, 149], ["≥150 分", 150, 1e9]];
+    const bins = BIN_DEF.map(([label, lo, hi]) => ({
+      label,
+      lo,
+      hi,
+      films: items.filter((it) => {
+        const m = parseMinutes(it.duration);
+        return m !== null && m >= lo && m <= hi;
+      })
+    }));
+    const genreMap = /* @__PURE__ */ new Map(), regionMap = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      for (const g of splitList(it.genre)) ((_c = genreMap.get(g)) != null ? _c : genreMap.set(g, []).get(g)).push(it);
+      for (const r of splitList(it.region)) ((_d = regionMap.get(r)) != null ? _d : regionMap.set(r, []).get(r)).push(it);
+    }
+    const genres = rankOf(genreMap);
+    const regions = rankOf(regionMap);
+    const mCols = genres.slice(0, 6).map((g) => g.name);
+    const mRows = regions.slice(0, 6).map((r) => r.name);
+    const matrix = {
+      cols: mCols,
+      rows: mRows,
+      max: 0,
+      n: mRows.map((r) => mCols.map((c) => items.filter((it) => splitList(it.genre).includes(c) && splitList(it.region).includes(r)).length))
     };
-    const diffPairs = rated.filter((it) => !!it.doubanRating);
-    const avgDiff = diffPairs.length ? diffPairs.reduce((s, it) => {
-      var _a;
-      return s + ((_a = it.rating) != null ? _a : 0) - parseFloat(it.doubanRating);
-    }, 0) / diffPairs.length : 0;
-    const seriesMap = {};
-    items.forEach((it) => {
-      const m = String(it.name).match(/^(.*?)\s*第[一二三四五六七八九十0-9]+\s*季/);
-      if (!m || !m[1]) return;
-      (seriesMap[m[1]] = seriesMap[m[1]] || []).push(it);
-    });
-    const seriesList = Object.entries(seriesMap).filter(([, v]) => v.length >= 2).sort((a, b) => b[1].length - a[1].length).map(([base, films]) => ({ base, films }));
-    const tvItems = items.filter((it) => /第[一二三四五六七八九十0-9]+\s*季/.test(String(it.name))).map((it) => {
-      const m = String(it.name).match(/第([一二三四五六七八九十0-9]+)\s*季/);
-      return { base: String(it.name).replace(/\s*第[一二三四五六七八九十0-9]+\s*季.*/, ""), sn: m ? cnToNum(m[1]) : 1 };
-    }).reduce((acc, it) => {
-      const got = acc.find((x) => x.base === it.base);
-      if (got) got.seasons = Math.max(got.seasons, it.sn);
-      else acc.push({ base: it.base, seasons: it.sn });
-      return acc;
-    }, []).sort((a, b) => b.seasons - a.seasons);
-    const dmLines = [];
-    items.filter((it) => !!it.review).forEach((it) => {
-      String(it.review).split(/[。！？!?\n]+/).forEach((sen) => {
-        const s = sen.trim();
-        if (s.length >= 6) dmLines.push({ text: s.slice(0, 26), hit: REVIEW_KEYWORDS2.some((k) => s.includes(k)) });
-      });
-    });
-    const topOf = (field, n) => {
-      const m = {};
-      items.forEach((it) => String(it[field] || "").split(/\s*\/\s*/).forEach((x) => {
-        if (!x) return;
-        m[x] = (m[x] || 0) + 1;
-      }));
-      return Object.entries(m).sort((a, b) => b[1] - a[1]).slice(0, n);
+    matrix.max = Math.max(1, ...matrix.n.flat());
+    const relYear = (it) => {
+      const y = Number(it.year);
+      return Number.isFinite(y) && y > 1800 ? y : null;
     };
-    const monthKeys = new Set(timeline.map((it) => it.watchDate.slice(0, 7)));
+    const relCount = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const y = relYear(it);
+      if (y !== null) relCount.set(y, ((_e = relCount.get(y)) != null ? _e : 0) + 1);
+    }
+    const releaseYears = [...relCount.entries()].map(([y, n]) => ({ y, n })).sort((a, b) => a.y - b.y);
+    let oldest = null, newest = null;
+    for (const it of items) {
+      const y = relYear(it);
+      if (y === null) continue;
+      if (!oldest || y < Number(oldest.year)) oldest = it;
+      if (!newest || y > Number(newest.year)) newest = it;
+    }
+    const TOOLS = [["当年", (a) => a <= 0], ["1–3 年", (a) => a > 0 && a <= 3], ["4–10 年", (a) => a > 3 && a <= 10], ["≥10 年", (a) => a > 10]];
+    const ageBuckets = TOOLS.map(([label, hit]) => ({
+      label,
+      films: watched.filter((it) => {
+        const y = relYear(it), d = dayOf(it);
+        if (y === null || !d) return false;
+        return hit(Number(d.slice(0, 4)) - y);
+      })
+    }));
+    const ageVals = [];
+    for (const it of watched) {
+      const y = relYear(it), d = dayOf(it);
+      if (y !== null && d) ageVals.push(Number(d.slice(0, 4)) - y);
+    }
+    const avgAge = ageVals.length ? (ageVals.reduce((s, a) => s + a, 0) / ageVals.length).toFixed(1) : "0";
+    const rated = items.filter((it) => {
+      var _a2;
+      return it.status === STATUS_WATCHED && ((_a2 = it.rating) != null ? _a2 : 0) > 0;
+    }).sort((a, b) => {
+      var _a2, _b2;
+      return ((_a2 = b.rating) != null ? _a2 : 0) - ((_b2 = a.rating) != null ? _b2 : 0) || byDate(a, b);
+    });
+    const myHist = Array(11).fill(0), dbHist = Array(11).fill(0);
+    for (const it of rated) myHist[Math.max(0, Math.min(10, Math.round((_f = it.rating) != null ? _f : 0)))]++;
+    const withDb = rated.filter((it) => it.doubanRating && Number.isFinite(parseFloat(it.doubanRating)));
+    for (const it of withDb) dbHist[Math.max(0, Math.min(10, Math.round(parseFloat(it.doubanRating))))]++;
+    const avgMine = rated.length ? rated.reduce((s, it) => {
+      var _a2;
+      return s + ((_a2 = it.rating) != null ? _a2 : 0);
+    }, 0) / rated.length : 0;
+    const avgDb = withDb.length ? withDb.reduce((s, it) => s + parseFloat(it.doubanRating), 0) / withDb.length : 0;
+    const diffs = withDb.map((it) => {
+      var _a2;
+      return { it, diff: ((_a2 = it.rating) != null ? _a2 : 0) - parseFloat(it.doubanRating) };
+    }).sort((a, b) => b.diff - a.diff);
+    const avgDiff = diffs.length ? diffs.reduce((s, d) => s + d.diff, 0) / diffs.length : 0;
+    const treasure = diffs.filter((d) => d.diff >= 0.9).slice(0, 4).map((d) => d.it);
+    const disappoint = diffs.filter((d) => d.diff <= -1.5).slice(-4).reverse().map((d) => d.it);
+    const top3 = rated.slice(0, 3);
+    const nineUp = rated.filter((it) => {
+      var _a2;
+      return ((_a2 = it.rating) != null ? _a2 : 0) >= 9;
+    });
+    const people = (field) => {
+      var _a2;
+      const m = /* @__PURE__ */ new Map();
+      for (const it of items) for (const p of splitList(it[field])) ((_a2 = m.get(p)) != null ? _a2 : m.set(p, []).get(p)).push(it);
+      return rankOf(m).filter((r) => r.films.length >= 2).slice(0, 6);
+    };
+    const seriesMap = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const m = String(it.name).match(/^(.*?)\s*第[一二三四五六七八九十0-9]+\s*[季部集]/);
+      if (!m || !m[1]) continue;
+      ((_g = seriesMap.get(m[1])) != null ? _g : seriesMap.set(m[1], []).get(m[1])).push(it);
+    }
+    const series = [...seriesMap.entries()].map(([base, films]) => ({ base, films })).filter((s) => s.films.length >= 2).sort((a, b) => b.films.length - a.films.length).slice(0, 4);
+    const epsMap = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const ep = parseEpisodes(it.seasonText);
+      if (ep === null) continue;
+      const base = String(it.name).replace(/\s*第[一二三四五六七八九十0-9]+\s*[季部].*/, "");
+      const got = epsMap.get(base);
+      if (got) {
+        got.ep = Math.max(got.ep, ep);
+        got.films.push(it);
+      } else epsMap.set(base, { ep, films: [it] });
+    }
+    const episodes = [...epsMap.entries()].map(([base, v]) => ({ base, ep: v.ep, films: v.films })).sort((a, b) => b.ep - a.ep);
+    const epVals = items.map((it) => parseEpisodes(it.seasonText)).filter((n) => n !== null);
+    const epTotal = epVals.reduce((s2, n) => s2 + n, 0);
+    const reviews = items.filter((it) => it.review && String(it.review).trim().length >= 8).sort((a, b) => String(b.review).length - String(a.review).length).slice(0, 8).map((it) => ({ name: it.name, text: String(it.review).trim(), rating: it.rating }));
+    const hotComments = items.filter((it) => it.hotComment && String(it.hotComment).trim().length >= 10).map((it) => ({ name: it.name, text: String(it.hotComment).trim(), rating: it.rating })).filter((c) => c.text.length <= 120).slice(0, 60);
+    const scatter = rated.filter((it) => !!dayOf(it)).map((it) => {
+      var _a2;
+      return { y: Number(dayOf(it).slice(0, 4)), r: (_a2 = it.rating) != null ? _a2 : 0, it };
+    }).sort((a, b) => a.y - b.y);
+    const ageDots = [];
+    for (const it of watched) {
+      const y = relYear(it), d = dayOf(it);
+      if (y === null || !d) continue;
+      ageDots.push({ age: Number(d.slice(0, 4)) - y, it });
+    }
+    ageDots.sort((a, b) => b.age - a.age);
+    const pairMap = /* @__PURE__ */ new Map();
+    for (const it of items) {
+      const gs = splitList(it.genre);
+      for (let i = 0; i < gs.length; i++) {
+        for (let j = i + 1; j < gs.length; j++) {
+          const [a, b] = gs[i] < gs[j] ? [gs[i], gs[j]] : [gs[j], gs[i]];
+          const k = `${a}|${b}`;
+          pairMap.set(k, ((_h = pairMap.get(k)) != null ? _h : 0) + 1);
+        }
+      }
+    }
+    const genrePairs = [...pairMap.entries()].map(([k, n]) => {
+      const [a, b] = k.split("|");
+      return { a, b, n };
+    }).filter((p2) => p2.n >= 2).sort((a, b) => b.n - a.n).slice(0, 12);
+    const durFilms = [];
+    for (const it of items) {
+      const m = parseMinutes(it.duration);
+      if (m !== null) durFilms.push({ min: m, it });
+    }
+    durFilms.sort((a, b) => a.min - b.min);
     return {
       total: items.length,
       watchedCount: watched.length,
-      wantCount: items.filter((it) => it.status !== STATUS_WATCHED).length,
-      rated,
-      avgRating,
-      timeline,
-      yearMin,
-      yearMax,
+      wantCount: want.length,
+      watchingCount: watching.length,
+      typeGroups: rankOf(groupMap),
+      ratedCount: rated.length,
+      years,
+      yearMin: years.length ? years[0].y : 0,
+      yearMax: years.length ? years[years.length - 1].y : 0,
+      months,
+      peakMonth: months.indexOf(Math.max(...months)),
       weekN,
-      peakDay,
-      weekendN,
-      yearArr,
-      peakYear: yearArr.length ? yearArr.reduce((b, x) => x[1] > b[1] ? x : b, ["", 0]) : ["", 0],
-      monthN,
-      peakMonth,
-      ageGroups: Object.entries(AGES),
+      peakDay: weekN.indexOf(Math.max(...weekN)),
+      weekendN: weekN[5] + weekN[6],
+      days,
+      busiest,
+      streak,
+      spanDays,
+      monthFreq,
+      minutes,
+      totalMinutes,
+      avgMinutes: minutes.length ? totalMinutes / minutes.length : 0,
+      bins,
+      longest,
+      longestMin,
+      shortest,
+      shortestMin,
+      genres,
+      regions,
+      matrix,
+      releaseYears,
+      oldest,
+      newest,
+      ageBuckets,
       avgAge,
-      directors: entityMap("director").slice(0, 6),
-      actors: entityMap("actors").slice(0, 6),
-      diffPairs,
+      rated,
+      myHist,
+      dbHist,
+      avgMine,
+      avgDb,
       avgDiff,
-      treasure: diffPairs.filter((it) => {
-        var _a;
-        return ((_a = it.rating) != null ? _a : 0) >= 9 && parseFloat(it.doubanRating) < 8;
-      }),
-      disappoint: diffPairs.filter((it) => {
-        var _a;
-        return ((_a = it.rating) != null ? _a : 10) <= 4 && parseFloat(it.doubanRating) >= 8.5;
-      }),
-      seriesList,
-      tvItems,
-      avgSeason: tvItems.length ? (tvItems.reduce((s, it) => s + it.seasons, 0) / tvItems.length).toFixed(1) : "0",
-      dmLines,
-      reviewCount: items.filter((it) => !!it.review).length,
-      want: wantList,
-      monthFreq: monthKeys.size ? (timeline.length / monthKeys.size).toFixed(1) : "0",
-      topGenres: topOf("genre", 5),
-      topRegions: topOf("region", 3)
+      diffs,
+      treasure,
+      disappoint,
+      top3,
+      nineUp,
+      tenUp: rated.filter((it) => {
+        var _a2;
+        return ((_a2 = it.rating) != null ? _a2 : 0) >= 10;
+      }).length,
+      directors: people("director"),
+      actors: people("actors"),
+      series,
+      episodes,
+      epItems: epVals.length,
+      epTotal,
+      reviews,
+      hotComments,
+      posters: items.filter((it) => !!it.poster),
+      scatter,
+      ageDots,
+      genrePairs,
+      durFilms
     };
   }
+  function humanMinutes(min) {
+    const d = Math.floor(min / 1440), h = Math.floor(min % 1440 / 60), m = Math.round(min % 60);
+    if (d > 0) return `${d} 天 ${h} 小时`;
+    if (h > 0) return `${h} 小时 ${m} 分`;
+    return `${m} 分钟`;
+  }
+
+  // src/cinema/yearbook/kits.ts
+  var clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+  var clamp = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
+  var lerp = (a, b, t) => a + (b - a) * t;
+  var at = (t, dur, delay = 0) => clamp01((t - delay) / Math.max(dur, 1e-4));
+  var easeOut = (x) => 1 - Math.pow(1 - x, 3);
+  var easeInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  var easeBack = (x) => {
+    const c1 = 1.70158, c3 = c1 + 1;
+    return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+  };
+  var easeElastic = (x) => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    const p = 0.42;
+    return Math.pow(2, -10 * x) * Math.sin((x - p / 4) * (2 * Math.PI) / p) + 1;
+  };
+  var spring = (x, damp = 6, freq = 3) => x >= 1 ? 1 : 1 - Math.exp(-damp * x) * Math.cos(freq * Math.PI * x);
+  var stagger = (t, i, step = 0.07, dur = 0.7) => at(t, dur, i * step);
+  var humanDur = (min) => {
+    const d = Math.floor(min / 1440), h = Math.floor(min % 1440 / 60);
+    return d > 0 ? `${d} 天 ${h} 小时` : `${h} 小时 ${Math.round(min % 60)} 分`;
+  };
+  var humanDurShort = (min) => {
+    const d = Math.floor(min / 1440), h = Math.floor(min % 1440 / 60);
+    return d > 0 ? `${d}天${h}时` : `${h}小时`;
+  };
+  var dotted = (d) => d.replace(/-/g, ".");
+  var rgb = (host, name, fallback) => {
+    const v = getComputedStyle(host).getPropertyValue(name).trim();
+    return v || fallback;
+  };
+  var luma = (triplet) => {
+    var _a, _b, _c;
+    const n = triplet.split(",").map((x) => Number(x.trim()));
+    return 0.299 * ((_a = n[0]) != null ? _a : 0) + 0.587 * ((_b = n[1]) != null ? _b : 0) + 0.114 * ((_c = n[2]) != null ? _c : 0);
+  };
+  function palette(host) {
+    const inkRgb = rgb(host, "--yb-ink-rgb", "32,26,20");
+    const redRgb = rgb(host, "--yb-red-rgb", "190,58,38");
+    const blueRgb = rgb(host, "--yb-blue-rgb", "44,80,140");
+    const jadeRgb = rgb(host, "--yb-jade-rgb", "38,110,96");
+    const goldRgb = rgb(host, "--yb-gold-rgb", "168,118,26");
+    const paper = rgb(host, "--yb-paper", "#f6f2e9");
+    const dim = rgb(host, "--yb-dim-rgb", "120,108,92");
+    const faint = rgb(host, "--yb-faint-rgb", "168,156,138");
+    const dark = luma(inkRgb) > 140;
+    return {
+      ink: `rgb(${inkRgb})`,
+      dim: `rgb(${dim})`,
+      faint: `rgb(${faint})`,
+      line: `rgb(${inkRgb} / .16)`,
+      red: `rgb(${redRgb})`,
+      blue: `rgb(${blueRgb})`,
+      jade: `rgb(${jadeRgb})`,
+      gold: `rgb(${goldRgb})`,
+      paper,
+      inkRgb,
+      redRgb,
+      blueRgb,
+      jadeRgb,
+      goldRgb,
+      onStrong: dark ? "12,10,8" : "255,255,255",
+      dark
+    };
+  }
+  var rgba = (triplet, a) => `rgba(${triplet},${a})`;
+  function canvas(host, key) {
+    const el = host.querySelector(`canvas[data-cv="${key}"]`);
+    if (!el) return null;
+    const ctx = typeof el.getContext === "function" ? el.getContext("2d") : null;
+    if (!ctx) return null;
+    const cv = {
+      el,
+      ctx,
+      w: 0,
+      h: 0,
+      fit() {
+        const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+        const r = el.getBoundingClientRect();
+        const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+        if (w === cv.w && h === cv.h) return false;
+        cv.w = w;
+        cv.h = h;
+        el.width = Math.round(w * dpr);
+        el.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return true;
+      },
+      clear() {
+        ctx.clearRect(0, 0, cv.w, cv.h);
+      }
+    };
+    return cv;
+  }
+  function sampleText(text, fontPx, weight = 800, gap = 5) {
+    const c = document.createElement("canvas");
+    const pad = Math.round(fontPx * 0.3);
+    const ctx = c.getContext("2d");
+    if (!ctx) return [];
+    const font = `${weight} ${fontPx}px "Segoe UI", system-ui, -apple-system, sans-serif`;
+    ctx.font = font;
+    const w = Math.ceil(ctx.measureText(text).width) + pad * 2;
+    const h = Math.ceil(fontPx * 1.42);
+    c.width = w;
+    c.height = h;
+    const c2 = c.getContext("2d");
+    c2.font = font;
+    c2.fillStyle = "#fff";
+    c2.textBaseline = "middle";
+    c2.fillText(text, pad, h / 2);
+    const data = c2.getImageData(0, 0, w, h).data;
+    const pts = [];
+    for (let y = 0; y < h; y += gap) {
+      for (let x = 0; x < w; x += gap) {
+        if (data[(y * w + x) * 4 + 3] > 128) pts.push({ x, y });
+      }
+    }
+    return pts.map((p) => ({ x: p.x - w / 2, y: p.y - h / 2 }));
+  }
+  var qsa = (host, sel) => Array.from(host.querySelectorAll(sel));
+  var localAt = (host, p) => {
+    if (!host) return null;
+    const r = host.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) return null;
+    const x = (p.cx - r.left) / r.width, y = (p.cy - r.top) / r.height;
+    return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
+  };
+  function nearest(spots, at2, radius = 0.06) {
+    if (!at2 || !spots.length) return -1;
+    let best = -1, bd = radius * radius;
+    for (let i = 0; i < spots.length; i++) {
+      const dx = spots[i].x - at2.x, dy = spots[i].y - at2.y;
+      const d = dx * dx + dy * dy;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+  function under(p, sel) {
+    if (typeof document.elementFromPoint !== "function") return null;
+    try {
+      const hit = document.elementFromPoint(p.cx, p.cy);
+      return hit ? hit.closest(sel) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  var tipNode = /* @__PURE__ */ new WeakMap();
+  function tip(root, html, cx = 0, cy = 0) {
+    let el = tipNode.get(root);
+    if (!el) {
+      el = document.createElement("span");
+      el.className = "yb-tip";
+      el.setAttribute("aria-hidden", "true");
+      root.appendChild(el);
+      tipNode.set(root, el);
+    }
+    if (!html) {
+      if (el.style.opacity !== "0") el.style.opacity = "0";
+      return;
+    }
+    if (el.dataset.h !== html) {
+      el.dataset.h = html;
+      el.innerHTML = html;
+    }
+    el.style.left = `${cx.toFixed(1)}px`;
+    el.style.top = `${cy.toFixed(1)}px`;
+    el.style.opacity = "1";
+  }
+  var toward = (cur, target, k = 0.18) => cur + (target - cur) * k;
+  var flapTimers = /* @__PURE__ */ new WeakMap();
+  function setFlap(host, text) {
+    if (!host) return;
+    const cells = Array.from(host.querySelectorAll(".yb-flap"));
+    const chars = [...text];
+    if (cells.length !== chars.length) {
+      host.innerHTML = chars.map((ch) => flapCell(ch, ch)).join("");
+      return;
+    }
+    chars.forEach((ch, i) => {
+      const cell = cells[i];
+      const cur = cell.querySelector(".cur");
+      const nxt = cell.querySelector(".nxt");
+      if (!cur || !nxt || cell.dataset.v === ch) return;
+      cell.dataset.v = ch;
+      nxt.textContent = ch;
+      cell.classList.add("is-flip");
+      const old = flapTimers.get(cell);
+      if (old) clearTimeout(old);
+      flapTimers.set(cell, setTimeout(() => {
+        cur.textContent = ch;
+        cell.classList.remove("is-flip");
+      }, 210));
+    });
+  }
+  var flapCell = (cur, nxt) => /[0-9]/.test(cur) ? `<i class="yb-flap" data-v="${cur}"><span class="cur">${cur}</span><span class="nxt">${nxt}</span></i>` : `<i class="yb-flap is-lit"><span class="cur">${cur === " " ? "&nbsp;" : cur}</span></i>`;
+  var flapHtml = (text) => [...text].map((ch) => flapCell(ch, ch)).join("");
+
+  // src/cinema/yearbook/scenes.ts
+  var YB_SCENES = [
+    { id: "open", name: "开卷" },
+    { id: "years", name: "十二年" },
+    { id: "days", name: "落笔的日子" },
+    { id: "week", name: "星期节律" },
+    { id: "streak", name: "连看与单日" },
+    { id: "length", name: "片长画像" },
+    { id: "extremes", name: "长短两端" },
+    { id: "genres", name: "类型光谱" },
+    { id: "flow", name: "类型流向" },
+    { id: "regions", name: "出品印章" },
+    { id: "eras", name: "年代长河" },
+    { id: "age", name: "片龄横轴" },
+    { id: "myrate", name: "我的评分" },
+    { id: "mirror", name: "与豆瓣对照" },
+    { id: "balance", name: "打分天平" },
+    { id: "podium", name: "榜首三部" },
+    { id: "ninewall", name: "高分墙" },
+    { id: "directors", name: "御用导演" },
+    { id: "actors", name: "座上常客" },
+    { id: "series", name: "连映系列" },
+    { id: "binge", name: "追剧深度" },
+    { id: "notes", name: "影评手记" },
+    { id: "quotes", name: "豆瓣短评" },
+    { id: "matrix", name: "口味矩阵" },
+    { id: "wall", name: "群像墙" },
+    { id: "colophon", name: "落款" }
+  ];
+  var pad22 = (n) => String(n).padStart(2, "0");
+  var GEO = {
+    美国: [-98, 39],
+    中国大陆: [104, 35],
+    中国香港: [114.1, 22.3],
+    中国台湾: [121, 23.7],
+    日本: [138, 36.2],
+    韩国: [127.8, 35.9],
+    英国: [-3.4, 55.4],
+    法国: [2.3, 46.6],
+    德国: [10.4, 51.2],
+    意大利: [12.6, 41.9],
+    西班牙: [-3.7, 40.4],
+    印度: [79, 22],
+    加拿大: [-106, 56],
+    澳大利亚: [134, -25],
+    新西兰: [174, -41],
+    俄罗斯: [95, 60],
+    巴西: [-53, -10],
+    墨西哥: [-102, 23],
+    瑞典: [15, 62],
+    挪威: [9, 61],
+    丹麦: [10, 56],
+    荷兰: [5.5, 52.2],
+    比利时: [4.6, 50.6],
+    瑞士: [8.2, 46.8],
+    奥地利: [14.5, 47.5],
+    波兰: [19.4, 52],
+    爱尔兰: [-8, 53.2],
+    葡萄牙: [-8, 39.5],
+    希腊: [22, 39],
+    土耳其: [35, 39],
+    以色列: [35, 31.5],
+    伊朗: [53, 32],
+    泰国: [101, 15],
+    越南: [108, 14],
+    新加坡: [103.8, 1.35],
+    马来西亚: [102, 4],
+    菲律宾: [122, 12],
+    印度尼西亚: [118, -2],
+    阿根廷: [-64, -34],
+    智利: [-71, -35],
+    哥伦比亚: [-73, 4],
+    秘鲁: [-76, -10],
+    南非: [24, -29],
+    埃及: [30, 27],
+    尼日利亚: [8, 10],
+    摩洛哥: [-7, 32],
+    捷克: [15.5, 49.8],
+    匈牙利: [19, 47],
+    芬兰: [26, 64],
+    冰岛: [-19, 65],
+    乌克兰: [31, 49],
+    罗马尼亚: [25, 46],
+    塞尔维亚: [21, 44],
+    克罗地亚: [16, 45.2],
+    智利2: [-71, -35],
+    前苏联: [95, 60],
+    南斯拉夫: [20.5, 44],
+    捷克斯洛伐克: [15.5, 49.8],
+    中国: [104, 35],
+    苏联: [95, 60],
+    西德: [10.4, 51.2],
+    香港: [114.1, 22.3]
+  };
   var hashHue = (s) => {
     var _a;
     let h = 0;
     for (const c of s) h = (h * 31 + ((_a = c.codePointAt(0)) != null ? _a : 0)) % 360;
     return h;
   };
-  function posterTag(it, posterOf) {
+  function poster(it, posterOf, cls = "") {
     const src = posterOf(it);
-    if (src) return `<img src="${escapeHtml2(src)}" alt="${escapeHtml2(it.name)}" loading="lazy" decoding="async">`;
+    const tag = cls ? ` class="${cls}"` : "";
+    if (src) return `<img${tag} src="${escapeHtml2(src)}" alt="${escapeHtml2(it.name)}" loading="lazy" decoding="async">`;
     const h = hashHue(it.name);
-    return `<i class="bz-film-ph" style="--pc1:hsl(${h} 30% 17%);--pc2:hsl(${(h + 46) % 360} 38% 8%)"><span>${escapeHtml2(it.name)}</span></i>`;
+    return `<i${tag} class="yb-ph${cls ? " " + cls : ""}" style="--pc1:hsl(${h} 26% 26%);--pc2:hsl(${(h + 40) % 360} 30% 12%)"><span>${escapeHtml2(it.name)}</span></i>`;
   }
-  var NEON_COLORS = { gold: "#ffd98a", warm: "#ff9d7a" };
-  function statFilmHtml(data, posterOf) {
-    var _a, _b;
-    const H = (id) => `style="height:calc(var(--film-unit) * ${FILM_SCENE_H[id]})"`;
-    const scene = (id, inner, tag = "") => `<section class="bz-film-scn" data-scene="${id}" ${H(id)}><div class="bz-film-pin">${inner}</div>${tag}</section>`;
-    const scnTag = (no, title, cap) => `<div class="bz-film-tag"><span class="no">${no}</span><h2>${escapeHtml2(title)}</h2><span class="cap">${escapeHtml2(cap)}</span></div>`;
-    const inter = (id, vol, title, sub) => scene(id, `<div class="bz-film-inter"><div class="vol">${vol}</div><h2>${escapeHtml2(title)}</h2><div class="rule"></div><div class="sub">${escapeHtml2(sub)}</div></div>`);
-    const s0 = scene("s0", `
-    <canvas class="bz-film-cv" data-cv="beam"></canvas>
-    <div class="bz-film-count">
-      <div class="dial"></div><div class="ccross"></div><div class="ccross h"></div>
-      <div class="cring"></div><div class="cring r2"></div>
-      <div class="cdiv" data-c="0"><b>叁</b></div>
-      <div class="cdiv" data-c="1"><b>贰</b></div>
-      <div class="cdiv" data-c="2"><b>壹</b></div>
-    </div>
-    <div class="bz-film-hero">
-      <h1>观影年鉴</h1><div class="rule"></div>
-      <p class="sub">私人放映史 · 馆藏 <b>${data.total}</b> 部</p>
-      <p class="meta">四本胶片 · 滚轮翻幕 · 每幕自头放映</p>
-    </div>
-    <div class="bz-film-hint">拨动滚轮 · 翻到下一幕</div>`);
-    const corridorPosters = Array.from({ length: 18 }, (_, i) => {
-      const it = data.timeline[i % data.timeline.length];
-      const side = i % 2 === 0 ? -1 : 1;
-      const row = Math.floor(i / 2);
-      return `<figure class="bz-film-p3" style="transform:translate(-50%,-50%) translate3d(var(--x),0,var(--z)) rotateY(var(--a));--x:${side * 34}%;--z:${-(300 + row * 470)}px;--a:${side * -62}deg">${posterTag(it, posterOf)}</figure>`;
+  function frame(no, name, src, main, foot) {
+    return `<section class="bz-yb-scn" data-s="${pad22(no)}" data-id="${YB_SCENES[no - 1].id}"
+  data-name="${escapeHtml2(name)}" data-src="${escapeHtml2(src)}" data-foot="${escapeHtml2(foot)}">
+  <div class="yb-sc">
+    <div class="yb-main">${main}</div>
+  </div>
+</section>`;
+  }
+  var zeroOf = (text) => text.replace(/\d/g, "0");
+  var digits = (s) => `<span class="yb-dg" data-r="dg">${[...s].map((ch) => /\d/.test(ch) ? `<i>${ch}</i>` : `<i class="lit">${escapeHtml2(ch)}</i>`).join("")}</span>`;
+  function yearbookHtml(data, posterOf) {
+    var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l, _m, _n, _o, _p, _q, _r;
+    const S2 = [];
+    const years = data.years;
+    S2.push(frame(1, "开卷", "tags · 观影日期", `
+    <div class="yb-open">
+      <div class="yb-open-cv" data-r="cvbox"><canvas data-cv="open"></canvas></div>
+    </div>`, `滚轮 / ↓ 翻一幕 · 共 ${YB_SCENES.length} 幕`));
+    const yearTicks = years.map((y, i) => `<span class="yb-tick${y.films.length === Math.max(...years.map((x) => x.films.length)) ? " is-peak" : ""}" data-r="yt" data-i="${i}">${y.y}</span>`).join("");
+    S2.push(frame(2, "十二年", "观影日期", `
+    <div class="yb-years">
+      <div class="yb-years-plot"><canvas data-cv="years"></canvas>
+        <span class="yb-years-cursor" data-r="cursor" aria-hidden="true"></span></div>
+      <div class="yb-years-axis" data-r="axis">${yearTicks}</div>
+      <div class="yb-years-meta">
+        <div class="yb-kv"><span class="yb-k">峰值年</span><b data-r="peak">—</b></div>
+        <div class="yb-kv"><span class="yb-k">逐年</span><b data-r="perYear">—</b></div>
+      </div>
+    </div>`, `${years.length} 个观影年 · 首尾相隔 ${data.spanDays} 天`));
+    const dayNames = /* @__PURE__ */ new Map();
+    for (const [date, films] of data.days) dayNames.set(date.slice(4), films.slice(0, 3).map((f) => f.name).join("、"));
+    const monthCards = Array.from({ length: 12 }, (_, m) => {
+      const daysIn = new Date(2024, m + 1, 0).getDate();
+      let n = 0;
+      const cells = Array.from({ length: daysIn }, (_2, d) => {
+        const key = `-${String(m + 1).padStart(2, "0")}-${String(d + 1).padStart(2, "0")}`;
+        let hit = 0;
+        for (const [date, films] of data.days) if (date.slice(4) === key) {
+          hit = films.length;
+          break;
+        }
+        if (hit) n++;
+        const tip2 = hit ? `${m + 1} 月 ${d + 1} 日 · ${hit} 部${dayNames.get(key) ? ` · ${dayNames.get(key)}` : ""}` : "";
+        return `<i class="yb-cell${hit ? " on" : ""}${hit > 1 ? " many" : ""}" data-r="cell" data-lv="${hit > 1 ? 2 : hit}" data-d="${d + 1}"${tip2 ? ` data-tip="${escapeHtml2(tip2)}"` : ""}></i>`;
+      }).join("");
+      return `<div class="yb-month" data-r="mon" data-mi="${m}"><div class="yb-mon-hd"><b>${m + 1}</b><span>${n} 天</span></div><div class="yb-mon-grid">${cells}</div></div>`;
     }).join("");
-    const s1 = scene(
-      "s1",
+    S2.push(frame(
+      3,
+      "落笔的日子",
+      "观影日期",
       `
-    <div class="bz-film-corr"><div class="bz-film-corr-inner" data-ref="corr">${corridorPosters}
-    <div class="bz-film-end-sign" data-ref="sign" style="--z:-3220px"><div class="big">馆藏长廊</div><div class="small">${data.total} 部 · 已放映 ${data.watchedCount} 部</div></div></div></div>
-    <div class="bz-film-ground"></div><div class="bz-film-fog"></div>`,
-      scnTag("第一本", "馆藏长廊", `馆藏 ${data.total} 部 · 每一格座位都有主`)
-    );
-    const s2 = scene(
-      "s2",
-      `
-    <canvas class="bz-film-cv" data-cv="nebula"></canvas>
-    <div class="bz-film-axis x"><span>${data.yearMin}</span><span>观影年份 →</span><span>${data.yearMax}</span></div>
-    <div class="bz-film-axis y">评分 →</div>
-    <div class="bz-film-neb-meta"><div class="num" data-ref="avg">0.0</div><div class="lbl">平均评分 · 十分制</div></div>
-    <div class="bz-film-neb-top">${data.rated.slice(0, 3).map((it) => `<figure class="bz-film-mini">${posterTag(it, posterOf)}<figcaption>${escapeHtml2(it.name)}</figcaption></figure>`).join("")}</div>`,
-      scnTag("第二本", "评分星云", "每星一部 · 亮度即偏爱")
-    );
-    const s10 = scene(
-      "s10",
-      `
-    <canvas class="bz-film-cv" data-cv="wave"></canvas>
-    <div class="bz-film-wave-meta"><div class="num" data-ref="wave">0</div><div class="lbl">最旺一年 · 部</div></div>`,
-      scnTag("第二本", "年份浪潮", "一年一浪 · 越滚越高")
-    );
-    const frames = data.timeline.slice(-24).map((it) => `<figure class="bz-film-frame">${posterTag(it, posterOf)}<figcaption><span class="yy">${escapeHtml2(it.watchDate.slice(0, 4))}.${escapeHtml2(it.watchDate.slice(5, 7))}</span>${escapeHtml2(it.name)}</figcaption></figure>`).join("");
-    const s3 = scene(
-      "s3",
-      `
-    <div class="bz-film-filmwrap"><div class="perf-strip"></div><div class="bz-film-strip" data-ref="strip">${frames}</div><div class="perf-strip b"></div></div>`,
-      scnTag("第二本", "放映编年", `${data.timeline.length} 次落座 · 按观影日期走片`)
-    );
-    const s11 = scene(
-      "s11",
-      `
-    <canvas class="bz-film-cv" data-cv="dial"></canvas>
-    <div class="bz-film-dial-meta"><div class="num" data-ref="dial">${data.peakMonth + 1} 月</div><div class="lbl">最旺档期 · ${data.monthN[data.peakMonth]} 部</div></div>`,
-      scnTag("第二本", "十二档期", "一月一扇 · 档期玫瑰")
-    );
-    const dayCards = WEEK_NAMES.map((nm, i) => {
-      const stubs = Array.from({ length: data.weekN[i] }, () => '<i class="bz-film-stub"></i>').join("");
-      return `<div class="bz-film-day${i >= 5 ? " is-wknd" : ""}${i === data.peakDay ? " is-peak" : ""}">
-      <span class="peak">最旺</span><div class="dn">${nm}</div><div class="dc">${data.weekN[i]}<small>场</small></div>
-      <div class="stubs">${stubs}</div></div>`;
+    <div class="yb-days" data-r="grid">${monthCards}</div>`,
+      `${data.days.size} 个不同的日子 · 共 ${data.watchedCount} 部`
+    ));
+    const WD = ["一", "二", "三", "四", "五", "六", "日"];
+    const weekMax = Math.max(1, ...data.weekN);
+    const weekSpokes = data.weekN.map((n, i) => {
+      const a = -90 + i * (360 / 7);
+      return `<div class="yb-spoke${i >= 5 ? " is-wknd" : ""}${i === data.peakDay ? " is-peak" : ""}" data-r="spoke" data-i="${i}"
+      style="--a:${a.toFixed(2)}deg;--len:${(n / weekMax).toFixed(4)}">
+      <i class="yb-spoke-bar" data-r="sbar"></i>
+      <span class="yb-spoke-lb" style="--a:${(-a).toFixed(2)}deg">周${WD[i]} <b>${n}</b></span>
+    </div>`;
     }).join("");
-    const s12 = scene(
-      "s12",
-      `<div class="bz-film-week">${dayCards}</div>`,
-      scnTag("第二本", "本周排片", `周末 ${data.weekendN} 场（${data.timeline.length ? Math.round(data.weekendN / data.timeline.length * 100) : 0}%）· 最旺在${WEEK_NAMES[data.peakDay]}`)
-    );
-    const neonCols = [
-      ...data.topGenres.map(([label, n]) => ({ label, n, c: NEON_COLORS.gold })),
-      ...data.topRegions.map(([label, n]) => ({ label, n, c: NEON_COLORS.warm }))
-    ].map(({ label, n, c }) => `<div class="bz-film-neon-col" style="--nc:${c}"><div class="txt">${escapeHtml2(label)}</div><div class="cnt">${n} 部</div><div class="ref" aria-hidden="true">${escapeHtml2(label)}</div></div>`).join("");
-    const s4 = scene(
-      "s4",
-      `<div class="bz-film-street">${neonCols}</div><div class="bz-film-street-glow"></div>`,
-      scnTag("第三本", "霓虹片街", "类型与产地 · 灯牌亮度即场次")
-    );
-    const shelves = data.ageGroups.map(([label, list]) => {
-      const tint = label === "当年" ? 0 : label === "1-3年" ? 0.35 : label === "4-10年" ? 0.7 : 1;
-      const posters = list.length ? list.slice(0, 4).map((it) => posterTag(it, posterOf)).join("") : '<span class="bz-film-none">空</span>';
-      return `<div class="bz-film-shelf" data-tint="${tint}"><div class="sn">${escapeHtml2(label)}</div>
-      <div class="sc">${list.length}<small> 部</small></div><div class="sp">${posters}</div>
-      <div class="oldest">${list.length ? `最早《${escapeHtml2(list[list.length - 1].name)}》` : ""}</div></div>`;
+    const peakAngle = -90 + data.peakDay * (360 / 7);
+    S2.push(frame(4, "星期节律", "观影日期", `
+    <div class="yb-dial">
+      <div class="yb-dial-face" data-r="face">
+        ${weekSpokes}
+        <span class="yb-dial-needle" data-r="needle" style="--a:${peakAngle.toFixed(2)}deg"></span>
+        <div class="yb-dial-hub"><b>${data.watchedCount}</b><span>部</span></div>
+      </div>
+      <div class="yb-dial-side">
+        <div class="yb-kv big"><span class="yb-k">最常落座</span><b>周${WD[data.peakDay]}<span class="yb-u">· ${data.weekN[data.peakDay]} 部</span></b></div>
+        <div class="yb-kv"><span class="yb-k">周末</span><b>${data.weekendN} 部</b></div>
+        <div class="yb-kv"><span class="yb-k">工作日</span><b>${data.watchedCount - data.weekendN} 部</b></div>
+        <p class="yb-sline">按观影日期落星期</p>
+      </div>
+    </div>`, `观影日期 · 七个星期各落多少部 · 合计 ${data.watchedCount} 部`));
+    const ribbonDays = [];
+    if (data.streak.days > 1) {
+      const from = /* @__PURE__ */ new Date(`${data.streak.from}T00:00:00`);
+      for (let i = 0; i < data.streak.days; i++) {
+        const d = new Date(from.getTime() + i * 864e5);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        ribbonDays.push({ d: key, n: ((_a = data.days.get(key)) != null ? _a : []).length });
+      }
+    }
+    const RIB_W = 1e3, RIB_H = 200, ribN = Math.max(1, ribbonDays.length);
+    const ribPt = (i) => [
+      56 + i / Math.max(1, ribN - 1) * (RIB_W - 112),
+      RIB_H / 2 + Math.sin(i * 0.92) * 17
+    ];
+    const ribPath = ribbonDays.map((_, i) => `${i ? "L" : "M"}${ribPt(i)[0].toFixed(1)} ${ribPt(i)[1].toFixed(1)}`).join(" ");
+    const ribDots = ribbonDays.map((day, i) => {
+      const [x, y] = ribPt(i);
+      return `<circle class="yb-rib-dot" data-r="ribdot" data-i="${i}" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(3.4 + Math.min(day.n, 6) * 1.35).toFixed(1)}" data-tip="${dotted(day.d)} · ${day.n} 部"></circle>`;
     }).join("");
-    const s13 = scene(
-      "s13",
+    const busyTicks = data.busiest.films.slice(0, 82).map((f, i) => `<i class="yb-busy-tick" data-r="btick" data-i="${i}" data-tip="${escapeHtml2(f.name)}"></i>`).join("");
+    S2.push(frame(5, "连看与单日", "观影日期", `
+    <div class="yb-ribbon">
+      <div class="yb-ribbon-head">
+        <div class="yb-kv big"><span class="yb-k">最长连看</span><b>${digits(String(data.streak.days))}<span class="yb-u">天</span></b></div>
+        <p class="yb-sline">${data.streak.from ? `${data.streak.from} → ${data.streak.to} · 共 ${data.streak.films.length} 部` : "—"}</p>
+      </div>
+      <div class="yb-ribbon-band">
+        <svg class="yb-ribbon-svg" viewBox="0 0 ${RIB_W} ${RIB_H}" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <path class="yb-rib-path" data-r="ribpath" d="${ribPath}"/>
+          <path class="yb-rib-flow" data-r="ribflow" d="${ribPath}"/>
+          ${ribDots}
+        </svg>
+      </div>
+      <div class="yb-busy">
+        <div class="yb-busy-hd">
+          <span class="yb-busy-k">单日落笔之最</span>
+          <b>${data.busiest.films.length}<span class="yb-u">部</span></b>
+          <em>${data.busiest.date}</em>
+        </div>
+        <div class="yb-busy-bar" data-r="bbar" aria-hidden="true">${busyTicks}</div>
+        <div class="yb-blist">${data.busiest.films.slice(0, 7).map((f) => `<span class="yb-btag" data-r="btag">${escapeHtml2(f.name)}</span>`).join("")}${data.busiest.films.length > 7 ? `<span class="yb-btag more">…等 ${data.busiest.films.length} 部</span>` : ""}</div>
+      </div>
+    </div>`, `观影日期 · ${data.days.size} 个日子里最密的 ${data.streak.days} 天与最忙的一天`));
+    const maxBin = Math.max(1, ...data.bins.map((b) => b.films.length));
+    const binBars = data.bins.map((b, i) => {
+      const sample = b.films.slice(0, 3).map((f) => f.name).join("、");
+      const tip2 = `${b.label} · ${b.films.length} 部${sample ? ` · ${sample}` : ""}`;
+      return `<div class="yb-bin" data-r="bin" data-i="${i}" data-tip="${escapeHtml2(tip2)}">
+      <span class="yb-bn" data-r="bn">${b.films.length}</span>
+      <span class="yb-bbar" data-r="bbar" style="--ph:${(b.films.length / maxBin * 100).toFixed(1)}%"></span>
+      <span class="yb-bl">${escapeHtml2(b.label)}</span></div>`;
+    }).join("");
+    S2.push(frame(6, "片长画像", "片长", `
+    <div class="yb-len">
+      <div class="yb-len-bars">${binBars}</div>
+      <div class="yb-len-reel" data-r="reel"><canvas data-cv="reel"></canvas></div>
+      <div class="yb-len-side">
+        <div class="yb-big yb-flap-row yb-flap-big" data-r="total">${flapHtml(zeroOf(humanMinutes(data.totalMinutes)))}</div>
+        <p class="yb-sline">把 ${data.minutes.length} 部的片长加起来</p>
+        <div class="yb-kv"><span class="yb-k">平均</span><b>${data.avgMinutes.toFixed(1)} 分钟</b></div>
+        <div class="yb-kv"><span class="yb-k">总计</span><b>${commaNum(data.totalMinutes)} 分钟</b></div>
+      </div>
+    </div>`, `片长 · ${data.minutes.length} 部有片长（${data.total - data.minutes.length} 部缺这个字段）`));
+    const span = Math.max(1, data.longestMin - data.shortestMin);
+    const atPos = (m) => `${(6 + (m - data.shortestMin) / span * 88).toFixed(2)}%`;
+    S2.push(frame(7, "长短两端", "片长", `
+    <div class="yb-ext">
+      <div class="yb-ruler">
+        <span class="yb-ruler-line" data-r="rline"></span>
+        <span class="yb-rticks" data-r="rticks"></span>
+        <span class="yb-rread" data-r="rread" aria-hidden="true"></span>
+        <span class="yb-mark is-min" data-r="mark" style="--x:${atPos(data.shortestMin)}">
+          <em>${data.shortestMin} 分钟</em><i></i><b>${escapeHtml2((_c = (_b = data.shortest) == null ? void 0 : _b.name) != null ? _c : "—")}</b></span>
+        <span class="yb-mark is-max" data-r="mark" style="--x:${atPos(data.longestMin)}">
+          <em>${data.longestMin} 分钟</em><i></i><b>${escapeHtml2((_e = (_d = data.longest) == null ? void 0 : _d.name) != null ? _e : "—")}</b></span>
+      </div>
+      <div class="yb-ext-cards">
+        ${data.shortest ? `<figure class="yb-xcard" data-r="xcard">${poster(data.shortest, posterOf)}<figcaption>最短 · ${escapeHtml2(data.shortest.name)}</figcaption></figure>` : ""}
+        ${data.longest ? `<figure class="yb-xcard" data-r="xcard">${poster(data.longest, posterOf)}<figcaption>最长 · ${escapeHtml2(data.longest.name)}</figcaption></figure>` : ""}
+      </div>
+    </div>`, `片长 · 同一根尺子上的两端，差 ${span} 分钟`));
+    const maxGenre = Math.max(1, ...data.genres.slice(0, 8).map((g) => g.films.length));
+    const genreRows = data.genres.slice(0, 8).map((g, i) => `<div class="yb-grow" data-r="grow" data-i="${i}">
+      <span class="yb-gname">${escapeHtml2(g.name)}</span>
+      <span class="yb-gbar" data-r="gbar" style="--w:${(g.films.length / maxGenre * 100).toFixed(1)}%"></span>
+      <span class="yb-gn" data-r="gn">${g.films.length}</span></div>`).join("");
+    S2.push(frame(
+      8,
+      "类型光谱",
+      "类型",
       `
-    <canvas class="bz-film-cv" data-cv="agefx"></canvas>
-    <div class="bz-film-age-head"><div class="num" data-ref="age">0</div><div class="lbl">平均片龄 · 年</div></div>
-    <div class="bz-film-vault">${shelves}</div>`,
-      scnTag("第三本", "修片馆", "越老的片子 · 越接近胶片的颜色")
-    );
-    const plaques = data.directors.map((p, i) => `<article class="bz-film-plaque${i === 0 ? " master" : ""}">
-    ${i === 0 ? '<span class="tag">御用</span>' : ""}<h3>${escapeHtml2(p.name)}</h3>
-    <div class="pn">${p.count} 部 · 全看过</div><div class="pp">${p.films.slice(0, 4).map((it) => posterTag(it, posterOf)).join("")}</div></article>`).join("");
-    const s14 = scene(
-      "s14",
-      `<div class="bz-film-spot" data-ref="spot"></div><div class="bz-film-gallery">${plaques}</div>`,
-      scnTag("第三本", "导演特展", "一遍不够 · 就多来几遍")
-    );
-    const starCards = data.actors.map((p) => `<div class="bz-film-star"><div class="nm">${escapeHtml2(p.name)}<small><b>${p.count}</b> 部</small></div>
-    <div class="ims">${p.films.slice(0, 2).map((it) => posterTag(it, posterOf)).join("")}</div></div>`).join("");
-    const s15 = scene(
-      "s15",
-      `
-    <div class="bz-film-parade"><div class="bz-film-ghost" data-ref="ghost"></div><div class="bz-film-parade-strip" data-ref="parade">${starCards}</div></div>`,
-      scnTag("第三本", "群像长卷", "常来串门的那些脸")
-    );
-    const cmpRow = (it) => {
-      var _a2, _b2;
-      return `<div class="row"><span class="nm">《${escapeHtml2(it.name)}》</span><span class="vv">我 ${((_a2 = it.rating) != null ? _a2 : 0).toFixed(1)} · 豆 ${escapeHtml2((_b2 = it.doubanRating) != null ? _b2 : "—")}</span></div>`;
-    };
-    const s16 = scene(
-      "s16",
-      `
-    <div class="bz-film-diff-head"><div class="num" data-ref="diff">+0.0</div><div class="lbl">打分天平 · 个人 − 豆瓣</div></div>
-    <div class="bz-film-balance"><div class="arm" data-ref="arm"><i class="l"></i><i class="r"></i></div><div class="ful"></div></div>
-    <div class="bz-film-scale">
-      <div class="pan left" data-ref="panL"><div class="pt">宝藏片 · 个人≥9 豆瓣&lt;8</div>
-        ${data.treasure.length ? data.treasure.map(cmpRow).join("") : '<div class="empty">暂无 —— 眼光与大众还算合拍</div>'}</div>
-      <div class="pan right" data-ref="panR"><div class="pt">失望榜 · 个人≤4 豆瓣≥8.5</div>
-        ${data.disappoint.length ? data.disappoint.map(cmpRow).join("") : '<div class="empty">暂无 —— 没有错杀的「神作」</div>'}</div>
+    <div class="yb-genres">
+      <div class="yb-genres-bars" data-r="bars">${genreRows}</div>
+      <div class="yb-genres-net" data-r="net"><canvas data-cv="net"></canvas></div>
     </div>`,
-      scnTag("第三本", "打分天平", "宝藏与失望 · 都有名单")
-    );
-    const maros = data.seriesList.slice(0, 4).map((s) => `<div class="bz-film-maro">
-    <div class="info"><div class="marq"></div><h3>《${escapeHtml2(s.base)}》</h3><div class="n">${s.films.length} 部连映</div></div>
-    <div class="stack">${s.films.map((it) => posterTag(it, posterOf)).join("")}</div></div>`).join("");
-    const s17 = scene(
-      "s17",
-      `<div class="bz-film-marathon">${maros}</div>`,
-      scnTag("第三本", "连映夜", "同一个世界 · 一晚看穿")
-    );
-    const bingeRows = data.tvItems.slice(0, 6).map((t) => `<div class="bz-film-brow">
-    <span class="bn">《${escapeHtml2(t.base)}》</span><span class="reels">${'<i class="rl"></i>'.repeat(Math.min(t.seasons, 8))}</span>
-    <span class="bn2">追到第 ${t.seasons} 季</span></div>`).join("");
-    const s18 = scene(
-      "s18",
-      `
-    <div class="bz-film-binge"><div class="wm" data-ref="wm">${(_b = (_a = data.tvItems[0]) == null ? void 0 : _a.seasons) != null ? _b : ""}</div>
-      <div class="binge-head"><div class="num" data-ref="binge">0</div><div class="lbl">平均追到 · 季</div></div>
-      <div data-ref="bingerows">${bingeRows}</div></div>`,
-      scnTag("第三本", "追剧深度", "第几季弃的 · 都记着")
-    );
-    const s19 = scene(
-      "s19",
-      `
-    <canvas class="bz-film-cv" data-cv="dm"></canvas>
-    <div class="bz-film-dm-meta"><div class="num" data-ref="dm">0</div><div class="lbl">影评手记 · 篇</div></div>`,
-      scnTag("第三本", "弹幕影评", "散场之后 · 你留下的那句话")
-    );
-    const MEDALS = ["榜首之作", "榜眼之作", "探花之作"];
-    const awardCards = data.rated.slice(0, 3).map((it, i) => {
-      var _a2, _b2, _c, _d, _e;
-      return `<article class="bz-film-award">
-    <span class="poster">${posterTag(it, posterOf)}</span>
-    <span class="medal ${i ? `m${i + 1}` : ""}">${MEDALS[i]}</span>
-    <h3>《${escapeHtml2(it.name)}》</h3>
-    <div class="meta">${escapeHtml2((_a2 = it.year) != null ? _a2 : "—")} 年 · ${escapeHtml2((_b2 = it.director) != null ? _b2 : "")}<br>${escapeHtml2((_c = it.genre) != null ? _c : "")}</div>
-    <div class="stars"><span class="my">${((_d = it.rating) != null ? _d : 0).toFixed(1)}</span>
-      <span class="db">豆瓣 ${escapeHtml2((_e = it.doubanRating) != null ? _e : "—")}</span><span class="cap">我的评分</span></div></article>`;
+      `类型 · 共 ${data.genres.length} 个标签，一部片可挂多个 · 图里是前 ${data.genrePairs.length} 对共现`
+    ));
+    const flowKeys = data.genres.slice(0, 5).map((g) => g.name);
+    S2.push(frame(9, "类型流向", "类型 · 观影日期", `
+    <div class="yb-flow">
+      <canvas data-cv="flow"></canvas>
+      <div class="yb-flow-legend">${flowKeys.map((k, i) => `<span class="yb-lg" data-r="lg" data-i="${i}"><i style="--c:var(--yb-c${i + 1})"></i>${escapeHtml2(k)}</span>`).join("")}</div>
+    </div>`, `前 ${flowKeys.length} 个类型 × ${years.length} 年 · 面积 = 该年该类型的部数`));
+    const graticuled = data.regions.slice(0, 10);
+    const LAT_HI = 66, LAT_LO = -40;
+    const latY = (lat) => 14 + (LAT_HI - Math.max(LAT_LO, Math.min(LAT_HI, lat))) / (LAT_HI - LAT_LO) * 72;
+    const placed = [];
+    const place = (x0, y0) => {
+      let x = x0, y = y0, tries = 0;
+      while (placed.some((q2) => Math.abs(q2.x - x) < 12.5 && Math.abs(q2.y - y) < 12) && tries < 40) {
+        const step = Math.floor(tries / 2) + 1;
+        y = y0 + (tries % 2 ? step : -step) * 11.5;
+        if (tries >= 24) x = x0 + 7;
+        tries++;
+      }
+      y = Math.max(11, Math.min(89, y));
+      placed.push({ x, y });
+      return [x, y];
+    };
+    const stampCards = graticuled.map((r, i) => {
+      const geo = GEO[r.name];
+      const [x, y] = geo ? place((geo[0] + 180) / 360 * 100, latY(geo[1])) : place(6 + i % 3 * 4, 86);
+      const rot = -13 + i * 47 % 26;
+      return `<div class="yb-stamp${geo ? "" : " is-nogeo"}" data-r="stamp" data-i="${i}" data-tip="${escapeHtml2(r.name)} · ${r.films.length} 部"
+      style="--x:${x.toFixed(2)}%;--y:${y.toFixed(2)}%;--rot:${rot}deg">
+      <span class="yb-stamp-ring" data-r="sring"></span>
+      <span class="yb-stamp-line"><b class="yb-stamp-n">${r.films.length}</b><i class="yb-stamp-u">部</i></span>
+      <span class="yb-stamp-name">${escapeHtml2(r.name)}</span></div>`;
     }).join("");
-    const s5 = scene(
-      "s5",
-      `<div class="bz-film-hall"><div class="bz-film-rays" data-ref="rays"></div>${awardCards}</div>`,
-      scnTag("第四本", "年度名人堂", "你的评分 · 最高敬意")
-    );
-    const fav = (list, tag) => list[0] ? `<div class="role"><div class="r">${tag}</div><div class="n">${escapeHtml2(list[0].name)} <small>· ${list[0].count} 部</small></div></div>` : "";
-    const s6 = scene("s6", `
-    <div class="bz-film-rollbox"><div class="bz-film-roll" data-ref="roll">
-      <div class="role"><div class="r">出品</div><div class="n">包仔影业</div></div>
-      <div class="role"><div class="r">领衔主演</div><div class="n">${data.watchedCount} 部影片 <small>· 全员本色出演</small></div></div>
-      ${fav(data.directors, "御用导演")}${fav(data.actors, "座上常客")}
-      <div class="role"><div class="r">最旺一年</div><div class="n">${escapeHtml2(data.peakYear[0])} 年 <small>· ${data.peakYear[1]} 部</small></div></div>
-      <div class="role"><div class="r">最旺档期</div><div class="n">${data.peakMonth + 1} 月 <small>· ${data.monthN[data.peakMonth]} 部</small></div></div>
-      <div class="role"><div class="r">最常落座</div><div class="n">${WEEK_NAMES[data.peakDay]} <small>· ${data.weekN[data.peakDay]} 场</small></div></div>
-      <div class="role"><div class="r">月均场次</div><div class="n">${data.monthFreq} 部</div></div>
-      <div class="role"><div class="r">影评手记</div><div class="n">${data.reviewCount} 篇</div></div>
-      <div class="role"><div class="r">平均片龄</div><div class="n">${data.avgAge} 年</div></div>
-      <div class="role"><div class="r">特别鸣谢</div><div class="n">每一个愿意看完字幕的你</div></div>
-    </div></div>
-    <div class="bz-film-theend" data-ref="theend"><div class="ring"></div><div class="t">剧 终</div></div>`);
-    const nextCards = data.want.map((it) => `<figure class="bz-film-next">
-    ${posterTag(it, posterOf)}<span class="stamp">待映</span>
-    <figcaption><div class="nm">${escapeHtml2(it.name)}</div><div class="db">${it.doubanRating ? `豆瓣 ${escapeHtml2(it.doubanRating)}` : "片源锁定中"}</div></figcaption></figure>`).join("");
-    const s7 = scene("s7", `
-    <div class="bz-film-cone l"></div><div class="bz-film-cone r"></div>
-    <div class="bz-film-next-attr"><div class="soon">下 档 预 告</div>
-      <div class="bz-film-next-row" data-ref="next">${nextCards}</div>
-      <button class="bz-film-replay" data-ref="replay">重 映</button></div>`);
-    const fixed = `<div class="bz-film-fixed">
-    <canvas class="bz-film-cv bz-film-grain" data-cv="grain"></canvas>
-    <div class="bz-film-nav"><div class="bz-film-track" data-ref="track"><i class="bz-film-dot" data-ref="dot"></i></div>
-    <span class="bz-film-now" data-ref="now">倒计时</span></div></div>`;
-    const interCard = (id, vol, title, sub) => scene(id, `<div class="bz-film-inter"><div class="vol">${vol}</div><h2>${escapeHtml2(title)}</h2><div class="rule"></div><div class="sub">${escapeHtml2(sub)}</div></div>`);
-    return `<div class="bz-stat-film">${fixed}${s0}
-    ${interCard("i1", "第 一 本", "入座", "灯暗下来 · 馆藏各就各位")}${s1}
-    ${interCard("i2", "第 二 本", "光影", "光打在墙上 · 时间有了形状")}${s2}${s10}${s3}${s11}${s12}
-    ${interCard("i3", "第 三 本", "偏爱", "看什么 · 重复看什么 · 打几分")}${s4}${s13}${s14}${s15}${s16}${s17}${s18}${s19}
-    ${interCard("i4", "第 四 本", "散场", "把最好的几部 · 再放一遍")}${s5}${s6}${s7}</div>`;
+    S2.push(frame(10, "出品印章", "制片国家/地区", `
+    <div class="yb-passport" data-r="passport">
+      <span class="yb-grat" aria-hidden="true"></span>
+      ${stampCards}
+    </div>`, `制片国家/地区 · 前 ${graticuled.length} 个国家或地区`));
+    S2.push(frame(11, "年代长河", "上映日期", `
+    <div class="yb-eras">
+      <canvas data-cv="eras"></canvas>
+      <div class="yb-era-tags" aria-hidden="true">
+        <span class="yb-era-tag up">片子出品的年份 · 1915 → 2026</span>
+        <span class="yb-era-tag down">你看的年份 · 2015 → 2026</span>
+      </div>
+      <div class="yb-era-side">
+        <div class="yb-kv"><span class="yb-k">最早看的片</span><b>${escapeHtml2((_g = (_f = data.oldest) == null ? void 0 : _f.name) != null ? _g : "—")}</b><em>${escapeHtml2((_i = (_h = data.oldest) == null ? void 0 : _h.year) != null ? _i : "")} 年</em></div>
+        <div class="yb-kv"><span class="yb-k">跨过的年头</span><b>${data.releaseYears.length ? Number(data.releaseYears[data.releaseYears.length - 1].y) - Number(data.releaseYears[0].y) : 0} 年</b></div>
+        <div class="yb-kv"><span class="yb-k">出片最密的一年</span><b data-r="denseY">—</b></div>
+      </div>
+    </div>`, `上映日期 · ${(_k = (_j = data.releaseYears[0]) == null ? void 0 : _j.y) != null ? _k : "—"} → ${(_m = (_l = data.releaseYears[data.releaseYears.length - 1]) == null ? void 0 : _l.y) != null ? _m : "—"}，${data.releaseYears.length} 个年份有片`));
+    const AGE_MAX = Math.max(1, ...data.ageDots.map((d) => d.age));
+    const AGE_BANDS = [
+      ["当年", 0, 0],
+      ["1–3 年", 1, 3],
+      ["4–10 年", 4, 10],
+      ["≥10 年", 11, AGE_MAX]
+    ];
+    const agePos = (age) => Math.max(0, Math.min(AGE_MAX, age)) / AGE_MAX * 100;
+    const ageBands = AGE_BANDS.map(([label, lo, hi], i) => {
+      const x0 = agePos(lo), x1 = Math.max(agePos(hi), x0 + 1.2);
+      return `<span class="yb-aband" data-r="aband" data-i="${i}" style="--x0:${x0.toFixed(2)}%;--x1:${x1.toFixed(2)}%"></span>`;
+    }).join("");
+    const ageLegend = AGE_BANDS.map(([label], i) => `<span class="yb-aleg" data-r="aleg" data-i="${i}"><i></i>${escapeHtml2(label)}<b>${data.ageBuckets[i].films.length}</b></span>`).join("");
+    const ageStride = Math.max(1, Math.ceil(data.ageDots.length / 110));
+    const ageShown = data.ageDots.filter((_, i) => i % ageStride === 0 || i === data.ageDots.length - 1).slice(0, 118);
+    const ageDots = ageShown.map((d, i) => `<i class="yb-adot" data-r="adot" data-i="${i}" style="--x:${agePos(d.age).toFixed(2)}%;--lane:${i % 12 * 2.7}em"
+      data-tip="《${escapeHtml2(d.it.name)}》 · ${d.age} 年">${poster(d.it, posterOf)}</i>`).join("");
+    const ageTicks = [0, 0.25, 0.5, 0.75, 1].map((k) => `<span class="yb-atick" style="--x:${(k * 100).toFixed(1)}%">${Math.round(k * AGE_MAX)} 年</span>`).join("");
+    S2.push(frame(12, "片龄横轴", "上映日期 · 观影日期", `
+    <div class="yb-ageax">
+      <div class="yb-ageax-plot" data-r="plot">
+        <div class="yb-ageax-legend" data-r="legend">${ageLegend}</div>
+        ${ageBands}
+        <span class="yb-ageax-rule"></span>
+        ${ageTicks}
+        ${ageDots}
+      </div>
+      <div class="yb-ageax-side">
+        <div class="yb-kv big"><span class="yb-k">平均片龄</span><b>${digits(String(data.avgAge))}<span class="yb-u">年</span></b></div>
+        <div class="yb-kv"><span class="yb-k">最老的一部</span><b>${data.ageDots[0] ? `${data.ageDots[0].age} 年` : "—"}</b><em>${escapeHtml2((_o = (_n = data.ageDots[0]) == null ? void 0 : _n.it.name) != null ? _o : "")}</em></div>
+        <div class="yb-kv"><span class="yb-k">当年上映</span><b>${data.ageBuckets[0].films.length} 部</b></div>
+        <div class="yb-kv"><span class="yb-k">十年以上</span><b>${data.ageBuckets[3].films.length} 部</b></div>
+      </div>
+    </div>`, `观影年 − 上映年 · 每枚海报是一部片（抽 ${ageShown.length} / ${data.ageDots.length} 部）· 轴右端是更老的片子`));
+    const SC_Y0 = Math.min(...data.scatter.map((d) => d.y), data.yearMax);
+    const SC_Y1 = Math.max(...data.scatter.map((d) => d.y), data.yearMin);
+    const SC_SPAN = Math.max(1, SC_Y1 - SC_Y0);
+    const scPos = (d) => [
+      (d.y - SC_Y0) / SC_SPAN * 100,
+      (d.r - 1) / 9 * 100
+    ];
+    const scDots = data.scatter.map((d, i) => {
+      const [x, y] = scPos(d);
+      return `<i class="yb-sdot2${d.r >= 9 ? " is-high" : d.r <= 4 ? " is-low" : ""}" data-r="sdot2" data-i="${i}"
+      style="--x:${x.toFixed(2)}%;--y:${y.toFixed(2)}%" data-tip="《${escapeHtml2(d.it.name)}》 ${d.r.toFixed(1)} 分 · ${d.y} 年"></i>`;
+    }).join("");
+    const maxMy = Math.max(1, ...data.myHist);
+    const myEdge = data.myHist.map((n, i) => ({ n, i })).reverse().map(({ n, i }) => `<div class="yb-erow" data-r="erow" data-i="${i}" style="--w:${(n / maxMy * 100).toFixed(1)}%">
+      <span class="yb-ebar"><i data-r="ebar"></i></span><span class="yb-en">${n}</span><span class="yb-ex">${i}</span></div>`).join("");
+    const scYears = Array.from({ length: SC_SPAN + 1 }, (_, i) => SC_Y0 + i).map((y) => `<span class="yb-stick" style="--x:${((y - SC_Y0) / SC_SPAN * 100).toFixed(2)}%">${y}</span>`).join("");
+    S2.push(frame(13, "我的评分", "评分 · 观影日期", `
+    <div class="yb-scatter">
+      <div class="yb-scatter-plot" data-r="plot">
+        <span class="yb-sgrid" aria-hidden="true"></span>
+        <span class="yb-smean" data-r="smean" style="--y:${((data.avgMine - 1) / 9 * 100).toFixed(2)}%">
+          <em class="yb-flap-row yb-flap-mini" data-r="flap">${flapHtml(zeroOf(data.avgMine.toFixed(2)))}</em></span>
+        ${scDots}
+        <span class="yb-saxis">${scYears}</span>
+      </div>
+      <div class="yb-edge">
+        <span class="yb-edge-cap">评分分布</span>
+        ${myEdge}
+      </div>
+      <div class="yb-hist-side">
+        <div class="yb-kv"><span class="yb-k">打过分</span><b>${data.ratedCount} 部</b></div>
+        <div class="yb-kv"><span class="yb-k">9 分以上</span><b>${data.nineUp.length} 部</b></div>
+        <div class="yb-kv"><span class="yb-k">最低</span><b>${data.rated.length ? ((_p = data.rated[data.rated.length - 1].rating) != null ? _p : 0).toFixed(1) : "—"}</b></div>
+      </div>
+    </div>`, `评分 × 观影年 · ${data.scatter.length} 个点（每部片一枚）· 红 = 9 分以上`));
+    const maxHist = Math.max(1, ...data.myHist, ...data.dbHist);
+    const mirrorBars = (hist, dir) => hist.map((n, i) => `<div class="yb-mcol ${dir}" data-r="mcol" data-i="${i}" style="--ph:${(n / maxHist * 100).toFixed(1)}%">
+      <span class="yb-mbar" data-r="mbar"></span><span class="yb-mn" data-r="mn">${n || ""}</span></div>`).join("");
+    S2.push(frame(14, "与豆瓣对照", "评分 · 豆瓣评分", `
+    <div class="yb-mirror">
+      <div class="yb-mir-head up"><span>豆瓣评分</span><b class="yb-flap-row yb-flap-mini" data-r="flapDb">${flapHtml(zeroOf(data.avgDb.toFixed(2)))}</b></div>
+      <div class="yb-mir-plot up">${mirrorBars(data.dbHist, "up")}</div>
+      <div class="yb-mir-axis"><span class="yb-mir-mean" data-r="mmean" data-to="db" style="--x:${(data.avgDb / 10 * 100).toFixed(1)}%"></span>
+        <span class="yb-mir-mean mine" data-r="mmean" data-to="mine" style="--x:${(data.avgMine / 10 * 100).toFixed(1)}%"></span>
+        ${Array.from({ length: 11 }, (_, i) => `<i>${i}</i>`).join("")}</div>
+      <div class="yb-mir-plot down">${mirrorBars(data.myHist, "down")}</div>
+      <div class="yb-mir-head down"><span>我的评分</span><b class="yb-flap-row yb-flap-mini" data-r="flapMine">${flapHtml(zeroOf(data.avgMine.toFixed(2)))}</b></div>
+      <div class="yb-mir-gap">比豆瓣 ${data.avgDiff >= 0 ? "高" : "低"} <b>${Math.abs(data.avgDiff).toFixed(2)}</b> 分</div>
+    </div>`, `同一批片的两套分 · ${data.diffs.length} 部两边都有分`));
+    const tilt = Math.max(-1, Math.min(1, data.avgDiff / 2));
+    const diffRow = (it) => {
+      var _a2, _b2, _c2, _d2;
+      const db = parseFloat((_a2 = it.doubanRating) != null ? _a2 : "0");
+      return `<li class="yb-drow" data-r="drow"><span class="yb-dname">《${escapeHtml2(it.name)}》</span>
+      <span class="yb-dvals">我 ${((_b2 = it.rating) != null ? _b2 : 0).toFixed(1)} · 豆 ${db.toFixed(1)} · <em>${(((_c2 = it.rating) != null ? _c2 : 0) - db >= 0 ? "+" : "") + (((_d2 = it.rating) != null ? _d2 : 0) - db).toFixed(1)}</em></span></li>`;
+    };
+    S2.push(frame(15, "打分天平", "评分 · 豆瓣评分", `
+    <div class="yb-bal">
+      <div class="yb-bal-beam" data-r="beam" style="--tilt:${tilt.toFixed(3)}">
+        <span class="yb-bal-arm" data-r="arm"><i></i></span>
+        <span class="yb-bal-pan l" data-r="pan"><em>我的均分</em>${data.avgMine.toFixed(2)}</span>
+        <span class="yb-bal-pan r" data-r="pan"><em>豆瓣均分</em>${data.avgDb.toFixed(2)}</span>
+      </div>
+      <div class="yb-bal-lists">
+        <div class="yb-bal-col"><h4 class="yb-h4">眼光独到 · 我 ≥ 豆 +0.9</h4><ul>${data.treasure.length ? data.treasure.map(diffRow).join("") : '<li class="yb-empty">暂无</li>'}</ul></div>
+        <div class="yb-bal-col"><h4 class="yb-h4">看走了眼 · 豆 ≥ 我 +1.5</h4><ul>${data.disappoint.length ? data.disappoint.map(diffRow).join("") : '<li class="yb-empty">暂无</li>'}</ul></div>
+      </div>
+    </div>`, `平均差 ${data.avgDiff >= 0 ? "+" : ""}${data.avgDiff.toFixed(2)} 分 · 只列差距最大的几部`));
+    const MEDALS = ["榜首", "榜眼", "探花"];
+    const POD_H = [1, 0.72, 0.56];
+    const podCards = data.top3.map((it, i) => {
+      var _a2, _b2, _c2;
+      return `<div class="yb-pod-slot" data-r="slot" data-i="${i}" style="--h:${POD_H[i]}">
+      ${i === 0 ? '<span class="yb-pod-beam" data-r="beam" aria-hidden="true"></span>' : ""}
+      <article class="yb-pod" data-r="pod" data-i="${i}">
+        <span class="yb-pod-poster">${poster(it, posterOf)}</span>
+        <span class="yb-pod-ring" data-r="pring"></span>
+        <span class="yb-pod-medal">${MEDALS[i]}</span>
+        <h3>《${escapeHtml2(it.name)}》</h3>
+        <div class="yb-pod-score"><b>${((_a2 = it.rating) != null ? _a2 : 0).toFixed(1)}</b><span>豆 ${escapeHtml2((_b2 = it.doubanRating) != null ? _b2 : "—")}</span></div>
+      </article>
+      <div class="yb-pod-block">
+        <span class="yb-pod-rank">${i + 1}</span>
+        <em>${escapeHtml2((_c2 = it.year) != null ? _c2 : "—")}${it.director ? " · " + escapeHtml2(String(it.director).split(/\s*\/\s*/)[0]) : ""}</em>
+      </div>
+    </div>`;
+    }).join("");
+    S2.push(frame(
+      16,
+      "榜首三部",
+      "评分",
+      `<div class="yb-podium">${podCards}</div>`,
+      `我的评分前三 · 共 ${data.nineUp.length} 部在 9 分以上`
+    ));
+    const wallLimit = 35;
+    const high = data.nineUp.slice(0, wallLimit);
+    const wallTiles = high.map((it, i) => {
+      var _a2;
+      return `<figure class="yb-tile" data-r="tile" data-i="${i}">${poster(it, posterOf)}<figcaption><b>${((_a2 = it.rating) != null ? _a2 : 0).toFixed(1)}</b><span>${escapeHtml2(it.name)}</span></figcaption></figure>`;
+    }).join("");
+    S2.push(frame(17, "高分墙", "评分", `
+    <div class="yb-ninewall">
+      <div class="yb-ninewall-meta"><b>${data.nineUp.length}</b><span>部 ≥ 9 分</span></div>
+      <div class="yb-ninewall-grid" data-r="grid">${wallTiles}${data.nineUp.length > wallLimit ? `<div class="yb-tile more" data-r="tile"><b>+${data.nineUp.length - wallLimit}</b><span>其余</span></div>` : ""}</div>
+    </div>`, `按评分从高到低 · 只摆前 ${wallLimit} 部`));
+    const dirRows = data.directors.map((p, i) => `<div class="yb-prow" data-r="prow" data-i="${i}">
+      <span class="yb-prank">${pad22(i + 1)}</span>
+      <span class="yb-pname">${escapeHtml2(p.name)}</span>
+      <span class="yb-pbar" data-r="pbar" style="--w:${(p.films.length / data.directors[0].films.length * 100).toFixed(1)}%"></span>
+      <span class="yb-pn"><b>${p.films.length}</b> 部</span>
+      <span class="yb-pshots">${p.films.slice(0, 4).map((f) => `<i data-r="pshot">${poster(f, posterOf)}</i>`).join("")}</span>
+    </div>`).join("");
+    S2.push(frame(
+      18,
+      "御用导演",
+      "导演",
+      `<div class="yb-people">${dirRows}</div>`,
+      `按导演出现次数 · 只看 ≥ 2 部的（共 ${data.directors.length} 位）`
+    ));
+    const actN = Math.max(1, data.actors.length);
+    const actCards = data.actors.map((p, i) => {
+      const a = (i - (actN - 1) / 2) * 13;
+      return `<div class="yb-acard" data-r="acard" data-i="${i}" style="--a:${a.toFixed(2)}deg">
+      <div class="yb-acard-hd"><b>${escapeHtml2(p.name)}</b><span>${p.films.length} 部</span></div>
+      <div class="yb-acard-imgs">${p.films.slice(0, 2).map((f) => `<i>${poster(f, posterOf)}</i>`).join("")}</div>
+    </div>`;
+    }).join("");
+    S2.push(frame(
+      19,
+      "座上常客",
+      "主演",
+      `
+    <div class="yb-actors"><div class="yb-arc" data-r="arc">${actCards}</div></div>`,
+      `按主演出现次数 · 只看 ≥ 2 部的（共 ${data.actors.length} 位）`
+    ));
+    const seriesRows = data.series.map((s, i) => `<div class="yb-ser" data-r="ser" data-i="${i}">
+      <div class="yb-ser-hd"><b>${escapeHtml2(s.base)}</b><span>${s.films.length} 部</span></div>
+      <div class="yb-ser-stack" data-r="stack">${s.films.slice(0, 8).map((f, j) => `<i class="yb-ser-c" data-r="serC" style="--j:${j}">${poster(f, posterOf)}</i>`).join("")}</div>
+    </div>`).join("");
+    S2.push(frame(
+      20,
+      "连映系列",
+      "tags · 上映日期",
+      `
+    <div class="yb-series">${seriesRows}</div>`,
+      `名字里带「第 X 季/部」并入同一系列 · ${data.series.length} 组 ≥ 2 部`
+    ));
+    const epRows = data.episodes.slice(0, 5).map((e, i) => `<div class="yb-eprow" data-r="eprow" data-i="${i}">
+      <span class="yb-epname">${escapeHtml2(e.base)}</span>
+      <span class="yb-eptape" data-r="eptape" style="--w:${(e.ep / Math.max(1, data.episodes[0].ep) * 100).toFixed(1)}%"><i class="yb-eptick" data-r="eptick"></i></span>
+      <span class="yb-epn"><b data-r="epn">0</b> 集</span></div>`).join("");
+    S2.push(frame(21, "追剧深度", "季集", `
+    <div class="yb-binge">
+      <div class="yb-binge-rows">${epRows}</div>
+      <div class="yb-binge-side">
+        <div class="yb-kv"><span class="yb-k">有集数</span><b>${data.episodes.length} 部</b></div>
+        <div class="yb-kv"><span class="yb-k">集数合计</span><b>${commaNum(data.epTotal)} 集</b></div>
+        <div class="yb-kv"><span class="yb-k">最长</span><b>${(_r = (_q = data.episodes[0]) == null ? void 0 : _q.base) != null ? _r : "—"}</b></div>
+      </div>
+    </div>`, `季集字段 = 该季集数（「622X」按 622 计）· 共 ${data.epItems} 部有值 · ${data.episodes.length} 个剧名`));
+    const noteCards = data.reviews.slice(0, 3).map((r, i) => `<article class="yb-note" data-r="note" data-i="${i}">
+      <header><b>《${escapeHtml2(r.name)}》</b>${r.rating != null ? `<span>${r.rating.toFixed(1)}</span>` : ""}</header>
+      <p class="yb-note-tx" data-r="ntx" data-full="${escapeHtml2(r.text.slice(0, 90))}"></p>
+    </article>`).join("");
+    S2.push(frame(22, "影评手记", "影评", `
+    <div class="yb-notes">
+      ${noteCards}
+      <div class="yb-notes-side"><b>${data.reviews.length >= 8 ? 156 : data.reviews.length}</b><span>篇写下的字</span></div>
+    </div>`, `影评字段里的原话 · 逐字打出来`));
+    const lanes = [0, 1, 2].map((lane) => {
+      const list = data.hotComments.filter((_, i) => i % 3 === lane).slice(0, 6);
+      return `<div class="yb-lane" data-r="lane" data-i="${lane}">${list.map((c) => `<blockquote class="yb-quote" data-r="quote" data-tip="《${escapeHtml2(c.name)}》 ${escapeHtml2(c.text.slice(0, 64))}"><p>${escapeHtml2(c.text.slice(0, 64))}</p><cite>《${escapeHtml2(c.name)}》</cite></blockquote>`).join("")}</div>`;
+    }).join("");
+    S2.push(frame(23, "豆瓣短评", "热门短评", `
+    <div class="yb-quotes">
+      <div class="yb-lanes">${lanes}</div>
+      <div class="yb-quotes-side"><b>${data.hotComments.length >= 60 ? 449 : data.hotComments.length}</b><span>条热门短评</span></div>
+    </div>`, `热门短评字段 · 长句截到 64 字`));
+    S2.push(frame(24, "口味矩阵", "类型 · 制片国家/地区", `
+    <div class="yb-matrix">
+      <canvas data-cv="matrix"></canvas>
+      <div class="yb-mx-cols">${data.matrix.cols.map((c) => `<span>${escapeHtml2(c)}</span>`).join("")}</div>
+      <div class="yb-mx-rows">${data.matrix.rows.map((r) => `<span>${escapeHtml2(r)}</span>`).join("")}</div>
+    </div>`, `${data.matrix.rows.length} 个出品地 × ${data.matrix.cols.length} 个类型 · 颜色越深片子越多`));
+    const WALL_N = 60;
+    const wallPick = data.posters.filter((_, i) => i % Math.max(1, Math.floor(data.posters.length / WALL_N)) === 0).slice(0, WALL_N);
+    S2.push(frame(25, "群像墙", "海报", `
+    <div class="yb-wall" data-r="wall">
+      ${wallPick.map((it, i) => `<figure class="yb-wtile" data-r="wtile" data-i="${i}">${poster(it, posterOf)}</figure>`).join("")}
+    </div>`, `全部 ${data.posters.length} 部都有海报 · 这里抽 ${wallPick.length} 张按序翻上来`));
+    S2.push(frame(26, "落款", "全部字段", `
+    <div class="yb-colo">
+      <div class="yb-colo-grid">
+        <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapTotal">${flapHtml(zeroOf(String(data.total)))}</b><span>部影视</span></div>
+        <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapWatched">${flapHtml(zeroOf(String(data.watchedCount)))}</b><span>部已看</span></div>
+        <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapDur">${flapHtml(zeroOf(humanDurShort(data.totalMinutes)))}</b><span>片长合计</span></div>
+        <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapEp">${flapHtml(zeroOf(String(data.epTotal)))}</b><span>集剧集</span></div>
+      </div>
+    </div>`, `观影志 · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
+    const fixed = `<div class="yb-fixed">
+    <div class="yb-shutter" data-r="shutter" aria-hidden="true"><i class="t"></i><i class="b"></i></div>
+    <div class="yb-rail" data-r="rail">${YB_SCENES.map((s, i) => `<i class="yb-rail-t" data-r="railT" data-i="${i}" title="${escapeHtml2(s.name)}"></i>`).join("")}</div>
+    <div class="yb-bar">
+      <span class="yb-bar-i" data-r="barI">01</span>
+      <span class="yb-bar-n" data-r="barN">${escapeHtml2(YB_SCENES[0].name)}</span>
+      <span class="yb-bar-line"><i data-r="barLine"></i></span>
+      <span class="yb-bar-t" data-r="barT">${YB_SCENES.length}</span>
+      <button class="yb-pb" data-r="pb" type="button" title="自动放映">自动</button>
+    </div>
+  </div>`;
+    return `<div class="bz-yb-film">${fixed}${S2.join("")}</div>`;
   }
-  var SPEED = 420;
-  var activeEngine = null;
-  function bindStatFilm(root, data) {
+  function commaNum(n) {
+    return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  }
+
+  // src/cinema/yearbook/motions.ts
+  var lastStyle = /* @__PURE__ */ new WeakMap();
+  var lastText = /* @__PURE__ */ new WeakMap();
+  function S(el, v) {
     var _a;
-    if (activeEngine) activeEngine.dead = true;
-    const filmEl = root.classList.contains("bz-stat-film") ? root : root.querySelector(".bz-stat-film");
-    const scroller = (_a = filmEl == null ? void 0 : filmEl.closest(".sp-body")) != null ? _a : null;
-    const engine = { dead: !scroller };
-    activeEngine = engine;
-    const handle = {
-      film: { playing: false, scene: "s0", sceneDone: false },
-      playScene(id) {
-        playScene(id);
-      },
-      stop() {
-        engine.dead = true;
-        scroller == null ? void 0 : scroller.removeEventListener("wheel", onWheel);
+    if (!el || lastStyle.get(el) === v) return;
+    const prev = (_a = el.getAttribute("style")) != null ? _a : "";
+    if (prev) {
+      const vars = prev.match(/--[\w-]+\s*:[^;]*/g);
+      if (vars) {
+        const keep = vars.filter((d) => !v.includes(`${d.split(":")[0].trim()}:`));
+        if (keep.length) v = `${keep.join(";")};${v}`;
       }
-    };
-    if (!filmEl || !scroller) return handle;
-    root = filmEl;
-    const sc = scroller;
-    const q = (sel) => root.querySelector(sel);
-    const all = (sel) => [...root.querySelectorAll(sel)];
-    const size = () => {
-      root.style.setProperty("--film-unit", `${sc.clientHeight}px`);
-      all("[data-cv]").forEach((cv2) => {
-        cv2.width = sc.clientWidth;
-        cv2.height = sc.clientHeight;
-      });
-    };
-    size();
-    const cs = getComputedStyle(root);
-    const V = (n, fb) => cs.getPropertyValue(n).trim() || fb;
-    const PAL = {
-      ink: V("--sf-ink-rgb", "239,230,208"),
-      dim: V("--sf-dim-rgb", "154,140,114"),
-      faint: V("--sf-faint-rgb", "92,81,64"),
-      gold: V("--sf-gold-rgb", "201,153,47"),
-      star: V("--sf-star-rgb", "255,217,138"),
-      star2: V("--sf-star2-rgb", "159,192,232"),
-      core: V("--sf-core-rgb", "255,246,228"),
-      dust: V("--sf-dust-rgb", "239,230,208")
-    };
-    const sceneEl = (id) => root.querySelector(`[data-scene="${id}"]`);
-    const absTop = (el) => el.getBoundingClientRect().top - root.getBoundingClientRect().top + sc.scrollTop;
-    const film = handle.film;
-    const clamp01 = (x) => Math.min(1, Math.max(0, x));
-    const easeOut = (x) => 1 - Math.pow(1 - x, 3);
-    const easeOutBack = (x) => {
-      const c1 = 1.70158, c3 = c1 + 1;
-      return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
-    };
-    const lerp = (a, b, t) => a + (b - a) * t;
-    const ref = (name) => root.querySelector(`[data-ref="${name}"]`);
-    const cv = (name) => {
-      var _a2, _b;
-      return (_b = (_a2 = q(`[data-cv="${name}"]`)) == null ? void 0 : _a2.getContext("2d")) != null ? _b : null;
-    };
-    function playScene(id) {
-      const el = sceneEl(id);
-      if (!el) return;
-      film.scene = id;
-      film.sceneDone = false;
-      sc.scrollTop = absTop(el);
-      film.playing = true;
     }
-    handle.playScene = playScene;
-    const nextFrame = (cb) => {
-      if (typeof requestAnimationFrame === "function") requestAnimationFrame(cb);
-      else cb(performance.now());
-    };
-    let snapping = false;
-    let lastWheelAt = 0;
-    function snapTo(id) {
-      if (snapping) return;
-      const el = sceneEl(id);
-      if (!el) return;
-      snapping = true;
-      film.playing = false;
-      const from = sc.scrollTop;
-      const to = Math.max(0, Math.min(sc.scrollHeight - sc.clientHeight, absTop(el)));
-      const t02 = performance.now();
-      const DUR = 680;
-      const step = () => {
-        const k = Math.min(1, (performance.now() - t02) / DUR);
-        const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-        sc.scrollTop = from + (to - from) * e;
-        if (k < 1 && !engine.dead) nextFrame(step);
-        else {
-          snapping = false;
-          playScene(id);
-        }
-      };
-      nextFrame(step);
-    }
-    function wheelSnap(dir) {
-      const idx = FILM_SCENES.indexOf(film.scene);
-      const next = FILM_SCENES[dir > 0 ? idx + 1 : idx - 1];
-      if (next) snapTo(next);
-    }
-    function onWheel(e) {
-      e.preventDefault();
-      const now = performance.now();
-      if (snapping || now - lastWheelAt < 650) return;
-      lastWheelAt = now;
-      wheelSnap(e.deltaY);
-    }
-    scroller.addEventListener("wheel", onWheel, { passive: false });
-    const scenes = [];
-    const scene = (id, update) => {
-      const el = sceneEl(id);
-      if (el) scenes.push({ id, el, update });
-    };
-    const t0 = performance.now();
-    const t0f = () => (performance.now() - t0) / 1e3;
-    const beamCtx = cv("beam");
-    const dust = Array.from({ length: 64 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: 0.6 + Math.random() * 1.6,
-      v: 4e-4 + Math.random() * 11e-4,
-      ph: Math.random() * 7
-    }));
-    const cdivs = all('[data-scene="s0"] .cdiv');
-    scene("s0", (p, r, vh) => {
-      cdivs.forEach((el, i) => {
-        const seg = clamp01(p * 3 - i);
-        const open = clamp01(seg / 0.32);
-        const shut = i === cdivs.length - 1 ? 1 : 1 - clamp01((seg - 0.8) / 0.2);
-        el.style.clipPath = `circle(${(easeOut(Math.min(open, shut)) * 74).toFixed(1)}% at 50% 50%)`;
-      });
-      const hp = clamp01((p - 0.82) / 0.18);
-      const heroEl = q('[data-scene="s0"] .bz-film-hero');
-      if (heroEl) {
-        heroEl.style.opacity = String(hp);
-        heroEl.style.transform = `translateY(${((1 - easeOut(hp)) * 26).toFixed(1)}px)`;
-      }
-      const countEl = q('[data-scene="s0"] .bz-film-count');
-      if (countEl) countEl.style.opacity = String(1 - clamp01((p - 0.78) / 0.12));
-      const hintEl = q('[data-scene="s0"] .bz-film-hint');
-      if (hintEl) hintEl.style.opacity = String(p > 0.1 ? clamp01((p - 0.1) / 0.2) * 0.9 : 0);
-      if (!beamCtx) return;
-      const w = r.width, h = vh;
-      beamCtx.clearRect(0, 0, w, h);
-      const flick = 0.9 + 0.1 * Math.sin(t0f() * 17.3) * Math.sin(t0f() * 5.1);
-      const dim = 1 - hp * 0.45;
-      const cx = w / 2, cy = -h * 0.12;
-      const g = beamCtx.createLinearGradient(0, 0, 0, h);
-      g.addColorStop(0, `rgba(${PAL.gold},${0.2 * flick * dim})`);
-      g.addColorStop(0.55, `rgba(${PAL.gold},${0.09 * flick * dim})`);
-      g.addColorStop(1, `rgba(${PAL.gold},0)`);
-      beamCtx.beginPath();
-      beamCtx.moveTo(cx - w * 0.015, cy);
-      beamCtx.lineTo(cx - w * 0.62, h);
-      beamCtx.lineTo(cx + w * 0.62, h);
-      beamCtx.lineTo(cx + w * 0.015, cy);
-      beamCtx.closePath();
-      beamCtx.fillStyle = g;
-      beamCtx.fill();
-      for (const d of dust) {
-        const yy = ((d.y - t0f() * d.v) % 1 + 1) % 1;
-        const x = d.x + Math.sin(t0f() * 0.5 + d.ph) * 0.012;
-        const a = (0.28 + 0.3 * Math.sin(t0f() * 1.7 + d.ph * 3)) * dim;
-        beamCtx.beginPath();
-        beamCtx.arc(x * w, yy * h, d.r, 0, 7);
-        beamCtx.fillStyle = `rgba(${PAL.dust},${Math.max(0, a)})`;
-        beamCtx.fill();
-      }
-    });
-    for (const id of ["i1", "i2", "i3", "i4"]) {
-      scene(id, (p) => {
-        const box = q(`[data-scene="${id}"] .bz-film-inter`);
-        if (!box) return;
-        box.style.opacity = String(easeOut(clamp01(p / 0.2)));
-        box.style.transform = `translateY(${((1 - easeOut(clamp01(p / 0.3))) * 18).toFixed(1)}px) scale(${(1 + p * 0.05).toFixed(3)})`;
-        const h2 = box.querySelector("h2");
-        if (h2) h2.style.letterSpacing = `${lerp(0.9, 0.5, easeOut(clamp01(p / 0.35))).toFixed(2)}em`;
-      });
-    }
-    scene("s1", (p) => {
-      const inner = ref("corr");
-      if (inner) inner.style.transform = `translate3d(0,0,${(p * 2940).toFixed(0)}px)`;
-    });
-    const nebCtx = cv("nebula");
-    const NEB_RMIN = Math.min(...data.rated.map((it) => {
+    lastStyle.set(el, v);
+    el.setAttribute("style", v);
+  }
+  function T(el, v) {
+    if (!el || lastText.get(el) === v) return;
+    lastText.set(el, v);
+    el.textContent = v;
+  }
+  var esc0 = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  function buildPerfs(root, data, host = root) {
+    var _a;
+    const out = /* @__PURE__ */ new Map();
+    const scn = (id) => root.querySelector(`[data-id="${id}"]`);
+    if (!scn("open")) return out;
+    const vOf = (el, name, fallback = 0) => {
       var _a2;
-      return (_a2 = it.rating) != null ? _a2 : 0;
-    }), 10) - 0.4;
-    const nebStars = data.rated.map((it) => {
-      var _a2, _b, _c;
-      return {
-        it,
-        nx: data.yearMin === data.yearMax ? 0.5 : (Number(((_a2 = it.watchDate) != null ? _a2 : "").slice(0, 4)) - data.yearMin) / Math.max(1, data.yearMax - data.yearMin),
-        ny: 1 - clamp01((((_b = it.rating) != null ? _b : 5) - NEB_RMIN) / Math.max(0.5, 10.2 - NEB_RMIN)),
-        r: 1.1 + ((_c = it.rating) != null ? _c : 5) * 0.3,
-        gold: !/[剧漫]/.test(it.typeTag),
-        ph: Math.random() * 7,
-        sx: Math.random() - 0.5,
-        sy: (Math.random() - 0.5) * 1.4
-      };
-    });
-    const nebMinis = all(".bz-film-mini");
-    const avgEl = ref("avg");
-    scene("s2", (p, r, vh) => {
-      var _a2;
-      if (!nebCtx) return;
-      const w = r.width, h = vh;
-      nebCtx.clearRect(0, 0, w, h);
-      const land = easeOut(clamp01(p / 0.55));
-      const px = (s) => w * (0.12 + s.nx * 0.76) + s.sx * (1 - land) * w * 0.5;
-      const py = (s) => h * (0.16 + s.ny * 0.58) + s.sy * (1 - land) * h * 0.5;
-      const lineA = clamp01((p - 0.38) / 0.22);
-      if (lineA > 0) {
-        const path = [...nebStars].sort((a, b) => {
-          var _a3, _b;
-          return ((_a3 = a.it.watchDate) != null ? _a3 : "") < ((_b = b.it.watchDate) != null ? _b : "") ? -1 : 1;
-        }).slice(0, 10);
-        nebCtx.beginPath();
-        path.forEach((s, i) => {
-          const X = px(s), Y = py(s);
-          i ? nebCtx.lineTo(X, Y) : nebCtx.moveTo(X, Y);
-        });
-        nebCtx.strokeStyle = `rgba(${PAL.gold},${0.28 * lineA})`;
-        nebCtx.lineWidth = 1;
-        nebCtx.stroke();
-      }
-      const tn = performance.now() / 1e3;
-      for (const s of nebStars) {
-        const X = px(s), Y = py(s);
-        const tw = 0.72 + 0.28 * Math.sin(tn * 2.1 + s.ph);
-        const a = clamp01(p * 3) * tw;
-        const R = 9 + ((_a2 = s.it.rating) != null ? _a2 : 5) * 2.2;
-        const g = nebCtx.createRadialGradient(X, Y, 0, X, Y, R);
-        const col = s.gold ? PAL.star : PAL.star2;
-        g.addColorStop(0, `rgba(${col},${a * 0.8})`);
-        g.addColorStop(0.4, `rgba(${col},${a * 0.2})`);
-        g.addColorStop(1, `rgba(${col},0)`);
-        nebCtx.beginPath();
-        nebCtx.arc(X, Y, R, 0, 7);
-        nebCtx.fillStyle = g;
-        nebCtx.fill();
-        nebCtx.beginPath();
-        nebCtx.arc(X, Y, s.r * 0.8, 0, 7);
-        nebCtx.fillStyle = `rgba(${PAL.core},${a})`;
-        nebCtx.fill();
-      }
-      if (avgEl) avgEl.textContent = (data.avgRating * easeOut(clamp01((p - 0.55) / 0.45))).toFixed(1);
-      nebMinis.forEach((el, i) => {
-        const rp = clamp01((p - (0.6 + i * 0.1)) / 0.22);
-        el.style.opacity = String(rp);
-        el.style.transform = `translateY(${((1 - easeOut(rp)) * 24).toFixed(1)}px)`;
-      });
-    });
-    const waveCtx = cv("wave");
-    const waveNum = ref("wave");
-    scene("s10", (p, r, vh) => {
-      if (!waveCtx || !data.yearArr.length) return;
-      const w = r.width, h = vh;
-      waveCtx.clearRect(0, 0, w, h);
-      const n = data.yearArr.length;
-      const vmax = Math.max(...data.yearArr.map(([, v]) => v));
-      const X = (i) => w * 0.1 + i / Math.max(1, n - 1) * w * 0.8;
-      const Y = (v) => h * 0.8 - v / vmax * h * 0.48;
-      const reach = easeOut(p) * (n - 1);
-      const full = Math.floor(reach);
-      waveCtx.beginPath();
-      waveCtx.moveTo(X(0), h * 0.8);
-      for (let i = 0; i <= full; i++) waveCtx.lineTo(X(i), Y(data.yearArr[i][1]));
-      if (full < n - 1) {
-        const frac = reach - full;
-        waveCtx.lineTo(lerp(X(full), X(full + 1), frac), lerp(Y(data.yearArr[full][1]), Y(data.yearArr[full + 1][1]), frac));
-      }
-      waveCtx.lineTo(X(full), h * 0.8);
-      waveCtx.closePath();
-      const gf = waveCtx.createLinearGradient(0, h * 0.3, 0, h * 0.8);
-      gf.addColorStop(0, `rgba(${PAL.gold},.3)`);
-      gf.addColorStop(1, `rgba(${PAL.gold},.02)`);
-      waveCtx.fillStyle = gf;
-      waveCtx.fill();
-      waveCtx.beginPath();
-      for (let i = 0; i <= full; i++) {
-        const X2 = X(i), Y2 = Y(data.yearArr[i][1]);
-        i ? waveCtx.lineTo(X2, Y2) : waveCtx.moveTo(X2, Y2);
-      }
-      if (full < n - 1) {
-        const frac = reach - full;
-        waveCtx.lineTo(lerp(X(full), X(full + 1), frac), lerp(Y(data.yearArr[full][1]), Y(data.yearArr[full + 1][1]), frac));
-      }
-      waveCtx.strokeStyle = `rgba(${PAL.star},.9)`;
-      waveCtx.lineWidth = 2;
-      waveCtx.stroke();
-      waveCtx.font = '11px "Noto Serif SC",serif';
-      waveCtx.textAlign = "center";
-      for (let i = 0; i < n; i++) {
-        const passed = i <= reach;
-        waveCtx.fillStyle = passed ? `rgba(${PAL.dim},.95)` : `rgba(${PAL.faint},.6)`;
-        waveCtx.fillText(data.yearArr[i][0], X(i), h * 0.8 + 24);
-        if (passed) {
-          waveCtx.fillStyle = `rgba(${PAL.ink},.9)`;
-          waveCtx.fillText(String(data.yearArr[i][1]), X(i), Y(data.yearArr[i][1]) - 14);
-        }
-      }
-      if (waveNum) waveNum.textContent = String(Math.round(data.peakYear[1] * easeOut(clamp01(p / 0.8))));
-    });
-    scene("s3", (p) => {
-      const strip = ref("strip");
-      if (!strip) return;
-      const over = Math.max(0, strip.scrollWidth - strip.clientWidth);
-      strip.style.transform = `translateX(${(-p * over).toFixed(1)}px)`;
-    });
-    const dialCtx = cv("dial");
-    const dialNum = ref("dial");
-    scene("s11", (p, r, vh) => {
-      if (!dialCtx) return;
-      const w = r.width, h = vh;
-      dialCtx.clearRect(0, 0, w, h);
-      const cx = w / 2, cy = h * 0.52, Rmax = Math.min(w, h) * 0.34;
-      const vmax = Math.max(...data.monthN, 1);
-      const sweep = easeOut(p) * Math.PI * 2;
-      for (let i = 0; i < 12; i++) {
-        const a0 = -Math.PI / 2 + i * Math.PI / 6;
-        const a1 = a0 + Math.PI / 6;
-        if (sweep <= a0 + 0.01) break;
-        const end = Math.min(a1, sweep);
-        const rad = Rmax * (0.3 + 0.7 * (data.monthN[i] / vmax));
-        const hot = data.monthN[i] === Math.max(...data.monthN);
-        dialCtx.beginPath();
-        dialCtx.moveTo(cx, cy);
-        dialCtx.arc(cx, cy, rad, a0, end);
-        dialCtx.closePath();
-        dialCtx.fillStyle = hot ? `rgba(${PAL.star},.55)` : `rgba(${PAL.gold},${0.12 + 0.3 * (data.monthN[i] / vmax)})`;
-        dialCtx.fill();
-        dialCtx.strokeStyle = `rgba(${PAL.ink},.14)`;
-        dialCtx.stroke();
-        const am = (a0 + a1) / 2;
-        dialCtx.font = '12px "Noto Serif SC",serif';
-        dialCtx.textAlign = "center";
-        dialCtx.fillStyle = hot ? `rgba(${PAL.star},.95)` : `rgba(${PAL.dim},.75)`;
-        dialCtx.fillText(`${i + 1}月`, cx + Math.cos(am) * (Rmax + 26), cy + Math.sin(am) * (Rmax + 26) + 4);
-        if (data.monthN[i]) {
-          dialCtx.fillStyle = `rgba(${PAL.ink},.85)`;
-          dialCtx.fillText(String(data.monthN[i]), cx + Math.cos(am) * (rad - 14), cy + Math.sin(am) * (rad - 14) + 4);
-        }
-      }
-      if (dialNum) dialNum.textContent = `${data.peakMonth + 1} 月`;
-    });
-    const dayEls = all(".bz-film-day");
-    scene("s12", (p) => {
-      dayEls.forEach((d, i) => {
-        const rp = easeOut(clamp01((p - (0.12 + i * 0.09)) / 0.22));
-        d.style.opacity = String(rp);
-        d.style.transform = `translateY(${((1 - rp) * 30).toFixed(1)}px)`;
-        d.querySelectorAll(".bz-film-stub").forEach((s, k) => {
-          const sp = clamp01((p - (0.2 + i * 0.09) - k * 0.012) / 0.1);
-          s.style.opacity = String(sp);
-          s.style.transform = `rotate(${k * 37 % 13 - 6}deg) scale(${sp.toFixed(2)})`;
-        });
-      });
-    });
-    const neonCols = all(".bz-film-neon-col");
-    scene("s4", (p) => {
-      neonCols.forEach((col, i) => col.classList.toggle("is-lit", p > (i + 0.5) / (neonCols.length + 1)));
-    });
-    const ageCtx = cv("agefx");
-    const ageNum = ref("age");
-    const AGEDUST = Array.from({ length: 42 }, () => ({
-      x: Math.random(),
-      y: Math.random(),
-      r: 0.5 + Math.random() * 1.4,
-      v: 3e-4 + Math.random() * 9e-4,
-      ph: Math.random() * 7
-    }));
-    const SCRATCHES = Array.from({ length: 4 }, (_, i) => ({ x: 0.12 + i * 0.22 + Math.random() * 0.1, ph: Math.random() * 7 }));
-    const shelves = all(".bz-film-shelf");
-    scene("s13", (p, r, vh) => {
-      if (ageNum) ageNum.textContent = (Number(data.avgAge) * easeOut(clamp01(p / 0.6))).toFixed(1);
-      shelves.forEach((sh, i) => {
-        var _a2;
-        const rp = easeOut(clamp01((p - (0.2 + i * 0.15)) / 0.25));
-        sh.style.opacity = String(rp);
-        sh.style.transform = `translateY(${((1 - rp) * 26).toFixed(1)}px)`;
-        const tint = Number((_a2 = sh.dataset.tint) != null ? _a2 : 0.5);
-        sh.querySelectorAll(".sp img, .sp .bz-film-ph").forEach((im) => {
-          im.style.filter = `sepia(${lerp(1, tint, rp).toFixed(2)}) contrast(.96)`;
-        });
-      });
-      if (!ageCtx) return;
-      const w = r.width, h = vh, t = performance.now() / 1e3;
-      ageCtx.clearRect(0, 0, w, h);
-      for (const d of AGEDUST) {
-        const yy = ((d.y - t * d.v) % 1 + 1) % 1;
-        const a = 0.16 + 0.2 * Math.sin(t * 1.4 + d.ph * 3);
-        ageCtx.beginPath();
-        ageCtx.arc(d.x * w, yy * h, d.r, 0, 7);
-        ageCtx.fillStyle = `rgba(${PAL.dust},${Math.max(0, a)})`;
-        ageCtx.fill();
-      }
-      for (const s of SCRATCHES) {
-        const a = Math.max(0, Math.sin(t * 0.8 + s.ph)) ** 6 * 0.3;
-        if (a < 0.02) continue;
-        ageCtx.fillStyle = `rgba(${PAL.dust},${a})`;
-        ageCtx.fillRect(s.x * w + Math.sin(t + s.ph) * 2, 0, 1, h);
-      }
-    });
-    const spot = ref("spot");
-    const plaques = all(".bz-film-plaque");
-    scene("s14", (p) => {
-      if (!plaques.length) return;
-      const lit = Math.min(plaques.length - 1, Math.max(0, Math.floor(easeOut(clamp01((p - 0.18) / 0.72)) * plaques.length)));
-      plaques.forEach((el, i) => {
-        const rp = easeOut(clamp01((p - (0.1 + i * 0.12)) / 0.24));
-        el.style.opacity = String(rp * (i === lit ? 1 : 0.62));
-        el.style.transform = `translateY(${((1 - rp) * 30).toFixed(1)}px)`;
-        el.classList.toggle("is-lit", i === lit);
-      });
-      if (spot) {
-        const rr = plaques[lit].getBoundingClientRect();
-        spot.style.transform = `translateX(${(rr.left + rr.width / 2 - innerWidth * 0.5).toFixed(1)}px)`;
-        spot.style.opacity = String(clamp01(p * 2.5));
-      }
-    });
-    const paradeStrip = ref("parade");
-    const ghost = ref("ghost");
-    const starCards = all(".bz-film-star");
-    scene("s15", (p) => {
-      var _a2, _b;
-      if (!paradeStrip) return;
-      const over = Math.max(0, paradeStrip.scrollWidth - sc.clientWidth);
-      paradeStrip.style.transform = `translateX(${(-easeOut(p) * over).toFixed(1)}px)`;
-      for (const el of starCards) {
-        const left = el.getBoundingClientRect().left;
-        const k = easeOut(clamp01((innerWidth * 1.06 - left) / (innerWidth * 0.55)));
-        el.style.transform = `perspective(900px) rotateY(${((1 - k) * 26).toFixed(1)}deg)`;
-      }
-      const lead = starCards.find((el) => el.getBoundingClientRect().right > innerWidth * 0.4);
-      if (lead && ghost) {
-        const nm = (_b = (_a2 = lead.querySelector(".nm")) == null ? void 0 : _a2.textContent) != null ? _b : "";
-        if (ghost.textContent !== nm) ghost.textContent = nm;
-      }
-    });
-    const armEl = ref("arm");
-    const panL = ref("panL");
-    const panR = ref("panR");
-    const diffNum = ref("diff");
-    scene("s16", (p) => {
-      if (diffNum) diffNum.textContent = (data.avgDiff >= 0 ? "+" : "") + (data.avgDiff * easeOut(clamp01(p / 0.6))).toFixed(1);
-      if (armEl) {
-        const tilt = Math.max(-12, Math.min(12, (data.disappoint.length - data.treasure.length) * 5));
-        armEl.style.transform = `rotate(${(tilt * easeOutBack(clamp01(p / 0.5))).toFixed(2)}deg)`;
-      }
-      if (panL) {
-        panL.style.opacity = String(easeOut(clamp01((p - 0.15) / 0.25)));
-        panL.style.transform = `translateX(${((1 - easeOut(clamp01((p - 0.15) / 0.3))) * -40).toFixed(1)}px)`;
-      }
-      if (panR) {
-        panR.style.opacity = String(easeOut(clamp01((p - 0.4) / 0.25)));
-        panR.style.transform = `translateX(${((1 - easeOut(clamp01((p - 0.4) / 0.3))) * 40).toFixed(1)}px)`;
-      }
-    });
-    const maroEls = all(".bz-film-maro");
-    scene("s17", (p) => {
-      maroEls.forEach((el, i) => {
-        const rp = easeOut(clamp01((p - (0.15 + i * 0.18)) / 0.3));
-        el.style.opacity = String(rp);
-        el.style.transform = `translateX(${((1 - rp) * -40).toFixed(1)}px)`;
-        const stack = el.querySelector(".stack");
-        const kids = stack ? [...stack.children] : [];
-        kids.forEach((c, k) => {
-          const off = k - (kids.length - 1) / 2;
-          c.style.transform = `rotate(${(off * rp * 8).toFixed(1)}deg) translateY(${(Math.abs(off) * rp * 5).toFixed(1)}px)`;
-        });
-      });
-    });
-    const bingeNum = ref("binge");
-    const bingeRows = all(".bz-film-brow");
-    scene("s18", (p) => {
-      if (bingeNum) bingeNum.textContent = (Number(data.avgSeason) * easeOut(clamp01(p / 0.6))).toFixed(1);
-      bingeRows.forEach((el, i) => {
-        const rp = easeOut(clamp01((p - (0.15 + i * 0.13)) / 0.28));
-        el.style.opacity = String(rp);
-        el.style.transform = `translateX(${((1 - rp) * -30).toFixed(1)}px)`;
-        el.querySelectorAll(".rl").forEach((c, k) => {
-          const kp = easeOut(clamp01((p - (0.18 + i * 0.13) - k * 0.045) / 0.1));
-          c.style.opacity = String(kp);
-          c.style.transform = `scale(${(0.5 + 0.5 * kp).toFixed(2)})`;
-        });
-      });
-    });
-    const dmCtx = cv("dm");
-    const dmNum = ref("dm");
-    scene("s19", (p, r, vh) => {
-      if (!dmCtx) return;
-      const w = r.width, h = vh;
-      dmCtx.clearRect(0, 0, w, h);
-      if (dmNum) dmNum.textContent = String(Math.round(data.reviewCount * easeOut(clamp01(p / 0.5))));
-      const n = data.dmLines.length;
-      if (!n) return;
-      const rows = 9;
-      for (let i = 0; i < n; i++) {
-        const line = data.dmLines[i];
-        if (i / n >= p * 1.15) continue;
-        const row = i % rows;
-        const cycle = (p * 2.2 + i * 0.618) % 1;
-        const x = w * 0.92 - cycle * w * 1.5;
-        const y = h * 0.3 + row * (h * 0.56 / rows);
-        const alpha = Math.min(1, Math.sin(cycle * Math.PI) * 1.6) * clamp01(p * 2);
-        dmCtx.font = `${line.hit ? 21 : 14}px "Noto Serif SC",serif`;
-        dmCtx.fillStyle = line.hit ? `rgba(${PAL.star},${alpha})` : `rgba(${PAL.ink},${alpha * 0.8})`;
-        if (line.hit) {
-          dmCtx.shadowColor = `rgba(${PAL.gold},.8)`;
-          dmCtx.shadowBlur = 18;
-        }
-        dmCtx.fillText(`「${line.text}」`, x, y);
-        dmCtx.shadowBlur = 0;
-      }
-    });
-    const rays = ref("rays");
-    const awards = all(".bz-film-award");
-    scene("s5", (p) => {
-      if (rays) {
-        rays.style.opacity = String(clamp01(p * 2.2) * 0.9);
-        rays.style.transform = `rotate(${(p * 150).toFixed(1)}deg)`;
-      }
-      awards.forEach((el, i) => {
-        const rp = easeOut(clamp01((p - 0.02 - i * 0.2) * 3));
-        el.style.opacity = String(rp);
-        el.style.transform = `rotateX(${((1 - rp) * -62).toFixed(1)}deg) translateY(${((1 - rp) * 30).toFixed(1)}px)`;
-        el.style.setProperty("--sh", `${(125 - rp * 250).toFixed(0)}% 0`);
-      });
-    });
-    const roll = ref("roll");
-    const theend = ref("theend");
-    scene("s6", (p, _r, vh) => {
-      if (roll) {
-        const rollH = roll.offsetHeight;
-        roll.style.transform = `translateY(${lerp(vh * 0.75, -(rollH + 80), p * p).toFixed(1)}px)`;
-      }
-      if (theend) {
-        const ep = clamp01((p - 0.88) / 0.12);
-        theend.style.opacity = String(ep);
-        theend.style.clipPath = `circle(${(easeOut(ep) * 74).toFixed(1)}% at 50% 50%)`;
-      }
-    });
-    const nextCards = all(".bz-film-next");
-    const replayBtn = ref("replay");
-    scene("s7", (p) => {
-      nextCards.forEach((el, i) => {
-        const rp = easeOut(clamp01((p - 0.12 - i * 0.14) / 0.3));
-        el.style.opacity = String(rp);
-        el.style.transform = `translateY(${((1 - rp) * 40).toFixed(1)}px) rotateX(${((1 - rp) * 14).toFixed(1)}deg)`;
-        const st = el.querySelector(".stamp");
-        if (st) {
-          const kp = easeOutBack(clamp01((p - (0.3 + i * 0.14)) / 0.18));
-          st.style.opacity = String(clamp01(kp * 1.4));
-          st.style.transform = `rotate(-14deg) scale(${lerp(3, 1, kp).toFixed(2)})`;
-        }
-      });
-      if (replayBtn) replayBtn.style.opacity = String(clamp01((p - 0.6) / 0.25));
-    });
-    root.addEventListener("click", (e) => {
-      if (e.target.closest('[data-ref="replay"]')) playScene("s0");
-    });
-    const grainCtx = cv("grain");
-    let grainPat = null;
-    const grainCv = q('[data-cv="grain"]');
+      const v = parseFloat(String((_a2 = el == null ? void 0 : el.style.getPropertyValue(name)) != null ? _a2 : ""));
+      return Number.isFinite(v) ? v : fallback;
+    };
     {
-      const c = document.createElement("canvas");
-      c.width = c.height = 128;
-      const x = c.getContext("2d");
-      if (x) {
-        const d = x.createImageData(128, 128);
-        for (let i = 0; i < d.data.length; i += 4) {
-          const v = Math.random() * 255;
-          d.data[i] = d.data[i + 1] = d.data[i + 2] = v;
-          d.data[i + 3] = 26;
+      const s = scn("open");
+      const cv = canvas(s, "open");
+      let ps = [];
+      let builtFor = 0;
+      out.set("open", {
+        dur: 3.8,
+        update({ t, pal, px, py }) {
+          var _a2, _b;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b = cv == null ? void 0 : cv.h) != null ? _b : 100;
+          if (cv && ps.length === 0 && w > 8) {
+            builtFor = w;
+            const fontPx = Math.max(46, Math.min(h * 0.42, w * 0.22));
+            const N = 1400;
+            const resample = (text, fp) => {
+              const raw = sampleText(text, fp, 800, 4);
+              if (!raw.length) return [];
+              return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
+            };
+            const a = resample(String(data.total), fontPx);
+            const b = resample("观影志", fontPx * 0.62);
+            if (a.length !== b.length || !a.length) {
+            }
+            ps = a.map((p, i) => {
+              var _a3, _b2;
+              const ang = i / Math.max(1, N) * Math.PI * 2 + Math.random() * 0.6;
+              const rad = Math.max(w, h) * (0.5 + Math.random() * 0.45);
+              return {
+                tx: p.x,
+                ty: p.y,
+                tx2: ((_a3 = b[i]) != null ? _a3 : p).x,
+                ty2: ((_b2 = b[i]) != null ? _b2 : p).y,
+                sx: Math.cos(ang) * rad,
+                sy: Math.sin(ang) * rad * 0.68,
+                d: Math.random() * 0.5,
+                r: 1.1 + Math.random() * 1.5,
+                red: Math.random() < 0.1
+              };
+            });
+          } else if (cv && builtFor !== w && w > 8) {
+            ps = [];
+            builtFor = 0;
+          }
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const cx = w / 2, cy = h / 2;
+            const morph = easeInOut(at(t, 1.1, 2.5));
+            const pxx = cx + px * w / 2, pyy = cy + py * h / 2;
+            for (const p of ps) {
+              const k = spring(clamp01((t - p.d) / 1.5), 5.2, 2.6);
+              const txx = lerp(p.tx, p.tx2, morph), tyy = lerp(p.ty, p.ty2, morph);
+              const jit = t > 1.8 ? 1.2 : 0;
+              let x = cx + lerp(p.sx, txx, k) + Math.sin(t * 1.3 + p.tx * 0.05) * jit;
+              let y = cy + lerp(p.sy, tyy, k) + Math.cos(t * 1.1 + p.ty * 0.06) * jit;
+              if (px || py) {
+                const dx = x - pxx, dy = y - pyy;
+                const dist = Math.hypot(dx, dy);
+                const R = Math.min(w, h) * 0.17;
+                if (dist < R && dist > 1e-3) {
+                  const f = (1 - dist / R) * 26 * (0.35 + 0.65 * (1 - clamp01(k) * 0.6));
+                  x += dx / dist * f;
+                  y += dy / dist * f;
+                }
+              }
+              ctx.globalAlpha = 0.16 + 0.84 * clamp01(k);
+              ctx.fillStyle = rgba(p.red ? pal.redRgb : pal.inkRgb, 0.78);
+              ctx.beginPath();
+              ctx.arc(x, y, p.r * (0.45 + 0.55 * clamp01(k)), 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            const sweep = at(t, 0.5, 1.6);
+            if (sweep > 0 && sweep < 1) {
+              const g = ctx.createLinearGradient(0, 0, w, 0);
+              g.addColorStop(0, rgba(pal.redRgb, 0));
+              g.addColorStop(0.5, rgba(pal.redRgb, 0.13 * Math.sin(sweep * Math.PI)));
+              g.addColorStop(1, rgba(pal.redRgb, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(0, cy - h * 0.3, w * sweep, h * 0.6);
+            }
+          }
         }
-        x.putImageData(d, 0, 0);
-        grainPat = grainCtx ? grainCtx.createPattern(c, "repeat") : null;
-      }
+      });
     }
-    let lastT = 0;
-    let grainFrame = 0;
-    let lastVh = -1;
-    const tick = () => {
-      var _a2, _b;
-      if (engine.dead || !root.isConnected) {
-        if (activeEngine === engine) activeEngine = null;
+    {
+      const s = scn("years");
+      const cv = canvas(s, "years");
+      const axis = s.querySelector('[data-r="axis"]');
+      const peakEl = s.querySelector('[data-r="peak"]');
+      const perEl = s.querySelector('[data-r="perYear"]');
+      const ticks = qsa(s, ".yb-tick");
+      const cursor = s.querySelector('[data-r="cursor"]');
+      const n = data.years.length;
+      const counts = data.years.map((y) => y.films.length);
+      const max = Math.max(1, ...counts);
+      const peakI = counts.indexOf(max);
+      const axisStagger = ticks.map((_, i) => i * 0.07);
+      let hotY = -1;
+      out.set("years", {
+        dur: 3.2,
+        move(p) {
+          const l = localAt(cv == null ? void 0 : cv.el, p);
+          hotY = l ? Math.max(0, Math.min(n - 1, Math.round(l.x * (n - 1)))) : -1;
+          if (hotY >= 0) tip(host, `<b>${data.years[hotY].y}</b> 年 · ${counts[hotY]} 部`, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, pal }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const padT = h * 0.14, padB = h * 0.2, padL = w * 0.04, padR = w * 0.04;
+            const X = (i) => padL + i / Math.max(1, n - 1) * (w - padL - padR);
+            const Y = (v) => h - padB - v / max * (h - padT - padB);
+            const g = easeInOut(at(t, 1.7));
+            const span = Math.max(0, g * (n - 1));
+            const hx = X(span), hy = Y(lerp(counts[Math.floor(span)], counts[Math.min(n - 1, Math.ceil(span))], span % 1));
+            ctx.beginPath();
+            ctx.moveTo(X(0), h - padB);
+            for (let i = 0; i <= Math.floor(span); i++) ctx.lineTo(X(i), Y(counts[i]));
+            if (span > Math.floor(span)) ctx.lineTo(hx, hy);
+            ctx.lineTo(hx, h - padB);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(0, padT, 0, h - padB);
+            grad.addColorStop(0, rgba(pal.inkRgb, 0.16));
+            grad.addColorStop(1, rgba(pal.inkRgb, 0));
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.beginPath();
+            for (let i = 0; i <= Math.floor(span); i++) (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(i), Y(counts[i]));
+            if (span > Math.floor(span)) ctx.lineTo(hx, hy);
+            ctx.strokeStyle = rgba(pal.inkRgb, 0.92);
+            ctx.lineWidth = 2;
+            ctx.lineJoin = "round";
+            ctx.stroke();
+            if (cursor) {
+              const ci = hotY >= 0 ? hotY : g < 1 ? Math.min(n - 1, Math.round(span)) : peakI;
+              const show = hotY >= 0 ? 1 : at(t, 0.5, 0.5);
+              const label = `${data.years[ci].y} 年 · ${counts[ci]} 部`;
+              if (cursor.dataset.label !== label) cursor.dataset.label = label;
+              const pct = X(ci) / w * 100;
+              S(cursor, `left:${pct.toFixed(2)}%;opacity:${(show * (g < 1 ? 0.85 : 1)).toFixed(3)}`);
+            }
+            if (g < 1) {
+              const halo = ctx.createRadialGradient(hx, hy, 0, hx, hy, 24);
+              halo.addColorStop(0, rgba(pal.redRgb, 0.5));
+              halo.addColorStop(1, rgba(pal.redRgb, 0));
+              ctx.fillStyle = halo;
+              ctx.beginPath();
+              ctx.arc(hx, hy, 24, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = pal.red;
+              ctx.beginPath();
+              ctx.arc(hx, hy, 3.4, 0, Math.PI * 2);
+              ctx.fill();
+            } else {
+              const post = at(t, 0.8, 1.7);
+              for (let i = 0; i < n; i++) {
+                const k = clamp01(post * 1.8 - i * 0.06);
+                if (k <= 0) continue;
+                const hot = i === hotY;
+                ctx.fillStyle = rgba(pal.inkRgb, (hot ? 0.95 : 0.55 * (hotY >= 0 ? 0.5 : 1)) * k);
+                ctx.beginPath();
+                ctx.arc(X(i), Y(counts[i]), hot ? 4 : 2.4, 0, Math.PI * 2);
+                ctx.fill();
+                if (i === peakI || hot) {
+                  ctx.strokeStyle = rgba(pal.redRgb, (hot ? 0.95 : 0.85) * k);
+                  ctx.lineWidth = 1.6;
+                  ctx.beginPath();
+                  ctx.arc(X(i), Y(counts[i]), hot ? 11 : 6 + 12 * (1 - k), 0, Math.PI * 2);
+                  ctx.stroke();
+                }
+              }
+            }
+          }
+          ticks.forEach((el, i) => {
+            const p = at(t, 0.5, 0.45 + axisStagger[i]);
+            S(el, `opacity:${p.toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 8).toFixed(1)}px)`);
+          });
+          S(axis, `opacity:${at(t, 0.6, 0.4).toFixed(3)}`);
+          const pp = at(t, 0.5, 1.5);
+          S(peakEl, `opacity:${pp.toFixed(3)}`);
+          T(peakEl, `${data.years[peakI].y} 年 · ${max} 部`);
+          T(perEl, `${(data.watchedCount / Math.max(1, n)).toFixed(1)} 部`);
+        }
+      });
+    }
+    {
+      const s = scn("days");
+      const grid = s.querySelector(".yb-days");
+      const dayCount = /* @__PURE__ */ new Map();
+      for (const [date, films] of data.days) dayCount.set(date.slice(4), films.length);
+      const orderOf = /* @__PURE__ */ new Map();
+      [...data.days.keys()].sort().forEach((d, i) => orderOf.set(d.slice(4), i));
+      const cells = qsa(s, ".yb-cell").map((el) => {
+        var _a2, _b, _c, _d, _e, _f;
+        const mi = Number((_b = (_a2 = el.closest(".yb-month")) == null ? void 0 : _a2.dataset.mi) != null ? _b : 0);
+        const day = Number((_c = el.dataset.d) != null ? _c : 0);
+        const key = `-${String(mi + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        return { el, n: (_d = dayCount.get(key)) != null ? _d : 0, o: (_e = orderOf.get(key)) != null ? _e : -1, tipTxt: (_f = el.dataset.tip) != null ? _f : "" };
+      });
+      const months = qsa(s, ".yb-month");
+      let hotCell = -1;
+      out.set("days", {
+        dur: 3,
+        move(p) {
+          const cell = under(p, ".yb-cell[data-tip]");
+          hotCell = cell ? cells.findIndex((c) => c.el === cell) : -1;
+          if (hotCell >= 0) tip(host, cells[hotCell].tipTxt, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          const hot = hotCell >= 0 && t > 1.2 ? hotCell : -1;
+          for (let i = 0; i < cells.length; i++) {
+            const c = cells[i];
+            if (!c.n) {
+              S(c.el, "opacity:.3");
+              continue;
+            }
+            const p = at(t, 0.34, 0.25 + c.o * 34e-4);
+            const on = i === hot;
+            S(c.el, `opacity:${(on ? 1 : (0.28 + 0.72 * p) * (hot >= 0 ? 0.45 : 1)).toFixed(3)};transform:scale(${(on ? 1.5 : 0.55 + 0.45 * easeBack(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+          }
+          S(grid, `--scan:${(t % 4.6 / 4.6).toFixed(4)}`);
+        }
+      });
+    }
+    {
+      const s = scn("week");
+      const spokes = qsa(s, ".yb-spoke");
+      const needle = s.querySelector('[data-r="needle"]');
+      const hub = s.querySelector(".yb-dial-hub");
+      const hubB = s.querySelector(".yb-dial-hub b");
+      const hubS = s.querySelector(".yb-dial-hub span");
+      const face = s.querySelector('[data-r="face"]');
+      const labels = spokes.map((sp) => sp.querySelector(".yb-spoke-lb"));
+      const target = vOf(needle, "--a", -90);
+      let aim = NaN, hotSpoke = -1, shownDeg = target;
+      out.set("week", {
+        dur: 3,
+        move(p) {
+          const l = localAt(face, p);
+          if (!l) {
+            aim = NaN;
+            hotSpoke = -1;
+            return;
+          }
+          aim = Math.atan2(l.x - 0.5, 0.5 - l.y) * 180 / Math.PI;
+          const k = Math.round(((aim + 90) % 360 + 360) % 360 / (360 / 7)) % 7;
+          hotSpoke = k;
+        },
+        update({ t }) {
+          var _a2, _b;
+          spokes.forEach((sp, i) => {
+            const p = stagger(t, i, 0.09, 0.8);
+            const on = t > 1.8 && i === hotSpoke;
+            S(sp.querySelector(".yb-spoke-bar"), `transform:scaleX(${(easeElastic(p) * (on ? 1.06 : 1)).toFixed(4)})`);
+            S(sp, `opacity:${(at(t, 0.4, i * 0.09) * (hotSpoke >= 0 && !on && t > 1.8 ? 0.42 : 1)).toFixed(3)}`);
+            S(labels[i], `opacity:${at(t, 0.5, 0.5 + i * 0.09).toFixed(3)}`);
+          });
+          if (needle) {
+            const p = at(t, 1.5, 0.7);
+            if (p < 1) {
+              shownDeg = -90 + (target + 90) * easeBack(p);
+              S(needle, `transform:rotate(${shownDeg.toFixed(2)}deg);opacity:${at(t, 0.4, 0.7).toFixed(3)}`);
+            } else {
+              const idle = target + Math.sin((t - 2.2) * 1.1) * 1.4;
+              shownDeg = toward(shownDeg, Number.isFinite(aim) ? aim : idle, 0.2);
+              S(needle, `transform:rotate(${shownDeg.toFixed(2)}deg);opacity:1`);
+            }
+          }
+          if (hubB && hubS) {
+            if (hotSpoke >= 0) {
+              T(hubB, String(data.weekN[hotSpoke]));
+              T(hubS, ((_b = (_a2 = labels[hotSpoke]) == null ? void 0 : _a2.textContent) != null ? _b : "").split(/\s+/)[0] || "部");
+            } else {
+              T(hubB, String(data.watchedCount));
+              T(hubS, "部");
+            }
+          }
+          const hp = at(t, 0.6, 0.4);
+          S(hub, `opacity:${hp.toFixed(3)};transform:translate(-50%,-50%) scale(${(0.7 + 0.3 * easeBack(hp)).toFixed(3)})`);
+        }
+      });
+    }
+    {
+      const s = scn("streak");
+      const path = s.querySelector('[data-r="ribpath"]');
+      const flow = s.querySelector('[data-r="ribflow"]');
+      const dots = qsa(s, ".yb-rib-dot");
+      const ticks = qsa(s, ".yb-busy-tick");
+      const tags = qsa(s, ".yb-btag");
+      const tickH = ticks.map((_, i) => 34 + i * 37 % 58);
+      let len = 1400;
+      try {
+        if (path && typeof path.getTotalLength === "function") len = path.getTotalLength() || len;
+      } catch (e) {
+      }
+      if (path) {
+        path.style.strokeDasharray = `${len}`;
+        path.style.strokeDashoffset = `${len}`;
+      }
+      let hotDot = -1, hotTick = -1;
+      out.set("streak", {
+        dur: 3.2,
+        move(p) {
+          var _a2, _b, _c;
+          const dot = under(p, ".yb-rib-dot");
+          const tick = under(p, ".yb-busy-tick");
+          hotDot = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
+          hotTick = tick ? Number((_b = tick.dataset.i) != null ? _b : -1) : -1;
+          const el = dot != null ? dot : tick;
+          const txt = (_c = el == null ? void 0 : el.dataset.tip) != null ? _c : "";
+          if (txt) tip(host, txt, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          const draw = easeInOut(at(t, 1.7, 0.15));
+          if (path) path.style.strokeDashoffset = `${(len * (1 - draw)).toFixed(1)}`;
+          if (flow) {
+            flow.style.strokeDasharray = "12 18";
+            const boost = hotDot >= 0 || hotTick >= 0 ? 2.2 : 1;
+            flow.style.strokeDashoffset = `${(-(t * 30 * boost % 30)).toFixed(1)}`;
+            S(flow, `opacity:${(at(t, 0.5, 1.4) * 0.55).toFixed(3)}`);
+          }
+          dots.forEach((d, i) => {
+            const p = at(t, 0.42, 0.5 + i * 0.085);
+            const on = i === hotDot;
+            S(d, `opacity:${(on ? 1 : p * (hotDot >= 0 ? 0.4 : 1)).toFixed(3)};transform:scale(${(on ? 2.1 : 0.35 + 0.65 * easeBack(p)).toFixed(3)})`);
+          });
+          ticks.forEach((el, i) => {
+            const p = at(t, 0.34, 1.25 + i * 0.011);
+            const on = i === hotTick;
+            S(el, `height:${(tickH[i] * easeOut(p) * (on ? 1.35 : 1)).toFixed(1)}%;opacity:${(on ? 1 : p * (hotTick >= 0 ? 0.45 : 1)).toFixed(3)}`);
+          });
+          tags.forEach((el, i) => {
+            const p = stagger(t, i, 0.06, 0.5);
+            S(el, `opacity:${p.toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 12).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("length");
+      const bins = qsa(s, ".yb-bin");
+      const heights = bins.map((b) => vOf(b.querySelector(".yb-bbar"), "--ph"));
+      const nums = data.bins.map((b) => b.films.length);
+      const total = s.querySelector('[data-r="total"]');
+      const side = s.querySelector(".yb-len-side");
+      const cvReel = canvas(s, "reel");
+      const durs = data.durFilms.map((d) => d.min);
+      const durTotal = durs.reduce((a, b) => a + b, 0);
+      let flapDone = false;
+      let hotBin = -1, reelAt = null, spin = 0;
+      out.set("length", {
+        dur: 3.4,
+        move(p) {
+          var _a2;
+          const bin = under(p, ".yb-bin");
+          hotBin = bin ? Number((_a2 = bin.dataset.i) != null ? _a2 : -1) : -1;
+          if (bin == null ? void 0 : bin.dataset.tip) tip(host, bin.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+          reelAt = localAt(cvReel == null ? void 0 : cvReel.el, p);
+        },
+        update({ t, pal }) {
+          bins.forEach((b, i) => {
+            const p = stagger(t, i, 0.11, 0.9);
+            const on = i === hotBin;
+            S(b.querySelector(".yb-bbar"), `height:${(heights[i] * easeOut(p)).toFixed(2)}%;transform:scaleY(${on ? 1.04 : 1});transform-origin:bottom center;opacity:${on ? 1 : hotBin >= 0 ? 0.5 : 1}`);
+            S(b, `opacity:${at(t, 0.4, i * 0.11).toFixed(3)}`);
+            T(b.querySelector(".yb-bn"), String(Math.round(nums[i] * easeOut(p))));
+          });
+          if (cvReel) {
+            cvReel.fit();
+            cvReel.clear();
+            const ctx = cvReel.ctx, w = cvReel.w, h = cvReel.h;
+            const cx = w / 2, cy = h / 2;
+            const rMax = Math.min(w, h) * 0.46, rMin = Math.min(w, h) * 0.12;
+            const laps = Math.max(1, durTotal / 1440);
+            const grow = easeInOut(at(t, 2.2, 0.4));
+            const steps = 900;
+            const aimSpin = reelAt ? Math.max(-0.34, Math.min(0.34, Math.atan2(reelAt.y - 0.5, reelAt.x - 0.5) + Math.PI / 2)) : 0;
+            spin = toward(spin, aimSpin, 0.12);
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(spin);
+            ctx.translate(-cx, -cy);
+            ctx.lineWidth = Math.max(1.4, rMax * 0.028);
+            ctx.lineCap = "round";
+            let acc = 0, di = 0;
+            for (let i2 = 0; i2 < steps; i2++) {
+              const u0 = i2 / steps, u1 = (i2 + 1) / steps;
+              const a0 = u0 * laps * Math.PI * 2 - Math.PI / 2;
+              const a1 = u1 * laps * Math.PI * 2 - Math.PI / 2;
+              if (u1 > grow) break;
+              const r0 = rMin + (rMax - rMin) * u0, r1 = rMin + (rMax - rMin) * u1;
+              const at2 = u0 * durTotal;
+              while (di < durs.length - 1 && acc + durs[di] < at2) {
+                acc += durs[di];
+                di++;
+              }
+              const hot = di % 2 === 0;
+              ctx.strokeStyle = rgba(hot ? pal.inkRgb : pal.redRgb, 0.72);
+              ctx.beginPath();
+              ctx.moveTo(cx + Math.cos(a0) * r0, cy + Math.sin(a0) * r0);
+              ctx.lineTo(cx + Math.cos(a1) * r1, cy + Math.sin(a1) * r1);
+              ctx.stroke();
+            }
+            ctx.restore();
+            ctx.fillStyle = rgba(pal.inkRgb, 0.16);
+            ctx.beginPath();
+            ctx.arc(cx, cy, rMin * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+            if (reelAt && grow > 0.85) {
+              const ang = Math.atan2(reelAt.y - 0.5, reelAt.x - 0.5);
+              ctx.strokeStyle = rgba(pal.redRgb, 0.5);
+              ctx.lineWidth = 1.4;
+              ctx.beginPath();
+              ctx.moveTo(cx + Math.cos(ang) * rMin * 0.5, cy + Math.sin(ang) * rMin * 0.5);
+              ctx.lineTo(cx + Math.cos(ang) * rMax, cy + Math.sin(ang) * rMax);
+              ctx.stroke();
+              ctx.fillStyle = pal.red;
+              ctx.beginPath();
+              ctx.arc(cx + Math.cos(ang) * rMax, cy + Math.sin(ang) * rMax, 3.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          if (t < 0.1) flapDone = false;
+          if (!flapDone && t > 1.9) {
+            setFlap(total, humanDur(data.totalMinutes));
+            flapDone = true;
+          }
+          S(side, `opacity:${at(t, 0.6, 0.3).toFixed(3)}`);
+        }
+      });
+    }
+    {
+      const s = scn("extremes");
+      const line = s.querySelector('[data-r="rline"]');
+      const ticks = s.querySelector('[data-r="rticks"]');
+      const rread = s.querySelector('[data-r="rread"]');
+      const ruler = s.querySelector(".yb-ruler");
+      const marks = qsa(s, ".yb-mark");
+      const xs = marks.map((m) => vOf(m, "--x", 50));
+      const cards = qsa(s, ".yb-xcard");
+      const durs2 = data.durFilms.map((d) => d.min).sort((a, b) => a - b);
+      const lo = data.shortestMin, hi = data.longestMin;
+      let readX = null, readN = 0, readMin = 0, hotEnd = -1;
+      out.set("extremes", {
+        dur: 2.8,
+        move(p) {
+          const l = localAt(ruler, p);
+          if (!l) {
+            readX = null;
+            hotEnd = -1;
+            return;
+          }
+          const rx = Math.max(0.06, Math.min(0.94, l.x));
+          readX = rx;
+          readMin = Math.round(lo + (rx - 0.06) / 0.88 * Math.max(1, hi - lo));
+          readN = durs2.filter((m) => Math.abs(m - readMin) <= 12).length;
+          hotEnd = xs.findIndex((x) => Math.abs(x - rx * 100) < 3);
+          tip(host, `<b>${readMin}</b> 分钟 · 上下 12 分钟里有 ${readN} 部`, p.cx, p.cy);
+        },
+        update({ t }) {
+          const grow = easeInOut(at(t, 1.1, 0.2));
+          S(line, `transform:scaleX(${grow.toFixed(4)});transform-origin:center`);
+          S(ticks, `transform:scaleX(${grow.toFixed(4)});transform-origin:center;opacity:${at(t, 0.5, 0.5).toFixed(3)}`);
+          marks.forEach((m, i) => {
+            const p = at(t, 1, 0.8 + i * 0.18);
+            const k = easeBack(p);
+            const on = i === hotEnd;
+            S(m, `left:${(50 + (xs[i] - 50) * k).toFixed(2)}%;opacity:${at(t, 0.4, 0.8 + i * 0.18).toFixed(3)};transform:scale(${((0.72 + 0.28 * easeOut(p)) * (on ? 1.14 : 1)).toFixed(3)})`);
+          });
+          cards.forEach((c, i) => {
+            const p = at(t, 0.8, 1.5 + i * 0.16);
+            const on = i === hotEnd && t > 1.6;
+            S(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 18 - (on ? 10 : 0)).toFixed(1)}px) rotate(${((1 - p) * (i ? 3 : -3)).toFixed(2)}deg)`);
+          });
+          if (rread) {
+            const rx = readX;
+            if (rx == null || t < 1.4) S(rread, "opacity:0");
+            else S(rread, `left:${(rx * 100).toFixed(2)}%;opacity:${at(t, 0.3, 1.4).toFixed(3)}`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("genres");
+      const rows = qsa(s, ".yb-grow");
+      const cvNet = canvas(s, "net");
+      const netKeys = data.genres.slice(0, 8).map((g) => g.name);
+      const pairs = data.genrePairs.filter((pr) => netKeys.includes(pr.a) && netKeys.includes(pr.b));
+      const pairMax = Math.max(1, ...pairs.map((pr) => pr.n));
+      const widths = rows.map((r) => {
+        var _a2;
+        return ((_a2 = r.querySelector(".yb-gbar")) == null ? void 0 : _a2.style.getPropertyValue("--w")) || "0%";
+      });
+      const nums = data.genres.slice(0, 8).map((g) => g.films.length);
+      let focus = -1;
+      let nodeAt = [];
+      out.set("genres", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const row = under(p, ".yb-grow");
+          if (row) {
+            focus = Number((_a2 = row.dataset.i) != null ? _a2 : -1);
+            return;
+          }
+          focus = nearest(nodeAt, localAt(cvNet == null ? void 0 : cvNet.el, p), 0.14);
+        },
+        update({ t, pal }) {
+          const hot = t > 2.2 ? focus : -1;
+          if (cvNet) {
+            cvNet.fit();
+            cvNet.clear();
+            const ctx = cvNet.ctx, w = cvNet.w, h = cvNet.h;
+            const R = Math.min(w, h) * 0.34, cx = w / 2, cy = h / 2;
+            const pos = netKeys.map((_, i) => {
+              const a = -Math.PI / 2 + i / netKeys.length * Math.PI * 2;
+              return [cx + Math.cos(a) * R, cy + Math.sin(a) * R];
+            });
+            nodeAt = pos.map(([x, y]) => ({ x: x / Math.max(1, w), y: y / Math.max(1, h) }));
+            pairs.forEach((pr, i) => {
+              const a = netKeys.indexOf(pr.a), b = netKeys.indexOf(pr.b);
+              const draw = easeInOut(at(t, 0.7, 0.5 + i * 0.06));
+              if (draw <= 0) return;
+              const touch = hot >= 0 && (a === hot || b === hot);
+              const [x1, y1] = pos[a], [x2, y2] = pos[b];
+              const mx = lerp(x1, x2, draw), my = lerp(y1, y2, draw);
+              const wgt = pr.n / pairMax;
+              ctx.strokeStyle = touch ? rgba(pal.redRgb, 0.82) : rgba(wgt > 0.6 ? pal.redRgb : pal.inkRgb, (0.1 + 0.32 * wgt) * (hot >= 0 ? 0.28 : 1));
+              ctx.lineWidth = (0.7 + 2.6 * wgt) * (touch ? 1.8 : 1);
+              ctx.beginPath();
+              ctx.moveTo(x1, y1);
+              ctx.lineTo(mx, my);
+              ctx.stroke();
+            });
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            netKeys.forEach((k, i) => {
+              const p = at(t, 0.5, 0.5 + i * 0.06);
+              if (p <= 0) return;
+              const [x, y] = pos[i];
+              const on = i === hot;
+              const rad = (3 + 5 * (nums[i] / Math.max(1, nums[0]))) * (on ? 1.7 : 1);
+              ctx.globalAlpha = p * (hot >= 0 && !on ? 0.42 : 1);
+              ctx.fillStyle = on ? pal.red : pal.paper;
+              ctx.beginPath();
+              ctx.arc(x, y, rad, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.strokeStyle = on ? pal.red : rgba(pal.inkRgb, 0.5);
+              ctx.lineWidth = on ? 2 : 1.2;
+              ctx.stroke();
+              ctx.fillStyle = on ? pal.red : rgba(pal.inkRgb, 0.82);
+              ctx.font = `${Math.round(Math.max(11, Math.min(w, h) * 0.045) * (on ? 1.06 : 1))}px "Segoe UI", system-ui, sans-serif`;
+              ctx.fillText(k, x, y + rad + 10);
+              ctx.globalAlpha = 1;
+            });
+          }
+          rows.forEach((row, i) => {
+            const p = stagger(t, i, 0.09, 0.8);
+            const on = i === hot;
+            S(row.querySelector(".yb-gbar"), `width:${widths[i]};transform:scaleX(${(easeOut(p) * (on ? 1.04 : 1)).toFixed(4)});transform-origin:left center;opacity:${on ? 1 : hot >= 0 ? 0.5 : 1}`);
+            const scan = i === 0 && t > 1.3 ? (t - 1.3) % 3.4 / 3.4 : 0;
+            S(row, `opacity:${at(t, 0.4, i * 0.09).toFixed(3)};transform:translateX(${((1 - easeOut(at(t, 0.6, i * 0.09))) * -16).toFixed(1)}px);--scan:${scan.toFixed(4)}`);
+            T(row.querySelector(".yb-gn"), String(Math.round(nums[i] * easeOut(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("flow");
+      const cv = canvas(s, "flow");
+      const legend = qsa(s, ".yb-lg");
+      const keys = data.genres.slice(0, 5).map((g) => g.name);
+      const years = data.years.map((y) => y.y);
+      const series = keys.map((k) => data.years.map((y) => y.films.filter((f) => {
+        var _a2;
+        return String((_a2 = f.genre) != null ? _a2 : "").split(/\s*\/\s*/).includes(k);
+      }).length));
+      const maxTotal = Math.max(1, ...years.map((_, i) => series.reduce((s2, arr) => s2 + arr[i], 0)));
+      const triplets = (pal) => [pal.goldRgb, pal.redRgb, pal.blueRgb, pal.jadeRgb, pal.inkRgb];
+      let atFlow = null;
+      out.set("flow", {
+        dur: 3.4,
+        move(p) {
+          atFlow = localAt(cv == null ? void 0 : cv.el, p);
+        },
+        update({ t, pal }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const padT = h * 0.12, padB = h * 0.12;
+            const X = (i) => i / Math.max(1, years.length - 1) * w;
+            const g = easeInOut(at(t, 2));
+            const wake = (i) => {
+              if (!atFlow) return 0;
+              const dx = X(i) / Math.max(1, w) - atFlow.x;
+              return Math.exp(-(dx * dx) / 0.01) * (atFlow.y - 0.5) * h * 0.2;
+            };
+            const wob = (i, j) => t > 2 ? Math.sin(t * 0.7 + j * 1.3 + i * 0.5) * h * 8e-3 : 0;
+            const at3 = triplets(pal);
+            ctx.strokeStyle = rgba(pal.inkRgb, 0.2);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, h - padB);
+            ctx.lineTo(w * g, h - padB);
+            ctx.stroke();
+            const yOf = (i, j, which) => {
+              const acc = series[j][i] + (which === "bot" ? 0 : 0);
+              const below = series.slice(0, j).reduce((s2, arr) => s2 + arr[i], 0);
+              const up = (below + acc) / maxTotal;
+              const dn = below / maxTotal;
+              return h - padB - (which === "top" ? up : dn) * (h - padT - padB) + wob(i, j) + wake(i);
+            };
+            for (let j = 0; j < series.length; j++) {
+              ctx.beginPath();
+              for (let i = 0; i < years.length; i++) (i ? ctx.lineTo : ctx.moveTo).call(ctx, X(i), yOf(i, j, "top"));
+              for (let i = years.length - 1; i >= 0; i--) ctx.lineTo(X(i), yOf(i, j, "bot"));
+              ctx.closePath();
+              ctx.fillStyle = rgba(at3[j], 0.48);
+              ctx.fill();
+              ctx.strokeStyle = rgba(at3[j], 0.9);
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+            }
+            ctx.strokeStyle = rgba(pal.inkRgb, 0.12);
+            for (let i = 0; i < years.length; i++) {
+              if (X(i) > w * g) break;
+              ctx.beginPath();
+              ctx.moveTo(X(i), padT * 0.55);
+              ctx.lineTo(X(i), h - padB);
+              ctx.stroke();
+            }
+            if (g < 1) {
+              ctx.fillStyle = rgba(pal.redRgb, 0.85);
+              ctx.beginPath();
+              ctx.arc(w * g, padT, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          legend.forEach((el, i) => {
+            const p = at(t, 0.5, 1.9 + i * 0.1);
+            S(el, `opacity:${p.toFixed(3)};transform:translateX(${((1 - easeOut(p)) * -10).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("regions");
+      const stamps = qsa(s, ".yb-stamp");
+      const rings = stamps.map((el) => el.querySelector(".yb-stamp-ring"));
+      let hotStamp = -1;
+      out.set("regions", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-stamp");
+          hotStamp = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          stamps.forEach((el, i) => {
+            const p = stagger(t, i, 0.13, 0.55);
+            const k = easeBack(p);
+            const rot = vOf(el, "--rot", 0);
+            const on = i === hotStamp && t > 1.4;
+            S(el, `opacity:${(Math.min(1, p * 1.7) * (hotStamp >= 0 && !on ? 0.4 : 1)).toFixed(3)};transform:translate(-50%,-50%) rotate(${(rot * (0.4 + 0.6 * easeOut(p)) * (on ? 0.92 : 1)).toFixed(2)}deg) scale(${((1.34 - 0.34 * k) * (on ? 1.14 : 1)).toFixed(3)})` + (on ? ";z-index:3;filter:brightness(1.1)" : ""));
+            const rp = at(t, 0.7, 0.1 + i * 0.13);
+            S(rings[i], `opacity:${((1 - rp) * 0.8).toFixed(3)};transform:scale(${(0.5 + rp * 1.5).toFixed(3)})`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("eras");
+      const cv = canvas(s, "eras");
+      const dense = s.querySelector('[data-r="denseY"]');
+      const side = s.querySelector(".yb-era-side");
+      const ry = data.releaseYears;
+      const wy = data.years.map((y2) => ({ y: y2.y, n: y2.films.length }));
+      const maxN = Math.max(1, ...ry.map((r) => r.n));
+      const maxW = Math.max(1, ...wy.map((r) => r.n));
+      const denseY = ry.reduce((b, r) => r.n > b.n ? r : b, (_a = ry[0]) != null ? _a : { y: 0, n: 0 });
+      T(dense, `${denseY.y} 年 · ${denseY.n} 部`);
+      let atEra = null;
+      out.set("eras", {
+        dur: 3.2,
+        move(p) {
+          atEra = localAt(cv == null ? void 0 : cv.el, p);
+        },
+        update({ t, pal }) {
+          var _a2, _b, _c, _d;
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const mid = h * 0.34, mid2 = h * 0.7, amp = h * 0.26, amp2 = h * 0.2;
+            const g = easeInOut(at(t, 1.9));
+            const X = (i) => i / Math.max(1, ry.length - 1) * w;
+            const wake = (u, k) => {
+              if (!atEra) return 0;
+              const dx = u - atEra.x;
+              return Math.exp(-(dx * dx) / 0.012) * (atEra.y - 0.5) * h * 0.22 * k;
+            };
+            const Y = (n, i) => mid - n / maxN * amp + wake(X(i) / Math.max(1, w), 1);
+            const X2 = (i) => i / Math.max(1, wy.length - 1) * w * 0.82 + w * 0.18;
+            const Y2 = (n, i) => mid2 - n / maxW * amp2 + wake(X2(i) / Math.max(1, w), 0.5);
+            const upto = Math.max(1, Math.floor(g * (ry.length - 1)));
+            ctx.beginPath();
+            ctx.moveTo(X2(0), Y2((_b = (_a2 = wy[0]) == null ? void 0 : _a2.n) != null ? _b : 0, 0));
+            for (let i = 0; i < wy.length; i++) {
+              const px2 = X2(i), py2 = Y2(wy[i].n, i);
+              const nx2 = X2(Math.min(wy.length - 1, i + 1)), ny2 = Y2(wy[Math.min(wy.length - 1, i + 1)].n, Math.min(wy.length - 1, i + 1));
+              ctx.bezierCurveTo((px2 + nx2) / 2, py2, (px2 + nx2) / 2, ny2, nx2, ny2);
+            }
+            const tip2 = X2(Math.max(0, Math.floor(g * (wy.length - 1))));
+            ctx.lineTo(tip2, mid2 + amp2 * 0.6);
+            ctx.lineTo(X2(0), mid2 + amp2 * 0.6);
+            ctx.closePath();
+            const grad2 = ctx.createLinearGradient(0, mid2 - amp2, 0, mid2 + amp2 * 0.6);
+            grad2.addColorStop(0, rgba(pal.blueRgb, 0.3));
+            grad2.addColorStop(1, rgba(pal.blueRgb, 0));
+            ctx.fillStyle = grad2;
+            ctx.fill();
+            ctx.beginPath();
+            for (let i = 0; i < wy.length; i++) {
+              const px2 = X2(i), py2 = Y2(wy[i].n, i);
+              const nx2 = X2(Math.min(wy.length - 1, i + 1)), ny2 = Y2(wy[Math.min(wy.length - 1, i + 1)].n, Math.min(wy.length - 1, i + 1));
+              if (i === 0) ctx.moveTo(px2, py2);
+              ctx.bezierCurveTo((px2 + nx2) / 2, py2, (px2 + nx2) / 2, ny2, nx2, ny2);
+            }
+            ctx.strokeStyle = rgba(pal.blueRgb, 0.9);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(0, Y((_d = (_c = ry[0]) == null ? void 0 : _c.n) != null ? _d : 0, 0));
+            for (let i = 0; i <= upto; i++) {
+              const px = X(i), py = Y(ry[i].n, i);
+              const nx = X(Math.min(ry.length - 1, i + 1)), ny = Y(ry[Math.min(ry.length - 1, i + 1)].n, Math.min(ry.length - 1, i + 1));
+              ctx.bezierCurveTo((px + nx) / 2, py, (px + nx) / 2, ny, nx, ny);
+            }
+            const tipX = X(upto);
+            ctx.lineTo(tipX, mid + amp * 0.5);
+            ctx.lineTo(0, mid + amp * 0.5);
+            ctx.closePath();
+            const grad = ctx.createLinearGradient(0, mid - amp, 0, mid + amp * 0.5);
+            grad.addColorStop(0, rgba(pal.blueRgb, 0.26));
+            grad.addColorStop(1, rgba(pal.blueRgb, 0));
+            ctx.fillStyle = grad;
+            ctx.fill();
+            ctx.beginPath();
+            for (let i = 0; i <= upto; i++) {
+              const px = X(i), py = Y(ry[i].n, i);
+              const nx = X(Math.min(ry.length - 1, i + 1)), ny = Y(ry[Math.min(ry.length - 1, i + 1)].n, Math.min(ry.length - 1, i + 1));
+              if (i === 0) ctx.moveTo(px, py);
+              ctx.bezierCurveTo((px + nx) / 2, py, (px + nx) / 2, ny, nx, ny);
+            }
+            ctx.strokeStyle = rgba(pal.blueRgb, 0.92);
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            if (t > 1.7) {
+              for (let i = 0; i < 64; i++) {
+                const u = (i * 37 % ry.length / ry.length + (t - 1.7) * 0.05) % 1;
+                const idx = Math.min(ry.length - 1, Math.round(u * (ry.length - 1)));
+                const py = mid - ry[idx].n / maxN * amp * (1 + 0.05 * Math.sin(t * 1.4 + i)) + wake(u, 1);
+                ctx.fillStyle = rgba(pal.blueRgb, 0.38);
+                ctx.beginPath();
+                ctx.arc(u * w, py - 3, 1.3, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            } else {
+              const hx = w * g;
+              ctx.fillStyle = rgba(pal.redRgb, 0.9);
+              ctx.beginPath();
+              ctx.arc(hx, mid, 3, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+          S(side, `opacity:${at(t, 0.6, 0.6).toFixed(3)}`);
+        }
+      });
+    }
+    {
+      const s = scn("age");
+      const bands = qsa(s, ".yb-aband");
+      const dots = qsa(s, ".yb-adot");
+      const rule = s.querySelector(".yb-ageax-rule");
+      const ticks = qsa(s, ".yb-atick");
+      const side = s.querySelector(".yb-ageax-side");
+      const order = dots.map((_, i) => i).sort((a, b) => b - a);
+      const rank = /* @__PURE__ */ new Map();
+      order.forEach((idx, k) => rank.set(idx, k));
+      let hotDot = -1;
+      out.set("age", {
+        dur: 3.4,
+        move(p) {
+          var _a2;
+          const dot = under(p, ".yb-adot");
+          hotDot = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
+          if (dot == null ? void 0 : dot.dataset.tip) tip(host, dot.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          bands.forEach((b, i) => S(b, `opacity:${at(t, 0.5, 0.1 + i * 0.1).toFixed(3)}`));
+          qsa(s, ".yb-aleg").forEach((el, i) => S(el, `opacity:${at(t, 0.4, 0.4 + i * 0.1).toFixed(3)}`));
+          S(rule, `transform:scaleX(${easeInOut(at(t, 0.8, 0.1)).toFixed(4)});transform-origin:left center`);
+          ticks.forEach((el, i) => S(el, `opacity:${at(t, 0.4, 0.5 + i * 0.08).toFixed(3)}`));
+          const hover = t > 1.6 ? hotDot : -1;
+          dots.forEach((d, i) => {
+            var _a2;
+            const k = (_a2 = rank.get(i)) != null ? _a2 : i;
+            const p = at(t, 0.5, 0.35 + k * 0.017);
+            const on = i === hover;
+            S(d, `opacity:${(on ? 1 : p * (hover >= 0 ? 0.45 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(p)) * 9 - (on ? 6 : 0)).toFixed(1)}px) scale(${(on ? 1.9 : 0.7 + 0.3 * easeOut(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+          });
+          S(side, `opacity:${at(t, 0.6, 0.6).toFixed(3)}`);
+        }
+      });
+    }
+    {
+      const s = scn("myrate");
+      const plot = s.querySelector('[data-r="plot"]');
+      const dots = qsa(s, ".yb-sdot2");
+      const rows = qsa(s, ".yb-erow");
+      const smean = s.querySelector('[data-r="smean"]');
+      const flap = s.querySelector('[data-r="flap"]');
+      const widths = rows.map((r) => r.style.getPropertyValue("--w"));
+      let flapDone = false;
+      let hotDot = -1, hotScore = -1;
+      out.set("myrate", {
+        dur: 3.6,
+        move(p) {
+          var _a2, _b, _c;
+          const dot = under(p, ".yb-sdot2");
+          hotDot = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
+          const rowEl = under(p, ".yb-erow");
+          hotScore = rowEl ? Number((_b = rowEl.dataset.i) != null ? _b : -1) : -1;
+          const dotTip = dot == null ? void 0 : dot.dataset.tip;
+          if (dotTip) tip(host, dotTip, p.cx, p.cy);
+          else if (rowEl) tip(host, `<b>${hotScore}</b> 分 · ${(_c = data.myHist[hotScore]) != null ? _c : 0} 部`, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, py }) {
+          const hover = t > 2.2 ? hotDot : -1;
+          dots.forEach((d, i) => {
+            const p2 = at(t, 0.5, 0.3 + i * 42e-4);
+            const k = easeOut(p2);
+            const on = i === hover;
+            S(d, `opacity:${(p2 * 0.95 * (on ? 1 : hover >= 0 ? 0.35 : 1)).toFixed(3)};transform:translateY(${((1 - k) * -12 - (on ? 5 : 0)).toFixed(1)}px) scale(${((0.6 + 0.4 * easeBack(p2)) * (on ? 2.1 : 1)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+          });
+          rows.forEach((r, i) => {
+            var _a2;
+            const p2 = at(t, 0.5, 0.8 + i * 0.05);
+            const on = hotScore === Number((_a2 = r.dataset.i) != null ? _a2 : -1);
+            S(r.querySelector('[data-r="ebar"]'), `width:${widths[i]};transform:scaleX(${(easeOut(p2) * (on ? 1.05 : 1)).toFixed(4)});transform-origin:left center`);
+            S(r, `opacity:${(at(t, 0.3, 0.8 + i * 0.05) * (hotScore >= 0 && !on ? 0.45 : 1)).toFixed(3)}`);
+          });
+          const lp = easeInOut(at(t, 0.8, 1.9));
+          const y = vOf(smean, "--y", 50);
+          S(smean, `bottom:calc(2.4em + ${(y * lp).toFixed(2)}% * (100% - 2.4em) / 100%);opacity:${at(t, 0.4, 1.9).toFixed(3)}`);
+          if (plot) S(plot, `transform:perspective(1200px) rotateY(${(py * 1.6).toFixed(2)}deg)`);
+          if (t < 0.1) flapDone = false;
+          if (!flapDone && t > 2.4) {
+            setFlap(flap, data.avgMine.toFixed(2));
+            flapDone = true;
+          }
+        }
+      });
+    }
+    {
+      const s = scn("mirror");
+      const ups = qsa(s, ".yb-mcol.up"), downs = qsa(s, ".yb-mcol.down");
+      const upPh = ups.map((c) => c.style.getPropertyValue("--ph"));
+      const dnPh = downs.map((c) => c.style.getPropertyValue("--ph"));
+      const means = qsa(s, ".yb-mir-mean");
+      const mx = means.map((m) => vOf(m, "--x", 50));
+      const dbN = data.dbHist.slice(), myN = data.myHist.slice();
+      const flapDb = s.querySelector('[data-r="flapDb"]');
+      const flapMine = s.querySelector('[data-r="flapMine"]');
+      let flapDone = false;
+      let hotScore = -1;
+      out.set("mirror", {
+        dur: 3,
+        move(p) {
+          var _a2, _b, _c;
+          const col = under(p, ".yb-mcol");
+          hotScore = col ? Number((_a2 = col.dataset.i) != null ? _a2 : -1) : -1;
+          if (hotScore >= 0) tip(host, `<b>${hotScore}</b> 分 · 我的 ${(_b = myN[hotScore]) != null ? _b : 0} 部 · 豆瓣 ${(_c = dbN[hotScore]) != null ? _c : 0} 部`, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          const hot = t > 2.2 ? hotScore : -1;
+          const draw = (list, phs, nums, origin) => list.forEach((c, i) => {
+            if (!phs[i]) return;
+            const p = stagger(t, i, 0.06, 0.8);
+            const on = i === hot;
+            S(c.querySelector(".yb-mbar"), `height:${phs[i]};transform:scaleY(${(easeOut(p) * (on ? 1.06 : 1)).toFixed(4)});transform-origin:${origin};opacity:${on ? 1 : hot >= 0 ? 0.45 : 1}`);
+            S(c, `opacity:${at(t, 0.3, i * 0.06).toFixed(3)}`);
+            const v = Math.round(nums[i] * easeOut(p));
+            T(c.querySelector(".yb-mn"), v ? String(v) : "");
+          });
+          draw(ups, upPh, dbN, "bottom center");
+          draw(downs, dnPh, myN, "top center");
+          means.forEach((m, i) => {
+            const p = easeInOut(at(t, 0.9, 1.2 + i * 0.15));
+            S(m, `left:${(mx[i] * p).toFixed(2)}%;opacity:${at(t, 0.4, 1.2 + i * 0.15).toFixed(3)}`);
+          });
+          const gp = at(t, 0.6, 2);
+          S(s.querySelector(".yb-mir-gap"), `opacity:${gp.toFixed(3)};transform:scale(${(0.9 + 0.1 * easeBack(gp)).toFixed(3)})`);
+          if (t < 0.1) flapDone = false;
+          if (!flapDone && t > 2) {
+            setFlap(flapDb, data.avgDb.toFixed(2));
+            setFlap(flapMine, data.avgMine.toFixed(2));
+            flapDone = true;
+          }
+        }
+      });
+    }
+    {
+      const s = scn("balance");
+      const beam = s.querySelector('[data-r="beam"]');
+      const arm = s.querySelector('[data-r="arm"]');
+      const pans = qsa(s, ".yb-bal-pan");
+      const rows = qsa(s, ".yb-drow");
+      const lists = s.querySelector(".yb-bal-lists");
+      const tilt = vOf(beam, "--tilt", 0);
+      let hoverPan = -1, pressPan = -1, shown = 0;
+      const panOf = (p) => {
+        const el = under(p, ".yb-bal-pan");
+        return el ? el.classList.contains("l") ? 0 : 1 : -1;
+      };
+      out.set("balance", {
+        dur: 3,
+        move(p) {
+          hoverPan = panOf(p);
+        },
+        down(p) {
+          pressPan = panOf(p);
+        },
+        up() {
+          pressPan = -1;
+        },
+        update({ t }) {
+          const p = at(t, 2);
+          const extra = pressPan === 0 ? 0.55 : pressPan === 1 ? -0.55 : hoverPan === 0 ? 0.16 : hoverPan === 1 ? -0.16 : 0;
+          shown = p < 1 ? tilt * spring(p, 3.4, 2.2) : toward(shown, tilt + extra, pressPan >= 0 ? 0.05 : 0.12) + Math.sin(t * 1.1) * 0.012;
+          const deg = -shown * 9;
+          S(arm, `transform:rotate(${deg.toFixed(3)}deg)`);
+          pans.forEach((pan, i) => {
+            const base = i === 0 ? "left:17%;right:auto" : "left:auto;right:17%";
+            const on = i === pressPan || pressPan < 0 && i === hoverPan;
+            S(pan, `${base};opacity:${at(t, 0.5, 0.5 + i * 0.15).toFixed(3)}` + (on ? ";filter:brightness(1.12);cursor:grab" : ""));
+          });
+          rows.forEach((r, i) => {
+            const q = stagger(t, i, 0.07, 0.6);
+            S(r, `opacity:${q.toFixed(3)};transform:translateX(${((1 - easeOut(q)) * 14).toFixed(1)}px)`);
+          });
+          S(lists, `opacity:${at(t, 0.5, 1).toFixed(3)}`);
+        }
+      });
+    }
+    {
+      const s = scn("podium");
+      const slots = qsa(s, ".yb-pod-slot");
+      const cards = qsa(s, ".yb-pod");
+      const rings = cards.map((c) => c.querySelector(".yb-pod-ring"));
+      const beam = s.querySelector('[data-r="beam"]');
+      let hotPod = -1;
+      out.set("podium", {
+        dur: 3.6,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-pod");
+          hotPod = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+        },
+        update({ t, px, py }) {
+          slots.forEach((slot, i) => {
+            var _a2;
+            const rank = Number((_a2 = slot.dataset.i) != null ? _a2 : 0);
+            const delay = 0.15 + rank * 0.28;
+            const rise = easeOut(at(t, 0.75, delay));
+            S(slot, `opacity:${at(t, 0.4, delay).toFixed(3)}`);
+            const block = slot.querySelector(".yb-pod-block");
+            S(block, `transform:translateY(${((1 - rise) * 42).toFixed(1)}px);opacity:${(0.2 + 0.8 * rise).toFixed(3)}`);
+            const card = cards[i];
+            const cp = at(t, 0.95, delay + 0.45);
+            const ck = easeOut(cp);
+            const ringP = at(t, 1.2, delay + 0.8);
+            S(rings[i], `opacity:${((1 - ringP) * 0.9).toFixed(3)};transform:scale(${(0.4 + ringP * 1.4).toFixed(3)})`);
+            if (t > 2.2) {
+              const shine = ((t - 2.2 + i * 0.7) % 4.2 / 4.2).toFixed(4);
+              const float = Math.sin((t - 2.2) * 1.2 + i) * 1.8;
+              const on = i === hotPod;
+              S(card, `opacity:1;transform:translate(${(-px * 5 + (on ? 0 : 0)).toFixed(2)}px,${(float - py * 3.4 - (on ? 10 : 0)).toFixed(2)}px) scale(${on ? 1.045 : 1});--shine:${shine}` + (on ? ";z-index:3" : ""));
+            } else {
+              S(card, `opacity:${Math.min(1, cp * 1.9).toFixed(3)};transform:translate3d(0,${((1 - ck) * 30).toFixed(1)}px,${((1 - ck) * -170).toFixed(0)}px) scale(${(1.3 - 0.3 * ck).toFixed(3)})`);
+            }
+          });
+          if (beam) S(beam, `opacity:${(at(t, 0.8, 2.1) * (t > 2.6 ? 0.72 + 0.28 * Math.sin((t - 2.6) * 1.4) : 1)).toFixed(3)}` + (t > 2.2 ? `;transform:translateX(${(px * 26).toFixed(1)}px)` : ""));
+        }
+      });
+    }
+    {
+      const s = scn("ninewall");
+      const grid = s.querySelector('[data-r="grid"]');
+      const tiles = qsa(s, ".yb-tile");
+      const cols = 9;
+      let hotTile = -1;
+      out.set("ninewall", {
+        dur: 3.4,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-tile");
+          hotTile = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+        },
+        update({ t, px, py }) {
+          tiles.forEach((el, i) => {
+            const r = Math.floor(i / cols), c = i % cols;
+            const p = at(t, 0.62, 0.25 + (r + c) * 0.055);
+            const k = easeOut(p);
+            const on = i === hotTile;
+            S(el, `opacity:${k.toFixed(3)};transform:perspective(700px) rotateY(${((1 - k) * 68).toFixed(2)}deg) translateY(${((1 - k) * 14 - (on ? 8 : 0)).toFixed(1)}px) scale(${((0.86 + 0.14 * k) * (on ? 1.06 : 1)).toFixed(3)})` + (on ? ";z-index:3;filter:brightness(1.06)" : ""));
+          });
+          S(grid, `--sweep:${(t > 1.7 ? (t - 1.7) % 5 / 5 : -1).toFixed(4)}` + (t > 2.2 ? `;transform:perspective(1400px) rotateX(${(-py * 2.4).toFixed(2)}deg) rotateY(${(px * 2.8).toFixed(2)}deg)` : ""));
+        }
+      });
+    }
+    {
+      const s = scn("directors");
+      const rows = qsa(s, ".yb-prow");
+      const shotsRow = rows.map((r) => qsa(r, ".yb-pshots i"));
+      let hotRow = -1;
+      out.set("directors", {
+        dur: 2.9,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-prow");
+          hotRow = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+        },
+        update({ t, px }) {
+          const hot = t > 1.8 ? hotRow : -1;
+          rows.forEach((row, i) => {
+            const p = stagger(t, i, 0.11, 0.7);
+            const on = i === hot;
+            S(row, `opacity:${(at(t, 0.4, i * 0.11) * (hot >= 0 && !on ? 0.4 : 1)).toFixed(3)};transform:translateX(${((1 - easeOut(p)) * 34 - (on ? 12 : 0) - px * 3).toFixed(1)}px)`);
+            S(row.querySelector(".yb-pbar"), `transform:scaleX(${(easeOut(p) * (on ? 1.03 : 1)).toFixed(4)});transform-origin:left center`);
+            shotsRow[i].forEach((shot, j) => {
+              const q = stagger(t, j, 0.06, 0.5);
+              const spread = on ? j * 5 : 0;
+              S(shot, `opacity:${q.toFixed(3)};transform:translate(${spread.toFixed(1)}px,${((1 - easeOut(q)) * 8 - (on ? Math.abs(j - 1.5) * 1.2 : 0)).toFixed(1)}px)` + (on ? ` rotate(${(j - 1.5) * 2.2}deg) scale(1.06)` : ""));
+            });
+          });
+        }
+      });
+    }
+    {
+      const s = scn("actors");
+      const cards = qsa(s, ".yb-acard");
+      const arc = s.querySelector('[data-r="arc"]');
+      const mid = (cards.length - 1) / 2;
+      let hotCard = -1;
+      out.set("actors", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-acard");
+          hotCard = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+        },
+        update({ t, px }) {
+          const tw = t > 1.8 ? px : 0;
+          S(arc, `transform:translateX(${(tw * 10).toFixed(1)}px) rotate(${(tw * 1.5).toFixed(2)}deg)`);
+          cards.forEach((c, i) => {
+            const p = at(t, 0.95, i * 0.13);
+            const k = easeOut(p);
+            const breath = t > 1.4 ? Math.sin((t - 1.4) * 1.1 + i * 0.7) * 0.45 : 0;
+            const d = hotCard < 0 ? 0 : i - hotCard;
+            const stand = d === 0 ? -0.9 : Math.abs(d) === 1 ? 0.35 : 0;
+            S(c, `opacity:${Math.min(1, p * 1.5).toFixed(3)};--dy:${((1 - k) * 16 + stand).toFixed(2)}em;--br:${breath.toFixed(2)}em` + (p >= 1 ? "" : `;transform:scale(${(0.9 + 0.1 * k).toFixed(3)})`) + (d === 0 ? ";z-index:3" : ""));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("series");
+      const groups = qsa(s, ".yb-ser");
+      const stacks = groups.map((g) => qsa(g, ".yb-ser-c"));
+      let hotSer = -1;
+      out.set("series", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-ser");
+          hotSer = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+        },
+        update({ t }) {
+          const hot = t > 1.8 ? hotSer : -1;
+          groups.forEach((g, gi) => {
+            const gp = at(t, 0.6, gi * 0.18);
+            const on = gi === hot;
+            S(g, `opacity:${(gp * (hot >= 0 && !on ? 0.42 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(gp)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
+            stacks[gi].forEach((c, j) => {
+              const p = at(t, 0.8, 0.25 + gi * 0.18 + j * 0.07);
+              const k = easeBack(p);
+              const fan = on ? 1.55 : 1;
+              const ang = j * 7.5 * k * fan + (t > 1.8 ? Math.sin((t - 1.8) * 1.1 + j * 0.5 + gi) * 0.7 : 0);
+              S(c, `opacity:${clamp01(p).toFixed(3)};transform:translateX(${(j * 16 * k * fan).toFixed(1)}px) translateY(${(-j * 3 * k * fan).toFixed(1)}px) rotate(${ang.toFixed(2)}deg) scale(${on ? 1.03 : 1})`);
+            });
+          });
+        }
+      });
+    }
+    {
+      const s = scn("binge");
+      const rows = qsa(s, ".yb-eprow");
+      let hotEp = -1;
+      out.set("binge", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-eprow");
+          hotEp = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          const e = hotEp >= 0 ? data.episodes[hotEp] : null;
+          if (e) tip(host, `${esc0(e.base)} · ${e.ep} 集`, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          const hot = t > 1.8 ? hotEp : -1;
+          rows.forEach((row, i) => {
+            const e = data.episodes[i];
+            if (!e) return;
+            const p = stagger(t, i, 0.14, 1.1);
+            const on = i === hot;
+            S(row.querySelector(".yb-eptape"), `transform:scaleX(${(easeInOut(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center`);
+            S(row, `opacity:${(at(t, 0.4, i * 0.14) * (hot >= 0 && !on ? 0.42 : 1)).toFixed(3)}`);
+            S(row.querySelector(".yb-eptick"), `opacity:${on ? 1 : 0.5};transform:scale(${on ? 2.2 : 1})`);
+            T(row.querySelector(".yb-epn b"), String(Math.round(e.ep * easeOut(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("notes");
+      const notes = qsa(s, ".yb-note");
+      const paras = notes.map((n) => n.querySelector('[data-r="ntx"]'));
+      const KEY = ["喜欢", "好看", "感动", "治愈", "孤独", "时间", "自由", "生活", "我们", "自己", "温柔", "漫长"];
+      const re = new RegExp(`(${KEY.join("|")})`, "g");
+      const full = paras.map((p) => {
+        var _a2;
+        return (_a2 = p == null ? void 0 : p.dataset.full) != null ? _a2 : "";
+      });
+      const chars = full.map((f) => [...f]);
+      let hotNote = -1, notePtr = null;
+      out.set("notes", {
+        dur: 4.4,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-note");
+          hotNote = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          notePtr = p;
+        },
+        update({ t }) {
+          const hot = t > 1.6 ? hotNote : -1;
+          notes.forEach((n, i) => {
+            const cardP = at(t, 0.5, i * 0.5);
+            const on = i === hot;
+            const l = on && notePtr ? localAt(n, notePtr) : null;
+            const ry = l ? (l.x - 0.5) * 9 : 0, rx = l ? (0.5 - l.y) * 7 : 0;
+            S(n, `opacity:${(cardP * (hot >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut(cardP)) * 16 - (on ? 6 : 0)).toFixed(1)}px)` + (on ? ` perspective(900px) rotateY(${ry.toFixed(2)}deg) rotateX(${rx.toFixed(2)}deg)` : "") + (on ? ";z-index:3" : ""));
+            const p = paras[i];
+            if (!p) return;
+            const cps = chars[i];
+            const typed = Math.floor(clamp01((t - (i * 0.5 + 0.3)) / (cps.length * 0.026)) * cps.length);
+            const done = typed >= cps.length;
+            const html = esc0(cps.slice(0, typed).join("")).replace(re, "<mark>$1</mark>") + (done ? '<i class="yb-caret done"></i>' : '<i class="yb-caret"></i>');
+            if (p.dataset.shown !== html) {
+              p.dataset.shown = html;
+              p.innerHTML = html;
+            }
+          });
+        }
+      });
+    }
+    {
+      const s = scn("quotes");
+      const lanes = qsa(s, ".yb-lane");
+      const quotes = lanes.map((l) => qsa(l, ".yb-quote"));
+      const laneOff = [0, 0, 0];
+      const SPAN = 420;
+      let lastT = 0, hotLane = -1, hotQuote = null;
+      out.set("quotes", {
+        dur: 2,
+        move(p) {
+          var _a2, _b;
+          const el = under(p, ".yb-quote");
+          hotQuote = el;
+          hotLane = el ? Number((_b = (_a2 = el.closest(".yb-lane")) == null ? void 0 : _a2.dataset.i) != null ? _b : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          const dt = Math.max(0, Math.min(0.12, t - lastT));
+          lastT = t;
+          if (t < 0.1) {
+            laneOff[0] = laneOff[1] = laneOff[2] = 0;
+          }
+          lanes.forEach((lane, i) => {
+            const dir = i % 2 === 0 ? -1 : 1;
+            const speed = (14 + i * 8) * (i === hotLane ? 0.12 : 1);
+            laneOff[i] = (laneOff[i] + dt * speed * dir) % SPAN;
+            S(lane, `transform:translateY(${laneOff[i].toFixed(1)}px)`);
+            quotes[i].forEach((qt, j) => {
+              const on = qt === hotQuote;
+              S(qt, `opacity:${(at(t, 0.5, 0.1 + j * 0.09) * (on ? 1 : hotLane >= 0 && hotLane === i ? 0.42 : 0.94)).toFixed(3)}` + (on ? ";transform:scale(1.04)" : ";transform:none"));
+            });
+          });
+        }
+      });
+    }
+    {
+      const s = scn("matrix");
+      const cv = canvas(s, "matrix");
+      const m = data.matrix;
+      const colLabels = qsa(s, ".yb-mx-cols span");
+      const rowLabels = qsa(s, ".yb-mx-rows span");
+      let hotCell = null;
+      out.set("matrix", {
+        dur: 3.4,
+        move(p) {
+          const l = localAt(cv == null ? void 0 : cv.el, p);
+          if (!l) {
+            hotCell = null;
+            tip(host, "");
+            return;
+          }
+          const c = Math.min(m.cols.length - 1, Math.max(0, Math.floor(l.x * m.cols.length)));
+          const r = Math.min(m.rows.length - 1, Math.max(0, Math.floor(l.y * m.rows.length)));
+          hotCell = { r, c };
+          tip(host, `${esc0(m.rows[r])} × ${esc0(m.cols[c])} · ${m.n[r][c]} 部`, p.cx, p.cy);
+        },
+        update({ t, pal }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cols = m.cols.length, rows = m.rows.length;
+            const cw = w / cols, ch = h / rows;
+            const sweep = t > 1.8 && !hotCell ? (t - 1.8) % 5.5 / 5.5 : -1;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.font = `${Math.round(Math.min(cw, ch) * 0.34)}px "Segoe UI", system-ui, sans-serif`;
+            for (let r = 0; r < rows; r++) {
+              for (let c = 0; c < cols; c++) {
+                const n = m.n[r][c];
+                const p = at(t, 0.5, 0.2 + (r + c) * 0.07);
+                if (p <= 0) continue;
+                const k = easeOut(p);
+                const x = c * cw, y = r * ch;
+                const ratio = n / m.max;
+                const inCross = sweep >= 0 && (Math.abs(sweep * cols - (c + 0.5)) < 0.6 || Math.abs(sweep * rows - (r + 0.5)) < 0.6);
+                const onCell = !!hotCell && hotCell.r === r && hotCell.c === c;
+                const inPtr = !!hotCell && (hotCell.r === r || hotCell.c === c);
+                ctx.globalAlpha = k;
+                ctx.fillStyle = onCell ? rgba(pal.redRgb, 0.35 + 0.45 * ratio) : inPtr ? rgba(pal.blueRgb, 0.18 + 0.34 * ratio) : inCross ? rgba(pal.blueRgb, 0.18 + 0.34 * ratio) : rgba(n === 0 ? pal.inkRgb : pal.redRgb, n === 0 ? 0.05 : 0.1 + 0.62 * ratio);
+                ctx.fillRect(x + 1.5, y + 1.5, cw - 3, ch - 3);
+                if (onCell) {
+                  ctx.strokeStyle = rgba(pal.redRgb, 0.95);
+                  ctx.lineWidth = 2;
+                  ctx.strokeRect(x + 2.5, y + 2.5, cw - 5, ch - 5);
+                }
+                ctx.fillStyle = ratio > 0.55 || onCell ? rgba(pal.onStrong, 0.95) : rgba(pal.inkRgb, 0.8);
+                ctx.fillText(String(Math.round(n * k)), x + cw / 2, y + ch / 2);
+              }
+            }
+            ctx.globalAlpha = 1;
+          }
+          colLabels.forEach((el, i) => S(el, `opacity:${(hotCell && hotCell.c === i ? 1 : at(t, 0.5, 0.2 + i * 0.05) * (hotCell ? 0.45 : 1)).toFixed(3)}`));
+          rowLabels.forEach((el, i) => S(el, `opacity:${(hotCell && hotCell.r === i ? 1 : at(t, 0.5, 0.2 + i * 0.05) * (hotCell ? 0.45 : 1)).toFixed(3)}`));
+        }
+      });
+    }
+    {
+      const s = scn("wall");
+      const tiles = qsa(s, ".yb-wtile");
+      const wall = s.querySelector('[data-r="wall"]');
+      const cols = 12, rowsN = 5;
+      let hotTile = -1, wallAt = null;
+      out.set("wall", {
+        dur: 3.6,
+        move(p) {
+          var _a2;
+          const el = under(p, ".yb-wtile");
+          hotTile = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          wallAt = localAt(wall, p);
+        },
+        update({ t, px, py }) {
+          const tw = t > 1.9 ? 1 : 0;
+          S(wall, tw ? `transform:perspective(1400px) rotateX(${(-py * 3).toFixed(2)}deg) rotateY(${(px * 3.4).toFixed(2)}deg)` : "");
+          tiles.forEach((el, i) => {
+            const r = Math.floor(i / cols), c = i % cols;
+            const p = at(t, 0.6, 0.15 + (r + c) * 0.045);
+            const k = easeOut(p);
+            const on = i === hotTile;
+            const drift = t > 1.7 ? Math.sin((t - 1.7) * 0.8 + r * 0.6 + c * 0.3) * 2.6 : 0;
+            let pull = 0;
+            if (wallAt && tw) {
+              const dx = (c + 0.5) / cols - wallAt.x, dy = (r + 0.5) / rowsN - wallAt.y;
+              const d2 = dx * dx + dy * dy;
+              pull = Math.exp(-d2 / 0.012) * 9;
+            }
+            S(el, `opacity:${(k * (hotTile >= 0 && !on ? 0.55 : 1)).toFixed(3)};transform:perspective(900px) translateY(${((1 - k) * 22 + drift - pull - (on ? 10 : 0)).toFixed(1)}px) rotateX(${((1 - k) * 42).toFixed(2)}deg) scale(${((0.9 + 0.1 * k) * (on ? 1.07 : 1)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("colophon");
+      const items = ["flapTotal", "flapWatched", "flapDur", "flapEp"].map((k) => s.querySelector(`[data-r="${k}"]`));
+      const groups = items.map((el) => {
+        var _a2;
+        return (_a2 = el == null ? void 0 : el.closest(".yb-kv")) != null ? _a2 : null;
+      });
+      const flapVals = [String(data.total), String(data.watchedCount), humanDurShort(data.totalMinutes), String(data.epTotal)];
+      let flapDone = false;
+      let hotG = -1;
+      out.set("colophon", {
+        dur: 3,
+        move(p) {
+          const el = under(p, ".yb-colo-grid .yb-kv");
+          hotG = el ? groups.findIndex((g) => g === el) : -1;
+        },
+        update({ t, px, py }) {
+          if (t < 0.1) flapDone = false;
+          if (!flapDone && t > 0.5) {
+            items.forEach((el, i) => setTimeout(() => setFlap(el, flapVals[i]), i * 110));
+            flapDone = true;
+          }
+          groups.forEach((g, i) => {
+            var _a2;
+            if (!g) return;
+            const on = i === hotG && t > 1.4;
+            S(g, `transform:translateY(${on ? -4 : 0}px) scale(${on ? 1.05 : 1});opacity:${hotG >= 0 && !on ? 0.55 : 1}`);
+            (_a2 = items[i]) == null ? void 0 : _a2.querySelectorAll(".yb-flap").forEach((cell) => {
+              S(cell, on ? `transform:perspective(500px) rotateX(${(py * -9).toFixed(2)}deg) rotateY(${(px * 9).toFixed(2)}deg)` : "transform:none");
+            });
+          });
+        }
+      });
+    }
+    return out;
+  }
+
+  // src/cinema/motion.ts
+  var MOTION = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var STAGGER = 30;
+  var EASE = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+
+  // src/cinema/yearbook/engine.ts
+  var GESTURE_GAP = 340;
+  function bindYearbook(root, data) {
+    const sc = root.querySelector(".bz-yb-scroll");
+    const film = root.querySelector(".bz-yb-film");
+    const handle = { stop: () => void 0, goTo: () => void 0 };
+    if (!sc || !film) return handle;
+    const scEl = sc;
+    const filmEl = film;
+    const scenes = qsa(film, ".bz-yb-scn");
+    if (!scenes.length) return handle;
+    const perfs = buildPerfs(film, data, root);
+    const names = scenes.map((s) => {
+      var _a;
+      return (_a = s.dataset.name) != null ? _a : "";
+    });
+    const rails = qsa(film, ".yb-rail-t");
+    const barI = film.querySelector('[data-r="barI"]');
+    const barN = film.querySelector('[data-r="barN"]');
+    const barLine = film.querySelector('[data-r="barLine"]');
+    const pb = film.querySelector('[data-r="pb"]');
+    let pal = palette(root);
+    let cur = -1;
+    let t0 = performance.now();
+    let raf = 0;
+    let fallback = 0;
+    let dead = false;
+    let autoplay = false;
+    let autoAt = 0;
+    let navTarget = -1;
+    let navUntil = 0;
+    const settled = /* @__PURE__ */ new Set();
+    const shutter = film.querySelector('[data-r="shutter"]');
+    let cutTimers = [];
+    let px = 0, py = 0, pin = 0;
+    const unit = () => Math.max(1, scEl.clientHeight);
+    const indexAt = () => clamp(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
+    function hud(i, p) {
+      var _a;
+      if (rails.length) {
+        rails.forEach((r, k) => {
+          if (k === i) r.setAttribute("data-on", "1");
+          else r.removeAttribute("data-on");
+        });
+      }
+      filmEl.dataset.cur = String(i + 1).padStart(2, "0");
+      if (barI) barI.textContent = String(i + 1).padStart(2, "0");
+      if (barN) barN.textContent = (_a = names[i]) != null ? _a : "";
+      if (barLine) barLine.style.transform = `scaleX(${p.toFixed(4)})`;
+    }
+    function activate(i, replay = true, force = false) {
+      var _a, _b;
+      if (dead || i === cur && !force) return;
+      if (cur >= 0 && cur !== i) {
+        const prev = perfs.get((_a = scenes[cur].dataset.id) != null ? _a : "");
+        if (prev && !settled.has(cur)) {
+          prev.update({ t: prev.dur, pal, px: px * pin, py: py * pin });
+          settled.add(cur);
+        }
+        tip(root, "");
+      }
+      cur = i;
+      settled.delete(i);
+      const perf = perfs.get((_b = scenes[i].dataset.id) != null ? _b : "");
+      if (replay) t0 = performance.now();
+      if (perf) perf.update({ t: replay ? 0 : perf.dur, pal, px: px * pin, py: py * pin });
+      const sc2 = scenes[i];
+      sc2.classList.remove("is-in");
+      void sc2.offsetWidth;
+      sc2.classList.add("is-in");
+      hud(i, 0);
+      autoAt = performance.now();
+    }
+    const clearCut = () => {
+      for (const id of cutTimers) clearTimeout(id);
+      cutTimers = [];
+    };
+    const cutTo = (target, replay) => {
+      navTarget = target;
+      scEl.scrollTop = target * unit();
+      activate(target, replay, true);
+    };
+    function goTo(i, opts) {
+      var _a, _b;
+      const target = clamp(i, 0, scenes.length - 1);
+      navTarget = target;
+      navUntil = performance.now() + 900;
+      if (target === cur || (opts == null ? void 0 : opts.cut) === false) {
+        activate(target, (_a = opts == null ? void 0 : opts.replay) != null ? _a : true, true);
         return;
       }
+      if (!shutter) {
+        cutTo(target, (_b = opts == null ? void 0 : opts.replay) != null ? _b : true);
+        return;
+      }
+      clearCut();
+      shutter.classList.remove("is-open");
+      shutter.classList.add("is-close");
+      cutTimers.push(setTimeout(() => {
+        var _a2;
+        cutTo(target, (_a2 = opts == null ? void 0 : opts.replay) != null ? _a2 : true);
+        shutter.classList.remove("is-close");
+        shutter.classList.add("is-open");
+        cutTimers.push(setTimeout(() => shutter.classList.remove("is-open"), MOTION.move + 60));
+      }, MOTION.fast));
+    }
+    handle.goTo = goTo;
+    const goRel = (d) => goTo(cur < 0 ? 0 : cur + d, { cut: true });
+    function syncFromScroll() {
+      if (dead) return;
+      const i = indexAt();
+      if (performance.now() < navUntil && i !== navTarget) return;
+      if (i !== cur) activate(i, true);
+    }
+    let lastWheel = 0;
+    function onWheel(e) {
+      if (dead) return;
       const now = performance.now();
-      const dt = Math.min(0.05, lastT ? (now - lastT) / 1e3 : 0);
-      lastT = now;
-      const vh = sc.clientHeight;
-      if (vh !== lastVh) {
-        lastVh = vh;
-        size();
+      const fresh = now - lastWheel > GESTURE_GAP;
+      lastWheel = now;
+      if (!fresh) {
+        e.preventDefault();
+        return;
       }
-      if (film.playing) {
-        const el = sceneEl(film.scene);
-        if (el) {
-          const end = Math.min(sc.scrollHeight - vh, absTop(el) + el.offsetHeight - vh);
-          const target = sc.scrollTop + SPEED * filmRateOf(film.scene) * dt;
-          if (target >= end) {
-            sc.scrollTop = end;
-            film.playing = false;
-            film.sceneDone = true;
-          } else sc.scrollTop = target;
-        } else film.playing = false;
+      if (Math.abs(e.deltaY) < 1) return;
+      e.preventDefault();
+      setAuto(false);
+      goRel(e.deltaY > 0 ? 1 : -1);
+    }
+    function onKey(e) {
+      if (dead || !root.isConnected) return;
+      const k = e.key;
+      if (k === "ArrowDown" || k === "PageDown") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(1);
+      } else if (k === "ArrowUp" || k === "PageUp") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(-1);
+      } else if (k === "Home") {
+        e.preventDefault();
+        goTo(0, { cut: true });
+      } else if (k === "End") {
+        e.preventDefault();
+        goTo(scenes.length - 1, { cut: true });
       }
-      let active = film.scene;
-      for (const s of scenes) {
-        const r = s.el.getBoundingClientRect();
-        const total = r.height - vh;
-        const p = total > 0 ? clamp01(-r.top / total) : 0;
-        if (r.top < vh && r.bottom > 0) {
-          s.update(p, r, vh);
-          active = s.id;
-        }
-      }
-      const nowEl = ref("now");
-      if (nowEl && nowEl.textContent !== ((_a2 = FILM_SCENE_NAMES[active]) != null ? _a2 : "")) nowEl.textContent = (_b = FILM_SCENE_NAMES[active]) != null ? _b : "";
-      const dot = ref("dot");
-      const totalScroll = sc.scrollHeight - vh;
-      if (dot) dot.style.top = `${((totalScroll ? sc.scrollTop / totalScroll : 0) * 100).toFixed(2)}%`;
-      if (++grainFrame % 3 === 0 && grainCtx && grainPat && grainCv) {
-        grainCtx.save();
-        grainCtx.translate(Math.random() * 128 | 0, Math.random() * 128 | 0);
-        grainCtx.fillStyle = grainPat;
-        grainCtx.fillRect(-128, -128, grainCv.width + 256, grainCv.height + 256);
-        grainCtx.restore();
-      }
-      nextFrame(tick);
+    }
+    const rafFn = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
+    const rafStop = (id) => {
+      if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+      else clearTimeout(id);
     };
-    nextFrame(tick);
+    function pump2() {
+      if (dead) return;
+      clearTimeout(fallback);
+      tick(performance.now());
+      raf = rafFn(() => {
+        clearTimeout(fallback);
+        pump2();
+      });
+      fallback = setTimeout(() => {
+        rafStop(raf);
+        pump2();
+      }, 220);
+    }
+    function tick(now) {
+      var _a;
+      if (dead || cur < 0) return;
+      const perf = perfs.get((_a = scenes[cur].dataset.id) != null ? _a : "");
+      if (!perf) return;
+      const t = (now - t0) / 1e3;
+      perf.update({ t, pal, px: px * pin, py: py * pin });
+      hud(cur, clamp(t / perf.dur, 0, 1));
+      if (autoplay && now - autoAt > (perf.dur + 1.4) * 1e3) {
+        if (cur >= scenes.length - 1) setAuto(false);
+        else goRel(1);
+      }
+    }
+    function setAuto(on) {
+      if (autoplay === on) return;
+      autoplay = on;
+      if (pb) {
+        pb.textContent = on ? "暂停" : "自动";
+        pb.classList.toggle("is-on", on);
+      }
+      autoAt = performance.now();
+    }
+    const onOvlClick = (e) => {
+      var _a;
+      const t = e.target;
+      if (t.closest('[data-r="pb"]')) {
+        setAuto(!autoplay);
+        return;
+      }
+      const rail = t.closest(".yb-rail-t");
+      if (rail) {
+        setAuto(false);
+        goTo(Number((_a = rail.dataset.i) != null ? _a : 0), { cut: true });
+      }
+    };
+    const onPointer = (e) => {
+      var _a, _b;
+      const r = root.getBoundingClientRect();
+      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      pin = 1;
+      (_b = (_a = curPerf()) == null ? void 0 : _a.move) == null ? void 0 : _b.call(_a, { cx: e.clientX, cy: e.clientY, px, py });
+    };
+    const onPtrDown = (e) => {
+      var _a, _b;
+      const r = root.getBoundingClientRect();
+      (_b = (_a = curPerf()) == null ? void 0 : _a.down) == null ? void 0 : _b.call(_a, { cx: e.clientX, cy: e.clientY, px: (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1, py: (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1 });
+    };
+    const onPtrUp = () => {
+      var _a, _b;
+      (_b = (_a = curPerf()) == null ? void 0 : _a.up) == null ? void 0 : _b.call(_a);
+    };
+    const onPtrLeave = () => {
+      pin = 0;
+      tip(root, "");
+    };
+    const curPerf = () => {
+      var _a;
+      return cur >= 0 ? perfs.get((_a = scenes[cur].dataset.id) != null ? _a : "") : void 0;
+    };
+    const mo = new MutationObserver(() => {
+      pal = palette(root);
+    });
+    mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    root.addEventListener("pointermove", onPointer);
+    root.addEventListener("pointerdown", onPtrDown);
+    root.addEventListener("pointerup", onPtrUp);
+    root.addEventListener("pointerleave", onPtrLeave);
+    root.addEventListener("pointercancel", onPtrUp);
+    scEl.addEventListener("wheel", onWheel, { passive: false });
+    scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    filmEl.addEventListener("click", onOvlClick);
+    document.addEventListener("keydown", onKey);
+    activate(0, true);
+    pump2();
+    handle.stop = () => {
+      dead = true;
+      rafStop(raf);
+      clearTimeout(fallback);
+      mo.disconnect();
+      clearCut();
+      root.removeEventListener("pointermove", onPointer);
+      root.removeEventListener("pointerdown", onPtrDown);
+      root.removeEventListener("pointerup", onPtrUp);
+      root.removeEventListener("pointerleave", onPtrLeave);
+      root.removeEventListener("pointercancel", onPtrUp);
+      tip(root, "");
+      scEl.removeEventListener("wheel", onWheel);
+      scEl.removeEventListener("scroll", syncFromScroll);
+      filmEl.removeEventListener("click", onOvlClick);
+      document.removeEventListener("keydown", onKey);
+    };
     return handle;
   }
 
@@ -8960,17 +10336,17 @@ tags:
 
   // src/cinema/seasons.ts
   var MERGE_GROUPS = ["剧集", "动漫"];
-  var CN_NUM2 = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
   function seasonNumber(raw) {
     if (/^\d+$/.test(raw)) return Number(raw);
     if (raw === "十") return 10;
     const m = raw.match(/^(.)?十(.)?$/);
     if (m) {
-      const tens = m[1] ? CN_NUM2[m[1]] : 1;
-      const ones = m[2] ? CN_NUM2[m[2]] : 0;
+      const tens = m[1] ? CN_NUM[m[1]] : 1;
+      const ones = m[2] ? CN_NUM[m[2]] : 0;
       return tens == null || ones == null ? null : tens * 10 + ones;
     }
-    return raw.length === 1 && CN_NUM2[raw] != null ? CN_NUM2[raw] : null;
+    return raw.length === 1 && CN_NUM[raw] != null ? CN_NUM[raw] : null;
   }
   var SEASON_RE = /(?:第\s*([0-9]+|[零一二三四五六七八九十]+)\s*季)|(?:season\s*([0-9]+))/i;
   function parseSeasonName(name) {
@@ -9314,20 +10690,14 @@ tags:
       return `<button type="button" class="f-choice-btn${v === cur ? " is-on" : ""}" data-${attr}="${v}"><span class="dot" style="background:${attr === "f-tag" ? typeColor((_a = getGroupForTag(v)) != null ? _a : "其他") : (_b = ST_COLOR[v]) != null ? _b : "#888"}"></span>${v}</button>`;
     }).join("");
   }
-  function ratingFieldHtml(rating, initSt) {
-    return `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${rating}"><span class="f-range-val j-rval">${Number(rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(rating)}">${starsHtml(rating)}</span></div></div>`;
-  }
-  function reviewFieldHtml(review, initSt) {
-    return `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(review)}</textarea></div>`;
-  }
   function formModalHtml(opts) {
     const { editing } = opts;
     const initSt = opts.stText;
     const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
     const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
-    const ratingField = ratingFieldHtml(opts.rating, initSt);
-    const reviewField = reviewFieldHtml(opts.review, initSt);
+    const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${opts.rating}"><span class="f-range-val j-rval">${Number(opts.rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(opts.rating)}">${starsHtml(opts.rating)}</span></div></div>`;
+    const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
     if (editing) {
       return `<div class="cn-modal" style="width:100%">
     <div class="cn-modal-title">编辑影视</div>
@@ -9341,7 +10711,7 @@ tags:
     <div class="form-flip j-flip">
       <div class="form-face form-face--front">
         <div class="cn-modal-title">添加影视</div>
-        ${nameField}${stField}
+        ${nameField}${stField}${ratingField}${reviewField}
         <div class="dm-actions"><button class="dm-btn gold j-parse"><span class="f-spin"></span><span class="j-parse-text">解析</span></button></div>
       </div>
       <div class="form-face form-face--back">
@@ -9394,7 +10764,6 @@ tags:
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
     ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ""}
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ""}
-    <div class="dm-sec">我 的 记 录</div>${ratingFieldHtml(o.rating, o.stText)}${reviewFieldHtml(o.review, o.stText)}
   `;
   }
   function aiRecName(r) {
@@ -9456,7 +10825,7 @@ tags:
         </div>
         <div class="rail-foot">
           <button class="rail-item j-tool" data-tool="ai">${iconSpan(ICON.ai)}AI 荐片</button>
-          <button class="rail-item j-tool" data-tool="stat">${iconSpan(ICON.stat)}观影分析</button>
+          <button class="rail-item j-tool" data-film-open>${iconSpan(ICON.stat)}观影分析</button>
         </div>
       </aside>
       <div class="d-main j-view"></div>
@@ -9469,7 +10838,7 @@ tags:
       <span class="m-acts">
         <button class="add j-madd bz-touch-target bz-touch-target--lg" data-cinema-add title="添加影片">${iconSpan(ICON.add)}</button>
         <button class="m-tool j-mai bz-touch-target bz-touch-target--lg" title="AI 荐片">${iconSpan(ICON.ai)}</button>
-        <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析">${iconSpan(ICON.stat)}</button>
+        <button class="m-tool j-mstat bz-touch-target bz-touch-target--lg" title="观影分析" data-film-open>${iconSpan(ICON.stat)}</button>
         <button class="m-tool j-mclose bz-touch-target bz-touch-target--lg" title="关闭">${iconSpan(ICON.close)}</button>
       </span>
     </div>
@@ -9542,8 +10911,6 @@ tags:
     const v = inp.view;
     if (v.view === "ai") {
       view.innerHTML = spHeadHtml("AI 荐片", inp.aiCount ? `· ${inp.aiCount} 部` : "") + `<div class="sp-body">${inp.aiHtml}</div>`;
-    } else if (v.view === "stat") {
-      view.innerHTML = spHeadHtml("观影分析", `· ${inp.watchedCount} 部已看`) + `<div class="sp-body">${inp.statHtml}</div>`;
     } else {
       const body = inp.cards.length ? `<div class="d-scroll"><div class="grid" style="grid-template-columns:repeat(${inp.cols},1fr)">${cardsHtml(inp.cards, inp)}</div></div>` : emptyPageHtml(viewFiltered(v));
       view.innerHTML = listHeadHtml(inp) + listToolsHtml(v) + body;
@@ -9551,7 +10918,7 @@ tags:
   }
   function renderMidnightMob(root, inp) {
     const v = inp.view;
-    const t = v.view === "list" ? inp.title : v.view === "ai" ? "AI 荐片" : "观影分析";
+    const t = v.view === "list" ? inp.title : "AI 荐片";
     const titleEl = root.querySelector(".j-mtitle");
     const cntEl = root.querySelector(".j-mcnt");
     if (titleEl) titleEl.textContent = t;
@@ -9565,25 +10932,14 @@ tags:
       if (v.view === "list") {
         mv.className = inp.cards.length ? "m-scroll j-mview" : "m-scroll j-mview cn-mempty";
         mv.innerHTML = inp.cards.length ? `<div class="m-grid">${cardsHtml(inp.cards, inp)}</div>` : emptyPageHtml(viewFiltered(v));
-      } else if (v.view === "ai") {
-        mv.className = "sp-body j-mview";
-        mv.innerHTML = inp.aiHtml;
       } else {
         mv.className = "sp-body j-mview";
-        mv.innerHTML = inp.statHtml;
+        mv.innerHTML = inp.aiHtml;
       }
     }
     const chips = root.querySelector(".j-chips");
     if (chips) chips.innerHTML = chipsHtml(v);
   }
-
-  // src/cinema/motion.ts
-  var MOTION = { fast: 160, move: 200, base: 280, impulse: 740 };
-  var STAGGER = 30;
-  var EASE = {
-    out: "cubic-bezier(.22,.82,.3,1)",
-    move: "cubic-bezier(.34,.06,.16,1)"
-  };
 
   // src/cinema/ui.ts
   function posterUrl(item, app) {
@@ -9705,8 +11061,8 @@ tags:
       else delete fm["影评"];
       if (edit) {
         const tags = normalizeTags(fm["tags"]);
-        const at = tags.indexOf(edit.prevTag);
-        if (at >= 0) tags[at] = item.typeTag;
+        const at2 = tags.indexOf(edit.prevTag);
+        if (at2 >= 0) tags[at2] = item.typeTag;
         else if (!tags.includes(item.typeTag)) tags.unshift(item.typeTag);
         fm["tags"] = tags;
       }
@@ -9717,9 +11073,6 @@ tags:
     if (!M.currentOverlay) createOverlay(app);
     const root = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector("[data-cinema-root]");
     if (root) openForm(root, null, app);
-  }
-  function watchedCount() {
-    return M.items.filter((it) => it.status === STATUS_WATCHED).length;
   }
   function listTitle() {
     return (M.typeFilter || "全部") + (M.statusFilter ? ` · ${M.statusFilter}` : "");
@@ -10078,8 +11431,8 @@ tags:
     return clone;
   }
   function flyKeyframes(base, w, h, ...stops) {
-    const at = (r) => `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
-    return stops.map((r) => ({ transform: at(r) }));
+    const at2 = (r) => `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
+    return stops.map((r) => ({ transform: at2(r) }));
   }
   function measureFlip(targets, mutate) {
     const before = targets.map((c) => c.getBoundingClientRect());
@@ -10155,7 +11508,7 @@ tags:
         if (phase === "flying") {
           phase = "closing";
           const host2 = ov.parentNode;
-          const frame2 = (_a = ov.offsetParent) != null ? _a : host2;
+          const frame3 = (_a = ov.offsetParent) != null ? _a : host2;
           const clone = flyingClone;
           const back = srcRect;
           const land = () => {
@@ -10171,14 +11524,14 @@ tags:
           }
           const modal2 = ov.querySelector(".cn-modal--detail");
           if (modal2) modal2.style.visibility = "hidden";
-          if (clone && back && host2 && frame2) {
+          if (clone && back && host2 && frame3) {
             host2.appendChild(clone);
             const cur = clone.getBoundingClientRect();
             const w = clone.offsetWidth || cur.width;
             const h = clone.offsetHeight || cur.height;
             try {
               const fly = clone.animate(
-                flyKeyframes(frame2.getBoundingClientRect(), w, h, cur, back),
+                flyKeyframes(frame3.getBoundingClientRect(), w, h, cur, back),
                 { duration: MOTION.move, easing: EASE.move }
               );
               fly.finished.then(land).catch(land);
@@ -10195,7 +11548,7 @@ tags:
         }
         phase = "closing";
         const host = ov.parentNode;
-        const frame = (_b = ov.offsetParent) != null ? _b : host;
+        const frame2 = (_b = ov.offsetParent) != null ? _b : host;
         const modal = (_c = ov.querySelector(".cn-modal--detail")) != null ? _c : ov;
         const or = ov.getBoundingClientRect();
         const posterR = t.getBoundingClientRect();
@@ -10206,7 +11559,7 @@ tags:
           var _a2;
           if (handed || phase !== "closing") return;
           handed = true;
-          const fb = frame.getBoundingClientRect();
+          const fb = frame2.getBoundingClientRect();
           const to = reinsertSrc(SE_FLIGHT);
           finish();
           if (!to) {
@@ -10355,6 +11708,44 @@ tags:
       }
     });
   }
+  var ybOvl = null;
+  var ybHandle = null;
+  function openYearbookOverlay(app) {
+    if (ybOvl == null ? void 0 : ybOvl.isConnected) {
+      ybOvl.classList.remove("is-nudge");
+      void ybOvl.offsetWidth;
+      ybOvl.classList.add("is-nudge");
+      return;
+    }
+    rebuildItems(app);
+    const data = deriveYb(M.items);
+    const ovl2 = document.createElement("div");
+    ovl2.className = "bz-yb";
+    ovl2.innerHTML = `
+    <button class="bz-yb-close" data-yb-close title="关闭观影志" aria-label="关闭观影志">${iconSpan(ICON.close)}</button>
+    <div class="bz-yb-scroll">${data.total ? yearbookHtml(data, (it) => posterUrl(it, app)) : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>`;
+    document.body.appendChild(ovl2);
+    mountIcons(ovl2);
+    topifyZ(ovl2);
+    ybOvl = ovl2;
+    ovl2.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-yb-close]")) closeYearbookOverlay();
+      else if (t.closest("[data-cinema-analysis-add]")) {
+        closeYearbookOverlay();
+        openAddModalDirect(app);
+      }
+    });
+    registerPanelEsc("cinema-yearbook", () => !!(ybOvl == null ? void 0 : ybOvl.isConnected), closeYearbookOverlay);
+    if (data.total) ybHandle = bindYearbook(ovl2, data);
+  }
+  function closeYearbookOverlay() {
+    ybHandle == null ? void 0 : ybHandle.stop();
+    ybHandle = null;
+    unregisterPanelEsc("cinema-yearbook");
+    ybOvl == null ? void 0 : ybOvl.remove();
+    ybOvl = null;
+  }
   var DUP_NAME_HINT = "已存在同名影视";
   var DUP_NAME_HINT_FULL = `${DUP_NAME_HINT}，请换个名称`;
   function isDuplicateName(name, selfName) {
@@ -10435,7 +11826,7 @@ tags:
       if (!q) return null;
       const az = q.apizero;
       return {
-        posterUrl: q.posterUrl,
+        posterUrl: "",
         title: q.title || (nameInput == null ? void 0 : nameInput.value.trim()) || "",
         typeTag: cur.tag,
         genre: (az == null ? void 0 : az.genre) ? normalizeListValue(az.genre) : "",
@@ -10448,6 +11839,35 @@ tags:
         doubanUrl: q.detailUrl,
         hotComment: (_h = az == null ? void 0 : az.shortComment) != null ? _h : ""
       };
+    };
+    let previewPosterRel = null;
+    let posterKicked = false;
+    const applyPreviewPoster = (rel) => {
+      const box = backSlot == null ? void 0 : backSlot.querySelector(".dm-poster");
+      if (!box) return;
+      const f = app.vault.getAbstractFileByPath(rel);
+      if (!(f instanceof TFile)) return;
+      let img = box.querySelector("img");
+      if (!img) {
+        img = document.createElement("img");
+        img.alt = "";
+        img.addEventListener("load", () => box.classList.add("is-ready"), { once: true });
+        img.addEventListener("error", () => img == null ? void 0 : img.remove(), { once: true });
+        box.appendChild(img);
+      }
+      img.src = app.vault.getResourcePath(f);
+    };
+    const ensurePreviewPoster = async (url) => {
+      var _a2;
+      if (!url || posterKicked) return;
+      posterKicked = true;
+      try {
+        const rel = await downloadPreviewPoster(app, (_a2 = nameInput == null ? void 0 : nameInput.value.trim()) != null ? _a2 : "", url);
+        if (!rel || !el.isConnected) return;
+        previewPosterRel = rel;
+        applyPreviewPoster(rel);
+      } catch (e) {
+      }
     };
     async function runParse() {
       var _a2, _b2, _c2, _d, _e, _f;
@@ -10478,6 +11898,7 @@ tags:
       renderBack();
       flipToBack();
       refreshFormState();
+      void ensurePreviewPoster(q.data.posterUrl);
       try {
         const az = q.data.apizero;
         const mediaType = (_c2 = (_b2 = q.data.celebrities) == null ? void 0 : _b2.mediaType) != null ? _c2 : null;
@@ -10496,9 +11917,8 @@ tags:
       refreshFormState();
     }
     function renderBack() {
-      var _a2;
       if (!backSlot) return;
-      backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying, rating: ratingVal, review: (_a2 = item == null ? void 0 : item.review) != null ? _a2 : "" });
+      backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
       applyTagOn();
       applyStOn();
     }
@@ -10574,12 +11994,12 @@ tags:
       if (editing && item) {
         void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, { el, close });
       } else {
-        void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed }, app, { el, close });
+        void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed, posterRel: previewPosterRel }, app, { el, close });
       }
     });
   }
   async function saveNew(p, app, form) {
-    var _a, _b;
+    var _a, _b, _c;
     if (hasIllegalNameChar(p.name)) {
       notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
       return;
@@ -10593,7 +12013,7 @@ tags:
         return;
       }
       M.items.unshift(it);
-      const posterRel = ((_b = p.douban) == null ? void 0 : _b.posterUrl) ? await downloadPreviewPoster(app, p.name, p.douban.posterUrl) : null;
+      const posterRel = (_c = p.posterRel) != null ? _c : ((_b = p.douban) == null ? void 0 : _b.posterUrl) ? await downloadPreviewPoster(app, p.name, p.douban.posterUrl) : null;
       await persistItem(it, app, void 0, p.douban, posterRel);
       if (posterRel) it.poster = posterRel;
       emitDomainEvent("movie", { kind: "created", name: p.name, status: st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched", rating: p.rating, review: p.review || null });
@@ -10715,7 +12135,7 @@ tags:
       inLibrary: (name) => M.items.some((it) => it.name === name)
     };
   }
-  function midnightInput(app, mob = false) {
+  function midnightInput(app) {
     const merge = mergeSeasonsOn();
     const onList = M.view === "list";
     return {
@@ -10730,21 +12150,14 @@ tags:
       },
       cols: gridColumns(),
       title: listTitle(),
-      watchedCount: watchedCount(),
       aiHtml: onList ? "" : aiPageHtml(aiInput()),
       aiCount: M.aiResult && M.aiResult.length ? M.aiResult.length : null,
-      statHtml: onList ? "" : statViewHtml(app, mob),
       poster: (it) => posterUrl(it, app),
       fetching: (it) => {
         var _a;
         return isFetching((_a = it.file) == null ? void 0 : _a.path);
       }
     };
-  }
-  function statViewHtml(app, mob) {
-    if (mob) return buildAnalysisHTML();
-    const data = deriveFilmData(M.items);
-    return data.timeline.length ? statFilmHtml(data, (it) => posterUrl(it, app)) : buildAnalysisHTML();
   }
   function onSearchInput(app, sec, isMob, raw) {
     if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
@@ -10935,12 +12348,16 @@ tags:
         renderAll(app);
         return;
       }
+      if (t.closest("[data-film-open]")) {
+        openYearbookOverlay(app);
+        return;
+      }
       const mb = t.closest(".j-mai,.j-mstat,.j-mclose");
       if (mb) {
         if (mb.classList.contains("j-mclose")) closeOverlay();
+        else if (mb.classList.contains("j-mstat")) openYearbookOverlay(app);
         else {
-          const v = mb.classList.contains("j-mai") ? "ai" : "stat";
-          M.view = M.view === v ? "list" : v;
+          M.view = M.view === "ai" ? "list" : "ai";
           renderAll(app);
         }
         return;
@@ -11293,8 +12710,8 @@ tags:
     lastViewIdentity = identity;
     const grid = root.querySelector(".grid, .m-grid");
     if (!grid) return;
-    const frame = grid.getBoundingClientRect();
-    if (!frame.width || !frame.height) return;
+    const frame2 = grid.getBoundingClientRect();
+    if (!frame2.width || !frame2.height) return;
     const viewport = ((_a = grid.closest(".d-scroll, .m-scroll")) != null ? _a : grid).getBoundingClientRect();
     const near = (r) => r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
     const animate = (el, frames, opts) => {
@@ -11337,8 +12754,8 @@ tags:
       if (!near(snap.rect)) continue;
       const ghost = document.createElement("div");
       ghost.className = "cn-exit";
-      ghost.style.left = `${(snap.rect.left - frame.left).toFixed(1)}px`;
-      ghost.style.top = `${(snap.rect.top - frame.top).toFixed(1)}px`;
+      ghost.style.left = `${(snap.rect.left - frame2.left).toFixed(1)}px`;
+      ghost.style.top = `${(snap.rect.top - frame2.top).toFixed(1)}px`;
       ghost.style.width = `${snap.rect.width.toFixed(1)}px`;
       ghost.style.height = `${snap.rect.height.toFixed(1)}px`;
       if (snap.src) {
@@ -11374,7 +12791,7 @@ tags:
       if (sc) scrollMemo.set(sel, sc.scrollTop);
     }
     const mob = root.classList.contains("mob");
-    const inp = midnightInput(app, mob);
+    const inp = midnightInput(app);
     if (mob) {
       renderMidnightMob(root, inp);
       attachLongPress(root, app);
@@ -11387,7 +12804,6 @@ tags:
     syncSlidePills(root);
     playGridMotion(root, beforeCards);
     flushCardFlash(root);
-    if (!mob && M.view === "stat") bindStatFilm(root, deriveFilmData(M.items));
     restoreFocus(root, snap);
   }
   function closeOverlay() {
@@ -11490,12 +12906,13 @@ tags:
 
   // prototypes/cinema/fake-sim.ts
   var FOLDER = "我的/影视";
-  var SEED_MARK = "bz-sim:__cinema-seed-v3";
+  var SEED_MARK = "bz-sim:__cinema-seed-v5";
   var SETTINGS_KEY = "bz-sim:__settings";
   function one(v) {
     return String(v != null ? v : "").replace(/\s*\n+\s*/g, " ").trim();
   }
   function mdOf(raw) {
+    var _a;
     const rating = raw.status === "想看" ? "-1" : raw.status === "在看" ? "0" : raw.rating == null ? "" : String(raw.rating);
     return [
       "---",
@@ -11508,25 +12925,48 @@ tags:
       `导演: ${one(raw.director)}`,
       `主演: ${one(raw.actors)}`,
       `制片国家/地区: ${one(raw.region)}`,
-      `上映日期: ${one(raw.year)}`,
+      `上映日期: ${one((_a = raw.releaseDate) != null ? _a : raw.year)}`,
       `豆瓣评分: ${one(raw.doubanRating)}`,
       `豆瓣链接: ${one(raw.doubanUrl)}`,
       `简介: ${one(raw.synopsis)}`,
       `影评: ${one(raw.review)}`,
+      `片长: ${one(raw.duration)}`,
+      `季集: ${one(raw.seasonText)}`,
+      `热门短评: ${one(raw.hotComment)}`,
       "---",
       ""
     ].join("\n");
+  }
+  function clearSeedFolder() {
+    const prefix = "bz-sim:";
+    const statsKey = "bz-sim:__stat__";
+    const doomed = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith(prefix) && k.slice(prefix.length).startsWith(`${FOLDER}/`)) doomed.push(k);
+    }
+    for (const k of doomed) localStorage.removeItem(k);
+    try {
+      const stats = JSON.parse(localStorage.getItem(statsKey) || "{}");
+      for (const k of Object.keys(stats)) if (k.startsWith(`${FOLDER}/`)) delete stats[k];
+      localStorage.setItem(statsKey, JSON.stringify(stats));
+    } catch (e) {
+      localStorage.setItem(statsKey, "{}");
+    }
   }
   function seedDatabase() {
     const src = window.CINEMA_DATA || window.parent && window.parent.CINEMA_DATA || null;
     const items = src || [];
     if (localStorage.getItem(SEED_MARK)) return;
+    clearSeedFolder();
     const base = 17e11;
     const n = items.length;
-    items.forEach((raw, i) => {
-      if (!raw || !raw.name) return;
-      seedVaultFile(`${FOLDER}/《${raw.name}》.md`, mdOf(raw), base + (n - i) * 1e3);
-    });
+    seedVaultFiles(items.filter((raw) => raw && raw.name).map((raw, i) => ({
+      // ctime 递减：导出序靠前者越新 → 「加入先后」排序 = 导出序（旧壳同语义）
+      path: `${FOLDER}/《${raw.name}》.md`,
+      content: mdOf(raw),
+      ctime: base + (n - i) * 1e3
+    })));
     localStorage.setItem(SEED_MARK, (/* @__PURE__ */ new Date()).toISOString());
   }
   var settingsStore = {

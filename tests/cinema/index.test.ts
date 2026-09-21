@@ -14,6 +14,7 @@ import { registerPanelEsc, unregisterPanelEsc } from '../../src/core/esc-manager
 import { getNoticeMessages, clearNotices } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { ensureCinema, unloadCinema, applyDefaultView, openCinema, openCinemaAnalysis } from '../../src/cinema';
+import { closeYearbookOverlay } from '../../src/cinema/ui';
 import { rebuildItems } from '../../src/cinema/data';
 import { quickAddWant } from '../../src/cinema/recommend';
 import { configureFetchQueue, enqueueDoubanFetch, isFetching, shutdownDoubanQueue } from '../../src/cinema/douban-queue';
@@ -176,7 +177,9 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     expect(getNoticeMessages()).toEqual([]);
   });
 
-  it('openCinemaAnalysis（面板未开分支）同样触发入队', async () => {
+  // 观影志（独立全屏长片，2026-09-22 重写）语义：只看不抓——不开面板，
+  // 也就没有面板打开时的扫尾入队；补抓由 openCinema（面板）那条路径负责（上一条用例钉着）。
+  it('openCinemaAnalysis（独立观影志）：不开面板、不触发抓取入队，影片照常渲染', async () => {
     setSettingsProvider(() => ({} as any));
     const vault = new MockVault();
     vault.files.set(
@@ -188,7 +191,10 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     configureFetchQueue({ fetch, gapMs: 0, refreshDelayMs: 0 });
     openCinemaAnalysis(app);
     await new Promise((r) => setTimeout(r, 25));
-    expect(fetched).toHaveLength(1);
+    expect(fetched).toHaveLength(0);
+    expect(document.querySelector('.bz-yb')).toBeTruthy(); // 观影志开了（面板没有）
+    expect(document.querySelector('[data-cinema-root]')).toBeNull();
+    closeYearbookOverlay();
   });
 });
 

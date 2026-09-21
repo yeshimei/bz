@@ -149,10 +149,12 @@ describe('批 C-8：cinema 触控热区收编 .bz-touch-target', () => {
 });
 
 describe('批 C-9：分析页排印归档', () => {
-  it('rem 散档守护：analysis 渲染无 .68~.95rem 残留（ADR-0103 后排印走原型 px 口径，token 断言退役）', () => {
-    const ts = repo('src/cinema/analysis.ts');
-    expect(ts).not.toMatch(/font-size:\.(6[89]|7[0-9]|8[0-9]|9[0-5])rem/);
-    expect(ts).toContain('stat-cards'); // 原型分析页语言在位
+  it('rem 散档守护：观影志渲染层不吃 rem（2026-09-22 重写：整片尺度走 .bz-yb 的 font-size + em）', () => {
+    const scenes = repo('src/cinema/yearbook/scenes.ts');
+    const css = cineCss();
+    expect(scenes).not.toMatch(/font-size:\.(6[89]|7[0-9]|8[0-9]|9[0-5])rem/);
+    expect(scenes).toContain('bz-yb-scn'); // 幕骨架在位
+    expect(css).toContain('.bz-yb-scn'); // 幕样式在位（26 幕共用一套骨架）
   });
 
   it('cinema 自绘确认框/面板 toast 收编 core 单源（一致审查#1/#2：cn-confirm/cn-toast 退役）', () => {

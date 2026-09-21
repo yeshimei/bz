@@ -12,7 +12,7 @@ import { resetObsidianMocks, hasNotice, Platform, TFile } from '../mock-obsidian
 import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { runAIRecommend, runSimilarRecommend, quickAddWant, parseRecommendJson } from '../../src/cinema/recommend';
-import { createOverlay, closeOverlay, openAddModalDirect, openRandomMovie, renderAll, renderSoft } from '../../src/cinema/ui';
+import { createOverlay, closeOverlay, openAddModalDirect, openRandomMovie, renderAll, renderSoft, openYearbookOverlay, closeYearbookOverlay } from '../../src/cinema/ui';
 import { configureFetchQueue, isFetching, shutdownDoubanQueue, type DoubanQueryOutcome } from '../../src/cinema/douban-queue';
 import { ensureCinema, unloadCinema, openCinemaAnalysis, pickRandomCinema } from '../../src/cinema';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
@@ -443,21 +443,21 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(form.querySelector('.cn-modal-title')?.textContent).toBe('添加影视');
     expect((form.querySelector('.j-name') as HTMLInputElement).value).toBe('');
     expect(form.querySelector('[data-f-st="想看"]')?.classList.contains('is-on')).toBe(true);
-    // 正面只有名称 + 状态（2026-09-21 拍板）：分类/评分/影评都不在正面
+    // 正面只有名称 + 状态 + 解析（2026-09-21 拍板）；分类不在正面，
+    // 评分/影评在正面状态下方但默认（想看）隐藏
     expect(form.querySelector('.form-face--front .j-tags')).toBeNull();
-    expect(form.querySelector('.form-face--front .j-rating')).toBeNull();
+    expect(form.querySelector('.form-face--front .j-rating')).toBeTruthy();
+    expect((form.querySelector('.form-face--front .j-rating') as HTMLElement).style.display).toBe('none');
+    expect((form.querySelector('.form-face--front .j-review') as HTMLElement).style.display).toBe('none');
     expect(form.querySelector('.j-parse')).toBeTruthy();
     // 解析 → 翻到背面（断言翻转类而非视觉过渡）
     (form.querySelector('.j-name') as HTMLInputElement).value = '新片A';
     clickEl(form.querySelector('.j-parse'));
     await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
-    // 背面 = 详情弹窗形制（dm-head + 豆瓣信息）+「我的记录」段收尾（2026-09-21 加回）。
-    // 默认想看：评分/影评两字段隐藏（已看才显示，applyStOn 统一开合）
+    // 背面 = 详情弹窗形制（dm-head + 豆瓣信息 + 热门短评）；评分/影评不在背面（在正面状态下方）
     expect(form.querySelector('.form-face--back .dm-title')).toBeTruthy();
-    expect(form.querySelector('.form-face--back .j-rating')).toBeTruthy();
-    expect(form.querySelector('.form-face--back .j-review')).toBeTruthy();
-    expect((form.querySelector('.form-face--back .j-rating') as HTMLElement).style.display).toBe('none');
-    expect((form.querySelector('.form-face--back .j-review') as HTMLElement).style.display).toBe('none');
+    expect(form.querySelector('.form-face--back .j-rating')).toBeNull();
+    expect(form.querySelector('.form-face--back .j-review')).toBeNull();
     // 分类徽标 → 点开下拉 → 选中即回填（同时收起）。
     // 展开态走 .is-open 类而非 hidden 属性：hidden 是瞬切、没有中间态（styles.css 全域动效段）
     const pickTag = form.querySelector('.form-face--back [data-pick="tag"]') as HTMLElement;
@@ -475,23 +475,22 @@ describe('cinema 风格化面板（issue 236）', () => {
     await vi.waitFor(() => expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(5)); // renderAll 落地
   });
 
-  // 2026-09-21 用户点名：点「已看」就要能填评分影评——背面「我的记录」段加回（当日「去掉」拍板作废）
-  it('添加流点已看：背面「我的记录」段展开，评分影评可填并落盘', async () => {
+  // 2026-09-21 用户点名：点「已看」就要能当场填评分影评——字段在正面状态下方（不等解析翻面）
+  it('添加流点已看：正面状态下方展开评分/影评，可填并随建档落盘', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(root.querySelector('[data-cinema-add]'));
     const form = root.querySelector('.cn-modal') as HTMLElement;
-    // 正面点「已看」：正反两面共用同一份 cur（issue 395）
+    // 正面点「已看」：字段就地展开（还没解析、还没翻面）
     clickEl(form.querySelector('.form-face--front [data-f-st="已看"]'));
+    expect((form.querySelector('.form-face--front .j-rating') as HTMLElement).style.display).toBe('');
+    expect((form.querySelector('.form-face--front .j-review') as HTMLElement).style.display).toBe('');
+    (form.querySelector('.form-face--front .j-range') as HTMLInputElement).value = '8.8';
+    (form.querySelector('.form-face--front .j-review-t') as HTMLTextAreaElement).value = '年度最佳';
     (form.querySelector('.j-name') as HTMLInputElement).value = '已看新片';
     clickEl(form.querySelector('.j-parse'));
     await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
-    // 已看态：背面我的记录段直接可见
-    expect((form.querySelector('.form-face--back .j-rating') as HTMLElement).style.display).toBe('');
-    expect((form.querySelector('.form-face--back .j-review') as HTMLElement).style.display).toBe('');
-    (form.querySelector('.form-face--back .j-range') as HTMLInputElement).value = '8.8';
-    (form.querySelector('.form-face--back .j-review-t') as HTMLTextAreaElement).value = '年度最佳';
     clickEl(form.querySelector('.j-save'));
     await vi.waitFor(() => expect(vault.files.has('我的/影视/《已看新片》.md')).toBe(true));
     expect(M.items[0].rating).toBe(8.8);
@@ -605,12 +604,12 @@ describe('cinema 风格化面板（issue 236）', () => {
     clickEl(root.querySelector('.j-back'));
     expect(M.view).toBe('list');
     expect(root.querySelector('.rail-item.is-on')?.textContent).toContain('已看');
-    // 分析页同样熄灭，返回恢复
-    clickEl(root.querySelector('[data-tool="stat"]'));
-    expect(M.view).toBe('stat');
-    expect(root.querySelector('.rail-item.is-on')).toBeNull();
-    clickEl(root.querySelector('.j-back'));
+    // 观影分析：独立全屏放映室——面板视图与 rail 高亮都不动（2026-09-21 用户拍板：不镶嵌面板）
+    clickEl(root.querySelector('[data-film-open]'));
+    expect(document.querySelector('.bz-yb')).toBeTruthy();
+    expect(M.view).toBe('list');
     expect(root.querySelector('.rail-item.is-on')?.textContent).toContain('已看');
+    closeYearbookOverlay();
   });
 
   it('AI 结果页：已在库中禁用 + 豆瓣外链 + 换一批；等待页文案', () => {
@@ -682,41 +681,47 @@ describe('cinema 风格化面板（issue 236）', () => {
     });
   });
 
-  it('分析页：sp-head 观影分析 + 滚动放映室 22 幕 + 空态带动作（issue 405：桌面 stat 走影片，mob 仍 19 板块）', () => {
+  it('观影志：独立全屏长片 26 幕 + 关闭钮出口；空库给空态且添加可直达（2026-09-22 重写）', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
-    clickEl(root.querySelector('[data-tool="stat"]'));
-    expect(M.view).toBe('stat');
-    expect(root.querySelector('.sp-head .sp-title')?.textContent).toBe('观影分析');
-    expect(root.querySelector('.sp-cnt')?.textContent).toBe('· 2 部已看');
-    expect(root.querySelectorAll('.bz-stat-film [data-scene]').length).toBe(22);
-    expect(root.querySelector('.bz-stat-film')?.textContent).toContain('馆藏长廊');
-    // 空库：引导 + 添加直达
+    clickEl(root.querySelector('[data-film-open]'));
+    const ovl = document.querySelector('.bz-yb') as HTMLElement;
+    expect(ovl).toBeTruthy();
+    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(26);
+    // 影片里没有 DOM 文案（页眉/页脚已去，片名「观影志」只在开卷那团粒子的画布里）
+    const film = ovl.querySelector('.bz-yb-film') as HTMLElement;
+    expect(film.dataset.cur).toBe('01');
+    expect(film.textContent).not.toContain('观影志');
+    expect(M.view).toBe('list'); // 面板视图不动（观影志独立）
+    // 关闭钮出口
+    clickEl(ovl.querySelector('[data-yb-close]'));
+    expect(document.querySelector('.bz-yb')).toBeNull();
+    // 空库：一条影视都没有 → 空态（带添加动作）
     closeOverlay();
     const app2 = makeApp(new MockVault());
     ensureCinema(app2);
     rebuildItems(app2);
-    createOverlay(app2);
     openCinemaAnalysis(app2);
-    const root2 = document.querySelector('[data-cinema-root]') as HTMLElement;
-    expect(root2.querySelector('.cn-empty-page')?.textContent).toContain('还没有可统计的影视记录');
-    clickEl(root2.querySelector('[data-cinema-analysis-add]'));
-    expect(root2.querySelector('.cn-modal .j-name')).toBeTruthy();
+    const ovl2 = document.querySelector('.bz-yb') as HTMLElement;
+    expect(ovl2.querySelector('.bz-yb-blank')?.textContent).toContain('影院还是空的');
+    clickEl(ovl2.querySelector('[data-cinema-analysis-add]'));
+    expect(document.querySelector('.bz-yb')).toBeNull(); // 先收观影志
+    expect(document.querySelector('.cn-modal .j-name')).toBeTruthy(); // 再开表单
     closeOverlay();
   });
 
-  it('openCinemaAnalysis 直达：未开面板 → 开并落分析页；已开列表 → 同一 overlay 就地切', () => {
+  it('openCinemaAnalysis 直达：独立全屏观影志（面板没开也能看）；重复调用不叠层', () => {
     const { app } = seedVault();
     openCinemaAnalysis(app);
-    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    expect(M.view).toBe('stat');
-    expect(overlay.querySelector('.sp-head .sp-title')?.textContent).toBe('观影分析');
-    clickEl(overlay.querySelector('.j-back'));
-    expect(M.view).toBe('list');
-    openCinemaAnalysis(app);
-    expect(M.view).toBe('stat');
-    expect(document.querySelector('.bz-panel-overlay')).toBe(overlay);
+    const ovl = document.querySelector('.bz-yb') as HTMLElement;
+    expect(ovl).toBeTruthy();
+    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(26);
+    openCinemaAnalysis(app); // 已开：不叠第二层
+    expect(document.querySelectorAll('.bz-yb').length).toBe(1);
+    expect(document.querySelector('.bz-yb')).toBe(ovl); // 还是同一层（只晃一下）
+    closeYearbookOverlay();
+    expect(document.querySelector('.bz-yb')).toBeNull();
   });
 
   it('openAddModalDirect 命令直达：未开面板先建面板再开表单', () => {
@@ -759,18 +764,22 @@ describe('cinema 风格化面板（issue 236）', () => {
     closeOverlay();
   });
 
-  it('分析页打开期间 vault 变更自动刷新（300ms 防抖后重算）', async () => {
+  it('放映期间 vault 变更不打断：不重绑引擎/不叠层（观影志是打开时的快照）', async () => {
     const { vault, app } = seedVault();
     openCinemaAnalysis(app);
-    const overlay = document.querySelector('.bz-panel-overlay') as HTMLElement;
-    expect(overlay.querySelector('.sp-cnt')?.textContent).toBe('· 2 部已看');
+    const ovl = document.querySelector('.bz-yb') as HTMLElement;
+    expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(26);
     vault.files.set('我的/影视/《新片》.md', md(`---
 tags: [电影]
 评分: 8
 观影日期: 2026-08-02
 ---`));
     emitDomainEvent('vault:md-created', { path: '我的/影视/《新片》.md' });
-    await vi.waitFor(() => expect(overlay.querySelector('.sp-cnt')?.textContent).toBe('· 3 部已看'));
+    await new Promise((r) => setTimeout(r, 400)); // 等过面板自动刷新的防抖窗口
+    // 层还是那一层、还在原地（放映不因后台刷新跳回片头）
+    expect(document.querySelectorAll('.bz-yb').length).toBe(1);
+    expect(document.querySelector('.bz-yb')).toBe(ovl);
+    closeYearbookOverlay();
   });
 
   // ======================= 移动端（mob 壳） =======================
@@ -805,18 +814,22 @@ tags: [电影]
     expect(M.currentOverlay).toBeNull();
   });
 
-  it('移动端进 AI/分析页 chips 整体熄灭（含「全部」）；再点回列表恢复先前高亮（与桌面同口径）', () => {
+  it('移动端进 AI 页 chips 整体熄灭（含「全部」）；再点回列表恢复先前高亮（与桌面同口径）', () => {
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
     clickEl(root.querySelector('.chip[data-c="剧集"]'));
     expect(root.querySelector('.chip.is-on')?.textContent).toContain('剧集');
-    // 分析页：筛选状态保留，chips 整条熄灭
+    // 观影分析（mob 同走独立全屏放映室）：面板视图与 chips 高亮都不动
     clickEl(root.querySelector('.j-mstat'));
-    expect(M.view).toBe('stat');
-    expect(M.typeFilter).toBe('剧集');
-    expect(root.querySelector('.chip.is-on')).toBeNull();
+    expect(document.querySelector('.bz-yb')).toBeTruthy();
+    expect(M.view).toBe('list');
+    expect(root.querySelector('.chip.is-on')?.textContent).toContain('剧集');
+    closeYearbookOverlay();
+    // AI 页：筛选状态保留，chips 整条熄灭
     clickEl(root.querySelector('.j-mai'));
+    expect(M.view).toBe('ai');
+    expect(M.typeFilter).toBe('剧集');
     expect(root.querySelector('.chip.is-on')).toBeNull();
     // 再点回列表：先前选中的高亮原样恢复
     clickEl(root.querySelector('.j-mai'));
@@ -824,9 +837,9 @@ tags: [电影]
     expect(root.querySelector('.chip.is-on')?.textContent).toContain('剧集');
   });
 
-  // 回归（2026-09-10 真机反馈）：AI 荐片/观影分析页点 chips 无反应——chips 行在移动壳里常驻，
-  // 但 chip 分支唯独没复位 M.view，筛选改了而页面仍停在 AI/分析页。
-  it('移动端：AI/分析页点 chips 回落海报列表（类型与状态两条路径）', () => {
+  // 回归（2026-09-10 真机反馈）：AI 荐片页点 chips 无反应——chips 行在移动壳里常驻，
+  // 但 chip 分支唯独没复位 M.view，筛选改了而页面仍停在 AI 页。
+  it('移动端：AI 页点 chips 回落海报列表（类型与状态两条路径）', () => {
     const { app } = seedMobile();
     createOverlay(app);
     const root = document.querySelector('section.mob.bz-cinema--midnight') as HTMLElement;
@@ -837,9 +850,13 @@ tags: [电影]
     expect(M.view).toBe('list');
     expect(root.querySelector('.j-mview')?.classList.contains('m-scroll')).toBe(true);
     expect(root.querySelectorAll('.m-grid .pcard').length).toBe(1);
-    // 分析页 → 点状态 chip（进 ai/stat 不清筛选；chip 点击回落列表并叠加所选状态）
+    // 观影分析是独立全屏放映室（不再有停在分析页的状态）：chips 语义只跟 AI 页 + 列表联动
     clickEl(root.querySelector('.j-mstat'));
-    expect(M.view).toBe('stat');
+    expect(document.querySelector('.bz-yb')).toBeTruthy();
+    closeYearbookOverlay();
+    // AI 页 → 点状态 chip（进 ai 不清筛选；chip 点击回落列表并叠加所选状态）
+    clickEl(root.querySelector('.j-mai'));
+    expect(M.view).toBe('ai');
     clickEl(root.querySelector('.chip[data-s="已看"]'));
     expect(M.view).toBe('list');
     expect(root.querySelectorAll('.m-grid .pcard').length).toBe(1); // 剧集 ∩ 已看 = 绝命毒师（类型筛选被保留）
@@ -1020,14 +1037,14 @@ describe('补扫 C：随机抽一部（已开面板先整刷再叠详情）', ()
     document.body.innerHTML = '';
   });
 
-  it('面板已开且停在分析页：先整刷回落列表页再叠详情（不叠旧 stat 页）', () => {
+  it('面板已开且停在 AI 页：先整刷回落列表页再叠详情（不叠旧 AI 页）', () => {
     const { app } = seedVault();
     createOverlay(app);
-    // 模拟用户停在分析页
-    M.view = 'stat';
+    // 模拟用户停在 AI 页
+    M.view = 'ai';
     renderAll(app);
     const root0 = document.querySelector('[data-cinema-root]') as HTMLElement;
-    expect(root0.querySelector('.sp-body')).toBeTruthy(); // 分析页在
+    expect(root0.querySelector('.sp-body')).toBeTruthy(); // AI 页在
     expect(root0.querySelector('.d-scroll')).toBeNull();
 
     // 想看池只有《想看片》→ 抽取确定
@@ -1036,7 +1053,7 @@ describe('补扫 C：随机抽一部（已开面板先整刷再叠详情）', ()
     expect(M.view).toBe('list');
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     expect(root.querySelector('.d-scroll .pcard')).toBeTruthy(); // 列表页已渲染
-    expect(root.querySelector('.sp-body')).toBeNull(); // 旧分析页已被整刷掉
+    expect(root.querySelector('.sp-body')).toBeNull(); // 旧 AI 页已被整刷掉
     expect(root.querySelector('.cn-modal')).toBeTruthy(); // 详情弹窗叠在列表页上
     expect(hasNotice(/抽到「想看片」/)).toBe(true);
   });
@@ -1820,19 +1837,16 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     await vi.waitFor(() => expect(M.items.find((i) => i.name === '瑞克和莫蒂')!.review).toBe('组合键写的影评'));
   });
 
-  // P3-14：list 页不预算 AI 页/分析页两份大字符串（分析页 19 板块全量统计），进页才构建
-  it('P3-14：list 页惰性构建——两份大字符串都不在 list 页预算（issue 405 后桌面 stat 走影片，19 板块仅 mob 消费）', async () => {
-    const analysisMod = await import('../../src/cinema/analysis');
-    const spy = vi.spyOn(analysisMod, 'buildAnalysisHTML');
+  // P3-14：list 页不预算 AI 页大字符串，进页才构建；观影志（独立全屏长片）同样是
+  // 打开时才拼 26 幕的 DOM——面板渲染期间不该出现任何 .bz-yb 节点
+  it('P3-14：list 页惰性构建——观影志 26 幕不在面板里预建', async () => {
     const { app } = seedVault();
     createOverlay(app);
-    expect(spy).not.toHaveBeenCalled();
-    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
-    clickEl(root.querySelector('[data-tool="stat"]'));
-    expect(spy).not.toHaveBeenCalled(); // 桌面 stat 走滚动放映室，不再构建 19 板块
-    expect(root.querySelector('.bz-stat-film')).toBeTruthy();
-    clickEl(root.querySelector('.j-back'));
-    expect(M.view).toBe('list');
+    expect(document.querySelector('.bz-yb')).toBeNull();
+    expect(document.querySelectorAll('.bz-yb-scn').length).toBe(0);
+    openCinemaAnalysis(app);
+    expect(document.querySelector('.bz-yb .bz-yb-film')).toBeTruthy();
+    closeYearbookOverlay();
   });
 
   // P3-15：parseRecommendJson 围栏放宽——裸 ``` 与任意语言标注均可解析

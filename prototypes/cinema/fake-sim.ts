@@ -19,7 +19,7 @@
  * 产出 prototype-behavior.js 挂 window.BZW_cinema，iframe 壳只调 boot + openCinema。
  * 插件的 ui.ts / data.ts / recommend.ts / analysis.ts / index.ts / core 服务一律零改动——行为代码单源。
  */
-import { FakeApp, seedVaultFile } from './fake/fake-obsidian';
+import { FakeApp, seedVaultFiles } from './fake/fake-obsidian';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider, setSettingsSaver } from '../../src/core/settings-provider';
 import { setAISettingsProvider } from '../../src/core/ai';
@@ -30,10 +30,10 @@ import { closeOverlay, openAddModalDirect } from '../../src/cinema/ui';
 /** 影视目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
 const FOLDER = '我的/影视';
 /** 种子标记：存在 = 已种子过（用户在评审壳里的增删改保留，不被覆盖）。
- *  **演示数据一变就提版本号**（v3：加 神探夏洛克 一/三季 + 三部电影版特别篇、我的三体 一/四季、
- *  老友记 一/二季 + 重聚特辑、权利的游戏：最后的守夜人）——否则老浏览器停在旧种子上，
- *  新条目静默不出现（得手点「重置演示数据」）。 */
-const SEED_MARK = 'bz-sim:__cinema-seed-v3';
+ *  **演示数据一变就提版本号**（v4：演示数据改为 `scripts/_gen-cinema-demo.mjs` 全量真库导出
+ *  686 条，并补齐 片长 / 季集 / 热门短评 / 上映日期 四项——「观影志」吃这些字段）
+ *  ——否则老浏览器停在旧种子上，新条目静默不出现（得手点「重置演示数据」）。 */
+const SEED_MARK = 'bz-sim:__cinema-seed-v5';
 /** 设置持久键（设置弹窗保存经 saveSettings 通道写入；自检可断言） */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -52,9 +52,17 @@ interface SeedItem {
   actors: string | null;
   region: string | null;
   year: string | null;
+  /** 完整上映日期（2026-09-21 起导出；插件 releaseDate 同源） */
+  releaseDate?: string | null;
   doubanRating: string | null;
   doubanUrl: string | null;
   synopsis: string | null;
+  /** 片长原文（如「102分钟」） */
+  duration?: string | null;
+  /** 季集原文（如「13」= 该季集数） */
+  seasonText?: string | null;
+  /** 豆瓣热门短评原文 */
+  hotComment?: string | null;
 }
 
 declare global {
@@ -83,14 +91,38 @@ function mdOf(raw: SeedItem): string {
     `导演: ${one(raw.director)}`,
     `主演: ${one(raw.actors)}`,
     `制片国家/地区: ${one(raw.region)}`,
-    `上映日期: ${one(raw.year)}`,
+    `上映日期: ${one(raw.releaseDate ?? raw.year)}`,
     `豆瓣评分: ${one(raw.doubanRating)}`,
     `豆瓣链接: ${one(raw.doubanUrl)}`,
     `简介: ${one(raw.synopsis)}`,
     `影评: ${one(raw.review)}`,
+    `片长: ${one(raw.duration)}`,
+    `季集: ${one(raw.seasonText)}`,
+    `热门短评: ${one(raw.hotComment)}`,
     '---',
     '',
   ].join('\n');
+}
+
+/** 旧演示数据清场：**整目录清掉再种**。
+ *  演示数据换代时只加不删的话，上一版独有的条目会留在库裡（v4 换全量导出时实测：
+ *  总数 688 = 新导出 686 + 旧版残留 2，「688 部」这种假数字就冒出来了）。 */
+function clearSeedFolder(): void {
+  const prefix = 'bz-sim:'; // 与 fake-obsidian 的 LS_PREFIX 同值（文件键 = 前缀 + vault 相对路径）
+  const statsKey = 'bz-sim:__stat__'; // STAT_KEY
+  const doomed: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(prefix) && k.slice(prefix.length).startsWith(`${FOLDER}/`)) doomed.push(k);
+  }
+  for (const k of doomed) localStorage.removeItem(k);
+  try {
+    const stats = JSON.parse(localStorage.getItem(statsKey) || '{}') as Record<string, unknown>;
+    for (const k of Object.keys(stats)) if (k.startsWith(`${FOLDER}/`)) delete stats[k];
+    localStorage.setItem(statsKey, JSON.stringify(stats));
+  } catch (e) {
+    localStorage.setItem(statsKey, '{}');
+  }
 }
 
 /** 种子：CINEMA_DATA → fake vault 的影视笔记（仅首启；ctime 按导出序递减） */
@@ -99,13 +131,15 @@ function seedDatabase(): void {
   const src = window.CINEMA_DATA || (window.parent && (window.parent as Window).CINEMA_DATA) || null;
   const items = src || [];
   if (localStorage.getItem(SEED_MARK)) return;
+  clearSeedFolder();
   const base = 1700000000000;
   const n = items.length;
-  items.forEach((raw, i) => {
-    if (!raw || !raw.name) return;
+  seedVaultFiles(items.filter((raw) => raw && raw.name).map((raw, i) => ({
     // ctime 递减：导出序靠前者越新 → 「加入先后」排序 = 导出序（旧壳同语义）
-    seedVaultFile(`${FOLDER}/《${raw.name}》.md`, mdOf(raw), base + (n - i) * 1000);
-  });
+    path: `${FOLDER}/《${raw.name}》.md`,
+    content: mdOf(raw),
+    ctime: base + (n - i) * 1000,
+  })));
   localStorage.setItem(SEED_MARK, new Date().toISOString());
 }
 
