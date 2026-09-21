@@ -14395,11 +14395,14 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .dm-btn.danger:hover{background:#b3402a;border-color:#b3402a;color:#fff}
 }
 .bz-cinema--midnight .dm-btn svg{width:12px;height:12px}
+.bz-cinema--midnight .dm-btn:disabled{opacity:.5;cursor:not-allowed;pointer-events:none}
 /* 表单弹窗 */
 .bz-cinema--midnight .f-field{margin-bottom:var(--bz-space-md)}
 .bz-cinema--midnight .f-label{display:block;font-size:var(--bz-font-caption);letter-spacing:.14em;color:var(--ink-3);margin-bottom:5px}
 .bz-cinema--midnight .f-input{width:100%;border:1px solid var(--line);border-radius:var(--bz-radius-sm);background:var(--panel);color:var(--ink);font-size:12.5px;font-family:inherit;padding:7px 11px;outline:none}
 .bz-cinema--midnight .f-input:focus{border-color:var(--gold);box-shadow:0 0 0 2px #c9992f22}
+.bz-cinema--midnight .f-input.is-dup{border-color:var(--bz-danger)}
+.bz-cinema--midnight .f-input.is-dup:focus{border-color:var(--bz-danger);box-shadow:0 0 0 2px #e5534b22}
 .bz-cinema--midnight textarea.f-input{min-height:64px;resize:vertical;line-height:1.7}
 .bz-cinema--midnight .f-choice{display:flex;flex-wrap:wrap;gap:6px}
 .bz-cinema--midnight .f-choice-btn{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:none;border-radius:99px;padding:5px var(--bz-space-md);font-size:11.5px;color:var(--ink-2);cursor:pointer;font-family:inherit}
