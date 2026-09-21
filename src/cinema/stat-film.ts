@@ -435,10 +435,16 @@ interface SceneUnit {
 
 let activeEngine: { dead: boolean } | null = null;
 
-/** 把影片引擎挂到 stat 页：root = .bz-stat-film（滚动容器取最近的 .sp-body） */
+/** 把影片引擎挂到 stat 页：宿主传面板根（renderAll）或影片根皆可——统一解析到
+ *  .bz-stat-film 元素后，再向上取最近的滚动容器 .sp-body。
+ *  （教训：面板根上 closest('.sp-body') 永远落空——.sp-body 是它的子孙不是祖先——
+ *  引擎未挂即 dead，上线首版整页静止就是这个根因。） */
 export function bindStatFilm(root: HTMLElement, data: FilmData): FilmHandle {
   if (activeEngine) activeEngine.dead = true; // 整刷重建：上一条引擎就地处决
-  const scroller = root.closest<HTMLElement>('.sp-body');
+  const filmEl = root.classList.contains('bz-stat-film')
+    ? root
+    : root.querySelector<HTMLElement>('.bz-stat-film');
+  const scroller = filmEl?.closest<HTMLElement>('.sp-body') ?? null;
   const engine = { dead: !scroller };
   activeEngine = engine;
   const handle: FilmHandle = {
@@ -446,7 +452,8 @@ export function bindStatFilm(root: HTMLElement, data: FilmData): FilmHandle {
     playScene(id: FilmSceneId) { playScene(id); },
     stop() { engine.dead = true; scroller?.removeEventListener('wheel', onWheel); },
   };
-  if (!scroller) return handle;
+  if (!filmEl || !scroller) return handle; // 回退板块列表页（无影片元素）：惰性句柄
+  root = filmEl; // 之后所有查询 / 画布 / 幕高单位都以影片元素为根
   const sc = scroller;
 
   const q = <T extends HTMLElement>(sel: string): T | null => root.querySelector<T>(sel);

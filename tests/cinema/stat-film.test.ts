@@ -181,12 +181,44 @@ describe('观影分析 · 滚动放映室 · 引擎（jsdom）', () => {
     return { host: scroller, root, scroller };
   }
 
-  it('绑定时把 --film-unit 写成滚动容器可视高', () => {
+  it('绑定时把 --film-unit 写成滚动容器可视高（写在影片元素上）', () => {
     const { host, root } = mount();
     const handle = bindStatFilm(root, data);
-    expect(root.style.getPropertyValue('--film-unit')).toBe('900px');
+    const filmEl = root.querySelector('.bz-stat-film') as HTMLElement;
+    expect(filmEl.style.getPropertyValue('--film-unit')).toBe('900px');
     handle.stop();
     host.remove();
+  });
+
+  // 生产结构回归（2026-09-21 上线首版整页静止的根因）：renderAll 传的是面板根，
+  // 影片元素在面板根 > .sp-body > .bz-stat-film——closest 只向上找必然落空。
+  // 引擎必须先把根解析到影片元素、再向上取滚动容器。
+  it('宿主传面板根（面板根 > .sp-body > 影片）也能挂上引擎', () => {
+    const panel = document.createElement('div');
+    panel.setAttribute('data-cinema-root', '');
+    const scroller = document.createElement('div');
+    scroller.className = 'sp-body';
+    const filmHost = document.createElement('div');
+    filmHost.innerHTML = statFilmHtml(data, () => null);
+    scroller.appendChild(filmHost);
+    panel.appendChild(scroller);
+    document.body.appendChild(panel);
+    Object.defineProperty(scroller, 'clientHeight', { configurable: true, value: 900 });
+    Object.defineProperty(scroller, 'clientWidth', { configurable: true, value: 1200 });
+    const handle = bindStatFilm(panel, data);
+    const filmEl = panel.querySelector('.bz-stat-film') as HTMLElement;
+    expect(filmEl.style.getPropertyValue('--film-unit')).toBe('900px');
+    handle.stop();
+    panel.remove();
+  });
+
+  it('宿主没有影片元素（回退板块列表页）→ 惰性句柄不炸', () => {
+    const panel = document.createElement('div');
+    document.body.appendChild(panel);
+    const handle = bindStatFilm(panel, data);
+    expect(handle.film.playing).toBe(false);
+    handle.stop(); // 无滚轮可摘：不得抛错
+    panel.remove();
   });
 
   it('滚轮向下翻到下一幕并从头放映（snap 落定后）', async () => {

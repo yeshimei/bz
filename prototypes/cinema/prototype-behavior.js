@@ -1,4 +1,4 @@
-/* 源指纹 83954f375bf406c9 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 499acf43be038d24 · 仓内输入 65 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/stat-film.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -8169,8 +8169,10 @@ tags:
   var SPEED = 420;
   var activeEngine = null;
   function bindStatFilm(root, data) {
+    var _a;
     if (activeEngine) activeEngine.dead = true;
-    const scroller = root.closest(".sp-body");
+    const filmEl = root.classList.contains("bz-stat-film") ? root : root.querySelector(".bz-stat-film");
+    const scroller = (_a = filmEl == null ? void 0 : filmEl.closest(".sp-body")) != null ? _a : null;
     const engine = { dead: !scroller };
     activeEngine = engine;
     const handle = {
@@ -8183,7 +8185,8 @@ tags:
         scroller == null ? void 0 : scroller.removeEventListener("wheel", onWheel);
       }
     };
-    if (!scroller) return handle;
+    if (!filmEl || !scroller) return handle;
+    root = filmEl;
     const sc = scroller;
     const q = (sel) => root.querySelector(sel);
     const all = (sel) => [...root.querySelectorAll(sel)];
@@ -8219,8 +8222,8 @@ tags:
     const lerp = (a, b, t) => a + (b - a) * t;
     const ref = (name) => root.querySelector(`[data-ref="${name}"]`);
     const cv = (name) => {
-      var _a, _b;
-      return (_b = (_a = q(`[data-cv="${name}"]`)) == null ? void 0 : _a.getContext("2d")) != null ? _b : null;
+      var _a2, _b;
+      return (_b = (_a2 = q(`[data-cv="${name}"]`)) == null ? void 0 : _a2.getContext("2d")) != null ? _b : null;
     };
     function playScene(id) {
       const el = sceneEl(id);
@@ -8349,14 +8352,14 @@ tags:
     });
     const nebCtx = cv("nebula");
     const NEB_RMIN = Math.min(...data.rated.map((it) => {
-      var _a;
-      return (_a = it.rating) != null ? _a : 0;
+      var _a2;
+      return (_a2 = it.rating) != null ? _a2 : 0;
     }), 10) - 0.4;
     const nebStars = data.rated.map((it) => {
-      var _a, _b, _c;
+      var _a2, _b, _c;
       return {
         it,
-        nx: data.yearMin === data.yearMax ? 0.5 : (Number(((_a = it.watchDate) != null ? _a : "").slice(0, 4)) - data.yearMin) / Math.max(1, data.yearMax - data.yearMin),
+        nx: data.yearMin === data.yearMax ? 0.5 : (Number(((_a2 = it.watchDate) != null ? _a2 : "").slice(0, 4)) - data.yearMin) / Math.max(1, data.yearMax - data.yearMin),
         ny: 1 - clamp01((((_b = it.rating) != null ? _b : 5) - NEB_RMIN) / Math.max(0.5, 10.2 - NEB_RMIN)),
         r: 1.1 + ((_c = it.rating) != null ? _c : 5) * 0.3,
         gold: !/[剧漫]/.test(it.typeTag),
@@ -8368,7 +8371,7 @@ tags:
     const nebMinis = all(".bz-film-mini");
     const avgEl = ref("avg");
     scene("s2", (p, r, vh) => {
-      var _a;
+      var _a2;
       if (!nebCtx) return;
       const w = r.width, h = vh;
       nebCtx.clearRect(0, 0, w, h);
@@ -8378,8 +8381,8 @@ tags:
       const lineA = clamp01((p - 0.38) / 0.22);
       if (lineA > 0) {
         const path = [...nebStars].sort((a, b) => {
-          var _a2, _b;
-          return ((_a2 = a.it.watchDate) != null ? _a2 : "") < ((_b = b.it.watchDate) != null ? _b : "") ? -1 : 1;
+          var _a3, _b;
+          return ((_a3 = a.it.watchDate) != null ? _a3 : "") < ((_b = b.it.watchDate) != null ? _b : "") ? -1 : 1;
         }).slice(0, 10);
         nebCtx.beginPath();
         path.forEach((s, i) => {
@@ -8395,7 +8398,7 @@ tags:
         const X = px(s), Y = py(s);
         const tw = 0.72 + 0.28 * Math.sin(tn * 2.1 + s.ph);
         const a = clamp01(p * 3) * tw;
-        const R = 9 + ((_a = s.it.rating) != null ? _a : 5) * 2.2;
+        const R = 9 + ((_a2 = s.it.rating) != null ? _a2 : 5) * 2.2;
         const g = nebCtx.createRadialGradient(X, Y, 0, X, Y, R);
         const col = s.gold ? PAL.star : PAL.star2;
         g.addColorStop(0, `rgba(${col},${a * 0.8})`);
@@ -8541,11 +8544,11 @@ tags:
     scene("s13", (p, r, vh) => {
       if (ageNum) ageNum.textContent = (Number(data.avgAge) * easeOut(clamp01(p / 0.6))).toFixed(1);
       shelves.forEach((sh, i) => {
-        var _a;
+        var _a2;
         const rp = easeOut(clamp01((p - (0.2 + i * 0.15)) / 0.25));
         sh.style.opacity = String(rp);
         sh.style.transform = `translateY(${((1 - rp) * 26).toFixed(1)}px)`;
-        const tint = Number((_a = sh.dataset.tint) != null ? _a : 0.5);
+        const tint = Number((_a2 = sh.dataset.tint) != null ? _a2 : 0.5);
         sh.querySelectorAll(".sp img, .sp .bz-film-ph").forEach((im) => {
           im.style.filter = `sepia(${lerp(1, tint, rp).toFixed(2)}) contrast(.96)`;
         });
@@ -8589,7 +8592,7 @@ tags:
     const ghost = ref("ghost");
     const starCards = all(".bz-film-star");
     scene("s15", (p) => {
-      var _a, _b;
+      var _a2, _b;
       if (!paradeStrip) return;
       const over = Math.max(0, paradeStrip.scrollWidth - sc.clientWidth);
       paradeStrip.style.transform = `translateX(${(-easeOut(p) * over).toFixed(1)}px)`;
@@ -8600,7 +8603,7 @@ tags:
       }
       const lead = starCards.find((el) => el.getBoundingClientRect().right > innerWidth * 0.4);
       if (lead && ghost) {
-        const nm = (_b = (_a = lead.querySelector(".nm")) == null ? void 0 : _a.textContent) != null ? _b : "";
+        const nm = (_b = (_a2 = lead.querySelector(".nm")) == null ? void 0 : _a2.textContent) != null ? _b : "";
         if (ghost.textContent !== nm) ghost.textContent = nm;
       }
     });
@@ -8748,7 +8751,7 @@ tags:
     let grainFrame = 0;
     let lastVh = -1;
     const tick = () => {
-      var _a, _b;
+      var _a2, _b;
       if (engine.dead || !root.isConnected) {
         if (activeEngine === engine) activeEngine = null;
         return;
@@ -8784,7 +8787,7 @@ tags:
         }
       }
       const nowEl = ref("now");
-      if (nowEl && nowEl.textContent !== ((_a = FILM_SCENE_NAMES[active]) != null ? _a : "")) nowEl.textContent = (_b = FILM_SCENE_NAMES[active]) != null ? _b : "";
+      if (nowEl && nowEl.textContent !== ((_a2 = FILM_SCENE_NAMES[active]) != null ? _a2 : "")) nowEl.textContent = (_b = FILM_SCENE_NAMES[active]) != null ? _b : "";
       const dot = ref("dot");
       const totalScroll = sc.scrollHeight - vh;
       if (dot) dot.style.top = `${((totalScroll ? sc.scrollTop / totalScroll : 0) * 100).toFixed(2)}%`;
@@ -9311,15 +9314,20 @@ tags:
       return `<button type="button" class="f-choice-btn${v === cur ? " is-on" : ""}" data-${attr}="${v}"><span class="dot" style="background:${attr === "f-tag" ? typeColor((_a = getGroupForTag(v)) != null ? _a : "其他") : (_b = ST_COLOR[v]) != null ? _b : "#888"}"></span>${v}</button>`;
     }).join("");
   }
+  function ratingFieldHtml(rating, initSt) {
+    return `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${rating}"><span class="f-range-val j-rval">${Number(rating).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(rating)}">${starsHtml(rating)}</span></div></div>`;
+  }
+  function reviewFieldHtml(review, initSt) {
+    return `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(review)}</textarea></div>`;
+  }
   function formModalHtml(opts) {
     const { editing } = opts;
     const initSt = opts.stText;
-    const ratingVal = opts.rating;
     const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
     const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
-    const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span><span class="f-stars j-stars" data-lit="${starsLit(ratingVal)}">${starsHtml(ratingVal)}</span></div></div>`;
-    const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
+    const ratingField = ratingFieldHtml(opts.rating, initSt);
+    const reviewField = reviewFieldHtml(opts.review, initSt);
     if (editing) {
       return `<div class="cn-modal" style="width:100%">
     <div class="cn-modal-title">编辑影视</div>
@@ -9386,6 +9394,7 @@ tags:
     ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
     ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ""}
     ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ""}
+    <div class="dm-sec">我 的 记 录</div>${ratingFieldHtml(o.rating, o.stText)}${reviewFieldHtml(o.review, o.stText)}
   `;
   }
   function aiRecName(r) {
@@ -10487,8 +10496,9 @@ tags:
       refreshFormState();
     }
     function renderBack() {
+      var _a2;
       if (!backSlot) return;
-      backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
+      backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying, rating: ratingVal, review: (_a2 = item == null ? void 0 : item.review) != null ? _a2 : "" });
       applyTagOn();
       applyStOn();
     }

@@ -1221,10 +1221,11 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     refreshFormState();
   }
 
-  /** 背面渲染：与详情弹窗同形制；分类 / 状态是有下拉的徽标（无「我的记录」段） */
+  /** 背面渲染：与详情弹窗同形制；分类 / 状态是有下拉的徽标；
+   *  「我的记录」段（评分/影评）收在末尾，已看才显示（2026-09-21 加回） */
   function renderBack(): void {
     if (!backSlot) return;
-    backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
+    backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying, rating: ratingVal, review: item?.review ?? '' });
     applyTagOn();
     applyStOn();
   }
@@ -1299,8 +1300,8 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     const date = stChanged ? localNow() : (item!.watchDate || localNow());
     // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
     // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回。
-    // 新增态背面已去掉评分滑杆（2026-09-21 拍板去掉「我的记录」段）→ 已看给默认分，
-    // 编辑态仍有滑杆，照旧读框。
+    // 「我的记录」段编辑态直出、新增态在背面（2026-09-21 加回）——.j-range 两态都查得到，
+    // querySelector 取先出现的那个框（同屏只会有一处）。框缺失是防御分支（已看给默认分）。
     const ratingBox = el.querySelector<HTMLInputElement>('.j-range');
     const rating = cur.st === '已看'
       ? (ratingBox ? parseFloat(ratingBox.value) : DEFAULT_RATING)
@@ -1308,7 +1309,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     // 非「已看」态保留原影评不写空（深审批A P2-2）：影评框在非已看态隐藏，原实现在这里
     // 强置空串 + persistItem `delete fm['影评']`——「已看」影片改回想看/在看保存，影评被静默清空。
     // 影评只在「已看」态的输入框里被用户显式改写/清空（空串保存 = 显式删除，语义保留）。
-    // 新增态背面无影评框（同上）→ 走编辑态分支留原值 / 空串。
+    // 新增态背面也有影评框了（同上「我的记录」段）→ 走编辑态分支留原值 / 空串。
     const reviewBox = el.querySelector<HTMLTextAreaElement>('.j-review-t');
     const review = reviewBox ? reviewBox.value.trim() : (editing && item ? item.review ?? '' : '');
     if (editing && item) {

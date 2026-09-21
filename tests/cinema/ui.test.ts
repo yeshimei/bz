@@ -451,10 +451,13 @@ describe('cinema 风格化面板（issue 236）', () => {
     (form.querySelector('.j-name') as HTMLInputElement).value = '新片A';
     clickEl(form.querySelector('.j-parse'));
     await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
-    // 背面 = 详情弹窗形制（dm-head + 豆瓣信息），且无「我的记录」段（2026-09-21 去掉）
+    // 背面 = 详情弹窗形制（dm-head + 豆瓣信息）+「我的记录」段收尾（2026-09-21 加回）。
+    // 默认想看：评分/影评两字段隐藏（已看才显示，applyStOn 统一开合）
     expect(form.querySelector('.form-face--back .dm-title')).toBeTruthy();
-    expect(form.querySelector('.form-face--back .j-rating')).toBeNull();
-    expect(form.querySelector('.form-face--back .j-review')).toBeNull();
+    expect(form.querySelector('.form-face--back .j-rating')).toBeTruthy();
+    expect(form.querySelector('.form-face--back .j-review')).toBeTruthy();
+    expect((form.querySelector('.form-face--back .j-rating') as HTMLElement).style.display).toBe('none');
+    expect((form.querySelector('.form-face--back .j-review') as HTMLElement).style.display).toBe('none');
     // 分类徽标 → 点开下拉 → 选中即回填（同时收起）。
     // 展开态走 .is-open 类而非 hidden 属性：hidden 是瞬切、没有中间态（styles.css 全域动效段）
     const pickTag = form.querySelector('.form-face--back [data-pick="tag"]') as HTMLElement;
@@ -470,6 +473,30 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.items[0].name).toBe('新片A'); // 新增置首
     expect(M.items[0].typeTag).toBe('美剧'); // 下拉选的分类落盘
     await vi.waitFor(() => expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(5)); // renderAll 落地
+  });
+
+  // 2026-09-21 用户点名：点「已看」就要能填评分影评——背面「我的记录」段加回（当日「去掉」拍板作废）
+  it('添加流点已看：背面「我的记录」段展开，评分影评可填并落盘', async () => {
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    // 正面点「已看」：正反两面共用同一份 cur（issue 395）
+    clickEl(form.querySelector('.form-face--front [data-f-st="已看"]'));
+    (form.querySelector('.j-name') as HTMLInputElement).value = '已看新片';
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    // 已看态：背面我的记录段直接可见
+    expect((form.querySelector('.form-face--back .j-rating') as HTMLElement).style.display).toBe('');
+    expect((form.querySelector('.form-face--back .j-review') as HTMLElement).style.display).toBe('');
+    (form.querySelector('.form-face--back .j-range') as HTMLInputElement).value = '8.8';
+    (form.querySelector('.form-face--back .j-review-t') as HTMLTextAreaElement).value = '年度最佳';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《已看新片》.md')).toBe(true));
+    expect(M.items[0].rating).toBe(8.8);
+    expect(M.items[0].review).toBe('年度最佳');
+    expect(vault.files.get('我的/影视/《已看新片》.md')).toContain('影评: 年度最佳');
   });
 
   it('CM2：新增重名 → 锁保存按钮且不落盘不留幽灵条目（issue 394）', async () => {
@@ -1547,7 +1574,7 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
-    // ① 建档：模板只写最小安全集（新增态已无影评输入——issue 395 双面卡片去掉「我的记录」段）
+    // ① 建档：默认想看（评分/影评框在背面隐藏、值为空）→ 模板仍是最小安全集，无影评键
     clickEl(root.querySelector('[data-cinema-add]'));
     let form = root.querySelector('.cn-modal') as HTMLElement;
     (form.querySelector('.j-name') as HTMLInputElement).value = '多行影评片';
@@ -1762,8 +1789,8 @@ describe('深审批A：写路径与 ui 行为回归', () => {
   });
 
   // P3-13：表单 Enter 提交（core bindFormSubmit）——双面卡片后按阶段分流（issue 395）：
-  // 正面 Enter = 解析翻面、背面 Enter = 提交建档；影评框 Ctrl+Enter 恒提交（走编辑态，
-  // 新增态已无影评框——去掉「我的记录」段）
+  // 正面 Enter = 解析翻面、背面 Enter = 提交建档；影评框 Ctrl+Enter 恒提交（走编辑态样板；
+  // 新增态背面影评框 2026-09-21 加回后同语义，core 豁免逻辑一致）
   it('P3-13：正面 Enter = 解析翻面、背面 Enter 提交建档；影评框 Ctrl+Enter 恒提交', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
