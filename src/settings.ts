@@ -63,6 +63,18 @@ export default interface BzSettings {
    *  modelOptions 显式思考键优先，不受本设置影响 */
   aiThinking: string;
 
+  // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389）=====
+  /** Jev 决策模型总开关（全局唯一一个）：关则自动关联裁判与影院类型判定全部回落 LLM / 不判定 */
+  jevEnabled: boolean;
+  /** Jev 端点（默认 https://api.typesafe.ai/v1/systemone） */
+  jevEndpoint: string;
+  /** Jev 密钥（TypeSafe 控制台创建；创建时只显示一次） */
+  jevApiKey: string;
+  /** Jev 模型名。默认固定版本 jev-1.13.0——口径不该由供应商的远端别名决定何时变更（ADR-0173 §5） */
+  jevModel: string;
+  /** Jev 请求超时（毫秒；实测单次 1–2 秒，默认 10000 留 5x 余量） */
+  jevTimeoutMs: number;
+
   // ===== 📂 数据存储路径（ADR-0009 共享数据路径）=====
   /** 共享 JSON 数据目录（memo/belongings/passwords/favorites/review/quiz/闪念 meta+vec 统一存放） */
   storagePath: string;
@@ -625,6 +637,13 @@ export const DEFAULT_SETTINGS: BzSettings = {
   aiMaxTokensOverrides: {},
   // AI 思考档位（issue 330/ADR-0146）：auto = 跟随模型默认，不注入思考参数
   aiThinking: 'auto',
+
+  // Jev 决策通道（ADR-0173）：默认关闭——未填密钥时不接管任何判定，行为与接入前一致
+  jevEnabled: false,
+  jevEndpoint: 'https://api.typesafe.ai/v1/systemone',
+  jevApiKey: '',
+  jevModel: 'jev-1.13.0',
+  jevTimeoutMs: 10000,
 
   // 共享数据路径（ADR-0009）
   storagePath: 'CONFIG/STORAGE',
