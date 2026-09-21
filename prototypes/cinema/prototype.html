@@ -463,6 +463,72 @@
         // 还原流转过的种子想看片（disk 层面；自检可重复——基线计数不受影响）
         if (wantOrig != null) localStorage.setItem(wantKey, wantOrig);
 
+        // 合集共享元素（issue 397）：本页自检基线按「分季合并=关」跑（见壳基座），所以这段放最后——
+        // 末尾把开关翻回默认「开」并重载桌面帧，在真浏览器里验两段过渡（jsdom 无几何，单测测不到）：
+        //   ① 点合集卡 = 与单卡同款（整卡抽离 → 海报飞入 → 面板从海报生长 → 关闭返程插回）
+        //   ② 合集弹窗里点某一季 = 这一行从明细列表抽离（其余行上移补位、行位不再占着），详情叠在
+        //      合集之上，关闭时行让位、海报飞回行内原位；合集弹窗全程留着
+        localStorage.setItem(MERGE_KEY, '1');
+        dtFrame().src = './prototype-view.html';
+        const seriesReady = await until(() => {
+          try { return !!dtDoc()?.querySelector('.pcard-series'); } catch { return false; } // 导航中跨文档访问会抛
+        }, 15000);
+        t('合集卡出现（合并开·重载）', seriesReady);
+        if (seriesReady) {
+          const ds = dtDoc();
+          const sf = (sel) => ds.querySelector(sel);
+
+          // ① 点合集卡：整卡抽离 + 面板从海报生长
+          const sCard = sf('.d-scroll .pcard-series');
+          sCard.click();
+          await sleep(80);
+          const sfm = sf('.cn-ovl .cn-modal--detail');
+          t('合集卡走fly通道', !!sfm && sfm.classList.contains('cn-modal--fly')
+            && !!ds.querySelector('.cn-fly') && sCard.style.display === 'none'); // 整卡抽离，不留空框
+          await until(() => !!sfm && sfm.style.visibility === '' && !ds.querySelector('.cn-fly'), 5000);
+          t('合集面板落地·卡保持抽离', !!sfm && sfm.style.visibility === '' && sCard.style.display === 'none');
+          sfm.closest('.cn-ovl').click();
+          await until(() => !ds.querySelector('.cn-ovl') && !ds.querySelector('.cn-fly'), 5000);
+          t('合集关闭返程归位', !ds.querySelector('.cn-ovl')
+            && sCard.style.display === '' && sCard.style.visibility === '');
+
+          // ② 合集弹窗里点某一季：行抽离 + 合集弹窗留着 + 关闭飞回行内
+          sCard.click();
+          await until(() => !!sf('.s-row'), 5000);
+          const rowN = ds.querySelectorAll('.s-row').length;
+          const sRow = [...ds.querySelectorAll('.s-row')].find((r) => r.querySelector('.s-thumb img[src]'));
+          t('合集行有海报可飞', !!sRow && rowN > 1);
+          if (sRow) {
+            sRow.click();
+            await sleep(80);
+            const ovls = [...ds.querySelectorAll('.cn-ovl')];
+            const rModal = ovls[ovls.length - 1]?.querySelector('.cn-modal--detail'); // 后挂的在上面 = 单季详情
+            t('合集行钻入·弹窗留着且走fly通道', ovls.length === 2 && !!rModal
+              && rModal.classList.contains('cn-modal--fly') && sRow.style.display === 'none');
+            await until(() => !!rModal && rModal.style.visibility === '' && !ds.querySelector('.cn-fly'), 5000);
+            t('行详情落地·行保持抽离', !!rModal && rModal.style.visibility === '' && sRow.style.display === 'none');
+            rModal.closest('.cn-ovl').click();
+            // 返程落点精度：克隆消失前最后一次采样的中心 vs 行内小图中心。
+            // 落点若被 FLIP 的祖先位移污染（先补动画后量坐标），会偏整整一条行高 —— 2026-09-21
+            // 用户报的「插回时有一些抖动」就是这个，这里钉住「量在演之前」的次序。
+            let landC = null;
+            for (let i = 0; i < 300; i++) {
+              const c = ds.querySelector('.cn-fly');
+              if (c) { const b = c.getBoundingClientRect(); landC = [b.left + b.width / 2, b.top + b.height / 2]; }
+              else if (landC) break;
+              await sleep(20);
+            }
+            const tb = sRow.querySelector('.s-thumb img')?.getBoundingClientRect();
+            const drift = (tb && landC)
+              ? Math.hypot(landC[0] - (tb.left + tb.width / 2), landC[1] - (tb.top + tb.height / 2)) : 999;
+            t('返程落点准（≤6px）', drift <= 6);
+            await until(() => ds.querySelectorAll('.cn-ovl').length === 1 && !ds.querySelector('.cn-fly'), 5000);
+            t('行关闭返程归位·合集弹窗留着', ds.querySelectorAll('.cn-ovl').length === 1
+              && sRow.style.display === '' && ds.querySelectorAll('.s-row').length === rowN);
+          }
+          sf('.cn-ovl')?.click(); // 清场：别把开着的弹窗留给下一次自检
+        }
+
         document.title = window.__st.fail.length
           ? 'SELFTEST FAIL ' + window.__st.fail.join(',')
           : `SELFTEST OK ${window.__st.pass}/${window.__st.pass + window.__st.fail.length}`;

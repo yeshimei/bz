@@ -1,4 +1,4 @@
-/* 源指纹 46fdc595016e73e7 · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 a1ed1cd6d9bfc0be · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -8586,29 +8586,29 @@ tags:
     });
   }
   function openDetail(sec, it, app, opts = {}) {
-    var _a, _b, _c, _d, _e;
+    var _a, _b, _c, _d, _e, _f;
     const url = posterUrl(it, app);
     const from = (_a = opts.from) != null ? _a : sec.querySelector(`.pcard[data-cinema-key="${CSS.escape(itemKey(it))}"]`);
     const se = from ? createSharedFlight() : null;
     const { el, close } = ovl(sec, detailModalHtml(it, url), { onWillClose: se == null ? void 0 : se.willClose });
     mountIcons(el);
-    if (se) se.begin(el, from);
-    (_b = el.querySelector(".j-edit")) == null ? void 0 : _b.addEventListener("click", () => {
+    if (se) se.begin(el, { el: from, borrow: (_b = opts.borrow) != null ? _b : "card" });
+    (_c = el.querySelector(".j-edit")) == null ? void 0 : _c.addEventListener("click", () => {
       close({ skipReturn: true });
       openForm(sec, it, app);
     });
-    (_c = el.querySelector(".j-del")) == null ? void 0 : _c.addEventListener("click", () => {
+    (_d = el.querySelector(".j-del")) == null ? void 0 : _d.addEventListener("click", () => {
       close({ skipReturn: true });
       openConfirm(it, app);
     });
-    (_d = el.querySelector(".j-similar")) == null ? void 0 : _d.addEventListener("click", () => {
+    (_e = el.querySelector(".j-similar")) == null ? void 0 : _e.addEventListener("click", () => {
       close({ skipReturn: true });
       void runSimilarRecommend(it, app);
     });
     const foldBtn = el.querySelector("[data-dm-fold]");
     const quote = el.querySelector("[data-dm-quote]");
     if (foldBtn && quote) {
-      const foldText = (_e = foldBtn.textContent) != null ? _e : "展开全文";
+      const foldText = (_f = foldBtn.textContent) != null ? _f : "展开全文";
       foldBtn.addEventListener("click", () => {
         foldBtn.textContent = quote.classList.toggle("is-fold") ? foldText : "收起";
       });
@@ -8633,54 +8633,65 @@ tags:
     const at = (r) => `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
     return stops.map((r) => ({ transform: at(r) }));
   }
-  function flipReflow(cards, viewport, mutate, duration = SE_FLIGHT) {
-    const animatable = cards.filter((c) => typeof c.animate === "function");
-    if (!animatable.length) {
-      mutate();
-      return;
-    }
-    const before = animatable.map((c) => c.getBoundingClientRect());
+  function measureFlip(targets, mutate) {
+    const before = targets.map((c) => c.getBoundingClientRect());
     mutate();
-    const near = (r) => r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
-    animatable.forEach((c, i) => {
+    return targets.map((c, i) => {
       const now = c.getBoundingClientRect();
-      const dx = before[i].left - now.left;
-      const dy = before[i].top - now.top;
-      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 || !near(now) && !near(before[i])) return;
-      c.animate(
-        [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
+      return { el: c, dx: before[i].left - now.left, dy: before[i].top - now.top, before: before[i], now };
+    });
+  }
+  function playFlip(deltas, viewport, duration = SE_FLIGHT) {
+    const near = (r) => r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
+    for (const d of deltas) {
+      if (typeof d.el.animate !== "function") continue;
+      if (Math.abs(d.dx) < 1 && Math.abs(d.dy) < 1 || !near(d.now) && !near(d.before)) continue;
+      d.el.animate(
+        [{ transform: `translate(${d.dx.toFixed(1)}px, ${d.dy.toFixed(1)}px)` }, { transform: "none" }],
         { duration, easing: "cubic-bezier(.22,.82,.3,1)" }
       );
-    });
+    }
   }
   function createSharedFlight() {
     let phase = "idle";
     let overlay = null;
     let target = null;
     let src = null;
-    let srcCard = null;
-    let gridEl = null;
-    const gridCards = () => gridEl ? [...gridEl.querySelectorAll(".pcard")] : [];
+    let taken = null;
+    let borrow = "card";
+    let boxEl = null;
+    const reflowSet = () => {
+      if (!boxEl) return [];
+      const sibs = [...boxEl.querySelectorAll(borrow === "row" ? ".s-row" : ".pcard")];
+      const panel = borrow === "row" ? boxEl.closest(".cn-modal") : null;
+      return panel ? [panel, ...sibs] : sibs;
+    };
     const extractSrc = () => {
-      const card = srcCard;
-      if (!card) return;
-      flipReflow(gridCards().filter((c) => c !== card), (gridEl != null ? gridEl : card).getBoundingClientRect(), () => {
-        card.style.display = "none";
-      });
+      const t = taken;
+      if (!t) return;
+      const set = reflowSet().filter((c) => c !== t);
+      const viewport = (boxEl != null ? boxEl : t).getBoundingClientRect();
+      playFlip(measureFlip(set, () => {
+        t.style.display = "none";
+      }), viewport);
     };
     const reinsertSrc = (reflowMs) => {
-      const card = srcCard;
-      if (!card || !card.isConnected || !(gridEl == null ? void 0 : gridEl.isConnected)) return null;
-      flipReflow(gridCards().filter((c) => c !== card), gridEl.getBoundingClientRect(), () => {
-        card.style.display = "";
-        card.style.visibility = "hidden";
-      }, reflowMs);
-      return (src == null ? void 0 : src.isConnected) ? src.getBoundingClientRect() : null;
+      const t = taken;
+      if (!t || !t.isConnected || !(boxEl == null ? void 0 : boxEl.isConnected)) return null;
+      const set = reflowSet().filter((c) => c !== t);
+      const viewport = boxEl.getBoundingClientRect();
+      const deltas = measureFlip(set, () => {
+        t.style.display = "";
+        t.style.visibility = "hidden";
+      });
+      const to = (src == null ? void 0 : src.isConnected) ? src.getBoundingClientRect() : null;
+      playFlip(deltas, viewport, reflowMs);
+      return to;
     };
     const restoreSrc = () => {
-      if (srcCard) {
-        srcCard.style.display = "";
-        srcCard.style.visibility = "";
+      if (taken) {
+        taken.style.display = "";
+        taken.style.visibility = "";
       }
     };
     return {
@@ -8727,7 +8738,7 @@ tags:
             { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" }
           );
           const done = () => {
-            if (srcCard) srcCard.style.visibility = "";
+            if (taken) taken.style.visibility = "";
             clone.remove();
             phase = "idle";
           };
@@ -8743,12 +8754,13 @@ tags:
         window.setTimeout(handOver, SE_GROW + 1200);
         return true;
       },
-      begin(ovlEl, fromCard) {
+      begin(ovlEl, from) {
         overlay = ovlEl;
+        borrow = from.borrow;
         target = overlay.querySelector(".cn-modal--detail .dm-poster");
-        src = fromCard.querySelector(".pw img");
-        srcCard = fromCard;
-        gridEl = fromCard.closest(".d-scroll, .m-scroll");
+        taken = from.el;
+        src = from.el.querySelector(borrow === "row" ? ".s-thumb img" : ".pw img");
+        boxEl = borrow === "row" ? from.el.closest(".s-list") : from.el.closest(".d-scroll, .m-scroll");
         if (!overlay || !target || !(src == null ? void 0 : src.getAttribute("src"))) {
           this.bail();
           return;
@@ -8818,25 +8830,29 @@ tags:
         overlay = null;
         target = null;
         src = null;
-        srcCard = null;
-        gridEl = null;
+        taken = null;
+        borrow = "card";
+        boxEl = null;
         phase = "idle";
       }
     };
   }
-  function openSeriesDetail(sec, key, app) {
+  function openSeriesDetail(sec, key, app, opts = {}) {
+    var _a;
     const card = seriesCardByKey(key);
     if (!card) return;
     const mobile = sec.classList.contains("mob");
-    const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)));
+    const from = (_a = opts.from) != null ? _a : sec.querySelector(`.pcard[data-cinema-key="${CSS.escape(key)}"]`);
+    const se = from ? createSharedFlight() : null;
+    const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)), { onWillClose: se == null ? void 0 : se.willClose });
     mountIcons(el);
+    if (se) se.begin(el, { el: from, borrow: "card" });
     const rowItem = (row) => itemByKeyInState(row.dataset.cinemaSeasonKey);
     el.querySelectorAll(".s-row").forEach((row) => {
       row.addEventListener("click", () => {
         const it = rowItem(row);
         if (!it) return;
-        close();
-        openDetail(sec, it, app);
+        openDetail(sec, it, app, { from: row, borrow: "row" });
       });
       row.addEventListener("contextmenu", (e) => {
         e.preventDefault();
@@ -9344,7 +9360,7 @@ tags:
       if (!cardEl) return;
       e.preventDefault();
       const key = cardEl.dataset.cinemaKey;
-      if (isSeriesKey(key)) openSeriesDetail(sec, key, app);
+      if (isSeriesKey(key)) openSeriesDetail(sec, key, app, { from: cardEl });
       else {
         const it = itemByKeyInState(key);
         if (it) openDetail(sec, it, app, { from: cardEl });
@@ -9435,7 +9451,7 @@ tags:
       const cardEl = t.closest(".pcard");
       if (cardEl) {
         const key = cardEl.dataset.cinemaKey;
-        if (isSeriesKey(key)) openSeriesDetail(sec, key, app);
+        if (isSeriesKey(key)) openSeriesDetail(sec, key, app, { from: cardEl });
         else {
           const it = itemByKeyInState(key);
           if (it) openDetail(sec, it, app, { from: cardEl });

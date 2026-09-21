@@ -424,15 +424,17 @@ function openSheet(sec: HTMLElement, target: SheetTarget, preFire?: () => void):
 
 // ---------- 弹窗：详情 ----------
 
-function openDetail(sec: HTMLElement, it: CinemaItem, app: App, opts: { from?: HTMLElement | null } = {}): void {
+/** @param opts.from 过渡来源（网格卡 / 合集弹窗里的季行）；缺省按键反查网格卡
+ *  @param opts.borrow 抽离口径，缺省 'card'（整卡抽离）；合集行钻入传 'image'（只借图，列表不动） */
+function openDetail(sec: HTMLElement, it: CinemaItem, app: App, opts: { from?: HTMLElement | null; borrow?: Borrow } = {}): void {
   const url = posterUrl(it, app);
-  // 共享元素过渡（issue 396）：来源卡 = 调用方显式给的（点卡片 / 键盘激活）；缺省按键反查——
-  // 菜单与抽屉动作手里只有条目没有卡元素，反查到同一张卡即可，飞行起点不会飘。
+  // 共享元素过渡（issue 396）：来源卡 = 调用方显式给的（点卡片 / 键盘激活 / 合集行）；
+  // 缺省按键反查——菜单与抽屉动作手里只有条目没有卡元素，反查到同一张卡即可，飞行起点不会飘。
   const from = opts.from ?? sec.querySelector<HTMLElement>(`.pcard[data-cinema-key="${CSS.escape(itemKey(it))}"]`);
   const se = from ? createSharedFlight() : null;
   const { el, close } = ovl(sec, detailModalHtml(it, url), { onWillClose: se?.willClose });
   mountIcons(el);
-  if (se) se.begin(el, from as HTMLElement);
+  if (se) se.begin(el, { el: from as HTMLElement, borrow: opts.borrow ?? 'card' });
   // 编辑 / 删除 / 找同类：关了马上开下一个弹窗，跳过返程动效（叠两段过渡只会互相打架）；
   // 卡片海报的归位由遮罩层移除观察者兜底，不会因为跳过返程而丢
   el.querySelector('.j-edit')?.addEventListener('click', () => { close({ skipReturn: true }); openForm(sec, it, app); });
@@ -449,7 +451,16 @@ function openDetail(sec: HTMLElement, it: CinemaItem, app: App, opts: { from?: H
   }
 }
 
-// ---------- 详情弹窗共享元素过渡（issue 396） ----------
+// ---------- 详情弹窗共享元素过渡（issue 396 / 397） ----------
+
+/** 抽离口径（issue 396 点卡 / issue 397 合集行钻入）：两者的**形态完全一致**——
+ *  被点的那一件从列表里抽离（display:none）、同容器的其余件 FLIP 补位，关闭时反向让位再插回原位；
+ *  差别只在容器与件选择器（网格 .pcard / 合集弹窗 .s-list 里的 .s-row）。
+ *  2026-09-21 用户拍板：「合集季中的列表也要移除掉，和在卡片列表中一样」——不是只借走小图。 */
+type Borrow = 'card' | 'row';
+
+/** 过渡来源：`el` = 网格卡 或 合集弹窗里的季行（.s-row） */
+interface FlightFrom { el: HTMLElement; borrow: Borrow }
 
 /** 过渡时长（2026-09-21 用户拍板：**很短，图片飞行 0.2s**——开 = 飞行 200 + 撑开 200，
  *  关 = 折回 200 + 飞回 200）。刻意不做 prefers-reduced-motion 放缓分支：用户本人系统即报
@@ -483,25 +494,31 @@ function flyKeyframes(base: DOMRect, w: number, h: number, ...stops: DOMRect[]):
   return stops.map((r) => ({ transform: at(r) }));
 }
 
-/** 列表重排 FLIP（issue 396）：mutate 前后各量一次，视口内的卡按位移差补一段位移动画——
- *  「其他卡片移动补齐 / 让位」读得见。视口外的卡跳变看不见，不演（也省下几百个合成层）；
- *  display:none 的卡（含正被抽离的那张）全零矩形自然落在视口判断之外。 */
-function flipReflow(cards: HTMLElement[], viewport: DOMRect, mutate: () => void, duration = SE_FLIGHT): void {
-  const animatable = cards.filter((c) => typeof c.animate === 'function');
-  if (!animatable.length) { mutate(); return; }
-  const before = animatable.map((c) => c.getBoundingClientRect());
+/** 列表重排 FLIP 的「量」半步（issue 396 / 397）：mutate 前后各量一次，得到每件的位移差。
+ *  **只量不动**——调用方常要在补动画之前再取一次几何（返程落点），而 FLIP 一旦开跑，
+ *  被动画元素的**子孙**矩形就被 transform 污染了（祖先带位移，子孙的 getBoundingClientRect 跟着走）。 */
+function measureFlip(targets: HTMLElement[], mutate: () => void): { el: HTMLElement; dx: number; dy: number; before: DOMRect; now: DOMRect }[] {
+  const before = targets.map((c) => c.getBoundingClientRect());
   mutate();
+  // 位移差与「量前/量后矩形」一起量齐：光标卡在补动画之后会读到被污染的值（见上）
+  return targets.map((c, i) => {
+    const now = c.getBoundingClientRect();
+    return { el: c, dx: before[i].left - now.left, dy: before[i].top - now.top, before: before[i], now };
+  });
+}
+
+/** 列表重排 FLIP 的「演」半步：按量好的位移差补一段位移动画——「其他卡/行移动补齐 / 让位」读得见。
+ *  视口外的件跳变看不见，不演（也省下几百个合成层）；display:none 的件全零矩形自然落在视口判断之外。 */
+function playFlip(deltas: { el: HTMLElement; dx: number; dy: number; before: DOMRect; now: DOMRect }[], viewport: DOMRect, duration = SE_FLIGHT): void {
   const near = (r: DOMRect): boolean =>
     r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120
     && r.left < viewport.right + 120 && r.right > viewport.left - 120;
-  animatable.forEach((c, i) => {
-    const now = c.getBoundingClientRect();
-    const dx = before[i].left - now.left;
-    const dy = before[i].top - now.top;
-    if ((Math.abs(dx) < 1 && Math.abs(dy) < 1) || (!near(now) && !near(before[i]))) return;
-    c.animate([{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: 'none' }],
+  for (const d of deltas) {
+    if (typeof d.el.animate !== 'function') continue;
+    if ((Math.abs(d.dx) < 1 && Math.abs(d.dy) < 1) || (!near(d.now) && !near(d.before))) continue;
+    d.el.animate([{ transform: `translate(${d.dx.toFixed(1)}px, ${d.dy.toFixed(1)}px)` }, { transform: 'none' }],
       { duration, easing: 'cubic-bezier(.22,.82,.3,1)' });
-  });
+  }
 }
 
 /**
@@ -524,44 +541,58 @@ function flipReflow(cards: HTMLElement[], viewport: DOMRect, mutate: () => void,
  */
 function createSharedFlight(): {
   willClose: (finish: () => void) => boolean;
-  begin: (ovlEl: HTMLElement, fromCard: HTMLElement) => void;
+  begin: (ovlEl: HTMLElement, from: FlightFrom) => void;
   bail: () => void;
 } {
   let phase: 'idle' | 'flying' | 'open' | 'closing' = 'idle';
   let overlay: HTMLElement | null = null;
   let target: HTMLElement | null = null;
-  let src: HTMLImageElement | null = null;
-  let srcCard: HTMLElement | null = null;  // 被抽走的整卡
-  let gridEl: HTMLElement | null = null;   // 所在滚动容器（重排 FLIP 的量测范围与视口）
+  let src: HTMLImageElement | null = null;   // 被抽离那件里的图（返程落点量它的矩形）
+  let taken: HTMLElement | null = null;      // 被抽离的那一件：网格卡（card）/ 合集行（row）
+  let borrow: Borrow = 'card';
+  let boxEl: HTMLElement | null = null;      // 抽离件的所在容器（补位/让位的量测范围与视口）
 
-  const gridCards = (): HTMLElement[] => (gridEl ? [...gridEl.querySelectorAll<HTMLElement>('.pcard')] : []);
-
-  /** 抽离：整卡 display:none，其余卡动画补位。海报 rect 要在调用**前**量好——抽离后源卡没有几何 */
-  const extractSrc = (): void => {
-    const card = srcCard; // 局部非空副本：TS 的收窄穿不进 mutate 闭包
-    if (!card) return;
-    // 源卡必须排除在补位集合外：display:none 后它没有几何，混进去只会领一条无意义动画
-    flipReflow(gridCards().filter((c) => c !== card), (gridEl ?? card).getBoundingClientRect(), () => { card.style.display = 'none'; });
+  /** 让位/补位的动画集合 = 同容器里的兄弟件；合集模式再带上弹窗本体——
+   *  行被抽走后弹窗变矮，而弹窗是 flex 居中的，不带上它会硬跳一下（2026-09-21 实测手感）。 */
+  const reflowSet = (): HTMLElement[] => {
+    if (!boxEl) return [];
+    const sibs = [...boxEl.querySelectorAll<HTMLElement>(borrow === 'row' ? '.s-row' : '.pcard')];
+    const panel = borrow === 'row' ? boxEl.closest<HTMLElement>('.cn-modal') : null;
+    return panel ? [panel, ...sibs] : sibs;
   };
 
-  /** 插回：列表让出空位（其余卡让位动画），卡本体以 visibility:hidden 占位，返回海报新 rect
+  /** 抽离：整件 display:none，其余件动画补位。图 rect 要在调用**前**量好——抽离后源件没有几何 */
+  const extractSrc = (): void => {
+    const t = taken; // 局部非空副本：TS 的收窄穿不进 mutate 闭包
+    if (!t) return;
+    // 源件必须排除在补位集合外：display:none 后它没有几何，混进去只会领一条无意义动画
+    const set = reflowSet().filter((c) => c !== t);
+    const viewport = (boxEl ?? t).getBoundingClientRect();
+    playFlip(measureFlip(set, () => { t.style.display = 'none'; }), viewport);
+  };
+
+  /** 插回：列表让出空位（其余件让位动画），本件以 visibility:hidden 占位，返回图的新 rect
    *  供返程克隆瞄准；显形由调用方在克隆落地时做（揭掉 visibility） */
   const reinsertSrc = (reflowMs: number): DOMRect | null => {
-    const card = srcCard;
-    if (!card || !card.isConnected || !gridEl?.isConnected) return null;
+    const t = taken;
+    if (!t || !t.isConnected || !boxEl?.isConnected) return null;
     // 让位时长跟返程同长：空位张开的节奏才对得上海报插回的那一下。
-    // ⚠ 源卡必须排除在让位集合外——它 display:none 时矩形是全零，混进去会领一条
+    // ⚠ 源件必须排除在让位集合外——它 display:none 时矩形是全零，混进去会领一条
     // 「从 (0,0) 飞到空位」的纠正动画，而 getBoundingClientRect 连 transform 一起量，
     // 返回的就是被位移污染的假坐标 → 返程克隆照着飞，落点跑到面板角落（2026-09-21 实测）
-    flipReflow(gridCards().filter((c) => c !== card), gridEl.getBoundingClientRect(), () => {
-      card.style.display = '';
-      card.style.visibility = 'hidden';
-    }, reflowMs);
-    return src?.isConnected ? src.getBoundingClientRect() : null;
+    const set = reflowSet().filter((c) => c !== t);
+    const viewport = boxEl.getBoundingClientRect();
+    const deltas = measureFlip(set, () => { t.style.display = ''; t.style.visibility = 'hidden'; });
+    // ⚠ 落点必须在补动画**之前**量：集合里带了弹窗本体（合集模式），它一开跑，
+    // 行的矩形就跟着祖先的 transform 走 —— 量到的是假坐标，海报落点偏一条行高再弹回来，
+    // 正是用户 2026-09-21 报的「插回时有一些抖动」。先量后演，两件事互不干扰。
+    const to = src?.isConnected ? src.getBoundingClientRect() : null;
+    playFlip(deltas, viewport, reflowMs);
+    return to;
   };
 
   const restoreSrc = (): void => {
-    if (srcCard) { srcCard.style.display = ''; srcCard.style.visibility = ''; }
+    if (taken) { taken.style.display = ''; taken.style.visibility = ''; }
   };
 
   return {
@@ -599,7 +630,7 @@ function createSharedFlight(): {
         const fly = clone.animate(flyKeyframes(fb, posterR.width, posterR.height, posterR, to),
           { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
         const done = (): void => {
-          if (srcCard) srcCard.style.visibility = ''; // 落地：卡在自己的空位里显形
+          if (taken) taken.style.visibility = ''; // 落地：卡（或行内小图）在自己的空位里显形
           clone.remove();
           phase = 'idle';
         };
@@ -616,12 +647,14 @@ function createSharedFlight(): {
       return true;
     },
 
-    begin(ovlEl, fromCard) {
+    begin(ovlEl, from) {
       overlay = ovlEl;
+      borrow = from.borrow;
       target = overlay.querySelector<HTMLElement>('.cn-modal--detail .dm-poster');
-      src = fromCard.querySelector<HTMLImageElement>('.pw img');
-      srcCard = fromCard;
-      gridEl = fromCard.closest<HTMLElement>('.d-scroll, .m-scroll');
+      // 被抽离的那一件 = 整卡 / 整行；图 = 卡面海报（配 .pw img）/ 行内小图（配 .s-thumb img）
+      taken = from.el;
+      src = from.el.querySelector<HTMLImageElement>(borrow === 'row' ? '.s-thumb img' : '.pw img');
+      boxEl = borrow === 'row' ? from.el.closest<HTMLElement>('.s-list') : from.el.closest<HTMLElement>('.d-scroll, .m-scroll');
       // 无海报 / 图对不上（季明细钻入时源是合并卡正脸，与钻入季可能不同图，硬飞会在
       // 落地瞬间跳图）→ 不飞，维持原有整体入场
       if (!overlay || !target || !src?.getAttribute('src')) { this.bail(); return; }
@@ -682,8 +715,9 @@ function createSharedFlight(): {
       overlay = null;
       target = null;
       src = null;
-      srcCard = null;
-      gridEl = null;
+      taken = null;
+      borrow = 'card';
+      boxEl = null;
       phase = 'idle';
     },
   };
@@ -694,6 +728,9 @@ function createSharedFlight(): {
  * 桌面右键出**该行**的跟手菜单、移动长按出底部抽屉；行点击仍是钻入该行详情）。
  * 入口 = 左键点卡片 / 卡片浮层的「查看全部」；卡片级不落笔记级动作，行级才有落点。
  *
+ * 钻入某一季（issue 397, 2026-09-21 用户拍板）：合集弹窗**留着**——「列表页面不会消失」，
+ * 单季详情以共享元素过渡叠在它之上，海报从行内小图长成详情海报、关闭再飞回这一行的原位。
+ *
  * 坑位（都踩过）：
  * - 行内条目**触发时现取**，不在绑定时闭包捕获：面板重刷后条目对象会换，旧引用指向陈货；
  * - 桌面右键后必须 `resetItemMenuClickGuard()`：Chromium 右键时序（mousedown → contextmenu →
@@ -701,22 +738,30 @@ function createSharedFlight(): {
  * - 长按回调里**不关弹窗**：`longPress` 靠元素级捕获吞长按后的合成 click，元素一旦被移除，
  *   合成 click 落到 document 层 → 被 item-actions 的「外部点击关闭」分支当成外部点击，
  *   抽屉开出即关（正是真机「长按没反应」那个回归）；
- * - 动作一律「先收弹窗再执行」（见 deferClose）。
+ * - 动作一律「先收弹窗再执行」（见 deferClose）——行右键菜单的动作仍按老口径收掉合集弹窗；
+ *   只有**左键点击钻入**保留弹窗（分层：详情压列表，正是用户要的形态）。
  */
-function openSeriesDetail(sec: HTMLElement, key: string, app: App): void {
+function openSeriesDetail(sec: HTMLElement, key: string, app: App, opts: { from?: HTMLElement | null } = {}): void {
   const card = seriesCardByKey(key);
   if (!card) return;
   // mobile 只管长按手势挂载（维持移动壳现状）；右键菜单分流不走壳类，见行内 hoverCapable 注
   const mobile = sec.classList.contains('mob');
-  const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)));
+  // 共享元素过渡（issue 397）：合集卡与单季卡同款——海报抽出飞入、面板从海报生长、关闭插回原位。
+  // 来源 = 调用方显式给的卡（点卡片 / 键盘激活）；缺省按键反查（浮层「查看全部」手里只有键）
+  const from = opts.from ?? sec.querySelector<HTMLElement>(`.pcard[data-cinema-key="${CSS.escape(key)}"]`);
+  const se = from ? createSharedFlight() : null;
+  const { el, close } = ovl(sec, seriesDetailModalHtml(card, (it) => posterUrl(it, app)), { onWillClose: se?.willClose });
   mountIcons(el);
+  if (se) se.begin(el, { el: from as HTMLElement, borrow: 'card' });
   const rowItem = (row: HTMLElement): CinemaItem | undefined => itemByKeyInState(row.dataset.cinemaSeasonKey);
   el.querySelectorAll<HTMLElement>('.s-row').forEach((row) => {
     row.addEventListener('click', () => {
       const it = rowItem(row);
       if (!it) return;
-      close();
-      openDetail(sec, it, app);
+      // 钻入某一季：合集弹窗**留着**（2026-09-21 用户拍板「列表页面不会消失」），单季详情叠在它
+      // 之上；这一行从明细列表里抽离（其余行上移补位，与网格点卡同一套），海报从行内小图长成
+      // 详情海报，关闭时行让位、海报飞回这一行的原位
+      openDetail(sec, it, app, { from: row, borrow: 'row' });
     });
     // 拦原生右键菜单：桌面换成跟手菜单；移动端只为挡「保存图片 / 复制链接」（触屏长按会同时发它）。
     // 跟手菜单走 hoverCapable（sec 级 contextmenu 同一出口）：壳类近似「桌面=有鼠标」会让
@@ -1344,7 +1389,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     e.preventDefault(); // Space 兼作翻页键：开详情时吞掉滚动
     const key = cardEl.dataset.cinemaKey;
     // 合并卡（剧集按季合并）：点开各季明细；其余走单条目详情（click 分支同构）
-    if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app);
+    if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app, { from: cardEl });
     else {
       const it = itemByKeyInState(key);
       if (it) openDetail(sec, it, app, { from: cardEl }); // 键盘激活同样走共享元素过渡（起点 = 聚焦的卡）
@@ -1429,7 +1474,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     if (cardEl) {
       const key = cardEl.dataset.cinemaKey;
       // 合并卡（剧集按季合并）：点开各季明细；其余走单条目详情
-      if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app);
+      if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app, { from: cardEl });
       else {
         const it = itemByKeyInState(key);
         if (it) openDetail(sec, it, app, { from: cardEl }); // 海报从这张卡「抽出」飞入详情（issue 396）

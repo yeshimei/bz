@@ -785,8 +785,11 @@
    其余段交给 clip-path 的撑开去揭示——两层位移动效叠在一起会互相打架。
    接力选择器带 :nth-child 权重更高，这里只能 !important（本文件既有先例） */
 .bz-cinema--midnight .cn-modal--fly > *{animation:none !important}
-/* 克隆海报：目标尺寸的独立合成层，transform 动画全程不触布局 */
-.bz-cinema--midnight .cn-fly{position:absolute;left:0;top:0;z-index:5;pointer-events:none;overflow:hidden;
+/* 克隆海报：目标尺寸的独立合成层，transform 动画全程不触布局。
+   z-index 高过 .cn-ovl（50）：返程克隆挂共享宿主（display:contents，坐标系=面板根），
+   而合集弹窗还开着时克隆与弹窗层同处一个层叠上下文——压在弹窗下就看不见海报飞回行里；
+   去程克隆挂在遮罩层内部（遮罩 z-index 自成层叠上下文），值大小不影响它的相对次序。 */
+.bz-cinema--midnight .cn-fly{position:absolute;left:0;top:0;z-index:60;pointer-events:none;overflow:hidden;
   background:var(--chip);box-shadow:0 14px 34px #0006;will-change:transform}
 .bz-cinema--midnight .cn-fly img{width:100%;height:100%;object-fit:cover;display:block}
 

@@ -1110,7 +1110,7 @@ tags: [电影]
     expect(root.querySelector('[data-g="电影"] .n')?.textContent).toBe('1');
   });
 
-  it('点合集卡开各季明细；点某一季关掉合集、钻进单季详情', () => {
+  it('点合集卡开各季明细；点某一季钻进单季详情（合集弹窗留着，详情叠在它之上）', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
     const { app } = seedSeasons();
     createOverlay(app);
@@ -1128,8 +1128,12 @@ tags: [电影]
     expect(modal.querySelector('.dm-actions')).toBeNull(); // 合集上不落单季动作
 
     clickEl(rows[1]);
-    modal = root.querySelector('.cn-modal') as HTMLElement;
-    expect(root.querySelectorAll('.cn-modal')).toHaveLength(1); // 合集弹窗已关，只留单季详情
+    // issue 397（2026-09-21 用户拍板）：合集面板**不关**——「列表页面不会消失」，单季详情叠在它之上
+    const modals = Array.from(root.querySelectorAll<HTMLElement>('.cn-modal'));
+    expect(modals).toHaveLength(2);
+    expect(modals[0].querySelector('.dm-n')?.textContent).toBe('共 3 季'); // 底层 = 合集弹窗原样留着
+    expect(modals[0].querySelectorAll('.s-row')).toHaveLength(3);
+    modal = modals[1]; // 顶层 = 单季详情
     expect(modal.querySelector('.dm-title')?.textContent).toBe('老友记 第二季');
     expect(modal.querySelectorAll('.s-row')).toHaveLength(0); // 单季详情不再有季明细行
     expect(modal.querySelector('.dm-actions')).toBeTruthy(); // 单季详情才有 找同类/编辑/删除
@@ -1188,9 +1192,13 @@ tags: [电影]
     expect(spRow.querySelector('.s-rate')?.textContent).toBe('8.6');
     expect(modal().querySelectorAll('.s-row')).toHaveLength(3); // 季行与特别篇行同构
     clickEl(spRow);
-    expect(root.querySelectorAll('.cn-modal')).toHaveLength(1);
-    expect(modal().querySelector('.dm-title')?.textContent).toBe('老友记：重聚特辑');
-    expect(modal().querySelector('.dm-actions')).toBeTruthy(); // 单条详情才有 找同类/编辑/删除
+    // issue 397：合集弹窗留着，特别篇详情叠在它之上
+    const modals = Array.from(root.querySelectorAll<HTMLElement>('.cn-modal'));
+    expect(modals).toHaveLength(2);
+    const detail = modals[1];
+    expect(detail.querySelector('.dm-title')?.textContent).toBe('老友记：重聚特辑');
+    expect(detail.querySelector('.dm-actions')).toBeTruthy(); // 单条详情才有 找同类/编辑/删除
+    expect(modal().querySelectorAll('.s-row')).toHaveLength(3); // 底层合集弹窗原样留着
   });
 
   it('弹窗季行右键 → 该季跟手菜单（弹窗留着）；点动作先收弹窗再执行', () => {
