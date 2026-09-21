@@ -14229,7 +14229,7 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 }
 .bz-cinema--midnight::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--gold) 30%,var(--gold) 70%,transparent);z-index:5}
 .bz-cinema--midnight .d-body{flex:1;display:flex;min-height:0}
-.bz-cinema--midnight .d-rail{width:176px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 0 var(--bz-space-md);background:var(--panel)}
+.bz-cinema--midnight .d-rail{width:176px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 0 var(--bz-space-md);background:var(--panel);position:relative}
 .bz-cinema--midnight .rail-brand{padding:0 18px 14px}
 .bz-cinema--midnight .rail-brand h1{font-family:"Noto Serif SC",SimSun,serif;font-size:24px;letter-spacing:.35em;font-weight:700;color:var(--ink)}
 .bz-cinema--midnight .rail-brand .en{font-size:9.5px;letter-spacing:.42em;color:var(--gold);margin-top:var(--bz-space-xs)}
@@ -14239,11 +14239,12 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
    宿主 app.css 的裸 button 基线是 display:inline-flex + justify-content:center，本类只把
    display 改成 flex、不动 justify-content → 真机里图标+文字被整行居中（评审壳不载宿主
    app.css，故此坑只在真机显形）。同 core 的 .bz-popover-item「钉死 button 宿主基线」处置。 */
-.bz-cinema--midnight .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:var(--bz-space-sm);width:100%;padding:7px var(--bz-space-sm);border:0;background:none;border-radius:var(--bz-radius-sm);cursor:pointer;font-size:var(--bz-font-label);color:var(--ink-2);font-family:inherit;text-align:left}@media (hover: hover) {
+.bz-cinema--midnight .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:var(--bz-space-sm);width:100%;padding:7px var(--bz-space-sm);border:0;background:none;border-radius:var(--bz-radius-sm);cursor:pointer;font-size:var(--bz-font-label);color:var(--ink-2);font-family:inherit;text-align:left;position:relative}@media (hover: hover) {
 
-.bz-cinema--midnight .rail-item:hover{background:var(--chip);color:var(--ink)}
+.bz-cinema--midnight .rail-item:hover{color:var(--ink)}
 }
-.bz-cinema--midnight .rail-item.is-on{background:var(--chip);color:var(--ink);font-weight:600}
+/* 选中/悬停的底色不再由项自绘：交给 .slide-pill 一片滑过去（项本体 position:relative 压在底片之上） */
+.bz-cinema--midnight .rail-item.is-on{color:var(--ink);font-weight:600}
 .bz-cinema--midnight .rail-item .dot{width:7px;height:7px;border-radius:50%;flex:none}
 .bz-cinema--midnight .rail-item .n{margin-left:auto;font-size:var(--bz-font-caption);color:var(--ink-3)}
 .bz-cinema--midnight .rail-foot{border-top:1px solid var(--line);padding:10px 10px 2px;display:flex;flex-direction:column;gap:2px}
@@ -14262,20 +14263,38 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .d-search{flex:1;display:flex;align-items:center;gap:var(--bz-space-sm);border:1px solid var(--line);border-radius:var(--bz-radius-sm);padding:6px var(--bz-space-md);color:var(--ink-3);font-size:12.5px;background:var(--panel)}
 .bz-cinema--midnight .d-search svg{width:13px;height:13px;flex:none}
 .bz-cinema--midnight .d-search input{flex:1;border:0;background:none;outline:none;font-size:12.5px;color:var(--ink);font-family:inherit;min-width:0}
-.bz-cinema--midnight .seg{display:flex;background:var(--chip);border-radius:var(--bz-radius-sm);padding:2px;flex:none}
-.bz-cinema--midnight .seg button{border:0;background:none;padding:5px 11px;font-size:11.5px;border-radius:6px;color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap}
-.bz-cinema--midnight .seg button.is-on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px #0002}
+.bz-cinema--midnight .seg{display:flex;background:var(--chip);border-radius:var(--bz-radius-sm);padding:2px;flex:none;position:relative}
+.bz-cinema--midnight .seg button{border:0;background:none;padding:5px 11px;font-size:11.5px;border-radius:6px;color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap;position:relative}
+/* 选中片的底与投影改由 .slide-pill 承载（三片之间滑过去），文字色重仍留在钮上 */
+.bz-cinema--midnight .seg button.is-on{color:var(--ink);font-weight:600}
+
+/* ── 滑动高亮底片（侧栏 rail 与排序钮 j-sort 共用；位置/尺寸由 JS 按目标项矩形驱动） ──
+   悬停跟随、移开回落选中项、点击后由选中项决定；渲染后落位走 .is-instant（不演滑行）。
+   刻意不做 prefers-reduced-motion 分支：用户本人系统即报 reduce，而这条动效是他点名要的。 */
+.bz-cinema--midnight .slide-pill{position:absolute;left:0;top:0;border-radius:var(--bz-radius-sm);
+  background:var(--chip);pointer-events:none;opacity:0;
+  transition:transform var(--cn-m-fast) var(--cn-e-out),width var(--cn-m-fast) var(--cn-e-out),
+    height var(--cn-m-fast) var(--cn-e-out),opacity var(--cn-m-fast) ease}
+.bz-cinema--midnight .slide-pill.is-visible{opacity:1}
+.bz-cinema--midnight .slide-pill.is-instant{transition:none}
+/* 排序钮：底片 = 原来那枚选中的白片（容器 .seg 自己带 chip 底轨，所以这片用面板色 + 投影） */
+.bz-cinema--midnight .seg .slide-pill{background:var(--panel);box-shadow:0 1px 3px #0002}
 .bz-cinema--midnight .d-scroll{flex:1;overflow-y:auto;padding:2px 20px 20px}
 .bz-cinema--midnight .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:15px 14px}
+/* 位移挂在**整卡**（issue 401）：原来只抬 .pw，片名与星级是 .pw 的兄弟、原地不动，
+   鼠标下卡片内距在变；抬升与推近的时长也各走一条，收势时图还在放大。
+   抬升/按下/推近一处声明（本文件末尾的动效段），这里只留结构与描边。 */
 .bz-cinema--midnight .pcard{cursor:pointer;min-width:0}
-.bz-cinema--midnight .pw{position:relative;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--chip);border:1px solid var(--line);transition:transform .18s,box-shadow .18s,border-color .18s}@media (hover: hover) {
-
-.bz-cinema--midnight .pcard:hover .pw{transform:translateY(-4px);border-color:var(--gold);box-shadow:0 10px 22px #0004}
-}
+.bz-cinema--midnight .pw{position:relative;aspect-ratio:2/3;border-radius:9px;overflow:hidden;background:var(--chip);border:1px solid var(--line)}
 .bz-cinema--midnight .pw img{width:100%;height:100%;object-fit:cover;display:block}
 /* 海报内芯包裹层（悬浮季圆点换脸用）：行为层只重写这一层，抓取遮罩/状态角标/季圆点原地不动。
    绝对定位铺满 → 卡片高度仍由 .pw 的 aspect-ratio 决定，不随换脸抖动。 */
 .bz-cinema--midnight .pw .pw-face{position:absolute;inset:0}
+/* 悬浮季圆点换季（方案 A「涟漪揭示」，2026-09-21 用户拍板）：来片层是一张覆盖层，
+   圆形 clip-path 从**被悬浮的那枚圆点**扩散开——几何（原点 + 半径）由 ui.ts 现场算，
+   这里只管铺满与不吃事件。**不加 z-index**：.pw 内的绘制序靠 DOM 顺序，来片插在
+   .pw-face 紧后就天然压住正脸，又垫在角标 / 季圆点 / 抓取遮罩（z-index:3）之下。 */
+.bz-cinema--midnight .pw .pw-in{position:absolute;inset:0;pointer-events:none}
 .bz-cinema--midnight .pw .ph{width:100%;height:100%;display:grid;place-items:center;font-family:"Noto Serif SC",serif;font-size:26px;color:var(--ink-3);background:linear-gradient(160deg,var(--chip),var(--panel))}
 .bz-cinema--midnight .badge{position:absolute;top:7px;left:7px;font-size:10.5px;letter-spacing:.1em;padding:2px var(--bz-space-sm);border-radius:99px;color:#fff}
 .bz-cinema--midnight .pname{font-size:12.5px;font-weight:600;color:var(--ink);margin-top:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -14357,6 +14376,34 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* 热门短评（451/687 有值）：引文式左侧竖线，长评收 3 行 + 展开钮（行为层 data-dm-fold 接线） */
 .bz-cinema--midnight .dm-quote{font-size:12.5px;color:var(--ink-2);line-height:1.85;text-align:justify;border-left:2px solid var(--line);padding-left:10px}
 .bz-cinema--midnight .dm-quote.is-fold{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+/* 背面可点下拉（issue 395）：徽标点击展候选，选中即回填并重渲染（重渲染自带收起）。
+   .dm-pick-list 有 display:flex，[hidden] 的默认 display:none 会被盖掉，故显式兜一道。 */
+.bz-cinema--midnight button.dm-chip{border:none;cursor:pointer;font-family:inherit}
+/* 分类判定中的占位骨架（2026-09-21）：先占位、出结果再填值——不预告默认值，避免「先看到一个错值再变」。
+   徽标不带小三角（同日拍板）：能点就够了，不加装饰性指示。 */
+.bz-cinema--midnight .dm-chip--pick.is-pending{display:inline-flex;align-items:center;background:var(--chip);
+  border:1px solid var(--line);padding:3px 10px}
+@keyframes cnSkel{0%,100%{opacity:.3}50%{opacity:.9}}
+.bz-cinema--midnight .dm-skel{display:inline-block;width:32px;height:9px;border-radius:99px;background:var(--ink-3);
+  animation:cnSkel 1.1s ease-in-out infinite}
+/* 海报占位（仅表单背面）：未加载完脉动，img 加载完加 is-ready 淡入并停动画。
+   只挂 .form-face--back 作用域——详情弹窗的海报没有 onload 接线，全域加会一直脉动。 */
+@keyframes cnPosterPulse{0%,100%{background-color:var(--chip)}50%{background-color:var(--line)}}
+.bz-cinema--midnight .form-face--back .dm-poster{animation:cnPosterPulse 1.4s ease-in-out infinite}
+.bz-cinema--midnight .form-face--back .dm-poster.is-ready{animation:none}
+.bz-cinema--midnight .form-face--back .dm-poster img{opacity:0;transition:opacity var(--cn-m-base) ease}
+.bz-cinema--midnight .form-face--back .dm-poster.is-ready img{opacity:1}
+/* 解析按钮的转圈 */
+@keyframes cnSpin{to{transform:rotate(360deg)}}
+.bz-cinema--midnight .f-spin{display:none;width:11px;height:11px;flex:none;box-sizing:border-box;
+  border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:cnSpin .7s linear infinite}
+.bz-cinema--midnight .j-parse.is-parsing .f-spin{display:inline-block}
+.bz-cinema--midnight .dm-pick-item{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);
+  background:var(--panel);border-radius:99px;padding:4px 10px;font-size:11.5px;color:var(--ink-2);
+  cursor:pointer;font-family:inherit}
+/* 候选清单的展开/收起过渡定义在文件末「影院全域动效」段（.is-open 类控制，不再用 hidden 瞬切） */
+.bz-cinema--midnight .dm-pick-item .dot{width:6px;height:6px;border-radius:50%}
+.bz-cinema--midnight .dm-pick-item.is-on{border-color:var(--gold);color:var(--ink);font-weight:600}
 .bz-cinema--midnight .dm-fold{margin-top:6px;padding:0;border:0;background:none;font-size:var(--bz-font-caption);color:var(--gold);cursor:pointer}
 /* 合并卡详情（issue 376）：片名后的「共 N 季」+ 条目行（各季在前、特别篇顺其后，点某行进该条详情）。
    动作行不放——找同类/编辑/删除都作用在一篇笔记上，合集级无处落地（ADR-0168）；
@@ -14409,6 +14456,67 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--midnight .f-choice-btn .dot{width:6px;height:6px;border-radius:50%}
 .bz-cinema--midnight .f-choice-btn.is-on{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
 .bz-cinema--midnight .f-choice-btn.is-on .dot{outline:1.5px solid #fff}
+/* ── 添加影视：双面翻转卡片（issue 395）——正面名称+状态 → 解析 → 翻到背面看全部信息。
+     3D 真实感三件套（2026-09-21 重做；原版 perspective:1400px + 单段 rotateY 被评「很假」）：
+     ① 透视拉近到 900px：旋转时能读出厚度与侧面，而不是平面翻片；
+     ② 翻转走 keyframes，中段 translateZ 抬起 22px——卡片像被捏起来翻过去再贴合落回。
+        过渡只能描述两端，做不出中段抬起，所以这里必须用动画，见行为层 flipToBack；
+     ③ 两面各压一层光照遮罩：正向受光 → 侧转背光变暗 → 背面翻正重新受光。
+        原来靠背面 opacity 淡入遮「突然闪现」，那恰恰加重了假——真卡片背面是被转过来的，不是淡进来的。
+     高度与居中由 grid 同格叠放解决（见下），行为层不参与——原先的「量高 + 过渡」每帧重排 = 卡顿源。 */
+.bz-cinema--midnight .cn-modal--flip{perspective:900px;perspective-origin:50% 50%;margin:auto;
+  /* 纯透视容器：卡片外观（底/边/圆角/阴影/内距）全部下放到两面。
+     否则转的是「白框里的一张纸」——框不动、纸在框里翻滚，一眼看穿是假的（2026-09-21 观感定位）。
+     overflow 必须 visible：旋转时卡片的投影会超出容器，裁掉就成了被切碎的碎片。
+     margin:auto 负责垂直居中——flex 居中在「背面比视口高」时会把顶部推出可视区且滚不到，
+     auto 外边距在溢出方向退化为 0，滚动条能从头滚起（2026-09-21 用户要求去掉顶部锚定）。 */
+  background:none;border:none;box-shadow:none;padding:0;max-height:none;overflow:visible}
+/* 两面用 grid 叠在**同一格**（1/1）：容器高度自动 = 较高那一面，于是**翻转全程高度零变化**。
+   原先靠行为层量高 + height 过渡补齐，每帧都要重排整个弹窗（含 flex 遮罩重新居中、滚动区重算），
+   首帧必然顿一下——这才是「翻转时卡顿」的根因，不是 3D 本身（2026-09-21 定位）。
+   同时两面都在行内居中 → 两个面的中心与容器中心重合 = 旋转中心，各自绕自己的中心转；
+   可见的那一面绝不会因为另一面变高而被推移。**居中之所以可行就在这一条**：原先锚顶是为了绕开
+   「高度一变卡片整体上移」，而那个上移的根因是面挂在容器顶边，不是居中本身。 */
+.bz-cinema--midnight .form-flip{position:relative;display:grid;transform-style:preserve-3d;will-change:transform}
+/* will-change:transform：把整棵子树提到独立合成层，旋转期间复用同一份光栅。
+   不提升的话，卡片那圈 48px 模糊阴影会在每一帧重绘——这是第二个卡顿来源。 */
+.bz-cinema--midnight .form-face{grid-area:1/1;align-self:center;position:relative;backface-visibility:hidden;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);
+  box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px}
+/* 两面各向外推 .6/1px：共面时在 3D 空间里会穿插闪烁（80° 附近能同时看到两块）。 */
+.bz-cinema--midnight .form-face--front{transform:translateZ(.6px)}
+/* 滚动**不能**装在面上：元素自身带 overflow 时，Chromium 下 backface-visibility 会失灵，
+   翻到 80° 附近两面会同时可见（重影）。改由遮罩层承担滚动——它在 3D 上下文之外，不参与合成。 */
+.bz-cinema--midnight .form-face--back{transform:rotateY(180deg) translateZ(1px)}
+.bz-cinema--midnight .form-flip.is-flipped{transform:rotateY(180deg)}
+/* 旋转只走 keyframes，不叠 transition：两条同时作用于 transform 时引擎可能先起一条过渡再被动画
+   覆盖，首帧会顿一下（2026-09-21 定位）。is-flipped 只作终态锚点——动画万一没生效也落在正确姿势。 */
+.bz-cinema--midnight .form-flip.is-flipping{animation:cnFlipToBack var(--cn-m-impulse) var(--cn-e-move) both}
+@keyframes cnFlipToBack{
+  0%{transform:rotateY(0deg) translateZ(0)}
+  44%{transform:rotateY(80deg) translateZ(22px)}
+  100%{transform:rotateY(180deg) translateZ(0)}
+}
+/* 光照遮罩：贴在面上的纯黑层，随面一起旋转 = 该面相对光源的角度变化。
+   inset 比卡片多铺 1px，避免旋转到边缘时露出未覆盖的细线。 */
+.bz-cinema--midnight .form-face::after{content:'';position:absolute;inset:-1px;border-radius:var(--bz-radius-md);
+  background:#0b0906;opacity:0;pointer-events:none}
+.bz-cinema--midnight .form-flip.is-flipping .form-face--front::after{animation:cnShadeFront var(--cn-m-impulse) ease-in-out both}
+.bz-cinema--midnight .form-flip.is-flipping .form-face--back::after{animation:cnShadeBack var(--cn-m-impulse) ease-in-out both}
+@keyframes cnShadeFront{0%{opacity:0}44%{opacity:.46}100%{opacity:.46}}
+@keyframes cnShadeBack{0%{opacity:.46}52%{opacity:.46}100%{opacity:0}}
+/* 翻转弹窗：垂直居中（2026-09-21 用户要求）。居中可行性的论证见 .form-flip 那段——
+   结论是「能居中」，原先锚顶属于绕开症状。上下留 6vh：背面比视口高时由本层滚动，
+   不能装在面上（见上：会破坏 backface-visibility）。 */
+.bz-cinema--midnight .cn-ovl.cn-ovl--flip{padding-top:6vh;padding-bottom:6vh;overflow-y:auto}
+/* 解析中：全部分类 chip 的边框走流光扫过（2026-09-21 用户点名「所有分类的边框变成流动的特效」） */
+@keyframes cnFormScan{from{background-position:200% 50%}to{background-position:-200% 50%}}
+.bz-cinema--midnight .f-choice-btn.is-scanning{
+  border-color:transparent;
+  background-image:linear-gradient(90deg,var(--line) 0%,var(--gold) 45%,var(--gold) 55%,var(--line) 100%);
+  background-size:200% 100%;
+  animation:cnFormScan 1.3s linear infinite;
+}
 .bz-cinema--midnight .f-range-row{display:flex;align-items:center;gap:var(--bz-space-md)}
 .bz-cinema--midnight .f-range{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:var(--chip);outline:none}
 .bz-cinema--midnight .f-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--panel);box-shadow:0 1px 4px #0003}
@@ -14663,23 +14771,27 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-cinema--booth .cell.grow svg{width:13px;height:13px;color:var(--ink-3);flex:none}
 .bz-cinema--booth .cell.grow input{flex:1;min-width:0;border:0;background:none;outline:none;font-size:12.5px;color:var(--ink);font-family:inherit}
 .bz-cinema--booth .cell.grow .add{margin-left:6px;background:var(--amber);color:#fff;border:0;border-radius:6px;padding:6px var(--bz-space-md);font-size:11.5px;cursor:pointer;font-family:inherit;white-space:nowrap}
-.bz-cinema--booth .seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-left:10px}
-.bz-cinema--booth .seg button{border:0;background:none;padding:6px 10px;font-size:var(--bz-font-caption);color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap;border-right:1px solid var(--line)}
+.bz-cinema--booth .seg{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;margin-left:10px;position:relative}
+.bz-cinema--booth .seg button{border:0;background:none;padding:6px 10px;font-size:var(--bz-font-caption);color:var(--ink-2);cursor:pointer;font-family:inherit;white-space:nowrap;border-right:1px solid var(--line);position:relative}
 .bz-cinema--booth .seg button:last-child{border-right:0}
-.bz-cinema--booth .seg button.is-on{background:var(--chalk);color:var(--room);font-weight:700}
+/* 选中片的底改由滑动底片承载（同午夜场口径，见文末滑动高亮段） */
+.bz-cinema--booth .seg button.is-on{color:var(--room);font-weight:700}
+.bz-cinema--booth .seg .slide-pill{background:var(--chalk);border-radius:0}
 /* 机身 */
 .bz-cinema--booth .d-body{flex:1;display:flex;min-height:0}
-.bz-cinema--booth .d-rail{width:168px;flex:none;border-right:1px solid var(--line);padding:14px 0 10px;display:flex;flex-direction:column;background:var(--frame)}
+.bz-cinema--booth .d-rail{width:168px;flex:none;border-right:1px solid var(--line);padding:14px 0 10px;display:flex;flex-direction:column;background:var(--frame);position:relative}
 .bz-cinema--booth .rail-brand{padding:0 var(--bz-space-lg) 10px;font-family:"Courier New",monospace}
 .bz-cinema--booth .rail-brand h1{font-size:var(--bz-font-emphasis);letter-spacing:.3em;color:var(--ink)}
 .bz-cinema--booth .rail-brand .en{font-size:9.5px;letter-spacing:.28em;color:var(--amber);margin-top:2px}
 .bz-cinema--booth .rail-sec{flex:1;overflow:hidden auto;padding:2px 10px}
 .bz-cinema--booth .rail-label{font-size:9.5px;letter-spacing:.32em;color:var(--ink-3);padding:var(--bz-space-sm) 6px 5px;font-family:"Courier New",monospace}
-.bz-cinema--booth .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:var(--bz-space-sm);width:100%;padding:6.5px var(--bz-space-sm);border:0;background:none;border-radius:var(--bz-radius-xs);cursor:pointer;font-size:12.5px;color:var(--ink-2);font-family:inherit;text-align:left}@media (hover: hover) {
+.bz-cinema--booth .rail-item{display:flex;align-items:center;justify-content:flex-start;gap:var(--bz-space-sm);width:100%;padding:6.5px var(--bz-space-sm);border:0;background:none;border-radius:var(--bz-radius-xs);cursor:pointer;font-size:12.5px;color:var(--ink-2);font-family:inherit;text-align:left;position:relative}@media (hover: hover) {
 
 .bz-cinema--booth .rail-item:hover{color:var(--ink)}
 }
-.bz-cinema--booth .rail-item.is-on{background:var(--room);color:var(--ink);font-weight:700;box-shadow:inset 2px 0 0 var(--amber)}
+/* 选中的底色与左侧琥珀条改由 .slide-pill 承载（悬停时同样滑过来） */
+.bz-cinema--booth .rail-item.is-on{color:var(--ink);font-weight:700}
+.bz-cinema--booth .slide-pill{background:var(--room);box-shadow:inset 2px 0 0 var(--amber);border-radius:var(--bz-radius-xs)}
 .bz-cinema--booth .rail-item .tape{width:5px;height:14px;flex:none;border-radius:1px;transform:skewX(-8deg)}
 .bz-cinema--booth .rail-item .n{margin-left:auto;font-family:"Courier New",monospace;font-size:10.5px;color:var(--ink-3)}
 .bz-cinema--booth .rail-foot{border-top:1px dashed var(--line);padding:var(--bz-space-sm) 10px 2px}
@@ -14782,6 +14894,415 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 /* mob 列表空态：m-scroll 常态是块级滚动容器，空态页（.cn-empty-page flex:1）要撑满居中
    → 空态时容器转 flex（与 desk .d-main 的 flex 列同效；jsdom 无布局值依赖） */
 .bz-cinema--midnight .m-scroll.cn-mempty{display:flex;flex-direction:column}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   影院动效台账（issue 400，2026-09-21 用户拍板）：本域只用这四档时长、两条曲线。
+   取值与 src/cinema/motion.ts 一一对应，由 tests/cinema/motion-ledger.test.ts 钉死——
+   新写一个「差不多」的时长会被那道门禁挡下（走查时本域曾散着十个自由值，最大差五倍）。
+   语义分档：fast 微反馈 / move 空间位移 / base 揭示 / impulse 冲量；
+   加载类循环（转圈 / 骨架 / 脉冲 / 扫描）是功能性指示，不入台账、取值不随交互节奏走。
+   ══════════════════════════════════════════════════════════════════════════ */
+.bz-cinema--midnight,
+.cn-skin{
+  --cn-m-fast:.16s;    /* 微反馈：hover / 按下 / 底色 / 高亮滑行 */
+  --cn-m-move:.2s;     /* 空间位移：海报飞行、FLIP 让位、面板撑开与折回、涟漪 */
+  --cn-m-base:.28s;    /* 揭示：面板入场、下拉展开、内容接力、海报淡入、卡片抬升与推近 */
+  --cn-m-impulse:.74s; /* 冲量：表单翻转这类一次性状态切换 */
+  --cn-e-out:cubic-bezier(.22,.82,.3,1);   /* 揭示：先快后缓、末尾收势 */
+  --cn-e-move:cubic-bezier(.34,.06,.16,1); /* 迁移与冲量：起手重、收尾干脆 */
+}
+/* 口径：**不做 prefers-reduced-motion 分支**（issue 400）。与共享元素（396）、滑动高亮（398）、
+   涟漪（399）三处已拍板口径一致。不只是「求一致」——用户本人机器恒报 reduce（Windows 关窗口动画，
+   core/styles.css 有实证），该媒体查询分不清「我关了系统动画」与「我想要更少的动效」，
+   表达不了意图：真要给「少动效」一个出口，走设置项（见 issue 400 遗留），不放媒体查询。
+   功能性指示（转圈 / 骨架 / 脉冲）本来就不降级，不受本条影响。 */
+
+/* ── 弹窗：遮罩淡入 + 面板由 .96 缩放上浮（原来弹窗是硬切进来的） ── */
+@keyframes cnOvlIn{from{opacity:0}to{opacity:1}}
+@keyframes cnModalIn{from{opacity:0;transform:translateY(12px) scale(.962)}to{opacity:1;transform:none}}
+.bz-cinema--midnight .cn-ovl{animation:cnOvlIn var(--cn-m-move) ease both}
+.bz-cinema--midnight .cn-modal{animation:cnModalIn var(--cn-m-base) var(--cn-e-out) both}
+
+/* ── 详情弹窗：面板浮起后内容分段接力（信息块多，逐段出现比整块砸下来耐看）──
+   阶梯排到第 10 块（issue 401）：直接子元素 = 头部 + 每一条豆瓣信息行，一部片常有八九块，
+   原来 n+6 起全部 .25s 齐发，后半段接力感荡然无存；步进收到 .03s、上限 .27s。 */
+@keyframes cnRiseIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.bz-cinema--midnight .cn-modal--detail > *{animation:cnRiseIn var(--cn-m-base) var(--cn-e-out) both}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(2){animation-delay:.03s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(3){animation-delay:.06s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(4){animation-delay:.09s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(5){animation-delay:.12s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(6){animation-delay:.15s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(7){animation-delay:.18s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(8){animation-delay:.21s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(9){animation-delay:.24s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(n+10){animation-delay:.27s}
+
+/* ── 卡片：整卡抬升 + 海报轻微推近，两者同期（issue 401：原来抬 .pw 而片名不动、
+   抬升 .28s / 推近 .44s 两条时长）；按下回弹也落在整卡上 ── */
+.bz-cinema--midnight .pcard{transition:transform var(--cn-m-base) var(--cn-e-out)}
+.bz-cinema--midnight .pw{transition:box-shadow var(--cn-m-base),border-color var(--cn-m-fast)}
+.bz-cinema--midnight .pw img{transition:transform var(--cn-m-base) var(--cn-e-out)}
+@media (hover: hover) {
+  .bz-cinema--midnight .pcard:hover{transform:translateY(-6px)}
+  .bz-cinema--midnight .pcard:hover .pw{border-color:var(--gold);
+    box-shadow:0 16px 34px #00000052,0 3px 9px #0003}
+  .bz-cinema--midnight .pcard:hover .pw img{transform:scale(1.045)}
+}
+.bz-cinema--midnight .pcard:active{transform:translateY(-2px) scale(.986)}
+
+/* ── 按钮与可选项：hover 有微光、按下有回弹（原来只有颜色变化，点击缺手感） ── */
+.bz-cinema--midnight .dm-btn,
+.bz-cinema--midnight .f-choice-btn,
+.bz-cinema--midnight .dm-pick-item,
+.bz-cinema--midnight .ai-start,
+.bz-cinema--midnight .rec-add,
+.bz-cinema--midnight .seg button,
+.bz-cinema--midnight .rail-item,
+.bz-cinema--midnight .m-tool,
+.bz-cinema--midnight .sp-back{transition:color var(--cn-m-fast),border-color var(--cn-m-fast),background var(--cn-m-fast),transform var(--cn-m-fast),filter var(--cn-m-fast)}
+.bz-cinema--midnight .dm-btn:active,
+.bz-cinema--midnight .f-choice-btn:active,
+.bz-cinema--midnight .dm-pick-item:active,
+.bz-cinema--midnight .ai-start:active,
+.bz-cinema--midnight .rec-add:active,
+.bz-cinema--midnight .seg button:active{transform:scale(.955)}
+
+/* ── 下拉候选：展开不再「啪」地出现（原先是 hidden 瞬切，没有中间态）──
+   收起态用 max-height:0 + opacity:0 + overflow:hidden，展开走 .is-open 类；
+   边框/内距/外边距一并过渡，否则盒子会先撑开再淡入。 */
+.bz-cinema--midnight .dm-pick-list{display:flex;flex-wrap:wrap;gap:6px;
+  max-height:0;opacity:0;overflow:hidden;padding:0 10px;margin-top:0;border:1px solid transparent;
+  border-radius:var(--bz-radius-sm);background:var(--chip);
+  transition:max-height var(--cn-m-base) var(--cn-e-out),opacity var(--cn-m-move) ease,
+    padding var(--cn-m-base) var(--cn-e-out),margin-top var(--cn-m-base),border-color var(--cn-m-base)}
+.bz-cinema--midnight .dm-pick-list.is-open{max-height:280px;opacity:1;padding:8px 10px;margin-top:8px;border-color:var(--line)}
+
+/* ── 反馈与入口（issue 403）── */
+/* 星级元素化：逐颗点亮要有可动画的「颗」（文本内容不变，仍是 ★★★☆☆） */
+.bz-cinema--midnight .pstars i{display:inline-block;font-style:normal}
+/* 表单评分星预览：拖动滑杆时逐颗点亮，与卡片同一份星口径（shared.starsHtml） */
+.bz-cinema--midnight .f-stars{flex:none;min-width:54px;color:var(--star);font-size:12px;letter-spacing:1px;text-align:right}
+.bz-cinema--midnight .f-stars i{display:inline-block;font-style:normal}
+/* 键盘焦点环：.pcard 早就带 tabindex/role=button，但纯键盘浏览看不见焦点（无障碍缺口）。
+   焦点环落在海报上，与 hover 的金边同一处，避免两套「选中」视觉。 */
+.bz-cinema--midnight .pcard:focus-visible{outline:none}
+.bz-cinema--midnight .pcard:focus-visible .pw{border-color:var(--gold);box-shadow:0 0 0 2px #c9992f66,0 10px 24px #0004}
+/* 详情海报可点看大图（core 灯箱） */
+.bz-cinema--midnight .cn-modal--detail .dm-poster{cursor:zoom-in}
+
+/* ── 网格重排（issue 402）：网格做幽灵的定位祖先；离场幽灵停在旧矩形处淡出 ──
+   幽灵不吃事件、不参与布局（绝对定位），渲染后由行为层补进来、动画收尾自清。 */
+.bz-cinema--midnight .grid,
+.bz-cinema--midnight .m-grid{position:relative}
+.bz-cinema--midnight .cn-exit{position:absolute;pointer-events:none;overflow:hidden;
+  border-radius:9px;background:var(--chip);border:1px solid var(--line)}
+.bz-cinema--midnight .cn-exit img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ── 列表行与分析统计条：hover 的底色也是渐入，不是瞬变 ── */
+.bz-cinema--midnight .s-row{transition:background var(--cn-m-fast)}
+
+/* 本段**没有** prefers-reduced-motion 块（issue 400 拍板：不做分支，理由见段首台账）。 */
+
+/* ══════════════════════════════════════════════════════════════════════════
+   详情弹窗共享元素过渡（issue 396）：点卡片 → 海报「抽出」飞到详情海报位 →
+   面板从海报处撑开。几何逐次不同，飞行与撑开都走行为层 WAAPI（时长与曲线见段首台账，
+   取值在 src/cinema/motion.ts）；这里只做两件事：压掉会被飞行对不上的既有入场，与克隆件外观。
+   本段必须排在全域动效段之后——对 .cn-modal 的 animation:none 靠「更晚出现」取胜。 */
+
+/* fly 通道压掉面板整体入场（cnModalIn）：面板在飞行期间整体隐藏，入场动画
+   在藏着的间隙里播完等于白播，落地时反而会把海报从落点上挪走 */
+.bz-cinema--midnight .cn-modal--fly{animation:none}
+/* 内容接力（cnRiseIn）同样压掉：dm-head 里的海报必须原地等克隆落地，
+   其余段交给 clip-path 的撑开去揭示——两层位移动效叠在一起会互相打架。
+   接力规则带 :nth-child（权重 0,3,0），这里补上 .cn-modal--detail 凑到同权重、并排在更后：
+   两条入场语法的从属关系由选择器写清楚，不再用 !important 硬压（issue 401）。 */
+.bz-cinema--midnight .cn-modal--fly.cn-modal--detail > *{animation:none}
+/* 克隆海报：目标尺寸的独立合成层，transform 动画全程不触布局。
+   z-index 高过 .cn-ovl（50）：返程克隆挂共享宿主（display:contents，坐标系=面板根），
+   而合集弹窗还开着时克隆与弹窗层同处一个层叠上下文——压在弹窗下就看不见海报飞回行里；
+   去程克隆挂在遮罩层内部（遮罩 z-index 自成层叠上下文），值大小不影响它的相对次序。 */
+.bz-cinema--midnight .cn-fly{position:absolute;left:0;top:0;z-index:60;pointer-events:none;overflow:hidden;
+  background:var(--chip);box-shadow:0 14px 34px #0006;will-change:transform}
+.bz-cinema--midnight .cn-fly img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   观影分析 · 滚动放映室（issue 405）：stat 页整页是一部四本 22 幕的影片。
+   幕高 = --film-unit（sp-body 可视高，引擎写入）× 幕系数；配色走 --sf-* 变量
+   （午夜场壳 = 暗调；亮色壳上岸只补一组亮色变量层）。时长均为氛围循环
+   （表盘/灯牌/跑马灯/探照灯），已入台账功能性循环白名单（issue 405）。 */
+.bz-cinema--midnight .sp-body:has(.bz-stat-film){padding:0;position:relative}
+.bz-stat-film{position:relative;overflow:hidden;
+  --film-unit:600px;
+  --sf-bg:#0b0906; --sf-ink-rgb:239,230,208; --sf-dim-rgb:154,140,114; --sf-faint-rgb:92,81,64;
+  --sf-gold-rgb:201,153,47; --sf-star-rgb:255,217,138; --sf-star2-rgb:159,192,232;
+  --sf-core-rgb:255,246,228; --sf-dust-rgb:239,230,208;
+  background:var(--sf-bg);color:rgb(var(--sf-ink-rgb));
+  font-family:"Noto Serif SC","Source Han Serif SC","SimSun",serif}
+.bz-stat-film img,.bz-stat-film .bz-film-ph{object-fit:cover;display:block;background:#181209}
+.bz-film-ph{position:relative;overflow:hidden}
+.bz-film-ph::before{content:"";position:absolute;inset:0;background:linear-gradient(160deg,var(--pc1),var(--pc2))}
+.bz-film-ph>span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  writing-mode:vertical-rl;font-size:14px;letter-spacing:.3em;color:#f0e6d0d9;line-height:1.5;font-style:normal}
+/* 顶栏常驻层：颗粒 + 细轨导航 */
+.bz-film-fixed{position:sticky;top:0;height:0;z-index:6}
+.bz-film-grain{position:absolute;top:0;left:0;width:100%;height:var(--film-unit);opacity:.06;pointer-events:none}
+.bz-film-nav{position:absolute;right:14px;top:0;height:var(--film-unit);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.bz-film-track{position:relative;width:2px;height:calc(var(--film-unit) * .42);border-radius:2px;cursor:pointer;
+  background:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 16%,transparent)}
+.bz-film-dot{position:absolute;left:50%;top:0;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);
+  background:var(--gold);box-shadow:0 0 12px color-mix(in srgb,var(--gold) 55%,transparent)}
+.bz-film-now{writing-mode:vertical-rl;font-size:11px;letter-spacing:.32em;color:rgb(var(--sf-dim-rgb))}
+/* 幕骨架 */
+.bz-film-scn{position:relative}
+.bz-film-pin{position:sticky;top:0;height:var(--film-unit);overflow:hidden}
+.bz-film-tag{position:absolute;left:4.5%;bottom:6.5%;z-index:6;display:flex;align-items:baseline;gap:14px}
+.bz-film-tag .no{font-size:11px;letter-spacing:.42em;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 33%,transparent);padding:3px 8px 3px 11px;border-radius:2px;white-space:nowrap}
+.bz-film-tag h2{font-size:24px;font-weight:600;letter-spacing:.22em;color:rgb(var(--sf-ink-rgb));white-space:nowrap}
+.bz-film-tag .cap{font-size:12px;letter-spacing:.2em;color:rgb(var(--sf-dim-rgb))}
+.bz-film-cv{position:absolute;inset:0;width:100%;height:100%}
+/* 序幕：倒计时 + 光束 */
+.bz-film-count{position:absolute;left:50%;top:44%;width:58%;height:58%;transform:translate(-50%,-50%)}
+.bz-film-count .cdiv{position:absolute;inset:0;display:grid;place-items:center;clip-path:circle(0% at 50% 50%)}
+.bz-film-count .cdiv b{font-size:calc(var(--film-unit) * .26);font-weight:600;color:rgb(var(--sf-ink-rgb));line-height:1}
+.bz-film-count .cring{position:absolute;inset:0;border:2px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 36%,transparent);border-radius:50%}
+.bz-film-count .cring.r2{inset:7.5%}
+.bz-film-count .ccross{position:absolute;left:50%;top:-8%;bottom:-8%;width:1px;background:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent)}
+.bz-film-count .ccross.h{left:-8%;right:-8%;top:50%;bottom:auto;width:auto;height:1px}
+.bz-film-count .dial{position:absolute;inset:-9%;border:1px dashed color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent);border-radius:50%;animation:dial 14s linear infinite}
+@keyframes dial{to{transform:rotate(360deg)}}
+.bz-film-hero{position:absolute;left:0;right:0;top:43%;text-align:center;opacity:0}
+.bz-film-hero h1{font-size:calc(var(--film-unit) * .1);font-weight:600;letter-spacing:.34em;text-indent:.34em;color:rgb(var(--sf-ink-rgb))}
+.bz-film-hero .rule{width:18%;height:1px;margin:2.8% auto 0;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 60%,transparent),transparent)}
+.bz-film-hero .sub{margin-top:2.4%;font-size:14px;letter-spacing:.5em;text-indent:.5em;color:rgb(var(--sf-star-rgb))}
+.bz-film-hero .meta{margin-top:2%;font-size:12px;letter-spacing:.4em;text-indent:.4em;color:rgb(var(--sf-dim-rgb))}
+.bz-film-hint{position:absolute;left:0;right:0;bottom:5%;text-align:center;font-size:12px;letter-spacing:.5em;text-indent:.5em;color:rgb(var(--sf-dim-rgb));opacity:0}
+/* 分本字幕卡：进场后常驻 */
+.bz-film-inter{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.bz-film-inter .vol{font-size:12px;letter-spacing:.6em;text-indent:.6em;color:var(--gold);margin-bottom:3.4%}
+.bz-film-inter h2{font-size:calc(var(--film-unit) * .095);font-weight:600;letter-spacing:.5em;text-indent:.5em;color:rgb(var(--sf-ink-rgb))}
+.bz-film-inter .rule{width:14%;height:1px;margin:3% auto;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--gold) 60%,transparent),transparent)}
+.bz-film-inter .sub{margin-top:3%;font-size:13px;letter-spacing:.34em;text-indent:.34em;color:rgb(var(--sf-dim-rgb))}
+/* 馆藏长廊 */
+.bz-film-corr{position:absolute;inset:0;perspective:1050px;perspective-origin:50% 44%}
+.bz-film-corr-inner{position:absolute;inset:0;transform-style:preserve-3d;will-change:transform}
+.bz-film-p3{position:absolute;left:50%;top:50%;height:43.5%;aspect-ratio:2/3;will-change:transform}
+.bz-film-p3 img,.bz-film-p3 .bz-film-ph{width:100%;height:100%;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent);border-radius:3px}
+.bz-film-end-sign{position:absolute;left:50%;top:44%;transform:translate(-50%,-50%) translateZ(var(--z,-3220px));text-align:center;white-space:nowrap}
+.bz-film-end-sign .big{font-size:calc(var(--film-unit) * .08);letter-spacing:.3em;text-indent:.3em;color:rgb(var(--sf-star-rgb));text-shadow:0 0 34px color-mix(in srgb,var(--gold) 40%,transparent)}
+.bz-film-end-sign .small{margin-top:1.6%;font-size:13px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
+.bz-film-ground{position:absolute;left:0;right:0;bottom:0;height:26%;background:linear-gradient(180deg,transparent,rgba(0,0,0,.6))}
+.bz-film-fog{position:absolute;inset:0;background:radial-gradient(72% 62% at 50% 44%,transparent 42%,rgba(11,9,6,.88) 100%)}
+/* 星云 / 浪潮 HUD */
+.bz-film-axis{position:absolute;font-size:11px;letter-spacing:.3em;color:rgb(var(--sf-faint-rgb))}
+.bz-film-axis.x{left:10%;right:10%;bottom:12%;display:flex;justify-content:space-between}
+.bz-film-axis.y{left:3%;top:50%;transform:rotate(180deg);writing-mode:vertical-rl}
+.bz-film-neb-meta{position:absolute;right:8%;top:16%;text-align:right}
+.bz-film-neb-meta .num{font-size:calc(var(--film-unit) * .12);font-weight:600;color:rgb(var(--sf-star-rgb));line-height:1;font-variant-numeric:tabular-nums}
+.bz-film-neb-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
+.bz-film-neb-top{position:absolute;right:8%;bottom:16%;display:flex;gap:14px}
+.bz-film-mini{width:9.5%;opacity:0}
+.bz-film-mini img,.bz-film-mini .bz-film-ph{width:100%;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent)}
+.bz-film-mini figcaption{margin-top:6px;font-size:10.5px;color:rgb(var(--sf-dim-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bz-film-wave-meta{position:absolute;left:8%;top:14%}
+.bz-film-wave-meta .num{font-size:calc(var(--film-unit) * .11);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
+.bz-film-wave-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
+/* 放映编年：胶片卷 */
+.bz-film-filmwrap{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);overflow:hidden;
+  background:#050403;border-top:1px solid #1c1712;border-bottom:1px solid #1c1712}
+.perf-strip{height:26px;background:repeating-linear-gradient(90deg,transparent 0 12px,#f0e6d024 12px 30px,transparent 30px 42px)}
+.perf-strip.b{transform:scaleY(-1)}
+.bz-film-strip{display:flex;will-change:transform;padding:14px 0}
+.bz-film-frame{flex:none;width:calc(var(--film-unit) * .313);padding:0 7px;position:relative}
+.bz-film-frame img,.bz-film-frame .bz-film-ph{width:100%;height:calc(var(--film-unit) * .46);border-radius:2px;border:1px solid #f0e6d01c;filter:saturate(.92)}
+.bz-film-frame figcaption{position:absolute;left:7px;right:7px;bottom:8px;padding:6px 8px 5px;
+  background:linear-gradient(180deg,transparent,rgba(5,4,3,.88) 38%);font-size:11.5px;color:#f0e6d0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bz-film-frame figcaption .yy{color:#ffd98a;font-variant-numeric:tabular-nums;margin-right:.5em}
+/* 十二档期 HUD */
+.bz-film-dial-meta{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;z-index:2}
+.bz-film-dial-meta .num{font-size:calc(var(--film-unit) * .095);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums}
+.bz-film-dial-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
+/* 本周排片 */
+.bz-film-week{position:absolute;left:7%;right:7%;top:50%;transform:translateY(-50%);display:grid;grid-template-columns:repeat(7,1fr);gap:1.4%}
+.bz-film-day{border:1px solid #2a241b;border-radius:6px;padding:2.4% 1% 2%;background:#100d08;opacity:0;position:relative;min-height:46%}
+.bz-film-day.is-wknd{border-color:color-mix(in srgb,var(--gold) 33%,transparent)}
+.bz-film-day .dn{font-size:13px;letter-spacing:.4em;text-indent:.4em;color:rgb(var(--sf-dim-rgb));text-align:center}
+.bz-film-day.is-wknd .dn{color:rgb(var(--sf-star-rgb))}
+.bz-film-day .dc{margin-top:2%;text-align:center;font-size:26px;color:rgb(var(--sf-ink-rgb));font-variant-numeric:tabular-nums}
+.bz-film-day .dc small{font-size:11px;color:rgb(var(--sf-faint-rgb));letter-spacing:.2em;margin-left:.3em}
+.bz-film-day .stubs{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:4%;align-content:flex-start}
+.bz-film-stub{width:26px;height:38px;border-radius:3px;opacity:0;background:linear-gradient(170deg,color-mix(in srgb,var(--gold) 18%,transparent),color-mix(in srgb,var(--gold) 8%,transparent));border:1px dashed color-mix(in srgb,var(--gold) 33%,transparent)}
+.bz-film-day.is-wknd .bz-film-stub{border-color:color-mix(in srgb,var(--gold) 47%,transparent)}
+.bz-film-day .peak{position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--gold);color:#14100a;
+  font-size:10.5px;letter-spacing:.3em;text-indent:.3em;padding:3px 9px;border-radius:2px;font-weight:600;display:none}
+.bz-film-day.is-peak .peak{display:block}
+/* 霓虹片街 */
+.bz-film-street{position:absolute;inset:0;display:flex;justify-content:center;gap:6%;align-items:flex-start;padding-top:16%}
+.bz-film-neon-col{display:flex;flex-direction:column;align-items:center}
+.bz-film-neon-col .txt{writing-mode:vertical-rl;font-size:calc(var(--film-unit) * .062);letter-spacing:.34em;font-weight:600;
+  color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);transition:color var(--cn-m-base)}
+.bz-film-neon-col .cnt{margin-top:14px;writing-mode:vertical-rl;font-size:11px;letter-spacing:.3em;color:rgb(var(--sf-faint-rgb))}
+.bz-film-neon-col .ref{margin-top:12%;writing-mode:vertical-rl;font-size:calc(var(--film-unit) * .062);letter-spacing:.34em;font-weight:600;
+  color:transparent;opacity:.5;filter:blur(3px);
+  -webkit-mask-image:linear-gradient(180deg,#000,transparent 72%);mask-image:linear-gradient(180deg,#000,transparent 72%)}
+.bz-film-neon-col.is-lit .txt{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc),0 0 70px var(--nc);animation:neon-on .9s steps(1) 1}
+.bz-film-neon-col.is-lit .ref{color:var(--nc);animation:neon-on .9s steps(1) 1}
+@keyframes neon-on{
+  0%{color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);text-shadow:none}
+  12%{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc)}
+  20%{color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);text-shadow:none}
+  28%{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc),0 0 70px var(--nc)}
+  34%{color:color-mix(in srgb,rgb(var(--sf-ink-rgb)) 22%,transparent);text-shadow:none}
+  42%,100%{color:var(--nc);text-shadow:0 0 8px var(--nc),0 0 26px var(--nc),0 0 70px var(--nc)}
+}
+.bz-film-street-glow{position:absolute;left:0;right:0;bottom:0;height:30%;background:radial-gradient(60% 120% at 50% 100%,color-mix(in srgb,var(--gold) 8%,transparent),transparent 70%)}
+/* 修片馆 */
+.bz-film-age-head{position:absolute;left:50%;top:11%;transform:translateX(-50%);text-align:center}
+.bz-film-age-head .num{font-size:calc(var(--film-unit) * .1);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
+.bz-film-age-head .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
+.bz-film-vault{position:absolute;left:6%;right:6%;top:34%;bottom:12%;display:grid;grid-template-columns:repeat(4,1fr);gap:1.6%}
+.bz-film-shelf{border:1px solid #2a241b;border-radius:6px;background:#100d08;padding:2.2% 1.2%;opacity:0;display:flex;flex-direction:column}
+.bz-film-shelf .sn{font-size:13px;letter-spacing:.34em;color:rgb(var(--sf-star-rgb));text-align:center}
+.bz-film-shelf .sc{margin-top:2%;text-align:center;font-size:22px;color:rgb(var(--sf-ink-rgb));font-variant-numeric:tabular-nums}
+.bz-film-shelf .sc small{font-size:11px;color:rgb(var(--sf-faint-rgb));letter-spacing:.2em}
+.bz-film-shelf .sp{display:flex;gap:8px;justify-content:center;margin-top:4%;flex-wrap:wrap}
+.bz-film-shelf .sp img,.bz-film-shelf .sp .bz-film-ph{width:86px;max-width:90%;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent)}
+.bz-film-shelf .oldest{margin-top:auto;padding-top:3%;text-align:center;font-size:11px;color:rgb(var(--sf-dim-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 导演特展 */
+.bz-film-spot{position:absolute;left:18%;top:2%;width:64%;height:94%;pointer-events:none;will-change:transform;
+  background:radial-gradient(closest-side,color-mix(in srgb,var(--gold) 17%,transparent),transparent 72%)}
+.bz-film-gallery{position:absolute;left:6%;right:6%;top:16%;bottom:14%;display:grid;grid-template-columns:repeat(3,1fr);gap:2%;grid-auto-rows:1fr}
+.bz-film-plaque{border:1px solid #2a241b;border-radius:6px;background:#100d08;padding:6% 8%;position:relative;opacity:0;transition:box-shadow var(--cn-m-base),border-color var(--cn-m-base)}
+.bz-film-plaque.master{border-color:color-mix(in srgb,var(--gold) 40%,transparent)}
+.bz-film-plaque.is-lit{border-color:color-mix(in srgb,var(--gold) 60%,transparent);box-shadow:0 0 0 1px color-mix(in srgb,var(--gold) 20%,transparent),0 18px 50px #0009,0 0 44px color-mix(in srgb,var(--gold) 15%,transparent)}
+.bz-film-plaque .tag{position:absolute;top:-11px;left:16px;background:var(--gold);color:#14100a;font-size:10.5px;letter-spacing:.3em;text-indent:.3em;padding:3px 9px;border-radius:2px;font-weight:600}
+.bz-film-plaque h3{font-size:calc(var(--film-unit) * .038);letter-spacing:.14em;color:rgb(var(--sf-ink-rgb));font-weight:600}
+.bz-film-plaque .pn{margin-top:2%;font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.2em}
+.bz-film-plaque .pp{display:flex;gap:8px;margin-top:4%;flex-wrap:wrap}
+.bz-film-plaque .pp img,.bz-film-plaque .pp .bz-film-ph{width:62px;max-width:80%;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent)}
+/* 群像长卷 */
+.bz-film-parade{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);overflow:hidden}
+.bz-film-ghost{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:calc(var(--film-unit) * .17);
+  font-weight:600;letter-spacing:.18em;color:transparent;white-space:nowrap;-webkit-text-stroke:1px color-mix(in srgb,var(--gold) 19%,transparent);overflow:hidden}
+.bz-film-parade-strip{display:flex;gap:3%;will-change:transform;padding:0 40% 0 8%;width:max-content;position:relative}
+.bz-film-star{display:flex;gap:16px;align-items:flex-start;transform-origin:left center;will-change:transform}
+.bz-film-star .nm{writing-mode:vertical-rl;font-size:calc(var(--film-unit) * .052);letter-spacing:.3em;color:rgb(var(--sf-ink-rgb));font-weight:600}
+.bz-film-star .nm small{font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.2em;margin-top:12px}
+.bz-film-star .nm small b{font-weight:400;text-combine-upright:all}
+.bz-film-star .ims{display:flex;gap:10px}
+.bz-film-star .ims img,.bz-film-star .ims .bz-film-ph{width:120px;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 13%,transparent)}
+/* 打分天平 */
+.bz-film-diff-head{position:absolute;left:50%;top:9%;transform:translateX(-50%);text-align:center;z-index:2}
+.bz-film-diff-head .num{font-size:calc(var(--film-unit) * .09);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
+.bz-film-diff-head .lbl{margin-top:1%;font-size:12px;letter-spacing:.36em;color:rgb(var(--sf-dim-rgb))}
+.bz-film-balance{position:absolute;left:50%;top:23%;transform:translateX(-50%);width:36%;height:10%;z-index:2}
+.bz-film-balance .arm{position:absolute;left:0;top:20%;width:100%;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--gold),rgb(var(--sf-star-rgb)),var(--gold));will-change:transform}
+.bz-film-balance .arm i{position:absolute;top:-4px;width:52px;height:52px;border-radius:50%;
+  border:1px dashed color-mix(in srgb,var(--gold) 53%,transparent);background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--gold) 13%,transparent),transparent 72%)}
+.bz-film-balance .arm i.l{left:-26px}
+.bz-film-balance .arm i.r{right:-26px}
+.bz-film-balance .ful{position:absolute;left:50%;top:calc(20% + 1px);width:0;height:0;margin-left:-11px;
+  border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:16px solid var(--gold)}
+.bz-film-scale{position:absolute;left:0;right:0;top:26%;bottom:12%;display:flex}
+.bz-film-scale .pan{flex:1;padding:4% 4%;overflow:hidden}
+.bz-film-scale .pan.left{background:linear-gradient(120deg,color-mix(in srgb,var(--gold) 6%,transparent),transparent 70%);border-right:1px dashed color-mix(in srgb,var(--gold) 27%,transparent)}
+.bz-film-scale .pan.right{background:linear-gradient(240deg,color-mix(in srgb,var(--red) 6%,transparent),transparent 70%)}
+.bz-film-scale .pt{font-size:15px;letter-spacing:.5em;color:rgb(var(--sf-star-rgb));margin-bottom:6%}
+.bz-film-scale .pan.right .pt{color:var(--red)}
+.bz-film-scale .row{display:flex;align-items:baseline;gap:12px;padding:3% 0;border-bottom:1px dashed color-mix(in srgb,rgb(var(--sf-ink-rgb)) 8%,transparent)}
+.bz-film-scale .row .nm{font-size:15px;color:rgb(var(--sf-ink-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bz-film-scale .row .vv{margin-left:auto;font-size:12px;color:rgb(var(--sf-dim-rgb));font-variant-numeric:tabular-nums;white-space:nowrap}
+.bz-film-scale .empty{color:rgb(var(--sf-faint-rgb));font-size:13px;letter-spacing:.3em;padding-top:2%}
+/* 连映夜 */
+.bz-film-marathon{position:absolute;left:8%;right:8%;top:20%;display:flex;flex-direction:column;gap:6%}
+.bz-film-maro{display:flex;align-items:center;gap:2.4%;opacity:0}
+.bz-film-maro .info{min-width:16%}
+.bz-film-maro .info h3{font-size:calc(var(--film-unit) * .04);letter-spacing:.12em;color:rgb(var(--sf-ink-rgb));font-weight:600}
+.bz-film-maro .info .n{margin-top:2%;font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.24em}
+.bz-film-maro .marq{height:5px;margin-bottom:3%;opacity:.7;background:repeating-linear-gradient(90deg,var(--gold) 0 8px,transparent 8px 20px);animation:marq 1.1s linear infinite}
+@keyframes marq{to{background-position:20px 0}}
+.bz-film-maro .stack{display:flex}
+.bz-film-maro .stack img,.bz-film-maro .stack .bz-film-ph{width:calc(var(--film-unit) * .095);aspect-ratio:2/3;border-radius:3px;
+  border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent);margin-left:calc(var(--film-unit) * -.075);box-shadow:-8px 0 22px #0008;transform-origin:50% 100%;will-change:transform}
+.bz-film-maro .stack img:first-child,.bz-film-maro .stack .bz-film-ph:first-child{margin-left:0}
+/* 追剧深度 */
+.bz-film-binge{position:absolute;left:12%;right:12%;top:18%}
+.bz-film-binge .wm{position:absolute;right:0;bottom:-6%;font-size:calc(var(--film-unit) * .3);font-weight:600;line-height:1;
+  color:transparent;-webkit-text-stroke:1.5px color-mix(in srgb,var(--gold) 14%,transparent)}
+.bz-film-binge .binge-head{text-align:center;margin-bottom:5%}
+.bz-film-binge .binge-head .num{font-size:calc(var(--film-unit) * .09);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
+.bz-film-binge .binge-head .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
+.bz-film-brow{display:flex;align-items:center;gap:2%;padding:3% 0;border-bottom:1px dashed color-mix(in srgb,rgb(var(--sf-ink-rgb)) 8%,transparent);opacity:0}
+.bz-film-brow .bn{font-size:calc(var(--film-unit) * .03);color:rgb(var(--sf-ink-rgb));letter-spacing:.1em;min-width:24%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bz-film-brow .reels{display:flex;gap:10px}
+.bz-film-brow .rl{width:32px;height:32px;border-radius:50%;border:2px solid var(--gold);opacity:0;
+  box-shadow:inset 0 0 0 2px var(--sf-bg),inset 0 0 0 4px color-mix(in srgb,var(--gold) 33%,transparent);background:#141008;will-change:transform,opacity}
+.bz-film-brow .bn2{margin-left:auto;font-size:12px;color:rgb(var(--sf-star-rgb));letter-spacing:.2em;white-space:nowrap}
+/* 弹幕影评 HUD */
+.bz-film-dm-meta{position:absolute;left:50%;top:12%;transform:translateX(-50%);text-align:center}
+.bz-film-dm-meta .num{font-size:calc(var(--film-unit) * .09);font-weight:600;color:rgb(var(--sf-star-rgb));font-variant-numeric:tabular-nums;line-height:1}
+.bz-film-dm-meta .lbl{margin-top:1%;font-size:12px;letter-spacing:.4em;color:rgb(var(--sf-dim-rgb))}
+/* 名人堂 */
+.bz-film-hall{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:4%;perspective:1400px}
+.bz-film-rays{position:absolute;left:50%;top:50%;width:calc(var(--film-unit) * 1.5);height:calc(var(--film-unit) * 1.5);margin:calc(var(--film-unit) * -.75);
+  border-radius:50%;pointer-events:none;opacity:0;will-change:transform,opacity;
+  background:repeating-conic-gradient(color-mix(in srgb,var(--gold) 6%,transparent) 0 6deg,transparent 6deg 14deg);
+  -webkit-mask-image:radial-gradient(circle,#000 28%,transparent 66%);mask-image:radial-gradient(circle,#000 28%,transparent 66%)}
+.bz-film-award{width:24%;max-width:330px;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);border-radius:6px;
+  background:linear-gradient(170deg,#171208,#0d0a06);padding:26px 24px 22px;position:relative;transform-origin:50% 100%;opacity:0;
+  box-shadow:0 24px 70px rgba(0,0,0,.66)}
+.bz-film-award::after{content:"";position:absolute;inset:0;border-radius:6px;pointer-events:none;
+  background:linear-gradient(115deg,transparent 42%,color-mix(in srgb,var(--gold) 17%,transparent) 50%,transparent 58%);
+  background-size:280% 100%;background-position:var(--sh,120%) 0}
+.bz-film-award .medal{position:absolute;top:-13px;left:24px;background:var(--gold);color:#14100a;font-size:11px;letter-spacing:.34em;text-indent:.34em;padding:4px 10px;border-radius:2px;font-weight:600}
+.bz-film-award .medal.m2{background:#b8b3a6}
+.bz-film-award .medal.m3{background:#a97b52}
+.bz-film-award .poster{float:right;width:72px;margin:0 0 8px 12px}
+.bz-film-award .poster img,.bz-film-award .poster .bz-film-ph{width:72px;aspect-ratio:2/3;border-radius:3px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent)}
+.bz-film-award h3{font-size:22px;letter-spacing:.1em;color:rgb(var(--sf-ink-rgb));line-height:1.35;font-weight:600}
+.bz-film-award .meta{margin-top:8px;font-size:12px;color:rgb(var(--sf-dim-rgb));letter-spacing:.1em;line-height:1.9}
+.bz-film-award .stars{margin-top:14px;padding-top:12px;border-top:1px dashed color-mix(in srgb,var(--gold) 24%,transparent);display:flex;align-items:baseline;gap:10px}
+.bz-film-award .stars .my{font-size:30px;color:rgb(var(--sf-star-rgb));font-weight:600;font-variant-numeric:tabular-nums}
+.bz-film-award .stars .db{font-size:11.5px;color:rgb(var(--sf-dim-rgb));font-variant-numeric:tabular-nums}
+.bz-film-award .stars .cap{font-size:10.5px;color:rgb(var(--sf-faint-rgb));letter-spacing:.2em;margin-left:auto}
+/* 片尾致谢 */
+.bz-film-rollbox{position:absolute;inset:0;overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent);
+  mask-image:linear-gradient(180deg,transparent,#000 18%,#000 82%,transparent)}
+.bz-film-roll{position:absolute;left:0;right:0;top:0;will-change:transform;text-align:center}
+.bz-film-roll .role{margin:4.6% 0}
+.bz-film-roll .role .r{font-size:11.5px;letter-spacing:.5em;text-indent:.5em;color:var(--gold);margin-bottom:2%}
+.bz-film-roll .role .n{font-size:22px;letter-spacing:.16em;color:rgb(var(--sf-ink-rgb))}
+.bz-film-roll .role .n small{font-size:13px;color:rgb(var(--sf-dim-rgb))}
+.bz-film-theend{position:absolute;inset:0;display:grid;place-items:center;opacity:0;clip-path:circle(0% at 50% 50%)}
+.bz-film-theend .t{font-size:calc(var(--film-unit) * .12);letter-spacing:.4em;text-indent:.4em;color:rgb(var(--sf-ink-rgb));text-shadow:0 0 70px color-mix(in srgb,var(--gold) 24%,transparent)}
+.bz-film-theend .ring{position:absolute;width:56%;aspect-ratio:1;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 21%,transparent);border-radius:50%}
+/* 下档预告 */
+.bz-film-cone{position:absolute;bottom:-6%;width:46%;height:125%;pointer-events:none;opacity:.55;will-change:transform;
+  background:linear-gradient(200deg,color-mix(in srgb,var(--gold) 11%,transparent),transparent 58%);transform-origin:50% 100%}
+.bz-film-cone.l{left:-12%;animation:sweepL 9s ease-in-out infinite alternate}
+.bz-film-cone.r{right:-12%;background:linear-gradient(160deg,color-mix(in srgb,var(--gold) 11%,transparent),transparent 58%);animation:sweepR 11s ease-in-out infinite alternate}
+@keyframes sweepL{from{transform:rotate(-13deg)}to{transform:rotate(15deg)}}
+@keyframes sweepR{from{transform:rotate(13deg)}to{transform:rotate(-15deg)}}
+.bz-film-next-attr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.bz-film-next-attr .soon{font-size:13px;letter-spacing:.6em;text-indent:.6em;color:var(--red);margin-bottom:5%;text-shadow:0 0 22px color-mix(in srgb,var(--red) 40%,transparent)}
+.bz-film-next-row{display:flex;gap:3.4%}
+.bz-film-next{width:16%;max-width:220px;opacity:0;position:relative;will-change:transform,opacity}
+.bz-film-next img,.bz-film-next .bz-film-ph{width:100%;aspect-ratio:2/3;border-radius:4px;border:1px solid color-mix(in srgb,rgb(var(--sf-ink-rgb)) 18%,transparent);box-shadow:0 20px 60px #000a}
+.bz-film-next .stamp{position:absolute;top:7%;right:5%;padding:5px 9px;border:3px solid color-mix(in srgb,var(--red) 80%,transparent);
+  color:color-mix(in srgb,var(--red) 80%,transparent);font-size:19px;font-weight:600;letter-spacing:.3em;text-indent:.3em;border-radius:4px;
+  transform:rotate(-14deg);opacity:0;will-change:transform,opacity}
+.bz-film-next figcaption{margin-top:12px;text-align:center}
+.bz-film-next .nm{font-size:14.5px;letter-spacing:.08em;color:rgb(var(--sf-ink-rgb));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bz-film-next .db{margin-top:5px;font-size:11px;color:rgb(var(--sf-dim-rgb));letter-spacing:.14em}
+.bz-film-replay{margin-top:7%;border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);background:none;color:rgb(var(--sf-star-rgb));
+  font-family:inherit;font-size:13px;letter-spacing:.5em;text-indent:.5em;padding:12px 30px;cursor:pointer;border-radius:2px;opacity:0;transition:background var(--cn-m-fast)}
+@media (hover: hover) {
+  .bz-film-replay:hover{background:color-mix(in srgb,var(--gold) 10%,transparent)}
+}
+
 /* ==================== 游戏库域样式（src/gameshelf/styles.css）v3 ====================
    方向 = V1 海报墙落域（2026-09-17 用户点版）：门面 hero + 工具行 + 封面网格 + 数据统计面板
    + 全量详情弹窗。2026-09-18（issue 378）：头行退役，大海报顶到面板顶，常驻操作 = 右上角
