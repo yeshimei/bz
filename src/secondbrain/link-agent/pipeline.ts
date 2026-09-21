@@ -28,6 +28,7 @@ import { notice, notify, NoticeHandle } from '../../core/notice';
 import { tryGetSettings } from '../../core/settings-provider';
 import { buildConfig, IS_MOBILE } from '../config';
 import { AI } from '../ai';
+import { askJev, isJevConfigured, type JevQuestion, type JevAnswer } from '../../core/jev';
 import type { SearchHit } from '../vector-store';
 import {
   computeBackfillTargets,
@@ -108,8 +109,22 @@ const JUDGE_PROMPT_PREFIX = [
   '你是笔记库的双链裁判。给定一篇新笔记的档案卡和若干候选笔记的档案卡，',
   '逐一判断候选与新笔记是否存在实质的知识关联（共同主题、直接引用、同一事件或人物、强互补上下文）。',
   '标准：只链实质关联，存疑不链；宁缺勿滥。',
-  '输出要求：严格 JSON 数组 [{"id":<候选编号>,"reason":"一句话理由"}]，按关联强度降序；无关联输出 []；不要输出 JSON 以外的任何文字。',
+  '输出要求：严格 JSON 数组 [{"id":<候选编号>}]，按关联强度降序；无关联输出 []；不要输出 JSON 以外的任何文字。',
 ].join('');
+
+/**
+ * 关联判定阈值（issue 392 决策 4）：三维 Noul 共用一个阈值，不新增设置键。
+ * 首版 0.5 是拍的——三维拆分的判定数据还没有（实测只有单维度 Noul 数据），灰度后按真实误建率调；
+ * 调阈值不需要动提示词，这正是把判据放进代码的意义。
+ */
+const JUDGE_DIM_MIN = 0.5;
+
+/** 命中维度中文标签（拼入 reason，仅调试/批次日志用，不写 frontmatter、不额外调用 LLM） */
+const JUDGE_DIM_LABEL: Record<'topic' | 'ref' | 'complement', string> = {
+  topic: '同一主题',
+  ref: '直接指向',
+  complement: '内容互补',
+};
 
 /** 候选池倍数：先取全局近邻大池，再过滤到文献盒范围截断 Top-K */
 const CANDIDATE_POOL_MIN = 24;
@@ -121,6 +136,12 @@ function settingNumber(v: unknown, fallback: number): number {
 
 function boolSetting(v: unknown, fallback: boolean): boolean {
   return v === undefined || v === null ? fallback : v === true;
+}
+
+/** 从 Jev 答案取 Noul 概率；缺键/非 noul/非数字均按 0 处理（issue 392 决策 9：缺键 = 0，不抛错） */
+function noulScore(a: JevAnswer | undefined): number {
+  if (a && a.type === 'noul' && typeof a.noul === 'number' && Number.isFinite(a.noul)) return a.noul;
+  return 0;
 }
 
 /** 剥 frontmatter 后的正文摘要（新笔记档案卡首块共用；检索查询不再用它截断） */
@@ -271,25 +292,19 @@ export class LinkAgent {
 
     const candidates = await this.findCandidates(path, content);
 
-    // ③ 裁判（core AI，ADR-0052 统一通道）
-    let picks: ReturnType<typeof parseJudgeOutput> = [];
+    // ③ 裁判（Jev 优先，失败回落 LLM；ADR-0173 §2 / issue 392）
+    let links: SearchHit[] = [];
     if (candidates.length > 0) {
-      const prompt = this.buildJudgePrompt(file, content, candidates);
-      let text = '';
       try {
-        text = await AI.ask(prompt);
+        links = await this.judge(file, content, candidates);
       } catch (e) {
-        // 裁判失败：保留队列/下次重试（spec「错误处理与边界」）
+        // 两道都不可用：保留队列/下次重试（spec「错误处理与边界」；issue 392 决策 7）
         await enqueuePaths([path], { [path]: hash });
         return { status: 'failed', error: e instanceof Error ? e.message : String(e) };
       }
-      picks = parseJudgeOutput(text, candidates.length);
     }
 
     // ④ 写入：通过裁判的对子写入新笔记侧 related（单侧、幂等、上限截断在写入侧兜底）
-    const links = picks
-      .map((p) => candidates[p.id - 1])
-      .filter((c) => !!c && c.path !== path && !!this.app.vault.getAbstractFileByPath(c.path));
     const created = await this.writeRelated(file, links.map((c) => c.path));
     // v1.4/ticket 119：写入后把当前文件全文哈希记为基准（含本次 related 写入——
     // 自写触发的 modify 事件后续经基准过滤掉，防止自触发死循环）。
@@ -331,18 +346,15 @@ export class LinkAgent {
       }
       if (!candidates.length) return { status: 'done' as const, picks: [] };
       const ghost = { path: '', basename: title || '待落盘草稿', extension: 'md' } as unknown as TFile;
-      let answer = '';
+      let links: SearchHit[] = [];
       try {
-        answer = await AI.ask(this.buildJudgePrompt(ghost, text, candidates), { signal: opts?.signal });
+        links = await this.judge(ghost, text, candidates, { signal: opts?.signal });
       } catch (e) {
         return { status: 'failed' as const, error: e instanceof Error ? e.message : String(e) };
       }
-      const picks = parseJudgeOutput(answer, candidates.length)
-        .map((p) => candidates[p.id - 1])
-        .filter((c) => !!c && !!c.path && !!this.app.vault.getAbstractFileByPath(c.path));
       return {
         status: 'done' as const,
-        picks: picks.map((c) => ({ path: c.path, title: this.linkTitleOf(c.path) })),
+        picks: links.map((c) => ({ path: c.path, title: this.linkTitleOf(c.path) })),
       };
     });
   }
@@ -518,6 +530,138 @@ export class LinkAgent {
       lines.push(this.dossierCard(f, (c.chunk || '').slice(0, 200)));
     });
     return lines.join('\n');
+  }
+
+  /**
+   * 统一裁判入口（issue 392 决策 1）：`processNote` 与 `previewLinks` 共用，筛选与排序只在这里做一次。
+   * - Jev 未启用/未配置（`jevEnabled !== true` 或端点密钥不齐）→ 直接走原 LLM 路径（零风险回退，行为与本票前一致）；
+   * - Jev 优先：一次 `askJev` 问完所有候选的三个独立 Noul 维度；
+   * - Jev 抛**非 abort** 错误 → 同一次 `judge()` 内用现有 prompt + `parseJudgeOutput` 回落 LLM（对用户不可见）；
+   * - `signal.aborted` → 直接抛出、**不回落**（用户主动放弃，回落等于白烧一次 LLM，issue 392 决策 6）；
+   * - 两道都抛错 → 上抛，由 `processNote` 入队 / `previewLinks` 返 failed（issue 392 决策 7）。
+   * @returns 选中的候选：已按强度降序、已剔除自身与不存在的文件。
+   */
+  private async judge(
+    selfFile: TFile,
+    selfContent: string,
+    candidates: SearchHit[],
+    opts?: { signal?: AbortSignal }
+  ): Promise<SearchHit[]> {
+    if (!candidates.length) return [];
+    // Jev 未就绪 → 直接走原 LLM 路径（isJevConfigured 已含 jevEnabled===true 与端点/密钥齐备检查）
+    if (!isJevConfigured()) {
+      return this.judgeByLLM(selfFile, selfContent, candidates, opts);
+    }
+    const state = this.buildJudgeState(selfFile, selfContent, candidates);
+    const questions = this.buildJevQuestions(candidates);
+    try {
+      const result = await askJev(state, questions, { signal: opts?.signal });
+      return this.judgeByJev(candidates, result.answers);
+    } catch (e) {
+      // 取消不算失败：用户主动放弃，回落等于白烧一次 LLM
+      if (opts?.signal?.aborted) throw e;
+      // Jev 抛非 abort 错误 → 同一次 judge 内回落 LLM（降级不通知、不落盘标记）
+      return this.judgeByLLM(selfFile, selfContent, candidates, opts);
+    }
+  }
+
+  /**
+   * Jev 回落路径（原 LLM 裁判）：组 prompt → `AI.ask` → `parseJudgeOutput`。
+   * 失败（含 abort）一律上抛，由 `judge()` 调用方决定入队/failed。
+   */
+  private async judgeByLLM(
+    selfFile: TFile,
+    selfContent: string,
+    candidates: SearchHit[],
+    opts?: { signal?: AbortSignal }
+  ): Promise<SearchHit[]> {
+    // AI.ask 失败/取消直接上抛：processNote 入队、previewLinks failed（issue 392 决策 7）
+    const text = await AI.ask(this.buildJudgePrompt(selfFile, selfContent, candidates), { signal: opts?.signal });
+    const picks = parseJudgeOutput(text, candidates.length);
+    return picks
+      .map((p) => candidates[p.id - 1])
+      .filter((c) => !!c && c.path !== selfFile.path && !!this.app.vault.getAbstractFileByPath(c.path));
+  }
+
+  /**
+   * Jev 结果 → 选中候选（issue 392 决策 3）：代码内判定，不看模型返回顺序。
+   * - 建链：`ref ≥ M` 或 `topic ≥ M 且 complement ≥ M`，`M = JUDGE_DIM_MIN`；
+   * - 排序：`score = max(topic, ref, complement)` 降序，稳定排序使同分保持候选原序（= 向量相似度降序）；
+   * - 缺键维度按 0；`answers` 整体缺失/非对象 → 抛错（issue 392 决策 9，交由 `judge()` 回落 LLM）。
+   */
+  private judgeByJev(candidates: SearchHit[], answers: Record<string, JevAnswer>): SearchHit[] {
+    if (!answers || typeof answers !== 'object' || Array.isArray(answers)) {
+      // 整体缺失/非对象：视作响应畸形，抛错走回落（不静默当成「零命中」伪装成「这批确实没有关联」）
+      throw new Error('Jev 响应缺少 answers 字段（整体缺失/非对象）');
+    }
+    const selected: Array<{ hit: SearchHit; score: number; reason: string }> = [];
+    candidates.forEach((c, i) => {
+      const id = i + 1; // 候选序号与 buildJudgePrompt 的 id 同序（从 1 起）
+      const topic = noulScore(answers[`c${id}_topic`]);
+      const ref = noulScore(answers[`c${id}_ref`]);
+      const complement = noulScore(answers[`c${id}_complement`]);
+      const link = ref >= JUDGE_DIM_MIN || (topic >= JUDGE_DIM_MIN && complement >= JUDGE_DIM_MIN);
+      if (!link) return;
+      const score = Math.max(topic, ref, complement);
+      const dims: string[] = [];
+      if (ref >= JUDGE_DIM_MIN) dims.push(JUDGE_DIM_LABEL.ref);
+      if (topic >= JUDGE_DIM_MIN) dims.push(JUDGE_DIM_LABEL.topic);
+      if (complement >= JUDGE_DIM_MIN) dims.push(JUDGE_DIM_LABEL.complement);
+      selected.push({ hit: c, score, reason: dims.join(' · ') });
+    });
+    // 稳定降序：同分保持候选原序（findCandidates 已是向量相似度降序）
+    selected.sort((a, b) => b.score - a.score);
+    if (selected.length) {
+      console.debug(
+        '[link-agent] Jev 判定建链：',
+        selected.map((s) => `${s.hit.path}（${s.reason}，score=${s.score.toFixed(3)}）`)
+      );
+    }
+    return selected.map((s) => s.hit);
+  }
+
+  /**
+   * 构造 Jev 的 `state`（档案卡拼接，改成 instructions 口径，不要求模型输出 JSON）。
+   * 沿用 `buildJudgePrompt` 的档案卡形态（## 新笔记 / ## 候选笔记 + dossierCard）。
+   */
+  private buildJudgeState(selfFile: TFile, selfContent: string, candidates: SearchHit[]): string {
+    const lines: string[] = [
+      '你是笔记库的双链裁判。给定一篇新笔记的档案卡和若干候选笔记的档案卡，',
+      '逐一判断候选与新笔记是否存在实质的知识关联。标准：只链实质关联，存疑不链；宁缺勿滥。',
+    ];
+    lines.push('', '## 新笔记');
+    lines.push(this.dossierCard(selfFile, bodyExcerpt(selfContent, 400)));
+    lines.push('', '## 候选笔记');
+    candidates.forEach((c, i) => {
+      const f = this.app.vault.getAbstractFileByPath(c.path) as TFile | null;
+      lines.push(`### id=${i + 1}`);
+      lines.push(this.dossierCard(f, (c.chunk || '').slice(0, 200)));
+    });
+    return lines.join('\n');
+  }
+
+  /**
+   * 构造 Jev 问题：每个候选问三个独立 Noul 维度，键固定 `c{i}_topic` / `c{i}_ref` / `c{i}_complement`
+   * （i = 候选序号，从 1 起，与 buildJudgePrompt 的 id 同序）。一次调用问完所有候选所有维度（加问不加价）。
+   */
+  private buildJevQuestions(candidates: SearchHit[]): Record<string, JevQuestion> {
+    const questions: Record<string, JevQuestion> = {};
+    candidates.forEach((_, i) => {
+      const id = i + 1;
+      questions[`c${id}_topic`] = {
+        type: 'noul',
+        instructions: `候选笔记 id=${id} 与新笔记之间：两者讨论的是同一个主题、概念或问题吗？`,
+      };
+      questions[`c${id}_ref`] = {
+        type: 'noul',
+        instructions: `候选笔记 id=${id} 与新笔记之间：一方是否直接引用、明确提及或指向另一方（含同一人物 / 事件 / 作品 / 术语）？`,
+      };
+      questions[`c${id}_complement`] = {
+        type: 'noul',
+        instructions: `候选笔记 id=${id} 与新笔记之间：一方是否是另一方的展开、解释、案例或反例（内容互补）？`,
+      };
+    });
+    return questions;
   }
 
   /** 档案卡紧凑格式：标题/tags/summary/首块截断 */

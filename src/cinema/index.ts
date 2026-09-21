@@ -9,7 +9,10 @@ import { unregisterPanelEsc } from '../core/esc-manager';
 import { M, resetCinemaState, resolveCinemaFolderPath, DEFAULT_FOLDER } from './state';
 import { rebuildItems, findPosterRenameTargets } from './data';
 import { createOverlay, closeOverlay, registerEscapeHandler, renderAll, renderSoft, openAddModalDirect, openRandomMovie } from './ui';
+import { decideTypeForActiveFile } from './type-decide';
 import { shutdownDoubanQueue, sweepDoubanFetch } from './douban-queue';
+
+export { decideTypeForActiveFile };
 
 let initialized = false;
 let autoRefreshRegistered = false;

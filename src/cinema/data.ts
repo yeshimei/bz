@@ -7,6 +7,15 @@ import { extractMovieName } from './douban-fetcher';
 import type { CinemaItem } from './state';
 import { M } from './state';
 
+/** frontmatter `tags` → string[]（兼容数组 / 单个字符串 / 缺失）。
+ *  影院域 tag 归一化单源：UI 写盘（ui.ts 改名替换）、判定命令（type-decide.ts）、
+ *  解析（parseMovieFile）共用，避免同域第二份漂移（issue 393 审查收口）。 */
+export function normalizeTags(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map((t) => String(t));
+  if (typeof raw === 'string' && raw) return [raw];
+  return [];
+}
+
 /** 解析单条笔记（frontmatter → CinemaItem）；无 frontmatter 返回 null */
 export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
   const cache = app.metadataCache.getFileCache(file);
@@ -17,9 +26,8 @@ export function parseMovieFile(file: TFile, app: App): CinemaItem | null {
   const name = extractMovieName(file.basename);
 
   // tags → typeTag（ALL_TAGS 顺序优先；无固定 tag 取首个；完全无 tag 跳过）
-  let rawTags = fm.tags;
-  if (typeof rawTags === 'string') rawTags = [rawTags];
-  const tags: string[] = Array.isArray(rawTags) ? rawTags.map((t: unknown) => String(t)) : [];
+  // 归一化走单源 normalizeTags（兼容数组/单字符串/缺失，与 UI/判定命令同口径）
+  const tags = normalizeTags(fm.tags);
   let typeTag: string | null = null;
   for (const t of ALL_TAGS) {
     if (tags.includes(t)) {

@@ -80,6 +80,8 @@ const EXPECTED_COMMAND_IDS = [
   'bz-cinema-open', 'bz-cinema-add',
   // 随机抽一部（2026-09-11 首页入口菜单；想看池随机直开详情）
   'bz-cinema-random-pick',
+  // 影院类型自动判定（issue 393 / ADR-0174）：Jev Choice 从闭合词表 ALL_TAGS 补 typeTag
+  'bz-cinema-type-decide',
   // 游戏架（gameshelf 域，issue 368：Steam 直连自动拉库）
   'bz-gameshelf-open',
   // 立即同步 / 数据统计（2026-09-17 首页入口菜单：前者不开面板直接拉，后者开面板落统计页）

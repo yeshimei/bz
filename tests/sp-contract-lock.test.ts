@@ -22,7 +22,7 @@ import type { SettingsSchema } from '../src/core/settings-schema';
 const COUNT_BASELINE: Record<string, number> = {
   global: 3,
   notice: 4,
-  ai: 7,
+  ai: 8,
   diary: 5,
   memo: 11,
   belongings: 6,

@@ -30,7 +30,7 @@ import {
   getGroupForTag, hasIllegalNameChar, ILLEGAL_NAME_HINT,
 } from './constants';
 import { M, type CinemaItem, type CinemaSortMode } from './state';
-import { rebuildItems, getDisplayItems } from './data';
+import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildAnalysisHTML } from './analysis';
@@ -168,11 +168,7 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     if (item.review) fm['影评'] = item.review;
     else delete fm['影评'];
     if (edit) {
-      const tags = Array.isArray(fm['tags'])
-        ? (fm['tags'] as unknown[]).map((t) => String(t))
-        : typeof fm['tags'] === 'string' && fm['tags']
-          ? [fm['tags'] as string]
-          : [];
+      const tags = normalizeTags(fm['tags']);
       const at = tags.indexOf(edit.prevTag);
       if (at >= 0) tags[at] = item.typeTag;
       else if (!tags.includes(item.typeTag)) tags.unshift(item.typeTag);

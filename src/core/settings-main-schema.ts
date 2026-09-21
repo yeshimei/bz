@@ -299,16 +299,71 @@ function credentialGroupRows(): SettingsRow[] {
   ];
 }
 
+/**
+ * 「Jev 决策通道」组行（issue 391 / ADR-0173 §6）：启用总开关 + 端点 / 密钥 / 模型 / 超时四行
+ * （后四行 visibleWhen 跟随总开关）。Jev 是判定通道（输出不计费、无 max_tokens），不挂进生成通道
+ * AI_PROVIDER_REGISTRY——独立成组（issue 391 决策 1）。
+ * 密钥行刻意用掩码档位（secret）：Jev 密钥是新引入的第三方凭据，不复用 providerGroupRows 的明文
+ * 口径（issue 391 决策 3）。本文件在 core 层、须保持 node 环境可安全加载，故不 import
+ * settings-panel/renderer 的 secretRow()——那会拉进 obsidian 侧 DOM 依赖形成跨层环；此处就地声明
+ * 一个 type:'secret' 的受控断言，运行时由 renderer 的 case 'secret' 单点消费（与 secretRow 同款收口）。
+ */
+function jevGroupRows(): SettingsRow[] {
+  return [
+    {
+      type: 'toggle',
+      name: '启用 Jev 判定',
+      desc: '开启后关联判定改走 Jev 决策通道',
+      binding: { key: 'jevEnabled' },
+    },
+    {
+      type: 'text',
+      name: 'Jev 端点',
+      desc: '判定服务接口地址，一般无需改动',
+      binding: { key: 'jevEndpoint' },
+      placeholder: 'https://api.typesafe.ai/v1/systemone',
+      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
+    },
+    // 就地声明掩码档位：不复用 renderer.secretRow()，理由见函数注（core 层禁 import obsidian 侧模块）
+    {
+      type: 'secret',
+      name: 'Jev 密钥',
+      desc: '连接 Jev 决策通道所需的密钥',
+      binding: { key: 'jevApiKey' },
+      placeholder: '粘贴 Jev 密钥',
+      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
+    } as unknown as SettingsRow,
+    {
+      type: 'text',
+      name: 'Jev 模型',
+      desc: '判定使用的模型，默认固定版本',
+      binding: { key: 'jevModel' },
+      placeholder: 'jev-1.13.0',
+      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
+    },
+    {
+      type: 'number',
+      name: 'Jev 超时',
+      desc: '单次判定超时毫秒，留空用默认十秒',
+      binding: { key: 'jevTimeoutMs' },
+      min: 0,
+      placeholder: '10000',
+      visibleWhen: (snapshot) => snapshot.jevEnabled === true,
+    },
+  ];
+}
+
 /** AI 页设置组（issue 186：设置面板拆独立域；⚙️ 主设置页与本域共用同一组定义。
  *  issue 331 重新分组：「AI 与凭据」单组（ADR-0133）拆为「服务商」「模型配置」「数据源凭据」
  *  三组——接入（选谁+密钥）/ 模型参数（用哪个模型+窗口）/ 数据源凭据（非 AI 的第三方凭据）
- *  三层各归各卡；键与行为零变化。 */
+ *  三层各归各卡；键与行为零变化。issue 391 追加「Jev 决策通道」组（判定通道，独立于生成通道）。 */
 export function aiSettingsSchema(): SettingsSchema {
   return {
     groups: [
       { icon: 'plug-zap', name: '服务商', rows: providerGroupRows() },
       { icon: 'cpu', name: '模型配置', rows: modelGroupRows() },
       { icon: 'key-round', name: '数据源凭据', rows: credentialGroupRows() },
+      { icon: 'route', name: 'Jev 决策通道', rows: jevGroupRows() },
     ],
   };
 }
