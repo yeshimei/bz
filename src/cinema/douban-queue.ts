@@ -13,7 +13,7 @@ import { sleep } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { M } from './state';
 import { rebuildItems } from './data';
-import { fetchNoteDouban, queryDoubanByName, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
+import { fetchNoteDouban, queryDoubanByName, downloadPosterToVault, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
 
 /** 查询结果类型再导出：测试注入 `configureFetchQueue({ preview })` 时要用 */
 export type { DoubanQueryOutcome };
@@ -112,6 +112,20 @@ export async function queryDoubanForPreview(app: App, name: string): Promise<Dou
   return previewFn ? previewFn(app, name) : queryDoubanByName(name, fetchDepsFromSettings(app));
 }
 
+/** 保存海报的注入面（测试用；默认走真下载） */
+export type PreviewPosterSave = (app: App, name: string, posterUrl: string) => Promise<string | null>;
+/** 测试注入：保存海报落库（默认走真 downloadPosterToVault） */
+let posterFn: PreviewPosterSave | null = null;
+
+/** 「添加影视」保存时把解析到的海报落库（issue 397）：与队列抓取共用 downloadPosterToVault
+ *  与同一套 deps（requestUrl 下载 + adapter 写盘）。返回 vault 相对路径；null = 没落成
+ *  （没网 / 写盘失败 / 未配置），由调用方决定是否回退后台抓取补齐。 */
+export async function downloadPreviewPoster(app: App, name: string, posterUrl: string): Promise<string | null> {
+  if (posterFn) return posterFn(app, name, posterUrl);
+  const r = await downloadPosterToVault(name, posterUrl, fetchDepsFromSettings(app));
+  return r.ok ? r.path : null;
+}
+
 /** 测试注入：替换执行器 / 条目间隔 / 完成后刷新延迟 */
 export function configureFetchQueue(hooks: {
   fetch?: FetchNote;
@@ -119,9 +133,12 @@ export function configureFetchQueue(hooks: {
   refreshDelayMs?: number;
   /** 解析查询器；传 null 复位（测试 afterEach 用） */
   preview?: PreviewQuery | null;
+  /** 保存海报落库；传 null 复位（测试 afterEach 用） */
+  poster?: PreviewPosterSave | null;
 }): void {
   if (hooks.fetch) fetchFn = hooks.fetch;
   if (hooks.preview !== undefined) previewFn = hooks.preview;
+  if (hooks.poster !== undefined) posterFn = hooks.poster;
   if (hooks.gapMs !== undefined) gapMs = hooks.gapMs;
   if (hooks.refreshDelayMs !== undefined) refreshDelayMs = hooks.refreshDelayMs;
 }

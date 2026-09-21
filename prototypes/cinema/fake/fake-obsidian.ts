@@ -97,9 +97,33 @@ const PNG_1PX = new Uint8Array([
   174, 66, 96, 130,
 ]);
 
+/** ArrayBuffer → data URL（评审壳的海报存储形态；分块 btoa 免爆栈） */
+function bytesToDataUrl(data: ArrayBuffer): string {
+  const bytes = new Uint8Array(data);
+  const mime = bytes[0] === 0x89 && bytes[1] === 0x50 ? 'image/png' : 'image/jpeg'; // PNG 魔数，其余按 JPEG
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return `data:${mime};base64,${btoa(bin)}`;
+}
+
+/** 取流 + 缩到卡片宽度（240px）：评审壳的海报是 localStorage 文件表里的 data URL，
+ *  真海报原图 100~400KB，base64 存不下几张；缩图后 ~10KB。真机没有这一步（直取原图写盘）。 */
+async function shrinkMedia(url: string): Promise<ArrayBuffer> {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error('media ' + resp.status);
+  const blob = await resp.blob();
+  const bmp = await createImageBitmap(blob);
+  const w = Math.max(1, Math.min(240, bmp.width));
+  const h = Math.max(1, Math.round((bmp.height / bmp.width) * w));
+  const cv = new OffscreenCanvas(w, h);
+  const ctx = cv.getContext('2d');
+  if (!ctx) return await blob.arrayBuffer();
+  ctx.drawImage(bmp, 0, 0, w, h);
+  return await (await cv.convertToBlob({ type: 'image/jpeg', quality: 0.82 })).arrayBuffer();
+}
+
 /** 豆瓣搜索页罐头（结构须匹配 douban-fetcher.parseSearchResults 的正则）。
- *  ⚠ 必须 >8000 字节：searchLooksBlocked 对短响应直接判风控，故补足填充块。 */
-function cannedSearchHtml(title: string, idx: number): string {
+ *  ⚠ 必须 >8000 字节：searchLooksBlocked 对短响应直接判风控，故补足填充块。 */function cannedSearchHtml(title: string, idx: number): string {
   const hit =
     `<div class="result"><div class="pic">` +
     `<a href="https://www.douban.com/link2/?url=https%3A%2F%2Fmovie.douban.com%2Fsubject%2F${sidOf(idx)}%2F">` +
@@ -212,6 +236,16 @@ export async function requestUrl(req: { url?: string; method?: string; body?: st
   }
   if (url.includes('doubanio.com')) {
     return { status: 200, text: '', json: null, arrayBuffer: PNG_1PX.buffer.slice(0) as ArrayBuffer };
+  }
+  // 罐头解析给的海报是评审壳自己托管的**真库海报**（/__vault-media/<basename>）：
+  // 现场取流并缩到卡片宽度再回（真机直取豆瓣高清图）——A. 让「保存即落海报」在原型里闭环，
+  // B. 缩完才存得进 localStorage 文件表（真海报 100~400KB，base64 会顶配额）
+  if (url.startsWith('/__vault-media/')) {
+    try {
+      return { status: 200, text: '', json: null, arrayBuffer: await shrinkMedia(new URL(url, location.href).href) };
+    } catch {
+      return { status: 200, text: '', json: null, arrayBuffer: PNG_1PX.buffer.slice(0) as ArrayBuffer };
+    }
   }
   // rexxar 演职员兜底：404 → fetchCelebrities 视作该类型无数据，回落到 ApiZero 的导演/主演
   if (url.includes('m.douban.com/rexxar')) return { status: 404, text: '', json: null, arrayBuffer: new ArrayBuffer(0) };
@@ -340,6 +374,21 @@ export class FakeVault {
   private listeners = new Map<string, Array<(...args: unknown[]) => void>>();
   private idSeq = 0;
 
+  /** 文件系统 adapter（守卫面 = 影院海报下载用的 writeBinary / mkdir）。
+   *  真机写的是 vault 相对路径下的真图；评审壳写进 localStorage 文件表的 **data URL**
+   *  （getResourcePath 认 data: 直出）——「保存即落海报」这条链在原型里也要能闭环，
+   *  否则建档后只能回落后台抓取，评审壳会弹出真机不会出现的抓取失败通知。 */
+  adapter = {
+    mkdir: async (_path: string): Promise<void> => undefined as never,
+    writeBinary: async (path: string, data: ArrayBuffer): Promise<void> => {
+      localStorage.setItem(LS_PREFIX + path, bytesToDataUrl(data));
+      const stats = this.stats();
+      stats[path] = { ctime: Date.now(), mtime: Date.now() };
+      this.saveStats(stats);
+      this.emit('create', { path });
+    },
+  };
+
   constructor() {
     // 跨实例写入：浏览器只向「非写者」文档派发 storage 事件——收到即视为外部变更
     if (typeof window !== 'undefined') {
@@ -394,6 +443,9 @@ export class FakeVault {
    *    服务端按 basename 从**真实 vault** 现场取流——海报全量 1.8G 不可能入库，只留名不入图；
    *  - file:// 双击直开：无服务端 → 返回绝对路径，浏览器直读本地文件（原口径）。 */
   getResourcePath(f: TFile): string {
+    // 评审壳写进 localStorage 文件表的海报是 data URL（见 adapter.writeBinary）→ 直接交给 img
+    const raw = this.raw(f.path);
+    if (raw && raw.startsWith('data:')) return raw;
     if (typeof location !== 'undefined' && /^https?:$/.test(location.protocol)) {
       return '/__vault-media/' + encodeURIComponent(f.name);
     }
@@ -440,8 +492,7 @@ export class FakeVault {
 
   async createFolder(_path: string): Promise<void> {
     // localStorage 无目录概念——persistItem/quickAddWant 的 ensureDir 调用此方法，no-op
-    return undefined as never;
-  }
+    return undefined as never;  }
 
   /** 回收站删除（openConfirm 的 vault.trash；system 参数与 Obsidian 同形，原型的回收站即消失） */
   async trash(f: TFile, _system?: boolean): Promise<void> {

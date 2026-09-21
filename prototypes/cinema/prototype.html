@@ -527,6 +527,33 @@
               && sRow.style.display === '' && ds.querySelectorAll('.s-row').length === rowN);
           }
           sf('.cn-ovl')?.click(); // 清场：别把开着的弹窗留给下一次自检
+
+          // 滑动高亮（issue 397）：侧栏一片底片跟着悬停滑（跨类型/状态/底部工具三段）、
+          // 移开回落选中项、点击后固定在选中项；排序钮同款。真浏览器里量的是真矩形——
+          // 单测只能钉假矩形，滑行是否真的对得上项由这里兜。
+          const railEl = sf('.d-rail');
+          const pillOf = (box) => box?.querySelector(':scope > .slide-pill');
+          const pillOn = (box, el) => {
+            const p = pillOf(box); if (!p || !el) return false;
+            const pr = p.getBoundingClientRect(); const er = el.getBoundingClientRect();
+            return Math.abs(pr.top - er.top) < 2 && Math.abs(pr.left - er.left) < 2 && Math.abs(pr.width - er.width) < 2;
+          };
+          const hoverRail = async (sel) => {
+            sf(sel).dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+            await sleep(280); // 等 0.22s 滑行走完
+          };
+          t('侧栏底片坐在选中项上', !!pillOf(railEl)?.classList.contains('is-visible')
+            && pillOn(railEl, sf('.d-rail .rail-item.is-on')));
+          await hoverRail('[data-s="已看"]');
+          t('悬停滑到该行（跨类型/状态组）', pillOn(railEl, sf('[data-s="已看"]')));
+          await hoverRail('[data-tool="stat"]');
+          t('悬停滑到底部工具', pillOn(railEl, sf('[data-tool="stat"]')));
+          railEl.dispatchEvent(new MouseEvent('mouseleave'));
+          await sleep(280);
+          t('移开回落选中项', pillOn(railEl, sf('.d-rail .rail-item.is-on')));
+          sf('.j-sort button[data-k="rating"]').click();
+          await sleep(280);
+          t('排序钮底片跟着选中项', pillOn(sf('.j-sort'), sf('.j-sort button[data-k="rating"]')));
         }
 
         document.title = window.__st.fail.length

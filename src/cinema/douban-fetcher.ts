@@ -344,6 +344,37 @@ export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Pr
 }
 
 /**
+ * 海报下载落库（唯一实现）：高清 URL → 二进制 → 写盘，返回 vault 相对路径。
+ * 两处共用：抓取队列 `fetchNoteDouban`，与「添加影视」保存（表单解析阶段已拿到远程 URL，
+ * 保存即落盘 → 建档即齐、不再入队后台抓取；issue 397）。
+ * 失败原因按 C6 语义拆开（network / write）由调用方决定怎么处置。
+ */
+export async function downloadPosterToVault(
+  name: string,
+  posterUrl: string,
+  deps: DoubanFetchDeps,
+): Promise<{ ok: true; path: string } | { ok: false; reason: 'network' | 'write' }> {
+  let buf: ArrayBuffer | null;
+  try {
+    buf = await deps.downloadBinary(upgradePosterUrl(posterUrl), { Referer: 'https://movie.douban.com/' });
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+  if (!buf) return { ok: false, reason: 'network' };
+  try {
+    const posterFolder = deps.posterFolder?.trim() || POSTER_FOLDER;
+    await deps.mkdir(posterFolder);
+    const ext = posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
+    const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, '_');
+    const path = `${posterFolder}/${safeName}_${(deps.now || Date.now)()}.${ext}`;
+    await deps.writeBinary(path, buf);
+    return { ok: true, path };
+  } catch {
+    return { ok: false, reason: 'write' };
+  }
+}
+
+/**
  * 单条笔记抓取（队列执行器注入点；成功 = 海报与豆瓣链接都写齐或本已齐全）。
  * 链路：搜索（风控检测）→ 海报下载写盘（无海报时）→ ApiZero 字段 + rexxar 兜底 → frontmatter 写入。
  * 搜索失败/网络异常 → network；搜索风控 → blocked；海报下载失败 → network；写盘失败 → write。
@@ -369,28 +400,12 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   const { detailUrl, posterUrl, sid, apizero: az, celebrities: cel } = q.data;
 
   // 2. 海报（无海报时：高清 URL → 二进制 → 写盘 → frontmatter + 正文 embed）。
-  //  保存目录可配（cinemaPosterFolder），空/缺省回落 POSTER_FOLDER；
-  //  下载失败（抛错/null）归 network，写盘失败归 write（C6：下载与落盘失败语义拆分）
-  const posterFolder = deps.posterFolder?.trim() || POSTER_FOLDER;
+  //  保存目录/下载失败语义都在 downloadPosterToVault 里（与表单保存同一份实现）
   let posterRelative = fieldValue(content, '海报');
   if (!hasPoster && posterUrl) {
-    let buf: ArrayBuffer | null;
-    try {
-      buf = await deps.downloadBinary(upgradePosterUrl(posterUrl), { Referer: 'https://movie.douban.com/' });
-    } catch {
-      return { ok: false, reason: 'network' };
-    }
-    if (!buf) return { ok: false, reason: 'network' };
-    try {
-      await deps.mkdir(posterFolder);
-      const ext = posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
-      const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, '_');
-      const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
-      posterRelative = `${posterFolder}/${fileName}`;
-      await deps.writeBinary(posterRelative, buf);
-    } catch {
-      return { ok: false, reason: 'write' };
-    }
+    const dl = await downloadPosterToVault(name, posterUrl, deps);
+    if (!dl.ok) return { ok: false, reason: dl.reason };
+    posterRelative = dl.path;
   }
 
   // 3. 字段：ApiZero 首选 → rexxar 兜底（缺导演/主演或需编剧）。

@@ -1,4 +1,4 @@
-/* 源指纹 a1ed1cd6d9bfc0be · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 5d300d5d43b3f28c · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -4147,6 +4147,26 @@ var BZW_cinema = (() => {
     96,
     130
   ]);
+  function bytesToDataUrl(data) {
+    const bytes = new Uint8Array(data);
+    const mime = bytes[0] === 137 && bytes[1] === 80 ? "image/png" : "image/jpeg";
+    let bin = "";
+    for (let i = 0; i < bytes.length; i += 32768) bin += String.fromCharCode(...bytes.subarray(i, i + 32768));
+    return `data:${mime};base64,${btoa(bin)}`;
+  }
+  async function shrinkMedia(url) {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error("media " + resp.status);
+    const blob = await resp.blob();
+    const bmp = await createImageBitmap(blob);
+    const w = Math.max(1, Math.min(240, bmp.width));
+    const h = Math.max(1, Math.round(bmp.height / bmp.width * w));
+    const cv = new OffscreenCanvas(w, h);
+    const ctx = cv.getContext("2d");
+    if (!ctx) return await blob.arrayBuffer();
+    ctx.drawImage(bmp, 0, 0, w, h);
+    return await (await cv.convertToBlob({ type: "image/jpeg", quality: 0.82 })).arrayBuffer();
+  }
   function cannedSearchHtml(title, idx) {
     const hit = `<div class="result"><div class="pic"><a href="https://www.douban.com/link2/?url=https%3A%2F%2Fmovie.douban.com%2Fsubject%2F${sidOf(idx)}%2F"><img src="${CANNED_PRESETS[idx].poster}"></a></div><div class="title"><a href="#">${title}</a></div></div>`;
     return `<!DOCTYPE html><html><body>${hit}${'<div class="filler"></div>'.repeat(400)}</body></html>`;
@@ -4252,6 +4272,13 @@ var BZW_cinema = (() => {
     if (url.includes("doubanio.com")) {
       return { status: 200, text: "", json: null, arrayBuffer: PNG_1PX.buffer.slice(0) };
     }
+    if (url.startsWith("/__vault-media/")) {
+      try {
+        return { status: 200, text: "", json: null, arrayBuffer: await shrinkMedia(new URL(url, location.href).href) };
+      } catch (e) {
+        return { status: 200, text: "", json: null, arrayBuffer: PNG_1PX.buffer.slice(0) };
+      }
+    }
     if (url.includes("m.douban.com/rexxar")) return { status: 404, text: "", json: null, arrayBuffer: new ArrayBuffer(0) };
     throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
   }
@@ -4339,6 +4366,20 @@ var BZW_cinema = (() => {
     constructor() {
       this.listeners = /* @__PURE__ */ new Map();
       this.idSeq = 0;
+      /** 文件系统 adapter（守卫面 = 影院海报下载用的 writeBinary / mkdir）。
+       *  真机写的是 vault 相对路径下的真图；评审壳写进 localStorage 文件表的 **data URL**
+       *  （getResourcePath 认 data: 直出）——「保存即落海报」这条链在原型里也要能闭环，
+       *  否则建档后只能回落后台抓取，评审壳会弹出真机不会出现的抓取失败通知。 */
+      this.adapter = {
+        mkdir: async (_path) => void 0,
+        writeBinary: async (path, data) => {
+          localStorage.setItem(LS_PREFIX + path, bytesToDataUrl(data));
+          const stats = this.stats();
+          stats[path] = { ctime: Date.now(), mtime: Date.now() };
+          this.saveStats(stats);
+          this.emit("create", { path });
+        }
+      };
       if (typeof window !== "undefined") {
         window.addEventListener("storage", (e) => {
           if (!e.key || !e.key.startsWith(LS_PREFIX) || e.key === STAT_KEY) return;
@@ -4381,6 +4422,8 @@ var BZW_cinema = (() => {
      *    服务端按 basename 从**真实 vault** 现场取流——海报全量 1.8G 不可能入库，只留名不入图；
      *  - file:// 双击直开：无服务端 → 返回绝对路径，浏览器直读本地文件（原口径）。 */
     getResourcePath(f) {
+      const raw = this.raw(f.path);
+      if (raw && raw.startsWith("data:")) return raw;
       if (typeof location !== "undefined" && /^https?:$/.test(location.protocol)) {
         return "/__vault-media/" + encodeURIComponent(f.name);
       }
@@ -6049,8 +6092,28 @@ var BZW_cinema = (() => {
     }
     return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
   }
-  async function fetchNoteDouban(app, file, deps) {
+  async function downloadPosterToVault(name, posterUrl2, deps) {
     var _a, _b;
+    let buf;
+    try {
+      buf = await deps.downloadBinary(upgradePosterUrl(posterUrl2), { Referer: "https://movie.douban.com/" });
+    } catch (e) {
+      return { ok: false, reason: "network" };
+    }
+    if (!buf) return { ok: false, reason: "network" };
+    try {
+      const posterFolder = ((_a = deps.posterFolder) == null ? void 0 : _a.trim()) || POSTER_FOLDER;
+      await deps.mkdir(posterFolder);
+      const ext = ((_b = posterUrl2.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _b[1]) || "jpg";
+      const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, "_");
+      const path = `${posterFolder}/${safeName}_${(deps.now || Date.now)()}.${ext}`;
+      await deps.writeBinary(path, buf);
+      return { ok: true, path };
+    } catch (e) {
+      return { ok: false, reason: "write" };
+    }
+  }
+  async function fetchNoteDouban(app, file, deps) {
     const name = extractMovieName(file.name);
     let content;
     try {
@@ -6065,26 +6128,11 @@ var BZW_cinema = (() => {
     const q = await queryDoubanByName(name, deps);
     if (!q.ok) return { ok: false, reason: q.reason };
     const { detailUrl, posterUrl: posterUrl2, sid, apizero: az, celebrities: cel } = q.data;
-    const posterFolder = ((_a = deps.posterFolder) == null ? void 0 : _a.trim()) || POSTER_FOLDER;
     let posterRelative = fieldValue(content, "海报");
     if (!hasPoster && posterUrl2) {
-      let buf;
-      try {
-        buf = await deps.downloadBinary(upgradePosterUrl(posterUrl2), { Referer: "https://movie.douban.com/" });
-      } catch (e) {
-        return { ok: false, reason: "network" };
-      }
-      if (!buf) return { ok: false, reason: "network" };
-      try {
-        await deps.mkdir(posterFolder);
-        const ext = ((_b = posterUrl2.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _b[1]) || "jpg";
-        const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, "_");
-        const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
-        posterRelative = `${posterFolder}/${fileName}`;
-        await deps.writeBinary(posterRelative, buf);
-      } catch (e) {
-        return { ok: false, reason: "write" };
-      }
+      const dl = await downloadPosterToVault(name, posterUrl2, deps);
+      if (!dl.ok) return { ok: false, reason: dl.reason };
+      posterRelative = dl.path;
     }
     const fields = {};
     if (posterRelative) fields["海报"] = { value: posterRelative, ifMissing: true };
@@ -6894,6 +6942,12 @@ var BZW_cinema = (() => {
   var previewFn = null;
   async function queryDoubanForPreview(app, name) {
     return previewFn ? previewFn(app, name) : queryDoubanByName(name, fetchDepsFromSettings(app));
+  }
+  var posterFn = null;
+  async function downloadPreviewPoster(app, name, posterUrl2) {
+    if (posterFn) return posterFn(app, name, posterUrl2);
+    const r = await downloadPosterToVault(name, posterUrl2, fetchDepsFromSettings(app));
+    return r.ok ? r.path : null;
   }
   function isFetching(path) {
     var _a;
@@ -8368,7 +8422,7 @@ tags:
     );
     return out;
   }
-  async function persistItem(item, app, edit, douban) {
+  async function persistItem(item, app, edit, douban, posterRel) {
     var _a;
     if (!item.file) {
       const folder = M.folderPath;
@@ -8376,7 +8430,7 @@ tags:
         await app.vault.createFolder(folder);
       }
       const filePath = `${folder}/《${item.name}》.md`;
-      const content = `---
+      let content = `---
 tags:
 - ${item.typeTag}
 观影日期: "${item.watchDate || localNow()}"
@@ -8384,11 +8438,13 @@ tags:
 海报: 
 ---
 `;
+      if (posterRel) content = insertPosterEmbed(content, posterRel);
       const f = await app.vault.create(filePath, content);
       item.file = f;
-      if (item.review || douban) {
+      if (item.review || douban || posterRel) {
         await app.fileManager.processFrontMatter(f, (fm) => {
           var _a2, _b, _c, _d, _e;
+          if (posterRel) fm["海报"] = posterRel;
           if (item.review) fm["影评"] = item.review;
           if (douban) {
             const az = douban.apizero;
@@ -9092,7 +9148,7 @@ tags:
     });
   }
   async function saveNew(p, app, close) {
-    var _a;
+    var _a, _b;
     if (hasIllegalNameChar(p.name)) {
       notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
       return;
@@ -9106,9 +9162,11 @@ tags:
         return;
       }
       M.items.unshift(it);
-      await persistItem(it, app, void 0, p.douban);
+      const posterRel = ((_b = p.douban) == null ? void 0 : _b.posterUrl) ? await downloadPreviewPoster(app, p.name, p.douban.posterUrl) : null;
+      await persistItem(it, app, void 0, p.douban, posterRel);
+      if (posterRel) it.poster = posterRel;
       emitDomainEvent("movie", { kind: "created", name: p.name, status: st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched", rating: p.rating, review: p.review || null });
-      if (it.file) enqueueDoubanFetch(it.file, it.name);
+      if (it.file && !posterRel) enqueueDoubanFetch(it.file, it.name);
       close();
       notice(`已添加「${p.name}」`, "success");
       renderAll(app);
@@ -9576,6 +9634,80 @@ tags:
     }
     renderAll(app);
   }
+  var PILL_CLS = "slide-pill";
+  function pillKeyOf(el) {
+    var _a, _b, _c, _d;
+    const d = el.dataset;
+    return (_d = (_c = (_b = (_a = d.g) != null ? _a : d.s) != null ? _b : d.tool) != null ? _c : d.k) != null ? _d : "";
+  }
+  function ensurePillBound(box, itemSel, hoverable) {
+    if (box.dataset.pillBound) return;
+    box.dataset.pillBound = "1";
+    const resync = (animate) => syncSlidePill(box, itemSel, hoverable, animate);
+    if (hoverable) {
+      box.addEventListener("mouseover", (e) => {
+        var _a;
+        const el = (_a = e.target) == null ? void 0 : _a.closest(itemSel);
+        if (!el || !box.contains(el)) return;
+        const k = pillKeyOf(el);
+        if (!k || box.dataset.pillHover === k) return;
+        box.dataset.pillHover = k;
+        resync(true);
+      });
+      box.addEventListener("mouseleave", () => {
+        if (!box.dataset.pillHover) return;
+        delete box.dataset.pillHover;
+        resync(true);
+      });
+    }
+    box.addEventListener("scroll", () => resync(false), true);
+  }
+  function syncSlidePill(box, itemSel, hoverable, animate = true) {
+    var _a;
+    ensurePillBound(box, itemSel, hoverable);
+    let pill = box.querySelector(`:scope > .${PILL_CLS}`);
+    if (!pill) {
+      pill = document.createElement("span");
+      pill.className = PILL_CLS;
+      pill.setAttribute("aria-hidden", "true");
+      box.prepend(pill);
+    }
+    const items = [...box.querySelectorAll(itemSel)];
+    const hoverKey = (_a = box.dataset.pillHover) != null ? _a : "";
+    const hovered = hoverKey ? items.find((el) => pillKeyOf(el) === hoverKey) : void 0;
+    const target = hovered != null ? hovered : items.find((el) => el.classList.contains("is-on"));
+    if (!target) {
+      pill.classList.remove("is-visible");
+      return;
+    }
+    const r = target.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    const sc = target.closest(".rail-sec");
+    if (sc) {
+      const sr = sc.getBoundingClientRect();
+      if (r.bottom < sr.top + 1 || r.top > sr.bottom - 1) {
+        pill.classList.remove("is-visible");
+        return;
+      }
+    }
+    if (!animate) pill.classList.add("is-instant");
+    pill.style.width = `${Math.round(r.width)}px`;
+    pill.style.height = `${Math.round(r.height)}px`;
+    pill.style.transform = `translate(${Math.round(r.left - b.left)}px, ${Math.round(r.top - b.top)}px)`;
+    pill.classList.add("is-visible");
+    if (!animate) {
+      void pill.offsetWidth;
+      pill.classList.remove("is-instant");
+    }
+  }
+  function syncSlidePills(root) {
+    const hoverable = hoverCapable();
+    const targets = [[".d-rail", ".rail-item"], [".j-sort", "button"]];
+    for (const [boxSel, itemSel] of targets) {
+      const box = root.querySelector(boxSel);
+      if (box) syncSlidePill(box, itemSel, hoverable, false);
+    }
+  }
   function renderAll(app) {
     const overlay = M.currentOverlay;
     if (!overlay) return;
@@ -9598,6 +9730,7 @@ tags:
       if (sc) sc.scrollTop = top;
     }
     mountIcons(root);
+    syncSlidePills(root);
     restoreFocus(root, snap);
   }
   function closeOverlay() {

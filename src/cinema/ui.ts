@@ -34,8 +34,8 @@ import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildAnalysisHTML } from './analysis';
-import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview } from './douban-queue';
-import { normalizeListValue, type DoubanQuery } from './douban-fetcher';
+import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview, downloadPreviewPoster } from './douban-queue';
+import { normalizeListValue, insertPosterEmbed, type DoubanQuery } from './douban-fetcher';
 import { decideCinemaType } from './type-decide';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl, itemKey,
@@ -136,7 +136,7 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
  * 把条目落盘：新增建笔记，编辑/快速状态写 frontmatter（保留海报/豆瓣字段）；
  * 改名走 fileManager.renameFile（自动更新双链）；类型写入 frontmatter tags。
  */
-async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string; prevTag: string }, douban?: DoubanQuery | null): Promise<void> {
+async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string; prevTag: string }, douban?: DoubanQuery | null, posterRel?: string | null): Promise<void> {
   if (!item.file) {
     const folder = M.folderPath;
     if (!app.vault.getAbstractFileByPath(folder)) {
@@ -148,11 +148,15 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     // 影评在建档后与编辑路径同通道（processFrontMatter，Obsidian YAML 序列化兜底）写入。
     // 观影日期加双引号（深审批A P3-8）：裸日期被真机 YAML 解析成 timestamp（Moment 对象）
     // → 展示英文星期；评分/(tags 列表项) 是纯数字/固定枚举，无需引号。
-    const content = `---\ntags:\n- ${item.typeTag}\n观影日期: "${item.watchDate || localNow()}"\n评分: ${item.rating ?? 0}\n海报: \n---\n`;
+    let content = `---\ntags:\n- ${item.typeTag}\n观影日期: "${item.watchDate || localNow()}"\n评分: ${item.rating ?? 0}\n海报: \n---\n`;
+    // 海报已落库（issue 397：保存时下载进库）→ 正文 embed 与抓取路径同款插入，
+    // 免得「建档即齐」的笔记比队列抓过的少一张图（insertPosterEmbed 单源）
+    if (posterRel) content = insertPosterEmbed(content, posterRel);
     const f = await app.vault.create(filePath, content);
     item.file = f;
-    if (item.review || douban) {
+    if (item.review || douban || posterRel) {
       await app.fileManager.processFrontMatter(f, (fm: Record<string, unknown>) => {
+        if (posterRel) fm['海报'] = posterRel;
         if (item.review) fm['影评'] = item.review;
         // 解析阶段已拿到豆瓣字段 → 建档时直接写入（issue 395）：省掉落盘后再抓一次的往返。
         // 口径与 fetchNoteDouban 一致（ApiZero 优先、rexxar 兜底、缺失才填由本处新檔天然满足）。
@@ -1094,9 +1098,14 @@ async function saveNew(p: FormPayload, app: App, close: () => void): Promise<voi
       return;
     }
     M.items.unshift(it);
-    await persistItem(it, app, undefined, p.douban);
+    // 解析阶段已拿到海报与字段（issue 395）→ 保存时一并落库（海报下载进 vault + 属性写入）：
+    // 建档即「齐」，于是**不入队后台抓取、也不再有抓取通知与卡片 loading**（2026-09-21 用户拍板）。
+    // 只有真没落成海报（没解析 / 没网 / 写盘失败）才回退老路径交队列补齐。
+    const posterRel = p.douban?.posterUrl ? await downloadPreviewPoster(app, p.name, p.douban.posterUrl) : null;
+    await persistItem(it, app, undefined, p.douban, posterRel);
+    if (posterRel) it.poster = posterRel; // 内存同步：本次渲染即可见海报（盘上已写，重解析同值）
     emitDomainEvent('movie', { kind: 'created', name: p.name, status: st === STATUS_WANT ? 'want' : st === STATUS_WATCHING ? 'watching' : 'watched', rating: p.rating, review: p.review || null });
-    if (it.file) enqueueDoubanFetch(it.file, it.name);
+    if (it.file && !posterRel) enqueueDoubanFetch(it.file, it.name);
     close();
     notice(`已添加「${p.name}」`, 'success');
     renderAll(app);
@@ -1638,6 +1647,95 @@ export function renderSoft(app: App): void {
   renderAll(app);
 }
 
+// ---------- 滑动高亮（侧栏 rail / 排序钮 j-sort；2026-09-21 用户拍板） ----------
+
+/**
+ * 一块滑动高亮：容器里放一片绝对定位底片，位置与尺寸按目标项矩形驱动。
+ * - 悬停跟随：鼠标落到哪一项，底片滑到哪一项（侧栏跨「类型 / 状态 / 底部工具」三段通吃）；
+ * - 离开回落：鼠标离开容器 → 滑回当前选中项（无选中态的 ai/stat 页则隐去）；
+ * - 点击固定：选中项由渲染结果决定，渲染后按键重新解析（悬停中的项重渲染后仍按同一键锁定）。
+ * 底片与监听挂在**容器**上：侧栏三段与排序钮的 innerHTML 每次渲染都重写，挂项里会被一起冲掉。
+ * 悬停只在有悬浮能力的设备上接（呈报#9 F4 范式：触屏不许悬浮态粘住）。
+ * 刻意不做 prefers-reduced-motion 分支：用户本人系统即报 reduce，而这条动效正是他点名要的
+ * （与 396 共享元素同一口径）——放缓/砍掉都等于替他改决定。
+ */
+const PILL_CLS = 'slide-pill';
+
+/** 项的稳定键（渲染后按键重新解析悬停项）：rail 的 data-g / data-s / data-tool、排序钮的 data-k */
+function pillKeyOf(el: HTMLElement): string {
+  const d = el.dataset;
+  return d.g ?? d.s ?? d.tool ?? d.k ?? '';
+}
+
+/** 绑定一次（容器被重渲染换掉时随新元素重绑）：悬停跟随 / 离开回落 / 滚动重定位。
+ *  必须**先于**任何落位早退执行——首帧没有几何（测试环境 / 尚未布局）就早退的话，
+ *  监听会永远绑不上，之后无论怎么悬停滚都不再重定位。 */
+function ensurePillBound(box: HTMLElement, itemSel: string, hoverable: boolean): void {
+  if (box.dataset.pillBound) return;
+  box.dataset.pillBound = '1';
+  const resync = (animate: boolean): void => syncSlidePill(box, itemSel, hoverable, animate);
+  if (hoverable) {
+    box.addEventListener('mouseover', (e) => {
+      const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(itemSel);
+      if (!el || !box.contains(el)) return;
+      const k = pillKeyOf(el);
+      if (!k || box.dataset.pillHover === k) return; // 同一项内移动不重排
+      box.dataset.pillHover = k;
+      resync(true);
+    });
+    box.addEventListener('mouseleave', () => {
+      if (!box.dataset.pillHover) return;
+      delete box.dataset.pillHover;
+      resync(true);
+    });
+  }
+  // 侧栏 .rail-sec 可滚：滚动时即时落位，别让底片追着滑
+  box.addEventListener('scroll', () => resync(false), true);
+}
+
+/** 重定位一块滑动高亮。`animate=false` 用于渲染/滚动后落位（不演滑行） */
+function syncSlidePill(box: HTMLElement, itemSel: string, hoverable: boolean, animate = true): void {
+  ensurePillBound(box, itemSel, hoverable);
+  let pill = box.querySelector<HTMLElement>(`:scope > .${PILL_CLS}`);
+  if (!pill) {
+    pill = document.createElement('span');
+    pill.className = PILL_CLS;
+    pill.setAttribute('aria-hidden', 'true'); // 纯装饰：选中语义仍在 .is-on 上（读屏不重复）
+    box.prepend(pill);
+  }
+  const items = [...box.querySelectorAll<HTMLElement>(itemSel)];
+  const hoverKey = box.dataset.pillHover ?? '';
+  // 悬停项按键现取（渲染后是同一键的新元素）；没有悬停或悬停项已消失 → 回落到选中项
+  const hovered = hoverKey ? items.find((el) => pillKeyOf(el) === hoverKey) : undefined;
+  const target = hovered ?? items.find((el) => el.classList.contains('is-on'));
+
+  if (!target) { pill.classList.remove('is-visible'); return; }
+  const r = target.getBoundingClientRect();
+  const b = box.getBoundingClientRect();
+  // 滚出可视区的项不画：侧栏 .rail-sec 可滚，而底片挂在 .d-rail 上不会被它裁掉
+  const sc = target.closest<HTMLElement>('.rail-sec');
+  if (sc) {
+    const sr = sc.getBoundingClientRect();
+    if (r.bottom < sr.top + 1 || r.top > sr.bottom - 1) { pill.classList.remove('is-visible'); return; }
+  }
+  if (!animate) pill.classList.add('is-instant');
+  pill.style.width = `${Math.round(r.width)}px`;
+  pill.style.height = `${Math.round(r.height)}px`;
+  pill.style.transform = `translate(${Math.round(r.left - b.left)}px, ${Math.round(r.top - b.top)}px)`;
+  pill.classList.add('is-visible');
+  if (!animate) { void pill.offsetWidth; pill.classList.remove('is-instant'); } // 落位后立刻恢复过渡
+}
+
+/** 渲染后重定位全部滑动高亮（底片坐在选中项上；悬停中的项按键续锁，落位不演滑行） */
+function syncSlidePills(root: HTMLElement): void {
+  const hoverable = hoverCapable();
+  const targets: [string, string][] = [['.d-rail', '.rail-item'], ['.j-sort', 'button']];
+  for (const [boxSel, itemSel] of targets) {
+    const box = root.querySelector<HTMLElement>(boxSel);
+    if (box) syncSlidePill(box, itemSel, hoverable, false);
+  }
+}
+
 /** 渲染总入口：按面板根的风格/端分发（vault 自动刷新与 M.renderFn 都走这里） */
 export function renderAll(app: App): void {
   const overlay = M.currentOverlay;
@@ -1664,6 +1762,7 @@ export function renderAll(app: App): void {
     if (sc) sc.scrollTop = top;
   }
   mountIcons(root);
+  syncSlidePills(root); // 底片跟着新选中项落位（渲染重写了 rail/排序钮的 innerHTML）
   restoreFocus(root, snap);
 }
 

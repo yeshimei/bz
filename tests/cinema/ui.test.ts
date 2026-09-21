@@ -13,7 +13,7 @@ import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { runAIRecommend, runSimilarRecommend, quickAddWant, parseRecommendJson } from '../../src/cinema/recommend';
 import { createOverlay, closeOverlay, openAddModalDirect, openRandomMovie, renderAll, renderSoft } from '../../src/cinema/ui';
-import { configureFetchQueue, type DoubanQueryOutcome } from '../../src/cinema/douban-queue';
+import { configureFetchQueue, isFetching, shutdownDoubanQueue, type DoubanQueryOutcome } from '../../src/cinema/douban-queue';
 import { ensureCinema, unloadCinema, openCinemaAnalysis, pickRandomCinema } from '../../src/cinema';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
@@ -1914,5 +1914,200 @@ tags: [电影]
     expect(rows.map((r) => r.querySelector('.s-name')?.textContent)).toEqual([
       '老友记 幕后1994', '老友记 第一季', '老友记 第二季', '老友记 重聚特辑',
     ]);
+  });
+});
+
+/**
+ * 添加影视「解析即落盘」（issue 397）：解析阶段已拿到海报与豆瓣字段，保存时一并写进笔记属性
+ * （海报下载进库 + 正文 embed 与抓取路径同款）→ 建档即齐，**不再入队后台抓取、也没有抓取通知
+ * 与卡片 loading**。真没落成海报（没解析 / 没网 / 写盘失败）才回退老路径交队列补齐。
+ */
+describe('cinema 添加影视：解析即落盘，不再后台抓取（issue 397）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+    shutdownDoubanQueue(); // 队列状态（pending/attempted）跨用例复位，命中判定才确定
+  });
+  afterEach(() => {
+    unloadCinema();
+    configureFetchQueue({ poster: null, fetch: undefined });
+    shutdownDoubanQueue();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+
+  /** 解析罐头带海报 URL（文件级罐头 posterUrl 为空串，这里单开一份能落海报的） */
+  const posterPreview = (): Promise<DoubanQueryOutcome> => Promise.resolve({
+    ok: true,
+    data: {
+      title: '海报片',
+      detailUrl: 'https://movie.douban.com/subject/1291561/',
+      sid: '1291561',
+      posterUrl: 'https://img9.doubanio.com/view/photo/s_ratio_poster/public/p1.jpg',
+      apizero: {
+        name: '海报片', year: '2001', score: '9.4', director: '宫崎骏', actor: '柊瑠美',
+        genre: '剧情, 动画, 奇幻', area: '日本', duration: '125分钟', episodes: '',
+        isTv: false, doubanUrl: 'https://movie.douban.com/subject/1291561/',
+        shortComment: '', commentAuthor: '',
+      },
+      celebrities: null,
+    },
+  });
+
+  it('海报落库成功：属性写齐 + 正文 embed，且不入队抓取', async () => {
+    // 抓取执行器换成记录器：断言「一次都没被抓」，比看 pending 表更实（队列首条不排队间隔，跑得飞快）
+    const fetched: string[] = [];
+    configureFetchQueue({
+      preview: posterPreview,
+      poster: async () => '海报/海报片_1.jpg',
+      fetch: async (file) => { fetched.push(file.path); return { ok: true }; },
+    });
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-name') as HTMLInputElement).value = '海报片';
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《海报片》.md')).toBe(true));
+    const content = vault.files.get('我的/影视/《海报片》.md')!;
+    const fm = parseFrontmatter(content);
+    expect(fm?.['海报']).toBe('海报/海报片_1.jpg'); // 海报进属性（不再等后台抓）
+    expect(content).toContain('![[海报/海报片_1.jpg]]'); // 正文 embed 与抓取路径同款
+    expect(fm?.['豆瓣链接']).toBe('https://movie.douban.com/subject/1291561/');
+    expect(fm?.['导演']).toBe('宫崎骏');
+    // 等保存流程走完（入队/通知都在建档之后）再断言，否则「没入队」是提前量的空断言
+    await vi.waitFor(() => expect(hasNotice(/已添加「海报片」/)).toBe(true));
+    expect(fetched, '建档即齐 → 不交后台抓').toHaveLength(0);
+  });
+
+  it('海报没落成（写盘失败/没网）：回退老路径，交队列补齐', async () => {
+    const fetched: string[] = [];
+    configureFetchQueue({
+      preview: posterPreview,
+      poster: async () => null,
+      fetch: async (file) => { fetched.push(file.path); return { ok: true }; },
+    });
+    const { app, vault } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    (form.querySelector('.j-name') as HTMLInputElement).value = '海报片';
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(vault.files.has('我的/影视/《海报片》.md')).toBe(true));
+    expect(parseFrontmatter(vault.files.get('我的/影视/《海报片》.md')!)?.['海报']).toBeFalsy();
+    await vi.waitFor(() => expect(fetched).toContain('我的/影视/《海报片》.md')); // 回退：仍交后台抓
+  });
+});
+
+/**
+ * 滑动高亮（issue 397，2026-09-21 用户拍板）：侧栏「类型 / 状态 / 底部工具」三段共一片底片，
+ * 悬停跟随、移开回落选中项、点击后固定在选中项；排序钮（最近观看三项）同款。
+ * jsdom 无布局引擎 → 用例给相关元素钉死矩形，位移断言才有真坐标。
+ */
+describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+    shutdownDoubanQueue();
+  });
+  afterEach(() => {
+    unloadCinema();
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+    delete (window as any).matchMedia;
+  });
+
+  /** 钉死矩形（jsdom 里 getBoundingClientRect 恒为全零，位移断言会退化成空断言） */
+  function pinRect(el: HTMLElement, top: number, left = 0, w = 156, h = 30): void {
+    el.getBoundingClientRect = () => ({
+      left, top, width: w, height: h, right: left + w, bottom: top + h, x: left, y: top,
+      toJSON: () => ({}),
+    }) as DOMRect;
+  }
+  /** 依次给容器与其下全部项钉矩形：容器在 (0,0)，项从 top0 起每条 step 高。
+   *  侧栏的 .rail-sec 一并钉（底片有「滚出可视区不画」的守卫，不钉会被零矩形判成滚没了） */
+  function pinList(box: HTMLElement, itemSel: string, top0: number, step = 30): HTMLElement[] {
+    pinRect(box, 0, 0, 176, 620);
+    const sec = box.querySelector<HTMLElement>('.rail-sec');
+    if (sec) pinRect(sec, 0, 0, 176, 600);
+    const items = Array.from(box.querySelectorAll<HTMLElement>(itemSel));
+    items.forEach((el, i) => pinRect(el, top0 + i * step));
+    return items;
+  }
+  const pillTransform = (box: HTMLElement): string =>
+    (box.querySelector(':scope > .slide-pill') as HTMLElement).style.transform;
+  /** 钉完矩形后强制重定位：真实路径是渲染 / 滚动 / 悬停触发，单测里没有真滚动。
+   *  （渲染会重写 rail 内部，钉过的元素当场作废 —— 所以先钉、再派发滚动、再断言） */
+  const resync = (box: HTMLElement): void => { box.dispatchEvent(new Event('scroll')); };
+
+  it('悬停滑到鼠标那项、移开回落选中项；点击后固定在新选中项', () => {
+    stubHover(true); // 悬浮跟随只在有悬浮能力的设备上接
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const rail = root.querySelector('.d-rail') as HTMLElement;
+    const items = pinList(rail, '.rail-item', 90); // 类型 7 + 状态 3 + 底部工具 2
+    expect(items.length).toBe(12);
+    resync(rail);
+    const at = (el: HTMLElement): string => `translate(0px, ${90 + items.indexOf(el) * 30}px)`;
+    const pill = rail.querySelector(':scope > .slide-pill') as HTMLElement;
+    expect(pill, '侧栏应有一片底片').toBeTruthy();
+    expect(pill.classList.contains('is-visible')).toBe(true); // 有选中项（全部）→ 可见
+    expect(pillTransform(rail)).toBe('translate(0px, 90px)'); // 坐在「全部」上
+
+    // 悬停「已看」（状态组）→ 底片横跨类型组滑到状态组；再滑到底部工具（AI 荐片）
+    const watched = items.find((el) => el.textContent?.includes('已看')) as HTMLElement;
+    watched.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(rail.dataset.pillHover).toBe('已看');
+    expect(pillTransform(rail)).toBe(at(watched));
+    const aiTool = rail.querySelector('[data-tool="ai"]') as HTMLElement;
+    aiTool.dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(rail.dataset.pillHover).toBe('ai');
+    expect(pillTransform(rail)).toBe(at(aiTool)); // 跨到最下面的工具行
+
+    // 鼠标离开侧栏 → 回落选中项（未点击过 → 仍是「全部」）
+    rail.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(rail.dataset.pillHover).toBeUndefined();
+    expect(pillTransform(rail)).toBe('translate(0px, 90px)');
+
+    // 点击「电影」→ 渲染重写 rail 内部（底片挂在 .d-rail 上，不被冲掉）→ 按键续锁新选中项
+    clickEl(rail.querySelector('[data-g="电影"]'));
+    expect(rail.querySelector(':scope > .slide-pill'), '渲染后底片仍在').toBe(pill);
+    const items2 = pinList(rail, '.rail-item', 90);
+    resync(rail);
+    const movie = rail.querySelector('.rail-item.is-on') as HTMLElement;
+    expect(movie.textContent).toContain('电影');
+    expect(pillTransform(rail)).toBe(`translate(0px, ${90 + items2.indexOf(movie) * 30}px)`);
+  });
+
+  it('排序钮（最近观看三项）：同款底片', () => {
+    stubHover(true);
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const seg = root.querySelector('.j-sort') as HTMLElement;
+    const btns = pinList(seg, 'button', 10);
+    expect(btns.map((b) => b.textContent)).toEqual(['最近观看', '加入先后', '按评分']);
+    resync(seg);
+    const pill = seg.querySelector(':scope > .slide-pill') as HTMLElement;
+    expect(pill).toBeTruthy();
+    expect(pillTransform(seg)).toBe('translate(0px, 10px)'); // 坐在「最近观看」上
+
+    btns[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(pillTransform(seg)).toBe('translate(0px, 70px)'); // 悬停「按评分」→ 滑过去
+    seg.dispatchEvent(new MouseEvent('mouseleave'));
+    expect(pillTransform(seg)).toBe('translate(0px, 10px)'); // 移开回落「最近观看」
   });
 });
