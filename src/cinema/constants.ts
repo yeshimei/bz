@@ -34,7 +34,7 @@ export const TYPE_GROUPS: Record<string, string[]> = {
   剧集: ['国产剧', '美剧', '英剧', '德剧', '日剧', '韩剧', '哥伦比亚剧'],
   动漫: ['日漫', '国漫', '美漫'],
   纪录片: ['纪录片'],
-  公开课: ['公开课', 'TED'],
+  公开课: ['公开课'],
 };
 
 export const ALL_TAGS: string[] = Object.values(TYPE_GROUPS).flat();

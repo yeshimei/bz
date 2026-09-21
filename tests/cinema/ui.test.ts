@@ -359,18 +359,40 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(vault.files.has('我的/影视/《瑞克和莫蒂》.md')).toBe(false);
   });
 
-  it('编辑改名 → 已存在同名拦截（弹窗留在原地，不落盘）', async () => {
+  it('编辑改名 → 已存在同名被拦（锁保存按钮 + 写明原因，点不动、不落盘）', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(pcardByName(root, '瑞克和莫蒂'));
     clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
     const form = root.querySelector('.cn-modal') as HTMLElement;
-    (form.querySelector('.j-name') as HTMLInputElement).value = '星际穿越';
-    clickEl(form.querySelector('.j-save'));
-    await vi.waitFor(() => expect(hasNotice('已存在同名影视，请换个名称')).toBe(true)); // toast 收编 core notice（一致审查#2）
+    const nameInput = form.querySelector('.j-name') as HTMLInputElement;
+    nameInput.value = '星际穿越';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    const saveBtn = form.querySelector('.j-save') as HTMLButtonElement;
+    expect(saveBtn.disabled).toBe(true); // issue 396：重名即锁按钮，不再只靠点击后弹 toast
+    expect(saveBtn.textContent).toBe('已存在同名影视');
+    clickEl(saveBtn); // 禁用态点击不派发 → 无声拦截，弹窗留在原地
     expect(vault.files.has('我的/影视/《瑞克和莫蒂》.md')).toBe(true);
     expect(form.querySelector('.j-name')).toBeTruthy();
+  });
+
+  it('编辑改名 → 名字改回不冲突即解锁按钮、文案复位（issue 396）', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '瑞克和莫蒂'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    const nameInput = form.querySelector('.j-name') as HTMLInputElement;
+    const saveBtn = form.querySelector('.j-save') as HTMLButtonElement;
+    nameInput.value = '星际穿越';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(saveBtn.disabled).toBe(true);
+    nameInput.value = '瑞克和莫蒂';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(saveBtn.disabled).toBe(false);
+    expect(saveBtn.textContent).toBe('保存');
   });
 
   it('编辑改名 → 非法字符拦截（notice 报错，不重命名）', async () => {
@@ -407,18 +429,53 @@ describe('cinema 风格化面板（issue 236）', () => {
     await vi.waitFor(() => expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(5)); // renderAll 落地
   });
 
-  it('CM2：新增重名拦截（不落盘不留幽灵条目）', async () => {
+  it('CM2：新增重名 → 锁保存按钮且不落盘不留幽灵条目（issue 396）', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
     clickEl(root.querySelector('[data-cinema-add]'));
     const form = root.querySelector('.cn-modal') as HTMLElement;
-    (form.querySelector('.j-name') as HTMLInputElement).value = '星际穿越';
+    const nameInput = form.querySelector('.j-name') as HTMLInputElement;
+    nameInput.value = '星际穿越';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
     clickEl(form.querySelector('[data-f-st="已看"]'));
-    clickEl(form.querySelector('.j-save'));
-    await vi.waitFor(() => expect(hasNotice('已存在同名影视，请换个名称')).toBe(true)); // toast 收编 core notice（一致审查#2）
+    const saveBtn = form.querySelector('.j-save') as HTMLButtonElement;
+    expect(saveBtn.disabled).toBe(true);
+    expect(saveBtn.textContent).toBe('已存在同名影视');
+    clickEl(saveBtn); // 禁用态点击无效 → 不落盘、不留幽灵条目
     expect(M.items.filter((i) => i.name === '星际穿越').length).toBe(1);
     void vault;
+  });
+
+  it('重名实时反馈：新增时输入已有名称 → 输入框标危险色，改正即消（issue 396）', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-cinema-add]'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    const nameInput = form.querySelector('.j-name') as HTMLInputElement;
+    expect(nameInput.classList.contains('is-dup')).toBe(false);
+    nameInput.value = '星际穿越';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(nameInput.classList.contains('is-dup')).toBe(true);
+    nameInput.value = '星际穿越 2';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(nameInput.classList.contains('is-dup')).toBe(false);
+  });
+
+  it('重名实时反馈：编辑时输入自身原名不标红，改名撞他片才标红（issue 396）', async () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(pcardByName(root, '瑞克和莫蒂'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    const form = root.querySelector('.cn-modal') as HTMLElement;
+    const nameInput = form.querySelector('.j-name') as HTMLInputElement;
+    expect(nameInput.value).toBe('瑞克和莫蒂');
+    expect(nameInput.classList.contains('is-dup')).toBe(false); // 自身原名不算重名
+    nameInput.value = '星际穿越';
+    nameInput.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(nameInput.classList.contains('is-dup')).toBe(true);
   });
 
   it('搜索过滤：防抖后局部刷新计数与网格', async () => {

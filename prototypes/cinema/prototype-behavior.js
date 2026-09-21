@@ -1,5 +1,5 @@
-/* 源指纹 5fbc3208fa2eabe4 · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 b110724000c4fc6a · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -5197,7 +5197,7 @@ var BZW_cinema = (() => {
     剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
     动漫: ["日漫", "国漫", "美漫"],
     纪录片: ["纪录片"],
-    公开课: ["公开课", "TED"]
+    公开课: ["公开课"]
   };
   var ALL_TAGS = Object.values(TYPE_GROUPS).flat();
   var GROUP_ORDER = ["电影", "剧集", "动漫", "纪录片", "公开课", "其他"];
@@ -7676,7 +7676,7 @@ tags:
     剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
     动漫: ["日漫", "国漫", "美漫"],
     纪录片: [],
-    公开课: ["公开课", "TED"]
+    公开课: ["公开课"]
   };
   function formAllTags() {
     const out = [];
@@ -8197,6 +8197,11 @@ tags:
       }
     });
   }
+  var DUP_NAME_HINT = "已存在同名影视";
+  var DUP_NAME_HINT_FULL = `${DUP_NAME_HINT}，请换个名称`;
+  function isDuplicateName(name, selfName) {
+    return name !== (selfName != null ? selfName : "") && M.items.some((x) => x.name === name);
+  }
   function openForm(sec, item, app, presetSt) {
     var _a, _b, _c;
     const editing = !!item;
@@ -8213,6 +8218,20 @@ tags:
     }));
     mountIcons(el);
     const cur = { tag: initTag, st: initSt };
+    const nameInput = el.querySelector(".j-name");
+    const saveBtn = el.querySelector(".j-save");
+    const idleSaveText = editing ? "保存" : "添加";
+    const refreshDupMark = () => {
+      if (!nameInput) return;
+      const dup = isDuplicateName(nameInput.value.trim(), item == null ? void 0 : item.name);
+      nameInput.classList.toggle("is-dup", dup);
+      if (saveBtn) {
+        saveBtn.disabled = dup;
+        saveBtn.textContent = dup ? DUP_NAME_HINT : idleSaveText;
+      }
+    };
+    nameInput == null ? void 0 : nameInput.addEventListener("input", refreshDupMark);
+    refreshDupMark();
     el.querySelectorAll("[data-f-tag]").forEach((b) => b.addEventListener("click", () => {
       var _a2;
       cur.tag = (_a2 = b.dataset.fTag) != null ? _a2 : cur.tag;
@@ -8238,12 +8257,8 @@ tags:
         notice("请输入名称", "warning");
         return;
       }
-      if (editing && item && name !== item.name && M.items.some((x) => x.name === name)) {
-        notice("已存在同名影视，请换个名称", "warning");
-        return;
-      }
-      if (!editing && M.items.some((x) => x.name === name)) {
-        notice("已存在同名影视，请换个名称", "warning");
+      if (isDuplicateName(name, item == null ? void 0 : item.name)) {
+        notice(DUP_NAME_HINT_FULL, "warning");
         return;
       }
       const stChanged = !editing || !item || item.status !== (cur.st === "想看" ? STATUS_WANT : cur.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED);
@@ -8268,7 +8283,7 @@ tags:
     const it = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
     try {
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-        notice("已存在同名影视，请换个名称", "warning");
+        notice(DUP_NAME_HINT_FULL, "warning");
         return;
       }
       M.items.unshift(it);
@@ -8299,7 +8314,7 @@ tags:
         return;
       }
       if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-        notice("已存在同名影视，请换个名称", "warning");
+        notice(DUP_NAME_HINT_FULL, "warning");
         return;
       }
     }

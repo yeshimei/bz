@@ -8,8 +8,8 @@ import type { CinemaItem } from './state';
 import { M } from './state';
 
 /** frontmatter `tags` → string[]（兼容数组 / 单个字符串 / 缺失）。
- *  影院域 tag 归一化单源：UI 写盘（ui.ts 改名替换）、判定命令（type-decide.ts）、
- *  解析（parseMovieFile）共用，避免同域第二份漂移（issue 393 审查收口）。 */
+ *  影院域 tag 归一化单源：UI 写盘（ui.ts 改名替换）与解析（parseMovieFile）共用，
+ *  避免同域第二份漂移（审查收口）。 */
 export function normalizeTags(raw: unknown): string[] {
   if (Array.isArray(raw)) return raw.map((t) => String(t));
   if (typeof raw === 'string' && raw) return [raw];
