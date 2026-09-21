@@ -292,6 +292,57 @@ function fieldValue(content: string, key: string): string | null {
   return v || null;
 }
 
+/** 豆瓣查询结果（**不落盘、不下载海报**）：字段取回来、海报只给远程 URL。
+ *  两个调用方：表单「解析」（展示 + 交给 Jev 判分类）、抓取队列（继续下载海报并写盘）。 */
+export interface DoubanQuery {
+  /** 搜索命中的标题（可能与用户输入不同——豆瓣条目的规范名） */
+  title: string;
+  detailUrl: string;
+  sid: string;
+  /** 远程海报 URL（未下载；表单直接 img 展示，队列下载后落盘） */
+  posterUrl: string;
+  apizero: ApizeroInfo | null;
+  celebrities: CelebritiesInfo | null;
+}
+
+/** 查询失败原因（与 DoubanFetchOutcome 同口径，写盘类原因除外） */
+export type DoubanQueryOutcome =
+  | { ok: true; data: DoubanQuery }
+  | { ok: false; reason: 'blocked' | 'notfound' | 'network' };
+
+/**
+ * 按片名查询豆瓣（搜索 → sid → ApiZero 字段 → rexxar 演职员兜底）。
+ * 表单「解析」与抓取队列 `fetchNoteDouban` **共用这一段**——各写一份必然漂移。
+ * 只走网络、不碰文件系统，故不需要 TFile（表单阶段草稿尚未落盘）。
+ */
+export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Promise<DoubanQueryOutcome> {
+  // 1. 搜索（豆瓣搜索页；Cookie 注入）。网络异常上抛接住归 network（C6：不与风控混淆）
+  const searchHeaders: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
+  if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
+  let html: string | null;
+  try {
+    html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, searchHeaders);
+  } catch {
+    return { ok: false, reason: 'network' };
+  }
+  if (searchLooksBlocked(html)) return { ok: false, reason: 'blocked' };
+  const results = parseSearchResults(html!);
+  if (results.length === 0) return { ok: false, reason: 'notfound' };
+  const first = results[0];
+  const sid = extractSid(first.detailUrl);
+  if (!sid) return { ok: false, reason: 'notfound' };
+
+  // 2. 字段：ApiZero 首选（key 未配/失败 → null，交 rexxar 兜底）
+  let az: ApizeroInfo | null = null;
+  if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
+  // 3. rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）
+  let celebrities: CelebritiesInfo | null = null;
+  if (!az || !az.director || !az.actor) {
+    celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+  }
+  return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
+}
+
 /**
  * 单条笔记抓取（队列执行器注入点；成功 = 海报与豆瓣链接都写齐或本已齐全）。
  * 链路：搜索（风控检测）→ 海报下载写盘（无海报时）→ ApiZero 字段 + rexxar 兜底 → frontmatter 写入。
@@ -312,38 +363,27 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
   if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
 
-  // 1. 搜索（豆瓣搜索页；Cookie 注入）。网络异常上抛接住归 network（C6：不与风控混淆）
-  const searchHeaders: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
-  if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
-  let html: string | null;
-  try {
-    html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, searchHeaders);
-  } catch {
-    return { ok: false, reason: 'network' };
-  }
-  if (searchLooksBlocked(html)) return { ok: false, reason: 'blocked' };
-  const results = parseSearchResults(html!);
-  if (results.length === 0) return { ok: false, reason: 'notfound' };
-  const first = results[0];
-  const sid = extractSid(first.detailUrl);
-  if (!sid) return { ok: false, reason: 'notfound' };
+  // 1. 查询（搜索 + 字段；与表单「解析」共用 queryDoubanByName，单源不裂）
+  const q = await queryDoubanByName(name, deps);
+  if (!q.ok) return { ok: false, reason: q.reason };
+  const { detailUrl, posterUrl, sid, apizero: az, celebrities: cel } = q.data;
 
   // 2. 海报（无海报时：高清 URL → 二进制 → 写盘 → frontmatter + 正文 embed）。
   //  保存目录可配（cinemaPosterFolder），空/缺省回落 POSTER_FOLDER；
   //  下载失败（抛错/null）归 network，写盘失败归 write（C6：下载与落盘失败语义拆分）
   const posterFolder = deps.posterFolder?.trim() || POSTER_FOLDER;
   let posterRelative = fieldValue(content, '海报');
-  if (!hasPoster && first.posterUrl) {
+  if (!hasPoster && posterUrl) {
     let buf: ArrayBuffer | null;
     try {
-      buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: 'https://movie.douban.com/' });
+      buf = await deps.downloadBinary(upgradePosterUrl(posterUrl), { Referer: 'https://movie.douban.com/' });
     } catch {
       return { ok: false, reason: 'network' };
     }
     if (!buf) return { ok: false, reason: 'network' };
     try {
       await deps.mkdir(posterFolder);
-      const ext = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
+      const ext = posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)?.[1] || 'jpg';
       const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, '_');
       const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
       posterRelative = `${posterFolder}/${fileName}`;
@@ -358,31 +398,23 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   //  fresh 内容复核（C8），此处不再依赖抓取开始时的快照
   const fields: Record<string, FmFieldSpec> = {};
   if (posterRelative) fields['海报'] = { value: posterRelative, ifMissing: true };
-  fields['豆瓣链接'] = first.detailUrl;
-  let az: ApizeroInfo | null = null;
-  if (deps.apizeroKey) {
-    az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-    if (az) {
-      if (az.score) fields['豆瓣评分'] = { value: az.score, ifMissing: true };
-      if (az.director) fields['导演'] = { value: normalizeListValue(az.director), ifMissing: true };
-      if (az.actor) fields['主演'] = { value: normalizeListValue(az.actor), ifMissing: true };
-      if (az.genre) fields['类型'] = { value: normalizeListValue(az.genre), ifMissing: true };
-      if (az.area) fields['制片国家/地区'] = { value: normalizeListValue(az.area), ifMissing: true };
-      if (az.duration) fields['片长'] = { value: az.duration, ifMissing: true };
-      // issue 303 字段扩展（ADR-0129 修订）：上映日期降级年份、热门短评，均缺失才填。
-      // 季集←episodes 已撤回（C1）：episodes 是总集数非季数，勿写入
-      if (az.year) fields['上映日期'] = { value: az.year, ifMissing: true };
-      if (az.shortComment) fields['热门短评'] = { value: az.shortComment, ifMissing: true };
-    }
+  fields['豆瓣链接'] = detailUrl;
+  if (az) {
+    if (az.score) fields['豆瓣评分'] = { value: az.score, ifMissing: true };
+    if (az.director) fields['导演'] = { value: normalizeListValue(az.director), ifMissing: true };
+    if (az.actor) fields['主演'] = { value: normalizeListValue(az.actor), ifMissing: true };
+    if (az.genre) fields['类型'] = { value: normalizeListValue(az.genre), ifMissing: true };
+    if (az.area) fields['制片国家/地区'] = { value: normalizeListValue(az.area), ifMissing: true };
+    if (az.duration) fields['片长'] = { value: az.duration, ifMissing: true };
+    // issue 303 字段扩展（ADR-0129 修订）：上映日期降级年份、热门短评，均缺失才填。
+    // 季集←episodes 已撤回（C1）：episodes 是总集数非季数，勿写入
+    if (az.year) fields['上映日期'] = { value: az.year, ifMissing: true };
+    if (az.shortComment) fields['热门短评'] = { value: az.shortComment, ifMissing: true };
   }
-  const needCelebrities = !az || !az.director || !az.actor;
-  if (needCelebrities) {
-    const cel = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
-    if (cel) {
-      if (!fields['导演'] && cel.directors) fields['导演'] = { value: cel.directors, ifMissing: true };
-      if (cel.writers) fields['编剧'] = { value: cel.writers, ifMissing: true };
-      if (!fields['主演'] && cel.casts) fields['主演'] = { value: cel.casts, ifMissing: true };
-    }
+  if (cel) {
+    if (!fields['导演'] && cel.directors) fields['导演'] = { value: cel.directors, ifMissing: true };
+    if (cel.writers) fields['编剧'] = { value: cel.writers, ifMissing: true };
+    if (!fields['主演'] && cel.casts) fields['主演'] = { value: cel.casts, ifMissing: true };
   }
 
   // 4. 写入（vault.process 原子读改写；海报 embed 先于字段更新算好内容一次写）。

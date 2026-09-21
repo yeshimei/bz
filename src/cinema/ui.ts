@@ -34,10 +34,13 @@ import { rebuildItems, getDisplayItems, normalizeTags } from './data';
 import { localNow } from '../core/ui/str';
 import { runAIRecommend, runSimilarRecommend, buildTasteProfile, quickAddWant } from './recommend';
 import { buildAnalysisHTML } from './analysis';
-import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching } from './douban-queue';
+import { enqueueDoubanFetch, dequeueDoubanFetch, isFetching, queryDoubanForPreview } from './douban-queue';
+import { normalizeListValue, type DoubanQuery } from './douban-fetcher';
+import { decideCinemaType } from './type-decide';
 import {
   ICON, statusText, itemByKey, doubanSearchUrl,
-  detailModalHtml, seriesDetailModalHtml, formModalHtml,
+  detailModalHtml, seriesDetailModalHtml, formModalHtml, formBackHtml,
+  formTagChipHtml, formStChipHtml, type FormPreviewData,
   aiPageHtml, sheetHeadHtml, seriesSheetHeadHtml, cardHtml, facePiecesHtml, type AiPageInput,
   midnightDeskHtml, midnightMobHtml, renderMidnightDesk, renderMidnightMob,
   type MidnightRenderInput,
@@ -133,7 +136,7 @@ function itemActions(it: CinemaItem, sec: HTMLElement, app: App): MenuAct[] {
  * 把条目落盘：新增建笔记，编辑/快速状态写 frontmatter（保留海报/豆瓣字段）；
  * 改名走 fileManager.renameFile（自动更新双链）；类型写入 frontmatter tags。
  */
-async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string; prevTag: string }): Promise<void> {
+async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string; prevTag: string }, douban?: DoubanQuery | null): Promise<void> {
   if (!item.file) {
     const folder = M.folderPath;
     if (!app.vault.getAbstractFileByPath(folder)) {
@@ -148,9 +151,28 @@ async function persistItem(item: CinemaItem, app: App, edit?: { prevName: string
     const content = `---\ntags:\n- ${item.typeTag}\n观影日期: "${item.watchDate || localNow()}"\n评分: ${item.rating ?? 0}\n海报: \n---\n`;
     const f = await app.vault.create(filePath, content);
     item.file = f;
-    if (item.review) {
+    if (item.review || douban) {
       await app.fileManager.processFrontMatter(f, (fm: Record<string, unknown>) => {
-        fm['影评'] = item.review;
+        if (item.review) fm['影评'] = item.review;
+        // 解析阶段已拿到豆瓣字段 → 建档时直接写入（issue 395）：省掉落盘后再抓一次的往返。
+        // 口径与 fetchNoteDouban 一致（ApiZero 优先、rexxar 兜底、缺失才填由本处新檔天然满足）。
+        if (douban) {
+          const az = douban.apizero;
+          if (douban.detailUrl) fm['豆瓣链接'] = douban.detailUrl;
+          if (az) {
+            if (az.score) fm['豆瓣评分'] = az.score;
+            if (az.genre) fm['类型'] = normalizeListValue(az.genre);
+            if (az.area) fm['制片国家/地区'] = normalizeListValue(az.area);
+            if (az.duration) fm['片长'] = az.duration;
+            if (az.year) fm['上映日期'] = az.year;
+            if (az.shortComment) fm['热门短评'] = az.shortComment;
+          }
+          const director = az?.director ? normalizeListValue(az.director) : douban.celebrities?.directors ?? '';
+          const actors = az?.actor ? normalizeListValue(az.actor) : douban.celebrities?.casts ?? '';
+          if (director) fm['导演'] = director;
+          if (actors) fm['主演'] = actors;
+          if (douban.celebrities?.writers) fm['编剧'] = douban.celebrities.writers;
+        }
       });
     }
     return;
@@ -508,65 +530,252 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     rating: ratingVal, review: item ? item.review ?? '' : '',
   }));
   mountIcons(el);
+  // 新增态是双面卡片：遮罩层多留上下留白并允许滚动（垂直居中由 .cn-modal--flip 的 margin:auto 负责，
+  // 两种居中手段并存是为了背面比视口高时仍能从头滚起——见 styles.css 那段注释）
+  if (!editing) el.classList.add('cn-ovl--flip');
   const cur = { tag: initTag, st: initSt };
-  // 重名反馈（issue 394）：输入框边框转危险色 + 保存按钮禁用并写明原因，不做文字小字提醒。
-  // 判据与保存拦截同源（isDuplicateName），打开即跑一次——覆盖「存量数据本就重名」的编辑入口。
-  // 禁用态顺带挡住 Enter 提交：bindFormSubmit 走 .j-save.click()，disabled 元素不派发 click。
+
+  // 表单阶段（issue 395）：新增 = 双面卡片「正面（名称+状态）→ 解析 → 背面（全部信息）→ 保存」；
+  // 编辑 = 单面到底（已有笔记不必重解析）。
+  let phase: 'idle' | 'parsing' | 'parsed' = editing ? 'parsed' : 'idle';
+  /** 翻面之后分类仍在判定（2026-09-21 拆两段：豆瓣信息到手即翻面，分类随后补）。
+   *  此间徽标是占位骨架、保存按钮锁着——分类没落定就保存，等于把这个值当默认值用。 */
+  let classifying = false;
+  let parsed: DoubanQuery | null = null;
+  let userPickedTag = false; // 2026-09-21 拍板：用户手点过 chip → 解析出的分类不覆盖他的选择
   const nameInput = el.querySelector<HTMLInputElement>('.j-name');
+  const parseBtn = el.querySelector<HTMLButtonElement>('.j-parse');
   const saveBtn = el.querySelector<HTMLButtonElement>('.j-save');
-  const idleSaveText = editing ? '保存' : '添加';
-  const refreshDupMark = (): void => {
-    if (!nameInput) return;
-    const dup = isDuplicateName(nameInput.value.trim(), item?.name);
-    nameInput.classList.toggle('is-dup', dup);
-    if (saveBtn) {
-      saveBtn.disabled = dup;
-      saveBtn.textContent = dup ? DUP_NAME_HINT : idleSaveText;
+  const flipEl = el.querySelector<HTMLElement>('.j-flip');
+  const backSlot = el.querySelector<HTMLElement>('.j-back');
+
+  /** 表单态唯一刷新点：正面按钮文案与禁用、输入框红边框、chip 流动特效都在这。
+   *  重名反馈（issue 394）与解析态（issue 395）共用同一个按钮，散着改 class 必然漂移。 */
+  const refreshFormState = (): void => {
+    const name = nameInput?.value.trim() ?? '';
+    const dup = !!name && isDuplicateName(name, item?.name);
+    if (nameInput) nameInput.classList.toggle('is-dup', dup);
+    if (parseBtn) {
+      const busy = phase === 'parsing';
+      parseBtn.disabled = dup || busy;
+      parseBtn.classList.toggle('is-parsing', busy);
+      // 文案写在子节点上：直接赋 textContent 会把转圈那个 span 一起抹掉
+      const txt = parseBtn.querySelector('.j-parse-text');
+      if (txt) txt.textContent = dup ? DUP_NAME_HINT : busy ? '解析中' : '解析';
     }
+    // 背面「保存」与编辑态「保存」是同一个按钮：重名同样锁死（issue 394 的行为不能因双面改造丢掉）。
+    // 解析中与分类判定中都锁住（2026-09-21）：分类未落定就保存，可能把那时的占位/默认值当结果用。
+    if (saveBtn) {
+      saveBtn.disabled = dup || phase === 'parsing' || classifying;
+      saveBtn.textContent = dup ? DUP_NAME_HINT : '保存';
+    }
+    // 解析中：全部分类 chip 的边框走流光（2026-09-21 用户点名）
+    el.querySelectorAll('[data-f-tag]').forEach((x) => x.classList.toggle('is-scanning', phase === 'parsing'));
   };
-  nameInput?.addEventListener('input', refreshDupMark);
-  refreshDupMark();
-  el.querySelectorAll<HTMLElement>('[data-f-tag]').forEach((b) => b.addEventListener('click', () => {
-    cur.tag = b.dataset.fTag ?? cur.tag;
-    el.querySelectorAll('[data-f-tag]').forEach((x) => x.classList.toggle('is-on', x === b));
-  }));
-  el.querySelectorAll<HTMLElement>('[data-f-st]').forEach((b) => b.addEventListener('click', () => {
-    cur.st = b.dataset.fSt ?? cur.st;
-    el.querySelectorAll('[data-f-st]').forEach((x) => x.classList.toggle('is-on', x === b));
+
+  /** 分类 chip 选中态（手点与解析预选共用，别各写一份 toggle） */
+  const applyTagOn = (): void => {
+    el.querySelectorAll<HTMLElement>('[data-f-tag]').forEach((b) => b.classList.toggle('is-on', b.dataset.fTag === cur.tag));
+  };
+
+  /** 状态 chip 选中态 + 「我的记录」段显隐（正反两面都有状态 chip，用 querySelectorAll 全覆盖） */
+  const applyStOn = (): void => {
+    el.querySelectorAll<HTMLElement>('[data-f-st]').forEach((b) => b.classList.toggle('is-on', b.dataset.fSt === cur.st));
     const show = cur.st === '已看';
-    (el.querySelector('.j-rating') as HTMLElement).style.display = show ? '' : 'none';
-    (el.querySelector('.j-review') as HTMLElement).style.display = show ? '' : 'none';
-  }));
+    el.querySelectorAll<HTMLElement>('.j-rating').forEach((x) => { x.style.display = show ? '' : 'none'; });
+    el.querySelectorAll<HTMLElement>('.j-review').forEach((x) => { x.style.display = show ? '' : 'none'; });
+  };
+
+  /** 翻到背面（新增态只有单向：正面 → 解析 → 背面；2026-09-21 去掉「返回」后没有反向路径）。
+   *
+   *  **高度不在这层管**：两面用 grid 叠在同一格，容器高度自动取较高那一面（见 styles.css）——
+   *  于是翻转全程高度零变化，没有重排可卡。此前是「量高 + height 过渡 + ResizeObserver 持续同步」，
+   *  每帧重排整个弹窗，是「翻转时卡顿一下」的根因（2026-09-21 定位并移除）。
+   *
+   *  旋转只由 keyframes 描述（中段 translateZ 抬起的弧线，两端式过渡做不出来）。
+   *  起手前先强制一次布局：把 renderBack 插入整卡 + 海报解码的排版开销结在动画之前，
+   *  否则动画首帧要同时做「插入 + 重排 + 合成」，表现为起手一顿。 */
+  const flipToBack = (): void => {
+    if (!flipEl) return;
+    void flipEl.offsetHeight;
+    const start = (): void => {
+      if (!el.isConnected) return; // 动画起手前弹窗已被关掉（用户手快）
+      flipEl.classList.add('is-flipped', 'is-flipping');
+      const clear = (): void => flipEl.classList.remove('is-flipping');
+      flipEl.addEventListener('animationend', clear, { once: true });
+      window.setTimeout(clear, 1200); // 兜底清理：动画被系统关掉时 animationend 不触发
+    };
+    // 推到下一帧起手（jsdom 无 rAF 时退回定时器，测试不必区分两种环境）
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(start);
+    else window.setTimeout(start, 16);
+  };
+
+  /** 预览卡数据：字段口径与落盘一致（ApiZero 优先、rexxar 兜底） */
+  const previewDataOf = (q: DoubanQuery | null): FormPreviewData | null => {
+    if (!q) return null;
+    const az = q.apizero;
+    return {
+      posterUrl: q.posterUrl,
+      title: q.title || nameInput?.value.trim() || '',
+      typeTag: cur.tag,
+      genre: az?.genre ? normalizeListValue(az.genre) : '',
+      director: az?.director ? normalizeListValue(az.director) : q.celebrities?.directors ?? '',
+      actors: az?.actor ? normalizeListValue(az.actor) : q.celebrities?.casts ?? '',
+      region: az?.area ? normalizeListValue(az.area) : '',
+      releaseDate: az?.year ?? '',
+      duration: az?.duration ?? '',
+      doubanRating: az?.score ?? '',
+      doubanUrl: q.detailUrl,
+      hotComment: az?.shortComment ?? '',
+    };
+  };
+
+  /** 解析（2026-09-21 拆两段）：
+   *  ① 豆瓣信息到手 → **立刻翻面**（不等信息全齐才让用户看到卡）
+   *  ② 海报与分类随后补——海报交给 img 自己加载（骨架 → 淡入），分类等 Jev 回来就地填。
+   *  判定失败或弃权都不阻断解析：字段已经到手，分类留空、由用户手点。 */
+  async function runParse(): Promise<void> {
+    const name = nameInput?.value.trim() ?? '';
+    if (!name) { notice('请输入名称', 'warning'); return; }
+    if (hasIllegalNameChar(name)) { notice(`${ILLEGAL_NAME_HINT}，请修改`, 'error'); return; }
+    phase = 'parsing';
+    refreshFormState();
+    const q = await queryDoubanForPreview(app, name);
+    if (!q.ok) {
+      phase = 'idle';
+      refreshFormState();
+      notice(
+        q.reason === 'blocked' ? '豆瓣搜索被风控，稍后再试'
+          : q.reason === 'notfound' ? '豆瓣没有找到这部影视'
+            : '网络不畅，未能获取豆瓣信息',
+        'warning',
+      );
+      return;
+    }
+    parsed = q.data;
+    // ① 字段到手即翻面：分类先占位（骨架），海报由 img 加载完自行淡入
+    phase = 'parsed';
+    classifying = true;
+    renderBack();
+    flipToBack();
+    refreshFormState();
+    // ② 分类随后补：就地换徽标，不重渲染整卡（重渲染会让海报 img 重新发起请求、白闪一下）
+    try {
+      const az = q.data.apizero;
+      const mediaType = q.data.celebrities?.mediaType ?? null;
+      const decided = await decideCinemaType({
+        title: q.data.title,
+        isTv: az ? az.isTv : mediaType ? mediaType === 'tv' : null,
+        area: az?.area ?? null,
+        genre: az?.genre ?? null,
+        year: az?.year ?? null,
+      });
+      if (decided && !userPickedTag) cur.tag = decided;
+    } catch { /* 判定通道不可用不阻断解析：字段已到手，分类由用户手点 */ }
+    classifying = false;
+    updateBadges();
+    refreshFormState();
+  }
+
+  /** 背面渲染：与详情弹窗同形制；分类 / 状态是有下拉的徽标（无「我的记录」段） */
+  function renderBack(): void {
+    if (!backSlot) return;
+    backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
+    applyTagOn();
+    applyStOn();
+  }
+
+  /** 收起两个候选下拉（徽标切换、选完都要收）。
+   *  走 .is-open 类而非 hidden 属性：hidden 是瞬切、没有中间态，展开会「啪」地弹出来。 */
+  const closePickLists = (): void => {
+    el.querySelectorAll<HTMLElement>('[data-pick-list]').forEach((l) => l.classList.remove('is-open'));
+  };
+
+  /** 两个徽标就地重渲（分类回来、用户改选时用）。
+   *  为什么不 renderBack()：整卡重渲染会重建海报 <img>，图片重新加载 → 白闪一下。
+   *  为什么不逐个改文本：徽标颜色 / 选中态 / 占位骨架的切换都跟着值走，重渲这两个节点最省心。
+   *  背面尚未渲染时（正面点状态）row 取不到，但下面两行仍要跑——正面状态 chip 靠 applyStOn 上选中态。 */
+  const updateBadges = (): void => {
+    const row = backSlot?.querySelector<HTMLElement>('.dm-badges');
+    if (row) row.innerHTML = formTagChipHtml(cur.tag) + formStChipHtml(cur.st);
+    applyTagOn();
+    applyStOn();
+  };
+
+  nameInput?.addEventListener('input', refreshFormState);
+  refreshFormState();
+  applyStOn();
+  // 分类/状态走事件委托（绑 el，不绑具体按钮）：背面是 innerHTML 动态生成的，逐个绑定必然漏一半；
+  // 两面共用同一份 cur，点哪一面都同步（issue 395）
+  el.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    // 背面徽标 → 展开候选下拉（先全收再开目标；同键再点即收起）
+    const pick = t.closest<HTMLElement>('[data-pick]');
+    if (pick) {
+      const key = pick.dataset.pick;
+      const target = el.querySelector<HTMLElement>(`[data-pick-list="${key}"]`);
+      const willOpen = !!target && !target.classList.contains('is-open');
+      closePickLists();
+      if (target && willOpen) target.classList.add('is-open');
+      return;
+    }
+    // 选中候选项 → 收回下拉 + 就地换徽标。正面状态 chip 也走这里（同一份 cur，两面同步）
+    const tagBtn = t.closest<HTMLElement>('[data-f-tag]');
+    if (tagBtn) {
+      cur.tag = tagBtn.dataset.fTag ?? cur.tag;
+      userPickedTag = true;
+      closePickLists();
+      updateBadges();
+      return;
+    }
+    const stBtn = t.closest<HTMLElement>('[data-f-st]');
+    if (stBtn) {
+      cur.st = stBtn.dataset.fSt ?? cur.st;
+      closePickLists();
+      updateBadges();
+    }
+  });
   // 表单 Enter 提交（深审批A P3-13）：core bindFormSubmit——名称框纯 Enter 直存，
-  // 影评 textarea 回车换行天然豁免；Ctrl/⌘+Enter 恒提交
-  bindFormSubmit(el, () => (el.querySelector('.j-save') as HTMLElement | null)?.click());
+  // 影评 textarea 回车换行天然豁免；Ctrl/⌘+Enter 恒提交。
+  // 双面卡片（issue 395）：正面 Enter = 解析、背面 Enter = 保存，按当前阶段分流。
+  bindFormSubmit(el, () => {
+    if (phase === 'idle' && !editing) { void runParse(); return; }
+    (el.querySelector('.j-save') as HTMLElement | null)?.click();
+  });
   // 桌面端打开即聚焦名称框（呈报#7 / C2，2026-09-19 拍板改口径：省一次点击）；
   // 移动端维持不聚焦——弹窗即弹软键盘遮挡表单（core settings-modal「移动端跳过 input 聚焦」同款口径）
   if (!isMobileEnv()) (el.querySelector('.j-name') as HTMLInputElement | null)?.focus();
+  parseBtn?.addEventListener('click', () => { void runParse(); });
   el.querySelector('.j-save')?.addEventListener('click', () => {
+    if (phase === 'parsing' || classifying) return; // 防御：解析/判定中不落盘（disabled 已挡一层）
     const name = (el.querySelector('.j-name') as HTMLInputElement).value.trim();
     if (!name) { notice('请输入名称', 'warning'); return; }
     if (isDuplicateName(name, item?.name)) { notice(DUP_NAME_HINT_FULL, 'warning'); return; }
     const stChanged = !editing || !item || item.status !== (cur.st === '想看' ? STATUS_WANT : cur.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED);
     const date = stChanged ? localNow() : (item!.watchDate || localNow());
     // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
-    // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回
-    const rating = cur.st === '已看' ? parseFloat((el.querySelector('.j-range') as HTMLInputElement).value) : cur.st === '在看' ? 0 : -1;
+    // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回。
+    // 新增态背面已去掉评分滑杆（2026-09-21 拍板去掉「我的记录」段）→ 已看给默认分，
+    // 编辑态仍有滑杆，照旧读框。
+    const ratingBox = el.querySelector<HTMLInputElement>('.j-range');
+    const rating = cur.st === '已看'
+      ? (ratingBox ? parseFloat(ratingBox.value) : DEFAULT_RATING)
+      : cur.st === '在看' ? 0 : -1;
     // 非「已看」态保留原影评不写空（深审批A P2-2）：影评框在非已看态隐藏，原实现在这里
     // 强置空串 + persistItem `delete fm['影评']`——「已看」影片改回想看/在看保存，影评被静默清空。
-    // 影评只在「已看」态的输入框里被用户显式改写/清空（空串保存 = 显式删除，语义保留）
-    const review = cur.st === '已看'
-      ? (el.querySelector('.j-review-t') as HTMLTextAreaElement).value.trim()
-      : (editing && item ? item.review ?? '' : '');
+    // 影评只在「已看」态的输入框里被用户显式改写/清空（空串保存 = 显式删除，语义保留）。
+    // 新增态背面无影评框（同上）→ 走编辑态分支留原值 / 空串。
+    const reviewBox = el.querySelector<HTMLTextAreaElement>('.j-review-t');
+    const review = reviewBox ? reviewBox.value.trim() : (editing && item ? item.review ?? '' : '');
     if (editing && item) {
       void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
     } else {
-      void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
+      void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed }, app, close);
     }
   });
 }
 
-interface FormPayload { name: string; tag: string; st: string; rating: number | null; date: string; review: string }
+interface FormPayload { name: string; tag: string; st: string; rating: number | null; date: string; review: string; /** 解析阶段拿到的豆瓣字段（issue 395）：建档时一并写入，省掉落盘后重抓 */ douban?: DoubanQuery | null }
 
 /** 新增落盘（CM2：重名/落盘失败回退；created 域事件 + 抓取队列接管） */
 async function saveNew(p: FormPayload, app: App, close: () => void): Promise<void> {
@@ -585,7 +794,7 @@ async function saveNew(p: FormPayload, app: App, close: () => void): Promise<voi
       return;
     }
     M.items.unshift(it);
-    await persistItem(it, app);
+    await persistItem(it, app, undefined, p.douban);
     emitDomainEvent('movie', { kind: 'created', name: p.name, status: st === STATUS_WANT ? 'want' : st === STATUS_WATCHING ? 'watching' : 'watched', rating: p.rating, review: p.review || null });
     if (it.file) enqueueDoubanFetch(it.file, it.name);
     close();

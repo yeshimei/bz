@@ -54,8 +54,167 @@ export function setIcon(container: HTMLElement, iconId: string): void {
 
 export type IconName = string;
 
-/** requestUrl（core/ai → recommend 的 createAI 链用到）：原型无网络，抛错让 AI 荐片走页内降级 */
-export async function requestUrl(): Promise<never> {
+// ==================== requestUrl：罐头网关（issue 395） ====================
+
+/** 演示预设（原型无真网络）：按片名关键词命中，让「输入不同片名 → 不同分类」看得出效果。
+ *  命中不到回落第 0 套。豆瓣信息区展示的是预设字段，标题用你输入的名字。 */
+const CANNED_PRESETS = [
+  { keys: ['千与千寻', '宫崎骏', '龙猫', '动画'], genre: '剧情, 动画, 奇幻', area: '日本', isTv: false, director: '宫崎骏', actor: '柊瑠美, 入野自由', year: '2001', duration: '125分钟', score: '9.4', poster: '/__vault-media/1049345607.jpg', shortComment: '不管前方的路有多苦，只要走的方向正确，都比站在原地更接近幸福。' },
+  { keys: ['三体'], genre: '剧情, 科幻', area: '中国大陆', isTv: true, director: '杨磊', actor: '张鲁一, 于和伟', year: '2023', duration: '45分钟', score: '8.7', poster: '/__vault-media/1164394344.jpg', shortComment: '不要回答。' },
+  { keys: ['绝命毒师', '毒师', '美剧'], genre: '剧情, 犯罪, 惊悚', area: '美国', isTv: true, director: '文斯·吉里根', actor: '布莱恩·科兰斯顿', year: '2008', duration: '45分钟', score: '9.6', poster: '/__vault-media/1170083317.jpg', shortComment: '我就是危险本身。' },
+  { keys: ['地球脉动', '纪录片', '行星'], genre: '纪录片', area: '英国', isTv: true, director: '阿拉斯泰尔·福瑟吉尔', actor: '大卫·爱登堡', year: '2006', duration: '50分钟', score: '9.7', poster: '/__vault-media/1214927835.jpg', shortComment: '这颗星球远比我们想象的更壮丽。' },
+  { keys: ['星际穿越', '诺兰'], genre: '剧情, 科幻, 冒险', area: '美国', isTv: false, director: '克里斯托弗·诺兰', actor: '马修·麦康纳', year: '2014', duration: '169分钟', score: '9.4', poster: '/__vault-media/1215062315.jpg', shortComment: '爱是唯一可以超越时间与空间的事物。' },
+];
+
+/** 命中片名 → 预设下标（找不到回落第 0 套） */
+function presetIndexOf(q: string): number {
+  const i = CANNED_PRESETS.findIndex((p) => p.keys.some((k) => q.includes(k)));
+  return i < 0 ? 0 : i;
+}
+
+/** sid 承载预设下标（extractSid 要求 subject/<数字>）：搜索与 ApiZero 两步靠它对齐 */
+function sidOf(i: number): string {
+  return `900${i + 1}`;
+}
+
+/** 原型专属：罐头响应延迟（**真实插件没有**）。2026-09-21 用户要求「拆两段看渐进」——
+ *  豆瓣两跳（搜索 + 字段）各 500ms ≈ 1 秒后翻面；Jev 判定再 1 秒，用来看分类「占位 → 填值」。 */
+const CANNED_DOUBAN_MS = 500;
+const CANNED_JEV_MS = 1000;
+const cannedDelay = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/** 从 ApiZero 请求 URL 的 id 反查预设 */
+function presetFromSid(url: string): (typeof CANNED_PRESETS)[number] {
+  const m = /id=(\d+)/.exec(url);
+  const i = m ? Number(m[1].slice(3)) - 1 : 0;
+  return CANNED_PRESETS[i >= 0 && i < CANNED_PRESETS.length ? i : 0];
+}
+
+/** 1×1 透明 PNG（下载海报用；空 ArrayBuffer 会让 downloadBinary 判失败） */
+const PNG_1PX = new Uint8Array([
+  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0, 31, 21, 196,
+  137, 0, 0, 0, 10, 73, 68, 65, 84, 120, 156, 99, 0, 1, 0, 0, 5, 0, 1, 13, 10, 45, 180, 0, 0, 0, 0, 73, 69, 78, 68,
+  174, 66, 96, 130,
+]);
+
+/** 豆瓣搜索页罐头（结构须匹配 douban-fetcher.parseSearchResults 的正则）。
+ *  ⚠ 必须 >8000 字节：searchLooksBlocked 对短响应直接判风控，故补足填充块。 */
+function cannedSearchHtml(title: string, idx: number): string {
+  const hit =
+    `<div class="result"><div class="pic">` +
+    `<a href="https://www.douban.com/link2/?url=https%3A%2F%2Fmovie.douban.com%2Fsubject%2F${sidOf(idx)}%2F">` +
+    `<img src="${CANNED_PRESETS[idx].poster}"></a></div>` +
+    `<div class="title"><a href="#">${title}</a></div></div>`;
+  return `<!DOCTYPE html><html><body>${hit}${'<div class="filler"></div>'.repeat(400)}</body></html>`;
+}
+
+/** ApiZero 字段罐头（结构须匹配 fetchApizeroInfo 的消费面） */
+function cannedApizero(p: (typeof CANNED_PRESETS)[number]): string {
+  return JSON.stringify({
+    code: 0,
+    data: {
+      name: '',
+      year: p.year,
+      score: p.score,
+      director: p.director,
+      actor: p.actor,
+      genre: p.genre,
+      area: p.area,
+      duration: p.duration,
+      episodes: '',
+      is_tv: p.isTv,
+      douban_url: 'https://movie.douban.com/subject/1291561/',
+      short_comment: p.shortComment,
+      comment_author: '豆瓣用户',
+    },
+  });
+}
+
+const CANNED_AREA_TAG: Record<string, string> = {
+  中国大陆: '国产剧', 美国: '美剧', 英国: '英剧', 德国: '德剧', 日本: '日剧', 韩国: '韩剧', 哥伦比亚: '哥伦比亚剧',
+};
+const CANNED_AREA_ANIME: Record<string, string> = { 日本: '日漫', 中国大陆: '国漫', 美国: '美漫' };
+
+/** 按 state 现场推一个分类（与 src/cinema/type-decide 的哨兵同值）。
+ *  演示里「自动分类」要是活的——永远回同一个值就看不出功能，故这里真按豆瓣字段推。 */
+function cannedChoice(state: string, keys: string[]): string {
+  const grab = (re: RegExp) => re.exec(state)?.[1]?.trim() ?? '';
+  const area = grab(/制片国家\/地区：([^\n]+)/).split(/[,，/]/)[0].trim();
+  const genre = grab(/豆瓣类型：([^\n]+)/);
+  const isTv = /是否剧集：是/.test(state);
+  let guess = '';
+  if (genre.includes('纪录片')) guess = '纪录片';
+  else if (genre.includes('动画')) guess = CANNED_AREA_ANIME[area] ?? '';
+  else if (!isTv) guess = '电影';
+  else guess = CANNED_AREA_TAG[area] ?? '';
+  return keys.includes(guess) ? guess : '以上都不是';
+}
+
+/** Jev 罐头：按请求里的 questions 逐题回一个形状正确的答案 */
+function cannedJev(body: string): string {
+  let state = '';
+  let questions: Record<string, { type?: string; criteria?: Record<string, string> }> = {};
+  try {
+    const req = JSON.parse(body || '{}') as { state?: string; questions?: typeof questions };
+    state = String(req.state ?? '');
+    questions = req.questions ?? {};
+  } catch {
+    // 罐头容错：请求体解析不了就回空 answers（调用方会按畸形响应处理）
+  }
+  const answers: Record<string, unknown> = {};
+  for (const [key, q] of Object.entries(questions)) {
+    if (q?.type === 'choice') {
+      const pick = cannedChoice(state, Object.keys(q.criteria ?? {}));
+      answers[key] = { type: 'choice', choice: pick, confidence: pick === '以上都不是' ? 0.31 : 0.93, probabilities: {} };
+    } else if (q?.type === 'noul') {
+      answers[key] = { type: 'noul', noul: 0.88 };
+    } else {
+      answers[key] = { type: 'score', score: 3, confidence: 0.8, legend: [] };
+    }
+  }
+  return JSON.stringify({ model: 'jev-canned', answers, usage: { input_tokens: 0, output_tokens: 0 } });
+}
+
+/**
+ * requestUrl：原型无网络，改为**罐头网关**（issue 395 影院表单「解析」链路）。
+ * 拦三类：豆瓣搜索页（HTML 罐头）、ApiZero 字段（JSON 罐头）、Jev 判定（按 state 现推）。
+ * 海报二进制回 1×1 PNG（否则落盘后的抓取队列必然报 network 失败）。
+ * 其余请求维持原口径——抛错（core/ai → AI 荐片走页内降级提示，原型不碰真 AI）。
+ */
+export async function requestUrl(req: { url?: string; method?: string; body?: string } | string): Promise<{
+  status: number;
+  text: string;
+  json: unknown;
+  arrayBuffer: ArrayBuffer;
+}> {
+  const url = typeof req === 'string' ? req : String((req as { url?: string })?.url ?? '');
+  const body = typeof req === 'string' ? '' : String((req as { body?: string })?.body ?? '');
+  // json 必须惰性容错：搜索页返回 HTML，直接 JSON.parse 会抛异常 →
+  // 整个查询被当成网络失败（点「解析」毫无反应，2026-09-21 实测踩到）
+  const ok = (text: string) => ({
+    status: 200,
+    text,
+    json: (() => { try { return JSON.parse(text || 'null'); } catch { return null; } })(),
+    arrayBuffer: new ArrayBuffer(0),
+  });
+  if (url.includes('douban.com/search')) {
+    await cannedDelay(CANNED_DOUBAN_MS);
+    const q = decodeURIComponent((/[?&]q=([^&]*)/.exec(url)?.[1] ?? '').replace(/\+/g, ' '));
+    return ok(cannedSearchHtml(q || '未命名', presetIndexOf(q)));
+  }
+  if (url.includes('v1.apizero.cn')) {
+    await cannedDelay(CANNED_DOUBAN_MS);
+    return ok(cannedApizero(presetFromSid(url)));
+  }
+  if (url.includes('api.typesafe.ai')) {
+    await cannedDelay(CANNED_JEV_MS);
+    return ok(cannedJev(body));
+  }
+  if (url.includes('doubanio.com')) {
+    return { status: 200, text: '', json: null, arrayBuffer: PNG_1PX.buffer.slice(0) as ArrayBuffer };
+  }
+  // rexxar 演职员兜底：404 → fetchCelebrities 视作该类型无数据，回落到 ApiZero 的导演/主演
+  if (url.includes('m.douban.com/rexxar')) return { status: 404, text: '', json: null, arrayBuffer: new ArrayBuffer(0) };
   throw new Error('原型环境无网络请求（fake obsidian requestUrl）');
 }
 

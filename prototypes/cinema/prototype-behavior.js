@@ -1,5 +1,5 @@
-/* 源指纹 b110724000c4fc6a · 仓内输入 61 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 e4d847879ad22f07 · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -4056,7 +4056,203 @@ var BZW_cinema = (() => {
     svg.innerHTML = d;
     container.replaceChildren(svg);
   }
-  async function requestUrl() {
+  var CANNED_PRESETS = [
+    { keys: ["千与千寻", "宫崎骏", "龙猫", "动画"], genre: "剧情, 动画, 奇幻", area: "日本", isTv: false, director: "宫崎骏", actor: "柊瑠美, 入野自由", year: "2001", duration: "125分钟", score: "9.4", poster: "/__vault-media/1049345607.jpg", shortComment: "不管前方的路有多苦，只要走的方向正确，都比站在原地更接近幸福。" },
+    { keys: ["三体"], genre: "剧情, 科幻", area: "中国大陆", isTv: true, director: "杨磊", actor: "张鲁一, 于和伟", year: "2023", duration: "45分钟", score: "8.7", poster: "/__vault-media/1164394344.jpg", shortComment: "不要回答。" },
+    { keys: ["绝命毒师", "毒师", "美剧"], genre: "剧情, 犯罪, 惊悚", area: "美国", isTv: true, director: "文斯·吉里根", actor: "布莱恩·科兰斯顿", year: "2008", duration: "45分钟", score: "9.6", poster: "/__vault-media/1170083317.jpg", shortComment: "我就是危险本身。" },
+    { keys: ["地球脉动", "纪录片", "行星"], genre: "纪录片", area: "英国", isTv: true, director: "阿拉斯泰尔·福瑟吉尔", actor: "大卫·爱登堡", year: "2006", duration: "50分钟", score: "9.7", poster: "/__vault-media/1214927835.jpg", shortComment: "这颗星球远比我们想象的更壮丽。" },
+    { keys: ["星际穿越", "诺兰"], genre: "剧情, 科幻, 冒险", area: "美国", isTv: false, director: "克里斯托弗·诺兰", actor: "马修·麦康纳", year: "2014", duration: "169分钟", score: "9.4", poster: "/__vault-media/1215062315.jpg", shortComment: "爱是唯一可以超越时间与空间的事物。" }
+  ];
+  function presetIndexOf(q) {
+    const i = CANNED_PRESETS.findIndex((p) => p.keys.some((k) => q.includes(k)));
+    return i < 0 ? 0 : i;
+  }
+  function sidOf(i) {
+    return `900${i + 1}`;
+  }
+  var CANNED_DOUBAN_MS = 500;
+  var CANNED_JEV_MS = 1e3;
+  var cannedDelay = (ms) => new Promise((r) => setTimeout(r, ms));
+  function presetFromSid(url) {
+    const m = /id=(\d+)/.exec(url);
+    const i = m ? Number(m[1].slice(3)) - 1 : 0;
+    return CANNED_PRESETS[i >= 0 && i < CANNED_PRESETS.length ? i : 0];
+  }
+  var PNG_1PX = new Uint8Array([
+    137,
+    80,
+    78,
+    71,
+    13,
+    10,
+    26,
+    10,
+    0,
+    0,
+    0,
+    13,
+    73,
+    72,
+    68,
+    82,
+    0,
+    0,
+    0,
+    1,
+    0,
+    0,
+    0,
+    1,
+    8,
+    6,
+    0,
+    0,
+    0,
+    31,
+    21,
+    196,
+    137,
+    0,
+    0,
+    0,
+    10,
+    73,
+    68,
+    65,
+    84,
+    120,
+    156,
+    99,
+    0,
+    1,
+    0,
+    0,
+    5,
+    0,
+    1,
+    13,
+    10,
+    45,
+    180,
+    0,
+    0,
+    0,
+    0,
+    73,
+    69,
+    78,
+    68,
+    174,
+    66,
+    96,
+    130
+  ]);
+  function cannedSearchHtml(title, idx) {
+    const hit = `<div class="result"><div class="pic"><a href="https://www.douban.com/link2/?url=https%3A%2F%2Fmovie.douban.com%2Fsubject%2F${sidOf(idx)}%2F"><img src="${CANNED_PRESETS[idx].poster}"></a></div><div class="title"><a href="#">${title}</a></div></div>`;
+    return `<!DOCTYPE html><html><body>${hit}${'<div class="filler"></div>'.repeat(400)}</body></html>`;
+  }
+  function cannedApizero(p) {
+    return JSON.stringify({
+      code: 0,
+      data: {
+        name: "",
+        year: p.year,
+        score: p.score,
+        director: p.director,
+        actor: p.actor,
+        genre: p.genre,
+        area: p.area,
+        duration: p.duration,
+        episodes: "",
+        is_tv: p.isTv,
+        douban_url: "https://movie.douban.com/subject/1291561/",
+        short_comment: p.shortComment,
+        comment_author: "豆瓣用户"
+      }
+    });
+  }
+  var CANNED_AREA_TAG = {
+    中国大陆: "国产剧",
+    美国: "美剧",
+    英国: "英剧",
+    德国: "德剧",
+    日本: "日剧",
+    韩国: "韩剧",
+    哥伦比亚: "哥伦比亚剧"
+  };
+  var CANNED_AREA_ANIME = { 日本: "日漫", 中国大陆: "国漫", 美国: "美漫" };
+  function cannedChoice(state, keys) {
+    var _a, _b;
+    const grab = (re) => {
+      var _a2, _b2, _c;
+      return (_c = (_b2 = (_a2 = re.exec(state)) == null ? void 0 : _a2[1]) == null ? void 0 : _b2.trim()) != null ? _c : "";
+    };
+    const area = grab(/制片国家\/地区：([^\n]+)/).split(/[,，/]/)[0].trim();
+    const genre = grab(/豆瓣类型：([^\n]+)/);
+    const isTv = /是否剧集：是/.test(state);
+    let guess = "";
+    if (genre.includes("纪录片")) guess = "纪录片";
+    else if (genre.includes("动画")) guess = (_a = CANNED_AREA_ANIME[area]) != null ? _a : "";
+    else if (!isTv) guess = "电影";
+    else guess = (_b = CANNED_AREA_TAG[area]) != null ? _b : "";
+    return keys.includes(guess) ? guess : "以上都不是";
+  }
+  function cannedJev(body) {
+    var _a, _b, _c;
+    let state = "";
+    let questions = {};
+    try {
+      const req = JSON.parse(body || "{}");
+      state = String((_a = req.state) != null ? _a : "");
+      questions = (_b = req.questions) != null ? _b : {};
+    } catch (e) {
+    }
+    const answers = {};
+    for (const [key, q] of Object.entries(questions)) {
+      if ((q == null ? void 0 : q.type) === "choice") {
+        const pick = cannedChoice(state, Object.keys((_c = q.criteria) != null ? _c : {}));
+        answers[key] = { type: "choice", choice: pick, confidence: pick === "以上都不是" ? 0.31 : 0.93, probabilities: {} };
+      } else if ((q == null ? void 0 : q.type) === "noul") {
+        answers[key] = { type: "noul", noul: 0.88 };
+      } else {
+        answers[key] = { type: "score", score: 3, confidence: 0.8, legend: [] };
+      }
+    }
+    return JSON.stringify({ model: "jev-canned", answers, usage: { input_tokens: 0, output_tokens: 0 } });
+  }
+  async function requestUrl(req) {
+    var _a, _b, _c, _d;
+    const url = typeof req === "string" ? req : String((_a = req == null ? void 0 : req.url) != null ? _a : "");
+    const body = typeof req === "string" ? "" : String((_b = req == null ? void 0 : req.body) != null ? _b : "");
+    const ok = (text) => ({
+      status: 200,
+      text,
+      json: (() => {
+        try {
+          return JSON.parse(text || "null");
+        } catch (e) {
+          return null;
+        }
+      })(),
+      arrayBuffer: new ArrayBuffer(0)
+    });
+    if (url.includes("douban.com/search")) {
+      await cannedDelay(CANNED_DOUBAN_MS);
+      const q = decodeURIComponent(((_d = (_c = /[?&]q=([^&]*)/.exec(url)) == null ? void 0 : _c[1]) != null ? _d : "").replace(/\+/g, " "));
+      return ok(cannedSearchHtml(q || "未命名", presetIndexOf(q)));
+    }
+    if (url.includes("v1.apizero.cn")) {
+      await cannedDelay(CANNED_DOUBAN_MS);
+      return ok(cannedApizero(presetFromSid(url)));
+    }
+    if (url.includes("api.typesafe.ai")) {
+      await cannedDelay(CANNED_JEV_MS);
+      return ok(cannedJev(body));
+    }
+    if (url.includes("doubanio.com")) {
+      return { status: 200, text: "", json: null, arrayBuffer: PNG_1PX.buffer.slice(0) };
+    }
+    if (url.includes("m.douban.com/rexxar")) return { status: 404, text: "", json: null, arrayBuffer: new ArrayBuffer(0) };
     throw new Error("原型环境无网络请求（fake obsidian requestUrl）");
   }
   var TFile = class {
@@ -5830,19 +6026,7 @@ var BZW_cinema = (() => {
     const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
     return v || null;
   }
-  async function fetchNoteDouban(app, file, deps) {
-    var _a, _b;
-    const name = extractMovieName(file.name);
-    let content;
-    try {
-      content = await app.vault.read(file);
-    } catch (e) {
-      return { ok: false, reason: "network" };
-    }
-    const hasPoster = !!fieldValue(content, "海报");
-    const doubanUrlRaw = fieldValue(content, "豆瓣链接");
-    const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
-    if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
+  async function queryDoubanByName(name, deps) {
     const searchHeaders = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
     if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
     let html;
@@ -5857,19 +6041,43 @@ var BZW_cinema = (() => {
     const first = results[0];
     const sid = extractSid(first.detailUrl);
     if (!sid) return { ok: false, reason: "notfound" };
+    let az = null;
+    if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
+    let celebrities = null;
+    if (!az || !az.director || !az.actor) {
+      celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
+    }
+    return { ok: true, data: { title: first.title, detailUrl: first.detailUrl, sid, posterUrl: first.posterUrl, apizero: az, celebrities } };
+  }
+  async function fetchNoteDouban(app, file, deps) {
+    var _a, _b;
+    const name = extractMovieName(file.name);
+    let content;
+    try {
+      content = await app.vault.read(file);
+    } catch (e) {
+      return { ok: false, reason: "network" };
+    }
+    const hasPoster = !!fieldValue(content, "海报");
+    const doubanUrlRaw = fieldValue(content, "豆瓣链接");
+    const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
+    if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
+    const q = await queryDoubanByName(name, deps);
+    if (!q.ok) return { ok: false, reason: q.reason };
+    const { detailUrl, posterUrl: posterUrl2, sid, apizero: az, celebrities: cel } = q.data;
     const posterFolder = ((_a = deps.posterFolder) == null ? void 0 : _a.trim()) || POSTER_FOLDER;
     let posterRelative = fieldValue(content, "海报");
-    if (!hasPoster && first.posterUrl) {
+    if (!hasPoster && posterUrl2) {
       let buf;
       try {
-        buf = await deps.downloadBinary(upgradePosterUrl(first.posterUrl), { Referer: "https://movie.douban.com/" });
+        buf = await deps.downloadBinary(upgradePosterUrl(posterUrl2), { Referer: "https://movie.douban.com/" });
       } catch (e) {
         return { ok: false, reason: "network" };
       }
       if (!buf) return { ok: false, reason: "network" };
       try {
         await deps.mkdir(posterFolder);
-        const ext = ((_b = first.posterUrl.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _b[1]) || "jpg";
+        const ext = ((_b = posterUrl2.match(/\.(jpg|jpeg|png|webp|gif)(\?.*)?$/i)) == null ? void 0 : _b[1]) || "jpg";
         const safeName = name.replace(ILLEGAL_NAME_RE_GLOBAL, "_");
         const fileName = `${safeName}_${(deps.now || Date.now)()}.${ext}`;
         posterRelative = `${posterFolder}/${fileName}`;
@@ -5880,29 +6088,21 @@ var BZW_cinema = (() => {
     }
     const fields = {};
     if (posterRelative) fields["海报"] = { value: posterRelative, ifMissing: true };
-    fields["豆瓣链接"] = first.detailUrl;
-    let az = null;
-    if (deps.apizeroKey) {
-      az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-      if (az) {
-        if (az.score) fields["豆瓣评分"] = { value: az.score, ifMissing: true };
-        if (az.director) fields["导演"] = { value: normalizeListValue(az.director), ifMissing: true };
-        if (az.actor) fields["主演"] = { value: normalizeListValue(az.actor), ifMissing: true };
-        if (az.genre) fields["类型"] = { value: normalizeListValue(az.genre), ifMissing: true };
-        if (az.area) fields["制片国家/地区"] = { value: normalizeListValue(az.area), ifMissing: true };
-        if (az.duration) fields["片长"] = { value: az.duration, ifMissing: true };
-        if (az.year) fields["上映日期"] = { value: az.year, ifMissing: true };
-        if (az.shortComment) fields["热门短评"] = { value: az.shortComment, ifMissing: true };
-      }
+    fields["豆瓣链接"] = detailUrl;
+    if (az) {
+      if (az.score) fields["豆瓣评分"] = { value: az.score, ifMissing: true };
+      if (az.director) fields["导演"] = { value: normalizeListValue(az.director), ifMissing: true };
+      if (az.actor) fields["主演"] = { value: normalizeListValue(az.actor), ifMissing: true };
+      if (az.genre) fields["类型"] = { value: normalizeListValue(az.genre), ifMissing: true };
+      if (az.area) fields["制片国家/地区"] = { value: normalizeListValue(az.area), ifMissing: true };
+      if (az.duration) fields["片长"] = { value: az.duration, ifMissing: true };
+      if (az.year) fields["上映日期"] = { value: az.year, ifMissing: true };
+      if (az.shortComment) fields["热门短评"] = { value: az.shortComment, ifMissing: true };
     }
-    const needCelebrities = !az || !az.director || !az.actor;
-    if (needCelebrities) {
-      const cel = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
-      if (cel) {
-        if (!fields["导演"] && cel.directors) fields["导演"] = { value: cel.directors, ifMissing: true };
-        if (cel.writers) fields["编剧"] = { value: cel.writers, ifMissing: true };
-        if (!fields["主演"] && cel.casts) fields["主演"] = { value: cel.casts, ifMissing: true };
-      }
+    if (cel) {
+      if (!fields["导演"] && cel.directors) fields["导演"] = { value: cel.directors, ifMissing: true };
+      if (cel.writers) fields["编剧"] = { value: cel.writers, ifMissing: true };
+      if (!fields["主演"] && cel.casts) fields["主演"] = { value: cel.casts, ifMissing: true };
     }
     try {
       await app.vault.process(file, (c) => {
@@ -6691,6 +6891,10 @@ var BZW_cinema = (() => {
       posterFolder: typeof s.cinemaPosterFolder === "string" ? s.cinemaPosterFolder.trim() : ""
     };
   }
+  var previewFn = null;
+  async function queryDoubanForPreview(app, name) {
+    return previewFn ? previewFn(app, name) : queryDoubanByName(name, fetchDepsFromSettings(app));
+  }
   function isFetching(path) {
     var _a;
     if (!path) return false;
@@ -7346,6 +7550,160 @@ tags:
   ${secHTML(`想看清单（${(_a = data.wantTotal) != null ? _a : data.wantList.length}）`, "bookmark", (data.wantList.length ? data.wantList.map((it, i) => topRow(String(i + 1), esc2(it.name) + (it.doubanRating ? " · 豆瓣 " + esc2(it.doubanRating) : ""), "")).join("") : emptyHTML()) + (Object.keys(data.wantTags).length ? '<div class="tag-cloud" style="margin-top:10px">' + Object.entries(data.wantTags).sort((a, b) => b[1] - a[1]).map(([t, c]) => `<span class="tag-pill">${esc2(t)} <b>${c}</b></span>`).join("") + "</div>" : ""))}`;
   }
 
+  // src/core/jev.ts
+  var JEV_DEFAULT_ENDPOINT = "https://api.typesafe.ai/v1/systemone";
+  var JEV_DEFAULT_MODEL = "jev-1.13.0";
+  var JEV_DEFAULT_TIMEOUT_MS = 1e4;
+  function resolveJevConfig(override) {
+    var _a, _b, _c, _d;
+    const s = tryGetSettings();
+    const pick = (key, fallback) => {
+      const v = s == null ? void 0 : s[key];
+      return v === void 0 || v === null || v === "" ? fallback : v;
+    };
+    const timeoutRaw = Number(pick("jevTimeoutMs", JEV_DEFAULT_TIMEOUT_MS));
+    return {
+      endpoint: String((_a = override == null ? void 0 : override.endpoint) != null ? _a : pick("jevEndpoint", JEV_DEFAULT_ENDPOINT)),
+      apiKey: String((_b = override == null ? void 0 : override.apiKey) != null ? _b : pick("jevApiKey", "")),
+      model: String((_c = override == null ? void 0 : override.model) != null ? _c : pick("jevModel", JEV_DEFAULT_MODEL)),
+      timeoutMs: (_d = override == null ? void 0 : override.timeoutMs) != null ? _d : Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : JEV_DEFAULT_TIMEOUT_MS
+    };
+  }
+  function isJevConfigured() {
+    const s = tryGetSettings();
+    if ((s == null ? void 0 : s.jevEnabled) !== true) return false;
+    const cfg = resolveJevConfig();
+    return !!cfg.endpoint && !!cfg.apiKey;
+  }
+  function abortError2() {
+    const e = new Error("Jev 请求已取消");
+    e.name = "AbortError";
+    return e;
+  }
+  function timeoutError2(ms) {
+    const e = new Error(`Jev 请求超时（${Math.round(ms / 1e3)} 秒无响应）`);
+    e.name = "TimeoutError";
+    return e;
+  }
+  function buildJevBody(state, questions, model) {
+    return { model, state, questions };
+  }
+  function parseJevResponse(text, status) {
+    var _a;
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      throw new Error(`Jev 响应不是合法 JSON（HTTP ${status}）`);
+    }
+    const answers = data == null ? void 0 : data.answers;
+    if (!answers || typeof answers !== "object" || Array.isArray(answers)) {
+      const detail = (data == null ? void 0 : data.detail) ? `: ${JSON.stringify(data.detail)}` : "";
+      throw new Error(`Jev 响应缺少 answers 字段（HTTP ${status}）${detail}`);
+    }
+    return {
+      model: String((_a = data.model) != null ? _a : ""),
+      answers,
+      usage: data.usage
+    };
+  }
+  async function askJev(state, questions, opts = {}) {
+    var _a, _b;
+    const keys = Object.keys(questions || {});
+    if (!keys.length) return { model: "", answers: {} };
+    const cfg = resolveJevConfig(opts.config);
+    const signal = opts.signal;
+    if (signal == null ? void 0 : signal.aborted) throw abortError2();
+    if (!cfg.endpoint) throw new Error("未配置 Jev 端点");
+    if (!cfg.apiKey) throw new Error("未配置 Jev 密钥（插件设置 → AI → Jev 决策通道）");
+    const body = buildJevBody(state, questions, cfg.model);
+    const headers = {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${cfg.apiKey}`
+    };
+    const resp = await new Promise((resolve, reject) => {
+      let settled = false;
+      let timer = null;
+      const onAbort = () => settle(() => reject(abortError2()));
+      function settle(fn) {
+        if (settled) return;
+        settled = true;
+        if (timer !== null) clearTimeout(timer);
+        signal == null ? void 0 : signal.removeEventListener("abort", onAbort);
+        fn();
+      }
+      timer = setTimeout(() => settle(() => reject(timeoutError2(cfg.timeoutMs))), cfg.timeoutMs);
+      signal == null ? void 0 : signal.addEventListener("abort", onAbort);
+      requestUrl({
+        url: cfg.endpoint,
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+        throw: false
+      }).then(
+        (r) => settle(() => resolve(r)),
+        (e) => settle(() => reject(e))
+      );
+    });
+    if (signal == null ? void 0 : signal.aborted) throw abortError2();
+    const status = Number((_a = resp == null ? void 0 : resp.status) != null ? _a : 0);
+    const text = String((_b = resp == null ? void 0 : resp.text) != null ? _b : "");
+    if (status < 200 || status >= 300) {
+      const brief = text.length > 300 ? `${text.slice(0, 300)}…` : text;
+      throw new Error(`Jev API ${status}: ${brief || "无响应正文"}`);
+    }
+    return parseJevResponse(text, status);
+  }
+
+  // src/cinema/type-decide.ts
+  var TYPE_SENTINEL = "以上都不是";
+  var CONFIDENCE_FLOOR = 0.5;
+  var EXCLUDED_FROM_DECIDE = ["公开课"];
+  var Q_KEY = "type";
+  function buildTypeCriteria() {
+    var _a;
+    const criteria = {};
+    for (const tag of ALL_TAGS) {
+      if (EXCLUDED_FROM_DECIDE.includes(tag)) continue;
+      criteria[tag] = (_a = getGroupForTag(tag)) != null ? _a : "其他";
+    }
+    criteria[TYPE_SENTINEL] = "以上候选都不匹配";
+    return criteria;
+  }
+  function buildTypeState(info) {
+    const lines = [];
+    if (info.title) lines.push(`片名：${info.title}`);
+    if (info.isTv !== null && info.isTv !== void 0) lines.push(`是否剧集：${info.isTv ? "是" : "否"}`);
+    if (info.area) lines.push(`制片国家/地区：${info.area}`);
+    if (info.genre) lines.push(`豆瓣类型：${info.genre}`);
+    if (info.year) lines.push(`年份：${info.year}`);
+    return lines.join("\n");
+  }
+  function judgeTypeChoice(answer, criteria) {
+    const choice = answer.choice;
+    if (!(choice in criteria)) return null;
+    if (choice === TYPE_SENTINEL) return null;
+    if (answer.confidence < CONFIDENCE_FLOOR) return null;
+    return choice;
+  }
+  async function decideCinemaType(info, opts) {
+    if (!isJevConfigured()) {
+      throw new Error("Jev 决策通道未配置（设置 → AI → Jev 决策通道）");
+    }
+    const criteria = buildTypeCriteria();
+    const question = {
+      type: "choice",
+      instructions: "根据下面这部影视的豆瓣信息，从候选清单里选出最贴切的分类标签。候选值的说明是该标签所属的组。判断线索：是否剧集区分「电影」与其他剧种；制片国家/地区决定是国产剧、美剧、日剧、韩剧、英剧还是德剧；豆瓣类型里含「动画」时按地区归入日漫、国漫或美漫；含「纪录片」时归「纪录片」（此时不按剧集判）。若都不贴切，请选「以上都不是」。",
+      criteria
+    };
+    const result = await askJev(buildTypeState(info), { [Q_KEY]: question }, opts);
+    const answer = result.answers[Q_KEY];
+    if (!answer || answer.type !== "choice") {
+      throw new Error("Jev 未返回有效的 choice 答案");
+    }
+    return judgeTypeChoice(answer, criteria);
+  }
+
   // src/cinema/seasons.ts
   var MERGE_GROUPS = ["剧集", "动漫"];
   var CN_NUM = { 零: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
@@ -7698,16 +8056,78 @@ tags:
     const { editing } = opts;
     const initSt = opts.stText;
     const ratingVal = opts.rating;
-    return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">${editing ? "编辑影视" : "添加影视"}</div>
-    <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>
+    const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
+    const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
+    const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>`;
+    const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
+    if (editing) {
+      return `<div class="cn-modal" style="width:100%">
+    <div class="cn-modal-title">编辑影视</div>
+    ${nameField}
     <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, "f-tag")}</div></div>
-    <div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>
-    <div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>
-    <div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>
-    <div class="dm-actions"><button class="dm-btn gold j-save">${editing ? "保存" : "添加"}</button></div>
+    ${stField}${ratingField}${reviewField}
+    <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
   </div>`;
+    }
+    return `<div class="cn-modal cn-modal--flip" style="width:100%">
+    <div class="form-flip j-flip">
+      <div class="form-face form-face--front">
+        <div class="cn-modal-title">添加影视</div>
+        ${nameField}${stField}
+        <div class="dm-actions"><button class="dm-btn gold j-parse"><span class="f-spin"></span><span class="j-parse-text">解析</span></button></div>
+      </div>
+      <div class="form-face form-face--back">
+        <div class="j-back"></div>
+        <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
+      </div>
+    </div>
+  </div>`;
+  }
+  function formTagChipHtml(typeTag, pending2 = false) {
+    var _a;
+    if (pending2) return '<span class="dm-chip dm-chip--pick is-pending"><span class="dm-skel"></span></span>';
+    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="tag" style="background:${typeColor((_a = getGroupForTag(typeTag)) != null ? _a : "其他")}">${esc(typeTag)}</button>`;
+  }
+  function formStChipHtml(stText) {
+    var _a;
+    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="st" style="background:${(_a = ST_COLOR[stText]) != null ? _a : "#888"}">${esc(stText)}</button>`;
+  }
+  function formBackHtml(d, o) {
+    var _a;
+    if (!d) return "";
+    const rows = [
+      ["豆瓣类型", d.genre],
+      ["导演", d.director],
+      ["主演", d.actors],
+      ["制片国家/地区", d.region],
+      ["上映日期", d.releaseDate],
+      ["片长", d.duration],
+      ["豆瓣评分", d.doubanRating]
+    ].filter(([, v]) => v !== "");
+    const hot = ((_a = d.hotComment) != null ? _a : "").trim();
+    const tagItems = formAllTags().map((t) => {
+      var _a2;
+      return `<button type="button" class="dm-pick-item${t === o.typeTag ? " is-on" : ""}" data-f-tag="${esc(t)}"><span class="dot" style="background:${typeColor((_a2 = getGroupForTag(t)) != null ? _a2 : "其他")}"></span>${esc(t)}</button>`;
+    }).join("");
+    const stItems = ["想看", "在看", "已看"].map((s) => {
+      var _a2;
+      return `<button type="button" class="dm-pick-item${s === o.stText ? " is-on" : ""}" data-f-st="${esc(s)}"><span class="dot" style="background:${(_a2 = ST_COLOR[s]) != null ? _a2 : "#888"}"></span>${esc(s)}</button>`;
+    }).join("");
+    return `
+    <div class="dm-head">
+      <div class="dm-poster">${d.posterUrl ? `<img src="${esc(d.posterUrl)}" alt="" onload="this.parentNode.classList.add('is-ready')" onerror="this.remove()">` : ""}</div>
+      <div style="flex:1;min-width:0">
+        <div class="dm-title">${esc(d.title)}</div>
+        <div class="dm-badges">${formTagChipHtml(o.typeTag, !!o.classifying)}${formStChipHtml(o.stText)}</div>
+      </div>
+    </div>
+    <div class="dm-pick-list" data-pick-list="tag">${tagItems}</div>
+    <div class="dm-pick-list" data-pick-list="st">${stItems}</div>
+    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
+    ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ""}
+    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ""}
+  `;
   }
   function aiRecName(r) {
     return (r == null ? void 0 : r.title) || (r == null ? void 0 : r.name) || "未命名";
@@ -7948,7 +8368,7 @@ tags:
     );
     return out;
   }
-  async function persistItem(item, app, edit) {
+  async function persistItem(item, app, edit, douban) {
     var _a;
     if (!item.file) {
       const folder = M.folderPath;
@@ -7966,9 +8386,27 @@ tags:
 `;
       const f = await app.vault.create(filePath, content);
       item.file = f;
-      if (item.review) {
+      if (item.review || douban) {
         await app.fileManager.processFrontMatter(f, (fm) => {
-          fm["影评"] = item.review;
+          var _a2, _b, _c, _d, _e;
+          if (item.review) fm["影评"] = item.review;
+          if (douban) {
+            const az = douban.apizero;
+            if (douban.detailUrl) fm["豆瓣链接"] = douban.detailUrl;
+            if (az) {
+              if (az.score) fm["豆瓣评分"] = az.score;
+              if (az.genre) fm["类型"] = normalizeListValue(az.genre);
+              if (az.area) fm["制片国家/地区"] = normalizeListValue(az.area);
+              if (az.duration) fm["片长"] = az.duration;
+              if (az.year) fm["上映日期"] = az.year;
+              if (az.shortComment) fm["热门短评"] = az.shortComment;
+            }
+            const director = (az == null ? void 0 : az.director) ? normalizeListValue(az.director) : (_b = (_a2 = douban.celebrities) == null ? void 0 : _a2.directors) != null ? _b : "";
+            const actors = (az == null ? void 0 : az.actor) ? normalizeListValue(az.actor) : (_d = (_c = douban.celebrities) == null ? void 0 : _c.casts) != null ? _d : "";
+            if (director) fm["导演"] = director;
+            if (actors) fm["主演"] = actors;
+            if ((_e = douban.celebrities) == null ? void 0 : _e.writers) fm["编剧"] = douban.celebrities.writers;
+          }
         });
       }
       return;
@@ -8217,41 +8655,186 @@ tags:
       review: item ? (_a = item.review) != null ? _a : "" : ""
     }));
     mountIcons(el);
+    if (!editing) el.classList.add("cn-ovl--flip");
     const cur = { tag: initTag, st: initSt };
+    let phase = editing ? "parsed" : "idle";
+    let classifying = false;
+    let parsed = null;
+    let userPickedTag = false;
     const nameInput = el.querySelector(".j-name");
+    const parseBtn = el.querySelector(".j-parse");
     const saveBtn = el.querySelector(".j-save");
-    const idleSaveText = editing ? "保存" : "添加";
-    const refreshDupMark = () => {
-      if (!nameInput) return;
-      const dup = isDuplicateName(nameInput.value.trim(), item == null ? void 0 : item.name);
-      nameInput.classList.toggle("is-dup", dup);
-      if (saveBtn) {
-        saveBtn.disabled = dup;
-        saveBtn.textContent = dup ? DUP_NAME_HINT : idleSaveText;
+    const flipEl = el.querySelector(".j-flip");
+    const backSlot = el.querySelector(".j-back");
+    const refreshFormState = () => {
+      var _a2;
+      const name = (_a2 = nameInput == null ? void 0 : nameInput.value.trim()) != null ? _a2 : "";
+      const dup = !!name && isDuplicateName(name, item == null ? void 0 : item.name);
+      if (nameInput) nameInput.classList.toggle("is-dup", dup);
+      if (parseBtn) {
+        const busy = phase === "parsing";
+        parseBtn.disabled = dup || busy;
+        parseBtn.classList.toggle("is-parsing", busy);
+        const txt = parseBtn.querySelector(".j-parse-text");
+        if (txt) txt.textContent = dup ? DUP_NAME_HINT : busy ? "解析中" : "解析";
       }
+      if (saveBtn) {
+        saveBtn.disabled = dup || phase === "parsing" || classifying;
+        saveBtn.textContent = dup ? DUP_NAME_HINT : "保存";
+      }
+      el.querySelectorAll("[data-f-tag]").forEach((x) => x.classList.toggle("is-scanning", phase === "parsing"));
     };
-    nameInput == null ? void 0 : nameInput.addEventListener("input", refreshDupMark);
-    refreshDupMark();
-    el.querySelectorAll("[data-f-tag]").forEach((b) => b.addEventListener("click", () => {
-      var _a2;
-      cur.tag = (_a2 = b.dataset.fTag) != null ? _a2 : cur.tag;
-      el.querySelectorAll("[data-f-tag]").forEach((x) => x.classList.toggle("is-on", x === b));
-    }));
-    el.querySelectorAll("[data-f-st]").forEach((b) => b.addEventListener("click", () => {
-      var _a2;
-      cur.st = (_a2 = b.dataset.fSt) != null ? _a2 : cur.st;
-      el.querySelectorAll("[data-f-st]").forEach((x) => x.classList.toggle("is-on", x === b));
+    const applyTagOn = () => {
+      el.querySelectorAll("[data-f-tag]").forEach((b) => b.classList.toggle("is-on", b.dataset.fTag === cur.tag));
+    };
+    const applyStOn = () => {
+      el.querySelectorAll("[data-f-st]").forEach((b) => b.classList.toggle("is-on", b.dataset.fSt === cur.st));
       const show = cur.st === "已看";
-      el.querySelector(".j-rating").style.display = show ? "" : "none";
-      el.querySelector(".j-review").style.display = show ? "" : "none";
-    }));
+      el.querySelectorAll(".j-rating").forEach((x) => {
+        x.style.display = show ? "" : "none";
+      });
+      el.querySelectorAll(".j-review").forEach((x) => {
+        x.style.display = show ? "" : "none";
+      });
+    };
+    const flipToBack = () => {
+      if (!flipEl) return;
+      void flipEl.offsetHeight;
+      const start = () => {
+        if (!el.isConnected) return;
+        flipEl.classList.add("is-flipped", "is-flipping");
+        const clear = () => flipEl.classList.remove("is-flipping");
+        flipEl.addEventListener("animationend", clear, { once: true });
+        window.setTimeout(clear, 1200);
+      };
+      if (typeof requestAnimationFrame === "function") requestAnimationFrame(start);
+      else window.setTimeout(start, 16);
+    };
+    const previewDataOf = (q) => {
+      var _a2, _b2, _c2, _d, _e, _f, _g, _h;
+      if (!q) return null;
+      const az = q.apizero;
+      return {
+        posterUrl: q.posterUrl,
+        title: q.title || (nameInput == null ? void 0 : nameInput.value.trim()) || "",
+        typeTag: cur.tag,
+        genre: (az == null ? void 0 : az.genre) ? normalizeListValue(az.genre) : "",
+        director: (az == null ? void 0 : az.director) ? normalizeListValue(az.director) : (_b2 = (_a2 = q.celebrities) == null ? void 0 : _a2.directors) != null ? _b2 : "",
+        actors: (az == null ? void 0 : az.actor) ? normalizeListValue(az.actor) : (_d = (_c2 = q.celebrities) == null ? void 0 : _c2.casts) != null ? _d : "",
+        region: (az == null ? void 0 : az.area) ? normalizeListValue(az.area) : "",
+        releaseDate: (_e = az == null ? void 0 : az.year) != null ? _e : "",
+        duration: (_f = az == null ? void 0 : az.duration) != null ? _f : "",
+        doubanRating: (_g = az == null ? void 0 : az.score) != null ? _g : "",
+        doubanUrl: q.detailUrl,
+        hotComment: (_h = az == null ? void 0 : az.shortComment) != null ? _h : ""
+      };
+    };
+    async function runParse() {
+      var _a2, _b2, _c2, _d, _e, _f;
+      const name = (_a2 = nameInput == null ? void 0 : nameInput.value.trim()) != null ? _a2 : "";
+      if (!name) {
+        notice("请输入名称", "warning");
+        return;
+      }
+      if (hasIllegalNameChar(name)) {
+        notice(`${ILLEGAL_NAME_HINT}，请修改`, "error");
+        return;
+      }
+      phase = "parsing";
+      refreshFormState();
+      const q = await queryDoubanForPreview(app, name);
+      if (!q.ok) {
+        phase = "idle";
+        refreshFormState();
+        notice(
+          q.reason === "blocked" ? "豆瓣搜索被风控，稍后再试" : q.reason === "notfound" ? "豆瓣没有找到这部影视" : "网络不畅，未能获取豆瓣信息",
+          "warning"
+        );
+        return;
+      }
+      parsed = q.data;
+      phase = "parsed";
+      classifying = true;
+      renderBack();
+      flipToBack();
+      refreshFormState();
+      try {
+        const az = q.data.apizero;
+        const mediaType = (_c2 = (_b2 = q.data.celebrities) == null ? void 0 : _b2.mediaType) != null ? _c2 : null;
+        const decided = await decideCinemaType({
+          title: q.data.title,
+          isTv: az ? az.isTv : mediaType ? mediaType === "tv" : null,
+          area: (_d = az == null ? void 0 : az.area) != null ? _d : null,
+          genre: (_e = az == null ? void 0 : az.genre) != null ? _e : null,
+          year: (_f = az == null ? void 0 : az.year) != null ? _f : null
+        });
+        if (decided && !userPickedTag) cur.tag = decided;
+      } catch (e) {
+      }
+      classifying = false;
+      updateBadges();
+      refreshFormState();
+    }
+    function renderBack() {
+      if (!backSlot) return;
+      backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
+      applyTagOn();
+      applyStOn();
+    }
+    const closePickLists = () => {
+      el.querySelectorAll("[data-pick-list]").forEach((l) => l.classList.remove("is-open"));
+    };
+    const updateBadges = () => {
+      const row = backSlot == null ? void 0 : backSlot.querySelector(".dm-badges");
+      if (row) row.innerHTML = formTagChipHtml(cur.tag) + formStChipHtml(cur.st);
+      applyTagOn();
+      applyStOn();
+    };
+    nameInput == null ? void 0 : nameInput.addEventListener("input", refreshFormState);
+    refreshFormState();
+    applyStOn();
+    el.addEventListener("click", (e) => {
+      var _a2, _b2;
+      const t = e.target;
+      const pick = t.closest("[data-pick]");
+      if (pick) {
+        const key = pick.dataset.pick;
+        const target = el.querySelector(`[data-pick-list="${key}"]`);
+        const willOpen = !!target && !target.classList.contains("is-open");
+        closePickLists();
+        if (target && willOpen) target.classList.add("is-open");
+        return;
+      }
+      const tagBtn = t.closest("[data-f-tag]");
+      if (tagBtn) {
+        cur.tag = (_a2 = tagBtn.dataset.fTag) != null ? _a2 : cur.tag;
+        userPickedTag = true;
+        closePickLists();
+        updateBadges();
+        return;
+      }
+      const stBtn = t.closest("[data-f-st]");
+      if (stBtn) {
+        cur.st = (_b2 = stBtn.dataset.fSt) != null ? _b2 : cur.st;
+        closePickLists();
+        updateBadges();
+      }
+    });
     bindFormSubmit(el, () => {
       var _a2;
-      return (_a2 = el.querySelector(".j-save")) == null ? void 0 : _a2.click();
+      if (phase === "idle" && !editing) {
+        void runParse();
+        return;
+      }
+      (_a2 = el.querySelector(".j-save")) == null ? void 0 : _a2.click();
     });
     if (!isMobileEnv()) (_b = el.querySelector(".j-name")) == null ? void 0 : _b.focus();
+    parseBtn == null ? void 0 : parseBtn.addEventListener("click", () => {
+      void runParse();
+    });
     (_c = el.querySelector(".j-save")) == null ? void 0 : _c.addEventListener("click", () => {
       var _a2;
+      if (phase === "parsing" || classifying) return;
       const name = el.querySelector(".j-name").value.trim();
       if (!name) {
         notice("请输入名称", "warning");
@@ -8263,12 +8846,14 @@ tags:
       }
       const stChanged = !editing || !item || item.status !== (cur.st === "想看" ? STATUS_WANT : cur.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED);
       const date = stChanged ? localNow() : item.watchDate || localNow();
-      const rating = cur.st === "已看" ? parseFloat(el.querySelector(".j-range").value) : cur.st === "在看" ? 0 : -1;
-      const review = cur.st === "已看" ? el.querySelector(".j-review-t").value.trim() : editing && item ? (_a2 = item.review) != null ? _a2 : "" : "";
+      const ratingBox = el.querySelector(".j-range");
+      const rating = cur.st === "已看" ? ratingBox ? parseFloat(ratingBox.value) : DEFAULT_RATING : cur.st === "在看" ? 0 : -1;
+      const reviewBox = el.querySelector(".j-review-t");
+      const review = reviewBox ? reviewBox.value.trim() : editing && item ? (_a2 = item.review) != null ? _a2 : "" : "";
       if (editing && item) {
         void saveEdit(item, { name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
       } else {
-        void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review }, app, close);
+        void saveNew({ name, tag: cur.tag, st: cur.st, rating, date, review, douban: parsed }, app, close);
       }
     });
   }
@@ -8287,7 +8872,7 @@ tags:
         return;
       }
       M.items.unshift(it);
-      await persistItem(it, app);
+      await persistItem(it, app, void 0, p.douban);
       emitDomainEvent("movie", { kind: "created", name: p.name, status: st === STATUS_WANT ? "want" : st === STATUS_WATCHING ? "watching" : "watched", rating: p.rating, review: p.review || null });
       if (it.file) enqueueDoubanFetch(it.file, it.name);
       close();
@@ -8924,7 +9509,15 @@ tags:
     cinemaSortMode: "date",
     cinemaStatusFilter: "",
     cinemaGridColumns: "5",
-    cinemaMergeSeasons: true
+    cinemaMergeSeasons: true,
+    // 「解析」链路（issue 395）：原型走 fake requestUrl 的罐头网关，
+    // 这里的密钥非空只为让 isJevConfigured / ApiZero 分支成立，不会真的发出去。
+    cinemaApizeroKey: "fake-apizero-key",
+    cinemaDoubanCookie: "",
+    jevEnabled: true,
+    jevApiKey: "fake-jev-key",
+    jevEndpoint: "https://api.typesafe.ai/v1/systemone",
+    jevModel: "jev-1.13.0"
   };
   function injectSettings() {
     if (new URLSearchParams(location.search).get("merge") === "0") settingsStore.cinemaMergeSeasons = false;

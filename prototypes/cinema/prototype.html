@@ -148,6 +148,12 @@
     window.__st = { pass: 0, fail: [] };
     const t = (name, cond) => cond ? window.__st.pass++ : window.__st.fail.push(name);
     const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    /** 轮询等待条件成立（解析分两段后时序变宽，固定 sleep 容易 flake） */
+    const until = async (fn, ms = 4000) => {
+      const t0 = Date.now();
+      while (Date.now() - t0 < ms) { if (fn()) return true; await sleep(50); }
+      return false;
+    };
     (async () => {
       const res = document.querySelector('#stResult');
       try {
@@ -291,15 +297,41 @@
         dt('.j-back').click();
         await sleep(80);
 
-        // 表单（桌面）：14 类型 choice + 状态切已看 → 添加「测试影片」
+        // 表单（桌面，issue 395 双面卡片）：正面只有名称 + 状态 → 解析 → 翻面 → 背面保存
         dt('[data-cinema-add]').click();
         await sleep(80);
-        t('表单14类型choice', dd.querySelectorAll('.f-choice-btn[data-f-tag]').length === 14
-          && dt('.cn-modal .cn-modal-title')?.textContent === '添加影视');
+        t('正面只有名称与状态', dt('.cn-modal .cn-modal-title')?.textContent === '添加影视'
+          && !dt('.cn-modal .form-face--front .j-tags') && !!dt('.cn-modal .j-parse'));
         dt('.cn-modal .j-name').value = '测试影片';
-        dt('.cn-modal [data-f-st="已看"]').click();
-        await sleep(50);
-        t('切已看显评分影评', dt('.cn-modal .j-rating').style.display !== 'none' && dt('.cn-modal .j-review').style.display !== 'none');
+        dt('.cn-modal .j-parse').click();
+        // 原型罐头：豆瓣两跳各 500ms → 约 1 秒翻面；Jev 判定再 1 秒（真实插件无这些延迟）
+        t('约1秒后翻面', await until(() => !!dt('.cn-modal .form-flip.is-flipped'), 2600));
+        t('背面是详情形制', !!dt('.cn-modal .form-face--back .dm-title') && !dt('.cn-modal .form-face--back .j-rating'));
+        t('无返回按钮', !dt('.cn-modal .j-flip-back'));
+        t('徽标无小三角', !dt('.cn-modal .form-face--back .dm-caret'));
+        // 翻面时分类还在判定：占位骨架 + 保存锁着（2026-09-21 拆两段）
+        t('分类先占位', !!dt('.cn-modal .form-face--back .dm-chip--pick.is-pending'));
+        t('判定中锁保存', dt('.cn-modal .j-save').disabled);
+        t('分类占位换真值', await until(() => !dt('.cn-modal .form-face--back .dm-chip--pick.is-pending')
+          && !!dt('.cn-modal .form-face--back [data-pick="tag"]'), 4000));
+        t('判定完解锁保存', !dt('.cn-modal .j-save').disabled);
+        // 分类徽标 → 下拉展开 → 选中即回填（就地换徽标同时收起）
+        // 下拉展开/收起走 .is-open 类（不再是 hidden 瞬切，见 styles.css 全域动效段）
+        t('分类下拉初始收起', !dt('.cn-modal [data-pick-list="tag"]').classList.contains('is-open'));
+        dt('.cn-modal .form-face--back [data-pick="tag"]').click();
+        await sleep(80);
+        t('分类下拉展开', dt('.cn-modal [data-pick-list="tag"]').classList.contains('is-open'));
+        t('下拉候选13项', dt('.cn-modal [data-pick-list="tag"]').querySelectorAll('.dm-pick-item[data-f-tag]').length === 13);
+        dt('.cn-modal [data-pick-list="tag"] [data-f-tag="美剧"]').click();
+        await sleep(80);
+        t('下拉选中回填', (dt('.cn-modal .form-face--back [data-pick="tag"]')?.textContent || '').includes('美剧')
+          && !dt('.cn-modal [data-pick-list="tag"]').classList.contains('is-open'));
+        // 状态下拉 → 已看（评分按 DEFAULT_RATING 落盘，见下方 fmField 断言）
+        dt('.cn-modal .form-face--back [data-pick="st"]').click();
+        await sleep(80);
+        dt('.cn-modal [data-pick-list="st"] [data-f-st="已看"]').click();
+        await sleep(80);
+        t('状态下拉选中', (dt('.cn-modal .form-face--back [data-pick="st"]')?.textContent || '').includes('已看'));
         dt('.cn-modal .j-save').click();
         await sleep(600);
         t('新增写库' + (DATA.length + 1) + '卡', dtCards() === DATA.length + 1 && !!localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
@@ -310,11 +342,11 @@
 
         // 右键菜单（桌面）：已看卡 5 项（无标记动作项）
         // 浮层已统一走 core/item-actions（.bz-item-menu 挂 document.body，不在面板树内）
-        const dtDoc = document.querySelector('#dtHost iframe').contentDocument;
+        const dtEl = document.querySelector('#dtHost iframe').contentDocument;
         ctxCard(cardByName(dd, '测试影片'));
         await sleep(100);
-        t('右键菜单5项(已看)', dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item').length === 5
-          && ![...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].some((b) => b.textContent.includes('标记')));
+        t('右键菜单5项(已看)', dtEl.querySelectorAll('.bz-item-menu .bz-item-menu-item').length === 5
+          && ![...dtEl.querySelectorAll('.bz-item-menu .bz-item-menu-item')].some((b) => b.textContent.includes('标记')));
 
         // 状态流转（桌面，种子想看片：想看 → 在看 → 已看；跑完还原 frontmatter 保自检可重复）
         const wantName = (DATA.find((x) => x.status === '想看') || {}).name;
@@ -322,30 +354,35 @@
         const wantOrig = localStorage.getItem(wantKey);
         ctxCard(cardByName(dd, wantName));
         await sleep(100);
-        t('右键菜单7项(想看)', dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item').length === 7);
-        clickReal([...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('标记在看')));
+        t('右键菜单7项(想看)', dtEl.querySelectorAll('.bz-item-menu .bz-item-menu-item').length === 7);
+        clickReal([...dtEl.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('标记在看')));
         await sleep(500);
         t('流转在看徽标', badgeOf(cardByName(dd, wantName)) === '在看' && fmField(wantName, '评分') === '0');
         ctxCard(cardByName(dd, wantName));
         await sleep(100);
-        t('在看态无标记在看项', ![...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].some((b) => b.textContent.includes('标记在看')));
-        clickReal([...dtDoc.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('标记已看')));
-        await sleep(500);
+        t('在看态无标记在看项', ![...dtEl.querySelectorAll('.bz-item-menu .bz-item-menu-item')].some((b) => b.textContent.includes('标记在看')));
+        clickReal([...dtEl.querySelectorAll('.bz-item-menu .bz-item-menu-item')].find((b) => b.textContent.includes('标记已看')));
+        await sleep(400);
+        // 「标记已看」自 memo item-1789105594322 起改走**编辑窗**（评分影评由用户确认后才落盘），
+        // 不再点击即生效——旧断言按老设计写，少了这次保存，弹窗一直开着把后续点击全挡住。
+        t('标记已看开编辑窗', dt('.cn-modal .cn-modal-title')?.textContent === '编辑影视');
+        dt('.cn-modal .j-save').click();
+        await sleep(600);
         t('流转已看收徽标', badgeOf(cardByName(dd, wantName)) === null && fmField(wantName, '评分') === '5');
 
         // 长按抽屉（移动）：统一手势 core/dom.longPress（touchstart 被动监听，500ms 阈值）
-        const mobDoc = document.querySelector('#mobHost iframe').contentDocument;
+        const mobEl = document.querySelector('#mobHost iframe').contentDocument;
         const lpCard = mob('.m-grid .pcard');
         lpCard.dispatchEvent(new Event('touchstart', { bubbles: true }));
         await sleep(700);
-        t('长按抽屉开', !!mobDoc.querySelector('.bz-item-sheet') && !!mobDoc.querySelector('.cn-sheet-name')
-          && mobDoc.querySelectorAll('.bz-item-sheet .bz-item-sheet-item').length >= 4);
+        t('长按抽屉开', !!mobEl.querySelector('.bz-item-sheet') && !!mobEl.querySelector('.cn-sheet-name')
+          && mobEl.querySelectorAll('.bz-item-sheet .bz-item-sheet-item').length >= 4);
         // 长按松手会补发一次合成 click（会命中刚打开的遮罩把抽屉关掉）——core 的静置窗口吞掉它；
         // 越过窗口（400ms）后再点遮罩应当能关
         await sleep(500);
-        mobDoc.querySelector('.bz-item-sheet-mask').click();
+        mobEl.querySelector('.bz-item-sheet-mask').click();
         await sleep(120);
-        t('抽屉遮罩关闭', !mobDoc.querySelector('.bz-item-sheet'));
+        t('抽屉遮罩关闭', !mobEl.querySelector('.bz-item-sheet'));
 
         // 头行钮序（移动 m-acts）：添加最前 → AI → 分析 → 关闭最后；设置钮退役（设置走插件设置页）
         const acts = [...mob('.m-acts').querySelectorAll('button')];
@@ -360,11 +397,14 @@
         const dm = dt('.cn-ovl .cn-modal');
         t('详情弹窗', !!dm && dm.querySelector('.dm-title')?.textContent === '测试影片');
         dm.querySelector('.j-del').click();
-        await sleep(80);
-        const confirm = dt('.cn-confirm');
-        t('删除确认三段式', !!confirm && confirm.querySelector('.cn-confirm-title')?.textContent === '删除影视'
+        await sleep(150);
+        // 删除确认 = core flow-dialog 标准双动作（取消左/删除右：__shared_confirm_ok__）。
+        // 旧断言的 .cn-confirm / .cn-confirm-title 是自绘确认框的类名——那套已收编 core/flow-dialog，
+        // src 里 grep 不到 cn-confirm，断言形态跟 belongings / favorites 两个域对齐。
+        const confirm = dt('.bz-flow-dialog');
+        t('删除确认走 flow-dialog', !!confirm && confirm.textContent.includes('删除影视')
           && confirm.textContent.includes('回收站'));
-        clickReal(confirm.querySelector('.j-del'));
+        clickReal(confirm.querySelector('#__shared_confirm_ok__'));
         await sleep(600);
         t('删除后' + DATA.length + '卡', dtCards() === DATA.length && !localStorage.getItem('bz-sim:我的/影视/《测试影片》.md'));
         await sleep(900);
@@ -406,7 +446,9 @@
         res.textContent = window.__st.fail.length ? '自检失败' : `自检通过 ${window.__st.pass}`;
         res.className = window.__st.fail.length ? 'bad' : 'ok';
       } catch (err) {
-        document.title = 'SELFTEST ERR ' + (err && err.message || err);
+        // 报错必须带进度：只报 message 时无法判断断在哪一步（2026-09-21 排查双面卡片时吃过亏）
+        document.title = 'SELFTEST ERR @pass=' + window.__st.pass
+          + ' fail=[' + window.__st.fail.join('|') + '] ' + (err && err.message || err);
         res.textContent = '自检异常';
         res.className = 'bad';
       }

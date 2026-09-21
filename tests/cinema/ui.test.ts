@@ -13,6 +13,7 @@ import { M, resetCinemaState } from '../../src/cinema/state';
 import { rebuildItems } from '../../src/cinema/data';
 import { runAIRecommend, runSimilarRecommend, quickAddWant, parseRecommendJson } from '../../src/cinema/recommend';
 import { createOverlay, closeOverlay, openAddModalDirect, openRandomMovie, renderAll, renderSoft } from '../../src/cinema/ui';
+import { configureFetchQueue, type DoubanQueryOutcome } from '../../src/cinema/douban-queue';
 import { ensureCinema, unloadCinema, openCinemaAnalysis, pickRandomCinema } from '../../src/cinema';
 import { setAISettingsProvider, resetAIProviderCache } from '../../src/core/ai';
 import { setApp } from '../../src/core/app';
@@ -23,6 +24,31 @@ import { emitDomainEvent, clearDomainEvents, onDomainEvent } from '../../src/cor
 function md(content: string): string {
   return content;
 }
+
+/** 表单「解析」罐头（issue 395）：新增态要先解析再翻面，单测不打真网络。
+ *  回一份完整豆瓣字段，让背面渲染出分类 / 状态 / 评分 / 影评全套。 */
+function cannedPreview(_app: unknown, name: string): Promise<DoubanQueryOutcome> {
+  return Promise.resolve({
+    ok: true,
+    data: {
+      title: name,
+      detailUrl: 'https://movie.douban.com/subject/1291561/',
+      sid: '1291561',
+      posterUrl: '',
+      apizero: {
+        name, year: '2001', score: '9.4', director: '宫崎骏', actor: '柊瑠美',
+        genre: '剧情, 动画, 奇幻', area: '日本', duration: '125分钟', episodes: '',
+        isTv: false, doubanUrl: 'https://movie.douban.com/subject/1291561/',
+        shortComment: '', commentAuthor: '',
+      },
+      celebrities: null,
+    },
+  });
+}
+
+// 文件级注入：本文件所有新增流程用例都走解析罐头（翻面 → 背面才有保存按钮与影评框）
+beforeEach(() => { configureFetchQueue({ preview: cannedPreview }); });
+afterEach(() => { configureFetchQueue({ preview: null }); });
 
 function seedVault(): { vault: MockVault; app: ReturnType<typeof mockAppWithVault> } {
   const vault = new MockVault();
@@ -370,14 +396,14 @@ describe('cinema 风格化面板（issue 236）', () => {
     nameInput.value = '星际穿越';
     nameInput.dispatchEvent(new Event('input', { bubbles: true }));
     const saveBtn = form.querySelector('.j-save') as HTMLButtonElement;
-    expect(saveBtn.disabled).toBe(true); // issue 396：重名即锁按钮，不再只靠点击后弹 toast
+    expect(saveBtn.disabled).toBe(true); // issue 394：重名即锁按钮，不再只靠点击后弹 toast
     expect(saveBtn.textContent).toBe('已存在同名影视');
     clickEl(saveBtn); // 禁用态点击不派发 → 无声拦截，弹窗留在原地
     expect(vault.files.has('我的/影视/《瑞克和莫蒂》.md')).toBe(true);
     expect(form.querySelector('.j-name')).toBeTruthy();
   });
 
-  it('编辑改名 → 名字改回不冲突即解锁按钮、文案复位（issue 396）', async () => {
+  it('编辑改名 → 名字改回不冲突即解锁按钮、文案复位（issue 394）', async () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -408,7 +434,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(vault.files.has('我的/影视/《瑞克和莫蒂》.md')).toBe(true);
   });
 
-  it('添加表单：默认想看（评分/影评隐藏）；切已看显隐联动；保存创建笔记 + progress 通知', async () => {
+  it('添加表单：正面只有名称+状态；解析翻面后背面是详情形制、分类可下拉改（issue 395）', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -417,19 +443,36 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(form.querySelector('.cn-modal-title')?.textContent).toBe('添加影视');
     expect((form.querySelector('.j-name') as HTMLInputElement).value).toBe('');
     expect(form.querySelector('[data-f-st="想看"]')?.classList.contains('is-on')).toBe(true);
-    expect((form.querySelector('.j-rating') as HTMLElement).style.display).toBe('none');
-    expect((form.querySelector('.j-review') as HTMLElement).style.display).toBe('none');
-    clickEl(form.querySelector('[data-f-st="已看"]'));
-    expect((form.querySelector('.j-rating') as HTMLElement).style.display).not.toBe('none');
+    // 正面只有名称 + 状态（2026-09-21 拍板）：分类/评分/影评都不在正面
+    expect(form.querySelector('.form-face--front .j-tags')).toBeNull();
+    expect(form.querySelector('.form-face--front .j-rating')).toBeNull();
+    expect(form.querySelector('.j-parse')).toBeTruthy();
+    // 解析 → 翻到背面（断言翻转类而非视觉过渡）
     (form.querySelector('.j-name') as HTMLInputElement).value = '新片A';
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    // 背面 = 详情弹窗形制（dm-head + 豆瓣信息），且无「我的记录」段（2026-09-21 去掉）
+    expect(form.querySelector('.form-face--back .dm-title')).toBeTruthy();
+    expect(form.querySelector('.form-face--back .j-rating')).toBeNull();
+    expect(form.querySelector('.form-face--back .j-review')).toBeNull();
+    // 分类徽标 → 点开下拉 → 选中即回填（同时收起）。
+    // 展开态走 .is-open 类而非 hidden 属性：hidden 是瞬切、没有中间态（styles.css 全域动效段）
+    const pickTag = form.querySelector('.form-face--back [data-pick="tag"]') as HTMLElement;
+    expect(pickTag).toBeTruthy();
+    expect((form.querySelector('[data-pick-list="tag"]') as HTMLElement).classList.contains('is-open')).toBe(false);
+    clickEl(pickTag);
+    expect((form.querySelector('[data-pick-list="tag"]') as HTMLElement).classList.contains('is-open')).toBe(true);
+    clickEl(form.querySelector('[data-pick-list="tag"] [data-f-tag="美剧"]'));
+    expect((form.querySelector('.form-face--back [data-pick="tag"]') as HTMLElement).textContent).toContain('美剧');
+    expect((form.querySelector('[data-pick-list="tag"]') as HTMLElement).classList.contains('is-open')).toBe(false);
     clickEl(form.querySelector('.j-save'));
     await vi.waitFor(() => expect(vault.files.has('我的/影视/《新片A》.md')).toBe(true));
     expect(M.items[0].name).toBe('新片A'); // 新增置首
-    expect(M.items[0].status).toBe(2);
+    expect(M.items[0].typeTag).toBe('美剧'); // 下拉选的分类落盘
     await vi.waitFor(() => expect(root.querySelectorAll('.d-scroll .pcard').length).toBe(5)); // renderAll 落地
   });
 
-  it('CM2：新增重名 → 锁保存按钮且不落盘不留幽灵条目（issue 396）', async () => {
+  it('CM2：新增重名 → 锁保存按钮且不落盘不留幽灵条目（issue 394）', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -447,7 +490,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     void vault;
   });
 
-  it('重名实时反馈：新增时输入已有名称 → 输入框标危险色，改正即消（issue 396）', async () => {
+  it('重名实时反馈：新增时输入已有名称 → 输入框标危险色，改正即消（issue 394）', async () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -463,7 +506,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(nameInput.classList.contains('is-dup')).toBe(false);
   });
 
-  it('重名实时反馈：编辑时输入自身原名不标红，改名撞他片才标红（issue 396）', async () => {
+  it('重名实时反馈：编辑时输入自身原名不标红，改名撞他片才标红（issue 394）', async () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1333,21 +1376,32 @@ describe('深审批A：写路径与 ui 行为回归', () => {
 
   // P2-1：建档模板只写最小安全集，影评走 processFrontMatter 同通道——多行/含「: 」的影评
   // 裸拼模板会写破 YAML → 影片从面板黏性消失、豆瓣 sweep 永不补抓（mock fail-closed 后旧实现必红）
-  it('P2-1：建档写多行影评 → frontmatter 可解析、重开面板影片可见且影评完整', async () => {
+  it('P2-1：建档最小安全集 + 编辑态写多行影评 → frontmatter 可解析、重开面板影片可见且影评完整', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    // ① 建档：模板只写最小安全集（新增态已无影评输入——issue 395 双面卡片去掉「我的记录」段）
     clickEl(root.querySelector('[data-cinema-add]'));
-    const form = root.querySelector('.cn-modal') as HTMLElement;
-    clickEl(form.querySelector('[data-f-st="已看"]'));
+    let form = root.querySelector('.cn-modal') as HTMLElement;
     (form.querySelector('.j-name') as HTMLInputElement).value = '多行影评片';
-    (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '第一幕: 开场\n第二幕: 高潮 #好';
+    clickEl(form.querySelector('.j-parse'));
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
     clickEl(form.querySelector('.j-save'));
     await vi.waitFor(() => expect(vault.files.has('我的/影视/《多行影评片》.md')).toBe(true));
-    const content = vault.files.get('我的/影视/《多行影评片》.md')!;
+    const content0 = vault.files.get('我的/影视/《多行影评片》.md')!;
     // P3-8：建档日期双引号（裸日期真机被 YAML 解析成 timestamp → Moment → 英文星期）
-    expect(content).toContain('观影日期: "');
-    // 模板本身无影评裸值 + 影评经 processFrontMatter 写入 → YAML 整体合法
+    expect(content0).toContain('观影日期: "');
+    expect(parseFrontmatter(content0), '建档 frontmatter 应可解析').toBeTruthy();
+    // ② 编辑态写多行/含「: 」影评：裸拼模板会写破 YAML → 影片从面板黏性消失、sweep 永不补抓
+    await vi.waitFor(() => expect(root.querySelectorAll('.cn-modal').length).toBe(0));
+    clickEl(pcardByName(root, '多行影评片'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
+    form = root.querySelector('.cn-modal') as HTMLElement;
+    clickEl(form.querySelector('[data-f-st="已看"]'));
+    (form.querySelector('.j-review-t') as HTMLTextAreaElement).value = '第一幕: 开场\n第二幕: 高潮 #好';
+    clickEl(form.querySelector('.j-save'));
+    await vi.waitFor(() => expect(vault.files.get('我的/影视/《多行影评片》.md')!.includes('第一幕')).toBe(true));
+    const content = vault.files.get('我的/影视/《多行影评片》.md')!;
     const fm = parseFrontmatter(content);
     expect(fm, 'frontmatter 应可解析（多行/含「: 」影评不再写破 YAML）').toBeTruthy();
     expect(fm!['影评']).toBe('第一幕: 开场\n第二幕: 高潮 #好');
@@ -1540,8 +1594,10 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     expect(hasNotice(/保存失败/)).toBe(true);
   });
 
-  // P3-13：表单 Enter 提交（core bindFormSubmit）——名称框纯 Enter 直存，Ctrl+Enter 恒提交
-  it('P3-13：表单名称框 Enter 提交建档；影评框 Ctrl+Enter 恒提交', async () => {
+  // P3-13：表单 Enter 提交（core bindFormSubmit）——双面卡片后按阶段分流（issue 395）：
+  // 正面 Enter = 解析翻面、背面 Enter = 提交建档；影评框 Ctrl+Enter 恒提交（走编辑态，
+  // 新增态已无影评框——去掉「我的记录」段）
+  it('P3-13：正面 Enter = 解析翻面、背面 Enter 提交建档；影评框 Ctrl+Enter 恒提交', async () => {
     const { app, vault } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -1550,17 +1606,24 @@ describe('深审批A：写路径与 ui 行为回归', () => {
     const nameInput = form.querySelector('.j-name') as HTMLInputElement;
     nameInput.value = '回车新片';
     nameInput.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true, cancelable: true }));
+    // 第一次 Enter 只解析翻面、不落盘
+    await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    expect(vault.files.has('我的/影视/《回车新片》.md')).toBe(false);
+    // 翻面后 Enter = 保存
+    nameInput.dispatchEvent(new KeyboardEvent('keypress', { key: 'Enter', bubbles: true, cancelable: true }));
     await vi.waitFor(() => expect(vault.files.has('我的/影视/《回车新片》.md')).toBe(true));
-    // 影评 textarea 聚焦时 Ctrl+Enter 恒提交（纯 Enter 换行不拦由 core 契约保证）
-    clickEl(root.querySelector('[data-cinema-add]'));
+    // 影评 textarea 聚焦时 Ctrl+Enter 恒提交（纯 Enter 换行不拦由 core 契约保证）。
+    // 等上一个弹窗真正关闭再开新的：saveNew 落盘后还有 close/renderAll 若干微任务，
+    // 抢在这之前开新表单会 querySelector 到旧弹窗（本用例是唯一连续两次打开表单的）
+    await vi.waitFor(() => expect(root.querySelectorAll('.cn-modal').length).toBe(0));
+    clickEl(pcardByName(root, '瑞克和莫蒂'));
+    clickEl((root.querySelector('.cn-modal') as HTMLElement).querySelector('.j-edit'));
     form = root.querySelector('.cn-modal') as HTMLElement;
-    (form.querySelector('.j-name') as HTMLInputElement).value = '组合键影片';
     clickEl(form.querySelector('[data-f-st="已看"]'));
     const review = form.querySelector('.j-review-t') as HTMLTextAreaElement;
     review.value = '组合键写的影评';
     review.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true, cancelable: true }));
-    await vi.waitFor(() => expect(vault.files.has('我的/影视/《组合键影片》.md')).toBe(true));
-    expect(M.items.find((i) => i.name === '组合键影片')!.review).toBe('组合键写的影评');
+    await vi.waitFor(() => expect(M.items.find((i) => i.name === '瑞克和莫蒂')!.review).toBe('组合键写的影评'));
   });
 
   // P3-14：list 页不预算 AI 页/分析页两份大字符串（分析页 19 板块全量统计），进页才构建

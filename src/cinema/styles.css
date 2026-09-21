@@ -168,6 +168,34 @@
 /* 热门短评（451/687 有值）：引文式左侧竖线，长评收 3 行 + 展开钮（行为层 data-dm-fold 接线） */
 .bz-cinema--midnight .dm-quote{font-size:12.5px;color:var(--ink-2);line-height:1.85;text-align:justify;border-left:2px solid var(--line);padding-left:10px}
 .bz-cinema--midnight .dm-quote.is-fold{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+/* 背面可点下拉（issue 395）：徽标点击展候选，选中即回填并重渲染（重渲染自带收起）。
+   .dm-pick-list 有 display:flex，[hidden] 的默认 display:none 会被盖掉，故显式兜一道。 */
+.bz-cinema--midnight button.dm-chip{border:none;cursor:pointer;font-family:inherit}
+/* 分类判定中的占位骨架（2026-09-21）：先占位、出结果再填值——不预告默认值，避免「先看到一个错值再变」。
+   徽标不带小三角（同日拍板）：能点就够了，不加装饰性指示。 */
+.bz-cinema--midnight .dm-chip--pick.is-pending{display:inline-flex;align-items:center;background:var(--chip);
+  border:1px solid var(--line);padding:3px 10px}
+@keyframes cnSkel{0%,100%{opacity:.3}50%{opacity:.9}}
+.bz-cinema--midnight .dm-skel{display:inline-block;width:32px;height:9px;border-radius:99px;background:var(--ink-3);
+  animation:cnSkel 1.1s ease-in-out infinite}
+/* 海报占位（仅表单背面）：未加载完脉动，img 加载完加 is-ready 淡入并停动画。
+   只挂 .form-face--back 作用域——详情弹窗的海报没有 onload 接线，全域加会一直脉动。 */
+@keyframes cnPosterPulse{0%,100%{background-color:var(--chip)}50%{background-color:var(--line)}}
+.bz-cinema--midnight .form-face--back .dm-poster{animation:cnPosterPulse 1.4s ease-in-out infinite}
+.bz-cinema--midnight .form-face--back .dm-poster.is-ready{animation:none}
+.bz-cinema--midnight .form-face--back .dm-poster img{opacity:0;transition:opacity .32s ease}
+.bz-cinema--midnight .form-face--back .dm-poster.is-ready img{opacity:1}
+/* 解析按钮的转圈 */
+@keyframes cnSpin{to{transform:rotate(360deg)}}
+.bz-cinema--midnight .f-spin{display:none;width:11px;height:11px;flex:none;box-sizing:border-box;
+  border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:cnSpin .7s linear infinite}
+.bz-cinema--midnight .j-parse.is-parsing .f-spin{display:inline-block}
+.bz-cinema--midnight .dm-pick-item{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);
+  background:var(--panel);border-radius:99px;padding:4px 10px;font-size:11.5px;color:var(--ink-2);
+  cursor:pointer;font-family:inherit}
+/* 候选清单的展开/收起过渡定义在文件末「影院全域动效」段（.is-open 类控制，不再用 hidden 瞬切） */
+.bz-cinema--midnight .dm-pick-item .dot{width:6px;height:6px;border-radius:50%}
+.bz-cinema--midnight .dm-pick-item.is-on{border-color:var(--gold);color:var(--ink);font-weight:600}
 .bz-cinema--midnight .dm-fold{margin-top:6px;padding:0;border:0;background:none;font-size:var(--bz-font-caption);color:var(--gold);cursor:pointer}
 /* 合并卡详情（issue 376）：片名后的「共 N 季」+ 条目行（各季在前、特别篇顺其后，点某行进该条详情）。
    动作行不放——找同类/编辑/删除都作用在一篇笔记上，合集级无处落地（ADR-0168）；
@@ -220,6 +248,67 @@
 .bz-cinema--midnight .f-choice-btn .dot{width:6px;height:6px;border-radius:50%}
 .bz-cinema--midnight .f-choice-btn.is-on{background:var(--gold);border-color:var(--gold);color:#fff;font-weight:600}
 .bz-cinema--midnight .f-choice-btn.is-on .dot{outline:1.5px solid #fff}
+/* ── 添加影视：双面翻转卡片（issue 395）——正面名称+状态 → 解析 → 翻到背面看全部信息。
+     3D 真实感三件套（2026-09-21 重做；原版 perspective:1400px + 单段 rotateY 被评「很假」）：
+     ① 透视拉近到 900px：旋转时能读出厚度与侧面，而不是平面翻片；
+     ② 翻转走 keyframes，中段 translateZ 抬起 22px——卡片像被捏起来翻过去再贴合落回。
+        过渡只能描述两端，做不出中段抬起，所以这里必须用动画，见行为层 flipToBack；
+     ③ 两面各压一层光照遮罩：正向受光 → 侧转背光变暗 → 背面翻正重新受光。
+        原来靠背面 opacity 淡入遮「突然闪现」，那恰恰加重了假——真卡片背面是被转过来的，不是淡进来的。
+     高度与居中由 grid 同格叠放解决（见下），行为层不参与——原先的「量高 + 过渡」每帧重排 = 卡顿源。 */
+.bz-cinema--midnight .cn-modal--flip{perspective:900px;perspective-origin:50% 50%;margin:auto;
+  /* 纯透视容器：卡片外观（底/边/圆角/阴影/内距）全部下放到两面。
+     否则转的是「白框里的一张纸」——框不动、纸在框里翻滚，一眼看穿是假的（2026-09-21 观感定位）。
+     overflow 必须 visible：旋转时卡片的投影会超出容器，裁掉就成了被切碎的碎片。
+     margin:auto 负责垂直居中——flex 居中在「背面比视口高」时会把顶部推出可视区且滚不到，
+     auto 外边距在溢出方向退化为 0，滚动条能从头滚起（2026-09-21 用户要求去掉顶部锚定）。 */
+  background:none;border:none;box-shadow:none;padding:0;max-height:none;overflow:visible}
+/* 两面用 grid 叠在**同一格**（1/1）：容器高度自动 = 较高那一面，于是**翻转全程高度零变化**。
+   原先靠行为层量高 + height 过渡补齐，每帧都要重排整个弹窗（含 flex 遮罩重新居中、滚动区重算），
+   首帧必然顿一下——这才是「翻转时卡顿」的根因，不是 3D 本身（2026-09-21 定位）。
+   同时两面都在行内居中 → 两个面的中心与容器中心重合 = 旋转中心，各自绕自己的中心转；
+   可见的那一面绝不会因为另一面变高而被推移。**居中之所以可行就在这一条**：原先锚顶是为了绕开
+   「高度一变卡片整体上移」，而那个上移的根因是面挂在容器顶边，不是居中本身。 */
+.bz-cinema--midnight .form-flip{position:relative;display:grid;transform-style:preserve-3d;will-change:transform}
+/* will-change:transform：把整棵子树提到独立合成层，旋转期间复用同一份光栅。
+   不提升的话，卡片那圈 48px 模糊阴影会在每一帧重绘——这是第二个卡顿来源。 */
+.bz-cinema--midnight .form-face{grid-area:1/1;align-self:center;position:relative;backface-visibility:hidden;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--bz-radius-md);
+  box-shadow:0 18px 48px #0005,0 2px 10px #0003;padding:18px 20px}
+/* 两面各向外推 .6/1px：共面时在 3D 空间里会穿插闪烁（80° 附近能同时看到两块）。 */
+.bz-cinema--midnight .form-face--front{transform:translateZ(.6px)}
+/* 滚动**不能**装在面上：元素自身带 overflow 时，Chromium 下 backface-visibility 会失灵，
+   翻到 80° 附近两面会同时可见（重影）。改由遮罩层承担滚动——它在 3D 上下文之外，不参与合成。 */
+.bz-cinema--midnight .form-face--back{transform:rotateY(180deg) translateZ(1px)}
+.bz-cinema--midnight .form-flip.is-flipped{transform:rotateY(180deg)}
+/* 旋转只走 keyframes，不叠 transition：两条同时作用于 transform 时引擎可能先起一条过渡再被动画
+   覆盖，首帧会顿一下（2026-09-21 定位）。is-flipped 只作终态锚点——动画万一没生效也落在正确姿势。 */
+.bz-cinema--midnight .form-flip.is-flipping{animation:cnFlipToBack .74s cubic-bezier(.34,.06,.16,1) both}
+@keyframes cnFlipToBack{
+  0%{transform:rotateY(0deg) translateZ(0)}
+  44%{transform:rotateY(80deg) translateZ(22px)}
+  100%{transform:rotateY(180deg) translateZ(0)}
+}
+/* 光照遮罩：贴在面上的纯黑层，随面一起旋转 = 该面相对光源的角度变化。
+   inset 比卡片多铺 1px，避免旋转到边缘时露出未覆盖的细线。 */
+.bz-cinema--midnight .form-face::after{content:'';position:absolute;inset:-1px;border-radius:var(--bz-radius-md);
+  background:#0b0906;opacity:0;pointer-events:none}
+.bz-cinema--midnight .form-flip.is-flipping .form-face--front::after{animation:cnShadeFront .74s ease-in-out both}
+.bz-cinema--midnight .form-flip.is-flipping .form-face--back::after{animation:cnShadeBack .74s ease-in-out both}
+@keyframes cnShadeFront{0%{opacity:0}44%{opacity:.46}100%{opacity:.46}}
+@keyframes cnShadeBack{0%{opacity:.46}52%{opacity:.46}100%{opacity:0}}
+/* 翻转弹窗：垂直居中（2026-09-21 用户要求）。居中可行性的论证见 .form-flip 那段——
+   结论是「能居中」，原先锚顶属于绕开症状。上下留 6vh：背面比视口高时由本层滚动，
+   不能装在面上（见上：会破坏 backface-visibility）。 */
+.bz-cinema--midnight .cn-ovl.cn-ovl--flip{padding-top:6vh;padding-bottom:6vh;overflow-y:auto}
+/* 解析中：全部分类 chip 的边框走流光扫过（2026-09-21 用户点名「所有分类的边框变成流动的特效」） */
+@keyframes cnFormScan{from{background-position:200% 50%}to{background-position:-200% 50%}}
+.bz-cinema--midnight .f-choice-btn.is-scanning{
+  border-color:transparent;
+  background-image:linear-gradient(90deg,var(--line) 0%,var(--gold) 45%,var(--gold) 55%,var(--line) 100%);
+  background-size:200% 100%;
+  animation:cnFormScan 1.3s linear infinite;
+}
 .bz-cinema--midnight .f-range-row{display:flex;align-items:center;gap:var(--bz-space-md)}
 .bz-cinema--midnight .f-range{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:99px;background:var(--chip);outline:none}
 .bz-cinema--midnight .f-range::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:50%;background:var(--gold);cursor:pointer;border:2px solid var(--panel);box-shadow:0 1px 4px #0003}
@@ -593,3 +682,92 @@
 /* mob 列表空态：m-scroll 常态是块级滚动容器，空态页（.cn-empty-page flex:1）要撑满居中
    → 空态时容器转 flex（与 desk .d-main 的 flex 列同效；jsdom 无布局值依赖） */
 .bz-cinema--midnight .m-scroll.cn-mempty{display:flex;flex-direction:column}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   影院全域动效（2026-09-21）。节奏统一三档：微交互 .16s / 面板与列表 .28s /
+   空间位移 .44s；缓动统一走 cubic-bezier(.22,.82,.3,1)（先快后缓、末尾收势），
+   免得同一屏里各动各的节奏。整段受 prefers-reduced-motion 收束（见段尾）。
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── 弹窗：遮罩淡入 + 面板由 .96 缩放上浮（原来弹窗是硬切进来的） ── */
+@keyframes cnOvlIn{from{opacity:0}to{opacity:1}}
+@keyframes cnModalIn{from{opacity:0;transform:translateY(12px) scale(.962)}to{opacity:1;transform:none}}
+.bz-cinema--midnight .cn-ovl{animation:cnOvlIn .2s ease both}
+.bz-cinema--midnight .cn-modal{animation:cnModalIn .3s cubic-bezier(.22,.82,.3,1) both}
+
+/* ── 详情弹窗：面板浮起后内容分段接力（信息块多，逐段出现比整块砸下来耐看） ── */
+@keyframes cnRiseIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.bz-cinema--midnight .cn-modal--detail > *{animation:cnRiseIn .36s cubic-bezier(.22,.82,.3,1) both}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(2){animation-delay:.05s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(3){animation-delay:.1s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(4){animation-delay:.15s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(5){animation-delay:.2s}
+.bz-cinema--midnight .cn-modal--detail > *:nth-child(n+6){animation-delay:.25s}
+
+/* ── 卡片：抬升给足分量（原来只 -4px），海报跟着轻微推近；按下有回弹 ── */
+.bz-cinema--midnight .pw{transition:transform .28s cubic-bezier(.22,.82,.3,1),box-shadow .28s,border-color .2s}
+.bz-cinema--midnight .pw img{transition:transform .44s cubic-bezier(.22,.82,.3,1)}
+@media (hover: hover) {
+  .bz-cinema--midnight .pcard:hover .pw{transform:translateY(-7px);border-color:var(--gold);
+    box-shadow:0 16px 34px #00000052,0 3px 9px #0003}
+  .bz-cinema--midnight .pcard:hover .pw img{transform:scale(1.045)}
+}
+.bz-cinema--midnight .pcard:active .pw{transform:translateY(-2px) scale(.986)}
+
+/* ── 按钮与可选项：hover 有微光、按下有回弹（原来只有颜色变化，点击缺手感） ── */
+.bz-cinema--midnight .dm-btn,
+.bz-cinema--midnight .f-choice-btn,
+.bz-cinema--midnight .dm-pick-item,
+.bz-cinema--midnight .ai-start,
+.bz-cinema--midnight .rec-add,
+.bz-cinema--midnight .seg button,
+.bz-cinema--midnight .rail-item,
+.bz-cinema--midnight .m-tool,
+.bz-cinema--midnight .sp-back{transition:color .16s,border-color .16s,background .16s,transform .16s,filter .16s}
+.bz-cinema--midnight .dm-btn:active,
+.bz-cinema--midnight .f-choice-btn:active,
+.bz-cinema--midnight .dm-pick-item:active,
+.bz-cinema--midnight .ai-start:active,
+.bz-cinema--midnight .rec-add:active,
+.bz-cinema--midnight .seg button:active{transform:scale(.955)}
+
+/* ── 下拉候选：展开不再「啪」地出现（原先是 hidden 瞬切，没有中间态）──
+   收起态用 max-height:0 + opacity:0 + overflow:hidden，展开走 .is-open 类；
+   边框/内距/外边距一并过渡，否则盒子会先撑开再淡入。 */
+.bz-cinema--midnight .dm-pick-list{display:flex;flex-wrap:wrap;gap:6px;
+  max-height:0;opacity:0;overflow:hidden;padding:0 10px;margin-top:0;border:1px solid transparent;
+  border-radius:var(--bz-radius-sm);background:var(--chip);
+  transition:max-height .28s cubic-bezier(.22,.82,.3,1),opacity .2s ease,
+    padding .28s cubic-bezier(.22,.82,.3,1),margin-top .28s,border-color .28s}
+.bz-cinema--midnight .dm-pick-list.is-open{max-height:280px;opacity:1;padding:8px 10px;margin-top:8px;border-color:var(--line)}
+
+/* ── 列表行与分析统计条：hover 的底色也是渐入，不是瞬变 ── */
+.bz-cinema--midnight .s-row,
+.bz-cinema--midnight .rec-row{transition:background .18s}
+
+/* ── 无障碍降级：**放缓 + 减幅**，不用 animation:none 一刀切 ──
+   ⚠️ Windows 关闭「窗口动画」时 Chromium 恒报 prefers-reduced-motion: reduce（本机 MinAnimate=0
+   实证），一刀切会把装饰动画一起杀掉，表现为「代码写了却没动」——core/styles.css:387 进度圈与
+   clipbook 面板标题都踩过同一个坑，两处的处置都是「放缓 + 减幅」。
+   本段同理：保留翻转与加载指示（功能性动效，关掉等于信息丢失），只压缩幅度、拉长周期。 */
+@media (prefers-reduced-motion: reduce) {
+  .bz-cinema--midnight .form-flip.is-flipping{animation-duration:1s}
+  .bz-cinema--midnight .cn-ovl,
+  .bz-cinema--midnight .cn-modal{animation-duration:.42s}
+  .bz-cinema--midnight .cn-modal--detail > *{animation-duration:.46s}
+  .bz-cinema--midnight .dm-pick-list{transition-duration:.46s}
+  .bz-cinema--midnight .pw{transition-duration:.42s}
+  /* 悬浮类改写必须留在 @media (hover: hover) 里（呈报#9 F4 触屏粘滞范式：圈外 :hover 清零），
+     所以这里嵌一层媒体而不是平铺——嵌套媒体同样计入门禁的媒体栈。 */
+  @media (hover: hover) {
+    .bz-cinema--midnight .pcard:hover .pw{transform:translateY(-3px)}
+    .bz-cinema--midnight .pcard:hover .pw img{transform:scale(1.018)}
+  }
+  .bz-cinema--midnight .pcard:active .pw{transform:translateY(-1px)}
+  .bz-cinema--midnight .dm-btn:active,
+  .bz-cinema--midnight .f-choice-btn:active,
+  .bz-cinema--midnight .dm-pick-item:active,
+  .bz-cinema--midnight .ai-start:active,
+  .bz-cinema--midnight .rec-add:active,
+  .bz-cinema--midnight .seg button:active{transform:none}
+}

@@ -1,4 +1,4 @@
-/* 源指纹 c42a57ceadd1c1be · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 386dd1629d09a704 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -37,8 +37,11 @@ var BZR_cinema = (() => {
     emptyPageHtml: () => emptyPageHtml,
     facePiecesHtml: () => facePiecesHtml,
     formAllTags: () => formAllTags,
+    formBackHtml: () => formBackHtml,
     formChoicesHtml: () => formChoicesHtml,
     formModalHtml: () => formModalHtml,
+    formStChipHtml: () => formStChipHtml,
+    formTagChipHtml: () => formTagChipHtml,
     itemByKey: () => itemByKey,
     itemKey: () => itemKey,
     listHeadHtml: () => listHeadHtml,
@@ -347,16 +350,78 @@ var BZR_cinema = (() => {
     const { editing } = opts;
     const initSt = opts.stText;
     const ratingVal = opts.rating;
-    return `<div class="cn-modal" style="width:100%">
-    <div class="cn-modal-title">${editing ? "编辑影视" : "添加影视"}</div>
-    <div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>
+    const nameField = `<div class="f-field"><span class="f-label">名 称</span><input class="f-input j-name" value="${esc(opts.name)}" placeholder="影视名称"></div>`;
+    const stField = `<div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>`;
+    const ratingField = `<div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
+      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>`;
+    const reviewField = `<div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>`;
+    if (editing) {
+      return `<div class="cn-modal" style="width:100%">
+    <div class="cn-modal-title">编辑影视</div>
+    ${nameField}
     <div class="f-field"><span class="f-label">类 型</span><div class="f-choice j-tags">${formChoicesHtml(formAllTags(), opts.typeTag, "f-tag")}</div></div>
-    <div class="f-field"><span class="f-label">状 态</span><div class="f-choice j-sts">${formChoicesHtml(["想看", "在看", "已看"], initSt, "f-st")}</div></div>
-    <div class="f-field j-rating" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">评 分</span>
-      <div class="f-range-row"><input type="range" class="f-range j-range" min="1" max="10" step="0.1" value="${ratingVal}"><span class="f-range-val j-rval">${Number(ratingVal).toFixed(1)}</span></div></div>
-    <div class="f-field j-review" style="display:${initSt === "已看" ? "" : "none"}"><span class="f-label">影 评</span><textarea class="f-input j-review-t" placeholder="写点什么…">${esc(opts.review)}</textarea></div>
-    <div class="dm-actions"><button class="dm-btn gold j-save">${editing ? "保存" : "添加"}</button></div>
+    ${stField}${ratingField}${reviewField}
+    <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
   </div>`;
+    }
+    return `<div class="cn-modal cn-modal--flip" style="width:100%">
+    <div class="form-flip j-flip">
+      <div class="form-face form-face--front">
+        <div class="cn-modal-title">添加影视</div>
+        ${nameField}${stField}
+        <div class="dm-actions"><button class="dm-btn gold j-parse"><span class="f-spin"></span><span class="j-parse-text">解析</span></button></div>
+      </div>
+      <div class="form-face form-face--back">
+        <div class="j-back"></div>
+        <div class="dm-actions"><button class="dm-btn gold j-save">保存</button></div>
+      </div>
+    </div>
+  </div>`;
+  }
+  function formTagChipHtml(typeTag, pending = false) {
+    var _a;
+    if (pending) return '<span class="dm-chip dm-chip--pick is-pending"><span class="dm-skel"></span></span>';
+    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="tag" style="background:${typeColor((_a = getGroupForTag(typeTag)) != null ? _a : "其他")}">${esc(typeTag)}</button>`;
+  }
+  function formStChipHtml(stText) {
+    var _a;
+    return `<button type="button" class="dm-chip dm-chip--pick" data-pick="st" style="background:${(_a = ST_COLOR[stText]) != null ? _a : "#888"}">${esc(stText)}</button>`;
+  }
+  function formBackHtml(d, o) {
+    var _a;
+    if (!d) return "";
+    const rows = [
+      ["豆瓣类型", d.genre],
+      ["导演", d.director],
+      ["主演", d.actors],
+      ["制片国家/地区", d.region],
+      ["上映日期", d.releaseDate],
+      ["片长", d.duration],
+      ["豆瓣评分", d.doubanRating]
+    ].filter(([, v]) => v !== "");
+    const hot = ((_a = d.hotComment) != null ? _a : "").trim();
+    const tagItems = formAllTags().map((t) => {
+      var _a2;
+      return `<button type="button" class="dm-pick-item${t === o.typeTag ? " is-on" : ""}" data-f-tag="${esc(t)}"><span class="dot" style="background:${typeColor((_a2 = getGroupForTag(t)) != null ? _a2 : "其他")}"></span>${esc(t)}</button>`;
+    }).join("");
+    const stItems = ["想看", "在看", "已看"].map((s) => {
+      var _a2;
+      return `<button type="button" class="dm-pick-item${s === o.stText ? " is-on" : ""}" data-f-st="${esc(s)}"><span class="dot" style="background:${(_a2 = ST_COLOR[s]) != null ? _a2 : "#888"}"></span>${esc(s)}</button>`;
+    }).join("");
+    return `
+    <div class="dm-head">
+      <div class="dm-poster">${d.posterUrl ? `<img src="${esc(d.posterUrl)}" alt="" onload="this.parentNode.classList.add('is-ready')" onerror="this.remove()">` : ""}</div>
+      <div style="flex:1;min-width:0">
+        <div class="dm-title">${esc(d.title)}</div>
+        <div class="dm-badges">${formTagChipHtml(o.typeTag, !!o.classifying)}${formStChipHtml(o.stText)}</div>
+      </div>
+    </div>
+    <div class="dm-pick-list" data-pick-list="tag">${tagItems}</div>
+    <div class="dm-pick-list" data-pick-list="st">${stItems}</div>
+    ${rows.length ? '<div class="dm-sec">豆 瓣 信 息</div>' + rows.map(([k, v]) => `<div class="dm-kv"><span class="dm-kv-k">${k}</span><span class="dm-kv-v">${esc(v)}</span></div>`).join("") : ""}
+    ${d.doubanUrl ? `<div class="dm-kv"><span class="dm-kv-k">豆瓣链接</span><span class="dm-kv-v"><a href="${esc(d.doubanUrl)}" target="_blank" rel="noopener">${esc(d.doubanUrl)}</a></span></div>` : ""}
+    ${hot ? `<div class="dm-sec">热 门 短 评</div><div class="dm-quote">${esc(hot)}</div>` : ""}
+  `;
   }
   function aiRecName(r) {
     return (r == null ? void 0 : r.title) || (r == null ? void 0 : r.name) || "未命名";

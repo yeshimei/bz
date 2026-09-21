@@ -118,6 +118,14 @@ const settingsStore: Record<string, unknown> = {
   cinemaStatusFilter: '',
   cinemaGridColumns: '5',
   cinemaMergeSeasons: true,
+  // 「解析」链路（issue 395）：原型走 fake requestUrl 的罐头网关，
+  // 这里的密钥非空只为让 isJevConfigured / ApiZero 分支成立，不会真的发出去。
+  cinemaApizeroKey: 'fake-apizero-key',
+  cinemaDoubanCookie: '',
+  jevEnabled: true,
+  jevApiKey: 'fake-jev-key',
+  jevEndpoint: 'https://api.typesafe.ai/v1/systemone',
+  jevModel: 'jev-1.13.0',
 };
 
 /** 设置注入（settings-provider + core/ai 共用同一 store；AI 无密钥 → 荐片走页内降级）

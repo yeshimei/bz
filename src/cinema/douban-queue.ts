@@ -13,7 +13,10 @@ import { sleep } from '../core/utils';
 import { tryGetSettings } from '../core/settings-provider';
 import { M } from './state';
 import { rebuildItems } from './data';
-import { fetchNoteDouban, type DoubanFetchDeps, type DoubanFetchOutcome } from './douban-fetcher';
+import { fetchNoteDouban, queryDoubanByName, type DoubanFetchDeps, type DoubanFetchOutcome, type DoubanQueryOutcome } from './douban-fetcher';
+
+/** 查询结果类型再导出：测试注入 `configureFetchQueue({ preview })` 时要用 */
+export type { DoubanQueryOutcome };
 
 /** 条目间隔 ms（防豆瓣限流，对齐原守护 FETCH_INTERVAL） */
 const FETCH_GAP_MS = 15000;
@@ -97,13 +100,28 @@ function fetchDepsFromSettings(app: App): DoubanFetchDeps {
   };
 }
 
+/** 表单「解析」查询器类型（测试注入面） */
+export type PreviewQuery = (app: App, name: string) => Promise<DoubanQueryOutcome>;
+/** 测试注入：解析查询器（默认走真 queryDoubanByName） */
+let previewFn: PreviewQuery | null = null;
+
+/** 表单「解析」入口（issue 395）：按片名查询豆瓣字段。
+ *  复用队列的 deps 组装（ApiZero Key / 豆瓣 Cookie / requestUrl 通道）——单一来源，
+ *  表单不自己拼一份 HTTP 层。 */
+export async function queryDoubanForPreview(app: App, name: string): Promise<DoubanQueryOutcome> {
+  return previewFn ? previewFn(app, name) : queryDoubanByName(name, fetchDepsFromSettings(app));
+}
+
 /** 测试注入：替换执行器 / 条目间隔 / 完成后刷新延迟 */
 export function configureFetchQueue(hooks: {
   fetch?: FetchNote;
   gapMs?: number;
   refreshDelayMs?: number;
+  /** 解析查询器；传 null 复位（测试 afterEach 用） */
+  preview?: PreviewQuery | null;
 }): void {
   if (hooks.fetch) fetchFn = hooks.fetch;
+  if (hooks.preview !== undefined) previewFn = hooks.preview;
   if (hooks.gapMs !== undefined) gapMs = hooks.gapMs;
   if (hooks.refreshDelayMs !== undefined) refreshDelayMs = hooks.refreshDelayMs;
 }
