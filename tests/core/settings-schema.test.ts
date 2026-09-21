@@ -19,9 +19,9 @@ function snapOf(partial: Partial<SettingsSnapshot>): SettingsSnapshot {
 describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三组）', () => {
   const schema = mainSettingsSchema();
 
-  it('issue 331：五个分组卡片（带 icon）——服务商/模型配置/数据源凭据 + 数据存储路径 + 通知', () => {
-    expect(schema.groups.map((g) => g.name)).toEqual(['服务商', '模型配置', '数据源凭据', '数据存储路径', '通知']);
-    expect(schema.groups.map((g) => g.icon)).toEqual(['plug-zap', 'cpu', 'key-round', 'folder-open', 'bell']);
+  it('issue 331：五个分组卡片（带 icon）——服务商/模型配置/数据源凭据 + 数据存储路径 + 通知（issue 391 追加 Jev 决策通道）', () => {
+    expect(schema.groups.map((g) => g.name)).toEqual(['服务商', '模型配置', '数据源凭据', 'Jev 决策通道', '数据存储路径', '通知']);
+    expect(schema.groups.map((g) => g.icon)).toEqual(['plug-zap', 'cpu', 'key-round', 'route', 'folder-open', 'bell']);
   });
 
   it('服务商组：服务商下拉 + 每家注册表提供商密钥行 + 自定义两行（ticket 171；issue 187 删自定义模型行；visibleWhen 随 aiProvider）', () => {
@@ -136,7 +136,8 @@ describe('mainSettingsSchema：主设置页区块（issue 331 起 AI 页拆三�
   });
 
   it('数据存储路径区块：path 单选行（键直绑）+ onCommit 提示文案逐字冻结', () => {
-    const row = schema.groups[3].rows[0] as {
+    // 按组名取（不按下标）：该组下标随 AI 分区组数变化而漂移（issue 391 已从 3 组增到 4 组）
+    const row = schema.groups.find((g) => g.name === '数据存储路径')!.rows[0] as {
       type: string;
       mode: string;
       name: string;

@@ -331,8 +331,10 @@ export interface JudgePick {
 }
 
 /**
- * 解析裁判输出为合法选项列表；任何畸形（非 JSON / 非数组 / id 越界 / 空串）整体或逐项丢弃，
+ * 解析裁判输出为合法选项列表；任何畸形（非 JSON / 非数组 / id 越界）整体或逐项丢弃，
  * 全部非法返回 []（= 无关联）。容忍 markdown 代码围栏包裹。
+ * `reason` 为**可选**：issue 392 决策 5/8 起回落路径不再要求模型写理由（纯浪费 token），
+ * 故缺省/非字符串的 reason 按空串处理、不再丢弃该条目——既有的 `{"id":n,"reason":"…"}` 形态仍照常解析。
  */
 export function parseJudgeOutput(text: string, maxId: number): JudgePick[] {
   if (!text) return [];
@@ -354,12 +356,11 @@ export function parseJudgeOutput(text: string, maxId: number): JudgePick[] {
     if (!item || typeof item !== 'object') continue;
     const rec = item as Record<string, unknown>;
     const id = rec.id;
-    const reason = rec.reason;
     if (typeof id !== 'number' || !Number.isInteger(id) || id < 1 || id > maxId) continue;
-    if (typeof reason !== 'string' || !reason.trim()) continue;
+    const reason = typeof rec.reason === 'string' ? rec.reason.trim() : '';
     if (seen.has(id)) continue;
     seen.add(id);
-    out.push({ id, reason: reason.trim() });
+    out.push({ id, reason });
   }
   return out;
 }

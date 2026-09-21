@@ -345,14 +345,14 @@ describe('裁判输出解析', () => {
     expect(parseJudgeOutput('', 3)).toEqual([]);
   });
 
-  it('id 越界/重复、reason 缺失逐项丢弃', () => {
+  it('id 越界/重复丢弃；reason 缺失容忍（保留为空串，issue 392 决策 5/8 不再要求 reason）', () => {
     expect(
       parseJudgeOutput('[{"id":0,"reason":"x"},{"id":9,"reason":"y"},{"id":1},{"id":1,"reason":"dup"},{"id":2,"reason":"ok"}]', 2)
     ).toEqual([
-      { id: 1, reason: 'dup' },
+      { id: 1, reason: '' },
       { id: 2, reason: 'ok' },
     ]);
-    // 完全重复的合法项只保留首个
+    // 完全重复的合法项只保留首个（按 id 去重，与是否带 reason 无关）
     expect(parseJudgeOutput('[{"id":1,"reason":"a"},{"id":1,"reason":"b"}]', 1)).toEqual([{ id: 1, reason: 'a' }]);
   });
 });
