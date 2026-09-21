@@ -528,6 +528,54 @@
           }
           sf('.cn-ovl')?.click(); // 清场：别把开着的弹窗留给下一次自检
 
+          // 涟漪揭示（issue 399，2026-09-21 用户拍板方案 A）：悬浮季圆点 → 来片层从**那枚圆点**
+          // 圆形扩散开（圆心 = 圆点中心相对 .pw 的坐标）+ 文案换名；打断时圆心跟着走；
+          // 离开折回并清层。几何只有真浏览器量得到（jsdom 里 getBoundingClientRect 全零），
+          // 单测钉的是假矩形，真值由这里兜。
+          // ⚠ 先等卡回到网格再量：上面刚关过合集弹窗，返程飞行期间整卡 display:none ——
+          //   那时全零矩形会让几何断言**静默空转**（2026-09-21 实测：把圆心写死成 0 也能过）。
+          //   所以下面既等归位，又要求矩形非零、圆心相对 .pw 有明显偏移（0/0 不许算通过）。
+          await until(() => sCard.isConnected && sCard.style.display === '' && sCard.style.visibility === ''
+            && sCard.getBoundingClientRect().width > 50, 8000);
+          const rdots = [...sCard.querySelectorAll('.pw .season-dots i')];
+          if (rdots.length >= 2) {
+            const rpw = sCard.querySelector('.pw');
+            const pa = rpw.getBoundingClientRect();
+            const center = (el) => { const b = el.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height / 2]; };
+            const fire = (el, type) => {
+              const [cx, cy] = center(el);
+              el.dispatchEvent(new MouseEvent(type, { bubbles: true, clientX: cx, clientY: cy }));
+            };
+            const nums = (layer) => (layer ? [...layer.style.clipPath.matchAll(/([\d.]+)px/g)].map((m) => Number(m[1])) : []);
+            const name0 = sCard.querySelector('.pname').textContent;
+            fire(rdots[1], 'mouseover');
+            await sleep(40);
+            const rl = sCard.querySelector('.pw-in');
+            const c1 = nums(rl);
+            const d1 = center(rdots[1]);
+            const dx1 = d1[0] - pa.left;
+            const dy1 = d1[1] - pa.top;
+            t('涟漪几何可量（卡已归位·矩形非零）', pa.width > 50 && pa.height > 50 && dx1 > 4 && dy1 > 4,
+              `pw=${pa.width}x${pa.height} 圆心偏移=${dx1.toFixed(1)},${dy1.toFixed(1)}`);
+            t('涟漪层出现（正脸紧后·季圆点之前）', !!rl
+              && rl.previousElementSibling === sCard.querySelector('.pw-face')
+              && !!rl.nextElementSibling?.classList.contains('season-dots'));
+            t('涟漪圆心 = 被悬浮那枚圆点的中心（≤1px）', c1.length === 3
+              && Math.hypot(c1[1] - dx1, c1[2] - dy1) <= 1,
+              rl ? rl.style.clipPath : '无来片层');
+            fire(rdots[0], 'mouseover'); // 打断：滑轮移到第 1 枚
+            await sleep(40);
+            const c2 = nums(rl);
+            const d0 = center(rdots[0]);
+            t('打断后圆心跟着换到新圆点（≤1px）', c2.length === 3 && d0[0] - pa.left > 4
+              && Math.hypot(c2[1] - (d0[0] - pa.left), c2[2] - (d0[1] - pa.top)) <= 1,
+              rl ? rl.style.clipPath : '无来片层');
+            fire(rdots[0], 'mouseout');
+            await until(() => !sCard.querySelector('.pw-in'), 3000);
+            t('离开圆点：折回后清层·文案回静息态', !sCard.querySelector('.pw-in')
+              && sCard.querySelector('.pname').textContent === name0);
+          }
+
           // 滑动高亮（issue 397）：侧栏一片底片跟着悬停滑（跨类型/状态/底部工具三段）、
           // 移开回落选中项、点击后固定在选中项；排序钮同款。真浏览器里量的是真矩形——
           // 单测只能钉假矩形，滑行是否真的对得上项由这里兜。

@@ -1339,6 +1339,71 @@ tags: [电影]
     expect(series.classList.contains('is-peek')).toBe(false);
   });
 
+  it('涟漪揭示：来片层从被悬浮的那枚圆点扩散，打断冻结底盘、离开折回并清层', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    (window as any).matchMedia = (q: string) => ({
+      matches: q === '(hover: hover) and (pointer: fine)',
+      media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    });
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const series = root.querySelector('.pcard-series') as HTMLElement;
+    const dots = Array.from(series.querySelectorAll<HTMLElement>('.pw .season-dots i'));
+    const pw = series.querySelector('.pw') as HTMLElement;
+    const face = series.querySelector('.pw-face') as HTMLElement;
+    const faceRest = face.innerHTML;
+    // 钉死几何（jsdom 里 getBoundingClientRect 恒全零，不钉就成空断言）：
+    // .pw 在 (100,200) 150×225；三枚圆点横排在左下角底衬里，中心 (115|124|133, 407)
+    const rect = (left: number, top: number, width: number, height: number): DOMRect =>
+      ({ left, top, width, height, right: left + width, bottom: top + height, x: left, y: top, toJSON: () => ({}) }) as DOMRect;
+    pw.getBoundingClientRect = () => rect(100, 200, 150, 225);
+    dots.forEach((d, i) => { d.getBoundingClientRect = () => rect(112 + i * 9, 404, 6, 6); });
+
+    // 悬浮第 3 枚（圆心相对 .pw = 33,207，半径取到最远角 117/207）
+    dots[2].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    const layer = series.querySelector<HTMLElement>('.pw .pw-in');
+    expect(layer).toBeTruthy();
+    expect(face.nextElementSibling).toBe(layer); // DOM 序：正脸 → 来片 → 角标/季圆点（圆点仍压在图上）
+    expect(layer!.style.clipPath).toBe(`circle(${Math.hypot(117, 207).toFixed(1)}px at 33.0px 207.0px)`);
+    expect(series.querySelector('.pname')?.textContent).toBe('老友记 第三季'); // 文案仍换（与硬切同口径）
+
+    // 打断：滑到第 1 枚 → 来片换成第 1 季（涟漪圆心随之移到那枚圆点），正脸冻结成「刚才那一季」
+    // （夹具无海报 → 两块都是 `.ph` 首字占位、字符串相同，故冻结只能断言成「等于打断前的来片内容」；
+    //   真正证明打断生效的是圆心位移——没打断的话圆心会停在上一枚圆点）
+    const layer3 = layer!.innerHTML;
+    dots[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(face.innerHTML).toBe(layer3);
+    expect(layer!.style.clipPath).toBe(`circle(${Math.hypot(135, 207).toFixed(1)}px at 15.0px 207.0px)`);
+
+    // 离开 → 折回后清层 + 正脸/文案按快照回填（jsdom 无 WAAPI：折回走「立即收尾」分支）
+    dots[0].dispatchEvent(new MouseEvent('mouseout', { bubbles: true }));
+    expect(series.querySelector('.pw-in')).toBeNull();
+    expect(face.innerHTML).toBe(faceRest);
+    expect(series.querySelector('.pname')?.textContent).toBe('老友记');
+    expect(series.classList.contains('is-peek')).toBe(false);
+  });
+
+  it('开合集/详情前先收掉换脸（否则「看到 A、飞的是 B」：飞行取的是静息态那一季的海报）', () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    (window as any).matchMedia = (q: string) => ({
+      matches: q === '(hover: hover) and (pointer: fine)',
+      media: q, addEventListener() {}, removeEventListener() {}, addListener() {}, removeListener() {},
+    });
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const series = root.querySelector('.pcard-series') as HTMLElement;
+    const face = series.querySelector('.pw-face') as HTMLElement;
+    const faceRest = face.innerHTML;
+    series.querySelectorAll<HTMLElement>('.pw .season-dots i')[1].dispatchEvent(new MouseEvent('mouseover', { bubbles: true }));
+    expect(series.querySelector('.pw-in')).toBeTruthy();
+    clickEl(series);
+    expect(series.querySelector('.pw-in')).toBeNull();
+    expect(face.innerHTML).toBe(faceRest);
+    expect(root.querySelectorAll('.cn-ovl')).toHaveLength(1); // 合集面板照常打开
+  });
+
   it('移动端不挂悬浮换脸（触屏 tap 只发 mouseover 不发 mouseout，换脸会滞留）', () => {
     setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
     Platform.isMobile = true;

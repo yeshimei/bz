@@ -345,10 +345,28 @@ function seriesSheetHeadEl(card: SeriesCard, url: string | null): HTMLElement {
   return headElOf(seriesSheetHeadHtml(card, url));
 }
 
-/** 悬浮换脸前的静息态快照（卡片元素 → 四件 innerHTML）。合并卡正脸口径与单季不同
+/** 涟漪原点（.pw 盒内坐标）+ 罩满整盒所需半径（圆点到最远角的距离） */
+interface RippleOrigin { x: number; y: number; r: number }
+
+/** 悬浮换脸的静息态快照 + 在飞的涟漪（卡片元素 → 状态）。合并卡正脸口径与单季不同
  *  （名字是归一名称、评分取最新已评季），复原必须回快照、不能靠重算。
- *  卡片每次重渲染都是新元素，旧键自然被 GC → WeakMap 不积残留。 */
-const faceStash = new WeakMap<HTMLElement, string[]>();
+ *  卡片每次重渲染都是新元素，旧键自然被 GC → WeakMap 不积残留。
+ *  `gen` 是收尾令牌：折回的 finished 回调与兜底定时器都按它判「我这一轮还算不算数」——
+ *  折回途中鼠标又落回圆点时，新一轮涟漪把 gen 顶掉，旧的收尾必须自己作废
+ *  （否则会 remove 掉新一轮正在用的来片层）。 */
+interface PeekState {
+  snap: string[];
+  anim: Animation | null;
+  origin: RippleOrigin | null;
+  gen: number;
+}
+const peekStates = new WeakMap<HTMLElement, PeekState>();
+
+/** 涟漪时长（2026-09-21 用户拍板方案 A「涟漪揭示」：来片从**被悬浮的那枚圆点**扩散开）。
+ *  与 396 共享元素、滑动高亮同一口径：**刻意不做 prefers-reduced-motion 分支**——
+ *  用户本人系统即报 reduce，而这条动效正是他点名要的，降级/放缓等于替他改决定。 */
+const PEEK_MS = 260;      // 来片从圆点扩散开
+const PEEK_BACK_MS = 200; // 折回圆点
 
 /** 正脸四件挂点（海报内芯 / 名字 / meta / 星级）；缺一即不换（如非合并卡） */
 function faceSlots(card: HTMLElement): HTMLElement[] {
@@ -356,30 +374,110 @@ function faceSlots(card: HTMLElement): HTMLElement[] {
     .map((c) => card.querySelector<HTMLElement>(`.${c}`)).filter((x): x is HTMLElement => !!x);
 }
 
-/** 悬浮季圆点：把卡片正脸换成该季的海报 + 名字/meta/星级（格式走 shared.facePiecesHtml 单源） */
+/** 涟漪原点：圆点中心 → .pw 盒内坐标。涟漪起点跟着圆点走——位置本身编码季号 */
+function rippleOrigin(pw: HTMLElement, dot: HTMLElement): RippleOrigin {
+  const pr = pw.getBoundingClientRect();
+  const dr = dot.getBoundingClientRect();
+  const x = dr.left + dr.width / 2 - pr.left;
+  const y = dr.top + dr.height / 2 - pr.top;
+  return { x, y, r: Math.hypot(Math.max(x, pr.width - x), Math.max(y, pr.height - y)) };
+}
+
+/** 来片层：正脸之上的一张覆盖层。**不加 z-index**——.pw 内的绘制序靠 DOM 顺序，
+ *  插在 .pw-face 紧后就天然压在正脸上、又垫在角标/季圆点/抓取遮罩之下。 */
+function peekLayer(pw: HTMLElement): HTMLElement {
+  let layer = pw.querySelector<HTMLElement>('.pw-in');
+  if (!layer) {
+    layer = document.createElement('div');
+    layer.className = 'pw-in';
+    pw.querySelector('.pw-face')?.after(layer);
+  }
+  return layer;
+}
+
+/** 文案三件（名字/meta/星级）淡入：给「换脸了」多一层明确信号 */
+function peekTextFade(els: HTMLElement[]): void {
+  els.forEach((el, i) => {
+    try {
+      el.animate([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }],
+        { duration: 200, delay: i * 30, easing: 'cubic-bezier(.22,.82,.3,1)', fill: 'backwards' });
+    } catch { /* 动画不可用（jsdom/老宿主）：文案已在终态 */ }
+  });
+}
+
+/** 悬浮季圆点：来片层从被悬浮的那枚圆点涟漪扩散 + 文案三件淡入（格式走 shared.facePiecesHtml 单源） */
 function peekSeasonDot(dot: HTMLElement, app: App): void {
   const card = dot.closest<HTMLElement>('.pcard');
+  const pw = card?.querySelector<HTMLElement>('.pw');
   const it = itemByKeyInState(dot.dataset.cinemaSeasonKey);
   const slots = card ? faceSlots(card) : [];
-  if (!card || !it || slots.length !== 4) return;
-  if (!faceStash.has(card)) faceStash.set(card, slots.map((s) => s.innerHTML));
+  if (!card || !pw || !it || slots.length !== 4) return;
+  let st = peekStates.get(card);
+  if (!st) {
+    st = { snap: slots.map((s) => s.innerHTML), anim: null, origin: null, gen: 0 };
+    peekStates.set(card, st);
+  }
+  st.gen++;
+  const layer = peekLayer(pw);
+  // 打断（鼠标在圆点间滑行）：来片层还在 → 先把「刚才那一季」冻结成正脸。
+  // 不冻结的话，新涟漪之外露出的会是静息态那一季，划过圆点时会闪回（同点已由调用方拦掉）。
+  if (layer.firstChild) slots[0].innerHTML = layer.innerHTML;
+  st.anim?.cancel();
+  st.anim = null;
+  const o = rippleOrigin(pw, dot);
+  st.origin = o;
+  // 底衬先写「已铺满」的终态：动画不可用（jsdom/老宿主）时停在「这一季已铺满」而不是空盒
+  layer.style.clipPath = `circle(${o.r.toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)`;
   const p = facePiecesHtml(it, posterUrl(it, app));
-  slots[0].innerHTML = p.poster;
+  layer.innerHTML = p.poster;
   slots[1].innerHTML = p.name;
   slots[2].innerHTML = p.meta;
   slots[3].innerHTML = p.stars;
+  peekTextFade(slots.slice(1));
   card.classList.add('is-peek');
+  try {
+    st.anim = layer.animate(
+      [{ clipPath: `circle(0px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` },
+        { clipPath: `circle(${o.r.toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` }],
+      { duration: PEEK_MS, easing: 'cubic-bezier(.22,.82,.3,1)', fill: 'forwards' },
+    );
+  } catch { /* 动画不可用：底衬已是终态 */ }
 }
 
-/** 离开圆点：正脸复原为静息态（快照回填） */
+/** 离开圆点：涟漪折回圆点 → 清来片层 → 正脸/文案按快照回填 */
 function restFace(dot: HTMLElement): void {
   const card = dot.closest<HTMLElement>('.pcard');
-  const snap = card ? faceStash.get(card) : undefined;
-  if (!card || !snap) return;
-  const slots = faceSlots(card);
-  if (slots.length !== 4) return;
-  slots.forEach((s, i) => { s.innerHTML = snap[i]; });
+  const st = card ? peekStates.get(card) : undefined;
+  if (!card || !st) return;
+  const layer = card.querySelector<HTMLElement>('.pw-in');
   card.classList.remove('is-peek');
+  const gen = ++st.gen;
+  const done = (): void => {
+    if (st.gen !== gen) return; // 已被新一轮涟漪接管（本轮折回被 cancel）→ 收尾作废
+    st.anim = null;
+    layer?.remove();
+    const slots = faceSlots(card);
+    if (slots.length !== 4) return;
+    slots.forEach((s, i) => { s.innerHTML = st.snap[i]; });
+    peekTextFade(slots.slice(1));
+  };
+  if (!layer || !st.origin) { done(); return; }
+  const o = st.origin;
+  st.anim?.cancel();
+  st.anim = null;
+  try {
+    // 从**当前帧**折回（可能还在扩散途中），不是从满圆重来
+    const fold = layer.animate(
+      [{ clipPath: getComputedStyle(layer).clipPath }, { clipPath: `circle(0px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` }],
+      { duration: PEEK_BACK_MS, easing: 'cubic-bezier(.22,.82,.3,1)' },
+    );
+    st.anim = fold;
+    fold.finished.then(done).catch(done);
+  } catch {
+    done(); // 动画不可用：立即收尾
+    return;
+  }
+  window.setTimeout(done, PEEK_BACK_MS + 400); // 兜底：动画事件丢失也必须收尾（同 396 handOver）
 }
 
 /** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。
@@ -1368,11 +1466,19 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     return best;
   };
   let peekedDot: HTMLElement | null = null; // 当前换脸中的圆点：同点不重刷（防 mousemove 反复重写 innerHTML 闪图）
+  /** 收掉当前换脸（离开圆点、以及开详情/合集前都要走它）。开弹窗前必须先收：
+   *  换脸途中正脸可能已被冻结成「刚才那一季」，而弹窗/飞行取的是静息态那一季的海报——
+   *  不收就会「看到 A、飞的是 B」。 */
+  const endPeek = (): void => {
+    if (!peekedDot) return;
+    restFace(peekedDot);
+    peekedDot = null;
+  };
   const peekNearest = (e: MouseEvent): void => {
     const dot = nearestSeasonDot(e.target, e);
     if (dot === peekedDot) return;
     if (dot) peekSeasonDot(dot, app);
-    else if (peekedDot) restFace(peekedDot);
+    else endPeek();
     peekedDot = dot;
   };
   if (hoverable) {
@@ -1382,10 +1488,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
       // 还在圆点容器内（圆点↔圆点、圆点↔衬底）交给 mouseover/mousemove 换脸，不打回静息态
       const to = e.relatedTarget as HTMLElement | null;
       if (to?.closest?.('.season-dots')) return;
-      if (peekedDot) {
-        restFace(peekedDot);
-        peekedDot = null;
-      }
+      endPeek();
     });
   }
   // 深审批 B #4：卡片键盘可达——.pcard 已带 tabindex=0/role=button（shared.cardHtml），
@@ -1396,6 +1499,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     const cardEl = (e.target as HTMLElement | null)?.closest?.('.pcard[data-cinema-key]') as HTMLElement | null;
     if (!cardEl) return;
     e.preventDefault(); // Space 兼作翻页键：开详情时吞掉滚动
+    endPeek();          // 换脸先收（弹窗海报取静息态那一季，见 endPeek 注释）
     const key = cardEl.dataset.cinemaKey;
     // 合并卡（剧集按季合并）：点开各季明细；其余走单条目详情（click 分支同构）
     if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app, { from: cardEl });
@@ -1481,6 +1585,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     if (add) { openForm(sec, null, app); return; }
     const cardEl = t.closest('.pcard') as HTMLElement | null;
     if (cardEl) {
+      endPeek(); // 换脸先收（飞行取的是静息态那一季的海报，见 endPeek 注释）
       const key = cardEl.dataset.cinemaKey;
       // 合并卡（剧集按季合并）：点开各季明细；其余走单条目详情
       if (isSeriesKey(key)) openSeriesDetail(sec, key as string, app, { from: cardEl });

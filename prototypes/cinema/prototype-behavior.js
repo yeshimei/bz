@@ -1,4 +1,4 @@
-/* 源指纹 5d300d5d43b3f28c · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 e7b7f2d57310ff24 · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -8584,33 +8584,116 @@ tags:
   function seriesSheetHeadEl(card, url) {
     return headElOf(seriesSheetHeadHtml(card, url));
   }
-  var faceStash = /* @__PURE__ */ new WeakMap();
+  var peekStates = /* @__PURE__ */ new WeakMap();
+  var PEEK_MS = 260;
+  var PEEK_BACK_MS = 200;
   function faceSlots(card) {
     return ["pw-face", "pname", "pmeta", "pstars"].map((c) => card.querySelector(`.${c}`)).filter((x) => !!x);
   }
+  function rippleOrigin(pw, dot) {
+    const pr = pw.getBoundingClientRect();
+    const dr = dot.getBoundingClientRect();
+    const x = dr.left + dr.width / 2 - pr.left;
+    const y = dr.top + dr.height / 2 - pr.top;
+    return { x, y, r: Math.hypot(Math.max(x, pr.width - x), Math.max(y, pr.height - y)) };
+  }
+  function peekLayer(pw) {
+    var _a;
+    let layer = pw.querySelector(".pw-in");
+    if (!layer) {
+      layer = document.createElement("div");
+      layer.className = "pw-in";
+      (_a = pw.querySelector(".pw-face")) == null ? void 0 : _a.after(layer);
+    }
+    return layer;
+  }
+  function peekTextFade(els) {
+    els.forEach((el, i) => {
+      try {
+        el.animate(
+          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+          { duration: 200, delay: i * 30, easing: "cubic-bezier(.22,.82,.3,1)", fill: "backwards" }
+        );
+      } catch (e) {
+      }
+    });
+  }
   function peekSeasonDot(dot, app) {
+    var _a;
     const card = dot.closest(".pcard");
+    const pw = card == null ? void 0 : card.querySelector(".pw");
     const it = itemByKeyInState(dot.dataset.cinemaSeasonKey);
     const slots = card ? faceSlots(card) : [];
-    if (!card || !it || slots.length !== 4) return;
-    if (!faceStash.has(card)) faceStash.set(card, slots.map((s) => s.innerHTML));
+    if (!card || !pw || !it || slots.length !== 4) return;
+    let st = peekStates.get(card);
+    if (!st) {
+      st = { snap: slots.map((s) => s.innerHTML), anim: null, origin: null, gen: 0 };
+      peekStates.set(card, st);
+    }
+    st.gen++;
+    const layer = peekLayer(pw);
+    if (layer.firstChild) slots[0].innerHTML = layer.innerHTML;
+    (_a = st.anim) == null ? void 0 : _a.cancel();
+    st.anim = null;
+    const o = rippleOrigin(pw, dot);
+    st.origin = o;
+    layer.style.clipPath = `circle(${o.r.toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)`;
     const p = facePiecesHtml(it, posterUrl(it, app));
-    slots[0].innerHTML = p.poster;
+    layer.innerHTML = p.poster;
     slots[1].innerHTML = p.name;
     slots[2].innerHTML = p.meta;
     slots[3].innerHTML = p.stars;
+    peekTextFade(slots.slice(1));
     card.classList.add("is-peek");
+    try {
+      st.anim = layer.animate(
+        [
+          { clipPath: `circle(0px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` },
+          { clipPath: `circle(${o.r.toFixed(1)}px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` }
+        ],
+        { duration: PEEK_MS, easing: "cubic-bezier(.22,.82,.3,1)", fill: "forwards" }
+      );
+    } catch (e) {
+    }
   }
   function restFace(dot) {
+    var _a;
     const card = dot.closest(".pcard");
-    const snap = card ? faceStash.get(card) : void 0;
-    if (!card || !snap) return;
-    const slots = faceSlots(card);
-    if (slots.length !== 4) return;
-    slots.forEach((s, i) => {
-      s.innerHTML = snap[i];
-    });
+    const st = card ? peekStates.get(card) : void 0;
+    if (!card || !st) return;
+    const layer = card.querySelector(".pw-in");
     card.classList.remove("is-peek");
+    const gen = ++st.gen;
+    const done = () => {
+      if (st.gen !== gen) return;
+      st.anim = null;
+      layer == null ? void 0 : layer.remove();
+      const slots = faceSlots(card);
+      if (slots.length !== 4) return;
+      slots.forEach((s, i) => {
+        s.innerHTML = st.snap[i];
+      });
+      peekTextFade(slots.slice(1));
+    };
+    if (!layer || !st.origin) {
+      done();
+      return;
+    }
+    const o = st.origin;
+    (_a = st.anim) == null ? void 0 : _a.cancel();
+    st.anim = null;
+    try {
+      const fold = layer.animate(
+        [{ clipPath: getComputedStyle(layer).clipPath }, { clipPath: `circle(0px at ${o.x.toFixed(1)}px ${o.y.toFixed(1)}px)` }],
+        { duration: PEEK_BACK_MS, easing: "cubic-bezier(.22,.82,.3,1)" }
+      );
+      st.anim = fold;
+      fold.finished.then(done).catch(done);
+    } catch (e) {
+      done();
+      return;
+    }
+    window.setTimeout(done, PEEK_BACK_MS + 400);
   }
   function attachLongPress(sec, app) {
     sec.querySelectorAll(".m-grid .pcard").forEach((c) => {
@@ -9391,11 +9474,16 @@ tags:
       return best;
     };
     let peekedDot = null;
+    const endPeek = () => {
+      if (!peekedDot) return;
+      restFace(peekedDot);
+      peekedDot = null;
+    };
     const peekNearest = (e) => {
       const dot = nearestSeasonDot(e.target, e);
       if (dot === peekedDot) return;
       if (dot) peekSeasonDot(dot, app);
-      else if (peekedDot) restFace(peekedDot);
+      else endPeek();
       peekedDot = dot;
     };
     if (hoverable) {
@@ -9405,10 +9493,7 @@ tags:
         var _a;
         const to = e.relatedTarget;
         if ((_a = to == null ? void 0 : to.closest) == null ? void 0 : _a.call(to, ".season-dots")) return;
-        if (peekedDot) {
-          restFace(peekedDot);
-          peekedDot = null;
-        }
+        endPeek();
       });
     }
     sec.addEventListener("keydown", (e) => {
@@ -9417,6 +9502,7 @@ tags:
       const cardEl = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".pcard[data-cinema-key]");
       if (!cardEl) return;
       e.preventDefault();
+      endPeek();
       const key = cardEl.dataset.cinemaKey;
       if (isSeriesKey(key)) openSeriesDetail(sec, key, app, { from: cardEl });
       else {
@@ -9508,6 +9594,7 @@ tags:
       }
       const cardEl = t.closest(".pcard");
       if (cardEl) {
+        endPeek();
         const key = cardEl.dataset.cinemaKey;
         if (isSeriesKey(key)) openSeriesDetail(sec, key, app, { from: cardEl });
         else {
