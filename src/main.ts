@@ -42,7 +42,7 @@ import { openFavoritesPanel, addFavoriteItem, unloadFavorites } from './favorite
 import { unloadReadingReport } from './reading-report';
 // 影院（cinema 域，ADR-0087 起接管影视；旧 movie 域已退役。ADR-0090：openCinemaAnalysis
 // 直达影院面板分析页，独立报告窗退役）
-import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unloadCinema, decideTypeForActiveFile } from './cinema';
+import { openCinema, addCinemaItem, openCinemaAnalysis, pickRandomCinema, unloadCinema } from './cinema';
 // 游戏库（gameshelf 域，issue 368：Steam 直连自动拉库，我的/游戏/*.md 一作一笔记）
 import { openGameshelf, openGameshelfStats, syncGameshelf, unloadGameshelf } from './gameshelf';
 // 书架墙（bookshelf 域，新域与书库并存；不修改旧书库代码；读书报告内嵌为面板内视图）
@@ -134,9 +134,6 @@ const COMMANDS: { id: string; name: string; icon: string; callback: () => void }
   { id: 'bz-cinema-add', name: '加影视', icon: 'plus-circle', callback: () => addCinemaItem(getApp()) },
   // 随机抽一部（2026-09-11 首页入口菜单）：想看池随机 → 直开详情
   { id: 'bz-cinema-random-pick', name: '随机抽一部', icon: 'shuffle', callback: () => pickRandomCinema(getApp()) },
-  // 影院类型自动判定（issue 393 / ADR-0174：受限分类，闭合词表不允许逃逸）：作用于当前活动笔记，
-  // 未打 typeTag 的影视经 Jev Choice 补一个；已有分类跳过、哨兵/低置信度/失败一律零写入（不回落 LLM）
-  { id: 'bz-cinema-type-decide', name: '影院类型判定', icon: 'tags', callback: () => void decideTypeForActiveFile(getApp()) },
   // 游戏库（gameshelf 域，issue 368）
   { id: 'bz-gameshelf-open', name: '游戏库', icon: DOMAIN_ICONS.gameshelf, callback: () => openGameshelf(getApp()) },
   // 立即同步（2026-09-17 首页入口菜单）：不开面板直接拉库（即时类，首页菜单里 keepHome）

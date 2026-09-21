@@ -1,4 +1,4 @@
-/* 源指纹 ac654708799c3b76 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 c42a57ceadd1c1be · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -89,7 +89,7 @@ var BZR_cinema = (() => {
     剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
     动漫: ["日漫", "国漫", "美漫"],
     纪录片: ["纪录片"],
-    公开课: ["公开课", "TED"]
+    公开课: ["公开课"]
   };
   var ALL_TAGS = Object.values(TYPE_GROUPS).flat();
   var GROUP_ORDER = ["电影", "剧集", "动漫", "纪录片", "公开课", "其他"];
@@ -325,7 +325,7 @@ var BZR_cinema = (() => {
     剧集: ["国产剧", "美剧", "英剧", "德剧", "日剧", "韩剧", "哥伦比亚剧"],
     动漫: ["日漫", "国漫", "美漫"],
     纪录片: [],
-    公开课: ["公开课", "TED"]
+    公开课: ["公开课"]
   };
   function formAllTags() {
     const out = [];

@@ -486,6 +486,16 @@ export function openRandomMovie(app: App): void {
 
 // ---------- 弹窗：添加 / 编辑表单 ----------
 
+/** 重名文案单源（issue 394）：按钮态用短句，拦截 notice 用完整句 */
+const DUP_NAME_HINT = '已存在同名影视';
+const DUP_NAME_HINT_FULL = `${DUP_NAME_HINT}，请换个名称`;
+
+/** 重名判据单源（issue 394）：新增时比对全库、编辑时排除自身原名。
+ *  保存拦截、输入框红边框、保存按钮禁用三处共用同一判据——各写一份必然漂移。 */
+function isDuplicateName(name: string, selfName?: string): boolean {
+  return name !== (selfName ?? '') && M.items.some((x) => x.name === name);
+}
+
 /** 添加/编辑表单弹窗。presetSt：预选状态（中文口径，如「已看」）——「标记已看」入口传入，
  *  状态 chip 预选、评分滑杆（预填当前评分，无则默认分）与影评框自动展开；弹窗本身不落盘，保存才生效 */
 function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?: string): void {
@@ -499,6 +509,23 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
   }));
   mountIcons(el);
   const cur = { tag: initTag, st: initSt };
+  // 重名反馈（issue 394）：输入框边框转危险色 + 保存按钮禁用并写明原因，不做文字小字提醒。
+  // 判据与保存拦截同源（isDuplicateName），打开即跑一次——覆盖「存量数据本就重名」的编辑入口。
+  // 禁用态顺带挡住 Enter 提交：bindFormSubmit 走 .j-save.click()，disabled 元素不派发 click。
+  const nameInput = el.querySelector<HTMLInputElement>('.j-name');
+  const saveBtn = el.querySelector<HTMLButtonElement>('.j-save');
+  const idleSaveText = editing ? '保存' : '添加';
+  const refreshDupMark = (): void => {
+    if (!nameInput) return;
+    const dup = isDuplicateName(nameInput.value.trim(), item?.name);
+    nameInput.classList.toggle('is-dup', dup);
+    if (saveBtn) {
+      saveBtn.disabled = dup;
+      saveBtn.textContent = dup ? DUP_NAME_HINT : idleSaveText;
+    }
+  };
+  nameInput?.addEventListener('input', refreshDupMark);
+  refreshDupMark();
   el.querySelectorAll<HTMLElement>('[data-f-tag]').forEach((b) => b.addEventListener('click', () => {
     cur.tag = b.dataset.fTag ?? cur.tag;
     el.querySelectorAll('[data-f-tag]').forEach((x) => x.classList.toggle('is-on', x === b));
@@ -519,8 +546,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
   el.querySelector('.j-save')?.addEventListener('click', () => {
     const name = (el.querySelector('.j-name') as HTMLInputElement).value.trim();
     if (!name) { notice('请输入名称', 'warning'); return; }
-    if (editing && item && name !== item.name && M.items.some((x) => x.name === name)) { notice('已存在同名影视，请换个名称', 'warning'); return; }
-    if (!editing && M.items.some((x) => x.name === name)) { notice('已存在同名影视，请换个名称', 'warning'); return; }
+    if (isDuplicateName(name, item?.name)) { notice(DUP_NAME_HINT_FULL, 'warning'); return; }
     const stChanged = !editing || !item || item.status !== (cur.st === '想看' ? STATUS_WANT : cur.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED);
     const date = stChanged ? localNow() : (item!.watchDate || localNow());
     // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
@@ -555,7 +581,7 @@ async function saveNew(p: FormPayload, app: App, close: () => void): Promise<voi
   const it: CinemaItem = { file: null, name: p.name, typeTag: p.tag, group, status: st, rating: p.rating, watchDate: p.date, review: p.review, poster: null, genre: null, director: null, actors: null, region: null, year: null, releaseDate: null, doubanRating: null, doubanUrl: null, synopsis: null, duration: null, seasonText: null, hotComment: null };
   try {
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-      notice('已存在同名影视，请换个名称', 'warning');
+      notice(DUP_NAME_HINT_FULL, 'warning');
       return;
     }
     M.items.unshift(it);
@@ -589,7 +615,7 @@ async function saveEdit(item: CinemaItem, p: FormPayload, app: App, close: () =>
       return;
     }
     if (app.vault.getAbstractFileByPath(`${M.folderPath}/《${p.name}》.md`)) {
-      notice('已存在同名影视，请换个名称', 'warning');
+      notice(DUP_NAME_HINT_FULL, 'warning');
       return;
     }
   }
