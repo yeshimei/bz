@@ -391,28 +391,28 @@
           && acts[2].classList.contains('j-mstat') && acts[3].classList.contains('j-mclose'));
         t('头行无设置钮', !mob('.j-mgear'));
 
-        // 共享元素过渡（issue 396）：点有海报的种子卡 → 海报抽出飞入 → 面板从海报生长。
-        // 时长走系统口径（本机 MinAnimate=0 → reduce 分支 ×1.4），所以落点用轮询不拍死等待
+        // 共享元素过渡（issue 396）：点有海报的种子卡 → 整卡从列表抽离（其余卡动画补位）
+        // → 海报飞入 → 面板从海报生长。时长走系统口径，落点用轮询不拍死等待
         const flyImg = [...dd.querySelectorAll('.d-scroll .pcard .pw img')].find((i) => i.getAttribute('src'));
         const flyCard = flyImg.closest('.pcard');
         flyCard.click();
         await sleep(80);
         const fm = dt('.cn-ovl .cn-modal--detail');
         t('详情走fly通道', !!fm && fm.classList.contains('cn-modal--fly') && fm.style.visibility === 'hidden'
-          && !!dd.querySelector('.cn-fly') && flyImg.style.visibility === 'hidden' && flyCard.classList.contains('is-out'));
+          && !!dd.querySelector('.cn-fly') && flyCard.style.display === 'none'); // 整卡抽离，不留空框
         let landed = false;
         for (let i = 0; i < 90 && !landed; i++) {
           landed = !!fm && fm.style.visibility === '' && getComputedStyle(fm).clipPath === 'none' && !dd.querySelector('.cn-fly');
           if (!landed) await sleep(60);
         }
-        t('飞行落地面板卸裁剪', landed && flyImg.style.visibility === 'hidden' && flyCard.classList.contains('is-out')); // 详情开着 = 卡片保持被抽走
-        fm.closest('.cn-ovl').click(); // 关闭 → 面板折回海报 + 海报飞回卡片位
+        t('飞行落地面板卸裁剪', landed && flyCard.style.display === 'none'); // 详情开着 = 卡片不在列表里
+        fm.closest('.cn-ovl').click(); // 关闭 → 面板折回海报 + 列表让位 + 海报飞回插入
         let closed = false;
         for (let i = 0; i < 90 && !closed; i++) {
           closed = !dd.querySelector('.cn-ovl') && !dd.querySelector('.cn-fly');
           if (!closed) await sleep(60);
         }
-        t('关闭返程归位', closed && flyImg.style.visibility === '' && !flyCard.classList.contains('is-out'));
+        t('关闭返程归位', closed && flyCard.style.display === '' && flyCard.style.visibility === '');
 
         // 详情弹窗 + 删除（桌面，确认三段式 + 回收站删除）
         cardByName(dd, '测试影片').click();

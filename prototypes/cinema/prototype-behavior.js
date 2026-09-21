@@ -1,4 +1,4 @@
-/* 源指纹 7201b8215d339e7f · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 ed1929e66d91443e · 仓内输入 63 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/analysis.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -8635,16 +8635,55 @@ tags:
     const at = (r) => `translate(${(r.left + r.width / 2 - base.left - w / 2).toFixed(1)}px, ${(r.top + r.height / 2 - base.top - h / 2).toFixed(1)}px) scale(${(r.width / w).toFixed(4)}, ${(r.height / h).toFixed(4)})`;
     return [{ transform: at(fromR) }, { transform: at(toR) }];
   }
+  function flipReflow(cards, viewport, mutate) {
+    const animatable = cards.filter((c) => typeof c.animate === "function");
+    if (!animatable.length) {
+      mutate();
+      return;
+    }
+    const before = animatable.map((c) => c.getBoundingClientRect());
+    mutate();
+    const near = (r) => r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120 && r.left < viewport.right + 120 && r.right > viewport.left - 120;
+    animatable.forEach((c, i) => {
+      const now = c.getBoundingClientRect();
+      const dx = before[i].left - now.left;
+      const dy = before[i].top - now.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1 || !near(now) && !near(before[i])) return;
+      c.animate(
+        [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
+        { duration: SE_FLIGHT, easing: "cubic-bezier(.22,.82,.3,1)" }
+      );
+    });
+  }
   function createSharedFlight() {
     let phase = "idle";
     let overlay = null;
     let target = null;
     let src = null;
-    const setSrcOut = (out) => {
-      var _a;
-      if (!src) return;
-      src.style.visibility = out ? "hidden" : "";
-      (_a = src.closest(".pcard")) == null ? void 0 : _a.classList.toggle("is-out", out);
+    let srcCard = null;
+    let gridEl = null;
+    const gridCards = () => gridEl ? [...gridEl.querySelectorAll(".pcard")] : [];
+    const extractSrc = () => {
+      const card = srcCard;
+      if (!card) return;
+      flipReflow(gridCards(), (gridEl != null ? gridEl : card).getBoundingClientRect(), () => {
+        card.style.display = "none";
+      });
+    };
+    const reinsertSrc = () => {
+      const card = srcCard;
+      if (!card || !card.isConnected || !(gridEl == null ? void 0 : gridEl.isConnected)) return null;
+      flipReflow(gridCards(), gridEl.getBoundingClientRect(), () => {
+        card.style.display = "";
+        card.style.visibility = "hidden";
+      });
+      return (src == null ? void 0 : src.isConnected) ? src.getBoundingClientRect() : null;
+    };
+    const restoreSrc = () => {
+      if (srcCard) {
+        srcCard.style.display = "";
+        srcCard.style.visibility = "";
+      }
     };
     return {
       /** 关闭接管：返回 true = 本模块收下这次关闭，finish 由动效结束（或超时兜底）调用 */
@@ -8655,7 +8694,7 @@ tags:
         const s = src;
         if (phase === "idle" || !ov || !t || !s) return false;
         if (phase === "flying") {
-          setSrcOut(false);
+          restoreSrc();
           phase = "idle";
           finish();
           return true;
@@ -8678,12 +8717,16 @@ tags:
           if (handed || phase !== "closing") return;
           handed = true;
           const fb = frame.getBoundingClientRect();
-          const clone = spawnFlyClone(host, (_a2 = s.getAttribute("src")) != null ? _a2 : "", posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
-          const to = s.getBoundingClientRect();
+          const to = reinsertSrc();
           finish();
+          if (!to) {
+            phase = "idle";
+            return;
+          }
+          const clone = spawnFlyClone(host, (_a2 = s.getAttribute("src")) != null ? _a2 : "", posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
           const fly = clone.animate(flyKeyframes(posterR, to, fb), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
           const done = () => {
-            setSrcOut(false);
+            if (srcCard) srcCard.style.visibility = "";
             clone.remove();
             phase = "idle";
           };
@@ -8703,25 +8746,21 @@ tags:
         overlay = ovlEl;
         target = overlay.querySelector(".cn-modal--detail .dm-poster");
         src = fromCard.querySelector(".pw img");
+        srcCard = fromCard;
+        gridEl = fromCard.closest(".d-scroll, .m-scroll");
         if (!overlay || !target || !(src == null ? void 0 : src.getAttribute("src"))) {
-          overlay = null;
-          target = null;
-          src = null;
+          this.bail();
           return;
         }
         const dstImg = target.querySelector("img");
         if (!dstImg || dstImg.getAttribute("src") !== src.getAttribute("src")) {
-          overlay = null;
-          target = null;
-          src = null;
+          this.bail();
           return;
         }
         try {
           const modal = overlay.querySelector(".cn-modal--detail");
           if (!modal) {
-            overlay = null;
-            target = null;
-            src = null;
+            this.bail();
             return;
           }
           modal.classList.add("cn-modal--fly");
@@ -8734,14 +8773,14 @@ tags:
             this.bail();
             return;
           }
+          extractSrc();
           const clone = spawnFlyClone(overlay, src.getAttribute("src"), tr.width, tr.height, getComputedStyle(target).borderTopLeftRadius);
-          setSrcOut(true);
           const fly = clone.animate(flyKeyframes(sr, tr, base), { duration: SE_FLIGHT, easing: "cubic-bezier(.34,.06,.16,1)", fill: "forwards" });
           if (overlay.parentNode) {
             const moo = new MutationObserver(() => {
               if (overlay == null ? void 0 : overlay.isConnected) return;
               moo.disconnect();
-              if (phase !== "closing") setSrcOut(false);
+              if (phase !== "closing") restoreSrc();
             });
             moo.observe(overlay.parentNode, { childList: true });
           }
@@ -8774,7 +8813,12 @@ tags:
         (_a = overlay == null ? void 0 : overlay.querySelector(".cn-modal--detail")) == null ? void 0 : _a.classList.remove("cn-modal--fly");
         const modal = overlay == null ? void 0 : overlay.querySelector(".cn-modal--detail");
         if (modal) modal.style.visibility = "";
-        setSrcOut(false);
+        restoreSrc();
+        overlay = null;
+        target = null;
+        src = null;
+        srcCard = null;
+        gridEl = null;
         phase = "idle";
       }
     };

@@ -790,7 +790,3 @@
   background:var(--chip);box-shadow:0 14px 34px #0006;will-change:transform}
 .bz-cinema--midnight .cn-fly img{width:100%;height:100%;object-fit:cover;display:block}
 
-/* 被借走的卡：海报在详情里，卡片留空框并整体压暗——「从列表中抽出」的驻留态（issue 396），
-   返程落地即摘 class 归位 */
-.bz-cinema--midnight .pcard{transition:opacity .3s}
-.bz-cinema--midnight .pcard.is-out{opacity:.35}

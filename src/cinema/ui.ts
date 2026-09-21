@@ -484,6 +484,28 @@ function flyKeyframes(fromR: DOMRect, toR: DOMRect, base: DOMRect): Keyframe[] {
   return [{ transform: at(fromR) }, { transform: at(toR) }];
 }
 
+/** 列表重排 FLIP（issue 396）：mutate 前后各量一次，视口内的卡按位移差补一段位移动画——
+ *  「其他卡片移动补齐 / 让位」读得见。视口外的卡跳变看不见，不演（也省下几百个合成层）；
+ *  display:none 的卡（含正被抽离的那张）全零矩形自然落在视口判断之外。时长与飞行同长：
+ *  补位和抽出是同一时刻的两半。 */
+function flipReflow(cards: HTMLElement[], viewport: DOMRect, mutate: () => void): void {
+  const animatable = cards.filter((c) => typeof c.animate === 'function');
+  if (!animatable.length) { mutate(); return; }
+  const before = animatable.map((c) => c.getBoundingClientRect());
+  mutate();
+  const near = (r: DOMRect): boolean =>
+    r.width > 0 && r.top < viewport.bottom + 120 && r.bottom > viewport.top - 120
+    && r.left < viewport.right + 120 && r.right > viewport.left - 120;
+  animatable.forEach((c, i) => {
+    const now = c.getBoundingClientRect();
+    const dx = before[i].left - now.left;
+    const dy = before[i].top - now.top;
+    if ((Math.abs(dx) < 1 && Math.abs(dy) < 1) || (!near(now) && !near(before[i]))) return;
+    c.animate([{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: 'none' }],
+      { duration: SE_FLIGHT, easing: 'cubic-bezier(.22,.82,.3,1)' });
+  });
+}
+
 /**
  * 共享元素过渡状态机（issue 396）。
  *
@@ -511,11 +533,32 @@ function createSharedFlight(): {
   let overlay: HTMLElement | null = null;
   let target: HTMLElement | null = null;
   let src: HTMLImageElement | null = null;
+  let srcCard: HTMLElement | null = null;  // 被抽走的整卡
+  let gridEl: HTMLElement | null = null;   // 所在滚动容器（重排 FLIP 的量测范围与视口）
 
-  const setSrcOut = (out: boolean): void => {
-    if (!src) return;
-    src.style.visibility = out ? 'hidden' : '';
-    src.closest('.pcard')?.classList.toggle('is-out', out);
+  const gridCards = (): HTMLElement[] => (gridEl ? [...gridEl.querySelectorAll<HTMLElement>('.pcard')] : []);
+
+  /** 抽离：整卡 display:none，其余卡动画补位。海报 rect 要在调用**前**量好——抽离后源卡没有几何 */
+  const extractSrc = (): void => {
+    const card = srcCard; // 局部非空副本：TS 的收窄穿不进 mutate 闭包
+    if (!card) return;
+    flipReflow(gridCards(), (gridEl ?? card).getBoundingClientRect(), () => { card.style.display = 'none'; });
+  };
+
+  /** 插回：列表让出空位（其余卡让位动画），卡本体以 visibility:hidden 占位，返回海报新 rect
+   *  供返程克隆瞄准；显形由调用方在克隆落地时做（揭掉 visibility） */
+  const reinsertSrc = (): DOMRect | null => {
+    const card = srcCard;
+    if (!card || !card.isConnected || !gridEl?.isConnected) return null;
+    flipReflow(gridCards(), gridEl.getBoundingClientRect(), () => {
+      card.style.display = '';
+      card.style.visibility = 'hidden';
+    });
+    return src?.isConnected ? src.getBoundingClientRect() : null;
+  };
+
+  const restoreSrc = (): void => {
+    if (srcCard) { srcCard.style.display = ''; srcCard.style.visibility = ''; }
   };
 
   return {
@@ -526,7 +569,7 @@ function createSharedFlight(): {
       const t = target;
       const s = src;
       if (phase === 'idle' || !ov || !t || !s) return false; // 没起飞过：按普通关闭走
-      if (phase === 'flying') { setSrcOut(false); phase = 'idle'; finish(); return true; } // 起飞途中被关：不演了
+      if (phase === 'flying') { restoreSrc(); phase = 'idle'; finish(); return true; } // 起飞途中被关：不演了
       if (phase === 'closing') { finish(); return true; } // 重入（面板整刷连发 close）：立刻收尾
       phase = 'closing';
       const host = ov.parentNode as HTMLElement;
@@ -541,13 +584,19 @@ function createSharedFlight(): {
       const handOver = (): void => {
         if (handed || phase !== 'closing') return;
         handed = true;
-        // ② 返程克隆挂宿主 → 移除遮罩（背景已淡到全透明，无感）→ 飞回卡片位
+        // ② 列表让位（其余卡动画挪开、卡本体隐形占位）→ 移除遮罩（背景已淡到全透明，无感）
+        //    → 海报飞回空位，落地卡才显形
         const fb = frame.getBoundingClientRect();
-        const clone = spawnFlyClone(host, s.getAttribute('src') ?? '', posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
-        const to = s.getBoundingClientRect();
+        const to = reinsertSrc();
         finish();
+        if (!to) { phase = 'idle'; return; } // 卡已不在线（面板整刷过）：新网格自带它，无需返程
+        const clone = spawnFlyClone(host, s.getAttribute('src') ?? '', posterR.width, posterR.height, getComputedStyle(t).borderTopLeftRadius);
         const fly = clone.animate(flyKeyframes(posterR, to, fb), { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
-        const done = (): void => { setSrcOut(false); clone.remove(); phase = 'idle'; };
+        const done = (): void => {
+          if (srcCard) srcCard.style.visibility = ''; // 落地：卡在自己的空位里显形
+          clone.remove();
+          phase = 'idle';
+        };
         fly.finished.then(done).catch(done);
       };
       ov.animate([
@@ -565,31 +614,33 @@ function createSharedFlight(): {
       overlay = ovlEl;
       target = overlay.querySelector<HTMLElement>('.cn-modal--detail .dm-poster');
       src = fromCard.querySelector<HTMLImageElement>('.pw img');
+      srcCard = fromCard;
+      gridEl = fromCard.closest<HTMLElement>('.d-scroll, .m-scroll');
       // 无海报 / 图对不上（季明细钻入时源是合并卡正脸，与钻入季可能不同图，硬飞会在
       // 落地瞬间跳图）→ 不飞，维持原有整体入场
-      if (!overlay || !target || !src?.getAttribute('src')) { overlay = null; target = null; src = null; return; }
+      if (!overlay || !target || !src?.getAttribute('src')) { this.bail(); return; }
       const dstImg = target.querySelector('img');
-      if (!dstImg || dstImg.getAttribute('src') !== src.getAttribute('src')) { overlay = null; target = null; src = null; return; }
+      if (!dstImg || dstImg.getAttribute('src') !== src.getAttribute('src')) { this.bail(); return; }
       try {
         const modal = overlay.querySelector<HTMLElement>('.cn-modal--detail');
-        if (!modal) { overlay = null; target = null; src = null; return; }
+        if (!modal) { this.bail(); return; }
         modal.classList.add('cn-modal--fly');       // 压整体入场与内容接力（styles.css 末段）
         modal.style.visibility = 'hidden';          // 布局照常，几何量得准
         phase = 'flying';
-        const sr = src.getBoundingClientRect();
+        const sr = src.getBoundingClientRect();     // 先量：整卡抽离后源就没有几何了
         const tr = target.getBoundingClientRect();
         const base = overlay.getBoundingClientRect();
         if (sr.width < 8 || sr.height < 8 || tr.width < 8 || tr.height < 8) { this.bail(); return; }
+        extractSrc();                               // 整卡从列表抽离，其余卡动画补位
         const clone = spawnFlyClone(overlay, src.getAttribute('src') as string, tr.width, tr.height, getComputedStyle(target).borderTopLeftRadius);
-        setSrcOut(true);                            // 「抽出来」：卡片留空框、整卡压暗，详情关掉才归位
         const fly = clone.animate(flyKeyframes(sr, tr, base), { duration: SE_FLIGHT, easing: 'cubic-bezier(.34,.06,.16,1)', fill: 'forwards' });
-        // 宿主观察：遮罩被移除且不在关闭流程（skipReturn 的编辑/删除、异常路径）→ 源海报归位。
-        // 关闭流程中的归位由返程落地负责，这里不能抢（抢了就是飞行途中卡片先长回海报）
+        // 宿主观察：遮罩被移除且不在关闭流程（skipReturn 的编辑/删除、异常路径）→ 源卡归位。
+        // 关闭流程中的归位由返程落地负责，这里不能抢（抢了就是飞行途中卡片先长回列表）
         if (overlay.parentNode) {
           const moo = new MutationObserver(() => {
             if (overlay?.isConnected) return;
             moo.disconnect();
-            if (phase !== 'closing') setSrcOut(false);
+            if (phase !== 'closing') restoreSrc();
           });
           moo.observe(overlay.parentNode, { childList: true });
         }
@@ -621,7 +672,12 @@ function createSharedFlight(): {
       overlay?.querySelector<HTMLElement>('.cn-modal--detail')?.classList.remove('cn-modal--fly');
       const modal = overlay?.querySelector<HTMLElement>('.cn-modal--detail');
       if (modal) modal.style.visibility = '';
-      setSrcOut(false);
+      restoreSrc();
+      overlay = null;
+      target = null;
+      src = null;
+      srcCard = null;
+      gridEl = null;
       phase = 'idle';
     },
   };
