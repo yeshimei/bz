@@ -1,11 +1,14 @@
 /**
- * 影院豆瓣抓取核心（issue 303 / ADR-0129；ADR-0177 搜索页退役）：自 tools/obsidian-douban-poster 移植入插件。
- * 字段链（ADR-0177 拍板）：**豆瓣 subject_suggest 补全接口**（JSON 一步拿 sid + 规范名 + 海报 URL，
- * 取代 www.douban.com/search 搜索页 HTML——该页体积大、易风控、15s 超时被误报「风控」，2026-09 实测）
+ * 影院豆瓣抓取核心（issue 303 / ADR-0129；ADR-0177 搜索页退役、ADR-0178 三路检索链）：
+ * 自 tools/obsidian-douban-poster 移植入插件。
+ * 字段链：**三路检索链**（ADR-0178）——①subject_suggest 补全接口（JSON 一步拿 sid + 规范名 +
+ * 海报 URL，最快最全）→ ②rexxar 移动搜索（与①频控池独立；①有「200+空数组」软拒绝形态，
+ * 实测窗口以分钟计）→ ③www.douban.com/search 搜索页 HTML（末路兜底复活）——命中即用，
+ * 全空且有路被拦 → blocked、全空无拦 → notfound
  * → **ApiZero 豆瓣电影信息接口**（评分/导演/主演/类型/地区/片长首选 + 上映日期←year/热门短评，
  * key 设置项）→ rexxar 演职员兜底（缺导演/主演或需编剧时）；
- * 海报走豆瓣（suggest 提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
- * 豆瓣详情页 HTML 与搜索页 HTML 均退役；移动端同源可用。
+ * 海报走豆瓣（检索路提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
+ * 豆瓣详情页 HTML 退役；移动端同源可用。
  * 写回口径（审查 C8/C9 拍板）：除豆瓣链接（修正脏值）外一律「缺失才填」——已有值
  * （含用户手工修正）不覆盖；ApiZero 逗号列表值写入前归一化为消费端的 ` / ` 切分口径（C2）。
  * 纯逻辑 + 依赖注入（httpGet / downloadBinary），node 环境可测。
@@ -89,8 +92,9 @@ export function parseSuggestResults(jsonText: string): DoubanSearchResult[] {
   return results;
 }
 
-/** 纯函数：suggest 响应是否为风控/异常形态（ADR-0177）——响应为 null（非 2xx/超时）
- *  或非 JSON（风控返回 HTML 拦截页）判风控；空数组是正常空态，交上层归 notfound */
+/** 纯函数：suggest 响应是否为风控/异常形态——响应为 null（非 2xx/超时）
+ *  或非 JSON（风控返回 HTML 拦截页）判风控；空数组**不算**明确空态：suggest 存在
+ *  「200 + 空数组」软拒绝形态（频控，实测窗口以分钟计，ADR-0178），交上层走下一路 */
 export function suggestLooksBlocked(jsonText: string | null): boolean {
   if (!jsonText) return true;
   try {
@@ -100,6 +104,72 @@ export function suggestLooksBlocked(jsonText: string | null): boolean {
     return true;
   }
 }
+
+/** rexxar search 条目的公共面（subjects.items[]；target_type 滤书/营销位） */
+interface RexxarSearchItem {
+  target_type?: string;
+  target?: { title?: string; uri?: string; cover_url?: string };
+}
+
+/** 纯函数：解析 rexxar 移动搜索 JSON（ADR-0178 第二路）：
+ *  subjects.items[] 只留 movie/tv（滤书籍与营销位）；sid 从 uri
+ *  （douban://douban.com/<movie|tv>/<sid>）提取；cover_url 已是 large 规格直用
+ *  （upgradePosterUrl 对无 s_ratio_poster 的 URL 原样返回，无害） */
+export function parseRexxarSearch(jsonText: string): DoubanSearchResult[] {
+  let data: any;
+  try {
+    data = JSON.parse(jsonText);
+  } catch {
+    return [];
+  }
+  const items = data?.subjects?.items;
+  if (!Array.isArray(items)) return [];
+  const results: DoubanSearchResult[] = [];
+  for (const it of items as RexxarSearchItem[]) {
+    const type = it?.target_type;
+    const sid = it?.target?.uri?.match(/\/(\d+)/)?.[1];
+    if ((type !== 'movie' && type !== 'tv') || !sid) continue;
+    results.push({
+      title: String(it.target?.title ?? '').trim(),
+      detailUrl: `https://movie.douban.com/subject/${sid}/`,
+      posterUrl: String(it.target?.cover_url ?? ''),
+    });
+  }
+  return results;
+}
+
+/** 纯函数：解析豆瓣搜索页 HTML（www.douban.com/search，ADR-0178 第三路复活：
+ *  result 块 → title/detailUrl/posterUrl；作为前两路 JSON 通道都拿不到时的兜底） */
+export function parseSearchResults(html: string): DoubanSearchResult[] {
+  const results: DoubanSearchResult[] = [];
+  const itemRegex = /class="result"[\s\S]*?<div class="pic">[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*>[\s\S]*?<div class="title">[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
+  let match: RegExpExecArray | null;
+  while ((match = itemRegex.exec(html)) !== null) {
+    const rawUrl = match[1];
+    const posterUrl = match[2];
+    const title = match[3].trim();
+    // 搜索结果链接是 link2 跳转包装，url= 参数里才是真实 subject 地址
+    const urlMatch = rawUrl.match(/url=([^&]+)/);
+    const detailUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : rawUrl;
+    results.push({ title, detailUrl, posterUrl });
+  }
+  return results;
+}
+
+/** 纯函数：搜索页响应是否为风控拦截页——响应过短或无搜索结果结构
+ *  （正常搜索页 >20KB 且含 result 块）；空态页含「没有找到」文案放行 */
+export function searchPageLooksBlocked(html: string | null): boolean {
+  if (!html) return true;
+  if (html.length < 8000) return true;
+  return !html.includes('class="result"') && !html.includes('没有找到') && !html.includes('没有相关的搜索结果');
+}
+
+/** 单路检索探测结果：hit = 命中结果；empty = 服务端正常应答但无结果（可能是软拒绝，
+ *  交下一路）；blocked = 明确被拦（null/非 JSON/风控页）。任一路网络异常上抛 → network（C6） */
+export type SearchProbe =
+  | { kind: 'hit'; results: DoubanSearchResult[] }
+  | { kind: 'empty' }
+  | { kind: 'blocked' };
 
 /** 纯函数：s_ratio_poster → l_ratio_poster（高清） */
 export function upgradePosterUrl(url: string): string {
@@ -330,32 +400,68 @@ export type DoubanQueryOutcome =
   | { ok: true; data: DoubanQuery }
   | { ok: false; reason: 'blocked' | 'notfound' | 'network' };
 
+// ---------- 检索三路（ADR-0178：suggest → rexxar search → 搜索页） ----------
+
+/** 三路单发：suggest 补全（主路，JSON、信息全）。软拒绝（200+空数组）归 empty 交下一路 */
+async function probeSuggest(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
+  const headers: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
+  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, headers);
+  if (suggestLooksBlocked(json)) return { kind: 'blocked' };
+  const results = parseSuggestResults(json!);
+  return results.length > 0 ? { kind: 'hit', results } : { kind: 'empty' };
+}
+
+/** 三路单发：rexxar 移动搜索（二路；与 suggest 频控池独立，实测 suggest 全空时仍命中） */
+async function probeRexxarSearch(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
+  const headers: Record<string, string> = { Referer: 'https://m.douban.com/movie/' };
+  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const json = await deps.httpGet(`https://m.douban.com/rexxar/api/v2/search?q=${encodeURIComponent(name)}&count=5`, headers);
+  if (!json) return { kind: 'blocked' };
+  const results = parseRexxarSearch(json);
+  return results.length > 0 ? { kind: 'hit', results } : { kind: 'empty' };
+}
+
+/** 三路单发：搜索页 HTML（末路兜底；体积大、风控面最宽，仅供最后一级） */
+async function probeSearchPage(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
+  const headers: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
+  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, headers);
+  if (searchPageLooksBlocked(html)) return { kind: 'blocked' };
+  const results = parseSearchResults(html!);
+  return results.length > 0 ? { kind: 'hit', results } : { kind: 'empty' };
+}
+
 /**
- * 按片名查询豆瓣（suggest → sid → ApiZero 字段 → rexxar 演职员兜底）。
+ * 按片名查询豆瓣（三路检索链 → sid → ApiZero 字段 → rexxar 演职员兜底）。
  * 表单「解析」与抓取队列 `fetchNoteDouban` **共用这一段**——各写一份必然漂移。
  * 只走网络、不碰文件系统，故不需要 TFile（表单阶段草稿尚未落盘）。
+ *
+ * 链路口径（ADR-0178）：逐路尝试，命中即用；suggest 有「200+空数组」软拒绝形态
+ * （频控），empty 一律交下一路。全部走完未命中：任一路明确被拦 → blocked（提示
+ * 「稍后再试」语义），否则 → notfound。任一路网络异常上抛 → network（C6：不与
+ * 风控混淆；前路已成功的请求不浪费——单条内三连发上限，无指数放大）。
  */
 export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Promise<DoubanQueryOutcome> {
-  // 1. 补全检索（subject_suggest 补全接口，JSON；Cookie 注入）。网络异常上抛接住归 network（C6：不与风控混淆）
-  const suggestHeaders: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
-  if (deps.doubanCookie) suggestHeaders.Cookie = deps.doubanCookie;
-  let json: string | null;
+  let first: DoubanSearchResult | null = null;
+  let sawBlocked = false;
   try {
-    json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, suggestHeaders);
+    for (const probe of [probeSuggest, probeRexxarSearch, probeSearchPage]) {
+      const r = await probe(name, deps);
+      if (r.kind === 'hit') { first = r.results[0]; break; }
+      if (r.kind === 'blocked') sawBlocked = true;
+    }
   } catch {
     return { ok: false, reason: 'network' };
   }
-  if (suggestLooksBlocked(json)) return { ok: false, reason: 'blocked' };
-  const results = parseSuggestResults(json!);
-  if (results.length === 0) return { ok: false, reason: 'notfound' };
-  const first = results[0];
+  if (!first) return { ok: false, reason: sawBlocked ? 'blocked' : 'notfound' };
   const sid = extractSid(first.detailUrl);
   if (!sid) return { ok: false, reason: 'notfound' };
 
-  // 2. 字段：ApiZero 首选（key 未配/失败 → null，交 rexxar 兜底）
+  // 字段：ApiZero 首选（key 未配/失败 → null，交 rexxar 兜底）
   let az: ApizeroInfo | null = null;
   if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-  // 3. rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）
+  // rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）
   let celebrities: CelebritiesInfo | null = null;
   if (!az || !az.director || !az.actor) {
     celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);

@@ -1,13 +1,17 @@
 // @vitest-environment jsdom
 /**
- * 影院豆瓣抓取核心测试（issue 303 / ADR-0129；ADR-0177 suggest 检索，jsdom：端到端用 vault.process/writeBinary）：
+ * 影院豆瓣抓取核心测试（issue 303 / ADR-0129；ADR-0177 suggest / ADR-0178 三路检索链，
+ * jsdom：端到端用 vault.process/writeBinary）：
  * - 纯函数：parseSuggestResults（movie/tv 过滤 + id 规范化）/ suggestLooksBlocked（风控/异常形态检测）/
- *   upgradePosterUrl / extractSid / parseCelebrities / extractMovieName / normalizeListValue（C2 逗号归一）/
- *   updateFrontmatterFields（C3 换行单行化 / C8 ifMissing 缺失才填）/ insertPosterEmbed
- *   （C4 无尾换行形态）/ ApiZero 客户端；
+ *   parseRexxarSearch（二路：uri 提 sid + target_type 过滤）/ parseSearchResults + searchPageLooksBlocked
+ *   （三路复活）/ upgradePosterUrl / extractSid / parseCelebrities / extractMovieName /
+ *   normalizeListValue（C2 逗号归一）/ updateFrontmatterFields（C3 换行单行化 / C8 ifMissing
+ *   缺失才填）/ insertPosterEmbed（C4 无尾换行形态）/ ApiZero 客户端；
+ * - 三路检索链：suggest 命中即停（不触发后路）/ suggest 软拒绝空 → rexxar search 命中
+ *   （回归：让子弹飞）/ 前两路空 → 搜索页命中 / 全空 → notfound / 前路被拦后路命中 → 成功 /
+ *   全被拦 → blocked / 网络异常 → network（C6）；
  * - fetchNoteDouban 端到端（fake 注入）：ApiZero 主链 / 无 key rexxar 兜底 /
- *   ApiZero 缺导演主演 rexxar 补 / suggest 风控（非 JSON）→ blocked / 空结果 → notfound /
- *   网络异常 → network（C6）/ 海报下载失败 → network、写盘失败 → write（C6 拆分）/
+ *   ApiZero 缺导演主演 rexxar 补 / 海报下载失败 → network、写盘失败 → write（C6 拆分）/
  *   海报下载写盘 + embed 插入 / 已齐全跳过 / 存量退役字段不覆盖 /
  *   C1 剧集不写季集 / C8 抓取中途用户手改不被覆盖 / C9 六字段缺失才填。
  */
@@ -16,9 +20,10 @@ import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setApp } from '../../src/core/app';
 import {
-  parseSuggestResults, suggestLooksBlocked, upgradePosterUrl, extractSid, parseCelebrities,
+  parseSuggestResults, suggestLooksBlocked, parseRexxarSearch, parseSearchResults, searchPageLooksBlocked,
+  upgradePosterUrl, extractSid, parseCelebrities,
   extractMovieName, normalizeListValue, updateFrontmatterFields, insertPosterEmbed,
-  fetchApizeroInfo, fetchNoteDouban,
+  fetchApizeroInfo, fetchNoteDouban, queryDoubanByName,
   POSTER_FOLDER, type HttpGet, type DoubanFetchDeps,
 } from '../../src/cinema/douban-fetcher';
 
@@ -36,7 +41,19 @@ const SUGGEST_JSON = JSON.stringify([
   { title: '流浪地球2 剧集', id: '999', img: 'https://img9.doubanio.com/x.jpg', type: 'tv' },
 ]);
 
-describe('parseSuggestResults（ADR-0177：suggest JSON 解析）', () => {
+// rexxar search 夹具（2026-09-23 实测形态）：subjects.items[]，uri 提 sid，营销位/书籍过滤
+const REXXAR_SEARCH_JSON = JSON.stringify({
+  smart_box: { layout: 'market', target: { title: '营销位' } },
+  subjects: { items: [
+    { target_type: 'movie', target: { title: '让子弹飞', uri: 'douban://douban.com/movie/3742360', cover_url: 'https://img1.doubanio.com/view/photo/large/public/p2538644552.jpg' } },
+    { target_type: 'book', target: { title: '让子弹飞（剧本）', uri: 'douban://douban.com/book/999001', cover_url: 'https://img3.doubanio.com/view/subject/m/public/s1.jpg' } },
+  ] },
+});
+
+// 搜索页夹具（ADR-0178 三路复活，对齐 ADR-0129 原正则口径）
+const SEARCH_PAGE_HTML = `<!DOCTYPE html><html><head><style>${'x'.repeat(20000)}</style></head><body><div class="result"><div class="pic"><a href="//www.douban.com/link2/?url=https%3A%2F%2Fmovie.douban.com%2Fsubject%2F3742360%2F" title="Let the Bullets Fly"><img src="https://img9.doubanio.com/view/photo/s_ratio_poster/public/p2538644552.jpg"></a></div><div class="title"><a href="#">让子弹飞</a></div></div></html>`;
+
+describe('parseSuggestResults（suggest JSON 解析）', () => {
   it('只留 movie/tv 条目；title/detailUrl/posterUrl 提取；detailUrl 由 id 规范化（不带 ?suggest= 脏参）', () => {
     const rs = parseSuggestResults(SUGGEST_JSON);
     expect(rs).toHaveLength(2); // book 条目被滤掉
@@ -47,7 +64,7 @@ describe('parseSuggestResults（ADR-0177：suggest JSON 解析）', () => {
     expect(rs[1].title).toBe('流浪地球2 剧集');
   });
 
-  it('非 JSON / 非数组 / 空 / 缺 id → 空数组（空态交上层归 notfound）', () => {
+  it('非 JSON / 非数组 / 空 / 缺 id → 空数组（软拒绝交下一路）', () => {
     expect(parseSuggestResults('<html>风控拦截页</html>')).toEqual([]);
     expect(parseSuggestResults('{"msg":"unexpected"}')).toEqual([]);
     expect(parseSuggestResults('[]')).toEqual([]);
@@ -55,12 +72,48 @@ describe('parseSuggestResults（ADR-0177：suggest JSON 解析）', () => {
   });
 });
 
-describe('suggestLooksBlocked（ADR-0177：风控/异常形态检测）', () => {
-  it('null（非 2xx/超时）/非 JSON 判风控；合法 JSON（含空态数组）放行', () => {
+describe('suggestLooksBlocked（风控/异常形态检测）', () => {
+  it('null（非 2xx/超时）/非 JSON 判风控；合法 JSON（含软拒绝空数组）放行', () => {
     expect(suggestLooksBlocked(null)).toBe(true);
     expect(suggestLooksBlocked('<!DOCTYPE html><html><title>豆瓣</title>异常请求</html>')).toBe(true);
     expect(suggestLooksBlocked(SUGGEST_JSON)).toBe(false);
-    expect(suggestLooksBlocked('[]')).toBe(false); // 空态 ≠ 风控
+    expect(suggestLooksBlocked('[]')).toBe(false); // 软拒绝空态 ≠ 明确风控（交下一路判）
+  });
+});
+
+describe('parseRexxarSearch（ADR-0178 二路：rexxar 移动搜索）', () => {
+  it('subjects.items 只留 movie/tv；uri 提 sid；cover_url 直用', () => {
+    const rs = parseRexxarSearch(REXXAR_SEARCH_JSON);
+    expect(rs).toHaveLength(1); // book 条目被滤掉
+    expect(rs[0].title).toBe('让子弹飞');
+    expect(rs[0].detailUrl).toBe('https://movie.douban.com/subject/3742360/');
+    expect(rs[0].posterUrl).toContain('large');
+  });
+
+  it('非 JSON / 无 subjects / 空 items / 缺 uri → 空数组', () => {
+    expect(parseRexxarSearch('<html>拦截页</html>')).toEqual([]);
+    expect(parseRexxarSearch('{"foo":1}')).toEqual([]);
+    expect(parseRexxarSearch('{"subjects":{"items":[]}}')).toEqual([]);
+    expect(parseRexxarSearch('{"subjects":{"items":[{"target_type":"movie","target":{"title":"缺uri"}}]}}')).toEqual([]);
+  });
+});
+
+describe('parseSearchResults / searchPageLooksBlocked（ADR-0178 三路复活，原正则口径）', () => {
+  it('result 块提取标题/详情链接（link2 解码）/海报 URL', () => {
+    const rs = parseSearchResults(SEARCH_PAGE_HTML);
+    expect(rs).toHaveLength(1);
+    expect(rs[0].title).toBe('让子弹飞');
+    expect(rs[0].detailUrl).toBe('https://movie.douban.com/subject/3742360/');
+    expect(rs[0].posterUrl).toContain('s_ratio_poster');
+  });
+
+  it('短响应/无结构判风控；正常页与空态页放行', () => {
+    const blocked = '<!DOCTYPE html><html><head><title>豆瓣</title><style type="t' + 'x'.repeat(2500) + '</style></head><body></body></html>';
+    expect(searchPageLooksBlocked(blocked)).toBe(true);
+    expect(searchPageLooksBlocked(null)).toBe(true);
+    expect(searchPageLooksBlocked(SEARCH_PAGE_HTML)).toBe(false);
+    const empty = '<html>' + 'x'.repeat(9000) + '没有找到相关的搜索结果</html>';
+    expect(searchPageLooksBlocked(empty)).toBe(false);
   });
 });
 
@@ -224,6 +277,7 @@ function makeDeps(over: {
   const defaultGet: HttpGet = async (url) => {
     if (url.includes('subject_suggest')) return SUGGEST_JSON;
     if (url.includes('apizero.cn')) return apizeroJson;
+    if (url.includes('rexxar/api/v2/search')) return REXXAR_SEARCH_JSON; // 主路命中即停，正常不走到
     if (url.includes('rexxar')) return rexxarJson;
     return null;
   };
@@ -332,16 +386,109 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(content).toContain('主演: 吴京');   // rexxar 补主演
   });
 
-  it('suggest 风控（非 JSON）→ blocked；空结果 → notfound；海报下载失败 → network、写盘失败 → write（C6 拆分）', async () => {
+  it('三路检索链：suggest 命中即停（后路零调用）', async () => {
+    const hits: string[] = [];
+    const deps: DoubanFetchDeps = {
+      httpGet: async (url) => {
+        hits.push(url);
+        if (url.includes('subject_suggest')) return SUGGEST_JSON;
+        if (url.includes('apizero.cn')) return JSON.stringify({ code: 0, data: { score: '8.3', douban_url: 'x', director: '郭帆', actor: '吴京' } });
+        return null;
+      },
+      downloadBinary: async () => null,
+      writeBinary: async () => {},
+      mkdir: async () => {},
+      apizeroKey: 'k',
+    };
+    const q = await queryDoubanByName('流浪地球2', deps);
+    expect(q.ok).toBe(true);
+    if (q.ok) {
+      expect(q.data.sid).toBe('35267208');
+      expect(q.data.title).toBe('流浪地球2');
+    }
+    expect(hits.some((u) => u.includes('subject_suggest'))).toBe(true);
+    expect(hits.some((u) => u.includes('rexxar/api/v2/search'))).toBe(false); // 主路命中，二路未触
+    expect(hits.some((u) => u.includes('douban.com/search'))).toBe(false);    // 三路未触
+  });
+
+  it('三路检索链（回归「让子弹飞」）：suggest 软拒绝空 → rexxar search 命中', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const { deps } = makeDeps({ vault, apizeroKey: 'k', posterBytes: new ArrayBuffer(1) });
+    deps.httpGet = async (url) => {
+      if (url.includes('subject_suggest')) return '[]'; // 200+空数组软拒绝（频控形态）
+      if (url.includes('apizero.cn')) return JSON.stringify({ code: 0, data: { score: '9.0', douban_url: 'https://movie.douban.com/subject/3742360/' } });
+      if (url.includes('rexxar/api/v2/search')) return REXXAR_SEARCH_JSON;
+      return null;
+    };
+    const r = await runOn(vault, deps);
+    expect(r).toEqual({ ok: true });
+    const content = vault.files.get(FILE_PATH)!;
+    expect(content).toContain('豆瓣链接: "https://movie.douban.com/subject/3742360/"'); // 二路命中写链
+    expect(content).toContain('豆瓣评分: 9.0');
+  });
+
+  it('三路检索链：前两路空 → 搜索页命中；全空 → notfound', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const { deps } = makeDeps({ vault, apizeroKey: 'k', posterBytes: new ArrayBuffer(1) });
+    deps.httpGet = async (url) => {
+      if (url.includes('subject_suggest')) return '[]';
+      if (url.includes('apizero.cn')) return JSON.stringify({ code: 0, data: { score: '9.0', douban_url: 'https://movie.douban.com/subject/3742360/' } });
+      if (url.includes('rexxar/api/v2/search')) return '{"subjects":{"items":[]}}';
+      if (url.includes('douban.com/search')) return SEARCH_PAGE_HTML;
+      return null;
+    };
+    const r = await runOn(vault, deps);
+    expect(r).toEqual({ ok: true });
+    expect(vault.files.get(FILE_PATH)).toContain('豆瓣链接: "https://movie.douban.com/subject/3742360/"'); // 三路命中写链
+
+    // 全空（无一路被拦）→ notfound（搜索页用空态页表达「真没有」——短响应会被判 blocked）
+    const vault2 = new MockVault();
+    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const d2 = makeDeps({ vault: vault2, apizeroKey: 'k' });
+    d2.deps.httpGet = async (url) => {
+      if (url.includes('subject_suggest')) return '[]';
+      if (url.includes('apizero.cn')) return '{}';
+      if (url.includes('rexxar/api/v2/search')) return '{"subjects":{"items":[]}}';
+      if (url.includes('douban.com/search')) return '<html>' + 'x'.repeat(9000) + '没有找到相关的搜索结果</html>';
+      return null;
+    };
+    expect(await runOn(vault2, d2.deps)).toEqual({ ok: false, reason: 'notfound' });
+  });
+
+  it('三路检索链：前路被拦后路命中 → 成功；全被拦 → blocked', async () => {
+    const vault = new MockVault();
+    vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const { deps } = makeDeps({ vault, apizeroKey: 'k', posterBytes: new ArrayBuffer(1) });
+    // suggest null（明确被拦）→ rexxar search 命中：blocked 不短路
+    deps.httpGet = async (url) => {
+      if (url.includes('subject_suggest')) return null;
+      if (url.includes('apizero.cn')) return JSON.stringify({ code: 0, data: { score: '9.0', douban_url: 'https://movie.douban.com/subject/3742360/' } });
+      if (url.includes('rexxar/api/v2/search')) return REXXAR_SEARCH_JSON;
+      return null;
+    };
+    expect(await runOn(vault, deps)).toEqual({ ok: true });
+
+    // 全路 null → blocked（有路被拦，提示「稍后再试」）
+    const vault2 = new MockVault();
+    vault2.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const d2 = makeDeps({ vault: vault2, apizeroKey: 'k' });
+    d2.deps.httpGet = async () => null;
+    expect(await runOn(vault2, d2.deps)).toEqual({ ok: false, reason: 'blocked' });
+
+    // 全路风控页/风控形态 → blocked
+    const vault3 = new MockVault();
+    vault3.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
+    const d3 = makeDeps({ vault: vault3, apizeroKey: 'k' });
+    d3.deps.httpGet = async () => '<html><title>豆瓣</title>有异常请求</html>';
+    expect(await runOn(vault3, d3.deps)).toEqual({ ok: false, reason: 'blocked' });
+  });
+
+  it('检索被拦/失败形态 + 海报下载失败 → network、写盘失败 → write（C6 拆分）', async () => {
     const vault = new MockVault();
     vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k' });
-
-    deps.httpGet = async () => '<html><title>豆瓣</title>有异常请求</html>';
-    expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'blocked' });
-
-    deps.httpGet = async () => '[]';
-    expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'notfound' });
 
     deps.httpGet = async () => SUGGEST_JSON;
     deps.downloadBinary = async () => null;
@@ -355,16 +502,13 @@ describe('fetchNoteDouban 端到端（fake 注入）', () => {
     expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'write' });
   });
 
-  it('C6：suggest httpGet reject → network（不误报风控）；返回 null（非 2xx/超时）仍 → blocked', async () => {
+  it('C6：检索 httpGet reject → network（不误报风控）', async () => {
     const vault = new MockVault();
     vault.files.set(FILE_PATH, '---\ntags: [电影]\n评分: -1\n---');
     const { deps } = makeDeps({ vault, apizeroKey: 'k' });
 
     deps.httpGet = async () => { throw new Error('ECONNREFUSED'); };
     expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'network' });
-
-    deps.httpGet = async () => null;
-    expect(await runOn(vault, deps)).toEqual({ ok: false, reason: 'blocked' });
   });
 
   it('已齐全跳过（零网络）；海报已有只补字段（不重下海报不重复 embed）', async () => {
