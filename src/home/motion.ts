@@ -68,10 +68,20 @@ function cancelPending(): void {
 
 /* ================= 面板壳：开 / 关 ================= */
 
+/** 退场动画的 id（motionPanelIn 按 id 撤残留，不误伤面板上的 CSS 动画） */
+const EXIT_ANIM_ID = 'bz-home-panel-exit';
+
 export function motionPanelIn(overlay: HTMLElement, reopen: boolean): void {
   const panel = overlay.querySelector<HTMLElement>('.bz-home-panel');
   if (!panel) return;
-  panel.style.opacity = ''; panel.style.transform = ''; panel.style.filter = ''; // 清退场残留（fill:forwards / RM 内联）
+  panel.style.opacity = ''; panel.style.transform = ''; panel.style.filter = ''; // 清 RM 内联残留
+  // 撤退场残留：上次退场的 fill:forwards 会把 opacity:0 钉在动画层（内联样式清不掉）——
+  // 不撤则「关→再开」入场播完自移除后，面板重新落回钉住的透明（整屏不可见但可点）
+  if (typeof panel.getAnimations === 'function') {
+    for (const a of panel.getAnimations()) {
+      if (a.id === EXIT_ANIM_ID) a.cancel();
+    }
+  }
   waapi(panel,
     [{ opacity: 0, transform: 'translateY(14px) scale(.985)', filter: 'blur(8px)' },
      { opacity: 1, transform: 'none', filter: 'blur(0px)' }],
@@ -89,11 +99,17 @@ export function motionPanelOut(overlay: HTMLElement, done: () => void): void {
   stopParallax(overlay);
   if (!panel) { done(); return; }
   let finished = false;
-  const finish = (): void => { if (!finished) { finished = true; done(); } };
+  const finish = (): void => {
+    if (finished) return;
+    finished = true;
+    // 面板收口后撤掉退场动画：fill:forwards 钉住的 opacity:0 不得活到下一次打开
+    try { if (a && a.playState !== 'idle') a.cancel(); } catch { /* 已收口忽略 */ }
+    done();
+  };
   const a = waapi(panel,
     [{ opacity: 1, transform: 'none', filter: 'blur(0px)' },
      { opacity: 0, transform: 'translateY(10px) scale(.985)', filter: 'blur(6px)' }],
-    { duration: M.move + 40, easing: E.out, fill: 'forwards' });
+    { duration: M.move + 40, easing: E.out, fill: 'forwards', id: EXIT_ANIM_ID });
   if (!a) { finish(); return; }
   a.finished.then(finish).catch(finish);
   after(M.move + 200, finish); // 兜底：动画事件丢失也不能卡住关闭
