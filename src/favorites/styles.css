@@ -371,3 +371,17 @@
 .bz-fav-tageditor-ic:hover { border-color: var(--acc); color: var(--acc-deep); }
 }
 .bz-fav-tageditor-ic.bz-fav-on { border-color: var(--acc); background: var(--acc); color: var(--on-acc); }
+
+/* ==================== 动效层注入件（src/favorites/motion.ts 消费，2026-09-22 动效批） ====================
+   只服务动效注入装饰：绝对定位 + 不吃事件 + aria-hidden（属性由 motion.ts 注入时挂），
+   演出完即摘——终态 UI 与无动效版逐像素一致。不改任何既有选择器的几何；
+   滚动条样式仍归 core 界级单源（ADR-0122），域内不自造。 */
+/* 收藏落定/复贴的光泽扫层：外层沿卡片圆角裁切，内层斜向亮带横扫（transform 驱动） */
+.bz-favm-sheen {
+  position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none;
+}
+.bz-favm-sheen-band {
+  position: absolute; top: -20%; bottom: -20%; left: 0; width: 46%;
+  transform: translateX(-140%) skewX(-18deg);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+}

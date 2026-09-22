@@ -48,10 +48,29 @@ import {
 } from './render';
 import { FavoritesAIService, normalizeAiOrganizeResult } from './ai';
 import { DataManager } from './data';
+// 动效层（2026-09-22 动效批）：纯表现，只在生命周期/交互挂点被调；语义词汇表见 ./motion 文件头
+import {
+  motionAiBusy, motionBindCardFeel, motionBindChipFeel, motionCardDepart, motionCardLanded,
+  motionCardPick, motionCaptureRects, motionErrShake, motionFilterSwitch, motionFormIn,
+  motionPanelIn, motionPanelOut, motionPickPop, motionPinFlip, motionRendered, motionSwitchPop,
+  motionTagMgrRows, motionTeardown, type MotionRects,
+} from './motion';
 // ADR-0002：app ↔ ui 环引用仅函数级延迟解析——本 import 只在 tagManagerDm() 运行时取用，
 // 模块顶层零互访（两侧模块均已初始化后才会走到标签管理入口）
 import { FavoritesApp } from './app';
 import type { FavTag } from './types';
+
+/** 渲染舞台（动效编排的状态机）：placeholder=占位帧（数据未到，静默）→ boot=首个全量渲染
+ *  （播首屏编排）→ idle=稳态（动作/刷新渲染静默，仅按 reveal 做单卡高光/FLIP） */
+type FavStage = 'placeholder' | 'boot' | 'idle';
+
+/** 渲染揭示载荷（reload 后对受影响单卡的动效指路） */
+interface FavReveal {
+  id?: string;
+  kind?: 'add' | 'edit' | 'pin' | 'restore';
+  /** 置顶 FLIP 的旧位快照（motionCaptureRects 在重建前取）；在则走全墙让位，否则单卡高光 */
+  flipBefore?: MotionRects | null;
+}
 
 /** 域级模块状态（模块单例；卸载/测试重置）。tag/archived 切片与纯层 FavView 结构兼容 */
 interface FavState {
@@ -63,7 +82,8 @@ interface FavState {
   archived: boolean;
   /** 当前排序（打开时按 favoritesDefaultSort 播种，issue 296；纯层 filteredItems 消费） */
   sort: FavSort;
-  renderFn: (() => void) | null;
+  renderFn: ((reveal?: FavReveal) => void) | null;
+  stage: FavStage;
 }
 
 const M: FavState = {
@@ -73,6 +93,7 @@ const M: FavState = {
   archived: false,
   sort: 'new',
   renderFn: null,
+  stage: 'idle',
 };
 
 export function resetFavoritesState(): void {
@@ -82,6 +103,8 @@ export function resetFavoritesState(): void {
   M.archived = false;
   M.sort = 'new';
   M.renderFn = null;
+  M.stage = 'idle';
+  motionTeardown();
 }
 
 // ==================== 设置 schema（⚙️ 已收敛设置面板） ====================
@@ -200,7 +223,9 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   document.body.appendChild(overlay);
   topifyZ(overlay); // ADR-0067：显示即发号
   M.overlay = overlay;
-  M.renderFn = () => renderAll();
+  M.renderFn = (reveal) => renderAll(reveal);
+  M.stage = 'placeholder'; // 首渲 = 占位帧（静默）；数据到齐的全量渲染才播首屏编排
+  motionTeardown(); // 上一次会话的编排残留清场（快速关开不叠影）
 
   // 打开默认（issue 296）：筛选与排序按设置播种——''=全部 / '@last'=关面板记忆 / 固定标签直选
   const openFilter = resolveOpenFilter();
@@ -216,6 +241,16 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）：
   // 焦点落面板容器本体（非输入框，移动端不弹软键盘），Tab 不再跑到面板背后
   trapPanelFocus(overlay.querySelector<HTMLElement>('.bz-fav-panel') ?? overlay);
+
+  // 动效层：亚麻板支上台面（磁贴/卡片手感绑定在下方容器声明之后）
+  motionPanelIn(overlay);
+  // 评审便利：#replay 重播首屏编排（motion.ts hashchange 消费；面板已关则不重放）
+  (window as unknown as Record<string, unknown>).__bzFavReplay = () => {
+    if (M.overlay !== overlay) return;
+    motionPanelIn(overlay);
+    M.stage = 'boot';
+    renderAll();
+  };
 
   // ---- 事件委托（overlay 顶层） ----
   overlay.addEventListener('click', (e) => {
@@ -236,6 +271,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
   // Enter/Space 与点击同径——键盘用户不再到不了开链/抽屉）
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
   const openCardDefault = (it: FavoritesItem, card?: HTMLElement | null): void => {
+    if (card) motionCardPick(card); // 动效层：拾取呼吸（移动交给抽屉，桌面交给浏览器）
     if (isMobileEnv()) { openMobSheet(it); return; }
     // 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开浏览器；无链接不再零反馈（F1/呈报#24，
     // issue 201「不动作」拍板保持：仍不开链不弹层），改轻微晃动示意「这张卡没有可打开的链接」
@@ -269,6 +305,7 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     const card = (e.target as HTMLElement).closest('[data-fav-id]') as HTMLElement | null;
     if (!card || isMobileEnv()) return;
     e.preventDefault();
+    motionCardPick(card); // 动效层：右键拾起（菜单开着时卡已被拿起一拍）
     const it = itemById(card.dataset.favId as string);
     if (it) openRowMenuAt(it, e.clientX, e.clientY);
   });
@@ -279,12 +316,17 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     (ev: any) => {
       const card = (ev.target as HTMLElement)?.closest?.('[data-fav-id]') as HTMLElement | null;
       if (!card) return;
+      motionCardPick(card); // 动效层：长按拾起（拿起来看一眼的呼吸起伏）
       const it = itemById(card.dataset.favId as string);
       if (it) openMobSheet(it);
     },
     undefined,
     (ev: any) => isMobileEnv() && !!(ev.target as HTMLElement)?.closest?.('[data-fav-id]')
   );
+
+  // 动效层：磁贴/卡片手感（委托绑容器，innerHTML 重建免疫）
+  motionBindChipFeel(stickers);
+  motionBindCardFeel(content);
 
   // 读盘占位（UI-07）：先渲一帧空态——大库/盘慢时打开不再白板（磁贴行 + 空态立现，
   // 数据到位后全量重渲）；读盘失败走 loadItems 的错误通知 + 空列表，占位帧语义不变
@@ -297,7 +339,8 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
 }
 
 export function closePanel(): void {
-  if (M.overlay) {
+  const ov = M.overlay;
+  if (ov) {
     // 上次筛选记忆（favoritesOpenFilter='@last' 的取数源）：关面板记住当下视图，下次打开取回
     // （issue 296，memoLastScene 同款先例）。落设置不落 favorites.json——顶层纯条目数组不改根结构
     const s = tryGetSettings();
@@ -305,8 +348,14 @@ export function closePanel(): void {
       s.favoritesLastFilter = M.archived ? '@archived' : (M.tag || '');
       void saveSettings();
     }
-    M.overlay.remove();
+    // 状态先清（toggle 语义/ESC 判活同步可见），DOM 交给收板动画摘除——
+    // 无动画宿主（测试）motionPanelOut 同步收口，行为与今日逐字一致
     M.overlay = null;
+    M.renderFn = null;
+    M.stage = 'idle';
+    motionTeardown(); // 清编排计时器/循环；收板兜底是 motionPanelOut 自持的，不受影响
+    motionPanelOut(ov, () => ov.remove());
+    return;
   }
   M.renderFn = null;
 }
@@ -328,21 +377,37 @@ async function loadItems(): Promise<void> {
   }
 }
 
-/** 数据刷新（外部写盘后：删除/置顶/归档/编辑后调用） */
-async function reload(): Promise<void> {
+/** 数据刷新（外部写盘后：删除/置顶/归档/编辑保存后调用；reveal 指路受影响单卡的动效） */
+async function reload(reveal?: FavReveal): Promise<void> {
   await loadItems();
-  M.renderFn?.();
+  M.renderFn?.(reveal);
 }
 
 // ==================== 渲染（markup 全在 ./render；此处只接纯层胶水） ====================
 
-function renderAll(): void {
+/** 卡墙容器（动效挂点取用；面板未开为 null） */
+function boardEl(): HTMLElement | null {
+  return M.overlay?.querySelector<HTMLElement>('[data-fav-content]') ?? null;
+}
+
+function renderAll(reveal?: FavReveal): void {
   if (!M.overlay) return;
   // 悬空筛选归一（UI-08）：激活标签已不在标签集（设置面板删/改名后 M.tag 悬指）→ 回落全部。
   // 标签仍在但计数归零的激活 chip 由 chipsHtml 保渲染（灰显），不走此归一——视图不擅自切换。
   if (!M.archived && M.tag && !getTags().some((t) => t.label === M.tag)) M.tag = null;
   const panel = M.overlay.querySelector('.bz-fav-panel') as HTMLElement;
   renderPanelView(panel, M.items, M, { mountIcons, mobile: isMobileEnv() });
+  // 动效舞台机：占位帧静默 → 首个全量渲染播首屏编排 → 稳态静默（仅 reveal 单卡高光/FLIP；
+  // 前后台刷新不重播入场，对齐 cinema/home 口径）
+  if (M.stage === 'placeholder') { M.stage = 'boot'; return; }
+  if (M.stage === 'boot') { M.stage = 'idle'; motionRendered(M.overlay, true); return; }
+  motionRendered(M.overlay, false);
+  if (reveal?.id) {
+    const board = boardEl();
+    if (!board) return;
+    if (reveal.flipBefore) motionPinFlip(board, reveal.flipBefore, reveal.id);
+    else motionCardLanded(board, reveal.id, reveal.kind ?? 'edit');
+  }
 }
 
 /** 标签筛选切换语义（磁贴行委托共用）：再点当前标签 = 取消筛选回全部；点「已归档」= 归档视图。
@@ -352,7 +417,14 @@ function applyTagFilter(label: string): void {
   if (label === VIEW_ALL) { M.tag = null; M.archived = false; }
   else if (label === VIEW_ARCHIVED) { M.tag = null; M.archived = !M.archived; }
   else { M.archived = false; M.tag = M.tag === label ? null : label; }
-  renderAll();
+  // 动效层：换筛 = 重新排一张板（揭下旧墙 → 重写 → 新墙轻浮上板 + 激活磁贴咔哒）；
+  // 无动画宿主内部同步重写，时序不变
+  const board = boardEl();
+  if (board) {
+    motionFilterSwitch(board, M.overlay?.querySelector<HTMLElement>('[data-fav-tags]') ?? null, () => renderAll());
+  } else {
+    renderAll();
+  }
 }
 
 function itemById(id: string): FavoritesItem | undefined {
@@ -372,6 +444,8 @@ function runAction(it: FavoritesItem, spec: FavActionSpec): void {
   } else if (spec.act === 'pin') {
     const next = !it.pinned;
     const prev = it.pinned;
+    // 动效层：置顶恒最前的可视化——重建前取旧位快照，reload 后全墙 FLIP 让位 + 金光落位
+    const before = motionCaptureRects(boardEl());
     it.pinned = next;
     void dataManagerOf().update(it.id, { pinned: next })
       .catch((e) => {
@@ -379,7 +453,7 @@ function runAction(it: FavoritesItem, spec: FavActionSpec): void {
         notifySaveError(e, '置顶收藏');
       })
       .finally(() => {
-        void reload();
+        void reload(before ? { id: it.id, kind: 'pin', flipBefore: before } : undefined);
       });
   } else if (spec.act === 'edit') {
     openForm(it);
@@ -447,7 +521,9 @@ function closeSheet(): void {
 /** 归档后可撤销：toast 挂「撤销」，点击回写 archived=false 恢复主列表 */
 async function archiveItem(it: FavoritesItem): Promise<void> {
   try {
-    await dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() });
+    // 动效层：卡先折收离场（进冷存箱），写盘与退场并行，退场完再补位重渲
+    const depart = motionCardDepart(boardEl(), it.id, 'archive');
+    await Promise.all([dataManagerOf().update(it.id, { archived: true, archivedAt: localNow() }), depart]);
     emitDomainEvent('favorites', { kind: 'archive', title: it.title });
     await reload();
     notifyUndo(`已归档收藏「${it.title}」`, () => {
@@ -455,7 +531,7 @@ async function archiveItem(it: FavoritesItem): Promise<void> {
         try {
           await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
           emitDomainEvent('favorites', { kind: 'unarchive', title: it.title });
-          await reload();
+          await reload({ id: it.id, kind: 'restore' }); // 动效层：复贴（从上方落回）
         } catch (e) {
           notifySaveError(e, '恢复收藏');
         }
@@ -469,7 +545,9 @@ async function archiveItem(it: FavoritesItem): Promise<void> {
 /** 取消归档（已归档视图动作）：回主列表 */
 async function unarchiveItem(it: FavoritesItem): Promise<void> {
   try {
-    await dataManagerOf().update(it.id, { archived: false, archivedAt: null });
+    // 动效层：回暖升起（褪色旧物离开冷存箱）
+    const depart = motionCardDepart(boardEl(), it.id, 'unarchive');
+    await Promise.all([dataManagerOf().update(it.id, { archived: false, archivedAt: null }), depart]);
     emitDomainEvent('favorites', { kind: 'unarchive', title: it.title });
     await reload();
     notice(`已取消归档，「${it.title}」回到主列表`, 'success');
@@ -481,7 +559,9 @@ async function unarchiveItem(it: FavoritesItem): Promise<void> {
 async function deleteItem(it: FavoritesItem): Promise<void> {
   const snapshot = it;
   try {
-    await dataManagerOf().delete(it.id);
+    // 动效层：揉掉（逆时针一缩一糊），写盘并行，退场完再补位重渲
+    const depart = motionCardDepart(boardEl(), it.id, 'del');
+    await Promise.all([dataManagerOf().delete(it.id), depart]);
     emitDomainEvent('favorites', { kind: 'delete', title: it.title });
     await reload();
     notifyUndo(`已删除收藏「${it.title}」`, () => {
@@ -492,7 +572,7 @@ async function deleteItem(it: FavoritesItem): Promise<void> {
           // 否则行为流只记「删除」，smartcat 上下文从此以为条目已删。kind 已双侧同步
           // （smartcat/favorites-source.ts 联合类型 + 文案/结构化分支，契约测试对账）
           emitDomainEvent('favorites', { kind: 'restored', title: it.title });
-          await reload();
+          await reload({ id: snapshot.id, kind: 'restore' }); // 动效层：复贴
         } catch (e) {
           notifySaveError(e, '恢复收藏');
         }
@@ -644,7 +724,9 @@ export function openForm(item: FavoritesItem | null): void {
       const label = (b as HTMLElement).dataset.tag as string;
       if (sel.has(label)) sel.delete(label);
       else sel.add(label);
-      b.classList.toggle('bz-fav-on', sel.has(label));
+      const on = sel.has(label);
+      b.classList.toggle('bz-fav-on', on);
+      motionPickPop(b as HTMLElement, on); // 动效层：选中=贴上一枚徽章（按弹+提亮），取消=轻弹
     }));
     mountIcons(pick);
   };
@@ -656,6 +738,7 @@ export function openForm(item: FavoritesItem | null): void {
   const togglePin = () => {
     const on = pinEl.classList.toggle('bz-fav-on');
     pinEl.setAttribute('aria-checked', String(on));
+    motionSwitchPop(pinEl); // 动效层：滑钮按弹（滑轨动画归 CSS transition）
   };
   pinEl.addEventListener('click', togglePin);
   pinEl.addEventListener('keydown', (e) => {
@@ -674,6 +757,9 @@ export function openForm(item: FavoritesItem | null): void {
   // 键盘提交（UI-11/E4）：core bindFormSubmit 单源——单行 input 纯 Enter 提交、textarea
   // 回车换行不拦、Ctrl/⌘+Enter 恒提交、isComposing 防 IME 误发（saveForm 自带 _saving 防重入）
   bindFormSubmit(popup, () => void saveForm(popup, it, sel, errEl));
+
+  // 动效层：纸面显字（字段逐行浮上来；纯表现，markup/几何零改动）
+  motionFormIn(popup);
 
   // 初始聚焦归 uiModal firstFocusable 单源（UI-03）：桌面落 #fz-title（markup 首个 input），
   // 移动端自动跳过 input/textarea 防软键盘顶起盖表单——原 setTimeout 强制聚焦已退役
@@ -703,6 +789,7 @@ async function runAiFill(
   const aiLabel = btn.lastElementChild as HTMLElement;
   btn.disabled = true;
   aiLabel.textContent = 'AI 整理中…';
+  motionAiBusy(btn, true); // 动效层：星芒轻摆（整理中的功能性指示）
   const handle = notify('AI 分析中…', { type: 'progress' });
   try {
     let ghInfo: { title: string; description: string; fetched: boolean } | null = null;
@@ -750,6 +837,7 @@ async function runAiFill(
   } finally {
     btn.disabled = false;
     aiLabel.textContent = 'AI 整理';
+    motionAiBusy(btn, false); // 动效层：星芒停摆
     errEl.textContent = '';
   }
 }
@@ -797,9 +885,9 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
   // 手输链接与贴链/读侧同一待遇，校验只拦不可救形态
   const rawUrl = inputVal(popup, '#fz-url').trim();
   const url = rawUrl ? normalizeUrl(rawUrl) : '';
-  if (!title) { errEl.textContent = '请输入标题'; return; }
-  if (url && !/^https?:\/\//i.test(url)) { errEl.textContent = '链接需以 http(s):// 开头'; return; } // 归一后恒过，防御性保留
-  if (sel.size === 0) { errEl.textContent = '请至少选择一个标签'; return; }
+  if (!title) { errEl.textContent = '请输入标题'; motionErrShake(errEl); return; }
+  if (url && !/^https?:\/\//i.test(url)) { errEl.textContent = '链接需以 http(s):// 开头'; motionErrShake(errEl); return; } // 归一后恒过，防御性保留
+  if (sel.size === 0) { errEl.textContent = '请至少选择一个标签'; motionErrShake(errEl); return; }
   const desc = inputVal(popup, '#fz-desc').trim();
   const tags = [...sel];
   const pin = formPinNow(popup);
@@ -809,6 +897,7 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
   saveBtn.disabled = true;
   saveBtn.textContent = '保存中…';
   const dm = dataManagerOf();
+  let reveal: FavReveal | undefined;
   try {
     if (it) {
       const old = it;
@@ -824,6 +913,7 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
       const changes = favoritesEditChanges(old, next);
       await dm.update(old.id, next);
       emitDomainEvent('favorites', { kind: 'edit', title: next.title, changes });
+      reveal = { id: old.id, kind: 'edit' };
     } else {
       const data: FavoritesItem = {
         id: Date.now().toString(),
@@ -841,9 +931,12 @@ async function saveForm(popup: HTMLElement, it: FavoritesItem | null, sel: Set<s
       };
       await dm.add(data);
       emitDomainEvent('favorites', { kind: 'add', item: data });
+      reveal = { id: data.id, kind: 'add' };
     }
     closeForm();
-    await reload();
+    // 动效层：收藏落定——新卡上板按平扫光（add）／编辑后的卡轻提一拍（edit）；
+    // 卡不在当前筛选视图时 motionCardLanded 静默，时序与今日一致
+    await reload(reveal);
   } catch (e: any) {
     notifySaveError(e);
     saveBtn.disabled = false;
@@ -933,6 +1026,7 @@ function drawTagManager(wrap: HTMLElement, dm: DataManager, redraw: () => void):
   addBtn.addEventListener('click', () => openTagEditor(dm, null, redraw));
   wrap.appendChild(addBtn);
   mountIcons(wrap);
+  motionTagMgrRows(wrap); // 动效层：整列重新落定（重排/增删的回声）
 }
 
 /** 排序调整（上移/下移）：交换后整体落盘（saveTags 写设置键 + saveSettings 即时生效） */
@@ -1043,6 +1137,8 @@ function openTagEditor(dm: DataManager, existing: FavTag | null, redraw: () => v
   };
   popup.querySelector('[data-fz-tag-cancel]')?.addEventListener('click', () => close());
   popup.querySelector('#fz-tag-save')?.addEventListener('click', () => void doSave());
+  // 动效层：纸面显字（与主表单同一套入场）
+  motionFormIn(popup);
   // 键盘提交（UI-04/C6）：手写 keydown Enter 退役，收编 core bindFormSubmit——获得 isComposing
   // 防 IME 误发（中文候选确认键不再误触发保存）+ Ctrl/⌘+Enter 恒提交语义
   bindFormSubmit(popup, () => void doSave());
