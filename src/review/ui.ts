@@ -42,6 +42,9 @@ import {
   sprintResultHtml, sprintSummaryHtml, reviewBarHtml,
   isPlayable as isPlayableRender,
 } from './render';
+import {
+  motionQueueBoot, motionChargeStrip, motionDrawCard, motionTeardown, motionRatingBar,
+} from './motion';
 import { DEFAULT_R_THRESHOLD, isDueToday } from './queue';
 import { SprintSession } from './sprint';
 import type { SprintMode } from './sprint';
@@ -92,6 +95,8 @@ export class UIManager {
   private sprintStarting = false;
   showArchived = false;
   private escHandle: { unregister: () => void } | null = null;
+  /** 动效 boot 消费标志：showMain 置位，首个 renderEntries 消费（后台刷新静默不重播） */
+  private motionBootPending = false;
 
   constructor(app: App, dataManager: ReviewDataManager) {
     this.app = app;
@@ -151,6 +156,7 @@ export class UIManager {
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
+    this.motionBootPending = true; // 动效首屏编排由紧随的 renderEntries 消费
     // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
     trapPanelFocus(this.popup);
     await this.showQueue();
@@ -158,6 +164,7 @@ export class UIManager {
 
   hideMain(): void {
     if (this.sprint) return; // 冲刺中不响应遮罩关闭
+    motionTeardown(); // 动效延时编排随面板收场
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
   }
@@ -167,6 +174,7 @@ export class UIManager {
     const sprint = this.sprint;
     this.sprint = null;
     sprint?.destroy();
+    motionTeardown();
     this.hideMain();
     if (this.escHandle) {
       this.escHandle.unregister();
@@ -235,6 +243,11 @@ export class UIManager {
     });
     if (focusKey) restoreFocusKey(container, focusKey);
     this.bindQueueEvents(container, items);
+    // 动效：仅首屏编排（boot 消费即熄）；刷新渲染静默（E6 滚位/焦点还原不受扰动）
+    if (this.motionBootPending) {
+      this.motionBootPending = false;
+      motionQueueBoot(container);
+    }
   }
   /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
   async showQueue(): Promise<void> {
@@ -266,7 +279,11 @@ export class UIManager {
   private bindQueueEvents(container: HTMLElement, items: ReviewItem[]): void {
     container.querySelector('[data-act="close"]')?.addEventListener('click', () => this.hideMain());
     // ⚙设置直达钮已退役（issue 254 迭代拍板）：设置走插件设置页，头行不再深链 settings-panel
-    container.querySelector('[data-act="begin"]')?.addEventListener('click', () => void this.beginRound());
+    container.querySelector('[data-act="begin"]')?.addEventListener('click', () => {
+      const strip = container.querySelector<HTMLElement>('.bz-q-strip');
+      if (strip) motionChargeStrip(strip); // 蓄力涟漪：出发的召唤感
+      void this.beginRound();
+    });
     container.querySelector('[data-act="arch"]')?.addEventListener('click', () => {
       this.showArchived = !this.showArchived;
       void this.refreshPanel();
@@ -280,7 +297,10 @@ export class UIManager {
     container.querySelectorAll<HTMLElement>('.bz-q-card[data-id]:not(.no)').forEach((card) => {
       const activate = () => {
         const it = items.find((x) => x.id === card.dataset.id);
-        if (it && isPlayable(it)) void this.beginSingle(it);
+        if (it && isPlayable(it)) {
+          motionDrawCard(card); // 抽卡手感：先一记「抽走」再切题面
+          void this.beginSingle(it);
+        }
       };
       card.addEventListener('click', activate);
       card.addEventListener('keydown', (e) => {
@@ -578,6 +598,7 @@ export function mountFloatingRatingBar(opts: {
     else el.blur();
   });
   document.body.appendChild(el);
+  motionRatingBar(el); // 底部弹升入场（保留 translateX(-50%) 居中）
   el.focus({ preventScroll: true });
   return { close };
 }

@@ -32,6 +32,10 @@ import {
   sprintHeadHtml, sprintLoadingHtml, sprintQuestionHtml, sprintBodyHtml,
   sprintResultHtml, sprintSummaryHtml, futureInLabel,
 } from './render';
+import {
+  motionSprintReset, motionSprintLoading, motionQuestion, motionResult,
+  motionSummary, motionFailFlash,
+} from './motion';
 
 /** 答对后亮绿到自动进下一题的延时（ticket 156 用户拍板 0.8s） */
 export const CORRECT_JUMP_DELAY_MS = 800;
@@ -358,7 +362,8 @@ export class SprintSession {
       // 不回退快照旧排期展示「下次 1 天后」假间隔；redo 不走 FSRS 快照无意义，同不展示
       entry.passNote = this.nextIntervalNote(nextReviewAt || undefined);
     } else {
-      // 未通过：写排期+挂待重做+打开原文（round/single 中断；redo 保持队列等下次）
+      // 未通过：红晕一记（纯氛围不阻断）→ 写排期+挂待重做+打开原文（round/single 中断；redo 保持队列等下次）
+      motionFailFlash(this.opts.host);
       await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
       if (this.finished) return;
       entry.state = 'failed';
@@ -507,7 +512,9 @@ export class SprintSession {
 
   private showLoading(entry: SprintEntry): void {
     this.view = 'loading';
+    motionSprintReset(); // 换篇：清题面指纹与遗留编排
     this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintLoadingHtml()}`;
+    motionSprintLoading(this.opts.host);
     this.bindTop();
   }
 
@@ -544,6 +551,8 @@ export class SprintSession {
         }
       });
     });
+    // 动效路由：新题=翻卡揭题；同题判定=对错反馈；多选勾选切换=零编排
+    motionQuestion(this.opts.host, { text: question.question, answered: q.answered, correct: q.lastCorrect });
     this.opts.onProgress?.();
   }
 
@@ -581,6 +590,7 @@ export class SprintSession {
     )}`;
     mountIcons(this.opts.host);
     this.bindTop();
+    motionResult(this.opts.host); // 对勾描线+光环+滚分+评级盖章
     this.opts.host.querySelector('[data-action="next"]')?.addEventListener('click', () => void this.handleResult('next'));
     this.opts.host.querySelector('[data-action="end"]')?.addEventListener('click', () => void this.handleResult('end'));
     this.opts.onProgress?.();
@@ -602,6 +612,7 @@ export class SprintSession {
     mountIcons(this.opts.host);
     this.bindTop();
     this.opts.host.querySelector('[data-action="done"]')?.addEventListener('click', () => this.finish('done'));
+    motionSummary(this.opts.host, failed === 0 ? '优' : '完成'); // 朱批大章：全对=优
   }
 
   /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
