@@ -7,9 +7,12 @@ import { setIcon } from 'obsidian';
 import { pad2 } from '../core/utils';
 import type { App } from 'obsidian';
 import type { PomodoroState } from './state';
+import { motionStatusbarPop } from './motion';
 
 let statusEl: HTMLElement | null = null;
 let textSpan: HTMLElement | null = null;
+/** 动效层：相位签名记忆（run/paused/idle 变化时微跃一记；首记不出手） */
+let statusSig = '';
 
 export function mountPomodoroStatusBar(container: HTMLElement, app: App): void {
   if (statusEl) return;
@@ -36,6 +39,7 @@ export function unmountPomodoroStatusBar(): void {
     statusEl = null;
     textSpan = null;
   }
+  statusSig = '';
 }
 
 /**
@@ -50,6 +54,13 @@ export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): 
   const paused = !running && state.paused;
   statusEl.classList.toggle('pomodoro-statusbar-idle', !running && !paused);
   statusEl.classList.toggle('pomodoro-statusbar-paused', paused);
+  // 动效层：相位变化微跃一记（空闲→计时→暂停的可感知切换）
+  const sig = running ? 'run' : paused ? 'paused' : 'idle';
+  if (statusSig !== sig) {
+    const first = statusSig === '';
+    statusSig = sig;
+    motionStatusbarPop(statusEl, sig, first);
+  }
   // 深审 PE1：render 每秒驱动本函数，同值短路（textContent/title setter 同值也会重建文本节点）
   const wantTitle = state.task ? `番茄钟：${state.task}` : '番茄钟';
   if (statusEl.title !== wantTitle) statusEl.title = wantTitle;

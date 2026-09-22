@@ -1,5 +1,5 @@
-/* 源指纹 3469cd3640305e67 · 仓内输入 25 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
+/* 源指纹 21879bc50a54cd19 · 仓内输入 26 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/pomodoro/fake-sim.ts","prototypes/pomodoro/fake/fake-obsidian.ts","src/core/app.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/mobile.ts","src/core/notice.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/focus-trap.ts","src/core/ui/str.ts","src/core/utils.ts","src/core/z-order.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/pomodoro/fake-sim.ts → window.BZW_pomodoro（行为单源预览包，issue 245/ADR-0106） */
 var BZW_pomodoro = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_pomodoro = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M, s, ms) {
+        function createDate(y, m, d, h, M2, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M, s, ms);
+            date = new Date(y + 400, m, d, h, M2, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M, s, ms);
+            date = new Date(y, m, d, h, M2, s, ms);
           }
           return date;
         }
@@ -5567,6 +5567,831 @@ var BZW_pomodoro = (() => {
     }
   });
 
+  // src/pomodoro/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function waapiLoop(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function byId(id) {
+    return document.getElementById(id);
+  }
+  function accentOf(popup) {
+    try {
+      const v = popup ? getComputedStyle(popup).getPropertyValue("--pz-accent").trim() : "";
+      if (v) return v;
+    } catch (e) {
+    }
+    return "var(--pz-accent, var(--interactive-accent))";
+  }
+  function trackFx(a) {
+    if (!a) return;
+    fxAnims.add(a);
+    if (fxAnims.size > 48) {
+      for (const x of [...fxAnims]) {
+        try {
+          if (x.playState === "finished") fxAnims.delete(x);
+        } catch (e) {
+          fxAnims.delete(x);
+        }
+      }
+    }
+  }
+  function stopGlow() {
+    try {
+      glowAnim == null ? void 0 : glowAnim.cancel();
+    } catch (e) {
+    }
+    glowAnim = null;
+  }
+  function stopTone() {
+    try {
+      toneAnim == null ? void 0 : toneAnim.cancel();
+    } catch (e) {
+    }
+    toneAnim = null;
+  }
+  function stopBreath() {
+    for (const a of loops) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    loops.clear();
+  }
+  function stopFx() {
+    for (const a of fxAnims) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    fxAnims.clear();
+  }
+  function atmosKey(phase, running, paused) {
+    if (running) return phase === "focus" ? "focus-run" : "break-run";
+    if (paused) return phase === "focus" ? "focus-pause" : "break-pause";
+    return "ready";
+  }
+  function motionPhaseSync(popup, phase, running, paused) {
+    const key = atmosKey(phase, running, paused);
+    if (key === lastSig) return;
+    const prev = lastSig;
+    lastSig = key;
+    if (!popup || !popup.isConnected) return;
+    const svg = byId("pomodoro-ring-svg");
+    const timeEl = byId("pomodoro-time");
+    const mask = byId("pomodoro-mask");
+    stopBreath();
+    stopGlow();
+    switch (key) {
+      case "focus-run": {
+        stopTone();
+        setGlow(svg, accentOf(popup), 7);
+        setHead(svg, "show");
+        breathe(svg, timeEl, BREATH_FOCUS, 0.012, 0.86);
+        if (prev === "focus-pause" && timeEl) {
+          waapi(
+            timeEl,
+            [{ opacity: 0.4, transform: "scale(.985)" }, { opacity: 1, transform: "none" }],
+            { duration: M.base, easing: E.out }
+          );
+        }
+        break;
+      }
+      case "break-run": {
+        stopTone();
+        setGlow(svg, accentOf(popup), 4);
+        setHead(svg, "show");
+        breathe(svg, timeEl, BREATH_BREAK, 7e-3, 0.92);
+        setVignette(mask, true, performance.now() < ceremonyUntil ? 620 : 0);
+        break;
+      }
+      case "focus-pause":
+      case "break-pause": {
+        setHead(svg, "hide");
+        if (mask && (key === "break-pause" || prev.startsWith("break"))) setVignette(mask, true, 0);
+        if (timeEl) {
+          waapi(
+            timeEl,
+            [{ transform: "translateX(0)" }, { transform: "translateX(-1.2px)" }, { transform: "translateX(1px)" }, { transform: "translateX(0)" }],
+            { duration: 240, easing: "ease-out" }
+          );
+        }
+        setTone(popup, "saturate(.92) brightness(.985)");
+        break;
+      }
+      default: {
+        setHead(svg, "hide");
+        stopTone();
+        if (mask) setVignette(mask, false, 0);
+        const btn = byId("pomodoro-btn-start");
+        if (btn && !btn.disabled) {
+          trackLoop(waapiLoop(
+            btn,
+            [{ filter: "brightness(1)" }, { filter: "brightness(1.12)" }, { filter: "brightness(1)" }],
+            { duration: 3400, iterations: Infinity, easing: "ease-in-out" }
+          ));
+        }
+        break;
+      }
+    }
+  }
+  function trackLoop(a) {
+    if (a) loops.add(a);
+  }
+  function setHead(svg, mode) {
+    if (!svg) return;
+    const g = ensureHead(svg);
+    if (!g) return;
+    if (mode === "show") {
+      if (headLastProgress >= 0) g.style.opacity = "1";
+    } else {
+      g.style.opacity = "0";
+      headLastProgress = -1;
+    }
+  }
+  function breathe(svg, timeEl, period, amp, low) {
+    if (svg) {
+      trackLoop(waapiLoop(
+        svg,
+        [{ transform: "scale(1)" }, { transform: `scale(${1 + amp})` }, { transform: "scale(1)" }],
+        { duration: period, iterations: Infinity, easing: "ease-in-out" }
+      ));
+    }
+    if (timeEl) {
+      trackLoop(waapiLoop(
+        timeEl,
+        [{ opacity: 1 }, { opacity: low }, { opacity: 1 }],
+        { duration: period, iterations: Infinity, easing: "ease-in-out" }
+      ));
+    }
+  }
+  function setGlow(svg, accent, radius) {
+    if (!svg) return;
+    const c = byId("pomodoro-ring-progress");
+    if (!c) return;
+    stopGlow();
+    if (typeof c.animate !== "function" || reduced()) return;
+    try {
+      glowAnim = c.animate(
+        [{ filter: "drop-shadow(0 0 0px rgba(0,0,0,0))" }, { filter: `drop-shadow(0 0 ${radius}px ${accent})` }],
+        { duration: M.base + 140, easing: E.out, fill: "forwards" }
+      );
+    } catch (e) {
+    }
+  }
+  function setTone(popup, value) {
+    stopTone();
+    if (typeof popup.animate !== "function" || reduced()) return;
+    try {
+      toneAnim = popup.animate(
+        [{ filter: "none" }, { filter: value }],
+        { duration: M.impulse, easing: E.out, fill: "forwards" }
+      );
+    } catch (e) {
+    }
+  }
+  function setVignette(mask, on, delay) {
+    if (!mask) return;
+    let v = mask.querySelector(":scope > .bz-pm-vignette");
+    if (on) {
+      if (!v) {
+        v = document.createElement("div");
+        v.className = "bz-pm-vignette";
+        v.setAttribute("aria-hidden", "true");
+        const s = v.style;
+        s.position = "absolute";
+        s.inset = "0";
+        s.pointerEvents = "none";
+        s.background = "radial-gradient(120% 92% at 50% 42%, rgba(0,0,0,0) 30%, rgba(8,6,4,.5) 100%)";
+        s.opacity = "0";
+        mask.prepend(v);
+      }
+      after(delay, () => {
+        const cur = v;
+        if (cur.isConnected) trackFx(waapi(cur, [{ opacity: 0 }, { opacity: 1 }], { duration: M.impulse, easing: E.out }));
+      });
+      return;
+    }
+    if (!v) return;
+    let from = "1";
+    try {
+      from = getComputedStyle(v).opacity || "1";
+    } catch (e) {
+    }
+    const out = waapi(v, [{ opacity: from }, { opacity: "0" }], { duration: M.base + 60, easing: E.out });
+    const remove = () => {
+      v == null ? void 0 : v.remove();
+    };
+    if (out) {
+      out.finished.then(remove).catch(remove);
+    }
+    after(M.base + 240, remove);
+  }
+  function supportsTransformBox() {
+    try {
+      return typeof CSS !== "undefined" && !!CSS.supports && CSS.supports("transform-box", "view-box");
+    } catch (e) {
+      return false;
+    }
+  }
+  function ensureHead(svg) {
+    if (!supportsTransformBox()) return null;
+    let g = svg.querySelector(":scope > g.bz-pm-head");
+    if (!g) {
+      const doc = svg.ownerDocument;
+      g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.classList.add("bz-pm-head");
+      const accent = accentOf(svg.closest("#pomodoro-popup"));
+      const halo = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
+      halo.setAttribute("cx", "60");
+      halo.setAttribute("cy", String(60 - RING_R));
+      halo.setAttribute("r", "8");
+      halo.setAttribute("fill", accent);
+      halo.setAttribute("opacity", ".3");
+      const core = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
+      core.setAttribute("cx", "60");
+      core.setAttribute("cy", String(60 - RING_R));
+      core.setAttribute("r", "3.4");
+      core.setAttribute("fill", accent);
+      core.classList.add("bz-pm-head-core");
+      g.appendChild(halo);
+      g.appendChild(core);
+      svg.appendChild(g);
+      g.style.transformBox = "view-box";
+      g.style.transformOrigin = "60px 60px";
+      g.style.transition = "opacity .2s ease, transform 1s linear";
+      g.style.opacity = "0";
+      core.style.transformBox = "fill-box";
+      core.style.transformOrigin = "center";
+    }
+    return g;
+  }
+  function motionRingHead(svg, progress, active) {
+    if (!svg) return;
+    const g = ensureHead(svg);
+    if (!g) return;
+    if (!active || progress <= 2e-3) {
+      g.style.opacity = "0";
+      headLastProgress = -1;
+      return;
+    }
+    g.style.opacity = "1";
+    const rot = `rotate(${(90 + progress * 360).toFixed(2)}deg)`;
+    const core = g.querySelector(".bz-pm-head-core");
+    if (headLastProgress < 0) {
+      g.style.transition = "opacity .2s ease";
+      g.style.transform = rot;
+      try {
+        void g.getBoundingClientRect();
+      } catch (e) {
+      }
+      g.style.transition = "opacity .2s ease, transform 1s linear";
+    } else {
+      g.style.transform = rot;
+    }
+    if (core && headLastProgress >= 0 && typeof core.animate === "function" && !reduced()) {
+      const d = progress - headLastProgress;
+      if (d > 5e-4 && d < 0.02) {
+        try {
+          core.animate(
+            [{ transform: "scale(1)" }, { transform: "scale(1.7)" }, { transform: "scale(1)" }],
+            { duration: 340, easing: "ease-out" }
+          );
+        } catch (e) {
+        }
+      }
+    }
+    headLastProgress = progress;
+  }
+  function motionPanelOpen(mask, idleish) {
+    var _a;
+    cancelPending();
+    stopFx();
+    stopBreath();
+    stopGlow();
+    stopTone();
+    lastSig = "";
+    headLastProgress = -1;
+    lastRemain = -1;
+    lastCount = -1;
+    taskShown = false;
+    todayText = "";
+    bootUntil = performance.now() + 1200;
+    const popup = byId("pomodoro-popup");
+    if (!popup) return;
+    trackFx(waapi(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M.move, easing: E.out }));
+    trackFx(waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.97)", filter: "blur(8px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 480, easing: E.out, delay: 50, fill: "backwards" }
+    ));
+    const reveal = (el, delay, dy = 5) => {
+      if (!el) return;
+      trackFx(waapi(
+        el,
+        [
+          { opacity: 0, transform: `translateY(${dy}px)`, filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 60, easing: E.out, delay, fill: "backwards" }
+      ));
+    };
+    reveal(byId("pomodoro-time"), 300, 7);
+    reveal(byId("pomodoro-phase"), 360);
+    reveal(byId("pomodoro-task"), 410, 3);
+    [...popup.querySelectorAll(".pomodoro-controls > button")].forEach((b, i) => reveal(b, 470 + i * STAG, 4));
+    reveal(byId("pomodoro-today"), 560, 3);
+    reveal((_a = byId("pomodoro-today")) == null ? void 0 : _a.nextElementSibling, 600, 3);
+    const cycle = byId("pomodoro-cycle");
+    if (cycle) [...cycle.children].forEach((dot, i) => {
+      after(340 + i * 40, () => trackFx(waapi(
+        dot,
+        [{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(1)", opacity: 1 }],
+        { duration: M.base, easing: E.out, fill: "backwards" }
+      )));
+    });
+    after(620, () => {
+      for (const id of ["pomodoro-week", "pomodoro-months"]) {
+        const box = byId(id);
+        if (box && !box.hidden) riseBars(box);
+      }
+    });
+    if (idleish) {
+      const track = popup.querySelector(".pomodoro-ring-track");
+      if (track) {
+        track.style.strokeDasharray = String(RING_C);
+        track.style.strokeDashoffset = String(RING_C);
+        const draw = waapi(
+          track,
+          [{ strokeDashoffset: String(RING_C) }, { strokeDashoffset: "0" }],
+          { duration: 950, easing: E.out, delay: 430, fill: "backwards" }
+        );
+        const cleanup = () => {
+          track.style.removeProperty("stroke-dasharray");
+          track.style.removeProperty("stroke-dashoffset");
+        };
+        if (draw) {
+          draw.finished.then(cleanup).catch(cleanup);
+        }
+        after(430 + 1050, cleanup);
+      }
+    }
+  }
+  function riseBars(box) {
+    [...box.querySelectorAll(".pomodoro-stat-day")].forEach((day, i) => {
+      trackFx(waapi(
+        day,
+        [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, easing: E.out, delay: i * STAG, fill: "backwards" }
+      ));
+      const bar = day.querySelector(".pomodoro-stat-bar");
+      if (bar) {
+        bar.style.transformOrigin = "50% 100%";
+        trackFx(waapi(
+          bar,
+          [{ transform: "scaleY(.15)" }, { transform: "scaleY(1)" }],
+          { duration: M.base + 120, easing: E.out, delay: i * STAG, fill: "backwards" }
+        ));
+      }
+    });
+  }
+  function motionPanelClose(mask, done, immediate) {
+    stopBreath();
+    stopGlow();
+    stopTone();
+    stopFx();
+    cancelPending();
+    lastSig = "";
+    headLastProgress = -1;
+    lastRemain = -1;
+    lastCount = -1;
+    taskShown = false;
+    todayText = "";
+    if (immediate || reduced() || typeof mask.animate !== "function") {
+      done();
+      return;
+    }
+    const popup = mask.querySelector("#pomodoro-popup");
+    let finished = false;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        done();
+      }
+    };
+    const sink = popup ? waapi(
+      popup,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.975)", filter: "blur(6px)" }
+      ],
+      { duration: M.move, easing: E.out, fill: "forwards" }
+    ) : null;
+    waapi(mask, [{ opacity: 1 }, { opacity: 0 }], { duration: M.move + 40, easing: E.out, fill: "forwards" });
+    if (!sink) {
+      finish();
+      return;
+    }
+    sink.finished.then(finish).catch(finish);
+    setTimeout(finish, M.move + 240);
+  }
+  function motionIgnite(popup, fresh) {
+    if (!popup) return;
+    const timeEl = byId("pomodoro-time");
+    if (timeEl) {
+      trackFx(waapi(
+        timeEl,
+        [{ transform: "scale(.985)", opacity: 0.7 }, { transform: "none", opacity: 1 }],
+        { duration: M.base, easing: E.out }
+      ));
+    }
+    if (!fresh) return;
+    trackFx(waapi(
+      popup,
+      [{ transform: "scale(1)" }, { transform: "scale(1.012)" }, { transform: "scale(1)" }],
+      { duration: 440, easing: E.out }
+    ));
+    const btn = byId("pomodoro-btn-start");
+    if (btn) {
+      trackFx(waapi(
+        btn,
+        [{ filter: "brightness(1)" }, { filter: "brightness(1.4)" }, { filter: "brightness(1)" }],
+        { duration: 420, easing: E.out }
+      ));
+    }
+  }
+  function motionCeremony(popup, svg, completedPhase) {
+    if (!popup || !popup.isConnected) return;
+    ceremonyUntil = performance.now() + 900;
+    const circle = byId("pomodoro-ring-progress");
+    if (circle && typeof circle.animate === "function" && !reduced()) {
+      try {
+        trackFx(circle.animate(
+          [{ filter: "brightness(1)" }, { filter: "brightness(1.9)" }, { filter: "brightness(1)" }],
+          { duration: 480, easing: "ease-out" }
+        ));
+      } catch (e) {
+      }
+    }
+    const timeEl = byId("pomodoro-time");
+    revealTime(timeEl);
+    if (completedPhase === "focus") {
+      trackFx(waapi(
+        popup,
+        [{ transform: "scale(1)" }, { transform: "scale(1.013)" }, { transform: "scale(1)" }],
+        { duration: 440, easing: E.out }
+      ));
+      sparks(popup, svg, 16, true);
+      ripples(popup, svg, 2);
+    } else {
+      trackFx(waapi(
+        popup,
+        [{ filter: "brightness(1)" }, { filter: "brightness(1.035)" }, { filter: "brightness(1)" }],
+        { duration: 600, easing: E.out }
+      ));
+      sparks(popup, svg, 8, false);
+    }
+  }
+  function revealTime(timeEl) {
+    if (!timeEl) return;
+    trackFx(waapi(
+      timeEl,
+      [
+        { opacity: 0, transform: "translateY(7px) scale(.97)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.base + 100, easing: E.out }
+    ));
+  }
+  function sparks(popup, svg, count, warm) {
+    if (reduced() || typeof popup.animate !== "function") return;
+    const pr = popup.getBoundingClientRect();
+    const sr = svg ? svg.getBoundingClientRect() : pr;
+    if (sr.width < 10) return;
+    const cx = sr.left - pr.left + sr.width / 2;
+    const cy = sr.top - pr.top + sr.height / 2;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement("span");
+      p.setAttribute("aria-hidden", "true");
+      const s = p.style;
+      const size = 3 + Math.random() * 3.5;
+      s.position = "absolute";
+      s.left = `${cx - size / 2}px`;
+      s.top = `${cy - size / 2}px`;
+      s.width = `${size}px`;
+      s.height = `${size}px`;
+      s.borderRadius = "50%";
+      s.pointerEvents = "none";
+      const roll = Math.random();
+      s.background = roll < 0.6 ? "var(--pz-accent, var(--interactive-accent))" : roll < 0.85 ? "var(--pz-fg, var(--text-normal))" : "var(--pz-muted, var(--text-muted))";
+      popup.appendChild(p);
+      const ang = warm ? Math.random() * Math.PI * 2 : -Math.PI / 2 + (Math.random() - 0.5) * 1.7;
+      const dist = warm ? 34 + Math.random() * 52 : 18 + Math.random() * 34;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist + (warm ? 0 : -10);
+      let removed = false;
+      const remove = () => {
+        if (!removed) {
+          removed = true;
+          p.remove();
+        }
+      };
+      try {
+        const a = p.animate(
+          [
+            { transform: "translate(0,0) scale(1)", opacity: 1 },
+            { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(.15)`, opacity: 0 }
+          ],
+          { duration: 620 + Math.random() * 380, easing: E.out }
+        );
+        a.finished.then(remove).catch(remove);
+      } catch (e) {
+        remove();
+      }
+      after(1200, remove);
+    }
+  }
+  function ripples(popup, svg, count) {
+    if (reduced() || typeof popup.animate !== "function") return;
+    const pr = popup.getBoundingClientRect();
+    const sr = svg ? svg.getBoundingClientRect() : pr;
+    if (sr.width < 10) return;
+    const cx = sr.left - pr.left + sr.width / 2;
+    const cy = sr.top - pr.top + sr.height / 2;
+    const size = Math.max(150, sr.width * 0.95);
+    for (let i = 0; i < count; i++) {
+      const r = document.createElement("i");
+      r.setAttribute("aria-hidden", "true");
+      const s = r.style;
+      s.position = "absolute";
+      s.left = `${cx - size / 2}px`;
+      s.top = `${cy - size / 2}px`;
+      s.width = `${size}px`;
+      s.height = `${size}px`;
+      s.border = "2px solid var(--pz-accent, var(--interactive-accent))";
+      s.borderRadius = "50%";
+      s.pointerEvents = "none";
+      s.opacity = "0";
+      popup.appendChild(r);
+      let removed = false;
+      const remove = () => {
+        if (!removed) {
+          removed = true;
+          r.remove();
+        }
+      };
+      try {
+        const a = r.animate(
+          [{ transform: "scale(.55)", opacity: 0.5 }, { transform: "scale(1.55)", opacity: 0 }],
+          { duration: 740, easing: E.out, delay: i * 150, fill: "backwards" }
+        );
+        a.finished.then(remove).catch(remove);
+      } catch (e) {
+        remove();
+      }
+      after(1100 + i * 150, remove);
+    }
+  }
+  function motionSkipWhoosh(popup) {
+    if (!popup) return;
+    trackFx(waapi(
+      popup,
+      [
+        { transform: "scale(1)", filter: "blur(0px)" },
+        { transform: "scale(.988)", filter: "blur(1.5px)" },
+        { transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.move + 80, easing: E.move }
+    ));
+  }
+  function motionRewind(popup) {
+    if (!popup) return;
+    trackFx(waapi(
+      popup,
+      [{ transform: "scale(1)" }, { transform: "scale(.991)" }, { transform: "scale(1)" }],
+      { duration: 480, easing: E.out }
+    ));
+    revealTime(byId("pomodoro-time"));
+  }
+  function motionTimeTick(timeEl, remain, running) {
+    if (!timeEl) {
+      lastRemain = -1;
+      return;
+    }
+    if (lastRemain < 0) {
+      lastRemain = remain;
+      return;
+    }
+    const delta = lastRemain - remain;
+    if (Math.abs(delta) > 2) {
+      revealTime(timeEl);
+    } else if (running && delta === 1 && remain > 0 && remain % 60 === 0) {
+      trackFx(waapi(
+        timeEl,
+        [{ transform: "scale(1)" }, { transform: "scale(1.035)" }, { transform: "scale(1)" }],
+        { duration: M.fast + 120, easing: E.out }
+      ));
+    }
+    lastRemain = remain;
+  }
+  function motionPhaseLabelSwap(el) {
+    if (!el) return;
+    trackFx(waapi(
+      el,
+      [
+        { opacity: 0, transform: "translateY(4px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.base, easing: E.out }
+    ));
+  }
+  function motionTaskLine(el, has) {
+    if (!el) {
+      taskShown = false;
+      return;
+    }
+    if (has && !taskShown) {
+      trackFx(waapi(
+        el,
+        [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, easing: E.out }
+      ));
+    }
+    taskShown = has;
+  }
+  function motionCycleDots(cycleEl, count) {
+    if (!cycleEl) {
+      lastCount = -1;
+      return;
+    }
+    if (lastCount < 0) {
+      lastCount = count;
+      return;
+    }
+    const dots = [...cycleEl.children];
+    if (count > lastCount) {
+      for (let i = lastCount; i < count && i < dots.length; i++) {
+        const dot = dots[i];
+        after((i - lastCount) * STAG, () => {
+          trackFx(waapi(
+            dot,
+            [{ transform: "scale(.4)", filter: "brightness(1.8)" }, { transform: "scale(1)", filter: "brightness(1)" }],
+            { duration: 320, easing: E.out }
+          ));
+        });
+      }
+    } else if (count < lastCount) {
+      for (let i = count; i < lastCount && i < dots.length; i++) {
+        const dot = dots[i];
+        after((i - count) * 24, () => {
+          trackFx(waapi(
+            dot,
+            [{ transform: "scale(1)", opacity: 1 }, { transform: "scale(.55)", opacity: 0.4 }, { transform: "scale(1)", opacity: 1 }],
+            { duration: 280, easing: E.out }
+          ));
+        });
+      }
+    }
+    lastCount = count;
+  }
+  function motionStatsIn(box) {
+    if (!box || performance.now() < bootUntil) return;
+    riseBars(box);
+  }
+  function motionTodayBlip(el, text) {
+    if (!el) {
+      todayText = "";
+      return;
+    }
+    if (todayText && text && text !== todayText) {
+      trackFx(waapi(
+        el,
+        [{ opacity: 0.35, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, easing: E.out }
+      ));
+    }
+    todayText = text;
+  }
+  function motionBindButtons(root) {
+    if (reduced()) return;
+    root.querySelectorAll("button").forEach((b) => {
+      const btn = b;
+      if (btn.dataset.pmPress) return;
+      btn.dataset.pmPress = "1";
+      let press = null;
+      const down = () => {
+        if (typeof btn.animate !== "function") return;
+        try {
+          press = btn.animate([{ transform: "scale(1)" }, { transform: "scale(.955)" }], { duration: M.fast, easing: E.out, fill: "forwards" });
+        } catch (e) {
+        }
+      };
+      const up = () => {
+        if (!press) return;
+        const p = press;
+        press = null;
+        if (typeof btn.animate !== "function") return;
+        try {
+          const rel = btn.animate([{ transform: "scale(.955)" }, { transform: "scale(1)" }], { duration: M.fast, easing: E.out, fill: "forwards" });
+          rel.finished.then(() => {
+            try {
+              p.cancel();
+              rel.cancel();
+            } catch (e) {
+            }
+          }).catch(() => {
+          });
+        } catch (e) {
+        }
+      };
+      btn.addEventListener("pointerdown", down);
+      btn.addEventListener("pointerup", up);
+      btn.addEventListener("pointercancel", up);
+      btn.addEventListener("pointerleave", up);
+    });
+  }
+  function motionStatusbarPop(el, sig, first) {
+    if (!el || first || reduced()) return;
+    trackFx(waapi(
+      el,
+      [{ transform: "scale(1)" }, { transform: "scale(1.14)" }, { transform: "scale(1)" }],
+      { duration: M.fast + 80, easing: E.out }
+    ));
+  }
+  var M, E, STAG, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
+  var init_motion = __esm({
+    "src/pomodoro/motion.ts"() {
+      M = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      BREATH_FOCUS = 4200;
+      BREATH_BREAK = 6400;
+      RING_R = 52;
+      RING_C = 2 * Math.PI * RING_R;
+      timers = /* @__PURE__ */ new Set();
+      loops = /* @__PURE__ */ new Set();
+      glowAnim = null;
+      toneAnim = null;
+      fxAnims = /* @__PURE__ */ new Set();
+      lastSig = "";
+      headLastProgress = -1;
+      ceremonyUntil = 0;
+      bootUntil = 0;
+      lastRemain = -1;
+      lastCount = -1;
+      taskShown = false;
+      todayText = "";
+    }
+  });
+
   // src/pomodoro/statusbar.ts
   function syncPomodoroStatusBar(state2, remainSec) {
     if (!statusEl) return;
@@ -5574,6 +6399,12 @@ var BZW_pomodoro = (() => {
     const paused = !running && state2.paused;
     statusEl.classList.toggle("pomodoro-statusbar-idle", !running && !paused);
     statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
+    const sig = running ? "run" : paused ? "paused" : "idle";
+    if (statusSig !== sig) {
+      const first = statusSig === "";
+      statusSig = sig;
+      motionStatusbarPop(statusEl, sig, first);
+    }
     const wantTitle = state2.task ? `番茄钟：${state2.task}` : "番茄钟";
     if (statusEl.title !== wantTitle) statusEl.title = wantTitle;
     if (textSpan) {
@@ -5588,13 +6419,15 @@ var BZW_pomodoro = (() => {
       }
     }
   }
-  var statusEl, textSpan;
+  var statusEl, textSpan, statusSig;
   var init_statusbar = __esm({
     "src/pomodoro/statusbar.ts"() {
       init_fake_obsidian();
       init_utils();
+      init_motion();
       statusEl = null;
       textSpan = null;
+      statusSig = "";
     }
   });
 
@@ -5798,8 +6631,11 @@ var BZW_pomodoro = (() => {
     const now = Date.now();
     const todayEl = document.getElementById("pomodoro-today");
     if (todayEl) {
-      const todayText = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
-      if (todayEl.textContent !== todayText) todayEl.textContent = todayText;
+      const todayText2 = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+      if (todayEl.textContent !== todayText2) {
+        todayEl.textContent = todayText2;
+        motionTodayBlip(todayEl, todayText2);
+      }
     }
     const weekEl = document.getElementById("pomodoro-week");
     const monthsEl = document.getElementById("pomodoro-months");
@@ -5825,6 +6661,7 @@ var BZW_pomodoro = (() => {
           return hoursLabel((_a = r.minutes) != null ? _a : 0);
         } }
       );
+      motionStatsIn(monthsEl);
       return;
     }
     const days = last7Days(history, now);
@@ -5843,6 +6680,7 @@ var BZW_pomodoro = (() => {
         count: d.count
       }))
     );
+    motionStatsIn(weekEl);
   }
   function syncStatTabs(weekOn) {
     const tabWeek = document.getElementById("pomodoro-stat-tab-week");
@@ -5873,6 +6711,7 @@ var BZW_pomodoro = (() => {
       circle.setAttribute("stroke-dasharray", String(C));
       circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
     }
+    motionRingHead(document.getElementById("pomodoro-ring-svg"), progress, state.endTime !== null && progress > 2e-3);
     const phaseEl = document.getElementById("pomodoro-phase");
     if (phaseEl) {
       const label = phaseLabel(state.phase);
@@ -5888,15 +6727,20 @@ var BZW_pomodoro = (() => {
         } else {
           phaseEl.textContent = label;
         }
+        motionPhaseLabelSwap(phaseEl);
       }
     }
     renderCycleDots(d);
     renderTaskLine();
     const timeEl = document.getElementById("pomodoro-time");
-    if (timeEl) timeEl.textContent = fmt(remain);
+    if (timeEl) {
+      timeEl.textContent = fmt(remain);
+      motionTimeTick(timeEl, remain, state.endTime !== null);
+    }
     renderStats();
     updateButtons();
     applySkinClass();
+    motionPhaseSync(document.getElementById("pomodoro-popup"), state.phase, state.endTime !== null, state.paused);
   }
   function renderCycleDots(d) {
     const cycleEl = document.getElementById("pomodoro-cycle");
@@ -5914,6 +6758,7 @@ var BZW_pomodoro = (() => {
       const want = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
       if (dot.className !== want) dot.className = want;
     });
+    motionCycleDots(cycleEl, state.cycleFocusCount);
   }
   function renderTaskLine() {
     const taskEl = document.getElementById("pomodoro-task");
@@ -5925,6 +6770,7 @@ var BZW_pomodoro = (() => {
       if (taskEl.textContent !== "") taskEl.textContent = "";
       if (taskEl.hasAttribute("title")) taskEl.removeAttribute("title");
     }
+    motionTaskLine(taskEl, !!state.task);
   }
   function updateButtons() {
     const startBtn = document.getElementById("pomodoro-btn-start");
@@ -5955,6 +6801,16 @@ var BZW_pomodoro = (() => {
     }
     if (action === "pause" && state.paused) notifyPaused();
     if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
+    const popupEl = document.getElementById("pomodoro-popup");
+    const ringSvg = document.getElementById("pomodoro-ring-svg");
+    if (r.event.type === "started") {
+      motionIgnite(popupEl, prev.endTime === null && !prev.paused);
+    }
+    if (r.event.type === "phase-completed" && action === "tick") {
+      motionCeremony(popupEl, ringSvg, r.event.completedPhase);
+    }
+    if (action === "skip") motionSkipWhoosh(popupEl);
+    if (action === "reset" && r.state !== prev) motionRewind(popupEl);
     ensureTick();
     render();
   }
@@ -6104,6 +6960,8 @@ var BZW_pomodoro = (() => {
       close: closePomodoro
     });
     bindEvents();
+    motionBindButtons(mask);
+    motionPanelOpen(mask, state.endTime === null && !state.paused);
     render();
     const panel = document.getElementById("pomodoro-popup");
     if (panel) trapPanelFocus(panel);
@@ -6164,10 +7022,11 @@ var BZW_pomodoro = (() => {
       }
     }
   }
-  function closePomodoro() {
+  function closePomodoro(immediate = false) {
     if (maskEl) {
-      maskEl.remove();
+      const el = maskEl;
       maskEl = null;
+      motionPanelClose(el, () => el.remove(), immediate);
     }
     if (escHandle) {
       escHandle.unregister();
@@ -6196,6 +7055,7 @@ var BZW_pomodoro = (() => {
       init_render();
       init_render();
       init_sound();
+      init_motion();
       init_statusbar();
       init_stats();
       init_config();

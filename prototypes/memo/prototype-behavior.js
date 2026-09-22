@@ -1,5 +1,5 @@
-/* 源指纹 e7c5f8aeaa3ae6e1 · 仓内输入 237 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 d4e9ba31c4daa603 · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/motion.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_memo = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M7, s, ms) {
+        function createDate(y, m, d, h, M8, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M7, s, ms);
+            date = new Date(y + 400, m, d, h, M8, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M7, s, ms);
+            date = new Date(y, m, d, h, M8, s, ms);
           }
           return date;
         }
@@ -5833,7 +5833,7 @@ var BZW_memo = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M7 = 10;
+    const M8 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -5860,7 +5860,7 @@ var BZW_memo = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
+      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
         moved = true;
         cancel();
       }
@@ -9129,6 +9129,846 @@ var BZW_memo = (() => {
     }
   });
 
+  // src/pomodoro/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function waapiLoop(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function byId(id) {
+    return document.getElementById(id);
+  }
+  function accentOf(popup) {
+    try {
+      const v = popup ? getComputedStyle(popup).getPropertyValue("--pz-accent").trim() : "";
+      if (v) return v;
+    } catch (e) {
+    }
+    return "var(--pz-accent, var(--interactive-accent))";
+  }
+  function trackFx(a) {
+    if (!a) return;
+    fxAnims.add(a);
+    if (fxAnims.size > 48) {
+      for (const x of [...fxAnims]) {
+        try {
+          if (x.playState === "finished") fxAnims.delete(x);
+        } catch (e) {
+          fxAnims.delete(x);
+        }
+      }
+    }
+  }
+  function stopGlow() {
+    try {
+      glowAnim == null ? void 0 : glowAnim.cancel();
+    } catch (e) {
+    }
+    glowAnim = null;
+  }
+  function stopTone() {
+    try {
+      toneAnim == null ? void 0 : toneAnim.cancel();
+    } catch (e) {
+    }
+    toneAnim = null;
+  }
+  function stopBreath() {
+    for (const a of loops) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    loops.clear();
+  }
+  function stopFx() {
+    for (const a of fxAnims) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    fxAnims.clear();
+  }
+  function atmosKey(phase, running2, paused) {
+    if (running2) return phase === "focus" ? "focus-run" : "break-run";
+    if (paused) return phase === "focus" ? "focus-pause" : "break-pause";
+    return "ready";
+  }
+  function motionPhaseSync(popup, phase, running2, paused) {
+    const key = atmosKey(phase, running2, paused);
+    if (key === lastSig) return;
+    const prev = lastSig;
+    lastSig = key;
+    if (!popup || !popup.isConnected) return;
+    const svg = byId("pomodoro-ring-svg");
+    const timeEl = byId("pomodoro-time");
+    const mask = byId("pomodoro-mask");
+    stopBreath();
+    stopGlow();
+    switch (key) {
+      case "focus-run": {
+        stopTone();
+        setGlow(svg, accentOf(popup), 7);
+        setHead(svg, "show");
+        breathe(svg, timeEl, BREATH_FOCUS, 0.012, 0.86);
+        if (prev === "focus-pause" && timeEl) {
+          waapi(
+            timeEl,
+            [{ opacity: 0.4, transform: "scale(.985)" }, { opacity: 1, transform: "none" }],
+            { duration: M2.base, easing: E.out }
+          );
+        }
+        break;
+      }
+      case "break-run": {
+        stopTone();
+        setGlow(svg, accentOf(popup), 4);
+        setHead(svg, "show");
+        breathe(svg, timeEl, BREATH_BREAK, 7e-3, 0.92);
+        setVignette(mask, true, performance.now() < ceremonyUntil ? 620 : 0);
+        break;
+      }
+      case "focus-pause":
+      case "break-pause": {
+        setHead(svg, "hide");
+        if (mask && (key === "break-pause" || prev.startsWith("break"))) setVignette(mask, true, 0);
+        if (timeEl) {
+          waapi(
+            timeEl,
+            [{ transform: "translateX(0)" }, { transform: "translateX(-1.2px)" }, { transform: "translateX(1px)" }, { transform: "translateX(0)" }],
+            { duration: 240, easing: "ease-out" }
+          );
+        }
+        setTone(popup, "saturate(.92) brightness(.985)");
+        break;
+      }
+      default: {
+        setHead(svg, "hide");
+        stopTone();
+        if (mask) setVignette(mask, false, 0);
+        const btn = byId("pomodoro-btn-start");
+        if (btn && !btn.disabled) {
+          trackLoop(waapiLoop(
+            btn,
+            [{ filter: "brightness(1)" }, { filter: "brightness(1.12)" }, { filter: "brightness(1)" }],
+            { duration: 3400, iterations: Infinity, easing: "ease-in-out" }
+          ));
+        }
+        break;
+      }
+    }
+  }
+  function trackLoop(a) {
+    if (a) loops.add(a);
+  }
+  function setHead(svg, mode) {
+    if (!svg) return;
+    const g = ensureHead(svg);
+    if (!g) return;
+    if (mode === "show") {
+      if (headLastProgress >= 0) g.style.opacity = "1";
+    } else {
+      g.style.opacity = "0";
+      headLastProgress = -1;
+    }
+  }
+  function breathe(svg, timeEl, period2, amp, low) {
+    if (svg) {
+      trackLoop(waapiLoop(
+        svg,
+        [{ transform: "scale(1)" }, { transform: `scale(${1 + amp})` }, { transform: "scale(1)" }],
+        { duration: period2, iterations: Infinity, easing: "ease-in-out" }
+      ));
+    }
+    if (timeEl) {
+      trackLoop(waapiLoop(
+        timeEl,
+        [{ opacity: 1 }, { opacity: low }, { opacity: 1 }],
+        { duration: period2, iterations: Infinity, easing: "ease-in-out" }
+      ));
+    }
+  }
+  function setGlow(svg, accent, radius) {
+    if (!svg) return;
+    const c = byId("pomodoro-ring-progress");
+    if (!c) return;
+    stopGlow();
+    if (typeof c.animate !== "function" || reduced()) return;
+    try {
+      glowAnim = c.animate(
+        [{ filter: "drop-shadow(0 0 0px rgba(0,0,0,0))" }, { filter: `drop-shadow(0 0 ${radius}px ${accent})` }],
+        { duration: M2.base + 140, easing: E.out, fill: "forwards" }
+      );
+    } catch (e) {
+    }
+  }
+  function setTone(popup, value) {
+    stopTone();
+    if (typeof popup.animate !== "function" || reduced()) return;
+    try {
+      toneAnim = popup.animate(
+        [{ filter: "none" }, { filter: value }],
+        { duration: M2.impulse, easing: E.out, fill: "forwards" }
+      );
+    } catch (e) {
+    }
+  }
+  function setVignette(mask, on, delay) {
+    if (!mask) return;
+    let v = mask.querySelector(":scope > .bz-pm-vignette");
+    if (on) {
+      if (!v) {
+        v = document.createElement("div");
+        v.className = "bz-pm-vignette";
+        v.setAttribute("aria-hidden", "true");
+        const s = v.style;
+        s.position = "absolute";
+        s.inset = "0";
+        s.pointerEvents = "none";
+        s.background = "radial-gradient(120% 92% at 50% 42%, rgba(0,0,0,0) 30%, rgba(8,6,4,.5) 100%)";
+        s.opacity = "0";
+        mask.prepend(v);
+      }
+      after(delay, () => {
+        const cur = v;
+        if (cur.isConnected) trackFx(waapi(cur, [{ opacity: 0 }, { opacity: 1 }], { duration: M2.impulse, easing: E.out }));
+      });
+      return;
+    }
+    if (!v) return;
+    let from = "1";
+    try {
+      from = getComputedStyle(v).opacity || "1";
+    } catch (e) {
+    }
+    const out = waapi(v, [{ opacity: from }, { opacity: "0" }], { duration: M2.base + 60, easing: E.out });
+    const remove = () => {
+      v == null ? void 0 : v.remove();
+    };
+    if (out) {
+      out.finished.then(remove).catch(remove);
+    }
+    after(M2.base + 240, remove);
+  }
+  function supportsTransformBox() {
+    try {
+      return typeof CSS !== "undefined" && !!CSS.supports && CSS.supports("transform-box", "view-box");
+    } catch (e) {
+      return false;
+    }
+  }
+  function ensureHead(svg) {
+    if (!supportsTransformBox()) return null;
+    let g = svg.querySelector(":scope > g.bz-pm-head");
+    if (!g) {
+      const doc = svg.ownerDocument;
+      g = doc.createElementNS("http://www.w3.org/2000/svg", "g");
+      g.classList.add("bz-pm-head");
+      const accent = accentOf(svg.closest("#pomodoro-popup"));
+      const halo = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
+      halo.setAttribute("cx", "60");
+      halo.setAttribute("cy", String(60 - RING_R));
+      halo.setAttribute("r", "8");
+      halo.setAttribute("fill", accent);
+      halo.setAttribute("opacity", ".3");
+      const core = doc.createElementNS("http://www.w3.org/2000/svg", "circle");
+      core.setAttribute("cx", "60");
+      core.setAttribute("cy", String(60 - RING_R));
+      core.setAttribute("r", "3.4");
+      core.setAttribute("fill", accent);
+      core.classList.add("bz-pm-head-core");
+      g.appendChild(halo);
+      g.appendChild(core);
+      svg.appendChild(g);
+      g.style.transformBox = "view-box";
+      g.style.transformOrigin = "60px 60px";
+      g.style.transition = "opacity .2s ease, transform 1s linear";
+      g.style.opacity = "0";
+      core.style.transformBox = "fill-box";
+      core.style.transformOrigin = "center";
+    }
+    return g;
+  }
+  function motionRingHead(svg, progress, active2) {
+    if (!svg) return;
+    const g = ensureHead(svg);
+    if (!g) return;
+    if (!active2 || progress <= 2e-3) {
+      g.style.opacity = "0";
+      headLastProgress = -1;
+      return;
+    }
+    g.style.opacity = "1";
+    const rot = `rotate(${(90 + progress * 360).toFixed(2)}deg)`;
+    const core = g.querySelector(".bz-pm-head-core");
+    if (headLastProgress < 0) {
+      g.style.transition = "opacity .2s ease";
+      g.style.transform = rot;
+      try {
+        void g.getBoundingClientRect();
+      } catch (e) {
+      }
+      g.style.transition = "opacity .2s ease, transform 1s linear";
+    } else {
+      g.style.transform = rot;
+    }
+    if (core && headLastProgress >= 0 && typeof core.animate === "function" && !reduced()) {
+      const d = progress - headLastProgress;
+      if (d > 5e-4 && d < 0.02) {
+        try {
+          core.animate(
+            [{ transform: "scale(1)" }, { transform: "scale(1.7)" }, { transform: "scale(1)" }],
+            { duration: 340, easing: "ease-out" }
+          );
+        } catch (e) {
+        }
+      }
+    }
+    headLastProgress = progress;
+  }
+  function motionPanelOpen(mask, idleish) {
+    var _a2;
+    cancelPending();
+    stopFx();
+    stopBreath();
+    stopGlow();
+    stopTone();
+    lastSig = "";
+    headLastProgress = -1;
+    lastRemain = -1;
+    lastCount = -1;
+    taskShown = false;
+    todayText = "";
+    bootUntil = performance.now() + 1200;
+    const popup = byId("pomodoro-popup");
+    if (!popup) return;
+    trackFx(waapi(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M2.move, easing: E.out }));
+    trackFx(waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.97)", filter: "blur(8px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 480, easing: E.out, delay: 50, fill: "backwards" }
+    ));
+    const reveal = (el, delay, dy = 5) => {
+      if (!el) return;
+      trackFx(waapi(
+        el,
+        [
+          { opacity: 0, transform: `translateY(${dy}px)`, filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.base + 60, easing: E.out, delay, fill: "backwards" }
+      ));
+    };
+    reveal(byId("pomodoro-time"), 300, 7);
+    reveal(byId("pomodoro-phase"), 360);
+    reveal(byId("pomodoro-task"), 410, 3);
+    [...popup.querySelectorAll(".pomodoro-controls > button")].forEach((b, i) => reveal(b, 470 + i * STAG, 4));
+    reveal(byId("pomodoro-today"), 560, 3);
+    reveal((_a2 = byId("pomodoro-today")) == null ? void 0 : _a2.nextElementSibling, 600, 3);
+    const cycle = byId("pomodoro-cycle");
+    if (cycle) [...cycle.children].forEach((dot, i) => {
+      after(340 + i * 40, () => trackFx(waapi(
+        dot,
+        [{ transform: "scale(.3)", opacity: 0 }, { transform: "scale(1)", opacity: 1 }],
+        { duration: M2.base, easing: E.out, fill: "backwards" }
+      )));
+    });
+    after(620, () => {
+      for (const id of ["pomodoro-week", "pomodoro-months"]) {
+        const box = byId(id);
+        if (box && !box.hidden) riseBars(box);
+      }
+    });
+    if (idleish) {
+      const track = popup.querySelector(".pomodoro-ring-track");
+      if (track) {
+        track.style.strokeDasharray = String(RING_C);
+        track.style.strokeDashoffset = String(RING_C);
+        const draw = waapi(
+          track,
+          [{ strokeDashoffset: String(RING_C) }, { strokeDashoffset: "0" }],
+          { duration: 950, easing: E.out, delay: 430, fill: "backwards" }
+        );
+        const cleanup = () => {
+          track.style.removeProperty("stroke-dasharray");
+          track.style.removeProperty("stroke-dashoffset");
+        };
+        if (draw) {
+          draw.finished.then(cleanup).catch(cleanup);
+        }
+        after(430 + 1050, cleanup);
+      }
+    }
+  }
+  function riseBars(box) {
+    [...box.querySelectorAll(".pomodoro-stat-day")].forEach((day, i) => {
+      trackFx(waapi(
+        day,
+        [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, easing: E.out, delay: i * STAG, fill: "backwards" }
+      ));
+      const bar = day.querySelector(".pomodoro-stat-bar");
+      if (bar) {
+        bar.style.transformOrigin = "50% 100%";
+        trackFx(waapi(
+          bar,
+          [{ transform: "scaleY(.15)" }, { transform: "scaleY(1)" }],
+          { duration: M2.base + 120, easing: E.out, delay: i * STAG, fill: "backwards" }
+        ));
+      }
+    });
+  }
+  function motionPanelClose(mask, done, immediate) {
+    stopBreath();
+    stopGlow();
+    stopTone();
+    stopFx();
+    cancelPending();
+    lastSig = "";
+    headLastProgress = -1;
+    lastRemain = -1;
+    lastCount = -1;
+    taskShown = false;
+    todayText = "";
+    if (immediate || reduced() || typeof mask.animate !== "function") {
+      done();
+      return;
+    }
+    const popup = mask.querySelector("#pomodoro-popup");
+    let finished = false;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        done();
+      }
+    };
+    const sink = popup ? waapi(
+      popup,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.975)", filter: "blur(6px)" }
+      ],
+      { duration: M2.move, easing: E.out, fill: "forwards" }
+    ) : null;
+    waapi(mask, [{ opacity: 1 }, { opacity: 0 }], { duration: M2.move + 40, easing: E.out, fill: "forwards" });
+    if (!sink) {
+      finish();
+      return;
+    }
+    sink.finished.then(finish).catch(finish);
+    setTimeout(finish, M2.move + 240);
+  }
+  function motionIgnite(popup, fresh) {
+    if (!popup) return;
+    const timeEl = byId("pomodoro-time");
+    if (timeEl) {
+      trackFx(waapi(
+        timeEl,
+        [{ transform: "scale(.985)", opacity: 0.7 }, { transform: "none", opacity: 1 }],
+        { duration: M2.base, easing: E.out }
+      ));
+    }
+    if (!fresh) return;
+    trackFx(waapi(
+      popup,
+      [{ transform: "scale(1)" }, { transform: "scale(1.012)" }, { transform: "scale(1)" }],
+      { duration: 440, easing: E.out }
+    ));
+    const btn = byId("pomodoro-btn-start");
+    if (btn) {
+      trackFx(waapi(
+        btn,
+        [{ filter: "brightness(1)" }, { filter: "brightness(1.4)" }, { filter: "brightness(1)" }],
+        { duration: 420, easing: E.out }
+      ));
+    }
+  }
+  function motionCeremony(popup, svg, completedPhase) {
+    if (!popup || !popup.isConnected) return;
+    ceremonyUntil = performance.now() + 900;
+    const circle = byId("pomodoro-ring-progress");
+    if (circle && typeof circle.animate === "function" && !reduced()) {
+      try {
+        trackFx(circle.animate(
+          [{ filter: "brightness(1)" }, { filter: "brightness(1.9)" }, { filter: "brightness(1)" }],
+          { duration: 480, easing: "ease-out" }
+        ));
+      } catch (e) {
+      }
+    }
+    const timeEl = byId("pomodoro-time");
+    revealTime(timeEl);
+    if (completedPhase === "focus") {
+      trackFx(waapi(
+        popup,
+        [{ transform: "scale(1)" }, { transform: "scale(1.013)" }, { transform: "scale(1)" }],
+        { duration: 440, easing: E.out }
+      ));
+      sparks(popup, svg, 16, true);
+      ripples(popup, svg, 2);
+    } else {
+      trackFx(waapi(
+        popup,
+        [{ filter: "brightness(1)" }, { filter: "brightness(1.035)" }, { filter: "brightness(1)" }],
+        { duration: 600, easing: E.out }
+      ));
+      sparks(popup, svg, 8, false);
+    }
+  }
+  function revealTime(timeEl) {
+    if (!timeEl) return;
+    trackFx(waapi(
+      timeEl,
+      [
+        { opacity: 0, transform: "translateY(7px) scale(.97)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.base + 100, easing: E.out }
+    ));
+  }
+  function sparks(popup, svg, count, warm) {
+    if (reduced() || typeof popup.animate !== "function") return;
+    const pr = popup.getBoundingClientRect();
+    const sr = svg ? svg.getBoundingClientRect() : pr;
+    if (sr.width < 10) return;
+    const cx = sr.left - pr.left + sr.width / 2;
+    const cy = sr.top - pr.top + sr.height / 2;
+    for (let i = 0; i < count; i++) {
+      const p = document.createElement("span");
+      p.setAttribute("aria-hidden", "true");
+      const s = p.style;
+      const size = 3 + Math.random() * 3.5;
+      s.position = "absolute";
+      s.left = `${cx - size / 2}px`;
+      s.top = `${cy - size / 2}px`;
+      s.width = `${size}px`;
+      s.height = `${size}px`;
+      s.borderRadius = "50%";
+      s.pointerEvents = "none";
+      const roll = Math.random();
+      s.background = roll < 0.6 ? "var(--pz-accent, var(--interactive-accent))" : roll < 0.85 ? "var(--pz-fg, var(--text-normal))" : "var(--pz-muted, var(--text-muted))";
+      popup.appendChild(p);
+      const ang = warm ? Math.random() * Math.PI * 2 : -Math.PI / 2 + (Math.random() - 0.5) * 1.7;
+      const dist = warm ? 34 + Math.random() * 52 : 18 + Math.random() * 34;
+      const dx = Math.cos(ang) * dist;
+      const dy = Math.sin(ang) * dist + (warm ? 0 : -10);
+      let removed = false;
+      const remove = () => {
+        if (!removed) {
+          removed = true;
+          p.remove();
+        }
+      };
+      try {
+        const a = p.animate(
+          [
+            { transform: "translate(0,0) scale(1)", opacity: 1 },
+            { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px) scale(.15)`, opacity: 0 }
+          ],
+          { duration: 620 + Math.random() * 380, easing: E.out }
+        );
+        a.finished.then(remove).catch(remove);
+      } catch (e) {
+        remove();
+      }
+      after(1200, remove);
+    }
+  }
+  function ripples(popup, svg, count) {
+    if (reduced() || typeof popup.animate !== "function") return;
+    const pr = popup.getBoundingClientRect();
+    const sr = svg ? svg.getBoundingClientRect() : pr;
+    if (sr.width < 10) return;
+    const cx = sr.left - pr.left + sr.width / 2;
+    const cy = sr.top - pr.top + sr.height / 2;
+    const size = Math.max(150, sr.width * 0.95);
+    for (let i = 0; i < count; i++) {
+      const r = document.createElement("i");
+      r.setAttribute("aria-hidden", "true");
+      const s = r.style;
+      s.position = "absolute";
+      s.left = `${cx - size / 2}px`;
+      s.top = `${cy - size / 2}px`;
+      s.width = `${size}px`;
+      s.height = `${size}px`;
+      s.border = "2px solid var(--pz-accent, var(--interactive-accent))";
+      s.borderRadius = "50%";
+      s.pointerEvents = "none";
+      s.opacity = "0";
+      popup.appendChild(r);
+      let removed = false;
+      const remove = () => {
+        if (!removed) {
+          removed = true;
+          r.remove();
+        }
+      };
+      try {
+        const a = r.animate(
+          [{ transform: "scale(.55)", opacity: 0.5 }, { transform: "scale(1.55)", opacity: 0 }],
+          { duration: 740, easing: E.out, delay: i * 150, fill: "backwards" }
+        );
+        a.finished.then(remove).catch(remove);
+      } catch (e) {
+        remove();
+      }
+      after(1100 + i * 150, remove);
+    }
+  }
+  function motionSkipWhoosh(popup) {
+    if (!popup) return;
+    trackFx(waapi(
+      popup,
+      [
+        { transform: "scale(1)", filter: "blur(0px)" },
+        { transform: "scale(.988)", filter: "blur(1.5px)" },
+        { transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.move + 80, easing: E.move }
+    ));
+  }
+  function motionRewind(popup) {
+    if (!popup) return;
+    trackFx(waapi(
+      popup,
+      [{ transform: "scale(1)" }, { transform: "scale(.991)" }, { transform: "scale(1)" }],
+      { duration: 480, easing: E.out }
+    ));
+    revealTime(byId("pomodoro-time"));
+  }
+  function motionTimeTick(timeEl, remain, running2) {
+    if (!timeEl) {
+      lastRemain = -1;
+      return;
+    }
+    if (lastRemain < 0) {
+      lastRemain = remain;
+      return;
+    }
+    const delta = lastRemain - remain;
+    if (Math.abs(delta) > 2) {
+      revealTime(timeEl);
+    } else if (running2 && delta === 1 && remain > 0 && remain % 60 === 0) {
+      trackFx(waapi(
+        timeEl,
+        [{ transform: "scale(1)" }, { transform: "scale(1.035)" }, { transform: "scale(1)" }],
+        { duration: M2.fast + 120, easing: E.out }
+      ));
+    }
+    lastRemain = remain;
+  }
+  function motionPhaseLabelSwap(el) {
+    if (!el) return;
+    trackFx(waapi(
+      el,
+      [
+        { opacity: 0, transform: "translateY(4px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.base, easing: E.out }
+    ));
+  }
+  function motionTaskLine(el, has) {
+    if (!el) {
+      taskShown = false;
+      return;
+    }
+    if (has && !taskShown) {
+      trackFx(waapi(
+        el,
+        [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, easing: E.out }
+      ));
+    }
+    taskShown = has;
+  }
+  function motionCycleDots(cycleEl, count) {
+    if (!cycleEl) {
+      lastCount = -1;
+      return;
+    }
+    if (lastCount < 0) {
+      lastCount = count;
+      return;
+    }
+    const dots = [...cycleEl.children];
+    if (count > lastCount) {
+      for (let i = lastCount; i < count && i < dots.length; i++) {
+        const dot = dots[i];
+        after((i - lastCount) * STAG, () => {
+          trackFx(waapi(
+            dot,
+            [{ transform: "scale(.4)", filter: "brightness(1.8)" }, { transform: "scale(1)", filter: "brightness(1)" }],
+            { duration: 320, easing: E.out }
+          ));
+        });
+      }
+    } else if (count < lastCount) {
+      for (let i = count; i < lastCount && i < dots.length; i++) {
+        const dot = dots[i];
+        after((i - count) * 24, () => {
+          trackFx(waapi(
+            dot,
+            [{ transform: "scale(1)", opacity: 1 }, { transform: "scale(.55)", opacity: 0.4 }, { transform: "scale(1)", opacity: 1 }],
+            { duration: 280, easing: E.out }
+          ));
+        });
+      }
+    }
+    lastCount = count;
+  }
+  function motionStatsIn(box) {
+    if (!box || performance.now() < bootUntil) return;
+    riseBars(box);
+  }
+  function motionTodayBlip(el, text) {
+    if (!el) {
+      todayText = "";
+      return;
+    }
+    if (todayText && text && text !== todayText) {
+      trackFx(waapi(
+        el,
+        [{ opacity: 0.35, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+        { duration: M2.base, easing: E.out }
+      ));
+    }
+    todayText = text;
+  }
+  function motionBindButtons(root) {
+    if (reduced()) return;
+    root.querySelectorAll("button").forEach((b) => {
+      const btn = b;
+      if (btn.dataset.pmPress) return;
+      btn.dataset.pmPress = "1";
+      let press = null;
+      const down = () => {
+        if (typeof btn.animate !== "function") return;
+        try {
+          press = btn.animate([{ transform: "scale(1)" }, { transform: "scale(.955)" }], { duration: M2.fast, easing: E.out, fill: "forwards" });
+        } catch (e) {
+        }
+      };
+      const up = () => {
+        if (!press) return;
+        const p = press;
+        press = null;
+        if (typeof btn.animate !== "function") return;
+        try {
+          const rel = btn.animate([{ transform: "scale(.955)" }, { transform: "scale(1)" }], { duration: M2.fast, easing: E.out, fill: "forwards" });
+          rel.finished.then(() => {
+            try {
+              p.cancel();
+              rel.cancel();
+            } catch (e) {
+            }
+          }).catch(() => {
+          });
+        } catch (e) {
+        }
+      };
+      btn.addEventListener("pointerdown", down);
+      btn.addEventListener("pointerup", up);
+      btn.addEventListener("pointercancel", up);
+      btn.addEventListener("pointerleave", up);
+    });
+  }
+  function motionStatusbarPop(el, sig, first) {
+    if (!el || first || reduced()) return;
+    trackFx(waapi(
+      el,
+      [{ transform: "scale(1)" }, { transform: "scale(1.14)" }, { transform: "scale(1)" }],
+      { duration: M2.fast + 80, easing: E.out }
+    ));
+  }
+  function motionTeardown() {
+    stopBreath();
+    stopGlow();
+    stopTone();
+    stopFx();
+    cancelPending();
+    lastSig = "";
+    headLastProgress = -1;
+    lastRemain = -1;
+    lastCount = -1;
+    taskShown = false;
+    todayText = "";
+    ceremonyUntil = 0;
+    bootUntil = 0;
+  }
+  var M2, E, STAG, BREATH_FOCUS, BREATH_BREAK, RING_R, RING_C, timers, loops, glowAnim, toneAnim, fxAnims, lastSig, headLastProgress, ceremonyUntil, bootUntil, lastRemain, lastCount, taskShown, todayText;
+  var init_motion = __esm({
+    "src/pomodoro/motion.ts"() {
+      M2 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      BREATH_FOCUS = 4200;
+      BREATH_BREAK = 6400;
+      RING_R = 52;
+      RING_C = 2 * Math.PI * RING_R;
+      timers = /* @__PURE__ */ new Set();
+      loops = /* @__PURE__ */ new Set();
+      glowAnim = null;
+      toneAnim = null;
+      fxAnims = /* @__PURE__ */ new Set();
+      lastSig = "";
+      headLastProgress = -1;
+      ceremonyUntil = 0;
+      bootUntil = 0;
+      lastRemain = -1;
+      lastCount = -1;
+      taskShown = false;
+      todayText = "";
+    }
+  });
+
   // src/pomodoro/statusbar.ts
   function syncPomodoroStatusBar(state3, remainSec) {
     if (!statusEl) return;
@@ -9136,6 +9976,12 @@ var BZW_memo = (() => {
     const paused = !running2 && state3.paused;
     statusEl.classList.toggle("pomodoro-statusbar-idle", !running2 && !paused);
     statusEl.classList.toggle("pomodoro-statusbar-paused", paused);
+    const sig = running2 ? "run" : paused ? "paused" : "idle";
+    if (statusSig !== sig) {
+      const first = statusSig === "";
+      statusSig = sig;
+      motionStatusbarPop(statusEl, sig, first);
+    }
     const wantTitle = state3.task ? `番茄钟：${state3.task}` : "番茄钟";
     if (statusEl.title !== wantTitle) statusEl.title = wantTitle;
     if (textSpan) {
@@ -9150,13 +9996,15 @@ var BZW_memo = (() => {
       }
     }
   }
-  var statusEl, textSpan;
+  var statusEl, textSpan, statusSig;
   var init_statusbar = __esm({
     "src/pomodoro/statusbar.ts"() {
       init_fake_obsidian();
       init_utils();
+      init_motion();
       statusEl = null;
       textSpan = null;
+      statusSig = "";
     }
   });
 
@@ -9362,8 +10210,11 @@ var BZW_memo = (() => {
     const now = Date.now();
     const todayEl = document.getElementById("pomodoro-today");
     if (todayEl) {
-      const todayText = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
-      if (todayEl.textContent !== todayText) todayEl.textContent = todayText;
+      const todayText2 = `今日 ${todayCount(history, now)} 个 · ${todayMinutes(history, now)} 分钟`;
+      if (todayEl.textContent !== todayText2) {
+        todayEl.textContent = todayText2;
+        motionTodayBlip(todayEl, todayText2);
+      }
     }
     const weekEl = document.getElementById("pomodoro-week");
     const monthsEl = document.getElementById("pomodoro-months");
@@ -9389,6 +10240,7 @@ var BZW_memo = (() => {
           return hoursLabel((_a2 = r.minutes) != null ? _a2 : 0);
         } }
       );
+      motionStatsIn(monthsEl);
       return;
     }
     const days = last7Days(history, now);
@@ -9407,6 +10259,7 @@ var BZW_memo = (() => {
         count: d.count
       }))
     );
+    motionStatsIn(weekEl);
   }
   function syncStatTabs(weekOn) {
     const tabWeek = document.getElementById("pomodoro-stat-tab-week");
@@ -9437,6 +10290,7 @@ var BZW_memo = (() => {
       circle.setAttribute("stroke-dasharray", String(C));
       circle.setAttribute("stroke-dashoffset", String(C * (1 - progress)));
     }
+    motionRingHead(document.getElementById("pomodoro-ring-svg"), progress, state.endTime !== null && progress > 2e-3);
     const phaseEl = document.getElementById("pomodoro-phase");
     if (phaseEl) {
       const label = phaseLabel(state.phase);
@@ -9452,15 +10306,20 @@ var BZW_memo = (() => {
         } else {
           phaseEl.textContent = label;
         }
+        motionPhaseLabelSwap(phaseEl);
       }
     }
     renderCycleDots(d);
     renderTaskLine();
     const timeEl = document.getElementById("pomodoro-time");
-    if (timeEl) timeEl.textContent = fmt(remain);
+    if (timeEl) {
+      timeEl.textContent = fmt(remain);
+      motionTimeTick(timeEl, remain, state.endTime !== null);
+    }
     renderStats();
     updateButtons();
     applySkinClass();
+    motionPhaseSync(document.getElementById("pomodoro-popup"), state.phase, state.endTime !== null, state.paused);
   }
   function renderCycleDots(d) {
     const cycleEl = document.getElementById("pomodoro-cycle");
@@ -9478,6 +10337,7 @@ var BZW_memo = (() => {
       const want = "pomodoro-cycle-dot" + (i < state.cycleFocusCount ? " pomodoro-cycle-dot-on" : "");
       if (dot.className !== want) dot.className = want;
     });
+    motionCycleDots(cycleEl, state.cycleFocusCount);
   }
   function renderTaskLine() {
     const taskEl = document.getElementById("pomodoro-task");
@@ -9489,6 +10349,7 @@ var BZW_memo = (() => {
       if (taskEl.textContent !== "") taskEl.textContent = "";
       if (taskEl.hasAttribute("title")) taskEl.removeAttribute("title");
     }
+    motionTaskLine(taskEl, !!state.task);
   }
   function updateButtons() {
     const startBtn = document.getElementById("pomodoro-btn-start");
@@ -9519,6 +10380,16 @@ var BZW_memo = (() => {
     }
     if (action === "pause" && state.paused) notifyPaused();
     if (r.event.type !== "none" || action === "pause" && state.paused || action === "reset" && r.state !== prev) void save();
+    const popupEl2 = document.getElementById("pomodoro-popup");
+    const ringSvg = document.getElementById("pomodoro-ring-svg");
+    if (r.event.type === "started") {
+      motionIgnite(popupEl2, prev.endTime === null && !prev.paused);
+    }
+    if (r.event.type === "phase-completed" && action === "tick") {
+      motionCeremony(popupEl2, ringSvg, r.event.completedPhase);
+    }
+    if (action === "skip") motionSkipWhoosh(popupEl2);
+    if (action === "reset" && r.state !== prev) motionRewind(popupEl2);
     ensureTick();
     render();
   }
@@ -9818,6 +10689,8 @@ var BZW_memo = (() => {
       close: closePomodoro
     });
     bindEvents();
+    motionBindButtons(mask);
+    motionPanelOpen(mask, state.endTime === null && !state.paused);
     render();
     const panel2 = document.getElementById("pomodoro-popup");
     if (panel2) trapPanelFocus(panel2);
@@ -9878,10 +10751,11 @@ var BZW_memo = (() => {
       }
     }
   }
-  function closePomodoro() {
+  function closePomodoro(immediate = false) {
     if (maskEl) {
-      maskEl.remove();
+      const el = maskEl;
       maskEl = null;
+      motionPanelClose(el, () => el.remove(), immediate);
     }
     if (escHandle) {
       escHandle.unregister();
@@ -9970,7 +10844,8 @@ var BZW_memo = (() => {
     recoveryNotified = false;
     openInflight = null;
     initInflight = null;
-    closePomodoro();
+    closePomodoro(true);
+    motionTeardown();
     state = createInitialState();
     history = [];
     archived = [];
@@ -9995,6 +10870,7 @@ var BZW_memo = (() => {
       init_render2();
       init_render2();
       init_sound();
+      init_motion();
       init_statusbar();
       init_stats();
       init_config();
@@ -13482,11 +14358,11 @@ var BZW_memo = (() => {
   });
 
   // src/bookshelf/state.ts
-  var M2;
+  var M3;
   var init_state3 = __esm({
     "src/bookshelf/state.ts"() {
       init_settings_provider();
-      M2 = {
+      M3 = {
         currentOverlay: null,
         items: [],
         side: "all",
@@ -17259,15 +18135,15 @@ ${sample}`
     const { CS, INF, STUB, PORT_PAD, PORT_MIN, ASTAR_MAX_NODES } = ROUTE_PARAMS;
     const strategy = (_a2 = opts == null ? void 0 : opts.strategy) != null ? _a2 : "astar";
     const nodes = boxes.map((b) => ({ box: b, rect: rectOf(b) }));
-    const byId = /* @__PURE__ */ new Map();
-    for (const n of nodes) if (!byId.has(n.box.id)) byId.set(n.box.id, n);
+    const byId2 = /* @__PURE__ */ new Map();
+    for (const n of nodes) if (!byId2.has(n.box.id)) byId2.set(n.box.id, n);
     const rects = nodes.map((n) => n.rect);
     const jobs = [];
     const groupKeys = [];
     const groups = /* @__PURE__ */ new Map();
     edges.forEach((e, idx) => {
-      const src = byId.get(e.from);
-      const dst = byId.get(e.to);
+      const src = byId2.get(e.from);
+      const dst = byId2.get(e.to);
       if (!src || !dst) {
         out[idx] = { from: e.from, to: e.to, d: "", exit: "L", entry: "L", fallback: true };
         return;
@@ -17380,15 +18256,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -18595,14 +19471,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
   function crumbTrail(nodes, id) {
     var _a2, _b2;
     if (!id) return [];
-    const byId = new Map(nodes.map((n) => [n.id, n]));
+    const byId2 = new Map(nodes.map((n) => [n.id, n]));
     const chain2 = [];
     const seen = /* @__PURE__ */ new Set();
-    let cur = (_a2 = byId.get(id)) != null ? _a2 : null;
+    let cur = (_a2 = byId2.get(id)) != null ? _a2 : null;
     while (cur && !seen.has(cur.id)) {
       seen.add(cur.id);
       chain2.unshift(cur);
-      cur = cur.parent ? (_b2 = byId.get(cur.parent)) != null ? _b2 : null : null;
+      cur = cur.parent ? (_b2 = byId2.get(cur.parent)) != null ? _b2 : null : null;
     }
     return chain2;
   }
@@ -19617,10 +20493,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after = part.node.splitText(offset);
-    const len = Math.min(hit.len, after.data.length);
-    const tail = after.splitText(len);
-    (_b2 = after.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after2 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after2.data.length);
+    const tail = after2.splitText(len);
+    (_b2 = after2.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -29034,13 +29910,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M4.overlay = null;
-    M4.db = null;
-    M4.status = null;
-    M4.year = "";
-    M4.q = "";
-    M4.sort = "recent";
-    M4.renderFn = null;
+    M5.overlay = null;
+    M5.db = null;
+    M5.status = null;
+    M5.year = "";
+    M5.q = "";
+    M5.sort = "recent";
+    M5.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -29135,11 +30011,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   function itemList() {
-    return M4.db ? Object.values(M4.db.items) : [];
+    return M5.db ? Object.values(M5.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M5.db) == null ? void 0 : _a2.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -29150,7 +30026,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M5.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -29173,7 +30049,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     );
   }
   async function openPanel() {
-    if (M4.overlay) {
+    if (M5.overlay) {
       closePanel();
       return;
     }
@@ -29190,18 +30066,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPanelInner() {
     var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M4.year = "";
-    M4.db = await loadDatabase();
+    M5.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M5.year = "";
+    M5.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M4.overlay = overlay2;
-    M4.renderFn = () => renderAll();
+    M5.overlay = overlay2;
+    M5.renderFn = () => renderAll();
     mountIcons(overlay2);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
@@ -29216,8 +30092,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       var _a3;
       closeAllDrops();
       const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
-      else M4.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
+      else M5.sort = v;
       renderAll();
     };
     const onDocClick = (e) => {
@@ -29297,22 +30173,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M4.sort = segBtn.dataset.k;
+        M5.sort = segBtn.dataset.k;
         renderAll();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
+        if (kind === "asset") M5.status = M5.status === "asset" ? null : "asset";
         renderAll();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M4.overlay !== overlay2) return;
-        M4.q = inp.value.trim();
+        if (M5.overlay !== overlay2) return;
+        M5.q = inp.value.trim();
         renderAll();
       }, SEARCH_DEBOUNCE_MS);
       const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
@@ -29322,7 +30198,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const clearSearch = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M4.q = "";
+        M5.q = "";
         syncClear();
         renderAll();
         if (refocus) inp.focus();
@@ -29402,13 +30278,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M4.overlay) {
-      M4.overlay.remove();
-      M4.overlay = null;
+    if (M5.overlay) {
+      M5.overlay.remove();
+      M5.overlay = null;
     }
-    M4.renderFn = null;
-    M4.db = null;
-    M4.q = "";
+    M5.renderFn = null;
+    M5.db = null;
+    M5.q = "";
   }
   function cleanupBelongings() {
     closePanel();
@@ -29429,16 +30305,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a2;
         try {
-          M4.db = await loadDatabase();
-          (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+          M5.db = await loadDatabase();
+          (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a3;
                 try {
-                  M4.db = await loadDatabase();
-                  (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+                  M5.db = await loadDatabase();
+                  (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
                 } catch (e2) {
                 }
               })();
@@ -29473,37 +30349,37 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M4.db) return;
+    if (!M5.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M4.db);
+      await saveDatabase(M5.db);
     } finally {
       selfWritePending--;
     }
-    (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+    (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
   }
   function renderAll() {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
+    if (!M5.overlay) return;
+    const panel2 = M5.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
+    renderPanelView(panel2, itemList(), M5, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M4.status = null;
-    else M4.status = M4.status === k ? null : k;
+    if (k === "__all") M5.status = null;
+    else M5.status = M5.status === k ? null : k;
     renderAll();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M4.db) {
+    if (M5.db) {
       items = itemList();
     } else {
       try {
@@ -29582,7 +30458,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       return;
     }
     const prevStatus = cur.current_status;
@@ -29598,8 +30474,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      M5.db = await loadDatabase().catch(() => null);
+      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
@@ -29607,7 +30483,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M4.db) M4.db = await loadDatabase();
+          if (!M5.db) M5.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -29622,8 +30498,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+          M5.db = await loadDatabase().catch(() => null);
+          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
         }
       })();
     }, { type: "restore" });
@@ -29668,22 +30544,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function deleteItem(it) {
     var _a2, _b2;
-    if (!M4.db) return;
-    if (!M4.db.items[it.id]) {
+    if (!M5.db) return;
+    if (!M5.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       return;
     }
-    const snapshot2 = { ...M4.db.items[it.id] };
-    delete M4.db.items[it.id];
+    const snapshot2 = { ...M5.db.items[it.id] };
+    delete M5.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M4.db.items[snapshot2.id] = snapshot2;
+      M5.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      M5.db = await loadDatabase().catch(() => null);
+      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -29691,18 +30567,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M4.db) M4.db = await loadDatabase();
-          if (M4.db.items[snapshot2.id]) {
+          if (!M5.db) M5.db = await loadDatabase();
+          if (M5.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M4.db.items[snapshot2.id] = snapshot2;
+          M5.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+          M5.db = await loadDatabase().catch(() => null);
+          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
         }
       })();
     }, { type: "restore" });
@@ -29745,9 +30621,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       return;
     }
-    if (!M4.db) {
+    if (!M5.db) {
       void loadDatabase().then((db) => {
-        M4.db = db;
+        M5.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -29794,13 +30670,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -29853,7 +30729,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -29920,7 +30796,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       saveBtn.textContent = "保存中…";
       void (async () => {
         try {
-          if (!M4.db) M4.db = await loadDatabase();
+          if (!M5.db) M5.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -29950,7 +30826,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M4.db) throw new Error("数据库未加载");
+            if (!M5.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -29966,7 +30842,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M4.db.items[newItem.id] = newItem;
+            M5.db.items[newItem.id] = newItem;
             await saveAndRender();
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
@@ -29983,7 +30859,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M5, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui5 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -30007,7 +30883,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS = 180;
-      M4 = {
+      M5 = {
         overlay: null,
         db: null,
         status: null,
@@ -31386,23 +32262,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M5.appRef = null;
-    M5.open = false;
-    M5.articles = [];
-    M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M5.clipNotes = null;
-    M5.clipUrls = /* @__PURE__ */ new Set();
-    M5.sel = defaultSel();
-    M5.cur = null;
-    M5.list = [];
-    M5.upInfo = {};
-    M5.mobDetailOpen = false;
+    M6.appRef = null;
+    M6.open = false;
+    M6.articles = [];
+    M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M6.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M6.clipNotes = null;
+    M6.clipUrls = /* @__PURE__ */ new Set();
+    M6.sel = defaultSel();
+    M6.cur = null;
+    M6.list = [];
+    M6.upInfo = {};
+    M6.mobDetailOpen = false;
   }
-  var M5;
+  var M6;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M5 = {
+      M6 = {
         appRef: null,
         open: false,
         articles: [],
@@ -31835,8 +32711,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M5.articles || []) keys.add(a.id);
-    for (const n of M5.clipNotes || []) {
+    for (const a of M6.articles || []) keys.add(a.id);
+    for (const n of M6.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -33392,22 +34268,22 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+      M6.articles = [];
+      M6.clipNotes = null;
+      M6.clipUrls = /* @__PURE__ */ new Set();
+      M6.sidecar = emptySidecar();
+      M6.upInfo = {};
+      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+      M6.articles = [];
+      M6.clipNotes = null;
+      M6.clipUrls = /* @__PURE__ */ new Set();
+      M6.sidecar = emptySidecar();
+      M6.upInfo = {};
+      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -33444,13 +34320,13 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M5.articles = data.articles;
-    M5.stats = data.stats;
-    M5.sidecar = sidecar;
-    M5.clipNotes = clipNotes;
-    M5.clipUrls = clipUrls;
-    M5.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M5.upInfo };
+    M6.articles = data.articles;
+    M6.stats = data.stats;
+    M6.sidecar = sidecar;
+    M6.clipNotes = clipNotes;
+    M6.clipUrls = clipUrls;
+    M6.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M6.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -33487,7 +34363,7 @@ ${c.trim()}
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M5.appRef = app;
+    M6.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -33495,13 +34371,13 @@ ${c.trim()}
   function showPanel() {
     var _a2;
     if (!overlayEl2) {
-      buildDom2(M5.appRef);
+      buildDom2(M6.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M5.open = true;
+    M6.open = true;
     beginSession();
     if (dirty || !loaded2) {
       if (!loaded2 && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
@@ -33514,7 +34390,7 @@ ${c.trim()}
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M5.open && overlayEl2) return Promise.resolve();
+    if (!M6.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -33531,7 +34407,7 @@ ${c.trim()}
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M5.open) renderAll2();
+      if (M6.open) renderAll2();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -33544,7 +34420,7 @@ ${c.trim()}
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M5.open) return;
+    if (!M6.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -33567,8 +34443,8 @@ ${c.trim()}
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M5.open = false;
-    M5.mobDetailOpen = false;
+    M6.open = false;
+    M6.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -33608,8 +34484,8 @@ ${c.trim()}
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M5.open = false;
-    M5.mobDetailOpen = false;
+    M6.open = false;
+    M6.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -33708,14 +34584,14 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
+      if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a3, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M5.cur) openNote(M5.cur);
+        if (M6.cur) openNote(M6.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -33758,8 +34634,8 @@ ${c.trim()}
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a3;
-      if (((_a3 = M5.cur) == null ? void 0 : _a3.st) === "saved") return;
-      void doSave(M5.cur);
+      if (((_a3 = M6.cur) == null ? void 0 : _a3.st) === "saved") return;
+      void doSave(M6.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -33781,9 +34657,9 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M5.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M5.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M5.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M6.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M6.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M6.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -33798,7 +34674,7 @@ ${c.trim()}
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M5.mobDetailOpen) {
+        if (M6.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -33844,13 +34720,13 @@ ${c.trim()}
     });
   }
   function selectSource(src) {
-    M5.sel = {
+    M6.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M5.mobDetailOpen = false;
+    M6.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -33859,7 +34735,7 @@ ${c.trim()}
     renderAll2();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M5.sel.kind && String(src.platform || "") === M5.sel.platform && (src.up ? String(src.up) : null) === M5.sel.up && String(src.site || "") === M5.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M6.sel.kind && String(src.platform || "") === M6.sel.platform && (src.up ? String(src.up) : null) === M6.sel.up && String(src.site || "") === M6.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -33878,16 +34754,16 @@ ${c.trim()}
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll2() {
-    if (!M5.open) return;
+    if (!M6.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M5.mobDetailOpen) {
-      if (M5.cur) renderMobDetail();
+    if (M6.mobDetailOpen) {
+      if (M6.cur) renderMobDetail();
       else {
-        M5.mobDetailOpen = false;
+        M6.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -33895,7 +34771,7 @@ ${c.trim()}
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M5.mobDetailOpen = false;
+    M6.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll2();
   }
@@ -33903,17 +34779,17 @@ ${c.trim()}
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M5.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M6.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M5.sel;
+    const s = M6.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], currentSrc(), M5.upInfo);
+    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], currentSrc(), M6.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -33929,7 +34805,7 @@ ${c.trim()}
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo));
+    const b = bucketByState(queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -33937,7 +34813,7 @@ ${c.trim()}
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -33977,39 +34853,39 @@ ${c.trim()}
   function renderRail() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M5.articles;
-    const clipNotes = M5.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source2, M5.upInfo).filter(matchesSearch).length;
+    const arts = M6.articles;
+    const clipNotes = M6.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, source2, M6.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M5.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
-      const full = queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, { kind: "site", site: row.site }, M5.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M6.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M6.sidecar.savedArchive || []).map((x) => x.url)), M6.clipUrls)) {
+      const full = queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, { kind: "site", site: row.site }, M6.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M5.sel.kind === "site" && M5.sel.site === row.site;
+      const active2 = M6.sel.kind === "site" && M6.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M5.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M6.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M5.sel.kind === "inbox" && M5.sel.platform === "B站" && M5.sel.up === uid;
+      const active2 = M6.sel.kind === "inbox" && M6.sel.platform === "B站" && M6.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M5.sel.kind === "clip";
+    const clipActive = M6.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M6.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -34034,9 +34910,9 @@ ${c.trim()}
       return;
     }
     const trySelect = () => {
-      const hit = M5.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M6.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M5.open) showPanel();
+      if (!M6.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -34049,10 +34925,10 @@ ${c.trim()}
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source2, M5.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source2, M5.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -34094,26 +34970,26 @@ ${c.trim()}
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M5.cur = null;
+      M6.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M5.cur = null;
+        M6.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) {
-        M5.cur = list[0];
+      if (!list.some((a) => a.id === (M6.cur && M6.cur.id))) {
+        M6.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M5.list = list;
+      listEl.innerHTML = tocListHtml(list, M6.cur ? M6.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M6.list = list;
       bindItemMenus();
       return;
     }
@@ -34121,27 +34997,27 @@ ${c.trim()}
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M5.cur = null;
+      M6.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M5.cur && M5.cur.id))) {
-      M5.cur = flat[0];
+    if (!flat.some((a) => a.id === (M6.cur && M6.cur.id))) {
+      M6.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M5.cur ? M5.cur.id : null;
+    const curId = M6.cur ? M6.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M5.cur = null;
+        M6.cur = null;
         if (readerEl) renderReader();
-        M5.list = [];
+        M6.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M5.list = hit;
+      M6.list = hit;
       bindItemMenus();
       return;
     }
@@ -34159,7 +35035,7 @@ ${c.trim()}
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M5.list = flat;
+    M6.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -34172,10 +35048,10 @@ ${c.trim()}
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M5.list;
+    const all = M6.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M5.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M6.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -34251,8 +35127,8 @@ ${c.trim()}
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M5.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M5.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M6.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M6.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -34267,7 +35143,7 @@ ${c.trim()}
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M5.cur;
+    const a = M6.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -34296,7 +35172,7 @@ ${c.trim()}
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -34307,13 +35183,13 @@ ${c.trim()}
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M5.cur && M5.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M6.cur && M6.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -34328,11 +35204,11 @@ ${c.trim()}
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M5.cur && M5.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M6.cur && M6.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M5.mobDetailOpen && M5.cur && M5.cur.id === a.id && mobDetailEl) {
+    if (M6.mobDetailOpen && M6.cur && M6.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -34374,12 +35250,12 @@ ${c.trim()}
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M5.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M6.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M5.cur ? list.findIndex((x) => x.id === M5.cur.id) : -1;
+    const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M5.cur || next.id !== M5.cur.id)) selectArticle(next.id);
+    if (next && (!M6.cur || next.id !== M6.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -34388,19 +35264,19 @@ ${c.trim()}
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M5.cur || M5.cur.id !== a.id;
+    const changed = !M6.cur || M6.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M5.cur) {
+    if (changed && M6.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M5.cur.id, sc.scrollTop);
+        readScrollMemo.set(M6.cur.id, sc.scrollTop);
       }
     }
-    M5.cur = a;
+    M6.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -34537,25 +35413,25 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M5.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M5.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M6.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M6.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M5.cur = flat.find((x) => x.id === prevId) || M5.cur;
+      M6.cur = flat.find((x) => x.id === prevId) || M6.cur;
     } else if (flat.length) {
-      M5.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M5.cur && M5.cur.id !== prevId;
+      M6.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M6.cur && M6.cur.id !== prevId;
     } else {
-      M5.cur = null;
+      M6.cur = null;
     }
-    if (advanced && M5.cur) markReadOnOpen(M5.cur);
+    if (advanced && M6.cur) markReadOnOpen(M6.cur);
     renderAll2();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M5.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M6.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -34585,13 +35461,13 @@ ${c.trim()}
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M5.articles;
-    const clipNotes = M5.clipNotes || [];
-    const savedUrls = new Set((M5.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M6.articles;
+    const clipNotes = M6.clipNotes || [];
+    const savedUrls = new Set((M6.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
-    const byId = /* @__PURE__ */ new Map();
+    const byId2 = /* @__PURE__ */ new Map();
     const order = [];
     const siteSet = /* @__PURE__ */ new Set();
     for (const a of arts) {
@@ -34625,12 +35501,12 @@ ${c.trim()}
         savedHtml: saved.length ? mobListHtml(saved, timeOf) : ""
       });
       [...unread, ...read, ...saved].forEach((a) => {
-        byId.set(a.id, a);
+        byId2.set(a.id, a);
         order.push(a);
       });
     }
     chapters.sort((x, y) => y.activeN + y.readN + y.savedN - (x.activeN + x.readN + x.savedN) || y.unread - x.unread || cmpZh(x.site, y.site));
-    mobItemById = byId;
+    mobItemById = byId2;
     mobItemOrder = order;
     if (!chapters.length) {
       mobListEl.innerHTML = mobNoHitHtml(searching ? "查无此条" : "暂无剪藏内容");
@@ -34639,7 +35515,7 @@ ${c.trim()}
     mobListEl.innerHTML = mobTocHtml(chapters, searching, expandedMobArch);
     mountIcons(mobListEl);
     mobListEl.querySelectorAll("[data-id]").forEach((card) => {
-      const art = byId.get(String(card.dataset.id || ""));
+      const art = byId2.get(String(card.dataset.id || ""));
       if (!art) return;
       attachItemActions(card, buildItemActions(art), { sheetTitle: art.title, sheetSub: art.summary || void 0 });
     });
@@ -34697,8 +35573,8 @@ ${c.trim()}
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M5.cur = a;
-    M5.mobDetailOpen = true;
+    M6.cur = a;
+    M6.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -34709,12 +35585,12 @@ ${c.trim()}
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M5.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M6.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M5.stats = res.stats;
-      if (M5.open && !M5.mobDetailOpen) {
+      if (res && res.changed && res.stats) M6.stats = res.stats;
+      if (M6.open && !M6.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -34723,8 +35599,8 @@ ${c.trim()}
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M5.cur) return;
-    const a = M5.cur;
+    if (!mobDetailEl || !M6.cur) return;
+    const a = M6.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -34756,7 +35632,7 @@ ${c.trim()}
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -34829,7 +35705,7 @@ ${c.trim()}
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M5.cur;
+    const a = M6.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -34845,7 +35721,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M5.cur;
+    const a = M6.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -34863,7 +35739,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M5.open) return;
+    if (!M6.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -34926,7 +35802,7 @@ ${c.trim()}
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M5.cur && M5.cur.id === articleId ? M5.cur : null;
+    return M6.cur && M6.cur.id === articleId ? M6.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -34984,10 +35860,10 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M5.mobDetailOpen) return;
+    if (!mobDetailEl || !M6.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -35014,12 +35890,12 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M5.cur || M5.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M5.cur);
-    if (M5.mobDetailOpen) refreshMobBodyInPlace(M5.cur);
+    if (!M6.cur || M6.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M6.cur);
+    if (M6.mobDetailOpen) refreshMobBodyInPlace(M6.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -35036,8 +35912,8 @@ ${c.trim()}
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M5.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M5.sidecar = await addPendingSourceNote(a.id, notePath);
+        M6.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M6.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -35066,7 +35942,7 @@ ${c.trim()}
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M5.sidecar = res.sidecar;
+      if (res.sidecar) M6.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -35124,7 +36000,7 @@ ${c.trim()}
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M5.sidecar = await addPendingSourceNote(a.id, notePath);
+        M6.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -35274,8 +36150,8 @@ ${c.trim()}
       maxWidth: 560,
       schema,
       onClose: () => {
-        M5.clipNotes = null;
-        M5.clipUrls = /* @__PURE__ */ new Set();
+        M6.clipNotes = null;
+        M6.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -35974,12 +36850,12 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M6.overlay = null;
-    M6.items = [];
-    M6.tag = null;
-    M6.archived = false;
-    M6.sort = "new";
-    M6.renderFn = null;
+    M7.overlay = null;
+    M7.items = [];
+    M7.tag = null;
+    M7.archived = false;
+    M7.sort = "new";
+    M7.renderFn = null;
   }
   function favoritesSettingsSchema() {
     return {
@@ -36050,7 +36926,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M7.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -36066,7 +36942,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M6.overlay) {
+    if (M7.overlay) {
       closePanel3();
       return;
     }
@@ -36075,12 +36951,12 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M6.overlay = overlay2;
-    M6.renderFn = () => renderAll3();
+    M7.overlay = overlay2;
+    M7.renderFn = () => renderAll3();
     const openFilter = resolveOpenFilter();
-    M6.tag = openFilter.tag;
-    M6.archived = openFilter.archived;
-    M6.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M7.tag = openFilter.tag;
+    M7.archived = openFilter.archived;
+    M7.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
@@ -36168,16 +37044,16 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    if (M6.overlay) {
+    if (M7.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M6.archived ? "@archived" : M6.tag || "";
+        s.favoritesLastFilter = M7.archived ? "@archived" : M7.tag || "";
         void saveSettings();
       }
-      M6.overlay.remove();
-      M6.overlay = null;
+      M7.overlay.remove();
+      M7.overlay = null;
     }
-    M6.renderFn = null;
+    M7.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -36186,9 +37062,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M6.items = await dataManagerOf().getAll();
+      M7.items = await dataManagerOf().getAll();
     } catch (e) {
-      M6.items = [];
+      M7.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -36196,29 +37072,29 @@ ${c.trim()}
   async function reload2() {
     var _a2;
     await loadItems();
-    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
+    (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
   }
   function renderAll3() {
-    if (!M6.overlay) return;
-    if (!M6.archived && M6.tag && !getTags().some((t) => t.label === M6.tag)) M6.tag = null;
-    const panel2 = M6.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
+    if (!M7.overlay) return;
+    if (!M7.archived && M7.tag && !getTags().some((t) => t.label === M7.tag)) M7.tag = null;
+    const panel2 = M7.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M7.items, M7, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
     if (label === VIEW_ALL) {
-      M6.tag = null;
-      M6.archived = false;
+      M7.tag = null;
+      M7.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M6.tag = null;
-      M6.archived = !M6.archived;
+      M7.tag = null;
+      M7.archived = !M7.archived;
     } else {
-      M6.archived = false;
-      M6.tag = M6.tag === label ? null : label;
+      M7.archived = false;
+      M7.tag = M7.tag === label ? null : label;
     }
     renderAll3();
   }
   function itemById2(id) {
-    return M6.items.find((i) => i.id === id);
+    return M7.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -36823,7 +37699,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M7, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -36846,7 +37722,7 @@ GitHub 仓库：${ghInfo.title}
       init_ai3();
       init_data8();
       init_app2();
-      M6 = {
+      M7 = {
         overlay: null,
         items: [],
         tag: null,
@@ -37181,8 +38057,8 @@ GitHub 仓库：${ghInfo.title}
     return document.body.classList.contains("theme-dark") ? "bz-bs-mode-dark" : "bz-bs-mode-light";
   }
   function applyBookshelfSkin(skin) {
-    if (!M2.currentOverlay) return;
-    const panel2 = M2.currentOverlay.querySelector(".bz-bs-panel");
+    if (!M3.currentOverlay) return;
+    const panel2 = M3.currentOverlay.querySelector(".bz-bs-panel");
     if (!panel2) return;
     panel2.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
     panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
@@ -48946,9 +49822,9 @@ ${n.content.slice(0, 2e3)}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after !== before) {
-        rec.secondBrainAllowPaths = after;
+      const after2 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after2 !== before) {
+        rec.secondBrainAllowPaths = after2;
         migrated = true;
       }
     }
@@ -52031,20 +52907,20 @@ ${n.content.slice(0, 2e3)}
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after = classifyFilePath(newPath);
-    if (!after) return;
+    const after2 = classifyFilePath(newPath);
+    if (!after2) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after
+      movedOut: before !== after2
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after === "diary") {
+    if (after2 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after}:file-renamed`, payload);
+    emitDomainEvent(`${after2}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;
