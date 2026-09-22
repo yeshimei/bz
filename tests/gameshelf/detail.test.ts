@@ -8,7 +8,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import {
-  ACH_STALE_MS, STORE_STALE_MS, achIconPathsMissing, achRefreshDue, achToFm, fmToAchDetail, fmToAchSummary, fmToShots,
+  ACH_STALE_MS, STORE_STALE_MS, achRefreshDue, achToFm, fmToAchDetail, fmToAchSummary, fmToShots,
   hasStoreFm, storeRefreshDue, storeToFm,
 } from '../../src/gameshelf/detail';
 import { parseAchievementRows, parseStoreMeta } from '../../src/gameshelf/steam';
@@ -30,7 +30,7 @@ function detail() {
 
 describe('成就全量落盘', () => {
   it('写入 → 读回：行序、解锁态、全球率、稀有成就都还原', () => {
-    const fm = achToFm(detail(), 548430);
+    const fm = achToFm(detail());
     const lines = fm['成就'] as string[];
     expect(lines).toHaveLength(2);
     // 行按稀有度升序（0.4% 在前），且已解锁的日期是真日期
@@ -60,26 +60,16 @@ describe('成就全量落盘', () => {
     expect(fmToAchSummary({})).toBeNull();
   });
 
-  it('图标本地路径随行落盘（第 7/8 段）：有源才写路径，没源的色留空串', () => {
-    const fm = achToFm(detail(), 548430);
+  it('行恒 6 段：成就图标路径不再随行落盘（ADR-0176）', () => {
+    const fm = achToFm(detail());
     const lines = fm['成就'] as string[];
-    const a1 = lines.find((l) => l.includes('A1'))!;
-    // A1 两色源都在 → 8 段齐全，路径与媒体队列同源（posters.ts::localAchIconPath）
-    expect(a1.endsWith('CONFIG/游戏海报/548430-ach-A1-on.jpg | CONFIG/游戏海报/548430-ach-A1-off.jpg')).toBe(true);
-    // A2 的 schema 没给图标 → 第 7/8 段写 `-` 占位（不能用空串：行尾空格会被 trim 吃掉、段数掉一段）
-    const a2 = lines.find((l) => l.includes('A2'))!;
-    expect(a2.split(' | ')).toHaveLength(8);
-    expect(a2.endsWith(' | - | -')).toBe(true);
-  });
-
-  it('旧格式（6 段行）要被认出来：achIconPathsMissing 只对旧格式为真', () => {
-    expect(achIconPathsMissing({})).toBe(false); // 没列表 → 归「缺全量列表」那条判据管
-    expect(achIconPathsMissing(achToFm(detail(), 548430))).toBe(false); // 新格式 → 收敛
-    expect(achIconPathsMissing({ 成就: ['初次挖掘 | 挖一下 | 1 | 2021-09-04 | 42.5 | A1'] })).toBe(true);
+    // schema 里 A1 有 icon/icongray、A2 没有——两种情况下行都是 6 段、都不带 .jpg
+    for (const l of lines) expect(l.split(' | ')).toHaveLength(6);
+    expect(lines.every((l) => !l.includes('.jpg'))).toBe(true);
   });
 
   it('坏行跳过而不是带崩整段：混一行手改坏的，其余照常渲染', () => {
-    const fm = achToFm(detail(), 548430);
+    const fm = achToFm(detail());
     (fm['成就'] as string[]).splice(1, 0, '这行被手改坏了');
     const back = fmToAchDetail(fm)!;
     expect(back.total).toBe(2);
@@ -119,7 +109,7 @@ describe('新鲜度判定', () => {
 
   it('成就：没有全量列表 → 该拉；有但超 24h → 该拉；新鲜 → 不拉', () => {
     expect(achRefreshDue({}, now)).toBe(true);
-    const fresh = achToFm(detail(), 548430);
+    const fresh = achToFm(detail());
     expect(achRefreshDue(fresh, now)).toBe(false);
     const stale = { ...fresh, 成就更新: new Date(now - ACH_STALE_MS - 1000).toISOString() };
     expect(achRefreshDue(stale, now)).toBe(true);

@@ -253,7 +253,10 @@ describe('详情弹窗 markup', () => {
     expect(html).toContain('初次挖掘');
     expect(html).toContain('42.5%');
     expect(html).toContain('未解锁');
-    expect(html).toContain('https://i/1.jpg');
+    // 成就图标**不落盘**（ADR-0176）：img src 直接吃 Schema 给的远端 URL，
+    // 没有 icon 的行（A2）画占位方块而不是空白
+    expect(html).toContain('class="bz-gs-achicon" src="https://i/1.jpg"');
+    expect(html).toContain('bz-gs-achicon--none');
   });
 
   it('成就段拉不到但有缓存摘要：画进度条 + 说明缓存来源', () => {

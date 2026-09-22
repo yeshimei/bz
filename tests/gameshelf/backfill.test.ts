@@ -11,7 +11,7 @@ import { resetObsidianMocks } from '../mock-obsidian-entry';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { BACKFILL_MAX_FAILURES, backfillNeeds, ensureBackfill, setBackfillInterval, unloadBackfill } from '../../src/gameshelf/backfill';
 import { clearDetailCache } from '../../src/gameshelf/detail';
-import { localAchIconPath, localShotPath, setMediaInterval, unloadPosters } from '../../src/gameshelf/posters';
+import { localShotPath, setMediaInterval, unloadPosters } from '../../src/gameshelf/posters';
 import { M, resetGameshelfState, type GameItem } from '../../src/gameshelf/state';
 
 const CONFIG = { gameshelfSteamId: '76561198000000000', gameshelfSteamApiKey: 'KEY' };
@@ -24,12 +24,9 @@ function item(appid: number, name: string, hasAch = false, fm?: Record<string, u
   };
 }
 
-/** 8 段成就行（本次改造后的格式；尾两段 = 图标本地路径，与媒体队列同源） */
-function row8(api: string, unlocked: boolean, name = '成就'): string {
-  return [
-    name, '', unlocked ? '1' : '0', '2026-01-01', '5.0', api,
-    localAchIconPath(548430, api, true), localAchIconPath(548430, api, false),
-  ].join(' | ');
+/** 6 段成就行（ADR-0176 后的格式） */
+function row6(api: string, unlocked: boolean, name = '成就'): string {
+  return [name, '', unlocked ? '1' : '0', '2026-01-01', '5.0', api].join(' | ');
 }
 
 /** 记录 frontmatter 写入的假 App（metadataCache 现场读 __fm；vault 供媒体队列查/写文件） */
@@ -196,7 +193,7 @@ describe('回填补跑判据（2026-09-18：成就全量 + 媒体文件）', () 
     expect(calls).toEqual(['https://s/2.jpg']);
   });
 
-  it('成就列表齐但图标文件缺 → 仍要重拉一次 schema（属性里没存图标地址，没 URL 补不了图）', async () => {
+  it('成就列表齐 → 不因图标（已退役）重拉 schema，零请求', async () => {
     const calls = mockSteamDetail();
     const sink: Record<string, unknown>[] = [];
     M.items = [item(548430, '深岩银河', true, {
@@ -207,43 +204,21 @@ describe('回填补跑判据（2026-09-18：成就全量 + 媒体文件）', () 
       成就总数: 1,
     })];
     ensureBackfill(recorder(sink), M.items);
-    await vi.waitFor(() => expect(calls.some((u) => u.includes('GetSchemaForGame'))).toBe(true));
-    expect(calls.filter((u) => u.includes('GetSchemaForGame')).length).toBe(1);
-    expect(calls.filter((u) => u.includes('/api/appdetails')).length).toBe(0); // 不重拉商店
+    await new Promise((r) => setTimeout(r, 60));
+    expect(calls.length).toBe(0);
   });
 
-  it('旧格式成就行（6 段、缺图标路径）→ 重拉一次补路径段，写完即收敛', async () => {
+  it('成就列表齐（6 段）→ 零请求（补跑判据收敛）', async () => {
     const calls = mockSteamDetail();
     const sink: Record<string, unknown>[] = [];
-    // 文件全在（含两色图标）→ 只剩「行是旧格式」这一个理由该拉
-    const files = new Set<string>([localAchIconPath(548430, 'A1', true), localAchIconPath(548430, 'A2', false)]);
     M.items = [item(548430, '深岩银河', true, {
       详情时间: '2026-09-18T00:00:00.000Z',
       截图源: [],
-      成就: ['首发日 |  | 1 | 2026-01-01 | 5.0 | A1', '一周目 |  | 0 | - | 0.7 | A2'],
+      成就: [row6('A1', true), row6('A2', false)],
       成就已解: 1,
       成就总数: 2,
     })];
-    ensureBackfill(recorder(sink, files), M.items);
-    await vi.waitFor(() => expect(sink.some((s) => '成就' in s)).toBe(true));
-    const rows = sink.find((s) => '成就' in s)!['成就'] as string[];
-    expect(rows.every((r) => r.split(' | ').length === 8)).toBe(true);
-    expect(rows.find((r) => r.includes('A1'))).toContain('CONFIG/游戏海报/548430-ach-A1-on.jpg');
-  });
-
-  it('成就列表齐（新 8 段格式）且当前解锁态的图标也在 → 零请求（补跑判据收敛）', async () => {
-    const calls = mockSteamDetail();
-    const sink: Record<string, unknown>[] = [];
-    // A1 已解锁 → 查彩色那张；A2 未解锁 → 查灰图那张（判据只查当前解锁态那一色）
-    const files = new Set<string>([localAchIconPath(548430, 'A1', true), localAchIconPath(548430, 'A2', false)]);
-    M.items = [item(548430, '深岩银河', true, {
-      详情时间: '2026-09-18T00:00:00.000Z',
-      截图源: [],
-      成就: [row8('A1', true), row8('A2', false)],
-      成就已解: 1,
-      成就总数: 2,
-    })];
-    ensureBackfill(recorder(sink, files), M.items);
+    ensureBackfill(recorder(sink), M.items);
     await new Promise((r) => setTimeout(r, 60));
     expect(calls.length).toBe(0);
   });

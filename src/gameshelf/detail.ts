@@ -1,26 +1,25 @@
 /**
  * 游戏库（gameshelf）域详情数据装配。
  *
- * **2026-09-18 起「全量落盘」**（用户拍板：所有数据都进笔记属性，图片图标都进本地文件夹）：
- * - 成就 → `成就` 列表（每行 8 段，格式见 steam.ts::achRowText）+ `成就已解`/`成就总数`/
- *   `稀有成就`/`成就更新`；
+ * **2026-09-22 成就图标不再本地化**（ADR-0176：本地只留封面 / 库内图标 / 截图）：
+ * - 成就 → `成就` 列表（每行 6 段，格式见 steam.ts::achRowText）+ `成就已解`/`成就总数`/
+ *   `稀有成就`/`成就更新`；成就图标**不下载、不存路径**，界面按 Schema 的远端 URL 直取；
  * - 截图 → `截图源`（远端 URL，**同步管辖**）+ `截图`（本地 vault 路径，**媒体队列管辖**）
- *   + `截图更新`，两数组同序同长、下载失败的位置留空串；
- * - 成就图标 → 文件落本地文件夹，路径写进 `成就` 行的第 7/8 段（ADR-0167：用户要的是
- *   「属性里一眼看得见图在哪」，可推导不是不写的理由）。
+ *   + `截图更新`，两数组同序同长、下载失败的位置留空串。
  *
- * 由此详情弹窗**默认零网络**：属性里有的块直接渲染（断网也能看全），只有该块属性缺失
- * 时才拉一次补齐；拉完即写回，下次离线可用。会话缓存退居「同一会话内避免重复拉」的加速层。
+ * 由此详情弹窗**默认零网络**：属性里有的块直接渲染（断网也能看全，成就段没有图标），
+ * 只有该块属性缺失时才拉一次补齐；拉完即写回，下次离线可用。会话缓存退居「同一会话内
+ * 避免重复拉」的加速层。
  *
- * 图片本体一律在本地文件夹，**属性里不放二进制**——这条仍是属性体积的命门：截图只存
+ * 图片本体一律在本地文件夹（成就图标除外——它改走远端），**属性里不放二进制**：截图只存
  * 地址（远端源 + 本地路径），图本体走文件系统。
  */
 import type { App, TFile } from 'obsidian';
 import { readDetailFm, upsertDetail } from './notes';
-import { ensureAchIcons, ensureShots, localAchIconPath } from './posters';
+import { ensureShots } from './posters';
 import { readSteamConfig } from './state';
 import {
-  achRowFromText, achRowSegCount, achRowText, fetchAchievementDetail, fetchStoreMeta, steamStoreUrl,
+  achRowFromText, achRowText, fetchAchievementDetail, fetchStoreMeta, steamStoreUrl,
   type AchievementDetail, type AchievementRow, type StoreMeta,
 } from './steam';
 import type { GameItem } from './state';
@@ -160,17 +159,10 @@ export function fmToShots(fm: Record<string, unknown>): { local: string[]; remot
   return { local: pad(local), remote: pad(remote) };
 }
 
-/** 成就明细 → frontmatter（全量列表 + 四键；行尾两段 = 图标本地路径，见 ADR-0167） */
-export function achToFm(d: AchievementDetail, appid: number): Record<string, unknown> {
+/** 成就明细 → frontmatter（全量列表 + 四键；行恒 6 段，ADR-0176） */
+export function achToFm(d: AchievementDetail): Record<string, unknown> {
   return {
-    // 第 7/8 段写本地路径：只在该色的远端源存在时写（Steam 没给的色留空串，
-    // 免得属性里指着一个永远不会下载的文件），路径与媒体队列的落点同源同函数。
-    成就: d.rows.map((r) =>
-      achRowText(r, {
-        on: r.icon ? localAchIconPath(appid, r.apiName, true) : '',
-        off: r.iconGray ? localAchIconPath(appid, r.apiName, false) : '',
-      }),
-    ),
+    成就: d.rows.map((r) => achRowText(r)),
     成就已解: d.unlocked,
     成就总数: d.total,
     稀有成就: d.rarestName ? `${d.rarestName}（全球 ${d.rarestPercent}% 拥有）` : '',
@@ -179,22 +171,11 @@ export function achToFm(d: AchievementDetail, appid: number): Record<string, unk
 }
 
 /**
- * 全量列表是不是**旧格式**（行只 6 段、没有图标路径段）。
- * 用途：本次改造前写下的 `成就` 列表重拉一次补上路径段；补过即 8 段，判据自然收敛
- * （不再看「段里有没有内容」——Steam 没给灰图的行第 8 段本来就该是空串）。
- */
-export function achIconPathsMissing(fm: Record<string, unknown>): boolean {
-  const lines = rawStrList(fm['成就']).filter((l) => l !== '');
-  if (lines.length === 0) return false; // 没列表 → 交给「缺全量列表」那条判据，别重复刷
-  return lines.some((l) => achRowSegCount(l) < 8);
-}
-
-/**
  * frontmatter → 成就明细（全量列表反解；没有 `成就` 列表 → null）。
  * 行序原样保留（写入时已按稀有度升序排过），不再重排——属性里看到的顺序就是界面顺序。
- * `icon`/`iconGray` 留空：界面按 (appid, apiname) 解析本地图（posters.ts::achIconDisplayUrl）。
- * 行尾那两段本地路径（第 7/8 段）是给**人看/手引用**的留档，界面不消费——两者同源于
- * localAchIconPath，不会不一致。
+ * `icon`/`iconGray` 恒为 null：成就行不存图标地址（ADR-0176：成就图标不落盘、属性也不留 URL），
+ * 界面找不到图标就画占位方块；这一批行要看到图标，得等 `成就更新` 过期后重拉一次（拉回来的
+ * 是 Steam 的远端 URL，不写盘）。字段留 null 只为补齐 AchievementRow 的形状。
  */
 export function fmToAchDetail(fm: Record<string, unknown>): AchievementDetail | null {
   const lines = rawStrList(fm['成就']).filter((l) => l !== '');
@@ -348,10 +329,7 @@ export async function refreshAchievements(app: App, item: GameItem): Promise<Ach
   const r = await fetchAchievementDetail(steamId, apiKey, item.appid);
   if (r.ok) {
     achCache.set(item.appid, r.data);
-    if (item.file) await upsertDetail(app, item.file, achToFm(r.data, item.appid));
-    // 成就图标入本地队列（两色都下；状态翻转时零下载）。图标路径随 `成就` 行落盘（ADR-0167），
-    // 文件本身由媒体队列补——下完只重渲，不再回写属性。
-    ensureAchIcons(app, item.appid, r.data.rows.map((row) => ({ apiName: row.apiName, on: row.icon, off: row.iconGray })));
+    if (item.file) await upsertDetail(app, item.file, achToFm(r.data));
     return { detail: r.data, summary, error: null, fromCache: false };
   }
   return { detail: fmToAchDetail(cached), summary, error: r.message, fromCache: !!summary };

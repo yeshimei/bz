@@ -34,7 +34,7 @@ import {
 import { ensureZhNames, unloadZhNames } from './names';
 import { unloadBackfill } from './backfill';
 import { unloadPosters } from './posters';
-import { achIconDisplayUrl, coverDisplayUrl, iconDisplayUrl, resolveShotUrls } from './posters';
+import { coverDisplayUrl, iconDisplayUrl, resolveShotUrls } from './posters';
 
 /** ESC 层 id 沿域内约定 'bz-<域>'（cons C4：全仓面板级层 id 唯一不带前缀的破例，对齐） */
 const ESC_ID = 'bz-gameshelf';
@@ -707,8 +707,10 @@ export function achListHtml(item: GameItem, sec: AchSection): string {
         const pct = r.globalPercent === null ? '' : `${r.globalPercent}%`;
         const when = r.unlockedAt ? dateText(r.unlockedAt) : '';
         const desc = r.desc || (r.hidden ? '隐藏成就，解锁后可见说明' : '');
-        // 图标按解锁态取色：已解锁 → 彩色图；未解锁 → Steam 的灰图（icongray）。
-        // 灰图缺失时回落彩色 + CSS 灰度（is-gray）——观感够用，且不必为缺图的那款多下一份
+        // 图标**不落盘**（ADR-0176）：直接吃 Schema 给的远端 URL（icon / icongray），不需要
+        // 任何本地文件与解析函数。属性里不存图标地址，所以「从属性反解」的那批行没有图标
+        // （画占位方块）——打开详情且 `成就更新` 过 24h 时会重拉一次，拉完当场就有图。
+        // 灰图 Steam 个别不给 → 回落彩色 + CSS 灰度（观感接近，不额外存一份图）。
         const iconSrc = r.unlocked ? (r.icon ?? r.iconGray) : (r.iconGray ?? r.icon);
         const grayFallback = !r.unlocked && !r.iconGray && !!r.icon;
         return `
@@ -795,23 +797,6 @@ export function shotsHtml(urls: string[]): string {
 }
 
 /**
- * 属性里的成就行 → 把图标填成可显示 URL。
- * 图标路径由 (appid, apiname, 解锁态) 推出（posters.ts），属性里不存——所以这一步在渲染前做，
- * `achListHtml` 只认「行上有没有 icon/iconGray」。本地文件不在 → null，界面画占位圆点。
- */
-function withLocalAchIcons(app: App, appid: number, detail: AchSection['detail']): AchSection['detail'] {
-  if (!detail) return detail;
-  return {
-    ...detail,
-    rows: detail.rows.map((r) => ({
-      ...r,
-      icon: achIconDisplayUrl(app, appid, r.apiName, true) || null,
-      iconGray: achIconDisplayUrl(app, appid, r.apiName, false) || null,
-    })),
-  };
-}
-
-/**
  * 打开详情弹窗：**属性优先、零网络**（2026-09-18 起所有数据都在笔记属性里，
  * 断网/代理没开也能看全）。属性缺该块 → 当场拉一次补齐；属性过期 → 后台静默刷新后重填。
  * 成就与资料两段各走各的，互不阻塞。
@@ -840,7 +825,7 @@ function openDetail(app: App, appid: number): void {
 
   const achBox = popup.querySelector('#bz-gs-detail-ach');
   const paintAch = (sec: AchSection): void => {
-    if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, { ...sec, detail: withLocalAchIcons(app, item.appid, sec.detail) });
+    if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, sec);
     mountIcons(popup);
   };
   void loadAchievements(app, item, cached).then((sec) => {
@@ -880,8 +865,8 @@ function openDetail(app: App, appid: number): void {
     if (shot?.dataset.src) openLightbox({ src: shot.dataset.src, type: 'image', title: item.name });
   });
 
-  // 媒体队列下完图后会调它。**只重画「会随下载变化」的两处**（成就图标、截图的本地路径），
-  // 不动资料段——它可能来自刚拉回来的新鲜数据，用属性反解反而会把新值覆盖成旧的。
+  // 媒体队列下完图后会调它。**只重画「会随下载变化」的那处**（截图的本地图片路径），
+  // 不动成就段与资料段——它们的数据来自属性或当场拉取，不随媒体下载变化。
   // 弹窗关了就自清（uiModal 摘掉节点后 isConnected 为假），免得钩子常驻。
   M.modalRepaintFn = () => {
     if (!popup.isConnected) {
@@ -889,8 +874,6 @@ function openDetail(app: App, appid: number): void {
       return;
     }
     const fm = safeDetailFm(app, item.file);
-    const detail = fmToAchDetail(fm);
-    if (detail) paintAch({ detail, summary: fmToAchSummary(fm), error: null, fromCache: false });
     const { local, remote } = fmToShots(fm);
     const urls = resolveShotUrls(app, local, remote);
     if (shotsBox && shotsBox.isConnected && urls.length > 0) shotsBox.innerHTML = shotsHtml(urls);
@@ -1441,7 +1424,7 @@ export function closePanel(): void {
   // 后台回填（商店资料/成就三键）也随面板关闭停止：别在用户眼皮外继续改笔记，
   // 下次打开面板幂等续跑
   unloadBackfill();
-  // 媒体下载（封面/图标/成就图标/截图）同口径关停（深审 F5 关停三选二收口）：
+  // 媒体下载（封面/库内图标/截图）同口径关停（深审 F5 关停三选二收口）：
   // 三队列关停语义就此一致
   unloadPosters();
 }

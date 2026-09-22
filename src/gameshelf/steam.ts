@@ -328,7 +328,7 @@ export function parseAchievementSummary(schemaRaw: unknown, playerRaw: unknown, 
 /**
  * 段分隔符。**实测 10088 条真实成就的名字与描述里 `|` 零出现**，故取它；
  * 仍留 sanitizeSeg 把 `|` 换成断竖线 `¦` 兜底——格式契约不能靠「真实数据没出现」活着，
- * 一旦某款新游戏的文案带竖线，整行会切错位、图标全部错配，代价远大于一个字符。
+ * 一旦某款新游戏的文案带竖线，整行会切错位、解锁态与全球率全部错配，代价远大于一个字符。
  */
 const ACH_SEP = ' | ';
 
@@ -350,37 +350,26 @@ function dateOnly(iso: string | null): string {
 }
 
 /**
- * 成就明细 → 属性行。基础 6 段，**带图标路径时 8 段**（ADR-0167 用户拍板：图标本地路径也要进属性）：
- *   显示名 | 描述 | 已解锁(1/0) | 解锁日期(未解锁 `-`) | 全球解锁率(未知 `-`) | apiname | 彩色图标路径 | 灰图路径
+ * 成就明细 → 属性行。**恒 6 段**（ADR-0176 把 2026-09-18 的 8 段格式收回）：
+ *   显示名 | 描述 | 已解锁(1/0) | 解锁日期(未解锁 `-`) | 全球解锁率(未知 `-`) | apiname
  *
- * 第 6 段的 apiname 是**成就图标本地文件的键**（见 posters.ts::localAchIconPath）——
- * 用它而不是下标，是因为 Steam 追加成就会让下标整体位移，而 apiname 永不变；
- * 同时它也是这一行的稳定身份，手改属性时看得懂「这是哪一条」。
+ * 第 6 段的 apiname 是这一行的稳定身份——用它而不是下标，是因为 Steam 追加成就会让下标
+ * 整体位移，而 apiname 永不变；手改属性时也看得懂「这是哪一条」。
  *
- * 第 7/8 段是**可推导值的留档**（路径 = 文件夹 + appid + apiname + 解锁态）：用户要的是
- * 「属性里一眼看得见图在哪、随手能引用」；Steam 没给的那一色写 `-`（与日期/全球率同占位符
- * 约定——**不能用空串**：行尾空段的尾随空格会被 trim / YAML 往返吃掉，「 |  | 」退化成
- * 「 |  |」，段数就少一段，判据会把新格式行误判成旧格式、反复重拉）。
- * 不传 icons 则保持 6 段旧格式——解析侧对两种格式都认（见 achRowFromText）。
+ * 「日期 / 全球率未知」一律写 `-`，**不能用空串**：行尾空段的尾随空格会被 trim / YAML
+ * 往返吃掉，段数就少一段。存量笔记里按 8 段格式写下的行不必迁移——解析侧只取前 6 段
+ * （见 achRowFromText），下次成就刷新时自然收敛成 6 段。
  */
-export function achRowText(row: AchievementRow, icons?: { on?: string | null; off?: string | null }): string {
+export function achRowText(row: AchievementRow): string {
   const pct = row.globalPercent === null ? '-' : row.globalPercent.toFixed(1);
-  const segs = [
+  return [
     sanitizeSeg(row.name),
     sanitizeSeg(row.desc),
     row.unlocked ? '1' : '0',
     row.unlocked ? dateOnly(row.unlockedAt) : '-',
     pct,
     sanitizeSeg(row.apiName),
-  ];
-  if (icons) segs.push(icons.on ? sanitizeSeg(icons.on) : '-', icons.off ? sanitizeSeg(icons.off) : '-');
-  return segs.join(ACH_SEP);
-}
-
-/** 属性行段数（旧格式 6 段 / 全量格式 8 段；供补跑判据判「这行是哪一代格式」，坏行返回 0） */
-export function achRowSegCount(text: string): number {
-  const t = String(text);
-  return t.trim() ? t.split(ACH_SEP).length : 0;
+  ].join(ACH_SEP);
 }
 
 /** 属性行 → 结构化（段数不足 6 / 无 apiname → null，坏行跳过而不是带崩整段渲染） */
@@ -393,10 +382,6 @@ export function achRowFromText(text: string): {
   /** null = 全球解锁率未知 */
   percent: number | null;
   apiName: string;
-  /** 第 7 段：彩色图标本地路径（旧格式行 / Steam 没给 → ''，行里写的是 `-`） */
-  iconPath: string;
-  /** 第 8 段：灰图本地路径（同上） */
-  iconGrayPath: string;
 } | null {
   const parts = String(text).split(ACH_SEP);
   if (parts.length < 6) return null;
@@ -404,7 +389,6 @@ export function achRowFromText(text: string): {
   const [name, desc, on, date, pct, apiName] = seg;
   if (!apiName) return null;
   const n = Number(pct);
-  const ph = (v: string | undefined) => (!v || v === '-' ? '' : v);
   return {
     name: name || apiName,
     desc,
@@ -412,8 +396,6 @@ export function achRowFromText(text: string): {
     date: date === '-' ? '' : date,
     percent: pct === '-' || !Number.isFinite(n) ? null : n,
     apiName,
-    iconPath: ph(seg[6]),
-    iconGrayPath: ph(seg[7]),
   };
 }
 

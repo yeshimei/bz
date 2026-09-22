@@ -2,14 +2,14 @@
 /**
  * 媒体本地化测试（issue 368 增补；2026-09-17 扩图标 + 回写本地路径）：
  * 封面/图标串行下载到本地文件夹、属性回写成 vault 路径、已本地化不再重复请求、
- * 显示层四级兜底（本地文件 → 属性远端值 → 源键 → CDN 直拼）。
+ * 显示层四级兜底（本地文件 → 属性远端值 → 源键 → CDN 直拼）；截图整组下载 + 失败位对齐。
+ * 成就图标不本地化（ADR-0176：改由界面直取远端 URL），相关用例随之删除。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { MockVault } from '../mock-vault';
 import {
-  DEFAULT_POSTER_FOLDER, achIconDisplayUrl, achIconsMissing, coverDisplayUrl, ensureAchIcons, ensurePosters,
-  ensureShots, iconDisplayUrl, localAchIconPath, localCoverPath, localIconPath, localShotPath,
-  resolvePosterFolder, resolveShotUrls, setMediaInterval, unloadPosters,
+  DEFAULT_POSTER_FOLDER, coverDisplayUrl, ensurePosters, ensureShots, iconDisplayUrl, localCoverPath,
+  localIconPath, localShotPath, resolvePosterFolder, resolveShotUrls, setMediaInterval, unloadPosters,
 } from '../../src/gameshelf/posters';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
@@ -47,7 +47,7 @@ beforeEach(() => {
   vault.binaryFiles.clear();
   vault.dirs.clear();
   writes.length = 0;
-  setMediaInterval(0); // 第二条队列（成就图标/截图）任务间有 120ms 间隔，测试归零
+  setMediaInterval(0); // 第二条队列（截图）任务间有 120ms 间隔，测试归零
   unloadPosters();
   (requestUrl as any).mockReset();
   (requestUrl as any).mockImplementation(async () => ({ status: 200, arrayBuffer: new ArrayBuffer(16) }));
@@ -134,62 +134,6 @@ describe('显示 URL 四级兜底', () => {
     // 图标没有直拼兜底：拿不到就空串（UI 不渲染）
     expect(iconDisplayUrl(app, 9, null, null)).toBe('');
     expect(iconDisplayUrl(app, 9, null, 'https://icon/9.jpg')).toBe('https://icon/9.jpg');
-  });
-});
-
-describe('成就图标本地化（2026-09-18）', () => {
-  it('路径契约：appid + apiname + 解锁态 → 文件名；apiname 里的非法字符换 _（防越界写）', () => {
-    setup();
-    expect(localAchIconPath(548430, 'APPROVED_GREENBEARD', true))
-      .toBe(`${DEFAULT_POSTER_FOLDER}/548430-ach-APPROVED_GREENBEARD-on.jpg`);
-    expect(localAchIconPath(548430, 'APPROVED_GREENBEARD', false))
-      .toBe(`${DEFAULT_POSTER_FOLDER}/548430-ach-APPROVED_GREENBEARD-off.jpg`);
-    expect(localAchIconPath(1, 'A/B:C', true)).toBe(`${DEFAULT_POSTER_FOLDER}/1-ach-A_B_C-on.jpg`);
-  });
-
-  it('两色都下（彩色 + 灰色各一次请求），且**一个属性键都不占**', async () => {
-    setup();
-    ensureAchIcons(app, 548430, [{ apiName: 'A1', on: 'https://cdn/a1-on.jpg', off: 'https://cdn/a1-off.jpg' }]);
-    await vi.waitFor(() => expect(vault.binaryFiles.has(localAchIconPath(548430, 'A1', true))).toBe(true));
-    await vi.waitFor(() => expect(vault.binaryFiles.has(localAchIconPath(548430, 'A1', false))).toBe(true));
-    const urls = (requestUrl as any).mock.calls.map((c: any[]) => String(c[0]?.url));
-    expect(urls).toContain('https://cdn/a1-on.jpg');
-    expect(urls).toContain('https://cdn/a1-off.jpg');
-    expect(writes.length).toBe(0);
-  });
-
-  it('本地两色都在 → 零请求（状态翻转零下载的前提）', async () => {
-    setup();
-    vault.binaryFiles.set(localAchIconPath(548430, 'A1', true), new Uint8Array(4));
-    vault.binaryFiles.set(localAchIconPath(548430, 'A1', false), new Uint8Array(4));
-    ensureAchIcons(app, 548430, [{ apiName: 'A1', on: 'https://cdn/a1-on.jpg', off: 'https://cdn/a1-off.jpg' }]);
-    await new Promise((r) => setTimeout(r, 40));
-    expect((requestUrl as any).mock.calls.length).toBe(0);
-  });
-
-  it('Steam 没给 icongray → 只下彩色，不报错', async () => {
-    setup();
-    ensureAchIcons(app, 1, [{ apiName: 'A1', on: 'https://cdn/on.jpg', off: null }]);
-    await vi.waitFor(() => expect(vault.binaryFiles.has(localAchIconPath(1, 'A1', true))).toBe(true));
-    expect(vault.binaryFiles.has(localAchIconPath(1, 'A1', false))).toBe(false);
-  });
-
-  it('显示 URL：本地文件在 → vault 资源；不在 → 空串（界面用占位圆点，不回退远端）', () => {
-    setup();
-    expect(achIconDisplayUrl(app, 1, 'A1', true)).toBe('');
-    vault.binaryFiles.set(localAchIconPath(1, 'A1', true), new Uint8Array(4));
-    expect(achIconDisplayUrl(app, 1, 'A1', true)).toBe('app://mock-vault/' + localAchIconPath(1, 'A1', true));
-    expect(achIconDisplayUrl(app, 1, 'A1', false)).toBe('');
-  });
-
-  it('achIconsMissing：只查当前解锁态那一色（灰图 Steam 常不给，两色都查会永远判缺）', () => {
-    setup();
-    const rows = [{ apiName: 'A1', unlocked: true }];
-    expect(achIconsMissing(app, 1, rows)).toBe(true);
-    vault.binaryFiles.set(localAchIconPath(1, 'A1', true), new Uint8Array(4));
-    expect(achIconsMissing(app, 1, rows)).toBe(false); // 灰图不在也不管
-    expect(achIconsMissing(app, 1, [{ apiName: 'A1', unlocked: false }])).toBe(true); // 换解锁态就换成查灰图
-    expect(achIconsMissing(app, 1, [])).toBe(false); // 没有成就行 → 没什么可缺
   });
 });
 
