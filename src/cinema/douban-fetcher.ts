@@ -1,9 +1,14 @@
 /**
- * 影院豆瓣抓取核心（issue 303 / ADR-0129）：自 tools/obsidian-douban-poster 移植入插件。
- * 字段链（用户拍板）：搜索豆瓣（搜索页正则解析）→ **ApiZero 豆瓣电影信息接口**（评分/导演/
- * 主演/类型/地区/片长首选 + 上映日期←year/热门短评，key 设置项）→ rexxar 演职员兜底
- * （缺导演/主演或需编剧时）；海报走豆瓣（搜索页提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
- * 豆瓣详情页 HTML 退役（字段已由 ApiZero 承接）；移动端同源可用。
+ * 影院豆瓣抓取核心（issue 303 / ADR-0129；ADR-0177 搜索页退役、ADR-0178 三路检索链）：
+ * 自 tools/obsidian-douban-poster 移植入插件。
+ * 字段链：**三路检索链**（ADR-0178）——①subject_suggest 补全接口（JSON 一步拿 sid + 规范名 +
+ * 海报 URL，最快最全）→ ②rexxar 移动搜索（与①频控池独立；①有「200+空数组」软拒绝形态，
+ * 实测窗口以分钟计）→ ③www.douban.com/search 搜索页 HTML（末路兜底复活）——命中即用，
+ * 全空且有路被拦 → blocked、全空无拦 → notfound
+ * → **ApiZero 豆瓣电影信息接口**（评分/导演/主演/类型/地区/片长首选 + 上映日期←year/热门短评，
+ * key 设置项）→ rexxar 演职员兜底（缺导演/主演或需编剧时）；
+ * 海报走豆瓣（检索路提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
+ * 豆瓣详情页 HTML 退役；移动端同源可用。
  * 写回口径（审查 C8/C9 拍板）：除豆瓣链接（修正脏值）外一律「缺失才填」——已有值
  * （含用户手工修正）不覆盖；ApiZero 逗号列表值写入前归一化为消费端的 ` / ` 切分口径（C2）。
  * 纯逻辑 + 依赖注入（httpGet / downloadBinary），node 环境可测。
@@ -56,7 +61,85 @@ export interface DoubanSearchResult {
   posterUrl: string;
 }
 
-/** 纯函数：解析豆瓣搜索页 HTML（照搬 parseSearchResults）：result 块 → title/detailUrl/posterUrl */
+/** subject_suggest 条目的公共面（只要这几个字段；type 用于滤掉书/音乐条目） */
+interface SuggestItem {
+  title?: string;
+  id?: string;
+  img?: string;
+  type?: string;
+}
+
+/** 纯函数：解析豆瓣 subject_suggest JSON（ADR-0177）：
+ *  只留 movie/tv 条目（suggest 会混书籍/音乐）；detailUrl 由 id 规范化构造——
+ *  suggest 的 url 字段带 ?suggest= 脏参数，不直接使用 */
+export function parseSuggestResults(jsonText: string): DoubanSearchResult[] {
+  let items: unknown;
+  try {
+    items = JSON.parse(jsonText);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(items)) return [];
+  const results: DoubanSearchResult[] = [];
+  for (const it of items as SuggestItem[]) {
+    if (!it || (it.type !== 'movie' && it.type !== 'tv') || !it.id) continue;
+    results.push({
+      title: String(it.title ?? '').trim(),
+      detailUrl: `https://movie.douban.com/subject/${it.id}/`,
+      posterUrl: String(it.img ?? ''),
+    });
+  }
+  return results;
+}
+
+/** 纯函数：suggest 响应是否为风控/异常形态——响应为 null（非 2xx/超时）
+ *  或非 JSON（风控返回 HTML 拦截页）判风控；空数组**不算**明确空态：suggest 存在
+ *  「200 + 空数组」软拒绝形态（频控，实测窗口以分钟计，ADR-0178），交上层走下一路 */
+export function suggestLooksBlocked(jsonText: string | null): boolean {
+  if (!jsonText) return true;
+  try {
+    JSON.parse(jsonText);
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+/** rexxar search 条目的公共面（subjects.items[]；target_type 滤书/营销位） */
+interface RexxarSearchItem {
+  target_type?: string;
+  target?: { title?: string; uri?: string; cover_url?: string };
+}
+
+/** 纯函数：解析 rexxar 移动搜索 JSON（ADR-0178 第二路）：
+ *  subjects.items[] 只留 movie/tv（滤书籍与营销位）；sid 从 uri
+ *  （douban://douban.com/<movie|tv>/<sid>）提取；cover_url 已是 large 规格直用
+ *  （upgradePosterUrl 对无 s_ratio_poster 的 URL 原样返回，无害） */
+export function parseRexxarSearch(jsonText: string): DoubanSearchResult[] {
+  let data: any;
+  try {
+    data = JSON.parse(jsonText);
+  } catch {
+    return [];
+  }
+  const items = data?.subjects?.items;
+  if (!Array.isArray(items)) return [];
+  const results: DoubanSearchResult[] = [];
+  for (const it of items as RexxarSearchItem[]) {
+    const type = it?.target_type;
+    const sid = it?.target?.uri?.match(/\/(\d+)/)?.[1];
+    if ((type !== 'movie' && type !== 'tv') || !sid) continue;
+    results.push({
+      title: String(it.target?.title ?? '').trim(),
+      detailUrl: `https://movie.douban.com/subject/${sid}/`,
+      posterUrl: String(it.target?.cover_url ?? ''),
+    });
+  }
+  return results;
+}
+
+/** 纯函数：解析豆瓣搜索页 HTML（www.douban.com/search，ADR-0178 第三路复活：
+ *  result 块 → title/detailUrl/posterUrl；作为前两路 JSON 通道都拿不到时的兜底） */
 export function parseSearchResults(html: string): DoubanSearchResult[] {
   const results: DoubanSearchResult[] = [];
   const itemRegex = /class="result"[\s\S]*?<div class="pic">[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*>[\s\S]*?<div class="title">[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
@@ -73,13 +156,20 @@ export function parseSearchResults(html: string): DoubanSearchResult[] {
   return results;
 }
 
-/** 纯函数：搜索响应是否为风控拦截页——响应过短或无搜索结果结构（正常搜索页 >20KB 且含 result 块） */
-export function searchLooksBlocked(html: string | null): boolean {
+/** 纯函数：搜索页响应是否为风控拦截页——响应过短或无搜索结果结构
+ *  （正常搜索页 >20KB 且含 result 块）；空态页含「没有找到」文案放行 */
+export function searchPageLooksBlocked(html: string | null): boolean {
   if (!html) return true;
   if (html.length < 8000) return true;
-  // 正常搜索页必然存在结果块或「没有找到」的空态结构；风控拦截页两者皆无
   return !html.includes('class="result"') && !html.includes('没有找到') && !html.includes('没有相关的搜索结果');
 }
+
+/** 单路检索探测结果：hit = 命中结果；empty = 服务端正常应答但无结果（可能是软拒绝，
+ *  交下一路）；blocked = 明确被拦（null/非 JSON/风控页）。任一路网络异常上抛 → network（C6） */
+export type SearchProbe =
+  | { kind: 'hit'; results: DoubanSearchResult[] }
+  | { kind: 'empty' }
+  | { kind: 'blocked' };
 
 /** 纯函数：s_ratio_poster → l_ratio_poster（高清） */
 export function upgradePosterUrl(url: string): string {
@@ -310,32 +400,68 @@ export type DoubanQueryOutcome =
   | { ok: true; data: DoubanQuery }
   | { ok: false; reason: 'blocked' | 'notfound' | 'network' };
 
+// ---------- 检索三路（ADR-0178：suggest → rexxar search → 搜索页） ----------
+
+/** 三路单发：suggest 补全（主路，JSON、信息全）。软拒绝（200+空数组）归 empty 交下一路 */
+async function probeSuggest(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
+  const headers: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
+  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, headers);
+  if (suggestLooksBlocked(json)) return { kind: 'blocked' };
+  const results = parseSuggestResults(json!);
+  return results.length > 0 ? { kind: 'hit', results } : { kind: 'empty' };
+}
+
+/** 三路单发：rexxar 移动搜索（二路；与 suggest 频控池独立，实测 suggest 全空时仍命中） */
+async function probeRexxarSearch(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
+  const headers: Record<string, string> = { Referer: 'https://m.douban.com/movie/' };
+  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const json = await deps.httpGet(`https://m.douban.com/rexxar/api/v2/search?q=${encodeURIComponent(name)}&count=5`, headers);
+  if (!json) return { kind: 'blocked' };
+  const results = parseRexxarSearch(json);
+  return results.length > 0 ? { kind: 'hit', results } : { kind: 'empty' };
+}
+
+/** 三路单发：搜索页 HTML（末路兜底；体积大、风控面最宽，仅供最后一级） */
+async function probeSearchPage(name: string, deps: DoubanFetchDeps): Promise<SearchProbe> {
+  const headers: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
+  if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+  const html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, headers);
+  if (searchPageLooksBlocked(html)) return { kind: 'blocked' };
+  const results = parseSearchResults(html!);
+  return results.length > 0 ? { kind: 'hit', results } : { kind: 'empty' };
+}
+
 /**
- * 按片名查询豆瓣（搜索 → sid → ApiZero 字段 → rexxar 演职员兜底）。
+ * 按片名查询豆瓣（三路检索链 → sid → ApiZero 字段 → rexxar 演职员兜底）。
  * 表单「解析」与抓取队列 `fetchNoteDouban` **共用这一段**——各写一份必然漂移。
  * 只走网络、不碰文件系统，故不需要 TFile（表单阶段草稿尚未落盘）。
+ *
+ * 链路口径（ADR-0178）：逐路尝试，命中即用；suggest 有「200+空数组」软拒绝形态
+ * （频控），empty 一律交下一路。全部走完未命中：任一路明确被拦 → blocked（提示
+ * 「稍后再试」语义），否则 → notfound。任一路网络异常上抛 → network（C6：不与
+ * 风控混淆；前路已成功的请求不浪费——单条内三连发上限，无指数放大）。
  */
 export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Promise<DoubanQueryOutcome> {
-  // 1. 搜索（豆瓣搜索页；Cookie 注入）。网络异常上抛接住归 network（C6：不与风控混淆）
-  const searchHeaders: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
-  if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
-  let html: string | null;
+  let first: DoubanSearchResult | null = null;
+  let sawBlocked = false;
   try {
-    html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, searchHeaders);
+    for (const probe of [probeSuggest, probeRexxarSearch, probeSearchPage]) {
+      const r = await probe(name, deps);
+      if (r.kind === 'hit') { first = r.results[0]; break; }
+      if (r.kind === 'blocked') sawBlocked = true;
+    }
   } catch {
     return { ok: false, reason: 'network' };
   }
-  if (searchLooksBlocked(html)) return { ok: false, reason: 'blocked' };
-  const results = parseSearchResults(html!);
-  if (results.length === 0) return { ok: false, reason: 'notfound' };
-  const first = results[0];
+  if (!first) return { ok: false, reason: sawBlocked ? 'blocked' : 'notfound' };
   const sid = extractSid(first.detailUrl);
   if (!sid) return { ok: false, reason: 'notfound' };
 
-  // 2. 字段：ApiZero 首选（key 未配/失败 → null，交 rexxar 兜底）
+  // 字段：ApiZero 首选（key 未配/失败 → null，交 rexxar 兜底）
   let az: ApizeroInfo | null = null;
   if (deps.apizeroKey) az = await fetchApizeroInfo(sid, deps.apizeroKey, deps.httpGet);
-  // 3. rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）
+  // rexxar 演职员兜底：ApiZero 拿不到导演/主演时补（口径同 fetchNoteDouban C9）
   let celebrities: CelebritiesInfo | null = null;
   if (!az || !az.director || !az.actor) {
     celebrities = await fetchCelebrities(sid, deps.httpGet, deps.doubanCookie);
@@ -376,8 +502,8 @@ export async function downloadPosterToVault(
 
 /**
  * 单条笔记抓取（队列执行器注入点；成功 = 海报与豆瓣链接都写齐或本已齐全）。
- * 链路：搜索（风控检测）→ 海报下载写盘（无海报时）→ ApiZero 字段 + rexxar 兜底 → frontmatter 写入。
- * 搜索失败/网络异常 → network；搜索风控 → blocked；海报下载失败 → network；写盘失败 → write。
+ * 链路：suggest 检索（风控检测）→ 海报下载写盘（无海报时）→ ApiZero 字段 + rexxar 兜底 → frontmatter 写入。
+ * 检索失败/网络异常 → network；suggest 风控/异常形态 → blocked；海报下载失败 → network；写盘失败 → write。
  * 写回经 vault.process：字段一律「缺失才填」并基于回调内 fresh 内容复核（C8），
  * 抓取期间用户手改不会被覆盖。
  */
@@ -394,7 +520,7 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
   if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
 
-  // 1. 查询（搜索 + 字段；与表单「解析」共用 queryDoubanByName，单源不裂）
+  // 1. 查询（suggest 检索 + 字段；与表单「解析」共用 queryDoubanByName，单源不裂）
   const q = await queryDoubanByName(name, deps);
   if (!q.ok) return { ok: false, reason: q.reason };
   const { detailUrl, posterUrl, sid, apizero: az, celebrities: cel } = q.data;
