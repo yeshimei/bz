@@ -215,7 +215,7 @@
      头行宽度余量核算：7×34+6×6=274 + 头行 gap + 关闭钮 36 ≈ 322px ≤ 360 屏可用宽。 */
   .bz-home-panel .bz-home-wk { width: 32px; border-radius: 6px; }
   .bz-home-panel .bz-home-wk .bz-home-wk-band { height: 6px; }
-  .bz-home-panel .bz-home-wk .bz-home-wk-wd { font-size: 9px; line-height: 2; }
+  .bz-home-panel .bz-home-wk .bz-home-wk-wd { font-size: 11px; line-height: 2; }
   .bz-home-panel .bz-home-wk .bz-home-wk-n { font-size: 17px; line-height: 1.4; padding-bottom: 3px; }
   .bz-home-week { gap: 4px; }
   .bz-home-sec-t { font-size: 16.5px; }
@@ -385,7 +385,9 @@
   transition: opacity var(--bz-dur-fast, .16s) ease;
   background: radial-gradient(190px 130px at var(--gx, 50%) var(--gy, 50%), rgba(122, 92, 224, .16), transparent 65%);
 }
-.bz-home-pr:hover .bz-hm-glare { opacity: 1; }
+@media (hover: hover) {
+  .bz-home-pr:hover .bz-hm-glare { opacity: 1; }
+}
 
 /* reduced-motion 兜底（评审期停用）：系统 RM 不再拦 CSS 动画——评审要看到完整动效，
    正式版拍板后按「放缓不减义」恢复为降速版而非全停。 */
