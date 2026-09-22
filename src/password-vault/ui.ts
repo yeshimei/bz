@@ -46,6 +46,14 @@ import {
   mobSegHtml,
   emptyHtml,
 } from './render';
+import {
+  motionArmBoot, motionArmSwitch, motionArmSearch, motionArmReveal, motionArmFav,
+  motionRendered, motionPanelIn, motionPanelCollapse,
+  motionLockIn, motionLockIdle, motionUnlockBurst,
+  motionDialogIn, motionGenFlash, motionCopyBurst,
+  motionQuickPickIn, motionQpPick, motionMobPageIn,
+  motionTeardown,
+} from './motion';
 
 // （arch 新-5 清仓：relTime/colorOf/PasswordVaultEntry 再导出零外部消费，已删——
 //   消费方请直接走 ./render 与 ./data 单源）
@@ -114,6 +122,7 @@ export class PasswordVaultUIManager {
   private applySearch = debounce((kw: string) => {
     this.searchKw = kw;
     this.syncSearchInputs(); // 新-6：提交时写回双实例输入框（一侧输入另一侧不同步）
+    motionArmSearch(); // 动效层：搜索刷新——行快级联
     this.renderAll();
   }, 180);
   /** 安全模式无交互自动上锁计时器（15 分钟；document 捕获阶段交互重置，cons 新-3 对齐 encrypt 形制） */
@@ -218,6 +227,7 @@ export class PasswordVaultUIManager {
   private setView(v: 'all' | 'fav'): void {
     if (v !== 'all' && v !== 'fav') return;
     this.view = v;
+    motionArmSwitch(); // 动效层：视图切换——行级联 + 详情揭出
     const root = this.root!;
     root.querySelectorAll('.bz-password-vault-navitem').forEach((x) =>
       x.classList.toggle('on', x.getAttribute('data-view') === v)
@@ -311,11 +321,13 @@ export class PasswordVaultUIManager {
         if (pwInput.value) {
           this.askConfirm('覆盖已填密码？', '密码框已有内容，生成新密码将替换它，替换后无法找回。', false, () => {
             pwInput.value = this.generatePassword();
+            motionGenFlash(pwInput); // 动效层：新密码亮一记
             this.toast('已生成新密码');
           });
           return;
         }
         pwInput.value = this.generatePassword();
+        motionGenFlash(pwInput); // 动效层：新密码亮一记
         this.toast('已生成新密码');
       });
       // eye 切换（E5）：默认掩码，点击明文/掩码互换（对齐 encrypt 侧同弹窗）
@@ -324,6 +336,7 @@ export class PasswordVaultUIManager {
         const eye = dlg.querySelector('[data-act="pw-eye"]') as HTMLElement;
         const show = input.type === 'password';
         input.type = show ? 'text' : 'password';
+        if (show) motionGenFlash(input); // 动效层：明文显影亮一记（掩回不演——瞬间归掩更安全）
         eye.title = show ? '隐藏密码' : '显示密码';
         eye.innerHTML = show ? ICONS.eyeoff : ICONS.eye;
       });
@@ -441,6 +454,8 @@ export class PasswordVaultUIManager {
     this.renderDeskList();
     this.renderDeskDetail();
     this.renderMobList();
+    // 动效层：按意图播编排（boot/switch/search/默认轻揭出）+ eye·fav 锚点消费
+    motionRendered(this.root);
     // 解锁态即布防 idle 自动上锁（安全模式；交互经 document 捕获 bump 重置）——
     // 布防收口在此：show / 解锁重载 / 域内动作后的重绘都汇经此处（对齐 encrypt renderList→startSessionTimers）
     if (this.dataManager.unlocked) this.bumpIdleLock();
@@ -500,6 +515,7 @@ export class PasswordVaultUIManager {
         const r = document.createElement('div');
         r.className = 'bz-password-vault-row' + (d.id === this.selAccount ? ' on' : '');
         r.innerHTML = hitRowHtml(d);
+        r.dataset.pwvEntry = d.id; // 动效层锚点：收藏点亮按 id 找回行（无视觉影响）
         r.addEventListener('click', (e) => {
           this.selAccount = d.id;
           this.renderAll();
@@ -530,6 +546,7 @@ export class PasswordVaultUIManager {
       const recent = p.accounts[0];
       const r = document.createElement('div');
       r.className = 'bz-password-vault-plrow' + (p.platform === this.selPlatform ? ' on' : '');
+      r.dataset.pwvPlat = p.platform; // 动效层锚点：收藏点亮按平台找回行（无视觉影响）
       r.innerHTML = platRowHtml({
         platform: p.platform,
         url: recent?.url || '',
@@ -603,10 +620,13 @@ export class PasswordVaultUIManager {
       const card = document.createElement('div');
       card.className = 'bz-password-vault-acctcard';
       card.innerHTML = acctCardHtml(d, shown);
+      card.dataset.pwvEntry = d.id; // 动效层锚点：eye 显影/收藏点亮按 id 找回卡片（无视觉影响）
       card.querySelectorAll('[data-act]').forEach((b) =>
         b.addEventListener('click', (e) => {
           e.stopPropagation();
-          void this.handleAccountAction(d, b.getAttribute('data-act') || '');
+          const act = b.getAttribute('data-act') || '';
+          if (act === 'copy-ac' || act === 'copy-pw') motionCopyBurst(b as HTMLElement); // 动效层：复制金屑
+          void this.handleAccountAction(d, act);
         })
       );
       // bz 统一右键菜单 / 长按抽屉（编辑/删除/收藏收在这里，无 ⋮ 按钮）
@@ -634,10 +654,13 @@ export class PasswordVaultUIManager {
     const card = document.createElement('div');
     card.className = 'bz-password-vault-acctcard';
     card.innerHTML = acctCardHtml(d, shown);
+    card.dataset.pwvEntry = d.id; // 动效层锚点：eye 显影/收藏点亮按 id 找回卡片（无视觉影响）
     card.querySelectorAll('[data-act]').forEach((b) =>
       b.addEventListener('click', (e) => {
         e.stopPropagation();
-        void this.handleAccountAction(d, b.getAttribute('data-act') || '');
+        const act = b.getAttribute('data-act') || '';
+        if (act === 'copy-ac' || act === 'copy-pw') motionCopyBurst(b as HTMLElement); // 动效层：复制金屑
+        void this.handleAccountAction(d, act);
       })
     );
     attachItemActions(card, this.buildAccountActions(d), {
@@ -663,7 +686,9 @@ export class PasswordVaultUIManager {
       }
       (await copySensitiveWithFallback(d.password)) ? t('密码已复制（60 秒后自动清空）') : t('复制失败，请手动复制', true);
     } else if (act === 'eye') {
-      this.shownIds[d.id] = !this.shownIds[d.id];
+      const revealing = !this.shownIds[d.id];
+      this.shownIds[d.id] = revealing;
+      if (revealing) motionArmReveal(d.id); // 动效层：明文显影锚点（掩回不演——瞬间归掩更安全）
       this.renderAll();
       this.refreshMobPage(); // E6：移动详情页重建，明文/掩码立即生效
     } else if (act === 'edit') {
@@ -671,6 +696,7 @@ export class PasswordVaultUIManager {
     } else if (act === 'fav') {
       try {
         await this.dataManager.toggleFav(d.id); // E16：失败 toast + 回滚重绘（dataManager 内存快照回退）
+        motionArmFav(d.id); // 动效层：星标点亮弹跳锚点
       } catch (e: any) {
         t('操作失败：' + (e?.message || e), true);
       }
@@ -782,6 +808,7 @@ export class PasswordVaultUIManager {
         const c = document.createElement('div');
         c.className = 'bz-password-vault-mobcard';
         c.innerHTML = mobHitCardHtml(d);
+        c.dataset.pwvEntry = d.id; // 动效层锚点（同桌面搜索态行）
         this.bindAccountCard(c, d);
         list.appendChild(c);
       });
@@ -809,6 +836,7 @@ export class PasswordVaultUIManager {
         count: p.accounts.length,
         fav: this.dataManager.hasFav(p.platform),
       });
+      c.dataset.pwvPlat = p.platform; // 动效层锚点（同桌面平台行）
       this.bindCard(c, p);
       list.appendChild(c);
     });
@@ -881,7 +909,12 @@ export class PasswordVaultUIManager {
     this.mob.pageTitle.textContent = p.platform;
     this.mobPagePlatform = p.platform;
     this.mobPageAccount = null; // E6：平台页
+    // 动效层锚点：seg 按 DOM 序回填条目 id（页体为字符串拼接，无 id 载体；无视觉影响）
+    this.mob.pageBody.querySelectorAll<HTMLElement>('.bz-password-vault-seg').forEach((seg, i) => {
+      if (accs[i]) seg.dataset.pwvEntry = accs[i].id;
+    });
     this.mob.page.classList.add('open');
+    motionMobPageIn(this.mob.pageBody); // 动效层：页内 seg 卡接力（壳体 sheetup 走既有 CSS）
   }
 
   /** 账号详情页（搜索态点账号卡，同构单卡） */
@@ -904,6 +937,7 @@ export class PasswordVaultUIManager {
       })
     );
     const seg = this.mob.pageBody.querySelector('.bz-password-vault-seg') as HTMLElement;
+    if (seg) seg.dataset.pwvEntry = d.id; // 动效层锚点（同平台页）
     attachItemActions(seg, this.buildAccountActions(d), {
       sheetHead: this.buildSheetHead(d.account, d.platform, d.createdAt),
     });
@@ -911,6 +945,7 @@ export class PasswordVaultUIManager {
     this.mobPagePlatform = d.platform;
     this.mobPageAccount = d; // E6：账号页
     this.mob.page.classList.add('open');
+    motionMobPageIn(this.mob.pageBody); // 动效层：页内内容接力
   }
 
   // ---------- 动作定义（bz 统一右键菜单 / 长按抽屉，item-actions） ----------
@@ -976,6 +1011,7 @@ export class PasswordVaultUIManager {
           void (async () => {
             try {
               await this.dataManager.toggleFav(d.id); // E16：失败 toast，不再裸 await 吞成 unhandled rejection
+              motionArmFav(d.id); // 动效层：星标点亮弹跳锚点
             } catch (e: any) {
               t('操作失败：' + (e?.message || e), true);
             }
@@ -1146,9 +1182,11 @@ export class PasswordVaultUIManager {
       }
       if (!editItem) {
         pwInput.value = this.generatePassword();
+        motionGenFlash(pwInput); // 动效层：自动生成的密码亮一记
       }
       (dlg.querySelector('[data-f-err]') as HTMLElement).textContent = '';
       modal.classList.add('open');
+      motionDialogIn(dlg as HTMLElement); // 动效层：弹窗升起 + 封蜡金线（不可见实例内部自跳过）
     });
     // 焦点（深审新-3）：落当前生效实例，移动端软键盘才弹得起
     this.focusDialogField('.bz-password-vault-modal', 'modal', '[data-f="platform"]');
@@ -1171,6 +1209,7 @@ export class PasswordVaultUIManager {
       (card.querySelector('.err') as HTMLElement).textContent = '';
       (card as any).__setCurrent?.(platform);
       card.classList.add('open');
+      motionDialogIn(card.querySelector<HTMLElement>('.card')!); // 动效层：平台编辑卡升起 + 封蜡金线
     });
     // 聚焦（深审新-3）：平台编辑弹窗此前全平台无 focus，打开后焦点落 body——补当前生效实例聚焦
     this.focusDialogField('.bz-password-vault-platedit', 'plat-edit', '[data-f="platform"]');
@@ -1228,6 +1267,8 @@ export class PasswordVaultUIManager {
     if (!this._initialized) this.ensureElements();
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
+    motionArmBoot(); // 动效层：boot 意图置位（首个渲染消费即熄）
+    motionPanelIn(this.root!); // 动效层：工作台卡升起 + 金印压落 + FAB 弹入
     this.subscribeUnlockEvents(); // E2：面板打开期间感知别域上锁/解锁（保险库「立即上锁」/安全模式/日记域）
     this.bumpIdleLock(); // 开屏即布防 idle 自动上锁（安全模式）；后续交互经 renderAll/document bump 重置
     void this.loadAndRender();
@@ -1273,6 +1314,8 @@ export class PasswordVaultUIManager {
     this.closeAllDialogs(); // 收场（N9 对齐）：面板内弹窗 + body 流程框随面板关闭收起
     this.closeMobPage(); // N14：移动详情页不跨 hide/show 残留旧明文
     this.clearIdleLock(); // 关面板即撤 idle 布防
+    // 动效层：同步收 display 前让 body 替身覆层演「金印卡沉入暗场」（同步语义不变）
+    if (this.root.style.display === 'flex') motionPanelCollapse(this.root);
     this.root.style.display = 'none';
     if (this.isSecurityModeLive()) {
       // T12：统计落盘收敛到消费点——写最近一次解锁期内存快照（渲染期已备好，不依赖此刻 pwData）
@@ -1446,6 +1489,7 @@ export class PasswordVaultUIManager {
       this.root.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((lockEl) => {
         lockEl.classList.add('open');
         let ls = this.lockHandles.get(lockEl);
+        const fresh = !ls;
         if (!ls) {
           ls = uiLockScreen({
             kind: 'password-vault',
@@ -1468,6 +1512,7 @@ export class PasswordVaultUIManager {
         ls.input.value = '';
         ls.input2.value = '';
         ls.setStats(this.pwLockStatsCache);
+        motionLockIn(lockEl, fresh); // 动效层：金印压落（首装）或正冠（重入）+ 候场辉光
         requestAnimationFrame(() => ls.focus());
       });
     });
@@ -1603,6 +1648,8 @@ export class PasswordVaultUIManager {
               cancelLockTimers();
               ls.input.value = '';
               ls.input2.value = ''; // arch 新-1 纵深防御：口令不残留在已关闭的锁屏 DOM 里
+              motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：金印拧开余韵
+              motionArmBoot(); // 动效层：开锁后的首渲染播 boot 全编排
               this.closeLock();
               notice('密码本已解锁', 'success'); // 深审口径批：自称「密码本」；大节点走 success 档
               await this.reloadAfterUnlock();
@@ -1637,6 +1684,8 @@ export class PasswordVaultUIManager {
           cancelLockTimers();
           ls.input.value = '';
           ls.input2.value = ''; // arch 新-1 纵深防御：口令不残留在已关闭的锁屏 DOM 里
+          motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：金印拧开余韵
+          motionArmBoot(); // 动效层：开锁后的首渲染播 boot 全编排
           this.closeLock();
           notice('密码本已解锁', 'success'); // 深审口径批：自称「密码本」；大节点走 success 档
           await this.reloadAfterUnlock();
@@ -1669,6 +1718,8 @@ export class PasswordVaultUIManager {
                     cancelLockTimers();
                     ls.input.value = '';
                     ls.input2.value = '';
+                    motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：金印拧开余韵
+                    motionArmBoot(); // 动效层：重设后的首渲染播 boot 全编排
                     this.closeLock();
                     // 对齐 encrypt 域同款 warning 档（重设属警示性结果，非纯失败）
                     notice('已重设主密码（旧数据不可恢复）', 'warning');
@@ -1704,7 +1755,10 @@ export class PasswordVaultUIManager {
     //   首设双输入态回车同样走主按钮的「请再次输入」分支，与原 focus input2 收敛为同一步）
   }
   private closeLock() {
-    this.root!.querySelectorAll('.bz-password-vault-lock').forEach((l) => l.classList.remove('open'));
+    this.root!.querySelectorAll<HTMLElement>('.bz-password-vault-lock').forEach((l) => {
+      motionLockIdle(l, false); // 动效层：候场辉光必收（长驻循环句柄池摘除）
+      l.classList.remove('open');
+    });
   }
 
   // ---------- ESC ----------
@@ -1743,6 +1797,7 @@ export class PasswordVaultUIManager {
       this.idleBump = null;
     }
     this.lockTimerDisposers.splice(0).forEach((dispose) => dispose()); // 锁屏错误/冷却计时器
+    motionTeardown(); // 动效层清场：延时编排 + 长驻循环（金印候场辉光）一并无孤儿
     this.escUnregister?.unregister();
     this.escUnregister = null;
     this.dataManager.destroy();

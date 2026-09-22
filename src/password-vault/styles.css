@@ -1850,3 +1850,32 @@
 .bz-password-vault-qp .bz-popover-item .pl { font-size: var(--bz-font-body); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bz-password-vault-qp .bz-popover-item .ac { font-size: var(--bz-font-meta); color: var(--bz-text-2, var(--text-muted)); font-family: var(--bz-font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
 .bz-password-vault-qp .bz-popover-item .key { font-size: var(--bz-font-caption); color: var(--bz-text-3, var(--text-faint)); flex-shrink: 0; }
+
+/* ═══ 动效层注入件（src/password-vault/motion.ts；台账复用 encrypt/motion 同一块表） ═══
+   覆层挂 body、本体 fixed 内联定位；此处只有覆层内部结构与 CSS 循环类——
+   全部 pointer-events:none + aria-hidden，演出完自毁，终态 UI 与今天逐像素一致。 */
+/* 金印待机辉光：锁屏候场时金印呼吸（长驻循环；motionLockIdle 句柄池管理，closeLock 必收） */
+.bz-pwv-m-idle { animation: bz-pwv-m-breathe 2.6s ease-in-out infinite; }
+@keyframes bz-pwv-m-breathe {
+  0%, 100% { box-shadow: 0 10px 30px color-mix(in srgb, var(--interactive-accent, #c9a03c) 40%, transparent); }
+  50% { box-shadow: 0 10px 36px color-mix(in srgb, var(--interactive-accent, #c9a03c) 64%, transparent); }
+}
+/* 开锁/复制金屑（burst 覆层内部结构） */
+.bz-pwv-m-burst-ring {
+  position: absolute; left: 50%; top: 50%; width: 72px; height: 72px; border-radius: 50%;
+  border: 2px solid var(--pwv-gold, var(--interactive-accent, #c9a03c));
+  box-shadow: 0 0 20px color-mix(in srgb, var(--interactive-accent, #c9a03c) 55%, transparent);
+  transform: translate(-50%, -50%) scale(0.55);
+}
+.bz-pwv-m-burst-bit {
+  position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--pwv-gold, var(--interactive-accent, #c9a03c)); transform: translate(-50%, -50%);
+}
+.bz-pwv-m-burst-bit.is-small { width: 4px; height: 4px; }
+/* 扫光（显影/封蜡/快取选中共用的斜光带；覆层 overflow:hidden 由 motion 层内联） */
+.bz-pwv-m-glint { overflow: hidden; border-radius: 10px; }
+.bz-pwv-m-glint-beam {
+  position: absolute; top: -20%; bottom: -20%; left: 0; width: 45%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--interactive-accent, #c9a03c) 22%, transparent), transparent);
+  transform: translateX(-130%) skewX(-18deg);
+}

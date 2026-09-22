@@ -9,6 +9,7 @@
  */
 import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
+import { motionQuickPickIn, motionQpPick } from './motion';
 import type { PasswordVaultEntry } from './data';
 
 /** 选中动作：现有条目（复制该密码）| 生成新（按设置生成并复制） */
@@ -168,6 +169,7 @@ export function openPasswordQuickPicker(
     // 呈报#12-P3：mousedown 圈闭——按下行不把焦点从搜索框抢走（选择仍由 click 完成）
     row.addEventListener('mousedown', (e) => e.preventDefault());
     row.addEventListener('click', () => {
+      motionQpPick(row); // 动效层：金光抽出（覆层独立于选择器生命周期，先关后散互不拖拽）
       closePasswordQuickPicker();
       onPick({ type: 'generate' });
     });
@@ -210,6 +212,7 @@ export function openPasswordQuickPicker(
         // 呈报#12-P3：同上，行按下不抢焦点
         row.addEventListener('mousedown', (e) => e.preventDefault());
         row.addEventListener('click', () => {
+          motionQpPick(row); // 动效层：金光抽出（同上）
           closePasswordQuickPicker();
           onPick({ type: 'entry', entry: d });
         });
@@ -271,6 +274,7 @@ export function openPasswordQuickPicker(
     close: () => closePasswordQuickPicker(),
   });
   renderList();
+  motionQuickPickIn(popup); // 动效层：选择器弹入 + 行接力（在 renderList 之后才有行可揭）
   // 打开聚焦搜索框（30ms 等 DOM 挂载，与 path-picker 同范式）
   focusTimer = window.setTimeout(() => {
     focusTimer = null;

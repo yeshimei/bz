@@ -1,5 +1,5 @@
-/* 源指纹 e7c5f8aeaa3ae6e1 · 仓内输入 237 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 0cc4af5e479647e0 · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/motion.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_memo = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M7, s, ms) {
+        function createDate(y, m, d, h, M8, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M7, s, ms);
+            date = new Date(y + 400, m, d, h, M8, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M7, s, ms);
+            date = new Date(y, m, d, h, M8, s, ms);
           }
           return date;
         }
@@ -5833,7 +5833,7 @@ var BZW_memo = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M7 = 10;
+    const M8 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -5860,7 +5860,7 @@ var BZW_memo = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
+      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
         moved = true;
         cancel();
       }
@@ -17380,15 +17380,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -30161,15 +30161,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function writeNewsData(data) {
     await jsonFileStore(getNewsFilePath()).write(data);
   }
-  async function writeNewsDataMerged(intent) {
+  async function writeNewsDataMerged(intent2) {
     var _a2;
     const res = await readNewsData();
     if (!res.ok) return;
     const base = res.data;
     const next = { ...base };
-    if (intent.set.articles || ((_a2 = intent.removeArticleKeys) == null ? void 0 : _a2.length)) {
-      const patchList = intent.set.articles || [];
-      const removeKeys = new Set(intent.removeArticleKeys || []);
+    if (intent2.set.articles || ((_a2 = intent2.removeArticleKeys) == null ? void 0 : _a2.length)) {
+      const patchList = intent2.set.articles || [];
+      const removeKeys = new Set(intent2.removeArticleKeys || []);
       const patchByKey = /* @__PURE__ */ new Map();
       for (const a of patchList) patchByKey.set(articleKeyOf(a), a);
       const merged = [];
@@ -30190,15 +30190,15 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       next.articles = merged;
     }
     for (const seg of ["stats", "bilibiliUps", "bilibiliUpInfo", "bilibiliMaxItems", "bilibiliCookie", "sources", "rssFeeds", "lastFetchAt", "fetchIntervalMin"]) {
-      if (intent.set[seg] !== void 0) {
-        next[seg] = intent.set[seg];
+      if (intent2.set[seg] !== void 0) {
+        next[seg] = intent2.set[seg];
       }
     }
-    if (intent.patchBilibiliUpInfo) {
-      next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent.patchBilibiliUpInfo };
+    if (intent2.patchBilibiliUpInfo) {
+      next.bilibiliUpInfo = { ...next.bilibiliUpInfo, ...intent2.patchBilibiliUpInfo };
     }
-    if (intent.patchRssFeedTitles) {
-      const titles = intent.patchRssFeedTitles;
+    if (intent2.patchRssFeedTitles) {
+      const titles = intent2.patchRssFeedTitles;
       next.rssFeeds = (next.rssFeeds || []).map(
         (f) => titles[f.url] !== void 0 ? { ...f, title: titles[f.url] } : f
       );
@@ -32327,8 +32327,8 @@ ${bodyText.substring(0, 6e3)}`;
           fetchIntervalMin: (_b2 = d.fetchIntervalMin) != null ? _b2 : DEFAULT_FETCH_INTERVAL_MIN
         };
       },
-      write: (intent) => enqueueNewsWrite(async () => {
-        await writeNewsDataMerged(intent);
+      write: (intent2) => enqueueNewsWrite(async () => {
+        await writeNewsDataMerged(intent2);
       })
     };
   }
@@ -45760,6 +45760,528 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/encrypt/motion.ts
+  function motionReduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function motionWaapi(el, frames, opts) {
+    if (!el || motionReduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function motionAfter(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function motionCancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionShellAfter(ms, fn) {
+    setTimeout(fn, ms);
+  }
+  function motionLoopAdd(key, stop) {
+    motionLoopStop(key);
+    loops.set(key, stop);
+  }
+  function motionLoopStop(key) {
+    const stop = loops.get(key);
+    if (stop) {
+      loops.delete(key);
+      try {
+        stop();
+      } catch (e) {
+      }
+    }
+  }
+  function motionLoopStopAll() {
+    for (const key of [...loops.keys()]) motionLoopStop(key);
+  }
+  function motionTeardown() {
+    motionCancelPending();
+    motionLoopStopAll();
+  }
+  function motionVeil(rect, cls) {
+    if (!rect || rect.width < 5 || rect.height < 5) return null;
+    if (typeof document === "undefined" || !document.body) return null;
+    const veil = document.createElement("div");
+    veil.className = cls;
+    veil.setAttribute("aria-hidden", "true");
+    veil.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;pointer-events:none;z-index:var(--bz-z-overlay,1000);`;
+    document.body.appendChild(veil);
+    return veil;
+  }
+  function motionVeilGone(veil, anim, dur) {
+    const gone = () => {
+      try {
+        veil.remove();
+      } catch (e) {
+      }
+    };
+    if (anim) anim.finished.then(gone).catch(gone);
+    motionShellAfter(dur + 150, gone);
+  }
+  function motionVisible(el) {
+    return !!el && el.offsetWidth > 0 && el.offsetHeight > 0;
+  }
+  function motionArmBoot() {
+    intent = "boot";
+  }
+  function motionArmSwitch() {
+    if (!intent) intent = "switch";
+  }
+  function motionArmSearch() {
+    if (!intent) intent = "search";
+  }
+  function rise(el, delay, dur = M7.base, from = {}) {
+    var _a2, _b2, _c;
+    const y = (_a2 = from.y) != null ? _a2 : 8;
+    const blur = (_b2 = from.blur) != null ? _b2 : 4;
+    const scale = (_c = from.scale) != null ? _c : 1;
+    motionAfter(delay, () => {
+      motionWaapi(
+        el,
+        [
+          { opacity: 0, transform: `translateY(${y}px)${scale !== 1 ? ` scale(${scale})` : ""}`, filter: `blur(${blur}px)` },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: dur, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionRendered(popup) {
+    motionCancelPending();
+    const phase = intent;
+    intent = null;
+    if (!popup || motionReduced() || !motionVisible(popup)) return;
+    const desk = popup.querySelector(".bz-vault-desk");
+    const mob = popup.querySelector(".bz-vault-mob");
+    const deskOn = motionVisible(desk);
+    if (deskOn && desk) {
+      const seal = desk.querySelector(".bz-vault-brand .seal");
+      const items = [...desk.querySelectorAll(".bz-vault-item")];
+      const side = [desk.querySelector(".bz-vault-health"), desk.querySelector(".bz-vault-lockbtn")];
+      const rows = [...desk.querySelectorAll(".bz-vault-lc-body .bz-vault-row")];
+      const detail = desk.querySelector(".bz-vault-detail");
+      if (phase === "boot") {
+        if (seal) motionAfter(0, () => motionWaapi(
+          seal,
+          [
+            { opacity: 0, transform: "rotate(-120deg) scale(.55)", filter: "blur(3px)" },
+            { opacity: 1, transform: "rotate(8deg) scale(1.06)", filter: "blur(0px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: 380, easing: E.out, fill: "backwards" }
+        ));
+        items.forEach((el, i) => rise(el, 90 + i * 45, M7.base, { y: 6 }));
+        side.forEach((el, i) => {
+          if (el) rise(el, 240 + i * 60, M7.base, { y: 6 });
+        });
+        const title = desk.querySelector("[data-vault-title]");
+        if (title) rise(title, 60, M7.base, { y: 5 });
+        motionBootSweep(popup);
+      }
+      if (phase === "boot") rows.forEach((el, i) => {
+        if (i < 14) rise(el, 300 + i * STAG, M7.base, { y: 7 });
+      });
+      else if (phase === "switch") rows.forEach((el, i) => {
+        if (i < 12) rise(el, i * 20, M7.fast + 60, { y: 6, blur: 3 });
+      });
+      else if (phase === "search") rows.forEach((el, i) => {
+        if (i < 10) rise(el, i * 14, M7.fast + 40, { y: 4, blur: 2 });
+      });
+      if (detail) {
+        if (phase === "boot" || phase === "switch") revealDetail(detail, phase === "boot" ? 220 : 40);
+        else if (phase === "search") revealDetail(detail, 30, true);
+        else rise(detail, 0, M7.fast + 40, { y: 4, blur: 2 });
+      }
+    }
+    if (motionVisible(mob) && mob) {
+      const rows = [...mob.querySelectorAll("[data-mob-body] > .bz-vault-row")];
+      if (phase === "boot") rows.forEach((el, i) => {
+        if (i < 12) rise(el, 260 + i * STAG, M7.base, { y: 7 });
+      });
+      else if (phase === "switch") rows.forEach((el, i) => {
+        if (i < 10) rise(el, i * 20, M7.fast + 60, { y: 6, blur: 3 });
+      });
+      else if (phase === "search") rows.forEach((el, i) => {
+        if (i < 8) rise(el, i * 14, M7.fast + 40, { y: 4, blur: 2 });
+      });
+    }
+  }
+  function revealDetail(detail, base, light = false) {
+    const blocks = [
+      detail.querySelector(".bz-vault-dhead"),
+      detail.querySelector(".bz-vault-hero"),
+      detail.querySelector(".bz-vault-cards"),
+      detail.querySelector(".bz-vault-two")
+    ].filter((b) => !!b);
+    blocks.forEach((b, i) => rise(b, base + i * (light ? 40 : 70), light ? M7.fast + 60 : M7.base, { y: light ? 4 : 7 }));
+    const fields = [...detail.querySelectorAll(".bz-vault-dcontent .field, .bz-vault-dcontent .bigbtns")];
+    fields.forEach((f, i) => rise(f, base + blocks.length * 60 + i * 55, M7.base, { y: 5 }));
+    const minis = [...detail.querySelectorAll(".bz-vault-minirow")];
+    minis.forEach((m, i) => {
+      if (i < 6) rise(m, base + 260 + i * 50, M7.base, { y: 4, blur: 2 });
+    });
+  }
+  function motionPanelIn(popup) {
+    if (!popup || motionReduced()) return;
+    const mask = document.getElementById("bz-encrypt-mask");
+    if (mask) motionWaapi(mask, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.move, easing: E.out });
+    const title = popup.querySelector("[data-vault-title]");
+    if (title && motionVisible(popup)) {
+      motionShellAfter(80, () => {
+        motionWaapi(
+          title,
+          [
+            { opacity: 0, transform: "translateY(5px)", filter: "blur(3px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M7.base, easing: E.out, fill: "backwards" }
+        );
+      });
+    }
+  }
+  function motionPanelCollapse(popup) {
+    if (!popup || motionReduced()) return;
+    const rect = popup.getBoundingClientRect();
+    let bg = "";
+    let radius = "12px";
+    try {
+      const cs = getComputedStyle(popup);
+      bg = cs.backgroundColor;
+      if (cs.borderRadius) radius = cs.borderRadius;
+    } catch (e) {
+    }
+    const veil = motionVeil(rect, "bz-vlt-collapse");
+    if (!veil) return;
+    veil.style.cssText += `background:${bg || "var(--bz-surface-2, #20242b)"};border-radius:${radius};box-shadow:var(--bz-shadow-lg, 0 20px 60px rgba(0,0,0,.4));`;
+    const anim = motionWaapi(
+      veil,
+      [
+        { opacity: 1, transform: "scale(1)", filter: "brightness(1) blur(0px)" },
+        { opacity: 0, transform: "scale(.965)", filter: "brightness(.45) blur(5px)" }
+      ],
+      { duration: M7.move + 20, easing: E.out }
+    );
+    motionVeilGone(veil, anim, M7.move + 20);
+  }
+  function motionLockSealing(popup) {
+    if (!popup || motionReduced() || !motionVisible(popup)) return;
+    const rect = popup.getBoundingClientRect();
+    let radius = "12px";
+    let z = 1e3;
+    try {
+      const cs = getComputedStyle(popup);
+      if (cs.borderRadius) radius = cs.borderRadius;
+      z = (parseInt(cs.zIndex, 10) || 1e3) + 1;
+    } catch (e) {
+    }
+    const gate = motionVeil(rect, "bz-vlt-gate");
+    if (!gate) return;
+    gate.style.cssText += `border-radius:${radius};z-index:${z};`;
+    const top = document.createElement("div");
+    top.className = "bz-vlt-gate-bar is-top";
+    const bot = document.createElement("div");
+    bot.className = "bz-vlt-gate-bar is-bot";
+    gate.append(top, bot);
+    motionWaapi(
+      top,
+      [{ transform: "translateY(-102%)" }, { transform: "translateY(0)" }],
+      { duration: 260, easing: E.move, fill: "forwards" }
+    );
+    motionWaapi(
+      bot,
+      [{ transform: "translateY(102%)" }, { transform: "translateY(0)" }],
+      { duration: 260, easing: E.move, fill: "forwards" }
+    );
+    motionShellAfter(268, () => {
+      motionWaapi(
+        top,
+        [{ filter: "brightness(1)" }, { filter: "brightness(1.55)" }, { filter: "brightness(1)" }],
+        { duration: 240, easing: E.out }
+      );
+      motionWaapi(
+        bot,
+        [{ filter: "brightness(1)" }, { filter: "brightness(1.55)" }, { filter: "brightness(1)" }],
+        { duration: 240, easing: E.out }
+      );
+    });
+    const seal = popup.querySelector(".bz-vault-brand .seal");
+    if (seal) motionWaapi(
+      seal,
+      [{ transform: "rotate(0deg)" }, { transform: "rotate(180deg)" }],
+      { duration: 460, easing: E.move }
+    );
+    motionShellAfter(430, () => {
+      const out = motionWaapi(gate, [{ opacity: 1 }, { opacity: 0 }], { duration: 190, easing: E.out, fill: "forwards" });
+      const gone = () => {
+        try {
+          gate.remove();
+        } catch (e) {
+        }
+      };
+      if (out) out.finished.then(gone).catch(gone);
+      motionShellAfter(320, gone);
+    });
+  }
+  function motionBootSweep(popup) {
+    if (motionReduced() || !motionVisible(popup)) return;
+    const sweep = document.createElement("div");
+    sweep.className = "bz-vlt-sweep";
+    sweep.setAttribute("aria-hidden", "true");
+    popup.appendChild(sweep);
+    const anim = motionWaapi(
+      sweep,
+      [{ transform: "translateX(-72%)" }, { transform: "translateX(72%)" }],
+      { duration: M7.impulse, easing: E.out }
+    );
+    motionVeilGone(sweep, anim, M7.impulse);
+  }
+  function motionLockScreenIn(lsEl) {
+    if (!lsEl || motionReduced()) return;
+    const box = lsEl.querySelector('[data-ls="box"]');
+    if (!box) return;
+    motionWaapi(
+      box,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.985)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 360, easing: E.out, fill: "backwards" }
+    );
+    const seal = lsEl.querySelector('[data-ls="seal"]');
+    if (seal) motionWaapi(
+      seal,
+      [
+        { opacity: 0, transform: "rotate(-16deg) scale(1.55)", filter: "blur(3px)" },
+        { opacity: 1, transform: "rotate(4deg) scale(.97)", filter: "blur(0px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 440, easing: E.out, fill: "backwards" }
+    );
+    const lines = ['[data-ls="title"]', '[data-ls="sub"]', '[data-ls="row"]'];
+    lines.forEach((sel, i) => {
+      const el = lsEl.querySelector(sel);
+      if (el) {
+        motionShellAfter(120 + i * 70, () => {
+          motionWaapi(
+            el,
+            [
+              { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
+              { opacity: 1, transform: "none", filter: "blur(0px)" }
+            ],
+            { duration: M7.base, easing: E.out, fill: "backwards" }
+          );
+        });
+      }
+    });
+    const stats = [...lsEl.querySelectorAll('[data-ls="stats"] .bz-lockscreen-stat')];
+    stats.forEach((el, i) => {
+      motionShellAfter(200 + i * 60, () => {
+        motionWaapi(
+          el,
+          [
+            { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M7.base, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+  }
+  function motionUnlockBurst(seal) {
+    if (!seal || motionReduced()) return;
+    const rect = seal.getBoundingClientRect();
+    const veil = motionVeil(rect, "bz-vlt-burst");
+    if (!veil) return;
+    const ring = document.createElement("div");
+    ring.className = "bz-vlt-burst-ring";
+    veil.appendChild(ring);
+    for (let i = 0; i < 7; i++) {
+      const bit = document.createElement("div");
+      bit.className = "bz-vlt-burst-bit";
+      veil.appendChild(bit);
+      const ang = i / 7 * Math.PI * 2 + Math.random() * 0.6;
+      const dist = 26 + Math.random() * 26;
+      motionWaapi(
+        bit,
+        [
+          { opacity: 1, transform: "translate(-50%,-50%) translate(0,0) scale(1)" },
+          { opacity: 0, transform: `translate(-50%,-50%) translate(${Math.cos(ang) * dist}px, ${Math.sin(ang) * dist}px) scale(.4)` }
+        ],
+        { duration: 380 + Math.random() * 120, easing: E.out }
+      );
+    }
+    const anim = motionWaapi(
+      ring,
+      [
+        { opacity: 0.95, transform: "translate(-50%,-50%) scale(.55)" },
+        { opacity: 0, transform: "translate(-50%,-50%) scale(2.3)" }
+      ],
+      { duration: 460, easing: E.out }
+    );
+    motionVeilGone(veil, anim, 460);
+  }
+  function motionRejectShake(lsEl) {
+    if (!lsEl || motionReduced()) return;
+    const box = lsEl.querySelector('[data-ls="box"]');
+    if (!box) return;
+    motionWaapi(
+      box,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-8px)" },
+        { transform: "translateX(7px)" },
+        { transform: "translateX(-4px)" },
+        { transform: "translateX(0)" }
+      ],
+      { duration: 300, easing: E.out }
+    );
+  }
+  function motionPreviewIn(popup) {
+    if (!popup || motionReduced() || !motionVisible(popup)) return;
+    motionWaapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(12px) scale(.985)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 300, easing: E.out, fill: "backwards" }
+    );
+    motionBootSweep(popup);
+  }
+  function motionRevealBody(el) {
+    if (!el || motionReduced() || !motionVisible(el)) return;
+    motionWaapi(
+      el,
+      [
+        { opacity: 0.3, filter: "blur(7px) brightness(1.35)" },
+        { opacity: 1, filter: "blur(0px) brightness(1)" }
+      ],
+      { duration: 460, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionOriginalFlash(slot) {
+    if (!slot || motionReduced()) return;
+    const media = slot.querySelector("img.bz-encrypt-preview-media, video.bz-encrypt-preview-video");
+    const target = media || slot;
+    motionWaapi(
+      target,
+      [{ filter: "brightness(1.6) contrast(1.05)" }, { filter: "brightness(1) contrast(1)" }],
+      { duration: 300, easing: E.out }
+    );
+  }
+  function motionHealthIn(box) {
+    if (!box || motionReduced() || !motionVisible(box)) return;
+    motionWaapi(
+      box,
+      [
+        { opacity: 0, transform: "translateY(12px) scale(.985)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 300, easing: E.out, fill: "backwards" }
+    );
+    motionBootSweep(box);
+  }
+  function motionScanStart(box) {
+    motionScanStop(box);
+    if (!box || motionReduced()) return;
+    const body = box.querySelector(".bz-encrypt-health-body");
+    if (!body || !motionVisible(body)) return;
+    const host = document.createElement("div");
+    host.className = "bz-vlt-scanhost";
+    host.setAttribute("aria-hidden", "true");
+    const beam = document.createElement("div");
+    beam.className = "bz-vlt-scanbeam";
+    host.appendChild(beam);
+    box.appendChild(host);
+    motionLoopAdd("encrypt-scan", () => {
+      try {
+        host.remove();
+      } catch (e) {
+      }
+    });
+  }
+  function motionScanStop(box) {
+    motionLoopStop("encrypt-scan");
+  }
+  function motionReportIn(body) {
+    if (!body || motionReduced()) return;
+    const summary = body.querySelector(".bz-encrypt-health-summary");
+    if (summary) motionWaapi(
+      summary,
+      [
+        { opacity: 0, transform: "translateY(5px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M7.base, easing: E.out, fill: "backwards" }
+    );
+    const secs = [...body.querySelectorAll(".bz-encrypt-health-section, .bz-encrypt-health-item, .bz-encrypt-health-hint")];
+    secs.forEach((el, i) => {
+      if (i < 12) rise(el, 90 + i * 35, M7.base, { y: 4, blur: 2 });
+    });
+  }
+  function motionFindRowIn(row) {
+    if (!row || motionReduced()) return;
+    motionWaapi(
+      row,
+      [
+        { opacity: 0, transform: "translateX(-6px)", filter: "blur(2px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M7.fast + 40, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionStatusbarSpin(el) {
+    if (!el || motionReduced()) return;
+    const ic2 = el.querySelector(".bz-vault-ic");
+    if (!ic2) return;
+    motionWaapi(
+      ic2,
+      [
+        { transform: "rotate(-100deg) scale(.7)", opacity: 0.4 },
+        { transform: "rotate(10deg) scale(1.08)", opacity: 1 },
+        { transform: "none", opacity: 1 }
+      ],
+      { duration: 360, easing: E.out }
+    );
+  }
+  var M7, E, STAG, timers, loops, intent;
+  var init_motion = __esm({
+    "src/encrypt/motion.ts"() {
+      M7 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      timers = /* @__PURE__ */ new Set();
+      loops = /* @__PURE__ */ new Map();
+      intent = null;
+    }
+  });
+
   // src/encrypt/ui.ts
   var ui_exports8 = {};
   __export(ui_exports8, {
@@ -46082,6 +46604,7 @@ ${n.content.slice(0, 2e3)}
       init_vault_assets_view();
       init_lock_screen();
       init_lock_stats();
+      init_motion();
       LOCK_KIND_META = {
         vault: {
           icon: "shield",
@@ -46290,6 +46813,7 @@ ${n.content.slice(0, 2e3)}
             const headSearch = this.deskSearch;
             if (headSearch) headSearch.value = "";
             this.mob.search.value = "";
+            motionArmSwitch();
             this.renderAll();
           };
           this.desk.nav.querySelectorAll(".bz-vault-item").forEach((el) => {
@@ -46364,6 +46888,7 @@ ${n.content.slice(0, 2e3)}
               this.mob.search.value = v;
             }
             this.syncSearchClear();
+            motionArmSearch();
             this.searchDebounced();
           });
           input.addEventListener("keydown", (e) => {
@@ -46394,6 +46919,7 @@ ${n.content.slice(0, 2e3)}
           if (deskSearch) deskSearch.value = "";
           this.mob.search.value = "";
           this.syncSearchClear();
+          motionArmSearch();
           this.renderAll();
         }
         createMask(id) {
@@ -46416,6 +46942,8 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          motionArmBoot();
+          motionPanelIn(this.popup);
           trapPanelFocus(this.popup);
           this.notifyUnlockUi();
           void this.renderList();
@@ -46424,6 +46952,7 @@ ${n.content.slice(0, 2e3)}
         hide(suppressAutoLockNotice = false) {
           this.closePreview();
           this.closeAllDialogs();
+          if (this.popup && this.popup.style.display === "flex") motionPanelCollapse(this.popup);
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
           this.stopSessionTimers();
@@ -46511,6 +47040,7 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.healthMask, this.healthPopup);
           this.healthMask.style.display = "flex";
           this.healthPopup.style.display = "flex";
+          motionHealthIn(this.healthPopup);
           void this.runHealthScan();
         }
         ensureHealthElements() {
@@ -46597,6 +47127,7 @@ ${n.content.slice(0, 2e3)}
             liveTitle.textContent = "发现的异常";
             live2.appendChild(liveTitle);
             body.appendChild(live2);
+            motionScanStart(this.healthPopup);
             try {
               const report = await this.dataManager.scanHealth((p) => {
                 progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
@@ -46606,10 +47137,12 @@ ${n.content.slice(0, 2e3)}
                   row.className = "bz-encrypt-health-item " + (item.cat === "corrupted-body" || item.cat === "corrupted-attachment" ? "bz-encrypt-health-item--bad" : item.cat === "missing-attachment" ? "bz-encrypt-health-item--warn" : "");
                   row.textContent = item.label;
                   live2.appendChild(row);
+                  motionFindRowIn(row);
                 }
               });
               this.lastHealth = { issues: report.items.length, lastChecked: (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", { hour12: false }) };
               this.renderHealthReport(report, body);
+              motionReportIn(body);
               this.renderNav();
             } catch (e) {
               body.innerHTML = "";
@@ -46618,6 +47151,7 @@ ${n.content.slice(0, 2e3)}
               body.appendChild(err);
             }
             this.setHealthButtonsDisabled(false);
+            motionScanStop(this.healthPopup);
           } finally {
             this._scanning = false;
           }
@@ -46826,6 +47360,7 @@ ${n.content.slice(0, 2e3)}
           topifyZ(ls.el);
           document.body.appendChild(ls.el);
           mountIcons(ls.el);
+          motionLockScreenIn(ls.el);
           const esc4 = escManager.register("bz-vault-unlock", {
             isVisible: () => ls.el.isConnected,
             close: () => done(false)
@@ -46872,6 +47407,7 @@ ${n.content.slice(0, 2e3)}
               try {
                 const ok = await this.dataManager.unlock(pw);
                 if (ok) {
+                  motionUnlockBurst(ls.el.querySelector('[data-ls="seal"]'));
                   done(true);
                   notice("密码已设置，数据已加密", "success");
                 } else {
@@ -46895,6 +47431,7 @@ ${n.content.slice(0, 2e3)}
               const success = await this.dataManager.unlock(pw);
               if (success) {
                 this.resetUnlockThrottle();
+                motionUnlockBurst(ls.el.querySelector('[data-ls="seal"]'));
                 done(true);
                 const healMsg = this.dataManager.selfHealRolledBack > 0 ? "；上次未完成的加密已自动回滚，原文未动" : "";
                 notice("解锁成功" + healMsg, "success");
@@ -46916,6 +47453,7 @@ ${n.content.slice(0, 2e3)}
                       void this.dataManager.unlock(pw, true).then((ok) => {
                         if (ok) {
                           this.resetUnlockThrottle();
+                          motionUnlockBurst(ls.el.querySelector('[data-ls="seal"]'));
                           done(true);
                           notice("已重设主密码（旧数据不可恢复）", "warning");
                         } else {
@@ -46929,6 +47467,7 @@ ${n.content.slice(0, 2e3)}
                 } else {
                   ls.setBusy(false);
                   const delaySec = this.registerUnlockFailure();
+                  motionRejectShake(ls.el);
                   this.rejectInput(`密码错误，${delaySec} 秒后可重试`, setErr, "error");
                   ls.input.value = "";
                   ls.focus();
@@ -46969,6 +47508,7 @@ ${n.content.slice(0, 2e3)}
           this.renderNav();
           this.renderDesktop();
           this.renderMobile();
+          if (this.popup) motionRendered(this.popup);
         }
         /** 列表头搜索框聚焦（openManager 渲染收口后补挂；无列表头/面板未显示时静默） */
         focusListSearch() {
@@ -47249,6 +47789,8 @@ ${n.content.slice(0, 2e3)}
               if (t !== null && this.asset === "diary" && this._selNoteId === note.id) {
                 this._diaryPlain[note.id] = t;
                 this.renderNoteDetail(detail, note, kind);
+                const pre = detail.querySelector(".note.pre");
+                if (pre) motionRevealBody(pre);
               }
             }).catch(() => {
             });
@@ -47372,6 +47914,7 @@ ${n.content.slice(0, 2e3)}
           this.mob.seg.querySelectorAll(".sg").forEach(
             (el) => el.classList.toggle("on", el.getAttribute("data-masset") === a)
           );
+          motionArmSwitch();
           this.renderAll();
         }
         /**
@@ -47398,6 +47941,7 @@ ${n.content.slice(0, 2e3)}
         }
         /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
         lockNow(silent = false) {
+          if (this.popup) motionLockSealing(this.popup);
           if (this.dataManager.unlocked) this.captureLockStats();
           this.dataManager.lock();
           this.pwDataManager.lock();
@@ -47517,10 +48061,14 @@ ${n.content.slice(0, 2e3)}
             openItemSheet(actions, opts);
           });
           this.mob.body.appendChild(page);
+          motionRevealBody(page);
           if (kind === "diary") {
             void this.dataManager.decryptNoteBody(note).then((t) => {
               const pre = body.querySelector(".note.pre");
-              if (pre && t !== null) pre.innerHTML = escapeHtml2(t).replace(/\n/g, "<br>");
+              if (pre && t !== null) {
+                pre.innerHTML = escapeHtml2(t).replace(/\n/g, "<br>");
+                motionRevealBody(pre);
+              }
             }).catch(() => {
             });
           }
@@ -47549,6 +48097,7 @@ ${n.content.slice(0, 2e3)}
           });
           topifyZ(ls.el);
           document.body.appendChild(ls.el);
+          motionLockScreenIn(ls.el);
           const esc4 = escManager.register("bz-vault-destroy-confirm", {
             isVisible: () => !!ls.el.isConnected,
             close: () => done(false)
@@ -47573,9 +48122,12 @@ ${n.content.slice(0, 2e3)}
             }
             ls.setBusy(true);
             try {
-              if (await this.dataManager.verifyPassword(pw)) done(true);
-              else {
+              if (await this.dataManager.verifyPassword(pw)) {
+                motionUnlockBurst(ls.el.querySelector('[data-ls="seal"]'));
+                done(true);
+              } else {
                 ls.setBusy(false);
+                motionRejectShake(ls.el);
                 this.rejectInput("主密码错误，未销毁", setErr, "error");
                 ls.input.value = "";
                 ls.focus();
@@ -47755,6 +48307,7 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.previewMask, this.previewPopup);
           mask.style.display = "block";
           popup.style.display = "flex";
+          motionPreviewIn(popup);
           void this.fillPreviewBody(note, body);
         }
         /** 预览窗正文异步填充：解密 → 渲染（带超时兜底）→ 图随文走 → 画廊 */
@@ -47802,6 +48355,7 @@ ${n.content.slice(0, 2e3)}
             }
             body.innerHTML = "";
             body.appendChild(bodyEl3);
+            motionRevealBody(bodyEl3);
             const residuals = note.attachments.filter((a) => !inlined.has(a.path));
             if (residuals.length) {
               const gallery = document.createElement("div");
@@ -47903,6 +48457,7 @@ ${n.content.slice(0, 2e3)}
             }
             slot.dataset.loaded = "1";
             slot.classList.add("bz-encrypt-preview-slot--loaded");
+            motionOriginalFlash(slot);
           } catch (e) {
             const img = slot.querySelector("img.bz-encrypt-preview-media");
             const missing = slot.querySelector(".bz-encrypt-preview-missing");
@@ -47995,6 +48550,7 @@ ${n.content.slice(0, 2e3)}
             if (this.statusBarEl) {
               this.statusBarEl.innerHTML = statusbarHtml(unlocked);
               mountIcons(this.statusBarEl);
+              motionStatusbarSpin(this.statusBarEl);
             }
             (_b2 = (_a2 = this.uiManager).notifyUnlockUi) == null ? void 0 : _b2.call(_a2);
           };
@@ -48143,6 +48699,7 @@ ${n.content.slice(0, 2e3)}
           this.uiManager.detachGlobalListeners();
           cancelClipboardClear();
           this.uiManager.stopSessionTimers();
+          motionTeardown();
           this.uiManager.pwDataManager.destroy();
           this.uiManager.mask = null;
           this.uiManager.popup = null;

@@ -367,3 +367,36 @@
   #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dhead { padding: 0 0 var(--bz-space-md); border-bottom: 1px solid var(--bz-border); }
   #bz-encrypt-popup .bz-vault-mobpage .bz-vault-dcontent { padding: 14px 0 0; }
 }
+/* ═══ 动效层注入件（src/encrypt/motion.ts；password-vault/motion.ts 复用其台账） ═══
+   全部 absolute/fixed + pointer-events:none + aria-hidden，由行为层挂点创建、演出完
+   自毁——终态 UI 与无动效层时逐像素一致；只动 transform/opacity/filter，不改几何。 */
+/* 光缝：门缝里漏进来的斜光（boot/预览/体检开场白），host = 面板/弹窗 */
+.bz-vlt-sweep {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.12) 50%, transparent 58%);
+}
+/* 铁门横档：上锁瞬间从上下缘合拢的门闩（中央金线即封条），host = #bz-encrypt-popup */
+.bz-vlt-gate { pointer-events: none; overflow: hidden; }
+.bz-vlt-gate-bar { position: absolute; left: -3%; width: 106%; height: 56%; background: linear-gradient(180deg, #23262c, #31353d 46%, #1c1f25); }
+.bz-vlt-gate-bar.is-top { top: 0; border-bottom: 2px solid var(--bz-brand, #b8862f); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45); }
+.bz-vlt-gate-bar.is-bot { bottom: 0; border-top: 2px solid var(--bz-brand, #b8862f); box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.45); }
+/* 开锁验讫余韵：印章处光环 + 金屑（body 自毁覆层的内部结构；覆层本体由 motion 层内联定位） */
+.bz-vlt-burst-ring {
+  position: absolute; left: 50%; top: 50%; width: 64px; height: 64px; border-radius: 50%;
+  border: 2px solid var(--bz-brand, #b8862f);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--bz-brand, #b8862f) 55%, transparent);
+  transform: translate(-50%, -50%) scale(0.55);
+}
+.bz-vlt-burst-bit {
+  position: absolute; left: 50%; top: 50%; width: 5px; height: 5px; border-radius: 50%;
+  background: var(--bz-brand, #b8862f); transform: translate(-50%, -50%);
+}
+/* 体检巡逻扫描线（长驻循环；句柄池管理，扫完 motionScanStop 必收） */
+.bz-encrypt-health-box { position: relative; }
+.bz-vlt-scanhost { position: absolute; inset: 0; z-index: 2; pointer-events: none; overflow: hidden; border-radius: inherit; }
+.bz-vlt-scanbeam {
+  position: absolute; left: 0; right: 0; top: 0; height: 34%;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bz-brand, #b8862f) 15%, transparent), transparent);
+  animation: bz-vlt-scan 1.5s linear infinite;
+}
+@keyframes bz-vlt-scan { from { transform: translateY(-120%); } to { transform: translateY(420%); } }

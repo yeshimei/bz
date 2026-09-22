@@ -40,6 +40,14 @@ import { overviewHTML, noteRowHTML, noteDetailHTML, statusbarHtml, type VaultAss
 import { uiLockScreen } from '../core/ui/lock-screen';
 import type { LockScreenKind, LockScreenStat } from '../core/ui/lock-screen';
 import { readLockStats, writeLockStats } from '../core/lock-stats';
+import {
+  motionArmBoot, motionArmSwitch, motionArmSearch,
+  motionRendered, motionPanelIn, motionPanelCollapse, motionLockSealing,
+  motionLockScreenIn, motionUnlockBurst, motionRejectShake,
+  motionPreviewIn, motionRevealBody, motionOriginalFlash,
+  motionHealthIn, motionScanStart, motionScanStop, motionReportIn, motionFindRowIn,
+  motionStatusbarSpin, motionTeardown,
+} from './motion';
 
 /**
  * 解锁屏三域口径（结构同源，内容与统计按域注入；ADR-0002：共享壳在 core，语义在数据域）
@@ -680,6 +688,7 @@ export class UIManager {
       const headSearch = this.deskSearch;
       if (headSearch) headSearch.value = '';
       this.mob.search.value = '';
+      motionArmSwitch(); // 动效层：资产切换——新内容分块揭出
       this.renderAll();
     };
     this.desk.nav.querySelectorAll('.bz-vault-item').forEach((el) => {
@@ -776,6 +785,7 @@ export class UIManager {
         this.mob.search.value = v; // 桌面输入 → 同步移动端框
       }
       this.syncSearchClear();
+      motionArmSearch(); // 动效层：搜索刷新——列表行快级联
       this.searchDebounced();
     });
     // ESC 清词：有词 = 只清词不冒泡（escManager 的 document 层收不到，防「清词变成关整个面板」、
@@ -810,6 +820,7 @@ export class UIManager {
     if (deskSearch) deskSearch.value = '';
     this.mob.search.value = '';
     this.syncSearchClear();
+    motionArmSearch(); // 动效层：清词回归全量列表——同搜索级联
     this.renderAll();
   }
 
@@ -836,6 +847,9 @@ export class UIManager {
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
+    // 动效层：遮罩淡入 + 标题揭出；boot 意图置位（首个可见渲染消费即熄，刷新静默）
+    motionArmBoot();
+    motionPanelIn(this.popup!);
     // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源；E7 键盘化起点）
     trapPanelFocus(this.popup!);
     this.notifyUnlockUi();
@@ -848,6 +862,8 @@ export class UIManager {
     // 关闭一并收起，已解密内容不再残留屏上
     this.closePreview();
     this.closeAllDialogs();
+    // 动效层：面板同步收 display 前让 body 替身覆层演退场（同步收语义不变，无 fill 残留）
+    if (this.popup && this.popup.style.display === 'flex') motionPanelCollapse(this.popup);
     if (this.mask) this.mask.style.display = 'none';
     if (this.popup) this.popup.style.display = 'none';
     this.stopSessionTimers();
@@ -946,6 +962,7 @@ export class UIManager {
     topifyZ(this.healthMask!, this.healthPopup!); // ADR-0067：显示即发号
     this.healthMask!.style.display = 'flex';
     this.healthPopup!.style.display = 'flex';
+    motionHealthIn(this.healthPopup!); // 动效层：体检窗升起 + 光缝短扫
     void this.runHealthScan();
   }
 
@@ -1047,6 +1064,7 @@ export class UIManager {
       liveTitle.textContent = '发现的异常';
       live.appendChild(liveTitle);
       body.appendChild(live);
+      motionScanStart(this.healthPopup); // 动效层：巡逻扫描线开（句柄入池，finally 必收）
       try {
         const report = await this.dataManager.scanHealth((p) => {
           progress.textContent = `检查中 ${p.done}/${p.total} · ${truncateName(p.current)}`;
@@ -1062,12 +1080,14 @@ export class UIManager {
                   : '');
             row.textContent = item.label;
             live.appendChild(row);
+            motionFindRowIn(row); // 动效层：异常发现行微揭出
           }
         });
         // 扫描完成：缓存问题数供概览健康卡（E5）+ 全量重渲染（分类规整 + 勾选框 + 底部按钮计数）
         // T15：时间格式统一 zh-CN 24 小时制（此前 toLocaleString 随环境locale/12小时制漂移）
         this.lastHealth = { issues: report.items.length, lastChecked: new Date().toLocaleString('zh-CN', { hour12: false }) };
         this.renderHealthReport(report, body);
+        motionReportIn(body); // 动效层：报告落定——摘要验讫一闪 + 分区接力
         // 概览健康卡即时跟随（若正停在概览视图）
         this.renderNav();
       } catch (e: any) {
@@ -1078,6 +1098,7 @@ export class UIManager {
       }
       // 扫描收场（成功/失败两路）：恢复按钮可用（锁定态分支已在上方提前返回保持禁用）
       this.setHealthButtonsDisabled(false);
+      motionScanStop(this.healthPopup); // 动效层：扫描线必收（句柄池摘除）
     } finally {
       this._scanning = false;
     }
@@ -1311,6 +1332,8 @@ export class UIManager {
     document.body.appendChild(ls.el);
     // 呈报#59/E5：首设风险提醒（triangle-alert）等占位兑现
     mountIcons(ls.el);
+    // 动效层：封条验印入场——印章压落 + 标题/统计/输入行接力（销毁确认共用此语汇）
+    motionLockScreenIn(ls.el);
     // 挂 body 弹层自声明 ESC 层（兜底链）：解锁屏开着时 ESC 只关解锁屏，不穿透主面板
     const esc = escManager.register('bz-vault-unlock', {
       isVisible: () => ls.el.isConnected,
@@ -1350,6 +1373,7 @@ export class UIManager {
         try {
           const ok = await this.dataManager.unlock(pw);
           if (ok) {
+            motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：验讫余韵
             done(true);
             notice('密码已设置，数据已加密', 'success');
           } else {
@@ -1373,6 +1397,7 @@ export class UIManager {
         const success = await this.dataManager.unlock(pw);
         if (success) {
           this.resetUnlockThrottle();
+          motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：验讫余韵
           done(true);
           const healMsg = this.dataManager.selfHealRolledBack > 0 ? '；上次未完成的加密已自动回滚，原文未动' : '';
           notice('解锁成功' + healMsg, 'success');
@@ -1397,6 +1422,7 @@ export class UIManager {
                 void this.dataManager.unlock(pw, true).then((ok) => {
                   if (ok) {
                     this.resetUnlockThrottle();
+                    motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：验讫余韵
                     done(true);
                     notice('已重设主密码（旧数据不可恢复）', 'warning');
                   } else {
@@ -1411,6 +1437,7 @@ export class UIManager {
             ls.setBusy(false);
             // T11 密码错误单通知（效率新-8）：行内报错与冷却提示合并为一条，不再两连发互顶
             const delaySec = this.registerUnlockFailure();
+            motionRejectShake(ls.el); // 动效层：拒盖三摇（固定节拍，不泄露任何输入信息）
             this.rejectInput(`密码错误，${delaySec} 秒后可重试`, setErr, 'error');
             ls.input.value = '';
             ls.focus();
@@ -1467,6 +1494,9 @@ export class UIManager {
     this.renderNav();
     this.renderDesktop();
     this.renderMobile();
+    // 动效层：按意图播编排（boot 全编排 / 资产切换分块 / 搜索级联 / 默认详情轻揭出），
+    // 意图消费即熄——写操作等普通重绘不重播全编（motionRendered 内部判可见性）
+    if (this.popup) motionRendered(this.popup);
   }
 
   /** 列表头搜索框聚焦（openManager 渲染收口后补挂；无列表头/面板未显示时静默） */
@@ -1796,6 +1826,9 @@ export class UIManager {
           if (t !== null && this.asset === 'diary' && this._selNoteId === note.id) {
             this._diaryPlain[note.id] = t;
             this.renderNoteDetail(detail, note, kind);
+            // 动效层：日记正文解密落定——正文预览块显影（异步解密窗口的收束一拍）
+            const pre = detail.querySelector<HTMLElement>('.note.pre');
+            if (pre) motionRevealBody(pre);
           }
         })
         .catch(() => {});
@@ -1939,6 +1972,7 @@ export class UIManager {
     this.mob.seg.querySelectorAll('.sg').forEach((el) =>
       el.classList.toggle('on', el.getAttribute('data-masset') === a)
     );
+    motionArmSwitch(); // 动效层：资产切换——新内容分块揭出
     this.renderAll();
   }
 
@@ -1969,6 +2003,9 @@ export class UIManager {
 
   /** 立即上锁（锁屏接管）。@param silent E11：安静上锁（触发方自带通知，如空闲自动上锁），hide 不再补一条 */
   lockNow(silent = false): void {
+    // 动效层：铁门横档合拢盖住随后的同步重绘——门后换好锁定态，门开即是锁定世界
+    // （安全模式下紧随的 hide 会让面板换 collapse 替身继续沉没：门合上、库沉走）
+    if (this.popup) motionLockSealing(this.popup);
     // T12：统计快照挪消费点——上锁前快照一次（lock() 会清空清单，锁后只能取到零值）
     if (this.dataManager.unlocked) this.captureLockStats();
     this.dataManager.lock();
@@ -2115,11 +2152,15 @@ export class UIManager {
       openItemSheet(actions, opts);
     });
     this.mob.body.appendChild(page);
+    motionRevealBody(page); // 动效层：二级页显影揭出
     // 渲染日记正文预览
     if (kind === 'diary') {
       void this.dataManager.decryptNoteBody(note).then((t) => {
         const pre = body.querySelector('.note.pre');
-        if (pre && t !== null) pre.innerHTML = escapeHtml(t).replace(/\n/g, '<br>');
+        if (pre && t !== null) {
+          pre.innerHTML = escapeHtml(t).replace(/\n/g, '<br>');
+          motionRevealBody(pre as HTMLElement); // 动效层：正文解密落定显影
+        }
       }).catch(() => {});
     }
   }
@@ -2154,6 +2195,7 @@ export class UIManager {
     });
     topifyZ(ls.el); // ADR-0067：一次性弹窗，创建即显示即发号
     document.body.appendChild(ls.el);
+    motionLockScreenIn(ls.el); // 动效层：封条验印入场（销毁确认=重验封印，同解锁屏语汇）
     const esc = escManager.register('bz-vault-destroy-confirm', {
       isVisible: () => !!ls.el.isConnected,
       close: () => done(false),
@@ -2173,9 +2215,12 @@ export class UIManager {
       if (!pw) { this.rejectInput('请输入主密码确认', setErr); return; }
       ls.setBusy(true);
       try {
-        if (await this.dataManager.verifyPassword(pw)) done(true);
-        else {
+        if (await this.dataManager.verifyPassword(pw)) {
+          motionUnlockBurst(ls.el.querySelector<HTMLElement>('[data-ls="seal"]')); // 动效层：验讫余韵
+          done(true);
+        } else {
           ls.setBusy(false);
+          motionRejectShake(ls.el); // 动效层：拒盖三摇
           this.rejectInput('主密码错误，未销毁', setErr, 'error');
           ls.input.value = '';
           ls.focus();
@@ -2385,6 +2430,7 @@ export class UIManager {
     topifyZ(this.previewMask, this.previewPopup); // ADR-0067：复用面板显示即发号
     mask.style.display = 'block';
     popup.style.display = 'flex';
+    motionPreviewIn(popup); // 动效层：升起 + 光缝（骨架先显，内容后到同拍）
     void this.fillPreviewBody(note, body);
   }
 
@@ -2441,6 +2487,7 @@ export class UIManager {
       }
       body.innerHTML = '';
       body.appendChild(bodyEl);
+      motionRevealBody(bodyEl); // 动效层：密文显影——解密内容从雾面浮出（节拍恒定不随长度变）
       // 底部画廊：未被正文引用的附件兜底展示（避免漏看；正文解密失败时全量兜底）
       const residuals = note.attachments.filter((a) => !inlined.has(a.path));
       if (residuals.length) {
@@ -2561,6 +2608,7 @@ export class UIManager {
       }
       slot.dataset.loaded = '1';
       slot.classList.add('bz-encrypt-preview-slot--loaded');
+      motionOriginalFlash(slot); // 动效层：原始层曝光一闪（照片在灯箱下亮起来的那一下）
     } catch (e) {
       // 失败：恢复缩略图，title 提示可重试（不弹通知）
       const img = slot.querySelector<HTMLImageElement>('img.bz-encrypt-preview-media');
@@ -2680,6 +2728,7 @@ export class EncryptAppController {
         this.statusBarEl.innerHTML = statusbarHtml(unlocked);
         // 呈报#59/E5：状态栏锁图标占位兑现（innerHTML 重绘后必须重挂）
         mountIcons(this.statusBarEl);
+        motionStatusbarSpin(this.statusBarEl); // 动效层：锁芯开合小转
       }
       // 解锁/上锁后 UI 同步（密码数据加载/锁屏态）
       this.uiManager.notifyUnlockUi?.();
@@ -2858,6 +2907,7 @@ export class EncryptAppController {
     cancelClipboardClear();
     // 解锁会话计时（时长刷新/无交互自动上锁）
     this.uiManager.stopSessionTimers();
+    motionTeardown(); // 动效层清场：延时编排 + 长驻循环（扫描线）一并无孤儿
     this.uiManager.pwDataManager.destroy();
     this.uiManager.mask = null;
     this.uiManager.popup = null;
