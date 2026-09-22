@@ -3,6 +3,7 @@
  * 域内单例，不挂 window（铁律 6）。
  */
 import type { App } from 'obsidian';
+import { motionThinkingPing } from './motion';
 
 /** 事件总线（原 EventSystem 逐字，on/off/emit） */
 class EventSystem {
@@ -58,7 +59,10 @@ export function ensureThinkingIndicator(container: HTMLElement | null): void {
 export function startThinking(): void {
   if (!thinkingIndicator) ensureThinkingIndicator(null);
   thinkingCount++;
-  if (thinkingIndicator) thinkingIndicator.classList.add('active');
+  if (thinkingIndicator) {
+    thinkingIndicator.classList.add('active');
+    motionThinkingPing(thinkingIndicator); // 外圈 ping 一记（节流 400ms）
+  }
 }
 
 /** 结束一次思考 */

@@ -1401,3 +1401,41 @@
   padding-left: var(--bz-space-sm);
   border-left: 2px solid var(--background-modifier-border);
 }
+/* ==================== 动效层注入件（motion.ts 专用） ====================
+   绝对定位 / 不吃事件 / aria-hidden / 演出完自移除——终态 UI 零增量。
+   基态透明：残渣即便滞留一帧也不可见（jsdom / 无 WAAPI 宿主根本不注入）。 */
+.bz-sc-paw {
+  position: absolute;
+  z-index: 4; /* 猫容器层叠上下文内小档（压过气泡容器 z2 / 思考点 z3） */
+  pointer-events: none;
+  color: var(--interactive-accent, #f39c4f);
+  opacity: 0;
+}
+.bz-sc-paw svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: currentColor;
+}
+.bz-sc-shine {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  left: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.5) 50%, transparent 100%);
+  pointer-events: none;
+  opacity: 0.9;
+}
+.bz-sc-ping {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border: 2px solid #4caf50;
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0;
+}
