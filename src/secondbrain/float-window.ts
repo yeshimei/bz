@@ -12,6 +12,7 @@
 import { escManager } from '../core/esc-manager';
 import { allocZ, topifyZ } from '../core/z-order';
 import { makeDraggable, makeResizable } from './ui-tools';
+import { motionFloatWake } from './motion';
 
 export class FloatWindow {
   el: HTMLElement;
@@ -230,6 +231,7 @@ export class FloatWindow {
     topifyZ(this.el); // ADR-0067：隐藏态恢复 = 重新显示，发号保证可见
     this.el.style.transform = 'translateX(0)';
     this.syncHiddenUI(false);
+    motionFloatWake(this.el); // 动效层：边条唤起右缘退散微光
   }
 
   /** 隐藏态 UI：标题/按钮/内容淡出只留 📖 边条标识（视觉切换收敛 CSS hidden 类） */

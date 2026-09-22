@@ -1,5 +1,5 @@
-/* 源指纹 83f657aa0258fb0c · 仓内输入 255 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 b1c8a4ef1dc0ac85 · 仓内输入 256 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/motion.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_home = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M9, s, ms) {
+        function createDate(y, m, d, h, M10, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M9, s, ms);
+            date = new Date(y + 400, m, d, h, M10, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M9, s, ms);
+            date = new Date(y, m, d, h, M10, s, ms);
           }
           return date;
         }
@@ -6851,7 +6851,7 @@ var BZW_home = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M9 = 10;
+    const M10 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -6878,7 +6878,7 @@ var BZW_home = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M9 || Math.abs(t.clientY - sy) > M9) {
+      if (Math.abs(t.clientX - sx) > M10 || Math.abs(t.clientY - sy) > M10) {
         moved = true;
         cancel();
       }
@@ -19396,7 +19396,7 @@ ${sample}`
     for (let round = 0; round < RESIDUAL_ROUNDS; round++) {
       if (!pushRound(nodes, 0, 0, RESIDUAL_EPS)) return;
     }
-    for (let sweep = 0; sweep < n; sweep++) {
+    for (let sweep2 = 0; sweep2 < n; sweep2++) {
       let moved = false;
       for (let j = 1; j < n; j++) {
         const B = nodes[j];
@@ -20031,15 +20031,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E2 = pick.E;
+      const E3 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E2, nOut, stub);
+      const E1 = along(E3, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E2, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E3, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E3, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -22268,10 +22268,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after2 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after2.data.length);
-    const tail = after2.splitText(len);
-    (_b2 = after2.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after3 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after3.data.length);
+    const tail = after3.splitText(len);
+    (_b2 = after3.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -43907,6 +43907,604 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/secondbrain/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function baseTransformOf(el) {
+    try {
+      const t = getComputedStyle(el).transform;
+      return t && t !== "none" ? t : "";
+    } catch (e) {
+      return "";
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function cancelExit(el, id) {
+    try {
+      if (typeof el.getAnimations !== "function") return;
+      for (const a of el.getAnimations()) if (a.id === id) a.cancel();
+    } catch (e) {
+    }
+  }
+  function playExit(el, id, frames, dur, done) {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    const a = waapi(el, frames, { duration: dur, easing: E.out, fill: "forwards", id });
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after(dur + 160, finish);
+  }
+  function synapseLoop(el) {
+    stopLoop(el);
+    if (reduced() || typeof el.animate !== "function") return;
+    const a = el.animate(
+      [
+        { transform: "scale(1)", filter: "drop-shadow(0 0 0px rgba(163,61,42,0))" },
+        { transform: "scale(1.055)", filter: "drop-shadow(0 0 7px rgba(163,61,42,.45))" },
+        { transform: "scale(1)", filter: "drop-shadow(0 0 0px rgba(163,61,42,0))" }
+      ],
+      { duration: 2400, iterations: Infinity, easing: "ease-in-out" }
+    );
+    loops.set(el, () => {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    });
+  }
+  function stopLoop(el) {
+    const stop = loops.get(el);
+    if (stop) {
+      stop();
+      loops.delete(el);
+    }
+  }
+  function stopAllLoops() {
+    for (const stop of loops.values()) stop();
+    loops.clear();
+  }
+  function motionTeardown() {
+    cancelPending();
+    stopAllLoops();
+  }
+  function ensureRelative(el) {
+    if (!el) return;
+    try {
+      if (getComputedStyle(el).position === "static") el.style.position = "relative";
+    } catch (e) {
+    }
+  }
+  function ripple(host, cx, cy, r0 = 6) {
+    if (!host.isConnected) return;
+    ensureRelative(host);
+    const ring = document.createElement("i");
+    ring.className = "bz-sb-mo-ring";
+    ring.setAttribute("aria-hidden", "true");
+    ring.style.left = `${cx - r0}px`;
+    ring.style.top = `${cy - r0}px`;
+    ring.style.width = `${r0 * 2}px`;
+    ring.style.height = `${r0 * 2}px`;
+    host.appendChild(ring);
+    const a = waapi(
+      ring,
+      [
+        { opacity: 0.85, transform: "scale(.4)" },
+        { opacity: 0, transform: "scale(4.6)" }
+      ],
+      { duration: M8.base + 260, easing: E.out }
+    );
+    const drop = () => {
+      ring.remove();
+      try {
+        a == null ? void 0 : a.cancel();
+      } catch (e) {
+      }
+    };
+    if (a) a.finished.then(drop).catch(drop);
+    else after(M8.base + 280, drop);
+  }
+  function sweep(host) {
+    if (!host.isConnected || reduced()) return;
+    ensureRelative(host);
+    const band = document.createElement("div");
+    band.className = "bz-sb-mo-sweep";
+    band.setAttribute("aria-hidden", "true");
+    const inner = document.createElement("i");
+    band.appendChild(inner);
+    host.insertBefore(band, host.firstChild);
+    const a = waapi(
+      inner,
+      [{ transform: "translateY(-120%)" }, { transform: "translateY(320%)" }],
+      { duration: M8.impulse - 60, easing: E.out }
+    );
+    const drop = () => {
+      band.remove();
+      try {
+        a == null ? void 0 : a.cancel();
+      } catch (e) {
+      }
+    };
+    if (a) a.finished.then(drop).catch(drop);
+    else after(M8.impulse - 40, drop);
+  }
+  function neuronFlash(card) {
+    if (!card.isConnected || reduced()) return;
+    ensureRelative(card);
+    const gl = document.createElement("i");
+    gl.className = "bz-sb-mo-flash";
+    gl.setAttribute("aria-hidden", "true");
+    card.appendChild(gl);
+    const a = waapi(
+      gl,
+      [{ opacity: 0.9, transform: "scale(.92)" }, { opacity: 0, transform: "scale(1.03)" }],
+      { duration: M8.impulse - 180, easing: E.out }
+    );
+    const drop = () => {
+      gl.remove();
+      try {
+        a == null ? void 0 : a.cancel();
+      } catch (e) {
+      }
+    };
+    if (a) a.finished.then(drop).catch(drop);
+    else after(M8.impulse - 160, drop);
+  }
+  function thread(host, x1, x2, y) {
+    if (!host.isConnected || reduced() || x2 <= x1) return;
+    ensureRelative(host);
+    const ln = document.createElement("i");
+    ln.className = "bz-sb-mo-thread";
+    ln.setAttribute("aria-hidden", "true");
+    ln.style.left = `${x1}px`;
+    ln.style.top = `${y}px`;
+    ln.style.width = `${x2 - x1}px`;
+    host.appendChild(ln);
+    const draw = waapi(
+      ln,
+      [{ transform: "scaleX(0)", opacity: 0.9 }, { transform: "scaleX(1)", opacity: 0.75 }],
+      { duration: M8.move, easing: E.out }
+    );
+    const fade = () => {
+      const out = waapi(ln, [{ opacity: 0.75 }, { opacity: 0 }], { duration: M8.base, easing: E.out, fill: "forwards" });
+      const drop = () => {
+        ln.remove();
+        try {
+          out == null ? void 0 : out.cancel();
+        } catch (e) {
+        }
+      };
+      if (out) out.finished.then(drop).catch(drop);
+      else after(M8.base + 20, drop);
+    };
+    if (draw) draw.finished.then(fade).catch(fade);
+    else after(M8.move + 20, fade);
+  }
+  function motionPanelIn(popup, reopen) {
+    if (!popup) return;
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    cancelExit(popup, PANEL_EXIT);
+    const base = baseTransformOf(popup);
+    const withBase = (extra) => base ? `${base} ${extra}` : extra;
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: withBase("scale(.965) translateY(10px)"), filter: "blur(7px)" },
+        { opacity: 1, transform: base || "none", filter: "blur(0px)" }
+      ],
+      { duration: reopen ? 300 : 480, easing: E.out }
+    );
+    panelBootArmed = true;
+  }
+  function motionPanelOut(popup, done) {
+    stopAllLoops();
+    if (!popup) {
+      done();
+      return;
+    }
+    const base = baseTransformOf(popup);
+    const withBase = (extra) => base ? `${base} ${extra}` : extra;
+    playExit(
+      popup,
+      PANEL_EXIT,
+      [
+        { opacity: 1, transform: base || "none", filter: "blur(0px)" },
+        { opacity: 0, transform: withBase("scale(.97) translateY(8px)"), filter: "blur(5px)" }
+      ],
+      M8.move + 40,
+      done
+    );
+  }
+  function motionStatsIn(popup, force = false) {
+    cancelPending();
+    stopAllLoops();
+    if (!popup) return;
+    const content = popup.querySelector("#bz-sb-content");
+    if (!content) return;
+    if (!force) {
+      if (!panelBootArmed) return;
+      panelBootArmed = false;
+    }
+    if (reduced()) return;
+    const pill = popup.querySelector(".bz-sb-pill");
+    if (pill) {
+      ensureRelative(pill);
+      waapi(
+        pill,
+        [
+          { opacity: 0, transform: "translateY(-5px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M8.base, easing: E.out, fill: "backwards" }
+      );
+      const dot = pill.querySelector(".bz-sb-pill-dot");
+      if (dot) after(160, () => {
+        const pr = pill.getBoundingClientRect();
+        const dr = dot.getBoundingClientRect();
+        if (!pill.isConnected) return;
+        ripple(pill, dr.left - pr.left + dr.width / 2, dr.top - pr.top + dr.height / 2, 5);
+      });
+    }
+    const cards = [...content.querySelectorAll("#bz-sb-cards .bz-sb-card")];
+    cards.forEach((card, i) => {
+      after(90 + i * STAG, () => {
+        if (!card.isConnected) return;
+        card.style.willChange = "transform,filter,opacity";
+        waapi(
+          card,
+          [
+            { opacity: 0, transform: "translateY(9px) scale(.97)", filter: "blur(5px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M8.base + 80, easing: E.out, fill: "backwards" }
+        );
+        neuronFlash(card);
+        after(M8.base + 220, () => {
+          card.style.willChange = "";
+        });
+      });
+    });
+    const cols = [...content.querySelectorAll("#bz-sb-trend .bz-sb-trend-col")];
+    cols.forEach((col, i) => {
+      const bar = col.querySelector(".bz-sb-trend-bar");
+      if (!bar) return;
+      bar.style.transformOrigin = "50% 100%";
+      after(320 + i * 24, () => {
+        if (!col.isConnected) return;
+        waapi(
+          bar,
+          [
+            { transform: "scaleY(0)", filter: "brightness(1.6)" },
+            { transform: "scaleY(1)", filter: "brightness(1)" }
+          ],
+          { duration: M8.base + 120, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+    const trendSum = content.querySelector("#bz-sb-trend-sum");
+    if (trendSum) after(560, () => {
+      if (trendSum.isConnected) waapi(trendSum, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+    });
+    const distRows = [...content.querySelectorAll("#bz-sb-dist .bz-sb-dist-row")];
+    distRows.forEach((row, i) => {
+      after(400 + Math.min(i, 16) * 14, () => {
+        if (!row.isConnected) return;
+        waapi(
+          row,
+          [{ opacity: 0, transform: "translateX(-7px)" }, { opacity: 1, transform: "none" }],
+          { duration: M8.base, easing: E.out, fill: "backwards" }
+        );
+        const fill = row.querySelector(".bz-sb-dist-fill");
+        if (fill) {
+          fill.style.transformOrigin = "left center";
+          waapi(
+            fill,
+            [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+            { duration: M8.base + 140, easing: E.out, fill: "backwards" }
+          );
+        }
+      });
+    });
+    const recentRows = [...content.querySelectorAll("#bz-sb-recent .bz-sb-recent-row")];
+    recentRows.forEach((row, i) => {
+      after(520 + Math.min(i, 10) * STAG, () => {
+        if (!row.isConnected) return;
+        row.style.willChange = "transform,filter,opacity";
+        waapi(
+          row,
+          [
+            { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M8.base + 80, easing: E.out, fill: "backwards" }
+        );
+        after(140, () => {
+          if (!row.isConnected) return;
+          const dot = row.querySelector(".bz-sb-dot");
+          if (!dot) return;
+          const rr = row.getBoundingClientRect();
+          const dr = dot.getBoundingClientRect();
+          ripple(row, dr.left - rr.left + dr.width / 2, dr.top - rr.top + dr.height / 2, 4.5);
+        });
+        after(M8.base + 260, () => {
+          row.style.willChange = "";
+        });
+      });
+    });
+    const foot = content.querySelector(".bz-sb-foot");
+    if (foot) after(700, () => {
+      if (!foot.isConnected) return;
+      [...foot.children].forEach((el, i) => {
+        waapi(
+          el,
+          [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+          { duration: M8.base, easing: E.out, fill: "backwards", delay: i * 40 }
+        );
+      });
+    });
+  }
+  function motionDistIn(dist) {
+    if (reduced() || !dist) return;
+    [...dist.querySelectorAll(".bz-sb-dist-row")].forEach((row, i) => {
+      after(Math.min(i, 14) * 14, () => {
+        if (!row.isConnected) return;
+        waapi(
+          row,
+          [{ opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }],
+          { duration: M8.fast + 40, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+  }
+  function motionGuideIn(onboard) {
+    if (reduced() || !onboard) return;
+    stopAllLoops();
+    const icon = onboard.querySelector(".bz-sb-onboard-icon");
+    if (icon) synapseLoop(icon);
+    const seq = [".bz-sb-onboard-title", ".bz-sb-onboard-desc", ".bz-sb-init-btn"];
+    seq.forEach((sel, i) => {
+      const el = onboard.querySelector(sel);
+      if (!el) return;
+      after(80 + i * 90, () => {
+        if (!el.isConnected) return;
+        waapi(
+          el,
+          [
+            { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M8.base + 60, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+  }
+  function motionProgressIn(onboard) {
+    if (reduced() || !onboard) return;
+    stopAllLoops();
+    const icon = onboard.querySelector(".bz-sb-onboard-icon");
+    if (icon) synapseLoop(icon);
+    const title = onboard.querySelector(".bz-sb-onboard-title");
+    if (title) waapi(
+      title,
+      [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+      { duration: M8.base, easing: E.out, fill: "backwards" }
+    );
+    const bar = onboard.querySelector(".bz-sb-init-bar");
+    if (bar) {
+      ensureRelative(bar);
+      sweep(bar);
+    }
+  }
+  function motionPhaseToContent() {
+    stopAllLoops();
+  }
+  function motionSummaryIn(card) {
+    if (reduced() || !card) return;
+    waapi(
+      card,
+      [
+        { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M8.base + 60, easing: E.out }
+    );
+  }
+  function motionWeeklyShellIn(overlay2) {
+    if (!overlay2) return;
+    overlay2.style.opacity = "";
+    overlay2.style.transform = "";
+    overlay2.style.filter = "";
+    cancelExit(overlay2, WEEKLY_EXIT);
+    const base = baseTransformOf(overlay2);
+    const withBase = (extra) => base ? `${base} ${extra}` : extra;
+    waapi(
+      overlay2,
+      [
+        { opacity: 0, transform: withBase("scale(.965) translateY(10px)"), filter: "blur(6px)" },
+        { opacity: 1, transform: base || "none", filter: "blur(0px)" }
+      ],
+      { duration: 380, easing: E.out }
+    );
+  }
+  function motionWeeklyContent(body) {
+    if (reduced() || !body) return;
+    const sections = [...body.querySelectorAll(".bz-sb-weekly-section")];
+    if (!sections.length) {
+      const empty = body.querySelector(".bz-sb-weekly-empty");
+      if (empty) waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+      return;
+    }
+    sections.forEach((sec, i) => {
+      after(i * 70, () => {
+        if (!sec.isConnected) return;
+        waapi(
+          sec,
+          [
+            { opacity: 0, transform: "translateY(9px)", filter: "blur(4px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M8.base + 60, easing: E.out, fill: "backwards" }
+        );
+      });
+      sec.querySelectorAll(".bz-sb-weekly-chip").forEach((chip2, j) => {
+        after(i * 70 + 120 + j * STAG, () => {
+          if (!chip2.isConnected) return;
+          waapi(
+            chip2,
+            [{ opacity: 0, transform: "scale(.8)" }, { opacity: 1, transform: "none" }],
+            { duration: M8.move + 60, easing: E.spring, fill: "backwards" }
+          );
+        });
+      });
+      sec.querySelectorAll(".bz-sb-weekly-row").forEach((row, j) => {
+        after(i * 70 + 160 + Math.min(j, 14) * STAG, () => {
+          if (!row.isConnected) return;
+          row.style.willChange = "transform,opacity,filter";
+          waapi(
+            row,
+            [
+              { opacity: 0, transform: "translateY(7px)", filter: "blur(3px)" },
+              { opacity: 1, transform: "none", filter: "blur(0px)" }
+            ],
+            { duration: M8.base, easing: E.out, fill: "backwards" }
+          );
+          const dot = row.querySelector(".bz-sb-weekly-row-dot");
+          if (dot) after(120, () => {
+            if (!row.isConnected || !dot) return;
+            const rr = row.getBoundingClientRect();
+            const dr = dot.getBoundingClientRect();
+            ripple(row, dr.left - rr.left + dr.width / 2, dr.top - rr.top + dr.height / 2, 4);
+          });
+          after(M8.base + 200, () => {
+            row.style.willChange = "";
+          });
+        });
+      });
+      sec.querySelectorAll(".bz-sb-weekly-row--hit").forEach((row, j) => {
+        after(i * 70 + 260 + Math.min(j, 8) * STAG + 200, () => {
+          if (!row.isConnected) return;
+          const names = [...row.querySelectorAll(".bz-sb-weekly-row-name")];
+          const rr = row.getBoundingClientRect();
+          if (names.length >= 2) {
+            const a = names[0].getBoundingClientRect();
+            const b = names[names.length - 1].getBoundingClientRect();
+            thread(row, a.right - rr.left + 2, b.left - rr.left - 2, rr.height / 2);
+          }
+          const arrow = row.querySelector(".bz-sb-weekly-row-hit-arrow");
+          if (arrow) waapi(
+            arrow,
+            [{ transform: "translateX(-4px)", opacity: 0.4 }, { transform: "none", opacity: 1 }],
+            { duration: M8.move, easing: E.out, fill: "backwards" }
+          );
+          const pct = row.querySelector(".bz-sb-weekly-row-pct");
+          if (pct) waapi(
+            pct,
+            [{ opacity: 0, transform: "scale(1.35)" }, { opacity: 1, transform: "none" }],
+            { duration: M8.move + 60, easing: E.spring, fill: "backwards" }
+          );
+        });
+      });
+    });
+  }
+  function motionWeeklyOut(overlay2, done) {
+    if (!overlay2) {
+      done();
+      return;
+    }
+    const base = baseTransformOf(overlay2);
+    const withBase = (extra) => base ? `${base} ${extra}` : extra;
+    playExit(
+      overlay2,
+      WEEKLY_EXIT,
+      [
+        { opacity: 1, transform: base || "none", filter: "blur(0px)" },
+        { opacity: 0, transform: withBase("scale(.97) translateY(8px)"), filter: "blur(5px)" }
+      ],
+      M8.move + 30,
+      done
+    );
+  }
+  var M8, E, STAG, timers, loops, PANEL_EXIT, panelBootArmed, WEEKLY_EXIT;
+  var init_motion = __esm({
+    "src/secondbrain/motion.ts"() {
+      M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)",
+        spring: "cubic-bezier(.34,1.56,.64,1)"
+      };
+      STAG = 30;
+      timers = /* @__PURE__ */ new Set();
+      loops = /* @__PURE__ */ new Map();
+      PANEL_EXIT = "bz-sb-panel-exit";
+      panelBootArmed = false;
+      WEEKLY_EXIT = "bz-sb-weekly-exit";
+      if (typeof window !== "undefined") {
+        window.addEventListener("hashchange", () => {
+          if (location.hash !== "#replay") return;
+          location.hash = "";
+          const replay = window.__bzSbReplay;
+          if (typeof replay === "function") setTimeout(replay, 600);
+        });
+        if (location.hash === "#replay") {
+          const wait = () => {
+            const replay = window.__bzSbReplay;
+            if (typeof replay === "function") {
+              location.hash = "";
+              setTimeout(replay, 600);
+            } else setTimeout(wait, 120);
+          };
+          setTimeout(wait, 120);
+        }
+      }
+    }
+  });
+
   // src/secondbrain/weekly-ui.ts
   function ensureModal(app) {
     var _a2;
@@ -43952,6 +44550,8 @@ GitHub 仓库：${ghInfo.title}
     topifyZ(maskEl3, overlayEl3);
     if (maskEl3) maskEl3.style.display = "block";
     overlayEl3.style.display = "flex";
+    motionSeq++;
+    motionWeeklyShellIn(overlayEl3);
   }
   function openWeeklyDigest(app) {
     void (async () => {
@@ -43969,8 +44569,12 @@ GitHub 仓库：${ghInfo.title}
   }
   function closeWeeklyDigest() {
     renderSeq3++;
-    if (overlayEl3) overlayEl3.style.display = "none";
-    if (maskEl3) maskEl3.style.display = "none";
+    const seq = motionSeq;
+    motionWeeklyOut(overlayEl3, () => {
+      if (seq !== motionSeq) return;
+      if (overlayEl3) overlayEl3.style.display = "none";
+      if (maskEl3) maskEl3.style.display = "none";
+    });
   }
   function showWeeklyModal(digest, opts) {
     if (!overlayEl3) return;
@@ -43982,6 +44586,7 @@ GitHub 仓库：${ghInfo.title}
       if (rangeHead) rangeHead.textContent = "";
       body.innerHTML = (opts == null ? void 0 : opts.loading) ? weeklyLoadingHtml() : (opts == null ? void 0 : opts.loadFailed) ? '<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">读取动态数据失败，请稍后重开。</div>' : weeklyEmptyHtml();
       mountIcons(body);
+      motionWeeklyContent(body);
       return;
     }
     if (seq !== renderSeq3) return;
@@ -44030,6 +44635,7 @@ GitHub 仓库：${ghInfo.title}
       );
     }
     mountIcons(body);
+    motionWeeklyContent(body);
   }
   function renderPanelWeeklyCard(popup, app, digest) {
     const card = popup.querySelector("#bz-sb-weekly-card");
@@ -44047,6 +44653,7 @@ GitHub 仓库：${ghInfo.title}
       txt.textContent = parts.join(" · ");
     }
     card.style.display = "";
+    motionSummaryIn(card);
     if (!card.dataset.bound) {
       card.dataset.bound = "1";
       const open = () => openWeeklyDigest(app);
@@ -44059,7 +44666,7 @@ GitHub 仓库：${ghInfo.title}
       });
     }
   }
-  var overlayEl3, maskEl3, escHandle5, appRef2, renderSeq3, WEEKLY_UI_LIST_CAP;
+  var overlayEl3, maskEl3, escHandle5, appRef2, renderSeq3, motionSeq, WEEKLY_UI_LIST_CAP;
   var init_weekly_ui = __esm({
     "src/secondbrain/weekly-ui.ts"() {
       init_dom();
@@ -44071,11 +44678,13 @@ GitHub 仓库：${ghInfo.title}
       init_weekly();
       init_render13();
       init_ai4();
+      init_motion();
       overlayEl3 = null;
       maskEl3 = null;
       escHandle5 = null;
       appRef2 = null;
       renderSeq3 = 0;
+      motionSeq = 0;
       WEEKLY_UI_LIST_CAP = 30;
     }
   });
@@ -44265,6 +44874,7 @@ GitHub 仓库：${ghInfo.title}
       init_store_file();
       init_weekly_ui();
       init_render13();
+      init_motion();
       init_render13();
       SecondBrainPanel = class {
         constructor(app, store2, opts) {
@@ -44279,6 +44889,10 @@ GitHub 仓库：${ghInfo.title}
           this.expandedDirs = /* @__PURE__ */ new Set();
           /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
           this.rebuildRequested = false;
+          /** 动效层：是否曾开过（重开走快档唤醒） */
+          this.motionOpened = false;
+          /** 动效层：开/关代次——退场期间被重开时，迟到的退场收口不得把新显示位收回 none（首页同款教训） */
+          this.motionSeq = 0;
           this.app = app;
           this.store = store2;
           this.opts = opts;
@@ -44293,12 +44907,23 @@ GitHub 仓库：${ghInfo.title}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          this.motionSeq++;
+          motionPanelIn(this.popup, this.motionOpened);
+          this.motionOpened = true;
+          window.__bzSbReplay = () => {
+            motionPanelIn(this.popup, true);
+            motionStatsIn(this.popup, true);
+          };
           await this.render();
         }
         close() {
           this.removeEscapeListener();
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
+          const seq = this.motionSeq;
+          motionPanelOut(this.popup, () => {
+            if (seq !== this.motionSeq) return;
+            if (this.mask) this.mask.style.display = "none";
+            if (this.popup) this.popup.style.display = "none";
+          });
         }
         /** [l2-sb] ESC 关闭走 escManager 层级（ticket 141 迁移）：open 注册、close 注销成对（幂等）——
          *  ⚙️ 设置弹窗叠开时其 'bz-settings-modal' 层后注册在上，ESC 先关设置、再 ESC 才关面板 */
@@ -44317,6 +44942,7 @@ GitHub 仓库：${ghInfo.title}
         destroy() {
           var _a2, _b2;
           this.removeEscapeListener();
+          motionTeardown();
           (_a2 = this.mask) == null ? void 0 : _a2.remove();
           (_b2 = this.popup) == null ? void 0 : _b2.remove();
           this.mask = null;
@@ -44354,6 +44980,7 @@ GitHub 仓库：${ghInfo.title}
         }
         showContent(skipRefresh = false) {
           var _a2, _b2;
+          motionPhaseToContent();
           const onboard = document.getElementById("bz-sb-onboard");
           const content = document.getElementById("bz-sb-content");
           if (onboard) onboard.style.display = "none";
@@ -44381,6 +45008,7 @@ GitHub 仓库：${ghInfo.title}
           if (onboard) onboard.style.display = "flex";
           if (content) content.style.display = "none";
           for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
+          motionGuideIn(onboard);
         }
         /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
         enterProgressView(titleText, resetStatus = true) {
@@ -44402,6 +45030,7 @@ GitHub 仓库：${ghInfo.title}
           if (onboard) onboard.style.display = "flex";
           if (content) content.style.display = "none";
           for (const b of (_b2 = (_a2 = this.popup) == null ? void 0 : _a2.querySelectorAll(".bz-sb-panel-func")) != null ? _b2 : []) b.classList.add("bz-sb-btn-hidden");
+          motionProgressIn(onboard);
         }
         /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
         progressObserver() {
@@ -44480,6 +45109,7 @@ GitHub 仓库：${ghInfo.title}
             if (this.expandedDirs.size) {
               this.expandedDirs.clear();
               this.renderDist();
+              motionDistIn(popup.querySelector("#bz-sb-dist"));
             } else {
               this.close();
             }
@@ -44512,6 +45142,7 @@ GitHub 仓库：${ghInfo.title}
             if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
             else this.expandedDirs.add(path);
             this.renderDist();
+            motionDistIn(popup.querySelector("#bz-sb-dist"));
           });
           document.body.appendChild(mask);
           document.body.appendChild(popup);
@@ -44671,6 +45302,7 @@ GitHub 仓库：${ghInfo.title}
           }
           mountIcons(popup);
           void this.loadSummaryAndLinks();
+          motionStatsIn(popup);
         }
         /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
         renderDist() {
@@ -44700,6 +45332,7 @@ GitHub 仓库：${ghInfo.title}
             if (aiCard) aiCard.style.display = summary ? "" : "none";
             if (aiTxt && summary) {
               aiTxt.innerHTML = panelSummaryHtml(summary, ((_b2 = store2.panel) == null ? void 0 : _b2.generatedAt) ? formatRelativeTime(store2.panel.generatedAt) : "");
+              motionSummaryIn(aiCard);
             }
             const linkedTotal = Object.keys(((_c = store2.link) == null ? void 0 : _c.state) || {}).length;
             const log = popup.querySelector("#bz-sb-log");
@@ -49431,9 +50064,9 @@ GitHub 仓库：${ghInfo.title}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after2 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after2 !== before) {
-        rec.secondBrainAllowPaths = after2;
+      const after3 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after3 !== before) {
+        rec.secondBrainAllowPaths = after3;
         migrated = true;
       }
     }
@@ -55140,13 +55773,13 @@ ${piece}` : piece;
   init_order();
 
   // src/home/motion.ts
-  var M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
-  var E = {
+  var M9 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E2 = {
     out: "cubic-bezier(.22,.82,.3,1)",
     move: "cubic-bezier(.34,.06,.16,1)"
   };
-  var STAG = 30;
-  function reduced() {
+  var STAG2 = 30;
+  function reduced2() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -55160,8 +55793,8 @@ ${piece}` : piece;
       return false;
     }
   }
-  function waapi(el, frames, opts) {
-    if (!el || reduced() || typeof el.animate !== "function") {
+  function waapi2(el, frames, opts) {
+    if (!el || reduced2() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -55188,20 +55821,20 @@ ${piece}` : piece;
     requestAnimationFrame(tick);
   }
   var easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
-  var timers = /* @__PURE__ */ new Set();
-  function after(ms, fn) {
+  var timers2 = /* @__PURE__ */ new Set();
+  function after2(ms, fn) {
     const id = setTimeout(() => {
-      timers.delete(id);
+      timers2.delete(id);
       fn();
     }, ms);
-    timers.add(id);
+    timers2.add(id);
   }
-  function cancelPending() {
-    timers.forEach(clearTimeout);
-    timers.clear();
+  function cancelPending2() {
+    timers2.forEach(clearTimeout);
+    timers2.clear();
   }
   var EXIT_ANIM_ID = "bz-home-panel-exit";
-  function motionPanelIn(overlay2, reopen) {
+  function motionPanelIn2(overlay2, reopen) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2) return;
     panel2.style.opacity = "";
@@ -55212,17 +55845,17 @@ ${piece}` : piece;
         if (a.id === EXIT_ANIM_ID) a.cancel();
       }
     }
-    waapi(
+    waapi2(
       panel2,
       [
         { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: reopen ? 300 : 480, easing: E.out }
+      { duration: reopen ? 300 : 480, easing: E2.out }
     );
     bindParallax(overlay2);
   }
-  function motionPanelOut(overlay2, done) {
+  function motionPanelOut2(overlay2, done) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     stopParallax(overlay2);
     if (!panel2) {
@@ -55239,23 +55872,23 @@ ${piece}` : piece;
       }
       done();
     };
-    const a = waapi(
+    const a = waapi2(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
       ],
-      { duration: M8.move + 40, easing: E.out, fill: "forwards", id: EXIT_ANIM_ID }
+      { duration: M9.move + 40, easing: E2.out, fill: "forwards", id: EXIT_ANIM_ID }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    after(M8.move + 200, finish);
+    after2(M9.move + 200, finish);
   }
   function motionRendered(overlay2, boot) {
-    cancelPending();
+    cancelPending2();
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2) return;
     const narrow = panel2.clientWidth > 0 && panel2.clientWidth <= 768;
@@ -55270,18 +55903,18 @@ ${piece}` : piece;
       }
       return;
     }
-    if (reduced()) return;
+    if (reduced2()) return;
     if (week) {
       [...week.querySelectorAll(".bz-home-wk")].forEach((el, i) => {
-        after(140 + i * 40, () => {
+        after2(140 + i * 40, () => {
           const to = el.classList.contains("bz-home-wk--sel") ? "translateY(-4px)" : "none";
-          waapi(
+          waapi2(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: to, filter: "blur(0px)" }
             ],
-            { duration: M8.base, easing: E.out, fill: "backwards" }
+            { duration: M9.base, easing: E2.out, fill: "backwards" }
           );
         });
       });
@@ -55290,14 +55923,14 @@ ${piece}` : piece;
       const rows = [...entries.querySelectorAll(".bz-home-erow")];
       rows.forEach((el, i) => {
         if (i >= 14) return;
-        after(260 + i * STAG, () => {
-          waapi(
+        after2(260 + i * STAG2, () => {
+          waapi2(
             el,
             [
               { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
               { opacity: 1, transform: "none", filter: "blur(0px)" }
             ],
-            { duration: M8.base, easing: E.out, fill: "backwards" }
+            { duration: M9.base, easing: E2.out, fill: "backwards" }
           );
         });
       });
@@ -55305,28 +55938,28 @@ ${piece}` : piece;
     if (flow) {
       const tl = flow.querySelector(".bz-home-timeline");
       if (tl) {
-        after(300, () => ensureRiver(tl, true));
+        after2(300, () => ensureRiver(tl, true));
         revealEvents(tl, { base: 460, stagger: 100, cap: 12 });
       }
       const empty = flow.querySelector(".bz-home-flow-empty");
-      if (empty) waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+      if (empty) waapi2(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.base, easing: E2.out, fill: "backwards" });
     }
     if (next) {
       const head = next.querySelector(".bz-home-sec-t");
-      if (head) waapi(
+      if (head) waapi2(
         head,
         [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-        { duration: M8.base, easing: E.out, fill: "backwards" }
+        { duration: M9.base, easing: E2.out, fill: "backwards" }
       );
       next.querySelectorAll(".bz-home-pr").forEach((el, i) => {
-        after(640 + i * 90, () => {
-          waapi(
+        after2(640 + i * 90, () => {
+          waapi2(
             el,
             [
               { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(7px)" },
               { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
             ],
-            { duration: M8.base + 120, easing: E.out, fill: "backwards" }
+            { duration: M9.base + 120, easing: E2.out, fill: "backwards" }
           );
         });
         if (!narrow && canHover()) bindTilt(el);
@@ -55335,23 +55968,23 @@ ${piece}` : piece;
   }
   function motionDaySwitch(flow, rewrite) {
     const tl = flow.querySelector(".bz-home-timeline");
-    if (reduced() || !tl) {
+    if (reduced2() || !tl) {
       rewrite();
       return;
     }
-    const out = waapi(
+    const out = waapi2(
       tl,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" }
       ],
-      { duration: M8.fast + 20, easing: E.out, fill: "forwards" }
+      { duration: M9.fast + 20, easing: E2.out, fill: "forwards" }
     );
     if (!out) {
       rewrite();
       return;
     }
-    after(M8.fast + 30, () => {
+    after2(M9.fast + 30, () => {
       rewrite();
       const nt = flow.querySelector(".bz-home-timeline");
       if (nt) {
@@ -55359,7 +55992,7 @@ ${piece}` : piece;
         revealEvents(nt, { base: 40, stagger: 70, cap: 12 });
       } else {
         const empty = flow.querySelector(".bz-home-flow-empty");
-        if (empty) waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+        if (empty) waapi2(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M9.base, easing: E2.out, fill: "backwards" });
       }
     });
   }
@@ -55386,18 +56019,18 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const delay = opts.base + Math.min(i, opts.cap) * opts.stagger;
       li.style.willChange = "transform,filter,opacity";
-      after(delay, () => {
-        waapi(
+      after2(delay, () => {
+        waapi2(
           li,
           [
             { opacity: 0, transform: "translateY(10px)", filter: "blur(5px)" },
             { opacity: 1, transform: "none", filter: "blur(0px)" }
           ],
-          { duration: M8.base + 140, easing: E.out, fill: "backwards" }
+          { duration: M9.base + 140, easing: E2.out, fill: "backwards" }
         );
         li.classList.add("bz-hm-ign");
-        after(620, () => li.classList.remove("bz-hm-ign"));
-        after(120, () => {
+        after2(620, () => li.classList.remove("bz-hm-ign"));
+        after2(120, () => {
           const a = beforeAnchor(li);
           const r = li.getBoundingClientRect(), tr = tl.getBoundingClientRect();
           burst(tl, r.left - tr.left + a.left + 4, r.top - tr.top + a.top + 4, sparkColor(tl, li));
@@ -55407,11 +56040,11 @@ ${piece}` : piece;
     lis.forEach((li, i) => {
       const note = li.querySelector(".bz-home-ev-note");
       if (!note) return;
-      after(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
-        waapi(
+      after2(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
+        waapi2(
           note,
           [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-          { duration: M8.base, easing: E.out, fill: "backwards" }
+          { duration: M9.base, easing: E2.out, fill: "backwards" }
         );
       });
     });
@@ -55468,13 +56101,13 @@ ${piece}` : piece;
     tween(850, (v) => {
       reveal.style.strokeDashoffset = String(len * (1 - v));
     }, easeOutQuart);
-    after(870, () => base.classList.add("bz-hm-flowing"));
+    after2(870, () => base.classList.add("bz-hm-flowing"));
   }
   var sparkPools = /* @__PURE__ */ new Map();
   var fxRaf = 0;
   function burst(tl, x, y, color) {
     var _a2;
-    if (reduced()) return;
+    if (reduced2()) return;
     let fx = tl.querySelector(":scope > .bz-hm-fx");
     if (!fx) {
       fx = document.createElement("canvas");
@@ -55538,7 +56171,7 @@ ${piece}` : piece;
   function bindParallax(overlay2) {
     const panel2 = overlay2.querySelector(".bz-home-panel");
     if (!panel2 || parallax.has(overlay2)) return;
-    if (reduced() || !canHover() || panel2.clientWidth <= 768) return;
+    if (reduced2() || !canHover() || panel2.clientWidth <= 768) return;
     const layers = [
       { el: panel2.querySelector(".bz-home-head"), d: 2 },
       { el: panel2.querySelector("[data-home-entries]"), d: 3.5 },
@@ -55792,9 +56425,9 @@ ${piece}` : piece;
     mountIcons(overlay2);
     bindEvents2(overlay2, app);
     renderAll5();
-    motionPanelIn(overlay2, false);
+    motionPanelIn2(overlay2, false);
     window.__bzHomeReplay = () => {
-      motionPanelIn(overlay2, false);
+      motionPanelIn2(overlay2, false);
       motionRendered(overlay2, true);
     };
     trapPanelFocus(overlay2);
@@ -55839,7 +56472,7 @@ ${piece}` : piece;
     const overlay2 = H.currentOverlay;
     saveScroll(overlay2);
     H.overlayVisible = false;
-    motionPanelOut(overlay2, () => {
+    motionPanelOut2(overlay2, () => {
       if (!H.overlayVisible && H.currentOverlay === overlay2) overlay2.style.display = "none";
     });
   }
@@ -55850,7 +56483,7 @@ ${piece}` : piece;
     topifyZ(overlay2);
     H.overlayVisible = true;
     restoreScroll(overlay2);
-    motionPanelIn(overlay2, true);
+    motionPanelIn2(overlay2, true);
     void refreshRiverAndRender();
   }
   function bindEvents2(overlay2, app) {

@@ -45,6 +45,17 @@ import {
   buildSourceTree,
   fmtCompact,
 } from './render';
+import {
+  motionPanelIn,
+  motionPanelOut,
+  motionStatsIn,
+  motionDistIn,
+  motionGuideIn,
+  motionProgressIn,
+  motionPhaseToContent,
+  motionSummaryIn,
+  motionTeardown,
+} from './motion';
 
 export { computeStats, buildSourceTree, fmtCompact } from './render';
 export type { SecondBrainStats, SourceDistItem, RecentNote, SourceTreeNode } from './render';
@@ -93,6 +104,10 @@ export class SecondBrainPanel {
   private expandedDirs = new Set<string>();
   /** 设置页「重新索引」意图标记（ticket 108：确认后打开面板即自动全量重建） */
   private rebuildRequested = false;
+  /** 动效层：是否曾开过（重开走快档唤醒） */
+  private motionOpened = false;
+  /** 动效层：开/关代次——退场期间被重开时，迟到的退场收口不得把新显示位收回 none（首页同款教训） */
+  private motionSeq = 0;
 
   constructor(app: App, store: VectorStore, opts: PanelOptions) {
     this.app = app;
@@ -112,14 +127,29 @@ export class SecondBrainPanel {
     topifyZ(this.mask!, this.popup!); // ADR-0067：显示即发号，谁后显示谁在上
     this.mask!.style.display = 'block';
     this.popup!.style.display = 'flex';
+    this.motionSeq++; // 新代次：在途退场收口作废
+    // 动效层：面板壳唤醒（boot 消费标志置位；统计编排由 renderStats 末的 motionStatsIn 接力）
+    motionPanelIn(this.popup!, this.motionOpened);
+    this.motionOpened = true;
+    // 评审便利：#replay 重播编排（motion.ts hashchange 钩子消费；插件内无害）
+    (window as unknown as Record<string, unknown>).__bzSbReplay = () => {
+      motionPanelIn(this.popup, true);
+      motionStatsIn(this.popup, true);
+    };
     // 先等初始 load 完成再定形态（防启动竞态把已有索引误判为空库）
     await this.render();
   }
 
   close(): void {
     this.removeEscapeListener(); // [l2-sb] 面板关闭即注销 ESC 层级（与 open 成对）
-    if (this.mask) this.mask.style.display = 'none';
-    if (this.popup) this.popup.style.display = 'none';
+    // 动效层：先演退场再收 display（常驻节点退场钉死由 motionPanelOut 收口时 cancel——
+    // 无 WAAPI 宿主同步收口，display:none 绝不晚到）；退场期间被重开由 motionSeq 守卫
+    const seq = this.motionSeq;
+    motionPanelOut(this.popup, () => {
+      if (seq !== this.motionSeq) return; // 退场途中已重开：不抢显示位
+      if (this.mask) this.mask.style.display = 'none';
+      if (this.popup) this.popup.style.display = 'none';
+    });
   }
 
   /** [l2-sb] ESC 关闭走 escManager 层级（ticket 141 迁移）：open 注册、close 注销成对（幂等）——
@@ -139,6 +169,7 @@ export class SecondBrainPanel {
 
   destroy(): void {
     this.removeEscapeListener();
+    motionTeardown(); // 动效层：循环/延时总清场（防永动孤儿）
     this.mask?.remove();
     this.popup?.remove();
     this.mask = null;
@@ -181,6 +212,7 @@ export class SecondBrainPanel {
   }
 
   private showContent(skipRefresh = false): void {
+    motionPhaseToContent(); // 动效层：引导/进度相位切回内容，收突触呼吸循环
     const onboard = document.getElementById('bz-sb-onboard');
     const content = document.getElementById('bz-sb-content');
     if (onboard) onboard.style.display = 'none';
@@ -208,6 +240,7 @@ export class SecondBrainPanel {
     if (onboard) onboard.style.display = 'flex';
     if (content) content.style.display = 'none';
     for (const b of this.popup?.querySelectorAll('.bz-sb-panel-func') ?? []) b.classList.add('bz-sb-btn-hidden');
+    motionGuideIn(onboard); // 动效层：星核呼吸 + 文案接力浮现
   }
 
   /** 进入纯进度形态（自动运行，无按钮；title 由调用方给定） */
@@ -229,6 +262,7 @@ export class SecondBrainPanel {
     if (onboard) onboard.style.display = 'flex';
     if (content) content.style.display = 'none';
     for (const b of this.popup?.querySelectorAll('.bz-sb-panel-func') ?? []) b.classList.add('bz-sb-btn-hidden');
+    motionProgressIn(onboard); // 动效层：脑核突触呼吸 + 进度槽微光
   }
 
   /** 进度回调解析：把 store.updateProgress 文案换算成进度条（面板销毁后不再写 DOM） */
@@ -317,6 +351,7 @@ export class SecondBrainPanel {
       if (this.expandedDirs.size) {
         this.expandedDirs.clear();
         this.renderDist();
+        motionDistIn(popup.querySelector<HTMLElement>('#bz-sb-dist')); // 动效层：复位重绘微编排
       } else {
         this.close();
       }
@@ -357,6 +392,7 @@ export class SecondBrainPanel {
       if (this.expandedDirs.has(path)) this.expandedDirs.delete(path);
       else this.expandedDirs.add(path);
       this.renderDist();
+      motionDistIn(popup.querySelector<HTMLElement>('#bz-sb-dist')); // 动效层：枝突伸展微编排
     });
 
     document.body.appendChild(mask);
@@ -542,6 +578,7 @@ export class SecondBrainPanel {
 
     mountIcons(popup);
     void this.loadSummaryAndLinks();
+    motionStatsIn(popup); // 动效层：记忆星图编排（boot 首渲才演，刷新静默）
   }
 
   /** 来源树渲染（renderStats 与展开点击共用；展开集会话内记忆） */
@@ -572,6 +609,7 @@ export class SecondBrainPanel {
       if (aiCard) aiCard.style.display = summary ? '' : 'none';
       if (aiTxt && summary) {
         aiTxt.innerHTML = panelSummaryHtml(summary, store.panel?.generatedAt ? formatRelativeTime(store.panel.generatedAt) : '');
+        motionSummaryIn(aiCard); // 动效层：摘要卡异步回填浮现
       }
       const linkedTotal = Object.keys(store.link?.state || {}).length;
       const log = popup.querySelector('#bz-sb-log');

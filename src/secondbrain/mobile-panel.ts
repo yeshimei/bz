@@ -24,6 +24,7 @@ import { getCurrentContext } from './context';
 import { jumpToChunk, renderMarkdown } from './ui-tools';
 import { AI } from './ai';
 import { CHAT_CHIPS } from './render';
+import { motionMobileCards, motionMsgIn, motionTeardown } from './motion';
 import { appendChatHistory, loadChatHistory, type ChatHistoryEntry } from './store-file';
 import type { SearchHit, VectorStore } from './vector-store';
 
@@ -373,6 +374,7 @@ export class MobilePanel {
         holdTimer = null;
       });
     }
+    motionMobileCards(this.body); // 动效层：向量召回接力 + 分数条充能
   }
 
   /** AI tab：桌面同构重排（issue 251 移动对齐）——标签气泡 + 推荐问法 + 带聚焦态输入行 */
@@ -485,6 +487,7 @@ export class MobilePanel {
     div.appendChild(bubble);
     this.chatMessagesDiv.appendChild(div);
     mountIcons(div);
+    motionMsgIn(div); // 动效层：气泡入列（user 弹性落座 / assistant 浮起）
     this.chatMessagesDiv.scrollTop = this.chatMessagesDiv.scrollHeight;
   }
 
@@ -508,6 +511,7 @@ export class MobilePanel {
     this.debounceTimer = null;
     this.sheet.classList.remove('bz-sb-mb-open');
     this.mini.classList.remove('bz-sb-mb-visible');
+    motionTeardown(); // 动效层：循环/延时总清场
     setTimeout(() => {
       this.sheet.remove();
       this.mini.remove();

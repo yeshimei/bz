@@ -22,6 +22,12 @@ import { buildConfig } from './config';
 import { getCurrentContext } from './context';
 import { jumpToChunk, renderMarkdown, makeDraggable, makeResizable } from './ui-tools';
 import { refCardHtml, refStateHtml } from './render';
+import {
+  motionRefSweep,
+  motionRefResults,
+  motionPreviewIn,
+  motionDensitySettle,
+} from './motion';
 import { mountIcons } from '../core/ui';
 import type { SearchHit, VectorStore } from './vector-store';
 
@@ -117,6 +123,7 @@ export class ReferencePanel {
     this.denseBtn.innerHTML = `<i data-lucide="${this.denseMode ? 'list-tree' : 'file-text'}"></i>`;
     mountIcons(this.denseBtn);
     this.denseBtn.title = this.denseMode ? '切换：标题+内容' : '切换：仅标题';
+    motionDensitySettle(this.resultsDiv); // 动效层：密度形态翻面的沉降一拍
   }
 
   refreshWithDebounce(): void {
@@ -159,6 +166,7 @@ export class ReferencePanel {
     this.cancelPendingCardStates(); // 旧卡未决态不跨重建存活
     this.resultsDiv.innerHTML = '';
     this.resultsDiv.insertAdjacentHTML('beforeend', refStateHtml(text));
+    motionRefSweep(this.resultsDiv); // 动效层：检索扫描微光
   }
 
   /** [46] 降级脚注：不打断结果列表，在列表末追加一行说明 */
@@ -182,6 +190,7 @@ export class ReferencePanel {
     for (const item of filtered) {
       this.createResultCard(item);
     }
+    motionRefResults(this.resultsDiv); // 动效层：向量召回接力 + 分数条充能
   }
 
   /** 列表重建/关闭前清场：取消所有卡片的未决长按与悬停计时（卡片即将被摘除，计时器不得存活） */
@@ -403,6 +412,7 @@ export class ReferencePanel {
     preview.appendChild(scoreLabel);
     preview.appendChild(bodyDiv);
     document.body.appendChild(preview);
+    motionPreviewIn(preview); // 动效层：预览纸页浮起
     // 正文 markdown 异步渲染会长高，渲染后按实际高度再钳制一次（ticket 109）
     setTimeout(() => {
       if (preview.isConnected) this.clampPreviewTop(preview, cardRect.top - 20);
