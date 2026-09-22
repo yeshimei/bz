@@ -47,6 +47,14 @@ import { railThumbKey, railThumbKeepKeys, pruneRailThumbs, getRailThumb, putRail
 import { wallPanelHTML, ACT_ICON, KIND_ICON, mimeOfMediaName, dayStats, statHtml, lbCaption, lbSubText, mediaCapHtml, WEEK } from './render';
 import { hideAddDialog, hideTagPicker, openAddDialog, showTagPicker } from './ui/dialogs';
 import { jumpToDiaryEntry, copyDiaryLink, showConfirm } from './ui/entry-actions';
+// 动效层（纸张/翻页/墨迹/日历）：只动表现不改布局；render.ts markup 单源一字不动
+import {
+  motionArmBoot, motionChipDeny, motionChipPress, motionClearChip, motionConsumeBoot,
+  motionDateFilterIn, motionDateFilterOut, motionDayStamp, motionDevelop, motionLightboxOut,
+  motionLightboxShow, motionMarks, motionMonthPress, motionPageTurn, motionPanelIn,
+  motionPanelOut, motionRendered, motionSearchRow, motionSheetDialog, motionSkeleton,
+  motionTeardown, type DiaryMotionMode,
+} from './motion';
 import { findDiaryEntry, removeDiaryEntries, isUnparsedRefusal, isDiaryReadFailure, rekeyDiaryMapPath, dropDiaryMapPath } from './store';
 import { isUnlocked, loadEncryptedEntries, encryptEntry, reclassifyEntry, deleteEncryptedEntry } from './encrypt';
 
@@ -150,6 +158,7 @@ export class DiaryAppController {
 
   /** 桌面实例 DOM */
   private desk!: {
+    el: HTMLElement; // 动效层编排锚点：实例根元素
     head: HTMLElement;
     range: HTMLElement;
     chipRow: HTMLElement;
@@ -166,6 +175,7 @@ export class DiaryAppController {
   };
   /** 移动实例 DOM */
   private mob!: {
+    el: HTMLElement;
     head: HTMLElement;
     range: HTMLElement;
     chipRow: HTMLElement;
@@ -268,6 +278,12 @@ export class DiaryAppController {
    *  （刷新/写后回刷/重试）恒先 invalidateWallCache 回源，保持「每次刷新即读盘」原语义。
    *  show 置真、loadAndRender 消费后复位 */
   private _allowCacheNext = false;
+  /** 动效层：用户筛选切换（chip/二级签/日期/清除）待走翻页编排的标志（renderWall 消费即熄） */
+  private _motionSwitchPend = false;
+  /** 动效层：面板退场演出进行中（hide 防重入；show 复位） */
+  private _hideMotion = false;
+  /** 动效层：是否开过面板（重开走短档入场） */
+  private _shownOnce = false;
 
   // ---------- 创建 DOM（桌面 + 移动双实例，幂等） ----------
   ensureElements() {
@@ -310,12 +326,22 @@ export class DiaryAppController {
       };
       this._mql.addEventListener('change', this._onMqChange);
     }
+    // 评审便利：#replay 重播首屏编排（motion.ts 的 hashchange 钩子消费；插件内无害）
+    (window as unknown as Record<string, unknown>).__bzDiaryReplay = () => {
+      if (!this.root) return;
+      this.root.style.display = 'flex';
+      this._hideMotion = false;
+      motionArmBoot();
+      motionPanelIn(this.root, false);
+      void this.loadAndRender();
+    };
   }
 
   /** 从实例 HTML 收集 DOM 引用 */
   private bindRefs(scope: HTMLElement) {
     const q = <T extends HTMLElement = HTMLElement>(sel: string) => scope.querySelector<T>(sel)!;
     return {
+      el: scope, // 动效层编排锚点：实例根元素（桌面卡 / 移动全屏）
       head: q('.bz-diary-head'),
       range: q('.bz-diary-range'),
       chipRow: q('.bz-diary-chiprow'),
@@ -382,6 +408,7 @@ export class DiaryAppController {
     ui.rail.addEventListener('click', (e) => {
       const item = (e.target as HTMLElement).closest<HTMLElement>('.bz-diary-month');
       if (!item) return;
+      motionMonthPress(item); // 动效层：书签签条按压
       this.scrollToMonth(item.dataset.month || '', ui.wall);
     });
     // 搜索输入：防抖过滤
@@ -465,7 +492,7 @@ export class DiaryAppController {
   /** 增强 #1：灯箱步进（dir=1 下一张 / -1 上一张；到头循环——相册式连看，与移动端滑动同口径） */
   private stepLightbox(dir: 1 | -1) {
     if (!this.lbVisible() || !this._lbSeq.length) return;
-    this.showLightboxAt(this._lbIdx + dir);
+    this.showLightboxAt(this._lbIdx + dir, dir);
   }
 
   /**
@@ -502,6 +529,18 @@ export class DiaryAppController {
   }
 
   /**
+   * 动效层：用户筛选切换（chip / 二级签 / 日期筛选 / 清除）走翻页编排——旧墙墨隐、
+   * 纸面扫过面板、过中线那一刻 renderAll 换血、新内容以 switch 档接力落纸。
+   * RM / 无 WAAPI 宿主：motionPageTurn 同步 rewrite，行为与直接 renderAll 等价。
+   * 后台刷新（写后回刷 / vault modify / 解锁）仍走静默 renderAll，不翻页。
+   */
+  private renderAllMotioned() {
+    const ui = this._mql ? (this._mql.matches ? this.mob : this.desk) : this.desk;
+    this._motionSwitchPend = true;
+    motionPageTurn(ui.el, ui.wall, () => this.renderAll());
+  }
+
+  /**
    * 效率#6：头行范围文案带日期筛选态（「2026-06 · 37 条」）——旧实现只有「N 条」，
    * 套用月份筛选后无处可见当前被限定在哪个月，墙看起来像丢数据；
    * 同步 brand 行「✕ 清除」胶囊（筛选生效时出现，一键清日期筛选）。
@@ -531,10 +570,11 @@ export class DiaryAppController {
     b.title = '清除日期筛选';
     b.appendChild(uiIcon('x'));
     b.appendChild(document.createTextNode('清除'));
+    motionClearChip(b); // 动效层：胶囊 pop 入
     b.addEventListener('click', (e) => {
       e.stopPropagation();
       this.selDateFilter = null;
-      this.renderAll();
+      this.renderAllMotioned();
     });
     brand.appendChild(b);
   }
@@ -660,6 +700,7 @@ export class DiaryAppController {
         cnt.textContent = String(countFor(tag));
         b.appendChild(cnt);
         b.addEventListener('click', () => {
+          motionChipPress(b); // 动效层：签条按压回弹
           if (tag === '加密') {
             // 点击锁定态「加密」→ 弹保险箱解锁面板（对齐日记本 createTag：ensureSafeUnlocked 弹主密码）；
             // 解锁成功后加载加密日记并筛选。已解锁态再点 = 选中/取消筛选。
@@ -668,13 +709,13 @@ export class DiaryAppController {
               return;
             }
             this.selTag = this.selTag === '加密' ? null : '加密';
-            this.renderAll();
+            this.renderAllMotioned();
             return;
           }
           // 切主标签：重置二级标签选中
           if (this.selTag !== tag) this.selSubTag = null;
           this.selTag = this.selTag === tag ? null : tag;
-          this.renderAll();
+          this.renderAllMotioned();
         });
         row.appendChild(b);
       });
@@ -690,7 +731,13 @@ export class DiaryAppController {
       const { ensureSafeUnlocked } = await import('../encrypt');
       // 同一套解锁屏骨架，按日记域口径注入文案/统计与配色（--dw-* token）
       const ok = await ensureSafeUnlocked('diary');
-      if (!ok) return; // 用户取消/密码错误：保持锁定态
+      if (!ok) {
+        // 动效层：解锁被取消——锁定签摇头示意（锁还扣着）
+        const vis = this._mql?.matches ? this.mob : this.desk;
+        const chip = vis.chipRow.querySelector<HTMLElement>('.bz-diary-chip[data-tag="加密"]');
+        if (chip) motionChipDeny(chip);
+        return; // 用户取消/密码错误：保持锁定态
+      }
       this.lockedVisible = true;
       this.selTag = '加密';
       await this.mergeEncryptedEntries();
@@ -765,8 +812,9 @@ export class DiaryAppController {
       b.dataset.tag = sub.tag;
       b.innerHTML = `${sub.emoji} ${sub.tag}`;
       b.addEventListener('click', () => {
+        motionChipPress(b); // 动效层：签条按压回弹
         this.selSubTag = this.selSubTag === sub.tag ? null : sub.tag;
-        this.renderAll();
+        this.renderAllMotioned();
       });
       row.appendChild(b);
     });
@@ -774,6 +822,9 @@ export class DiaryAppController {
 
   /** 渲染章节栏 + 瀑布（桌面/移动各一份；list = 本次过滤结果，renderAll 一次计算共享） */
   private renderWall(ui: typeof this.desk, mobile: boolean, list: WallEntry[]) {
+    // 动效层编排档位：用户筛选切换（翻页后 switch 接力）> 打开后的首渲（boot，消费即熄）> 静默
+    const mode: DiaryMotionMode = this._motionSwitchPend ? 'switch' : motionConsumeBoot() ? 'boot' : 'none';
+    this._motionSwitchPend = false;
     this.teardownScrollers(mobile ? 'mob' : 'desk');
     ui.wall.innerHTML = '';
     ui.rail.innerHTML = '';
@@ -787,6 +838,7 @@ export class DiaryAppController {
     }
     if (!list.length) {
       ui.wall.appendChild(this.mkEmpty());
+      motionRendered(ui.el, mode); // 动效层：空态/错误态浮起（档位为 none 时零编排）
       return;
     }
     // 增强 #5 + issue 352：那年今天时光条（首屏顶部横滑条，不打断主瀑布流；无命中不渲染）。
@@ -810,6 +862,7 @@ export class DiaryAppController {
     if (!mobile && ui.rail.children.length > 0) {
       this.setupRailHighlight(ui.wall, ui.rail, 'desk');
     }
+    motionRendered(ui.el, mode); // 动效层：首屏全编排 / 筛切接力 / 后台刷新静默
   }
 
   /**
@@ -975,7 +1028,10 @@ export class DiaryAppController {
       // 效率#9：搜索命中词轻高亮——渲染完成后 TreeWalker 包 <mark>（先只纯文本卡；
       // must 等渲染管线产出再扫，直接改 markdown 源串会破坏语法）
       void this.renderText(tx, text, e).then(() => {
-        if (tx.isConnected) this.highlightHits(tx);
+        if (tx.isConnected) {
+          this.highlightHits(tx);
+          motionMarks(tx); // 动效层：命中墨闪
+        }
       });
     }
     item.append(row, tx);
@@ -1374,7 +1430,9 @@ export class DiaryAppController {
     for (const ui of [this.desk, this.mob]) {
       if (ui.wall.querySelector('.bz-diary-item')) continue;
       ui.wall.innerHTML = '';
-      ui.wall.appendChild(this.mkSkeleton());
+      const skel = this.mkSkeleton();
+      ui.wall.appendChild(skel);
+      motionSkeleton(skel); // 动效层：骨架浮现（shimmer 循环是既有 CSS 功能指示，不动）
     }
   }
 
@@ -1436,6 +1494,7 @@ export class DiaryAppController {
           img.onload = () => {
             ph.style.opacity = '0';
             img.style.opacity = '1';
+            motionDevelop(img); // 动效层：照片显影
           };
           img.onerror = () => {
             ph.style.opacity = '1';
@@ -1549,6 +1608,7 @@ export class DiaryAppController {
       img.onload = () => {
         if (ph) ph.style.opacity = '0';
         img.style.opacity = '1';
+        motionDevelop(img); // 动效层：加密媒体解出后同样走显影
       };
       img.onerror = () => {
         if (ph) ph.style.opacity = '1';
@@ -1852,6 +1912,7 @@ export class DiaryAppController {
       if (this.root?.style.display !== 'flex') return;
       const h = wall.querySelector<HTMLElement>(`.bz-diary-day-head[data-date^="${mk}"]`);
       if (!h) return;
+      motionDayStamp(h); // 动效层：落定即盖台历戳（告诉你「就是这一页」）
       const t2 = wall.scrollTop + (this.flowTopOf(h, wall.getBoundingClientRect()) - 6);
       if (Math.abs(t2 - wall.scrollTop) > 2) wall.scrollTo({ top: Math.max(0, t2) });
     }, SCROLL_FIX_DELAY_MS);
@@ -1965,9 +2026,10 @@ export class DiaryAppController {
 
   /**
    * 展示连看序列第 idx 项（到头循环——与移动端滑动、桌面按钮、方向键同一口径）。
+   * dir：0 = 开箱（显影）；±1 = 步进（方向性滑入）——动效层 motionLightboxShow 消费。
    * P3 审查修复保留：只填充当前端实例（另一实例 lbMedia 保持为空，无双份加载/播放）。
    */
-  private showLightboxAt(idx: number) {
+  private showLightboxAt(idx: number, dir: 0 | 1 | -1 = 0) {
     const seq = this._lbSeq;
     if (!seq.length) return;
     const n = seq.length;
@@ -1976,7 +2038,8 @@ export class DiaryAppController {
     // 增强 #1：切换前停掉旧视频/音频（释放解码与声音，避免后台继续播）
     this.pauseLbMedia();
     const mobileNow = typeof matchMedia === 'function' && matchMedia('(max-width: 768px)').matches;
-    this.fillLbMedia(mobileNow ? this.mob.lbMedia : this.desk.lbMedia, k, entry);
+    const target = mobileNow ? this.mob : this.desk;
+    this.fillLbMedia(target.lbMedia, k, entry);
     // 增强 #6：标题行去文件名，改「日期 时间 · 标签字」；副行 = 日记正文文字（去媒体引用），
     // 不显示资源路径（用户要求：放大后下面显示日记的文字）
     const cap = lbCaption(entry);
@@ -1988,6 +2051,8 @@ export class DiaryAppController {
     // 仅当前可见实例加 --show（≤768px 桌面实例 display:none；避免双实例重复 autoplay/冗余节点）
     if (mobileNow) this.mob.lb.classList.add('bz-diary-lb--show');
     else this.desk.lb.classList.add('bz-diary-lb--show');
+    // 动效层：媒体显影/方向性滑入 + 题注墨迹浮起（并清关箱退场残留）
+    motionLightboxShow(target.lb, target.lbMedia, target.lbCap, target.lbSub, dir);
   }
 
   /** 停掉双实例灯箱内正在播放的媒体（切换/关闭前调用） */
@@ -2061,7 +2126,9 @@ export class DiaryAppController {
           box.appendChild(this.mkLbErr(k));
           return;
         }
-        box.appendChild(this.mkLbMediaEl(k, url));
+        const el = this.mkLbMediaEl(k, url);
+        box.appendChild(el);
+        motionDevelop(el); // 动效层：密文解出即显影（解密等待期的 pending 脉冲由域样式承担）
       });
       return;
     }
@@ -2081,9 +2148,15 @@ export class DiaryAppController {
 
   private closeLightbox() {
     this.pauseLbMedia();
+    // 动效层：退光合箱——退场期间重开的竞态用会话代次兜住（退场完成回调发现代次已推进即放弃收口）
+    const gen = ++this._lbGen;
     [this.desk, this.mob].forEach((ui) => {
-      ui.lb.classList.remove('bz-diary-lb--show');
-      ui.lbMedia.innerHTML = '';
+      if (!ui.lb.classList.contains('bz-diary-lb--show')) return;
+      motionLightboxOut(ui.lb, () => {
+        if (gen !== this._lbGen) return; // 退场期间灯箱被重开：不动新会话
+        ui.lb.classList.remove('bz-diary-lb--show');
+        ui.lbMedia.innerHTML = '';
+      });
     });
     // issue 217 F1：时光条序列会话结束，还原墙内主序列
     if (this._lbSeqMain) {
@@ -2424,8 +2497,12 @@ export class DiaryAppController {
 
   show() {
     if (!this._initialized) this.ensureElements();
+    const reopen = this._shownOnce;
+    this._shownOnce = true;
+    this._hideMotion = false; // 快速关开：退场演出中断即复位（display 已被拉回，不抢 done）
     this.root!.style.display = 'flex';
     topifyZ(this.root!); // ADR-0067
+    motionPanelIn(this.root!, reopen); // 动效层：遮罩退光淡入（卡体自带 CSS slide-up；内容编排归 renderWall）
     this.subscribeVaultModify();
     this.subscribeUnlockEvents(); // 增强 #9：上锁实时归位
     this.subscribeWriteEvents(); // 写链路域事件防抖回刷（含整文件删除等 vault delete 无 modify 的路径）
@@ -2433,11 +2510,14 @@ export class DiaryAppController {
     // 增强 #11：loadAndRender 完成后一次性恢复跳走前的筛选与滚动位置
     // ②：开墙读允许命中预热/上次刷新后的缓存秒开（闭合期写改已由 domain-bus 事件作废缓存，不会读到脏数据）
     this._allowCacheNext = true;
+    motionArmBoot(); // 动效层：boot 标志置位——本帧首个 renderWall 消费即熄，回刷/重渲不重播
     void this.loadAndRender().then(() => this.applyRestore());
   }
 
   hide() {
     if (!this.root) return;
+    if (this._hideMotion) return; // 动效层：退场演出中防重入（演出完由 done 收口 display:none）
+    this._hideMotion = true;
     this.closeDateFilter();
     this.closeLightbox();
     this.closeSheet();
@@ -2446,11 +2526,17 @@ export class DiaryAppController {
     // 写链路两弹窗挂 body（D-UI2 残款兜底）：面板关闭强制收壳，不留可交互浮层
     hideAddDialog();
     hideTagPicker();
-    this.root.style.display = 'none';
     this.unsubscribeVaultModify();
     this.unsubscribeUnlockEvents();
     this.unsubscribeWriteEvents();
     this.unsubscribeRefSync(); // issue 339：摘引用同步订阅
+    // 动效层：先演「合上本子」（卡体落回桌面 + 遮罩退光）再收 display；
+    // 无 WAAPI 宿主同步收口（测试/老内核 display:none 不晚到）
+    motionPanelOut(this.root, () => {
+      this._hideMotion = false;
+      if (!this.root) return;
+      this.root.style.display = 'none';
+    });
   }
 
   /**
@@ -2707,7 +2793,6 @@ export class DiaryAppController {
   private openDatePicker() {
     this.showDateFilter(this.selDateFilter?.year ?? this.defaultFilterYear());
   }
-
   /**
    * 打开时的默认浏览年份 = 当前年份（用户要求「打开日期筛选默认选中当前年份」）。
    * 当前年若没有任何数据（跨年空窗），回落最新有数据的年份——否则月份网格不渲染，
@@ -2722,13 +2807,15 @@ export class DiaryAppController {
 
   /** 显示日期筛选弹窗：viewYear 只是「正在浏览的年份」临时值（P2 审查修复：
    *  旧实现点年份即写入 selDateFilter，ESC 关闭后筛选已悄悄生效）。
-   *  只有点月份或「全部」才提交筛选。 */
-  private showDateFilter(viewYear: string | null) {
+   *  只有点月份或「全部」才提交筛选。
+   *  light（动效层）：年内切年重开——只翻月份格，不重演题头与年份签。 */
+  private showDateFilter(viewYear: string | null, light = false) {
     this.closeDateFilter();
     this._dateFilterEl = this.mkDateFilter(viewYear);
     document.body.appendChild(this._dateFilterEl);
     topifyZ(this._dateFilterEl); // ADR-0067：后显示在上
     this._dateFilterEl.style.display = 'flex';
+    motionDateFilterIn(this._dateFilterEl, light); // 动效层：台历翻开（卡体自带 CSS slide-up）
   }
 
   /** 自绘日期筛选弹窗（年份行 + 月份网格 + 全部/关闭）；viewYear 为正在浏览的年份临时值 */
@@ -2758,7 +2845,7 @@ export class DiaryAppController {
       resetBtn.addEventListener('click', () => {
         this.selDateFilter = null;
         this.closeDateFilter();
-        this.renderAll();
+        this.renderAllMotioned();
       });
       head.appendChild(resetBtn);
     }
@@ -2784,8 +2871,8 @@ export class DiaryAppController {
       b.innerHTML = `<span class="bz-diary-datefilter-year-name">${y}</span><span class="bz-diary-datefilter-year-cnt">${yearCount.get(y) || 0}</span>`;
       b.addEventListener('click', () => {
         // 两段式：点年份 → 只切换到该年的月份网格（临时值，不提交筛选）；
-        // 点月份才应用过滤并关闭
-        this.showDateFilter(y);
+        // 点月份才应用过滤并关闭。动效层走 light 档：只翻月份格
+        this.showDateFilter(y, true);
       });
       yearRow.appendChild(b);
     });
@@ -2819,10 +2906,11 @@ export class DiaryAppController {
         cardEl.innerHTML = `<span class="bz-diary-datefilter-month-name">${i}月</span><span class="bz-diary-datefilter-month-cnt">${cnt || ''}</span>`;
         cardEl.addEventListener('click', () => {
           if (cnt === 0) return;
+          motionChipPress(cardEl); // 动效层：台历格按压
           // 点月份才提交筛选（年份本身只是浏览临时值）
           this.selDateFilter = { year: viewYear, month: ms };
           this.closeDateFilter();
-          this.renderAll();
+          this.renderAllMotioned();
         });
         monthRow.appendChild(cardEl);
       }
@@ -2843,10 +2931,13 @@ export class DiaryAppController {
   }
 
   private closeDateFilter() {
-    if (this._dateFilterEl) {
-      this._dateFilterEl.remove();
-      this._dateFilterEl = null;
-    }
+    const el = this._dateFilterEl;
+    if (!el) return;
+    this._dateFilterEl = null; // 先摘引用：退场期间的二次关闭/重开都按「已关」走
+    // 动效层：台历合上再摘除（演出完 remove）；退场期间不吃指针、对读屏隐身
+    motionDateFilterOut(el, () => el.remove());
+    el.style.pointerEvents = 'none';
+    el.setAttribute('aria-hidden', 'true');
   }
 
   /** 搜索：toggle 搜索框（桌面/移动各一），输入过滤；打开/收起同步按钮高亮态 */
@@ -2859,6 +2950,7 @@ export class DiaryAppController {
     const other = ui === this.desk ? this.mob : this.desk;
     if (row.style.display === 'none') {
       row.style.display = 'block';
+      motionSearchRow(row); // 动效层：搜索行纸条滑出
       box.value = this.searchKeyword;
       box.focus();
       box.select();
@@ -2887,6 +2979,7 @@ export class DiaryAppController {
   cleanup() {
     this.closeDateFilter();
     closeItemMenu();
+    motionTeardown(); // 动效层：摘全部延时编排 + 复位 boot 标志
     this.teardownScrollers('desk');
     this.teardownScrollers('mob');
     this.unsubscribeVaultModify(); // DW3：摘 modify 订阅
