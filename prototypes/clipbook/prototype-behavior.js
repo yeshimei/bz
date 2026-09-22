@@ -1,5 +1,5 @@
-/* 源指纹 de3240b05c9f577b · 仓内输入 105 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 c98ba82fc4ad48df · 仓内输入 106 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -1797,15 +1797,15 @@ var BZW_clipbook = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M2, s, ms) {
+        function createDate(y, m, d, h, M3, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M2, s, ms);
+            date = new Date(y + 400, m, d, h, M3, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M2, s, ms);
+            date = new Date(y, m, d, h, M3, s, ms);
           }
           return date;
         }
@@ -7784,7 +7784,7 @@ ${c.trim()}
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M2 = 10;
+    const M3 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -7811,7 +7811,7 @@ ${c.trim()}
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M2 || Math.abs(t.clientY - sy) > M2) {
+      if (Math.abs(t.clientX - sx) > M3 || Math.abs(t.clientY - sy) > M3) {
         moved = true;
         cancel();
       }
@@ -10842,15 +10842,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -11943,6 +11943,761 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/knowledge/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionClosing(el) {
+    return !!el && el.dataset.bzMotionClosing === "1";
+  }
+  function abortOut(el) {
+    const run = outRuns.get(el);
+    if (!run) return;
+    outRuns.delete(el);
+    run.abort();
+  }
+  function sweepExit(el, id) {
+    try {
+      if (typeof el.getAnimations !== "function") return;
+      for (const a of el.getAnimations()) if (a.id === id) a.cancel();
+    } catch (e) {
+    }
+  }
+  function runOut(el, id, frames, opts, done) {
+    var _a;
+    if (!el) {
+      done();
+      return;
+    }
+    if (motionClosing(el)) return;
+    el.dataset.bzMotionClosing = "1";
+    let finished = false;
+    let anim = null;
+    const run = {
+      abort: () => {
+        run.aborted = true;
+        delete el.dataset.bzMotionClosing;
+        try {
+          anim == null ? void 0 : anim.cancel();
+        } catch (e) {
+        }
+      },
+      aborted: false
+    };
+    outRuns.set(el, run);
+    const finish = () => {
+      if (finished || run.aborted) return;
+      finished = true;
+      outRuns.delete(el);
+      delete el.dataset.bzMotionClosing;
+      try {
+        anim == null ? void 0 : anim.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    anim = waapi(el, frames, { ...opts, fill: "forwards", id });
+    if (!anim) {
+      finish();
+      return;
+    }
+    anim.finished.then(finish).catch(() => {
+    });
+    after(Number((_a = opts.duration) != null ? _a : 240) + 200, finish);
+  }
+  function motionMainIn(popup) {
+    cancelPending();
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, MAIN_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    const reopen = popup.dataset.kbMotionOpened === "1";
+    popup.dataset.kbMotionOpened = "1";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(12px) scale(.975)", filter: "blur(7px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: reopen ? 300 : 460, easing: E.out }
+    );
+    const title = popup.querySelector(".bz-kb-title");
+    if (title) {
+      waapi(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 160, delay: 140, easing: E.out, fill: "backwards" }
+      );
+    }
+    const top = popup.querySelector(".bz-kb-top");
+    if (top) {
+      waapi(
+        top,
+        [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, delay: 60, easing: E.out, fill: "backwards" }
+      );
+    }
+    const head = popup.querySelector(".bz-kb-head");
+    if (head) {
+      const line = document.createElement("i");
+      line.className = "bz-kb-headline";
+      line.setAttribute("aria-hidden", "true");
+      head.appendChild(line);
+      const a = waapi(
+        line,
+        [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+        { duration: M.base + 120, delay: 180, easing: E.out, fill: "backwards" }
+      );
+      if (a) a.finished.then(() => line.remove()).catch(() => line.remove());
+      else line.remove();
+    }
+    popup.querySelectorAll(".bz-kb-part").forEach((b, i) => {
+      waapi(
+        b,
+        [{ opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, delay: 200 + i * 45, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionMainOut(popup, done) {
+    motionPenOff();
+    runOut(
+      popup,
+      MAIN_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.985)", filter: "blur(5px)" }
+      ],
+      { duration: M.move + 40, easing: E.out },
+      done
+    );
+  }
+  function cardFrames(to) {
+    return [
+      { opacity: 0, transform: "translateX(-7px) rotate(.2deg)", clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+      { opacity: 1, transform: to, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+    ];
+  }
+  function motionLitReveal(sc, cue) {
+    if (!sc || cue === "silent" || reduced()) return;
+    const base = cue === "boot" ? 340 : 40;
+    const step = cue === "boot" ? STAG : 22;
+    sc.querySelectorAll(".bz-kb-lexrow").forEach((row, i) => {
+      if (i >= REVEAL_CAP) return;
+      waapi(
+        row,
+        cardFrames("none"),
+        { duration: M.base + 80, delay: base + i * step, easing: E.out, fill: "backwards" }
+      );
+    });
+    sc.querySelectorAll(".bz-kb-entrybtn").forEach((btn, i) => {
+      waapi(
+        btn,
+        [
+          { opacity: 0, transform: "translateY(9px)", clipPath: "inset(0 0 100% 0)" },
+          { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" }
+        ],
+        { duration: M.base + 60, delay: (cue === "boot" ? 230 : 20) + i * 45, easing: E.out, fill: "backwards" }
+      );
+    });
+    const bar = sc.querySelector(".bz-kb-cbar");
+    if (bar) {
+      waapi(
+        bar,
+        [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, delay: base - 60 > 0 ? base - 60 : 0, easing: E.out, fill: "backwards" }
+      );
+    }
+    const empty = sc.querySelector(".bz-kb-empty");
+    if (empty) {
+      waapi(
+        empty,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M.base + 80, delay: base, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionCardsAppended(rowsEl, from, cue) {
+    if (!rowsEl || reduced()) return;
+    const total = rowsEl.children.length;
+    if (from >= total) return;
+    if (from === 0 && cue === "silent") return;
+    const base = from > 0 ? 30 : cue === "boot" ? 340 : 50;
+    const step = from > 0 ? 18 : STAG;
+    for (let i = from; i < total; i++) {
+      const row = rowsEl.children[i];
+      if (!row || i - from >= REVEAL_CAP) break;
+      waapi(
+        row,
+        cardFrames("none"),
+        { duration: M.base + 60, delay: base + (i - from) * step, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionStampBadge(badge) {
+    if (!badge || reduced()) return;
+    waapi(
+      badge,
+      [
+        { opacity: 0, transform: "scale(1.7) rotate(-7deg)" },
+        { opacity: 1, transform: "scale(1) rotate(0deg)" }
+      ],
+      { duration: M.fast + 70, easing: E.move, fill: "backwards" }
+    );
+  }
+  function motionSheetIn(ovl) {
+    if (!ovl || reduced()) return;
+    cancelPending();
+    waapi(ovl, [{ opacity: 0 }, { opacity: 1 }], { duration: M.fast, easing: E.out, fill: "backwards" });
+    const sheet = ovl.querySelector(".bz-kb-sheet");
+    if (sheet) {
+      waapi(
+        sheet,
+        [
+          { opacity: 0, transform: "translateY(12px) scale(.97)", filter: "blur(6px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 60, easing: E.out, fill: "backwards" }
+      );
+      const head = sheet.querySelector(".bz-kb-sheet-head");
+      if (head) {
+        waapi(
+          head,
+          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+          { duration: M.base, delay: 80, easing: E.out, fill: "backwards" }
+        );
+      }
+    }
+  }
+  function motionSheetOut(ovl, done) {
+    if (!ovl) {
+      done();
+      return;
+    }
+    if (ovl.dataset.bzMotionClosing === "1") return;
+    ovl.dataset.bzMotionClosing = "1";
+    const sheet = ovl.querySelector(".bz-kb-sheet");
+    const a = waapi(ovl, [{ opacity: 1 }, { opacity: 0 }], { duration: M.move - 20, easing: E.out, fill: "forwards" });
+    const b = sheet ? waapi(
+      sheet,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.98)", filter: "blur(4px)" }
+      ],
+      { duration: M.move - 20, easing: E.out, fill: "forwards" }
+    ) : null;
+    const finish = () => {
+      ovl.dataset.bzMotionClosing = "";
+      try {
+        a == null ? void 0 : a.cancel();
+      } catch (e) {
+      }
+      try {
+        b == null ? void 0 : b.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    if (!a && !b) {
+      finish();
+      return;
+    }
+    let waited = 0;
+    const hit = () => {
+      waited++;
+      if (waited >= 2) finish();
+    };
+    if (a) a.finished.then(hit).catch(hit);
+    else hit();
+    if (b) b.finished.then(hit).catch(hit);
+    else hit();
+    after(M.move + 160, finish);
+  }
+  function motionPreviewBody(ovl) {
+    if (!ovl || reduced()) return;
+    const body = ovl.querySelector("#bz-kb-preview-body");
+    if (body) {
+      [...body.children].forEach((el, i) => {
+        if (i >= 12) return;
+        waapi(
+          el,
+          [
+            { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M.base + 60, delay: 60 + i * STAG, easing: E.out, fill: "backwards" }
+        );
+      });
+    }
+    ovl.querySelectorAll(".bz-kb-cite").forEach((chip2, i) => {
+      waapi(
+        chip2,
+        [{ opacity: 0, transform: "scale(.75)" }, { opacity: 1, transform: "none" }],
+        { duration: M.fast + 60, delay: 300 + i * 35, easing: E.out, fill: "backwards" }
+      );
+    });
+    const link = ovl.querySelector(".bz-kb-cliplink");
+    if (link) {
+      waapi(
+        link,
+        [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, delay: 340, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionVideoIn(popup) {
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, VIDEO_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.base + 60, easing: E.out }
+    );
+    const title = popup.querySelector(".bz-kb-title");
+    if (title) {
+      waapi(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 100, delay: 90, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionVideoOut(popup, done) {
+    runOut(
+      popup,
+      VIDEO_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.985)", filter: "blur(4px)" }
+      ],
+      { duration: M.move + 20, easing: E.out },
+      done
+    );
+  }
+  function motionVideoRows(list, cue) {
+    if (!list || cue === "silent" || reduced()) return;
+    list.querySelectorAll(".bz-kb-taskcard").forEach((card, i) => {
+      if (i >= 10) return;
+      waapi(
+        card,
+        [
+          { opacity: 0, filter: "sepia(.85) contrast(.65) blur(3px)", transform: "translateY(6px)" },
+          { opacity: 1, filter: "sepia(0) contrast(1) blur(0px)", transform: "none" }
+        ],
+        { duration: M.base + 140, delay: 30 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+    const banner = list.querySelector(".bz-kb-banner");
+    if (banner) {
+      waapi(
+        banner,
+        [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, delay: 10, easing: E.out, fill: "backwards" }
+      );
+    }
+    const empty = list.querySelector(".bz-kb-empty");
+    if (empty) {
+      waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M.base + 60, easing: E.out, fill: "backwards" });
+    }
+  }
+  function motionAddIn(popup) {
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, ADD_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.base + 40, easing: E.out }
+    );
+  }
+  function motionAddOut(popup, done) {
+    runOut(
+      popup,
+      ADD_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(6px) scale(.99)", filter: "blur(3px)" }
+      ],
+      { duration: M.move, easing: E.out },
+      done
+    );
+  }
+  function motionAddReveal(more) {
+    if (!more || reduced()) return;
+    waapi(
+      more,
+      [
+        { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(-5px)" },
+        { opacity: 1, clipPath: "inset(0 0 0 0)", transform: "none" }
+      ],
+      { duration: M.base + 120, easing: E.out, fill: "backwards" }
+    );
+    more.querySelectorAll(".bz-lit-term-row, #lit-add-rb, .bz-lit-term-actions").forEach((row, i) => {
+      if (i >= 9) return;
+      waapi(
+        row,
+        [
+          { opacity: 0, transform: "translateY(5px)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base, delay: 90 + i * 26, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionEntryIn(popup) {
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, TERM_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.base + 40, easing: E.out }
+    );
+    const title = popup.querySelector("#lit-entry-title");
+    if (title) {
+      waapi(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 80, delay: 70, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionEntryOut(popup, done) {
+    motionPenOff();
+    runOut(
+      popup,
+      TERM_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(6px) scale(.99)", filter: "blur(3px)" }
+      ],
+      { duration: M.move, easing: E.out },
+      done
+    );
+  }
+  function motionEntryPreviewIn(preview) {
+    if (!preview || reduced()) return;
+    const cards = preview.querySelectorAll(".bz-lit-term-card");
+    cards.forEach((card, i) => {
+      waapi(
+        card,
+        [
+          { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 80, delay: i * 120, easing: E.out, fill: "backwards" }
+      );
+    });
+    const actions = preview.querySelector(".bz-lit-term-actions");
+    if (actions) {
+      waapi(
+        actions,
+        [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.base, delay: cards.length * 120 + 60, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionEntryPenOn(card) {
+    motionPenOff();
+    if (!card || reduced() || typeof document === "undefined") return;
+    const pen = document.createElement("i");
+    pen.className = "bz-kb-pen";
+    pen.setAttribute("aria-hidden", "true");
+    card.appendChild(pen);
+    card.style.position = card.style.position || "relative";
+    penPool.add(pen);
+  }
+  function motionPenOff() {
+    for (const pen of penPool) pen.remove();
+    penPool.clear();
+  }
+  function motionMetaSetValue(el) {
+    if (!el || reduced()) return;
+    waapi(
+      el,
+      [
+        { opacity: 0.25, transform: "translateY(3px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.fast + 80, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionContentArrive(el) {
+    if (!el || reduced()) return;
+    waapi(
+      el,
+      [{ filter: "blur(1.5px)" }, { filter: "blur(0px)" }],
+      { duration: M.fast + 60, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionRelRowIn(row) {
+    if (!row || reduced()) return;
+    waapi(
+      row,
+      [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+      { duration: M.fast + 60, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionRelChips(relEl) {
+    if (!relEl || reduced()) return;
+    relEl.querySelectorAll(".bz-lit-rel-chip").forEach((chip2, i) => {
+      waapi(
+        chip2,
+        [{ opacity: 0, transform: "scale(.72) translateY(2px)" }, { opacity: 1, transform: "none" }],
+        { duration: M.fast + 60, delay: 40 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionDupHint(hint) {
+    if (!hint || reduced()) return;
+    waapi(
+      hint,
+      [
+        { opacity: 0, transform: "translateX(0)" },
+        { opacity: 1, transform: "translateX(-3px)", offset: 0.3 },
+        { transform: "translateX(3px)", offset: 0.55 },
+        { transform: "translateX(-2px)", offset: 0.78 },
+        { opacity: 1, transform: "translateX(0)" }
+      ],
+      { duration: M.fast * 2 + 60, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionThumbsIn(grid, from) {
+    if (!grid || reduced()) return;
+    const items = grid.querySelectorAll(".bz-lit-drop-item");
+    items.forEach((item, i) => {
+      if (i < from) return;
+      waapi(
+        item,
+        [
+          { opacity: 0, transform: "scale(.88) rotate(-2deg)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base, delay: (i - from) * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionSrcChipIn(chip2) {
+    if (!chip2 || reduced()) return;
+    waapi(
+      chip2,
+      [{ opacity: 0, transform: "scale(.9) translateY(2px)" }, { opacity: 1, transform: "none" }],
+      { duration: M.fast + 50, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionTreeIn(win, fresh) {
+    if (!win || reduced() || !fresh) return;
+    abortOut(win);
+    sweepExit(win, TREE_EXIT);
+    win.style.opacity = "";
+    win.style.transform = "";
+    win.style.filter = "";
+    waapi(
+      win,
+      [
+        { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(7px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.base + 140, easing: E.out }
+    );
+  }
+  function motionTreeOut(win, done) {
+    runOut(
+      win,
+      TREE_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.99)", filter: "blur(5px)" }
+      ],
+      { duration: M.move + 40, easing: E.out },
+      done
+    );
+  }
+  function motionTreeCards(worldEl, opts) {
+    if (!worldEl || reduced()) return;
+    if (opts.fresh) treeShownIds = /* @__PURE__ */ new Set();
+    const nodes = [...worldEl.querySelectorAll(".bz-kb-mt-node")];
+    nodes.sort((a, b) => {
+      const ra = a.getAttribute("data-mt-id") === opts.rootId ? -1 : 0;
+      const rb = b.getAttribute("data-mt-id") === opts.rootId ? -1 : 0;
+      return ra - rb;
+    });
+    let step = 0;
+    for (const node of nodes) {
+      const id = node.getAttribute("data-mt-id") || "";
+      if (treeShownIds.has(id)) continue;
+      treeShownIds.add(id);
+      if (node.style.display === "none") continue;
+      if (step >= 18) break;
+      const ghost = node.classList.contains("is-ghost");
+      waapi(
+        node,
+        [
+          { opacity: 0, transform: "translateY(8px) scale(.96)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M.base + 80, delay: 40 + step * STAG, easing: E.out, fill: "backwards" }
+      );
+      if (ghost) {
+        waapi(node, [{ opacity: 0.4 }, { opacity: 1 }], { duration: M.impulse - 300, delay: 300 + step * STAG, easing: E.out, fill: "backwards" });
+      }
+      step++;
+    }
+  }
+  function motionTreeEdges(svg) {
+    if (!svg || reduced()) return;
+    const paths = [...svg.querySelectorAll(".bz-kb-mt-edge")];
+    let step = 0;
+    for (const p of paths) {
+      const dashed = p.classList.contains("is-sug") || p.classList.contains("is-fb");
+      if (dashed) continue;
+      if (step >= 24) break;
+      let len = 0;
+      try {
+        len = p.getTotalLength();
+      } catch (e) {
+        continue;
+      }
+      if (!len || !Number.isFinite(len)) continue;
+      waapi(
+        p,
+        [
+          { strokeDasharray: `${len}`, strokeDashoffset: `${len}` },
+          { strokeDasharray: `${len}`, strokeDashoffset: "0" }
+        ],
+        { duration: M.base + 160, delay: 160 + step * 24, easing: E.move, fill: "backwards" }
+      );
+      step++;
+    }
+    if (step || paths.length) {
+      waapi(svg, [{ opacity: 0 }, { opacity: 1 }], { duration: M.fast + 60, easing: E.out, fill: "backwards" });
+    }
+  }
+  function motionTreeMenu(menu) {
+    if (!menu || reduced()) return;
+    menu.style.transformOrigin = "0 0";
+    waapi(
+      menu,
+      [
+        { opacity: 0, transform: "scale(.93) translateY(-2px)", filter: "blur(2px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M.fast + 40, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionProgressIn(loadingEl) {
+    if (!loadingEl || reduced()) return;
+    waapi(
+      loadingEl,
+      [
+        { opacity: 0, transform: "translate(-50%, -48%) scale(.97)", filter: "blur(3px)" },
+        { opacity: 1, transform: "translate(-50%, -50%)", filter: "blur(0px)" }
+      ],
+      { duration: M.base, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionTeardown() {
+    cancelPending();
+    for (const [el, run] of [...outRuns.entries()]) {
+      outRuns.delete(el);
+      run.abort();
+    }
+    motionPenOff();
+    treeShownIds = /* @__PURE__ */ new Set();
+  }
+  var M, E, STAG, timers, outRuns, MAIN_EXIT, REVEAL_CAP, VIDEO_EXIT, ADD_EXIT, TERM_EXIT, penPool, TREE_EXIT, treeShownIds;
+  var init_motion = __esm({
+    "src/knowledge/motion.ts"() {
+      M = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      timers = /* @__PURE__ */ new Set();
+      outRuns = /* @__PURE__ */ new Map();
+      MAIN_EXIT = "bz-kb-main-exit";
+      REVEAL_CAP = 14;
+      VIDEO_EXIT = "bz-kb-video-exit";
+      ADD_EXIT = "bz-kb-add-exit";
+      TERM_EXIT = "bz-kb-term-exit";
+      penPool = /* @__PURE__ */ new Set();
+      TREE_EXIT = "bz-kb-mt-exit";
+      treeShownIds = /* @__PURE__ */ new Set();
+      if (typeof window !== "undefined") {
+        window.addEventListener("hashchange", () => {
+          if (location.hash !== "#replay") return;
+          location.hash = "";
+          const replay = window.__bzKbReplay;
+          if (typeof replay === "function") setTimeout(replay, 600);
+        });
+        if (location.hash === "#replay") {
+          const wait = () => {
+            const replay = window.__bzKbReplay;
+            if (typeof replay === "function") {
+              location.hash = "";
+              setTimeout(replay, 600);
+            } else setTimeout(wait, 120);
+          };
+          setTimeout(wait, 120);
+        }
+      }
+    }
+  });
+
   // src/knowledge/mount-canvas.ts
   function mountKindColor(kind) {
     var _a;
@@ -12394,8 +13149,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!st) return;
     closeMenu();
     cancelLongPress(st);
-    st.mask.style.display = "none";
-    st.win.style.display = "none";
+    const win = st.win;
+    const mask = st.mask;
+    motionTreeOut(win, () => {
+      if (mask) mask.style.display = "none";
+      if (win) win.style.display = "none";
+    });
     st.selected = null;
     st.token++;
     hideProgress(st);
@@ -12413,8 +13172,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
     st.deps = defaultDeps(opts == null ? void 0 : opts.deps);
     topifyZ(st.mask, st.win);
+    const shellFresh = st.win.style.display !== "flex";
     st.mask.style.display = "block";
     st.win.style.display = "flex";
+    motionTreeIn(st.win, shellFresh);
     if (!st.esc) {
       st.esc = escManager.register(ESC_ID, {
         isVisible: () => mountTreeOpen() || !!st.menu,
@@ -12487,7 +13248,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (waitFirst) {
       renderTop(st);
     } else {
-      await renderCanvas(st);
+      await renderCanvas(st, true);
       renderTop(st);
       fit();
     }
@@ -12515,11 +13276,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (s == null ? void 0 : s.target) st.ghosts.set(suggestionId(s), s);
         }
         st.tree = mergeSuggestions(tree, run);
-        await renderCanvas(st);
+        await renderCanvas(st, false);
         if (waitFirst) fit();
       } else if (waitFirst) {
         st.tree = tree;
-        await renderCanvas(st);
+        await renderCanvas(st, true);
         fit();
       } else {
         st.tree = tree;
@@ -12534,6 +13295,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (st.progressHint) st.progressHint.textContent = emptyHint;
     st.loadingEl.classList.toggle("is-bare", !!emptyHint);
     st.loadingEl.style.display = "";
+    motionProgressIn(st.loadingEl);
     st.startedAt = Date.now();
     if (st.progressBar) st.progressBar.style.width = "4%";
     if (st.progressText) st.progressText.textContent = "准备生成建议";
@@ -12593,7 +13355,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     if (token !== st.token) return;
     st.tree = st.run && st.run.suggestions.length ? mergeSuggestions(tree, st.run) : tree;
-    await renderCanvas(st);
+    await renderCanvas(st, true);
     renderTop(st);
   }
   function renderTop(st) {
@@ -12640,7 +13402,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     st.deps.notice("未建向量索引：请先在第二大脑执行「重建索引」，再回白板点「重新生成」");
   }
-  async function renderCanvas(st) {
+  async function renderCanvas(st, motionFresh) {
     var _a, _b, _c, _d, _e, _f, _g, _h;
     const worldEl = st.worldEl;
     for (const el of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
@@ -12732,6 +13494,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     syncWorld(st);
     drawEdges(st);
     applySelection(st);
+    motionTreeCards(worldEl, { fresh: motionFresh, rootId });
+    motionTreeEdges(st.svg);
   }
   function widthOf(st, node) {
     var _a;
@@ -13002,10 +13766,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after = part.node.splitText(offset);
-    const len = Math.min(hit.len, after.data.length);
-    const tail = after.splitText(len);
-    (_b = after.parentNode) == null ? void 0 : _b.insertBefore(dot, tail);
+    const after2 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after2.data.length);
+    const tail = after2.splitText(len);
+    (_b = after2.parentNode) == null ? void 0 : _b.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -13256,6 +14020,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const top = Math.max(8, Math.min(y - num(rect.top), (rect.height || CANVAS_FALLBACK_H) - mh - 8));
     menu.style.left = `${left}px`;
     menu.style.top = `${top}px`;
+    motionTreeMenu(menu);
     st.menu = menu;
     const outside = (ev) => {
       var _a2, _b2;
@@ -13400,6 +14165,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_mount_layout();
       init_mount_route();
       init_mount_suggest();
+      init_motion();
       MASK_ID = "bz-kb-mt-mask";
       WIN_ID = "bz-kb-mt-window";
       ESC_ID = "bz-kb-mt";
@@ -13957,6 +14723,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_source();
       init_video_meta();
       init_range_bar();
+      init_motion();
       IMAGE_ENTRY_MAX = 9;
       REL_BG_NOTICE_KEY = "bz-kb-entry-rel";
       STATUS_META = {
@@ -13982,6 +14749,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.popup = null;
           this.contentEl = null;
           this.part = "z1";
+          /**
+           * 动效层 boot 消费标志（motion.ts 口径）：showMain 置 'boot'，点部签置 'part'，
+           * 首个渲染消费即熄复位 'silent'——后台文件变更刷新等非首次渲染静默不重播。
+           */
+          this.motionCue = "silent";
           this.allNotes = [];
           this.allCards = [];
           this.allTopics = [];
@@ -14186,6 +14958,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const act = t.getAttribute("data-kb-act");
           if (act === "part") {
             this.part = t.getAttribute("data-part") || "z1";
+            this.motionCue = "part";
             void this.refreshCurrent();
             this.syncPartButtons();
           } else if (act === "term-entry") this.showTermEntry();
@@ -14206,6 +14979,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           } else if (act === "cards-orphan") {
             if (!this.mountIndex) return;
             this.cardOrphanOnly = !this.cardOrphanOnly;
+            this.motionCue = "part";
             this.renderCards();
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
@@ -14225,12 +14999,27 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          this.motionCue = "boot";
+          motionMainIn(this.popup);
+          window.__bzKbReplay = () => {
+            if (!this.popup || !this.mask) return;
+            this.mask.style.display = "block";
+            this.popup.style.display = "flex";
+            this.motionCue = "boot";
+            motionMainIn(this.popup);
+            void this.refreshCurrent();
+          };
           void this.refreshCurrent();
           void this.runBackfill();
         }
         hideMain() {
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
+          if (this.popup && motionClosing(this.popup)) return;
+          const popup = this.popup;
+          const mask = this.mask;
+          motionMainOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
         }
         /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
         async refreshCurrent() {
@@ -14328,6 +15117,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
         </div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。</div>'}
       </div>`;
+          motionLitReveal(this.contentEl, this.motionCue);
+          this.motionCue = "silent";
         }
         /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
         async openPreview(n, kind = "lit") {
@@ -14351,6 +15142,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
+          motionSheetIn(ovl);
           this._previewNote = n;
           const bodyEl2 = ovl ? q(ovl, "#bz-kb-preview-body") : null;
           if (bodyEl2) {
@@ -14377,6 +15169,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               this._openExternal(a.getAttribute("data-lit-src-url") || "");
             });
           });
+          motionPreviewBody(ovl);
         }
         /**
          * 按 path 直达文献预览（issue 329 跨域 API，ADR-0144 划词锚定双链点击）：主面板不出场——
@@ -14493,6 +15286,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.cardRowsEl = q(this.contentEl, "#kb-card-rows");
           this.cardsShown = 0;
           this.appendCardRows(80);
+          this.motionCue = "silent";
         }
         /** 追加 n 行（增量：已渲染的行不动，滚动位置与 DOM 节点都保住） */
         appendCardRows(n) {
@@ -14503,6 +15297,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             rowsEl.innerHTML = `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在「卡片文件夹」里新建一篇笔记即可。"}</div>`;
             this.cardsShown = 0;
             this.updateCardMore(pool);
+            motionLitReveal(rowsEl, this.motionCue);
             return;
           }
           const from = Math.max(0, this.cardsShown);
@@ -14514,6 +15309,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             while (tmp.firstChild) frag.appendChild(tmp.firstChild);
             rowsEl.appendChild(frag);
             this.cardsShown = to;
+            motionCardsAppended(rowsEl, from, this.motionCue);
           }
           this.updateCardMore(pool);
         }
@@ -14540,6 +15336,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 span.className = "bz-kb-orphan";
                 span.title = "既无入链也无挂载";
                 span.textContent = "孤 儿";
+                motionStampBadge(span);
                 const dom = hw.querySelector(".bz-kb-dom");
                 if (dom) hw.insertBefore(span, dom);
                 else hw.appendChild(span);
@@ -14553,6 +15350,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 b.className = "bz-kb-refbadge";
                 b.title = refBadgeTitle(n);
                 b.textContent = `被引 ${n}`;
+                motionStampBadge(b);
                 const btn = tail.querySelector(".bz-kb-mt-openbtn");
                 if (btn) tail.insertBefore(b, btn);
                 else tail.appendChild(b);
@@ -14580,6 +15378,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             b.className = "bz-kb-refbadge";
             b.title = refBadgeTitle(n);
             b.textContent = `被引 ${n}`;
+            motionStampBadge(b);
             tail.insertBefore(b, tail.firstChild);
           }
         }
@@ -14646,6 +15445,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
     </div>`;
+          motionLitReveal(this.contentEl, this.motionCue);
+          this.motionCue = "silent";
         }
         /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
         async noteRels(n) {
@@ -14691,13 +15492,28 @@ ${String(blockText != null ? blockText : "").trim()}`);
           return ovl;
         }
         closeSheet() {
+          const dropHost = () => {
+            if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
+              this.previewHostEl.remove();
+              this.previewHostEl = null;
+            }
+          };
+          let pending = 0;
           for (const host of [this.popup, this.previewHostEl]) {
-            host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+            host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => {
+              if (x.dataset.bzMotionClosing === "1") {
+                x.remove();
+                return;
+              }
+              pending++;
+              motionSheetOut(x, () => {
+                x.remove();
+                pending--;
+                dropHost();
+              });
+            });
           }
-          if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
-            this.previewHostEl.remove();
-            this.previewHostEl = null;
-          }
+          if (!pending) dropHost();
         }
         sheetWrap(title, body) {
           return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -14878,9 +15694,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 面板显示 + 按当前视图重绘（两个入口共用的收尾） */
         _showVideoWindow() {
           if (!this.videoMask || !this.videoPopup) return;
+          const fresh = this.videoPopup.style.display !== "flex";
           topifyZ(this.videoMask, this.videoPopup);
           this.videoMask.style.display = "block";
           this.videoPopup.style.display = "flex";
+          this.motionCue = "part";
+          motionVideoIn(this.videoPopup);
           void this.refreshVideoPanel();
         }
         /**
@@ -14916,16 +15735,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         hideVideo() {
-          if (this.videoMask) this.videoMask.style.display = "none";
-          if (this.videoPopup) this.videoPopup.style.display = "none";
+          if (this.videoPopup && motionClosing(this.videoPopup)) return;
+          const popup = this.videoPopup;
+          const mask = this.videoMask;
+          motionVideoOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
         }
         async refreshVideoPanel() {
           const tasks = await KnowledgeData.loadTasks();
           if (!this.videoList) return;
+          const cue = this.motionCue;
+          this.motionCue = "silent";
           this._syncVideoHead();
           this.videoList.innerHTML = "";
           if (this.videoView === "history") {
             this.renderHistory(tasks);
+            motionVideoRows(this.videoList, cue);
             return;
           }
           const active = tasks.filter((t) => !t.archived);
@@ -14944,10 +15771,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
             empty.className = "bz-kb-empty";
             empty.textContent = "暂无转文献任务。点右上角加号添加视频链接与起止时间，回到桌面端即可批量处理。";
             this.videoList.appendChild(empty);
+            motionVideoRows(this.videoList, cue);
             this._syncRunButton(active);
             return;
           }
           for (const t of active) this.videoList.appendChild(this.renderRow(t));
+          motionVideoRows(this.videoList, cue);
           this._syncRunButton(active);
         }
         _syncStatusCounts(tasks) {
@@ -15337,6 +16166,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.addMask, this.addPopup);
           this.addMask.style.display = "block";
           this.addPopup.style.display = "flex";
+          motionAddIn(this.addPopup);
           const urlInput = q(this.addPopup, "#lit-add-url");
           if (urlInput) setTimeout(() => urlInput.focus(), 100);
           if (((_g = editItem == null ? void 0 : editItem.url) != null ? _g : "").trim()) void this._handleResolve({ auto: true });
@@ -15351,7 +16181,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const pages = (meta == null ? void 0 : meta.pages) || [];
           const multi = pages.length > 1;
           const more = q(popup, "#lit-add-more");
-          if (more) more.style.display = this.addRevealed ? "block" : "none";
+          if (more) {
+            const wasHidden = more.style.display === "none";
+            more.style.display = this.addRevealed ? "block" : "none";
+            if (wasHidden && this.addRevealed) motionAddReveal(more);
+          }
           const tEl = q(popup, "#lit-add-ititle");
           if (tEl) {
             tEl.textContent = (meta == null ? void 0 : meta.title) || "（未取到标题）";
@@ -15640,8 +16474,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         hideAddDialog() {
-          if (this.addMask) this.addMask.style.display = "none";
-          if (this.addPopup) this.addPopup.style.display = "none";
+          if (this.addPopup && motionClosing(this.addPopup)) return;
+          const popup = this.addPopup;
+          const mask = this.addMask;
+          motionAddOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
           this.editingId = null;
           this.addUrlReset();
           this.addMeta = null;
@@ -16048,6 +16887,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.termMask, this.termPopup);
           this.termMask.style.display = "block";
           this.termPopup.style.display = "flex";
+          motionEntryIn(this.termPopup);
           const zone = q(this.termPopup, "#lit-image-drop");
           const focusEl = mode === "passage" ? area : mode === "image" ? zone : input;
           if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
@@ -16064,8 +16904,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!hint) return;
           const term = ((_b = (_a = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a.value) != null ? _b : "").trim();
           const dup = term ? findDuplicateTermNote(term) : null;
+          const wasHidden = hint.style.display === "none";
           hint.textContent = dup ? "已存在同名文献笔记：" + ((_c = String(dup).split("/").pop()) == null ? void 0 : _c.replace(/\.md$/, "")) : "";
           hint.style.display = dup ? "" : "none";
+          if (dup && wasHidden) motionDupHint(hint);
         }
         /** 重名提醒复位（开面板 / 关面板即全新态） */
         resetTermDupHint() {
@@ -16101,8 +16943,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
           if (hitLimit) notice(`一次最多放 ${IMAGE_ENTRY_MAX} 张图`, "error");
           if (!added) return;
+          const prevCount = this.entryImages.length - added;
           this.renderEntryImage();
           this.draftInvalidate();
+          motionThumbsIn(this.termPopup ? q(this.termPopup, "#lit-image-grid") : null, prevCount);
         }
         /**
          * data URL 图片预填（issue 329 剪藏本工具框「存为图版」）：程序化入口没有 File 对象——
@@ -16269,6 +17113,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           chip2.style.display = "inline-flex";
           chip2.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc2(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
           if (input) input.style.display = "none";
+          motionSrcChipIn(chip2);
         }
         /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
         termSrcRefreshMeta() {
@@ -16327,8 +17172,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const el = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
           if (!el) return;
           if (el.textContent === text && el.classList.contains("bz-lit-term-pending") === pending) return;
+          const wasPending = el.classList.contains("bz-lit-term-pending");
           el.classList.toggle("bz-lit-term-pending", pending);
           el.textContent = text;
+          if (wasPending && !pending && text) motionContentArrive(el);
         }
         /**
          * 属性行的「分析中…」占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出的行，
@@ -16340,12 +17187,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
           el.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text}`;
           el.classList.add("bz-lit-meta-pending");
         }
-        /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰 */
+        /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰；从「分析中…」落到真值时播「墨字落纸」 */
         setTermMetaValue(sel, text) {
           const el = this.termPopup ? q(this.termPopup, sel) : null;
           if (!el) return;
+          const wasPending = el.classList.contains("bz-lit-meta-pending");
           el.textContent = text;
           el.classList.remove("bz-lit-meta-pending");
+          if (wasPending) motionMetaSetValue(el);
         }
         /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
         /**
@@ -16465,7 +17314,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!el) return;
           const st = this.entryRelState;
           const row = this.termPopup ? q(this.termPopup, "#lit-term-meta-relrow") : null;
-          if (row) row.style.display = st === "idle" ? "none" : "";
+          if (row) {
+            const wasHidden = row.style.display === "none";
+            row.style.display = st === "idle" ? "none" : "";
+            if (wasHidden && st !== "idle") motionRelRowIn(row);
+          }
           el.className = "bz-lit-term-meta-v";
           if (st === "loading") {
             el.classList.add("bz-lit-rel-idle");
@@ -16482,6 +17335,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             el.innerHTML = items.map(
               (it, i) => `<span class="bz-lit-rel-chip"><span>${esc2(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
             ).join("");
+            motionRelChips(el);
             return;
           }
           if (st === "empty") {
@@ -16758,6 +17612,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 中止在途生成流（ADR-0152 决策 7）：先置空句柄再 abort——它的收尾据此被序号守卫拦掉，
          *  不会把「用户自己关的窗 / 自己触发的重生成」误报成「生成中断」。 */
         abortTermGenerate() {
+          motionPenOff();
           const ac = this.termGenAbort;
           this.termGenAbort = null;
           ac == null ? void 0 : ac.abort();
@@ -16769,7 +17624,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 注意这里**不设** termPreview：草稿仍以收尾的 parseAiJson 结果为准，界面提前展开不等于草稿提前成立。
          */
         beginTermPreview() {
-          var _a, _b, _c;
+          var _a, _b, _c, _d, _e;
           if (!this.termPopup) return;
           this.termStreamBody = "";
           this.termDraftBroken = false;
@@ -16784,9 +17639,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.setTermMetaValue("#lit-term-meta-date", dateStamp());
           this.setTermContent("正在生成…", true);
           this.setTermPreviewVisible(true);
+          const previewEl = q(this.termPopup, "#lit-term-preview");
+          motionEntryPreviewIn(previewEl);
+          motionEntryPenOn((_d = (_c = q(this.termPopup, "#lit-term-content")) == null ? void 0 : _c.closest(".bz-lit-term-card")) != null ? _d : null);
           this.refreshTermActions();
           const prev = q(this.termPopup, "#lit-term-preview");
-          (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
+          (_e = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _e.call(prev, { behavior: "smooth", block: "nearest" });
         }
         /**
          * 流式字段到达（ADR-0152 决策 3/11）：正文逐字写，领域与标题到达即填。
@@ -16816,6 +17674,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           };
           this.termStreamBody = draft.summary;
           this.termDraftBroken = false;
+          motionPenOff();
           if (!this.termPopup) return;
           if (this.entryTitled && !keepTitle) this.setTermMetaValue("#lit-entry-meta-title", draft.title || "—");
           if (!keepDomain) this.setTermMetaValue("#lit-term-meta-domain", draft.domain || "—");
@@ -16829,6 +17688,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 用户主动中止不会走到这里（由调用方的句柄守卫拦掉）。
          */
         handleTermGenFailure(e) {
+          motionPenOff();
           if (this.termStreamBody) {
             this.termDraftBroken = true;
             notice("生成中断：已保留收到的内容，请重新生成后再写入", "error");
@@ -16913,7 +17773,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               }
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
             }
-            this.hideTermEntry();
+            this.hideTermEntry(true);
             if (onCreated) {
               try {
                 onCreated(path);
@@ -16931,7 +17791,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
             this.refreshTermActions();
           }
         }
-        hideTermEntry() {
+        /**
+         * 关闭录入面板。`immediate` = 写入成功路径（确认落盘后无可丢失，用户预期即时收场）：
+         * 跳过收纸退场直接交还 display——否则关窗动画（240ms）与列表刷新竞速，
+         * 「写入 → 关窗 + 笔记进列表」的既有断言/体感会被退场演出拖慢。
+         */
+        hideTermEntry(immediate = false) {
+          if (this.termPopup && motionClosing(this.termPopup)) return;
           this.abortTermGenerate();
           this.termGenerating = false;
           this.termSaving = false;
@@ -16944,8 +17810,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.resetTermDupHint();
           const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
           this.termSrcReset(srcInput);
-          if (this.termMask) this.termMask.style.display = "none";
-          if (this.termPopup) this.termPopup.style.display = "none";
+          if (immediate) {
+            if (this.termMask) this.termMask.style.display = "none";
+            if (this.termPopup) this.termPopup.style.display = "none";
+          } else {
+            const popup = this.termPopup;
+            const mask = this.termMask;
+            motionEntryOut(popup, () => {
+              if (mask) mask.style.display = "none";
+              if (popup) popup.style.display = "none";
+            });
+          }
           void this.refreshCurrent();
         }
         /**
@@ -17003,6 +17878,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         destroy() {
           var _a;
           this.abortTermGenerate();
+          motionTeardown();
           this.clearRunTimer();
           this.runState.clear();
           if (this.termSrcTimer) {
@@ -22463,23 +23339,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M.appRef = null;
-    M.open = false;
-    M.articles = [];
-    M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M.clipNotes = null;
-    M.clipUrls = /* @__PURE__ */ new Set();
-    M.sel = defaultSel();
-    M.cur = null;
-    M.list = [];
-    M.upInfo = {};
-    M.mobDetailOpen = false;
+    M2.appRef = null;
+    M2.open = false;
+    M2.articles = [];
+    M2.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M2.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M2.clipNotes = null;
+    M2.clipUrls = /* @__PURE__ */ new Set();
+    M2.sel = defaultSel();
+    M2.cur = null;
+    M2.list = [];
+    M2.upInfo = {};
+    M2.mobDetailOpen = false;
   }
-  var M;
+  var M2;
   var init_state = __esm({
     "src/clipbook/state.ts"() {
-      M = {
+      M2 = {
         appRef: null,
         open: false,
         articles: [],
@@ -22580,22 +23456,22 @@ ${bodyText.substring(0, 6e3)}`;
     var _a;
     const res = await readNewsData();
     if (res.missing) {
-      M.articles = [];
-      M.clipNotes = null;
-      M.clipUrls = /* @__PURE__ */ new Set();
-      M.sidecar = emptySidecar();
-      M.upInfo = {};
-      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
+      M2.articles = [];
+      M2.clipNotes = null;
+      M2.clipUrls = /* @__PURE__ */ new Set();
+      M2.sidecar = emptySidecar();
+      M2.upInfo = {};
+      M2.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M2.sidecar, clipNotes: null, clipUrls: M2.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M.articles = [];
-      M.clipNotes = null;
-      M.clipUrls = /* @__PURE__ */ new Set();
-      M.sidecar = emptySidecar();
-      M.upInfo = {};
-      M.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M.sidecar, clipNotes: null, clipUrls: M.clipUrls, upInfo: {} };
+      M2.articles = [];
+      M2.clipNotes = null;
+      M2.clipUrls = /* @__PURE__ */ new Set();
+      M2.sidecar = emptySidecar();
+      M2.upInfo = {};
+      M2.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M2.sidecar, clipNotes: null, clipUrls: M2.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a : 30;
@@ -22632,13 +23508,13 @@ ${bodyText.substring(0, 6e3)}`;
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M.articles = data.articles;
-    M.stats = data.stats;
-    M.sidecar = sidecar;
-    M.clipNotes = clipNotes;
-    M.clipUrls = clipUrls;
-    M.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M.upInfo };
+    M2.articles = data.articles;
+    M2.stats = data.stats;
+    M2.sidecar = sidecar;
+    M2.clipNotes = clipNotes;
+    M2.clipUrls = clipUrls;
+    M2.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M2.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -22662,8 +23538,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M.articles || []) keys.add(a.id);
-    for (const n of M.clipNotes || []) {
+    for (const a of M2.articles || []) keys.add(a.id);
+    for (const n of M2.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -22939,7 +23815,7 @@ ${bodyText.substring(0, 6e3)}`;
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M.appRef = app;
+    M2.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -22947,13 +23823,13 @@ ${bodyText.substring(0, 6e3)}`;
   function showPanel() {
     var _a;
     if (!overlayEl2) {
-      buildDom2(M.appRef);
+      buildDom2(M2.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M.open = true;
+    M2.open = true;
     beginSession();
     if (dirty || !loaded) {
       if (!loaded && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
@@ -22966,7 +23842,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M.open && overlayEl2) return Promise.resolve();
+    if (!M2.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -22983,7 +23859,7 @@ ${bodyText.substring(0, 6e3)}`;
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M.open) renderAll();
+      if (M2.open) renderAll();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -22996,7 +23872,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M.open) return;
+    if (!M2.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -23019,8 +23895,8 @@ ${bodyText.substring(0, 6e3)}`;
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M.open = false;
-    M.mobDetailOpen = false;
+    M2.open = false;
+    M2.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -23060,8 +23936,8 @@ ${bodyText.substring(0, 6e3)}`;
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M.open = false;
-    M.mobDetailOpen = false;
+    M2.open = false;
+    M2.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -23160,14 +24036,14 @@ ${bodyText.substring(0, 6e3)}`;
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M.cur) openNote(M.cur);
+      if (t.closest("[data-clip-open-note]") && M2.cur) openNote(M2.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a2, _b;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b = (_a2 = e.target).closest) == null ? void 0 : _b.call(_a2, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M.cur) openNote(M.cur);
+        if (M2.cur) openNote(M2.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -23210,8 +24086,8 @@ ${bodyText.substring(0, 6e3)}`;
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a2;
-      if (((_a2 = M.cur) == null ? void 0 : _a2.st) === "saved") return;
-      void doSave(M.cur);
+      if (((_a2 = M2.cur) == null ? void 0 : _a2.st) === "saved") return;
+      void doSave(M2.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -23233,9 +24109,9 @@ ${bodyText.substring(0, 6e3)}`;
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M2.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M2.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M2.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -23250,7 +24126,7 @@ ${bodyText.substring(0, 6e3)}`;
     escHandle2 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M.mobDetailOpen) {
+        if (M2.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -23296,13 +24172,13 @@ ${bodyText.substring(0, 6e3)}`;
     });
   }
   function selectSource(src) {
-    M.sel = {
+    M2.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M.mobDetailOpen = false;
+    M2.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -23311,7 +24187,7 @@ ${bodyText.substring(0, 6e3)}`;
     renderAll();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M.sel.kind && String(src.platform || "") === M.sel.platform && (src.up ? String(src.up) : null) === M.sel.up && String(src.site || "") === M.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M2.sel.kind && String(src.platform || "") === M2.sel.platform && (src.up ? String(src.up) : null) === M2.sel.up && String(src.site || "") === M2.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -23330,16 +24206,16 @@ ${bodyText.substring(0, 6e3)}`;
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll() {
-    if (!M.open) return;
+    if (!M2.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M.mobDetailOpen) {
-      if (M.cur) renderMobDetail();
+    if (M2.mobDetailOpen) {
+      if (M2.cur) renderMobDetail();
       else {
-        M.mobDetailOpen = false;
+        M2.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -23347,7 +24223,7 @@ ${bodyText.substring(0, 6e3)}`;
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M.mobDetailOpen = false;
+    M2.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll();
   }
@@ -23355,17 +24231,17 @@ ${bodyText.substring(0, 6e3)}`;
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M2.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M.sel;
+    const s = M2.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], currentSrc(), M.upInfo);
+    return queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], currentSrc(), M2.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -23381,7 +24257,7 @@ ${bodyText.substring(0, 6e3)}`;
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo));
+    const b = bucketByState(queryBySourceFull(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], src, M2.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -23389,7 +24265,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], src, M2.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -23429,39 +24305,39 @@ ${bodyText.substring(0, 6e3)}`;
   function renderRail() {
     var _a, _b, _c, _d;
     if (!railListEl) return;
-    const arts = M.articles;
-    const clipNotes = M.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, source2, M.upInfo).filter(matchesSearch).length;
+    const arts = M2.articles;
+    const clipNotes = M2.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M2.sidecar, M2.clipUrls, clipNotes, source2, M2.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M.sidecar.savedArchive || []).map((x) => x.url)), M.clipUrls)) {
-      const full = queryBySource(arts, M.sidecar, M.clipUrls, clipNotes, { kind: "site", site: row.site }, M.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M2.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M2.sidecar.savedArchive || []).map((x) => x.url)), M2.clipUrls)) {
+      const full = queryBySource(arts, M2.sidecar, M2.clipUrls, clipNotes, { kind: "site", site: row.site }, M2.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active = M.sel.kind === "site" && M.sel.site === row.site;
+      const active = M2.sel.kind === "site" && M2.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b = (_a = M.upInfo) == null ? void 0 : _a[uid]) == null ? void 0 : _b.name;
+        const backfilled = (_b = (_a = M2.upInfo) == null ? void 0 : _a[uid]) == null ? void 0 : _b.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active = M.sel.kind === "inbox" && M.sel.platform === "B站" && M.sel.up === uid;
+      const active = M2.sel.kind === "inbox" && M2.sel.platform === "B站" && M2.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active, name.slice(0, 1));
     }
-    const clipActive = M.sel.kind === "clip";
+    const clipActive = M2.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M2.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -23486,9 +24362,9 @@ ${bodyText.substring(0, 6e3)}`;
       return;
     }
     const trySelect = () => {
-      const hit = M.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M2.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M.open) showPanel();
+      if (!M2.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -23501,10 +24377,10 @@ ${bodyText.substring(0, 6e3)}`;
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source2, M.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], source2, M2.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], source2, M.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], source2, M2.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -23546,26 +24422,26 @@ ${bodyText.substring(0, 6e3)}`;
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M.cur = null;
+      M2.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M.articles, M.sidecar, M.clipUrls, M.clipNotes || [], src, M.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M2.articles, M2.sidecar, M2.clipUrls, M2.clipNotes || [], src, M2.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M.cur = null;
+        M2.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M.cur && M.cur.id))) {
-        M.cur = list[0];
+      if (!list.some((a) => a.id === (M2.cur && M2.cur.id))) {
+        M2.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M.cur ? M.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M.list = list;
+      listEl.innerHTML = tocListHtml(list, M2.cur ? M2.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M2.list = list;
       bindItemMenus();
       return;
     }
@@ -23573,27 +24449,27 @@ ${bodyText.substring(0, 6e3)}`;
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M.cur = null;
+      M2.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M.cur && M.cur.id))) {
-      M.cur = flat[0];
+    if (!flat.some((a) => a.id === (M2.cur && M2.cur.id))) {
+      M2.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M.cur ? M.cur.id : null;
+    const curId = M2.cur ? M2.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M.cur = null;
+        M2.cur = null;
         if (readerEl) renderReader();
-        M.list = [];
+        M2.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M.list = hit;
+      M2.list = hit;
       bindItemMenus();
       return;
     }
@@ -23611,7 +24487,7 @@ ${bodyText.substring(0, 6e3)}`;
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M.list = flat;
+    M2.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -23624,10 +24500,10 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M.list;
+    const all = M2.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M2.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -23703,8 +24579,8 @@ ${bodyText.substring(0, 6e3)}`;
   function transformBodyForRead(a, body) {
     var _a, _b;
     if (a.origin !== "news") return body;
-    const marks = ((_a = M.sidecar.marks) == null ? void 0 : _a[a.id]) || [];
-    const swaps = ((_b = M.sidecar.savedImages) == null ? void 0 : _b[a.id]) || [];
+    const marks = ((_a = M2.sidecar.marks) == null ? void 0 : _a[a.id]) || [];
+    const swaps = ((_b = M2.sidecar.savedImages) == null ? void 0 : _b[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -23719,7 +24595,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M.cur;
+    const a = M2.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -23748,7 +24624,7 @@ ${bodyText.substring(0, 6e3)}`;
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M2.cur && M2.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -23759,13 +24635,13 @@ ${bodyText.substring(0, 6e3)}`;
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M.cur && M.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M2.cur && M2.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M2.mobDetailOpen && !!M2.cur && M2.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -23780,11 +24656,11 @@ ${bodyText.substring(0, 6e3)}`;
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M.cur && M.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M2.cur && M2.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M.mobDetailOpen && M.cur && M.cur.id === a.id && mobDetailEl) {
+    if (M2.mobDetailOpen && M2.cur && M2.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -23826,12 +24702,12 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M2.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M.cur ? list.findIndex((x) => x.id === M.cur.id) : -1;
+    const idx = M2.cur ? list.findIndex((x) => x.id === M2.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M.cur || next.id !== M.cur.id)) selectArticle(next.id);
+    if (next && (!M2.cur || next.id !== M2.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -23840,19 +24716,19 @@ ${bodyText.substring(0, 6e3)}`;
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M.cur || M.cur.id !== a.id;
+    const changed = !M2.cur || M2.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M.cur) {
+    if (changed && M2.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M.cur.id, sc.scrollTop);
+        readScrollMemo.set(M2.cur.id, sc.scrollTop);
       }
     }
-    M.cur = a;
+    M2.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -23989,25 +24865,25 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function refreshAfterAction() {
     var _a;
-    const prevId = (_a = M.cur) == null ? void 0 : _a.id;
-    const prevIdx = M.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a = M2.cur) == null ? void 0 : _a.id;
+    const prevIdx = M2.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M.cur = flat.find((x) => x.id === prevId) || M.cur;
+      M2.cur = flat.find((x) => x.id === prevId) || M2.cur;
     } else if (flat.length) {
-      M.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M.cur && M.cur.id !== prevId;
+      M2.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M2.cur && M2.cur.id !== prevId;
     } else {
-      M.cur = null;
+      M2.cur = null;
     }
-    if (advanced && M.cur) markReadOnOpen(M.cur);
+    if (advanced && M2.cur) markReadOnOpen(M2.cur);
     renderAll();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M2.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -24037,9 +24913,9 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M.articles;
-    const clipNotes = M.clipNotes || [];
-    const savedUrls = new Set((M.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M2.articles;
+    const clipNotes = M2.clipNotes || [];
+    const savedUrls = new Set((M2.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -24149,8 +25025,8 @@ ${bodyText.substring(0, 6e3)}`;
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M.cur = a;
-    M.mobDetailOpen = true;
+    M2.cur = a;
+    M2.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -24161,12 +25037,12 @@ ${bodyText.substring(0, 6e3)}`;
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M2.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M.stats = res.stats;
-      if (M.open && !M.mobDetailOpen) {
+      if (res && res.changed && res.stats) M2.stats = res.stats;
+      if (M2.open && !M2.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -24175,8 +25051,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function renderMobDetail() {
     var _a;
-    if (!mobDetailEl || !M.cur) return;
-    const a = M.cur;
+    if (!mobDetailEl || !M2.cur) return;
+    const a = M2.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -24208,7 +25084,7 @@ ${bodyText.substring(0, 6e3)}`;
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M2.mobDetailOpen && !!M2.cur && M2.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -24281,7 +25157,7 @@ ${bodyText.substring(0, 6e3)}`;
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M.cur;
+    const a = M2.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -24297,7 +25173,7 @@ ${bodyText.substring(0, 6e3)}`;
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M.cur;
+    const a = M2.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -24315,7 +25191,7 @@ ${bodyText.substring(0, 6e3)}`;
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M.open) return;
+    if (!M2.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -24378,7 +25254,7 @@ ${bodyText.substring(0, 6e3)}`;
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M.cur && M.cur.id === articleId ? M.cur : null;
+    return M2.cur && M2.cur.id === articleId ? M2.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -24436,10 +25312,10 @@ ${bodyText.substring(0, 6e3)}`;
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M.cur && M.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M2.cur && M2.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M.mobDetailOpen) return;
+    if (!mobDetailEl || !M2.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -24466,12 +25342,12 @@ ${bodyText.substring(0, 6e3)}`;
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M.mobDetailOpen && !!M.cur && M.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M2.mobDetailOpen && !!M2.cur && M2.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M.cur || M.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M.cur);
-    if (M.mobDetailOpen) refreshMobBodyInPlace(M.cur);
+    if (!M2.cur || M2.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M2.cur);
+    if (M2.mobDetailOpen) refreshMobBodyInPlace(M2.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -24488,8 +25364,8 @@ ${bodyText.substring(0, 6e3)}`;
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M.sidecar = await addPendingSourceNote(a.id, notePath);
+        M2.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M2.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -24518,7 +25394,7 @@ ${bodyText.substring(0, 6e3)}`;
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M.sidecar = res.sidecar;
+      if (res.sidecar) M2.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -24576,7 +25452,7 @@ ${bodyText.substring(0, 6e3)}`;
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M.sidecar = await addPendingSourceNote(a.id, notePath);
+        M2.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -24726,8 +25602,8 @@ ${bodyText.substring(0, 6e3)}`;
       maxWidth: 560,
       schema,
       onClose: () => {
-        M.clipNotes = null;
-        M.clipUrls = /* @__PURE__ */ new Set();
+        M2.clipNotes = null;
+        M2.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -25137,20 +26013,20 @@ ${bodyText.substring(0, 6e3)}`;
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after = classifyFilePath(newPath);
-    if (!after) return;
+    const after2 = classifyFilePath(newPath);
+    if (!after2) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after
+      movedOut: before !== after2
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after === "diary") {
+    if (after2 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after}:file-renamed`, payload);
+    emitDomainEvent(`${after2}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;

@@ -46,6 +46,14 @@ import { backfillNotes, findDuplicateTermNote, generateImageDraft, generateImage
 import { canonicalVideoUrl, cleanSourceTitle, isUrlLikeSourceText, normalizeSourceUrl, noteSourceName, type TermSource } from './source';
 import { fetchCheckedQualities, fetchVideoMeta, needsBvidRepair, parseBvid, resolveVideo, type ResolvedVideo, type VideoMeta } from './video-meta';
 import { RangeBar } from './range-bar';
+import {
+  motionAddIn, motionAddOut, motionAddReveal, motionCardsAppended, motionContentArrive, motionDupHint,
+  motionEntryIn, motionEntryOut, motionEntryPenOn, motionEntryPreviewIn, motionLitReveal, motionMainIn,
+  motionMainOut, motionMetaSetValue, motionPenOff, motionPreviewBody, motionRelChips, motionRelRowIn,
+  motionSheetIn, motionSheetOut, motionSrcChipIn, motionStampBadge, motionTeardown, motionThumbsIn,
+  motionTreeIn, motionTreeOut, motionTreeCards, motionTreeEdges, motionTreeMenu, motionProgressIn,
+  motionVideoIn, motionVideoOut, motionVideoRows, motionClosing, type MotionCue,
+} from './motion';
 
 /** 文献类型 → 紧凑行名（issue 309/312 四类：名词 / 段落 / 影像 / 图版；未知类型按名词兜底）；
  *  行内标签（字距版）与紧凑写法同源派生，别再各写一份映射（review 2026-09-14） */
@@ -457,6 +465,11 @@ export class UIManager {
   popup: HTMLElement | null = null;
   contentEl: HTMLElement | null = null;
   part: 'z1' | 'z2' | 'z3' = 'z1';
+  /**
+   * 动效层 boot 消费标志（motion.ts 口径）：showMain 置 'boot'，点部签置 'part'，
+   * 首个渲染消费即熄复位 'silent'——后台文件变更刷新等非首次渲染静默不重播。
+   */
+  private motionCue: MotionCue = 'silent';
   private allNotes: KnowledgeNoteEntry[] = [];
   private allCards: CardEntry[] = [];
   private allTopics: TopicEntry[] = [];
@@ -661,7 +674,7 @@ export class UIManager {
     const t = (e.target as HTMLElement).closest('[data-kb-act]') as HTMLElement | null;
     if (!t) return;
     const act = t.getAttribute('data-kb-act');
-    if (act === 'part') { this.part = (t.getAttribute('data-part') as 'z1' | 'z2' | 'z3') || 'z1'; void this.refreshCurrent(); this.syncPartButtons(); }
+    if (act === 'part') { this.part = (t.getAttribute('data-part') as 'z1' | 'z2' | 'z3') || 'z1'; this.motionCue = 'part'; void this.refreshCurrent(); this.syncPartButtons(); }
     else if (act === 'term-entry') this.showTermEntry();
     else if (act === 'passage-entry') this.showPassageEntry();
     else if (act === 'video-entry') this.showVideoEntry();
@@ -673,6 +686,7 @@ export class UIManager {
     else if (act === 'cards-orphan') {
       if (!this.mountIndex) return; // 索引未统计（扫描失败）：芯片置灰，不给假状态
       this.cardOrphanOnly = !this.cardOrphanOnly;
+      this.motionCue = 'part'; // 动效层：用户主动换池 = 翻部级编排（重建后消费）
       this.renderCards(); // 池随筛选变化 → 重建（内部回收到首屏 80 行）
     }
     else if (act === 'topic-open') { const p = t.getAttribute('data-path') || ''; const tp = this.allTopics.find((x) => x.path === p); if (tp) void this.openPreview({ file: tp.file, path: tp.path, title: tp.title, domain: tp.where }, 'topic'); }
@@ -692,13 +706,31 @@ export class UIManager {
     topifyZ(this.mask, this.popup);
     this.mask.style.display = 'block';
     this.popup.style.display = 'flex';
+    // 动效层：落纸壳入场；boot 标志置位，首个渲染（refreshCurrent → renderXxx）消费即熄
+    this.motionCue = 'boot';
+    motionMainIn(this.popup);
+    // 评审便利：#replay 重播首屏编排（motion.ts 的 hashchange 钩子消费；插件内无害）
+    (window as unknown as Record<string, unknown>).__bzKbReplay = () => {
+      if (!this.popup || !this.mask) return;
+      this.mask.style.display = 'block';
+      this.popup.style.display = 'flex';
+      this.motionCue = 'boot';
+      motionMainIn(this.popup);
+      void this.refreshCurrent();
+    };
     void this.refreshCurrent();
     void this.runBackfill();
   }
 
   hideMain(): void {
-    if (this.mask) this.mask.style.display = 'none';
-    if (this.popup) this.popup.style.display = 'none';
+    // 动效层：退场中忽略重复关闭（ESC 连按 / 遮罩连点），收纸演完才交还 display
+    if (this.popup && motionClosing(this.popup)) return;
+    const popup = this.popup;
+    const mask = this.mask;
+    motionMainOut(popup, () => {
+      if (mask) mask.style.display = 'none';
+      if (popup) popup.style.display = 'none';
+    });
   }
 
   /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
@@ -794,6 +826,9 @@ export class UIManager {
         </div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。</div>'}
       </div>`;
+    // 动效层：词典行抽卡接力（boot = 首开编排 / part = 翻部编排 / silent = 后台刷新静默）；消费即熄
+    motionLitReveal(this.contentEl, this.motionCue);
+    this.motionCue = 'silent';
   }
 
   /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
@@ -829,6 +864,7 @@ export class UIManager {
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc(r)}</span>`).join('')}</div>` : ''}
       ${srcHtml}`));
+    motionSheetIn(ovl); // 动效层：纸面摊开揭出
     this._previewNote = n;
     // 正文真 Markdown 渲染：加粗/列表/标题/引用原生出，视频 ![[mp4]] 内嵌为可播放 <video>。
     // ADR-0122 追加语义契约：render 是「追加到容器」，渲染前容器必须为空（预填纯文本再渲染 = 双份，issue 275）；
@@ -861,6 +897,8 @@ export class UIManager {
         this._openExternal(a.getAttribute('data-lit-src-url') || '');
       });
     });
+    // 动效层：摘录逐段浮现 + 关联签片弹出（正文渲染兜底完成后编排）
+    motionPreviewBody(ovl);
   }
   private _previewNote: PreviewEntry | null = null;
 
@@ -987,6 +1025,8 @@ export class UIManager {
     this.cardRowsEl = q<HTMLElement>(this.contentEl, '#kb-card-rows');
     this.cardsShown = 0;
     this.appendCardRows(80); // 首屏 80 行（口径不变）
+    // 动效层：首屏抽卡编排消费完毕（增量追加由 appendCardRows 内部自理），此后静默
+    this.motionCue = 'silent';
   }
 
   /** 追加 n 行（增量：已渲染的行不动，滚动位置与 DOM 节点都保住） */
@@ -1000,6 +1040,7 @@ export class UIManager {
       }</div>`;
       this.cardsShown = 0;
       this.updateCardMore(pool);
+      motionLitReveal(rowsEl, this.motionCue); // 动效层：空态轻揭出（silent 直通）
       return;
     }
     const from = Math.max(0, this.cardsShown);
@@ -1011,6 +1052,8 @@ export class UIManager {
       while (tmp.firstChild) frag.appendChild(tmp.firstChild);
       rowsEl.appendChild(frag);
       this.cardsShown = to;
+      // 动效层：新行抽卡揭出——首屏随 cue 编排，滚动增量永远播（新增行本是突然出现，揭出是纯增益）
+      motionCardsAppended(rowsEl, from, this.motionCue);
     }
     this.updateCardMore(pool);
   }
@@ -1038,6 +1081,7 @@ export class UIManager {
           span.className = 'bz-kb-orphan';
           span.title = '既无入链也无挂载';
           span.textContent = '孤 儿';
+          motionStampBadge(span); // 动效层：孤儿签盖章落位
           const dom = hw.querySelector('.bz-kb-dom');
           if (dom) hw.insertBefore(span, dom);
           else hw.appendChild(span);
@@ -1051,6 +1095,7 @@ export class UIManager {
           b.className = 'bz-kb-refbadge';
           b.title = refBadgeTitle(n);
           b.textContent = `被引 ${n}`;
+          motionStampBadge(b); // 动效层：被引徽标盖章落位
           const btn = tail.querySelector('.bz-kb-mt-openbtn');
           if (btn) tail.insertBefore(b, btn);
           else tail.appendChild(b);
@@ -1078,6 +1123,7 @@ export class UIManager {
       b.className = 'bz-kb-refbadge';
       b.title = refBadgeTitle(n);
       b.textContent = `被引 ${n}`;
+      motionStampBadge(b); // 动效层：被引徽标盖章落位
       tail.insertBefore(b, tail.firstChild);
     }
   }
@@ -1145,6 +1191,9 @@ export class UIManager {
     this.contentEl.innerHTML = `<div class="bz-kb-pd">
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
     </div>`;
+    // 动效层：主题行抽卡接力（消费 motionCue 即熄）
+    motionLitReveal(this.contentEl, this.motionCue);
+    this.motionCue = 'silent';
   }
 
   /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
@@ -1193,14 +1242,26 @@ export class UIManager {
     return ovl;
   }
   private closeSheet(): void {
+    // 动效层：预览纸面折回收起再移除（ovl 是自毁节点，退场随节点销毁；jsdom/无 WAAPI 同步移除零时差）
+    const dropHost = (): void => {
+      if (this.previewHostEl && !this.previewHostEl.querySelector('.bz-kb-ovl')) {
+        this.previewHostEl.remove();
+        this.previewHostEl = null;
+      }
+    };
+    let pending = 0;
     for (const host of [this.popup, this.previewHostEl]) {
-      host?.querySelectorAll('.bz-kb-ovl').forEach((x) => x.remove());
+      host?.querySelectorAll<HTMLElement>('.bz-kb-ovl').forEach((x) => {
+        if (x.dataset.bzMotionClosing === '1') { x.remove(); return; } // 退场中被换层：硬删不留残影
+        pending++;
+        motionSheetOut(x, () => {
+          x.remove();
+          pending--;
+          dropHost();
+        });
+      });
     }
-    // 独立宿主用完即撤：不留空壳节点常驻 document
-    if (this.previewHostEl && !this.previewHostEl.querySelector('.bz-kb-ovl')) {
-      this.previewHostEl.remove();
-      this.previewHostEl = null;
-    }
+    if (!pending) dropHost(); // 无弹层在场：独立宿主直接撤空壳
   }
   private sheetWrap(title: string, body: string): string {
     return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -1391,9 +1452,13 @@ export class UIManager {
   /** 面板显示 + 按当前视图重绘（两个入口共用的收尾） */
   private _showVideoWindow(): void {
     if (!this.videoMask || !this.videoPopup) return;
+    const fresh = this.videoPopup.style.display !== 'flex';
     topifyZ(this.videoMask, this.videoPopup);
     this.videoMask.style.display = 'block';
     this.videoPopup.style.display = 'flex';
+    // 动效层：壳落纸只在真开（抬层重入不重播）；行接力随 refreshVideoPanel 消费 cue
+    this.motionCue = 'part';
+    motionVideoIn(this.videoPopup);
     void this.refreshVideoPanel();
   }
 
@@ -1428,16 +1493,23 @@ export class UIManager {
   }
 
   hideVideo(): void {
-    if (this.videoMask) this.videoMask.style.display = 'none';
-    if (this.videoPopup) this.videoPopup.style.display = 'none';
+    if (this.videoPopup && motionClosing(this.videoPopup)) return; // 动效层：退场中忽略重复关闭
+    const popup = this.videoPopup;
+    const mask = this.videoMask;
+    motionVideoOut(popup, () => {
+      if (mask) mask.style.display = 'none';
+      if (popup) popup.style.display = 'none';
+    });
   }
 
   async refreshVideoPanel(): Promise<void> {
     const tasks = await KnowledgeData.loadTasks();
     if (!this.videoList) return;
+    const cue = this.motionCue; // 动效层：异步读库前捕 cue，读完按此编排并复位（批量事件刷新走 silent）
+    this.motionCue = 'silent';
     this._syncVideoHead();
     this.videoList.innerHTML = '';
-    if (this.videoView === 'history') { this.renderHistory(tasks); return; }
+    if (this.videoView === 'history') { this.renderHistory(tasks); motionVideoRows(this.videoList, cue); return; }
     const active = tasks.filter((t) => !t.archived);
     const running = BatchRunner.running;
     if (running) {
@@ -1454,10 +1526,12 @@ export class UIManager {
       empty.className = 'bz-kb-empty';
       empty.textContent = '暂无转文献任务。点右上角加号添加视频链接与起止时间，回到桌面端即可批量处理。';
       this.videoList.appendChild(empty);
+      motionVideoRows(this.videoList, cue); // 动效层：空态轻揭出
       this._syncRunButton(active);
       return;
     }
     for (const t of active) this.videoList.appendChild(this.renderRow(t));
+    motionVideoRows(this.videoList, cue); // 动效层：任务卡显影接力（silent 直通，批量途中不闪）
     this._syncRunButton(active);
   }
 
@@ -1846,6 +1920,7 @@ export class UIManager {
     topifyZ(this.addMask, this.addPopup);
     this.addMask.style.display = 'block';
     this.addPopup.style.display = 'flex';
+    motionAddIn(this.addPopup); // 动效层：落纸入场
     const urlInput = q<HTMLInputElement>(this.addPopup, '#lit-add-url');
     if (urlInput) setTimeout(() => urlInput.focus(), 100);
     // 打开即自动重抓（ADR-0133：无需用户操作；失败静默保留已有值）
@@ -1862,7 +1937,12 @@ export class UIManager {
     const multi = pages.length > 1;
     // 下半表单总闸（issue 310）：未解析 = 只有链接行可见（保存随之不可达 → 先解析是唯一路径）
     const more = q<HTMLElement>(popup, '#lit-add-more');
-    if (more) more.style.display = this.addRevealed ? 'block' : 'none';
+    if (more) {
+      const wasHidden = more.style.display === 'none';
+      more.style.display = this.addRevealed ? 'block' : 'none';
+      // 动效层：解析跑完 = 词典条目展开释义（只在「从未展开 → 展开」的瞬间播）
+      if (wasHidden && this.addRevealed) motionAddReveal(more);
+    }
     // 信息区（标题 / UP 主只读；缺项显示占位）
     const tEl = q<HTMLElement>(popup, '#lit-add-ititle');
     if (tEl) { tEl.textContent = meta?.title || '（未取到标题）'; tEl.title = meta?.title || ''; }
@@ -2146,8 +2226,13 @@ export class UIManager {
   }
 
   hideAddDialog(): void {
-    if (this.addMask) this.addMask.style.display = 'none';
-    if (this.addPopup) this.addPopup.style.display = 'none';
+    if (this.addPopup && motionClosing(this.addPopup)) return; // 动效层：退场中忽略重复关闭
+    const popup = this.addPopup;
+    const mask = this.addMask;
+    motionAddOut(popup, () => {
+      if (mask) mask.style.display = 'none';
+      if (popup) popup.style.display = 'none';
+    });
     this.editingId = null;
     this.addUrlReset(); // 关弹窗使在途解析过期（杜绝迟到回填到已卸载 DOM）
     this.addMeta = null;
@@ -2569,6 +2654,7 @@ export class UIManager {
     topifyZ(this.termMask, this.termPopup);
     this.termMask.style.display = 'block';
     this.termPopup.style.display = 'flex';
+    motionEntryIn(this.termPopup); // 动效层：落纸入场 + 题字揭出
     const zone = q<HTMLElement>(this.termPopup, '#lit-image-drop');
     const focusEl: HTMLElement | null = mode === 'passage' ? area : mode === 'image' ? zone : input;
     if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
@@ -2588,8 +2674,10 @@ export class UIManager {
     if (!hint) return;
     const term = (q<HTMLInputElement>(this.termPopup, '#lit-term-input')?.value ?? '').trim();
     const dup = term ? findDuplicateTermNote(term) : null;
+    const wasHidden = hint.style.display === 'none';
     hint.textContent = dup ? '已存在同名文献笔记：' + String(dup).split('/').pop()?.replace(/\.md$/, '') : '';
     hint.style.display = dup ? '' : 'none';
+    if (dup && wasHidden) motionDupHint(hint); // 动效层：重名提醒 = 一次性横摇警示
   }
 
   /** 重名提醒复位（开面板 / 关面板即全新态） */
@@ -2622,8 +2710,10 @@ export class UIManager {
     }
     if (hitLimit) notice(`一次最多放 ${IMAGE_ENTRY_MAX} 张图`, 'error');
     if (!added) return;
+    const prevCount = this.entryImages.length - added; // 动效层：只有新增的几张要「贴上卡纸」
     this.renderEntryImage();
     this.draftInvalidate();
+    motionThumbsIn(this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-image-grid') : null, prevCount);
   }
 
   /**
@@ -2799,6 +2889,7 @@ export class UIManager {
     chip.style.display = 'inline-flex';
     chip.innerHTML = `<b>${isNote ? '内 部' : '外 部'}</b><span>${esc(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
     if (input) input.style.display = 'none';
+    motionSrcChipIn(chip); // 动效层：来源签拍进卡槽（标题异步抓回重渲时同款轻弹）
   }
 
   /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
@@ -2862,8 +2953,10 @@ export class UIManager {
     const el = this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-term-content') : null;
     if (!el) return;
     if (el.textContent === text && el.classList.contains('bz-lit-term-pending') === pending) return;
+    const wasPending = el.classList.contains('bz-lit-term-pending');
     el.classList.toggle('bz-lit-term-pending', pending);
     el.textContent = text;
+    if (wasPending && !pending && text) motionContentArrive(el); // 动效层：首个正文字符到达 = 墨迹入纸
   }
 
   /**
@@ -2879,12 +2972,14 @@ export class UIManager {
     el.classList.add('bz-lit-meta-pending');
   }
 
-  /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰 */
+  /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰；从「分析中…」落到真值时播「墨字落纸」 */
   private setTermMetaValue(sel: string, text: string): void {
     const el = this.termPopup ? q<HTMLElement>(this.termPopup, sel) : null;
     if (!el) return;
+    const wasPending = el.classList.contains('bz-lit-meta-pending');
     el.textContent = text;
     el.classList.remove('bz-lit-meta-pending');
+    if (wasPending) motionMetaSetValue(el); // 动效层：AI 值到达 = 墨字落纸（日期等非 pending 落值不播）
   }
 
   /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
@@ -3003,7 +3098,11 @@ export class UIManager {
     // 此前这里挂着「待写入 → —」，可那一刻关联根本没开始跑，展示一行静止的假状态只会误导。
     // 正式开跑（loading）起才让这一行出现——「看得见正在跑」的前提是它真的在跑。
     const row = this.termPopup ? q<HTMLElement>(this.termPopup, '#lit-term-meta-relrow') : null;
-    if (row) row.style.display = st === 'idle' ? 'none' : '';
+    if (row) {
+      const wasHidden = row.style.display === 'none';
+      row.style.display = st === 'idle' ? 'none' : '';
+      if (wasHidden && st !== 'idle') motionRelRowIn(row); // 动效层：关联行登场轻揭出
+    }
     el.className = 'bz-lit-term-meta-v';
     if (st === 'loading') {
       el.classList.add('bz-lit-rel-idle');
@@ -3019,6 +3118,7 @@ export class UIManager {
       el.innerHTML = items.map((it, i) =>
         `<span class="bz-lit-rel-chip"><span>${esc(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
       ).join('');
+      motionRelChips(el); // 动效层：关联签片逐张插进卡槽
       return;
     }
     if (st === 'empty') { el.classList.add('bz-lit-rel-idle'); el.textContent = '暂无关联'; return; }
@@ -3286,6 +3386,7 @@ export class UIManager {
   /** 中止在途生成流（ADR-0152 决策 7）：先置空句柄再 abort——它的收尾据此被序号守卫拦掉，
    *  不会把「用户自己关的窗 / 自己触发的重生成」误报成「生成中断」。 */
   private abortTermGenerate(): void {
+    motionPenOff(); // 动效层：中止即收笔（新一轮 beginTermPreview 再起；关窗 / 作废草稿同路径收）
     const ac = this.termGenAbort;
     this.termGenAbort = null;
     ac?.abort();
@@ -3313,6 +3414,10 @@ export class UIManager {
     this.setTermMetaValue('#lit-term-meta-date', dateStamp());
     this.setTermContent('正在生成…', true);
     this.setTermPreviewVisible(true);
+    // 动效层：纸卡浮凸接力（属性卡先成形、内容卡随墨迹揭开）+「笔还在写」呼吸墨滴起笔
+    const previewEl = q<HTMLElement>(this.termPopup, '#lit-term-preview');
+    motionEntryPreviewIn(previewEl);
+    motionEntryPenOn(q<HTMLElement>(this.termPopup, '#lit-term-content')?.closest<HTMLElement>('.bz-lit-term-card') ?? null);
     this.refreshTermActions();
     // 展开时滚一次（ADR-0152 决策 8：流式期间不自动跟随，否则会抢走用户自己的滚动位置）
     const prev = q<HTMLElement>(this.termPopup, '#lit-term-preview');
@@ -3349,6 +3454,7 @@ export class UIManager {
     };
     this.termStreamBody = draft.summary;
     this.termDraftBroken = false;
+    motionPenOff(); // 动效层：草稿落定 = 收笔（墨滴只陪流式过程）
     if (!this.termPopup) return;
     if (this.entryTitled && !keepTitle) this.setTermMetaValue('#lit-entry-meta-title', draft.title || '—');
     if (!keepDomain) this.setTermMetaValue('#lit-term-meta-domain', draft.domain || '—');
@@ -3364,6 +3470,7 @@ export class UIManager {
    * 用户主动中止不会走到这里（由调用方的句柄守卫拦掉）。
    */
   private handleTermGenFailure(e: unknown): void {
+    motionPenOff(); // 动效层：生成收场（失败 / 中断）即收笔
     if (this.termStreamBody) {
       this.termDraftBroken = true;
       notice('生成中断：已保留收到的内容，请重新生成后再写入', 'error');
@@ -3443,7 +3550,7 @@ export class UIManager {
         }
         notice(mode === 'passage' ? '已生成段落文献笔记：' + title : '已生成名词文献笔记：' + term, 'success');
       }
-      this.hideTermEntry();
+      this.hideTermEntry(true);
       // 写入成功后的去向（issue 329）：有 onCreated（剪藏本工具框流程）→ 回调路径、**不自动打开笔记**
       // （ADR-0144：不打断阅读；回调失败只记日志，不影响已完成的落盘）；否则维持「生成即开」。
       if (onCreated) {
@@ -3460,7 +3567,14 @@ export class UIManager {
     }
   }
 
-  hideTermEntry(): void {
+  /**
+   * 关闭录入面板。`immediate` = 写入成功路径（确认落盘后无可丢失，用户预期即时收场）：
+   * 跳过收纸退场直接交还 display——否则关窗动画（240ms）与列表刷新竞速，
+   * 「写入 → 关窗 + 笔记进列表」的既有断言/体感会被退场演出拖慢。
+   */
+  hideTermEntry(immediate = false): void {
+    // 动效层：退场中忽略重复关闭（ESC 连按不会二次触发关闭确认框）
+    if (this.termPopup && motionClosing(this.termPopup)) return;
     // 面板一关即在途生成流中止（ADR-0152 决策 7：关窗走二次确认，**用户确认之后**才走到这里；
     // 取消关闭 ⇒ 请求继续跑）。忙态一并归零——之后到达的那股流由句柄守卫丢弃，不改任何状态。
     this.abortTermGenerate();
@@ -3475,8 +3589,18 @@ export class UIManager {
     this.resetTermDupHint();
     const srcInput = this.termPopup ? q<HTMLInputElement>(this.termPopup, '#lit-term-src') : null;
     this.termSrcReset(srcInput);
-    if (this.termMask) this.termMask.style.display = 'none';
-    if (this.termPopup) this.termPopup.style.display = 'none';
+    if (immediate) {
+      if (this.termMask) this.termMask.style.display = 'none';
+      if (this.termPopup) this.termPopup.style.display = 'none';
+    } else {
+      // 动效层：收纸演完才交还 display（jsdom / 无 WAAPI 同步收口，测试零时差）
+      const popup = this.termPopup;
+      const mask = this.termMask;
+      motionEntryOut(popup, () => {
+        if (mask) mask.style.display = 'none';
+        if (popup) popup.style.display = 'none';
+      });
+    }
     void this.refreshCurrent();
   }
 
@@ -3536,6 +3660,7 @@ export class UIManager {
 
   destroy(): void {
     this.abortTermGenerate(); // 在途生成流随面板销毁中止
+    motionTeardown(); // 动效层：撤全部在途退场簿记 / 编排定时器 / 循环注入件
     this.clearRunTimer();
     this.runState.clear();
     if (this.termSrcTimer) { clearTimeout(this.termSrcTimer); this.termSrcTimer = null; }

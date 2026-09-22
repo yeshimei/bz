@@ -56,6 +56,10 @@ import {
   suggestionUnitMarkdown,
   suggestProgressPercent,
 } from './mount-suggest';
+import {
+  motionPenOff, motionProgressIn, motionTeardown, motionTreeCards, motionTreeEdges, motionTreeIn,
+  motionTreeMenu, motionTreeOut,
+} from './motion';
 import type {
   AnchorRef,
   MountDirection,
@@ -749,8 +753,13 @@ export function closeMountTree(): void {
   if (!st) return;
   closeMenu();
   cancelLongPress(st);
-  st.mask.style.display = 'none';
-  st.win.style.display = 'none';
+  // 动效层：收板演完才交还 display（jsdom / 无 WAAPI 同步收口；退场中重复关闭由 motion 层簿记忽略）
+  const win = st.win;
+  const mask = st.mask;
+  motionTreeOut(win, () => {
+    if (mask) mask.style.display = 'none';
+    if (win) win.style.display = 'none';
+  });
   st.selected = null;
   st.token++; // 在途载入作废
   // 关闭即收掉进度遮罩：在途载入被 token 作废后没人再负责隐藏它（关掉再开会看到永久「生成中」）
@@ -780,8 +789,11 @@ export async function openMountTree(
   const direction: MountDirection = opts?.direction === 'upstream' ? 'upstream' : 'downstream';
   st.deps = defaultDeps(opts?.deps);
   topifyZ(st.mask, st.win);
+  // 动效层：大板升起（此前不可见才播；抬层重入不重播壳动画）
+  const shellFresh = st.win.style.display !== 'flex';
   st.mask.style.display = 'block';
   st.win.style.display = 'flex';
+  motionTreeIn(st.win, shellFresh);
   if (!st.esc) {
     st.esc = escManager.register(ESC_ID, {
       isVisible: () => mountTreeOpen() || !!st.menu,
@@ -889,7 +901,7 @@ async function load(st: CanvasState, force: boolean): Promise<void> {
     renderTop(st); // 顶栏/面包屑照常切到当前主卡；画布留空（下面 showProgress 给一行说明）
   } else {
     // 渐进呈现第一步：树建完**立即**画真实双链（不等建议），用户秒级看到新卡
-    await renderCanvas(st);
+    await renderCanvas(st, true);
     renderTop(st);
     fit();
   }
@@ -919,12 +931,12 @@ async function load(st: CanvasState, force: boolean): Promise<void> {
       }
       st.tree = mergeSuggestions(tree, run);
       // 渐进呈现第二步：建议就绪后并入幽灵节点重画（保留用户已调过的缩放/平移，不重新 fit）
-      await renderCanvas(st);
+      await renderCanvas(st, false); // fresh=false：只补上墙新增的建议卡，不整墙重播
       if (waitFirst) fit(); // 空板首画：画布之前是空的，得摆一次位置
     } else if (waitFirst) {
       // 建议没出来（降级 / 无关联）：空板不能再空着——照实画出来（含真实双链）
       st.tree = tree;
-      await renderCanvas(st);
+      await renderCanvas(st, true);
       fit();
     } else {
       st.tree = tree;
@@ -951,6 +963,7 @@ function showProgress(st: CanvasState, emptyHint = ''): void {
   if (st.progressHint) st.progressHint.textContent = emptyHint;
   st.loadingEl.classList.toggle('is-bare', !!emptyHint);
   st.loadingEl.style.display = '';
+  motionProgressIn(st.loadingEl); // 动效层：进度卡登场轻揭出（进度推进由 CSS width transition 自理）
   st.startedAt = Date.now();
   if (st.progressBar) st.progressBar.style.width = '4%';
   if (st.progressText) st.progressText.textContent = '准备生成建议';
@@ -1026,7 +1039,7 @@ async function rebuildTreeOnly(st: CanvasState): Promise<void> {
   }
   if (token !== st.token) return;
   st.tree = st.run && st.run.suggestions.length ? mergeSuggestions(tree, st.run) : tree;
-  await renderCanvas(st);
+  await renderCanvas(st, true); // 固定 / 取消建议后的本地重排 = 换了一轮墙，全量重播上墙
   renderTop(st);
 }
 
@@ -1097,7 +1110,12 @@ function requestBuildIndex(st: CanvasState): void {
  * 画布渲染：建卡 → 量尺寸 → 布局 → 吸附 → 路由 → 画线
  * ------------------------------------------------------------------ */
 
-async function renderCanvas(st: CanvasState): Promise<void> {
+/**
+ * 画布渲染：建卡 → 量尺寸 → 布局 → 吸附 → 路由 → 画线。
+ * `motionFresh` = 这一轮是否全量重建（换卡 / 重跑 / 本地刷新）：动效层据此清上墙记忆
+ * 全量重播；false = 建议并入的重画，只补新增（ghost）卡。
+ */
+async function renderCanvas(st: CanvasState, motionFresh: boolean): Promise<void> {
   const worldEl = st.worldEl;
   for (const el of Array.from(worldEl.querySelectorAll('.bz-kb-mt-node'))) el.remove();
   st.svg.innerHTML = '';
@@ -1202,6 +1220,9 @@ async function renderCanvas(st: CanvasState): Promise<void> {
   syncWorld(st);
   drawEdges(st);
   applySelection(st);
+  // 动效层：卡片上墙接力 + 连线描线生长（jsdom / 无 WAAPI 直通终态）
+  motionTreeCards(worldEl, { fresh: motionFresh, rootId });
+  motionTreeEdges(st.svg);
 }
 
 /** 卡片宽度（主卡 560；吸附项跟随所属卡片） */
@@ -1837,6 +1858,7 @@ function openNodeMenu(nodeId: string, x: number, y: number): void {
   const top = Math.max(8, Math.min(y - num(rect.top), (rect.height || CANVAS_FALLBACK_H) - mh - 8));
   menu.style.left = `${left}px`;
   menu.style.top = `${top}px`;
+  motionTreeMenu(menu); // 动效层：菜单从落点摊开（自毁节点，随 closeMenu remove）
   st.menu = menu;
   const outside = (ev: any) => {
     if (!st.menu) return;
@@ -1998,6 +2020,7 @@ export function destroyMountTree(): void {
   const st = state;
   if (!st) return;
   closeMenu(); // 菜单开着时卸载：连 document 级「点外关闭」监听一起摘掉
+  motionTeardown(); // 动效层：撤在途退场簿记与编排定时器
   st.esc?.unregister();
   st.esc = null;
   st.token++; // 在途载入作废（别让它在 DOM 摘除后继续写状态）

@@ -1,5 +1,5 @@
-/* 源指纹 e7c5f8aeaa3ae6e1 · 仓内输入 237 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 9187291c2cfc0d07 · 仓内输入 238 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/motion.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_memo = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M7, s, ms) {
+        function createDate(y, m, d, h, M8, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M7, s, ms);
+            date = new Date(y + 400, m, d, h, M8, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M7, s, ms);
+            date = new Date(y, m, d, h, M8, s, ms);
           }
           return date;
         }
@@ -5833,7 +5833,7 @@ var BZW_memo = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M7 = 10;
+    const M8 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -5860,7 +5860,7 @@ var BZW_memo = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M7 || Math.abs(t.clientY - sy) > M7) {
+      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
         moved = true;
         cancel();
       }
@@ -17380,15 +17380,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -18558,6 +18558,761 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
   });
 
+  // src/knowledge/motion.ts
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionClosing(el) {
+    return !!el && el.dataset.bzMotionClosing === "1";
+  }
+  function abortOut(el) {
+    const run = outRuns.get(el);
+    if (!run) return;
+    outRuns.delete(el);
+    run.abort();
+  }
+  function sweepExit(el, id) {
+    try {
+      if (typeof el.getAnimations !== "function") return;
+      for (const a of el.getAnimations()) if (a.id === id) a.cancel();
+    } catch (e) {
+    }
+  }
+  function runOut(el, id, frames, opts, done) {
+    var _a2;
+    if (!el) {
+      done();
+      return;
+    }
+    if (motionClosing(el)) return;
+    el.dataset.bzMotionClosing = "1";
+    let finished = false;
+    let anim = null;
+    const run = {
+      abort: () => {
+        run.aborted = true;
+        delete el.dataset.bzMotionClosing;
+        try {
+          anim == null ? void 0 : anim.cancel();
+        } catch (e) {
+        }
+      },
+      aborted: false
+    };
+    outRuns.set(el, run);
+    const finish = () => {
+      if (finished || run.aborted) return;
+      finished = true;
+      outRuns.delete(el);
+      delete el.dataset.bzMotionClosing;
+      try {
+        anim == null ? void 0 : anim.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    anim = waapi(el, frames, { ...opts, fill: "forwards", id });
+    if (!anim) {
+      finish();
+      return;
+    }
+    anim.finished.then(finish).catch(() => {
+    });
+    after(Number((_a2 = opts.duration) != null ? _a2 : 240) + 200, finish);
+  }
+  function motionMainIn(popup) {
+    cancelPending();
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, MAIN_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    const reopen = popup.dataset.kbMotionOpened === "1";
+    popup.dataset.kbMotionOpened = "1";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(12px) scale(.975)", filter: "blur(7px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: reopen ? 300 : 460, easing: E.out }
+    );
+    const title = popup.querySelector(".bz-kb-title");
+    if (title) {
+      waapi(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M3.base + 160, delay: 140, easing: E.out, fill: "backwards" }
+      );
+    }
+    const top = popup.querySelector(".bz-kb-top");
+    if (top) {
+      waapi(
+        top,
+        [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, delay: 60, easing: E.out, fill: "backwards" }
+      );
+    }
+    const head = popup.querySelector(".bz-kb-head");
+    if (head) {
+      const line = document.createElement("i");
+      line.className = "bz-kb-headline";
+      line.setAttribute("aria-hidden", "true");
+      head.appendChild(line);
+      const a = waapi(
+        line,
+        [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+        { duration: M3.base + 120, delay: 180, easing: E.out, fill: "backwards" }
+      );
+      if (a) a.finished.then(() => line.remove()).catch(() => line.remove());
+      else line.remove();
+    }
+    popup.querySelectorAll(".bz-kb-part").forEach((b, i) => {
+      waapi(
+        b,
+        [{ opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, delay: 200 + i * 45, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionMainOut(popup, done) {
+    motionPenOff();
+    runOut(
+      popup,
+      MAIN_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.985)", filter: "blur(5px)" }
+      ],
+      { duration: M3.move + 40, easing: E.out },
+      done
+    );
+  }
+  function cardFrames(to) {
+    return [
+      { opacity: 0, transform: "translateX(-7px) rotate(.2deg)", clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+      { opacity: 1, transform: to, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+    ];
+  }
+  function motionLitReveal(sc, cue) {
+    if (!sc || cue === "silent" || reduced()) return;
+    const base = cue === "boot" ? 340 : 40;
+    const step = cue === "boot" ? STAG : 22;
+    sc.querySelectorAll(".bz-kb-lexrow").forEach((row, i) => {
+      if (i >= REVEAL_CAP) return;
+      waapi(
+        row,
+        cardFrames("none"),
+        { duration: M3.base + 80, delay: base + i * step, easing: E.out, fill: "backwards" }
+      );
+    });
+    sc.querySelectorAll(".bz-kb-entrybtn").forEach((btn, i) => {
+      waapi(
+        btn,
+        [
+          { opacity: 0, transform: "translateY(9px)", clipPath: "inset(0 0 100% 0)" },
+          { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" }
+        ],
+        { duration: M3.base + 60, delay: (cue === "boot" ? 230 : 20) + i * 45, easing: E.out, fill: "backwards" }
+      );
+    });
+    const bar = sc.querySelector(".bz-kb-cbar");
+    if (bar) {
+      waapi(
+        bar,
+        [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, delay: base - 60 > 0 ? base - 60 : 0, easing: E.out, fill: "backwards" }
+      );
+    }
+    const empty = sc.querySelector(".bz-kb-empty");
+    if (empty) {
+      waapi(
+        empty,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M3.base + 80, delay: base, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionCardsAppended(rowsEl, from, cue) {
+    if (!rowsEl || reduced()) return;
+    const total = rowsEl.children.length;
+    if (from >= total) return;
+    if (from === 0 && cue === "silent") return;
+    const base = from > 0 ? 30 : cue === "boot" ? 340 : 50;
+    const step = from > 0 ? 18 : STAG;
+    for (let i = from; i < total; i++) {
+      const row = rowsEl.children[i];
+      if (!row || i - from >= REVEAL_CAP) break;
+      waapi(
+        row,
+        cardFrames("none"),
+        { duration: M3.base + 60, delay: base + (i - from) * step, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionStampBadge(badge) {
+    if (!badge || reduced()) return;
+    waapi(
+      badge,
+      [
+        { opacity: 0, transform: "scale(1.7) rotate(-7deg)" },
+        { opacity: 1, transform: "scale(1) rotate(0deg)" }
+      ],
+      { duration: M3.fast + 70, easing: E.move, fill: "backwards" }
+    );
+  }
+  function motionSheetIn(ovl) {
+    if (!ovl || reduced()) return;
+    cancelPending();
+    waapi(ovl, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.fast, easing: E.out, fill: "backwards" });
+    const sheet = ovl.querySelector(".bz-kb-sheet");
+    if (sheet) {
+      waapi(
+        sheet,
+        [
+          { opacity: 0, transform: "translateY(12px) scale(.97)", filter: "blur(6px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M3.base + 60, easing: E.out, fill: "backwards" }
+      );
+      const head = sheet.querySelector(".bz-kb-sheet-head");
+      if (head) {
+        waapi(
+          head,
+          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+          { duration: M3.base, delay: 80, easing: E.out, fill: "backwards" }
+        );
+      }
+    }
+  }
+  function motionSheetOut(ovl, done) {
+    if (!ovl) {
+      done();
+      return;
+    }
+    if (ovl.dataset.bzMotionClosing === "1") return;
+    ovl.dataset.bzMotionClosing = "1";
+    const sheet = ovl.querySelector(".bz-kb-sheet");
+    const a = waapi(ovl, [{ opacity: 1 }, { opacity: 0 }], { duration: M3.move - 20, easing: E.out, fill: "forwards" });
+    const b = sheet ? waapi(
+      sheet,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.98)", filter: "blur(4px)" }
+      ],
+      { duration: M3.move - 20, easing: E.out, fill: "forwards" }
+    ) : null;
+    const finish = () => {
+      ovl.dataset.bzMotionClosing = "";
+      try {
+        a == null ? void 0 : a.cancel();
+      } catch (e) {
+      }
+      try {
+        b == null ? void 0 : b.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    if (!a && !b) {
+      finish();
+      return;
+    }
+    let waited = 0;
+    const hit = () => {
+      waited++;
+      if (waited >= 2) finish();
+    };
+    if (a) a.finished.then(hit).catch(hit);
+    else hit();
+    if (b) b.finished.then(hit).catch(hit);
+    else hit();
+    after(M3.move + 160, finish);
+  }
+  function motionPreviewBody(ovl) {
+    if (!ovl || reduced()) return;
+    const body = ovl.querySelector("#bz-kb-preview-body");
+    if (body) {
+      [...body.children].forEach((el, i) => {
+        if (i >= 12) return;
+        waapi(
+          el,
+          [
+            { opacity: 0, transform: "translateY(6px)", filter: "blur(3px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M3.base + 60, delay: 60 + i * STAG, easing: E.out, fill: "backwards" }
+        );
+      });
+    }
+    ovl.querySelectorAll(".bz-kb-cite").forEach((chip2, i) => {
+      waapi(
+        chip2,
+        [{ opacity: 0, transform: "scale(.75)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.fast + 60, delay: 300 + i * 35, easing: E.out, fill: "backwards" }
+      );
+    });
+    const link = ovl.querySelector(".bz-kb-cliplink");
+    if (link) {
+      waapi(
+        link,
+        [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, delay: 340, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionVideoIn(popup) {
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, VIDEO_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.base + 60, easing: E.out }
+    );
+    const title = popup.querySelector(".bz-kb-title");
+    if (title) {
+      waapi(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M3.base + 100, delay: 90, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionVideoOut(popup, done) {
+    runOut(
+      popup,
+      VIDEO_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(8px) scale(.985)", filter: "blur(4px)" }
+      ],
+      { duration: M3.move + 20, easing: E.out },
+      done
+    );
+  }
+  function motionVideoRows(list, cue) {
+    if (!list || cue === "silent" || reduced()) return;
+    list.querySelectorAll(".bz-kb-taskcard").forEach((card, i) => {
+      if (i >= 10) return;
+      waapi(
+        card,
+        [
+          { opacity: 0, filter: "sepia(.85) contrast(.65) blur(3px)", transform: "translateY(6px)" },
+          { opacity: 1, filter: "sepia(0) contrast(1) blur(0px)", transform: "none" }
+        ],
+        { duration: M3.base + 140, delay: 30 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+    const banner = list.querySelector(".bz-kb-banner");
+    if (banner) {
+      waapi(
+        banner,
+        [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, delay: 10, easing: E.out, fill: "backwards" }
+      );
+    }
+    const empty = list.querySelector(".bz-kb-empty");
+    if (empty) {
+      waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.base + 60, easing: E.out, fill: "backwards" });
+    }
+  }
+  function motionAddIn(popup) {
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, ADD_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.base + 40, easing: E.out }
+    );
+  }
+  function motionAddOut(popup, done) {
+    runOut(
+      popup,
+      ADD_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(6px) scale(.99)", filter: "blur(3px)" }
+      ],
+      { duration: M3.move, easing: E.out },
+      done
+    );
+  }
+  function motionAddReveal(more) {
+    if (!more || reduced()) return;
+    waapi(
+      more,
+      [
+        { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(-5px)" },
+        { opacity: 1, clipPath: "inset(0 0 0 0)", transform: "none" }
+      ],
+      { duration: M3.base + 120, easing: E.out, fill: "backwards" }
+    );
+    more.querySelectorAll(".bz-lit-term-row, #lit-add-rb, .bz-lit-term-actions").forEach((row, i) => {
+      if (i >= 9) return;
+      waapi(
+        row,
+        [
+          { opacity: 0, transform: "translateY(5px)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M3.base, delay: 90 + i * 26, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionEntryIn(popup) {
+    if (!popup || reduced()) return;
+    abortOut(popup);
+    sweepExit(popup, TERM_EXIT);
+    popup.style.opacity = "";
+    popup.style.transform = "";
+    popup.style.filter = "";
+    waapi(
+      popup,
+      [
+        { opacity: 0, transform: "translateY(10px) scale(.98)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.base + 40, easing: E.out }
+    );
+    const title = popup.querySelector("#lit-entry-title");
+    if (title) {
+      waapi(
+        title,
+        [
+          { opacity: 0.2, clipPath: "inset(0 100% 0 0)", filter: "blur(2px)" },
+          { opacity: 1, clipPath: "inset(0 0 0 0)", filter: "blur(0px)" }
+        ],
+        { duration: M3.base + 80, delay: 70, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionEntryOut(popup, done) {
+    motionPenOff();
+    runOut(
+      popup,
+      TERM_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(6px) scale(.99)", filter: "blur(3px)" }
+      ],
+      { duration: M3.move, easing: E.out },
+      done
+    );
+  }
+  function motionEntryPreviewIn(preview) {
+    if (!preview || reduced()) return;
+    const cards = preview.querySelectorAll(".bz-lit-term-card");
+    cards.forEach((card, i) => {
+      waapi(
+        card,
+        [
+          { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M3.base + 80, delay: i * 120, easing: E.out, fill: "backwards" }
+      );
+    });
+    const actions = preview.querySelector(".bz-lit-term-actions");
+    if (actions) {
+      waapi(
+        actions,
+        [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.base, delay: cards.length * 120 + 60, easing: E.out, fill: "backwards" }
+      );
+    }
+  }
+  function motionEntryPenOn(card) {
+    motionPenOff();
+    if (!card || reduced() || typeof document === "undefined") return;
+    const pen = document.createElement("i");
+    pen.className = "bz-kb-pen";
+    pen.setAttribute("aria-hidden", "true");
+    card.appendChild(pen);
+    card.style.position = card.style.position || "relative";
+    penPool.add(pen);
+  }
+  function motionPenOff() {
+    for (const pen of penPool) pen.remove();
+    penPool.clear();
+  }
+  function motionMetaSetValue(el) {
+    if (!el || reduced()) return;
+    waapi(
+      el,
+      [
+        { opacity: 0.25, transform: "translateY(3px)", filter: "blur(3px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.fast + 80, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionContentArrive(el) {
+    if (!el || reduced()) return;
+    waapi(
+      el,
+      [{ filter: "blur(1.5px)" }, { filter: "blur(0px)" }],
+      { duration: M3.fast + 60, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionRelRowIn(row) {
+    if (!row || reduced()) return;
+    waapi(
+      row,
+      [{ opacity: 0, transform: "translateY(3px)" }, { opacity: 1, transform: "none" }],
+      { duration: M3.fast + 60, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionRelChips(relEl) {
+    if (!relEl || reduced()) return;
+    relEl.querySelectorAll(".bz-lit-rel-chip").forEach((chip2, i) => {
+      waapi(
+        chip2,
+        [{ opacity: 0, transform: "scale(.72) translateY(2px)" }, { opacity: 1, transform: "none" }],
+        { duration: M3.fast + 60, delay: 40 + i * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionDupHint(hint) {
+    if (!hint || reduced()) return;
+    waapi(
+      hint,
+      [
+        { opacity: 0, transform: "translateX(0)" },
+        { opacity: 1, transform: "translateX(-3px)", offset: 0.3 },
+        { transform: "translateX(3px)", offset: 0.55 },
+        { transform: "translateX(-2px)", offset: 0.78 },
+        { opacity: 1, transform: "translateX(0)" }
+      ],
+      { duration: M3.fast * 2 + 60, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionThumbsIn(grid, from) {
+    if (!grid || reduced()) return;
+    const items = grid.querySelectorAll(".bz-lit-drop-item");
+    items.forEach((item, i) => {
+      if (i < from) return;
+      waapi(
+        item,
+        [
+          { opacity: 0, transform: "scale(.88) rotate(-2deg)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M3.base, delay: (i - from) * STAG, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionSrcChipIn(chip2) {
+    if (!chip2 || reduced()) return;
+    waapi(
+      chip2,
+      [{ opacity: 0, transform: "scale(.9) translateY(2px)" }, { opacity: 1, transform: "none" }],
+      { duration: M3.fast + 50, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionTreeIn(win, fresh) {
+    if (!win || reduced() || !fresh) return;
+    abortOut(win);
+    sweepExit(win, TREE_EXIT);
+    win.style.opacity = "";
+    win.style.transform = "";
+    win.style.filter = "";
+    waapi(
+      win,
+      [
+        { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(7px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.base + 140, easing: E.out }
+    );
+  }
+  function motionTreeOut(win, done) {
+    runOut(
+      win,
+      TREE_EXIT,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.99)", filter: "blur(5px)" }
+      ],
+      { duration: M3.move + 40, easing: E.out },
+      done
+    );
+  }
+  function motionTreeCards(worldEl, opts) {
+    if (!worldEl || reduced()) return;
+    if (opts.fresh) treeShownIds = /* @__PURE__ */ new Set();
+    const nodes = [...worldEl.querySelectorAll(".bz-kb-mt-node")];
+    nodes.sort((a, b) => {
+      const ra = a.getAttribute("data-mt-id") === opts.rootId ? -1 : 0;
+      const rb = b.getAttribute("data-mt-id") === opts.rootId ? -1 : 0;
+      return ra - rb;
+    });
+    let step = 0;
+    for (const node of nodes) {
+      const id = node.getAttribute("data-mt-id") || "";
+      if (treeShownIds.has(id)) continue;
+      treeShownIds.add(id);
+      if (node.style.display === "none") continue;
+      if (step >= 18) break;
+      const ghost = node.classList.contains("is-ghost");
+      waapi(
+        node,
+        [
+          { opacity: 0, transform: "translateY(8px) scale(.96)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M3.base + 80, delay: 40 + step * STAG, easing: E.out, fill: "backwards" }
+      );
+      if (ghost) {
+        waapi(node, [{ opacity: 0.4 }, { opacity: 1 }], { duration: M3.impulse - 300, delay: 300 + step * STAG, easing: E.out, fill: "backwards" });
+      }
+      step++;
+    }
+  }
+  function motionTreeEdges(svg) {
+    if (!svg || reduced()) return;
+    const paths = [...svg.querySelectorAll(".bz-kb-mt-edge")];
+    let step = 0;
+    for (const p of paths) {
+      const dashed = p.classList.contains("is-sug") || p.classList.contains("is-fb");
+      if (dashed) continue;
+      if (step >= 24) break;
+      let len = 0;
+      try {
+        len = p.getTotalLength();
+      } catch (e) {
+        continue;
+      }
+      if (!len || !Number.isFinite(len)) continue;
+      waapi(
+        p,
+        [
+          { strokeDasharray: `${len}`, strokeDashoffset: `${len}` },
+          { strokeDasharray: `${len}`, strokeDashoffset: "0" }
+        ],
+        { duration: M3.base + 160, delay: 160 + step * 24, easing: E.move, fill: "backwards" }
+      );
+      step++;
+    }
+    if (step || paths.length) {
+      waapi(svg, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.fast + 60, easing: E.out, fill: "backwards" });
+    }
+  }
+  function motionTreeMenu(menu) {
+    if (!menu || reduced()) return;
+    menu.style.transformOrigin = "0 0";
+    waapi(
+      menu,
+      [
+        { opacity: 0, transform: "scale(.93) translateY(-2px)", filter: "blur(2px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.fast + 40, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionProgressIn(loadingEl) {
+    if (!loadingEl || reduced()) return;
+    waapi(
+      loadingEl,
+      [
+        { opacity: 0, transform: "translate(-50%, -48%) scale(.97)", filter: "blur(3px)" },
+        { opacity: 1, transform: "translate(-50%, -50%)", filter: "blur(0px)" }
+      ],
+      { duration: M3.base, easing: E.out, fill: "backwards" }
+    );
+  }
+  function motionTeardown() {
+    cancelPending();
+    for (const [el, run] of [...outRuns.entries()]) {
+      outRuns.delete(el);
+      run.abort();
+    }
+    motionPenOff();
+    treeShownIds = /* @__PURE__ */ new Set();
+  }
+  var M3, E, STAG, timers, outRuns, MAIN_EXIT, REVEAL_CAP, VIDEO_EXIT, ADD_EXIT, TERM_EXIT, penPool, TREE_EXIT, treeShownIds;
+  var init_motion = __esm({
+    "src/knowledge/motion.ts"() {
+      M3 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      timers = /* @__PURE__ */ new Set();
+      outRuns = /* @__PURE__ */ new Map();
+      MAIN_EXIT = "bz-kb-main-exit";
+      REVEAL_CAP = 14;
+      VIDEO_EXIT = "bz-kb-video-exit";
+      ADD_EXIT = "bz-kb-add-exit";
+      TERM_EXIT = "bz-kb-term-exit";
+      penPool = /* @__PURE__ */ new Set();
+      TREE_EXIT = "bz-kb-mt-exit";
+      treeShownIds = /* @__PURE__ */ new Set();
+      if (typeof window !== "undefined") {
+        window.addEventListener("hashchange", () => {
+          if (location.hash !== "#replay") return;
+          location.hash = "";
+          const replay = window.__bzKbReplay;
+          if (typeof replay === "function") setTimeout(replay, 600);
+        });
+        if (location.hash === "#replay") {
+          const wait = () => {
+            const replay = window.__bzKbReplay;
+            if (typeof replay === "function") {
+              location.hash = "";
+              setTimeout(replay, 600);
+            } else setTimeout(wait, 120);
+          };
+          setTimeout(wait, 120);
+        }
+      }
+    }
+  });
+
   // src/knowledge/mount-canvas.ts
   function mountKindColor(kind) {
     var _a2;
@@ -19009,8 +19764,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (!st) return;
     closeMenu();
     cancelLongPress(st);
-    st.mask.style.display = "none";
-    st.win.style.display = "none";
+    const win = st.win;
+    const mask = st.mask;
+    motionTreeOut(win, () => {
+      if (mask) mask.style.display = "none";
+      if (win) win.style.display = "none";
+    });
     st.selected = null;
     st.token++;
     hideProgress(st);
@@ -19028,8 +19787,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const direction = (opts == null ? void 0 : opts.direction) === "upstream" ? "upstream" : "downstream";
     st.deps = defaultDeps(opts == null ? void 0 : opts.deps);
     topifyZ(st.mask, st.win);
+    const shellFresh = st.win.style.display !== "flex";
     st.mask.style.display = "block";
     st.win.style.display = "flex";
+    motionTreeIn(st.win, shellFresh);
     if (!st.esc) {
       st.esc = escManager.register(ESC_ID, {
         isVisible: () => mountTreeOpen() || !!st.menu,
@@ -19102,7 +19863,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (waitFirst) {
       renderTop(st);
     } else {
-      await renderCanvas(st);
+      await renderCanvas(st, true);
       renderTop(st);
       fit();
     }
@@ -19130,11 +19891,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (s == null ? void 0 : s.target) st.ghosts.set(suggestionId(s), s);
         }
         st.tree = mergeSuggestions(tree, run);
-        await renderCanvas(st);
+        await renderCanvas(st, false);
         if (waitFirst) fit();
       } else if (waitFirst) {
         st.tree = tree;
-        await renderCanvas(st);
+        await renderCanvas(st, true);
         fit();
       } else {
         st.tree = tree;
@@ -19149,6 +19910,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (st.progressHint) st.progressHint.textContent = emptyHint;
     st.loadingEl.classList.toggle("is-bare", !!emptyHint);
     st.loadingEl.style.display = "";
+    motionProgressIn(st.loadingEl);
     st.startedAt = Date.now();
     if (st.progressBar) st.progressBar.style.width = "4%";
     if (st.progressText) st.progressText.textContent = "准备生成建议";
@@ -19208,7 +19970,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     if (token !== st.token) return;
     st.tree = st.run && st.run.suggestions.length ? mergeSuggestions(tree, st.run) : tree;
-    await renderCanvas(st);
+    await renderCanvas(st, true);
     renderTop(st);
   }
   function renderTop(st) {
@@ -19255,7 +20017,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     }
     st.deps.notice("未建向量索引：请先在第二大脑执行「重建索引」，再回白板点「重新生成」");
   }
-  async function renderCanvas(st) {
+  async function renderCanvas(st, motionFresh) {
     var _a2, _b2, _c, _d, _e, _f, _g, _h;
     const worldEl = st.worldEl;
     for (const el of Array.from(worldEl.querySelectorAll(".bz-kb-mt-node"))) el.remove();
@@ -19347,6 +20109,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     syncWorld(st);
     drawEdges(st);
     applySelection(st);
+    motionTreeCards(worldEl, { fresh: motionFresh, rootId });
+    motionTreeEdges(st.svg);
   }
   function widthOf(st, node) {
     var _a2;
@@ -19617,10 +20381,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after = part.node.splitText(offset);
-    const len = Math.min(hit.len, after.data.length);
-    const tail = after.splitText(len);
-    (_b2 = after.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after2 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after2.data.length);
+    const tail = after2.splitText(len);
+    (_b2 = after2.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -19871,6 +20635,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const top = Math.max(8, Math.min(y - num(rect.top), (rect.height || CANVAS_FALLBACK_H) - mh - 8));
     menu.style.left = `${left}px`;
     menu.style.top = `${top}px`;
+    motionTreeMenu(menu);
     st.menu = menu;
     const outside = (ev) => {
       var _a3, _b3;
@@ -20015,6 +20780,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_mount_layout();
       init_mount_route();
       init_mount_suggest();
+      init_motion();
       MASK_ID = "bz-kb-mt-mask";
       WIN_ID = "bz-kb-mt-window";
       ESC_ID = "bz-kb-mt";
@@ -20747,6 +21513,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       init_source();
       init_video_meta();
       init_range_bar();
+      init_motion();
       IMAGE_ENTRY_MAX = 9;
       REL_BG_NOTICE_KEY = "bz-kb-entry-rel";
       STATUS_META = {
@@ -20772,6 +21539,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.popup = null;
           this.contentEl = null;
           this.part = "z1";
+          /**
+           * 动效层 boot 消费标志（motion.ts 口径）：showMain 置 'boot'，点部签置 'part'，
+           * 首个渲染消费即熄复位 'silent'——后台文件变更刷新等非首次渲染静默不重播。
+           */
+          this.motionCue = "silent";
           this.allNotes = [];
           this.allCards = [];
           this.allTopics = [];
@@ -20976,6 +21748,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const act = t.getAttribute("data-kb-act");
           if (act === "part") {
             this.part = t.getAttribute("data-part") || "z1";
+            this.motionCue = "part";
             void this.refreshCurrent();
             this.syncPartButtons();
           } else if (act === "term-entry") this.showTermEntry();
@@ -20996,6 +21769,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           } else if (act === "cards-orphan") {
             if (!this.mountIndex) return;
             this.cardOrphanOnly = !this.cardOrphanOnly;
+            this.motionCue = "part";
             this.renderCards();
           } else if (act === "topic-open") {
             const p = t.getAttribute("data-path") || "";
@@ -21015,12 +21789,27 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          this.motionCue = "boot";
+          motionMainIn(this.popup);
+          window.__bzKbReplay = () => {
+            if (!this.popup || !this.mask) return;
+            this.mask.style.display = "block";
+            this.popup.style.display = "flex";
+            this.motionCue = "boot";
+            motionMainIn(this.popup);
+            void this.refreshCurrent();
+          };
           void this.refreshCurrent();
           void this.runBackfill();
         }
         hideMain() {
-          if (this.mask) this.mask.style.display = "none";
-          if (this.popup) this.popup.style.display = "none";
+          if (this.popup && motionClosing(this.popup)) return;
+          const popup = this.popup;
+          const mask = this.mask;
+          motionMainOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
         }
         /** 当前部数据 + 渲染（目录变更检测 → 清缓存重扫） */
         async refreshCurrent() {
@@ -21118,6 +21907,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
         </div>
         ${rows || '<div class="bz-kb-empty">「文献目录」还没有文献笔记——从上面的四种录入开始。</div>'}
       </div>`;
+          motionLitReveal(this.contentEl, this.motionCue);
+          this.motionCue = "silent";
         }
         /** 三部共用预览弹层（文献/卡片/主题同一样式）：正文真 Markdown 渲染（视频 ![[mp4]] 内嵌可播）+ 关联 + 可点来源（只读；关闭走 ✕/ESC） */
         async openPreview(n, kind = "lit") {
@@ -21141,6 +21932,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       <div class="bz-kb-paras" id="bz-kb-preview-body"></div>
       ${rels.length ? `<div class="bz-kb-sec">关 联</div><div class="bz-kb-rels">${rels.map((r) => `<span class="bz-kb-cite">${esc2(r)}</span>`).join("")}</div>` : ""}
       ${srcHtml}`));
+          motionSheetIn(ovl);
           this._previewNote = n;
           const bodyEl3 = ovl ? q(ovl, "#bz-kb-preview-body") : null;
           if (bodyEl3) {
@@ -21167,6 +21959,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               this._openExternal(a.getAttribute("data-lit-src-url") || "");
             });
           });
+          motionPreviewBody(ovl);
         }
         /**
          * 按 path 直达文献预览（issue 329 跨域 API，ADR-0144 划词锚定双链点击）：主面板不出场——
@@ -21283,6 +22076,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.cardRowsEl = q(this.contentEl, "#kb-card-rows");
           this.cardsShown = 0;
           this.appendCardRows(80);
+          this.motionCue = "silent";
         }
         /** 追加 n 行（增量：已渲染的行不动，滚动位置与 DOM 节点都保住） */
         appendCardRows(n) {
@@ -21293,6 +22087,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             rowsEl.innerHTML = `<div class="bz-kb-empty">${this.cardOrphanOnly ? "没有孤儿卡——每张卡都有人挂或挂着谁。" : "卡片目录还没有卡片——在「卡片文件夹」里新建一篇笔记即可。"}</div>`;
             this.cardsShown = 0;
             this.updateCardMore(pool);
+            motionLitReveal(rowsEl, this.motionCue);
             return;
           }
           const from = Math.max(0, this.cardsShown);
@@ -21304,6 +22099,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             while (tmp.firstChild) frag.appendChild(tmp.firstChild);
             rowsEl.appendChild(frag);
             this.cardsShown = to;
+            motionCardsAppended(rowsEl, from, this.motionCue);
           }
           this.updateCardMore(pool);
         }
@@ -21330,6 +22126,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 span.className = "bz-kb-orphan";
                 span.title = "既无入链也无挂载";
                 span.textContent = "孤 儿";
+                motionStampBadge(span);
                 const dom = hw.querySelector(".bz-kb-dom");
                 if (dom) hw.insertBefore(span, dom);
                 else hw.appendChild(span);
@@ -21343,6 +22140,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
                 b.className = "bz-kb-refbadge";
                 b.title = refBadgeTitle(n);
                 b.textContent = `被引 ${n}`;
+                motionStampBadge(b);
                 const btn = tail.querySelector(".bz-kb-mt-openbtn");
                 if (btn) tail.insertBefore(b, btn);
                 else tail.appendChild(b);
@@ -21370,6 +22168,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             b.className = "bz-kb-refbadge";
             b.title = refBadgeTitle(n);
             b.textContent = `被引 ${n}`;
+            motionStampBadge(b);
             tail.insertBefore(b, tail.firstChild);
           }
         }
@@ -21436,6 +22235,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.contentEl.innerHTML = `<div class="bz-kb-pd">
       ${rows || '<div class="bz-kb-empty">主题目录还没有笔记。</div>'}
     </div>`;
+          motionLitReveal(this.contentEl, this.motionCue);
+          this.motionCue = "silent";
         }
         /** 读笔记 frontmatter related 展示名列表（预览「关联」区；解析见 parseRelatedNames） */
         async noteRels(n) {
@@ -21481,13 +22282,28 @@ ${String(blockText != null ? blockText : "").trim()}`);
           return ovl;
         }
         closeSheet() {
+          const dropHost = () => {
+            if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
+              this.previewHostEl.remove();
+              this.previewHostEl = null;
+            }
+          };
+          let pending = 0;
           for (const host of [this.popup, this.previewHostEl]) {
-            host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => x.remove());
+            host == null ? void 0 : host.querySelectorAll(".bz-kb-ovl").forEach((x) => {
+              if (x.dataset.bzMotionClosing === "1") {
+                x.remove();
+                return;
+              }
+              pending++;
+              motionSheetOut(x, () => {
+                x.remove();
+                pending--;
+                dropHost();
+              });
+            });
           }
-          if (this.previewHostEl && !this.previewHostEl.querySelector(".bz-kb-ovl")) {
-            this.previewHostEl.remove();
-            this.previewHostEl = null;
-          }
+          if (!pending) dropHost();
         }
         sheetWrap(title, body) {
           return `<div class="bz-kb-sheet-head"><span class="bz-kb-sheet-title">${esc2(title)}</span></div><div class="bz-kb-sheet-body">${body}</div>`;
@@ -21668,9 +22484,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 面板显示 + 按当前视图重绘（两个入口共用的收尾） */
         _showVideoWindow() {
           if (!this.videoMask || !this.videoPopup) return;
+          const fresh = this.videoPopup.style.display !== "flex";
           topifyZ(this.videoMask, this.videoPopup);
           this.videoMask.style.display = "block";
           this.videoPopup.style.display = "flex";
+          this.motionCue = "part";
+          motionVideoIn(this.videoPopup);
           void this.refreshVideoPanel();
         }
         /**
@@ -21706,16 +22525,24 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         hideVideo() {
-          if (this.videoMask) this.videoMask.style.display = "none";
-          if (this.videoPopup) this.videoPopup.style.display = "none";
+          if (this.videoPopup && motionClosing(this.videoPopup)) return;
+          const popup = this.videoPopup;
+          const mask = this.videoMask;
+          motionVideoOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
         }
         async refreshVideoPanel() {
           const tasks = await KnowledgeData.loadTasks();
           if (!this.videoList) return;
+          const cue = this.motionCue;
+          this.motionCue = "silent";
           this._syncVideoHead();
           this.videoList.innerHTML = "";
           if (this.videoView === "history") {
             this.renderHistory(tasks);
+            motionVideoRows(this.videoList, cue);
             return;
           }
           const active2 = tasks.filter((t) => !t.archived);
@@ -21734,10 +22561,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
             empty.className = "bz-kb-empty";
             empty.textContent = "暂无转文献任务。点右上角加号添加视频链接与起止时间，回到桌面端即可批量处理。";
             this.videoList.appendChild(empty);
+            motionVideoRows(this.videoList, cue);
             this._syncRunButton(active2);
             return;
           }
           for (const t of active2) this.videoList.appendChild(this.renderRow(t));
+          motionVideoRows(this.videoList, cue);
           this._syncRunButton(active2);
         }
         _syncStatusCounts(tasks) {
@@ -22127,6 +22956,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.addMask, this.addPopup);
           this.addMask.style.display = "block";
           this.addPopup.style.display = "flex";
+          motionAddIn(this.addPopup);
           const urlInput = q(this.addPopup, "#lit-add-url");
           if (urlInput) setTimeout(() => urlInput.focus(), 100);
           if (((_g = editItem == null ? void 0 : editItem.url) != null ? _g : "").trim()) void this._handleResolve({ auto: true });
@@ -22141,7 +22971,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const pages = (meta == null ? void 0 : meta.pages) || [];
           const multi = pages.length > 1;
           const more = q(popup, "#lit-add-more");
-          if (more) more.style.display = this.addRevealed ? "block" : "none";
+          if (more) {
+            const wasHidden = more.style.display === "none";
+            more.style.display = this.addRevealed ? "block" : "none";
+            if (wasHidden && this.addRevealed) motionAddReveal(more);
+          }
           const tEl = q(popup, "#lit-add-ititle");
           if (tEl) {
             tEl.textContent = (meta == null ? void 0 : meta.title) || "（未取到标题）";
@@ -22430,8 +23264,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
         }
         hideAddDialog() {
-          if (this.addMask) this.addMask.style.display = "none";
-          if (this.addPopup) this.addPopup.style.display = "none";
+          if (this.addPopup && motionClosing(this.addPopup)) return;
+          const popup = this.addPopup;
+          const mask = this.addMask;
+          motionAddOut(popup, () => {
+            if (mask) mask.style.display = "none";
+            if (popup) popup.style.display = "none";
+          });
           this.editingId = null;
           this.addUrlReset();
           this.addMeta = null;
@@ -22838,6 +23677,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           topifyZ(this.termMask, this.termPopup);
           this.termMask.style.display = "block";
           this.termPopup.style.display = "flex";
+          motionEntryIn(this.termPopup);
           const zone = q(this.termPopup, "#lit-image-drop");
           const focusEl = mode === "passage" ? area : mode === "image" ? zone : input;
           if (focusEl && !value) setTimeout(() => focusEl.focus(), 100);
@@ -22854,8 +23694,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!hint) return;
           const term = ((_b2 = (_a2 = q(this.termPopup, "#lit-term-input")) == null ? void 0 : _a2.value) != null ? _b2 : "").trim();
           const dup = term ? findDuplicateTermNote(term) : null;
+          const wasHidden = hint.style.display === "none";
           hint.textContent = dup ? "已存在同名文献笔记：" + ((_c = String(dup).split("/").pop()) == null ? void 0 : _c.replace(/\.md$/, "")) : "";
           hint.style.display = dup ? "" : "none";
+          if (dup && wasHidden) motionDupHint(hint);
         }
         /** 重名提醒复位（开面板 / 关面板即全新态） */
         resetTermDupHint() {
@@ -22891,8 +23733,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           }
           if (hitLimit) notice(`一次最多放 ${IMAGE_ENTRY_MAX} 张图`, "error");
           if (!added) return;
+          const prevCount = this.entryImages.length - added;
           this.renderEntryImage();
           this.draftInvalidate();
+          motionThumbsIn(this.termPopup ? q(this.termPopup, "#lit-image-grid") : null, prevCount);
         }
         /**
          * data URL 图片预填（issue 329 剪藏本工具框「存为图版」）：程序化入口没有 File 对象——
@@ -23059,6 +23903,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           chip2.style.display = "inline-flex";
           chip2.innerHTML = `<b>${isNote ? "内 部" : "外 部"}</b><span>${esc2(label)}</span><button type="button" data-term-src-clear title="清除来源" aria-label="清除来源">✕</button>`;
           if (input) input.style.display = "none";
+          motionSrcChipIn(chip2);
         }
         /** 预览属性卡第 4 行「来源」：有来源显行（可点开），无来源隐行 */
         termSrcRefreshMeta() {
@@ -23117,8 +23962,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
           const el = this.termPopup ? q(this.termPopup, "#lit-term-content") : null;
           if (!el) return;
           if (el.textContent === text && el.classList.contains("bz-lit-term-pending") === pending) return;
+          const wasPending = el.classList.contains("bz-lit-term-pending");
           el.classList.toggle("bz-lit-term-pending", pending);
           el.textContent = text;
+          if (wasPending && !pending && text) motionContentArrive(el);
         }
         /**
          * 属性行的「分析中…」占位（ADR-0152 决策 4）：领域 / 标题这类 AI 产出的行，
@@ -23130,12 +23977,14 @@ ${String(blockText != null ? blockText : "").trim()}`);
           el.innerHTML = `<span class="bz-lit-rel-bar" aria-hidden="true"></span>${text}`;
           el.classList.add("bz-lit-meta-pending");
         }
-        /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰 */
+        /** 属性行落值（到达即填）：值与占位同一出口，填完去掉占位灰；从「分析中…」落到真值时播「墨字落纸」 */
         setTermMetaValue(sel, text) {
           const el = this.termPopup ? q(this.termPopup, sel) : null;
           if (!el) return;
+          const wasPending = el.classList.contains("bz-lit-meta-pending");
           el.textContent = text;
           el.classList.remove("bz-lit-meta-pending");
+          if (wasPending) motionMetaSetValue(el);
         }
         /* ---------- 属性行就地编辑（建议 5 / ADR-0152 决策 16-19） ---------- */
         /**
@@ -23255,7 +24104,11 @@ ${String(blockText != null ? blockText : "").trim()}`);
           if (!el) return;
           const st = this.entryRelState;
           const row = this.termPopup ? q(this.termPopup, "#lit-term-meta-relrow") : null;
-          if (row) row.style.display = st === "idle" ? "none" : "";
+          if (row) {
+            const wasHidden = row.style.display === "none";
+            row.style.display = st === "idle" ? "none" : "";
+            if (wasHidden && st !== "idle") motionRelRowIn(row);
+          }
           el.className = "bz-lit-term-meta-v";
           if (st === "loading") {
             el.classList.add("bz-lit-rel-idle");
@@ -23272,6 +24125,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
             el.innerHTML = items.map(
               (it, i) => `<span class="bz-lit-rel-chip"><span>${esc2(it.title)}</span><button type="button" data-rel-drop="${i}" title="这条不写入">✕</button></span>`
             ).join("");
+            motionRelChips(el);
             return;
           }
           if (st === "empty") {
@@ -23548,6 +24402,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         /** 中止在途生成流（ADR-0152 决策 7）：先置空句柄再 abort——它的收尾据此被序号守卫拦掉，
          *  不会把「用户自己关的窗 / 自己触发的重生成」误报成「生成中断」。 */
         abortTermGenerate() {
+          motionPenOff();
           const ac = this.termGenAbort;
           this.termGenAbort = null;
           ac == null ? void 0 : ac.abort();
@@ -23559,7 +24414,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 注意这里**不设** termPreview：草稿仍以收尾的 parseAiJson 结果为准，界面提前展开不等于草稿提前成立。
          */
         beginTermPreview() {
-          var _a2, _b2, _c;
+          var _a2, _b2, _c, _d, _e;
           if (!this.termPopup) return;
           this.termStreamBody = "";
           this.termDraftBroken = false;
@@ -23574,9 +24429,12 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.setTermMetaValue("#lit-term-meta-date", dateStamp());
           this.setTermContent("正在生成…", true);
           this.setTermPreviewVisible(true);
+          const previewEl = q(this.termPopup, "#lit-term-preview");
+          motionEntryPreviewIn(previewEl);
+          motionEntryPenOn((_d = (_c = q(this.termPopup, "#lit-term-content")) == null ? void 0 : _c.closest(".bz-lit-term-card")) != null ? _d : null);
           this.refreshTermActions();
           const prev = q(this.termPopup, "#lit-term-preview");
-          (_c = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _c.call(prev, { behavior: "smooth", block: "nearest" });
+          (_e = prev == null ? void 0 : prev.scrollIntoView) == null ? void 0 : _e.call(prev, { behavior: "smooth", block: "nearest" });
         }
         /**
          * 流式字段到达（ADR-0152 决策 3/11）：正文逐字写，领域与标题到达即填。
@@ -23606,6 +24464,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
           };
           this.termStreamBody = draft.summary;
           this.termDraftBroken = false;
+          motionPenOff();
           if (!this.termPopup) return;
           if (this.entryTitled && !keepTitle) this.setTermMetaValue("#lit-entry-meta-title", draft.title || "—");
           if (!keepDomain) this.setTermMetaValue("#lit-term-meta-domain", draft.domain || "—");
@@ -23619,6 +24478,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
          * 用户主动中止不会走到这里（由调用方的句柄守卫拦掉）。
          */
         handleTermGenFailure(e) {
+          motionPenOff();
           if (this.termStreamBody) {
             this.termDraftBroken = true;
             notice("生成中断：已保留收到的内容，请重新生成后再写入", "error");
@@ -23703,7 +24563,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
               }
               notice(mode === "passage" ? "已生成段落文献笔记：" + title : "已生成名词文献笔记：" + term, "success");
             }
-            this.hideTermEntry();
+            this.hideTermEntry(true);
             if (onCreated) {
               try {
                 onCreated(path);
@@ -23721,7 +24581,13 @@ ${String(blockText != null ? blockText : "").trim()}`);
             this.refreshTermActions();
           }
         }
-        hideTermEntry() {
+        /**
+         * 关闭录入面板。`immediate` = 写入成功路径（确认落盘后无可丢失，用户预期即时收场）：
+         * 跳过收纸退场直接交还 display——否则关窗动画（240ms）与列表刷新竞速，
+         * 「写入 → 关窗 + 笔记进列表」的既有断言/体感会被退场演出拖慢。
+         */
+        hideTermEntry(immediate = false) {
+          if (this.termPopup && motionClosing(this.termPopup)) return;
           this.abortTermGenerate();
           this.termGenerating = false;
           this.termSaving = false;
@@ -23734,8 +24600,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.resetTermDupHint();
           const srcInput = this.termPopup ? q(this.termPopup, "#lit-term-src") : null;
           this.termSrcReset(srcInput);
-          if (this.termMask) this.termMask.style.display = "none";
-          if (this.termPopup) this.termPopup.style.display = "none";
+          if (immediate) {
+            if (this.termMask) this.termMask.style.display = "none";
+            if (this.termPopup) this.termPopup.style.display = "none";
+          } else {
+            const popup = this.termPopup;
+            const mask = this.termMask;
+            motionEntryOut(popup, () => {
+              if (mask) mask.style.display = "none";
+              if (popup) popup.style.display = "none";
+            });
+          }
           void this.refreshCurrent();
         }
         /**
@@ -23793,6 +24668,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         destroy() {
           var _a2;
           this.abortTermGenerate();
+          motionTeardown();
           this.clearRunTimer();
           this.runState.clear();
           if (this.termSrcTimer) {
@@ -29034,13 +29910,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M4.overlay = null;
-    M4.db = null;
-    M4.status = null;
-    M4.year = "";
-    M4.q = "";
-    M4.sort = "recent";
-    M4.renderFn = null;
+    M5.overlay = null;
+    M5.db = null;
+    M5.status = null;
+    M5.year = "";
+    M5.q = "";
+    M5.sort = "recent";
+    M5.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -29135,11 +30011,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   function itemList() {
-    return M4.db ? Object.values(M4.db.items) : [];
+    return M5.db ? Object.values(M5.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M4.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M5.db) == null ? void 0 : _a2.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -29150,7 +30026,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M4.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M5.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -29173,7 +30049,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     );
   }
   async function openPanel() {
-    if (M4.overlay) {
+    if (M5.overlay) {
       closePanel();
       return;
     }
@@ -29190,18 +30066,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPanelInner() {
     var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M4.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M4.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M4.year = "";
-    M4.db = await loadDatabase();
+    M5.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M5.year = "";
+    M5.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M4.overlay = overlay2;
-    M4.renderFn = () => renderAll();
+    M5.overlay = overlay2;
+    M5.renderFn = () => renderAll();
     mountIcons(overlay2);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
@@ -29216,8 +30092,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       var _a3;
       closeAllDrops();
       const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M4.year = v;
-      else M4.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
+      else M5.sort = v;
       renderAll();
     };
     const onDocClick = (e) => {
@@ -29297,22 +30173,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M4.sort = segBtn.dataset.k;
+        M5.sort = segBtn.dataset.k;
         renderAll();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M4.status = M4.status === "asset" ? null : "asset";
+        if (kind === "asset") M5.status = M5.status === "asset" ? null : "asset";
         renderAll();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M4.overlay !== overlay2) return;
-        M4.q = inp.value.trim();
+        if (M5.overlay !== overlay2) return;
+        M5.q = inp.value.trim();
         renderAll();
       }, SEARCH_DEBOUNCE_MS);
       const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
@@ -29322,7 +30198,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const clearSearch = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M4.q = "";
+        M5.q = "";
         syncClear();
         renderAll();
         if (refocus) inp.focus();
@@ -29402,13 +30278,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M4.overlay) {
-      M4.overlay.remove();
-      M4.overlay = null;
+    if (M5.overlay) {
+      M5.overlay.remove();
+      M5.overlay = null;
     }
-    M4.renderFn = null;
-    M4.db = null;
-    M4.q = "";
+    M5.renderFn = null;
+    M5.db = null;
+    M5.q = "";
   }
   function cleanupBelongings() {
     closePanel();
@@ -29429,16 +30305,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a2;
         try {
-          M4.db = await loadDatabase();
-          (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+          M5.db = await loadDatabase();
+          (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a3;
                 try {
-                  M4.db = await loadDatabase();
-                  (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+                  M5.db = await loadDatabase();
+                  (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
                 } catch (e2) {
                 }
               })();
@@ -29473,37 +30349,37 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M4.db) return;
+    if (!M5.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M4.db);
+      await saveDatabase(M5.db);
     } finally {
       selfWritePending--;
     }
-    (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+    (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
   }
   function renderAll() {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-bel-panel");
+    if (!M5.overlay) return;
+    const panel2 = M5.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M4, { mountIcons }, currencyUnit());
+    renderPanelView(panel2, itemList(), M5, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M4.status = null;
-    else M4.status = M4.status === k ? null : k;
+    if (k === "__all") M5.status = null;
+    else M5.status = M5.status === k ? null : k;
     renderAll();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M4.db) {
+    if (M5.db) {
       items = itemList();
     } else {
       try {
@@ -29582,7 +30458,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       return;
     }
     const prevStatus = cur.current_status;
@@ -29598,8 +30474,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      M5.db = await loadDatabase().catch(() => null);
+      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
@@ -29607,7 +30483,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M4.db) M4.db = await loadDatabase();
+          if (!M5.db) M5.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -29622,8 +30498,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+          M5.db = await loadDatabase().catch(() => null);
+          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
         }
       })();
     }, { type: "restore" });
@@ -29668,22 +30544,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function deleteItem(it) {
     var _a2, _b2;
-    if (!M4.db) return;
-    if (!M4.db.items[it.id]) {
+    if (!M5.db) return;
+    if (!M5.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M4.renderFn) == null ? void 0 : _a2.call(M4);
+      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
       return;
     }
-    const snapshot2 = { ...M4.db.items[it.id] };
-    delete M4.db.items[it.id];
+    const snapshot2 = { ...M5.db.items[it.id] };
+    delete M5.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M4.db.items[snapshot2.id] = snapshot2;
+      M5.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M4.db = await loadDatabase().catch(() => null);
-      (_b2 = M4.renderFn) == null ? void 0 : _b2.call(M4);
+      M5.db = await loadDatabase().catch(() => null);
+      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -29691,18 +30567,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M4.db) M4.db = await loadDatabase();
-          if (M4.db.items[snapshot2.id]) {
+          if (!M5.db) M5.db = await loadDatabase();
+          if (M5.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M4.db.items[snapshot2.id] = snapshot2;
+          M5.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M4.db = await loadDatabase().catch(() => null);
-          (_a3 = M4.renderFn) == null ? void 0 : _a3.call(M4);
+          M5.db = await loadDatabase().catch(() => null);
+          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
         }
       })();
     }, { type: "restore" });
@@ -29745,9 +30621,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       return;
     }
-    if (!M4.db) {
+    if (!M5.db) {
       void loadDatabase().then((db) => {
-        M4.db = db;
+        M5.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -29794,13 +30670,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -29853,7 +30729,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M4.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -29920,7 +30796,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       saveBtn.textContent = "保存中…";
       void (async () => {
         try {
-          if (!M4.db) M4.db = await loadDatabase();
+          if (!M5.db) M5.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -29950,7 +30826,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M4.db) throw new Error("数据库未加载");
+            if (!M5.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -29966,7 +30842,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M4.db.items[newItem.id] = newItem;
+            M5.db.items[newItem.id] = newItem;
             await saveAndRender();
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
@@ -29983,7 +30859,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M4, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS, M5, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui5 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -30007,7 +30883,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS = 180;
-      M4 = {
+      M5 = {
         overlay: null,
         db: null,
         status: null,
@@ -31386,23 +32262,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M5.appRef = null;
-    M5.open = false;
-    M5.articles = [];
-    M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M5.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M5.clipNotes = null;
-    M5.clipUrls = /* @__PURE__ */ new Set();
-    M5.sel = defaultSel();
-    M5.cur = null;
-    M5.list = [];
-    M5.upInfo = {};
-    M5.mobDetailOpen = false;
+    M6.appRef = null;
+    M6.open = false;
+    M6.articles = [];
+    M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M6.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M6.clipNotes = null;
+    M6.clipUrls = /* @__PURE__ */ new Set();
+    M6.sel = defaultSel();
+    M6.cur = null;
+    M6.list = [];
+    M6.upInfo = {};
+    M6.mobDetailOpen = false;
   }
-  var M5;
+  var M6;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M5 = {
+      M6 = {
         appRef: null,
         open: false,
         articles: [],
@@ -31835,8 +32711,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M5.articles || []) keys.add(a.id);
-    for (const n of M5.clipNotes || []) {
+    for (const a of M6.articles || []) keys.add(a.id);
+    for (const n of M6.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -33392,22 +34268,22 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+      M6.articles = [];
+      M6.clipNotes = null;
+      M6.clipUrls = /* @__PURE__ */ new Set();
+      M6.sidecar = emptySidecar();
+      M6.upInfo = {};
+      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M5.articles = [];
-      M5.clipNotes = null;
-      M5.clipUrls = /* @__PURE__ */ new Set();
-      M5.sidecar = emptySidecar();
-      M5.upInfo = {};
-      M5.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M5.sidecar, clipNotes: null, clipUrls: M5.clipUrls, upInfo: {} };
+      M6.articles = [];
+      M6.clipNotes = null;
+      M6.clipUrls = /* @__PURE__ */ new Set();
+      M6.sidecar = emptySidecar();
+      M6.upInfo = {};
+      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -33444,13 +34320,13 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M5.articles = data.articles;
-    M5.stats = data.stats;
-    M5.sidecar = sidecar;
-    M5.clipNotes = clipNotes;
-    M5.clipUrls = clipUrls;
-    M5.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M5.upInfo };
+    M6.articles = data.articles;
+    M6.stats = data.stats;
+    M6.sidecar = sidecar;
+    M6.clipNotes = clipNotes;
+    M6.clipUrls = clipUrls;
+    M6.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M6.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -33487,7 +34363,7 @@ ${c.trim()}
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M5.appRef = app;
+    M6.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -33495,13 +34371,13 @@ ${c.trim()}
   function showPanel() {
     var _a2;
     if (!overlayEl2) {
-      buildDom2(M5.appRef);
+      buildDom2(M6.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M5.open = true;
+    M6.open = true;
     beginSession();
     if (dirty || !loaded2) {
       if (!loaded2 && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
@@ -33514,7 +34390,7 @@ ${c.trim()}
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M5.open && overlayEl2) return Promise.resolve();
+    if (!M6.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -33531,7 +34407,7 @@ ${c.trim()}
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M5.open) renderAll2();
+      if (M6.open) renderAll2();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -33544,7 +34420,7 @@ ${c.trim()}
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M5.open) return;
+    if (!M6.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -33567,8 +34443,8 @@ ${c.trim()}
     panelResizeDetach == null ? void 0 : panelResizeDetach.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M5.open = false;
-    M5.mobDetailOpen = false;
+    M6.open = false;
+    M6.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -33608,8 +34484,8 @@ ${c.trim()}
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M5.open = false;
-    M5.mobDetailOpen = false;
+    M6.open = false;
+    M6.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -33708,14 +34584,14 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M5.cur) openNote(M5.cur);
+      if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a3, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M5.cur) openNote(M5.cur);
+        if (M6.cur) openNote(M6.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -33758,8 +34634,8 @@ ${c.trim()}
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a3;
-      if (((_a3 = M5.cur) == null ? void 0 : _a3.st) === "saved") return;
-      void doSave(M5.cur);
+      if (((_a3 = M6.cur) == null ? void 0 : _a3.st) === "saved") return;
+      void doSave(M6.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -33781,9 +34657,9 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M5.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M5.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M5.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M6.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M6.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M6.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -33798,7 +34674,7 @@ ${c.trim()}
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M5.mobDetailOpen) {
+        if (M6.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -33844,13 +34720,13 @@ ${c.trim()}
     });
   }
   function selectSource(src) {
-    M5.sel = {
+    M6.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M5.mobDetailOpen = false;
+    M6.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -33859,7 +34735,7 @@ ${c.trim()}
     renderAll2();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M5.sel.kind && String(src.platform || "") === M5.sel.platform && (src.up ? String(src.up) : null) === M5.sel.up && String(src.site || "") === M5.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M6.sel.kind && String(src.platform || "") === M6.sel.platform && (src.up ? String(src.up) : null) === M6.sel.up && String(src.site || "") === M6.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -33878,16 +34754,16 @@ ${c.trim()}
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll2() {
-    if (!M5.open) return;
+    if (!M6.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M5.mobDetailOpen) {
-      if (M5.cur) renderMobDetail();
+    if (M6.mobDetailOpen) {
+      if (M6.cur) renderMobDetail();
       else {
-        M5.mobDetailOpen = false;
+        M6.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -33895,7 +34771,7 @@ ${c.trim()}
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M5.mobDetailOpen = false;
+    M6.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll2();
   }
@@ -33903,17 +34779,17 @@ ${c.trim()}
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M5.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M6.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M5.sel;
+    const s = M6.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], currentSrc(), M5.upInfo);
+    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], currentSrc(), M6.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -33929,7 +34805,7 @@ ${c.trim()}
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo));
+    const b = bucketByState(queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -33937,7 +34813,7 @@ ${c.trim()}
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -33977,39 +34853,39 @@ ${c.trim()}
   function renderRail() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M5.articles;
-    const clipNotes = M5.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, source2, M5.upInfo).filter(matchesSearch).length;
+    const arts = M6.articles;
+    const clipNotes = M6.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, source2, M6.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M5.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M5.sidecar.savedArchive || []).map((x) => x.url)), M5.clipUrls)) {
-      const full = queryBySource(arts, M5.sidecar, M5.clipUrls, clipNotes, { kind: "site", site: row.site }, M5.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M6.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M6.sidecar.savedArchive || []).map((x) => x.url)), M6.clipUrls)) {
+      const full = queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, { kind: "site", site: row.site }, M6.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M5.sel.kind === "site" && M5.sel.site === row.site;
+      const active2 = M6.sel.kind === "site" && M6.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M5.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M6.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M5.sel.kind === "inbox" && M5.sel.platform === "B站" && M5.sel.up === uid;
+      const active2 = M6.sel.kind === "inbox" && M6.sel.platform === "B站" && M6.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M5.sel.kind === "clip";
+    const clipActive = M6.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M5.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M6.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -34034,9 +34910,9 @@ ${c.trim()}
       return;
     }
     const trySelect = () => {
-      const hit = M5.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M6.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M5.open) showPanel();
+      if (!M6.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -34049,10 +34925,10 @@ ${c.trim()}
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source2, M5.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], source2, M5.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -34094,26 +34970,26 @@ ${c.trim()}
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M5.cur = null;
+      M6.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M5.articles, M5.sidecar, M5.clipUrls, M5.clipNotes || [], src, M5.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M5.cur = null;
+        M6.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M5.cur && M5.cur.id))) {
-        M5.cur = list[0];
+      if (!list.some((a) => a.id === (M6.cur && M6.cur.id))) {
+        M6.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M5.cur ? M5.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M5.list = list;
+      listEl.innerHTML = tocListHtml(list, M6.cur ? M6.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M6.list = list;
       bindItemMenus();
       return;
     }
@@ -34121,27 +34997,27 @@ ${c.trim()}
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M5.cur = null;
+      M6.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M5.cur && M5.cur.id))) {
-      M5.cur = flat[0];
+    if (!flat.some((a) => a.id === (M6.cur && M6.cur.id))) {
+      M6.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M5.cur ? M5.cur.id : null;
+    const curId = M6.cur ? M6.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M5.cur = null;
+        M6.cur = null;
         if (readerEl) renderReader();
-        M5.list = [];
+        M6.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M5.list = hit;
+      M6.list = hit;
       bindItemMenus();
       return;
     }
@@ -34159,7 +35035,7 @@ ${c.trim()}
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M5.list = flat;
+    M6.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -34172,10 +35048,10 @@ ${c.trim()}
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M5.list;
+    const all = M6.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M5.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M6.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -34251,8 +35127,8 @@ ${c.trim()}
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M5.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M5.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M6.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M6.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -34267,7 +35143,7 @@ ${c.trim()}
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M5.cur;
+    const a = M6.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -34296,7 +35172,7 @@ ${c.trim()}
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -34307,13 +35183,13 @@ ${c.trim()}
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M5.cur && M5.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M6.cur && M6.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -34328,11 +35204,11 @@ ${c.trim()}
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M5.cur && M5.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M6.cur && M6.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M5.mobDetailOpen && M5.cur && M5.cur.id === a.id && mobDetailEl) {
+    if (M6.mobDetailOpen && M6.cur && M6.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -34374,12 +35250,12 @@ ${c.trim()}
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M5.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M6.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M5.cur ? list.findIndex((x) => x.id === M5.cur.id) : -1;
+    const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M5.cur || next.id !== M5.cur.id)) selectArticle(next.id);
+    if (next && (!M6.cur || next.id !== M6.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -34388,19 +35264,19 @@ ${c.trim()}
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M5.cur || M5.cur.id !== a.id;
+    const changed = !M6.cur || M6.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M5.cur) {
+    if (changed && M6.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M5.cur.id, sc.scrollTop);
+        readScrollMemo.set(M6.cur.id, sc.scrollTop);
       }
     }
-    M5.cur = a;
+    M6.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -34537,25 +35413,25 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M5.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M5.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M6.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M6.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M5.cur = flat.find((x) => x.id === prevId) || M5.cur;
+      M6.cur = flat.find((x) => x.id === prevId) || M6.cur;
     } else if (flat.length) {
-      M5.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M5.cur && M5.cur.id !== prevId;
+      M6.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M6.cur && M6.cur.id !== prevId;
     } else {
-      M5.cur = null;
+      M6.cur = null;
     }
-    if (advanced && M5.cur) markReadOnOpen(M5.cur);
+    if (advanced && M6.cur) markReadOnOpen(M6.cur);
     renderAll2();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M5.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M6.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -34585,9 +35461,9 @@ ${c.trim()}
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M5.articles;
-    const clipNotes = M5.clipNotes || [];
-    const savedUrls = new Set((M5.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M6.articles;
+    const clipNotes = M6.clipNotes || [];
+    const savedUrls = new Set((M6.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -34697,8 +35573,8 @@ ${c.trim()}
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M5.cur = a;
-    M5.mobDetailOpen = true;
+    M6.cur = a;
+    M6.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -34709,12 +35585,12 @@ ${c.trim()}
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M5.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M6.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M5.stats = res.stats;
-      if (M5.open && !M5.mobDetailOpen) {
+      if (res && res.changed && res.stats) M6.stats = res.stats;
+      if (M6.open && !M6.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -34723,8 +35599,8 @@ ${c.trim()}
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M5.cur) return;
-    const a = M5.cur;
+    if (!mobDetailEl || !M6.cur) return;
+    const a = M6.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -34756,7 +35632,7 @@ ${c.trim()}
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -34829,7 +35705,7 @@ ${c.trim()}
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M5.cur;
+    const a = M6.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -34845,7 +35721,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M5.cur;
+    const a = M6.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -34863,7 +35739,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M5.open) return;
+    if (!M6.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -34926,7 +35802,7 @@ ${c.trim()}
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M5.cur && M5.cur.id === articleId ? M5.cur : null;
+    return M6.cur && M6.cur.id === articleId ? M6.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -34984,10 +35860,10 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M5.cur && M5.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M5.mobDetailOpen) return;
+    if (!mobDetailEl || !M6.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -35014,12 +35890,12 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M5.mobDetailOpen && !!M5.cur && M5.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M5.cur || M5.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M5.cur);
-    if (M5.mobDetailOpen) refreshMobBodyInPlace(M5.cur);
+    if (!M6.cur || M6.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M6.cur);
+    if (M6.mobDetailOpen) refreshMobBodyInPlace(M6.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -35036,8 +35912,8 @@ ${c.trim()}
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M5.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M5.sidecar = await addPendingSourceNote(a.id, notePath);
+        M6.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M6.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -35066,7 +35942,7 @@ ${c.trim()}
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M5.sidecar = res.sidecar;
+      if (res.sidecar) M6.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -35124,7 +36000,7 @@ ${c.trim()}
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M5.sidecar = await addPendingSourceNote(a.id, notePath);
+        M6.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -35274,8 +36150,8 @@ ${c.trim()}
       maxWidth: 560,
       schema,
       onClose: () => {
-        M5.clipNotes = null;
-        M5.clipUrls = /* @__PURE__ */ new Set();
+        M6.clipNotes = null;
+        M6.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -35974,12 +36850,12 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M6.overlay = null;
-    M6.items = [];
-    M6.tag = null;
-    M6.archived = false;
-    M6.sort = "new";
-    M6.renderFn = null;
+    M7.overlay = null;
+    M7.items = [];
+    M7.tag = null;
+    M7.archived = false;
+    M7.sort = "new";
+    M7.renderFn = null;
   }
   function favoritesSettingsSchema() {
     return {
@@ -36050,7 +36926,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M6.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M7.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -36066,7 +36942,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M6.overlay) {
+    if (M7.overlay) {
       closePanel3();
       return;
     }
@@ -36075,12 +36951,12 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M6.overlay = overlay2;
-    M6.renderFn = () => renderAll3();
+    M7.overlay = overlay2;
+    M7.renderFn = () => renderAll3();
     const openFilter = resolveOpenFilter();
-    M6.tag = openFilter.tag;
-    M6.archived = openFilter.archived;
-    M6.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M7.tag = openFilter.tag;
+    M7.archived = openFilter.archived;
+    M7.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
@@ -36168,16 +37044,16 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    if (M6.overlay) {
+    if (M7.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M6.archived ? "@archived" : M6.tag || "";
+        s.favoritesLastFilter = M7.archived ? "@archived" : M7.tag || "";
         void saveSettings();
       }
-      M6.overlay.remove();
-      M6.overlay = null;
+      M7.overlay.remove();
+      M7.overlay = null;
     }
-    M6.renderFn = null;
+    M7.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -36186,9 +37062,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M6.items = await dataManagerOf().getAll();
+      M7.items = await dataManagerOf().getAll();
     } catch (e) {
-      M6.items = [];
+      M7.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -36196,29 +37072,29 @@ ${c.trim()}
   async function reload2() {
     var _a2;
     await loadItems();
-    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
+    (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
   }
   function renderAll3() {
-    if (!M6.overlay) return;
-    if (!M6.archived && M6.tag && !getTags().some((t) => t.label === M6.tag)) M6.tag = null;
-    const panel2 = M6.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M6.items, M6, { mountIcons, mobile: isMobileEnv() });
+    if (!M7.overlay) return;
+    if (!M7.archived && M7.tag && !getTags().some((t) => t.label === M7.tag)) M7.tag = null;
+    const panel2 = M7.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M7.items, M7, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
     if (label === VIEW_ALL) {
-      M6.tag = null;
-      M6.archived = false;
+      M7.tag = null;
+      M7.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M6.tag = null;
-      M6.archived = !M6.archived;
+      M7.tag = null;
+      M7.archived = !M7.archived;
     } else {
-      M6.archived = false;
-      M6.tag = M6.tag === label ? null : label;
+      M7.archived = false;
+      M7.tag = M7.tag === label ? null : label;
     }
     renderAll3();
   }
   function itemById2(id) {
-    return M6.items.find((i) => i.id === id);
+    return M7.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -36823,7 +37699,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M6, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M7, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -36846,7 +37722,7 @@ GitHub 仓库：${ghInfo.title}
       init_ai3();
       init_data8();
       init_app2();
-      M6 = {
+      M7 = {
         overlay: null,
         items: [],
         tag: null,
@@ -48946,9 +49822,9 @@ ${n.content.slice(0, 2e3)}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after !== before) {
-        rec.secondBrainAllowPaths = after;
+      const after2 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after2 !== before) {
+        rec.secondBrainAllowPaths = after2;
         migrated = true;
       }
     }
@@ -52031,20 +52907,20 @@ ${n.content.slice(0, 2e3)}
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after = classifyFilePath(newPath);
-    if (!after) return;
+    const after2 = classifyFilePath(newPath);
+    if (!after2) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after
+      movedOut: before !== after2
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after === "diary") {
+    if (after2 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after}:file-renamed`, payload);
+    emitDomainEvent(`${after2}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;

@@ -1677,3 +1677,43 @@
 
 .bz-kb-mt-openbtn:hover { background: var(--chip); color: var(--ink); border-color: var(--accent); }
 }
+
+/* ============================================================
+ * 动效层（motion.ts 消费，2026-09-22 全量动效批）
+ * 只服务注入件与循环指示：全部 absolute 定位 / 不吃事件 / aria-hidden，
+ * 演出完自动移除——终态 UI 与静态版逐像素一致，不参与任何静态排版。
+ * ============================================================ */
+
+/* 头部双细线描线（主窗落纸）：与 .bz-kb-head 的 border-bottom 3px double 同位同色，
+   自中心向两侧 scaleX 描出后由 JS 移除，终态回落原生 border */
+.bz-kb-headline {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  border-top: 1px solid var(--ink2);
+  border-bottom: 1px solid var(--ink2);
+  pointer-events: none;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* 「笔还在写」呼吸墨滴（录入面板流式生成期）：内容卡角一枚墨点浮沉，
+   移除节点即收（句柄池管理，写完 / 中止 / 关窗 / 销毁都必收，禁永动孤儿） */
+.bz-kb-pen {
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  opacity: 0.75;
+  pointer-events: none;
+  animation: bzKbPenFloat 1.3s ease-in-out infinite;
+}
+@keyframes bzKbPenFloat {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.55; }
+  50% { transform: translateY(-4px) scale(0.82); opacity: 0.95; }
+}
