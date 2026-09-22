@@ -60,7 +60,7 @@ let refreshDelayMs = 1500;
 // ---------- requestUrl 适配（生产默认 HTTP 通道） ----------
 
 /** 带 15s 超时的 requestUrl GET；非 2xx / 超时 → null（由调用方判形态）；
- *  网络异常向上抛（审查 C6：吞成 null 会被 searchLooksBlocked 误判为风控拦截） */
+ *  网络异常向上抛（审查 C6：吞成 null 会被 suggestLooksBlocked 误判为风控拦截） */
 async function httpGet(url: string, headers?: Record<string, string>): Promise<string | null> {
   const timer = new Promise<null>((resolve) => setTimeout(() => resolve(null), HTTP_TIMEOUT_MS));
   const req = requestUrl({ url, method: 'GET', headers, throw: false }).then((resp) => {

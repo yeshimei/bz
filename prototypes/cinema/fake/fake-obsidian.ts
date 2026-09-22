@@ -122,14 +122,18 @@ async function shrinkMedia(url: string): Promise<ArrayBuffer> {
   return await (await cv.convertToBlob({ type: 'image/jpeg', quality: 0.82 })).arrayBuffer();
 }
 
-/** 豆瓣搜索页罐头（结构须匹配 douban-fetcher.parseSearchResults 的正则）。
- *  ⚠ 必须 >8000 字节：searchLooksBlocked 对短响应直接判风控，故补足填充块。 */function cannedSearchHtml(title: string, idx: number): string {
-  const hit =
-    `<div class="result"><div class="pic">` +
-    `<a href="https://www.douban.com/link2/?url=https%3A%2F%2Fmovie.douban.com%2Fsubject%2F${sidOf(idx)}%2F">` +
-    `<img src="${CANNED_PRESETS[idx].poster}"></a></div>` +
-    `<div class="title"><a href="#">${title}</a></div></div>`;
-  return `<!DOCTYPE html><html><body>${hit}${'<div class="filler"></div>'.repeat(400)}</body></html>`;
+/** 豆瓣 subject_suggest 罐头（结构须匹配 douban-fetcher.parseSuggestResults 的消费面：movie/tv 过滤 + id/title/img） */
+function cannedSuggestJson(title: string, idx: number): string {
+  const p = CANNED_PRESETS[idx];
+  return JSON.stringify([
+    {
+      title,
+      id: sidOf(idx),
+      img: p.poster,
+      type: p.isTv ? 'tv' : 'movie',
+      url: `https://movie.douban.com/subject/${sidOf(idx)}/?suggest=${encodeURIComponent(title)}`,
+    },
+  ]);
 }
 
 /** ApiZero 字段罐头（结构须匹配 fetchApizeroInfo 的消费面） */
@@ -201,8 +205,8 @@ function cannedJev(body: string): string {
 
 /**
  * requestUrl：原型无网络，改为**罐头网关**（issue 395 影院表单「解析」链路）。
- * 拦三类：豆瓣搜索页（HTML 罐头）、ApiZero 字段（JSON 罐头）、Jev 判定（按 state 现推）。
- * 海报二进制回 1×1 PNG（否则落盘后的抓取队列必然报 network 失败）。
+ * 拦三类：豆瓣 subject_suggest（JSON 罐头，ADR-0177 搜索页退役）、ApiZero 字段（JSON 罐头）、
+ * Jev 判定（按 state 现推）。海报二进制回 1×1 PNG（否则落盘后的抓取队列必然报 network 失败）。
  * 其余请求维持原口径——抛错（core/ai → AI 荐片走页内降级提示，原型不碰真 AI）。
  */
 export async function requestUrl(req: { url?: string; method?: string; body?: string } | string): Promise<{
@@ -213,18 +217,18 @@ export async function requestUrl(req: { url?: string; method?: string; body?: st
 }> {
   const url = typeof req === 'string' ? req : String((req as { url?: string })?.url ?? '');
   const body = typeof req === 'string' ? '' : String((req as { body?: string })?.body ?? '');
-  // json 必须惰性容错：搜索页返回 HTML，直接 JSON.parse 会抛异常 →
-  // 整个查询被当成网络失败（点「解析」毫无反应，2026-09-21 实测踩到）
+  // json 必须惰性容错：豆瓣/字段落盘口径差异下不假定响应可解析——
+  // 直接 JSON.parse 抛异常会让整个查询被当成网络失败（点「解析」毫无反应，2026-09-21 实测踩到）
   const ok = (text: string) => ({
     status: 200,
     text,
     json: (() => { try { return JSON.parse(text || 'null'); } catch { return null; } })(),
     arrayBuffer: new ArrayBuffer(0),
   });
-  if (url.includes('douban.com/search')) {
+  if (url.includes('subject_suggest')) {
     await cannedDelay(CANNED_DOUBAN_MS);
     const q = decodeURIComponent((/[?&]q=([^&]*)/.exec(url)?.[1] ?? '').replace(/\+/g, ' '));
-    return ok(cannedSearchHtml(q || '未命名', presetIndexOf(q)));
+    return ok(cannedSuggestJson(q || '未命名', presetIndexOf(q)));
   }
   if (url.includes('v1.apizero.cn')) {
     await cannedDelay(CANNED_DOUBAN_MS);

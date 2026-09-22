@@ -1,9 +1,11 @@
 /**
- * 影院豆瓣抓取核心（issue 303 / ADR-0129）：自 tools/obsidian-douban-poster 移植入插件。
- * 字段链（用户拍板）：搜索豆瓣（搜索页正则解析）→ **ApiZero 豆瓣电影信息接口**（评分/导演/
- * 主演/类型/地区/片长首选 + 上映日期←year/热门短评，key 设置项）→ rexxar 演职员兜底
- * （缺导演/主演或需编剧时）；海报走豆瓣（搜索页提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
- * 豆瓣详情页 HTML 退役（字段已由 ApiZero 承接）；移动端同源可用。
+ * 影院豆瓣抓取核心（issue 303 / ADR-0129；ADR-0177 搜索页退役）：自 tools/obsidian-douban-poster 移植入插件。
+ * 字段链（ADR-0177 拍板）：**豆瓣 subject_suggest 补全接口**（JSON 一步拿 sid + 规范名 + 海报 URL，
+ * 取代 www.douban.com/search 搜索页 HTML——该页体积大、易风控、15s 超时被误报「风控」，2026-09 实测）
+ * → **ApiZero 豆瓣电影信息接口**（评分/导演/主演/类型/地区/片长首选 + 上映日期←year/热门短评，
+ * key 设置项）→ rexxar 演职员兜底（缺导演/主演或需编剧时）；
+ * 海报走豆瓣（suggest 提 URL → upgradePosterUrl 高清 → writeBinary 写盘）。
+ * 豆瓣详情页 HTML 与搜索页 HTML 均退役；移动端同源可用。
  * 写回口径（审查 C8/C9 拍板）：除豆瓣链接（修正脏值）外一律「缺失才填」——已有值
  * （含用户手工修正）不覆盖；ApiZero 逗号列表值写入前归一化为消费端的 ` / ` 切分口径（C2）。
  * 纯逻辑 + 依赖注入（httpGet / downloadBinary），node 环境可测。
@@ -56,29 +58,47 @@ export interface DoubanSearchResult {
   posterUrl: string;
 }
 
-/** 纯函数：解析豆瓣搜索页 HTML（照搬 parseSearchResults）：result 块 → title/detailUrl/posterUrl */
-export function parseSearchResults(html: string): DoubanSearchResult[] {
+/** subject_suggest 条目的公共面（只要这几个字段；type 用于滤掉书/音乐条目） */
+interface SuggestItem {
+  title?: string;
+  id?: string;
+  img?: string;
+  type?: string;
+}
+
+/** 纯函数：解析豆瓣 subject_suggest JSON（ADR-0177）：
+ *  只留 movie/tv 条目（suggest 会混书籍/音乐）；detailUrl 由 id 规范化构造——
+ *  suggest 的 url 字段带 ?suggest= 脏参数，不直接使用 */
+export function parseSuggestResults(jsonText: string): DoubanSearchResult[] {
+  let items: unknown;
+  try {
+    items = JSON.parse(jsonText);
+  } catch {
+    return [];
+  }
+  if (!Array.isArray(items)) return [];
   const results: DoubanSearchResult[] = [];
-  const itemRegex = /class="result"[\s\S]*?<div class="pic">[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*>[\s\S]*?<div class="title">[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
-  let match: RegExpExecArray | null;
-  while ((match = itemRegex.exec(html)) !== null) {
-    const rawUrl = match[1];
-    const posterUrl = match[2];
-    const title = match[3].trim();
-    // 搜索结果链接是 link2 跳转包装，url= 参数里才是真实 subject 地址
-    const urlMatch = rawUrl.match(/url=([^&]+)/);
-    const detailUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : rawUrl;
-    results.push({ title, detailUrl, posterUrl });
+  for (const it of items as SuggestItem[]) {
+    if (!it || (it.type !== 'movie' && it.type !== 'tv') || !it.id) continue;
+    results.push({
+      title: String(it.title ?? '').trim(),
+      detailUrl: `https://movie.douban.com/subject/${it.id}/`,
+      posterUrl: String(it.img ?? ''),
+    });
   }
   return results;
 }
 
-/** 纯函数：搜索响应是否为风控拦截页——响应过短或无搜索结果结构（正常搜索页 >20KB 且含 result 块） */
-export function searchLooksBlocked(html: string | null): boolean {
-  if (!html) return true;
-  if (html.length < 8000) return true;
-  // 正常搜索页必然存在结果块或「没有找到」的空态结构；风控拦截页两者皆无
-  return !html.includes('class="result"') && !html.includes('没有找到') && !html.includes('没有相关的搜索结果');
+/** 纯函数：suggest 响应是否为风控/异常形态（ADR-0177）——响应为 null（非 2xx/超时）
+ *  或非 JSON（风控返回 HTML 拦截页）判风控；空数组是正常空态，交上层归 notfound */
+export function suggestLooksBlocked(jsonText: string | null): boolean {
+  if (!jsonText) return true;
+  try {
+    JSON.parse(jsonText);
+    return false;
+  } catch {
+    return true;
+  }
 }
 
 /** 纯函数：s_ratio_poster → l_ratio_poster（高清） */
@@ -311,22 +331,22 @@ export type DoubanQueryOutcome =
   | { ok: false; reason: 'blocked' | 'notfound' | 'network' };
 
 /**
- * 按片名查询豆瓣（搜索 → sid → ApiZero 字段 → rexxar 演职员兜底）。
+ * 按片名查询豆瓣（suggest → sid → ApiZero 字段 → rexxar 演职员兜底）。
  * 表单「解析」与抓取队列 `fetchNoteDouban` **共用这一段**——各写一份必然漂移。
  * 只走网络、不碰文件系统，故不需要 TFile（表单阶段草稿尚未落盘）。
  */
 export async function queryDoubanByName(name: string, deps: DoubanFetchDeps): Promise<DoubanQueryOutcome> {
-  // 1. 搜索（豆瓣搜索页；Cookie 注入）。网络异常上抛接住归 network（C6：不与风控混淆）
-  const searchHeaders: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
-  if (deps.doubanCookie) searchHeaders.Cookie = deps.doubanCookie;
-  let html: string | null;
+  // 1. 补全检索（subject_suggest 补全接口，JSON；Cookie 注入）。网络异常上抛接住归 network（C6：不与风控混淆）
+  const suggestHeaders: Record<string, string> = { Referer: 'https://movie.douban.com/', 'Accept-Language': 'zh-CN,zh;q=0.9' };
+  if (deps.doubanCookie) suggestHeaders.Cookie = deps.doubanCookie;
+  let json: string | null;
   try {
-    html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, searchHeaders);
+    json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, suggestHeaders);
   } catch {
     return { ok: false, reason: 'network' };
   }
-  if (searchLooksBlocked(html)) return { ok: false, reason: 'blocked' };
-  const results = parseSearchResults(html!);
+  if (suggestLooksBlocked(json)) return { ok: false, reason: 'blocked' };
+  const results = parseSuggestResults(json!);
   if (results.length === 0) return { ok: false, reason: 'notfound' };
   const first = results[0];
   const sid = extractSid(first.detailUrl);
@@ -376,8 +396,8 @@ export async function downloadPosterToVault(
 
 /**
  * 单条笔记抓取（队列执行器注入点；成功 = 海报与豆瓣链接都写齐或本已齐全）。
- * 链路：搜索（风控检测）→ 海报下载写盘（无海报时）→ ApiZero 字段 + rexxar 兜底 → frontmatter 写入。
- * 搜索失败/网络异常 → network；搜索风控 → blocked；海报下载失败 → network；写盘失败 → write。
+ * 链路：suggest 检索（风控检测）→ 海报下载写盘（无海报时）→ ApiZero 字段 + rexxar 兜底 → frontmatter 写入。
+ * 检索失败/网络异常 → network；suggest 风控/异常形态 → blocked；海报下载失败 → network；写盘失败 → write。
  * 写回经 vault.process：字段一律「缺失才填」并基于回调内 fresh 内容复核（C8），
  * 抓取期间用户手改不会被覆盖。
  */
@@ -394,7 +414,7 @@ export async function fetchNoteDouban(app: App, file: TFile, deps: DoubanFetchDe
   const hasDoubanInfo = !!doubanUrlRaw && /^https?:\/\//.test(doubanUrlRaw);
   if (hasPoster && hasDoubanInfo) return { ok: true, skipped: true };
 
-  // 1. 查询（搜索 + 字段；与表单「解析」共用 queryDoubanByName，单源不裂）
+  // 1. 查询（suggest 检索 + 字段；与表单「解析」共用 queryDoubanByName，单源不裂）
   const q = await queryDoubanByName(name, deps);
   if (!q.ok) return { ok: false, reason: q.reason };
   const { detailUrl, posterUrl, sid, apizero: az, celebrities: cel } = q.data;
