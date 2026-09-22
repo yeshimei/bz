@@ -12750,6 +12750,29 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
 .bz-sp-set-row--list:hover { background: transparent; }
 }
 .bz-sp-set-row--list .bz-sp-set-ctrl { margin-left: 0; width: 100%; min-width: 0; flex-wrap: wrap; }
+/* 复合行窄屏两行排版（≤768px 移动端口径）：名称/描述独占首行，行内按钮与输入框落到第二行、
+   占满行宽（输入框吃掉余宽）。命中 = 控件区同时有输入框与行内按钮——「添加 UP 主」「添加 RSS 源」
+   这类「名称 + 按钮 + 输入框」三元素行：原三者挤一行时控件区按内容宽（按钮 + 输入框固有宽）撑开，
+   把名称描述压成窄柱。桌面宽屏三元素同行不变。作用域不挂 .bz-sp-desk/.bz-sp-mobile：
+   UP/RSS 管理弹窗（挂 body 的独立 overlay）不在移动面板壳内，靠视口宽度命中。 */
+@media (max-width: 768px) {
+  .bz-sp-set-row:has(.bz-sp-set-ctrl .bz-input):has(.bz-sp-set-ctrl .bz-sp-btn) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--bz-space-sm);
+  }
+  .bz-sp-set-row:has(.bz-sp-set-ctrl .bz-input):has(.bz-sp-set-ctrl .bz-sp-btn) > .bz-sp-set-ctrl {
+    margin-left: 0;
+    width: 100%;
+  }
+  .bz-sp-set-row:has(.bz-sp-set-ctrl .bz-input):has(.bz-sp-set-ctrl .bz-sp-btn) > .bz-sp-set-ctrl .bz-sp-btn {
+    flex: none;
+  }
+  .bz-sp-set-row:has(.bz-sp-set-ctrl .bz-input):has(.bz-sp-set-ctrl .bz-sp-btn) > .bz-sp-set-ctrl .bz-input {
+    flex: 1;
+    min-width: 0;
+  }
+}
 /* 设置子项层级降级（enh-sweep-a）：isChild 行弱化、hover 恢复 */
 .bz-sp-desk .bz-sp-set-row.child,
 .bz-sp-mobile .bz-sp-set-row.child,
