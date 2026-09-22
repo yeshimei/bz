@@ -1,5 +1,5 @@
-/* 源指纹 cfcc1a4e7cd9151b · 仓内输入 254 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 eeba1a050b0dbe56 · 仓内输入 255 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/home/fake-sim.ts","prototypes/home/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/parser.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/notes.ts","src/gameshelf/reconcile.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/home/behavior-timeline.ts","src/home/domains.ts","src/home/entry-editor.ts","src/home/index.ts","src/home/layouts/river/render.ts","src/home/motion.ts","src/home/order.ts","src/home/render.ts","src/home/river.ts","src/home/settings.ts","src/home/shared.ts","src/home/state.ts","src/home/ui.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/recap/aggregate.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/ollama.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/api.ts","src/smartcat/behavior-trim.ts","src/smartcat/behavior-wording.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/cognitive.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/insight-version.ts","src/smartcat/memory.ts","src/smartcat/routing.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/home/fake-sim.ts → window.BZW_home（行为单源预览包，issue 245/ADR-0106） */
 var BZW_home = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_home = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M8, s, ms) {
+        function createDate(y, m, d, h, M9, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M8, s, ms);
+            date = new Date(y + 400, m, d, h, M9, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M8, s, ms);
+            date = new Date(y, m, d, h, M9, s, ms);
           }
           return date;
         }
@@ -6851,7 +6851,7 @@ var BZW_home = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M8 = 10;
+    const M9 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -6878,7 +6878,7 @@ var BZW_home = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
+      if (Math.abs(t.clientX - sx) > M9 || Math.abs(t.clientY - sy) > M9) {
         moved = true;
         cancel();
       }
@@ -20031,15 +20031,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -22268,10 +22268,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after = part.node.splitText(offset);
-    const len = Math.min(hit.len, after.data.length);
-    const tail = after.splitText(len);
-    (_b2 = after.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after2 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after2.data.length);
+    const tail = after2.splitText(len);
+    (_b2 = after2.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -49431,9 +49431,9 @@ GitHub 仓库：${ghInfo.title}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after !== before) {
-        rec.secondBrainAllowPaths = after;
+      const after2 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after2 !== before) {
+        rec.secondBrainAllowPaths = after2;
         migrated = true;
       }
     }
@@ -55139,6 +55139,513 @@ ${piece}` : piece;
   // src/home/ui.ts
   init_order();
 
+  // src/home/motion.ts
+  var M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var E = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+  var STAG = 30;
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function canHover() {
+    try {
+      return typeof matchMedia === "function" && matchMedia("(hover: hover)").matches;
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || reduced() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  var easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+  var timers = /* @__PURE__ */ new Set();
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionPanelIn(overlay2, reopen) {
+    const panel2 = overlay2.querySelector(".bz-home-panel");
+    if (!panel2) return;
+    panel2.style.opacity = "";
+    panel2.style.transform = "";
+    panel2.style.filter = "";
+    waapi(
+      panel2,
+      [
+        { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: reopen ? 300 : 480, easing: E.out }
+    );
+    bindParallax(overlay2);
+  }
+  function motionPanelOut(overlay2, done) {
+    const panel2 = overlay2.querySelector(".bz-home-panel");
+    stopParallax(overlay2);
+    if (!panel2) {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (!finished) {
+        finished = true;
+        done();
+      }
+    };
+    const a = waapi(
+      panel2,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
+      ],
+      { duration: M8.move + 40, easing: E.out, fill: "forwards" }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after(M8.move + 200, finish);
+  }
+  function motionRendered(overlay2, boot) {
+    cancelPending();
+    const panel2 = overlay2.querySelector(".bz-home-panel");
+    if (!panel2) return;
+    const narrow = panel2.clientWidth > 0 && panel2.clientWidth <= 768;
+    const week = overlay2.querySelector("[data-home-week]");
+    const entries = overlay2.querySelector("[data-home-entries]");
+    const flow = overlay2.querySelector("[data-home-flow]");
+    const next = overlay2.querySelector("[data-home-next]");
+    if (!boot) {
+      if (flow) {
+        const tl = flow.querySelector(".bz-home-timeline");
+        if (tl) ensureRiver(tl, false);
+      }
+      return;
+    }
+    if (reduced()) return;
+    if (week) {
+      const cells = [...week.querySelectorAll(".bz-home-wk")];
+      cells.forEach((el, i) => {
+        after(140 + i * 46, () => {
+          waapi(
+            el,
+            [
+              { opacity: 0, transform: "rotateX(-64deg) translateY(6px)" },
+              { opacity: 1, transform: "none" }
+            ],
+            { duration: 560, easing: E.out, fill: "backwards" }
+          );
+        });
+      });
+      const sel = cells.find((c) => c.classList.contains("bz-home-wk--sel"));
+      if (sel) after(620, () => popBar(sel));
+    }
+    if (entries) {
+      const rows = [...entries.querySelectorAll(".bz-home-erow")];
+      rows.forEach((el, i) => {
+        if (i >= 14) return;
+        after(260 + i * STAG, () => {
+          waapi(
+            el,
+            [
+              { opacity: 0, transform: "translateY(8px)", filter: "blur(4px)" },
+              { opacity: 1, transform: "none", filter: "blur(0px)" }
+            ],
+            { duration: M8.base, easing: E.out, fill: "backwards" }
+          );
+        });
+      });
+    }
+    if (flow) {
+      const tl = flow.querySelector(".bz-home-timeline");
+      if (tl) {
+        after(300, () => ensureRiver(tl, true));
+        revealEvents(tl, { base: 460, stagger: 100, cap: 12 });
+      }
+      const empty = flow.querySelector(".bz-home-flow-empty");
+      if (empty) waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+    }
+    if (next) {
+      const head = next.querySelector(".bz-home-sec-t");
+      if (head) waapi(
+        head,
+        [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
+        { duration: M8.base, easing: E.out, fill: "backwards" }
+      );
+      next.querySelectorAll(".bz-home-pr").forEach((el, i) => {
+        after(640 + i * 90, () => {
+          waapi(
+            el,
+            [
+              { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(7px)" },
+              { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
+            ],
+            { duration: M8.base + 120, easing: E.out, fill: "backwards" }
+          );
+        });
+        if (!narrow && canHover()) bindTilt(el);
+      });
+    }
+  }
+  function motionDaySwitch(flow, rewrite) {
+    const tl = flow.querySelector(".bz-home-timeline");
+    if (reduced() || !tl) {
+      rewrite();
+      return;
+    }
+    const out = waapi(
+      tl,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" }
+      ],
+      { duration: M8.fast + 20, easing: E.out, fill: "forwards" }
+    );
+    if (!out) {
+      rewrite();
+      return;
+    }
+    after(M8.fast + 30, () => {
+      rewrite();
+      const nt = flow.querySelector(".bz-home-timeline");
+      if (nt) {
+        ensureRiver(nt, true);
+        revealEvents(nt, { base: 40, stagger: 70, cap: 12 });
+      } else {
+        const empty = flow.querySelector(".bz-home-flow-empty");
+        if (empty) waapi(empty, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.base, easing: E.out, fill: "backwards" });
+      }
+    });
+  }
+  function motionWeekPop(wk) {
+    if (reduced()) return;
+    wk.classList.remove("bz-hm-wkpop");
+    void wk.offsetWidth;
+    wk.classList.add("bz-hm-wkpop");
+  }
+  function popBar(wk) {
+    motionWeekPop(wk);
+  }
+  var SPARK_FALLBACK = { ok: "#2f9e5f", warn: "#d98a1f", hot: "#c74a2c" };
+  function beforeAnchor(li) {
+    try {
+      const cs = getComputedStyle(li, "::before");
+      return { left: parseFloat(cs.left) || 6, top: parseFloat(cs.top) || 17 };
+    } catch (e) {
+      return { left: 6, top: 17 };
+    }
+  }
+  function sparkColor(tl, li) {
+    const key = li.classList.contains("bz-home-ev--hot") ? "--h-red" : li.classList.contains("bz-home-ev--warn") ? "--h-amber" : "--h-ok";
+    try {
+      const v = getComputedStyle(tl).getPropertyValue(key).trim();
+      if (v) return v;
+    } catch (e) {
+    }
+    return SPARK_FALLBACK[key === "--h-red" ? "hot" : key === "--h-amber" ? "warn" : "ok"];
+  }
+  function revealEvents(tl, opts) {
+    const lis = [...tl.querySelectorAll(".bz-home-ev")];
+    lis.forEach((li, i) => {
+      const delay = opts.base + Math.min(i, opts.cap) * opts.stagger;
+      li.style.willChange = "transform,filter,opacity";
+      after(delay, () => {
+        waapi(
+          li,
+          [
+            { opacity: 0, transform: "translateY(10px)", filter: "blur(5px)" },
+            { opacity: 1, transform: "none", filter: "blur(0px)" }
+          ],
+          { duration: M8.base + 140, easing: E.out, fill: "backwards" }
+        );
+        li.classList.add("bz-hm-ign");
+        after(620, () => li.classList.remove("bz-hm-ign"));
+        after(120, () => {
+          const a = beforeAnchor(li);
+          const r = li.getBoundingClientRect(), tr = tl.getBoundingClientRect();
+          burst(tl, r.left - tr.left + a.left + 4, r.top - tr.top + a.top + 4, sparkColor(tl, li));
+        });
+      });
+    });
+    lis.forEach((li, i) => {
+      const note = li.querySelector(".bz-home-ev-note");
+      if (!note) return;
+      after(opts.base + Math.min(i, opts.cap) * opts.stagger + 240, () => {
+        waapi(
+          note,
+          [{ opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
+          { duration: M8.base, easing: E.out, fill: "backwards" }
+        );
+      });
+    });
+  }
+  function ensureRiver(tl, animate) {
+    const lis = [...tl.querySelectorAll(".bz-home-ev")];
+    let svg = tl.querySelector(":scope > .bz-hm-river");
+    if (!lis.length) {
+      svg == null ? void 0 : svg.remove();
+      tl.classList.remove("has-river");
+      return;
+    }
+    const w = tl.scrollWidth, h = tl.scrollHeight;
+    if (w < 10 || h < 10) return;
+    if (!svg) {
+      svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      svg.classList.add("bz-hm-river");
+      svg.innerHTML = '<defs></defs><mask id="bz-hm-rv-mask" maskUnits="userSpaceOnUse"><path class="bz-hm-rv-reveal" fill="none" stroke="#fff" stroke-width="8"/></mask><path class="bz-hm-rv-base" fill="none" stroke-width="2" stroke-linecap="round" stroke-dasharray="3 3" mask="url(#bz-hm-rv-mask)"/>';
+      tl.prepend(svg);
+    }
+    tl.classList.add("has-river");
+    svg.setAttribute("width", String(w));
+    svg.setAttribute("height", String(h));
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.style.width = `${w}px`;
+    svg.style.height = `${h}px`;
+    const base = svg.querySelector(".bz-hm-rv-base");
+    const reveal = svg.querySelector(".bz-hm-rv-reveal");
+    if (!base || !reveal) return;
+    base.style.stroke = "var(--h-line)";
+    const tr = tl.getBoundingClientRect();
+    const pts = lis.map((li) => {
+      const a = beforeAnchor(li);
+      const r = li.getBoundingClientRect();
+      return { x: r.left - tr.left + a.left + 4, y: r.top - tr.top + a.top + 4 };
+    });
+    let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1], b = pts[i], sway = i % 2 ? 7 : -7, dy = (b.y - a.y) * 0.4;
+      d += ` C ${(a.x + sway).toFixed(1)} ${(a.y + dy).toFixed(1)}, ${(b.x - sway).toFixed(1)} ${(b.y - dy).toFixed(1)}, ${b.x.toFixed(1)} ${b.y.toFixed(1)}`;
+    }
+    base.setAttribute("d", d);
+    reveal.setAttribute("d", d);
+    const len = base.getTotalLength() + 2;
+    base.classList.remove("bz-hm-flowing");
+    if (!animate) {
+      reveal.style.strokeDasharray = "none";
+      reveal.style.strokeDashoffset = "0";
+      base.classList.add("bz-hm-flowing");
+      return;
+    }
+    reveal.style.strokeDasharray = String(len);
+    reveal.style.strokeDashoffset = String(len);
+    tween(850, (v) => {
+      reveal.style.strokeDashoffset = String(len * (1 - v));
+    }, easeOutQuart);
+    after(870, () => base.classList.add("bz-hm-flowing"));
+  }
+  var sparkPools = /* @__PURE__ */ new Map();
+  var fxRaf = 0;
+  function burst(tl, x, y, color) {
+    var _a2;
+    if (reduced()) return;
+    let fx = tl.querySelector(":scope > .bz-hm-fx");
+    if (!fx) {
+      fx = document.createElement("canvas");
+      fx.className = "bz-hm-fx";
+      tl.appendChild(fx);
+    }
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = tl.scrollWidth, h = tl.scrollHeight;
+    if (fx.width !== Math.round(w * dpr) || fx.height !== Math.round(h * dpr)) {
+      fx.width = Math.round(w * dpr);
+      fx.height = Math.round(h * dpr);
+      fx.style.width = `${w}px`;
+      fx.style.height = `${h}px`;
+    }
+    const ctx = fx.getContext("2d");
+    if (!ctx) return;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const pool = (_a2 = sparkPools.get(fx)) != null ? _a2 : [];
+    for (let i = 0; i < 8; i++) {
+      const ang = -Math.PI / 2 + (Math.random() - 0.5) * 2.4;
+      const sp = 1.1 + Math.random() * 2;
+      pool.push({ x, y, vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp, life: 1, r: 0.9 + Math.random() * 1.3, color });
+    }
+    sparkPools.set(fx, pool);
+    if (!fxRaf) fxRaf = requestAnimationFrame(fxTick);
+  }
+  function fxTick() {
+    fxRaf = 0;
+    for (const [fx, pool] of [...sparkPools.entries()]) {
+      const ctx = fx.getContext("2d");
+      if (!ctx || !fx.isConnected) {
+        sparkPools.delete(fx);
+        continue;
+      }
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, fx.width, fx.height);
+      for (let i = pool.length - 1; i >= 0; i--) {
+        const s = pool[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.05;
+        s.vx *= 0.985;
+        s.life -= 0.025;
+        if (s.life <= 0) {
+          pool.splice(i, 1);
+          continue;
+        }
+        ctx.globalAlpha = Math.max(0, s.life);
+        ctx.fillStyle = s.color;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r * s.life, 0, 7);
+        ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      if (!pool.length) sparkPools.delete(fx);
+    }
+    if (sparkPools.size) fxRaf = requestAnimationFrame(fxTick);
+  }
+  var parallax = /* @__PURE__ */ new Map();
+  function bindParallax(overlay2) {
+    const panel2 = overlay2.querySelector(".bz-home-panel");
+    if (!panel2 || parallax.has(overlay2)) return;
+    if (reduced() || !canHover() || panel2.clientWidth <= 768) return;
+    const layers = [
+      { el: panel2.querySelector(".bz-home-head"), d: 2 },
+      { el: panel2.querySelector("[data-home-entries]"), d: 3.5 },
+      { el: panel2.querySelector("[data-home-flow]"), d: 5 },
+      { el: panel2.querySelector("[data-home-next]"), d: 3 }
+    ].filter((l) => !!l.el);
+    const st = {
+      overlay: overlay2,
+      layers,
+      tx: 0,
+      ty: 0,
+      x: 0,
+      y: 0,
+      raf: 0,
+      onMove: (e) => {
+        const r = panel2.getBoundingClientRect();
+        st.tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+        st.ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+        if (!st.raf) st.raf = requestAnimationFrame(parallaxTick);
+      },
+      onLeave: () => {
+        st.tx = 0;
+        st.ty = 0;
+        if (!st.raf) st.raf = requestAnimationFrame(parallaxTick);
+      }
+    };
+    panel2.addEventListener("pointermove", st.onMove);
+    panel2.addEventListener("pointerleave", st.onLeave);
+    parallax.set(overlay2, st);
+  }
+  function parallaxTick() {
+    let active2 = false;
+    for (const st of parallax.values()) {
+      st.raf = 0;
+      st.x += (st.tx - st.x) * 0.07;
+      st.y += (st.ty - st.y) * 0.07;
+      if (Math.abs(st.tx - st.x) < 2e-3 && Math.abs(st.ty - st.y) < 2e-3) {
+        st.x = st.tx;
+        st.y = st.ty;
+      }
+      for (const l of st.layers) l.el.style.transform = `translate3d(${(st.x * l.d).toFixed(2)}px, ${(st.y * l.d * 0.6).toFixed(2)}px, 0)`;
+      if (st.x !== st.tx || st.y !== st.ty) active2 = true;
+    }
+    if (active2) {
+      for (const st of parallax.values()) if (!st.raf) st.raf = requestAnimationFrame(parallaxTick);
+    }
+  }
+  function stopParallax(overlay2) {
+    const st = parallax.get(overlay2);
+    if (!st) return;
+    st.overlay.removeEventListener("pointermove", st.onMove);
+    st.overlay.removeEventListener("pointerleave", st.onLeave);
+    if (st.raf) cancelAnimationFrame(st.raf);
+    for (const l of st.layers) l.el.style.transform = "";
+    parallax.delete(overlay2);
+  }
+  function bindTilt(card) {
+    if (card.dataset.hmTilt) return;
+    card.dataset.hmTilt = "1";
+    card.classList.add("bz-hm-tilt");
+    let rx = 0, ry = 0, trx = 0, tryy = 0, raf = 0;
+    const glare = document.createElement("i");
+    glare.className = "bz-hm-glare";
+    card.appendChild(glare);
+    const loop = () => {
+      rx += (trx - rx) * 0.14;
+      ry += (tryy - ry) * 0.14;
+      card.style.transform = Math.abs(rx) > 0.02 || Math.abs(ry) > 0.02 ? `perspective(620px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)` : "";
+      if (Math.abs(trx - rx) > 0.01 || Math.abs(tryy - ry) > 0.01 || trx || tryy) raf = requestAnimationFrame(loop);
+      else raf = 0;
+    };
+    card.addEventListener("pointermove", (e) => {
+      const r = card.getBoundingClientRect();
+      const mx = (e.clientX - r.left) / r.width - 0.5, my = (e.clientY - r.top) / r.height - 0.5;
+      trx = -my * 4.5;
+      tryy = mx * 5;
+      glare.style.setProperty("--gx", `${(mx * 100 + 50).toFixed(1)}%`);
+      glare.style.setProperty("--gy", `${(my * 100 + 50).toFixed(1)}%`);
+      if (!raf) raf = requestAnimationFrame(loop);
+    });
+    card.addEventListener("pointerleave", () => {
+      trx = 0;
+      tryy = 0;
+      if (!raf) raf = requestAnimationFrame(loop);
+    });
+  }
+  if (typeof window !== "undefined") {
+    window.addEventListener("hashchange", () => {
+      if (location.hash !== "#replay") return;
+      location.hash = "";
+      const replay = window.__bzHomeReplay;
+      if (typeof replay === "function") setTimeout(replay, 600);
+    });
+    if (location.hash === "#replay") {
+      const wait = () => {
+        const replay = window.__bzHomeReplay;
+        if (typeof replay === "function") {
+          location.hash = "";
+          setTimeout(replay, 600);
+        } else setTimeout(wait, 120);
+      };
+      setTimeout(wait, 120);
+    }
+  }
+
   // src/home/render.ts
   init_shared();
 
@@ -55287,6 +55794,11 @@ ${piece}` : piece;
     mountIcons(overlay2);
     bindEvents2(overlay2, app);
     renderAll5();
+    motionPanelIn(overlay2, false);
+    window.__bzHomeReplay = () => {
+      motionPanelIn(overlay2, false);
+      motionRendered(overlay2, true);
+    };
     trapPanelFocus(overlay2);
     void refreshRiverAndRender();
   }
@@ -55326,9 +55838,12 @@ ${piece}` : piece;
   }
   function closeOverlay() {
     if (!H.currentOverlay || !H.overlayVisible) return;
-    saveScroll(H.currentOverlay);
-    H.currentOverlay.style.display = "none";
+    const overlay2 = H.currentOverlay;
+    saveScroll(overlay2);
     H.overlayVisible = false;
+    motionPanelOut(overlay2, () => {
+      if (!H.overlayVisible && H.currentOverlay === overlay2) overlay2.style.display = "none";
+    });
   }
   function showOverlay() {
     const overlay2 = H.currentOverlay;
@@ -55337,6 +55852,7 @@ ${piece}` : piece;
     topifyZ(overlay2);
     H.overlayVisible = true;
     restoreScroll(overlay2);
+    motionPanelIn(overlay2, true);
     void refreshRiverAndRender();
   }
   function bindEvents2(overlay2, app) {
@@ -55350,7 +55866,6 @@ ${piece}` : piece;
       }
     });
     overlay2.addEventListener("click", (e) => {
-      var _a2;
       const t = e.target;
       if (e.target === overlay2) {
         closeOverlay();
@@ -55371,15 +55886,21 @@ ${piece}` : piece;
         H.riverView = wk.dataset.homeWeekday || null;
         const overlay22 = H.currentOverlay;
         if (overlay22) {
+          let selEl = null;
           overlay22.querySelectorAll("[data-home-weekday]").forEach((b) => {
             const sel = b.dataset.homeWeekday === H.riverView;
             b.classList.toggle("bz-home-wk--sel", sel);
             b.setAttribute("aria-pressed", sel ? "true" : "false");
+            if (sel) selEl = b;
           });
+          if (selEl) motionWeekPop(selEl);
           const flow = overlay22.querySelector("[data-home-flow]");
           if (flow) {
-            flow.innerHTML = flowHtml(H.river, (_a2 = H.riverView) != null ? _a2 : "", readHomeSettings().flow);
-            mountIcons(flow);
+            motionDaySwitch(flow, () => {
+              var _a2;
+              flow.innerHTML = flowHtml(H.river, (_a2 = H.riverView) != null ? _a2 : "", readHomeSettings().flow);
+              mountIcons(flow);
+            });
           }
         }
       }
@@ -55542,9 +56063,10 @@ ${piece}` : piece;
     H.riverView = view;
     const today = river.today.dateStr;
     const week = overlay2.querySelector("[data-home-week]");
-    if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view != null ? view : today);
     const entries = overlay2.querySelector("[data-home-entries]");
     const flow = overlay2.querySelector("[data-home-flow]");
+    const flowBoot = !!flow.querySelector(".bz-home-sk-line, .bz-home-flow-empty");
+    if (week) week.innerHTML = weekHtml(river.week.slice(0, cfg.rangeDays), today, view != null ? view : today);
     const next = overlay2.querySelector("[data-home-next]");
     entries.innerHTML = entriesHtml(river, H.order.desk, H.order.hiddenDesk);
     flow.innerHTML = flowHtml(river, view != null ? view : today, cfg.flow);
@@ -55561,6 +56083,7 @@ ${piece}` : piece;
     mountIcons(tiles);
     mountRowInteractions(overlay2, H.appRef, river);
     restoreScroll(overlay2);
+    motionRendered(overlay2, flowBoot);
     if (fk && fk.value && H.overlayVisible) {
       const target = overlay2.querySelector(`[${fk.attr}="${fk.value}"]`);
       target == null ? void 0 : target.focus();

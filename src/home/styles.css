@@ -334,3 +334,45 @@
 .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(23, 21, 18, 0.06) !important; }
 .theme-dark .bz-item-menu.bz-home-menu button.bz-item-menu-item:hover { background: rgba(236, 233, 223, 0.08) !important; }
 }
+/* ==================== 动效层（2026-09-22 快速原型批：在原 UI 上叠动画，布局零改动） ====================
+   台账对齐 cinema/motion.ts（issue 400）：fast 160 / move 200 / base 280 / impulse 740 + 接力 30ms。
+   注入件（河面 SVG / 迸光画布 / 光泽层）全部绝对定位、pointer-events:none、不参与排版；
+   .has-river 只是把原生虚线轨道的视觉同位替换成会流动的 SVG 河（几何同位，从 ::before 现算）。
+   reduced-motion：JS 侧整层直达终态，这里再兜一层「动画全停」。 */
+.bz-home-week { perspective: 560px; } /* 周历 3D 翻落的透视（纯视觉，不影响排布） */
+
+/* 河面：描线 + 虚线常流（几何 = 事件行圆点锚的贝塞尔串，见 motion.ts ensureRiver） */
+.bz-home-timeline.has-river::before { opacity: 0; }
+.bz-hm-river { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: visible; }
+.bz-hm-river.flow .bz-hm-rv-base { animation: bz-hm-march 2.6s linear infinite; }
+@keyframes bz-hm-march { to { stroke-dashoffset: -60; } }
+
+/* 迸光画布：压在事件文字之上、不吃事件 */
+.bz-home-timeline .bz-hm-fx { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+
+/* 彩点点亮：圆点带白环一起弹性放大（transform 不吃布局） */
+.bz-home-ev.bz-hm-ign::before { animation: bz-hm-ign .5s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes bz-hm-ign { 0% { transform: scale(0); } 62% { transform: scale(1.45); } 100% { transform: scale(1); } }
+
+/* 周历选中彩条弹跳 */
+.bz-home-wk.bz-hm-wkpop i { animation: bz-hm-wkpop .44s cubic-bezier(.34, 1.56, .64, 1); }
+@keyframes bz-hm-wkpop { 0% { transform: scaleY(.4); } 60% { transform: scaleY(1.18); } 100% { transform: scaleY(1); } }
+
+/* 入口行 hover：彩点轻轻一跳（微反馈档） */
+@media (hover: hover) {
+  .bz-home-erow:hover .bz-home-dot { animation: bz-hm-dotping .5s cubic-bezier(.34, 1.56, .64, 1); }
+}
+@keyframes bz-hm-dotping { 0% { transform: scale(.7); } 55% { transform: scale(1.35); } 100% { transform: scale(1); } }
+
+/* 明天预告卡：3D 倾斜 + 跟手光泽（inject 件随卡裁切；倾斜 transform 不吃布局） */
+.bz-home-pr.bz-hm-tilt { position: relative; overflow: hidden; will-change: transform; }
+.bz-home-pr .bz-hm-glare {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0;
+  transition: opacity var(--bz-dur-fast, .16s) ease;
+  background: radial-gradient(190px 130px at var(--gx, 50%) var(--gy, 50%), rgba(122, 92, 224, .16), transparent 65%);
+}
+.bz-home-pr:hover .bz-hm-glare { opacity: 1; }
+
+/* reduced-motion 兜底（评审期停用）：系统 RM 不再拦 CSS 动画——评审要看到完整动效，
+   正式版拍板后按「放缓不减义」恢复为降速版而非全停。 */
+/* @media (prefers-reduced-motion: reduce) { ... } */
