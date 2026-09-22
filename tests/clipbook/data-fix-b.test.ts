@@ -22,7 +22,7 @@ import { resetObsidianMocks, requestUrl } from '../mock-obsidian-entry';
 import { MockVault, mockAppWithVault } from '../mock-vault';
 import { setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
-import { getNewsFilePath, readNewsData, writeNewsData, resolveUidFromInputDetailed } from '../../src/clipbook/news-data';
+import { getNewsFilePath, readNewsData, writeNewsData, resolveUidFromInputDetailed, fetchUpProfile } from '../../src/clipbook/news-data';
 import { drainNewsWritesForTests } from '../../src/clipbook/write-queue';
 import { flowMarkAllRead, flowUndoHandled, flowUndoMarkAllRead } from '../../src/clipbook/flow';
 import { applyBodyTransforms, applyClipContentTransforms } from '../../src/clipbook/anchor';
@@ -297,6 +297,32 @@ describe('resolveUidFromInputDetailed（新-8）', () => {
       expect(r).toEqual({ uid: id, networkFailed: false });
     }
     expect(requestUrl).not.toHaveBeenCalled();
+  });
+});
+
+// ---------- 2026-09-22：UP 资料直查（fetchUpProfile，web-interface/card） ----------
+
+describe('fetchUpProfile（添加/开弹窗时补名字与头像）', () => {
+  it('取到 card → name + avatar（face 统一转 https），长 uid 照查', async () => {
+    vi.mocked(requestUrl).mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ code: 0, data: { card: { mid: '3706929260006322', name: '黑鸦Heya', face: 'http://i0.hdslb.com/x.jpg' } } }),
+    } as any);
+    const info = await fetchUpProfile('3706929260006322');
+    expect(info).toEqual({ name: '黑鸦Heya', avatar: 'https://i0.hdslb.com/x.jpg' });
+    expect(String(vi.mocked(requestUrl).mock.calls[0][0].url)).toContain('mid=3706929260006322');
+  });
+
+  it('风控 / 无 card / 非 2xx / 名字头像全缺 / 空 uid → null（调用方保留 uid 兜底）', async () => {
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: JSON.stringify({ code: -412, message: '风控' }) } as any);
+    expect(await fetchUpProfile('1')).toBeNull();
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: JSON.stringify({ code: 0, data: {} }) } as any);
+    expect(await fetchUpProfile('1')).toBeNull();
+    vi.mocked(requestUrl).mockResolvedValue({ status: 412, text: '' } as any);
+    expect(await fetchUpProfile('1')).toBeNull();
+    vi.mocked(requestUrl).mockResolvedValue({ status: 200, text: JSON.stringify({ code: 0, data: { card: { name: '', face: '' } } }) } as any);
+    expect(await fetchUpProfile('1')).toBeNull();
+    expect(await fetchUpProfile('')).toBeNull();
   });
 });
 

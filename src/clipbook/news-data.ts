@@ -392,6 +392,33 @@ export async function resolveUidFromInput(text: string): Promise<string | null> 
   return (await resolveUidFromInputDetailed(text)).uid;
 }
 
+/**
+ * 单个 uid → UP 主资料（name + avatar）。接口 = B站 web-interface/card（匿名可读，不需要
+ * Cookie；实测 16 位长 uid 亦可查）。
+ * 失败一律收成 null：网络失败 / 非 2xx / 风控（code≠0 → 无 card）/ 无 card / 名字与头像全缺
+ * ——调用方保留 uid 兜底展示，不误报「已读取资料」。头像统一转 https（同 bilibiliUpInfo
+ * 段解析口径）。HTTP 通道走 core/http 单源（requestUrl 生产适配，移动端免 CORS）。
+ */
+export async function fetchUpProfile(uid: string): Promise<BilibiliUpInfo | null> {
+  const mid = String(uid || '').trim();
+  if (!mid) return null;
+  const body = await httpGetText(`https://api.bilibili.com/x/web-interface/card?mid=${encodeURIComponent(mid)}&photo=false`, {
+    timeoutMs: 10000,
+    fetchImpl: requestUrlAsFetch(),
+  });
+  if (body === null) return null;
+  try {
+    const card = JSON.parse(body)?.data?.card;
+    if (!card) return null;
+    const name = card.name ? String(card.name).trim() : '';
+    const avatar = card.face ? String(card.face).replace(/^http:/, 'https:') : '';
+    if (!name && !avatar) return null;
+    return { ...(name ? { name } : {}), ...(avatar ? { avatar } : {}) };
+  } catch {
+    return null;
+  }
+}
+
 /** 迁移：读旧 news-stats.json（若存在）并入 stats 段；返回迁移后的四段（无旧文件/已有统计 → 原样返回） */
 export async function migrateLegacyStats(data: NewsData): Promise<NewsData> {
   // stats 段已有真实数据则不动（避免反复覆盖）
