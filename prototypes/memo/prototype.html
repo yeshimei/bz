@@ -229,7 +229,7 @@
         t('桌面面板开', !!dt('.bz-memo-panel'));
         t('移动面板开', !!mob('.bz-memo-panel'));
         t('初始16条', db().length === BASE);
-        t('皮肤默认纸感', dt('.bz-memo-panel').classList.contains('bz-memo-skin-paper'));
+        t('皮肤默认编辑部（2026-09-22 新默认）', dt('.bz-memo-panel').classList.contains('bz-memo-skin-editorial'));
         // 徽牌皮肤钮（issue 269 修复守卫，两轮）：① 旧实现标签与目标方向写反 → 点按永远不动；
         // ② 旧实现只调桌面实例 → 移动端不跟着切（双 iframe 两份行为包实例）。两条都要守住。
         (() => {
@@ -273,13 +273,23 @@
         t('composer 落盘', !!saved);
         t('composer 场景=默认第一场景', saved && saved.scene === '剪藏');
 
-        // 行内勾选（300ms 防抖 + 行为流）
+        // 行内勾选（300ms 防抖 + 「卷走」动效 + 行为流）
         const firstCard = dd.querySelector('.bz-memo-card:not(.bz-memo-done)');
         const firstId = firstCard && firstCard.dataset.memoId;
         firstCard.querySelector('[data-memo-check]').click();
-        await sleep(900);
+        // 卷走窗口（300ms 防抖刚过）：卡片必须**在列表原地**开始卷、并且**由卡片自身**卷成
+        // 那根纸卷——整列重建会把卡片直接挪进已完成折叠区，这一段就全没机会出现
+        await sleep(430);
+        const rollCard = dd.querySelector('.bz-memo-card[data-memo-id="' + firstId + '"]');
+        t('卷走：卡片自身就地卷成纸卷', !!rollCard && rollCard.classList.contains('bz-memo-rolled'));
+        t('卷走：卡片已搬进 overlay 当纸卷', !!rollCard && rollCard.classList.contains('bz-memo-rollcard'));
+        t('卷走：不再另插一根卷轴条', dd.querySelectorAll('.bz-memo-rollaxis').length === 0);
+        await sleep(760);
         const doneItem = db().find((i) => i.id === firstId);
         t('勾选完成落盘', doneItem && !!doneItem.completed);
+        // 演完才挪走：原卡离开列表（进了折叠区），飞到半路的纸卷随即自我清理
+        t('卷走：演完才挪走（列表已无该卡）', !dd.querySelector('.bz-memo-card[data-memo-id="' + firstId + '"]'));
+        t('卷走：纸卷已清理', dd.querySelectorAll('.bz-memo-rollcard').length === 0);
 
         // 编辑弹窗（真 openEditor → uiModal）
         dt('[data-memo-newbtn]').click();
@@ -297,6 +307,9 @@
         t('皮肤切编辑部（移动端）', mob('.bz-memo-panel').classList.contains('bz-memo-skin-editorial'));
         B().applySkin('paper');
         mobFrame().contentWindow.BZW_memo.applySkin('paper');
+        // 切回默认编辑部：applySkin 会写共享存储，别把壳留在纸感上（自检跑完还要接着手看）
+        B().applySkin('editorial');
+        mobFrame().contentWindow.BZW_memo.applySkin('editorial');
 
         // 引用同步·改名（真 file-sync：vault rename → 域事件总线 → notePath 改写，去抖回放）
         const renamed = B().demoRenameNote('笔记/项目规划.md', '笔记/项目规划-2026.md');

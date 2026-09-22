@@ -46,9 +46,11 @@ const VAULT_KEY = 'bz-sim:CONFIG/STORAGE/memo.json';
  * 谁改都一致，且刷新（SSE 热重载会整页 reload）后选择不丢。
  * 数据类内容（memo.json）本就走 fake vault 的 localStorage，无需在此重复。
  */
-const DEMO_KEY = 'bz-sim:demo-settings';
+const DEMO_KEY = 'bz-sim:demo-settings:v2';
 
-/** 需要跨 iframe 共享的键（外观选择；不含与数据/行为相关的键） */
+/** 需要跨 iframe 共享的键（外观选择；不含与数据/行为相关的键）。
+ *  ⚠️ DEMO_KEY 带版本后缀：2026-09-22 默认皮肤由纸感改编辑部，旧共享值（多半只是旧默认
+ *  住进去的 paper）随键名作废一次，否则壳里永远停在纸感、看不到新默认。 */
 const SHARED_KEYS = ['memoSkin', 'memoLayout'] as const;
 
 /** 读共享设置并盖到内存副本上（boot 时调用一次；坏数据静默忽略） */
@@ -84,7 +86,7 @@ const demoSettings: Record<string, unknown> = {
 	// 面板键（ADR-0117 正名后键名）：皮肤演示钮写 memoSkin 即时热切换
 	memoPanelWidth: 0,
 	memoPanelHeight: 0,
-	memoSkin: 'paper',
+	memoSkin: 'editorial',
 	memoLayout: 'default',
 	// memo* 设置键（ADR-0092 存储契约，键名即本名）
 	memoScenarios: '',
@@ -142,19 +144,19 @@ export function openPanel(): void {
 export { closeMemoPanel as closePanel };
 
 /** 皮肤演示（设置行 onChange 同款热切换）：改演示设置（+ 共享落盘）+ 真 applyMemoSkin。
- *  返回**归一后的值**（未知值按 applyMemoSkin 的兜底回落纸感）——壳按绝对目标下发两端时，
+ *  返回**归一后的值**（未知值按 applyMemoSkin 的兜底回落编辑部）——壳按绝对目标下发两端时，
  *  直接拿这个返回值回显按钮，不必再读回一次状态。 */
 export function applySkin(skin: 'paper' | 'editorial'): 'paper' | 'editorial' {
 	bootMemoSim();
-	demoSettings.memoSkin = skin === 'editorial' ? 'editorial' : 'paper';
+	demoSettings.memoSkin = skin === 'paper' ? 'paper' : 'editorial';
 	saveSharedSettings();
 	applyMemoSkin(demoSettings.memoSkin as 'paper' | 'editorial');
 	return demoSettings.memoSkin as 'paper' | 'editorial';
 }
 
-/** 当前皮肤（读演示设置；未知回落纸感——与 applyMemoSkin 的兜底同口径） */
+/** 当前皮肤（读演示设置；未知回落编辑部——与 applyMemoSkin 的兜底同口径） */
 export function skinState(): 'paper' | 'editorial' {
-	return demoSettings.memoSkin === 'editorial' ? 'editorial' : 'paper';
+	return demoSettings.memoSkin === 'paper' ? 'paper' : 'editorial';
 }
 
 /**

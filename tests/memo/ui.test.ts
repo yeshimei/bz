@@ -312,17 +312,50 @@ describe('memo 面板', () => {
     expect(document.querySelectorAll('.bz-memo-card')[0].textContent).toContain('ffmpeg 转写参数整理');
   });
 
-  it('排序 = 组件库下拉（issue 268）：收起态单枚 + 展开菜单三档，切换写回设置', async () => {
+  it('排序 = 桌面三档平铺（分段钮 + 滑动底片）：切换写回设置、底片跟着走', async () => {
+    const { app, settings, saveSpy } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-sort] .bz-segmented')).toBeTruthy();
+    });
+    const seg = document.querySelector('[data-memo-sort] .bz-segmented') as HTMLElement;
+    const btns = [...seg.querySelectorAll('.bz-segmented-btn')] as HTMLElement[];
+    // 三档平铺（2026-09-22 用户拍板，对齐影院排序钮）：文案全在、当前档 is-on
+    expect(btns.map((b) => b.textContent)).toEqual(['紧急优先', '仅按到期', '按创建']);
+    expect(seg.querySelector('.bz-segmented-btn.is-on')?.textContent).toBe('紧急优先');
+    // 每档带稳定键：滑动底片按键解析当前项（渲染后重解析也不认错）
+    expect(btns.map((b) => b.dataset.value)).toEqual(['priority', 'due', 'created']);
+    // 桌面走平铺，不再有下拉
+    expect(document.querySelector('[data-memo-sort] .bz-select')).toBeNull();
+    // 底片挂在钮组上（core/ui/slide-pill 按选中项矩形落位）
+    // 底片挂在钮组上（core/ui/slide-pill 按选中项矩形落位）——首次渲染在 await loadData 之后，
+    // 分段钮是同步注入的，所以这里必须等底片而不是等钮组
+    await vi.waitFor(() => {
+      expect(seg.querySelector(':scope > .bz-slide-pill'), '底片应随首次渲染落位').toBeTruthy();
+    });
+    // 点「按创建」→ 写回 memoSortMode（与 memo 共用键）+ 落盘 + 选中跟随
+    btns.find((b) => b.textContent === '按创建')!.click();
+    expect(settings.memoSortMode).toBe('created');
+    await vi.waitFor(() => {
+      expect(saveSpy).toHaveBeenCalled();
+    });
+    expect(M.sortMode).toBe('created');
+    expect(document.querySelector('[data-memo-sort] .bz-segmented-btn.is-on')?.textContent).toBe('按创建');
+  });
+
+  it('排序 = 移动端仍走组件库下拉（issue 268 的窄屏判据）：三档在菜单里、切换写回设置', async () => {
+    MockPlatform.isMobile = true;
     const { app, settings, saveSpy } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
       expect(document.querySelector('[data-memo-sort] .bz-select')).toBeTruthy();
     });
     const sel = document.querySelector('[data-memo-sort] .bz-select') as HTMLElement;
-    // 收起态：只亮当前档文案 + 箭头（三档平铺退役 → 搜索框腾出宽度）
+    // 移动端不建平铺分段钮（窄屏三档占宽会把搜索框挤没）
+    expect(document.querySelector('[data-memo-sort] .bz-segmented')).toBeNull();
+    // 收起态：只亮当前档文案 + 箭头
     expect(sel.querySelector('.bz-select-val')?.textContent).toBe('紧急优先');
     expect(sel.querySelector('.bz-select-car')).toBeTruthy();
-    expect(document.querySelector('[data-memo-sort] .bz-choice')).toBeNull();
     // 点触发器展开菜单：三档 + 当前档选中
     sel.click();
     const menu = sel.querySelector('.bz-select-menu') as HTMLElement;
@@ -330,7 +363,7 @@ describe('memo 面板', () => {
     const items = [...menu.querySelectorAll('.bz-select-item')] as HTMLElement[];
     expect(items.map((b) => b.textContent)).toEqual(['紧急优先', '仅按到期', '按创建']);
     expect(menu.querySelector('.bz-select-item.is-on')?.textContent).toBe('紧急优先');
-    // 点「按创建」→ 写回 memoSortMode（与 memo 共用键）+ 落盘 + 菜单收起 + 收起态文案跟随
+    // 点「按创建」→ 写回 memoSortMode + 落盘 + 菜单收起 + 收起态文案跟随
     items.find((b) => b.textContent === '按创建')!.click();
     expect(settings.memoSortMode).toBe('created');
     await vi.waitFor(() => {
@@ -341,7 +374,28 @@ describe('memo 面板', () => {
     expect(M.sortMode).toBe('created');
   });
 
-  it('排序下拉：点外部 / Escape 收起菜单（不误改值）', async () => {
+  it('侧栏场景选中块走滑动底片（core/ui/slide-pill）：底片常驻，重渲染后不被冲掉', async () => {
+    const { app } = seedVault();
+    openMemoPanel(app);
+    await vi.waitFor(() => {
+      expect(document.querySelector('[data-memo-nav] .bz-rail-item.on')).toBeTruthy();
+    });
+    const nav = document.querySelector('[data-memo-nav]') as HTMLElement;
+    expect(nav.querySelector(':scope > .bz-slide-pill'), '侧栏应有一片底片').toBeTruthy();
+    // 切场景 → renderAll 重写 nav.innerHTML（底片挂在容器上、不被冲掉）→ 选中项跟着换
+    const chips = [...nav.querySelectorAll<HTMLElement>('[data-memo-scene]')];
+    const target = chips.find((el) => !el.classList.contains('on'))!;
+    const targetKey = target.dataset.memoScene;
+    target.click();
+    await vi.waitFor(() => {
+      // 渲染换掉了整批项：按键重新查新元素（旧元素已脱离 DOM）
+      expect(document.querySelector('[data-memo-nav] .bz-rail-item.on')?.getAttribute('data-memo-scene')).toBe(targetKey);
+    });
+    expect(nav.querySelector(':scope > .bz-slide-pill'), '重渲染后底片仍在').toBeTruthy();
+  });
+
+  it('排序下拉（移动端）：点外部 / Escape 收起菜单（不误改值）', async () => {
+    MockPlatform.isMobile = true;
     const { app, settings } = seedVault();
     openMemoPanel(app);
     await vi.waitFor(() => {
@@ -1191,7 +1245,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
     expect(theme.name).toBe('面板主题');
     expect(theme.binding).toMatchObject({ key: 'memoSkin' });
     expect(theme.layoutKey).toBe('memoLayout');
-    expect(theme.options.map((o: any) => o.value)).toEqual(['paper', 'editorial']);
+    expect(theme.options.map((o: any) => o.value)).toEqual(['editorial', 'paper']);
     expect(theme.options.every((o: any) => o.layout === 'default')).toBe(true);
     // 显示组不再含皮肤行
     const show = schema.groups.find((g) => g.name === '显示');
@@ -1209,7 +1263,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
     void app;
   });
 
-  it('打开面板按 memoSkin 挂皮肤类；未知/缺省值回落纸感（默认风格已下线）', async () => {
+  it('打开面板按 memoSkin 挂皮肤类；未知/缺省值回落编辑部（2026-09-22 新默认）', async () => {
     const { app, settings } = seedVault();
     settings.memoSkin = 'paper';
     openMemoPanel(app);
@@ -1226,8 +1280,8 @@ describe('备忘录面板皮肤（issue 210）', () => {
     settings.memoSkin = 'default';
     openMemoPanel(app);
     const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
-    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(true);
-    expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(false);
+    expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(true);
+    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(false);
   });
 
   it('主头行计数数字包 .bz-memo-cnt-num（皮肤染色钩子）', async () => {
@@ -1241,7 +1295,7 @@ describe('备忘录面板皮肤（issue 210）', () => {
     expect(nums[1].textContent).toBe('3');
   });
 
-  it('弹窗换肤：memoSkin=paper 挂纸感；default/未知回落纸感（与面板 applyMemoSkin 同口径，issue 291）', async () => {
+  it('弹窗换肤：memoSkin=paper 挂纸感；default/未知回落编辑部（与面板 applyMemoSkin 同口径，issue 291）', async () => {
     const { app, settings } = seedVault();
     settings.memoSkin = 'paper';
     openMemoPanel(app);
@@ -1258,13 +1312,13 @@ describe('备忘录面板皮肤（issue 210）', () => {
     openMemoPanel(app);
     openEditor(M.items.find((i) => i.id === 'a')!);
     const popup2 = document.querySelector('.bz-overlay-popup') as HTMLElement;
-    // 面板在 default 下回落纸感（见上一条用例）——弹窗必须同皮，
+    // 面板在 default 下回落编辑部（见上一条用例）——弹窗必须同皮，
     // 否则就是 issue 291 的「面板有皮、子弹窗没皮」（旧断言 default 不挂 = 该缺陷本身）
-    expect(popup2.classList.contains('bz-memo-skin-paper')).toBe(true);
-    expect(popup2.classList.contains('bz-memo-skin-editorial')).toBe(false);
+    expect(popup2.classList.contains('bz-memo-skin-editorial')).toBe(true);
+    expect(popup2.classList.contains('bz-memo-skin-paper')).toBe(false);
   });
 
-  it('applyMemoSkin 热切换已开面板；未知值回落纸感（默认风格已下线）', async () => {
+  it('applyMemoSkin 热切换已开面板；未知值回落编辑部（2026-09-22 新默认）', async () => {
     const { app } = seedVault();
     openMemoPanel(app);
     const panel = document.querySelector('.bz-memo-panel') as HTMLElement;
@@ -1274,8 +1328,8 @@ describe('备忘录面板皮肤（issue 210）', () => {
     expect(panel.classList.contains('bz-memo-skin-paper')).toBe(false);
     expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(true);
     applyMemoSkin('default');
-    expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(false);
-    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(true);
+    expect(panel.classList.contains('bz-memo-skin-paper')).toBe(false);
+    expect(panel.classList.contains('bz-memo-skin-editorial')).toBe(true);
     // 面板未开时调用不抛错（仅落盘路径）
     closeMemoPanel();
     expect(() => applyMemoSkin('paper')).not.toThrow();

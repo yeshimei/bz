@@ -1,5 +1,5 @@
-/* 源指纹 53fc693a6ae64950 · 仓内输入 235 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 92551c8747ac5a07 · 仓内输入 237 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -6291,6 +6291,7 @@ var BZW_memo = (() => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "bz-segmented-btn" + (o.value === opts.value ? " is-on" : "");
+      b.dataset.value = o.value;
       b.textContent = o.label;
       b.setAttribute("role", "radio");
       b.setAttribute("aria-checked", String(o.value === opts.value));
@@ -7743,6 +7744,205 @@ var BZW_memo = (() => {
       init_modal();
       init_resize();
       init_splitter();
+    }
+  });
+
+  // src/core/ui/slide-pill.ts
+  function hoverCapable() {
+    try {
+      return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    } catch (e) {
+      return false;
+    }
+  }
+  function pillKeyOf(el, keys) {
+    for (const k of keys) {
+      const v = el.dataset[k];
+      if (v) return v;
+    }
+    return "";
+  }
+  function ensurePillBound(box, t, hoverable) {
+    if (box.dataset.pillBound) return;
+    box.dataset.pillBound = "1";
+    const resync = (animate) => syncSlidePill(box, t, hoverable, animate);
+    if (hoverable) {
+      box.addEventListener("mouseover", (e) => {
+        var _a2;
+        const el = (_a2 = e.target) == null ? void 0 : _a2.closest(t.item);
+        if (!el || !box.contains(el)) return;
+        const k = pillKeyOf(el, t.keys);
+        if (!k || box.dataset.pillHover === k) return;
+        box.dataset.pillHover = k;
+        resync(true);
+      });
+      box.addEventListener("mouseleave", () => {
+        if (!box.dataset.pillHover) return;
+        delete box.dataset.pillHover;
+        resync(true);
+      });
+    }
+    box.addEventListener("scroll", () => resync(false), true);
+  }
+  function syncSlidePill(box, t, hoverable, animate = true) {
+    var _a2, _b2;
+    ensurePillBound(box, t, hoverable);
+    const onClass = (_a2 = t.onClass) != null ? _a2 : "is-on";
+    let pill = box.querySelector(`:scope > .${BZ_PILL_CLS}`);
+    if (!pill) {
+      pill = document.createElement("span");
+      pill.className = BZ_PILL_CLS;
+      pill.setAttribute("aria-hidden", "true");
+      if (getComputedStyle(box).position === "static") box.style.position = "relative";
+      box.prepend(pill);
+    }
+    const items = [...box.querySelectorAll(t.item)];
+    const hoverKey = (_b2 = box.dataset.pillHover) != null ? _b2 : "";
+    const hovered = hoverKey ? items.find((el) => pillKeyOf(el, t.keys) === hoverKey) : void 0;
+    const target = hovered != null ? hovered : items.find((el) => el.classList.contains(onClass));
+    if (!target) {
+      pill.classList.remove("is-visible");
+      return;
+    }
+    const r = target.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    if (t.clip) {
+      const sc = target.closest(t.clip);
+      if (sc) {
+        const sr = sc.getBoundingClientRect();
+        if (r.bottom < sr.top + 1 || r.top > sr.bottom - 1) {
+          pill.classList.remove("is-visible");
+          return;
+        }
+      }
+    }
+    if (!animate) pill.classList.add("is-instant");
+    pill.style.width = `${Math.round(r.width)}px`;
+    pill.style.height = `${Math.round(r.height)}px`;
+    pill.style.transform = `translate(${Math.round(r.left - b.left)}px, ${Math.round(r.top - b.top)}px)`;
+    pill.classList.add("is-visible");
+    if (!animate) {
+      void pill.offsetWidth;
+      pill.classList.remove("is-instant");
+    }
+  }
+  function syncSlidePills(root, targets, hoverable = hoverCapable()) {
+    for (const t of targets) {
+      const box = root.querySelector(t.box);
+      if (box) syncSlidePill(box, t, hoverable, false);
+    }
+  }
+  var BZ_PILL_CLS;
+  var init_slide_pill = __esm({
+    "src/core/ui/slide-pill.ts"() {
+      BZ_PILL_CLS = "bz-slide-pill";
+    }
+  });
+
+  // src/core/ui/flip.ts
+  function safeAnimate(el, frames, opts) {
+    if (typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      console.error("[flip] 动画不可用，跳过：", e);
+      return null;
+    }
+  }
+  function measureFlip(root, item, key) {
+    const m = /* @__PURE__ */ new Map();
+    root.querySelectorAll(item).forEach((n) => {
+      const k = n.dataset[key];
+      if (k) m.set(k, n.getBoundingClientRect());
+    });
+    return m;
+  }
+  function playFlip(root, before, opts) {
+    var _a2, _b2, _c, _d, _e;
+    const dur = (_a2 = opts.dur) != null ? _a2 : FLIP_DUR;
+    const rr = root.getBoundingClientRect();
+    const nodes = Array.from(root.querySelectorAll(opts.item));
+    const seen = /* @__PURE__ */ new Set();
+    const spin = (_b2 = opts.spin) != null ? _b2 : 0;
+    nodes.forEach((n, vi) => {
+      const k = n.dataset[opts.key];
+      if (!k) return;
+      seen.add(k);
+      const a = before == null ? void 0 : before.get(k);
+      if (!a) return;
+      const b = n.getBoundingClientRect();
+      const dx = a.left - b.left;
+      const dy = a.top - b.top;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+      const deg = spin ? vi % 2 ? spin : -spin : 0;
+      n.style.transition = "none";
+      n.style.transform = `translate(${dx}px, ${dy}px) rotate(${deg}deg) scale(${spin ? 0.96 : 1})`;
+      if (spin) n.style.zIndex = "4";
+      requestAnimationFrame(() => {
+        n.style.transition = spin ? `transform ${dur + 60}ms cubic-bezier(0.34, 1.3, 0.5, 1)` : `transform ${dur}ms var(--bz-ease-out)`;
+        n.style.transform = "rotate(0deg) scale(1)";
+        window.setTimeout(() => {
+          n.style.transition = "";
+          n.style.transform = "";
+          if (spin) n.style.zIndex = "";
+        }, dur + 100);
+      });
+    });
+    if (opts.ghost !== false && before) {
+      let i = 0;
+      before.forEach((r, k) => {
+        if (seen.has(k)) return;
+        if (r.bottom < rr.top || r.top > rr.bottom || r.width < 1) return;
+        const g = document.createElement("div");
+        g.className = "bz-flip-ghost" + (opts.ghostClass ? " " + opts.ghostClass : "");
+        g.style.cssText = `position:absolute;left:${Math.round(r.left - rr.left + root.scrollLeft)}px;top:${Math.round(r.top - rr.top + root.scrollTop)}px;width:${Math.round(r.width)}px;height:${Math.round(r.height)}px`;
+        root.appendChild(g);
+        const ga = safeAnimate(g, [
+          { opacity: 0.9, transform: "none", filter: "blur(0px)" },
+          { opacity: 0, transform: "translateY(6px) scale(0.97)", filter: "blur(3px)" }
+        ], { duration: 240, delay: Math.min(i, 10) * 22, easing: "ease", fill: "forwards" });
+        if (!ga) {
+          g.remove();
+          return;
+        }
+        ga.onfinish = () => g.remove();
+        i++;
+      });
+    }
+    if (opts.enter) {
+      const n = (_c = opts.enter.n) != null ? _c : 12;
+      const stagger = (_d = opts.enter.stagger) != null ? _d : 26;
+      const from = (_e = opts.enter.from) != null ? _e : "bottom";
+      let idx = 0;
+      nodes.forEach((el) => {
+        const k = el.dataset[opts.key];
+        if (!k || (before == null ? void 0 : before.has(k))) return;
+        if (idx >= n) {
+          el.style.opacity = "";
+          return;
+        }
+        const delay = idx * stagger;
+        idx++;
+        const fromCss = from === "right" ? "translateX(22px) scale(0.96)" : "translateY(6px) scale(0.99)";
+        const ea = safeAnimate(el, [
+          { opacity: 0, transform: fromCss, filter: "blur(3px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ], { duration: 300, delay, easing: EASE_OUT, fill: "both" });
+        if (!ea) {
+          el.style.opacity = "";
+          return;
+        }
+        ea.onfinish = () => {
+          el.style.opacity = "";
+        };
+      });
+    }
+  }
+  var FLIP_DUR, EASE_OUT;
+  var init_flip = __esm({
+    "src/core/ui/flip.ts"() {
+      FLIP_DUR = 200;
+      EASE_OUT = "cubic-bezier(0.33, 1, 0.68, 1)";
     }
   });
 
@@ -26949,8 +27149,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               binding: { key: "memoSkin" },
               layoutKey: "memoLayout",
               options: [
-                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" },
-                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" }
+                // 编辑部置首（2026-09-22 用户拍板）：与默认值 memoSkin:'editorial' 同口径——
+                // 第一张卡就是新装 / 缺省时落到的那个
+                { value: "editorial", label: "编辑部", layout: "default", prevClass: "bz-skinprev-editorial" },
+                { value: "paper", label: "纸感手账", layout: "default", prevClass: "bz-skinprev-paper" }
               ],
               onChange: (v) => applyMemoSkin(v)
             }
@@ -48820,7 +49022,7 @@ ${n.content.slice(0, 2e3)}
         // 备忘录面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
         memoPanelWidth: 0,
         memoPanelHeight: 0,
-        memoSkin: "paper",
+        memoSkin: "editorial",
         memoLayout: "default",
         // 日记本（ADR-0115：3 键；影视/书库目录跨域读，退役键见接口注释）
         diaryDirectory: "我的/日记",
@@ -49946,6 +50148,7 @@ ${n.content.slice(0, 2e3)}
     var _a2;
     searchDebounced2.cancel();
     M.search = "";
+    touchViewEpoch();
     const input = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
     if (input) input.value = "";
     syncSearchClear();
@@ -50085,15 +50288,15 @@ ${n.content.slice(0, 2e3)}
     const panel2 = M.overlay.querySelector(".bz-memo-panel");
     if (!panel2) return;
     panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
-    const v = skin === "editorial" ? "editorial" : "paper";
+    const v = skin === "paper" ? "paper" : "editorial";
     panel2.classList.add(`bz-memo-skin-${v}`);
   }
   function skinClass() {
     const s = tryGetSettings().memoSkin;
-    return s === "editorial" ? "bz-memo-skin-editorial" : "bz-memo-skin-paper";
+    return s === "paper" ? "bz-memo-skin-paper" : "bz-memo-skin-editorial";
   }
   function openMemoPanel(app, opts) {
-    var _a2;
+    var _a2, _b2;
     if (M.overlay) {
       closeMemoPanel();
       return;
@@ -50107,35 +50310,40 @@ ${n.content.slice(0, 2e3)}
     M.pinnedNewId = null;
     M.search = "";
     const overlay2 = document.createElement("div");
-    overlay2.className = "bz-panel-overlay";
+    overlay2.className = "bz-panel-overlay bz-memo-ovpre bz-memo-ovanim";
     overlay2.innerHTML = panelShellHtml();
+    (_a2 = overlay2.querySelector(".bz-memo-panel")) == null ? void 0 : _a2.classList.add("bz-memo-anim", "bz-memo-pre");
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
     M.overlay = overlay2;
     M.appRef = app;
     M.renderFn = () => renderAll4();
+    playPanelEnter(overlay2);
+    panelEnterPending = true;
     const panelEl = overlay2.querySelector(".bz-memo-panel");
     applyMemoSkin(tryGetSettings().memoSkin);
     mountIcons(overlay2);
     panelFocusRelease = trapPanelFocus(panelEl);
     const sortEl = overlay2.querySelector("[data-memo-sort]");
-    const sortSelect = uiSelect({
-      options: [
-        { value: "priority", label: "紧急优先" },
-        { value: "due", label: "仅按到期" },
-        { value: "created", label: "按创建" }
-      ],
-      value: M.sortMode,
-      className: "bz-memo-sortsel",
-      onChange: (v) => {
-        M.sortMode = v;
-        getSettings().memoSortMode = v;
-        void saveSettings().catch((e) => console.error("[memo] 排序设置保存失败", e));
-        renderAll4();
-      }
-    });
-    sortEl.appendChild(sortSelect.el);
-    sortSelectDetach = sortSelect.detach;
+    if (isMobileEnv()) {
+      const sortSelect = uiSelect({
+        options: SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+        value: M.sortMode,
+        className: "bz-memo-sortsel",
+        onChange: applySortMode
+      });
+      sortEl.appendChild(sortSelect.el);
+      sortSelectDetach = sortSelect.detach;
+    } else {
+      const sortSeg = uiSegmented({
+        options: SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+        value: M.sortMode,
+        label: "排序方式",
+        className: "bz-memo-sortseg",
+        onChange: applySortMode
+      });
+      sortEl.appendChild(sortSeg.el);
+    }
     if (!isMobileEnv()) {
       panelResizeDetach2 = uiResizable(panelEl, {
         minW: PANEL.MIN_W,
@@ -50174,6 +50382,7 @@ ${n.content.slice(0, 2e3)}
       if (nav) {
         const scene = nav.dataset.memoScene;
         M.activeScene = M.activeScene === scene ? "全部" : scene;
+        touchViewEpoch();
         M.pinnedNewId = null;
         renderAll4();
         return;
@@ -50191,12 +50400,15 @@ ${n.content.slice(0, 2e3)}
       const donebar = t.closest("[data-memo-donebar]");
       if (donebar) {
         M.showDone = !M.showDone;
+        doneJustOpened = M.showDone;
+        touchViewEpoch();
         renderAll4();
         return;
       }
       const doneMore = t.closest("[data-memo-donemore]");
       if (doneMore) {
         M.showEarlierDone = true;
+        touchViewEpoch();
         renderAll4();
         return;
       }
@@ -50218,7 +50430,7 @@ ${n.content.slice(0, 2e3)}
       toggleCheck(it);
     });
     content.addEventListener("keydown", (e) => {
-      var _a3, _b2, _c;
+      var _a3, _b3, _c;
       if (e.key !== "Enter" && e.key !== " ") return;
       const t = e.target;
       if (!t || t.closest("a")) return;
@@ -50230,9 +50442,11 @@ ${n.content.slice(0, 2e3)}
         if (it) toggleCheck(it);
         return;
       }
-      if ((_b2 = t.closest) == null ? void 0 : _b2.call(t, "[data-memo-donebar]")) {
+      if ((_b3 = t.closest) == null ? void 0 : _b3.call(t, "[data-memo-donebar]")) {
         e.preventDefault();
         M.showDone = !M.showDone;
+        doneJustOpened = M.showDone;
+        touchViewEpoch();
         renderAll4();
         return;
       }
@@ -50278,7 +50492,7 @@ ${n.content.slice(0, 2e3)}
       e.stopImmediatePropagation();
       clearMemoSearch();
     });
-    (_a2 = overlay2.querySelector("[data-memo-search-clear]")) == null ? void 0 : _a2.addEventListener("click", () => clearMemoSearch());
+    (_b2 = overlay2.querySelector("[data-memo-search-clear]")) == null ? void 0 : _b2.addEventListener("click", () => clearMemoSearch());
     void (async () => {
       await loadData();
       if (opts == null ? void 0 : opts.notePath) {
@@ -50290,6 +50504,60 @@ ${n.content.slice(0, 2e3)}
       renderAll4();
     })();
   }
+  function enterLayer(el, delay, dy) {
+    if (!el) return;
+    el.style.opacity = "0";
+    el.style.transform = `translateY(${dy}px)`;
+    window.setTimeout(() => {
+      el.style.transition = "opacity 300ms var(--bz-ease-out), transform 300ms var(--bz-ease-out)";
+      el.style.opacity = "";
+      el.style.transform = "";
+      window.setTimeout(() => {
+        el.style.transition = "";
+      }, 340);
+    }, delay);
+  }
+  function playPanelEnter(overlay2) {
+    const panel2 = overlay2.querySelector(".bz-memo-panel");
+    if (!panel2) return;
+    requestAnimationFrame(() => {
+      panel2.classList.remove("bz-memo-pre");
+      overlay2.classList.remove("bz-memo-ovpre");
+    });
+    enterLayer(panel2.querySelector(".bz-rail"), 90, 12);
+    enterLayer(panel2.querySelector(".bz-toolrow"), 160, 12);
+    window.setTimeout(() => {
+      panel2.classList.remove("bz-memo-anim");
+      overlay2.classList.remove("bz-memo-ovanim");
+    }, 520);
+  }
+  function playCardsEnter() {
+    if (!M.overlay) return;
+    M.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
+      enterLayer(c, 20 + i * 34, 14);
+    });
+  }
+  function playPanelExit(overlay2) {
+    const wrap = document.createElement("div");
+    wrap.className = "bz-memo-exit";
+    const mask = document.createElement("div");
+    mask.className = "bz-memo-exit-mask";
+    wrap.appendChild(mask);
+    const panel2 = overlay2.querySelector(".bz-memo-panel");
+    if (panel2) {
+      const r = panel2.getBoundingClientRect();
+      if (r.width >= 4 && r.height >= 4) {
+        const board = document.createElement("div");
+        board.className = "bz-memo-exit-panel";
+        const cs = getComputedStyle(panel2);
+        board.style.cssText = `left:${Math.round(r.left)}px;top:${Math.round(r.top)}px;width:${Math.round(r.width)}px;height:${Math.round(r.height)}px;border-radius:${cs.borderRadius || "12px"}`;
+        wrap.appendChild(board);
+      }
+    }
+    document.body.appendChild(wrap);
+    requestAnimationFrame(() => wrap.classList.add("is-out"));
+    window.setTimeout(() => wrap.remove(), PANEL_EXIT_MS);
+  }
   function closeMemoPanel() {
     if (M.overlay) {
       const s = tryGetSettings();
@@ -50297,6 +50565,7 @@ ${n.content.slice(0, 2e3)}
         s.memoLastScene = M.activeScene;
         void saveSettings().catch((e) => console.error("[memo] 上次场景保存失败", e));
       }
+      playPanelExit(M.overlay);
       M.overlay.remove();
       M.overlay = null;
     }
@@ -50323,6 +50592,22 @@ ${n.content.slice(0, 2e3)}
     M.pinnedNewId = null;
     clipTitleHint = null;
   }
+  function touchViewEpoch() {
+    viewEpoch++;
+  }
+  function syncMemoPills() {
+    if (!M.overlay) return;
+    syncSlidePills(M.overlay, MEMO_PILL_TARGETS);
+  }
+  function applySortMode(v) {
+    if (v === M.sortMode) return;
+    M.sortMode = v;
+    touchViewEpoch();
+    nextFlipSpin = 2.6;
+    getSettings().memoSortMode = v;
+    void saveSettings().catch((e) => console.error("[memo] 排序设置保存失败", e));
+    renderAll4();
+  }
   function renderAll4() {
     if (!M.overlay) return;
     const items = getVisibleItems();
@@ -50330,6 +50615,11 @@ ${n.content.slice(0, 2e3)}
     renderMobScenes();
     renderMainHead(items);
     renderContent(items);
+    syncMemoPills();
+    if (panelEnterPending) {
+      panelEnterPending = false;
+      playCardsEnter();
+    }
   }
   function renderMainHead(items) {
     const overlay2 = M.overlay;
@@ -50387,6 +50677,14 @@ ${n.content.slice(0, 2e3)}
     const content = M.overlay.querySelector("[data-memo-content]");
     if (!content) return;
     const keepTop = content.scrollTop;
+    const flipBefore = measureFlip(content, ".bz-memo-card", "memoId");
+    const newView = viewEpoch !== lastRenderEpoch;
+    lastRenderEpoch = viewEpoch;
+    const flipSpin = nextFlipSpin;
+    nextFlipSpin = 0;
+    const enterFrom = nextEnterFrom;
+    nextEnterFrom = "right";
+    nextEnterSoft = false;
     if (items.length === 0) {
       content.innerHTML = "";
       if (loadFailed) {
@@ -50435,7 +50733,7 @@ ${n.content.slice(0, 2e3)}
       const listed = !open || M.showEarlierDone ? done : recent2;
       sections.push(doneBarHtml(open, done.length));
       if (open) {
-        sections.push(...listed.map((it) => cardHtml4(it)));
+        sections.push(`<div class="bz-memo-donearea${doneJustOpened ? " bz-memo-areain" : ""}" data-memo-donearea><div>` + listed.map((it) => cardHtml4(it)).join("") + "</div></div>");
         if (earlier > 0 && !M.showEarlierDone) {
           sections.push(doneMoreHtml(earlier));
         }
@@ -50444,6 +50742,13 @@ ${n.content.slice(0, 2e3)}
     content.innerHTML = sections.join("");
     mountIcons(content);
     content.scrollTop = keepTop;
+    playFlip(content, flipBefore, {
+      item: ".bz-memo-card",
+      key: "memoId",
+      enter: newView ? { n: nextEnterSoft ? 5 : 12, stagger: nextEnterSoft ? 14 : 26, from: enterFrom } : false,
+      spin: flipSpin
+    });
+    doneJustOpened = false;
     content.querySelectorAll("[data-memo-openitem]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.preventDefault();
@@ -50541,7 +50846,25 @@ ${n.content.slice(0, 2e3)}
   function syncPendingCheck(id, pending) {
     document.querySelectorAll(
       `.bz-memo-card[data-memo-id="${id}"] [data-memo-check], .bz-memo-sheet-entry [data-memo-check]`
-    ).forEach((el) => el.classList.toggle("bz-memo-pending", pending));
+    ).forEach((el) => {
+      el.classList.toggle("bz-memo-pending", pending);
+      const ring = el.querySelector(":scope > .bz-memo-ring");
+      if (pending && !ring) {
+        const NS = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(NS, "svg");
+        svg.setAttribute("class", "bz-memo-ring");
+        svg.setAttribute("viewBox", "0 0 20 20");
+        svg.setAttribute("aria-hidden", "true");
+        const c = document.createElementNS(NS, "circle");
+        c.setAttribute("cx", "10");
+        c.setAttribute("cy", "10");
+        c.setAttribute("r", "8.5");
+        svg.appendChild(c);
+        el.appendChild(svg);
+      } else if (!pending && ring) {
+        ring.remove();
+      }
+    });
   }
   function toggleCheck(it) {
     if (it.completed) {
@@ -50570,7 +50893,171 @@ ${n.content.slice(0, 2e3)}
     void bar.offsetWidth;
     bar.classList.add("bz-memo-donebar-bump");
   }
+  function rollWait(from, away) {
+    const total = away ? ROLL_MS + ROLL_IMPACT_MS : ROLL_FLY_MS;
+    const left = total - (Date.now() - from);
+    return left > 0 ? new Promise((r) => setTimeout(r, left)) : Promise.resolve();
+  }
+  function rollTarget() {
+    var _a2;
+    const cnt = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
+    if (!cnt) return null;
+    const r = cnt.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  function listLanding() {
+    var _a2, _b2, _c;
+    const panel2 = (_b2 = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
+    if (!panel2) return null;
+    const first = panel2.querySelector(".bz-memo-card:not(.bz-memo-done)");
+    if (first) {
+      const r2 = first.getBoundingClientRect();
+      return { x: r2.left + r2.width / 2, y: r2.top + r2.height / 2 };
+    }
+    const wrap = (_c = panel2.querySelector("[data-memo-content]")) != null ? _c : panel2;
+    const r = wrap.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + Math.round(r.height * 0.12) };
+  }
+  function rollCount(node, from, to) {
+    if (!node || from === to) return;
+    const h = node.offsetHeight || 16;
+    const box = node.parentElement;
+    if (box) {
+      if (getComputedStyle(box).position === "static") box.style.position = "relative";
+      box.style.display = "inline-block";
+      const old = document.createElement("i");
+      old.className = "bz-memo-cnt-out";
+      old.textContent = String(from);
+      old.style.cssText = `position:absolute;left:0;top:0;height:${h}px;line-height:${h}px;font-style:normal`;
+      box.appendChild(old);
+      const oa = safeAnimate(old, [
+        { transform: "none", opacity: 1 },
+        { transform: `translateY(-${h}px)`, opacity: 0 }
+      ], { duration: 260, easing: EASE_OUT2, fill: "forwards" });
+      if (!oa) old.remove();
+      else oa.onfinish = () => old.remove();
+    }
+    node.textContent = String(to);
+    safeAnimate(
+      node,
+      [{ transform: `translateY(${h}px)` }, { transform: "none" }],
+      { duration: 260, easing: EASE_OUT2 }
+    );
+  }
+  function rollAway(id, away) {
+    var _a2;
+    const overlay2 = M.overlay;
+    const card = (_a2 = overlay2 == null ? void 0 : overlay2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
+    if (!overlay2 || !card) return;
+    const cr = card.getBoundingClientRect();
+    if (cr.width < 4 || cr.height < 4) return;
+    const EASE_FLY = "cubic-bezier(.4, 0, .3, 1)";
+    const parent = card.parentElement;
+    const sibs = parent ? Array.from(parent.querySelectorAll(".bz-memo-card")).filter((n) => n !== card) : [];
+    const before = sibs.map((n) => n.getBoundingClientRect());
+    parent == null ? void 0 : parent.removeChild(card);
+    sibs.forEach((n, i) => {
+      const a = before[i];
+      const b = n.getBoundingClientRect();
+      const dx = a.left - b.left;
+      const dy = a.top - b.top;
+      if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+      n.style.transition = "none";
+      n.style.transform = `translate(${dx}px, ${dy}px)`;
+      requestAnimationFrame(() => {
+        n.style.transition = "transform 200ms var(--bz-ease-out)";
+        n.style.transform = "";
+        window.setTimeout(() => {
+          n.style.transition = "";
+        }, 240);
+      });
+    });
+    overlay2.appendChild(card);
+    card.classList.add("bz-memo-rollcard");
+    card.style.left = `${cr.left}px`;
+    card.style.top = `${cr.top}px`;
+    card.style.width = `${cr.width}px`;
+    card.style.height = `${cr.height}px`;
+    void card.offsetHeight;
+    if (away) {
+      const sx = Math.min(1, ROLL_CURL_W / Math.max(1, cr.width));
+      const CURLED = `scaleX(${sx})`;
+      const SKIN = `background-color ${ROLL_CURL_MS}ms ease, border-color ${ROLL_CURL_MS}ms ease, border-radius ${ROLL_CURL_MS}ms ease, box-shadow ${ROLL_CURL_MS}ms ease`;
+      card.style.transition = `transform ${ROLL_CURL_MS}ms cubic-bezier(.55, 0, .72, .12), ${SKIN}`;
+      card.classList.add("bz-memo-rolled");
+      card.style.transform = CURLED;
+      const target = rollTarget();
+      const dx = target ? Math.round(target.x - (cr.right - ROLL_CURL_W / 2)) : 0;
+      const dy = target ? Math.round(target.y - (cr.top + cr.height / 2)) : 0;
+      window.setTimeout(() => {
+        if (!target) {
+          card.style.transition = `transform ${ROLL_CURL_MS}ms ${EASE_FLY}, opacity ${ROLL_CURL_MS}ms linear`;
+          card.style.transform = `${CURLED} scaleY(.3)`;
+          card.style.opacity = "0";
+          window.setTimeout(() => card.remove(), ROLL_CURL_MS + 80);
+          return;
+        }
+        safeAnimate(card, [
+          { transform: `translate(0px, 0px) scaleX(${sx}) scaleY(1)`, opacity: 1 },
+          { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 62}px) scaleX(${sx}) scaleY(1.14)`, opacity: 1 },
+          { transform: `translate(${dx}px, ${dy}px) scaleX(${sx}) scaleY(.4)`, opacity: 0 }
+        ], { duration: ROLL_FLY_MS, easing: EASE_FLY, fill: "forwards" });
+        [45, 90].forEach((delay, i) => {
+          const g = document.createElement("div");
+          g.className = "bz-memo-rollghost";
+          g.style.cssText = `left:${cr.right - ROLL_CURL_W}px;top:${cr.top}px;width:${ROLL_CURL_W}px;height:${cr.height}px;opacity:${0.34 - i * 0.13};filter:blur(${(i + 1) * 1.5}px)`;
+          overlay2.appendChild(g);
+          const ga = safeAnimate(g, [
+            { transform: `translate(0px, 0px) scaleY(1)`, opacity: 0.34 - i * 0.13 },
+            { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 62}px) scaleY(1.14)`, opacity: 0.22 - i * 0.13 },
+            { transform: `translate(${dx}px, ${dy}px) scaleY(.4)`, opacity: 0 }
+          ], { duration: ROLL_FLY_MS, delay, easing: EASE_FLY, fill: "forwards" });
+          if (!ga) g.remove();
+          else ga.onfinish = () => g.remove();
+        });
+        window.setTimeout(() => {
+          var _a3, _b2, _c;
+          const panel2 = overlay2.querySelector(".bz-memo-panel");
+          const bar = (_a3 = panel2 == null ? void 0 : panel2.querySelector("[data-memo-donebar]")) != null ? _a3 : null;
+          if (bar) {
+            bar.classList.remove("bz-memo-donebar-hit");
+            void bar.offsetWidth;
+            bar.classList.add("bz-memo-donebar-hit");
+            window.setTimeout(() => bar.classList.remove("bz-memo-donebar-hit"), 560);
+          }
+          const rp = document.createElement("div");
+          rp.className = "bz-memo-ripple";
+          rp.style.left = `${Math.round(target.x)}px`;
+          rp.style.top = `${Math.round(target.y)}px`;
+          overlay2.appendChild(rp);
+          window.setTimeout(() => rp.remove(), 620);
+          const cntEl = (_b2 = panel2 == null ? void 0 : panel2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt")) != null ? _b2 : null;
+          const shown = Number(((_c = cntEl == null ? void 0 : cntEl.textContent) != null ? _c : "").trim());
+          if (cntEl && Number.isFinite(shown)) rollCount(cntEl, shown, shown + 1);
+          bumpDoneBar();
+        }, ROLL_FLY_MS);
+        window.setTimeout(() => card.remove(), ROLL_FLY_MS + 80);
+      }, ROLL_CURL_MS);
+      return;
+    }
+    const land = listLanding();
+    const lx = land ? Math.round(land.x - (cr.left + cr.width / 2)) : 0;
+    const ly = land ? Math.round(land.y - (cr.top + cr.height / 2)) : -Math.round(cr.height * 1.8);
+    card.classList.add("bz-memo-lifting");
+    card.style.transition = `transform ${ROLL_FLY_MS}ms ${EASE_FLY}, background-color ${ROLL_FLY_MS}ms ease, box-shadow ${ROLL_FLY_MS}ms ease, opacity ${Math.round(ROLL_FLY_MS * 0.4)}ms linear ${Math.round(ROLL_FLY_MS * 0.6)}ms`;
+    card.style.transform = `translate(${lx}px, ${ly}px)`;
+    card.style.opacity = "0";
+    window.setTimeout(() => {
+      card.removeAttribute("style");
+      card.classList.remove("bz-memo-rollcard", "bz-memo-lifting");
+      card.remove();
+    }, ROLL_FLY_MS + 80);
+  }
   async function completeItem(it) {
+    var _a2;
+    const t0 = Date.now();
+    it.completed = (_a2 = it.completed) != null ? _a2 : (0, import_moment6.default)().format("YYYY-MM-DD HH:mm:ss");
+    rollAway(it.id, true);
     try {
       await MemoData.completeItem(it.id);
       emitDomainEvent("memo", { kind: "completed", title: it.title });
@@ -50578,10 +51065,15 @@ ${n.content.slice(0, 2e3)}
       notifySaveError(e, "标记完成");
       console.error(e);
     }
+    await rollWait(t0, true);
+    if (!M.overlay) return;
     await refresh();
     bumpDoneBar();
   }
   async function restoreItem(it) {
+    const t0 = Date.now();
+    it.completed = null;
+    rollAway(it.id, false);
     try {
       await MemoData.updateItem(it.id, { completed: null });
       emitDomainEvent("memo", { kind: "restored", title: it.title });
@@ -50589,6 +51081,8 @@ ${n.content.slice(0, 2e3)}
       notifySaveError(e, "恢复未完成");
       console.error(e);
     }
+    await rollWait(t0, false);
+    if (!M.overlay) return;
     await refresh();
   }
   async function postponeItem(id, days) {
@@ -50620,7 +51114,15 @@ ${n.content.slice(0, 2e3)}
     }
     await refresh();
   }
+  function playDeleteExit(id) {
+    var _a2;
+    const card = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    if (!card) return Promise.resolve();
+    card.classList.add("bz-memo-vanishing");
+    return new Promise((r) => setTimeout(r, DELETE_EXIT_MS));
+  }
   async function deleteItemWithUndo(it) {
+    await playDeleteExit(it.id);
     try {
       const idx = await MemoData.deleteItem(it.id);
       if (idx === -1) {
@@ -50633,6 +51135,8 @@ ${n.content.slice(0, 2e3)}
         void (async () => {
           try {
             await MemoData.restoreItem(it, idx);
+            touchViewEpoch();
+            nextEnterFrom = "bottom";
             await refresh();
           } catch (e) {
             notifySaveError(e, "撤销删除");
@@ -50747,6 +51251,8 @@ ${n.content.slice(0, 2e3)}
   }
   function addFromComposer() {
     if (composerBusy) return;
+    touchViewEpoch();
+    nextEnterFrom = "bottom";
     const overlay2 = M.overlay;
     const input = overlay2.querySelector("[data-memo-composer-input]");
     const txt = (input.value || "").trim();
@@ -50796,6 +51302,50 @@ ${n.content.slice(0, 2e3)}
       composerBusy = false;
       await refresh();
     })();
+  }
+  function playEditorShrink(popup, id) {
+    var _a2;
+    if (!id) return;
+    const card = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const pr = popup.getBoundingClientRect();
+    if (!card || pr.width < 4 || pr.height < 4) return;
+    const cr = card.getBoundingClientRect();
+    if (cr.width < 4 || cr.height < 4) return;
+    const board = document.createElement("div");
+    board.className = "bz-memo-exit-panel";
+    const cs = getComputedStyle(popup);
+    board.style.cssText = `left:${Math.round(pr.left)}px;top:${Math.round(pr.top)}px;width:${Math.round(pr.width)}px;height:${Math.round(pr.height)}px;border-radius:${cs.borderRadius || "12px"}`;
+    document.body.appendChild(board);
+    const dx = Math.round(cr.left + cr.width / 2 - (pr.left + pr.width / 2));
+    const dy = Math.round(cr.top + cr.height / 2 - (pr.top + pr.height / 2));
+    const sx = Math.max(0.06, cr.width / pr.width);
+    const sy = Math.max(0.06, cr.height / pr.height);
+    safeAnimate(board, [
+      { transform: "translate(0px, 0px) scale(1)", opacity: 1 },
+      { transform: `translate(${Math.round(dx * 0.55)}px, ${Math.round(dy * 0.55)}px) scale(${((1 + sx) / 2).toFixed(3)}, ${((1 + sy) / 2).toFixed(3)})`, opacity: 0.92, offset: 0.55 },
+      { transform: `translate(${dx}px, ${dy}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`, opacity: 0 }
+    ], { duration: 300, easing: EASE_OUT2, fill: "forwards" });
+    window.setTimeout(() => board.remove(), 380);
+  }
+  function playEditorGrow(popup, id) {
+    var _a2;
+    const card = (_a2 = M.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    if (!card) return;
+    const cr = card.getBoundingClientRect();
+    const pr = popup.getBoundingClientRect();
+    if (cr.width < 4 || cr.height < 4 || pr.width < 4 || pr.height < 4) return;
+    const inset = `inset(${Math.round(cr.top - pr.top)}px ${Math.round(pr.right - cr.right)}px ${Math.round(pr.bottom - cr.bottom)}px ${Math.round(cr.left - pr.left)}px)`;
+    safeAnimate(popup, [
+      { clipPath: inset, opacity: 0.35 },
+      { clipPath: "inset(0px 0px 0px 0px)", opacity: 1 }
+    ], { duration: 280, easing: EASE_OUT2 });
+    const fields = Array.from(popup.querySelectorAll(".bz-memo-form > *")).slice(0, 8);
+    fields.forEach((f, i) => {
+      safeAnimate(f, [
+        { opacity: 0, transform: "translateY(6px)" },
+        { opacity: 1, transform: "none" }
+      ], { duration: 240, delay: 90 + i * 34, easing: EASE_OUT2, fill: "both" });
+    });
   }
   function openEditor(item, opts) {
     var _a2, _b2;
@@ -51111,8 +51661,13 @@ ${n.content.slice(0, 2e3)}
       confirmDiscard(() => closeModal(), void 0, skinClass());
     };
     const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: `${skinClass()} bz-memo-editor-popup`, requestClose });
-    closeModal = close;
+    closeModal = () => {
+      var _a3;
+      playEditorShrink(popup, (_a3 = editing == null ? void 0 : editing.id) != null ? _a3 : null);
+      close();
+    };
     bindFormSubmit(popup, doSave2);
+    if (editing) playEditorGrow(popup, editing.id);
     if (!isMobileEnv()) contentInput.focus();
     if (!isEdit && defaultScene === "剪藏") tryEditorClipPrefill();
   }
@@ -51318,7 +51873,7 @@ ${n.content.slice(0, 2e3)}
   function memoDataReady() {
     return initialLoad != null ? initialLoad : Promise.resolve();
   }
-  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS4, searchDebounced2, clipTitleHint, loadFailed, panelResizeDetach2, sortSelectDetach, panelFocusRelease, composerBusy, initialLoad;
+  var import_moment6, PANEL, SEARCH_DEBOUNCE_MS4, searchDebounced2, clipTitleHint, loadFailed, panelEnterPending, PANEL_EXIT_MS, panelResizeDetach2, sortSelectDetach, panelFocusRelease, viewEpoch, lastRenderEpoch, nextFlipSpin, nextEnterFrom, nextEnterSoft, doneJustOpened, SORT_OPTIONS, MEMO_PILL_TARGETS, ROLL_CURL_MS, ROLL_FLY_MS, ROLL_MS, ROLL_CURL_W, ROLL_IMPACT_MS, EASE_OUT2, DELETE_EXIT_MS, composerBusy, initialLoad;
   var init_ui13 = __esm({
     "src/memo/ui.ts"() {
       import_moment6 = __toESM(require_moment());
@@ -51329,6 +51884,8 @@ ${n.content.slice(0, 2e3)}
       init_mobile();
       init_settings_provider();
       init_ui();
+      init_slide_pill();
+      init_flip();
       init_modal();
       init_flow_dialog();
       init_domain_bus();
@@ -51342,13 +51899,42 @@ ${n.content.slice(0, 2e3)}
       SEARCH_DEBOUNCE_MS4 = 180;
       searchDebounced2 = debounce((v) => {
         M.search = v;
+        touchViewEpoch();
+        nextEnterSoft = true;
         renderAll4();
       }, SEARCH_DEBOUNCE_MS4);
       clipTitleHint = null;
       loadFailed = false;
+      panelEnterPending = false;
+      PANEL_EXIT_MS = 540;
       panelResizeDetach2 = null;
       sortSelectDetach = null;
       panelFocusRelease = null;
+      viewEpoch = 0;
+      lastRenderEpoch = -1;
+      nextFlipSpin = 0;
+      nextEnterFrom = "right";
+      nextEnterSoft = false;
+      doneJustOpened = false;
+      SORT_OPTIONS = [
+        { value: "priority", label: "紧急优先" },
+        { value: "due", label: "仅按到期" },
+        { value: "created", label: "按创建" }
+      ];
+      MEMO_PILL_TARGETS = [
+        { box: "[data-memo-nav]", item: ".bz-rail-item", keys: ["memoScene"], onClass: "on", clip: ".bz-rail-scroll" },
+        // 排序底片的宿主是分段钮本体（自带 position: relative 与内边距），不是外层槽位
+        { box: "[data-memo-sort] .bz-segmented", item: ".bz-segmented-btn", keys: ["value"] },
+        // 移动端横滑场景条：同一套机制（触屏没有 hover，底片只做「常驻 + 选中跟随」）
+        { box: "[data-memo-mob-scenes]", item: ".bz-mobstrip-chip", keys: ["memoScene"], onClass: "is-on" }
+      ];
+      ROLL_CURL_MS = 340;
+      ROLL_FLY_MS = 400;
+      ROLL_MS = ROLL_CURL_MS + ROLL_FLY_MS;
+      ROLL_CURL_W = 13;
+      ROLL_IMPACT_MS = 360;
+      EASE_OUT2 = "cubic-bezier(0.33, 1, 0.68, 1)";
+      DELETE_EXIT_MS = 180;
       composerBusy = false;
       initialLoad = null;
     }
@@ -51637,7 +52223,7 @@ ${n.content.slice(0, 2e3)}
   init_ui13();
   init_settings3();
   var VAULT_KEY = "bz-sim:CONFIG/STORAGE/memo.json";
-  var DEMO_KEY = "bz-sim:demo-settings";
+  var DEMO_KEY = "bz-sim:demo-settings:v2";
   var SHARED_KEYS = ["memoSkin", "memoLayout"];
   function loadSharedSettings() {
     try {
@@ -51665,7 +52251,7 @@ ${n.content.slice(0, 2e3)}
     // 面板键（ADR-0117 正名后键名）：皮肤演示钮写 memoSkin 即时热切换
     memoPanelWidth: 0,
     memoPanelHeight: 0,
-    memoSkin: "paper",
+    memoSkin: "editorial",
     memoLayout: "default",
     // memo* 设置键（ADR-0092 存储契约，键名即本名）
     memoScenarios: "",
@@ -51709,13 +52295,13 @@ ${n.content.slice(0, 2e3)}
   }
   function applySkin(skin) {
     bootMemoSim();
-    demoSettings.memoSkin = skin === "editorial" ? "editorial" : "paper";
+    demoSettings.memoSkin = skin === "paper" ? "paper" : "editorial";
     saveSharedSettings();
     applyMemoSkin(demoSettings.memoSkin);
     return demoSettings.memoSkin;
   }
   function skinState() {
-    return demoSettings.memoSkin === "editorial" ? "editorial" : "paper";
+    return demoSettings.memoSkin === "paper" ? "paper" : "editorial";
   }
   function toggleSkin() {
     const next = skinState() === "paper" ? "editorial" : "paper";

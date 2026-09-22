@@ -101,13 +101,13 @@ describe('memo 确认框随皮肤（issue 291；条目删除已免确认，唯�
     expect(popup.classList.contains('bz-memo-skin-paper')).toBe(false);
   });
 
-  it('皮肤未设置：回落纸感手账（与 applyMemoSkin 同口径，绝不因缺省掉回 core 裸皮）', async () => {
+  it('皮肤未设置：回落编辑部（与 applyMemoSkin 同口径，绝不因缺省掉回 core 裸皮）', async () => {
     const { app } = seed();
     openMemoPanel(app);
     await vi.waitFor(() => expect(document.querySelector('[data-memo-nav] [data-memo-scene="副业"]')).toBeTruthy());
     const popup = await openSceneDeleteConfirm();
     expect(popup.classList.contains('bz-overlay-popup')).toBe(true);
-    expect(popup.classList.contains('bz-memo-skin-paper')).toBe(true); // 面板回落纸感 → 弹窗同皮
+    expect(popup.classList.contains('bz-memo-skin-editorial')).toBe(true); // 面板回落编辑部 → 弹窗同皮
   });
 
   it('条目删除免确认（旧-2 / B7 口径）：右键删除不弹确认框，直达删除 + 撤销通知', async () => {

@@ -23,6 +23,7 @@ import { topifyZ, longPress } from '../core/dom';
 import { openItemMenu, openItemSheet, closeItemMenu, resetItemMenuClickGuard, type ItemAction } from '../core/item-actions';
 import { tryGetSettings } from '../core/settings-provider';
 import { mountIcons, openLightbox } from '../core/ui';
+import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
 import { iconSpan } from '../core/ui/str';
 import { openExternalUrl } from '../core/utils';
 import { bindFormSubmit } from '../core/ui/modal';
@@ -2137,93 +2138,14 @@ export function renderSoft(app: App): void {
 }
 
 // ---------- 滑动高亮（侧栏 rail / 排序钮 j-sort；2026-09-21 用户拍板） ----------
+// 机制已收编 core/ui/slide-pill.ts：底片常驻选中项、悬停跟随、移开回落、渲染后落位不演滑行。
+// 与备忘录（侧栏场景 / 排序钮）共用同一套，禁止域内各写一份。
 
-/**
- * 一块滑动高亮：容器里放一片绝对定位底片，位置与尺寸按目标项矩形驱动。
- * - 悬停跟随：鼠标落到哪一项，底片滑到哪一项（侧栏跨「类型 / 状态 / 底部工具」三段通吃）；
- * - 离开回落：鼠标离开容器 → 滑回当前选中项（无选中态的 ai/stat 页则隐去）；
- * - 点击固定：选中项由渲染结果决定，渲染后按键重新解析（悬停中的项重渲染后仍按同一键锁定）。
- * 底片与监听挂在**容器**上：侧栏三段与排序钮的 innerHTML 每次渲染都重写，挂项里会被一起冲掉。
- * 悬停只在有悬浮能力的设备上接（呈报#9 F4 范式：触屏不许悬浮态粘住）。
- * 刻意不做 prefers-reduced-motion 分支：用户本人系统即报 reduce，而这条动效正是他点名要的
- * （与 396 共享元素同一口径）——放缓/砍掉都等于替他改决定。
- */
-const PILL_CLS = 'slide-pill';
-
-/** 项的稳定键（渲染后按键重新解析悬停项）：rail 的 data-g / data-s / data-tool、排序钮的 data-k */
-function pillKeyOf(el: HTMLElement): string {
-  const d = el.dataset;
-  return d.g ?? d.s ?? d.tool ?? d.k ?? '';
-}
-
-/** 绑定一次（容器被重渲染换掉时随新元素重绑）：悬停跟随 / 离开回落 / 滚动重定位。
- *  必须**先于**任何落位早退执行——首帧没有几何（测试环境 / 尚未布局）就早退的话，
- *  监听会永远绑不上，之后无论怎么悬停滚都不再重定位。 */
-function ensurePillBound(box: HTMLElement, itemSel: string, hoverable: boolean): void {
-  if (box.dataset.pillBound) return;
-  box.dataset.pillBound = '1';
-  const resync = (animate: boolean): void => syncSlidePill(box, itemSel, hoverable, animate);
-  if (hoverable) {
-    box.addEventListener('mouseover', (e) => {
-      const el = (e.target as HTMLElement | null)?.closest<HTMLElement>(itemSel);
-      if (!el || !box.contains(el)) return;
-      const k = pillKeyOf(el);
-      if (!k || box.dataset.pillHover === k) return; // 同一项内移动不重排
-      box.dataset.pillHover = k;
-      resync(true);
-    });
-    box.addEventListener('mouseleave', () => {
-      if (!box.dataset.pillHover) return;
-      delete box.dataset.pillHover;
-      resync(true);
-    });
-  }
-  // 侧栏 .rail-sec 可滚：滚动时即时落位，别让底片追着滑
-  box.addEventListener('scroll', () => resync(false), true);
-}
-
-/** 重定位一块滑动高亮。`animate=false` 用于渲染/滚动后落位（不演滑行） */
-function syncSlidePill(box: HTMLElement, itemSel: string, hoverable: boolean, animate = true): void {
-  ensurePillBound(box, itemSel, hoverable);
-  let pill = box.querySelector<HTMLElement>(`:scope > .${PILL_CLS}`);
-  if (!pill) {
-    pill = document.createElement('span');
-    pill.className = PILL_CLS;
-    pill.setAttribute('aria-hidden', 'true'); // 纯装饰：选中语义仍在 .is-on 上（读屏不重复）
-    box.prepend(pill);
-  }
-  const items = [...box.querySelectorAll<HTMLElement>(itemSel)];
-  const hoverKey = box.dataset.pillHover ?? '';
-  // 悬停项按键现取（渲染后是同一键的新元素）；没有悬停或悬停项已消失 → 回落到选中项
-  const hovered = hoverKey ? items.find((el) => pillKeyOf(el) === hoverKey) : undefined;
-  const target = hovered ?? items.find((el) => el.classList.contains('is-on'));
-
-  if (!target) { pill.classList.remove('is-visible'); return; }
-  const r = target.getBoundingClientRect();
-  const b = box.getBoundingClientRect();
-  // 滚出可视区的项不画：侧栏 .rail-sec 可滚，而底片挂在 .d-rail 上不会被它裁掉
-  const sc = target.closest<HTMLElement>('.rail-sec');
-  if (sc) {
-    const sr = sc.getBoundingClientRect();
-    if (r.bottom < sr.top + 1 || r.top > sr.bottom - 1) { pill.classList.remove('is-visible'); return; }
-  }
-  if (!animate) pill.classList.add('is-instant');
-  pill.style.width = `${Math.round(r.width)}px`;
-  pill.style.height = `${Math.round(r.height)}px`;
-  pill.style.transform = `translate(${Math.round(r.left - b.left)}px, ${Math.round(r.top - b.top)}px)`;
-  pill.classList.add('is-visible');
-  if (!animate) { void pill.offsetWidth; pill.classList.remove('is-instant'); } // 落位后立刻恢复过渡
-}
-
-/** 渲染后重定位全部滑动高亮（底片坐在选中项上；悬停中的项按键续锁，落位不演滑行） */
-function syncSlidePills(root: HTMLElement): void {
-  const hoverable = hoverCapable();
-  const targets: [string, string][] = [['.d-rail', '.rail-item'], ['.j-sort', 'button']];
-  for (const [boxSel, itemSel] of targets) {
-    const box = root.querySelector<HTMLElement>(boxSel);
-    if (box) syncSlidePill(box, itemSel, hoverable, false);
-  }
-}
+/** 影院的两处底片挂载点：左栏 rail（类型/状态/底部工具三段通吃）与排序钮 j-sort */
+const PILL_TARGETS: readonly BzSlidePillTarget[] = [
+  { box: ".d-rail", item: ".rail-item", keys: ["g", "s", "tool", "k"], clip: ".rail-sec" },
+  { box: ".j-sort", item: "button", keys: ["k"] },
+];
 
 // ---------- 反馈与入口（issue 403）：星级点亮、落位闪、保存折回 ----------
 
@@ -2427,7 +2349,7 @@ export function renderAll(app: App): void {
     if (sc) sc.scrollTop = top;
   }
   mountIcons(root);
-  syncSlidePills(root); // 底片跟着新选中项落位（渲染重写了 rail/排序钮的 innerHTML）
+  syncSlidePills(root, PILL_TARGETS); // 底片跟着新选中项落位（渲染重写了 rail/排序钮的 innerHTML）
   playGridMotion(root, beforeCards); // 滚位恢复之后再演：位移差要跟最终滚位一致
   flushCardFlash(root); // 刚变更的那张卡闪一下（issue 403）
   restoreFocus(root, snap);

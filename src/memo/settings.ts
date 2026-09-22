@@ -31,8 +31,10 @@ export function memoSettingsSchema(): SettingsSchema {
             binding: { key: 'memoSkin' },
             layoutKey: 'memoLayout',
             options: [
-              { value: 'paper', label: '纸感手账', layout: 'default', prevClass: 'bz-skinprev-paper' },
+              // 编辑部置首（2026-09-22 用户拍板）：与默认值 memoSkin:'editorial' 同口径——
+              // 第一张卡就是新装 / 缺省时落到的那个
               { value: 'editorial', label: '编辑部', layout: 'default', prevClass: 'bz-skinprev-editorial' },
+              { value: 'paper', label: '纸感手账', layout: 'default', prevClass: 'bz-skinprev-paper' },
             ],
             onChange: (v) => applyMemoSkin(v),
           },

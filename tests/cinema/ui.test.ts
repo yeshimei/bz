@@ -2311,7 +2311,7 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
     return items;
   }
   const pillTransform = (box: HTMLElement): string =>
-    (box.querySelector(':scope > .slide-pill') as HTMLElement).style.transform;
+    (box.querySelector(':scope > .bz-slide-pill') as HTMLElement).style.transform;
   /** 钉完矩形后强制重定位：真实路径是渲染 / 滚动 / 悬停触发，单测里没有真滚动。
    *  （渲染会重写 rail 内部，钉过的元素当场作废 —— 所以先钉、再派发滚动、再断言） */
   const resync = (box: HTMLElement): void => { box.dispatchEvent(new Event('scroll')); };
@@ -2326,7 +2326,7 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
     expect(items.length).toBe(12);
     resync(rail);
     const at = (el: HTMLElement): string => `translate(0px, ${90 + items.indexOf(el) * 30}px)`;
-    const pill = rail.querySelector(':scope > .slide-pill') as HTMLElement;
+    const pill = rail.querySelector(':scope > .bz-slide-pill') as HTMLElement;
     expect(pill, '侧栏应有一片底片').toBeTruthy();
     expect(pill.classList.contains('is-visible')).toBe(true); // 有选中项（全部）→ 可见
     expect(pillTransform(rail)).toBe('translate(0px, 90px)'); // 坐在「全部」上
@@ -2348,7 +2348,7 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
 
     // 点击「电影」→ 渲染重写 rail 内部（底片挂在 .d-rail 上，不被冲掉）→ 按键续锁新选中项
     clickEl(rail.querySelector('[data-g="电影"]'));
-    expect(rail.querySelector(':scope > .slide-pill'), '渲染后底片仍在').toBe(pill);
+    expect(rail.querySelector(':scope > .bz-slide-pill'), '渲染后底片仍在').toBe(pill);
     const items2 = pinList(rail, '.rail-item', 90);
     resync(rail);
     const movie = rail.querySelector('.rail-item.is-on') as HTMLElement;
@@ -2365,7 +2365,7 @@ describe('cinema 滑动高亮：侧栏与排序钮（issue 397）', () => {
     const btns = pinList(seg, 'button', 10);
     expect(btns.map((b) => b.textContent)).toEqual(['最近观看', '加入先后', '按评分']);
     resync(seg);
-    const pill = seg.querySelector(':scope > .slide-pill') as HTMLElement;
+    const pill = seg.querySelector(':scope > .bz-slide-pill') as HTMLElement;
     expect(pill).toBeTruthy();
     expect(pillTransform(seg)).toBe('translate(0px, 10px)'); // 坐在「最近观看」上
 

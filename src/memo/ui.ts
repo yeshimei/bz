@@ -39,7 +39,9 @@ import { trapPanelFocus } from '../core/ui/focus-trap';
 import { topifyZ } from '../core/dom';
 import { isMobileEnv } from '../core/mobile';
 import { getSettings, saveSettings, tryGetSettings } from '../core/settings-provider';
-import { uiModal, uiIcon, uiChoice, uiSelect, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
+import { uiModal, uiIcon, uiChoice, uiSelect, uiSegmented, uiBtn, uiBtnRow, uiResizable, uiEmpty, mountIcons, uiSuggest } from '../core/ui';
+import { syncSlidePills, type BzSlidePillTarget } from '../core/ui/slide-pill';
+import { measureFlip, playFlip, safeAnimate } from '../core/ui/flip';
 import { bindFormSubmit } from '../core/ui/modal';
 import { openFlowDialog, confirmDiscard } from '../core/flow-dialog';
 import { emitDomainEvent } from '../core/domain-bus';
@@ -66,6 +68,8 @@ const SEARCH_DEBOUNCE_MS = 180;
  *  定时器等价——最后一次 input 的输入值生效，面板关闭 cancel 防孤儿回调） */
 const searchDebounced = debounce((v: string) => {
   M.search = v;
+  touchViewEpoch(); // 关键词变了 = 换了一批结果 → 排接力
+  nextEnterSoft = true; // 逐字过滤：轻档（少排几张、步进收紧），别让动画互相打断
   renderAll();
 }, SEARCH_DEBOUNCE_MS);
 
@@ -82,6 +86,7 @@ function syncSearchClear(): void {
 function clearMemoSearch(): void {
   searchDebounced.cancel();
   M.search = '';
+  touchViewEpoch();
   const input = M.overlay?.querySelector('[data-memo-search]') as HTMLInputElement | null;
   if (input) input.value = '';
   syncSearchClear();
@@ -330,7 +335,8 @@ function sceneCounts(): Map<string, number> {
 // ---------- 主面板（打开/关闭/ESC） ----------
 
 /**
- * 皮肤应用（issue 210）：面板根挂 bz-memo-skin-{paper|editorial}（默认无修饰类）。
+ * 皮肤应用（issue 210）：面板根挂 bz-memo-skin-{paper|editorial}——缺省一律编辑部
+ * （2026-09-22 用户拍板：默认皮肤由纸感手账改为编辑部）。
  * 双入口：openMemoPanel 打开时按 memoSkin 挂载；设置行 onChange 热切换已开面板。
  * 面板未开时仅落盘（设置行已持久化），下次打开生效。
  */
@@ -339,20 +345,20 @@ export function applyMemoSkin(skin: unknown): void {
   const panel = M.overlay.querySelector('.bz-memo-panel') as HTMLElement | null;
   if (!panel) return;
   panel.classList.remove('bz-memo-skin-paper', 'bz-memo-skin-editorial');
-  // 默认风格已下线（issue 210 四轮）：未知/缺省值一律回落纸感手账
-  const v = skin === 'editorial' ? 'editorial' : 'paper';
+  // 默认皮肤 = 编辑部（2026-09-22 用户拍板）：未知/缺省值一律回落编辑部
+  const v = skin === 'paper' ? 'paper' : 'editorial';
   panel.classList.add(`bz-memo-skin-${v}`);
 }
 
 /**
  * 当前皮肤类名（issue 210）：挂 body 的浮层（uiModal 弹窗 / 流程框 / 右键菜单 / 抽屉）
- * 与面板共用同套皮肤。回落口径**必须与 applyMemoSkin 逐字一致**（未知/缺省 → 纸感手账）：
- * 面板回落纸感而弹窗返回空类的话，弹窗就掉回 core 裸皮——正是 issue 291 要消灭的
+ * 与面板共用同套皮肤。回落口径**必须与 applyMemoSkin 逐字一致**（未知/缺省 → 编辑部）：
+ * 面板回落编辑部而弹窗返回空类的话，弹窗就掉回 core 裸皮——正是 issue 291 要消灭的
  * 「面板有皮、子弹窗没皮」；且四类浮层都靠这个类才拿得到 --bz-* 皮肤 token。
  */
 function skinClass(): string {
   const s = tryGetSettings().memoSkin;
-  return s === 'editorial' ? 'bz-memo-skin-editorial' : 'bz-memo-skin-paper';
+  return s === 'paper' ? 'bz-memo-skin-paper' : 'bz-memo-skin-editorial';
 }
 
 /**
@@ -378,14 +384,21 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   M.search = ''; // E8：搜索词跨开合残留——输入框是新的但列表仍被旧关键词过滤（notePath 定位在 loadData 后另行覆写）
 
   const overlay = document.createElement('div');
-  overlay.className = 'bz-panel-overlay';
+  overlay.className = 'bz-panel-overlay bz-memo-ovpre bz-memo-ovanim';
   overlay.innerHTML = panelShellHtml();
+
+  // 面板开合：整块先落在「还没被从桌面上抽起来」的初始态，进 DOM 并提交后再放开 → 走过渡。
+  // 初始态必须在 append 之前挂上，否则会先以常态闪一帧。
+  overlay.querySelector<HTMLElement>('.bz-memo-panel')?.classList.add('bz-memo-anim', 'bz-memo-pre');
 
   document.body.appendChild(overlay);
   topifyZ(overlay); // T6：ADR-0067 动态发号——后开恒压先开的动态 overlay；不再占死静态 100000
   M.overlay = overlay;
   M.appRef = app;
   M.renderFn = () => renderAll();
+
+  playPanelEnter(overlay); // 入场：侧栏 / 工具行错峰（卡片层等首次渲染）
+  panelEnterPending = true;
 
   const panelEl = overlay.querySelector('.bz-memo-panel') as HTMLElement;
   applyMemoSkin(tryGetSettings().memoSkin);
@@ -395,30 +408,29 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   // 移动端不弹软键盘），Tab/Shift+Tab 圈闭在面板内
   panelFocusRelease = trapPanelFocus(panelEl);
 
-  // 排序 = 组件库下拉（issue 268 用户拍板：三档平铺占宽把搜索框挤窄，改单枚下拉——
-  // 收起态只占一行文案宽，搜索框（.bz-search flex:1）随之变长；展开菜单走 .bz-select-menu，
-  // 皮肤段按 paper/editorial 各自风格化。值域/写回口径不变）
+  // 排序 = 桌面三档平铺（分段钮 + 滑动底片，2026-09-22 用户拍板，对齐影院 seg 口径）；
+  // 移动端仍走组件库下拉——窄屏里三档占宽会把搜索框挤没（issue 268 的原判据在移动端依然成立，
+  // 桌面当初一并改下拉是过度收敛）。值域/写回口径两个形态完全一致。
   const sortEl = overlay.querySelector('[data-memo-sort]') as HTMLElement;
-  const sortSelect = uiSelect<string>({
-    options: [
-      { value: 'priority', label: '紧急优先' },
-      { value: 'due', label: '仅按到期' },
-      { value: 'created', label: '按创建' },
-    ],
-    value: M.sortMode,
-    className: 'bz-memo-sortsel',
-    onChange: (v) => {
-      M.sortMode = v;
-      // 同步写入默认排序（与 memo 共用 memoSortMode 键）
-      // memo2-func #13 / memo2-consistency 旧-13：设置写盘收编——高频低价值写走 quiet
-      // 兜底（失败仅 console，不弹错误 toast 刷屏；此前 void 裸奔 + unhandled rejection）
-      getSettings().memoSortMode = v;
-      void saveSettings().catch((e) => console.error('[memo] 排序设置保存失败', e));
-      renderAll();
-    },
-  });
-  sortEl.appendChild(sortSelect.el);
-  sortSelectDetach = sortSelect.detach;
+  if (isMobileEnv()) {
+    const sortSelect = uiSelect<string>({
+      options: SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+      value: M.sortMode,
+      className: 'bz-memo-sortsel',
+      onChange: applySortMode,
+    });
+    sortEl.appendChild(sortSelect.el);
+    sortSelectDetach = sortSelect.detach;
+  } else {
+    const sortSeg = uiSegmented<string>({
+      options: SORT_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+      value: M.sortMode,
+      label: '排序方式',
+      className: 'bz-memo-sortseg',
+      onChange: applySortMode,
+    });
+    sortEl.appendChild(sortSeg.el);
+  }
 
   // 桌面拖动缩放（ADR-0084；移动端真全屏/常规卡都由 CSS 撑满视口，不挂）。
   // 尺寸记忆（ADR-0094）：persist.load 挂载时恢复（resize 工厂钳到与拖拽同口径），
@@ -464,6 +476,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     if (nav) {
       const scene = nav.dataset.memoScene as string;
       M.activeScene = M.activeScene === scene ? '全部' : scene;
+      touchViewEpoch(); // 换场景 = 换一批卡
       M.pinnedNewId = null; // 录入置顶只服务当前视图，切场景即清
       renderAll();
       return;
@@ -477,6 +490,8 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     const donebar = t.closest('[data-memo-donebar]');
     if (donebar) {
       M.showDone = !M.showDone;
+      doneJustOpened = M.showDone; // 点开的这一次：先渲染成收起态，下一帧再放开
+      touchViewEpoch();
       renderAll();
       return;
     }
@@ -484,6 +499,7 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     const doneMore = t.closest('[data-memo-donemore]');
     if (doneMore) {
       M.showEarlierDone = true;
+      touchViewEpoch();
       renderAll();
       return;
     }
@@ -522,6 +538,8 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
     if (t.closest?.('[data-memo-donebar]')) {
       e.preventDefault();
       M.showDone = !M.showDone;
+      doneJustOpened = M.showDone; // 点开的这一次：先渲染成收起态，下一帧再放开
+      touchViewEpoch();
       renderAll();
       return;
     }
@@ -597,6 +615,91 @@ export function openMemoPanel(app: App, opts?: { notePath?: string }): void {
   })();
 }
 
+// ---------- 面板开合（2026-09-22 用户拍板「纸抽出来」） ----------
+//
+// ⚠️ 全程**不做** prefers-reduced-motion 分支（影院 396 / 398 / 399 三处同口径）：用户本人机器
+// 恒报 reduce（Windows 关窗口动画 → Chromium 恒报），做了分支等于每次开合都先被砍一半。
+// ⚠️ transition 只在开合期间由 .bz-memo-anim 提供——拖拽缩放改的是宽高，常驻过渡会让拖拽滞后。
+
+/** 首次渲染还没跑（列表在异步 loadData 之后才有），卡片那层错峰要挂到它身上 */
+let panelEnterPending = false;
+
+/** 面板退场总时长（ms）：与 styles.css .bz-memo-leaving / .bz-memo-ovout 同源 */
+const PANEL_EXIT_MS = 540;
+
+/** 单层入场：自下 12px 浮入（延迟错峰）。恢复时把内联样式交还 CSS，免得常驻。 */
+function enterLayer(el: HTMLElement | null, delay: number, dy: number): void {
+  if (!el) return;
+  el.style.opacity = '0';
+  el.style.transform = `translateY(${dy}px)`;
+  window.setTimeout(() => {
+    el.style.transition = 'opacity 300ms var(--bz-ease-out), transform 300ms var(--bz-ease-out)';
+    el.style.opacity = '';
+    el.style.transform = '';
+    window.setTimeout(() => { el.style.transition = ''; }, 340);
+  }, delay);
+}
+
+/** 面板入场：整块像被从桌面上「抽起来」——透视抬起 + 影子由虚到实 + 去模糊；
+ *  内容再分侧栏 / 工具行 / 卡片三层错峰落位（卡片层由首次 renderAll 接力）。
+ *  调用时机：overlay 已 append、初始态（.bz-memo-pre / .bz-memo-ovpre）已提交之后。 */
+function playPanelEnter(overlay: HTMLElement): void {
+  const panel = overlay.querySelector<HTMLElement>('.bz-memo-panel');
+  if (!panel) return;
+  requestAnimationFrame(() => {
+    panel.classList.remove('bz-memo-pre'); // 放开 → 过渡到常态
+    overlay.classList.remove('bz-memo-ovpre');
+  });
+  enterLayer(panel.querySelector<HTMLElement>('.bz-rail'), 90, 12);
+  enterLayer(panel.querySelector<HTMLElement>('.bz-toolrow'), 160, 12);
+  window.setTimeout(() => {
+    panel.classList.remove('bz-memo-anim');
+    overlay.classList.remove('bz-memo-ovanim');
+  }, 520);
+}
+
+/** 首次渲染后卡片接力落位（与侧栏 / 工具行合起来是三层错峰）。只演一次。 */
+function playCardsEnter(): void {
+  if (!M.overlay) return;
+  M.overlay.querySelectorAll<HTMLElement>('[data-memo-content] .bz-memo-card').forEach((c, i) => {
+    enterLayer(c, 20 + i * 34, 14);
+  });
+}
+
+/** 面板退场：真 overlay 由调用方**立即移除**（closeMemoPanel 是同步语义，几十处调用点与
+ *  测试都假定「函数返回即没了」），屏幕上只留一层纯遮罩继续淡出。
+ *
+ *  ⚠️ 这里刻意**不做**「面板体下沉」：要演它就得把整块面板留在 DOM 里几百毫秒，而
+ *  ① 所有「面板还在不在」的查询会命中这枚残影；② 试过克隆快照——cloneNode **不复制事件
+ *  监听**，残影里的折叠条/搜索框能被选择器命中却点不动，测试和真实交互一起乱掉。
+ *  用一层与遮罩同色的纯色层接上再淡出，既保住"同步关"的语义，视觉上也是连续的。
+ *  开的方向（从桌面抽起来）才是这条动效的主戏。 */
+function playPanelExit(overlay: HTMLElement): void {
+  const wrap = document.createElement('div');
+  wrap.className = 'bz-memo-exit';
+  const mask = document.createElement('div');
+  mask.className = 'bz-memo-exit-mask';
+  wrap.appendChild(mask);
+  // 板子按**关闭那一刻**的面板矩形裁出：落回桌面的动效得有个真实的起点尺寸，
+  // 全屏纯色块淡出（上一版）等于没有退场——「开是抽起来、关是啪一下没了」的不对称就来自这。
+  const panel = overlay.querySelector<HTMLElement>('.bz-memo-panel');
+  if (panel) {
+    const r = panel.getBoundingClientRect();
+    if (r.width >= 4 && r.height >= 4) {
+      const board = document.createElement('div');
+      board.className = 'bz-memo-exit-panel';
+      const cs = getComputedStyle(panel);
+      board.style.cssText = `left:${Math.round(r.left)}px;top:${Math.round(r.top)}px;`
+        + `width:${Math.round(r.width)}px;height:${Math.round(r.height)}px;`
+        + `border-radius:${cs.borderRadius || '12px'}`;
+      wrap.appendChild(board);
+    }
+  }
+  document.body.appendChild(wrap);
+  requestAnimationFrame(() => wrap.classList.add('is-out'));
+  window.setTimeout(() => wrap.remove(), PANEL_EXIT_MS);
+}
+
 export function closeMemoPanel(): void {
   if (M.overlay) {
     // 上次停留（memoOpenScene='@last' 的取数源）：关面板记住当下场景，下次打开取回
@@ -606,6 +709,7 @@ export function closeMemoPanel(): void {
       // 设置写盘 quiet 兜底（memo2-func #13 / 旧-13，同排序口径）
       void saveSettings().catch((e) => console.error('[memo] 上次场景保存失败', e));
     }
+    playPanelExit(M.overlay); // 退场演在克隆快照上，真 overlay 立即移除（同步语义不变）
     M.overlay.remove();
     M.overlay = null;
   }
@@ -655,6 +759,62 @@ let panelFocusRelease: (() => void) | null = null;
 
 // ---------- 渲染 ----------
 
+/** 视图纪元：变了说明「看的是另一批东西」（切场景 / 搜索 / 排序 / 折叠区开合），
+ *  渲染后要排接力入场；勾选、保存、编辑这类原地刷新**不动它**，只演 FLIP 补位——
+ *  否则每次点勾整屏都在闪，比不做动效更糟。 */
+let viewEpoch = 0;
+let lastRenderEpoch = -1;
+/** 「重新发牌」的抛起旋转（度）：排序切换时置上，渲染时用完即清 */
+let nextFlipSpin = 0;
+/** 入场方向：视图/搜索换的是"另一批结果"→ 从右前方推入；新建是"多了一条"→ 自下长出 */
+let nextEnterFrom: 'right' | 'bottom' = 'right';
+/** 入场的张数与步进是否走「轻档」：搜索是逐字过滤，每敲一下都排满 12 张会互相打断、显得闹；
+ *  切场景是一次性换屏，值得给满。 */
+let nextEnterSoft = false;
+/** 「折叠区这一次是刚点开的」——渲染时先落收起态，下一帧再放开（高度过渡的起点） */
+let doneJustOpened = false;
+
+/** 标记「下一次渲染算换了一批东西」——各视图入口调用（与影院 402 的 touchViewEpoch 同口径） */
+function touchViewEpoch(): void { viewEpoch++; }
+
+/** 排序三档：桌面分段钮与移动端下拉取同一份源（值域与 memoSortMode 设置键共用） */
+const SORT_OPTIONS = [
+  { value: 'priority', label: '紧急优先' },
+  { value: 'due', label: '仅按到期' },
+  { value: 'created', label: '按创建' },
+] as const;
+
+/** 滑动底片的两处挂载点（core/ui/slide-pill）：侧栏场景（键=data-memo-scene、选中类=on）
+ *  与排序三档（键=data-value，core 分段钮自带）。
+ *  两个容器的 innerHTML 每次渲染都重写，底片与监听由 core 挂在**容器**上才不会跟着被冲掉。 */
+const MEMO_PILL_TARGETS: readonly BzSlidePillTarget[] = [
+  { box: '[data-memo-nav]', item: '.bz-rail-item', keys: ['memoScene'], onClass: 'on', clip: '.bz-rail-scroll' },
+  // 排序底片的宿主是分段钮本体（自带 position: relative 与内边距），不是外层槽位
+  { box: '[data-memo-sort] .bz-segmented', item: '.bz-segmented-btn', keys: ['value'] },
+  // 移动端横滑场景条：同一套机制（触屏没有 hover，底片只做「常驻 + 选中跟随」）
+  { box: '[data-memo-mob-scenes]', item: '.bz-mobstrip-chip', keys: ['memoScene'], onClass: 'is-on' },
+];
+
+/** 渲染后重定位滑动底片（侧栏场景 / 排序三档）：选中项变了就滑过去，落位不演滑行 */
+function syncMemoPills(): void {
+  if (!M.overlay) return;
+  syncSlidePills(M.overlay, MEMO_PILL_TARGETS);
+}
+
+/** 排序切换（桌面分段钮与移动端下拉共用出口）：写回设置 + 重渲染（底片随渲染落位） */
+function applySortMode(v: string): void {
+  if (v === M.sortMode) return;
+  M.sortMode = v;
+  // 同步写入默认排序（与 memo 共用 memoSortMode 键）
+  // memo2-func #13 / memo2-consistency 旧-13：设置写盘收编——高频低价值写走 quiet
+  // 兜底（失败仅 console，不弹错误 toast 刷屏；此前 void 裸奔 + unhandled rejection）
+  touchViewEpoch();
+  nextFlipSpin = 2.6; // 「重新发牌」：补位时顺手抛起一点旋转，落地过冲回弹
+  getSettings().memoSortMode = v;
+  void saveSettings().catch((e) => console.error('[memo] 排序设置保存失败', e));
+  renderAll();
+}
+
 function renderAll(): void {
   if (!M.overlay) return;
   // memo2-efficiency 新-4：getVisibleItems（全量 filter+sort）每轮渲染只算一次，
@@ -664,6 +824,8 @@ function renderAll(): void {
   renderMobScenes();
   renderMainHead(items);
   renderContent(items);
+  syncMemoPills(); // 侧栏/排序钮的 DOM 刚被重写，底片跟着新选中项落位
+  if (panelEnterPending) { panelEnterPending = false; playCardsEnter(); } // 面板入场的第三层
 }
 
 /** 主头行（原型 p1-main-head）：当前场景标题 + “· N 项 · M 未完成” + 右侧新建按钮 */
@@ -750,6 +912,15 @@ function renderContent(items: MemoItem[]): void {
   // memo2-ui M2-4：纵滚位保持——重建前存 scrollTop，重建后恢复（长列表中段操作后
   // 不再跳回顶部；diary「保存 scrollTop 恢复」先例同款）
   const keepTop = content.scrollTop;
+  // 重排动效的量：渲染前把每张卡的旧矩形按「条目 id」记下来，渲染后同键配对就知它从哪来
+  const flipBefore = measureFlip(content, '.bz-memo-card', 'memoId');
+  const newView = viewEpoch !== lastRenderEpoch; // 「看的是另一批东西」才排接力
+  lastRenderEpoch = viewEpoch;
+  const flipSpin = nextFlipSpin; // 「重新发牌」的抛起旋转（用完即清，别粘到下一次）
+  nextFlipSpin = 0;
+  const enterFrom = nextEnterFrom;
+  nextEnterFrom = 'right';
+  nextEnterSoft = false; // 用完即清（同 flipSpin 口径，别粘到下一次渲染）
   if (items.length === 0) {
     // 空态三件套（组件库 .bz-empty：图标 + 一句话 + 动作按钮）
     content.innerHTML = '';
@@ -817,7 +988,11 @@ function renderContent(items: MemoItem[]): void {
     const listed = !open || M.showEarlierDone ? done : recent;
     sections.push(doneBarHtml(open, done.length));
     if (open) {
-      sections.push(...listed.map((it) => cardHtml(it)));
+      // 折叠区容器只在展开时渲染（**收起态不渲染**——这是既有语义：收起时已完成条目就不在
+      // 列表里，卡片计数、分组、搜索都按这个口径走）。展开那一次从 0 高度长出来，
+      // 把下面的「更早 N 条」整体推开，而不是"啪"地跳出来。
+      sections.push(`<div class="bz-memo-donearea${doneJustOpened ? ' bz-memo-areain' : ''}" data-memo-donearea><div>`
+        + listed.map((it) => cardHtml(it)).join('') + '</div></div>');
       if (earlier > 0 && !M.showEarlierDone) {
         sections.push(doneMoreHtml(earlier));
       }
@@ -826,6 +1001,14 @@ function renderContent(items: MemoItem[]): void {
   content.innerHTML = sections.join('');
   mountIcons(content);
   content.scrollTop = keepTop; // M2-4：滚位还原
+  // 重排三件套：留下来的卡 FLIP 补位、消失的卡按旧矩形留幽灵淡出、新出现的卡接力入场
+  playFlip(content, flipBefore, {
+    item: '.bz-memo-card',
+    key: 'memoId',
+    enter: newView ? { n: nextEnterSoft ? 5 : 12, stagger: nextEnterSoft ? 14 : 26, from: enterFrom } : false,
+    spin: flipSpin,
+  });
+  doneJustOpened = false; // 展开动画的类已在本次渲染里带上，用完即清
 
   // 链接点击：打开关联内容（内部笔记 / 外部 URL），不走浏览器默认
   content.querySelectorAll('[data-memo-openitem]').forEach((el) => {
@@ -951,7 +1134,28 @@ function syncPendingCheck(id: string, pending: boolean): void {
     .querySelectorAll<HTMLElement>(
       `.bz-memo-card[data-memo-id="${id}"] [data-memo-check], .bz-memo-sheet-entry [data-memo-check]`,
     )
-    .forEach((el) => el.classList.toggle('bz-memo-pending', pending));
+    .forEach((el) => {
+      el.classList.toggle('bz-memo-pending', pending);
+      // 倒计时环：300ms 可反悔窗口画成勾选圈外的一圈（原有呼吸保留作底衬）。
+      // 光有呼吸只能说"有点事在发生"，用户并不知道还剩多久能点回来；环直接把它画出来。
+      // ⚠️ 环的动画时长与下方 setTimeout 的 300ms 防抖同源，改一处必须改两处。
+      const ring = el.querySelector<SVGSVGElement>(':scope > .bz-memo-ring');
+      if (pending && !ring) {
+        const NS = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(NS, 'svg');
+        svg.setAttribute('class', 'bz-memo-ring');
+        svg.setAttribute('viewBox', '0 0 20 20');
+        svg.setAttribute('aria-hidden', 'true');
+        const c = document.createElementNS(NS, 'circle');
+        c.setAttribute('cx', '10');
+        c.setAttribute('cy', '10');
+        c.setAttribute('r', '8.5');
+        svg.appendChild(c);
+        el.appendChild(svg);
+      } else if (!pending && ring) {
+        ring.remove();
+      }
+    });
 }
 
 /** 行内勾选切换（列表卡与移动抽屉头共用）：已完成 = 恢复；未完成 = 300ms 防抖后标记完成
@@ -989,7 +1193,248 @@ function bumpDoneBar(): void {
   bar.classList.add('bz-memo-donebar-bump');
 }
 
+/** 卷走的时序（ms）——与 styles.css `.bz-memo-rollcard` / `.bz-memo-rolled` 同源：
+ *  卡片**自身**从右端卷成一根纸卷（340ms），纸卷再整根平移进「已完成 N」（400ms），末段收细淡出。
+ *  ⚠️ 动效播完才 refresh：整列重建会把动效掐掉——完成态的卡片会直接挪进已完成折叠区，
+ *  那就什么都看不见（这是本次唯一要动行为层的原因）。 */
+const ROLL_CURL_MS = 340;
+const ROLL_FLY_MS = 400;
+const ROLL_MS = ROLL_CURL_MS + ROLL_FLY_MS;
+/** 卷起后的视觉宽度（px）：卡片卷成多宽的一根纸卷（卷起态与飞行态共用） */
+const ROLL_CURL_W = 13;
+
+/** 撞击阶段的时长（ms）：凹弹 520 / 涟漪 540 / 计数滚动 260，取能跑完大部分的一段。
+ *  ⚠️ 必须计入 rollWait 的等待：撞击的 setTimeout 到期时刻与 rollWait **完全重合**（同为
+ *  ROLL_MS），谁先跑只取决于谁先注册——refresh 一旦抢先就会重建 content.innerHTML，
+ *  撞击/涟漪/计数滚动全部落在新节点上演，等于白演。这是竞态，不是时序微调。 */
+const ROLL_IMPACT_MS = 360;
+
+/** 等卷走演完（from = 动手那一刻的 Date.now()；落盘与动效并行，这里只补差值）。
+ *  两个方向不等长：完成 = 卷起 + 飞行 + 撞击，取消 = 只飞（整张卡飞出去，没有卷的那一段）。
+ *  ⚠️ 刻意**不做** prefers-reduced-motion 分支（影院 396 / 398 / 399 三处同口径）：用户本人
+ *  机器恒报 reduce（Windows 关窗口动画 → Chromium 恒报），做了分支等于每次都被砍一半。 */
+function rollWait(from: number, away: boolean): Promise<void> {
+  const total = away ? ROLL_MS + ROLL_IMPACT_MS : ROLL_FLY_MS;
+  const left = total - (Date.now() - from);
+  return left > 0 ? new Promise((r) => setTimeout(r, left)) : Promise.resolve();
+}
+
+/** 卷走的落点：「已完成 N」的计数；折叠条不在（列表空/搜索无结果）时返回 null，调用方只卷不飞 */
+function rollTarget(): { x: number; y: number } | null {
+  const cnt = M.overlay?.querySelector('[data-memo-donebar] .bz-memo-donebar-cnt') as HTMLElement | null;
+  if (!cnt) return null;
+  const r = cnt.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+/** 取消完成的落点：主列表里它要回去的地方——第一条未完成卡片的位置（列表滚在别处时
+ *  落点在视野外，正好是「飞出已完成区、回列表去」的观感）；主列表空了就取内容区上沿。
+ *  返回 null 表示连面板都找不到（只走状态，不演视觉）。 */
+function listLanding(): { x: number; y: number } | null {
+  const panel = M.overlay?.querySelector<HTMLElement>('.bz-memo-panel') ?? null;
+  if (!panel) return null;
+  const first = panel.querySelector<HTMLElement>('.bz-memo-card:not(.bz-memo-done)');
+  if (first) {
+    const r = first.getBoundingClientRect();
+    return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+  }
+  const wrap = panel.querySelector<HTMLElement>('[data-memo-content]') ?? panel;
+  const r = wrap.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + Math.round(r.height * 0.12) };
+}
+
+/** ⚠️ WAAPI 的 easing **只认关键字或 cubic-bezier 字面量**——写 `var(--bz-ease-out)` 会抛
+ *  「not a valid value for easing」并**中断整个脚本**（原型页上一版就是这么废掉的）。
+ *  样式侧（CSS transition）照旧用 var()；这里是与 core 的 --bz-ease-out 逐字同值的一份字面量。 */
+const EASE_OUT = 'cubic-bezier(0.33, 1, 0.68, 1)';
+
+/** 计数滚动进位：旧值上滚出、新值下滚入（折叠条 bump 同刻）。
+ *  纯视觉件——不改变被渲染进 DOM 的真实计数（refresh 重建后它就是新值）。 */
+function rollCount(node: HTMLElement | null, from: number, to: number): void {
+  if (!node || from === to) return;
+  const h = node.offsetHeight || 16;
+  const box = node.parentElement;
+  if (box) {
+    if (getComputedStyle(box).position === 'static') box.style.position = 'relative';
+    box.style.display = 'inline-block';
+    const old = document.createElement('i');
+    old.className = 'bz-memo-cnt-out';
+    old.textContent = String(from);
+    old.style.cssText = `position:absolute;left:0;top:0;height:${h}px;line-height:${h}px;font-style:normal`;
+    box.appendChild(old);
+    const oa = safeAnimate(old, [
+      { transform: 'none', opacity: 1 },
+      { transform: `translateY(-${h}px)`, opacity: 0 },
+    ], { duration: 260, easing: EASE_OUT, fill: 'forwards' });
+    if (!oa) old.remove(); // 无 WAAPI：别留一个旧数字压在新数字上
+    else oa.onfinish = () => old.remove();
+  }
+  node.textContent = String(to);
+  safeAnimate(node, [{ transform: `translateY(${h}px)` }, { transform: 'none' }],
+    { duration: 260, easing: EASE_OUT });
+}
+
+/** 完成 = 卡片**自身**卷成一根纸卷、纸卷整根被送进「已完成 N」的计数；
+ *  取消 = 卡片**整张**从已完成区飞回主列表（不卷、不缩成条）。
+ *
+ *  这是一条**多段编排**，不是一条 transition：
+ *    ① 让位：卡片从列表里取出，行内其余卡 FLIP 补上空位（列表真的合上，不是留个坑等重建）
+ *    ② 卷起：卡片自身从右端收成一根纸卷（底色/边框/圆角/投影随卷一起长出来）
+ *    ③ 飞行：两层残影拖尾 + 本体沿弧线飞向「已完成 N」
+ *    ④ 撞击：折叠条被压凹再回弹（过冲）+ 一圈冲击波 + 计数滚动进位
+ *    ⑤ 落定：refresh 重建，折叠区里那条由 renderContent 的接力入场接住
+ *
+ *  为什么要把卡片搬到 overlay：面板自身带 backdrop-filter，是 fixed 后代的包含块，而 overlay
+ *  就是整个视口——挂在 overlay 上、fixed + 视口坐标，才与 getBoundingClientRect 同一口径
+ *  （ADR-0067 的 z 号也在 overlay 上）。搬的**就是卡片本身**，不另插独立元素：上一版凭空冒出
+ *  的那根灰条跟卡片毫无关系，看着就是贴上去的装饰。
+ *
+ *  ⚠️ 刻意不做 prefers-reduced-motion 分支（影院 396 / 398 / 399 同口径）。
+ *  ⚠️ 动效播完才 refresh：整列重建会把动效掐掉。 */
+function rollAway(id: string, away: boolean): void {
+  const overlay = M.overlay;
+  // 限定在面板内找：飞行中的卡片已被搬到 overlay 直属（不在 .bz-memo-panel 里），
+  // 连续点勾时不会把飞在半路的那一枚再抓来演一遍
+  const card = overlay?.querySelector<HTMLElement>(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`) ?? null;
+  if (!overlay || !card) return;
+  const cr = card.getBoundingClientRect();
+  if (cr.width < 4 || cr.height < 4) return; // 卡片不可见（折叠区收起 / 被搜索滤掉）：只走状态，不演视觉
+
+  const EASE_FLY = 'cubic-bezier(.4, 0, .3, 1)';
+  const parent = card.parentElement;
+
+  // ① 让位：先把同容器内其余卡的旧矩形量下来，再把卡片取走——列表自然合上，
+  //    其余卡按 FLIP 平滑上移（不做这一步，列表会瞬跳一下）。
+  const sibs = parent ? Array.from(parent.querySelectorAll<HTMLElement>('.bz-memo-card')).filter((n) => n !== card) : [];
+  const before = sibs.map((n) => n.getBoundingClientRect());
+  parent?.removeChild(card);
+  sibs.forEach((n, i) => {
+    const a = before[i];
+    const b = n.getBoundingClientRect();
+    const dx = a.left - b.left;
+    const dy = a.top - b.top;
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
+    n.style.transition = 'none';
+    n.style.transform = `translate(${dx}px, ${dy}px)`;
+    requestAnimationFrame(() => {
+      n.style.transition = 'transform 200ms var(--bz-ease-out)';
+      n.style.transform = '';
+      window.setTimeout(() => { n.style.transition = ''; }, 240);
+    });
+  });
+
+  // 卡片搬到 overlay 并钉在原位（视口坐标）
+  overlay.appendChild(card);
+  card.classList.add('bz-memo-rollcard');
+  card.style.left = `${cr.left}px`;
+  card.style.top = `${cr.top}px`;
+  card.style.width = `${cr.width}px`;
+  card.style.height = `${cr.height}px`;
+  void card.offsetHeight; // 先按原样落位并提交样式，之后改 transform 才会真的走过渡
+
+  if (away) {
+    const sx = Math.min(1, ROLL_CURL_W / Math.max(1, cr.width));
+    const CURLED = `scaleX(${sx})`; // origin 在右端 → 向右对齐收缩
+    // 纸卷外观随卷起一起长出来（底色/边框/圆角/投影）
+    const SKIN = `background-color ${ROLL_CURL_MS}ms ease, border-color ${ROLL_CURL_MS}ms ease, `
+      + `border-radius ${ROLL_CURL_MS}ms ease, box-shadow ${ROLL_CURL_MS}ms ease`;
+    card.style.transition = `transform ${ROLL_CURL_MS}ms cubic-bezier(.55, 0, .72, .12), ${SKIN}`;
+    card.classList.add('bz-memo-rolled');
+    card.style.transform = CURLED;
+
+    const target = rollTarget();
+    // 几何：origin 在右端，卷起后视觉范围是 [cr.right - ROLL_CURL_W, cr.right]，
+    // 视觉中心 = cr.right - ROLL_CURL_W/2；平移到计数处要补的位移就是 dx/dy
+    const dx = target ? Math.round(target.x - (cr.right - ROLL_CURL_W / 2)) : 0;
+    const dy = target ? Math.round(target.y - (cr.top + cr.height / 2)) : 0;
+
+    // ③ 飞行：两层残影先走（延迟 45/90ms），本体跟上
+    window.setTimeout(() => {
+      if (!target) {
+        // 没有折叠条可飞（列表空 / 搜索无结果）：卷起后原地收细淡出
+        card.style.transition = `transform ${ROLL_CURL_MS}ms ${EASE_FLY}, opacity ${ROLL_CURL_MS}ms linear`;
+        card.style.transform = `${CURLED} scaleY(.3)`;
+        card.style.opacity = '0';
+        window.setTimeout(() => card.remove(), ROLL_CURL_MS + 80);
+        return;
+      }
+      // 本体飞行：沿同一条弧线（中点抬高 62px 走抛物线），末段收细
+      // 残影与本体的透明度各自定值——此前用「与 delay 线性耦合」的公式，第二根会算到
+      // 0.025（等于看不见），末帧甚至算出负数（非法 opacity）。
+      safeAnimate(card, [
+        { transform: `translate(0px, 0px) scaleX(${sx}) scaleY(1)`, opacity: 1 },
+        { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 62}px) scaleX(${sx}) scaleY(1.14)`, opacity: 1 },
+        { transform: `translate(${dx}px, ${dy}px) scaleX(${sx}) scaleY(.4)`, opacity: 0 },
+      ], { duration: ROLL_FLY_MS, easing: EASE_FLY, fill: 'forwards' });
+      // 残影：两根比本体窄的纸卷形，挂在同一条抛物线后面
+      [45, 90].forEach((delay, i) => {
+        const g = document.createElement('div');
+        g.className = 'bz-memo-rollghost';
+        g.style.cssText = `left:${cr.right - ROLL_CURL_W}px;top:${cr.top}px;width:${ROLL_CURL_W}px;`
+          + `height:${cr.height}px;opacity:${0.34 - i * 0.13};filter:blur(${(i + 1) * 1.5}px)`;
+        overlay.appendChild(g);
+        const ga = safeAnimate(g, [
+          { transform: `translate(0px, 0px) scaleY(1)`, opacity: 0.34 - i * 0.13 },
+          { transform: `translate(${dx * 0.5}px, ${dy * 0.5 - 62}px) scaleY(1.14)`, opacity: 0.22 - i * 0.13 },
+          { transform: `translate(${dx}px, ${dy}px) scaleY(.4)`, opacity: 0 },
+        ], { duration: ROLL_FLY_MS, delay, easing: EASE_FLY, fill: 'forwards' });
+        if (!ga) g.remove(); // 无 WAAPI：别把残影留在 overlay 上
+        else ga.onfinish = () => g.remove();
+      });
+
+      // ④ 撞击：折叠条压凹回弹 + 冲击波 + 计数滚动进位
+      window.setTimeout(() => {
+        const panel = overlay.querySelector<HTMLElement>('.bz-memo-panel');
+        const bar = panel?.querySelector<HTMLElement>('[data-memo-donebar]') ?? null;
+        if (bar) {
+          bar.classList.remove('bz-memo-donebar-hit');
+          void bar.offsetWidth;
+          bar.classList.add('bz-memo-donebar-hit');
+          window.setTimeout(() => bar.classList.remove('bz-memo-donebar-hit'), 560);
+        }
+        const rp = document.createElement('div');
+        rp.className = 'bz-memo-ripple';
+        rp.style.left = `${Math.round(target.x)}px`;
+        rp.style.top = `${Math.round(target.y)}px`;
+        overlay.appendChild(rp);
+        window.setTimeout(() => rp.remove(), 620);
+        // 计数滚动：从「本域已知的已完成条数」滚到 +1（refresh 后即为真值）
+        const cntEl = panel?.querySelector<HTMLElement>('[data-memo-donebar] .bz-memo-donebar-cnt') ?? null;
+        const shown = Number((cntEl?.textContent ?? '').trim());
+        if (cntEl && Number.isFinite(shown)) rollCount(cntEl, shown, shown + 1);
+        bumpDoneBar();
+      }, ROLL_FLY_MS);
+      window.setTimeout(() => card.remove(), ROLL_FLY_MS + 80);
+    }, ROLL_CURL_MS);
+    return;
+  }
+
+  // 取消完成：**整张卡**直接飞出已完成区、回到主列表——不卷、不缩成条。
+  // 它在已完成区里本来就是一张带勾的完整卡片（飞行中不撤勾），先捏成条再展开，中间那段
+  // 谁都看不懂；「直接飞出去」本身就是全部语义。飞行时给它一点轻底色与投影，像一张被拈起来
+  // 的卡（卡片平时是透明底，不给背景的话空中只剩一片飘着的文字，反而看不出是卡片在飞）。
+  const land = listLanding();
+  const lx = land ? Math.round(land.x - (cr.left + cr.width / 2)) : 0;
+  // 找不到落点时的兜底：向上飞出面板（「回列表去」的方向），别原地淡出
+  const ly = land ? Math.round(land.y - (cr.top + cr.height / 2)) : -Math.round(cr.height * 1.8);
+  card.classList.add('bz-memo-lifting');
+  card.style.transition = `transform ${ROLL_FLY_MS}ms ${EASE_FLY}, background-color ${ROLL_FLY_MS}ms ease, `
+    + `box-shadow ${ROLL_FLY_MS}ms ease, opacity ${Math.round(ROLL_FLY_MS * 0.4)}ms linear ${Math.round(ROLL_FLY_MS * 0.6)}ms`;
+  card.style.transform = `translate(${lx}px, ${ly}px)`;
+  card.style.opacity = '0';
+  window.setTimeout(() => {
+    card.removeAttribute('style');
+    card.classList.remove('bz-memo-rollcard', 'bz-memo-lifting');
+    card.remove();
+  }, ROLL_FLY_MS + 80);
+}
+
 async function completeItem(it: MemoItem): Promise<void> {
+  const t0 = Date.now();
+  // 就地改内存态：动效窗口内列表还没重建，此刻再点勾选会走 restoreItem（卡片已经卷走了，
+  // 再点理应回退）；否则会又排一次完成，看着像「卷了又卷」
+  it.completed = it.completed ?? moment().format('YYYY-MM-DD HH:mm:ss');
+  rollAway(it.id, true); // 先起卷（卡片开始卷成纸卷），落盘与它并行
   try {
     await MemoData.completeItem(it.id);
     emitDomainEvent('memo', { kind: 'completed', title: it.title });
@@ -997,11 +1442,16 @@ async function completeItem(it: MemoItem): Promise<void> {
     notifySaveError(e, '标记完成');
     console.error(e);
   }
+  await rollWait(t0, true); // 纸卷落进计数才重建列表（重建 = 卡片挪进已完成折叠区）
+  if (!M.overlay) return; // 动效期间面板被关（关面板的 flush 路径）：不重建
   await refresh();
   bumpDoneBar();
 }
 
 async function restoreItem(it: MemoItem): Promise<void> {
+  const t0 = Date.now();
+  it.completed = null; // 同上：窗口内再点 = 重新完成
+  rollAway(it.id, false); // 整张卡飞出已完成区、回主列表（飞完才重建为未完成态）
   try {
     await MemoData.updateItem(it.id, { completed: null });
     emitDomainEvent('memo', { kind: 'restored', title: it.title });
@@ -1009,6 +1459,8 @@ async function restoreItem(it: MemoItem): Promise<void> {
     notifySaveError(e, '恢复未完成');
     console.error(e);
   }
+  await rollWait(t0, false);
+  if (!M.overlay) return;
   await refresh();
 }
 
@@ -1049,7 +1501,21 @@ async function togglePrio(id: string): Promise<void> {
   await refresh();
 }
 
+/** 删除起手「被抽走」的时长（ms）：与 styles.css .bz-memo-vanish 同源 */
+const DELETE_EXIT_MS = 180;
+
+/** 删除起手：给卡片一个「被抽走」的起势（向左滑出 + 收拢）。
+ *  ⚠️ 要**等它演完**再落盘刷新：卡片已淡到接近 0，紧接着 refresh 的 FLIP 幽灵却从
+ *  opacity 0.9 重新开始淡，中间会闪一下（亮度跳变）。落盘通常比 180ms 快，正是最易撞上的情形。 */
+function playDeleteExit(id: string): Promise<void> {
+  const card = M.overlay?.querySelector<HTMLElement>(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+  if (!card) return Promise.resolve();
+  card.classList.add('bz-memo-vanishing');
+  return new Promise((r) => setTimeout(r, DELETE_EXIT_MS));
+}
+
 async function deleteItemWithUndo(it: MemoItem): Promise<void> {
+  await playDeleteExit(it.id); // 起势：等抽走演完再落盘（不等会在幽灵接手时闪一下）
   // memo2-consistency 旧-2（B7 全局删除口径定稿）：接 notifyUndo 的删除不再走
   // openFlowDialog 二次确认——撤销兜底已覆盖误删风险，确认+撤销双保险只是多一次打断
   // （belongings/clipbook/review/favorites 先行落地）。场景删除保留确认（批量迁移 +
@@ -1069,6 +1535,9 @@ async function deleteItemWithUndo(it: MemoItem): Promise<void> {
       void (async () => {
         try {
           await MemoData.restoreItem(it, idx); // 插回删除前的原位置
+          // 撤销是「多了一条」→ 让卡片自下长出（与新建同口径）；不排的话它是凭空出现的
+          touchViewEpoch();
+          nextEnterFrom = 'bottom';
           await refresh();
         } catch (e) {
           notifySaveError(e, '撤销删除');
@@ -1185,6 +1654,9 @@ let composerBusy = false;
 
 function addFromComposer(): void {
   if (composerBusy) return; // E19：落盘窗口期忽略再次提交，防同文本双条目
+  // 新条目算「换了一批」→ 渲染后新卡自下长出（其余卡在 before 里，只会补位、不会重演）
+  touchViewEpoch();
+  nextEnterFrom = 'bottom';
   const overlay = M.overlay!;
   const input = overlay.querySelector('[data-memo-composer-input]') as HTMLInputElement;
   const txt = (input.value || '').trim();
@@ -1246,6 +1718,67 @@ function addFromComposer(): void {
  *  - presetNote：关联笔记预置（2026-09-11「给当前笔记记一笔」命令；同「定位到笔记」的绑定字段）
  *  - onSaved：保存成功后的回调（调用方清底部录入草稿）
  */
+/** 共享元素返程（与 playEditorGrow 对称）：编辑器关闭时，弹窗本体立即关——「关了没有」是
+ *  同步语义（脏表单校验、关了马上开下一个都靠它），把弹窗留到动画播完会全线改变行为。
+ *  所以这里只留一枚按弹窗矩形裁出的**板子**缩回源卡矩形再淡出：开是「从那张卡长出来」，
+ *  关是「收回那张卡里去」。源卡不在列表里（被搜索/场景滤掉、或折叠区收起）就不演。 */
+function playEditorShrink(popup: HTMLElement, id: string | null): void {
+  if (!id) return;
+  const card = M.overlay?.querySelector<HTMLElement>(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+  const pr = popup.getBoundingClientRect();
+  if (!card || pr.width < 4 || pr.height < 4) return;
+  const cr = card.getBoundingClientRect();
+  if (cr.width < 4 || cr.height < 4) return;
+  const board = document.createElement('div');
+  board.className = 'bz-memo-exit-panel';
+  const cs = getComputedStyle(popup);
+  board.style.cssText = `left:${Math.round(pr.left)}px;top:${Math.round(pr.top)}px;`
+    + `width:${Math.round(pr.width)}px;height:${Math.round(pr.height)}px;`
+    + `border-radius:${cs.borderRadius || '12px'}`;
+  document.body.appendChild(board);
+  const dx = Math.round(cr.left + cr.width / 2 - (pr.left + pr.width / 2));
+  const dy = Math.round(cr.top + cr.height / 2 - (pr.top + pr.height / 2));
+  const sx = Math.max(0.06, cr.width / pr.width);
+  const sy = Math.max(0.06, cr.height / pr.height);
+  safeAnimate(board, [
+    { transform: 'translate(0px, 0px) scale(1)', opacity: 1 },
+    { transform: `translate(${Math.round(dx * 0.55)}px, ${Math.round(dy * 0.55)}px) scale(${((1 + sx) / 2).toFixed(3)}, ${((1 + sy) / 2).toFixed(3)})`, opacity: 0.92, offset: 0.55 },
+    { transform: `translate(${dx}px, ${dy}px) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`, opacity: 0 },
+  ], { duration: 300, easing: EASE_OUT, fill: 'forwards' });
+  // 无 WAAPI（jsdom）时动画不跑：板子必须自己清掉，否则永远悬在屏幕上
+  window.setTimeout(() => board.remove(), 380);
+}
+
+/** 共享元素：编辑已有条目时，弹窗从「被编辑的那张卡」的矩形里**生长出来**
+ *  （影院 396 同款，memo 版）。刻意只做揭示、不做位移——弹窗原地展开，才谈得上
+ *  「从那张卡里长出来」；要是弹窗从别处飞过来，那叫飞入，不叫生长。
+ *  源卡不在列表里（被搜索/场景滤掉、或折叠区收起）就不演，走 uiModal 的常规入场。
+ *
+ *  ⚠️ 只做打开方向：关闭若也折回去，就得把弹窗留到动画播完才关，而「关了没有」是个
+ *  同步语义（脏表单校验、关了马上开下一个都靠它），延后会全线改变行为。
+ *  ⚠️ 不做 prefers-reduced-motion 分支（影院三处同口径）。 */
+function playEditorGrow(popup: HTMLElement, id: string): void {
+  const card = M.overlay?.querySelector<HTMLElement>(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+  if (!card) return; // 源卡不在列表里 → 不演（没有"从哪来"就说不上生长）
+  const cr = card.getBoundingClientRect();
+  const pr = popup.getBoundingClientRect();
+  if (cr.width < 4 || cr.height < 4 || pr.width < 4 || pr.height < 4) return;
+  const inset = `inset(${Math.round(cr.top - pr.top)}px ${Math.round(pr.right - cr.right)}px `
+    + `${Math.round(pr.bottom - cr.bottom)}px ${Math.round(cr.left - pr.left)}px)`;
+  safeAnimate(popup, [
+    { clipPath: inset, opacity: 0.35 },
+    { clipPath: 'inset(0px 0px 0px 0px)', opacity: 1 },
+  ], { duration: 280, easing: EASE_OUT });
+  // 内容在裁剪展开之后才接力进来：跟着一起淡会糊成一团
+  const fields = Array.from(popup.querySelectorAll<HTMLElement>('.bz-memo-form > *')).slice(0, 8);
+  fields.forEach((f, i) => {
+    safeAnimate(f, [
+      { opacity: 0, transform: 'translateY(6px)' },
+      { opacity: 1, transform: 'none' },
+    ], { duration: 240, delay: 90 + i * 34, easing: EASE_OUT, fill: 'both' });
+  });
+}
+
 export function openEditor(
   item: MemoItem | null,
   opts?: {
@@ -1604,8 +2137,11 @@ export function openEditor(
   // 呈报#18 18A：popup 挂 bz-memo-editor-popup——移动端键盘适配的域内覆盖锚点
   // （core 公共壳 .bz-overlay-popup 不动，覆盖规则见域 styles.css 移动适配段）
   const { close, popup } = uiModal({ content: modalBox, maxWidth: 420, className: `${skinClass()} bz-memo-editor-popup`, requestClose });
-  closeModal = close;
+  // 共享元素返程：弹窗本体**立即关**（同步语义一寸不让），屏幕上另留一枚板子缩回源卡
+  closeModal = () => { playEditorShrink(popup, editing?.id ?? null); close(); };
   bindFormSubmit(popup, doSave);
+  // 共享元素：编辑态才有源卡（新建没有"从哪来"），弹窗从那张卡的矩形里生长出来
+  if (editing) playEditorGrow(popup, editing.id);
   if (!isMobileEnv()) contentInput.focus();
   // 剪藏默认场景：打开即尝试剪贴板预填（新建限定；与切场景入口共用 tryEditorClipPrefill）
   if (!isEdit && defaultScene === '剪藏') tryEditorClipPrefill();

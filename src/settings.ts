@@ -672,7 +672,7 @@ export const DEFAULT_SETTINGS: BzSettings = {
   // 备忘录面板桌面尺寸记忆（ADR-0084；0=未拖过，打开走默认 720×580）
   memoPanelWidth: 0,
   memoPanelHeight: 0,
-  memoSkin: 'paper',
+  memoSkin: 'editorial',
   memoLayout: 'default',
 
   // 日记本（ADR-0115：3 键；影视/书库目录跨域读，退役键见接口注释）

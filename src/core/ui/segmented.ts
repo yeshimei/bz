@@ -15,6 +15,9 @@ export function uiSegmented<T extends string>(opts: BzSegOpts<T>): { el: HTMLDiv
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'bz-segmented-btn' + (o.value === opts.value ? ' is-on' : '');
+    // data-value = 钮的稳定键：滑动底片（core/ui/slide-pill）按键解析当前项，
+    // 渲染后重解析也不会认错（值与文案无关）
+    b.dataset.value = o.value;
     b.textContent = o.label;
     b.setAttribute('role', 'radio');
     b.setAttribute('aria-checked', String(o.value === opts.value));

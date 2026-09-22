@@ -376,8 +376,8 @@ describe('bz 骨架冒烟', () => {
     expect('newsRetentionSavedDays' in s).toBe(false);
     expect('newsRetentionSkippedDays' in s).toBe(false);
     expect(s.newsRetentionUnsavedDays).toBe('30');
-    // 备忘录面板皮肤（issue 210 四轮）：默认风格下线，缺省 = 纸感手账
-    expect(s.memoSkin).toBe('paper');
+    // 备忘录面板皮肤（issue 210 四轮；2026-09-22 拍板：默认由纸感手账改为编辑部）
+    expect(s.memoSkin).toBe('editorial');
     // enh-sweep-a 死键清理：旧 clipping 域孤儿键（实际生效 = clipbook 键）与
     // bookshelf 未接管前遗留的 5 个书库展示开关键，全仓无消费方，接口+默认值双删
     expect('clippingMobileDefaultFullscreen' in s).toBe(false);

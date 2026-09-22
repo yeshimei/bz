@@ -357,6 +357,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   border-radius: var(--bz-radius-sm);
   padding: 3px;
   gap: 2px;
+  /* 滑动底片（core/ui/slide-pill）的定位上下文：宿主须为首个绝对定位子元素的容器 */
+  position: relative;
 }
 .bz-segmented-btn {
   appearance: none;
@@ -371,6 +373,8 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   cursor: pointer;
   font-family: inherit;
   white-space: nowrap;
+  /* 同 .bz-rail-item：钮本体要压在滑动底片之上（底片是 absolute） */
+  position: relative;
   transition: background-color var(--bz-dur-fast) ease, color var(--bz-dur-fast) ease;
 }@media (hover: hover) {
 
@@ -1008,6 +1012,9 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   text-align: left;
   font-family: inherit;
   flex-shrink: 0;
+  /* 定位元素：滑动底片（.bz-slide-pill）是 absolute，静态内容会被它盖住
+     （层叠顺序里定位元素在上），行本体必须在它之上 */
+  position: relative;
 }@media (hover: hover) {
 
 .bz-rail-item:hover { background: var(--bz-surface-hover); }
@@ -1115,6 +1122,36 @@ textarea.bz-input { height: auto; min-height: 80px; padding: 8px 10px; line-heig
   flex-shrink: 0;
   border-top: 1px solid var(--bz-border);
   padding: var(--bz-space-sm) var(--bz-space-md);
+}
+
+/* ── 滑动底片 .bz-slide-pill（core/ui/slide-pill.ts）──
+   容器里的一片绝对定位高亮，位置/尺寸由 JS 按目标项矩形驱动：常驻在选中项上、
+   悬停跟随、移开回落。宿主容器需 position: relative。各域只覆盖配色（底色/圆角/投影），
+   别重写定位与过渡——那是两侧唯一的机制源；时长/曲线要改走 --bz-pill-dur / --bz-pill-ease。
+   刻意不做 prefers-reduced-motion 分支：这条动效是用户点名要的，放缓/砍掉都等于替他改决定。 */
+.bz-slide-pill {
+  position: absolute; left: 0; top: 0;
+  border-radius: var(--bz-radius-sm);
+  background: var(--bz-surface-hover);
+  pointer-events: none;
+  opacity: 0;
+  transition: transform var(--bz-pill-dur, var(--bz-dur-fast)) var(--bz-pill-ease, var(--bz-ease-out)),
+    width var(--bz-pill-dur, var(--bz-dur-fast)) var(--bz-pill-ease, var(--bz-ease-out)),
+    height var(--bz-pill-dur, var(--bz-dur-fast)) var(--bz-pill-ease, var(--bz-ease-out)),
+    opacity var(--bz-pill-dur, var(--bz-dur-fast)) ease;
+}
+.bz-slide-pill.is-visible { opacity: 1; }
+.bz-slide-pill.is-instant { transition: none; }
+
+/* ── 重排幽灵 .bz-flip-ghost（core/ui/flip.ts）──
+   「消失的件」按旧矩形留下的一枚残影，淡出后自清。宿主容器需 position: relative。
+   各域按自己的底色覆盖 background 即可（卡片是透明底时，默认的 surface-2 会显得突兀）。 */
+.bz-flip-ghost {
+  position: absolute;
+  border-radius: 8px;
+  background: var(--bz-surface-2);
+  pointer-events: none;
+  z-index: 3;
 }
 
 /* ═══════════ G. 移动筛选横滑条 .bz-mobstrip ═══════════

@@ -12,6 +12,47 @@
   width: 720px; max-width: calc(100vw - 32px); height: 580px; max-height: 92vh;
 }
 
+/* ---- 面板开合（2026-09-22 用户拍板：纸从桌面上「抽起来」）----
+   开：整块带透视抬起 + 影子由虚到实 + 去模糊，内容再分侧栏 / 工具行 / 卡片三层错峰落位；
+   关：反序（卡片先走 → 工具行 → 侧栏 → 整块落回桌面）。
+   ⚠️ 刻意不做 prefers-reduced-motion 分支（影院 396 / 398 / 399 三处同口径）：用户本人机器
+   恒报 reduce（Windows 关窗口动画 → Chromium 恒报），做了分支等于每次开合都先被砍一半。
+   ⚠️ transition 只在开合期间挂 .bz-memo-anim——拖拽缩放改的是宽高，常驻过渡会让拖拽滞后；
+   入场初始态挂 .bz-memo-pre（元素进 DOM 前就挂上，避免先以常态闪一帧）。 */
+.bz-memo-anim {
+  transition: transform 420ms var(--bz-ease-out), opacity 300ms var(--bz-ease-out),
+    filter 420ms var(--bz-ease-out), box-shadow 420ms var(--bz-ease-out);
+}
+.bz-memo-panel.bz-memo-pre {
+  transform: perspective(1300px) rotateX(8deg) translateY(30px) scale(0.93);
+  opacity: 0;
+  filter: blur(8px);
+  box-shadow: 0 46px 96px rgba(0, 0, 0, 0.5);
+}
+/* 关闭时接在真 overlay 后面演的一层退场件（见 ui.ts playPanelExit）：
+   真 overlay 同步移除（「关了没有」是同步语义，几十处调用点与测试都靠它），屏幕上只留
+   ①一层全屏遮罩淡出 ②一块按关闭那一刻面板矩形裁出的板子落回桌面——与开场「纸抽起来」对称。
+   ⚠️ 刻意**不带**任何 bz-memo-* 语义、也**不含**任何 data-memo-* 控件：试过克隆整个面板，
+   cloneNode **不复制事件监听**，残影里的折叠条/搜索框能被选择器命中却点不动，测试和真实
+   交互一起乱掉。用两块纯色几何接上，既保住同步关，视觉上也是连续的。
+   ⚠️ 整块 pointer-events: none——绝不能让它挡住关闭后的第一次点击。 */
+.bz-memo-exit { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; }
+.bz-memo-exit-mask { position: absolute; inset: 0; background: var(--bz-overlay); }
+/* 板子两用：①面板关闭时落在 .bz-memo-exit 里 ②编辑器关闭时单独挂 body 缩回源卡（playEditorShrink）。
+   故用 fixed（视口坐标，与 getBoundingClientRect 同口径）并自带 z-index。 */
+.bz-memo-exit-panel {
+  position: fixed; z-index: 2147483000; background: var(--bz-surface-1);
+  border: 1px solid var(--bz-border); box-shadow: 0 18px 42px rgba(0, 0, 0, 0.38);
+  pointer-events: none; transform-origin: center top;
+}
+/* 退场：板子先落回桌面（带透视下沉 + 去影），遮罩随后收——顺序与开场相反但同源 */
+.bz-memo-exit.is-out .bz-memo-exit-mask { opacity: 0; transition: opacity 320ms ease; }
+.bz-memo-exit.is-out .bz-memo-exit-panel {
+  opacity: 0;
+  transform: perspective(1300px) rotateX(6deg) translateY(26px) scale(0.96);
+  transition: opacity 250ms ease 90ms, transform 360ms cubic-bezier(0.34, 0.06, 0.16, 1);
+}
+
 .bz-memo-body { display: flex; flex: 1; min-height: 0; }
 
 /* ---- 左场景栏补充（.bz-rail 骨架走共享；「添加场景」虚线钮为待办特有，
@@ -31,16 +72,38 @@
 
 .bz-memo-side-add .bz-ic { width: 13px; height: 13px; }
 
+/* 场景选中/悬停的底色改由滑动底片承载（core/ui/slide-pill，2026-09-22 用户拍板，
+   对齐影院 rail 口径）：底片常驻选中场景、悬停滑过来，项本体只留文字色重。
+   皮肤的选中装饰（纸感的贴纸描边、编辑部的左侧竖条）同样画在底片上——见皮肤段，
+   否则底色滑走了、描边还留在原位瞬跳。
+   ⚠️ 容器必须是定位上下文：底片 position:absolute，宿主缺 relative 就会去相对更外层的
+   祖先（面板框），整块底色跑到别处去。 */
+[data-memo-nav] { position: relative; }
+[data-memo-nav] .bz-rail-item.on { background: transparent; color: var(--bz-text-1); }@media (hover: hover) {
+
+/* 悬停只剩底片在动：行本体不再自绘底色（否则底色与底片各画一块） */
+[data-memo-nav] .bz-rail-item:hover { background: transparent; }
+}
+[data-memo-nav] .bz-slide-pill { background: var(--bz-surface-hover); border-radius: 6px; }
+
 /* ---- 右栏 ---- */
 .bz-memo-main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-/* 排序 = 组件库下拉（issue 268：三档平铺改单枚下拉，收起态只占一行文案宽，
-   搜索框（.bz-search flex:1）随之吃掉余量变长）。组件默认 min-width:160px 按最长
-   选项预留，此处放开——收起态按内容宽（文案 + 箭头 + 内边距）自适应即可。 */
+/* 排序（2026-09-22 用户拍板）：桌面 = 三档平铺分段钮 + 滑动底片（对齐影院排序钮口径）；
+   移动端 = 组件库下拉（ui.ts 按 isMobileEnv 分叉）——窄屏里三档占宽会把搜索框挤没，
+   issue 268 的原判据在移动端依然成立，桌面当初一并改下拉是过度收敛。
+   .bz-memo-sort 只是宿主槽位：桌面容纳分段钮、移动容纳下拉（下拉默认 min-width:160px
+   按最长选项预留，此处放开——收起态按内容宽自适应即可）。 */
 .bz-memo-sort { flex-shrink: 0; }
 .bz-memo-sort .bz-select { min-width: 0; width: auto; }
-/* 排序下拉实例类（uiSelect className，挂 .bz-select 根上）：不参与工具行压缩，
-   宽度自适应由上一行管；皮肤观感（墨边贴纸/方角描边）见皮肤段排序下拉组 */
+/* 排序下拉实例类（uiSelect className，挂 .bz-select 根上）：不参与工具行压缩 */
 .bz-memo-sortsel { flex-shrink: 0; }
+/* 分段钮实例类（uiSegmented className）：工具行里不参与压缩 */
+.bz-memo-sortseg { flex-shrink: 0; }
+/* 选中片的底改由滑动底片承载（底片滑到哪一档哪一档亮）：钮本体只留文字色重 */
+[data-memo-sort] .bz-segmented-btn.is-on { background: transparent !important; box-shadow: none !important; }
+[data-memo-sort] .bz-slide-pill { background: var(--bz-surface-3); }
+.bz-memo-skin-paper [data-memo-sort] .bz-slide-pill,
+.bz-memo-skin-editorial [data-memo-sort] .bz-slide-pill { background: var(--bz-brand-soft); }
 
 /* 搜索框尾部 ✕ 一键清词（呈报#5 5A；clipbook 效率#12 定稿范式，gameshelf
    .bz-gs-search-clear 同款）：绝对定位贴输入框右缘，有词才现（hidden 由 ui.ts
@@ -170,6 +233,117 @@
 .bz-memo-card-title { font-size: var(--bz-font-body); color: var(--bz-text-1); line-height: 1.5; word-break: break-word; overflow-wrap: anywhere; white-space: pre-wrap; }
 .bz-memo-card.bz-memo-done .bz-memo-card-title { text-decoration: line-through; color: var(--bz-text-2); }
 .bz-memo-card-title a { color: var(--bz-brand); text-decoration: underline; cursor: pointer; word-break: break-word; }
+
+/* ---- 完成 / 取消完成的「卷走」动效（2026-09-22 用户拍板：五个抽法里选的「卷走」）----
+   完成 = 卡片**自身**以右端为轴从右往左卷成一根纸卷，纸卷再整根平移进「已完成 N」的计数、
+   末段收细淡出；取消 = **整张卡**直接飞出已完成区、回到主列表（不卷不缩——它在已完成区里本来
+   就是一张带勾的完整卡片，先捏成条再展开，中间那段谁都看不懂）。
+   「由卡片自己变成那根条」是这一版全部要点：一根跟卡片毫无关系的条凭空冒出来，看着就是贴上去
+   的装饰（上一版的样子）。所以这里不再有独立的卷轴元素——**搬的就是卡片本身**。
+   轴心必须落在右端：卷到哪儿就从哪儿起飞，两段才接得上（否则会从卡片正中窜出去）。
+   ⚠️ 时长与 ui.ts 的 ROLL_CURL_MS / ROLL_FLY_MS 同源：动效播完才 refresh——整列重建会把动效
+   掐掉（完成态的卡片会直接挪进已完成折叠区，那就什么都看不见了）。
+   ⚠️ 几何与过渡都在 ui.ts 里内联（两个方向、三阶段；用类切换驱动会踩特异性与起始值的坑），
+   这里只管定位方式与纸卷/飞卡的外观。
+   ⚠️ 两处都**不做** prefers-reduced-motion 分支（影院 396 / 398 / 399 三处同口径）：用户本人机器
+   恒报 reduce（Windows 关窗口动画 → Chromium 恒报），做了分支等于每次都被砍一半。 */
+.bz-memo-rollcard {
+  position: fixed; margin: 0; z-index: 10; box-sizing: border-box;
+  pointer-events: none; will-change: transform, opacity;
+  transform-origin: right center; /* 卷/放都以右端为轴：卷到哪儿就从哪儿起飞 */
+}
+/* 卷成纸卷的外观：底色/细边框/圆角/投影都长在卡片自己身上（深色下靠「亮一档底色 + 1px 边框」
+   立层级），不是另造一根灰条。overflow: hidden 让压缩后的内容不溢出卷外。 */
+.bz-memo-card.bz-memo-rolled {
+  background: var(--bz-surface-3);
+  border: 1px solid var(--bz-border-strong);
+  border-radius: 4px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.42);
+  overflow: hidden;
+}
+/* 取消完成时飞出去的那张卡：给它一点轻底色与投影，让它像一张被拈起来的卡片——
+   卡片平时是透明底，不给背景的话空中只剩一片飘着的文字，反倒看不出是卡片在飞。
+   飞行中**不撤勾**（它是从已完成区出来的，单选框此刻仍是选中态），
+   落进主列表后由 refresh 重建为未完成态。 */
+.bz-memo-card.bz-memo-lifting {
+  background: var(--bz-surface-2);
+  border-radius: 10px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
+}
+/* 卡片被搬去飞行后，原位由同容器其余卡的 FLIP 补位合上（见 ui.ts rollAway ①），
+   不再插等高占位——占位会让「补位」与「占位塌缩」两套位移叠在一起，看着更乱。 */
+
+/* ---- 「卷走」的附加件（多段编排：残影拖尾 / 撞击冲击波 / 折叠条受击 / 计数滚动的旧值）----
+   ⚠️ 时长与 ui.ts 的 ROLL_FLY_MS / ROLL_CURL_MS 同源；同样不做 prefers-reduced-motion 分支。 */
+.bz-memo-rollghost {
+  position: fixed; border-radius: 4px; background: var(--bz-surface-3);
+  border: 1px solid var(--bz-border-strong); pointer-events: none; z-index: 9;
+}
+/* 撞击点扩散一圈冲击波：与折叠条的凹弹同刻起 */
+.bz-memo-ripple {
+  position: fixed; width: 26px; height: 26px; margin: -13px 0 0 -13px; border-radius: 50%;
+  border: 1.5px solid var(--bz-brand); pointer-events: none; z-index: 9;
+  animation: bz-memo-ripple-out 540ms cubic-bezier(0.22, 0.82, 0.3, 1) forwards;
+}
+@keyframes bz-memo-ripple-out {
+  from { transform: scale(0.4); opacity: 0.9; }
+  to { transform: scale(3.6); opacity: 0; }
+}
+/* 折叠条被纸卷撞到：压凹 → 过冲回弹 → 落定
+   ⚠️ 两个动画名必须**并列在同一条规则里**：hit 管 transform（压凹回弹），bump 管背景/边框/
+   计数色变（既有呈报#13 13A 的「完成去向」反馈）。若各写一条 `animation` 简写，后声明的那条
+   会把前一条**整个覆盖**（简写会重置全部 animation-* 子属性），bump 就一次都不演——
+   这正是落地后实测出来的缺陷：hit 与 bump 同时挂在条上，却只剩 hit 在跑。 */
+.bz-memo-donebar.bz-memo-donebar-hit {
+  transform-origin: center bottom;
+  animation: bz-memo-donebar-hit 520ms cubic-bezier(0.34, 1.4, 0.5, 1),
+    bz-memo-donebar-bump 0.9s ease;
+}
+@keyframes bz-memo-donebar-hit {
+  0% { transform: scaleY(1) translateY(0); }
+  18% { transform: scaleY(0.84) translateY(3px); }
+  55% { transform: scaleY(1.05) translateY(-2px); }
+  100% { transform: scaleY(1) translateY(0); }
+}
+/* 计数滚动时向上滚出的旧值（滚完自清） */
+.bz-memo-cnt-out { color: var(--bz-text-2); }
+
+/* 重排动效（core/ui/flip.ts）：内容区是幽灵的定位上下文；卡片是透明底，幽灵按 hover 底色走，
+   不然默认的 surface-2 会在列表里浮出一块不属于任何卡片的灰。 */
+[data-memo-content] { position: relative; }
+[data-memo-content] .bz-flip-ghost { background: var(--bz-surface-hover); border-radius: 8px; }
+
+/* ---- 勾选倒计时环（300ms 可反悔窗口画得出来）----
+   ⚠️ 环的 300ms 与 ui.ts 里 setTimeout(..., 300) 的完成防抖同源，改一处必须改两处。 */
+.bz-memo-ring { position: absolute; inset: -2.5px; pointer-events: none; overflow: visible; }
+.bz-memo-ring circle {
+  fill: none; stroke: var(--bz-brand); stroke-width: 2; stroke-linecap: round;
+  transform: rotate(-90deg); transform-origin: 50% 50%;
+  stroke-dasharray: 53.4; stroke-dashoffset: 53.4;
+  animation: bz-memo-ring-count 300ms linear forwards;
+}
+@keyframes bz-memo-ring-count { from { stroke-dashoffset: 0; } to { stroke-dashoffset: 53.4; } }
+
+/* ---- 折叠区高度过渡：容器常驻、收起时 0 行高，展开把下面的内容整体推开 ---- */
+.bz-memo-donearea { display: grid; grid-template-rows: 1fr; overflow: hidden; }
+.bz-memo-donearea > div { overflow: hidden; min-height: 0; }
+/* 点开的这一次：从 0 行高长出来（收起态根本不渲染这个容器，所以只演展开这一段） */
+.bz-memo-donearea.bz-memo-areain { animation: bz-memo-area-open 240ms var(--bz-ease-out); }
+@keyframes bz-memo-area-open {
+  from { grid-template-rows: 0fr; }
+  to { grid-template-rows: 1fr; }
+}
+
+/* ---- 删除起势：卡片被抽走的那一下（紧接着的 refresh 由幽灵接住） ---- */
+.bz-memo-card.bz-memo-vanishing {
+  animation: bz-memo-vanish 180ms cubic-bezier(0.34, 0.06, 0.16, 1) forwards;
+}
+@keyframes bz-memo-vanish {
+  to { transform: translateX(-18px) scale(0.97); opacity: 0; }
+}
+
+/* ---- 卡片 hover 底色不再硬切 ---- */
+.bz-memo-card { transition: background-color var(--bz-dur-fast) var(--bz-ease-out); }
 
 /* ---- 移动抽屉头（buildSheetHead，ADR-0104 markup 单源）----
    勾选圈复用上方 .bz-memo-check 单源规则（抽屉经 sheetClass 挂皮肤类，纸感/编辑部皮肤自动随行，
@@ -389,10 +563,15 @@
   transform: rotate(-1.6deg);
   margin: var(--bz-space-sm) var(--bz-space-xs) var(--bz-space-md);
 }
-.bz-memo-skin-paper .bz-rail-item.on {
+/* 选中贴纸的整块（底色 + 墨边 + 错位实心投影）画在滑动底片上：滑过去时整块跟着走，
+   而不是只有底色在动、描边留在原地瞬跳 */
+.bz-memo-skin-paper [data-memo-nav] .bz-slide-pill {
   background: var(--bz-brand-soft);
-  color: var(--bz-text-1);
+  border-radius: 6px;
   box-shadow: inset 0 0 0 2px var(--bz-skin-ink), 3px 3px 0 var(--bz-skin-ink);
+}
+.bz-memo-skin-paper .bz-rail-item.on {
+  color: var(--bz-text-1);
 }
 .bz-memo-skin-paper .bz-rail-item.on .bz-ic { color: var(--bz-brand); }
 .bz-memo-skin-paper .bz-rail-item.on .bz-rail-count {
@@ -786,9 +965,13 @@
 .bz-memo-skin-editorial .bz-rail-item:hover { color: var(--bz-text-1); }
 }
 
-.bz-memo-skin-editorial .bz-rail-item.on {
+/* 选中块的底与左侧品牌竖条画在滑动底片上（竖条 = inset 4px，对齐项上的 border-left 4px） */
+.bz-memo-skin-editorial [data-memo-nav] .bz-slide-pill {
   background: var(--bz-brand-soft);
-  border-left-color: var(--bz-brand);
+  border-radius: 0;
+  box-shadow: inset 4px 0 0 var(--bz-brand);
+}
+.bz-memo-skin-editorial .bz-rail-item.on {
   color: var(--bz-text-1);
   font-weight: var(--bz-weight-bold);
 }

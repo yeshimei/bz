@@ -1,5 +1,5 @@
-/* 源指纹 3772aa0b15c8e9fb · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
+/* 源指纹 301c0cc86748da80 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
   var __create = Object.create;
@@ -6989,6 +6989,93 @@ var BZW_cinema = (() => {
     });
   }
 
+  // src/core/ui/slide-pill.ts
+  var BZ_PILL_CLS = "bz-slide-pill";
+  function hoverCapable() {
+    try {
+      return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+    } catch (e) {
+      return false;
+    }
+  }
+  function pillKeyOf(el, keys) {
+    for (const k of keys) {
+      const v = el.dataset[k];
+      if (v) return v;
+    }
+    return "";
+  }
+  function ensurePillBound(box, t, hoverable) {
+    if (box.dataset.pillBound) return;
+    box.dataset.pillBound = "1";
+    const resync = (animate) => syncSlidePill(box, t, hoverable, animate);
+    if (hoverable) {
+      box.addEventListener("mouseover", (e) => {
+        var _a;
+        const el = (_a = e.target) == null ? void 0 : _a.closest(t.item);
+        if (!el || !box.contains(el)) return;
+        const k = pillKeyOf(el, t.keys);
+        if (!k || box.dataset.pillHover === k) return;
+        box.dataset.pillHover = k;
+        resync(true);
+      });
+      box.addEventListener("mouseleave", () => {
+        if (!box.dataset.pillHover) return;
+        delete box.dataset.pillHover;
+        resync(true);
+      });
+    }
+    box.addEventListener("scroll", () => resync(false), true);
+  }
+  function syncSlidePill(box, t, hoverable, animate = true) {
+    var _a, _b;
+    ensurePillBound(box, t, hoverable);
+    const onClass = (_a = t.onClass) != null ? _a : "is-on";
+    let pill = box.querySelector(`:scope > .${BZ_PILL_CLS}`);
+    if (!pill) {
+      pill = document.createElement("span");
+      pill.className = BZ_PILL_CLS;
+      pill.setAttribute("aria-hidden", "true");
+      if (getComputedStyle(box).position === "static") box.style.position = "relative";
+      box.prepend(pill);
+    }
+    const items = [...box.querySelectorAll(t.item)];
+    const hoverKey = (_b = box.dataset.pillHover) != null ? _b : "";
+    const hovered = hoverKey ? items.find((el) => pillKeyOf(el, t.keys) === hoverKey) : void 0;
+    const target = hovered != null ? hovered : items.find((el) => el.classList.contains(onClass));
+    if (!target) {
+      pill.classList.remove("is-visible");
+      return;
+    }
+    const r = target.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
+    if (t.clip) {
+      const sc = target.closest(t.clip);
+      if (sc) {
+        const sr = sc.getBoundingClientRect();
+        if (r.bottom < sr.top + 1 || r.top > sr.bottom - 1) {
+          pill.classList.remove("is-visible");
+          return;
+        }
+      }
+    }
+    if (!animate) pill.classList.add("is-instant");
+    pill.style.width = `${Math.round(r.width)}px`;
+    pill.style.height = `${Math.round(r.height)}px`;
+    pill.style.transform = `translate(${Math.round(r.left - b.left)}px, ${Math.round(r.top - b.top)}px)`;
+    pill.classList.add("is-visible");
+    if (!animate) {
+      void pill.offsetWidth;
+      pill.classList.remove("is-instant");
+    }
+  }
+  function syncSlidePills(root, targets, hoverable = hoverCapable()) {
+    for (const t of targets) {
+      const box = root.querySelector(t.box);
+      if (box) syncSlidePill(box, t, hoverable, false);
+    }
+  }
+
   // src/cinema/douban-queue.ts
   var FETCH_GAP_MS = 15e3;
   var FETCH_TIMEOUT_MS = 3 * 60 * 1e3;
@@ -11758,7 +11845,7 @@ tags:
       row.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         const it = rowItem(row);
-        if (!it || !hoverCapable()) return;
+        if (!it || !hoverCapable2()) return;
         openItemMenu(e.clientX, e.clientY, toItemActions(deferClose(itemActions(it, sec, app), close)), true, MENU_SKIN);
         resetItemMenuClickGuard();
       });
@@ -12327,7 +12414,7 @@ tags:
     if (grid) grid.innerHTML = cards.map((e) => cardEntryHtml(e, app)).join("");
     mountIcons(sec);
   }
-  function hoverCapable() {
+  function hoverCapable2() {
     try {
       return typeof window !== "undefined" && !!window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     } catch (e) {
@@ -12366,7 +12453,7 @@ tags:
     });
     return best;
   }
-  function bindMidnight(sec, app, hoverable = hoverCapable()) {
+  function bindMidnight(sec, app, hoverable = hoverCapable2()) {
     const nearestSeasonDot = (target, e) => {
       var _a;
       const el = target;
@@ -12533,7 +12620,7 @@ tags:
       }
     });
     sec.addEventListener("contextmenu", (e) => {
-      if (!hoverCapable()) return;
+      if (!hoverCapable2()) return;
       const cardEl = e.target.closest(".pcard");
       if (!cardEl) return;
       e.preventDefault();
@@ -12652,80 +12739,10 @@ tags:
     }
     renderAll(app);
   }
-  var PILL_CLS = "slide-pill";
-  function pillKeyOf(el) {
-    var _a, _b, _c, _d;
-    const d = el.dataset;
-    return (_d = (_c = (_b = (_a = d.g) != null ? _a : d.s) != null ? _b : d.tool) != null ? _c : d.k) != null ? _d : "";
-  }
-  function ensurePillBound(box, itemSel, hoverable) {
-    if (box.dataset.pillBound) return;
-    box.dataset.pillBound = "1";
-    const resync = (animate) => syncSlidePill(box, itemSel, hoverable, animate);
-    if (hoverable) {
-      box.addEventListener("mouseover", (e) => {
-        var _a;
-        const el = (_a = e.target) == null ? void 0 : _a.closest(itemSel);
-        if (!el || !box.contains(el)) return;
-        const k = pillKeyOf(el);
-        if (!k || box.dataset.pillHover === k) return;
-        box.dataset.pillHover = k;
-        resync(true);
-      });
-      box.addEventListener("mouseleave", () => {
-        if (!box.dataset.pillHover) return;
-        delete box.dataset.pillHover;
-        resync(true);
-      });
-    }
-    box.addEventListener("scroll", () => resync(false), true);
-  }
-  function syncSlidePill(box, itemSel, hoverable, animate = true) {
-    var _a;
-    ensurePillBound(box, itemSel, hoverable);
-    let pill = box.querySelector(`:scope > .${PILL_CLS}`);
-    if (!pill) {
-      pill = document.createElement("span");
-      pill.className = PILL_CLS;
-      pill.setAttribute("aria-hidden", "true");
-      box.prepend(pill);
-    }
-    const items = [...box.querySelectorAll(itemSel)];
-    const hoverKey = (_a = box.dataset.pillHover) != null ? _a : "";
-    const hovered = hoverKey ? items.find((el) => pillKeyOf(el) === hoverKey) : void 0;
-    const target = hovered != null ? hovered : items.find((el) => el.classList.contains("is-on"));
-    if (!target) {
-      pill.classList.remove("is-visible");
-      return;
-    }
-    const r = target.getBoundingClientRect();
-    const b = box.getBoundingClientRect();
-    const sc = target.closest(".rail-sec");
-    if (sc) {
-      const sr = sc.getBoundingClientRect();
-      if (r.bottom < sr.top + 1 || r.top > sr.bottom - 1) {
-        pill.classList.remove("is-visible");
-        return;
-      }
-    }
-    if (!animate) pill.classList.add("is-instant");
-    pill.style.width = `${Math.round(r.width)}px`;
-    pill.style.height = `${Math.round(r.height)}px`;
-    pill.style.transform = `translate(${Math.round(r.left - b.left)}px, ${Math.round(r.top - b.top)}px)`;
-    pill.classList.add("is-visible");
-    if (!animate) {
-      void pill.offsetWidth;
-      pill.classList.remove("is-instant");
-    }
-  }
-  function syncSlidePills(root) {
-    const hoverable = hoverCapable();
-    const targets = [[".d-rail", ".rail-item"], [".j-sort", "button"]];
-    for (const [boxSel, itemSel] of targets) {
-      const box = root.querySelector(boxSel);
-      if (box) syncSlidePill(box, itemSel, hoverable, false);
-    }
-  }
+  var PILL_TARGETS = [
+    { box: ".d-rail", item: ".rail-item", keys: ["g", "s", "tool", "k"], clip: ".rail-sec" },
+    { box: ".j-sort", item: "button", keys: ["k"] }
+  ];
   function updateFormStars(range, rating) {
     var _a, _b;
     const box = (_a = range.closest(".f-range-row")) == null ? void 0 : _a.querySelector(".j-stars");
@@ -12917,7 +12934,7 @@ tags:
       if (sc) sc.scrollTop = top;
     }
     mountIcons(root);
-    syncSlidePills(root);
+    syncSlidePills(root, PILL_TARGETS);
     playGridMotion(root, beforeCards);
     flushCardFlash(root);
     restoreFocus(root, snap);
