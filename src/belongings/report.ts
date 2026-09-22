@@ -27,6 +27,7 @@ import { CHART_PASTEL_SERIES, CHART_HIGHLIGHT, CHART_INK, CHART_RANK_BADGES } fr
 import { moneyShort, moneyWith, type MoneyUnit } from './shared';
 import { computeYearReport, reportYears, resolveReportYear, type YearReportStats } from './report-stats';
 import { trimDailyNum } from './shared';
+import { motionReportSection } from './motion';
 import type { BelongingsItem } from './types';
 
 // ==================== 模块状态（在途渲染 / 当前报告上下文） ====================
@@ -236,6 +237,7 @@ function startReport(quiet = false): void {
       body.innerHTML = '';
       body.appendChild(buildLibraryEmpty());
       mountIcons(body);
+      motionReportSection(body.firstElementChild as HTMLElement); // 动效层：空态显影
       return finishDone(true);
     }
 
@@ -250,6 +252,7 @@ function startReport(quiet = false): void {
     if (!stats.hasYearData) {
       body.innerHTML = emptyYearHtml(year);
       mountIcons(body);
+      motionReportSection(body.firstElementChild as HTMLElement); // 动效层：空年显影
       return finishDone(true);
     }
 
@@ -262,6 +265,7 @@ function startReport(quiet = false): void {
       // 二次校验：await 让出期间容器可能已被摘除 → 不把本段写进已移除的 DOM
       if (!alive()) return finishAbort();
       body.insertAdjacentHTML('beforeend', section.generate());
+      motionReportSection(body.lastElementChild as HTMLElement); // 动效层：段落显影 + 柱条/占比条生长
       progress.setMessage(`正在生成${section.label}…`);
     }
 
