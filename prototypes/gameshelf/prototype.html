@@ -69,8 +69,8 @@
 </head>
 <body class="theme-light">
   <div class="title" id="title">游戏库 · 真行为单源预览（桌面 1280×900 · 移动 412×915 物理 1:1 · 默认亮色）</div>
-  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" src="./prototype-view.html" title="游戏库·桌面"></iframe></div>
-  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" src="./prototype-view.html" title="游戏库·移动"></iframe></div></div>
+  <div id="dtHost" class="demo-dt"><iframe class="demo-frame" title="游戏库·桌面"></iframe></div>
+  <div id="mobHost" class="demo-mob-wrap"><div class="demo-mob"><iframe class="demo-frame" title="游戏库·移动"></iframe></div></div>
 
   <div class="vbadge">
     <button id="themeToggle">切到暗色</button>
@@ -92,6 +92,13 @@
    *  - 自检（?selftest=1）：经 iframe contentDocument 访问真 DOM 断言
    */
   const DATA = window.GAMESHELF_DATA || [];
+
+  /* 评审口径透传（演示钩子）：主文档 query 原样交给行为 iframe——?rm=1（动效层模拟 RM，
+   * 直达终态）这类口径开关必须进到 iframe 里的 motion 层才生效；iframe 无静态 src，
+   * 在此一次性赋值，只加载一次。 */
+  document.querySelectorAll('.demo-frame').forEach((f) => {
+    f.src = './prototype-view.html' + location.search;
+  });
 
   const resetSim = () => {
     const kill = [];
@@ -185,8 +192,8 @@
         const mob = (sel) => md.querySelector(sel);
         const cards = (doc) => doc.querySelectorAll('.bz-gs-card').length;
 
-        t('桌面面板开', !!dt('.bz-gs-panel') && !!dt('.bz-main-head'));
-        t('移动面板开', !!mob('.bz-gs-panel') && !!mob('.bz-main-head'));
+        t('桌面面板开', !!dt('.bz-gs-panel') && !!dt('#bz-gs-heroops'));
+        t('移动面板开', !!mob('.bz-gs-panel') && !!mob('#bz-gs-heroops'));
         t('面板挂 bz-panel-mtop', dt('.bz-gs-panel').classList.contains('bz-panel-mtop'));
         // 回归钉（2026-09-17 真机「只有遮罩、没有主窗口」）：frame 必须是遮罩的子节点。
         // 壳的 body 是空的，挂错位置也会「看着居中」，所以这里同时钉父子关系与几何居中——
@@ -231,12 +238,13 @@
         // 桌面仍吸顶（移动端已改「固定」，见下）：桌面门面在上，工具行要吸在门面之下
         t('桌面工具行仍吸顶（sticky）', getComputedStyle(dt('.bz-gs-tools')).position === 'sticky');
         t('排序三档', dd.querySelectorAll('#bz-gs-sort .bz-segmented-btn').length === 3);
-        t('视图切换不做页签', dd.querySelectorAll('.bz-main-head .bz-segmented').length === 0);
+        t('头行已退役（无 .bz-main-head 残留）', dd.querySelectorAll('.bz-main-head').length === 0);
         t('桌面无关闭钮', getComputedStyle(dt('.bz-gs-close')).display === 'none');
-        t('视图入口在数据统计位', !!dt('.bz-main-head .bz-gs-viewbtn') && dt('.bz-main-head .bz-gs-viewbtn').textContent.includes('数据统计'));
+        t('视图入口在海报右上角操作位', (() => { const b = dt('#bz-gs-heroops .bz-icon-btn'); return !!b && (b.getAttribute('aria-label') || '').includes('数据统计'); })());
         // 右侧顺序：数据统计 → 立即同步（用户要求两者都放右边，统计在前）
-        t('右侧顺序 统计→同步', !!dt('.bz-gs-viewslot') && !!dt('.bz-gs-viewslot').nextElementSibling
-          && dt('.bz-gs-viewslot').nextElementSibling.classList.contains('bz-btn--primary'));
+        t('操作位顺序 统计→同步', (() => { const bs = dd.querySelectorAll('#bz-gs-heroops .bz-icon-btn'); return bs.length >= 2
+          && (bs[0].getAttribute('aria-label') || '').includes('数据统计')
+          && (bs[1].getAttribute('aria-label') || '').includes('同步'); })());
         t('移动端有关闭钮', getComputedStyle(mob('.bz-gs-close')).display !== 'none');
 
         // 档位筛选：从未启动（种子 13 款）——口径从种子现算，不硬编码
@@ -252,16 +260,18 @@
         const q = dt('.bz-gs-search input');
         q.value = 'Deep Rock';
         q.dispatchEvent(new Event('input', { bubbles: true }));
-        await sleep(150);
+        await sleep(400); // 搜索重渲走 180ms 防抖：150ms 拍点早于防抖完成（曾假红）
         const hits = DATA.filter((g) => g.name.toLowerCase().includes('deep rock') || (g.zh || '').toLowerCase().includes('deep rock')).length;
-        t('搜索命中 ' + hits + ' 卡', cards(dd) === hits && dt('.bz-gs-search input') === q);
+        t('搜索命中 ' + hits + ' 卡', cards(dd) === hits && dt('.bz-gs-search input').value === 'Deep Rock');
+        // 词断言用 value 语义：后台队列整刷会重建工具行（焦点/值经快照回写保真），
+        // 「同一节点引用」在整刷时序下本来就不成立（曾随机假红）
         q.value = '深岩';
         q.dispatchEvent(new Event('input', { bubbles: true }));
-        await sleep(150);
+        await sleep(400); // 同上：等防抖
         t('中文名可搜', cards(dd) === DATA.filter((g) => (g.zh || '').includes('深岩')).length);
         q.value = '';
         q.dispatchEvent(new Event('input', { bubbles: true }));
-        await sleep(120);
+        await sleep(400); // 同上：等防抖
 
         // 排序：名称升序 → 首位应为展示名（中文名优先）排序最小者
         dt('#bz-gs-sort .bz-segmented-btn:nth-child(3)').click();
@@ -273,17 +283,17 @@
 
         // 数据统计页（注意：Document 没有 textContent——要用 dd.body.textContent）
         // 入口 = 头行右侧工具位按钮（一个槽位随状态只出一条），不是页签
-        dt('.bz-gs-viewbtn').click();
+        dt('#bz-gs-heroops .bz-icon-btn').click();
         await sleep(200);
         t('统计页 5 张统计卡', dd.querySelectorAll('.bz-stat').length === 5);
         t('统计页含排行与分布', !!dt('.bz-gs-rows') && !!dt('.bz-gs-cols') && dd.body.textContent.includes('时长档位分布'));
         t('统计页口径注记', dd.body.textContent.includes('没有逐日游玩时长'));
-        t('入口变回「游戏墙」', dt('.bz-gs-viewbtn').textContent.includes('游戏墙'));
+        t('入口变回「游戏墙」', (dt('#bz-gs-heroops .bz-icon-btn').getAttribute('aria-label') || '').includes('返回游戏墙'));
         const top0 = [...DATA].sort((a, b) => b.min - a.min)[0];
         t('排行首位=' + dn(top0), dt('.bz-gs-rankname').textContent === dn(top0));
-        dt('.bz-gs-viewbtn').click();
+        dt('#bz-gs-heroops .bz-icon-btn').click();
         await sleep(200);
-        t('切回游戏墙', cards(dd) === DATA.length && dt('.bz-gs-viewbtn').textContent.includes('数据统计'));
+        t('切回游戏墙', cards(dd) === DATA.length && (dt('#bz-gs-heroops .bz-icon-btn').getAttribute('aria-label') || '').includes('数据统计'));
 
         // 详情弹窗：真实 appdetails + 成就罐头（走假 requestUrl）
         const first = DATA[0];
@@ -323,17 +333,15 @@
         t('已解锁行 ' + achOn + ' = 属性成就已解 ' + achSum, achSum >= 0 && achOn === achSum);
         // 图标：打开详情会因「成就属性过期」静默刷新该款 → 图标随即入本地队列，弹窗靠
         // M.modalRepaintFn 重画。所以这里轮询即可，别把断言绑在某一款的运气上。
-        const iconFilePat = '/' + first.appid + '-ach-';
-        let iconFiles = 0;
+        // ADR-0176（2026-09-22）成就图标「远端直取、不落盘」——旧断言要求 -ach- 本地文件，与拍板
+        // 相反（头行退役后自检 ERR 从未跑到这里，故一直没暴露）。新口径：弹窗有真图即可。
         let achIconSrc = '';
         for (let i = 0; i < 90 && !achIconSrc; i++) {
           await sleep(200);
-          iconFiles = Object.keys(localStorage).filter((k) => k.includes(iconFilePat)).length;
           const img = dt('.bz-gs-achrow .bz-gs-achicon:not(.bz-gs-achicon--none)');
           achIconSrc = (img && img.getAttribute('src')) || '';
         }
-        t('成就图标落到本地 ' + iconFiles + ' 个 → 弹窗有真图 ' + (achIconSrc ? '有' : '无'),
-          iconFiles > 0 && !!achIconSrc);
+        t('成就图标远端直取 → 弹窗有真图 ' + (achIconSrc ? '有' : '无'), !!achIconSrc);
         // 截图：罐头抓到了才该渲染（没抓到就不该出现空段）——两种情况都是对的。
         // 弹窗开着时刷新回来的那一版截图段用的是「截图源」的远端地址（本地文件还没下完），
         // 所以稍等片刻即可，不需要为了看本地路径重开弹窗。
@@ -358,7 +366,8 @@
         await sleep(150);
         t('ESC 关弹窗留面板', !!dt('.bz-gs-panel') && !dt('.bz-gs-detail-modal'));
         dd.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
-        await sleep(150);
+        await sleep(400); // 面板关闭走 120ms 关机退场（motion 层），收口兜底 240ms——
+                          // headless 评审时动画事件会被冻结伪影推迟，拍点放到兜底之后
         t('ESC 再关面板', !dt('.bz-gs-panel'));
 
         // ---- 移动端（412×915）----
@@ -374,16 +383,15 @@
         const mvh = md.documentElement.clientHeight;
         t('移动端整屏无底部空隙', Math.abs(mRect.height - mvh) < 1.5 && Math.abs(mRect.bottom - mvh) < 1.5);
         // 三钮只留图标（文字 span 隐藏、图标仍是真 svg）
-        const iconOnly = (b) => {
-          const label = b && b.querySelector('span:not(.bz-ic)');
-          return !!b && !!label && getComputedStyle(label).display === 'none' && !!b.querySelector('svg');
-        };
-        t('移动端三钮只留图标', iconOnly(mob('.bz-gs-viewbtn')) && iconOnly(mob('.bz-main-head .bz-btn--primary')) && iconOnly(mob('.bz-gs-close')));
+        // 头行退役后三钮 = ops 的三个 uiIconBtn（button > svg，无文字 span）：纯图标语义 = 有 svg 且零文本
+        const mOps = mob('#bz-gs-heroops').children;
+        const iconOnly = (b) => !!b && !!b.querySelector('svg') && !b.textContent.trim();
+        t('移动端三钮只留图标', mOps.length === 3 && Array.from(mOps).every(iconOnly));
         // 移动端按钮顺序：立即同步 → 数据统计 → 关闭（用户 2026-09-17 指定；桌面保持相反）
-        const mSyncR = mob('.bz-main-head .bz-btn--primary').getBoundingClientRect();
-        const mViewR = mob('.bz-gs-viewbtn').getBoundingClientRect();
-        const mCloseR = mob('.bz-gs-close').getBoundingClientRect();
-        t('移动端按钮序 同步→统计→关闭', mSyncR.left < mViewR.left && mViewR.left < mCloseR.left);
+        const mSyncR = mOps[1].getBoundingClientRect();
+        const mViewR = mOps[0].getBoundingClientRect();
+        const mCloseR = mOps[2].getBoundingClientRect();
+        t('移动端按钮序 统计→同步→关闭', mViewR.left < mSyncR.left && mSyncR.left < mCloseR.left);
         // 工具行：搜索 + 两个下拉同一行，搜索在最前；chips 与三档分段让位
         // （每个元素用前现查：海报/中文名队列的节流重渲会把工具行整块换掉，
         //   提前抓的引用会变游离节点——getBoundingClientRect 全 0，断言假失败）

@@ -1,5 +1,5 @@
-/* 源指纹 5420e240fd5326d1 · 仓内输入 246 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 0151d0efc55fbb1b · 仓内输入 247 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/motion.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
   var __create = Object.create;
@@ -2936,7 +2936,7 @@ var BZW_gameshelf = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M8 = 10;
+    const M9 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -2963,7 +2963,7 @@ var BZW_gameshelf = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M8 || Math.abs(t.clientY - sy) > M8) {
+      if (Math.abs(t.clientX - sx) > M9 || Math.abs(t.clientY - sy) > M9) {
         moved = true;
         cancel();
       }
@@ -4170,15 +4170,15 @@ var BZW_gameshelf = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M8, s, ms) {
+        function createDate(y, m, d, h, M9, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M8, s, ms);
+            date = new Date(y + 400, m, d, h, M9, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M8, s, ms);
+            date = new Date(y, m, d, h, M9, s, ms);
           }
           return date;
         }
@@ -10647,11 +10647,11 @@ var BZW_gameshelf = (() => {
     const eye = holder.querySelector(".bz-sp-secret-eye");
     bindTextCommit(input, opts.onCommit);
     eye.addEventListener("click", () => {
-      const reveal = input.type === "password";
-      input.type = reveal ? "text" : "password";
-      eye.setAttribute("aria-pressed", String(reveal));
-      eye.setAttribute("aria-label", reveal ? "隐藏密钥" : "显示密钥");
-      eye.innerHTML = iconSpan(reveal ? "eye-off" : "eye");
+      const reveal2 = input.type === "password";
+      input.type = reveal2 ? "text" : "password";
+      eye.setAttribute("aria-pressed", String(reveal2));
+      eye.setAttribute("aria-label", reveal2 ? "隐藏密钥" : "显示密钥");
+      eye.innerHTML = iconSpan(reveal2 ? "eye-off" : "eye");
       mountIcons(eye);
     });
     return holder.firstElementChild;
@@ -12200,11 +12200,11 @@ var BZW_gameshelf = (() => {
   });
 
   // src/bookshelf/state.ts
-  var M2;
+  var M3;
   var init_state2 = __esm({
     "src/bookshelf/state.ts"() {
       init_settings_provider();
-      M2 = {
+      M3 = {
         currentOverlay: null,
         items: [],
         side: "all",
@@ -16493,15 +16493,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E = pick.E;
+      const E2 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E, nOut, stub);
+      const E1 = along(E2, nOut, stub);
       const T = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
+      const items = [S, E2, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -18730,10 +18730,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after = part.node.splitText(offset);
-    const len = Math.min(hit.len, after.data.length);
-    const tail = after.splitText(len);
-    (_b2 = after.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after2 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after2.data.length);
+    const tail = after2.splitText(len);
+    (_b2 = after2.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -26918,10 +26918,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   });
 
   // src/memo/state.ts
-  var M4;
+  var M5;
   var init_state4 = __esm({
     "src/memo/state.ts"() {
-      M4 = {
+      M5 = {
         appRef: null,
         overlay: null,
         items: [],
@@ -28363,16 +28363,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   // src/memo/ui.ts
   function syncSearchClear() {
     var _a2, _b2;
-    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
-    const btn = (_b2 = M4.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
+    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const btn = (_b2 = M5.overlay) == null ? void 0 : _b2.querySelector("[data-memo-search-clear]");
     if (btn && input) btn.hidden = !input.value.trim();
   }
   function clearMemoSearch() {
     var _a2;
     searchDebounced.cancel();
-    M4.search = "";
+    M5.search = "";
     touchViewEpoch();
-    const input = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
+    const input = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-search]");
     if (input) input.value = "";
     syncSearchClear();
     renderAll();
@@ -28412,7 +28412,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function loadData() {
     try {
-      M4.items = await MemoData.loadItems();
+      M5.items = await MemoData.loadItems();
       loadFailed = false;
     } catch (e) {
       loadFailed = true;
@@ -28423,7 +28423,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function refresh() {
     var _a2, _b2;
     await loadData();
-    (_b2 = (_a2 = M4).renderFn) == null ? void 0 : _b2.call(_a2);
+    (_b2 = (_a2 = M5).renderFn) == null ? void 0 : _b2.call(_a2);
   }
   function dueRank(it) {
     if (!it.due) return 3;
@@ -28431,27 +28431,27 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return st === "overdue" ? 0 : st === "today" ? 1 : 2;
   }
   function getVisibleItems() {
-    const kw = M4.search.trim().toLowerCase();
+    const kw = M5.search.trim().toLowerCase();
     const today = localDayKey();
-    let list = M4.items.filter((it) => {
-      if (M4.activeScene === "今日") {
+    let list = M5.items.filter((it) => {
+      if (M5.activeScene === "今日") {
         if (!it.completed) {
           const st = getDueStatus(it.due);
           if (st !== "overdue" && st !== "today") return false;
         } else if (!isTodayStr(it.completed, today)) {
           return false;
         }
-      } else if (M4.activeScene === "重要") {
+      } else if (M5.activeScene === "重要") {
         if (it.priority !== "important") return false;
-      } else if (M4.activeScene !== "全部" && it.scene !== M4.activeScene) return false;
+      } else if (M5.activeScene !== "全部" && it.scene !== M5.activeScene) return false;
       if (kw) {
         const hay = [it.title, it.scene, it.notePath, it.scriptName, it.courseName, it.url].filter(Boolean).join(" ").toLowerCase();
         if (!hay.includes(kw)) return false;
       }
       return true;
     });
-    if (M4.pinnedNewId && M4.activeScene !== "全部") {
-      const pinned = M4.items.find((i) => i.id === M4.pinnedNewId);
+    if (M5.pinnedNewId && M5.activeScene !== "全部") {
+      const pinned = M5.items.find((i) => i.id === M5.pinnedNewId);
       if (pinned && !pinned.completed && !list.some((i) => i.id === pinned.id)) list = [pinned, ...list];
     }
     list.sort((a, b) => {
@@ -28459,12 +28459,12 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       if (ac !== bc) return ac ? 1 : -1;
       const dr = dueRank(a) - dueRank(b);
       if (dr !== 0) return dr;
-      if (M4.sortMode === "priority") {
+      if (M5.sortMode === "priority") {
         const pa = a.priority === "important" ? 0 : 1;
         const pb = b.priority === "important" ? 0 : 1;
         if (pa !== pb) return pa - pb;
       }
-      if (M4.sortMode === "created") {
+      if (M5.sortMode === "created") {
         return (b.created || "").localeCompare(a.created || "");
       }
       if (a.due && b.due) return a.due.localeCompare(b.due);
@@ -28475,11 +28475,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function sceneCounts() {
     const today = localDayKey();
     const counts = /* @__PURE__ */ new Map([
-      ["全部", M4.items.length],
+      ["全部", M5.items.length],
       ["今日", 0],
       ["重要", 0]
     ]);
-    for (const it of M4.items) {
+    for (const it of M5.items) {
       if (it.scene) counts.set(it.scene, (counts.get(it.scene) || 0) + 1);
       if (it.priority === "important") counts.set("重要", (counts.get("重要") || 0) + 1);
       const todayHit = it.completed ? isTodayStr(it.completed, today) : (() => {
@@ -28491,8 +28491,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return counts;
   }
   function applyMemoSkin(skin) {
-    if (!M4.overlay) return;
-    const panel2 = M4.overlay.querySelector(".bz-memo-panel");
+    if (!M5.overlay) return;
+    const panel2 = M5.overlay.querySelector(".bz-memo-panel");
     if (!panel2) return;
     panel2.classList.remove("bz-memo-skin-paper", "bz-memo-skin-editorial");
     const v = skin === "paper" ? "paper" : "editorial";
@@ -28516,8 +28516,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }, delay);
   }
   function playCardsEnter() {
-    if (!M4.overlay) return;
-    M4.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
+    if (!M5.overlay) return;
+    M5.overlay.querySelectorAll("[data-memo-content] .bz-memo-card").forEach((c, i) => {
       enterLayer(c, 20 + i * 34, 14);
     });
   }
@@ -28543,23 +28543,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     window.setTimeout(() => wrap.remove(), PANEL_EXIT_MS);
   }
   function closeMemoPanel() {
-    if (M4.overlay) {
+    if (M5.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.memoLastScene = M4.activeScene;
+        s.memoLastScene = M5.activeScene;
         void saveSettings().catch((e) => console.error("[memo] 上次场景保存失败", e));
       }
-      playPanelExit(M4.overlay);
-      M4.overlay.remove();
-      M4.overlay = null;
+      playPanelExit(M5.overlay);
+      M5.overlay.remove();
+      M5.overlay = null;
     }
     searchDebounced.cancel();
-    for (const [id, t] of M4.completeTimers) {
+    for (const [id, t] of M5.completeTimers) {
       clearTimeout(t);
-      const it = M4.items.find((i) => i.id === id);
+      const it = M5.items.find((i) => i.id === id);
       if (it) void completeItem(it);
     }
-    M4.completeTimers.clear();
+    M5.completeTimers.clear();
     if (panelResizeDetach) {
       panelResizeDetach.detach();
       panelResizeDetach = null;
@@ -28572,19 +28572,19 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       panelFocusRelease();
       panelFocusRelease = null;
     }
-    M4.renderFn = null;
-    M4.pinnedNewId = null;
+    M5.renderFn = null;
+    M5.pinnedNewId = null;
     clipTitleHint = null;
   }
   function touchViewEpoch() {
     viewEpoch++;
   }
   function syncMemoPills() {
-    if (!M4.overlay) return;
-    syncSlidePills(M4.overlay, MEMO_PILL_TARGETS);
+    if (!M5.overlay) return;
+    syncSlidePills(M5.overlay, MEMO_PILL_TARGETS);
   }
   function renderAll() {
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     const items = getVisibleItems();
     renderNav();
     renderMobScenes();
@@ -28597,11 +28597,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     }
   }
   function renderMainHead(items) {
-    const overlay2 = M4.overlay;
+    const overlay2 = M5.overlay;
     const titleEl = overlay2.querySelector("[data-memo-main-title]");
     const countEl = overlay2.querySelector("[data-memo-main-count]");
     if (!titleEl || !countEl) return;
-    titleEl.textContent = sceneLabel(M4.activeScene);
+    titleEl.textContent = sceneLabel(M5.activeScene);
     const undone = items.filter((i) => !i.completed).length;
     countEl.innerHTML = mainCountHtml(items.length, undone);
   }
@@ -28618,10 +28618,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     attachItemActions(el, buildSceneActions(scene), { sheetTitle: scene, sheetSub: "场景", menuClass: skinClass() || void 0 });
   }
   function renderNav() {
-    const nav = M4.overlay.querySelector("[data-memo-nav]");
+    const nav = M5.overlay.querySelector("[data-memo-nav]");
     if (!nav) return;
     const counts = sceneCounts();
-    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M4.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
+    nav.innerHTML = sceneOptions().map((o) => navBtnHtml(o, M5.activeScene === o.scene, counts.get(o.scene) || 0)).join("");
     mountIcons(nav);
     nav.querySelectorAll("[data-memo-scene]").forEach((el) => {
       attachSceneActions(el, el.dataset.memoScene);
@@ -28629,10 +28629,10 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function renderMobScenes() {
     if (!isMobileEnv()) return;
-    const wrap = M4.overlay.querySelector("[data-memo-mob-scenes]");
+    const wrap = M5.overlay.querySelector("[data-memo-mob-scenes]");
     if (!wrap) return;
     const keepLeft = wrap.scrollLeft;
-    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M4.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
+    wrap.innerHTML = sceneOptions().map((o) => mobChipHtml(o, M5.activeScene === o.scene)).join("") + mobAddSceneChipHtml();
     wrap.scrollLeft = keepLeft;
     mountIcons(wrap);
     wrap.querySelectorAll("[data-memo-scene]").forEach((el) => {
@@ -28649,7 +28649,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return metaTagsHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "");
   }
   function renderContent(items) {
-    const content = M4.overlay.querySelector("[data-memo-content]");
+    const content = M5.overlay.querySelector("[data-memo-content]");
     if (!content) return;
     const keepTop = content.scrollTop;
     const flipBefore = measureFlip(content, ".bz-memo-card", "memoId");
@@ -28671,8 +28671,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         }));
         return;
       }
-      const emptyCopy = M4.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M4.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M4.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
-      const emptyActions = M4.search ? [
+      const emptyCopy = M5.search ? { title: "没有匹配的备忘录", desc: "试试其他关键词，或清除搜索" } : M5.activeScene === "今日" ? { title: "今日没有备忘录", desc: "今天到期或已完成的备忘录会显示在这里" } : M5.activeScene === "重要" ? { title: "还没有标为重要的备忘录", desc: "在条目菜单选「转为重要」，它就会出现在这里" } : { title: "这里还没有备忘录", desc: "随手记一条，别让它溜走" };
+      const emptyActions = M5.search ? [
         uiBtn({ label: "清除搜索", icon: MEMO_ICONS.close, onClick: () => clearMemoSearch() }),
         uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })
       ] : [uiBtn({ label: "新建备忘录", icon: MEMO_ICONS.add, tone: "primary", onClick: () => openEditor(null) })];
@@ -28688,7 +28688,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const done = items.filter((i) => i.completed);
     const urgent = active2.filter((i) => dueRank(i) <= 1);
     const normal = active2.filter((i) => dueRank(i) > 1);
-    const kw = M4.search.trim();
+    const kw = M5.search.trim();
     const cardHtml4 = (it) => cardHtml(it, metaDueOf(it), it.created ? formatRelativeTime(it.created) : "", kw);
     const sections = [];
     if (urgent.length) {
@@ -28700,16 +28700,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       sections.push(...normal.map((it) => cardHtml4(it)));
     }
     if (done.length) {
-      const open = M4.showDone;
+      const open = M5.showDone;
       const win = doneWindowDays();
       const cutoff = win === null ? null : (0, import_moment5.default)().subtract(win, "days").format("YYYY-MM-DD HH:mm:ss");
       const recent2 = cutoff === null ? done : done.filter((i) => i.completed >= cutoff);
       const earlier = done.length - recent2.length;
-      const listed = !open || M4.showEarlierDone ? done : recent2;
+      const listed = !open || M5.showEarlierDone ? done : recent2;
       sections.push(doneBarHtml(open, done.length));
       if (open) {
         sections.push(`<div class="bz-memo-donearea${doneJustOpened ? " bz-memo-areain" : ""}" data-memo-donearea><div>` + listed.map((it) => cardHtml4(it)).join("") + "</div></div>");
-        if (earlier > 0 && !M4.showEarlierDone) {
+        if (earlier > 0 && !M5.showEarlierDone) {
           sections.push(doneMoreHtml(earlier));
         }
       }
@@ -28728,20 +28728,20 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       el.addEventListener("click", (e) => {
         e.preventDefault();
         e.stopPropagation();
-        const it = M4.items.find((i) => i.id === el.dataset.memoOpenitem);
+        const it = M5.items.find((i) => i.id === el.dataset.memoOpenitem);
         if (it) openItem(it);
       });
     });
     content.querySelectorAll("[data-memo-pos]").forEach((el) => {
       el.addEventListener("click", (e) => {
         e.stopPropagation();
-        const it = M4.items.find((i) => i.id === el.dataset.memoPos);
+        const it = M5.items.find((i) => i.id === el.dataset.memoPos);
         if (it) jumpToNote(it);
       });
     });
     content.querySelectorAll(".bz-memo-card").forEach((card) => {
       const id = card.dataset.memoId;
-      const it = M4.items.find((i) => i.id === id);
+      const it = M5.items.find((i) => i.id === id);
       if (!it) return;
       attachItemActions(card, buildCardActions(it), {
         menuClass: skinClass() || void 0,
@@ -28782,7 +28782,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return head;
   }
   function openItem(it) {
-    const app = M4.appRef;
+    const app = M5.appRef;
     if (it.linkedNote) {
       const file = app.vault.getAbstractFileByPath(it.linkedNote);
       if (!file) {
@@ -28798,7 +28798,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function jumpToNote(it) {
     if (!it.notePath) return;
-    const app = M4.appRef;
+    const app = M5.appRef;
     const file = app.vault.getAbstractFileByPath(it.notePath);
     if (!file) {
       notice("关联笔记不存在");
@@ -28846,23 +28846,23 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void restoreItem(it);
       return;
     }
-    if (M4.completeTimers.has(it.id)) {
-      clearTimeout(M4.completeTimers.get(it.id));
-      M4.completeTimers.delete(it.id);
+    if (M5.completeTimers.has(it.id)) {
+      clearTimeout(M5.completeTimers.get(it.id));
+      M5.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       return;
     }
     const timer = setTimeout(() => {
-      M4.completeTimers.delete(it.id);
+      M5.completeTimers.delete(it.id);
       syncPendingCheck(it.id, false);
       void completeItem(it);
     }, 300);
-    M4.completeTimers.set(it.id, timer);
+    M5.completeTimers.set(it.id, timer);
     syncPendingCheck(it.id, true);
   }
   function bumpDoneBar() {
     var _a2;
-    const bar = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
+    const bar = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar]");
     if (!bar) return;
     bar.classList.remove("bz-memo-donebar-bump");
     void bar.offsetWidth;
@@ -28875,14 +28875,14 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollTarget() {
     var _a2;
-    const cnt = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
+    const cnt = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector("[data-memo-donebar] .bz-memo-donebar-cnt");
     if (!cnt) return null;
     const r = cnt.getBoundingClientRect();
     return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
   }
   function listLanding() {
     var _a2, _b2, _c;
-    const panel2 = (_b2 = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
+    const panel2 = (_b2 = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(".bz-memo-panel")) != null ? _b2 : null;
     if (!panel2) return null;
     const first = panel2.querySelector(".bz-memo-card:not(.bz-memo-done)");
     if (first) {
@@ -28921,7 +28921,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function rollAway(id, away) {
     var _a2;
-    const overlay2 = M4.overlay;
+    const overlay2 = M5.overlay;
     const card = (_a2 = overlay2 == null ? void 0 : overlay2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`)) != null ? _a2 : null;
     if (!overlay2 || !card) return;
     const cr = card.getBoundingClientRect();
@@ -29041,7 +29041,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, true);
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     await refresh();
     bumpDoneBar();
   }
@@ -29057,11 +29057,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       console.error(e);
     }
     await rollWait(t0, false);
-    if (!M4.overlay) return;
+    if (!M5.overlay) return;
     await refresh();
   }
   async function postponeItem(id, days) {
-    const it = M4.items.find((i) => i.id === id);
+    const it = M5.items.find((i) => i.id === id);
     if (!it || !it.due) return;
     const keepHm = it.due.replace("T", " ").slice(11, 16) || "09:00";
     const next = (0, import_moment5.default)(it.due.replace("T", " ").slice(0, 10), "YYYY-MM-DD").add(days, "days").format(`YYYY-MM-DD ${keepHm}`);
@@ -29076,7 +29076,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   async function togglePrio(id) {
-    const it = M4.items.find((i) => i.id === id);
+    const it = M5.items.find((i) => i.id === id);
     if (!it) return;
     const to = it.priority === "important" ? "minor" : "important";
     try {
@@ -29091,7 +29091,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playDeleteExit(id) {
     var _a2;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return Promise.resolve();
     card.classList.add("bz-memo-vanishing");
     return new Promise((r) => setTimeout(r, DELETE_EXIT_MS));
@@ -29126,7 +29126,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     await refresh();
   }
   function focusMemoItem(it) {
-    const app = M4.appRef;
+    const app = M5.appRef;
     if (!app) return;
     void Promise.resolve().then(() => (init_pomodoro(), pomodoro_exports)).then((m) => m.startFocusForTask(app, it.title));
   }
@@ -29209,7 +29209,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function playEditorShrink(popup, id) {
     var _a2;
     if (!id) return;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     const pr = popup.getBoundingClientRect();
     if (!card || pr.width < 4 || pr.height < 4) return;
     const cr = card.getBoundingClientRect();
@@ -29232,7 +29232,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function playEditorGrow(popup, id) {
     var _a2;
-    const card = (_a2 = M4.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
+    const card = (_a2 = M5.overlay) == null ? void 0 : _a2.querySelector(`.bz-memo-panel .bz-memo-card[data-memo-id="${id}"]`);
     if (!card) return;
     const cr = card.getBoundingClientRect();
     const pr = popup.getBoundingClientRect();
@@ -29354,8 +29354,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     prioField.appendChild(prioChoice.el);
     form.appendChild(prioField);
-    const knownScripts = [...new Set(M4.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
-    const knownCourses = [...new Set(M4.items.map((i) => i.courseName).filter((n) => !!n))].sort();
+    const knownScripts = [...new Set(M5.items.map((i) => i.scriptName).filter((n) => !!n))].sort();
+    const knownCourses = [...new Set(M5.items.map((i) => i.courseName).filter((n) => !!n))].sort();
     function bindSug(input, list, onPick) {
       uiSuggest({ anchor: input, source: list, max: 5, excludeCurrent: true, onPick });
     }
@@ -29530,7 +29530,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             };
             await MemoData.addItem(it);
             emitDomainEvent("memo", { kind: "added", title: finalTitle, scene, priority, due });
-            M4.pinnedNewId = it.id;
+            M5.pinnedNewId = it.id;
           }
           editorBusy = false;
           closeModal();
@@ -29594,7 +29594,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     return actions;
   }
   function openMemoInSettings() {
-    const app = M4.appRef;
+    const app = M5.appRef;
     closeMemoPanel();
     if (!app) return;
     void Promise.resolve().then(() => (init_settings_panel(), settings_panel_exports)).then((m) => m.openSettingsPanel(app, "memo"));
@@ -29620,7 +29620,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const input = document.createElement("input");
     input.className = "bz-input";
     input.value = scene;
-    const count = M4.items.filter((i) => i.scene === scene).length;
+    const count = M5.items.filter((i) => i.scene === scene).length;
     const hint = document.createElement("div");
     hint.className = "bz-memo-addscene-hint";
     hint.textContent = count > 0 ? `保存后 ${count} 条备忘录将同步改为新场景名` : "场景将写入备忘录设置（与设置面板同键）";
@@ -29654,7 +29654,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           moved = await MemoData.updateSceneBulk(scene, name);
           if (moved === 0 && count > 0) throw new Error("场景迁移未生效");
           await commitScenarios(scenes.map((s) => s === scene ? name : s), `已重命名为「${name}」`);
-          if (M4.activeScene === scene) M4.activeScene = name;
+          if (M5.activeScene === scene) M5.activeScene = name;
           renderAll();
           close();
         } catch (e) {
@@ -29690,7 +29690,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       notice("至少保留一个场景");
       return;
     }
-    const count = M4.items.filter((i) => i.scene === scene).length;
+    const count = M5.items.filter((i) => i.scene === scene).length;
     const ok = await openFlowDialog({
       title: "删除场景",
       message: count > 0 ? `确定删除场景「${scene}」吗？
@@ -29708,7 +29708,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     try {
       moved = count > 0 ? await MemoData.updateSceneBulk(scene, target) : 0;
       await commitScenarios(others, `已删除场景「${scene}」`);
-      if (M4.activeScene === scene) M4.activeScene = "全部";
+      if (M5.activeScene === scene) M5.activeScene = "全部";
       renderAll();
     } catch (e) {
       if (moved > 0) {
@@ -29745,7 +29745,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_state4();
       SEARCH_DEBOUNCE_MS = 180;
       searchDebounced = debounce((v) => {
-        M4.search = v;
+        M5.search = v;
         touchViewEpoch();
         nextEnterSoft = true;
         renderAll();
@@ -31689,13 +31689,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     resetBelongingsState: () => resetBelongingsState
   });
   function resetBelongingsState() {
-    M5.overlay = null;
-    M5.db = null;
-    M5.status = null;
-    M5.year = "";
-    M5.q = "";
-    M5.sort = "recent";
-    M5.renderFn = null;
+    M6.overlay = null;
+    M6.db = null;
+    M6.status = null;
+    M6.year = "";
+    M6.q = "";
+    M6.sort = "recent";
+    M6.renderFn = null;
   }
   function currencyUnit() {
     const v = tryGetSettings().belongingsCurrency;
@@ -31790,11 +31790,11 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     };
   }
   function itemList() {
-    return M5.db ? Object.values(M5.db.items) : [];
+    return M6.db ? Object.values(M6.db.items) : [];
   }
   function itemById(id) {
     var _a2;
-    return (_a2 = M5.db) == null ? void 0 : _a2.items[id];
+    return (_a2 = M6.db) == null ? void 0 : _a2.items[id];
   }
   function closeAllDrops() {
     document.querySelectorAll(".bz-bel-yearsel.is-open").forEach((w) => {
@@ -31805,7 +31805,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   function ensureBelongingsEsc() {
     registerPanelEsc(
       "bz-bel",
-      () => !!M5.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
+      () => !!M6.overlay || !!document.querySelector(".bz-bel-form") || !!document.querySelector(".bz-bel-detail") || !!document.querySelector(".bz-bel-report-mask"),
       () => {
         if (document.querySelector(".bz-bel-form")) {
           requestCloseBelForm();
@@ -31828,7 +31828,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     );
   }
   async function openPanel() {
-    if (M5.overlay) {
+    if (M6.overlay) {
       closePanel();
       return;
     }
@@ -31845,18 +31845,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   async function openPanelInner() {
     var _a2;
     const st = tryGetSettings().belongingsDefaultStatus;
-    M5.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
+    M6.status = typeof st === "string" && DEFAULT_STATUS_VALUES.includes(st) && st !== "" ? st : null;
     const srt = tryGetSettings().belongingsDefaultSort;
-    M5.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
-    M5.year = "";
-    M5.db = await loadDatabase();
+    M6.sort = SORT_OPTS.some((o) => o.v === srt) ? srt : "recent";
+    M6.year = "";
+    M6.db = await loadDatabase();
     const overlay2 = document.createElement("div");
     overlay2.className = "bz-panel-overlay";
     overlay2.innerHTML = panelHtml();
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M5.overlay = overlay2;
-    M5.renderFn = () => renderAll2();
+    M6.overlay = overlay2;
+    M6.renderFn = () => renderAll2();
     mountIcons(overlay2);
     ensureBelongingsEsc();
     trapPanelFocus((_a2 = overlay2.querySelector(".bz-bel-panel")) != null ? _a2 : overlay2);
@@ -31871,8 +31871,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       var _a3;
       closeAllDrops();
       const v = (_a3 = opt.dataset.v) != null ? _a3 : "";
-      if (opt.closest("[data-bel-yearmenu]")) M5.year = v;
-      else M5.sort = v;
+      if (opt.closest("[data-bel-yearmenu]")) M6.year = v;
+      else M6.sort = v;
       renderAll2();
     };
     const onDocClick = (e) => {
@@ -31952,22 +31952,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       const segBtn = t.closest(".bz-segmented-btn");
       if (segBtn) {
-        M5.sort = segBtn.dataset.k;
+        M6.sort = segBtn.dataset.k;
         renderAll2();
         return;
       }
       const kpi = t.closest("[data-bel-statclick]");
       if (kpi) {
         const kind = kpi.dataset.belStatclick;
-        if (kind === "asset") M5.status = M5.status === "asset" ? null : "asset";
+        if (kind === "asset") M6.status = M6.status === "asset" ? null : "asset";
         renderAll2();
         return;
       }
     });
     const bindSearch = (inp) => {
       const debounced = debounce(() => {
-        if (M5.overlay !== overlay2) return;
-        M5.q = inp.value.trim();
+        if (M6.overlay !== overlay2) return;
+        M6.q = inp.value.trim();
         renderAll2();
       }, SEARCH_DEBOUNCE_MS2);
       const clearBtn = overlay2.querySelector("[data-bel-search-clear]");
@@ -31977,7 +31977,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const clearSearch2 = (refocus) => {
         debounced.cancel();
         inp.value = "";
-        M5.q = "";
+        M6.q = "";
         syncClear();
         renderAll2();
         if (refocus) inp.focus();
@@ -32057,13 +32057,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       document.removeEventListener("click", dropDocClick);
       dropDocClick = null;
     }
-    if (M5.overlay) {
-      M5.overlay.remove();
-      M5.overlay = null;
+    if (M6.overlay) {
+      M6.overlay.remove();
+      M6.overlay = null;
     }
-    M5.renderFn = null;
-    M5.db = null;
-    M5.q = "";
+    M6.renderFn = null;
+    M6.db = null;
+    M6.q = "";
   }
   function cleanupBelongings() {
     closePanel();
@@ -32084,16 +32084,16 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a2;
         try {
-          M5.db = await loadDatabase();
-          (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+          M6.db = await loadDatabase();
+          (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
         } catch (e) {
           notifyActionError(e, "归物本数据自动刷新", {
             onRetry: () => {
               void (async () => {
                 var _a3;
                 try {
-                  M5.db = await loadDatabase();
-                  (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+                  M6.db = await loadDatabase();
+                  (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
                 } catch (e2) {
                 }
               })();
@@ -32128,37 +32128,37 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       const now = themeOf();
       if (now !== prev) {
         prev = now;
-        (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+        (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       }
     });
     bodyThemeObserver.observe(document.body, { attributes: true, attributeFilter: ["class"] });
   }
   async function saveAndRender() {
     var _a2;
-    if (!M5.db) return;
+    if (!M6.db) return;
     selfWritePending++;
     try {
-      await saveDatabase(M5.db);
+      await saveDatabase(M6.db);
     } finally {
       selfWritePending--;
     }
-    (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+    (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
   }
   function renderAll2() {
-    if (!M5.overlay) return;
-    const panel2 = M5.overlay.querySelector(".bz-bel-panel");
+    if (!M6.overlay) return;
+    const panel2 = M6.overlay.querySelector(".bz-bel-panel");
     if (!panel2) return;
-    renderPanelView(panel2, itemList(), M5, { mountIcons }, currencyUnit());
+    renderPanelView(panel2, itemList(), M6, { mountIcons }, currencyUnit());
   }
   function applyStatusFilter(k) {
-    if (k === "__all") M5.status = null;
-    else M5.status = M5.status === k ? null : k;
+    if (k === "__all") M6.status = null;
+    else M6.status = M6.status === k ? null : k;
     renderAll2();
   }
   async function openBelongingsReportView() {
     ensureBelongingsEsc();
     let items;
-    if (M5.db) {
+    if (M6.db) {
       items = itemList();
     } else {
       try {
@@ -32237,7 +32237,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const cur = itemById(it.id);
     if (!cur) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
     const prevStatus = cur.current_status;
@@ -32253,8 +32253,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       await saveAndRender();
     } catch (e) {
       notifySaveError(e, "状态流转");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_b2 = M6.renderFn) == null ? void 0 : _b2.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "status", title: cur.name, status: s });
@@ -32262,7 +32262,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           const now = itemById(it.id);
           if (!now) {
             notice("该物品已被外部变更删除，无法撤销", "warning");
@@ -32277,8 +32277,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
           notice(`已撤销，「${now.name}」回到${prevStatus}`, "success");
         } catch (e) {
           notifySaveError(e, "撤销状态");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -32323,22 +32323,22 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   async function deleteItem(it) {
     var _a2, _b2;
-    if (!M5.db) return;
-    if (!M5.db.items[it.id]) {
+    if (!M6.db) return;
+    if (!M6.db.items[it.id]) {
       notice("该物品已被外部变更删除，列表已刷新", "warning");
-      (_a2 = M5.renderFn) == null ? void 0 : _a2.call(M5);
+      (_a2 = M6.renderFn) == null ? void 0 : _a2.call(M6);
       return;
     }
-    const snapshot2 = { ...M5.db.items[it.id] };
-    delete M5.db.items[it.id];
+    const snapshot2 = { ...M6.db.items[it.id] };
+    delete M6.db.items[it.id];
     closeBelDetail();
     try {
       await saveAndRender();
     } catch (e) {
-      M5.db.items[snapshot2.id] = snapshot2;
+      M6.db.items[snapshot2.id] = snapshot2;
       notifySaveError(e, "删除物品");
-      M5.db = await loadDatabase().catch(() => null);
-      (_b2 = M5.renderFn) == null ? void 0 : _b2.call(M5);
+      M6.db = await loadDatabase().catch(() => null);
+      (_b2 = M6.renderFn) == null ? void 0 : _b2.call(M6);
       return;
     }
     emitDomainEvent("belongings", { kind: "delete", title: it.name });
@@ -32346,18 +32346,18 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3;
         try {
-          if (!M5.db) M5.db = await loadDatabase();
-          if (M5.db.items[snapshot2.id]) {
+          if (!M6.db) M6.db = await loadDatabase();
+          if (M6.db.items[snapshot2.id]) {
             notice(`已存在同 id 物品（${snapshot2.id}），跳过恢复`, "warning");
             return;
           }
-          M5.db.items[snapshot2.id] = snapshot2;
+          M6.db.items[snapshot2.id] = snapshot2;
           await saveAndRender();
           notice(`已恢复「${snapshot2.name}」`, "success");
         } catch (e) {
           notifySaveError(e, "撤销删除");
-          M5.db = await loadDatabase().catch(() => null);
-          (_a3 = M5.renderFn) == null ? void 0 : _a3.call(M5);
+          M6.db = await loadDatabase().catch(() => null);
+          (_a3 = M6.renderFn) == null ? void 0 : _a3.call(M6);
         }
       })();
     }, { type: "restore" });
@@ -32400,9 +32400,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       }
       return;
     }
-    if (!M5.db) {
+    if (!M6.db) {
       void loadDatabase().then((db) => {
-        M5.db = db;
+        M6.db = db;
         openForm(it);
       }).catch((e) => {
         notifyActionError(e, "归物本数据加载", { onRetry: () => openForm(it) });
@@ -32449,13 +32449,13 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     drawIconChip();
     const historyIconOf = (cat) => {
       var _a3, _b3;
-      return ((_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
+      return ((_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categoryIcons) == null ? void 0 : _b3[cat]) || "";
     };
     uiSuggest({
       anchor: catInput,
       source: () => {
         var _a3, _b3;
-        return (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
+        return (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) != null ? _b3 : [];
       },
       max: 60,
       iconOf: (raw) => {
@@ -32508,7 +32508,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       void (async () => {
         var _a3, _b3, _c2;
         try {
-          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M5.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
+          const sug = await aiSuggestCategory(aiName, (_c2 = (_b3 = (_a3 = M6.db) == null ? void 0 : _a3.categories) == null ? void 0 : _b3.slice(0, 40)) != null ? _c2 : []);
           catInput.value = sug.category;
           formIcon = sug.icon;
           drawIconChip();
@@ -32575,7 +32575,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       saveBtn.textContent = "保存中…";
       void (async () => {
         try {
-          if (!M5.db) M5.db = await loadDatabase();
+          if (!M6.db) M6.db = await loadDatabase();
           if (it) {
             const cur = itemById(it.id);
             if (!cur) {
@@ -32605,7 +32605,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "edit", title: name, changes: belongingsEditChanges(snapshot2, cur) });
           } else {
-            if (!M5.db) throw new Error("数据库未加载");
+            if (!M6.db) throw new Error("数据库未加载");
             const newItem = {
               // id 拼随机后缀（H18）：裸 Date.now() 同毫秒两条（批量导入等）会互相覆盖
               id: "item_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8),
@@ -32621,7 +32621,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
               ...curStatus === STATUS.sold.label ? { sold_price: soldPrice } : {},
               ...formIcon ? { icon: formIcon } : {}
             };
-            M5.db.items[newItem.id] = newItem;
+            M6.db.items[newItem.id] = newItem;
             await saveAndRender();
             if (isBelReportOpen()) void openBelongingsReportView();
             emitDomainEvent("belongings", { kind: "add", item: newItem });
@@ -32638,7 +32638,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     });
     bindFormSubmit(mask, () => saveBtn.click());
   }
-  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M5, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
+  var THEME_CLASSES, SEARCH_DEBOUNCE_MS2, M6, dropDocClick, DEFAULT_STATUS_VALUES, autoRefreshOff, selfWritePending, bodyThemeObserver, opening, belDetailClose, _belBaseline, _belFormTargetId, belFormClose, belFormMask;
   var init_ui6 = __esm({
     "src/belongings/ui.ts"() {
       init_notice();
@@ -32662,7 +32662,7 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       init_ai2();
       THEME_CLASSES = /* @__PURE__ */ new Set(["theme-dark", "theme-light"]);
       SEARCH_DEBOUNCE_MS2 = 180;
-      M5 = {
+      M6 = {
         overlay: null,
         db: null,
         status: null,
@@ -34041,23 +34041,23 @@ ${bodyText.substring(0, 6e3)}`;
     return { kind: "all", platform: "", up: null, site: "" };
   }
   function resetClipbookState() {
-    M6.appRef = null;
-    M6.open = false;
-    M6.articles = [];
-    M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-    M6.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
-    M6.clipNotes = null;
-    M6.clipUrls = /* @__PURE__ */ new Set();
-    M6.sel = defaultSel();
-    M6.cur = null;
-    M6.list = [];
-    M6.upInfo = {};
-    M6.mobDetailOpen = false;
+    M7.appRef = null;
+    M7.open = false;
+    M7.articles = [];
+    M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+    M7.sidecar = { articleOverrides: {}, savedArchive: [], order: [], marks: {}, savedImages: {}, pendingSource: {}, readLog: [] };
+    M7.clipNotes = null;
+    M7.clipUrls = /* @__PURE__ */ new Set();
+    M7.sel = defaultSel();
+    M7.cur = null;
+    M7.list = [];
+    M7.upInfo = {};
+    M7.mobDetailOpen = false;
   }
-  var M6;
+  var M7;
   var init_state6 = __esm({
     "src/clipbook/state.ts"() {
-      M6 = {
+      M7 = {
         appRef: null,
         open: false,
         articles: [],
@@ -34490,8 +34490,8 @@ ${bodyText.substring(0, 6e3)}`;
   }
   async function collectAvailableKeys() {
     const keys = /* @__PURE__ */ new Set();
-    for (const a of M6.articles || []) keys.add(a.id);
-    for (const n of M6.clipNotes || []) {
+    for (const a of M7.articles || []) keys.add(a.id);
+    for (const n of M7.clipNotes || []) {
       if (n && n.path) keys.add("clip:" + String(n.path));
     }
     try {
@@ -36047,22 +36047,22 @@ ${c.trim()}
     var _a2;
     const res = await readNewsData();
     if (res.missing) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "missing", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "missing", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     if (!res.ok) {
-      M6.articles = [];
-      M6.clipNotes = null;
-      M6.clipUrls = /* @__PURE__ */ new Set();
-      M6.sidecar = emptySidecar();
-      M6.upInfo = {};
-      M6.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
-      return { status: "corrupt", articles: [], sidecar: M6.sidecar, clipNotes: null, clipUrls: M6.clipUrls, upInfo: {} };
+      M7.articles = [];
+      M7.clipNotes = null;
+      M7.clipUrls = /* @__PURE__ */ new Set();
+      M7.sidecar = emptySidecar();
+      M7.upInfo = {};
+      M7.stats = { totalRead: 0, totalSaved: 0, totalSkipped: 0, byPlatform: {}, byDate: {} };
+      return { status: "corrupt", articles: [], sidecar: M7.sidecar, clipNotes: null, clipUrls: M7.clipUrls, upInfo: {} };
     }
     const s = tryGetSettings();
     const days = (_a2 = normalizeRetentionDays(s == null ? void 0 : s.newsRetentionUnsavedDays)) != null ? _a2 : 30;
@@ -36099,13 +36099,13 @@ ${c.trim()}
       console.warn(`[剪藏本] 剪藏目录有 ${clipNotes.rejected} 篇无法识别（缺 url/created frontmatter）`, clipNotes.rejectedPaths);
     }
     const clipUrls = clipUrlSet(clipNotes || []);
-    M6.articles = data.articles;
-    M6.stats = data.stats;
-    M6.sidecar = sidecar;
-    M6.clipNotes = clipNotes;
-    M6.clipUrls = clipUrls;
-    M6.upInfo = data.bilibiliUpInfo || {};
-    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M6.upInfo };
+    M7.articles = data.articles;
+    M7.stats = data.stats;
+    M7.sidecar = sidecar;
+    M7.clipNotes = clipNotes;
+    M7.clipUrls = clipUrls;
+    M7.upInfo = data.bilibiliUpInfo || {};
+    return { status: "ok", articles: data.articles, sidecar, clipNotes, clipUrls, upInfo: M7.upInfo };
   }
   var init_loader = __esm({
     "src/clipbook/loader.ts"() {
@@ -36142,7 +36142,7 @@ ${c.trim()}
     unloadPanel: () => unloadPanel
   });
   function initPanel(app, showNow = false) {
-    M6.appRef = app;
+    M7.appRef = app;
     if (!overlayEl2) buildDom2(app);
     if (showNow) showPanel();
     else void loadIfNeeded();
@@ -36150,13 +36150,13 @@ ${c.trim()}
   function showPanel() {
     var _a2;
     if (!overlayEl2) {
-      buildDom2(M6.appRef);
+      buildDom2(M7.appRef);
     }
     overlayEl2.style.display = "flex";
     topifyZ(overlayEl2);
     trapPanelFocus((_a2 = overlayEl2.querySelector(".bz-clip-frame")) != null ? _a2 : overlayEl2);
     panelSplit == null ? void 0 : panelSplit.restore();
-    M6.open = true;
+    M7.open = true;
     beginSession();
     if (dirty || !loaded2) {
       if (!loaded2 && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
@@ -36169,7 +36169,7 @@ ${c.trim()}
   }
   function loadIfNeeded() {
     if (loading) return loadPromise || Promise.resolve();
-    if (!M6.open && overlayEl2) return Promise.resolve();
+    if (!M7.open && overlayEl2) return Promise.resolve();
     loading = true;
     loadPromise = readNewsAndSidecar().then((res) => {
       if (res && res.status === "corrupt") {
@@ -36186,7 +36186,7 @@ ${c.trim()}
       console.error("[剪藏本] 装载失败", e);
       loadError = { kind: "exception", reason: e instanceof Error ? e.message : String(e) };
       notifyActionError(e, "剪藏本数据读取", { onRetry: retryLoad });
-      if (M6.open) renderAll3();
+      if (M7.open) renderAll3();
     }).finally(() => {
       loading = false;
       loadPromise = null;
@@ -36199,7 +36199,7 @@ ${c.trim()}
   }
   function reloadIfOpen() {
     dirty = true;
-    if (!M6.open) return;
+    if (!M7.open) return;
     void loadIfNeeded();
   }
   async function revealClipArticle(notePath) {
@@ -36222,8 +36222,8 @@ ${c.trim()}
     panelResizeDetach2 == null ? void 0 : panelResizeDetach2.flush();
     panelSplit == null ? void 0 : panelSplit.flush();
     hideSelBar();
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     if (overlayEl2) overlayEl2.style.display = "none";
   }
@@ -36263,8 +36263,8 @@ ${c.trim()}
     clipBodyCache.clear();
     clipBodyInflight.clear();
     setSearchKw("");
-    M6.open = false;
-    M6.mobDetailOpen = false;
+    M7.open = false;
+    M7.mobDetailOpen = false;
     loading = false;
     loadPromise = null;
     dirty = false;
@@ -36363,14 +36363,14 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
+      if (t.closest("[data-clip-open-note]") && M7.cur) openNote(M7.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
       var _a3, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
-        if (M6.cur) openNote(M6.cur);
+        if (M7.cur) openNote(M7.cur);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "k") {
@@ -36413,8 +36413,8 @@ ${c.trim()}
     mobBackBtn.addEventListener("click", () => closeMobDetail());
     mobSaveBtnEl.addEventListener("click", () => {
       var _a3;
-      if (((_a3 = M6.cur) == null ? void 0 : _a3.st) === "saved") return;
-      void doSave(M6.cur);
+      if (((_a3 = M7.cur) == null ? void 0 : _a3.st) === "saved") return;
+      void doSave(M7.cur);
     });
     mobDetailEl.addEventListener("click", (e) => {
       const t = e.target;
@@ -36436,9 +36436,9 @@ ${c.trim()}
         showImageSelBar(img);
         return;
       }
-      if (!t.closest("[data-clip-mob-next]") || !M6.cur) return;
-      const grp = mobItemOrder.filter((x) => x.srcName === M6.cur.srcName);
-      const idx = grp.findIndex((x) => x.id === M6.cur.id);
+      if (!t.closest("[data-clip-mob-next]") || !M7.cur) return;
+      const grp = mobItemOrder.filter((x) => x.srcName === M7.cur.srcName);
+      const idx = grp.findIndex((x) => x.id === M7.cur.id);
       const next = grp[idx + 1];
       if (next) openMobDetail(next.id);
       else mobBackBtn.click();
@@ -36453,7 +36453,7 @@ ${c.trim()}
     escHandle4 = escManager.register(escKey, {
       isVisible: () => !!overlayEl2 && overlayEl2.style.display !== "none",
       close: () => {
-        if (M6.mobDetailOpen) {
+        if (M7.mobDetailOpen) {
           closeMobDetail();
           return;
         }
@@ -36499,13 +36499,13 @@ ${c.trim()}
     });
   }
   function selectSource(src) {
-    M6.sel = {
+    M7.sel = {
       kind: src.kind,
       platform: String(src.platform || ""),
       up: src.up ? String(src.up) : null,
       site: String(src.site || "")
     };
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
@@ -36514,7 +36514,7 @@ ${c.trim()}
     renderAll3();
   }
   function toggleSource(src) {
-    const same = src && src.kind !== "all" && src.kind === M6.sel.kind && String(src.platform || "") === M6.sel.platform && (src.up ? String(src.up) : null) === M6.sel.up && String(src.site || "") === M6.sel.site;
+    const same = src && src.kind !== "all" && src.kind === M7.sel.kind && String(src.platform || "") === M7.sel.platform && (src.up ? String(src.up) : null) === M7.sel.up && String(src.site || "") === M7.sel.site;
     selectSource(same ? { kind: "all" } : src);
   }
   function setSearchKw(kw) {
@@ -36533,16 +36533,16 @@ ${c.trim()}
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll3() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     renderHeadIssue();
     renderRail();
     renderList();
     renderReader();
     renderMobToc();
-    if (M6.mobDetailOpen) {
-      if (M6.cur) renderMobDetail();
+    if (M7.mobDetailOpen) {
+      if (M7.cur) renderMobDetail();
       else {
-        M6.mobDetailOpen = false;
+        M7.mobDetailOpen = false;
         if (mobDetailEl) mobDetailEl.style.display = "none";
       }
     }
@@ -36550,7 +36550,7 @@ ${c.trim()}
   function closeMobDetail() {
     pauseReadingSession();
     void flushReadingSession();
-    M6.mobDetailOpen = false;
+    M7.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
     renderAll3();
   }
@@ -36558,17 +36558,17 @@ ${c.trim()}
     const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
     if (!el) return;
     const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M6.articles.length} 期`;
+    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M7.articles.length} 期`;
   }
   function currentSrc() {
-    const s = M6.sel;
+    const s = M7.sel;
     if (s.kind === "clip") return { kind: "clip" };
     if (s.kind === "site") return { kind: "site", site: s.site };
     if (s.kind === "inbox") return { kind: "inbox", platform: s.platform, up: s.up || void 0 };
     return { kind: "all" };
   }
   function currentList() {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], currentSrc(), M6.upInfo);
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], currentSrc(), M7.upInfo);
   }
   function epochReset() {
     dirEpoch++;
@@ -36584,7 +36584,7 @@ ${c.trim()}
     const key = srcKey(src);
     const cur = dirSnap.get(key);
     if (cur && snapEpochs.get(key) === dirEpoch) return cur;
-    const b = bucketByState(queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo));
+    const b = bucketByState(queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo));
     const snap = { unread: b.unread.map((a) => a.id), read: b.read.map((a) => a.id), saved: b.saved.map((a) => a.id) };
     dirSnap.set(key, snap);
     snapEpochs.set(key, dirEpoch);
@@ -36592,7 +36592,7 @@ ${c.trim()}
   }
   function resolveSnap(snap, src) {
     const live2 = /* @__PURE__ */ new Map();
-    for (const a of queryBySourceFull(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo)) live2.set(a.id, a);
+    for (const a of queryBySourceFull(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo)) live2.set(a.id, a);
     const pick = (ids) => ids.map((id) => live2.get(id)).filter((a) => !!a);
     return { unread: pick(snap.unread), read: pick(snap.read), saved: pick(snap.saved) };
   }
@@ -36632,39 +36632,39 @@ ${c.trim()}
   function renderRail() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const countOf = (source2) => queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, source2, M6.upInfo).filter(matchesSearch).length;
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const countOf = (source2) => queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, source2, M7.upInfo).filter(matchesSearch).length;
     const allHit = countOf({ kind: "all" });
-    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M6.sel.kind === "all", "");
-    for (const row of aggregateSites(arts, clipNotes, new Set((M6.sidecar.savedArchive || []).map((x) => x.url)), M6.clipUrls)) {
-      const full = queryBySource(arts, M6.sidecar, M6.clipUrls, clipNotes, { kind: "site", site: row.site }, M6.upInfo);
+    let html = railItemHtml({ kind: "all" }, "全部未读", allHit, arts.length, "inbox", "#58a6ff", M7.sel.kind === "all", "");
+    for (const row of aggregateSites(arts, clipNotes, new Set((M7.sidecar.savedArchive || []).map((x) => x.url)), M7.clipUrls)) {
+      const full = queryBySource(arts, M7.sidecar, M7.clipUrls, clipNotes, { kind: "site", site: row.site }, M7.upInfo);
       const unreadN = full.filter((a) => a.st !== "saved").length;
       const hit = countOf({ kind: "site", site: row.site });
-      const active2 = M6.sel.kind === "site" && M6.sel.site === row.site;
+      const active2 = M7.sel.kind === "site" && M7.sel.site === row.site;
       html += railItemHtml({ kind: "site", site: row.site }, row.site, searchKw ? hit : unreadN, full.length, "feed", siteTint(row.site), active2, "");
     }
     const biliUps = /* @__PURE__ */ new Map();
     for (const a of arts) {
       if (a.platform === "B站" && a.author) {
         const uid = String(a.author);
-        const backfilled = (_b2 = (_a2 = M6.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
+        const backfilled = (_b2 = (_a2 = M7.upInfo) == null ? void 0 : _a2[uid]) == null ? void 0 : _b2.name;
         if (!biliUps.has(uid)) biliUps.set(uid, backfilled ? String(backfilled) : uid);
       }
     }
     for (const [uid, name] of biliUps) {
       const cnt = countOf({ kind: "inbox", platform: "B站", up: uid });
       const upTotal = arts.filter((a) => a.platform === "B站" && String(a.author || "") === uid).length;
-      const active2 = M6.sel.kind === "inbox" && M6.sel.platform === "B站" && M6.sel.up === uid;
+      const active2 = M7.sel.kind === "inbox" && M7.sel.platform === "B站" && M7.sel.up === uid;
       html += railItemHtml({ kind: "inbox", platform: "B站", up: uid }, name, cnt, upTotal, "bili", "", active2, name.slice(0, 1));
     }
-    const clipActive = M6.sel.kind === "clip";
+    const clipActive = M7.sel.kind === "clip";
     const clipHit = countOf({ kind: "clip" });
     html += railItemHtml({ kind: "clip" }, "剪藏本", clipHit, clipNotes.length, "clip", "", clipActive, "");
     railListEl.innerHTML = html;
     mountIcons(railListEl);
     if (railFootEl) {
-      railFootEl.innerHTML = railFootHtml(((_d = (_c = M6.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
+      railFootEl.innerHTML = railFootHtml(((_d = (_c = M7.stats) == null ? void 0 : _c.byDate) == null ? void 0 : _d[localDayKey()]) || 0) + clipReportEntryHtml();
       mountIcons(railFootEl);
     }
     const rows = railListEl.querySelectorAll("[data-src]");
@@ -36689,9 +36689,9 @@ ${c.trim()}
       return;
     }
     const trySelect = () => {
-      const hit = M6.articles.find((x) => articleKeyOf(x) === k);
+      const hit = M7.articles.find((x) => articleKeyOf(x) === k);
       if (!hit) return false;
-      if (!M6.open) showPanel();
+      if (!M7.open) showPanel();
       selectSource({ kind: "all" });
       selectArticle(articleKeyOf(hit));
       return true;
@@ -36704,10 +36704,10 @@ ${c.trim()}
     });
   }
   function railUnreadN(source2) {
-    return queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news").length;
+    return queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news").length;
   }
   function buildRailActions(label, source2) {
-    const unreadList = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], source2, M6.upInfo).filter((a) => a.origin === "news");
+    const unreadList = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], source2, M7.upInfo).filter((a) => a.origin === "news");
     if (!unreadList.length) return [];
     const n = unreadList.length;
     return [{
@@ -36749,26 +36749,26 @@ ${c.trim()}
         title: `剪藏本数据读取失败：${loadError.reason}`,
         actions: uiBtn({ label: "重试", icon: "rotate-ccw", onClick: () => retryLoad() })
       }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
     const src = currentSrc();
     if (src.kind === "clip") {
-      const list = queryBySource(M6.articles, M6.sidecar, M6.clipUrls, M6.clipNotes || [], src, M6.upInfo).filter((a) => !searchKw || matchesSearch(a));
+      const list = queryBySource(M7.articles, M7.sidecar, M7.clipUrls, M7.clipNotes || [], src, M7.upInfo).filter((a) => !searchKw || matchesSearch(a));
       if (!list.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "scissors", title: searchKw ? "查无此条" : "剪藏本为空" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
         return;
       }
-      if (!list.some((a) => a.id === (M6.cur && M6.cur.id))) {
-        M6.cur = list[0];
+      if (!list.some((a) => a.id === (M7.cur && M7.cur.id))) {
+        M7.cur = list[0];
         if (readerEl) renderReader();
       }
-      listEl.innerHTML = tocListHtml(list, M6.cur ? M6.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
-      M6.list = list;
+      listEl.innerHTML = tocListHtml(list, M7.cur ? M7.cur.id : null, (a) => relTime2(a.timeTs), searchKw);
+      M7.list = list;
       bindItemMenus();
       return;
     }
@@ -36776,27 +36776,27 @@ ${c.trim()}
     if (!flat.length) {
       listEl.innerHTML = "";
       listEl.appendChild(uiEmpty({ icon: "inbox", title: "这个源暂无内容" }));
-      M6.cur = null;
+      M7.cur = null;
       if (readerEl) renderReader();
       return;
     }
-    if (!flat.some((a) => a.id === (M6.cur && M6.cur.id))) {
-      M6.cur = flat[0];
+    if (!flat.some((a) => a.id === (M7.cur && M7.cur.id))) {
+      M7.cur = flat[0];
     }
     const timeOf = (a) => relTime2(a.timeTs);
-    const curId = M6.cur ? M6.cur.id : null;
+    const curId = M7.cur ? M7.cur.id : null;
     if (searchKw) {
       const hit = flat.filter(matchesSearch);
       if (!hit.length) {
         listEl.innerHTML = "";
         listEl.appendChild(uiEmpty({ icon: "search-x", title: "查无此条" }));
-        M6.cur = null;
+        M7.cur = null;
         if (readerEl) renderReader();
-        M6.list = [];
+        M7.list = [];
         return;
       }
       listEl.innerHTML = tocListHtml(hit, curId, timeOf, searchKw);
-      M6.list = hit;
+      M7.list = hit;
       bindItemMenus();
       return;
     }
@@ -36814,7 +36814,7 @@ ${c.trim()}
       html += foldBodyHtml(tocListHtml(b.saved, curId, timeOf, searchKw), open);
     }
     listEl.innerHTML = html;
-    M6.list = flat;
+    M7.list = flat;
     bindItemMenus();
   }
   function relTime2(ts) {
@@ -36827,10 +36827,10 @@ ${c.trim()}
   }
   function bindItemMenus() {
     if (!listEl) return;
-    const all = M6.list;
+    const all = M7.list;
     const cards = listEl.querySelectorAll(".bz-clip-item");
     cards.forEach((card) => {
-      const art = all.find((x) => x.id === card.dataset.id) || M6.cur;
+      const art = all.find((x) => x.id === card.dataset.id) || M7.cur;
       if (!art || art.id !== card.dataset.id) return;
       const actions = buildItemActions(art);
       attachItemActions(card, actions, { sheetTitle: art.title, sheetSub: art.summary || void 0, menuClass: "bz-clip-menu-editorial" });
@@ -36906,8 +36906,8 @@ ${c.trim()}
   function transformBodyForRead(a, body) {
     var _a2, _b2;
     if (a.origin !== "news") return body;
-    const marks = ((_a2 = M6.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
-    const swaps = ((_b2 = M6.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
+    const marks = ((_a2 = M7.sidecar.marks) == null ? void 0 : _a2[a.id]) || [];
+    const swaps = ((_b2 = M7.sidecar.savedImages) == null ? void 0 : _b2[a.id]) || [];
     if (!marks.length && !swaps.length) return body;
     return applyBodyTransforms(body, marks, swaps).body;
   }
@@ -36922,7 +36922,7 @@ ${c.trim()}
   }
   function renderReader() {
     if (!readerEl) return;
-    const a = M6.cur;
+    const a = M7.cur;
     hideSelBar();
     applyReaderFontSize();
     if (!a) {
@@ -36951,7 +36951,7 @@ ${c.trim()}
     bindImgFallback(readerEl);
     const mdEl = readerEl.querySelector("[data-clip-md]");
     if (mdEl && body) {
-      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, transformBodyForRead(a, body), a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -36962,13 +36962,13 @@ ${c.trim()}
         sel: "[data-clip-md]",
         dim: true,
         // 桌面守卫叠 dataset.clipReaderId：移动 kick 读盘期间桌面可能还显旧篇，防把新正文水合进旧篇容器
-        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M6.cur && M6.cur.id === a.id && readerEl.contains(md)
+        alive: (md) => !!readerEl && readerEl.dataset.clipReaderId === a.id && !!M7.cur && M7.cur.id === a.id && readerEl.contains(md)
       },
       {
         host: mobDetailEl,
         sel: "[data-clip-mob-md]",
         dim: false,
-        alive: (md) => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
+        alive: (md) => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md)
       }
     ];
     for (const t of targets) {
@@ -36983,11 +36983,11 @@ ${c.trim()}
     }
   }
   function clipBodyReadFail(a) {
-    if (readerEl && readerEl.dataset.clipReaderId === a.id && M6.cur && M6.cur.id === a.id) {
+    if (readerEl && readerEl.dataset.clipReaderId === a.id && M7.cur && M7.cur.id === a.id) {
       const md = readerEl.querySelector("[data-clip-md]");
       if (md) md.innerHTML = `<p class="dim">正文读取失败，可打开笔记查看</p>`;
     }
-    if (M6.mobDetailOpen && M6.cur && M6.cur.id === a.id && mobDetailEl) {
+    if (M7.mobDetailOpen && M7.cur && M7.cur.id === a.id && mobDetailEl) {
       const md = mobDetailEl.querySelector("[data-clip-mob-md]");
       if (md) md.innerHTML = `<p>正文读取失败，可打开笔记查看</p>`;
     }
@@ -37029,12 +37029,12 @@ ${c.trim()}
   }
   function stepArticle(delta) {
     const src = currentSrc();
-    const list = searchKw ? M6.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
+    const list = searchKw ? M7.list : src.kind === "clip" ? currentList() : dirFor(src).unread;
     if (!list.length) return;
-    const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
+    const idx = M7.cur ? list.findIndex((x) => x.id === M7.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M6.cur || next.id !== M6.cur.id)) selectArticle(next.id);
+    if (next && (!M7.cur || next.id !== M7.cur.id)) selectArticle(next.id);
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -37043,19 +37043,19 @@ ${c.trim()}
   function selectArticle(id) {
     const a = deskFlat().find((x) => x.id === id);
     if (!a) return;
-    const changed = !M6.cur || M6.cur.id !== a.id;
+    const changed = !M7.cur || M7.cur.id !== a.id;
     const readScroller = () => readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
-    if (changed && M6.cur) {
+    if (changed && M7.cur) {
       const sc = readScroller();
       if (sc) {
         if (readScrollMemo.size >= READ_SCROLL_MEMO_MAX) {
           const oldest = readScrollMemo.keys().next().value;
           if (oldest !== void 0) readScrollMemo.delete(oldest);
         }
-        readScrollMemo.set(M6.cur.id, sc.scrollTop);
+        readScrollMemo.set(M7.cur.id, sc.scrollTop);
       }
     }
-    M6.cur = a;
+    M7.cur = a;
     markReadOnOpen(a);
     renderList();
     renderReader();
@@ -37192,25 +37192,25 @@ ${c.trim()}
   }
   async function refreshAfterAction() {
     var _a2;
-    const prevId = (_a2 = M6.cur) == null ? void 0 : _a2.id;
-    const prevIdx = M6.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
+    const prevId = (_a2 = M7.cur) == null ? void 0 : _a2.id;
+    const prevIdx = M7.cur ? deskFlat().findIndex((x) => x.id === prevId) : -1;
     await readNewsAndSidecar();
     const flat = deskFlat();
     let advanced = false;
     if (prevId && flat.some((x) => x.id === prevId)) {
-      M6.cur = flat.find((x) => x.id === prevId) || M6.cur;
+      M7.cur = flat.find((x) => x.id === prevId) || M7.cur;
     } else if (flat.length) {
-      M6.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
-      advanced = !!prevId && !!M6.cur && M6.cur.id !== prevId;
+      M7.cur = flat[Math.min(Math.max(prevIdx, 0), flat.length - 1)];
+      advanced = !!prevId && !!M7.cur && M7.cur.id !== prevId;
     } else {
-      M6.cur = null;
+      M7.cur = null;
     }
-    if (advanced && M6.cur) markReadOnOpen(M6.cur);
+    if (advanced && M7.cur) markReadOnOpen(M7.cur);
     renderAll3();
     if (advanced) {
       resetReadScroll();
       const mobBody = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
-      if (M6.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
+      if (M7.mobDetailOpen && mobBody) mobBody.scrollTop = 0;
     }
   }
   function savedPanelSize() {
@@ -37240,9 +37240,9 @@ ${c.trim()}
   }
   function renderMobToc() {
     if (!mobListEl) return;
-    const arts = M6.articles;
-    const clipNotes = M6.clipNotes || [];
-    const savedUrls = new Set((M6.sidecar.savedArchive || []).map((x) => x.url));
+    const arts = M7.articles;
+    const clipNotes = M7.clipNotes || [];
+    const savedUrls = new Set((M7.sidecar.savedArchive || []).map((x) => x.url));
     const searching = !!searchKw;
     const timeOf = (a) => relTime2(a.timeTs);
     const chapters = [];
@@ -37352,8 +37352,8 @@ ${c.trim()}
     let a = currentList().find((x) => x.id === id);
     if (!a) a = mobItemById.get(id);
     if (!a) return;
-    M6.cur = a;
-    M6.mobDetailOpen = true;
+    M7.cur = a;
+    M7.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
     if (mobDetailEl) mobDetailEl.style.display = "flex";
@@ -37364,12 +37364,12 @@ ${c.trim()}
   function markReadOnOpen(a) {
     if (!a || a.st !== "unread") return;
     if (a.origin !== "news") return;
-    const raw = a.raw || M6.articles.find((n) => articleKeyOf(n) === a.id);
+    const raw = a.raw || M7.articles.find((n) => articleKeyOf(n) === a.id);
     if (!raw || raw.read === true) return;
     raw.read = true;
     void flowMarkRead(a, { keepSession: true }).then((res) => {
-      if (res && res.changed && res.stats) M6.stats = res.stats;
-      if (M6.open && !M6.mobDetailOpen) {
+      if (res && res.changed && res.stats) M7.stats = res.stats;
+      if (M7.open && !M7.mobDetailOpen) {
         renderList();
         renderRail();
       }
@@ -37378,8 +37378,8 @@ ${c.trim()}
   }
   function renderMobDetail() {
     var _a2;
-    if (!mobDetailEl || !M6.cur) return;
-    const a = M6.cur;
+    if (!mobDetailEl || !M7.cur) return;
+    const a = M7.cur;
     hideSelBar();
     if (mobTitleEl) mobTitleEl.textContent = `${a.srcName} · 目录`;
     if (mobSaveBtnEl) {
@@ -37411,7 +37411,7 @@ ${c.trim()}
     bindImgFallback(detailBody);
     const mdEl = detailBody.querySelector("[data-clip-mob-md]");
     if (mdEl && mdBody) {
-      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
+      void hydrateArticleMarkdown(mdEl, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(mdEl));
     }
     if (a.origin === "clip") void loadClipBody(a);
   }
@@ -37484,7 +37484,7 @@ ${c.trim()}
     return { text, rect: r || { top: 0, left: 0, bottom: 0, right: 0 } };
   }
   function showTextSelBar(info) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const body = currentSourceBody(a);
     selSnap = { articleId: a.id, text: info.text, body };
@@ -37500,7 +37500,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function showImageSelBar(imgEl) {
-    const a = M6.cur;
+    const a = M7.cur;
     if (!a) return;
     const src = imgEl.getAttribute("src") || "";
     if (!src) return;
@@ -37518,7 +37518,7 @@ ${c.trim()}
     armSelBarEsc();
   }
   function checkTextSelection() {
-    if (!M6.open) return;
+    if (!M7.open) return;
     if (Date.now() < selBarHoldUntil) return;
     const info = readTextSelection();
     if (!info) {
@@ -37581,7 +37581,7 @@ ${c.trim()}
     await copyText(snippet || snap.text, "Markdown 已复制");
   }
   function articleForSnapshot(articleId) {
-    return M6.cur && M6.cur.id === articleId ? M6.cur : null;
+    return M7.cur && M7.cur.id === articleId ? M7.cur : null;
   }
   async function actSaveEntry(kind) {
     const snap = selSnap;
@@ -37639,10 +37639,10 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M6.cur && M6.cur.id === a.id && !!readerEl && readerEl.contains(md));
+    void hydrateArticleMarkdown(md, body, a.notePath || "", () => !!M7.cur && M7.cur.id === a.id && !!readerEl && readerEl.contains(md));
   }
   function refreshMobBodyInPlace(a) {
-    if (!mobDetailEl || !M6.mobDetailOpen) return;
+    if (!mobDetailEl || !M7.mobDetailOpen) return;
     const md = mobDetailEl.querySelector("[data-clip-mob-md]");
     if (!md) {
       renderMobDetail();
@@ -37669,12 +37669,12 @@ ${c.trim()}
       md.appendChild(p);
       return;
     }
-    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M6.mobDetailOpen && !!M6.cur && M6.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
+    void hydrateArticleMarkdown(md, mdBody, a.notePath || "", () => M7.mobDetailOpen && !!M7.cur && M7.cur.id === a.id && !!mobDetailEl && mobDetailEl.contains(md));
   }
   function refreshReadingViews(articleId) {
-    if (!M6.cur || M6.cur.id !== articleId) return;
-    refreshReaderBodyInPlace(M6.cur);
-    if (M6.mobDetailOpen) refreshMobBodyInPlace(M6.cur);
+    if (!M7.cur || M7.cur.id !== articleId) return;
+    refreshReaderBodyInPlace(M7.cur);
+    if (M7.mobDetailOpen) refreshMobBodyInPlace(M7.cur);
   }
   async function handleAnchorCreated(kind, notePath, snap, a) {
     if (!notePath) return;
@@ -37691,8 +37691,8 @@ ${c.trim()}
         await upgradeSourceFor(notePath, a);
         refreshReadingViews(a.id);
       } else {
-        M6.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addArticleMark(a.id, { find: snap.text, notePath, kind });
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
         refreshReadingViews(a.id);
       }
     } catch (e) {
@@ -37721,7 +37721,7 @@ ${c.trim()}
         articleKey: a.id,
         savedNotePath: a.origin === "clip" ? a.notePath : null
       });
-      if (res.sidecar) M6.sidecar = res.sidecar;
+      if (res.sidecar) M7.sidecar = res.sidecar;
       if (a.origin === "clip" && a.notePath) invalidateClipBodyCache(a.notePath);
       refreshReadingViews(a.id);
       await copyImageEmbedLink(res.local);
@@ -37779,7 +37779,7 @@ ${c.trim()}
       if (a.origin === "clip" && a.notePath) {
         await upgradeSourceFor(notePath, a);
       } else {
-        M6.sidecar = await addPendingSourceNote(a.id, notePath);
+        M7.sidecar = await addPendingSourceNote(a.id, notePath);
       }
     } catch (e) {
       console.warn("[剪藏本] 图版来源登记失败", e);
@@ -37929,8 +37929,8 @@ ${c.trim()}
       maxWidth: 560,
       schema,
       onClose: () => {
-        M6.clipNotes = null;
-        M6.clipUrls = /* @__PURE__ */ new Set();
+        M7.clipNotes = null;
+        M7.clipUrls = /* @__PURE__ */ new Set();
         void reloadIfOpen();
       }
     });
@@ -38629,12 +38629,12 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M7.overlay = null;
-    M7.items = [];
-    M7.tag = null;
-    M7.archived = false;
-    M7.sort = "new";
-    M7.renderFn = null;
+    M8.overlay = null;
+    M8.items = [];
+    M8.tag = null;
+    M8.archived = false;
+    M8.sort = "new";
+    M8.renderFn = null;
   }
   function favoritesSettingsSchema() {
     return {
@@ -38705,7 +38705,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M7.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M8.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -38721,7 +38721,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M7.overlay) {
+    if (M8.overlay) {
       closePanel3();
       return;
     }
@@ -38730,12 +38730,12 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M7.overlay = overlay2;
-    M7.renderFn = () => renderAll4();
+    M8.overlay = overlay2;
+    M8.renderFn = () => renderAll4();
     const openFilter = resolveOpenFilter();
-    M7.tag = openFilter.tag;
-    M7.archived = openFilter.archived;
-    M7.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M8.tag = openFilter.tag;
+    M8.archived = openFilter.archived;
+    M8.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
@@ -38823,16 +38823,16 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    if (M7.overlay) {
+    if (M8.overlay) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M7.archived ? "@archived" : M7.tag || "";
+        s.favoritesLastFilter = M8.archived ? "@archived" : M8.tag || "";
         void saveSettings();
       }
-      M7.overlay.remove();
-      M7.overlay = null;
+      M8.overlay.remove();
+      M8.overlay = null;
     }
-    M7.renderFn = null;
+    M8.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -38841,9 +38841,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M7.items = await dataManagerOf().getAll();
+      M8.items = await dataManagerOf().getAll();
     } catch (e) {
-      M7.items = [];
+      M8.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -38851,29 +38851,29 @@ ${c.trim()}
   async function reload2() {
     var _a2;
     await loadItems();
-    (_a2 = M7.renderFn) == null ? void 0 : _a2.call(M7);
+    (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8);
   }
   function renderAll4() {
-    if (!M7.overlay) return;
-    if (!M7.archived && M7.tag && !getTags().some((t) => t.label === M7.tag)) M7.tag = null;
-    const panel2 = M7.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M7.items, M7, { mountIcons, mobile: isMobileEnv() });
+    if (!M8.overlay) return;
+    if (!M8.archived && M8.tag && !getTags().some((t) => t.label === M8.tag)) M8.tag = null;
+    const panel2 = M8.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M8.items, M8, { mountIcons, mobile: isMobileEnv() });
   }
   function applyTagFilter(label) {
     if (label === VIEW_ALL) {
-      M7.tag = null;
-      M7.archived = false;
+      M8.tag = null;
+      M8.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M7.tag = null;
-      M7.archived = !M7.archived;
+      M8.tag = null;
+      M8.archived = !M8.archived;
     } else {
-      M7.archived = false;
-      M7.tag = M7.tag === label ? null : label;
+      M8.archived = false;
+      M8.tag = M8.tag === label ? null : label;
     }
     renderAll4();
   }
   function itemById2(id) {
-    return M7.items.find((i) => i.id === id);
+    return M8.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -39478,7 +39478,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M7, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M8, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui8 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -39501,7 +39501,7 @@ GitHub 仓库：${ghInfo.title}
       init_ai3();
       init_data8();
       init_app2();
-      M7 = {
+      M8 = {
         overlay: null,
         items: [],
         tag: null,
@@ -39836,8 +39836,8 @@ GitHub 仓库：${ghInfo.title}
     return document.body.classList.contains("theme-dark") ? "bz-bs-mode-dark" : "bz-bs-mode-light";
   }
   function applyBookshelfSkin(skin) {
-    if (!M2.currentOverlay) return;
-    const panel2 = M2.currentOverlay.querySelector(".bz-bs-panel");
+    if (!M3.currentOverlay) return;
+    const panel2 = M3.currentOverlay.querySelector(".bz-bs-panel");
     if (!panel2) return;
     panel2.classList.remove(...SKIN_IDS.map((id) => `bz-bs-skin-${id}`), "bz-bs-mode-light", "bz-bs-mode-dark");
     panel2.classList.add(`bz-bs-skin-${normalizeSkin(skin)}`, bsModeClass());
@@ -51601,9 +51601,9 @@ ${n.content.slice(0, 2e3)}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after !== before) {
-        rec.secondBrainAllowPaths = after;
+      const after2 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after2 !== before) {
+        rec.secondBrainAllowPaths = after2;
         migrated = true;
       }
     }
@@ -52965,20 +52965,20 @@ ${n.content.slice(0, 2e3)}
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after = classifyFilePath(newPath);
-    if (!after) return;
+    const after2 = classifyFilePath(newPath);
+    if (!after2) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after
+      movedOut: before !== after2
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after === "diary") {
+    if (after2 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after}:file-renamed`, payload);
+    emitDomainEvent(`${after2}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;
@@ -53425,6 +53425,640 @@ ${n.content.slice(0, 2e3)}
   init_ui();
   init_state();
 
+  // src/gameshelf/motion.ts
+  var M2 = { fast: 160, move: 200, base: 280, impulse: 740 };
+  var STAG = 30;
+  var E = {
+    out: "cubic-bezier(.22,.82,.3,1)",
+    move: "cubic-bezier(.34,.06,.16,1)"
+  };
+  function reduced() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi(el, frames, opts) {
+    if (!el || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  var timers = /* @__PURE__ */ new Set();
+  function after(ms, fn) {
+    const id = setTimeout(() => {
+      timers.delete(id);
+      fn();
+    }, ms);
+    timers.add(id);
+  }
+  var loops = /* @__PURE__ */ new Set();
+  function cancelPending() {
+    timers.forEach(clearTimeout);
+    timers.clear();
+  }
+  function motionTeardown() {
+    cancelPending();
+    for (const a of loops) {
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    }
+    loops.clear();
+  }
+  function reveal(el, opts = {}) {
+    const { delay = 0, dur = M2.base, dy = 8, blur = 4, easing = E.out } = opts;
+    waapi(
+      el,
+      [
+        { opacity: 0, transform: `translateY(${dy}px)`, filter: `blur(${blur}px)` },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { delay, duration: dur, easing, fill: "backwards" }
+    );
+  }
+  function lightUp(el, delay, dur = M2.base + 160) {
+    if (!el) return;
+    waapi(
+      el,
+      [
+        { clipPath: "inset(-2% 100% -2% 0)" },
+        { clipPath: "none" }
+      ],
+      { delay, duration: dur, easing: E.out, fill: "backwards" }
+    );
+  }
+  function growUp(el, delay, dur = M2.base + 120) {
+    if (!el) return;
+    el.style.transformOrigin = "bottom";
+    waapi(
+      el,
+      [
+        { transform: "scaleY(0)" },
+        { transform: "scaleY(1)" }
+      ],
+      { delay, duration: dur, easing: E.out, fill: "backwards" }
+    );
+  }
+  var EXIT_ANIM_ID = "bz-gs-panel-exit";
+  function motionPanelOut(panel2, done) {
+    if (reduced() || typeof panel2.animate !== "function") {
+      done();
+      return;
+    }
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    const a = panel2.animate(
+      [
+        { opacity: 1, filter: "brightness(1)" },
+        { opacity: 0, filter: "brightness(2.2)" }
+      ],
+      { duration: 120, easing: "cubic-bezier(.4,0,.7,.2)", fill: "forwards", id: EXIT_ANIM_ID }
+    );
+    if (!a) {
+      finish();
+      return;
+    }
+    a.finished.then(finish).catch(finish);
+    after(240, finish);
+  }
+  function scanline(frame) {
+    const scan = document.createElement("i");
+    scan.className = "bz-gs-scan";
+    scan.setAttribute("aria-hidden", "true");
+    frame.appendChild(scan);
+    const a = waapi(
+      scan,
+      [
+        { transform: "translateY(-130%)", opacity: 0 },
+        { opacity: 1, offset: 0.18 },
+        { opacity: 1, offset: 0.82 },
+        { transform: "translateY(130%)", opacity: 0 }
+      ],
+      { duration: M2.impulse, easing: "cubic-bezier(.3,.1,.3,1)" }
+    );
+    if (a) a.finished.then(() => scan.remove()).catch(() => scan.remove());
+    else scan.remove();
+  }
+  function panelBoot(frame) {
+    var _a2;
+    const panel2 = (_a2 = frame.querySelector(".bz-gs-panel")) != null ? _a2 : frame;
+    panel2.style.opacity = "";
+    panel2.style.filter = "";
+    if (typeof panel2.getAnimations === "function") {
+      for (const a of panel2.getAnimations()) if (a.id === EXIT_ANIM_ID) a.cancel();
+    }
+    waapi(
+      panel2,
+      [
+        { opacity: 0, filter: "brightness(2.6) blur(6px)" },
+        { opacity: 1, filter: "brightness(1) blur(0px)" }
+      ],
+      { duration: M2.base + 80, easing: E.out }
+    );
+    scanline(frame);
+    const hero = frame.querySelector("#bz-gs-hero");
+    if (hero && hero.querySelector(".bz-gs-hero-art")) {
+      waapi(
+        hero,
+        [
+          { opacity: 0, transform: "translateY(-18px)", filter: "blur(3px)" },
+          { opacity: 1, transform: "translateY(2px)", filter: "blur(0px)", offset: 0.7 },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { delay: 60, duration: M2.move + 200, easing: E.move, fill: "backwards" }
+      );
+    }
+  }
+  function motionHeroSwap(hero) {
+    if (reduced() || !hero) return;
+    const art = hero.querySelector(".bz-gs-hero-art");
+    if (art) waapi(art, [{ opacity: 0.25 }, { opacity: 1 }], { duration: M2.fast, easing: E.out });
+    const inEl = hero.querySelector(".bz-gs-hero-in");
+    if (inEl) waapi(
+      inEl,
+      [
+        { opacity: 0.2, transform: "translateY(5px)", filter: "blur(2px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.fast, easing: E.out }
+    );
+  }
+  var confettiPools = /* @__PURE__ */ new Map();
+  var fxRaf = 0;
+  var GOLD = ["#e8b33e", "#f5d061", "#c98f2a", "#fff2c4"];
+  function confettiBurst(host, x, y) {
+    var _a2;
+    let fx = host.querySelector(":scope > .bz-gs-fx");
+    if (!fx) {
+      fx = document.createElement("canvas");
+      fx.className = "bz-gs-fx";
+      fx.setAttribute("aria-hidden", "true");
+      host.appendChild(fx);
+    }
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const w = host.scrollWidth, h = host.scrollHeight;
+    if (w < 10 || h < 10) return;
+    if (fx.width !== Math.round(w * dpr) || fx.height !== Math.round(h * dpr)) {
+      fx.width = Math.round(w * dpr);
+      fx.height = Math.round(h * dpr);
+      fx.style.width = `${w}px`;
+      fx.style.height = `${h}px`;
+    }
+    const ctx = fx.getContext("2d");
+    if (!ctx) {
+      fx.remove();
+      return;
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const pool = (_a2 = confettiPools.get(fx)) != null ? _a2 : [];
+    for (let i = 0; i < 26; i++) {
+      const ang = -Math.PI / 2 + (Math.random() - 0.5) * 1.9;
+      const sp = 2 + Math.random() * 3.4;
+      pool.push({
+        x,
+        y,
+        vx: Math.cos(ang) * sp,
+        vy: Math.sin(ang) * sp,
+        rot: Math.random() * Math.PI,
+        vr: (Math.random() - 0.5) * 0.34,
+        life: 1,
+        w: 2.4 + Math.random() * 2.6,
+        h: 1.4 + Math.random() * 1.6,
+        color: GOLD[i % GOLD.length]
+      });
+    }
+    confettiPools.set(fx, pool);
+    if (!fxRaf) fxRaf = requestAnimationFrame(confettiTick);
+  }
+  function confettiTick() {
+    fxRaf = 0;
+    for (const [fx, pool] of [...confettiPools.entries()]) {
+      const ctx = fx.getContext("2d");
+      if (!ctx || !fx.isConnected) {
+        confettiPools.delete(fx);
+        continue;
+      }
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, fx.width, fx.height);
+      for (let i = pool.length - 1; i >= 0; i--) {
+        const s = pool[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.vy += 0.12;
+        s.vx *= 0.985;
+        s.rot += s.vr;
+        s.life -= 0.016;
+        if (s.life <= 0) {
+          pool.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, s.life * 1.4));
+        ctx.translate(s.x, s.y);
+        ctx.rotate(s.rot);
+        ctx.fillStyle = s.color;
+        ctx.fillRect(-s.w / 2, -s.h / 2, s.w, s.h * Math.max(0.3, s.life));
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+      if (!pool.length) {
+        confettiPools.delete(fx);
+        fx.remove();
+      }
+    }
+    if (confettiPools.size) fxRaf = requestAnimationFrame(confettiTick);
+  }
+  function trophyCeremony(trophy, delay) {
+    after(delay, () => {
+      waapi(
+        trophy,
+        [
+          { opacity: 0, transform: "scale(1.9) rotate(-16deg)", filter: "brightness(2.4) drop-shadow(0 0 0 rgba(232,179,62,0))" },
+          { opacity: 1, transform: "scale(1.12) rotate(3deg)", filter: "brightness(1.7) drop-shadow(0 0 7px rgba(232,179,62,.9))", offset: 0.62 },
+          { opacity: 1, transform: "none", filter: "brightness(1) drop-shadow(0 1px 2px rgba(0,0,0,0.7))" }
+        ],
+        { duration: M2.base + 200, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function rankStamp(rank, delay) {
+    after(delay, () => {
+      waapi(
+        rank,
+        [
+          { opacity: 0, transform: "scale(1.75)", filter: "blur(2px)" },
+          { opacity: 1, transform: "scale(1)", filter: "blur(0px)" }
+        ],
+        { duration: M2.fast + 60, easing: E.move, fill: "backwards" }
+      );
+    });
+  }
+  function motionShelfIn(host, level) {
+    if (reduced() || !host) return;
+    const grid = host.querySelector(".bz-gs-grid");
+    const cards = [...host.querySelectorAll(".bz-gs-card")];
+    if (!grid && !cards.length) return;
+    const boot = level === "boot";
+    const stag = boot ? 14 : 9;
+    const cap = boot ? 18 : 24;
+    const base = boot ? 240 : 0;
+    cards.forEach((card, i) => {
+      if (i >= cap) return;
+      reveal(card, { delay: base + i * stag, dur: boot ? M2.base : M2.fast + 40, dy: boot ? 9 : 5, blur: boot ? 3 : 2 });
+      if (!boot) return;
+      const rank = card.querySelector(".bz-gs-rank");
+      if (rank) rankStamp(rank, base + i * stag + 300);
+      const trophy = card.querySelector(".bz-gs-trophy");
+      if (trophy && i < 6) {
+        trophyCeremony(trophy, base + i * stag + 420);
+        after(base + i * stag + 480, () => {
+          const hr = host.getBoundingClientRect();
+          const tr = trophy.getBoundingClientRect();
+          confettiBurst(host, tr.left - hr.left + tr.width / 2 + host.scrollLeft, tr.top - hr.top + 8 + host.scrollTop);
+        });
+      }
+      const strip = card.querySelector(".bz-gs-strip > i");
+      if (strip) lightUp(strip, base + i * stag + 320, M2.base + 140);
+    });
+    const empty = host.querySelector(".bz-empty");
+    if (empty && boot) reveal(empty, { delay: 260, dy: 8 });
+  }
+  function motionStatsIn(body) {
+    if (reduced() || !body) return;
+    const stats = [...body.querySelectorAll(".bz-gs-stats .bz-stat")];
+    stats.forEach((el, i) => reveal(el, { delay: 60 + i * STAG, dy: 9 }));
+    const topRows = [...body.querySelectorAll(".bz-gs-sec")].find(
+      (sec) => sec.querySelector(".bz-gs-rankno")
+    );
+    const rankRows = topRows ? [...topRows.querySelectorAll(".bz-gs-rankrow")] : [];
+    rankRows.forEach((row, i) => {
+      reveal(row, { delay: 300 + i * STAG, dy: 6, blur: 2 });
+      lightUp(row.querySelector(".bz-gs-rankbar > i"), 380 + i * STAG, M2.base + 180);
+    });
+    const colSecs = [...body.querySelectorAll(".bz-gs-cols")];
+    colSecs.forEach((cols, si) => {
+      const bars = [...cols.querySelectorAll(".bz-gs-col")];
+      bars.forEach((col, i) => {
+        const bar = col.querySelector(".bz-gs-colbar");
+        growUp(bar, 480 + si * 220 + i * 45);
+        const num2 = col.querySelector("b");
+        if (num2) reveal(num2, { delay: 560 + si * 220 + i * 45, dy: 4, blur: 0, dur: M2.fast + 60 });
+        if (col.classList.contains("is-now")) {
+          after(480 + si * 220 + i * 45 + M2.base + 200, () => {
+            if (!bar) return;
+            waapi(
+              bar,
+              [{ filter: "brightness(1)" }, { filter: "brightness(1.55)" }, { filter: "brightness(1)" }],
+              { duration: M2.base + 120, easing: E.out }
+            );
+          });
+        }
+      });
+    });
+    const rowBlocks = [...body.querySelectorAll(".bz-gs-rows")].filter((r) => r.querySelector(".bz-gs-rankbar"));
+    const platBlock = rowBlocks[1];
+    if (platBlock) {
+      [...platBlock.querySelectorAll(".bz-gs-rankrow")].forEach((row, i) => {
+        reveal(row, { delay: 760 + i * STAG, dy: 6, blur: 2 });
+        lightUp(row.querySelector(".bz-gs-rankbar > i"), 820 + i * STAG, M2.base + 160);
+      });
+    }
+    const latest = body.querySelector(".bz-gs-rows--flat");
+    if (latest) {
+      [...latest.querySelectorAll(".bz-gs-latestrow")].forEach((row, i) => {
+        reveal(row, { delay: 860 + i * STAG, dy: 5, blur: 2 });
+      });
+    }
+    const foot = body.querySelector(".bz-gs-foot");
+    if (foot) reveal(foot, { delay: 1e3, dy: 4, blur: 0 });
+    const caveat = body.querySelector(".bz-gs-caveat");
+    if (caveat) reveal(caveat, { delay: 200, dy: 5, blur: 0 });
+  }
+  function shineOver(cover) {
+    const shine = document.createElement("i");
+    shine.className = "bz-gs-shine";
+    shine.setAttribute("aria-hidden", "true");
+    cover.appendChild(shine);
+    const a = waapi(
+      shine,
+      [
+        { transform: "translateX(-160%) skewX(-18deg)" },
+        { transform: "translateX(260%) skewX(-18deg)" }
+      ],
+      { delay: 160, duration: M2.base + 320, easing: "cubic-bezier(.3,.1,.3,1)" }
+    );
+    if (a) a.finished.then(() => shine.remove()).catch(() => shine.remove());
+    else shine.remove();
+  }
+  function motionDetailIn(popup) {
+    var _a2;
+    if (reduced() || !popup) return;
+    const card = (_a2 = popup.querySelector(".bz-dialog-card, .bz-overlay-popup, .bz-gs-detail-modal")) != null ? _a2 : popup;
+    waapi(
+      card,
+      [
+        { opacity: 0, transform: "scale(.962) translateY(10px)", filter: "blur(5px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M2.base, easing: E.out }
+    );
+    const cover = popup.querySelector(".bz-gs-detail-cover");
+    if (cover) {
+      waapi(
+        cover,
+        [
+          { opacity: 0, transform: "translateY(-14px)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)", offset: 0.72 },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M2.move + 180, easing: E.move, fill: "backwards" }
+      );
+      shineOver(cover);
+    }
+    [...popup.querySelectorAll(".bz-gs-chiplet")].forEach((chip2, i) => {
+      reveal(chip2, { delay: 200 + i * 45, dy: 5, blur: 0, dur: M2.fast + 60 });
+    });
+    const bigNum = popup.querySelector(".bz-gs-mine-num b");
+    if (bigNum) {
+      waapi(
+        bigNum,
+        [
+          { opacity: 0, clipPath: "inset(0 0 100% 0)", transform: "translateY(6px)" },
+          { opacity: 1, clipPath: "inset(0 0 -8% 0)", transform: "none" }
+        ],
+        { delay: 260, duration: M2.base + 120, easing: E.out, fill: "backwards" }
+      );
+    }
+    [...popup.querySelectorAll(".bz-gs-mine-grid > div")].forEach((cell, i) => {
+      reveal(cell, { delay: 320 + i * 50, dy: 5, blur: 0, dur: M2.fast + 60 });
+    });
+    const mineSec = popup.querySelector(".bz-gs-mine");
+    if (mineSec) {
+      [...mineSec.querySelectorAll(".bz-gs-platbar > i")].forEach((bar, i) => {
+        lightUp(bar, 420 + i * 70, M2.base + 160);
+      });
+    }
+  }
+  function motionAchPaint(box) {
+    var _a2;
+    if (reduced() || !box) return;
+    const first = !box.dataset.gsPainted;
+    box.dataset.gsPainted = "1";
+    const head = box.querySelector(".bz-gs-achhead");
+    if (head) reveal(head, { delay: first ? 40 : 0, dy: 5, blur: 0, dur: M2.fast + 40 });
+    lightUp((_a2 = head == null ? void 0 : head.querySelector(".bz-gs-platbar > i")) != null ? _a2 : null, first ? 120 : 0, M2.base + 120);
+    const rare = box.querySelector(".bz-gs-mine-rare");
+    if (rare && first) {
+      after(200, () => {
+        waapi(
+          rare,
+          [
+            { opacity: 0, filter: "brightness(1) drop-shadow(0 0 0 rgba(232,179,62,0))" },
+            { opacity: 1, filter: "brightness(1.5) drop-shadow(0 0 8px rgba(232,179,62,.75))", offset: 0.55 },
+            { opacity: 1, filter: "brightness(1) drop-shadow(0 0 0 rgba(232,179,62,0))" }
+          ],
+          { duration: M2.base + 260, easing: E.out, fill: "backwards" }
+        );
+      });
+    }
+    const rows = [...box.querySelectorAll(".bz-gs-achrow")];
+    rows.forEach((row, i) => {
+      if (i >= 24) return;
+      reveal(row, { delay: (first ? 80 : 0) + i * 14, dy: 5, blur: 2, dur: M2.fast + 60 });
+      if (row.classList.contains("is-on")) {
+        const icon = row.querySelector(".bz-gs-achicon");
+        if (icon) {
+          after((first ? 80 : 0) + i * 14 + 180, () => {
+            waapi(
+              icon,
+              [{ filter: "brightness(2) saturate(1.4)" }, { filter: "brightness(1) saturate(1)" }],
+              { duration: M2.base, easing: E.out }
+            );
+          });
+        }
+      }
+    });
+  }
+  function motionStorePaint(box) {
+    if (reduced() || !box) return;
+    const first = !box.dataset.gsPainted;
+    box.dataset.gsPainted = "1";
+    if (!first) return;
+    [...box.querySelectorAll(".bz-gs-kv")].forEach((kv, i) => {
+      reveal(kv, { delay: 60 + i * 26, dy: 4, blur: 0, dur: M2.fast + 40 });
+    });
+    const desc = box.querySelector(".bz-gs-desc");
+    if (desc) reveal(desc, { delay: 200, dy: 4, blur: 0 });
+  }
+  function motionShotsPaint(box) {
+    if (reduced() || !box) return;
+    [...box.querySelectorAll(".bz-gs-shot")].forEach((shot, i) => {
+      if (i >= 16) return;
+      waapi(
+        shot,
+        [
+          { opacity: 0, transform: "scale(.95) translateY(6px)" },
+          { opacity: 1, transform: "none" }
+        ],
+        { delay: 60 + i * 40, duration: M2.base, easing: E.out, fill: "backwards" }
+      );
+    });
+  }
+  function motionSyncSpin(btn, on) {
+    const targetOf = (a2) => {
+      try {
+        const fx = a2.effect;
+        return fx && typeof fx === "object" && "target" in fx ? fx.target : null;
+      } catch (e) {
+        return null;
+      }
+    };
+    for (const a2 of [...loops]) {
+      const target = targetOf(a2);
+      if (!target || !target.isConnected) {
+        try {
+          a2.cancel();
+        } catch (e) {
+        }
+        loops.delete(a2);
+      }
+    }
+    if (!btn) return;
+    if (!on) {
+      delete btn.dataset.gsSpinning;
+      for (const a2 of [...loops]) {
+        if (targetOf(a2) === btn) {
+          try {
+            a2.cancel();
+          } catch (e) {
+          }
+          loops.delete(a2);
+        }
+      }
+      return;
+    }
+    if (reduced() || btn.dataset.gsSpinning) return;
+    btn.dataset.gsSpinning = "1";
+    const a = waapi(
+      btn,
+      [{ transform: "rotate(0deg)" }, { transform: "rotate(360deg)" }],
+      { duration: 900, easing: "linear", iterations: Infinity }
+    );
+    if (a) {
+      loops.add(a);
+      a.finished.catch(() => {
+      });
+    } else {
+      delete btn.dataset.gsSpinning;
+    }
+  }
+  var statusMemo = /* @__PURE__ */ new WeakMap();
+  function motionStatusLine(el, text) {
+    if (reduced() || !el || !text) return;
+    if (statusMemo.get(el) === text) return;
+    statusMemo.set(el, text);
+    waapi(
+      el,
+      [
+        { opacity: 0, transform: "translateX(-10px)" },
+        { opacity: 1, transform: "none" }
+      ],
+      { duration: M2.fast + 60, easing: E.out }
+    );
+  }
+  function motionGuideIn(body) {
+    if (reduced() || !body) return;
+    const empty = body.querySelector(".bz-empty");
+    if (!empty) return;
+    reveal(empty, { delay: 80, dy: 10 });
+    const pad = empty.querySelector("svg, .bz-empty-icon, [data-lucide]");
+    if (pad) {
+      after(320, () => {
+        waapi(
+          pad,
+          [
+            { transform: "rotate(0deg)" },
+            { transform: "rotate(-9deg)", offset: 0.25 },
+            { transform: "rotate(8deg)", offset: 0.55 },
+            { transform: "rotate(-5deg)", offset: 0.8 },
+            { transform: "rotate(0deg)" }
+          ],
+          { duration: M2.base + 320, easing: "cubic-bezier(.3,.1,.3,1)" }
+        );
+      });
+    }
+  }
+  function motionEmptyIn(body) {
+    if (reduced() || !body) return;
+    const empty = body.querySelector(".bz-empty");
+    if (empty) reveal(empty, { delay: 30, dy: 6, blur: 2, dur: M2.fast + 60 });
+  }
+  function motionRendered(frame, body, boot, viewChanged, view) {
+    cancelPending();
+    if (reduced()) return;
+    if (!frame || !body) return;
+    if (!boot && !viewChanged) return;
+    if (boot) panelBoot(frame);
+    if (view === null) {
+      motionGuideIn(body);
+      return;
+    }
+    if (view === "stats") {
+      motionStatsIn(body);
+    } else {
+      const tools = body.querySelector(".bz-gs-tools");
+      if (tools && boot) reveal(tools, { delay: 160, dy: -6, blur: 0 });
+      const host = body.querySelector("#bz-gs-grid");
+      if (host) motionShelfIn(host, boot ? "boot" : "user");
+      else {
+        const empty = body.querySelector(".bz-empty");
+        if (empty && boot) reveal(empty, { delay: 260, dy: 8 });
+      }
+    }
+  }
+  if (typeof window !== "undefined") {
+    window.addEventListener("hashchange", () => {
+      if (location.hash !== "#replay") return;
+      location.hash = "";
+      const replay2 = window.__bzGameshelfReplay;
+      if (typeof replay2 === "function") setTimeout(replay2, 600);
+    });
+    if (location.hash === "#replay") {
+      const wait = () => {
+        const replay2 = window.__bzGameshelfReplay;
+        if (typeof replay2 === "function") {
+          location.hash = "";
+          setTimeout(replay2, 600);
+        } else setTimeout(wait, 120);
+      };
+      setTimeout(wait, 120);
+    }
+  }
+
   // src/gameshelf/report.ts
   init_str();
   init_state();
@@ -53540,6 +54174,8 @@ ${n.content.slice(0, 2e3)}
   var selectRefs = [];
   var bucketSelRef = null;
   var sortSelRef = null;
+  var gsBoot = false;
+  var gsInRenderAll = false;
   var scrollMemo = /* @__PURE__ */ new Map();
   var renderedView = null;
   function activeScroller() {
@@ -53589,6 +54225,7 @@ ${n.content.slice(0, 2e3)}
       mk("refresh-cw", "立即同步", () => void onSyncClick(app), M.syncing || !isConfigured()),
       close
     );
+    motionSyncSpin(ops.children[1], M.syncing);
   }
   function hoursOf(min) {
     return Math.round((min || 0) / 60 * 10) / 10;
@@ -54101,13 +54738,17 @@ ${n.content.slice(0, 2e3)}
     const modal = uiModalSafe(detailShellHtml(item, cover, cached, icon), `《${displayNameOf(item)}》`);
     if (!modal) return;
     const popup = modal.popup;
+    motionDetailIn(popup);
     bindMediaFallback(popup);
     modal.mask.classList.add("bz-gs-detail-mask");
     const fmHadAch = !!fmToAchDetail(cached);
     const fmHadStore = hasStoreFm(cached);
     const achBox = popup.querySelector("#bz-gs-detail-ach");
     const paintAch = (sec) => {
-      if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, sec);
+      if (achBox && achBox.isConnected) {
+        achBox.innerHTML = achListHtml(item, sec);
+        motionAchPaint(achBox);
+      }
       mountIcons(popup);
     };
     void loadAchievements(app, item, cached).then((sec) => {
@@ -54123,8 +54764,14 @@ ${n.content.slice(0, 2e3)}
     const paintStore = (sec) => {
       const { local, remote } = fmToShots(safeDetailFm(app, item.file));
       const display = resolveShotUrls(app, local, sec.screenshots.length > 0 ? sec.screenshots : remote);
-      if (storeBox && storeBox.isConnected) storeBox.innerHTML = storeRowsHtml(item, sec);
-      if (shotsBox && shotsBox.isConnected) shotsBox.innerHTML = shotsHtml(display);
+      if (storeBox && storeBox.isConnected) {
+        storeBox.innerHTML = storeRowsHtml(item, sec);
+        motionStorePaint(storeBox);
+      }
+      if (shotsBox && shotsBox.isConnected) {
+        shotsBox.innerHTML = shotsHtml(display);
+        motionShotsPaint(shotsBox);
+      }
       const open = popup.querySelector("#bz-gs-open-store");
       if (open) open.addEventListener("click", () => openExternalUrl(app, storeUrlOf(item.appid)));
       mountIcons(popup);
@@ -54225,6 +54872,11 @@ ${n.content.slice(0, 2e3)}
     M.currentOverlay = frame;
     registerPanelEsc(ESC_ID3, () => !!M.currentOverlay, closePanel4);
     trapPanelFocus(frame);
+    ;
+    window.__bzGameshelfReplay = () => {
+      gsBoot = true;
+      renderAll5(app);
+    };
   }
   async function onSyncClick(app) {
     const { runSync: runSync2 } = await Promise.resolve().then(() => (init_sync(), sync_exports));
@@ -54310,6 +54962,7 @@ ${n.content.slice(0, 2e3)}
   function renderAll5(app) {
     const frame = M.currentOverlay;
     if (!frame || !document.body.contains(frame)) return;
+    gsInRenderAll = true;
     clearSoftRender();
     const snap = snapshotFocus();
     saveScrollMemo();
@@ -54317,9 +54970,13 @@ ${n.content.slice(0, 2e3)}
     mountOps(app);
     restReel();
     const status = frame.querySelector("#bz-gs-status");
-    if (status) status.textContent = M.statusMsg;
+    if (status) {
+      status.textContent = M.statusMsg;
+      motionStatusLine(status, M.statusMsg);
+    }
     const body = frame.querySelector("#bz-gs-body");
     if (!body) return;
+    gsInRenderAll = false;
     body.innerHTML = "";
     body.removeAttribute("data-view");
     disposeSelects();
@@ -54333,6 +54990,10 @@ ${n.content.slice(0, 2e3)}
       body.appendChild(guidanceEl(app));
       mountIcons(frame);
       renderedView = null;
+      const guideBoot = gsBoot;
+      gsBoot = false;
+      motionRendered(frame, body, guideBoot, false, null);
+      gsInRenderAll = false;
       return;
     }
     const rp = buildReport(M.items);
@@ -54347,8 +55008,13 @@ ${n.content.slice(0, 2e3)}
     }
     mountIcons(frame);
     restoreFocus(snap);
+    const viewChanged = renderedView !== null && renderedView !== M.view;
+    const boot = gsBoot;
+    gsBoot = false;
+    motionRendered(frame, body, boot, viewChanged, M.view);
     renderedView = M.view;
     restoreScrollMemo();
+    gsInRenderAll = false;
   }
   function shelfBody(app, rp) {
     var _a2;
@@ -54504,12 +55170,16 @@ ${n.content.slice(0, 2e3)}
       const s = fmToAchSummary(safeDetailFm(app, it.file));
       return s && s.total > 0 ? { unlocked: s.unlocked, total: s.total } : null;
     };
+    const gsAutonomous = !gsBoot && !gsInRenderAll;
     if (list.length === 0) {
       gridEl.innerHTML = "";
       gridEl.appendChild(emptyResult(app));
+      if (gsAutonomous) motionEmptyIn(gridEl);
     } else {
       gridEl.innerHTML = shelfHtml(list, (it) => coverDisplayUrl(app, it.appid, it.cover, it.coverSrc), { showRank, achOf });
+      if (gsAutonomous) motionShelfIn(gridEl, "user");
     }
+    if (gsAutonomous && heroEl) motionHeroSwap(heroEl);
     const frame = M.currentOverlay;
     if (frame) mountIcons(frame);
   }
@@ -54551,23 +55221,22 @@ ${n.content.slice(0, 2e3)}
   function openPanel3(app, view = "shelf") {
     createUI(app);
     M.view = view;
+    gsBoot = true;
     M.renderFn = () => renderSoft(app);
     renderAll5(app);
     void ensurePostersFor(app);
     ensureZhNames(app, M.items);
   }
   function closePanel4() {
-    var _a2;
     saveScrollMemo();
     renderedView = null;
     unregisterPanelEsc(ESC_ID3);
     restReel();
     clearSoftRender();
     searchListRender.cancel();
-    maskEl4 == null ? void 0 : maskEl4.remove();
+    const mask = maskEl4;
     maskEl4 = null;
     popupEl2 = null;
-    (_a2 = M.currentOverlay) == null ? void 0 : _a2.remove();
     M.currentOverlay = null;
     disposeSelects();
     bucketSelRef = null;
@@ -54586,6 +55255,13 @@ ${n.content.slice(0, 2e3)}
     unloadZhNames();
     unloadBackfill();
     unloadPosters();
+    if (mask && document.body.contains(mask)) {
+      motionTeardown();
+      motionPanelOut(mask, () => mask.remove());
+    } else {
+      motionTeardown();
+      mask == null ? void 0 : mask.remove();
+    }
   }
 
   // src/gameshelf/index.ts
