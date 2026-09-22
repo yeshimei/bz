@@ -978,3 +978,41 @@
   .bz-clp-rep-hero { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .bz-clp-rep-bar-label { flex-basis: 5.5em; }
 }
+
+/* ==================== 动效层注入件（src/clipbook/motion.ts 配套；2026-09-22 快速原型批） ====================
+   全部是演出件：position:absolute/fixed + pointer-events:none + aria-hidden，motion.ts 演完即移除——
+   终态 UI 与无动效时逐像素一致。只动表现不改布局；不涉滚动条（ADR-0122）、无 :hover 规则。 */
+
+/* 开印版线：头行下缘 2px 墨线（与原生 border-bottom 同几何同色，画完隐去即移除，原生 border 恒在） */
+.bz-clm-ink-rule {
+  position: absolute; left: 0; right: 0; bottom: -2px; height: 2px;
+  background: var(--clip-ink, #1c1a17); transform-origin: left center;
+  transform: scaleX(0); pointer-events: none; z-index: 3;
+}
+
+/* 钤收章：双环圆章 + 衬线「收」，落章方向 -12°（盖标题左三分之一——阅读动线上第一眼处，
+   也避开右上通知落点；host 几何不动） */
+.bz-clm-stamp {
+  position: absolute; top: 8%; left: 34%; width: 36px; height: 36px;
+  border: 2px solid var(--clip-accent, #c2410c); border-radius: 50%;
+  box-shadow: inset 0 0 0 2px var(--clip-paper, #faf8f3), inset 0 0 0 3px var(--clip-accent, #c2410c);
+  color: var(--clip-accent, #c2410c); background: transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--clip-serif, Georgia, serif); font-size: 16px; font-weight: 700; line-height: 1;
+  pointer-events: none; z-index: 2;
+}
+
+/* 勾销墨线：标题上划过的一道墨（会话内灰显类是终态语义，本件演完即移除） */
+.bz-clm-strike {
+  position: absolute; left: -2px; right: -2px; top: 50%; height: 2px; margin-top: -1px;
+  background: var(--clip-ink-2, #3d3a34); opacity: .9; border-radius: 1px;
+  transform: scaleX(0); transform-origin: left center; pointer-events: none; z-index: 1;
+}
+
+/* 剪走纸片：删除条目时卡片的 fixed 克隆（同位覆盖 → 向左滑出消散；演完移除） */
+.bz-clm-cutghost {
+  position: fixed; z-index: 9999; margin: 0; overflow: hidden;
+  background: var(--clip-paper, #faf8f3);
+  box-shadow: 0 6px 22px rgba(28, 26, 23, .18);
+  pointer-events: none;
+}

@@ -25,6 +25,7 @@ import { buildClipReport, type ClipReportData, type ReportPeriod } from './repor
 import {
   clipReportShellHtml, clipReportSkeletonHtml, buildClipReportSections,
 } from './render';
+import { motionReportIn, motionReportSection, motionLoadingPulse } from './motion';
 import { openClipbook } from './index';
 import { revealArticleByKey } from './ui';
 
@@ -94,6 +95,7 @@ export async function openClipbookReport(_app?: App): Promise<void> {
   topifyZ(overlayEl);
   // 打开即入焦 + Tab 圈闭（呈报#13 F3+H3 全域范式，core trapPanelFocus 单源）
   trapPanelFocus(overlayEl!.querySelector<HTMLElement>('.bz-clip-report-frame') ?? overlayEl!);
+  motionReportIn(overlayEl!); // 动效：弹层升帘（遮罩快淡入 + 框体浮起）
   await renderBody(true);
 }
 
@@ -235,6 +237,7 @@ async function renderBody(withToast: boolean): Promise<void> {
   const alive = (): boolean => seq === renderSeq && !!overlayEl && overlayEl!.style.display !== 'none' && body.isConnected;
 
   body.innerHTML = clipReportSkeletonHtml();
+  motionLoadingPulse(body.firstElementChild as HTMLElement | null); // 功能性呼吸指示（不入台账）
 
   try {
     if (!logCache) {
@@ -256,6 +259,7 @@ async function renderBody(withToast: boolean): Promise<void> {
     // 空态人话·首次：还没有任何阅读记录（openClipbookReport 已先 flush，能记的都在了）
     if (!logCache.length) {
       renderEmptyState(body, buildClipReportEmpty('never'));
+      motionReportSection(body.firstElementChild, 0); // 动效：空态轻浮出
       if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
       return;
     }
@@ -277,17 +281,20 @@ async function renderBody(withToast: boolean): Promise<void> {
       const otherData = buildClipReport(logCache, other, new Date());
       const switchTo = otherData.articles || otherData.totalMinutes ? other : undefined;
       renderEmptyState(body, buildClipReportEmpty('period', switchTo));
+      motionReportSection(body.firstElementChild, 0); // 动效：空态也走一段轻浮出
       if (progress && activeProgress === progress) { progress.hide(); activeProgress = null; }
       return;
     }
 
     body.innerHTML = ''; // 骨架 → 报告区（分段渐进填充）
+    let secIdx = 0;
     for (const section of buildClipReportSections(data, { availableKeys: availKeys })) {
       if (!alive()) return finishAbort();
       await yieldToMainThread(YIELD_MS);
       // 二次校验：让出期间弹层可能已被关闭 → 不把本段写进已隐藏的 DOM
       if (!alive()) return finishAbort();
       body.insertAdjacentHTML('beforeend', section.generate());
+      motionReportSection(body.lastElementChild, secIdx++); // 动效：逐段落版（段内件接力）
       progress?.setMessage(`正在生成${section.label}…`);
     }
     if (alive()) {
