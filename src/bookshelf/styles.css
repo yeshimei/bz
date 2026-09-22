@@ -628,6 +628,38 @@
 .bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-search { background: #1a1a1a; color: #f0f0f0; border: 1px solid #333333; }
 .bz-bs-skin-mono.bz-bs-mode-dark .bz-bs-search::placeholder { color: #777777; }
 
+/* ==================== 动效层辅助（src/bookshelf/motion.ts 注入件；bz-bsm-*） ====================
+   只服务 motion.ts 的注入表现件：绝对定位 / 不吃事件 / aria-hidden / 演出完自移除，
+   不承载任何布局语义（终态 UI 与无动效版完全一致）。轻摆是唯一长驻循环，类名由
+   motion.ts 句柄池（liveSway）管理，面板关闭 / motionTeardown 必收。 */
+.bz-bsm-sheen {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 6;
+}
+.bz-bsm-sheen::before {
+  content: ''; position: absolute; left: -30%; top: -30%; width: 45%; height: 160%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: rotate(8deg);
+  animation: bz-bsm-sheen-x 0.62s cubic-bezier(0.22, 0.82, 0.3, 1) forwards;
+}
+/* 竖版（书脊扫光）：光带自上而下掠过窄条 */
+.bz-bsm-sheen.v::before {
+  left: -10%; top: -60%; width: 120%; height: 40%;
+  background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: none;
+  animation: bz-bsm-sheen-y 0.62s cubic-bezier(0.22, 0.82, 0.3, 1) forwards;
+}
+@keyframes bz-bsm-sheen-x { to { transform: translateX(430%) rotate(8deg); } }
+@keyframes bz-bsm-sheen-y { to { transform: translateY(430%); } }
+/* 在读书签带轻摆（长驻循环；只挂 motion.ts 垂落演完的书脊，translateX 保持居中） */
+.bz-bs-spine.reading .ribbon.bz-bsm-sway {
+  transform-origin: 50% 0;
+  animation: bz-bsm-sway 3.4s ease-in-out 0.1s infinite;
+}
+@keyframes bz-bsm-sway {
+  0%, 100% { transform: translateX(-50%) rotate(0deg); }
+  50% { transform: translateX(-50%) rotate(2.6deg); }
+}
+
 /* ==================== 设置页皮肤预览（.bz-cardpick-prev 变体；全局作用域——
    域 CSS 经 esbuild 聚合为全局样式，但预览卡不吃面板皮肤类，故用顶层 .bz-skinprev-bs-* 独立成画；
    预览 = 各肤招牌侧（亮肤即亮、暗肤即暗），亮暗变体不单独出预览卡） ==================== */
