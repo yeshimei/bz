@@ -7,6 +7,9 @@ import { makeApp } from '../helpers/app';
  * 业务回归保留：落盘/改名/tags 落盘/回收站删除/域事件/CM2 重名拦截/CM3 稳定键。
  */
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { YB_TITLE } from '../../src/cinema/yearbook/data';
 import { MockVault, mockAppWithVault, parseFrontmatter } from '../mock-vault';
 import { resetObsidianMocks, hasNotice, Platform, TFile } from '../mock-obsidian-entry';
 import { M, resetCinemaState } from '../../src/cinema/state';
@@ -491,11 +494,28 @@ describe('cinema 风格化面板（issue 236）', () => {
     (form.querySelector('.j-name') as HTMLInputElement).value = '已看新片';
     clickEl(form.querySelector('.j-parse'));
     await vi.waitFor(() => expect(form.querySelector('.form-flip')?.classList.contains('is-flipped')).toBe(true));
+    // 背面把「我的记录」显示出来（issue 409 追加拍板）：只读、与详情弹窗同形制
+    const back = form.querySelector('.form-face--back') as HTMLElement;
+    expect(back.querySelector('.dm-rating')?.textContent, '评分显示').toBe('8.8');
+    expect(back.querySelector('.dm-stars'), '星级与分数齐出').toBeTruthy();
+    expect(back.querySelector('.dm-review')?.textContent).toBe('年度最佳');
+    expect(back.querySelector('.dm-date')?.textContent, '观影日期显示').toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(back.querySelector('.j-range'), '背面只读展示，不带控件').toBeNull();
+    expect(back.querySelector('.j-review-t')).toBeNull();
+    // 分类回填会整行重写徽标行（updateBadges）——记录件必须独立成行、在这之后仍活着
+    // （2026-09-21 用户实测：塞进徽标行的评分/日期在分类到手后被冲掉）
+    await vi.waitFor(() => expect(back.querySelector('[data-pick="tag"]'), '分类已回填（骨架换成真徽标）').toBeTruthy());
+    expect(back.querySelector('.dm-rating')?.textContent, '分类回填后评分还在').toBe('8.8');
+    expect(back.querySelector('.dm-date')?.textContent, '分类回填后观影日期还在').toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(back.querySelector('.dm-review')?.textContent, '影评还在').toBe('年度最佳');
     clickEl(form.querySelector('.j-save'));
     await vi.waitFor(() => expect(vault.files.has('我的/影视/《已看新片》.md')).toBe(true));
     expect(M.items[0].rating).toBe(8.8);
     expect(M.items[0].review).toBe('年度最佳');
     expect(vault.files.get('我的/影视/《已看新片》.md')).toContain('影评: 年度最佳');
+    // 背面显示的日子 = 真存下去的那一天（watchDateOf 单源）
+    expect(vault.files.get('我的/影视/《已看新片》.md'))
+      .toContain(`观影日期: "${(back.querySelector('.dm-date')?.textContent ?? '').slice(0, 10)}`);
   });
 
   it('CM2：新增重名 → 锁保存按钮且不落盘不留幽灵条目（issue 394）', async () => {
@@ -586,7 +606,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     expect(M.view).toBe('list');
   });
 
-  it('进 AI/分析页 rail 整体熄灭（含「全部」）；返回恢复先前选中高亮（桌面）', () => {
+  it('进 AI 页筛选段熄灭、底片固定到入口；返回恢复先前选中高亮（桌面）', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -594,17 +614,19 @@ describe('cinema 风格化面板（issue 236）', () => {
     clickEl(root.querySelector('[data-g="剧集"]'));
     clickEl(root.querySelector('[data-s="已看"]'));
     expect(root.querySelector('.rail-item.is-on')?.textContent).toContain('已看');
-    // 进 AI 页：筛选状态保留，rail 整组熄灭、一个 is-on 都不留
+    // 进 AI 页：筛选状态保留，筛选段整组熄灭——但 tool 入口点亮（底片的回落目标，issue 409）
     clickEl(root.querySelector('[data-tool="ai"]'));
     expect(M.view).toBe('ai');
     expect(M.typeFilter).toBe('剧集');
     expect(M.statusFilter).toBe('已看');
-    expect(root.querySelector('.rail-item.is-on')).toBeNull();
-    // 返回：先前选中的高亮原样恢复
+    expect(root.querySelector('.rail-sec .rail-item.is-on'), '筛选段熄灭').toBeNull();
+    expect(root.querySelector('.rail-foot .rail-item.is-on')?.textContent, '底片固定到 AI 荐片入口').toContain('AI 荐片');
+    // 返回：先前选中的高亮原样恢复，入口熄灭
     clickEl(root.querySelector('.j-back'));
     expect(M.view).toBe('list');
     expect(root.querySelector('.rail-item.is-on')?.textContent).toContain('已看');
-    // 观影分析：独立全屏放映室——面板视图与 rail 高亮都不动（2026-09-21 用户拍板：不镶嵌面板）
+    expect(root.querySelector('.rail-foot .rail-item.is-on'), '离开 AI 页入口不再点亮').toBeNull();
+    // 观影分析：覆盖面板的一层（ADR-0175）——面板视图与 rail 高亮都不动，层挂在面板之上
     clickEl(root.querySelector('[data-film-open]'));
     expect(document.querySelector('.bz-yb')).toBeTruthy();
     expect(M.view).toBe('list');
@@ -681,7 +703,7 @@ describe('cinema 风格化面板（issue 236）', () => {
     });
   });
 
-  it('观影志：独立全屏长片 26 幕 + 关闭钮出口；空库给空态且添加可直达（2026-09-22 重写）', () => {
+  it('观影分析：覆盖影院面板的一层 26 幕 + 点框外关闭；空库给空态且添加可直达（ADR-0175）', () => {
     const { app } = seedVault();
     createOverlay(app);
     const root = document.querySelector('[data-cinema-root]') as HTMLElement;
@@ -689,24 +711,29 @@ describe('cinema 风格化面板（issue 236）', () => {
     const ovl = document.querySelector('.bz-yb') as HTMLElement;
     expect(ovl).toBeTruthy();
     expect(ovl.querySelectorAll('.bz-yb-scn').length).toBe(26);
-    // 影片里没有 DOM 文案（页眉/页脚已去，片名「观影志」只在开卷那团粒子的画布里）
+    // 影片里没有 DOM 文案（页眉/页脚已去，片名只在开卷那团粒子的画布里）
     const film = ovl.querySelector('.bz-yb-film') as HTMLElement;
     expect(film.dataset.cur).toBe('01');
-    expect(film.textContent).not.toContain('观影志');
-    expect(M.view).toBe('list'); // 面板视图不动（观影志独立）
-    // 关闭钮出口
-    clickEl(ovl.querySelector('[data-yb-close]'));
-    expect(document.querySelector('.bz-yb')).toBeNull();
-    // 空库：一条影视都没有 → 空态（带添加动作）
+    expect(film.textContent).not.toContain('观影分析');
+    expect(M.view).toBe('list'); // 面板视图不动（层不是视图切换）
+    // 覆盖层形态：纸面在 .bz-yb-box 里、桌面不给关闭按钮（jsdom 非移动环境）、层根即遮罩
+    expect(ovl.querySelector('.bz-yb-box'), '层框在').toBeTruthy();
+    expect(ovl.querySelector('[data-yb-close]'), '桌面无关闭钮').toBeNull();
+    expect(M.currentOverlay, '面板在层下原样待命').toBeTruthy();
+    clickEl(ovl); // 点层根 = 点框外
+    expect(document.querySelector('.bz-yb'), '点框外即关').toBeNull();
+    expect(M.currentOverlay, '关掉的只有层').toBeTruthy();
+    // 空库：一条影视都没有 → 空态（带添加动作）；命令入口面板没开时先开面板再盖层
     closeOverlay();
     const app2 = makeApp(new MockVault());
     ensureCinema(app2);
     rebuildItems(app2);
     openCinemaAnalysis(app2);
+    expect(document.querySelector('[data-cinema-root]'), '命令入口先把面板开起来').toBeTruthy();
     const ovl2 = document.querySelector('.bz-yb') as HTMLElement;
     expect(ovl2.querySelector('.bz-yb-blank')?.textContent).toContain('影院还是空的');
     clickEl(ovl2.querySelector('[data-cinema-analysis-add]'));
-    expect(document.querySelector('.bz-yb')).toBeNull(); // 先收观影志
+    expect(document.querySelector('.bz-yb')).toBeNull(); // 先收层
     expect(document.querySelector('.cn-modal .j-name')).toBeTruthy(); // 再开表单
     closeOverlay();
   });
@@ -1517,6 +1544,43 @@ tags: [电影]
       expect(series.querySelector('.pname')?.textContent, '收尾文案回到静息态').toBe('老友记');
       expect(face.innerHTML).toBe(faceRest);
     } finally {
+      (Element.prototype as any).animate = realAnimate;
+    }
+  });
+
+  it('折回收尾只收一次：动画 finished 与兜底定时器都到期，文案淡入不重播（issue 409）', async () => {
+    setSettingsProvider(() => ({ cinemaMergeSeasons: true } as any));
+    stubHover(true);
+    const { app } = seedSeasons();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const series = pcardByName(root, '老友记');
+    const dots = series.querySelectorAll('.season-dots i');
+
+    // WAAPI 替身：记下每次调用（要数「文案淡入」播了几轮）；finished 立即 resolve（收尾走 then 分支）
+    const realAnimate = (Element.prototype as any).animate;
+    const calls: { opts: any }[] = [];
+    (Element.prototype as any).animate = function (_frames: any, opts: any) {
+      calls.push({ opts });
+      return { finished: Promise.resolve(), cancel() {}, play() {}, pause() {}, finish() {}, addEventListener() {}, removeEventListener() {} };
+    };
+    // 文案淡入带接力阶梯步进（delay），涟漪与折回都不带——据此认「淡入播了几轮」
+    const fades = (): number => calls.filter((c) => c.opts && c.opts.delay !== undefined).length;
+    vi.useFakeTimers();
+    try {
+      dots[0].dispatchEvent(new MouseEvent('mouseover', { bubbles: true })); // 换脸到第一季
+      const afterPeek = fades(); // 换脸本身也淡入一轮（三件）——基线取在它之后
+      expect(afterPeek, '换脸淡入一轮').toBe(3);
+      dots[0].dispatchEvent(new MouseEvent('mouseout', { bubbles: true })); // 离开 → 折回
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(fades() - afterPeek, '折回收尾再播一轮文案淡入（三件）').toBe(3);
+      const afterFold = fades();
+      vi.advanceTimersByTime(1200); // 兜底定时器（PEEK_BACK_MS + 400）到期：修前这里会再播一轮
+      expect(fades(), '同轮收尾只收一次（修前会多三件 = 闪两次）').toBe(afterFold);
+      expect(series.querySelector('.pname')?.textContent).toBe('老友记');
+    } finally {
+      vi.useRealTimers();
       (Element.prototype as any).animate = realAnimate;
     }
   });
@@ -2451,6 +2515,41 @@ describe('影院动效整合（issue 400-403）', () => {
     expect(calls.filter((c) => c.el.classList.contains('cn-fly')).length, '折返动画落在飞行件上').toBe(2);
   });
 
+  it('开面板：海报落地那一帧才起撑、撑开时长 .3s；落地不重复起撑（issue 409）', async () => {
+    installLayout();
+    const { app } = seedWithPoster();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const card = pcardByName(root, '星际穿越');
+    expect(card.querySelector('.pw img')?.getAttribute('src'), '海报须可解析').toBeTruthy();
+
+    // WAAPI 替身：撑开动画（clipPath 关键帧）记账；飞行的 finished 由测试放行——才能验「落地才起撑」
+    const realAnimate = (Element.prototype as any).animate;
+    const grows: any[] = [];
+    let landFlight: () => void = () => undefined;
+    (Element.prototype as any).animate = function (frames: any, opts: any) {
+      const isGrow = Array.isArray(frames) && frames.some((f: any) => f && f.clipPath !== undefined);
+      if (isGrow) grows.push(opts);
+      const finished = isGrow ? Promise.resolve() : new Promise<void>((r) => { landFlight = () => r(); });
+      return { finished, cancel() {}, play() {}, pause() {}, finish() {}, addEventListener() {}, removeEventListener() {} };
+    };
+    vi.useFakeTimers();
+    try {
+      clickEl(card);
+      expect(grows.length, '刚开始飞：不抢跑').toBe(0);
+      vi.advanceTimersByTime(1000); // 飞行还没落地（finished 由测试放行）：面板不许自己开撑
+      expect(grows.length, '海报没落地就不起撑（2026-09-21 拍板：不提前）').toBe(0);
+      landFlight();
+      await Promise.resolve();
+      expect(grows.length, '落地那一帧起撑').toBe(1);
+      expect(grows[0].duration, '撑开时长 .3s（2026-09-21 拍板）').toBe(300);
+      expect((root.querySelector('.cn-modal--detail') as HTMLElement).style.visibility, '撑开时面板即显形').toBe('');
+    } finally {
+      vi.useRealTimers();
+      (Element.prototype as any).animate = realAnimate;
+    }
+  });
+
   it('短评展开走高度中间态；无几何回落即时切换（issue 401）', async () => {
     installAnimate();
     const hot = '一'.repeat(200);
@@ -2603,5 +2702,114 @@ tags: [电影]
     cards[0].focus();
     expect(press(cards[0], 'ArrowLeft').defaultPrevented, '边界不吞键').toBe(false);
     expect(document.activeElement, '边界焦点不动').toBe(cards[0]);
+  });
+});
+
+/**
+ * 影院覆盖层与跟手（issue 409）：层框几何、海报跟手倾斜、样式契约、上屏片名。
+ * 覆盖层形态（ADR-0175）的断言分三处落：结构 / 关闭语义在「风格化面板」，撑开节奏在「动效整合」，
+ * 这里放需要几何替身与文本读取的两件（层框跟随、跟手倾斜），外加两条样式契约。
+ */
+describe('影院覆盖层与跟手（issue 409）', () => {
+  beforeEach(() => {
+    resetObsidianMocks();
+    resetCinemaState();
+    clearDomainEvents();
+    M.folderPath = '我的/影视';
+    document.body.innerHTML = '';
+    setSettingsProvider(() => ({}) as any);
+  });
+  afterEach(() => {
+    Platform.isMobile = false;
+    unloadCinema();
+    document.body.innerHTML = '';
+    delete (window as any).matchMedia;
+  });
+
+  const rect = (l: number, t: number, w: number, h: number): DOMRect => ({
+    left: l, top: t, width: w, height: h, right: l + w, bottom: t + h, x: l, y: t,
+    toJSON: () => ({}),
+  }) as DOMRect;
+
+  it('层框跟着面板走：矩形写内联、基字号随框派生、面板尺寸变了再跟一次', () => {
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const real = Element.prototype.getBoundingClientRect;
+    let panelRect = rect(40, 30, 900, 620);
+    (Element.prototype as any).getBoundingClientRect = function (this: HTMLElement) {
+      return this === root ? panelRect : rect(0, 0, 0, 0);
+    };
+    try {
+      clickEl(root.querySelector('[data-film-open]'));
+      const box = document.querySelector('.bz-yb-box') as HTMLElement;
+      expect(box.style.left).toBe('40px');
+      expect(box.style.top).toBe('30px');
+      expect(box.style.width).toBe('900px');
+      expect(box.style.height).toBe('620px');
+      // 基字号 = clamp(12, 12 × min(w/900, h/620), 19)：900×620 面板上就取基准 12px
+      expect(box.style.fontSize, '面板固定尺寸，基字号不跟窗口跑').toBe('12px');
+      // 面板挪了 / 改尺寸（窗口缩放、移动端旋屏）→ 层框跟一次
+      panelRect = rect(0, 0, 1200, 800);
+      window.dispatchEvent(new Event('resize'));
+      expect(box.style.left).toBe('0px');
+      expect(box.style.width).toBe('1200px');
+      expect(box.style.fontSize, '框更大 → 基字号按比例涨').toBe('15.48px');
+    } finally {
+      (Element.prototype as any).getBoundingClientRect = real;
+      closeYearbookOverlay();
+    }
+  });
+
+  it('海报跟手倾斜：写 --tlt-* 变量 + is-tilt；离开归零（issue 409）', () => {
+    stubHover(true);
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    const card = pcardByName(root, '星际穿越');
+    const pw = card.querySelector('.pw') as HTMLElement;
+    const real = Element.prototype.getBoundingClientRect;
+    (Element.prototype as any).getBoundingClientRect = function (this: HTMLElement) {
+      return this === pw ? rect(100, 200, 200, 300) : rect(0, 0, 0, 0);
+    };
+    try {
+      // 指针落在海报右上角：绕 Y 正转（右侧远）、绕 X 正转（上侧远）
+      pw.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 300, clientY: 200 }));
+      expect(card.classList.contains('is-tilt'), '进海报即接倾斜').toBe(true);
+      const rx = parseFloat(card.style.getPropertyValue('--tlt-x'));
+      const ry = parseFloat(card.style.getPropertyValue('--tlt-y'));
+      expect(ry, '靠右 → 绕 Y 正转').toBeGreaterThan(0);
+      expect(rx, '靠上 → 绕 X 正转').toBeGreaterThan(0);
+      expect(Math.abs(ry), '幅度留小（跟手不是晃卡）').toBeLessThanOrEqual(5.5);
+      // 写的是变量不是 transform：抬升与按下回弹那条 transform（issue 401）不能被顶掉
+      expect(card.style.transform, '不直接写 transform').toBe('');
+      // 移到面板别处（不在海报上）→ 归零并摘类
+      root.dispatchEvent(new MouseEvent('pointermove', { bubbles: true, clientX: 5, clientY: 5 }));
+      expect(card.classList.contains('is-tilt')).toBe(false);
+      expect(card.style.getPropertyValue('--tlt-y')).toBe('0deg');
+    } finally {
+      (Element.prototype as any).getBoundingClientRect = real;
+    }
+  });
+
+  it('样式契约：层框纸面、vmin 基字号退役、列表 10px 内上边距（issue 409）', () => {
+    const css = readFileSync(join(process.cwd(), 'src/cinema/styles.css'), 'utf8');
+    expect(css, '层框 = 面板矩形（纸面落在这儿）').toMatch(/\.bz-yb-box\{position:absolute; overflow:hidden; background:var\(--yb-paper\)/);
+    expect(css, '层根不再铺纸面（框外要透出面板底色当遮罩）').not.toMatch(/\.bz-yb\{[^}]*background:var\(--yb-paper\)/);
+    expect(css, '基字号不再跟窗口跑').not.toMatch(/\.bz-yb\{[^}]*vmin/);
+    expect(css, '主界面列表 10px 内上边距').toMatch(/\.bz-cinema--midnight \.d-scroll\{[^}]*padding:10px 20px 20px/);
+    expect(css, '倾斜量走变量，抬升/回弹不被顶掉').toMatch(/\.pcard\{--tlt-x:0deg/);
+  });
+
+  it('上屏片名 = 观影分析（四字）；落款副题同步（2026-09-21 拍板）', () => {
+    expect(YB_TITLE).toBe('观影分析');
+    const { app } = seedVault();
+    createOverlay(app);
+    const root = document.querySelector('[data-cinema-root]') as HTMLElement;
+    clickEl(root.querySelector('[data-film-open]'));
+    const scns = document.querySelectorAll('.bz-yb-scn');
+    expect(scns.length).toBe(26);
+    expect(scns[25].getAttribute('data-foot'), '落款副题跟着改名').toContain('观影分析');
+    closeYearbookOverlay();
   });
 });

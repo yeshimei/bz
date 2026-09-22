@@ -119,11 +119,15 @@ export function openCinema(app: App): void {
 }
 
 /**
- * 观影分析（命令 bz-cinema-analysis）：独立全屏长片《观影志》（2026-09-22 重写为 26 幕，
- * 面板开不开都能看；命令 ID 与首页入口不变）。幂等语义：已开着就不叠第二层（再点晃一下提示）。
+ * 观影分析（命令 bz-cinema-analysis）：**覆盖影院面板的一层** 26 幕长片《观影分析》
+ * （ADR-0175；2026-09-22 重写为 26 幕，2026-09-21 由「独立全屏」改为覆盖面板——点遮罩 / ESC 关闭）。
+ * 面板没开就先开面板再盖层（层得有落脚处），且**不补** applyDefaultView / sweepDoubanFetch：
+ * 那两个是「打开影院」的语义（回落默认视图 / 入队补抓），不是「看分析」的。
+ * 幂等语义：已开着就不叠第二层（再点晃一下提示）。
  */
 export function openCinemaAnalysis(app: App): void {
   ensureCinema(app);
+  if (!M.currentOverlay) createOverlay(app);
   openYearbookOverlay(app);
 }
 

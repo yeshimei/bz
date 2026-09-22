@@ -1,4 +1,4 @@
-/* 源指纹 44cfe3d4019de1e8 · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 507462ba446acc5c · 仓内输入 6 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["src/cinema/constants.ts","src/cinema/layouts/midnight/render.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/core/ui/str.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — src/cinema/render.ts → window.BZR_cinema（评审壳预览包，ADR-0104） */
 var BZR_cinema = (() => {
@@ -397,7 +397,7 @@ var BZR_cinema = (() => {
     return `<button type="button" class="dm-chip dm-chip--pick" data-pick="st" style="background:${(_a = ST_COLOR[stText]) != null ? _a : "#888"}">${esc(stText)}</button>`;
   }
   function formBackHtml(d, o) {
-    var _a;
+    var _a, _b, _c, _d;
     if (!d) return "";
     const rows = [
       ["豆瓣类型", d.genre],
@@ -409,6 +409,9 @@ var BZR_cinema = (() => {
       ["豆瓣评分", d.doubanRating]
     ].filter(([, v]) => v !== "");
     const hot = ((_a = d.hotComment) != null ? _a : "").trim();
+    const rc = ((_b = o.rating) != null ? _b : 0) > 0 ? o.rating : 0;
+    const dateText = ((_c = o.watchDate) != null ? _c : "").slice(0, 10);
+    const reviewText = ((_d = o.review) != null ? _d : "").trim();
     const tagItems = formAllTags().map((t) => {
       var _a2;
       return `<button type="button" class="dm-pick-item${t === o.typeTag ? " is-on" : ""}" data-f-tag="${esc(t)}"><span class="dot" style="background:${typeColor((_a2 = getGroupForTag(t)) != null ? _a2 : "其他")}"></span>${esc(t)}</button>`;
@@ -423,6 +426,10 @@ var BZR_cinema = (() => {
       <div style="flex:1;min-width:0">
         <div class="dm-title">${esc(d.title)}</div>
         <div class="dm-badges">${formTagChipHtml(o.typeTag, !!o.classifying)}${formStChipHtml(o.stText)}</div>
+        ${rc || dateText ? `<div class="dm-record">
+          ${rc ? `<span class="dm-stars">${getStarString(rc)}</span><span class="dm-rating">${Number(rc).toFixed(1)}</span>` : ""}
+          ${dateText ? `<span class="dm-date">${esc(dateText)}</span>` : ""}</div>` : ""}
+        ${reviewText ? `<div class="dm-review">${esc(reviewText)}</div>` : ""}
       </div>
     </div>
     <div class="dm-pick-list" data-pick-list="tag">${tagItems}</div>
@@ -575,6 +582,7 @@ var BZR_cinema = (() => {
     const view = root.querySelector(".j-view");
     if (!view) return;
     const v = inp.view;
+    root.querySelectorAll(".rail-foot .j-tool").forEach((b) => b.classList.toggle("is-on", v.view === "ai" && b.dataset.tool === "ai"));
     if (v.view === "ai") {
       view.innerHTML = spHeadHtml("AI 荐片", inp.aiCount ? `· ${inp.aiCount} 部` : "") + `<div class="sp-body">${inp.aiHtml}</div>`;
     } else {

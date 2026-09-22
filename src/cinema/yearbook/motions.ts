@@ -16,7 +16,7 @@
  * 抽屉拉开 / 均值线扫过 / 背靠背双峰 / 天平阻尼摆动 / 纵深飞入 / 对角波浪翻牌 / 右侧推入 /
  * 弧线归位 / 扇面摊开 / 磁带延展 / 打字机 / 弹幕漂流 / 热力矩阵扫行 / 墙面视差 / 落款错峰
  */
-import type { YbData } from './data';
+import { YB_TITLE, type YbData } from './data';
 import {
   at, clamp01, easeOut, easeInOut, easeBack, easeElastic, spring, stagger,
   canvas, sampleText, rgba, qsa, humanDur, humanDurShort, setFlap, lerp, type Palette,
@@ -96,7 +96,7 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
         if (cv && ps.length === 0 && w > 8) {
           builtFor = w;
           const fontPx = Math.max(46, Math.min(h * .42, w * .22));
-          // 两套靶点：先「686」，再化形成「观影志」——同一批粒子换靶点，不是两套动画
+          // 两套靶点：先「686」，再化形成片名 YB_TITLE——同一批粒子换靶点，不是两套动画
           const N = 1400;
           const resample = (text: string, fp: number): { x: number; y: number }[] => {
             const raw = sampleText(text, fp, 800, 4);
@@ -104,7 +104,8 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
             return Array.from({ length: N }, (_, i) => raw[Math.floor((i / N) * raw.length)]);
           };
           const a = resample(String(data.total), fontPx);
-          const b = resample('观影志', fontPx * .62);
+          // 四字比原三字宽：字号系数按位宽同比收（.62 × 3/4 ≈ .46），整串宽度与三字版持平
+          const b = resample(YB_TITLE, fontPx * .46);
           if (a.length !== b.length || !a.length) { /* 取样失败就只做第一段 */ }
           ps = a.map((p, i) => {
             const ang = (i / Math.max(1, N)) * Math.PI * 2 + Math.random() * .6;
@@ -123,7 +124,7 @@ export function buildPerfs(root: HTMLElement, data: YbData, host: HTMLElement = 
           cv.clear();
           const ctx = cv.ctx;
           const cx = w / 2, cy = h / 2;
-          // 化形进度：1.5 秒汇聚成 686 → 停一拍 → 1.1 秒再化成「观影志」（常驻停在这两个字上）
+          // 化形进度：1.5 秒汇聚成 686 → 停一拍 → 1.1 秒再化成片名（常驻停在片名上）
           const morph = easeInOut(at(t, 1.1, 2.5));
           const pxx = cx + (px * w) / 2, pyy = cy + (py * h) / 2;
           for (const p of ps) {

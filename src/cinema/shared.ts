@@ -401,6 +401,14 @@ export interface FormBackOpts {
   stText: string;
   /** 分类仍在判定中（2026-09-21）：徽标显示占位骨架，出结果后由行为层就地替换 */
   classifying?: boolean;
+  /** 我的记录（2026-09-21 用户拍板）：解析翻到背面后，正面填的**评分 / 影评**与**观影日期**
+   *  也要看得见——与详情弹窗同形制（星级+分数、日期、影评）**只读展示，不带控件**。
+   *  取值口径由行为层给：评分/影评取正面已填值，日期走保存时的同一判据（ui.watchDateOf）。
+   *  ⚠ 星级/日期**不能塞进 `.dm-badges` 行**：分类判定回来的 `updateBadges()` 整行重写，
+   *  塞那儿会被冲掉（2026-09-21 用户实测「分类填充后观影日期和评分又消失了」）。 */
+  rating?: number;
+  watchDate?: string;
+  review?: string;
 }
 
 /** 分类徽标：判定中显示占位骨架（不预告默认值，避免「先看到一个错值再变」），
@@ -417,7 +425,8 @@ export function formStChipHtml(stText: string): string {
 
 /** 卡片背面（issue 395）：**与详情弹窗同形制**（dm-head + 豆瓣信息 + 热门短评）。
  *  唯一区别：详情弹窗的类型/状态是只读徽标，这里是可点下拉（点击展开候选，选中即回填）。
- *  不放「我的记录」段——评分/影评在正面状态下方（2026-09-21 用户拍板：点已看当场能填）。
+ *  评分/影评的可填控件在正面状态下方（2026-09-21 拍板：点已看当场能填）；背面把那三项
+ *  **显示**出来（issue 409 追加拍板：解析后翻不过去，背面得看得见自己填了什么）。
  *  徽标不带小三角（2026-09-21 用户拍板：能点就够了，不额外加装饰性指示）。 */
 export function formBackHtml(d: FormPreviewData | null, o: FormBackOpts): string {
   if (!d) return '';
@@ -431,6 +440,9 @@ export function formBackHtml(d: FormPreviewData | null, o: FormBackOpts): string
     ['豆瓣评分', d.doubanRating],
   ] as [string, string][]).filter(([, v]) => v !== '');
   const hot = (d.hotComment ?? '').trim();
+  const rc = (o.rating ?? 0) > 0 ? (o.rating as number) : 0;
+  const dateText = (o.watchDate ?? '').slice(0, 10);
+  const reviewText = (o.review ?? '').trim();
   const tagItems = formAllTags()
     .map((t) => `<button type="button" class="dm-pick-item${t === o.typeTag ? ' is-on' : ''}" data-f-tag="${esc(t)}"><span class="dot" style="background:${typeColor(getGroupForTag(t) ?? '其他')}"></span>${esc(t)}</button>`)
     .join('');
@@ -444,6 +456,10 @@ export function formBackHtml(d: FormPreviewData | null, o: FormBackOpts): string
       <div style="flex:1;min-width:0">
         <div class="dm-title">${esc(d.title)}</div>
         <div class="dm-badges">${formTagChipHtml(o.typeTag, !!o.classifying)}${formStChipHtml(o.stText)}</div>
+        ${rc || dateText ? `<div class="dm-record">
+          ${rc ? `<span class="dm-stars">${getStarString(rc)}</span><span class="dm-rating">${Number(rc).toFixed(1)}</span>` : ''}
+          ${dateText ? `<span class="dm-date">${esc(dateText)}</span>` : ''}</div>` : ''}
+        ${reviewText ? `<div class="dm-review">${esc(reviewText)}</div>` : ''}
       </div>
     </div>
     <div class="dm-pick-list" data-pick-list="tag">${tagItems}</div>

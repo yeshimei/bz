@@ -11,7 +11,7 @@
 import type { CinemaItem } from '../state';
 import { escapeHtml as esc } from '../../core/utils';
 import { flapHtml, humanDurShort, dotted } from './kits';
-import { humanMinutes } from './data';
+import { humanMinutes, YB_TITLE } from './data';
 import type { YbData } from './data';
 
 /** 幕表：编号固定，引擎按顺序翻。hint 是底栏用的短名 */
@@ -586,7 +586,7 @@ export function yearbookHtml(data: YbData, posterOf: (it: CinemaItem) => string 
         <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapDur">${flapHtml(zeroOf(humanDurShort(data.totalMinutes)))}</b><span>片长合计</span></div>
         <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapEp">${flapHtml(zeroOf(String(data.epTotal)))}</b><span>集剧集</span></div>
       </div>
-    </div>`, `观影志 · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
+    </div>`, `${YB_TITLE} · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
 
   /* 固定层：右侧刻度 + 底栏（挂 film 上，滚幕不动） */
   const fixed = `<div class="yb-fixed">

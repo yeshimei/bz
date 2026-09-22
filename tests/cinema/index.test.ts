@@ -177,9 +177,9 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     expect(getNoticeMessages()).toEqual([]);
   });
 
-  // 观影志（独立全屏长片，2026-09-22 重写）语义：只看不抓——不开面板，
-  // 也就没有面板打开时的扫尾入队；补抓由 openCinema（面板）那条路径负责（上一条用例钉着）。
-  it('openCinemaAnalysis（独立观影志）：不开面板、不触发抓取入队，影片照常渲染', async () => {
+  // 观影分析（覆盖影院面板的一层，ADR-0175）语义：只看不抓——面板没开就先开面板（层得有落脚处），
+  // 但**不**走 openCinema 的扫尾入队；补抓只由 openCinema（打开影院）那条路径负责（上一条用例钉着）。
+  it('openCinemaAnalysis（覆盖层）：面板没开先开面板再盖层，不触发抓取入队，影片照常渲染', async () => {
     setSettingsProvider(() => ({} as any));
     const vault = new MockVault();
     vault.files.set(
@@ -192,9 +192,11 @@ describe('cinema 打开面板触发豆瓣抓取队列（ADR-0113）', () => {
     openCinemaAnalysis(app);
     await new Promise((r) => setTimeout(r, 25));
     expect(fetched).toHaveLength(0);
-    expect(document.querySelector('.bz-yb')).toBeTruthy(); // 观影志开了（面板没有）
-    expect(document.querySelector('[data-cinema-root]')).toBeNull();
+    expect(document.querySelector('.bz-yb'), '观影分析层开了').toBeTruthy();
+    expect(document.querySelector('[data-cinema-root]'), '面板在层下待命').toBeTruthy();
+    expect(document.querySelector('.bz-yb-box'), '纸面在层框里（框 = 面板矩形）').toBeTruthy();
     closeYearbookOverlay();
+    expect(document.querySelector('.bz-yb'), '关层即回影院面板').toBeNull();
   });
 });
 

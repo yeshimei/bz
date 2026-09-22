@@ -150,7 +150,7 @@ export function listToolsHtml(view: CinemaView): string {
 
 // ---------- 渲染胶水（desk/mob 各自回填挂点；两侧同构执行） ----------
 
-/** desk 渲染：侧栏 rail + 主视图（list/ai 按视图状态装配；观影分析走独立全屏弹窗，不在面板内） */
+/** desk 渲染：侧栏 rail + 主视图（list/ai 按视图状态装配；观影分析走覆盖面板的一层，ADR-0175） */
 export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput): void {
   const rail = railHtml(inp.allCards, inp.view);
   const groupsEl = root.querySelector('.j-groups');
@@ -160,6 +160,10 @@ export function renderMidnightDesk(root: HTMLElement, inp: MidnightRenderInput):
   const view = root.querySelector('.j-view');
   if (!view) return;
   const v = inp.view;
+  // 底片（滑动高亮）的回落目标是 `.is-on` 项：AI 荐片页把入口点亮，底片就常驻在它身上
+  // （原来这两页 rail 整体熄灭、底片没有目标而隐去；观影分析盖住面板，不需要停留点）
+  root.querySelectorAll<HTMLElement>('.rail-foot .j-tool')
+    .forEach((b) => b.classList.toggle('is-on', v.view === 'ai' && b.dataset.tool === 'ai'));
   if (v.view === 'ai') {
     view.innerHTML = spHeadHtml('AI 荐片', inp.aiCount ? `· ${inp.aiCount} 部` : '') + `<div class="sp-body">${inp.aiHtml}</div>`;
   } else {

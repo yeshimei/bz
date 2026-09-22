@@ -90,7 +90,7 @@
 .bz-cinema--midnight .slide-pill.is-instant{transition:none}
 /* 排序钮：底片 = 原来那枚选中的白片（容器 .seg 自己带 chip 底轨，所以这片用面板色 + 投影） */
 .bz-cinema--midnight .seg .slide-pill{background:var(--panel);box-shadow:0 1px 3px #0002}
-.bz-cinema--midnight .d-scroll{flex:1;overflow-y:auto;padding:2px 20px 20px}
+.bz-cinema--midnight .d-scroll{flex:1;overflow-y:auto;padding:10px 20px 20px}
 .bz-cinema--midnight .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:15px 14px}
 /* 位移挂在**整卡**（issue 401）：原来只抬 .pw，片名与星级是 .pw 的兄弟、原地不动，
    鼠标下卡片内距在变；抬升与推近的时长也各走一条，收势时图还在放大。
@@ -174,6 +174,9 @@
 .bz-cinema--midnight .dm-poster img{width:100%;height:100%;object-fit:cover;display:block}
 .bz-cinema--midnight .dm-title{font-family:"Noto Serif SC",SimSun,serif;font-size:var(--bz-font-title);font-weight:700;color:var(--ink);line-height:1.4}
 .bz-cinema--midnight .dm-badges{display:flex;align-items:center;gap:6px;margin-top:var(--bz-space-sm);flex-wrap:wrap}
+/* 添加电影背面的「我的记录」（issue 409）：评分 / 观影日期只读展示，与徽标行同排版。
+   **独立一行**——徽标行会被分类回填整行重写（updateBadges），记录件塞进去会被冲掉。 */
+.bz-cinema--midnight .dm-record{display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap}
 .bz-cinema--midnight .dm-chip{font-size:10.5px;padding:2px 9px;border-radius:99px;color:#fff;letter-spacing:.06em}
 .bz-cinema--midnight .dm-stars{font-size:var(--bz-font-meta);color:var(--star);letter-spacing:1px}
 .bz-cinema--midnight .dm-rating{font-size:var(--bz-font-label);font-weight:700;color:var(--ink)}
@@ -751,17 +754,23 @@
 .bz-cinema--midnight .cn-modal--detail > *:nth-child(n+10){animation-delay:.27s}
 
 /* ── 卡片：整卡抬升 + 海报轻微推近，两者同期（issue 401：原来抬 .pw 而片名不动、
-   抬升 .28s / 推近 .44s 两条时长）；按下回弹也落在整卡上 ── */
-.bz-cinema--midnight .pcard{transition:transform var(--cn-m-base) var(--cn-e-out)}
+   抬升 .28s / 推近 .44s 两条时长）；按下回弹也落在整卡上。
+   跟手倾斜（issue 409）也走这一条 transform：角度由行为层写 `--tlt-*` 变量（默认 0 度 = 恒等变换），
+   写变量而不是 inline transform——抬升与回弹才不会整条被顶掉。 ── */
+.bz-cinema--midnight .pcard{--tlt-x:0deg; --tlt-y:0deg; --tlt-lift:0px; --tlt-scale:1;
+  transform:perspective(900px) rotateX(var(--tlt-x)) rotateY(var(--tlt-y)) translateY(var(--tlt-lift)) scale(var(--tlt-scale));
+  transition:transform var(--cn-m-base) var(--cn-e-out)}
+/* 跟手期间收短到 fast 档：base 档跟不住指针；离手回落仍走 base（类摘掉即恢复） */
+.bz-cinema--midnight .pcard.is-tilt{transition:transform var(--cn-m-fast) var(--cn-e-out)}
 .bz-cinema--midnight .pw{transition:box-shadow var(--cn-m-base),border-color var(--cn-m-fast)}
 .bz-cinema--midnight .pw img{transition:transform var(--cn-m-base) var(--cn-e-out)}
 @media (hover: hover) {
-  .bz-cinema--midnight .pcard:hover{transform:translateY(-6px)}
+  .bz-cinema--midnight .pcard:hover{--tlt-lift:-6px}
   .bz-cinema--midnight .pcard:hover .pw{border-color:var(--gold);
     box-shadow:0 16px 34px #00000052,0 3px 9px #0003}
   .bz-cinema--midnight .pcard:hover .pw img{transform:scale(1.045)}
 }
-.bz-cinema--midnight .pcard:active{transform:translateY(-2px) scale(.986)}
+.bz-cinema--midnight .pcard:active{--tlt-lift:-2px; --tlt-scale:.986}
 
 /* ── 按钮与可选项：hover 有微光、按下有回弹（原来只有颜色变化，点击缺手感） ── */
 .bz-cinema--midnight .dm-btn,
@@ -847,12 +856,12 @@
 
    配色：**纸/墨/朱/靛**（编辑部数据图鉴，不是影院皮肤）。亮色默认、跟随 Obsidian 明暗
    （.theme-dark 覆写）；所有颜色只走 `--yb-*`，画布经 kits.palette() 读同一批变量。
-   尺度：整片字体基准 = `.bz-yb` 的 font-size（随窗口缩放），幕内一律 em，不写 px。
+   尺度：整片字体基准 = `.bz-yb-box` 的 font-size（行为层按层框派生后写内联，ADR-0175），幕内一律 em，不写 px。
    ══════════════════════════════════════════════════════════════════════════ */
 .bz-yb{
   position:fixed; inset:0; z-index:50;
-  font-size:clamp(13px,1.15vmin + 4px,19px);
-  background:var(--yb-paper); color:rgb(var(--yb-ink-rgb));
+  font-size:12px; /* 兜底值：真值由 fitYbBox 按层框写内联（面板没几何时也不至于塌成 0） */
+  color:rgb(var(--yb-ink-rgb));
   font-family:var(--font-interface, -apple-system, "Segoe UI", system-ui, sans-serif);
   font-variant-numeric:tabular-nums;
   --yb-paper:#f4f0e7;
@@ -881,7 +890,11 @@
   --yb-jade-rgb:96,196,170;
   --yb-gold-rgb:226,182,104;
 }
-.bz-yb.is-nudge{animation:bzYbNudge var(--cn-m-base) var(--cn-e-out)}
+/* 层框 = 影院面板矩形（ADR-0175）：纸面、圆角、投影都落在这儿；几何与基字号由行为层写内联。
+   框外那圈是遮罩——点它关闭（层根本身透明，露出的就是影院面板自己的底色）。 */
+.bz-yb-box{position:absolute; overflow:hidden; background:var(--yb-paper);
+  box-shadow:0 14px 44px #0004,0 2px 8px #0002}
+.bz-yb-box.is-nudge{animation:bzYbNudge var(--cn-m-base) var(--cn-e-out)}
 @keyframes bzYbNudge{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 
 .bz-yb-scroll{position:absolute; inset:0; overflow-y:auto; overflow-x:hidden;
@@ -1471,7 +1484,8 @@
  *  于是「钟盘/胶片盘被挤成窄条、主图整块消失」（2026-09-22 用户在窄窗口实测）。
  *  这里按幕逐个给：该并排的并排（两列），该铺满的铺满（跨列），子项列号一并复位。 */
 @media (max-width: 900px){
-  .bz-yb{font-size:clamp(12px,2.6vmin,17px)}
+  /* 基字号不再在这里覆盖：真值由 fitYbBox 按层框写内联（ADR-0175），层内一律跟框走——
+     这条 vmin 覆盖既被内联盖住、口径也和「随框派生」相抵，删掉。 */
   .yb-sc{padding:1.8em 2.2em 3em 2em}
 
   /* 06 片长画像：上排「胶片盘 + 数字」，下排柱状图铺满 */

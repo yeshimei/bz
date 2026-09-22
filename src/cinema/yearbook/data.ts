@@ -12,6 +12,10 @@ import { STATUS_WANT, STATUS_WATCHING, STATUS_WATCHED } from '../constants';
 
 /* ─────────── 类型 ─────────── */
 
+/** 上屏片名（01 开卷的粒子第二靶点 + 26 落款副题共用一份）。
+ *  2026-09-21 用户拍板：原来的三字改「观影分析」四字——代码域名词仍留 yearbook / 观影志。 */
+export const YB_TITLE = '观影分析';
+
 export interface YbYear { y: number; films: CinemaItem[] }
 export interface YbRank { name: string; films: CinemaItem[] }
 export interface YbSeries { base: string; films: CinemaItem[] }

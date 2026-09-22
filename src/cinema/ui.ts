@@ -502,8 +502,12 @@ function restFace(dot: HTMLElement): void {
   const slotsNow = faceSlots(card);
   if (slotsNow.length === 4) slotsNow[0].innerHTML = st.snap[0];
   const gen = ++st.gen;
+  // 同轮只收一次：`fold.finished` 与兜底定时器**都会**叫 done，gen 只挡「新一轮换脸」，
+  // 挡不住同轮重入——重入一次就多播一遍 peekTextFade（用户报的「移开鼠标文字闪两次」，issue 409）
+  let closed = false;
   const done = (): void => {
-    if (st.gen !== gen) return; // 已被新一轮涟漪接管（本轮折回被 cancel）→ 收尾作废
+    if (closed || st.gen !== gen) return; // 已收过 / 已被新一轮涟漪接管（本轮折回被 cancel）→ 作废
+    closed = true;
     st.anim = null;
     layer?.remove();
     const slots = faceSlots(card);
@@ -528,6 +532,47 @@ function restFace(dot: HTMLElement): void {
     return;
   }
   window.setTimeout(done, PEEK_BACK_MS + 400); // 兜底：动画事件丢失也必须收尾（同 396 handOver）
+}
+
+const TILT_DEG = 5.5; // 倾斜上限（度）：再大就不是「跟手」而是「晃卡」了
+
+/** 卡片海报跟手倾斜（issue 409）：指针在海报上时整卡随位置小幅 3D 倾斜。
+ *  量写进 `--tlt-x/--tlt-y` 变量、由 CSS 那条 transform 统一消费——`.pcard` 的 transform 还背着
+ *  hover 抬升与按下回弹（issue 401），inline transform 会把它们整条顶掉。
+ *  rect 在**进入这张卡时**量一次并缓存：倾斜会改变海报的投影矩形，逐帧重量等于把自己量进反馈环。
+ *  只在悬浮能力的设备上绑（触屏 tap 会发 pointermove 却不发 leave，倾斜会粘住）。 */
+function bindCardTilt(sec: HTMLElement): void {
+  let card: HTMLElement | null = null;
+  let box: DOMRect | null = null;
+  const rest = (): void => {
+    if (!card) return;
+    card.style.setProperty('--tlt-x', '0deg');
+    card.style.setProperty('--tlt-y', '0deg');
+    card.classList.remove('is-tilt');
+    card = null;
+    box = null;
+  };
+  sec.addEventListener('pointermove', (e) => {
+    const pw = (e.target as HTMLElement | null)?.closest?.('.pw') as HTMLElement | null;
+    const next = pw?.closest<HTMLElement>('.pcard') ?? null;
+    if (!pw || !next) { rest(); return; }
+    if (next !== card) {
+      rest();
+      const r = pw.getBoundingClientRect();
+      if (r.width < 8 || r.height < 8) return; // 无几何（测试环境 / 卡片隐藏）：不接
+      card = next;
+      box = r;
+      next.classList.add('is-tilt');
+    }
+    if (!box) return;
+    const x = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+    const y = Math.min(1, Math.max(0, (e.clientY - box.top) / box.height));
+    card.style.setProperty('--tlt-y', `${((x - .5) * 2 * TILT_DEG).toFixed(2)}deg`);
+    card.style.setProperty('--tlt-x', `${((.5 - y) * 2 * TILT_DEG).toFixed(2)}deg`);
+  });
+  sec.addEventListener('pointerleave', rest);
+  // 点海报开详情前先归零：共享元素过渡量的是静置矩形，带着倾斜量会把飞行起点算歪（捕获先于开层）
+  sec.addEventListener('click', rest, true);
 }
 
 /** 移动端长按 → 底部抽屉（手势 core/dom.longPress；卡片每次重渲染重建后重挂）。
@@ -669,7 +714,12 @@ interface FlightFrom { el: HTMLElement; borrow: Borrow }
  *  关 = 折回 200 + 飞回 200）。刻意不做 prefers-reduced-motion 放缓分支：用户本人系统即报
  *  reduce，时长是他试出来的明确口径，放缓分支等于替他改决定。 */
 const SE_FLIGHT = MOTION.move; // 海报单程飞行（去程直达）
-const SE_GROW = MOTION.move;   // 面板从海报撑开 / 折回海报
+const SE_GROW = MOTION.move;   // 面板折回海报（关闭方向）
+/** 开面板（海报矩形撑开成详情）的时长：2026-09-21 用户拍板「改成 .3s」——比台账四档都长，
+ *  是这条揭示动效的**用户指定值**（不放宽台账，只是这一个数由拍板给定；口径在 .8/.6/.5 后定为 .3）。
+ *  **不提前**（同日拍板「改成不提前了」）：海报落地那一帧才起撑，两段仍是先飞后开。
+ *  与关闭方向不对称是刻意的：开是揭示、慢；关是收回、干脆。 */
+const SE_GROW_OPEN = 300;
 
 /** 目标尺寸的海报克隆（飞行件）。挂哪层由调用方定：去程挂遮罩层（随弹窗生灭），
  *  返程挂共享宿主——它是 display:contents、自己没有盒，绝对定位实际落在面板根上，
@@ -921,14 +971,13 @@ function createSharedFlight(): {
           });
           moo.observe(overlay.parentNode, { childList: true });
         }
-        const land = (): void => {
-          if (phase !== 'flying') return;
-          phase = 'open';
+        // 面板从海报矩形撑开：clip-path 只揭示、不位移，海报原地不动；
+        // 终帧外扩 64px 罩住面板投影（clip-path 连投影一起裁），fill 缺省 none，结束即卸
+        let revealed = false;
+        const reveal = (): void => {
+          if (revealed || phase !== 'flying') return;
+          revealed = true;
           modal.style.visibility = '';
-          clone.remove();
-          flyingClone = null;
-          // 面板从海报矩形撑开：clip-path 只揭示、不位移，海报原地不动；
-          // 终帧外扩 64px 罩住面板投影（clip-path 连投影一起裁），fill 缺省 none，结束即卸
           try {
             const pr = modal.getBoundingClientRect();
             const t2 = target!.getBoundingClientRect();
@@ -936,8 +985,15 @@ function createSharedFlight(): {
             modal.animate([
               { clipPath: `inset(${Math.max(0, t2.top - pr.top)}px ${Math.max(0, pr.right - t2.right)}px ${Math.max(0, pr.bottom - t2.bottom)}px ${Math.max(0, t2.left - pr.left)}px round 8px)` },
               { clipPath: `inset(-64px round ${radius}px)` },
-            ], { duration: SE_GROW, easing: EASE.out });
+            ], { duration: SE_GROW_OPEN, easing: EASE.out });
           } catch { /* 动画不可用（测试环境）：面板已在终态 */ }
+        };
+        const land = (): void => {
+          if (phase !== 'flying') return;
+          reveal(); // 海报落地那一帧才起撑（2026-09-21 用户拍板：不提前）
+          phase = 'open';
+          clone.remove();
+          flyingClone = null;
         };
         fly.finished.then(land).catch(() => { if (phase === 'flying') this.bail(); });
       } catch {
@@ -1047,49 +1103,84 @@ export function openRandomMovie(app: App): void {
   notice(want.length ? `抽到「${it.name}」` : `想看清单空着，从全部影视里抽到「${it.name}」`, 'success');
 }
 
-// ---------- 观影志：独立全屏长片（2026-09-22 重写；26 幕，一幕一屏） ----------
+// ---------- 观影分析：覆盖影院面板的一层（ADR-0175；26 幕长片见 yearbook/） ----------
 
 let ybOvl: HTMLElement | null = null;
 let ybHandle: YbHandle | null = null;
+let ybSync: (() => void) | null = null; // 层框跟随面板矩形（窗 resize / 面板 resize）
+let ybRo: ResizeObserver | null = null;
 
-/** 打开观影志：整屏弹窗挂 body，与影院面板互不依赖（命令入口面板没开也能看）。
+/** 层框 = 面板矩形（ADR-0175）：层根 fixed inset:0，客户端坐标即层内坐标，rect 直接写内联。
+ *  基字号随层框派生（不再 vmin）——面板是固定尺寸，跟窗口跑会让真机与原型排成两个密度。 */
+function fitYbBox(box: HTMLElement, panel: HTMLElement | null): void {
+  const r = panel?.getBoundingClientRect();
+  if (!panel || !r || r.width < 40 || r.height < 40) return; // 面板没几何（测试环境）：保持 CSS 兜底
+  box.style.left = `${Math.round(r.left)}px`;
+  box.style.top = `${Math.round(r.top)}px`;
+  box.style.width = `${Math.round(r.width)}px`;
+  box.style.height = `${Math.round(r.height)}px`;
+  const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+  box.style.fontSize = `${base.toFixed(2)}px`;
+  box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || '';
+}
+
+/** 打开观影分析：**覆盖影院面板的一层**（ADR-0175，2026-09-21 用户改口径；推翻此前的整屏独立形态）。
+ *  点框外（遮罩）＝关、ESC 同义；桌面不给关闭按钮，移动端面板满屏没有遮罩可点、按钮即出口。
  *  内容 = 26 幕长片（yearbook/），全部数据来自笔记 frontmatter 里的真实字段；
  *  一条影视都没有时给空态（带「添加影视」入口）。明暗跟随 Obsidian（styles.css 的 --yb-* 变量层）。
  *  翻幕：滚轮/方向键一滚一幕，翻到的那幕从头演一遍；「自动」按钮按各幕时长自己往下放。 */
 export function openYearbookOverlay(app: App): void {
   if (ybOvl?.isConnected) { // 已开：不叠第二层，晃一下提示还在
-    ybOvl.classList.remove('is-nudge');
-    void ybOvl.offsetWidth;
-    ybOvl.classList.add('is-nudge');
+    const box = ybOvl.querySelector<HTMLElement>('.bz-yb-box');
+    if (box) { box.classList.remove('is-nudge'); void box.offsetWidth; box.classList.add('is-nudge'); }
     return;
   }
   rebuildItems(app);
   const data = deriveYb(M.items);
+  const panel = M.currentOverlay?.querySelector<HTMLElement>('[data-cinema-root]') ?? null;
   const ovl = document.createElement('div');
   ovl.className = 'bz-yb';
+  // 层根只当遮罩（透明、接「点框外」）；纸面与内容全在 .bz-yb-box 里，框即面板矩形
   ovl.innerHTML = `
-    <button class="bz-yb-close" data-yb-close title="关闭观影志" aria-label="关闭观影志">${iconSpan(ICON.close)}</button>
-    <div class="bz-yb-scroll">${data.total
-      ? yearbookHtml(data, (it) => posterUrl(it, app))
-      : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>`;
+    <div class="bz-yb-box">
+      ${isMobileEnv() ? `<button class="bz-yb-close" data-yb-close title="关闭观影分析" aria-label="关闭观影分析">${iconSpan(ICON.close)}</button>` : ''}
+      <div class="bz-yb-scroll">${data.total
+        ? yearbookHtml(data, (it) => posterUrl(it, app))
+        : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>
+    </div>`;
   document.body.appendChild(ovl);
   mountIcons(ovl);
   topifyZ(ovl); // 显示即发号（ADR-0067）：叠在影院面板/其它浮层之上，关掉即销号
   ybOvl = ovl;
+  const box = ovl.querySelector<HTMLElement>('.bz-yb-box');
+  if (box) {
+    fitYbBox(box, panel);
+    ybSync = () => fitYbBox(box, panel);
+    window.addEventListener('resize', ybSync);
+    // 面板自身也会 resize（Obsidian 窗口变化 / 移动端旋屏）：跟它同步，别只在窗 resize 时对一次
+    if (typeof ResizeObserver === 'function' && panel) {
+      ybRo = new ResizeObserver(ybSync);
+      ybRo.observe(panel);
+    }
+  }
   ovl.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
-    if (t.closest('[data-yb-close]')) closeYearbookOverlay();
-    // 空态里的「添加影视」：先收观影志再开表单（表单在面板层，留着会把它盖住）
-    else if (t.closest('[data-cinema-analysis-add]')) { closeYearbookOverlay(); openAddModalDirect(app); }
+    // 空态里的「添加影视」：先收观影分析再开表单（表单在面板层，留着会把它盖住）
+    if (t.closest('[data-cinema-analysis-add]')) { closeYearbookOverlay(); openAddModalDirect(app); return; }
+    if (t.closest('[data-yb-close]')) { closeYearbookOverlay(); return; }
+    if (!t.closest('.bz-yb-box')) closeYearbookOverlay(); // 点框外 = 遮罩，关掉露出影院面板
   });
   registerPanelEsc('cinema-yearbook', () => !!ybOvl?.isConnected, closeYearbookOverlay);
   if (data.total) ybHandle = bindYearbook(ovl, data);
 }
 
-/** 关闭观影志：引擎先停（rAF/监听/观察者自灭），再摘层。幂等。 */
+/** 关闭观影分析：引擎先停（rAF/监听/观察者自灭），再摘层与几何跟随。幂等。 */
 export function closeYearbookOverlay(): void {
   ybHandle?.stop();
   ybHandle = null;
+  if (ybSync) { window.removeEventListener('resize', ybSync); ybSync = null; }
+  ybRo?.disconnect();
+  ybRo = null;
   unregisterPanelEsc('cinema-yearbook');
   ybOvl?.remove();
   ybOvl = null;
@@ -1300,11 +1391,27 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     refreshFormState();
   }
 
+  /** 观影日期判据（单源）：状态变了取当下、没变沿用原有——保存落盘与背面展示共用这一份，
+   *  各算一份必然出现「背面写的日期和真存下去的不是同一天」。 */
+  const watchDateOf = (): string => {
+    const stChanged = !editing || !item || item.status
+      !== (cur.st === '想看' ? STATUS_WANT : cur.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED);
+    return stChanged ? localNow() : (item!.watchDate || localNow());
+  };
+
   /** 背面渲染：与详情弹窗同形制；分类 / 状态是有下拉的徽标。
-   *  评分/影评不在这面——在正面状态下方（2026-09-21 用户拍板：点已看当场能填） */
+   *  可填控件（评分滑杆 / 影评框）在正面状态下方（2026-09-21 拍板：点已看当场能填）；
+   *  背面把「我的记录」**只读显示**出来（issue 409 追加拍板：解析之后翻不回正面，
+   *  背面得看得见自己刚填的评分 / 影评，以及这一笔存下去会是哪一天）。 */
   function renderBack(): void {
     if (!backSlot) return;
-    backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
+    const watched = cur.st === '已看'; // 只有已看有记录：非已看态正面根本不给填
+    backSlot.innerHTML = formBackHtml(previewDataOf(parsed), {
+      typeTag: cur.tag, stText: cur.st, classifying,
+      rating: watched ? Number(el.querySelector<HTMLInputElement>('.j-range')?.value ?? 0) : 0,
+      review: watched ? el.querySelector<HTMLTextAreaElement>('.j-review-t')?.value ?? '' : '',
+      watchDate: watched ? watchDateOf() : '',
+    });
     applyTagOn();
     applyStOn();
   }
@@ -1375,8 +1482,7 @@ function openForm(sec: HTMLElement, item: CinemaItem | null, app: App, presetSt?
     const name = (el.querySelector('.j-name') as HTMLInputElement).value.trim();
     if (!name) { notice('请输入名称', 'warning'); return; }
     if (isDuplicateName(name, item?.name)) { notice(DUP_NAME_HINT_FULL, 'warning'); return; }
-    const stChanged = !editing || !item || item.status !== (cur.st === '想看' ? STATUS_WANT : cur.st === '在看' ? STATUS_WATCHING : STATUS_WATCHED);
-    const date = stChanged ? localNow() : (item!.watchDate || localNow());
+    const date = watchDateOf();
     // 想看编码 -1（评分推断状态的既有合法值，AI「＋想看」quickAddWant 同口径）：
     // 若给 null 会在 persistItem 被 `?? 0` 兜底成 0 → 落盘重解析判为在看，编辑/新增想看当场弹回。
     // 评分/影评在正面状态下方（2026-09-21 用户拍板）——编辑/新增两态同一个框，querySelector 直取。
@@ -1749,6 +1855,7 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
       if (to?.closest?.('.season-dots')) return;
       endPeek();
     });
+    bindCardTilt(sec); // 海报跟手倾斜（issue 409）：与换脸同一道悬停能力门控
   }
   // 深审批 B #4：卡片键盘可达——.pcard 已带 tabindex=0/role=button（shared.cardHtml），
   // 聚焦后 Enter/Space 开详情（与 click 分支同一落点分流；对齐 review 域不可达卡整改范式）。

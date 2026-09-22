@@ -233,6 +233,15 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
   const mo = new MutationObserver(() => { pal = palette(root); });
   mo.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 
+  // 滚动口尺寸变化 → 重锚当前幕（覆盖层形态下层框跟面板走，窗 resize / 旋屏都会改幕高；
+  // 幕高由滚动口解析，不重锚的话 scrollTop 停在旧倍数上，幕号与画面错位——ADR-0175）
+  const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(() => {
+    if (dead || cur < 0) return;
+    const want = cur * unit();
+    if (Math.abs(scEl.scrollTop - want) > 1) scEl.scrollTop = want;
+  }) : null;
+  ro?.observe(scEl);
+
   root.addEventListener('pointermove', onPointer);
   root.addEventListener('pointerdown', onPtrDown);
   root.addEventListener('pointerup', onPtrUp);
@@ -252,6 +261,7 @@ export function bindYearbook(root: HTMLElement, data: YbData): YbHandle {
     rafStop(raf);
     clearTimeout(fallback);
     mo.disconnect();
+    ro?.disconnect();
     clearCut();
     root.removeEventListener('pointermove', onPointer);
     root.removeEventListener('pointerdown', onPtrDown);

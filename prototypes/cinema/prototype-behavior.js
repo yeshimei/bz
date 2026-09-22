@@ -1,4 +1,4 @@
-/* 源指纹 4ffef5e4718b3b23 · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 0676f1b52b27622c · 仓内输入 69 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -7429,6 +7429,7 @@ tags:
   }
 
   // src/cinema/yearbook/data.ts
+  var YB_TITLE = "观影分析";
   function parseMinutes(raw) {
     if (!raw) return null;
     const s = String(raw);
@@ -8502,7 +8503,7 @@ tags:
         <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapDur">${flapHtml(zeroOf(humanDurShort(data.totalMinutes)))}</b><span>片长合计</span></div>
         <div class="yb-kv big"><b class="yb-flap-row yb-flap-big" data-r="flapEp">${flapHtml(zeroOf(String(data.epTotal)))}</b><span>集剧集</span></div>
       </div>
-    </div>`, `观影志 · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
+    </div>`, `${YB_TITLE} · ${data.yearMin}–${data.yearMax} · 共 ${YB_SCENES.length} 幕`));
     const fixed = `<div class="yb-fixed">
     <div class="yb-shutter" data-r="shutter" aria-hidden="true"><i class="t"></i><i class="b"></i></div>
     <div class="yb-rail" data-r="rail">${YB_SCENES.map((s, i) => `<i class="yb-rail-t" data-r="railT" data-i="${i}" title="${escapeHtml2(s.name)}"></i>`).join("")}</div>
@@ -8574,7 +8575,7 @@ tags:
               return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
             };
             const a = resample(String(data.total), fontPx);
-            const b = resample("观影志", fontPx * 0.62);
+            const b = resample(YB_TITLE, fontPx * 0.46);
             if (a.length !== b.length || !a.length) {
             }
             ps = a.map((p, i) => {
@@ -10149,6 +10150,12 @@ tags:
       pal = palette(root);
     });
     mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      if (dead || cur < 0) return;
+      const want = cur * unit();
+      if (Math.abs(scEl.scrollTop - want) > 1) scEl.scrollTop = want;
+    }) : null;
+    ro == null ? void 0 : ro.observe(scEl);
     root.addEventListener("pointermove", onPointer);
     root.addEventListener("pointerdown", onPtrDown);
     root.addEventListener("pointerup", onPtrUp);
@@ -10165,6 +10172,7 @@ tags:
       rafStop(raf);
       clearTimeout(fallback);
       mo.disconnect();
+      ro == null ? void 0 : ro.disconnect();
       clearCut();
       root.removeEventListener("pointermove", onPointer);
       root.removeEventListener("pointerdown", onPtrDown);
@@ -10731,7 +10739,7 @@ tags:
     return `<button type="button" class="dm-chip dm-chip--pick" data-pick="st" style="background:${(_a = ST_COLOR[stText]) != null ? _a : "#888"}">${esc(stText)}</button>`;
   }
   function formBackHtml(d, o) {
-    var _a;
+    var _a, _b, _c, _d;
     if (!d) return "";
     const rows = [
       ["豆瓣类型", d.genre],
@@ -10743,6 +10751,9 @@ tags:
       ["豆瓣评分", d.doubanRating]
     ].filter(([, v]) => v !== "");
     const hot = ((_a = d.hotComment) != null ? _a : "").trim();
+    const rc = ((_b = o.rating) != null ? _b : 0) > 0 ? o.rating : 0;
+    const dateText = ((_c = o.watchDate) != null ? _c : "").slice(0, 10);
+    const reviewText = ((_d = o.review) != null ? _d : "").trim();
     const tagItems = formAllTags().map((t) => {
       var _a2;
       return `<button type="button" class="dm-pick-item${t === o.typeTag ? " is-on" : ""}" data-f-tag="${esc(t)}"><span class="dot" style="background:${typeColor((_a2 = getGroupForTag(t)) != null ? _a2 : "其他")}"></span>${esc(t)}</button>`;
@@ -10757,6 +10768,10 @@ tags:
       <div style="flex:1;min-width:0">
         <div class="dm-title">${esc(d.title)}</div>
         <div class="dm-badges">${formTagChipHtml(o.typeTag, !!o.classifying)}${formStChipHtml(o.stText)}</div>
+        ${rc || dateText ? `<div class="dm-record">
+          ${rc ? `<span class="dm-stars">${getStarString(rc)}</span><span class="dm-rating">${Number(rc).toFixed(1)}</span>` : ""}
+          ${dateText ? `<span class="dm-date">${esc(dateText)}</span>` : ""}</div>` : ""}
+        ${reviewText ? `<div class="dm-review">${esc(reviewText)}</div>` : ""}
       </div>
     </div>
     <div class="dm-pick-list" data-pick-list="tag">${tagItems}</div>
@@ -10909,6 +10924,7 @@ tags:
     const view = root.querySelector(".j-view");
     if (!view) return;
     const v = inp.view;
+    root.querySelectorAll(".rail-foot .j-tool").forEach((b) => b.classList.toggle("is-on", v.view === "ai" && b.dataset.tool === "ai"));
     if (v.view === "ai") {
       view.innerHTML = spHeadHtml("AI 荐片", inp.aiCount ? `· ${inp.aiCount} 部` : "") + `<div class="sp-body">${inp.aiHtml}</div>`;
     } else {
@@ -11274,8 +11290,10 @@ tags:
     const slotsNow = faceSlots(card);
     if (slotsNow.length === 4) slotsNow[0].innerHTML = st.snap[0];
     const gen = ++st.gen;
+    let closed = false;
     const done = () => {
-      if (st.gen !== gen) return;
+      if (closed || st.gen !== gen) return;
+      closed = true;
       st.anim = null;
       layer == null ? void 0 : layer.remove();
       const slots = faceSlots(card);
@@ -11304,6 +11322,43 @@ tags:
       return;
     }
     window.setTimeout(done, PEEK_BACK_MS + 400);
+  }
+  var TILT_DEG = 5.5;
+  function bindCardTilt(sec) {
+    let card = null;
+    let box = null;
+    const rest = () => {
+      if (!card) return;
+      card.style.setProperty("--tlt-x", "0deg");
+      card.style.setProperty("--tlt-y", "0deg");
+      card.classList.remove("is-tilt");
+      card = null;
+      box = null;
+    };
+    sec.addEventListener("pointermove", (e) => {
+      var _a, _b, _c;
+      const pw = (_b = (_a = e.target) == null ? void 0 : _a.closest) == null ? void 0 : _b.call(_a, ".pw");
+      const next = (_c = pw == null ? void 0 : pw.closest(".pcard")) != null ? _c : null;
+      if (!pw || !next) {
+        rest();
+        return;
+      }
+      if (next !== card) {
+        rest();
+        const r = pw.getBoundingClientRect();
+        if (r.width < 8 || r.height < 8) return;
+        card = next;
+        box = r;
+        next.classList.add("is-tilt");
+      }
+      if (!box) return;
+      const x = Math.min(1, Math.max(0, (e.clientX - box.left) / box.width));
+      const y = Math.min(1, Math.max(0, (e.clientY - box.top) / box.height));
+      card.style.setProperty("--tlt-y", `${((x - 0.5) * 2 * TILT_DEG).toFixed(2)}deg`);
+      card.style.setProperty("--tlt-x", `${((0.5 - y) * 2 * TILT_DEG).toFixed(2)}deg`);
+    });
+    sec.addEventListener("pointerleave", rest);
+    sec.addEventListener("click", rest, true);
   }
   function attachLongPress(sec, app) {
     sec.querySelectorAll(".m-grid .pcard").forEach((c) => {
@@ -11417,6 +11472,7 @@ tags:
   }
   var SE_FLIGHT = MOTION.move;
   var SE_GROW = MOTION.move;
+  var SE_GROW_OPEN = 300;
   function spawnFlyClone(host, imgSrc, w, h, radius) {
     const clone = document.createElement("div");
     clone.className = "cn-fly";
@@ -11633,12 +11689,11 @@ tags:
             });
             moo.observe(overlay.parentNode, { childList: true });
           }
-          const land = () => {
-            if (phase !== "flying") return;
-            phase = "open";
+          let revealed = false;
+          const reveal = () => {
+            if (revealed || phase !== "flying") return;
+            revealed = true;
             modal.style.visibility = "";
-            clone.remove();
-            flyingClone = null;
             try {
               const pr = modal.getBoundingClientRect();
               const t2 = target.getBoundingClientRect();
@@ -11646,9 +11701,16 @@ tags:
               modal.animate([
                 { clipPath: `inset(${Math.max(0, t2.top - pr.top)}px ${Math.max(0, pr.right - t2.right)}px ${Math.max(0, pr.bottom - t2.bottom)}px ${Math.max(0, t2.left - pr.left)}px round 8px)` },
                 { clipPath: `inset(-64px round ${radius}px)` }
-              ], { duration: SE_GROW, easing: EASE.out });
+              ], { duration: SE_GROW_OPEN, easing: EASE.out });
             } catch (e) {
             }
+          };
+          const land = () => {
+            if (phase !== "flying") return;
+            reveal();
+            phase = "open";
+            clone.remove();
+            flyingClone = null;
           };
           fly.finished.then(land).catch(() => {
             if (phase === "flying") this.bail();
@@ -11710,31 +11772,66 @@ tags:
   }
   var ybOvl = null;
   var ybHandle = null;
+  var ybSync = null;
+  var ybRo = null;
+  function fitYbBox(box, panel) {
+    const r = panel == null ? void 0 : panel.getBoundingClientRect();
+    if (!panel || !r || r.width < 40 || r.height < 40) return;
+    box.style.left = `${Math.round(r.left)}px`;
+    box.style.top = `${Math.round(r.top)}px`;
+    box.style.width = `${Math.round(r.width)}px`;
+    box.style.height = `${Math.round(r.height)}px`;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    box.style.fontSize = `${base.toFixed(2)}px`;
+    box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || "";
+  }
   function openYearbookOverlay(app) {
+    var _a, _b;
     if (ybOvl == null ? void 0 : ybOvl.isConnected) {
-      ybOvl.classList.remove("is-nudge");
-      void ybOvl.offsetWidth;
-      ybOvl.classList.add("is-nudge");
+      const box2 = ybOvl.querySelector(".bz-yb-box");
+      if (box2) {
+        box2.classList.remove("is-nudge");
+        void box2.offsetWidth;
+        box2.classList.add("is-nudge");
+      }
       return;
     }
     rebuildItems(app);
     const data = deriveYb(M.items);
+    const panel = (_b = (_a = M.currentOverlay) == null ? void 0 : _a.querySelector("[data-cinema-root]")) != null ? _b : null;
     const ovl2 = document.createElement("div");
     ovl2.className = "bz-yb";
     ovl2.innerHTML = `
-    <button class="bz-yb-close" data-yb-close title="关闭观影志" aria-label="关闭观影志">${iconSpan(ICON.close)}</button>
-    <div class="bz-yb-scroll">${data.total ? yearbookHtml(data, (it) => posterUrl(it, app)) : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>`;
+    <div class="bz-yb-box">
+      ${isMobileEnv() ? `<button class="bz-yb-close" data-yb-close title="关闭观影分析" aria-label="关闭观影分析">${iconSpan(ICON.close)}</button>` : ""}
+      <div class="bz-yb-scroll">${data.total ? yearbookHtml(data, (it) => posterUrl(it, app)) : `<div class="bz-yb-blank"><p>影院还是空的——先添一部，这一页才有得放。</p><button class="bz-btn" data-cinema-analysis-add type="button">添加影视</button></div>`}</div>
+    </div>`;
     document.body.appendChild(ovl2);
     mountIcons(ovl2);
     topifyZ(ovl2);
     ybOvl = ovl2;
+    const box = ovl2.querySelector(".bz-yb-box");
+    if (box) {
+      fitYbBox(box, panel);
+      ybSync = () => fitYbBox(box, panel);
+      window.addEventListener("resize", ybSync);
+      if (typeof ResizeObserver === "function" && panel) {
+        ybRo = new ResizeObserver(ybSync);
+        ybRo.observe(panel);
+      }
+    }
     ovl2.addEventListener("click", (e) => {
       const t = e.target;
-      if (t.closest("[data-yb-close]")) closeYearbookOverlay();
-      else if (t.closest("[data-cinema-analysis-add]")) {
+      if (t.closest("[data-cinema-analysis-add]")) {
         closeYearbookOverlay();
         openAddModalDirect(app);
+        return;
       }
+      if (t.closest("[data-yb-close]")) {
+        closeYearbookOverlay();
+        return;
+      }
+      if (!t.closest(".bz-yb-box")) closeYearbookOverlay();
     });
     registerPanelEsc("cinema-yearbook", () => !!(ybOvl == null ? void 0 : ybOvl.isConnected), closeYearbookOverlay);
     if (data.total) ybHandle = bindYearbook(ovl2, data);
@@ -11742,6 +11839,12 @@ tags:
   function closeYearbookOverlay() {
     ybHandle == null ? void 0 : ybHandle.stop();
     ybHandle = null;
+    if (ybSync) {
+      window.removeEventListener("resize", ybSync);
+      ybSync = null;
+    }
+    ybRo == null ? void 0 : ybRo.disconnect();
+    ybRo = null;
     unregisterPanelEsc("cinema-yearbook");
     ybOvl == null ? void 0 : ybOvl.remove();
     ybOvl = null;
@@ -11916,9 +12019,22 @@ tags:
       updateBadges();
       refreshFormState();
     }
+    const watchDateOf = () => {
+      const stChanged = !editing || !item || item.status !== (cur.st === "想看" ? STATUS_WANT : cur.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED);
+      return stChanged ? localNow() : item.watchDate || localNow();
+    };
     function renderBack() {
+      var _a2, _b2, _c2, _d;
       if (!backSlot) return;
-      backSlot.innerHTML = formBackHtml(previewDataOf(parsed), { typeTag: cur.tag, stText: cur.st, classifying });
+      const watched = cur.st === "已看";
+      backSlot.innerHTML = formBackHtml(previewDataOf(parsed), {
+        typeTag: cur.tag,
+        stText: cur.st,
+        classifying,
+        rating: watched ? Number((_b2 = (_a2 = el.querySelector(".j-range")) == null ? void 0 : _a2.value) != null ? _b2 : 0) : 0,
+        review: watched ? (_d = (_c2 = el.querySelector(".j-review-t")) == null ? void 0 : _c2.value) != null ? _d : "" : "",
+        watchDate: watched ? watchDateOf() : ""
+      });
       applyTagOn();
       applyStOn();
     }
@@ -11985,8 +12101,7 @@ tags:
         notice(DUP_NAME_HINT_FULL, "warning");
         return;
       }
-      const stChanged = !editing || !item || item.status !== (cur.st === "想看" ? STATUS_WANT : cur.st === "在看" ? STATUS_WATCHING : STATUS_WATCHED);
-      const date = stChanged ? localNow() : item.watchDate || localNow();
+      const date = watchDateOf();
       const ratingBox = el.querySelector(".j-range");
       const rating = cur.st === "已看" ? ratingBox ? parseFloat(ratingBox.value) : DEFAULT_RATING : cur.st === "在看" ? 0 : -1;
       const reviewBox = el.querySelector(".j-review-t");
@@ -12293,6 +12408,7 @@ tags:
         if ((_a = to == null ? void 0 : to.closest) == null ? void 0 : _a.call(to, ".season-dots")) return;
         endPeek();
       });
+      bindCardTilt(sec);
     }
     sec.addEventListener("keydown", (e) => {
       var _a, _b, _c, _d;
