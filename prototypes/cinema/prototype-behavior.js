@@ -1,4 +1,4 @@
-/* 源指纹 bae8f44e2eb931a3 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1a82ca2e137bc8a3 · 仓内输入 70 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -5957,6 +5957,48 @@ var BZW_cinema = (() => {
       return true;
     }
   }
+  function parseRexxarSearch(jsonText) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    let data;
+    try {
+      data = JSON.parse(jsonText);
+    } catch (e) {
+      return [];
+    }
+    const items = (_a = data == null ? void 0 : data.subjects) == null ? void 0 : _a.items;
+    if (!Array.isArray(items)) return [];
+    const results = [];
+    for (const it of items) {
+      const type = it == null ? void 0 : it.target_type;
+      const sid = (_d = (_c = (_b = it == null ? void 0 : it.target) == null ? void 0 : _b.uri) == null ? void 0 : _c.match(/\/(\d+)/)) == null ? void 0 : _d[1];
+      if (type !== "movie" && type !== "tv" || !sid) continue;
+      results.push({
+        title: String((_f = (_e = it.target) == null ? void 0 : _e.title) != null ? _f : "").trim(),
+        detailUrl: `https://movie.douban.com/subject/${sid}/`,
+        posterUrl: String((_h = (_g = it.target) == null ? void 0 : _g.cover_url) != null ? _h : "")
+      });
+    }
+    return results;
+  }
+  function parseSearchResults(html) {
+    const results = [];
+    const itemRegex = /class="result"[\s\S]*?<div class="pic">[\s\S]*?<a[^>]*href="([^"]*)"[^>]*>[\s\S]*?<img[^>]*src="([^"]*)"[^>]*>[\s\S]*?<div class="title">[\s\S]*?<a[^>]*>([^<]+)<\/a>/g;
+    let match;
+    while ((match = itemRegex.exec(html)) !== null) {
+      const rawUrl = match[1];
+      const posterUrl2 = match[2];
+      const title = match[3].trim();
+      const urlMatch = rawUrl.match(/url=([^&]+)/);
+      const detailUrl = urlMatch ? decodeURIComponent(urlMatch[1]) : rawUrl;
+      results.push({ title, detailUrl, posterUrl: posterUrl2 });
+    }
+    return results;
+  }
+  function searchPageLooksBlocked(html) {
+    if (!html) return true;
+    if (html.length < 8e3) return true;
+    return !html.includes('class="result"') && !html.includes("没有找到") && !html.includes("没有相关的搜索结果");
+  }
   function upgradePosterUrl(url) {
     return url.replace("s_ratio_poster", "l_ratio_poster");
   }
@@ -6094,19 +6136,46 @@ var BZW_cinema = (() => {
     const v = m[1].trim().replace(/^"(.*)"$/, "$1").replace(/^'(.*)'$/, "$1").trim();
     return v || null;
   }
+  async function probeSuggest(name, deps) {
+    const headers = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
+    if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+    const json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, headers);
+    if (suggestLooksBlocked(json)) return { kind: "blocked" };
+    const results = parseSuggestResults(json);
+    return results.length > 0 ? { kind: "hit", results } : { kind: "empty" };
+  }
+  async function probeRexxarSearch(name, deps) {
+    const headers = { Referer: "https://m.douban.com/movie/" };
+    if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+    const json = await deps.httpGet(`https://m.douban.com/rexxar/api/v2/search?q=${encodeURIComponent(name)}&count=5`, headers);
+    if (!json) return { kind: "blocked" };
+    const results = parseRexxarSearch(json);
+    return results.length > 0 ? { kind: "hit", results } : { kind: "empty" };
+  }
+  async function probeSearchPage(name, deps) {
+    const headers = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
+    if (deps.doubanCookie) headers.Cookie = deps.doubanCookie;
+    const html = await deps.httpGet(`https://www.douban.com/search?cat=1002&q=${encodeURIComponent(name)}`, headers);
+    if (searchPageLooksBlocked(html)) return { kind: "blocked" };
+    const results = parseSearchResults(html);
+    return results.length > 0 ? { kind: "hit", results } : { kind: "empty" };
+  }
   async function queryDoubanByName(name, deps) {
-    const suggestHeaders = { Referer: "https://movie.douban.com/", "Accept-Language": "zh-CN,zh;q=0.9" };
-    if (deps.doubanCookie) suggestHeaders.Cookie = deps.doubanCookie;
-    let json;
+    let first = null;
+    let sawBlocked = false;
     try {
-      json = await deps.httpGet(`https://movie.douban.com/j/subject_suggest?q=${encodeURIComponent(name)}`, suggestHeaders);
+      for (const probe of [probeSuggest, probeRexxarSearch, probeSearchPage]) {
+        const r = await probe(name, deps);
+        if (r.kind === "hit") {
+          first = r.results[0];
+          break;
+        }
+        if (r.kind === "blocked") sawBlocked = true;
+      }
     } catch (e) {
       return { ok: false, reason: "network" };
     }
-    if (suggestLooksBlocked(json)) return { ok: false, reason: "blocked" };
-    const results = parseSuggestResults(json);
-    if (results.length === 0) return { ok: false, reason: "notfound" };
-    const first = results[0];
+    if (!first) return { ok: false, reason: sawBlocked ? "blocked" : "notfound" };
     const sid = extractSid(first.detailUrl);
     if (!sid) return { ok: false, reason: "notfound" };
     let az = null;
