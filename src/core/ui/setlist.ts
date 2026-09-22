@@ -31,6 +31,14 @@ export function uiSetlist(opts: BzSetlistOpts): HTMLDivElement {
     if (it.imageUrl) {
       const img = document.createElement('img');
       img.className = 'bz-setlist-avatar';
+      // 防盗链：B 站图床（i0/i1.hdslb.com）对任何带 Referer 的取图请求回 403；移动端 WebView 的
+      // origin 是 capacitor://localhost（iOS）/ http://localhost（Android），跨源取图必带 Referer
+      // → 头像一律 403，再走下面的 onerror 被移除（表现＝「名单列表不显示头像」）。
+      // 2026-09-22 实测（同 URL）：无 Referer 200；带 capacitor://localhost 或 http://localhost 均 403。
+      // no-referrer 让取图不带 Referer，桌面/移动同口径；对本地资源无副作用。
+      // 用 attribute 而非 IDL 属性：行为与浏览器一致，且 jsdom 未实现 referrerPolicy 的 IDL
+      // 反射（测试可与生产同口径断言）。
+      img.setAttribute('referrerpolicy', 'no-referrer');
       img.src = it.imageUrl;
       img.alt = '';
       img.onerror = () => img.remove(); // 头像加载失败不占位

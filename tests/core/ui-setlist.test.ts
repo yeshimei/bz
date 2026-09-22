@@ -41,6 +41,9 @@ describe('uiSetlist 组件契约', () => {
     expect(els.map((e) => e.dataset.key)).toEqual(['u1', 'u2']);
     expect(els[0].querySelector('.bz-setlist-avatar')).toBeTruthy();
     expect(els[1].querySelector('.bz-setlist-avatar')).toBeNull(); // 无头像不占位
+    // 防盗链锁：B 站图床头像带 Referer 一律 403（移动端 WebView origin = capacitor://localhost /
+    // http://localhost），取图必须 no-referrer，否则头像 403 后被 onerror 移除、列表一片空白
+    expect((els[0].querySelector('.bz-setlist-avatar') as HTMLImageElement).getAttribute('referrerpolicy')).toBe('no-referrer');
     expect(els[0].querySelector('.bz-setlist-name')!.textContent).toBe('UP 甲');
     expect(els[0].querySelector('.bz-setlist-sub')!.textContent).toBe('UID 1');
     expect(els[0].title).toBe('UID 1'); // chips 不展示 sub → title 保信息可达
