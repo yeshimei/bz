@@ -117,19 +117,18 @@ export function motionRendered(overlay: HTMLElement, boot: boolean): void {
   }
   if (reduced()) return; // 评审模拟 RM：内容已由 render 直接落终态，零编排
 
-  /* —— 周历：3D 翻落接力 —— */
+  /* —— 周历头：与入口行同语的波浪入场（台历卡不带翻页动效，只做轻波浪；
+      选中卡的 transform 抬升不参与插值，落点按各自终态写） —— */
   if (week) {
-    const cells = [...week.querySelectorAll<HTMLElement>('.bz-home-wk')];
-    cells.forEach((el, i) => {
-      after(140 + i * 46, () => {
+    [...week.querySelectorAll<HTMLElement>('.bz-home-wk')].forEach((el, i) => {
+      after(140 + i * 40, () => {
+        const to = el.classList.contains('bz-home-wk--sel') ? 'translateY(-4px)' : 'none';
         waapi(el,
-          [{ opacity: 0, transform: 'rotateX(-64deg) translateY(6px)' },
-           { opacity: 1, transform: 'none' }],
-          { duration: 560, easing: E.out, fill: 'backwards' });
+          [{ opacity: 0, transform: 'translateY(8px)', filter: 'blur(4px)' },
+           { opacity: 1, transform: to, filter: 'blur(0px)' }],
+          { duration: M.base, easing: E.out, fill: 'backwards' });
       });
     });
-    const sel = cells.find((c) => c.classList.contains('bz-home-wk--sel'));
-    if (sel) after(620, () => popBar(sel));
   }
 
   /* —— 入口行：涟漪上浮（30ms 接力，前 14 行，其余直达）—— */
@@ -197,15 +196,6 @@ export function motionDaySwitch(flow: HTMLElement, rewrite: () => void): void {
     }
   });
 }
-
-/** 选中格彩条弹跳（切天 / 首屏落到选中日） */
-export function motionWeekPop(wk: HTMLElement): void {
-  if (reduced()) return;
-  wk.classList.remove('bz-hm-wkpop');
-  void wk.offsetWidth; // 重启动画
-  wk.classList.add('bz-hm-wkpop');
-}
-function popBar(wk: HTMLElement): void { motionWeekPop(wk); }
 
 /* ================= 事件揭出：彩点点亮 + 迸光 + 卡片上浮 ================= */
 
