@@ -180,6 +180,21 @@ describe('C4 管理弹窗增删提示（调用方文案准确）', () => {
     expect(disk(vault).bilibiliUps).toEqual(['123456', '654321']);
   });
 
+  it('名单列表不带头像（只出主副文案）+ 纯 uid 录入本地解析不请求网络', async () => {
+    const upInfo = { '546195': { name: '影视飓风', avatar: 'https://a.b/c.png' } };
+    seedVault({ bilibiliUps: ['546195'], bilibiliUpInfo: upInfo });
+    const schema = upManagerSettingsSchema({ ups: ['546195'], upInfo, onChanged: () => {} });
+    // 2026-09-22 拍板：名单条目不渲染头像（imageUrl 不下发）；名字回填仍走 upInfo
+    expect(rowByName(schema.groups[0].rows, '名单列表').items()).toEqual([
+      { key: '546195', label: '影视飓风', sub: 'UID 546195' },
+    ]);
+    // 纯 uid 录入：本地规则解析即入库（离线可用），不走 B站 view API
+    (requestUrl as any).mockClear();
+    await rowByName(schema.groups[0].rows, '添加 UP 主').actions[0].onClick('123456');
+    expect(requestUrl).not.toHaveBeenCalled();
+    expect(hasNotice('已添加 UP 主 123456')).toBe(true);
+  });
+
   it('UP 移除：损坏态条目保留 + 失败提示（无假成功）；正常态才弹已移除', async () => {
     seedBroken();
     const onChangedFail = vi.fn();

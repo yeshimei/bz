@@ -164,7 +164,7 @@ interface UpManagerBox {
  * UP 主名单管理弹窗 schema（全面声明行；原 custom 三行——添加复合行/Cookie 复合行/自绘名单已退役；
  * Cookie 可选行与「添加 UP 主」灰字描述随 2026-09-12 用户拍板移除）：
  * 添加行 = text + 行内按钮（actions，渲染器统一实现）；名单 = 通用 list 行
- * （头像/主副文案/移除，items 函数形式每次移除后以字盒为基底重建）。
+ * （主副文案/移除，items 函数形式每次移除后以字盒为基底重建；头像随 2026-09-22 拍板不再展示）。
  * 原「每日简报」组随每日简报退役删除（ADR-0121）；RSS 订阅管理在独立弹窗（rssManagerSettingsSchema）。
  */
 export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsSchema {
@@ -201,7 +201,6 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
               key: uid,
               label: upDisplayName(uid, box.upInfo[uid]),
               sub: `UID ${uid}`,
-              imageUrl: box.upInfo[uid]?.avatar,
             })),
             emptyText: '暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加',
             // 返回 Promise 与 RSS 订阅行同口径：渲染器待落盘完成后重读重建——否则字盒变更晚于
