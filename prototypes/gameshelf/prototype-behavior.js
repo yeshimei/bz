@@ -1,4 +1,4 @@
-/* 源指纹 88700c827ba25d4b · 仓内输入 244 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 71413d76f501f211 · 仓内输入 244 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/gameshelf/fake-sim.ts","prototypes/gameshelf/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/backfill.ts","src/gameshelf/constants.ts","src/gameshelf/detail.ts","src/gameshelf/index.ts","src/gameshelf/names.ts","src/gameshelf/notes.ts","src/gameshelf/posters.ts","src/gameshelf/reconcile.ts","src/gameshelf/report.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/gameshelf/steam.ts","src/gameshelf/sync.ts","src/gameshelf/ui.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/gameshelf/fake-sim.ts → window.BZW_gameshelf（行为单源预览包，issue 245/ADR-0106） */
 var BZW_gameshelf = (() => {
@@ -194,26 +194,12 @@ var BZW_gameshelf = (() => {
     if (!r) throw new Error("原型壳没有这个请求的罐头：" + url);
     return r;
   }
-  function safeNameSeg(s) {
-    return s.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || "x";
-  }
   function remoteOfLocalMedia(name) {
-    var _a2, _b2, _c, _d, _e, _f, _g;
+    var _a2, _b2;
     const bundle = detailBundle();
-    const icon = /^(\d+)-ach-(.+)-(on|off)\.jpg$/.exec(name);
-    if (icon) {
-      const list = (_e = (_d = (_c = (_b2 = (_a2 = bundle.ach[icon[1]]) == null ? void 0 : _a2.schema) == null ? void 0 : _b2.game) == null ? void 0 : _c.availableGameStats) == null ? void 0 : _d.achievements) != null ? _e : [];
-      const hit = (Array.isArray(list) ? list : []).find((a) => {
-        var _a3;
-        return safeNameSeg(String((_a3 = a == null ? void 0 : a.name) != null ? _a3 : "")) === icon[2];
-      });
-      if (!hit) return null;
-      const url = icon[3] === "on" ? hit.icon : hit.icongray;
-      return typeof url === "string" && url ? url : null;
-    }
     const shot = /^(\d+)-shot-(\d+)\.jpg$/.exec(name);
     if (shot) {
-      const list = (_g = (_f = bundle.store[shot[1]]) == null ? void 0 : _f.data) == null ? void 0 : _g.screenshots;
+      const list = (_b2 = (_a2 = bundle.store[shot[1]]) == null ? void 0 : _a2.data) == null ? void 0 : _b2.screenshots;
       const one2 = Array.isArray(list) ? list[Number(shot[2]) - 1] : void 0;
       return typeof (one2 == null ? void 0 : one2.path_full) === "string" ? one2.path_full : null;
     }
@@ -447,12 +433,13 @@ var BZW_gameshelf = (() => {
          * vault 文件 → 可显示 URL（插件端由 Obsidian 给 app://... 的本地资源地址）。
          *
          * 评审壳分两条路：
-         * 1. **媒体队列下过的文件**（成就图标 `<appid>-ach-<apiname>-<on|off>.jpg`、商店截图
-         *    `<appid>-shot-<n>.jpg`）→ 按文件名**推导**出它在罐头里的远端源并返回。浏览器写不了磁盘、
-         *    也拿不到图标的字节（CDN 无 CORS 头），但 `<img src=远端>` 不受 CORS 限制，于是评审页里
-         *    能直接看到真图。真机是本地文件，这条捷径只在壳里存在。
+         * 1. **媒体队列下过的文件**（商店截图 `<appid>-shot-<n>.jpg`）→ 按文件名**推导**出它在罐头里的
+         *    远端源并返回。浏览器写不了磁盘、也拿不到图的字节（CDN 无 CORS 头），但 `<img src=远端>`
+         *    不受 CORS 限制，于是评审页里能直接看到真图。真机是本地文件，这条捷径只在壳里存在。
          * 2. 其余（封面 `<appid>.jpg`、库内图标）→ 走 preview-live 的 `/__vault-media/<文件名>`
          *    按 basename 从**真实 vault** 现取，所以游戏封面显示的就是用户 vault 里那张真海报。
+         *
+         * 成就图标两者都不走（ADR-0176）：界面直接把远端 URL 写进 `<img src>`，不经资源解析。
          */
         getResourcePath(f) {
           const remote = remoteOfLocalMedia(f.name);
@@ -2237,22 +2224,16 @@ var BZW_gameshelf = (() => {
     if (!Number.isFinite(d.getTime())) return "-";
     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
   }
-  function achRowText(row, icons) {
+  function achRowText(row) {
     const pct = row.globalPercent === null ? "-" : row.globalPercent.toFixed(1);
-    const segs = [
+    return [
       sanitizeSeg(row.name),
       sanitizeSeg(row.desc),
       row.unlocked ? "1" : "0",
       row.unlocked ? dateOnly(row.unlockedAt) : "-",
       pct,
       sanitizeSeg(row.apiName)
-    ];
-    if (icons) segs.push(icons.on ? sanitizeSeg(icons.on) : "-", icons.off ? sanitizeSeg(icons.off) : "-");
-    return segs.join(ACH_SEP);
-  }
-  function achRowSegCount(text) {
-    const t = String(text);
-    return t.trim() ? t.split(ACH_SEP).length : 0;
+    ].join(ACH_SEP);
   }
   function achRowFromText(text) {
     const parts = String(text).split(ACH_SEP);
@@ -2261,16 +2242,13 @@ var BZW_gameshelf = (() => {
     const [name, desc, on, date, pct, apiName] = seg;
     if (!apiName) return null;
     const n = Number(pct);
-    const ph = (v) => !v || v === "-" ? "" : v;
     return {
       name: name || apiName,
       desc,
       unlocked: on === "1",
       date: date === "-" ? "" : date,
       percent: pct === "-" || !Number.isFinite(n) ? null : n,
-      apiName,
-      iconPath: ph(seg[6]),
-      iconGrayPath: ph(seg[7])
+      apiName
     };
   }
   function achievementFailure(e) {
@@ -2685,14 +2663,10 @@ var BZW_gameshelf = (() => {
   var posters_exports = {};
   __export(posters_exports, {
     DEFAULT_POSTER_FOLDER: () => DEFAULT_POSTER_FOLDER,
-    achIconDisplayUrl: () => achIconDisplayUrl,
-    achIconsMissing: () => achIconsMissing,
     coverDisplayUrl: () => coverDisplayUrl,
-    ensureAchIcons: () => ensureAchIcons,
     ensurePosters: () => ensurePosters,
     ensureShots: () => ensureShots,
     iconDisplayUrl: () => iconDisplayUrl,
-    localAchIconPath: () => localAchIconPath,
     localCoverPath: () => localCoverPath,
     localIconPath: () => localIconPath,
     localShotPath: () => localShotPath,
@@ -2844,17 +2818,8 @@ var BZW_gameshelf = (() => {
     }
     running = false;
   }
-  function safeNameSeg2(s) {
-    return s.replace(/[^A-Za-z0-9_-]/g, "_").slice(0, 80) || "x";
-  }
-  function localAchIconPath(appid, apiName, unlocked) {
-    return `${resolvePosterFolder()}/${appid}-ach-${safeNameSeg2(apiName)}-${unlocked ? "on" : "off"}.jpg`;
-  }
   function localShotPath(appid, index) {
     return `${resolvePosterFolder()}/${appid}-shot-${index + 1}.jpg`;
-  }
-  function achIconDisplayUrl(app, appid, apiName, unlocked) {
-    return resourceUrl(app, localAchIconPath(appid, apiName, unlocked));
   }
   function resolveShotUrls(app, local, remote) {
     var _a2;
@@ -2870,27 +2835,6 @@ var BZW_gameshelf = (() => {
   }
   function setMediaInterval(ms) {
     mediaIntervalMs = ms;
-  }
-  function ensureAchIcons(app, appid, jobs) {
-    for (const job of jobs) {
-      const wants = [[job.on, true], [job.off, false]];
-      for (const [url, unlocked] of wants) {
-        if (!url) continue;
-        const path = localAchIconPath(appid, job.apiName, unlocked);
-        if (hasFile(app, path)) continue;
-        const key = `i:${path}`;
-        if (mediaQueued.has(key)) continue;
-        mediaQueued.add(key);
-        mediaTasks.push(async () => {
-          try {
-            if (await download(app, path, url)) scheduleRerender();
-          } finally {
-            mediaQueued.delete(key);
-          }
-        });
-      }
-    }
-    void pumpMedia();
   }
   function ensureShots(app, job) {
     if (job.remote.length === 0) return;
@@ -2943,12 +2887,6 @@ var BZW_gameshelf = (() => {
       if (mediaTasks.length > 0) await new Promise((r) => setTimeout(r, mediaIntervalMs));
     }
     mediaRunning = false;
-  }
-  function achIconsMissing(app, appid, rows) {
-    for (const r of rows) {
-      if (!hasFile(app, localAchIconPath(appid, r.apiName, r.unlocked))) return true;
-    }
-    return false;
   }
   function scheduleRerender() {
     if (rerenderTimer) return;
@@ -7652,6 +7590,7 @@ var BZW_gameshelf = (() => {
       if (it.imageUrl) {
         const img = document.createElement("img");
         img.className = "bz-setlist-avatar";
+        img.setAttribute("referrerpolicy", "no-referrer");
         img.src = it.imageUrl;
         img.alt = "";
         img.onerror = () => img.remove();
@@ -52612,26 +52551,14 @@ ${n.content.slice(0, 2e3)}
     });
     return { local: pad(local), remote: pad(remote) };
   }
-  function achToFm(d, appid) {
+  function achToFm(d) {
     return {
-      // 第 7/8 段写本地路径：只在该色的远端源存在时写（Steam 没给的色留空串，
-      // 免得属性里指着一个永远不会下载的文件），路径与媒体队列的落点同源同函数。
-      成就: d.rows.map(
-        (r) => achRowText(r, {
-          on: r.icon ? localAchIconPath(appid, r.apiName, true) : "",
-          off: r.iconGray ? localAchIconPath(appid, r.apiName, false) : ""
-        })
-      ),
+      成就: d.rows.map((r) => achRowText(r)),
       成就已解: d.unlocked,
       成就总数: d.total,
       稀有成就: d.rarestName ? `${d.rarestName}（全球 ${d.rarestPercent}% 拥有）` : "",
       成就更新: (/* @__PURE__ */ new Date()).toISOString()
     };
-  }
-  function achIconPathsMissing(fm) {
-    const lines = rawStrList(fm["成就"]).filter((l) => l !== "");
-    if (lines.length === 0) return false;
-    return lines.some((l) => achRowSegCount(l) < 8);
   }
   function fmToAchDetail(fm) {
     const lines = rawStrList(fm["成就"]).filter((l) => l !== "");
@@ -52754,8 +52681,7 @@ ${n.content.slice(0, 2e3)}
     const r = await fetchAchievementDetail(steamId, apiKey, item.appid);
     if (r.ok) {
       achCache.set(item.appid, r.data);
-      if (item.file) await upsertDetail(app, item.file, achToFm(r.data, item.appid));
-      ensureAchIcons(app, item.appid, r.data.rows.map((row) => ({ apiName: row.apiName, on: row.icon, off: row.iconGray })));
+      if (item.file) await upsertDetail(app, item.file, achToFm(r.data));
       return { detail: r.data, summary, error: null, fromCache: false };
     }
     return { detail: fmToAchDetail(cached), summary, error: r.message, fromCache: !!summary };
@@ -52772,7 +52698,7 @@ ${n.content.slice(0, 2e3)}
   var BACKFILL_MAX_FAILURES = 3;
   function backfillNeeds(fm, hasAch) {
     const store2 = !fm[GS_FM.detailAt] || fm[GS_FM.shotsSrc] === void 0;
-    const ach = hasAch && (!fmToAchDetail(fm) || achIconPathsMissing(fm));
+    const ach = hasAch && !fmToAchDetail(fm);
     const { local, remote } = fmToShots(fm);
     const shots = remote.some((u, i) => !!u && !local[i]);
     return { store: store2, ach, shots };
@@ -52804,11 +52730,9 @@ ${n.content.slice(0, 2e3)}
         const s = fmToShots(fm);
         ensureShots(app, { appid: it.appid, file: it.file, remote: s.remote, prevLocal: s.local });
       }
-      const detail = need.ach ? null : fmToAchDetail(fm);
-      const needAch = need.ach || !!detail && achIconsMissing(app, it.appid, detail.rows);
-      if (!need.store && !needAch) continue;
+      if (!need.store && !need.ach) continue;
       queued.add(it.appid);
-      queue2.push({ app, item: it, file: it.file, needStore: need.store, needAch });
+      queue2.push({ app, item: it, file: it.file, needStore: need.store, needAch: need.ach });
       added += 1;
     }
     if (added > 0 && !running2) void runQueue2();
@@ -53621,17 +53545,6 @@ ${n.content.slice(0, 2e3)}
     return `<div class="bz-gs-sectitle">商店截图</div>
   <div class="bz-gs-shots">${urls.map((u) => `<button type="button" class="bz-gs-shot" data-src="${escAttr(u)}"><img loading="lazy" src="${escAttr(u)}" alt=""></button>`).join("")}</div>`;
   }
-  function withLocalAchIcons(app, appid, detail) {
-    if (!detail) return detail;
-    return {
-      ...detail,
-      rows: detail.rows.map((r) => ({
-        ...r,
-        icon: achIconDisplayUrl(app, appid, r.apiName, true) || null,
-        iconGray: achIconDisplayUrl(app, appid, r.apiName, false) || null
-      }))
-    };
-  }
   function openDetail(app, appid) {
     restReel();
     restHero();
@@ -53649,7 +53562,7 @@ ${n.content.slice(0, 2e3)}
     const fmHadStore = hasStoreFm(cached);
     const achBox = popup.querySelector("#bz-gs-detail-ach");
     const paintAch = (sec) => {
-      if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, { ...sec, detail: withLocalAchIcons(app, item.appid, sec.detail) });
+      if (achBox && achBox.isConnected) achBox.innerHTML = achListHtml(item, sec);
       mountIcons(popup);
     };
     void loadAchievements(app, item, cached).then((sec) => {
@@ -53687,8 +53600,6 @@ ${n.content.slice(0, 2e3)}
         return;
       }
       const fm = safeDetailFm(app, item.file);
-      const detail = fmToAchDetail(fm);
-      if (detail) paintAch({ detail, summary: fmToAchSummary(fm), error: null, fromCache: false });
       const { local, remote } = fmToShots(fm);
       const urls = resolveShotUrls(app, local, remote);
       if (shotsBox && shotsBox.isConnected && urls.length > 0) shotsBox.innerHTML = shotsHtml(urls);
@@ -54174,19 +54085,14 @@ ${n.content.slice(0, 2e3)}
   init_steam();
   var FOLDER = "我的/游戏";
   var SEED_LIMIT = 0;
-  var SEED_MARK = "bz-sim:__gameshelf-seed-v9";
+  var SEED_MARK = "bz-sim:__gameshelf-seed-v10";
   var SETTINGS_KEY = "bz-sim:__settings";
   function achRowsOf(appid) {
     var _a2, _b2;
     const a = (_b2 = (_a2 = window.GAMESHELF_DETAIL) == null ? void 0 : _a2.ach) == null ? void 0 : _b2[String(appid)];
     if (!a) return [];
     const d = parseAchievementRows(a.schema, a.player, a.global);
-    return d ? d.rows.map(
-      (r) => achRowText(r, {
-        on: r.icon ? localAchIconPath(appid, r.apiName, true) : "",
-        off: r.iconGray ? localAchIconPath(appid, r.apiName, false) : ""
-      })
-    ) : [];
+    return d ? d.rows.map((r) => achRowText(r)) : [];
   }
   function shotUrlsOf(appid) {
     var _a2, _b2, _c, _d;
@@ -54216,8 +54122,8 @@ ${n.content.slice(0, 2e3)}
       lines.push(
         `成就已解: ${achRows.filter((r) => r.split(" | ")[2] === "1").length}`,
         `成就总数: ${achRows.length}`,
-        // 刻意写**过期**时间：这样点开任一详情都会走「属性过期 → 静默刷新」那条路，
-        // 顺带把该款的成就图标与截图补到本地。评审时因此每款一开就是齐的，
+        // 刻意写**过期**时间：这样点开任一详情都会走「属性过期 → 静默刷新」那条路——
+        // 成就段刷的是远端图标地址（当场有图），截图刷的是本地文件。评审时因此每款一开就是齐的，
         // 不用等全量回填轮到它（回填按 vault 序排队，展示首位那款不一定是第一个）。
         '成就更新: "2026-09-01T00:00:00.000Z"'
       );
