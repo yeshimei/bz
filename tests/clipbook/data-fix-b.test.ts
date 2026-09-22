@@ -290,6 +290,14 @@ describe('resolveUidFromInputDetailed（新-8）', () => {
     const r2 = await resolveUidFromInputDetailed('https://www.bilibili.com/video/BV1xx411c7mD');
     expect(r2).toEqual({ uid: null, networkFailed: false });
   });
+
+  it('长 uid 同样本地解析（位数不设上限，2026-09-22 拍板）', async () => {
+    for (const id of ['3706929260006322', '12345678901', '1234567890123456789012345']) {
+      const r = await resolveUidFromInputDetailed(id);
+      expect(r).toEqual({ uid: id, networkFailed: false });
+    }
+    expect(requestUrl).not.toHaveBeenCalled();
+  });
 });
 
 // ---------- 条目8（效率#2）：scanClipDirectory 被拒诊断 ----------

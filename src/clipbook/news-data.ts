@@ -326,14 +326,16 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void
 
 /**
  * UP 主 uid 解析（纯函数，本地规则部分；网络回填见 resolveUidFromInput）：
- * - 纯数字 uid（"546195"）→ 原样
+ * - 纯数字 uid（"546195"、长 uid "3706929260006322"）→ 原样。**位数不设上限**——原
+ *   `\d{1,10}` 上限按 B站 mid 位数定的，16 位长 uid 会被判「无法识别」（2026-09-22 拍板放开：
+ *   纯数字串就是 uid，不做位数分类）
  * - space.bilibili.com/<uid>（可带 https:// 与尾斜杠/参数）→ uid
  * - /video/BVxxx → 仅视频链接本地无法取 uid，返回 null（由调用方走 view API 回填）
  */
 export function parseUidFromText(text: string): string | null {
   const t = String(text || '').trim();
   if (!t) return null;
-  const pure = t.match(/^\d{1,10}$/);
+  const pure = t.match(/^\d+$/);
   if (pure) return pure[0];
   const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
   if (space) return space[1];
