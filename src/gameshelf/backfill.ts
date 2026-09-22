@@ -1,12 +1,11 @@
 /**
- * 游戏库（gameshelf）域后台全量回填（2026-09-18 用户拍板）：
- * **商店资料 + 成就全量 + 截图/成就图标本地化 → 笔记属性与本地文件夹**，
+ * 游戏库（gameshelf）域后台全量回填（2026-09-18 用户拍板；2026-09-22 成就图标改远端直取、
+ * 不再本地化，ADR-0176）：**商店资料 + 成就全量 → 笔记属性；截图 → 本地文件夹**，
  * 不等用户逐款点开详情弹窗。
  *
  * 补跑判据（三件各自独立，任一缺就排队；全齐才跳过）：
  * - `详情时间` 缺、或 `截图源` 键缺失（= 全量落盘改造前回填的存量笔记）→ 拉商店资料；
- * - 有成就页却缺 `成就` 全量列表、或列表是旧 6 段格式（缺图标本地路径）→ 拉成就三接口
- *   （顺带把图标源交给媒体队列）；
+ * - 有成就页却缺 `成就` 全量列表 → 拉成就三接口；
  * - `截图源` 有值而 `截图` 对应位缺 → 只补下载，**零网络请求**（URL 就在属性里）。
  *
  * 做法（同 names.ts 的串行队列范式）：
@@ -23,8 +22,8 @@
  */
 import type { App, TFile } from 'obsidian';
 import { notify } from '../core/notice';
-import { achIconPathsMissing, fmToAchDetail, fmToShots, refreshAchievements, refreshStore, safeDetailFm } from './detail';
-import { achIconsMissing, ensureShots } from './posters';
+import { fmToAchDetail, fmToShots, refreshAchievements, refreshStore, safeDetailFm } from './detail';
+import { ensureShots } from './posters';
 import { M, type GameItem } from './state';
 import { GS_FM, QUEUE_HALTED_NOTICE, QUEUE_HALTED_DEDUPE_KEY } from './constants';
 
@@ -49,9 +48,8 @@ export function backfillNeeds(fm: Record<string, unknown>, hasAch: boolean): { s
   // 却从没写过截图源——只看详情时间它们永远判「不用拉」，截图就永远本地化不了。
   // storeToFm 现在始终写截图源（无截图写空数组），重拉一次即自愈，不会反复 churn。
   const store = !fm[GS_FM.detailAt] || fm[GS_FM.shotsSrc] === undefined;
-  // 缺全量列表 **或** 列表是旧格式（行只有 6 段、没有图标本地路径——ADR-0167 改造前写的）
-  // → 各拉一次补齐；补过即自愈（8 段行不再命中，不会反复 churn）
-  const ach = hasAch && (!fmToAchDetail(fm) || achIconPathsMissing(fm));
+  // 缺全量列表 → 拉一次补齐；补过即自愈（有列表就不再命中，不会反复 churn）
+  const ach = hasAch && !fmToAchDetail(fm);
   const { local, remote } = fmToShots(fm);
   const shots = remote.some((u, i) => !!u && !local[i]);
   return { store, ach, shots };
@@ -100,13 +98,9 @@ export function ensureBackfill(app: App, items: GameItem[]): void {
       const s = fmToShots(fm);
       ensureShots(app, { appid: it.appid, file: it.file, remote: s.remote, prevLocal: s.local });
     }
-    // 成就图标缺文件 → 同样得重拉一次 schema：属性里**不存图标地址**（文件名由 appid+apiname 推），
-    // 没有 URL 就补不了图。判据只查当前解锁态那一色（见 posters.ts::achIconsMissing）。
-    const detail = need.ach ? null : fmToAchDetail(fm);
-    const needAch = need.ach || (!!detail && achIconsMissing(app, it.appid, detail.rows));
-    if (!need.store && !needAch) continue;
+    if (!need.store && !need.ach) continue;
     queued.add(it.appid);
-    queue.push({ app, item: it, file: it.file, needStore: need.store, needAch });
+    queue.push({ app, item: it, file: it.file, needStore: need.store, needAch: need.ach });
     added += 1;
   }
   if (added > 0 && !running) void runQueue();
@@ -126,7 +120,7 @@ async function runQueue(): Promise<void> {
     const job = queue.shift()!;
     try {
       // 注意：这里必须用 refresh*（强制走网络）而不是 load*——load* 是「属性优先」的读路径，
-      // 属性里有就不发请求，队列会空转（曾因此让成就图标永远补不下来）。
+      // 属性里有就不发请求，队列会空转（曾因此让媒体永远补不下来）。
       if (job.needStore) {
         const store = await refreshStore(job.app, job.item);
         if (store.error) failures += 1;

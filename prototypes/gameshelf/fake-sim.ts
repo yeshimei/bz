@@ -22,7 +22,7 @@ import { setAISettingsProvider } from '../../src/core/ai';
 import { attachObsidianAdapter } from '../../src/core/obsidian-adapter';
 import { ensureGameshelf, openGameshelf as openGameshelfDomain, unloadGameshelf } from '../../src/gameshelf/index';
 import { closePanel } from '../../src/gameshelf/ui';
-import { localAchIconPath, setMediaInterval } from '../../src/gameshelf/posters';
+import { setMediaInterval } from '../../src/gameshelf/posters';
 import { achRowText, parseAchievementRows, parseStoreMeta } from '../../src/gameshelf/steam';
 
 /** 游戏目录（插件 DEFAULT_FOLDER 同值；种子与自动刷新前缀共用） */
@@ -36,7 +36,7 @@ const SEED_LIMIT = 0;
 /** 种子标记：存在 = 已种子过（用户在壳里的改动保留，不被覆盖）。
  *  ⚠️ 改种子内容（含条数上限）必须同一次把版本号 +1——否则浏览器老 localStorage 里的
  *  旧种子不会重播。 */
-const SEED_MARK = 'bz-sim:__gameshelf-seed-v9';
+const SEED_MARK = 'bz-sim:__gameshelf-seed-v10';
 /** 设置持久键 */
 const SETTINGS_KEY = 'bz-sim:__settings';
 
@@ -50,21 +50,13 @@ declare global {
  * 罐头 → 该款的 `成就` 属性行（**真解析 + 真序列化**，与插件写盘口径逐字一致）。
  * 壳里种子直接带上全量行，是为了让评审跑的是「属性优先、零网络」那条主路径
  * （而不是每次都靠罐头现拉再回填）。罐头没这款 → 空数组。
- * 尾两段 = 图标本地路径（ADR-0167）：与媒体队列同源（localAchIconPath），
- * 罐头没给的那一色写 `-`（占位符口径与日期/全球率一致）。
+ * 行恒 6 段（ADR-0176）：成就图标不落盘，属性里也就没有它的地址段。
  */
 function achRowsOf(appid: number): string[] {
   const a = window.GAMESHELF_DETAIL?.ach?.[String(appid)];
   if (!a) return [];
   const d = parseAchievementRows(a.schema, a.player, a.global);
-  return d
-    ? d.rows.map((r) =>
-        achRowText(r, {
-          on: r.icon ? localAchIconPath(appid, r.apiName, true) : '',
-          off: r.iconGray ? localAchIconPath(appid, r.apiName, false) : '',
-        }),
-      )
-    : [];
+  return d ? d.rows.map((r) => achRowText(r)) : [];
 }
 
 /**
@@ -104,8 +96,8 @@ function mdOf(g: SeedGame): string {
     lines.push(
       `成就已解: ${achRows.filter((r) => r.split(' | ')[2] === '1').length}`,
       `成就总数: ${achRows.length}`,
-      // 刻意写**过期**时间：这样点开任一详情都会走「属性过期 → 静默刷新」那条路，
-      // 顺带把该款的成就图标与截图补到本地。评审时因此每款一开就是齐的，
+      // 刻意写**过期**时间：这样点开任一详情都会走「属性过期 → 静默刷新」那条路——
+      // 成就段刷的是远端图标地址（当场有图），截图刷的是本地文件。评审时因此每款一开就是齐的，
       // 不用等全量回填轮到它（回填按 vault 序排队，展示首位那款不一定是第一个）。
       '成就更新: "2026-09-01T00:00:00.000Z"',
     );
@@ -190,7 +182,7 @@ export function bootGameshelfSim(): void {
   }
   seedDatabase();
   // 媒体队列的任务间隔归零：生产那 120ms 是给 Steam CDN 留的礼貌间隔，壳里没有真网络，
-  // 留着只会让评审时「图标一张张才出来」（成就图标一款就上百张）
+  // 留着只会让评审时「图一张张才出来」（截图一款就有 8 张）
   setMediaInterval(0);
   const app = new FakeApp();
   simApp = app;

@@ -1,23 +1,26 @@
 /**
  * 游戏库媒体本地化（issue 368 增补；2026-09-17 扩到图标 + 回写本地路径；
- * 2026-09-18 扩到**成就图标 + 商店截图**——用户拍板「图片图标都存本地指定文件夹」）。
+ * 2026-09-18 扩到商店截图；2026-09-22 **成就图标不再本地化**——只留封面 / 库内图标 / 截图，
+ * 成就图标改「远端直取、不落盘」，见 ADR-0176）。
  *
- * 落在这个文件夹（默认 CONFIG/游戏海报，设置键 gameshelfPosterFolder）的四类图：
+ * 落在这个文件夹（默认 CONFIG/游戏海报，设置键 gameshelfPosterFolder）的三类图：
  * - `<appid>.jpg`            封面 header.jpg
  * - `<appid>-icon.jpg`       库内小图标
- * - `<appid>-ach-<apiname>-{on,off}.jpg`  成就图标（彩色 = 已解锁 / 灰色 = 未解锁）
  * - `<appid>-shot-<n>.jpg`   商店截图（第 n 张，1 基）
+ *
+ * 为什么成就图标不走这条路（ADR-0176 的判据）：它是**按成就条目逐条生成**的，且每个成就两色
+ * （彩色 + 灰图）——实测 147 款库累积出 8,118 个文件，是封面 / 库内图标 / 截图三类合计
+ * （约 1,400 个）的近六倍。文件数正是 Obsidian 每次启动都要遍历的量，所以它改成界面直取
+ * Steam 的远端 URL（ui.ts::achListHtml），一个本地文件都不产生。判据是**是否随条目数膨胀**，
+ * 不是「是不是图标」——库内小图标是每款一张的固定量，照本地化。
  *
  * frontmatter 键的分工（这是本模块的核心约定，别在别处另立一套）：
  * - `封面源` / `图标源` / `截图源` = Steam 远端地址，**同步管辖**（随库刷新，hash 变了能跟上）；
  * - `封面` / `图标` / `截图`       = 本地图片的 vault 路径，**由本模块写**，同步绝不碰
  *   （否则每次同步都把本地路径冲回远端）。`截图源` 与 `截图` **同序同长**，下载失败位留空串。
- * - **成就图标**：路径写在 `成就` 行的第 7/8 段（ADR-0167 用户拍板「一个不差」），
- *   但**只写不读**——界面按 (appid, apiname) 推导，两处同源于 localAchIconPath。
- *   本模块因此不需要（也不该）拿 file 去回写属性：文件落盘即完成。
  *
- * CDN 实测直连可达（不走代理）。两条队列各自串行：封面/库内图标一条（要「立刻可看」），
- * 成就图标与截图另一条（量级差两个数量级，混排会把封面挤到几千张之后）。
+ * CDN 实测直连可达（不走代理）。两条队列各自串行：封面 / 库内图标一条（要「立刻可看」），
+ * 截图另一条（量大，逐条之间留间隔，别拿几百张图去冲 Steam CDN）。
  */
 import type { App, TFile } from 'obsidian';
 import { requestUrl } from 'obsidian';
@@ -32,8 +35,8 @@ export const DEFAULT_POSTER_FOLDER = 'CONFIG/游戏海报';
 
 /**
  * 单张媒体下载超时（深审 F8）：对照本域 steam 通道 withTimeout(…, 20s)。此前裸 requestUrl，
- * 网络劣化时一张挂起图让串行队列整体停摆到传输层自身超时——几千张成就图标/截图排队时
- * 尤其致命。超时仅弃结果（requestUrl 无中止能力，core/http 同款语义），失败位走原有兜底。
+ * 网络劣化时一张挂起图让串行队列整体停摆到传输层自身超时——几百张截图排队时尤其致命。
+ * 超时仅弃结果（requestUrl 无中止能力，core/http 同款语义），失败位走原有兜底。
  */
 const MEDIA_DOWNLOAD_TIMEOUT_MS = 20_000;
 
@@ -237,26 +240,11 @@ async function runQueue(): Promise<void> {
   running = false;
 }
 
-/* ---------- 成就图标与商店截图（2026-09-18 全量本地化） ---------- */
-
-/** 文件名段净化（apiname 一般是 [A-Z0-9_]，仍兜一手：非法字符换 _、限长防超路径上限） */
-function safeNameSeg(s: string): string {
-  return s.replace(/[^A-Za-z0-9_-]/g, '_').slice(0, 80) || 'x';
-}
-
-/** 本地成就图标路径（彩色 = 已解锁 / 灰色 = 未解锁；两色都下，状态翻转零下载） */
-export function localAchIconPath(appid: number, apiName: string, unlocked: boolean): string {
-  return `${resolvePosterFolder()}/${appid}-ach-${safeNameSeg(apiName)}-${unlocked ? 'on' : 'off'}.jpg`;
-}
+/* ---------- 商店截图 ---------- */
 
 /** 本地截图路径（与「截图源」同序，index 0 基 → 文件名 1 基） */
 export function localShotPath(appid: number, index: number): string {
   return `${resolvePosterFolder()}/${appid}-shot-${index + 1}.jpg`;
-}
-
-/** 成就图标显示 URL（本地文件在 → vault resource URL；否则 ''，界面用占位圆点） */
-export function achIconDisplayUrl(app: App, appid: number, apiName: string, unlocked: boolean): string {
-  return resourceUrl(app, localAchIconPath(appid, apiName, unlocked));
 }
 
 /**
@@ -275,15 +263,6 @@ export function resolveShotUrls(app: App, local: string[], remote: string[]): st
   return out;
 }
 
-/** 成就图标下载任务（两色都给 URL；Steam 没给的那色跳过） */
-export interface AchIconJob {
-  apiName: string;
-  /** 已解锁用的彩色图（Schema icon） */
-  on: string | null;
-  /** 未解锁用的灰图（Schema icongray；Steam 多数给，个别没有 → 界面回落彩色 + CSS 灰度） */
-  off: string | null;
-}
-
 /** 截图下载任务（整组一起下完再写 `截图`——数组是整体的，分次写会留半截状态） */
 export interface ShotJob {
   appid: number;
@@ -294,7 +273,7 @@ export interface ShotJob {
   prevLocal: string[];
 }
 
-/** 第二条队列（成就图标 + 截图）。任务间留间隔，别拿几千张图去冲 Steam CDN */
+/** 第二条队列（截图）。任务间留间隔，别拿几百张图去冲 Steam CDN */
 const MEDIA_INTERVAL_MS = 120;
 let mediaIntervalMs = MEDIA_INTERVAL_MS;
 /** 测试用：把队列间隔归零（生产恒 120ms，见 MEDIA_INTERVAL_MS） */
@@ -304,31 +283,6 @@ export function setMediaInterval(ms: number): void {
 const mediaTasks: Array<() => Promise<void>> = [];
 const mediaQueued = new Set<string>();
 let mediaRunning = false;
-
-/** 成就图标入队（幂等：本地文件已在 → 不排队；路径已随 `成就` 行落盘，故这里只下文件） */
-export function ensureAchIcons(app: App, appid: number, jobs: AchIconJob[]): void {
-  for (const job of jobs) {
-    const wants: Array<[string | null, boolean]> = [[job.on, true], [job.off, false]];
-    for (const [url, unlocked] of wants) {
-      if (!url) continue;
-      const path = localAchIconPath(appid, job.apiName, unlocked);
-      if (hasFile(app, path)) continue;
-      const key = `i:${path}`;
-      if (mediaQueued.has(key)) continue;
-      mediaQueued.add(key);
-      mediaTasks.push(async () => {
-        try {
-          // 路径已在写 `成就` 行时随行落盘（detail.ts::achToFm），这里唯一的副作用就是文件本身 ——
-          // 所以下完必须显式叫一次重渲，否则界面上永远停在占位图（弹窗也靠这个钩子）
-          if (await download(app, path, url)) scheduleRerender();
-        } finally {
-          mediaQueued.delete(key);
-        }
-      });
-    }
-  }
-  void pumpMedia();
-}
 
 /** 截图入队（缺哪张下哪张；下完把整组路径写回 `截图`，失败位留空串保对齐） */
 export function ensureShots(app: App, job: ShotJob): void {
@@ -383,20 +337,6 @@ async function pumpMedia(): Promise<void> {
     if (mediaTasks.length > 0) await new Promise((r) => setTimeout(r, mediaIntervalMs));
   }
   mediaRunning = false;
-}
-
-/**
- * 该款的成就图标有没有缺（按属性里的行判断）。
- * 只查**当前解锁态对应的那一色**：Steam 个别成就没给 icongray，若两色都查，
- * 那款会永远判「缺」→ 每次开面板都重拉一次 schema，白跑。
- * 用途：属性里存的是**本地路径**、不是图标地址（ADR-0167），所以图标缺了只能靠重拉
- * schema 才拿得到 URL 去补。
- */
-export function achIconsMissing(app: App, appid: number, rows: Array<{ apiName: string; unlocked: boolean }>): boolean {
-  for (const r of rows) {
-    if (!hasFile(app, localAchIconPath(appid, r.apiName, r.unlocked))) return true;
-  }
-  return false;
 }
 
 /** 逐条完成后节流重渲（1.5s 尾沿；面板关着 renderFn 空转无害） */

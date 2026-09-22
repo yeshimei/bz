@@ -584,3 +584,19 @@
 - [x] 口径：滚轮弹层内「此刻」钮保留（二级选择器功能钮）；标签选择器浮层过滤框保留；`.bz-diary-tag-filter` 样式保留
 - [x] 测试同步 6 处：ui.test 头行断言收敛 + 关闭复位优先退役 + E6 改遮罩关闭；wall-fix-c 今天钮退役；datetime-picker-fix chips 2 例退役；dialogs-fix-a 改回归钉
 - [x] 原型 `prototypes/diary/` build-preview 重出；门禁：tsc 0 错 + worktree 全量 6118/6118 + 自审 + diff 审查 + 主仓终态全量 + 构建部署
+
+## Issue 410 — 游戏库：成就图标改远端直取（`成就` 行恒 6 段）
+
+**状态：已实现**（2026-09-22，bz-gs-media-trim worktree 门禁）
+
+- [x] 规格：`issues/410-gameshelf-ach-icon-remote.md` + `docs/adr/adr-0176-gameshelf-ach-icon-remote.md`（取代 ADR-0167）
+- [x] 只读盘点：vault 26,247 文件 / 游戏海报盒 9,512（成就图标 8,118 + 截图 1,104 + 库内图标 146 + 封面 144）——负担在**文件数量**不在体积（635 MB / 均 70 KB）
+- [x] 判据：**是否随条目数膨胀**——封面 / 库内小图标 / 截图是每款一两张的固定量，照旧本地化；成就图标是「每条成就 × 两色」，改远端直取
+- [x] 数据层：`posters.ts` 删 `localAchIconPath` / `achIconDisplayUrl` / `AchIconJob` / `ensureAchIcons` / `achIconsMissing` / `safeNameSeg`；封面 / 库内图标 / 截图三条路径逻辑不动
+- [x] 成就行：`achRowText` 恒 6 段、`achRowFromText` 不再反解第 7/8 段、`achRowSegCount` 与 `achIconPathsMissing` 删除；`backfillNeeds` 判据收窄为「缺全量列表」
+- [x] 界面：成就行**保留图标列**，`<img src>` 直吃 Schema 远端 URL，无地址画占位块；**详情弹窗游戏名小图标保留**；`modalRepaintFn` 收窄为只重画截图段
+- [x] 假层：`fake-sim.ts` 行改 6 段（`SEED_MARK` v10）；`fake-obsidian.ts` 删「ach 文件名 → 罐头远端源」映射与 `safeNameSeg`（截图映射保留）
+- [x] 测试同步 5 文件（posters / detail / reconcile / backfill / ui）
+- [x] 门禁：tsc 0 错 + worktree 全量 474 文件 / 7038 例全绿（域内 12 文件 / 172 例）
+- [x] 存量清理：8,119 个 `*-ach-*.jpg`（89 MB）已同盘归档到 vault 外 `E:\Obsidian\_bz-media-archive\20260922-ach-icons\`；盒内剩 1,394 个、`-icon` 146 / `-shot-` 1,104 / 封面 144 完好
+- [ ] 收尾：原型产物重出 + 合并回主仓 + 主仓构建部署
