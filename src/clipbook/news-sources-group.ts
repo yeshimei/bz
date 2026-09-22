@@ -22,11 +22,11 @@ import { createOverlay } from '../core/dom';
 import { escManager } from '../core/esc-manager';
 import type { SettingsRow, SettingsRowContext, SettingsSchema } from '../core/settings-schema';
 import {
-  readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp,
+  readDataSourceState, writeSources, addBilibiliUp, removeBilibiliUp, writeBilibiliUpInfo,
   writeBilibiliMaxItems, addRssFeed, removeRssFeed, writeFetchInterval, type DataSourceState,
 } from './news-source-settings';
 import { fetchNowNews, notifyManualFetchResult, localDatetime } from './news-fetcher';
-import { resolveUidFromInputDetailed, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, type BilibiliUpInfo, type RssFeed } from './news-data';
+import { resolveUidFromInputDetailed, fetchUpProfile, extractFeedTitleFromXml, looksLikeFeedXml, normalizeRssFeedUrl, normalizeFetchIntervalMin, FETCH_INTERVAL_STEPS, type BilibiliUpInfo, type RssFeed } from './news-data';
 
 /** 状态盒（构建期快照的可变副本）：三函数绑定 get/set 读它，save 经数据层落盘 */
 type DataSourceBox = DataSourceState;
@@ -153,8 +153,9 @@ export interface UpManagerSchemaOptions {
   onChanged: () => void;
 }
 
-/** UP 弹窗级可变状态盒：添加/名单操作共享（schema 每次打开重建，状态随弹窗生命周期） */
-interface UpManagerBox {
+/** UP 弹窗级可变状态盒：添加/名单操作共享（schema 每次打开重建，状态随弹窗生命周期）；
+ *  导出供 openUpManagerModal 持有——打开即补资料的刷新链要操作同一个字盒（2026-09-22） */
+export interface UpManagerBox {
   inputValue: string;
   ups: string[];
   upInfo: Record<string, BilibiliUpInfo>;
@@ -165,10 +166,12 @@ interface UpManagerBox {
  * Cookie 可选行与「添加 UP 主」灰字描述随 2026-09-12 用户拍板移除）：
  * 添加行 = text + 行内按钮（actions，渲染器统一实现）；名单 = 通用 list 行
  * （头像/主副文案/移除，items 函数形式每次移除后以字盒为基底重建）。
+ * 资料（名字/头像）来源两路（2026-09-22）：添加时与打开弹窗时对缺资料条目直查
+ * fetchUpProfile（web-interface/card）回填；抓取轮从动态条目抽的 extractUpInfo 照旧覆盖。
  * 原「每日简报」组随每日简报退役删除（ADR-0121）；RSS 订阅管理在独立弹窗（rssManagerSettingsSchema）。
  */
-export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsSchema {
-  const box: UpManagerBox = {
+export function upManagerSettingsSchema(opts: UpManagerSchemaOptions, boxIn?: UpManagerBox): SettingsSchema {
+  const box: UpManagerBox = boxIn ?? {
     inputValue: '',
     ups: [...opts.ups],
     upInfo: { ...opts.upInfo },
@@ -191,7 +194,7 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
             actions: [{
               text: '添加',
               cta: true,
-              onClick: (value) => addUpUid(value, box, opts),
+              onClick: (value, ctx) => addUpUid(value, box, opts, ctx),
             }],
           },
           {
@@ -201,6 +204,7 @@ export function upManagerSettingsSchema(opts: UpManagerSchemaOptions): SettingsS
               key: uid,
               label: upDisplayName(uid, box.upInfo[uid]),
               sub: `UID ${uid}`,
+              // 头像来自 bilibiliUpInfo（添加时/打开弹窗时直查回填，或抓取轮从动态条目抽）
               imageUrl: box.upInfo[uid]?.avatar,
             })),
             emptyText: '暂无跟踪 UP 主，在上方粘贴主页链接或视频链接添加',
@@ -234,8 +238,39 @@ function upDisplayName(uid: string, info?: BilibiliUpInfo): string {
   return info && info.name ? info.name : `UP ${uid}`;
 }
 
-/** 添加动作：解析 UID 入库（去重），回填字盒并联动外部刷新 */
-async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpManagerSchemaOptions): Promise<void> {
+/** 资料回填结果（C4 口径：网络取不到与写盘失败分型，调用方给准确提示） */
+type ProfileBackfillOutcome = 'filled' | 'none' | 'write-failed';
+
+/** 本会话已试过资料回填的 uid（成功与否都记账——取不到的 uid 不重复打接口） */
+const profileTried = new Set<string>();
+
+/**
+ * 后台补 UP 资料（名字/头像，2026-09-22）：只补缺的条目，每个 uid 每会话最多查一次；
+ * 取到即写盘（段级合并只动该 uid）+ 重渲列表，头像/名字当场就位。
+ * 逐条串行（B站接口风控敏感，不并发）；单条失败继续下一条。
+ */
+async function backfillUpProfiles(uids: string[], box: UpManagerBox, refresh: () => void): Promise<ProfileBackfillOutcome> {
+  let filled = false;
+  let writeFailed = false;
+  for (const uid of uids) {
+    if (!uid || profileTried.has(uid)) continue;
+    if (box.upInfo[uid]?.name && box.upInfo[uid]?.avatar) { profileTried.add(uid); continue; }
+    profileTried.add(uid);
+    const info = await fetchUpProfile(uid);
+    if (!info) continue; // 网络失败/风控/查无此人：抓取轮 extractUpInfo 还会兜底
+    if (!(await writeBilibiliUpInfo(uid, info))) { writeFailed = true; continue; }
+    box.upInfo[uid] = { ...box.upInfo[uid], ...info };
+    filled = true;
+  }
+  if (filled) refresh(); // 列表重建读到字盒里的新资料（头像 + 名字）
+  if (filled) return 'filled';
+  return writeFailed ? 'write-failed' : 'none';
+}
+
+/** 添加动作：解析 UID 入库（去重），回填字盒并联动外部刷新；入库后直查资料（名字/头像）。
+ *  ctx 用于资料到位后重渲列表——添加本身不 await 这次网络查询，慢网不卡列表刷新
+ *  （ctx 缺省 = 单测直调场景：不重渲，其余链路不变）。 */
+async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpManagerSchemaOptions, ctx?: SettingsRowContext): Promise<void> {
   const input = String(raw || '').trim();
   if (!input) return;
   // 新-8：网络失败与「无法识别」分文案（resolveUidFromInputDetailed 由批 B 落地）
@@ -257,6 +292,10 @@ async function addUpUid(raw: string | undefined, box: UpManagerBox, opts: UpMana
       box.ups = [...box.ups, uid];
       opts.onChanged();
       notice(`已添加 UP 主 ${uid}`, 'success');
+      void backfillUpProfiles([uid], box, ctx?.refreshVisibility ?? (() => {})).then((r) => {
+        if (r === 'none') notice('网络读取 UP 主资料失败，抓取时会自动回填', 'info');
+        else if (r === 'write-failed') notifyWriteFailed('回填 UP 主资料');
+      });
       return;
     case 'exists':
       notice('该 UP 主已在名单中', 'info');
@@ -311,11 +350,17 @@ async function openUpManagerModal(opts: { ups: string[]; upInfo: Record<string, 
   const content = document.createElement('div');
   content.className = 'bz-settings-content';
 
+  /** 弹窗字盒：schema 与「打开即补资料」共用同一份——回填写进去，列表重建才看得到 */
+  const box: UpManagerBox = { inputValue: '', ups: [...opts.ups], upInfo: { ...opts.upInfo } };
+
   try {
     // 内容 = 面板通用渲染器（renderPanelSchema，行/组卡与设置面板同组件单源）；
     // 懒加载解析跨域环（settings-panel schemaLoaders ←→ 本域管理弹窗，函数级延迟解析）
     const { renderPanelSchema } = await import('../settings-panel/renderer');
-    renderPanelSchema(content, upManagerSettingsSchema(opts));
+    const { refresh } = renderPanelSchema(content, upManagerSettingsSchema(opts, box));
+    // 打开即补缺资料（存量名单的 uid 多半只有 uid、没有名字/头像）：后台逐条串行查，
+    // 查到即写盘 + 重渲列表；失败静默（抓取轮 extractUpInfo 还会兜底，不打扰评审）
+    void backfillUpProfiles(box.ups, box, refresh);
   } catch (e) {
     // 打开失败（动态加载/渲染异常）：close 复位守卫并清理半成品——否则单例标志滞留，「管理」此后无响应
     close();

@@ -22,10 +22,15 @@ import {
   addBilibiliUp, addRssFeed, removeBilibiliUp, removeRssFeed,
 } from '../src/clipbook/news-source-settings';
 import { dataSourceGroupRows, upManagerSettingsSchema, rssManagerSettingsSchema } from '../src/clipbook/news-sources-group';
+import { drainNewsWritesForTests } from '../src/clipbook/write-queue';
 import type { SettingsRow } from '../src/core/settings-schema';
 
 /** 损坏的 news.json 原文（保留态：onCorrupt 不清盘，原文件原样留存） */
 const BROKEN_JSON = '{ "articles": [broken json';
+
+/** 16 位长 uid（2026-09-22 用户实例）：既验长位数解析，又避开同文件其它用例已试过的 uid
+ *  ——资料回填每个 uid 每会话只试一次（模块级记账，跨用例残留） */
+const LONG_UID = '3706929260006322';
 
 const rowByName = (rows: SettingsRow[], name: string) => rows.find((r) => (r as { name?: string }).name === name) as any;
 const disk = (vault: MockVault) => JSON.parse(vault.files.get(getNewsFilePath())!);
@@ -178,6 +183,56 @@ describe('C4 管理弹窗增删提示（调用方文案准确）', () => {
     expect(hasNotice('已添加 UP 主 654321')).toBe(true);
     expect(onChanged).toHaveBeenCalledTimes(1);
     expect(disk(vault).bilibiliUps).toEqual(['123456', '654321']);
+  });
+
+  it('名单条目带名字与头像；添加后直查 B站资料回填（名字/头像当场就位）', async () => {
+    const upInfo = { '546195': { name: '影视飓风', avatar: 'https://a.b/c.png' } };
+    seedVault({ bilibiliUps: ['546195'], bilibiliUpInfo: upInfo });
+    const schema = upManagerSettingsSchema({ ups: ['546195'], upInfo, onChanged: () => {} });
+    // 已有资料：主文案 = 名字、副文案 = UID、头像走 imageUrl（列表组件渲染头像的唯一来源）
+    expect(rowByName(schema.groups[0].rows, '名单列表').items()).toEqual([
+      { key: '546195', label: '影视飓风', sub: 'UID 546195', imageUrl: 'https://a.b/c.png' },
+    ]);
+
+    // 添加：纯 uid 本地解析入库（不走 view API），随后直查 card 接口回填资料 → 重渲列表
+    (requestUrl as any).mockResolvedValue({
+      status: 200,
+      text: JSON.stringify({ code: 0, data: { card: { mid: LONG_UID, name: '黑鸦Heya', face: 'http://i0.hdslb.com/x.jpg' } } }),
+    });
+    const refresh = vi.fn();
+    const schema2 = upManagerSettingsSchema({ ups: [], upInfo: {}, onChanged: () => {} });
+    await rowByName(schema2.groups[0].rows, '添加 UP 主').actions[0].onClick(LONG_UID, {
+      rowEl: document.createElement('div'),
+      refreshVisibility: refresh,
+    } as any);
+    expect(hasNotice(`已添加 UP 主 ${LONG_UID}`)).toBe(true);
+    // 资料回填是不阻塞添加动作的后台链路（查资料 → 落盘 → 重渲）：等它落地再断言
+    await vi.waitFor(() => {
+      expect(rowByName(schema2.groups[0].rows, '名单列表').items()).toEqual([
+        { key: LONG_UID, label: '黑鸦Heya', sub: `UID ${LONG_UID}`, imageUrl: 'https://i0.hdslb.com/x.jpg' },
+      ]);
+    });
+    expect(refresh).toHaveBeenCalled(); // 资料到位即重渲列表
+    expect(hasNotice('网络读取 UP 主资料失败，抓取时会自动回填')).toBe(false);
+  });
+
+  it('资料直查取不到（风控/断网）→ 保留 uid 展示 + 一次提示，不写盘不假成功', async () => {
+    const vault = seedVault({ bilibiliUps: [] });
+    (requestUrl as any).mockResolvedValue({ status: 200, text: JSON.stringify({ code: -412, message: '风控' }) });
+    const refresh = vi.fn();
+    const schema = upManagerSettingsSchema({ ups: [], upInfo: {}, onChanged: () => {} });
+    await rowByName(schema.groups[0].rows, '添加 UP 主').actions[0].onClick('8888888888', {
+      rowEl: document.createElement('div'),
+      refreshVisibility: refresh,
+    } as any);
+    await vi.waitFor(() => {
+      expect(hasNotice('网络读取 UP 主资料失败，抓取时会自动回填')).toBe(true);
+    });
+    await drainNewsWritesForTests();
+    expect(disk(vault).bilibiliUps).toEqual(['8888888888']); // 名单照样入库
+    expect(disk(vault).bilibiliUpInfo['8888888888']).toBeUndefined(); // 资料不写空壳
+    expect(rowByName(schema.groups[0].rows, '名单列表').items()[0].label).toBe('UP 8888888888');
+    expect(refresh).not.toHaveBeenCalled(); // 没资料不重渲
   });
 
   it('UP 移除：损坏态条目保留 + 失败提示（无假成功）；正常态才弹已移除', async () => {

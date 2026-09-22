@@ -326,14 +326,16 @@ export async function writeNewsDataMerged(intent: NewsWriteIntent): Promise<void
 
 /**
  * UP 主 uid 解析（纯函数，本地规则部分；网络回填见 resolveUidFromInput）：
- * - 纯数字 uid（"546195"）→ 原样
+ * - 纯数字 uid（"546195"、长 uid "3706929260006322"）→ 原样。**位数不设上限**——原
+ *   `\d{1,10}` 上限按 B站 mid 位数定的，16 位长 uid 会被判「无法识别」（2026-09-22 拍板放开：
+ *   纯数字串就是 uid，不做位数分类）
  * - space.bilibili.com/<uid>（可带 https:// 与尾斜杠/参数）→ uid
  * - /video/BVxxx → 仅视频链接本地无法取 uid，返回 null（由调用方走 view API 回填）
  */
 export function parseUidFromText(text: string): string | null {
   const t = String(text || '').trim();
   if (!t) return null;
-  const pure = t.match(/^\d{1,10}$/);
+  const pure = t.match(/^\d+$/);
   if (pure) return pure[0];
   const space = t.match(/space\.bilibili\.com[\/:]*(\d+)/i);
   if (space) return space[1];
@@ -388,6 +390,33 @@ export async function resolveUidFromInputDetailed(text: string): Promise<UidReso
  */
 export async function resolveUidFromInput(text: string): Promise<string | null> {
   return (await resolveUidFromInputDetailed(text)).uid;
+}
+
+/**
+ * 单个 uid → UP 主资料（name + avatar）。接口 = B站 web-interface/card（匿名可读，不需要
+ * Cookie；实测 16 位长 uid 亦可查）。
+ * 失败一律收成 null：网络失败 / 非 2xx / 风控（code≠0 → 无 card）/ 无 card / 名字与头像全缺
+ * ——调用方保留 uid 兜底展示，不误报「已读取资料」。头像统一转 https（同 bilibiliUpInfo
+ * 段解析口径）。HTTP 通道走 core/http 单源（requestUrl 生产适配，移动端免 CORS）。
+ */
+export async function fetchUpProfile(uid: string): Promise<BilibiliUpInfo | null> {
+  const mid = String(uid || '').trim();
+  if (!mid) return null;
+  const body = await httpGetText(`https://api.bilibili.com/x/web-interface/card?mid=${encodeURIComponent(mid)}&photo=false`, {
+    timeoutMs: 10000,
+    fetchImpl: requestUrlAsFetch(),
+  });
+  if (body === null) return null;
+  try {
+    const card = JSON.parse(body)?.data?.card;
+    if (!card) return null;
+    const name = card.name ? String(card.name).trim() : '';
+    const avatar = card.face ? String(card.face).replace(/^http:/, 'https:') : '';
+    if (!name && !avatar) return null;
+    return { ...(name ? { name } : {}), ...(avatar ? { avatar } : {}) };
+  } catch {
+    return null;
+  }
 }
 
 /** 迁移：读旧 news-stats.json（若存在）并入 stats 段；返回迁移后的四段（无旧文件/已有统计 → 原样返回） */

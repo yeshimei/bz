@@ -87,6 +87,23 @@ export async function addBilibiliUp(uid: string): Promise<AddSourceOutcome> {
   });
 }
 
+/**
+ * 回填单个 UP 主资料（name/avatar；串行队列 + 段级合并只声明 bilibiliUpInfo 段——该 uid
+ * 既有键并入，其余 uid 与其余段取磁盘现值，不覆盖后台抓取刚写入的资料）。
+ * C4：返回是否落盘（news.json 损坏/读盘失败 → false，调用方须提示）。
+ */
+export async function writeBilibiliUpInfo(uid: string, info: BilibiliUpInfo): Promise<boolean> {
+  const id = String(uid || '').trim();
+  if (!id) return false;
+  return enqueueNewsWrite(async () => {
+    const res = await readNewsData();
+    if (!res.ok) return false;
+    const prev = res.data.bilibiliUpInfo[id];
+    await writeNewsDataMerged({ set: { bilibiliUpInfo: { ...res.data.bilibiliUpInfo, [id]: { ...prev, ...info } } } });
+    return true;
+  });
+}
+
 /** 写 B 站每 UP 抓取条数（ticket 127；默认 10，夹取 1..50，非法回退 10；串行队列 + 段级合并）。
  *  C4：返回是否落盘（news.json 损坏/读盘失败 → false，调用方须提示） */
 export async function writeBilibiliMaxItems(v: string | number): Promise<boolean> {
