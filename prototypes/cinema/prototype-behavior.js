@@ -1,4 +1,4 @@
-/* 源指纹 c1717d3f6338c8f2 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 6444adf2479e0371 · 仓内输入 71 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/cinema/fake-sim.ts","prototypes/cinema/fake/fake-obsidian.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/douban-queue.ts","src/cinema/index.ts","src/cinema/layouts/midnight/render.ts","src/cinema/motion.ts","src/cinema/recommend.ts","src/cinema/render.ts","src/cinema/seasons.ts","src/cinema/shared.ts","src/cinema/state.ts","src/cinema/type-decide.ts","src/cinema/ui.ts","src/cinema/yearbook/data.ts","src/cinema/yearbook/engine.ts","src/cinema/yearbook/index.ts","src/cinema/yearbook/kits.ts","src/cinema/yearbook/motions.ts","src/cinema/yearbook/scenes.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev-fallback.ts","src/core/jev.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/settings-provider.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/cinema/fake-sim.ts → window.BZW_cinema（行为单源预览包，issue 245/ADR-0106） */
 var BZW_cinema = (() => {
@@ -10319,7 +10319,7 @@ tags:
       const result = await askJev(state, questions, { signal, config: plan.config });
       return plan.parse(result.answers);
     } catch (e) {
-      if (signal == null ? void 0 : signal.aborted) throw e;
+      if (signal == null ? void 0 : signal.aborted) throw e instanceof Error && e.name === "AbortError" ? e : abortError3();
       console.debug("[jev] 判定通道不可用，回落 LLM：", e instanceof Error ? e.message : e);
       return plan.fallback();
     }
@@ -10353,10 +10353,13 @@ tags:
   }
   function judgeTypeChoice(answer, criteria) {
     const choice = answer.choice;
-    if (!(choice in criteria)) return null;
+    if (!hasOwn(criteria, choice)) return null;
     if (choice === TYPE_SENTINEL) return null;
     if (answer.confidence < CONFIDENCE_FLOOR) return null;
     return choice;
+  }
+  function hasOwn(criteria, key) {
+    return Object.prototype.hasOwnProperty.call(criteria, key);
   }
   function buildTypeLlmPrompt(info, criteria) {
     const menu = Object.keys(criteria).map((tag) => tag === TYPE_SENTINEL ? tag : `${tag}（${criteria[tag]}）`).join("、");
@@ -10382,11 +10385,11 @@ tags:
       return null;
     }
     const tag = String((_a = obj == null ? void 0 : obj.type) != null ? _a : "").trim();
-    if (!tag || tag === TYPE_SENTINEL || !(tag in criteria)) return null;
+    if (!tag || tag === TYPE_SENTINEL || !hasOwn(criteria, tag)) return null;
     return tag;
   }
-  async function decideTypeByLlm(info, criteria) {
-    const raw = await createAI().json(buildTypeLlmPrompt(info, criteria));
+  async function decideTypeByLlm(info, criteria, signal) {
+    const raw = await createAI().json(buildTypeLlmPrompt(info, criteria), { signal });
     return parseTypeLlmOutput(raw, criteria);
   }
   async function decideCinemaType(info, opts) {
@@ -10401,9 +10404,10 @@ tags:
       parse: (answers) => {
         const answer = answers[Q_KEY];
         if (!answer || answer.type !== "choice") throw new Error("Jev 未返回有效的 choice 答案");
+        if (!hasOwn(criteria, answer.choice)) throw new Error(`Jev 返回的选择不在候选清单内：${answer.choice}`);
         return judgeTypeChoice(answer, criteria);
       },
-      fallback: () => decideTypeByLlm(info, criteria)
+      fallback: () => decideTypeByLlm(info, criteria, opts == null ? void 0 : opts.signal)
     });
   }
 
