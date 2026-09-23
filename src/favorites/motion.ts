@@ -156,9 +156,11 @@ export function motionRendered(overlay: HTMLElement, boot: boolean): void {
     cards.forEach((card, i) => {
       const delay = 200 + Math.min(i, 16) * STAG;
       if (cold) {
+        // 冷存终态 = CSS 的 .bz-fav-arch（opacity .5 + grayscale .5）：fill both 会把末帧
+        // 永久钉住，末帧必须就是归档视觉本身，否则透明弱化被 opacity:1 盖掉（2026-09-23 修复）
         waapi(card,
           [{ opacity: 0, transform: 'translateY(8px) rotate(1.2deg) scale(.985)' },
-           { opacity: 1, transform: 'none' }],
+           { opacity: .5, filter: 'grayscale(.5)', transform: 'none' }],
           { duration: M.base + 100, delay, easing: E.out, fill: 'both' });
       } else {
         waapi(card,
@@ -198,8 +200,9 @@ export function motionFilterSwitch(board: HTMLElement, tagsRow: HTMLElement | nu
   const cold = !!board.querySelector('.bz-fav-card.bz-fav-arch');
   fresh.forEach((card, i) => {
     waapi(card,
+      // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
       cold
-        ? [{ opacity: 0, transform: 'translateY(7px) rotate(1deg) scale(.99)' }, { opacity: 1, transform: 'none' }]
+        ? [{ opacity: 0, transform: 'translateY(7px) rotate(1deg) scale(.99)' }, { opacity: .5, filter: 'grayscale(.5)', transform: 'none' }]
         : [{ opacity: 0, transform: 'translateY(9px) rotate(.8deg) scale(.985)' }, { opacity: 1, transform: 'none' }],
       { duration: M.base, delay: Math.min(i, 14) * STAG, easing: E.out, fill: 'both' });
   });

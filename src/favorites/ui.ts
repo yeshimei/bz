@@ -267,23 +267,13 @@ export function openPanel(app: any, dm: DataManager, ai: FavoritesAIService): vo
     applyTagFilter(b.dataset.favTag as string);
   });
 
-  // 内容区：卡片点击（移动抽屉 / 桌面有链直开）+ 右键 + 键盘（UI-06：卡片 role=button 后
-  // Enter/Space 与点击同径——键盘用户不再到不了开链/抽屉）
+  // 内容区：卡片点击（移动抽屉 / 桌面拾取）+ 右键 + 键盘（UI-06：卡片 role=button 后
+  // Enter/Space 与点击同径）。2026-09-23 拍板：点卡不再跳网站——开链/复制网址走右键菜单
   const content = overlay.querySelector('[data-fav-content]') as HTMLElement;
   const openCardDefault = (it: FavoritesItem, card?: HTMLElement | null): void => {
-    if (card) motionCardPick(card); // 动效层：拾取呼吸（移动交给抽屉，桌面交给浏览器）
+    if (card) motionCardPick(card); // 动效层：拾取呼吸
     if (isMobileEnv()) { openMobSheet(it); return; }
-    // 桌面：点击不弹菜单（操作唯一入口右键）——有链接直开浏览器；无链接不再零反馈（F1/呈报#24，
-    // issue 201「不动作」拍板保持：仍不开链不弹层），改轻微晃动示意「这张卡没有可打开的链接」
-    // （补链入口 = 右键编辑，卡片 title 静态提示同口径）
-    const rawUrl = (it.url || '').trim();
-    if (rawUrl) { openExternal(normalizeUrl(rawUrl)); return; }
-    if (card) {
-      card.classList.remove('bz-fav-nolink');
-      void card.offsetWidth; // 强制重排：连续点击也从头晃
-      card.classList.add('bz-fav-nolink');
-      card.addEventListener('animationend', () => card.classList.remove('bz-fav-nolink'), { once: true });
-    }
+    // 桌面：点击只给拾取反馈，不导航不弹菜单（操作唯一入口右键）
   };
   content.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
@@ -441,6 +431,11 @@ function runAction(it: FavoritesItem, spec: FavActionSpec): void {
   const rawUrl = (it.url || '').trim();
   if (spec.act === 'open') {
     openExternal(normalizeUrl(rawUrl));
+  } else if (spec.act === 'copy') {
+    // 复制网址（2026-09-23 拍板）：点卡不跳转后，右键补一个无副作用的开链替代
+    void navigator.clipboard.writeText(normalizeUrl(rawUrl))
+      .then(() => notify('网址已复制'))
+      .catch(() => notify('无法复制网址'));
   } else if (spec.act === 'pin') {
     const next = !it.pinned;
     const prev = it.pinned;

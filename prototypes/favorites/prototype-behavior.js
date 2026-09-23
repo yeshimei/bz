@@ -1,4 +1,4 @@
-/* 源指纹 13aaeb0f5dbae877 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
+/* 源指纹 1f68df5c436b1345 · 仓内输入 57 个（校验见 tests/preview-freshness.test.ts） */
 /*#preview-inputs=["prototypes/favorites/fake-sim.ts","prototypes/favorites/fake/fake-obsidian.ts","src/core/ai.ts","src/core/app.ts","src/core/crypto.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/json-store.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/settings-provider.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/smartcat/favorites-source.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/favorites/fake-sim.ts → window.BZW_favorites（行为单源预览包，issue 245/ADR-0106） */
 var BZW_favorites = (() => {
@@ -6517,6 +6517,7 @@ var BZW_favorites = (() => {
     close: "x",
     add: "plus",
     open: "external-link",
+    copy: "copy",
     pin: "pin",
     pinOff: "pin-off",
     edit: "pencil",
@@ -6573,10 +6574,9 @@ var BZW_favorites = (() => {
     const archCls = it.archived ? " bz-fav-arch" : "";
     const hue = hueOf((it.tags || [])[0] || "");
     const tape = "bz-fav-tape" + (idx % 3 ? [" bz-fav-tape--r", " bz-fav-tape--g"][idx % 3 - 1] : "");
-    const ext = (it.url || "").trim() ? `<span class="bz-fav-ext" title="打开外部链接">${iconSpan(ICON.open, "bz-ic--xs")}</span>` : "";
     return `<div class="bz-fav-card${pinnedCls}${archCls}" data-fav-id="${esc(it.id)}" role="button" tabindex="0">
     <span class="${tape}"></span>
-    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>${ext}
+    <span class="bz-fav-dot" style="--c:hsl(${hue} 52% 58%)"></span>
     <h3>${esc(it.title || "无标题")}</h3>
     <p>${esc(it.description || "（这张卡只写了个名字）")}</p>
     <div class="bz-fav-ft"><span class="bz-fav-tags-row">${(it.tags || []).map((t) => {
@@ -6601,6 +6601,7 @@ var BZW_favorites = (() => {
   function actionSpecs(it) {
     const acts = [];
     if ((it.url || "").trim()) acts.push({ icon: ICON.open, label: "打开", act: "open" });
+    if ((it.url || "").trim()) acts.push({ icon: ICON.copy, label: "复制网址", act: "copy" });
     acts.push({
       icon: it.pinned ? ICON.pinOff : ICON.pin,
       label: it.pinned ? "取消置顶" : "置顶",
@@ -6826,7 +6827,7 @@ var BZW_favorites = (() => {
             card,
             [
               { opacity: 0, transform: "translateY(8px) rotate(1.2deg) scale(.985)" },
-              { opacity: 1, transform: "none" }
+              { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }
             ],
             { duration: M.base + 100, delay, easing: E.out, fill: "both" }
           );
@@ -6868,7 +6869,8 @@ var BZW_favorites = (() => {
     fresh.forEach((card, i) => {
       waapi(
         card,
-        cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 1, transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
+        // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
+        cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
         { duration: M.base, delay: Math.min(i, 14) * STAG, easing: E.out, fill: "both" }
       );
     });
@@ -7376,17 +7378,6 @@ var BZW_favorites = (() => {
         openMobSheet(it);
         return;
       }
-      const rawUrl = (it.url || "").trim();
-      if (rawUrl) {
-        openExternal(normalizeUrl(rawUrl));
-        return;
-      }
-      if (card) {
-        card.classList.remove("bz-fav-nolink");
-        void card.offsetWidth;
-        card.classList.add("bz-fav-nolink");
-        card.addEventListener("animationend", () => card.classList.remove("bz-fav-nolink"), { once: true });
-      }
     };
     content.addEventListener("click", (e) => {
       const t = e.target;
@@ -7520,6 +7511,8 @@ var BZW_favorites = (() => {
     const rawUrl = (it.url || "").trim();
     if (spec.act === "open") {
       openExternal(normalizeUrl(rawUrl));
+    } else if (spec.act === "copy") {
+      void navigator.clipboard.writeText(normalizeUrl(rawUrl)).then(() => notify("网址已复制")).catch(() => notify("无法复制网址"));
     } else if (spec.act === "pin") {
       const next = !it.pinned;
       const prev = it.pinned;
