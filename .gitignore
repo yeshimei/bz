@@ -6,7 +6,8 @@ node_modules/
 coverage/
 viz/
 .scratch/
-x.dsh-worktrees/
 .dsh-worktrees/
 .zcode/
 .workbuddy/
+.docs/
+.issues/

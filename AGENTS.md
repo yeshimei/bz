@@ -56,7 +56,7 @@
 
 - 主分支 `master`，提交遵循 Conventional Commits。
 - worktree 建在主仓库父级外（如 `../.dsh-worktrees/`），从最新 master 分叉。
-- 工作流：worktree 开发 → `git merge master` 同步底 → `pnpm test`/tsc/自审/diff 审查全绿 → review 通过 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署。
+- 工作流：worktree 开发 → `git merge master` 同步底 → `pnpm test`/tsc/自审/diff 审查全绿 → 合并回主仓库 → 主仓库 `pnpm run build` 并部署 -> 子代理 review。
 - 严禁在 worktree 内构建。
 - 部署后清理 worktree。
 - 并行会话占号（issues/ADR 编号）前先查主仓库最新号，防撞车重编号。
