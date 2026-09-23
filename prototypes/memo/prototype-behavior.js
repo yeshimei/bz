@@ -1,5 +1,5 @@
-/* 源指纹 d5d6af8bdbfa0a0c · 仓内输入 239 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
+/* 源指纹 9486f5ce215de765 · 仓内输入 253 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/memo/fake-sim.ts","prototypes/memo/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/belongings/ai.ts","src/belongings/data.ts","src/belongings/emoji-icon-map.ts","src/belongings/layouts/poster/render.ts","src/belongings/render.ts","src/belongings/report-stats.ts","src/belongings/report.ts","src/belongings/shared.ts","src/belongings/ui.ts","src/bookshelf/constants.ts","src/bookshelf/data.ts","src/bookshelf/epub-notes.ts","src/bookshelf/layouts/wall/render.ts","src/bookshelf/motion.ts","src/bookshelf/notes-ui.ts","src/bookshelf/notes.ts","src/bookshelf/render.ts","src/bookshelf/settings.ts","src/bookshelf/shared.ts","src/bookshelf/state.ts","src/bookshelf/ui.ts","src/checkup/checks-consistency.ts","src/checkup/checks-drift.ts","src/checkup/checks-json.ts","src/checkup/checks-orphans.ts","src/checkup/files.ts","src/checkup/index.ts","src/checkup/run.ts","src/checkup/ui.ts","src/cinema/constants.ts","src/cinema/data.ts","src/cinema/douban-fetcher.ts","src/cinema/settings.ts","src/cinema/state.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai-models.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/domain-icons.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/jev.ts","src/core/json-store.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/lock-stats.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/pomodoro-phase.ts","src/core/settings-common.ts","src/core/settings-main-schema.ts","src/core/settings-modal.ts","src/core/settings-model-picker.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/flip.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/lock-screen.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slide-pill.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/diary/config.ts","src/diary/repair.ts","src/diary/settings.ts","src/diary/ui/repair-modal.ts","src/encrypt/data.ts","src/encrypt/index.ts","src/encrypt/preview.ts","src/encrypt/ui.ts","src/encrypt/vault-assets-view.ts","src/favorites/ai.ts","src/favorites/app.ts","src/favorites/config.ts","src/favorites/data.ts","src/favorites/layouts/board/render.ts","src/favorites/motion.ts","src/favorites/render.ts","src/favorites/shared.ts","src/favorites/ui.ts","src/gameshelf/constants.ts","src/gameshelf/settings.ts","src/gameshelf/state.ts","src/home/entry-editor.ts","src/home/order.ts","src/home/settings.ts","src/home/shared.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/memo/data.ts","src/memo/due.ts","src/memo/file-sync.ts","src/memo/reminder.ts","src/memo/render.ts","src/memo/settings.ts","src/memo/state.ts","src/memo/ui.ts","src/password-vault/data.ts","src/password-vault/settings.ts","src/pomodoro/config.ts","src/pomodoro/data.ts","src/pomodoro/index.ts","src/pomodoro/render.ts","src/pomodoro/sound.ts","src/pomodoro/state.ts","src/pomodoro/stats.ts","src/pomodoro/statusbar.ts","src/pomodoro/ui.ts","src/reading-report/index.ts","src/reading-report/report.ts","src/reading-report/stats.ts","src/review/analysis/data.ts","src/review/analysis/engine.ts","src/review/analysis/index.ts","src/review/analysis/kits.ts","src/review/analysis/motions.ts","src/review/analysis/view.ts","src/review/app.ts","src/review/data.ts","src/review/fit.ts","src/review/fsrs.ts","src/review/index.ts","src/review/motion.ts","src/review/queue.ts","src/review/quiz-core/generator.ts","src/review/quiz-core/index.ts","src/review/quiz-core/manager.ts","src/review/quiz-core/session.ts","src/review/quiz-panel-data.ts","src/review/quiz-panel.ts","src/review/render.ts","src/review/settings-schema.ts","src/review/sprint.ts","src/review/stats-ui.ts","src/review/stats.ts","src/review/ui.ts","src/review/watch.ts","src/secondbrain/ai.ts","src/secondbrain/chunk.ts","src/secondbrain/config.ts","src/secondbrain/link-agent/data.ts","src/secondbrain/link-agent/pipeline.ts","src/secondbrain/local-ip.ts","src/secondbrain/panel.ts","src/secondbrain/readonly.ts","src/secondbrain/render.ts","src/secondbrain/store-file.ts","src/secondbrain/tfidf.ts","src/secondbrain/weekly-ui.ts","src/secondbrain/weekly.ts","src/secondbrain/whitelist.ts","src/settings-panel/index.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/schema.ts","src/settings-panel/shared.ts","src/settings-panel/ui.ts","src/settings.ts","src/smartcat/belongings-source.ts","src/smartcat/character.ts","src/smartcat/config.ts","src/smartcat/data.ts","src/smartcat/favorites-source.ts","src/smartcat/ui.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/memo/fake-sim.ts → window.BZW_memo（行为单源预览包，issue 245/ADR-0106） */
 var BZW_memo = (() => {
   var __create = Object.create;
@@ -1016,15 +1016,15 @@ var BZW_memo = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M9, s, ms) {
+        function createDate(y, m, d, h, M11, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M9, s, ms);
+            date = new Date(y + 400, m, d, h, M11, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M9, s, ms);
+            date = new Date(y, m, d, h, M11, s, ms);
           }
           return date;
         }
@@ -5586,8 +5586,8 @@ var BZW_memo = (() => {
         async restoreItem(item, idx) {
           return enqueueFileTask(this.memoFilePath, async () => {
             const data = await this.read();
-            const at = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
-            data.splice(at, 0, item);
+            const at3 = idx !== void 0 && idx >= 0 && idx <= data.length ? idx : 0;
+            data.splice(at3, 0, item);
             await this.write(data);
           });
         },
@@ -5833,7 +5833,7 @@ var BZW_memo = (() => {
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M9 = 10;
+    const M11 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -5860,7 +5860,7 @@ var BZW_memo = (() => {
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M9 || Math.abs(t.clientY - sy) > M9) {
+      if (Math.abs(t.clientX - sx) > M11 || Math.abs(t.clientY - sy) > M11) {
         moved = true;
         cancel();
       }
@@ -6703,10 +6703,33 @@ var BZW_memo = (() => {
       onInput: opts.onInput
     });
     el.appendChild(input);
+    let clearBtn = null;
+    if (opts.clearable !== false) {
+      clearBtn = document.createElement("button");
+      clearBtn.type = "button";
+      clearBtn.className = "bz-search-clear";
+      clearBtn.title = "清除搜索";
+      clearBtn.setAttribute("aria-label", "清除搜索");
+      clearBtn.hidden = !input.value.trim();
+      clearBtn.appendChild(uiIcon("x"));
+      clearBtn.addEventListener("click", () => {
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      });
+      input.addEventListener("input", () => {
+        if (clearBtn) clearBtn.hidden = !input.value.trim();
+      });
+      el.appendChild(clearBtn);
+    }
+    const syncClear = () => {
+      if (clearBtn) clearBtn.hidden = !input.value.trim();
+    };
     const setValue = (v) => {
       input.value = v;
+      syncClear();
     };
-    return { el, input, setValue };
+    return { el, input, setValue, syncClear };
   }
   var init_search = __esm({
     "src/core/ui/search.ts"() {
@@ -7128,8 +7151,8 @@ var BZW_memo = (() => {
     const draw = () => {
       if (!layer) return;
       const cur = anchor.value.trim();
-      const q2 = cur.toLowerCase();
-      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
+      const q3 = cur.toLowerCase();
+      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q3 || s.toLowerCase().includes(q3))).slice(0, max);
       if (!matched.length) {
         close();
         return;
@@ -7911,7 +7934,7 @@ var BZW_memo = (() => {
     }
     if (opts.enter) {
       const n = (_c = opts.enter.n) != null ? _c : 12;
-      const stagger = (_d = opts.enter.stagger) != null ? _d : 26;
+      const stagger2 = (_d = opts.enter.stagger) != null ? _d : 26;
       const from = (_e = opts.enter.from) != null ? _e : "bottom";
       let idx = 0;
       nodes.forEach((el) => {
@@ -7921,7 +7944,7 @@ var BZW_memo = (() => {
           el.style.opacity = "";
           return;
         }
-        const delay = idx * stagger;
+        const delay = idx * stagger2;
         idx++;
         const fromCss = from === "right" ? "translateX(22px) scale(0.96)" : "translateY(6px) scale(0.99)";
         const ea = safeAnimate(el, [
@@ -8542,11 +8565,11 @@ var BZW_memo = (() => {
     let out = "";
     let cursor = 0;
     for (; ; ) {
-      const at = lower.indexOf(needle, cursor);
-      if (at < 0) break;
-      out += escapeHtml(t.slice(cursor, at));
-      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at, at + needle.length))}</mark>`;
-      cursor = at + needle.length;
+      const at3 = lower.indexOf(needle, cursor);
+      if (at3 < 0) break;
+      out += escapeHtml(t.slice(cursor, at3));
+      out += `<mark class="bz-memo-hit">${escapeHtml(t.slice(at3, at3 + needle.length))}</mark>`;
+      cursor = at3 + needle.length;
     }
     return out + escapeHtml(t.slice(cursor));
   }
@@ -9649,9 +9672,9 @@ var BZW_memo = (() => {
                 var _a2, _b2;
                 const s = tryGetSettings();
                 const cur = String((_a2 = s.pomodoroSkinTheme) != null ? _a2 : "");
-                const fit2 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
-                if (!fit2.some((o) => o.value === cur)) {
-                  s.pomodoroSkinTheme = ((_b2 = fit2[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
+                const fit3 = SKIN_THEME_OPTIONS.filter((o) => o.layout === s.pomodoroSkin);
+                if (!fit3.some((o) => o.value === cur)) {
+                  s.pomodoroSkinTheme = ((_b2 = fit3[0]) != null ? _b2 : SKIN_THEME_OPTIONS[0]).value;
                   saveSettings();
                 }
                 render();
@@ -10392,13 +10415,13 @@ var BZW_memo = (() => {
     }
     function renderList2() {
       listEl2.innerHTML = "";
-      const q2 = state3.q.trim().toLowerCase();
-      const exact = !!q2 && state3.folders.includes(q2);
+      const q3 = state3.q.trim().toLowerCase();
+      const exact = !!q3 && state3.folders.includes(q3);
       const LIMIT = 300;
       let n = 0;
       let total = 0;
       for (const folder of orderedList()) {
-        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
+        if (q3 && !exact && !folder.toLowerCase().includes(q3)) continue;
         total++;
         if (n >= LIMIT) continue;
         n++;
@@ -11550,10 +11573,10 @@ var BZW_memo = (() => {
     st.fx.style.height = `${h}px`;
     st.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     st.rect = readHostRect(st.host);
-    const rng = mulberry32(20260923);
+    const rng3 = mulberry32(20260923);
     for (const m of st.motes) {
-      m.hx = rng() * w;
-      m.hy = rng() * h;
+      m.hx = rng3() * w;
+      m.hy = rng3() * h;
     }
   }
   function readHostRect(host) {
@@ -11600,7 +11623,7 @@ var BZW_memo = (() => {
       inkc = (_c = hexToRgb(cs.getPropertyValue("--sp-ink-2"))) != null ? _c : inkc;
     } catch (e) {
     }
-    const rng = mulberry32(20260923);
+    const rng3 = mulberry32(20260923);
     const motes = [];
     for (let i = 0; i < DUST_MAX; i++) {
       motes.push({
@@ -11610,14 +11633,14 @@ var BZW_memo = (() => {
         oy: 0,
         ovx: 0,
         ovy: 0,
-        ax: 5 + rng() * 10,
-        ay: 5 + rng() * 10,
-        fa: 0.05 + rng() * 0.12,
-        fb: 0.05 + rng() * 0.12,
-        ph: rng() * Math.PI * 2,
-        tw: 0.4 + rng() * 1.1,
-        r: 0.7 + rng() * 1.5,
-        ink: rng() < 0.22
+        ax: 5 + rng3() * 10,
+        ay: 5 + rng3() * 10,
+        fa: 0.05 + rng3() * 0.12,
+        fb: 0.05 + rng3() * 0.12,
+        ph: rng3() * Math.PI * 2,
+        tw: 0.4 + rng3() * 1.1,
+        r: 0.7 + rng3() * 1.5,
+        ink: rng3() < 0.22
       });
     }
     const st = {
@@ -14887,11 +14910,11 @@ ${countsToText(s.missing)}
         prevSpace = false;
       }
     }
-    const q2 = t.replace(/\s+/g, " ").trim();
-    const n = normStr.indexOf(q2);
+    const q3 = t.replace(/\s+/g, " ").trim();
+    const n = normStr.indexOf(q3);
     if (n === -1) return null;
     const start = normIdx[n];
-    const end = normIdx[Math.min(n + q2.length - 1, normIdx.length - 1)] + 1;
+    const end = normIdx[Math.min(n + q3.length - 1, normIdx.length - 1)] + 1;
     return lineAround(src, start, end);
   }
   async function readArticleTracking(articleKey) {
@@ -15828,8 +15851,8 @@ ${countsToText(s.missing)}
     const flat = flattenWs(src);
     const needle = flattenWs(text).text;
     if (!needle) return null;
-    const at = flat.text.indexOf(needle);
-    return at < 0 ? null : flat.map[at];
+    const at3 = flat.text.indexOf(needle);
+    return at3 < 0 ? null : flat.map[at3];
   }
   function flattenWs(s) {
     const map = [];
@@ -17341,7 +17364,7 @@ ${sample}`
     for (let round = 0; round < RESIDUAL_ROUNDS; round++) {
       if (!pushRound(nodes, 0, 0, RESIDUAL_EPS)) return;
     }
-    for (let sweep = 0; sweep < n; sweep++) {
+    for (let sweep3 = 0; sweep3 < n; sweep3++) {
       let moved = false;
       for (let j = 1; j < n; j++) {
         const B = nodes[j];
@@ -17445,9 +17468,9 @@ ${sample}`
   function rectOf(b) {
     return { left: b.x, top: b.y, right: b.x + b.w, bottom: b.y + b.h };
   }
-  function segRectHit(p, q2, r, margin = 0) {
-    const dx = q2.x - p.x;
-    const dy = q2.y - p.y;
+  function segRectHit(p, q3, r, margin = 0) {
+    const dx = q3.x - p.x;
+    const dy = q3.y - p.y;
     const pv = [-dx, dx, -dy, dy];
     const qv = [
       p.x - (r.left - margin),
@@ -17502,14 +17525,14 @@ ${sample}`
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
   }
-  function exitCandidates(S, sb, portPad) {
-    const ye = clamp(S.y, sb.top + portPad, sb.bottom - portPad);
-    const xe = clamp(S.x, sb.left + portPad, sb.right - portPad);
+  function exitCandidates(S3, sb, portPad) {
+    const ye = clamp(S3.y, sb.top + portPad, sb.bottom - portPad);
+    const xe = clamp(S3.x, sb.left + portPad, sb.right - portPad);
     const cands = [
-      { side: "L", d: S.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
-      { side: "R", d: sb.right - S.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
-      { side: "T", d: S.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
-      { side: "B", d: sb.bottom - S.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
+      { side: "L", d: S3.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
+      { side: "R", d: sb.right - S3.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
+      { side: "T", d: S3.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
+      { side: "B", d: sb.bottom - S3.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
     ];
     const order = ["L", "R", "T", "B"];
     return cands.sort((a, b) => a.d !== b.d ? a.d - b.d : order.indexOf(a.side) - order.indexOf(b.side));
@@ -17526,7 +17549,7 @@ ${sample}`
       { s: "R", d: Math.hypot(b.right - ax, bcy - ay) }
     ];
     const order = ["L", "T", "B", "R"];
-    cands.sort((p, q2) => p.d !== q2.d ? p.d - q2.d : order.indexOf(p.s) - order.indexOf(q2.s));
+    cands.sort((p, q3) => p.d !== q3.d ? p.d - q3.d : order.indexOf(p.s) - order.indexOf(q3.s));
     return cands.map((c) => c.s);
   }
   function sidePortAndNormal(side, b, portPad) {
@@ -17614,9 +17637,9 @@ ${sample}`
       for (let i = 1; i < vals.length; i++) if (vals[i] - vals[i - 1] < min) vals[i] = vals[i - 1] + min;
     }
   }
-  function segHitsAny(p, q2, rects, margin) {
+  function segHitsAny(p, q3, rects, margin) {
     for (let i = 0; i < rects.length; i++) {
-      if (segRectHit(p, q2, rects[i], margin)) return true;
+      if (segRectHit(p, q3, rects[i], margin)) return true;
     }
     return false;
   }
@@ -17800,10 +17823,10 @@ ${sample}`
       dist[start] = 0;
       buckets[0] = [start];
       for (let c = 0; c <= maxc && !found; c++) {
-        const q2 = buckets[c];
-        if (!q2) continue;
-        for (let qi = 0; qi < q2.length; qi++) {
-          const cur = q2[qi];
+        const q3 = buckets[c];
+        if (!q3) continue;
+        for (let qi = 0; qi < q3.length; qi++) {
+          const cur = q3[qi];
           if (done[cur]) continue;
           done[cur] = 1;
           if (cur === goal) {
@@ -17872,8 +17895,8 @@ ${sample}`
       let entry = order[0];
       let clean = false;
       for (const side of order) {
-        const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-        if (rayCardDistance(T, nOut, rects, 0) >= STUB) {
+        const { T: T3, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+        if (rayCardDistance(T3, nOut, rects, 0) >= STUB) {
           entry = side;
           clean = true;
           break;
@@ -17881,8 +17904,8 @@ ${sample}`
       }
       if (!clean) {
         for (const side of order) {
-          const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-          if (rayCardDistance(T, nOut, rects, 0) >= 1) {
+          const { T: T3, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+          if (rayCardDistance(T3, nOut, rects, 0) >= 1) {
             entry = side;
             clean = true;
             break;
@@ -17950,8 +17973,8 @@ ${sample}`
     for (const j of jobs) {
       const e = j.edge;
       const sb = j.src.rect;
-      const S = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
-      const cands = exitCandidates(S, sb, PORT_PAD);
+      const S3 = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
+      const cands = exitCandidates(S3, sb, PORT_PAD);
       let pick = null;
       let stub = STUB;
       for (const c of cands) {
@@ -17976,15 +17999,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E3 = pick.E;
+      const E5 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E3, nOut, stub);
-      const T = j.T;
+      const E1 = along(E5, nOut, stub);
+      const T3 = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E3, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E3, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E5, E1, rects) || stubDirty(T1, T3, rects);
+      const items = [S3, E5, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -18007,7 +18030,7 @@ ${sample}`
       } else {
         items.push(T1);
       }
-      items.push(T);
+      items.push(T3);
       out[j.idx] = {
         from: e.from,
         to: e.to,
@@ -18109,8 +18132,8 @@ ${sample}`
     var _a2, _b2;
     const sub = String((_a2 = s == null ? void 0 : s.subpath) != null ? _a2 : "").trim();
     if (sub) return hash8(normLite(sub));
-    const q2 = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim();
-    return q2 ? hash8(normLite(q2)) : "";
+    const q3 = String((_b2 = s == null ? void 0 : s.quote) != null ? _b2 : "").trim();
+    return q3 ? hash8(normLite(q3)) : "";
   }
   function nextIsBoundary(text, i) {
     if (i >= text.length) return true;
@@ -18380,10 +18403,10 @@ ${sample}`
     if (flatWant) {
       const hit = flat.indexOf(flatWant);
       if (hit >= 0 && map[hit] !== void 0) {
-        const at = start + map[hit];
+        const at3 = start + map[hit];
         const endIdx = hit + flatWant.length - 1;
         const end = map[endIdx] !== void 0 ? start + map[endIdx] + 1 : src.length;
-        return { at, len: Math.max(1, end - at), level: 2 };
+        return { at: at3, len: Math.max(1, end - at3), level: 2 };
       }
     }
     const kws = keywordsOf(want);
@@ -18400,16 +18423,16 @@ ${sample}`
       for (const k of kws) if (flatBlock.includes(k)) score++;
       if (score < need) continue;
       const lead = raw.length - raw.trimStart().length;
-      const at = start + m.index + lead;
+      const at3 = start + m.index + lead;
       const len = raw.trimEnd().length - lead;
-      if (!best || score > best.score) best = { at, len, score };
+      if (!best || score > best.score) best = { at: at3, len, score };
     }
     if (!best) return null;
     return { at: best.at, len: best.len, level: 3 };
   }
-  function expandBlock(text, at, len) {
+  function expandBlock(text, at3, len) {
     const src = String(text != null ? text : "");
-    let s = Math.max(0, Math.min(Number(at) || 0, src.length));
+    let s = Math.max(0, Math.min(Number(at3) || 0, src.length));
     let e = Math.max(s, Math.min(src.length, s + Math.max(0, Number(len) || 0)));
     const lb = src.slice(0, s).search(/\n[ \t]*\n[^\n]*$/);
     s = lb >= 0 ? lb + 1 : 0;
@@ -18882,17 +18905,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
       console.warn("[mount-suggest] 查询官失败，退回机械分句当查询", e);
     }
     tell("query", anchors.length, anchors.length);
-    const recallTotal = queries.reduce((n, q2) => n + q2.length, 0);
+    const recallTotal = queries.reduce((n, q3) => n + q3.length, 0);
     let recallDone = 0;
     const hits = [];
     let searchFailed = false;
     for (let i = 0; i < queries.length; i++) {
-      for (const q2 of queries[i]) {
+      for (const q3 of queries[i]) {
         try {
-          const got = await searchApi.search(q2, SUGGEST_TOPK) || [];
+          const got = await searchApi.search(q3, SUGGEST_TOPK) || [];
           for (const h of got) {
             if (!h || !h.path) continue;
-            hits.push({ seg: i, query: q2, path: h.path, score: Number(h.score) || 0, chunk: String(h.chunk || "") });
+            hits.push({ seg: i, query: q3, path: h.path, score: Number(h.score) || 0, chunk: String(h.chunk || "") });
           }
         } catch (e) {
           console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
@@ -19263,8 +19286,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (alreadyLinked(src, link)) return src;
     const text = String((_a2 = anchor == null ? void 0 : anchor.text) != null ? _a2 : "").trim();
     if (text) {
-      const at = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
-      if (at !== null && at >= 0) return src.slice(0, at + text.length) + wiki + src.slice(at + text.length);
+      const at3 = relocateAnchor(src, { from: (_b2 = anchor == null ? void 0 : anchor.from) != null ? _b2 : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
+      if (at3 !== null && at3 >= 0) return src.slice(0, at3 + text.length) + wiki + src.slice(at3 + text.length);
       const compact = text.replace(/\s+/g, "");
       const flat = src.replace(/\s+/g, "");
       for (const len of [10, 6, 4, 2]) {
@@ -19441,8 +19464,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
         void openMountTree(path, { direction: st.direction, deps: depsOf(st) });
       } else if (act === "build-index") requestBuildIndex(st);
     });
-    const canvas = st.canvasEl;
-    canvas.addEventListener("pointerdown", (e) => {
+    const canvas2 = st.canvasEl;
+    canvas2.addEventListener("pointerdown", (e) => {
       var _a2, _b2, _c, _d;
       if (st.menu) closeMenu();
       st.longPressFired = false;
@@ -19450,7 +19473,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       st.downNode = (_c = (_b2 = (_a2 = e.target) == null ? void 0 : _a2.closest) == null ? void 0 : _b2.call(_a2, ".bz-kb-mt-node")) != null ? _c : null;
       st.drag = { x: num(e.clientX), y: num(e.clientY), tx: st.tx, ty: st.ty };
       try {
-        (_d = canvas.setPointerCapture) == null ? void 0 : _d.call(canvas, e.pointerId);
+        (_d = canvas2.setPointerCapture) == null ? void 0 : _d.call(canvas2, e.pointerId);
       } catch (e2) {
       }
       if (isMobileEnv() && st.downNode) {
@@ -19464,7 +19487,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         }, LONG_PRESS_MS);
       }
     });
-    canvas.addEventListener("pointermove", (e) => {
+    canvas2.addEventListener("pointermove", (e) => {
       if (!st.drag) return;
       const dx = num(e.clientX) - st.drag.x;
       const dy = num(e.clientY) - st.drag.y;
@@ -19477,9 +19500,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
       cancelLongPress(st);
       st.drag = null;
     };
-    canvas.addEventListener("pointerup", endDrag);
-    canvas.addEventListener("pointercancel", endDrag);
-    canvas.addEventListener("click", (e) => {
+    canvas2.addEventListener("pointerup", endDrag);
+    canvas2.addEventListener("pointercancel", endDrag);
+    canvas2.addEventListener("click", (e) => {
       var _a2, _b2, _c;
       if (st.longPressFired) {
         st.longPressFired = false;
@@ -19492,17 +19515,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
       applySelection(st);
       renderTop(st);
     });
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "wheel",
       (e) => {
         var _a2, _b2, _c, _d;
         (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
-        const rect = (_c = (_b2 = canvas.getBoundingClientRect) == null ? void 0 : _b2.call(canvas)) != null ? _c : { left: 0, top: 0 };
+        const rect = (_c = (_b2 = canvas2.getBoundingClientRect) == null ? void 0 : _b2.call(canvas2)) != null ? _c : { left: 0, top: 0 };
         zoomAt(st, num(e.clientX) - num(rect.left), num(e.clientY) - num(rect.top), ((_d = e.deltaY) != null ? _d : 0) < 0 ? 1.1 : 0.9);
       },
       { passive: false }
     );
-    canvas.addEventListener("contextmenu", (e) => {
+    canvas2.addEventListener("contextmenu", (e) => {
       var _a2, _b2, _c, _d, _e, _f;
       (_a2 = e.preventDefault) == null ? void 0 : _a2.call(e);
       const nodeEl = (_d = (_c = (_b2 = e.target) == null ? void 0 : _b2.closest) == null ? void 0 : _c.call(_b2, ".bz-kb-mt-node")) != null ? _d : null;
@@ -19520,7 +19543,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       }
       if (st.menu) closeMenu();
     });
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "touchstart",
       (e) => {
         var _a2;
@@ -19531,7 +19554,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       { passive: true }
     );
-    canvas.addEventListener(
+    canvas2.addEventListener(
       "touchmove",
       (e) => {
         var _a2, _b2, _c, _d;
@@ -19539,7 +19562,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
         (_b2 = e.preventDefault) == null ? void 0 : _b2.call(e);
         const d = touchDistance(e.touches);
         if (!st.pinch.d) return;
-        const rect = (_d = (_c = canvas.getBoundingClientRect) == null ? void 0 : _c.call(canvas)) != null ? _d : { left: 0, top: 0 };
+        const rect = (_d = (_c = canvas2.getBoundingClientRect) == null ? void 0 : _c.call(canvas2)) != null ? _d : { left: 0, top: 0 };
         const cx = (num(e.touches[0].clientX) + num(e.touches[1].clientX)) / 2 - num(rect.left);
         const cy = (num(e.touches[0].clientY) + num(e.touches[1].clientY)) / 2 - num(rect.top);
         const want = st.pinch.scale * (d / st.pinch.d);
@@ -19547,7 +19570,7 @@ ${String(blockText != null ? blockText : "").trim()}`);
       },
       { passive: false }
     );
-    canvas.addEventListener("touchend", () => {
+    canvas2.addEventListener("touchend", () => {
       st.pinch = null;
     });
     st.win.addEventListener("mouseover", (e) => {
@@ -20213,10 +20236,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after3 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after3.data.length);
-    const tail = after3.splitText(len);
-    (_b2 = after3.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
+    const after5 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after5.data.length);
+    const tail = after5.splitText(len);
+    (_b2 = after5.parentNode) == null ? void 0 : _b2.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -20947,9 +20970,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.onChange(s, e);
         }
         _paint() {
-          const T = this.total || 1;
-          const sp = this.total > 0 ? this.start / T * 100 : 0;
-          const ep = this.total > 0 ? this.end / T * 100 : 100;
+          const T3 = this.total || 1;
+          const sp = this.total > 0 ? this.start / T3 * 100 : 0;
+          const ep = this.total > 0 ? this.end / T3 * 100 : 100;
           this.hStart.style.left = `${sp}%`;
           this.hEnd.style.left = `${ep}%`;
           this.fill.style.left = `${sp}%`;
@@ -26033,8 +26056,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         if (data === null) return;
         const list = Array.isArray(data.savedArchive) ? data.savedArchive : [];
         for (const r of removedSaved) {
-          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
+          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at3, 0, { url: r.url, title: r.title, savedAt: r.savedAt });
         }
         data.savedArchive = list;
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -26048,8 +26071,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const marks = recordSectionOf(data, "marks");
         for (const r of removedMarks) {
           const list = Array.isArray(marks[r.articleKey]) ? marks[r.articleKey] : [];
-          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at, 0, r.mark);
+          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at3, 0, r.mark);
           marks[r.articleKey] = list;
         }
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -26063,8 +26086,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
         const pending = recordSectionOf(data, "pendingSource");
         for (const r of removedSrc) {
           const list = Array.isArray(pending[r.articleKey]) ? pending[r.articleKey] : [];
-          const at = r.index >= 0 && r.index <= list.length ? r.index : list.length;
-          list.splice(at, 0, r.notePath);
+          const at3 = r.index >= 0 && r.index <= list.length ? r.index : list.length;
+          list.splice(at3, 0, r.notePath);
           pending[r.articleKey] = list;
         }
         await jsonFileStore(file, { defaultValue: emptySidecar }).write(data);
@@ -26234,9 +26257,9 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     const ov = document.createElement("div");
     ov.id = OVERLAY_ID;
     ov.className = "bz-panel-overlay";
-    const frame = document.createElement("div");
-    frame.id = FRAME_ID;
-    frame.className = "bz-panel-frame bz-checkup-popup";
+    const frame2 = document.createElement("div");
+    frame2.id = FRAME_ID;
+    frame2.className = "bz-panel-frame bz-checkup-popup";
     const head = document.createElement("div");
     head.className = "bz-panel-head";
     const brand = document.createElement("div");
@@ -26252,8 +26275,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
     body.className = "bz-checkup-body";
     const foot = document.createElement("div");
     foot.className = "bz-checkup-foot";
-    frame.append(head, body, foot);
-    ov.appendChild(frame);
+    frame2.append(head, body, foot);
+    ov.appendChild(frame2);
     ov.addEventListener("click", (e) => {
       if (e.target === ov) hide();
     });
@@ -28580,8 +28603,8 @@ ${missing.map((m) => `- ${m}`).join("\n")}
       return i.current_status === statusOf(view.status).label;
     }).filter((i) => view.year ? String(i.purchase_date || "").startsWith(view.year) : true).filter((i) => {
       if (!view.q) return true;
-      const q2 = view.q.toLowerCase();
-      return [i.name, i.category, i.description].join(" ").toLowerCase().includes(q2);
+      const q3 = view.q.toLowerCase();
+      return [i.name, i.category, i.description].join(" ").toLowerCase().includes(q3);
     }).sort((a, b) => {
       if (view.sort === "price") return (Number(b.purchase_price) || 0) - (Number(a.purchase_price) || 0);
       if (view.sort === "daily") return dailyCostOf(b) - dailyCostOf(a);
@@ -29380,37 +29403,37 @@ ${missing.map((m) => `- ${m}`).join("\n")}
   }
   function renderPanelView(root, items, view, hooks, unit = "cny") {
     var _a2;
-    const q2 = (sel) => root.querySelector(sel);
-    const title = q2("[data-bel-herotitle]");
+    const q3 = (sel) => root.querySelector(sel);
+    const title = q3("[data-bel-herotitle]");
     if (title) title.textContent = heroTitleText(view);
-    const sub = q2("[data-bel-herosub]");
+    const sub = q3("[data-bel-herosub]");
     if (sub) sub.textContent = heroSubText(items, view);
-    const chips = q2("[data-bel-chips]");
+    const chips = q3("[data-bel-chips]");
     if (chips) chips.innerHTML = chipsHtml(items, view);
-    const mob = q2("[data-bel-mobstatus]");
+    const mob = q3("[data-bel-mobstatus]");
     if (mob) mob.innerHTML = mobChipsHtml(items, view);
     view.year = resolveYear(items, view.year);
-    const yearSel = q2("[data-bel-year]");
+    const yearSel = q3("[data-bel-year]");
     if (yearSel) {
       yearSel.querySelector(".bz-bel-select-label").textContent = view.year || "全部年份";
-      const menu = q2("[data-bel-yearmenu]");
+      const menu = q3("[data-bel-yearmenu]");
       if (menu) menu.innerHTML = yearsOptionsHtml(items, view.year);
     }
-    const wrap = q2("[data-bel-kpis]");
+    const wrap = q3("[data-bel-kpis]");
     if (wrap) wrap.innerHTML = kpisHtml(items, unit);
-    const stampN = q2("[data-bel-stampn]");
+    const stampN = q3("[data-bel-stampn]");
     if (stampN) stampN.textContent = stampCount(items);
-    const mobStats = q2("[data-bel-mobstats]");
+    const mobStats = q3("[data-bel-mobstats]");
     if (mobStats) mobStats.textContent = mobStatsText(items, unit);
-    const sortHost = q2("[data-bel-sort]");
+    const sortHost = q3("[data-bel-sort]");
     if (sortHost) sortHost.innerHTML = segmentedHtml(view.sort);
-    const mobSortSel = q2("[data-bel-mobsortsel]");
+    const mobSortSel = q3("[data-bel-mobsortsel]");
     if (mobSortSel) {
       mobSortSel.querySelector(".bz-bel-select-label").textContent = ((_a2 = SORT_OPTS.find((o) => o.v === view.sort)) != null ? _a2 : SORT_OPTS[0]).label;
-      const menu = q2("[data-bel-mobsortmenu]");
+      const menu = q3("[data-bel-mobsortmenu]");
       if (menu) menu.innerHTML = sortOptionsHtml(view.sort);
     }
-    const content = q2("[data-bel-content]");
+    const content = q3("[data-bel-content]");
     if (!content) return;
     const list = filtered(items, view);
     if (!list.length) {
@@ -32075,7 +32098,8 @@ ${bodyText.substring(0, 6e3)}`;
       bySrc,
       hours,
       topArticles,
-      activeDays: days.size
+      activeDays: days.size,
+      streakDays: streakDays(log, now)
     };
   }
   function formatMinutes(min) {
@@ -32085,11 +32109,109 @@ ${bodyText.substring(0, 6e3)}`;
     if (h <= 0) return `${r} 分钟`;
     return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
   }
-  var REPORT_TOP_N;
+  function shiftBuckets(hours) {
+    return CLIP_SHIFTS.map((s) => ({
+      key: s.key,
+      label: s.label,
+      span: s.span,
+      minutes: (hours || []).slice(s.from, s.to).reduce((sum, m) => sum + m, 0)
+    }));
+  }
+  function shiftOfHour(h) {
+    const s = CLIP_SHIFTS.find((x) => h >= x.from && h < x.to);
+    return s ? s.label : "晚班";
+  }
+  function streakDays(log, now = /* @__PURE__ */ new Date()) {
+    const days = /* @__PURE__ */ new Set();
+    for (const e of log || []) {
+      if (e && typeof e.ts === "number" && isFinite(e.ts) && (Number(e.minutes) || 0) > 0) days.add(dayKeyOf(e.ts));
+    }
+    if (!days.size) return 0;
+    const keyOf = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    let streak = 0;
+    const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (!days.has(keyOf(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (days.has(keyOf(cursor))) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  }
+  function busiestDay(log, period2, now = /* @__PURE__ */ new Date()) {
+    const perDay = /* @__PURE__ */ new Map();
+    for (const e of filterReadLogByPeriod(log, period2, now)) {
+      const m = Math.max(0, Math.round(Number(e.minutes) || 0));
+      if (m <= 0) continue;
+      const k = dayKeyOf(e.ts);
+      perDay.set(k, (perDay.get(k) || 0) + m);
+    }
+    let best = null;
+    for (const [date, minutes] of perDay) {
+      if (!best || minutes > best.minutes || minutes === best.minutes && date < best.date) best = { date, minutes };
+    }
+    return best;
+  }
+  function buildLibraryStats(articles, now = /* @__PURE__ */ new Date()) {
+    const list = articles || [];
+    let readCount = 0;
+    const platformMap = /* @__PURE__ */ new Map();
+    let oldestTs = Infinity;
+    let oldest = null;
+    for (const a of list) {
+      if (a.read) readCount += 1;
+      const p = String(a.platform || "").trim() || "未知";
+      platformMap.set(p, (platformMap.get(p) || 0) + 1);
+      if (!a.read) {
+        const ts = Date.parse(String(a.fetchedAt || a.date || ""));
+        if (isFinite(ts) && ts < oldestTs) {
+          oldestTs = ts;
+          oldest = {
+            title: String(a.title || "(无标题)"),
+            src: p,
+            days: Math.max(0, Math.floor((now.getTime() - ts) / 864e5))
+          };
+        }
+      }
+    }
+    const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const firstTs = dayStart(now) - (LIB_PACE_DAYS - 1) * 864e5;
+    const buckets = new Array(LIB_PACE_DAYS).fill(0);
+    for (const a of list) {
+      const ts = Date.parse(String(a.fetchedAt || ""));
+      if (!isFinite(ts) || ts < firstTs) continue;
+      const idx = LIB_PACE_DAYS - 1 - Math.floor((dayStart(new Date(ts)) - firstTs) / 864e5);
+      if (idx >= 0 && idx < LIB_PACE_DAYS) buckets[idx] += 1;
+    }
+    const byDay = [];
+    for (let i = 0; i < LIB_PACE_DAYS; i++) {
+      const d = new Date(firstTs + i * 864e5);
+      byDay.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, n: buckets[i] });
+    }
+    const topPlatforms = [...platformMap.entries()].map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, REPORT_TOP_N);
+    const total = list.length;
+    return {
+      total,
+      readCount,
+      unread: total - readCount,
+      readRate: total ? Math.round(readCount / total * 100) : 0,
+      byDay,
+      byDayPeak: Math.max(0, ...buckets),
+      topPlatforms,
+      oldestUnread: oldest
+    };
+  }
+  var REPORT_TOP_N, CLIP_SHIFTS, LIB_PACE_DAYS;
   var init_report_stats2 = __esm({
     "src/clipbook/report-stats.ts"() {
       init_str();
       REPORT_TOP_N = 5;
+      CLIP_SHIFTS = [
+        { key: "night", label: "夜班", span: "0-6 点", from: 0, to: 6 },
+        { key: "morning", label: "晨班", span: "6-12 点", from: 6, to: 12 },
+        { key: "noon", label: "午班", span: "12-18 点", from: 12, to: 18 },
+        { key: "evening", label: "晚班", span: "18-24 点", from: 18, to: 24 }
+      ];
+      LIB_PACE_DAYS = 14;
     }
   });
 
@@ -32100,13 +32222,22 @@ ${bodyText.substring(0, 6e3)}`;
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
         <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-title">剪藏本</div>
+          <!-- 刊名电传纸带（.scratch/clip-title/d.html D 版 1:1，2026-09-23 拍板）：tape 内字位 span 供
+               motion 逐字击打；字车 cur 常驻 blink（boot 由 motion 先送带首再随击推进）；lamp = 收带铃圆点。
+               span 间不得有空白（textContent 契约=「剪藏本」）；静默渲染不演即终态 -->
+          <div class="bz-panel-title bz-clip-title-wire" data-clip-title-wire><div class="bz-clip-title-tape"><span class="bz-clip-tape-ch">剪</span><span class="bz-clip-tape-ch">藏</span><span class="bz-clip-tape-ch">本</span><span class="bz-clip-tape-cur" aria-hidden="true"></span></div><i class="bz-clip-tape-lamp" aria-hidden="true"></i></div>
           <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-issue" data-clip-issue></div>
-          <!-- 效率#12：尾部 ✕ 一键清除（有词才显示，ui.ts syncDeskSearchClear 同步）。定位走内联随单源
-               markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的左缘绝对定位会劫持 iconSpan 产物，
-               且 mountIcons 换节点会丢内联样式；不带 display 内联值，hidden 属性才能生效 -->
-          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          <!-- 头行右侧「电传抬头单」（2026-09-23 头行五版拍板 D 版 + C 版期号戳章）：
+               期号戳章 + 细分隔 + 检索（纸底色/点线/上下边线/日期随当日追加拍板逐次撤去）。
+               data-clip-issue = 戳章（第 N 期）；检索钩子（data-clip-desk-search / data-clip-search-clear）不变。
+               效率#12 ✕ 清除钮：定位走内联随单源 markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的
+               左缘绝对定位会劫持 iconSpan 产物，且 mountIcons 换节点会丢内联样式；不带 display 内联值，
+               hidden 属性才能生效 -->
+          <div class="bz-clip-head-strip">
+            <span class="bz-clip-issue-stamp" data-clip-issue></span>
+            <span class="bz-clip-strip-sep" aria-hidden="true"></span>
+            <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          </div>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -32126,13 +32257,14 @@ ${bodyText.substring(0, 6e3)}`;
       <!-- 移动双屏 -->
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
-          <div class="bz-clip-mob-title">剪藏本</div>
+          <!-- 移动刊名 = 期号戳章（2026-09-23 拍板）：与桌面抬头单同款同钩（data-clip-issue），renderHeadIssue 双端同填 -->
+          <div class="bz-clip-issue-stamp" data-clip-issue></div>
           <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
           <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-mob-search-clear" data-clip-mob-search-clear title="清除检索" aria-label="清除检索" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -32169,7 +32301,7 @@ ${bodyText.substring(0, 6e3)}`;
     </div>`;
   }
   function railFootHtml(todayRead) {
-    return `今日已读<br><b>${todayRead}</b> 篇`;
+    return `<div class="bz-clip-foot-row">今日已读<i class="bz-clip-lead"></i><b>${todayRead}</b> 篇</div>`;
   }
   function clipReportEntryHtml() {
     return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
@@ -32325,15 +32457,23 @@ ${bodyText.substring(0, 6e3)}`;
     return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
   }
   function buildClipReportSections(d, opts) {
-    return [
+    const secs = [
       { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d, opts) },
       { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
       { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
     ];
+    if ((opts == null ? void 0 : opts.library) && opts.library.total > 0) {
+      secs.push({ key: "library", label: "报库盘点", generate: () => clipReportLibraryHtml(opts.library) });
+    }
+    return secs;
+  }
+  function dayCn(iso) {
+    const parts = iso.split("-");
+    return parts.length >= 3 ? `${Number(parts[1])} 月 ${Number(parts[2])} 日` : esc(iso);
   }
   function clipReportOverviewHtml(d, opts) {
     const keys = (opts == null ? void 0 : opts.availableKeys) || null;
-    const topRows = d.topArticles.map((a, i) => {
+    const topRows2 = d.topArticles.map((a, i) => {
       const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
       const openable = !!keys && keys.has(a.key);
       const openBtn = openable ? `<span class="bz-clp-rep-top-open" data-clip-rep-open role="button" tabindex="0" title="打开该篇回看">打开 ${iconSpan(ICO.external, "bz-ic--xs")}</span>` : "";
@@ -32346,15 +32486,18 @@ ${bodyText.substring(0, 6e3)}`;
       ${openBtn}
     </div>`;
     }).join("");
+    const busiest = (opts == null ? void 0 : opts.busiest) ? `<div class="bz-clp-rep-busiest"><span>最投入的一天</span><i class="bz-clp-rep-lead" aria-hidden="true"></i><b>${dayCn(opts.busiest.date)}</b><span class="bz-clp-rep-busiest-min">${esc(formatMinutes(opts.busiest.minutes))}</span></div>` : "";
     return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">统计概览</div>
-      <div class="bz-clp-rep-hero">
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
         <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
         <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
         <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.streakDays}</b><span>连续天数</span></div>
       </div>
-      ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ""}
+      ${busiest}
+      ${topRows2 ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows2}</div>` : ""}
     </div>`;
   }
   function clipReportSourcesHtml(d) {
@@ -32387,12 +32530,56 @@ ${bodyText.substring(0, 6e3)}`;
       return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
     }).join("");
     const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
-    const peakText = peakHour >= 0 ? `${peakHour} 点前后` : "暂无";
+    const peakText = peakHour >= 0 ? `${peakHour} 点前后（${shiftOfHour(peakHour)}）` : "暂无";
+    const shifts = shiftBuckets(d.hours);
+    const shiftMax = Math.max(1, ...shifts.map((s) => s.minutes));
+    const shiftRows = shifts.map((s, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label">${s.label}<span class="bz-clp-rep-shift-span">${s.span}</span></span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round(s.minutes / shiftMax * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${esc(formatMinutes(s.minutes))}</span>
+    </div>`).join("");
     return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-sub">工班盘点</div>
+      <div class="bz-clp-rep-bars">${shiftRows}</div>
+      <div class="bz-clp-rep-sub">全天 24 小时</div>
       <div class="bz-clp-rep-hours">${cols}</div>
       <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
+  }
+  function clipReportLibraryHtml(lib) {
+    const paceMax = Math.max(1, lib.byDayPeak);
+    const paceCols = lib.byDay.map((d, i) => {
+      const height = d.n > 0 ? 10 + Math.round(d.n / paceMax * 44) : 3;
+      const accent = lib.byDayPeak > 0 && d.n === lib.byDayPeak;
+      const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
+      return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${esc(d.label)} · 收 ${d.n} 篇"></div><div class="bz-clp-rep-hlabel">${esc(d.label)}</div></div>`;
+    }).join("");
+    const platMax = Math.max(1, ...lib.topPlatforms.map((p) => p.n));
+    const platRows = lib.topPlatforms.map((p, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(p.name)}">${esc(p.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round(p.n / platMax * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${p.n} 篇</span>
+    </div>`).join("");
+    const oldest = lib.oldestUnread ? `<div class="bz-clp-rep-old"><span class="bz-clp-rep-old-tag">压库</span><span class="bz-clp-rep-top-title" title="${esc(lib.oldestUnread.title)}">${esc(lib.oldestUnread.title)}</span><span class="bz-clp-rep-top-src">${esc(lib.oldestUnread.src)}</span><span class="bz-clp-rep-top-min">压了 ${lib.oldestUnread.days} 天</span></div>` : "";
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">报库盘点 · 建库以来</div>
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
+        <div class="bz-clp-rep-hero-card"><b>${lib.total}</b><span>在流篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readCount}</b><span>已读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.unread}</b><span>待读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readRate}%</b><span>已读率</span></div>
+      </div>
+      <div class="bz-clp-rep-sub">近 14 天收录节奏</div>
+      <div class="bz-clp-rep-hours">${paceCols}</div>
+      <div class="bz-clp-rep-hours-note">每天收进来的新剪报 · 单日最多收 ${lib.byDayPeak} 篇</div>
+      <div class="bz-clp-rep-sub">在流来源</div>
+      <div class="bz-clp-rep-bars">${platRows}</div>
+      ${oldest}
     </div>`;
   }
   var ICO;
@@ -32425,6 +32612,661 @@ ${bodyText.substring(0, 6e3)}`;
     }
   });
 
+  // src/clipbook/motion.ts
+  function reduced2() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function canAnimate() {
+    return !reduced2() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
+  }
+  function waapi2(el, frames, opts) {
+    if (!el || reduced2() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    if (typeof requestAnimationFrame !== "function") {
+      step(1);
+      return;
+    }
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function after2(ms, fn) {
+    if (typeof setTimeout !== "function") return;
+    const id = setTimeout(() => {
+      timers2.delete(id);
+      fn();
+    }, ms);
+    timers2.add(id);
+  }
+  function motionTeardown2() {
+    timers2.forEach(clearTimeout);
+    timers2.clear();
+    try {
+      panelAnim == null ? void 0 : panelAnim.cancel();
+    } catch (e) {
+    }
+    panelAnim = null;
+  }
+  function sweep(el, from, to, opts = {}) {
+    if (!el || !canAnimate()) return;
+    const { delay = 0, dur = M7.base, easing = E2.out, origin } = opts;
+    if (origin) el.style.transformOrigin = origin;
+    el.style.willChange = "transform,opacity,filter";
+    let a = null;
+    try {
+      a = el.animate([from, to], { duration: dur, delay, easing, fill: "backwards" });
+    } catch (e) {
+      a = null;
+    }
+    if (!a) {
+      cleanSweep(el, from, to, !!origin);
+      return;
+    }
+    const done = () => {
+      cleanSweep(el, from, to, !!origin);
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    };
+    a.finished.then(done).catch(done);
+  }
+  function cleanSweep(el, from, to, hadOrigin) {
+    const keys = /* @__PURE__ */ new Set([...Object.keys(from), ...Object.keys(to)]);
+    if (hadOrigin) keys.add("transformOrigin");
+    keys.add("willChange");
+    for (const k of keys) {
+      if (k === "offset" || k === "easing" || k === "composite") continue;
+      const css = CSS_PROP[k] || k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
+      try {
+        el.style.removeProperty(css);
+      } catch (e) {
+      }
+    }
+  }
+  function cancelAnimsBy(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
+  function motionPanelIn2(overlay2, reopen) {
+    const frame2 = overlay2.querySelector(".bz-clip-frame");
+    if (!frame2) return;
+    try {
+      panelAnim == null ? void 0 : panelAnim.cancel();
+    } catch (e) {
+    }
+    panelAnim = null;
+    cancelAnimsBy(frame2, [EXIT_ANIM_ID]);
+    cancelAnimsBy(overlay2, [EXIT_MASK_ANIM_ID]);
+    frame2.style.opacity = "";
+    frame2.style.transform = "";
+    frame2.style.filter = "";
+    if (!overlay2.style.opacity) overlay2.style.opacity = "0";
+    waapi2(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.fast + 40, easing: E2.out });
+    const a = waapi2(
+      frame2,
+      [
+        { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: reopen ? M7.base + 20 : 480, easing: E2.out }
+    );
+    if (a) {
+      panelAnim = a;
+      a.finished.then(() => {
+        if (panelAnim === a) panelAnim = null;
+        overlay2.style.opacity = "";
+        frame2.style.opacity = "";
+        frame2.style.transform = "";
+        frame2.style.filter = "";
+      }).catch(() => {
+        overlay2.style.opacity = "";
+      });
+    } else {
+      overlay2.style.opacity = "";
+    }
+  }
+  function motionPanelOut(overlay2, done) {
+    const frame2 = overlay2.querySelector(".bz-clip-frame");
+    if (!frame2) {
+      done();
+      return;
+    }
+    let finished = false;
+    let maskAnim = null;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      panelAnim = null;
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    try {
+      panelAnim == null ? void 0 : panelAnim.cancel();
+    } catch (e) {
+    }
+    const a = waapi2(
+      frame2,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
+      ],
+      { duration: M7.move + 40, easing: E2.out, fill: "forwards", id: EXIT_ANIM_ID }
+    );
+    maskAnim = waapi2(
+      overlay2,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M7.move + 40, easing: E2.out, id: EXIT_MASK_ANIM_ID }
+    );
+    if (!a) {
+      overlay2.style.opacity = "";
+      finish();
+      return;
+    }
+    panelAnim = a;
+    a.finished.then(() => {
+      overlay2.style.opacity = "";
+      finish();
+    }).catch(() => {
+      overlay2.style.opacity = "";
+      finish();
+    });
+    after2(M7.move + 200, finish);
+  }
+  function motionHeadRevealed(overlay2) {
+    var _a2, _b2, _c;
+    const head = overlay2.querySelector(".bz-clip-desk .bz-panel-head");
+    if (!head || head.offsetParent === null) return;
+    const wire = head.querySelector("[data-clip-title-wire]");
+    const strip = head.querySelector(".bz-clip-head-strip");
+    const tape = (_a2 = wire == null ? void 0 : wire.querySelector(".bz-clip-title-tape")) != null ? _a2 : null;
+    const cur = (_b2 = wire == null ? void 0 : wire.querySelector(".bz-clip-tape-cur")) != null ? _b2 : null;
+    const lamp = (_c = wire == null ? void 0 : wire.querySelector(".bz-clip-tape-lamp")) != null ? _c : null;
+    const chars = tape ? [...tape.querySelectorAll(".bz-clip-tape-ch")] : [];
+    if (wire && tape && cur && chars.length && canAnimate()) {
+      try {
+        wire.animate(
+          [{ opacity: 0, transform: "translateX(-70px)" }, { opacity: 1, transform: "none" }],
+          { duration: 360, easing: E2.out, fill: "backwards" }
+        );
+      } catch (e) {
+      }
+      tape.insertBefore(cur, chars[0]);
+      chars.forEach((c, i) => {
+        const t = 430 + i * 390;
+        try {
+          c.animate(
+            [
+              { opacity: 0, transform: "translateY(-6px) scale(1.25) rotate(-5deg)", color: "#7d2f26" },
+              { opacity: 1, transform: "none", color: "#32302c" }
+            ],
+            { duration: 130, delay: t, easing: "cubic-bezier(.2,.8,.3,1)", fill: "backwards" }
+          );
+        } catch (e) {
+        }
+        try {
+          tape.animate(
+            [{ transform: "translateX(0)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }],
+            { duration: 110, delay: t, easing: "ease-out", fill: "backwards" }
+          );
+        } catch (e) {
+        }
+        after2(t, () => {
+          if (!cur.isConnected || cur.parentNode !== tape) return;
+          const next = chars[i + 1];
+          if (next) tape.insertBefore(cur, next);
+          else tape.appendChild(cur);
+        });
+      });
+      after2(430 + chars.length * 390 + 260, () => {
+        lamp == null ? void 0 : lamp.classList.add("on");
+        try {
+          lamp == null ? void 0 : lamp.animate(
+            [
+              { filter: "brightness(1)" },
+              { filter: "brightness(1.7)" },
+              { filter: "brightness(1)" },
+              { filter: "brightness(1.7)" },
+              { filter: "brightness(1)" }
+            ],
+            { duration: 420 }
+          );
+        } catch (e) {
+        }
+        try {
+          tape.animate(
+            [
+              { transform: "translateX(0)" },
+              { transform: "translateX(-2px)" },
+              { transform: "translateX(2px)" },
+              { transform: "translateX(0)" }
+            ],
+            { duration: 220 }
+          );
+        } catch (e) {
+        }
+        after2(500, () => lamp == null ? void 0 : lamp.classList.remove("on"));
+      });
+    } else {
+      sweep(wire, { opacity: 0, transform: "translateY(7px)", filter: "blur(5px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: 60, dur: M7.base + 40 });
+    }
+    sweep(strip, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 150, dur: M7.base });
+    if (!canAnimate() || head.querySelector(":scope > .bz-clm-ink-rule")) return;
+    const prevStyle = head.getAttribute("style");
+    const rule = document.createElement("span");
+    rule.className = "bz-clm-ink-rule";
+    rule.setAttribute("aria-hidden", "true");
+    head.appendChild(rule);
+    if (getComputedStyle(head).position === "static") head.style.position = "relative";
+    tween(620, (v) => {
+      rule.style.transform = `scaleX(${Math.max(1e-3, v).toFixed(3)})`;
+    }, easeOutQuart);
+    after2(700, () => {
+      const fade = waapi2(rule, [{ opacity: 0.95 }, { opacity: 0 }], { duration: M7.base - 80, easing: E2.out });
+      const remove = () => {
+        rule.remove();
+        if (prevStyle === null) head.removeAttribute("style");
+        else head.setAttribute("style", prevStyle);
+      };
+      if (fade) fade.finished.then(remove).catch(remove);
+      else after2(M7.base, remove);
+    });
+  }
+  function motionRailRendered(railEl, mood) {
+    if (mood === "boot") {
+      const label = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-label") : null;
+      sweep(label, { opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }, { delay: 140, dur: M7.base - 60 });
+      const rows = [...railEl.querySelectorAll(".bz-rail-item")];
+      rows.slice(0, 12).forEach((row, i) => {
+        sweep(
+          row,
+          { opacity: 0, transform: "translateX(-8px)", clipPath: "inset(0 100% 0 0)" },
+          { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
+          { delay: 220 + i * STAG2, dur: M7.base + 60 }
+        );
+      });
+      const foot = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-foot") : null;
+      sweep(foot, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: 240 + Math.min(rows.length, 12) * STAG2 + 40, dur: M7.base });
+      return;
+    }
+    if (mood === "nav") {
+      const on = railEl.querySelector(".bz-rail-item.on");
+      sweep(on, { transform: "scale(.985)" }, { transform: "none" }, { dur: M7.fast });
+    }
+  }
+  function motionListRendered(listEl2, mood, foldKind, pressed) {
+    if (mood === "boot" || mood === "nav") {
+      const boot = mood === "boot";
+      const rows = [...listEl2.querySelectorAll(".bz-clip-item, .bz-clip-desk-fold")];
+      const cap = boot ? 14 : 8;
+      rows.slice(0, cap).forEach((row, i) => {
+        const delay = (boot ? 300 : 40) + i * STAG2;
+        sweep(
+          row,
+          { opacity: 0, transform: "translateY(9px)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" },
+          { delay, dur: M7.base + (boot ? 60 : 0) }
+        );
+        const no = row.classList.contains("bz-clip-item") ? row.querySelector(".bz-clip-no") : null;
+        if (no) sweep(no, { opacity: 0, transform: "scale(1.7) rotate(-9deg)" }, { opacity: 1, transform: "none" }, { delay: delay + 70, dur: M7.fast + 70, easing: E2.move });
+      });
+      if (boot) {
+        listEl2.querySelectorAll(".bz-clip-desk-fold-body:not([hidden])").forEach((body, i) => {
+          sweep(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { delay: 420 + i * 80, dur: M7.base + 80 });
+        });
+      }
+      return;
+    }
+    if (mood === "search") {
+      sweep(listEl2, { opacity: 0.45, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { dur: M7.fast + 60 });
+      return;
+    }
+    if (foldKind) {
+      const row = listEl2.querySelector(`.bz-clip-desk-fold[data-desk-fold="${foldKind}"].on`);
+      const body = row ? row.nextElementSibling : null;
+      if (body && body.classList.contains("bz-clip-desk-fold-body") && !body.hidden) {
+        sweep(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M7.move + 60 });
+      }
+    }
+    if (pressed) {
+      const on = listEl2.querySelector(".bz-clip-item.on");
+      sweep(on, { transform: "scale(.988)" }, { transform: "none" }, { dur: M7.fast });
+    }
+    if (!listEl2.querySelector(".bz-clip-item") && !listEl2.querySelector(".bz-clip-desk-fold")) {
+      sweep(listEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M7.base - 40 });
+    }
+  }
+  function motionReaderRendered(readerEl2, turn, mood) {
+    try {
+      readerAnim == null ? void 0 : readerAnim.cancel();
+    } catch (e) {
+    }
+    readerAnim = null;
+    if (!turn) {
+      if (mood === "boot") sweep(readerEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M7.base - 40 });
+      return;
+    }
+    if (turn === "first") {
+      const from = { opacity: 0.25, transform: "perspective(1100px) rotateX(6deg) translateY(10px)", filter: "blur(2px)" };
+      let a2 = null;
+      if (canAnimate()) {
+        readerEl2.style.transformOrigin = "50% 0";
+        a2 = waapi2(readerEl2, [from, { opacity: 1, transform: "none", filter: "blur(0px)" }], { duration: M7.base + 80, easing: E2.out });
+        if (a2) {
+          readerAnim = a2;
+          const done = () => {
+            readerEl2.style.transformOrigin = "";
+            readerEl2.style.willChange = "";
+            try {
+              a2.cancel();
+            } catch (e) {
+            }
+            if (readerAnim === a2) readerAnim = null;
+          };
+          a2.finished.then(done).catch(done);
+        }
+      }
+      const title = readerEl2.querySelector(".bz-clip-art-title");
+      sweep(
+        title,
+        { opacity: 0, transform: "translateY(6px)", clipPath: "inset(0 100% 0 0)" },
+        { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
+        { delay: 90, dur: M7.base + 60 }
+      );
+      sweep(readerEl2.querySelector(".bz-clip-art-meta"), { opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { delay: 170, dur: M7.base - 40 });
+      const tags = readerEl2.querySelector(".bz-clip-art-tags");
+      sweep(tags, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 210, dur: M7.base - 60 });
+      sweep(
+        readerEl2.querySelector(".bz-clip-art-sum"),
+        { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+        { opacity: 1, clipPath: "inset(0 0 0 0)" },
+        { delay: 250, dur: M7.base + 40 }
+      );
+      sweep(readerEl2.querySelector("[data-clip-md]"), { opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }, { delay: 320, dur: M7.base + 60 });
+      sweep(readerEl2.querySelector(".bz-clip-art-foot"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 400, dur: M7.base - 40 });
+      return;
+    }
+    const rx = turn === "back" ? -5 : 5;
+    const oy = turn === "back" ? "100%" : "0";
+    let a = null;
+    if (canAnimate()) {
+      readerEl2.style.transformOrigin = `50% ${oy}`;
+      a = waapi2(
+        readerEl2,
+        [
+          { opacity: 0.3, transform: `perspective(1100px) rotateX(${rx}deg) translateY(${turn === "back" ? -6 : 6}px)` },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M7.move + 60, easing: E2.out }
+      );
+      if (a) {
+        readerAnim = a;
+        const done = () => {
+          readerEl2.style.transformOrigin = "";
+          readerEl2.style.willChange = "";
+          try {
+            a.cancel();
+          } catch (e) {
+          }
+          if (readerAnim === a) readerAnim = null;
+        };
+        a.finished.then(done).catch(done);
+      }
+    }
+  }
+  function motionMobTocRendered(mobListEl2, mood) {
+    if (mood !== "boot") return;
+    [...mobListEl2.querySelectorAll(".bz-clip-mob-ch")].slice(0, 8).forEach((ch, i) => {
+      sweep(
+        ch,
+        { opacity: 0, transform: "translateY(10px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { delay: 200 + i * 60, dur: M7.base + 40 }
+      );
+    });
+  }
+  function motionMobFoldOpen(archEl) {
+    sweep(archEl, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M7.move + 40 });
+  }
+  function motionMobDetailIn(detailEl) {
+    let a = null;
+    if (canAnimate()) {
+      a = waapi2(
+        detailEl,
+        [
+          { opacity: 0.4, transform: "translateX(36px)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M7.move + 60, easing: E2.move }
+      );
+      if (a) {
+        const done = () => {
+          detailEl.style.willChange = "";
+          try {
+            a.cancel();
+          } catch (e) {
+          }
+        };
+        a.finished.then(done).catch(done);
+      }
+    }
+    [".bz-clip-mob-d-kicker", ".bz-clip-mob-d-title", ".bz-clip-mob-d-rule", ".bz-clip-mob-d-md", ".bz-clip-mob-d-foot"].forEach((sel, i) => {
+      sweep(
+        detailEl.querySelector(sel),
+        { opacity: 0, transform: "translateY(7px)" },
+        { opacity: 1, transform: "none" },
+        { delay: 110 + i * 45, dur: M7.base - 20 }
+      );
+    });
+  }
+  function motionMobSearchbarIn(barEl) {
+    sweep(barEl, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M7.fast + 40 });
+  }
+  function motionSelbarIn(barEl) {
+    sweep(barEl, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M7.fast + 20 });
+  }
+  function motionArchStamp(host) {
+    if (!host || !canAnimate() || host.querySelector(":scope > .bz-clm-stamp")) return;
+    const prevStyle = host.getAttribute("style");
+    if (getComputedStyle(host).position === "static") host.style.position = "relative";
+    const stamp = document.createElement("span");
+    stamp.className = "bz-clm-stamp";
+    stamp.setAttribute("aria-hidden", "true");
+    stamp.textContent = "收";
+    host.appendChild(stamp);
+    const a = waapi2(
+      stamp,
+      [
+        { opacity: 0, transform: "rotate(-14deg) scale(2.1)" },
+        { opacity: 0.95, transform: "rotate(-12deg) scale(1)", offset: 0.26 },
+        { opacity: 0.95, transform: "rotate(-12deg) scale(1)", offset: 0.74 },
+        { opacity: 0, transform: "rotate(-11deg) scale(1.06)" }
+      ],
+      { duration: M7.impulse + 260, easing: E2.move }
+    );
+    const remove = () => {
+      stamp.remove();
+      if (prevStyle === null) host.removeAttribute("style");
+      else host.setAttribute("style", prevStyle);
+    };
+    if (a) a.finished.then(remove).catch(remove);
+    else after2(M7.impulse + 280, remove);
+  }
+  function motionInkStrike(titleEl, delay = 0) {
+    if (!titleEl || !canAnimate() || titleEl.querySelector(":scope > .bz-clm-strike")) return;
+    const prevStyle = titleEl.getAttribute("style");
+    if (getComputedStyle(titleEl).position === "static") titleEl.style.position = "relative";
+    const strike = document.createElement("span");
+    strike.className = "bz-clm-strike";
+    strike.setAttribute("aria-hidden", "true");
+    titleEl.appendChild(strike);
+    const a = waapi2(
+      strike,
+      [
+        { opacity: 0.9, transform: "scaleX(0)" },
+        { opacity: 0.9, transform: "scaleX(1)", offset: 0.22 },
+        { opacity: 0.9, transform: "scaleX(1)", offset: 0.68 },
+        { opacity: 0, transform: "scaleX(1)" }
+      ],
+      { duration: 980, delay, easing: E2.out }
+    );
+    const remove = () => {
+      strike.remove();
+      if (prevStyle === null) titleEl.removeAttribute("style");
+      else titleEl.setAttribute("style", prevStyle);
+    };
+    if (a) a.finished.then(remove).catch(remove);
+    else after2(1e3 + delay, remove);
+  }
+  function motionSnipGhost(cardEl) {
+    if (!cardEl || !canAnimate() || !cardEl.isConnected) return;
+    const rect = cardEl.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) return;
+    const ghost = cardEl.cloneNode(true);
+    ghost.classList.add("bz-clm-cutghost");
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+    const host = cardEl.closest(".bz-clip-frame") || document.body;
+    host.appendChild(ghost);
+    const a = waapi2(
+      ghost,
+      [
+        { opacity: 1, transform: "none", filter: "none" },
+        { opacity: 1, transform: "translate(-8px,-4px) rotate(-.6deg) scale(1.01)", offset: 0.28 },
+        { opacity: 0, transform: "translate(-70px,-16px) rotate(-3deg) scale(.96)", filter: "blur(2px)" }
+      ],
+      { duration: M7.impulse - 160, easing: E2.move }
+    );
+    const remove = () => ghost.remove();
+    if (a) a.finished.then(remove).catch(remove);
+    else after2(M7.impulse, remove);
+  }
+  function motionReportIn(overlay2) {
+    const frame2 = overlay2.querySelector(".bz-clip-report-frame");
+    if (!frame2) return;
+    if (!overlay2.style.opacity) overlay2.style.opacity = "0";
+    waapi2(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.fast + 40, easing: E2.out });
+    const a = waapi2(
+      frame2,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.985)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M7.base + 60, easing: E2.out }
+    );
+    const clear = () => {
+      overlay2.style.opacity = "";
+    };
+    if (a) a.finished.then(clear).catch(clear);
+    else clear();
+  }
+  function motionReportSection(secEl, idx) {
+    const sec = secEl;
+    if (!sec || !canAnimate()) return;
+    const base = idx * 50;
+    sweep(sec, { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: base, dur: M7.base + 40 });
+    sweep(sec.querySelector(".bz-clp-rep-sec-h"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: base + 80, dur: M7.base - 40 });
+    sec.querySelectorAll(".bz-clp-rep-hero-card").forEach((card, i) => {
+      sweep(card, { opacity: 0, transform: "translateY(8px) scale(.94)" }, { opacity: 1, transform: "none" }, { delay: base + 140 + i * 60, dur: M7.base - 20, easing: E2.move });
+    });
+    sec.querySelectorAll(".bz-clp-rep-top-row").forEach((row, i) => {
+      sweep(row, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: base + 180 + Math.min(i, 5) * STAG2, dur: M7.base - 40 });
+    });
+    sec.querySelectorAll(".bz-clp-rep-bar-row").forEach((row, i) => {
+      const bar = row.querySelector(".bz-clp-rep-bar-track i");
+      sweep(
+        bar,
+        { transform: "scaleX(0)" },
+        { transform: "scaleX(1)" },
+        { delay: base + 200 + Math.min(i, 8) * 40, dur: M7.base + 80, easing: E2.move, origin: "left center" }
+      );
+    });
+    sec.querySelectorAll(".bz-clp-rep-hcol").forEach((col, i) => {
+      const bar = col.querySelector(".bz-clp-rep-hbar");
+      sweep(
+        bar,
+        { transform: "scaleY(0)" },
+        { transform: "scaleY(1)" },
+        { delay: base + 200 + Math.min(i, 24) * 18, dur: M7.base + 40, easing: E2.move, origin: "center bottom" }
+      );
+    });
+    sweep(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M7.base - 40 });
+    sweep(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M7.base - 40 });
+  }
+  function motionLoadingPulse(el) {
+    if (!el || reduced2() || typeof el.animate !== "function") return;
+    try {
+      el.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
+    } catch (e) {
+    }
+  }
+  var M7, E2, STAG2, easeOutQuart, timers2, CSS_PROP, panelAnim, EXIT_ANIM_ID, EXIT_MASK_ANIM_ID, readerAnim;
+  var init_motion2 = __esm({
+    "src/clipbook/motion.ts"() {
+      M7 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E2 = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG2 = 30;
+      easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+      timers2 = /* @__PURE__ */ new Set();
+      CSS_PROP = {
+        opacity: "opacity",
+        transform: "transform",
+        filter: "filter",
+        clipPath: "clip-path",
+        transformOrigin: "transform-origin",
+        willChange: "will-change"
+      };
+      panelAnim = null;
+      EXIT_ANIM_ID = "bz-clip-exit";
+      EXIT_MASK_ANIM_ID = "bz-clip-exit-mask";
+      readerAnim = null;
+    }
+  });
+
   // src/clipbook/report-ui.ts
   function bodyEl2() {
     return overlayEl ? overlayEl.querySelector("[data-clp-rep-body]") : null;
@@ -32454,6 +33296,7 @@ ${bodyText.substring(0, 6e3)}`;
     overlayEl.style.display = "flex";
     topifyZ(overlayEl);
     trapPanelFocus((_a2 = overlayEl.querySelector(".bz-clip-report-frame")) != null ? _a2 : overlayEl);
+    motionReportIn(overlayEl);
     await renderBody2(true);
   }
   function syncPeriodSeg() {
@@ -32588,6 +33431,7 @@ ${bodyText.substring(0, 6e3)}`;
     const seq = ++renderSeq2;
     const alive = () => seq === renderSeq2 && !!overlayEl && overlayEl.style.display !== "none" && body.isConnected;
     body.innerHTML = clipReportSkeletonHtml();
+    motionLoadingPulse(body.firstElementChild);
     try {
       if (!logCache) {
         await yieldToMainThread(YIELD_MS);
@@ -32606,6 +33450,7 @@ ${bodyText.substring(0, 6e3)}`;
       };
       if (!logCache.length) {
         renderEmptyState(body, buildClipReportEmpty("never"));
+        motionReportSection(body.firstElementChild, 0);
         if (progress && activeProgress2 === progress) {
           progress.hide();
           activeProgress2 = null;
@@ -32618,11 +33463,21 @@ ${bodyText.substring(0, 6e3)}`;
       const data = buildClipReport(logCache, period, /* @__PURE__ */ new Date());
       const availKeys = await collectAvailableKeys();
       if (!alive()) return finishAbort();
+      let library = null;
+      try {
+        const res = await readNewsData();
+        if (res.ok && !res.missing) library = buildLibraryStats(res.data && res.data.articles, /* @__PURE__ */ new Date());
+      } catch (e) {
+        library = null;
+      }
+      if (!alive()) return finishAbort();
+      const busiest = busiestDay(logCache, period, /* @__PURE__ */ new Date());
       if (!data.articles && !data.totalMinutes) {
         const other = period === "week" ? "month" : "week";
         const otherData = buildClipReport(logCache, other, /* @__PURE__ */ new Date());
         const switchTo = otherData.articles || otherData.totalMinutes ? other : void 0;
         renderEmptyState(body, buildClipReportEmpty("period", switchTo));
+        motionReportSection(body.firstElementChild, 0);
         if (progress && activeProgress2 === progress) {
           progress.hide();
           activeProgress2 = null;
@@ -32630,11 +33485,13 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       body.innerHTML = "";
-      for (const section of buildClipReportSections(data, { availableKeys: availKeys })) {
+      let secIdx = 0;
+      for (const section of buildClipReportSections(data, { availableKeys: availKeys, library, busiest })) {
         if (!alive()) return finishAbort();
         await yieldToMainThread(YIELD_MS);
         if (!alive()) return finishAbort();
         body.insertAdjacentHTML("beforeend", section.generate());
+        motionReportSection(body.lastElementChild, secIdx++);
         progress == null ? void 0 : progress.setMessage(`正在生成${section.label}…`);
       }
       if (alive()) {
@@ -32670,6 +33527,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_flow();
       init_report_stats2();
       init_render7();
+      init_motion2();
       init_clipbook();
       init_ui6();
       overlayEl = null;
@@ -32686,6 +33544,2136 @@ ${bodyText.substring(0, 6e3)}`;
   <div class="bz-clp-rep-error-t">统计失败</div>
   <div>读取阅读记录时出错，请重新打开；若反复出现请查看控制台</div>
 </div>`;
+    }
+  });
+
+  // src/clipbook/press/data.ts
+  function hourOf2(ts) {
+    const h = new Date(ts).getHours();
+    return h >= 0 && h < 24 ? h : 0;
+  }
+  function dayKeyOf2(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function titleWords(titles, limit) {
+    const map = /* @__PURE__ */ new Map();
+    const bump = (w) => {
+      if (CN_STOPWORDS.has(w)) return;
+      map.set(w, (map.get(w) || 0) + 1);
+    };
+    for (const t of titles) {
+      for (const seg of String(t).match(/[\u4e00-\u9fa5]{2,}/g) || []) {
+        for (let i = 0; i + 2 <= seg.length; i++) bump(seg.slice(i, i + 2));
+      }
+      for (const w of String(t).match(/[A-Za-z]{3,}/g) || []) {
+        bump(w[0] + w[1].toLowerCase() + w.slice(2).toLowerCase());
+      }
+    }
+    return [...map.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit).map(([w, n]) => ({ w, n }));
+  }
+  function agoOf(ts, now) {
+    const d = new Date(ts);
+    const dayStart = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const diff = Math.round((dayStart(now) - dayStart(d)) / 864e5);
+    if (diff <= 0) return `今天 ${d.getHours()} 点`;
+    if (diff === 1) return "昨天";
+    return `${diff} 天前`;
+  }
+  function derivePress(log, rawArticles, extra, now = /* @__PURE__ */ new Date()) {
+    const valid = (log || []).filter((e) => e && typeof e.ts === "number" && isFinite(e.ts) && Math.round(Number(e.minutes) || 0) > 0);
+    const minutesByKey = /* @__PURE__ */ new Map();
+    const srcMap = /* @__PURE__ */ new Map();
+    const srcShiftMap = /* @__PURE__ */ new Map();
+    const hours = new Array(24).fill(0);
+    const days = /* @__PURE__ */ new Set();
+    const perDay = /* @__PURE__ */ new Map();
+    let totalMinutes = 0;
+    const todayKey = dayKeyOf2(now.getTime());
+    let todayMinutes2 = 0;
+    let todaySessions = 0;
+    let deepMinutes = 0;
+    for (const e of valid) {
+      const m = Math.round(Number(e.minutes) || 0);
+      totalMinutes += m;
+      if (dayKeyOf2(e.ts) === todayKey) {
+        todayMinutes2 += m;
+        todaySessions += 1;
+      }
+      if (m > deepMinutes) deepMinutes = m;
+      const h = hourOf2(e.ts);
+      hours[h] += m;
+      const k = dayKeyOf2(e.ts);
+      days.add(k);
+      perDay.set(k, (perDay.get(k) || 0) + m);
+      const key = String(e.key || "");
+      const src = String(e.src || "").trim() || "未知";
+      const prev = minutesByKey.get(key);
+      if (prev) prev.minutes += m;
+      else minutesByKey.set(key, { title: String(e.title || "(无标题)"), src, minutes: m });
+      let row = srcMap.get(src);
+      if (!row) {
+        row = { name: src, articles: 0, minutes: 0 };
+        srcMap.set(src, row);
+      }
+      row.minutes += m;
+      let ss = srcShiftMap.get(src);
+      if (!ss) {
+        ss = [0, 0, 0, 0];
+        srcShiftMap.set(src, ss);
+      }
+      ss[h < 6 ? 0 : h < 12 ? 1 : h < 18 ? 2 : 3] += m;
+    }
+    for (const { src } of minutesByKey.values()) {
+      const row = srcMap.get(src);
+      if (row) row.articles += 1;
+    }
+    let busiest = null;
+    for (const [date, minutes] of perDay) {
+      if (!busiest || minutes > busiest.minutes || minutes === busiest.minutes && date < busiest.date) {
+        busiest = { date, minutes };
+      }
+    }
+    let peakHour = -1;
+    for (let h = 0; h < 24; h++) if (hours[h] > 0 && (peakHour < 0 || hours[h] > hours[peakHour])) peakHour = h;
+    const top = [...minutesByKey.values()].sort((a, b) => b.minutes - a.minutes).slice(0, 5);
+    const sources = [...srcMap.values()].sort((a, b) => b.minutes - a.minutes || b.articles - a.articles || a.name.localeCompare(b.name)).slice(0, 6);
+    const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const matrix = [];
+    const cal = [];
+    const matrixMinutes = /* @__PURE__ */ new Map();
+    for (const e of valid) {
+      const k = dayKeyOf2(e.ts);
+      let arr = matrixMinutes.get(k);
+      if (!arr) {
+        arr = new Array(24).fill(0);
+        matrixMinutes.set(k, arr);
+      }
+      arr[hourOf2(e.ts)] += Math.round(Number(e.minutes) || 0);
+    }
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(dayStart(now) - i * 864e5);
+      const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      const hs = matrixMinutes.get(k) || new Array(24).fill(0);
+      matrix.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, minutes: hs.reduce((s, x) => s + x, 0), hours: hs });
+    }
+    for (let i = 55; i >= 0; i--) {
+      const d = new Date(dayStart(now) - i * 864e5);
+      const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      cal.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, minutes: perDay.get(k) || 0 });
+    }
+    const srcShift = sources.map((s) => ({ name: s.name, shifts: srcShiftMap.get(s.name) || [0, 0, 0, 0] }));
+    const recent2 = [...valid].sort((a, b) => b.ts - a.ts).slice(0, 8).map((e) => ({
+      title: String(e.title || "(无标题)"),
+      src: String(e.src || "").trim() || "未知",
+      minutes: Math.round(Number(e.minutes) || 0),
+      ago: agoOf(e.ts, now)
+    }));
+    const words = titleWords([...minutesByKey.values()].map((x) => x.title), 26);
+    let lib = null;
+    try {
+      lib = rawArticles ? buildLibraryStats(rawArticles, now) : null;
+    } catch (e) {
+      lib = null;
+    }
+    const oldest3 = [];
+    const unreadMap = /* @__PURE__ */ new Map();
+    if (rawArticles) {
+      const cands = [];
+      for (const a of rawArticles) {
+        if (a.read) continue;
+        const p = String(a.platform || "").trim() || "未知";
+        unreadMap.set(p, (unreadMap.get(p) || 0) + 1);
+        const ts = Date.parse(String(a.fetchedAt || a.date || ""));
+        if (isFinite(ts)) cands.push({ title: String(a.title || "(无标题)"), src: p, ts });
+      }
+      cands.sort((a, b) => a.ts - b.ts);
+      for (const c of cands.slice(0, 3)) {
+        oldest3.push({ title: c.title, src: c.src, days: Math.max(0, Math.floor((now.getTime() - c.ts) / 864e5)) });
+      }
+    }
+    const unreadTop = [...unreadMap.entries()].map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 6);
+    const totalRead = Math.max(0, Math.round(Number(extra == null ? void 0 : extra.totalRead) || 0));
+    const inStream = lib ? lib.total : 0;
+    const saved = Math.max(0, Math.round(Number(extra == null ? void 0 : extra.savedCount) || 0));
+    const byDateDays = Math.max(1, Math.round(Number(extra == null ? void 0 : extra.byDateDays) || 0));
+    const totals = totalRead > 0 ? { totalRead, inStream, saved, perDay: Math.round(totalRead / byDateDays * 10) / 10 } : null;
+    return {
+      issue: lib ? lib.total : 0,
+      sessions: valid.length,
+      articles: minutesByKey.size,
+      totalMinutes,
+      activeDays: days.size,
+      streak: streakDays(log, now),
+      busiest,
+      top,
+      sources,
+      hours,
+      peakHour,
+      shifts: shiftBuckets(hours),
+      matrix,
+      words,
+      cal,
+      srcShift,
+      recent: recent2,
+      todayMinutes: todayMinutes2,
+      todaySessions,
+      deepMinutes,
+      oldest3,
+      unreadTop,
+      totals,
+      lib
+    };
+  }
+  var CN_STOPWORDS;
+  var init_data8 = __esm({
+    "src/clipbook/press/data.ts"() {
+      init_report_stats2();
+      init_str();
+      CN_STOPWORDS = /* @__PURE__ */ new Set(["我们", "一个", "什么", "这个", "自己", "没有", "就是", "为什么", "怎么", "可以", "不是", "还是", "已经", "如何", "评价", "看待", "为啥", "你的", "他们的"]);
+    }
+  });
+
+  // src/clipbook/press/view.ts
+  function numCell(n, fmt2, label) {
+    return `<div class="bz-rp-cell" data-r="cell"><b class="bz-rp-num" data-r="num" data-n="${n}" data-fmt="${fmt2}">${fmt2 === "min" ? esc(formatMinutes(n)) : n}</b><span>${esc(label)}</span></div>`;
+  }
+  function headRow(d) {
+    const r = d.top[0];
+    if (!r) return "";
+    const max = Math.max(1, ...d.top.map((x) => x.minutes));
+    return `
+    <div class="bz-rp-head" data-r="head">
+      <span class="bz-rp-rank" data-r="rank">1</span>
+      <div class="bz-rp-head-main">
+        <b class="bz-rp-head-t" title="${esc(r.title)}">${esc(r.title)}</b>
+        <span class="bz-rp-head-s"><i>${esc(r.src)}</i><em data-r="heads">${esc(formatMinutes(r.minutes))}</em></span>
+      </div>
+      <span class="bz-rp-head-bar"><i data-r="headb" style="width:${Math.max(6, Math.round(r.minutes / max * 100))}%"></i></span>
+    </div>`;
+  }
+  function topRows(d) {
+    const max = Math.max(1, ...d.top.map((r) => r.minutes));
+    return d.top.slice(1).map((r, i) => `
+    <div class="bz-rp-row" data-r="row">
+      <span class="bz-rp-rank" data-r="rank">${i + 2}</span>
+      <span class="bz-rp-row-t" title="${esc(r.title)}">${esc(r.title)}</span>
+      <span class="bz-rp-row-src">${esc(r.src)}</span>
+      <span class="bz-rp-minb"><i data-r="minb" style="width:${Math.max(4, Math.round(r.minutes / max * 100))}%"></i></span>
+      <b class="bz-rp-row-min">${esc(formatMinutes(r.minutes))}</b>
+    </div>`).join("");
+  }
+  function srcRows(d) {
+    const max = Math.max(1, ...d.sources.map((s) => s.minutes));
+    const maxA = Math.max(1, ...d.sources.map((s) => s.articles));
+    return d.sources.map((s) => `
+    <div class="bz-rp-row" data-r="row">
+      <span class="bz-rp-row-t bz-rp-row-t--src" title="${esc(s.name)}">${esc(s.name)}</span>
+      <span class="bz-rp-bar"><i data-r="bar" style="width:${Math.max(3, Math.round(s.minutes / max * 100))}%"></i></span>
+      <span class="bz-rp-subbar"><i data-r="subbar" style="width:${Math.max(3, Math.round(s.articles / maxA * 100))}%"></i></span>
+      <b class="bz-rp-row-min" data-r="cnt" data-n="${s.minutes}" data-x="${s.articles}">${esc(formatMinutes(s.minutes))} · ${s.articles} 篇</b>
+    </div>`).join("");
+  }
+  function recentRows(d) {
+    return d.recent.map((r) => `
+    <div class="bz-rp-row bz-rp-row--wire" data-r="wire">
+      <i class="bz-rp-wire-dot" data-r="dot" aria-hidden="true"></i>
+      <span class="bz-rp-row-t" title="${esc(r.title)}">${esc(r.title)}</span>
+      <span class="bz-rp-row-src">${esc(r.src)}</span>
+      <span class="bz-rp-ago" data-r="ago">${esc(r.ago)} · ${r.minutes} 分钟</span>
+    </div>`).join("");
+  }
+  function dayLabels(d) {
+    if (!d.lib) return "";
+    return d.lib.byDay.map((x) => `<span data-r="dl">${esc(x.label)}</span>`).join("");
+  }
+  function old3Rows(d) {
+    return d.oldest3.map((o, i) => `
+    <div class="bz-rp-old3" data-r="old3" style="--o3i:${i}">
+      <span class="bz-rp-rank" data-r="o3rank">${i + 1}</span>
+      <div class="bz-rp-old3-main">
+        <span class="bz-rp-old3-t" title="${esc(o.title)}">${esc(o.title)}</span>
+        <span class="bz-rp-row-src">${esc(o.src)} · 压了 ${esc(cnDay(o.days))} 天的报</span>
+      </div>
+      <b class="bz-rp-old3-d" data-r="o3d"><i data-r="o3n" data-n="${o.days}">0</i> 天</b>
+      <span class="bz-rp-badge" data-r="o3tag">压库</span>
+    </div>`).join("");
+  }
+  function dayCn2(iso) {
+    const p = iso.split("-");
+    return p.length >= 3 ? `${Number(p[1])} 月 ${Number(p[2])} 日` : iso;
+  }
+  function cnDay(days) {
+    return `${days}`;
+  }
+  function shiftLegend() {
+    return `<div class="bz-rp-legend" data-r="legend">
+    <span data-r="lg"><i style="background:var(--clip-line,#e4ddd0)"></i>夜班 0-6</span>
+    <span data-r="lg"><i style="background:var(--clip-accent-soft,#e8965a);opacity:.55"></i>晨班 6-12</span>
+    <span data-r="lg"><i style="background:var(--clip-accent-soft,#e8965a);opacity:.8"></i>午班 12-18</span>
+    <span data-r="lg"><i style="background:var(--clip-accent,#c2410c)"></i>晚班 18-24</span>
+  </div>`;
+  }
+  function vertChars(text) {
+    return [...text].map((c) => `<span>${esc(c)}</span>`).join("");
+  }
+  function pressHtml(d) {
+    const busiest = d.busiest ? `<div class="bz-rp-busiest" data-r="brow"><span>最投入的一天</span><i class="bz-rp-lead" data-r="blead"></i><b data-r="bday">${esc(dayCn2(d.busiest.date))}</b><span class="bz-rp-dim" data-r="bmin">${esc(formatMinutes(d.busiest.minutes))}</span></div>` : "";
+    const deep = d.deepMinutes > 0 ? `<div class="bz-rp-busiest" data-r="deeprow"><span>最深一段</span><i class="bz-rp-lead" data-r="deeplead"></i><b data-r="deepv">${esc(formatMinutes(d.deepMinutes))}</b><span class="bz-rp-dim">不歇气</span></div>` : "";
+    const lib = d.lib;
+    return `
+    <div class="bz-rp-box">
+      <div class="bz-rp-scroll">
+        <div class="bz-rp-film">
+
+          <!-- 01 开印：油墨泼开 + 刊名活字错落 + 竖排报眼 + 期号压角 -->
+          <section class="bz-rp-scn" data-id="c01" data-name="开印">
+            <canvas class="bz-rp-cv" data-cv="c01" aria-hidden="true"></canvas>
+            <div class="bz-rp-mast-eye" data-r="eye" aria-hidden="true">${vertChars("读报特刊")}</div>
+            <div class="bz-rp-in bz-rp-in--mid">
+              <h1 class="bz-rp-mast" data-r="mast"><span>我</span><span>读</span><span>了</span><span>什</span><span>么</span></h1>
+              <div class="bz-rp-mast-sub" data-r="sub">读报特刊 · 建库以来</div>
+              <i class="bz-rp-mast-line" data-r="line" aria-hidden="true"></i>
+            </div>
+            <b class="bz-rp-issue" data-r="issue" aria-hidden="true">第 ${d.issue} 期</b>
+          </section>
+
+          <!-- 02 速览：总时长大数压左上，三格沿右缘错落 -->
+          <section class="bz-rp-scn" data-id="c02" data-name="速览">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">本期速览</h2>
+              <div class="bz-rp-grid">
+                <div class="bz-rp-hero" data-r="cell">
+                  <b class="bz-rp-hero-n" data-r="num" data-n="${d.totalMinutes}" data-fmt="min">${esc(formatMinutes(d.totalMinutes))}</b>
+                  <span class="bz-rp-hero-l">总阅读时长</span>
+                </div>
+                <div class="bz-rp-side">
+                  ${numCell(d.articles, "int", "已读篇数")}
+                  ${numCell(d.activeDays, "int", "活跃天数")}
+                  ${numCell(d.streak, "int", "连续天数")}
+                </div>
+              </div>
+              <i class="bz-rp-inkline" data-r="inkline" aria-hidden="true"></i>
+              ${busiest}
+              ${deep}
+            </div>
+          </section>
+
+          <!-- 03 工班钟：钟面左置 + 24 刻度 + 跟随针；工班行右侧 -->
+          <section class="bz-rp-scn" data-id="c03" data-name="工班钟">
+            <canvas class="bz-rp-cv" data-cv="c03" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--dial">
+              <h2 class="bz-rp-h">工班钟 · 什么时刻在读</h2>
+              <div class="bz-rp-dial-c" data-r="dialc"><b>${d.peakHour >= 0 ? d.peakHour : "--"} 点</b><span>${d.peakHour >= 0 ? esc(shiftName(d.peakHour)) : "还没读过"}</span></div>
+              <div class="bz-rp-shifts">
+                ${d.shifts.map((s) => `
+                  <div class="bz-rp-shift" data-r="shift">
+                    <span class="bz-rp-shift-nm">${esc(s.label)}<i>${esc(s.span)}</i></span>
+                    <span class="bz-rp-shift-b"><i data-r="shiftb" style="width:${Math.max(3, Math.round(s.minutes / Math.max(1, ...d.shifts.map((x) => x.minutes)) * 100))}%"></i></span>
+                    <b class="bz-rp-shift-v" data-r="shiftv" data-n="${s.minutes}">${esc(formatMinutes(s.minutes))}</b>
+                  </div>`).join("")}
+              </div>
+            </div>
+          </section>
+
+          <!-- 04 热力带：矩阵占右 2/3，竖排刊字压右缘，光标十字跟随 -->
+          <section class="bz-rp-scn" data-id="c04" data-name="热力带">
+            <canvas class="bz-rp-cv" data-cv="c04" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h bz-rp-h--vert" data-r="vt" aria-hidden="true">${vertChars("热力带")}</h2>
+            </div>
+            <div class="bz-rp-tip" data-r="tip"></div>
+          </section>
+
+          <!-- 05 读得最久：头版头条 + 四行活字次榜 -->
+          <section class="bz-rp-scn" data-id="c05" data-name="读得最久">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">读得最久 · Top 5</h2>
+              ${headRow(d)}
+              <div class="bz-rp-rows">${topRows(d)}</div>
+            </div>
+          </section>
+
+          <!-- 06 消息源榜：滚筒压过双条 + 王牌章压右上角 -->
+          <section class="bz-rp-scn" data-id="c06" data-name="消息源榜">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">消息源榜 · 谁在供版</h2>
+              <div class="bz-rp-rows">${srcRows(d)}</div>
+              <div class="bz-rp-note" data-r="snote">橙条 = 阅读分钟 · 细条 = 供版篇数</div>
+            </div>
+            <b class="bz-rp-ace" data-r="ace" aria-hidden="true">王牌</b>
+            <i class="bz-rp-roller" data-r="roller" aria-hidden="true"></i>
+          </section>
+
+          <!-- 07 号外：电传纸连发 + 走纸孔 + 今日注记 -->
+          <section class="bz-rp-scn" data-id="c07" data-name="号外">
+            <canvas class="bz-rp-cv" data-cv="c07" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--wire">
+              <h2 class="bz-rp-h">号外 · 最近在读</h2>
+              <div class="bz-rp-rows">${recentRows(d)}</div>
+              <div class="bz-rp-note" data-r="today">${d.todayMinutes > 0 ? `今晨已读 ${d.todayMinutes} 分钟 · 共 ${d.todaySessions} 段` : "今晨还没开张"}</div>
+            </div>
+          </section>
+
+          <!-- 08 收录节奏：滚筒横扫柱弹起 + 峰值纸屑 -->
+          <section class="bz-rp-scn" data-id="c08" data-name="收录节奏">
+            <canvas class="bz-rp-cv" data-cv="c08" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">收录节奏 · 近 14 天</h2>
+              <div class="bz-rp-daylab">${dayLabels(d)}</div>
+              <div class="bz-rp-note" data-r="note">${lib ? `每天收进来的新剪报 · 单日最多收 ${lib.byDayPeak} 篇` : "报库数据暂缺"}</div>
+            </div>
+          </section>
+
+          <!-- 09 驻留日历：56 格对角波显影 + 连胜线逐段描画 -->
+          <section class="bz-rp-scn" data-id="c09" data-name="驻留日历">
+            <canvas class="bz-rp-cv" data-cv="c09" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">驻留日历 · 近 56 天</h2>
+            </div>
+            <div class="bz-rp-tip" data-r="tip"></div>
+          </section>
+
+          <!-- 10 班次×来源：堆叠四段接力 + 悬停行提亮 -->
+          <section class="bz-rp-scn" data-id="c10" data-name="班次×来源">
+            <canvas class="bz-rp-cv" data-cv="c10" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">班次 × 来源 · 谁在哪一班供版</h2>
+              ${shiftLegend()}
+            </div>
+            <div class="bz-rp-tip" data-r="tip"></div>
+          </section>
+
+          <!-- 11 关键词：词云螺旋落位 + 斥力弹性回位 -->
+          <section class="bz-rp-scn" data-id="c11" data-name="关键词">
+            <canvas class="bz-rp-cv" data-cv="c11" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">关键词 · 你读的标题里什么最多</h2>
+            </div>
+          </section>
+
+          <!-- 12 报库盘点：墨盘圆环扫出 + 环心百分数 + 三格右列 -->
+          <section class="bz-rp-scn" data-id="c12" data-name="报库盘点">
+            <canvas class="bz-rp-cv" data-cv="c12" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--c12">
+              <h2 class="bz-rp-h">报库盘点 · 建库以来</h2>
+              ${lib ? `
+              <div class="bz-rp-ringc"><div class="bz-rp-ring-in" data-r="ringc"><b data-r="ringv">${lib.readRate}%</b><span>已读率</span></div></div>
+              <div class="bz-rp-side3">
+                ${numCell(lib.total, "int", "在流篇数")}
+                ${numCell(lib.readCount, "int", "已读")}
+                ${numCell(lib.unread, "int", "待读")}
+              </div>` : '<p class="bz-rp-dim">报库数据暂缺——news.json 没读到，这一页先欠着。</p>'}
+            </div>
+          </section>
+
+          <!-- 13 压库专页：三份卷宗掀角入场 + 天数里程表 -->
+          <section class="bz-rp-scn" data-id="c13" data-name="压库专页">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">压库专页 · 压得最久的三份</h2>
+              ${d.oldest3.length ? old3Rows(d) : '<p class="bz-rp-dim">没有压库的待读——报库很干净。</p>'}
+            </div>
+          </section>
+
+          <!-- 14 未读版图：行滑入 + 总待读大数压右上角 -->
+          <section class="bz-rp-scn" data-id="c14" data-name="未读版图">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">未读版图 · 待读都在谁家</h2>
+              <div class="bz-rp-rows">
+                ${d.unreadTop.map((u) => `
+                <div class="bz-rp-row" data-r="row">
+                  <span class="bz-rp-row-t bz-rp-row-t--src">${esc(u.name)}</span>
+                  <span class="bz-rp-bar"><i data-r="bar" style="width:${Math.max(3, Math.round(u.n / Math.max(1, ...d.unreadTop.map((x) => x.n)) * 100))}%"></i></span>
+                  <b class="bz-rp-row-min" data-r="cnt" data-n="${u.n}">${u.n} 篇</b>
+                </div>`).join("")}
+              </div>
+            </div>
+            ${lib ? `<b class="bz-rp-ghost" data-r="ghost" aria-hidden="true">${lib.unread}</b>` : ""}
+          </section>
+
+          <!-- 15 总账：三数视差滚齐 + 界栏双线 + 扫光 -->
+          <section class="bz-rp-scn" data-id="c15" data-name="总账">
+            <canvas class="bz-rp-cv" data-cv="c15" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">总账 · 这间报馆一共</h2>
+              ${d.totals ? `
+              <div class="bz-rp-cells">
+                <div class="bz-rp-cell" data-r="tcell"><b class="bz-rp-num" data-r="tnum" data-n="${d.totals.totalRead}">${d.totals.totalRead}</b><span>累计已读</span></div>
+                <div class="bz-rp-cell" data-r="tcell"><b class="bz-rp-num" data-r="tnum" data-n="${d.totals.inStream}">${d.totals.inStream}</b><span>在流待读</span></div>
+                <div class="bz-rp-cell" data-r="tcell"><b class="bz-rp-num" data-r="tnum" data-n="${d.totals.saved}">${d.totals.saved}</b><span>剪藏入册</span></div>
+              </div>
+              <div class="bz-rp-busiest" data-r="avgrow"><span>平均每天读报</span><i class="bz-rp-lead" data-r="avglead"></i><b data-r="avgv">${d.totals.perDay}</b><span class="bz-rp-dim">篇 / 天</span></div>` : '<p class="bz-rp-dim">总账缺页——news.stats 没读到。</p>'}
+            </div>
+          </section>
+
+          <!-- 16 落款：墨滴礼花 + 纸屑 + 尾章 -->
+          <section class="bz-rp-scn" data-id="c16" data-name="落款">
+            <canvas class="bz-rp-cv" data-cv="c16" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--mid">
+              <h1 class="bz-rp-mast bz-rp-mast--end" data-r="end"><span>本</span><span>报</span><span>完</span></h1>
+            </div>
+            <span class="bz-rp-seal" data-r="seal" aria-hidden="true">完</span>
+          </section>
+
+        </div>
+      </div>
+      <div class="bz-rp-shut" data-r="shut" aria-hidden="true"><i></i><i></i></div>
+      <nav class="bz-rp-ticks" data-r="ticks" aria-label="幕目录">${SCN_NAMES.map((n, i) => `<i class="bz-rp-tick" data-i="${i}" title="${esc(n)}"></i>`).join("")}</nav>
+    </div>`;
+  }
+  function shiftName(h) {
+    if (h < 6) return "夜班";
+    if (h < 12) return "晨班";
+    if (h < 18) return "午班";
+    return "晚班";
+  }
+  var SCN_NAMES;
+  var init_view = __esm({
+    "src/clipbook/press/view.ts"() {
+      init_render7();
+      init_report_stats2();
+      SCN_NAMES = [
+        "开印",
+        "速览",
+        "工班钟",
+        "热力带",
+        "读得最久",
+        "消息源榜",
+        "号外",
+        "收录节奏",
+        "驻留日历",
+        "班次×来源",
+        "关键词",
+        "报库盘点",
+        "压库专页",
+        "未读版图",
+        "总账",
+        "落款"
+      ];
+    }
+  });
+
+  // src/clipbook/press/motions.ts
+  function palette(root) {
+    const cs = getComputedStyle(root);
+    const v = (n, fb) => (cs.getPropertyValue(n) || "").trim() || fb;
+    return {
+      ink: v("--clip-ink", "#1c1a17"),
+      ink2: v("--clip-ink-2", "#3d3a34"),
+      dim: v("--clip-dim", "#6b6458"),
+      muted: v("--clip-muted", "#b3aa9a"),
+      accent: v("--clip-accent", "#c2410c"),
+      accentSoft: v("--clip-accent-soft", "#e8965a"),
+      line: v("--clip-line", "#e4ddd0"),
+      paper: v("--clip-paper", "#faf8f3")
+    };
+  }
+  function rng(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = s * 1664525 + 1013904223 >>> 0;
+      return s / 4294967296;
+    };
+  }
+  function S(el, v) {
+    var _a2;
+    if (!el || lastStyle.get(el) === v) return;
+    const he = el;
+    const prev = (_a2 = he.getAttribute("style")) != null ? _a2 : "";
+    if (prev) {
+      const incoming = new Set(v.split(";").map((d) => d.split(":")[0].trim()).filter(Boolean));
+      const keep = prev.split(";").filter((d) => {
+        const k = d.split(":")[0].trim();
+        return k && !incoming.has(k);
+      });
+      if (keep.length) v = `${keep.join(";")};${v}`;
+    }
+    he.setAttribute("style", v);
+    lastStyle.set(he, v);
+  }
+  function T(el, v) {
+    if (!el || lastText.get(el) === v) return;
+    el.textContent = v;
+    lastText.set(el, v);
+  }
+  function fit2(cv) {
+    const ctx = cv.getContext("2d");
+    if (!ctx) return null;
+    const dpr = typeof devicePixelRatio === "number" && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (w < 2 || h < 2) return null;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+  function rgba(hex, a) {
+    const m = hex.replace("#", "");
+    const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+    const n = parseInt(full.slice(0, 6), 16);
+    if (!isFinite(n)) return hex;
+    return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a.toFixed(3)})`;
+  }
+  function repel(lx, ly, pin, x, y, R = 110, force = 26) {
+    if (!pin) return { dx: 0, dy: 0 };
+    const dx = x - lx, dy = y - ly;
+    const dist = Math.hypot(dx, dy);
+    if (dist > R || dist < 1e-3) return { dx: 0, dy: 0 };
+    const f = (1 - dist / R) * force;
+    return { dx: dx / dist * f, dy: dy / dist * f };
+  }
+  function dolly(el, t, from, dur = 1.1, delay = 0) {
+    if (!el) return;
+    const rest = 1 - easeOut(at(t, dur, delay));
+    S(el, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
+  }
+  function drawTip(ctx, x, y, text, pal) {
+    ctx.font = `12px ${HEI}`;
+    const wText = ctx.measureText(text).width;
+    const w = wText + 18, h = 24;
+    const left = Math.max(6, Math.min(x - w / 2, (ctx.canvas.clientWidth || 9999) - w - 6));
+    const top = y - h - 12;
+    ctx.fillStyle = pal.paper;
+    ctx.strokeStyle = pal.ink;
+    ctx.lineWidth = 1;
+    ctx.fillRect(left, top, w, h);
+    ctx.strokeRect(left + 0.5, top + 0.5, w - 1, h - 1);
+    ctx.fillStyle = pal.ink;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, left + 9, top + h / 2 + 0.5);
+  }
+  function humanish(min) {
+    const h = Math.floor(min / 60), r = Math.round(min % 60);
+    if (h <= 0) return `${r} 分钟`;
+    return r > 0 ? `${h} 小时 ${r} 分` : `${h} 小时`;
+  }
+  function shiftOfHour2(h) {
+    if (h < 6) return "夜班";
+    if (h < 12) return "晨班";
+    if (h < 18) return "午班";
+    return "晚班";
+  }
+  function perfC01(scn, d) {
+    const cv = q2(scn, '[data-cv="c01"]');
+    const chars = qa(scn, '[data-r="mast"] span');
+    const eyeChars = qa(scn, '[data-r="eye"] span');
+    const sub = q2(scn, '[data-r="sub"]');
+    const line = q2(scn, '[data-r="line"]');
+    const issue = q2(scn, '[data-r="issue"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const rand = rng(20260923);
+    const nDrops = Math.min(110, 40 + Math.round(d.articles * 0.6));
+    const drops = Array.from({ length: nDrops }, (_, i) => ({
+      x: rand(),
+      y0: rand() * 0.14,
+      y1: 0.3 + rand() * 0.58,
+      t0: 0.15 + rand() * 2.6,
+      life: 1.5 + rand() * 1.7,
+      r: 0.8 + rand() * 2.6,
+      wob: 6 + rand() * 20,
+      ph: rand() * Math.PI * 2,
+      accent: i % 9 === 0,
+      trail: []
+    }));
+    const beat = [0, 0.26, 0.1, 0.52, 0.34];
+    const tilt = [-6, 4, -3, 5, -4];
+    const dur = 4.6 + Math.min(0.8, d.articles / 120 * 0.8);
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        dolly(inn, t, (r) => `scale(${(1 + r * 0.045).toFixed(4)})`, 1.15);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const rect = pin ? cv.getBoundingClientRect() : null;
+            const lx = rect ? cx - rect.left : -9999;
+            const ly = rect ? cy - rect.top : -9999;
+            for (const dr of drops) {
+              const p = at(t, dr.life, dr.t0);
+              if (p <= 0 || p >= 1) {
+                if (dr.trail.length) dr.trail.length = 0;
+                continue;
+              }
+              const bx = dr.x * w + Math.sin(dr.ph + t * 1.3) * dr.wob;
+              const by = lerp(dr.y0, dr.y1, easeInOut(p)) * h;
+              const off = repel(lx, ly, pin, bx, by, 120, 30);
+              const x = bx + off.dx, y = by + off.dy;
+              dr.trail.push([x, y]);
+              if (dr.trail.length > 6) dr.trail.shift();
+              if (dr.trail.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = rgba(dr.accent ? pal.accent : pal.ink, Math.sin(Math.PI * p) * 0.16);
+                ctx.lineWidth = dr.r * 0.9;
+                ctx.moveTo(dr.trail[0][0], dr.trail[0][1]);
+                for (let k = 1; k < dr.trail.length; k++) ctx.lineTo(dr.trail[k][0], dr.trail[k][1]);
+                ctx.stroke();
+              }
+              const a = Math.sin(Math.PI * p) * 0.5;
+              ctx.beginPath();
+              ctx.fillStyle = rgba(dr.accent ? pal.accent : pal.ink, a);
+              ctx.arc(x, y, dr.r, 0, Math.PI * 2);
+              ctx.fill();
+              if (p > 0.55) {
+                const rp2 = (p - 0.55) / 0.45;
+                ctx.strokeStyle = rgba(dr.accent ? pal.accent : pal.ink, (1 - rp2) * 0.2);
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(x, y, dr.r + rp2 * 10, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(x, y, dr.r + rp2 * 5, 0, Math.PI * 2);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+        chars.forEach((c, i) => {
+          var _a2, _b2;
+          const p = easeBack(at(t, 0.55, 0.4 + ((_a2 = beat[i % 5]) != null ? _a2 : 0)));
+          S(c, `opacity:${clamp01(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -34).toFixed(1)}px) rotate(${((1 - p) * ((_b2 = tilt[i % 5]) != null ? _b2 : -4)).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.28).toFixed(3)})`);
+        });
+        eyeChars.forEach((c, i) => {
+          const p = easeOut(at(t, 0.4, 1.7 + i * 0.14));
+          S(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * -14).toFixed(1)}px)`);
+        });
+        const ps = at(t, 0.6, 2.3);
+        S(sub, `opacity:${ps.toFixed(3)};transform:translateY(${((1 - ps) * 10).toFixed(1)}px)`);
+        S(line, `transform:scaleX(${easeOutExpo(at(t, 0.9, 2.7)).toFixed(4)})`);
+        const pi = easeBack(at(t, 0.6, 2.9));
+        S(issue, `opacity:${clamp01(pi * 1.6).toFixed(3)};transform:translateY(${((1 - pi) * 16).toFixed(1)}px) rotate(${(-3 + (1 - pi) * -6).toFixed(2)}deg)`);
+      }
+    };
+  }
+  function perfC02(scn, d) {
+    const nums = qa(scn, '[data-r="num"]');
+    const cells = qa(scn, '[data-r="cell"]');
+    const line = q2(scn, '[data-r="inkline"]');
+    const brow = q2(scn, '[data-r="brow"]');
+    const blead = q2(scn, '[data-r="blead"]');
+    const bday = q2(scn, '[data-r="bday"]');
+    const bmin = q2(scn, '[data-r="bmin"]');
+    const deeprow = q2(scn, '[data-r="deeprow"]');
+    const deeplead = q2(scn, '[data-r="deeplead"]');
+    const deepv = q2(scn, '[data-r="deepv"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const sideBeat = [0, 0.2, 0.46];
+    const beatOf = (i) => {
+      var _a2;
+      return i === 0 ? 0 : (_a2 = sideBeat[i - 1]) != null ? _a2 : 0;
+    };
+    const rollDur = (i) => {
+      const el = nums[i];
+      const n = Math.round(Number((el == null ? void 0 : el.dataset.n) || 0));
+      return 0.9 + Math.min(6, String(n).length) * 0.12;
+    };
+    const dur = 4.4 + Math.min(1.2, String(Math.round(d.totalMinutes)).length * 0.18);
+    return {
+      dur,
+      update({ t, px, py }) {
+        dolly(inn, t, (r) => `translate(${(r * -2.2).toFixed(2)}%, ${(r * -1.2).toFixed(2)}%) rotate(${(r * -0.5).toFixed(2)}deg)`, 1);
+        cells.forEach((c, i) => {
+          const p = easeOut(at(t, 0.6, 0.25 + beatOf(i)));
+          const depth = i === 0 ? 0.4 : 0.8 + i * 0.35;
+          const par = `translate(${(px * depth * 5).toFixed(1)}px, ${(py * depth * 3.4).toFixed(1)}px)`;
+          const dir = i === 0 ? `translateY(${((1 - p) * -22).toFixed(1)}px)` : `translateX(${((1 - p) * 30).toFixed(1)}px)`;
+          S(c, `opacity:${clamp01(p * 1.5).toFixed(3)};transform:${par} ${dir}`);
+        });
+        nums.forEach((el, i) => {
+          const n = Number(el.dataset.n || 0);
+          const p = easeOutExpo(at(t, rollDur(i), 0.4 + beatOf(i) + 0.15));
+          T(el, el.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
+        });
+        S(line, `transform:scaleX(${easeInOut(at(t, 1, 0.3)).toFixed(4)})`);
+        if (brow) {
+          S(brow, `opacity:${at(t, 0.7, 2.5).toFixed(3)}`);
+          if (blead) S(blead, `transform:scaleX(${easeOut(at(t, 0.9, 2.7)).toFixed(4)})`);
+          S(bday, `opacity:${at(t, 0.5, 3.1).toFixed(3)}`);
+          S(bmin, `opacity:${at(t, 0.5, 3.3).toFixed(3)}`);
+        }
+        if (deeprow) {
+          S(deeprow, `opacity:${at(t, 0.7, 2.9).toFixed(3)}`);
+          if (deeplead) S(deeplead, `transform:scaleX(${easeOut(at(t, 0.9, 3.1)).toFixed(4)})`);
+          if (deepv) S(deepv, `opacity:${at(t, 0.5, 3.5).toFixed(3)}`);
+        }
+      }
+    };
+  }
+  function perfC03(scn, d) {
+    const cv = q2(scn, '[data-cv="c03"]');
+    const rows = qa(scn, '[data-r="shift"]');
+    const dialc = q2(scn, '[data-r="dialc"]');
+    const maxMin = Math.max(1, ...d.hours);
+    let follow = -Math.PI / 2;
+    let followA = 0;
+    const jit = rng(31);
+    const jits = Array.from({ length: 24 }, () => jit() * 0.16);
+    const dur = 6 + (maxMin > 90 ? 0.5 : 0);
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const cx0 = w * (w > h * 1.2 ? 0.36 : 0.5), cy0 = h * 0.52;
+            const R = Math.min(w * 0.3, h * 0.34);
+            const rect = pin ? cv.getBoundingClientRect() : null;
+            const lx = rect ? cx - rect.left : -9999;
+            const ly = rect ? cy - rect.top : -9999;
+            ctx.strokeStyle = rgba(pal.muted, 0.85);
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 24; i++) {
+              const p = easeOut(at(t, 0.06, 0.1 + i * 0.028 + jits[i]));
+              if (p <= 0) continue;
+              const ang = (-90 + i * 15) * Math.PI / 180;
+              ctx.globalAlpha = p * 0.8;
+              ctx.beginPath();
+              ctx.moveTo(cx0 + Math.cos(ang) * (R + 8), cy0 + Math.sin(ang) * (R + 8));
+              ctx.lineTo(cx0 + Math.cos(ang) * (R + 13), cy0 + Math.sin(ang) * (R + 13));
+              ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            const ringP = [at(t, 0.7, 0.3), at(t, 0.7, 0.45), at(t, 0.7, 0.6), at(t, 0.7, 0.75)];
+            const ranges = [[0, 6], [6, 12], [12, 18], [18, 24]];
+            ctx.lineWidth = 3;
+            ctx.lineCap = "butt";
+            ranges.forEach(([lo, hi], si) => {
+              const p = easeOut(ringP[si]);
+              if (p <= 0) return;
+              const a0 = (-90 + lo * 15) * Math.PI / 180;
+              const a1 = (-90 + lo * 15 + (hi - lo) * 15 * p) * Math.PI / 180;
+              ctx.beginPath();
+              ctx.strokeStyle = rgba(pal.line, 0.55);
+              ctx.arc(cx0, cy0, R + 22, a0, a1);
+              ctx.stroke();
+            });
+            let hoverText = "";
+            for (let i = 0; i < 24; i++) {
+              const p = easeOut(at(t, 0.32, 0.7 + i * 0.09 + jits[i]));
+              if (p <= 0) continue;
+              const ang = (-90 + i * 15) * Math.PI / 180;
+              const v = d.hours[i] / maxMin;
+              const x = cx0 + Math.cos(ang) * R, y = cy0 + Math.sin(ang) * R;
+              const isPeak = i === d.peakHour;
+              const hovered = pin && Math.hypot(lx - x, ly - y) < 26;
+              const r = (2.2 + v * 9) * p * (hovered ? 1.5 : 1);
+              ctx.beginPath();
+              ctx.fillStyle = rgba(isPeak || hovered ? pal.accent : pal.ink, (0.18 + 0.82 * p) * (0.3 + 0.7 * (0.35 + 0.65 * v)));
+              if (isPeak || hovered) {
+                ctx.shadowColor = rgba(pal.accent, 0.55 * p);
+                ctx.shadowBlur = 12 * p;
+              }
+              ctx.arc(x, y, r, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+              if (hovered) hoverText = `${i} 点 · ${humanish(d.hours[i])}（${shiftOfHour2(i)}）`;
+            }
+            if (d.peakHour >= 0) {
+              const sp = springUp(at(t, 1.7, 2.4));
+              if (sp > 1e-3) {
+                const ang = (-90 + d.peakHour * 15 * sp) * Math.PI / 180;
+                ctx.beginPath();
+                ctx.strokeStyle = pal.accent;
+                ctx.lineWidth = 2.4;
+                ctx.moveTo(cx0, cy0);
+                ctx.lineTo(cx0 + Math.cos(ang) * (R - 16), cy0 + Math.sin(ang) * (R - 16));
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.fillStyle = pal.accent;
+                ctx.arc(cx0, cy0, 3.4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+            if (pin) {
+              const target = Math.atan2(ly - cy0, lx - cx0);
+              follow += sdelta(target, follow) * 0.13;
+              followA = Math.min(1, followA + 0.08);
+            } else {
+              followA = Math.max(0, followA - 0.06);
+            }
+            if (followA > 0.01) {
+              ctx.globalAlpha = followA * 0.5;
+              ctx.strokeStyle = pal.accent;
+              ctx.lineWidth = 1.2;
+              ctx.setLineDash([3, 5]);
+              ctx.beginPath();
+              ctx.moveTo(cx0, cy0);
+              ctx.lineTo(cx0 + Math.cos(follow) * (R - 30), cy0 + Math.sin(follow) * (R - 30));
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.globalAlpha = 1;
+            }
+            if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+          }
+        }
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.5, 1.1 + i * 0.2));
+          S(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 22).toFixed(1)}px)`);
+          const b = q2(row, '[data-r="shiftb"]');
+          if (b) S(b, `transform:scaleX(${easeOutExpo(at(t, 0.7, 1.35 + i * 0.2)).toFixed(4)})`);
+          const v = q2(row, '[data-r="shiftv"]');
+          if (v) {
+            const n = Number(v.dataset.n || 0);
+            T(v, humanish(roll(n, easeOutExpo(at(t, 0.9, 1.3 + i * 0.2)))));
+          }
+        });
+        if (dialc) {
+          const p = at(t, 0.6, 5);
+          S(dialc, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 8).toFixed(1)}px)`);
+        }
+      }
+    };
+  }
+  function perfC04(scn, d) {
+    const cv = q2(scn, '[data-cv="c04"]');
+    const vt = qa(scn, '[data-r="vt"] span');
+    const maxMin = Math.max(1, ...d.matrix.flatMap((m) => m.hours));
+    let pk = { r: -1, c: -1, v: 0 };
+    d.matrix.forEach((m, r) => m.hours.forEach((v, c) => {
+      if (v > pk.v) pk = { r, c, v };
+    }));
+    const jit = rng(47);
+    const jits = d.matrix.map(() => Array.from({ length: 24 }, () => jit() * 0.14));
+    const dur = 5.6 + Math.min(0.8, d.matrix.length * 0.04);
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        vt.forEach((c, i) => {
+          const p = easeOut(at(t, 0.5, 0.25 + i * 0.24));
+          S(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 18).toFixed(1)}px)`);
+        });
+        if (!cv) return;
+        const f = fit2(cv);
+        if (!f) return;
+        const { ctx, w, h } = f;
+        ctx.clearRect(0, 0, w, h);
+        const cols = 24, rowsN = d.matrix.length;
+        const gx = w * 0.12, gw = w * 0.66;
+        const gy = h * 0.24, gh = h * 0.54;
+        const cw = gw / cols, chh = gh / rowsN;
+        const rect = pin ? cv.getBoundingClientRect() : null;
+        const lx = rect ? cx - rect.left : -9999;
+        const ly = rect ? cy - rect.top : -9999;
+        let hoverText = "";
+        let hcx = -1, hry = -1;
+        if (pin && lx >= gx && lx < gx + gw && ly >= gy && ly < gy + gh) {
+          hcx = Math.floor((lx - gx) / cw);
+          hry = Math.floor((ly - gy) / chh);
+          ctx.fillStyle = rgba(pal.accent, 0.06);
+          ctx.fillRect(gx + hcx * cw, gy, cw, gh);
+          ctx.fillRect(gx, gy + hry * chh, gw, chh);
+        }
+        const per = 2 * (gw + gh);
+        const fp = easeInOut(at(t, 1.3, 0.15));
+        if (fp > 0) {
+          ctx.setLineDash([per * fp, per]);
+          ctx.strokeStyle = rgba(pal.muted, 0.9);
+          ctx.lineWidth = 1;
+          ctx.strokeRect(gx + 0.5, gy + 0.5, gw - 1, gh - 1);
+          ctx.setLineDash([]);
+        }
+        ctx.lineWidth = 1;
+        for (let r = 0; r < rowsN; r++) {
+          const day = d.matrix[r];
+          for (let c = 0; c < cols; c++) {
+            const p = easeOut(at(t, 0.4, 0.35 + (r + c) * 0.018 + jits[r][c]));
+            if (p <= 0) continue;
+            const v = day.hours[c] / maxMin;
+            const x = gx + c * cw, y = gy + r * chh;
+            const hot = r === hry && c === hcx;
+            ctx.fillStyle = v > 0 ? rgba(hot ? pal.accent : pal.accentSoft, (0.12 + 0.88 * p) * (0.25 + 0.75 * Math.min(1, v * 1.4))) : rgba(pal.line, 0.35 * p);
+            ctx.fillRect(x + 1, y + 1, cw - 2, chh - 2);
+            if (hot && day.hours[c] > 0) {
+              ctx.strokeStyle = pal.accent;
+              ctx.strokeRect(x + 0.5, y + 0.5, cw - 1, chh - 1);
+              hoverText = `${day.label} ${c} 点 · ${humanish(day.hours[c])}`;
+            }
+          }
+        }
+        const gp = at(t, 0.5, 3.6);
+        if (pk.r >= 0 && pk.v > 0 && gp > 0) {
+          const x = gx + pk.c * cw, y = gy + pk.r * chh;
+          ctx.strokeStyle = rgba(pal.accent, gp);
+          ctx.lineWidth = 1.6;
+          ctx.strokeRect(x + 0.5, y + 0.5, cw - 2, chh - 2);
+        }
+        ctx.fillStyle = pal.muted;
+        ctx.font = `${Math.max(10, w * 85e-4)}px ${HEI}`;
+        ctx.textAlign = "center";
+        [0, 6, 12, 18, 23].forEach((hc) => ctx.fillText(String(hc), gx + hc * cw + cw / 2, gy + gh + 18));
+        ctx.textAlign = "right";
+        d.matrix.forEach((day, r) => {
+          const p = at(t, 0.3, 0.4 + r * 0.05);
+          ctx.fillStyle = rgba(pal.muted, 0.4 + 0.6 * p);
+          ctx.fillText(day.label, gx - 8, gy + r * chh + chh / 2 + 4);
+        });
+        if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+      }
+    };
+  }
+  function perfC05(scn, _d) {
+    const head = q2(scn, '[data-r="head"]');
+    const headT = q2(scn, '[data-r="head"] .bz-rp-head-t');
+    const headRank = q2(scn, '[data-r="head"] [data-r="rank"]');
+    const headS = q2(scn, '[data-r="heads"]');
+    const headB = q2(scn, '[data-r="headb"]');
+    const rows = qa(scn, '[data-r="row"]');
+    const dur = 5.2;
+    const beat = [0, 0.16, 0.38, 0.66];
+    return {
+      dur,
+      update({ t }) {
+        const hp = easeBack(at(t, 0.7, 0.3));
+        if (head) S(head, `opacity:${clamp01(hp * 2).toFixed(3)};transform:translateY(${((1 - hp) * -26).toFixed(1)}px)`);
+        if (headT) S(headT, `letter-spacing:${(0.5 - 0.44 * clamp01(hp)).toFixed(3)}em`);
+        if (headRank) {
+          const rp = easeBack(at(t, 0.45, 0.55));
+          S(headRank, `opacity:${clamp01(rp * 2).toFixed(3)};transform:scale(${(rp * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - rp) * -12).toFixed(2)}deg)`);
+        }
+        if (headB) S(headB, `transform:scaleX(${easeOutExpo(at(t, 0.8, 0.9)).toFixed(4)})`);
+        if (headS) S(headS, `opacity:${at(t, 0.5, 1).toFixed(3)}`);
+        rows.forEach((row, i) => {
+          var _a2;
+          const b = (_a2 = beat[i % 4]) != null ? _a2 : 0;
+          const p = easeBack(at(t, 0.6, 0.9 + b));
+          S(row, `opacity:${clamp01(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -44).toFixed(1)}px) rotate(${((1 - p) * (i % 2 ? 1.4 : -1.8)).toFixed(2)}deg)`);
+          const rank = q2(row, '[data-r="rank"]');
+          if (rank) {
+            const pr = easeBack(at(t, 0.4, 1.05 + b));
+            S(rank, `opacity:${clamp01(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -10).toFixed(2)}deg)`);
+          }
+          const bar = q2(row, '[data-r="minb"]');
+          if (bar) S(bar, `transform:scaleX(${easeOutExpo(at(t, 0.55, 1.25 + b)).toFixed(4)})`);
+        });
+      }
+    };
+  }
+  function perfC06(scn, d) {
+    const rows = qa(scn, '[data-r="row"]');
+    const note = q2(scn, '[data-r="snote"]');
+    const ace = q2(scn, '[data-r="ace"]');
+    const roller = q2(scn, '[data-r="roller"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 4.6 + Math.min(1.2, d.sources.length * 0.18);
+    return {
+      dur,
+      update({ t }) {
+        dolly(inn, t, (r) => `translateX(${(r * 2.6).toFixed(2)}%) rotate(${(r * 0.5).toFixed(2)}deg)`, 1.05);
+        const rp = easeInOut(at(t, 2.2, 0.45));
+        if (roller) S(roller, `opacity:${rp > 0 && rp < 1 ? 0.9 : 0};transform:translateX(${(rp * 1150).toFixed(1)}%)`);
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.5, 0.4 + i * 0.24));
+          S(row, `opacity:${p.toFixed(3)}`);
+          const bar = q2(row, '[data-r="bar"]');
+          if (bar) S(bar, `transform:scaleX(${easeInOut(at(t, 0.9, 0.7 + i * 0.24)).toFixed(4)})`);
+          const sub = q2(row, '[data-r="subbar"]');
+          if (sub) S(sub, `transform:scaleX(${easeInOut(at(t, 0.8, 1 + i * 0.24)).toFixed(4)})`);
+          const cnt = q2(row, '[data-r="cnt"]');
+          if (cnt) {
+            const n = Number(cnt.dataset.n || 0);
+            const x = Number(cnt.dataset.x || 0);
+            const cp = easeOutExpo(at(t, 1, 0.8 + i * 0.24));
+            T(cnt, `${humanish(roll(n, cp))} · ${roll(x, cp)} 篇`);
+          }
+        });
+        const ap = easeBack(at(t, 0.55, 3.1));
+        S(ace, `opacity:${clamp01(ap * 2).toFixed(3)};transform:scale(${(1 + (1 - ap) * 1.4).toFixed(3)}) rotate(${(-10 + (1 - ap) * -14).toFixed(2)}deg)`);
+        if (note) S(note, `opacity:${at(t, 0.6, 3.6).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC07(scn, d) {
+    const cv = q2(scn, '[data-cv="c07"]');
+    const rows = qa(scn, '[data-r="wire"]');
+    const today = q2(scn, '[data-r="today"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 4.4 + Math.min(2.4, d.recent.length * 0.28);
+    return {
+      dur,
+      update({ t, pal }) {
+        dolly(inn, t, (r) => `translateX(${(r * 2.4).toFixed(2)}%)`, 0.9);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = rgba(pal.muted, 0.3);
+            const holeGap = 26, roll2 = t * 12 % holeGap;
+            for (let y = -holeGap; y < h + holeGap; y += holeGap) {
+              const yy = y + roll2;
+              ctx.beginPath();
+              ctx.arc(w * 0.045, yy, 2.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(w * 0.955, yy, 2.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.setLineDash([7, 9]);
+            ctx.lineDashOffset = -t * 26;
+            ctx.strokeStyle = rgba(pal.accent, 0.4);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.06, h * 0.16);
+            ctx.lineTo(w * 0.94, h * 0.16);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(w * 0.06, h * 0.88);
+            ctx.lineTo(w * 0.94, h * 0.88);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.lineDashOffset = 0;
+          }
+        }
+        const beat = [0, 0.12, 0.3, 0.5, 0.78, 1.02, 1.2, 1.5];
+        rows.forEach((row, i) => {
+          var _a2;
+          const b = (_a2 = beat[i % 8]) != null ? _a2 : 0;
+          const p = easeOut(at(t, 0.4, 0.35 + b));
+          S(row, `opacity:${p.toFixed(3)};clip-path:inset(0 ${((1 - p) * 100).toFixed(1)}% 0 0)`);
+          const dot = q2(row, '[data-r="dot"]');
+          if (dot) {
+            const pulse = 0.5 + 0.5 * Math.sin(t * 5 + i * 1.7);
+            S(dot, `opacity:${(p * (0.45 + 0.55 * pulse)).toFixed(3)};transform:scale(${(p * (0.8 + 0.3 * pulse)).toFixed(3)})`);
+          }
+          const ago = q2(row, '[data-r="ago"]');
+          if (ago) S(ago, `opacity:${at(t, 0.4, 0.55 + b).toFixed(3)}`);
+        });
+        if (today) S(today, `opacity:${at(t, 0.6, Math.max(2.2, dur - 1.2)).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC08(scn, d) {
+    const cv = q2(scn, '[data-cv="c08"]');
+    const labels = qa(scn, '[data-r="dl"]');
+    const note = q2(scn, '[data-r="note"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const lib = d.lib;
+    const nConf = Math.min(40, 8 + (lib ? lib.byDayPeak * 2 : 0));
+    const rand = rng(88);
+    const confetti = Array.from({ length: nConf }, () => ({
+      ang: rand() * Math.PI * 2,
+      sp: 30 + rand() * 70,
+      sz: 2.4 + rand() * 3,
+      rot: rand() * Math.PI,
+      vr: (rand() - 0.5) * 6
+    }));
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal }) {
+        dolly(inn, t, (r) => `scale(${(1 - r * 0.04).toFixed(4)})`, 1.1);
+        if (cv && lib && lib.byDay.length) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const base = h * 0.8, top = h * 0.16;
+            const n = lib.byDay.length;
+            const bw = Math.min(30, w * 0.7 / n * 0.52);
+            const step = w * 0.7 / n;
+            const x0 = (w - step * n) / 2 + step / 2 + w * 0.05;
+            const peak = Math.max(1, lib.byDayPeak);
+            const rollP = easeInOut(at(t, 2.1, 0.25));
+            const rollX = lerp(-w * 0.06, w * 1.06, rollP);
+            if (rollP > 0 && rollP < 1) {
+              const g = ctx.createLinearGradient(rollX - 46, 0, rollX + 46, 0);
+              g.addColorStop(0, rgba(pal.accent, 0));
+              g.addColorStop(0.5, rgba(pal.accent, 0.1));
+              g.addColorStop(1, rgba(pal.accent, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(rollX - 46, top - 14, 92, base - top + 22);
+            }
+            lib.byDay.forEach((day, i) => {
+              const p = springUp(at(t, 0.8, 0.3 + (i + 1) / n * 1.8));
+              if (p <= 0) return;
+              const x = x0 + i * step;
+              const hh = day.n / peak * (base - top) * p;
+              ctx.fillStyle = rgba(pal.accentSoft, 0.8);
+              ctx.fillRect(x - bw / 2, base - hh, bw, hh);
+              if (day.n > 0 && day.n === lib.byDayPeak) {
+                const gp = easeOut(at(t, 0.4, 3.2));
+                if (gp > 0) {
+                  ctx.strokeStyle = pal.accent;
+                  ctx.lineWidth = 2;
+                  ctx.strokeRect(x - bw / 2 - 3, base - hh - 3, bw + 6, hh + 3);
+                  ctx.fillStyle = pal.accent;
+                  ctx.font = `700 ${Math.max(11, w * 0.013)}px ${SERIF}`;
+                  ctx.textAlign = "center";
+                  ctx.fillText(String(day.n), x, base - hh - 10);
+                  const cp = at(t, 1.6, 3.3);
+                  if (cp > 0 && cp < 1) {
+                    for (const c of confetti) {
+                      const fx = x + Math.cos(c.ang) * c.sp * easeOut(cp);
+                      const fy = base - hh - 6 + Math.sin(c.ang) * c.sp * easeOut(cp) + 90 * cp * cp;
+                      ctx.save();
+                      ctx.translate(fx, fy);
+                      ctx.rotate(c.rot + c.vr * cp);
+                      ctx.fillStyle = rgba(pal.accent, Math.sin(Math.PI * cp) * 0.55);
+                      ctx.fillRect(-c.sz / 2, -c.sz / 4, c.sz, c.sz / 2);
+                      ctx.restore();
+                    }
+                  }
+                }
+              }
+              ctx.fillStyle = rgba(pal.ink, 0.25);
+              ctx.fillRect(x - bw / 2, base, bw, 1.5);
+            });
+          }
+        }
+        labels.forEach((lb, i) => {
+          const p = at(t, 0.35, 0.45 + i * 0.09);
+          S(lb, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 6).toFixed(1)}px)`);
+        });
+        if (note) S(note, `opacity:${at(t, 0.6, 3.7).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC09(scn, d) {
+    const cv = q2(scn, '[data-cv="c09"]');
+    const maxMin = Math.max(1, ...d.cal.map((c) => c.minutes));
+    const jit = rng(99);
+    const jits = d.cal.map(() => jit() * 0.12);
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, cx, cy, py, pin }) {
+        var _a2, _b2;
+        if (!cv) return;
+        const f = fit2(cv);
+        if (!f) return;
+        const { ctx, w, h } = f;
+        ctx.clearRect(0, 0, w, h);
+        const n = d.cal.length;
+        const cols = 8, rowsN = 7;
+        const size = Math.min(w * 0.5 / cols, h * 0.52 / rowsN, 44);
+        const gx = w * 0.1, gy = h * 0.3;
+        const rect = pin ? cv.getBoundingClientRect() : null;
+        const lx = rect ? cx - rect.left : -9999;
+        const ly = rect ? cy - rect.top : -9999;
+        let hoverText = "";
+        d.cal.forEach((day, i) => {
+          const col = Math.floor(i / rowsN), row = i % rowsN;
+          const p = easeOut(at(t, 0.3, 0.25 + (col + row) * 0.05 + jits[i]));
+          if (p <= 0) return;
+          const x = gx + col * size * 1.35, y = gy + row * size * 1.35;
+          const v = day.minutes / maxMin;
+          const hovered = pin && Math.hypot(lx - (x + size / 2), ly - (y + size / 2)) < size * 0.8;
+          if (day.minutes > 0) {
+            ctx.fillStyle = rgba(hovered ? pal.accent : pal.accentSoft, (0.15 + 0.85 * p) * (0.3 + 0.7 * Math.min(1, v * 1.5)));
+            ctx.fillRect(x, y, size, size);
+          } else {
+            ctx.strokeStyle = rgba(pal.line, 0.7 * p);
+            ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+          }
+          if (i === n - 1) {
+            ctx.strokeStyle = rgba(pal.accent, p);
+            ctx.lineWidth = 1.6;
+            ctx.strokeRect(x - 2.5, y - 2.5, size + 5, size + 5);
+            ctx.lineWidth = 1;
+          }
+          if (hovered) hoverText = `${day.label} · ${day.minutes > 0 ? humanish(day.minutes) : "没翻报"}`;
+        });
+        const streak = Math.min(d.streak, n);
+        if (streak > 1) {
+          const pts = [];
+          for (let i = n - streak; i < n; i++) {
+            const col = Math.floor(i / rowsN), row = i % rowsN;
+            pts.push([gx + col * size * 1.35 + size / 2, gy + row * size * 1.35 + size / 2]);
+          }
+          const sp = easeInOut(at(t, 1.3, 2.5));
+          const p0 = pts[0], p1 = pts[1];
+          if (sp > 0 && p0 && p1) {
+            const total = pts.length - 1;
+            const fp = sp * total;
+            const k = Math.min(Math.floor(fp), total - 1);
+            const frac = fp - k;
+            const pk2 = (_a2 = pts[k]) != null ? _a2 : p0;
+            const pk3 = (_b2 = pts[k + 1]) != null ? _b2 : p1;
+            ctx.beginPath();
+            ctx.strokeStyle = pal.accent;
+            ctx.lineWidth = 2;
+            ctx.moveTo(p0[0], p0[1]);
+            for (let m = 1; m <= k; m++) {
+              const pm = pts[m];
+              if (pm) ctx.lineTo(pm[0], pm[1]);
+            }
+            const tipX = lerp(pk2[0], pk3[0], frac);
+            const tipY = lerp(pk2[1], pk3[1], frac);
+            ctx.lineTo(tipX, tipY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = pal.accent;
+            ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        const tp = springUp(at(t, 0.8, 3.2));
+        if (tp > 0.01) {
+          ctx.globalAlpha = clamp01(tp * 1.4);
+          ctx.fillStyle = pal.accent;
+          ctx.font = `700 ${Math.max(26, w * 0.035)}px ${SERIF}`;
+          ctx.textAlign = "center";
+          ctx.fillText(String(d.streak), w * 0.78, h * 0.46 + py * 7);
+          ctx.fillStyle = pal.dim;
+          ctx.font = `${Math.max(12, w * 0.011)}px ${HEI}`;
+          ctx.fillText("连 续 天 数", w * 0.78, h * 0.46 + 30 + py * 4);
+          ctx.globalAlpha = 1;
+        }
+        if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+      }
+    };
+  }
+  function perfC10(scn, d) {
+    const cv = q2(scn, '[data-cv="c10"]');
+    const lgs = qa(scn, '[data-r="lg"]');
+    const inn = q2(scn, ".bz-rp-in");
+    let hoverRow = -1;
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        dolly(inn, t, (r) => `translate(${(r * -2).toFixed(2)}%, ${(r * 1).toFixed(2)}%) rotate(${(r * -0.4).toFixed(2)}deg)`, 1);
+        if (cv && d.srcShift.length) {
+          const f = fit2(cv);
+          if (!f) return;
+          const { ctx, w, h } = f;
+          ctx.clearRect(0, 0, w, h);
+          const rows = d.srcShift;
+          const gx = w * 0.17, gw = w * 0.6;
+          const gy = h * 0.3, rowH = Math.min(34, h * 0.52 / rows.length);
+          const maxTotal = Math.max(1, ...rows.map((r) => r.shifts.reduce((s, x) => s + x, 0)));
+          const segColors = [rgba(pal.line, 0.9), rgba(pal.accentSoft, 0.5), rgba(pal.accentSoft, 0.8), pal.accent];
+          const rect = pin ? cv.getBoundingClientRect() : null;
+          const lx = rect ? cx - rect.left : -9999;
+          const ly = rect ? cy - rect.top : -9999;
+          let hoverText = "";
+          let hotRow = -1;
+          rows.forEach((r, i) => {
+            const y = gy + i * rowH * 1.5;
+            if (pin && lx >= gx && lx <= gx + gw && ly >= y && ly <= y + rowH * 0.52) hotRow = i;
+          });
+          if (pin) hoverRow = hotRow;
+          rows.forEach((r, i) => {
+            const y = gy + i * rowH * 1.5;
+            const barH = rowH * 0.52;
+            const p = easeOut(at(t, 0.9, 0.35 + i * 0.22));
+            const total = r.shifts.reduce((s, x) => s + x, 0);
+            const dimmed = hoverRow >= 0 && hoverRow !== i;
+            ctx.fillStyle = rgba(pal.ink2, clamp01(p * 2) * (dimmed ? 0.4 : 1));
+            ctx.font = `600 ${Math.max(13, w * 0.012)}px ${SERIF}`;
+            ctx.textAlign = "right";
+            ctx.fillText(r.name.slice(0, 8), gx - 12, y + barH / 2 + 4);
+            let acc = 0;
+            const segP = clamp01(p * 1.35 - 0.1);
+            r.shifts.forEach((min, j) => {
+              const segW = min / maxTotal * gw;
+              const gp = clamp01(segP * 4 - j);
+              if (gp > 0) {
+                ctx.globalAlpha = dimmed ? 0.35 : 1;
+                ctx.fillStyle = segColors[j];
+                ctx.fillRect(gx + acc * segP, y, segW * gp, barH);
+                ctx.globalAlpha = 1;
+              }
+              acc += min;
+            });
+            if (total > 0) {
+              ctx.fillStyle = rgba(pal.dim, dimmed ? 0.35 : 1);
+              ctx.textAlign = "left";
+              ctx.font = `${Math.max(11, w * 0.0105)}px ${HEI}`;
+              ctx.fillText(humanish(total), gx + gw + 10, y + barH / 2 + 4);
+            }
+            if (hotRow === i) {
+              ctx.strokeStyle = pal.accent;
+              ctx.lineWidth = 1;
+              ctx.strokeRect(gx + 0.5, y + 0.5, gw - 1, barH - 1);
+              hoverText = `${r.name} · ${humanish(total)}（夜 ${r.shifts[0]} / 晨 ${r.shifts[1]} / 午 ${r.shifts[2]} / 晚 ${r.shifts[3]}）`;
+            }
+          });
+          if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+        }
+        lgs.forEach((lg, i) => {
+          S(lg, `opacity:${at(t, 0.5, 1.6 + i * 0.14).toFixed(3)}`);
+        });
+      }
+    };
+  }
+  function perfC11(scn, d) {
+    const cv = q2(scn, '[data-cv="c11"]');
+    let laidW = 0, laidH = 0;
+    let laid = [];
+    const rand = rng(7);
+    const maxN = Math.max(1, ...d.words.map((x) => x.n));
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        if (!cv || !d.words.length) return;
+        const f = fit2(cv);
+        if (!f) return;
+        const { ctx, w, h } = f;
+        if (laidW !== w || laidH !== h || !laid.length) {
+          laidW = w;
+          laidH = h;
+          laid = [];
+          const minN = Math.min(...d.words.map((x) => x.n));
+          const placed = [];
+          ctx.font = `700 20px ${SERIF}`;
+          d.words.forEach((word) => {
+            const scale = (word.n - minN) / Math.max(1, maxN - minN);
+            const size = Math.round(14 + scale * (h * 0.062));
+            ctx.font = `700 ${size}px ${SERIF}`;
+            const tw = ctx.measureText(word.w).width;
+            const th = size * 1.15;
+            const cxp = w * 0.46, cyp = h * 0.55;
+            let placedOk = false;
+            let px2 = cxp, py2 = cyp;
+            for (let step = 0; step < 640 && !placedOk; step++) {
+              const ang = step * 0.35;
+              const rad = 6 + step * (Math.min(w, h) / 340);
+              px2 = cxp + Math.cos(ang) * rad * 1.5;
+              py2 = cyp + Math.sin(ang) * rad;
+              const box = { x: px2 - tw / 2 - 6, y: py2 - th / 2 - 3, w: tw + 12, h: th + 6 };
+              if (box.x < w * 0.06 || box.x + box.w > w * 0.94 || box.y < h * 0.2 || box.y + box.h > h * 0.92) continue;
+              placedOk = !placed.some((b) => box.x < b.x + b.w && box.x + box.w > b.x && box.y < b.y + b.h && box.y + box.h > b.y);
+            }
+            if (placedOk) {
+              placed.push({ x: px2 - tw / 2 - 6, y: py2 - th / 2 - 3, w: tw + 12, h: th + 6 });
+              laid.push({
+                w: word.w,
+                n: word.n,
+                x: px2,
+                y: py2,
+                size,
+                width: tw,
+                ox: 0,
+                oy: 0,
+                vx: 0,
+                vy: 0,
+                dx: (rand() - 0.5) * 70,
+                dy: (rand() - 0.5) * 70,
+                dl: rand() * 1.4
+              });
+            }
+          });
+        }
+        ctx.clearRect(0, 0, w, h);
+        const rect = pin ? cv.getBoundingClientRect() : null;
+        const lx = rect ? cx - rect.left : -9999;
+        const ly = rect ? cy - rect.top : -9999;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        laid.forEach((lw) => {
+          const p = easeBack(at(t, 0.5, 0.3 + lw.dl));
+          if (p <= 0) return;
+          const fly = 1 - clamp01(p);
+          const want = repel(lx, ly, pin, lw.x, lw.y, 130, 34);
+          lw.vx += (want.dx - lw.ox) * 0.16;
+          lw.vy += (want.dy - lw.oy) * 0.16;
+          lw.vx *= 0.74;
+          lw.vy *= 0.74;
+          lw.ox += lw.vx;
+          lw.oy += lw.vy;
+          const big = lw.n >= maxN - 1;
+          ctx.font = `700 ${lw.size}px ${SERIF}`;
+          ctx.fillStyle = rgba(big ? pal.accent : pal.ink, (0.25 + 0.75 * clamp01(p)) * (big ? 1 : 0.82));
+          ctx.fillText(lw.w, lw.x + lw.ox + lw.dx * fly, lw.y + lw.oy + lw.dy * fly);
+          if (big && p >= 1) {
+            ctx.setLineDash([2, 4]);
+            ctx.strokeStyle = rgba(pal.accent, 0.7);
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(lw.x + lw.ox - lw.width / 2, lw.y + lw.oy + lw.size * 0.68);
+            ctx.lineTo(lw.x + lw.ox + lw.width / 2, lw.y + lw.oy + lw.size * 0.68);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        });
+      }
+    };
+  }
+  function perfC12(scn, _d) {
+    var _a2;
+    const cv = q2(scn, '[data-cv="c12"]');
+    const nums = qa(scn, '[data-r="num"]');
+    const cells = qa(scn, '[data-r="cell"]');
+    const ringc = q2(scn, '[data-r="ringc"]');
+    const ringv = q2(scn, '[data-r="ringv"]');
+    const rate = Number(((_a2 = ringv == null ? void 0 : ringv.textContent) == null ? void 0 : _a2.replace("%", "")) || 0);
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 5.4;
+    return {
+      dur,
+      update({ t, pal, px, py }) {
+        dolly(inn, t, (r) => `scale(${(1 - r * 0.035).toFixed(4)})`, 1.1);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const cx0 = w * 0.26, cy0 = h * 0.55;
+            const R = Math.min(w * 0.13, h * 0.21);
+            const p = springUp(at(t, 1.7, 0.5));
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = rgba(pal.line, 0.9);
+            ctx.beginPath();
+            ctx.arc(cx0, cy0, R + 12, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = rgba(pal.line, 0.5);
+            ctx.beginPath();
+            ctx.arc(cx0, cy0, R, 0, Math.PI * 2);
+            ctx.stroke();
+            if (p > 1e-3) {
+              const a1 = (-90 + 360 * (rate / 100) * p) * Math.PI / 180;
+              ctx.strokeStyle = pal.accent;
+              ctx.beginPath();
+              ctx.arc(cx0, cy0, R, -Math.PI / 2, a1);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.fillStyle = pal.accent;
+              ctx.arc(cx0 + Math.cos(a1) * R, cy0 + Math.sin(a1) * R, 5.4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+        if (ringc) {
+          const p = springUp(at(t, 1.7, 0.5));
+          S(ringc, `opacity:${clamp01(p * 2).toFixed(3)};transform:translate(-50%, -50%) scale(${(0.9 + 0.1 * clamp01(p)).toFixed(3)})`);
+          if (ringv) T(ringv, `${Math.round(rate * clamp01(p))}%`);
+        }
+        cells.forEach((c, i) => {
+          const el = q2(c, '[data-r="num"]');
+          const n = Number((el == null ? void 0 : el.dataset.n) || 0);
+          const p = easeOutExpo(at(t, 1.1, 0.7 + i * 0.22));
+          T(el, comma(roll(n, p)));
+          const depth = 0.6 + i * 0.4;
+          S(c, `opacity:${clamp01(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 6).toFixed(1)}px, ${(py * depth * 4 + (1 - p) * 20).toFixed(1)}px)`);
+        });
+      }
+    };
+  }
+  function perfC13(scn, _d) {
+    const rows = qa(scn, '[data-r="old3"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t }) {
+        dolly(inn, t, (r) => `perspective(900px) rotateY(${(r * 3).toFixed(2)}deg)`, 1.05);
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.7, 0.4 + i * 0.42));
+          S(row, `opacity:${p.toFixed(3)};transform:perspective(700px) rotateY(${((1 - p) * -16).toFixed(2)}deg) translateX(${((1 - p) * -18).toFixed(1)}px)`);
+          const rank = q2(row, '[data-r="o3rank"]');
+          if (rank) {
+            const pr = easeBack(at(t, 0.45, 0.6 + i * 0.42));
+            S(rank, `opacity:${clamp01(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -12).toFixed(2)}deg)`);
+          }
+          const on = q2(row, '[data-r="o3n"]');
+          if (on) T(on, String(roll(Number(on.dataset.n || 0), easeOutExpo(at(t, 1, 0.9 + i * 0.42)))));
+          const tag = q2(row, '[data-r="o3tag"]');
+          if (tag) {
+            const tp = easeBack(at(t, 0.5, 1.4 + i * 0.42));
+            S(tag, `opacity:${clamp01(tp * 2).toFixed(3)};transform:scale(${(1 + (1 - tp) * 1.3).toFixed(3)}) rotate(${(-2 + (1 - tp) * -14).toFixed(2)}deg)`);
+          }
+        });
+      }
+    };
+  }
+  function perfC14(scn, _d) {
+    const rows = qa(scn, '[data-r="row"]');
+    const ghost = q2(scn, '[data-r="ghost"]');
+    const gN = Math.round(Number((ghost == null ? void 0 : ghost.textContent) || 0));
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 5;
+    return {
+      dur,
+      update({ t, px, py }) {
+        dolly(inn, t, (r) => `translateX(${(r * 2.2).toFixed(2)}%)`, 0.95);
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.5, 0.3 + i * 0.24));
+          S(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 30).toFixed(1)}px)`);
+          const bar = q2(row, '[data-r="bar"]');
+          if (bar) S(bar, `transform:scaleX(${easeInOut(at(t, 0.9, 0.55 + i * 0.24)).toFixed(4)})`);
+          const cnt = q2(row, '[data-r="cnt"]');
+          if (cnt) T(cnt, `${roll(Number(cnt.dataset.n || 0), easeOutExpo(at(t, 0.9, 0.6 + i * 0.24)))} 篇`);
+        });
+        if (ghost) {
+          const p = easeBack(at(t, 0.9, 1.6));
+          S(ghost, `opacity:${clamp01(p * 1.4).toFixed(3)};transform:translate(${(px * 7).toFixed(1)}px, ${(py * 5).toFixed(1)}px) rotate(${(-3 + (1 - p) * -5).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.3).toFixed(3)})`);
+          T(ghost, comma(roll(gN, easeOutExpo(at(t, 1.2, 1.7)))));
+        }
+      }
+    };
+  }
+  function perfC15(scn, _d) {
+    const cv = q2(scn, '[data-cv="c15"]');
+    const cells = qa(scn, '[data-r="tcell"]');
+    const nums = qa(scn, '[data-r="tnum"]');
+    const avgrow = q2(scn, '[data-r="avgrow"]');
+    const avglead = q2(scn, '[data-r="avglead"]');
+    const avgv = q2(scn, '[data-r="avgv"]');
+    const h2 = q2(scn, ".bz-rp-h");
+    const inn = q2(scn, ".bz-rp-in");
+    const depths = [0.5, 1.2, 0.8];
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, px, py }) {
+        dolly(inn, t, (r) => `scale(${(1 + r * 0.035).toFixed(4)})`, 1.5, 0.1);
+        if (h2) S(h2, `transform:translateX(${(px * -5).toFixed(1)}px)`);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const p = easeInOut(at(t, 2.4, 0.2));
+            if (p > 0 && p < 1) {
+              const x = lerp(-w * 0.3, w * 1.1, p);
+              const g = ctx.createLinearGradient(x - 120, 0, x + 120, h);
+              g.addColorStop(0, rgba(pal.ink, 0));
+              g.addColorStop(0.5, rgba(pal.ink, 0.035));
+              g.addColorStop(1, rgba(pal.ink, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(0, 0, w, h);
+            }
+          }
+        }
+        cells.forEach((c, i) => {
+          var _a2, _b2;
+          const el = (_a2 = nums[i]) != null ? _a2 : null;
+          const n = Number((el == null ? void 0 : el.dataset.n) || 0);
+          const p = easeOutExpo(at(t, 1.3, 0.4 + i * 0.28));
+          T(el, comma(roll(n, p)));
+          const depth = (_b2 = depths[i]) != null ? _b2 : 1;
+          const dip = i === 1 ? 12 : 0;
+          S(c, `opacity:${clamp01(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 9).toFixed(1)}px, ${(py * depth * 6 + (1 - p) * 18).toFixed(1)}px) translateY(${dip}px)`);
+        });
+        if (avgrow) S(avgrow, `opacity:${at(t, 0.7, 2.4).toFixed(3)}`);
+        if (avglead) S(avglead, `transform:scaleX(${easeOut(at(t, 0.9, 2.6)).toFixed(4)})`);
+        if (avgv) S(avgv, `opacity:${at(t, 0.5, 2.9).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC16(scn, d) {
+    const cv = q2(scn, '[data-cv="c16"]');
+    const chars = qa(scn, '[data-r="end"] span');
+    const seal2 = q2(scn, '[data-r="seal"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const nConf = Math.min(60, 14 + Math.round(d.sessions / 3));
+    const rand = rng(66);
+    const flakes = Array.from({ length: nConf }, () => ({
+      x: rand(),
+      y0: -0.05 - rand() * 0.2,
+      sp: 0.1 + rand() * 0.12,
+      sz: 2.6 + rand() * 3.4,
+      rot: rand() * Math.PI * 2,
+      vr: (rand() - 0.5) * 5,
+      sw: rand() * Math.PI * 2
+    }));
+    const dur = 5.2;
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        dolly(inn, t, (r) => `scale(${(1 - r * 0.015).toFixed(4)})`, 1.2);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const rect = pin ? cv.getBoundingClientRect() : null;
+            const lx = rect ? cx - rect.left : -9999;
+            const ly = rect ? cy - rect.top : -9999;
+            const bursts = [
+              { x: w * 0.38, y: h * 0.42, t0: 0.5, seed: 7 },
+              { x: w * 0.62, y: h * 0.4, t0: 1, seed: 91 }
+            ];
+            for (const b of bursts) {
+              const rand2 = rng(b.seed);
+              for (let i = 0; i < 26; i++) {
+                const ang = i / 26 * Math.PI * 2 + rand2() * 0.5;
+                const sp2 = 60 + rand2() * 130;
+                const p = at(t, 1.5, b.t0);
+                if (p <= 0 || p >= 1) continue;
+                let x = b.x + Math.cos(ang) * sp2 * easeOut(p);
+                let y = b.y + Math.sin(ang) * sp2 * easeOut(p) + 130 * p * p;
+                const off = repel(lx, ly, pin, x, y, 90, 40);
+                x += off.dx;
+                y += off.dy;
+                const a = Math.sin(Math.PI * p) * 0.6;
+                ctx.beginPath();
+                ctx.fillStyle = rgba(i % 7 === 0 ? pal.accent : pal.ink, a);
+                ctx.arc(x, y, 1 + rand2() * 2.4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+            for (const fk of flakes) {
+              const p = at(t, 3.4, 0.4 + fk.sp * 2);
+              if (p <= 0 || p >= 1) continue;
+              const fx = fk.x * w + Math.sin(fk.sw + t * 2) * 16;
+              const fy = (fk.y0 + p * 1.1) * h;
+              ctx.save();
+              ctx.translate(fx, fy);
+              ctx.rotate(fk.rot + t * fk.vr);
+              ctx.fillStyle = rgba(pal.muted, Math.sin(Math.PI * p) * 0.5);
+              ctx.fillRect(-fk.sz / 2, -fk.sz / 4, fk.sz, fk.sz / 2);
+              ctx.restore();
+            }
+          }
+        }
+        chars.forEach((c, i) => {
+          const p = easeBack(at(t, 0.6, 0.4 + i * 0.22));
+          S(c, `opacity:${clamp01(p).toFixed(3)};transform:translateY(${((1 - p) * 26).toFixed(1)}px) rotate(${((1 - p) * 4).toFixed(2)}deg)`);
+        });
+        const sp = easeBack(at(t, 0.6, 1.9));
+        S(seal2, `opacity:${clamp01(sp * 2).toFixed(3)};transform:scale(${(1 + (1 - sp) * 1.5).toFixed(3)}) rotate(${(-8 + (1 - sp) * -12).toFixed(2)}deg)`);
+      }
+    };
+  }
+  function buildPressPerfs(film, data) {
+    const m = /* @__PURE__ */ new Map();
+    const bind = (id, fn) => {
+      const scn = film.querySelector(`[data-id="${id}"]`);
+      if (scn) m.set(id, fn(scn, data));
+    };
+    bind("c01", perfC01);
+    bind("c02", perfC02);
+    bind("c03", perfC03);
+    bind("c04", perfC04);
+    bind("c05", perfC05);
+    bind("c06", perfC06);
+    bind("c07", perfC07);
+    bind("c08", perfC08);
+    bind("c09", perfC09);
+    bind("c10", perfC10);
+    bind("c11", perfC11);
+    bind("c12", perfC12);
+    bind("c13", perfC13);
+    bind("c14", perfC14);
+    bind("c15", perfC15);
+    bind("c16", perfC16);
+    return m;
+  }
+  var SERIF, HEI, clamp01, at, easeOut, easeInOut, easeBack, easeOutExpo, springUp, lerp, roll, comma, sdelta, lastStyle, lastText, q2, qa;
+  var init_motions = __esm({
+    "src/clipbook/press/motions.ts"() {
+      SERIF = 'Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif';
+      HEI = `'Microsoft YaHei', sans-serif`;
+      clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+      at = (t, dur, delay = 0) => clamp01((t - delay) / Math.max(dur, 1e-4));
+      easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      easeInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      easeBack = (x) => {
+        const c1 = 1.70158, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+      };
+      easeOutExpo = (x) => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+      springUp = (x) => x >= 1 ? 1 : 1 - Math.exp(-5.2 * x) * Math.cos(3.1 * Math.PI * x);
+      lerp = (a, b, t) => a + (b - a) * t;
+      roll = (n, x) => Math.round(n * clamp01(x));
+      comma = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      sdelta = (a, b) => {
+        let d = a - b;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        return d;
+      };
+      lastStyle = /* @__PURE__ */ new WeakMap();
+      lastText = /* @__PURE__ */ new WeakMap();
+      q2 = (root, sel) => root.querySelector(sel);
+      qa = (root, sel) => [...root.querySelectorAll(sel)];
+    }
+  });
+
+  // src/clipbook/press/engine.ts
+  function qa2(root, sel) {
+    return [...root.querySelectorAll(sel)];
+  }
+  function bindPress(root, data) {
+    var _a2;
+    const sc = root.querySelector(".bz-rp-scroll");
+    const film = root.querySelector(".bz-rp-film");
+    const handle = { stop: () => void 0 };
+    if (!sc || !film) return handle;
+    const scEl = sc;
+    const filmEl = film;
+    const scenes = qa2(film, ".bz-rp-scn");
+    if (!scenes.length) return handle;
+    const perfs = buildPressPerfs(film, data);
+    const box = (_a2 = filmEl.closest(".bz-rp-box")) != null ? _a2 : root;
+    const ticks = qa2(box, ".bz-rp-tick");
+    const shutter = box.querySelector('[data-r="shut"]');
+    let pal = palette(root);
+    let cur = -1;
+    let t0 = performance.now();
+    let raf = 0;
+    let fallback = 0;
+    let dead = false;
+    let navTarget = -1;
+    let navUntil = 0;
+    let px = 0, py = 0, cx = 0, cy = 0, pin = 0;
+    const settled = /* @__PURE__ */ new Set();
+    const broken = /* @__PURE__ */ new Set();
+    let cutTimers = [];
+    const unit = () => Math.max(1, scEl.clientHeight);
+    const fitHeight = () => filmEl.style.setProperty("--rp-h", `${unit()}px`);
+    fitHeight();
+    const indexAt = () => clamp2(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
+    function hud(i, p) {
+      ticks.forEach((tk, k) => {
+        if (k === i) tk.setAttribute("data-on", "1");
+        else tk.removeAttribute("data-on");
+      });
+      box.dataset.cur = String(i + 1).padStart(2, "0");
+    }
+    function play(perf, scn, ctx) {
+      var _a3;
+      const id = (_a3 = scn.getAttribute("data-id")) != null ? _a3 : "";
+      if (broken.has(id)) return;
+      try {
+        perf.update(ctx);
+      } catch (e) {
+        broken.add(id);
+        scn.classList.add("is-err");
+        try {
+          console.error("[读报特刊] 幕表演异常，该幕转静版：", id, e);
+        } catch (e2) {
+        }
+      }
+    }
+    function activate(i, replay = true) {
+      var _a3, _b2;
+      if (dead || i === cur && !replay) return;
+      if (cur >= 0 && cur !== i) {
+        const prev = perfs.get((_a3 = scenes[cur].getAttribute("data-id")) != null ? _a3 : "");
+        if (prev && !settled.has(cur)) {
+          play(prev, scenes[cur], { t: prev.dur, pal, px, py, cx, cy, pin });
+          settled.add(cur);
+        }
+      }
+      cur = i;
+      settled.delete(i);
+      const perf = perfs.get((_b2 = scenes[i].getAttribute("data-id")) != null ? _b2 : "");
+      if (replay) t0 = performance.now();
+      if (perf) play(perf, scenes[i], { t: replay ? 0 : perf.dur, pal, px, py, cx, cy, pin });
+      const scn = scenes[i];
+      scn.classList.remove("is-in");
+      void scn.offsetWidth;
+      scn.classList.add("is-in");
+      hud(i, 0);
+    }
+    const clearCut = () => {
+      for (const id of cutTimers) clearTimeout(id);
+      cutTimers = [];
+    };
+    const cutTo = (target, replay) => {
+      navTarget = target;
+      scEl.scrollTop = target * unit();
+      activate(target, replay);
+    };
+    function goTo(i, opts) {
+      var _a3, _b2;
+      const target = clamp2(i, 0, scenes.length - 1);
+      navTarget = target;
+      navUntil = performance.now() + 900;
+      if (target === cur || (opts == null ? void 0 : opts.cut) === false) {
+        activate(target, (_a3 = opts == null ? void 0 : opts.replay) != null ? _a3 : true);
+        return;
+      }
+      if (!shutter) {
+        cutTo(target, (_b2 = opts == null ? void 0 : opts.replay) != null ? _b2 : true);
+        return;
+      }
+      clearCut();
+      shutter.classList.remove("is-open");
+      shutter.classList.add("is-close");
+      cutTimers.push(setTimeout(() => {
+        var _a4;
+        cutTo(target, (_a4 = opts == null ? void 0 : opts.replay) != null ? _a4 : true);
+        shutter.classList.remove("is-close");
+        shutter.classList.add("is-open");
+        cutTimers.push(setTimeout(() => shutter.classList.remove("is-open"), 240));
+      }, 160));
+    }
+    const goRel = (dN) => goTo(cur < 0 ? 0 : cur + dN, { cut: true });
+    function syncFromScroll() {
+      if (dead) return;
+      const i = indexAt();
+      if (performance.now() < navUntil && i !== navTarget) return;
+      if (i !== cur) activate(i, true);
+    }
+    let lastWheel = 0;
+    function onWheel(e) {
+      if (dead) return;
+      const now = performance.now();
+      const fresh = now - lastWheel > GESTURE_GAP;
+      lastWheel = now;
+      if (!fresh) {
+        e.preventDefault();
+        return;
+      }
+      if (Math.abs(e.deltaY) < 1) return;
+      e.preventDefault();
+      goRel(e.deltaY > 0 ? 1 : -1);
+    }
+    function onKey(e) {
+      if (dead || !root.isConnected) return;
+      const k = e.key;
+      if (k === "ArrowDown" || k === "PageDown") {
+        e.preventDefault();
+        goRel(1);
+      } else if (k === "ArrowUp" || k === "PageUp") {
+        e.preventDefault();
+        goRel(-1);
+      } else if (k === "Home") {
+        e.preventDefault();
+        goTo(0, { cut: true });
+      } else if (k === "End") {
+        e.preventDefault();
+        goTo(scenes.length - 1, { cut: true });
+      }
+    }
+    function pump() {
+      if (dead) return;
+      clearTimeout(fallback);
+      tick(performance.now());
+      raf = rafFn(() => {
+        clearTimeout(fallback);
+        pump();
+      });
+      fallback = setTimeout(() => {
+        rafStop(raf);
+        pump();
+      }, 220);
+    }
+    function tick(now) {
+      var _a3;
+      if (dead || cur < 0) return;
+      const perf = perfs.get((_a3 = scenes[cur].getAttribute("data-id")) != null ? _a3 : "");
+      if (!perf) return;
+      const t = (now - t0) / 1e3;
+      play(perf, scenes[cur], { t, pal, px, py, cx, cy, pin });
+      hud(cur, clamp012(t / perf.dur));
+    }
+    const onOvlClick = (e) => {
+      var _a3;
+      const t = e.target;
+      if (t.closest('[data-r="close"]')) return;
+      const tickEl = t.closest(".bz-rp-tick");
+      if (tickEl) goTo(Number((_a3 = tickEl.getAttribute("data-i")) != null ? _a3 : 0), { cut: true });
+    };
+    const onPointerMove = (e) => {
+      const r = root.getBoundingClientRect();
+      cx = e.clientX;
+      cy = e.clientY;
+      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      pin = 1;
+    };
+    const onPointerLeave = () => {
+      pin = 0;
+      px = 0;
+      py = 0;
+    };
+    const mo = typeof MutationObserver === "function" ? new MutationObserver(() => {
+      pal = palette(root);
+    }) : null;
+    mo == null ? void 0 : mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      if (dead || cur < 0) return;
+      fitHeight();
+      const want = cur * unit();
+      if (Math.abs(scEl.scrollTop - want) > 1) scEl.scrollTop = want;
+    }) : null;
+    ro == null ? void 0 : ro.observe(scEl);
+    scEl.addEventListener("wheel", onWheel, { passive: false });
+    scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    box.addEventListener("click", onOvlClick);
+    root.addEventListener("pointermove", onPointerMove, { passive: true });
+    root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    document.addEventListener("keydown", onKey);
+    activate(0, true);
+    pump();
+    handle.stop = () => {
+      dead = true;
+      rafStop(raf);
+      clearTimeout(fallback);
+      mo == null ? void 0 : mo.disconnect();
+      ro == null ? void 0 : ro.disconnect();
+      clearCut();
+      scEl.removeEventListener("wheel", onWheel);
+      scEl.removeEventListener("scroll", syncFromScroll);
+      box.removeEventListener("click", onOvlClick);
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("keydown", onKey);
+    };
+    return handle;
+  }
+  var GESTURE_GAP, rafFn, rafStop, clamp2, clamp012;
+  var init_engine = __esm({
+    "src/clipbook/press/engine.ts"() {
+      init_motions();
+      GESTURE_GAP = 340;
+      rafFn = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
+      rafStop = (id) => {
+        if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+        else clearTimeout(id);
+      };
+      clamp2 = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
+      clamp012 = (x) => clamp2(x, 0, 1);
+    }
+  });
+
+  // src/clipbook/press/index.ts
+  function fitPressBox(box, panel2) {
+    const r = panel2 == null ? void 0 : panel2.getBoundingClientRect();
+    if (!panel2 || !r || r.width < 40 || r.height < 40) {
+      box.style.left = "16px";
+      box.style.top = "16px";
+      box.style.width = "calc(100vw - 32px)";
+      box.style.height = "calc(100vh - 32px)";
+      box.style.fontSize = "16px";
+      return;
+    }
+    box.style.left = `${Math.round(r.left)}px`;
+    box.style.top = `${Math.round(r.top)}px`;
+    box.style.width = `${Math.round(r.width)}px`;
+    box.style.height = `${Math.round(r.height)}px`;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    box.style.fontSize = `${base.toFixed(2)}px`;
+    box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
+  }
+  async function openReadingPress(app) {
+    var _a2, _b2;
+    const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
+    if (pressOvl == null ? void 0 : pressOvl.isConnected) {
+      const box2 = pressOvl.querySelector(".bz-rp-box");
+      if (box2) {
+        box2.classList.remove("is-nudge");
+        void box2.offsetWidth;
+        box2.classList.add("is-nudge");
+      }
+      return;
+    }
+    await flushReadingSession();
+    const sidecar = await readClipbookData();
+    const log = sidecar.readLog || [];
+    if (noStage || !log.length) {
+      await openClipbookReport(app);
+      return;
+    }
+    let raw = null;
+    let totalRead;
+    let byDateDays;
+    try {
+      const res = await readNewsData();
+      if (res.ok && !res.missing) {
+        raw = res.data && res.data.articles || [];
+        const st = (_a2 = res.data) == null ? void 0 : _a2.stats;
+        totalRead = st == null ? void 0 : st.totalRead;
+        byDateDays = (st == null ? void 0 : st.byDate) ? Object.keys(st.byDate).length : void 0;
+      }
+    } catch (e) {
+      raw = null;
+    }
+    const data = derivePress(log, raw, {
+      savedCount: ((_b2 = sidecar.savedArchive) == null ? void 0 : _b2.length) || 0,
+      totalRead,
+      byDateDays
+    }, /* @__PURE__ */ new Date());
+    const panel2 = document.querySelector(".bz-clip-frame");
+    const ovl = document.createElement("div");
+    ovl.className = "bz-rp";
+    ovl.innerHTML = pressHtml(data);
+    const isMobile = (() => {
+      try {
+        return window.matchMedia("(max-width: 768px)").matches;
+      } catch (e) {
+        return false;
+      }
+    })();
+    if (isMobile) {
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "bz-rp-close";
+      close.setAttribute("data-r", "close");
+      close.setAttribute("title", "关闭");
+      close.setAttribute("aria-label", "关闭读报特刊");
+      close.textContent = "✕";
+      ovl.appendChild(close);
+    }
+    document.body.appendChild(ovl);
+    topifyZ(ovl);
+    pressOvl = ovl;
+    const box = ovl.querySelector(".bz-rp-box");
+    if (box) {
+      fitPressBox(box, panel2);
+      pressSync = () => fitPressBox(box, panel2);
+      window.addEventListener("resize", pressSync);
+      if (typeof ResizeObserver === "function" && panel2) {
+        pressRo = new ResizeObserver(pressSync);
+        pressRo.observe(panel2);
+      }
+    }
+    ovl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest('[data-r="close"]')) {
+        closeReadingPress();
+        return;
+      }
+      if (!t.closest(".bz-rp-box")) closeReadingPress();
+    });
+    pressEsc = escManager.register("clipbook-press", {
+      isVisible: () => !!(pressOvl == null ? void 0 : pressOvl.isConnected),
+      close: closeReadingPress
+    });
+    pressHandle = bindPress(ovl, data);
+  }
+  function closeReadingPress() {
+    pressHandle == null ? void 0 : pressHandle.stop();
+    pressHandle = null;
+    if (pressEsc) {
+      try {
+        pressEsc.unregister();
+      } catch (e) {
+      }
+      pressEsc = null;
+    }
+    if (pressSync) {
+      window.removeEventListener("resize", pressSync);
+      pressSync = null;
+    }
+    pressRo == null ? void 0 : pressRo.disconnect();
+    pressRo = null;
+    pressOvl == null ? void 0 : pressOvl.remove();
+    pressOvl = null;
+  }
+  function unloadReadingPress() {
+    closeReadingPress();
+  }
+  var pressOvl, pressHandle, pressEsc, pressSync, pressRo;
+  var init_press = __esm({
+    "src/clipbook/press/index.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_flow();
+      init_data4();
+      init_news_data();
+      init_report_ui();
+      init_data8();
+      init_view();
+      init_engine();
+      pressOvl = null;
+      pressHandle = null;
+      pressEsc = null;
+      pressSync = null;
+      pressRo = null;
     }
   });
 
@@ -32790,6 +35778,7 @@ ${bodyText.substring(0, 6e3)}`;
     markAllUnreadRead: () => markAllUnreadRead,
     openClipbook: () => openClipbook,
     openClipbookReport: () => openClipbookReport,
+    openReadingPress: () => openReadingPress,
     unloadClipbook: () => unloadClipbook,
     unloadClipbookFileSync: () => unloadFileSync2
   });
@@ -32839,6 +35828,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadClipbook() {
     var _a2;
+    unloadReadingPress();
     unloadClipbookReport();
     unloadManagerModals();
     for (const id of ["bz-up-manager-mask", "bz-up-manager-popup", "bz-rss-manager-mask", "bz-rss-manager-popup"]) {
@@ -32887,6 +35877,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_save();
       init_ui6();
       init_report_ui();
+      init_press();
       init_news_sources_group();
       init_file_sync3();
       initialized3 = false;
@@ -34099,8 +37090,16 @@ ${c.trim()}
     panelSplit == null ? void 0 : panelSplit.restore();
     M6.open = true;
     beginSession();
+    pendingBoot = true;
+    lastReaderId = "";
+    lastListCurId = "";
+    motionPanelIn2(overlayEl2, !panelShownOnce);
+    panelShownOnce = true;
     if (dirty || !loaded2) {
-      if (!loaded2 && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+      if (!loaded2 && listEl) {
+        listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+        motionLoadingPulse(listEl.firstElementChild);
+      }
       void loadIfNeeded();
     } else renderAll2();
     if (!isMobileEnv()) {
@@ -34166,7 +37165,9 @@ ${c.trim()}
     M6.open = false;
     M6.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
-    if (overlayEl2) overlayEl2.style.display = "none";
+    if (overlayEl2) motionPanelOut(overlayEl2, () => {
+      if (!M6.open && overlayEl2) overlayEl2.style.display = "none";
+    });
   }
   function unloadPanel() {
     pauseReadingSession();
@@ -34203,6 +37204,13 @@ ${c.trim()}
     }
     clipBodyCache.clear();
     clipBodyInflight.clear();
+    motionTeardown2();
+    pendingBoot = false;
+    renderMood = "mute";
+    panelShownOnce = false;
+    lastReaderId = "";
+    lastListCurId = "";
+    pendingFoldKind = null;
     setSearchKw("");
     M6.open = false;
     M6.mobDetailOpen = false;
@@ -34230,7 +37238,7 @@ ${c.trim()}
     resetClipbookState();
   }
   function buildDom2(app) {
-    var _a2;
+    var _a2, _b2;
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
     overlayEl2.style.display = "none";
@@ -34252,22 +37260,23 @@ ${c.trim()}
     mobSearchbarEl = overlayEl2.querySelector("[data-clip-mob-searchbar]");
     const mobSearchbar = mobSearchbarEl;
     const mobInput = overlayEl2.querySelector("[data-clip-mob-input]");
+    mobSearchEl = mobInput;
     deskSearchEl = overlayEl2.querySelector("[data-clip-desk-search]");
     overlayEl2.addEventListener("click", (e) => {
       if (e.target === overlayEl2) closePanel2();
     });
     railFootEl.addEventListener("click", (e) => {
-      if (e.target.closest("[data-clp-rep-entry]")) openClipbookReport(app);
+      if (e.target.closest("[data-clp-rep-entry]")) void openReadingPress(app);
     });
     railFootEl.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
       if (e.target.closest("[data-clp-rep-entry]")) {
         e.preventDefault();
-        openClipbookReport(app);
+        void openReadingPress(app);
       }
     });
     const mobReportBtn = overlayEl2.querySelector("[data-clip-mob-report]");
-    mobReportBtn.addEventListener("click", () => openClipbookReport(app));
+    mobReportBtn.addEventListener("click", () => void openReadingPress(app));
     railListEl.addEventListener("click", (e) => {
       const row = e.target.closest("[data-src]");
       if (!row) return;
@@ -34307,9 +37316,9 @@ ${c.trim()}
       if (t.closest("[data-clip-open-note]") && M6.cur) openNote(M6.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
-      var _a3, _b2;
+      var _a3, _b3;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a3 = e.target).closest) == null ? void 0 : _b2.call(_a3, "[data-clip-open-note]"))) {
+      if ((e.key === "Enter" || e.key === " ") && ((_b3 = (_a3 = e.target).closest) == null ? void 0 : _b3.call(_a3, "[data-clip-open-note]"))) {
         e.preventDefault();
         if (M6.cur) openNote(M6.cur);
         return;
@@ -34328,16 +37337,30 @@ ${c.trim()}
     mobSearchBtn.addEventListener("click", () => {
       const show = mobSearchbarEl.style.display === "none";
       mobSearchbarEl.style.display = show ? "block" : "none";
-      if (show) mobInput.focus();
-      else {
+      if (show) {
+        motionMobSearchbarIn(mobSearchbarEl);
+        mobInput.focus();
+      } else {
         mobInput.value = "";
         setSearchKw("");
+        syncMobSearchClear();
         renderMobToc();
       }
     });
     mobInput.addEventListener("input", () => {
       searchKw = mobInput.value.trim();
+      syncMobSearchClear();
+      renderMood = "search";
       renderMobToc();
+      renderMood = "mute";
+    });
+    (_b2 = overlayEl2.querySelector("[data-clip-mob-search-clear]")) == null ? void 0 : _b2.addEventListener("click", () => {
+      mobInput.value = "";
+      setSearchKw("");
+      syncMobSearchClear();
+      renderMobToc();
+      mobSearchbarEl.style.display = "none";
+      mobInput.blur();
     });
     mobCloseBtn.addEventListener("click", () => {
       const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display === "block" : false;
@@ -34345,6 +37368,7 @@ ${c.trim()}
         searchKw = "";
         expandedMobArch.clear();
         if (mobInput) mobInput.value = "";
+        syncMobSearchClear();
         if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
         renderMobToc();
       } else {
@@ -34450,8 +37474,9 @@ ${c.trim()}
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
-    const mobInput = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-input]") : null;
-    if (mobInput) mobInput.value = "";
+    if (mobSearchEl) mobSearchEl.value = "";
+    syncMobSearchClear();
+    renderMood = "nav";
     renderAll2();
   }
   function toggleSource(src) {
@@ -34465,15 +37490,31 @@ ${c.trim()}
     const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-search-clear]") : null;
     if (btn) btn.hidden = !(deskSearchEl == null ? void 0 : deskSearchEl.value.trim());
   }
+  function syncMobSearchClear() {
+    const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-search-clear]") : null;
+    if (btn) btn.hidden = !(mobSearchEl == null ? void 0 : mobSearchEl.value.trim());
+  }
   function clearDeskSearch() {
     if (deskSearchEl) deskSearchEl.value = "";
     setSearchKw("");
     syncDeskSearchClear();
+    renderMood = "search";
     renderList();
     renderRail();
+    renderMood = "mute";
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll2() {
+    if (!M6.open) return;
+    if (pendingBoot) {
+      renderMood = "boot";
+      pendingBoot = false;
+    }
+    if (renderMood === "boot" && overlayEl2) motionHeadRevealed(overlayEl2);
+    renderAllNow();
+    renderMood = "mute";
+  }
+  function renderAllNow() {
     if (!M6.open) return;
     renderHeadIssue();
     renderRail();
@@ -34496,10 +37537,10 @@ ${c.trim()}
     renderAll2();
   }
   function renderHeadIssue() {
-    const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
-    if (!el) return;
-    const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M6.articles.length} 期`;
+    if (!overlayEl2) return;
+    overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el) => {
+      el.textContent = `第 ${M6.articles.length} 期`;
+    });
   }
   function currentSrc() {
     const s = M6.sel;
@@ -34556,6 +37597,7 @@ ${c.trim()}
     deskFoldTouched.add(key);
     if (deskFoldOpen.has(key)) deskFoldOpen.delete(key);
     else deskFoldOpen.add(key);
+    pendingFoldKind = kind;
     renderList();
   }
   function beginSession() {
@@ -34571,6 +37613,10 @@ ${c.trim()}
     return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.body.toLowerCase().includes(kw) || a.url.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
   }
   function renderRail() {
+    renderRailNow();
+    if (railListEl) motionRailRendered(railListEl, renderMood);
+  }
+  function renderRailNow() {
     var _a2, _b2, _c, _d;
     if (!railListEl) return;
     const arts = M6.articles;
@@ -34680,8 +37726,21 @@ ${c.trim()}
       await refreshAfterAction();
     })());
     await refreshAfterAction();
+    items.slice(0, 12).forEach((a, i) => {
+      motionInkStrike(clipTitleEl(clipCardEl(a.id)), i * 70);
+    });
   }
   function renderList() {
+    renderListNow();
+    if (!listEl) return;
+    const foldKind = pendingFoldKind;
+    pendingFoldKind = null;
+    const curId = M6.cur ? M6.cur.id : "";
+    const pressed = !!curId && curId !== lastListCurId && renderMood !== "boot";
+    lastListCurId = curId;
+    motionListRendered(listEl, renderMood, foldKind, pressed);
+  }
+  function renderListNow() {
     if (!listEl) return;
     if (loadError) {
       listEl.innerHTML = "";
@@ -34765,6 +37824,16 @@ ${c.trim()}
     } catch (e) {
       return "";
     }
+  }
+  function clipCardEl(id) {
+    if (!id) return null;
+    const safe = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(id) : id.replace(/"/g, '\\"');
+    const sel = `[data-id="${safe}"]`;
+    return listEl && listEl.querySelector(sel) || mobListEl && mobListEl.querySelector(sel) || null;
+  }
+  function clipTitleEl(card) {
+    if (!card) return null;
+    return card.querySelector(".bz-clip-item-t") || card.querySelector(".bz-clip-mob-ttl");
   }
   function bindItemMenus() {
     if (!listEl) return;
@@ -34862,6 +37931,14 @@ ${c.trim()}
     bindImgFallback(container);
   }
   function renderReader() {
+    const prevId = lastReaderId;
+    renderReaderNow();
+    const curId = M6.cur ? M6.cur.id : "";
+    lastReaderId = curId;
+    if (!readerEl || !curId || prevId === curId) return;
+    motionReaderRendered(readerEl, prevId === "" ? "first" : readerDir, renderMood);
+  }
+  function renderReaderNow() {
     if (!readerEl) return;
     const a = M6.cur;
     hideSelBar();
@@ -34975,7 +38052,10 @@ ${c.trim()}
     const idx = M6.cur ? list.findIndex((x) => x.id === M6.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M6.cur || next.id !== M6.cur.id)) selectArticle(next.id);
+    if (next && (!M6.cur || next.id !== M6.cur.id)) {
+      readerDir = delta >= 0 ? "fwd" : "back";
+      selectArticle(next.id);
+    }
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -35013,6 +38093,11 @@ ${c.trim()}
     const ok = await flowSave(a);
     if (!ok) return;
     await refreshAfterAction();
+    if (M6.mobDetailOpen && mobDetailEl) {
+      motionArchStamp(mobDetailEl.querySelector("[data-clip-mob-detail-body]"));
+    } else {
+      motionArchStamp(readerEl ? readerEl.querySelector(".bz-clip-art-title") : null);
+    }
   }
   async function doMarkRead(a) {
     if (!a || a.origin !== "news") return;
@@ -35031,6 +38116,7 @@ ${c.trim()}
     }
     notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
     await refreshAfterAction();
+    motionInkStrike(clipTitleEl(clipCardEl(a.id)));
   }
   async function rawBeforeFromDisk(a) {
     const key = articleKeyOf(a.raw || {});
@@ -35063,6 +38149,7 @@ ${c.trim()}
     void clearArticleTracking(a.id).catch(() => {
     });
     notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
+    motionSnipGhost(clipCardEl(a.id));
     await refreshAfterAction();
   }
   async function undoDeleteNews(rawBefore) {
@@ -35093,6 +38180,7 @@ ${c.trim()}
         void clearArticleTracking(a.id).catch(() => {
         });
         notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
+        motionSnipGhost(clipCardEl(a.id));
         await refreshAfterAction();
       } catch (e) {
         notifyActionError(e, "删除剪藏");
@@ -35180,6 +38268,10 @@ ${c.trim()}
     void saveSettings();
   }
   function renderMobToc() {
+    renderMobTocNow();
+    if (mobListEl) motionMobTocRendered(mobListEl, renderMood);
+  }
+  function renderMobTocNow() {
     if (!mobListEl) return;
     const arts = M6.articles;
     const clipNotes = M6.clipNotes || [];
@@ -35284,6 +38376,7 @@ ${c.trim()}
       const label = kind === "read" ? "已读" : "已收";
       lab.innerHTML = opening2 ? "收起" : `${label} <b>${n}</b> 篇`;
     }
+    if (opening2 && arch) motionMobFoldOpen(arch);
     if (site) {
       if (opening2) expandedMobArch.add(key);
       else expandedMobArch.delete(key);
@@ -35297,7 +38390,10 @@ ${c.trim()}
     M6.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
-    if (mobDetailEl) mobDetailEl.style.display = "flex";
+    if (mobDetailEl) {
+      mobDetailEl.style.display = "flex";
+      motionMobDetailIn(mobDetailEl);
+    }
     const body = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
     if (body) body.scrollTop = 0;
     markReadOnOpen(a);
@@ -35439,6 +38535,7 @@ ${c.trim()}
     topifyZ(bar);
     placeSelBar(info.rect);
     armSelBarEsc();
+    motionSelbarIn(bar);
   }
   function showImageSelBar(imgEl) {
     const a = M6.cur;
@@ -35457,6 +38554,7 @@ ${c.trim()}
     const r = typeof imgEl.getBoundingClientRect === "function" ? imgEl.getBoundingClientRect() : null;
     placeSelBar(r || { top: 0, left: 0, bottom: 0, right: 0 });
     armSelBarEsc();
+    motionSelbarIn(bar);
   }
   function checkTextSelection() {
     if (!M6.open) return;
@@ -35876,7 +38974,7 @@ ${c.trim()}
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle4, loading, dirty, loaded2, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS2, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui6 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -35901,13 +38999,14 @@ ${c.trim()}
       init_store();
       init_render7();
       init_state6();
+      init_motion2();
       init_loader();
       init_news_data();
       init_knowledge_boxes();
       init_anchor();
       init_image_save();
       init_flow();
-      init_report_ui();
+      init_press();
       overlayEl2 = null;
       railListEl = null;
       railFootEl = null;
@@ -35920,6 +39019,7 @@ ${c.trim()}
       mobSaveBtnEl = null;
       mobSearchbarEl = null;
       deskSearchEl = null;
+      mobSearchEl = null;
       escKey = "";
       escHandle4 = null;
       loading = false;
@@ -35928,6 +39028,13 @@ ${c.trim()}
       loadError = null;
       readScrollMemo = /* @__PURE__ */ new Map();
       READ_SCROLL_MEMO_MAX = 200;
+      pendingBoot = false;
+      renderMood = "mute";
+      panelShownOnce = false;
+      lastReaderId = "";
+      lastListCurId = "";
+      readerDir = "fwd";
+      pendingFoldKind = null;
       SEARCH_DEBOUNCE_MS2 = 180;
       PANEL_MIN_W = 760;
       PANEL_MIN_H = 520;
@@ -35936,8 +39043,10 @@ ${c.trim()}
       clipBodyCache = /* @__PURE__ */ new Map();
       searchDebounced = debounce(() => {
         setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
+        renderMood = "search";
         renderList();
         renderRail();
+        renderMood = "mute";
       }, SEARCH_DEBOUNCE_MS2);
       panelResizeDetach = null;
       panelSplit = null;
@@ -36351,7 +39460,7 @@ ${c.trim()}
     return legacyMigrateInFlight;
   }
   var FORM_SNAPSHOT_FIELDS, legacyMigrateInFlight, DataManager;
-  var init_data8 = __esm({
+  var init_data9 = __esm({
     "src/favorites/data.ts"() {
       init_json_store();
       init_storage();
@@ -36508,7 +39617,7 @@ ${c.trim()}
   });
 
   // src/favorites/motion.ts
-  function reduced2() {
+  function reduced3() {
     try {
       return typeof location !== "undefined" && location.search.includes("rm=1");
     } catch (e) {
@@ -36522,8 +39631,8 @@ ${c.trim()}
       return false;
     }
   }
-  function waapi2(el, frames, opts) {
-    if (!el || reduced2() || typeof el.animate !== "function") {
+  function waapi3(el, frames, opts) {
+    if (!el || reduced3() || typeof el.animate !== "function") {
       const last = frames[frames.length - 1];
       if (el && last) for (const k of Object.keys(last)) {
         if (k === "offset") continue;
@@ -36540,16 +39649,16 @@ ${c.trim()}
       return null;
     }
   }
-  function after2(ms, fn) {
+  function after3(ms, fn) {
     const id = setTimeout(() => {
-      timers2.delete(id);
+      timers3.delete(id);
       fn();
     }, ms);
-    timers2.add(id);
+    timers3.add(id);
   }
   function cancelPending2() {
-    timers2.forEach(clearTimeout);
-    timers2.clear();
+    timers3.forEach(clearTimeout);
+    timers3.clear();
   }
   function findCard(board, id) {
     try {
@@ -36559,24 +39668,37 @@ ${c.trim()}
     }
     return board.querySelector(`.bz-fav-card[data-fav-id="${id.replace(/"/g, "")}"]`);
   }
-  function motionPanelIn2(overlay2) {
+  function cancelAnimsBy2(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
+  function motionPanelIn3(overlay2) {
     const panel2 = overlay2.querySelector(".bz-fav-panel");
     if (!panel2) return;
+    cancelAnimsBy2(panel2, [EXIT_ANIM_ID2]);
+    cancelAnimsBy2(overlay2, [EXIT_MASK_ANIM_ID2]);
     panel2.style.opacity = "";
     panel2.style.transform = "";
     panel2.style.filter = "";
-    waapi2(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M7.move + 40, easing: E2.out });
-    waapi2(
+    waapi3(overlay2, [{ opacity: 0 }, { opacity: 1 }], { duration: M8.move + 40, easing: E3.out });
+    waapi3(
       panel2,
       [
         { opacity: 0, transform: "translateY(18px) scale(.972) rotate(-.4deg)", filter: "blur(10px)" },
         { opacity: 1, transform: "translateY(-2px) scale(1.004) rotate(.15deg)", offset: 0.72 },
         { opacity: 1, transform: "none", filter: "blur(0px)" }
       ],
-      { duration: 460, easing: E2.out }
+      { duration: 460, easing: E3.out }
     );
   }
-  function motionPanelOut(overlay2, done) {
+  function motionPanelOut2(overlay2, done) {
     const panel2 = overlay2.querySelector(".bz-fav-panel");
     if (!panel2) {
       done();
@@ -36584,26 +39706,37 @@ ${c.trim()}
     }
     let finished = false;
     const finish = () => {
-      if (!finished) {
-        finished = true;
-        done();
+      if (finished) return;
+      finished = true;
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
       }
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      done();
     };
-    waapi2(overlay2, [{ opacity: 1 }, { opacity: 0 }], { duration: M7.fast + 40, easing: E2.out, fill: "forwards" });
-    const a = waapi2(
+    let maskAnim = waapi3(
+      overlay2,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M8.fast + 40, easing: E3.out, fill: "forwards", id: EXIT_MASK_ANIM_ID2 }
+    );
+    const a = waapi3(
       panel2,
       [
         { opacity: 1, transform: "none", filter: "blur(0px)" },
         { opacity: 0, transform: "translateY(12px) scale(.982) rotate(.25deg)", filter: "blur(6px)" }
       ],
-      { duration: M7.fast + 40, easing: E2.out, fill: "forwards" }
+      { duration: M8.fast + 40, easing: E3.out, fill: "forwards", id: EXIT_ANIM_ID2 }
     );
     if (!a) {
       finish();
       return;
     }
     a.finished.then(finish).catch(finish);
-    setTimeout(finish, M7.fast + 120);
+    setTimeout(finish, M8.fast + 120);
   }
   function motionRendered2(overlay2, boot) {
     var _a2, _b2;
@@ -36615,48 +39748,48 @@ ${c.trim()}
       if (board) ensureEmptyFloat(board);
       return;
     }
-    if (reduced2()) return;
+    if (reduced3()) return;
     const h1 = panel2.querySelector(".bz-fav-head h1");
-    if (h1) waapi2(
+    if (h1) waapi3(
       h1,
       [{ opacity: 0, transform: "translateY(-6px)" }, { opacity: 1, transform: "none" }],
-      { duration: M7.base, easing: E2.out, fill: "both" }
+      { duration: M8.base, easing: E3.out, fill: "both" }
     );
     const chips = [...panel2.querySelectorAll("[data-fav-tags] button")];
     chips.forEach((chip2, i) => {
-      waapi2(
+      waapi3(
         chip2,
         [
           { opacity: 0, transform: "translateY(-9px) scale(1.16)", filter: "blur(2px)" },
           { opacity: 1, transform: "translateY(1px) scale(.97)", offset: 0.68 },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M7.base + 60, delay: 60 + Math.min(i, 13) * STAG2, easing: E2.out, fill: "both" }
+        { duration: M8.base + 60, delay: 60 + Math.min(i, 13) * STAG3, easing: E3.out, fill: "both" }
       );
     });
     if (board) {
       const cards = [...board.querySelectorAll(".bz-fav-card")];
       const cold = (_b2 = (_a2 = cards[0]) == null ? void 0 : _a2.classList.contains("bz-fav-arch")) != null ? _b2 : false;
       cards.forEach((card, i) => {
-        const delay = 200 + Math.min(i, 16) * STAG2;
+        const delay = 200 + Math.min(i, 16) * STAG3;
         if (cold) {
-          waapi2(
+          waapi3(
             card,
             [
               { opacity: 0, transform: "translateY(8px) rotate(1.2deg) scale(.985)" },
               { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }
             ],
-            { duration: M7.base + 100, delay, easing: E2.out, fill: "both" }
+            { duration: M8.base + 100, delay, easing: E3.out, fill: "both" }
           );
         } else {
-          waapi2(
+          waapi3(
             card,
             [
               { opacity: 0, transform: "translateY(12px) rotate(2deg) scale(.955)", filter: "blur(4px)" },
               { opacity: 1, transform: "translateY(2px) rotate(-.6deg) scale(1.004)", offset: 0.7, filter: "blur(0px)" },
               { opacity: 1, transform: "none" }
             ],
-            { duration: M7.base + 90, delay, easing: E2.out, fill: "both" }
+            { duration: M8.base + 90, delay, easing: E3.out, fill: "both" }
           );
           const tape = card.querySelector(".bz-fav-tape");
           if (tape) tapePress(tape, delay + 140);
@@ -36664,10 +39797,10 @@ ${c.trim()}
       });
       const empty = board.querySelector(".bz-fav-empty");
       if (empty && !cards.length) {
-        waapi2(
+        waapi3(
           empty,
           [{ opacity: 0, transform: "translateY(7px)" }, { opacity: 1, transform: "none" }],
-          { duration: M7.base + 80, delay: 240, easing: E2.out, fill: "both" }
+          { duration: M8.base + 80, delay: 240, easing: E3.out, fill: "both" }
         );
       }
       ensureEmptyFloat(board);
@@ -36675,27 +39808,27 @@ ${c.trim()}
   }
   function motionFilterSwitch(board, tagsRow, rewrite) {
     rewrite();
-    if (reduced2() || typeof board.animate !== "function") return;
-    waapi2(
+    if (reduced3() || typeof board.animate !== "function") return;
+    waapi3(
       board,
       [{ opacity: 0.55, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }],
-      { duration: M7.fast + 60, easing: E2.out }
+      { duration: M8.fast + 60, easing: E3.out }
     );
     const fresh = board.querySelectorAll(".bz-fav-card");
     const cold = !!board.querySelector(".bz-fav-card.bz-fav-arch");
     fresh.forEach((card, i) => {
-      waapi2(
+      waapi3(
         card,
         // 冷存末帧 = 归档视觉本身（.bz-fav-arch）：fill both 钉末帧，别用 opacity:1 盖掉褪色
         cold ? [{ opacity: 0, transform: "translateY(7px) rotate(1deg) scale(.99)" }, { opacity: 0.5, filter: "grayscale(.5)", transform: "none" }] : [{ opacity: 0, transform: "translateY(9px) rotate(.8deg) scale(.985)" }, { opacity: 1, transform: "none" }],
-        { duration: M7.base, delay: Math.min(i, 14) * STAG2, easing: E2.out, fill: "both" }
+        { duration: M8.base, delay: Math.min(i, 14) * STAG3, easing: E3.out, fill: "both" }
       );
     });
     const ne = board.querySelector(".bz-fav-empty");
-    if (ne) waapi2(
+    if (ne) waapi3(
       ne,
       [{ opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }],
-      { duration: M7.base, easing: E2.out, fill: "both" }
+      { duration: M8.base, easing: E3.out, fill: "both" }
     );
     if (tagsRow) chipSnap(tagsRow);
     ensureEmptyFloat(board);
@@ -36703,10 +39836,10 @@ ${c.trim()}
   function chipSnap(row) {
     const on = row.querySelector("button.bz-fav-on");
     if (!on) return;
-    waapi2(
+    waapi3(
       on,
       [{ transform: "scale(1)" }, { transform: "scale(1.13)", offset: 0.4 }, { transform: "scale(.97)", offset: 0.72 }, { transform: "none" }],
-      { duration: M7.base - 20, easing: E2.out }
+      { duration: M8.base - 20, easing: E3.out }
     );
   }
   function motionBindChipFeel(row) {
@@ -36715,12 +39848,12 @@ ${c.trim()}
     const pressed = /* @__PURE__ */ new WeakMap();
     row.addEventListener("pointerover", (e) => {
       var _a2, _b2, _c, _d;
-      if (!canHover2() || reduced2()) return;
+      if (!canHover2() || reduced3()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       pressed.delete(chip2);
-      waapi2(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M7.fast, easing: E2.out });
+      waapi3(chip2, [{ transform: "translateY(0)" }, { transform: "translateY(-1.5px)" }], { duration: M8.fast, easing: E3.out });
     });
     row.addEventListener("pointerout", (e) => {
       var _a2, _b2, _c, _d;
@@ -36728,22 +39861,22 @@ ${c.trim()}
       if (!chip2 || !row.contains(chip2)) return;
       if (((_d = (_c = e.relatedTarget) == null ? void 0 : _c.closest) == null ? void 0 : _d.call(_c, "button")) === chip2) return;
       if (pressed.get(chip2)) return;
-      waapi2(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M7.fast, easing: E2.out });
+      waapi3(chip2, [{ transform: "translateY(-1.5px)" }, { transform: "translateY(0)" }], { duration: M8.fast, easing: E3.out });
     });
     row.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced2()) return;
+      if (reduced3()) return;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !row.contains(chip2)) return;
       pressed.set(chip2, Date.now());
-      waapi2(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E2.out, fill: "forwards" });
+      waapi3(chip2, [{ transform: "scale(1)" }, { transform: "scale(.94)" }], { duration: 110, easing: E3.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
       const chip2 = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "button");
       if (!chip2 || !pressed.get(chip2)) return;
       pressed.delete(chip2);
-      waapi2(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M7.base - 60, easing: E2.out });
+      waapi3(chip2, [{ transform: "scale(.94)" }, { transform: "scale(1.04)", offset: 0.6 }, { transform: "none" }], { duration: M8.base - 60, easing: E3.out });
     };
     row.addEventListener("pointerup", release);
     row.addEventListener("pointercancel", release);
@@ -36755,11 +39888,11 @@ ${c.trim()}
     let held = null;
     content.addEventListener("pointerdown", (e) => {
       var _a2, _b2;
-      if (reduced2()) return;
+      if (reduced3()) return;
       const card = (_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-fav-id]");
       if (!card) return;
       held = card;
-      waapi2(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E2.out, fill: "forwards" });
+      waapi3(card, [{ transform: "scale(1)" }, { transform: "scale(.98)" }], { duration: 110, easing: E3.out, fill: "forwards" });
     });
     const release = (e) => {
       var _a2, _b2;
@@ -36768,34 +39901,34 @@ ${c.trim()}
       if (!target) return;
       if (card && card !== held) return;
       held = null;
-      waapi2(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M7.move + 40, easing: E2.out });
+      waapi3(target, [{ transform: "scale(.98)" }, { transform: "scale(1.005)", offset: 0.62 }, { transform: "none" }], { duration: M8.move + 40, easing: E3.out });
     };
     content.addEventListener("pointerup", release);
     content.addEventListener("pointercancel", release);
     content.addEventListener("pointerleave", release);
   }
   function motionCardPick(card) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced3()) return;
+    waapi3(
       card,
       [{ transform: "none" }, { transform: "translateY(-3px) scale(1.025)", offset: 0.45 }, { transform: "none" }],
-      { duration: M7.move + 160, easing: E2.out }
+      { duration: M8.move + 160, easing: E3.out }
     );
   }
   function tapePress(tape, delay) {
     const rot = tape.classList.contains("bz-fav-tape--r") ? 2 : tape.classList.contains("bz-fav-tape--g") ? -1 : -2;
-    waapi2(
+    waapi3(
       tape,
       [
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(.35)`, opacity: 0.4 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1.12)`, offset: 0.7 },
         { transform: `translateX(-50%) rotate(${rot}deg) scaleX(1)`, opacity: 1 }
       ],
-      { duration: M7.move + 80, delay, easing: E2.out }
+      { duration: M8.move + 80, delay, easing: E3.out }
     );
   }
   function sheen(card, delay) {
-    if (reduced2() || card.querySelector(".bz-favm-sheen")) return;
+    if (reduced3() || card.querySelector(".bz-favm-sheen")) return;
     const wrap = document.createElement("span");
     wrap.className = "bz-favm-sheen";
     wrap.setAttribute("aria-hidden", "true");
@@ -36803,62 +39936,62 @@ ${c.trim()}
     band.className = "bz-favm-sheen-band";
     wrap.appendChild(band);
     card.appendChild(wrap);
-    after2(delay, () => {
-      const a = waapi2(
+    after3(delay, () => {
+      const a = waapi3(
         band,
         [{ transform: "translateX(-140%) skewX(-18deg)" }, { transform: "translateX(360%) skewX(-18deg)" }],
-        { duration: 620, easing: E2.out }
+        { duration: 620, easing: E3.out }
       );
-      after2(a ? 680 : 0, () => wrap.remove());
+      after3(a ? 680 : 0, () => wrap.remove());
     });
   }
   function motionCardLanded(board, id, kind) {
-    if (reduced2()) return;
+    if (reduced3()) return;
     const card = findCard(board, id);
     if (!card) return;
     if (kind === "add") {
-      waapi2(
+      waapi3(
         card,
         [
           { opacity: 0.4, transform: "translateY(-12px) scale(1.1) rotate(-1.2deg)", filter: "brightness(1.12)" },
           { opacity: 1, transform: "translateY(2px) scale(.992) rotate(.5deg)", offset: 0.62, filter: "brightness(1.05)" },
           { opacity: 1, transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M7.base + 160, easing: E2.out }
+        { duration: M8.base + 160, easing: E3.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 100);
       sheen(card, 140);
     } else if (kind === "edit") {
-      waapi2(
+      waapi3(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "scale(1.018)", offset: 0.5, filter: "brightness(1.07)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M7.base + 80, easing: E2.out }
+        { duration: M8.base + 80, easing: E3.out }
       );
     } else if (kind === "pin") {
-      waapi2(
+      waapi3(
         card,
         [
           { transform: "none", filter: "brightness(1)" },
           { transform: "translateY(-6px) scale(1.02)", offset: 0.5, filter: "brightness(1.16)" },
           { transform: "none", filter: "brightness(1)" }
         ],
-        { duration: M7.base + 140, easing: E2.out }
+        { duration: M8.base + 140, easing: E3.out }
       );
     } else {
-      waapi2(
+      waapi3(
         card,
         [{ opacity: 0, transform: "translateY(-14px) scale(1.05)" }, { opacity: 1, transform: "none" }],
-        { duration: M7.base + 100, easing: E2.out }
+        { duration: M8.base + 100, easing: E3.out }
       );
       tapePress(card.querySelector(".bz-fav-tape"), 120);
     }
   }
   function motionCaptureRects(board) {
-    if (!board || reduced2() || typeof board.animate !== "function") return null;
+    if (!board || reduced3() || typeof board.animate !== "function") return null;
     const map = /* @__PURE__ */ new Map();
     board.querySelectorAll(".bz-fav-card[data-fav-id]").forEach((c) => {
       const r = c.getBoundingClientRect();
@@ -36867,8 +40000,8 @@ ${c.trim()}
     return map;
   }
   function motionPinFlip(board, before, pinnedId) {
-    if (!before || before.size === 0 || reduced2()) {
-      if (!reduced2()) motionCardLanded(board, pinnedId, "pin");
+    if (!before || before.size === 0 || reduced3()) {
+      if (!reduced3()) motionCardLanded(board, pinnedId, "pin");
       return;
     }
     let played = false;
@@ -36880,20 +40013,20 @@ ${c.trim()}
       if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
       played = true;
       if (card.dataset.favId === pinnedId) {
-        waapi2(
+        waapi3(
           card,
           [
             { transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`, filter: "brightness(1)" },
             { transform: "translate(0, -5px) scale(1.02)", offset: 0.78, filter: "brightness(1.16)" },
             { transform: "none", filter: "brightness(1)" }
           ],
-          { duration: M7.move + 140, easing: E2.move }
+          { duration: M8.move + 140, easing: E3.move }
         );
       } else {
-        waapi2(
+        waapi3(
           card,
           [{ transform: `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)` }, { transform: "none" }],
-          { duration: M7.move + 60, delay: 30, easing: E2.move }
+          { duration: M8.move + 60, delay: 30, easing: E3.move }
         );
       }
     });
@@ -36901,7 +40034,7 @@ ${c.trim()}
   }
   function motionCardDepart(board, id, kind) {
     const card = board ? findCard(board, id) : null;
-    if (!card || reduced2() || typeof card.animate !== "function") return Promise.resolve();
+    if (!card || reduced3() || typeof card.animate !== "function") return Promise.resolve();
     return new Promise((res) => {
       let settled = false;
       const finish = () => {
@@ -36920,50 +40053,50 @@ ${c.trim()}
         { opacity: 1, transform: "none" },
         { opacity: 0, transform: "translateY(-12px) scale(1.03)" }
       ];
-      const a = waapi2(card, frames, { duration: M7.move + (kind === "del" ? 0 : 40), easing: E2.out, fill: "forwards" });
+      const a = waapi3(card, frames, { duration: M8.move + (kind === "del" ? 0 : 40), easing: E3.out, fill: "forwards" });
       if (!a) {
         finish();
         return;
       }
       a.finished.then(finish).catch(finish);
-      setTimeout(finish, M7.move + 140);
+      setTimeout(finish, M8.move + 140);
     });
   }
   function motionFormIn(popup) {
-    if (reduced2()) return;
+    if (reduced3()) return;
     const rows = [
       ...popup.querySelectorAll(":scope > h2, :scope > .bz-fav-fld, :scope > .bz-fav-err, :scope > .bz-fav-btns")
     ];
     rows.forEach((el, i) => {
-      waapi2(
+      waapi3(
         el,
         [
           { opacity: 0, transform: "translateY(8px)", filter: "blur(2px)" },
           { opacity: 1, transform: "none", filter: "blur(0px)" }
         ],
-        { duration: M7.base, delay: i * 24, easing: E2.out, fill: "both" }
+        { duration: M8.base, delay: i * 24, easing: E3.out, fill: "both" }
       );
     });
   }
   function motionSwitchPop(el) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced3()) return;
+    waapi3(
       el,
       [{ transform: "scale(1)" }, { transform: "scale(1.16)", offset: 0.42 }, { transform: "none" }],
-      { duration: M7.base - 40, easing: E2.out }
+      { duration: M8.base - 40, easing: E3.out }
     );
   }
   function motionPickPop(btn, on) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced3()) return;
+    waapi3(
       btn,
       on ? [{ transform: "scale(.92)", filter: "brightness(1)" }, { transform: "scale(1.07)", offset: 0.55, filter: "brightness(1.22)" }, { transform: "none", filter: "brightness(1)" }] : [{ transform: "scale(.94)" }, { transform: "none" }],
-      { duration: M7.base - 60, easing: E2.out }
+      { duration: M8.base - 60, easing: E3.out }
     );
   }
   function motionErrShake(errEl) {
-    if (reduced2()) return;
-    waapi2(
+    if (reduced3()) return;
+    waapi3(
       errEl,
       [
         { transform: "translateX(0)" },
@@ -36972,7 +40105,7 @@ ${c.trim()}
         { transform: "translateX(-2px)", offset: 0.72 },
         { transform: "translateX(0)" }
       ],
-      { duration: M7.base + 20, easing: E2.out }
+      { duration: M8.base + 20, easing: E3.out }
     );
   }
   function motionAiBusy(btn, on) {
@@ -36981,10 +40114,10 @@ ${c.trim()}
       prev.cancel();
       aiAnims.delete(btn);
     }
-    if (!on || reduced2()) return;
+    if (!on || reduced3()) return;
     const star = btn.querySelector("svg");
     const target = star != null ? star : btn;
-    const a = waapi2(
+    const a = waapi3(
       target,
       [{ transform: "rotate(0deg)" }, { transform: "rotate(-14deg)" }, { transform: "rotate(10deg)" }, { transform: "rotate(0deg)" }],
       { duration: 1100, iterations: Infinity, easing: "ease-in-out" }
@@ -36992,12 +40125,12 @@ ${c.trim()}
     if (a) aiAnims.set(btn, a);
   }
   function motionTagMgrRows(wrap) {
-    if (reduced2()) return;
+    if (reduced3()) return;
     [...wrap.querySelectorAll(".bz-fav-tagmgr-row, .bz-fav-tagmgr-add")].forEach((el, i) => {
-      waapi2(
+      waapi3(
         el,
         [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
-        { duration: M7.base, delay: Math.min(i, 10) * STAG2, easing: E2.out, fill: "both" }
+        { duration: M8.base, delay: Math.min(i, 10) * STAG3, easing: E3.out, fill: "both" }
       );
     });
   }
@@ -37005,14 +40138,14 @@ ${c.trim()}
     const ic2 = board.querySelector(".bz-empty .bz-empty-ic");
     if (!ic2 || ic2.dataset.favmFloat) return;
     ic2.dataset.favmFloat = "1";
-    const a = waapi2(
+    const a = waapi3(
       ic2,
       [{ transform: "translateY(0)" }, { transform: "translateY(-4px)" }, { transform: "translateY(0)" }],
       { duration: 2600, iterations: Infinity, easing: "ease-in-out" }
     );
     if (a) floatAnims.set(ic2, a);
   }
-  function motionTeardown2() {
+  function motionTeardown3() {
     cancelPending2();
     for (const a of floatAnims.values()) {
       try {
@@ -37033,16 +40166,18 @@ ${c.trim()}
     } catch (e) {
     }
   }
-  var M7, E2, STAG2, timers2, aiAnims, floatAnims;
-  var init_motion2 = __esm({
+  var M8, E3, STAG3, timers3, EXIT_ANIM_ID2, EXIT_MASK_ANIM_ID2, aiAnims, floatAnims;
+  var init_motion3 = __esm({
     "src/favorites/motion.ts"() {
-      M7 = { fast: 160, move: 200, base: 280, impulse: 740 };
-      E2 = {
+      M8 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E3 = {
         out: "cubic-bezier(.22,.82,.3,1)",
         move: "cubic-bezier(.34,.06,.16,1)"
       };
-      STAG2 = 30;
-      timers2 = /* @__PURE__ */ new Set();
+      STAG3 = 30;
+      timers3 = /* @__PURE__ */ new Set();
+      EXIT_ANIM_ID2 = "bz-fav-exit";
+      EXIT_MASK_ANIM_ID2 = "bz-fav-exit-mask";
       aiAnims = /* @__PURE__ */ new Map();
       floatAnims = /* @__PURE__ */ new Map();
       if (typeof window !== "undefined") {
@@ -37072,7 +40207,7 @@ ${c.trim()}
     "src/favorites/app.ts"() {
       init_settings_provider();
       init_config2();
-      init_data8();
+      init_data9();
       init_ai3();
       init_ui7();
       _FavoritesApp = class _FavoritesApp {
@@ -37130,14 +40265,14 @@ ${c.trim()}
     unloadFavoritesUI: () => unloadFavoritesUI
   });
   function resetFavoritesState() {
-    M8.overlay = null;
-    M8.items = [];
-    M8.tag = null;
-    M8.archived = false;
-    M8.sort = "new";
-    M8.renderFn = null;
-    M8.stage = "idle";
-    motionTeardown2();
+    M9.overlay = null;
+    M9.items = [];
+    M9.tag = null;
+    M9.archived = false;
+    M9.sort = "new";
+    M9.renderFn = null;
+    M9.stage = "idle";
+    motionTeardown3();
   }
   function favoritesSettingsSchema() {
     return {
@@ -37208,7 +40343,7 @@ ${c.trim()}
   function ensureFavoritesEsc() {
     registerPanelEsc(
       "bz-fav",
-      () => !!M8.overlay || !!document.querySelector(".bz-fav-form"),
+      () => !!M9.overlay || !!document.querySelector(".bz-fav-form"),
       () => {
         closeItemMenu();
         if (document.querySelector(".bz-fav-form")) requestCloseForm();
@@ -37224,7 +40359,7 @@ ${c.trim()}
   function openPanel2(app, dm, ai) {
     var _a2, _b2;
     initFavoritesUI(app, dm, ai);
-    if (M8.overlay) {
+    if (M9.overlay) {
       closePanel3();
       return;
     }
@@ -37233,22 +40368,22 @@ ${c.trim()}
     overlay2.innerHTML = panelHtml3(isMobileEnv());
     document.body.appendChild(overlay2);
     topifyZ(overlay2);
-    M8.overlay = overlay2;
-    M8.renderFn = (reveal) => renderAll3(reveal);
-    M8.stage = "placeholder";
-    motionTeardown2();
+    M9.overlay = overlay2;
+    M9.renderFn = (reveal) => renderAll3(reveal);
+    M9.stage = "placeholder";
+    motionTeardown3();
     const openFilter = resolveOpenFilter();
-    M8.tag = openFilter.tag;
-    M8.archived = openFilter.archived;
-    M8.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
+    M9.tag = openFilter.tag;
+    M9.archived = openFilter.archived;
+    M9.sort = normalizeFavSort((_a2 = tryGetSettings()) == null ? void 0 : _a2.favoritesDefaultSort);
     mountIcons(overlay2);
     ensureFavoritesEsc();
     trapPanelFocus((_b2 = overlay2.querySelector(".bz-fav-panel")) != null ? _b2 : overlay2);
-    motionPanelIn2(overlay2);
+    motionPanelIn3(overlay2);
     window.__bzFavReplay = () => {
-      if (M8.overlay !== overlay2) return;
-      motionPanelIn2(overlay2);
-      M8.stage = "boot";
+      if (M9.overlay !== overlay2) return;
+      motionPanelIn3(overlay2);
+      M9.stage = "boot";
       renderAll3();
     };
     overlay2.addEventListener("click", (e) => {
@@ -37329,21 +40464,21 @@ ${c.trim()}
     })();
   }
   function closePanel3() {
-    const ov = M8.overlay;
+    const ov = M9.overlay;
     if (ov) {
       const s = tryGetSettings();
       if (s) {
-        s.favoritesLastFilter = M8.archived ? "@archived" : M8.tag || "";
+        s.favoritesLastFilter = M9.archived ? "@archived" : M9.tag || "";
         void saveSettings();
       }
-      M8.overlay = null;
-      M8.renderFn = null;
-      M8.stage = "idle";
-      motionTeardown2();
-      motionPanelOut(ov, () => ov.remove());
+      M9.overlay = null;
+      M9.renderFn = null;
+      M9.stage = "idle";
+      motionTeardown3();
+      motionPanelOut2(ov, () => ov.remove());
       return;
     }
-    M8.renderFn = null;
+    M9.renderFn = null;
   }
   function unloadFavoritesUI() {
     closePanel3();
@@ -37352,9 +40487,9 @@ ${c.trim()}
   }
   async function loadItems() {
     try {
-      M8.items = await dataManagerOf().getAll();
+      M9.items = await dataManagerOf().getAll();
     } catch (e) {
-      M8.items = [];
+      M9.items = [];
       notice("收藏数据读取失败，已显示为空列表", "error");
       console.error("[favorites-load]", e);
     }
@@ -37362,28 +40497,28 @@ ${c.trim()}
   async function reload2(reveal) {
     var _a2;
     await loadItems();
-    (_a2 = M8.renderFn) == null ? void 0 : _a2.call(M8, reveal);
+    (_a2 = M9.renderFn) == null ? void 0 : _a2.call(M9, reveal);
   }
   function boardEl() {
     var _a2, _b2;
-    return (_b2 = (_a2 = M8.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
+    return (_b2 = (_a2 = M9.overlay) == null ? void 0 : _a2.querySelector("[data-fav-content]")) != null ? _b2 : null;
   }
   function renderAll3(reveal) {
     var _a2;
-    if (!M8.overlay) return;
-    if (!M8.archived && M8.tag && !getTags().some((t) => t.label === M8.tag)) M8.tag = null;
-    const panel2 = M8.overlay.querySelector(".bz-fav-panel");
-    renderPanelView2(panel2, M8.items, M8, { mountIcons, mobile: isMobileEnv() });
-    if (M8.stage === "placeholder") {
-      M8.stage = "boot";
+    if (!M9.overlay) return;
+    if (!M9.archived && M9.tag && !getTags().some((t) => t.label === M9.tag)) M9.tag = null;
+    const panel2 = M9.overlay.querySelector(".bz-fav-panel");
+    renderPanelView2(panel2, M9.items, M9, { mountIcons, mobile: isMobileEnv() });
+    if (M9.stage === "placeholder") {
+      M9.stage = "boot";
       return;
     }
-    if (M8.stage === "boot") {
-      M8.stage = "idle";
-      motionRendered2(M8.overlay, true);
+    if (M9.stage === "boot") {
+      M9.stage = "idle";
+      motionRendered2(M9.overlay, true);
       return;
     }
-    motionRendered2(M8.overlay, false);
+    motionRendered2(M9.overlay, false);
     if (reveal == null ? void 0 : reveal.id) {
       const board = boardEl();
       if (!board) return;
@@ -37394,24 +40529,24 @@ ${c.trim()}
   function applyTagFilter(label) {
     var _a2, _b2;
     if (label === VIEW_ALL) {
-      M8.tag = null;
-      M8.archived = false;
+      M9.tag = null;
+      M9.archived = false;
     } else if (label === VIEW_ARCHIVED) {
-      M8.tag = null;
-      M8.archived = !M8.archived;
+      M9.tag = null;
+      M9.archived = !M9.archived;
     } else {
-      M8.archived = false;
-      M8.tag = M8.tag === label ? null : label;
+      M9.archived = false;
+      M9.tag = M9.tag === label ? null : label;
     }
     const board = boardEl();
     if (board) {
-      motionFilterSwitch(board, (_b2 = (_a2 = M8.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll3());
+      motionFilterSwitch(board, (_b2 = (_a2 = M9.overlay) == null ? void 0 : _a2.querySelector("[data-fav-tags]")) != null ? _b2 : null, () => renderAll3());
     } else {
       renderAll3();
     }
   }
   function itemById2(id) {
-    return M8.items.find((i) => i.id === id);
+    return M9.items.find((i) => i.id === id);
   }
   function runAction(it, spec) {
     const rawUrl = (it.url || "").trim();
@@ -38036,7 +41171,7 @@ GitHub 仓库：${ghInfo.title}
       notifySaveError(e, "删除标签");
     }
   }
-  var M8, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
+  var M9, _dm, _ai, _app2, _saving, _baseline, _formClose, TAG_ICON_CHOICES;
   var init_ui7 = __esm({
     "src/favorites/ui.ts"() {
       init_notice();
@@ -38057,10 +41192,10 @@ GitHub 仓库：${ghInfo.title}
       init_config2();
       init_render9();
       init_ai3();
-      init_data8();
-      init_motion2();
+      init_data9();
+      init_motion3();
       init_app2();
-      M8 = {
+      M9 = {
         overlay: null,
         items: [],
         tag: null,
@@ -38358,6 +41493,12 @@ GitHub 仓库：${ghInfo.title}
     }
   });
 
+  // src/bookshelf/motion.ts
+  var init_motion4 = __esm({
+    "src/bookshelf/motion.ts"() {
+    }
+  });
+
   // src/bookshelf/notes.ts
   var init_notes = __esm({
     "src/bookshelf/notes.ts"() {
@@ -38383,6 +41524,7 @@ GitHub 仓库：${ghInfo.title}
       init_ui();
       init_modal();
       init_ui8();
+      init_motion4();
       init_notes();
       init_epub_notes();
     }
@@ -38418,6 +41560,7 @@ GitHub 仓库：${ghInfo.title}
       init_data3();
       init_render11();
       init_notes_ui();
+      init_motion4();
       SKIN_IDS = ["nordic", "noir", "kraft", "velvet", "mono"];
     }
   });
@@ -38517,9 +41660,9 @@ GitHub 仓库：${ghInfo.title}
       else target = state3.stage + 2;
       target = Math.max(0, Math.min(target, LADDER_MAX));
       if (target >= LADDER_MAX) {
-        const S2 = fsrs.initS(rating);
+        const S4 = fsrs.initS(rating);
         const D2 = fsrs.initD(rating);
-        const rS = Math.round(S2 * 100) / 100;
+        const rS = Math.round(S4 * 100) / 100;
         const rD = Math.round(D2 * 100) / 100;
         return {
           stage: target,
@@ -38547,12 +41690,12 @@ GitHub 仓库：${ghInfo.title}
         historyDifficulty: null
       };
     }
-    const S = state3.stability || 1;
+    const S3 = state3.stability || 1;
     const D = state3.difficulty || 0.3;
     const last = state3.lastReviewed || state3.reviewStart;
     const t = last ? (now.getTime() - new Date(last).getTime()) / 864e5 : 0;
-    const R = fsrs.R(t, S);
-    const result = fsrs.nextInterval(S, D, rating, R);
+    const R = fsrs.R(t, S3);
+    const result = fsrs.nextInterval(S3, D, rating, R);
     return {
       stage: state3.stage,
       phase: "fsrs",
@@ -38583,8 +41726,8 @@ GitHub 仓库：${ghInfo.title}
           this.d = d;
         }
         /** 记忆保留度：R(t, S) = (1 + t/(S·d))^-d */
-        R(t, S) {
-          return Math.pow(1 + t / (S * this.d), -this.d);
+        R(t, S3) {
+          return Math.pow(1 + t / (S3 * this.d), -this.d);
         }
         /** 初始稳定性 */
         initS(rating) {
@@ -38617,19 +41760,19 @@ GitHub 仓库：${ghInfo.title}
           return Math.max(Math.min(D, 1), Math.min(10, newD));
         }
         /** 下一稳定性 */
-        nextStab(S, D, rating, R) {
+        nextStab(S3, D, rating, R) {
           if (rating === "again") {
-            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
+            return this.w[11] * Math.pow(D, -this.w[12]) * (Math.pow(S3 + 1, this.w[13]) - 1) * Math.exp(this.w[14] * R);
           }
-          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
-          if (rating === "hard") return S * base;
-          if (rating === "good") return S * (base + 1);
-          return S * base * (Math.exp(this.w[17]) + 1);
+          const base = Math.exp(this.w[8]) * (11 - D) * Math.pow(S3, -this.w[9]) * (Math.exp(this.w[10] * (1 - R)) - 1);
+          if (rating === "hard") return S3 * base;
+          if (rating === "good") return S3 * (base + 1);
+          return S3 * base * (Math.exp(this.w[17]) + 1);
         }
         /** 下一间隔（天） */
-        nextInterval(S, D, rating, R) {
+        nextInterval(S3, D, rating, R) {
           const newD = this.nextDiff(D, rating);
-          const newS = Math.max(0.01, this.nextStab(S, newD, rating, R));
+          const newS = Math.max(0.01, this.nextStab(S3, newD, rating, R));
           return { S: newS, D: newD, days: newS };
         }
       };
@@ -38669,15 +41812,15 @@ GitHub 仓库：${ghInfo.title}
     const fsrs = new FSRS(w);
     let sum = 0;
     for (const s of series) {
-      let S = fsrs.initS(RATING_NAMES[s.initRating]);
+      let S3 = fsrs.initS(RATING_NAMES[s.initRating]);
       let D = fsrs.initD(RATING_NAMES[s.initRating]);
       for (const p of s.pairs) {
-        const R = fsrs.R(p.t, S);
+        const R = fsrs.R(p.t, S3);
         const remember = p.rating >= 2;
         const prob = remember ? R : 1 - R;
         sum += Math.log(Math.max(1e-9, Math.min(1 - 1e-9, prob)));
-        const next = fsrs.nextInterval(S, D, RATING_NAMES[p.rating], R);
-        S = next.S;
+        const next = fsrs.nextInterval(S3, D, RATING_NAMES[p.rating], R);
+        S3 = next.S;
         D = next.D;
       }
     }
@@ -38836,11 +41979,11 @@ GitHub 仓库：${ghInfo.title}
     if (!data.w.every((x) => Number.isFinite(x))) return null;
     return { ...data, w: clipWToBounds(data.w) };
   }
-  async function saveFittedParams(app, fit2) {
-    await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit2));
+  async function saveFittedParams(app, fit3) {
+    await enqueueFileTask(getReviewFitFilePath(), () => jsonFileStore(getReviewFitFilePath()).write(fit3));
   }
   var ReviewDataManager, FIT_PARAMS_VERSION;
-  var init_data9 = __esm({
+  var init_data10 = __esm({
     "src/review/data.ts"() {
       init_utils();
       init_storage();
@@ -39252,7 +42395,7 @@ GitHub 仓库：${ghInfo.title}
         /** 源码 L45-49（G3：RMW 入队，fn 内改现值） */
         async saveQuestionsForNote(app, notePath, questions) {
           await this.mutateQuiz(app, (quiz) => {
-            quiz.notes[notePath] = questions.map((q2) => ({ ...q2 }));
+            quiz.notes[notePath] = questions.map((q3) => ({ ...q3 }));
           });
         }
         /** 源码 L51-57 splice 语义 + P0-2 稳定定位改造：
@@ -39266,7 +42409,7 @@ GitHub 仓库：${ghInfo.title}
           await this.mutateQuiz(app, (quiz) => {
             const list = quiz.notes[notePath];
             if (!list) return false;
-            const idx = list.findIndex((q2) => sameQuestion(q2, target));
+            const idx = list.findIndex((q3) => sameQuestion(q3, target));
             if (idx === -1) return false;
             list.splice(idx, 1);
             return void 0;
@@ -39346,14 +42489,14 @@ ${truncated}`;
           const result = await aiService.json(prompt);
           const parsed = this.extractJSON(result);
           if (!((_a2 = parsed.questions) == null ? void 0 : _a2.length)) throw new Error("AI 未返回有效题目数组。");
-          for (const q2 of parsed.questions) {
-            if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4) {
+          for (const q3 of parsed.questions) {
+            if (!q3.question || !Array.isArray(q3.options) || q3.options.length !== 4) {
               throw new Error("题目格式不正确：缺少 question 或 options 不是长度为4的数组");
             }
-            if (!Array.isArray(q2.correctIndices) || q2.correctIndices.length === 0) {
+            if (!Array.isArray(q3.correctIndices) || q3.correctIndices.length === 0) {
               throw new Error("题目格式不正确：correctIndices 必须是非空数组");
             }
-            for (const idx of q2.correctIndices) {
+            for (const idx of q3.correctIndices) {
               if (typeof idx !== "number" || idx < 0 || idx > 3) {
                 throw new Error("correctIndices 元素必须在 0~3 之间");
               }
@@ -39408,13 +42551,13 @@ ${n.content.slice(0, 2e3)}
             if (key.startsWith("笔记ID:")) key = key.slice("笔记ID:".length).trim();
             if (!exact.has(key)) continue;
             const valid = [];
-            for (const q2 of qs) {
-              if (!q2.question || !Array.isArray(q2.options) || q2.options.length !== 4 || !Array.isArray(q2.correctIndices)) {
+            for (const q3 of qs) {
+              if (!q3.question || !Array.isArray(q3.options) || q3.options.length !== 4 || !Array.isArray(q3.correctIndices)) {
                 continue;
               }
-              const indices = q2.correctIndices.filter((i) => typeof i === "number" && i >= 0 && i <= 3);
+              const indices = q3.correctIndices.filter((i) => typeof i === "number" && i >= 0 && i <= 3);
               if (!indices.length) continue;
-              valid.push({ ...q2, correctIndices: indices });
+              valid.push({ ...q3, correctIndices: indices });
             }
             if (valid.length) out[key] = valid;
           }
@@ -39431,7 +42574,595 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/motion.ts
+  function reduced4() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function waapi4(el, frames, opts) {
+    if (!el || typeof el.animate !== "function") return null;
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween2(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function after4(ms, fn) {
+    const id = setTimeout(() => {
+      timers4.delete(id);
+      fn();
+    }, ms);
+    timers4.add(id);
+  }
+  function cancelPending3() {
+    timers4.forEach(clearTimeout);
+    timers4.clear();
+  }
+  function motionTeardown5() {
+    cancelPending3();
+  }
+  function ensureRelative(el) {
+    if (getComputedStyle(el).position === "static") el.style.position = "relative";
+  }
+  function seal(host, text, big = false) {
+    ensureRelative(host);
+    const s = document.createElement("span");
+    s.className = "bz-rv-seal" + (big ? " bz-rv-seal--big" : "");
+    s.setAttribute("aria-hidden", "true");
+    s.textContent = text;
+    host.appendChild(s);
+    waapi4(
+      s,
+      [
+        { opacity: 0, transform: "rotate(-26deg) scale(2.6)" },
+        { opacity: 1, transform: "rotate(-12deg) scale(1)" }
+      ],
+      { duration: big ? 260 : 210, easing: E4.land, fill: "both" }
+    );
+    after4(big ? 1500 : 1150, () => {
+      waapi4(s, [{ opacity: 1 }, { opacity: 0 }], { duration: 340, easing: E4.out, fill: "forwards" });
+      after4(360, () => s.remove());
+    });
+  }
+  function ringBurst(el) {
+    const parent = el.offsetParent instanceof HTMLElement ? el.offsetParent : el.parentElement;
+    if (!parent) return;
+    const pr = parent.getBoundingClientRect();
+    const r = el.getBoundingClientRect();
+    const ring = document.createElement("i");
+    ring.className = "bz-rv-ring";
+    ring.setAttribute("aria-hidden", "true");
+    ring.style.left = r.left - pr.left + r.width / 2 + "px";
+    ring.style.top = r.top - pr.top + r.height / 2 + "px";
+    ring.style.width = Math.max(r.width, r.height) * 1.15 + "px";
+    ring.style.height = Math.max(r.width, r.height) * 1.15 + "px";
+    parent.appendChild(ring);
+    const a = waapi4(
+      ring,
+      [
+        { opacity: 0.85, transform: "translate(-50%,-50%) scale(.45)" },
+        { opacity: 0, transform: "translate(-50%,-50%) scale(2.35)" }
+      ],
+      { duration: 640, easing: E4.out, fill: "forwards" }
+    );
+    const done = () => ring.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after4(680, done);
+  }
+  function sweep2(host) {
+    ensureRelative(host);
+    const layer = document.createElement("i");
+    layer.className = "bz-rv-sweep";
+    layer.setAttribute("aria-hidden", "true");
+    const band = document.createElement("u");
+    layer.appendChild(band);
+    host.appendChild(layer);
+    const a = waapi4(
+      band,
+      [
+        { transform: "translateX(-150%) skewX(-18deg)" },
+        { transform: "translateX(340%) skewX(-18deg)" }
+      ],
+      { duration: 840, easing: E4.move, fill: "forwards" }
+    );
+    const done = () => layer.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after4(880, done);
+  }
+  function drawStroke(svg, dur = 320) {
+    const parts = svg.querySelectorAll("path,line,polyline,circle,rect");
+    parts.forEach((p) => {
+      try {
+        const len = p.getTotalLength();
+        if (!isFinite(len) || len <= 0) return;
+        p.style.strokeDasharray = String(len);
+        p.style.strokeDashoffset = String(len);
+        const a = p.animate(
+          [{ strokeDashoffset: len }, { strokeDashoffset: 0 }],
+          { duration: dur, easing: E4.out, fill: "forwards" }
+        );
+        a.finished.then(() => {
+          p.style.strokeDasharray = "";
+          p.style.strokeDashoffset = "";
+        }).catch(() => {
+          p.style.strokeDasharray = "";
+          p.style.strokeDashoffset = "";
+        });
+      } catch (e) {
+      }
+    });
+  }
+  function countUpNode(el, dur) {
+    const node = el.childNodes[0];
+    if (!node || node.nodeType !== Node.TEXT_NODE) return;
+    const raw = node.textContent || "";
+    const m = raw.match(/\d[\d,]*/);
+    if (!m) return;
+    const target = Number(m[0].replace(/,/g, ""));
+    if (!isFinite(target) || target === 0) return;
+    tween2(dur, (v) => {
+      node.textContent = raw.replace(m[0], String(Math.round(target * v)));
+    });
+  }
+  function popCnt(el) {
+    waapi4(
+      el,
+      [
+        { transform: "scale(.4)", opacity: 0 },
+        { transform: "scale(1.18)", opacity: 1, offset: 0.7 },
+        { transform: "scale(1)", opacity: 1 }
+      ],
+      { duration: 420, easing: E4.out, fill: "backwards" }
+    );
+  }
+  function motionQueueBoot(container) {
+    cancelPending3();
+    if (reduced4()) return;
+    const popup = container.closest("#review-popup");
+    if (popup) sweep2(popup);
+    const strip = container.querySelector(".bz-q-strip");
+    if (strip) {
+      after4(80, () => waapi4(
+        strip,
+        [{ opacity: 0, transform: "translateY(-8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+      const dot = strip.querySelector(".bz-q-strip-dot.ok");
+      if (dot) after4(420, () => ringBurst(dot));
+    }
+    const cols = [...container.querySelectorAll(".bz-q-col")];
+    let t = 160;
+    const total = container.querySelectorAll(".bz-q-card").length;
+    const step = total > 26 ? 24 : 52;
+    let seals = 0;
+    cols.forEach((col, ci) => {
+      const cards = [...col.querySelectorAll(".bz-q-card")];
+      const danger = col.classList.contains("danger");
+      cards.forEach((card, cj) => {
+        const rot = (ci * 7 + cj * 13) % 5 - 2;
+        const fromX = ci === 0 ? 16 : ci === 1 ? 0 : -16;
+        const at3 = t;
+        after4(at3, () => waapi4(
+          card,
+          [
+            { opacity: 0, transform: `translate(${fromX}px,22px) rotate(${rot * 2}deg) scale(.9)` },
+            { opacity: 1, transform: "none" }
+          ],
+          { duration: 340, easing: E4.out, fill: "backwards" }
+        ));
+        if (danger && seals < 4) {
+          seals++;
+          after4(at3 + 300, () => seal(card, "急"));
+        }
+        t += step;
+      });
+      const cnt = col.querySelector(".bz-q-col-head .cnt");
+      if (cnt) after4(Math.max(120, t - 30), () => popCnt(cnt));
+      t += 120;
+    });
+    const footer = container.querySelector(".bz-q-footer");
+    if (footer) after4(t + 60, () => waapi4(
+      footer,
+      [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.base, easing: E4.out, fill: "backwards" }
+    ));
+    const empty = container.querySelector("[data-empty-host]");
+    if (empty) after4(200, () => waapi4(
+      empty,
+      [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.impulse, easing: E4.out, fill: "backwards" }
+    ));
+  }
+  function motionChargeStrip(strip) {
+    if (reduced4()) return;
+    const btn = strip.querySelector('[data-act="begin"]');
+    const host = btn || strip;
+    ringBurst(host);
+    waapi4(
+      host,
+      [{ transform: "scale(1)" }, { transform: "scale(.96)" }, { transform: "scale(1.03)" }, { transform: "scale(1)" }],
+      { duration: 280, easing: E4.out }
+    );
+  }
+  function motionDrawCard(card) {
+    if (reduced4()) return;
+    waapi4(
+      card,
+      [
+        { transform: "none", boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { transform: "scale(.975) translateY(1px)", offset: 0.4 },
+        { transform: "scale(1.04) translateY(-3px)", boxShadow: "0 10px 24px rgba(0,0,0,.16)" }
+      ],
+      { duration: 260, easing: E4.out }
+    );
+  }
+  function motionSprintReset() {
+    lastQKey = "";
+    cancelPending3();
+  }
+  function motionSprintLoading(host) {
+    if (reduced4()) return;
+    const ld = host.querySelector(".bz-sprint-loading");
+    if (ld) waapi4(
+      ld,
+      [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.base, easing: E4.out, fill: "backwards" }
+    );
+  }
+  function motionQuestion(host, sig) {
+    if (reduced4()) return;
+    const card = host.querySelector(".bz-sprint-qcard");
+    if (!card) return;
+    if (sig.text !== lastQKey) {
+      lastQKey = sig.text;
+      waapi4(
+        card,
+        [
+          { opacity: 0, transform: "perspective(900px) rotateY(-78deg) scale(.94)" },
+          { opacity: 1, transform: "perspective(900px) rotateY(0deg) scale(1)" }
+        ],
+        { duration: 430, easing: E4.out, fill: "backwards" }
+      );
+      const prog = host.querySelector(".bz-sprint-progress");
+      if (prog) after4(120, () => popCnt(prog));
+      host.querySelectorAll(".bz-sprint-opt").forEach((el, i) => {
+        after4(150 + i * STAG4, () => waapi4(
+          el,
+          [{ opacity: 0, transform: "translateX(-10px)" }, { opacity: 1, transform: "none" }],
+          { duration: M10.base, easing: E4.out, fill: "backwards" }
+        ));
+      });
+      return;
+    }
+    if (!sig.answered) return;
+    if (sig.correct) {
+      sweep2(card);
+      const okSvg = card.querySelector(".bz-sprint-opt.is-correct .bz-mark svg");
+      if (okSvg) drawStroke(okSvg, 300);
+      const okOpt2 = card.querySelector(".bz-sprint-opt.is-correct");
+      if (okOpt2) waapi4(
+        okOpt2,
+        [{ transform: "scale(1)" }, { transform: "scale(1.02)" }, { transform: "scale(1)" }],
+        { duration: 260, easing: E4.out }
+      );
+      return;
+    }
+    waapi4(
+      card,
+      [
+        { transform: "translateX(0)" },
+        { transform: "translateX(-8px)", offset: 0.15 },
+        { transform: "translateX(7px)", offset: 0.35 },
+        { transform: "translateX(-5px)", offset: 0.55 },
+        { transform: "translateX(3px)", offset: 0.75 },
+        { transform: "translateX(0)" }
+      ],
+      { duration: 420, easing: "ease-out" }
+    );
+    waapi4(
+      card,
+      [
+        { boxShadow: "inset 0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "inset 0 0 0 2px color-mix(in srgb, var(--bz-danger, #d64545) 55%, transparent)" },
+        { boxShadow: "inset 0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 760, easing: E4.out }
+    );
+    const bad = card.querySelector(".bz-sprint-opt.is-wrong");
+    if (bad) waapi4(
+      bad,
+      [{ transform: "translateX(0)" }, { transform: "translateX(-4px)" }, { transform: "translateX(3px)" }, { transform: "none" }],
+      { duration: 260, easing: "ease-out" }
+    );
+    const okOpt = card.querySelector(".bz-sprint-opt.is-correct");
+    if (okOpt) waapi4(
+      okOpt,
+      [
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "0 0 0 3px color-mix(in srgb, var(--bz-success, #3a9e5f) 45%, transparent)" },
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 700, easing: E4.out }
+    );
+  }
+  function motionFailFlash(host) {
+    if (reduced4()) return;
+    const target = host.closest("#review-popup") || host;
+    ensureRelative(target);
+    const v = document.createElement("i");
+    v.className = "bz-rv-failflash";
+    v.setAttribute("aria-hidden", "true");
+    target.appendChild(v);
+    const a = waapi4(
+      v,
+      [{ opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 0 }],
+      { duration: 620, easing: "ease-out", fill: "forwards" }
+    );
+    const done = () => v.remove();
+    if (a) a.finished.then(done).catch(done);
+    else after4(660, done);
+  }
+  function motionResult(host) {
+    if (reduced4()) return;
+    const res = host.querySelector(".bz-result");
+    if (!res) return;
+    const ic2 = res.querySelector(".bz-result-ic");
+    const okSvg = ic2 == null ? void 0 : ic2.querySelector("svg");
+    if (okSvg) drawStroke(okSvg, 380);
+    if (ic2) after4(60, () => ringBurst(ic2));
+    const score = res.querySelector(".bz-result-score");
+    if (score) after4(140, () => countUpNode(score, 620));
+    const pill = res.querySelector(".bz-result-rating");
+    if (pill) after4(340, () => waapi4(
+      pill,
+      [{ opacity: 0, transform: "scale(1.8) rotate(-7deg)" }, { opacity: 1, transform: "none" }],
+      { duration: 280, easing: E4.land, fill: "backwards" }
+    ));
+    res.querySelectorAll(".bz-btn").forEach((b, i) => {
+      after4(430 + i * 60, () => waapi4(
+        b,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionSummary(host, grade) {
+    if (reduced4()) return;
+    const box = host.querySelector(".bz-summary");
+    if (!box) return;
+    const title = box.querySelector(".bz-summary-title");
+    if (title) waapi4(
+      title,
+      [
+        { opacity: 0, transform: "translateY(-6px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M10.base, easing: E4.out, fill: "backwards" }
+    );
+    box.querySelectorAll(".bz-summary-stats .st b").forEach((b, i) => {
+      after4(120 + i * 90, () => {
+        countUpNode(b, 560);
+        popCnt(b);
+      });
+    });
+    after4(460, () => seal(box, grade, true));
+    const tail = box.querySelector(".bz-summary-streak, .bz-qp-acc");
+    if (tail) after4(820, () => {
+      waapi4(
+        tail,
+        [{ opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      );
+      const b = tail.querySelector("b");
+      if (b) waapi4(
+        b,
+        [
+          { filter: "drop-shadow(0 0 0 rgba(255,150,60,0))" },
+          { filter: "drop-shadow(0 0 9px rgba(255,150,60,.85))" },
+          { filter: "drop-shadow(0 0 2px rgba(255,150,60,.3))" }
+        ],
+        { duration: 900, easing: E4.out }
+      );
+    });
+    box.querySelectorAll(".bz-btn").forEach((b, i) => {
+      after4(900 + i * 70, () => waapi4(
+        b,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionStats(body) {
+    if (reduced4()) return;
+    sweep2(body);
+    body.querySelectorAll(".stat-card").forEach((card, i) => {
+      after4(60 + i * 60, () => {
+        waapi4(
+          card,
+          [{ opacity: 0, transform: "translateY(10px) scale(.97)" }, { opacity: 1, transform: "none" }],
+          { duration: M10.base, easing: E4.out, fill: "backwards" }
+        );
+        const v = card.querySelector(".v");
+        if (v) countUpNode(v, 540);
+      });
+    });
+    body.querySelectorAll(".sec").forEach((sec, i) => {
+      after4(240 + i * 80, () => waapi4(
+        sec,
+        [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+    });
+    body.querySelectorAll(".soft-fill, .bar-fill").forEach((fill, i) => {
+      after4(380 + i * 45, () => {
+        fill.style.transformOrigin = "left center";
+        waapi4(
+          fill,
+          [{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
+          { duration: 560, easing: "cubic-bezier(.3,.9,.35,1.12)", fill: "backwards" }
+        );
+      });
+    });
+    body.querySelectorAll(".top-row").forEach((row, i) => {
+      after4(460 + i * 55, () => waapi4(
+        row,
+        [{ opacity: 0, transform: "translateX(-12px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+    });
+    const first = body.querySelector(".top-row.is-top");
+    if (first) after4(760, () => ringBurst(first));
+    body.querySelectorAll(".kv-inline").forEach((kv, i) => {
+      after4(300 + i * 70, () => waapi4(
+        kv,
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionHistory(body) {
+    if (reduced4()) return;
+    const status = body.querySelector(".bz-review-history-status");
+    if (status) waapi4(
+      status,
+      [{ opacity: 0, transform: "translateY(-4px)" }, { opacity: 1, transform: "none" }],
+      { duration: M10.base, easing: E4.out, fill: "backwards" }
+    );
+    body.querySelectorAll(".bz-review-history-item").forEach((item, i) => {
+      after4(110 + i * 110, () => {
+        const dot = item.querySelector(".bz-review-history-dot");
+        if (dot) waapi4(
+          dot,
+          [{ transform: "scale(0)" }, { transform: "scale(1.5)", offset: 0.7 }, { transform: "scale(1)" }],
+          { duration: 320, easing: E4.out, fill: "backwards" }
+        );
+        const line = item.querySelector(".bz-review-history-line");
+        if (line) {
+          line.style.transformOrigin = "top center";
+          waapi4(
+            line,
+            [{ transform: "scaleY(0)" }, { transform: "scaleY(1)" }],
+            { duration: 230, easing: E4.out, fill: "backwards" }
+          );
+        }
+        const row = item.querySelector(".bz-review-history-row");
+        if (row) waapi4(
+          row,
+          [{ opacity: 0, transform: "translateX(8px)" }, { opacity: 1, transform: "none" }],
+          { duration: M10.base, easing: E4.out, fill: "backwards" }
+        );
+      });
+    });
+  }
+  function motionRatingBar(el) {
+    if (reduced4()) return;
+    waapi4(
+      el,
+      [
+        { opacity: 0, transform: "translateX(-50%) translateY(60px)" },
+        { opacity: 1, transform: "translateX(-50%) translateY(0)" }
+      ],
+      { duration: 420, easing: "cubic-bezier(.22,.9,.32,1.15)", fill: "backwards" }
+    );
+    el.querySelectorAll(".bz-review-bar-btn").forEach((b, i) => {
+      after4(150 + i * STAG4, () => popCnt(b));
+    });
+  }
+  function motionQuizSetup(content) {
+    if (reduced4()) return;
+    content.querySelectorAll(".bz-qp-sec").forEach((sec, i) => {
+      after4(i * 90, () => waapi4(
+        sec,
+        [{ opacity: 0, transform: "translateY(10px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+    });
+    const meta = content.querySelector(".bz-qp-meta");
+    if (meta) after4(300, () => waapi4(meta, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E4.out, fill: "backwards" }));
+    const start = content.querySelector(".bz-qp-start");
+    if (start) after4(380, () => ringBurst(start));
+    const foot = content.querySelector(".bz-qp-foot");
+    if (foot) after4(460, () => waapi4(foot, [{ opacity: 0 }, { opacity: 1 }], { duration: M10.base, easing: E4.out, fill: "backwards" }));
+  }
+  function motionQuizSummary(content, grade) {
+    motionSummary(content, grade);
+  }
+  function motionQuizCard(popup) {
+    if (reduced4()) return;
+    const q3 = popup.querySelector(".bz-quiz-question");
+    if (q3) waapi4(
+      q3,
+      [
+        { opacity: 0, transform: "perspective(800px) rotateX(24deg) translateY(6px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: 380, easing: E4.out, fill: "backwards" }
+    );
+    popup.querySelectorAll(".quiz-option-btn").forEach((el, i) => {
+      after4(120 + i * STAG4, () => waapi4(
+        el,
+        [{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }],
+        { duration: M10.base, easing: E4.out, fill: "backwards" }
+      ));
+    });
+  }
+  function motionQuizJudge(popup, correct) {
+    if (reduced4()) return;
+    if (correct) {
+      sweep2(popup);
+      const mark = popup.querySelector(".quiz-option-btn.correct .check-mark");
+      if (mark) popCnt(mark);
+      return;
+    }
+    const bad = popup.querySelector(".quiz-option-btn.wrong");
+    if (bad) waapi4(
+      bad,
+      [{ transform: "translateX(0)" }, { transform: "translateX(-5px)" }, { transform: "translateX(4px)" }, { transform: "none" }],
+      { duration: 260, easing: "ease-out" }
+    );
+    const ok = popup.querySelector(".quiz-option-btn.correct");
+    if (ok) waapi4(
+      ok,
+      [
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" },
+        { boxShadow: "0 0 0 3px color-mix(in srgb, var(--bz-success, #3a9e5f) 45%, transparent)" },
+        { boxShadow: "0 0 0 0 rgba(0,0,0,0)" }
+      ],
+      { duration: 700, easing: E4.out }
+    );
+  }
+  var M10, E4, STAG4, timers4, lastQKey;
+  var init_motion5 = __esm({
+    "src/review/motion.ts"() {
+      M10 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E4 = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)",
+        /** 落章/落定带轻微过冲 */
+        land: "cubic-bezier(.2,.8,.3,1.18)"
+      };
+      STAG4 = 30;
+      timers4 = /* @__PURE__ */ new Set();
+      lastQKey = "";
+    }
+  });
+
   // src/review/quiz-core/session.ts
+  function quizPopupEl() {
+    return document.getElementById("quiz-popup");
+  }
   function cleanOptionText(text) {
     if (!text) return "";
     const match = text.match(/^([A-D])\s*[.、:：)）]\s*/);
@@ -39457,6 +43188,7 @@ ${n.content.slice(0, 2e3)}
       init_manager();
       init_generator();
       init_utils();
+      init_motion5();
       CORRECT_JUMP_DELAY_MS = 800;
       _QuizMasterUI = class _QuizMasterUI {
         constructor() {
@@ -39592,7 +43324,7 @@ ${n.content.slice(0, 2e3)}
           this._teardownModal();
         }
         /** 渲染单题（源码 L514-676 逐字） */
-        renderModal(q2) {
+        renderModal(q3) {
           this._teardownModal();
           this._pendingSubmitBtn = null;
           const mask = document.createElement("div");
@@ -39607,20 +43339,20 @@ ${n.content.slice(0, 2e3)}
           header.appendChild(uiIconSpan("file-text", "bz-quiz-note-ic"));
           const title = document.createElement("span");
           title.className = "bz-quiz-title";
-          const noteName = q2.notePath ? q2.notePath.split("/").pop().replace(".md", "") : "";
+          const noteName = q3.notePath ? q3.notePath.split("/").pop().replace(".md", "") : "";
           const doneCount = this.totalQuestions - this.currentQuestions.length;
           title.textContent = noteName ? `${noteName} (${doneCount + 1}/${this.totalQuestions})` : `(${doneCount + 1}/${this.totalQuestions})`;
           header.appendChild(title);
           popup.appendChild(header);
           const questionDiv = document.createElement("div");
           questionDiv.className = "bz-quiz-question";
-          questionDiv.textContent = q2.question;
+          questionDiv.textContent = q3.question;
           popup.appendChild(questionDiv);
           const optionsContainer = document.createElement("div");
           optionsContainer.className = "bz-quiz-options";
           const selectedIndices = /* @__PURE__ */ new Set();
           const answeredRef = { value: false };
-          const optionElements = this._buildOptionButtons(q2, answeredRef, selectedIndices, optionsContainer);
+          const optionElements = this._buildOptionButtons(q3, answeredRef, selectedIndices, optionsContainer);
           optionElements.forEach((el) => optionsContainer.appendChild(el));
           if (this._pendingSubmitBtn) {
             optionsContainer.appendChild(this._pendingSubmitBtn);
@@ -39630,6 +43362,7 @@ ${n.content.slice(0, 2e3)}
           mask.appendChild(popup);
           document.body.appendChild(mask);
           mountIcons(popup);
+          motionQuizCard(popup);
           this._escHandle = escManager.register("bz-review-quiz", {
             isVisible: () => !!(this.mask && this.mask.isConnected),
             close: () => this.finishQuiz()
@@ -39686,11 +43419,11 @@ ${n.content.slice(0, 2e3)}
           }
         }
         /** 选项按钮组构建与答题逻辑（renderModal 拆分）：单选即点即判 / 多选切换 + 提交 */
-        _buildOptionButtons(q2, answeredRef, selectedIndices, optionsContainer) {
+        _buildOptionButtons(q3, answeredRef, selectedIndices, optionsContainer) {
           const optionLabels = ["A", "B", "C", "D"];
-          const isSingle = q2.correctIndices.length === 1;
+          const isSingle = q3.correctIndices.length === 1;
           const app = getApp();
-          const optionElements = q2.options.map((opt, idx) => {
+          const optionElements = q3.options.map((opt, idx) => {
             const btn = document.createElement("button");
             btn.className = "quiz-option-btn";
             const cleanText = cleanOptionText(opt);
@@ -39701,12 +43434,14 @@ ${n.content.slice(0, 2e3)}
               if (isSingle) {
                 answeredRef.value = true;
                 optionElements.forEach((b) => b.classList.add("disabled"));
-                const isCorrect = idx === q2.correctIndices[0];
+                const isCorrect = idx === q3.correctIndices[0];
                 if (isCorrect) {
                   optionElements.forEach((b, i) => {
-                    if (i === q2.correctIndices[0]) b.classList.add("correct");
+                    if (i === q3.correctIndices[0]) b.classList.add("correct");
                   });
-                  this._answerCorrect(q2, app, () => {
+                  const p = quizPopupEl();
+                  if (p) motionQuizJudge(p, true);
+                  this._answerCorrect(q3, app, () => {
                     answeredRef.value = false;
                     optionElements.forEach((b) => b.classList.remove("disabled", "correct"));
                   });
@@ -39714,9 +43449,11 @@ ${n.content.slice(0, 2e3)}
                   this.wrongCount++;
                   this.currentQuestions.splice(this.currentIndex, 1);
                   optionElements.forEach((b, i) => {
-                    if (i === q2.correctIndices[0]) b.classList.add("correct");
+                    if (i === q3.correctIndices[0]) b.classList.add("correct");
                     if (i === idx) b.classList.add("wrong");
                   });
+                  const p = quizPopupEl();
+                  if (p) motionQuizJudge(p, false);
                   this.addNextButton(optionsContainer);
                 }
               } else {
@@ -39744,7 +43481,7 @@ ${n.content.slice(0, 2e3)}
               answeredRef.value = true;
               submitBtn.disabled = true;
               const selected = Array.from(selectedIndices).sort();
-              const correct = q2.correctIndices.slice().sort();
+              const correct = q3.correctIndices.slice().sort();
               const isCorrect = selected.length === correct.length && selected.every((v, i) => v === correct[i]);
               optionElements.forEach((b, i) => {
                 b.classList.add("disabled");
@@ -39752,7 +43489,9 @@ ${n.content.slice(0, 2e3)}
                 else if (selectedIndices.has(i) && !isCorrect) b.classList.add("wrong");
               });
               if (isCorrect) {
-                this._answerCorrect(q2, app, () => {
+                const p = quizPopupEl();
+                if (p) motionQuizJudge(p, true);
+                this._answerCorrect(q3, app, () => {
                   answeredRef.value = false;
                   submitBtn.disabled = false;
                   optionElements.forEach((b) => b.classList.remove("disabled", "correct"));
@@ -39760,6 +43499,8 @@ ${n.content.slice(0, 2e3)}
               } else {
                 this.wrongCount++;
                 this.currentQuestions.splice(this.currentIndex, 1);
+                const p = quizPopupEl();
+                if (p) motionQuizJudge(p, false);
                 this.addNextButton(optionsContainer);
               }
             };
@@ -39773,8 +43514,8 @@ ${n.content.slice(0, 2e3)}
          *  ticket 153：答对自动跳下一题（答对不出现「下一题」按钮，答错才由用户点按）；
          *  ticket 156：跳题延后 0.8s——亮绿正确选项让用户看到反馈再进入下一题；
          *  延时期间放弃做题/强制关闭 → 清除延时（回调内再校验会话态，防迟到渲染僵尸弹窗）。 */
-        _answerCorrect(q2, app, onFailRestore) {
-          this.manager.removeQuestion(app, q2.notePath, { question: q2.question, options: q2.options, correctIndices: q2.correctIndices }).then(() => {
+        _answerCorrect(q3, app, onFailRestore) {
+          this.manager.removeQuestion(app, q3.notePath, { question: q3.question, options: q3.options, correctIndices: q3.correctIndices }).then(() => {
             this.correctCount++;
             this.currentQuestions.splice(this.currentIndex, 1);
             this._clearJumpTimer();
@@ -40329,8 +44070,8 @@ ${n.content.slice(0, 2e3)}
       <div class="bz-q-footer">
         ${archItem}
         <i class="sep"></i>
-        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="查看复习统计分布">
-          ${iconSpan("bar-chart-3", "bz-q-ic")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
+        <span class="bz-q-fitem bz-touch-target--lg" data-act="stats" title="逐幕回放全馆记忆">
+          ${iconSpan("flame", "bz-q-ic")}<span class="lbl">累计 <b>${stats.totalReviews}</b> 天 · 连续 <b>${stats.streak}</b> 天</span>
         </span>
       </div>`;
     return `<div class="bz-q-view">${head}${strip}${body}${footer}</div>`;
@@ -40355,15 +44096,15 @@ ${n.content.slice(0, 2e3)}
   function sprintLoadingHtml() {
     return `<div class="bz-sprint-loading"><span class="bz-q-spinner"></span>正在获取题目…</div>`;
   }
-  function sprintOptsHtml(q2, answered, sel, lastCorrect) {
-    return q2.options.map((opt, i) => {
+  function sprintOptsHtml(q3, answered, sel, lastCorrect) {
+    return q3.options.map((opt, i) => {
       const isSel = sel.includes(i);
       let extra = "";
       if (answered) {
-        if (q2.correctIndices.includes(i)) extra = " is-correct";
+        if (q3.correctIndices.includes(i)) extra = " is-correct";
         else if (isSel) extra = " is-wrong";
       } else if (isSel) extra = " is-sel";
-      const m = answered && q2.correctIndices.includes(i) ? markHtml("ok") : answered && isSel && !q2.correctIndices.includes(i) ? markHtml("bad") : "";
+      const m = answered && q3.correctIndices.includes(i) ? markHtml("ok") : answered && isSel && !q3.correctIndices.includes(i) ? markHtml("bad") : "";
       return `
           <div class="bz-sprint-opt${extra}${answered ? " is-disabled" : ""}" data-i="${i}" role="button" tabindex="${answered ? "-1" : "0"}" aria-disabled="${answered ? "true" : "false"}">
             <span class="k">${"ABCD"[i]}</span>
@@ -40546,6 +44287,7 @@ ${n.content.slice(0, 2e3)}
       init_esc_manager();
       init_stats3();
       init_render12();
+      init_motion5();
       CORRECT_JUMP_DELAY_MS2 = 800;
       SprintSession = class {
         constructor(opts) {
@@ -40684,14 +44426,14 @@ ${n.content.slice(0, 2e3)}
           }
           e.preventDefault();
           if (this.view === "question" && this.q) {
-            const q2 = this.q;
-            if (!q2.answered) {
+            const q3 = this.q;
+            if (!q3.answered) {
               const question = this.currentQuestion();
               if (question && question.correctIndices.length > 1) this.submitMulti();
               return;
             }
-            if (q2.lastCorrect) return;
-            if (q2.list.length) this.nextQuestion();
+            if (q3.lastCorrect) return;
+            if (q3.list.length) this.nextQuestion();
             else void this.finishNote();
             return;
           }
@@ -40772,6 +44514,7 @@ ${n.content.slice(0, 2e3)}
             entry.state = "passed";
             entry.passNote = this.nextIntervalNote(nextReviewAt || void 0);
           } else {
+            motionFailFlash(this.opts.host);
             await this.opts.onFailed(entry.item, rating, { acc: entry.acc, wrong: entry.wrong });
             if (this.finished) return;
             entry.state = "failed";
@@ -40802,49 +44545,49 @@ ${n.content.slice(0, 2e3)}
         }
         /** 单选点选 / 多选勾选 */
         answer(idx) {
-          const q2 = this.q;
-          if (!q2 || q2.answered) return;
+          const q3 = this.q;
+          if (!q3 || q3.answered) return;
           const question = this.currentQuestion();
           if (!question) return;
           const single = question.correctIndices.length === 1;
           if (!single) {
-            if (q2.sel.has(idx)) q2.sel.delete(idx);
-            else q2.sel.add(idx);
+            if (q3.sel.has(idx)) q3.sel.delete(idx);
+            else q3.sel.add(idx);
             this.renderQuestion();
             return;
           }
-          q2.answered = true;
-          q2.sel = /* @__PURE__ */ new Set([idx]);
+          q3.answered = true;
+          q3.sel = /* @__PURE__ */ new Set([idx]);
           const correct = idx === question.correctIndices[0];
-          q2.lastCorrect = correct;
+          q3.lastCorrect = correct;
           this.consume(question, correct);
         }
         /** 多选提交 */
         submitMulti() {
-          const q2 = this.q;
-          if (!q2 || q2.answered) return;
+          const q3 = this.q;
+          if (!q3 || q3.answered) return;
           const question = this.currentQuestion();
           if (!question) return;
-          if (!q2.sel.size) {
+          if (!q3.sel.size) {
             notice("请至少选择一项", "warning");
             return;
           }
-          q2.answered = true;
-          const sel = Array.from(q2.sel).sort();
+          q3.answered = true;
+          const sel = Array.from(q3.sel).sort();
           const correctArr = question.correctIndices.slice().sort();
           const correct = sel.length === correctArr.length && sel.every((v, i) => v === correctArr[i]);
-          q2.lastCorrect = correct;
+          q3.lastCorrect = correct;
           this.consume(question, correct);
         }
         /** 消费当前题（出本轮；答对持久化删库后自动下一题，答错等「下一题」按钮） */
         consume(question, correct) {
-          const q2 = this.q;
+          const q3 = this.q;
           const entry = this.entry();
-          q2.cur = question;
-          q2.list.shift();
+          q3.cur = question;
+          q3.list.shift();
           if (correct) entry.acc++;
           else entry.wrong++;
-          q2.doneCount++;
+          q3.doneCount++;
           if (correct) {
             void this.removeQuestionPersist(question).then(() => {
               if (this.finished) return;
@@ -40858,14 +44601,14 @@ ${n.content.slice(0, 2e3)}
           }
           this.renderQuestion();
         }
-        async removeQuestionPersist(q2) {
+        async removeQuestionPersist(q3) {
           const quiz = this.opts.quiz;
-          if (!quiz || !q2.notePath) return;
+          if (!quiz || !q3.notePath) return;
           try {
-            await quiz.manager.removeQuestion(this.opts.app, q2.notePath, {
-              question: q2.question,
-              options: q2.options,
-              correctIndices: q2.correctIndices
+            await quiz.manager.removeQuestion(this.opts.app, q3.notePath, {
+              question: q3.question,
+              options: q3.options,
+              correctIndices: q3.correctIndices
             });
           } catch (e) {
             notifyActionError(e, "删除题目");
@@ -40901,7 +44644,9 @@ ${n.content.slice(0, 2e3)}
         // ================= 视图构建（markup 单源：render.ts，issue 253） =================
         showLoading(entry) {
           this.view = "loading";
+          motionSprintReset();
           this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintLoadingHtml()}`;
+          motionSprintLoading(this.opts.host);
           this.bindTop();
         }
         asideStates() {
@@ -40910,13 +44655,13 @@ ${n.content.slice(0, 2e3)}
         renderQuestion() {
           var _a2, _b2, _c, _d, _e;
           const entry = this.entry();
-          const q2 = this.q;
+          const q3 = this.q;
           const question = this.currentQuestion();
           if (!question) return;
           const main = sprintQuestionHtml(
-            { questions: entry.questions, doneCount: q2.doneCount },
+            { questions: entry.questions, doneCount: q3.doneCount },
             question,
-            { answered: q2.answered, sel: [...q2.sel], lastCorrect: q2.lastCorrect, remaining: q2.list.length }
+            { answered: q3.answered, sel: [...q3.sel], lastCorrect: q3.lastCorrect, remaining: q3.list.length }
           );
           this.view = "question";
           this.opts.host.innerHTML = `${sprintHeadHtml(this.mode)}${sprintBodyHtml(main, this.asideStates())}`;
@@ -40937,6 +44682,7 @@ ${n.content.slice(0, 2e3)}
               }
             });
           });
+          motionQuestion(this.opts.host, { text: question.question, answered: q3.answered, correct: q3.lastCorrect });
           (_e = (_d = this.opts).onProgress) == null ? void 0 : _e.call(_d);
         }
         renderResult(entry) {
@@ -40962,6 +44708,7 @@ ${n.content.slice(0, 2e3)}
           )}`;
           mountIcons(this.opts.host);
           this.bindTop();
+          motionResult(this.opts.host);
           (_a2 = this.opts.host.querySelector('[data-action="next"]')) == null ? void 0 : _a2.addEventListener("click", () => void this.handleResult("next"));
           (_b2 = this.opts.host.querySelector('[data-action="end"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.handleResult("end"));
           (_d = (_c = this.opts).onProgress) == null ? void 0 : _d.call(_c);
@@ -40981,6 +44728,7 @@ ${n.content.slice(0, 2e3)}
           mountIcons(this.opts.host);
           this.bindTop();
           (_b2 = this.opts.host.querySelector('[data-action="done"]')) == null ? void 0 : _b2.addEventListener("click", () => this.finish("done"));
+          motionSummary(this.opts.host, failed === 0 ? "优" : "完成");
         }
         /** 顶部/队列共同动作（跳过此篇 / 退出按钮） */
         bindTop() {
@@ -41187,6 +44935,1955 @@ ${n.content.slice(0, 2e3)}
     }
   });
 
+  // src/review/analysis/data.ts
+  function deriveAnalysis(items, opts) {
+    var _a2, _b2, _c;
+    const w = (opts == null ? void 0 : opts.w) || DEFAULT_W;
+    const nowMs = (opts == null ? void 0 : opts.now) != null ? new Date(opts.now).getTime() : Date.now();
+    const embers = items.map((it) => {
+      const r = currentR(it, w, nowMs);
+      const nextMs = it.nextReviewDate ? new Date(it.nextReviewDate).getTime() : NaN;
+      const dueDays = Number.isFinite(nextMs) ? (nextMs - nowMs) / 864e5 : null;
+      const lastMs = it.lastReviewed ? new Date(it.lastReviewed).getTime() : NaN;
+      return {
+        name: it.name || it.filePath,
+        r,
+        s: Number(it.stability) || 0,
+        d: Number(it.difficulty) || 0,
+        stage: Math.max(0, Math.min(9, Number(it.stage) || 0)),
+        phase: it.phase === "fsrs" ? "fsrs" : "ladder",
+        overdue: !!it.isOverdue,
+        overdueDays: it.isOverdue && dueDays != null ? Math.max(0, -dueDays) : 0,
+        ageDays: Number.isFinite(lastMs) ? Math.max(0, (nowMs - lastMs) / 864e5) : null,
+        dueInDays: dueDays == null || !Number.isFinite(dueDays) ? null : dueDays,
+        done: !!(it.completed || it.isCompleted),
+        missing: !!it.isMissing,
+        redo: !!it.pendingRedo,
+        pinned: !!it.pinned,
+        reviews: Array.isArray(it.reviewHistory) ? it.reviewHistory.length : 0
+      };
+    });
+    const live2 = embers.filter((e) => !e.done && !e.missing);
+    const doneN = embers.filter((e) => e.done).length;
+    const missingN = embers.filter((e) => e.missing).length;
+    const ladderN = live2.filter((e) => e.phase === "ladder").length;
+    const fsrsN = live2.filter((e) => e.phase === "fsrs").length;
+    const stageDist = new Array(10).fill(0);
+    for (const e of live2) stageDist[e.phase === "fsrs" ? 9 : Math.min(8, e.stage)]++;
+    const stagePeak = stageDist.some((n) => n > 0) ? stageDist.indexOf(Math.max(...stageDist)) : -1;
+    const cols = partitionQueue(items, 0.9, w);
+    const rs = live2.map((e) => e.r).filter((v) => v != null);
+    const rHist = new Array(10).fill(0);
+    for (const v of rs) rHist[Math.max(0, Math.min(9, Math.floor(v * 10)))]++;
+    const avgR = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : null;
+    const fsrsList = live2.filter((e) => e.phase === "fsrs" && e.s > 0);
+    const sBuckets = sBucketsOf(fsrsList.map((e) => e.s));
+    const sMax = fsrsList.reduce((m, e) => Math.max(m, e.s), 0);
+    const dAvg = fsrsList.length ? fsrsList.reduce((a, e) => a + e.d, 0) / fsrsList.length : null;
+    const daily14 = [];
+    const dayIdx = /* @__PURE__ */ new Map();
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(nowMs - i * 864e5);
+      const key = dateKey(d);
+      dayIdx.set(key, daily14.length);
+      daily14.push({ date: key, count: 0 });
+    }
+    let verdictTotal = 0;
+    const ratingDist = {};
+    const lastDiffDist = {};
+    const distinct = /* @__PURE__ */ new Set();
+    let firstMs = Infinity;
+    for (const it of items) {
+      const hist = Array.isArray(it.reviewHistory) ? it.reviewHistory : [];
+      for (const h of hist) {
+        verdictTotal++;
+        const rating = String((_a2 = h == null ? void 0 : h.rating) != null ? _a2 : "");
+        if (rating) ratingDist[rating] = (ratingDist[rating] || 0) + 1;
+        const ts = (h == null ? void 0 : h.timestamp) ? new Date(h.timestamp).getTime() : NaN;
+        if (Number.isFinite(ts)) {
+          distinct.add(dateKey(new Date(ts)));
+          if (ts < firstMs) firstMs = ts;
+          const slot = dayIdx.get(dateKey(new Date(ts)));
+          if (slot != null) daily14[slot].count++;
+        }
+      }
+      const ld = it.lastDifficulty ? String(it.lastDifficulty) : "";
+      if (ld) lastDiffDist[ld] = (lastDiffDist[ld] || 0) + 1;
+    }
+    const dailyPeak = daily14.reduce((m, d) => Math.max(m, d.count), 0);
+    const dailyTotal = daily14.reduce((a, d) => a + d.count, 0);
+    let streak = 0;
+    const cursor = new Date(nowMs);
+    cursor.setHours(0, 0, 0, 0);
+    if (!distinct.has(dateKey(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (distinct.has(dateKey(cursor))) {
+      streak++;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    const bedrock = fsrsList.slice().sort((a, b) => b.s - a.s).slice(0, 5).map((e) => ({ name: e.name, s: e.s, r: e.r, reviews: e.reviews }));
+    const next8 = [];
+    const tideIdx = /* @__PURE__ */ new Map();
+    for (let i = 0; i < 8; i++) {
+      const d = new Date(nowMs + i * 864e5);
+      const key = dateKey(d);
+      tideIdx.set(key, next8.length);
+      next8.push({ date: key, label: i === 0 ? "今" : `+${i}`, count: 0 });
+    }
+    for (const it of items) {
+      if (it.completed || it.isCompleted || it.isMissing || !it.nextReviewDate) continue;
+      const key = dateKey(new Date(it.nextReviewDate));
+      const slot = tideIdx.get(key);
+      if (slot != null) next8[slot].count++;
+    }
+    const tomorrowN = (_c = (_b2 = next8[1]) == null ? void 0 : _b2.count) != null ? _c : 0;
+    const againN = ratingDist["again"] || 0;
+    const redoN = live2.filter((e) => e.redo).length;
+    const confList = items.map((it) => Number(it.averageConfidence)).filter((v) => Number.isFinite(v) && v > 0);
+    return {
+      total: embers.length,
+      active: live2.length,
+      doneN,
+      missingN,
+      ladderN,
+      fsrsN,
+      stageDist,
+      stagePeak,
+      embers,
+      liveEmbers: live2,
+      overdueList: live2.filter((e) => e.overdue).sort((a, b) => b.overdueDays - a.overdueDays).map((e) => ({ name: e.name, days: e.overdueDays })),
+      overdueN: cols.overdue.length,
+      todayN: cols.today.length,
+      futureN: cols.future.length,
+      doneColN: cols.done.length,
+      avgR,
+      rHist,
+      rAbove90: rs.filter((v) => v > 0.9).length,
+      rBelow50: rs.filter((v) => v < 0.5).length,
+      sBuckets,
+      sMax,
+      dBuckets: dBucketsOf(fsrsList.map((e) => e.d)),
+      dAvg,
+      daily14,
+      dailyPeak,
+      dailyTotal,
+      streak,
+      distinctDays: distinct.size,
+      firstReviewAt: Number.isFinite(firstMs) ? new Date(firstMs).toISOString() : null,
+      ratingDist,
+      verdictTotal,
+      againRate: verdictTotal ? againN / verdictTotal : null,
+      bedrock,
+      next8,
+      tomorrowN,
+      redoN,
+      lastDiffDist,
+      confidenceAvg: confList.length ? confList.reduce((a, b) => a + b, 0) / confList.length : 0
+    };
+  }
+  var RA_RATING_ORDER, RA_RATING_NAMES, sBucketsOf, dBucketsOf;
+  var init_data11 = __esm({
+    "src/review/analysis/data.ts"() {
+      init_fsrs();
+      init_queue();
+      init_stats3();
+      RA_RATING_ORDER = ["again", "hard", "good", "easy"];
+      RA_RATING_NAMES = { again: "忘了", hard: "困难", good: "一般", easy: "简单" };
+      sBucketsOf = (list) => {
+        const def = [
+          ["<7 天", (v) => v < 7],
+          ["7-30 天", (v) => v >= 7 && v < 30],
+          ["30-90 天", (v) => v >= 30 && v < 90],
+          ["≥90 天", (v) => v >= 90]
+        ];
+        return def.map(([label, hit]) => ({ label, n: list.filter(hit).length }));
+      };
+      dBucketsOf = (list) => {
+        const def = [
+          ["<2", (v) => v < 2],
+          ["2-4", (v) => v >= 2 && v < 4],
+          ["4-6", (v) => v >= 4 && v < 6],
+          ["≥6", (v) => v >= 6]
+        ];
+        return def.map(([label, hit]) => ({ label, n: list.filter(hit).length }));
+      };
+    }
+  });
+
+  // src/review/analysis/view.ts
+  function frame(no, main) {
+    const def = RA_SCENES[no - 1];
+    return `<section class="bz-ra-scn" data-s="${pad22(no)}" data-id="${def.id}" data-name="${escapeHtml2(def.name)}">
+  <div class="ra-sc"><div class="ra-main">${main}</div></div>
+</section>`;
+  }
+  function analysisHtml(data) {
+    const S3 = [];
+    S3.push(frame(1, `
+    <div class="ra-open"><canvas data-cv="open" aria-hidden="true"></canvas></div>`));
+    S3.push(frame(2, `
+    <div class="ra-field">
+      <canvas data-cv="field" aria-hidden="true"></canvas>
+      <div class="ra-field-side">
+        <div class="ra-kv big"><span class="ra-k">在炉</span><b>${data.active}<span class="ra-u">篇</span></b></div>
+        <div class="ra-legend">
+          <span><i class="dot tone-hi"></i>余温足（R&gt;70%）</span>
+          <span><i class="dot tone-mid"></i>渐凉（40-70%）</span>
+          <span><i class="dot tone-low"></i>将熄（&lt;40%）</span>
+          <span><i class="dot tone-off"></i>阶梯期（未入 FSRS）</span>
+        </div>
+      </div>
+    </div>`));
+    const slopePts = data.liveEmbers.filter((e) => e.r != null && e.ageDays != null && e.s > 0).slice(0, 90).map((e, i) => {
+      const x = Math.min(1, e.ageDays / Math.max(0.5, e.s));
+      return `<i class="ra-slope-dot tone-${emberTone(e.r)}" data-r="sdot" data-i="${i}"
+        style="--x:${x.toFixed(4)};--y:${e.r.toFixed(4)}"></i>`;
+    }).join("");
+    S3.push(frame(3, `
+    <div class="ra-slope">
+      <div class="ra-slope-plot" data-r="plot">
+        <canvas data-cv="slope" aria-hidden="true"></canvas>
+        <span class="ra-slope-cursor" data-r="cursor" aria-hidden="true"></span>
+        ${slopePts}
+      </div>
+      <div class="ra-slope-side">
+        <div class="ra-kv"><span class="ra-k">在崖上</span><b data-r="oncliff">—</b></div>
+        <div class="ra-kv"><span class="ra-k">已过半坡</span><b>${data.rBelow50}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">稳住 90% 以上</span><b>${data.rAbove90}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">每篇记忆都在往坡下滑——坡的缓急由稳定性决定，添一次柴坡就缓一截。</p>
+      </div>
+    </div>`));
+    const tidePct = data.avgR == null ? 0 : Math.round(data.avgR * 100);
+    S3.push(frame(4, `
+    <div class="ra-tide">
+      <div class="ra-tide-plot" data-r="tplot"><canvas data-cv="tide" aria-hidden="true"></canvas>
+        <span class="ra-tide-gauge" data-r="gauge"><b>0%</b></span>
+      </div>
+      <div class="ra-tide-side">
+        <div class="ra-kv big"><span class="ra-k">平均留存</span><b>${data.avgR == null ? "—" : tidePct + "%"}<span class="ra-u">R</span></b></div>
+        <div class="ra-kv"><span class="ra-k">满水位</span><b>${data.rHist[9]}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">浅滩</span><b>${data.rHist[0] + data.rHist[1]}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">按住池面可以把水压下去，松手它回到你的真实水位。</p>
+      </div>
+    </div>`));
+    const debtMaxDays = Math.max(1, ...data.overdueList.slice(0, 18).map((d) => Math.round(d.days)));
+    const debtTags = data.overdueList.slice(0, 18).map((d, i) => {
+      const x = 8 + i * 29 % 84;
+      const y = 14 + Math.round(d.days) / debtMaxDays * 44;
+      const rot = -9 + i * 53 % 19;
+      return `<span class="ra-debt" data-r="debt" data-i="${i}" data-tip="${escapeHtml2(d.name)} · 拖了 ${Math.round(d.days)} 天"
+      style="--x:${x.toFixed(1)}%;--y:${y.toFixed(1)}%;--rot:${rot}deg;--sw:${i * 17 % 10 / 10}"><b>${escapeHtml2(d.name)}</b><i>拖 ${Math.round(d.days)} 天</i></span>`;
+    }).join("");
+    S3.push(frame(5, `
+    <div class="ra-debts">
+      <div class="ra-debt-rope" data-r="rope"></div>
+      ${debtTags}
+      <div class="ra-debt-total"><b>${data.overdueList.length}</b><span>笔未还 · 最早一笔拖了 ${data.overdueList.length ? Math.round(data.overdueList[0].days) : 0} 天</span></div>
+    </div>`));
+    const stepMax = Math.max(1, ...data.stageDist);
+    const steps = data.stageDist.map((n, i) => {
+      const last = i === 9;
+      const label = last ? "FSRS" : `${i + 1}`;
+      const tip2 = `${last ? "自由排期" : `第 ${i + 1} 阶`} · ${n} 篇`;
+      return `<div class="ra-step${last ? " is-fsrs" : ""}${i === data.stagePeak ? " is-peak" : ""}" data-r="step" data-i="${i}" data-tip="${escapeHtml2(tip2)}">
+      <span class="ra-step-n" data-r="stepn">${n}</span>
+      <span class="ra-step-bar" data-r="stepbar" style="--ph:${(n / stepMax * 100).toFixed(1)}%"></span>
+      <span class="ra-step-lb">${label}</span></div>`;
+    }).join("");
+    S3.push(frame(6, `
+    <div class="ra-steps" data-r="steps">${steps}<i class="ra-steps-fly" data-r="fly" aria-hidden="true"></i></div>`));
+    const crystalMax = Math.max(1, ...data.sBuckets.map((b) => b.n));
+    const crystals = data.sBuckets.map((b, i) => {
+      const w = b.n / crystalMax;
+      return `<div class="ra-crystal${i === data.sBuckets.length - 1 ? " is-last" : ""}" data-r="crystal" data-i="${i}"
+      data-tip="稳定性 ${escapeHtml2(b.label)} · ${b.n} 篇" style="--w:${w.toFixed(3)};--i:${i}">
+      <canvas data-cv="crystal${i}" aria-hidden="true"></canvas>
+      <div class="ra-crystal-meta"><b data-r="cn">${b.n}</b><span>${escapeHtml2(b.label)}</span></div>
+    </div>`;
+    }).join("");
+    S3.push(frame(7, `
+    <div class="ra-crystals">
+      <div class="ra-crystal-row" data-r="crow">${crystals}</div>
+      <div class="ra-crystal-side">
+        <div class="ra-kv"><span class="ra-k">最久一块</span><b>${sText(data.sMax)}</b></div>
+        <p class="ra-sline">稳定性是记忆的晶格：越久没忘，晶格越大，下一次遗忘就来得越慢。</p>
+      </div>
+    </div>`));
+    const strataMax = Math.max(1, ...data.dBuckets.map((b) => b.n));
+    const STRATA_C = ["var(--ra-jade)", "var(--ra-indigo)", "var(--ra-amber)", "var(--ra-ember)"];
+    const strata = data.dBuckets.map((b, i) => `<div class="ra-stratum" data-r="stratum" data-i="${i}" data-tip="难度 ${escapeHtml2(b.label)} · ${b.n} 篇" style="--ph:${(b.n / strataMax * 100).toFixed(1)}%;--sc:${STRATA_C[i]}">
+      <span class="ra-st-name">${escapeHtml2(b.label)}</span><span class="ra-st-n" data-r="stn">${b.n}</span></div>`).join("");
+    S3.push(frame(8, `
+    <div class="ra-strata">
+      <div class="ra-strata-bed" data-r="bed">${strata}</div>
+      <div class="ra-strata-side">
+        <div class="ra-kv"><span class="ra-k">平均难度</span><b>${data.dAvg == null ? "—" : data.dAvg.toFixed(1)}</b></div>
+        <p class="ra-sline">难度是你与这些笔记的相处史：越常「忘了」，矿层越往下沉。</p>
+      </div>
+    </div>`));
+    const woodMax = Math.max(1, ...data.daily14.map((d) => d.count));
+    const woodRows = data.daily14.map((d, i) => `<div class="ra-wood${i === 13 ? " is-today" : ""}" data-r="wood" data-i="${i}" data-tip="${escapeHtml2(zhDay(d.date))} · ${d.count} 次" style="--ph:${(d.count / woodMax * 100).toFixed(1)}%">
+      <span class="ra-wood-flame" data-r="flame"></span>
+      <span class="ra-wood-bar" data-r="woodbar"></span>
+      <span class="ra-wood-lb">${slashDay(d.date)}</span></div>`).join("");
+    S3.push(frame(9, `
+    <div class="ra-woods">
+      <div class="ra-woods-row" data-r="wrow">${woodRows}</div>
+      <div class="ra-woods-side">
+        <div class="ra-kv big"><span class="ra-k">两周添柴</span><b data-r="woodTotal">0</b></div>
+        <div class="ra-kv"><span class="ra-k">最勤一天</span><b>${data.dailyPeak}<span class="ra-u">次</span></b></div>
+      </div>
+    </div>`));
+    const beadN = Math.min(31, Math.max(data.streak, 1));
+    const beads = Array.from({ length: beadN }, (_, i) => `<i class="ra-bead${i === beadN - 1 ? " is-now" : ""}" data-r="bead" style="--i:${i}"></i>`).join("");
+    S3.push(frame(10, `
+    <div class="ra-vigil">
+      <div class="ra-vigil-lamp"><canvas data-cv="vigil" aria-hidden="true"></canvas></div>
+      <div class="ra-vigil-wick" data-r="wick">${beads}</div>
+      <div class="ra-vigil-side">
+        <div class="ra-kv big"><span class="ra-k">连燃</span><b data-r="streakN">0</b><span class="ra-u">天</span></div>
+        <div class="ra-kv"><span class="ra-k">累计</span><b>${data.distinctDays}<span class="ra-u">天</span></b></div>
+        <div class="ra-kv"><span class="ra-k">起点</span><b>${data.firstReviewAt ? escapeHtml2(slashDay(data.firstReviewAt.slice(0, 10))) : "—"}</b></div>
+      </div>
+    </div>`));
+    S3.push(frame(11, `
+    <div class="ra-verdicts">
+      <div class="ra-verdicts-plot" data-r="vplot"><canvas data-cv="verdicts" aria-hidden="true"></canvas></div>
+      <div class="ra-verdicts-side">
+        ${RA_RATING_ORDER.map((k) => `<div class="ra-kv" data-r="vk" data-k="${k}"><span class="ra-k"><i class="dot is-${k}"></i>${RA_RATING_NAMES[k]}</span><b data-r="vn">${data.ratingDist[k] || 0}<span class="ra-u">次</span></b></div>`).join("")}
+        <div class="ra-kv"><span class="ra-k">批改总计</span><b>${data.verdictTotal}<span class="ra-u">次</span></b></div>
+        <div class="ra-kv"><span class="ra-k">忘了率</span><b>${data.againRate == null ? "—" : Math.round(data.againRate * 100) + "%"}</b></div>
+      </div>
+    </div>`));
+    const bedMax = Math.max(1, ...data.bedrock.map((b) => b.s));
+    const bedRows = data.bedrock.map((b, i) => {
+      const tone = emberTone(b.r);
+      return `<div class="ra-bed" data-r="bedrow" data-i="${i}" data-tip="${escapeHtml2(b.name)} · 稳 ${sText(b.s)}${b.r != null ? ` · R ${Math.round(b.r * 100)}%` : ""}" style="--ph:${(b.s / bedMax * 100).toFixed(1)}%">
+      <span class="ra-bed-rank">${i + 1}</span>
+      <span class="ra-bed-bar tone-${tone}" data-r="bedbar"><i class="ra-bed-shine" data-r="shine"></i></span>
+      <span class="ra-bed-name">${escapeHtml2(b.name)}</span>
+      <span class="ra-bed-val">${sText(b.s)}</span></div>`;
+    }).join("");
+    S3.push(frame(12, `
+    <div class="ra-bedrock">
+      <div class="ra-bedrock-rows" data-r="brows">${bedRows || '<p class="ra-sline">还没有进入 FSRS 的笔记——基岩要靠一次次「记得」垒起来。</p>'}</div>
+      <div class="ra-bedrock-side">
+        <div class="ra-kv big"><span class="ra-k">FSRS 在册</span><b>${data.fsrsN}<span class="ra-u">篇</span></b></div>
+        <div class="ra-kv"><span class="ra-k">阶梯爬坡</span><b>${data.ladderN}<span class="ra-u">篇</span></b></div>
+      </div>
+    </div>`));
+    const tideMax = Math.max(1, ...data.next8.map((d) => d.count));
+    const tideBars = data.next8.map((d, i) => `<div class="ra-tidebar${i === 0 ? " is-today" : i === 1 ? " is-tmr" : ""}" data-r="tidebar" data-i="${i}" data-tip="${escapeHtml2(zhDay(d.date))} · ${d.count} 篇" style="--ph:${(d.count / tideMax * 100).toFixed(1)}%">
+      <i class="ra-tidefly" data-r="tidefly"></i>
+      <span class="ra-tidebar-bar" data-r="tidebar"></span>
+      <span class="ra-tidebar-n" data-r="tidebarN">${d.count}</span>
+      <span class="ra-tidebar-lb">${d.label}</span></div>`).join("");
+    S3.push(frame(13, `
+    <div class="ra-portide">
+      <div class="ra-portide-row" data-r="prow">${tideBars}</div>
+      <div class="ra-portide-side">
+        <div class="ra-kv big"><span class="ra-k">明日来潮</span><b>${data.tomorrowN}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">潮水把到期推到岸边——今晚多添一柴，明天的岸就干一分。</p>
+      </div>
+    </div>`));
+    const QCOLS = [
+      ["逾期", data.overdueN, "var(--ra-ember)"],
+      ["今日", data.todayN, "var(--ra-amber)"],
+      ["未来", data.futureN, "var(--ra-indigo)"],
+      ["已完成", data.doneColN, "var(--ra-jade)"]
+    ];
+    const qMax = Math.max(1, ...QCOLS.map(([, n]) => n));
+    const quarters = QCOLS.map(([label, n, color], i) => `<div class="ra-quarter" data-r="quarter" data-i="${i}" data-tip="${label} · ${n} 篇" style="--ph:${(n / qMax * 100).toFixed(1)}%;--qc:${color}">
+      <span class="ra-quarter-lamp" data-r="qlamp"></span>
+      <span class="ra-quarter-n" data-r="qn">0</span>
+      <span class="ra-quarter-lb">${label}</span></div>`).join("");
+    S3.push(frame(14, `
+    <div class="ra-quarters" data-r="qrow">${quarters}</div>`));
+    const markMax = Math.max(1, ...RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0));
+    const marks = RA_RATING_ORDER.map((k, i) => {
+      const n = data.lastDiffDist[k] || 0;
+      return `<div class="ra-mark tone-${k === "again" ? "low" : k === "hard" ? "mid" : "hi"}" data-r="mark" data-i="${i}" data-tip="末次「${RA_RATING_NAMES[k]}」· ${n} 篇" style="--ph:${(n / markMax * 100).toFixed(1)}%;--mi:${i}">
+      <span class="ra-mark-cut" data-r="cut"></span>
+      <span class="ra-mark-n" data-r="markn">${n}</span>
+      <span class="ra-mark-lb">${RA_RATING_NAMES[k]}</span></div>`;
+    }).join("");
+    S3.push(frame(15, `
+    <div class="ra-marks">
+      <div class="ra-marks-row" data-r="mrow">${marks}</div>
+      <div class="ra-marks-side">
+        <div class="ra-kv big"><span class="ra-k">待重做</span><b class="${data.redoN ? "is-hot" : ""}">${data.redoN}<span class="ra-u">篇</span></b></div>
+        <p class="ra-sline">末一次批改落在哪一档，就刻哪一道痕；「忘了」的痕最深，压着下次排期。</p>
+      </div>
+    </div>`));
+    S3.push(frame(16, `
+    <div class="ra-colo">
+      <canvas data-cv="colo" aria-hidden="true"></canvas>
+      <div class="ra-colo-grid">
+        <div class="ra-kv big"><b data-r="coloN">0</b><span>篇在册</span></div>
+        <div class="ra-kv big"><b data-r="coloA">0</b><span>篇在炉</span></div>
+        <div class="ra-kv big"><b data-r="coloD">0</b><span>篇完成</span></div>
+        <div class="ra-kv big"><b data-r="coloS">0</b><span>天连燃</span></div>
+      </div>
+      <p class="ra-colo-line">共 ${RA_SCENES.length} 幕 · 火不灭，账不清</p>
+    </div>`));
+    return `<div class="ra-film">${S3.join("")}</div>`;
+  }
+  function analysisFixedHtml() {
+    return `<div class="ra-fixed">
+    <div class="ra-shutter" data-r="shutter" aria-hidden="true"><i class="t"></i><i class="b"></i></div>
+    <div class="ra-lampcol" data-r="rail">${RA_SCENES.map((s, i) => `<i class="ra-lamp" data-r="lamp" data-i="${i}" title="${escapeHtml2(s.name)}"></i>`).join("")}</div>
+  </div>`;
+  }
+  var RA_SCENES, pad22, slashDay, zhDay, sText, emberTone;
+  var init_view2 = __esm({
+    "src/review/analysis/view.ts"() {
+      init_utils();
+      init_data11();
+      RA_SCENES = [
+        { id: "open", name: "点炉" },
+        { id: "field", name: "忆炉全景" },
+        { id: "slope", name: "忘坡" },
+        { id: "tide", name: "水位" },
+        { id: "debts", name: "欠账" },
+        { id: "steppath", name: "阶石" },
+        { id: "crystal", name: "墨晶" },
+        { id: "strata", name: "矿层" },
+        { id: "dailies", name: "添柴志" },
+        { id: "vigil", name: "长明" },
+        { id: "verdicts", name: "批改环" },
+        { id: "bedrock", name: "基岩" },
+        { id: "portide", name: "来潮" },
+        { id: "quarters", name: "四驻" },
+        { id: "marks", name: "批痕" },
+        { id: "keeper", name: "守夜人" }
+      ];
+      pad22 = (n) => String(n).padStart(2, "0");
+      slashDay = (d) => d.slice(5).replace("-", "/");
+      zhDay = (d) => {
+        const [, m, dd] = d.split("-");
+        return `${Number(m)} 月 ${Number(dd)} 日`;
+      };
+      sText = (s) => s >= 365 ? `${(s / 365).toFixed(1)} 年` : `${Math.round(s)} 天`;
+      emberTone = (r) => r == null ? "off" : r >= 0.7 ? "hi" : r >= 0.4 ? "mid" : "low";
+    }
+  });
+
+  // src/review/analysis/kits.ts
+  function rng2(seed) {
+    let s = seed >>> 0 || 1;
+    return () => {
+      s ^= s << 13;
+      s >>>= 0;
+      s ^= s >> 17;
+      s ^= s << 5;
+      s >>>= 0;
+      return s / 4294967296;
+    };
+  }
+  function palette2(host) {
+    const inkRgb = cssVar(host, "--ra-ink-rgb", "222,228,236");
+    const jadeRgb = cssVar(host, "--ra-jade-rgb", "110,220,196");
+    const amberRgb = cssVar(host, "--ra-amber-rgb", "232,168,86");
+    const emberRgb = cssVar(host, "--ra-ember-rgb", "226,106,88");
+    const indigoRgb = cssVar(host, "--ra-indigo-rgb", "122,152,222");
+    const paper = cssVar(host, "--ra-paper", "#10161d");
+    const dark = luma(inkRgb) > 140;
+    return {
+      ink: `rgb(${inkRgb})`,
+      jade: `rgb(${jadeRgb})`,
+      amber: `rgb(${amberRgb})`,
+      ember: `rgb(${emberRgb})`,
+      indigo: `rgb(${indigoRgb})`,
+      paper,
+      dim: dark ? "rgba(190,200,214,.66)" : "rgba(52,64,80,.72)",
+      faint: dark ? "rgba(190,200,214,.34)" : "rgba(52,64,80,.4)",
+      inkRgb,
+      jadeRgb,
+      amberRgb,
+      emberRgb,
+      indigoRgb,
+      onStrong: dark ? "10,14,20" : "244,248,252",
+      dark
+    };
+  }
+  function canvas(host, key) {
+    const el = host.querySelector(`canvas[data-cv="${key}"]`);
+    if (!el) return null;
+    const ctx = typeof el.getContext === "function" ? el.getContext("2d") : null;
+    if (!ctx) return null;
+    const cv = {
+      el,
+      ctx,
+      w: 0,
+      h: 0,
+      fit() {
+        const dpr = Math.min(2, globalThis.devicePixelRatio || 1);
+        const r = el.getBoundingClientRect();
+        const w = Math.max(1, Math.round(r.width)), h = Math.max(1, Math.round(r.height));
+        if (w === cv.w && h === cv.h) return false;
+        cv.w = w;
+        cv.h = h;
+        el.width = Math.round(w * dpr);
+        el.height = Math.round(h * dpr);
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        return true;
+      },
+      clear() {
+        ctx.clearRect(0, 0, cv.w, cv.h);
+      }
+    };
+    return cv;
+  }
+  function sampleText(text, fontPx, weight = 800, gap = 5) {
+    const c = document.createElement("canvas");
+    const pad = Math.round(fontPx * 0.3);
+    const ctx = c.getContext("2d");
+    if (!ctx) return [];
+    const font = `${weight} ${fontPx}px "Segoe UI", system-ui, -apple-system, sans-serif`;
+    ctx.font = font;
+    const w = Math.ceil(ctx.measureText(text).width) + pad * 2;
+    const h = Math.ceil(fontPx * 1.42);
+    c.width = w;
+    c.height = h;
+    const c2 = c.getContext("2d");
+    if (!c2) return [];
+    c2.font = font;
+    c2.fillStyle = "#fff";
+    c2.textBaseline = "middle";
+    c2.fillText(text, pad, h / 2);
+    const data = c2.getImageData(0, 0, w, h).data;
+    const pts = [];
+    for (let y = 0; y < h; y += gap) {
+      for (let x = 0; x < w; x += gap) {
+        if (data[(y * w + x) * 4 + 3] > 128) pts.push({ x, y });
+      }
+    }
+    return pts.map((p) => ({ x: p.x - w / 2, y: p.y - h / 2 }));
+  }
+  function nearest(spots, at22, radius = 0.06) {
+    if (!at22 || !spots.length) return -1;
+    let best = -1, bd = radius * radius;
+    for (let i = 0; i < spots.length; i++) {
+      const dx = spots[i].x - at22.x, dy = spots[i].y - at22.y;
+      const d = dx * dx + dy * dy;
+      if (d < bd) {
+        bd = d;
+        best = i;
+      }
+    }
+    return best;
+  }
+  function under(p, sel) {
+    if (typeof document === "undefined" || typeof document.elementFromPoint !== "function") return null;
+    try {
+      const hit = document.elementFromPoint(p.cx, p.cy);
+      return hit ? hit.closest(sel) : null;
+    } catch (e) {
+      return null;
+    }
+  }
+  function tip(root, html, cx = 0, cy = 0) {
+    let el = tipNode.get(root);
+    if (!el) {
+      if (typeof document === "undefined") return;
+      el = document.createElement("span");
+      el.className = "ra-tip";
+      el.setAttribute("aria-hidden", "true");
+      root.appendChild(el);
+      tipNode.set(root, el);
+    }
+    if (!html) {
+      if (el.style.opacity !== "0") el.style.opacity = "0";
+      return;
+    }
+    if (el.dataset.h !== html) {
+      el.dataset.h = html;
+      el.innerHTML = html;
+    }
+    el.style.left = `${cx.toFixed(1)}px`;
+    el.style.top = `${cy.toFixed(1)}px`;
+    el.style.opacity = "1";
+  }
+  var clamp013, lerp2, at2, easeOut2, easeInOut2, easeBack2, spring, stagger, rollTo, cssVar, luma, rgba2, qsa, localAt, tipNode, toward;
+  var init_kits = __esm({
+    "src/review/analysis/kits.ts"() {
+      clamp013 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+      lerp2 = (a, b, t) => a + (b - a) * t;
+      at2 = (t, dur, delay = 0) => clamp013((t - delay) / Math.max(dur, 1e-4));
+      easeOut2 = (x) => 1 - Math.pow(1 - x, 3);
+      easeInOut2 = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      easeBack2 = (x) => {
+        const c1 = 1.70158, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+      };
+      spring = (x, damp = 6, freq = 3) => x >= 1 ? 1 : 1 - Math.exp(-damp * x) * Math.cos(freq * Math.PI * x);
+      stagger = (t, i, step = 0.07, dur = 0.7) => at2(t, dur, i * step);
+      rollTo = (n, x, digits = 0, width = 0) => {
+        const v = n * clamp013(x);
+        const s = digits > 0 ? v.toFixed(digits) : String(Math.round(v));
+        return width > 0 ? s.padStart(width, "0") : s;
+      };
+      cssVar = (host, name, fallback) => {
+        const v = getComputedStyle(host).getPropertyValue(name).trim();
+        return v || fallback;
+      };
+      luma = (triplet) => {
+        var _a2, _b2, _c;
+        const n = triplet.split(",").map((x) => Number(x.trim()));
+        return 0.299 * ((_a2 = n[0]) != null ? _a2 : 0) + 0.587 * ((_b2 = n[1]) != null ? _b2 : 0) + 0.114 * ((_c = n[2]) != null ? _c : 0);
+      };
+      rgba2 = (triplet, a) => `rgba(${triplet},${a})`;
+      qsa = (host, sel) => Array.from(host.querySelectorAll(sel));
+      localAt = (host, p) => {
+        if (!host) return null;
+        const r = host.getBoundingClientRect();
+        if (r.width < 1 || r.height < 1) return null;
+        const x = (p.cx - r.left) / r.width, y = (p.cy - r.top) / r.height;
+        return x >= 0 && x <= 1 && y >= 0 && y <= 1 ? { x, y } : null;
+      };
+      tipNode = /* @__PURE__ */ new WeakMap();
+      toward = (cur, target, k = 0.18) => cur + (target - cur) * k;
+    }
+  });
+
+  // src/review/analysis/motions.ts
+  function S2(el, v) {
+    var _a2;
+    if (!el || lastStyle2.get(el) === v) return;
+    const prev = (_a2 = el.getAttribute("style")) != null ? _a2 : "";
+    if (prev) {
+      const vars = prev.match(/--[\w-]+\s*:[^;]*/g);
+      if (vars) {
+        const keep = vars.filter((d) => !v.includes(`${d.split(":")[0].trim()}:`));
+        if (keep.length) v = `${keep.join(";")};${v}`;
+      }
+    }
+    lastStyle2.set(el, v);
+    el.setAttribute("style", v);
+  }
+  function T2(el, v) {
+    if (!el || lastText2.get(el) === v) return;
+    lastText2.set(el, v);
+    el.textContent = v;
+  }
+  function buildPerfs(root, data, host = root) {
+    const out = /* @__PURE__ */ new Map();
+    const scn = (id) => root.querySelector(`[data-id="${id}"]`);
+    if (!scn("open")) return out;
+    const vOf = (el, name, fallback = 0) => {
+      var _a2;
+      const v = parseFloat(String((_a2 = el == null ? void 0 : el.style.getPropertyValue(name)) != null ? _a2 : ""));
+      return Number.isFinite(v) ? v : fallback;
+    };
+    {
+      const s = scn("open");
+      const cv = canvas(s, "open");
+      let ps = [];
+      let builtFor = 0;
+      out.set("open", {
+        dur: 4.2,
+        update({ t, pal, px, py }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          if (cv && ps.length === 0 && w > 8) {
+            builtFor = w;
+            const N = 60;
+            const fontPx = Math.max(120, Math.min(h * 0.5, w * 0.3));
+            const roll2 = rng2(20260922);
+            const resample = (text, fp) => {
+              const raw = sampleText(text, fp, 800, Math.max(3, Math.round(fp / 9)));
+              if (!raw.length) return [];
+              return Array.from({ length: N }, (_, i) => raw[Math.floor(i / N * raw.length)]);
+            };
+            const a = resample(String(data.active), fontPx);
+            const b = resample("忆", fontPx * 0.9);
+            ps = a.map((p, i) => {
+              var _a3, _b3;
+              const ang = i / Math.max(1, N) * Math.PI * 2 + roll2() * 0.6;
+              const rad = Math.max(w, h) * (0.5 + roll2() * 0.45);
+              return {
+                tx: p.x,
+                ty: p.y,
+                tx2: ((_a3 = b[i]) != null ? _a3 : p).x,
+                ty2: ((_b3 = b[i]) != null ? _b3 : p).y,
+                sx: Math.cos(ang) * rad,
+                sy: Math.sin(ang) * rad * 0.68,
+                d: roll2() * 0.5,
+                r: 2.2 + roll2() * 2.6,
+                jade: roll2() < 0.2
+              };
+            });
+          } else if (cv && builtFor !== w && w > 8) {
+            ps = [];
+            builtFor = 0;
+          }
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const cx = w / 2, cy = h / 2;
+            const morph = easeInOut2(at2(t, 1.2, 2.7));
+            const pxx = cx + px * w / 2, pyy = cy + py * h / 2;
+            for (const p of ps) {
+              const k = spring(clamp013((t - p.d) / 1.6), 5.2, 2.6);
+              const txx = lerp2(p.tx, p.tx2, morph), tyy = lerp2(p.ty, p.ty2, morph);
+              const jit = t > 2 ? 1.2 : 0;
+              let x = cx + lerp2(p.sx, txx, k) + Math.sin(t * 1.3 + p.tx * 0.05) * jit;
+              let y = cy + lerp2(p.sy, tyy, k) + Math.cos(t * 1.1 + p.ty * 0.06) * jit;
+              if (px || py) {
+                const dx = x - pxx, dy = y - pyy;
+                const dist = Math.hypot(dx, dy);
+                const R = Math.min(w, h) * 0.16;
+                if (dist < R && dist > 1e-3) {
+                  const f = (1 - dist / R) * 24 * (0.35 + 0.65 * (1 - clamp013(k) * 0.6));
+                  x += dx / dist * f;
+                  y += dy / dist * f;
+                }
+              }
+              ctx.globalAlpha = 0.16 + 0.84 * clamp013(k);
+              ctx.fillStyle = rgba2(p.jade ? pal.jadeRgb : pal.inkRgb, 0.8);
+              ctx.beginPath();
+              ctx.arc(x, y, p.r * (0.45 + 0.55 * clamp013(k)), 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            const sweep3 = at2(t, 0.5, 1.7);
+            if (sweep3 > 0 && sweep3 < 1) {
+              const g = ctx.createLinearGradient(0, 0, w, 0);
+              g.addColorStop(0, rgba2(pal.jadeRgb, 0));
+              g.addColorStop(0.5, rgba2(pal.jadeRgb, 0.12 * Math.sin(sweep3 * Math.PI)));
+              g.addColorStop(1, rgba2(pal.jadeRgb, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(0, cy - h * 0.3, w * sweep3, h * 0.6);
+            }
+          }
+        }
+      });
+    }
+    {
+      const s = scn("field");
+      const cv = canvas(s, "field");
+      const embers = data.liveEmbers.slice(0, 60).map((e) => ({ name: e.name, r: e.r, s: e.s, overdue: e.overdue }));
+      let spots = [];
+      let builtFor = 0;
+      let hot = -1;
+      out.set("field", {
+        dur: 3.4,
+        move(p) {
+          hot = nearest(spots, localAt(cv == null ? void 0 : cv.el, p), 0.09);
+          if (hot >= 0) {
+            const e = embers[hot];
+            const rTxt = e.r == null ? "阶梯期" : `R ${Math.round(e.r * 100)}%`;
+            tip(host, `${e.name} · ${rTxt}`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal, px, py }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          if (cv && spots.length === 0 && w > 8 && embers.length) {
+            builtFor = w;
+            const roll2 = rng2(777);
+            spots = embers.map((e) => {
+              const depth = e.r == null ? 0.5 : 1 - e.r;
+              const a = roll2() * Math.PI * 2;
+              const rx = w * 0.34, ry = h * 0.32;
+              return {
+                x: w / 2 + Math.cos(a) * rx * (0.25 + 0.75 * roll2()),
+                y: h * (0.84 - 0.66 * (1 - depth)) + Math.sin(a) * ry * 0.3
+              };
+            });
+          } else if (cv && builtFor !== w && w > 8) {
+            spots = [];
+            builtFor = 0;
+          }
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const pxx = w / 2 + px * w / 2, pyy = h / 2 + py * h / 2;
+            embers.forEach((e, i) => {
+              var _a3;
+              const p = at2(t, 0.9, i * 0.045);
+              if (p <= 0) return;
+              const base = (_a3 = spots[i]) != null ? _a3 : { x: w / 2, y: h / 2 };
+              const amp = e.r == null ? 3 : 2 + e.r * 4;
+              const x = base.x + Math.sin(t * 0.9 + i * 1.7) * amp * 0.8;
+              const y0 = lerp2(h * 1.05, base.y, easeOut2(p));
+              const y = y0 + Math.cos(t * (0.7 + i % 5 * 0.1) + i) * amp;
+              let push = 0, pushA = 0;
+              if (px || py) {
+                const dx = x - pxx, dy = y - pyy;
+                const dist = Math.hypot(dx, dy);
+                const R = Math.min(w, h) * 0.13;
+                if (dist < R && dist > 1e-3) {
+                  push = (1 - dist / R) * 22;
+                  pushA = Math.atan2(dy, dx);
+                }
+              }
+              const fx = x + Math.cos(pushA) * push, fy = y + Math.sin(pushA) * push;
+              const tone = e.overdue ? pal.emberRgb : e.r == null ? pal.indigoRgb : e.r >= 0.7 ? pal.jadeRgb : e.r >= 0.4 ? pal.amberRgb : pal.emberRgb;
+              const rad = (e.r == null ? 2.4 : 2 + e.r * 3.4) * (i === hot ? 1.9 : 1) * easeOut2(p);
+              const flick = 0.72 + 0.28 * Math.sin(t * (2.2 + i % 7 * 0.3) + i * 2.1);
+              const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, rad * 4.2);
+              g.addColorStop(0, rgba2(tone, 0.85 * flick));
+              g.addColorStop(0.35, rgba2(tone, 0.3 * flick));
+              g.addColorStop(1, rgba2(tone, 0));
+              ctx.fillStyle = g;
+              ctx.beginPath();
+              ctx.arc(fx, fy, rad * 4.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.fillStyle = rgba2(tone, 0.95);
+              ctx.beginPath();
+              ctx.arc(fx, fy, rad * 0.55, 0, Math.PI * 2);
+              ctx.fill();
+            });
+          }
+        }
+      });
+    }
+    {
+      const s = scn("slope");
+      const cv = canvas(s, "slope");
+      const cursor = s.querySelector('[data-r="cursor"]');
+      const oncliff = s.querySelector('[data-r="oncliff"]');
+      const dots = qsa(s, ".ra-slope-dot");
+      const REF_S = [3, 14, 45, 150];
+      let hotI = -1;
+      out.set("slope", {
+        dur: 3.6,
+        move(p) {
+          var _a2, _b2;
+          const dot = under(p, ".ra-slope-dot");
+          hotI = dot ? Number((_a2 = dot.dataset.i) != null ? _a2 : -1) : -1;
+          const l = localAt((_b2 = cursor == null ? void 0 : cursor.offsetParent) != null ? _b2 : null, p);
+          if (hotI >= 0) {
+            const e = data.liveEmbers.filter((x) => x.r != null && x.ageDays != null && x.s > 0)[hotI];
+            if (e) tip(host, `${e.name} · 龄 ${Math.round(e.ageDays)} 天 / 稳 ${Math.round(e.s)} 天 · R ${Math.round(e.r * 100)}%`, p.cx, p.cy);
+          } else if (l) {
+            tip(host, `龄期 ${Math.round(l.x * 3 * 10) / 10}×S`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal, px }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const padL = w * 0.07, padR = w * 0.05, padT = h * 0.12, padB = h * 0.14;
+            const X = (u) => padL + u * (w - padL - padR);
+            const Y = (r) => padT + (1 - r) * (h - padT - padB);
+            const d = 0.9;
+            const grow = easeInOut2(at2(t, 1.9, 0.2));
+            REF_S.forEach((sV, si) => {
+              const gp = clamp013(grow * 1.3 - si * 0.08);
+              if (gp <= 0) return;
+              ctx.beginPath();
+              const steps = 60;
+              for (let i = 0; i <= steps * gp; i++) {
+                const u = i / steps;
+                const r = Math.pow(1 + u * sV * 0 + u * sV / sV * 0 + u / 1 * sV / sV * 0 + u / (sV * d) * sV / sV * 0 + 0, 0);
+                const rr = Math.pow(1 + u * 3 / (sV * d), -d);
+                if (i === 0) ctx.moveTo(X(u), Y(rr));
+                else ctx.lineTo(X(u), Y(rr));
+              }
+              ctx.strokeStyle = rgba2(pal.indigoRgb, 0.34 - si * 0.05);
+              ctx.lineWidth = 1.2;
+              ctx.stroke();
+            });
+            ctx.strokeStyle = rgba2(pal.inkRgb, 0.1);
+            ctx.lineWidth = 1;
+            for (const gv of [0.25, 0.5, 0.75]) {
+              ctx.beginPath();
+              ctx.moveTo(X(0), Y(gv));
+              ctx.lineTo(X(1), Y(gv));
+              ctx.stroke();
+            }
+            const dashT = t * 0.35 % 1;
+            const mainS = 14;
+            ctx.setLineDash([10, 14]);
+            ctx.lineDashOffset = -t * 26;
+            ctx.beginPath();
+            for (let i = 0; i <= 60; i++) {
+              const u = i / 60;
+              const rr = Math.pow(1 + u * 3 / (mainS * d), -d);
+              if (i === 0) ctx.moveTo(X(u), Y(rr));
+              else ctx.lineTo(X(u), Y(rr));
+            }
+            ctx.strokeStyle = rgba2(pal.jadeRgb, 0.5 * at2(t, 0.6, 1.9));
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+            ctx.setLineDash([]);
+            if (px && t > 1.2) {
+              const u = clamp013((px + 1) / 2);
+              ctx.strokeStyle = rgba2(pal.inkRgb, 0.3);
+              ctx.beginPath();
+              ctx.moveTo(X(u), Y(1));
+              ctx.lineTo(X(u), Y(0));
+              ctx.stroke();
+              for (const sV of REF_S) {
+                const rr = Math.pow(1 + u * 3 / (sV * d), -d);
+                ctx.fillStyle = rgba2(pal.indigoRgb, 0.8);
+                ctx.beginPath();
+                ctx.arc(X(u), Y(rr), 2.4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+          }
+          dots.forEach((el, i) => {
+            const p = at2(t, 0.5, 1.4 + i * 0.028);
+            const on = i === hotI && t > 2;
+            S2(el, `opacity:${(p * (on ? 1 : hotI >= 0 ? 0.4 : 0.9)).toFixed(3)};transform:translate(-50%,-50%) scale(${(on ? 2.1 : 0.55 + 0.45 * easeBack2(p)).toFixed(3)})` + (on ? ";z-index:3" : ""));
+          });
+          if (oncliff) {
+            const p = at2(t, 0.6, 2.2);
+            S2(oncliff, `opacity:${p.toFixed(3)}`);
+            T2(oncliff, `${data.rBelow50 + data.rAbove90 === data.total ? 0 : Math.max(0, data.active - data.rBelow50 - data.rAbove90)} 篇`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("tide");
+      const cv = canvas(s, "tide");
+      const gauge = s.querySelector('[data-r="gauge"]');
+      const tplot = s.querySelector('[data-r="tplot"]');
+      const target = data.avgR == null ? 0 : data.avgR;
+      let shown = 0;
+      let pressAt = null;
+      out.set("tide", {
+        dur: 3.2,
+        move(p) {
+          if (pressAt) pressAt = localAt(tplot, p);
+        },
+        down(p) {
+          pressAt = localAt(tplot, p);
+        },
+        up() {
+          pressAt = null;
+        },
+        update({ t, pal }) {
+          var _a2, _b2;
+          if (cv) cv.fit();
+          const w = (_a2 = cv == null ? void 0 : cv.w) != null ? _a2 : 100, h = (_b2 = cv == null ? void 0 : cv.h) != null ? _b2 : 100;
+          const want = pressAt ? clamp013(1 - pressAt.y) : target;
+          const ramp = easeInOut2(at2(t, 2.2, 0.2));
+          shown = t < 0.1 ? 0 : toward(shown, want * ramp, pressAt ? 0.09 : 0.05);
+          const pct = Math.round(shown * 100);
+          if (cv) {
+            cv.clear();
+            const ctx = cv.ctx;
+            const layers = [
+              [pal.jadeRgb, 0.18, 0],
+              [pal.jadeRgb, 0.26, 2.1],
+              [pal.indigoRgb, 0.3, 4.2]
+            ];
+            layers.forEach(([rgb3, alpha, ph], li) => {
+              ctx.beginPath();
+              ctx.moveTo(0, h);
+              const amp = h * (0.03 + li * 0.012);
+              const spd = 0.9 + li * 0.5;
+              for (let x = 0; x <= w; x += 8) {
+                const y = h * (1 - shown) + Math.sin(t * spd + ph + x / (w / (3 + li))) * amp + Math.sin(t * spd * 0.6 + x / (w / 1.7)) * amp * 0.5;
+                ctx.lineTo(x, y);
+              }
+              ctx.lineTo(w, h);
+              ctx.closePath();
+              ctx.fillStyle = rgba2(rgb3, alpha);
+              ctx.fill();
+            });
+            ctx.strokeStyle = rgba2(pal.inkRgb, 0.14);
+            ctx.lineWidth = 1;
+            ctx.setLineDash([3, 7]);
+            for (const gv of [0.25, 0.5, 0.75, 1]) {
+              const y = h * (1 - gv);
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(w, y);
+              ctx.stroke();
+            }
+            ctx.setLineDash([]);
+            if (target > 0) {
+              const y = h * (1 - target);
+              ctx.strokeStyle = rgba2(pal.emberRgb, 0.5 * at2(t, 0.5, 1));
+              ctx.setLineDash([6, 6]);
+              ctx.beginPath();
+              ctx.moveTo(0, y);
+              ctx.lineTo(w, y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          }
+          if (gauge) {
+            S2(gauge, `transform:translateY(${((1 - shown) * 100).toFixed(2)}%);opacity:${at2(t, 0.4, 0.8).toFixed(3)}`);
+            T2(gauge.querySelector("b"), `${pct}%`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("debts");
+      const debts = qsa(s, ".ra-debt");
+      const rots = debts.map((el) => vOf(el, "--rot", 0));
+      const swings = debts.map((el) => vOf(el, "--sw", 0));
+      const total = s.querySelector(".ra-debt-total");
+      let hotDebt = -1;
+      out.set("debts", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-debt");
+          hotDebt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          debts.forEach((el, i) => {
+            const p = at2(t, 0.5, 0.2 + i * 0.09);
+            const on = i === hotDebt && t > 1.2;
+            const swing = Math.sin(t * 1.15 + i * 1.9 + swings[i] * 6.28) * (1.6 + swings[i]);
+            S2(el, `opacity:${Math.min(1, p * 1.6).toFixed(3)};transform:translate(-50%,${((1 - easeBack2(p)) * -26).toFixed(1)}px) rotate(${(rots[i] * easeOut2(p) + swing * (on ? 0.2 : 1)).toFixed(2)}deg)` + (on ? ";z-index:3;filter:brightness(1.14)" : ""));
+          });
+          if (total) {
+            const p = at2(t, 0.6, 1.2);
+            S2(total, `opacity:${p.toFixed(3)};transform:translateY(${((1 - easeOut2(p)) * 10).toFixed(1)}px)`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("steppath");
+      const steps = qsa(s, ".ra-step");
+      const bars = steps.map((el) => el.querySelector('[data-r="stepbar"]'));
+      const nums = steps.map((el) => el.querySelector('[data-r="stepn"]'));
+      const fly = s.querySelector('[data-r="fly"]');
+      const phs = steps.map((el) => vOf(el.querySelector('[data-r="stepbar"]'), "--ph", 0));
+      const row = s.querySelector('[data-r="steps"]');
+      let hotStep = -1;
+      out.set("steppath", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-step");
+          hotStep = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          steps.forEach((el, i) => {
+            const p = stagger(t, i, 0.12, 0.8);
+            const on = i === hotStep && t > 1.6;
+            S2(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center`);
+            S2(el, `opacity:${(at2(t, 0.4, i * 0.12) * (hotStep >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+            T2(nums[i], String(Math.round((data.stageDist[i] || 0) * easeOut2(p))));
+          });
+          if (fly && row) {
+            const span = steps.length - 1;
+            const u = (Math.sin((t - 1.4) * 0.55) * 0.5 + 0.5) * span;
+            const i0 = Math.floor(u), i1 = Math.min(span, i0 + 1);
+            const f = u - i0;
+            const h0 = phs[i0] / 100, h1 = phs[i1] / 100;
+            const lift = lerp2(12 + h0, 12 + h1, easeInOut2(f));
+            const left = (u + 0.5) / steps.length * 100;
+            const glow = 0.5 + 0.5 * Math.sin(t * 3);
+            S2(fly, `--fx:${left.toFixed(2)}%;--fy:${lift.toFixed(2)}%;opacity:${(at2(t, 0.4, 1.4) * (0.55 + 0.45 * glow)).toFixed(3)}`);
+          }
+        }
+      });
+    }
+    {
+      const s = scn("crystal");
+      const blocks = qsa(s, ".ra-crystal");
+      const cvs = blocks.map((_, i) => canvas(s, `crystal${i}`));
+      const ns = data.sBuckets.map((b) => b.n);
+      const weights = blocks.map((el) => vOf(el, "--w", 0));
+      const crow = s.querySelector('[data-r="crow"]');
+      const numsEls = blocks.map((el) => el.querySelector('[data-r="cn"]'));
+      let hotC = -1;
+      out.set("crystal", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-crystal");
+          hotC = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, pal, px, py }) {
+          if (crow && t > 1.8) {
+            S2(crow, `transform:perspective(1100px) rotateX(${(-py * 2.6).toFixed(2)}deg) rotateY(${(px * 3).toFixed(2)}deg)`);
+          }
+          blocks.forEach((el, i) => {
+            const p = at2(t, 0.7, i * 0.16);
+            const on = i === hotC && t > 1.6;
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.16) * (hotC >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut2(p)) * 14 - (on ? 6 : 0)).toFixed(1)}px)`);
+            T2(numsEls[i], String(Math.round(ns[i] * easeOut2(p))));
+            const cv = cvs[i];
+            if (!cv) return;
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const weight = weights[i];
+            if (weight <= 0) {
+              ctx.strokeStyle = rgba2(pal.inkRgb, 0.12);
+              ctx.setLineDash([3, 5]);
+              hexPath(ctx, w / 2, h * 0.62, Math.min(w, h) * 0.16);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              return;
+            }
+            const base = Math.min(w, h) * (0.09 + 0.13 * weight);
+            const glowU = (t * 0.22 + i * 0.37) % 1;
+            ctx.lineWidth = 1.1;
+            const rowsN = 5;
+            let idx = 0;
+            for (let r = 0; r < rowsN; r++) {
+              const count = rowsN - r;
+              for (let c = 0; c < count; c++) {
+                const cx = w / 2 + (c - (count - 1) / 2) * base * 1.78;
+                const cy = h * 0.88 - r * base * 1.54;
+                const size = base * (0.8 + 0.3 * Math.sin(idx * 3.7));
+                const appear = clamp013(at2(t, 0.5, i * 0.16 + idx * 0.05));
+                const near = Math.exp(-Math.pow(glowU * (rowsN * rowsN) - idx, 2) / 3.2);
+                ctx.strokeStyle = rgba2(pal.jadeRgb, (0.24 + 0.6 * near) * appear);
+                ctx.fillStyle = rgba2(pal.jadeRgb, (0.06 + 0.16 * near + 0.1 * weight) * appear);
+                hexPath(ctx, cx, cy, size * easeBack2(appear));
+                ctx.fill();
+                ctx.stroke();
+                idx++;
+              }
+            }
+          });
+        }
+      });
+    }
+    {
+      const s = scn("strata");
+      const strata = qsa(s, ".ra-stratum");
+      const phs = strata.map((el) => vOf(el, "--ph", 0));
+      const nsEls = strata.map((el) => el.querySelector('[data-r="stn"]'));
+      const ns = data.dBuckets.map((b) => b.n);
+      const bed = s.querySelector('[data-r="bed"]');
+      let hotSt = -1;
+      out.set("strata", {
+        dur: 2.6,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-stratum");
+          hotSt = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          strata.forEach((el, i) => {
+            const p = stagger(t, i, 0.16, 0.7);
+            const on = i === hotSt && t > 1.2;
+            S2(el, `--scan:${(t > 1 ? (t - 1) % 4.4 / 4.4 : -1).toFixed(4)};transform:scaleX(${(easeOut2(p) * (on ? 1.02 : 1)).toFixed(4)});transform-origin:left center;opacity:${(at2(t, 0.4, i * 0.16) * (hotSt >= 0 && !on ? 0.5 : 1)).toFixed(3)}`);
+            T2(nsEls[i], String(Math.round(ns[i] * easeOut2(p))));
+          });
+          if (bed) S2(bed, `transform:perspective(1100px) rotateY(${0 .toFixed(2)}deg)`);
+        }
+      });
+    }
+    {
+      const s = scn("dailies");
+      const woods = qsa(s, ".ra-wood");
+      const bars = woods.map((el) => el.querySelector('[data-r="woodbar"]'));
+      const flames = woods.map((el) => el.querySelector('[data-r="flame"]'));
+      const phs = woods.map((el) => vOf(el, "--ph", 0));
+      const wTotal = s.querySelector('[data-r="woodTotal"]');
+      let hotW = -1;
+      out.set("dailies", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-wood");
+          hotW = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          woods.forEach((el, i) => {
+            const p = stagger(t, i, 0.09, 0.6);
+            const on = i === hotW && t > 1.4;
+            S2(bars[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center`);
+            const alive = phs[i] > 0 && p > 0.9 ? 1 : 0;
+            const breath = 0.45 + 0.55 * Math.sin(t * 2.3 + i * 1.4);
+            S2(flames[i], `opacity:${(alive * (0.35 + 0.65 * breath) * (on ? 1.4 : 1)).toFixed(3)};transform:translateX(-50%) scale(${(on ? 1.5 : 0.8 + 0.3 * breath).toFixed(3)})`);
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.09) * (hotW >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+          });
+          if (wTotal) {
+            const p = easeOut2(at2(t, 1.4, 0.6));
+            T2(wTotal, rollTo(data.dailyTotal, p));
+          }
+        }
+      });
+    }
+    {
+      const s = scn("vigil");
+      const cv = canvas(s, "vigil");
+      const beads = qsa(s, ".ra-bead");
+      const streakN = s.querySelector('[data-r="streakN"]');
+      out.set("vigil", {
+        dur: 3.4,
+        update({ t, pal, px, py }) {
+          beads.forEach((el, i) => {
+            const p = at2(t, 0.3, 0.4 + i * 0.075);
+            const lit = p > 0 ? 1 : 0;
+            const pulse = i === beads.length - 1 && p >= 1 ? 0.4 + 0.6 * Math.abs(Math.sin(t * 1.8)) : 1;
+            S2(el, `opacity:${(lit * (i === beads.length - 1 ? pulse : 0.3 + 0.7 * p)).toFixed(3)};transform:scale(${(0.4 + 0.6 * easeBack2(p)).toFixed(3)})`);
+          });
+          if (streakN) {
+            const p = easeOut2(at2(t, 1.6, 0.8));
+            T2(streakN, rollTo(data.streak, p));
+          }
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2, baseY = h * 0.92;
+            const lit = data.streak > 0 ? 1 : easeInOut2(at2(t, 0.8, 0.3));
+            const lean = -px * 10 * lit;
+            const sway = Math.sin(t * 2.1) * 4 + Math.sin(t * 3.7 + 1.2) * 2;
+            const flameH = h * (0.34 + 0.05 * Math.sin(t * 1.6)) * lit;
+            const tipX = cx + lean + sway;
+            const g = ctx.createLinearGradient(cx, baseY, tipX, baseY - flameH);
+            g.addColorStop(0, rgba2(pal.amberRgb, 0.85 * lit));
+            g.addColorStop(0.55, rgba2(pal.jadeRgb, 0.55 * lit));
+            g.addColorStop(1, rgba2(pal.jadeRgb, 0));
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.moveTo(cx - 7 * lit, baseY);
+            ctx.quadraticCurveTo(cx - 9 + lean * 0.4, baseY - flameH * 0.5, tipX, baseY - flameH);
+            ctx.quadraticCurveTo(cx + 9 + lean * 0.4, baseY - flameH * 0.5, cx + 7, baseY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = rgba2(pal.inkRgb, 0.5 * at2(t, 0.3, 0.1));
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(cx, baseY + 4);
+            ctx.lineTo(cx, baseY - 6);
+            ctx.stroke();
+            ctx.fillStyle = rgba2(pal.inkRgb, 0.18);
+            ctx.beginPath();
+            ctx.ellipse(cx, baseY + 8, 22, 4.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+    }
+    {
+      const s = scn("verdicts");
+      const cv = canvas(s, "verdicts");
+      const vRows = qsa(s, '[data-r="vk"]');
+      const TOTAL = Math.max(1, RA_RATING_ORDER.reduce((a, k) => a + (data.ratingDist[k] || 0), 0));
+      let hotK = -1;
+      const toneOf = (k) => k === "again" ? "emberRgb" : k === "hard" ? "amberRgb" : k === "good" ? "jadeRgb" : "inkRgb";
+      out.set("verdicts", {
+        dur: 3.2,
+        move(p) {
+          var _a2;
+          const row = under(p, '[data-r="vk"]');
+          if (row) {
+            hotK = RA_RATING_ORDER.indexOf((_a2 = row.dataset.k) != null ? _a2 : "");
+            return;
+          }
+          const l = localAt(cv == null ? void 0 : cv.el, p);
+          if (!l) {
+            hotK = -1;
+            tip(host, "");
+            return;
+          }
+          const ang = (Math.atan2(l.y - 0.5, l.x - 0.5) + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2);
+          let acc = 0;
+          hotK = -1;
+          for (let i = 0; i < RA_RATING_ORDER.length; i++) {
+            const frac = (data.ratingDist[RA_RATING_ORDER[i]] || 0) / TOTAL;
+            if (frac <= 0) continue;
+            if (ang >= acc && ang < acc + frac * Math.PI * 2) {
+              hotK = i;
+              break;
+            }
+            acc += frac * Math.PI * 2;
+          }
+          if (hotK >= 0) {
+            const k = RA_RATING_ORDER[hotK];
+            tip(host, `${RA_RATING_NAMES[k]} · ${data.ratingDist[k] || 0} 次`, p.cx, p.cy);
+          } else tip(host, "");
+        },
+        update({ t, pal }) {
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2, cy = h / 2;
+            const R = Math.min(w, h) * 0.36, rIn = R * 0.58;
+            const spin = t > 2 ? (t - 2) * 0.12 : 0;
+            let a0 = -Math.PI / 2 + spin;
+            const grow = easeInOut2(at2(t, 2.2, 0.3));
+            RA_RATING_ORDER.forEach((k, i) => {
+              var _a2, _b2;
+              const frac = (data.ratingDist[k] || 0) / TOTAL;
+              if (frac <= 0) return;
+              const sweep3 = frac * Math.PI * 2 * grow;
+              const on = i === hotK;
+              const rOut = R * (on ? 1.07 : 1);
+              ctx.beginPath();
+              ctx.arc(cx, cy, rOut, a0, a0 + sweep3);
+              ctx.arc(cx, cy, rIn, a0 + sweep3, a0, true);
+              ctx.closePath();
+              const toneKey = toneOf(k);
+              const tone = (_a2 = pal[toneKey]) != null ? _a2 : pal.ink;
+              const rgb3 = (_b2 = pal[`${toneKey.replace("Rgb", "")}`]) != null ? _b2 : "";
+              ctx.fillStyle = tone.startsWith("rgb") ? tone : `rgba(${tone},.8)`;
+              ctx.globalAlpha = (on ? 1 : hotK >= 0 ? 0.42 : 0.88) * Math.min(1, grow * 1.4);
+              ctx.fill();
+              ctx.globalAlpha = 1;
+              a0 += frac * Math.PI * 2;
+            });
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillStyle = rgba2(pal.inkRgb, at2(t, 0.5, 1));
+            ctx.font = `700 ${Math.round(Math.min(w, h) * 0.14)}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillText(String(Math.round(data.verdictTotal * grow)), cx, cy);
+            ctx.font = `${Math.round(Math.min(w, h) * 0.07)}px "Segoe UI", system-ui, sans-serif`;
+            ctx.fillStyle = rgba2(pal.inkRgb, 0.5 * at2(t, 0.5, 1.2));
+            ctx.fillText("次批改", cx, cy + Math.min(w, h) * 0.11);
+          }
+          vRows.forEach((row, i) => {
+            const on = i === hotK;
+            S2(row, `opacity:${(at2(t, 0.4, 0.6 + i * 0.1) * (hotK >= 0 && !on ? 0.45 : 1)).toFixed(3)};transform:translateX(${(on ? 6 : 0).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("bedrock");
+      const rows = qsa(s, ".ra-bed");
+      const bars = rows.map((el) => el.querySelector('[data-r="bedbar"]'));
+      const shines = rows.map((el) => el.querySelector('[data-r="shine"]'));
+      const phs = rows.map((el) => vOf(el, "--ph", 0));
+      let hotB = -1;
+      out.set("bedrock", {
+        dur: 3,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-bed");
+          hotB = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          rows.forEach((el, i) => {
+            const p = stagger(t, i, 0.14, 0.9);
+            const on = i === hotB && t > 1.5;
+            S2(bars[i], `width:${phs[i].toFixed(2)}%;transform:scaleX(${easeOut2(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.18)" : "none"}`);
+            S2(shines[i], `opacity:${(p >= 1 ? 0.4 + 0.5 * Math.max(0, Math.sin(t * 1.1 + i * 0.9)) : 0).toFixed(3)};transform:translateX(${((t * 22 + i * 60) % 160 - 30).toFixed(1)}px)`);
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.14) * (hotB >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateX(${(on ? 8 : 0).toFixed(1)}px)`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("portide");
+      const bars = qsa(s, ".ra-tidebar");
+      const columns = bars.map((el) => el.querySelector('[data-r="tidebar"]'));
+      const numsEls = bars.map((el) => el.querySelector('[data-r="tidebarN"]'));
+      const flies = bars.map((el) => el.querySelector('[data-r="tidefly"]'));
+      const phs = bars.map((el) => vOf(el, "--ph", 0));
+      const counts = data.next8.map((d) => d.count);
+      let hotT = -1;
+      out.set("portide", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-tidebar");
+          hotT = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          bars.forEach((el, i) => {
+            const p = stagger(t, i, 0.11, 0.7);
+            const on = i === hotT && t > 1.4;
+            S2(columns[i], `height:${phs[i].toFixed(2)}%;transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center;filter:${on ? "brightness(1.2)" : "none"}`);
+            T2(numsEls[i], String(Math.round((counts[i] || 0) * easeOut2(p))));
+            const alive = (counts[i] || 0) > 0 && p >= 1 ? 1 : 0;
+            const blink = 0.3 + 0.7 * Math.abs(Math.sin(t * 1.7 + i * 1.1));
+            S2(flies[i], `opacity:${(alive * blink * (on ? 1 : 0.8)).toFixed(3)};transform:translate(-50%,${(-4 - 3 * Math.sin(t * 2 + i)).toFixed(1)}px) scale(${(on ? 1.5 : 1).toFixed(2)})`);
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.11) * (hotT >= 0 && !on ? 0.55 : 1)).toFixed(3)}`);
+          });
+        }
+      });
+    }
+    {
+      const s = scn("quarters");
+      const quarters = qsa(s, ".ra-quarter");
+      const lamps = quarters.map((el) => el.querySelector('[data-r="qlamp"]'));
+      const numsEls = quarters.map((el) => el.querySelector('[data-r="qn"]'));
+      const phs = quarters.map((el) => vOf(el, "--ph", 0));
+      const counts = [data.overdueN, data.todayN, data.futureN, data.doneColN];
+      let hotQ = -1;
+      out.set("quarters", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-quarter");
+          hotQ = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t }) {
+          quarters.forEach((el, i) => {
+            const p = stagger(t, i, 0.16, 0.8);
+            const on = i === hotQ && t > 1.5;
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.16) * (hotQ >= 0 && !on ? 0.5 : 1)).toFixed(3)};transform:translateY(${((1 - easeOut2(p)) * 16 - (on ? 6 : 0)).toFixed(1)}px);--breathe:${(0.5 + 0.5 * Math.sin(t * 1.4 + i * 1.6)).toFixed(3)}`);
+            S2(lamps[i], `transform:scaleY(${easeOut2(p).toFixed(4)});transform-origin:bottom center;filter:brightness(${(on ? 1.4 : 0.8 + 0.45 * Math.abs(Math.sin(t * 1.4 + i * 1.6))).toFixed(3)})`);
+            T2(numsEls[i], String(Math.round((counts[i] || 0) * easeOut2(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("marks");
+      const marks = qsa(s, ".ra-mark");
+      const cuts = marks.map((el) => el.querySelector('[data-r="cut"]'));
+      const numsEls = marks.map((el) => el.querySelector('[data-r="markn"]'));
+      const phs = marks.map((el) => vOf(el, "--ph", 0));
+      const mrow = s.querySelector('[data-r="mrow"]');
+      const counts = RA_RATING_ORDER.map((k) => data.lastDiffDist[k] || 0);
+      let hotM = -1;
+      out.set("marks", {
+        dur: 2.8,
+        move(p) {
+          var _a2;
+          const el = under(p, ".ra-mark");
+          hotM = el ? Number((_a2 = el.dataset.i) != null ? _a2 : -1) : -1;
+          if (el == null ? void 0 : el.dataset.tip) tip(host, el.dataset.tip, p.cx, p.cy);
+          else tip(host, "");
+        },
+        update({ t, px, py }) {
+          if (mrow && t > 1.6) {
+            S2(mrow, `transform:perspective(1100px) rotateY(${(px * 2.4).toFixed(2)}deg) rotateX(${(-py * 1.8).toFixed(2)}deg)`);
+          }
+          marks.forEach((el, i) => {
+            const p = stagger(t, i, 0.14, 0.55);
+            const on = i === hotM && t > 1.4;
+            S2(cuts[i], `transform:scaleX(${easeBack2(p).toFixed(4)});transform-origin:left center;filter:${on ? "brightness(1.3)" : "none"}`);
+            const sheen2 = p >= 1 ? Math.max(0, Math.sin(t * 0.9 + i * 1.3)) : 0;
+            S2(el, `opacity:${(at2(t, 0.3, i * 0.14) * (hotM >= 0 && !on ? 0.5 : 1)).toFixed(3)};--sheen:${sheen2.toFixed(3)}`);
+            T2(numsEls[i], String(Math.round((counts[i] || 0) * easeOut2(p))));
+          });
+        }
+      });
+    }
+    {
+      const s = scn("keeper");
+      const cv = canvas(s, "colo");
+      const coloN = s.querySelector('[data-r="coloN"]');
+      const coloA = s.querySelector('[data-r="coloA"]');
+      const coloD = s.querySelector('[data-r="coloD"]');
+      const coloS = s.querySelector('[data-r="coloS"]');
+      const roll2 = rng2(4242);
+      out.set("keeper", {
+        dur: 3.4,
+        update({ t, pal, px, py }) {
+          const dp = (delay) => easeOut2(at2(t, 1.2, delay));
+          T2(coloN, rollTo(data.total, dp(0.2)));
+          T2(coloA, rollTo(data.active, dp(0.45)));
+          T2(coloD, rollTo(data.doneN, dp(0.7)));
+          T2(coloS, rollTo(data.streak, dp(0.95)));
+          if (cv) {
+            cv.fit();
+            cv.clear();
+            const ctx = cv.ctx, w = cv.w, h = cv.h;
+            const cx = w / 2 + px * 8, cy = h / 2 + py * 6;
+            const appear = at2(t, 1.2, 0.4);
+            for (let i = 0; i < 18; i++) {
+              const a = roll2() * Math.PI * 2;
+              const rx = Math.min(w, h) * (0.28 + roll2() * 0.22);
+              const ry = rx * (0.5 + roll2() * 0.3);
+              const spd = 0.25 + roll2() * 0.4;
+              const ph = roll2() * Math.PI * 2;
+              const u = t * spd + ph;
+              const x = cx + Math.cos(u) * rx;
+              const y = cy + Math.sin(u * 0.92 + a) * ry;
+              const tw = 0.35 + 0.65 * Math.abs(Math.sin(t * 1.9 + i * 2.3));
+              ctx.fillStyle = rgba2(pal.jadeRgb, 0.5 * tw * appear);
+              ctx.beginPath();
+              ctx.arc(x, y, 1.6 + tw, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            const breathe = 0.5 + 0.5 * Math.sin(t * 1.1);
+            const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 30 + breathe * 12);
+            g.addColorStop(0, rgba2(pal.amberRgb, 0.3 * appear));
+            g.addColorStop(1, rgba2(pal.amberRgb, 0));
+            ctx.fillStyle = g;
+            ctx.beginPath();
+            ctx.arc(cx, cy, 42 + breathe * 12, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      });
+    }
+    return out;
+  }
+  function hexPath(ctx, cx, cy, r) {
+    ctx.beginPath();
+    for (let i = 0; i < 6; i++) {
+      const a = Math.PI / 6 + i / 6 * Math.PI * 2;
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+  }
+  var lastStyle2, lastText2;
+  var init_motions2 = __esm({
+    "src/review/analysis/motions.ts"() {
+      init_data11();
+      init_kits();
+      lastStyle2 = /* @__PURE__ */ new WeakMap();
+      lastText2 = /* @__PURE__ */ new WeakMap();
+    }
+  });
+
+  // src/review/analysis/engine.ts
+  function reduced5() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function qa3(root, sel) {
+    return [...root.querySelectorAll(sel)];
+  }
+  function bindAnalysis(root, data) {
+    const sc = root.querySelector(".bz-ra-scroll");
+    const film = root.querySelector(".ra-film");
+    const handle = { stop: () => void 0, goTo: () => void 0 };
+    if (!sc || !film) return handle;
+    const scEl = sc;
+    const filmEl = film;
+    const scenes = qa3(film, ".bz-ra-scn");
+    if (!scenes.length) return handle;
+    const perfs = buildPerfs(film, data, root);
+    const lamps = qa3(root, ".ra-lamp");
+    const shutter = root.querySelector('[data-r="shutter"]');
+    const barI = root.querySelector('[data-r="barI"]');
+    const barN = root.querySelector('[data-r="barN"]');
+    const barLine = root.querySelector('[data-r="barLine"]');
+    const pb = root.querySelector('[data-r="pb"]');
+    let pal = palette2(root);
+    let cur = -1;
+    let t0 = performance.now();
+    let raf = 0;
+    let fallback = 0;
+    let dead = false;
+    let autoplay = false;
+    let autoAt = 0;
+    let navTarget = -1;
+    let navUntil = 0;
+    let px = 0, py = 0, cx = 0, cy = 0, pin = 0;
+    const settled = /* @__PURE__ */ new Set();
+    const broken = /* @__PURE__ */ new Set();
+    let cutTimers = [];
+    const unit = () => Math.max(1, scEl.clientHeight);
+    const fitHeight = () => filmEl.style.setProperty("--ra-h", `${unit()}px`);
+    fitHeight();
+    const indexAt = () => clamp3(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
+    function hud(i, p) {
+      var _a2;
+      lamps.forEach((lp, k) => {
+        if (k === i) lp.setAttribute("data-on", "1");
+        else lp.removeAttribute("data-on");
+      });
+      if (barI) barI.textContent = String(i + 1).padStart(2, "0");
+      if (barN) barN.textContent = (_a2 = scenes[i].dataset.name) != null ? _a2 : "";
+      if (barLine) barLine.style.transform = `scaleX(${p.toFixed(4)})`;
+    }
+    function play(perf, scn, ctx) {
+      var _a2;
+      const id = (_a2 = scn.getAttribute("data-id")) != null ? _a2 : "";
+      if (broken.has(id)) return;
+      try {
+        perf.update(ctx);
+      } catch (e) {
+        broken.add(id);
+        scn.classList.add("is-err");
+        try {
+          console.error("[记忆分析] 幕表演异常，该幕转静版：", id, e);
+        } catch (e2) {
+        }
+      }
+    }
+    function activate(i, replay = true) {
+      var _a2, _b2;
+      if (dead || i === cur && !replay) return;
+      if (cur >= 0 && cur !== i) {
+        const prev = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+        if (prev && !settled.has(cur)) {
+          play(prev, scenes[cur], { t: prev.dur, pal, px, py, cx, cy, pin });
+          settled.add(cur);
+        }
+        tip(root, "");
+      }
+      cur = i;
+      settled.delete(i);
+      const perf = perfs.get((_b2 = scenes[i].getAttribute("data-id")) != null ? _b2 : "");
+      if (replay) t0 = performance.now();
+      if (perf) play(perf, scenes[i], { t: replay ? 0 : perf.dur, pal, px, py, cx, cy, pin });
+      const scn = scenes[i];
+      scn.classList.remove("is-in");
+      void scn.offsetWidth;
+      scn.classList.add("is-in");
+      hud(i, 0);
+      autoAt = performance.now();
+    }
+    const clearCut = () => {
+      for (const id of cutTimers) clearTimeout(id);
+      cutTimers = [];
+    };
+    const cutTo = (target, replay) => {
+      navTarget = target;
+      scEl.scrollTop = target * unit();
+      activate(target, replay);
+    };
+    function goTo(i, opts) {
+      var _a2, _b2;
+      const target = clamp3(i, 0, scenes.length - 1);
+      navTarget = target;
+      navUntil = performance.now() + 900;
+      if (target === cur || (opts == null ? void 0 : opts.cut) === false) {
+        activate(target, (_a2 = opts == null ? void 0 : opts.replay) != null ? _a2 : true);
+        return;
+      }
+      if (!shutter) {
+        cutTo(target, (_b2 = opts == null ? void 0 : opts.replay) != null ? _b2 : true);
+        return;
+      }
+      clearCut();
+      shutter.classList.remove("is-open");
+      shutter.classList.add("is-close");
+      cutTimers.push(setTimeout(() => {
+        var _a3;
+        cutTo(target, (_a3 = opts == null ? void 0 : opts.replay) != null ? _a3 : true);
+        shutter.classList.remove("is-close");
+        shutter.classList.add("is-open");
+        cutTimers.push(setTimeout(() => shutter.classList.remove("is-open"), 240));
+      }, 160));
+    }
+    handle.goTo = goTo;
+    const goRel = (dN) => goTo(cur < 0 ? 0 : cur + dN, { cut: true });
+    function syncFromScroll() {
+      if (dead) return;
+      const i = indexAt();
+      if (performance.now() < navUntil && i !== navTarget) return;
+      if (i !== cur) activate(i, true);
+    }
+    let lastWheel = 0;
+    function onWheel(e) {
+      if (dead) return;
+      const now = performance.now();
+      const fresh = now - lastWheel > GESTURE_GAP2;
+      lastWheel = now;
+      if (!fresh) {
+        e.preventDefault();
+        return;
+      }
+      if (Math.abs(e.deltaY) < 1) return;
+      e.preventDefault();
+      setAuto(false);
+      goRel(e.deltaY > 0 ? 1 : -1);
+    }
+    function onKey(e) {
+      if (dead || !root.isConnected) return;
+      const k = e.key;
+      if (k === "ArrowDown" || k === "PageDown") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(1);
+      } else if (k === "ArrowUp" || k === "PageUp") {
+        e.preventDefault();
+        setAuto(false);
+        goRel(-1);
+      } else if (k === "Home") {
+        e.preventDefault();
+        goTo(0, { cut: true });
+      } else if (k === "End") {
+        e.preventDefault();
+        goTo(scenes.length - 1, { cut: true });
+      }
+    }
+    function pump() {
+      if (dead) return;
+      clearTimeout(fallback);
+      tick(performance.now());
+      raf = rafFn2(() => {
+        clearTimeout(fallback);
+        pump();
+      });
+      fallback = setTimeout(() => {
+        rafStop2(raf);
+        pump();
+      }, 220);
+    }
+    function tick(now) {
+      var _a2;
+      if (dead || cur < 0) return;
+      const perf = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+      if (!perf) return;
+      const t = (now - t0) / 1e3;
+      play(perf, scenes[cur], { t, pal, px, py, cx, cy, pin });
+      hud(cur, clamp014(t / perf.dur));
+      if (autoplay && now - autoAt > (perf.dur + 1.4) * 1e3) {
+        if (cur >= scenes.length - 1) setAuto(false);
+        else goRel(1);
+      }
+    }
+    function setAuto(on) {
+      if (autoplay === on) return;
+      autoplay = on;
+      if (pb) {
+        pb.textContent = on ? "停火" : "巡火";
+        pb.classList.toggle("is-on", on);
+      }
+      autoAt = performance.now();
+    }
+    const onOvlClick = (e) => {
+      var _a2;
+      const t = e.target;
+      if (t.closest('[data-r="pb"]')) {
+        setAuto(!autoplay);
+        return;
+      }
+      const lamp = t.closest(".ra-lamp");
+      if (lamp) {
+        setAuto(false);
+        goTo(Number((_a2 = lamp.getAttribute("data-i")) != null ? _a2 : 0), { cut: true });
+      }
+    };
+    const onPointerMove = (e) => {
+      const r = root.getBoundingClientRect();
+      cx = e.clientX;
+      cy = e.clientY;
+      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      pin = 1;
+    };
+    const onPointerLeave = () => {
+      pin = 0;
+      px = 0;
+      py = 0;
+      tip(root, "");
+    };
+    const mo = typeof MutationObserver === "function" ? new MutationObserver(() => {
+      pal = palette2(root);
+    }) : null;
+    mo == null ? void 0 : mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      if (dead || cur < 0) return;
+      fitHeight();
+      const want = cur * unit();
+      if (Math.abs(scEl.scrollTop - want) > 1) scEl.scrollTop = want;
+    }) : null;
+    ro == null ? void 0 : ro.observe(scEl);
+    filmEl.addEventListener("click", onOvlClick);
+    scEl.addEventListener("wheel", onWheel, { passive: false });
+    scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    root.addEventListener("pointermove", onPointerMove, { passive: true });
+    root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    document.addEventListener("keydown", onKey);
+    if (reduced5()) {
+      scenes.forEach((scn, i) => {
+        var _a2;
+        const perf = perfs.get((_a2 = scn.getAttribute("data-id")) != null ? _a2 : "");
+        if (perf) play(perf, scn, { t: perf.dur, pal, px: 0, py: 0, cx: 0, cy: 0, pin: 0 });
+      });
+      cur = scenes.length - 1;
+      hud(scenes.length - 1, 1);
+    } else {
+      activate(0, true);
+      pump();
+    }
+    handle.stop = () => {
+      dead = true;
+      rafStop2(raf);
+      clearTimeout(fallback);
+      mo == null ? void 0 : mo.disconnect();
+      ro == null ? void 0 : ro.disconnect();
+      clearCut();
+      tip(root, "");
+      filmEl.removeEventListener("click", onOvlClick);
+      scEl.removeEventListener("wheel", onWheel);
+      scEl.removeEventListener("scroll", syncFromScroll);
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("keydown", onKey);
+    };
+    return handle;
+  }
+  var GESTURE_GAP2, rafFn2, rafStop2, clamp3, clamp014;
+  var init_engine2 = __esm({
+    "src/review/analysis/engine.ts"() {
+      init_motions2();
+      init_kits();
+      GESTURE_GAP2 = 340;
+      rafFn2 = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
+      rafStop2 = (id) => {
+        if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+        else clearTimeout(id);
+      };
+      clamp3 = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
+      clamp014 = (x) => clamp3(x, 0, 1);
+    }
+  });
+
+  // src/review/analysis/index.ts
+  var analysis_exports = {};
+  __export(analysis_exports, {
+    closeReviewAnalysis: () => closeReviewAnalysis,
+    openReviewAnalysis: () => openReviewAnalysis,
+    unloadReviewAnalysis: () => unloadReviewAnalysis
+  });
+  function fitRaBox(box, panel2) {
+    const r = panel2 == null ? void 0 : panel2.getBoundingClientRect();
+    if (!panel2 || !r || r.width < 40 || r.height < 40) {
+      box.style.left = "16px";
+      box.style.top = "16px";
+      box.style.width = "calc(100vw - 32px)";
+      box.style.height = "calc(100vh - 32px)";
+      box.style.fontSize = "16px";
+      return;
+    }
+    box.style.left = `${Math.round(r.left)}px`;
+    box.style.top = `${Math.round(r.top)}px`;
+    box.style.width = `${Math.round(r.width)}px`;
+    box.style.height = `${Math.round(r.height)}px`;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    box.style.fontSize = `${base.toFixed(2)}px`;
+    box.style.borderRadius = getComputedStyle(panel2).borderTopLeftRadius || "";
+  }
+  async function openReviewAnalysis(app) {
+    const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
+    if (raOvl == null ? void 0 : raOvl.isConnected) {
+      const box2 = raOvl.querySelector(".bz-ra-box");
+      if (box2) {
+        box2.classList.remove("is-nudge");
+        void box2.offsetWidth;
+        box2.classList.add("is-nudge");
+      }
+      return;
+    }
+    let data;
+    try {
+      ensureReview(app);
+      const dm = dataManager2;
+      if (!dm || noStage) throw new Error("no-stage");
+      const items = await dm.loadItems();
+      if (!items.length) throw new Error("empty");
+      let w;
+      try {
+        w = reviewApp.currentW();
+      } catch (e) {
+        w = void 0;
+      }
+      data = deriveAnalysis(items, { w });
+    } catch (e) {
+      const { openReviewReport: openReviewReport2 } = await Promise.resolve().then(() => (init_review(), review_exports));
+      await openReviewReport2(app);
+      return;
+    }
+    const panel2 = document.querySelector("#review-popup");
+    const ovl = document.createElement("div");
+    ovl.className = "bz-ra";
+    ovl.innerHTML = `
+    <div class="bz-ra-box">
+      ${analysisFixedHtml()}
+      <div class="bz-ra-scroll">${analysisHtml(data)}</div>
+    </div>`;
+    const isMobile = (() => {
+      try {
+        return window.matchMedia("(max-width: 768px)").matches;
+      } catch (e) {
+        return false;
+      }
+    })();
+    if (isMobile) {
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "bz-ra-close";
+      close.setAttribute("data-ra-close", "");
+      close.title = "关闭";
+      close.setAttribute("aria-label", "关闭");
+      close.textContent = "✕";
+      ovl.appendChild(close);
+    }
+    document.body.appendChild(ovl);
+    topifyZ(ovl);
+    raOvl = ovl;
+    const box = ovl.querySelector(".bz-ra-box");
+    if (box) {
+      fitRaBox(box, panel2);
+      raSync = () => fitRaBox(box, panel2);
+      window.addEventListener("resize", raSync);
+      if (typeof ResizeObserver === "function" && panel2) {
+        raRo = new ResizeObserver(raSync);
+        raRo.observe(panel2);
+      }
+    }
+    ovl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest("[data-ra-close]")) {
+        closeReviewAnalysis();
+        return;
+      }
+      if (!t.closest(".bz-ra-box")) closeReviewAnalysis();
+    });
+    raEsc = escManager.register("bz-review-analysis", {
+      isVisible: () => !!(raOvl == null ? void 0 : raOvl.isConnected),
+      close: closeReviewAnalysis
+    });
+    raHandle = bindAnalysis(ovl, data);
+  }
+  function closeReviewAnalysis() {
+    raHandle == null ? void 0 : raHandle.stop();
+    raHandle = null;
+    if (raEsc) {
+      try {
+        raEsc.unregister();
+      } catch (e) {
+      }
+      raEsc = null;
+    }
+    if (raSync) {
+      window.removeEventListener("resize", raSync);
+      raSync = null;
+    }
+    raRo == null ? void 0 : raRo.disconnect();
+    raRo = null;
+    raOvl == null ? void 0 : raOvl.remove();
+    raOvl = null;
+  }
+  function unloadReviewAnalysis() {
+    closeReviewAnalysis();
+  }
+  var raOvl, raHandle, raEsc, raSync, raRo;
+  var init_analysis = __esm({
+    "src/review/analysis/index.ts"() {
+      init_z_order();
+      init_esc_manager();
+      init_review();
+      init_app3();
+      init_data11();
+      init_view2();
+      init_engine2();
+      raOvl = null;
+      raHandle = null;
+      raEsc = null;
+      raSync = null;
+      raRo = null;
+    }
+  });
+
   // src/review/stats-ui.ts
   var stats_ui_exports = {};
   __export(stats_ui_exports, {
@@ -41247,17 +46944,17 @@ ${n.content.slice(0, 2e3)}
   async function showStatsModal(app, dm) {
     const items = await dm.loadItems();
     let w;
-    let fit2 = null;
+    let fit3 = null;
     try {
       const appMod = await Promise.resolve().then(() => (init_app3(), app_exports));
       w = appMod.reviewApp.currentW();
-      fit2 = typeof appMod.reviewApp.fitMeta === "function" ? appMod.reviewApp.fitMeta() : null;
+      fit3 = typeof appMod.reviewApp.fitMeta === "function" ? appMod.reviewApp.fitMeta() : null;
     } catch (e) {
       w = void 0;
     }
-    renderStatsModal(app, dm, items, w, fit2);
+    renderStatsModal(app, dm, items, w, fit3);
   }
-  function renderStatsModal(app, dm, items, w, fit2) {
+  function renderStatsModal(app, dm, items, w, fit3) {
     closeStatsModal();
     statsMask = document.createElement("div");
     statsMask.id = "review-stats-mask";
@@ -41281,8 +46978,9 @@ ${n.content.slice(0, 2e3)}
     document.body.appendChild(statsMask);
     document.body.appendChild(statsPopup);
     const stats = computeStats(items, { w });
-    body.innerHTML = buildStatsHTML(app, dm, items, stats, fit2);
+    body.innerHTML = buildStatsHTML(app, dm, items, stats, fit3);
     mountIcons(body);
+    motionStats(body);
     const openTimeline = (el) => {
       const idx = Number(el.dataset.idx);
       const target = items.filter((i) => (i.reviewHistory || []).length).sort((a, b) => {
@@ -41307,7 +47005,7 @@ ${n.content.slice(0, 2e3)}
       close: closeStatsModal
     });
   }
-  function buildStatsHTML(app, dm, items, stats, fit2) {
+  function buildStatsHTML(app, dm, items, stats, fit3) {
     var _a2, _b2;
     const cards = `
     <div class="stat-cards">
@@ -41318,13 +47016,13 @@ ${n.content.slice(0, 2e3)}
       ${statCardHTML("平均 R", stats.avgR === null ? "-" : Math.round(stats.avgR * 100) + "%")}
       ${statCardHTML("复习笔记", stats.reviewedNotes)}
     </div>`;
-    const fitChips = fit2 ? statInlineHTML([
+    const fitChips = fit3 ? statInlineHTML([
       {
-        text: fit2.full ? "记忆曲线：按你的记录定制" : "记忆曲线：简化版",
-        title: fit2.full ? "用全部 19 个记忆参数拟合你的复习记录，越用越贴合你的节奏" : "先用 8 个核心参数拟合的简化版，复习记录攒够后会自动升级为完整定制"
+        text: fit3.full ? "记忆曲线：按你的记录定制" : "记忆曲线：简化版",
+        title: fit3.full ? "用全部 19 个记忆参数拟合你的复习记录，越用越贴合你的节奏" : "先用 8 个核心参数拟合的简化版，复习记录攒够后会自动升级为完整定制"
       },
-      `样本 ${fit2.fitCount} 条`,
-      `拟合于 ${formatRelativeTime(new Date(fit2.fitAt))}`
+      `样本 ${fit3.fitCount} 条`,
+      `拟合于 ${formatRelativeTime(new Date(fit3.fitAt))}`
     ]) : statInlineHTML([{ text: "记忆曲线：默认参数，复习积累后自动拟合", title: "复习记录攒够（约 100 条评级）后会自动拟合你的记忆曲线" }]);
     const total = Object.values(stats.ratingDist).reduce((a, b) => a + b, 0) || 1;
     const ratingBars = ["again", "hard", "good", "easy"].map((r) => ({
@@ -41429,8 +47127,8 @@ ${n.content.slice(0, 2e3)}
       const ratingName = RATING_NAMES2[h.rating] || h.rating;
       const color = RATING_COLORS[h.rating] || "#888";
       const rText = h.R !== void 0 ? `R=${h.R <= 1 ? Math.round(h.R * 100) : Math.round(h.R)}%` : "";
-      const sText = h.stability !== void 0 ? `S=${h.stability}` : "";
-      const meta = [rText, sText].filter(Boolean).join(" · ");
+      const sText2 = h.stability !== void 0 ? `S=${h.stability}` : "";
+      const meta = [rText, sText2].filter(Boolean).join(" · ");
       const line = isLast ? "" : '<div class="bz-review-history-line"></div>';
       return `
       <div class="bz-review-history-item${isLast ? " is-last" : ""}">
@@ -41445,6 +47143,7 @@ ${n.content.slice(0, 2e3)}
     }).join("");
     tl.innerHTML = itemsHTML;
     body.appendChild(tl);
+    motionHistory(body);
     histEsc = escManager.register("bz-review-history", {
       isVisible: () => !!histMask && histMask.style.display === "block",
       close: closeTimeline
@@ -41476,6 +47175,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_stats3();
       init_fsrs();
+      init_motion5();
       statsMask = null;
       statsPopup = null;
       statsEsc = null;
@@ -41551,6 +47251,7 @@ ${n.content.slice(0, 2e3)}
       else el.blur();
     });
     document.body.appendChild(el);
+    motionRatingBar(el);
     el.focus({ preventScroll: true });
     return { close };
   }
@@ -41566,6 +47267,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_fsrs();
       init_render12();
+      init_motion5();
       init_queue();
       init_sprint();
       init_settings_schema2();
@@ -41584,6 +47286,8 @@ ${n.content.slice(0, 2e3)}
           this.sprintStarting = false;
           this.showArchived = false;
           this.escHandle = null;
+          /** 动效 boot 消费标志：showMain 置位，首个 renderEntries 消费（后台刷新静默不重播） */
+          this.motionBootPending = false;
           this.app = app;
           this.dataManager = dataManager3;
           this.createMainUI();
@@ -41628,11 +47332,13 @@ ${n.content.slice(0, 2e3)}
           topifyZ(this.mask, this.popup);
           this.mask.style.display = "block";
           this.popup.style.display = "flex";
+          this.motionBootPending = true;
           trapPanelFocus(this.popup);
           await this.showQueue();
         }
         hideMain() {
           if (this.sprint) return;
+          motionTeardown5();
           if (this.mask) this.mask.style.display = "none";
           if (this.popup) this.popup.style.display = "none";
         }
@@ -41640,6 +47346,7 @@ ${n.content.slice(0, 2e3)}
           const sprint = this.sprint;
           this.sprint = null;
           sprint == null ? void 0 : sprint.destroy();
+          motionTeardown5();
           this.hideMain();
           if (this.escHandle) {
             this.escHandle.unregister();
@@ -41703,6 +47410,10 @@ ${n.content.slice(0, 2e3)}
           });
           if (focusKey) restoreFocusKey(container, focusKey);
           this.bindQueueEvents(container, items);
+          if (this.motionBootPending) {
+            this.motionBootPending = false;
+            motionQueueBoot(container);
+          }
         }
         /** 切回队列视图（冲刺结束回调）；遇仍活动的会话先销毁再置空（防孤儿 ESC 层） */
         async showQueue() {
@@ -41729,18 +47440,30 @@ ${n.content.slice(0, 2e3)}
         bindQueueEvents(container, items) {
           var _a2, _b2, _c, _d, _e, _f;
           (_a2 = container.querySelector('[data-act="close"]')) == null ? void 0 : _a2.addEventListener("click", () => this.hideMain());
-          (_b2 = container.querySelector('[data-act="begin"]')) == null ? void 0 : _b2.addEventListener("click", () => void this.beginRound());
+          (_b2 = container.querySelector('[data-act="begin"]')) == null ? void 0 : _b2.addEventListener("click", () => {
+            const strip = container.querySelector(".bz-q-strip");
+            if (strip) motionChargeStrip(strip);
+            void this.beginRound();
+          });
           (_c = container.querySelector('[data-act="arch"]')) == null ? void 0 : _c.addEventListener("click", () => {
             this.showArchived = !this.showArchived;
             void this.refreshPanel();
           });
-          (_d = container.querySelector('[data-act="stats"]')) == null ? void 0 : _d.addEventListener("click", () => void this.openStats());
+          (_d = container.querySelector('[data-act="stats"]')) == null ? void 0 : _d.addEventListener("click", () => {
+            void (async () => {
+              const { openReviewAnalysis: openReviewAnalysis3 } = await Promise.resolve().then(() => (init_analysis(), analysis_exports));
+              await openReviewAnalysis3(this.app);
+            })();
+          });
           (_e = container.querySelector('[data-act="add-current"]')) == null ? void 0 : _e.addEventListener("click", () => void this.addCurrentNote());
           (_f = container.querySelector('[data-act="watch-help"]')) == null ? void 0 : _f.addEventListener("click", () => void this.showWatchHelp());
           container.querySelectorAll(".bz-q-card[data-id]:not(.no)").forEach((card) => {
             const activate = () => {
               const it = items.find((x) => x.id === card.dataset.id);
-              if (it && isPlayable2(it)) void this.beginSingle(it);
+              if (it && isPlayable2(it)) {
+                motionDrawCard(card);
+                void this.beginSingle(it);
+              }
             };
             card.addEventListener("click", activate);
             card.addEventListener("keydown", (e) => {
@@ -41822,11 +47545,6 @@ ${n.content.slice(0, 2e3)}
           });
           return this.sprint.start();
         }
-        // ================= 归档 / 统计 =================
-        async openStats() {
-          const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
-          await showStatsModal2(this.app, this.dataManager);
-        }
         // ================= 难度弹窗（评分命令用；U4/A4/E7/U10 迁 openFlowDialog choice 形态） =================
         /** 四档评级 + 取消：ESC/遮罩/焦点圈闭/关闭还原焦点全由 core flow-dialog 单源收口
          *  （旧自绘 .difficulty-dialog 的 ESC 关错层、外点穿透、companion 残留随之消亡）。
@@ -41874,11 +47592,11 @@ ${n.content.slice(0, 2e3)}
           card.addEventListener("contextmenu", (e) => {
             e.preventDefault();
             e.stopPropagation();
-            void this.openDrawer(item, card);
+            void this.openDrawer(item, e.clientX, e.clientY);
           });
         }
-        async openDrawer(item, anchor) {
-          const { attachItemActions: attachItemActions2, closeItemMenu: closeItemMenu2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
+        async openDrawer(item, x, y) {
+          const { openItemMenu: openItemMenu2, resetItemMenuClickGuard: resetItemMenuClickGuard2 } = await Promise.resolve().then(() => (init_item_actions(), item_actions_exports));
           const actions = [
             {
               icon: "file-text",
@@ -41925,7 +47643,8 @@ ${n.content.slice(0, 2e3)}
               }
             }
           ];
-          attachItemActions2(anchor, actions);
+          openItemMenu2(x, y, actions, true, "bz-rv-menu");
+          resetItemMenuClickGuard2();
         }
         async openItemFile(item) {
           const file = this.app.vault.getAbstractFileByPath(item.filePath);
@@ -41981,30 +47700,30 @@ ${n.content.slice(0, 2e3)}
     for (const p of paths) {
       const qs = notes[p];
       if (!qs || !qs.length) continue;
-      for (const q2 of qs) out.push({ ...q2, notePath: p });
+      for (const q3 of qs) out.push({ ...q3, notePath: p });
     }
     return out;
   }
   function pickRoundQuestions(all, batch) {
     const pools = /* @__PURE__ */ new Map();
-    for (const q2 of all) {
-      const key = q2.notePath || "";
+    for (const q3 of all) {
+      const key = q3.notePath || "";
       const pool = pools.get(key);
-      if (pool) pool.push(q2);
-      else pools.set(key, [q2]);
+      if (pool) pool.push(q3);
+      else pools.set(key, [q3]);
     }
     const out = [];
     const capped = batch > 0;
     while (pools.size) {
       let took = false;
       for (const [key, pool] of pools) {
-        const q2 = pool.shift();
-        if (!q2) {
+        const q3 = pool.shift();
+        if (!q3) {
           pools.delete(key);
           continue;
         }
         took = true;
-        out.push(q2);
+        out.push(q3);
         if (capped && out.length >= batch) return out;
       }
       if (!took) break;
@@ -42065,6 +47784,7 @@ ${n.content.slice(0, 2e3)}
       init_ui();
       init_quiz_core();
       init_render12();
+      init_motion5();
       init_quiz_panel_data();
       MASK_ID2 = "bz-quiz-practice-mask";
       POPUP_ID = "bz-quiz-practice-popup";
@@ -42156,6 +47876,7 @@ ${n.content.slice(0, 2e3)}
           });
           mountIcons(this.content);
           this.bindSetup();
+          motionQuizSetup(this.content);
           if (focusKey) this.restoreFocus(focusKey);
         }
         /** E5：面板内焦点控件 → data-* 特征键，null = 面板外/无可记忆焦点 */
@@ -42330,6 +48051,7 @@ ${n.content.slice(0, 2e3)}
           });
           (_b2 = this.content.querySelector('[data-act="finish"]')) == null ? void 0 : _b2.addEventListener("click", () => this.hide());
           this.present();
+          motionQuizSummary(this.content, results.accuracy >= 90 ? "优" : "完成");
         }
       };
       panel = null;
@@ -42342,6 +48064,7 @@ ${n.content.slice(0, 2e3)}
     dataManager: () => dataManager2,
     ensureReview: () => ensureReview,
     openQuizPractice: () => openQuizPractice,
+    openReviewAnalysis: () => openReviewAnalysis2,
     openReviewPanel: () => openReviewPanel,
     openReviewReport: () => openReviewReport,
     reviewAddCurrent: () => reviewAddCurrent,
@@ -42416,6 +48139,11 @@ ${n.content.slice(0, 2e3)}
     ensureReview(app);
     const { showStatsModal: showStatsModal2 } = await Promise.resolve().then(() => (init_stats_ui(), stats_ui_exports));
     await showStatsModal2(app, dataManager2);
+  }
+  async function openReviewAnalysis2(app) {
+    ensureReview(app);
+    const mod = await Promise.resolve().then(() => (init_analysis(), analysis_exports));
+    await mod.openReviewAnalysis(app);
   }
   function openQuizPractice(app) {
     void openQuizPanel(app);
@@ -42537,6 +48265,7 @@ ${n.content.slice(0, 2e3)}
     reviewApp._reviewNotice = null;
     reviewApp._notifiedOverdue.clear();
     unloadQuizPanel();
+    unloadReviewAnalysis();
     resetQuiz();
     for (const off of unsubscribers) {
       try {
@@ -42557,13 +48286,14 @@ ${n.content.slice(0, 2e3)}
       init_utils();
       init_notice();
       init_domain_bus();
-      init_data9();
+      init_data10();
       init_watch();
       init_ui9();
       init_app3();
       init_quiz_panel();
       init_quiz_core();
       init_stats_ui();
+      init_analysis();
       init_flow_dialog();
       initialized5 = false;
       dataManager2 = null;
@@ -42603,8 +48333,8 @@ ${n.content.slice(0, 2e3)}
       init_app();
       init_settings_provider();
       init_fsrs();
-      init_data9();
-      init_data9();
+      init_data10();
+      init_data10();
       init_fit();
       init_fsrs();
       init_queue();
@@ -42685,9 +48415,9 @@ ${n.content.slice(0, 2e3)}
          *  issue 361：同时留存 _fitMeta（契约版本/样本数/档位），统计弹窗标注拟合档位用 */
         async loadFitParams(app) {
           try {
-            const fit2 = await loadFittedParams(app);
-            this._fitMeta = fit2;
-            this._fittedW = fit2 ? mergeFittedW(fit2.w) : null;
+            const fit3 = await loadFittedParams(app);
+            this._fitMeta = fit3;
+            this._fittedW = fit3 ? mergeFittedW(fit3.w) : null;
           } catch (e) {
             this._fitMeta = null;
             this._fittedW = null;
@@ -42865,7 +48595,7 @@ ${n.content.slice(0, 2e3)}
             await quiz.manager.saveQuestionsForNote(getApp(), filePath, leftover);
           }
           const picked = fresh.length ? fresh : leftover;
-          return picked.map((q2, i) => ({ ...q2, notePath: filePath, _index: i }));
+          return picked.map((q3, i) => ({ ...q3, notePath: filePath, _index: i }));
         },
         /** 批量生成题目（返回 {filePath: questions[]} 映射）：先快照存量题再清库触发重出。
          *  A1：生成成功才覆盖写新题，失败/空篇把存量题原样写回（saveQuestionsForNote 内 mutateQuiz
@@ -42897,8 +48627,8 @@ ${n.content.slice(0, 2e3)}
           for (const item of items) {
             const qs = await quiz.manager.getQuestionsForNote(app, item.filePath);
             if (qs && qs.length) {
-              out[item.filePath] = qs.map((q2, i) => ({
-                ...q2,
+              out[item.filePath] = qs.map((q3, i) => ({
+                ...q3,
                 notePath: item.filePath,
                 _index: i
               }));
@@ -43002,9 +48732,9 @@ ${n.content.slice(0, 2e3)}
           const app = getApp();
           const { uiManager: uiManager3 } = await Promise.resolve().then(() => (init_review(), review_exports));
           if (!uiManager3) return;
-          let streakDays = 0;
+          let streakDays2 = 0;
           try {
-            streakDays = computeStats(await this.dataManager.loadItems()).streak;
+            streakDays2 = computeStats(await this.dataManager.loadItems()).streak;
           } catch (e) {
           }
           const quiz = await this.getQuiz();
@@ -43023,12 +48753,12 @@ ${n.content.slice(0, 2e3)}
             queue: items,
             mode,
             quiz,
-            streakDays,
+            streakDays: streakDays2,
             fetchQuestions: async (item) => {
               var _a2;
               const qs = await ((_a2 = quiz == null ? void 0 : quiz.manager) == null ? void 0 : _a2.getQuestionsForNote(app, item.filePath));
               if (qs && qs.length) {
-                return qs.map((q2, i) => ({ ...q2, notePath: item.filePath, _index: i }));
+                return qs.map((q3, i) => ({ ...q3, notePath: item.filePath, _index: i }));
               }
               if (!(quiz == null ? void 0 : quiz.ai)) return null;
               if (mode === "round") {
@@ -43676,11 +49406,11 @@ ${n.content.slice(0, 2e3)}
     let panel2 = primary.panel;
     if (conflict.panel && (!panel2 || conflict.panel.generatedAt > panel2.generatedAt)) panel2 = conflict.panel;
     const queue = [...primary.link.queue];
-    const seen = new Set(queue.map((q2) => q2.path));
-    for (const q2 of conflict.link.queue) {
-      if (!seen.has(q2.path)) {
-        seen.add(q2.path);
-        queue.push(q2);
+    const seen = new Set(queue.map((q3) => q3.path));
+    for (const q3 of conflict.link.queue) {
+      if (!seen.has(q3.path)) {
+        seen.add(q3.path);
+        queue.push(q3);
       }
     }
     const state3 = { ...primary.link.state };
@@ -43983,7 +49713,7 @@ ${n.content.slice(0, 2e3)}
   });
 
   // src/secondbrain/link-agent/data.ts
-  var init_data10 = __esm({
+  var init_data12 = __esm({
     "src/secondbrain/link-agent/data.ts"() {
       init_utils();
       init_knowledge_boxes();
@@ -44020,7 +49750,7 @@ ${n.content.slice(0, 2e3)}
   var init_weekly = __esm({
     "src/secondbrain/weekly.ts"() {
       init_store_file();
-      init_data10();
+      init_data12();
       init_tfidf();
       init_chunk();
       init_config4();
@@ -45169,7 +50899,7 @@ ${n.content.slice(0, 2e3)}
     return out;
   }
   var ENCRYPT_CHANGED_CHANNEL, ENCRYPT_UNLOCK_CHANGED_CHANNEL, RAND_CHARS, STAGING_DIR, PENDING_FILE, BLOB_CONCURRENCY, SafeManager;
-  var init_data11 = __esm({
+  var init_data13 = __esm({
     "src/encrypt/data.ts"() {
       init_app();
       init_domain_bus();
@@ -46349,12 +52079,12 @@ ${n.content.slice(0, 2e3)}
     const scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
     const w = Math.max(1, Math.round(img.naturalWidth * scale));
     const h = Math.max(1, Math.round(img.naturalHeight * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = w;
+    canvas2.height = h;
+    const ctx = canvas2.getContext("2d");
     ctx.drawImage(img, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const dataUrl = canvas2.toDataURL("image/jpeg", quality);
     return { dataUrl, width: w, height: h };
   }
   async function videoFrame(src, maxSize = PREVIEW_OMIT_SIZE, quality = PREVIEW_OMIT_QUALITY) {
@@ -46394,12 +52124,12 @@ ${n.content.slice(0, 2e3)}
     const scale = Math.min(1, maxSize / Math.max(vw, vh));
     const w = Math.max(1, Math.round(vw * scale));
     const h = Math.max(1, Math.round(vh * scale));
-    const canvas = document.createElement("canvas");
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext("2d");
+    const canvas2 = document.createElement("canvas");
+    canvas2.width = w;
+    canvas2.height = h;
+    const ctx = canvas2.getContext("2d");
     ctx.drawImage(video, 0, 0, w, h);
-    const dataUrl = canvas.toDataURL("image/jpeg", quality);
+    const dataUrl = canvas2.toDataURL("image/jpeg", quality);
     return { dataUrl, width: w, height: h };
   }
   var PREVIEW_TIMEOUT_MS, PREVIEW_OMIT_SIZE, PREVIEW_OMIT_QUALITY;
@@ -46414,10 +52144,10 @@ ${n.content.slice(0, 2e3)}
 
   // src/password-vault/data.ts
   var PASSWORD_VAULT_CHANNEL, DEFAULT_PW_CHARSET, VAULT_KIND, VAULT_PATH, VAULT_TITLE, PasswordVaultDataManager;
-  var init_data12 = __esm({
+  var init_data14 = __esm({
     "src/password-vault/data.ts"() {
       init_domain_bus();
-      init_data11();
+      init_data13();
       PASSWORD_VAULT_CHANNEL = "password-vault:changed";
       DEFAULT_PW_CHARSET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ~!@$%^&*()_+";
       VAULT_KIND = "password-vault";
@@ -46685,7 +52415,7 @@ ${n.content.slice(0, 2e3)}
     const { counts, attachments, attBytes, recent: recent2, health } = stats;
     const kb = attBytes > 0 ? (attBytes / 1024).toFixed(1) + " KB" : "—";
     const healthRows = health == null ? `<div class="bz-vault-hrow"><span class="dot" style="background:var(--bz-text-3)"></span><span class="lbl">待处理</span><span class="n">未体检</span></div>` : `<div class="bz-vault-hrow"><span class="dot" style="background:${health.issues ? "var(--bz-danger)" : "var(--bz-success)"}"></span><span class="lbl">待处理</span><span class="n">${health.issues}</span></div>`;
-    const recentRows = recent2.length ? recent2.map((r) => {
+    const recentRows2 = recent2.length ? recent2.map((r) => {
       const color = r.kind === "note" ? ASSET_COLOR.note : ASSET_COLOR.diary;
       const iconName = r.kind === "note" ? "file-lock" : "book-lock";
       return `<div class="bz-vault-minirow" role="button" tabindex="0" data-recent="${r.kind}"${r.id ? ` data-recent-id="${escapeHtml2(r.id)}"` : ""}>
@@ -46723,7 +52453,7 @@ ${n.content.slice(0, 2e3)}
   <div class="bz-vault-two">
     <div class="panel">
       <div class="pt">最近加密<span class="more" role="button" tabindex="0" data-hero="recent-all">查看全部 →</span></div>
-      ${recentRows}
+      ${recentRows2}
     </div>
     <div class="panel" role="button" tabindex="0" data-hero="health" title="打开保险库体检">
       <div class="pt">保险库体检<span class="more">查看 →</span></div>
@@ -46791,11 +52521,11 @@ ${n.content.slice(0, 2e3)}
     const box = document.createElement("div");
     box.className = "bz-lockscreen-box";
     box.dataset.ls = "box";
-    const seal = document.createElement("div");
-    seal.className = "bz-lockscreen-seal";
-    seal.dataset.ls = "seal";
-    seal.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
-    box.appendChild(seal);
+    const seal2 = document.createElement("div");
+    seal2.className = "bz-lockscreen-seal";
+    seal2.dataset.ls = "seal";
+    seal2.appendChild(uiIcon(opts.icon || "lock", "bz-lockscreen-seal-ic"));
+    box.appendChild(seal2);
     const title = document.createElement("h4");
     title.className = "bz-lockscreen-title";
     title.dataset.ls = "title";
@@ -47290,10 +53020,10 @@ ${n.content.slice(0, 2e3)}
       init_settings_provider();
       init_settings_modal();
       init_settings_common();
-      init_data11();
+      init_data13();
       init_domain_bus();
       init_preview();
-      init_data12();
+      init_data14();
       init_vault_assets_view();
       init_lock_screen();
       init_lock_stats();
@@ -49483,11 +55213,11 @@ ${n.content.slice(0, 2e3)}
 
   // src/smartcat/character.ts
   function randomOceanSeed() {
-    const clamp2 = (v) => Math.min(0.9, Math.max(0.1, v));
+    const clamp4 = (v) => Math.min(0.9, Math.max(0.1, v));
     const g = () => {
       const r1 = Math.max(1e-9, Math.random());
       const r2 = Math.max(1e-9, Math.random());
-      return clamp2(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
+      return clamp4(0.5 + 0.15 * Math.sqrt(-2 * Math.log(r1)) * Math.cos(2 * Math.PI * r2));
     };
     return {
       openness: g(),
@@ -49755,7 +55485,7 @@ ${n.content.slice(0, 2e3)}
     await jsonFileStore(getSmartcatFilePath(), { writeIfChanged: true, app }).write(data);
   }
   var SMARTCAT_FILE, SMARTCAT_VEC_FILE, DAY_MS2;
-  var init_data13 = __esm({
+  var init_data15 = __esm({
     "src/smartcat/data.ts"() {
       init_storage();
       init_config5();
@@ -50161,9 +55891,9 @@ ${n.content.slice(0, 2e3)}
     if (rec.secondBrainAllowPaths !== void 0) {
       const before = String((_a2 = rec.secondBrainAllowPaths) != null ? _a2 : "");
       const boxes = getKnowledgeBoxes(rec);
-      const after3 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
-      if (after3 !== before) {
-        rec.secondBrainAllowPaths = after3;
+      const after5 = parseDirList(before).filter((p) => !isBoxDir(p, boxes)).join(",");
+      if (after5 !== before) {
+        rec.secondBrainAllowPaths = after5;
         migrated = true;
       }
     }
@@ -50173,7 +55903,7 @@ ${n.content.slice(0, 2e3)}
   var init_settings8 = __esm({
     "src/settings.ts"() {
       init_knowledge_boxes();
-      init_data12();
+      init_data14();
       init_keys();
       MEMO_KEY_MIGRATIONS = [
         ["todoPanelWidth", "memoPanelWidth"],
@@ -50599,12 +56329,12 @@ ${n.content.slice(0, 2e3)}
           });
         },
         smartcat: async () => {
-          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data13(), data_exports));
+          const { loadSmartCatData: loadSmartCatData2 } = await Promise.resolve().then(() => (init_data15(), data_exports));
           const { smartcatSettingsSchema: smartcatSettingsSchema2 } = await Promise.resolve().then(() => (init_ui11(), ui_exports9));
           const app = getApp();
           const data = await loadSmartCatData2(app);
           const saveConfig = async (config) => {
-            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data13(), data_exports));
+            const { saveSmartCatData: saveSmartCatData2 } = await Promise.resolve().then(() => (init_data15(), data_exports));
             data.config = config;
             await saveSmartCatData2(app, data);
           };
@@ -50765,8 +56495,8 @@ ${n.content.slice(0, 2e3)}
             const next = cur < 0 ? e.key === "ArrowDown" ? 0 : items.length - 1 : e.key === "ArrowDown" ? Math.min(cur + 1, items.length - 1) : Math.max(cur - 1, 0);
             items[next].focus();
           });
-          const renderNav2 = (q2) => {
-            const query = q2.trim();
+          const renderNav2 = (q3) => {
+            const query = q3.trim();
             nav.innerHTML = "";
             const visible = listableDomains();
             const matches = (d) => !query || spMatch(d.name, query) || spMatch(d.desc, query) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
@@ -50805,8 +56535,8 @@ ${n.content.slice(0, 2e3)}
           searchIn.addEventListener("input", () => applySearch());
           searchIn.addEventListener("keydown", (e) => {
             var _a3, _b2;
-            const q2 = searchIn.value.trim();
-            if (e.key === "Escape" && q2) {
+            const q3 = searchIn.value.trim();
+            if (e.key === "Escape" && q3) {
               e.preventDefault();
               e.stopImmediatePropagation();
               searchIn.value = "";
@@ -50816,8 +56546,8 @@ ${n.content.slice(0, 2e3)}
               searchIn.focus();
               return;
             }
-            if (e.key === "Enter" && q2) {
-              const first = this.matchedDomains(q2)[0];
+            if (e.key === "Enter" && q3) {
+              const first = this.matchedDomains(q3)[0];
               if (!first) return;
               e.preventDefault();
               this.activeDomainId = first.id;
@@ -50988,16 +56718,16 @@ ${n.content.slice(0, 2e3)}
          *   恢复分支因此永不放行 visibleWhen 隐藏的行/组；清空后再经渲染句柄 refresh 重求值门控兜底）；
          * - 组卡「N 项」徽标按当前可见行数重算（UI-6：搜索态计数与实际可见行数一致）。
          */
-        applyHitFilter(root, q2) {
+        applyHitFilter(root, q3) {
           root.querySelectorAll(".bz-sp-set-row").forEach((row) => {
             if (row.dataset.spHitHidden === "1") {
               row.style.display = "";
               delete row.dataset.spHitHidden;
             }
-            const hit = !!q2 && !!row.textContent && spMatch(row.textContent, q2);
+            const hit = !!q3 && !!row.textContent && spMatch(row.textContent, q3);
             row.classList.toggle("hit", hit);
-            this.markHitText(row, q2);
-            if (q2 && !hit && row.style.display !== "none") {
+            this.markHitText(row, q3);
+            if (q3 && !hit && row.style.display !== "none") {
               row.style.display = "none";
               row.dataset.spHitHidden = "1";
             }
@@ -51007,14 +56737,14 @@ ${n.content.slice(0, 2e3)}
               g.style.display = "";
               delete g.dataset.spHitHidden;
             }
-            if (!q2) return;
+            if (!q3) return;
             const any = [...g.querySelectorAll(".bz-sp-set-row")].some((r) => r.style.display !== "none");
             if (!any && g.style.display !== "none") {
               g.style.display = "none";
               g.dataset.spHitHidden = "1";
             }
           });
-          if (!q2) {
+          if (!q3) {
             this.renderHandles.forEach((h) => h.refresh());
           }
           refreshGroupCounts(root);
@@ -51025,8 +56755,8 @@ ${n.content.slice(0, 2e3)}
          * data-sp-orig（行 DOM 生命周期内的还原底稿）再按小写归一切片重建文本节点，
          * 不做动态 regex（与 UX-1 修法建议同口径，无注入面）；q 清空按 orig 还原。
          */
-        markHitText(row, q2) {
-          const needle = q2.trim().toLowerCase();
+        markHitText(row, q3) {
+          const needle = q3.trim().toLowerCase();
           row.querySelectorAll(".bz-sp-set-name, .bz-sp-set-desc").forEach((el) => {
             var _a2, _b2;
             if (el.dataset.spOrig === void 0) el.dataset.spOrig = (_a2 = el.textContent) != null ? _a2 : "";
@@ -51039,14 +56769,14 @@ ${n.content.slice(0, 2e3)}
             const lower = text.toLowerCase();
             let cursor = 0;
             for (; ; ) {
-              const at = lower.indexOf(needle, cursor);
-              if (at < 0) break;
-              if (at > cursor) el.append(document.createTextNode(text.slice(cursor, at)));
+              const at3 = lower.indexOf(needle, cursor);
+              if (at3 < 0) break;
+              if (at3 > cursor) el.append(document.createTextNode(text.slice(cursor, at3)));
               const mark = document.createElement("mark");
               mark.className = "bz-sp-mark";
-              mark.textContent = text.slice(at, at + needle.length);
+              mark.textContent = text.slice(at3, at3 + needle.length);
               el.append(mark);
-              cursor = at + needle.length;
+              cursor = at3 + needle.length;
             }
             if (cursor < text.length) el.append(document.createTextNode(text.slice(cursor)));
           });
@@ -51081,8 +56811,8 @@ ${n.content.slice(0, 2e3)}
           (_c = (_b2 = this.navEl) == null ? void 0 : _b2.querySelector(`.bz-sp-nav-item[data-sp-domain="${d.id}"]`)) == null ? void 0 : _c.scrollIntoView({ block: "nearest" });
         }
         /** 搜索命中域集（导航视觉序；↑↓ 切域与 Enter 首跳共用同一口径，F-6 不漂移） */
-        matchedDomains(q2) {
-          const query = q2.trim();
+        matchedDomains(q3) {
+          const query = q3.trim();
           const matches = (d) => !query || spMatch(d.name, query) || spMatch(d.desc, query) || (schemaRowCache.get(d.id) || []).some((r) => spMatch(r.name, query));
           return groupDomains(listableDomains(), matches).flatMap((s) => s.domains);
         }
@@ -51154,8 +56884,8 @@ ${n.content.slice(0, 2e3)}
           mountIcons(popup);
           const list = popup.querySelector(".bz-sp-mob-list");
           const searchIn = popup.querySelector(".bz-sp-mob-search .bz-input");
-          const render2 = (q2) => {
-            const query = q2.trim();
+          const render2 = (q3) => {
+            const query = q3.trim();
             list.innerHTML = "";
             if (!query) {
               const secs = groupDomains(listableDomains());
@@ -51203,8 +56933,8 @@ ${n.content.slice(0, 2e3)}
           const applySearch = debounce(() => render2(searchIn.value), SEARCH_DEBOUNCE_MS3);
           searchIn.addEventListener("input", () => applySearch());
           searchIn.addEventListener("keydown", (e) => {
-            const q2 = searchIn.value.trim();
-            if (e.key === "Escape" && q2) {
+            const q3 = searchIn.value.trim();
+            if (e.key === "Escape" && q3) {
               e.preventDefault();
               e.stopImmediatePropagation();
               searchIn.value = "";
@@ -51212,8 +56942,8 @@ ${n.content.slice(0, 2e3)}
               searchIn.focus();
               return;
             }
-            if (e.key === "Enter" && q2) {
-              const doms = listableDomains().filter((d) => spMatch(d.name, q2) || spMatch(d.desc, q2));
+            if (e.key === "Enter" && q3) {
+              const doms = listableDomains().filter((d) => spMatch(d.name, q3) || spMatch(d.desc, q3));
               if (doms.length) {
                 e.preventDefault();
                 void this.pushDomain(doms[0]);
@@ -51222,7 +56952,7 @@ ${n.content.slice(0, 2e3)}
               let hit = null;
               for (const [did, rowsOf] of schemaRowCache) {
                 const d = DOMAINS2.find((x) => x.id === did);
-                const r = d ? rowsOf.find((rr) => spMatch(rr.name, q2) || rr.desc && spMatch(rr.desc, q2)) : void 0;
+                const r = d ? rowsOf.find((rr) => spMatch(rr.name, q3) || rr.desc && spMatch(rr.desc, q3)) : void 0;
                 if (d && r) {
                   hit = { domain: d, row: r.name };
                   break;
@@ -53263,20 +58993,20 @@ ${n.content.slice(0, 2e3)}
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after3 = classifyFilePath(newPath);
-    if (!after3) return;
+    const after5 = classifyFilePath(newPath);
+    if (!after5) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after3
+      movedOut: before !== after5
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after3 === "diary") {
+    if (after5 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after3}:file-renamed`, payload);
+    emitDomainEvent(`${after5}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;

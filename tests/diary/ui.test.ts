@@ -750,6 +750,27 @@ describe('回忆墙 UI', () => {
     expect(visibleHeads()).toBe(3);
   });
 
+  it('搜索清除钮（效率#12 全域口径，uiSearch 内置）：无词隐藏、有词显示；ESC 清词后钮即隐', async () => {
+    await openAndWait();
+    const desk = document.querySelector('.bz-diary-desk')!;
+    const searchBtn = desk.querySelector('[data-act="search"]') as HTMLElement;
+    searchBtn.click();
+    const box = desk.querySelector('.bz-diary-searchrow .bz-search input') as HTMLInputElement;
+    const btn = desk.querySelector('.bz-diary-searchrow .bz-search-clear') as HTMLElement;
+    expect(btn).toBeTruthy();
+    const visibleHeads = () =>
+      Array.from(desk.querySelectorAll<HTMLElement>('.bz-diary-day-head')).filter((h) => h.style.display !== 'none').length;
+    expect(btn.hidden).toBe(true); // 无词初始态
+    box.value = '猫';
+    box.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(btn.hidden).toBe(false); // 有词即显
+    // ESC 清词：置空 + 派发 input（同步清除钮显隐）+ cancel 派生尾触 + renderAll
+    box.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+    expect(box.value).toBe('');
+    expect(btn.hidden).toBe(true);
+    await waitFor(() => visibleHeads() === 3);
+  });
+
   it('二级标签：点击带子标签的主标签显示子标签行', async () => {
     // mock 数据：两条 🀄（四川 子标签）+ 一条 📖（普通日记）——点子标签「四川」后应只剩四川条目
     const c = DiaryAppController.getInstance();

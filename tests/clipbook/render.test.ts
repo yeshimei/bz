@@ -193,7 +193,7 @@ describe('clipbook render 纯层（issue 247）', () => {
     const d = {
       period: 'week' as const, articles: 2, sessions: 3, totalMinutes: 45,
       bySrc: [{ name: '知乎日报', articles: 2, minutes: 45 }],
-      hours: new Array<number>(24).fill(0), topArticles: [], activeDays: 2,
+      hours: new Array<number>(24).fill(0), topArticles: [], activeDays: 2, streakDays: 0,
     };
     d.hours[9] = 45;
     const secs = buildClipReportSections(d);

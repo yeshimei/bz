@@ -16,6 +16,7 @@ import { openFlowDialog } from '../core/flow-dialog';
 import { uiModal, uiEmpty } from '../core/ui';
 import { bindFormSubmit } from '../core/ui/modal';
 import { bsSkinClass } from './ui';
+import { motionNotesList } from './motion';
 import { parseBookNotes, jumpToHighlight, updateComment, deleteHighlight } from './notes';
 import type { BookNoteNode } from './notes';
 import {
@@ -173,6 +174,7 @@ export function showBookNotes(app: App, filePath: string, title?: string) {
         contentContainer.appendChild(uiEmpty({ icon: 'highlighter', title: '没有找到高亮或批注', desc: '在原文中划线后这里会显示' }));
       } else {
         renderBookNoteNode(parsed.root, contentContainer, app, filePath);
+        motionNotesList(contentContainer); // 动效层：批注墨迹接力浮现
       }
     })
     .catch((e) => {
@@ -222,6 +224,7 @@ export function showEpubBookNotes(app: App, vaultPath: string, title: string) {
       // 编辑/删除后重开（与 md showBookNotes 的 onDone 语义一致）
       showEpubBookNotes(app, path, title);
     });
+    motionNotesList(contentContainer); // 动效层：批注墨迹接力浮现
   })();
 }
 

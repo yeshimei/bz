@@ -237,9 +237,15 @@ export class PasswordVaultUIManager {
     root.querySelectorAll('.bz-password-vault-navitem').forEach((it) => {
       it.addEventListener('click', () => this.setView(it.getAttribute('data-view') as 'all' | 'fav'));
     });
-    // 搜索防抖（双实例共用一支 applySearch）
+    // 搜索防抖（双实例共用一支 applySearch）；尾部 ✕ 显隐随词同步（效率#12 全域口径）
     this.desk.search.addEventListener('input', (e) => {
+      this.syncSearchClear();
       this.applySearch((e.target as HTMLInputElement).value.trim());
+    });
+    // 尾部 ✕ 一键清除（clipbook 效率#12 定稿范式）：点 = 清词 + 刷新 + 焦点回框
+    this.desk.search.parentElement?.querySelector<HTMLElement>('[data-pwv-search-clear]')?.addEventListener('click', () => {
+      this.clearSearch();
+      this.desk.search.focus();
     });
     // 点击卡片外遮罩 → 关闭窗口
     root.addEventListener('click', (e) => {
@@ -255,9 +261,15 @@ export class PasswordVaultUIManager {
     root.querySelectorAll('[data-mobview]').forEach((it) => {
       it.addEventListener('click', () => this.setView(it.getAttribute('data-mobview') as 'all' | 'fav'));
     });
-    // 搜索（双实例共用一支 applySearch）
+    // 搜索（双实例共用一支 applySearch）；尾部 ✕ 显隐随词同步（效率#12 全域口径）
     this.mob.search.addEventListener('input', (e) => {
+      this.syncSearchClear();
       this.applySearch((e.target as HTMLInputElement).value.trim());
+    });
+    // 尾部 ✕ 一键清除：点 = 清词 + 刷新 + 焦点回框
+    this.mob.search.parentElement?.querySelector<HTMLElement>('[data-pwv-search-clear]')?.addEventListener('click', () => {
+      this.clearSearch();
+      this.mob.search.focus();
     });
     // FAB 添加
     root.querySelector('.bz-password-vault-fab')?.addEventListener('click', () => this.openEntryDialog(null));
@@ -430,6 +442,25 @@ export class PasswordVaultUIManager {
     for (const inp of [this.desk.search, this.mob.search]) {
       if (inp && inp.value.trim() !== kw) inp.value = kw;
     }
+    this.syncSearchClear();
+  }
+
+  /** 尾部 ✕ 显隐随词同步（效率#12 全域口径：有词才现、清空即隐；双框各自按实值） */
+  private syncSearchClear(): void {
+    for (const inp of [this.desk.search, this.mob.search]) {
+      const btn = inp.parentElement?.querySelector<HTMLElement>('[data-pwv-search-clear]');
+      if (btn) btn.hidden = !inp.value.trim();
+    }
+  }
+
+  /** 清词统一出口（✕ 共用；clipbook clearDeskSearch 同范式）：取消防抖尾触防关键词
+   *  「复活」+ 双框同清 + ✕ 显隐同步 + 立即重绘（不走防抖） */
+  private clearSearch(): void {
+    this.applySearch.cancel();
+    this.searchKw = '';
+    for (const inp of [this.desk.search, this.mob.search]) inp.value = '';
+    this.syncSearchClear();
+    this.renderAll();
   }
 
   renderAll() {

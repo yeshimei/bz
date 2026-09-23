@@ -1,5 +1,5 @@
-/* 源指纹 9864797b13515e58 · 仓内输入 106 个（校验见 tests/preview-freshness.test.ts） */
-/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
+/* 源指纹 6731e82305f83701 · 仓内输入 112 个（校验见 tests/preview-freshness.test.ts） */
+/*#preview-inputs=["prototypes/clipbook/fake-sim.ts","prototypes/clipbook/fake/fake-obsidian.ts","src/auto-summary/index.ts","src/auto-summary/keys.ts","src/auto-summary/parser.ts","src/auto-summary/processor.ts","src/clipbook/anchor.ts","src/clipbook/constants.ts","src/clipbook/data.ts","src/clipbook/file-sync.ts","src/clipbook/flow.ts","src/clipbook/image-save.ts","src/clipbook/index.ts","src/clipbook/loader.ts","src/clipbook/md.ts","src/clipbook/motion.ts","src/clipbook/news-data.ts","src/clipbook/news-fetcher.ts","src/clipbook/news-source-settings.ts","src/clipbook/news-sources-group.ts","src/clipbook/press/data.ts","src/clipbook/press/engine.ts","src/clipbook/press/index.ts","src/clipbook/press/motions.ts","src/clipbook/press/view.ts","src/clipbook/render.ts","src/clipbook/report-stats.ts","src/clipbook/report-ui.ts","src/clipbook/save.ts","src/clipbook/scan.ts","src/clipbook/state.ts","src/clipbook/store.ts","src/clipbook/ui.ts","src/clipbook/write-queue.ts","src/core/ai.ts","src/core/app.ts","src/core/chart-palette.ts","src/core/crypto.ts","src/core/diary-format.ts","src/core/dom.ts","src/core/domain-bus.ts","src/core/esc-manager.ts","src/core/file-sync.ts","src/core/flow-dialog.ts","src/core/http.ts","src/core/item-actions.ts","src/core/knowledge-boxes.ts","src/core/link-now.ts","src/core/mobile.ts","src/core/model-limits.ts","src/core/notice.ts","src/core/obsidian-adapter.ts","src/core/path-classify.ts","src/core/path-picker.ts","src/core/settings-common.ts","src/core/settings-modal.ts","src/core/settings-provider.ts","src/core/settings-schema.ts","src/core/storage.ts","src/core/ui/button.ts","src/core/ui/cardpick.ts","src/core/ui/chip.ts","src/core/ui/choice.ts","src/core/ui/empty.ts","src/core/ui/field.ts","src/core/ui/focus-trap.ts","src/core/ui/icon.ts","src/core/ui/icons.ts","src/core/ui/index.ts","src/core/ui/lightbox.ts","src/core/ui/mainhead.ts","src/core/ui/mobstrip.ts","src/core/ui/modal.ts","src/core/ui/popover.ts","src/core/ui/progress.ts","src/core/ui/rail.ts","src/core/ui/resize.ts","src/core/ui/search.ts","src/core/ui/segmented.ts","src/core/ui/select.ts","src/core/ui/setlist.ts","src/core/ui/slider.ts","src/core/ui/splitter.ts","src/core/ui/stat.ts","src/core/ui/str.ts","src/core/ui/suggest.ts","src/core/ui/switch.ts","src/core/utils.ts","src/core/z-order.ts","src/knowledge/data.ts","src/knowledge/file-sync.ts","src/knowledge/index.ts","src/knowledge/mount-canvas.ts","src/knowledge/mount-data.ts","src/knowledge/mount-geom.ts","src/knowledge/mount-layout.ts","src/knowledge/mount-route.ts","src/knowledge/mount-suggest.ts","src/knowledge/note-gen.ts","src/knowledge/partial-json.ts","src/knowledge/processor.ts","src/knowledge/range-bar.ts","src/knowledge/source-retire.ts","src/knowledge/source.ts","src/knowledge/ui.ts","src/knowledge/video-meta.ts","src/secondbrain/readonly.ts","src/settings-panel/layouts/jingwei/render.ts","src/settings-panel/motion.ts","src/settings-panel/render.ts","src/settings-panel/renderer.ts","src/settings-panel/shared.ts"]*/
 /* 构建产物（勿手改）：node scripts/build-preview.mjs — prototypes/clipbook/fake-sim.ts → window.BZW_clipbook（行为单源预览包，issue 245/ADR-0106） */
 var BZW_clipbook = (() => {
   var __create = Object.create;
@@ -1797,15 +1797,15 @@ var BZW_clipbook = (() => {
             "i"
           );
         }
-        function createDate(y, m, d, h, M3, s, ms) {
+        function createDate(y, m, d, h, M4, s, ms) {
           var date;
           if (y < 100 && y >= 0) {
-            date = new Date(y + 400, m, d, h, M3, s, ms);
+            date = new Date(y + 400, m, d, h, M4, s, ms);
             if (isFinite(date.getFullYear())) {
               date.setFullYear(y);
             }
           } else {
-            date = new Date(y, m, d, h, M3, s, ms);
+            date = new Date(y, m, d, h, M4, s, ms);
           }
           return date;
         }
@@ -6470,11 +6470,11 @@ ${c.trim()}
         prevSpace = false;
       }
     }
-    const q2 = t.replace(/\s+/g, " ").trim();
-    const n = normStr.indexOf(q2);
+    const q3 = t.replace(/\s+/g, " ").trim();
+    const n = normStr.indexOf(q3);
     if (n === -1) return null;
     const start = normIdx[n];
-    const end = normIdx[Math.min(n + q2.length - 1, normIdx.length - 1)] + 1;
+    const end = normIdx[Math.min(n + q3.length - 1, normIdx.length - 1)] + 1;
     return lineAround(src, start, end);
   }
   async function readArticleTracking(articleKey) {
@@ -7784,7 +7784,7 @@ ${c.trim()}
     if (!dur) dur = 500;
     let timer = null, touching = false, fired = false, moved = false, sx = 0, sy = 0;
     let suppressClick = false;
-    const M3 = 10;
+    const M4 = 10;
     function start(e) {
       if (filter && !filter(e)) return;
       if (e.button !== void 0 && e.button !== 0) return;
@@ -7811,7 +7811,7 @@ ${c.trim()}
     function move(e) {
       if (!timer || !touching || !e.touches || !e.touches.length) return;
       const t = e.touches[0];
-      if (Math.abs(t.clientX - sx) > M3 || Math.abs(t.clientY - sy) > M3) {
+      if (Math.abs(t.clientX - sx) > M4 || Math.abs(t.clientY - sy) > M4) {
         moved = true;
         cancel();
       }
@@ -8331,8 +8331,8 @@ ${c.trim()}
     const draw = () => {
       if (!layer) return;
       const cur = anchor.value.trim();
-      const q2 = cur.toLowerCase();
-      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q2 || s.toLowerCase().includes(q2))).slice(0, max);
+      const q3 = cur.toLowerCase();
+      const matched = opts.source().filter((s) => (!opts.excludeCurrent || s !== cur) && (!q3 || s.toLowerCase().includes(q3))).slice(0, max);
       if (!matched.length) {
         close();
         return;
@@ -8694,8 +8694,8 @@ ${c.trim()}
     const flat = flattenWs(src);
     const needle = flattenWs(text).text;
     if (!needle) return null;
-    const at = flat.text.indexOf(needle);
-    return at < 0 ? null : flat.map[at];
+    const at2 = flat.text.indexOf(needle);
+    return at2 < 0 ? null : flat.map[at2];
   }
   function flattenWs(s) {
     const map = [];
@@ -10207,7 +10207,7 @@ ${sample}`
     for (let round = 0; round < RESIDUAL_ROUNDS; round++) {
       if (!pushRound(nodes, 0, 0, RESIDUAL_EPS)) return;
     }
-    for (let sweep = 0; sweep < n; sweep++) {
+    for (let sweep2 = 0; sweep2 < n; sweep2++) {
       let moved = false;
       for (let j = 1; j < n; j++) {
         const B = nodes[j];
@@ -10311,9 +10311,9 @@ ${sample}`
   function rectOf(b) {
     return { left: b.x, top: b.y, right: b.x + b.w, bottom: b.y + b.h };
   }
-  function segRectHit(p, q2, r, margin = 0) {
-    const dx = q2.x - p.x;
-    const dy = q2.y - p.y;
+  function segRectHit(p, q3, r, margin = 0) {
+    const dx = q3.x - p.x;
+    const dy = q3.y - p.y;
     const pv = [-dx, dx, -dy, dy];
     const qv = [
       p.x - (r.left - margin),
@@ -10368,14 +10368,14 @@ ${sample}`
   function clamp(v, a, b) {
     return v < a ? a : v > b ? b : v;
   }
-  function exitCandidates(S, sb, portPad) {
-    const ye = clamp(S.y, sb.top + portPad, sb.bottom - portPad);
-    const xe = clamp(S.x, sb.left + portPad, sb.right - portPad);
+  function exitCandidates(S2, sb, portPad) {
+    const ye = clamp(S2.y, sb.top + portPad, sb.bottom - portPad);
+    const xe = clamp(S2.x, sb.left + portPad, sb.right - portPad);
     const cands = [
-      { side: "L", d: S.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
-      { side: "R", d: sb.right - S.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
-      { side: "T", d: S.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
-      { side: "B", d: sb.bottom - S.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
+      { side: "L", d: S2.x - sb.left, E: { x: sb.left, y: ye }, nOut: { x: -1, y: 0 } },
+      { side: "R", d: sb.right - S2.x, E: { x: sb.right, y: ye }, nOut: { x: 1, y: 0 } },
+      { side: "T", d: S2.y - sb.top, E: { x: xe, y: sb.top }, nOut: { x: 0, y: -1 } },
+      { side: "B", d: sb.bottom - S2.y, E: { x: xe, y: sb.bottom }, nOut: { x: 0, y: 1 } }
     ];
     const order = ["L", "R", "T", "B"];
     return cands.sort((a, b) => a.d !== b.d ? a.d - b.d : order.indexOf(a.side) - order.indexOf(b.side));
@@ -10392,7 +10392,7 @@ ${sample}`
       { s: "R", d: Math.hypot(b.right - ax, bcy - ay) }
     ];
     const order = ["L", "T", "B", "R"];
-    cands.sort((p, q2) => p.d !== q2.d ? p.d - q2.d : order.indexOf(p.s) - order.indexOf(q2.s));
+    cands.sort((p, q3) => p.d !== q3.d ? p.d - q3.d : order.indexOf(p.s) - order.indexOf(q3.s));
     return cands.map((c) => c.s);
   }
   function sidePortAndNormal(side, b, portPad) {
@@ -10480,9 +10480,9 @@ ${sample}`
       for (let i = 1; i < vals.length; i++) if (vals[i] - vals[i - 1] < min) vals[i] = vals[i - 1] + min;
     }
   }
-  function segHitsAny(p, q2, rects, margin) {
+  function segHitsAny(p, q3, rects, margin) {
     for (let i = 0; i < rects.length; i++) {
-      if (segRectHit(p, q2, rects[i], margin)) return true;
+      if (segRectHit(p, q3, rects[i], margin)) return true;
     }
     return false;
   }
@@ -10666,10 +10666,10 @@ ${sample}`
       dist[start] = 0;
       buckets[0] = [start];
       for (let c = 0; c <= maxc && !found; c++) {
-        const q2 = buckets[c];
-        if (!q2) continue;
-        for (let qi = 0; qi < q2.length; qi++) {
-          const cur = q2[qi];
+        const q3 = buckets[c];
+        if (!q3) continue;
+        for (let qi = 0; qi < q3.length; qi++) {
+          const cur = q3[qi];
           if (done[cur]) continue;
           done[cur] = 1;
           if (cur === goal) {
@@ -10738,8 +10738,8 @@ ${sample}`
       let entry = order[0];
       let clean = false;
       for (const side of order) {
-        const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-        if (rayCardDistance(T, nOut, rects, 0) >= STUB) {
+        const { T: T2, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+        if (rayCardDistance(T2, nOut, rects, 0) >= STUB) {
           entry = side;
           clean = true;
           break;
@@ -10747,8 +10747,8 @@ ${sample}`
       }
       if (!clean) {
         for (const side of order) {
-          const { T, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
-          if (rayCardDistance(T, nOut, rects, 0) >= 1) {
+          const { T: T2, nOut } = sidePortAndNormal(side, dst.rect, PORT_PAD);
+          if (rayCardDistance(T2, nOut, rects, 0) >= 1) {
             entry = side;
             clean = true;
             break;
@@ -10816,8 +10816,8 @@ ${sample}`
     for (const j of jobs) {
       const e = j.edge;
       const sb = j.src.rect;
-      const S = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
-      const cands = exitCandidates(S, sb, PORT_PAD);
+      const S2 = e.anchor && Number.isFinite(e.anchor.x) && Number.isFinite(e.anchor.y) ? { x: e.anchor.x, y: e.anchor.y } : { x: sb.left, y: sb.top + 26 };
+      const cands = exitCandidates(S2, sb, PORT_PAD);
       let pick = null;
       let stub = STUB;
       for (const c of cands) {
@@ -10842,15 +10842,15 @@ ${sample}`
         stub = 0;
       }
       const exit = pick.side;
-      const E2 = pick.E;
+      const E3 = pick.E;
       const nOut = pick.nOut;
-      const E1 = along(E2, nOut, stub);
-      const T = j.T;
+      const E1 = along(E3, nOut, stub);
+      const T2 = j.T;
       const nOutT = { x: -j.nIn.x, y: -j.nIn.y };
       const T1 = j.T1;
       const raw = astar ? astar(E1, T1, nOut, nOutT) : null;
-      let dirty2 = !exitClean || !j.clean || stubDirty(E2, E1, rects) || stubDirty(T1, T, rects);
-      const items = [S, E2, E1];
+      let dirty2 = !exitClean || !j.clean || stubDirty(E3, E1, rects) || stubDirty(T1, T2, rects);
+      const items = [S2, E3, E1];
       if (raw) {
         const base = pull(raw, rects, PULL_MARGIN);
         if (!polylineClean(base, rects)) dirty2 = true;
@@ -10873,7 +10873,7 @@ ${sample}`
       } else {
         items.push(T1);
       }
-      items.push(T);
+      items.push(T2);
       out[j.idx] = {
         from: e.from,
         to: e.to,
@@ -10927,8 +10927,8 @@ ${sample}`
     var _a, _b;
     const sub = String((_a = s == null ? void 0 : s.subpath) != null ? _a : "").trim();
     if (sub) return hash8(normLite(sub));
-    const q2 = String((_b = s == null ? void 0 : s.quote) != null ? _b : "").trim();
-    return q2 ? hash8(normLite(q2)) : "";
+    const q3 = String((_b = s == null ? void 0 : s.quote) != null ? _b : "").trim();
+    return q3 ? hash8(normLite(q3)) : "";
   }
   function nextIsBoundary(text, i) {
     if (i >= text.length) return true;
@@ -11189,10 +11189,10 @@ ${sample}`
     if (flatWant) {
       const hit = flat.indexOf(flatWant);
       if (hit >= 0 && map[hit] !== void 0) {
-        const at = start + map[hit];
+        const at2 = start + map[hit];
         const endIdx = hit + flatWant.length - 1;
         const end = map[endIdx] !== void 0 ? start + map[endIdx] + 1 : src.length;
-        return { at, len: Math.max(1, end - at), level: 2 };
+        return { at: at2, len: Math.max(1, end - at2), level: 2 };
       }
     }
     const kws = keywordsOf(want);
@@ -11209,16 +11209,16 @@ ${sample}`
       for (const k of kws) if (flatBlock.includes(k)) score++;
       if (score < need) continue;
       const lead = raw.length - raw.trimStart().length;
-      const at = start + m.index + lead;
+      const at2 = start + m.index + lead;
       const len = raw.trimEnd().length - lead;
-      if (!best || score > best.score) best = { at, len, score };
+      if (!best || score > best.score) best = { at: at2, len, score };
     }
     if (!best) return null;
     return { at: best.at, len: best.len, level: 3 };
   }
-  function expandBlock(text, at, len) {
+  function expandBlock(text, at2, len) {
     const src = String(text != null ? text : "");
-    let s = Math.max(0, Math.min(Number(at) || 0, src.length));
+    let s = Math.max(0, Math.min(Number(at2) || 0, src.length));
     let e = Math.max(s, Math.min(src.length, s + Math.max(0, Number(len) || 0)));
     const lb = src.slice(0, s).search(/\n[ \t]*\n[^\n]*$/);
     s = lb >= 0 ? lb + 1 : 0;
@@ -11671,17 +11671,17 @@ ${String(blockText != null ? blockText : "").trim()}`);
       console.warn("[mount-suggest] 查询官失败，退回机械分句当查询", e);
     }
     tell("query", anchors.length, anchors.length);
-    const recallTotal = queries.reduce((n, q2) => n + q2.length, 0);
+    const recallTotal = queries.reduce((n, q3) => n + q3.length, 0);
     let recallDone = 0;
     const hits = [];
     let searchFailed = false;
     for (let i = 0; i < queries.length; i++) {
-      for (const q2 of queries[i]) {
+      for (const q3 of queries[i]) {
         try {
-          const got = await searchApi.search(q2, SUGGEST_TOPK) || [];
+          const got = await searchApi.search(q3, SUGGEST_TOPK) || [];
           for (const h of got) {
             if (!h || !h.path) continue;
-            hits.push({ seg: i, query: q2, path: h.path, score: Number(h.score) || 0, chunk: String(h.chunk || "") });
+            hits.push({ seg: i, query: q3, path: h.path, score: Number(h.score) || 0, chunk: String(h.chunk || "") });
           }
         } catch (e) {
           console.warn("[mount-suggest] 向量检索失败，按降级处理", e);
@@ -12052,8 +12052,8 @@ ${String(blockText != null ? blockText : "").trim()}`);
     if (alreadyLinked(src, link)) return src;
     const text = String((_a = anchor == null ? void 0 : anchor.text) != null ? _a : "").trim();
     if (text) {
-      const at = relocateAnchor(src, { from: (_b = anchor == null ? void 0 : anchor.from) != null ? _b : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
-      if (at !== null && at >= 0) return src.slice(0, at + text.length) + wiki + src.slice(at + text.length);
+      const at2 = relocateAnchor(src, { from: (_b = anchor == null ? void 0 : anchor.from) != null ? _b : 0, to: (_c = anchor == null ? void 0 : anchor.to) != null ? _c : 0, text });
+      if (at2 !== null && at2 >= 0) return src.slice(0, at2 + text.length) + wiki + src.slice(at2 + text.length);
       const compact = text.replace(/\s+/g, "");
       const flat = src.replace(/\s+/g, "");
       for (const len of [10, 6, 4, 2]) {
@@ -13002,10 +13002,10 @@ ${String(blockText != null ? blockText : "").trim()}`);
     const part = [...idx.parts].reverse().find((p) => hit.at >= p.start);
     if (!part) return null;
     const offset = Math.min(Math.max(0, hit.at - part.start), part.node.data.length);
-    const after2 = part.node.splitText(offset);
-    const len = Math.min(hit.len, after2.data.length);
-    const tail = after2.splitText(len);
-    (_b = after2.parentNode) == null ? void 0 : _b.insertBefore(dot, tail);
+    const after3 = part.node.splitText(offset);
+    const len = Math.min(hit.len, after3.data.length);
+    const tail = after3.splitText(len);
+    (_b = after3.parentNode) == null ? void 0 : _b.insertBefore(dot, tail);
     return dot;
   }
   function textIndexOf(container) {
@@ -13736,9 +13736,9 @@ ${String(blockText != null ? blockText : "").trim()}`);
           this.onChange(s, e);
         }
         _paint() {
-          const T = this.total || 1;
-          const sp = this.total > 0 ? this.start / T * 100 : 0;
-          const ep = this.total > 0 ? this.end / T * 100 : 100;
+          const T2 = this.total || 1;
+          const sp = this.total > 0 ? this.start / T2 * 100 : 0;
+          const ep = this.total > 0 ? this.end / T2 * 100 : 100;
           this.hStart.style.left = `${sp}%`;
           this.hEnd.style.left = `${ep}%`;
           this.fill.style.left = `${sp}%`;
@@ -18953,13 +18953,13 @@ ${body}`;
     }
     function renderList2() {
       listEl2.innerHTML = "";
-      const q2 = state2.q.trim().toLowerCase();
-      const exact = !!q2 && state2.folders.includes(q2);
+      const q3 = state2.q.trim().toLowerCase();
+      const exact = !!q3 && state2.folders.includes(q3);
       const LIMIT = 300;
       let n = 0;
       let total = 0;
       for (const folder of orderedList()) {
-        if (q2 && !exact && !folder.toLowerCase().includes(q2)) continue;
+        if (q3 && !exact && !folder.toLowerCase().includes(q3)) continue;
         total++;
         if (n >= LIMIT) continue;
         n++;
@@ -22234,7 +22234,8 @@ ${bodyText.substring(0, 6e3)}`;
       bySrc,
       hours,
       topArticles,
-      activeDays: days.size
+      activeDays: days.size,
+      streakDays: streakDays(log, now)
     };
   }
   function formatMinutes(min) {
@@ -22244,11 +22245,109 @@ ${bodyText.substring(0, 6e3)}`;
     if (h <= 0) return `${r} 分钟`;
     return r > 0 ? `${h} 小时 ${r} 分钟` : `${h} 小时`;
   }
-  var REPORT_TOP_N;
+  function shiftBuckets(hours) {
+    return CLIP_SHIFTS.map((s) => ({
+      key: s.key,
+      label: s.label,
+      span: s.span,
+      minutes: (hours || []).slice(s.from, s.to).reduce((sum, m) => sum + m, 0)
+    }));
+  }
+  function shiftOfHour(h) {
+    const s = CLIP_SHIFTS.find((x) => h >= x.from && h < x.to);
+    return s ? s.label : "晚班";
+  }
+  function streakDays(log, now = /* @__PURE__ */ new Date()) {
+    const days = /* @__PURE__ */ new Set();
+    for (const e of log || []) {
+      if (e && typeof e.ts === "number" && isFinite(e.ts) && (Number(e.minutes) || 0) > 0) days.add(dayKeyOf(e.ts));
+    }
+    if (!days.size) return 0;
+    const keyOf = (d) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    let streak = 0;
+    const cursor = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (!days.has(keyOf(cursor))) cursor.setDate(cursor.getDate() - 1);
+    while (days.has(keyOf(cursor))) {
+      streak += 1;
+      cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+  }
+  function busiestDay(log, period2, now = /* @__PURE__ */ new Date()) {
+    const perDay = /* @__PURE__ */ new Map();
+    for (const e of filterReadLogByPeriod(log, period2, now)) {
+      const m = Math.max(0, Math.round(Number(e.minutes) || 0));
+      if (m <= 0) continue;
+      const k = dayKeyOf(e.ts);
+      perDay.set(k, (perDay.get(k) || 0) + m);
+    }
+    let best = null;
+    for (const [date, minutes] of perDay) {
+      if (!best || minutes > best.minutes || minutes === best.minutes && date < best.date) best = { date, minutes };
+    }
+    return best;
+  }
+  function buildLibraryStats(articles, now = /* @__PURE__ */ new Date()) {
+    const list = articles || [];
+    let readCount = 0;
+    const platformMap = /* @__PURE__ */ new Map();
+    let oldestTs = Infinity;
+    let oldest = null;
+    for (const a of list) {
+      if (a.read) readCount += 1;
+      const p = String(a.platform || "").trim() || "未知";
+      platformMap.set(p, (platformMap.get(p) || 0) + 1);
+      if (!a.read) {
+        const ts = Date.parse(String(a.fetchedAt || a.date || ""));
+        if (isFinite(ts) && ts < oldestTs) {
+          oldestTs = ts;
+          oldest = {
+            title: String(a.title || "(无标题)"),
+            src: p,
+            days: Math.max(0, Math.floor((now.getTime() - ts) / 864e5))
+          };
+        }
+      }
+    }
+    const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const firstTs = dayStart(now) - (LIB_PACE_DAYS - 1) * 864e5;
+    const buckets = new Array(LIB_PACE_DAYS).fill(0);
+    for (const a of list) {
+      const ts = Date.parse(String(a.fetchedAt || ""));
+      if (!isFinite(ts) || ts < firstTs) continue;
+      const idx = LIB_PACE_DAYS - 1 - Math.floor((dayStart(new Date(ts)) - firstTs) / 864e5);
+      if (idx >= 0 && idx < LIB_PACE_DAYS) buckets[idx] += 1;
+    }
+    const byDay = [];
+    for (let i = 0; i < LIB_PACE_DAYS; i++) {
+      const d = new Date(firstTs + i * 864e5);
+      byDay.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, n: buckets[i] });
+    }
+    const topPlatforms = [...platformMap.entries()].map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, REPORT_TOP_N);
+    const total = list.length;
+    return {
+      total,
+      readCount,
+      unread: total - readCount,
+      readRate: total ? Math.round(readCount / total * 100) : 0,
+      byDay,
+      byDayPeak: Math.max(0, ...buckets),
+      topPlatforms,
+      oldestUnread: oldest
+    };
+  }
+  var REPORT_TOP_N, CLIP_SHIFTS, LIB_PACE_DAYS;
   var init_report_stats = __esm({
     "src/clipbook/report-stats.ts"() {
       init_str();
       REPORT_TOP_N = 5;
+      CLIP_SHIFTS = [
+        { key: "night", label: "夜班", span: "0-6 点", from: 0, to: 6 },
+        { key: "morning", label: "晨班", span: "6-12 点", from: 6, to: 12 },
+        { key: "noon", label: "午班", span: "12-18 点", from: 12, to: 18 },
+        { key: "evening", label: "晚班", span: "18-24 点", from: 18, to: 24 }
+      ];
+      LIB_PACE_DAYS = 14;
     }
   });
 
@@ -22259,13 +22358,22 @@ ${bodyText.substring(0, 6e3)}`;
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
         <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-title">剪藏本</div>
+          <!-- 刊名电传纸带（.scratch/clip-title/d.html D 版 1:1，2026-09-23 拍板）：tape 内字位 span 供
+               motion 逐字击打；字车 cur 常驻 blink（boot 由 motion 先送带首再随击推进）；lamp = 收带铃圆点。
+               span 间不得有空白（textContent 契约=「剪藏本」）；静默渲染不演即终态 -->
+          <div class="bz-panel-title bz-clip-title-wire" data-clip-title-wire><div class="bz-clip-title-tape"><span class="bz-clip-tape-ch">剪</span><span class="bz-clip-tape-ch">藏</span><span class="bz-clip-tape-ch">本</span><span class="bz-clip-tape-cur" aria-hidden="true"></span></div><i class="bz-clip-tape-lamp" aria-hidden="true"></i></div>
           <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-issue" data-clip-issue></div>
-          <!-- 效率#12：尾部 ✕ 一键清除（有词才显示，ui.ts syncDeskSearchClear 同步）。定位走内联随单源
-               markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的左缘绝对定位会劫持 iconSpan 产物，
-               且 mountIcons 换节点会丢内联样式；不带 display 内联值，hidden 属性才能生效 -->
-          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          <!-- 头行右侧「电传抬头单」（2026-09-23 头行五版拍板 D 版 + C 版期号戳章）：
+               期号戳章 + 细分隔 + 检索（纸底色/点线/上下边线/日期随当日追加拍板逐次撤去）。
+               data-clip-issue = 戳章（第 N 期）；检索钩子（data-clip-desk-search / data-clip-search-clear）不变。
+               效率#12 ✕ 清除钮：定位走内联随单源 markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的
+               左缘绝对定位会劫持 iconSpan 产物，且 mountIcons 换节点会丢内联样式；不带 display 内联值，
+               hidden 属性才能生效 -->
+          <div class="bz-clip-head-strip">
+            <span class="bz-clip-issue-stamp" data-clip-issue></span>
+            <span class="bz-clip-strip-sep" aria-hidden="true"></span>
+            <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          </div>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -22285,13 +22393,14 @@ ${bodyText.substring(0, 6e3)}`;
       <!-- 移动双屏 -->
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
-          <div class="bz-clip-mob-title">剪藏本</div>
+          <!-- 移动刊名 = 期号戳章（2026-09-23 拍板）：与桌面抬头单同款同钩（data-clip-issue），renderHeadIssue 双端同填 -->
+          <div class="bz-clip-issue-stamp" data-clip-issue></div>
           <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
           <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-mob-search-clear" data-clip-mob-search-clear title="清除检索" aria-label="清除检索" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -22328,7 +22437,7 @@ ${bodyText.substring(0, 6e3)}`;
     </div>`;
   }
   function railFootHtml(todayRead) {
-    return `今日已读<br><b>${todayRead}</b> 篇`;
+    return `<div class="bz-clip-foot-row">今日已读<i class="bz-clip-lead"></i><b>${todayRead}</b> 篇</div>`;
   }
   function clipReportEntryHtml() {
     return `<div class="bz-clp-rep-entry" data-clp-rep-entry role="button" tabindex="0">我读了什么 ${iconSpan("chevron-right", "bz-ic--xs")}</div>`;
@@ -22484,15 +22593,23 @@ ${bodyText.substring(0, 6e3)}`;
     return `<div class="bz-clp-rep-skeleton">统计中…</div>`;
   }
   function buildClipReportSections(d, opts) {
-    return [
+    const secs = [
       { key: "overview", label: "统计概览", generate: () => clipReportOverviewHtml(d, opts) },
       { key: "sources", label: "来源分布", generate: () => clipReportSourcesHtml(d) },
       { key: "hours", label: "阅读时段", generate: () => clipReportHoursHtml(d) }
     ];
+    if ((opts == null ? void 0 : opts.library) && opts.library.total > 0) {
+      secs.push({ key: "library", label: "报库盘点", generate: () => clipReportLibraryHtml(opts.library) });
+    }
+    return secs;
+  }
+  function dayCn(iso) {
+    const parts = iso.split("-");
+    return parts.length >= 3 ? `${Number(parts[1])} 月 ${Number(parts[2])} 日` : esc(iso);
   }
   function clipReportOverviewHtml(d, opts) {
     const keys = (opts == null ? void 0 : opts.availableKeys) || null;
-    const topRows = d.topArticles.map((a, i) => {
+    const topRows2 = d.topArticles.map((a, i) => {
       const badge = CHART_RANK_BADGES[i % CHART_RANK_BADGES.length];
       const openable = !!keys && keys.has(a.key);
       const openBtn = openable ? `<span class="bz-clp-rep-top-open" data-clip-rep-open role="button" tabindex="0" title="打开该篇回看">打开 ${iconSpan(ICO.external, "bz-ic--xs")}</span>` : "";
@@ -22505,15 +22622,18 @@ ${bodyText.substring(0, 6e3)}`;
       ${openBtn}
     </div>`;
     }).join("");
+    const busiest = (opts == null ? void 0 : opts.busiest) ? `<div class="bz-clp-rep-busiest"><span>最投入的一天</span><i class="bz-clp-rep-lead" aria-hidden="true"></i><b>${dayCn(opts.busiest.date)}</b><span class="bz-clp-rep-busiest-min">${esc(formatMinutes(opts.busiest.minutes))}</span></div>` : "";
     return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">统计概览</div>
-      <div class="bz-clp-rep-hero">
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
         <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
         <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
         <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.streakDays}</b><span>连续天数</span></div>
       </div>
-      ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ""}
+      ${busiest}
+      ${topRows2 ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows2}</div>` : ""}
     </div>`;
   }
   function clipReportSourcesHtml(d) {
@@ -22546,12 +22666,56 @@ ${bodyText.substring(0, 6e3)}`;
       return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
     }).join("");
     const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
-    const peakText = peakHour >= 0 ? `${peakHour} 点前后` : "暂无";
+    const peakText = peakHour >= 0 ? `${peakHour} 点前后（${shiftOfHour(peakHour)}）` : "暂无";
+    const shifts = shiftBuckets(d.hours);
+    const shiftMax = Math.max(1, ...shifts.map((s) => s.minutes));
+    const shiftRows = shifts.map((s, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label">${s.label}<span class="bz-clp-rep-shift-span">${s.span}</span></span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round(s.minutes / shiftMax * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${esc(formatMinutes(s.minutes))}</span>
+    </div>`).join("");
     return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-sub">工班盘点</div>
+      <div class="bz-clp-rep-bars">${shiftRows}</div>
+      <div class="bz-clp-rep-sub">全天 24 小时</div>
       <div class="bz-clp-rep-hours">${cols}</div>
       <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
+  }
+  function clipReportLibraryHtml(lib) {
+    const paceMax = Math.max(1, lib.byDayPeak);
+    const paceCols = lib.byDay.map((d, i) => {
+      const height = d.n > 0 ? 10 + Math.round(d.n / paceMax * 44) : 3;
+      const accent = lib.byDayPeak > 0 && d.n === lib.byDayPeak;
+      const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
+      return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? " accent" : ""}" style="height:${height}px;background:${bg}" title="${esc(d.label)} · 收 ${d.n} 篇"></div><div class="bz-clp-rep-hlabel">${esc(d.label)}</div></div>`;
+    }).join("");
+    const platMax = Math.max(1, ...lib.topPlatforms.map((p) => p.n));
+    const platRows = lib.topPlatforms.map((p, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(p.name)}">${esc(p.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round(p.n / platMax * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${p.n} 篇</span>
+    </div>`).join("");
+    const oldest = lib.oldestUnread ? `<div class="bz-clp-rep-old"><span class="bz-clp-rep-old-tag">压库</span><span class="bz-clp-rep-top-title" title="${esc(lib.oldestUnread.title)}">${esc(lib.oldestUnread.title)}</span><span class="bz-clp-rep-top-src">${esc(lib.oldestUnread.src)}</span><span class="bz-clp-rep-top-min">压了 ${lib.oldestUnread.days} 天</span></div>` : "";
+    return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">报库盘点 · 建库以来</div>
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
+        <div class="bz-clp-rep-hero-card"><b>${lib.total}</b><span>在流篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readCount}</b><span>已读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.unread}</b><span>待读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readRate}%</b><span>已读率</span></div>
+      </div>
+      <div class="bz-clp-rep-sub">近 14 天收录节奏</div>
+      <div class="bz-clp-rep-hours">${paceCols}</div>
+      <div class="bz-clp-rep-hours-note">每天收进来的新剪报 · 单日最多收 ${lib.byDayPeak} 篇</div>
+      <div class="bz-clp-rep-sub">在流来源</div>
+      <div class="bz-clp-rep-bars">${platRows}</div>
+      ${oldest}
     </div>`;
   }
   var ICO;
@@ -22619,6 +22783,661 @@ ${bodyText.substring(0, 6e3)}`;
         upInfo: {},
         mobDetailOpen: false
       };
+    }
+  });
+
+  // src/clipbook/motion.ts
+  function reduced2() {
+    try {
+      return typeof location !== "undefined" && location.search.includes("rm=1");
+    } catch (e) {
+      return false;
+    }
+  }
+  function canAnimate() {
+    return !reduced2() && typeof document !== "undefined" && typeof HTMLElement !== "undefined" && typeof HTMLElement.prototype.animate === "function";
+  }
+  function waapi2(el, frames, opts) {
+    if (!el || reduced2() || typeof el.animate !== "function") {
+      const last = frames[frames.length - 1];
+      if (el && last) for (const k of Object.keys(last)) {
+        if (k === "offset") continue;
+        try {
+          el.style[k] = String(last[k]);
+        } catch (e) {
+        }
+      }
+      return null;
+    }
+    try {
+      return el.animate(frames, opts);
+    } catch (e) {
+      return null;
+    }
+  }
+  function tween(dur, step, ease = (t) => 1 - Math.pow(1 - t, 3)) {
+    if (typeof requestAnimationFrame !== "function") {
+      step(1);
+      return;
+    }
+    const t0 = performance.now();
+    const tick = (now) => {
+      const p = Math.min(1, (now - t0) / dur);
+      step(ease(p));
+      if (p < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+  function after2(ms, fn) {
+    if (typeof setTimeout !== "function") return;
+    const id = setTimeout(() => {
+      timers2.delete(id);
+      fn();
+    }, ms);
+    timers2.add(id);
+  }
+  function motionTeardown() {
+    timers2.forEach(clearTimeout);
+    timers2.clear();
+    try {
+      panelAnim == null ? void 0 : panelAnim.cancel();
+    } catch (e) {
+    }
+    panelAnim = null;
+  }
+  function sweep(el, from, to, opts = {}) {
+    if (!el || !canAnimate()) return;
+    const { delay = 0, dur = M3.base, easing = E2.out, origin } = opts;
+    if (origin) el.style.transformOrigin = origin;
+    el.style.willChange = "transform,opacity,filter";
+    let a = null;
+    try {
+      a = el.animate([from, to], { duration: dur, delay, easing, fill: "backwards" });
+    } catch (e) {
+      a = null;
+    }
+    if (!a) {
+      cleanSweep(el, from, to, !!origin);
+      return;
+    }
+    const done = () => {
+      cleanSweep(el, from, to, !!origin);
+      try {
+        a.cancel();
+      } catch (e) {
+      }
+    };
+    a.finished.then(done).catch(done);
+  }
+  function cleanSweep(el, from, to, hadOrigin) {
+    const keys = /* @__PURE__ */ new Set([...Object.keys(from), ...Object.keys(to)]);
+    if (hadOrigin) keys.add("transformOrigin");
+    keys.add("willChange");
+    for (const k of keys) {
+      if (k === "offset" || k === "easing" || k === "composite") continue;
+      const css = CSS_PROP[k] || k.replace(/[A-Z]/g, (m) => "-" + m.toLowerCase());
+      try {
+        el.style.removeProperty(css);
+      } catch (e) {
+      }
+    }
+  }
+  function cancelAnimsBy(el, ids) {
+    if (typeof el.getAnimations !== "function") return;
+    for (const a of el.getAnimations()) {
+      if (ids.includes(a.id)) {
+        try {
+          a.cancel();
+        } catch (e) {
+        }
+      }
+    }
+  }
+  function motionPanelIn(overlay, reopen) {
+    const frame = overlay.querySelector(".bz-clip-frame");
+    if (!frame) return;
+    try {
+      panelAnim == null ? void 0 : panelAnim.cancel();
+    } catch (e) {
+    }
+    panelAnim = null;
+    cancelAnimsBy(frame, [EXIT_ANIM_ID]);
+    cancelAnimsBy(overlay, [EXIT_MASK_ANIM_ID]);
+    frame.style.opacity = "";
+    frame.style.transform = "";
+    frame.style.filter = "";
+    if (!overlay.style.opacity) overlay.style.opacity = "0";
+    waapi2(overlay, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.fast + 40, easing: E2.out });
+    const a = waapi2(
+      frame,
+      [
+        { opacity: 0, transform: "translateY(14px) scale(.985)", filter: "blur(8px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: reopen ? M3.base + 20 : 480, easing: E2.out }
+    );
+    if (a) {
+      panelAnim = a;
+      a.finished.then(() => {
+        if (panelAnim === a) panelAnim = null;
+        overlay.style.opacity = "";
+        frame.style.opacity = "";
+        frame.style.transform = "";
+        frame.style.filter = "";
+      }).catch(() => {
+        overlay.style.opacity = "";
+      });
+    } else {
+      overlay.style.opacity = "";
+    }
+  }
+  function motionPanelOut(overlay, done) {
+    const frame = overlay.querySelector(".bz-clip-frame");
+    if (!frame) {
+      done();
+      return;
+    }
+    let finished = false;
+    let maskAnim = null;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      panelAnim = null;
+      try {
+        if (a && a.playState !== "idle") a.cancel();
+      } catch (e) {
+      }
+      try {
+        if (maskAnim && maskAnim.playState !== "idle") maskAnim.cancel();
+      } catch (e) {
+      }
+      done();
+    };
+    try {
+      panelAnim == null ? void 0 : panelAnim.cancel();
+    } catch (e) {
+    }
+    const a = waapi2(
+      frame,
+      [
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { opacity: 0, transform: "translateY(10px) scale(.985)", filter: "blur(6px)" }
+      ],
+      { duration: M3.move + 40, easing: E2.out, fill: "forwards", id: EXIT_ANIM_ID }
+    );
+    maskAnim = waapi2(
+      overlay,
+      [{ opacity: 1 }, { opacity: 0 }],
+      { duration: M3.move + 40, easing: E2.out, id: EXIT_MASK_ANIM_ID }
+    );
+    if (!a) {
+      overlay.style.opacity = "";
+      finish();
+      return;
+    }
+    panelAnim = a;
+    a.finished.then(() => {
+      overlay.style.opacity = "";
+      finish();
+    }).catch(() => {
+      overlay.style.opacity = "";
+      finish();
+    });
+    after2(M3.move + 200, finish);
+  }
+  function motionHeadRevealed(overlay) {
+    var _a, _b, _c;
+    const head = overlay.querySelector(".bz-clip-desk .bz-panel-head");
+    if (!head || head.offsetParent === null) return;
+    const wire = head.querySelector("[data-clip-title-wire]");
+    const strip = head.querySelector(".bz-clip-head-strip");
+    const tape = (_a = wire == null ? void 0 : wire.querySelector(".bz-clip-title-tape")) != null ? _a : null;
+    const cur = (_b = wire == null ? void 0 : wire.querySelector(".bz-clip-tape-cur")) != null ? _b : null;
+    const lamp = (_c = wire == null ? void 0 : wire.querySelector(".bz-clip-tape-lamp")) != null ? _c : null;
+    const chars = tape ? [...tape.querySelectorAll(".bz-clip-tape-ch")] : [];
+    if (wire && tape && cur && chars.length && canAnimate()) {
+      try {
+        wire.animate(
+          [{ opacity: 0, transform: "translateX(-70px)" }, { opacity: 1, transform: "none" }],
+          { duration: 360, easing: E2.out, fill: "backwards" }
+        );
+      } catch (e) {
+      }
+      tape.insertBefore(cur, chars[0]);
+      chars.forEach((c, i) => {
+        const t = 430 + i * 390;
+        try {
+          c.animate(
+            [
+              { opacity: 0, transform: "translateY(-6px) scale(1.25) rotate(-5deg)", color: "#7d2f26" },
+              { opacity: 1, transform: "none", color: "#32302c" }
+            ],
+            { duration: 130, delay: t, easing: "cubic-bezier(.2,.8,.3,1)", fill: "backwards" }
+          );
+        } catch (e) {
+        }
+        try {
+          tape.animate(
+            [{ transform: "translateX(0)" }, { transform: "translateX(-4px)" }, { transform: "translateX(0)" }],
+            { duration: 110, delay: t, easing: "ease-out", fill: "backwards" }
+          );
+        } catch (e) {
+        }
+        after2(t, () => {
+          if (!cur.isConnected || cur.parentNode !== tape) return;
+          const next = chars[i + 1];
+          if (next) tape.insertBefore(cur, next);
+          else tape.appendChild(cur);
+        });
+      });
+      after2(430 + chars.length * 390 + 260, () => {
+        lamp == null ? void 0 : lamp.classList.add("on");
+        try {
+          lamp == null ? void 0 : lamp.animate(
+            [
+              { filter: "brightness(1)" },
+              { filter: "brightness(1.7)" },
+              { filter: "brightness(1)" },
+              { filter: "brightness(1.7)" },
+              { filter: "brightness(1)" }
+            ],
+            { duration: 420 }
+          );
+        } catch (e) {
+        }
+        try {
+          tape.animate(
+            [
+              { transform: "translateX(0)" },
+              { transform: "translateX(-2px)" },
+              { transform: "translateX(2px)" },
+              { transform: "translateX(0)" }
+            ],
+            { duration: 220 }
+          );
+        } catch (e) {
+        }
+        after2(500, () => lamp == null ? void 0 : lamp.classList.remove("on"));
+      });
+    } else {
+      sweep(wire, { opacity: 0, transform: "translateY(7px)", filter: "blur(5px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: 60, dur: M3.base + 40 });
+    }
+    sweep(strip, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 150, dur: M3.base });
+    if (!canAnimate() || head.querySelector(":scope > .bz-clm-ink-rule")) return;
+    const prevStyle = head.getAttribute("style");
+    const rule = document.createElement("span");
+    rule.className = "bz-clm-ink-rule";
+    rule.setAttribute("aria-hidden", "true");
+    head.appendChild(rule);
+    if (getComputedStyle(head).position === "static") head.style.position = "relative";
+    tween(620, (v) => {
+      rule.style.transform = `scaleX(${Math.max(1e-3, v).toFixed(3)})`;
+    }, easeOutQuart);
+    after2(700, () => {
+      const fade = waapi2(rule, [{ opacity: 0.95 }, { opacity: 0 }], { duration: M3.base - 80, easing: E2.out });
+      const remove = () => {
+        rule.remove();
+        if (prevStyle === null) head.removeAttribute("style");
+        else head.setAttribute("style", prevStyle);
+      };
+      if (fade) fade.finished.then(remove).catch(remove);
+      else after2(M3.base, remove);
+    });
+  }
+  function motionRailRendered(railEl, mood) {
+    if (mood === "boot") {
+      const label = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-label") : null;
+      sweep(label, { opacity: 0, transform: "translateX(-6px)" }, { opacity: 1, transform: "none" }, { delay: 140, dur: M3.base - 60 });
+      const rows = [...railEl.querySelectorAll(".bz-rail-item")];
+      rows.slice(0, 12).forEach((row, i) => {
+        sweep(
+          row,
+          { opacity: 0, transform: "translateX(-8px)", clipPath: "inset(0 100% 0 0)" },
+          { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
+          { delay: 220 + i * STAG, dur: M3.base + 60 }
+        );
+      });
+      const foot = railEl.parentElement ? railEl.parentElement.querySelector(".bz-clip-rail-foot") : null;
+      sweep(foot, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: 240 + Math.min(rows.length, 12) * STAG + 40, dur: M3.base });
+      return;
+    }
+    if (mood === "nav") {
+      const on = railEl.querySelector(".bz-rail-item.on");
+      sweep(on, { transform: "scale(.985)" }, { transform: "none" }, { dur: M3.fast });
+    }
+  }
+  function motionListRendered(listEl2, mood, foldKind, pressed) {
+    if (mood === "boot" || mood === "nav") {
+      const boot = mood === "boot";
+      const rows = [...listEl2.querySelectorAll(".bz-clip-item, .bz-clip-desk-fold")];
+      const cap = boot ? 14 : 8;
+      rows.slice(0, cap).forEach((row, i) => {
+        const delay = (boot ? 300 : 40) + i * STAG;
+        sweep(
+          row,
+          { opacity: 0, transform: "translateY(9px)", filter: "blur(4px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" },
+          { delay, dur: M3.base + (boot ? 60 : 0) }
+        );
+        const no = row.classList.contains("bz-clip-item") ? row.querySelector(".bz-clip-no") : null;
+        if (no) sweep(no, { opacity: 0, transform: "scale(1.7) rotate(-9deg)" }, { opacity: 1, transform: "none" }, { delay: delay + 70, dur: M3.fast + 70, easing: E2.move });
+      });
+      if (boot) {
+        listEl2.querySelectorAll(".bz-clip-desk-fold-body:not([hidden])").forEach((body, i) => {
+          sweep(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { delay: 420 + i * 80, dur: M3.base + 80 });
+        });
+      }
+      return;
+    }
+    if (mood === "search") {
+      sweep(listEl2, { opacity: 0.45, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { dur: M3.fast + 60 });
+      return;
+    }
+    if (foldKind) {
+      const row = listEl2.querySelector(`.bz-clip-desk-fold[data-desk-fold="${foldKind}"].on`);
+      const body = row ? row.nextElementSibling : null;
+      if (body && body.classList.contains("bz-clip-desk-fold-body") && !body.hidden) {
+        sweep(body, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M3.move + 60 });
+      }
+    }
+    if (pressed) {
+      const on = listEl2.querySelector(".bz-clip-item.on");
+      sweep(on, { transform: "scale(.988)" }, { transform: "none" }, { dur: M3.fast });
+    }
+    if (!listEl2.querySelector(".bz-clip-item") && !listEl2.querySelector(".bz-clip-desk-fold")) {
+      sweep(listEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M3.base - 40 });
+    }
+  }
+  function motionReaderRendered(readerEl2, turn, mood) {
+    try {
+      readerAnim == null ? void 0 : readerAnim.cancel();
+    } catch (e) {
+    }
+    readerAnim = null;
+    if (!turn) {
+      if (mood === "boot") sweep(readerEl2.querySelector(".bz-empty"), { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { dur: M3.base - 40 });
+      return;
+    }
+    if (turn === "first") {
+      const from = { opacity: 0.25, transform: "perspective(1100px) rotateX(6deg) translateY(10px)", filter: "blur(2px)" };
+      let a2 = null;
+      if (canAnimate()) {
+        readerEl2.style.transformOrigin = "50% 0";
+        a2 = waapi2(readerEl2, [from, { opacity: 1, transform: "none", filter: "blur(0px)" }], { duration: M3.base + 80, easing: E2.out });
+        if (a2) {
+          readerAnim = a2;
+          const done = () => {
+            readerEl2.style.transformOrigin = "";
+            readerEl2.style.willChange = "";
+            try {
+              a2.cancel();
+            } catch (e) {
+            }
+            if (readerAnim === a2) readerAnim = null;
+          };
+          a2.finished.then(done).catch(done);
+        }
+      }
+      const title = readerEl2.querySelector(".bz-clip-art-title");
+      sweep(
+        title,
+        { opacity: 0, transform: "translateY(6px)", clipPath: "inset(0 100% 0 0)" },
+        { opacity: 1, transform: "none", clipPath: "inset(0 0 0 0)" },
+        { delay: 90, dur: M3.base + 60 }
+      );
+      sweep(readerEl2.querySelector(".bz-clip-art-meta"), { opacity: 0, transform: "translateY(5px)" }, { opacity: 1, transform: "none" }, { delay: 170, dur: M3.base - 40 });
+      const tags = readerEl2.querySelector(".bz-clip-art-tags");
+      sweep(tags, { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 210, dur: M3.base - 60 });
+      sweep(
+        readerEl2.querySelector(".bz-clip-art-sum"),
+        { opacity: 0, clipPath: "inset(0 100% 0 0)" },
+        { opacity: 1, clipPath: "inset(0 0 0 0)" },
+        { delay: 250, dur: M3.base + 40 }
+      );
+      sweep(readerEl2.querySelector("[data-clip-md]"), { opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }, { delay: 320, dur: M3.base + 60 });
+      sweep(readerEl2.querySelector(".bz-clip-art-foot"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: 400, dur: M3.base - 40 });
+      return;
+    }
+    const rx = turn === "back" ? -5 : 5;
+    const oy = turn === "back" ? "100%" : "0";
+    let a = null;
+    if (canAnimate()) {
+      readerEl2.style.transformOrigin = `50% ${oy}`;
+      a = waapi2(
+        readerEl2,
+        [
+          { opacity: 0.3, transform: `perspective(1100px) rotateX(${rx}deg) translateY(${turn === "back" ? -6 : 6}px)` },
+          { opacity: 1, transform: "none" }
+        ],
+        { duration: M3.move + 60, easing: E2.out }
+      );
+      if (a) {
+        readerAnim = a;
+        const done = () => {
+          readerEl2.style.transformOrigin = "";
+          readerEl2.style.willChange = "";
+          try {
+            a.cancel();
+          } catch (e) {
+          }
+          if (readerAnim === a) readerAnim = null;
+        };
+        a.finished.then(done).catch(done);
+      }
+    }
+  }
+  function motionMobTocRendered(mobListEl2, mood) {
+    if (mood !== "boot") return;
+    [...mobListEl2.querySelectorAll(".bz-clip-mob-ch")].slice(0, 8).forEach((ch, i) => {
+      sweep(
+        ch,
+        { opacity: 0, transform: "translateY(10px)", filter: "blur(4px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" },
+        { delay: 200 + i * 60, dur: M3.base + 40 }
+      );
+    });
+  }
+  function motionMobFoldOpen(archEl) {
+    sweep(archEl, { opacity: 0, clipPath: "inset(0 0 100% 0)" }, { opacity: 1, clipPath: "inset(0 0 0 0)" }, { dur: M3.move + 40 });
+  }
+  function motionMobDetailIn(detailEl) {
+    let a = null;
+    if (canAnimate()) {
+      a = waapi2(
+        detailEl,
+        [
+          { opacity: 0.4, transform: "translateX(36px)", filter: "blur(2px)" },
+          { opacity: 1, transform: "none", filter: "blur(0px)" }
+        ],
+        { duration: M3.move + 60, easing: E2.move }
+      );
+      if (a) {
+        const done = () => {
+          detailEl.style.willChange = "";
+          try {
+            a.cancel();
+          } catch (e) {
+          }
+        };
+        a.finished.then(done).catch(done);
+      }
+    }
+    [".bz-clip-mob-d-kicker", ".bz-clip-mob-d-title", ".bz-clip-mob-d-rule", ".bz-clip-mob-d-md", ".bz-clip-mob-d-foot"].forEach((sel, i) => {
+      sweep(
+        detailEl.querySelector(sel),
+        { opacity: 0, transform: "translateY(7px)" },
+        { opacity: 1, transform: "none" },
+        { delay: 110 + i * 45, dur: M3.base - 20 }
+      );
+    });
+  }
+  function motionMobSearchbarIn(barEl) {
+    sweep(barEl, { opacity: 0, transform: "translateY(-7px)" }, { opacity: 1, transform: "none" }, { dur: M3.fast + 40 });
+  }
+  function motionSelbarIn(barEl) {
+    sweep(barEl, { opacity: 0, transform: "translateY(5px) scale(.96)" }, { opacity: 1, transform: "none" }, { dur: M3.fast + 20 });
+  }
+  function motionArchStamp(host) {
+    if (!host || !canAnimate() || host.querySelector(":scope > .bz-clm-stamp")) return;
+    const prevStyle = host.getAttribute("style");
+    if (getComputedStyle(host).position === "static") host.style.position = "relative";
+    const stamp = document.createElement("span");
+    stamp.className = "bz-clm-stamp";
+    stamp.setAttribute("aria-hidden", "true");
+    stamp.textContent = "收";
+    host.appendChild(stamp);
+    const a = waapi2(
+      stamp,
+      [
+        { opacity: 0, transform: "rotate(-14deg) scale(2.1)" },
+        { opacity: 0.95, transform: "rotate(-12deg) scale(1)", offset: 0.26 },
+        { opacity: 0.95, transform: "rotate(-12deg) scale(1)", offset: 0.74 },
+        { opacity: 0, transform: "rotate(-11deg) scale(1.06)" }
+      ],
+      { duration: M3.impulse + 260, easing: E2.move }
+    );
+    const remove = () => {
+      stamp.remove();
+      if (prevStyle === null) host.removeAttribute("style");
+      else host.setAttribute("style", prevStyle);
+    };
+    if (a) a.finished.then(remove).catch(remove);
+    else after2(M3.impulse + 280, remove);
+  }
+  function motionInkStrike(titleEl, delay = 0) {
+    if (!titleEl || !canAnimate() || titleEl.querySelector(":scope > .bz-clm-strike")) return;
+    const prevStyle = titleEl.getAttribute("style");
+    if (getComputedStyle(titleEl).position === "static") titleEl.style.position = "relative";
+    const strike = document.createElement("span");
+    strike.className = "bz-clm-strike";
+    strike.setAttribute("aria-hidden", "true");
+    titleEl.appendChild(strike);
+    const a = waapi2(
+      strike,
+      [
+        { opacity: 0.9, transform: "scaleX(0)" },
+        { opacity: 0.9, transform: "scaleX(1)", offset: 0.22 },
+        { opacity: 0.9, transform: "scaleX(1)", offset: 0.68 },
+        { opacity: 0, transform: "scaleX(1)" }
+      ],
+      { duration: 980, delay, easing: E2.out }
+    );
+    const remove = () => {
+      strike.remove();
+      if (prevStyle === null) titleEl.removeAttribute("style");
+      else titleEl.setAttribute("style", prevStyle);
+    };
+    if (a) a.finished.then(remove).catch(remove);
+    else after2(1e3 + delay, remove);
+  }
+  function motionSnipGhost(cardEl) {
+    if (!cardEl || !canAnimate() || !cardEl.isConnected) return;
+    const rect = cardEl.getBoundingClientRect();
+    if (rect.width < 8 || rect.height < 8) return;
+    const ghost = cardEl.cloneNode(true);
+    ghost.classList.add("bz-clm-cutghost");
+    ghost.setAttribute("aria-hidden", "true");
+    ghost.style.left = `${rect.left}px`;
+    ghost.style.top = `${rect.top}px`;
+    ghost.style.width = `${rect.width}px`;
+    ghost.style.height = `${rect.height}px`;
+    const host = cardEl.closest(".bz-clip-frame") || document.body;
+    host.appendChild(ghost);
+    const a = waapi2(
+      ghost,
+      [
+        { opacity: 1, transform: "none", filter: "none" },
+        { opacity: 1, transform: "translate(-8px,-4px) rotate(-.6deg) scale(1.01)", offset: 0.28 },
+        { opacity: 0, transform: "translate(-70px,-16px) rotate(-3deg) scale(.96)", filter: "blur(2px)" }
+      ],
+      { duration: M3.impulse - 160, easing: E2.move }
+    );
+    const remove = () => ghost.remove();
+    if (a) a.finished.then(remove).catch(remove);
+    else after2(M3.impulse, remove);
+  }
+  function motionReportIn(overlay) {
+    const frame = overlay.querySelector(".bz-clip-report-frame");
+    if (!frame) return;
+    if (!overlay.style.opacity) overlay.style.opacity = "0";
+    waapi2(overlay, [{ opacity: 0 }, { opacity: 1 }], { duration: M3.fast + 40, easing: E2.out });
+    const a = waapi2(
+      frame,
+      [
+        { opacity: 0, transform: "translateY(16px) scale(.985)", filter: "blur(6px)" },
+        { opacity: 1, transform: "none", filter: "blur(0px)" }
+      ],
+      { duration: M3.base + 60, easing: E2.out }
+    );
+    const clear = () => {
+      overlay.style.opacity = "";
+    };
+    if (a) a.finished.then(clear).catch(clear);
+    else clear();
+  }
+  function motionReportSection(secEl, idx) {
+    const sec = secEl;
+    if (!sec || !canAnimate()) return;
+    const base = idx * 50;
+    sweep(sec, { opacity: 0, transform: "translateY(10px)", filter: "blur(3px)" }, { opacity: 1, transform: "none", filter: "blur(0px)" }, { delay: base, dur: M3.base + 40 });
+    sweep(sec.querySelector(".bz-clp-rep-sec-h"), { opacity: 0, transform: "translateY(4px)" }, { opacity: 1, transform: "none" }, { delay: base + 80, dur: M3.base - 40 });
+    sec.querySelectorAll(".bz-clp-rep-hero-card").forEach((card, i) => {
+      sweep(card, { opacity: 0, transform: "translateY(8px) scale(.94)" }, { opacity: 1, transform: "none" }, { delay: base + 140 + i * 60, dur: M3.base - 20, easing: E2.move });
+    });
+    sec.querySelectorAll(".bz-clp-rep-top-row").forEach((row, i) => {
+      sweep(row, { opacity: 0, transform: "translateY(6px)" }, { opacity: 1, transform: "none" }, { delay: base + 180 + Math.min(i, 5) * STAG, dur: M3.base - 40 });
+    });
+    sec.querySelectorAll(".bz-clp-rep-bar-row").forEach((row, i) => {
+      const bar = row.querySelector(".bz-clp-rep-bar-track i");
+      sweep(
+        bar,
+        { transform: "scaleX(0)" },
+        { transform: "scaleX(1)" },
+        { delay: base + 200 + Math.min(i, 8) * 40, dur: M3.base + 80, easing: E2.move, origin: "left center" }
+      );
+    });
+    sec.querySelectorAll(".bz-clp-rep-hcol").forEach((col, i) => {
+      const bar = col.querySelector(".bz-clp-rep-hbar");
+      sweep(
+        bar,
+        { transform: "scaleY(0)" },
+        { transform: "scaleY(1)" },
+        { delay: base + 200 + Math.min(i, 24) * 18, dur: M3.base + 40, easing: E2.move, origin: "center bottom" }
+      );
+    });
+    sweep(sec.querySelector(".bz-clp-rep-hours-note"), { opacity: 0 }, { opacity: 1 }, { delay: base + 460, dur: M3.base - 40 });
+    sweep(sec.querySelector(".bz-clp-rep-none"), { opacity: 0 }, { opacity: 1 }, { delay: base + 120, dur: M3.base - 40 });
+  }
+  function motionLoadingPulse(el) {
+    if (!el || reduced2() || typeof el.animate !== "function") return;
+    try {
+      el.animate([{ opacity: 1 }, { opacity: 0.45 }, { opacity: 1 }], { duration: 1400, iterations: Infinity, easing: "ease-in-out" });
+    } catch (e) {
+    }
+  }
+  var M3, E2, STAG, easeOutQuart, timers2, CSS_PROP, panelAnim, EXIT_ANIM_ID, EXIT_MASK_ANIM_ID, readerAnim;
+  var init_motion2 = __esm({
+    "src/clipbook/motion.ts"() {
+      M3 = { fast: 160, move: 200, base: 280, impulse: 740 };
+      E2 = {
+        out: "cubic-bezier(.22,.82,.3,1)",
+        move: "cubic-bezier(.34,.06,.16,1)"
+      };
+      STAG = 30;
+      easeOutQuart = (t) => 1 - Math.pow(1 - t, 4);
+      timers2 = /* @__PURE__ */ new Set();
+      CSS_PROP = {
+        opacity: "opacity",
+        transform: "transform",
+        filter: "filter",
+        clipPath: "clip-path",
+        transformOrigin: "transform-origin",
+        willChange: "will-change"
+      };
+      panelAnim = null;
+      EXIT_ANIM_ID = "bz-clip-exit";
+      EXIT_MASK_ANIM_ID = "bz-clip-exit-mask";
+      readerAnim = null;
     }
   });
 
@@ -22811,6 +23630,7 @@ ${bodyText.substring(0, 6e3)}`;
     overlayEl.style.display = "flex";
     topifyZ(overlayEl);
     trapPanelFocus((_a = overlayEl.querySelector(".bz-clip-report-frame")) != null ? _a : overlayEl);
+    motionReportIn(overlayEl);
     await renderBody(true);
   }
   function syncPeriodSeg() {
@@ -22945,6 +23765,7 @@ ${bodyText.substring(0, 6e3)}`;
     const seq = ++renderSeq;
     const alive = () => seq === renderSeq && !!overlayEl && overlayEl.style.display !== "none" && body.isConnected;
     body.innerHTML = clipReportSkeletonHtml();
+    motionLoadingPulse(body.firstElementChild);
     try {
       if (!logCache) {
         await yieldToMainThread(YIELD_MS);
@@ -22963,6 +23784,7 @@ ${bodyText.substring(0, 6e3)}`;
       };
       if (!logCache.length) {
         renderEmptyState(body, buildClipReportEmpty("never"));
+        motionReportSection(body.firstElementChild, 0);
         if (progress && activeProgress === progress) {
           progress.hide();
           activeProgress = null;
@@ -22975,11 +23797,21 @@ ${bodyText.substring(0, 6e3)}`;
       const data = buildClipReport(logCache, period, /* @__PURE__ */ new Date());
       const availKeys = await collectAvailableKeys();
       if (!alive()) return finishAbort();
+      let library = null;
+      try {
+        const res = await readNewsData();
+        if (res.ok && !res.missing) library = buildLibraryStats(res.data && res.data.articles, /* @__PURE__ */ new Date());
+      } catch (e) {
+        library = null;
+      }
+      if (!alive()) return finishAbort();
+      const busiest = busiestDay(logCache, period, /* @__PURE__ */ new Date());
       if (!data.articles && !data.totalMinutes) {
         const other = period === "week" ? "month" : "week";
         const otherData = buildClipReport(logCache, other, /* @__PURE__ */ new Date());
         const switchTo = otherData.articles || otherData.totalMinutes ? other : void 0;
         renderEmptyState(body, buildClipReportEmpty("period", switchTo));
+        motionReportSection(body.firstElementChild, 0);
         if (progress && activeProgress === progress) {
           progress.hide();
           activeProgress = null;
@@ -22987,11 +23819,13 @@ ${bodyText.substring(0, 6e3)}`;
         return;
       }
       body.innerHTML = "";
-      for (const section of buildClipReportSections(data, { availableKeys: availKeys })) {
+      let secIdx = 0;
+      for (const section of buildClipReportSections(data, { availableKeys: availKeys, library, busiest })) {
         if (!alive()) return finishAbort();
         await yieldToMainThread(YIELD_MS);
         if (!alive()) return finishAbort();
         body.insertAdjacentHTML("beforeend", section.generate());
+        motionReportSection(body.lastElementChild, secIdx++);
         progress == null ? void 0 : progress.setMessage(`正在生成${section.label}…`);
       }
       if (alive()) {
@@ -23027,6 +23861,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_flow();
       init_report_stats();
       init_render3();
+      init_motion2();
       init_clipbook();
       init_ui3();
       overlayEl = null;
@@ -23043,6 +23878,2136 @@ ${bodyText.substring(0, 6e3)}`;
   <div class="bz-clp-rep-error-t">统计失败</div>
   <div>读取阅读记录时出错，请重新打开；若反复出现请查看控制台</div>
 </div>`;
+    }
+  });
+
+  // src/clipbook/press/data.ts
+  function hourOf2(ts) {
+    const h = new Date(ts).getHours();
+    return h >= 0 && h < 24 ? h : 0;
+  }
+  function dayKeyOf2(ts) {
+    const d = new Date(ts);
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  }
+  function titleWords(titles, limit) {
+    const map = /* @__PURE__ */ new Map();
+    const bump = (w) => {
+      if (CN_STOPWORDS.has(w)) return;
+      map.set(w, (map.get(w) || 0) + 1);
+    };
+    for (const t of titles) {
+      for (const seg of String(t).match(/[\u4e00-\u9fa5]{2,}/g) || []) {
+        for (let i = 0; i + 2 <= seg.length; i++) bump(seg.slice(i, i + 2));
+      }
+      for (const w of String(t).match(/[A-Za-z]{3,}/g) || []) {
+        bump(w[0] + w[1].toLowerCase() + w.slice(2).toLowerCase());
+      }
+    }
+    return [...map.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, limit).map(([w, n]) => ({ w, n }));
+  }
+  function agoOf(ts, now) {
+    const d = new Date(ts);
+    const dayStart = (x) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const diff = Math.round((dayStart(now) - dayStart(d)) / 864e5);
+    if (diff <= 0) return `今天 ${d.getHours()} 点`;
+    if (diff === 1) return "昨天";
+    return `${diff} 天前`;
+  }
+  function derivePress(log, rawArticles, extra, now = /* @__PURE__ */ new Date()) {
+    const valid = (log || []).filter((e) => e && typeof e.ts === "number" && isFinite(e.ts) && Math.round(Number(e.minutes) || 0) > 0);
+    const minutesByKey = /* @__PURE__ */ new Map();
+    const srcMap = /* @__PURE__ */ new Map();
+    const srcShiftMap = /* @__PURE__ */ new Map();
+    const hours = new Array(24).fill(0);
+    const days = /* @__PURE__ */ new Set();
+    const perDay = /* @__PURE__ */ new Map();
+    let totalMinutes = 0;
+    const todayKey = dayKeyOf2(now.getTime());
+    let todayMinutes = 0;
+    let todaySessions = 0;
+    let deepMinutes = 0;
+    for (const e of valid) {
+      const m = Math.round(Number(e.minutes) || 0);
+      totalMinutes += m;
+      if (dayKeyOf2(e.ts) === todayKey) {
+        todayMinutes += m;
+        todaySessions += 1;
+      }
+      if (m > deepMinutes) deepMinutes = m;
+      const h = hourOf2(e.ts);
+      hours[h] += m;
+      const k = dayKeyOf2(e.ts);
+      days.add(k);
+      perDay.set(k, (perDay.get(k) || 0) + m);
+      const key = String(e.key || "");
+      const src = String(e.src || "").trim() || "未知";
+      const prev = minutesByKey.get(key);
+      if (prev) prev.minutes += m;
+      else minutesByKey.set(key, { title: String(e.title || "(无标题)"), src, minutes: m });
+      let row = srcMap.get(src);
+      if (!row) {
+        row = { name: src, articles: 0, minutes: 0 };
+        srcMap.set(src, row);
+      }
+      row.minutes += m;
+      let ss = srcShiftMap.get(src);
+      if (!ss) {
+        ss = [0, 0, 0, 0];
+        srcShiftMap.set(src, ss);
+      }
+      ss[h < 6 ? 0 : h < 12 ? 1 : h < 18 ? 2 : 3] += m;
+    }
+    for (const { src } of minutesByKey.values()) {
+      const row = srcMap.get(src);
+      if (row) row.articles += 1;
+    }
+    let busiest = null;
+    for (const [date, minutes] of perDay) {
+      if (!busiest || minutes > busiest.minutes || minutes === busiest.minutes && date < busiest.date) {
+        busiest = { date, minutes };
+      }
+    }
+    let peakHour = -1;
+    for (let h = 0; h < 24; h++) if (hours[h] > 0 && (peakHour < 0 || hours[h] > hours[peakHour])) peakHour = h;
+    const top = [...minutesByKey.values()].sort((a, b) => b.minutes - a.minutes).slice(0, 5);
+    const sources = [...srcMap.values()].sort((a, b) => b.minutes - a.minutes || b.articles - a.articles || a.name.localeCompare(b.name)).slice(0, 6);
+    const dayStart = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+    const matrix = [];
+    const cal = [];
+    const matrixMinutes = /* @__PURE__ */ new Map();
+    for (const e of valid) {
+      const k = dayKeyOf2(e.ts);
+      let arr = matrixMinutes.get(k);
+      if (!arr) {
+        arr = new Array(24).fill(0);
+        matrixMinutes.set(k, arr);
+      }
+      arr[hourOf2(e.ts)] += Math.round(Number(e.minutes) || 0);
+    }
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(dayStart(now) - i * 864e5);
+      const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      const hs = matrixMinutes.get(k) || new Array(24).fill(0);
+      matrix.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, minutes: hs.reduce((s, x) => s + x, 0), hours: hs });
+    }
+    for (let i = 55; i >= 0; i--) {
+      const d = new Date(dayStart(now) - i * 864e5);
+      const k = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+      cal.push({ label: `${d.getMonth() + 1}/${d.getDate()}`, minutes: perDay.get(k) || 0 });
+    }
+    const srcShift = sources.map((s) => ({ name: s.name, shifts: srcShiftMap.get(s.name) || [0, 0, 0, 0] }));
+    const recent2 = [...valid].sort((a, b) => b.ts - a.ts).slice(0, 8).map((e) => ({
+      title: String(e.title || "(无标题)"),
+      src: String(e.src || "").trim() || "未知",
+      minutes: Math.round(Number(e.minutes) || 0),
+      ago: agoOf(e.ts, now)
+    }));
+    const words = titleWords([...minutesByKey.values()].map((x) => x.title), 26);
+    let lib = null;
+    try {
+      lib = rawArticles ? buildLibraryStats(rawArticles, now) : null;
+    } catch (e) {
+      lib = null;
+    }
+    const oldest3 = [];
+    const unreadMap = /* @__PURE__ */ new Map();
+    if (rawArticles) {
+      const cands = [];
+      for (const a of rawArticles) {
+        if (a.read) continue;
+        const p = String(a.platform || "").trim() || "未知";
+        unreadMap.set(p, (unreadMap.get(p) || 0) + 1);
+        const ts = Date.parse(String(a.fetchedAt || a.date || ""));
+        if (isFinite(ts)) cands.push({ title: String(a.title || "(无标题)"), src: p, ts });
+      }
+      cands.sort((a, b) => a.ts - b.ts);
+      for (const c of cands.slice(0, 3)) {
+        oldest3.push({ title: c.title, src: c.src, days: Math.max(0, Math.floor((now.getTime() - c.ts) / 864e5)) });
+      }
+    }
+    const unreadTop = [...unreadMap.entries()].map(([name, n]) => ({ name, n })).sort((a, b) => b.n - a.n || a.name.localeCompare(b.name)).slice(0, 6);
+    const totalRead = Math.max(0, Math.round(Number(extra == null ? void 0 : extra.totalRead) || 0));
+    const inStream = lib ? lib.total : 0;
+    const saved = Math.max(0, Math.round(Number(extra == null ? void 0 : extra.savedCount) || 0));
+    const byDateDays = Math.max(1, Math.round(Number(extra == null ? void 0 : extra.byDateDays) || 0));
+    const totals = totalRead > 0 ? { totalRead, inStream, saved, perDay: Math.round(totalRead / byDateDays * 10) / 10 } : null;
+    return {
+      issue: lib ? lib.total : 0,
+      sessions: valid.length,
+      articles: minutesByKey.size,
+      totalMinutes,
+      activeDays: days.size,
+      streak: streakDays(log, now),
+      busiest,
+      top,
+      sources,
+      hours,
+      peakHour,
+      shifts: shiftBuckets(hours),
+      matrix,
+      words,
+      cal,
+      srcShift,
+      recent: recent2,
+      todayMinutes,
+      todaySessions,
+      deepMinutes,
+      oldest3,
+      unreadTop,
+      totals,
+      lib
+    };
+  }
+  var CN_STOPWORDS;
+  var init_data3 = __esm({
+    "src/clipbook/press/data.ts"() {
+      init_report_stats();
+      init_str();
+      CN_STOPWORDS = /* @__PURE__ */ new Set(["我们", "一个", "什么", "这个", "自己", "没有", "就是", "为什么", "怎么", "可以", "不是", "还是", "已经", "如何", "评价", "看待", "为啥", "你的", "他们的"]);
+    }
+  });
+
+  // src/clipbook/press/view.ts
+  function numCell(n, fmt, label) {
+    return `<div class="bz-rp-cell" data-r="cell"><b class="bz-rp-num" data-r="num" data-n="${n}" data-fmt="${fmt}">${fmt === "min" ? esc(formatMinutes(n)) : n}</b><span>${esc(label)}</span></div>`;
+  }
+  function headRow(d) {
+    const r = d.top[0];
+    if (!r) return "";
+    const max = Math.max(1, ...d.top.map((x) => x.minutes));
+    return `
+    <div class="bz-rp-head" data-r="head">
+      <span class="bz-rp-rank" data-r="rank">1</span>
+      <div class="bz-rp-head-main">
+        <b class="bz-rp-head-t" title="${esc(r.title)}">${esc(r.title)}</b>
+        <span class="bz-rp-head-s"><i>${esc(r.src)}</i><em data-r="heads">${esc(formatMinutes(r.minutes))}</em></span>
+      </div>
+      <span class="bz-rp-head-bar"><i data-r="headb" style="width:${Math.max(6, Math.round(r.minutes / max * 100))}%"></i></span>
+    </div>`;
+  }
+  function topRows(d) {
+    const max = Math.max(1, ...d.top.map((r) => r.minutes));
+    return d.top.slice(1).map((r, i) => `
+    <div class="bz-rp-row" data-r="row">
+      <span class="bz-rp-rank" data-r="rank">${i + 2}</span>
+      <span class="bz-rp-row-t" title="${esc(r.title)}">${esc(r.title)}</span>
+      <span class="bz-rp-row-src">${esc(r.src)}</span>
+      <span class="bz-rp-minb"><i data-r="minb" style="width:${Math.max(4, Math.round(r.minutes / max * 100))}%"></i></span>
+      <b class="bz-rp-row-min">${esc(formatMinutes(r.minutes))}</b>
+    </div>`).join("");
+  }
+  function srcRows(d) {
+    const max = Math.max(1, ...d.sources.map((s) => s.minutes));
+    const maxA = Math.max(1, ...d.sources.map((s) => s.articles));
+    return d.sources.map((s) => `
+    <div class="bz-rp-row" data-r="row">
+      <span class="bz-rp-row-t bz-rp-row-t--src" title="${esc(s.name)}">${esc(s.name)}</span>
+      <span class="bz-rp-bar"><i data-r="bar" style="width:${Math.max(3, Math.round(s.minutes / max * 100))}%"></i></span>
+      <span class="bz-rp-subbar"><i data-r="subbar" style="width:${Math.max(3, Math.round(s.articles / maxA * 100))}%"></i></span>
+      <b class="bz-rp-row-min" data-r="cnt" data-n="${s.minutes}" data-x="${s.articles}">${esc(formatMinutes(s.minutes))} · ${s.articles} 篇</b>
+    </div>`).join("");
+  }
+  function recentRows(d) {
+    return d.recent.map((r) => `
+    <div class="bz-rp-row bz-rp-row--wire" data-r="wire">
+      <i class="bz-rp-wire-dot" data-r="dot" aria-hidden="true"></i>
+      <span class="bz-rp-row-t" title="${esc(r.title)}">${esc(r.title)}</span>
+      <span class="bz-rp-row-src">${esc(r.src)}</span>
+      <span class="bz-rp-ago" data-r="ago">${esc(r.ago)} · ${r.minutes} 分钟</span>
+    </div>`).join("");
+  }
+  function dayLabels(d) {
+    if (!d.lib) return "";
+    return d.lib.byDay.map((x) => `<span data-r="dl">${esc(x.label)}</span>`).join("");
+  }
+  function old3Rows(d) {
+    return d.oldest3.map((o, i) => `
+    <div class="bz-rp-old3" data-r="old3" style="--o3i:${i}">
+      <span class="bz-rp-rank" data-r="o3rank">${i + 1}</span>
+      <div class="bz-rp-old3-main">
+        <span class="bz-rp-old3-t" title="${esc(o.title)}">${esc(o.title)}</span>
+        <span class="bz-rp-row-src">${esc(o.src)} · 压了 ${esc(cnDay(o.days))} 天的报</span>
+      </div>
+      <b class="bz-rp-old3-d" data-r="o3d"><i data-r="o3n" data-n="${o.days}">0</i> 天</b>
+      <span class="bz-rp-badge" data-r="o3tag">压库</span>
+    </div>`).join("");
+  }
+  function dayCn2(iso) {
+    const p = iso.split("-");
+    return p.length >= 3 ? `${Number(p[1])} 月 ${Number(p[2])} 日` : iso;
+  }
+  function cnDay(days) {
+    return `${days}`;
+  }
+  function shiftLegend() {
+    return `<div class="bz-rp-legend" data-r="legend">
+    <span data-r="lg"><i style="background:var(--clip-line,#e4ddd0)"></i>夜班 0-6</span>
+    <span data-r="lg"><i style="background:var(--clip-accent-soft,#e8965a);opacity:.55"></i>晨班 6-12</span>
+    <span data-r="lg"><i style="background:var(--clip-accent-soft,#e8965a);opacity:.8"></i>午班 12-18</span>
+    <span data-r="lg"><i style="background:var(--clip-accent,#c2410c)"></i>晚班 18-24</span>
+  </div>`;
+  }
+  function vertChars(text) {
+    return [...text].map((c) => `<span>${esc(c)}</span>`).join("");
+  }
+  function pressHtml(d) {
+    const busiest = d.busiest ? `<div class="bz-rp-busiest" data-r="brow"><span>最投入的一天</span><i class="bz-rp-lead" data-r="blead"></i><b data-r="bday">${esc(dayCn2(d.busiest.date))}</b><span class="bz-rp-dim" data-r="bmin">${esc(formatMinutes(d.busiest.minutes))}</span></div>` : "";
+    const deep = d.deepMinutes > 0 ? `<div class="bz-rp-busiest" data-r="deeprow"><span>最深一段</span><i class="bz-rp-lead" data-r="deeplead"></i><b data-r="deepv">${esc(formatMinutes(d.deepMinutes))}</b><span class="bz-rp-dim">不歇气</span></div>` : "";
+    const lib = d.lib;
+    return `
+    <div class="bz-rp-box">
+      <div class="bz-rp-scroll">
+        <div class="bz-rp-film">
+
+          <!-- 01 开印：油墨泼开 + 刊名活字错落 + 竖排报眼 + 期号压角 -->
+          <section class="bz-rp-scn" data-id="c01" data-name="开印">
+            <canvas class="bz-rp-cv" data-cv="c01" aria-hidden="true"></canvas>
+            <div class="bz-rp-mast-eye" data-r="eye" aria-hidden="true">${vertChars("读报特刊")}</div>
+            <div class="bz-rp-in bz-rp-in--mid">
+              <h1 class="bz-rp-mast" data-r="mast"><span>我</span><span>读</span><span>了</span><span>什</span><span>么</span></h1>
+              <div class="bz-rp-mast-sub" data-r="sub">读报特刊 · 建库以来</div>
+              <i class="bz-rp-mast-line" data-r="line" aria-hidden="true"></i>
+            </div>
+            <b class="bz-rp-issue" data-r="issue" aria-hidden="true">第 ${d.issue} 期</b>
+          </section>
+
+          <!-- 02 速览：总时长大数压左上，三格沿右缘错落 -->
+          <section class="bz-rp-scn" data-id="c02" data-name="速览">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">本期速览</h2>
+              <div class="bz-rp-grid">
+                <div class="bz-rp-hero" data-r="cell">
+                  <b class="bz-rp-hero-n" data-r="num" data-n="${d.totalMinutes}" data-fmt="min">${esc(formatMinutes(d.totalMinutes))}</b>
+                  <span class="bz-rp-hero-l">总阅读时长</span>
+                </div>
+                <div class="bz-rp-side">
+                  ${numCell(d.articles, "int", "已读篇数")}
+                  ${numCell(d.activeDays, "int", "活跃天数")}
+                  ${numCell(d.streak, "int", "连续天数")}
+                </div>
+              </div>
+              <i class="bz-rp-inkline" data-r="inkline" aria-hidden="true"></i>
+              ${busiest}
+              ${deep}
+            </div>
+          </section>
+
+          <!-- 03 工班钟：钟面左置 + 24 刻度 + 跟随针；工班行右侧 -->
+          <section class="bz-rp-scn" data-id="c03" data-name="工班钟">
+            <canvas class="bz-rp-cv" data-cv="c03" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--dial">
+              <h2 class="bz-rp-h">工班钟 · 什么时刻在读</h2>
+              <div class="bz-rp-dial-c" data-r="dialc"><b>${d.peakHour >= 0 ? d.peakHour : "--"} 点</b><span>${d.peakHour >= 0 ? esc(shiftName(d.peakHour)) : "还没读过"}</span></div>
+              <div class="bz-rp-shifts">
+                ${d.shifts.map((s) => `
+                  <div class="bz-rp-shift" data-r="shift">
+                    <span class="bz-rp-shift-nm">${esc(s.label)}<i>${esc(s.span)}</i></span>
+                    <span class="bz-rp-shift-b"><i data-r="shiftb" style="width:${Math.max(3, Math.round(s.minutes / Math.max(1, ...d.shifts.map((x) => x.minutes)) * 100))}%"></i></span>
+                    <b class="bz-rp-shift-v" data-r="shiftv" data-n="${s.minutes}">${esc(formatMinutes(s.minutes))}</b>
+                  </div>`).join("")}
+              </div>
+            </div>
+          </section>
+
+          <!-- 04 热力带：矩阵占右 2/3，竖排刊字压右缘，光标十字跟随 -->
+          <section class="bz-rp-scn" data-id="c04" data-name="热力带">
+            <canvas class="bz-rp-cv" data-cv="c04" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h bz-rp-h--vert" data-r="vt" aria-hidden="true">${vertChars("热力带")}</h2>
+            </div>
+            <div class="bz-rp-tip" data-r="tip"></div>
+          </section>
+
+          <!-- 05 读得最久：头版头条 + 四行活字次榜 -->
+          <section class="bz-rp-scn" data-id="c05" data-name="读得最久">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">读得最久 · Top 5</h2>
+              ${headRow(d)}
+              <div class="bz-rp-rows">${topRows(d)}</div>
+            </div>
+          </section>
+
+          <!-- 06 消息源榜：滚筒压过双条 + 王牌章压右上角 -->
+          <section class="bz-rp-scn" data-id="c06" data-name="消息源榜">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">消息源榜 · 谁在供版</h2>
+              <div class="bz-rp-rows">${srcRows(d)}</div>
+              <div class="bz-rp-note" data-r="snote">橙条 = 阅读分钟 · 细条 = 供版篇数</div>
+            </div>
+            <b class="bz-rp-ace" data-r="ace" aria-hidden="true">王牌</b>
+            <i class="bz-rp-roller" data-r="roller" aria-hidden="true"></i>
+          </section>
+
+          <!-- 07 号外：电传纸连发 + 走纸孔 + 今日注记 -->
+          <section class="bz-rp-scn" data-id="c07" data-name="号外">
+            <canvas class="bz-rp-cv" data-cv="c07" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--wire">
+              <h2 class="bz-rp-h">号外 · 最近在读</h2>
+              <div class="bz-rp-rows">${recentRows(d)}</div>
+              <div class="bz-rp-note" data-r="today">${d.todayMinutes > 0 ? `今晨已读 ${d.todayMinutes} 分钟 · 共 ${d.todaySessions} 段` : "今晨还没开张"}</div>
+            </div>
+          </section>
+
+          <!-- 08 收录节奏：滚筒横扫柱弹起 + 峰值纸屑 -->
+          <section class="bz-rp-scn" data-id="c08" data-name="收录节奏">
+            <canvas class="bz-rp-cv" data-cv="c08" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">收录节奏 · 近 14 天</h2>
+              <div class="bz-rp-daylab">${dayLabels(d)}</div>
+              <div class="bz-rp-note" data-r="note">${lib ? `每天收进来的新剪报 · 单日最多收 ${lib.byDayPeak} 篇` : "报库数据暂缺"}</div>
+            </div>
+          </section>
+
+          <!-- 09 驻留日历：56 格对角波显影 + 连胜线逐段描画 -->
+          <section class="bz-rp-scn" data-id="c09" data-name="驻留日历">
+            <canvas class="bz-rp-cv" data-cv="c09" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">驻留日历 · 近 56 天</h2>
+            </div>
+            <div class="bz-rp-tip" data-r="tip"></div>
+          </section>
+
+          <!-- 10 班次×来源：堆叠四段接力 + 悬停行提亮 -->
+          <section class="bz-rp-scn" data-id="c10" data-name="班次×来源">
+            <canvas class="bz-rp-cv" data-cv="c10" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">班次 × 来源 · 谁在哪一班供版</h2>
+              ${shiftLegend()}
+            </div>
+            <div class="bz-rp-tip" data-r="tip"></div>
+          </section>
+
+          <!-- 11 关键词：词云螺旋落位 + 斥力弹性回位 -->
+          <section class="bz-rp-scn" data-id="c11" data-name="关键词">
+            <canvas class="bz-rp-cv" data-cv="c11" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">关键词 · 你读的标题里什么最多</h2>
+            </div>
+          </section>
+
+          <!-- 12 报库盘点：墨盘圆环扫出 + 环心百分数 + 三格右列 -->
+          <section class="bz-rp-scn" data-id="c12" data-name="报库盘点">
+            <canvas class="bz-rp-cv" data-cv="c12" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--c12">
+              <h2 class="bz-rp-h">报库盘点 · 建库以来</h2>
+              ${lib ? `
+              <div class="bz-rp-ringc"><div class="bz-rp-ring-in" data-r="ringc"><b data-r="ringv">${lib.readRate}%</b><span>已读率</span></div></div>
+              <div class="bz-rp-side3">
+                ${numCell(lib.total, "int", "在流篇数")}
+                ${numCell(lib.readCount, "int", "已读")}
+                ${numCell(lib.unread, "int", "待读")}
+              </div>` : '<p class="bz-rp-dim">报库数据暂缺——news.json 没读到，这一页先欠着。</p>'}
+            </div>
+          </section>
+
+          <!-- 13 压库专页：三份卷宗掀角入场 + 天数里程表 -->
+          <section class="bz-rp-scn" data-id="c13" data-name="压库专页">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">压库专页 · 压得最久的三份</h2>
+              ${d.oldest3.length ? old3Rows(d) : '<p class="bz-rp-dim">没有压库的待读——报库很干净。</p>'}
+            </div>
+          </section>
+
+          <!-- 14 未读版图：行滑入 + 总待读大数压右上角 -->
+          <section class="bz-rp-scn" data-id="c14" data-name="未读版图">
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">未读版图 · 待读都在谁家</h2>
+              <div class="bz-rp-rows">
+                ${d.unreadTop.map((u) => `
+                <div class="bz-rp-row" data-r="row">
+                  <span class="bz-rp-row-t bz-rp-row-t--src">${esc(u.name)}</span>
+                  <span class="bz-rp-bar"><i data-r="bar" style="width:${Math.max(3, Math.round(u.n / Math.max(1, ...d.unreadTop.map((x) => x.n)) * 100))}%"></i></span>
+                  <b class="bz-rp-row-min" data-r="cnt" data-n="${u.n}">${u.n} 篇</b>
+                </div>`).join("")}
+              </div>
+            </div>
+            ${lib ? `<b class="bz-rp-ghost" data-r="ghost" aria-hidden="true">${lib.unread}</b>` : ""}
+          </section>
+
+          <!-- 15 总账：三数视差滚齐 + 界栏双线 + 扫光 -->
+          <section class="bz-rp-scn" data-id="c15" data-name="总账">
+            <canvas class="bz-rp-cv" data-cv="c15" aria-hidden="true"></canvas>
+            <div class="bz-rp-in">
+              <h2 class="bz-rp-h">总账 · 这间报馆一共</h2>
+              ${d.totals ? `
+              <div class="bz-rp-cells">
+                <div class="bz-rp-cell" data-r="tcell"><b class="bz-rp-num" data-r="tnum" data-n="${d.totals.totalRead}">${d.totals.totalRead}</b><span>累计已读</span></div>
+                <div class="bz-rp-cell" data-r="tcell"><b class="bz-rp-num" data-r="tnum" data-n="${d.totals.inStream}">${d.totals.inStream}</b><span>在流待读</span></div>
+                <div class="bz-rp-cell" data-r="tcell"><b class="bz-rp-num" data-r="tnum" data-n="${d.totals.saved}">${d.totals.saved}</b><span>剪藏入册</span></div>
+              </div>
+              <div class="bz-rp-busiest" data-r="avgrow"><span>平均每天读报</span><i class="bz-rp-lead" data-r="avglead"></i><b data-r="avgv">${d.totals.perDay}</b><span class="bz-rp-dim">篇 / 天</span></div>` : '<p class="bz-rp-dim">总账缺页——news.stats 没读到。</p>'}
+            </div>
+          </section>
+
+          <!-- 16 落款：墨滴礼花 + 纸屑 + 尾章 -->
+          <section class="bz-rp-scn" data-id="c16" data-name="落款">
+            <canvas class="bz-rp-cv" data-cv="c16" aria-hidden="true"></canvas>
+            <div class="bz-rp-in bz-rp-in--mid">
+              <h1 class="bz-rp-mast bz-rp-mast--end" data-r="end"><span>本</span><span>报</span><span>完</span></h1>
+            </div>
+            <span class="bz-rp-seal" data-r="seal" aria-hidden="true">完</span>
+          </section>
+
+        </div>
+      </div>
+      <div class="bz-rp-shut" data-r="shut" aria-hidden="true"><i></i><i></i></div>
+      <nav class="bz-rp-ticks" data-r="ticks" aria-label="幕目录">${SCN_NAMES.map((n, i) => `<i class="bz-rp-tick" data-i="${i}" title="${esc(n)}"></i>`).join("")}</nav>
+    </div>`;
+  }
+  function shiftName(h) {
+    if (h < 6) return "夜班";
+    if (h < 12) return "晨班";
+    if (h < 18) return "午班";
+    return "晚班";
+  }
+  var SCN_NAMES;
+  var init_view = __esm({
+    "src/clipbook/press/view.ts"() {
+      init_render3();
+      init_report_stats();
+      SCN_NAMES = [
+        "开印",
+        "速览",
+        "工班钟",
+        "热力带",
+        "读得最久",
+        "消息源榜",
+        "号外",
+        "收录节奏",
+        "驻留日历",
+        "班次×来源",
+        "关键词",
+        "报库盘点",
+        "压库专页",
+        "未读版图",
+        "总账",
+        "落款"
+      ];
+    }
+  });
+
+  // src/clipbook/press/motions.ts
+  function palette(root) {
+    const cs = getComputedStyle(root);
+    const v = (n, fb) => (cs.getPropertyValue(n) || "").trim() || fb;
+    return {
+      ink: v("--clip-ink", "#1c1a17"),
+      ink2: v("--clip-ink-2", "#3d3a34"),
+      dim: v("--clip-dim", "#6b6458"),
+      muted: v("--clip-muted", "#b3aa9a"),
+      accent: v("--clip-accent", "#c2410c"),
+      accentSoft: v("--clip-accent-soft", "#e8965a"),
+      line: v("--clip-line", "#e4ddd0"),
+      paper: v("--clip-paper", "#faf8f3")
+    };
+  }
+  function rng(seed) {
+    let s = seed >>> 0;
+    return () => {
+      s = s * 1664525 + 1013904223 >>> 0;
+      return s / 4294967296;
+    };
+  }
+  function S(el, v) {
+    var _a;
+    if (!el || lastStyle.get(el) === v) return;
+    const he = el;
+    const prev = (_a = he.getAttribute("style")) != null ? _a : "";
+    if (prev) {
+      const incoming = new Set(v.split(";").map((d) => d.split(":")[0].trim()).filter(Boolean));
+      const keep = prev.split(";").filter((d) => {
+        const k = d.split(":")[0].trim();
+        return k && !incoming.has(k);
+      });
+      if (keep.length) v = `${keep.join(";")};${v}`;
+    }
+    he.setAttribute("style", v);
+    lastStyle.set(he, v);
+  }
+  function T(el, v) {
+    if (!el || lastText.get(el) === v) return;
+    el.textContent = v;
+    lastText.set(el, v);
+  }
+  function fit2(cv) {
+    const ctx = cv.getContext("2d");
+    if (!ctx) return null;
+    const dpr = typeof devicePixelRatio === "number" && devicePixelRatio > 0 ? devicePixelRatio : 1;
+    const w = cv.clientWidth, h = cv.clientHeight;
+    if (w < 2 || h < 2) return null;
+    if (cv.width !== Math.round(w * dpr) || cv.height !== Math.round(h * dpr)) {
+      cv.width = Math.round(w * dpr);
+      cv.height = Math.round(h * dpr);
+    }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, w, h };
+  }
+  function rgba(hex, a) {
+    const m = hex.replace("#", "");
+    const full = m.length === 3 ? m.split("").map((c) => c + c).join("") : m;
+    const n = parseInt(full.slice(0, 6), 16);
+    if (!isFinite(n)) return hex;
+    return `rgba(${n >> 16 & 255},${n >> 8 & 255},${n & 255},${a.toFixed(3)})`;
+  }
+  function repel(lx, ly, pin, x, y, R = 110, force = 26) {
+    if (!pin) return { dx: 0, dy: 0 };
+    const dx = x - lx, dy = y - ly;
+    const dist = Math.hypot(dx, dy);
+    if (dist > R || dist < 1e-3) return { dx: 0, dy: 0 };
+    const f = (1 - dist / R) * force;
+    return { dx: dx / dist * f, dy: dy / dist * f };
+  }
+  function dolly(el, t, from, dur = 1.1, delay = 0) {
+    if (!el) return;
+    const rest = 1 - easeOut(at(t, dur, delay));
+    S(el, rest <= 5e-4 ? "transform:none" : `transform:${from(rest)}`);
+  }
+  function drawTip(ctx, x, y, text, pal) {
+    ctx.font = `12px ${HEI}`;
+    const wText = ctx.measureText(text).width;
+    const w = wText + 18, h = 24;
+    const left = Math.max(6, Math.min(x - w / 2, (ctx.canvas.clientWidth || 9999) - w - 6));
+    const top = y - h - 12;
+    ctx.fillStyle = pal.paper;
+    ctx.strokeStyle = pal.ink;
+    ctx.lineWidth = 1;
+    ctx.fillRect(left, top, w, h);
+    ctx.strokeRect(left + 0.5, top + 0.5, w - 1, h - 1);
+    ctx.fillStyle = pal.ink;
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    ctx.fillText(text, left + 9, top + h / 2 + 0.5);
+  }
+  function humanish(min) {
+    const h = Math.floor(min / 60), r = Math.round(min % 60);
+    if (h <= 0) return `${r} 分钟`;
+    return r > 0 ? `${h} 小时 ${r} 分` : `${h} 小时`;
+  }
+  function shiftOfHour2(h) {
+    if (h < 6) return "夜班";
+    if (h < 12) return "晨班";
+    if (h < 18) return "午班";
+    return "晚班";
+  }
+  function perfC01(scn, d) {
+    const cv = q2(scn, '[data-cv="c01"]');
+    const chars = qa(scn, '[data-r="mast"] span');
+    const eyeChars = qa(scn, '[data-r="eye"] span');
+    const sub = q2(scn, '[data-r="sub"]');
+    const line = q2(scn, '[data-r="line"]');
+    const issue = q2(scn, '[data-r="issue"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const rand = rng(20260923);
+    const nDrops = Math.min(110, 40 + Math.round(d.articles * 0.6));
+    const drops = Array.from({ length: nDrops }, (_, i) => ({
+      x: rand(),
+      y0: rand() * 0.14,
+      y1: 0.3 + rand() * 0.58,
+      t0: 0.15 + rand() * 2.6,
+      life: 1.5 + rand() * 1.7,
+      r: 0.8 + rand() * 2.6,
+      wob: 6 + rand() * 20,
+      ph: rand() * Math.PI * 2,
+      accent: i % 9 === 0,
+      trail: []
+    }));
+    const beat = [0, 0.26, 0.1, 0.52, 0.34];
+    const tilt = [-6, 4, -3, 5, -4];
+    const dur = 4.6 + Math.min(0.8, d.articles / 120 * 0.8);
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        dolly(inn, t, (r) => `scale(${(1 + r * 0.045).toFixed(4)})`, 1.15);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const rect = pin ? cv.getBoundingClientRect() : null;
+            const lx = rect ? cx - rect.left : -9999;
+            const ly = rect ? cy - rect.top : -9999;
+            for (const dr of drops) {
+              const p = at(t, dr.life, dr.t0);
+              if (p <= 0 || p >= 1) {
+                if (dr.trail.length) dr.trail.length = 0;
+                continue;
+              }
+              const bx = dr.x * w + Math.sin(dr.ph + t * 1.3) * dr.wob;
+              const by = lerp(dr.y0, dr.y1, easeInOut(p)) * h;
+              const off = repel(lx, ly, pin, bx, by, 120, 30);
+              const x = bx + off.dx, y = by + off.dy;
+              dr.trail.push([x, y]);
+              if (dr.trail.length > 6) dr.trail.shift();
+              if (dr.trail.length > 1) {
+                ctx.beginPath();
+                ctx.strokeStyle = rgba(dr.accent ? pal.accent : pal.ink, Math.sin(Math.PI * p) * 0.16);
+                ctx.lineWidth = dr.r * 0.9;
+                ctx.moveTo(dr.trail[0][0], dr.trail[0][1]);
+                for (let k = 1; k < dr.trail.length; k++) ctx.lineTo(dr.trail[k][0], dr.trail[k][1]);
+                ctx.stroke();
+              }
+              const a = Math.sin(Math.PI * p) * 0.5;
+              ctx.beginPath();
+              ctx.fillStyle = rgba(dr.accent ? pal.accent : pal.ink, a);
+              ctx.arc(x, y, dr.r, 0, Math.PI * 2);
+              ctx.fill();
+              if (p > 0.55) {
+                const rp2 = (p - 0.55) / 0.45;
+                ctx.strokeStyle = rgba(dr.accent ? pal.accent : pal.ink, (1 - rp2) * 0.2);
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.arc(x, y, dr.r + rp2 * 10, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(x, y, dr.r + rp2 * 5, 0, Math.PI * 2);
+                ctx.stroke();
+              }
+            }
+          }
+        }
+        chars.forEach((c, i) => {
+          var _a, _b;
+          const p = easeBack(at(t, 0.55, 0.4 + ((_a = beat[i % 5]) != null ? _a : 0)));
+          S(c, `opacity:${clamp01(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -34).toFixed(1)}px) rotate(${((1 - p) * ((_b = tilt[i % 5]) != null ? _b : -4)).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.28).toFixed(3)})`);
+        });
+        eyeChars.forEach((c, i) => {
+          const p = easeOut(at(t, 0.4, 1.7 + i * 0.14));
+          S(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * -14).toFixed(1)}px)`);
+        });
+        const ps = at(t, 0.6, 2.3);
+        S(sub, `opacity:${ps.toFixed(3)};transform:translateY(${((1 - ps) * 10).toFixed(1)}px)`);
+        S(line, `transform:scaleX(${easeOutExpo(at(t, 0.9, 2.7)).toFixed(4)})`);
+        const pi = easeBack(at(t, 0.6, 2.9));
+        S(issue, `opacity:${clamp01(pi * 1.6).toFixed(3)};transform:translateY(${((1 - pi) * 16).toFixed(1)}px) rotate(${(-3 + (1 - pi) * -6).toFixed(2)}deg)`);
+      }
+    };
+  }
+  function perfC02(scn, d) {
+    const nums = qa(scn, '[data-r="num"]');
+    const cells = qa(scn, '[data-r="cell"]');
+    const line = q2(scn, '[data-r="inkline"]');
+    const brow = q2(scn, '[data-r="brow"]');
+    const blead = q2(scn, '[data-r="blead"]');
+    const bday = q2(scn, '[data-r="bday"]');
+    const bmin = q2(scn, '[data-r="bmin"]');
+    const deeprow = q2(scn, '[data-r="deeprow"]');
+    const deeplead = q2(scn, '[data-r="deeplead"]');
+    const deepv = q2(scn, '[data-r="deepv"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const sideBeat = [0, 0.2, 0.46];
+    const beatOf = (i) => {
+      var _a;
+      return i === 0 ? 0 : (_a = sideBeat[i - 1]) != null ? _a : 0;
+    };
+    const rollDur = (i) => {
+      const el = nums[i];
+      const n = Math.round(Number((el == null ? void 0 : el.dataset.n) || 0));
+      return 0.9 + Math.min(6, String(n).length) * 0.12;
+    };
+    const dur = 4.4 + Math.min(1.2, String(Math.round(d.totalMinutes)).length * 0.18);
+    return {
+      dur,
+      update({ t, px, py }) {
+        dolly(inn, t, (r) => `translate(${(r * -2.2).toFixed(2)}%, ${(r * -1.2).toFixed(2)}%) rotate(${(r * -0.5).toFixed(2)}deg)`, 1);
+        cells.forEach((c, i) => {
+          const p = easeOut(at(t, 0.6, 0.25 + beatOf(i)));
+          const depth = i === 0 ? 0.4 : 0.8 + i * 0.35;
+          const par = `translate(${(px * depth * 5).toFixed(1)}px, ${(py * depth * 3.4).toFixed(1)}px)`;
+          const dir = i === 0 ? `translateY(${((1 - p) * -22).toFixed(1)}px)` : `translateX(${((1 - p) * 30).toFixed(1)}px)`;
+          S(c, `opacity:${clamp01(p * 1.5).toFixed(3)};transform:${par} ${dir}`);
+        });
+        nums.forEach((el, i) => {
+          const n = Number(el.dataset.n || 0);
+          const p = easeOutExpo(at(t, rollDur(i), 0.4 + beatOf(i) + 0.15));
+          T(el, el.getAttribute("data-fmt") === "min" ? humanish(roll(n, p)) : comma(roll(n, p)));
+        });
+        S(line, `transform:scaleX(${easeInOut(at(t, 1, 0.3)).toFixed(4)})`);
+        if (brow) {
+          S(brow, `opacity:${at(t, 0.7, 2.5).toFixed(3)}`);
+          if (blead) S(blead, `transform:scaleX(${easeOut(at(t, 0.9, 2.7)).toFixed(4)})`);
+          S(bday, `opacity:${at(t, 0.5, 3.1).toFixed(3)}`);
+          S(bmin, `opacity:${at(t, 0.5, 3.3).toFixed(3)}`);
+        }
+        if (deeprow) {
+          S(deeprow, `opacity:${at(t, 0.7, 2.9).toFixed(3)}`);
+          if (deeplead) S(deeplead, `transform:scaleX(${easeOut(at(t, 0.9, 3.1)).toFixed(4)})`);
+          if (deepv) S(deepv, `opacity:${at(t, 0.5, 3.5).toFixed(3)}`);
+        }
+      }
+    };
+  }
+  function perfC03(scn, d) {
+    const cv = q2(scn, '[data-cv="c03"]');
+    const rows = qa(scn, '[data-r="shift"]');
+    const dialc = q2(scn, '[data-r="dialc"]');
+    const maxMin = Math.max(1, ...d.hours);
+    let follow = -Math.PI / 2;
+    let followA = 0;
+    const jit = rng(31);
+    const jits = Array.from({ length: 24 }, () => jit() * 0.16);
+    const dur = 6 + (maxMin > 90 ? 0.5 : 0);
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const cx0 = w * (w > h * 1.2 ? 0.36 : 0.5), cy0 = h * 0.52;
+            const R = Math.min(w * 0.3, h * 0.34);
+            const rect = pin ? cv.getBoundingClientRect() : null;
+            const lx = rect ? cx - rect.left : -9999;
+            const ly = rect ? cy - rect.top : -9999;
+            ctx.strokeStyle = rgba(pal.muted, 0.85);
+            ctx.lineWidth = 1;
+            for (let i = 0; i < 24; i++) {
+              const p = easeOut(at(t, 0.06, 0.1 + i * 0.028 + jits[i]));
+              if (p <= 0) continue;
+              const ang = (-90 + i * 15) * Math.PI / 180;
+              ctx.globalAlpha = p * 0.8;
+              ctx.beginPath();
+              ctx.moveTo(cx0 + Math.cos(ang) * (R + 8), cy0 + Math.sin(ang) * (R + 8));
+              ctx.lineTo(cx0 + Math.cos(ang) * (R + 13), cy0 + Math.sin(ang) * (R + 13));
+              ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            const ringP = [at(t, 0.7, 0.3), at(t, 0.7, 0.45), at(t, 0.7, 0.6), at(t, 0.7, 0.75)];
+            const ranges = [[0, 6], [6, 12], [12, 18], [18, 24]];
+            ctx.lineWidth = 3;
+            ctx.lineCap = "butt";
+            ranges.forEach(([lo, hi], si) => {
+              const p = easeOut(ringP[si]);
+              if (p <= 0) return;
+              const a0 = (-90 + lo * 15) * Math.PI / 180;
+              const a1 = (-90 + lo * 15 + (hi - lo) * 15 * p) * Math.PI / 180;
+              ctx.beginPath();
+              ctx.strokeStyle = rgba(pal.line, 0.55);
+              ctx.arc(cx0, cy0, R + 22, a0, a1);
+              ctx.stroke();
+            });
+            let hoverText = "";
+            for (let i = 0; i < 24; i++) {
+              const p = easeOut(at(t, 0.32, 0.7 + i * 0.09 + jits[i]));
+              if (p <= 0) continue;
+              const ang = (-90 + i * 15) * Math.PI / 180;
+              const v = d.hours[i] / maxMin;
+              const x = cx0 + Math.cos(ang) * R, y = cy0 + Math.sin(ang) * R;
+              const isPeak = i === d.peakHour;
+              const hovered = pin && Math.hypot(lx - x, ly - y) < 26;
+              const r = (2.2 + v * 9) * p * (hovered ? 1.5 : 1);
+              ctx.beginPath();
+              ctx.fillStyle = rgba(isPeak || hovered ? pal.accent : pal.ink, (0.18 + 0.82 * p) * (0.3 + 0.7 * (0.35 + 0.65 * v)));
+              if (isPeak || hovered) {
+                ctx.shadowColor = rgba(pal.accent, 0.55 * p);
+                ctx.shadowBlur = 12 * p;
+              }
+              ctx.arc(x, y, r, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.shadowBlur = 0;
+              if (hovered) hoverText = `${i} 点 · ${humanish(d.hours[i])}（${shiftOfHour2(i)}）`;
+            }
+            if (d.peakHour >= 0) {
+              const sp = springUp(at(t, 1.7, 2.4));
+              if (sp > 1e-3) {
+                const ang = (-90 + d.peakHour * 15 * sp) * Math.PI / 180;
+                ctx.beginPath();
+                ctx.strokeStyle = pal.accent;
+                ctx.lineWidth = 2.4;
+                ctx.moveTo(cx0, cy0);
+                ctx.lineTo(cx0 + Math.cos(ang) * (R - 16), cy0 + Math.sin(ang) * (R - 16));
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.fillStyle = pal.accent;
+                ctx.arc(cx0, cy0, 3.4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+            if (pin) {
+              const target = Math.atan2(ly - cy0, lx - cx0);
+              follow += sdelta(target, follow) * 0.13;
+              followA = Math.min(1, followA + 0.08);
+            } else {
+              followA = Math.max(0, followA - 0.06);
+            }
+            if (followA > 0.01) {
+              ctx.globalAlpha = followA * 0.5;
+              ctx.strokeStyle = pal.accent;
+              ctx.lineWidth = 1.2;
+              ctx.setLineDash([3, 5]);
+              ctx.beginPath();
+              ctx.moveTo(cx0, cy0);
+              ctx.lineTo(cx0 + Math.cos(follow) * (R - 30), cy0 + Math.sin(follow) * (R - 30));
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.globalAlpha = 1;
+            }
+            if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+          }
+        }
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.5, 1.1 + i * 0.2));
+          S(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 22).toFixed(1)}px)`);
+          const b = q2(row, '[data-r="shiftb"]');
+          if (b) S(b, `transform:scaleX(${easeOutExpo(at(t, 0.7, 1.35 + i * 0.2)).toFixed(4)})`);
+          const v = q2(row, '[data-r="shiftv"]');
+          if (v) {
+            const n = Number(v.dataset.n || 0);
+            T(v, humanish(roll(n, easeOutExpo(at(t, 0.9, 1.3 + i * 0.2)))));
+          }
+        });
+        if (dialc) {
+          const p = at(t, 0.6, 5);
+          S(dialc, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 8).toFixed(1)}px)`);
+        }
+      }
+    };
+  }
+  function perfC04(scn, d) {
+    const cv = q2(scn, '[data-cv="c04"]');
+    const vt = qa(scn, '[data-r="vt"] span');
+    const maxMin = Math.max(1, ...d.matrix.flatMap((m) => m.hours));
+    let pk = { r: -1, c: -1, v: 0 };
+    d.matrix.forEach((m, r) => m.hours.forEach((v, c) => {
+      if (v > pk.v) pk = { r, c, v };
+    }));
+    const jit = rng(47);
+    const jits = d.matrix.map(() => Array.from({ length: 24 }, () => jit() * 0.14));
+    const dur = 5.6 + Math.min(0.8, d.matrix.length * 0.04);
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        vt.forEach((c, i) => {
+          const p = easeOut(at(t, 0.5, 0.25 + i * 0.24));
+          S(c, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 18).toFixed(1)}px)`);
+        });
+        if (!cv) return;
+        const f = fit2(cv);
+        if (!f) return;
+        const { ctx, w, h } = f;
+        ctx.clearRect(0, 0, w, h);
+        const cols = 24, rowsN = d.matrix.length;
+        const gx = w * 0.12, gw = w * 0.66;
+        const gy = h * 0.24, gh = h * 0.54;
+        const cw = gw / cols, chh = gh / rowsN;
+        const rect = pin ? cv.getBoundingClientRect() : null;
+        const lx = rect ? cx - rect.left : -9999;
+        const ly = rect ? cy - rect.top : -9999;
+        let hoverText = "";
+        let hcx = -1, hry = -1;
+        if (pin && lx >= gx && lx < gx + gw && ly >= gy && ly < gy + gh) {
+          hcx = Math.floor((lx - gx) / cw);
+          hry = Math.floor((ly - gy) / chh);
+          ctx.fillStyle = rgba(pal.accent, 0.06);
+          ctx.fillRect(gx + hcx * cw, gy, cw, gh);
+          ctx.fillRect(gx, gy + hry * chh, gw, chh);
+        }
+        const per = 2 * (gw + gh);
+        const fp = easeInOut(at(t, 1.3, 0.15));
+        if (fp > 0) {
+          ctx.setLineDash([per * fp, per]);
+          ctx.strokeStyle = rgba(pal.muted, 0.9);
+          ctx.lineWidth = 1;
+          ctx.strokeRect(gx + 0.5, gy + 0.5, gw - 1, gh - 1);
+          ctx.setLineDash([]);
+        }
+        ctx.lineWidth = 1;
+        for (let r = 0; r < rowsN; r++) {
+          const day = d.matrix[r];
+          for (let c = 0; c < cols; c++) {
+            const p = easeOut(at(t, 0.4, 0.35 + (r + c) * 0.018 + jits[r][c]));
+            if (p <= 0) continue;
+            const v = day.hours[c] / maxMin;
+            const x = gx + c * cw, y = gy + r * chh;
+            const hot = r === hry && c === hcx;
+            ctx.fillStyle = v > 0 ? rgba(hot ? pal.accent : pal.accentSoft, (0.12 + 0.88 * p) * (0.25 + 0.75 * Math.min(1, v * 1.4))) : rgba(pal.line, 0.35 * p);
+            ctx.fillRect(x + 1, y + 1, cw - 2, chh - 2);
+            if (hot && day.hours[c] > 0) {
+              ctx.strokeStyle = pal.accent;
+              ctx.strokeRect(x + 0.5, y + 0.5, cw - 1, chh - 1);
+              hoverText = `${day.label} ${c} 点 · ${humanish(day.hours[c])}`;
+            }
+          }
+        }
+        const gp = at(t, 0.5, 3.6);
+        if (pk.r >= 0 && pk.v > 0 && gp > 0) {
+          const x = gx + pk.c * cw, y = gy + pk.r * chh;
+          ctx.strokeStyle = rgba(pal.accent, gp);
+          ctx.lineWidth = 1.6;
+          ctx.strokeRect(x + 0.5, y + 0.5, cw - 2, chh - 2);
+        }
+        ctx.fillStyle = pal.muted;
+        ctx.font = `${Math.max(10, w * 85e-4)}px ${HEI}`;
+        ctx.textAlign = "center";
+        [0, 6, 12, 18, 23].forEach((hc) => ctx.fillText(String(hc), gx + hc * cw + cw / 2, gy + gh + 18));
+        ctx.textAlign = "right";
+        d.matrix.forEach((day, r) => {
+          const p = at(t, 0.3, 0.4 + r * 0.05);
+          ctx.fillStyle = rgba(pal.muted, 0.4 + 0.6 * p);
+          ctx.fillText(day.label, gx - 8, gy + r * chh + chh / 2 + 4);
+        });
+        if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+      }
+    };
+  }
+  function perfC05(scn, _d) {
+    const head = q2(scn, '[data-r="head"]');
+    const headT = q2(scn, '[data-r="head"] .bz-rp-head-t');
+    const headRank = q2(scn, '[data-r="head"] [data-r="rank"]');
+    const headS = q2(scn, '[data-r="heads"]');
+    const headB = q2(scn, '[data-r="headb"]');
+    const rows = qa(scn, '[data-r="row"]');
+    const dur = 5.2;
+    const beat = [0, 0.16, 0.38, 0.66];
+    return {
+      dur,
+      update({ t }) {
+        const hp = easeBack(at(t, 0.7, 0.3));
+        if (head) S(head, `opacity:${clamp01(hp * 2).toFixed(3)};transform:translateY(${((1 - hp) * -26).toFixed(1)}px)`);
+        if (headT) S(headT, `letter-spacing:${(0.5 - 0.44 * clamp01(hp)).toFixed(3)}em`);
+        if (headRank) {
+          const rp = easeBack(at(t, 0.45, 0.55));
+          S(headRank, `opacity:${clamp01(rp * 2).toFixed(3)};transform:scale(${(rp * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - rp) * -12).toFixed(2)}deg)`);
+        }
+        if (headB) S(headB, `transform:scaleX(${easeOutExpo(at(t, 0.8, 0.9)).toFixed(4)})`);
+        if (headS) S(headS, `opacity:${at(t, 0.5, 1).toFixed(3)}`);
+        rows.forEach((row, i) => {
+          var _a;
+          const b = (_a = beat[i % 4]) != null ? _a : 0;
+          const p = easeBack(at(t, 0.6, 0.9 + b));
+          S(row, `opacity:${clamp01(p * 2).toFixed(3)};transform:translateY(${((1 - p) * -44).toFixed(1)}px) rotate(${((1 - p) * (i % 2 ? 1.4 : -1.8)).toFixed(2)}deg)`);
+          const rank = q2(row, '[data-r="rank"]');
+          if (rank) {
+            const pr = easeBack(at(t, 0.4, 1.05 + b));
+            S(rank, `opacity:${clamp01(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -10).toFixed(2)}deg)`);
+          }
+          const bar = q2(row, '[data-r="minb"]');
+          if (bar) S(bar, `transform:scaleX(${easeOutExpo(at(t, 0.55, 1.25 + b)).toFixed(4)})`);
+        });
+      }
+    };
+  }
+  function perfC06(scn, d) {
+    const rows = qa(scn, '[data-r="row"]');
+    const note = q2(scn, '[data-r="snote"]');
+    const ace = q2(scn, '[data-r="ace"]');
+    const roller = q2(scn, '[data-r="roller"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 4.6 + Math.min(1.2, d.sources.length * 0.18);
+    return {
+      dur,
+      update({ t }) {
+        dolly(inn, t, (r) => `translateX(${(r * 2.6).toFixed(2)}%) rotate(${(r * 0.5).toFixed(2)}deg)`, 1.05);
+        const rp = easeInOut(at(t, 2.2, 0.45));
+        if (roller) S(roller, `opacity:${rp > 0 && rp < 1 ? 0.9 : 0};transform:translateX(${(rp * 1150).toFixed(1)}%)`);
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.5, 0.4 + i * 0.24));
+          S(row, `opacity:${p.toFixed(3)}`);
+          const bar = q2(row, '[data-r="bar"]');
+          if (bar) S(bar, `transform:scaleX(${easeInOut(at(t, 0.9, 0.7 + i * 0.24)).toFixed(4)})`);
+          const sub = q2(row, '[data-r="subbar"]');
+          if (sub) S(sub, `transform:scaleX(${easeInOut(at(t, 0.8, 1 + i * 0.24)).toFixed(4)})`);
+          const cnt = q2(row, '[data-r="cnt"]');
+          if (cnt) {
+            const n = Number(cnt.dataset.n || 0);
+            const x = Number(cnt.dataset.x || 0);
+            const cp = easeOutExpo(at(t, 1, 0.8 + i * 0.24));
+            T(cnt, `${humanish(roll(n, cp))} · ${roll(x, cp)} 篇`);
+          }
+        });
+        const ap = easeBack(at(t, 0.55, 3.1));
+        S(ace, `opacity:${clamp01(ap * 2).toFixed(3)};transform:scale(${(1 + (1 - ap) * 1.4).toFixed(3)}) rotate(${(-10 + (1 - ap) * -14).toFixed(2)}deg)`);
+        if (note) S(note, `opacity:${at(t, 0.6, 3.6).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC07(scn, d) {
+    const cv = q2(scn, '[data-cv="c07"]');
+    const rows = qa(scn, '[data-r="wire"]');
+    const today = q2(scn, '[data-r="today"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 4.4 + Math.min(2.4, d.recent.length * 0.28);
+    return {
+      dur,
+      update({ t, pal }) {
+        dolly(inn, t, (r) => `translateX(${(r * 2.4).toFixed(2)}%)`, 0.9);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = rgba(pal.muted, 0.3);
+            const holeGap = 26, roll2 = t * 12 % holeGap;
+            for (let y = -holeGap; y < h + holeGap; y += holeGap) {
+              const yy = y + roll2;
+              ctx.beginPath();
+              ctx.arc(w * 0.045, yy, 2.2, 0, Math.PI * 2);
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(w * 0.955, yy, 2.2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.setLineDash([7, 9]);
+            ctx.lineDashOffset = -t * 26;
+            ctx.strokeStyle = rgba(pal.accent, 0.4);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.06, h * 0.16);
+            ctx.lineTo(w * 0.94, h * 0.16);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(w * 0.06, h * 0.88);
+            ctx.lineTo(w * 0.94, h * 0.88);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.lineDashOffset = 0;
+          }
+        }
+        const beat = [0, 0.12, 0.3, 0.5, 0.78, 1.02, 1.2, 1.5];
+        rows.forEach((row, i) => {
+          var _a;
+          const b = (_a = beat[i % 8]) != null ? _a : 0;
+          const p = easeOut(at(t, 0.4, 0.35 + b));
+          S(row, `opacity:${p.toFixed(3)};clip-path:inset(0 ${((1 - p) * 100).toFixed(1)}% 0 0)`);
+          const dot = q2(row, '[data-r="dot"]');
+          if (dot) {
+            const pulse = 0.5 + 0.5 * Math.sin(t * 5 + i * 1.7);
+            S(dot, `opacity:${(p * (0.45 + 0.55 * pulse)).toFixed(3)};transform:scale(${(p * (0.8 + 0.3 * pulse)).toFixed(3)})`);
+          }
+          const ago = q2(row, '[data-r="ago"]');
+          if (ago) S(ago, `opacity:${at(t, 0.4, 0.55 + b).toFixed(3)}`);
+        });
+        if (today) S(today, `opacity:${at(t, 0.6, Math.max(2.2, dur - 1.2)).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC08(scn, d) {
+    const cv = q2(scn, '[data-cv="c08"]');
+    const labels = qa(scn, '[data-r="dl"]');
+    const note = q2(scn, '[data-r="note"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const lib = d.lib;
+    const nConf = Math.min(40, 8 + (lib ? lib.byDayPeak * 2 : 0));
+    const rand = rng(88);
+    const confetti = Array.from({ length: nConf }, () => ({
+      ang: rand() * Math.PI * 2,
+      sp: 30 + rand() * 70,
+      sz: 2.4 + rand() * 3,
+      rot: rand() * Math.PI,
+      vr: (rand() - 0.5) * 6
+    }));
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal }) {
+        dolly(inn, t, (r) => `scale(${(1 - r * 0.04).toFixed(4)})`, 1.1);
+        if (cv && lib && lib.byDay.length) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const base = h * 0.8, top = h * 0.16;
+            const n = lib.byDay.length;
+            const bw = Math.min(30, w * 0.7 / n * 0.52);
+            const step = w * 0.7 / n;
+            const x0 = (w - step * n) / 2 + step / 2 + w * 0.05;
+            const peak = Math.max(1, lib.byDayPeak);
+            const rollP = easeInOut(at(t, 2.1, 0.25));
+            const rollX = lerp(-w * 0.06, w * 1.06, rollP);
+            if (rollP > 0 && rollP < 1) {
+              const g = ctx.createLinearGradient(rollX - 46, 0, rollX + 46, 0);
+              g.addColorStop(0, rgba(pal.accent, 0));
+              g.addColorStop(0.5, rgba(pal.accent, 0.1));
+              g.addColorStop(1, rgba(pal.accent, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(rollX - 46, top - 14, 92, base - top + 22);
+            }
+            lib.byDay.forEach((day, i) => {
+              const p = springUp(at(t, 0.8, 0.3 + (i + 1) / n * 1.8));
+              if (p <= 0) return;
+              const x = x0 + i * step;
+              const hh = day.n / peak * (base - top) * p;
+              ctx.fillStyle = rgba(pal.accentSoft, 0.8);
+              ctx.fillRect(x - bw / 2, base - hh, bw, hh);
+              if (day.n > 0 && day.n === lib.byDayPeak) {
+                const gp = easeOut(at(t, 0.4, 3.2));
+                if (gp > 0) {
+                  ctx.strokeStyle = pal.accent;
+                  ctx.lineWidth = 2;
+                  ctx.strokeRect(x - bw / 2 - 3, base - hh - 3, bw + 6, hh + 3);
+                  ctx.fillStyle = pal.accent;
+                  ctx.font = `700 ${Math.max(11, w * 0.013)}px ${SERIF}`;
+                  ctx.textAlign = "center";
+                  ctx.fillText(String(day.n), x, base - hh - 10);
+                  const cp = at(t, 1.6, 3.3);
+                  if (cp > 0 && cp < 1) {
+                    for (const c of confetti) {
+                      const fx = x + Math.cos(c.ang) * c.sp * easeOut(cp);
+                      const fy = base - hh - 6 + Math.sin(c.ang) * c.sp * easeOut(cp) + 90 * cp * cp;
+                      ctx.save();
+                      ctx.translate(fx, fy);
+                      ctx.rotate(c.rot + c.vr * cp);
+                      ctx.fillStyle = rgba(pal.accent, Math.sin(Math.PI * cp) * 0.55);
+                      ctx.fillRect(-c.sz / 2, -c.sz / 4, c.sz, c.sz / 2);
+                      ctx.restore();
+                    }
+                  }
+                }
+              }
+              ctx.fillStyle = rgba(pal.ink, 0.25);
+              ctx.fillRect(x - bw / 2, base, bw, 1.5);
+            });
+          }
+        }
+        labels.forEach((lb, i) => {
+          const p = at(t, 0.35, 0.45 + i * 0.09);
+          S(lb, `opacity:${p.toFixed(3)};transform:translateY(${((1 - p) * 6).toFixed(1)}px)`);
+        });
+        if (note) S(note, `opacity:${at(t, 0.6, 3.7).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC09(scn, d) {
+    const cv = q2(scn, '[data-cv="c09"]');
+    const maxMin = Math.max(1, ...d.cal.map((c) => c.minutes));
+    const jit = rng(99);
+    const jits = d.cal.map(() => jit() * 0.12);
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, cx, cy, py, pin }) {
+        var _a, _b;
+        if (!cv) return;
+        const f = fit2(cv);
+        if (!f) return;
+        const { ctx, w, h } = f;
+        ctx.clearRect(0, 0, w, h);
+        const n = d.cal.length;
+        const cols = 8, rowsN = 7;
+        const size = Math.min(w * 0.5 / cols, h * 0.52 / rowsN, 44);
+        const gx = w * 0.1, gy = h * 0.3;
+        const rect = pin ? cv.getBoundingClientRect() : null;
+        const lx = rect ? cx - rect.left : -9999;
+        const ly = rect ? cy - rect.top : -9999;
+        let hoverText = "";
+        d.cal.forEach((day, i) => {
+          const col = Math.floor(i / rowsN), row = i % rowsN;
+          const p = easeOut(at(t, 0.3, 0.25 + (col + row) * 0.05 + jits[i]));
+          if (p <= 0) return;
+          const x = gx + col * size * 1.35, y = gy + row * size * 1.35;
+          const v = day.minutes / maxMin;
+          const hovered = pin && Math.hypot(lx - (x + size / 2), ly - (y + size / 2)) < size * 0.8;
+          if (day.minutes > 0) {
+            ctx.fillStyle = rgba(hovered ? pal.accent : pal.accentSoft, (0.15 + 0.85 * p) * (0.3 + 0.7 * Math.min(1, v * 1.5)));
+            ctx.fillRect(x, y, size, size);
+          } else {
+            ctx.strokeStyle = rgba(pal.line, 0.7 * p);
+            ctx.strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+          }
+          if (i === n - 1) {
+            ctx.strokeStyle = rgba(pal.accent, p);
+            ctx.lineWidth = 1.6;
+            ctx.strokeRect(x - 2.5, y - 2.5, size + 5, size + 5);
+            ctx.lineWidth = 1;
+          }
+          if (hovered) hoverText = `${day.label} · ${day.minutes > 0 ? humanish(day.minutes) : "没翻报"}`;
+        });
+        const streak = Math.min(d.streak, n);
+        if (streak > 1) {
+          const pts = [];
+          for (let i = n - streak; i < n; i++) {
+            const col = Math.floor(i / rowsN), row = i % rowsN;
+            pts.push([gx + col * size * 1.35 + size / 2, gy + row * size * 1.35 + size / 2]);
+          }
+          const sp = easeInOut(at(t, 1.3, 2.5));
+          const p0 = pts[0], p1 = pts[1];
+          if (sp > 0 && p0 && p1) {
+            const total = pts.length - 1;
+            const fp = sp * total;
+            const k = Math.min(Math.floor(fp), total - 1);
+            const frac = fp - k;
+            const pk2 = (_a = pts[k]) != null ? _a : p0;
+            const pk3 = (_b = pts[k + 1]) != null ? _b : p1;
+            ctx.beginPath();
+            ctx.strokeStyle = pal.accent;
+            ctx.lineWidth = 2;
+            ctx.moveTo(p0[0], p0[1]);
+            for (let m = 1; m <= k; m++) {
+              const pm = pts[m];
+              if (pm) ctx.lineTo(pm[0], pm[1]);
+            }
+            const tipX = lerp(pk2[0], pk3[0], frac);
+            const tipY = lerp(pk2[1], pk3[1], frac);
+            ctx.lineTo(tipX, tipY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.fillStyle = pal.accent;
+            ctx.arc(tipX, tipY, 3, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        const tp = springUp(at(t, 0.8, 3.2));
+        if (tp > 0.01) {
+          ctx.globalAlpha = clamp01(tp * 1.4);
+          ctx.fillStyle = pal.accent;
+          ctx.font = `700 ${Math.max(26, w * 0.035)}px ${SERIF}`;
+          ctx.textAlign = "center";
+          ctx.fillText(String(d.streak), w * 0.78, h * 0.46 + py * 7);
+          ctx.fillStyle = pal.dim;
+          ctx.font = `${Math.max(12, w * 0.011)}px ${HEI}`;
+          ctx.fillText("连 续 天 数", w * 0.78, h * 0.46 + 30 + py * 4);
+          ctx.globalAlpha = 1;
+        }
+        if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+      }
+    };
+  }
+  function perfC10(scn, d) {
+    const cv = q2(scn, '[data-cv="c10"]');
+    const lgs = qa(scn, '[data-r="lg"]');
+    const inn = q2(scn, ".bz-rp-in");
+    let hoverRow = -1;
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        dolly(inn, t, (r) => `translate(${(r * -2).toFixed(2)}%, ${(r * 1).toFixed(2)}%) rotate(${(r * -0.4).toFixed(2)}deg)`, 1);
+        if (cv && d.srcShift.length) {
+          const f = fit2(cv);
+          if (!f) return;
+          const { ctx, w, h } = f;
+          ctx.clearRect(0, 0, w, h);
+          const rows = d.srcShift;
+          const gx = w * 0.17, gw = w * 0.6;
+          const gy = h * 0.3, rowH = Math.min(34, h * 0.52 / rows.length);
+          const maxTotal = Math.max(1, ...rows.map((r) => r.shifts.reduce((s, x) => s + x, 0)));
+          const segColors = [rgba(pal.line, 0.9), rgba(pal.accentSoft, 0.5), rgba(pal.accentSoft, 0.8), pal.accent];
+          const rect = pin ? cv.getBoundingClientRect() : null;
+          const lx = rect ? cx - rect.left : -9999;
+          const ly = rect ? cy - rect.top : -9999;
+          let hoverText = "";
+          let hotRow = -1;
+          rows.forEach((r, i) => {
+            const y = gy + i * rowH * 1.5;
+            if (pin && lx >= gx && lx <= gx + gw && ly >= y && ly <= y + rowH * 0.52) hotRow = i;
+          });
+          if (pin) hoverRow = hotRow;
+          rows.forEach((r, i) => {
+            const y = gy + i * rowH * 1.5;
+            const barH = rowH * 0.52;
+            const p = easeOut(at(t, 0.9, 0.35 + i * 0.22));
+            const total = r.shifts.reduce((s, x) => s + x, 0);
+            const dimmed = hoverRow >= 0 && hoverRow !== i;
+            ctx.fillStyle = rgba(pal.ink2, clamp01(p * 2) * (dimmed ? 0.4 : 1));
+            ctx.font = `600 ${Math.max(13, w * 0.012)}px ${SERIF}`;
+            ctx.textAlign = "right";
+            ctx.fillText(r.name.slice(0, 8), gx - 12, y + barH / 2 + 4);
+            let acc = 0;
+            const segP = clamp01(p * 1.35 - 0.1);
+            r.shifts.forEach((min, j) => {
+              const segW = min / maxTotal * gw;
+              const gp = clamp01(segP * 4 - j);
+              if (gp > 0) {
+                ctx.globalAlpha = dimmed ? 0.35 : 1;
+                ctx.fillStyle = segColors[j];
+                ctx.fillRect(gx + acc * segP, y, segW * gp, barH);
+                ctx.globalAlpha = 1;
+              }
+              acc += min;
+            });
+            if (total > 0) {
+              ctx.fillStyle = rgba(pal.dim, dimmed ? 0.35 : 1);
+              ctx.textAlign = "left";
+              ctx.font = `${Math.max(11, w * 0.0105)}px ${HEI}`;
+              ctx.fillText(humanish(total), gx + gw + 10, y + barH / 2 + 4);
+            }
+            if (hotRow === i) {
+              ctx.strokeStyle = pal.accent;
+              ctx.lineWidth = 1;
+              ctx.strokeRect(gx + 0.5, y + 0.5, gw - 1, barH - 1);
+              hoverText = `${r.name} · ${humanish(total)}（夜 ${r.shifts[0]} / 晨 ${r.shifts[1]} / 午 ${r.shifts[2]} / 晚 ${r.shifts[3]}）`;
+            }
+          });
+          if (hoverText) drawTip(ctx, lx, ly, hoverText, pal);
+        }
+        lgs.forEach((lg, i) => {
+          S(lg, `opacity:${at(t, 0.5, 1.6 + i * 0.14).toFixed(3)}`);
+        });
+      }
+    };
+  }
+  function perfC11(scn, d) {
+    const cv = q2(scn, '[data-cv="c11"]');
+    let laidW = 0, laidH = 0;
+    let laid = [];
+    const rand = rng(7);
+    const maxN = Math.max(1, ...d.words.map((x) => x.n));
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        if (!cv || !d.words.length) return;
+        const f = fit2(cv);
+        if (!f) return;
+        const { ctx, w, h } = f;
+        if (laidW !== w || laidH !== h || !laid.length) {
+          laidW = w;
+          laidH = h;
+          laid = [];
+          const minN = Math.min(...d.words.map((x) => x.n));
+          const placed = [];
+          ctx.font = `700 20px ${SERIF}`;
+          d.words.forEach((word) => {
+            const scale = (word.n - minN) / Math.max(1, maxN - minN);
+            const size = Math.round(14 + scale * (h * 0.062));
+            ctx.font = `700 ${size}px ${SERIF}`;
+            const tw = ctx.measureText(word.w).width;
+            const th = size * 1.15;
+            const cxp = w * 0.46, cyp = h * 0.55;
+            let placedOk = false;
+            let px2 = cxp, py2 = cyp;
+            for (let step = 0; step < 640 && !placedOk; step++) {
+              const ang = step * 0.35;
+              const rad = 6 + step * (Math.min(w, h) / 340);
+              px2 = cxp + Math.cos(ang) * rad * 1.5;
+              py2 = cyp + Math.sin(ang) * rad;
+              const box = { x: px2 - tw / 2 - 6, y: py2 - th / 2 - 3, w: tw + 12, h: th + 6 };
+              if (box.x < w * 0.06 || box.x + box.w > w * 0.94 || box.y < h * 0.2 || box.y + box.h > h * 0.92) continue;
+              placedOk = !placed.some((b) => box.x < b.x + b.w && box.x + box.w > b.x && box.y < b.y + b.h && box.y + box.h > b.y);
+            }
+            if (placedOk) {
+              placed.push({ x: px2 - tw / 2 - 6, y: py2 - th / 2 - 3, w: tw + 12, h: th + 6 });
+              laid.push({
+                w: word.w,
+                n: word.n,
+                x: px2,
+                y: py2,
+                size,
+                width: tw,
+                ox: 0,
+                oy: 0,
+                vx: 0,
+                vy: 0,
+                dx: (rand() - 0.5) * 70,
+                dy: (rand() - 0.5) * 70,
+                dl: rand() * 1.4
+              });
+            }
+          });
+        }
+        ctx.clearRect(0, 0, w, h);
+        const rect = pin ? cv.getBoundingClientRect() : null;
+        const lx = rect ? cx - rect.left : -9999;
+        const ly = rect ? cy - rect.top : -9999;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        laid.forEach((lw) => {
+          const p = easeBack(at(t, 0.5, 0.3 + lw.dl));
+          if (p <= 0) return;
+          const fly = 1 - clamp01(p);
+          const want = repel(lx, ly, pin, lw.x, lw.y, 130, 34);
+          lw.vx += (want.dx - lw.ox) * 0.16;
+          lw.vy += (want.dy - lw.oy) * 0.16;
+          lw.vx *= 0.74;
+          lw.vy *= 0.74;
+          lw.ox += lw.vx;
+          lw.oy += lw.vy;
+          const big = lw.n >= maxN - 1;
+          ctx.font = `700 ${lw.size}px ${SERIF}`;
+          ctx.fillStyle = rgba(big ? pal.accent : pal.ink, (0.25 + 0.75 * clamp01(p)) * (big ? 1 : 0.82));
+          ctx.fillText(lw.w, lw.x + lw.ox + lw.dx * fly, lw.y + lw.oy + lw.dy * fly);
+          if (big && p >= 1) {
+            ctx.setLineDash([2, 4]);
+            ctx.strokeStyle = rgba(pal.accent, 0.7);
+            ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(lw.x + lw.ox - lw.width / 2, lw.y + lw.oy + lw.size * 0.68);
+            ctx.lineTo(lw.x + lw.ox + lw.width / 2, lw.y + lw.oy + lw.size * 0.68);
+            ctx.stroke();
+            ctx.setLineDash([]);
+          }
+        });
+      }
+    };
+  }
+  function perfC12(scn, _d) {
+    var _a;
+    const cv = q2(scn, '[data-cv="c12"]');
+    const nums = qa(scn, '[data-r="num"]');
+    const cells = qa(scn, '[data-r="cell"]');
+    const ringc = q2(scn, '[data-r="ringc"]');
+    const ringv = q2(scn, '[data-r="ringv"]');
+    const rate = Number(((_a = ringv == null ? void 0 : ringv.textContent) == null ? void 0 : _a.replace("%", "")) || 0);
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 5.4;
+    return {
+      dur,
+      update({ t, pal, px, py }) {
+        dolly(inn, t, (r) => `scale(${(1 - r * 0.035).toFixed(4)})`, 1.1);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const cx0 = w * 0.26, cy0 = h * 0.55;
+            const R = Math.min(w * 0.13, h * 0.21);
+            const p = springUp(at(t, 1.7, 0.5));
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = rgba(pal.line, 0.9);
+            ctx.beginPath();
+            ctx.arc(cx0, cy0, R + 12, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = rgba(pal.line, 0.5);
+            ctx.beginPath();
+            ctx.arc(cx0, cy0, R, 0, Math.PI * 2);
+            ctx.stroke();
+            if (p > 1e-3) {
+              const a1 = (-90 + 360 * (rate / 100) * p) * Math.PI / 180;
+              ctx.strokeStyle = pal.accent;
+              ctx.beginPath();
+              ctx.arc(cx0, cy0, R, -Math.PI / 2, a1);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.fillStyle = pal.accent;
+              ctx.arc(cx0 + Math.cos(a1) * R, cy0 + Math.sin(a1) * R, 5.4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+        if (ringc) {
+          const p = springUp(at(t, 1.7, 0.5));
+          S(ringc, `opacity:${clamp01(p * 2).toFixed(3)};transform:translate(-50%, -50%) scale(${(0.9 + 0.1 * clamp01(p)).toFixed(3)})`);
+          if (ringv) T(ringv, `${Math.round(rate * clamp01(p))}%`);
+        }
+        cells.forEach((c, i) => {
+          const el = q2(c, '[data-r="num"]');
+          const n = Number((el == null ? void 0 : el.dataset.n) || 0);
+          const p = easeOutExpo(at(t, 1.1, 0.7 + i * 0.22));
+          T(el, comma(roll(n, p)));
+          const depth = 0.6 + i * 0.4;
+          S(c, `opacity:${clamp01(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 6).toFixed(1)}px, ${(py * depth * 4 + (1 - p) * 20).toFixed(1)}px)`);
+        });
+      }
+    };
+  }
+  function perfC13(scn, _d) {
+    const rows = qa(scn, '[data-r="old3"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t }) {
+        dolly(inn, t, (r) => `perspective(900px) rotateY(${(r * 3).toFixed(2)}deg)`, 1.05);
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.7, 0.4 + i * 0.42));
+          S(row, `opacity:${p.toFixed(3)};transform:perspective(700px) rotateY(${((1 - p) * -16).toFixed(2)}deg) translateX(${((1 - p) * -18).toFixed(1)}px)`);
+          const rank = q2(row, '[data-r="o3rank"]');
+          if (rank) {
+            const pr = easeBack(at(t, 0.45, 0.6 + i * 0.42));
+            S(rank, `opacity:${clamp01(pr * 2).toFixed(3)};transform:scale(${(pr * 0.4 + 0.6).toFixed(3)}) rotate(${((1 - pr) * -12).toFixed(2)}deg)`);
+          }
+          const on = q2(row, '[data-r="o3n"]');
+          if (on) T(on, String(roll(Number(on.dataset.n || 0), easeOutExpo(at(t, 1, 0.9 + i * 0.42)))));
+          const tag = q2(row, '[data-r="o3tag"]');
+          if (tag) {
+            const tp = easeBack(at(t, 0.5, 1.4 + i * 0.42));
+            S(tag, `opacity:${clamp01(tp * 2).toFixed(3)};transform:scale(${(1 + (1 - tp) * 1.3).toFixed(3)}) rotate(${(-2 + (1 - tp) * -14).toFixed(2)}deg)`);
+          }
+        });
+      }
+    };
+  }
+  function perfC14(scn, _d) {
+    const rows = qa(scn, '[data-r="row"]');
+    const ghost = q2(scn, '[data-r="ghost"]');
+    const gN = Math.round(Number((ghost == null ? void 0 : ghost.textContent) || 0));
+    const inn = q2(scn, ".bz-rp-in");
+    const dur = 5;
+    return {
+      dur,
+      update({ t, px, py }) {
+        dolly(inn, t, (r) => `translateX(${(r * 2.2).toFixed(2)}%)`, 0.95);
+        rows.forEach((row, i) => {
+          const p = easeOut(at(t, 0.5, 0.3 + i * 0.24));
+          S(row, `opacity:${p.toFixed(3)};transform:translateX(${((1 - p) * 30).toFixed(1)}px)`);
+          const bar = q2(row, '[data-r="bar"]');
+          if (bar) S(bar, `transform:scaleX(${easeInOut(at(t, 0.9, 0.55 + i * 0.24)).toFixed(4)})`);
+          const cnt = q2(row, '[data-r="cnt"]');
+          if (cnt) T(cnt, `${roll(Number(cnt.dataset.n || 0), easeOutExpo(at(t, 0.9, 0.6 + i * 0.24)))} 篇`);
+        });
+        if (ghost) {
+          const p = easeBack(at(t, 0.9, 1.6));
+          S(ghost, `opacity:${clamp01(p * 1.4).toFixed(3)};transform:translate(${(px * 7).toFixed(1)}px, ${(py * 5).toFixed(1)}px) rotate(${(-3 + (1 - p) * -5).toFixed(2)}deg) scale(${(1 + (1 - p) * 0.3).toFixed(3)})`);
+          T(ghost, comma(roll(gN, easeOutExpo(at(t, 1.2, 1.7)))));
+        }
+      }
+    };
+  }
+  function perfC15(scn, _d) {
+    const cv = q2(scn, '[data-cv="c15"]');
+    const cells = qa(scn, '[data-r="tcell"]');
+    const nums = qa(scn, '[data-r="tnum"]');
+    const avgrow = q2(scn, '[data-r="avgrow"]');
+    const avglead = q2(scn, '[data-r="avglead"]');
+    const avgv = q2(scn, '[data-r="avgv"]');
+    const h2 = q2(scn, ".bz-rp-h");
+    const inn = q2(scn, ".bz-rp-in");
+    const depths = [0.5, 1.2, 0.8];
+    const dur = 5.6;
+    return {
+      dur,
+      update({ t, pal, px, py }) {
+        dolly(inn, t, (r) => `scale(${(1 + r * 0.035).toFixed(4)})`, 1.5, 0.1);
+        if (h2) S(h2, `transform:translateX(${(px * -5).toFixed(1)}px)`);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const p = easeInOut(at(t, 2.4, 0.2));
+            if (p > 0 && p < 1) {
+              const x = lerp(-w * 0.3, w * 1.1, p);
+              const g = ctx.createLinearGradient(x - 120, 0, x + 120, h);
+              g.addColorStop(0, rgba(pal.ink, 0));
+              g.addColorStop(0.5, rgba(pal.ink, 0.035));
+              g.addColorStop(1, rgba(pal.ink, 0));
+              ctx.fillStyle = g;
+              ctx.fillRect(0, 0, w, h);
+            }
+          }
+        }
+        cells.forEach((c, i) => {
+          var _a, _b;
+          const el = (_a = nums[i]) != null ? _a : null;
+          const n = Number((el == null ? void 0 : el.dataset.n) || 0);
+          const p = easeOutExpo(at(t, 1.3, 0.4 + i * 0.28));
+          T(el, comma(roll(n, p)));
+          const depth = (_b = depths[i]) != null ? _b : 1;
+          const dip = i === 1 ? 12 : 0;
+          S(c, `opacity:${clamp01(p * 1.6).toFixed(3)};transform:translate(${(px * depth * 9).toFixed(1)}px, ${(py * depth * 6 + (1 - p) * 18).toFixed(1)}px) translateY(${dip}px)`);
+        });
+        if (avgrow) S(avgrow, `opacity:${at(t, 0.7, 2.4).toFixed(3)}`);
+        if (avglead) S(avglead, `transform:scaleX(${easeOut(at(t, 0.9, 2.6)).toFixed(4)})`);
+        if (avgv) S(avgv, `opacity:${at(t, 0.5, 2.9).toFixed(3)}`);
+      }
+    };
+  }
+  function perfC16(scn, d) {
+    const cv = q2(scn, '[data-cv="c16"]');
+    const chars = qa(scn, '[data-r="end"] span');
+    const seal = q2(scn, '[data-r="seal"]');
+    const inn = q2(scn, ".bz-rp-in");
+    const nConf = Math.min(60, 14 + Math.round(d.sessions / 3));
+    const rand = rng(66);
+    const flakes = Array.from({ length: nConf }, () => ({
+      x: rand(),
+      y0: -0.05 - rand() * 0.2,
+      sp: 0.1 + rand() * 0.12,
+      sz: 2.6 + rand() * 3.4,
+      rot: rand() * Math.PI * 2,
+      vr: (rand() - 0.5) * 5,
+      sw: rand() * Math.PI * 2
+    }));
+    const dur = 5.2;
+    return {
+      dur,
+      update({ t, pal, cx, cy, pin }) {
+        dolly(inn, t, (r) => `scale(${(1 - r * 0.015).toFixed(4)})`, 1.2);
+        if (cv) {
+          const f = fit2(cv);
+          if (f) {
+            const { ctx, w, h } = f;
+            ctx.clearRect(0, 0, w, h);
+            const rect = pin ? cv.getBoundingClientRect() : null;
+            const lx = rect ? cx - rect.left : -9999;
+            const ly = rect ? cy - rect.top : -9999;
+            const bursts = [
+              { x: w * 0.38, y: h * 0.42, t0: 0.5, seed: 7 },
+              { x: w * 0.62, y: h * 0.4, t0: 1, seed: 91 }
+            ];
+            for (const b of bursts) {
+              const rand2 = rng(b.seed);
+              for (let i = 0; i < 26; i++) {
+                const ang = i / 26 * Math.PI * 2 + rand2() * 0.5;
+                const sp2 = 60 + rand2() * 130;
+                const p = at(t, 1.5, b.t0);
+                if (p <= 0 || p >= 1) continue;
+                let x = b.x + Math.cos(ang) * sp2 * easeOut(p);
+                let y = b.y + Math.sin(ang) * sp2 * easeOut(p) + 130 * p * p;
+                const off = repel(lx, ly, pin, x, y, 90, 40);
+                x += off.dx;
+                y += off.dy;
+                const a = Math.sin(Math.PI * p) * 0.6;
+                ctx.beginPath();
+                ctx.fillStyle = rgba(i % 7 === 0 ? pal.accent : pal.ink, a);
+                ctx.arc(x, y, 1 + rand2() * 2.4, 0, Math.PI * 2);
+                ctx.fill();
+              }
+            }
+            for (const fk of flakes) {
+              const p = at(t, 3.4, 0.4 + fk.sp * 2);
+              if (p <= 0 || p >= 1) continue;
+              const fx = fk.x * w + Math.sin(fk.sw + t * 2) * 16;
+              const fy = (fk.y0 + p * 1.1) * h;
+              ctx.save();
+              ctx.translate(fx, fy);
+              ctx.rotate(fk.rot + t * fk.vr);
+              ctx.fillStyle = rgba(pal.muted, Math.sin(Math.PI * p) * 0.5);
+              ctx.fillRect(-fk.sz / 2, -fk.sz / 4, fk.sz, fk.sz / 2);
+              ctx.restore();
+            }
+          }
+        }
+        chars.forEach((c, i) => {
+          const p = easeBack(at(t, 0.6, 0.4 + i * 0.22));
+          S(c, `opacity:${clamp01(p).toFixed(3)};transform:translateY(${((1 - p) * 26).toFixed(1)}px) rotate(${((1 - p) * 4).toFixed(2)}deg)`);
+        });
+        const sp = easeBack(at(t, 0.6, 1.9));
+        S(seal, `opacity:${clamp01(sp * 2).toFixed(3)};transform:scale(${(1 + (1 - sp) * 1.5).toFixed(3)}) rotate(${(-8 + (1 - sp) * -12).toFixed(2)}deg)`);
+      }
+    };
+  }
+  function buildPressPerfs(film, data) {
+    const m = /* @__PURE__ */ new Map();
+    const bind = (id, fn) => {
+      const scn = film.querySelector(`[data-id="${id}"]`);
+      if (scn) m.set(id, fn(scn, data));
+    };
+    bind("c01", perfC01);
+    bind("c02", perfC02);
+    bind("c03", perfC03);
+    bind("c04", perfC04);
+    bind("c05", perfC05);
+    bind("c06", perfC06);
+    bind("c07", perfC07);
+    bind("c08", perfC08);
+    bind("c09", perfC09);
+    bind("c10", perfC10);
+    bind("c11", perfC11);
+    bind("c12", perfC12);
+    bind("c13", perfC13);
+    bind("c14", perfC14);
+    bind("c15", perfC15);
+    bind("c16", perfC16);
+    return m;
+  }
+  var SERIF, HEI, clamp01, at, easeOut, easeInOut, easeBack, easeOutExpo, springUp, lerp, roll, comma, sdelta, lastStyle, lastText, q2, qa;
+  var init_motions = __esm({
+    "src/clipbook/press/motions.ts"() {
+      SERIF = 'Georgia, "Noto Serif SC", "Songti SC", "SimSun", serif';
+      HEI = `'Microsoft YaHei', sans-serif`;
+      clamp01 = (x) => x < 0 ? 0 : x > 1 ? 1 : x;
+      at = (t, dur, delay = 0) => clamp01((t - delay) / Math.max(dur, 1e-4));
+      easeOut = (x) => 1 - Math.pow(1 - x, 3);
+      easeInOut = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+      easeBack = (x) => {
+        const c1 = 1.70158, c3 = c1 + 1;
+        return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+      };
+      easeOutExpo = (x) => x >= 1 ? 1 : 1 - Math.pow(2, -10 * x);
+      springUp = (x) => x >= 1 ? 1 : 1 - Math.exp(-5.2 * x) * Math.cos(3.1 * Math.PI * x);
+      lerp = (a, b, t) => a + (b - a) * t;
+      roll = (n, x) => Math.round(n * clamp01(x));
+      comma = (n) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      sdelta = (a, b) => {
+        let d = a - b;
+        while (d > Math.PI) d -= Math.PI * 2;
+        while (d < -Math.PI) d += Math.PI * 2;
+        return d;
+      };
+      lastStyle = /* @__PURE__ */ new WeakMap();
+      lastText = /* @__PURE__ */ new WeakMap();
+      q2 = (root, sel) => root.querySelector(sel);
+      qa = (root, sel) => [...root.querySelectorAll(sel)];
+    }
+  });
+
+  // src/clipbook/press/engine.ts
+  function qa2(root, sel) {
+    return [...root.querySelectorAll(sel)];
+  }
+  function bindPress(root, data) {
+    var _a;
+    const sc = root.querySelector(".bz-rp-scroll");
+    const film = root.querySelector(".bz-rp-film");
+    const handle = { stop: () => void 0 };
+    if (!sc || !film) return handle;
+    const scEl = sc;
+    const filmEl = film;
+    const scenes = qa2(film, ".bz-rp-scn");
+    if (!scenes.length) return handle;
+    const perfs = buildPressPerfs(film, data);
+    const box = (_a = filmEl.closest(".bz-rp-box")) != null ? _a : root;
+    const ticks = qa2(box, ".bz-rp-tick");
+    const shutter = box.querySelector('[data-r="shut"]');
+    let pal = palette(root);
+    let cur = -1;
+    let t0 = performance.now();
+    let raf = 0;
+    let fallback = 0;
+    let dead = false;
+    let navTarget = -1;
+    let navUntil = 0;
+    let px = 0, py = 0, cx = 0, cy = 0, pin = 0;
+    const settled = /* @__PURE__ */ new Set();
+    const broken = /* @__PURE__ */ new Set();
+    let cutTimers = [];
+    const unit = () => Math.max(1, scEl.clientHeight);
+    const fitHeight = () => filmEl.style.setProperty("--rp-h", `${unit()}px`);
+    fitHeight();
+    const indexAt = () => clamp2(Math.round(scEl.scrollTop / unit()), 0, scenes.length - 1);
+    function hud(i, p) {
+      ticks.forEach((tk, k) => {
+        if (k === i) tk.setAttribute("data-on", "1");
+        else tk.removeAttribute("data-on");
+      });
+      box.dataset.cur = String(i + 1).padStart(2, "0");
+    }
+    function play(perf, scn, ctx) {
+      var _a2;
+      const id = (_a2 = scn.getAttribute("data-id")) != null ? _a2 : "";
+      if (broken.has(id)) return;
+      try {
+        perf.update(ctx);
+      } catch (e) {
+        broken.add(id);
+        scn.classList.add("is-err");
+        try {
+          console.error("[读报特刊] 幕表演异常，该幕转静版：", id, e);
+        } catch (e2) {
+        }
+      }
+    }
+    function activate(i, replay = true) {
+      var _a2, _b;
+      if (dead || i === cur && !replay) return;
+      if (cur >= 0 && cur !== i) {
+        const prev = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+        if (prev && !settled.has(cur)) {
+          play(prev, scenes[cur], { t: prev.dur, pal, px, py, cx, cy, pin });
+          settled.add(cur);
+        }
+      }
+      cur = i;
+      settled.delete(i);
+      const perf = perfs.get((_b = scenes[i].getAttribute("data-id")) != null ? _b : "");
+      if (replay) t0 = performance.now();
+      if (perf) play(perf, scenes[i], { t: replay ? 0 : perf.dur, pal, px, py, cx, cy, pin });
+      const scn = scenes[i];
+      scn.classList.remove("is-in");
+      void scn.offsetWidth;
+      scn.classList.add("is-in");
+      hud(i, 0);
+    }
+    const clearCut = () => {
+      for (const id of cutTimers) clearTimeout(id);
+      cutTimers = [];
+    };
+    const cutTo = (target, replay) => {
+      navTarget = target;
+      scEl.scrollTop = target * unit();
+      activate(target, replay);
+    };
+    function goTo(i, opts) {
+      var _a2, _b;
+      const target = clamp2(i, 0, scenes.length - 1);
+      navTarget = target;
+      navUntil = performance.now() + 900;
+      if (target === cur || (opts == null ? void 0 : opts.cut) === false) {
+        activate(target, (_a2 = opts == null ? void 0 : opts.replay) != null ? _a2 : true);
+        return;
+      }
+      if (!shutter) {
+        cutTo(target, (_b = opts == null ? void 0 : opts.replay) != null ? _b : true);
+        return;
+      }
+      clearCut();
+      shutter.classList.remove("is-open");
+      shutter.classList.add("is-close");
+      cutTimers.push(setTimeout(() => {
+        var _a3;
+        cutTo(target, (_a3 = opts == null ? void 0 : opts.replay) != null ? _a3 : true);
+        shutter.classList.remove("is-close");
+        shutter.classList.add("is-open");
+        cutTimers.push(setTimeout(() => shutter.classList.remove("is-open"), 240));
+      }, 160));
+    }
+    const goRel = (dN) => goTo(cur < 0 ? 0 : cur + dN, { cut: true });
+    function syncFromScroll() {
+      if (dead) return;
+      const i = indexAt();
+      if (performance.now() < navUntil && i !== navTarget) return;
+      if (i !== cur) activate(i, true);
+    }
+    let lastWheel = 0;
+    function onWheel(e) {
+      if (dead) return;
+      const now = performance.now();
+      const fresh = now - lastWheel > GESTURE_GAP;
+      lastWheel = now;
+      if (!fresh) {
+        e.preventDefault();
+        return;
+      }
+      if (Math.abs(e.deltaY) < 1) return;
+      e.preventDefault();
+      goRel(e.deltaY > 0 ? 1 : -1);
+    }
+    function onKey(e) {
+      if (dead || !root.isConnected) return;
+      const k = e.key;
+      if (k === "ArrowDown" || k === "PageDown") {
+        e.preventDefault();
+        goRel(1);
+      } else if (k === "ArrowUp" || k === "PageUp") {
+        e.preventDefault();
+        goRel(-1);
+      } else if (k === "Home") {
+        e.preventDefault();
+        goTo(0, { cut: true });
+      } else if (k === "End") {
+        e.preventDefault();
+        goTo(scenes.length - 1, { cut: true });
+      }
+    }
+    function pump() {
+      if (dead) return;
+      clearTimeout(fallback);
+      tick(performance.now());
+      raf = rafFn(() => {
+        clearTimeout(fallback);
+        pump();
+      });
+      fallback = setTimeout(() => {
+        rafStop(raf);
+        pump();
+      }, 220);
+    }
+    function tick(now) {
+      var _a2;
+      if (dead || cur < 0) return;
+      const perf = perfs.get((_a2 = scenes[cur].getAttribute("data-id")) != null ? _a2 : "");
+      if (!perf) return;
+      const t = (now - t0) / 1e3;
+      play(perf, scenes[cur], { t, pal, px, py, cx, cy, pin });
+      hud(cur, clamp012(t / perf.dur));
+    }
+    const onOvlClick = (e) => {
+      var _a2;
+      const t = e.target;
+      if (t.closest('[data-r="close"]')) return;
+      const tickEl = t.closest(".bz-rp-tick");
+      if (tickEl) goTo(Number((_a2 = tickEl.getAttribute("data-i")) != null ? _a2 : 0), { cut: true });
+    };
+    const onPointerMove = (e) => {
+      const r = root.getBoundingClientRect();
+      cx = e.clientX;
+      cy = e.clientY;
+      px = (e.clientX - r.left) / Math.max(1, r.width) * 2 - 1;
+      py = (e.clientY - r.top) / Math.max(1, r.height) * 2 - 1;
+      pin = 1;
+    };
+    const onPointerLeave = () => {
+      pin = 0;
+      px = 0;
+      py = 0;
+    };
+    const mo = typeof MutationObserver === "function" ? new MutationObserver(() => {
+      pal = palette(root);
+    }) : null;
+    mo == null ? void 0 : mo.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    const ro = typeof ResizeObserver === "function" ? new ResizeObserver(() => {
+      if (dead || cur < 0) return;
+      fitHeight();
+      const want = cur * unit();
+      if (Math.abs(scEl.scrollTop - want) > 1) scEl.scrollTop = want;
+    }) : null;
+    ro == null ? void 0 : ro.observe(scEl);
+    scEl.addEventListener("wheel", onWheel, { passive: false });
+    scEl.addEventListener("scroll", syncFromScroll, { passive: true });
+    box.addEventListener("click", onOvlClick);
+    root.addEventListener("pointermove", onPointerMove, { passive: true });
+    root.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    document.addEventListener("keydown", onKey);
+    activate(0, true);
+    pump();
+    handle.stop = () => {
+      dead = true;
+      rafStop(raf);
+      clearTimeout(fallback);
+      mo == null ? void 0 : mo.disconnect();
+      ro == null ? void 0 : ro.disconnect();
+      clearCut();
+      scEl.removeEventListener("wheel", onWheel);
+      scEl.removeEventListener("scroll", syncFromScroll);
+      box.removeEventListener("click", onOvlClick);
+      root.removeEventListener("pointermove", onPointerMove);
+      root.removeEventListener("pointerleave", onPointerLeave);
+      document.removeEventListener("keydown", onKey);
+    };
+    return handle;
+  }
+  var GESTURE_GAP, rafFn, rafStop, clamp2, clamp012;
+  var init_engine = __esm({
+    "src/clipbook/press/engine.ts"() {
+      init_motions();
+      GESTURE_GAP = 340;
+      rafFn = typeof requestAnimationFrame === "function" ? (cb) => requestAnimationFrame(cb) : (cb) => setTimeout(cb, 16);
+      rafStop = (id) => {
+        if (typeof cancelAnimationFrame === "function") cancelAnimationFrame(id);
+        else clearTimeout(id);
+      };
+      clamp2 = (x, lo, hi) => x < lo ? lo : x > hi ? hi : x;
+      clamp012 = (x) => clamp2(x, 0, 1);
+    }
+  });
+
+  // src/clipbook/press/index.ts
+  function fitPressBox(box, panel) {
+    const r = panel == null ? void 0 : panel.getBoundingClientRect();
+    if (!panel || !r || r.width < 40 || r.height < 40) {
+      box.style.left = "16px";
+      box.style.top = "16px";
+      box.style.width = "calc(100vw - 32px)";
+      box.style.height = "calc(100vh - 32px)";
+      box.style.fontSize = "16px";
+      return;
+    }
+    box.style.left = `${Math.round(r.left)}px`;
+    box.style.top = `${Math.round(r.top)}px`;
+    box.style.width = `${Math.round(r.width)}px`;
+    box.style.height = `${Math.round(r.height)}px`;
+    const base = Math.max(12, Math.min(19, 12 * Math.min(r.width / 900, r.height / 620)));
+    box.style.fontSize = `${base.toFixed(2)}px`;
+    box.style.borderRadius = getComputedStyle(panel).borderTopLeftRadius || "";
+  }
+  async function openReadingPress(app) {
+    var _a, _b;
+    const noStage = typeof requestAnimationFrame !== "function" || typeof HTMLElement === "undefined" || typeof HTMLElement.prototype.animate !== "function";
+    if (pressOvl == null ? void 0 : pressOvl.isConnected) {
+      const box2 = pressOvl.querySelector(".bz-rp-box");
+      if (box2) {
+        box2.classList.remove("is-nudge");
+        void box2.offsetWidth;
+        box2.classList.add("is-nudge");
+      }
+      return;
+    }
+    await flushReadingSession();
+    const sidecar = await readClipbookData();
+    const log = sidecar.readLog || [];
+    if (noStage || !log.length) {
+      await openClipbookReport(app);
+      return;
+    }
+    let raw = null;
+    let totalRead;
+    let byDateDays;
+    try {
+      const res = await readNewsData();
+      if (res.ok && !res.missing) {
+        raw = res.data && res.data.articles || [];
+        const st = (_a = res.data) == null ? void 0 : _a.stats;
+        totalRead = st == null ? void 0 : st.totalRead;
+        byDateDays = (st == null ? void 0 : st.byDate) ? Object.keys(st.byDate).length : void 0;
+      }
+    } catch (e) {
+      raw = null;
+    }
+    const data = derivePress(log, raw, {
+      savedCount: ((_b = sidecar.savedArchive) == null ? void 0 : _b.length) || 0,
+      totalRead,
+      byDateDays
+    }, /* @__PURE__ */ new Date());
+    const panel = document.querySelector(".bz-clip-frame");
+    const ovl = document.createElement("div");
+    ovl.className = "bz-rp";
+    ovl.innerHTML = pressHtml(data);
+    const isMobile = (() => {
+      try {
+        return window.matchMedia("(max-width: 768px)").matches;
+      } catch (e) {
+        return false;
+      }
+    })();
+    if (isMobile) {
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "bz-rp-close";
+      close.setAttribute("data-r", "close");
+      close.setAttribute("title", "关闭");
+      close.setAttribute("aria-label", "关闭读报特刊");
+      close.textContent = "✕";
+      ovl.appendChild(close);
+    }
+    document.body.appendChild(ovl);
+    topifyZ(ovl);
+    pressOvl = ovl;
+    const box = ovl.querySelector(".bz-rp-box");
+    if (box) {
+      fitPressBox(box, panel);
+      pressSync = () => fitPressBox(box, panel);
+      window.addEventListener("resize", pressSync);
+      if (typeof ResizeObserver === "function" && panel) {
+        pressRo = new ResizeObserver(pressSync);
+        pressRo.observe(panel);
+      }
+    }
+    ovl.addEventListener("click", (e) => {
+      const t = e.target;
+      if (t.closest('[data-r="close"]')) {
+        closeReadingPress();
+        return;
+      }
+      if (!t.closest(".bz-rp-box")) closeReadingPress();
+    });
+    pressEsc = escManager.register("clipbook-press", {
+      isVisible: () => !!(pressOvl == null ? void 0 : pressOvl.isConnected),
+      close: closeReadingPress
+    });
+    pressHandle = bindPress(ovl, data);
+  }
+  function closeReadingPress() {
+    pressHandle == null ? void 0 : pressHandle.stop();
+    pressHandle = null;
+    if (pressEsc) {
+      try {
+        pressEsc.unregister();
+      } catch (e) {
+      }
+      pressEsc = null;
+    }
+    if (pressSync) {
+      window.removeEventListener("resize", pressSync);
+      pressSync = null;
+    }
+    pressRo == null ? void 0 : pressRo.disconnect();
+    pressRo = null;
+    pressOvl == null ? void 0 : pressOvl.remove();
+    pressOvl = null;
+  }
+  function unloadReadingPress() {
+    closeReadingPress();
+  }
+  var pressOvl, pressHandle, pressEsc, pressSync, pressRo;
+  var init_press = __esm({
+    "src/clipbook/press/index.ts"() {
+      init_dom();
+      init_esc_manager();
+      init_flow();
+      init_data();
+      init_news_data();
+      init_report_ui();
+      init_data3();
+      init_view();
+      init_engine();
+      pressOvl = null;
+      pressHandle = null;
+      pressEsc = null;
+      pressSync = null;
+      pressRo = null;
     }
   });
 
@@ -23081,8 +26046,16 @@ ${bodyText.substring(0, 6e3)}`;
     panelSplit == null ? void 0 : panelSplit.restore();
     M2.open = true;
     beginSession();
+    pendingBoot = true;
+    lastReaderId = "";
+    lastListCurId = "";
+    motionPanelIn(overlayEl2, !panelShownOnce);
+    panelShownOnce = true;
     if (dirty || !loaded) {
-      if (!loaded && listEl) listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+      if (!loaded && listEl) {
+        listEl.innerHTML = '<p class="dim">正在装载剪藏…</p>';
+        motionLoadingPulse(listEl.firstElementChild);
+      }
       void loadIfNeeded();
     } else renderAll();
     if (!isMobileEnv()) {
@@ -23148,7 +26121,9 @@ ${bodyText.substring(0, 6e3)}`;
     M2.open = false;
     M2.mobDetailOpen = false;
     if (mobDetailEl) mobDetailEl.style.display = "none";
-    if (overlayEl2) overlayEl2.style.display = "none";
+    if (overlayEl2) motionPanelOut(overlayEl2, () => {
+      if (!M2.open && overlayEl2) overlayEl2.style.display = "none";
+    });
   }
   function unloadPanel() {
     pauseReadingSession();
@@ -23185,6 +26160,13 @@ ${bodyText.substring(0, 6e3)}`;
     }
     clipBodyCache.clear();
     clipBodyInflight.clear();
+    motionTeardown();
+    pendingBoot = false;
+    renderMood = "mute";
+    panelShownOnce = false;
+    lastReaderId = "";
+    lastListCurId = "";
+    pendingFoldKind = null;
     setSearchKw("");
     M2.open = false;
     M2.mobDetailOpen = false;
@@ -23212,7 +26194,7 @@ ${bodyText.substring(0, 6e3)}`;
     resetClipbookState();
   }
   function buildDom2(app) {
-    var _a;
+    var _a, _b;
     overlayEl2 = document.createElement("div");
     overlayEl2.className = "bz-panel-overlay";
     overlayEl2.style.display = "none";
@@ -23234,22 +26216,23 @@ ${bodyText.substring(0, 6e3)}`;
     mobSearchbarEl = overlayEl2.querySelector("[data-clip-mob-searchbar]");
     const mobSearchbar = mobSearchbarEl;
     const mobInput = overlayEl2.querySelector("[data-clip-mob-input]");
+    mobSearchEl = mobInput;
     deskSearchEl = overlayEl2.querySelector("[data-clip-desk-search]");
     overlayEl2.addEventListener("click", (e) => {
       if (e.target === overlayEl2) closePanel();
     });
     railFootEl.addEventListener("click", (e) => {
-      if (e.target.closest("[data-clp-rep-entry]")) openClipbookReport(app);
+      if (e.target.closest("[data-clp-rep-entry]")) void openReadingPress(app);
     });
     railFootEl.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" && e.key !== " ") return;
       if (e.target.closest("[data-clp-rep-entry]")) {
         e.preventDefault();
-        openClipbookReport(app);
+        void openReadingPress(app);
       }
     });
     const mobReportBtn = overlayEl2.querySelector("[data-clip-mob-report]");
-    mobReportBtn.addEventListener("click", () => openClipbookReport(app));
+    mobReportBtn.addEventListener("click", () => void openReadingPress(app));
     railListEl.addEventListener("click", (e) => {
       const row = e.target.closest("[data-src]");
       if (!row) return;
@@ -23289,9 +26272,9 @@ ${bodyText.substring(0, 6e3)}`;
       if (t.closest("[data-clip-open-note]") && M2.cur) openNote(M2.cur);
     }, true);
     readPaneEl.addEventListener("keydown", (e) => {
-      var _a2, _b;
+      var _a2, _b2;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
-      if ((e.key === "Enter" || e.key === " ") && ((_b = (_a2 = e.target).closest) == null ? void 0 : _b.call(_a2, "[data-clip-open-note]"))) {
+      if ((e.key === "Enter" || e.key === " ") && ((_b2 = (_a2 = e.target).closest) == null ? void 0 : _b2.call(_a2, "[data-clip-open-note]"))) {
         e.preventDefault();
         if (M2.cur) openNote(M2.cur);
         return;
@@ -23310,16 +26293,30 @@ ${bodyText.substring(0, 6e3)}`;
     mobSearchBtn.addEventListener("click", () => {
       const show = mobSearchbarEl.style.display === "none";
       mobSearchbarEl.style.display = show ? "block" : "none";
-      if (show) mobInput.focus();
-      else {
+      if (show) {
+        motionMobSearchbarIn(mobSearchbarEl);
+        mobInput.focus();
+      } else {
         mobInput.value = "";
         setSearchKw("");
+        syncMobSearchClear();
         renderMobToc();
       }
     });
     mobInput.addEventListener("input", () => {
       searchKw = mobInput.value.trim();
+      syncMobSearchClear();
+      renderMood = "search";
       renderMobToc();
+      renderMood = "mute";
+    });
+    (_b = overlayEl2.querySelector("[data-clip-mob-search-clear]")) == null ? void 0 : _b.addEventListener("click", () => {
+      mobInput.value = "";
+      setSearchKw("");
+      syncMobSearchClear();
+      renderMobToc();
+      mobSearchbarEl.style.display = "none";
+      mobInput.blur();
     });
     mobCloseBtn.addEventListener("click", () => {
       const barOpen = mobSearchbarEl ? mobSearchbarEl.style.display === "block" : false;
@@ -23327,6 +26324,7 @@ ${bodyText.substring(0, 6e3)}`;
         searchKw = "";
         expandedMobArch.clear();
         if (mobInput) mobInput.value = "";
+        syncMobSearchClear();
         if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
         renderMobToc();
       } else {
@@ -23432,8 +26430,9 @@ ${bodyText.substring(0, 6e3)}`;
     setSearchKw("");
     if (deskSearchEl) deskSearchEl.value = "";
     if (mobSearchbarEl) mobSearchbarEl.style.display = "none";
-    const mobInput = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-input]") : null;
-    if (mobInput) mobInput.value = "";
+    if (mobSearchEl) mobSearchEl.value = "";
+    syncMobSearchClear();
+    renderMood = "nav";
     renderAll();
   }
   function toggleSource(src) {
@@ -23447,15 +26446,31 @@ ${bodyText.substring(0, 6e3)}`;
     const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-search-clear]") : null;
     if (btn) btn.hidden = !(deskSearchEl == null ? void 0 : deskSearchEl.value.trim());
   }
+  function syncMobSearchClear() {
+    const btn = overlayEl2 ? overlayEl2.querySelector("[data-clip-mob-search-clear]") : null;
+    if (btn) btn.hidden = !(mobSearchEl == null ? void 0 : mobSearchEl.value.trim());
+  }
   function clearDeskSearch() {
     if (deskSearchEl) deskSearchEl.value = "";
     setSearchKw("");
     syncDeskSearchClear();
+    renderMood = "search";
     renderList();
     renderRail();
+    renderMood = "mute";
     deskSearchEl == null ? void 0 : deskSearchEl.focus();
   }
   function renderAll() {
+    if (!M2.open) return;
+    if (pendingBoot) {
+      renderMood = "boot";
+      pendingBoot = false;
+    }
+    if (renderMood === "boot" && overlayEl2) motionHeadRevealed(overlayEl2);
+    renderAllNow();
+    renderMood = "mute";
+  }
+  function renderAllNow() {
     if (!M2.open) return;
     renderHeadIssue();
     renderRail();
@@ -23478,10 +26493,10 @@ ${bodyText.substring(0, 6e3)}`;
     renderAll();
   }
   function renderHeadIssue() {
-    const el = overlayEl2 ? overlayEl2.querySelector("[data-clip-issue]") : null;
-    if (!el) return;
-    const d = /* @__PURE__ */ new Date();
-    el.textContent = `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日 · 第 ${M2.articles.length} 期`;
+    if (!overlayEl2) return;
+    overlayEl2.querySelectorAll("[data-clip-issue]").forEach((el) => {
+      el.textContent = `第 ${M2.articles.length} 期`;
+    });
   }
   function currentSrc() {
     const s = M2.sel;
@@ -23538,6 +26553,7 @@ ${bodyText.substring(0, 6e3)}`;
     deskFoldTouched.add(key);
     if (deskFoldOpen.has(key)) deskFoldOpen.delete(key);
     else deskFoldOpen.add(key);
+    pendingFoldKind = kind;
     renderList();
   }
   function beginSession() {
@@ -23553,6 +26569,10 @@ ${bodyText.substring(0, 6e3)}`;
     return a.title.toLowerCase().includes(kw) || a.summary.toLowerCase().includes(kw) || a.site.toLowerCase().includes(kw) || a.srcName.toLowerCase().includes(kw) || a.author.toLowerCase().includes(kw) || a.body.toLowerCase().includes(kw) || a.url.toLowerCase().includes(kw) || a.tags.some((t) => t.toLowerCase().includes(kw));
   }
   function renderRail() {
+    renderRailNow();
+    if (railListEl) motionRailRendered(railListEl, renderMood);
+  }
+  function renderRailNow() {
     var _a, _b, _c, _d;
     if (!railListEl) return;
     const arts = M2.articles;
@@ -23662,8 +26682,21 @@ ${bodyText.substring(0, 6e3)}`;
       await refreshAfterAction();
     })());
     await refreshAfterAction();
+    items.slice(0, 12).forEach((a, i) => {
+      motionInkStrike(clipTitleEl(clipCardEl(a.id)), i * 70);
+    });
   }
   function renderList() {
+    renderListNow();
+    if (!listEl) return;
+    const foldKind = pendingFoldKind;
+    pendingFoldKind = null;
+    const curId = M2.cur ? M2.cur.id : "";
+    const pressed = !!curId && curId !== lastListCurId && renderMood !== "boot";
+    lastListCurId = curId;
+    motionListRendered(listEl, renderMood, foldKind, pressed);
+  }
+  function renderListNow() {
     if (!listEl) return;
     if (loadError) {
       listEl.innerHTML = "";
@@ -23747,6 +26780,16 @@ ${bodyText.substring(0, 6e3)}`;
     } catch (e) {
       return "";
     }
+  }
+  function clipCardEl(id) {
+    if (!id) return null;
+    const safe = typeof CSS !== "undefined" && typeof CSS.escape === "function" ? CSS.escape(id) : id.replace(/"/g, '\\"');
+    const sel = `[data-id="${safe}"]`;
+    return listEl && listEl.querySelector(sel) || mobListEl && mobListEl.querySelector(sel) || null;
+  }
+  function clipTitleEl(card) {
+    if (!card) return null;
+    return card.querySelector(".bz-clip-item-t") || card.querySelector(".bz-clip-mob-ttl");
   }
   function bindItemMenus() {
     if (!listEl) return;
@@ -23844,6 +26887,14 @@ ${bodyText.substring(0, 6e3)}`;
     bindImgFallback(container);
   }
   function renderReader() {
+    const prevId = lastReaderId;
+    renderReaderNow();
+    const curId = M2.cur ? M2.cur.id : "";
+    lastReaderId = curId;
+    if (!readerEl || !curId || prevId === curId) return;
+    motionReaderRendered(readerEl, prevId === "" ? "first" : readerDir, renderMood);
+  }
+  function renderReaderNow() {
     if (!readerEl) return;
     const a = M2.cur;
     hideSelBar();
@@ -23957,7 +27008,10 @@ ${bodyText.substring(0, 6e3)}`;
     const idx = M2.cur ? list.findIndex((x) => x.id === M2.cur.id) : -1;
     const nextIdx = idx === -1 ? 0 : Math.min(list.length - 1, Math.max(0, idx + delta));
     const next = list[nextIdx];
-    if (next && (!M2.cur || next.id !== M2.cur.id)) selectArticle(next.id);
+    if (next && (!M2.cur || next.id !== M2.cur.id)) {
+      readerDir = delta >= 0 ? "fwd" : "back";
+      selectArticle(next.id);
+    }
   }
   function resetReadScroll() {
     const sc = readPaneEl ? readPaneEl.querySelector(".bz-clip-read-scroll") : null;
@@ -23995,6 +27049,11 @@ ${bodyText.substring(0, 6e3)}`;
     const ok = await flowSave(a);
     if (!ok) return;
     await refreshAfterAction();
+    if (M2.mobDetailOpen && mobDetailEl) {
+      motionArchStamp(mobDetailEl.querySelector("[data-clip-mob-detail-body]"));
+    } else {
+      motionArchStamp(readerEl ? readerEl.querySelector(".bz-clip-art-title") : null);
+    }
   }
   async function doMarkRead(a) {
     if (!a || a.origin !== "news") return;
@@ -24013,6 +27072,7 @@ ${bodyText.substring(0, 6e3)}`;
     }
     notifyUndo(`已将「${a.title}」标为已读`, () => void undoMarkRead(rawBefore));
     await refreshAfterAction();
+    motionInkStrike(clipTitleEl(clipCardEl(a.id)));
   }
   async function rawBeforeFromDisk(a) {
     const key = articleKeyOf(a.raw || {});
@@ -24045,6 +27105,7 @@ ${bodyText.substring(0, 6e3)}`;
     void clearArticleTracking(a.id).catch(() => {
     });
     notifyUndo(`已删除条目「${a.title}」`, () => void undoDeleteNews(rawBefore));
+    motionSnipGhost(clipCardEl(a.id));
     await refreshAfterAction();
   }
   async function undoDeleteNews(rawBefore) {
@@ -24075,6 +27136,7 @@ ${bodyText.substring(0, 6e3)}`;
         void clearArticleTracking(a.id).catch(() => {
         });
         notifyUndo(`已删除剪藏「${a.title}」（已移入系统回收站）`, () => void undoTrashClip(path, content));
+        motionSnipGhost(clipCardEl(a.id));
         await refreshAfterAction();
       } catch (e) {
         notifyActionError(e, "删除剪藏");
@@ -24162,6 +27224,10 @@ ${bodyText.substring(0, 6e3)}`;
     void saveSettings();
   }
   function renderMobToc() {
+    renderMobTocNow();
+    if (mobListEl) motionMobTocRendered(mobListEl, renderMood);
+  }
+  function renderMobTocNow() {
     if (!mobListEl) return;
     const arts = M2.articles;
     const clipNotes = M2.clipNotes || [];
@@ -24266,6 +27332,7 @@ ${bodyText.substring(0, 6e3)}`;
       const label = kind === "read" ? "已读" : "已收";
       lab.innerHTML = opening ? "收起" : `${label} <b>${n}</b> 篇`;
     }
+    if (opening && arch) motionMobFoldOpen(arch);
     if (site) {
       if (opening) expandedMobArch.add(key);
       else expandedMobArch.delete(key);
@@ -24279,7 +27346,10 @@ ${bodyText.substring(0, 6e3)}`;
     M2.mobDetailOpen = true;
     setReadingSession(a.id, { title: a.title, src: a.srcName });
     renderMobDetail();
-    if (mobDetailEl) mobDetailEl.style.display = "flex";
+    if (mobDetailEl) {
+      mobDetailEl.style.display = "flex";
+      motionMobDetailIn(mobDetailEl);
+    }
     const body = mobDetailEl ? mobDetailEl.querySelector("[data-clip-mob-detail-body]") : null;
     if (body) body.scrollTop = 0;
     markReadOnOpen(a);
@@ -24421,6 +27491,7 @@ ${bodyText.substring(0, 6e3)}`;
     topifyZ(bar);
     placeSelBar(info.rect);
     armSelBarEsc();
+    motionSelbarIn(bar);
   }
   function showImageSelBar(imgEl) {
     const a = M2.cur;
@@ -24439,6 +27510,7 @@ ${bodyText.substring(0, 6e3)}`;
     const r = typeof imgEl.getBoundingClientRect === "function" ? imgEl.getBoundingClientRect() : null;
     placeSelBar(r || { top: 0, left: 0, bottom: 0, right: 0 });
     armSelBarEsc();
+    motionSelbarIn(bar);
   }
   function checkTextSelection() {
     if (!M2.open) return;
@@ -24858,7 +27930,7 @@ ${bodyText.substring(0, 6e3)}`;
       }
     });
   }
-  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, escKey, escHandle2, loading, dirty, loaded, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
+  var overlayEl2, railListEl, railFootEl, listEl, readerEl, readPaneEl, mobListEl, mobDetailEl, mobTitleEl, mobSaveBtnEl, mobSearchbarEl, deskSearchEl, mobSearchEl, escKey, escHandle2, loading, dirty, loaded, loadError, readScrollMemo, READ_SCROLL_MEMO_MAX, pendingBoot, renderMood, panelShownOnce, lastReaderId, lastListCurId, readerDir, pendingFoldKind, SEARCH_DEBOUNCE_MS, PANEL_MIN_W, PANEL_MIN_H, PANEL_MAX_W, PANEL_MAX_H, clipBodyCache, searchDebounced, panelResizeDetach, panelSplit, SPLIT_MIN_MID, SPLIT_MIN_READ, loadPromise, searchKw, expandedMobArch, mobItemById, mobItemOrder, dirEpoch, dirSnap, snapEpochs, deskFoldOpen, deskFoldTouched, clipBodyInflight, selBarEl, selBarEsc, selChangeTimer, selBarHoldUntil, selSnap, imgSnap;
   var init_ui3 = __esm({
     "src/clipbook/ui.ts"() {
       init_fake_obsidian();
@@ -24883,13 +27955,14 @@ ${bodyText.substring(0, 6e3)}`;
       init_store();
       init_render3();
       init_state();
+      init_motion2();
       init_loader();
       init_news_data();
       init_knowledge_boxes();
       init_anchor();
       init_image_save();
       init_flow();
-      init_report_ui();
+      init_press();
       overlayEl2 = null;
       railListEl = null;
       railFootEl = null;
@@ -24902,6 +27975,7 @@ ${bodyText.substring(0, 6e3)}`;
       mobSaveBtnEl = null;
       mobSearchbarEl = null;
       deskSearchEl = null;
+      mobSearchEl = null;
       escKey = "";
       escHandle2 = null;
       loading = false;
@@ -24910,6 +27984,13 @@ ${bodyText.substring(0, 6e3)}`;
       loadError = null;
       readScrollMemo = /* @__PURE__ */ new Map();
       READ_SCROLL_MEMO_MAX = 200;
+      pendingBoot = false;
+      renderMood = "mute";
+      panelShownOnce = false;
+      lastReaderId = "";
+      lastListCurId = "";
+      readerDir = "fwd";
+      pendingFoldKind = null;
       SEARCH_DEBOUNCE_MS = 180;
       PANEL_MIN_W = 760;
       PANEL_MIN_H = 520;
@@ -24918,8 +27999,10 @@ ${bodyText.substring(0, 6e3)}`;
       clipBodyCache = /* @__PURE__ */ new Map();
       searchDebounced = debounce(() => {
         setSearchKw(deskSearchEl ? deskSearchEl.value.trim() : "");
+        renderMood = "search";
         renderList();
         renderRail();
+        renderMood = "mute";
       }, SEARCH_DEBOUNCE_MS);
       panelResizeDetach = null;
       panelSplit = null;
@@ -25046,6 +28129,7 @@ ${bodyText.substring(0, 6e3)}`;
     markAllUnreadRead: () => markAllUnreadRead,
     openClipbook: () => openClipbook,
     openClipbookReport: () => openClipbookReport,
+    openReadingPress: () => openReadingPress,
     unloadClipbook: () => unloadClipbook,
     unloadClipbookFileSync: () => unloadFileSync2
   });
@@ -25095,6 +28179,7 @@ ${bodyText.substring(0, 6e3)}`;
   }
   function unloadClipbook() {
     var _a;
+    unloadReadingPress();
     unloadClipbookReport();
     unloadManagerModals();
     for (const id of ["bz-up-manager-mask", "bz-up-manager-popup", "bz-rss-manager-mask", "bz-rss-manager-popup"]) {
@@ -25143,6 +28228,7 @@ ${bodyText.substring(0, 6e3)}`;
       init_save();
       init_ui3();
       init_report_ui();
+      init_press();
       init_news_sources_group();
       init_file_sync3();
       initialized3 = false;
@@ -25263,20 +28349,20 @@ ${bodyText.substring(0, 6e3)}`;
     const wasMd = oldPath.endsWith(".md");
     if (!wasMd && !isMarkdownFile(file, newPath)) return;
     emitDomainEvent("vault:md-renamed", { oldPath, newPath });
-    const after2 = classifyFilePath(newPath);
-    if (!after2) return;
+    const after3 = classifyFilePath(newPath);
+    if (!after3) return;
     const before = classifyFilePath(oldPath);
     const payload = {
       oldPath,
       newPath,
-      movedOut: before !== after2
+      movedOut: before !== after3
       // 含旧无新有（移入域）；旧有新无时 after 为空、本事件不派发
     };
-    if (after2 === "diary") {
+    if (after3 === "diary") {
       const date = diaryDateFromPath(newPath);
       if (date) payload.date = date;
     }
-    emitDomainEvent(`${after2}:file-renamed`, payload);
+    emitDomainEvent(`${after3}:file-renamed`, payload);
   }
   function attachObsidianAdapter(app, registerRef) {
     if (attached) return;
@@ -25299,7 +28385,7 @@ ${bodyText.substring(0, 6e3)}`;
   init_clipbook();
   init_ui3();
   var CLIP_DIR = "归档/网页剪藏";
-  var SEED_MARK = "bz-sim:__clipbook-seed-v3";
+  var SEED_MARK = "bz-sim:__clipbook-seed-v4";
   var SETTINGS_KEY = "bz-sim:__settings";
   var NEWS_PATH = "CONFIG/STORAGE/news.json";
   var SIDECAR_PATH = "CONFIG/STORAGE/clipbook.json";
@@ -25320,7 +28406,8 @@ ${bodyText.substring(0, 6e3)}`;
     if (!src || localStorage.getItem(SEED_MARK)) return;
     seedVaultFile(NEWS_PATH, JSON.stringify({
       articles: src.NEWS.articles,
-      stats: { totalRead: 24, totalSaved: 8, totalSkipped: 16, byPlatform: {}, byDate: buildByDate() },
+      // 真实快照带真实 stats（byDate = 每日已读事实源）；旧快照无 stats 时落回演示值
+      stats: src.NEWS.stats || { totalRead: 24, totalSaved: 8, totalSkipped: 16, byPlatform: {}, byDate: buildByDate() },
       bilibiliUps: [],
       bilibiliUpInfo: src.NEWS.upInfo || {},
       bilibiliMaxItems: 10,
