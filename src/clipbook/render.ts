@@ -22,7 +22,7 @@
  */
 import { esc, iconSpan, pad2 } from '../core/ui/str';
 import { CHART_PASTEL_SERIES, CHART_RANK_BADGES, CHART_HIGHLIGHT } from '../core/chart-palette';
-import { formatMinutes, REPORT_TOP_N, type ClipReportData } from './report-stats';
+import { formatMinutes, REPORT_TOP_N, shiftBuckets, shiftOfHour, type ClipDayRow, type ClipLibraryStats, type ClipReportData } from './report-stats';
 import type { ClipArticle } from './types';
 
 /** esc/iconSpan 再导出：行为层与评审壳演示 markup 同源 */
@@ -65,13 +65,22 @@ export function panelHtml(): string {
       <!-- 桌面三栏 -->
       <div class="bz-clip-desk">
         <div class="bz-panel-head bz-panel-head--tall">
-          <div class="bz-panel-title">剪藏本</div>
+          <!-- 刊名电传纸带（.scratch/clip-title/d.html D 版 1:1，2026-09-23 拍板）：tape 内字位 span 供
+               motion 逐字击打；字车 cur 常驻 blink（boot 由 motion 先送带首再随击推进）；lamp = 收带铃圆点。
+               span 间不得有空白（textContent 契约=「剪藏本」）；静默渲染不演即终态 -->
+          <div class="bz-panel-title bz-clip-title-wire" data-clip-title-wire><div class="bz-clip-title-tape"><span class="bz-clip-tape-ch">剪</span><span class="bz-clip-tape-ch">藏</span><span class="bz-clip-tape-ch">本</span><span class="bz-clip-tape-cur" aria-hidden="true"></span></div><i class="bz-clip-tape-lamp" aria-hidden="true"></i></div>
           <div class="bz-panel-head-sp"></div>
-          <div class="bz-clip-issue" data-clip-issue></div>
-          <!-- 效率#12：尾部 ✕ 一键清除（有词才显示，ui.ts syncDeskSearchClear 同步）。定位走内联随单源
-               markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的左缘绝对定位会劫持 iconSpan 产物，
-               且 mountIcons 换节点会丢内联样式；不带 display 内联值，hidden 属性才能生效 -->
-          <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          <!-- 头行右侧「电传抬头单」（2026-09-23 头行五版拍板 D 版 + C 版期号戳章）：
+               期号戳章 + 细分隔 + 检索（纸底色/点线/上下边线/日期随当日追加拍板逐次撤去）。
+               data-clip-issue = 戳章（第 N 期）；检索钩子（data-clip-desk-search / data-clip-search-clear）不变。
+               效率#12 ✕ 清除钮：定位走内联随单源 markup 两侧生效；图标用内联 SVG——.bz-search .bz-ic 的
+               左缘绝对定位会劫持 iconSpan 产物，且 mountIcons 换节点会丢内联样式；不带 display 内联值，
+               hidden 属性才能生效 -->
+          <div class="bz-clip-head-strip">
+            <span class="bz-clip-issue-stamp" data-clip-issue></span>
+            <span class="bz-clip-strip-sep" aria-hidden="true"></span>
+            <div class="bz-clip-head-search bz-search">${iconSpan(ICO.search)}<input class="bz-input" type="text" data-clip-desk-search placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-search-clear" data-clip-search-clear title="清除搜索" aria-label="清除搜索" hidden style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;cursor:pointer;color:var(--bz-text-3);padding:2px;line-height:0"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>
+          </div>
         </div>
         <div class="bz-clip-desk-body">
           <div class="bz-rail bz-rail--wide bz-clip-rail">
@@ -91,13 +100,14 @@ export function panelHtml(): string {
       <!-- 移动双屏 -->
       <div class="bz-clip-mob" data-clip-mob>
         <div class="bz-clip-mob-top">
-          <div class="bz-clip-mob-title">剪藏本</div>
+          <!-- 移动刊名 = 期号戳章（2026-09-23 拍板）：与桌面抬头单同款同钩（data-clip-issue），renderHeadIssue 双端同填 -->
+          <div class="bz-clip-issue-stamp" data-clip-issue></div>
           <span class="bz-clip-mob-act" data-clip-mob-report role="button">报告</span>
           <span class="bz-clip-mob-act" data-clip-mob-search role="button">搜索</span>
           <span class="bz-clip-mob-act" data-clip-mob-close role="button">关闭</span>
         </div>
         <div class="bz-clip-mob-searchbar" data-clip-mob-searchbar style="display:none">
-          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…">
+          <input class="bz-input" type="text" data-clip-mob-input placeholder="检索标题、摘要、站点、来源…"><button type="button" class="bz-clip-mob-search-clear" data-clip-mob-search-clear title="清除检索" aria-label="清除检索" hidden><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
         </div>
         <div class="bz-clip-mob-list" data-clip-mob-list></div>
       </div>
@@ -171,9 +181,11 @@ export function railItemHtml(sel: SrcSelJson, label: string, unread: number, tot
     </div>`;
 }
 
-/** rail 脚注（issue 214）：今日已读 N 篇（news.json stats.byDate，键 YYYY-MM-DD；缺省 0） */
+/** rail 脚注（issue 214；2026-09-23 拍板 A 版合块）：「今日已读 ··· N 篇」点线引导行
+ *  （复用 rail 行内 .bz-clip-lead 点线语言），与「我读了什么」入口共居 .bz-clip-rail-foot
+ *  一条顶线之下（入口 markup 见 clipReportEntryHtml）。 */
 export function railFootHtml(todayRead: number): string {
-  return `今日已读<br><b>${todayRead}</b> 篇`;
+  return `<div class="bz-clip-foot-row">今日已读<i class="bz-clip-lead"></i><b>${todayRead}</b> 篇</div>`;
 }
 
 /** rail 脚注·阅读报告入口（issue 358）：点开「我读了什么」报告弹层。
@@ -438,11 +450,16 @@ export interface ClipReportSection {
 }
 
 export function buildClipReportSections(d: ClipReportData, opts?: ClipReportViewOpts): ClipReportSection[] {
-  return [
+  const secs: ClipReportSection[] = [
     { key: 'overview', label: '统计概览', generate: () => clipReportOverviewHtml(d, opts) },
     { key: 'sources', label: '来源分布', generate: () => clipReportSourcesHtml(d) },
     { key: 'hours', label: '阅读时段', generate: () => clipReportHoursHtml(d) },
   ];
+  // 报库盘点（2026-09-23 重做拍板）：news.json 真实家底（建库以来）；不可用则整段省略
+  if (opts?.library && opts.library.total > 0) {
+    secs.push({ key: 'library', label: '报库盘点', generate: () => clipReportLibraryHtml(opts.library!) });
+  }
+  return secs;
 }
 
 /** 报告视图装配选项（效率#20：Top5 可点回看的可定位信息由行为层现查后注入，纯层不持状态） */
@@ -450,9 +467,19 @@ export interface ClipReportViewOpts {
   /** 当前库内可定位条目的 key 集（articleKeyOf / clip:<path>）；
    *  缺省/null = 不可知，Top5 全部不挂「打开」钮（保留策略清掉的条目诚实不承诺）。 */
   availableKeys?: Set<string> | null;
+  /** 报库盘点数据（news.json 真实库聚合；缺省/null = news 不可用，整段省略） */
+  library?: ClipLibraryStats | null;
+  /** 本期最投入的一天（null = 本期无有效阅读段，不显该行） */
+  busiest?: ClipDayRow | null;
 }
 
-/** 段 1·统计概览：三格 hero（篇数/总时长/活跃天数）+ 读得最久 Top 5。
+/** 统计日期串（2026-09-19 → 「9 月 19 日」；报告语境是当前周期，不显年） */
+function dayCn(iso: string): string {
+  const parts = iso.split('-');
+  return parts.length >= 3 ? `${Number(parts[1])} 月 ${Number(parts[2])} 日` : esc(iso);
+}
+
+/** 段 1·统计概览：四格 hero（篇数/总时长/活跃天数/连续天数）+ 最投入的一天 + 读得最久 Top 5。
  *  hero/排名徽章取 chart-palette 粉彩系与浅底徽章色（图表配色单源），墨字走域皮肤。
  *  opts.availableKeys（效率#20）：命中的行挂 data-clip-rep-key + 行尾「打开」钮（点击回看，
  *  面板开着 selectArticle / 未开 revealClipArticle 链路，接线在 report-ui.ts）；失隐条目不挂。 */
@@ -473,14 +500,19 @@ function clipReportOverviewHtml(d: ClipReportData, opts?: ClipReportViewOpts): s
       ${openBtn}
     </div>`;
   }).join('');
+  const busiest = opts?.busiest
+    ? `<div class="bz-clp-rep-busiest"><span>最投入的一天</span><i class="bz-clp-rep-lead" aria-hidden="true"></i><b>${dayCn(opts.busiest.date)}</b><span class="bz-clp-rep-busiest-min">${esc(formatMinutes(opts.busiest.minutes))}</span></div>`
+    : '';
   return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">统计概览</div>
-      <div class="bz-clp-rep-hero">
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
         <div class="bz-clp-rep-hero-card"><b>${d.articles}</b><span>已读篇数</span></div>
         <div class="bz-clp-rep-hero-card"><b>${esc(formatMinutes(d.totalMinutes))}</b><span>总时长</span></div>
         <div class="bz-clp-rep-hero-card"><b>${d.activeDays}</b><span>活跃天数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${d.streakDays}</b><span>连续天数</span></div>
       </div>
+      ${busiest}
       ${topRows ? `<div class="bz-clp-rep-top"><div class="bz-clp-rep-sub">读得最久</div>${topRows}</div>` : ''}
     </div>`;
 }
@@ -509,8 +541,8 @@ function clipReportSourcesHtml(d: ClipReportData): string {
     </div>`;
 }
 
-/** 段 3·阅读时段：24 小时柱（每柱 = 该小时阅读分钟数；粉彩底，最高柱 CHART_HIGHLIGHT 强调）
- *  + 高峰人话 */
+/** 段 3·阅读时段：四班工时（原创「报社工班」口径：夜/晨/午/晚）+ 24 小时柱（每柱 = 该小时阅读
+ *  分钟数；粉彩底，最高柱 CHART_HIGHLIGHT 强调）+ 高峰人话（班次归属） */
 function clipReportHoursHtml(d: ClipReportData): string {
   const max = Math.max(0, ...d.hours);
   const cols = d.hours.map((m, h) => {
@@ -520,11 +552,61 @@ function clipReportHoursHtml(d: ClipReportData): string {
     return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? ' accent' : ''}" style="height:${height}px;background:${bg}" title="${h} 点 · ${esc(formatMinutes(m))}"></div><div class="bz-clp-rep-hlabel">${h}</div></div>`;
   }).join('');
   const peakHour = max > 0 ? d.hours.indexOf(max) : -1;
-  const peakText = peakHour >= 0 ? `${peakHour} 点前后` : '暂无';
+  const peakText = peakHour >= 0 ? `${peakHour} 点前后（${shiftOfHour(peakHour)}）` : '暂无';
+  // 四班工时条（与来源分布同 bar-row 语言；横排四班各占一行）
+  const shifts = shiftBuckets(d.hours);
+  const shiftMax = Math.max(1, ...shifts.map((s) => s.minutes));
+  const shiftRows = shifts.map((s, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label">${s.label}<span class="bz-clp-rep-shift-span">${s.span}</span></span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round((s.minutes / shiftMax) * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${esc(formatMinutes(s.minutes))}</span>
+    </div>`).join('');
   return `
     <div class="bz-clp-rep-sec">
       <div class="bz-clp-rep-sec-h">阅读时段</div>
+      <div class="bz-clp-rep-sub">工班盘点</div>
+      <div class="bz-clp-rep-bars">${shiftRows}</div>
+      <div class="bz-clp-rep-sub">全天 24 小时</div>
       <div class="bz-clp-rep-hours">${cols}</div>
       <div class="bz-clp-rep-hours-note">每根柱 = 该小时的阅读分钟 · 阅读高峰在 ${peakText}</div>
+    </div>`;
+}
+
+/** 段 4·报库盘点（2026-09-23 重做新增，news.json 真实家底 · 建库以来）：
+ *  四格 hero（在流/已读/待读/已读率）+ 近 14 天收录柱 + 在流来源 Top + 压库最久的待读。 */
+function clipReportLibraryHtml(lib: ClipLibraryStats): string {
+  const paceMax = Math.max(1, lib.byDayPeak);
+  const paceCols = lib.byDay.map((d, i) => {
+    const height = d.n > 0 ? 10 + Math.round((d.n / paceMax) * 44) : 3;
+    const accent = lib.byDayPeak > 0 && d.n === lib.byDayPeak;
+    const bg = accent ? CHART_HIGHLIGHT : CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length];
+    return `<div class="bz-clp-rep-hcol"><div class="bz-clp-rep-hbar${accent ? ' accent' : ''}" style="height:${height}px;background:${bg}" title="${esc(d.label)} · 收 ${d.n} 篇"></div><div class="bz-clp-rep-hlabel">${esc(d.label)}</div></div>`;
+  }).join('');
+  const platMax = Math.max(1, ...lib.topPlatforms.map((p) => p.n));
+  const platRows = lib.topPlatforms.map((p, i) => `
+    <div class="bz-clp-rep-bar-row">
+      <span class="bz-clp-rep-bar-label" title="${esc(p.name)}">${esc(p.name)}</span>
+      <span class="bz-clp-rep-bar-track"><i style="width:${Math.max(2, Math.round((p.n / platMax) * 100))}%;background:${CHART_PASTEL_SERIES[i % CHART_PASTEL_SERIES.length]}"></i></span>
+      <span class="bz-clp-rep-bar-val">${p.n} 篇</span>
+    </div>`).join('');
+  const oldest = lib.oldestUnread
+    ? `<div class="bz-clp-rep-old"><span class="bz-clp-rep-old-tag">压库</span><span class="bz-clp-rep-top-title" title="${esc(lib.oldestUnread.title)}">${esc(lib.oldestUnread.title)}</span><span class="bz-clp-rep-top-src">${esc(lib.oldestUnread.src)}</span><span class="bz-clp-rep-top-min">压了 ${lib.oldestUnread.days} 天</span></div>`
+    : '';
+  return `
+    <div class="bz-clp-rep-sec">
+      <div class="bz-clp-rep-sec-h">报库盘点 · 建库以来</div>
+      <div class="bz-clp-rep-hero bz-clp-rep-hero--4">
+        <div class="bz-clp-rep-hero-card"><b>${lib.total}</b><span>在流篇数</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readCount}</b><span>已读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.unread}</b><span>待读</span></div>
+        <div class="bz-clp-rep-hero-card"><b>${lib.readRate}%</b><span>已读率</span></div>
+      </div>
+      <div class="bz-clp-rep-sub">近 14 天收录节奏</div>
+      <div class="bz-clp-rep-hours">${paceCols}</div>
+      <div class="bz-clp-rep-hours-note">每天收进来的新剪报 · 单日最多收 ${lib.byDayPeak} 篇</div>
+      <div class="bz-clp-rep-sub">在流来源</div>
+      <div class="bz-clp-rep-bars">${platRows}</div>
+      ${oldest}
     </div>`;
 }

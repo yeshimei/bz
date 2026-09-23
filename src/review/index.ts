@@ -13,6 +13,7 @@ import { reviewApp } from './app';
 import { openQuizPanel, unloadQuizPanel } from './quiz-panel';
 import { resetQuiz } from './quiz-core';
 import { closeStatsModal } from './stats-ui';
+import { unloadReviewAnalysis } from './analysis/index';
 import { cancelActiveFlowDialog } from '../core/flow-dialog';
 import type { Rating } from './fsrs';
 
@@ -107,6 +108,14 @@ export async function openReviewReport(app: App): Promise<void> {
   ensureReview(app);
   const { showStatsModal } = await import('./stats-ui');
   await showStatsModal(app, dataManager!);
+}
+
+/** 记忆分析特刊（bz-review-analysis）：全屏逐幕分析层（analysis/）——
+ *  空库/无动画宿主/装配失败在层内回落经典统计弹层（press 降级口径） */
+export async function openReviewAnalysis(app: App): Promise<void> {
+  ensureReview(app);
+  const mod = await import('./analysis/index');
+  await mod.openReviewAnalysis(app);
 }
 
 /** 做题练习独立面板（bz-review-quiz-open，issue 362）：quiz-core 引擎 + 做题会话契约的
@@ -253,6 +262,8 @@ export function unloadReview(): void {
   reviewApp._notifiedOverdue.clear();
   // 做题练习独立面板（issue 362）：会话在途契约强制收口 + 面板 DOM/ESC 层摘除
   unloadQuizPanel();
+  // 记忆分析特刊层（analysis/）：引擎/监听/ESC 句柄随域卸载收口（幂等）
+  unloadReviewAnalysis();
   // F6：quiz-core 单例 initialized/ai 复位——禁用→再启用后 ensureQuiz 重建 AI/设置引用（否则旧配置常驻）
   resetQuiz();
   // P2：全部退订函数统一调用（原生 offref + 总线退订），防卸载后旧监听残留（再 ensure 后事件双触发）

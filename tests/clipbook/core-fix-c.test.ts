@@ -517,6 +517,27 @@ describe('C-UI7：selectSource 移动搜索栏复位', () => {
   });
 });
 
+describe('效率#12：移动搜索 ✕ 一键清除（有词才现、清空即隐）', () => {
+  it('无词隐藏 / 有词显示；点 = 清词 + 收搜索栏 + 钮即隐', async () => {
+    MockPlatform.isMobile = true;
+    boot();
+    openClipbook(getApp());
+    await vi.waitFor(() => expect(M.open).toBe(true));
+    (document.querySelector('[data-clip-mob-search]') as HTMLElement).click(); // 开搜索栏
+    const input = document.querySelector('[data-clip-mob-input]') as HTMLInputElement;
+    const btn = document.querySelector('[data-clip-mob-search-clear]') as HTMLElement;
+    expect(btn).toBeTruthy();
+    expect(btn.hidden).toBe(true); // 无词初始态
+    input.value = '影视';
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(btn.hidden).toBe(false); // 有词即显
+    btn.click();
+    expect(input.value).toBe('');
+    expect(btn.hidden).toBe(true);
+    expect((document.querySelector('[data-clip-mob-searchbar]') as HTMLElement).style.display).toBe('none'); // 收起
+  });
+});
+
 // ================= 条目13：undoTrashClip 目录兜底（新-5） =================
 
 describe('新-5：undoTrashClip 目录兜底与分型文案', () => {

@@ -19,6 +19,7 @@
 import { FakeApp, seedVaultFile } from './fake/fake-obsidian';
 import { getApp, setApp } from '../../src/core/app';
 import { setSettingsProvider } from '../../src/core/settings-provider';
+import { setAISettingsProvider, getAIProvider } from '../../src/core/ai';
 import { ensureReview, openReviewPanel as openReviewPanelImpl, unloadReview } from '../../src/review/index';
 
 declare global {
@@ -71,21 +72,39 @@ function seedDatabase(): void {
   setApp(new FakeApp() as never);
 }
 
-/** 默认设置（键与插件 data.json 同形）：做题家全开 = 「开始本轮/点到期卡」走做题冲刺 */
+/** 默认设置（键与插件 data.json 同形）：2026-09-23 拍板——「开始本轮」默认进做题界面
+ *  （forceQuizForReview 开）；aiProvider 种 ollama（本地服务无鉴权，getAIProvider 空密钥放行）
+ *  让 aiReady 判据通过，出题走 fake requestUrl 的题库回放，零真实网络。
+ *  关键：core/ai 有独立的 setAISettingsProvider 注入线（真插件 main.ts onload 注入）——
+ *  壳不同时注入它，getAIProvider 永远拿空配置 → aiReady 恒假 → 做题永远降级（本次根因） */
 function injectSettings(): void {
-  setSettingsProvider(
-    () =>
-      ({
-        storagePath: 'CONFIG/STORAGE',
-        forceQuizForReview: true,
-        enableMultipleChoice: true,
-        questionsPerNote: '',
-        shuffleQuestions: true,
-        reviewRThreshold: 0.9,
-        reviewDailyLimit: 0,
-        watchFolders: [],
-      }) as never
-  );
+  const make = () =>
+    ({
+      storagePath: 'CONFIG/STORAGE',
+      forceQuizForReview: true,
+      aiProvider: 'ollama',
+      enableMultipleChoice: true,
+      questionsPerNote: '',
+      shuffleQuestions: true,
+      reviewRThreshold: 0.9,
+      reviewDailyLimit: 0,
+      watchFolders: [],
+    }) as never;
+  setSettingsProvider(make);
+  setAISettingsProvider(make);
+  // 诊断探针（评审壳专用）：页面里 await iframe.contentWindow.__bzSim.probeAI()
+  // 直取 getAIProvider 判定原文，做题降级不再盲猜
+  (window as unknown as { __bzSim?: object }).__bzSim = {
+    settings: make(),
+    probeAI: async () => {
+      try {
+        await getAIProvider();
+        return 'ok';
+      } catch (e) {
+        return e instanceof Error ? e.message : String(e);
+      }
+    },
+  };
 }
 
 /** 壳入口：一次性启动（种子 + 注入；幂等） */

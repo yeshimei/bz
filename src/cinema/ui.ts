@@ -1705,6 +1705,10 @@ function midnightInput(app: App): MidnightRenderInput {
 // ---------- 搜索（防抖；desk 部分刷新保焦点 / mob 全刷+回焦） ----------
 
 function onSearchInput(app: App, sec: HTMLElement, isMob: boolean, raw: string): void {
+  // 尾部 ✕ 显隐随词同步（效率#12 全域拍板：有词才现、清空即隐；mob 搜索框随壳常驻，
+  // 不随 renderAll 重建，显隐只能走行为层）
+  const clearBtn = sec.querySelector('[data-cinema-clear]') as HTMLElement | null;
+  if (clearBtn) clearBtn.hidden = !raw.trim();
   if (M.searchDebounceTimer) clearTimeout(M.searchDebounceTimer);
   M.searchDebounceTimer = setTimeout(() => {
     M.searchKeyword = raw.trim();
@@ -1727,8 +1731,12 @@ function clearSearchKeyword(app: App, sec: HTMLElement, isMob: boolean): void {
   M.searchDebounceTimer = null;
   M.searchKeyword = '';
   renderAll(app);
+  // 焦点回框（P2-5）：查询必须在 renderAll 之后——desk 框随整刷换血，取新元素才接得上焦。
+  // mob 框随壳常驻（不随 renderAll 重建），新值残留必须显式清 + ✕ 显隐同步
   const el = sec.querySelector(isMob ? '.j-mq' : '.j-q') as HTMLInputElement | null;
-  if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); }
+  if (el) { el.value = ''; el.focus(); }
+  const clearBtn = sec.querySelector('[data-cinema-clear]') as HTMLElement | null;
+  if (clearBtn) clearBtn.hidden = true;
 }
 
 /** 输入时只刷列表与计数（保焦点；空了整刷出空态，原型 refreshList 同语义） */
@@ -1907,6 +1915,10 @@ function bindMidnight(sec: HTMLElement, app: App, hoverable = hoverCapable()): v
     const clear = t.closest('[data-cinema-clear]') as HTMLElement | null;
     if (clear) {
       M.typeFilter = null; M.statusFilter = null; M.searchKeyword = '';
+      // 效率#12 全域口径：✕ 点击 = 框值同清 + ✕ 即隐（mob 框常驻不随 renderAll 重建）
+      const inp = clear.closest('label')?.querySelector('input') as HTMLInputElement | null;
+      if (inp) inp.value = '';
+      (clear as HTMLElement).hidden = true;
       renderAll(app);
       return;
     }
