@@ -28,7 +28,8 @@ import { notice, notify, NoticeHandle } from '../../core/notice';
 import { tryGetSettings } from '../../core/settings-provider';
 import { buildConfig, IS_MOBILE } from '../config';
 import { AI } from '../ai';
-import { askJev, isJevConfigured, type JevQuestion, type JevAnswer } from '../../core/jev';
+import { judgeOrFallback } from '../../core/jev-fallback';
+import type { JevQuestion, JevAnswer } from '../../core/jev';
 import type { SearchHit } from '../vector-store';
 import {
   computeBackfillTargets,
@@ -533,10 +534,11 @@ export class LinkAgent {
   }
 
   /**
-   * 统一裁判入口（issue 392 决策 1）：`processNote` 与 `previewLinks` 共用，筛选与排序只在这里做一次。
-   * - Jev 未启用/未配置（`jevEnabled !== true` 或端点密钥不齐）→ 直接走原 LLM 路径（零风险回退，行为与本票前一致）；
+   * 统一裁判入口（issue 392 决策 1；编排单源 `core/jev-fallback`，ADR-0181）：
+   * `processNote` 与 `previewLinks` 共用，筛选与排序只在这里做一次。
+   * - Jev 未启用/未配置（`jevEnabled !== true` 或端点密钥不齐）→ 直接走原 LLM 路径（零风险回退，行为与接入前一致）；
    * - Jev 优先：一次 `askJev` 问完所有候选的三个独立 Noul 维度；
-   * - Jev 抛**非 abort** 错误 → 同一次 `judge()` 内用现有 prompt + `parseJudgeOutput` 回落 LLM（对用户不可见）；
+   * - Jev 抛**非 abort** 错误（请求失败 / 答案畸形）→ 同一次 `judge()` 内用现有 prompt + `parseJudgeOutput` 回落 LLM（对用户不可见）；
    * - `signal.aborted` → 直接抛出、**不回落**（用户主动放弃，回落等于白烧一次 LLM，issue 392 决策 6）；
    * - 两道都抛错 → 上抛，由 `processNote` 入队 / `previewLinks` 返 failed（issue 392 决策 7）。
    * @returns 选中的候选：已按强度降序、已剔除自身与不存在的文件。
@@ -548,21 +550,16 @@ export class LinkAgent {
     opts?: { signal?: AbortSignal }
   ): Promise<SearchHit[]> {
     if (!candidates.length) return [];
-    // Jev 未就绪 → 直接走原 LLM 路径（isJevConfigured 已含 jevEnabled===true 与端点/密钥齐备检查）
-    if (!isJevConfigured()) {
-      return this.judgeByLLM(selfFile, selfContent, candidates, opts);
-    }
-    const state = this.buildJudgeState(selfFile, selfContent, candidates);
-    const questions = this.buildJevQuestions(candidates);
-    try {
-      const result = await askJev(state, questions, { signal: opts?.signal });
-      return this.judgeByJev(candidates, result.answers);
-    } catch (e) {
-      // 取消不算失败：用户主动放弃，回落等于白烧一次 LLM
-      if (opts?.signal?.aborted) throw e;
-      // Jev 抛非 abort 错误 → 同一次 judge 内回落 LLM（降级不通知、不落盘标记）
-      return this.judgeByLLM(selfFile, selfContent, candidates, opts);
-    }
+    return judgeOrFallback<SearchHit[]>({
+      signal: opts?.signal,
+      // 材料惰性构造：Jev 未就绪 / 已取消时不该白拼档案卡（要读 vault）
+      request: () => ({
+        state: this.buildJudgeState(selfFile, selfContent, candidates),
+        questions: this.buildJevQuestions(candidates),
+      }),
+      parse: (answers) => this.judgeByJev(candidates, answers),
+      fallback: () => this.judgeByLLM(selfFile, selfContent, candidates, opts),
+    });
   }
 
   /**

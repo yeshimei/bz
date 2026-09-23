@@ -254,18 +254,33 @@ describe('裁判接入 Jev：previewLinks 共用同一 judge()', () => {
     }
   });
 
-  it('signal abort → 不回落 LLM（AI.ask 零调用），返回 failed', async () => {
+  it('在途取消（abort 落在 Jev 请求期间）→ 不回落 LLM（AI.ask 零调用），返回 failed', async () => {
+    setSettingsProvider(() => jevSettings());
+    const { agent, askJevSpy, askSpy } = makeWorld({
+      hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
+    });
+    const ctrl = new AbortController();
+    askJevSpy.mockImplementation(async () => {
+      ctrl.abort(); // 模拟请求在途时用户放弃（重新生成）
+      throw abortError();
+    });
+    const r = await agent.previewLinks('草稿正文', '草稿标题', { signal: ctrl.signal });
+    expect(r.status).toBe('failed');
+    expect(askJevSpy).toHaveBeenCalledTimes(1);
+    expect(askSpy).not.toHaveBeenCalled(); // 取消不回落，白烧一次 LLM 不值
+  });
+
+  it('调用前已取消 → 连 Jev 材料都不造：零请求、零回落，返回 failed', async () => {
     setSettingsProvider(() => jevSettings());
     const { agent, askJevSpy, askSpy } = makeWorld({
       hits: [{ path: '文献盒/B.md', chunk: 'B', score: 0.9 }],
     });
     const ctrl = new AbortController();
     ctrl.abort();
-    askJevSpy.mockRejectedValue(abortError());
     const r = await agent.previewLinks('草稿正文', '草稿标题', { signal: ctrl.signal });
     expect(r.status).toBe('failed');
-    expect(askJevSpy).toHaveBeenCalledTimes(1);
-    expect(askSpy).not.toHaveBeenCalled(); // 取消不回落，白烧一次 LLM 不值
+    expect(askJevSpy).not.toHaveBeenCalled();
+    expect(askSpy).not.toHaveBeenCalled();
   });
 
   it('Jev 抛错 → 回落 LLM（预演同规则，与后台一致）', async () => {
