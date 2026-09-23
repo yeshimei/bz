@@ -283,7 +283,7 @@ describe('recover：超时恢复（ticket 62 不补算）', () => {
     expect(events.length).toBe(0);
   });
 
-  it('冻结暂停态（pausedBy=autopause）→ 原样保留不流转（P1-4：标记供重启后 locked 判定放行）', () => {
+  it('旧版冻结暂停态（pausedBy=autopause 遗留数据）→ 原样保留不流转（不补算，放行判据见 ui）', () => {
     const frozen: PomodoroState = {
       phase: 'focus',
       endTime: null,
@@ -300,8 +300,8 @@ describe('recover：超时恢复（ticket 62 不补算）', () => {
   });
 });
 
-describe('pausedBy 暂停来源标记（P1-4：冻结 vs 手动）', () => {
-  /** 后台自动暂停冻结态样例 */
+describe('pausedBy 暂停来源标记（遗留兼容：旧版后台冻结）', () => {
+  /** 旧版「后台自动暂停」（2026-09-23 退役）冻结态样例——旧 vault 仍可能读到 */
   const frozen: PomodoroState = {
     phase: 'focus',
     endTime: null,

@@ -30,7 +30,7 @@ function setup(vault: MockVault = new MockVault(), settings: any = {}) {
 function makeAudioMock(): { createOscillator: ReturnType<typeof vi.fn> } {
   class FakeOscillator {
     type = '';
-    frequency = { value: 0 };
+    frequency = { value: 0, exponentialRampToValueAtTime: vi.fn() };
     connect = vi.fn();
     start = vi.fn();
     stop = vi.fn();
@@ -145,78 +145,35 @@ describe('ensurePomodoro（插件启动恢复）', () => {
     expect(document.getElementById('pomodoro-mask')).not.toBeNull(); // openPomodoro 照常出弹窗
   });
 
-  it('P3：恢复可见但无可解冻状态（未冻结/空闲）→ 仅渲染不落盘', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    await ensurePomodoro(app); // 运行中、未冻结
-    const saveSpy = vi.spyOn(PomodoroDataManager.prototype, 'save');
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    expect(saveSpy).not.toHaveBeenCalled(); // 无状态变化不写盘（原无条件 save）
-  });
-
-  it('后台自动暂停：hidden → 主番茄钟冻结（paused/endTime null），visible → 自动恢复（ticket 62）', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    await ensurePomodoro(app);
-    // 运行中（endTime 非空）→ 模拟窗口最小化 hidden
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const frozen = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(frozen.state.paused).toBe(true);
-    expect(frozen.state.endTime).toBeNull();
-    expect(frozen.state.remaining).toBeGreaterThan(0);
-    expect(frozen.state.pausedBy).toBe('autopause'); // 冻结来源标记随落盘持久化（P1-4）
-    // 恢复 visible → 自动继续
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const resumed = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(resumed.state.paused).toBe(false);
-    expect(resumed.state.endTime).not.toBeNull();
-  });
-
-  it('后台自动暂停开关关闭 → hidden 不冻结（ticket 62）', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    setSettingsProvider(() => ({ pomodoroAutoPauseOnHide: false } as any));
-    await ensurePomodoro(app);
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(false);
-    expect(raw.state.endTime).not.toBeNull();
-  });
-
-  it('手动暂停后 hidden → 不被自动覆盖，visible → 不自动恢复（ticket 62 尊重手动暂停）', async () => {
+  it('窗口 hidden/visible 不干扰计时（后台自动暂停 2026-09-23 退役：不再监听 visibilitychange）', async () => {
     const vault = new MockVault();
     vault.files.set(getPomodoroFilePath(), runningData());
     const app = makeApp(vault);
     setApp(app);
     await openPomodoro(app);
-    // 手动暂停（点开始按钮 → 暂停）
-    (document.getElementById('pomodoro-btn-start') as HTMLElement).click();
-    await vi.advanceTimersByTimeAsync(0);
-    let raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(true);
-    // hidden + visible：手动暂停保持
+    const startBtn = el('pomodoro-btn-start') as HTMLButtonElement;
+    expect(startBtn.textContent).toBe('暂停'); // 运行中
+    const saveSpy = vi.spyOn(PomodoroDataManager.prototype, 'save');
+    // 最小化/遮挡（hidden）：不暂停、不翻按钮、不落盘
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
     document.dispatchEvent(new Event('visibilitychange'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(saveSpy).not.toHaveBeenCalled();
+    expect(startBtn.textContent).toBe('暂停');
+    // 恢复可见：同样无副作用（旧版此处解冻并写盘）
     Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
     document.dispatchEvent(new Event('visibilitychange'));
     await vi.advanceTimersByTimeAsync(0);
-    raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(true);
-    expect(raw.state.endTime).toBeNull(); // 保持暂停
+    expect(saveSpy).not.toHaveBeenCalled();
+    // 关键判据：隐藏期间计时照走（旧版冻结在 remaining 不动、时间字也不刷新）
+    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+    document.dispatchEvent(new Event('visibilitychange'));
+    const before = el('pomodoro-time').textContent;
+    await vi.advanceTimersByTimeAsync(3000);
+    expect(el('pomodoro-time').textContent).not.toBe(before);
+    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
+    expect(raw.state.paused).toBe(false);
+    expect(raw.state.endTime).not.toBeNull();
   });
 });
 
@@ -293,18 +250,24 @@ describe('番茄钟弹窗', () => {
     const { app } = setup();
     const audio = makeAudioMock();
     await openPomodoro(app);
+    // 2026-09-23 特效批：阶段开始 = 过渡音（低频铺底）+ 落定音，枚数会随批次变化；
+    // 不变量是「落定音恒为本批最后创建的那一枚」，故断言取末枚而非硬编码下标
+    const lastFreq = () => {
+      const r = audio.createOscillator.mock.results;
+      return r[r.length - 1].value.frequency.value;
+    };
     el('pomodoro-btn-start').click(); // 开始
     expect(hasNotice('专注开始')).toBe(true);
-    expect(audio.createOscillator).toHaveBeenCalledTimes(1);
-    expect(audio.createOscillator.mock.results[0].value.frequency.value).toBe(880); // 专注开始
+    expect(audio.createOscillator).toHaveBeenCalledTimes(2);
+    expect(lastFreq()).toBe(880); // 专注开始（落定）
     await vi.advanceTimersByTimeAsync(2000);
     el('pomodoro-btn-start').click(); // 暂停
     expect(hasNotice('已暂停专注')).toBe(true);
-    expect(audio.createOscillator).toHaveBeenCalledTimes(2);
-    expect(audio.createOscillator.mock.results[1].value.frequency.value).toBe(440); // 暂停
+    expect(audio.createOscillator).toHaveBeenCalledTimes(3);
+    expect(lastFreq()).toBe(440); // 暂停
     el('pomodoro-btn-start').click(); // 继续
     expect(hasNotice('专注开始')).toBe(true); // 继续也算开始
-    expect(audio.createOscillator.mock.results[2].value.frequency.value).toBe(880);
+    expect(lastFreq()).toBe(880); // 继续＝过渡 + 落定
   });
 
   it('重置（专注中）→ 确认框（issues/144 拍板）确认后回满时长并停止，且落盘（F11 回归锁）', async () => {
@@ -445,7 +408,7 @@ describe('番茄钟弹窗', () => {
   });
 
   it('tick 完成专注 → 流转短休息 + 历史落盘 + toast + 短休开始声（523Hz）', async () => {
-    const { app, vault } = setup();
+    const { app, vault } = setup(new MockVault(), { pomodoroTickSound: false });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click(); // 手动开始：专注开始声（880Hz）
@@ -462,12 +425,15 @@ describe('番茄钟弹窗', () => {
     // 增强包：autoCycle 关 → toast 挂「开始休息」动作按钮（点击直达开始）
     const restBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '开始休息');
     expect(restBtn).toBeTruthy();
-    expect(audio.createOscillator.mock.calls.length - before).toBe(1);
-    expect(audio.createOscillator.mock.results[before].value.frequency.value).toBe(523); // 短休开始
+    // 2026-09-23 特效批：阶段开始 = 过渡音（低频铺底）+ 落定音；本次是「专注完成 → 短休」，
+    // 故另有收工钟 4 枚泛音（钟只在专注完成敲）——合计 6 枚，落定音恒为最后创建的那一枚
+    const after = audio.createOscillator.mock.calls.length;
+    expect(after - before).toBe(6);
+    expect(audio.createOscillator.mock.results[after - 1].value.frequency.value).toBe(523); // 短休开始（落定）
   });
 
   it('休息完成 → toast 挂「开始专注」动作（autoCycle 关不计时，文案不说「开始专注」）+ 完成提示声', async () => {
-    const { app } = setup();
+    const { app } = setup(new MockVault(), { pomodoroTickSound: false });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click();
@@ -478,8 +444,8 @@ describe('番茄钟弹窗', () => {
     // 文案按实况：手动流转（autoCycle 关）只报事实，「开始专注」由动作按钮承担
     expect(hasNotice('休息结束：开始专注')).toBe(false);
     expect(hasNotice('休息结束')).toBe(true);
-    expect(audio.createOscillator.mock.calls.length - before).toBe(1); // 完成提示声（新阶段预告）
-    expect(audio.createOscillator.mock.results[before].value.frequency.value).toBe(880); // 专注开始声
+    expect(audio.createOscillator.mock.calls.length - before).toBe(2); // 过渡音 + 完成提示声
+    expect(audio.createOscillator.mock.results[audio.createOscillator.mock.calls.length - 1].value.frequency.value).toBe(880); // 专注开始声（落定）
     expect(el('pomodoro-btn-start').textContent).toContain('开始'); // 休息结束未自动计时
     // 动作按钮直达开始专注
     const actionBtn = [...document.querySelectorAll('.bz-notice-action')].find((b) => b.textContent === '开始专注');
@@ -500,7 +466,7 @@ describe('番茄钟弹窗', () => {
   });
 
   it('第 4 个专注完成 → 长休开始声（392Hz）', async () => {
-    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true });
+    const { app } = setup(new MockVault(), { pomodoroAutoCycle: true, pomodoroTickSound: false });
     const audio = makeAudioMock();
     await openPomodoro(app);
     el('pomodoro-btn-start').click(); // 手动开始：专注开始声
@@ -508,8 +474,10 @@ describe('番茄钟弹窗', () => {
     await vi.advanceTimersByTimeAsync(4 * 25 * 60 * 1000 + 3 * 5 * 60 * 1000);
     expect(el('pomodoro-phase').textContent).toContain('长休息');
     const calls = audio.createOscillator.mock.calls.length;
-    expect(calls).toBe(8); // 手动专注开始 1 + 专注开始 3 次（休息完成）+ 短休开始 3 次 + 长休开始 1 次
-    expect(audio.createOscillator.mock.results[calls - 1].value.frequency.value).toBe(392); // 长休开始
+    // 2026-09-23 特效批后的构成（32 = 手动专注开始 2 + 3×(专注完成 6) + 3×(短休完成 2) + 第 4 次专注完成 6）：
+    //   专注完成 6 = 收工钟 4 泛音 + 过渡音 1 + 短休落定 1；其余每次阶段开始 2 = 过渡 + 落定
+    expect(calls).toBe(32);
+    expect(audio.createOscillator.mock.results[calls - 1].value.frequency.value).toBe(392); // 长休开始（落定）
   });
 
   it('声音开关关闭：完成时不响（toast 仍发）', async () => {
@@ -520,6 +488,29 @@ describe('番茄钟弹窗', () => {
     await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
     expect(hasNotice('专注完成：休息 5 分钟')).toBe(true);
     expect(audio.createOscillator).not.toHaveBeenCalled();
+  });
+
+  it('倒数滴答：最后十秒每秒一记（独立开关默认开）', async () => {
+    const { app } = setup();
+    const audio = makeAudioMock();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    const before = audio.createOscillator.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000); // 走完整个专注
+    const freqs = audio.createOscillator.mock.results.slice(before).map((r) => r.value.frequency.value);
+    expect(freqs.filter((f) => f === 1900)).toHaveLength(10); // 剩 10…1 秒各一记，同一秒不重播
+  });
+
+  it('倒数滴答开关关闭：最后十秒静默，提示音不受影响', async () => {
+    const { app } = setup(new MockVault(), { pomodoroTickSound: false });
+    const audio = makeAudioMock();
+    await openPomodoro(app);
+    el('pomodoro-btn-start').click();
+    const before = audio.createOscillator.mock.calls.length;
+    await vi.advanceTimersByTimeAsync(25 * 60 * 1000);
+    const freqs = audio.createOscillator.mock.results.slice(before).map((r) => r.value.frequency.value);
+    expect(freqs.filter((f) => f === 1900)).toHaveLength(0);
+    expect(freqs.length).toBeGreaterThan(0); // 收工钟/过渡音/落定音照响
   });
 
   it('unloadPomodoro：清理轮询无残留', async () => {
@@ -814,6 +805,16 @@ describe('增强包：循环圆点 / 时段分布 / 通知动作 / Space / 备�
     expect(/#pomodoro-mask[^{]*\{[^}]*background/.test(css)).toBe(false); // 域内不得回潮遮罩底
     expect(/#pomodoro-mask[^{]*\{[^}]*rgba\(0,0,0,\s*0\.45\)/.test(css)).toBe(false);
     expect(css).toContain('.pomodoro-statusbar:hover');
+  });
+
+  it('样式基线：环形 SVG 显式 overflow:visible——环光的 drop-shadow 绘到框外才不会被硬切（2026-09-23）', () => {
+    const css = readFileSync(resolve(process.cwd(), 'src/pomodoro/styles.css'), 'utf8');
+    // 环光 = 挂在 #pomodoro-ring-progress 上的 drop-shadow（motion.ts setGlow）。
+    // 环实绘外缘 r=56 用户单位、viewBox 半宽 60 → 余量 4 单位；辉光要 ~7 单位 →
+    // UA 默认 overflow:hidden 会在元素框上切出一条直边（用户报「光晕被裁切到一个方块中」）。
+    // 量化对照（CDP 探针读像素剖面，环心沿 +x）：置 visible 前在 +60.5 单位一步断到背景色，
+    // 置 visible 后同一段平滑衰减到 +74 单位。jsdom 无绘制 → 这条只能钉声明。
+    expect(/#pomodoro-ring-svg\s*\{[^}]*overflow:\s*visible/.test(css)).toBe(true);
   });
 });
 
@@ -1356,32 +1357,5 @@ describe('深审修复批回归（bz-fix-pomo-core）', () => {
     el('pomodoro-stat-tab-month').click();
     const days = [...el('pomodoro-months').querySelectorAll('.pomodoro-stat-day')] as HTMLElement[];
     expect(days[3].querySelector('.pomodoro-stat-num')?.textContent).toBe('100h'); // 2026-06（≥100h 取整）
-  });
-
-  it('F12 回归锁：冻结标记随解冻清除——手动暂停后 hidden→visible 不被静默续跑', async () => {
-    const vault = new MockVault();
-    vault.files.set(getPomodoroFilePath(), runningData());
-    const app = makeApp(vault);
-    setApp(app);
-    await ensurePomodoro(app);
-    // hidden 冻结（autoPauseMain 置位 + pausedBy:'autopause' 落盘）
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    // visible 自动解冻（autoPauseMain 清除）→ 立即手动暂停
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    await togglePause(app);
-    expect(JSON.parse(vault.files.get(getPomodoroFilePath())!).state.paused).toBe(true);
-    // 再 hidden → visible：不得把手动暂停静默续跑（F12：applyAction 统一清冻结标记）
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
-    document.dispatchEvent(new Event('visibilitychange'));
-    Object.defineProperty(document, 'hidden', { configurable: true, get: () => false });
-    document.dispatchEvent(new Event('visibilitychange'));
-    await vi.advanceTimersByTimeAsync(0);
-    const raw = JSON.parse(vault.files.get(getPomodoroFilePath())!);
-    expect(raw.state.paused).toBe(true);
-    expect(raw.state.endTime).toBeNull();
   });
 });

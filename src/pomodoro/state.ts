@@ -19,8 +19,9 @@ export interface PomodoroState {
   remaining: number;
   paused: boolean;
   /**
-   * 暂停来源标记（仅冻结暂停写入）：'autopause' = 后台自动暂停产生的冻结；
-   * 缺省/undefined = 手动暂停或旧数据（兼容读取）。恢复/重置/跳过/手动暂停时清除。
+   * 暂停来源标记——**遗留兼容字段**：旧版「后台自动暂停」（2026-09-23 退役）写入的冻结标记。
+   * 本版不再写入；读取方仅剩 forceFocus 的放行判据（ui.ts updateButtons 与 setTask 拦截文案），
+   * 让升级时正好停在旧冻结态的 vault 不至于三键全禁用。恢复/重置/跳过/手动暂停时清除。
    */
   pausedBy?: 'autopause';
   /** 当前循环内已完成专注数（进长休后清零） */

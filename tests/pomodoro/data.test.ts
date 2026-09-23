@@ -266,7 +266,7 @@ describe('PomodoroDataManager', () => {
     expect((data as any).reading).toBeUndefined(); // reading 字段不再进入新数据
   });
 
-  it('pausedBy 冻结来源标记：合法值保留 / 非法值与旧数据回退 undefined（P1-4）', async () => {
+  it('pausedBy 冻结来源标记（遗留兼容）：合法值保留 / 非法值与旧数据回退 undefined', async () => {
     const vault = new MockVault();
     vault.files.set(
       POMODORO_FILE_PATH,
@@ -306,12 +306,12 @@ describe('PomodoroDataManager', () => {
     expect((await dm.load()).state.pausedBy).toBeUndefined();
   });
 
-  it('pausedBy 往返：冻结落盘写入标记；手动暂停保存后文件不含该键（P1-4）', async () => {
+  it('pausedBy 往返（遗留兼容）：带标记落盘保留；手动暂停保存后文件不含该键', async () => {
     const vault = new MockVault();
     const app = makeApp(vault);
     setApp(app);
     const dm = new PomodoroDataManager(app);
-    // 冻结态保存 → 文件带 pausedBy:'autopause'
+    // 遗留冻结态保存 → 文件原样带 pausedBy:'autopause'
     await dm.save({
       version: 1,
       state: { phase: 'focus', endTime: null, remaining: 600, paused: true, pausedBy: 'autopause', cycleFocusCount: 1 },

@@ -361,12 +361,12 @@ export default interface BzSettings {
   pomodoroAutoSkipBreak: boolean;
   /** 声音提醒（默认开） */
   pomodoroSound: boolean;
+  /** 倒数滴答：最后十秒每秒一记轻响（默认开，2026-09-23 特效批） */
+  pomodoroTickSound: boolean;
   /** 提示音音量 0-100（默认 100 最大） */
   pomodoroVolume: number;
   /** 打开时恢复方式：background（后台继续倒计时）/ popup（正在倒计时则自动弹窗） */
   pomodoroRestoreMode: string;
-  /** 后台自动暂停：窗口 hidden（最小化/遮挡/休眠）时主番茄钟暂停，恢复可见自动继续（默认开，ticket 62；blur 不触发） */
-  pomodoroAutoPauseOnHide: boolean;
   /** 统计档位记忆（呈报#49-PM3）：弹窗统计区上次所选档（'week' 近 7 天 / 'month' 近 6 月，默认 week）——面板 UI 偏好，不进设置面板行 */
   pomodoroStatMode: string;
 
@@ -832,9 +832,9 @@ export const DEFAULT_SETTINGS: BzSettings = {
   pomodoroAutoCycle: false,
   pomodoroAutoSkipBreak: false,
   pomodoroSound: true,
+  pomodoroTickSound: true,
   pomodoroVolume: 100,
   pomodoroRestoreMode: 'background',
-  pomodoroAutoPauseOnHide: true,
   pomodoroStatMode: 'week',
 
   // 加密保险箱（encrypt 域）

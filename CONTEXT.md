@@ -247,7 +247,7 @@ _Avoid_: 方案、模式（指预设时）
 
 **强制专注模式 (Force Focus Mode)**: 番茄钟设置开关——开启后专注阶段内暂停/跳过/重置均禁用。注意与「专注阶段」区分。
 
-**后台自动暂停 (Auto-pause on Hide)**: 番茄钟设置开关（默认开，ticket 62）——Obsidian 窗口因 `visibilitychange` 进入 hidden（最小化/遮挡/系统休眠）时，主番茄钟暂停冻结；恢复 visible 且原本运行中 → 自动继续。仅认 hidden，blur 失焦不触发（锁屏/全屏切走等 hidden 抓不到的缝隙接受，记已知限制）。手动暂停永不被自动覆盖。
+**后台自动暂停 (Auto-pause on Hide)**: ~~番茄钟设置开关（默认开，ticket 62）——Obsidian 窗口因 `visibilitychange` 进入 hidden（最小化/遮挡/系统休眠）时，主番茄钟暂停冻结；恢复 visible 且原本运行中 → 自动继续。~~ **2026-09-23 用户拍板退役（ADR-0179）**：窗口 hidden 不再影响计时（后台照走），`visibilitychange` 监听、`autoPauseMain` 冻结标记与该设置行（`pomodoroAutoPauseOnHide`）一并删除。旧数据里的 `pausedBy: 'autopause'` 标记仍读——只用于放行 forceFocus 下的「继续」，防升级时停在旧冻结态的 vault 三键全禁用。_Avoid_: 用「自动暂停」指代任何现存行为（本版无此行为）。
 
 **不补算 (No Backfill)**: 番茄钟恢复规则（ticket 62）——Obsidian 关闭/重启期间的时间一律不折算成历史：运行中状态重开时 endTime 已超时 → 主番茄钟回空闲（剩余作废、不记历史）。暂停态不超时 → 保持暂停不受影响。取代旧「逐段补算」语义（recover 不再编造历史）。
 

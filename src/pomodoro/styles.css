@@ -16,7 +16,14 @@
     #pomodoro-mask.bz-overlay-mask { padding: 0; } /* 三件套（fixed/inset/--bz-overlay 底/token blur/居中）已收编 .bz-overlay-mask 单源（issue 365）；padding 归零对齐原可用区，320px 弹窗窄屏不被裁 */
     #pomodoro-popup { width: 320px; padding: var(--bz-space-xl); border-radius: var(--bz-radius-lg); background: var(--pz-bg, var(--background-primary)); box-shadow: 0 8px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
     #pomodoro-popup:focus { outline: none; } /* Space 快捷键承载焦点，不画焦点环 */
-    #pomodoro-ring-svg { width: 160px; height: 160px; margin: var(--bz-space-sm) auto; display: block; }
+    /* overflow: visible 是环光的必要项，不是装饰：进行中的辉光是挂在 #pomodoro-ring-progress 上的
+       drop-shadow（motion.ts setGlow，半径 7 = 专注 / 4 = 休息），它的绘制范围会溢出 circle 本体。
+       viewBox 0 0 120 120 的半宽只有 60，而环的实绘外缘已在 56（r 52 + 描边 8/2），
+       余量仅 4 单位 ≈ 8px；7 单位半径的辉光需要 ~2σ≈7 单位 → 缺这口余量就在 SVG 元素框上被硬切一刀。
+       （2026-09-23 用户报「番茄钟的光晕被裁切到一个方块中」：反解截图，切边距环心 60.08 用户单位、
+       与元素右边缘 368px 重合 = 视口裁切，非滤镜区域。）SVG 根的 UA 默认 overflow 是 hidden，
+       显式置 visible 后滤镜输出可绘到框外；面板 padding 24px，够它落。 */
+    #pomodoro-ring-svg { width: 160px; height: 160px; margin: var(--bz-space-sm) auto; display: block; overflow: visible; }
     .pomodoro-ring-track { fill: none; stroke: var(--pz-line, var(--background-modifier-border)); stroke-width: 8; }
     .pomodoro-ring-progress { fill: none; stroke: var(--pz-accent, var(--interactive-accent)); stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
     /* 本轮循环位置：N 个 6px 方点，已完成填 accent（增强包，替代「专注 2/4」文字小字） */
@@ -29,6 +36,17 @@
     /* 当前专注任务名（待办「专注这个」联动）：弱化小字，超长省略，悬停 title 见全文 */
     .pomodoro-task { font-size: var(--bz-font-meta); color: var(--pz-faint, var(--text-faint)); margin-top: var(--bz-space-xs); max-width: 240px; margin-left: auto; margin-right: auto; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #pomodoro-time { font-size: 42px; font-weight: 600; color: var(--pz-fg, var(--text-normal)); font-variant-numeric: tabular-nums; }
+    /* 时间字双层（2026-09-23 翻牌机）：可见文本层承载读屏与语义，滚动层绝对定位叠在上面。
+       文本层用 opacity:0 让位而非 visibility/display——后两者会把时间对辅助技术一并藏掉。
+       --pomodoro-reel-cell 是滚动行高单源：ui.ts 的位移算式直接引用它，不写死像素。 */
+    .pomodoro-time-box { position: relative; --pomodoro-reel-cell: 46px; transition: transform .3s ease; }
+    .pomodoro-time-box.reel-on #pomodoro-time { opacity: 0; }
+    .pomodoro-time-reel { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; }
+    .pomodoro-time-box.reel-on .pomodoro-time-reel { display: flex; }
+    .pomodoro-rcol { display: inline-block; width: 25px; height: var(--pomodoro-reel-cell); overflow: hidden; vertical-align: top; }
+    .pomodoro-rinn { display: block; transition: transform .38s cubic-bezier(.34,.06,.16,1); }
+    .pomodoro-rinn > span { display: block; height: var(--pomodoro-reel-cell); line-height: var(--pomodoro-reel-cell); text-align: center; }
+    .pomodoro-rdot { display: inline-block; width: 14px; height: var(--pomodoro-reel-cell); line-height: var(--pomodoro-reel-cell); vertical-align: top; }
     .pomodoro-controls { display: flex; gap: var(--bz-space-sm); justify-content: center; margin-top: var(--bz-space-lg); }
     .pomodoro-btn { padding: 6px 14px; border-radius: var(--bz-radius-sm); background: var(--pz-btn, var(--background-secondary)); color: var(--pz-btn-fg, var(--text-normal)); cursor: pointer; font-size: var(--bz-font-body); }@media (hover: hover) {
 
@@ -150,6 +168,15 @@
 /* 10 夜航 · night（亮面压深保证浅底可读） */
     #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-l); --pz-accent:var(--pz-night-a); --pz-muted:var(--pz-night-m); --pz-faint:var(--pz-night-f); --pz-btn:var(--pz-night-b); --pz-btn-fg:var(--pz-night-bf); --pz-on-accent:#fff; }
     .theme-dark #pomodoro-popup.pomodoro-skin-night { --pz-bg:var(--pz-night-d); --pz-accent:var(--pz-night-ad); --pz-fg:var(--pz-night-fgd); --pz-muted:var(--pz-night-md); --pz-faint:var(--pz-night-fd); --pz-btn:var(--pz-night-bd); --pz-btn-fg:var(--pz-night-bfd); --pz-on-accent:var(--pz-night-d); --pz-line:rgba(255,255,255,.14); }
+
+/* ==================== 世界退后（2026-09-23 特效批采纳 9）· 休息相位专用 ====================
+   休息不再只是「弹窗里变暗」：整个外部世界也后退一档，弹窗自己极缓地呼吸一下。
+   - 遮罩 backdrop-blur 加深（--bz-overlay-blur 单源 × 1.9 ≈ 15px，与 .bz-overlay-mask 同源变量）；
+   - 弹窗 6.4s 一息、幅度 8‰（与休息的呼吸周期同拍，见 motion.ts 的 BREATH_BREAK）。
+   类由 motion.ts::setRestDepth 挂/摘，只活在 break-* 相位；RM 口径与域内一致（不在此处单独降级）。 */
+#pomodoro-mask.bz-pm-rest { backdrop-filter: blur(calc(var(--bz-overlay-blur, 8px) * 1.9)); }
+#pomodoro-popup.bz-pm-rest { animation: bz-pm-rest-breath 6.4s ease-in-out infinite; }
+@keyframes bz-pm-rest-breath { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.008); } }
 
 /* ==================== 触控热区（设计手册 §8.2，触屏 pointer:coarse） ====================
    ::after 外扩已收编 core .bz-touch-target（components.css，模板挂类）：

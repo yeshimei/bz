@@ -9,7 +9,7 @@ import { playSound } from '../../src/pomodoro/sound';
 
 class FakeOscillator {
   type = '';
-  frequency = { value: 0 };
+  frequency = { value: 0, exponentialRampToValueAtTime: vi.fn() };
   connect = vi.fn();
   start = vi.fn();
   stop = vi.fn();
@@ -94,6 +94,37 @@ describe('playSound（阶段开始提示声，各一声）', () => {
     expect(() => playSound('short-break-start')).not.toThrow();
     expect(() => playSound('long-break-start')).not.toThrow();
     expect(() => playSound('pause')).not.toThrow();
+    expect(() => playSound('ceremony')).not.toThrow();
+    expect(() => playSound('tick')).not.toThrow();
+    expect(() => playSound('transition')).not.toThrow();
+  });
+
+  it('收工钟声：基频 + 三泛音各一枚振荡器，泛音逐层变轻', () => {
+    const ctx = mockAudio();
+    playSound('ceremony');
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(4);
+    const freqs = ctx.createOscillator.mock.results.map((r) => r.value.frequency.value);
+    expect(freqs[0]).toBeCloseTo(587.33, 2); // D5 基频
+    expect(freqs[1]).toBeCloseTo(587.33 * 1.5, 2); // 五度
+    const peakOf = (i: number) => (ctx.createGain.mock.results[i].value as FakeGain).gain.exponentialRampToValueAtTime.mock.calls[0][0];
+    expect(peakOf(0)).toBeGreaterThan(peakOf(1));
+    expect(peakOf(1)).toBeGreaterThan(peakOf(3));
+  });
+
+  it('倒数滴答：1900Hz 三角波一声（短促不抢戏）', () => {
+    const ctx = mockAudio();
+    playSound('tick');
+    expect(ctx.createOscillator).toHaveBeenCalledTimes(1);
+    expect(ctx.createOscillator.mock.results[0].value.frequency.value).toBe(1900);
+    expect(ctx.createOscillator.mock.results[0].value.type).toBe('triangle');
+  });
+
+  it('阶段过渡：低频下扫 210 → 120Hz', () => {
+    const ctx = mockAudio();
+    playSound('transition');
+    const freq = (ctx.createOscillator.mock.results[0].value as any).frequency;
+    expect(freq.value).toBe(210);
+    expect(freq.exponentialRampToValueAtTime).toHaveBeenCalledWith(120, expect.any(Number));
   });
 
   it('音量参数：50 → 峰值 0.4（0.8×50%，翻倍后）', () => {

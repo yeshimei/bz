@@ -44,8 +44,8 @@ export function unmountPomodoroStatusBar(): void {
 
 /**
  * ui.ts render 每 1s 调用：
- * 主番茄钟运行中：mm:ss；暂停（含后台自动暂停）：显示「已暂停」标签（.pomodoro-statusbar-paused 醒目标识）；
- * 空闲：空文本灰态（.pomodoro-statusbar-idle）。自动暂停/恢复只在此处体现，不加 toast（x6）。
+ * 主番茄钟运行中：mm:ss；暂停：显示「已暂停」标签（.pomodoro-statusbar-paused 醒目标识）；
+ * 空闲：空文本灰态（.pomodoro-statusbar-idle）。
  * 增强包：hover 反馈走 styles.css（对齐组件库交互基线）；专注归属任务名挂 title 悬停展示（状态栏空间宝贵，文本位留给倒计时）。
  */
 export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): void {
@@ -71,7 +71,7 @@ export function syncPomodoroStatusBar(state: PomodoroState, remainSec: number): 
       const want = `${pad2(m)}:${pad2(s)}`;
       if (textSpan.textContent !== want) textSpan.textContent = want;
     } else {
-      // 暂停（含后台自动暂停）恒「已暂停」通用标签（PF3 口径：toast 按阶段取文案，状态栏保持通用）
+      // 暂停恒「已暂停」通用标签（PF3 口径：toast 按阶段取文案，状态栏保持通用）
       const want = paused ? '已暂停' : '';
       if (textSpan.textContent !== want) textSpan.textContent = want;
     }
