@@ -32,6 +32,7 @@ import {
   weeklyLoadingHtml,
 } from './render';
 import { AI } from './ai';
+import { motionWeeklyShellIn, motionWeeklyContent, motionWeeklyOut, motionSummaryIn, motionTeardown } from './motion';
 
 /** 启动后延迟调度（ms）：错开启动队列消费与存量补链；测试可收紧 */
 export let WEEKLY_SCHEDULE_DELAY_MS = 90_000;
@@ -135,6 +136,8 @@ let escHandle: { unregister(): void } | null = null;
 let appRef: App | null = null;
 /** 打开时的 lastRunAt 快照：聚合期间防旧渲染覆盖新结果（seq 同法 clipbook 报告页） */
 let renderSeq = 0;
+/** 动效层：开/关代次——退场期间被重开时，迟到的退场收口不得收回新显示位 */
+let motionSeq = 0;
 
 function ensureModal(app: App): void {
   appRef = app;
@@ -188,6 +191,8 @@ function ensureModal(app: App): void {
   topifyZ(maskEl, overlayEl);
   if (maskEl) maskEl.style.display = 'block';
   overlayEl!.style.display = 'flex';
+  motionSeq++; // 新代次：在途退场收口作废
+  motionWeeklyShellIn(overlayEl); // 动效层：弹层壳唤醒（撤退场残留，重开快档由内容编排接力）
 }
 
 /**
@@ -216,14 +221,21 @@ function openWeeklyDigestFromApp(): void {
 
 function closeWeeklyDigest(): void {
   renderSeq++;
-  if (overlayEl) overlayEl.style.display = 'none';
-  if (maskEl) maskEl.style.display = 'none';
+  // 动效层：先演退场再收 display（常驻单例，收口 cancel 钉帧；无 WAAPI 宿主同步收口）；
+  // 退场期间被重开由 motionSeq 守卫（ensureModal 已自增代次，迟到收口不抢显示位）
+  const seq = motionSeq;
+  motionWeeklyOut(overlayEl, () => {
+    if (seq !== motionSeq) return;
+    if (overlayEl) overlayEl.style.display = 'none';
+    if (maskEl) maskEl.style.display = 'none';
+  });
 }
 
 /** 卸载清理（index.unloadSecondBrain 经 cancelWeeklySchedule 间接调用亦可；此处供显式摘除 DOM） */
 export function unloadWeeklyDigest(): void {
   weeklyRunGeneration++; // 在途 runWeeklyIfDue 完成回调比对代际后静默丢弃（卸载后不再弹通知）
   cancelWeeklySchedule();
+  motionTeardown(); // 动效层：循环/延时总清场
   if (escHandle) {
     try {
       escHandle.unregister();
@@ -261,6 +273,7 @@ function showWeeklyModal(digest: WeeklyDigest | null, opts?: { loading?: boolean
         ? '<div class="bz-sb-weekly-empty bz-sb-weekly-empty--page">读取动态数据失败，请稍后重开。</div>'
         : weeklyEmptyHtml();
     mountIcons(body);
+    motionWeeklyContent(body); // 动效层：空态/聚合中轻浮现
     return;
   }
   if (seq !== renderSeq) return; // 聚合已完成而本次是旧渲染：弃写
@@ -326,6 +339,7 @@ function showWeeklyModal(digest: WeeklyDigest | null, opts?: { loading?: boolean
     );
   }
   mountIcons(body);
+  motionWeeklyContent(body); // 动效层：分节星图接力 + 行涟漪 + 撞车联想连线
 }
 
 // ---------------- 主面板入口卡 ----------------
@@ -351,6 +365,7 @@ export function renderPanelWeeklyCard(popup: HTMLElement, app: App, digest: Week
     txt.textContent = parts.join(' · ');
   }
   card.style.display = '';
+  motionSummaryIn(card); // 动效层：入口卡异步回填浮现
   if (!card.dataset.bound) {
     card.dataset.bound = '1';
     const open = () => openWeeklyDigest(app);

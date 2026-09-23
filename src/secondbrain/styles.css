@@ -1982,3 +1982,68 @@
   text-align: center;
   font-size: 13px;
 }
+
+/* ==================== 动效层注入件基座（src/secondbrain/motion.ts 配套） ====================
+   全部 position:absolute + pointer-events:none（aria-hidden 由 TS 设），只动
+   transform/opacity/filter，演出完自动移除——终态 UI 与无动效时逐像素一致。
+   色彩一律 var(--sb-acc)（跟随明暗主题），不硬编码色值。 */
+/* 检索涟漪环：从命中点/星点向外扩散的一圈 */
+.bz-sb-mo-ring {
+  position: absolute;
+  border-radius: 50%;
+  border: 1.5px solid var(--sb-acc);
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 0 10px color-mix(in srgb, var(--sb-acc) 22%, transparent);
+}
+/* 检索扫描微光带：检索发起时掠过列表/消息区的一道竖向光带 */
+.bz-sb-mo-sweep {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.bz-sb-mo-sweep i {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 36%;
+  background: linear-gradient(
+    180deg,
+    transparent,
+    color-mix(in srgb, var(--sb-acc) 6%, transparent) 42%,
+    color-mix(in srgb, var(--sb-acc) 13%, transparent) 50%,
+    color-mix(in srgb, var(--sb-acc) 6%, transparent) 58%,
+    transparent
+  );
+}
+/* 神经元点亮光晕：内容卡入列一瞬的一次性辉光 */
+.bz-sb-mo-flash {
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(130% 130% at 28% 18%, color-mix(in srgb, var(--sb-acc) 15%, transparent), transparent 62%);
+}
+/* 联想连线：命中/撞车两端的发光细线（描线生长） */
+.bz-sb-mo-thread {
+  position: absolute;
+  height: 1.5px;
+  border-radius: 99px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--sb-acc), transparent);
+  opacity: 0.75;
+  transform-origin: left center;
+  box-shadow: 0 0 6px color-mix(in srgb, var(--sb-acc) 30%, transparent);
+}
+/* 边条唤起微光：窄窗从边条展开时右缘的一道退散光 */
+.bz-sb-mo-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+  width: 52px;
+  pointer-events: none;
+  background: linear-gradient(270deg, color-mix(in srgb, var(--sb-acc) 14%, transparent), transparent);
+}
