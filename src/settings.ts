@@ -36,7 +36,7 @@ export default interface BzSettings {
   aiThinkingOverrides: Record<string, string>;
 
   // ===== 🧭 Jev 决策通道（ADR-0173 / issue 389）=====
-  /** Jev 决策模型总开关（全局唯一一个）：关则自动关联裁判与影院类型判定全部回落 LLM / 不判定 */
+  /** Jev 决策模型总开关（全局唯一一个）：关则自动关联裁判与影院类型判定全部回落 LLM */
   jevEnabled: boolean;
   /** Jev 端点（默认 https://api.typesafe.ai/v1/systemone） */
   jevEndpoint: string;

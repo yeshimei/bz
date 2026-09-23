@@ -5,12 +5,14 @@
  * - Jev 成功 → 以 parse 结果为准（含域内弃权值），回落零调用；
  * - 请求失败（HTTP 非 2xx）→ 回落；
  * - 答案畸形（parse 抛错）→ 回落；
- * - 取消（前置 / 在途）→ 抛 AbortError 且**不回落**；
+ * - 取消（前置 / 在途）→ 抛 AbortError 且**不回落**；取消与超时同时发生时出口仍是 AbortError；
+ * - 材料构造抛错 → 与请求失败同档，回落；
  * - 回落自身失败 → 原样上抛（调用方决定入队 / 留空）；
  * - config 覆盖透传 askJev。
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { judgeOrFallback, type JudgePlan } from '../../src/core/jev-fallback';
+import * as jev from '../../src/core/jev';
 import type { JevConfig, JevQuestion } from '../../src/core/jev';
 import { setSettingsProvider } from '../../src/core/settings-provider';
 import { requestUrl } from '../mock-obsidian-entry';
@@ -38,6 +40,7 @@ function okResponse(body: unknown) {
 const JEV_OK = { model: 'jev-1.13.0', answers: { q: { type: 'noul', noul: 1 } } };
 
 interface PlanOver {
+  request?: () => { state: string; questions: Record<string, JevQuestion> };
   parse?: (answers: Record<string, any>) => string;
   fallback?: () => Promise<string>;
   signal?: AbortSignal;
@@ -46,10 +49,13 @@ interface PlanOver {
 
 /** 计划工厂：默认 request / fallback 都是 spy，便于断言「材料是否白造」「回落是否发生」 */
 function makePlan(over: PlanOver = {}) {
-  const request = vi.fn(() => ({
-    state: '材料',
-    questions: { q: { type: 'noul', instructions: '是？' } as JevQuestion },
-  }));
+  const request = vi.fn(
+    over.request ??
+      (() => ({
+        state: '材料',
+        questions: { q: { type: 'noul', instructions: '是？' } as JevQuestion },
+      }))
+  );
   const fallback = vi.fn(async () => 'LLM 结果');
   const plan: JudgePlan<string> = {
     request,
@@ -62,6 +68,8 @@ function makePlan(over: PlanOver = {}) {
 }
 
 beforeEach(() => {
+  // askJev 的 spy 跨用例复用同一 mock，不还原会带着上一用例的记录（顺序：先还原再装桩）
+  vi.restoreAllMocks();
   requestUrlMock.mockReset();
   requestUrlMock.mockResolvedValue(okResponse(JEV_OK));
 });
@@ -111,6 +119,17 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
     expect(fallback).toHaveBeenCalledTimes(1);
   });
 
+  it('材料构造抛错（request 抛）→ 与请求失败同档：回落而非上抛', async () => {
+    ready();
+    const { plan, fallback } = makePlan({
+      request: () => {
+        throw new Error('读 vault 失败');
+      },
+    });
+    await expect(judgeOrFallback(plan)).resolves.toBe('LLM 结果');
+    expect(fallback).toHaveBeenCalledTimes(1);
+  });
+
   it('调用前已取消 → 抛 AbortError：零材料、零请求、零回落', async () => {
     ready();
     const ctrl = new AbortController();
@@ -119,6 +138,30 @@ describe('judgeOrFallback：Jev 优先 / 不可用回落', () => {
     await expect(judgeOrFallback(plan)).rejects.toMatchObject({ name: 'AbortError' });
     expect(request).not.toHaveBeenCalled();
     expect(requestUrlMock).not.toHaveBeenCalled();
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  it('取消优先于就绪门：未配置 + 已取消 → 仍抛 AbortError、零回落', async () => {
+    setSettingsProvider(() => ({ jevEnabled: false }) as any);
+    const ctrl = new AbortController();
+    ctrl.abort();
+    const { plan, fallback } = makePlan({ signal: ctrl.signal });
+    await expect(judgeOrFallback(plan)).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fallback).not.toHaveBeenCalled();
+  });
+
+  it('取消与超时同时发生 → 出口仍是 AbortError（原始 TimeoutError 归一化）', async () => {
+    ready();
+    const ctrl = new AbortController();
+    const { plan, fallback } = makePlan({ signal: ctrl.signal });
+    // 错误先造、取消紧随：catch 时 signal.aborted 已为真，但抛出的其实是 TimeoutError
+    vi.spyOn(jev, 'askJev').mockImplementation(async () => {
+      ctrl.abort();
+      const e = new Error('判定通道超时');
+      e.name = 'TimeoutError';
+      throw e;
+    });
+    await expect(judgeOrFallback(plan)).rejects.toMatchObject({ name: 'AbortError' });
     expect(fallback).not.toHaveBeenCalled();
   });
 

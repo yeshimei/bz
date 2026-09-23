@@ -325,7 +325,7 @@ function jevGroupRows(): SettingsRow[] {
     {
       type: 'toggle',
       name: '启用 Jev 判定',
-      desc: '开启后关联判定改走 Jev 决策通道',
+      desc: '开启后关联判定与影院类型归类改走 Jev 决策通道',
       binding: { key: 'jevEnabled' },
     },
     {

@@ -11,8 +11,8 @@
  * 末尾追加显式哨兵「以上都不是」——Choice 语义下模型必选其一，这个出口必须显式给出。
  * 不允许逃逸：哨兵命中 / Jev 置信度不足 / LLM 回执不在清单，一律不写值，留给用户手点。
  *
- * 回落口径（2026-09-23 用户拍板，ADR-0181）：未配置 / 请求失败 / 答案畸形都回落 LLM；
- * 取消（`signal.aborted`）不回落。**弃权不是失败**——Jev 选哨兵或置信度不足是有效判定，
+ * 回落口径（2026-09-23 用户拍板，ADR-0181）：未配置 / 请求失败 / **答案畸形（题型不符、取值越界）**
+ * 都回落 LLM；取消（`signal.aborted`）不回落。**弃权不是失败**——Jev 选哨兵或置信度不足是有效判定，
  * 不回落（回落等于绕过 Jev 的校准概率）；两道都不可用才抛错，由调用方留空。
  */
 import { createAI } from '../core/ai';
@@ -77,10 +77,15 @@ export function buildTypeState(info: TypeDecideInfo): string {
 /** 判定（纯函数）：哨兵 → null；置信度不足 → null；不在候选清单（接口异常）→ null */
 export function judgeTypeChoice(answer: JevChoiceAnswer, criteria: Record<string, string>): string | null {
   const choice = answer.choice;
-  if (!(choice in criteria)) return null;
+  if (!hasOwn(criteria, choice)) return null;
   if (choice === TYPE_SENTINEL) return null;
   if (answer.confidence < CONFIDENCE_FLOOR) return null;
   return choice;
+}
+
+/** 候选清单是字面量对象，`in` 会连 `toString` / `constructor` 这些原型链键一起认（LLM 回执可能真吐这两个词） */
+function hasOwn(criteria: Record<string, string>, key: string): boolean {
+  return Object.prototype.hasOwnProperty.call(criteria, key);
 }
 
 // ---------------- LLM 回落（Jev 不可用时的后补通道，ADR-0181） ----------------
@@ -113,13 +118,17 @@ export function parseTypeLlmOutput(raw: string, criteria: Record<string, string>
     return null;
   }
   const tag = String(obj?.type ?? '').trim();
-  if (!tag || tag === TYPE_SENTINEL || !(tag in criteria)) return null;
+  if (!tag || tag === TYPE_SENTINEL || !hasOwn(criteria, tag)) return null;
   return tag;
 }
 
-/** LLM 回落入口：请求失败（未配置 / 网络）抛错，由调用方留空；输出不合规则弃权（null） */
-async function decideTypeByLlm(info: TypeDecideInfo, criteria: Record<string, string>): Promise<string | null> {
-  const raw = await createAI().json(buildTypeLlmPrompt(info, criteria));
+/** LLM 回落入口：请求失败（未配置 / 网络 / 取消）抛错，由调用方留空；输出不合规则弃权（null） */
+async function decideTypeByLlm(
+  info: TypeDecideInfo,
+  criteria: Record<string, string>,
+  signal?: AbortSignal
+): Promise<string | null> {
+  const raw = await createAI().json(buildTypeLlmPrompt(info, criteria), { signal });
   return parseTypeLlmOutput(raw, criteria);
 }
 
@@ -139,8 +148,10 @@ export async function decideCinemaType(info: TypeDecideInfo, opts?: JevAskOption
     parse: (answers) => {
       const answer = answers[Q_KEY];
       if (!answer || answer.type !== 'choice') throw new Error('Jev 未返回有效的 choice 答案');
+      // 越界 = 答案畸形（接口异常 / 模型吐出清单外的词）→ 抛错走回落；哨兵与低置信是有效弃权，不在此列
+      if (!hasOwn(criteria, answer.choice)) throw new Error(`Jev 返回的选择不在候选清单内：${answer.choice}`);
       return judgeTypeChoice(answer, criteria);
     },
-    fallback: () => decideTypeByLlm(info, criteria),
+    fallback: () => decideTypeByLlm(info, criteria, opts?.signal),
   });
 }
