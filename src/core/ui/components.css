@@ -2737,3 +2737,11 @@ a.bz-crumb:hover, button.bz-crumb:hover { color: var(--bz-text-1); }
   font-size: var(--bz-font-caption);
   color: var(--ls-faint);
 }
+
+/* ═══ 多行掩码（2026-09-23）：Cookie 类长串凭据的 textarea 打点 ═══
+   textarea 没有 type=password，故用 -webkit-text-security 把字符打成圆点（Chromium / WKWebView /
+   Android WebView 均支持；不支持的引擎退化为明文显示，不比改装前更差，值本身照常落盘）。
+   两个渲染器共用这一对类：设置面板走 R.maskedAreaHtml（外壳 .bz-sp-secret--area + 眼睛），
+   core 设置弹窗走 Setting.addTextArea + inputEl.classList + ExtraButtonComponent 眼睛。 */
+.bz-maskarea { -webkit-text-security: disc; }
+.bz-maskarea--revealed { -webkit-text-security: none; }

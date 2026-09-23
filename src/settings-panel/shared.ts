@@ -40,28 +40,29 @@ export function selectItemHtml(label: string, on: boolean): string {
     `<span class="bz-ic bz-select-item-ck">${iconSpan('check')}</span></button>`;
 }
 
-/** 文本/数字输入（mono/num/secret 修饰；契约类 bz-input）——原型 text/textarea/number 分支 */
+/** 文本/数字输入（mono/num 修饰；契约类 bz-input）——原型 text/number 分支。
+ *  inputmode = 软键盘语义提示（仅提示不校验）；掩码档位不走这里（见 secretInputHtml）。 */
 export function textInputHtml(opts: {
   value: string;
   type?: 'text' | 'number';
   mono?: boolean;
   num?: boolean;
-  secret?: boolean;
   placeholder?: string;
   min?: number;
   max?: number;
   step?: number;
+  inputMode?: string;
 }): string {
   const cls = ['bz-input'];
   if (opts.mono) cls.push('mono');
   if (opts.num) cls.push('num');
-  if (opts.secret) cls.push('secret');
   const attrs: string[] = [`class="${cls.join(' ')}"`, `value="${esc(opts.value)}"`];
   attrs.push(opts.type === 'number' ? 'type="number"' : 'type="text"');
   if (opts.placeholder) attrs.push(`placeholder="${esc(opts.placeholder)}"`);
   if (opts.min !== undefined) attrs.push(`min="${opts.min}"`);
   if (opts.max !== undefined) attrs.push(`max="${opts.max}"`);
   if (opts.step !== undefined) attrs.push(`step="${opts.step}"`);
+  if (opts.inputMode && opts.inputMode !== 'text') attrs.push(`inputmode="${esc(opts.inputMode)}"`);
   return `<input ${attrs.join(' ')} autocomplete="off">`;
 }
 
@@ -70,12 +71,22 @@ export function textareaHtml(value: string, placeholder?: string): string {
   return `<textarea class="bz-input bz-sp-textarea" autocomplete="off"${placeholder ? ` placeholder="${esc(placeholder)}"` : ''}>${esc(value)}</textarea>`;
 }
 
-/** 密钥型输入（GS3 档位，呈报#48）：input type=password 掩码显示 + 眼睛按钮切换明文。
- *  行为（切换 / 防抖落盘）留 renderer.ts 行为层（makeSecretInput）；眼睛钮挂
+/** 密钥型输入（GS3 档位，呈报#48；2026-09-23 行类型收编进 core）：input type=password 掩码显示 +
+ *  眼睛按钮切换明文。行为（切换 / 防抖落盘）留 renderer.ts 行为层（makeSecretInput）；眼睛钮挂
  *  bz-touch-target--lg 热区抬档（UI-4 口径同 rowBtnHtml）。 */
 export function secretInputHtml(opts: { value: string; placeholder?: string }): string {
   return `<div class="bz-sp-secret">` +
     `<input class="bz-input bz-sp-secret-input" type="password" value="${esc(opts.value)}" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ''}>` +
+    `<button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan('eye')}</button>` +
+    `</div>`;
+}
+
+/** 多行掩码（TextAreaRow.masked，Cookie 类长串凭据）：textarea 没有 type=password，打点由
+ *  core/ui/components.css 的 .bz-maskarea（-webkit-text-security）负责，眼睛翻
+ *  .bz-maskarea--revealed。外壳复用单行密钥档位的 .bz-sp-secret 布局（+ --area 顶部对齐）。 */
+export function maskedAreaHtml(opts: { value: string; placeholder?: string }): string {
+  return `<div class="bz-sp-secret bz-sp-secret--area">` +
+    `<textarea class="bz-input bz-sp-textarea bz-maskarea" autocomplete="off" spellcheck="false"${opts.placeholder ? ` placeholder="${esc(opts.placeholder)}"` : ''}>${esc(opts.value)}</textarea>` +
     `<button type="button" class="bz-sp-secret-eye bz-touch-target--lg" aria-label="显示密钥" aria-pressed="false" title="显示 / 隐藏密钥">${iconSpan('eye')}</button>` +
     `</div>`;
 }

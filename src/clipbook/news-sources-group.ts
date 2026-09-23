@@ -120,7 +120,7 @@ export function dataSourceGroupRows(init: DataSourceState): SettingsRow[] {
           if (!(await writeBilibiliMaxItems(box.bilibiliMaxItems))) notifyWriteFailed('B站抓取条数');
         },
       } },
-    { type: 'number', name: '文章保留天数', desc: '已读与跳过文章的数据超期自动清理，默认 30 天', min: 1, step: 1,
+    { type: 'number', name: '文章保留天数', desc: '已读与跳过文章的数据超期自动清理，默认 30 天', min: 1, max: 3650, step: 1,
       binding: numStrBinding('newsRetentionUnsavedDays', 30) },
   ];
 }

@@ -361,63 +361,13 @@ export function knowledgeSettingsSchema(opts?: { onClearHistory?: () => void | P
         icon: 'link', name: '自动关联',
         rows: [
           { type: 'toggle', name: '自动关联', desc: '三个盒子的笔记改动后自动建关联，候选近邻经 AI 裁判筛选', binding: boolDefaultOn('linkAgentEnabled'), onChange: warnReload },
-          {
-            type: 'text',
-            name: '单篇候选数量 TopK',
-            desc: '每篇笔记的近邻候选数，越大召回越全也越慢',
-            // number 键（linkAgentTopK）不走键直绑（收窄到 string），三函数绑定 + onChange 钳制复写
-            binding: {
-              get: () => String((getSettings() as any).linkAgentTopK ?? 8),
-              set: (v: string) => {
-                (getSettings() as any).linkAgentTopK = v;
-              },
-              save: () => saveSettings(),
-            },
-            visibleWhen: (s) => s.linkAgentEnabled !== false,
-            isChild: true,
-            onChange: (v) => {
-              const n = Math.floor(Number(v));
-              (getSettings() as any).linkAgentTopK = Number.isFinite(n) && n > 0 ? n : 8;
-            },
-          },
-          {
-            type: 'text',
-            name: '每篇关联上限',
-            desc: '0 表示不限量，由 AI 裁判自行决定',
-            // number 键（linkAgentMaxLinks）同上
-            binding: {
-              get: () => String((getSettings() as any).linkAgentMaxLinks ?? 0),
-              set: (v: string) => {
-                (getSettings() as any).linkAgentMaxLinks = v;
-              },
-              save: () => saveSettings(),
-            },
-            visibleWhen: (s) => s.linkAgentEnabled !== false,
-            isChild: true,
-            onChange: (v) => {
-              const n = Math.floor(Number(v));
-              (getSettings() as any).linkAgentMaxLinks = Number.isFinite(n) && n > 0 ? n : 0;
-            },
-          },
-          {
-            type: 'text',
-            name: '候选相似度下限',
-            desc: '低于此分的候选直接丢弃不送 AI 裁判，0 表示不过滤',
-            // number 键（linkAgentMinScore，0~1 小数）同 TopK 口径：三函数绑定 + onChange 钳制
-            binding: {
-              get: () => String((getSettings() as any).linkAgentMinScore ?? 0.65),
-              set: (v: string) => {
-                (getSettings() as any).linkAgentMinScore = v;
-              },
-              save: () => saveSettings(),
-            },
-            visibleWhen: (s) => s.linkAgentEnabled !== false,
-            isChild: true,
-            onChange: (v) => {
-              const n = Number(v);
-              (getSettings() as any).linkAgentMinScore = Number.isFinite(n) ? Math.min(1, Math.max(0, n)) : 0.65;
-            },
-          },
+          // 2026-09-23：三行原为 text + 「三函数绑定 + onChange 钳制复写」——那是「number 键
+          // （linkAgentTopK/MaxLinks/MinScore）在 text 行里被收窄到 string」逼出来的绕行。
+          // 改标准 number 行后：键直绑（类型本就 number）；钳制交给输入框 min/max/step；
+          // 空串不再被 Number('') 误写成默认值（parseClampedNumber 空→null→不写）。
+          { type: 'number', name: '单篇候选数量 TopK', desc: '每篇笔记的近邻候选数，越大召回越全也越慢', binding: { key: 'linkAgentTopK' }, min: 1, max: 50, step: 1, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'number', name: '每篇关联上限', desc: '0 表示不限量，由 AI 裁判自行决定', binding: { key: 'linkAgentMaxLinks' }, min: 0, max: 100, step: 1, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
+          { type: 'number', name: '候选相似度下限', desc: '低于此分的候选直接丢弃不送 AI 裁判，0 表示不过滤', binding: { key: 'linkAgentMinScore' }, min: 0, max: 1, step: 0.05, visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'toggle', name: '完成通知', desc: '处理完成后通知提醒，关闭则全程静默', binding: boolDefaultOn('linkAgentNotify'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'toggle', name: '失效关联自动清理', desc: '目标笔记删除后自动移除指向它的失效关联条目', binding: boolDefaultOn('linkAgentAutoClean'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },
           { type: 'toggle', name: '已有关联不再建链', desc: '笔记已有关联时自动跳过处理', binding: boolDefaultOn('linkAgentRespectRelated'), visibleWhen: (s) => s.linkAgentEnabled !== false, isChild: true },

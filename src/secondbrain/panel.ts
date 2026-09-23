@@ -25,6 +25,7 @@ import { escManager } from '../core/esc-manager';
 import { formatRelativeTime } from '../core/utils';
 import { tryGetSettings, getSettings, saveSettings } from '../core/settings-provider';
 import { openSettingsModal } from '../core/settings-modal';
+import { numStrBinding } from '../core/settings-common';
 import type { SettingsSchema } from '../core/settings-schema';
 import { buildConfig, IS_MOBILE } from './config';
 import type { VectorStore } from './vector-store';
@@ -685,7 +686,7 @@ export function secondBrainSettingsSchema(): SettingsSchema {
         // 2026-09-12：组名「基础」→「服务」（内容全是 Ollama 连接与模型，原名字不达意）
         name: '服务',
         rows: [
-          { type: 'text', name: 'Ollama 本地 URL', desc: '本地 Ollama 服务地址，留空用默认端口', binding: { key: 'secondBrainOllamaUrl' }, onChange: trimStore('secondBrainOllamaUrl') },
+          { type: 'text', name: 'Ollama 本地 URL', desc: '本地 Ollama 服务地址，留空用默认端口', binding: { key: 'secondBrainOllamaUrl' }, inputMode: 'url', onChange: trimStore('secondBrainOllamaUrl') },
           // 远程 Ollama URL（移动端）：声明 text 行 + 行内「填入远程 URL」按钮（actions 统一实现，
           // 动作完成后渲染器重读绑定回填显示——custom 输入框引用持快手已退役）
           {
@@ -693,6 +694,7 @@ export function secondBrainSettingsSchema(): SettingsSchema {
             name: '移动端远程地址',
             desc: '手机上连本地向量库走这个地址',
             binding: { key: 'secondBrainRemoteOllamaUrl' },
+            inputMode: 'url',
             onChange: (v) => trimStore('secondBrainRemoteOllamaUrl')(v),
             actions: [{
               text: '填入远程 URL',
@@ -759,20 +761,24 @@ export function secondBrainSettingsSchema(): SettingsSchema {
         icon: 'search',
         name: '检索',
         rows: [
-          // 2026-09-12：检索组六行原本零描述（参数名裸奔），补齐自然句说明
-          { type: 'text', name: '参考结果数 TopK', desc: '参考侧返回的近邻条数，越大越全也越慢', binding: { key: 'secondBrainTopK' }, onChange: trimStore('secondBrainTopK') },
-          { type: 'text', name: '对话参考结果数', desc: '对话时注入上下文的参考条数', binding: { key: 'secondBrainChatTopK' }, onChange: trimStore('secondBrainChatTopK') },
-          { type: 'text', name: '段落最小长度', desc: '短于该字符数的段落不入向量索引', binding: { key: 'secondBrainChunkMinLength' }, onChange: trimStore('secondBrainChunkMinLength') },
-          { type: 'text', name: '上下文限制', desc: '单次注入对话的上下文字符上限', binding: { key: 'secondBrainContextLimit' }, onChange: trimStore('secondBrainContextLimit') },
-          { type: 'text', name: '防抖延迟毫秒', desc: '输入停顿该毫秒数后才开始检索', binding: { key: 'secondBrainDebounceDelay' }, onChange: trimStore('secondBrainDebounceDelay') },
-          { type: 'text', name: '光标轮询毫秒', desc: '光标位置轮询间隔，越小跟随越快', binding: { key: 'secondBrainCursorPollInterval' }, onChange: trimStore('secondBrainCursorPollInterval') },
+          // 2026-09-23：检索组六行原为 text（每键自己 Number() + 钳制），改标准 number 行——
+          // 键仍存字符串（消费侧 Number(x) || 默认，见 config.ts），故走 numStrBinding 适配器
+          // （cinema/encrypt/password-vault 同款），min/max 由输入框兜住手滑值；
+          // 六键消费侧一律 `Number(x) || 默认` → 0 与非法值都回落默认，与 numStrBinding 的
+          // 「≤0 取默认」语义一致（0 不是这些参数的有效值）。
+          { type: 'number', name: '参考结果数 TopK', desc: '参考侧返回的近邻条数，越大越全也越慢', binding: numStrBinding('secondBrainTopK', 20), min: 1, max: 50, step: 1 },
+          { type: 'number', name: '对话参考结果数', desc: '对话时注入上下文的参考条数', binding: numStrBinding('secondBrainChatTopK', 20), min: 1, max: 50, step: 1 },
+          { type: 'number', name: '段落最小长度', desc: '短于该字符数的段落不入向量索引', binding: numStrBinding('secondBrainChunkMinLength', 50), min: 1, max: 2000, step: 1 },
+          { type: 'number', name: '上下文限制', desc: '单次注入对话的上下文字符上限', binding: numStrBinding('secondBrainContextLimit', 600), min: 1, max: 20000, step: 1 },
+          { type: 'number', name: '防抖延迟毫秒', desc: '输入停顿该毫秒数后才开始检索', binding: numStrBinding('secondBrainDebounceDelay', 300), min: 1, max: 5000, step: 10 },
+          { type: 'number', name: '光标轮询毫秒', desc: '光标位置轮询间隔，越小跟随越快', binding: numStrBinding('secondBrainCursorPollInterval', 500), min: 1, max: 5000, step: 10 },
         ],
       },
       {
         icon: 'message-square',
         name: '对话',
         rows: [
-          { type: 'text', name: '最大历史记录', desc: '对话保留的历史轮数上限', binding: { key: 'secondBrainMaxHistory' }, onChange: trimStore('secondBrainMaxHistory') },
+          { type: 'number', name: '最大历史记录', desc: '对话保留的历史轮数上限', binding: numStrBinding('secondBrainMaxHistory', 10), min: 1, max: 200, step: 1 },
           // 「AI 通道」跳转按钮已删（2026-09-12 用户拍板）：设置面板不放跳转移交类按钮
         ],
       },
