@@ -71,7 +71,6 @@ describe('getAIProvider 解析与缓存', () => {
     expect(p.endpoint).toBe('https://third.example/v1');
     expect(p.apiKey).toBe('k3');
     expect(p.model).toBeUndefined();
-    expect(p.noCors).toBeUndefined();
   });
 
   it('override 对象无 apiKey → 不走直配分支，回落设置中的 deepseek', async () => {
@@ -123,7 +122,6 @@ describe('getAIProvider 解析与缓存', () => {
     expect(p.endpoint).toBe('https://open.bigmodel.cn/api/coding/paas/v4');
     expect(p.model).toBe('glm-5.3-flash');
     expect(p.apiKey).toBe('zp-plan-key');
-    expect(p.noCors).toBeUndefined();
   });
 
   it('zhipu-plan 缺 key：拦截报「未配置 智谱 Plan API Key」', async () => {

@@ -1,7 +1,7 @@
 /**
  * AI 提供商模型列表拉取（ticket 173「获取模型名」按钮）：
  * 统一 OpenAI 兼容 GET {endpoint}/models（Authorization: Bearer），Ollama 特判 GET {base}/api/tags（无鉴权）。
- * HTTP 通道与 core/ai.ts 请求同口径：fetch 优先，desc.noCors 或 fetch 失败回退 requestUrl（无 CORS 限制）。
+ * HTTP 通道与 core/ai.ts 请求同口径：fetch 优先，失败回退 requestUrl（无 CORS 限制）。
  * 纯数据层：不触 DOM、不弹 toast（报错文案抛给调用方，由设置页按钮统一提示）。
  */
 import { requestUrl } from 'obsidian';
@@ -107,7 +107,7 @@ export async function fetchProviderModels(
   const fetchFn = deps.fetchFn || ((u: string, init?: any) => fetch(u, init));
   const requestUrlFn = deps.requestUrlFn || requestUrl;
 
-  // fetch 优先（无 CORS 限制环境直接成功）；desc.noCors 或 fetch 失败（CORS/网络）回退 requestUrl
+  // fetch 优先（无 CORS 限制环境直接成功）；fetch 失败（CORS/网络）回退 requestUrl
   const fetchAttempt = async (signal: AbortSignal): Promise<any> => {
     const resp = await fetchFn(url, { method: 'GET', headers, signal });
     return { resp, via: 'fetch' as const };
@@ -119,9 +119,7 @@ export async function fetchProviderModels(
 
   let attempt:
     | { resp: { ok: boolean; status: number; json: () => Promise<any> }; via: 'fetch' | 'requestUrl' };
-  if (desc.noCors) {
-    attempt = await requestUrlAttempt();
-  } else {
+  {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {

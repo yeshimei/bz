@@ -20,6 +20,7 @@ import { openPathPicker } from '../core/path-picker';
 // TEXT_COMMIT_DELAY（防抖窗口）下沉 core 导出，两渲染器消费同一实现——core 历轮加固经此传导
 import {
   bindValue, safePersist, CommitWarn, parseClampedNumber, TEXT_COMMIT_DELAY,
+  selectOptionsOf, selectOptionsSignature, selectDisplayValue,
 } from '../core/settings-schema';
 import type { RowBinding, SettingsSchema, SettingsRow, SettingsSnapshot, SettingsRowContext, SecretRow, SelectOption } from '../core/settings-schema';
 import { setIcon } from 'obsidian';
@@ -547,16 +548,10 @@ function renderRow(
     }
     case 'select': {
       const acc = bindValue<string>(row.binding as unknown as RowBinding<string>);
-      /** 选项求值（issue 411/ADR-0179）：静态数组原样，函数形式随快照重取——思考档位随
-       *  「AI 服务商」切换换表（档位词表是 provider 属性，固定五档会把不生效的档摆给用户） */
-      const readOptions = (): SelectOption[] =>
-        typeof row.options === 'function' ? row.options(snapshot()) : row.options;
-      const optSigOf = (opts: SelectOption[]): string => opts.map((o) => o.value).join('\u0001');
-      /** 应显示值：绑定值不在选项内（空/历史遗留档位）→ 回落首项（同 core 渲染器口径） */
-      const displayValue = (opts: SelectOption[]): string => {
-        const v = String(acc.read() ?? '');
-        return opts.some((o) => o.value === v) ? v : (opts[0]?.value ?? '');
-      };
+      // 选项求值 / 签名 / 显示值回落 = core 单源三件套（issue 412；与本文件自绘 DOM 解耦）：
+      // 函数型选项随快照重取——思考档位随「AI 服务商」切换换表（档位词表是 provider 属性，
+      // 固定五档会把不生效的档摆给用户，issue 411/ADR-0179）
+      const readOptions = (): SelectOption[] => selectOptionsOf(row.options, snapshot());
 
       let vspan: HTMLElement | null = null;
       /** 上一次挂载的收尾（重建前释放 document 监听与 ESC 层，防切换服务商时监听堆叠） */
@@ -570,7 +565,7 @@ function renderRow(
         // UI-1/UI-2（对齐 core uiSelect 范式）：触发器带 tabindex/aria-expanded 可键盘聚焦，
         // Enter/Space/↑↓ 开合菜单、菜单内 ↑↓ 移高亮 Enter 提交；ESC 经 escManager 层先收菜单不关面板。
         const labelOf = (v: string) => (options.find((o) => o.value === v) || { label: v }).label;
-        ctrlEl.innerHTML = R.selectTriggerHtml(labelOf(displayValue(options)));
+        ctrlEl.innerHTML = R.selectTriggerHtml(labelOf(selectDisplayValue(() => acc.read(), options)));
         const sel = ctrlEl.querySelector('.bz-select') as HTMLElement;
         vspan = sel.querySelector('.bz-select-val')!;
 
@@ -648,8 +643,8 @@ function renderRow(
           const menu = document.createElement('div');
           menu.className = 'bz-select-menu';
           menu.setAttribute('role', 'listbox');
-          const curNow = displayValue(options);
-          menu.innerHTML = options.map((o) => R.selectItemHtml(o.label, o.value === curNow)).join('');
+          const currentValue = selectDisplayValue(() => acc.read(), options);
+          menu.innerHTML = options.map((o) => R.selectItemHtml(o.label, o.value === currentValue)).join('');
           menu.querySelectorAll<HTMLElement>('.bz-select-item').forEach((it) => it.classList.add('bz-touch-target--lg')); // UI-4：30px 菜单项热区抬档
           menu.querySelectorAll('.bz-select-item').forEach((it, i) => {
             const o = options[i];
@@ -706,18 +701,18 @@ function renderRow(
       };
 
       mount();
-      let optSig = optSigOf(readOptions());
+      let optionsSig = selectOptionsSignature(readOptions());
       // 联动刷新（issue 411/ADR-0179）：选项集变了 → 整只下拉重建（换表）；否则只回填当前值（不落盘）
       if (regRefresh && (row.refreshKey !== undefined || typeof row.options === 'function')) {
         regRefresh(() => {
           const opts = readOptions();
-          const sig = optSigOf(opts);
-          if (sig !== optSig) {
-            optSig = sig;
+          const sig = selectOptionsSignature(opts);
+          if (sig !== optionsSig) {
+            optionsSig = sig;
             mount();
             return;
           }
-          if (vspan) vspan.textContent = (opts.find((o) => o.value === displayValue(opts)) || { label: '' }).label;
+          if (vspan) vspan.textContent = (opts.find((o) => o.value === selectDisplayValue(() => acc.read(), opts)) || { label: '' }).label;
         });
       }
       break;
